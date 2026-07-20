@@ -7,11 +7,12 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
+import { usePathname } from 'next/navigation';
 import { Heart, Radio, Trophy, ListOrdered, LogIn, User, type LucideIcon } from 'lucide-react';
 import Link from '@/components/AppLink';
 import LangToggle from '@/components/LangToggle';
 import { useTranslation } from 'react-i18next';
-import { useAuthUser, useAuthStore } from '@/lib/auth-store';
+import { useAuthUser, nextQuery } from '@/lib/auth-store';
 import LandingCubeHero from '../_components/LandingCubeHero';
 import { TEXTS, SECTIONS } from '@/lib/landing-sections';
 
@@ -63,11 +64,10 @@ export default function LandingPage() {
 
   const t = useCallback((key: keyof typeof TEXTS) => TEXTS[key][lang], [lang]);
 
-  // 右上角 登录 / 我的主页 入口。useAuthUser 是 hydration-safe(SSG 首帧按未登录渲染,
-  // 挂载后才切到已登录),避免 SSG/CSR 错配。已登录且有 WCA id → 跳个人 hub;纯邮箱/手机
-  // 账号(无 wcaId、无 person 页)退回打开账号面板。
+  // 右上角 登录 / 我的 入口,两态都是真链接、都指 /account(全站无登录弹层)。useAuthUser
+  // 是 hydration-safe(SSG 首帧按未登录渲染,挂载后才切到已登录),避免 SSG/CSR 错配。
   const user = useAuthUser();
-  const openLogin = () => useAuthStore.getState().login();
+  const pathname = usePathname();
   // 已登录时右上角只保留头像(去掉名字);无头像退回 User 图标。
   const authInner = user && (
     user.avatar
@@ -80,18 +80,18 @@ export default function LandingPage() {
       <div className="landing-auth">
         <LangToggle />
         {!user ? (
-          <button type="button" className="landing-auth-btn is-login" onClick={openLogin}>
+          <Link href={`/account${nextQuery(pathname)}`} className="landing-auth-btn is-login" prefetch={false}>
             <LogIn size={16} aria-hidden />
             <span>{tr({ zh: '登录', en: 'Log in' })}</span>
-          </button>
-        ) : user.wcaId ? (
-          <Link href={`/person/${user.wcaId}`} className="landing-auth-btn is-avatar" prefetch={false}>
-            {authInner}
           </Link>
         ) : (
-          <button type="button" className="landing-auth-btn is-avatar" onClick={openLogin}>
+          <Link
+            href="/account"
+            className="landing-auth-btn is-avatar"
+            prefetch={false}
+          >
             {authInner}
-          </button>
+          </Link>
         )}
       </div>
 

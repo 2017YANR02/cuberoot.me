@@ -49,11 +49,10 @@ const CSS = `
   width:32px;height:32px;border:0;background:transparent;}
 .deskpet-toolbar .wca-auth-btn:hover,.deskpet-toolbar .wca-auth-trigger:hover{
   background:color-mix(in srgb, var(--foreground) 9%, transparent);}
-/* Desktop toolbar sits at the bottom, so its popups (auth dropdown + lang /
-   palette menus) open upward. On mobile the toolbar is pinned to the top, so
-   they must open downward — scoped to desktop here, overridden below. */
+/* Desktop toolbar sits at the bottom, so its popups (lang / palette menus)
+   open upward. On mobile the toolbar is pinned to the top, so they must open
+   downward — scoped to desktop here, overridden below. */
 @media (min-width:769px){
-  .deskpet-toolbar .wca-auth-dropdown{top:auto;bottom:calc(100% + 6px);}
   .deskpet-toolbar .lang-menu{top:auto;bottom:calc(100% + 6px);}
 }
 
@@ -74,7 +73,6 @@ const CSS = `
   /* Mobile toolbar is at the top, so popups open downward and left-aligned to
      their trigger so they don't run off the left edge. */
   .deskpet-toolbar .lang-menu{left:0;right:auto;top:calc(100% + 4px);bottom:auto;}
-  .deskpet-toolbar .wca-auth-dropdown{top:calc(100% + 4px);bottom:auto;}
   /* Box hugs the keyboard: visualViewport shrinks the backdrop, keep only a
      small breathing gap at the bottom. */
   .deskpet-search-backdrop{padding-bottom:6px;}
@@ -216,7 +214,7 @@ export default function DeskPetSearch({
           <Home size={16} />
         </button>
         <HeaderToggles />
-        <WcaAuth />
+        <WcaAuth onNavigate={onClose} />
         <button type="button" className="icon-only" onClick={() => setDonateOpen(true)}
           title={t('赞助', 'Donate')}>
           <Heart size={16} className="heart-icon" />

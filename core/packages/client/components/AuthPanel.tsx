@@ -1,26 +1,26 @@
 'use client';
 
-// 全站登录 / 账号弹层。未登录:行业标准布局 —— 邮箱为主凭据(验证码优先,可切密码),下方
-// 分隔线 + 「用 X 登录」第三方按钮竖排(WCA / Google / 支付宝 / 微信 / QQ)。已登录:账号面板
-// (已绑定身份列表 + 绑定新方式 + 设/改密码 + 解绑 + 登出)。结构镜像 FeedbackModal(自包含 +
-// 本地 t + 背景点击关闭)。由 store 的 loginOpen 控制,全局挂在 app/layout.tsx。
+// 全站认证 UI。**没有任何弹层形态** —— 两块面板都只长在页面里,认证只有 /account 一个地址:
+//  1. LoginForm —— 只服务未登录:行业标准布局,邮箱为主凭据(验证码优先,可切密码),下方分隔线
+//     + 「用 X 登录」第三方按钮竖排(WCA / Google / 支付宝 / 微信 / QQ)。渲染于 /account。
+//  2. AccountPanel —— 已绑定身份 + 绑定新方式 + 设/改密码 + 解绑。同样只渲染于 /account。
+// 两者共用同一套表单原语(CodeFlow / 密码表单 / 错误文案),故同处一文件。
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { X, Key, Loader2, LogOut, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Eye, EyeOff, Mail, Smartphone, KeyRound } from 'lucide-react';
 import { SiWechat, SiQq, SiAlipay } from 'react-icons/si';
-import AppLink from '@/components/AppLink';
 import { useAuthStore, applySession } from '@/lib/auth-store';
 import { useLang } from '@/i18n/tr';
 import {
   sendEmailCode, verifyEmailCode, sendPhoneCode, verifyPhoneCode,
   loginPassword, setPassword as apiSetPassword, removePassword,
   linkEmailSend, linkEmailVerify, linkPhoneSend, linkPhoneVerify,
-  unlinkIdentity, fetchIdentities, fetchAuthProviders, loginGoogle, linkGoogle,
+  unlinkIdentity, fetchIdentities, fetchAuthProviders, loginGoogle, linkGoogle, replaceEmailVerify,
   type Identity, type AuthProviders, type SocialProvider,
 } from '@/lib/account-api';
 import { requestGoogleAssertion } from '@/lib/google-auth';
 import { startSocialLogin, isBlockedWebview } from '@/lib/social-auth';
-import './login-modal.css';
+import './auth-panel.css';
 
 const ICON = 16;
 const CODE_LEN = 6;
@@ -38,6 +38,11 @@ function GoogleGlyph({ size = 16 }: { size?: number }) {
   );
 }
 
+/** WCA 官方标 — 站内自有 /icons/wca.svg,与首页统计卡、规则页同一份。 */
+const WcaGlyph = ({ size = 16 }: { size?: number }) => (
+  <img src="/icons/wca.svg" alt="" width={size} height={size} aria-hidden="true" />
+);
+
 /** 国内三方品牌标:react-icons/si(simple-icons)按需 import,打进 bundle、不走 CDN。 */
 const WechatGlyph = ({ size = 16 }: { size?: number }) => <SiWechat size={size} color="#07C160" aria-hidden="true" />;
 const QqGlyph = ({ size = 16 }: { size?: number }) => <SiQq size={size} color="#1EBAFC" aria-hidden="true" />;
@@ -50,6 +55,26 @@ const SOCIALS: { key: SocialProvider; Glyph: (p: { size?: number }) => React.Rea
   { key: 'alipay', Glyph: AlipayGlyph, name: { zh: '支付宝', en: 'Alipay' } },
 ];
 
+/**
+ * 各登录方式的标:三方用品牌标,邮箱 / 手机 / 密码用 lucide。账号面板的每一行(已绑定、
+ * 可绑定、密码)都靠它取标,所以键要和后端 provider 串对齐;认不出的渲染空占位,行不会错位。
+ */
+const PROVIDER_GLYPH: Record<string, (p: { size?: number }) => React.ReactNode> = {
+  wca: WcaGlyph,
+  google: GoogleGlyph,
+  wechat: WechatGlyph,
+  qq: QqGlyph,
+  alipay: AlipayGlyph,
+  email: ({ size = 16 }) => <Mail size={size} />,
+  phone: ({ size = 16 }) => <Smartphone size={size} />,
+  password: ({ size = 16 }) => <KeyRound size={size} />,
+};
+
+function ProviderGlyph({ provider }: { provider: string }) {
+  const G = PROVIDER_GLYPH[provider];
+  return <span className="auth-idicon">{G ? <G size={16} /> : null}</span>;
+}
+
 /** Apple 风格分格验证码输入:6 个格子 + 高亮当前格 + 跳动光标。一个透明原生 input 承接
  *  键盘/粘贴/iOS 短信自动填充(autocomplete=one-time-code),格子只做展示、始终左到右填。 */
 function CodeCells({ value, onChange, disabled }: {
@@ -59,10 +84,10 @@ function CodeCells({ value, onChange, disabled }: {
   const [focused, setFocused] = useState(false);
   const toEnd = () => { const el = ref.current; if (el) el.setSelectionRange(el.value.length, el.value.length); };
   return (
-    <div className="lm-otp" onMouseDown={(e) => { e.preventDefault(); ref.current?.focus(); toEnd(); }}>
+    <div className="auth-otp" onMouseDown={(e) => { e.preventDefault(); ref.current?.focus(); toEnd(); }}>
       <input
         ref={ref}
-        className="lm-otp-native"
+        className="auth-otp-native"
         inputMode="numeric"
         autoComplete="one-time-code"
         pattern="\d*"
@@ -78,8 +103,8 @@ function CodeCells({ value, onChange, disabled }: {
       {Array.from({ length: CODE_LEN }).map((_, i) => {
         const active = focused && (i === value.length || (value.length === CODE_LEN && i === CODE_LEN - 1));
         return (
-          <div key={i} className={`lm-otp-cell${active ? ' is-active' : ''}${value[i] ? ' is-filled' : ''}`}>
-            {value[i] ? <span>{value[i]}</span> : active ? <span className="lm-otp-caret" /> : null}
+          <div key={i} className={`auth-otp-cell${active ? ' is-active' : ''}${value[i] ? ' is-filled' : ''}`}>
+            {value[i] ? <span>{value[i]}</span> : active ? <span className="auth-otp-caret" /> : null}
           </div>
         );
       })}
@@ -96,6 +121,7 @@ function authErrorText(raw: string, t: (zh: string, en: string) => string): stri
   if (m.includes('wrong current password')) return t('当前密码不正确', 'Current password is incorrect');
   if (m.includes('invalid password')) return t('密码至少 8 位', 'Password must be at least 8 characters');
   if (m.includes('not configured')) return t('该登录方式暂未开放', "This sign-in method isn't available yet");
+  if (m.includes('account already has an email')) return t('一个账号只能绑定一个邮箱,请先解绑现有邮箱', 'An account can have only one email — unlink the current one first');
   if (m.includes('already linked')) return t('该方式已绑定到另一个账号', 'Already linked to another account');
   if (m.includes('invalid email')) return t('邮箱格式不正确', 'Invalid email address');
   if (m.includes('invalid phone')) return t('手机号格式不正确', 'Invalid phone number');
@@ -108,8 +134,13 @@ function authErrorText(raw: string, t: (zh: string, en: string) => string): stri
   return raw;
 }
 
-/** 邮箱/手机验证码流程(发码 → 输码 → 校验)。login 模式登录;link 模式绑到当前账号。 */
-function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' | 'link'; onDone: () => void }) {
+/**
+ * 邮箱/手机验证码流程(发码 → 输码 → 校验)。
+ *   login    验证后登录
+ *   link     绑到当前账号
+ *   replace  换掉当前账号已有的邮箱(仅 email)—— 发码与 link 同一条链路,只有最后落库不同
+ */
+function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' | 'link' | 'replace'; onDone: () => void }) {
   const lang = useLang();
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
   const [target, setTarget] = useState('');
@@ -119,13 +150,13 @@ function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' |
   const [error, setError] = useState<string | null>(null);
 
   const label = channel === 'email' ? t('邮箱', 'Email') : t('手机号', 'Phone');
-  const placeholder = channel === 'email' ? 'you@example.com' : t('11 位手机号', '11-digit phone');
+  const placeholder = channel === 'email' ? undefined : t('11 位手机号', '11-digit phone');
 
   const send = useCallback(async () => {
     setError(null);
     setBusy(true);
     try {
-      if (mode === 'link') {
+      if (mode === 'link' || mode === 'replace') {
         channel === 'email' ? await linkEmailSend(target) : await linkPhoneSend(target);
       } else {
         channel === 'email' ? await sendEmailCode(target) : await sendPhoneCode(target);
@@ -142,7 +173,10 @@ function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' |
     setError(null);
     setBusy(true);
     try {
-      if (mode === 'link') {
+      if (mode === 'replace') {
+        await replaceEmailVerify(target, code);
+        onDone();
+      } else if (mode === 'link') {
         channel === 'email' ? await linkEmailVerify(target, code) : await linkPhoneVerify(target, code);
         onDone();
       } else {
@@ -164,12 +198,12 @@ function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' |
   }, [code, step]);
 
   return (
-    <div className="lm-flow">
+    <div className="auth-flow">
       {step === 'input' ? (
         <>
-          <label className="lm-label">{label}</label>
+          <label className="auth-label">{label}</label>
           <input
-            className="lm-input"
+            className="auth-input"
             type={channel === 'email' ? 'email' : 'tel'}
             value={target}
             autoFocus
@@ -177,22 +211,22 @@ function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' |
             onChange={(e) => setTarget(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter' && target && !busy) void send(); }}
           />
-          {error && <p className="lm-error">{error}</p>}
-          <button className="lm-primary" disabled={!target || busy} onClick={() => void send()}>
-            {busy ? <Loader2 size={ICON} className="lm-spin" /> : null}
+          {error && <p className="auth-error">{error}</p>}
+          <button className="auth-primary" disabled={!target || busy} onClick={() => void send()}>
+            {busy ? <Loader2 size={ICON} className="auth-spin" /> : null}
             {t('发送验证码', 'Send code')}
           </button>
         </>
       ) : (
         <>
-          <label className="lm-label">{t('验证码', 'Verification code')} · {target}</label>
+          <label className="auth-label">{t('验证码', 'Verification code')} · {target}</label>
           <CodeCells value={code} onChange={setCode} disabled={busy} />
-          {error && <p className="lm-error">{error}</p>}
-          <button className="lm-primary" disabled={code.length !== CODE_LEN || busy} onClick={() => void verify()}>
-            {busy ? <Loader2 size={ICON} className="lm-spin" /> : null}
+          {error && <p className="auth-error">{error}</p>}
+          <button className="auth-primary" disabled={code.length !== CODE_LEN || busy} onClick={() => void verify()}>
+            {busy ? <Loader2 size={ICON} className="auth-spin" /> : null}
             {mode === 'link' ? t('绑定', 'Link') : t('登录', 'Sign in')}
           </button>
-          <button className="lm-textbtn" onClick={() => { setStep('input'); setCode(''); setError(null); }}>
+          <button className="auth-textbtn" onClick={() => { setStep('input'); setCode(''); setError(null); }}>
             {t('改用其它' + label, 'Use another ' + label.toLowerCase())}
           </button>
         </>
@@ -210,9 +244,9 @@ function PasswordInput({ value, onChange, placeholder, autoComplete, autoFocus, 
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
   const [show, setShow] = useState(false);
   return (
-    <div className="lm-pwfield">
+    <div className="auth-pwfield">
       <input
-        className="lm-input"
+        className="auth-input"
         type={show ? 'text' : 'password'}
         value={value}
         autoFocus={autoFocus}
@@ -223,7 +257,7 @@ function PasswordInput({ value, onChange, placeholder, autoComplete, autoFocus, 
       />
       <button
         type="button"
-        className="lm-pweye"
+        className="auth-pweye"
         onClick={() => setShow((s) => !s)}
         aria-label={show ? t('隐藏密码', 'Hide password') : t('显示密码', 'Show password')}
       >
@@ -284,44 +318,43 @@ function EmailCodeFlow({ email, setEmail, onDone, toPassword, reset }: {
 
   if (step === 'code') {
     return (
-      <div className="lm-flow">
-        <p className="lm-hint">{t(`验证码已发送至 ${email}`, `We sent a code to ${email}`)}</p>
+      <div className="auth-flow">
+        <p className="auth-hint">{t(`验证码已发送至 ${email}`, `We sent a code to ${email}`)}</p>
         <CodeCells value={code} onChange={setCode} disabled={busy} />
-        {error && <p className="lm-error">{error}</p>}
-        <button className="lm-primary" disabled={code.length !== CODE_LEN || busy} onClick={() => void verify()}>
-          {busy ? <Loader2 size={ICON} className="lm-spin" /> : null}
+        {error && <p className="auth-error">{error}</p>}
+        <button className="auth-primary" disabled={code.length !== CODE_LEN || busy} onClick={() => void verify()}>
+          {busy ? <Loader2 size={ICON} className="auth-spin" /> : null}
           {reset ? t('继续', 'Continue') : t('登录', 'Sign in')}
         </button>
-        <button className="lm-textbtn" onClick={() => { setStep('input'); setCode(''); setError(null); }}>
+        <button className="auth-textbtn" onClick={() => { setStep('input'); setCode(''); setError(null); }}>
           {t('换邮箱 / 重新发送', 'Change email / resend')}
         </button>
       </div>
     );
   }
   return (
-    <div className="lm-flow">
+    <div className="auth-flow">
       {reset && (
-        <p className="lm-hint">
+        <p className="auth-hint">
           {t('给你的邮箱发一个验证码,验证后即可设置新密码。', "We'll email you a code — verify it and you can set a new password.")}
         </p>
       )}
-      <label className="lm-label">{t('邮箱', 'Email')}</label>
+      <label className="auth-label">{t('邮箱', 'Email')}</label>
       <input
-        className="lm-input"
+        className="auth-input"
         type="email"
         value={email}
         autoFocus
         autoComplete="email"
-        placeholder="you@example.com"
         onChange={(e) => setEmail(e.target.value)}
         onKeyDown={(e) => { if (e.key === 'Enter' && email && !busy) void send(); }}
       />
-      {error && <p className="lm-error">{error}</p>}
-      <button className="lm-primary" disabled={!email || busy} onClick={() => void send()}>
-        {busy ? <Loader2 size={ICON} className="lm-spin" /> : null}
+      {error && <p className="auth-error">{error}</p>}
+      <button className="auth-primary" disabled={!email || busy} onClick={() => void send()}>
+        {busy ? <Loader2 size={ICON} className="auth-spin" /> : null}
         {t('发送验证码', 'Send code')}
       </button>
-      <button className="lm-textbtn" onClick={toPassword}>
+      <button className="auth-textbtn" onClick={toPassword}>
         {reset ? t('返回密码登录', 'Back to password sign-in') : t('用密码登录', 'Sign in with a password')}
       </button>
     </div>
@@ -354,18 +387,17 @@ function EmailPasswordFlow({ email, setEmail, onDone, toCode, onForgot }: {
   }, [email, pw, onDone]);
 
   return (
-    <div className="lm-flow">
-      <label className="lm-label">{t('邮箱', 'Email')}</label>
+    <div className="auth-flow">
+      <label className="auth-label">{t('邮箱', 'Email')}</label>
       <input
-        className="lm-input"
+        className="auth-input"
         type="email"
         value={email}
         autoFocus
         autoComplete="username"
-        placeholder="you@example.com"
         onChange={(e) => setEmail(e.target.value)}
       />
-      <label className="lm-label">{t('密码', 'Password')}</label>
+      <label className="auth-label">{t('密码', 'Password')}</label>
       <PasswordInput
         value={pw}
         onChange={setPw}
@@ -373,13 +405,13 @@ function EmailPasswordFlow({ email, setEmail, onDone, toCode, onForgot }: {
         placeholder={t('密码', 'Password')}
         onEnter={() => { if (email && pw && !busy) void submit(); }}
       />
-      {error && <p className="lm-error">{error}</p>}
-      <button className="lm-primary" disabled={!email || !pw || busy} onClick={() => void submit()}>
-        {busy ? <Loader2 size={ICON} className="lm-spin" /> : null}
+      {error && <p className="auth-error">{error}</p>}
+      <button className="auth-primary" disabled={!email || !pw || busy} onClick={() => void submit()}>
+        {busy ? <Loader2 size={ICON} className="auth-spin" /> : null}
         {t('登录', 'Sign in')}
       </button>
-      <button className="lm-textbtn" onClick={toCode}>{t('用邮箱验证码登录', 'Email me a code instead')}</button>
-      <button className="lm-textbtn" onClick={onForgot}>{t('忘记密码?', 'Forgot your password?')}</button>
+      <button className="auth-textbtn" onClick={toCode}>{t('用邮箱验证码登录', 'Email me a code instead')}</button>
+      <button className="auth-textbtn" onClick={onForgot}>{t('忘记密码?', 'Forgot your password?')}</button>
     </div>
   );
 }
@@ -400,10 +432,10 @@ function EmailAuth({ onDone }: { onDone: () => void }) {
 
   if (newPw) {
     return (
-      <div className="lm-flow">
-        <p className="lm-hint">{t('邮箱已验证。设置一个新密码,下次即可用它登录。', 'Email verified. Set a new password to sign in with next time.')}</p>
+      <div className="auth-flow">
+        <p className="auth-hint">{t('邮箱已验证。设置一个新密码,下次即可用它登录。', 'Email verified. Set a new password to sign in with next time.')}</p>
         <SetPasswordForm needCurrent={false} label={t('新密码', 'New password')} onDone={onDone} />
-        <button className="lm-textbtn" onClick={onDone}>{t('跳过', 'Skip')}</button>
+        <button className="auth-textbtn" onClick={onDone}>{t('跳过', 'Skip')}</button>
       </div>
     );
   }
@@ -429,7 +461,7 @@ function EmailAuth({ onDone }: { onDone: () => void }) {
 /** 「或」分隔线(两侧发丝线 + 居中文字),分隔主凭据区与第三方登录。 */
 function OrDivider() {
   const lang = useLang();
-  return <div className="lm-divider"><span>{lang === 'zh' ? '或' : 'or'}</span></div>;
+  return <div className="auth-divider"><span>{lang === 'zh' ? '或' : 'or'}</span></div>;
 }
 
 /** 第三方「用 X 登录」按钮:整行、图标定位左侧、文字居中(Google/Apple 官方按钮范式)。 */
@@ -437,9 +469,9 @@ function SsoButton({ icon, label, busy, onClick }: {
   icon: React.ReactNode; label: string; busy?: boolean; onClick: () => void;
 }) {
   return (
-    <button type="button" className="lm-sso" disabled={busy} onClick={onClick}>
-      <span className="lm-sso-icon">{busy ? <Loader2 size={ICON} className="lm-spin" /> : icon}</span>
-      <span className="lm-sso-label">{label}</span>
+    <button type="button" className="auth-sso" disabled={busy} onClick={onClick}>
+      <span className="auth-sso-icon">{busy ? <Loader2 size={ICON} className="auth-spin" /> : icon}</span>
+      <span className="auth-sso-label">{label}</span>
     </button>
   );
 }
@@ -477,17 +509,17 @@ function SetPasswordForm({ needCurrent, label, onDone }: {
   }, [current, next, confirm, needCurrent, onDone]);
 
   if (done) {
-    return <div className="lm-flow lm-pwform"><p className="lm-hint">{t('密码已保存。', 'Password saved.')}</p></div>;
+    return <div className="auth-flow auth-pwform"><p className="auth-hint">{t('密码已保存。', 'Password saved.')}</p></div>;
   }
   return (
-    <div className="lm-flow lm-pwform">
+    <div className="auth-flow auth-pwform">
       {needCurrent && (
         <>
-          <label className="lm-label">{t('当前密码', 'Current password')}</label>
+          <label className="auth-label">{t('当前密码', 'Current password')}</label>
           <PasswordInput value={current} onChange={setCurrent} autoComplete="current-password" autoFocus />
         </>
       )}
-      <label className="lm-label">{label}</label>
+      <label className="auth-label">{label}</label>
       <PasswordInput
         value={next}
         onChange={setNext}
@@ -495,20 +527,20 @@ function SetPasswordForm({ needCurrent, label, onDone }: {
         autoFocus={!needCurrent}
         placeholder={t('至少 8 位', 'At least 8 characters')}
       />
-      <label className="lm-label">{t('确认密码', 'Confirm password')}</label>
+      <label className="auth-label">{t('确认密码', 'Confirm password')}</label>
       <PasswordInput
         value={confirm}
         onChange={setConfirm}
         autoComplete="new-password"
         onEnter={() => { if (!busy) void submit(); }}
       />
-      {error && <p className="lm-error">{error}</p>}
+      {error && <p className="auth-error">{error}</p>}
       <button
-        className="lm-primary"
+        className="auth-primary"
         disabled={busy || !next || !confirm || (needCurrent && !current)}
         onClick={() => void submit()}
       >
-        {busy ? <Loader2 size={ICON} className="lm-spin" /> : null}
+        {busy ? <Loader2 size={ICON} className="auth-spin" /> : null}
         {t('保存', 'Save')}
       </button>
     </div>
@@ -539,28 +571,29 @@ function RemovePasswordForm({ needCurrent, onDone, onCancel }: {
   }, [current, needCurrent, onDone]);
 
   return (
-    <div className="lm-flow lm-pwform">
-      <p className="lm-hint">{t('移除后仍可用邮箱验证码登录,不会丢失账号。', 'You can still sign in with an emailed code — your account stays.')}</p>
+    <div className="auth-flow auth-pwform">
+      <p className="auth-hint">{t('移除后仍可用邮箱验证码登录,不会丢失账号。', 'You can still sign in with an emailed code — your account stays.')}</p>
       {needCurrent && (
         <>
-          <label className="lm-label">{t('当前密码', 'Current password')}</label>
+          <label className="auth-label">{t('当前密码', 'Current password')}</label>
           <PasswordInput
             value={current} onChange={setCurrent} autoComplete="current-password" autoFocus
             onEnter={() => { if (!busy && current) void submit(); }}
           />
         </>
       )}
-      {error && <p className="lm-error">{error}</p>}
-      <button className="lm-primary" disabled={busy || (needCurrent && !current)} onClick={() => void submit()}>
-        {busy ? <Loader2 size={ICON} className="lm-spin" /> : null}
+      {error && <p className="auth-error">{error}</p>}
+      <button className="auth-primary" disabled={busy || (needCurrent && !current)} onClick={() => void submit()}>
+        {busy ? <Loader2 size={ICON} className="auth-spin" /> : null}
         {t('移除密码', 'Remove password')}
       </button>
-      <button className="lm-textbtn" onClick={onCancel}>{t('取消', 'Cancel')}</button>
+      <button className="auth-textbtn" onClick={onCancel}>{t('取消', 'Cancel')}</button>
     </div>
   );
 }
 
-function LoginForm({ onClose }: { onClose: () => void }) {
+/** 登录 / 注册表单。`onDone` 在拿到会话后触发(/account 用它回跳 ?next=)。 */
+export function LoginForm({ onDone }: { onDone: () => void }) {
   const lang = useLang();
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
   const loginWithWca = useAuthStore((s) => s.loginWithWca);
@@ -590,7 +623,7 @@ function LoginForm({ onClose }: { onClose: () => void }) {
       const assertion = await requestGoogleAssertion(clientId, relayUrl);
       const r = await loginGoogle(assertion);
       applySession(r.token, r.user);
-      onClose();
+      onDone();
     } catch (e) {
       setGError(authErrorText(e instanceof Error ? e.message : String(e), t));
     } finally {
@@ -632,11 +665,11 @@ function LoginForm({ onClose }: { onClose: () => void }) {
     const name = t(meta.name.zh, meta.name.en);
     return (
       <>
-        <h2 className="lm-title">{t('登录 / 注册', 'Sign in / up')}</h2>
-        <div className="lm-flow">
-          <p className="lm-hint">{t(`已打开${name},请完成授权后返回本页面。`, `Opened ${name} — finish authorizing there, then return to this page.`)}</p>
-          <button className="lm-primary" onClick={() => window.location.reload()}>{t('我已完成授权', 'I have authorized')}</button>
-          <button className="lm-textbtn" onClick={() => setSocialLaunched(null)}>{t('返回', 'Back')}</button>
+        <h2 className="auth-title">{t('登录 / 注册', 'Sign in / up')}</h2>
+        <div className="auth-flow">
+          <p className="auth-hint">{t(`已打开${name},请完成授权后返回本页面。`, `Opened ${name} — finish authorizing there, then return to this page.`)}</p>
+          <button className="auth-primary" onClick={() => window.location.reload()}>{t('我已完成授权', 'I have authorized')}</button>
+          <button className="auth-textbtn" onClick={() => setSocialLaunched(null)}>{t('返回', 'Back')}</button>
         </div>
       </>
     );
@@ -648,17 +681,17 @@ function LoginForm({ onClose }: { onClose: () => void }) {
 
   return (
     <>
-      <h2 className="lm-title">{t('登录 / 注册', 'Sign in / up')}</h2>
+      <h2 className="auth-title">{t('登录 / 注册', 'Sign in / up')}</h2>
 
-      {credMode === 'email' && avail.email && <EmailAuth onDone={onClose} />}
+      {credMode === 'email' && avail.email && <EmailAuth onDone={onDone} />}
       {credMode === 'phone' && avail.phone && (
         <>
-          <CodeFlow channel="phone" mode="login" onDone={onClose} />
-          <p className="lm-hint">{t('目前仅支持中国大陆手机号(+86)。', 'Mainland China (+86) numbers only for now.')}</p>
+          <CodeFlow channel="phone" mode="login" onDone={onDone} />
+          <p className="auth-hint">{t('目前仅支持中国大陆手机号(+86)。', 'Mainland China (+86) numbers only for now.')}</p>
         </>
       )}
       {avail.email && avail.phone && (
-        <button className="lm-textbtn lm-cred-switch" onClick={() => setCredMode((m) => (m === 'email' ? 'phone' : 'email'))}>
+        <button className="auth-textbtn auth-cred-switch" onClick={() => setCredMode((m) => (m === 'email' ? 'phone' : 'email'))}>
           {credMode === 'email' ? t('用手机号登录', 'Use phone number') : t('用邮箱登录', 'Use email')}
         </button>
       )}
@@ -666,9 +699,9 @@ function LoginForm({ onClose }: { onClose: () => void }) {
       {hasCred && hasSso && <OrDivider />}
 
       {hasSso && (
-        <div className="lm-sso-list">
+        <div className="auth-sso-list">
           {avail.wca && (
-            <SsoButton icon={<Key size={ICON} />} label={t('用 WCA 登录', 'Continue with WCA')} onClick={() => loginWithWca()} />
+            <SsoButton icon={<WcaGlyph size={ICON} />} label={t('用 WCA 登录', 'Continue with WCA')} onClick={() => loginWithWca()} />
           )}
           {googleOn && (
             <SsoButton icon={<GoogleGlyph size={ICON} />} busy={gBusy} label={t('用 Google 登录', 'Continue with Google')} onClick={() => void handleGoogleLogin()} />
@@ -678,7 +711,7 @@ function LoginForm({ onClose }: { onClose: () => void }) {
           ))}
         </div>
       )}
-      {(gError || socialError) && <p className="lm-error lm-sso-error">{gError || socialError}</p>}
+      {(gError || socialError) && <p className="auth-error auth-sso-error">{gError || socialError}</p>}
     </>
   );
 }
@@ -694,11 +727,13 @@ const PROVIDER_LABEL: Record<string, { zh: string; en: string }> = {
   qq: { zh: 'QQ', en: 'QQ' },
 };
 
-function AccountPanel({ onClose }: { onClose: () => void }) {
+/**
+ * 账号面板:已绑定身份 + 绑定新方式 + 解绑 + 设/改密码。只渲染于 /account。
+ * 姓名与登出归宿主页头部管(那是页面级信息),这里只管凭据本身。
+ */
+export function AccountPanel() {
   const lang = useLang();
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
-  const user = useAuthStore((s) => s.user);
-  const logout = useAuthStore((s) => s.logout);
   const loginWithWca = useAuthStore((s) => s.loginWithWca);
   const [identities, setIdentities] = useState<Identity[] | null>(null);
   const [hasPassword, setHasPassword] = useState(false);
@@ -706,6 +741,8 @@ function AccountPanel({ onClose }: { onClose: () => void }) {
   const [canReset, setCanReset] = useState(false);
   const [pwAction, setPwAction] = useState<'set' | 'remove' | null>(null);
   const [linking, setLinking] = useState<'email' | 'phone' | null>(null);
+  // 换绑邮箱。与 linking 互斥:同时展开两个验证码表单,用户分不清哪个码填哪儿。
+  const [replacingEmail, setReplacingEmail] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // 解绑二次确认:先点「解绑」进入待确认态,再点「确定」才真正调用。
   const [confirmKey, setConfirmKey] = useState<string | null>(null);
@@ -796,19 +833,11 @@ function AccountPanel({ onClose }: { onClose: () => void }) {
 
   return (
     <>
-      {user?.wcaId ? (
-        <AppLink href={`/person/${user.wcaId}`} className="lm-who lm-who-link" onClick={onClose}>
-          {user?.name || user.wcaId}
-        </AppLink>
-      ) : (
-        <p className="lm-who">{user?.name || t('未命名', 'Unnamed')}</p>
-      )}
-
-      <div className="lm-idlist">
+      <div className="auth-idlist">
         {identities === null ? (
-          <div className="lm-loading"><Loader2 size={ICON} className="lm-spin" /></div>
+          <div className="auth-loading"><Loader2 size={ICON} className="auth-spin" /></div>
         ) : identities.length === 0 ? (
-          <p className="lm-hint">{t('暂无已绑定的登录方式。', 'No linked login methods yet.')}</p>
+          <p className="auth-hint">{t('暂无已绑定的登录方式。', 'No linked login methods yet.')}</p>
         ) : (
           identities.map((i) => {
             const lab = PROVIDER_LABEL[i.provider] ?? { zh: i.provider, en: i.provider };
@@ -817,23 +846,24 @@ function AccountPanel({ onClose }: { onClose: () => void }) {
             // WCA ID / 邮箱 / 手机号对用户有意义,展示;三方(Google/支付宝/微信/QQ)的 uid 是不透明数字串,不展示。
             const showUid = i.provider === 'wca' || i.provider === 'email' || i.provider === 'phone';
             return (
-              <div key={key} className="lm-idrow">
-                <span className="lm-idprov">{lang === 'zh' ? lab.zh : lab.en}</span>
-                {showUid && <span className="lm-iduid">{i.providerUid}</span>}
+              <div key={key} className="auth-idrow">
+                <ProviderGlyph provider={i.provider} />
+                <span className="auth-idprov">{lang === 'zh' ? lab.zh : lab.en}</span>
+                {showUid && <span className="auth-iduid">{i.providerUid}</span>}
                 {confirmKey === key ? (
-                  <div className="lm-unlink-confirm">
-                    <span className="lm-unlink-confirm-text">{t('确定解绑?', 'Unlink?')}</span>
+                  <div className="auth-unlink-confirm">
+                    <span className="auth-unlink-confirm-text">{t('确定解绑?', 'Unlink?')}</span>
                     <button
                       type="button"
-                      className="lm-unlink-yes"
+                      className="auth-unlink-yes"
                       disabled={unlinking}
                       onClick={() => void doUnlink(i.provider, i.providerUid)}
                     >
-                      {unlinking ? <Loader2 size={12} className="lm-spin" /> : t('确定', 'Yes')}
+                      {unlinking ? <Loader2 size={12} className="auth-spin" /> : t('确定', 'Yes')}
                     </button>
                     <button
                       type="button"
-                      className="lm-unlink-no"
+                      className="auth-unlink-no"
                       disabled={unlinking}
                       onClick={() => setConfirmKey(null)}
                     >
@@ -841,15 +871,28 @@ function AccountPanel({ onClose }: { onClose: () => void }) {
                     </button>
                   </div>
                 ) : (
-                  <button
-                    type="button"
-                    className="lm-unlink"
-                    disabled={onlyOne}
-                    title={onlyOne ? t('不能解绑唯一的登录方式', 'Cannot unlink your only method') : undefined}
-                    onClick={() => setConfirmKey(key)}
-                  >
-                    {t('解绑', 'Unlink')}
-                  </button>
+                  <div className="auth-idactions">
+                    {/* 换邮箱只能走这里:一个账号只能一个邮箱、唯一的登录方式又不许解绑,
+                        「先解绑再绑定」对只有邮箱的账号是死路。这个按钮原地换掉那条身份。 */}
+                    {i.provider === 'email' && (
+                      <button
+                        type="button"
+                        className="auth-link"
+                        onClick={() => { setLinking(null); setReplacingEmail((v) => !v); }}
+                      >
+                        {t('更换', 'Change')}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="auth-unlink"
+                      disabled={onlyOne}
+                      title={onlyOne ? t('不能解绑唯一的登录方式', 'Cannot unlink your only method') : undefined}
+                      onClick={() => setConfirmKey(key)}
+                    >
+                      {t('解绑', 'Unlink')}
+                    </button>
+                  </div>
                 )}
               </div>
             );
@@ -857,48 +900,81 @@ function AccountPanel({ onClose }: { onClose: () => void }) {
         )}
       </div>
 
-      {error && <p className="lm-error">{error}</p>}
+      {error && <p className="auth-error">{error}</p>}
 
-      {(avail.email || avail.phone || !hasWca || (googleOn && !hasGoogle) || availableSocials.length > 0) && (
-        <div className="lm-linklist">
-          {avail.email && (
-            <div className="lm-idrow">
-              <span className="lm-idprov">{t('邮箱', 'Email')}</span>
-              <button type="button" className="lm-link" onClick={() => setLinking(linking === 'email' ? null : 'email')}>
-                {t('绑定', 'Link')}
-              </button>
+      {replacingEmail && (
+        <div className="auth-replace">
+          <p className="auth-hint">
+            {t('验证新邮箱后,原邮箱立即失效。', 'Once the new address is verified, the old one stops working immediately.')}
+          </p>
+          <CodeFlow
+            channel="email"
+            mode="replace"
+            onDone={() => { setReplacingEmail(false); void reload(); }}
+          />
+        </div>
+      )}
+
+      {/* 「还能绑什么」在拿到已绑列表前无从谈起:identities 为 null 时 hasEmail/hasWca 全是
+          false,会把已绑过的方式先闪一行再撤掉。等加载完再渲染整块。
+          一个账号只能绑一个邮箱(0078 偏唯一索引),已有就不给入口 —— 否则和上面「邮箱
+          xxx@x 解绑」那行撞脸,看着像重复渲染。手机仍可多绑,故不加同样的判断。 */}
+      {identities !== null
+        && ((avail.email && !hasEmail) || avail.phone || !hasWca || (googleOn && !hasGoogle) || availableSocials.length > 0) && (
+        <div className="auth-linklist">
+          {avail.email && !hasEmail && (
+            <div className="auth-idrow">
+              <ProviderGlyph provider="email" />
+              <span className="auth-idprov">{t('邮箱', 'Email')}</span>
+              <div className="auth-idactions">
+                <button type="button" className="auth-link" onClick={() => { setReplacingEmail(false); setLinking(linking === 'email' ? null : 'email'); }}>
+                  {t('绑定', 'Link')}
+                </button>
+              </div>
             </div>
           )}
           {avail.phone && (
-            <div className="lm-idrow">
-              <span className="lm-idprov">{t('手机', 'Phone')}</span>
-              <button type="button" className="lm-link" onClick={() => setLinking(linking === 'phone' ? null : 'phone')}>
-                {t('绑定', 'Link')}
-              </button>
+            <div className="auth-idrow">
+              <ProviderGlyph provider="phone" />
+              <span className="auth-idprov">{t('手机', 'Phone')}</span>
+              <div className="auth-idactions">
+                <button type="button" className="auth-link" onClick={() => { setReplacingEmail(false); setLinking(linking === 'phone' ? null : 'phone'); }}>
+                  {t('绑定', 'Link')}
+                </button>
+              </div>
             </div>
           )}
           {!hasWca && (
-            <div className="lm-idrow">
-              <span className="lm-idprov">WCA</span>
-              <button type="button" className="lm-link" onClick={linkWcaStart}>
-                {t('绑定', 'Link')}
-              </button>
+            <div className="auth-idrow">
+              <ProviderGlyph provider="wca" />
+              <span className="auth-idprov">WCA</span>
+              <div className="auth-idactions">
+                <button type="button" className="auth-link" onClick={linkWcaStart}>
+                  {t('绑定', 'Link')}
+                </button>
+              </div>
             </div>
           )}
           {googleOn && !hasGoogle && (
-            <div className="lm-idrow">
-              <span className="lm-idprov">Google</span>
-              <button type="button" className="lm-link" disabled={linkingGoogle} onClick={() => void linkGoogleStart()}>
-                {linkingGoogle ? <Loader2 size={12} className="lm-spin" /> : t('绑定', 'Link')}
-              </button>
+            <div className="auth-idrow">
+              <ProviderGlyph provider="google" />
+              <span className="auth-idprov">Google</span>
+              <div className="auth-idactions">
+                <button type="button" className="auth-link" disabled={linkingGoogle} onClick={() => void linkGoogleStart()}>
+                  {linkingGoogle ? <Loader2 size={12} className="auth-spin" /> : t('绑定', 'Link')}
+                </button>
+              </div>
             </div>
           )}
           {availableSocials.map((s) => (
-            <div key={s.key} className="lm-idrow">
-              <span className="lm-idprov">{t(s.name.zh, s.name.en)}</span>
-              <button type="button" className="lm-link" disabled={linkingSocial === s.key} onClick={() => void linkSocialStart(s.key)}>
-                {linkingSocial === s.key ? <Loader2 size={12} className="lm-spin" /> : t('绑定', 'Link')}
-              </button>
+            <div key={s.key} className="auth-idrow">
+              <ProviderGlyph provider={s.key} />
+              <span className="auth-idprov">{t(s.name.zh, s.name.en)}</span>
+              <div className="auth-idactions">
+                <button type="button" className="auth-link" disabled={linkingSocial === s.key} onClick={() => void linkSocialStart(s.key)}>
+                  {linkingSocial === s.key ? <Loader2 size={12} className="auth-spin" /> : t('绑定', 'Link')}
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -909,25 +985,28 @@ function AccountPanel({ onClose }: { onClose: () => void }) {
       )}
 
       {hasEmail && (
-        <div className="lm-linklist">
-          <div className="lm-idrow">
-            <span className="lm-idprov">{t('密码', 'Password')}</span>
-            <button
-              type="button"
-              className="lm-link"
-              onClick={() => setPwAction((a) => (a === 'set' ? null : 'set'))}
-            >
-              {hasPassword ? t('修改', 'Change') : t('设置', 'Set')}
-            </button>
-            {hasPassword && (
+        <div className="auth-linklist">
+          <div className="auth-idrow">
+            <ProviderGlyph provider="password" />
+            <span className="auth-idprov">{t('密码', 'Password')}</span>
+            <div className="auth-idactions">
               <button
                 type="button"
-                className="lm-unlink"
-                onClick={() => setPwAction((a) => (a === 'remove' ? null : 'remove'))}
+                className="auth-link"
+                onClick={() => setPwAction((a) => (a === 'set' ? null : 'set'))}
               >
-                {t('移除', 'Remove')}
+                {hasPassword ? t('修改', 'Change') : t('设置', 'Set')}
               </button>
-            )}
+              {hasPassword && (
+                <button
+                  type="button"
+                  className="auth-unlink"
+                  onClick={() => setPwAction((a) => (a === 'remove' ? null : 'remove'))}
+                >
+                  {t('移除', 'Remove')}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -945,48 +1024,6 @@ function AccountPanel({ onClose }: { onClose: () => void }) {
           onCancel={() => setPwAction(null)}
         />
       )}
-
-      <button className="lm-textbtn lm-logout" onClick={() => { logout(); onClose(); }}>
-        <LogOut size={14} /> {t('退出登录', 'Sign out')}
-      </button>
     </>
-  );
-}
-
-export default function LoginModal() {
-  const open = useAuthStore((s) => s.loginOpen);
-  const close = useAuthStore((s) => s.closeLogin);
-  const user = useAuthStore((s) => s.user);
-  const lang = useLang();
-  const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
-    window.addEventListener('keydown', onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prev;
-    };
-  }, [open, close]);
-
-  if (!open) return null;
-
-  return (
-    <div
-      className="lm-overlay"
-      role="dialog"
-      aria-modal="true"
-      onMouseDown={(e) => { if (e.target === e.currentTarget) close(); }}
-    >
-      <div className="lm-modal">
-        <button className="lm-close" onClick={close} aria-label={t('关闭', 'Close')}>
-          <X size={ICON} />
-        </button>
-        {user ? <AccountPanel onClose={close} /> : <LoginForm onClose={close} />}
-      </div>
-    </div>
   );
 }

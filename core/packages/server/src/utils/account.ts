@@ -271,15 +271,17 @@ export async function loginWithIdentity(
 
 /**
  * 给「当前已登录用户」绑定一个新身份。返回:
- *   'ok'       绑定成功(或该身份本就属于本人 → 幂等)
- *   'conflict' 该身份已属于另一个账号(不做静默合并,交产品引导)
+ *   'ok'        绑定成功(或该身份本就属于本人 → 幂等)
+ *   'conflict'  该身份已属于另一个账号(不做静默合并,交产品引导)
+ *   'has-email' 本账号已有邮箱 —— 一个账号只能绑一个(见 0078)。与 'conflict' 分开是因为
+ *               两者要给用户的话完全不同:一个是「去解绑你自己的」,一个是「这是别人的」。
  */
 export async function addIdentity(
   userId: number,
   provider: Provider,
   providerUid: string,
   wcaMirror?: string | null,
-): Promise<'ok' | 'conflict'> {
+): Promise<'ok' | 'conflict' | 'has-email'> {
   const owner = await findUserByIdentity(provider, providerUid);
   if (owner) return owner.id === userId ? 'ok' : 'conflict';
   try {
@@ -292,14 +294,60 @@ export async function addIdentity(
           WHERE id = ${userId} AND wca_id IS NULL`;
         if (upd.count === 0) return 'conflict';
       }
+      // 单账号仅允许一个邮箱。这只是先行检查,好给出准确文案;真正的保证是 0078 的偏唯一
+      // 索引 uq_auth_identity_one_email —— 并发双绑会绕过这里,由索引在 catch 里兜住。
+      if (provider === 'email') {
+        const dup = await tx`
+          SELECT 1 FROM auth_identities
+          WHERE user_id = ${userId} AND provider = 'email' LIMIT 1`;
+        if (dup.count > 0) return 'has-email';
+      }
       await tx`
         INSERT INTO auth_identities (user_id, provider, provider_uid, verified_at)
         VALUES (${userId}, ${provider}, ${providerUid}, NOW())`;
       return 'ok';
     });
-    return status as 'ok' | 'conflict';
+    return status as 'ok' | 'conflict' | 'has-email';
+  } catch (e) {
+    // 并发绑第二个邮箱时晚到的那条落这里 —— 认约束名还原成准确状态,别混进「已被他人占用」。
+    const detail = `${(e as { constraint_name?: string }).constraint_name ?? ''} ${(e as Error).message ?? ''}`;
+    if (detail.includes('uq_auth_identity_one_email')) return 'has-email';
+    // 其余唯一约束(provider,uid 或 wca 镜像)冲突 → 视为已被他人占用。
+    return 'conflict';
+  }
+}
+
+/**
+ * 换绑邮箱:把本账号那条 email 身份原地改成新地址。返回:
+ *   'ok'       换成功(或新旧同一个地址 → 幂等)
+ *   'conflict' 新邮箱已属于另一个账号
+ *   'no-email' 本账号还没有邮箱身份 —— 那是「绑定」不是「更换」,让调用方走 addIdentity
+ *
+ * 为什么不是「先解绑再绑定」:一个账号只能有一个邮箱(0078),而唯一的登录方式又不许解绑
+ * (removeIdentity 的 'last')。拆成两步时,只有邮箱的账号会在中间那一刻手里零个登录方式,
+ * 两条规矩迎面撞上,换邮箱直接没路。原地 UPDATE 全程不空手,也全程不超过一个邮箱。
+ */
+export async function replaceEmailIdentity(
+  userId: number,
+  newEmail: string,
+): Promise<'ok' | 'conflict' | 'no-email'> {
+  const owner = await findUserByIdentity('email', newEmail);
+  if (owner && owner.id !== userId) return 'conflict';
+  try {
+    return await sql.begin(async (tx) => {
+      // 锁住本账号的 email 行:并发两次换绑各读到旧值再各改一次,后写的赢且前一次静默丢失。
+      const rows = await tx`
+        SELECT id FROM auth_identities
+        WHERE user_id = ${userId} AND provider = 'email' FOR UPDATE`;
+      if (rows.count === 0) return 'no-email';
+      await tx`
+        UPDATE auth_identities
+        SET provider_uid = ${newEmail}, verified_at = NOW()
+        WHERE id = ${rows[0].id}`;
+      return 'ok';
+    });
   } catch {
-    // 唯一约束(provider,uid 或 wca 镜像)冲突 → 视为已被他人占用。
+    // 唯一约束 (provider, provider_uid):新邮箱在我们检查之后被别人抢注。
     return 'conflict';
   }
 }

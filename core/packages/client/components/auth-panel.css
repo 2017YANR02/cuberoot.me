@@ -1,63 +1,18 @@
-/* 全站登录 / 账号弹层。双主题(走 :root token,自动 light/dark)。 */
+/* 全站认证面板(登录表单 + 账号面板)。没有弹层形态 —— 全是页内元素,外框与宽度由
+   宿主页 /account 负责,这里只管面板内部。选择器保持扁平、不依赖任何容器祖先。
+   双主题(走 :root token)。 */
 
-.lm-overlay {
-  position: fixed;
-  inset: 0;
-  /* 登录/账号弹层是主阻塞弹层,必须在所有浮层之上 —— 尤其桌宠搜索 backdrop
-     (.deskpet-search-backdrop z-index:100010 + backdrop-filter blur),从桌宠
-     工具栏头像打开时,否则会被它的模糊灰罩盖住,面板看起来一片灰。 */
-  z-index: 100100;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  background: color-mix(in srgb, var(--foreground) 45%, transparent);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
-}
-
-.lm-modal {
-  position: relative;
-  width: 100%;
-  max-width: 360px;
-  max-height: calc(100vh - 32px);
-  overflow-y: auto;
-  padding: 24px 22px 20px;
-  border-radius: 16px;
-  background: var(--popover);
-  border: 1px solid var(--border-default);
-  box-shadow: 0 12px 40px color-mix(in srgb, var(--foreground) 22%, transparent);
-}
-
-.lm-close {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  color: var(--muted-foreground);
-  appearance: none;
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-.lm-close:hover { background: color-mix(in srgb, var(--foreground) 8%, transparent); }
-
-.lm-title {
+.auth-title {
   margin: 0 0 16px;
   font-size: 17px;
   font-weight: 650;
   color: var(--foreground);
 }
 
-.lm-flow { display: flex; flex-direction: column; gap: 10px; }
+.auth-flow { display: flex; flex-direction: column; gap: 10px; }
 
 /* 「或」分隔线:两侧发丝线 + 居中文字,分隔主凭据区与第三方登录 */
-.lm-divider {
+.auth-divider {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -65,8 +20,8 @@
   font-size: 12px;
   color: var(--faint-foreground);
 }
-.lm-divider::before,
-.lm-divider::after {
+.auth-divider::before,
+.auth-divider::after {
   content: '';
   flex: 1;
   height: 1px;
@@ -74,14 +29,14 @@
 }
 
 /* 第三方「用 X 登录」按钮竖排 */
-.lm-sso-list { display: flex; flex-direction: column; gap: 8px; }
-.lm-sso {
-  position: relative;
+.auth-sso-list { display: flex; flex-direction: column; gap: 8px; }
+.auth-sso {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 10px;
   width: 100%;
-  padding: 11px 42px;
+  padding: 11px 14px;
   font: inherit;
   font-size: 14px;
   font-weight: 600;
@@ -92,28 +47,27 @@
   border-radius: 10px;
   cursor: pointer;
 }
-.lm-sso:not(:disabled):hover {
+.auth-sso:not(:disabled):hover {
   background: color-mix(in srgb, var(--foreground) 7%, transparent);
   border-color: var(--border-strong);
 }
-.lm-sso:disabled { opacity: 0.6; cursor: not-allowed; }
-/* 图标钉左、文字居中(Google/Apple 官方按钮范式:不同长度标签下图标始终对齐) */
-.lm-sso-icon {
-  position: absolute;
-  left: 14px;
+.auth-sso:disabled { opacity: 0.6; cursor: not-allowed; }
+/* 标与文字成组居中,标紧挨文字左侧 */
+.auth-sso-icon {
   display: inline-flex;
   align-items: center;
+  flex-shrink: 0;
 }
-.lm-sso-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lm-sso-error { text-align: center; margin-top: 4px; }
+.auth-sso-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.auth-sso-error { text-align: center; margin-top: 4px; }
 
 /* 邮箱/手机 切换链接 */
-.lm-cred-switch { margin-top: 2px; }
+.auth-cred-switch { margin-top: 2px; }
 
 /* 密码输入 + 眼睛切换 */
-.lm-pwfield { position: relative; display: flex; align-items: center; }
-.lm-pwfield .lm-input { padding-right: 42px; }
-.lm-pweye {
+.auth-pwfield { position: relative; display: flex; align-items: center; }
+.auth-pwfield .auth-input { padding-right: 42px; }
+.auth-pweye {
   position: absolute;
   right: 6px;
   display: inline-flex;
@@ -128,14 +82,14 @@
   border: none;
   cursor: pointer;
 }
-.lm-pweye:hover { color: var(--foreground); }
-.lm-pwform { margin-top: 6px; }
+.auth-pweye:hover { color: var(--foreground); }
+.auth-pwform { margin-top: 6px; }
 
-.lm-label {
+.auth-label {
   font-size: 12px;
   color: var(--muted-foreground);
 }
-.lm-input {
+.auth-input {
   width: 100%;
   padding: 10px 12px;
   font: inherit;
@@ -145,20 +99,20 @@
   border: 1px solid var(--input);
   border-radius: 10px;
 }
-.lm-input:focus {
+.auth-input:focus {
   outline: none;
   border-color: var(--ring);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 30%, transparent);
 }
 /* Apple 风格分格验证码输入 */
-.lm-otp {
+.auth-otp {
   position: relative;
   display: flex;
   gap: 8px;
   justify-content: center;
   padding: 2px 0;
 }
-.lm-otp-native {
+.auth-otp-native {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -173,7 +127,7 @@
   cursor: pointer;
   outline: none;
 }
-.lm-otp-cell {
+.auth-otp-cell {
   width: 44px;
   height: 52px;
   display: flex;
@@ -188,25 +142,25 @@
   border-radius: 11px;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
-.lm-otp-cell.is-filled { border-color: var(--border-strong); }
-.lm-otp-cell.is-active {
+.auth-otp-cell.is-filled { border-color: var(--border-strong); }
+.auth-otp-cell.is-active {
   border-color: var(--ring);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 30%, transparent);
 }
-.lm-otp-caret {
+.auth-otp-caret {
   width: 2px;
   height: 24px;
   border-radius: 1px;
   background: var(--accent);
-  animation: lm-caret 1s step-end infinite;
+  animation: auth-caret 1s step-end infinite;
 }
-@keyframes lm-caret { 50% { opacity: 0; } }
+@keyframes auth-caret { 50% { opacity: 0; } }
 @media (max-width: 380px) {
-  .lm-otp { gap: 6px; }
-  .lm-otp-cell { width: 40px; height: 48px; font-size: 20px; }
+  .auth-otp { gap: 6px; }
+  .auth-otp-cell { width: 40px; height: 48px; font-size: 20px; }
 }
 
-.lm-primary {
+.auth-primary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -221,10 +175,10 @@
   border-radius: 10px;
   cursor: pointer;
 }
-.lm-primary:disabled { opacity: 0.55; cursor: not-allowed; }
-.lm-primary:not(:disabled):hover { background: color-mix(in srgb, var(--primary) 88%, black); }
+.auth-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+.auth-primary:not(:disabled):hover { background: color-mix(in srgb, var(--primary) 88%, black); }
 
-.lm-textbtn {
+.auth-textbtn {
   align-self: center;
   padding: 4px 8px;
   font: inherit;
@@ -238,37 +192,26 @@
   align-items: center;
   gap: 6px;
 }
-.lm-textbtn:hover { color: var(--foreground); }
+.auth-textbtn:hover { color: var(--foreground); }
 
-.lm-hint {
+.auth-hint {
   margin: 2px 0 0;
   font-size: 12px;
   color: var(--faint-foreground);
 }
-.lm-error {
+.auth-error {
   margin: 0;
   font-size: 13px;
   color: var(--destructive);
 }
 
-.lm-spin { animation: lm-spin 0.8s linear infinite; }
-@keyframes lm-spin { to { transform: rotate(360deg); } }
+.auth-spin { animation: auth-spin 0.8s linear infinite; }
+@keyframes auth-spin { to { transform: rotate(360deg); } }
 
 /* ── 账号面板 ── */
-.lm-who {
-  margin: 0 0 14px;
-  font-size: 14px;
-  color: var(--muted-foreground);
-}
-.lm-who-link {
-  display: inline-block;
-  text-decoration: none;
-  cursor: pointer;
-}
-.lm-who-link:hover { color: var(--foreground); text-decoration: underline; }
-.lm-idlist { display: flex; flex-direction: column; gap: 6px; }
-.lm-loading { display: flex; justify-content: center; padding: 12px; color: var(--muted-foreground); }
-.lm-idrow {
+.auth-idlist { display: flex; flex-direction: column; gap: 6px; }
+.auth-loading { display: flex; justify-content: center; padding: 12px; color: var(--muted-foreground); }
+.auth-idrow {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -276,8 +219,17 @@
   border-radius: 9px;
   background: color-mix(in srgb, var(--foreground) 4%, transparent);
 }
-.lm-idprov { font-size: 13px; font-weight: 600; color: var(--foreground); min-width: 48px; }
-.lm-iduid {
+/* 登录方式的标。定宽 + 居中,认不出的 provider 渲染空占位,整列文字仍对齐。 */
+.auth-idicon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  flex-shrink: 0;
+  color: var(--muted-foreground);
+}
+.auth-idprov { font-size: 13px; font-weight: 600; color: var(--foreground); min-width: 48px; }
+.auth-iduid {
   flex: 1;
   font-size: 13px;
   color: var(--muted-foreground);
@@ -285,8 +237,12 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.lm-unlink {
-  margin-left: auto;
+/* 一行里的操作按钮组(更换/解绑、修改/移除…)。auto 边距只挂在这个外层容器上 ——
+   挂在每个按钮自己身上时,多个 auto 会平分剩余空间,把按钮互相推开(而不是整组贴右)。
+   同一模式已用在 .auth-unlink-confirm。 */
+.auth-idactions { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; }
+
+.auth-unlink {
   display: inline-flex;
   align-items: center;
   padding: 5px 10px;
@@ -301,16 +257,16 @@
   cursor: pointer;
   white-space: nowrap;
 }
-.lm-unlink:not(:disabled):hover {
+.auth-unlink:not(:disabled):hover {
   color: var(--destructive);
   border-color: color-mix(in srgb, var(--destructive) 40%, transparent);
   background: color-mix(in srgb, var(--destructive) 10%, transparent);
 }
-.lm-unlink:disabled { opacity: 0.4; cursor: not-allowed; }
+.auth-unlink:disabled { opacity: 0.4; cursor: not-allowed; }
 
-.lm-unlink-confirm { margin-left: auto; display: flex; align-items: center; gap: 6px; }
-.lm-unlink-confirm-text { font-size: 12px; color: var(--muted-foreground); white-space: nowrap; }
-.lm-unlink-yes {
+.auth-unlink-confirm { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+.auth-unlink-confirm-text { font-size: 12px; color: var(--muted-foreground); white-space: nowrap; }
+.auth-unlink-yes {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -325,8 +281,8 @@
   border-radius: 7px;
   cursor: pointer;
 }
-.lm-unlink-yes:disabled { opacity: 0.55; cursor: not-allowed; }
-.lm-unlink-no {
+.auth-unlink-yes:disabled { opacity: 0.55; cursor: not-allowed; }
+.auth-unlink-no {
   padding: 5px 10px;
   font: inherit;
   font-size: 12px;
@@ -337,12 +293,14 @@
   border-radius: 7px;
   cursor: pointer;
 }
-.lm-unlink-no:not(:disabled):hover { color: var(--foreground); border-color: var(--border-strong); }
-.lm-unlink-no:disabled { opacity: 0.55; cursor: not-allowed; }
+.auth-unlink-no:not(:disabled):hover { color: var(--foreground); border-color: var(--border-strong); }
+.auth-unlink-no:disabled { opacity: 0.55; cursor: not-allowed; }
 
-.lm-linklist { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
-.lm-link {
-  margin-left: auto;
+/* 换绑邮箱的展开区,挂在已绑列表下方 */
+.auth-replace { margin-top: 10px; }
+
+.auth-linklist { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.auth-link {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -359,7 +317,6 @@
   cursor: pointer;
   white-space: nowrap;
 }
-.lm-link:not(:disabled):hover { color: var(--foreground); border-color: var(--border-strong); }
-.lm-link:disabled { opacity: 0.4; cursor: not-allowed; }
+.auth-link:not(:disabled):hover { color: var(--foreground); border-color: var(--border-strong); }
+.auth-link:disabled { opacity: 0.4; cursor: not-allowed; }
 
-.lm-logout { margin-top: 18px; }
