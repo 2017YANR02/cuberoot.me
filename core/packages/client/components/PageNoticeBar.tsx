@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Info, AlertTriangle, Wrench, X, Pencil, Plus, Trash2, Laptop, Globe } from 'lucide-react';
 import { useIsAdmin } from '@/lib/auth-store';
+import { useLiveUrlSuffix } from '@/hooks/useLiveUrlSuffix';
 import { tr, T, useLang } from '@/i18n/tr';
 import BoolToggle from './BoolToggle';
 import { persistItem } from '@/lib/safe-storage';
@@ -33,10 +34,13 @@ const PROD_ORIGIN = 'https://cuberoot.me';
 // 管理员专用:在任意页原地切换 本地 ↔ 线上,便于调试对照。
 // 高亮当前所在环境(本地=琥珀、线上=绿),同时充当「我现在在哪个环境」的指示。
 // 两端都用真 <a>(跨 origin,故非 AppLink):支持中键 / Ctrl 点在新标签打开,本地与线上并排对比。
+// URL 走 useLiveUrlSuffix:本条通知栏常驻 layout,nuqs 的 shallow 写不会让它重渲染,
+// render 时读 window.location 会把 ?q=... 这类页内状态漏在快照外。
 function EnvSwitch() {
-  if (typeof window === 'undefined') return null; // 仅管理员挂载(见调用处),此时已在 client
-  const { pathname, search, hash, hostname } = window.location;
-  const rest = pathname + search + hash;
+  const rest = useLiveUrlSuffix();
+  if (!rest) return null; // SSR / 未 hydrate:还没有可用的 window.location
+  // hostname 不随页内状态变(换 origin 必然整页导航),render 时读即可。
+  const { hostname } = window.location;
   const active: 'local' | 'prod' = hostname === 'localhost' || hostname === '127.0.0.1' ? 'local' : 'prod';
   const opts = [
     { env: 'local' as const, href: LOCAL_ORIGIN + rest, label: { en: 'Local', zh: '本地' }, Icon: Laptop },

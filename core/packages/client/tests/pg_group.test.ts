@@ -4,9 +4,10 @@ import { PgGroup, type PgWord } from '@/app/[lang]/sim/engine/pgGroup';
 import { pyraPgBridge } from '@/app/[lang]/sim/engine/pyra/pyraPgBridge';
 
 // The group-theory core: a Schreier-Sims BSGS *with words*, built on the vendored
-// PGTransform algebra. Driven here by the pyraminx engine's 8 turning generators
-// (tip = PG `DRF`, corner = `DRF·2DRF`). Proves it is constructive, not just a counter:
-// any element factors back into a generator word, and uniform sampling is faithful.
+// PGTransform algebra. Driven here by the pyraminx engine's 12 generators — 4 tips
+// (PG `DRF` family), 4 corners (`DRF·2DRF`) and 4 faces (PG's far slab on the same
+// axis). Proves it is constructive, not just a counter: any element factors back into
+// a generator word, and uniform sampling is faithful.
 describe('PgGroup BSGS factorizer (pyraminx engine generators)', () => {
   const od = getPuzzleGeometryByName('pyraminx', {}).getOrbitsDef(false);
   const gens = pyraPgBridge.engineGens(od);
@@ -15,9 +16,12 @@ describe('PgGroup BSGS factorizer (pyraminx engine generators)', () => {
   const rnd = (len: number): PgWord =>
     Array.from({ length: len }, () => ({ gi: Math.floor(Math.random() * gens.length), inv: Math.random() < 0.5 }));
 
-  it('|G| from the BSGS equals the classic pyraminx turning count', () => {
-    expect(gens).toHaveLength(8);
-    expect(G.order).toBe(75582720n); // independent of Schreier-Sims, same number
+  it('|G| from the BSGS equals the full pyraminx group (turns + reorientations)', () => {
+    expect(gens).toHaveLength(12);
+    // Full pyraminx group: the face-turn generators reach the 12 whole-puzzle
+    // reorientations, so |G| = 12 × the pure turning group (75,582,720) —
+    // exactly PG's precomputed facts order.
+    expect(G.order).toBe(906992640n);
   });
 
   it('factor round-trips: word → elem → factor → elem', () => {
@@ -45,6 +49,6 @@ describe('PgGroup BSGS factorizer (pyraminx engine generators)', () => {
   it('random states are well-spread (sanity: not collapsing to identity)', () => {
     let nonId = 0;
     for (let i = 0; i < 50; i++) if (!G.randomElement().elem.equal(id)) nonId++;
-    expect(nonId).toBeGreaterThan(45); // ~49/50 expected for a 75M group
+    expect(nonId).toBeGreaterThan(45); // ~50/50 expected for a 907M group
   });
 });
