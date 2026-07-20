@@ -255,7 +255,11 @@ console.log(`\nGLOBAL transit min: ${globalMin.toFixed(2)} @ branch ${globalArg.
 {
   const thrExpr = engineSrc.match(/const THROAT_OFF = ([^;]+);/)?.[1];
   if (!thrExpr) throw new Error('THROAT_OFF not found in engine source');
-  const THROAT = eval(thrExpr); // uses PLATE_T from this scope
+  // thrExpr is an expression scraped out of our own engine source and it references
+  // PLATE_T from this scope, so it has to be evaluated here — `new Function` would
+  // not see the local. Dev-only check script.
+  // eslint-disable-next-line no-eval
+  const THROAT = eval(thrExpr);
   console.log(`\nengine THROAT_OFF = ${thrExpr.trim()} = ${THROAT.toFixed(2)}`);
   const WEB_R = 13;
   let worstHub = Infinity, worstCone = Infinity;

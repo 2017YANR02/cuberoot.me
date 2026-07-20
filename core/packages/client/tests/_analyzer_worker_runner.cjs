@@ -107,6 +107,7 @@ const code = ['hs.js', 'zbh.js', 'boohoo.js', workerFile]
 // Direct eval in CJS module scope = sloppy mode. Top-level `let`/`class`
 // declarations in the eval'd code share scope with each other (they're all
 // in the same eval block) which is what classic-worker importScripts gets you.
+// eslint-disable-next-line no-eval -- that shared sloppy-mode scope IS the point
 eval(code);
 
 parentPort.on('message', (data) => {

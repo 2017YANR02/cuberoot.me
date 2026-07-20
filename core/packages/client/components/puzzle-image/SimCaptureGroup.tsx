@@ -163,7 +163,6 @@ export default function SimCaptureGroup({ simBridge }: { simBridge: SimBridge })
   return (
     <>
       <div className="vc-capture-group">
-        <span className="vc-capture-label">{t('实时', 'Live')}</span>
         <button type="button" className="vc-btn" onClick={snapshot}>
           <Camera size={14} /> {t('截图', 'Snapshot')}
         </button>

@@ -106,7 +106,7 @@ import {
 import { toWca as toWcaSkewb, type SkewbNotation } from '@cuberoot/shared/skewb-notation';
 import SkewbNotationGuide from './SkewbNotationGuide';
 import {
-  Slider, Toggle, KeymapModal, resetWorldView, mapFrames,
+  Slider, OrbitPad, Toggle, KeymapModal, resetWorldView, mapFrames,
   DEFAULT_SETTINGS, DEFAULT_FACE_COLORS, MIRROR_DEFAULT_COLOR,
   type SimSettings, type SimBoardBg, type SliderUnit,
 } from './SettingDrawer';
@@ -884,6 +884,11 @@ interface Props {
   /** 全屏/退出全屏按钮(SimPage 持有 fullscreen 状态),渲染在播放条按钮排最左
    *  (twizzle alpha.twizzle.net/edit 同款,全屏钮居首)。 */
   fullscreenButton?: ReactNode;
+  /** 画布左上角图像浮层的显隐开关(状态归 SimPage),放在按钮排最左 —— 与浮层
+   *  自身的关闭钮是同一个开关的两个入口。 */
+  imageButton?: ReactNode;
+  /** 画布右上角背面小窗的显隐开关,放在按钮排最右,同上。 */
+  backViewButton?: ReactNode;
   /** 按阶段展示色块(twizzle stickering,issue #27)。URL 状态归 SimPage(nuqs),
    *  这里只渲染播放条最左的下拉。支持与否走 simCaps.supports.stickering(不支持隐藏)。 */
   stickering?: string;
@@ -901,7 +906,7 @@ export default function PlayerControls({
   userMoveRef, twistyPlayerRef,
   skewbNotation, onSkewbNotationChange,
   renderer = 'cubing', onRendererChange,
-  playbackSlot, fullscreenButton,
+  playbackSlot, fullscreenButton, imageButton, backViewButton,
   stickering = 'full', onStickeringChange,
   stickeringColor = 'yellow', onStickeringColorChange,
 }: Props) {
@@ -2180,8 +2185,8 @@ export default function PlayerControls({
         onTogglePlay={handleTogglePlay}
         onStepForward={stepForward}
         onSkipEnd={() => { setCaretChar(null); jumpToStep(totalSteps); }}
-        leading={<>{fullscreenButton}{stickeringSelect}</>}
-        trailing={anchorSelect}
+        leading={<>{imageButton}{fullscreenButton}{stickeringSelect}</>}
+        trailing={<>{anchorSelect}{backViewButton}</>}
         labels={{
           skipStart: t('回到起点', 'Skip to start'),
           stepBack: t('上一步', 'Step back'),
@@ -2198,7 +2203,7 @@ export default function PlayerControls({
       // (TwistySection's bottom-row controlPanel); only the anchor select is ours to add —
       // TwistySection already reads settings.playbackMode into experimentalSetupAnchor, it
       // just had no control to change it in this mode.
-      <div className="sim-player-row">{fullscreenButton}{stickeringSelect}{anchorSelect}</div>
+      <div className="sim-player-row">{imageButton}{fullscreenButton}{stickeringSelect}{anchorSelect}{backViewButton}</div>
       );
       return playbackSlot ? createPortal(playbackBar, playbackSlot) : playbackBar;
       })()}
@@ -2575,8 +2580,12 @@ const UNIT_SCALE: SliderUnit = { to: (v) => 0.5 + v / 100, from: (m) => (m - 0.5
 // 补偿定画幅),竖直 FOV = 2·atan(1/p) ⇔ 全画幅(半高 12mm)焦距 f = 12p = 24 + 0.96v mm。
 // 24mm 广角畸变强 → 120mm 长焦近正交。仅引擎路径(cubing.js 拼图此滑条本就禁用)。
 const UNIT_FOCAL: SliderUnit = { to: (v) => 24 + v * 0.96, from: (f) => (f - 24) / 0.96, min: 24, max: 120, step: 1, decimals: 0, suffix: 'mm' };
-const UNIT_YAW_ENGINE: SliderUnit = { to: (v) => (v - 50) * 1.8, from: (d) => 50 + d / 1.8, min: -90, max: 90, step: 1, decimals: 0, suffix: '°' };
-const UNIT_YAW_TWISTY: SliderUnit = { to: (v) => (v - 50) * 3.6, from: (d) => 50 + d / 3.6, min: -180, max: 180, step: 1, decimals: 0, suffix: '°' };
+// 视角盘的度数框:约定「右 = 正(看右面)」→ 显示符号相对内部值翻转(默认 viewAngle=30
+// 从旧 −36° 变 +36°)。内部 0..100 与引擎 mapYaw / twisty cameraLongitude 全不变,纯显示层。
+// pad·90(引擎)/ pad·180(twisty)= (50−v)·1.8 / (50−v)·3.6,与 padX=(50−v)/50 同号。
+const UNIT_YAW_ENGINE: SliderUnit = { to: (v) => (50 - v) * 1.8, from: (d) => 50 - d / 1.8, min: -90, max: 90, step: 1, decimals: 0, suffix: '°' };
+const UNIT_YAW_TWISTY: SliderUnit = { to: (v) => (50 - v) * 3.6, from: (d) => 50 - d / 3.6, min: -180, max: 180, step: 1, decimals: 0, suffix: '°' };
+// 上下(pitch):(50−v)·1.8 本就「上 = 正 = 俯视」,默认 33 → +31°,符号无需翻。
 const UNIT_PITCH: SliderUnit = { to: (v) => (50 - v) * 1.8, from: (d) => 50 - d / 1.8, min: -90, max: 90, step: 1, decimals: 0, suffix: '°' };
 const UNIT_TPS: SliderUnit = { to: (v) => 60 / mapFrames(v), from: (tps) => (120 - 60 / tps) / 1.1, min: 0.5, max: 6, step: 0.1, decimals: 1 };
 
@@ -2767,10 +2776,22 @@ function PuzzleSettings({
                 : t('跟手倍率(相对默认):同时作用于拖层转动、拖空白转视角、SQ1 拖拽', 'Responsiveness relative to the default — scales layer drags, view drags and SQ1 drags alike'))} />
             <Slider label={t('缩放', 'Scale')} value={settings.scale} onChange={(v) => set('scale', v)} unit={UNIT_SCALE} title={t('缩放倍率', 'Zoom factor')} />
             <Slider label={t('透视', 'Perspective')} value={settings.perspective} onChange={(v) => set('perspective', v)} disabled={!caps.supports.perspective} unit={UNIT_FOCAL} title={hint(caps.supports.perspective) ?? t('35mm 等效焦距(小 = 广角畸变强,大 = 接近正交)', '35mm-equivalent focal length (low = wide-angle distortion, high = near-orthographic)')} />
-            <Slider label={t('左右', 'Yaw')} value={settings.viewAngle} onChange={(v) => set('viewAngle', v)} unit={caps.engineActive ? UNIT_YAW_ENGINE : UNIT_YAW_TWISTY} title={t('左右旋转角度', 'Horizontal angle (degrees)')} />
-            <Slider label={t('上下', 'Pitch')} value={settings.viewGradient} onChange={(v) => set('viewGradient', v)} unit={UNIT_PITCH} title={t('上下旋转角度(正 = 俯视)', 'Vertical angle (degrees, + = looking down)')} />
             <Slider label={t('转动速度', 'Turn speed')} value={settings.speed} onChange={(v) => set('speed', v)} unit={UNIT_TPS} title={t('每秒转动步数', 'Turns per second')} />
           </div>
+          {/* 视角盘:「左右 / 上下」两条滑条合成一个平面直角坐标系 —— 可拖圆点 + 两个精确度数框
+              (打 30 正好 30)。右 = 正(看右面)、上 = 正(俯视),纯显示层符号,不改底层 3D 旋转。
+              twisty 渲染下左右量程 ±180°(cameraLongitude 全程),引擎 ±90°。 */}
+          <OrbitPad
+            xValue={settings.viewAngle}
+            yValue={settings.viewGradient}
+            onChange={(x, y) => onSettingsChange({ ...settings, viewAngle: x, viewGradient: y })}
+            xLabel={t('左右', 'Yaw')}
+            yLabel={t('上下', 'Pitch')}
+            xUnit={caps.engineActive ? UNIT_YAW_ENGINE : UNIT_YAW_TWISTY}
+            yUnit={UNIT_PITCH}
+            xTitle={t('左右旋转角度(右 = 正,看右面)', 'Horizontal view angle (right = positive, toward the right face)')}
+            yTitle={t('上下旋转角度(上 = 正,俯视)', "Vertical view angle (up = positive, bird's-eye)")}
+          />
           <div className="sim-puzzle-toggles">
             {/* 手拧:关 = 鼠标 / 手势不能拧动拼图(点贴纸、拖贴纸都只转视角,不记步);
                 视角旋转 / 缩放 / 平移 / 键盘 / 播放不受影响。三条路径都接:NxN controller、
@@ -2856,8 +2877,8 @@ function PuzzleSettings({
             </label>
             {/* 锁定大小位置 锁的是引擎滚轮/捏合缩放,cubing.js 拼图自管缩放 → 引擎未驱动时灰掉。 */}
             <Toggle label={t('锁定大小位置', 'Lock size & position')} value={settings.lockView} onChange={(v) => set('lockView', v)} disabled={!caps.supports.lockView} title={hint(caps.supports.lockView)} />
-            {/* 小窗(背面视图)两条渲染路径都支持(引擎自有第二相机 / cubing.js 原生 backView)→ 不灰。 */}
-            <Toggle label={t('小窗', 'Mini view')} value={settings.backView} onChange={(v) => set('backView', v)} />
+            {/* 小窗(背面视图)的开关不在这里:小窗自己右上角有 ×,关掉后播放条最右出现
+                找回按钮 —— 同一个 settings.backView 已经有两个入口,再放一个是第三份。 */}
             {/* 立体贴片 / 镂空 是本站引擎特性,cubing.js 渲染的拼图上无此能力 → 引擎未驱动时灰掉
                 (面板形状仍保持每拼图一致:控件常显,只是不可点)。 */}
             <Toggle label={t('立体贴片', 'Sticker thickness')} value={settings.thickness} onChange={(v) => set('thickness', v)} disabled={!caps.supports.thickness} title={hint(caps.supports.thickness)} />

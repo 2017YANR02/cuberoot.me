@@ -87,6 +87,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.60.0",
     "@tailwindcss/postcss": "^4.3.0",
     "@types/luxon": "^3.7.1",
@@ -99,6 +100,7 @@
     "esbuild": "^0.27.4",
     "eslint": "^9.39.4",
     "fake-indexeddb": "^6.2.5",
+    "globals": "^17.7.0",
     "tailwindcss": "^4.2.2",
     "typescript": "^5",
     "vitest": "^4.1.6"

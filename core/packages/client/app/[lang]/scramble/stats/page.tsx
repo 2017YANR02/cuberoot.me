@@ -799,7 +799,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
           onChange={setAvgExtras}
           offLabel={tr({ zh: '不含备打', en: 'No extras' })}
           onLabel={tr({ zh: '含备打', en: 'With extras' })}
-          ariaLabel={tr({ zh: '组平均是否包含备用打乱', en: 'Include extra scrambles in the group average' })}
+          ariaLabel={tr({ zh: '组平均是否含备打', en: 'Include extra scrambles in the group average' })}
         />
       )}
     </div>

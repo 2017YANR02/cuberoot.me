@@ -117,28 +117,129 @@
 .sim-section-body > .sim-algs {
   max-height: none;  /* 折叠面板里不再用 40vh 顶死,让父级 .sim-side 滚动 */
 }
-/* 图像面板:studio 自带内边距,折叠体只需给一点四周留白与其它面板一致。 */
-.sim-section-body > .vc-studio-panel {
+/* 图像面板:studio 自带内边距,只需给一点四周留白与其它面板一致。已脱离折叠区
+   (标题栏去掉后直接挂 .sim-side),两种挂法都覆盖。 */
+.sim-section-body > .vc-studio-panel,
+.sim-side > .vc-studio-panel {
   padding: 8px 12px 12px;
 }
 
-/* 图像面板 export 行里的「实时」录制子组(仅 /sim 面板模式渲染):整组换行独占
-   一行,与上方静态导出按钮用一条 hairline 分隔。按钮本身复用 studio 的 .vc-btn。 */
+/* 图像预览浮层 — 画布左上角,与右上角背面小窗(.sim-backview)对称的一对。
+   pointer-events:none 让拖动穿透到主画布,预览在面板模式本就是被动镜像,不接手势。
+   尺寸不自己定:与背面小窗同取 --sim-float-size(JS layoutBackView 出的唯一尺寸),
+   两个窗必须一样大。 */
+.sim-image-overlay {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 9;
+  pointer-events: none;
+}
+/* portal 的目标节点(React 不能同时管容器 children 和 portal 内容 → 关闭钮挂外层) */
+.sim-image-overlay-host { display: contents; }
+/* portal 出来的预览不再落在 .vc-studio-panel 里,吃的是 studio 页版基样式 —— 那套
+   sticky / 45vh / 输入框底色是给整页主视觉写的,这里逐条中和。
+   图像是方的、窗也是方的,铺满即精确贴合(svg 自带 viewBox,meet 缩放不变形)。 */
+.sim-image-overlay .vc-preview-wrap {
+  position: static;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  background: none;
+}
+/* 透明格纹是 studio 里「导出图背景透明」的示意,浮在画布上就成了第三种背景。
+   去掉后图像直接透出画布背景,与主画布 / 背面小窗三块始终一致。 */
+.sim-image-overlay .vc-preview {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  background: none;
+}
+.sim-image-overlay .vc-preview svg {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+}
+/* sr-puzzlegen(sq1 / pyra / mega / skewb 异形)在 svg 外套了一层固定 px 的 host div
+   (PuzzleSVG 的 width:size/height:size 内联);上面那条只钳 svg,这层 div 不收 → svg
+   仍按 256px 实际渲染,塞进浮层框被 overflow:hidden 裁掉四周(爆框)。把这层也钳成
+   100%,svg 随之按 viewBox meet 缩放贴合框。只命中 inline-block 的 sr host,避开
+   skewb-net 那种 12:9 非方容器(强制方形会拉伸变形)。 */
+.sim-image-overlay .vc-preview > div[style*="inline-block"] {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* 两个浮层共用的「窗框」:同尺寸(--sim-float-size)+ 同一圈黑白双环。
+   双环而不是单色边框:画布背景是 art-directed 的固定五档(纯白 / 深灰 / 两种棋盘),
+   与明暗主题无关,任何单色描边都会在其中某一档上隐身 —— 内圈浅、外圈深,总有一环
+   与底色反差。同理不能用 --border-default 之类 token(它跟的是主题,不是画布档)。 */
+.sim-image-overlay,
+.sim-backview {
+  box-sizing: border-box;
+  width: var(--sim-float-size, 140px);
+  height: var(--sim-float-size, 140px);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 8px;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.55),
+    0 2px 10px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+/* 浮层关闭钮 —— 图像浮层 / 背面小窗共用一款,钉在各自右上内角。两个宿主都是
+   pointer-events:none(拖动要穿透到主画布),按钮自己收回 auto。
+   固定黑底白字不走 token:它压在 data-board-bg 上,而那 5 档背景是 art-directed
+   的固定色(纯白 / 深灰 / 棋盘),跟主题无关 —— 用 --card/--foreground 会在白底档
+   变成白钮糊掉。色值与紧邻的 .sim-backview-swap 逐值一致,同一族浮层 chrome。 */
+.sim-float-close {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  cursor: pointer;
+  pointer-events: auto;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 11;
+}
+/* 默认隐身,鼠标进画布(或键盘聚焦)才浮现 —— 常驻会一直压在图上。挂在画布而不是
+   浮层自身:两个浮层都 pointer-events:none,:hover 永远不会命中它们。触屏无 hover,
+   coarse pointer 下常显。 */
+.sim-canvas-wrap:hover .sim-float-close,
+.sim-float-close:focus-visible { opacity: 1; }
+@media (hover: none) {
+  .sim-float-close { opacity: 1; }
+}
+.sim-float-close:hover { background: rgba(0, 0, 0, 0.75); }
+/* 背面小窗自身 pointer-events:none,关闭钮只能挂在画布层,坐标 = 小窗 top/right (8px)
+   再进 4px 内角,与 .sim-backview-swap 由 JS 钉右下角的做法同源(这个是定值,免 JS)。 */
+.sim-float-close--backview {
+  top: 12px;
+  right: 12px;
+}
+
+/* 图像面板 export 行里的实时截图子组(仅 /sim 面板模式渲染):排在静态导出按钮
+   之上,整组换行独占一行,用一条 hairline 与下方分隔。按钮复用 studio 的 .vc-btn。 */
 .sim-side .vc-capture-group {
   flex-basis: 100%;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
-  margin-top: 8px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border-default);
-}
-.sim-side .vc-capture-label {
-  font-size: 11px;
-  color: var(--muted-foreground);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-default);
 }
 .sim-side .vc-capture-group .vc-btn:disabled {
   opacity: 0.4;
@@ -369,18 +470,15 @@
    不再浮在 canvas 上;原 .sim-fullscreen-exit 覆盖样式已随之移除。 */
 
 /* 背面视图小窗 — 右上角浮一个第二渲染器画布,从背后看魔方。
-   尺寸 + fullscreen 按钮的让位偏移由 JS (layoutBackView) 写 inline style。
-   pointer-events:none 让它纯展示,拖动穿透到主画布。canvas 自身透明,
-   未覆盖处透出本窗 var(--card) 背景。 */
+   尺寸(--sim-float-size)+ 窗框与左上图像浮层共用一套,见上面那条合并规则;
+   这里只管定位。pointer-events:none 让它纯展示,拖动穿透到主画布。canvas 自身透明,
+   本窗也不铺底色 —— 三块画面(主画布 / 背面小窗 / 图像浮层)必须始终同一背景,
+   任何 data-board-bg 档都由 .sim-canvas-wrap 那一层统一透上来。 */
 .sim-backview {
   position: absolute;
   top: 8px;
   right: 8px;
-  border: 1px solid var(--border-default);
-  border-radius: 8px;
-  overflow: hidden;
-  background: var(--card);
-  box-shadow: 0 2px 10px color-mix(in srgb, var(--foreground) 14%, transparent);
+  background: none;
   pointer-events: none;
   z-index: 9;
 }

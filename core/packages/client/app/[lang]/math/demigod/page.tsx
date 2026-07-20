@@ -414,7 +414,7 @@ export default function DemigodPage() {
           </p>
           <ul>
             <li>{t('翻 F-U 棱(翻棱不变量调一位)', 'Flip the F-U edge (toggles edge-flip parity)')}</li>
-            <li>{t('换 F-U-L 与 F-U-R 角(切角排列 sign)', 'Swap F-U-L and F-U-R corners (flips corner parity)')}</li>
+            <li>{t('换 F-U-L 与 F-U-R 角(翻转角排列奇偶)', 'Swap F-U-L and F-U-R corners (flips corner parity)')}</li>
             <li>{t('顺时针扭 D-U-R 角(调角扭转 mod 3)', 'Twist the D-U-R corner clockwise (shifts twist sum mod 3)')}</li>
           </ul>
           <p>

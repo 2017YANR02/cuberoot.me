@@ -1538,7 +1538,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
                   value={includeExtras}
                   onChange={setIncludeExtras}
                   label={t('备打', 'Extras')}
-                  ariaLabel={t('含备用打乱', 'Include extra scrambles')}
+                  ariaLabel={t('备打', 'Extras')}
                 />
               )}
               {showCross && hasOptimal && (

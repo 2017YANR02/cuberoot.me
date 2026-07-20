@@ -109,7 +109,7 @@ const SECTIONS: ResSection[] = [
   {
     id: 'commutators',
     icon: <Repeat size={18} />,
-    zh: '交换子（转换机）教程',
+    zh: '换位子（转换机）教程',
     en: 'Commutator tutorials',
     links: [
       { href: 'https://b23.tv/SCay8Du', zh: '《交换子进阶教程——「转换机」的深入理解》', en: 'Deep dive into commutators (animated)', by: '天方魔 / Tianfangmo'
@@ -234,10 +234,10 @@ const SECTIONS: ResSection[] = [
     },
       {
         href: 'http://zixingwang.com/commutator/cube.html',
-        zh: '交换子拆解网站',
+        zh: '换位子拆解网站',
         en: 'Commutator decomposer',
         by: '王子兴 / Zixing Wang',
-        descZh: '把完整公式拆解为交换子，或把交换子展开为完整公式。',
+        descZh: '把完整公式拆解为换位子，或把换位子展开为完整公式。',
         descEn: 'Decompose full algs into commutators, or expand commutators back to algs.'
     },
       {
@@ -318,7 +318,7 @@ export default function ResourcesPage(): JSX.Element {
       </div>
 
       <p className="bld-res-intro">
-        {tr({ zh: '整合了国内外的三盲（3BLD）学习资源：视频与图文教程、交换子讲解、公式集、记忆方法以及常用工具。资源原汇总来自勺子的 bldtrainer，外链均跳转至原作者发布页。', en: 'A curated set of 3BLD learning resources: video & written tutorials, commutator explainers, algorithm sheets, memory methods, and tools. Originally compiled in Zhi Qiao’s bldtrainer; every link points to its original author.'
+        {tr({ zh: '整合了国内外的三盲（3BLD）学习资源：视频与图文教程、换位子讲解、公式集、记忆方法以及常用工具。资源原汇总来自勺子的 bldtrainer，外链均跳转至原作者发布页。', en: 'A curated set of 3BLD learning resources: video & written tutorials, commutator explainers, algorithm sheets, memory methods, and tools. Originally compiled in Zhi Qiao’s bldtrainer; every link points to its original author.'
         })}
       </p>
 

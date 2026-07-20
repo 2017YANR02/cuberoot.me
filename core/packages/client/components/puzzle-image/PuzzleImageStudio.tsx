@@ -14,6 +14,7 @@
  */
 
 import { useCallback, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Copy, Check, Download, MousePointerClick, RotateCcw, Plus, Trash2 } from 'lucide-react';
 import SimCaptureGroup, { type SimBridge } from '@/components/puzzle-image/SimCaptureGroup';
 import PillToggle from '@/components/PillToggle/PillToggle';
@@ -40,8 +41,6 @@ import { FACE_LIST, type FaceKey, type ImageSpec, type PuzzleType, type PuzzleVa
 import { useT } from '@/hooks/useT';
 import { tr } from '@/i18n/tr';
 import './puzzle-image.css';
-
-const IMAGE_SIZE_PRESETS = [64, 88, 128, 256, 512, 1000];
 
 /** Size-specific mask groups, keyed by cube size. */
 const SIZE_MASKS: Record<number, { label: string; items: MaskOption[] }> = {
@@ -171,9 +170,14 @@ export interface PuzzleImageStudioProps {
   className?: string;
   /** Present only in /sim panel mode → shows the live capture subgroup + 从模拟器取. */
   simBridge?: SimBridge;
+  /** Render the preview into this host instead of inline (a React portal, so the
+   *  section keeps its ref → the DOM-serialize export fallback still finds the svg).
+   *  /sim passes the canvas' top-left overlay: the image sits next to the live cube
+   *  rather than at the bottom of a scrolled sidebar. Null until the host mounts. */
+  previewHost?: HTMLElement | null;
 }
 
-export default function PuzzleImageStudio({ spec, onSpecChange, mode, className, simBridge }: PuzzleImageStudioProps) {
+export default function PuzzleImageStudio({ spec, onSpecChange, mode, className, simBridge, previewHost }: PuzzleImageStudioProps) {
   const t = useT();
   const s = spec;
   const set = useCallback(<K extends keyof ImageSpec>(key: K, value: ImageSpec[K]) => {
@@ -329,21 +333,29 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
     set('stickerMask', formatMask(ids));
   }, [s.stickerMask, s.puzzleType, s.cubeSize, maskWholePiece, set]);
 
+  // Preview cube — the visualcube (2D vector) render of the current state.
+  // On the /visualcube page it's the main image; in the /sim 图像 panel it's the
+  // clean, zoom-crisp vector companion to the live 3D cube on the left (the 3D
+  // snapshot bakes its occlusion edges at raster resolution, this one is true
+  // vector). Only ever mounts for spec-renderable puzzles: SimPage gates the whole
+  // panel behind imageStudioSupported, so gear/rex/etc never reach here.
+  const preview = (
+    <section className="vc-preview-wrap" ref={previewRef}>
+      {/* Page mode: interactive (drag-to-rotate, paint editor). Panel mode: a passive
+          mirror — the sim's own 左右 / 上下 (and 透视 for the cube) drive the spec. */}
+      <PuzzleImage spec={s} onSpecChange={onSpecChange} interactive={mode === 'page'} />
+    </section>
+  );
+
   return (
     <div className={`vc-studio vc-studio-${mode}${className ? ` ${className}` : ''}`}>
-      {/* Preview cube — the visualcube (2D vector) render of the current state.
-          On the /visualcube page it's the main image; in the /sim 图像 panel it's the
-          clean, zoom-crisp vector companion to the live 3D cube on the left (the 3D
-          snapshot bakes its occlusion edges at raster resolution, this one is true
-          vector). Only ever mounts for spec-renderable puzzles: SimPage gates the whole
-          panel behind imageStudioSupported, so gear/rex/etc never reach here. */}
-      <section className="vc-preview-wrap" ref={previewRef}>
-        {/* Page mode: interactive (drag-to-rotate, paint editor). Panel mode: a passive
-            mirror — the sim's own 左右 / 上下 (and 透视 for the cube) drive the spec. */}
-        <PuzzleImage spec={s} onSpecChange={onSpecChange} interactive={mode === 'page'} />
-      </section>
+      {previewHost ? createPortal(preview, previewHost) : preview}
 
       <section className="vc-exports">
+        {/* 实时截图组排在静态导出之上:它出的是画布当下这一帧,跟左上角浮层里
+            看到的是同一个东西,离图更近;下面那排导出的是 spec 重渲染的结果。 */}
+        {simBridge && <SimCaptureGroup simBridge={simBridge} />}
+
         <CopyButton label={t('分享链接', 'Share URL')} getValue={() => shareUrl} />
         <CopyButton label={t('API 链接', 'API URL')} getValue={() => apiSvgUrl} />
         <button type="button" className="vc-btn" onClick={downloadSvg}>
@@ -357,8 +369,6 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
           getValue={() => `<img src="${apiSvgUrl}" alt="cube" width="${s.imageSize}" height="${s.imageSize}" />`}
         />
         <CopyButton label="Markdown" getValue={() => `![cube](${apiSvgUrl})`} />
-
-        {simBridge && <SimCaptureGroup simBridge={simBridge} />}
       </section>
 
       <section className="vc-controls">
@@ -428,21 +438,9 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
           <label className={`vc-label${isCube && showPuzzleControls ? ' vc-label-secondary' : ''}`}>
             {t('图片尺寸 (px)', 'Image Size (px)')}
           </label>
-          {/* Preset select + a free number input: `?size=300` used to show an
-              empty select with no way to read or edit the actual value. */}
-          <select
-            className="vc-select"
-            value={IMAGE_SIZE_PRESETS.includes(s.imageSize) ? String(s.imageSize) : ''}
-            onChange={(e) => {
-              if (!e.target.value) return;
-              set('imageSize', parseInt(e.target.value, 10));
-            }}
-          >
-            {!IMAGE_SIZE_PRESETS.includes(s.imageSize) && (
-              <option value="">{t('自定义', 'custom')}</option>
-            )}
-            {IMAGE_SIZE_PRESETS.map((n) => <option key={n} value={n}>{n}</option>)}
-          </select>
+          {/* 只留自由输入。以前预设下拉 + 数字框并排,两个控件绑同一个 imageSize,
+              永远显示同一个数,改一个另一个跟着变 —— 看着像坏了。预设本来就是为了
+              「下拉里选不到当前值」补的,值既然能直接读能直接改,预设就多余了。 */}
           <input
             type="number" className="vc-num" value={s.imageSize} min={1} max={1000}
             aria-label={t('图片尺寸 (px)', 'Image Size (px)')}
