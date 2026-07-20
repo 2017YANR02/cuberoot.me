@@ -9,6 +9,7 @@
 import { T } from '@/i18n/tr';
 import { useT } from '@/hooks/useT';
 import type { EsqParams, MccParams } from '@/lib/mcc';
+import { POCKET_COSTS } from '@/lib/pocket-cost';
 
 /** 显示用:2 位小数去尾。 */
 const n2 = (n: number) => String(Math.round(n * 100) / 100);
@@ -48,13 +49,72 @@ function mccCostRows(p: MccParams): CostRow[] {
   ];
 }
 
-export default function ScoringGuide({ metric, mccParams, esqParams }: {
+/** 二阶握位代价表:每步在不同拇指握位下的固定代价(TNoodle TwoByTwoSolver 常量)。 */
+function PocketGuide() {
+  const t = useT();
+  const c = POCKET_COSTS;
+  const rows: Array<{ move: string; cost: string; zh: string; en: string }> = [
+    { move: "R R'", cost: String(c.R), zh: '拇指自然拨,握位平移', en: 'natural thumb flick, grip shifts' },
+    { move: 'R2', cost: String(c.R2), zh: '半转', en: 'half turn' },
+    { move: "U'", cost: String(c.U3), zh: '食指拨,不换握', en: 'index flick, no regrip' },
+    { move: 'U', cost: `${c.U} ~ ${c.regrip + c.U}`, zh: '需拇指在前;握位不对要先换手', en: 'needs thumb-on-front; regrip if not' },
+    { move: 'U2', cost: String(c.U2), zh: '半转', en: 'half turn' },
+    { move: "F'", cost: String(c.F3), zh: 'F 层较慢', en: 'F face is slower' },
+    { move: 'F', cost: `${c.F} ~ ${c.regrip + c.F}`, zh: '强制拇指到底;握位不对要先换手', en: 'forces thumb-to-bottom; regrip if not' },
+    { move: 'F2', cost: String(c.F2), zh: '最贵 —— 二阶最碍手的一步', en: 'the most expensive move on 2×2' },
+  ];
+  return (
+    <section className="mcc-guide">
+      <h2>{t('二阶转动代价怎么算', 'How the 2×2 turn cost is scored')}</h2>
+      <p className="mcc-guide-lead">
+        {t(
+          '这是 WCA 官方打乱程序(TNoodle)给二阶打乱挑手法用的模型:它跟踪右手拇指握位(在底 / 在前 / 在顶),从「拇指在前」起手,逐步执行、按当前握位累加每步耗时;握位不对做不出下一步时,插入一次换手(+' + c.regrip + ')。数值越低越顺手。',
+          'This is the model WCA’s official scrambler (TNoodle) uses to pick a comfortable 2×2 scramble. It tracks the right-hand thumb grip (bottom / front / top), starts from thumb-on-front, and sums each move’s cost from the current grip; when a grip cannot perform the next move a regrip is inserted (+' + c.regrip + '). Lower is smoother.',
+        )}
+      </p>
+      <p className="mcc-formula">
+        {t('转动代价', 'Turn cost')} = {t('Σ 每步代价', 'Σ per-move cost')} + {t('Σ 换手', 'Σ regrips')}
+      </p>
+      <div className="mcc-guide-table-wrap">
+        <table className="mcc-guide-table">
+          <thead>
+            <tr>
+              <th>{t('动作', 'Move')}</th>
+              <th className="mcc-guide-num">{t('代价', 'Cost')}</th>
+              <th>{t('说明', 'Notes')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.move}>
+                <td className="mcc-guide-move">{row.move}</td>
+                <td className="mcc-guide-num">{row.cost}</td>
+                <td>{t(row.zh, row.en)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="mcc-guide-note">
+        {t(
+          `换手惩罚 ${c.regrip};从握位 -1(拇指在底)不换手强做 U 记 ${c.Ulow}。R 系最便宜(${c.R})、U' 次之(${c.U3}),F2(${c.F2})与换手最贵 —— 所以官方二阶打乱会尽量少用 F2 和换手。`,
+          `Regrip penalty ${c.regrip}; forcing a U from grip −1 (thumb-on-bottom) without regripping costs ${c.Ulow}. R moves are cheapest (${c.R}), U' next (${c.U3}); F2 (${c.F2}) and regrips are the most expensive — which is why official 2×2 scrambles avoid F2 and regrips where they can.`,
+        )}
+      </p>
+    </section>
+  );
+}
+
+export default function ScoringGuide({ puzzle, metric, mccParams, esqParams }: {
+  puzzle: '333' | '222';
   metric: 'mcc' | 'esq';
   mccParams: MccParams;
   esqParams: EsqParams;
 }) {
   const t = useT();
   const p = mccParams;
+
+  if (puzzle === '222') return <PocketGuide />;
 
   if (metric === 'esq') {
     const { wristQuarter: wq, flickQuarter: fq, wristHalf: wh, flickHalf: fh } = esqParams;
