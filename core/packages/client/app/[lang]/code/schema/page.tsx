@@ -261,6 +261,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 75, slug: 'contributors', desc: { zh: '新表 contributors:/support 贡献者名单,score = 贡献次数(admin 点数字 +1)', en: 'New contributors table: the /support contributor wall, score = contribution count (admin clicks the number to +1)' } },
   { n: 76, slug: 'alg_case_marks', desc: { zh: '新表 alg_case_marks:公式训练器 per-case 学习标记(学习中/已掌握/搁置 + 星标),登录用户跨设备同步', en: 'New alg_case_marks table: per-case learning marks in the alg trainer (learning/mastered/paused + star), synced across devices for signed-in users' } },
   { n: 77, slug: 'trainer_rooms', desc: { zh: '新表 trainer_rooms:公式训练器协同房间,多设备在线复习分工 —— 房间持有共享 case 队列 + 领取游标,原子出队保证不重不漏、支持乱序', en: 'New trainer_rooms table: online coop rooms for the alg trainer — the room holds a shared case queue + claim cursor, atomic dequeue guarantees no overlap/no gaps and supports shuffled order' } },
+  { n: 78, slug: 'one_email_per_account', desc: { zh: 'auth_identities 加偏唯一索引 uq_auth_identity_one_email:一个账号只能绑一个邮箱(原先只有 (provider, provider_uid) 全局唯一,同一账号可绑多个邮箱)。手机仍可多绑,WCA 由 app_users.wca_id 镜像列保证单例', en: 'Partial unique index uq_auth_identity_one_email on auth_identities: one email per account (previously only (provider, provider_uid) was unique globally, so one account could bind several emails). Phone stays multi-bindable; WCA singularity is enforced by the app_users.wca_id mirror column' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

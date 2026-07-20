@@ -14,7 +14,7 @@ import { query } from '../db/connection.js';
 import { requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
 import { signSession, hasFreshEmailGrant } from '../utils/session.js';
 import {
-  issueCode, verifyCode, loginWithIdentity, addIdentity, removeIdentity,
+  issueCode, verifyCode, loginWithIdentity, addIdentity, removeIdentity, replaceEmailIdentity,
   getIdentities, getUserById, findUserByWcaId, publicUser,
   normalizeEmail, isValidEmail, normalizePhone, isValidPhone, isValidPassword,
   loginWithPassword, setPassword, clearPassword, getPasswordHash, verifyPassword,
@@ -267,7 +267,28 @@ accountAuthRoutes.post('/auth/link/email/verify', async (c) => {
   const ok = await verifyCode('email', norm, 'link', code as string);
   if (!ok) return c.json({ error: 'wrong or expired code' }, 401);
   const r = await addIdentity(uid, 'email', norm);
+  if (r === 'has-email') return c.json({ error: 'account already has an email' }, 409);
   if (r === 'conflict') return c.json({ error: 'email already linked to another account' }, 409);
+  return c.json({ ok: true, identities: await getIdentities(uid) });
+});
+
+/**
+ * 换绑邮箱。发码复用 link/email/send(拿的是同一个 'link' 用途的码,新地址的所有权证明
+ * 一模一样),只有落库这步不同:原地改那条 email 身份,不是新增一条。
+ * 见 replaceEmailIdentity —— 「先解绑再绑定」对只有邮箱的账号走不通。
+ */
+accountAuthRoutes.post('/auth/email/replace', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  const uid = await requireUserId(c);
+  const { email, code } = await c.req.json<{ email?: string; code?: string }>().catch(() => ({ email: undefined, code: undefined }));
+  const norm = normalizeEmail(email ?? '');
+  if (!isValidEmail(norm) || !/^\d{6}$/.test(code ?? '')) return c.json({ error: 'invalid input' }, 400);
+  const ok = await verifyCode('email', norm, 'link', code as string);
+  if (!ok) return c.json({ error: 'wrong or expired code' }, 401);
+  const r = await replaceEmailIdentity(uid, norm);
+  if (r === 'conflict') return c.json({ error: 'email already linked to another account' }, 409);
+  if (r === 'no-email') return c.json({ error: 'no email to replace' }, 409);
   return c.json({ ok: true, identities: await getIdentities(uid) });
 });
 
