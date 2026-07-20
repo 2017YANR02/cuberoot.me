@@ -108,7 +108,7 @@ import SkewbNotationGuide from './SkewbNotationGuide';
 import {
   Slider, Toggle, KeymapModal, resetWorldView, mapFrames,
   DEFAULT_SETTINGS, DEFAULT_FACE_COLORS, MIRROR_DEFAULT_COLOR,
-  type SimSettings, type SimBoardBg,
+  type SimSettings, type SimBoardBg, type SliderUnit,
 } from './SettingDrawer';
 import { KEYBOARD_ROWS, keyLabel, displayMove, type KeyMove } from './keymap';
 import CubeVirtualKeyboard from '@/components/CubeVirtualKeyboard';
@@ -2559,6 +2559,21 @@ function ColorRow({
   );
 }
 
+/** 滑条数字框的真实单位(内部仍存 0..100,见 SliderUnit):
+ *  - 缩放 → 倍率:引擎 world.scale = 0.5 + v/100;cubing.js 用 cameraDistance [9,3] 逼近同档感受。
+ *  - 左右/上下 → 旋转角度(度):引擎 scene.rotation ±90°;cubing.js 经度全程 ±180°(纬度同 ±90°),
+ *    所以左右按渲染路径二选一。上下正值 = 俯视(相机在上)。
+ *  - 转动速度 → 每秒转动步数:引擎 mapFrames 帧/90°,按 60fps 折算;cubing.js tempo 档近似同速。 */
+const UNIT_SCALE: SliderUnit = { to: (v) => 0.5 + v / 100, from: (m) => (m - 0.5) * 100, min: 0.5, max: 1.5, step: 0.05, decimals: 2, suffix: '×' };
+// 透视 → 35mm 等效焦距:引擎是 dolly-zoom(distance = 取景半径×p,p = 2 + v×0.08,FOV 反向
+// 补偿定画幅),竖直 FOV = 2·atan(1/p) ⇔ 全画幅(半高 12mm)焦距 f = 12p = 24 + 0.96v mm。
+// 24mm 广角畸变强 → 120mm 长焦近正交。仅引擎路径(cubing.js 拼图此滑条本就禁用)。
+const UNIT_FOCAL: SliderUnit = { to: (v) => 24 + v * 0.96, from: (f) => (f - 24) / 0.96, min: 24, max: 120, step: 1, decimals: 0, suffix: 'mm' };
+const UNIT_YAW_ENGINE: SliderUnit = { to: (v) => (v - 50) * 1.8, from: (d) => 50 + d / 1.8, min: -90, max: 90, step: 1, decimals: 0, suffix: '°' };
+const UNIT_YAW_TWISTY: SliderUnit = { to: (v) => (v - 50) * 3.6, from: (d) => 50 + d / 3.6, min: -180, max: 180, step: 1, decimals: 0, suffix: '°' };
+const UNIT_PITCH: SliderUnit = { to: (v) => (50 - v) * 1.8, from: (d) => 50 - d / 1.8, min: -90, max: 90, step: 1, decimals: 0, suffix: '°' };
+const UNIT_TPS: SliderUnit = { to: (v) => 60 / mapFrames(v), from: (tps) => (120 - 60 / tps) / 1.1, min: 0.5, max: 6, step: 0.1, decimals: 1 };
+
 function PuzzleSettings({
   order, onOrderChange, puzzleKind, onPuzzleChange,
   renderer, onRendererChange,
@@ -2740,11 +2755,11 @@ function PuzzleSettings({
 
           <div className="sim-puzzle-sliders">
             <Slider label={t('灵敏度', 'Sensitivity')} value={settings.sensitivity} onChange={(v) => set('sensitivity', v)} disabled={!caps.supports.sensitivity} title={hint(caps.supports.sensitivity)} />
-            <Slider label={t('缩放', 'Scale')} value={settings.scale} onChange={(v) => set('scale', v)} />
-            <Slider label={t('透视', 'Perspective')} value={settings.perspective} onChange={(v) => set('perspective', v)} disabled={!caps.supports.perspective} title={hint(caps.supports.perspective)} />
-            <Slider label={t('左右', 'Yaw')} value={settings.viewAngle} onChange={(v) => set('viewAngle', v)} />
-            <Slider label={t('上下', 'Pitch')} value={settings.viewGradient} onChange={(v) => set('viewGradient', v)} />
-            <Slider label={t('转动速度', 'Turn speed')} value={settings.speed} onChange={(v) => set('speed', v)} />
+            <Slider label={t('缩放', 'Scale')} value={settings.scale} onChange={(v) => set('scale', v)} unit={UNIT_SCALE} title={t('缩放倍率', 'Zoom factor')} />
+            <Slider label={t('透视', 'Perspective')} value={settings.perspective} onChange={(v) => set('perspective', v)} disabled={!caps.supports.perspective} unit={UNIT_FOCAL} title={hint(caps.supports.perspective) ?? t('35mm 等效焦距(小 = 广角畸变强,大 = 接近正交)', '35mm-equivalent focal length (low = wide-angle distortion, high = near-orthographic)')} />
+            <Slider label={t('左右', 'Yaw')} value={settings.viewAngle} onChange={(v) => set('viewAngle', v)} unit={caps.engineActive ? UNIT_YAW_ENGINE : UNIT_YAW_TWISTY} title={t('左右旋转角度', 'Horizontal angle (degrees)')} />
+            <Slider label={t('上下', 'Pitch')} value={settings.viewGradient} onChange={(v) => set('viewGradient', v)} unit={UNIT_PITCH} title={t('上下旋转角度(正 = 俯视)', 'Vertical angle (degrees, + = looking down)')} />
+            <Slider label={t('转动速度', 'Turn speed')} value={settings.speed} onChange={(v) => set('speed', v)} unit={UNIT_TPS} title={t('每秒转动步数', 'Turns per second')} />
           </div>
           <div className="sim-puzzle-toggles">
             {/* 播放动画开关:关 → 「播放」时瞬切每一步(不逐格转动);单步前进/后退本就瞬切。 */}
