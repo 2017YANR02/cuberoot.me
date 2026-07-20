@@ -84,6 +84,35 @@ describe('wca_pool 封闭集(稀有难度档)', () => {
     expect(fetchFn.mock.calls.length).toBeGreaterThan(1);
   });
 
+  it('遍历进度 seen/total:逐条累加,练满即 seen == total 且不再增长', async () => {
+    mockFetch(2);
+    const { nextWca, peekWca, wcaPoolProgress } = await freshPool();
+
+    // 首条出题前总数未知(还没联网 → 未封闭)。
+    expect(wcaPoolProgress(rareSpec)).toBeNull();
+
+    await nextWca(rareSpec);
+    expect(wcaPoolProgress(rareSpec)).toEqual({ total: 2, seen: 1 });
+
+    // 端出第二条(不同的一条)→ 遍历完成。
+    let guard = 0;
+    while ((wcaPoolProgress(rareSpec)?.seen ?? 0) < 2 && guard++ < 20) {
+      peekWca(rareSpec); await Promise.resolve();
+    }
+    expect(wcaPoolProgress(rareSpec)).toEqual({ total: 2, seen: 2 });
+
+    // 之后是重复出题,seen 不会超过 total(UI 的「已练 n/N」不能显示 3/2)。
+    for (let i = 0; i < 15; i++) { peekWca(rareSpec); await Promise.resolve(); }
+    expect(wcaPoolProgress(rareSpec)).toEqual({ total: 2, seen: 2 });
+  });
+
+  it('常见档(回满)不报进度 —— UI 不该显示「已练 n/50」', async () => {
+    mockFetch(50);
+    const { nextWca, wcaPoolProgress } = await freshPool();
+    await nextWca(rareSpec);
+    expect(wcaPoolProgress(rareSpec)).toBeNull();
+  });
+
   it('有日期范围时不判封闭(那条路是 comp-sampling,回得少 ≠ 穷尽)', async () => {
     const fetchFn = mockFetch(2);
     const dated: WcaSourceSpec = { ...rareSpec, from: '2015-01-01', to: '2016-01-01' };
