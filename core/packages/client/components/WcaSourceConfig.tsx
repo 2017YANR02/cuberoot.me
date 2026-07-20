@@ -35,7 +35,8 @@ const WCA_MIN_DATE = '1982-06-05';
 const DIFFICULTY_EVENTS = new Set(['333', '333oh', '333bf', '333fm', '333ft', '333mbf']);
 // 「合并」可用的项目 —— 与 server 的 FAMILY_333 一致。333mbf 不在 wca_scramble_steps 里(多盲拆子
 // 打乱会撞自然键),合并对它无操作,故不给开关。
-const MERGE_EVENTS = new Set(['333', '333oh', '333bf', '333fm', '333ft']);
+const MERGE_EVENT_LIST = ['333', '333oh', '333bf', '333fm', '333ft'] as const;
+const MERGE_EVENTS = new Set<string>(MERGE_EVENT_LIST);
 // 步数范围(覆盖常用 cross/xcross;深阶段超出 14 的步数 v1 暂不在此选)。难度开启默认带这个范围。
 const STEP_MIN = 0;
 const STEP_MAX = 14;
@@ -223,11 +224,30 @@ export default function WcaSourceConfig({
 
   // 整解(方法 '333')无配色维度,数据落伪子集 'ALL';其余按所选底色子集查直方图。
   const effectiveDiffSubset = settings.wcaDiffVariant === '333' ? 'ALL' : diffSel.subsetKey;
+  // 端点必须与后端取题池同口径,否则滑杆放得出池子里根本没有的步数(BG 十字 8 步全库只有一条,
+  // 且在 333bf —— 练 333 时选 8 必然空手)。合并开 → 3x3 族各项目端点取并(= server 的 FAMILY_333,
+  // 不含 333mbf,它不在 steps 表里);合并关 → 只看当前项目自己的 per-event 集。
   const [stepLo, stepHi] = useMemo<[number, number]>(() => {
-    const h = diffDist?.sets?.wca?.variants?.[settings.wcaDiffVariant]?.data?.[settings.wcaDiffStage]?.[effectiveDiffSubset];
-    if (h && Number.isFinite(h.min) && Number.isFinite(h.max) && h.max >= h.min) return [h.min, h.max];
-    return [STEP_MIN, STEP_MAX];
-  }, [diffDist, settings.wcaDiffVariant, settings.wcaDiffStage, effectiveDiffSubset]);
+    const bounds = (setKey: string): [number, number] | null => {
+      const h = diffDist?.sets?.[setKey]?.variants?.[settings.wcaDiffVariant]?.data?.[settings.wcaDiffStage]?.[effectiveDiffSubset];
+      if (!h || !Number.isFinite(h.min) || !Number.isFinite(h.max) || h.max < h.min) return null;
+      return [h.min, h.max];
+    };
+    const keys = canMerge && settings.wcaDiffMerged
+      ? MERGE_EVENT_LIST.map((e) => `wca_${e}`)
+      : [`wca_${wev}`];
+    let lo = Infinity;
+    let hi = -Infinity;
+    for (const k of keys) {
+      const b = bounds(k);
+      if (!b) continue;
+      if (b[0] < lo) lo = b[0];
+      if (b[1] > hi) hi = b[1];
+    }
+    if (hi >= lo) return [lo, hi];
+    // per-event 集缺失(旧 distribution.json)→ 退合并池端点,再退静态范围
+    return bounds('wca') ?? [STEP_MIN, STEP_MAX];
+  }, [diffDist, settings.wcaDiffVariant, settings.wcaDiffStage, effectiveDiffSubset, settings.wcaDiffMerged, canMerge, wev]);
   // 刻度尽量标全整数;范围宽到标签会重叠时,按 nice 步长(1/2/5/10…)抽稀,始终含两端。
   const stepMarks = useMemo(() => {
     const span = stepHi - stepLo;
