@@ -123,7 +123,7 @@ export default function ScoringGuide({ puzzle, metric, mccParams, esqParams }: {
         <h2>{t('增强 SQTM 怎么算', 'How Enhanced SQTM is scored')}</h2>
         <p className="mcc-guide-lead">
           {t(
-            '把每一步按「哪只手做 / 转多少度」分成四类,各计一个固定分,直接相加 —— 没有换手、过劳等情境代价,是一个纯粹的加权步数。',
+            '把每一步按「哪只手做 / 转多少度」分成四类,各计一个固定分,直接相加 —— 没有换手、复用等情境代价,是一个纯粹的加权步数。',
             'Each move falls into one of four buckets by which motion performs it and how far it turns; the bucket values are simply summed. No regrip or fatigue modelling — it is a pure weighted move count.',
           )}
         </p>
@@ -168,7 +168,7 @@ export default function ScoringGuide({ puzzle, metric, mccParams, esqParams }: {
       </p>
 
       <p className="mcc-formula">
-        MCC = Σ <T zh="动作代价" en="move cost" /> + Σ <T zh="换手" en="regrip" /> + Σ <T zh="过劳等待" en="overwork wait" />
+        MCC = Σ <T zh="动作代价" en="move cost" /> + Σ <T zh="换手" en="regrip" /> + Σ <T zh="复用等待" en="overwork wait" />
         {' '}+ Σ <T zh="失稳 / 阻挡" en="destabilize / block" /> − Σ <T zh="连招折扣" en="trigger discount" />
       </p>
 
@@ -212,7 +212,7 @@ export default function ScoringGuide({ puzzle, metric, mccParams, esqParams }: {
           )}
         </li>
         <li>
-          <strong>{t('过劳等待', 'Overwork wait')}</strong>
+          <strong>{t('复用等待', 'Overwork wait')}</strong>
           {t(
             `:同一根手指刚用过、这一步又要它换到别的位置,得先等它回来 —— 补上 ${n2(p.overWorkMult)} 减去已过去的时间。M' U' M' 这种连拨同指的序列就靠它拉开差距。`,
             `: if a finger was just used and now has to move somewhere else, the model waits out the remainder of ${n2(p.overWorkMult)}. This is what separates same-finger chains like M' U' M' from alternating ones.`,

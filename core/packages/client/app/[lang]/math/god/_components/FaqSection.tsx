@@ -33,7 +33,7 @@ const FAQ: QA[] = [
     q: { zh: 'CFOP / Roux / ZZ 不能解到 20 步吗?', en: "Can't CFOP / Roux / ZZ solve in 20?"
     },
     a: {
-      zh: '理论可以,实践几乎不行。CFOP 把求解分成 cross + F2L + OLL + PLL 四步,每步用人脑可识别的少数 case,合起来 ~55 步。Roux 平均 ~48 步,ZZ 平均 ~52 步。要做到 20 步需要彻底放弃 step-by-step,直接 brute-force 全状态空间——这就是 cube20.org 的 solver,需要 1.5 GB 剪枝表 + 几小时 CPU/状态。人类做不到。',
+      zh: '理论可以,实践几乎不行。CFOP 把求解分成十字 + F2L + OLL + PLL 四步,每步用人脑可识别的少数 case,合起来 ~55 步。Roux 平均 ~48 步,ZZ 平均 ~52 步。要做到 20 步需要彻底放弃 step-by-step,直接 brute-force 全状态空间——这就是 cube20.org 的 solver,需要 1.5 GB 剪枝表 + 几小时 CPU/状态。人类做不到。',
       en: 'In theory yes; in practice no. CFOP splits solving into cross + F2L + OLL + PLL with human-recognisable cases, totalling ~55 moves. Roux averages ~48, ZZ ~52. Hitting 20 requires abandoning step-by-step and brute-forcing the whole state space — that\'s cube20.org\'s solver: 1.5 GB pruning tables, hours of CPU per state. Humans cannot.'
     },
   },

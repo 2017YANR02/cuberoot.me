@@ -162,7 +162,7 @@ export default function MccPage() {
                 'Estimates how comfortable a 2×2 scramble or alg is to turn: WCA’s official (TNoodle) pocket-cube grip-cost model — it tracks the right-hand thumb grip and sums each move’s cost. Lower is smoother.',
               )
             : t(
-                '衡量 3x3 公式的手速潜力:模拟最优手法下的换手、过劳、失稳等代价,数值越低越快。',
+                '衡量 3x3 公式的手速潜力:模拟最优手法下的换手、复用、失稳等代价,数值越低越快。',
                 'Estimates how fast a 3x3 alg can be executed: models regrips, finger overwork and instability under optimal fingertricks — lower is faster.',
               )}
         </p>

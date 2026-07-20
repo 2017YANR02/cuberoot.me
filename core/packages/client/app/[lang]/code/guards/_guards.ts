@@ -96,6 +96,12 @@ export interface CiGuard {
 
 export const CI_GUARDS_UI: CiGuard[] = [
   {
+    id: 'cubing-term-blacklist',
+    test: 'i18n-cubing-term-blacklist.test.ts',
+    zh: { title: '魔方术语错译', desc: 'AI 写双语文案按通用语感直译魔方黑话(Overwork≠劳累义直译、Commutator≠通用数学直译、Finger Trick≠逐字直译),语法全对但社区不这么说 —— 正确译法依次为「复用 / 换位子 / 指法」。权威译法单一源 = /wiki 的 glossary.json(713 条中英对照);本守卫锁已修正错译的黑名单,发现新错译修完即加入。豁免行内 allow-cubing-term。' },
+    en: { title: 'Cubing term mistranslations', desc: 'AI-written bilingual copy tends to translate cubing jargon literally (Overwork, Commutator, Finger Trick rendered as generic Chinese) — grammatical but not what the community says; the approved terms are 复用 / 换位子 / 指法. The single source of approved translations is the /wiki glossary.json (713 EN/ZH entries); this guard locks a blacklist of corrected mistranslations, growing as new ones get fixed. Inline allow-cubing-term to exempt.' },
+  },
+  {
     id: 'sort-arrow',
     test: 'sort-arrow-unified.test.ts',
     zh: { title: '自造排序箭头', desc: '禁 JSX 渲染 <ChevronsUpDown>(双向 ^v),表头排序指示统一走 SortArrow(↑/↓ 贴文字右侧,仅当前排序列显示)。' },

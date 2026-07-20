@@ -30,7 +30,7 @@ export interface MccParams {
   double: number;
   /** S/E Slice Multiplier(S/E 中层) */
   sesliceMult: number;
-  /** Overwork Penalty(手指过劳惩罚) */
+  /** Overwork Penalty(手指复用惩罚) */
   overWorkMult: number;
   /** Move Block Penalty(前步阻挡惩罚) */
   moveblock: number;
