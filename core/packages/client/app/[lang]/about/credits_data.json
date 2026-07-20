@@ -129,6 +129,13 @@
     "long_en": "trangium's Movecount Coefficient calculator — the algSpeed.js fingertrick-simulation metric is ported to TypeScript (golden-locked against upstream) to power the `/scramble/mcc` page; UI rebuilt in React"
   },
   {
+    "name": "trangium/BatchSolver",
+    "url": "https://github.com/trangium/trangium.github.io",
+    "zh": "批量公式集求解引擎(worker.js 已 port 为 TS,/scramble/batch-solver 与 /scramble/sub-solver;MIT)",
+    "en": "Batch Solver algset-generation engine (worker.js ported to TS for /scramble/batch-solver and /scramble/sub-solver; MIT)",
+    "long_en": "trangium's Batch Solver — the worker.js permutation engine (custom puzzle definitions, equivalence reduction, weighted prune/search, adjust handling, scramble DSL) is ported to TypeScript (golden-locked against upstream message-for-message) to power `/scramble/batch-solver`; `/scramble/sub-solver` (Subsolver's successor) runs on the same engine; UIs rebuilt in React"
+  },
+  {
     "name": "nbwzx/commutator",
     "url": "https://github.com/nbwzx/commutator",
     "zh": "换位子分解 / 展开引擎(Zixing Wang;ES module 重封装,UI 重写 React)",

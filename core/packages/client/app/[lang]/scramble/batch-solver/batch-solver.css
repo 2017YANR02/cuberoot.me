@@ -1,0 +1,315 @@
+/* /scramble/batch-solver — 批量求解器 */
+
+.bsv-page {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  color: var(--foreground);
+}
+
+.bsv-header h1 {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.bsv-lead {
+  margin: 0.35rem 0 0;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+  max-width: 46rem;
+}
+
+/* ---- 示例 ---- */
+.bsv-examples {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1.1rem;
+}
+.bsv-examples-label {
+  font-size: 0.85rem;
+  color: var(--faint-foreground);
+}
+.bsv-chip {
+  border: 1px solid var(--border-default);
+  background: none;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.22rem 0.75rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.bsv-chip:hover { color: var(--foreground); border-color: var(--border-strong); }
+
+/* ---- 表单 ---- */
+.bsv-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin-top: 1.2rem;
+  max-width: 46rem;
+}
+.bsv-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.bsv-field-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+.bsv-label {
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+}
+.bsv-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--foreground);
+  background: var(--background);
+  border: 1px solid var(--input);
+  border-radius: 8px;
+  padding: 0.45rem 0.65rem;
+}
+.bsv-textarea:focus-visible { outline: none; border-color: var(--ring); }
+.bsv-def { white-space: pre; overflow-x: auto; }
+.bsv-textarea[readonly] { color: var(--muted-foreground); }
+.bsv-input {
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  color: var(--foreground);
+  background: var(--background);
+  border: 1px solid var(--input);
+  border-radius: 6px;
+  padding: 0.3rem 0.5rem;
+  min-width: 0;
+}
+.bsv-input:focus-visible { outline: none; border-color: var(--ring); }
+.bsv-input-short { width: 6.5em; }
+.bsv-input-num { width: 5em; }
+.bsv-input-grow { flex: 1 1 12em; }
+
+.bsv-subgroup-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.bsv-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  flex: none;
+}
+.bsv-icon-btn:hover:not(:disabled) { color: var(--foreground); border-color: var(--border-strong); }
+.bsv-icon-btn:disabled { opacity: 0.35; cursor: default; }
+
+.bsv-collapse-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.88rem;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.bsv-collapse-toggle:hover { color: var(--foreground); }
+.bsv-collapse-chevron { transition: transform 0.15s; }
+.bsv-collapse-toggle.is-open .bsv-collapse-chevron { transform: rotate(180deg); }
+
+.bsv-advanced { margin-top: 0.2rem; }
+.bsv-esq {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* ---- 运行 ---- */
+.bsv-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.3rem;
+}
+.bsv-run {
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-foreground, #fff);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 0.45rem 1.4rem;
+  cursor: pointer;
+}
+.bsv-run.is-running {
+  background: none;
+  color: var(--destructive);
+  border: 1px solid var(--destructive);
+}
+.bsv-secondary-btn {
+  border: 1px solid var(--border-default);
+  background: none;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 0.88rem;
+  padding: 0.3rem 0.9rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.bsv-secondary-btn:hover { color: var(--foreground); border-color: var(--border-strong); }
+.bsv-error {
+  margin: 0;
+  color: var(--destructive);
+  font-size: 0.9rem;
+}
+
+.bsv-stats {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin: 1.1rem 0 0;
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+.bsv-stats-sep { width: 1px; height: 0.9em; background: var(--border-default); }
+.bsv-fails {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--destructive);
+  cursor: pointer;
+}
+.bsv-progress { color: var(--faint-foreground); }
+
+/* ---- 输出 ---- */
+.bsv-output {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.6rem;
+  margin-top: 1rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+.bsv-case { flex: none; }
+.bsv-case-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+  min-height: 1.4rem;
+}
+.bsv-case-img { display: inline-flex; }
+.bsv-case-num {
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.bsv-sol-table {
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.bsv-sol-table th {
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.78rem;
+  color: var(--muted-foreground);
+  padding: 0.15rem 0.7rem 0.25rem 0;
+  border-bottom: 1px solid var(--border-default);
+  white-space: nowrap;
+}
+.bsv-sol-table td {
+  padding: 0.18rem 0.7rem 0.18rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-default) 40%, transparent);
+  vertical-align: top;
+}
+.bsv-sol-num {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.bsv-sol-alg {
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+.bsv-case-empty {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--faint-foreground);
+  max-width: 12rem;
+}
+
+/* ---- 指南 ---- */
+.bsv-guide {
+  margin-top: 3rem;
+  padding-top: 1.6rem;
+  border-top: 1px solid var(--border-default);
+  max-width: 52rem;
+}
+.bsv-guide h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+.bsv-guide h3 {
+  margin: 1.6rem 0 0.45rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.bsv-guide-lead {
+  margin: 0.5rem 0 0;
+  line-height: 1.75;
+  color: var(--muted-foreground);
+}
+.bsv-guide-note {
+  margin: 0.3rem 0 0;
+  font-size: 0.88rem;
+  line-height: 1.75;
+  color: var(--muted-foreground);
+}
+.bsv-guide-list {
+  margin: 0.3rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.88rem;
+  line-height: 1.8;
+  color: var(--muted-foreground);
+}
+.bsv-guide-list li { margin-bottom: 0.3rem; }
+.bsv-guide-list strong { color: var(--foreground); font-weight: 600; }
+.bsv-guide a { color: var(--accent); }
+
+.bsv-credit {
+  margin: 2.2rem 0 0;
+  font-size: 0.8rem;
+  color: var(--faint-foreground);
+}
+.bsv-credit a { color: inherit; }
+.bsv-credit a:hover { color: var(--muted-foreground); }
+
+@media (max-width: 768px) {
+  .bsv-page { padding: 1rem 0.75rem 2rem; }
+  .bsv-header h1 { font-size: 1.3rem; }
+  .bsv-subgroup-row { flex-wrap: wrap; }
+}
