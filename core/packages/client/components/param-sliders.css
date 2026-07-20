@@ -1,0 +1,72 @@
+/* ParamSliders — 参数滑杆组(从 mcc.css 的 .mcc-advanced/.mcc-slider 提取) */
+
+.param-sliders {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.45rem 2rem;
+  align-self: flex-start;
+}
+.param-slider {
+  display: grid;
+  grid-template-columns: 9.5em 1fr 3em;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+}
+.param-slider-label { color: var(--muted-foreground); }
+.param-slider-value {
+  font-family: var(--font-mono);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.param-slider input[type='range'] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 18px;
+  background: transparent;
+  cursor: pointer;
+}
+.param-slider input[type='range']::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--foreground) 15%, transparent);
+}
+.param-slider input[type='range']::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--foreground) 15%, transparent);
+}
+.param-slider input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: none;
+}
+.param-slider input[type='range']::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: none;
+}
+.param-sliders-reset {
+  justify-self: start;
+  border: 1px solid var(--border-default);
+  background: none;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.param-sliders-reset:hover { color: var(--foreground); border-color: var(--border-strong); }
+
+@media (max-width: 768px) {
+  .param-slider { grid-template-columns: 8.5em 1fr 3em; }
+  .param-sliders { grid-template-columns: 1fr; }
+}

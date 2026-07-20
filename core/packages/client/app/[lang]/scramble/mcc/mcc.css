@@ -44,73 +44,8 @@
 .mcc-advanced-chevron { transition: transform 0.15s; }
 .mcc-advanced-toggle.is-open .mcc-advanced-chevron { transform: rotate(180deg); }
 
-/* ---- 高级参数 ---- */
-.mcc-advanced {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 0.45rem 2rem;
-  margin-top: 0.9rem;
-  align-self: flex-start;
-}
-.mcc-slider {
-  display: grid;
-  grid-template-columns: 9.5em 1fr 3em;
-  align-items: center;
-  gap: 0.6rem;
-  font-size: 0.85rem;
-}
-.mcc-slider-label { color: var(--muted-foreground); }
-.mcc-slider-value {
-  font-family: var(--font-mono);
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-.mcc-slider input[type='range'] {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 100%;
-  height: 18px;
-  background: transparent;
-  cursor: pointer;
-}
-.mcc-slider input[type='range']::-webkit-slider-runnable-track {
-  height: 4px;
-  border-radius: 2px;
-  background: color-mix(in srgb, var(--foreground) 15%, transparent);
-}
-.mcc-slider input[type='range']::-moz-range-track {
-  height: 4px;
-  border-radius: 2px;
-  background: color-mix(in srgb, var(--foreground) 15%, transparent);
-}
-.mcc-slider input[type='range']::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 14px;
-  height: 14px;
-  margin-top: -5px;
-  border-radius: 50%;
-  background: var(--accent);
-  border: none;
-}
-.mcc-slider input[type='range']::-moz-range-thumb {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--accent);
-  border: none;
-}
-.mcc-reset {
-  justify-self: start;
-  border: 1px solid var(--border-default);
-  background: none;
-  color: var(--muted-foreground);
-  font: inherit;
-  font-size: 0.82rem;
-  padding: 0.2rem 0.7rem;
-  border-radius: 999px;
-  cursor: pointer;
-}
-.mcc-reset:hover { color: var(--foreground); border-color: var(--border-strong); }
+/* ---- 高级参数(滑杆样式在 components/param-sliders.css)---- */
+.mcc-advanced { margin-top: 0.9rem; }
 
 /* ---- 主体两栏 ---- */
 .mcc-body {
@@ -335,6 +270,4 @@
   .mcc-page { padding: 1rem 0.75rem 2rem; }
   .mcc-header h1 { font-size: 1.3rem; }
   .mcc-body { grid-template-columns: 1fr; }
-  .mcc-slider { grid-template-columns: 8.5em 1fr 3em; }
-  .mcc-advanced { grid-template-columns: 1fr; }
 }

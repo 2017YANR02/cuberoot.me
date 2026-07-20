@@ -30,6 +30,7 @@ import { SearchInput } from '@/components/SearchInput';
 import { ListSelect } from '@/components/ListSelect';
 import { VariantSelect } from '@/components/VariantSelect';
 import { RangeSlider } from '@/components/RangeSlider/RangeSlider';
+import { ParamSliders, type ParamSliderSpec } from '@/components/ParamSliders';
 import { Spinner } from '@/components/Spinner/Spinner';
 import PlaybackBar from '@/components/PlaybackBar';
 import StackedBar, { type StackedSeg } from '@/components/StackedBar/StackedBar';
@@ -216,6 +217,23 @@ function ClearButtonDemo() {
       <ClearButton onClick={() => setHits((h) => h + 1)} variant="standalone" isZh={isZh} />
       <span className="cg-hint">{isZh ? `点了 ${hits} 次` : `clicked ${hits}×`}</span>
     </div>
+  );
+}
+
+const PARAM_SLIDER_DEMO_SPECS: ParamSliderSpec<'push' | 'double'>[] = [
+  { key: 'push', zh: '推转系数', en: 'Push turn ×', min: 1, max: 3, step: 0.05 },
+  { key: 'double', zh: '180° 转系数', en: 'Half turn ×', min: 1, max: 2, step: 0.05 },
+];
+
+function ParamSlidersDemo() {
+  const [vals, setVals] = useState<Record<'push' | 'double', number>>({ push: 1.3, double: 1.65 });
+  return (
+    <ParamSliders
+      specs={PARAM_SLIDER_DEMO_SPECS}
+      values={vals}
+      defaults={{ push: 1.3, double: 1.65 }}
+      onChange={setVals}
+    />
   );
 }
 
@@ -809,6 +827,16 @@ export const CATALOG: ComponentEntry[] = [
     usage: '<RangeSlider min={0} max={14} value={[lo, hi]} onChange={setRange} marks={[0, 7, 14]} />',
     Demo: RangeSliderDemo,
     note: { zh: '需要 min–max 双端选择就用它,别再叠两个 <input type=range> 手撸。', en: 'Use it for any min–max dual selection — don’t hand-stack two <input type=range> again.' },
+  },
+  {
+    name: 'ParamSliders',
+    import: "import { ParamSliders, MCC_SLIDERS, ESQ_SLIDERS } from '@/components/ParamSliders';",
+    category: 'input',
+    zh: '一组「标签 + 单值滑杆 + 当前值」参数行,非默认时自动出「恢复默认」。MCC / 增强 SQTM 的滑杆规格常量随组件导出,/scramble/mcc 与 batch-solver / sub-solver 共用。',
+    en: 'A block of “label + single-value slider + current value” parameter rows with an automatic “Reset to defaults” button. Ships the MCC / Enhanced-SQTM slider spec constants; shared by /scramble/mcc, batch-solver and sub-solver.',
+    usage: '<ParamSliders specs={MCC_SLIDERS} values={params} defaults={MCC_DEFAULTS} onChange={setParams} />',
+    Demo: ParamSlidersDemo,
+    note: { zh: '单值参数板用它;min–max 区间选择用 RangeSlider,别混。', en: 'For single-value parameter panels; use RangeSlider for min–max ranges — don’t mix them.' },
   },
   {
     name: 'PlaybackBar',

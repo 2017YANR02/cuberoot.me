@@ -1,0 +1,2389 @@
+{
+ "note": "由 _batch_solver_diff_local.test.ts 对上游 BatchSolver/worker.js 原文生成;重生成必须重新对拍上游,禁止手改。",
+ "scenarios": [
+  {
+   "name": "2x2-two-cases",
+   "input": {
+    "puzzle": "U: (UFR UFL UBL UBR)\nR: (UFR-1 UBR+1 DBR-1 DFR+1)\nF: (UFR+1 DFR-1 DFL+1 UFL-1)\nD: (DFR DBR DBL DFL)\nL: (UFL+1 DFL-1 DBL+1 UBL-1)\nB: (UBR-1 UBL+1 DBL-1 DBR+1)",
+    "ignore": "",
+    "solve": "[R U R' U' R U R' U', R U2 R' U' R U' R']",
+    "preAdjust": "U",
+    "postAdjust": "U",
+    "subgroups": [
+     {
+      "subgroup": "U R",
+      "prune": "5",
+      "search": "5"
+     }
+    ],
+    "sorting": [],
+    "esq": "",
+    "rankesq": "R_ L_ r_ l_: 1\nR2 L2 r2 l2: 2\n__: 2\n_2: 3",
+    "showPost": false
+   },
+   "messages": [
+    {
+     "type": "num-states",
+     "value": 2
+    },
+    {
+     "type": "set-depth",
+     "value": 0
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "moveWeights",
+     "value": [
+      [
+       "R_",
+       1
+      ],
+      [
+       "L_",
+       1
+      ],
+      [
+       "r_",
+       1
+      ],
+      [
+       "l_",
+       1
+      ],
+      [
+       "R2",
+       2
+      ],
+      [
+       "L2",
+       2
+      ],
+      [
+       "r2",
+       2
+      ],
+      [
+       "l2",
+       2
+      ],
+      [
+       "__",
+       2
+      ],
+      [
+       "_2",
+       3
+      ]
+     ]
+    },
+    {
+     "type": "next-state",
+     "value": {
+      "index": 1,
+      "setup": "  R U R' U' R U R' U'",
+      "num": 1
+     }
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "(U2) R U R2 U2 R U2 R"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R U' R2 U' R' U R"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R U' R' U R U' R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U2) R U' R2 U2 R' U2 R"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R2 U R U' R' U2 R'"
+    },
+    {
+     "type": "solution",
+     "value": "R' U' R2 U' R U2 R"
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "(U2) R U R2 U2 R U2 R"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R U' R2 U' R' U R"
+    },
+    {
+     "type": "solution",
+     "value": "(U2) R U' R2 U2 R' U2 R"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R U' R' U R U' R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R2 U R U' R' U2 R'"
+    },
+    {
+     "type": "solution",
+     "value": "R' U' R2 U' R U2 R"
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "(U2) R U R U2 R' U2 R' U2 R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R U R2 U2 R2 U R' U R"
+    },
+    {
+     "type": "solution",
+     "value": "(U2) R U R2 U2 R U2 R"
+    },
+    {
+     "type": "solution",
+     "value": "(U2) R U R2 U2 R' U2 R2 U2 R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R U2 R' U' R' U2 R U2 R"
+    },
+    {
+     "type": "solution",
+     "value": "(U2) R U' R2 U2 R U2 R2 U2 R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U2) R U' R2 U2 R' U2 R"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R U' R2 U' R' U R"
+    },
+    {
+     "type": "solution",
+     "value": "(U2) R U' R2 U' R U R2 U' R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R U' R' U R U' R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R2 U R U' R U2 R2 U2 R"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R2 U R U' R' U2 R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U2) R2 U R U' R2 U' R U' R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R2 U R2 U R2 U' R' U' R2"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R2 U R2 U R' U2 R' U' R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R2 U R' U' R2 U' R U2 R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R2 U2 R U' R2 U' R' U R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R2 U2 R2 U' R U' R' U2 R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R2 U2 R' U' R2 U' R' U R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R2 U' R U' R' U2 R' U' R2"
+    },
+    {
+     "type": "solution",
+     "value": "R2 U' R2 U R2 U2 R U' R2"
+    },
+    {
+     "type": "solution",
+     "value": "R2 U' R2 U' R2 U2 R' U' R2"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R' U R2 U R2 U2 R U R"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R' U R2 U R' U R U R2"
+    },
+    {
+     "type": "solution",
+     "value": "R' U R2 U2 R2 U R U2 R"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R' U R2 U2 R U R U' R"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R' U R2 U' R2 U2 R' U R"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R' U R' U R U R2 U2 R"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R' U R' U R U' R2 U2 R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R' U2 R U R U' R U2 R"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R' U' R2 U2 R' U R U' R"
+    },
+    {
+     "type": "solution",
+     "value": "R' U' R2 U' R U2 R"
+    },
+    {
+     "type": "solution",
+     "value": "R' U' R2 U' R' U2 R2 U2 R'"
+    },
+    {
+     "type": "solution",
+     "value": "R' U' R' U R U2 R U' R'"
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "(U2) R U R U2 R' U2 R' U2 R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U2) R U R2 U2 R U2 R"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R U R2 U2 R2 U R' U R"
+    },
+    {
+     "type": "solution",
+     "value": "(U2) R U R2 U2 R' U2 R2 U2 R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R U2 R' U' R' U2 R U2 R"
+    },
+    {
+     "type": "solution",
+     "value": "(U2) R U' R2 U2 R U2 R2 U2 R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U2) R U' R2 U2 R' U2 R"
+    },
+    {
+     "type": "solution",
+     "value": "(U2) R U' R2 U' R U R2 U' R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R U' R2 U' R' U R"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R U' R' U R U' R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R2 U R U' R U2 R2 U2 R"
+    },
+    {
+     "type": "solution",
+     "value": "(U2) R2 U R U' R2 U' R U' R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R2 U R U' R' U2 R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R2 U R2 U R2 U' R' U' R2"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R2 U R2 U R' U2 R' U' R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R2 U R' U' R2 U' R U2 R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R2 U2 R U' R2 U' R' U R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R2 U2 R2 U' R U' R' U2 R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R2 U2 R' U' R2 U' R' U R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R2 U' R U' R' U2 R' U' R2"
+    },
+    {
+     "type": "solution",
+     "value": "R2 U' R2 U R2 U2 R U' R2"
+    },
+    {
+     "type": "solution",
+     "value": "R2 U' R2 U' R2 U2 R' U' R2"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R' U R2 U R2 U2 R U R"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R' U R2 U R' U R U R2"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R' U R2 U2 R U R U' R"
+    },
+    {
+     "type": "solution",
+     "value": "R' U R2 U2 R2 U R U2 R"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R' U R2 U' R2 U2 R' U R"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R' U R' U R U R2 U2 R"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R' U R' U R U' R2 U2 R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R' U2 R U R U' R U2 R"
+    },
+    {
+     "type": "solution",
+     "value": "(U) R' U' R2 U2 R' U R U' R"
+    },
+    {
+     "type": "solution",
+     "value": "R' U' R2 U' R U2 R"
+    },
+    {
+     "type": "solution",
+     "value": "R' U' R2 U' R' U2 R2 U2 R'"
+    },
+    {
+     "type": "solution",
+     "value": "R' U' R' U R U2 R U' R'"
+    },
+    {
+     "type": "set-depth",
+     "value": 0
+    },
+    {
+     "type": "next-state",
+     "value": {
+      "index": 2,
+      "setup": "   R U2 R' U' R U' R'",
+      "num": 2
+     }
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "R U R2 U' R2 U R"
+    },
+    {
+     "type": "solution",
+     "value": "R U R' U R U2 R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R' U2 R U R' U R"
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "R U R2 U' R2 U R"
+    },
+    {
+     "type": "solution",
+     "value": "R U R' U R U2 R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R' U2 R U R' U R"
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "(U) R U R U2 R U2 R' U R'"
+    },
+    {
+     "type": "solution",
+     "value": "R U R2 U R2 U2 R2 U' R"
+    },
+    {
+     "type": "solution",
+     "value": "R U R2 U' R2 U R"
+    },
+    {
+     "type": "solution",
+     "value": "R U R' U R U2 R'"
+    },
+    {
+     "type": "solution",
+     "value": "R U R' U R' U2 R2 U2 R"
+    },
+    {
+     "type": "solution",
+     "value": "R U2 R U R U' R' U R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R U2 R2 U2 R' U R' U R"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R U2 R2 U' R U R2 U2 R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R U2 R2 U' R U' R2 U2 R"
+    },
+    {
+     "type": "solution",
+     "value": "R U' R2 U2 R2 U R2 U R"
+    },
+    {
+     "type": "solution",
+     "value": "R2 U R U R2 U2 R' U R'"
+    },
+    {
+     "type": "solution",
+     "value": "R2 U R U' R2 U2 R U R'"
+    },
+    {
+     "type": "solution",
+     "value": "R2 U R2 U R U' R U' R2"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R2 U' R U' R U R2 U R2"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R' U R U2 R2 U' R U R2"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R' U R' U2 R U2 R U R"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R' U R' U2 R2 U R U R2"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R' U R' U' R U R U2 R"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R' U2 R U R' U R"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R' U2 R U2 R U R U' R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R' U2 R2 U R U R2 U2 R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R' U2 R2 U R U' R2 U2 R"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R' U' R U R U2 R U2 R'"
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "(U) R U R U2 R U2 R' U R'"
+    },
+    {
+     "type": "solution",
+     "value": "R U R2 U R2 U2 R2 U' R"
+    },
+    {
+     "type": "solution",
+     "value": "R U R2 U' R2 U R"
+    },
+    {
+     "type": "solution",
+     "value": "R U R' U R U2 R'"
+    },
+    {
+     "type": "solution",
+     "value": "R U R' U R' U2 R2 U2 R"
+    },
+    {
+     "type": "solution",
+     "value": "R U2 R U R U' R' U R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R U2 R2 U2 R' U R' U R"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R U2 R2 U' R U R2 U2 R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R U2 R2 U' R U' R2 U2 R"
+    },
+    {
+     "type": "solution",
+     "value": "R U' R2 U2 R2 U R2 U R"
+    },
+    {
+     "type": "solution",
+     "value": "R2 U R U R2 U2 R' U R'"
+    },
+    {
+     "type": "solution",
+     "value": "R2 U R U' R2 U2 R U R'"
+    },
+    {
+     "type": "solution",
+     "value": "R2 U R2 U R U' R U' R2"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R2 U' R U' R U R2 U R2"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R' U R U2 R2 U' R U R2"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R' U R' U2 R U2 R U R"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R' U R' U2 R2 U R U R2"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R' U R' U' R U R U2 R"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R' U2 R U R' U R"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R' U2 R U2 R U R U' R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R' U2 R2 U R U R2 U2 R'"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R' U2 R2 U R U' R2 U2 R"
+    },
+    {
+     "type": "solution",
+     "value": "(U') R' U' R U R U2 R U2 R'"
+    },
+    {
+     "type": "set-depth",
+     "value": 0
+    },
+    {
+     "type": "stop",
+     "value": null
+    }
+   ]
+  },
+  {
+   "name": "3x3-sune-showpost",
+   "input": {
+    "puzzle": "U: (UF UL UB UR) (UFR UFL UBL UBR)\nR: (UR BR DR FR) (UFR-1 UBR+1 DBR-1 DFR+1)\nF: (UF+1 FR+1 DF+1 FL+1) (UFR+1 DFR-1 DFL+1 UFL-1)\nD: (DF DR DB DL) (DFR DBR DBL DFL)\nL: (UL FL DL BL) (UFL+1 DFL-1 DBL+1 UBL-1)\nB: (UB+1 BL+1 DB+1 BR+1) (UBR-1 UBL+1 DBL-1 DBR+1)\nu: (UF UL UB UR) (UFR UFL UBL UBR) (FR+1 FL+1 BL+1 BR+1) (RL FB+1 RL+1)\nr: (UR BR DR FR) (UFR-1 UBR+1 DBR-1 DFR+1) (UF+1 UB+1 DB+1 DF+1) (FB UD+1 FB+1)\nf: (UF+1 FR+1 DF+1 FL+1) (UFR+1 DFR-1 DFL+1 UFL-1) (UR+1 DR+1 DL+1 UL+1) (UD RL+1 UD+1)\nd: (DF DR DB DL) (DFR DBR DBL DFL) (FR+1 BR+1 BL+1 FL+1) (FB RL+1 FB+1)\nl: (UL FL DL BL) (UFL+1 DFL-1 DBL+1 UBL-1) (UF+1 DF+1 DB+1 UB+1) (UD FB+1 UD+1)\nb: (UB+1 BL+1 DB+1 BR+1) (UBR-1 UBL+1 DBL-1 DBR+1) (UR+1 UL+1 DL+1 DR+1) (RL UD+1 RL+1)\nM: (UF+1 DF+1 DB+1 UB+1) (UD FB+1 UD+1)\nS: (UR+1 DR+1 DL+1 UL+1) (UD RL+1 UD+1)\nE: (FR+1 BR+1 BL+1 FL+1) (FB RL+1 FB+1)\nx: (UR BR DR FR) (UFR-1 UBR+1 DBR-1 DFR+1) (UL BL DL FL) (UFL+1 UBL-1 DBL+1 DFL-1) (UF+1 UB+1 DB+1 DF+1) (FB UD+1 FB+1)\ny: (UF UL UB UR) (UFR UFL UBL UBR) (DF DL DB DR) (DFR DFL DBL DBR) (FR+1 FL+1 BL+1 BR+1) (RL FB+1 RL+1)\nz: (UF+1 FR+1 DF+1 FL+1) (UFR+1 DFR-1 DFL+1 UFL-1) (UB+1 BR+1 DB+1 BL+1) (UBR-1 DBR+1 DBL-1 UBL+1) (UR+1 DR+1 DL+1 UL+1) (UD RL+1 UD+1)",
+    "ignore": "",
+    "solve": "[R U R' U R U2 R']",
+    "preAdjust": "U",
+    "postAdjust": "U",
+    "subgroups": [
+     {
+      "subgroup": "R U",
+      "prune": "5",
+      "search": "+"
+     }
+    ],
+    "sorting": [],
+    "esq": "",
+    "rankesq": "R_ L_ r_ l_: 1\nR2 L2 r2 l2: 2\n__: 2\n_2: 3",
+    "showPost": true
+   },
+   "messages": [
+    {
+     "type": "num-states",
+     "value": 1
+    },
+    {
+     "type": "set-depth",
+     "value": 0
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "moveWeights",
+     "value": [
+      [
+       "R_",
+       1
+      ],
+      [
+       "L_",
+       1
+      ],
+      [
+       "r_",
+       1
+      ],
+      [
+       "l_",
+       1
+      ],
+      [
+       "R2",
+       2
+      ],
+      [
+       "L2",
+       2
+      ],
+      [
+       "r2",
+       2
+      ],
+      [
+       "l2",
+       2
+      ],
+      [
+       "__",
+       2
+      ],
+      [
+       "_2",
+       3
+      ]
+     ]
+    },
+    {
+     "type": "next-state",
+     "value": {
+      "index": 1,
+      "setup": "  R U R' U R U2 R'",
+      "num": 1
+     }
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "R U2 R' U' R U' R' "
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "R U2 R' U' R U' R' "
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "R U2 R' U' R U' R' "
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "R U2 R' U' R U' R' "
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "R U2 R' U' R U' R' "
+    },
+    {
+     "type": "set-depth",
+     "value": 0
+    },
+    {
+     "type": "stop",
+     "value": null
+    }
+   ]
+  },
+  {
+   "name": "ocll-generators-sized-prune",
+   "input": {
+    "puzzle": "U: (UF UL UB UR) (UFR UFL UBL UBR)\nR: (UR BR DR FR) (UFR-1 UBR+1 DBR-1 DFR+1)\nF: (UF+1 FR+1 DF+1 FL+1) (UFR+1 DFR-1 DFL+1 UFL-1)\nD: (DF DR DB DL) (DFR DBR DBL DFL)\nL: (UL FL DL BL) (UFL+1 DFL-1 DBL+1 UBL-1)\nB: (UB+1 BL+1 DB+1 BR+1) (UBR-1 UBL+1 DBL-1 DBR+1)\nu: (UF UL UB UR) (UFR UFL UBL UBR) (FR+1 FL+1 BL+1 BR+1) (RL FB+1 RL+1)\nr: (UR BR DR FR) (UFR-1 UBR+1 DBR-1 DFR+1) (UF+1 UB+1 DB+1 DF+1) (FB UD+1 FB+1)\nf: (UF+1 FR+1 DF+1 FL+1) (UFR+1 DFR-1 DFL+1 UFL-1) (UR+1 DR+1 DL+1 UL+1) (UD RL+1 UD+1)\nd: (DF DR DB DL) (DFR DBR DBL DFL) (FR+1 BR+1 BL+1 FL+1) (FB RL+1 FB+1)\nl: (UL FL DL BL) (UFL+1 DFL-1 DBL+1 UBL-1) (UF+1 DF+1 DB+1 UB+1) (UD FB+1 UD+1)\nb: (UB+1 BL+1 DB+1 BR+1) (UBR-1 UBL+1 DBL-1 DBR+1) (UR+1 UL+1 DL+1 DR+1) (RL UD+1 RL+1)\nM: (UF+1 DF+1 DB+1 UB+1) (UD FB+1 UD+1)\nS: (UR+1 DR+1 DL+1 UL+1) (UD RL+1 UD+1)\nE: (FR+1 BR+1 BL+1 FL+1) (FB RL+1 FB+1)\nx: (UR BR DR FR) (UFR-1 UBR+1 DBR-1 DFR+1) (UL BL DL FL) (UFL+1 UBL-1 DBL+1 DFL-1) (UF+1 UB+1 DB+1 DF+1) (FB UD+1 FB+1)\ny: (UF UL UB UR) (UFR UFL UBL UBR) (DF DL DB DR) (DFR DFL DBL DBR) (FR+1 FL+1 BL+1 BR+1) (RL FB+1 RL+1)\nz: (UF+1 FR+1 DF+1 FL+1) (UFR+1 DFR-1 DFL+1 UFL-1) (UB+1 BR+1 DB+1 BL+1) (UBR-1 DBR+1 DBL-1 UBL+1) (UR+1 DR+1 DL+1 UL+1) (UD RL+1 UD+1)",
+    "ignore": "{UF UR UB UL} {UFR UBR UBL UFL}\n1: UF UR UB UL",
+    "solve": "<R U R' U R U2 R', U> #1-4",
+    "preAdjust": "U",
+    "postAdjust": "U",
+    "subgroups": [
+     {
+      "subgroup": "R U",
+      "prune": "1k",
+      "search": "="
+     }
+    ],
+    "sorting": [
+     {
+      "type": "ori-at",
+      "pieces": "UFR UFL UBL UBR"
+     }
+    ],
+    "esq": "",
+    "rankesq": "R_ L_ r_ l_: 1\nR2 L2 r2 l2: 2\n__: 2\n_2: 3",
+    "showPost": false
+   },
+   "messages": [
+    {
+     "type": "num-states",
+     "value": "2 (not reduced)"
+    },
+    {
+     "type": "num-states",
+     "value": "4 (not reduced)"
+    },
+    {
+     "type": "num-states",
+     "value": "8 (not reduced)"
+    },
+    {
+     "type": "num-states",
+     "value": "14 (not reduced)"
+    },
+    {
+     "type": "num-states",
+     "value": "19 (not reduced)"
+    },
+    {
+     "type": "num-states",
+     "value": "24 (not reduced)"
+    },
+    {
+     "type": "num-states",
+     "value": "26 (not reduced)"
+    },
+    {
+     "type": "num-states",
+     "value": "27 (not reduced)"
+    },
+    {
+     "type": "num-states",
+     "value": 4
+    },
+    {
+     "type": "set-depth",
+     "value": 0
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "moveWeights",
+     "value": [
+      [
+       "R_",
+       1
+      ],
+      [
+       "L_",
+       1
+      ],
+      [
+       "r_",
+       1
+      ],
+      [
+       "l_",
+       1
+      ],
+      [
+       "R2",
+       2
+      ],
+      [
+       "L2",
+       2
+      ],
+      [
+       "r2",
+       2
+      ],
+      [
+       "l2",
+       2
+      ],
+      [
+       "__",
+       2
+      ],
+      [
+       "_2",
+       3
+      ]
+     ]
+    },
+    {
+     "type": "next-state",
+     "value": {
+      "index": 1,
+      "setup": "  R U R' U R U2 R'  U R U R' U R U2 R'  U  U R U R' U R U2 R'  ",
+      "num": 1
+     }
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "set-depth",
+     "value": 0
+    },
+    {
+     "type": "next-state",
+     "value": {
+      "index": 2,
+      "setup": "  R U R' U R U2 R' R U R' U R U2 R' R U R' U R U2 R'  U R U R' U R U2 R'  U  ",
+      "num": 2
+     }
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "set-depth",
+     "value": 0
+    },
+    {
+     "type": "next-state",
+     "value": {
+      "index": 3,
+      "setup": "  R U R' U R U2 R' R U R' U R U2 R' R U R' U R U2 R'  ",
+      "num": 3
+     }
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "set-depth",
+     "value": 0
+    },
+    {
+     "type": "next-state",
+     "value": {
+      "index": 4,
+      "setup": "  R U R' U R U2 R'  U R U R' U R U2 R'  U R U R' U R U2 R'  ",
+      "num": 4
+     }
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "(U) R U R' U R U2 R'"
+    },
+    {
+     "type": "solution",
+     "value": "R' U2 R U R' U R"
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "(U) R U R' U R U2 R'"
+    },
+    {
+     "type": "solution",
+     "value": "R' U2 R U R' U R"
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "(U) R U R' U R U2 R'"
+    },
+    {
+     "type": "solution",
+     "value": "R' U2 R U R' U R"
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "(U) R U R' U R U2 R'"
+    },
+    {
+     "type": "solution",
+     "value": "R' U2 R U R' U R"
+    },
+    {
+     "type": "set-depth",
+     "value": 0
+    },
+    {
+     "type": "stop",
+     "value": null
+    }
+   ]
+  },
+  {
+   "name": "pyraminx",
+   "input": {
+    "puzzle": "U: (UB UR UL) (UUU+1) (TUU+1)\nR: (UR DR DF) (RRR+1) (TRR+1)\nL: (UL+1 DF+1 DL) (LLL+1) (TLL+1)\nB: (UB+1 DL DR+1) (BBB+1) (TBB+1)\nu: (TUU+1)\nr: (TRR+1)\nl: (TLL+1)\nb: (TBB+1)",
+    "ignore": "",
+    "solve": "[U R U' R', R U R' U R U R']",
+    "preAdjust": "",
+    "postAdjust": "",
+    "subgroups": [
+     {
+      "subgroup": "U R L",
+      "prune": "4",
+      "search": "4"
+     }
+    ],
+    "sorting": [],
+    "esq": "",
+    "rankesq": "R_ L_ r_ l_: 1\nR2 L2 r2 l2: 2\n__: 2\n_2: 3",
+    "showPost": false
+   },
+   "messages": [
+    {
+     "type": "num-states",
+     "value": 2
+    },
+    {
+     "type": "set-depth",
+     "value": 0
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "moveWeights",
+     "value": [
+      [
+       "R_",
+       1
+      ],
+      [
+       "L_",
+       1
+      ],
+      [
+       "r_",
+       1
+      ],
+      [
+       "l_",
+       1
+      ],
+      [
+       "R2",
+       2
+      ],
+      [
+       "L2",
+       2
+      ],
+      [
+       "r2",
+       2
+      ],
+      [
+       "l2",
+       2
+      ],
+      [
+       "__",
+       2
+      ],
+      [
+       "_2",
+       3
+      ]
+     ]
+    },
+    {
+     "type": "next-state",
+     "value": {
+      "index": 1,
+      "setup": "  U R U' R'",
+      "num": 1
+     }
+    },
+    {
+     "type": "solution",
+     "value": "R U R' U'"
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "R U R' U'"
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "R U R' U'"
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "R U R' U'"
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "U R U' R' U R U' R'"
+    },
+    {
+     "type": "solution",
+     "value": "R L U R' U' R L' R'"
+    },
+    {
+     "type": "solution",
+     "value": "R L U L' R' L U' L'"
+    },
+    {
+     "type": "solution",
+     "value": "R L' U R' U' R L R'"
+    },
+    {
+     "type": "solution",
+     "value": "L R U R' U' R' L' R"
+    },
+    {
+     "type": "solution",
+     "value": "L' R U R' U' R' L R"
+    },
+    {
+     "type": "set-depth",
+     "value": 0
+    },
+    {
+     "type": "next-state",
+     "value": {
+      "index": 2,
+      "setup": "   R U R' U R U R'",
+      "num": 2
+     }
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "R U' R' U' R U' R'"
+    },
+    {
+     "type": "solution",
+     "value": "R' U' R U' R' U' R"
+    },
+    {
+     "type": "solution",
+     "value": "L U' L' U' L U' L'"
+    },
+    {
+     "type": "solution",
+     "value": "L' U' L U' L' U' L"
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "R U' R' U' R U' R'"
+    },
+    {
+     "type": "solution",
+     "value": "R' U' R U' R' U' R"
+    },
+    {
+     "type": "solution",
+     "value": "L U' L' U' L U' L'"
+    },
+    {
+     "type": "solution",
+     "value": "L' U' L U' L' U' L"
+    },
+    {
+     "type": "set-depth",
+     "value": 0
+    },
+    {
+     "type": "stop",
+     "value": null
+    }
+   ]
+  },
+  {
+   "name": "skewb",
+   "input": {
+    "puzzle": "l: (UFL-1 DFR-1 DBL-1) (DLF+1) (L F D)\nL: (URF-1 DLF-1 ULB-1) (UFL+1) (U F L)\nr: (DFR-1 UBR-1 DBL-1) (DRB+1) (R B D)\nR: (URF-1 ULB-1 DRB-1) (UBR+1) (R U B)\nb: (ULB-1 DLF-1 DRB-1) (DBL+1) (L D B)\nB: (UBR-1 UFL-1 DBL-1) (ULB+1) (U L B)\nF: (UFL-1 UBR-1 DFR-1) (URF+1) (F U R)\nf: (URF-1 DRB-1 DLF-1) (DFR+1) (F R D)\nS: (URF-1) (UFL+1) (ULB+1) (UBR-1) (R U) (F B)\nH: (URF+1) (UFL-1) (ULB-1) (UBR+1) (R U) (F B)\ns: (UBR-1) (ULB+1) (DRB-1) (DBL+1) (U D) (R B)\nh: (UBR+1) (ULB-1) (DRB+1) (DBL-1) (U D) (R B)\nx: (F U B D) (URF+1 UBR-1 DRB+1 DFR-1) (UFL-1 ULB+1 DBL-1 DLF+1)\ny: (F L B R) (URF UFL ULB UBR) (DFR DLF DBL DRB)\nz: (U R D L) (URF-1 DFR+1 DLF-1 UFL+1) (UBR+1 DRB-1 DBL+1 ULB-1)\nvUperm: (U B D)\nhUperm: (U R D)",
+    "ignore": "",
+    "solve": "[R L R' L']",
+    "preAdjust": "",
+    "postAdjust": "",
+    "subgroups": [
+     {
+      "subgroup": "R L F B",
+      "prune": "3",
+      "search": "3"
+     }
+    ],
+    "sorting": [],
+    "esq": "",
+    "rankesq": "R_ L_ r_ l_: 1\nR2 L2 r2 l2: 2\n__: 2\n_2: 3",
+    "showPost": false
+   },
+   "messages": [
+    {
+     "type": "num-states",
+     "value": 1
+    },
+    {
+     "type": "set-depth",
+     "value": 0
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "moveWeights",
+     "value": [
+      [
+       "R_",
+       1
+      ],
+      [
+       "L_",
+       1
+      ],
+      [
+       "r_",
+       1
+      ],
+      [
+       "l_",
+       1
+      ],
+      [
+       "R2",
+       2
+      ],
+      [
+       "L2",
+       2
+      ],
+      [
+       "r2",
+       2
+      ],
+      [
+       "l2",
+       2
+      ],
+      [
+       "__",
+       2
+      ],
+      [
+       "_2",
+       3
+      ]
+     ]
+    },
+    {
+     "type": "next-state",
+     "value": {
+      "index": 1,
+      "setup": "  R L R' L'",
+      "num": 1
+     }
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "L R L' R'"
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "L R L' R'"
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "L R L' R'"
+    },
+    {
+     "type": "set-depth",
+     "value": 0
+    },
+    {
+     "type": "stop",
+     "value": null
+    }
+   ]
+  },
+  {
+   "name": "megaminx",
+   "input": {
+    "puzzle": "U: (UF UL UBl UBr UR) (UFR UFL ULB UDB URB)\nR: (UR RB RDr RDl RF) (UFR-1 URB+1 RDB-1 RDD RDF+1)\nL: (UL LF LDr LDl LB) (ULB-1 UFL+1 LDF-1 LDD LDB+1)\nF: (UF+1 RF+1 FDr+1 FDl LF+1) (UFL-1 UFR+1 RDF-1 FDD LDF+1)\nDfr: (RDl+1 DFrr+1 DFrb+1 DFrl FDr+1) (RDF-1 RDD+1 DFRr-1 DFRl FDD+1)\nBr: ( UBr+1 DB+1 BRd+1 BRf RB+1) (URB-1 UDB+1 BRB-1 BRD RDB+1)\nBl: ( UBl+1 DB+1 BLd+1 BLf LB+1) (ULB-1 UDB+1 BLB-1 BLD LDB+1)",
+    "ignore": "",
+    "solve": "[R U R' U']",
+    "preAdjust": "U",
+    "postAdjust": "U",
+    "subgroups": [
+     {
+      "subgroup": "R U",
+      "prune": "3",
+      "search": "3"
+     }
+    ],
+    "sorting": [],
+    "esq": "",
+    "rankesq": "R_ L_ r_ l_: 1\nR2 L2 r2 l2: 2\n__: 2\n_2: 3",
+    "showPost": false
+   },
+   "messages": [
+    {
+     "type": "num-states",
+     "value": 1
+    },
+    {
+     "type": "set-depth",
+     "value": 0
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "moveWeights",
+     "value": [
+      [
+       "R_",
+       1
+      ],
+      [
+       "L_",
+       1
+      ],
+      [
+       "r_",
+       1
+      ],
+      [
+       "l_",
+       1
+      ],
+      [
+       "R2",
+       2
+      ],
+      [
+       "L2",
+       2
+      ],
+      [
+       "r2",
+       2
+      ],
+      [
+       "l2",
+       2
+      ],
+      [
+       "__",
+       2
+      ],
+      [
+       "_2",
+       3
+      ]
+     ]
+    },
+    {
+     "type": "next-state",
+     "value": {
+      "index": 1,
+      "setup": "  R U R' U'",
+      "num": 1
+     }
+    },
+    {
+     "type": "solution",
+     "value": "(U) R U' R'"
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "(U) R U' R'"
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "(U) R U' R'"
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "set-depth",
+     "value": 0
+    },
+    {
+     "type": "stop",
+     "value": null
+    }
+   ]
+  },
+  {
+   "name": "fto",
+   "input": {
+    "puzzle": "U: (UF UN UM) (Ur Ul Ub) (lUr bUl rUb) (uRf uLn uBm) (fLu nBu mRu)\nD: (FM FN+1 MN+1) (Fd Nd Md) (mDf fDn nDm) (dFr dNl dMb) (lFd bNd rMd)\nF: (UF FM FN) (Fl Fr Fd) (rFl dFr lFd) (uRf mDf nLf) (fLu fRm fDn)\nB: (UM+1 UN MN+1) (Ub Mb Nb) (mBn uBm nBu) (rUb lNb dMb) (bUl bNd bMr)\nL: (UF+1 FN UN+1) (Ul Fl Nl) (nLf uLn fLu) (lUr lFd lNb) (rFl dNl bUl)\nR: (UF+1 UM FM+1) (Ur Mr Fr) (fRm uRf mRu) (lUr bMr dFr) (rFl rUb rMd)\nBL: (UN FN+1 MN+1) (Nl Nd Nb) (lNb bNd dNl) (uLn fDn mBn) (nLf nDm nBu)\nBR: (UM MN+1 FM+1) (Mr Mb Md) (bMr dMb rMd) (mRu mBn mDf) (fRm uBm nDm)\nu: (UF UN UM) (Ur Ul Ub) (Fr Nl Mb) (Fl Nb Mr) (lUr bUl rUb) (uRf uLn uBm) (fLu nBu mRu) (rFl lNb bMr) (fRm nLf mBn)\nd: (FM FN+1 MN+1) (Fd Nd Md) (mDf fDn nDm) (dFr dNl dMb) (lFd bNd rMd) (Fl Mr Nb) (Fr Mb Nl) (rFl bMr lNb) (fRm mBn nLf)\nf: (UF FM FN) (Fl Fr Fd) (rFl dFr lFd) (uRf mDf nLf) (fLu fRm fDn) (Ul Mr Nd) (Ur Md Nl) (lUr rMd dNl) (mRu nDm uLn)\nb: (UM+1 UN MN+1) (Ub Mb Nb) (mBn uBm nBu) (rUb lNb dMb) (bUl bNd bMr) (Ul Nd Mr) (Ur Nl Md) (lUr dNl rMd) (mRu uLn nDm)\nl: (UF+1 FN UN+1) (Ul Fl Nl) (nLf uLn fLu) (lUr lFd lNb) (rFl dNl bUl) (UR Fd Nb) (Ub Fr Nd) (rUb dFr bNd) (uRf fDn nBu)\nr: (UF+1 UM FM+1) (Ur Mr Fr) (Ul Mb Fd) (Ub Md Fl) (fRm uRf mRu) (lUr bMr dFr) (rFl rUb rMd) (fLu uBm mDf) (bUl dMb lFd)\nbl: (UN FN+1 MN+1) (Nl Nd Nb) (lNb bNd dNl) (uLn fDn mBn) (nLf nDm nBu) (Ul Fd Mb) (Ub Fl Md) (bUl lFd dMb) (fLu mDf uBm)\nbr: (UM MN+1 FM+1) (Mr Mb Md) (bMr dMb rMd) (mRu mBn mDf) (fRm uBm nDm) (Ur Nb Fd) (Ub Nd Fr) (rUb bNd dFr) (uRf nBu fDn)\nM: (Ul Fd Mb) (Ub Fl Md) (bUl lFd dMb) (fLu mDf uBm)\nN: (Ur Fd Nb) (Ub Fr Nd) (rUb dFr bNd) (uRf fDn nBu)\nE: (Fl Mr Nb) (Fr Mb Nl) (rFl bMr lNb) (fRm mBn nLf)\nS: (Ul Mr Nd) (Ur Md Nl) (lUr rMd dNl) (mRu nDm uLn)",
+    "ignore": "",
+    "solve": "[R U R' U']",
+    "preAdjust": "U",
+    "postAdjust": "U",
+    "subgroups": [
+     {
+      "subgroup": "U R",
+      "prune": "3",
+      "search": "3"
+     }
+    ],
+    "sorting": [],
+    "esq": "",
+    "rankesq": "R_ L_ r_ l_: 1\nR2 L2 r2 l2: 2\n__: 2\n_2: 3",
+    "showPost": false
+   },
+   "messages": [
+    {
+     "type": "num-states",
+     "value": 1
+    },
+    {
+     "type": "set-depth",
+     "value": 0
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "moveWeights",
+     "value": [
+      [
+       "R_",
+       1
+      ],
+      [
+       "L_",
+       1
+      ],
+      [
+       "r_",
+       1
+      ],
+      [
+       "l_",
+       1
+      ],
+      [
+       "R2",
+       2
+      ],
+      [
+       "L2",
+       2
+      ],
+      [
+       "r2",
+       2
+      ],
+      [
+       "l2",
+       2
+      ],
+      [
+       "__",
+       2
+      ],
+      [
+       "_2",
+       3
+      ]
+     ]
+    },
+    {
+     "type": "next-state",
+     "value": {
+      "index": 1,
+      "setup": "  R U R' U'",
+      "num": 1
+     }
+    },
+    {
+     "type": "solution",
+     "value": "(U) R U' R'"
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "(U) R U' R'"
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "(U) R U' R'"
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "set-depth",
+     "value": 0
+    },
+    {
+     "type": "stop",
+     "value": null
+    }
+   ]
+  },
+  {
+   "name": "4x4-wides",
+   "input": {
+    "puzzle": "U: (Ublc Ubrc Ufrc Uflc) (UFR UFL UBL UBR) (Ufr Ulf Ubl Urb) (Ful Lub Bur Ruf)\nR: (Rufc Rubc Rdbc Rdfc) (UFR-1 UBR+1 DBR-1 DFR+1) (Ruf Rbu Rdb Rfd) (Urb Brd Drf Fru)\nF: (Fulc Furc Fdrc Fdlc) (UFR+1 DFR-1 DFL+1 UFL-1) (Ful Fru Fdr Fld) (Ufr Rfd Dfl Lfu)\nD: (Dflc Dfrc Dbrc Dblc) (DFR DBR DBL DFL) (Dfl Drf Dbr Dlb) (Fdr Rdb Bdl Ldf)\nL: (Lubc Lufc Ldfc Ldbc) (UFL+1 DFL-1 DBL+1 UBL-1) (Lub Lfu Ldf Lbd) (Ulf Fld Dlb Blu)\nB: (Burc Bulc Bdlc Bdrc) (UBR-1 UBL+1 DBL-1 DBR+1) (Bur Blu Bdl Brd) (Ubl Lbd Dbr Rbu)\n2U: (Furc Lufc Bulc Rubc) (Fulc Lubc Burc Rufc) (Fru Lfu Blu Rbu)\n2R: (Ubrc Bdrc Dfrc Furc) (Ufrc Burc Dbrc Fdrc) (Ufr Bur Dbr Fdr)\n2F: (Ufrc Rdfc Dflc Lufc) (Uflc Rufc Dfrc Ldfc) (Ulf Ruf Drf Ldf)\n2D: (Fdlc Rdfc Bdrc Ldbc) (Fdrc Rdbc Bdlc Ldfc) (Fld Rfd Brd Lbd)\n2L: (Uflc Fdlc Dblc Bulc) (Ublc Fulc Dflc Bdlc) (Ubl Ful Dfl Bdl)\n2B: (Ubrc Lubc Dblc Rdbc) (Ublc Ldbc Dbrc Rubc) (Urb Lub Dlb Rdb)\nu: (Ublc Ubrc Ufrc Uflc) (Furc Lufc Bulc Rubc) (Fulc Lubc Burc Rufc) (UFR UFL UBL UBR) (Ufr Ulf Ubl Urb) (Ful Lub Bur Ruf) (Fru Lfu Blu Rbu)\nr: (Rufc Rubc Rdbc Rdfc) (Ubrc Bdrc Dfrc Furc) (Ufrc Burc Dbrc Fdrc) (UFR-1 UBR+1 DBR-1 DFR+1) (Ruf Rbu Rdb Rfd) (Urb Brd Drf Fru) (Ufr Bur Dbr Fdr)\nf: (Fulc Furc Fdrc Fdlc) (Ufrc Rdfc Dflc Lufc) (Uflc Rufc Dfrc Ldfc) (UFR+1 DFR-1 DFL+1 UFL-1) (Ful Fru Fdr Fld) (Ufr Rfd Dfl Lfu) (Ulf Ruf Drf Ldf)\nd: (Dflc Dfrc Dbrc Dblc) (Fdlc Rdfc Bdrc Ldbc) (Fdrc Rdbc Bdlc Ldfc) (DFR DBR DBL DFL) (Dfl Drf Dbr Dlb) (Fdr Rdb Bdl Ldf)(Fld Rfd Brd Lbd)\nl: (Lubc Lufc Ldfc Ldbc) (Uflc Fdlc Dblc Bulc) (Ublc Fulc Dflc Bdlc) (UFL+1 DFL-1 DBL+1 UBL-1) (Lub Lfu Ldf Lbd) (Ulf Fld Dlb Blu) (Ubl Ful Dfl Bdl)\nb: (Burc Bulc Bdlc Bdrc) (Ubrc Lubc Dblc Rdbc) (Ublc Ldbc Dbrc Rubc) (UBR-1 UBL+1 DBL-1 DBR+1) (Bur Blu Bdl Brd) (Ubl Lbd Dbr Rbu) (Urb Lub Dlb Rdb)",
+    "ignore": "{Ublc Ubrc Ufrc Uflc} {Rufc Rubc Rdbc Rdfc} {Fulc Furc Fdrc Fdlc} {Dflc Dfrc Dbrc Dblc} {Lubc Lufc Ldfc Ldbc} {Burc Bulc Bdlc Bdrc}",
+    "solve": "[r U r' U']",
+    "preAdjust": "U",
+    "postAdjust": "U",
+    "subgroups": [
+     {
+      "subgroup": "u r U R",
+      "prune": "3",
+      "search": "3"
+     }
+    ],
+    "sorting": [],
+    "esq": "",
+    "rankesq": "R_ L_ r_ l_: 1\nR2 L2 r2 l2: 2\n__: 2\n_2: 3",
+    "showPost": false
+   },
+   "messages": [
+    {
+     "type": "num-states",
+     "value": 1
+    },
+    {
+     "type": "set-depth",
+     "value": 0
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "moveWeights",
+     "value": [
+      [
+       "R_",
+       1
+      ],
+      [
+       "L_",
+       1
+      ],
+      [
+       "r_",
+       1
+      ],
+      [
+       "l_",
+       1
+      ],
+      [
+       "R2",
+       2
+      ],
+      [
+       "L2",
+       2
+      ],
+      [
+       "r2",
+       2
+      ],
+      [
+       "l2",
+       2
+      ],
+      [
+       "__",
+       2
+      ],
+      [
+       "_2",
+       3
+      ]
+     ]
+    },
+    {
+     "type": "next-state",
+     "value": {
+      "index": 1,
+      "setup": "  r U r' U'",
+      "num": 1
+     }
+    },
+    {
+     "type": "solution",
+     "value": "(U) r U' r'"
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "(U) r U' r'"
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "(U) r U' r'"
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "set-depth",
+     "value": 0
+    },
+    {
+     "type": "stop",
+     "value": null
+    }
+   ]
+  },
+  {
+   "name": "esq-weighted-generation",
+   "input": {
+    "puzzle": "U: (UF UL UB UR) (UFR UFL UBL UBR)\nR: (UR BR DR FR) (UFR-1 UBR+1 DBR-1 DFR+1)\nF: (UF+1 FR+1 DF+1 FL+1) (UFR+1 DFR-1 DFL+1 UFL-1)\nD: (DF DR DB DL) (DFR DBR DBL DFL)\nL: (UL FL DL BL) (UFL+1 DFL-1 DBL+1 UBL-1)\nB: (UB+1 BL+1 DB+1 BR+1) (UBR-1 UBL+1 DBL-1 DBR+1)\nu: (UF UL UB UR) (UFR UFL UBL UBR) (FR+1 FL+1 BL+1 BR+1) (RL FB+1 RL+1)\nr: (UR BR DR FR) (UFR-1 UBR+1 DBR-1 DFR+1) (UF+1 UB+1 DB+1 DF+1) (FB UD+1 FB+1)\nf: (UF+1 FR+1 DF+1 FL+1) (UFR+1 DFR-1 DFL+1 UFL-1) (UR+1 DR+1 DL+1 UL+1) (UD RL+1 UD+1)\nd: (DF DR DB DL) (DFR DBR DBL DFL) (FR+1 BR+1 BL+1 FL+1) (FB RL+1 FB+1)\nl: (UL FL DL BL) (UFL+1 DFL-1 DBL+1 UBL-1) (UF+1 DF+1 DB+1 UB+1) (UD FB+1 UD+1)\nb: (UB+1 BL+1 DB+1 BR+1) (UBR-1 UBL+1 DBL-1 DBR+1) (UR+1 UL+1 DL+1 DR+1) (RL UD+1 RL+1)\nM: (UF+1 DF+1 DB+1 UB+1) (UD FB+1 UD+1)\nS: (UR+1 DR+1 DL+1 UL+1) (UD RL+1 UD+1)\nE: (FR+1 BR+1 BL+1 FL+1) (FB RL+1 FB+1)\nx: (UR BR DR FR) (UFR-1 UBR+1 DBR-1 DFR+1) (UL BL DL FL) (UFL+1 UBL-1 DBL+1 DFL-1) (UF+1 UB+1 DB+1 DF+1) (FB UD+1 FB+1)\ny: (UF UL UB UR) (UFR UFL UBL UBR) (DF DL DB DR) (DFR DFL DBL DBR) (FR+1 FL+1 BL+1 BR+1) (RL FB+1 RL+1)\nz: (UF+1 FR+1 DF+1 FL+1) (UFR+1 DFR-1 DFL+1 UFL-1) (UB+1 BR+1 DB+1 BL+1) (UBR-1 DBR+1 DBL-1 UBL+1) (UR+1 DR+1 DL+1 UL+1) (UD RL+1 UD+1)",
+    "ignore": "",
+    "solve": "[R U2 R' U' R U' R']",
+    "preAdjust": "U",
+    "postAdjust": "U",
+    "subgroups": [
+     {
+      "subgroup": "R U",
+      "prune": "4",
+      "search": "4"
+     }
+    ],
+    "sorting": [],
+    "esq": "_2: 2",
+    "rankesq": "R_ L_ r_ l_: 1\nR2 L2 r2 l2: 2\n__: 2\n_2: 3",
+    "showPost": false
+   },
+   "messages": [
+    {
+     "type": "num-states",
+     "value": 1
+    },
+    {
+     "type": "set-depth",
+     "value": 0
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "moveWeights",
+     "value": [
+      [
+       "R_",
+       1
+      ],
+      [
+       "L_",
+       1
+      ],
+      [
+       "r_",
+       1
+      ],
+      [
+       "l_",
+       1
+      ],
+      [
+       "R2",
+       2
+      ],
+      [
+       "L2",
+       2
+      ],
+      [
+       "r2",
+       2
+      ],
+      [
+       "l2",
+       2
+      ],
+      [
+       "__",
+       2
+      ],
+      [
+       "_2",
+       3
+      ]
+     ]
+    },
+    {
+     "type": "next-state",
+     "value": {
+      "index": 1,
+      "setup": "  R U2 R' U' R U' R'",
+      "num": 1
+     }
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "R U R' U R U2 R'"
+    },
+    {
+     "type": "set-depth",
+     "value": 0
+    },
+    {
+     "type": "stop",
+     "value": null
+    }
+   ]
+  },
+  {
+   "name": "optimise-first-only",
+   "input": {
+    "puzzle": "U: (UFR UFL UBL UBR)\nR: (UFR-1 UBR+1 DBR-1 DFR+1)\nF: (UFR+1 DFR-1 DFL+1 UFL-1)\nD: (DFR DBR DBL DFL)\nL: (UFL+1 DFL-1 DBL+1 UBL-1)\nB: (UBR-1 UBL+1 DBL-1 DBR+1)",
+    "ignore": "",
+    "solve": "[R U R' U' R U R' U', R U2 R' U' R U' R']",
+    "preAdjust": "U",
+    "postAdjust": "U",
+    "subgroups": [
+     {
+      "subgroup": "U R",
+      "prune": "4",
+      "search": "4"
+     }
+    ],
+    "sorting": [],
+    "esq": "",
+    "rankesq": "R_ L_ r_ l_: 1\nR2 L2 r2 l2: 2\n__: 2\n_2: 3",
+    "showPost": false,
+    "optimise": true
+   },
+   "messages": [
+    {
+     "type": "num-states",
+     "value": 2
+    },
+    {
+     "type": "set-depth",
+     "value": 0
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "moveWeights",
+     "value": [
+      [
+       "R_",
+       1
+      ],
+      [
+       "L_",
+       1
+      ],
+      [
+       "r_",
+       1
+      ],
+      [
+       "l_",
+       1
+      ],
+      [
+       "R2",
+       2
+      ],
+      [
+       "L2",
+       2
+      ],
+      [
+       "r2",
+       2
+      ],
+      [
+       "l2",
+       2
+      ],
+      [
+       "__",
+       2
+      ],
+      [
+       "_2",
+       3
+      ]
+     ]
+    },
+    {
+     "type": "next-state",
+     "value": {
+      "index": 1,
+      "setup": "  R U R' U' R U R' U'",
+      "num": 1
+     }
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "(U2) R U R2 U2 R U2 R"
+    },
+    {
+     "type": "next-state",
+     "value": {
+      "index": 2,
+      "setup": "   R U2 R' U' R U' R'",
+      "num": 2
+     }
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "R U R2 U' R2 U R"
+    },
+    {
+     "type": "stop",
+     "value": null
+    }
+   ]
+  },
+  {
+   "name": "custom-puzzle",
+   "input": {
+    "puzzle": "X: (AB BC CD)\nY: (BC-1 CD DA+1)",
+    "ignore": "",
+    "solve": "[X Y X' Y']",
+    "preAdjust": "",
+    "postAdjust": "",
+    "subgroups": [
+     {
+      "subgroup": "",
+      "prune": "2",
+      "search": "3"
+     }
+    ],
+    "sorting": [
+     {
+      "type": "perm-at",
+      "pieces": "AB BC"
+     }
+    ],
+    "esq": "",
+    "rankesq": "R_ L_ r_ l_: 1\nR2 L2 r2 l2: 2\n__: 2\n_2: 3",
+    "showPost": false
+   },
+   "messages": [
+    {
+     "type": "num-states",
+     "value": 1
+    },
+    {
+     "type": "set-depth",
+     "value": 0
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "moveWeights",
+     "value": [
+      [
+       "R_",
+       1
+      ],
+      [
+       "L_",
+       1
+      ],
+      [
+       "r_",
+       1
+      ],
+      [
+       "l_",
+       1
+      ],
+      [
+       "R2",
+       2
+      ],
+      [
+       "L2",
+       2
+      ],
+      [
+       "r2",
+       2
+      ],
+      [
+       "l2",
+       2
+      ],
+      [
+       "__",
+       2
+      ],
+      [
+       "_2",
+       3
+      ]
+     ]
+    },
+    {
+     "type": "next-state",
+     "value": {
+      "index": 1,
+      "setup": "  X Y X' Y'",
+      "num": 1
+     }
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "X Y' X"
+    },
+    {
+     "type": "solution",
+     "value": "Y' X Y'"
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "X Y' X"
+    },
+    {
+     "type": "solution",
+     "value": "X' Y' X Y"
+    },
+    {
+     "type": "solution",
+     "value": "Y X Y' X'"
+    },
+    {
+     "type": "solution",
+     "value": "Y' X Y'"
+    },
+    {
+     "type": "depthUpdate",
+     "value": 1
+    },
+    {
+     "type": "solution",
+     "value": "X' Y' X Y"
+    },
+    {
+     "type": "solution",
+     "value": "Y X Y' X'"
+    },
+    {
+     "type": "set-depth",
+     "value": 0
+    },
+    {
+     "type": "stop",
+     "value": null
+    }
+   ]
+  },
+  {
+   "name": "err-bad-subgroup-move",
+   "input": {
+    "puzzle": "U: (UF UL UB UR) (UFR UFL UBL UBR)\nR: (UR BR DR FR) (UFR-1 UBR+1 DBR-1 DFR+1)\nF: (UF+1 FR+1 DF+1 FL+1) (UFR+1 DFR-1 DFL+1 UFL-1)\nD: (DF DR DB DL) (DFR DBR DBL DFL)\nL: (UL FL DL BL) (UFL+1 DFL-1 DBL+1 UBL-1)\nB: (UB+1 BL+1 DB+1 BR+1) (UBR-1 UBL+1 DBL-1 DBR+1)\nu: (UF UL UB UR) (UFR UFL UBL UBR) (FR+1 FL+1 BL+1 BR+1) (RL FB+1 RL+1)\nr: (UR BR DR FR) (UFR-1 UBR+1 DBR-1 DFR+1) (UF+1 UB+1 DB+1 DF+1) (FB UD+1 FB+1)\nf: (UF+1 FR+1 DF+1 FL+1) (UFR+1 DFR-1 DFL+1 UFL-1) (UR+1 DR+1 DL+1 UL+1) (UD RL+1 UD+1)\nd: (DF DR DB DL) (DFR DBR DBL DFL) (FR+1 BR+1 BL+1 FL+1) (FB RL+1 FB+1)\nl: (UL FL DL BL) (UFL+1 DFL-1 DBL+1 UBL-1) (UF+1 DF+1 DB+1 UB+1) (UD FB+1 UD+1)\nb: (UB+1 BL+1 DB+1 BR+1) (UBR-1 UBL+1 DBL-1 DBR+1) (UR+1 UL+1 DL+1 DR+1) (RL UD+1 RL+1)\nM: (UF+1 DF+1 DB+1 UB+1) (UD FB+1 UD+1)\nS: (UR+1 DR+1 DL+1 UL+1) (UD RL+1 UD+1)\nE: (FR+1 BR+1 BL+1 FL+1) (FB RL+1 FB+1)\nx: (UR BR DR FR) (UFR-1 UBR+1 DBR-1 DFR+1) (UL BL DL FL) (UFL+1 UBL-1 DBL+1 DFL-1) (UF+1 UB+1 DB+1 DF+1) (FB UD+1 FB+1)\ny: (UF UL UB UR) (UFR UFL UBL UBR) (DF DL DB DR) (DFR DFL DBL DBR) (FR+1 FL+1 BL+1 BR+1) (RL FB+1 RL+1)\nz: (UF+1 FR+1 DF+1 FL+1) (UFR+1 DFR-1 DFL+1 UFL-1) (UB+1 BR+1 DB+1 BL+1) (UBR-1 DBR+1 DBL-1 UBL+1) (UR+1 DR+1 DL+1 UL+1) (UD RL+1 UD+1)",
+    "ignore": "",
+    "solve": "[R U R' U']",
+    "preAdjust": "U",
+    "postAdjust": "U",
+    "subgroups": [
+     {
+      "subgroup": "R U Q",
+      "prune": "3",
+      "search": "3"
+     }
+    ],
+    "sorting": [],
+    "esq": "",
+    "rankesq": "R_ L_ r_ l_: 1\nR2 L2 r2 l2: 2\n__: 2\n_2: 3",
+    "showPost": false
+   },
+   "messages": [
+    {
+     "type": "stop",
+     "value": "\"Q\" is not a valid move in a subgroup"
+    }
+   ]
+  },
+  {
+   "name": "err-missing-bracket",
+   "input": {
+    "puzzle": "U: (UF UL UB UR) (UFR UFL UBL UBR)\nR: (UR BR DR FR) (UFR-1 UBR+1 DBR-1 DFR+1)\nF: (UF+1 FR+1 DF+1 FL+1) (UFR+1 DFR-1 DFL+1 UFL-1)\nD: (DF DR DB DL) (DFR DBR DBL DFL)\nL: (UL FL DL BL) (UFL+1 DFL-1 DBL+1 UBL-1)\nB: (UB+1 BL+1 DB+1 BR+1) (UBR-1 UBL+1 DBL-1 DBR+1)\nu: (UF UL UB UR) (UFR UFL UBL UBR) (FR+1 FL+1 BL+1 BR+1) (RL FB+1 RL+1)\nr: (UR BR DR FR) (UFR-1 UBR+1 DBR-1 DFR+1) (UF+1 UB+1 DB+1 DF+1) (FB UD+1 FB+1)\nf: (UF+1 FR+1 DF+1 FL+1) (UFR+1 DFR-1 DFL+1 UFL-1) (UR+1 DR+1 DL+1 UL+1) (UD RL+1 UD+1)\nd: (DF DR DB DL) (DFR DBR DBL DFL) (FR+1 BR+1 BL+1 FL+1) (FB RL+1 FB+1)\nl: (UL FL DL BL) (UFL+1 DFL-1 DBL+1 UBL-1) (UF+1 DF+1 DB+1 UB+1) (UD FB+1 UD+1)\nb: (UB+1 BL+1 DB+1 BR+1) (UBR-1 UBL+1 DBL-1 DBR+1) (UR+1 UL+1 DL+1 DR+1) (RL UD+1 RL+1)\nM: (UF+1 DF+1 DB+1 UB+1) (UD FB+1 UD+1)\nS: (UR+1 DR+1 DL+1 UL+1) (UD RL+1 UD+1)\nE: (FR+1 BR+1 BL+1 FL+1) (FB RL+1 FB+1)\nx: (UR BR DR FR) (UFR-1 UBR+1 DBR-1 DFR+1) (UL BL DL FL) (UFL+1 UBL-1 DBL+1 DFL-1) (UF+1 UB+1 DB+1 DF+1) (FB UD+1 FB+1)\ny: (UF UL UB UR) (UFR UFL UBL UBR) (DF DL DB DR) (DFR DFL DBL DBR) (FR+1 FL+1 BL+1 BR+1) (RL FB+1 RL+1)\nz: (UF+1 FR+1 DF+1 FL+1) (UFR+1 DFR-1 DFL+1 UFL-1) (UB+1 BR+1 DB+1 BL+1) (UBR-1 DBR+1 DBL-1 UBL+1) (UR+1 DR+1 DL+1 UL+1) (UD RL+1 UD+1)",
+    "ignore": "",
+    "solve": "[R U",
+    "preAdjust": "U",
+    "postAdjust": "U",
+    "subgroups": [
+     {
+      "subgroup": "R U",
+      "prune": "4",
+      "search": "4"
+     }
+    ],
+    "sorting": [],
+    "esq": "",
+    "rankesq": "R_ L_ r_ l_: 1\nR2 L2 r2 l2: 2\n__: 2\n_2: 3",
+    "showPost": false
+   },
+   "messages": [
+    {
+     "type": "stop",
+     "value": "Missing \"]\" in Scramble"
+    }
+   ]
+  },
+  {
+   "name": "err-colon-deprecated",
+   "input": {
+    "puzzle": "U: (UF UL UB UR) (UFR UFL UBL UBR)\nR: (UR BR DR FR) (UFR-1 UBR+1 DBR-1 DFR+1)\nF: (UF+1 FR+1 DF+1 FL+1) (UFR+1 DFR-1 DFL+1 UFL-1)\nD: (DF DR DB DL) (DFR DBR DBL DFL)\nL: (UL FL DL BL) (UFL+1 DFL-1 DBL+1 UBL-1)\nB: (UB+1 BL+1 DB+1 BR+1) (UBR-1 UBL+1 DBL-1 DBR+1)\nu: (UF UL UB UR) (UFR UFL UBL UBR) (FR+1 FL+1 BL+1 BR+1) (RL FB+1 RL+1)\nr: (UR BR DR FR) (UFR-1 UBR+1 DBR-1 DFR+1) (UF+1 UB+1 DB+1 DF+1) (FB UD+1 FB+1)\nf: (UF+1 FR+1 DF+1 FL+1) (UFR+1 DFR-1 DFL+1 UFL-1) (UR+1 DR+1 DL+1 UL+1) (UD RL+1 UD+1)\nd: (DF DR DB DL) (DFR DBR DBL DFL) (FR+1 BR+1 BL+1 FL+1) (FB RL+1 FB+1)\nl: (UL FL DL BL) (UFL+1 DFL-1 DBL+1 UBL-1) (UF+1 DF+1 DB+1 UB+1) (UD FB+1 UD+1)\nb: (UB+1 BL+1 DB+1 BR+1) (UBR-1 UBL+1 DBL-1 DBR+1) (UR+1 UL+1 DL+1 DR+1) (RL UD+1 RL+1)\nM: (UF+1 DF+1 DB+1 UB+1) (UD FB+1 UD+1)\nS: (UR+1 DR+1 DL+1 UL+1) (UD RL+1 UD+1)\nE: (FR+1 BR+1 BL+1 FL+1) (FB RL+1 FB+1)\nx: (UR BR DR FR) (UFR-1 UBR+1 DBR-1 DFR+1) (UL BL DL FL) (UFL+1 UBL-1 DBL+1 DFL-1) (UF+1 UB+1 DB+1 DF+1) (FB UD+1 FB+1)\ny: (UF UL UB UR) (UFR UFL UBL UBR) (DF DL DB DR) (DFR DFL DBL DBR) (FR+1 FL+1 BL+1 BR+1) (RL FB+1 RL+1)\nz: (UF+1 FR+1 DF+1 FL+1) (UFR+1 DFR-1 DFL+1 UFL-1) (UB+1 BR+1 DB+1 BL+1) (UBR-1 DBR+1 DBL-1 UBL+1) (UR+1 DR+1 DL+1 UL+1) (UD RL+1 UD+1)",
+    "ignore": "",
+    "solve": "R: U",
+    "preAdjust": "U",
+    "postAdjust": "U",
+    "subgroups": [
+     {
+      "subgroup": "R U",
+      "prune": "4",
+      "search": "4"
+     }
+    ],
+    "sorting": [],
+    "esq": "",
+    "rankesq": "R_ L_ r_ l_: 1\nR2 L2 r2 l2: 2\n__: 2\n_2: 3",
+    "showPost": false
+   },
+   "messages": [
+    {
+     "type": "stop",
+     "value": "Colon notation for indicating adjust moves is deprecated."
+    }
+   ]
+  }
+ ]
+}
