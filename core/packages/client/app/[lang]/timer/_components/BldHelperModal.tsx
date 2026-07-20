@@ -43,6 +43,17 @@ function is3x3Event(event: EventId): boolean {
   return event.startsWith('333');
 }
 
+/**
+ * 多盲的打乱是多条:生成器输出 `Solve 1 of 3: R U F ...` 每行一条。整串喂给 codereader
+ * 只会算出垃圾(或抛异常被吞成空),所以按行拆开,让用户选看第几个魔方。
+ * 其余项目(含 WCA 真题源,一次只给一条)只有一行,原样返回单条。
+ */
+function splitSolves(raw: string): string[] {
+  const lines = raw.split('\n').map((l) => l.trim()).filter(Boolean);
+  if (lines.length <= 1) return [raw.trim()];
+  return lines.map((l) => l.replace(/^Solve\s+\d+\s+of\s+\d+\s*[:：]\s*/i, ''));
+}
+
 function cellClass(role: LetterCell['role']): string {
   if (role === 'start') return 'bld-helper-cell-start';
   if (role === 'end') return 'bld-helper-cell-end';
@@ -88,7 +99,12 @@ export default function BldHelperModal({ scramble, event, isZh, onClose }: Props
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  const trimmed = scramble.trim();
+  const solves = useMemo(() => splitSolves(scramble), [scramble]);
+  const [solveIdx, setSolveIdx] = useState(0);
+  // 换了打乱(下一题 / 切项目)回到第 1 个,否则会停在上一串里越界的序号上。
+  useEffect(() => { setSolveIdx(0); }, [scramble]);
+
+  const trimmed = (solves[Math.min(solveIdx, solves.length - 1)] ?? '').trim();
   const usable = trimmed.length > 0 && is3x3Event(event);
 
   const read = useMemo<CodeReadResult>(() => {
@@ -123,6 +139,23 @@ export default function BldHelperModal({ scramble, event, isZh, onClose }: Props
         ) : (
           <>
             <div className="bld-helper-config">
+              {/* 多盲:一串打乱含多个魔方,选看第几个。单条项目不渲染这一项。 */}
+              {solves.length > 1 && (
+                <div className="bld-helper-cfg-field">
+                  <label htmlFor="bldh-solve">{tr({ zh: '第几个', en: 'Cube'
+                  })}</label>
+                  <select
+                    className="bld-helper-cfg-select"
+                    id="bldh-solve"
+                    value={solveIdx}
+                    onChange={(e) => setSolveIdx(Number(e.target.value))}
+                  >
+                    {solves.map((_, i) => (
+                      <option key={i} value={i}>{i + 1} / {solves.length}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div className="bld-helper-cfg-field">
                 <label htmlFor="bldh-cbuf">{tr({ zh: '角缓冲', en: 'Corner buffer'
                 })}</label>
