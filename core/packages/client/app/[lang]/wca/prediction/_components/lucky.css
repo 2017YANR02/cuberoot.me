@@ -43,35 +43,7 @@
 }
 .lucky-year-N strong { color: var(--foreground); }
 
-.lucky-slider {
-  width: 100%;
-  height: 6px;
-  appearance: none;
-  -webkit-appearance: none;
-  background: color-mix(in srgb, var(--accent) 25%, var(--muted));
-  border-radius: 3px;
-  outline: none;
-  cursor: pointer;
-}
-.lucky-slider::-webkit-slider-thumb {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--accent);
-  cursor: pointer;
-  border: 3px solid var(--card);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
-}
-.lucky-slider::-moz-range-thumb {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--accent);
-  cursor: pointer;
-  border: 3px solid var(--card);
-}
+/* 滑杆皮肤走 globals.css 的 input[type=range] 基础皮肤。 */
 
 .lucky-slider-ticks {
   display: flex;
