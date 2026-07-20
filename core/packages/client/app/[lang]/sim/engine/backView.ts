@@ -50,14 +50,29 @@ export function createBackView(
       renderer.setSize(px, px, false);
     },
     render(world: World) {
-      // Mirror the main resize() framing for a square aspect.
+      // Per-puzzle framing so this mini fills its (square) box ~like the left image panel
+      // (the sr-puzzlegen 2D companion, which sits at ~84–91% of its box). Each value below
+      // was measured so the 3D body fills the same fraction its own left image does — the two
+      // corner minis read as the same size (the reported bug: pyramid huge on the left / tiny
+      // on the right). These are TIGHTER than world.resize()'s main-view refHalf on purpose:
+      // the main viewport is roomy so it can afford margin, but in a 170px window that margin
+      // reads as "too small". The old constant (sq1 4.6 / else 3) both under-framed pyraminx
+      // (≈65%) AND over-framed the exotic solids to the point of clipping (dino/skewb spilled
+      // the box at refHalf 3). NxN stays 3 — recon cuber players share this helper and are
+      // always 3x3; ivy/mirror fall through to 3 too (already ~0.82). Hands keep the wide 3.9
+      // frame (wrist + forearm/sleeve ring out past the cube); its near/far margins follow.
       const isSq1 = world.puzzleKind === 'sq1';
-      // 手开着时:取景对齐主视图 3.9,near/far 按手部真包络 13/13.5×cubelet 放宽
-      // (腕+前臂/袖 188U+袖半径 ≈ 12×cubelet,整体转动会把臂甩向相机,包络不足
-      // near 切进臂里出「管状开口」假象),且 near 钳正 —— perspective 滑杆低段
-      // distance 仅 7.8×cubelet,margin 一减为负 = 投影矩阵损坏乱切面(与主视图同款修法)。
       const handsOn = world.hands?.isEnabled === true && world.puzzleKind === 3;
-      const refHalf = cubeletSize * (isSq1 ? 4.6 : handsOn ? 3.9 : 3);
+      const k = world.puzzleKind;
+      const refHalfU = handsOn ? 3.9
+        : k === 'pyraminx' ? 2.45
+        : isSq1 ? 3.85
+        : k === 'megaminx' ? 3.3
+        : k === 'fto' ? 3.2
+        : (k === 'dino' || k === 'redi' || k === 'rex' || k === 'heli' || k === 'gear'
+           || k === 'skewb') ? 3.6
+        : 3;
+      const refHalf = cubeletSize * refHalfU;
       const persp = world.perspective;
       const minv = 1 / (world.scale * persp);
       const distance = refHalf * persp;
