@@ -162,7 +162,7 @@
 }
 .country-input-continent-icon {
   flex-shrink: 0;
-  color: var(--text-sub, #888);
+  color: var(--text-sub, var(--muted-foreground));
 }
 
 .country-input-check {
