@@ -1,14 +1,9 @@
 /* BLD helper modal — Speffz memo readout for the current 3x3 scramble.
-   Lives inside the timer-modal (dark) context; colors via theme tokens only. */
+   取色全走站点 token。曾经在这里锁死一份深色 token,因为那时 .timer-modal 无论站点明暗
+   都是硬编码深色;现在它自己走 var(--popover) 跟主题翻,再锁就成了浅底浅字。 */
 
 .bld-helper-modal {
   max-width: 440px;
-  /* .timer-modal is hardcoded-dark on every page theme, so root tokens (which
-     follow the page light/dark state) would paint dark text on the dark modal.
-     Lock the standard dark palette here — same fix as .timer-modal--solver. */
-  --foreground: #ededed;
-  --muted-foreground: #a3a3a3;
-  --faint-foreground: #737373;
 }
 
 .bld-helper-modal h2 {
