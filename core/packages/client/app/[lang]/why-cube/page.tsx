@@ -492,7 +492,7 @@ export default function WhyCubePage() {
           <h3 className="wc-subhead"><Boxes size={20} className="wc-subhead-icon" />{t('17 个官方项目', 'The 17 official events')}</h3>
           <div className="wc-evt-grid">
             <Evt event="222"    name={t('二阶', '2×2')}            skill={t('只有八个角块，最快上手 —— 孩子的第一个项目', 'Just eight corners — the easiest first event')} />
-            <Evt event="333"    name={t('三阶', '3×3')}            skill={t('旗舰项目：速度、识别、手指技巧的全能练习', 'The flagship — speed, recognition and finger tricks combined')} />
+            <Evt event="333"    name={t('三阶', '3×3')}            skill={t('旗舰项目：速度、识别、指法的全能练习', 'The flagship — speed, recognition and finger tricks combined')} />
             <Evt event="444"    name={t('四阶', '4×4')}            skill={t('要先拼中心、配棱块，还要处理“奇偶”', 'Build centers, pair edges, and handle parity')} />
             <Evt event="555"    name={t('五阶', '5×5')}            skill={t('更大的还原规划，也更考验耐心', 'Bigger-picture planning and patience')} />
             <Evt event="666"    name={t('六阶', '6×6')}            skill={t('一致性与大方块技巧', 'Consistency and big-cube technique')} />

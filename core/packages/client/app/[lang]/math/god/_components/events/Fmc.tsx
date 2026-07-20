@@ -219,7 +219,7 @@ export default function Fmc({ isZh }: { isZh: boolean; eventId?: string }) {
       >
         <p>
           {t(
-            '顶尖 FMC 选手不会去枚举 20 步;他们用 NISS(从正反两个方向逼近)、insertion(在骨架解里插入交换子消角/棱)、以及大量的 EO/DR/HTR 阶段化技巧,把一个 ~17-19 步的最优解“凑”到 21-30 步。当前 FMC 三次平均的世界纪录约 21-22 步,而最优解平均 17.7——这 3-5 步的差距,就是“可计算的最优”和“一小时内人类能想到的最优”之间的鸿沟。',
+            '顶尖 FMC 选手不会去枚举 20 步;他们用 NISS(从正反两个方向逼近)、insertion(在骨架解里插入换位子消角/棱)、以及大量的 EO/DR/HTR 阶段化技巧,把一个 ~17-19 步的最优解“凑”到 21-30 步。当前 FMC 三次平均的世界纪录约 21-22 步,而最优解平均 17.7——这 3-5 步的差距,就是“可计算的最优”和“一小时内人类能想到的最优”之间的鸿沟。',
             'Top FMC solvers don\'t enumerate 20-move solutions; they use NISS (attacking from both the scramble and its inverse), insertions (splicing commutators into a skeleton to cancel last corners/edges), and staged EO/DR/HTR techniques to land a ~17-19-move optimum somewhere around 21-30. The mean-of-3 world record is about 21-22, while the optimum averages 17.7 — that 3-5-move gap is the chasm between "the computable optimum" and "the best a human can reason out in an hour".',
           )}
         </p>

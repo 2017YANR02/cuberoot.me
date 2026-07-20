@@ -13,7 +13,7 @@
 
 // Real header read: the header name immediately preceded by a quote or `[`. A prose
 // mention like "NO X-Forwarded-For fallback" (a space before it) never matches.
-const XFF_READ = /["'`\[]x-forwarded-for/i;
+const XFF_READ = /["'`[]x-forwarded-for/i;
 
 const deny = (reason) => {
   process.stdout.write(JSON.stringify({

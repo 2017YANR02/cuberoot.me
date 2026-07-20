@@ -116,6 +116,61 @@
   accent-color: var(--accent);
 }
 
+/* 视角盘(OrbitPad):「左右 / 上下」合成的平面直角坐标系。盘是功能控制面(可拖靶面,
+   同输入框一类),故保留 1px 边框 —— 非内容卡片。右侧两个度数框复用 .sim-slider-val。 */
+.sim-orbit {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+.sim-orbit-pad {
+  position: relative;
+  flex: none;
+  width: 96px;
+  height: 96px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+  cursor: crosshair;
+  touch-action: none;   /* 触屏拖圆点不滚页 */
+}
+.sim-orbit-pad:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.sim-orbit-axis {
+  position: absolute;
+  background: color-mix(in srgb, var(--foreground) 14%, transparent);
+  pointer-events: none;
+}
+.sim-orbit-axis-x { left: 6px; right: 6px; top: 50%; height: 1px; }
+.sim-orbit-axis-y { top: 6px; bottom: 6px; left: 50%; width: 1px; }
+.sim-orbit-dot {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--background);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.sim-orbit-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sim-orbit-field {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--foreground);
+}
+
 .sim-toggle {
   display: inline-flex;
   align-items: center;

@@ -45,7 +45,7 @@ const CATEGORY_CARDS: CategoryConfig[] = [
   { cat: '2x2',       tier: 'medium',    Icon: Square,    label: { en: '2x2',        zh: '二阶'
 } },
   // Tier 3 — standard（4 per row）
-  { cat: 'Roux',      tier: 'standard',  Icon: InfinityIcon,  label: { en: 'Roux',       zh: 'Roux' } },
+  { cat: 'Roux',      tier: 'standard',  Icon: InfinityIcon,  label: { en: 'Roux',       zh: '桥式' } },
   { cat: 'SQ1',       tier: 'standard',  Icon: Shapes,    label: { en: 'SQ1',        zh: 'SQ1' } },
   { cat: 'Skewb',     tier: 'standard',  Icon: Diamond,   label: { en: 'Skewb',      zh: '斜转'
 } },

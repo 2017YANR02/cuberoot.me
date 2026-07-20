@@ -215,7 +215,7 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
     if (showExtraDivider) {
       rows.push(
         <tr key={`div-${i}`} className="gen-tn-extras-divider">
-          <td colSpan={colSpan}>{t('备用打乱', 'Extra Scrambles')}</td>
+          <td colSpan={colSpan}>{t('备打', 'Extra Scrambles')}</td>
         </tr>,
       );
     }

@@ -32,6 +32,13 @@ description: "Use when adding/editing user-visible text in the React client (cor
 - lang + theme 一律 `<HeaderToggles className="…" />`(`@/components/HeaderToggles`,自带布局);禁手写 `<LangToggle /> <ThemeToggle />` 配 wrapper。className 只传定位。
 - 站内跳转用 `@/components/AppLink`(Pattern B:en 出裸 URL、zh 补 `/zh`),禁裸 `next/link` 手拼 lang 前缀。
 
+## 魔方术语(termbase)
+
+- zh 魔方术语唯一权威 = `app/[lang]/wiki/glossary.json`(713 条社区中英对照)。写含魔方术语的 zh 文案先 grep 它,禁按通用语感直译。
+- 高频陷阱:Overwork=复用;Corner Cutting=容错;Commutator=换位子;Conjugate=共轭子;Finger Trick=指法;Lookahead=预判;Regrip=换手;POP=飞棱;Buffer=缓冲块;Inspection=观察;OLL/PLL Skip=跳O/跳P;Scramble/Setup=打乱;Extra scrambles=备打(UI 简称);Alg=公式;Xcross=拓展十字。
+- 方法名:Roux=桥式(FB=左桥,SB=右桥,Last Pair=末槽);LBL=层先法;Petrus=彼得鲁斯法;CFOP/ZZ/DR/EOLR/CMLL/LSE 留原名。zh UI 落中文名。
+- 守卫:CI `tests/i18n-cubing-term-blacklist.test.ts`(已修错译黑名单,发现新错译修完即加入);豁免行内 `allow-cubing-term: <理由>`;外部作品原标题《…》自动豁免。
+
 ## 命名空间
 
 看 `i18n/en.json` 顶层。复用优先 `common.*`(loading / back / loadFailed / unknownError / cases)。新 `t()` 键必须同时进 en.json + zh.json,`{{x}}` 两边都要有。

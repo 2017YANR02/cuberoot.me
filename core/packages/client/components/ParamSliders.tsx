@@ -27,7 +27,7 @@ export const MCC_SLIDERS: ParamSliderSpec<keyof MccParams>[] = [
   { key: 'addRegrip', zh: '软换手惩罚', en: 'Soft regrip penalty', min: 0, max: 4, step: 0.05 },
   { key: 'double', zh: '180° 转系数', en: 'Half turn ×', min: 1, max: 2, step: 0.05 },
   { key: 'sesliceMult', zh: 'S/E 中层系数', en: 'S/E slice ×', min: 1, max: 2, step: 0.05 },
-  { key: 'overWorkMult', zh: '过劳惩罚', en: 'Overwork penalty', min: 0, max: 5, step: 0.05 },
+  { key: 'overWorkMult', zh: '复用惩罚', en: 'Overwork penalty', min: 0, max: 5, step: 0.05 },
   { key: 'moveblock', zh: '前步阻挡惩罚', en: 'Move block penalty', min: 0, max: 3, step: 0.05 },
   { key: 'rotation', zh: 'y/z 转身代价', en: 'y/z rotation', min: 1, max: 7, step: 0.1 },
 ];

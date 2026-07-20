@@ -5,7 +5,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import zlib from 'node:zlib';
 
-const TOOTH_TIP = 62, TOOTH_ROOT = 32, RIM_R = 44, TOOTH_HALF_W = 8.5;
+const TOOTH_TIP = 62, RIM_R = 44, TOOTH_HALF_W = 8.5;
 const TOOTH_TIP_CR = 3.5, TOOTH_FILLET_R = 5;
 const H = 128, COIN_R = 30.4;
 

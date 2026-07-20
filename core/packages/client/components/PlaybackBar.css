@@ -60,6 +60,14 @@
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 
+/* Only for buttons that are genuinely a toggle (they carry aria-pressed and stay
+   mounted in both states). Buttons that just disappear when their target is open
+   never set it, so they never pick this up. */
+.playback-bar-btn[aria-pressed='true'] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .playback-bar-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;

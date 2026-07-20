@@ -63,9 +63,9 @@ if (process.platform === 'win32') {
 
 function killTree(pid) {
   if (process.platform === 'win32') {
-    try { execSync(`taskkill /F /T /PID ${pid}`, { stdio: 'ignore' }); } catch {}
+    try { execSync(`taskkill /F /T /PID ${pid}`, { stdio: 'ignore' }); } catch { /* already dead */ }
   } else {
-    try { process.kill(-pid, 'SIGKILL'); } catch {}
+    try { process.kill(-pid, 'SIGKILL'); } catch { /* already dead */ }
   }
 }
 

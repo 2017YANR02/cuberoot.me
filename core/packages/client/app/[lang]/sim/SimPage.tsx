@@ -26,6 +26,8 @@ import {
   Maximize2, Minimize2,
   ArrowLeftRight,
   ImagePlus,
+  PictureInPicture2,
+  X,
 } from 'lucide-react';
 import World, { type PuzzleKind } from './engine/world';
 import type Cube from './engine/nxn/cube';
@@ -411,10 +413,9 @@ export default function SimPage() {
     persistItem('sim.panel.algs', algsOpen ? '1' : '0');
   }, [algsOpen]);
 
-  // Image studio panel: auto-open when a shared /sim?img_… link carries ANY image state
-  // (so the panel is visible without a click), otherwise honour the persisted preference.
-  // In panel mode the codec omits `img_pzl` and writes only non-default settings, so a
-  // pristine studio contributes zero img_ keys — any img_ key present is real intent.
+  // 画布左上角图像浮层的显隐(侧栏的 studio 控件常驻,不再受它控制)。分享链接带任何
+  // img_ 键 = 对方特意调过图 → 自动显示浮层,否则读持久化偏好。panel 模式的 codec 省略
+  // img_pzl 且只写非默认值,所以「一动没动的 studio」不会产生任何 img_ 键。
   const [imageOpen, setImageOpen] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     try {
@@ -432,6 +433,11 @@ export default function SimPage() {
 
   const settingsRef = useRef(settings);
   useEffect(() => { settingsRef.current = settings; }, [settings]);
+
+  // Host for the 图像 preview, floated over the canvas' top-left (the studio portals
+  // its preview section in here — see PuzzleImageStudio previewHost). State, not a
+  // ref, because the studio must re-render once the host element exists.
+  const [imageHost, setImageHost] = useState<HTMLDivElement | null>(null);
 
   // The studio panel is driven entirely by the sim: its puzzle comes from the sim's
   // `puzzle=` dropdown (imgPuzzle — keeps `pzl` out of the URL) and its alg + colour
@@ -464,11 +470,10 @@ export default function SimPage() {
     const H = container.clientHeight;
     const size = Math.round(Math.min(184, Math.max(104, Math.min(W, H) * 0.3)));
     backSizeRef.current = size;
-    const frame = backFrameRef.current;
-    if (frame) {
-      frame.style.width = `${size}px`;
-      frame.style.height = `${size}px`;
-    }
+    // 两个浮层(左上图像 / 右上背面小窗)必须同尺寸,所以尺寸只从这里出一次,
+    // 落成画布上的 CSS 变量,两个框各自 width/height 取它 —— 图像浮层是按需挂载的,
+    // 走变量就不用关心它和这次 layout 的先后。
+    container.style.setProperty('--sim-float-size', `${size}px`);
     backViewRef.current?.setSize(size);
     // Pin the swap button to the back-view window's bottom-right inner corner.
     const swapBtn = swapButtonRef.current;
@@ -1708,6 +1713,26 @@ export default function SimPage() {
               onScaleChange={(scale) => setSettings((prev) => (prev.scale === scale ? prev : { ...prev, scale }))}
             />
           ) : null}
+          {/* 图像面板的预览浮在画布左上角(与右上角背面小窗对称),内容由
+              PuzzleImageStudio portal 进来 —— 面板折叠时 studio 不挂载,这里自然空着。
+              portal 的容器必须是它独占的节点(React 不能同时管容器的 children 和
+              portal 内容),所以关闭钮挂在外层、host 是里面那层。 */}
+          {imageStudioSupported && (
+            // 常挂:studio 现在常驻侧栏,预览总要有个 portal 落点。关掉只是 display:none
+            // (若卸载,previewHost 变 null → studio 会把预览渲回侧栏里)。
+            <div className="sim-image-overlay" style={{ display: imageOpen ? 'block' : 'none' }}>
+              <div className="sim-image-overlay-host" ref={setImageHost} />
+              <button
+                type="button"
+                className="sim-float-close"
+                onClick={() => setImageOpen(false)}
+                title={t('关闭图像', 'Hide image')}
+                aria-label={t('关闭图像', 'Hide image')}
+              >
+                <X size={12} />
+              </button>
+            </div>
+          )}
           {/* Back-view window for the cuber engine (NxN / SQ1). Always mounted
               while the cuber engine is active so the second renderer's canvas
               stays attached across toggles; visibility flips with the setting.
@@ -1733,6 +1758,19 @@ export default function SimPage() {
               aria-label={t('交换主视图与背面视图', 'Swap main / back view')}
             >
               <ArrowLeftRight size={14} />
+            </button>
+          )}
+          {/* 背面小窗的关闭钮 —— 与图像浮层那个同款,钉在小窗右上内角。小窗自身
+              pointer-events:none,按钮在 .sim-float-close 里自带 auto。 */}
+          {!twisty && !netMode && settings.backView && (
+            <button
+              type="button"
+              className="sim-float-close sim-float-close--backview"
+              onClick={() => setSettings((prev) => ({ ...prev, backView: false }))}
+              title={t('关闭小窗', 'Hide back view')}
+              aria-label={t('关闭小窗', 'Hide back view')}
+            >
+              <X size={12} />
             </button>
           )}
         </div>
@@ -1789,36 +1827,60 @@ export default function SimPage() {
                 {fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
               </button>
             }
+            /* 两个浮层的「找回来」按钮,位置对应它们在画布上的角:图像在左上 → 按钮在
+               最左;背面小窗在右上 → 按钮在最右。只在对应浮层关着时出现 —— 开着时关它
+               的入口是浮层自己右上角那个 ×,这里再放一个同义按钮纯属占位。 */
+            imageButton={imageStudioSupported && !imageOpen ? (
+              <button
+                type="button"
+                className="playback-bar-btn"
+                onClick={() => setImageOpen(true)}
+                title={t('显示图像', 'Show image')}
+                aria-label={t('显示图像', 'Show image')}
+              >
+                <ImagePlus size={14} />
+              </button>
+            ) : null}
+            /* 小窗按钮在两条渲染路径下语义不同,因为「关」的入口不一样:
+               - 引擎(NxN / SQ1):小窗是我们自己画的浮层,右上角有 ×,所以这里
+                 只做「开」,关着时才出现,和图像那个一致;
+               - cubing.js:小窗是 player 原生画的,我们钉不上 ×(那块区域归它管),
+                 所以这里必须常驻并且是真开关,否则 settings.backView 在这条路径上
+                 一个入口都没有 —— 侧栏那个「小窗」toggle 已经删掉了。 */
+            backViewButton={!netMode && (twisty || !settings.backView) ? (
+              <button
+                type="button"
+                className="playback-bar-btn"
+                aria-pressed={twisty ? settings.backView : undefined}
+                onClick={() => setSettings((prev) => ({
+                  ...prev, backView: twisty ? !prev.backView : true,
+                }))}
+                title={twisty && settings.backView ? t('关闭小窗', 'Hide back view') : t('显示小窗', 'Show back view')}
+                aria-label={twisty && settings.backView ? t('关闭小窗', 'Hide back view') : t('显示小窗', 'Show back view')}
+              >
+                <PictureInPicture2 size={14} />
+              </button>
+            ) : null}
             stickering={query.stickering}
             onStickeringChange={(v) => setQuery({ stickering: v === 'full' ? null : v })}
             stickeringColor={query.stickeringColor}
             onStickeringColorChange={(v) => setQuery({ stickeringColor: v === 'yellow' ? null : v })}
           />
+          {/* 图像:不再套折叠区。图本身已经浮在画布左上角,侧栏这一段只剩控件 + 导出,
+              一个「图像」标题栏既没东西可折叠也没图可指。显隐归浮层自己的 × 和播放条
+              按钮(imageOpen),侧栏常驻。 */}
           {imageStudioSupported ? (
-            <CollapsibleSection
-              open={imageOpen}
-              onToggle={() => setImageOpen((o) => !o)}
-              icon={ImagePlus}
-              label={t('图像', 'Image')}
-            >
-              <PuzzleImageStudio
-                mode="panel"
-                spec={imgSpec}
-                onSpecChange={setImgSpec}
-                simBridge={simBridge}
-              />
-            </CollapsibleSection>
+            <PuzzleImageStudio
+              mode="panel"
+              spec={imgSpec}
+              onSpecChange={setImgSpec}
+              simBridge={simBridge}
+              previewHost={imageHost}
+            />
           ) : (
             // spec 渲染器不支持的拼图(枫叶 / 恐龙 / 齿轮 / PG 骨架族等)仍给
             // 实时截图组(PNG / SVG / MP4)—— 截图能力覆盖菜单里的所有拼图。
-            <CollapsibleSection
-              open={imageOpen}
-              onToggle={() => setImageOpen((o) => !o)}
-              icon={ImagePlus}
-              label={t('图像', 'Image')}
-            >
-              <SimCaptureGroup simBridge={simBridge} />
-            </CollapsibleSection>
+            <SimCaptureGroup simBridge={simBridge} />
           )}
           {/* Group-theory panel = the visible half of the non-cubing.js view. Shows for any
               PG-bound puzzle that isn't on cubing.js. Pure-engine PG puzzles (dino/heli/NxN)

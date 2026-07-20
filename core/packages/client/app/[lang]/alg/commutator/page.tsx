@@ -91,7 +91,7 @@ function buildExpandOpts(s: Settings, algorithm: string) {
 }
 
 export default function CommutatorPage() {
-    useDocumentTitle('交换子', 'Commutator');
+    useDocumentTitle('换位子', 'Commutator');
     const t = useT();
 
     const [tab, setTab] = useQueryState(

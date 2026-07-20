@@ -5,7 +5,7 @@
 'use client';
 
 import { X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { CUBE_FILL } from '@/lib/cube-colors';
 import { persistItem } from '@/lib/safe-storage';
 import PillToggle from '@/components/PillToggle/PillToggle';
@@ -421,7 +421,7 @@ export function resetWorldView(world: World, s: SimSettings): void {
 export interface SliderUnit {
   /** 0..100 → 真实单位值 */
   to: (v: number) => number;
-  /** 真实单位值 → 0..100(可越界,Slider 负责 round + clamp) */
+  /** 真实单位值 → 0..100(可越界,Slider 只 clamp 不 round,保留小数以精确回显) */
   from: (n: number) => number;
   min: number;
   max: number;
@@ -439,7 +439,9 @@ export function Slider({ label, value, onChange, disabled, title, unit }: { labe
     const n = Number(draft);
     if (!Number.isFinite(n)) { setDraft(fmt(value)); return; }
     const raw = unit ? unit.from(Math.max(unit.min, Math.min(unit.max, n))) : n;
-    const clamped = Math.max(0, Math.min(100, Math.round(raw)));
+    // 有 unit 时内部值保留小数(仅 clamp,不 round):每 1 内部格 = 1.8°(角度)等 > 1 显示单位,
+    // 若量化成整数 0..100,输入 30° 会存成 33 再回显 31°。保留小数让 to(from(n)) 精确往返。
+    const clamped = unit ? Math.max(0, Math.min(100, raw)) : Math.max(0, Math.min(100, Math.round(raw)));
     setDraft(fmt(clamped));
     if (clamped !== value) onChange(clamped);
   };
@@ -475,6 +477,147 @@ export function Slider({ label, value, onChange, disabled, title, unit }: { labe
         onChange={(e) => onChange(Number(e.target.value))}
       />
     </label>
+  );
+}
+
+/** 视角盘旁的精确度数框:复用 Slider 的 unit 往返(打 30 正好 30 —— 只 clamp 不 round,
+ *  保留小数让 to(from(n)) 精确回显)。无 range,窄框专供 OrbitPad 使用。 */
+function PadNumberField({ label, value, onChange, unit, title }: {
+  label: string; value: number; onChange: (v: number) => void; unit: SliderUnit; title?: string;
+}) {
+  const fmt = (v: number): string => unit.to(v).toFixed(unit.decimals);
+  const [draft, setDraft] = useState<string>(() => fmt(value));
+  useEffect(() => { setDraft(unit.to(value).toFixed(unit.decimals)); }, [value, unit]);
+  const commit = () => {
+    const n = Number(draft);
+    if (!Number.isFinite(n)) { setDraft(fmt(value)); return; }
+    const clamped = Math.max(0, Math.min(100, unit.from(Math.max(unit.min, Math.min(unit.max, n)))));
+    setDraft(fmt(clamped));
+    if (clamped !== value) onChange(clamped);
+  };
+  return (
+    <label className="sim-orbit-field" title={title}>
+      <span>{label}</span>
+      <span className="sim-slider-valwrap">
+        <input
+          type="number"
+          className="sim-slider-val"
+          min={unit.min}
+          max={unit.max}
+          step={unit.step}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+            else if (e.key === 'Escape') { setDraft(fmt(value)); (e.target as HTMLInputElement).blur(); }
+          }}
+        />
+        {unit.suffix ? <span className="sim-slider-unit">{unit.suffix}</span> : null}
+      </span>
+    </label>
+  );
+}
+
+/** 视角盘(平面直角坐标系):把「左右 / 上下」两条滑条合成一个可拖圆点 —— 盘内位置 = 当前朝向,
+ *  十字轴过原点(中心 = 正前方 0°/0°)。右侧配两个精确度数框(可打字,打 30 正好 30)。
+ *
+ *  纯显示层的符号约定 —— 右 = 正(看右面)、上 = 正(俯视 bird's-eye)。底层 3D 旋转
+ *  (world.scene.rotation / cubing.js cameraLongitude·Latitude)完全不动:盘只把内部
+ *  0..100 的 viewAngle/viewGradient 映到画面坐标,度数框按传入的 unit 换算显示。
+ *
+ *    padX = (50 − viewAngle)/50       viewAngle    = clamp(50 − padX·50, 0..100)
+ *    padY = (50 − viewGradient)/50    viewGradient = clamp(50 − padY·50, 0..100)
+ *  padX/padY ∈ [−1,1],+X 右、+Y 屏幕上方。默认 (30,33) → 圆点落在右上、显示 +36° / +31°。
+ *  显示度数 = pad·(90 引擎 / pitch;180 twisty yaw),与传入 unit 一致(线性同号)。 */
+export function OrbitPad({
+  xValue, yValue, onChange, xLabel, yLabel, xUnit, yUnit, xTitle, yTitle,
+}: {
+  xValue: number; yValue: number;
+  /** 一次性更新两轴(x=viewAngle, y=viewGradient,均 0..100)。必须两轴同发:拖动时两轴
+   *  在同一 handler 里变,若拆成两个 set(...spread settings) 调用,后者会用旧快照盖掉前者。 */
+  onChange: (x: number, y: number) => void;
+  xLabel: string; yLabel: string;
+  xUnit: SliderUnit; yUnit: SliderUnit;
+  xTitle?: string; yTitle?: string;
+}) {
+  const padRef = useRef<HTMLDivElement>(null);
+  const draggingRef = useRef(false);
+
+  const padX = (50 - xValue) / 50;
+  const padY = (50 - yValue) / 50;
+  const leftPct = ((padX + 1) / 2) * 100;
+  const topPct = ((1 - padY) / 2) * 100;   // padY=+1(上)→ 0% 顶
+
+  const applyPointer = useCallback((clientX: number, clientY: number) => {
+    const el = padRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const nx = r.width ? (clientX - r.left) / r.width : 0.5;   // 0..1
+    const ny = r.height ? (clientY - r.top) / r.height : 0.5;
+    const pX = Math.max(-1, Math.min(1, nx * 2 - 1));
+    const pY = Math.max(-1, Math.min(1, 1 - ny * 2));          // 屏幕上 → +Y
+    onChange(
+      Math.max(0, Math.min(100, 50 - pX * 50)),
+      Math.max(0, Math.min(100, 50 - pY * 50)),
+    );
+  }, [onChange]);
+
+  // 拖动跟到 window:指针移出盘外仍持续更新(只 clamp 到边),松开即停。
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const move = (e: PointerEvent) => { if (draggingRef.current) applyPointer(e.clientX, e.clientY); };
+    const up = () => { draggingRef.current = false; };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
+    return () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+    };
+  }, [applyPointer]);
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    draggingRef.current = true;
+    applyPointer(e.clientX, e.clientY);
+  };
+
+  // 方向键微调:每步 1 内部格(引擎 ≈ 1.8°)。右 = 正 = viewAngle 减小;上 = 正 = viewGradient 减小。
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    let dx = 0, dy = 0;
+    if (e.key === 'ArrowLeft') dx = -1;
+    else if (e.key === 'ArrowRight') dx = 1;
+    else if (e.key === 'ArrowUp') dy = 1;
+    else if (e.key === 'ArrowDown') dy = -1;
+    else return;
+    e.preventDefault();
+    onChange(
+      Math.max(0, Math.min(100, xValue - dx)),
+      Math.max(0, Math.min(100, yValue - dy)),
+    );
+  };
+
+  return (
+    <div className="sim-orbit">
+      <div
+        ref={padRef}
+        className="sim-orbit-pad"
+        onPointerDown={onPointerDown}
+        onKeyDown={onKeyDown}
+        role="application"
+        tabIndex={0}
+        aria-label={xLabel + ' / ' + yLabel}
+      >
+        <span className="sim-orbit-axis sim-orbit-axis-x" />
+        <span className="sim-orbit-axis sim-orbit-axis-y" />
+        <span className="sim-orbit-dot" style={{ left: `${leftPct}%`, top: `${topPct}%` }} />
+      </div>
+      <div className="sim-orbit-fields">
+        <PadNumberField label={xLabel} value={xValue} onChange={(v) => onChange(v, yValue)} unit={xUnit} title={xTitle} />
+        <PadNumberField label={yLabel} value={yValue} onChange={(v) => onChange(xValue, v)} unit={yUnit} title={yTitle} />
+      </div>
+    </div>
   );
 }
 

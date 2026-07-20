@@ -500,10 +500,15 @@
 .sim-bg-toggle .sim-color-select {
   align-self: center;
 }
-/* 背景档在网格最右列,弹层默认 left:0 向右展开会溢出屏幕 → 改为靠右对齐(向左展开) */
+/* 背景档在网格最右列,弹层默认 left:0 向右展开会溢出屏幕 → 改为靠右对齐(向左展开)。
+   5 个档纵向单列排:横排 5 格 + gap 逼近 200px 上限会折成 2 行,单列读起来更像菜单。
+   anchored-panel: safe (right:0 靠右对齐 + 单列宽仅 38px,右缘贴触发器、左缘离视口左边
+   还有整个画布的距离,横向不可能越界;纵向本就没被钳位约束) */
 .sim-bg-toggle .sim-color-select-panel {
   left: auto;
   right: 0;
+  flex-direction: column;
+  flex-wrap: nowrap;
 }
 .sim-bg-box--auto {
   background-image: linear-gradient(135deg, #ffffff 0 50%, #1c1917 50% 100%);

@@ -714,6 +714,12 @@ a {
   width: 20px;
   height: 20px;
 }
+/* input[type=search] 与 ClearButton 并存时隐藏 WebKit 原生 ✕,防双叉(wiki / wca results 搜索框) */
+input[type='search']:has(~ .clear-btn)::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}
 
 /* 屏幕键盘(components/OnScreenKeyboard.tsx)—— Vite index.css 漏移植,补回。 */
 .on-screen-keyboard {
