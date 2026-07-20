@@ -128,6 +128,8 @@ interface TrainerPrefs {
   showStageThumb: boolean;
   /** 纯打乱:显示/复制时剥掉括号与 `↑↓·` 等标注,只留转动。 */
   pureScramble: boolean;
+  /** 三条一屏(仅不计时模式):一屏出 3 条打乱,拧完 3 条再点一次切下一屏。 */
+  multiScramble: boolean;
   /** 复习模式多设备协同分片配置(记住搭档 = 存进 prefs 下次自动恢复)。 */
   coop: TrainerCoop;
 }
@@ -135,7 +137,7 @@ const DEFAULT_PREFS: TrainerPrefs = {
   preAuf: true, postAuf: true, timing: true, mode: 'recap', probMode: 'uniform',
   recapOrder: 'shuffle', timerFont: 'lcd', scrambleFont: 'sans',
   showPrevCard: true, showNextCard: true, showStats: true, showStageThumb: true,
-  pureScramble: true, coop: DEFAULT_COOP,
+  pureScramble: true, multiScramble: false, coop: DEFAULT_COOP,
 };
 const PREFS_KEY = 'trainer:prefs';
 
@@ -159,7 +161,8 @@ const prefsOf = (st: TrainerPrefs): TrainerPrefs => ({
   probMode: st.probMode, recapOrder: st.recapOrder,
   timerFont: st.timerFont, scrambleFont: st.scrambleFont,
   showPrevCard: st.showPrevCard, showNextCard: st.showNextCard, showStats: st.showStats,
-  showStageThumb: st.showStageThumb, pureScramble: st.pureScramble, coop: st.coop,
+  showStageThumb: st.showStageThumb, pureScramble: st.pureScramble,
+  multiScramble: st.multiScramble, coop: st.coop,
 });
 
 const shuffle = <T,>(arr: T[]): T[] => {
@@ -270,6 +273,7 @@ interface TrainerState {
   showStats: boolean;
   showStageThumb: boolean;
   pureScramble: boolean;
+  multiScramble: boolean;
   coop: TrainerCoop;
 
   /** recap 模式的洗牌队列:pool 变了(recapSig 失配)重洗。 */
@@ -295,6 +299,7 @@ interface TrainerState {
   setShowStats: (v: boolean) => void;
   setShowStageThumb: (v: boolean) => void;
   setPureScramble: (v: boolean) => void;
+  setMultiScramble: (v: boolean) => void;
   setCoop: (c: TrainerCoop) => void;
 
   /** 下一个打乱:历史中段先前进,到队尾才出新题(train 随机 / recap 逐个)。 */
@@ -721,6 +726,10 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     },
     setPureScramble: (v) => {
       set({ pureScramble: v });
+      persistPrefs(prefsOf(get()));
+    },
+    setMultiScramble: (v) => {
+      set({ multiScramble: v });
       persistPrefs(prefsOf(get()));
     },
     setTimerFont: (f) => {

@@ -258,26 +258,73 @@ SELECT count(*) AS wca_scramble_optimal_total FROM wca_scramble_optimal;
 # 失败非致命(只警告不 throw):migration 0057 未部署到 prod 时这步会失败,部署后下次 run 自动灌上。
 # 服务器密码从其自身 /root/core-api/.env 读,不把凭据写进(进 git 的)本脚本。
 function Load-StepsToPg {
-  param([string]$LocalCsv, [string]$LocalLayout, [string]$Stamp)
+  param([string]$LocalCsv, [string]$LocalLayout, [string]$LocalRare, [string]$Stamp)
   if(-not (Test-Path $LocalCsv) -or -not (Test-Path $LocalLayout)){ Write-Host '  [steps] 缺 CSV/layout, 跳过灌库' -ForegroundColor DarkGray; return }
   $rows = (Lc $LocalCsv)
   $pwExpr = '$(grep -oP ''DB_PASS=\K.*'' /root/core-api/.env | tr -d ''[:space:]'')'
   # layout JSONB 内联(单引号字面串 + dollar-quote tag,避免 PowerShell/SQL 转义);json 内无 $/反引号
   $layout = ([IO.File]::ReadAllText($LocalLayout)).Trim()
   $metaIns = "INSERT INTO wca_scramble_steps_meta (id,layout,generated_at) VALUES (1, " + '$WSSL$' + $layout + '$WSSL$' + "::jsonb, '$Stamp') ON CONFLICT (id) DO UPDATE SET layout=EXCLUDED.layout, generated_at=EXCLUDED.generated_at;"
+  function GzipTo([string]$src,[string]$dst){
+    Remove-Item $dst -Force -EA SilentlyContinue
+    $fin=[IO.File]::OpenRead($src); $fout=[IO.File]::Create($dst)
+    $gzs=New-Object IO.Compression.GZipStream($fout,[IO.Compression.CompressionLevel]::Fastest)
+    $fin.CopyTo($gzs); $gzs.Close(); $fout.Close(); $fin.Close()
+  }
+  # 稀有档侧表(migration 0062):rare CSV 与 meta.tails 必须同事务替换(路由元数据 ↔ 行集一致),
+  # 三条路径(增量/基线/无变化)都全量重灌 rare(几 MB gz,秒级)。0062 未部署时 \if 跳过侧表并
+  # 从 meta 里剥掉 tails/rare_k(server 不会路由到不存在/空的表);EXISTS 校验保证 rare ⊆ 大表
+  # (WCA 同自然键双打乱套的重复行由 ON CONFLICT DO NOTHING 收敛)。
+  $hasRare = $LocalRare -and (Test-Path $LocalRare)
+  $remoteRareGz='/root/_wssr.csv.gz'; $remoteRare='/root/_wssr.csv'
+  $metaInsNoRare = $metaIns -replace '::jsonb,', "::jsonb - 'tails' - 'rare_k',"
+  $metaBlock = if($hasRare){ @"
+SELECT (to_regclass('public.wca_scramble_steps_rare') IS NOT NULL)::int AS has_rare
+\gset
+\if :has_rare
+CREATE TEMP TABLE _wssr_stage (slot smallint, val smallint, competition_id varchar(32), event_id varchar(6), round_type_id varchar(1), group_id varchar(3), is_extra smallint, scramble_num int, stage6 smallint[]) ON COMMIT DROP;
+\copy _wssr_stage (slot,val,competition_id,event_id,round_type_id,group_id,is_extra,scramble_num,stage6) FROM '$remoteRare' WITH (FORMAT csv)
+TRUNCATE wca_scramble_steps_rare;
+INSERT INTO wca_scramble_steps_rare (slot,val,competition_id,event_id,round_type_id,group_id,is_extra,scramble_num,stage6)
+  SELECT r.slot,r.val,r.competition_id,r.event_id,r.round_type_id,r.group_id,r.is_extra,r.scramble_num,r.stage6
+  FROM _wssr_stage r
+  WHERE EXISTS (SELECT 1 FROM wca_scramble_steps t
+                 WHERE t.competition_id=r.competition_id AND t.event_id=r.event_id AND t.round_type_id=r.round_type_id
+                   AND t.group_id=r.group_id AND t.is_extra=r.is_extra AND t.scramble_num=r.scramble_num)
+  ON CONFLICT DO NOTHING;
+$metaIns
+\else
+$metaInsNoRare
+\endif
+"@ } else { $metaIns }
+  # COMMIT 后(事务外)VACUUM ANALYZE:覆盖索引 index-only 扫描依赖可见性地图,不 VACUUM 会静默退化回堆。
+  $postSql = "VACUUM ANALYZE wca_scramble_steps;`n" + $(if($hasRare){ "\if :has_rare`nVACUUM ANALYZE wca_scramble_steps_rare;`nSELECT 'wca_scramble_steps_rare_total='||count(*) FROM wca_scramble_steps_rare;`n\endif`n" } else { '' })
+  # rare gz 先做好(增量/基线/无变化 三路都要 scp)
+  if($hasRare){ GzipTo $LocalRare "$LocalRare.gz" }
+  $scpRare = {
+    if(-not $hasRare){ return $true }
+    scp "$LocalRare.gz" "${StaticHost}:$remoteRareGz" | Out-Null
+    if($LASTEXITCODE -ne 0){ Write-Host '  [steps] rare scp 失败, 跳过灌库' -ForegroundColor Yellow; return $false }
+    return $true
+  }
+  $rareGunzip = if($hasRare){ "gunzip -f $remoteRareGz && " } else { '' }
+  $rareRm = if($hasRare){ " $remoteRare $remoteRareGz" } else { '' }
   $manifest = Join-Path $IncrDir 'pg_wss_manifest.tsv'
   $manifestExisted = Test-Path $manifest
   $d = Invoke-PgDiff -Csv $LocalCsv -Manifest $manifest -KeyCols 6   # steps CSV 无 header
   $st = $d.Stat
   if($manifestExisted){
     if($st.deltaRows -eq 0 -and $st.deleted -eq 0){
-      Write-Host "  [steps] 无变化, 只刷新 meta (manifest 命中全量 $rows 行)" -ForegroundColor DarkGray
+      # 大表无变化仍重灌 rare + meta(同事务):兜「manifest 命中但 0062 迁移/侧表是后来才部署」的空窗,
+      # 保证 meta.tails 出现时侧表必已灌满。
+      Write-Host "  [steps] 无变化, 刷新 meta + rare 侧表 (manifest 命中全量 $rows 行)" -ForegroundColor DarkGray
+      if(-not (& $scpRare)){ Remove-Item $d.NewManifest -Force -EA SilentlyContinue; return }
       $remoteSql='/root/_wss_meta.sql'
-      $sql = "\set ON_ERROR_STOP on`nBEGIN;`n$metaIns`nCOMMIT;`n"
+      $sql = "\set ON_ERROR_STOP on`nBEGIN;`n$metaBlock`nCOMMIT;`n$postSql"
       $localSql = Join-Path $env:TEMP '_wss_meta.sql'
       [IO.File]::WriteAllText($localSql, ($sql -replace "`r`n","`n"), [Text.UTF8Encoding]::new($false))
       scp $localSql "${StaticHost}:$remoteSql" | Out-Null
-      if($LASTEXITCODE -eq 0){ ssh $StaticHost "PGPASSWORD=$pwExpr psql -U recon_user -h 127.0.0.1 -d cuberoot_db -v ON_ERROR_STOP=1 -f $remoteSql; rc=`$?; rm -f $remoteSql; exit `$rc" | Out-Null }
+      if($LASTEXITCODE -eq 0){ ssh $StaticHost "${rareGunzip}PGPASSWORD=$pwExpr psql -U recon_user -h 127.0.0.1 -d cuberoot_db -v ON_ERROR_STOP=1 -f $remoteSql; rc=`$?; rm -f $remoteSql$rareRm; exit `$rc" | Out-Null }
       Remove-Item $localSql -Force -EA SilentlyContinue
       Move-Item -Force $d.NewManifest $manifest; Remove-Item $d.DeltaCsv,$d.DeletedTxt -Force -EA SilentlyContinue; return
     }
@@ -299,16 +346,18 @@ CREATE TEMP TABLE _wss_del (competition_id varchar(32), event_id varchar(6), rou
 \copy _wss_del FROM '$remoteDel' WITH (FORMAT csv)
 DELETE FROM wca_scramble_steps t USING _wss_del d
   WHERE t.competition_id=d.competition_id AND t.event_id=d.event_id AND t.round_type_id=d.round_type_id AND t.group_id=d.group_id AND t.is_extra=d.is_extra AND t.scramble_num=d.scramble_num;
-$metaIns
+$metaBlock
 COMMIT;
+$postSql
 SELECT 'wca_scramble_steps_total='||count(*) FROM wca_scramble_steps;
 "@
     $localSql = Join-Path $env:TEMP '_wss.sql'
     [IO.File]::WriteAllText($localSql, ($sql -replace "`r`n","`n"), [Text.UTF8Encoding]::new($false))
     scp $d.DeltaCsv "${StaticHost}:$remoteDelta"; if($LASTEXITCODE -ne 0){ Write-Host '  [steps] delta scp 失败, 跳过(manifest 不更新)' -ForegroundColor Yellow; Remove-Item $d.NewManifest -Force -EA SilentlyContinue; return }
     scp $d.DeletedTxt "${StaticHost}:$remoteDel" | Out-Null; if($LASTEXITCODE -ne 0){ Write-Host '  [steps] del scp 失败, 跳过' -ForegroundColor Yellow; Remove-Item $d.NewManifest -Force -EA SilentlyContinue; return }
+    if(-not (& $scpRare)){ Remove-Item $d.NewManifest -Force -EA SilentlyContinue; return }
     scp $localSql "${StaticHost}:$remoteSql" | Out-Null; if($LASTEXITCODE -ne 0){ Write-Host '  [steps] SQL scp 失败, 跳过' -ForegroundColor Yellow; Remove-Item $localSql,$d.NewManifest -Force -EA SilentlyContinue; return }
-    $remoteCmd = "PGPASSWORD=$pwExpr psql -U recon_user -h 127.0.0.1 -d cuberoot_db -v ON_ERROR_STOP=1 -f $remoteSql; rc=`$?; rm -f $remoteDelta $remoteDel $remoteSql; exit `$rc"
+    $remoteCmd = "${rareGunzip}PGPASSWORD=$pwExpr psql -U recon_user -h 127.0.0.1 -d cuberoot_db -v ON_ERROR_STOP=1 -f $remoteSql; rc=`$?; rm -f $remoteDelta $remoteDel $remoteSql$rareRm; exit `$rc"
     ssh $StaticHost $remoteCmd
     $loadRc=$LASTEXITCODE
     Remove-Item $localSql -Force -ErrorAction SilentlyContinue
@@ -335,16 +384,18 @@ INSERT INTO wca_scramble_steps (competition_id,event_id,round_type_id,group_id,i
          s.competition_id,s.event_id,s.round_type_id,s.group_id,s.is_extra,s.scramble_num,w.rnd,s.steps,s.gm_cross6,s.gm_xcross6
   FROM _wss_stage s JOIN wca_scrambles w USING (competition_id,event_id,round_type_id,group_id,is_extra,scramble_num)
   ORDER BY s.competition_id,s.event_id,s.round_type_id,s.group_id,s.is_extra,s.scramble_num, s.gm_cross6 NULLS LAST, s.gm_xcross6 NULLS LAST, w.rnd;
-$metaIns
+$metaBlock
 COMMIT;
+$postSql
 SELECT 'wca_scramble_steps_total='||count(*) FROM wca_scramble_steps;
 "@
     $localSql = Join-Path $env:TEMP '_wss_load.sql'
     [IO.File]::WriteAllText($localSql, ($sql -replace "`r`n","`n"), [Text.UTF8Encoding]::new($false))
+    if(-not (& $scpRare)){ Remove-Item $d.NewManifest -Force -EA SilentlyContinue; return }
     scp $localSql "${StaticHost}:$remoteSql" | Out-Null
     if($LASTEXITCODE -ne 0){ Write-Host '  [steps] SQL scp 失败, 跳过' -ForegroundColor Yellow; Remove-Item $localSql,$d.NewManifest -Force -EA SilentlyContinue; return }
     # 先 gunzip,再 psql -f(\copy 读已解压文件),最后清理远端临时文件
-    $remoteCmd = "gunzip -f $remoteGz && PGPASSWORD=$pwExpr psql -U recon_user -h 127.0.0.1 -d cuberoot_db -v ON_ERROR_STOP=1 -f $remoteSql; rc=`$?; rm -f $remoteCsv $remoteGz $remoteSql; exit `$rc"
+    $remoteCmd = "gunzip -f $remoteGz && ${rareGunzip}PGPASSWORD=$pwExpr psql -U recon_user -h 127.0.0.1 -d cuberoot_db -v ON_ERROR_STOP=1 -f $remoteSql; rc=`$?; rm -f $remoteCsv $remoteGz $remoteSql$rareRm; exit `$rc"
     ssh $StaticHost $remoteCmd
     $loadRc=$LASTEXITCODE
     Remove-Item $localSql -Force -ErrorAction SilentlyContinue
@@ -1081,7 +1132,8 @@ if($runStages){
     if($LASTEXITCODE -ne 0){ Write-Host '[steps] 生成失败(非致命, 跳过)' -ForegroundColor Yellow }
     elseif(-not $NoPublish){
       Load-StepsToPg -LocalCsv (Join-Path $RepoRoot 'stats/scramble/steps/wca_scramble_steps.csv') `
-        -LocalLayout (Join-Path $RepoRoot 'stats/scramble/steps/steps_layout.json') -Stamp $stamp
+        -LocalLayout (Join-Path $RepoRoot 'stats/scramble/steps/steps_layout.json') `
+        -LocalRare (Join-Path $RepoRoot 'stats/scramble/steps/wca_scramble_steps_rare.csv') -Stamp $stamp
     }
   } finally { Pop-Location }
 }

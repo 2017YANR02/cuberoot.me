@@ -374,6 +374,17 @@
 }
 .trainer-stage-btn:hover { background: color-mix(in srgb, var(--foreground) 6%, transparent); }
 
+/* 三条一屏(不计时模式):打乱与图交错成六行,每条打乱紧跟自己那张图 */
+.trainer-scramble-multi {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 18px;
+}
+.trainer-scramble-row {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 6px;
+}
+.trainer-scramble-multi .trainer-scramble-text { margin-bottom: 0; }
+
 /* 当前题的 case 图 —— 左栏计时数字下方居中,看得见正在练的这一把 */
 .trainer-stage-thumb {
   display: flex; justify-content: center;
@@ -417,17 +428,26 @@
   margin-top: 12px;
 }
 
-/* 状态行(如复习进度):居中一行,窄屏折行 */
-.trainer-stage-opts {
-  display: flex; flex-wrap: wrap;
-  justify-content: center; align-items: center;
-  gap: 10px 14px;
-  margin: 0 0 8px;
-}
+/* 复习进度(26/472):贴在齿轮右侧。absolute 脱流 —— 齿轮保持精确居中,
+   .trainer-opts 的盒子不被撑宽,弹出面板的锚点也就不跟着偏。 */
 .trainer-recap-progress {
+  position: absolute;
+  left: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
   font-size: 0.82rem;
   color: var(--muted-foreground);
   font-variant-numeric: tabular-nums;
+}
+/* 窄屏齿轮已靠右缘(见下方 media query),右侧没空间 —— 改回行内跟在齿轮后面 */
+@media (max-width: 768px) {
+  .trainer-recap-progress {
+    position: static;
+    transform: none;
+    align-self: center;
+    margin-left: 6px;
+  }
 }
 
 /* ─── 齿轮设置弹出面板(训练选项全收纳:打乱类型/模式/计时/pre-AUF/概率/字体) ─── */

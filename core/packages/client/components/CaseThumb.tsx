@@ -37,7 +37,7 @@ const CORNER_LL_MASK: Partial<Record<string, string>> = {
 };
 
 export function CaseThumb({
-  puzzle, set, sticker, alg, setup, size = 88, mask: maskOverride,
+  puzzle, set, sticker, alg, setup, size = 88, mask: maskOverride, local,
 }: {
   puzzle: AlgPuzzle;
   set: string;
@@ -46,6 +46,8 @@ export function CaseThumb({
   setup?: string;
   size?: number;
   mask?: string;
+  /** NxN 走本地渲染(瞬时、与同屏其它图同帧出现)。见 `VisualCube` 的 `local`。 */
+  local?: boolean;
 }) {
   if (puzzle === 'sq1') {
     const params = new URLSearchParams({ pzl: 'sq1', variant: 'net' });
@@ -66,15 +68,15 @@ export function CaseThumb({
     return <PuzzleSVG kind={kind} {...driver} size={size} />;
   }
   if (maskOverride) {
-    return <VisualCube algorithm={alg} setup={setup} view="pll" mask={maskOverride} size={size} />;
+    return <VisualCube algorithm={alg} setup={setup} view="pll" mask={maskOverride} size={size} local={local} />;
   }
   const isZbls = puzzle === '3x3' && set === 'zbls';
   if (isZbls) {
-    return <VisualCube algorithm={alg} setup={setup} view="iso" mask="vh" size={size} />;
+    return <VisualCube algorithm={alg} setup={setup} view="iso" mask="vh" size={size} local={local} />;
   }
   const cornerMask = puzzle === '3x3' ? CORNER_LL_MASK[set] : undefined;
   if (cornerMask) {
-    return <VisualCube algorithm={alg} setup={setup} view="pll" mask={cornerMask} size={size} />;
+    return <VisualCube algorithm={alg} setup={setup} view="pll" mask={cornerMask} size={size} local={local} />;
   }
   return (
     <VisualCube
@@ -83,6 +85,7 @@ export function CaseThumb({
       view={pickView(puzzle, set, sticker)}
       size={size}
       puzzleSize={PUZZLE_SIZE[puzzle]}
+      local={local}
     />
   );
 }

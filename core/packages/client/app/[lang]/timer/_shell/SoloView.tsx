@@ -327,8 +327,11 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       from: compMissing ? '' : settings.wcaDateFrom,
       to: compMissing ? '' : settings.wcaDateTo,
       optimal: settings.wcaUseOptimal,
-      // 难度过滤:回退的空比赛出纯随机真题、未入库的比赛旁路(见 wcaCompUnindexed)——都不套残留难度设置。
-      diff: !compMissing && !wcaCompUnindexed && settings.wcaDifficultyOn && settings.wcaDiffSteps.length > 0
+      // 难度过滤:未入库的比赛旁路(见 wcaCompUnindexed)。空比赛回退成「全时段随机真题」时仍生效——
+      // 难度控件此时照常显示可操作(WcaSourceConfig 只看开关不看有无选中比赛),丢弃会静默出不符条件的
+      // 打乱(如选了 0 步十字却拿到普通打乱);date 池服务端 /random 对空 from/to 走飞镖采样带环绕补齐,
+      // 稀有档(0 步十字)也能出题。
+      diff: !wcaCompUnindexed && settings.wcaDifficultyOn && settings.wcaDiffSteps.length > 0
         ? { variant: settings.wcaDiffVariant, stage: settings.wcaDiffStage, colors: settings.wcaDiffColors, steps: settings.wcaDiffSteps }
         : undefined,
       stepFilter: wcaStep ?? undefined,
@@ -1555,12 +1558,12 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                         // 还没算,常见新赛)→ 换步数/配色也没用,提示改用日期模式;已入库只是此难度档无匹配
                         // → 提示换步数/配色。
                         : wcaSpec.diff
-                          ? settings.wcaScrambleMode === 'comp'
+                          ? wcaSpec.mode === 'comp'
                             ? isWcaCompUnindexed(wcaSpec)
                               ? tr({ zh: '难度库待更新', en: 'Difficulty index not updated yet' })
                               : tr({ zh: '该比赛没有匹配此难度的真题,换个步数或配色试试', en: 'This competition has no scramble at this difficulty — try other step counts or colors' })
                             : tr({ zh: '该难度组合没有匹配的 WCA 真题,换个步数或配色试试', en: 'No WCA scramble matches this difficulty — try other step counts or colors' })
-                          : settings.wcaScrambleMode === 'comp'
+                          : wcaSpec.mode === 'comp'
                             ? tr({ zh: '该比赛没有此项目的打乱', en: 'This competition has no scrambles for this event' })
                             : tr({ zh: '该时间段内没有 WCA 真题', en: 'No WCA scrambles in this date range' })
                     }</span>
