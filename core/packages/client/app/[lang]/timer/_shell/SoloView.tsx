@@ -290,8 +290,9 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   // `sig` string is the *meaningful* identity (excludes compName, which changes
   // per keystroke while typing in the comp picker) used as the reset trigger.
   // 难度过滤(date 模式)签名:开启且选了步数才生效,变了即重置打乱队列。
+  // merged 也进签名:合并/分开是两个不同的取题池,切换后必须重置队列,否则继续出旧池的题。
   const wcaDiffSig = settings.wcaDifficultyOn && settings.wcaDiffSteps.length > 0
-    ? `${settings.wcaDiffVariant}:${settings.wcaDiffStage}:${settings.wcaDiffColors}:${[...settings.wcaDiffSteps].sort((a, b) => a - b).join('.')}`
+    ? `${settings.wcaDiffVariant}:${settings.wcaDiffStage}:${settings.wcaDiffColors}:${[...settings.wcaDiffSteps].sort((a, b) => a - b).join('.')}${settings.wcaDiffMerged ? ':m' : ''}`
     : '';
   // 「按步数」WCA 过滤(2×2 / 金字塔):把真实打乱按度量步数筛到 [lo,hi]。与随机来源共用同一组设置。
   const wcaStep = wcaStepFilter(event, settings);
@@ -331,12 +332,16 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       // 打乱(如选了 0 步十字却拿到普通打乱);date 池服务端 /random 对空 from/to 走飞镖采样带环绕补齐,
       // 稀有档(0 步十字)也能出题。
       diff: !wcaCompUnindexed && settings.wcaDifficultyOn && settings.wcaDiffSteps.length > 0
-        ? { variant: settings.wcaDiffVariant, stage: settings.wcaDiffStage, colors: settings.wcaDiffColors, steps: settings.wcaDiffSteps }
+        ? {
+          variant: settings.wcaDiffVariant, stage: settings.wcaDiffStage,
+          colors: settings.wcaDiffColors, steps: settings.wcaDiffSteps,
+          merged: settings.wcaDiffMerged,
+        }
         : undefined,
       stepFilter: wcaStep ?? undefined,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [event, settings.wcaScrambleMode, settings.wcaComp, settings.wcaCompName, settings.wcaRound, settings.wcaGroup, settings.wcaDateFrom, settings.wcaDateTo, settings.wcaUseOptimal, settings.wcaDifficultyOn, settings.wcaDiffVariant, settings.wcaDiffStage, settings.wcaDiffColors, settings.wcaDiffSteps, wcaStepSig, wcaCompUnindexed]);
+  }, [event, settings.wcaScrambleMode, settings.wcaComp, settings.wcaCompName, settings.wcaRound, settings.wcaGroup, settings.wcaDateFrom, settings.wcaDateTo, settings.wcaUseOptimal, settings.wcaDifficultyOn, settings.wcaDiffVariant, settings.wcaDiffStage, settings.wcaDiffColors, settings.wcaDiffSteps, settings.wcaDiffMerged, wcaStepSig, wcaCompUnindexed]);
   const wcaSpecRef = useRef(wcaSpec);
   wcaSpecRef.current = wcaSpec;
   const wcaSourceSig = settings.scrambleSource === 'wca'

@@ -41,7 +41,7 @@ beforeEach(() => { vi.unstubAllGlobals(); });
 describe('wca_pool 封闭集(稀有难度档)', () => {
   const rareSpec: WcaSourceSpec = {
     ...baseSpec,
-    diff: { variant: 'std', stage: 'cross', colors: 'WY', steps: [8] },
+    diff: { variant: 'std', stage: 'cross', colors: 'WY', steps: [8], merged: true },
   };
 
   it('回得少于所要条数 → 认定为全集,之后只本地循环不再联网', async () => {
