@@ -1,9 +1,9 @@
 .cs-page {
-  --surface: #1a1a1a;
-  --text: #d4d4d4;
-  --muted: #8f8f8f;
-  --border: rgba(255, 255, 255, 0.12);
-  background: #111;
+  --surface: var(--card);
+  --text: var(--foreground);
+  --muted: var(--muted-foreground);
+  --border: var(--border-default);
+  background: var(--background);
   color: var(--text);
   min-height: 100vh;
   padding: 24px 32px;
@@ -30,14 +30,14 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.06);
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
   color: var(--text);
   text-decoration: none;
   transition: background 0.15s;
 }
 
 .cs-back:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--border-default);
 }
 
 .cs-title {
@@ -79,7 +79,7 @@
   font-size: 0.95rem;
   font-weight: 600;
   margin: 0 0 12px;
-  color: #b8b8b8;
+  color: var(--muted-foreground);
   display: flex;
   align-items: baseline;
   gap: 10px;
@@ -101,8 +101,8 @@
 
 .cs-sec-play,
 .cs-sec-stop {
-  background: rgba(91, 157, 217, 0.18);
-  color: #bbdaf3;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: color-mix(in srgb, var(--accent) 55%, white);
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -117,7 +117,7 @@
 
 .cs-sec-play:hover,
 .cs-sec-stop:hover {
-  background: rgba(91, 157, 217, 0.3);
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
 /* ── 视频式进度条 ── */
@@ -136,10 +136,10 @@
   height: 6px;
   background: linear-gradient(
     to right,
-    #5b9dd9 0%,
-    #5b9dd9 var(--cs-scrubber-pct, 0%),
-    rgba(255, 255, 255, 0.08) var(--cs-scrubber-pct, 0%),
-    rgba(255, 255, 255, 0.08) 100%
+    var(--accent) 0%,
+    var(--accent) var(--cs-scrubber-pct, 0%),
+    color-mix(in srgb, var(--foreground) 8%, transparent) var(--cs-scrubber-pct, 0%),
+    color-mix(in srgb, var(--foreground) 8%, transparent) 100%
   );
   border-radius: 3px;
   outline: none;
@@ -153,10 +153,10 @@
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #bbdaf3;
-  border: 2px solid #1a1a1a;
+  background: color-mix(in srgb, var(--accent) 55%, white);
+  border: 2px solid var(--background);
   cursor: pointer;
-  box-shadow: 0 0 4px rgba(91, 157, 217, 0.4);
+  box-shadow: 0 0 4px color-mix(in srgb, var(--accent) 40%, transparent);
   transition: transform 0.1s;
 }
 
@@ -168,8 +168,8 @@
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #bbdaf3;
-  border: 2px solid #1a1a1a;
+  background: color-mix(in srgb, var(--accent) 55%, white);
+  border: 2px solid var(--background);
   cursor: pointer;
 }
 
@@ -211,7 +211,7 @@
 }
 
 .cs-cell-clickable:hover {
-  stroke: rgba(255, 255, 255, 0.5);
+  stroke: color-mix(in srgb, var(--foreground) 50%, transparent);
   stroke-width: 1;
 }
 
@@ -245,13 +245,13 @@
 }
 
 .cs-gran-btn:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
   color: var(--text);
 }
 
 .cs-gran-btn--active {
-  background: rgba(91, 157, 217, 0.18);
-  color: #bbdaf3;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: color-mix(in srgb, var(--accent) 55%, white);
 }
 
 .cs-line-wrap {
@@ -268,8 +268,8 @@
   margin-bottom: 4px;
   min-height: 26px;
 }.cs-line-reset {
-  background: rgba(91, 157, 217, 0.18);
-  color: #bbdaf3;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: color-mix(in srgb, var(--accent) 55%, white);
   border: none;
   border-radius: 4px;
   padding: 2px 10px;
@@ -278,7 +278,7 @@
   transition: background 0.12s;
   font-family: inherit;
 }.cs-line-reset:hover {
-  background: rgba(91, 157, 217, 0.3);
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
 .cs-line-svg {
@@ -302,19 +302,19 @@
 }
 
 .cs-line-grid {
-  stroke: rgba(255, 255, 255, 0.06);
+  stroke: color-mix(in srgb, var(--foreground) 6%, transparent);
   stroke-width: 1;
 }
 
 .cs-line-path {
-  stroke: #5b9dd9;
+  stroke: var(--accent);
   stroke-width: 2;
   stroke-linejoin: round;
   stroke-linecap: round;
 }
 
 .cs-line-dot {
-  fill: #5b9dd9;
+  fill: var(--accent);
   cursor: default;
   transition: r 0.1s, fill 0.1s;
 }
@@ -324,7 +324,7 @@
 }
 
 .cs-line-dot-clickable:hover {
-  fill: #bbdaf3;
+  fill: color-mix(in srgb, var(--accent) 55%, white);
   r: 5;
 }
 
@@ -375,14 +375,14 @@
 
 .cs-bar-track {
   height: 14px;
-  background: rgba(255, 255, 255, 0.05);
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
   border-radius: 3px;
   overflow: hidden;
 }
 
 .cs-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #5b9dd9, #8bbde8);
+  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 70%, white));
   transition: width 0.4s;
 }
 

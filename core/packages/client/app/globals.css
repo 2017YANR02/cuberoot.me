@@ -163,6 +163,7 @@ html:root:not([data-palette-scheme=dark]):has(.records-page),
 html:root:not([data-palette-scheme=dark]):has(.nemesizer-page),
 html:root:not([data-palette-scheme=dark]):has(.fun-stats),
 html:root:not([data-palette-scheme=dark]):has(.result-watch-page),
+html:root:not([data-palette-scheme=dark]):has(.cs-page),
 html:root:not([data-palette-scheme=dark]):has(.tr-page) {
   color-scheme: dark;
   --background: #171717;
