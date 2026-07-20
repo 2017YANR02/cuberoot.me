@@ -1,6 +1,6 @@
 // lib/pocket-scramble —— WCA 二阶打乱(TNoodle 移植)的正确性 + 性能。
 import { describe, it, expect } from 'vitest';
-import { writeFileSync } from 'node:fs';
+import { writeFileSync, mkdirSync } from 'node:fs';
 import { wcaPocketScramble, optimalPocketScramble } from '@/lib/pocket-scramble';
 import { pocketCost } from '@/lib/pocket-cost';
 import { create222MetricEvaluator } from '@/lib/cube222-metric';
@@ -83,9 +83,13 @@ describe('wcaPocketScramble', () => {
     const t1 = Date.now();
     for (let i = 0; i < N; i++) optimalPocketScramble(r);
     const optMs = Date.now() - t1;
-    writeFileSync('.tmp/pocket_scramble_bench.txt',
-      `WCA-11:  ${N} in ${wcaMs}ms = ${(wcaMs / N).toFixed(2)}ms each\n` +
-      `optimal: ${N} in ${optMs}ms = ${(optMs / N).toFixed(2)}ms each\n`);
+    // bench dump 仅供人工查看:CI 全新 checkout 没有 .tmp/,先建目录,写不出也不算测试失败。
+    try {
+      mkdirSync('.tmp', { recursive: true });
+      writeFileSync('.tmp/pocket_scramble_bench.txt',
+        `WCA-11:  ${N} in ${wcaMs}ms = ${(wcaMs / N).toFixed(2)}ms each\n` +
+        `optimal: ${N} in ${optMs}ms = ${(optMs / N).toFixed(2)}ms each\n`);
+    } catch { /* 写 bench dump 失败无所谓,下面的性能断言才是真判据 */ }
     expect(wcaMs / N).toBeLessThan(200);
   });
 });
