@@ -2568,8 +2568,8 @@ function ColorRow({
 // (controller.sensitivity)、拖空白转视角的 rad/px(mapOrbitK)、SQ1 拖拽(mapTurnDragFactor)
 // —— 三者都是 mapSensitivity(v) 的常数倍,所以只有"相对默认几倍"对三条路径同时精确;
 // 标成 °/px 之类的物理量只有转视角那条对得上,拖贴纸会对不上(它还受透视/缩放影响)。
-// mapSensitivity(v)/mapSensitivity(50) = (0.05+0.007v)/0.4 = 0.125+0.0175v。
-const UNIT_SENS: SliderUnit = { to: (v) => 0.125 + v * 0.0175, from: (m) => (m - 0.125) / 0.0175, min: 0.13, max: 1.88, step: 0.05, decimals: 2, suffix: '×' };
+// mapSensitivity 是几何映射(每 25 格 ×2),倍率 = 2^((v-50)/25),0.25×~4×。
+const UNIT_SENS: SliderUnit = { to: (v) => Math.pow(2, (v - 50) / 25), from: (m) => 50 + 25 * Math.log2(m), min: 0.25, max: 4, step: 0.05, decimals: 2, suffix: '×' };
 const UNIT_SCALE: SliderUnit = { to: (v) => 0.5 + v / 100, from: (m) => (m - 0.5) * 100, min: 0.5, max: 1.5, step: 0.05, decimals: 2, suffix: '×' };
 // 透视 → 35mm 等效焦距:引擎是 dolly-zoom(distance = 取景半径×p,p = 2 + v×0.08,FOV 反向
 // 补偿定画幅),竖直 FOV = 2·atan(1/p) ⇔ 全画幅(半高 12mm)焦距 f = 12p = 24 + 0.96v mm。
