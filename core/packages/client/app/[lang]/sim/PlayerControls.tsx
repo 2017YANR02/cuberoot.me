@@ -2760,7 +2760,11 @@ function PuzzleSettings({
           </div>
 
           <div className="sim-puzzle-sliders">
-            <Slider label={t('灵敏度', 'Sensitivity')} value={settings.sensitivity} onChange={(v) => set('sensitivity', v)} disabled={!caps.supports.sensitivity} unit={UNIT_SENS} title={hint(caps.supports.sensitivity) ?? t('跟手倍率(相对默认):同时作用于拖层转动、拖空白转视角、SQ1 拖拽', 'Responsiveness relative to the default — scales layer drags, view drags and SQ1 drags alike')} />
+            <Slider label={t('灵敏度', 'Sensitivity')} value={settings.sensitivity} onChange={(v) => set('sensitivity', v)} disabled={!caps.supports.sensitivity} unit={UNIT_SENS}
+              title={hint(caps.supports.sensitivity) ?? (settings.pointerTurns === false
+                // 手拧关 → 拖层/SQ1 两条路径不再产生 move,只剩转视角,单位含义随之收窄(仍然可调)。
+                ? t('跟手倍率(相对默认):手拧已关,当前只作用于拖动转视角', 'Responsiveness relative to the default — with drag-turn off it only scales view rotation')
+                : t('跟手倍率(相对默认):同时作用于拖层转动、拖空白转视角、SQ1 拖拽', 'Responsiveness relative to the default — scales layer drags, view drags and SQ1 drags alike'))} />
             <Slider label={t('缩放', 'Scale')} value={settings.scale} onChange={(v) => set('scale', v)} unit={UNIT_SCALE} title={t('缩放倍率', 'Zoom factor')} />
             <Slider label={t('透视', 'Perspective')} value={settings.perspective} onChange={(v) => set('perspective', v)} disabled={!caps.supports.perspective} unit={UNIT_FOCAL} title={hint(caps.supports.perspective) ?? t('35mm 等效焦距(小 = 广角畸变强,大 = 接近正交)', '35mm-equivalent focal length (low = wide-angle distortion, high = near-orthographic)')} />
             <Slider label={t('左右', 'Yaw')} value={settings.viewAngle} onChange={(v) => set('viewAngle', v)} unit={caps.engineActive ? UNIT_YAW_ENGINE : UNIT_YAW_TWISTY} title={t('左右旋转角度', 'Horizontal angle (degrees)')} />
