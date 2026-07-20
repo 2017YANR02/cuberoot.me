@@ -1216,10 +1216,10 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       icon: <Crosshair size={14} />, label: tr({ zh: '专项练习', en: 'Drill mode'
     }), onClick: () => setDrillModalOpen(true),
     }] : []),
-    // Speffz 记忆读数只对三盲有意义。原来写的是 startsWith('333'),于是 3x3 / OH / FM / 单手
-    // 这些非盲项目也挂着这一项。'333ni' 就是三盲 NI(同一个魔方、同一套编码,只是不给观察),
-    // 一并保留;多盲(333mbld)是另一个项目,没算进来。
-    ...(event === '333bld' || event === '333ni' ? [{
+    // Speffz 记忆读数只对 3x3 盲拧有意义。原来写的是 startsWith('333'),于是 3x3 / OH / FM / MR
+    // 这些非盲项目也挂着这一项。三个 3x3 盲拧项目都要:三盲、三盲 NI(不给观察)、多盲(逐个
+    // 魔方还是同一套编码)。4BLD 以上不算 —— 那是另一套编码,这个助手只读 3x3 打乱。
+    ...(event === '333bld' || event === '333ni' || event === '333mbld' ? [{
       icon: <Brain size={14} />, label: tr({ zh: '盲拧助手', en: 'BLD helper'
     }), onClick: () => setBldHelperOpen(true),
     }] : []),
