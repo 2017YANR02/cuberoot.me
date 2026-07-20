@@ -122,6 +122,13 @@
     "long_en": "Jobarion's cubelib Rust FMC solver + its joba.me/mallard web UI — behavior & UI reference for the step-by-step EO→DR→HTR→FR→Finish + NISS chain at the bottom of `/scramble/analyzer`. Our FR coordinate, chain orchestrator and NISS logic were reimplemented from scratch in Rust + TypeScript on our own solver engine; no cubelib source was copied"
   },
   {
+    "name": "trangium/MovecountCoefficient",
+    "url": "https://github.com/trangium/trangium.github.io",
+    "zh": "MCC 公式测速算法(algSpeed.js 已 port 为 TS,/scramble/mcc;MIT)",
+    "en": "Movecount Coefficient alg-speed metric (algSpeed.js ported to TS for /scramble/mcc; MIT)",
+    "long_en": "trangium's Movecount Coefficient calculator — the algSpeed.js fingertrick-simulation metric is ported to TypeScript (golden-locked against upstream) to power the `/scramble/mcc` page; UI rebuilt in React"
+  },
+  {
     "name": "nbwzx/commutator",
     "url": "https://github.com/nbwzx/commutator",
     "zh": "换位子分解 / 展开引擎(Zixing Wang;ES module 重封装,UI 重写 React)",

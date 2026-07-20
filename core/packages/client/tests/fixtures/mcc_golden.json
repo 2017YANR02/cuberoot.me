@@ -1,0 +1,6217 @@
+{
+ "note": "generated from upstream trangium algSpeed.js — regenerate only by re-running the one-off diff harness against upstream",
+ "paramSets": {
+  "default": {
+   "wristMult": 0.8,
+   "pushMult": 1.3,
+   "ringMult": 1.4,
+   "destabilize": 0.5,
+   "addRegrip": 1,
+   "double": 1.65,
+   "sesliceMult": 1.25,
+   "overWorkMult": 2.25,
+   "moveblock": 0.8,
+   "rotation": 3.5
+  },
+  "alt1": {
+   "wristMult": 0.6,
+   "pushMult": 1.5,
+   "ringMult": 1.8,
+   "destabilize": 1,
+   "addRegrip": 2,
+   "double": 1.8,
+   "sesliceMult": 1.5,
+   "overWorkMult": 3,
+   "moveblock": 1.2,
+   "rotation": 5
+  },
+  "alt2": {
+   "wristMult": 1,
+   "pushMult": 1,
+   "ringMult": 1,
+   "destabilize": 0,
+   "addRegrip": 0,
+   "double": 1,
+   "sesliceMult": 1,
+   "overWorkMult": 0,
+   "moveblock": 0,
+   "rotation": 1
+  }
+ },
+ "esqSets": {
+  "default": {
+   "wristQuarter": 1,
+   "flickQuarter": 2,
+   "wristHalf": 2,
+   "flickHalf": 3
+  },
+  "alt": {
+   "wristQuarter": 1.5,
+   "flickQuarter": 2.5,
+   "wristHalf": 2.5,
+   "flickHalf": 4
+  }
+ },
+ "cases": [
+  {
+   "alg": "R U R' U' R' F R2 U' R' U' R U R' F'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 14.4
+  },
+  {
+   "alg": "R U R' U' R' F R2 U' R' U' R U R' F'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 16.5
+  },
+  {
+   "alg": "R U R' U' R' F R2 U' R' U' R U R' F'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 14.3
+  },
+  {
+   "alg": "R U R' U' R' F R2 U' R' U' R U R' F'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 22,
+   "stm": 14
+  },
+  {
+   "alg": "R U R' U' R' F R2 U' R' U' R U R' F'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 29,
+   "stm": 14
+  },
+  {
+   "alg": "R U R' U' R' F R2 U' R' U' R U R' F'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 14.4
+  },
+  {
+   "alg": "R U R' U' R' F R2 U' R' U' R U R' F'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 16.5
+  },
+  {
+   "alg": "R U R' U' R' F R2 U' R' U' R U R' F'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 14.3
+  },
+  {
+   "alg": "R U R' U' R' F R2 U' R' U' R U R' F'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 22,
+   "stm": 14
+  },
+  {
+   "alg": "R U R' U' R' F R2 U' R' U' R U R' F'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 29,
+   "stm": 14
+  },
+  {
+   "alg": "R U R' U' R' F R2 U' R' U' R U R' F'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 14.4
+  },
+  {
+   "alg": "R U R' U' R' F R2 U' R' U' R U R' F'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 16.5
+  },
+  {
+   "alg": "R U R' U' R' F R2 U' R' U' R U R' F'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 14.3
+  },
+  {
+   "alg": "R U R' U' R' F R2 U' R' U' R U R' F'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 22,
+   "stm": 14
+  },
+  {
+   "alg": "R U R' U' R' F R2 U' R' U' R U R' F'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 29,
+   "stm": 14
+  },
+  {
+   "alg": "R U R' U' R' F R2 U' R' U' R U R' F'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 14.4
+  },
+  {
+   "alg": "R U R' U' R' F R2 U' R' U' R U R' F'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 16.5
+  },
+  {
+   "alg": "R U R' U' R' F R2 U' R' U' R U R' F'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 14.3
+  },
+  {
+   "alg": "R U R' U' R' F R2 U' R' U' R U R' F'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 22,
+   "stm": 14
+  },
+  {
+   "alg": "R U R' U' R' F R2 U' R' U' R U R' F'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 29,
+   "stm": 14
+  },
+  {
+   "alg": "R U R' F' R U R' U' R' F R2 U' R'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 13.4
+  },
+  {
+   "alg": "R U R' F' R U R' U' R' F R2 U' R'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 13.9
+  },
+  {
+   "alg": "R U R' F' R U R' U' R' F R2 U' R'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 13.3
+  },
+  {
+   "alg": "R U R' F' R U R' U' R' F R2 U' R'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 20,
+   "stm": 13
+  },
+  {
+   "alg": "R U R' F' R U R' U' R' F R2 U' R'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 26.5,
+   "stm": 13
+  },
+  {
+   "alg": "R U R' F' R U R' U' R' F R2 U' R'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 13.4
+  },
+  {
+   "alg": "R U R' F' R U R' U' R' F R2 U' R'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 13.9
+  },
+  {
+   "alg": "R U R' F' R U R' U' R' F R2 U' R'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 13.3
+  },
+  {
+   "alg": "R U R' F' R U R' U' R' F R2 U' R'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 20,
+   "stm": 13
+  },
+  {
+   "alg": "R U R' F' R U R' U' R' F R2 U' R'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 26.5,
+   "stm": 13
+  },
+  {
+   "alg": "R U R' F' R U R' U' R' F R2 U' R'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 13.4
+  },
+  {
+   "alg": "R U R' F' R U R' U' R' F R2 U' R'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 13.9
+  },
+  {
+   "alg": "R U R' F' R U R' U' R' F R2 U' R'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 13.3
+  },
+  {
+   "alg": "R U R' F' R U R' U' R' F R2 U' R'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 20,
+   "stm": 13
+  },
+  {
+   "alg": "R U R' F' R U R' U' R' F R2 U' R'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 26.5,
+   "stm": 13
+  },
+  {
+   "alg": "R U R' F' R U R' U' R' F R2 U' R'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 13.4
+  },
+  {
+   "alg": "R U R' F' R U R' U' R' F R2 U' R'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 13.9
+  },
+  {
+   "alg": "R U R' F' R U R' U' R' F R2 U' R'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 13.3
+  },
+  {
+   "alg": "R U R' F' R U R' U' R' F R2 U' R'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 20,
+   "stm": 13
+  },
+  {
+   "alg": "R U R' F' R U R' U' R' F R2 U' R'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 26.5,
+   "stm": 13
+  },
+  {
+   "alg": "R' U L' U2 R U' R' U2 R L",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 20.9
+  },
+  {
+   "alg": "R' U L' U2 R U' R' U2 R L",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 23.9
+  },
+  {
+   "alg": "R' U L' U2 R U' R' U2 R L",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 17
+  },
+  {
+   "alg": "R' U L' U2 R U' R' U2 R L",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 16,
+   "stm": 10
+  },
+  {
+   "alg": "R' U L' U2 R U' R' U2 R L",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 22,
+   "stm": 10
+  },
+  {
+   "alg": "R' U L' U2 R U' R' U2 R L",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 20.9
+  },
+  {
+   "alg": "R' U L' U2 R U' R' U2 R L",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 23.9
+  },
+  {
+   "alg": "R' U L' U2 R U' R' U2 R L",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 17
+  },
+  {
+   "alg": "R' U L' U2 R U' R' U2 R L",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 16,
+   "stm": 10
+  },
+  {
+   "alg": "R' U L' U2 R U' R' U2 R L",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 22,
+   "stm": 10
+  },
+  {
+   "alg": "R' U L' U2 R U' R' U2 R L",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 20.9
+  },
+  {
+   "alg": "R' U L' U2 R U' R' U2 R L",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 23.9
+  },
+  {
+   "alg": "R' U L' U2 R U' R' U2 R L",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 17
+  },
+  {
+   "alg": "R' U L' U2 R U' R' U2 R L",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 16,
+   "stm": 10
+  },
+  {
+   "alg": "R' U L' U2 R U' R' U2 R L",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 22,
+   "stm": 10
+  },
+  {
+   "alg": "R' U L' U2 R U' R' U2 R L",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 20.9
+  },
+  {
+   "alg": "R' U L' U2 R U' R' U2 R L",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 23.9
+  },
+  {
+   "alg": "R' U L' U2 R U' R' U2 R L",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 17
+  },
+  {
+   "alg": "R' U L' U2 R U' R' U2 R L",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 16,
+   "stm": 10
+  },
+  {
+   "alg": "R' U L' U2 R U' R' U2 R L",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 22,
+   "stm": 10
+  },
+  {
+   "alg": "R' U R' U' y R' F' R2 U' R' U R' F R F",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 21.8
+  },
+  {
+   "alg": "R' U R' U' y R' F' R2 U' R' U R' F R F",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 24.7
+  },
+  {
+   "alg": "R' U R' U' y R' F' R2 U' R' U R' F R F",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 16
+  },
+  {
+   "alg": "R' U R' U' y R' F' R2 U' R' U R' F R F",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 24,
+   "stm": 15
+  },
+  {
+   "alg": "R' U R' U' y R' F' R2 U' R' U R' F R F",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 31.5,
+   "stm": 15
+  },
+  {
+   "alg": "R' U R' U' y R' F' R2 U' R' U R' F R F",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 21.8
+  },
+  {
+   "alg": "R' U R' U' y R' F' R2 U' R' U R' F R F",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 24.7
+  },
+  {
+   "alg": "R' U R' U' y R' F' R2 U' R' U R' F R F",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 16
+  },
+  {
+   "alg": "R' U R' U' y R' F' R2 U' R' U R' F R F",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 24,
+   "stm": 15
+  },
+  {
+   "alg": "R' U R' U' y R' F' R2 U' R' U R' F R F",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 31.5,
+   "stm": 15
+  },
+  {
+   "alg": "R' U R' U' y R' F' R2 U' R' U R' F R F",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 21.8
+  },
+  {
+   "alg": "R' U R' U' y R' F' R2 U' R' U R' F R F",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 24.7
+  },
+  {
+   "alg": "R' U R' U' y R' F' R2 U' R' U R' F R F",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 16
+  },
+  {
+   "alg": "R' U R' U' y R' F' R2 U' R' U R' F R F",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 24,
+   "stm": 15
+  },
+  {
+   "alg": "R' U R' U' y R' F' R2 U' R' U R' F R F",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 31.5,
+   "stm": 15
+  },
+  {
+   "alg": "R' U R' U' y R' F' R2 U' R' U R' F R F",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 21.8
+  },
+  {
+   "alg": "R' U R' U' y R' F' R2 U' R' U R' F R F",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 24.7
+  },
+  {
+   "alg": "R' U R' U' y R' F' R2 U' R' U R' F R F",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 16
+  },
+  {
+   "alg": "R' U R' U' y R' F' R2 U' R' U R' F R F",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 24,
+   "stm": 15
+  },
+  {
+   "alg": "R' U R' U' y R' F' R2 U' R' U R' F R F",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 31.5,
+   "stm": 15
+  },
+  {
+   "alg": "R2 U R' U R' U' R U' R2 U' D R' U R D'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 18.1
+  },
+  {
+   "alg": "R2 U R' U R' U' R U' R2 U' D R' U R D'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 20.1
+  },
+  {
+   "alg": "R2 U R' U R' U' R U' R2 U' D R' U R D'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 14.2
+  },
+  {
+   "alg": "R2 U R' U R' U' R U' R2 U' D R' U R D'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 25,
+   "stm": 15
+  },
+  {
+   "alg": "R2 U R' U R' U' R U' R2 U' D R' U R D'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 32.5,
+   "stm": 15
+  },
+  {
+   "alg": "R2 U R' U R' U' R U' R2 U' D R' U R D'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 18.1
+  },
+  {
+   "alg": "R2 U R' U R' U' R U' R2 U' D R' U R D'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 20.1
+  },
+  {
+   "alg": "R2 U R' U R' U' R U' R2 U' D R' U R D'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 14.2
+  },
+  {
+   "alg": "R2 U R' U R' U' R U' R2 U' D R' U R D'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 25,
+   "stm": 15
+  },
+  {
+   "alg": "R2 U R' U R' U' R U' R2 U' D R' U R D'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 32.5,
+   "stm": 15
+  },
+  {
+   "alg": "R2 U R' U R' U' R U' R2 U' D R' U R D'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 18.1
+  },
+  {
+   "alg": "R2 U R' U R' U' R U' R2 U' D R' U R D'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 20.1
+  },
+  {
+   "alg": "R2 U R' U R' U' R U' R2 U' D R' U R D'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 14.2
+  },
+  {
+   "alg": "R2 U R' U R' U' R U' R2 U' D R' U R D'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 25,
+   "stm": 15
+  },
+  {
+   "alg": "R2 U R' U R' U' R U' R2 U' D R' U R D'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 32.5,
+   "stm": 15
+  },
+  {
+   "alg": "R2 U R' U R' U' R U' R2 U' D R' U R D'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 18.1
+  },
+  {
+   "alg": "R2 U R' U R' U' R U' R2 U' D R' U R D'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 20.1
+  },
+  {
+   "alg": "R2 U R' U R' U' R U' R2 U' D R' U R D'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 14.2
+  },
+  {
+   "alg": "R2 U R' U R' U' R U' R2 U' D R' U R D'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 25,
+   "stm": 15
+  },
+  {
+   "alg": "R2 U R' U R' U' R U' R2 U' D R' U R D'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 32.5,
+   "stm": 15
+  },
+  {
+   "alg": "R' d' F R2 u R' U R U' R u' R2",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 17.4
+  },
+  {
+   "alg": "R' d' F R2 u R' U R U' R u' R2",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 18.2
+  },
+  {
+   "alg": "R' d' F R2 u R' U R U' R u' R2",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 16
+  },
+  {
+   "alg": "R' d' F R2 u R' U R U' R u' R2",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 20,
+   "stm": 12
+  },
+  {
+   "alg": "R' d' F R2 u R' U R U' R u' R2",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 26,
+   "stm": 12
+  },
+  {
+   "alg": "R' d' F R2 u R' U R U' R u' R2",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 17.4
+  },
+  {
+   "alg": "R' d' F R2 u R' U R U' R u' R2",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 18.2
+  },
+  {
+   "alg": "R' d' F R2 u R' U R U' R u' R2",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 16
+  },
+  {
+   "alg": "R' d' F R2 u R' U R U' R u' R2",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 20,
+   "stm": 12
+  },
+  {
+   "alg": "R' d' F R2 u R' U R U' R u' R2",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 26,
+   "stm": 12
+  },
+  {
+   "alg": "R' d' F R2 u R' U R U' R u' R2",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 17.4
+  },
+  {
+   "alg": "R' d' F R2 u R' U R U' R u' R2",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 18.2
+  },
+  {
+   "alg": "R' d' F R2 u R' U R U' R u' R2",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 16
+  },
+  {
+   "alg": "R' d' F R2 u R' U R U' R u' R2",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 20,
+   "stm": 12
+  },
+  {
+   "alg": "R' d' F R2 u R' U R U' R u' R2",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 26,
+   "stm": 12
+  },
+  {
+   "alg": "R' d' F R2 u R' U R U' R u' R2",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 17.4
+  },
+  {
+   "alg": "R' d' F R2 u R' U R U' R u' R2",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 18.2
+  },
+  {
+   "alg": "R' d' F R2 u R' U R U' R u' R2",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 16
+  },
+  {
+   "alg": "R' d' F R2 u R' U R U' R u' R2",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 20,
+   "stm": 12
+  },
+  {
+   "alg": "R' d' F R2 u R' U R U' R u' R2",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 26,
+   "stm": 12
+  },
+  {
+   "alg": "M2 U M2 U2 M2 U M2",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 14.6
+  },
+  {
+   "alg": "M2 U M2 U2 M2 U M2",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 18.2
+  },
+  {
+   "alg": "M2 U M2 U2 M2 U M2",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 7
+  },
+  {
+   "alg": "M2 U M2 U2 M2 U M2",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 19,
+   "stm": 7
+  },
+  {
+   "alg": "M2 U M2 U2 M2 U M2",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 25,
+   "stm": 7
+  },
+  {
+   "alg": "M2 U M2 U2 M2 U M2",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 14.6
+  },
+  {
+   "alg": "M2 U M2 U2 M2 U M2",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 18.2
+  },
+  {
+   "alg": "M2 U M2 U2 M2 U M2",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 7
+  },
+  {
+   "alg": "M2 U M2 U2 M2 U M2",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 19,
+   "stm": 7
+  },
+  {
+   "alg": "M2 U M2 U2 M2 U M2",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 25,
+   "stm": 7
+  },
+  {
+   "alg": "M2 U M2 U2 M2 U M2",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 14.6
+  },
+  {
+   "alg": "M2 U M2 U2 M2 U M2",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 18.2
+  },
+  {
+   "alg": "M2 U M2 U2 M2 U M2",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 7
+  },
+  {
+   "alg": "M2 U M2 U2 M2 U M2",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 19,
+   "stm": 7
+  },
+  {
+   "alg": "M2 U M2 U2 M2 U M2",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 25,
+   "stm": 7
+  },
+  {
+   "alg": "M2 U M2 U2 M2 U M2",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 14.6
+  },
+  {
+   "alg": "M2 U M2 U2 M2 U M2",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 18.2
+  },
+  {
+   "alg": "M2 U M2 U2 M2 U M2",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 7
+  },
+  {
+   "alg": "M2 U M2 U2 M2 U M2",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 19,
+   "stm": 7
+  },
+  {
+   "alg": "M2 U M2 U2 M2 U M2",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 25,
+   "stm": 7
+  },
+  {
+   "alg": "M2 U M U2 M' U M2",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 12.7
+  },
+  {
+   "alg": "M2 U M U2 M' U M2",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 15.4
+  },
+  {
+   "alg": "M2 U M U2 M' U M2",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 7
+  },
+  {
+   "alg": "M2 U M U2 M' U M2",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 17,
+   "stm": 7
+  },
+  {
+   "alg": "M2 U M U2 M' U M2",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 22,
+   "stm": 7
+  },
+  {
+   "alg": "M2 U M U2 M' U M2",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 12.7
+  },
+  {
+   "alg": "M2 U M U2 M' U M2",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 15.4
+  },
+  {
+   "alg": "M2 U M U2 M' U M2",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 7
+  },
+  {
+   "alg": "M2 U M U2 M' U M2",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 17,
+   "stm": 7
+  },
+  {
+   "alg": "M2 U M U2 M' U M2",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 22,
+   "stm": 7
+  },
+  {
+   "alg": "M2 U M U2 M' U M2",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 12.7
+  },
+  {
+   "alg": "M2 U M U2 M' U M2",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 15.4
+  },
+  {
+   "alg": "M2 U M U2 M' U M2",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 7
+  },
+  {
+   "alg": "M2 U M U2 M' U M2",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 17,
+   "stm": 7
+  },
+  {
+   "alg": "M2 U M U2 M' U M2",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 22,
+   "stm": 7
+  },
+  {
+   "alg": "M2 U M U2 M' U M2",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 12.7
+  },
+  {
+   "alg": "M2 U M U2 M' U M2",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 15.4
+  },
+  {
+   "alg": "M2 U M U2 M' U M2",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 7
+  },
+  {
+   "alg": "M2 U M U2 M' U M2",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 17,
+   "stm": 7
+  },
+  {
+   "alg": "M2 U M U2 M' U M2",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 22,
+   "stm": 7
+  },
+  {
+   "alg": "M' U M2 U M2 U M' U2 M2",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 17.2
+  },
+  {
+   "alg": "M' U M2 U M2 U M' U2 M2",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 21.4
+  },
+  {
+   "alg": "M' U M2 U M2 U M' U2 M2",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 9
+  },
+  {
+   "alg": "M' U M2 U M2 U M' U2 M2",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 22,
+   "stm": 9
+  },
+  {
+   "alg": "M' U M2 U M2 U M' U2 M2",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 28.5,
+   "stm": 9
+  },
+  {
+   "alg": "M' U M2 U M2 U M' U2 M2",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 17.2
+  },
+  {
+   "alg": "M' U M2 U M2 U M' U2 M2",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 21.4
+  },
+  {
+   "alg": "M' U M2 U M2 U M' U2 M2",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 9
+  },
+  {
+   "alg": "M' U M2 U M2 U M' U2 M2",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 22,
+   "stm": 9
+  },
+  {
+   "alg": "M' U M2 U M2 U M' U2 M2",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 28.5,
+   "stm": 9
+  },
+  {
+   "alg": "M' U M2 U M2 U M' U2 M2",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 17.2
+  },
+  {
+   "alg": "M' U M2 U M2 U M' U2 M2",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 21.4
+  },
+  {
+   "alg": "M' U M2 U M2 U M' U2 M2",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 9
+  },
+  {
+   "alg": "M' U M2 U M2 U M' U2 M2",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 22,
+   "stm": 9
+  },
+  {
+   "alg": "M' U M2 U M2 U M' U2 M2",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 28.5,
+   "stm": 9
+  },
+  {
+   "alg": "M' U M2 U M2 U M' U2 M2",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 17.2
+  },
+  {
+   "alg": "M' U M2 U M2 U M' U2 M2",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 21.4
+  },
+  {
+   "alg": "M' U M2 U M2 U M' U2 M2",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 9
+  },
+  {
+   "alg": "M' U M2 U M2 U M' U2 M2",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 22,
+   "stm": 9
+  },
+  {
+   "alg": "M' U M2 U M2 U M' U2 M2",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 28.5,
+   "stm": 9
+  },
+  {
+   "alg": "x R' U R' D2 R U' R' D2 R2 x'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 12.6
+  },
+  {
+   "alg": "x R' U R' D2 R U' R' D2 R2 x'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 15.3
+  },
+  {
+   "alg": "x R' U R' D2 R U' R' D2 R2 x'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 9.5
+  },
+  {
+   "alg": "x R' U R' D2 R U' R' D2 R2 x'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 20,
+   "stm": 11
+  },
+  {
+   "alg": "x R' U R' D2 R U' R' D2 R2 x'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 26.5,
+   "stm": 11
+  },
+  {
+   "alg": "x R' U R' D2 R U' R' D2 R2 x'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 12.6
+  },
+  {
+   "alg": "x R' U R' D2 R U' R' D2 R2 x'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 15.3
+  },
+  {
+   "alg": "x R' U R' D2 R U' R' D2 R2 x'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 9.5
+  },
+  {
+   "alg": "x R' U R' D2 R U' R' D2 R2 x'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 20,
+   "stm": 11
+  },
+  {
+   "alg": "x R' U R' D2 R U' R' D2 R2 x'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 26.5,
+   "stm": 11
+  },
+  {
+   "alg": "x R' U R' D2 R U' R' D2 R2 x'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 12.6
+  },
+  {
+   "alg": "x R' U R' D2 R U' R' D2 R2 x'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 15.3
+  },
+  {
+   "alg": "x R' U R' D2 R U' R' D2 R2 x'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 9.5
+  },
+  {
+   "alg": "x R' U R' D2 R U' R' D2 R2 x'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 20,
+   "stm": 11
+  },
+  {
+   "alg": "x R' U R' D2 R U' R' D2 R2 x'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 26.5,
+   "stm": 11
+  },
+  {
+   "alg": "x R' U R' D2 R U' R' D2 R2 x'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 12.6
+  },
+  {
+   "alg": "x R' U R' D2 R U' R' D2 R2 x'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 15.3
+  },
+  {
+   "alg": "x R' U R' D2 R U' R' D2 R2 x'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 9.5
+  },
+  {
+   "alg": "x R' U R' D2 R U' R' D2 R2 x'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 20,
+   "stm": 11
+  },
+  {
+   "alg": "x R' U R' D2 R U' R' D2 R2 x'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 26.5,
+   "stm": 11
+  },
+  {
+   "alg": "R U R' U' R' F R F'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 9.6
+  },
+  {
+   "alg": "R U R' U' R' F R F'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 11
+  },
+  {
+   "alg": "R U R' U' R' F R F'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 8.3
+  },
+  {
+   "alg": "R U R' U' R' F R F'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 12,
+   "stm": 8
+  },
+  {
+   "alg": "R U R' U' R' F R F'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 16,
+   "stm": 8
+  },
+  {
+   "alg": "R U R' U' R' F R F'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 9.6
+  },
+  {
+   "alg": "R U R' U' R' F R F'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 11
+  },
+  {
+   "alg": "R U R' U' R' F R F'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 8.3
+  },
+  {
+   "alg": "R U R' U' R' F R F'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 12,
+   "stm": 8
+  },
+  {
+   "alg": "R U R' U' R' F R F'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 16,
+   "stm": 8
+  },
+  {
+   "alg": "R U R' U' R' F R F'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 9.6
+  },
+  {
+   "alg": "R U R' U' R' F R F'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 11
+  },
+  {
+   "alg": "R U R' U' R' F R F'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 8.3
+  },
+  {
+   "alg": "R U R' U' R' F R F'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 12,
+   "stm": 8
+  },
+  {
+   "alg": "R U R' U' R' F R F'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 16,
+   "stm": 8
+  },
+  {
+   "alg": "R U R' U' R' F R F'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 9.6
+  },
+  {
+   "alg": "R U R' U' R' F R F'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 11
+  },
+  {
+   "alg": "R U R' U' R' F R F'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 8.3
+  },
+  {
+   "alg": "R U R' U' R' F R F'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 12,
+   "stm": 8
+  },
+  {
+   "alg": "R U R' U' R' F R F'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 16,
+   "stm": 8
+  },
+  {
+   "alg": "F R U R' U' F'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 7.4
+  },
+  {
+   "alg": "F R U R' U' F'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 8
+  },
+  {
+   "alg": "F R U R' U' F'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 6.3
+  },
+  {
+   "alg": "F R U R' U' F'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 10,
+   "stm": 6
+  },
+  {
+   "alg": "F R U R' U' F'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 13,
+   "stm": 6
+  },
+  {
+   "alg": "F R U R' U' F'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 7.4
+  },
+  {
+   "alg": "F R U R' U' F'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 8
+  },
+  {
+   "alg": "F R U R' U' F'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 6.3
+  },
+  {
+   "alg": "F R U R' U' F'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 10,
+   "stm": 6
+  },
+  {
+   "alg": "F R U R' U' F'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 13,
+   "stm": 6
+  },
+  {
+   "alg": "F R U R' U' F'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 7.4
+  },
+  {
+   "alg": "F R U R' U' F'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 8
+  },
+  {
+   "alg": "F R U R' U' F'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 6.3
+  },
+  {
+   "alg": "F R U R' U' F'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 10,
+   "stm": 6
+  },
+  {
+   "alg": "F R U R' U' F'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 13,
+   "stm": 6
+  },
+  {
+   "alg": "F R U R' U' F'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 7.4
+  },
+  {
+   "alg": "F R U R' U' F'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 8
+  },
+  {
+   "alg": "F R U R' U' F'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 6.3
+  },
+  {
+   "alg": "F R U R' U' F'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 10,
+   "stm": 6
+  },
+  {
+   "alg": "F R U R' U' F'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 13,
+   "stm": 6
+  },
+  {
+   "alg": "f R U R' U' f'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 7.4
+  },
+  {
+   "alg": "f R U R' U' f'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 8
+  },
+  {
+   "alg": "f R U R' U' f'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 6.3
+  },
+  {
+   "alg": "f R U R' U' f'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 10,
+   "stm": 6
+  },
+  {
+   "alg": "f R U R' U' f'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 13,
+   "stm": 6
+  },
+  {
+   "alg": "f R U R' U' f'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 7.4
+  },
+  {
+   "alg": "f R U R' U' f'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 8
+  },
+  {
+   "alg": "f R U R' U' f'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 6.3
+  },
+  {
+   "alg": "f R U R' U' f'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 10,
+   "stm": 6
+  },
+  {
+   "alg": "f R U R' U' f'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 13,
+   "stm": 6
+  },
+  {
+   "alg": "f R U R' U' f'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 7.4
+  },
+  {
+   "alg": "f R U R' U' f'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 8
+  },
+  {
+   "alg": "f R U R' U' f'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 6.3
+  },
+  {
+   "alg": "f R U R' U' f'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 10,
+   "stm": 6
+  },
+  {
+   "alg": "f R U R' U' f'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 13,
+   "stm": 6
+  },
+  {
+   "alg": "f R U R' U' f'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 7.4
+  },
+  {
+   "alg": "f R U R' U' f'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 8
+  },
+  {
+   "alg": "f R U R' U' f'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 6.3
+  },
+  {
+   "alg": "f R U R' U' f'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 10,
+   "stm": 6
+  },
+  {
+   "alg": "f R U R' U' f'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 13,
+   "stm": 6
+  },
+  {
+   "alg": "R U R' U R U2 R'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 7.6
+  },
+  {
+   "alg": "R U R' U R U2 R'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 8.1
+  },
+  {
+   "alg": "R U R' U R U2 R'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 7
+  },
+  {
+   "alg": "R U R' U R U2 R'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 11,
+   "stm": 7
+  },
+  {
+   "alg": "R U R' U R U2 R'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 15,
+   "stm": 7
+  },
+  {
+   "alg": "R U R' U R U2 R'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 7.6
+  },
+  {
+   "alg": "R U R' U R U2 R'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 8.1
+  },
+  {
+   "alg": "R U R' U R U2 R'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 7
+  },
+  {
+   "alg": "R U R' U R U2 R'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 11,
+   "stm": 7
+  },
+  {
+   "alg": "R U R' U R U2 R'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 15,
+   "stm": 7
+  },
+  {
+   "alg": "R U R' U R U2 R'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 7.6
+  },
+  {
+   "alg": "R U R' U R U2 R'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 8.1
+  },
+  {
+   "alg": "R U R' U R U2 R'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 7
+  },
+  {
+   "alg": "R U R' U R U2 R'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 11,
+   "stm": 7
+  },
+  {
+   "alg": "R U R' U R U2 R'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 15,
+   "stm": 7
+  },
+  {
+   "alg": "R U R' U R U2 R'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 7.6
+  },
+  {
+   "alg": "R U R' U R U2 R'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 8.1
+  },
+  {
+   "alg": "R U R' U R U2 R'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 7
+  },
+  {
+   "alg": "R U R' U R U2 R'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 11,
+   "stm": 7
+  },
+  {
+   "alg": "R U R' U R U2 R'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 15,
+   "stm": 7
+  },
+  {
+   "alg": "R' U' R U' R' U2 R",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 8.3
+  },
+  {
+   "alg": "R' U' R U' R' U2 R",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 8.6
+  },
+  {
+   "alg": "R' U' R U' R' U2 R",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 7
+  },
+  {
+   "alg": "R' U' R U' R' U2 R",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 11,
+   "stm": 7
+  },
+  {
+   "alg": "R' U' R U' R' U2 R",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 15,
+   "stm": 7
+  },
+  {
+   "alg": "R' U' R U' R' U2 R",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 8.3
+  },
+  {
+   "alg": "R' U' R U' R' U2 R",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 8.6
+  },
+  {
+   "alg": "R' U' R U' R' U2 R",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 7
+  },
+  {
+   "alg": "R' U' R U' R' U2 R",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 11,
+   "stm": 7
+  },
+  {
+   "alg": "R' U' R U' R' U2 R",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 15,
+   "stm": 7
+  },
+  {
+   "alg": "R' U' R U' R' U2 R",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 8.3
+  },
+  {
+   "alg": "R' U' R U' R' U2 R",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 8.6
+  },
+  {
+   "alg": "R' U' R U' R' U2 R",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 7
+  },
+  {
+   "alg": "R' U' R U' R' U2 R",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 11,
+   "stm": 7
+  },
+  {
+   "alg": "R' U' R U' R' U2 R",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 15,
+   "stm": 7
+  },
+  {
+   "alg": "R' U' R U' R' U2 R",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 8.3
+  },
+  {
+   "alg": "R' U' R U' R' U2 R",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 8.6
+  },
+  {
+   "alg": "R' U' R U' R' U2 R",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 7
+  },
+  {
+   "alg": "R' U' R U' R' U2 R",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 11,
+   "stm": 7
+  },
+  {
+   "alg": "R' U' R U' R' U2 R",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 15,
+   "stm": 7
+  },
+  {
+   "alg": "L' U' L U' L' U2 L",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 7.8
+  },
+  {
+   "alg": "L' U' L U' L' U2 L",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 8.1
+  },
+  {
+   "alg": "L' U' L U' L' U2 L",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 7.7
+  },
+  {
+   "alg": "L' U' L U' L' U2 L",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 11,
+   "stm": 7
+  },
+  {
+   "alg": "L' U' L U' L' U2 L",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 15,
+   "stm": 7
+  },
+  {
+   "alg": "L' U' L U' L' U2 L",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 7.8
+  },
+  {
+   "alg": "L' U' L U' L' U2 L",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 8.1
+  },
+  {
+   "alg": "L' U' L U' L' U2 L",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 7.7
+  },
+  {
+   "alg": "L' U' L U' L' U2 L",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 11,
+   "stm": 7
+  },
+  {
+   "alg": "L' U' L U' L' U2 L",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 15,
+   "stm": 7
+  },
+  {
+   "alg": "L' U' L U' L' U2 L",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 7.8
+  },
+  {
+   "alg": "L' U' L U' L' U2 L",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 8.1
+  },
+  {
+   "alg": "L' U' L U' L' U2 L",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 7.7
+  },
+  {
+   "alg": "L' U' L U' L' U2 L",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 11,
+   "stm": 7
+  },
+  {
+   "alg": "L' U' L U' L' U2 L",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 15,
+   "stm": 7
+  },
+  {
+   "alg": "L' U' L U' L' U2 L",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 7.8
+  },
+  {
+   "alg": "L' U' L U' L' U2 L",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 8.1
+  },
+  {
+   "alg": "L' U' L U' L' U2 L",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 7.7
+  },
+  {
+   "alg": "L' U' L U' L' U2 L",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 11,
+   "stm": 7
+  },
+  {
+   "alg": "L' U' L U' L' U2 L",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 15,
+   "stm": 7
+  },
+  {
+   "alg": "r U R' U' r' F R F'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 11.2
+  },
+  {
+   "alg": "r U R' U' r' F R F'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 12.3
+  },
+  {
+   "alg": "r U R' U' r' F R F'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 10.9
+  },
+  {
+   "alg": "r U R' U' r' F R F'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 12,
+   "stm": 8
+  },
+  {
+   "alg": "r U R' U' r' F R F'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 16,
+   "stm": 8
+  },
+  {
+   "alg": "r U R' U' r' F R F'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 11.2
+  },
+  {
+   "alg": "r U R' U' r' F R F'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 12.3
+  },
+  {
+   "alg": "r U R' U' r' F R F'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 10.9
+  },
+  {
+   "alg": "r U R' U' r' F R F'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 12,
+   "stm": 8
+  },
+  {
+   "alg": "r U R' U' r' F R F'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 16,
+   "stm": 8
+  },
+  {
+   "alg": "r U R' U' r' F R F'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 11.2
+  },
+  {
+   "alg": "r U R' U' r' F R F'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 12.3
+  },
+  {
+   "alg": "r U R' U' r' F R F'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 10.9
+  },
+  {
+   "alg": "r U R' U' r' F R F'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 12,
+   "stm": 8
+  },
+  {
+   "alg": "r U R' U' r' F R F'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 16,
+   "stm": 8
+  },
+  {
+   "alg": "r U R' U' r' F R F'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 11.2
+  },
+  {
+   "alg": "r U R' U' r' F R F'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 12.3
+  },
+  {
+   "alg": "r U R' U' r' F R F'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 10.9
+  },
+  {
+   "alg": "r U R' U' r' F R F'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 12,
+   "stm": 8
+  },
+  {
+   "alg": "r U R' U' r' F R F'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 16,
+   "stm": 8
+  },
+  {
+   "alg": "R U R' U' M' U R U' r'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 16.9
+  },
+  {
+   "alg": "R U R' U' M' U R U' r'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 19.5
+  },
+  {
+   "alg": "R U R' U' M' U R U' r'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 10.8
+  },
+  {
+   "alg": "R U R' U' M' U R U' r'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 14,
+   "stm": 9
+  },
+  {
+   "alg": "R U R' U' M' U R U' r'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 18.5,
+   "stm": 9
+  },
+  {
+   "alg": "R U R' U' M' U R U' r'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 16.9
+  },
+  {
+   "alg": "R U R' U' M' U R U' r'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 19.5
+  },
+  {
+   "alg": "R U R' U' M' U R U' r'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 10.8
+  },
+  {
+   "alg": "R U R' U' M' U R U' r'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 14,
+   "stm": 9
+  },
+  {
+   "alg": "R U R' U' M' U R U' r'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 18.5,
+   "stm": 9
+  },
+  {
+   "alg": "R U R' U' M' U R U' r'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 16.9
+  },
+  {
+   "alg": "R U R' U' M' U R U' r'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 19.5
+  },
+  {
+   "alg": "R U R' U' M' U R U' r'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 10.8
+  },
+  {
+   "alg": "R U R' U' M' U R U' r'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 14,
+   "stm": 9
+  },
+  {
+   "alg": "R U R' U' M' U R U' r'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 18.5,
+   "stm": 9
+  },
+  {
+   "alg": "R U R' U' M' U R U' r'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 16.9
+  },
+  {
+   "alg": "R U R' U' M' U R U' r'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 19.5
+  },
+  {
+   "alg": "R U R' U' M' U R U' r'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 10.8
+  },
+  {
+   "alg": "R U R' U' M' U R U' r'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 14,
+   "stm": 9
+  },
+  {
+   "alg": "R U R' U' M' U R U' r'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 18.5,
+   "stm": 9
+  },
+  {
+   "alg": "R' F R U R' U' F' U R",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 9.2
+  },
+  {
+   "alg": "R' F R U R' U' F' U R",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 9.4
+  },
+  {
+   "alg": "R' F R U R' U' F' U R",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 9
+  },
+  {
+   "alg": "R' F R U R' U' F' U R",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 14,
+   "stm": 9
+  },
+  {
+   "alg": "R' F R U R' U' F' U R",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 18.5,
+   "stm": 9
+  },
+  {
+   "alg": "R' F R U R' U' F' U R",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 9.2
+  },
+  {
+   "alg": "R' F R U R' U' F' U R",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 9.4
+  },
+  {
+   "alg": "R' F R U R' U' F' U R",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 9
+  },
+  {
+   "alg": "R' F R U R' U' F' U R",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 14,
+   "stm": 9
+  },
+  {
+   "alg": "R' F R U R' U' F' U R",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 18.5,
+   "stm": 9
+  },
+  {
+   "alg": "R' F R U R' U' F' U R",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 9.2
+  },
+  {
+   "alg": "R' F R U R' U' F' U R",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 9.4
+  },
+  {
+   "alg": "R' F R U R' U' F' U R",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 9
+  },
+  {
+   "alg": "R' F R U R' U' F' U R",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 14,
+   "stm": 9
+  },
+  {
+   "alg": "R' F R U R' U' F' U R",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 18.5,
+   "stm": 9
+  },
+  {
+   "alg": "R' F R U R' U' F' U R",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 9.2
+  },
+  {
+   "alg": "R' F R U R' U' F' U R",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 9.4
+  },
+  {
+   "alg": "R' F R U R' U' F' U R",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 9
+  },
+  {
+   "alg": "R' F R U R' U' F' U R",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 14,
+   "stm": 9
+  },
+  {
+   "alg": "R' F R U R' U' F' U R",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 18.5,
+   "stm": 9
+  },
+  {
+   "alg": "F R' F' R U R U' R'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 8.5
+  },
+  {
+   "alg": "F R' F' R U R U' R'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 8.4
+  },
+  {
+   "alg": "F R' F' R U R U' R'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 8
+  },
+  {
+   "alg": "F R' F' R U R U' R'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 12,
+   "stm": 8
+  },
+  {
+   "alg": "F R' F' R U R U' R'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 16,
+   "stm": 8
+  },
+  {
+   "alg": "F R' F' R U R U' R'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 8.5
+  },
+  {
+   "alg": "F R' F' R U R U' R'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 8.4
+  },
+  {
+   "alg": "F R' F' R U R U' R'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 8
+  },
+  {
+   "alg": "F R' F' R U R U' R'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 12,
+   "stm": 8
+  },
+  {
+   "alg": "F R' F' R U R U' R'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 16,
+   "stm": 8
+  },
+  {
+   "alg": "F R' F' R U R U' R'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 8.5
+  },
+  {
+   "alg": "F R' F' R U R U' R'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 8.4
+  },
+  {
+   "alg": "F R' F' R U R U' R'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 8
+  },
+  {
+   "alg": "F R' F' R U R U' R'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 12,
+   "stm": 8
+  },
+  {
+   "alg": "F R' F' R U R U' R'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 16,
+   "stm": 8
+  },
+  {
+   "alg": "F R' F' R U R U' R'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 8.5
+  },
+  {
+   "alg": "F R' F' R U R U' R'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 8.4
+  },
+  {
+   "alg": "F R' F' R U R U' R'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 8
+  },
+  {
+   "alg": "F R' F' R U R U' R'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 12,
+   "stm": 8
+  },
+  {
+   "alg": "F R' F' R U R U' R'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 16,
+   "stm": 8
+  },
+  {
+   "alg": "R B' R2 F R2 B R2 F' R",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 13.4
+  },
+  {
+   "alg": "R B' R2 F R2 B R2 F' R",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 16.2
+  },
+  {
+   "alg": "R B' R2 F R2 B R2 F' R",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 9.2
+  },
+  {
+   "alg": "R B' R2 F R2 B R2 F' R",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 16,
+   "stm": 9
+  },
+  {
+   "alg": "R B' R2 F R2 B R2 F' R",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 20.5,
+   "stm": 9
+  },
+  {
+   "alg": "R B' R2 F R2 B R2 F' R",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 13.4
+  },
+  {
+   "alg": "R B' R2 F R2 B R2 F' R",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 16.2
+  },
+  {
+   "alg": "R B' R2 F R2 B R2 F' R",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 9.2
+  },
+  {
+   "alg": "R B' R2 F R2 B R2 F' R",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 16,
+   "stm": 9
+  },
+  {
+   "alg": "R B' R2 F R2 B R2 F' R",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 20.5,
+   "stm": 9
+  },
+  {
+   "alg": "R B' R2 F R2 B R2 F' R",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 13.4
+  },
+  {
+   "alg": "R B' R2 F R2 B R2 F' R",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 16.2
+  },
+  {
+   "alg": "R B' R2 F R2 B R2 F' R",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 9.2
+  },
+  {
+   "alg": "R B' R2 F R2 B R2 F' R",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 16,
+   "stm": 9
+  },
+  {
+   "alg": "R B' R2 F R2 B R2 F' R",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 20.5,
+   "stm": 9
+  },
+  {
+   "alg": "R B' R2 F R2 B R2 F' R",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 13.4
+  },
+  {
+   "alg": "R B' R2 F R2 B R2 F' R",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 16.2
+  },
+  {
+   "alg": "R B' R2 F R2 B R2 F' R",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 9.2
+  },
+  {
+   "alg": "R B' R2 F R2 B R2 F' R",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 16,
+   "stm": 9
+  },
+  {
+   "alg": "R B' R2 F R2 B R2 F' R",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 20.5,
+   "stm": 9
+  },
+  {
+   "alg": "R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 19.6
+  },
+  {
+   "alg": "R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 21.5
+  },
+  {
+   "alg": "R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 19.3
+  },
+  {
+   "alg": "R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 28,
+   "stm": 18
+  },
+  {
+   "alg": "R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 37,
+   "stm": 18
+  },
+  {
+   "alg": "R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 19.6
+  },
+  {
+   "alg": "R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 21.5
+  },
+  {
+   "alg": "R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 19.3
+  },
+  {
+   "alg": "R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 28,
+   "stm": 18
+  },
+  {
+   "alg": "R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 37,
+   "stm": 18
+  },
+  {
+   "alg": "R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 19.6
+  },
+  {
+   "alg": "R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 21.5
+  },
+  {
+   "alg": "R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 19.3
+  },
+  {
+   "alg": "R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 28,
+   "stm": 18
+  },
+  {
+   "alg": "R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 37,
+   "stm": 18
+  },
+  {
+   "alg": "R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 19.6
+  },
+  {
+   "alg": "R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 21.5
+  },
+  {
+   "alg": "R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 19.3
+  },
+  {
+   "alg": "R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 28,
+   "stm": 18
+  },
+  {
+   "alg": "R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 37,
+   "stm": 18
+  },
+  {
+   "alg": "L U' R U2 L' U R' L U' R U2 L' U R'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 27
+  },
+  {
+   "alg": "L U' R U2 L' U R' L U' R U2 L' U R'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 31
+  },
+  {
+   "alg": "L U' R U2 L' U R' L U' R U2 L' U R'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 22
+  },
+  {
+   "alg": "L U' R U2 L' U R' L U' R U2 L' U R'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 22,
+   "stm": 14
+  },
+  {
+   "alg": "L U' R U2 L' U R' L U' R U2 L' U R'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 30,
+   "stm": 14
+  },
+  {
+   "alg": "L U' R U2 L' U R' L U' R U2 L' U R'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 27
+  },
+  {
+   "alg": "L U' R U2 L' U R' L U' R U2 L' U R'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 31
+  },
+  {
+   "alg": "L U' R U2 L' U R' L U' R U2 L' U R'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 22
+  },
+  {
+   "alg": "L U' R U2 L' U R' L U' R U2 L' U R'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 22,
+   "stm": 14
+  },
+  {
+   "alg": "L U' R U2 L' U R' L U' R U2 L' U R'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 30,
+   "stm": 14
+  },
+  {
+   "alg": "L U' R U2 L' U R' L U' R U2 L' U R'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 27
+  },
+  {
+   "alg": "L U' R U2 L' U R' L U' R U2 L' U R'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 31
+  },
+  {
+   "alg": "L U' R U2 L' U R' L U' R U2 L' U R'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 22
+  },
+  {
+   "alg": "L U' R U2 L' U R' L U' R U2 L' U R'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 22,
+   "stm": 14
+  },
+  {
+   "alg": "L U' R U2 L' U R' L U' R U2 L' U R'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 30,
+   "stm": 14
+  },
+  {
+   "alg": "L U' R U2 L' U R' L U' R U2 L' U R'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 27
+  },
+  {
+   "alg": "L U' R U2 L' U R' L U' R U2 L' U R'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 31
+  },
+  {
+   "alg": "L U' R U2 L' U R' L U' R U2 L' U R'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 22
+  },
+  {
+   "alg": "L U' R U2 L' U R' L U' R U2 L' U R'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 22,
+   "stm": 14
+  },
+  {
+   "alg": "L U' R U2 L' U R' L U' R U2 L' U R'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 30,
+   "stm": 14
+  },
+  {
+   "alg": "E2 M E2 M'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 15.7
+  },
+  {
+   "alg": "E2 M E2 M'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 20.7
+  },
+  {
+   "alg": "E2 M E2 M'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 5
+  },
+  {
+   "alg": "E2 M E2 M'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 10,
+   "stm": 4
+  },
+  {
+   "alg": "E2 M E2 M'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 13,
+   "stm": 4
+  },
+  {
+   "alg": "E2 M E2 M'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 15.7
+  },
+  {
+   "alg": "E2 M E2 M'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 20.7
+  },
+  {
+   "alg": "E2 M E2 M'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 5
+  },
+  {
+   "alg": "E2 M E2 M'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 10,
+   "stm": 4
+  },
+  {
+   "alg": "E2 M E2 M'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 13,
+   "stm": 4
+  },
+  {
+   "alg": "E2 M E2 M'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 15.7
+  },
+  {
+   "alg": "E2 M E2 M'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 20.7
+  },
+  {
+   "alg": "E2 M E2 M'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 5
+  },
+  {
+   "alg": "E2 M E2 M'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 10,
+   "stm": 4
+  },
+  {
+   "alg": "E2 M E2 M'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 13,
+   "stm": 4
+  },
+  {
+   "alg": "E2 M E2 M'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 15.7
+  },
+  {
+   "alg": "E2 M E2 M'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 20.7
+  },
+  {
+   "alg": "E2 M E2 M'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 5
+  },
+  {
+   "alg": "E2 M E2 M'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 10,
+   "stm": 4
+  },
+  {
+   "alg": "E2 M E2 M'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 13,
+   "stm": 4
+  },
+  {
+   "alg": "S R U R' U' S' U' R U R' U' S R S'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 19.8
+  },
+  {
+   "alg": "S R U R' U' S' U' R U R' U' S R S'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 23.9
+  },
+  {
+   "alg": "S R U R' U' S' U' R U R' U' S R S'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 14
+  },
+  {
+   "alg": "S R U R' U' S' U' R U R' U' S R S'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 23,
+   "stm": 14
+  },
+  {
+   "alg": "S R U R' U' S' U' R U R' U' S R S'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 30,
+   "stm": 14
+  },
+  {
+   "alg": "S R U R' U' S' U' R U R' U' S R S'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 19.8
+  },
+  {
+   "alg": "S R U R' U' S' U' R U R' U' S R S'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 23.9
+  },
+  {
+   "alg": "S R U R' U' S' U' R U R' U' S R S'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 14
+  },
+  {
+   "alg": "S R U R' U' S' U' R U R' U' S R S'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 23,
+   "stm": 14
+  },
+  {
+   "alg": "S R U R' U' S' U' R U R' U' S R S'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 30,
+   "stm": 14
+  },
+  {
+   "alg": "S R U R' U' S' U' R U R' U' S R S'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 19.8
+  },
+  {
+   "alg": "S R U R' U' S' U' R U R' U' S R S'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 23.9
+  },
+  {
+   "alg": "S R U R' U' S' U' R U R' U' S R S'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 14
+  },
+  {
+   "alg": "S R U R' U' S' U' R U R' U' S R S'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 23,
+   "stm": 14
+  },
+  {
+   "alg": "S R U R' U' S' U' R U R' U' S R S'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 30,
+   "stm": 14
+  },
+  {
+   "alg": "S R U R' U' S' U' R U R' U' S R S'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 19.8
+  },
+  {
+   "alg": "S R U R' U' S' U' R U R' U' S R S'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 23.9
+  },
+  {
+   "alg": "S R U R' U' S' U' R U R' U' S R S'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 14
+  },
+  {
+   "alg": "S R U R' U' S' U' R U R' U' S R S'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 23,
+   "stm": 14
+  },
+  {
+   "alg": "S R U R' U' S' U' R U R' U' S R S'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 30,
+   "stm": 14
+  },
+  {
+   "alg": "M2 E2 S2",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 10
+  },
+  {
+   "alg": "M2 E2 S2",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 13.2
+  },
+  {
+   "alg": "M2 E2 S2",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 4
+  },
+  {
+   "alg": "M2 E2 S2",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 9,
+   "stm": 3
+  },
+  {
+   "alg": "M2 E2 S2",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 12,
+   "stm": 3
+  },
+  {
+   "alg": "M2 E2 S2",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 10
+  },
+  {
+   "alg": "M2 E2 S2",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 13.2
+  },
+  {
+   "alg": "M2 E2 S2",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 4
+  },
+  {
+   "alg": "M2 E2 S2",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 9,
+   "stm": 3
+  },
+  {
+   "alg": "M2 E2 S2",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 12,
+   "stm": 3
+  },
+  {
+   "alg": "M2 E2 S2",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 10
+  },
+  {
+   "alg": "M2 E2 S2",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 13.2
+  },
+  {
+   "alg": "M2 E2 S2",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 4
+  },
+  {
+   "alg": "M2 E2 S2",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 9,
+   "stm": 3
+  },
+  {
+   "alg": "M2 E2 S2",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 12,
+   "stm": 3
+  },
+  {
+   "alg": "M2 E2 S2",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 10
+  },
+  {
+   "alg": "M2 E2 S2",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 13.2
+  },
+  {
+   "alg": "M2 E2 S2",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 4
+  },
+  {
+   "alg": "M2 E2 S2",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 9,
+   "stm": 3
+  },
+  {
+   "alg": "M2 E2 S2",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 12,
+   "stm": 3
+  },
+  {
+   "alg": "z U R' U' z' R U2 L' U L U2 R'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 19.4
+  },
+  {
+   "alg": "z U R' U' z' R U2 L' U L U2 R'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 22.7
+  },
+  {
+   "alg": "z U R' U' z' R U2 L' U L U2 R'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 13.3
+  },
+  {
+   "alg": "z U R' U' z' R U2 L' U L U2 R'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 21,
+   "stm": 12
+  },
+  {
+   "alg": "z U R' U' z' R U2 L' U L U2 R'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 28,
+   "stm": 12
+  },
+  {
+   "alg": "z U R' U' z' R U2 L' U L U2 R'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 19.4
+  },
+  {
+   "alg": "z U R' U' z' R U2 L' U L U2 R'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 22.7
+  },
+  {
+   "alg": "z U R' U' z' R U2 L' U L U2 R'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 13.3
+  },
+  {
+   "alg": "z U R' U' z' R U2 L' U L U2 R'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 21,
+   "stm": 12
+  },
+  {
+   "alg": "z U R' U' z' R U2 L' U L U2 R'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 28,
+   "stm": 12
+  },
+  {
+   "alg": "z U R' U' z' R U2 L' U L U2 R'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 19.4
+  },
+  {
+   "alg": "z U R' U' z' R U2 L' U L U2 R'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 22.7
+  },
+  {
+   "alg": "z U R' U' z' R U2 L' U L U2 R'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 13.3
+  },
+  {
+   "alg": "z U R' U' z' R U2 L' U L U2 R'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 21,
+   "stm": 12
+  },
+  {
+   "alg": "z U R' U' z' R U2 L' U L U2 R'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 28,
+   "stm": 12
+  },
+  {
+   "alg": "z U R' U' z' R U2 L' U L U2 R'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 19.4
+  },
+  {
+   "alg": "z U R' U' z' R U2 L' U L U2 R'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 22.7
+  },
+  {
+   "alg": "z U R' U' z' R U2 L' U L U2 R'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 13.3
+  },
+  {
+   "alg": "z U R' U' z' R U2 L' U L U2 R'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 21,
+   "stm": 12
+  },
+  {
+   "alg": "z U R' U' z' R U2 L' U L U2 R'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 28,
+   "stm": 12
+  },
+  {
+   "alg": "y R U' R' U' R U R' F' R U R' U' R' F R",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 17.8
+  },
+  {
+   "alg": "y R U' R' U' R U R' F' R U R' U' R' F R",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 18.6
+  },
+  {
+   "alg": "y R U' R' U' R U R' F' R U R' U' R' F R",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 16.3
+  },
+  {
+   "alg": "y R U' R' U' R U R' F' R U R' U' R' F R",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 24,
+   "stm": 16
+  },
+  {
+   "alg": "y R U' R' U' R U R' F' R U R' U' R' F R",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 32,
+   "stm": 16
+  },
+  {
+   "alg": "y R U' R' U' R U R' F' R U R' U' R' F R",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 17.8
+  },
+  {
+   "alg": "y R U' R' U' R U R' F' R U R' U' R' F R",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 18.6
+  },
+  {
+   "alg": "y R U' R' U' R U R' F' R U R' U' R' F R",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 16.3
+  },
+  {
+   "alg": "y R U' R' U' R U R' F' R U R' U' R' F R",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 24,
+   "stm": 16
+  },
+  {
+   "alg": "y R U' R' U' R U R' F' R U R' U' R' F R",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 32,
+   "stm": 16
+  },
+  {
+   "alg": "y R U' R' U' R U R' F' R U R' U' R' F R",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 17.8
+  },
+  {
+   "alg": "y R U' R' U' R U R' F' R U R' U' R' F R",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 18.6
+  },
+  {
+   "alg": "y R U' R' U' R U R' F' R U R' U' R' F R",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 16.3
+  },
+  {
+   "alg": "y R U' R' U' R U R' F' R U R' U' R' F R",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 24,
+   "stm": 16
+  },
+  {
+   "alg": "y R U' R' U' R U R' F' R U R' U' R' F R",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 32,
+   "stm": 16
+  },
+  {
+   "alg": "y R U' R' U' R U R' F' R U R' U' R' F R",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 17.8
+  },
+  {
+   "alg": "y R U' R' U' R U R' F' R U R' U' R' F R",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 18.6
+  },
+  {
+   "alg": "y R U' R' U' R U R' F' R U R' U' R' F R",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 16.3
+  },
+  {
+   "alg": "y R U' R' U' R U R' F' R U R' U' R' F R",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 24,
+   "stm": 16
+  },
+  {
+   "alg": "y R U' R' U' R U R' F' R U R' U' R' F R",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 32,
+   "stm": 16
+  },
+  {
+   "alg": "D R' U2 R D' R' U2 R",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 10.3
+  },
+  {
+   "alg": "D R' U2 R D' R' U2 R",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 12.6
+  },
+  {
+   "alg": "D R' U2 R D' R' U2 R",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 8
+  },
+  {
+   "alg": "D R' U2 R D' R' U2 R",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 14,
+   "stm": 8
+  },
+  {
+   "alg": "D R' U2 R D' R' U2 R",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 19,
+   "stm": 8
+  },
+  {
+   "alg": "D R' U2 R D' R' U2 R",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 10.3
+  },
+  {
+   "alg": "D R' U2 R D' R' U2 R",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 12.6
+  },
+  {
+   "alg": "D R' U2 R D' R' U2 R",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 8
+  },
+  {
+   "alg": "D R' U2 R D' R' U2 R",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 14,
+   "stm": 8
+  },
+  {
+   "alg": "D R' U2 R D' R' U2 R",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 19,
+   "stm": 8
+  },
+  {
+   "alg": "D R' U2 R D' R' U2 R",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 10.3
+  },
+  {
+   "alg": "D R' U2 R D' R' U2 R",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 12.6
+  },
+  {
+   "alg": "D R' U2 R D' R' U2 R",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 8
+  },
+  {
+   "alg": "D R' U2 R D' R' U2 R",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 14,
+   "stm": 8
+  },
+  {
+   "alg": "D R' U2 R D' R' U2 R",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 19,
+   "stm": 8
+  },
+  {
+   "alg": "D R' U2 R D' R' U2 R",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 10.3
+  },
+  {
+   "alg": "D R' U2 R D' R' U2 R",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 12.6
+  },
+  {
+   "alg": "D R' U2 R D' R' U2 R",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 8
+  },
+  {
+   "alg": "D R' U2 R D' R' U2 R",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 14,
+   "stm": 8
+  },
+  {
+   "alg": "D R' U2 R D' R' U2 R",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 19,
+   "stm": 8
+  },
+  {
+   "alg": "U R U' R'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 3.6
+  },
+  {
+   "alg": "U R U' R'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 3.2
+  },
+  {
+   "alg": "U R U' R'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 4
+  },
+  {
+   "alg": "U R U' R'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 6,
+   "stm": 4
+  },
+  {
+   "alg": "U R U' R'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 8,
+   "stm": 4
+  },
+  {
+   "alg": "U R U' R'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 2.6
+  },
+  {
+   "alg": "U R U' R'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 2.2
+  },
+  {
+   "alg": "U R U' R'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 3
+  },
+  {
+   "alg": "U R U' R'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 4,
+   "stm": 3
+  },
+  {
+   "alg": "U R U' R'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 5.5,
+   "stm": 3
+  },
+  {
+   "alg": "U R U' R'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 3.6
+  },
+  {
+   "alg": "U R U' R'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 3.2
+  },
+  {
+   "alg": "U R U' R'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 4
+  },
+  {
+   "alg": "U R U' R'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 6,
+   "stm": 4
+  },
+  {
+   "alg": "U R U' R'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 8,
+   "stm": 4
+  },
+  {
+   "alg": "U R U' R'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 2.6
+  },
+  {
+   "alg": "U R U' R'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 2.2
+  },
+  {
+   "alg": "U R U' R'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 3
+  },
+  {
+   "alg": "U R U' R'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 4,
+   "stm": 3
+  },
+  {
+   "alg": "U R U' R'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 5.5,
+   "stm": 3
+  },
+  {
+   "alg": "U' R U R' U",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 4.9
+  },
+  {
+   "alg": "U' R U R' U",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 4.7
+  },
+  {
+   "alg": "U' R U R' U",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 5
+  },
+  {
+   "alg": "U' R U R' U",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 8,
+   "stm": 5
+  },
+  {
+   "alg": "U' R U R' U",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 10.5,
+   "stm": 5
+  },
+  {
+   "alg": "U' R U R' U",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 3.4
+  },
+  {
+   "alg": "U' R U R' U",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 4.1
+  },
+  {
+   "alg": "U' R U R' U",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 3
+  },
+  {
+   "alg": "U' R U R' U",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 4,
+   "stm": 3
+  },
+  {
+   "alg": "U' R U R' U",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 5.5,
+   "stm": 3
+  },
+  {
+   "alg": "U' R U R' U",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 4.9
+  },
+  {
+   "alg": "U' R U R' U",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 4.7
+  },
+  {
+   "alg": "U' R U R' U",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 5
+  },
+  {
+   "alg": "U' R U R' U",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 8,
+   "stm": 5
+  },
+  {
+   "alg": "U' R U R' U",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 10.5,
+   "stm": 5
+  },
+  {
+   "alg": "U' R U R' U",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 3.4
+  },
+  {
+   "alg": "U' R U R' U",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 4.1
+  },
+  {
+   "alg": "U' R U R' U",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 3
+  },
+  {
+   "alg": "U' R U R' U",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 4,
+   "stm": 3
+  },
+  {
+   "alg": "U' R U R' U",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 5.5,
+   "stm": 3
+  },
+  {
+   "alg": "D U R U' R' D'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 5.9
+  },
+  {
+   "alg": "D U R U' R' D'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 6.3
+  },
+  {
+   "alg": "D U R U' R' D'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 5.5
+  },
+  {
+   "alg": "D U R U' R' D'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 10,
+   "stm": 6
+  },
+  {
+   "alg": "D U R U' R' D'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 13,
+   "stm": 6
+  },
+  {
+   "alg": "D U R U' R' D'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 5.4
+  },
+  {
+   "alg": "D U R U' R' D'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 5.8
+  },
+  {
+   "alg": "D U R U' R' D'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 5
+  },
+  {
+   "alg": "D U R U' R' D'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 8,
+   "stm": 5
+  },
+  {
+   "alg": "D U R U' R' D'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 10.5,
+   "stm": 5
+  },
+  {
+   "alg": "D U R U' R' D'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 5.9
+  },
+  {
+   "alg": "D U R U' R' D'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 6.3
+  },
+  {
+   "alg": "D U R U' R' D'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 5.5
+  },
+  {
+   "alg": "D U R U' R' D'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 10,
+   "stm": 6
+  },
+  {
+   "alg": "D U R U' R' D'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 13,
+   "stm": 6
+  },
+  {
+   "alg": "D U R U' R' D'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 5.4
+  },
+  {
+   "alg": "D U R U' R' D'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 5.8
+  },
+  {
+   "alg": "D U R U' R' D'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 5
+  },
+  {
+   "alg": "D U R U' R' D'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 8,
+   "stm": 5
+  },
+  {
+   "alg": "D U R U' R' D'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 10.5,
+   "stm": 5
+  },
+  {
+   "alg": "R U' R' U D'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 4.5
+  },
+  {
+   "alg": "R U' R' U D'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 4.5
+  },
+  {
+   "alg": "R U' R' U D'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 4.5
+  },
+  {
+   "alg": "R U' R' U D'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 8,
+   "stm": 5
+  },
+  {
+   "alg": "R U' R' U D'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 10.5,
+   "stm": 5
+  },
+  {
+   "alg": "R U' R' U D'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 4
+  },
+  {
+   "alg": "R U' R' U D'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 4
+  },
+  {
+   "alg": "R U' R' U D'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 4
+  },
+  {
+   "alg": "R U' R' U D'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 6,
+   "stm": 4
+  },
+  {
+   "alg": "R U' R' U D'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 8,
+   "stm": 4
+  },
+  {
+   "alg": "R U' R' U D'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 4.5
+  },
+  {
+   "alg": "R U' R' U D'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 4.5
+  },
+  {
+   "alg": "R U' R' U D'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 4.5
+  },
+  {
+   "alg": "R U' R' U D'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 8,
+   "stm": 5
+  },
+  {
+   "alg": "R U' R' U D'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 10.5,
+   "stm": 5
+  },
+  {
+   "alg": "R U' R' U D'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 4
+  },
+  {
+   "alg": "R U' R' U D'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 4
+  },
+  {
+   "alg": "R U' R' U D'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 4
+  },
+  {
+   "alg": "R U' R' U D'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 6,
+   "stm": 4
+  },
+  {
+   "alg": "R U' R' U D'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 8,
+   "stm": 4
+  },
+  {
+   "alg": "R R U U' R' R'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 5.6
+  },
+  {
+   "alg": "R R U U' R' R'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 6.6
+  },
+  {
+   "alg": "R R U U' R' R'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 4.2
+  },
+  {
+   "alg": "R R U U' R' R'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 8,
+   "stm": 6
+  },
+  {
+   "alg": "R R U U' R' R'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 10,
+   "stm": 6
+  },
+  {
+   "alg": "R R U U' R' R'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 5.6
+  },
+  {
+   "alg": "R R U U' R' R'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 6.6
+  },
+  {
+   "alg": "R R U U' R' R'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 4.2
+  },
+  {
+   "alg": "R R U U' R' R'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 8,
+   "stm": 6
+  },
+  {
+   "alg": "R R U U' R' R'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 10,
+   "stm": 6
+  },
+  {
+   "alg": "R R U U' R' R'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 5.6
+  },
+  {
+   "alg": "R R U U' R' R'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 6.6
+  },
+  {
+   "alg": "R R U U' R' R'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 4.2
+  },
+  {
+   "alg": "R R U U' R' R'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 8,
+   "stm": 6
+  },
+  {
+   "alg": "R R U U' R' R'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 10,
+   "stm": 6
+  },
+  {
+   "alg": "R R U U' R' R'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 5.6
+  },
+  {
+   "alg": "R R U U' R' R'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 6.6
+  },
+  {
+   "alg": "R R U U' R' R'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 4.2
+  },
+  {
+   "alg": "R R U U' R' R'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 8,
+   "stm": 6
+  },
+  {
+   "alg": "R R U U' R' R'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 10,
+   "stm": 6
+  },
+  {
+   "alg": "R2' U2' R2",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 4.3
+  },
+  {
+   "alg": "R2' U2' R2",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 5.5
+  },
+  {
+   "alg": "R2' U2' R2",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 3
+  },
+  {
+   "alg": "R2' U2' R2",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 7,
+   "stm": 1
+  },
+  {
+   "alg": "R2' U2' R2",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 9,
+   "stm": 1
+  },
+  {
+   "alg": "R2' U2' R2",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 4.3
+  },
+  {
+   "alg": "R2' U2' R2",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 5.5
+  },
+  {
+   "alg": "R2' U2' R2",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 3
+  },
+  {
+   "alg": "R2' U2' R2",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 7,
+   "stm": 1
+  },
+  {
+   "alg": "R2' U2' R2",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 9,
+   "stm": 1
+  },
+  {
+   "alg": "R2' U2' R2",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 4.3
+  },
+  {
+   "alg": "R2' U2' R2",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 5.5
+  },
+  {
+   "alg": "R2' U2' R2",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 3
+  },
+  {
+   "alg": "R2' U2' R2",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 7,
+   "stm": 1
+  },
+  {
+   "alg": "R2' U2' R2",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 9,
+   "stm": 1
+  },
+  {
+   "alg": "R2' U2' R2",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 4.3
+  },
+  {
+   "alg": "R2' U2' R2",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 5.5
+  },
+  {
+   "alg": "R2' U2' R2",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 3
+  },
+  {
+   "alg": "R2' U2' R2",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 7,
+   "stm": 1
+  },
+  {
+   "alg": "R2' U2' R2",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 9,
+   "stm": 1
+  },
+  {
+   "alg": "u M' u' M",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 5.5
+  },
+  {
+   "alg": "u M' u' M",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 6.5
+  },
+  {
+   "alg": "u M' u' M",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 4.2
+  },
+  {
+   "alg": "u M' u' M",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 8,
+   "stm": 4
+  },
+  {
+   "alg": "u M' u' M",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 10,
+   "stm": 4
+  },
+  {
+   "alg": "u M' u' M",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 5.5
+  },
+  {
+   "alg": "u M' u' M",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 6.5
+  },
+  {
+   "alg": "u M' u' M",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 4.2
+  },
+  {
+   "alg": "u M' u' M",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 8,
+   "stm": 4
+  },
+  {
+   "alg": "u M' u' M",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 10,
+   "stm": 4
+  },
+  {
+   "alg": "u M' u' M",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 5.5
+  },
+  {
+   "alg": "u M' u' M",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 6.5
+  },
+  {
+   "alg": "u M' u' M",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 4.2
+  },
+  {
+   "alg": "u M' u' M",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 8,
+   "stm": 4
+  },
+  {
+   "alg": "u M' u' M",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 10,
+   "stm": 4
+  },
+  {
+   "alg": "u M' u' M",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 5.5
+  },
+  {
+   "alg": "u M' u' M",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 6.5
+  },
+  {
+   "alg": "u M' u' M",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 4.2
+  },
+  {
+   "alg": "u M' u' M",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 8,
+   "stm": 4
+  },
+  {
+   "alg": "u M' u' M",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 10,
+   "stm": 4
+  },
+  {
+   "alg": "d R' U' R d' R' U R",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 18
+  },
+  {
+   "alg": "d R' U' R d' R' U R",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 18.7
+  },
+  {
+   "alg": "d R' U' R d' R' U R",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 17.2
+  },
+  {
+   "alg": "d R' U' R d' R' U R",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 12,
+   "stm": 8
+  },
+  {
+   "alg": "d R' U' R d' R' U R",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 16,
+   "stm": 8
+  },
+  {
+   "alg": "d R' U' R d' R' U R",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 18
+  },
+  {
+   "alg": "d R' U' R d' R' U R",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 18.7
+  },
+  {
+   "alg": "d R' U' R d' R' U R",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 17.2
+  },
+  {
+   "alg": "d R' U' R d' R' U R",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 12,
+   "stm": 8
+  },
+  {
+   "alg": "d R' U' R d' R' U R",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 16,
+   "stm": 8
+  },
+  {
+   "alg": "d R' U' R d' R' U R",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 18
+  },
+  {
+   "alg": "d R' U' R d' R' U R",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 18.7
+  },
+  {
+   "alg": "d R' U' R d' R' U R",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 17.2
+  },
+  {
+   "alg": "d R' U' R d' R' U R",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 12,
+   "stm": 8
+  },
+  {
+   "alg": "d R' U' R d' R' U R",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 16,
+   "stm": 8
+  },
+  {
+   "alg": "d R' U' R d' R' U R",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 18
+  },
+  {
+   "alg": "d R' U' R d' R' U R",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 18.7
+  },
+  {
+   "alg": "d R' U' R d' R' U R",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 17.2
+  },
+  {
+   "alg": "d R' U' R d' R' U R",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 12,
+   "stm": 8
+  },
+  {
+   "alg": "d R' U' R d' R' U R",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 16,
+   "stm": 8
+  },
+  {
+   "alg": "b R b'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 6.7
+  },
+  {
+   "alg": "b R b'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 8.7
+  },
+  {
+   "alg": "b R b'",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 4.2
+  },
+  {
+   "alg": "b R b'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 5,
+   "stm": 3
+  },
+  {
+   "alg": "b R b'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 6.5,
+   "stm": 3
+  },
+  {
+   "alg": "b R b'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 6.7
+  },
+  {
+   "alg": "b R b'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 8.7
+  },
+  {
+   "alg": "b R b'",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 4.2
+  },
+  {
+   "alg": "b R b'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 5,
+   "stm": 3
+  },
+  {
+   "alg": "b R b'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 6.5,
+   "stm": 3
+  },
+  {
+   "alg": "b R b'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 6.7
+  },
+  {
+   "alg": "b R b'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 8.7
+  },
+  {
+   "alg": "b R b'",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 4.2
+  },
+  {
+   "alg": "b R b'",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 5,
+   "stm": 3
+  },
+  {
+   "alg": "b R b'",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 6.5,
+   "stm": 3
+  },
+  {
+   "alg": "b R b'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 6.7
+  },
+  {
+   "alg": "b R b'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 8.7
+  },
+  {
+   "alg": "b R b'",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 4.2
+  },
+  {
+   "alg": "b R b'",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 5,
+   "stm": 3
+  },
+  {
+   "alg": "b R b'",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 6.5,
+   "stm": 3
+  },
+  {
+   "alg": "l U' R' U l' U2 R U2 R' U2",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 17.8
+  },
+  {
+   "alg": "l U' R' U l' U2 R U2 R' U2",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 20.8
+  },
+  {
+   "alg": "l U' R' U l' U2 R U2 R' U2",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 13.2
+  },
+  {
+   "alg": "l U' R' U l' U2 R U2 R' U2",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 18,
+   "stm": 10
+  },
+  {
+   "alg": "l U' R' U l' U2 R U2 R' U2",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 24.5,
+   "stm": 10
+  },
+  {
+   "alg": "l U' R' U l' U2 R U2 R' U2",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 16.2
+  },
+  {
+   "alg": "l U' R' U l' U2 R U2 R' U2",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 19
+  },
+  {
+   "alg": "l U' R' U l' U2 R U2 R' U2",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 12.2
+  },
+  {
+   "alg": "l U' R' U l' U2 R U2 R' U2",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 15,
+   "stm": 9
+  },
+  {
+   "alg": "l U' R' U l' U2 R U2 R' U2",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 20.5,
+   "stm": 9
+  },
+  {
+   "alg": "l U' R' U l' U2 R U2 R' U2",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 17.8
+  },
+  {
+   "alg": "l U' R' U l' U2 R U2 R' U2",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 20.8
+  },
+  {
+   "alg": "l U' R' U l' U2 R U2 R' U2",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 13.2
+  },
+  {
+   "alg": "l U' R' U l' U2 R U2 R' U2",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 18,
+   "stm": 10
+  },
+  {
+   "alg": "l U' R' U l' U2 R U2 R' U2",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 24.5,
+   "stm": 10
+  },
+  {
+   "alg": "l U' R' U l' U2 R U2 R' U2",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 16.2
+  },
+  {
+   "alg": "l U' R' U l' U2 R U2 R' U2",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 19
+  },
+  {
+   "alg": "l U' R' U l' U2 R U2 R' U2",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 12.2
+  },
+  {
+   "alg": "l U' R' U l' U2 R U2 R' U2",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 15,
+   "stm": 9
+  },
+  {
+   "alg": "l U' R' U l' U2 R U2 R' U2",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 20.5,
+   "stm": 9
+  },
+  {
+   "alg": "x' R U' R' D R U R' D' R U R' D R U' R' D' x",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 18.8
+  },
+  {
+   "alg": "x' R U' R' D R U R' D' R U R' D R U' R' D' x",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 20.8
+  },
+  {
+   "alg": "x' R U' R' D R U R' D' R U R' D R U' R' D' x",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 17
+  },
+  {
+   "alg": "x' R U' R' D R U R' D' R U R' D R U' R' D' x",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 28,
+   "stm": 18
+  },
+  {
+   "alg": "x' R U' R' D R U R' D' R U R' D R U' R' D' x",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 37,
+   "stm": 18
+  },
+  {
+   "alg": "x' R U' R' D R U R' D' R U R' D R U' R' D' x",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 18.8
+  },
+  {
+   "alg": "x' R U' R' D R U R' D' R U R' D R U' R' D' x",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 20.8
+  },
+  {
+   "alg": "x' R U' R' D R U R' D' R U R' D R U' R' D' x",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 17
+  },
+  {
+   "alg": "x' R U' R' D R U R' D' R U R' D R U' R' D' x",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 28,
+   "stm": 18
+  },
+  {
+   "alg": "x' R U' R' D R U R' D' R U R' D R U' R' D' x",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 37,
+   "stm": 18
+  },
+  {
+   "alg": "x' R U' R' D R U R' D' R U R' D R U' R' D' x",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 18.8
+  },
+  {
+   "alg": "x' R U' R' D R U R' D' R U R' D R U' R' D' x",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 20.8
+  },
+  {
+   "alg": "x' R U' R' D R U R' D' R U R' D R U' R' D' x",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 17
+  },
+  {
+   "alg": "x' R U' R' D R U R' D' R U R' D R U' R' D' x",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 28,
+   "stm": 18
+  },
+  {
+   "alg": "x' R U' R' D R U R' D' R U R' D R U' R' D' x",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 37,
+   "stm": 18
+  },
+  {
+   "alg": "x' R U' R' D R U R' D' R U R' D R U' R' D' x",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 18.8
+  },
+  {
+   "alg": "x' R U' R' D R U R' D' R U R' D R U' R' D' x",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 20.8
+  },
+  {
+   "alg": "x' R U' R' D R U R' D' R U R' D R U' R' D' x",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 17
+  },
+  {
+   "alg": "x' R U' R' D R U R' D' R U R' D R U' R' D' x",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 28,
+   "stm": 18
+  },
+  {
+   "alg": "x' R U' R' D R U R' D' R U R' D R U' R' D' x",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 37,
+   "stm": 18
+  },
+  {
+   "alg": "",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 0
+  },
+  {
+   "alg": "",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 0
+  },
+  {
+   "alg": "",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 0
+  },
+  {
+   "alg": "",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 0,
+   "stm": 0
+  },
+  {
+   "alg": "",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 0,
+   "stm": 0
+  },
+  {
+   "alg": "",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 0
+  },
+  {
+   "alg": "",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 0
+  },
+  {
+   "alg": "",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 0
+  },
+  {
+   "alg": "",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 0,
+   "stm": 0
+  },
+  {
+   "alg": "",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 0,
+   "stm": 0
+  },
+  {
+   "alg": "",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 0
+  },
+  {
+   "alg": "",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 0
+  },
+  {
+   "alg": "",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 0
+  },
+  {
+   "alg": "",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 0,
+   "stm": 0
+  },
+  {
+   "alg": "",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 0,
+   "stm": 0
+  },
+  {
+   "alg": "",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 0
+  },
+  {
+   "alg": "",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 0
+  },
+  {
+   "alg": "",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 0
+  },
+  {
+   "alg": "",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 0,
+   "stm": 0
+  },
+  {
+   "alg": "",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 0,
+   "stm": 0
+  },
+  {
+   "alg": "R3 U Rw",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": "Unknown move: R3"
+  },
+  {
+   "alg": "R3 U Rw",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": "Unknown move: R3"
+  },
+  {
+   "alg": "R3 U Rw",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": "Unknown move: R3"
+  },
+  {
+   "alg": "R3 U Rw",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 2,
+   "stm": 1
+  },
+  {
+   "alg": "R3 U Rw",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 2.5,
+   "stm": 1
+  },
+  {
+   "alg": "R3 U Rw",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": "Unknown move: R3"
+  },
+  {
+   "alg": "R3 U Rw",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": "Unknown move: R3"
+  },
+  {
+   "alg": "R3 U Rw",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": "Unknown move: R3"
+  },
+  {
+   "alg": "R3 U Rw",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 0,
+   "stm": 0
+  },
+  {
+   "alg": "R3 U Rw",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 0,
+   "stm": 0
+  },
+  {
+   "alg": "R3 U Rw",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 1
+  },
+  {
+   "alg": "R3 U Rw",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 1
+  },
+  {
+   "alg": "R3 U Rw",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 1
+  },
+  {
+   "alg": "R3 U Rw",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 2,
+   "stm": 1
+  },
+  {
+   "alg": "R3 U Rw",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 2.5,
+   "stm": 1
+  },
+  {
+   "alg": "R3 U Rw",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 0
+  },
+  {
+   "alg": "R3 U Rw",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 0
+  },
+  {
+   "alg": "R3 U Rw",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 0
+  },
+  {
+   "alg": "R3 U Rw",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 0,
+   "stm": 0
+  },
+  {
+   "alg": "R3 U Rw",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 0,
+   "stm": 0
+  },
+  {
+   "alg": "R U R2 U2 R' foo U",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": "Unknown move: foo"
+  },
+  {
+   "alg": "R U R2 U2 R' foo U",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": "Unknown move: foo"
+  },
+  {
+   "alg": "R U R2 U2 R' foo U",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": "Unknown move: foo"
+  },
+  {
+   "alg": "R U R2 U2 R' foo U",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 11,
+   "stm": 6
+  },
+  {
+   "alg": "R U R2 U2 R' foo U",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 14.5,
+   "stm": 6
+  },
+  {
+   "alg": "R U R2 U2 R' foo U",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": "Unknown move: foo"
+  },
+  {
+   "alg": "R U R2 U2 R' foo U",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": "Unknown move: foo"
+  },
+  {
+   "alg": "R U R2 U2 R' foo U",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": "Unknown move: foo"
+  },
+  {
+   "alg": "R U R2 U2 R' foo U",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 9,
+   "stm": 5
+  },
+  {
+   "alg": "R U R2 U2 R' foo U",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 12,
+   "stm": 5
+  },
+  {
+   "alg": "R U R2 U2 R' foo U",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 8.6
+  },
+  {
+   "alg": "R U R2 U2 R' foo U",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 9.1
+  },
+  {
+   "alg": "R U R2 U2 R' foo U",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 7
+  },
+  {
+   "alg": "R U R2 U2 R' foo U",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 11,
+   "stm": 6
+  },
+  {
+   "alg": "R U R2 U2 R' foo U",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 14.5,
+   "stm": 6
+  },
+  {
+   "alg": "R U R2 U2 R' foo U",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 7.6
+  },
+  {
+   "alg": "R U R2 U2 R' foo U",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 8.1
+  },
+  {
+   "alg": "R U R2 U2 R' foo U",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 6
+  },
+  {
+   "alg": "R U R2 U2 R' foo U",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 9,
+   "stm": 5
+  },
+  {
+   "alg": "R U R2 U2 R' foo U",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 12,
+   "stm": 5
+  },
+  {
+   "alg": "   R    U   ",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 2.6
+  },
+  {
+   "alg": "   R    U   ",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 3.5
+  },
+  {
+   "alg": "   R    U   ",
+   "ignoreErrors": false,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 2
+  },
+  {
+   "alg": "   R    U   ",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 3,
+   "stm": 2
+  },
+  {
+   "alg": "   R    U   ",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 4,
+   "stm": 2
+  },
+  {
+   "alg": "   R    U   ",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 0.8
+  },
+  {
+   "alg": "   R    U   ",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 0.6
+  },
+  {
+   "alg": "   R    U   ",
+   "ignoreErrors": false,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 1
+  },
+  {
+   "alg": "   R    U   ",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 1,
+   "stm": 1
+  },
+  {
+   "alg": "   R    U   ",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 1.5,
+   "stm": 1
+  },
+  {
+   "alg": "   R    U   ",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "default",
+   "mcc": 2.6
+  },
+  {
+   "alg": "   R    U   ",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt1",
+   "mcc": 3.5
+  },
+  {
+   "alg": "   R    U   ",
+   "ignoreErrors": true,
+   "ignoreAuf": false,
+   "params": "alt2",
+   "mcc": 2
+  },
+  {
+   "alg": "   R    U   ",
+   "ignoreAuf": false,
+   "esqParams": "default",
+   "esq": 3,
+   "stm": 2
+  },
+  {
+   "alg": "   R    U   ",
+   "ignoreAuf": false,
+   "esqParams": "alt",
+   "esq": 4,
+   "stm": 2
+  },
+  {
+   "alg": "   R    U   ",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "default",
+   "mcc": 0.8
+  },
+  {
+   "alg": "   R    U   ",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt1",
+   "mcc": 0.6
+  },
+  {
+   "alg": "   R    U   ",
+   "ignoreErrors": true,
+   "ignoreAuf": true,
+   "params": "alt2",
+   "mcc": 1
+  },
+  {
+   "alg": "   R    U   ",
+   "ignoreAuf": true,
+   "esqParams": "default",
+   "esq": 1,
+   "stm": 1
+  },
+  {
+   "alg": "   R    U   ",
+   "ignoreAuf": true,
+   "esqParams": "alt",
+   "esq": 1.5,
+   "stm": 1
+  }
+ ]
+}
