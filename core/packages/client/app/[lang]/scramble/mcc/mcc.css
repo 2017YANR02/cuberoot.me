@@ -242,6 +242,87 @@
   white-space: nowrap;
 }
 
+/* ---- 计分方式说明 ---- */
+.mcc-guide {
+  margin-top: 3rem;
+  padding-top: 1.6rem;
+  border-top: 1px solid var(--border-default);
+  max-width: 52rem;
+}
+.mcc-guide h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+.mcc-guide h3 {
+  margin: 1.8rem 0 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.mcc-guide-lead {
+  margin: 0.5rem 0 0;
+  line-height: 1.75;
+  color: var(--muted-foreground);
+}
+.mcc-formula {
+  margin: 1.1rem 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.92rem;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.mcc-guide-note {
+  margin: 0.5rem 0 0;
+  font-size: 0.88rem;
+  line-height: 1.75;
+  color: var(--muted-foreground);
+}
+.mcc-guide-table-wrap { overflow-x: auto; margin-top: 0.8rem; }
+.mcc-guide-table {
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.mcc-guide-table th {
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+  padding: 0.2rem 1.4rem 0.3rem 0;
+  border-bottom: 1px solid var(--border-default);
+  white-space: nowrap;
+}
+.mcc-guide-table td {
+  padding: 0.28rem 1.4rem 0.28rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-default) 40%, transparent);
+  color: var(--muted-foreground);
+}
+.mcc-guide-move {
+  font-family: var(--font-mono);
+  color: var(--foreground);
+  white-space: nowrap;
+}
+.mcc-guide-expr {
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+.mcc-guide-num {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--foreground);
+  white-space: nowrap;
+  padding-right: 0 !important;
+}
+.mcc-guide-list {
+  margin: 0.6rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.88rem;
+  line-height: 1.8;
+  color: var(--muted-foreground);
+}
+.mcc-guide-list li { margin-bottom: 0.35rem; }
+.mcc-guide-list strong { color: var(--foreground); font-weight: 600; }
+
 .mcc-credit {
   margin: 2.2rem 0 0;
   font-size: 0.8rem;

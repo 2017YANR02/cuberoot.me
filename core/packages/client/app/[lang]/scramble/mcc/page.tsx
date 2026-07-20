@@ -21,6 +21,7 @@ import {
   algSpeed, getESQ, getSTM, normalizeLine,
   MCC_DEFAULTS, ESQ_DEFAULTS, type EsqParams, type MccParams,
 } from '@/lib/mcc';
+import ScoringGuide from './_ScoringGuide';
 import './mcc.css';
 
 type Metric = 'mcc' | 'esq';
@@ -91,7 +92,8 @@ export default function MccPage() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [mccParams, setMccParams] = useState<MccParams>(MCC_DEFAULTS);
   const [esqParams, setEsqParams] = useState<EsqParams>(ESQ_DEFAULTS);
-  const [sortKey, setSortKey] = useState<SortKey>('input');
+  // 默认按当前指标升序 = 最快的公式排最前(对应上游的 Calculate & Sort)
+  const [sortKey, setSortKey] = useState<SortKey>('metric');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
 
   const rows = useMemo<Row[]>(() => {
@@ -315,6 +317,8 @@ export default function MccPage() {
           )}
         </section>
       </div>
+
+      <ScoringGuide metric={metric} mccParams={mccParams} esqParams={esqParams} />
 
       <p className="mcc-credit">
         {t('算法移植自 ', 'Algorithm ported from ')}
