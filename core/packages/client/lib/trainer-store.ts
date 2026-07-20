@@ -126,14 +126,16 @@ interface TrainerPrefs {
   showStats: boolean;
   /** 左栏计时数字下方的当前 case 图,可隐藏。 */
   showStageThumb: boolean;
+  /** 纯打乱:显示/复制时剥掉括号与 `↑↓·` 等标注,只留转动。 */
+  pureScramble: boolean;
   /** 复习模式多设备协同分片配置(记住搭档 = 存进 prefs 下次自动恢复)。 */
   coop: TrainerCoop;
 }
 const DEFAULT_PREFS: TrainerPrefs = {
-  preAuf: true, postAuf: true, timing: true, mode: 'train', probMode: 'uniform',
+  preAuf: true, postAuf: true, timing: true, mode: 'recap', probMode: 'uniform',
   recapOrder: 'shuffle', timerFont: 'lcd', scrambleFont: 'sans',
   showPrevCard: true, showNextCard: true, showStats: true, showStageThumb: true,
-  coop: DEFAULT_COOP,
+  pureScramble: true, coop: DEFAULT_COOP,
 };
 const PREFS_KEY = 'trainer:prefs';
 
@@ -157,7 +159,7 @@ const prefsOf = (st: TrainerPrefs): TrainerPrefs => ({
   probMode: st.probMode, recapOrder: st.recapOrder,
   timerFont: st.timerFont, scrambleFont: st.scrambleFont,
   showPrevCard: st.showPrevCard, showNextCard: st.showNextCard, showStats: st.showStats,
-  showStageThumb: st.showStageThumb, coop: st.coop,
+  showStageThumb: st.showStageThumb, pureScramble: st.pureScramble, coop: st.coop,
 });
 
 const shuffle = <T,>(arr: T[]): T[] => {
@@ -267,6 +269,7 @@ interface TrainerState {
   showNextCard: boolean;
   showStats: boolean;
   showStageThumb: boolean;
+  pureScramble: boolean;
   coop: TrainerCoop;
 
   /** recap 模式的洗牌队列:pool 变了(recapSig 失配)重洗。 */
@@ -291,6 +294,7 @@ interface TrainerState {
   setShowNextCard: (v: boolean) => void;
   setShowStats: (v: boolean) => void;
   setShowStageThumb: (v: boolean) => void;
+  setPureScramble: (v: boolean) => void;
   setCoop: (c: TrainerCoop) => void;
 
   /** 下一个打乱:历史中段先前进,到队尾才出新题(train 随机 / recap 逐个)。 */
@@ -713,6 +717,10 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     },
     setShowStageThumb: (v) => {
       set({ showStageThumb: v });
+      persistPrefs(prefsOf(get()));
+    },
+    setPureScramble: (v) => {
+      set({ pureScramble: v });
       persistPrefs(prefsOf(get()));
     },
     setTimerFont: (f) => {

@@ -20,7 +20,7 @@ import PillToggle from '@/components/PillToggle/PillToggle';
 import AlgCaseMetaModal from '@/components/AlgCaseMetaModal';
 import { CaseThumb } from '@/components/CaseThumb';
 import { caseKey, findCaseByKey } from '@/lib/trainer-case-key';
-import { availableKinds, SCRAMBLE_KINDS, type ScrambleKind } from '@/lib/trainer-scramble';
+import { availableKinds, purifyScramble, SCRAMBLE_KINDS, type ScrambleKind } from '@/lib/trainer-scramble';
 import { useTrainerMarks, markStatus, markStarred, type CaseMarkStatus } from '@/lib/trainer-marks';
 import { ALG_SET_UNIVERSE } from '@/lib/alg_probability';
 import {
@@ -104,6 +104,8 @@ export default function TrainerRunClient() {
   const setShowStats = useTrainerStore(s => s.setShowStats);
   const showStageThumb = useTrainerStore(s => s.showStageThumb);
   const setShowStageThumb = useTrainerStore(s => s.setShowStageThumb);
+  const pureScramble = useTrainerStore(s => s.pureScramble);
+  const setPureScramble = useTrainerStore(s => s.setPureScramble);
   const observingPinned = useTrainerStore(s => s.observingPinned);
   const pinObserving = useTrainerStore(s => s.pinObserving);
   const nextScramble = useTrainerStore(s => s.nextScramble);
@@ -262,6 +264,9 @@ export default function TrainerRunClient() {
   const optsRef = useRef<HTMLDivElement | null>(null);
   const optsPanelRef = useRef<HTMLDivElement | null>(null);
   const [optsOpen, setOptsOpen] = useState(false);
+  // 空白按压处理器(下方)是常驻监听、不随 optsOpen 重订阅 —— 用 ref 让它读到当次最新值。
+  const optsOpenRef = useRef(false);
+  optsOpenRef.current = optsOpen;
   usePanelClamp(optsOpen, optsPanelRef);
   useEffect(() => {
     if (!optsOpen) return;
@@ -297,7 +302,8 @@ export default function TrainerRunClient() {
     surfaceRef: stageRef,
     active: stageMounted,
     // 「下一个」等按钮在计时面板内 — 按它们不应触发按压计时(否则点了直接开始计时)。
-    ignoreTarget: shouldIgnoreTimerTarget,
+    // 设置面板开着时整个 stage 也一并跳过:面板外那一下只该关面板,不该切打乱 / 起表。
+    ignoreTarget: (t) => optsOpenRef.current || shouldIgnoreTimerTarget(t),
     canGesture: () => {
       const st = useTrainerStore.getState().timerState;
       return st === TimerState.NOT_RUNNING || st === TimerState.STOPPING;
@@ -333,7 +339,9 @@ export default function TrainerRunClient() {
         }
         case 6: if (last) deleteSolve(lastIdx); break;
         case 7: {
-          const scr = st.currentScramble;
+          // 复制的是**屏幕上那一份**:开了纯打乱就复制剥净后的文本。
+          const raw = st.currentScramble;
+          const scr = raw && st.pureScramble ? purifyScramble(puzzle, raw) : raw;
           if (scr && typeof navigator !== 'undefined' && navigator.clipboard) {
             navigator.clipboard.writeText(scr).then(() => {
               setCopied(true);
@@ -375,6 +383,8 @@ export default function TrainerRunClient() {
     let pressed = false;
     const down = (e: PointerEvent) => {
       if (e.pointerType === 'mouse' && e.button !== 0) return;
+      // 设置面板开着时,面板外的按压只该关面板 —— 不该顺带切打乱/触发计时。
+      if (optsOpenRef.current) return;
       if (!isBlank(e.target)) return;
       pressed = true;
       if (!useTrainerStore.getState().timing) return;
@@ -500,6 +510,10 @@ export default function TrainerRunClient() {
   const prevHeader = pinnedSolve
     ? `#${pinnedSolve.i + 1}`
     : tr({ zh: '上一个', en: 'Previous' });
+  // 纯打乱纯粹是**呈现**:store / 历史 / 缩略图 / 云备份仍存原打乱,只有给人看和复制的
+  // 那一份剥掉括号与 `↑↓·` 标注。
+  const shownScramble = (s: string | null | undefined): string =>
+    pureScramble ? purifyScramble(puzzle, s ?? '') : (s ?? '');
   // 标记目标 = 上一个这把(你刚做完 / 刚切过的),数字键 1-4 也打在它上面。
   const pillCase = prevCase;
   pillKeyRef.current = pillCase ? caseKey(pillCase) : null;
@@ -565,19 +579,19 @@ export default function TrainerRunClient() {
                   label={tr({ zh: '计时', en: 'Timing' })}
                 />
                 <PillToggle
-                  value={mode === 'train'}
-                  onChange={v => setMode(v ? 'train' : 'recap')}
-                  onLabel={tr({ zh: '训练', en: 'Train' })}
-                  offLabel={tr({ zh: '复习', en: 'Recap' })}
+                  value={mode === 'recap'}
+                  onChange={v => setMode(v ? 'recap' : 'train')}
+                  onLabel={tr({ zh: '复习', en: 'Recap' })}
+                  offLabel={tr({ zh: '训练', en: 'Train' })}
                   ariaLabel={tr({ zh: '训练 / 复习模式', en: 'Train / recap mode' })}
                   disabled={!!room}
                 />
                 {mode === 'recap' && (
                   <PillToggle
-                    value={recapOrder === 'seq'}
-                    onChange={v => setRecapOrder(v ? 'seq' : 'shuffle')}
-                    onLabel={tr({ zh: '顺序', en: 'In order' })}
-                    offLabel={tr({ zh: '乱序', en: 'Shuffled' })}
+                    value={recapOrder === 'shuffle'}
+                    onChange={v => setRecapOrder(v ? 'shuffle' : 'seq')}
+                    onLabel={tr({ zh: '乱序', en: 'Shuffled' })}
+                    offLabel={tr({ zh: '顺序', en: 'In order' })}
                     ariaLabel={tr({ zh: '复习顺序', en: 'Recap order' })}
                     disabled={!!room}
                   />
@@ -758,6 +772,11 @@ export default function TrainerRunClient() {
                   onChange={setShowStageThumb}
                   label={tr({ zh: '打乱图', en: 'Cube image' })}
                 />
+                <BoolToggle
+                  value={pureScramble}
+                  onChange={setPureScramble}
+                  label={tr({ zh: '纯打乱', en: 'Plain scramble' })}
+                />
                 {timing && (
                   <BoolToggle
                     value={showStats}
@@ -814,7 +833,7 @@ export default function TrainerRunClient() {
       <div className={`trainer-run${showPrevCard || showNextCard || statsVisible ? '' : ' trainer-run--solo'}`}>
         <div className="trainer-stage" ref={stageRef}>
           <ScrambleHeader
-            scramble={currentScramble || ''}
+            scramble={shownScramble(currentScramble)}
             label={copied ? tr({ zh: '已复制', en: 'Copied' }) : undefined}
             font={scrambleFont}
           />
@@ -931,7 +950,7 @@ export default function TrainerRunClient() {
               <SolveCard
                 puzzle={puzzle}
                 set={setSlug}
-                scramble={prevSolveScramble}
+                scramble={shownScramble(prevSolveScramble)}
                 c={prevCase}
                 isZh={isZh}
                 onShowCase={prevCase.meta ? (c) => setMetaCase(c) : undefined}
@@ -944,7 +963,7 @@ export default function TrainerRunClient() {
               <SolveCard
                 puzzle={puzzle}
                 set={setSlug}
-                scramble={nextScrambleStr}
+                scramble={shownScramble(nextScrambleStr)}
                 c={nextCase}
                 isZh={isZh}
                 onShowCase={nextCase?.meta ? (c) => setMetaCase(c) : undefined}

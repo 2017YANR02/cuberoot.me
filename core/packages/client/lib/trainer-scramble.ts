@@ -1,5 +1,6 @@
 // Ported from packages/client-vite/src/utils/trainerScramble.ts
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
+import { flattenAlg } from '@cuberoot/shared/alg-notation';
 import { tr } from '@/i18n/tr';
 
 const AUF = ['', 'U', 'U2', "U'"];
@@ -159,4 +160,26 @@ export function generateScramble(
   }
 
   return base;
+}
+
+/**
+ * 纯打乱:只留转动。库里的 setup / 公式原文混着换握记号 `↑↓·`、上游标注 `=`/`*`、
+ * FTN 注解块、分组括号 `(…)2` —— 打乱本身不需要这些(它们是给「怎么拧」用的标注),
+ * 想照着念一遍打乱的人会被它们干扰。剥净 + 展开括号走全站唯一那份 `flattenAlg`。
+ *
+ * 顺带把 `R2'` 写成 `R2` —— 半圈转没有方向,撇只是上游作者的书写习惯,念打乱时纯噪音。
+ *
+ * 两处例外,都**原样返回 / 不改**:
+ *  - sq1:`(1,0)/` 的括号和逗号**是招式本体**,展开就毁了。
+ *  - megaminx:`R++` / `D--` 是另一套文法,`2'` 归一那条规则在这里没有意义,不碰。
+ */
+export function purifyScramble(puzzle: AlgPuzzle | undefined, s: string): string {
+  if (!s || !puzzle || puzzle === 'sq1') return s;
+  try {
+    const flat = flattenAlg(s);
+    // 只改 `2'`(`3Rw2'` 同理),**不碰其它角度**:`U3'` = `U'`,写成 `U3` 就是另一个招式。
+    return puzzle === 'megaminx' ? flat : flat.replace(/2'/g, '2');
+  } catch {
+    return s;
+  }
 }
