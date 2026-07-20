@@ -80,6 +80,13 @@
   justify-content: space-between;
   color: var(--foreground);
 }
+.sim-slider-valwrap {
+  display: inline-flex;
+  align-items: baseline;
+}
+.sim-slider-unit {
+  color: var(--muted-foreground);
+}
 .sim-slider-val {
   font-variant-numeric: tabular-nums;
   color: var(--muted-foreground);

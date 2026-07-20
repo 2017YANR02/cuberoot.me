@@ -403,35 +403,56 @@ export function resetWorldView(world: World, s: SimSettings): void {
   world.resize();
 }
 
-export function Slider({ label, value, onChange, disabled, title }: { label: string; value: number; onChange: (v: number) => void; disabled?: boolean; title?: string }) {
-  const [draft, setDraft] = useState<string>(String(value));
-  useEffect(() => { setDraft(String(value)); }, [value]);
+/** 右侧数字框的真实单位显示:滑条内部值恒为 0..100(存储/引擎映射不变),
+ *  仅数字框按 to/from 换算显示与输入。传对象须是稳定引用(模块常量),
+ *  否则每次渲染新建会把 draft-重置 effect 打成每帧执行,清掉用户输入中的草稿。 */
+export interface SliderUnit {
+  /** 0..100 → 真实单位值 */
+  to: (v: number) => number;
+  /** 真实单位值 → 0..100(可越界,Slider 负责 round + clamp) */
+  from: (n: number) => number;
+  min: number;
+  max: number;
+  step: number;
+  decimals: number;
+  /** 单位后缀(× / °),不设则不显示 */
+  suffix?: string;
+}
+
+export function Slider({ label, value, onChange, disabled, title, unit }: { label: string; value: number; onChange: (v: number) => void; disabled?: boolean; title?: string; unit?: SliderUnit }) {
+  const fmt = (v: number): string => (unit ? unit.to(v).toFixed(unit.decimals) : String(v));
+  const [draft, setDraft] = useState<string>(() => fmt(value));
+  useEffect(() => { setDraft(unit ? unit.to(value).toFixed(unit.decimals) : String(value)); }, [value, unit]);
   const commit = () => {
     const n = Number(draft);
-    if (!Number.isFinite(n)) { setDraft(String(value)); return; }
-    const clamped = Math.max(0, Math.min(100, Math.round(n)));
-    setDraft(String(clamped));
+    if (!Number.isFinite(n)) { setDraft(fmt(value)); return; }
+    const raw = unit ? unit.from(Math.max(unit.min, Math.min(unit.max, n))) : n;
+    const clamped = Math.max(0, Math.min(100, Math.round(raw)));
+    setDraft(fmt(clamped));
     if (clamped !== value) onChange(clamped);
   };
   return (
     <label className={'sim-slider' + (disabled ? ' sim-slider--disabled' : '')} aria-disabled={disabled || undefined} title={title}>
       <div className="sim-slider-row">
         <span>{label}</span>
-        <input
-          type="number"
-          className="sim-slider-val"
-          min={0}
-          max={100}
-          step={1}
-          value={draft}
-          disabled={disabled}
-          onChange={(e) => setDraft(e.target.value)}
-          onBlur={commit}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-            else if (e.key === 'Escape') { setDraft(String(value)); (e.target as HTMLInputElement).blur(); }
-          }}
-        />
+        <span className="sim-slider-valwrap">
+          <input
+            type="number"
+            className="sim-slider-val"
+            min={unit ? unit.min : 0}
+            max={unit ? unit.max : 100}
+            step={unit ? unit.step : 1}
+            value={draft}
+            disabled={disabled}
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={commit}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+              else if (e.key === 'Escape') { setDraft(fmt(value)); (e.target as HTMLInputElement).blur(); }
+            }}
+          />
+          {unit?.suffix ? <span className="sim-slider-unit">{unit.suffix}</span> : null}
+        </span>
       </div>
       <input
         type="range"
