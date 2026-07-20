@@ -1119,6 +1119,13 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: `Safari / iOS 自动退回 CSS frosted thumb;依赖 liquid-glass-react。`, en: `Falls back to a CSS frosted thumb on Safari/iOS; depends on liquid-glass-react.` },
   },
   {
+    name: 'Scramble222ModePicker',
+    import: "import Scramble222ModePicker from '@/components/Scramble222ModePicker';",
+    category: 'toggle',
+    zh: `2x2 打乱口径切换(WCA 官方 11 步与最优最短),仅当选中 2x2 时显示,选择持久化到 localStorage;两种口径都经 TNoodle 握位模型选最顺手的等价打乱。`,
+    en: `2x2 scramble-style toggle (official WCA 11-move vs shortest-optimal), shown only when 2x2 is selected, persisting the choice to localStorage; both styles pick the most ergonomic equivalent via TNoodle's grip model.`,
+  },
+  {
     name: 'Scramble333ModePicker',
     import: "import Scramble333ModePicker from '@/components/Scramble333ModePicker';",
     category: 'toggle',

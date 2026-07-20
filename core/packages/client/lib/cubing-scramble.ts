@@ -25,6 +25,8 @@ import { fetch555Scramble, fetch555ScrambleBatch } from './scramble-555-server';
 import { get555Mode, on555ModeChange } from './scramble-555-mode';
 import { get333Mode, on333ModeChange } from './scramble-333-mode';
 import { m2pScramble333 } from './m2p-scramble';
+import { wcaPocketScramble, optimalPocketScramble } from './pocket-scramble';
+import { get222Mode, on222ModeChange } from './scramble-222-mode';
 import { toWcaEventId } from './wca-events';
 
 // Tell cubing.js to start the next prefetched scramble the instant the
@@ -197,6 +199,12 @@ on333ModeChange(() => {
   refilling.delete('333ft');
 });
 
+// 2x2 口径切换(wca 11 步 ↔ optimal):两种输出长度不同,清掉 222 pool 免混入旧口径。
+on222ModeChange(() => {
+  pool.set('222', []);
+  refilling.delete('222');
+});
+
 /**
  * Engine selector: 444 goes through cs0x7f's Threephase via cstimer_module
  * (in our own Web Worker pool, no wrapping overhead). Everything else stays
@@ -206,6 +214,10 @@ on333ModeChange(() => {
  */
 async function generateScramble(wcaId: string): Promise<string> {
   if (wcaId === '444') return cstimerScramble444();
+  // 2x2: cubing.js 0.63 把 222 路由到 WASM twips,generator 是 U/F/L/R 四面 —— 出的打乱含 L,
+  // 违反 WCA 4b3(二阶固定 DBL 角,只用 U/R/F)。改走站内 TNoodle 移植(lib/pocket-scramble):
+  // wca = 恰好 11 步、握位代价最小(与赛场一致);optimal = HTM 最短 + Q|H,同样握位代价最小。
+  if (wcaId === '222') return get222Mode() === 'optimal' ? optimalPocketScramble() : wcaPocketScramble();
   // kilominx 走自带 random-move,绕开 cubing.js 那个要 1 分钟建表的 random-state solver。
   if (wcaId === 'kilominx') return randomMoveKilominxScramble();
   // 5x5: user picks random-state (cube555 daemon, ~70 moves) or random-move
