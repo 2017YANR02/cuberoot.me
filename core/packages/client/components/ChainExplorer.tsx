@@ -19,6 +19,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Ban, X, Play, ChevronDown, Plus } from 'lucide-react';
 import { Spinner } from '@/components/Spinner/Spinner';
+import { RangeSlider } from '@/components/RangeSlider/RangeSlider';
 import TwistySection from '@/components/TwistySection';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { apiUrl } from '@/lib/api-base';
@@ -125,58 +126,6 @@ function stepMoves(s: FmcStep): string {
   if (s.normal) parts.push(s.normal);
   if (s.inverse) parts.push(`(${s.inverse})`);
   return parts.join(' ');
-}
-
-/** 双滑块 [min,max]。 */
-function DualRange({
-  track,
-  min,
-  max,
-  disabled,
-  onChange,
-}: {
-  track: number;
-  min: number;
-  max: number;
-  disabled?: boolean;
-  onChange: (min: number, max: number) => void;
-}) {
-  const ticks = useMemo(() => Array.from({ length: track + 1 }, (_, i) => i), [track]);
-  const pct = (v: number) => (track === 0 ? 0 : (v / track) * 100);
-  return (
-    <div className={`chx-dual${disabled ? ' is-off' : ''}`}>
-      <div className="chx-dual-track">
-        <div className="chx-dual-fill" style={{ left: `${pct(min)}%`, right: `${100 - pct(max)}%` }} />
-        <input
-          type="range"
-          className="chx-dual-input chx-dual-min"
-          min={0}
-          max={track}
-          step={1}
-          value={min}
-          disabled={disabled}
-          aria-label="min length"
-          onChange={(e) => onChange(Math.min(Number(e.target.value), max), max)}
-        />
-        <input
-          type="range"
-          className="chx-dual-input chx-dual-max"
-          min={0}
-          max={track}
-          step={1}
-          value={max}
-          disabled={disabled}
-          aria-label="max length"
-          onChange={(e) => onChange(min, Math.max(Number(e.target.value), min))}
-        />
-      </div>
-      <div className="chx-dual-ticks">
-        {ticks.map((i) => (
-          <span key={i} className={i >= min && i <= max ? 'is-in' : ''} style={{ left: `${pct(i)}%` }}>{i}</span>
-        ))}
-      </div>
-    </div>
-  );
 }
 
 interface Props {
@@ -605,12 +554,15 @@ export default function ChainExplorer({ scramble, lang }: Props) {
 
         <div className="chx-field-block">
           <div className="chx-field-label">{t('步数范围', 'Step length')}</div>
-          <DualRange
-            track={STEP_TRACK[key]}
-            min={s.min}
-            max={s.max}
+          <RangeSlider
+            min={0}
+            max={STEP_TRACK[key]}
+            value={[s.min, s.max]}
+            onChange={([min, max]) => setStage(key, { min, max })}
+            marks={Array.from({ length: STEP_TRACK[key] + 1 }, (_, i) => i)}
+            markHighlight
             disabled={disabled}
-            onChange={(min, max) => setStage(key, { min, max })}
+            ariaLabel={t('步数范围', 'Step length')}
           />
         </div>
 

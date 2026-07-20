@@ -100,89 +100,7 @@
   line-height: 1.5;
 }
 
-/* ── 双滑块 Step length ── */
-.chx-dual {
-  position: relative;
-  max-width: 420px;
-}
-.chx-dual.is-off {
-  opacity: 0.5;
-}
-.chx-dual-track {
-  position: relative;
-  height: 5px;
-  margin: 8px 7px 4px;
-  background: color-mix(in srgb, var(--foreground) 15%, transparent);
-  border-radius: 999px;
-}
-.chx-dual-fill {
-  position: absolute;
-  top: 0;
-  height: 100%;
-  background: var(--accent);
-  border-radius: 999px;
-}
-.chx-dual-input {
-  position: absolute;
-  top: 50%;
-  left: -7px;
-  width: calc(100% + 14px);
-  height: 0;
-  margin: 0;
-  transform: translateY(-50%);
-  -webkit-appearance: none;
-  appearance: none;
-  background: transparent;
-  pointer-events: none;
-}
-.chx-dual-min { z-index: 4; }
-.chx-dual-max { z-index: 3; }
-.chx-dual-input::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  background: var(--accent);
-  border: 2px solid var(--card);
-  box-shadow: 0 1px 3px color-mix(in srgb, var(--foreground) 35%, transparent);
-  cursor: pointer;
-  pointer-events: auto;
-}
-.chx-dual-input::-moz-range-thumb {
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  background: var(--accent);
-  border: 2px solid var(--card);
-  box-shadow: 0 1px 3px color-mix(in srgb, var(--foreground) 35%, transparent);
-  cursor: pointer;
-  pointer-events: auto;
-}
-.chx-dual-input::-webkit-slider-runnable-track {
-  background: transparent;
-  border: none;
-}
-.chx-dual-input::-moz-range-track {
-  background: transparent;
-  border: none;
-}
-.chx-dual-ticks {
-  position: relative;
-  height: 14px;
-  margin: 0 7px;
-  font-size: 10.5px;
-  color: var(--faint-foreground);
-}
-.chx-dual-ticks span {
-  position: absolute;
-  transform: translateX(-50%);
-  white-space: nowrap;
-}
-.chx-dual-ticks .is-in {
-  color: var(--accent);
-  font-weight: 600;
-}
+/* Step length 双滑块 → components/RangeSlider(markHighlight) */
 
 /* ── 变体轴标签 ── */
 .chx-chips {
@@ -554,9 +472,6 @@
 }
 @media (max-width: 480px) {
   .chx-niss-row {
-    max-width: 100%;
-  }
-  .chx-dual {
     max-width: 100%;
   }
 }
