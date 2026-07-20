@@ -544,6 +544,42 @@ export default function SimPage() {
     toucherRef.current = toucher;
 
     const Q = Math.PI / 2;
+
+    // 拖动改的是 world.scene.rotation,而「左右 / 上下」滑杆存的是 0..100,两者之间没有
+    // 回路 —— 所以拖完视角后读数会停在拖动前的旧值。这里反算 mapYaw / mapPitch 写回,
+    // 与滚轮缩放后回写 scale 是同一套路(syncScaleToSettings)。
+    //  · debounce 到手停:拖动中每帧 setState 会把整棵 React 树卷进拖拽帧。
+    //  · 存浮点不 round:滑杆一格 = 1.8°,round 会让松手瞬间吸附一下。
+    //  · applySettings 只在值真的变了才写 rotation,写回当前姿态不会反弹。
+    const settingsFromYaw = (r: number) => (Math.atan2(Math.sin(r), Math.cos(r)) / Q + 1) * 50;
+    const settingsFromPitch = (r: number) => (1 - Math.atan2(Math.sin(r), Math.cos(r)) / Q) * 50;
+    let viewSyncTimer: number | null = null;
+    const syncViewToSettings = () => {
+      if (viewSyncTimer) window.clearTimeout(viewSyncTimer);
+      viewSyncTimer = window.setTimeout(() => {
+        const w = worldRef.current;
+        if (!w) return;
+        // 滑杆只跨 ±90°,'view' 模式下视角可以转出这个范围 —— 出界就别写回:钳到端点会
+        // 让 applySettings 把姿态硬拉回 ±90°(拖到一半镜头自己跳)。读数停在端点附近、
+        // 转回范围内自动跟上,是这里唯一不打架的取法。两轴各自判断。
+        const inRange = (v: number) => v >= 0 && v <= 100;
+        const yaw = settingsFromYaw(w.scene.rotation.y);
+        const pitch = settingsFromPitch(w.scene.rotation.x);
+        setSettings((prev) => {
+          const viewAngle = inRange(yaw) ? yaw : prev.viewAngle;
+          const viewGradient = inRange(pitch) ? pitch : prev.viewGradient;
+          return prev.viewAngle === viewAngle && prev.viewGradient === viewGradient
+            ? prev
+            : { ...prev, viewAngle, viewGradient };
+        });
+      }, 250);
+    };
+    /** 所有 orbit 手势的唯一出口 —— 新增手势别再直接调 orbitScene,读数会漏同步。 */
+    const orbitView = (dx: number, dy: number) => {
+      orbitScene(world, dx, dy, mapOrbitK(settingsRef.current.sensitivity));
+      syncViewToSettings();
+    };
+
     world.controller.onOrbit = (dx, dy) => {
       const k = mapOrbitK(settingsRef.current.sensitivity);
       world.scene.rotation.y += dx * k;
@@ -553,6 +589,7 @@ export default function SimPage() {
       if (settingsRef.current.dragEmpty === 'view' || settingsRef.current.pointerTurns === false) {
         world.scene.updateMatrix();
         world.dirty = true;
+        syncViewToSettings();
         return;
       }
       if (cube) {
@@ -589,6 +626,7 @@ export default function SimPage() {
       }
       world.scene.updateMatrix();
       world.dirty = true;
+      syncViewToSettings();
     };
 
     world.controller.taps.push((idx, face, opts) => {
@@ -984,7 +1022,7 @@ export default function SimPage() {
         const dy = e.clientY - ivyLastY;
         ivyLastX = e.clientX;
         ivyLastY = e.clientY;
-        orbitScene(world, dx, dy, mapOrbitK(settingsRef.current.sensitivity));
+        orbitView(dx, dy);
         return;
       }
       if (worldRef.current?.puzzleKind === 'sq1') {
@@ -1012,7 +1050,7 @@ export default function SimPage() {
           const dy = e.clientY - sq1LastY;
           sq1LastX = e.clientX;
           sq1LastY = e.clientY;
-          orbitScene(world, dx, dy, mapOrbitK(settingsRef.current.sensitivity));
+          orbitView(dx, dy);
           return;
         }
         if (sq1Pending && !sq1MovedPastThreshold && !pinching) {
@@ -1078,7 +1116,7 @@ export default function SimPage() {
               const dy2 = e.clientY - sq1LastY;
               sq1LastX = e.clientX;
               sq1LastY = e.clientY;
-              orbitScene(world, dx2, dy2, mapOrbitK(settingsRef.current.sensitivity));
+              orbitView(dx2, dy2);
             }
             return;
           }
@@ -1177,6 +1215,9 @@ export default function SimPage() {
       }
       sq1Pending = false;
       cornerGestureFor(worldRef.current?.puzzleKind)?.onUp(e);
+      // 'rotate' 模式松手会 snapViewToQuadrant(上面 sq1、以及 corner gesture 的 onUp
+      // 里各一处),那是拖动之后又一次改姿态 —— 补一次同步,否则读数停在吸附前的角度。
+      syncViewToSettings();
       if (e.pointerType !== 'touch') return;
       activePointers.delete(e.pointerId);
       if (pinching && activePointers.size < 2) {
@@ -1263,6 +1304,7 @@ export default function SimPage() {
         renderer.domElement.removeEventListener('pointercancel', onPointerUp);
         renderer.domElement.removeEventListener('contextmenu', onContextMenu);
         if (scaleSyncTimer) window.clearTimeout(scaleSyncTimer);
+        if (viewSyncTimer) window.clearTimeout(viewSyncTimer);
         toucher.destroy();
         if (renderer.domElement.parentNode) {
           renderer.domElement.parentNode.removeChild(renderer.domElement);
