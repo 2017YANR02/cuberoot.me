@@ -12,7 +12,7 @@ interface Props {
   /** Forward scramble — applied DIRECTLY without inversion. When set, takes precedence over
    *  `algorithm`. */
   setup?: string;
-  view: 'iso' | 'f2l' | 'oll' | 'pll' | 'pll-iso' | 'trans';
+  view: 'iso' | 'plan' | 'f2l' | 'oll' | 'pll' | 'pll-iso' | 'trans';
   /** Explicit Masking enum value (e.g. 'vh', 'wv', 'els'). Overrides the view-implied mask. */
   mask?: string;
   size?: number;

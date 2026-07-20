@@ -14,6 +14,7 @@ import BoolToggle from '@/components/BoolToggle';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import SortArrow from '@/components/SortArrow';
 import { ClearButton } from '@/components/ClearButton';
+import { ESQ_SLIDERS, MCC_SLIDERS, ParamSliders } from '@/components/ParamSliders';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from '@/hooks/useT';
 import { tr } from '@/i18n/tr';
@@ -37,35 +38,6 @@ const EXAMPLE = [
   "x R' U R' D2 R U' R' D2 R2 x'",
   "R2 U R' U R' U' R U' R2 U' D R' U R D'",
 ].join('\n');
-
-interface SliderSpec<K extends string> {
-  key: K;
-  zh: string;
-  en: string;
-  min: number;
-  max: number;
-  step: number;
-}
-
-const MCC_SLIDERS: SliderSpec<keyof MccParams>[] = [
-  { key: 'wristMult', zh: '手腕转系数', en: 'Wrist turn ×', min: 0, max: 1, step: 0.05 },
-  { key: 'pushMult', zh: '推转系数', en: 'Push turn ×', min: 1, max: 3, step: 0.05 },
-  { key: 'ringMult', zh: '无名指拨系数', en: 'Ring turn ×', min: 1, max: 3, step: 0.05 },
-  { key: 'destabilize', zh: '失稳惩罚', en: 'Destabilize penalty', min: 0, max: 2, step: 0.05 },
-  { key: 'addRegrip', zh: '软换手惩罚', en: 'Soft regrip penalty', min: 0, max: 4, step: 0.05 },
-  { key: 'double', zh: '180° 转系数', en: 'Half turn ×', min: 1, max: 2, step: 0.05 },
-  { key: 'sesliceMult', zh: 'S/E 中层系数', en: 'S/E slice ×', min: 1, max: 2, step: 0.05 },
-  { key: 'overWorkMult', zh: '过劳惩罚', en: 'Overwork penalty', min: 0, max: 5, step: 0.05 },
-  { key: 'moveblock', zh: '前步阻挡惩罚', en: 'Move block penalty', min: 0, max: 3, step: 0.05 },
-  { key: 'rotation', zh: 'y/z 转身代价', en: 'y/z rotation', min: 1, max: 7, step: 0.1 },
-];
-
-const ESQ_SLIDERS: SliderSpec<keyof EsqParams>[] = [
-  { key: 'wristQuarter', zh: '手腕 90°', en: 'Wrist quarter', min: 0, max: 5, step: 0.1 },
-  { key: 'flickQuarter', zh: '手指 90°', en: 'Flick quarter', min: 0, max: 5, step: 0.1 },
-  { key: 'wristHalf', zh: '手腕 180°', en: 'Wrist half', min: 0, max: 5, step: 0.1 },
-  { key: 'flickHalf', zh: '手指 180°', en: 'Flick half', min: 0, max: 5, step: 0.1 },
-];
 
 interface Row {
   /** 输入里的行号(1 起,含空行,便于与左侧对照) */
@@ -148,9 +120,6 @@ export default function MccPage() {
   };
 
   const metricName = metric === 'mcc' ? 'MCC' : tr({ zh: '增强 SQTM', en: 'Enhanced SQTM' });
-  const isDefaultParams = metric === 'mcc'
-    ? MCC_SLIDERS.every((s) => mccParams[s.key] === MCC_DEFAULTS[s.key])
-    : ESQ_SLIDERS.every((s) => esqParams[s.key] === ESQ_DEFAULTS[s.key]);
 
   return (
     <div className="mcc-page">
@@ -196,46 +165,9 @@ export default function MccPage() {
       </div>
 
       {showAdvanced && (
-        <div className="mcc-advanced">
-          {metric === 'mcc'
-            ? MCC_SLIDERS.map((s) => (
-              <label key={s.key} className="mcc-slider">
-                <span className="mcc-slider-label">{tr(s)}</span>
-                <input
-                  type="range"
-                  min={s.min}
-                  max={s.max}
-                  step={s.step}
-                  value={mccParams[s.key]}
-                  onChange={(e) => setMccParams((p) => ({ ...p, [s.key]: Number(e.target.value) }))}
-                />
-                <span className="mcc-slider-value">{fmt(mccParams[s.key])}</span>
-              </label>
-            ))
-            : ESQ_SLIDERS.map((s) => (
-              <label key={s.key} className="mcc-slider">
-                <span className="mcc-slider-label">{tr(s)}</span>
-                <input
-                  type="range"
-                  min={s.min}
-                  max={s.max}
-                  step={s.step}
-                  value={esqParams[s.key]}
-                  onChange={(e) => setEsqParams((p) => ({ ...p, [s.key]: Number(e.target.value) }))}
-                />
-                <span className="mcc-slider-value">{fmt(esqParams[s.key])}</span>
-              </label>
-            ))}
-          {!isDefaultParams && (
-            <button
-              type="button"
-              className="mcc-reset"
-              onClick={() => (metric === 'mcc' ? setMccParams(MCC_DEFAULTS) : setEsqParams(ESQ_DEFAULTS))}
-            >
-              {t('恢复默认', 'Reset to defaults')}
-            </button>
-          )}
-        </div>
+        metric === 'mcc'
+          ? <ParamSliders className="mcc-advanced" specs={MCC_SLIDERS} values={mccParams} defaults={MCC_DEFAULTS} onChange={setMccParams} />
+          : <ParamSliders className="mcc-advanced" specs={ESQ_SLIDERS} values={esqParams} defaults={ESQ_DEFAULTS} onChange={setEsqParams} />
       )}
 
       <div className="mcc-body">

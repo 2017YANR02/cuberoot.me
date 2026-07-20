@@ -1,0 +1,181 @@
+/* /scramble/sub-solver — 子群求解器 */
+
+.ssv-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  color: var(--foreground);
+}
+
+.ssv-header h1 {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.ssv-lead {
+  margin: 0.35rem 0 0;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+}
+.ssv-lead a { color: var(--accent); }
+
+.ssv-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin-top: 1.2rem;
+}
+.ssv-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.ssv-label {
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+}
+
+.ssv-moves {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-self: flex-start;
+}
+.ssv-move-row {
+  display: flex;
+  gap: 0.35rem;
+}
+.ssv-move {
+  width: 2.2rem;
+  height: 2rem;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: none;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+.ssv-move:hover { border-color: var(--border-strong); color: var(--foreground); }
+.ssv-move.is-on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-foreground, #fff);
+}
+
+.ssv-depths { max-width: 24rem; }
+.ssv-hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--faint-foreground);
+  line-height: 1.55;
+}
+
+.ssv-scramble-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.ssv-example {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--accent);
+  cursor: pointer;
+}
+.ssv-example:hover { text-decoration: underline; }
+.ssv-input {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: var(--font-mono);
+  font-size: 0.92rem;
+  color: var(--foreground);
+  background: var(--background);
+  border: 1px solid var(--input);
+  border-radius: 8px;
+  padding: 0.45rem 0.65rem;
+}
+.ssv-input:focus-visible { outline: none; border-color: var(--ring); }
+
+.ssv-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+.ssv-run {
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-foreground, #fff);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 0.45rem 1.4rem;
+  cursor: pointer;
+}
+.ssv-run.is-running {
+  background: none;
+  color: var(--destructive);
+  border: 1px solid var(--destructive);
+}
+.ssv-progress {
+  font-size: 0.85rem;
+  color: var(--faint-foreground);
+  font-variant-numeric: tabular-nums;
+}
+.ssv-error {
+  margin: 0;
+  color: var(--destructive);
+  font-size: 0.9rem;
+}
+
+.ssv-results { margin-top: 1.2rem; }
+.ssv-count {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+}
+.ssv-table-wrap { overflow-x: auto; }
+.ssv-table {
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.ssv-table th {
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+  padding: 0.2rem 0.8rem 0.3rem 0;
+  border-bottom: 1px solid var(--border-default);
+  white-space: nowrap;
+}
+.ssv-table td {
+  padding: 0.25rem 0.8rem 0.25rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-default) 45%, transparent);
+}
+.ssv-td-num {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.ssv-td-alg {
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.ssv-credit {
+  margin: 2.2rem 0 0;
+  font-size: 0.8rem;
+  color: var(--faint-foreground);
+}
+.ssv-credit a { color: inherit; }
+.ssv-credit a:hover { color: var(--muted-foreground); }
+
+@media (max-width: 768px) {
+  .ssv-page { padding: 1rem 0.75rem 2rem; }
+  .ssv-header h1 { font-size: 1.3rem; }
+}
