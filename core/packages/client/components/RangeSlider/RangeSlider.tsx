@@ -30,6 +30,8 @@ export interface RangeSliderProps {
   onChange: (value: [number, number]) => void;
   /** Tick values to label under the track (e.g. [0, 7, 14]). */
   marks?: number[];
+  /** Highlight marks that fall inside the selected [lo, hi] range (accent + bold). */
+  markHighlight?: boolean;
   /** Format a value for the aria text / marks (e.g. n => `${n} 步`). */
   formatValue?: (n: number) => string;
   ariaLabel?: string;
@@ -37,7 +39,7 @@ export interface RangeSliderProps {
 }
 
 export function RangeSlider({
-  min, max, step = 1, value, onChange, marks, formatValue, ariaLabel, disabled,
+  min, max, step = 1, value, onChange, marks, markHighlight, formatValue, ariaLabel, disabled,
 }: RangeSliderProps) {
   const [lo, hi] = value;
   const span = max - min || 1;
@@ -99,7 +101,11 @@ export function RangeSlider({
       {marks && marks.length > 0 && (
         <div className="range-slider-marks" aria-hidden="true">
           {marks.map((m) => (
-            <span key={m} className="range-slider-mark" style={{ left: pct(m) }}>{fmt(m)}</span>
+            <span
+              key={m}
+              className={`range-slider-mark${markHighlight && m >= lo && m <= hi ? ' is-in' : ''}`}
+              style={{ left: pct(m) }}
+            >{fmt(m)}</span>
           ))}
         </div>
       )}
