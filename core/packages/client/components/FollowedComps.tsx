@@ -1,7 +1,7 @@
 'use client';
 
-// 「我关注的比赛」— 个人主页 /person/[wcaId] 上展示当前登录用户星标(盯一下)的比赛。
-// 仅在「看自己的主页」时出现(登录 wca_id == 页面 wca_id);看别人的主页不显示,也取不到别人的关注。
+// 「我关注的比赛」— /account(我的页)上展示当前登录用户星标(盯一下)的比赛。
+// 只认当前会话,不接受「看谁的」参数:关注是私有数据,取不到也不该取别人的。未登录不渲染。
 // 关注集合走 useCompFollows(server PG comp_follows);比赛详情用 loadComps()(全球 upcoming + 近 30 天)
 // join 出来。不在该集合里的(更久远的已结束比赛)降级成纯链接行。SSG 页用 mounted 门控避免 hydration 错配。
 import { useEffect, useMemo, useState } from 'react';
@@ -69,8 +69,7 @@ function CompRow({ comp, nameZh, isZh, lang, onToggle, ended }: {
   );
 }
 
-export default function FollowedComps({ wcaId, isZh, lang }: {
-  wcaId: string;
+export default function FollowedComps({ isZh, lang }: {
   isZh: boolean;
   lang: 'zh' | 'en';
 }) {
@@ -129,9 +128,8 @@ export default function FollowedComps({ wcaId, isZh, lang }: {
     return { upcoming: up, past: pa, unknownIds: unk };
   }, [comps, follows]);
 
-  // 仅在「看自己的主页」时出现;SSG 页等 mounted 再判定,避免 hydration 错配。
-  const isSelf = mounted && !!user && user.wcaId === wcaId;
-  if (!isSelf) return null;
+  // 未登录没有关注可言;SSG 页等 mounted 再判定,避免 hydration 错配。
+  if (!mounted || !user) return null;
   if (!loaded || comps === null) return null; // 关注集合 / 比赛数据还没回来,先不闪空态
 
   return (

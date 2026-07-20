@@ -249,10 +249,9 @@ const nextConfig: NextConfig = {
         // 负向断言绕开真实静态子页(stats/sources),否则它们也会被吞进哨兵壳
         // (WCA comp id 是 [A-Za-z0-9]+ 且首字母大写年份结尾,不会撞这两个词,但防御性排除)。
         { source: "/:lang(en|zh)/wca/comp/:slug((?!stats$|sources$)[^/]+)", destination: "/:lang/wca/comp/_" },
-        // Person hub + personal-recon pages: unbounded wcaId space, pure client shells
-        // (same latent spike as the comp page above). One static sentinel shell each.
-        // See person/[wcaId]/page.tsx and recon/person/[wcaId]/page.tsx.
-        { source: "/:lang(en|zh)/person/:wcaId", destination: "/:lang/person/_" },
+        // Personal-recon pages: unbounded wcaId space, pure client shell (same latent
+        // spike as the comp page above). One static sentinel shell.
+        // See recon/person/[wcaId]/page.tsx.
         { source: "/:lang(en|zh)/recon/person/:wcaId", destination: "/:lang/recon/person/_" },
       ],
       afterFiles: [

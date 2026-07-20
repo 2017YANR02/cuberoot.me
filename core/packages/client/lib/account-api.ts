@@ -50,6 +50,10 @@ export const verifyPhoneCode = (phone: string, code: string) => post<SessionResp
 // 绑定(登录态)
 export const linkEmailSend = (email: string) => post<{ ok: true }>('/v1/auth/link/email/send', { email }, true);
 export const linkEmailVerify = (email: string, code: string) => post<{ ok: true; identities: Identity[] }>('/v1/auth/link/email/verify', { email, code }, true);
+// 换绑邮箱:发码复用 linkEmailSend(同一个 'link' 用途的码),只有最后一步落库不同 ——
+// 原地改那条 email 身份。一个账号只能一个邮箱,而唯一的登录方式又不许解绑,所以「先解绑
+// 再绑定」对只有邮箱的账号是死路。
+export const replaceEmailVerify = (email: string, code: string) => post<{ ok: true; identities: Identity[] }>('/v1/auth/email/replace', { email, code }, true);
 export const linkPhoneSend = (phone: string) => post<{ ok: true }>('/v1/auth/link/phone/send', { phone }, true);
 export const linkPhoneVerify = (phone: string, code: string) => post<{ ok: true; identities: Identity[] }>('/v1/auth/link/phone/verify', { phone, code }, true);
 export const linkWca = (accessToken: string) => post<{ ok: true; token?: string; user?: SessionUser; identities: Identity[] }>('/v1/auth/link/wca', { accessToken }, true);

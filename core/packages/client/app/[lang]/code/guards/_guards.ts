@@ -179,6 +179,12 @@ export const CI_GUARDS_API: CiGuard[] = [
     zh: { title: 'API 缓存头分层', desc: '可变数据端点禁止给浏览器层发 > 600s 的 max-age(2026-06-10 真撞过:重灌窗口的暂态 null 被浏览器钉了一天)。要长缓存只能走 s-maxage(nginx 共享层),例外须进 IMMUTABLE_ALLOWLIST。' },
     en: { title: 'API cache header layering', desc: 'Mutable-data endpoints can’t ship a browser-layer max-age > 600s (hit for real on 2026-06-10: a transient null during a reload window got pinned by the browser for a day). Long caching only via s-maxage (the nginx shared layer); exceptions must join IMMUTABLE_ALLOWLIST.' },
   },
+  {
+    id: 'one-email-per-account',
+    test: 'one_email_per_account.test.ts',
+    zh: { title: '一个账号只能绑一个邮箱', desc: '约束铺三层:0078 偏唯一索引(唯一真保证,挡并发)+ addIdentity 先行检查回 has-email + 前端已有邮箱时不给绑定入口。重点守跨包字面量耦合 —— 服务端错误串和前端 authErrorText 的 includes() 靠同一句英文对上,改一边措辞前端就静默退化成把英文糊给用户。' },
+    en: { title: 'One email per account', desc: 'Enforced in three layers: the 0078 partial unique index (the only real guarantee — it stops concurrent double-binds), an addIdentity pre-check returning has-email, and the panel hiding the link entry once an email exists. Mainly guards a cross-package literal: the server error string and the client authErrorText includes() match on the same English sentence, so rewording one side silently degrades the UI into showing raw English.' },
+  },
 ];
 
 export interface ProcessGuard {

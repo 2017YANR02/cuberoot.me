@@ -25,16 +25,12 @@ export interface WcaUser {
 
 interface AuthState {
   user: WcaUser | null;
-  /** 登录 / 账号弹层是否打开。 */
-  loginOpen: boolean;
 }
 
 interface AuthActions {
-  /** 打开登录 / 账号弹层(全站 9 处「登录」入口都走这里)。 */
+  /** 去登录页 /account —— 全站 20 余处「需要登录」入口都走这里。没有弹层形态。 */
   login: () => void;
-  openLogin: () => void;
-  closeLogin: () => void;
-  /** 直接跳 WCA OAuth(弹层里「用 WCA 登录」按钮用)。 */
+  /** 直接跳 WCA OAuth(登录页「用 WCA 登录」按钮用)。 */
   loginWithWca: () => void;
   logout: () => void;
   refresh: () => void;
@@ -66,14 +62,51 @@ function readUser(): WcaUser | null {
  */
 export const persistAuthItem = persistItem;
 
+// 「去登录」是导航,不是开弹层 —— store 不在 React 树里拿不到 router,由 AuthRouteBridge
+// (挂 app/layout.tsx)注册一次。没注册时退化成整页跳转:能用,只是丢 SPA 状态。
+let navigate: ((href: string) => void) | null = null;
+export function setAuthNavigate(fn: ((href: string) => void) | null): void {
+  navigate = fn;
+}
+
+/**
+ * 登录页 href 的 ?next= 部分:记住来处供登录后回跳。已经在登录页时为空 —— 否则登录完
+ * 又跳回登录页。给 <AppLink href={`/account${nextQuery(pathname)}`}> 和 loginHref 共用。
+ *
+ * 先把内部路径归一成对外形式:Pattern B 下英文是裸 URL,但 usePathname() 在英文路由上
+ * 回的是 rewrite 后的 `/en/...`。直接拿它当 next,登录后会把人扔到非规范的 /en/*。
+ */
+export function nextQuery(path: string): string {
+  const p = path === '/en' ? '/' : path.startsWith('/en/') ? path.slice(3) : path;
+  return /^(\/zh)?\/account$/.test(p) ? '' : `?next=${encodeURIComponent(p)}`;
+}
+
+/** 登录页完整地址(带 lang 前缀,Pattern B:英文裸路径,中文 /zh)。imperative 跳转用。 */
+export function loginHref(): string {
+  if (typeof window === 'undefined') return '/account';
+  const path = window.location.pathname;
+  const prefix = path === '/zh' || path.startsWith('/zh/') ? '/zh' : '';
+  return `${prefix}/account` + nextQuery(path);
+}
+
+/**
+ * 校验 ?next= 回跳目标:只收站内绝对路径。挡开放重定向 —— `//evil.com` 会被浏览器当
+ * 协议相对 URL 跳到站外,`javascript:` 同理,两者都不以单个 `/` 开头之外的形式出现。
+ */
+export function safeNext(raw: string | null | undefined): string | null {
+  if (!raw || !raw.startsWith('/') || raw.startsWith('//')) return null;
+  return raw;
+}
+
 export const useAuthStore = create<AuthState & AuthActions>()((set) => ({
   user: readUser(),
-  loginOpen: false,
 
-  // 「登录」入口统一打开弹层(邮箱 / 手机 / WCA 多方式选择);已登录则打开账号面板。
-  login: () => set({ loginOpen: true }),
-  openLogin: () => set({ loginOpen: true }),
-  closeLogin: () => set({ loginOpen: false }),
+  login: () => {
+    if (typeof window === 'undefined') return;
+    const href = loginHref();
+    if (navigate) navigate(href);
+    else window.location.assign(href);
+  },
 
   loginWithWca: () => {
     if (typeof window === 'undefined') return;
@@ -98,7 +131,7 @@ export const useAuthStore = create<AuthState & AuthActions>()((set) => ({
     localStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem('cuberoot_jwt');
-    set({ user: null, loginOpen: false });
+    set({ user: null });
   },
 
   refresh: () => {
