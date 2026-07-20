@@ -26,14 +26,16 @@ import { tr } from '@/i18n/tr';
 
 const EVENT_LIST = ['3x3', '2x2', '4x4', '5x5', '6x6', '7x7', '3bld', '4bld', '5bld', 'oh', 'sq1', 'pyra', 'mega', 'clock', 'skewb', 'fmc', 'mbld'];
 
+// 热力强度 → accent 透明度阶(叠在暗底上)。用 color-mix 走 CSS fill,随配色主题重上色;
+// 空格用极淡 foreground 叠加(留出网格轮廓)。见 calendar_stats.css 的 .cs-cell。
 function bucketColor(count: number, max: number): string {
-  if (count <= 0) return '#1a1a1d';
+  if (count <= 0) return 'color-mix(in srgb, var(--foreground) 5%, transparent)';
   const r = max <= 0 ? 0 : count / max;
-  if (r < 0.15) return '#1f3a55';
-  if (r < 0.3) return '#2f5d87';
-  if (r < 0.5) return '#5b9dd9';
-  if (r < 0.75) return '#8bbde8';
-  return '#bbdaf3';
+  if (r < 0.15) return 'color-mix(in srgb, var(--accent) 22%, transparent)';
+  if (r < 0.3) return 'color-mix(in srgb, var(--accent) 38%, transparent)';
+  if (r < 0.5) return 'color-mix(in srgb, var(--accent) 55%, transparent)';
+  if (r < 0.75) return 'color-mix(in srgb, var(--accent) 75%, transparent)';
+  return 'var(--accent)';
 }
 
 export default function CalendarStatsPage() {
@@ -264,7 +266,7 @@ export default function CalendarStatsPage() {
                       width={cellSize}
                       height={cellSize}
                       rx={3}
-                      fill={bucketColor(count, monthMax)}
+                      style={{ fill: bucketColor(count, monthMax) }}
                       className={clickable ? 'cs-cell cs-cell-clickable' : 'cs-cell'}
                       onClick={onClick}
                     >
