@@ -16,7 +16,8 @@ import { useQueryState, useQueryStates, parseAsString, parseAsInteger, parseAsSt
 import dynamic from 'next/dynamic';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown, ChevronRight, Copy, Loader2, Check } from 'lucide-react';
+import { ChevronDown, ChevronRight, Copy, Check } from 'lucide-react';
+import { Spinner } from '@/components/Spinner/Spinner';
 import { normalizeScramble } from '@/lib/cross-solver';
 import { persistItem } from '@/lib/safe-storage';
 import {
@@ -582,7 +583,7 @@ function AnalyzePageInner() {
           onClick={runAnalyze}
           disabled={running || !scramble.trim()}
         >
-          {running ? <Loader2 size={16} className="analyze-spin" /> : null}
+          {running ? <Spinner size={16} /> : null}
           {t('求解', 'Solve')}
         </button>
         <label className="analyze-control">

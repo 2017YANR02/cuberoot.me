@@ -246,8 +246,6 @@
   color: var(--muted-foreground);
   font-size: 0.86rem;
 }
-.bld-spinner svg { animation: bld-spin 0.9s linear infinite; }
-@keyframes bld-spin { to { transform: rotate(360deg); } }
 
 /* ─── modal ─── */
 .bld-modal-backdrop {
@@ -613,8 +611,6 @@
   min-height: 220px;
   color: var(--muted-foreground);
 }
-.bld-cube-loading svg { animation: bld-spin 0.9s linear infinite; }
-.bld-inline-spin { animation: bld-spin 0.9s linear infinite; }
 
 .bld-helper-gen {
   display: flex;

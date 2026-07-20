@@ -64,8 +64,6 @@
 }
 .fbc-send:hover:not(:disabled) { opacity: .9; }
 .fbc-send:disabled { opacity: .45; cursor: default; }
-.fbc-spin { animation: fbc-spin 1s linear infinite; }
-@keyframes fbc-spin { to { transform: rotate(360deg); } }
 
 @media (max-width: 480px) {
   .fbc-reply { flex-direction: column; align-items: stretch; }

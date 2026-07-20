@@ -5,7 +5,8 @@
 // 1080×1920。作为赛程 tab 的 layout=poster 直接渲染在页面上(原弹窗形态已移除),
 // 窄屏按容器宽等比缩放预览,导出节点本身不带 transform;右上角悬浮下载按钮。
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Download, Loader2 } from 'lucide-react';
+import { Download } from 'lucide-react';
+import { Spinner } from '@/components/Spinner/Spinner';
 import { toBlob } from 'html-to-image';
 import { EventIcon } from '@/components/EventIcon';
 import { Flag } from '@/components/Flag';
@@ -303,7 +304,7 @@ export default function CompPoster({ slug, compName, compIso2, info, isZh }: Com
 
               <div className="comp-poster-sched">
                 {loading ? (
-                  <div className="comp-poster-empty"><Loader2 size={18} className="is-spinning" /></div>
+                  <div className="comp-poster-empty"><Spinner size={18} label={tr({ zh: '加载赛程…', en: 'Loading schedule…' })} /></div>
                 ) : days.length === 0 ? (
                   <div className="comp-poster-empty">{tr({ zh: '暂无赛程', en: 'No schedule available' })}</div>
                 ) : (

@@ -13,7 +13,8 @@
 
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { Loader2, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
+import { Spinner } from '@/components/Spinner/Spinner';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import StepSolve from './StepSolve';
 import { persistItem } from '@/lib/safe-storage';
@@ -23,7 +24,7 @@ const StageSolver = dynamic(() => import('@/components/StageSolver'), {
   ssr: false,
   loading: () => (
     <div className="solver-panel-loading">
-      <Loader2 size={16} className="solver-modal-spin" />
+      <Spinner size={16} label={tr({ zh: '加载中', en: 'Loading' })} />
     </div>
   ),
 });

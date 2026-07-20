@@ -40,6 +40,7 @@ import {
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import CubingPreview from '@/components/CubingPreview';
 import BoolToggle from '@/components/BoolToggle';
+import { Spinner } from '@/components/Spinner/Spinner';
 import { BldConfigBar } from '../_components/BldConfigBar';
 import {
   useBldConfigStore,
@@ -471,9 +472,7 @@ export default function MemoRecallPage(): JSX.Element {
             <span className="bld-spacer" />
             {assocLoading && (
               <span className="bld-spinner">
-                <span className="bld-inline-spin" style={{ display: 'inline-flex' }}>
-                  <Lightbulb size={14} />
-                </span>
+                <Spinner size={14} label={tr({ zh: '加载中', en: 'Loading' })} />
               </span>
             )}
           </div>

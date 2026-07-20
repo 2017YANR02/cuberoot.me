@@ -6,7 +6,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
-import { ImagePlus, Film, X, Loader2, Check, LogIn, Inbox, MessagesSquare } from 'lucide-react';
+import { ImagePlus, Film, X, Check, LogIn, Inbox, MessagesSquare } from 'lucide-react';
+import { Spinner } from '@/components/Spinner/Spinner';
 import { useAuthStore, isAdmin } from '@/lib/auth-store';
 import AppLink from '@/components/AppLink';
 import { submitFeedback, uploadFeedbackImage, uploadFeedbackVideo } from '@/lib/feedback-api';
@@ -231,7 +232,7 @@ export default function FeedbackModal({ lang, onClose }: Props) {
 
             <div className="fb-add-row">
               <label className={`fb-add${images.length >= MAX_IMAGES ? ' is-disabled' : ''}`}>
-                {imgBusy ? <Loader2 size={ICON} className="fb-spin" /> : <ImagePlus size={ICON} />}
+                {imgBusy ? <Spinner size={ICON} /> : <ImagePlus size={ICON} />}
                 {t('截图', 'Screenshot')}
                 <input type="file" accept="image/*" multiple hidden
                   disabled={images.length >= MAX_IMAGES}
@@ -249,7 +250,7 @@ export default function FeedbackModal({ lang, onClose }: Props) {
             {error && <p className="fb-error">{error}</p>}
 
             <button className="fb-submit" onClick={handleSubmit} disabled={!canSubmit}>
-              {submitting ? <><Loader2 size={ICON} className="fb-spin" /> {t('提交中…', 'Sending…')}</> : t('提交', 'Send')}
+              {submitting ? <><Spinner size={ICON} /> {t('提交中…', 'Sending…')}</> : t('提交', 'Send')}
             </button>
 
             <div className="fb-links">

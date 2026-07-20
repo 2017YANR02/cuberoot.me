@@ -1277,14 +1277,6 @@
 .paint-save-badge.is-error {
   color: var(--destructive);
 }
-.paint-spin {
-  animation: paint-spin 0.9s linear infinite;
-}
-@keyframes paint-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
 
 /* ---- cloud library panel ---- */
 .paint-drawings-panel {

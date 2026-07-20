@@ -94,13 +94,6 @@
   justify-content: center;
   gap: 6px;
 }
-.recon-autofill-spin {
-  animation: recon-autofill-spin 0.8s linear infinite;
-  flex: 0 0 auto;
-}
-@keyframes recon-autofill-spin {
-  to { transform: rotate(360deg); }
-}
 
 /* 首阶段三列:cross / xcross / xxcross 并排 */
 .recon-autofill-cols {

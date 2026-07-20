@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { CalendarDays, Table as TableIcon, ImageDown, Loader2, CalendarPlus } from 'lucide-react';
+import { CalendarDays, Table as TableIcon, ImageDown, CalendarPlus } from 'lucide-react';
+import { Spinner } from '@/components/Spinner/Spinner';
 import { EventIcon } from '@/components/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
 import { useIsMobile } from '@/hooks/useIsMobile';
@@ -30,7 +31,7 @@ const ScheduleCalendar = dynamic(() => import('./ScheduleCalendar'), {
   ssr: false,
   loading: () => (
     <div className="sched-loading">
-      <Loader2 className="sched-loading-spinner is-spinning" />
+      <Spinner size={22} label={tr({ zh: '加载赛程…', en: 'Loading schedule…' })} />
     </div>
   ),
 });
@@ -82,7 +83,7 @@ export default function ScheduleView({ slug, isZh, compName, view, detailsExpand
   if (loading) {
     return (
       <div className="sched-loading">
-        <Loader2 className="sched-loading-spinner is-spinning" />
+        <Spinner size={22} />
         <span>{tr({ zh: '加载赛程…', en: 'Loading schedule…'
         })}</span>
       </div>

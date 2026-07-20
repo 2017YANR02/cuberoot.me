@@ -113,14 +113,6 @@
     cursor: not-allowed;
 }
 
-.analyze-spin {
-    animation: analyze-spin 1s linear infinite;
-}
-
-@keyframes analyze-spin {
-    to { transform: rotate(360deg); }
-}
-
 /* ── Filters: howfar + color toggles ── */
 
 .analyze-filters {

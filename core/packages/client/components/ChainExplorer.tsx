@@ -17,7 +17,8 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Loader2, Ban, X, Play, ChevronDown, Plus } from 'lucide-react';
+import { Ban, X, Play, ChevronDown, Plus } from 'lucide-react';
+import { Spinner } from '@/components/Spinner/Spinner';
 import TwistySection from '@/components/TwistySection';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { apiUrl } from '@/lib/api-base';
@@ -727,7 +728,7 @@ export default function ChainExplorer({ scramble, lang }: Props) {
 
       <div className="chx-run">
         <button className="chx-compute" onClick={compute} disabled={busy}>
-          {busy ? <Loader2 size={14} className="chx-spin" /> : null}
+          {busy ? <Spinner size={14} /> : null}
           {ranRef.current ? t('重新计算', 'Recompute') : t('计算', 'Compute')}
         </button>
         {streaming && (
@@ -784,7 +785,7 @@ export default function ChainExplorer({ scramble, lang }: Props) {
                     </button>
                     <span className="chx-chain-n">{t('最优', 'Best')}</span>
                     <span className="chx-chain-total">{bestSol.total} HTM</span>
-                    {streaming && <Loader2 size={12} className="chx-spin" />}
+                    {streaming && <Spinner size={12} />}
                     {trail.length > 1 && (
                       <span className="chx-trail">
                         {trail.map((p, i) => (

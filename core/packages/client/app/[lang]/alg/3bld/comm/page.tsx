@@ -25,9 +25,10 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import dynamic from 'next/dynamic';
-import { Search, Loader2, Lightbulb, Boxes, Square } from 'lucide-react';
+import { Search, Lightbulb, Boxes, Square } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { ClearButton } from '@/components/ClearButton';
+import { Spinner } from '@/components/Spinner/Spinner';
 import CubingPreview from '@/components/CubingPreview';
 import '../3bld.css';
 import { tr } from '@/i18n/tr';
@@ -37,7 +38,7 @@ const TwistySection = dynamic(() => import('@/components/TwistySection'), {
   ssr: false,
   loading: () => (
     <div className="bld-cube-loading">
-      <Loader2 size={18} />
+      <Spinner size={18} label={tr({ zh: '加载中', en: 'Loading' })} />
     </div>
   ),
 });
@@ -238,7 +239,7 @@ export default function CommLibraryPage(): JSX.Element {
       <div className="bld-comm-grid">
         {loading ? (
           <div className="bld-comm-empty">
-            <Loader2 size={18} className="bld-inline-spin" />
+            <Spinner size={18} label={tr({ zh: '加载中', en: 'Loading' })} />
           </div>
         ) : pairs.length === 0 ? (
           <div className="bld-comm-empty">

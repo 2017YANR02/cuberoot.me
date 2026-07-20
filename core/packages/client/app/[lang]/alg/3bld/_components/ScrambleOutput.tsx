@@ -3,7 +3,8 @@
 // Numbered read-only list of generated scrambles + copy-all + stats line + busy spinner.
 
 import { useState, type JSX } from 'react';
-import { Copy, Check, Loader2 } from 'lucide-react';
+import { Copy, Check } from 'lucide-react';
+import { Spinner } from '@/components/Spinner/Spinner';
 import { tr } from '@/i18n/tr';
 
 interface ScrambleOutputProps {
@@ -37,7 +38,7 @@ export function ScrambleOutput({ scrambles, info, busy }: ScrambleOutputProps): 
         <span className="bld-stat">{stat}</span>
         {busy && (
           <span className="bld-spinner">
-            <Loader2 size={15} />
+            <Spinner size={15} />
             {tr({ zh: '生成中…', en: 'Generating…' })}
           </span>
         )}

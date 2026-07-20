@@ -1701,7 +1701,6 @@ td.is-pr {
   display: flex; align-items: center; justify-content: center; gap: 10px;
   padding: 60px 20px; color: var(--muted-foreground); font-size: 0.95rem;
 }
-.sched-loading-spinner { width: 22px; height: 22px; }
 .sched-empty, .sched-note { color: var(--muted-foreground); }
 .sched-empty { text-align: center; padding: 48px 20px; font-size: 0.95rem; }
 .sched-note { font-size: 0.82rem; margin: 0 0 10px; }

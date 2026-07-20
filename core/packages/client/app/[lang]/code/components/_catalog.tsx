@@ -30,6 +30,7 @@ import { SearchInput } from '@/components/SearchInput';
 import { ListSelect } from '@/components/ListSelect';
 import { VariantSelect } from '@/components/VariantSelect';
 import { RangeSlider } from '@/components/RangeSlider/RangeSlider';
+import { Spinner } from '@/components/Spinner/Spinner';
 import PlaybackBar from '@/components/PlaybackBar';
 import StackedBar, { type StackedSeg } from '@/components/StackedBar/StackedBar';
 import CountryShareBar from '@/components/CountryShareBar/CountryShareBar';
@@ -214,6 +215,16 @@ function ClearButtonDemo() {
     <div className="cg-row">
       <ClearButton onClick={() => setHits((h) => h + 1)} variant="standalone" isZh={isZh} />
       <span className="cg-hint">{isZh ? `点了 ${hits} 次` : `clicked ${hits}×`}</span>
+    </div>
+  );
+}
+
+function SpinnerDemo() {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+      <Spinner size={14} />
+      <Spinner size={22} />
+      <span style={{ color: 'var(--accent)', display: 'inline-flex' }}><Spinner size={30} /></span>
     </div>
   );
 }
@@ -778,6 +789,16 @@ export const CATALOG: ComponentEntry[] = [
     usage: '<SearchInput value={q} onChange={setQ} placeholder="搜索" />',
     Demo: SearchInputDemo,
     note: { zh: '任何写 nuqs / 节流 store 的自由文本输入都走它,别裸写 <input value onChange=setQuery>。CI 守卫 tests/ime-safe-search-input。', en: 'Use it for any free-text input that writes to nuqs / a throttled store — never hand-roll <input value onChange=setQuery>. Guarded by tests/ime-safe-search-input.' },
+  },
+  {
+    name: 'Spinner',
+    import: "import { Spinner } from '@/components/Spinner/Spinner';",
+    category: 'display',
+    zh: '加载转圈,全站唯一实现。iOS 风格的 12 根辐条依次渐隐,不是转一圈的圆弧。颜色走 currentColor(放哪继承哪),尺寸给 size(px)。旁边没有说明文字时传 label 供读屏播报;prefers-reduced-motion 下自动停动画。',
+    en: 'Loading spinner — the single implementation site-wide. iOS-style: twelve spokes fading in sequence, not a rotating arc. Color comes from currentColor (inherits wherever it sits), size in px. Pass label when no adjacent text explains the wait; animation is dropped under prefers-reduced-motion.',
+    usage: '<Spinner size={16} />',
+    Demo: SpinnerDemo,
+    note: { zh: '别再给 lucide 的 Loader2 手写 @keyframes 转 —— 那份重复过 22 遍。动作图标(如刷新时转的 RefreshCw)不算加载转圈,不要换成它。', en: 'Don’t hand-roll another @keyframes rotation on lucide’s Loader2 — that was duplicated 22 times. Action icons (a RefreshCw spinning while refreshing) are not loading spinners; leave those alone.' },
   },
   {
     name: 'RangeSlider',

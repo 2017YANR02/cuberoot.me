@@ -19,9 +19,10 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import {
-  Bold, Heading, Highlighter, Info, Image as ImageIcon, Rows3, Play, Box, Loader2,
+  Bold, Heading, Highlighter, Info, Image as ImageIcon, Rows3, Play, Box,
 } from 'lucide-react';
 import type { EditorView } from '@codemirror/view';
+import { Spinner } from '@/components/Spinner/Spinner';
 import { renderArticleMarkdown } from '@/lib/article-markdown';
 import { uploadForumImage } from '@/lib/forum-api';
 import { useT } from '@/hooks/useT';
@@ -262,7 +263,7 @@ export const ForumMarkdownEditor = forwardRef<ForumEditorHandle, {
           title={tt('插入图片', 'Insert image')} aria-label={tt('插入图片', 'Insert image')}
           onClick={() => fileInputRef.current?.click()} disabled={uploading}
         >
-          {uploading ? <Loader2 size={16} className="forum-editor-spin" /> : <ImageIcon size={16} />}
+          {uploading ? <Spinner size={16} /> : <ImageIcon size={16} />}
         </button>
         <input
           ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp" multiple hidden
