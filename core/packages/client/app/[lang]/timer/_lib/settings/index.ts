@@ -6,9 +6,7 @@
  * re-render when settings change.
  */
 
-import { useEffect, useState, useSyncExternalStore } from 'react';
-import { readPalette } from '@/lib/theme';
-import { paletteScheme } from '@/lib/palettes';
+import { useSyncExternalStore } from 'react';
 import { persistItem } from '@/lib/safe-storage';
 
 const KEY = 'cuberoot-timer.settings.v1';
@@ -27,9 +25,6 @@ export interface TimerSettings {
 
   /** Hide running time (show only "...") until the timer stops. */
   hideTime: boolean;
-
-  /** UI theme. 'auto' follows OS preference. */
-  theme: 'dark' | 'light' | 'auto';
 
   /** Cube preview color override (hex). null → use WCA defaults. */
   colors: Partial<Record<'U'|'D'|'F'|'B'|'L'|'R', string>>;
@@ -232,7 +227,6 @@ export const DEFAULTS: TimerSettings = {
   soundsEnabled: false,
   volume: 0.5,
   hideTime: false,
-  theme: 'dark',
   colors: {},
   showCubePreview: true,
   showCharts: true,
@@ -405,42 +399,6 @@ export function useSettings(): TimerSettings {
   return useSyncExternalStore(subscribe, getSettings, getSettings);
 }
 
-/**
- * Apply theme to the document root by toggling a data-attribute. Other CSS
- * keys can target `:root[data-timer-theme="light"]`.
- */
-export function useApplyTheme(): void {
-  const settings = useSettings();
-  const [systemDark, setSystemDark] = useState(() =>
-    typeof window !== 'undefined' && window.matchMedia
-      ? window.matchMedia('(prefers-color-scheme: dark)').matches
-      : true,
-  );
-  // 站点配色主题(克劳德/中国色)自带明暗,且 shell 背景走 var(--background) 跟配色。
-  // 选了配色时必须让 data-timer-theme 跟配色的明暗,否则计时器那套 [data-timer-theme]
-  // 灰阶仍按 OS prefers-color-scheme 走,会出现「浅配色 + OS 暗 → 浅底配暗灰文字」看不清。
-  const [paletteSch, setPaletteSch] = useState<'light' | 'dark' | null>(() =>
-    typeof window === 'undefined' ? null : paletteScheme(readPalette()),
-  );
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const onChange = (e: MediaQueryListEvent) => setSystemDark(e.matches);
-    mq.addEventListener?.('change', onChange);
-    const onPalette = () => setPaletteSch(paletteScheme(readPalette()));
-    window.addEventListener('theme-change', onPalette);
-    window.addEventListener('storage', onPalette);
-    return () => {
-      mq.removeEventListener?.('change', onChange);
-      window.removeEventListener('theme-change', onPalette);
-      window.removeEventListener('storage', onPalette);
-    };
-  }, []);
-  useEffect(() => {
-    const root = document.documentElement;
-    const effective =
-      paletteSch ?? (settings.theme === 'auto' ? (systemDark ? 'dark' : 'light') : settings.theme);
-    root.setAttribute('data-timer-theme', effective);
-    return () => root.removeAttribute('data-timer-theme');
-  }, [settings.theme, systemDark, paletteSch]);
-}
+// 计时器曾经有自己独立于站点的明暗(data-timer-theme + settings.theme,cstimer 遗留),
+// 于是同一个 <html> 上挂两套主题:shell 走站点 token、内层走那套硬码灰阶,二者可能相反
+// (站点浅色 + 计时器深色 → 浅底配深控件)。现已整体并入站点主题,颜色全走 :root token。

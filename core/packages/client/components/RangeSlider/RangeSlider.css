@@ -1,8 +1,7 @@
 /* Dual-thumb range slider. Two stacked native range inputs share one rail; the
    inputs are pointer-transparent and only their thumbs are interactive. Colors
-   default to theme tokens (follows light/dark + palette themes); consumers in a
-   non-token context (e.g. the timer's data-timer-theme panel) can override the
-   --rs-* color vars without touching this file. */
+   default to theme tokens (follows light/dark + palette themes); consumers can
+   override the --rs-* color vars without touching this file. */
 .range-slider {
   position: relative;
   width: 100%;

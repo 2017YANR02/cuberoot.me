@@ -225,9 +225,6 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   letter-spacing: 0.02em;
   color: var(--timer-idle);
   font-variant-numeric: tabular-nums;
-  /* No LCD glow — legacy timer.css adds a text-shadow halo per state; kill it
-     here (shell.css loads after timer.css → wins at equal specificity). */
-  text-shadow: none;
   transition: color 120ms;
 }
 /* 计时字体档位(tf-lcd = 默认 Segment7;其余为站内自托管字体,与 /alg 训练器同四档)。 */
@@ -351,27 +348,9 @@ html[data-theme=dark] { --scramble-fg: #fff; }
    the absolute .timing-surface-sub, so showing/hiding it never shifts the
    digits. */
 .timing-surface-cube { display: flex; justify-content: center; }
-/* column-reverse → preview sits right under the digits, the eye toggle below it
-   (small + subtle); when hidden only the eye button remains, still centered. */
-/* --cube-h drives both the preview box AND its always-present reserve box, so
-   the eye toggle (below) never shifts whether the cube is shown or hidden. */
+/* --cube-h 同时驱动预览框和它常驻的占位框,所以显示/隐藏魔方时下面的内容不会跳动。 */
 .shell-corner-net { display: flex; flex-direction: column; align-items: center; gap: 6px; --cube-h: var(--timer-cube-h); }
 .shell-corner-net-imgbox { height: var(--cube-h); display: flex; align-items: center; justify-content: center; }
-.shell-corner-net .cube-preview-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: 1px solid var(--shell-divider);
-  border-radius: 8px;
-  background: var(--shell-chip);
-  color: var(--foreground);
-  cursor: pointer;
-  transition: background 120ms, color 120ms;
-}
-.shell-corner-net .cube-preview-toggle:hover { background: var(--shell-hover); color: var(--foreground); }
-.shell-corner-net .cube-preview-toggle svg { display: block; }
 .shell-corner-net-img {
   display: block;
   padding: 0;
@@ -855,40 +834,6 @@ html[data-theme=dark] { --scramble-fg: #fff; }
     max-width: 300px;
     margin: 0 auto;
   }
-}
-
-/* 打乱来源面板取色统一走站点 token(跟随右栏 var(--background) 的明暗),而非计时器那套
-   data-timer-theme 灰阶 —— 二者可能不一致(计时器主题 dark + 站点浅色),会出现浅底配深控件。
-   这些 .settings-row* / .wca-src-* 原语默认硬码深色(给 dark-locked 设置弹层用),这里只在本
-   面板(.scramble-src-panel)内翻成 token,和同栏的「解法提示」面板一致;设置弹层 / 对战设置
-   不受影响。:root[data-timer-theme] 前缀是为了盖过 wca-source.css 里 data-timer-theme=light 覆盖。 */
-:root[data-timer-theme] .scramble-src-panel .settings-row-label { color: var(--muted-foreground); }
-:root[data-timer-theme] .scramble-src-panel .settings-row-control input[type='number'],
-:root[data-timer-theme] .scramble-src-panel .settings-row-control .settings-row-control-select,
-:root[data-timer-theme] .scramble-src-panel .wca-src-dates input[type='date'] {
-  background: var(--background);
-  color: var(--foreground);
-  border-color: var(--border-default);
-  color-scheme: light dark;
-}
-:root[data-timer-theme] .scramble-src-panel .settings-row-control .hint,
-:root[data-timer-theme] .scramble-src-panel .wca-src-hint,
-:root[data-timer-theme] .scramble-src-panel .wca-src-dash { color: var(--muted-foreground); }
-:root[data-timer-theme] .scramble-src-panel .settings-row-control .hint-btn {
-  border-color: var(--border-default);
-  color: var(--muted-foreground);
-}
-:root[data-timer-theme] .scramble-src-panel .settings-row-control .hint-btn:hover {
-  background: var(--shell-hover);
-  color: var(--foreground);
-}
-:root[data-timer-theme] .scramble-src-panel .wca-src-config { border-left-color: var(--shell-divider); }
-:root[data-timer-theme] .scramble-src-panel .wca-src-comp-name { color: var(--foreground); }
-:root[data-timer-theme] .scramble-src-panel .wca-src-steps-range .range-slider {
-  --rs-rail-bg: var(--shell-divider);
-  --rs-thumb-ring: var(--background);
-  --rs-thumb-shadow: color-mix(in srgb, var(--foreground) 20%, transparent);
-  --rs-mark-fg: var(--muted-foreground);
 }
 
 /* ── 打乱来源常驻配置条 (ScrambleSourceBar) ───────────────
@@ -1378,7 +1323,7 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 @media (prefers-reduced-motion: reduce) {.shell-panel--sheet { animation: none; }
 }
 
-/* tb-btn used in topbar — token-clean override (legacy timer.css has hex). */
+/* tb-btn used in topbar. */
 .shell-topbar .tb-btn {
   display: inline-flex;
   align-items: center;
@@ -1400,7 +1345,6 @@ html[data-theme=dark] { --scramble-fg: #fff; }
    near-invisible UA outline on the dark surface. Token-only, both themes. */
 .shell-event-btn:focus-visible,
 .shell-topbar .tb-btn:focus-visible,
-.shell-corner-net .cube-preview-toggle:focus-visible,
 .shell-bottombar-btn:focus-visible,
 .shell-panel-tab:focus-visible,
 .shell-undersurface .solver-hints .solver-hint-btn:focus-visible {
