@@ -101,10 +101,21 @@ function LetterAvatar({ name, group }: { name: string; group: GroupId }) {
   );
 }
 
+/** 精确子串(不区分大小写)命中在哪一档:名称 0 > 标签/作者/网址 1 > 简介 2 > 只是模糊像 3。 */
+function matchTier(s: Site, lowerQuery: string): number {
+  const has = (v?: string | null) => !!v && v.toLowerCase().includes(lowerQuery);
+  if (has(s.name) || has(s.name_zh) || has(s.name_en)) return 0;
+  if (has(s.author) || has(s.url) || (s.alt_urls ?? []).some(has) || (s.tags ?? []).some(has)) return 1;
+  if (has(s.desc_zh) || has(s.desc_en)) return 2;
+  return 3;
+}
+
 interface RowProps {
   site: Site;
   lang: 'en' | 'zh';
   admin: boolean;
+  /** 搜索结果按相关度跨组混排,「组内上下移」在这种列表里没有可见反馈 → 只收起移动按钮,编辑/删除照常。 */
+  reorderable: boolean;
   canMoveUp: boolean;
   canMoveDown: boolean;
   onEdit: (s: Site) => void;
@@ -112,7 +123,7 @@ interface RowProps {
   onMove: (s: Site, dir: -1 | 1) => void;
 }
 
-function SiteRow({ site, lang, admin, canMoveUp, canMoveDown, onEdit, onDelete, onMove }: RowProps) {
+function SiteRow({ site, lang, admin, reorderable, canMoveUp, canMoveDown, onEdit, onDelete, onMove }: RowProps) {
   const name = lang === 'zh' ? site.name_zh || site.name : site.name_en || site.name;
   const desc = lang === 'zh' ? site.desc_zh || site.desc_en : site.desc_en || site.desc_zh;
   const dead = site.status === 'dead';
@@ -143,8 +154,12 @@ function SiteRow({ site, lang, admin, canMoveUp, canMoveDown, onEdit, onDelete, 
 
       {admin && (
         <div className="site-row-admin">
-          <button className="site-admin-btn" disabled={!canMoveUp} title="up" onClick={() => onMove(site, -1)}><ArrowUp size={14} /></button>
-          <button className="site-admin-btn" disabled={!canMoveDown} title="down" onClick={() => onMove(site, 1)}><ArrowDown size={14} /></button>
+          {reorderable && (
+            <>
+              <button className="site-admin-btn" disabled={!canMoveUp} title="up" onClick={() => onMove(site, -1)}><ArrowUp size={14} /></button>
+              <button className="site-admin-btn" disabled={!canMoveDown} title="down" onClick={() => onMove(site, 1)}><ArrowDown size={14} /></button>
+            </>
+          )}
           <button className="site-admin-btn" title="edit" onClick={() => onEdit(site)}><Pencil size={14} /></button>
           <button className="site-admin-btn site-admin-del" title="delete" onClick={() => onDelete(site)}><Trash2 size={14} /></button>
         </div>
@@ -251,8 +266,20 @@ function SitesPageInner() {
 
   const filtered = useMemo(() => {
     if (!sites) return [];
-    if (query.trim()) return fuse.search(query.trim()).map((r) => r.item);
-    return sites.filter((s) => s.group === group);
+    const q = query.trim();
+    if (!q) return sites.filter((s) => s.group === group);
+    // 先只认精确子串(不区分大小写),按命中字段分层排序 —— 搜 "MCC" 就该给含 MCC 的,
+    // 而不是被 Fuse 判成「像 FMC」的一大片噪音(3 字母缩写编辑距离 2 就命中)。
+    // 精确匹配独立于 Fuse 算,不受 threshold 影响,不会漏。
+    const lower = q.toLowerCase();
+    const exact = sites
+      .map((site, i) => ({ site, i, tier: matchTier(site, lower) }))
+      .filter((r) => r.tier < 3)
+      .sort((a, b) => a.tier - b.tier || a.i - b.i)
+      .map((r) => r.site);
+    if (exact.length) return exact;
+    // 一条精确的都没有(拼错 / 记岔了)才降级到 Fuse 模糊,保住容错。
+    return fuse.search(q).map((r) => r.item);
   }, [sites, query, group, fuse]);
 
   const headerLabel = query.trim()
@@ -347,7 +374,7 @@ function SitesPageInner() {
           <span className="sites-main-count">
             {filtered.length} {TEXTS.sites[lang]}
           </span>
-          {admin && !query.trim() && (
+          {admin && (
             <button className="sites-add-btn" onClick={() => setCreating(true)}>
               <Plus size={14} /> {TEXTS.add[lang]}
             </button>
@@ -373,7 +400,8 @@ function SitesPageInner() {
                 key={s.id}
                 site={s}
                 lang={lang}
-                admin={admin && !query.trim()}
+                admin={admin}
+                reorderable={!query.trim()}
                 canMoveUp={i > 0 && filtered[i - 1].group === s.group}
                 canMoveDown={i < filtered.length - 1 && filtered[i + 1].group === s.group}
                 onEdit={setEditing}
