@@ -2564,6 +2564,12 @@ function ColorRow({
  *  - 左右/上下 → 旋转角度(度):引擎 scene.rotation ±90°;cubing.js 经度全程 ±180°(纬度同 ±90°),
  *    所以左右按渲染路径二选一。上下正值 = 俯视(相机在上)。
  *  - 转动速度 → 每秒转动步数:引擎 mapFrames 帧/90°,按 60fps 折算;cubing.js tempo 档近似同速。 */
+// 灵敏度 → 相对默认(滑杆 50)的倍率。它同时驱动三种手感 —— 拖贴纸转层的角速度
+// (controller.sensitivity)、拖空白转视角的 rad/px(mapOrbitK)、SQ1 拖拽(mapTurnDragFactor)
+// —— 三者都是 mapSensitivity(v) 的常数倍,所以只有"相对默认几倍"对三条路径同时精确;
+// 标成 °/px 之类的物理量只有转视角那条对得上,拖贴纸会对不上(它还受透视/缩放影响)。
+// mapSensitivity(v)/mapSensitivity(50) = (0.05+0.007v)/0.4 = 0.125+0.0175v。
+const UNIT_SENS: SliderUnit = { to: (v) => 0.125 + v * 0.0175, from: (m) => (m - 0.125) / 0.0175, min: 0.13, max: 1.88, step: 0.05, decimals: 2, suffix: '×' };
 const UNIT_SCALE: SliderUnit = { to: (v) => 0.5 + v / 100, from: (m) => (m - 0.5) * 100, min: 0.5, max: 1.5, step: 0.05, decimals: 2, suffix: '×' };
 // 透视 → 35mm 等效焦距:引擎是 dolly-zoom(distance = 取景半径×p,p = 2 + v×0.08,FOV 反向
 // 补偿定画幅),竖直 FOV = 2·atan(1/p) ⇔ 全画幅(半高 12mm)焦距 f = 12p = 24 + 0.96v mm。
@@ -2754,7 +2760,7 @@ function PuzzleSettings({
           </div>
 
           <div className="sim-puzzle-sliders">
-            <Slider label={t('灵敏度', 'Sensitivity')} value={settings.sensitivity} onChange={(v) => set('sensitivity', v)} disabled={!caps.supports.sensitivity} title={hint(caps.supports.sensitivity)} />
+            <Slider label={t('灵敏度', 'Sensitivity')} value={settings.sensitivity} onChange={(v) => set('sensitivity', v)} disabled={!caps.supports.sensitivity} unit={UNIT_SENS} title={hint(caps.supports.sensitivity) ?? t('跟手倍率(相对默认):同时作用于拖层转动、拖空白转视角、SQ1 拖拽', 'Responsiveness relative to the default — scales layer drags, view drags and SQ1 drags alike')} />
             <Slider label={t('缩放', 'Scale')} value={settings.scale} onChange={(v) => set('scale', v)} unit={UNIT_SCALE} title={t('缩放倍率', 'Zoom factor')} />
             <Slider label={t('透视', 'Perspective')} value={settings.perspective} onChange={(v) => set('perspective', v)} disabled={!caps.supports.perspective} unit={UNIT_FOCAL} title={hint(caps.supports.perspective) ?? t('35mm 等效焦距(小 = 广角畸变强,大 = 接近正交)', '35mm-equivalent focal length (low = wide-angle distortion, high = near-orthographic)')} />
             <Slider label={t('左右', 'Yaw')} value={settings.viewAngle} onChange={(v) => set('viewAngle', v)} unit={caps.engineActive ? UNIT_YAW_ENGINE : UNIT_YAW_TWISTY} title={t('左右旋转角度', 'Horizontal angle (degrees)')} />
