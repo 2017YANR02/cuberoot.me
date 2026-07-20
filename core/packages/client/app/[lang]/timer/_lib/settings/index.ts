@@ -131,6 +131,10 @@ export interface TimerSettings {
   wcaDiffStage: string;     // stage key, e.g. 'cross'
   wcaDiffColors: string;    // subset key, e.g. 'BGORWY' (six-color) / 'W' / 'WY'
   wcaDiffSteps: number[];   // allowed optimal step-counts; empty = no filter
+  /** 难度筛跨整个 3x3 族取题(333/oh/bf/ft/fm),而不是只在当前项目里找。默认开,与 /scramble/stats
+   *  难度 tab 的合并口径一致 —— 那里的直方图是全族计数,分项目查会「图上有、这里查无」(稀有档
+   *  尤其明显:BG 十字 8 步全库仅 1 条,还落在 333bf 决赛)。关掉 = 只用当前项目的真题。 */
+  wcaDiffMerged: boolean;
 
   /** "按步数" scramble filter for 2×2 (face/layer/cube-HTM/QTM) and pyraminx (V / cube-HTM). Works under
    *  both sources: random = uniform full-space sampling + reject; WCA = filter real scrambles by the metric.
@@ -262,6 +266,7 @@ export const DEFAULTS: TimerSettings = {
   wcaDiffStage: 'cross',
   wcaDiffColors: 'BGORWY',
   wcaDiffSteps: [],
+  wcaDiffMerged: true,
   genByStepsOn: false,
   genStepsMetric: 'face',
   genSteps: [],

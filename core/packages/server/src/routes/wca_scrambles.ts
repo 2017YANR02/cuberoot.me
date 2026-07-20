@@ -65,6 +65,17 @@ const VARIANT_RE = /^[a-z0-9_]{1,24}$/;
 const STAGE_RE = /^[a-z0-9_]{1,32}$/;
 const COLORS_RE = /^[BGORWY]{1,6}$/;
 const STEP_COLORS6 = ['B', 'G', 'O', 'R', 'W', 'Y'] as const;
+
+// 3x3 族合并池(family=1):这些项目的打乱都是同一颗 3x3 的随机态,只是当年被用在不同项目的轮次里。
+// 难度筛可选合并 —— 稀有档往往整族只有个位数条(BG 十字 8 步全库仅 1 条,还恰好落在 333bf 决赛),
+// 分项目查会把它们全筛掉,与 /scramble/stats 难度 tab 的合并口径也对不上(用户看图有、计时器查无)。
+// 333mbf 不在 wca_scramble_steps 里(build_scramble_steps.ts 的 EXCLUDE_EVENTS:多盲拆子打乱会
+// 撞自然键主键),且多盲要成组出题,故不列入 —— 传 family=1 对它是无操作。
+const FAMILY_333 = ['333', '333oh', '333bf', '333ft', '333fm'];
+/** 合并开启且该 event 属 3x3 族 → 整族;否则单查原 event(合并对其它项目无意义)。 */
+function poolEvents(event: string, merged: boolean): string[] {
+  return merged && FAMILY_333.includes(event) ? FAMILY_333 : [event];
+}
 // steps s ↔ wca_scrambles ws 自然键 join(steps 表无 scramble 文本,需 join 取文本/optimal)。
 const STEPS_WS_JOIN = `JOIN wca_scrambles ws
     ON ws.competition_id = s.competition_id AND ws.event_id = s.event_id
@@ -148,6 +159,13 @@ function rareBranchSql(plan: DiffPlan, bins: number[]): string {
   }
   return parts.join(' OR ');
 }
+
+// steps 行 → wca_scramble_optimal 自然键 join(飞镖分支用)。「最优打乱」软偏好必须在 per-event
+// LIMIT 之前生效,否则先取 count 条再过滤会把结果打空 —— 故内联进 LATERAL 子查询而非外层 WHERE。
+const STEPS_OPT_JOIN = `JOIN wca_scramble_optimal so
+    ON so.competition_id = s.competition_id AND so.event_id = s.event_id
+   AND so.round_type_id = s.round_type_id AND so.group_id = s.group_id
+   AND so.is_extra = s.is_extra AND so.scramble_num = s.scramble_num`;
 
 // 侧表行 → wca_scramble_optimal 自然键 join(「最优打乱」软偏好在 LIMIT 前生效用)。
 const RARE_OPT_JOIN = `JOIN wca_scramble_optimal ro
@@ -239,7 +257,8 @@ wcaScramblesRoutes.get('/wca/scrambles', async (c) => {
   return c.body(payload, 200, { 'Content-Type': 'application/json' });
 });
 
-// GET /wca/scrambles/random?event=333&count=5&from=&to= — 随机真实打乱(timer 练习池)。
+// GET /wca/scrambles/random?event=333&count=5&from=&to=&family= — 随机真实打乱(timer 练习池)。
+// family=1 且难度筛开启 → 跨 3x3 族取题(见 FAMILY_333),与 /scramble/stats 难度 tab 同口径。
 //
 // 无日期边界(默认/全时段):「抽奖号」飞镖采样。每行有永久随机 rnd∈[0,1)(migration 0037),
 //   随机 dart∈[0,1) 落点,取该 event 中 rnd>=dart 的 next count 条;末尾不足则从头(rnd<dart 的最小者)
@@ -289,6 +308,9 @@ wcaScramblesRoutes.get('/wca/scrambles/random', async (c) => {
   const dSteps = parseStepList(c.req.query('steps') ?? '');
   const wantDifficulty = !!dVariant && !!dStage && !!dColors && dSteps.length > 0
     && VARIANT_RE.test(dVariant) && STAGE_RE.test(dStage) && COLORS_RE.test(dColors);
+  // family=1:难度筛跨整个 3x3 族取题(见 FAMILY_333)。只作用于难度分支 —— 不筛难度时按项目出题
+  // 本来就是对的,合并没有意义。
+  const events = poolEvents(event, c.req.query('family') === '1');
 
   try {
     if (wantDifficulty) {
@@ -299,11 +321,12 @@ wcaScramblesRoutes.get('/wca/scrambles/random', async (c) => {
       if (!plan) return c.json({ error: 'difficulty data not available', event }, 503);
 
       // 稀有档:所选 bins 全部命中侧表尾部 → 直查侧表(候选 ≤ 6×K×|bins|,先 LIMIT 再 join 取文本)。
-      // tails 按全 event 合并计数 → 按 event 过滤后 0 行 = 该项目在此难度档确实无真题(可靠 404)。
+      // tails 按全 event 合并计数 → 按 events 过滤后 0 行 = 该(些)项目在此难度档确实无真题(可靠 404)。
+      // 侧表主键是 (slot,val,...),event_id 不是前导列 —— 合并与否都走同一段 (slot,val) 直达,代价相同。
       if (rareCovers(layout, plan, dSteps)) {
         const cond = rareBranchSql(plan, dSteps);
-        const rWhere: string[] = ['r.event_id = ?', `(${cond})`];
-        const rParams: unknown[] = [event];
+        const rWhere: string[] = [`r.event_id IN (${events.map(() => '?').join(',')})`, `(${cond})`];
+        const rParams: unknown[] = [...events];
         if (hasFrom) { rWhere.push('cd.start_date >= ?'); rParams.push(from); }
         if (hasTo) { rWhere.push('cd.start_date <= ?'); rParams.push(to); }
         const needDates = hasFrom || hasTo;
@@ -341,23 +364,39 @@ wcaScramblesRoutes.get('/wca/scrambles/random', async (c) => {
         // gm_cross6/xcross6 列索引、std 深阶段六色 LEAST 表达式索引、或 (event_id,rnd) 通用索引过滤 —— 一律
         // LIMIT 提前停,毫秒级(替代旧 ORDER BY random() 整分区扫描:333 ~1.3M 行实测 2.5s,见 migration 0061)。
         const dart = Math.random();
-        const dartSql = (cmp: '>=' | '<', opt: string) => `SELECT ${RANDOM_COLS}
-             FROM wca_scramble_steps s
+        // 逐 event 各取前 count 条再归并,而不是把 events 塞进一个 IN:覆盖索引是 (event_id, rnd),
+        // event_id 一旦不再是等值前导列,ORDER BY rnd 就没索引可用 —— 实测直接去掉 event 谓词会从
+        // 8.5ms 退化成 3.1s 的全表 parallel seq scan。归并结果精确而非近似:全局按 rnd 的前 count 条
+        // 必然是各 event 各自前 count 条的子集。单 event 时退化成一次索引扫描,不比原来贵。
+        // 另外先在 steps 表 LIMIT、再 join 文本/比赛表,比原先平铺 join 更快(全热实测 26ms → 6ms)。
+        const evPlaceholders = events.map(() => '?').join(',');
+        const dartSql = (cmp: '>=' | '<', withOpt: boolean) => `SELECT ${RANDOM_COLS}
+             FROM (SELECT m.competition_id, m.event_id, m.round_type_id, m.group_id,
+                          m.is_extra, m.scramble_num, m.rnd
+                     FROM unnest(ARRAY[${evPlaceholders}]::varchar[]) AS ev(e)
+                     CROSS JOIN LATERAL (
+                       SELECT s.competition_id, s.event_id, s.round_type_id, s.group_id,
+                              s.is_extra, s.scramble_num, s.rnd
+                         FROM wca_scramble_steps s
+                         ${withOpt ? STEPS_OPT_JOIN : ''}
+                        WHERE s.event_id = ev.e${gmPrefilter} AND ${diffWhere} AND s.rnd ${cmp} ?
+                        ORDER BY s.rnd LIMIT ?) m
+                    ORDER BY m.rnd LIMIT ?) s
              ${STEPS_WS_JOIN}
              LEFT JOIN wca_competitions c ON c.id = s.competition_id
              ${OPT_JOIN}
-            WHERE s.event_id = ?${gmPrefilter} AND ${diffWhere} AND s.rnd ${cmp} ? ${opt}
             ORDER BY s.rnd, ws.id LIMIT ?`;
-        const runDart = async (opt: string): Promise<RandomRow[]> => {
-          let r = await query<RandomRow>(dartSql('>=', opt), [event, dart, count]);
+        const runDart = async (withOpt: boolean): Promise<RandomRow[]> => {
+          let r = await query<RandomRow>(dartSql('>=', withOpt), [...events, dart, count, count, count]);
           if (r.length < count) {
-            const more = await query<RandomRow>(dartSql('<', opt), [event, dart, count - r.length]);
+            const need = count - r.length;
+            const more = await query<RandomRow>(dartSql('<', withOpt), [...events, dart, need, need, need]);
             r = r.concat(more);
           }
           return r;
         };
-        drows = await runDart(optFilter);
-        if (optFilter && drows.length === 0) drows = await runDart('');
+        drows = await runDart(!!optFilter);
+        if (optFilter && drows.length === 0) drows = await runDart(false);
       } else {
         // 难度 + 日期:comp-sampling 叠难度谓词(+ gmPrefilter 缩候选)。
         const dWhere: string[] = []; const dParams: string[] = [];
@@ -370,9 +409,9 @@ wcaScramblesRoutes.get('/wca/scrambles/random', async (c) => {
                     ORDER BY random() LIMIT ${COMP_SAMPLE}) c ON c.id = s.competition_id
              ${STEPS_WS_JOIN}
              ${OPT_JOIN}
-            WHERE s.event_id = ?${gmPrefilter} AND ${diffWhere} ${opt}
+            WHERE s.event_id IN (${events.map(() => '?').join(',')})${gmPrefilter} AND ${diffWhere} ${opt}
             ORDER BY random() LIMIT ?`,
-          [...dParams, event, count],
+          [...dParams, ...events, count],
         );
         drows = await runComp(optFilter);
         if (optFilter && drows.length === 0) drows = await runComp('');

@@ -97,6 +97,7 @@ const DEFAULT_WCA_SRC: WcaSourceSettings = {
   wcaUseOptimal: false,
   wcaDifficultyOn: false,
   wcaDiffVariant: 'std', wcaDiffStage: 'cross', wcaDiffColors: 'BGORWY', wcaDiffSteps: [],
+  wcaDiffMerged: true,
 };
 function loadWcaSrc(): WcaSourceSettings {
   if (typeof localStorage === 'undefined') return { ...DEFAULT_WCA_SRC };
@@ -115,7 +116,10 @@ function specFromWcaSrc(s: WcaSourceSettings): WcaSourceSpec {
     from: s.wcaDateFrom, to: s.wcaDateTo,
     optimal: s.wcaUseOptimal,
     diff: s.wcaDifficultyOn && s.wcaDiffSteps.length
-      ? { variant: s.wcaDiffVariant, stage: s.wcaDiffStage, colors: s.wcaDiffColors, steps: s.wcaDiffSteps }
+      ? {
+        variant: s.wcaDiffVariant, stage: s.wcaDiffStage, colors: s.wcaDiffColors,
+        steps: s.wcaDiffSteps, merged: s.wcaDiffMerged,
+      }
       : undefined,
   };
 }
