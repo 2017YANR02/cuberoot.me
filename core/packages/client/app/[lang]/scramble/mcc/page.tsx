@@ -8,10 +8,12 @@
  * Calculate / Calculate & Sort 按钮;STM 列常显;统计行常显。
  */
 import { useMemo, useState } from 'react';
+import { useParams } from 'next/navigation';
 import { useQueryState, parseAsBoolean, parseAsStringEnum } from 'nuqs';
 import { ChevronDown } from 'lucide-react';
 import BoolToggle from '@/components/BoolToggle';
 import PillToggle from '@/components/PillToggle/PillToggle';
+import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
 import SortArrow from '@/components/SortArrow';
 import { ClearButton } from '@/components/ClearButton';
 import { ESQ_SLIDERS, MCC_SLIDERS, ParamSliders } from '@/components/ParamSliders';
@@ -22,14 +24,19 @@ import {
   algSpeed, getESQ, getSTM, normalizeLine,
   MCC_DEFAULTS, ESQ_DEFAULTS, type EsqParams, type MccParams,
 } from '@/lib/mcc';
+import { pocketCost } from '@/lib/pocket-cost';
 import ScoringGuide from './_ScoringGuide';
 import './mcc.css';
 
+// 支持转动手感评分的项目(以后扩展新项目 = 往这里加 id + 在 rows 里接对应模型)。
+type Puzzle = '333' | '222';
+const MCC_PUZZLE_SET = new Set<string>(['333', '222']);
+const NO_NONWCA_PUZZLES = new Set<string>(); // 本页暂不列非 WCA 项目
 type Metric = 'mcc' | 'esq';
 type SortKey = 'input' | 'stm' | 'metric';
 type SortDir = 'asc' | 'desc';
 
-const EXAMPLE = [
+const EXAMPLE_333 = [
   "R U R' U' R' F R2 U' R' U' R U R' F'",
   "R U R' F' R U R' U' R' F R2 U' R'",
   "R' U L' U2 R U' R' U2 R L",
@@ -37,6 +44,17 @@ const EXAMPLE = [
   "M2 U M U2 M' U M2",
   "x R' U R' D2 R U' R' D2 R2 x'",
   "R2 U R' U R' U' R U' R2 U' D R' U R D'",
+].join('\n');
+
+// 二阶只用 U R F(固定 DBL 角):几条常见 EG/CLL 手法 + 打乱段,展示代价差异。
+const EXAMPLE_222 = [
+  "R U R' U R U2 R'",
+  "R U2 R' U' R U' R'",
+  "F R U' R' U' R U R' F'",
+  "R U R' U' R' F R F'",
+  "R2 U2 R U2 R2",
+  "R U' R F2 R' U R'",
+  "F R U R' U' F'",
 ].join('\n');
 
 interface Row {
@@ -55,9 +73,12 @@ const UNKNOWN_PREFIX = 'Unknown move: ';
 
 export default function MccPage() {
   const t = useT();
+  const params = useParams();
+  const isZh = params?.lang === 'zh';
   useDocumentTitle('MCC 公式测速', 'Movecount Coefficient');
 
   const [input, setInput] = useState('');
+  const [puzzle, setPuzzle] = useQueryState('p', parseAsStringEnum<Puzzle>(['333', '222']).withDefault('333'));
   const [metric, setMetric] = useQueryState('metric', parseAsStringEnum<Metric>(['mcc', 'esq']).withDefault('mcc'));
   const [ignoreUnknown, setIgnoreUnknown] = useQueryState('skipUnknown', parseAsBoolean.withDefault(false));
   const [ignoreAuf, setIgnoreAuf] = useQueryState('noAuf', parseAsBoolean.withDefault(true));
@@ -68,6 +89,9 @@ export default function MccPage() {
   const [sortKey, setSortKey] = useState<SortKey>('metric');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
 
+  // 二阶忽略 AUF 概念(那是三阶末层调整),STM 也按不忽略算。
+  const effIgnoreAuf = puzzle === '333' && ignoreAuf;
+
   const rows = useMemo<Row[]>(() => {
     // 上游把 \t 当换行(方便从表格粘贴);这里解析时等价处理,不改写输入框
     const lines = input.split(/\r?\n|\t/);
@@ -76,18 +100,20 @@ export default function MccPage() {
       const alg = lines[i].trim();
       if (!alg) continue;
       const norm = normalizeLine(alg);
-      const value = metric === 'mcc'
-        ? algSpeed(norm, ignoreUnknown, ignoreAuf, mccParams)
-        : getESQ(norm, ignoreAuf, esqParams);
+      const value = puzzle === '222'
+        ? pocketCost(norm, ignoreUnknown)
+        : metric === 'mcc'
+          ? algSpeed(norm, ignoreUnknown, effIgnoreAuf, mccParams)
+          : getESQ(norm, effIgnoreAuf, esqParams);
       out.push({
         line: i + 1,
         alg,
-        stm: getSTM(alg, ignoreAuf),
+        stm: getSTM(alg, effIgnoreAuf),
         value: typeof value === 'string' ? value.slice(UNKNOWN_PREFIX.length) : value,
       });
     }
     return out;
-  }, [input, metric, ignoreUnknown, ignoreAuf, mccParams, esqParams]);
+  }, [input, puzzle, metric, ignoreUnknown, effIgnoreAuf, mccParams, esqParams]);
 
   const sorted = useMemo(() => {
     if (sortKey === 'input') return rows;
@@ -119,52 +145,74 @@ export default function MccPage() {
     }
   };
 
-  const metricName = metric === 'mcc' ? 'MCC' : tr({ zh: '增强 SQTM', en: 'Enhanced SQTM' });
+  const isPocket = puzzle === '222';
+  const metricName = isPocket
+    ? tr({ zh: '转动代价', en: 'Turn cost' })
+    : metric === 'mcc' ? 'MCC' : tr({ zh: '增强 SQTM', en: 'Enhanced SQTM' });
+  const showUnknownToggle = isPocket || metric === 'mcc';
 
   return (
     <div className="mcc-page">
       <header className="mcc-header">
         <h1>{t('MCC 公式测速', 'Movecount Coefficient')}</h1>
         <p className="mcc-lead">
-          {t(
-            '衡量 3x3 公式的手速潜力:模拟最优手法下的换手、过劳、失稳等代价,数值越低越快。',
-            'Estimates how fast a 3x3 alg can be executed: models regrips, finger overwork and instability under optimal fingertricks — lower is faster.',
-          )}
+          {isPocket
+            ? t(
+                '衡量二阶打乱 / 公式的转动手感:采用 WCA 官方(TNoodle)的二阶握位代价模型 —— 跟踪右手拇指握位,逐步累加每步耗时,数值越低越顺手。',
+                'Estimates how comfortable a 2×2 scramble or alg is to turn: WCA’s official (TNoodle) pocket-cube grip-cost model — it tracks the right-hand thumb grip and sums each move’s cost. Lower is smoother.',
+              )
+            : t(
+                '衡量 3x3 公式的手速潜力:模拟最优手法下的换手、过劳、失稳等代价,数值越低越快。',
+                'Estimates how fast a 3x3 alg can be executed: models regrips, finger overwork and instability under optimal fingertricks — lower is faster.',
+              )}
         </p>
       </header>
 
       <div className="mcc-controls">
-        <PillToggle
-          value={metric === 'esq'}
-          onChange={(v) => { void setMetric(v ? 'esq' : 'mcc'); }}
-          offLabel="MCC"
-          onLabel={tr({ zh: '增强 SQTM', en: 'Enhanced SQTM' })}
-          ariaLabel={tr({ zh: '输出指标', en: 'Output metric' })}
+        <PuzzlePicker
+          isZh={isZh}
+          selectedEvent={puzzle}
+          wcaEvents={MCC_PUZZLE_SET}
+          availableEvents={NO_NONWCA_PUZZLES}
+          onSelect={(id) => { void setPuzzle(id as Puzzle); }}
         />
-        <BoolToggle
-          value={ignoreAuf}
-          onChange={(v) => { void setIgnoreAuf(v); }}
-          label={t('忽略首尾 U 步', 'Ignore leading & trailing U moves')}
-        />
-        {metric === 'mcc' && (
+        {!isPocket && (
+          <PillToggle
+            value={metric === 'esq'}
+            onChange={(v) => { void setMetric(v ? 'esq' : 'mcc'); }}
+            offLabel="MCC"
+            onLabel={tr({ zh: '增强 SQTM', en: 'Enhanced SQTM' })}
+            ariaLabel={tr({ zh: '输出指标', en: 'Output metric' })}
+          />
+        )}
+        {!isPocket && (
+          <BoolToggle
+            value={ignoreAuf}
+            onChange={(v) => { void setIgnoreAuf(v); }}
+            label={t('忽略首尾 U 步', 'Ignore leading & trailing U moves')}
+          />
+        )}
+        {showUnknownToggle && (
           <BoolToggle
             value={ignoreUnknown}
             onChange={(v) => { void setIgnoreUnknown(v); }}
             label={t('跳过未知步', 'Skip unknown moves')}
           />
         )}
-        <button
-          type="button"
-          className={`mcc-advanced-toggle${showAdvanced ? ' is-open' : ''}`}
-          onClick={() => setShowAdvanced((v) => !v)}
-          aria-expanded={showAdvanced}
-        >
-          {t('高级参数', 'Advanced options')}
-          <ChevronDown size={15} className="mcc-advanced-chevron" aria-hidden="true" />
-        </button>
+        {!isPocket && (
+          <button
+            type="button"
+            className={`mcc-advanced-toggle${showAdvanced ? ' is-open' : ''}`}
+            onClick={() => setShowAdvanced((v) => !v)}
+            aria-expanded={showAdvanced}
+          >
+            {t('高级参数', 'Advanced options')}
+            <ChevronDown size={15} className="mcc-advanced-chevron" aria-hidden="true" />
+          </button>
+        )}
       </div>
 
-      {showAdvanced && (
+      {!isPocket && showAdvanced && (
         metric === 'mcc'
           ? <ParamSliders className="mcc-advanced" specs={MCC_SLIDERS} values={mccParams} defaults={MCC_DEFAULTS} onChange={setMccParams} />
           : <ParamSliders className="mcc-advanced" specs={ESQ_SLIDERS} values={esqParams} defaults={ESQ_DEFAULTS} onChange={setEsqParams} />
@@ -176,7 +224,7 @@ export default function MccPage() {
             <h2>{t('公式(每行一条)', 'Algs (one per line)')}</h2>
             {input !== '' && <ClearButton variant="standalone" onClick={() => setInput('')} />}
             {input === '' && (
-              <button type="button" className="mcc-example" onClick={() => setInput(EXAMPLE)}>
+              <button type="button" className="mcc-example" onClick={() => setInput(isPocket ? EXAMPLE_222 : EXAMPLE_333)}>
                 {t('填入示例', 'Load example')}
               </button>
             )}
@@ -189,13 +237,20 @@ export default function MccPage() {
             spellCheck={false}
             autoCapitalize="off"
             autoCorrect="off"
-            placeholder={"R U R' U' R' F R2 U' R' U' R U R' F'\nR U R' F' R U R' U' R' F R2 U' R'\n…"}
+            placeholder={isPocket
+              ? "R U R' U R U2 R'\nF R U' R' U' R U R' F'\n…"
+              : "R U R' U' R' F R2 U' R' U' R U R' F'\nR U R' F' R U R' U' R' F R2 U' R'\n…"}
           />
           <p className="mcc-hint">
-            {t(
-              "支持 RUFDLB / rufdlb 宽层 / MES 中层 / xyz 转身;宽层用小写(r),不认 Rw。",
-              'Supports RUFDLB, lowercase wide (r), MES slices and xyz rotations; wide moves must be lowercase — Rw is not recognized.',
-            )}
+            {isPocket
+              ? t(
+                  '二阶固定 DBL 角,只用 U R F 三面(及其 2 / ′ 变体);其他步会标为未知。',
+                  'A 2×2 fixes the DBL corner, so only U R F (and their 2 / ′ variants) are used; any other move is flagged as unknown.',
+                )
+              : t(
+                  "支持 RUFDLB / rufdlb 宽层 / MES 中层 / xyz 转身;宽层用小写(r),不认 Rw。",
+                  'Supports RUFDLB, lowercase wide (r), MES slices and xyz rotations; wide moves must be lowercase — Rw is not recognized.',
+                )}
           </p>
         </section>
 
@@ -250,13 +305,23 @@ export default function MccPage() {
         </section>
       </div>
 
-      <ScoringGuide metric={metric} mccParams={mccParams} esqParams={esqParams} />
+      <ScoringGuide puzzle={puzzle} metric={metric} mccParams={mccParams} esqParams={esqParams} />
 
       <p className="mcc-credit">
-        {t('算法移植自 ', 'Algorithm ported from ')}
-        <a href="https://github.com/trangium/trangium.github.io" target="_blank" rel="noreferrer">trangium/MovecountCoefficient</a>
-        {t('(MIT);指标介绍见 ', ' (MIT); background: ')}
-        <a href="https://www.speedsolving.com/threads/movecount-coefficient-calculator-online-tool-to-evaluate-the-speed-of-3x3-algorithms.79025/" target="_blank" rel="noreferrer">speedsolving.com</a>
+        {isPocket ? (
+          <>
+            {t('二阶代价模型移植自 ', 'Pocket-cube cost model ported from ')}
+            <a href="https://github.com/thewca/tnoodle" target="_blank" rel="noreferrer">TNoodle</a>
+            {t('(WCA 官方打乱程序的 TwoByTwoSolver)。', '(TwoByTwoSolver in WCA’s official scrambler).')}
+          </>
+        ) : (
+          <>
+            {t('算法移植自 ', 'Algorithm ported from ')}
+            <a href="https://github.com/trangium/trangium.github.io" target="_blank" rel="noreferrer">trangium/MovecountCoefficient</a>
+            {t('(MIT);指标介绍见 ', ' (MIT); background: ')}
+            <a href="https://www.speedsolving.com/threads/movecount-coefficient-calculator-online-tool-to-evaluate-the-speed-of-3x3-algorithms.79025/" target="_blank" rel="noreferrer">speedsolving.com</a>
+          </>
+        )}
       </p>
     </div>
   );
