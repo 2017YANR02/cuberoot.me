@@ -95,7 +95,7 @@ export function useImageSpec(prefix: string, opts?: CodecOptions): [ImageSpec, I
     for (const k of legacyKeys) {
       if (urlParams[k] != null) { patch[k] = null; changed = true; }
     }
-    if (changed) void setUrlParams(patch);
+    if (changed) { if (typeof window !== 'undefined') { (window as any).__EFFB = ((window as any).__EFFB||0)+1; if ((window as any).__EFFB % 20 === 0) console.warn('[EFFB spec→URL]', (window as any).__EFFB, JSON.stringify(patch)); } void setUrlParams(patch); }
   }, [spec, prefix, keyOpts, urlParams, setUrlParams, writeKeys, legacyKeys]);
 
   return [spec, patchSpec];

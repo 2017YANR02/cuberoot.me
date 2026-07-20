@@ -1,7 +1,7 @@
 'use client';
 
 // Ported from packages/client-vite/src/pages/trainer/TrainerRunPage.tsx
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from '@/components/AppLink';
 import { useParams } from 'next/navigation';
 import { useQueryState } from 'nuqs';
@@ -106,6 +106,8 @@ export default function TrainerRunClient() {
   const setShowStageThumb = useTrainerStore(s => s.setShowStageThumb);
   const pureScramble = useTrainerStore(s => s.pureScramble);
   const setPureScramble = useTrainerStore(s => s.setPureScramble);
+  const multiScramble = useTrainerStore(s => s.multiScramble);
+  const setMultiScramble = useTrainerStore(s => s.setMultiScramble);
   const observingPinned = useTrainerStore(s => s.observingPinned);
   const pinObserving = useTrainerStore(s => s.pinObserving);
   const nextScramble = useTrainerStore(s => s.nextScramble);
@@ -198,6 +200,16 @@ export default function TrainerRunClient() {
     }
   }, [cases.length, pool.length, currentName, nextScramble]);
 
+  // 三条一屏(仅不计时模式):屏上第 2、3 条就是 store 预抽的 peek / peek2,所以「切下一屏」
+  // = 连推 3 格 —— 新一屏是全新的三条,每条照常进历史(← 仍能逐条回看)。
+  // 监听器常驻不重订阅,用 ref 读当次最新值。
+  const multiRef = useRef(false);
+  multiRef.current = multiScramble && !timing;
+  const advanceScramble = useCallback(() => {
+    const n = multiRef.current ? 3 : 1;
+    for (let i = 0; i < n; i++) nextScramble();
+  }, [nextScramble]);
+
   // Space-bar timing (keyboard). Touch/mouse press-to-time is handled by the
   // gesture-wheel hook below so a press can also drive the radial dial.
   useSpaceHoldTimer({
@@ -226,7 +238,7 @@ export default function TrainerRunClient() {
         return;
       }
       if (e.code === 'ArrowLeft') { e.preventDefault(); prevScramble(); return; }
-      if (e.code === 'ArrowRight') { e.preventDefault(); nextScramble(); return; }
+      if (e.code === 'ArrowRight') { e.preventDefault(); advanceScramble(); return; }
       // 1-4:直接给卡片当前 case 打标记(1 学习中 / 2 已掌握 / 3 搁置 / 4 星标);再按同键取消
       if (!e.repeat && (e.code === 'Digit1' || e.code === 'Digit2' || e.code === 'Digit3' || e.code === 'Digit4')) {
         const st = useTrainerStore.getState();
@@ -245,12 +257,12 @@ export default function TrainerRunClient() {
       }
       if (e.code === 'Space' && !useTrainerStore.getState().timing) {
         e.preventDefault();
-        if (!e.repeat) nextScramble();
+        if (!e.repeat) advanceScramble();
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [prevScramble, nextScramble]);
+  }, [prevScramble, advanceScramble]);
 
   // ── Radial gesture wheel (shared with /timer) ───────────────────
   const stageRef = useRef<HTMLDivElement | null>(null);
@@ -325,7 +337,7 @@ export default function TrainerRunClient() {
       const lastIdx = st.solves.length - 1;
       const last = st.solves[lastIdx];
       switch (i) {
-        case 0: if (st.timerState === TimerState.NOT_RUNNING) nextScramble(); break;
+        case 0: if (st.timerState === TimerState.NOT_RUNNING) advanceScramble(); break;
         case 1: if (last) setSolvePenalty(lastIdx, 'ok'); break;
         case 2: if (last) setSolvePenalty(lastIdx, last.penalty === '+2' ? 'ok' : '+2'); break;
         case 3: if (last) setSolvePenalty(lastIdx, last.penalty === 'DNF' ? 'ok' : 'DNF'); break;
@@ -359,8 +371,8 @@ export default function TrainerRunClient() {
       else if (st === TimerState.NOT_RUNNING) getTimerReady(TIMER_DELAY_MS);
     },
     onPressUp: () => {
-      // 不计时模式:单击(未拖动)= 下一个打乱
-      if (!useTrainerStore.getState().timing) { nextScramble(); return; }
+      // 不计时模式:单击(未拖动)= 下一个打乱(三条一屏时 = 下一屏三条)
+      if (!useTrainerStore.getState().timing) { advanceScramble(); return; }
       const st = useTrainerStore.getState().timerState;
       if (st === TimerState.READY) startTimer();
       else if (st === TimerState.AWAITING_READY || st === TimerState.STOPPING) setTimerState(TimerState.NOT_RUNNING);
@@ -395,7 +407,7 @@ export default function TrainerRunClient() {
     const up = () => {
       if (!pressed) return;
       pressed = false;
-      if (!useTrainerStore.getState().timing) { nextScramble(); return; }
+      if (!useTrainerStore.getState().timing) { advanceScramble(); return; }
       const st = useTrainerStore.getState().timerState;
       if (st === TimerState.READY) startTimer();
       else if (st === TimerState.AWAITING_READY || st === TimerState.STOPPING) setTimerState(TimerState.NOT_RUNNING);
@@ -406,7 +418,7 @@ export default function TrainerRunClient() {
       document.removeEventListener('pointerdown', down);
       document.removeEventListener('pointerup', up);
     };
-  }, [nextScramble, stopTimer, getTimerReady, startTimer, setTimerState]);
+  }, [advanceScramble, stopTimer, getTimerReady, startTimer, setTimerState]);
 
   // ── 成绩驱动的标记升降级建议(只建议不自动改,标记主权在用户)──
   // 升:该 case 近 5 把全成功,且这 5 把的中位数不慢于本 session 全部成功成绩的中位数
@@ -499,6 +511,9 @@ export default function TrainerRunClient() {
     : peek2;
   const next2Case = next2Entry ? findCaseByKey(cases, next2Entry.key) ?? null : null;
 
+  // 三条一屏只在不计时模式下成立(计时是一把一把的,一屏三条无从计时)。
+  const multi = multiScramble && !timing;
+
   // 「上一个」卡片(回看 + 标记):默认 = 打乱历史里的上一条,与「下一个」= 下一条对称 ——
   // 换题(计时停表 / 空格 / →)时光标一起走,两张卡片同步更新(计时停表后的上一条正好是
   // 你刚做完那把)。在统计里点选某条成绩(pinned)则临时切到那把,标题显示 #N,换题自动解除。
@@ -510,6 +525,14 @@ export default function TrainerRunClient() {
   const prevHeader = pinnedSolve
     ? `#${pinnedSolve.i + 1}`
     : tr({ zh: '上一个', en: 'Previous' });
+  // 三条一屏时「上一个」= 上一屏那三条(点一次跨 3 格,所以回看的单位也是一屏三条),
+  // 顺序与主屏一致(上屏第 1/2/3 条)。不计时模式下 pinned 恒为空,直接读历史即可。
+  const prevTrio = multi
+    ? [hist.idx - 3, hist.idx - 2, hist.idx - 1]
+        .filter(i => i >= 0)
+        .map(i => hist.list[i])
+        .filter(Boolean)
+    : [];
   // 纯打乱纯粹是**呈现**:store / 历史 / 缩略图 / 云备份仍存原打乱,只有给人看和复制的
   // 那一份剥掉括号与 `↑↓·` 标注。
   const shownScramble = (s: string | null | undefined): string =>
@@ -519,7 +542,7 @@ export default function TrainerRunClient() {
   pillKeyRef.current = pillCase ? caseKey(pillCase) : null;
 
   const onNextCase = () => {
-    if (timerState === TimerState.NOT_RUNNING) nextScramble();
+    if (timerState === TimerState.NOT_RUNNING) advanceScramble();
   };
 
   // 不计时没有用时可统计,统计卡片(和它的开关)整块不出现,不是留一个空/永远关着的卡片
@@ -556,6 +579,21 @@ export default function TrainerRunClient() {
           >
             <Settings size={22} />
           </button>
+          {/* 复习进度贴在齿轮右侧(absolute 脱流:齿轮仍精确居中,面板锚点不受影响) */}
+          {recapShown && recapCur && (
+            <span className="trainer-recap-progress">
+              {recapCur.pos}/{recapCur.total}
+              {room ? (
+                <span className="trainer-recap-coop">
+                  {tr({ zh: `房间 ${room.code} 全队`, en: `room ${room.code} team` })}
+                </span>
+              ) : coop.on && coop.n >= 2 ? (
+                <span className="trainer-recap-coop">
+                  {tr({ zh: `协同 ${coop.k + 1}/${coop.n} 台`, en: `team ${coop.k + 1}/${coop.n}` })}
+                </span>
+              ) : null}
+            </span>
+          )}
           {optsOpen && (
             <div className="trainer-opts-panel" ref={optsPanelRef}>
               {kinds.length > 1 && (
@@ -777,6 +815,14 @@ export default function TrainerRunClient() {
                   onChange={setPureScramble}
                   label={tr({ zh: '纯打乱', en: 'Plain scramble' })}
                 />
+                {/* 三条一屏只在不计时下有意义(计时是一把一把的),与「统计」正好互补出现 */}
+                {!timing && (
+                  <BoolToggle
+                    value={multiScramble}
+                    onChange={setMultiScramble}
+                    label={tr({ zh: '三条一屏', en: 'Three at once' })}
+                  />
+                )}
                 {timing && (
                   <BoolToggle
                     value={showStats}
@@ -785,17 +831,21 @@ export default function TrainerRunClient() {
                   />
                 )}
               </div>
+              {/* 三条一屏时「下一个」已经在主屏第 2 条里,那张卡片不出 —— 开关一起隐掉,
+                  不留一个按了没反应的死开关;「上一个」则整屏回看,改叫「上三个」。 */}
               <div className="trainer-opts-row">
                 <BoolToggle
                   value={showPrevCard}
                   onChange={setShowPrevCard}
-                  label={tr({ zh: '上一个', en: 'Previous' })}
+                  label={multi ? tr({ zh: '上三个', en: 'Previous 3' }) : tr({ zh: '上一个', en: 'Previous' })}
                 />
-                <BoolToggle
-                  value={showNextCard}
-                  onChange={setShowNextCard}
-                  label={tr({ zh: '下一个', en: 'Next' })}
-                />
+                {!multi && (
+                  <BoolToggle
+                    value={showNextCard}
+                    onChange={setShowNextCard}
+                    label={tr({ zh: '下一个', en: 'Next' })}
+                  />
+                )}
               </div>
               {timing && (
                 <div className="trainer-opts-row">
@@ -820,23 +870,62 @@ export default function TrainerRunClient() {
                   : tr({ zh: '单击、空格或 → 键切下一个打乱', en: 'Click, Space or → for the next scramble' })}
               </div>
               <div className="trainer-opts-help">
-                {tr({
-                  zh: '数字键 1 学习中、2 已掌握、3 搁置、4 星标,标在「上一个」case',
-                  en: 'Keys 1 learning, 2 mastered, 3 paused, 4 star — mark the “Previous” case',
-                })}
+                {multi
+                  ? tr({
+                      zh: '数字键 1 学习中、2 已掌握、3 搁置、4 星标,标在「上三个」最后一条;其余两条点卡片上的标记条',
+                      en: 'Keys 1 learning, 2 mastered, 3 paused, 4 star — mark the last of “Previous 3”; use each card’s mark bar for the other two',
+                    })
+                  : tr({
+                      zh: '数字键 1 学习中、2 已掌握、3 搁置、4 星标,标在「上一个」case',
+                      en: 'Keys 1 learning, 2 mastered, 3 paused, 4 star — mark the “Previous” case',
+                    })}
               </div>
             </div>
           )}
         </div>
       </div>
 
-      <div className={`trainer-run${showPrevCard || showNextCard || statsVisible ? '' : ' trainer-run--solo'}`}>
+      <div className={`trainer-run${showPrevCard || (showNextCard && !multi) || statsVisible ? '' : ' trainer-run--solo'}`}>
         <div className="trainer-stage" ref={stageRef}>
-          <ScrambleHeader
-            scramble={shownScramble(currentScramble)}
-            label={copied ? tr({ zh: '已复制', en: 'Copied' }) : undefined}
-            font={scrambleFont}
-          />
+          {/* 三条一屏:当前 + 屏上第 2、3 条(队尾时 = 预抽的 peek / peek2,回看过则是历史里
+              后两条),拧完三条再点一次切下一屏。打乱与图交错成六行,每条紧跟自己那张图。
+              图走 local 渲染:三张与三条文字在同一次 commit 出现,不再各自等自己的网络往返。 */}
+          {multi ? (
+            <div className="trainer-scramble-multi">
+              {[
+                { s: currentScramble, c: currentCase },
+                { s: nextEntry?.scramble ?? null, c: nextCase },
+                { s: next2Entry?.scramble ?? null, c: next2Case },
+              ]
+                .filter(row => !!row.s)
+                .map((row, i) => (
+                  <div className="trainer-scramble-row" key={i}>
+                    <ScrambleHeader
+                      scramble={shownScramble(row.s)}
+                      label={i === 0 && copied ? tr({ zh: '已复制', en: 'Copied' }) : undefined}
+                      font={scrambleFont}
+                    />
+                    {showStageThumb && row.c && (
+                      <CaseThumb
+                        puzzle={puzzle}
+                        set={setSlug}
+                        sticker={row.c.sticker}
+                        alg={row.c.algs.flat()[0]?.alg ?? row.c.standard ?? ''}
+                        setup={row.s ?? row.c.setup}
+                        size={140}
+                        local
+                      />
+                    )}
+                  </div>
+                ))}
+            </div>
+          ) : (
+            <ScrambleHeader
+              scramble={shownScramble(currentScramble)}
+              label={copied ? tr({ zh: '已复制', en: 'Copied' }) : undefined}
+              font={scrambleFont}
+            />
+          )}
           <div className="trainer-stage-actions">
             {/* 不计时模式下点哪都是「下一个」,按钮多余不显示 */}
             {timing && (
@@ -851,23 +940,6 @@ export default function TrainerRunClient() {
             )}
           </div>
 
-          {recapShown && recapCur && (
-            <div className="trainer-stage-opts">
-              <span className="trainer-recap-progress">
-                {recapCur.pos}/{recapCur.total}
-                {room ? (
-                  <span className="trainer-recap-coop">
-                    {tr({ zh: `房间 ${room.code} 全队`, en: `room ${room.code} team` })}
-                  </span>
-                ) : coop.on && coop.n >= 2 ? (
-                  <span className="trainer-recap-coop">
-                    {tr({ zh: `协同 ${coop.k + 1}/${coop.n} 台`, en: `team ${coop.k + 1}/${coop.n}` })}
-                  </span>
-                ) : null}
-              </span>
-            </div>
-          )}
-
           {timing && (
             <TimerDisplay
               state={timerState}
@@ -878,8 +950,9 @@ export default function TrainerRunClient() {
           )}
 
           {/* 当前这道题的 case 图(左栏下方):看得见正在练的这一把。
-              图从「实际打乱」渲染(含 pre/post-AUF),与上方打乱公式朝向一致。 */}
-          {showStageThumb && currentCase && (
+              图从「实际打乱」渲染(含 pre/post-AUF),与上方打乱公式朝向一致。
+              三条一屏时图已经跟在各自那条打乱下面(见上),这里不再重复出。 */}
+          {!multi && showStageThumb && currentCase && (
             <div className="trainer-stage-thumb">
               <CaseThumb
                 puzzle={puzzle}
@@ -943,10 +1016,28 @@ export default function TrainerRunClient() {
           )}
         </div>
 
-        {(showPrevCard || showNextCard || statsVisible) && (
+        {(showPrevCard || (showNextCard && !multi) || statsVisible) && (
           <aside className="trainer-sidebar">
-            {/* 上一个:刚做完那把(图+名+打乱)+ 标记条,标记打在这把上。第一把之前无成绩,不出。 */}
-            {showPrevCard && prevCase && (
+            {/* 上一个:刚做完那把(图+名+打乱)+ 标记条,标记打在这把上。第一把之前无成绩,不出。
+                三条一屏 → 上三个:上一屏那三条各一张卡片,每张自带标记条(键盘 1-4 仍打最近那条)。 */}
+            {showPrevCard && multi && prevTrio.map((e, i) => {
+              const c = findCaseByKey(cases, e.key) ?? null;
+              if (!c) return null;
+              return (
+                <SolveCard
+                  key={`${e.key}-${i}`}
+                  puzzle={puzzle}
+                  set={setSlug}
+                  scramble={shownScramble(e.scramble)}
+                  c={c}
+                  isZh={isZh}
+                  onShowCase={c.meta ? (cc) => setMetaCase(cc) : undefined}
+                  header={i === 0 ? tr({ zh: '上三个', en: 'Previous 3' }) : undefined}
+                  markSlot={<CaseMarkBar k={caseKey(c)} />}
+                />
+              );
+            })}
+            {showPrevCard && !multi && prevCase && (
               <SolveCard
                 puzzle={puzzle}
                 set={setSlug}
@@ -958,8 +1049,9 @@ export default function TrainerRunClient() {
                 markSlot={<CaseMarkBar k={caseKey(prevCase)} />}
               />
             )}
-            {/* 下一个:预览待做那把(图+名+打乱),不带标记。 */}
-            {showNextCard && (
+            {/* 下一个:预览待做那把(图+名+打乱),不带标记。
+                三条一屏时它已经在主屏第 2 条里,不再重复出一张卡片。 */}
+            {showNextCard && !multi && (
               <SolveCard
                 puzzle={puzzle}
                 set={setSlug}
