@@ -98,6 +98,10 @@ export default class Controller {
   /** paint 模式:任何拖拽(含贴纸上)都当 orbit 转视角,绝不拧层;单击仍走 taps(→ 涂色)。
    *  仅 /scramble/solver 立体涂色用,默认关 → /sim 行为不变。需配合 dragEmpty='view'。 */
   public paintMode = false;
+  /** 手拧锁(设置面板「手拧」关):指针不能产生任何 move —— 拖贴纸走 orbit 视角(无视
+   *  dragEmpty,连 'rotate' 的整体转也不记步),单击不派 taps(转层)。paintMode 的
+   *  强化版:paint 保留单击(涂色),这里连单击也吞掉。键盘 / 播放 / 缩放不受影响。 */
+  public turnsLocked = false;
   /** 开发者调试:开启后拖一层转到一半松手 → 不吸附 90°、不记步,冻结在当前角度
    *  (逐帧看中间态)。下次 handleDown / disable / clearFrozen() 时干净释放。 */
   public holdPartial = false;
@@ -268,7 +272,10 @@ export default class Controller {
       }
       // 拖空白 + orbit 模式 → 切到 orbit 分支,不走整体转。
       // paintMode 下任何拖拽(含贴纸上)都走 orbit,绝不拧层(单击没位移 → 不进这里 → handleUp 派 taps 涂色)。
-      if ((this.paintMode || this.holder.index === -1) && (this.dragEmpty === 'orbit' || this.dragEmpty === 'view')) {
+      // turnsLocked(手拧关)同样把贴纸拖当 orbit,且无视 dragEmpty —— 'rotate' 的整体转
+      // 会记 x/y/z 进 move list,锁着时同样不该产生。
+      if ((this.turnsLocked || this.paintMode || this.holder.index === -1)
+        && (this.turnsLocked || this.dragEmpty === 'orbit' || this.dragEmpty === 'view')) {
         this.dragging = false;
         this.orbiting = true;
         this.orbitLastX = this.down.x;
@@ -418,6 +425,18 @@ export default class Controller {
   }
 
   handleUp(): void {
+    // 手拧锁:单击(dragging 无位移)本会派 taps 转层 —— 吞掉。paintMode 不受影响
+    // (它靠 taps 涂色),两者不同时开。
+    if (this.dragging && this.turnsLocked && !this.paintMode) {
+      this.group = null;
+      this.wideExtras = [];
+      this.wideSign = "";
+      this.holder.index = -1;
+      this.dragging = false;
+      this.rotating = false;
+      this.orbiting = false;
+      return;
+    }
     if (this.dragging) {
       let face: FACE | null = null;
       switch (this.holder.plane) {

@@ -549,7 +549,8 @@ export default function SimPage() {
       world.scene.rotation.y += dx * k;
       world.scene.rotation.x += dy * k;
       const cube = asNxN(world);
-      if (settingsRef.current.dragEmpty === 'view') {
+      // 手拧锁 → 按 'view' 处理:纯改 scene.rotation,不把跨 ±90° 的视角折成 y/x 记步。
+      if (settingsRef.current.dragEmpty === 'view' || settingsRef.current.pointerTurns === false) {
         world.scene.updateMatrix();
         world.dirty = true;
         return;
@@ -853,7 +854,8 @@ export default function SimPage() {
           const ly = e.clientY - r0.top;
           // Grab anywhere on the cube → turn (drag direction picks the corner);
           // only an off-cube miss orbits the view (on-cube never rotates whole).
-          ivyPick = w.cube instanceof IvyCube
+          // 手拧锁:不 pick → 恒等于"没抓到" → 整段手势都是 orbit 视角。
+          ivyPick = settingsRef.current.pointerTurns !== false && w.cube instanceof IvyCube
             ? ivyPickHit(w.cube, w.scene, w.camera, lx, ly, w.width, w.height)
             : null;
           ivyDownX = lx;
@@ -1020,7 +1022,8 @@ export default function SimPage() {
             sq1MovedPastThreshold = true;
             const w = worldRef.current;
             const c = w.cube;
-            if (c instanceof Sq1Cube) {
+            // 手拧锁:不解析抓取 → sq1Drag 留 null → 落到下方 orbit 分支。
+            if (c instanceof Sq1Cube && settingsRef.current.pointerTurns !== false) {
               c.twister.finish();
               tweener.finish();
               sq1Drag = sq1DragStart(c, w.scene, w.camera, sq1DownX, sq1DownY, w.width, w.height);
@@ -1161,7 +1164,8 @@ export default function SimPage() {
         if (settingsRef.current?.dragEmpty === 'rotate') snapViewToQuadrant(world);
         try { renderer.domElement.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
       }
-      if (sq1Pending && !sq1MovedPastThreshold && worldRef.current?.puzzleKind === 'sq1') {
+      if (sq1Pending && !sq1MovedPastThreshold && worldRef.current?.puzzleKind === 'sq1'
+        && settingsRef.current.pointerTurns !== false) {
         const w = worldRef.current;
         if (w.cube instanceof Sq1Cube) {
           const hit = sq1DragStart(w.cube, w.scene, w.camera, sq1DownX, sq1DownY, w.width, w.height);
@@ -1633,6 +1637,7 @@ export default function SimPage() {
               order={order}
               userMoveRef={userMoveRef}
               faceColors={settings.faceColors}
+              pointerTurns={settings.pointerTurns !== false}
             />
           )}
           {twisty ? (

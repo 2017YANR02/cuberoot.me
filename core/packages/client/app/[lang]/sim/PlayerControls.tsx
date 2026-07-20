@@ -2762,10 +2762,15 @@ function PuzzleSettings({
             <Slider label={t('转动速度', 'Turn speed')} value={settings.speed} onChange={(v) => set('speed', v)} unit={UNIT_TPS} title={t('每秒转动步数', 'Turns per second')} />
           </div>
           <div className="sim-puzzle-toggles">
-            {/* 播放动画开关:关 → 「播放」时瞬切每一步(不逐格转动);单步前进/后退本就瞬切。 */}
-            <Toggle label={t('动画', 'Animation')} value={settings.animatePlayback !== false} onChange={(v) => set('animatePlayback', v)} />
-            {/* 方位字母常显:U/D/L/R/F/B(角/棱/面转拼图显对应标签),等同拖视角时浮现的标签但常驻。 */}
-            <Toggle label={t('字母', 'Letters')} value={settings.faceLabels === true} onChange={(v) => set('faceLabels', v)} disabled={!caps.supports.faceLabels} title={hint(caps.supports.faceLabels)} />
+            {/* 手拧:关 = 鼠标 / 手势不能拧动拼图(点贴纸、拖贴纸都只转视角,不记步);
+                视角旋转 / 缩放 / 平移 / 键盘 / 播放不受影响。三条路径都接:NxN controller、
+                SQ1 / Ivy / 角转系 gesture、cubing.js addMove。 */}
+            <Toggle
+              label={t('手拧', 'Drag turn')}
+              value={settings.pointerTurns !== false}
+              onChange={(v) => set('pointerTurns', v)}
+              title={t('关闭后鼠标 / 手势只能转视角,不能拧动拼图(键盘和播放不受影响)', 'Off: mouse / touch only rotates the view — it cannot turn the puzzle (keyboard and playback still work)')}
+            />
             {/* 「消步」开关已移到播放器工具行(逆 旁),此处不再重复。 */}
             <label className="sim-toggle">
               <span>{t('拖空白', 'Drag empty')}</span>
@@ -2778,6 +2783,10 @@ function PuzzleSettings({
                 <option value="orbit">{t('自动转体', 'Auto rotate')}</option>
               </select>
             </label>
+            {/* 播放动画开关:关 → 「播放」时瞬切每一步(不逐格转动);单步前进/后退本就瞬切。 */}
+            <Toggle label={t('动画', 'Animation')} value={settings.animatePlayback !== false} onChange={(v) => set('animatePlayback', v)} />
+            {/* 方位字母常显:U/D/L/R/F/B(角/棱/面转拼图显对应标签),等同拖视角时浮现的标签但常驻。 */}
+            <Toggle label={t('字母', 'Letters')} value={settings.faceLabels === true} onChange={(v) => set('faceLabels', v)} disabled={!caps.supports.faceLabels} title={hint(caps.supports.faceLabels)} />
             {/* 背景:复用内核色那套弹出色块选择器(SwatchPopup),trigger 显当前背景,
                 点开弹出 5 个可视色块(直接预览各档外观)。左侧「背景 / BG」文字标签,
                 与其它开关行对齐。色值对齐 sim.css 里 .sim-canvas-wrap 的固定背景。 */}
