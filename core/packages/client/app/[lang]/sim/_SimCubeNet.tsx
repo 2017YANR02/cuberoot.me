@@ -98,6 +98,8 @@ interface Props {
   order: number;
   userMoveRef: RefObject<((action: TwistAction | string) => void) | null>;
   faceColors: Record<FaceLetter, string>;
+  /** 手拧(设置面板):false = 拖贴纸不转层。平面图没有视角可转,所以直接不接手势。 */
+  pointerTurns?: boolean;
 }
 
 /** Narrow world.cube to the NxN Cube (the only kind with serialize()/table). */
@@ -107,7 +109,7 @@ function nxnCube(world: World | null): CubeType | null {
   return world.cube as CubeType;
 }
 
-export default function SimCubeNet({ getWorld, worldTick, order, userMoveRef, faceColors }: Props) {
+export default function SimCubeNet({ getWorld, worldTick, order, userMoveRef, faceColors, pointerTurns = true }: Props) {
   const t = useT();
   const [, force] = useState(0);
   const rerender = useCallback(() => force((n) => (n + 1) & 0xffff), []);
@@ -217,6 +219,8 @@ export default function SimCubeNet({ getWorld, worldTick, order, userMoveRef, fa
             stroke="#000"
             strokeWidth={STROKE_W}
             onPointerDown={(e) => {
+              // 手拧关 → 根本不起手势(applyMove 是拖转层的唯一出口,它只由这里启动)。
+              if (!pointerTurns) return;
               e.preventDefault();
               dragRef.current = { face, r, c, x: e.clientX, y: e.clientY, done: false };
             }}

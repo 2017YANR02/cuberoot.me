@@ -45,6 +45,11 @@ export interface SimSettings {
   /** 播放解法时是否逐步转动动画:true=每步平滑转动(默认),false=瞬切到下一步(无转动动画)。
    *  仅影响连续「播放」;单步前进/后退/光标定位本就瞬切。 */
   animatePlayback: boolean;
+  /** 鼠标 / 手势能否拧动魔方:true=默认(点贴纸转层、拖贴纸转层);false=只看不动,
+   *  指针落在拼图上也只转视角,不产生任何 move。缩放 / 平移 / 视角旋转 / 键盘 / 播放
+   *  一律不受影响(锁的是"手拧",不是整个画面)。三条手势路径都接:NxN controller、
+   *  SQ1 / Ivy / 角转系 gesture、cubing.js movePressInput。 */
+  pointerTurns: boolean;
   /** 是否常显方位字母(NxN/SQ1 为 U/D/L/R/F/B 六面;角/棱/面转拼图显对应角/棱/面标签):
    *  true=一直显示(等同拖动视角时浮现的方位标签,但常驻),false=仅拖动时浮现(默认)。 */
   faceLabels: boolean;
@@ -170,6 +175,7 @@ export const DEFAULT_SETTINGS: SimSettings = {
   hint: false,
   animateScramble: false,
   animatePlayback: true,
+  pointerTurns: true,
   faceLabels: true,
   boardBg: 'auto',
   lockView: false,
@@ -223,6 +229,7 @@ export function loadSettings(): SimSettings {
     if (merged.coreStyle !== 'raw' && merged.coreStyle !== 'normal') merged.coreStyle = 'normal';
     if (merged.logo !== 'site' && merged.logo !== 'custom' && merged.logo !== 'none') merged.logo = 'none';
     if (typeof merged.customLogo !== 'string') merged.customLogo = '';
+    if (typeof merged.pointerTurns !== 'boolean') merged.pointerTurns = true;
     if (typeof merged.hands !== 'boolean') merged.hands = false;
     if (typeof merged.fullBody !== 'boolean') merged.fullBody = false;
     // 指甲配色:非法值兜回默认(色值细校验在 paintNailPolish 入口,这里只保类型)。
@@ -280,6 +287,8 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
   world.controller.sensitivity = mapSensitivity(s.sensitivity);
   world.controller.dragEmpty = s.dragEmpty;
   world.controller.holdPartial = s.holdPartialTurn;
+  // 手拧关 → NxN 指针路径只转视角:拖贴纸落到 orbit 分支,单击不派 taps。
+  world.controller.turnsLocked = s.pointerTurns === false;
   // 「动画」关 → 手动拖层瞬间吸附(无中间角度);见 Controller.instantTurns。
   world.controller.instantTurns = !s.animatePlayback;
   // scale 由滚轮直接改 world.scale + 防抖反算 settings (round 损失 ≤0.005),

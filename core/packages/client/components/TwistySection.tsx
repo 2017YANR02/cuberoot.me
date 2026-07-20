@@ -103,6 +103,9 @@ export interface TwistySettings {
   /** 常显方位字母:true → FaceOverlay 字母常驻,false → 完全不显示(拖动也不浮现)。
    *  字母的唯一开关,对齐引擎路径。仅有 FACE_TABLES 的拼图(skewb / pyraminx / megaminx)生效。 */
   faceLabels?: boolean;
+  /** 手拧:false = 指针不能拧动拼图(tap/拖转层被吞),视角旋转 / 缩放照常。
+   *  缺省(undefined)= 可拧,旧调用方行为不变。 */
+  pointerTurns?: boolean;
 }
 
 /** Twisty 播放器区域——动态导入 cubing 库，用构造函数 API 创建（对齐 legacy） */
@@ -173,6 +176,9 @@ export default function TwistySection({
   // 常显方位字母 → FaceOverlay 初始可见性(live 切换走下方独立 effect)。
   const faceLabelsRef = useRef(false);
   useEffect(() => { faceLabelsRef.current = !!settings?.faceLabels; }, [settings?.faceLabels]);
+  // 手拧锁 → addMove wrap 里吞掉指针产生的 move。用 ref 让开关一变不必重建 player。
+  const pointerTurnsRef = useRef(true);
+  useEffect(() => { pointerTurnsRef.current = settings?.pointerTurns !== false; }, [settings?.pointerTurns]);
 
   // NOTE: 自动加载 cubing 库——import 完成后 setCtor 触发重渲染
   useEffect(() => {
@@ -219,6 +225,10 @@ export default function TwistySection({
       const orig = model.experimentalAddMove.bind(model);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       model.experimentalAddMove = (mv: any, opts?: unknown) => {
+        // 手拧锁(设置面板「手拧」关):raycast 照常跑,但吞掉 move —— 拼图不动、
+        // 不记步。这是 tap/拖转层的唯一入口(程序化 alg 走 model.alg.set 不经此),
+        // 相机 orbit 与它无关 → 视角照常可拖。
+        if (pointerTurnsRef.current === false) return;
         const text = typeof mv === 'string' ? mv : (mv?.toString?.() ?? String(mv));
         try { onUserMoveRef.current?.(text); } catch { /* swallow */ }
         return orig(mv, opts);
