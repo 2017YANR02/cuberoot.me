@@ -7,7 +7,7 @@
  * 在线支付未开通时引导走打赏 + 联系站长手动开通。admin 登录后见管理面板。
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Crown, Check, Loader2, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Crown, Check, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useQueryState } from 'nuqs';
 import { tr, useLang } from '@/i18n/tr';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -16,6 +16,7 @@ import { fmtPrice, fmtDate } from '@/lib/membership-format';
 import AppLink from '@/components/AppLink';
 import DonateModal from '@/components/DonateModal';
 import MembershipBadge from '@/components/MembershipBadge';
+import { Spinner } from '@/components/Spinner/Spinner';
 import {
   listPlans, getMyMembership, getOrderStatus, membershipExpiry,
   type MembershipPlan, type Membership, type PayChannels,
@@ -203,7 +204,7 @@ export default function MembershipPage() {
         <div className="mem-empty">{tr({ zh: '加载失败', en: 'Failed to load'
         })}: {loadErr}</div>
       ) : !plans ? (
-        <div className="mem-empty"><Loader2 size={16} className="mem-spin" /> {tr({ zh: '加载中…', en: 'Loading…'
+        <div className="mem-empty"><Spinner size={16} /> {tr({ zh: '加载中…', en: 'Loading…'
         })}</div>
       ) : isLifetime ? (
         <div className="mem-empty">{tr({ zh: '你已经是永久会员,无需再次购买。', en: 'You already have lifetime membership — nothing to buy.'

@@ -46,10 +46,7 @@ html[data-theme='dark'] .stsv {
   padding: 8px 0;
 }
 .stsv-err { color: var(--sv-accent); }
-.stsv-spin { animation: stsv-spin 1s linear infinite; }
-@keyframes stsv-spin { to { transform: rotate(360deg); } }
-
-/* 计数行内联小转圈:与面板其余 spinner 同款 lucide 弧形,补左间距 + 垂直对齐。 */
+/* 计数行内联小转圈:共享 <Spinner>,此处只补左间距 + 垂直对齐。 */
 .stsv-sols-spin { margin-left: 0.45em; vertical-align: -0.15em; }
 
 /* ── 首次加载:列出要加载的表 + 内存占用 ── */

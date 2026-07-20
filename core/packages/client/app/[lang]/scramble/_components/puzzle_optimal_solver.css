@@ -56,14 +56,6 @@
   font-size: 0.9rem;
 }
 
-.pos-spin {
-  animation: pos-spin 0.9s linear infinite;
-}
-
-@keyframes pos-spin {
-  to { transform: rotate(360deg); }
-}
-
 .pos-result-len {
   display: flex;
   align-items: baseline;
@@ -101,6 +93,11 @@
   margin: 0.55rem 0 0;
   color: var(--signal-success);
   font-size: 0.95rem;
+}
+
+/* 求解中那一行:转圈是行内元素,补回原先写在 inline style 上的 6px 间距。 */
+.pos-result-solved .spinner {
+  margin-right: 6px;
 }
 
 @media (max-width: 480px) {

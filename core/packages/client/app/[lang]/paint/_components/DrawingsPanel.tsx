@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Plus, Trash2, Pencil, Check, Images, Loader2 } from 'lucide-react';
+import { X, Plus, Trash2, Pencil, Check, Images } from 'lucide-react';
+import { Spinner } from '@/components/Spinner/Spinner';
 import { tr } from '@/i18n/tr';
 import { useT } from '@/hooks/useT';
 import {
@@ -80,7 +81,7 @@ export default function DrawingsPanel({ open, onClose }: Props) {
 
         {loading && (
           <div className="paint-drawings-empty">
-            <Loader2 size={16} className="paint-spin" />
+            <Spinner size={16} />
             <span>{t('加载中…', 'Loading…')}</span>
           </div>
         )}

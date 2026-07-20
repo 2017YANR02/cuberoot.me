@@ -330,12 +330,6 @@
   font-size: 12px;
   color: var(--muted-foreground);
 }
-.chx-spin {
-  animation: chx-spin 1s linear infinite;
-}
-@keyframes chx-spin {
-  to { transform: rotate(360deg); }
-}
 .chx-err {
   font-size: 13px;
   color: var(--destructive);

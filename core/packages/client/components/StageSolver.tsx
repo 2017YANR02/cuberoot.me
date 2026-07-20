@@ -16,7 +16,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
-import { Loader2, Check, Info, X, ChevronRight, ChevronDown } from 'lucide-react';
+import { Check, Info, X, ChevronRight, ChevronDown } from 'lucide-react';
+import { Spinner } from '@/components/Spinner/Spinner';
 import TwistySection from '@/components/TwistySection';
 import { SubsetColorPicker, useSubsetSelection, COLOR_NAME, type ColorLetter } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import { CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '@/lib/cube-colors';
@@ -1073,7 +1074,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                   {counts[i] != null ? (
                     <span className="stsv-angle-n">{isTooBroad(counts[i]) ? '⋯' : isSentinel(counts[i]) ? '-' : counts[i]}</span>
                   ) : loading ? (
-                    <Loader2 size={12} className="stsv-spin" />
+                    <Spinner size={12} label={t('求解中…', 'Solving…')} />
                   ) : (
                     <span className="stsv-angle-dot">·</span>
                   )}
@@ -1208,7 +1209,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
       {status === 'loading' && (
         <div className="stsv-loading">
           <div className="stsv-status">
-            <Loader2 size={14} className="stsv-spin" />
+            <Spinner size={14} />
             {t('加载求解器与数据表(仅首次)…', 'Loading solver + tables (first time only)…')}
             {elapsed >= 3 && <span className="stsv-elapsed">{elapsed}s</span>}
           </div>
@@ -1277,7 +1278,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
             <div className="stsv-result">
               <div className="stsv-sols">
                 {movesLoading && (!moves || moves.sols.length === 0) && (
-                  <div className="stsv-status"><Loader2 size={14} className="stsv-spin" />{t('搜索最优解…', 'Searching…')}</div>
+                  <div className="stsv-status"><Spinner size={14} />{t('搜索最优解…', 'Searching…')}</div>
                 )}
 
                 {moves && !movesLoading && moves.sols.length === 0 && (
@@ -1298,7 +1299,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                   <>
                     {movesLoading && (
                       <div className="stsv-sols-count">
-                        <Loader2 size={12} className="stsv-spin stsv-sols-spin" aria-label={t('搜索中…', 'Searching…')} />
+                        <Spinner size={12} className="stsv-sols-spin" label={t('搜索中…', 'Searching…')} />
                       </div>
                     )}
                     <ol className="stsv-sols-list">

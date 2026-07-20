@@ -11,7 +11,8 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { X, Loader2 } from 'lucide-react';
+import { X } from 'lucide-react';
+import { Spinner } from '@/components/Spinner/Spinner';
 import { useTranslation } from 'react-i18next';
 import { fetchGroupScrambles, type GroupScrambles } from '@/lib/wca-results-api';
 import { toWcaEventId } from '@/lib/wca-events';
@@ -93,7 +94,7 @@ export default function GroupScramblePicker({
 
         <div className="rr-body gsp-body">
           {groups == null && !failed ? (
-            <div className="rr-state"><Loader2 size={18} className="rr-spin" /> {tr({ zh: '加载中…', en: 'Loading…' })}</div>
+            <div className="rr-state"><Spinner size={18} /> {tr({ zh: '加载中…', en: 'Loading…' })}</div>
           ) : failed || !sheet ? (
             <div className="rr-state">{tr({ zh: '这一轮暂无打乱数据', en: 'No scrambles for this round' })}</div>
           ) : (

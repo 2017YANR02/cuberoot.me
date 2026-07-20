@@ -11,7 +11,7 @@
  * the offline analyzer pipeline.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, LayoutGrid, BarChart3 } from 'lucide-react';
+import { LayoutGrid, BarChart3 } from 'lucide-react';
 import { histogram, type Histogram } from '@/lib/comp-cross';
 import { reduceDigits, type ColorLetter } from '@/lib/cross-color-subset';
 import type { StepMapState, StepMetric } from './useStepMap';
@@ -19,6 +19,7 @@ import { normScramble, type CompStepsState } from './useCompSteps';
 import { stageLabel } from '@/lib/scramble-variants';
 import { persistItem } from '@/lib/safe-storage';
 import StackedBar, { type StackedSeg } from '@/components/StackedBar/StackedBar';
+import { Spinner } from '@/components/Spinner/Spinner';
 import type { RoundSheet } from './SheetView';
 
 // b122/b123/b222/b223/bf2b = 块类指标(1x2x2 方块 / 1x2x3 / 2x2x2 / 2x2x3 / 双1x2x3),
@@ -232,7 +233,7 @@ export default function CompCrossAnalysis({ sheets333, crossMap, ready, pre, ste
       {step.error ? (
         <p className="gen-cx-pending">{t('计算失败', 'Computation failed')}: {step.error}</p>
       ) : !activeReady && data.totalHist.total === 0 ? (
-        <p className="gen-cx-loading"><Loader2 size={15} className="gen-spin" />{progressLabel}</p>
+        <p className="gen-cx-loading"><Spinner size={15} />{progressLabel}</p>
       ) : data.totalHist.total === 0 ? (
         <p className="gen-cx-pending">{
           engineless && !pre.map
@@ -242,7 +243,7 @@ export default function CompCrossAnalysis({ sheets333, crossMap, ready, pre, ste
       ) : (
         <>
           {!activeReady && (
-            <p className="gen-cx-loading"><Loader2 size={15} className="gen-spin" />{progressLabel}</p>
+            <p className="gen-cx-loading"><Spinner size={15} />{progressLabel}</p>
           )}
           {view === 'bars' ? (
             <div className="gen-cx-legendrow">

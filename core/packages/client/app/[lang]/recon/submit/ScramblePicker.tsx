@@ -8,7 +8,8 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { X, Search, Loader2 } from 'lucide-react';
+import { X, Search } from 'lucide-react';
+import { Spinner } from '@/components/Spinner/Spinner';
 import type { ReconSolve } from '@cuberoot/shared';
 import { listRecons } from '@/lib/recon-api';
 import { EventIcon } from '@/components/EventIcon';
@@ -127,7 +128,7 @@ export default function ScramblePicker({ isZh, event, onClose, onPick }: Props) 
 
         <div className="rr-body">
           {all == null ? (
-            <div className="rr-state"><Loader2 size={18} className="rr-spin" /> {tr({ zh: '加载中…', en: 'Loading…' })}</div>
+            <div className="rr-state"><Spinner size={18} /> {tr({ zh: '加载中…', en: 'Loading…' })}</div>
           ) : filtered.length === 0 ? (
             <div className="rr-state">
               {q.trim()

@@ -9,7 +9,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryState, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { LoaderCircle } from 'lucide-react';
+import { Spinner } from '@/components/Spinner/Spinner';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
@@ -173,7 +173,7 @@ export function PuzzleOptimalSolver({ spec }: { spec: OptimalSolverSpec }) {
               <div className="pos-result" aria-live="polite">
                 {solving && !showResult && (
                   <p className="pos-solving">
-                    <LoaderCircle size={14} className="pos-spin" aria-hidden />
+                    <Spinner size={14} />
                     {tr({ zh: '求解中…', en: 'Solving…'
                   })}
                   </p>
