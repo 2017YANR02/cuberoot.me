@@ -2,6 +2,13 @@
 
 .reconstruct-modal {
   max-width: 560px;
+
+  /* CFOP 阶段色:领域色板(哪一段是十字/F2L/OLL/PLL),不是状态语义,所以不套 --signal-*。
+     阶段条和阶段圆点原本各硬码一份同样的四个色,这里合成单一源。中饱和度,明暗两档都够对比。 */
+  --rc-stage-cross: #d4b85a;
+  --rc-stage-f2l: #5aa8d4;
+  --rc-stage-oll: #d4885a;
+  --rc-stage-pll: #7ad45a;
 }
 
 .reconstruct-modal h2 .reconstruct-date {
@@ -27,12 +34,12 @@
   font-family: var(--font-mono);
 }
 .reconstruct-bld-seg.memo {
-  border-color: #3d4d2a;
-  color: #cde0a8;
+  border-color: color-mix(in srgb, var(--signal-success) 45%, transparent);
+  color: var(--signal-success);
 }
 .reconstruct-bld-seg.exec {
-  border-color: #2a3d4d;
-  color: #a8cde0;
+  border-color: color-mix(in srgb, var(--signal-info) 45%, transparent);
+  color: var(--signal-info);
 }
 
 .reconstruct-stats {
@@ -65,7 +72,7 @@
 }
 .reconstruct-stat-sub {
   font-size: 11px;
-  color: #6a8da6;
+  color: var(--muted-foreground);
   margin-top: 4px;
 }
 
@@ -133,8 +140,8 @@
   border-bottom: none;
 }
 .reconstruct-move-row.slow {
-  background: #2a1d1d;
-  color: #f0c8a0;
+  background: color-mix(in srgb, var(--destructive) 10%, transparent);
+  color: var(--signal-warning);
 }
 
 .reconstruct-move-idx {
@@ -151,7 +158,7 @@
   text-align: right;
 }
 .reconstruct-move-row.slow .reconstruct-move-gap {
-  color: #f0c8a0;
+  color: var(--signal-warning);
 }
 
 .reconstruct-stages-section {
@@ -174,17 +181,17 @@
   min-width: 1px;
   transition: width 0.2s ease;
 }
-.reconstruct-stage-seg.stage-cross { background: #d4b85a; }
-.reconstruct-stage-seg.stage-f2l   { background: #5aa8d4; }
-.reconstruct-stage-seg.stage-oll   { background: #d4885a; }
-.reconstruct-stage-seg.stage-pll   { background: #7ad45a; }
+.reconstruct-stage-seg.stage-cross { background: var(--rc-stage-cross); }
+.reconstruct-stage-seg.stage-f2l   { background: var(--rc-stage-f2l); }
+.reconstruct-stage-seg.stage-oll   { background: var(--rc-stage-oll); }
+.reconstruct-stage-seg.stage-pll   { background: var(--rc-stage-pll); }
 .reconstruct-stage-seg.stage-unfinished {
   background: repeating-linear-gradient(
     45deg,
-    #2a2a2e,
-    #2a2a2e 6px,
-    #1a1a1d 6px,
-    #1a1a1d 12px
+    color-mix(in srgb, var(--foreground) 10%, transparent),
+    color-mix(in srgb, var(--foreground) 10%, transparent) 6px,
+    color-mix(in srgb, var(--foreground) 5%, transparent) 6px,
+    color-mix(in srgb, var(--foreground) 5%, transparent) 12px
   );
 }
 
@@ -211,10 +218,10 @@
   height: 8px;
   border-radius: 2px;
 }
-.reconstruct-stage-dot.stage-cross { background: #d4b85a; }
-.reconstruct-stage-dot.stage-f2l   { background: #5aa8d4; }
-.reconstruct-stage-dot.stage-oll   { background: #d4885a; }
-.reconstruct-stage-dot.stage-pll   { background: #7ad45a; }
+.reconstruct-stage-dot.stage-cross { background: var(--rc-stage-cross); }
+.reconstruct-stage-dot.stage-f2l   { background: var(--rc-stage-f2l); }
+.reconstruct-stage-dot.stage-oll   { background: var(--rc-stage-oll); }
+.reconstruct-stage-dot.stage-pll   { background: var(--rc-stage-pll); }
 
 .reconstruct-stage-label {
   color: var(--muted-foreground);
@@ -230,7 +237,7 @@
 }
 .reconstruct-stage-tps {
   font-size: 10px;
-  color: #6a8da6;
+  color: var(--muted-foreground);
   margin-top: 2px;
   font-family: var(--font-mono);
 }
@@ -243,9 +250,9 @@
   font-size: 9px;
   line-height: 1.3;
 }
-.reconstruct-stage-delta.faster  { color: #7ad45a; }
-.reconstruct-stage-delta.slower  { color: #d97a7a; }
-.reconstruct-stage-delta.neutral { color: #888; }
+.reconstruct-stage-delta.faster  { color: var(--signal-success); }
+.reconstruct-stage-delta.slower  { color: var(--destructive); }
+.reconstruct-stage-delta.neutral { color: var(--muted-foreground); }
 
 .reconstruct-playback-toggle {
   display: inline-flex;
@@ -322,7 +329,7 @@
 .reconstruct-playback-slider {
   width: 100%;
   cursor: pointer;
-  accent-color: #6a8da6;
+  accent-color: var(--muted-foreground);
 }
 .reconstruct-playback-slider:disabled {
   opacity: 0.4;
@@ -363,9 +370,9 @@
   color: var(--foreground);
 }
 .reconstruct-playback-speed-btn.active {
-  background: #2a3d4d;
-  border-color: #3a5366;
-  color: #a8cde0;
+  background: color-mix(in srgb, var(--signal-info) 18%, transparent);
+  border-color: var(--signal-info);
+  color: var(--signal-info);
 }
 
 @media (max-width: 768px) {
