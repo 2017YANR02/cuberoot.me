@@ -2,6 +2,15 @@
    1v1 Battle Timer — 对战计时器样式
    1:1 迁移自 battle/battle.css
    NOTE: 纯黑背景，AMOLED 友好，与原始 Flutter 应用一致
+
+   ⚠️ 本文件在 /timer 上「无条件加载」:TimerShell 静态 import BattleView,
+   BattleView import 本文件,所以单人模式(?players=1)也会带上它,而且排在
+   timer.css / shell.css 之后 —— 任何裸类名规则都会作用到单人 DOM 上并在同特异性下取胜。
+   .history-panel / .scramble-text 等曾因此漏进单人(单人打乱一度选不中,因为基类带
+   user-select:none)。新增只属于对战的规则一律写成 :where(.battle-container) .foo:
+   用 :where() 而非直接加前缀,是因为它不贡献特异性,本文件内部的层叠关系保持不变
+   (例:.vs-history-panel .history-header 排在裸 .history-header 之前,抬特异性会被反超)。
+   守卫:tests/battle-css-no-solo-leak.test.ts
    ========================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
@@ -116,7 +125,7 @@
    打乱公式显示
    ========================================================== */
 
-.scramble-text {
+:where(.battle-container) .scramble-text {
     font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
     font-size: calc(clamp(0.8rem, 2.8vw, 1.1rem) * var(--scramble-scale, 1) * var(--scramble-auto, 1));
     color: var(--scramble-color, var(--player-text-color, var(--scramble-fg)));
@@ -135,18 +144,18 @@
     -webkit-user-select: none;
 }
 
-.scramble-text.hidden {
+:where(.battle-container) .scramble-text.hidden {
     visibility: hidden;
 }
 
-.scramble-text .loading {
+:where(.battle-container) .scramble-text .loading {
     color: var(--faint-foreground);
     font-style: italic;
 }
 
 /* timer-battle: the scramble text is click-to-copy, so it must capture taps
    (base .scramble-text is pointer-events:none so taps fall through to arm the
-   timer). Scoped to .player-area to leave the solo strip untouched. */
+   timer). */
 .player-area .scramble-text {
     pointer-events: auto;
     cursor: pointer;
@@ -1014,7 +1023,7 @@ body.solo .scramble-img {
     pointer-events: auto;
 }
 
-.history-panel {
+:where(.battle-container) .history-panel {
     background: var(--background);
     width: 100%;
     /* NOTE: 全屏高度，底部为导航栏留 56px 空间 */
@@ -1261,7 +1270,7 @@ body.solo .scramble-img {
     }
 }
 
-.history-header {
+:where(.battle-container) .history-header {
     display: flex;
     align-items: center;
     padding: 12px 16px;
@@ -1292,7 +1301,7 @@ body.solo .scramble-img {
     font-family: 'Inter', sans-serif;
 }
 
-.history-list {
+:where(.battle-container) .history-list {
     overflow-y: auto;
     flex: 1;
     padding: 4px 0;
@@ -1365,7 +1374,7 @@ body.solo .scramble-img {
     color: var(--muted-foreground);
 }
 
-.history-empty {
+:where(.battle-container) .history-empty {
     padding: 32px 16px;
     text-align: center;
     color: var(--faint-foreground);
