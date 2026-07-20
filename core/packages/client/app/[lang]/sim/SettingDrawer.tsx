@@ -248,13 +248,16 @@ export function saveSettings(s: SimSettings): void {
 }
 
 // 把 0~100 → 实际数值。scale 50 = 1.0 (upstream 默认), 范围 0.5 ~ 1.5。
-function mapSensitivity(v: number): number { return 0.05 + (v / 100) * 0.7; }   // 0.05 ~ 0.75 (整体 -50%)
-/** 拖空白 orbit 用的 radians-per-pixel。v=50 → 0.01 (历史硬编码默认),v∈[0,100] → [0.00125, 0.01875]。
+/** 几何映射:每 25 格 ×2,默认(50)= 0.4 与旧线性映射同值(手感不变)。范围 0.1 ~ 1.6
+ *  即 0.25×~4×。改几何是因为旧线性区间 0.05~0.75 比例上偏斜(下半程 8 倍、上半程 1.9 倍),
+ *  且端点换算成倍率是 1/8、15/8 这种没人记得住的数;几何后两端对称、整数倍、UI 读数干净。 */
+function mapSensitivity(v: number): number { return 0.4 * Math.pow(2, (v - 50) / 25); }
+/** 拖空白 orbit 用的 radians-per-pixel。v=50 → 0.01 (历史硬编码默认),v∈[0,100] → [0.0025, 0.04]。
  *  NxN/SQ1 共享。Twisty 由 cubing.js 自管不接入。 */
 export function mapOrbitK(v: number): number { return mapSensitivity(v) / 40; }
-/** SQ1 turn-drag 角速度缩放。v=100 → 4.0,v=50 → ~2.13,v=0 → ~0.27。整体放大 4×
- *  让 turn 跟得上手指 — 原 1:1 polar atan2 实际拖完一格需要大段位移,放大后更跟手。
- *  贴片不再严格跟手指,符合"灵敏度低 = 转得慢"的 slider 语义。 */
+/** SQ1 turn-drag 角速度缩放。v=50 → ~2.13(默认,与几何映射改版前同值),v∈[0,100] → [0.53, 8.53]。
+ *  整体放大(/0.75×4,沿用旧线性端点定标)让 turn 跟得上手指 — 原 1:1 polar atan2 实际
+ *  拖完一格需要大段位移。贴片不再严格跟手指,符合"灵敏度低 = 转得慢"的 slider 语义。 */
 export function mapTurnDragFactor(v: number): number { return mapSensitivity(v) / 0.75 * 4; }
 function mapScale(v: number): number { return 0.5 + v / 100; }                  // 0.5 ~ 1.5
 function mapPerspective(v: number): number { return 2 + (v / 100) * 8; }        // 2 ~ 10
