@@ -14,12 +14,55 @@ import { isWR, getAvgWR12 } from '../engine/wr_data';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
-// NOTE: 选手颜色 — 原版 chart.js#29-34，每个选手统一纯色
+// NOTE: 选手颜色 — 站点 token --calc-a / --calc-b(见 globals.css);tie 走 muted。
+// 命令式 SVG 不能直接写 var(),故每帧从 DOM 探针把 token 解析成 rgb() 实际值
+// (canvas/SVG 取 token 的既有套路),darken/fade 在解析出的 rgb 上运算。
+// 下面是 SSR / 解析失败时的回退硬值,运行时每帧被 resolvePalette() 覆盖。
 export const SHADES: string[] = [
-  'rgba(255,128,0,1.0)',    // Player A (橙色)
-  'rgba(50,130,255,1.0)',   // Player B (蓝色)
-  'rgba(190,190,190,1.0)',  // tie (灰色)
+  'rgb(255,128,0)',    // Player A → --calc-a
+  'rgb(50,130,255)',   // Player B → --calc-b
+  'rgb(163,163,163)',  // tie → --muted-foreground
 ];
+
+// NOTE: 图表用到的全部语义色,每帧由 resolvePalette() 从站点 token 解析
+interface ChartPalette {
+  grid: string; axis: string; onColor: string; target: string;
+  danger: string; muted: string; success: string; warning: string; info: string;
+}
+const PAL: ChartPalette = {
+  grid: 'rgb(204,204,204)', axis: 'rgb(136,136,136)', onColor: 'rgb(255,255,255)',
+  target: 'rgb(233,30,99)', danger: 'rgb(211,47,47)', muted: 'rgb(153,153,153)',
+  success: 'rgb(76,175,80)', warning: 'rgb(255,193,7)', info: 'rgb(25,118,210)',
+};
+
+// 单个隐藏探针复用:设 color 为某 var()/token 表达式,读回浏览器算出的 rgb()。
+// hex / color-mix() 都能解析,失败(SSR / 无容器)则保留回退值。
+function resolvePalette(): void {
+  const host = chartContainer ?? (typeof document !== 'undefined' ? document.body : null);
+  if (!host || typeof document === 'undefined') return;
+  const probe = document.createElement('span');
+  probe.style.cssText = 'display:none;position:absolute';
+  host.appendChild(probe);
+  const read = (expr: string, fallback: string): string => {
+    probe.style.color = '';
+    probe.style.color = expr;
+    const c = getComputedStyle(probe).color;
+    return c || fallback;
+  };
+  SHADES[0] = read('var(--calc-a)', SHADES[0]);
+  SHADES[1] = read('var(--calc-b)', SHADES[1]);
+  SHADES[2] = read('var(--muted-foreground)', SHADES[2]);
+  PAL.grid = read('var(--border-strong)', PAL.grid);
+  PAL.axis = read('var(--muted-foreground)', PAL.axis);
+  PAL.onColor = read('var(--accent-foreground)', PAL.onColor);
+  PAL.target = read('var(--calc-target)', PAL.target);
+  PAL.danger = read('var(--destructive)', PAL.danger);
+  PAL.muted = read('var(--muted-foreground)', PAL.muted);
+  PAL.success = read('var(--signal-success)', PAL.success);
+  PAL.warning = read('var(--signal-warning)', PAL.warning);
+  PAL.info = read('var(--signal-info)', PAL.info);
+  host.removeChild(probe);
+}
 
 // NOTE: 图表布局参数（坐标系单位，映射到 viewBox）
 export const BAR_START = 48;   // Y 轴标签占用的左侧空间
@@ -225,6 +268,8 @@ function calcViewBox(): void {
 export function render(opts?: RenderOptions): void {
   if (!svgEl || !gBars || !gGrid || !gLabels || !gStats || !gAvg) return;
 
+  resolvePalette();
+
   if (!opts?.skipViewBox) {
     calcViewBox();
   }
@@ -263,7 +308,7 @@ function drawGrid(): void {
     // 网格线
     const line = createSvgElement('line', {
       x1: BAR_START - 5, y1: y, x2: gp.vbW, y2: y,
-      stroke: '#ccc', 'stroke-width': 0.5,
+      stroke: PAL.grid, 'stroke-width': 0.5,
     });
     gGrid.appendChild(line);
 
@@ -271,7 +316,7 @@ function drawGrid(): void {
     const labelText = formatTime(val, true, isMove);
     const label = createSvgElement('text', {
       x: BAR_START - 8, y: y + 3,
-      'text-anchor': 'end', fill: '#888',
+      'text-anchor': 'end', fill: PAL.axis,
       'font-size': LABEL_FONT, 'font-family': 'Helvetica, Arial, sans-serif',
     });
     label.textContent = labelText;
@@ -284,7 +329,7 @@ function drawGrid(): void {
     const ty = valToYCap(tavg);
     const dash = createSvgElement('line', {
       x1: BAR_START, y1: ty, x2: gp.vbW, y2: ty,
-      stroke: '#E91E63', 'stroke-width': 1.5,
+      stroke: PAL.target, 'stroke-width': 1.5,
       'stroke-dasharray': '6,3',
       opacity: '0.7',
     });
@@ -293,7 +338,7 @@ function drawGrid(): void {
     // 标签
     const tLabel = createSvgElement('text', {
       x: BAR_START - 2, y: ty - 4,
-      'text-anchor': 'end', fill: '#E91E63',
+      'text-anchor': 'end', fill: PAL.target,
       'font-size': 10, 'font-weight': '600',
     });
     tLabel.textContent = formatTime(tavg, false, false, true);
@@ -303,7 +348,7 @@ function drawGrid(): void {
   // NOTE: WR Avg 虚线（#1 和 #2）
   const avgWR = getAvgWR12(state.event);
   if (avgWR) {
-    const wrColors = ['rgba(255,128,0,0.4)', 'rgba(50,130,255,0.4)'];
+    const wrColors = [fade(SHADES[0], 0.4), fade(SHADES[1], 0.4)];
     for (let i = 0; i < 2; i++) {
       if (avgWR[i] > 0 && avgWR[i] < DNF_VALUE) {
         const wy = valToYCap(avgWR[i]);
@@ -400,6 +445,7 @@ function drawBars(): void {
         bar.setAttribute('y', String(y));
         bar.setAttribute('width', String(bw));
         bar.setAttribute('height', String(Math.max(0, barH)));
+        bar.setAttribute('fill', SHADES[p] || SHADES[0]); // 每帧刷:切主题时序列色随 token 更新
         gBars.appendChild(bar); // 移到末尾维持 z-order
 
         // NOTE: 属性变化时用 WAAPI 播放过渡动画（原版 chart.js#731-741）
@@ -461,9 +507,9 @@ function drawGhostBars(): void {
 
       // NOTE: ghost 颜色 — safe(绿)/conditional(黄)/impossible(红)
       const colors: Record<string, string> = {
-        safe: '#4CAF50', conditional: '#FFC107', impossible: '#F44336', any: '#4CAF50',
+        safe: PAL.success, conditional: PAL.warning, impossible: PAL.danger, any: PAL.success,
       };
-      const color = colors[ghost.type] || '#999';
+      const color = colors[ghost.type] || PAL.muted;
 
       const ghostRect = createSvgElement('rect', {
         x, y, width: gp.barW, height: Math.max(0, barH),
@@ -508,7 +554,7 @@ function drawBarLabels(): void {
         // DNF 标签 — 在基线上方显示
         const label = createSvgElement('text', {
           x, y: gp.chartTop + gp.chartH - 5,
-          'text-anchor': 'middle', fill: '#c62828',
+          'text-anchor': 'middle', fill: PAL.danger,
           'font-size': 16, 'font-weight': '700',
           class: 'chart-bar-label',
           'data-player': String(p), 'data-solve': String(t),
@@ -539,11 +585,11 @@ function drawBarLabels(): void {
         gLabels.appendChild(createSvgElement('rect', {
           x: x - wrW / 2, y: wrY - wrH / 2,
           width: wrW, height: wrH, rx: wrR,
-          fill: '#D32F2F',
+          fill: PAL.danger,
         }));
         const badge = createSvgElement('text', {
           x, y: wrY + 3.5,
-          'text-anchor': 'middle', fill: '#fff',
+          'text-anchor': 'middle', fill: PAL.onColor,
           'font-size': 8, 'font-weight': '700',
         });
         badge.textContent = 'WR';
@@ -572,7 +618,7 @@ function drawGhostLabels(): void {
       const y = valToYCap(ghost.value) - 5;
       const label = createSvgElement('text', {
         x, y: Math.max(Y_MARGIN_TOP, y),
-        'text-anchor': 'middle', fill: '#999',
+        'text-anchor': 'middle', fill: PAL.muted,
         'font-size': 9, 'font-style': 'italic',
       });
       label.textContent = formatTime(ghost.value);
@@ -726,9 +772,9 @@ function drawNeedBadges(): void {
 
     // NOTE: 收集要显示的 badge
     const BADGE_COLORS = {
-      t4wpa: '#1976D2',   // 蓝色 — WPA
-      t4bpa: '#388E3C',   // 绿色 — BPA
-      t5: '#D32F2F',      // 红色 — 第 5 把
+      t4wpa: PAL.info,   // 蓝色 — WPA
+      t4bpa: PAL.success,   // 绿色 — BPA
+      t5: PAL.danger,      // 红色 — 第 5 把
     };
 
     interface Badge {
@@ -765,7 +811,7 @@ function drawNeedBadges(): void {
     // t#4 impossible
     if (th.t4wpa === null && th.t4bpa === null) {
       badges.push({
-        line1: '4th', line2: '💀', color: '#D32F2F', skull: true,
+        line1: '4th', line2: '💀', color: PAL.danger, skull: true,
         y: valToYCap(tavg)
       });
     }
@@ -779,7 +825,7 @@ function drawNeedBadges(): void {
         });
       } else {
         badges.push({
-          line1: '5th', line2: '💀', color: '#D32F2F', skull: true,
+          line1: '5th', line2: '💀', color: PAL.danger, skull: true,
           y: valToYCap(tavg) + 20
         });
       }
@@ -820,7 +866,7 @@ function drawNeedBadges(): void {
       // 文字内容
       const tx = lx + (bw + br) / 2;
       const text1 = createSvgElement('text', {
-        x: tx, y: by + 9, fill: '#fff',
+        x: tx, y: by + 9, fill: PAL.onColor,
         'font-size': 7, 'font-weight': 'bold',
         'font-family': 'Helvetica, Arial, sans-serif',
         'text-anchor': 'middle',
@@ -829,7 +875,7 @@ function drawNeedBadges(): void {
       gStats.appendChild(text1);
 
       const text2 = createSvgElement('text', {
-        x: tx, y: by + 19, fill: '#fff',
+        x: tx, y: by + 19, fill: PAL.onColor,
         'font-size': 8, 'font-weight': 'bold',
         'font-family': 'Helvetica, Arial, sans-serif',
         'text-anchor': 'middle',
@@ -895,7 +941,7 @@ function drawAverages(): void {
       const text = createSvgElement('text', {
         x: lx + jm + 3, y: cy,
         'font-size': fontSize, 'font-family': 'Helvetica, Arial, sans-serif',
-        fill: '#fff', 'text-anchor': 'start',
+        fill: PAL.onColor, 'text-anchor': 'start',
         'dominant-baseline': 'central',
         'font-weight': '700',
       });
@@ -911,11 +957,11 @@ function drawAverages(): void {
         gAvg.appendChild(createSvgElement('rect', {
           x: wrX, y: wrY - wrH / 2,
           width: wrW, height: wrH, rx: wrR,
-          fill: '#D32F2F',
+          fill: PAL.danger,
         }));
         const wrLabel = createSvgElement('text', {
           x: wrX + wrW / 2, y: wrY + 3.5,
-          'text-anchor': 'middle', fill: '#fff',
+          'text-anchor': 'middle', fill: PAL.onColor,
           'font-size': 8, 'font-weight': '700',
         });
         wrLabel.textContent = 'WR';
@@ -927,7 +973,7 @@ function drawAverages(): void {
       const avgY = gp.chartTop + gp.chartH / 2;
       const avgLabel = createSvgElement('text', {
         x: lastBarX + 8, y: avgY + 3,
-        fill: '#c62828', 'font-size': 10, 'font-weight': '700',
+        fill: PAL.danger, 'font-size': 10, 'font-weight': '700',
       });
       avgLabel.textContent = (mo3 ? 'Mo3: ' : 'Ao5: ') + 'DNF';
       gAvg.appendChild(avgLabel);
