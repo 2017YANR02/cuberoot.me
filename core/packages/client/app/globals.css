@@ -98,6 +98,13 @@ body {
   --article-blue: #395ca2;
   --article-red-soft: color-mix(in srgb, var(--article-red) 12%, transparent);
   --article-blue-soft: color-mix(in srgb, var(--article-blue) 12%, transparent);
+
+  /* /calc 选手 A / B 序列色 (light) — 两条数据序列的身份色,必须彼此可分,故不跟 --accent
+     走配色主题(否则某些配色下两条会撞色)。base hex 只在这里,页面 CSS 用 var()。
+     --calc-target = 目标均值标记(品红虚线),与 A/B 序列、危险红都要区分。 */
+  --calc-a: #ff8000;
+  --calc-b: #3282ff;
+  --calc-target: #e91e63;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -128,6 +135,11 @@ body {
     --article-blue: #7ba0e0;
     --article-red-soft: color-mix(in srgb, var(--article-red) 18%, transparent);
     --article-blue-soft: color-mix(in srgb, var(--article-blue) 18%, transparent);
+
+    /* /calc 选手序列色 (dark) — 蓝提亮一档,暗底上 #3282ff 偏沉 */
+    --calc-a: #ff9433;
+    --calc-b: #5a9bff;
+    --calc-target: #ff5c8a;
   }
 }
 
@@ -201,6 +213,11 @@ html[data-theme=dark] {
   --article-blue: #7ba0e0;
   --article-red-soft: color-mix(in srgb, var(--article-red) 18%, transparent);
   --article-blue-soft: color-mix(in srgb, var(--article-blue) 18%, transparent);
+
+  /* /calc 选手序列色 (dark) */
+  --calc-a: #ff9433;
+  --calc-b: #5a9bff;
+  --calc-target: #ff5c8a;
 }
 
 /* ── 中国色「配色主题」(palette) — 叠在 light/dark 之上的可选整套配色 ──
