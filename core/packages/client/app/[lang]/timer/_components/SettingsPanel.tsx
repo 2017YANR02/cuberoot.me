@@ -1132,20 +1132,6 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
           expanded={expandedSections}
           setExpanded={setExpandedSections}
         >
-          <Row label={tr({ zh: '主题', en: 'Theme'
-        })}>
-            <select
-              className="settings-row-control-select"
-              value={s.theme}
-              onChange={(e) => updateSettings({ theme: e.target.value as 'dark' | 'light' | 'auto' })}
-            >
-              <option value="dark">{tr({ zh: '深色', en: 'Dark' })}</option>
-              <option value="light">{tr({ zh: '浅色', en: 'Light'
-            })}</option>
-              <option value="auto">{tr({ zh: '跟随系统', en: 'Auto'
-            })}</option>
-            </select>
-          </Row>
           <Row label={tr({ zh: '计时器字体', en: 'Timer font'
         })}>
             <TimerFontPicker

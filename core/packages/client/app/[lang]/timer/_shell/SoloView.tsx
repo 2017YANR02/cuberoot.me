@@ -56,7 +56,7 @@ import {
   importCstimerJson, exportCsv, exportSpeedstacks,
   listSessions, getActiveSessionId, moveSolveToSession,
 } from '../_lib/storage/db';
-import { formatTargetTime, useApplyTheme, useSettings, getSettings, updateSettings } from '../_lib/settings';
+import { formatTargetTime, useSettings, getSettings, updateSettings } from '../_lib/settings';
 import { warmupSound } from '../_lib/sound';
 import { getMetronome } from '../_lib/sound/metronome';
 import { useBluetoothCube } from '../_lib/bluetooth';
@@ -198,7 +198,6 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   useDocumentTitle('计时器', 'Timer');
   const settings = useSettings();
   const rankCountry = useRankCountry();
-  useApplyTheme();
 
   const isMobile = useMediaQuery('(max-width: 480px)');
   const isDesktop = useMediaQuery('(min-width: 1024px)');
