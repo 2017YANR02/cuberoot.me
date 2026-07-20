@@ -27,6 +27,7 @@ const CARDS: Card[] = [
   { to: '/scramble/gen', zh: { title: '生成' }, en: { title: 'Generate' } },
   { to: '/scramble/solver', zh: { title: '求解' }, en: { title: 'Solve' } },
   { to: '/scramble/pattern', zh: { title: '花式' }, en: { title: 'Pattern' } },
+  { to: '/scramble/mcc', zh: { title: '公式测速' }, en: { title: 'MCC' } },
 ];
 
 export default function ScrambleHubPage() {

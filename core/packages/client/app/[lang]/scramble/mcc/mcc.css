@@ -1,0 +1,259 @@
+/* /scramble/mcc — Movecount Coefficient 计算器 */
+
+.mcc-page {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+  color: var(--foreground);
+}
+
+.mcc-header h1 {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.mcc-lead {
+  margin: 0.35rem 0 0;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+  max-width: 46rem;
+}
+
+/* ---- 控制行 ---- */
+.mcc-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1.25rem;
+  margin-top: 1.1rem;
+}
+.mcc-advanced-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.mcc-advanced-toggle:hover { color: var(--foreground); }
+.mcc-advanced-chevron { transition: transform 0.15s; }
+.mcc-advanced-toggle.is-open .mcc-advanced-chevron { transform: rotate(180deg); }
+
+/* ---- 高级参数 ---- */
+.mcc-advanced {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.45rem 2rem;
+  margin-top: 0.9rem;
+  align-self: flex-start;
+}
+.mcc-slider {
+  display: grid;
+  grid-template-columns: 9.5em 1fr 3em;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+}
+.mcc-slider-label { color: var(--muted-foreground); }
+.mcc-slider-value {
+  font-family: var(--font-mono);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.mcc-slider input[type='range'] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 18px;
+  background: transparent;
+  cursor: pointer;
+}
+.mcc-slider input[type='range']::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--foreground) 15%, transparent);
+}
+.mcc-slider input[type='range']::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--foreground) 15%, transparent);
+}
+.mcc-slider input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: none;
+}
+.mcc-slider input[type='range']::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: none;
+}
+.mcc-reset {
+  justify-self: start;
+  border: 1px solid var(--border-default);
+  background: none;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.mcc-reset:hover { color: var(--foreground); border-color: var(--border-strong); }
+
+/* ---- 主体两栏 ---- */
+.mcc-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1.5rem 2.5rem;
+  margin-top: 1.4rem;
+  align-items: start;
+}
+.mcc-col-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+}
+.mcc-col-head h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.mcc-example {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--accent);
+  cursor: pointer;
+}
+.mcc-example:hover { text-decoration: underline; }
+
+.mcc-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--foreground);
+  background: var(--background);
+  border: 1px solid var(--input);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  white-space: pre;
+}
+.mcc-textarea:focus-visible {
+  outline: none;
+  border-color: var(--ring);
+}
+.mcc-hint {
+  margin: 0.45rem 0 0;
+  font-size: 0.8rem;
+  color: var(--faint-foreground);
+  line-height: 1.55;
+}
+
+/* ---- 结果 ---- */
+.mcc-stats {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+.mcc-stats-sep {
+  width: 1px;
+  height: 0.9em;
+  background: var(--border-default);
+}
+.mcc-empty {
+  margin: 0.4rem 0 0;
+  color: var(--faint-foreground);
+  font-size: 0.9rem;
+}
+.mcc-table-wrap { overflow-x: auto; }
+.mcc-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.9rem;
+}
+.mcc-table th {
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+  padding: 0.25rem 0.6rem 0.35rem 0;
+  border-bottom: 1px solid var(--border-default);
+  white-space: nowrap;
+}
+.mcc-th-sort {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+.mcc-th-sort:hover { color: var(--foreground); }
+.mcc-th-num, .mcc-td-num { text-align: right; }
+.mcc-table td {
+  padding: 0.3rem 0.6rem 0.3rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-default) 45%, transparent);
+  vertical-align: top;
+}
+.mcc-td-line {
+  color: var(--faint-foreground);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+.mcc-td-alg {
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+.mcc-td-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.mcc-unknown {
+  color: var(--destructive);
+  font-family: inherit;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.mcc-credit {
+  margin: 2.2rem 0 0;
+  font-size: 0.8rem;
+  color: var(--faint-foreground);
+}
+.mcc-credit a { color: inherit; }
+.mcc-credit a:hover { color: var(--muted-foreground); }
+
+@media (max-width: 768px) {
+  .mcc-page { padding: 1rem 0.75rem 2rem; }
+  .mcc-header h1 { font-size: 1.3rem; }
+  .mcc-body { grid-template-columns: 1fr; }
+  .mcc-slider { grid-template-columns: 8.5em 1fr 3em; }
+  .mcc-advanced { grid-template-columns: 1fr; }
+}
