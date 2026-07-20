@@ -61,7 +61,9 @@ export interface CornerTurnAdapter<C extends TwistableCube<M>, M, H> {
 export interface CornerGestureCtx {
   world: World;
   dom: HTMLElement;
-  settings(): { holdPartialTurn: boolean; dragEmpty: string };
+  /** `pointerTurns` false = 手拧锁(设置面板「手拧」关):跳过 pickHit,每次拖拽都落到
+   *  orbit 分支,指针不产生 move。缺省视为 true(旧调用方 / paint 类场景不受影响)。 */
+  settings(): { holdPartialTurn: boolean; dragEmpty: string; pointerTurns?: boolean };
   pinching(): boolean;
   emitMove(token: string): void;
   /** Orbit the view by a raw screen delta (controller leaves sensitivity scaling to
@@ -163,7 +165,8 @@ export class CornerTurnGesture<C extends TwistableCube<M>, M, H> implements Corn
       if (Math.hypot(dx, dy) < this.adapter.threshold) return false; // not yet → let pinch see it
       this.fired = true; // consume this gesture either as a turn or orbit
       const cube = world.cube;
-      if (this.adapter.match(cube)) {
+      // 手拧锁:不 pick → 直接落到下方 orbit 分支(等价于"没抓到块")。
+      if (this.ctx.settings().pointerTurns !== false && this.adapter.match(cube)) {
         cube.twister.finish();
         tweener.finish();
         // pick from the original pointerdown location (before the drag moved)
