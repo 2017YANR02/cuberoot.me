@@ -7,7 +7,7 @@
  *   - 'comp': one specific competition, optionally narrowed to a round / group.
  * Writes its state into TimerSettings; the wca_pool reads those to fetch.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { CompPicker } from '@/components/CompPicker';
 import { ClearButton } from '@/components/ClearButton';
 import PillToggle from '@/components/PillToggle/PillToggle';
@@ -242,6 +242,31 @@ export default function WcaSourceConfig({
   const shownLo = Math.min(Math.max(diffLo, stepLo), stepHi);
   const shownHi = Math.max(Math.min(diffHi, stepHi), stepLo);
 
+  // 滑块 debounce:原生 range 拖动中连续 onChange,直写 settings 会让拖动路径上每个中间区间都
+  // 触发出题池重灌(逐值打一发 /random)。拖动期间只更新本地显示,停手 350ms 才落库;卸载前有
+  // 未落库的拖动值则立即冲刷(不丢用户最后的选择)。
+  const [dragSteps, setDragSteps] = useState<[number, number] | null>(null);
+  const dragRef = useRef<{ timer: number | null; pending: [number, number] | null }>({ timer: null, pending: null });
+  const updateSettingsRef = useRef(updateSettings);
+  updateSettingsRef.current = updateSettings;
+  const onStepsDrag = ([a, b]: [number, number]) => {
+    setDragSteps([a, b]);
+    const d = dragRef.current;
+    d.pending = [a, b];
+    if (d.timer !== null) window.clearTimeout(d.timer);
+    d.timer = window.setTimeout(() => {
+      d.timer = null; d.pending = null;
+      setDragSteps(null);
+      updateSettings({ wcaDiffSteps: stepRange(a, b) });
+    }, 350);
+  };
+  useEffect(() => () => {
+    const d = dragRef.current;
+    if (d.timer !== null) window.clearTimeout(d.timer);
+    if (d.pending) updateSettingsRef.current({ wcaDiffSteps: stepRange(d.pending[0], d.pending[1]) });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // 难度开启但步数为空(首次开 / 历史遗留)→ 填默认区间,保证滑块与过滤口径一致。
   useEffect(() => {
     if (canDifficulty && settings.wcaDifficultyOn && settings.wcaDiffSteps.length === 0) {
@@ -367,8 +392,8 @@ export default function WcaSourceConfig({
             <RangeSlider
               min={stepLo}
               max={stepHi}
-              value={[shownLo, shownHi]}
-              onChange={([a, b]) => updateSettings({ wcaDiffSteps: stepRange(a, b) })}
+              value={dragSteps ?? [shownLo, shownHi]}
+              onChange={onStepsDrag}
               marks={stepMarks}
               ariaLabel={tr({ zh: '步数范围', en: 'Step range' })}
             />

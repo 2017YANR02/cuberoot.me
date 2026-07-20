@@ -74,10 +74,13 @@ const TABLES: Table[] = [
   // ── scramble ────────────────────────────────────────────
   { name: 'wca_scrambles', domain: 'scramble', origin: '0035', evolved: [36, 37], purpose: { zh: 'WCA 真实打乱语料(计时器 / 长度 / 难度都从这抽)', en: 'The real WCA scramble corpus (timer, length, difficulty)' } },
   { name: 'wca_scramble_optimal', domain: 'scramble', origin: '0047', purpose: { zh: '最优打乱 = invert(最优解),到达同态的最短打乱', en: 'Optimal scrambles: invert(optimal solve) reaching the same state' } },
-  { name: 'wca_scramble_steps', domain: 'scramble', origin: '0057', evolved: [61], purpose: { zh: '逐方法 / 阶段 / 底色的最优步数宽数组 + 热列,支撑按难度抽真题', en: 'Per-method/stage optimal step counts as a wide array + hot columns' }, cols: [
+  { name: 'wca_scramble_steps', domain: 'scramble', origin: '0057', evolved: [61, 62], purpose: { zh: '逐方法 / 阶段 / 底色的最优步数宽数组 + 热列,支撑按难度抽真题', en: 'Per-method/stage optimal step counts as a wide array + hot columns' }, cols: [
     { name: 'competition_id, event_id, round_type_id, group_id' }, { name: 'steps SMALLINT[]', note: { zh: '逐阶段最优步数宽数组', en: 'wide array of per-step optima' } }, { name: 'gm_cross6', note: { zh: '六色十字最优(热路径飞镖列)', en: 'std cross optimum (hot dart column)' } }, { name: 'gm_xcross6', note: { zh: '六色 xcross 最优(热列)', en: 'std xcross optimum (hot column)' } },
   ] },
-  { name: 'wca_scramble_steps_meta', domain: 'scramble', origin: '0057', purpose: { zh: '步数槽位 layout 元表(单行,给 server 映射数组下标)', en: 'Single-row steps-layout meta mapping array slots' } },
+  { name: 'wca_scramble_steps_meta', domain: 'scramble', origin: '0057', purpose: { zh: '步数槽位 layout 元表(单行,给 server 映射数组下标 + 稀有档 tails)', en: 'Single-row steps-layout meta mapping array slots + rare tails' } },
+  { name: 'wca_scramble_steps_rare', domain: 'scramble', origin: '0062', naturalKey: true, purpose: { zh: '稀有难度档侧表:单槽位值计数 ≤ K 的尾部行,(slot,val) 直达免全表扫', en: 'Rare-difficulty side table: tail rows (per-slot count ≤ K), direct (slot,val) seek' }, cols: [
+    { name: 'slot, val', note: { zh: '槽位 + 步数值(尾部值表在 meta.layout.tails)', en: 'slot + step value (tails in meta.layout)' } }, { name: 'stage6 SMALLINT[]', note: { zh: '同阶段 6 底色快照,分支兄弟色判据行内可判', en: 'same-stage 6-color snapshot for branch sibling checks' } },
+  ] },
   { name: 'scramble_marks', domain: 'scramble', origin: '0041', naturalKey: true, purpose: { zh: '计时器打乱公开标记 + feed', en: 'Public scramble marks + feed' }, cols: [
     { name: 'wca_id, name, country' }, { name: 'competition_id, event_id, round_type_id', note: { zh: '六元自然键,无 FK', en: 'six-part natural key, no FK' } },
   ] },
@@ -241,6 +244,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 59, slug: 'alg_submission_reads', desc: { zh: '公式投稿已读状态(admin 红点)', en: 'Read state for alg submissions' } },
   { n: 60, slug: 'wca_championship_podiums', desc: { zh: '锦标赛领奖台专表', en: 'Championship podium table' } },
   { n: 61, slug: 'wss_difficulty_indexes', desc: { zh: '打乱难度子集查询补索引', en: 'Indexes for difficulty subset queries' } },
+  { n: 62, slug: 'wss_covering_and_rare', desc: { zh: '难度查询覆盖索引(index-only)+ 稀有档侧表', en: 'Covering index (index-only) + rare-bin side table for difficulty' } },
   { n: 62, slug: 'wca_persons_gender', desc: { zh: 'wca_persons 加 gender 列,支撑 /wca 排名页性别筛选', en: 'Add gender column to wca_persons for the rankings gender filter' } },
   { n: 63, slug: 'recons_dup_reason', desc: { zh: 'recons 加 dup_reason 列,支撑同选手+同打乱有理由重复提交', en: 'Add dup_reason column to recons for intentional duplicate submissions' } },
   { n: 64, slug: 'user_accounts', desc: { zh: '内部账号体系:app_users + auth_identities(多身份绑定)+ auth_codes(邮箱/手机验证码),从 wca_users 回填', en: 'Internal accounts: app_users + auth_identities (multi-provider) + auth_codes (email/phone), backfilled from wca_users' } },

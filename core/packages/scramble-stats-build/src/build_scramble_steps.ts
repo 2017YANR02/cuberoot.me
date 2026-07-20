@@ -6,8 +6,11 @@
 //   <root>/wca_scrambles_no_wide_move.txt  id 全集(3x3-family 语料)
 //   <root>/input/wca_scrambles_split_mbf.csv  id → competition/event/round/group/extra/num 自然键
 // 输出:
-//   stats/scramble/steps/wca_scramble_steps.csv  (\copy 进 staging:natkey,gm_cross6,gm_xcross6,steps)
-//   stats/scramble/steps/steps_layout.json       (server 端点据此把 (方法,阶段,底色) → 数组槽位)
+//   stats/scramble/steps/wca_scramble_steps.csv       (\copy 进 staging:natkey,gm_cross6,gm_xcross6,steps)
+//   stats/scramble/steps/wca_scramble_steps_rare.csv  (稀有档侧表:单槽值计数 ≤ RARE_K 的尾部行,
+//                                                      migration 0062;与 layout.tails 同批替换)
+//   stats/scramble/steps/steps_layout.json            (server 端点据此把 (方法,阶段,底色) → 数组槽位;
+//                                                      含 rare_k/tails = 稀有档路由元数据)
 //
 // 用法: pnpm --filter @cuberoot/scramble-stats-build build:scramble-steps
 import fs from 'node:fs';
@@ -18,6 +21,11 @@ import YAML from 'yaml';
 import { VARIANTS, COLOR_LETTERS, type ColorLetter, type VariantSpec } from './variants';
 
 const MISSING = -1; // Int16 sentinel:该 (id, 槽) 无数据 → 数组元素 NULL
+// 稀有档尾部阈值:某槽某步数值的全库行数 ≤ RARE_K → 该 (slot,val) 的全部行导出进
+// wca_scramble_steps_rare 侧表(server 对「所选各底色槽都命中尾部」的难度查询走侧表
+// (slot,val) 直达,免全表扫)。计数只统计实际写出的行(排除 333mbf/无自然键),与服务器表同口径。
+const RARE_K = 2000;
+const VAL_CAP = 64; // 计数桶上限(步数远小于此;≥VAL_CAP 不计,也永不为尾部)
 // 333mbf(多盲)排除:split_mbf 把一次多盲拆成多个 cube 子打乱,同一自然键
 // (comp,event,round,group,num) 对应多条 → 破坏 wca_scramble_steps 的自然键主键。
 // 同 wca_scramble_optimal(0047)排除盲拧/多盲的口径。其余 333/oh/bf/fm/ft 单打乱、键唯一。
@@ -38,24 +46,29 @@ function resolveWcaSet(): SetSpec {
 }
 
 // 规范槽位布局:遍历 present 变体(CSV 存在)× spec.stages × COLOR_LETTERS(B,G,O,R,W,Y)。
-// 1-based offset。返回 { offsets, layout, presentVariants }。
+// 1-based offset。返回 { offsets, layout, presentVariants, stageOf }。
+// stageOf[slot0] = 该槽所属阶段的 6 个 0-based 槽位(B,G,O,R,W,Y 序)——rare 侧表 stage6 快照用。
 function buildLayout(csvDir: string) {
   const present: VariantSpec[] = VARIANTS.filter((v) => fs.existsSync(path.join(csvDir, v.file)));
   const offsets = new Map<string, number>(); // `${variant}|${stage}|${color}` → 1-based offset
   const layout: Record<string, Record<string, Record<string, number>>> = {};
+  const stageOf: number[][] = [];
   let n = 0;
   for (const v of present) {
     layout[v.key] = {};
     for (const stage of v.stages) {
       layout[v.key][stage] = {};
+      const group: number[] = [];
       for (const color of COLOR_LETTERS) {
         n += 1;
         offsets.set(`${v.key}|${stage}|${color}`, n);
         layout[v.key][stage][color] = n;
+        group.push(n - 1);
       }
+      for (const s of group) stageOf[s] = group;
     }
   }
-  return { present, offsets, layout, length: n };
+  return { present, offsets, layout, length: n, stageOf };
 }
 
 async function loadCorpusIds(txtPath: string): Promise<Map<string, number>> {
@@ -103,7 +116,7 @@ async function main() {
     if (!fs.existsSync(p)) throw new Error(`missing ${label}: ${p}`);
   }
 
-  const { present, offsets, layout, length } = buildLayout(set.csv_dir);
+  const { present, offsets, layout, length, stageOf } = buildLayout(set.csv_dir);
   console.log(`present variants (${present.length}): ${present.map((v) => v.key).join(', ')}`);
   console.log(`steps[] length = ${length} slots`);
 
@@ -169,40 +182,89 @@ async function main() {
     return m === Infinity ? null : m;
   };
 
+  // 行是否写出(自然键齐全 + 非排除 event)—— 主 CSV / 计数 / rare 三处同判据。
+  const isWritten = (k: (string[] | undefined)): k is string[] =>
+    !!k && !!k[0] && !!k[1] && k[5] !== undefined && !EXCLUDE_EVENTS.has(k[1]);
+
+  // Pass A:逐 (slot,val) 计数(只统计将写出的行,与服务器表同口径)→ 尾部 = 1..RARE_K。
+  console.log('counting per-slot value histograms...');
+  const counts = new Int32Array(length * VAL_CAP);
+  for (const [, row] of ids) {
+    if (!isWritten(natKeys[row])) continue;
+    const base = row * length;
+    for (let s = 0; s < length; s++) {
+      const v = store[base + s];
+      if (v !== MISSING && v < VAL_CAP) counts[s * VAL_CAP + v]++;
+    }
+  }
+  const isTail = new Uint8Array(length * VAL_CAP);
+  const tails: Record<string, number[]> = {}; // 1-based slot → 尾部 val 升序
+  let tailPairs = 0;
+  for (let s = 0; s < length; s++) {
+    const vals: number[] = [];
+    for (let v = 0; v < VAL_CAP; v++) {
+      const n = counts[s * VAL_CAP + v];
+      if (n >= 1 && n <= RARE_K) { isTail[s * VAL_CAP + v] = 1; vals.push(v); }
+    }
+    if (vals.length) { tails[String(s + 1)] = vals; tailPairs += vals.length; }
+  }
+
+  // Pass B:主 CSV + rare CSV 同批写出。
   const csvPath = path.join(outDir, 'wca_scramble_steps.csv');
+  const rareCsvPath = path.join(outDir, 'wca_scramble_steps_rare.csv');
   const ws = fs.createWriteStream(csvPath, { encoding: 'utf-8' });
-  let written = 0, skipped = 0;
+  const wsRare = fs.createWriteStream(rareCsvPath, { encoding: 'utf-8' });
+  let written = 0, skipped = 0, rareRows = 0;
   const buf: string[] = [];
+  const bufRare: string[] = [];
   for (const [, row] of ids) {
     const k = natKeys[row];
-    if (!k || !k[0] || !k[1] || k[5] === undefined || EXCLUDE_EVENTS.has(k[1])) { skipped++; continue; }
+    if (!isWritten(k)) { skipped++; continue; }
     const base = row * length;
     const arr: string[] = new Array(length);
     for (let s = 0; s < length; s++) { const v = store[base + s]; arr[s] = v === MISSING ? 'NULL' : String(v); }
     const gmC = minOf(base, stdCrossSlots);
     const gmX = minOf(base, stdXcrossSlots);
+    const natCells = [csvCell(k[0]), k[1], k[2], k[3], k[4], k[5]].join(',');
     // 列: competition_id,event_id,round_type_id,group_id,is_extra,scramble_num,gm_cross6,gm_xcross6,steps
     buf.push([
-      csvCell(k[0]), k[1], k[2], k[3], k[4], k[5],
+      natCells,
       gmC === null ? '' : String(gmC), gmX === null ? '' : String(gmX),
       `"{${arr.join(',')}}"`,
     ].join(','));
     written++;
     if (buf.length >= 2000) { ws.write(buf.join('\n') + '\n'); buf.length = 0; }
+    // rare:该行任一尾部 (slot,val) → 一行侧表(带同阶段 6 底色快照)。
+    // 列: slot,val,competition_id,event_id,round_type_id,group_id,is_extra,scramble_num,stage6
+    for (let s = 0; s < length; s++) {
+      const v = store[base + s];
+      if (v === MISSING || v >= VAL_CAP || !isTail[s * VAL_CAP + v]) continue;
+      const stage6 = stageOf[s].map((g) => { const gv = store[base + g]; return gv === MISSING ? 'NULL' : String(gv); });
+      bufRare.push(`${s + 1},${v},${natCells},"{${stage6.join(',')}}"`);
+      rareRows++;
+    }
+    if (bufRare.length >= 2000) { wsRare.write(bufRare.join('\n') + '\n'); bufRare.length = 0; }
   }
   if (buf.length) ws.write(buf.join('\n') + '\n');
+  if (bufRare.length) wsRare.write(bufRare.join('\n') + '\n');
   await new Promise<void>((r) => ws.end(r));
+  await new Promise<void>((r) => wsRare.end(r));
 
   const layoutPath = path.join(outDir, 'steps_layout.json');
   fs.writeFileSync(layoutPath, JSON.stringify({
     generated_at: process.env.SCRAMBLE_STATS_STAMP || new Date().toISOString(),
     length,
     variants: layout, // variant → stage → color → 1-based slot
+    rare_k: RARE_K,
+    tails, // 1-based slot → 侧表覆盖的步数值(升序);server 据此 rare/live 分流
   }, null, 0));
 
   console.log(`\nwrote ${csvPath}`);
   console.log(`  ${written.toLocaleString()} rows, ${skipped.toLocaleString()} skipped (no natural key)`);
   console.log(`  size ${(fs.statSync(csvPath).size / 1e6).toFixed(1)} MB`);
+  console.log(`wrote ${rareCsvPath}`);
+  console.log(`  ${rareRows.toLocaleString()} rare rows over ${tailPairs.toLocaleString()} (slot,val) tails (K=${RARE_K})`);
+  console.log(`  size ${(fs.statSync(rareCsvPath).size / 1e6).toFixed(1)} MB`);
   console.log(`wrote ${layoutPath} (length=${length})`);
 }
 
