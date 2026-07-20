@@ -803,3 +803,63 @@ a {
 }
 .timer-colon::before { bottom: 0.48em; } /* 上点 */
 .timer-colon::after  { bottom: 0.20em; } /* 下点 */
+
+/* ── 裸 <input type=range> 基础皮肤 ─────────────────────────────────────────
+   全站单把手滑杆的统一外观(轨道 + 圆把手,走站点 token)。此前各页自搓
+   ::-webkit-slider-thumb 或只写 accent-color,把手直径 14–22px 五个值并存;这里立一层
+   基础皮肤收敛之。组件级更具体的选择器(.foo input[type=range]::…、RangeSlider 的
+   .range-slider-*)特异度更高,仍可覆盖(如日历 scrubber 的渐变进度、calc 序列色)。
+   双把手用 components/RangeSlider;播放进度用 components/PlaybackScrubber。 */
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 16px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+input[type='range']:focus-visible {
+  outline: none;
+}
+input[type='range']::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--foreground) 15%, transparent);
+}
+input[type='range']::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--foreground) 15%, transparent);
+}
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  margin-top: -5px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--card);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--foreground) 30%, transparent);
+  cursor: pointer;
+}
+input[type='range']::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--card);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--foreground) 30%, transparent);
+  cursor: pointer;
+}
+input[type='range']:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px var(--ring);
+}
+input[type='range']:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 3px var(--ring);
+}
+input[type='range']:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
