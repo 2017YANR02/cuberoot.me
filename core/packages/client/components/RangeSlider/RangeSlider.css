@@ -104,6 +104,10 @@
   transform: translateX(-50%);
   white-space: nowrap;
 }
+.range-slider-mark.is-in {
+  color: var(--rs-fill);
+  font-weight: 600;
+}
 
 /* Coarse pointer (touch): larger thumbs + taller hit area. */
 @media (pointer: coarse) {
