@@ -147,6 +147,29 @@ const precomputedFor = new Map<string, string[]>(); // key -> 区间内预计算
 // 有 from/to 时不成立(那条路是 comp-sampling,只抽 30 场,回得少 ≠ 穷尽),故仅全时段登记。
 const closedFor = new Map<string, string[]>();
 
+// 已端出过的真题(按 key),用于封闭集的「已练 n/N」提示。上限就是封闭集可能的最大条数,
+// 非封闭 key(常见档全库上万条,永不展示进度)加到上限即停,不再增长。
+const servedFor = new Map<string, Set<string>>();
+function noteServed(key: string, s: string): void {
+  let set = servedFor.get(key);
+  if (!set) { set = new Set(); servedFor.set(key, set); }
+  if (set.size < SERVER_MAX_COUNT) set.add(s);
+}
+
+/** 封闭集(真题总数已知且有限,见 closedFor)的遍历进度 { total, seen };非封闭 / 未知 → null。
+ *  UI 据此在稀有档提示「共几条、已练几条、练完后开始重复」——不必等用户自己发现打乱在转圈复现。
+ *  seen 取交集而非 servedFor.size:池子换 key 前后 served 可能混入不属于当前全集的条目。 */
+export function wcaPoolProgress(spec: WcaSourceSpec): { total: number; seen: number } | null {
+  const key = specKey(spec);
+  if (!key) return null;
+  const closed = closedFor.get(key);
+  if (!closed || closed.length === 0) return null;
+  const set = servedFor.get(key);
+  let seen = 0;
+  for (const s of closed) if (set?.has(s)) seen++;
+  return { total: closed.length, seen };
+}
+
 // localStorage persistence — so reopening the timer (or returning to a source /
 // setting used before) serves the first scramble instantly from cache and tops
 // up in the background, instead of waiting on the cold network fetch. Only a
@@ -571,7 +594,7 @@ export function peekWca(spec: WcaSourceSpec): string | null {
   const key = specKey(spec);
   if (!key) return null;
   const s = pools[key]?.shift() ?? null;
-  if (s) persist(); // 反映已消费,避免重开时端出同一条
+  if (s) { noteServed(key, s); persist(); } // 反映已消费,避免重开时端出同一条
   if ((pools[key]?.length ?? 0) < REFILL_AT) void fill(spec);
   return s;
 }
@@ -584,7 +607,7 @@ export async function nextWca(spec: WcaSourceSpec): Promise<string | null> {
   if (!key) return null;
   if ((pools[key]?.length ?? 0) === 0) await fill(spec);
   const s = pools[key]?.shift() ?? null;
-  if (s) persist();
+  if (s) { noteServed(key, s); persist(); }
   return s;
 }
 

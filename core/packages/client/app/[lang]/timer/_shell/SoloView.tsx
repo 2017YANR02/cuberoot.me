@@ -22,7 +22,7 @@ import {
   Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2,
   Bluetooth, Mic, BarChart3, Plus, Wrench, ListPlus, Printer, FileText,
   FileSpreadsheet, AlertTriangle, Target, Crosshair, Keyboard, Link2, Globe,
-  ListOrdered, LineChart, Brain, X, Check, CheckCircle2, Footprints,
+  ListOrdered, LineChart, Brain, X, Check, CheckCircle2, Footprints, Repeat,
 } from 'lucide-react';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { CubingIcon, EventIcon } from '@/components/EventIcon/EventIcon';
@@ -33,7 +33,7 @@ import { type MoreMenuItem } from '../_components/MoreMenu';
 import { syncLangToUrl } from '@/i18n/i18n-client';
 
 import { generateScramble, registerScramble } from '../_lib/scramble';
-import { peekWca, nextWca, prefetchWca, hasWcaSource, isWcaSourceEmpty, isWcaCompUnindexed, probeCompCoverage, getCompCoverage, wcaEventId, wcaMetaFor, type WcaSourceSpec } from '../_lib/scramble/wca_pool';
+import { peekWca, nextWca, prefetchWca, hasWcaSource, isWcaSourceEmpty, isWcaCompUnindexed, probeCompCoverage, getCompCoverage, wcaEventId, wcaMetaFor, wcaPoolProgress, type WcaSourceSpec } from '../_lib/scramble/wca_pool';
 import { takeScramble } from '../_lib/scramble/scramble_pool';
 import { genByStepsScramble, genByStepsSig, wcaStepFilter } from '../_lib/scramble/gen-by-steps';
 import { formatScrambleForEvent } from '@/lib/sq1-svg';
@@ -483,6 +483,12 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     void loadFlagData().then((v) => setFlagVer((cur) => (v !== cur ? v : cur)));
   }, [settings.scrambleSource]);
   const wcaSource = settings.scrambleSource === 'wca' && !scrambleLoading ? wcaMetaFor(scramble) : null;
+  // 稀有筛选(如 8 步双色十字,全库仅 2 条)下真题总数是确切已知的(见 wca_pool 的封闭集)——
+  // 从第一条起就显示「已练 n/N」,让用户一眼知道池子有多小;练满 N 条后转成「已全部练过」,
+  // 明确告知之后是重复出题,免得以为出题坏了。常见档总数未知 → 返回 null,整块不渲染。
+  // 随 scramble 变化重算即可(每出一条都会重渲染),不需要额外的订阅/状态。
+  const poolRun = settings.scrambleSource === 'wca' && !scrambleLoading ? wcaPoolProgress(wcaSpec) : null;
+  const poolRunDone = !!poolRun && poolRun.seen >= poolRun.total;
   // 开了「最优打乱」但这条是回退的原打乱(该难度档无最优等态)→ 在打乱右侧标「非最优」。
   const wcaNonOptimal = settings.wcaUseOptimal && !!wcaSource?.nonOptimal;
   const wcaSrcDisplay = useMemo(() => {
@@ -1637,6 +1643,26 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                     </div>
                   )}
                 </span>
+                )}
+                {poolRun && (
+                  <span
+                    className={`scramble-pool-run${poolRunDone ? ' done' : ''}`}
+                    data-no-timer
+                    title={poolRunDone
+                      ? tr({
+                          zh: `符合当前筛选的 WCA 真题只有 ${poolRun.total} 条,已全部练过,之后是重复出题`,
+                          en: `Only ${poolRun.total} WCA scrambles match the current filters — all practiced, so they now repeat`,
+                        })
+                      : tr({
+                          zh: `符合当前筛选的 WCA 真题只有 ${poolRun.total} 条,练完后会重复出题`,
+                          en: `Only ${poolRun.total} WCA scrambles match the current filters — they repeat once all are practiced`,
+                        })}
+                  >
+                    {poolRunDone && <Repeat size={12} />}
+                    {poolRunDone
+                      ? tr({ zh: `${poolRun.total} 条已全部练过`, en: `All ${poolRun.total} practiced` })
+                      : tr({ zh: `已练 ${poolRun.seen}/${poolRun.total}`, en: `${poolRun.seen}/${poolRun.total} practiced` })}
+                  </span>
                 )}
                 </div>
               )}

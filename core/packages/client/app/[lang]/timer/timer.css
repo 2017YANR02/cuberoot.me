@@ -149,6 +149,29 @@
 :root[data-timer-theme="light"] .scramble-src:hover .scramble-src-name { color: #111; }
 :root[data-timer-theme="light"] .scramble-src-meta { color: #888; }
 
+/* 稀有筛选下的真题遍历计数(见 SoloView 的 poolRun):只有当匹配全集确切已知且有限时才渲染
+   —— 常见档总数未知,整块不出现。默认与来源徽标同一档静音灰(只是背景信息);练满全集后转
+   .done(琥珀 + 循环图标),明示之后是重复出题。与来源徽标同在 .scramble-src-row,间距靠该 row
+   的 gap,不自带 margin、不加外框。字体/word-spacing 复位同 .scramble-src(父级是等宽打乱区),
+   nowrap 防这类短 CJK 标签在窄屏被拆行。
+   颜色沿用本区块的 data-timer-theme 双写而非 :root token:计时器外壳有自己的明暗(与站点主题
+   独立),用 --muted-foreground 会在「站点浅色 + 计时器深色」下变成深底深字。 */
+.scramble-pool-run {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 12px;
+  line-height: 1.3;
+  word-spacing: normal;
+  white-space: nowrap;
+  color: #7d7d85;
+}
+.scramble-pool-run svg { flex-shrink: 0; }
+.scramble-pool-run.done { color: #d4a259; }
+:root[data-timer-theme="light"] .scramble-pool-run { color: #888; }
+:root[data-timer-theme="light"] .scramble-pool-run.done { color: #9a6b28; }
+
 /* 打卡:来源行旁的「N 人做过」chip + 名单弹层。与 .scramble-src 同字体复位;和来源徽标同在
    .scramble-src-row 内,行内间距靠该 row 的 gap,这里不再自带 margin。 */
 .scramble-marks {
