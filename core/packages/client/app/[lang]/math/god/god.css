@@ -1868,33 +1868,9 @@
   font-size: 0.82rem;
   color: var(--god-text-sub);
 }
+/* 皮肤走 globals.css 的 input[type=range] 基础皮肤;这里只留固定宽度。 */
 .god-ida-slider {
-  -webkit-appearance: none;
-  appearance: none;
   width: 160px;
-  height: 4px;
-  background: var(--god-border);
-  border-radius: 2px;
-  outline: none;
-  cursor: pointer;
-}
-.god-ida-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--god-accent);
-  cursor: pointer;
-  border: 2px solid var(--god-surface);
-  box-shadow: 0 0 0 1px var(--god-border-strong);
-}
-.god-ida-slider::-moz-range-thumb {
-  width: 16px; height: 16px;
-  border-radius: 50%;
-  background: var(--god-accent);
-  cursor: pointer;
-  border: 2px solid var(--god-surface);
 }
 
 .god-ida-heur-desc {
