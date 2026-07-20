@@ -78,6 +78,7 @@ const DEFAULT_ROUTES = [
   '/zh/scramble/gen', '/zh/scramble/stats', '/zh/scramble/solver', '/zh/scramble/analyzer',
   '/zh/timer', '/zh/battle', '/zh/calc', '/zh/recon', '/zh/alg',
   '/zh/membership', '/zh/support', '/zh/mosaic', '/zh/frame-count', '/zh/paint', '/zh/sim',
+  '/zh/site', '/zh/site?q=MCC',   // 搜索态行更长,曾因裸 1fr 把整页撑宽
   '/zh/math/group', '/zh/math/god', '/zh/code', '/zh/code/architecture', '/zh/code/solvers',
   '/zh/recognize/pll', '/zh/regulation', '/zh/regulation/events', '/zh/nemesizer',
   '/zh/why-cube', '/zh/tutorial',

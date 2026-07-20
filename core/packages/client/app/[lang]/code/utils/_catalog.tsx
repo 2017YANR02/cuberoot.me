@@ -109,6 +109,15 @@ export const CATALOG: UtilEntry[] = [
     en: '"Click a thing → URL fragment updates → scroll to it and highlight" in one place. Unifies 6 hand-rolled copies (wiki entries, the two person result tables, alg cards, prediction event sections, forum posts). Differences become options: resolve / reveal (expand a collapsed group, force-render a virtualized row, open <details>; return false to retry) / linger (sticky vs flash) / highlightClass / deps.',
   },
   {
+    name: 'useLiveUrlSuffix',
+    sig: 'useLiveUrlSuffix(): string',
+    imp: "import { useLiveUrlSuffix } from '@/hooks/useLiveUrlSuffix';",
+    usage: "const rest = useLiveUrlSuffix();  // '/zh/site?q=trangium'\n<a href={'https://cuberoot.me' + rest}>线上</a>",
+    category: 'hook',
+    zh: '当前 URL 的 pathname+search+hash,给「指向当前页」的绝对链接用(跨 origin 的环境切换、分享链接等,这类 href 用不了 AppLink)。存在的理由:nuqs 默认 shallow 写(replaceState)只改地址栏、不过 Next 路由,usePathname 不会重渲染 —— 常驻 layout 的 chrome 在 render body 里读 window.location 会把 ?q=... 这类页内状态漏在挂载那一刻的快照外(通知条的本地/线上切换就踩过)。刷新时机是 document 级捕获 pointerdown / focusin:激活链接前必然先经过其一,且 pointerdown 是 discrete event(React 同步 flush),所以中键 / Ctrl 点新开标签拿到的也是最新 URL。',
+    en: "Current pathname+search+hash, for absolute links pointing at the current page (cross-origin env switch, share links — where AppLink can't be used). Needed because nuqs shallow writes (replaceState) never re-render layout-level chrome, so a render-time window.location read freezes at mount and drops in-page state like ?q=. Refreshes on captured pointerdown / focusin, which always precede activating a link — so middle-click / Ctrl-click open the up-to-date URL too.",
+  },
+  {
     name: 'useModalDismiss',
     sig: 'useModalDismiss(onClose: () => void, disabled?: boolean): void',
     imp: "import { useModalDismiss } from '@/hooks/useModalDismiss';",
