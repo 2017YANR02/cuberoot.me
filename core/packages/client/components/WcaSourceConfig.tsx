@@ -33,6 +33,9 @@ const WCA_MIN_DATE = '1982-06-05';
 
 // 难度过滤只适用 3x3-family(随机态打乱,有十字/方法步数);其余项目无此数据。
 const DIFFICULTY_EVENTS = new Set(['333', '333oh', '333bf', '333fm', '333ft', '333mbf']);
+// 「合并」可用的项目 —— 与 server 的 FAMILY_333 一致。333mbf 不在 wca_scramble_steps 里(多盲拆子
+// 打乱会撞自然键),合并对它无操作,故不给开关。
+const MERGE_EVENTS = new Set(['333', '333oh', '333bf', '333fm', '333ft']);
 // 步数范围(覆盖常用 cross/xcross;深阶段超出 14 的步数 v1 暂不在此选)。难度开启默认带这个范围。
 const STEP_MIN = 0;
 const STEP_MAX = 14;
@@ -69,6 +72,7 @@ export interface WcaSourceSettings {
   wcaDiffStage: string;
   wcaDiffColors: string;
   wcaDiffSteps: number[];
+  wcaDiffMerged: boolean;
 }
 
 interface Props {
@@ -144,6 +148,7 @@ export default function WcaSourceConfig({
   // 可用方法/阶段来自 steps_layout.json(哪些 (方法,阶段) 已回填);拿不到则回退静态 VARIANT 定义。
   // date 模式服务端 /random 直接筛;comp 模式走 by-difficulty 端点按本场逐 bin 拉(见 wca_pool.fillComp)。
   const canDifficulty = !!wev && DIFFICULTY_EVENTS.has(wev);
+  const canMerge = !!wev && MERGE_EVENTS.has(wev);
 
   // comp 模式选中比赛后,提前探测该场在难度库有无步数数据(离线管道对新赛滞后)。没有 → 把「难度」开关灰锁,
   // 点击给原因,并让难度过滤对该场旁路(见 SoloView 的 wcaCompUnindexed)。'loading' 期间不灰(乐观)。
@@ -340,6 +345,18 @@ export default function WcaSourceConfig({
                 />
               )}
             </span>
+          </span>
+        )}
+        {/* 合并:难度筛跨整个 3x3 族取题,与 /scramble/stats 难度 tab 同口径。只在难度开着时有意义,
+            故跟着它显示;多盲不在 steps 表里(见 MERGE_EVENTS),对它不给这个开关。 */}
+        {canMerge && settings.wcaDifficultyOn && !diffLocked && (
+          <span className="settings-row-tight-group">
+            <span className="settings-row-label">{tr({ zh: '合并', en: 'Merge' })}</span>
+            <PillToggle
+              value={settings.wcaDiffMerged}
+              onChange={(v) => updateSettings({ wcaDiffMerged: v })}
+              ariaLabel={tr({ zh: '合并 3x3 全族真题', en: 'Merge all 3x3-family scrambles' })}
+            />
           </span>
         )}
         {canDifficulty && (

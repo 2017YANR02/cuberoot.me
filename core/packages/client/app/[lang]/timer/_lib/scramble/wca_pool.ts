@@ -69,7 +69,9 @@ export interface WcaSourceSpec {
   optimal: boolean;    // 用 God's-number 最短等态打乱(同态项目 333/oh/ft/fm 才有,无则回退原打乱)
   // 按难度过滤(3x3 族):date 模式服务端 /random 直接筛;comp 模式走 by-difficulty 端点按本场逐 bin 拉。
   // steps 为空 = 不过滤。variant/stage/colors 同 /scramble/stats 的口径。
-  diff?: { variant: string; stage: string; colors: string; steps: number[] };
+  // merged = 跨 3x3 族取题(/random 传 family=1;by-difficulty 省略 event —— 两端都是「合并池」口径,
+  // 与 /scramble/stats 难度 tab 一致)。关掉则只在当前项目里找。
+  diff?: { variant: string; stage: string; colors: string; steps: number[]; merged: boolean };
   // 「按步数」过滤(2×2 / 金字塔):客户端算每条真题的度量步数,只留 [lo,hi] 内的。
   // date + comp 两种模式都生效(真题分布近上帝数,低步数可能全被过滤 → knownEmpty → UI 提示)。
   stepFilter?: { metric: string; lo: number; hi: number };
@@ -244,8 +246,9 @@ function specKey(spec: WcaSourceSpec): string | null {
   // 「按步数」过滤两种模式都生效,进 key(切换度量/区间即重灌)。
   const sf = spec.stepFilter ? `|S:${spec.stepFilter.metric}:${spec.stepFilter.lo}.${spec.stepFilter.hi}` : '';
   // 难度过滤 date + comp 两模式都生效;steps 非空才计入池 key(切换难度即重灌)。
+  // merged 也进 key:同一组难度参数在合并/分开两种口径下是两个不同的池,不进 key 会切换后吃到旧池。
   const d = spec.diff && spec.diff.steps.length > 0
-    ? `|D:${spec.diff.variant}:${spec.diff.stage}:${spec.diff.colors}:${[...spec.diff.steps].sort((a, b) => a - b).join('.')}`
+    ? `|D:${spec.diff.variant}:${spec.diff.stage}:${spec.diff.colors}:${[...spec.diff.steps].sort((a, b) => a - b).join('.')}${spec.diff.merged ? ':m' : ''}`
     : '';
   if (spec.mode === 'comp') return spec.comp ? `c|${spec.comp}|${w}|${spec.round}|${spec.group}${opt}${sf}${d}` : null;
   return `d|${w}|${spec.from}|${spec.to}${opt}${d}${sf}`;
@@ -304,8 +307,10 @@ async function compRowsAll(spec: WcaSourceSpec, w: string, useOptimal: boolean):
 async function compRowsByDifficulty(spec: WcaSourceSpec, w: string, useOptimal: boolean): Promise<CompRow[]> {
   const d = spec.diff!;
   const bins = [...new Set(d.steps)].sort((a, b) => a - b);
+  // 合并口径下省略 event = 本场所有 3x3 族轮次的真题都算(与 /random 的 family=1 同义);
+  // 分开则只要本项目的。
   const results = await Promise.all(bins.map((bin) => fetchByDifficulty({
-    variant: d.variant, stage: d.stage, colors: d.colors, bin, event: w,
+    variant: d.variant, stage: d.stage, colors: d.colors, bin, event: d.merged ? undefined : w,
     names: spec.compName ? [spec.compName] : undefined, pageSize: 200,
   })));
   if (results.every((r) => r == null)) throw new Error('by-difficulty unavailable');
@@ -317,12 +322,14 @@ async function compRowsByDifficulty(spec: WcaSourceSpec, w: string, useOptimal: 
       if (spec.round && row.r !== spec.round) continue;
       if (spec.group && row.g !== spec.group) continue;
       if (useOptimal && !row.o) continue;                    // 最优模式:只留有最优等态的
-      const dk = `${row.r}|${row.g}|${row.x}|${row.n}`;
+      // 合并口径下同一 (轮次,组,序号) 在不同项目里各有一条,去重键必须带 event,否则会互相吞掉。
+      const dk = `${row.e}|${row.r}|${row.g}|${row.x}|${row.n}`;
       if (seen.has(dk)) continue;
       seen.add(dk);
       out.push({
         scramble: normalize(useOptimal && row.o ? row.o : row.scramble),
-        meta: { ci: spec.comp, cn: spec.compName || spec.comp, e: w, r: row.r, g: row.g, n: row.n, x: row.x },
+        // e 取真实来源项目(合并时可能不是当前练习的项目),来源角标才不会张冠李戴。
+        meta: { ci: spec.comp, cn: spec.compName || spec.comp, e: row.e || w, r: row.r, g: row.g, n: row.n, x: row.x },
       });
     }
   }
@@ -462,6 +469,7 @@ async function fillDate(spec: WcaSourceSpec, key: string): Promise<void> {
       qs.set('stage', spec.diff.stage);
       qs.set('colors', spec.diff.colors);
       qs.set('steps', [...spec.diff.steps].sort((a, b) => a - b).join(','));
+      if (spec.diff.merged) qs.set('family', '1'); // 跨 3x3 族取题(非 3x3 族服务端忽略)
     }
     return qs;
   };
