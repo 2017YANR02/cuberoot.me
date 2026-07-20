@@ -17,6 +17,10 @@ import WcaEventSelector from '@/components/WcaEventSelector';
 import NumberCommitInput from '@/components/NumberCommitInput';
 import Scramble555ModePicker from '@/components/Scramble555ModePicker';
 import Scramble333ModePicker from '@/components/Scramble333ModePicker';
+import Scramble222ModePicker from '@/components/Scramble222ModePicker';
+import { on222ModeChange } from '@/lib/scramble-222-mode';
+import { on333ModeChange } from '@/lib/scramble-333-mode';
+import { on555ModeChange } from '@/lib/scramble-555-mode';
 import HighOrderNxNInput from '@/components/HighOrderNxNInput';
 import { activeEventOf } from './_active-view';
 import { CompPicker } from '@/components/CompPicker';
@@ -344,6 +348,20 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
   const cacheRef = useRef<Record<string, string[]>>({});
   const cacheBusyRef = useRef<Set<string>>(new Set());
   const cacheTargetRef = useRef<Record<string, number>>({});
+  // 打乱口径/引擎切换(222 wca↔optimal、333 wca↔m2p、555 rs↔rm)会改变输出,预生成的本地
+  // 缓存必须作废并重灌;pregenGen 代际号让 in-flight fill 检测到切换后停手,免把旧口径混进新池。
+  const pregenGenRef = useRef(0);
+  const [scrambleModeVer, setScrambleModeVer] = useState(0);
+  useEffect(() => {
+    const invalidate = () => {
+      pregenGenRef.current += 1;
+      cacheRef.current = {};
+      cacheTargetRef.current = {};
+      setScrambleModeVer((v) => v + 1);
+    };
+    const uns = [on222ModeChange(invalidate), on333ModeChange(invalidate), on555ModeChange(invalidate)];
+    return () => uns.forEach((un) => un());
+  }, []);
 
   const [flagVer, setFlagVer] = useState(flagDataVersion());
   useEffect(() => {
@@ -492,10 +510,12 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
       if (cacheBusyRef.current.has(type)) continue;
       if ((cacheRef.current[type]?.length ?? 0) >= (cacheTargetRef.current[type] ?? 0)) continue;
       cacheBusyRef.current.add(type);
+      const myGen = pregenGenRef.current;
       (async () => {
         try {
           while ((cacheRef.current[type]?.length ?? 0) < (cacheTargetRef.current[type] ?? 0)) {
             const s = await generateOne(type);
+            if (pregenGenRef.current !== myGen) return; // 口径已切换,丢弃旧口径结果
             if (!cacheRef.current[type]) cacheRef.current[type] = [];
             cacheRef.current[type].push(s ?? '');
           }
@@ -506,7 +526,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
         }
       })();
     }
-  }, [enabledEvents, events, loadedCompId, sheets, forcedCompId]);
+  }, [enabledEvents, events, loadedCompId, sheets, forcedCompId, scrambleModeVer]);
 
   // ── mock 生成 ─────────────────────────────────────────────────
   const generate = async () => {
@@ -1385,6 +1405,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
           )}
           <Scramble555ModePicker active555={!!events['555']} isZh={isZh} />
           <Scramble333ModePicker active333={!!events['333']} isZh={isZh} />
+          <Scramble222ModePicker active222={!!events['222']} />
         </div>
       )}
 
