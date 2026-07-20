@@ -16,15 +16,16 @@
   z-index: 1;
 }
 
-/* NOTE: 用 var() + fallback 自适应主题——landing/upcoming 定义了 --surface/--text/--border 等，
-   recon 等暗色页未定义则回退暗色风格 */
+/* NOTE: 旧名 --surface/--text/--border 优先(landing.css 把它们映射到真 token,/code 那批
+   art-directed 暗色页自定义了值),没定义的页面回退站点 token —— 别写死暗色回退值,否则在
+   浅色页面上会变成「白底 + 12% 白边框」的隐形输入框(/timer 跟站点主题后踩过)。 */
 .country-input-field {
   width: 100%;
   padding: 8px 12px;
   border-radius: 8px;
-  border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
-  background: var(--surface, rgba(255, 255, 255, 0.05));
-  color: var(--text, #e5e5e5);
+  border: 1px solid var(--border, var(--border-default));
+  background: var(--surface, var(--background));
+  color: var(--text, var(--foreground));
   font-size: 0.88rem;
   font-family: 'Inter', Arial, sans-serif;
   outline: none;
@@ -45,8 +46,6 @@
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
-/* NOTE: 用 var() + fallback 自适应主题——landing/upcoming 浅色页定义了 --surface/--text/--border，
-   recon 等暗色页未定义则回退暗色面板。 */
 .country-input-popup {
   position: absolute;
   top: calc(100% + 4px);
@@ -57,13 +56,13 @@
   max-width: min(92vw, 360px);
   max-height: 280px;
   overflow-y: auto;
-  background: var(--surface, #2a2a2a);
-  color: var(--text, #e5e5e5);
-  border: 1px solid var(--border, rgba(255, 255, 255, 0.12));
+  background: var(--surface, var(--popover));
+  color: var(--text, var(--foreground));
+  border: 1px solid var(--border, var(--border-default));
   border-radius: 8px;
   padding: 4px 0;
   z-index: 100;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--foreground) 25%, transparent);
 }
 
 .country-input-item {
@@ -114,7 +113,7 @@
   flex-wrap: wrap;
   gap: 4px;
   padding: 8px 8px 6px;
-  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.10));
+  border-bottom: 1px solid var(--border, var(--border-default));
   margin-bottom: 4px;
 }
 .country-input-chip {
@@ -124,7 +123,7 @@
   padding: 2px 2px 2px 6px;
   border-radius: 999px;
   background: var(--accent-soft);
-  color: var(--text, #e5e5e5);
+  color: var(--text, var(--foreground));
   font-size: 0.78rem;
   line-height: 1.2;
 }

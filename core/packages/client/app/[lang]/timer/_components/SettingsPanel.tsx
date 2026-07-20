@@ -1213,27 +1213,25 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
         })}>
             <BoolToggle value={s.showRankBadge !== false} onChange={(v) => updateSettings({ showRankBadge: v })} />
           </Row>
-          {s.showRankBadge !== false && (
+          {/* 登录后账号国家就是权威来源(见 useRankCountry),不再让用户手选 —— 只有未登录时
+              才需要这一行来手填,顺带给个登录入口。 */}
+          {s.showRankBadge !== false && !user && (
             <Row label={tr({ zh: '地区排名', en: 'Ranking region'
           })}>
+              {/* placeholder 显式给空:组件默认会兜底成「搜国家名」,这里靠左侧 Row 标签说明即可。 */}
               <CountryInput
                 value={(s.rankCountry ?? '').toLowerCase()}
                 onChange={(iso2) => updateSettings({ rankCountry: iso2.toUpperCase() })}
-                placeholder={tr({ zh: '国家(留空只显 WR)', en: 'Country (blank = WR only)'
-              })}
+                placeholder=""
               />
-              {!user && (
-                <button
-                  className="hint-btn"
-                  onClick={() => login()}
-                  title={tr({ zh: '登录 WCA 自动带入账号国家', en: 'Sign in with WCA to auto-fill your country' })}
-                >
-                  <LogIn size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-                  {tr({ zh: '登录', en: 'Sign in' })}
-                </button>
-              )}
-              <span className="hint">{tr({ zh: '设国家后停表额外显示 CR(大洲)/ NR(全国)排名;登录 WCA 自动带入', en: 'adds CR (continent) / NR (national) ranks; auto-filled when signed in'
-              })}</span>
+              <button
+                className="hint-btn"
+                onClick={() => login()}
+                title={tr({ zh: '登录 WCA 自动带入账号国家', en: 'Sign in with WCA to auto-fill your country' })}
+              >
+                <LogIn size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
+                {tr({ zh: '登录', en: 'Sign in' })}
+              </button>
             </Row>
           )}
         </AccordionSection>
