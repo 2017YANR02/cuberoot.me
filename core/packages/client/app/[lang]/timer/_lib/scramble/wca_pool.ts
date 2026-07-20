@@ -44,7 +44,10 @@ const EVENT_MAP: Partial<Record<EventId, string>> = {
 export const WCA_OPTIMAL_EVENTS = new Set(['333', '333oh', '333ft', '333fm', '222', 'pyram', 'skewb']);
 function supportsOptimal(w: string): boolean { return WCA_OPTIMAL_EVENTS.has(w); }
 
-const FETCH_COUNT = 50;
+// 一次向 /random 要几条。服务端把 count 钳在 SERVER_MAX_COUNT 内,本值必须 <= 它,
+// 否则「回得比要的少」不再等价于「已穷尽」,封闭集判定(见 closedFor)会误判。
+const SERVER_MAX_COUNT = 50; // 与 server routes/wca_scrambles.ts 的 Math.min(50, ...) 对齐
+const FETCH_COUNT = Math.min(50, SERVER_MAX_COUNT);
 const REFILL_AT = 8;
 const META_CAP = 1000; // 元数据 Map 软上限,超出按插入序丢最旧。
 
@@ -135,6 +138,14 @@ function loadDist(): Promise<DiffDistJson | null> {
 
 const precomputedSeeded = new Set<string>();       // 已建过预计算桶的 key(每 key 只 seed 一次)
 const precomputedFor = new Map<string, string[]>(); // key -> 区间内预计算真题打乱串(refill 洗牌灌回池)
+
+// 封闭集:该 key 的匹配全集(已确认穷尽)。稀有难度档(如 0 步十字 / 8 步双色十字)全库仅 2-4 条,
+// 而 /random 每次都要全分区扫才捞得到它们(生产实测 1.4-2.6s)—— 队列一见底就联网、又只补回同样
+// 那几条,于是每两三次出题就卡一次转圈。服务端在「全时段(无 from/to)」两条路径都是扫完全集再
+// LIMIT(飞镖正向 rnd>=dart + 环绕 rnd<dart;稀有侧表 ORDER BY random()),所以「要 FETCH_COUNT
+// 条却回得更少」严格等价于「匹配全集就这么多」。据此把全集存下,之后本地洗牌循环,永不再联网。
+// 有 from/to 时不成立(那条路是 comp-sampling,只抽 30 场,回得少 ≠ 穷尽),故仅全时段登记。
+const closedFor = new Map<string, string[]>();
 
 // localStorage persistence — so reopening the timer (or returning to a source /
 // setting used before) serves the first scramble instantly from cache and tops
@@ -402,6 +413,16 @@ function shuffledCopy(src: string[]): string[] {
   return a;
 }
 
+/** 有限真题集(预计算桶 / 封闭集)洗牌灌回队列,循环用不会耗尽。优先端还没在队列里的,
+ *  桶太小(如仅 2 条)全在队列时只能整桶循环,再防「洗牌头 == 队尾」的背靠背重复。 */
+function refillFrom(q: string[], src: string[]): void {
+  const inQ = new Set(q);
+  let arr = shuffledCopy(src).filter((s) => !inQ.has(s));
+  if (arr.length === 0) arr = shuffledCopy(src);
+  if (q.length > 0 && arr.length > 1 && arr[0] === q[q.length - 1]) arr.push(arr.shift()!);
+  for (const s of arr) q.push(s);
+}
+
 /** date mode: top up from the server's random sampler (optionally date-bounded). */
 async function fillDate(spec: WcaSourceSpec, key: string): Promise<void> {
   const w = wev(spec);
@@ -422,6 +443,9 @@ async function fillDate(spec: WcaSourceSpec, key: string): Promise<void> {
     return qs;
   };
   const q = (pools[key] ??= []);
+  // 封闭集已确认(该 spec 的真题就这几条)→ 本地洗牌灌回,零网络。稀有难度档常态走这条。
+  const closed = closedFor.get(key);
+  if (closed && closed.length > 0) { refillFrom(q, closed); knownEmpty.delete(key); persist(); return; }
   // 「按步数」:先用预计算真题桶播种(稀有区间即时+可靠,如 2×2 底层=0),再 live 补充变化。
   let hasPrecomputed = false;
   // 预计算真题桶是全时段的,只在无日期范围时播种(有 from/to 时 live 采样才尊重日期过滤)。
@@ -436,19 +460,16 @@ async function fillDate(spec: WcaSourceSpec, key: string): Promise<void> {
       // 只在队列见底时才把预计算桶洗牌灌回(循环用,不会耗尽):常见区间靠 live 批次保持变化,
       // 每次 refill 全量重灌会造成队内重复 + 出题被固定采样集垄断。灌回时跳过仍在队列里的,
       // 桶太小(如仅 3 条)全在队列 → 只能整桶循环,再防洗牌头 == 队尾的背靠背重复。
-      if (q.length <= 2) {
-        const inQ = new Set(q);
-        let arr = shuffledCopy(pre).filter((s) => !inQ.has(s));
-        if (arr.length === 0) arr = shuffledCopy(pre);
-        if (q.length > 0 && arr.length > 1 && arr[0] === q[q.length - 1]) arr.push(arr.shift()!);
-        for (const s of arr) q.push(s);
-      }
+      if (q.length <= 2) refillFrom(q, pre);
       knownEmpty.delete(key);
     }
   }
   // live 采样:无 stepFilter → 1 批(原行为);有 stepFilter 且无预计算 → MAX_FILTER_BATCHES 批找稀有匹配,
   // 全空才判 knownEmpty;有预计算 → 只补 3 批变化(常见区间一批即中并短路,稀有区间靠预计算不硬搜),永不判空。
   const maxBatches = spec.stepFilter ? (hasPrecomputed ? 3 : MAX_FILTER_BATCHES) : 1;
+  // 封闭集只在「全时段 + 无 stepFilter」时可判(见 closedFor):有 from/to 走 comp-sampling(抽 30 场,
+  // 回得少不代表穷尽);stepFilter 有自己的预计算桶 + 多批采样路径,回条数与匹配数不对应。
+  const canClose = !spec.stepFilter && !spec.from && !spec.to;
   let totalAdded = 0;
   for (let batch = 0; batch < maxBatches; batch++) {
     const res = await fetch(apiUrl(`/v1/wca/scrambles/random?${buildQs().toString()}`));
@@ -459,6 +480,7 @@ async function fillDate(spec: WcaSourceSpec, key: string): Promise<void> {
     const items = Array.isArray(data.scrambles) ? data.scrambles : [];
     if (items.length === 0) { if (!hasPrecomputed) knownEmpty.add(key); return; }
     let added = 0;
+    const got: string[] = [];
     for (const it of items) {
       if (!it?.scramble) continue;
       // 最优模式且该条带最优等态 → 用最优打乱(同态,更短);否则用原打乱(服务器在稀有难度档无最优时回退)。
@@ -466,12 +488,16 @@ async function fillDate(spec: WcaSourceSpec, key: string): Promise<void> {
       const s = normalize(useOpt ? it.o! : it.scramble);
       if (!stepPass(spec, s)) continue; // 「按步数」客户端过滤(服务端不懂 2×2/金字塔度量)
       q.push(s);
+      got.push(s);
       added++;
       rememberMeta(s, {
         ci: it.ci, cn: it.cn, e: it.e, r: it.r, g: it.g, n: it.n, x: it.x,
         ...(useOptimal && !useOpt ? { nonOptimal: true } : {}),
       });
     }
+    // 要 FETCH_COUNT 条却回得更少 = 服务端已扫完全集 → 这批就是匹配全集,登记后不再联网。
+    // 常见档恒回满 FETCH_COUNT,永远不会进这里;只有稀有档(全库个位数)才封闭。
+    if (canClose && items.length < FETCH_COUNT && got.length > 0) closedFor.set(key, [...new Set(got)]);
     totalAdded += added;
     if (added > 0) break; // 已找到匹配,不再多抓(短路,常态一批即够)
   }
