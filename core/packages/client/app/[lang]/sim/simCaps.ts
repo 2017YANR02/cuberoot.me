@@ -49,42 +49,37 @@ export interface SimPuzzleCaps {
    *  per-kind isolation → the control grays out. Gear (corner/edge gear/center) is
    *  the first; other engines opt in by declaring their subset. */
   isolate?: IsolateSpec[];
-  /** Whether the /sim 图像 panel shows for this puzzle. Spec-renderable types (NxN cube /
-   *  mirror / sq1 / skewb / pyraminx / megaminx) get the full studio (spec controls + API
-   *  links);其余引擎拼图(fto / ivy / dino / redi / rex / heli / gear)走 engine-only
-   *  模式 —— 面板只有引擎矢量伴图 + SVG/PNG 下载(SimPage 的 imageStudioEngineOnly),
-   *  且要求引擎路径激活(cubing.js 渲染下无 world 出不了伴图)。false 仅剩 custom /
-   *  PG-explore(纯 TwistyPlayer,无 world)。 */
-  imageStudio: boolean;
 }
 
-const NXN_CAPS: SimPuzzleCaps = { engine: 'always', imageStudio: true };
-const TWISTY_CAPS: SimPuzzleCaps = { engine: 'never', imageStudio: false };
+// 图像面板不再是 capability:每个拼图都有(spec 可渲染的走完整 studio,其余走
+// engine-only 伴图 —— 引擎 world 或 TwistyPlayer vantage 二选一,总有一个在场)。
+// 见 SimPage 的 imageStudioEngineOnly。
+const NXN_CAPS: SimPuzzleCaps = { engine: 'always' };
+const TWISTY_CAPS: SimPuzzleCaps = { engine: 'never' };
 
 /** Per-kind capabilities. Keyed by the string puzzle kinds; NxN (numeric kind) and
  *  PG explore puzzles fall back to NXN_CAPS / TWISTY_CAPS respectively. */
 const CAPS: Record<string, SimPuzzleCaps> = {
-  sq1: { engine: 'always', imageStudio: true },
-  ivy: { engine: 'always', carve: 'corner', imageStudio: true },
-  dino: { engine: 'always', carve: 'corner', imageStudio: true },
-  redi: { engine: 'always', carve: 'corner', imageStudio: true },
-  rex: { engine: 'always', carve: 'corner', imageStudio: true },
-  heli: { engine: 'always', carve: 'edge', imageStudio: true },
+  sq1: { engine: 'always' },
+  ivy: { engine: 'always', carve: 'corner' },
+  dino: { engine: 'always', carve: 'corner' },
+  redi: { engine: 'always', carve: 'corner' },
+  rex: { engine: 'always', carve: 'corner' },
+  heli: { engine: 'always', carve: 'edge' },
   // Gear Cube — geared 180° face flips; carving lifts one face layer off the middle.
   // Isolate: inspect one block kind alone (角 8 / 棱 12 / 中心 6) — user request. 中心块
   // shows the center pieces + core together (merged 中心块 + 骨架, one skeleton unit).
   gear: {
     engine: 'always', carve: 'face',
     isolate: [{ kind: 'corner', count: 8 }, { kind: 'edge', count: 12 }, { kind: 'center', count: 6 }],
-    imageStudio: true,
   },
-  skewb: { engine: 'engineMode', carve: 'corner', imageStudio: true },
-  pyraminx: { engine: 'engineMode', carve: 'corner', imageStudio: true },
-  megaminx: { engine: 'engineMode', carve: 'face', imageStudio: true },
-  fto: { engine: 'engineMode', carve: 'face', imageStudio: true },
+  skewb: { engine: 'engineMode', carve: 'corner' },
+  pyraminx: { engine: 'engineMode', carve: 'corner' },
+  megaminx: { engine: 'engineMode', carve: 'face' },
+  fto: { engine: 'engineMode', carve: 'face' },
   // Mirror Cube — order-3 NxN engine (uniform logic, non-uniform geometry). Like NxN
   // it has no single moving group to lift off, so no carve. Studio renders it as a cube.
-  mirror: { engine: 'always', imageStudio: true },
+  mirror: { engine: 'always' },
 };
 
 /** Static capabilities for a puzzle kind (independent of the active renderer). */
