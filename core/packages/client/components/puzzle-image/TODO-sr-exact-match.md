@@ -2,6 +2,8 @@
 
 方案 A:异形(sq1/pyraminx/megaminx/skewb)右侧 sr 预览 = 朝向 + 配色 + 透视 + 状态 与左边 3D 一致(风格用 sr,不复刻 sim 网格外观)。详见 memory `project_sim_exotic_sr_exact_match.md`。
 
+> **2026-07-21 决策:sr 走向退役** —— 重路线(引擎 BSP 解析矢量导出统一伴图+服务端缩略图)已立项,完整方案与追踪清单见同目录 `PLAN-sr-retirement.md`;sr 留作后悔药,切换稳定后删除。本文件维持记录现行 sr 路径,直至 Phase 5 归档。
+
 ## 关键发现
 1. **sim 异形引擎用「固定配色」,不是 faceColors 面板**
    - **skewb** → `CUBE_FILL`(WCA 标准,`@/lib/cube-colors`)
