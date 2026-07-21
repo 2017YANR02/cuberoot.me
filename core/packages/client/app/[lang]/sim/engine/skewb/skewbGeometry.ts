@@ -218,6 +218,8 @@ function buildPiece(rep: THREE.Vector3, slotTag: { key: string; value: number })
     const sGeom = roundedPolySticker(sp, nrm);
     group.add(makeSticker(sGeom, stickerMat(SKEWB_FACE_COLOR[f]), bodyMat, {
       skewbFace: f, simStickerNormal: nrm.clone(),
+      // 建构标识(复原帧,跟块走):mask 直映用,派生表见 tests/_engine_mask_derive.ts
+      stickerKey: `${slotTag.key === 'skewbCorner' ? 'corner' : 'center'}${slotTag.value}:${f}`,
       // 示意小面(sim_svg_export_schematic):理想晶格多边形(无缝、不 inset / lift)
       schematicPoly: schematicPolyFromFacet(idealVerts.filter((v) => Math.abs(v.dot(nrm) - H) < 0.5), nrm),
     }));

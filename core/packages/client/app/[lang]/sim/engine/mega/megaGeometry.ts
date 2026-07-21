@@ -81,8 +81,9 @@ function piecePlanes(capFaces: readonly number[]): Plane[] {
 
 // ── stickers ────────────────────────────────────────────────────────────────────────
 /** Raised, grooved, rounded sticker for the piece's facet on face `faceIdx`. `facet` =
- *  the piece's polytope verts lying on that face's plane. */
-function facetSticker(facet: THREE.Vector3[], faceIdx: number): THREE.Mesh | null {
+ *  the piece's polytope verts lying on that face's plane. `pieceKey` = 建构标识前缀
+ *  (corner0 / edge12 / center3),mask 直映的 stickerKey 用。 */
+function facetSticker(facet: THREE.Vector3[], faceIdx: number, pieceKey: string): THREE.Mesh | null {
   if (facet.length < 3) return null;
   const n = _n(faceIdx).normalize();
   let u = Math.abs(n.y) < 0.9 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0);
@@ -99,6 +100,8 @@ function facetSticker(facet: THREE.Vector3[], faceIdx: number): THREE.Mesh | nul
   const geo = extrudeOntoFace(poly, { u, v: w, n, origin }, STICKER_DEPTH);
   return makeSticker(geo, stickerMats[faceIdx], bodyMat, {
     simStickerNormal: n.clone(),
+    // 建构标识(复原帧,跟块走):mask 直映用,派生表见 tests/_engine_mask_derive.ts
+    stickerKey: `${pieceKey}:${faceIdx}`,
     // 示意小面(sim_svg_export_schematic):facet 即理想晶格(相邻 cell 精确共享
     // 切割面 → 共享棱同一组坐标),不 inset / 不 round / 不 lift
     schematicPoly: schematicPolyFromFacet(facet, n),
@@ -108,7 +111,7 @@ function facetSticker(facet: THREE.Vector3[], faceIdx: number): THREE.Mesh | nul
 export interface PieceBuild { pivot: THREE.Object3D; group: THREE.Group; }
 
 /** Build one piece: rounded body + one sticker per cap face, parented to an origin pivot. */
-function buildPiece(capFaces: readonly number[], userData: Record<string, unknown>): PieceBuild {
+function buildPiece(capFaces: readonly number[], userData: Record<string, unknown>, pieceKey: string): PieceBuild {
   const planes = piecePlanes(capFaces);
   const group = new THREE.Group();
   const body = new THREE.Mesh(roundedSolid(planes, BODY_ROUND), bodyMat);
@@ -117,7 +120,7 @@ function buildPiece(capFaces: readonly number[], userData: Record<string, unknow
   const sharp = polytopeVerts(planes);
   for (const f of capFaces) {
     const facet = sharp.filter((v) => v.dot(_n(f)) > R_IN - 0.5);
-    const s = facetSticker(facet, f);
+    const s = facetSticker(facet, f, pieceKey);
     if (s) group.add(s);
   }
   const pivot = new THREE.Object3D();
@@ -127,13 +130,13 @@ function buildPiece(capFaces: readonly number[], userData: Record<string, unknow
 }
 
 export function buildCornerPiece(id: number): PieceBuild {
-  return buildPiece(CORNER_FACES[id], { megaCornerId: id });
+  return buildPiece(CORNER_FACES[id], { megaCornerId: id }, `corner${id}`);
 }
 export function buildEdgePiece(id: number): PieceBuild {
-  return buildPiece(EDGE_FACES[id], { megaEdgeId: id });
+  return buildPiece(EDGE_FACES[id], { megaEdgeId: id }, `edge${id}`);
 }
 export function buildCenterPiece(face: number): PieceBuild {
-  return buildPiece([face], { megaCenterFace: face });
+  return buildPiece([face], { megaCenterFace: face }, `center${face}`);
 }
 
 /** Fixed central core = dodecahedron ∩ {·x ≤ CUT for every face} (rounded). On the
