@@ -30,9 +30,9 @@ import { SkewbState, skewbStickerId, SKEWB_FACE_LABELS } from '@/app/[lang]/scra
 import { megaSolvedState, megaTurnFace, megaStickerId, MEGA_FACE_NAMES } from '@/app/[lang]/scramble/gen/_svg/mega_svg';
 import { doslice } from '@/app/[lang]/scramble/gen/_svg/nnn_sim';
 import { cubeStickerIdFromPosit, CUBE_FACE_LETTERS } from '@/app/[lang]/scramble/gen/_svg/cube_unfolded_svg';
-import { PyraminxSimulator } from 'sr-puzzlegen/dist/lib/simulator/pyraminx/pyraminxSimulator';
-import { SkewbSimulator } from 'sr-puzzlegen/dist/lib/simulator/skewb/skewbSimulator';
-import { MegaminxSimulator } from 'sr-puzzlegen/dist/lib/simulator/megaminx/megaminxSimulator';
+import { PyraminxSimulator } from '@cuberoot/vendor-sr-puzzlegen/simulator/pyraminx/pyraminxSimulator';
+import { SkewbSimulator } from '@cuberoot/vendor-sr-puzzlegen/simulator/skewb/skewbSimulator';
+import { MegaminxSimulator } from '@cuberoot/vendor-sr-puzzlegen/simulator/megaminx/megaminxSimulator';
 
 /** π[p] = canonical sticker index sitting at position p after one application of the generator. */
 export type Perm = number[];

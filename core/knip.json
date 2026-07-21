@@ -18,6 +18,9 @@
       ],
       "ignoreDependencies": ["playwright"]
     },
+    "packages/vendor-sr-puzzlegen": {
+      "entry": ["src/index.ts"]
+    },
     "packages/server": {
       "entry": [
         "scripts/**/*.{ts,mjs}",
