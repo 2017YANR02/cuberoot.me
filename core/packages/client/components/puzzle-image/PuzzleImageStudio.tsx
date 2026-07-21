@@ -181,8 +181,8 @@ export interface PuzzleImageStudioProps {
    *  engineSvg,隐藏所有 spec 控件与 API 链接(服务端渲染不了这些拼图),导出栏只剩
    *  截图组 + SVG/PNG(下载的就是预览这份引擎矢量)。 */
   engineOnly?: boolean;
-  /** 示意伴图黑边宽(世界单位)。仅当伴图为示意版(有严格版孪生)时由 host 传值,
-   *  值为 undefined 表示不适用 → 不渲染黑边滑块。 */
+  /** 示意伴图黑边 = 网格缝宽占小面的百分比(visualcube inset 模型)。仅当伴图为
+   *  示意版(有严格版孪生)时由 host 传值,undefined = 不适用 → 不渲染滑块。 */
   outlineWidth?: number;
   onOutlineWidthChange?: (n: number) => void;
 }
@@ -426,13 +426,13 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
                 id="vc-outline"
                 type="range"
                 min={0}
-                max={20}
-                step={0.5}
+                max={30}
+                step={1}
                 value={outlineWidth}
                 onChange={(e) => onOutlineWidthChange(Number(e.target.value))}
-                aria-label={t('示意伴图黑描边粗细', 'Schematic stroke thickness')}
+                aria-label={t('示意伴图网格缝宽(占小面 %)', 'Schematic grid gap (% of facelet)')}
               />
-              <span className="vc-outline-val">{outlineWidth}</span>
+              <span className="vc-outline-val">{outlineWidth}%</span>
             </div>
           </div>
         )}

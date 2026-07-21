@@ -1,6 +1,8 @@
-# sr-puzzlegen 退役计划 — 引擎解析矢量导出统一路线
+# sr-puzzlegen + visualcube 退役计划 — 引擎解析矢量导出统一路线
 
 状态:**Phase 2 完成、Phase 3 /sim 镜像上线(2026-07-21,含 NxN)**。决策(2026-07-21):给自有 /sim 引擎做**解析隐面消除(BSP)矢量导出**,伴图 + 服务端缩略图全走它;`@cuberoot/vendor-sr-puzzlegen` 整包**先不删,当后悔药**,切换稳定后最终删除。追加决策(2026-07-21):**NxN 伴图同路退役 visualcube**(cube:normal 走 BSP 镜像;visualcube 包同样先不删当后悔药)—— §5 原「NxN 不在本方案内」作废,收窄为「visualcube 的无 live-sim 消费方(/visualcube studio 任意 spec、CaseThumb、服务端)仍走 visualcube,随 Phase 1 抽包 + Phase 4 一并评估」。
+
+**最终目标定稿(2026-07-21 用户指令)**:**完全退役 visualcube 和 sr 两个渲染后端**(代码都先留着当后悔药,以后单独会话再删)。退役硬前提:**visualcube studio 现有功能一个都不能少**,能抄的全抄进引擎路线,见 §2b 对照表;别重复造轮 —— UI / DSL / 解析层照搬,只换渲染后端。网格观感抄 visualcube 的 **inset 模型**(贴纸向心缩、壳色衬底,缝宽 = 小面固定比例),弃绝对 px 描边 —— 固定 px 在高阶 NxN 会吞掉贴纸整图发黑(40 阶用户实测)。
 
 > 执行顺序调整(2026-07-21):BSP 导出(Phase 2)先在 client 内实现并接通 /sim
 > 伴图(Phase 3 的镜像部分),**抽包(Phase 1)推迟到服务端切换(Phase 4)之前**
@@ -38,6 +40,27 @@ sr 共 12 种 visualizer type、5 类拼图:
 
 用到的 sr 特性:`alg`/`case`(自带模拟器)、`rotations`、`cameraDist`(fork 收编的透视选项)、`scheme`(整面配色)、`mask`(灰化,经派生表 `SR_INDEX_MAP` 映射;sq1 不可 mask 是 sr 结构限制)、viewBox 裁剪(minx/miny/svgWidth/svgHeight)、strokeWidth。**没人用**:`arrows`、`stickerColors`、sr 的 net/cube 系列。
 （2026-07-21:`arrows` 与 `color.stroke` 逐色描边已按用户要求提前移植进 `sim_svg_export_schematic.ts`——箭头走 `opts.arrows` 世界坐标线段,逐色描边走 sticker `userData.schematicStroke`;站内暂无消费方,备将来用。）
+
+## 2b. visualcube studio 功能对照表(2026-07-21 用户指令:一个都不能少)
+
+用户明确:以下 /visualcube studio 面板功能(截图存证)全部要在引擎路线等价存在,才允许退役 visualcube。UI 与 DSL(箭头串 `U0U2-red,U6U8`、遮罩串 `U:0,2;F:3-5`)照搬,只换渲染后端。
+
+| 功能 | visualcube 侧实现 | 引擎路线落点 | 状态 |
+|---|---|---|---|
+| 视图 normal(iso) | drawing.ts 三面投影 | /sim 伴图已镜像(示意/BSP) | ✅ |
+| 视图 plan(俯视含侧带) | 同上,俯视 + 四侧首排 | 引擎相机 top 预设 + 示意导出;侧带形态待设计 | ⬜ |
+| 视图 trans(半透明) | cubeOpacity/stickerOpacity | 导出器 bodyOpacity/stickerOpacity 参数 + 预设 | ⬜ |
+| 视图 net(展开图) | 平面展开 | /sim 已有引擎驱动 2D net,导出侧接同源 | ⬜ |
+| 视图 wca(记分表样式) | tnoodle 风格平面 | 同 net,引擎状态直出 | ⬜ |
+| 图片尺寸 (PX) | svg width/height | 导出参数(viewBox 已有,补输出尺寸) | ⬜ |
+| 箭头(面/从/到/过/缩放/影响/颜色 + DSL + 默认箭头色) | arrows 解析 + renderArrows | 导出器 `opts.arrows` 已通(世界坐标线段);差 DSL(`U0U2-red`)→ 贴纸中心坐标解析层 + UI 透传 | ⬜(底层 ✅) |
+| MASK 预设(fl/f2l/oll… + rot) | mask 枚举 | canonical DSL → 引擎贴纸 id 直映(Phase 3 既有条目) | ⬜ |
+| 贴纸遮罩(`U:0,2;F:3-5` + 点选编辑) | facelet 级遮罩 | 同上直映层;点选编辑 UI 照搬 | ⬜ |
+| 壳体色 | cubeColor | 导出器 bodyColor 参数(inset 衬底色) | ✅(2026-07-21 inset 模型落地) |
+| 壳体不透明度 | cubeOpacity | 导出器 bodyOpacity | ✅(参数已留) |
+| 贴纸不透明度 | stickerOpacity | 导出器 stickerOpacity | ✅(参数已留) |
+| 投影距离 | dist(透视强度) | 引擎相机距离/fov 映射 | ⬜ |
+| 黑边(网格缝宽) | inset 0.85 + 底色缝 | 示意导出器 inset 模型(滑块 = 缝宽占小面比例) | ✅(2026-07-21) |
 
 ## 3. 消费方清单(切换时逐个勾)
 
