@@ -30,7 +30,7 @@ import {
   X,
 } from 'lucide-react';
 import World, { type PuzzleKind } from './engine/world';
-import { exportSimSvgBsp } from './sim_svg_export_bsp';
+import { bspSceneAudit, exportSimSvgBsp } from './sim_svg_export_bsp';
 import type Cube from './engine/nxn/cube';
 import { SIZE } from './engine/define';
 import { createBackView, type BackView } from './engine/backView';
@@ -1686,20 +1686,26 @@ export default function SimPage() {
   }, [imageStudioSupported, imgPuzzle, imgInherit, imgSpec,
       settings.viewAngle, settings.viewGradient, settings.perspective, setImgSpec]);
 
-  // ── 引擎 BSP 伴图镜像(sr 退役计划 Phase 3)──────────────────────────────
-  // 异形(sq1/pyraminx/megaminx/skewb)iso 伴图不再走 sr-puzzlegen 的近似角度
-  // 标定,而是把引擎场景本身经 BSP 解析隐面消除导出为矢量 SVG(sim_svg_export_bsp)
-  // —— 相机/配色/状态与左边同源,天然一致,无毛刺。rAF 低频采样场景几何签名,
-  // 连续两拍不变(≈0.25s 静止)才导出一次;twist 动画 / 拖动期间不重算,伴图
-  // 显示上一静止帧。回退后悔药:/sim?img_engine=sr 走旧 sr 路径。
+  // ── 引擎 BSP 伴图镜像(sr / visualcube 伴图退役,Phase 3)────────────────
+  // 3D 投影伴图(异形 iso + NxN cube normal)不再走 sr-puzzlegen / visualcube 的
+  // 近似角度标定,而是把引擎场景本身经 BSP 解析隐面消除导出为矢量 SVG
+  // (sim_svg_export_bsp)—— 相机/配色/状态与左边同源,天然一致,无毛刺。rAF
+  // 低频采样场景几何签名,连续两拍不变(≈0.25s 静止)才导出一次;twist 动画 /
+  // 拖动期间不重算,伴图显示上一静止帧。原核分色(BSP 会画错色)、超高阶爆量
+  // (SVG_TOO_COMPLEX)时置 null 回退旧渲染器(cube→visualcube,异形→sr)。
+  // 回退后悔药:/sim?img_engine=sr 强制全程旧路径。
   const [srCompanionForced] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     try { return new URLSearchParams(window.location.search).get('img_engine') === 'sr'; } catch { return false; }
   });
   const [engineSvg, setEngineSvg] = useState<string | null>(null);
   useEffect(() => {
-    const active = imageStudioSupported && imageOpen && imgPuzzle.puzzleType !== 'cube' && !srCompanionForced;
+    const active = imageStudioSupported && imageOpen && !srCompanionForced;
     if (!active) { setEngineSvg(null); return; }
+    // 伴图复杂度上限:普通阶几何 ≈ 88 三角/块 + 204 三角/贴纸,6x6 ≈ 5.7 万已是
+    // 主线程单帧 ~1s 量级;更高阶(至 N≥50 换简化几何前)会到百万级,必须掐断。
+    // 超限在收集阶段即抛(几十 ms),伴图回退 visualcube,不卡页面。
+    const MAX_TRIS = 64_000;
     let raf = 0;
     let frame = 0;
     let lastSig = '';
@@ -1734,16 +1740,19 @@ export default function SimPage() {
       if (stable < 1) { stable++; return; }
       if (sig === exportedSig) return;
       exportedSig = sig;
+      if (bspSceneAudit(world.scene).miscolors) { setEngineSvg(null); return; } // 原核分色:回退旧渲染器
       try {
-        setEngineSvg(exportSimSvgBsp({ world }));
+        setEngineSvg(exportSimSvgBsp({ world, maxTriangles: MAX_TRIS }));
       } catch (err) {
-        console.warn('[sim] BSP companion export failed', err);
-        setEngineSvg(null); // 本帧回退 sr 渲染
+        if (!(err instanceof Error && err.message.startsWith('SVG_TOO_COMPLEX'))) {
+          console.warn('[sim] BSP companion export failed', err);
+        }
+        setEngineSvg(null); // 本帧回退旧渲染器
       }
     };
     raf = requestAnimationFrame(tick);
     return () => { disposed = true; cancelAnimationFrame(raf); };
-  }, [imageStudioSupported, imageOpen, imgPuzzle.puzzleType, srCompanionForced,
+  }, [imageStudioSupported, imageOpen, srCompanionForced,
       settings.faceColors, query.stickering, query.stickeringColor]);
 
   // 2D flat-net view mode — NxN only (number puzzle), driven by the same live cube.

@@ -110,17 +110,29 @@ export default function SimCaptureGroup({ simBridge }: { simBridge: SimBridge })
   }, [simBridge, downloadUrl]);
 
   // 实时 SVG 截图 — 把当前 3D 场景静止帧投影成矢量 SVG(所有 /sim 拼图 + 任意
-  // 设置开关组合;与 PNG 截图一样导出主视图,背景透明)。引擎拼图直接用 world;
-  // twisty 拼图从 TwistyPlayer vantage 取 scene+camera 喂同一个导出器(全 Basic
-  // 材质无灯,无深度图 → 纯 painter 分支)。
+  // 设置开关组合;与 PNG 截图一样导出主视图,背景透明)。引擎拼图默认走 BSP
+  // 解析隐面消除(遮挡边界 = 平面求交直线,任意放大无毛刺);场景含 BSP 不覆盖
+  // 的特性(手 SkinnedMesh / 方位字母 Sprite / logo 贴图 / 原核分色 aRaw)或
+  // BSP 爆量时回退 GPU depth-map 路径。twisty 拼图从 TwistyPlayer vantage 取
+  // scene+camera 喂截图导出器(全 Basic 材质无灯,无深度图 → 纯 painter 分支)。
   const svgSnapshot = useCallback(async () => {
     try {
-      const { exportSimSvg } = await import('@/app/[lang]/sim/sim_svg_export');
       const world = simBridge.getWorld();
-      let svg: string;
+      let svg: string | undefined;
       if (world) {
-        svg = exportSimSvg({ world, renderer: simBridge.getRenderer() });
+        const bsp = await import('@/app/[lang]/sim/sim_svg_export_bsp');
+        const audit = bsp.bspSceneAudit(world.scene);
+        if (!audit.losesDetail && !audit.miscolors) {
+          try {
+            svg = bsp.exportSimSvgBsp({ world });
+          } catch { /* SVG_TOO_COMPLEX(超高阶)等 → 回退 GPU 路径 */ }
+        }
+        if (svg === undefined) {
+          const { exportSimSvg } = await import('@/app/[lang]/sim/sim_svg_export');
+          svg = exportSimSvg({ world, renderer: simBridge.getRenderer() });
+        }
       } else {
+        const { exportSimSvg } = await import('@/app/[lang]/sim/sim_svg_export');
         const tp = simBridge.getTwistyPlayer?.() as TwistyPlayerLike | null;
         if (!tp?.experimentalCurrentVantages) return;
         const vantage = [...await tp.experimentalCurrentVantages()][0];

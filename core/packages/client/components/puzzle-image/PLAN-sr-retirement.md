@@ -1,6 +1,6 @@
 # sr-puzzlegen 退役计划 — 引擎解析矢量导出统一路线
 
-状态:**Phase 2 完成、Phase 3 /sim 镜像上线(2026-07-21)**。决策(2026-07-21):给自有 /sim 引擎做**解析隐面消除(BSP)矢量导出**,伴图 + 服务端缩略图全走它;`@cuberoot/vendor-sr-puzzlegen` 整包**先不删,当后悔药**,切换稳定后最终删除。
+状态:**Phase 2 完成、Phase 3 /sim 镜像上线(2026-07-21,含 NxN)**。决策(2026-07-21):给自有 /sim 引擎做**解析隐面消除(BSP)矢量导出**,伴图 + 服务端缩略图全走它;`@cuberoot/vendor-sr-puzzlegen` 整包**先不删,当后悔药**,切换稳定后最终删除。追加决策(2026-07-21):**NxN 伴图同路退役 visualcube**(cube:normal 走 BSP 镜像;visualcube 包同样先不删当后悔药)—— §5 原「NxN 不在本方案内」作废,收窄为「visualcube 的无 live-sim 消费方(/visualcube studio 任意 spec、CaseThumb、服务端)仍走 visualcube,随 Phase 1 抽包 + Phase 4 一并评估」。
 
 > 执行顺序调整(2026-07-21):BSP 导出(Phase 2)先在 client 内实现并接通 /sim
 > 伴图(Phase 3 的镜像部分),**抽包(Phase 1)推迟到服务端切换(Phase 4)之前**
@@ -71,6 +71,8 @@ sr 共 12 种 visualizer type、5 类拼图:
 
 ### Phase 3 — 客户端伴图切换
 - [x] **/sim 伴图镜像(v1,2026-07-21)**:SimPage rAF 采样场景几何签名,静止(两拍 ≈0.25s)即 `exportSimSvgBsp(world)` → `engineSvg` 透传 studio → PuzzleImage 的 sr 分支被引擎矢量镜像替代(仅 iso 变体;top 俯视示意不动)。相机/配色/状态与左边同源,**天然精确跟踪任意视角**。回退:`/sim?img_engine=sr`。SR_ANGLE_BASE 保留为回退路径的标定,待 sr 删除时一并清。
+- [x] **NxN 伴图镜像(2026-07-21)**:cube:`normal` 视图同吃 `engineSvg`(plan/trans/net/wca 仍 visualcube/tnoodle)。伴图上限 64k 三角(普通阶 ≈88/块+204/贴纸,6x6≈5.7 万;超限收集期即抛,回退 visualcube 不卡页面);原核分色(aRaw,BSP 会画错色)经 `bspSceneAudit` 检测回退。N≥50 引擎自换简化几何,远期若要全阶镜像走 worker 化。
+- [x] **「截图 SVG」按钮切 BSP 默认(2026-07-21)**:引擎拼图下载路径不再走 GPU depth-map(其逐像素遮挡采样即毛刺来源,用户实测 pyraminx 下载件确认);`bspSceneAudit` 检出手/方位字母/logo 贴图/原核(BSP 画不全或画错)才回退 GPU 全保真路径。BSP 收集期跳过贴图材质(logo 贴片画成实心色块必错,宁缺)。
 - [ ] 待用户过目 4 拼图新旧观感(风格从 sr 平面示意 → 引擎实模投影)后,再决定是否需要示意图预设形态。
 - [ ] mask:canonical DSL → 引擎贴纸 id 直映(新 map,替代 SR_INDEX_MAP);顺带解锁 sq1 mask(sr 做不到,引擎能)。
 - [ ] 后悔药开关:`?img_engine=sr` query(+ env `NEXT_PUBLIC_SR_FALLBACK`)一键回退旧路径;sr 代码原样保留。
@@ -96,7 +98,7 @@ sr 共 12 种 visualizer type、5 类拼图:
 - **sq1 薄中层**:kite/中层薄片共面 epsilon 要调(现导出器的平面簇偏置经验可复用)。
 - **抽包半径**:engine 24k 行里 headless 核心占多少、client-only 纠缠多深,Phase 1 开工前先做依赖图;若纠缠过深,退一步先抽「几何构建 + 状态」最小集。
 - **风格即产品**:伴图/缩略图外观会从 sr 味变引擎味,Phase 3 验收含用户过目,不视觉偷跑。
-- **NxN 不在本方案内**:cube 系仍走 visualcube/cubing.js;引擎导出器取代 visualcube 是远期独立方案(sim_svg_export 长期目标),别混进来。
+- **NxN(2026-07-21 改判)**:/sim 伴图的 cube:normal 已入镜像(见 Phase 3);visualcube 包先不删。剩余 visualcube 消费方 = 无 live-sim 场景(/visualcube studio 任意 spec 渲染、CaseThumb cube、`/v1/visualcube.svg` cube 视图、plan/trans/net 视图),真退役前置条件与 sr 相同:Phase 1 headless 抽包后由参数建 world 再 BSP。cubing.js net 不在退役范围。
 
 ## 6. 时序
 Phase 0 随时可做;1→2→(3‖4)→观察期→5 严格串行;3 与 4 可并行。每 phase 单独 commit + 全测试绿再进下一个。
