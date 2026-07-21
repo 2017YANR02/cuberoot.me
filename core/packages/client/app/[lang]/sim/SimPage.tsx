@@ -452,6 +452,20 @@ export default function SimPage() {
     persistItem('sim.panel.image', imageOpen ? '1' : '0');
   }, [imageOpen]);
 
+  // 示意伴图黑边宽(世界单位):导出时贴纸向质心内缩这么多,身下黑块露出黑框。
+  // 只影响 schematic 伴图,niche 外观,走 localStorage(同 sim.panel.image,非 URL)。
+  const [imgOutline, setImgOutline] = useState<number>(() => {
+    if (typeof window === 'undefined') return 3;
+    try {
+      const v = Number(localStorage.getItem('sim.img.outline'));
+      return Number.isFinite(v) && v > 0 ? v : 3;
+    } catch { return 3; }
+  });
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    persistItem('sim.img.outline', String(imgOutline));
+  }, [imgOutline]);
+
   const settingsRef = useRef(settings);
   useEffect(() => { settingsRef.current = settings; }, [settings]);
 
@@ -1746,7 +1760,7 @@ export default function SimPage() {
       let schematic = false;
       world.scene.traverse((o) => { if (o.userData.schematicGeom) schematic = true; });
       try {
-        setEngineSvg(exportSimSvgBsp({ world, maxTriangles: MAX_TRIS, schematic }));
+        setEngineSvg(exportSimSvgBsp({ world, maxTriangles: MAX_TRIS, schematic, schematicOutline: imgOutline }));
       } catch (err) {
         if (!(err instanceof Error && err.message.startsWith('SVG_TOO_COMPLEX'))) {
           console.warn('[sim] BSP companion export failed', err);
@@ -1756,8 +1770,19 @@ export default function SimPage() {
     };
     raf = requestAnimationFrame(tick);
     return () => { disposed = true; cancelAnimationFrame(raf); };
-  }, [imageStudioSupported, imageOpen, srCompanionForced,
+  }, [imageStudioSupported, imageOpen, srCompanionForced, imgOutline,
       settings.faceColors, query.stickering, query.stickeringColor]);
+
+  // 伴图当前是否示意版(有严格版孪生)—— 决定黑边滑块是否可用。
+  const [engineSchematic, setEngineSchematic] = useState(false);
+  useEffect(() => {
+    if (!(imageStudioSupported && imageOpen && !srCompanionForced)) { setEngineSchematic(false); return; }
+    const world = worldRef.current;
+    if (!world) { setEngineSchematic(false); return; }
+    let has = false;
+    world.scene.traverse((o) => { if (o.userData.schematicGeom) has = true; });
+    setEngineSchematic(has);
+  }, [imageStudioSupported, imageOpen, srCompanionForced, imgPuzzle.puzzleType, engineSvg]);
 
   // 2D flat-net view mode — NxN only (number puzzle), driven by the same live cube.
   const netMode = settings.viewMode === 'net' && typeof puzzleParam === 'number';
@@ -1984,6 +2009,8 @@ export default function SimPage() {
               simBridge={simBridge}
               previewHost={imageHost}
               engineSvg={engineSvg}
+              outlineWidth={engineSchematic ? imgOutline : undefined}
+              onOutlineWidthChange={setImgOutline}
             />
           ) : (
             // spec 渲染器不支持的拼图(枫叶 / 恐龙 / 齿轮 / PG 骨架族等)仍给
