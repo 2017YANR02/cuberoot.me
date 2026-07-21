@@ -1,6 +1,10 @@
 # sr-puzzlegen 退役计划 — 引擎解析矢量导出统一路线
 
-状态:**方案定稿,未开工**。决策(2026-07-21):给自有 /sim 引擎做**解析隐面消除(BSP)矢量导出**,伴图 + 服务端缩略图全走它;`@cuberoot/vendor-sr-puzzlegen` 整包**先不删,当后悔药**,切换稳定后最终删除。
+状态:**Phase 2 完成、Phase 3 /sim 镜像上线(2026-07-21)**。决策(2026-07-21):给自有 /sim 引擎做**解析隐面消除(BSP)矢量导出**,伴图 + 服务端缩略图全走它;`@cuberoot/vendor-sr-puzzlegen` 整包**先不删,当后悔药**,切换稳定后最终删除。
+
+> 执行顺序调整(2026-07-21):BSP 导出(Phase 2)先在 client 内实现并接通 /sim
+> 伴图(Phase 3 的镜像部分),**抽包(Phase 1)推迟到服务端切换(Phase 4)之前**
+> —— 风险最高的算法部分先落地见效,机械搬移后置。
 
 前情:标定/对齐历史见同目录 `TODO-sr-exact-match.md`;此方案根治其「残留」节的 pitch 近似跟踪 + 消灭 SR_ANGLE_BASE 手工标定层。
 
@@ -59,14 +63,15 @@ sr 共 12 种 visualizer type、5 类拼图:
 - [ ] client 全量改 import 路径;server 可 import(先例:server 已 import `@cuberoot/visualcube`、`@cuberoot/shared`)。
 - 验收:Node 裸脚本能建出 skewb world 并数出三角形;client typecheck + 全测试绿;/sim playwright smoke 行为不变。
 
-### Phase 2 — BSP 解析隐面消除导出路径(核心)
-- [ ] `sim_svg_export.ts` 新增 `renderer: 'bsp'` 模式(与现有 null-painter / GPU depth-map 并存):世界系三角形建 BSP 树,按相机 back-to-front 遍历得**精确** painter 序,分裂解循环遮挡;共面层(贴纸压塑料压 logo)沿用现有材质优先级,不走几何。
-- [ ] 共面同色相邻三角形合并成单 path(union),把 path 数压到贴纸量级。
-- [ ] 「示意图预设」(schematic preset):倒角 0、无手、无 logo、平色填充 —— 低模场景既是 BSP 分裂量的保险,也是缩略图产品形态。
-- 验收:4 拼图 × iso/top × 扫任意 `r=`,GL vs SVG 逐像素 diff ≤ 现 depth-map 路径水平;4-8x 放大接缝无锯齿无漏面(1:1 diff 是盲区,必放大验);path 数目标 mega iso ≤ 300;耗时不劣于现 GPU 路径参考值(pyra 173ms / skewb 263 / sq1 337 / mega 669)。
+### Phase 2 — BSP 解析隐面消除导出路径(核心)✅ 2026-07-21(commit 9c1b0170b6)
+- [x] 独立模块 `sim_svg_export_bsp.ts`(与 GPU depth-map 截图路径并存):世界系三角形建 BSP 树,按相机 back-to-front 遍历得**精确** painter 序,SPAN 面片 Sutherland–Hodgman 解析切开;共面并档保 GL「先画先赢」语义(ro asc + seq desc)。纯数学无 WebGL,Node 可跑。
+- [x] 共享边相消边界重建:paint 序中连续同平面同色段合并为单 path(含洞,nonzero);链化失败降级逐面片,不产生错误画面。
+- [ ] 「示意图预设」(schematic preset):倒角 0、无手、无 logo、平色填充 —— path 数 / 文件体积优化(现全模 skewb ~5.3k path / 800KB),留给缩略图阶段。
+- 验收(已做):单测 14 用例含解析 painter-order oracle(1/viewZ 屏幕空间仿射,重叠对逐一验证近盖远),互穿 + 循环遮挡(风车三板)通过;真实 skewb 场景 6.2k 三角 147ms(优于 GPU 路径参考值)。**毛刺结构性消失**(无逐像素采样、无细分,遮挡边界=平面求交直线)。
 
 ### Phase 3 — 客户端伴图切换
-- [ ] `PuzzleImage.tsx` 的 `'sr-puzzlegen'` renderer → `'engine-svg'`:直接复用 sim 相机参数,**删除 SR_ANGLE_BASE / SR_DIST_BASE 整层**(含 codec 角度换算、`srSchemeFor` 映射)。偏离默认视角从此精确跟踪(根治 TODO 残留第一条)。
+- [x] **/sim 伴图镜像(v1,2026-07-21)**:SimPage rAF 采样场景几何签名,静止(两拍 ≈0.25s)即 `exportSimSvgBsp(world)` → `engineSvg` 透传 studio → PuzzleImage 的 sr 分支被引擎矢量镜像替代(仅 iso 变体;top 俯视示意不动)。相机/配色/状态与左边同源,**天然精确跟踪任意视角**。回退:`/sim?img_engine=sr`。SR_ANGLE_BASE 保留为回退路径的标定,待 sr 删除时一并清。
+- [ ] 待用户过目 4 拼图新旧观感(风格从 sr 平面示意 → 引擎实模投影)后,再决定是否需要示意图预设形态。
 - [ ] mask:canonical DSL → 引擎贴纸 id 直映(新 map,替代 SR_INDEX_MAP);顺带解锁 sq1 mask(sr 做不到,引擎能)。
 - [ ] 后悔药开关:`?img_engine=sr` query(+ env `NEXT_PUBLIC_SR_FALLBACK`)一键回退旧路径;sr 代码原样保留。
 - [ ] skewb-top 自绘 fan 保留不动(它不是 sr,是示意图另一形态)。

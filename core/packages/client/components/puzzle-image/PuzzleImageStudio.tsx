@@ -175,9 +175,11 @@ export interface PuzzleImageStudioProps {
    *  /sim passes the canvas' top-left overlay: the image sits next to the live cube
    *  rather than at the bottom of a scrolled sidebar. Null until the host mounts. */
   previewHost?: HTMLElement | null;
+  /** /sim 引擎 BSP 矢量镜像,透传 PuzzleImage(见其 engineSvg 注释)。 */
+  engineSvg?: string | null;
 }
 
-export default function PuzzleImageStudio({ spec, onSpecChange, mode, className, simBridge, previewHost }: PuzzleImageStudioProps) {
+export default function PuzzleImageStudio({ spec, onSpecChange, mode, className, simBridge, previewHost, engineSvg }: PuzzleImageStudioProps) {
   const t = useT();
   const s = spec;
   const set = useCallback(<K extends keyof ImageSpec>(key: K, value: ImageSpec[K]) => {
@@ -343,7 +345,7 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
     <section className="vc-preview-wrap" ref={previewRef}>
       {/* Page mode: interactive (drag-to-rotate, paint editor). Panel mode: a passive
           mirror — the sim's own 左右 / 上下 (and 透视 for the cube) drive the spec. */}
-      <PuzzleImage spec={s} onSpecChange={onSpecChange} interactive={mode === 'page'} />
+      <PuzzleImage spec={s} onSpecChange={onSpecChange} interactive={mode === 'page'} engineSvg={engineSvg} />
     </section>
   );
 
