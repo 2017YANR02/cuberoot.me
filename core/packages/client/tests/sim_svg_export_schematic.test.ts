@@ -32,8 +32,9 @@ function makeWorld(scene: THREE.Scene): { scene: THREE.Scene; camera: THREE.Pers
   return { scene, camera, width: 400, height: 400 };
 }
 
-function pathDs(svg: string): string[] {
-  return [...svg.matchAll(/d="([^"]+)"/g)].map((m) => m[1]);
+/** 小面 path 的 d(排除 clipPath 轮廓与 fill="none" 的外框线)。 */
+function faceletDs(svg: string): string[] {
+  return [...svg.matchAll(/<path d="([^"]+)" fill="(?!none)/g)].map((m) => m[1]);
 }
 
 describe('exportSimSvgSchematic', () => {
@@ -52,7 +53,7 @@ describe('exportSimSvgSchematic', () => {
   it('每个小面 = 严格三角形:2 个可见面 × 9 小面,每条 path 恰 3 个坐标对', () => {
     const world = makeWorld(buildPyraScene());
     const svg = exportSimSvgSchematic({ world });
-    const ds = pathDs(svg);
+    const ds = faceletDs(svg);
     expect(ds.length).toBe(18);
     for (const d of ds) {
       // M + 2 个 L + Z = 严格三角形,无 BSP 切分碎片
@@ -66,7 +67,7 @@ describe('exportSimSvgSchematic', () => {
     const svg = exportSimSvgSchematic({ world });
     const verts = new Set<string>();
     let refs = 0;
-    for (const d of pathDs(svg)) {
+    for (const d of faceletDs(svg)) {
       for (const m of d.matchAll(/[ML](-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)/g)) {
         verts.add(`${m[1]},${m[2]}`);
         refs++;
@@ -78,14 +79,21 @@ describe('exportSimSvgSchematic', () => {
     expect(verts.size).toBe(16);
   });
 
-  it('平色 + 黑描边:fill=面色原值,stroke 黑,宽随参数;0 = 无描边', () => {
+  it('平色 + 黑描边:fill=面色原值,stroke 黑,宽随参数;外缘凸包裁剪 + 外框;0 = 全无', () => {
     const world = makeWorld(buildPyraScene());
     const svg = exportSimSvgSchematic({ world, strokeWidth: 8 });
     // +z 视角可见面 m=1(红)m=2(蓝)
     expect(svg.toLowerCase()).toContain(CUBE_FILL.R.toLowerCase());
     expect(svg.toLowerCase()).toContain(CUBE_FILL.B.toLowerCase());
-    expect(svg.match(/stroke="#000000" stroke-width="8"/g)?.length).toBe(18);
-    expect(exportSimSvgSchematic({ world, strokeWidth: 0 })).not.toContain('stroke');
+    // 18 小面 + 1 条凸包外框
+    expect(svg.match(/stroke="#000000" stroke-width="8"/g)?.length).toBe(19);
+    // 毛刺防线:小面描边被凸包 clip(外缘 miter 尖不出界),外框沿凸包重描
+    expect(svg).toContain('<clipPath id="sil">');
+    expect(svg).toContain('clip-path="url(#sil)"');
+    expect(svg).toMatch(/<path d="[^"]+" fill="none" stroke="#000000"/);
+    const bare = exportSimSvgSchematic({ world, strokeWidth: 0 });
+    expect(bare).not.toContain('stroke');
+    expect(bare).not.toContain('clipPath');
   });
 
   it('背面剔除:背对相机的面(m=0 黄 / m=3 绿)不输出', () => {

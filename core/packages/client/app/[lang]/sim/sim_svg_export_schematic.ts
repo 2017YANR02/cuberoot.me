@@ -103,13 +103,52 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
   // 远 → 近(凸体下可见面互不重叠,排序只是对轻微非凸的保护)
   facelets.sort((a, b) => a.z - b.z);
 
+  const dOf = (pts: number[]): string => {
+    let s = `M${fmt(pts[0])} ${fmt(pts[1])}`;
+    for (let i = 2; i < pts.length; i += 2) s += `L${fmt(pts[i])} ${fmt(pts[i + 1])}`;
+    return s + 'Z';
+  };
+
   const stroke = strokeW > 0 ? ` stroke="#000000" stroke-width="${fmt(strokeW)}"` : '';
-  const body = facelets.map((f) => {
-    let dStr = `M${fmt(f.pts[0])} ${fmt(f.pts[1])}`;
-    for (let i = 2; i < f.pts.length; i += 2) dStr += `L${fmt(f.pts[i])} ${fmt(f.pts[i + 1])}`;
-    return `<path d="${dStr}Z" fill="${f.fill}"${stroke}/>`;
-  });
+  const paths = facelets.map((f) => `<path d="${dOf(f.pts)}" fill="${f.fill}"${stroke}/>`).join('');
+
+  // 外轮廓 = 可见小面投影的凸包(静止魔方是凸体)。小面描边在外缘晶格点的
+  // miter 尖会伸出轮廓线(内部同类尖被邻面描边盖住,轮廓上无遮盖 → "毛刺"),
+  // 用凸包 clipPath 裁掉出界部分,再沿凸包描一条外框 → 外缘是数学直线。
+  let content = paths;
+  if (strokeW > 0 && facelets.length > 0) {
+    const hull = convexHull2D(facelets.flatMap((f) => {
+      const out: [number, number][] = [];
+      for (let i = 0; i < f.pts.length; i += 2) out.push([f.pts[i], f.pts[i + 1]]);
+      return out;
+    }));
+    if (hull.length >= 3) {
+      const hullD = dOf(hull.flat());
+      content = `<clipPath id="sil"><path d="${hullD}"/></clipPath>`
+        + `<g clip-path="url(#sil)">${paths}</g>`
+        + `<path d="${hullD}" fill="none"${stroke}/>`;
+    }
+  }
 
   const bg = opts.background ? `<rect width="100%" height="100%" fill="${opts.background}"/>` : '';
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${bg}${body.join('')}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${bg}${content}</svg>`;
+}
+
+/** 2D 凸包(Andrew monotone chain),返回逆时针顶点;共线点剔除。 */
+function convexHull2D(pts: [number, number][]): [number, number][] {
+  const uniq = [...new Map(pts.map((p) => [`${p[0]},${p[1]}`, p])).values()]
+    .sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  if (uniq.length < 3) return uniq;
+  const cross = (o: [number, number], a: [number, number], b: [number, number]): number =>
+    (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const half = (list: [number, number][]): [number, number][] => {
+    const out: [number, number][] = [];
+    for (const p of list) {
+      while (out.length >= 2 && cross(out[out.length - 2], out[out.length - 1], p) <= 0) out.pop();
+      out.push(p);
+    }
+    out.pop();
+    return out;
+  };
+  return [...half(uniq), ...half([...uniq].reverse())];
 }
