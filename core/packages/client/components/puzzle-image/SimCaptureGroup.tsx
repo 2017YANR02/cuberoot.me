@@ -37,8 +37,9 @@ export interface SimBridge {
   alg: string;
 }
 
-/** TwistyPlayer 实验 API 的最小 duck-type(避免引入 cubing/twisty 类型依赖)。 */
-interface TwistyPlayerLike {
+/** TwistyPlayer 实验 API 的最小 duck-type(避免引入 cubing/twisty 类型依赖)。
+ *  SimPage 的伴图 twisty 路径与本组件的截图路径共用。 */
+export interface TwistyPlayerLike {
   experimentalCurrentVantages?: () => Promise<Iterable<{
     camera: () => Promise<THREE.PerspectiveCamera>;
     scene: { scene: () => Promise<THREE.Scene> };

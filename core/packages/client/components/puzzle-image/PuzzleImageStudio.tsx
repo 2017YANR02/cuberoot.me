@@ -360,8 +360,9 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
   // On the /visualcube page it's the main image; in the /sim 图像 panel it's the
   // clean, zoom-crisp vector companion to the live 3D cube on the left (the 3D
   // snapshot bakes its occlusion edges at raster resolution, this one is true
-  // vector). Only ever mounts for spec-renderable puzzles: SimPage gates the whole
-  // panel behind imageStudioSupported, so gear/rex/etc never reach here.
+  // vector). Spec-renderable puzzles land in the PuzzleImage branch; everything else
+  // (gear / rex / PG 目录 / custom…) comes in with engineOnly and shows the live
+  // engine/twisty vector mirror instead.
   const preview = (
     <section className="vc-preview-wrap" ref={previewRef}>
       {/* Page mode: interactive (drag-to-rotate, paint editor). Panel mode: a passive
@@ -380,7 +381,7 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
             }}
           />
         ) : (
-          <div className="vc-preview vc-preview-pending">{t('等待引擎静止帧…', 'Waiting for a still frame…')}</div>
+          <div className="vc-preview vc-preview-pending">{t('等待静止帧…', 'Waiting for a still frame…')}</div>
         )
       ) : (
         <PuzzleImage spec={s} onSpecChange={onSpecChange} interactive={mode === 'page'} engineSvg={engineSvg} />

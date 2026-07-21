@@ -509,6 +509,50 @@
   background: rgba(0, 0, 0, 0.75);
 }
 
+/* 交换主图 / 伴图的浮动按钮 — 同款外观(上面的类出样式),钉在图像浮层右下内角。
+   浮层自身是定位上下文且 pointer-events:none,按钮收回 auto(继承同款类)。 */
+.sim-image-swap {
+  right: 6px;
+  bottom: 6px;
+}
+
+/* 主图 ↔ 伴图交换态:伴图浮层铺满画布,实时 3D 缩进左上小框。引擎 canvas 不是 CSS
+   缩放 —— SimPage 的 resize 把渲染器/world 真调到 float-size 方框(否则 Toucher 的
+   像素坐标对不上射线拾取),这里只负责把显示尺寸钉成同一个方框(必须 !important,
+   基线 `.sim-canvas-wrap canvas` 的 100% 也是 !important)+ 摆位 + 窗框;twisty
+   player 自带 ResizeObserver,盒子一变就真正重排到小框。 */
+.sim-canvas-wrap--imgswap .sim-image-overlay {
+  width: auto;
+  height: auto;
+  inset: 8px;
+}
+.sim-canvas-wrap--imgswap > canvas {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: var(--sim-float-size, 140px) !important;
+  height: var(--sim-float-size, 140px) !important;
+  z-index: 10;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 8px;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.55),
+    0 2px 10px rgba(0, 0, 0, 0.25);
+}
+.sim-canvas-wrap--imgswap > .twisty-section {
+  inset: 8px auto auto 8px;
+  width: var(--sim-float-size, 140px);
+  height: var(--sim-float-size, 140px);
+  z-index: 10;
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 8px;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.55),
+    0 2px 10px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
 @media (max-width: 480px) {
   .sim-header {
     padding: 6px 8px;
