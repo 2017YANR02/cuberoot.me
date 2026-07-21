@@ -161,6 +161,27 @@ function roundedBody(planes: Plane[]): THREE.BufferGeometry {
   return geom;
 }
 
+// ── 示意版几何(伴图 BSP 导出的 schematic 模式)─────────────────────────────
+// 不进 live 场景,只挂在对应 mesh 的 userData.schematicGeom 上,导出器按同一
+// matrixWorld 替换投影:每个小面在 SVG 里就是一条严格多边形 path,无圆角无曲面。
+
+/** 精确凸包块身(同一套割平面,不做 Minkowski 圆化)。 */
+function exactBody(planes: Plane[]): THREE.BufferGeometry {
+  return new ConvexGeometry(cellVerts(planes));
+}
+
+/** 严格三角形贴纸:单三角平面片,绕向朝 normal 外侧。 */
+function strictTriSticker(p0: THREE.Vector3, p1: THREE.Vector3, p2: THREE.Vector3, normal: THREE.Vector3): THREE.BufferGeometry {
+  const c = new THREE.Vector3().subVectors(p1, p0).cross(new THREE.Vector3().subVectors(p2, p0));
+  const [q1, q2] = c.dot(normal) >= 0 ? [p1, p2] : [p2, p1];
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute([
+    p0.x, p0.y, p0.z, q1.x, q1.y, q1.z, q2.x, q2.y, q2.z,
+  ], 3));
+  g.computeVertexNormals();
+  return g;
+}
+
 /** Rounded-corner triangle sticker on the plane through p0/p1/p2 (already inset +
  *  lifted) — same soft pillow as dino/NxN stickers. */
 function roundedTriSticker(p0: THREE.Vector3, p1: THREE.Vector3, p2: THREE.Vector3, normal: THREE.Vector3): THREE.BufferGeometry {
@@ -228,6 +249,7 @@ export function buildPyraPiece(kind: 'tip' | 'corner' | 'edge', a: number, b = -
 
   const bodyMesh = new THREE.Mesh(roundedBody(planes), bodyMat);
   bodyMesh.userData.simRole = 'body';
+  bodyMesh.userData.schematicGeom = exactBody(planes);
   group.add(bodyMesh);
 
   for (const m of pieceFaces(kind, a, b)) {
@@ -247,8 +269,12 @@ export function buildPyraPiece(kind: 'tip' | 'corner' | 'edge', a: number, b = -
       const d = Math.min(STICKER_INSET_DIST, toC.length() * 0.5);
       return p.clone().add(toC.setLength(d)).add(lift);
     };
-    const sGeom = roundedTriSticker(inset(tri[0]), inset(tri[1]), inset(tri[2]), nrm);
-    group.add(makeSticker(sGeom, stickerMat(FACE_COLOR[m]), bodyMat, { simStickerNormal: nrm.clone(), pyraFace: m }));
+    const q0 = inset(tri[0]), q1 = inset(tri[1]), q2 = inset(tri[2]);
+    const sGeom = roundedTriSticker(q0, q1, q2, nrm);
+    group.add(makeSticker(sGeom, stickerMat(FACE_COLOR[m]), bodyMat, {
+      simStickerNormal: nrm.clone(), pyraFace: m,
+      schematicGeom: strictTriSticker(q0, q1, q2, nrm),
+    }));
   }
 
   // Shrink the whole piece toward its home centroid: world = pivot · ((1−s)·c + s·p).
@@ -275,6 +301,12 @@ export function buildCore(): THREE.Mesh {
   const geom = new THREE.SphereGeometry(PYRA_A * 0.56, 32, 24);
   const mesh = new THREE.Mesh(geom, coreMat);
   mesh.userData.simRole = 'core';
+  // 示意版核:0.9 缩放正四面体 —— 缝隙里露出的是平行于外表面的平面(直边黑带)
+  // 而非球面曲线碎片。0.9A 深于收缩后任何外表面(shrink 后最浅面 ≈0.93A),不外
+  // 穿;四面体对 120° 顶点转动不变,静止帧导出姿态下永不穿层。
+  mesh.userData.schematicGeom = new ConvexGeometry(
+    VDIR.map((v) => new THREE.Vector3(...v).multiplyScalar(PYRA_A * 0.9)),
+  );
   return mesh;
 }
 

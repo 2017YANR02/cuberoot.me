@@ -999,11 +999,11 @@ export function exportSimSvg(opts: SimSvgExportOptions): string {
   let curD: string[] = [];
   let clipId = 0;
 
-  // join 不设 round:全部直线段(默认 miter,极尖角由 miterlimit 自动削成直切),
-  // 与 BSP 导出器同策略,防小碎片被描成圆团。
+  // join 用 bevel:round 把小碎片描成圆团,miter 在微锯齿顶点长针刺;bevel 一刀
+  // 直切、零外延,与 BSP 导出器同策略。
   const flush = (): void => {
     if (curD.length === 0) return;
-    const opAttr = curOp < 1 ? ` fill-opacity="${fmt(curOp)}"` : ` stroke="${curFill}" stroke-width="1.2"`;
+    const opAttr = curOp < 1 ? ` fill-opacity="${fmt(curOp)}"` : ` stroke="${curFill}" stroke-width="1.2" stroke-linejoin="bevel"`;
     body.push(`<path d="${curD.join('')}" fill="${curFill}"${opAttr}/>`);
     curD = [];
   };
@@ -1027,7 +1027,7 @@ export function exportSimSvg(opts: SimSvgExportOptions): string {
       if (sw < 1.2) {
         flush();
         const op = p.opacity < 1 ? ` fill-opacity="${fmt(p.opacity)}"` : '';
-        const st = p.opacity < 1 ? '' : ` stroke="${p.fill}" stroke-width="${fmt(sw)}"`;
+        const st = p.opacity < 1 ? '' : ` stroke="${p.fill}" stroke-width="${fmt(sw)}" stroke-linejoin="bevel"`;
         body.push(`<path d="${d}" fill="${p.fill}"${op}${st}/>`);
         continue;
       }
