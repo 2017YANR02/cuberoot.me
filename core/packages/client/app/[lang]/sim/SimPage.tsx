@@ -30,6 +30,7 @@ import {
   X,
 } from 'lucide-react';
 import World, { type PuzzleKind } from './engine/world';
+import { exportSimSvgBsp } from './sim_svg_export_bsp';
 import type Cube from './engine/nxn/cube';
 import { SIZE } from './engine/define';
 import { createBackView, type BackView } from './engine/backView';
@@ -1685,6 +1686,66 @@ export default function SimPage() {
   }, [imageStudioSupported, imgPuzzle, imgInherit, imgSpec,
       settings.viewAngle, settings.viewGradient, settings.perspective, setImgSpec]);
 
+  // ── 引擎 BSP 伴图镜像(sr 退役计划 Phase 3)──────────────────────────────
+  // 异形(sq1/pyraminx/megaminx/skewb)iso 伴图不再走 sr-puzzlegen 的近似角度
+  // 标定,而是把引擎场景本身经 BSP 解析隐面消除导出为矢量 SVG(sim_svg_export_bsp)
+  // —— 相机/配色/状态与左边同源,天然一致,无毛刺。rAF 低频采样场景几何签名,
+  // 连续两拍不变(≈0.25s 静止)才导出一次;twist 动画 / 拖动期间不重算,伴图
+  // 显示上一静止帧。回退后悔药:/sim?img_engine=sr 走旧 sr 路径。
+  const [srCompanionForced] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    try { return new URLSearchParams(window.location.search).get('img_engine') === 'sr'; } catch { return false; }
+  });
+  const [engineSvg, setEngineSvg] = useState<string | null>(null);
+  useEffect(() => {
+    const active = imageStudioSupported && imageOpen && imgPuzzle.puzzleType !== 'cube' && !srCompanionForced;
+    if (!active) { setEngineSvg(null); return; }
+    let raf = 0;
+    let frame = 0;
+    let lastSig = '';
+    let stable = 0;
+    let exportedSig = '';
+    let disposed = false;
+    const sigOf = (world: World): string => {
+      let h = 0;
+      const mix = (v: number): void => { h = (h * 31 + Math.round(v * 1000)) | 0; };
+      mix(world.width); mix(world.height);
+      const ce = world.camera.matrixWorld.elements;
+      mix(ce[12]); mix(ce[13]); mix(ce[14]);
+      world.scene.traverseVisible((o) => {
+        const m = o as THREE.Mesh;
+        if (!m.isMesh) return;
+        const e = m.matrixWorld.elements;
+        mix(e[12]); mix(e[13]); mix(e[14]); mix(e[0]); mix(e[5]); mix(e[9]);
+        const im = m as THREE.InstancedMesh;
+        if (im.isInstancedMesh) mix(im.instanceMatrix.version);
+      });
+      return String(h);
+    };
+    const tick = (): void => {
+      if (disposed) return;
+      raf = requestAnimationFrame(tick);
+      if (++frame % 8 !== 0) return; // ~7.5Hz 采样
+      const world = worldRef.current;
+      if (!world) { if (exportedSig) { exportedSig = ''; setEngineSvg(null); } return; }
+      world.scene.updateMatrixWorld(true);
+      const sig = sigOf(world);
+      if (sig !== lastSig) { lastSig = sig; stable = 0; return; }
+      if (stable < 1) { stable++; return; }
+      if (sig === exportedSig) return;
+      exportedSig = sig;
+      try {
+        setEngineSvg(exportSimSvgBsp({ world }));
+      } catch (err) {
+        console.warn('[sim] BSP companion export failed', err);
+        setEngineSvg(null); // 本帧回退 sr 渲染
+      }
+    };
+    raf = requestAnimationFrame(tick);
+    return () => { disposed = true; cancelAnimationFrame(raf); };
+  }, [imageStudioSupported, imageOpen, imgPuzzle.puzzleType, srCompanionForced,
+      settings.faceColors, query.stickering, query.stickeringColor]);
+
   // 2D flat-net view mode — NxN only (number puzzle), driven by the same live cube.
   const netMode = settings.viewMode === 'net' && typeof puzzleParam === 'number';
 
@@ -1909,6 +1970,7 @@ export default function SimPage() {
               onSpecChange={setImgSpec}
               simBridge={simBridge}
               previewHost={imageHost}
+              engineSvg={engineSvg}
             />
           ) : (
             // spec 渲染器不支持的拼图(枫叶 / 恐龙 / 齿轮 / PG 骨架族等)仍给

@@ -223,10 +223,17 @@ export interface PuzzleImageProps {
    * wca views; visualcube iso/plan and sr-puzzlegen emit no ids and stay silent.
    */
   onStickerClick?: (sid: StickerId) => void;
+  /**
+   * /sim 引擎 BSP 矢量镜像(sim_svg_export_bsp,SimPage 静止帧生成):有值时
+   * iso 变体不再走 sr-puzzlegen,直接显示引擎自己的精确矢量投影 —— 相机 / 配色 /
+   * 状态天然一致,无需 SR_ANGLE_BASE 标定。top 变体(俯视示意图)不受影响。
+   * sr 退役计划 Phase 3,回退:/sim?img_engine=sr。
+   */
+  engineSvg?: string | null;
 }
 
 export default function PuzzleImage({
-  spec, className, onSpecChange, interactive = true, onStickerClick,
+  spec, className, onSpecChange, interactive = true, onStickerClick, engineSvg,
 }: PuzzleImageProps) {
   const { renderer, draggable, extraClass } = entryFor(spec);
   const wantIds = !!onStickerClick;
@@ -376,6 +383,14 @@ export default function PuzzleImage({
   }
 
   if (renderer === 'sr-puzzlegen') {
+    if (engineSvg && spec.puzzleVariant !== 'top') {
+      // 引擎镜像是全尺寸画布投影;钉成方形显示框,viewBox + 默认 meet 保比例。
+      const sized = engineSvg.replace(
+        /<svg\b([^>]*?)\swidth="[^"]*"\sheight="[^"]*"/,
+        `<svg$1 width="${spec.imageSize}" height="${spec.imageSize}"`,
+      );
+      return <div className={cls} dangerouslySetInnerHTML={{ __html: sized }} />;
+    }
     const kind = srKindOf(spec.puzzleType, spec.puzzleVariant)!;
     const rotations = !rotationsMatchDefault(spec) ? [
       { [srPromoteAxis(spec.puzzleType, spec.rotateAxis1)]: spec.rotateAngle1 },
