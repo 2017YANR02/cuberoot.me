@@ -1741,8 +1741,12 @@ export default function SimPage() {
       if (sig === exportedSig) return;
       exportedSig = sig;
       if (bspSceneAudit(world.scene).miscolors) { setEngineSvg(null); return; } // 原核分色:回退旧渲染器
+      // 拼图带严格版几何(userData.schematicGeom)时走示意模式:每个小面 = 严格
+      // 多边形 path、平色;没有的拼图仍导实模投影。
+      let schematic = false;
+      world.scene.traverse((o) => { if (o.userData.schematicGeom) schematic = true; });
       try {
-        setEngineSvg(exportSimSvgBsp({ world, maxTriangles: MAX_TRIS }));
+        setEngineSvg(exportSimSvgBsp({ world, maxTriangles: MAX_TRIS, schematic }));
       } catch (err) {
         if (!(err instanceof Error && err.message.startsWith('SVG_TOO_COMPLEX'))) {
           console.warn('[sim] BSP companion export failed', err);
