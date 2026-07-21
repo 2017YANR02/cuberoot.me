@@ -197,9 +197,64 @@
   margin: 0.15rem 0;
 }
 
-/* 正文中英对照:en 段与 zh 段之间留白分隔(无框,靠 gap) */
+/* ── 中英显示模式 ──────────────────────────────────────────
+   both「中英对照」:每段前置极小语言标签(EN / 中),EN、中 各占一行/一块;
+   拉丁 vs 汉字脚本本身 + 标签双重区分,不再挤成一串。
+   single:只渲染当前站点语言那一种,无标签,无混排问题。 */
+
+/* 语言标签:低调不抢内容(非「框」,是标注);hover 不随标题变 accent。 */
+.wiki-lang-tag {
+  flex: 0 0 auto;
+  align-self: baseline;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  line-height: 1.4;
+  color: var(--muted-foreground);
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  border-radius: 3px;
+  padding: 1px 4px;
+  user-select: none;
+}
+
+/* 标题对照:EN 一行、中 一行;EN 保持 600(继承),中 略轻做层级。 */
+.wiki-head-line {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.wiki-head-line + .wiki-head-line {
+  margin-top: 3px;
+}
+.wiki-head-line .wiki-lang-tag {
+  transform: translateY(-1px);
+}
+.wiki-head-zh {
+  font-weight: 500;
+}
+
+/* 正文对照:标签 + 文本块两列;en 段与 zh 段留白分隔(无框,靠 gap)。 */
+.wiki-body-lang {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
 .wiki-body-lang + .wiki-body-lang {
-  margin-top: 0.3rem;
+  margin-top: 0.35rem;
+}
+.wiki-body-lang .wiki-lang-tag {
+  margin-top: 0.18rem;
+}
+.wiki-body-lang-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* 右上角「中英对照」开关 */
+.wiki-bi-toggle {
+  flex: 0 0 auto;
+  font-size: 0.85rem;
 }
 
 .wiki-entry-body a {
