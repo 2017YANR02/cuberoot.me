@@ -218,16 +218,20 @@
   user-select: none;
 }
 
-/* 标题对照:EN 一行、中 一行;EN 保持 600(继承),中 略轻做层级。 */
-.wiki-head-line {
-  display: flex;
+/* 标题对照:EN、中 同一行,段间留白;窄屏放不下才自动换行。
+   EN 保持 600(继承),中 略轻做层级。 */
+.wiki-head-bi {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 3px 12px;
+}
+.wiki-head-seg {
+  display: inline-flex;
   align-items: baseline;
   gap: 6px;
 }
-.wiki-head-line + .wiki-head-line {
-  margin-top: 3px;
-}
-.wiki-head-line .wiki-lang-tag {
+.wiki-head-bi .wiki-lang-tag {
   transform: translateY(-1px);
 }
 .wiki-head-zh {
