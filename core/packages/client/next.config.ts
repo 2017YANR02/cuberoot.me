@@ -273,6 +273,14 @@ const nextConfig: NextConfig = {
         ...(process.env.NODE_ENV === "development"
           ? [{ source: "/v1/forum/:path*", destination: "http://127.0.0.1:3001/v1/forum/:path*" }]
           : []),
+        // Dev + opt-in (LOCAL_ALG=1): serve the alg API from a locally-run Hono
+        // server (:3001) against local pg13, so alg data edits (case moves, subgroup
+        // renames, new algs) can be verified locally BEFORE push. Everything else still
+        // hits prod — same selective-proxy trick as /v1/forum above, so this local DB
+        // only needs the alg tables. Seed + run: packages/server/scripts/README.md.
+        ...(process.env.NODE_ENV === "development" && process.env.LOCAL_ALG === "1"
+          ? [{ source: "/v1/alg/:path*", destination: "http://127.0.0.1:3001/v1/alg/:path*" }]
+          : []),
         // Dev: proxy backend so loadAlg() etc. don't trip CORS from 127.0.0.1.
         // In prod, apiUrl() builds absolute https://api.cuberoot.me URLs directly.
         { source: "/v1/:path*", destination: "https://api.cuberoot.me/v1/:path*" },
