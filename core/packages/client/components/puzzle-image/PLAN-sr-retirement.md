@@ -37,6 +37,7 @@ sr 共 12 种 visualizer type、5 类拼图:
 | 全部 `*-net` | ❌ | cubing.js 2D net(server `cubing_render.ts`) |
 
 用到的 sr 特性:`alg`/`case`(自带模拟器)、`rotations`、`cameraDist`(fork 收编的透视选项)、`scheme`(整面配色)、`mask`(灰化,经派生表 `SR_INDEX_MAP` 映射;sq1 不可 mask 是 sr 结构限制)、viewBox 裁剪(minx/miny/svgWidth/svgHeight)、strokeWidth。**没人用**:`arrows`、`stickerColors`、sr 的 net/cube 系列。
+（2026-07-21:`arrows` 与 `color.stroke` 逐色描边已按用户要求提前移植进 `sim_svg_export_schematic.ts`——箭头走 `opts.arrows` 世界坐标线段,逐色描边走 sticker `userData.schematicStroke`;站内暂无消费方,备将来用。）
 
 ## 3. 消费方清单(切换时逐个勾)
 
