@@ -30,6 +30,7 @@
 - **pitch 偏离默认后近似跟踪**:pyra/mega 的 pitch 有常量偏移(additive 角度模型,tilt 基座不与 yaw/pitch 交换),默认精确、偏离近似。yaw 对 mega 是 1:1、对 pyra 连续。根治需把基座姿态改成「前置固定旋转 + 世界系 yaw/pitch」模型(改 SimPage↔PuzzleImage 契约,风险高),暂不做。
 - **alg vs setup 语义**:面板对 `alg` 显**末态**(应用 setup+alg),左边 twisty 对 `alg` 显**起始态**(待播放)。有 `alg`(非 setup)时两图天然不同 —— 这是交互播放器 vs 静态快照的固有区别,非 bug。`setup`(打乱)两边都应用、一致。
 - **sq1/mega 记号未逐一 live 核**:sq1 经 `canonicalSq1Alg` 桥接、mega 喂 Pochmann 两边都解析(research 判定一致);skewb+pyra 已实测。如需可后续对 sq1/mega 各做一次 `setup=<move>` 左右比对。
+- **记号桥单一源(2026-07-21)**:sq1 记号(parse/invert/canonical/compact/simplify + tnoodle 状态应用)收进 `@cuberoot/shared/sq1-notation`,client/server/scramble-stats-build 四份拷贝全删;skewb invert 统一走 `@cuberoot/shared/skewb-notation`(扩到 UL/UR 双字母)。顺带修 `skewb_pyramid_svg`(skewb-top)三个真 bug:x/y/z 旋转矩阵三轴全反(已按 y U y'≡UL 等共轭恒等式校正)、UL/UR token 被丢弃(接上 ULF/URB 矩阵)、X2 逆错(现按模阶计净转数,X2' 可解析)。
 
 ## 标定法(如需再标)
 temp 在 `PuzzleSVG.tsx` 的 `import('@cuberoot/vendor-sr-puzzlegen').then((mod)` 回调里挂 `window.__srMod=mod`(用完删;sr 已收编为 workspace 包,无 runtime patch),浏览器 eval `mod.SVG(host, mod.Type.XXX, {width,height,puzzle:{scheme,rotations}})` 扫候选栅格对左边 GL canvas 目视选。判据=左边(实际默认渲染器)。彩虹 scheme 读键位:megaminx 12 键 `{U F R dr dl L d br BR BL bl b}`、pyraminx 4 键 `{left right top back}`。滑杆 index:灵敏0 缩放1 透视2 Yaw(左右)3 Pitch(上下)4 转速5。
