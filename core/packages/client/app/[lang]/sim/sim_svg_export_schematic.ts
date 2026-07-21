@@ -109,7 +109,10 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
     return s + 'Z';
   };
 
-  const stroke = strokeW > 0 ? ` stroke="#000000" stroke-width="${fmt(strokeW)}"` : '';
+  // join=round 照抄 sr(svg.ts):透视压扁的小面投影角可以极尖,miter 会沿角
+  // 平分线拉出长针(内部结点偶有盖不住的露出来 = "刺");round 的圆帽半径只有
+  // 半描边宽,黑压黑不可见。外缘的圆帽由凸包裁剪 + 外框线兜住,不上轮廓。
+  const stroke = strokeW > 0 ? ` stroke="#000000" stroke-width="${fmt(strokeW)}" stroke-linejoin="round"` : '';
   const paths = facelets.map((f) => `<path d="${dOf(f.pts)}" fill="${f.fill}"${stroke}/>`).join('');
 
   // 外轮廓 = 可见小面投影的凸包(静止魔方是凸体)。小面描边在外缘晶格点的
