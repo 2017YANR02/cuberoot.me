@@ -108,6 +108,7 @@ import { toEngineMask } from '@/lib/puzzle-image/puzzle-mask';
 import GroupTheoryPanel, { type SimWorldView } from './GroupTheoryPanel';
 import { nxnHasPgKernel } from './engine/nxn/nxnPgBridge';
 import { stickeringMaskFn } from './engine/nxn/stickering';
+import { resolveStageMaskFn } from './engine/nxn/vcStageMask';
 import SimCubeNet from './_SimCubeNet';
 import {
   loadKeymap, saveKeymap, resetKeymap as resetKeymapStorage, type KeyMove,
@@ -1477,8 +1478,12 @@ export default function SimPage() {
     if (!world) return;
     const cube = asNxN(world);
     if (!cube) return;
+    // 引擎自带阶段优先;它不认的名字(visualcube 搬来的整套 MASK)落到 vc 遮罩桥。
     cube.instancedRenderer.setStickering(
-      typeof puzzleParam === 'number' ? stickeringMaskFn(cube.order, query.stickering, query.stickeringColor) : null,
+      typeof puzzleParam === 'number'
+        ? (stickeringMaskFn(cube.order, query.stickering, query.stickeringColor)
+          ?? resolveStageMaskFn(cube.order, query.stickering, query.stickeringColor))
+        : null,
     );
   }, [twisty, worldTick, puzzleParam, query.stickering, query.stickeringColor]);
 
