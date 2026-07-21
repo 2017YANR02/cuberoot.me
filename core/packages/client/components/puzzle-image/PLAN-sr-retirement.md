@@ -54,11 +54,11 @@ sr 共 12 种 visualizer type、5 类拼图:
 | 视图 wca(记分表样式) | tnoodle 风格平面 | 同 net,引擎状态直出 | ⬜ |
 | 图片尺寸 (PX) | svg width/height | 导出参数(viewBox 已有,补输出尺寸) | ⬜ |
 | 箭头(面/从/到/过/缩放/影响/颜色 + DSL + 默认箭头色) | arrows 解析 + renderArrows | 导出器 `opts.arrows` 已通(世界坐标线段);差 DSL(`U0U2-red`)→ 贴纸中心坐标解析层 + UI 透传 | ⬜(底层 ✅) |
-| MASK 预设(fl/f2l/oll… + rot) | mask 枚举 | canonical DSL → 引擎贴纸 key 直映(Phase 3 条目) | ◐(pyra/skewb/mega 通;NxN posit、sq1 id 空间待做) |
-| 贴纸遮罩(`U:0,2;F:3-5` + 点选编辑) | facelet 级遮罩 | 同上直映层;点选编辑 UI 照搬 | ◐(同上) |
-| 壳体色 | cubeColor | 导出器 bodyColor 参数(inset 衬底色) | ✅(2026-07-21 inset 模型落地) |
-| 壳体不透明度 | cubeOpacity | 导出器 bodyOpacity | ✅(参数已留) |
-| 贴纸不透明度 | stickerOpacity | 导出器 stickerOpacity | ✅(参数已留) |
+| MASK 预设(fl/f2l/oll… + rot) | mask 枚举 | ①非 NxN 走 canonical DSL → 引擎贴纸 key 直映;②**NxN 整套 visualcube MASK 已并进 /sim 主魔方 stickering 下拉**(`engine/nxn/vcStageMask.ts`:复用 `makeMasking` + 标准展开图桥,逐小面二值灰化 3D 真机,伴图读 mesh 色天然跟随;按语义去重引擎自带阶段;crossColor 重定向)| ◐→**NxN ✅**(pyra/skewb/mega 直映通;sq1 id 空间待做) |
+| 贴纸遮罩(`U:0,2;F:3-5` + 点选编辑) | facelet 级遮罩 | 同上直映层;点选编辑 UI 照搬 | ◐(pyra/skewb/mega 通;NxN 伴图直映、sq1 待做) |
+| 壳体色 | cubeColor | 导出器 bodyColor 参数(inset 衬底色) | ✅(已接 /sim 引擎伴图,2026-07-21) |
+| 壳体不透明度 | cubeOpacity | 导出器 bodyOpacity | ✅(已接引擎伴图) |
+| 贴纸不透明度 | stickerOpacity | 导出器 stickerOpacity | ✅(已接引擎伴图) |
 | 投影距离 | dist(透视强度) | 引擎相机距离/fov 映射 | ⬜ |
 | 黑边(网格缝宽) | inset 0.85 + 底色缝 | 示意导出器 inset 模型(滑块 = 缝宽占小面比例) | ✅(2026-07-21) |
 

@@ -170,7 +170,7 @@ const CROSS_COLOR_TO_FACE: Record<CrossColor, FACE> = {
 
 /** 物理坐标 → 遮罩坐标 的整体旋转(det=+1)+ 面置换(下标物理面 → 遮罩面),
  *  键 = 充当 D 的物理面。FACE 编码 L0 R1 D2 U3 B4 F5。 */
-type CrossXform = {
+export type CrossXform = {
   map: (x: number, y: number, z: number, max: number) => readonly [number, number, number];
   facePerm: readonly FACE[];
 };
@@ -183,6 +183,12 @@ const CROSS_XFORMS: Record<FACE, CrossXform> = {
   [FACE.L]: { map: (x, y, z, m) => [m - y, x, z], facePerm: [2, 3, 1, 0, 4, 5] },     // z'
 };
 
+/** 十字(底面)颜色 → 物理坐标/面 到遮罩坐标系的整体旋转(共轭)。visualcube
+ *  阶段遮罩(vcStageMask.ts)复用同一旋转,阶段随所选底色重定向。 */
+export function crossXform(crossColor?: string): CrossXform {
+  return CROSS_XFORMS[CROSS_COLOR_TO_FACE[(crossColor ?? "yellow") as CrossColor] ?? FACE.D];
+}
+
 /** 阶段名 → (initial, face) 遮罩函数;full / 未知阶段返回 null(= 全原色)。
  *  crossColor:十字(底面)颜色,未知值回退 yellow(=D,恒等)。 */
 export function stickeringMaskFn(order: number, name: string, crossColor?: string): StickeringMaskFn | null {
@@ -191,7 +197,7 @@ export function stickeringMaskFn(order: number, name: string, crossColor?: strin
   if (!rules || rules.length === 0) return null;
   const max = order - 1;
   const N2 = order * order;
-  const xf = CROSS_XFORMS[CROSS_COLOR_TO_FACE[(crossColor ?? "yellow") as CrossColor] ?? FACE.D];
+  const xf = crossXform(crossColor);
   return (initial, face) => {
     const [x, y, z] = xf.map(initial % order, ((initial / order) | 0) % order, (initial / N2) | 0, max);
     const p: Piece = { x, y, z };

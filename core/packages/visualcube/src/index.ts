@@ -9,6 +9,12 @@ import { parseOptions } from './cube/parsing/options.js'
 import { parseFaceletDefinitions } from './cube/parsing/faceletDefinitions.js'
 
 export { Masking, Face, AllFaces } from './cube/constants.js'
+// makeMasking(mask, cubeSize) → per-face colored/masked booleans. Pure mask DATA
+// (no rendering); reused by /sim engine stickering to offer every visualcube stage
+// mask on the live 3D cube (PLAN-sr-retirement §2b). Stays here until visualcube
+// is retired, then the data relocates with it.
+export { makeMasking } from './cube/masking.js'
+export type { FaceValues } from './cube/masking.js'
 export { Axis } from './math.js'
 export { StickerDefinition } from './cube/models/sticker.js'
 export { Arrow } from './cube/models/arrow.js'

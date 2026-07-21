@@ -5,6 +5,7 @@
 import { useMemo } from 'react';
 import { useT } from '@/hooks/useT';
 import { CROSS_COLORS, stickeringGroupsFor, type StickeringGroup } from './engine/nxn/stickering';
+import { visualcubeStageGroups, VC_MASK_LABEL } from './engine/nxn/vcStageMask';
 import type { SimPuzzle } from './PlayerControls';
 
 // 十字(底面)颜色标签(标准配色 U=白 D=黄 F=绿 B=蓝 R=红 L=橙)。
@@ -39,7 +40,8 @@ function itemLabel(name: string, t: (zh: string, en: string) => string): string 
   if (name === 'centers-only') return t('仅中心', 'centers only');
   if (name === 'opposite-centers') return t('对面中心', 'opposite centers');
   if (name.startsWith('experimental-fto-')) return name.slice('experimental-fto-'.length).toUpperCase();
-  return name;
+  // visualcube 遮罩用 masks.ts 的人读标签(XCross FR / DR R / Mehta Belt2…)。
+  return VC_MASK_LABEL[name] ?? name;
 }
 
 function groupLabel(group: string, t: (zh: string, en: string) => string): string {
@@ -51,6 +53,10 @@ function groupLabel(group: string, t: (zh: string, en: string) => string): strin
     case 'Reduction': return t('降阶', 'Reduction');
     case 'General': return t('通用', 'General');
     case 'Miscellaneous': return t('其它', 'Miscellaneous');
+    // visualcube 搬来的遮罩(退役对照表 §2b)
+    case 'VCMasks': return t('遮罩', 'Masks');
+    case 'VCMasksExt': return t('遮罩(进阶)', 'Masks (extended)');
+    case 'VCMasksSize': return t('遮罩(阶专属)', 'Masks (this size)');
     // CFOP / ZZ / Petrus / Nautilus / FMC / Ortega / Bencisco:通用名,双语同形
     default: return group;
   }
@@ -67,7 +73,8 @@ export default function StickeringSelect({ puzzleKind, value, onChange, color, o
 }) {
   const t = useT();
   const groups = useMemo<StickeringGroup[]>(() => {
-    if (typeof puzzleKind === 'number') return stickeringGroupsFor(puzzleKind);
+    // NxN:引擎自带阶段(方法学 CFOP/ZZ/Roux/…)+ visualcube 整套 MASK 清单(去重)。
+    if (typeof puzzleKind === 'number') return [...stickeringGroupsFor(puzzleKind), ...visualcubeStageGroups(puzzleKind)];
     if (puzzleKind === 'megaminx') return MEGAMINX_GROUPS;
     if (puzzleKind === 'fto') return FTO_GROUPS;
     return [];
