@@ -8,7 +8,9 @@ import { checkRateLimit } from '../utils/recon_helpers.js';
  *
  *   POST /trainer/rooms                  — 建房:{puzzle,set,order,keys[]} → {code,round,total,order}
  *   GET  /trainer/rooms/:code            — 房间状态(轮询合并进度):{round,total,claimed,done,...}
- *   POST /trainer/rooms/:code/claim      — 领取下一题:{round} → {caseKey,index,round,total} | {done} | {advanced}
+ *   POST /trainer/rooms/:code/claim      — 领取下一题:{round,count?} → {caseKey,index,cases,round,total} | {done} | {advanced}
+ *                                          count(默认1,夹1..12)一次占多格(三条一屏);cases[]=本次领到的格,
+ *                                          顶层 caseKey/index=首格(兼容旧前端);一次 HTTP = 一次限流额度
  *   POST /trainer/rooms/:code/next-round — 开下一轮(CAS,只第一个成功):{round} → {round,total}
  *
  * 无需登录 —— 房间码即身份。核心是「领取」原子出队:一条 UPDATE 把游标 +1 并返回该格 case_key,
@@ -145,10 +147,13 @@ trainerRoomsRoutes.post('/trainer/rooms/:code/claim', async (c) => {
   const code = parseCode(c.req.param('code'));
   if (!code) return c.json({ error: 'invalid code' }, 400);
 
-  let body: { round?: unknown };
+  let body: { round?: unknown; count?: unknown };
   try { body = await c.req.json(); } catch { body = {}; }
   const reqRound = Number.isInteger(body.round) ? (body.round as number) : null;
   if (reqRound == null || reqRound < 1) return c.json({ error: 'invalid round' }, 400);
+  // count:一次占多格(三条一屏一次三格)。默认 1,夹 1..12 防一口气占太多。
+  const countRaw = Number.isInteger(body.count) ? (body.count as number) : 1;
+  const count = Math.min(Math.max(countRaw, 1), 12);
 
   const head = await query<{ round: number; total: number }>(
     'SELECT round, total FROM trainer_rooms WHERE code = ?', [code],
@@ -161,23 +166,33 @@ trainerRoomsRoutes.post('/trainer/rooms/:code/claim', async (c) => {
     return c.json({ advanced: true, round: room.round, total: room.total });
   }
 
-  // 原子出队:游标 +1 并取回该格 case_key(行锁保证并发下每格只发一次)
-  const claimed = await query<{ idx: number; case_key: string; round: number; total: number }>(
-    `WITH claimed AS (
-       UPDATE trainer_rooms
-       SET next_index = next_index + 1, updated_at = ?
-       WHERE code = ? AND round = ? AND next_index < total
-       RETURNING next_index - 1 AS idx, queue, round, total
-     )
-     SELECT idx, (queue ->> idx) AS case_key, round, total FROM claimed`,
-    [Date.now(), code, reqRound],
-  );
-  if (claimed[0]) {
+  // 逐格原子出队 count 次:每次都是「游标 +1 并取回该格 case_key」的行锁原子操作(并发下每格只发
+  // 一次;两台一起 batch 领取,拿到的下标交错但绝不重复)。一次 HTTP = 一次限流额度,batch 内多个
+  // DB 往返都在本进程 + 本地 PG,开销可忽略。领到 total 边界就提前停(cases 可能少于 count)。
+  const cases: { caseKey: string; index: number }[] = [];
+  let lastRound = room.round, lastTotal = room.total;
+  for (let i = 0; i < count; i++) {
+    const claimed = await query<{ idx: number; case_key: string; round: number; total: number }>(
+      `WITH claimed AS (
+         UPDATE trainer_rooms
+         SET next_index = next_index + 1, updated_at = ?
+         WHERE code = ? AND round = ? AND next_index < total
+         RETURNING next_index - 1 AS idx, queue, round, total
+       )
+       SELECT idx, (queue ->> idx) AS case_key, round, total FROM claimed`,
+      [Date.now(), code, reqRound],
+    );
+    if (!claimed[0]) break;
     const row = claimed[0];
-    return c.json({ caseKey: row.case_key, index: row.idx, round: row.round, total: row.total });
+    lastRound = row.round; lastTotal = row.total;
+    cases.push({ caseKey: row.case_key, index: row.idx });
+  }
+  if (cases.length > 0) {
+    // 顶层 caseKey/index = 首格,兼容尚未升级的旧前端(它只读顶层单格);cases[] 给新前端多格
+    return c.json({ caseKey: cases[0].caseKey, index: cases[0].index, cases, round: lastRound, total: lastTotal });
   }
 
-  // 没领到:要么本轮领完,要么刚好被别人开了下一轮 —— 复查 round 区分
+  // 一格没领到:要么本轮领完,要么刚好被别人开了下一轮 —— 复查 round 区分
   const after = await query<{ round: number; total: number }>(
     'SELECT round, total FROM trainer_rooms WHERE code = ?', [code],
   );
