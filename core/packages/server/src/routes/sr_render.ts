@@ -18,6 +18,7 @@ import { SVG as srSVG } from '@cuberoot/vendor-sr-puzzlegen';
 import { renderSkewbPyramidSvgParametric } from '@cuberoot/shared/skewb-pyramid-svg';
 import { invert as invertSkewbAlg } from '@cuberoot/shared/skewb-notation';
 import { canonicalSq1Alg } from '@cuberoot/shared/sq1-notation';
+import { parseViewRotations, srPromoteAxis } from '@cuberoot/shared/sr-rotations';
 
 let domReady: Promise<void> | null = null;
 function ensureDom(): Promise<void> {
@@ -41,19 +42,16 @@ function srTypeOf(puzzle: Puzzle, variant: Variant): string | null {
   return null;
 }
 
-/** Parse `r=y30x-30` style into sr-puzzlegen rotations. Drops z. */
+/** Parse `r=y30x-30` style into sr-puzzlegen rotations (shared grammar +
+ *  sq1/pyraminx y→z promotion). Takes the first two axis pairs. */
 function parseRotations(
   r: string | undefined,
   puzzle: Puzzle,
 ): { x?: number; y?: number; z?: number }[] | undefined {
-  if (!r) return undefined;
-  const matches = [...r.matchAll(/([xy])(-?\d{1,3})/g)];
-  if (matches.length === 0) return undefined;
-  // sq1 / pyraminx use Z-up internally — promote y→z (matches client editor).
-  const promote = (axis: string): string =>
-    (puzzle === 'sq1' || puzzle === 'pyraminx') && axis === 'y' ? 'z' : axis;
-  return matches.slice(0, 2).map((m) => ({
-    [promote(m[1])]: parseInt(m[2], 10),
+  const parsed = parseViewRotations(r);
+  if (parsed.length === 0) return undefined;
+  return parsed.slice(0, 2).map((p) => ({
+    [srPromoteAxis(puzzle, p.axis)]: p.angle,
   })) as { x?: number; y?: number; z?: number }[];
 }
 

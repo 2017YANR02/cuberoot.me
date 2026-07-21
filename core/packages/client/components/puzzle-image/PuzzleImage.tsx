@@ -27,6 +27,7 @@ import { CUBE_FILL } from '@/lib/cube-colors';
 import { SQ1_COLORS } from '@/app/[lang]/sim/engine/sq1/sq1Colors';
 import { invertAlg } from '@/lib/cube3';
 import { rotationDefaultsFor, rotationsMatchDefault } from '@/lib/puzzle-image/defaults';
+import { srPromoteAxis } from '@cuberoot/shared/sr-rotations';
 import { renderSpecSvg, srKindOf } from '@/lib/puzzle-image/render';
 import type { StickerId } from '@/lib/puzzle-image/mask-core';
 import type { ImageSpec, PuzzleType } from '@/lib/puzzle-image/types';
@@ -141,15 +142,6 @@ function entryFor(s: ImageSpec): { renderer: RendererId; draggable: boolean; ext
   const e = REGISTRY[registryKey(s)] ?? FALLBACK;
   const renderer = typeof e.renderer === 'function' ? e.renderer(s) : e.renderer;
   return { renderer, draggable: e.draggable, extraClass: RENDERER_CLASS[renderer] };
-}
-
-/** sr-puzzlegen's own axis naming. sq1 spins about z where we say y (bird's-eye top layer).
- *  pyraminx's sr default view is a z-roll ([{z:60},{x:-60}] in defaultPyraminxOptions) — the
- *  apex-up kite that matches the cubing.js left — so we map our y→z too, letting the explicit
- *  rotation REPRODUCE that default (rather than override it with a bare identity) and track
- *  continuously off it. megaminx/skewb keep y as the vertical spin axis. */
-function srPuzzleAxis(type: PuzzleType, axis: string): string {
-  return (type === 'sq1' || type === 'pyraminx') && axis === 'y' ? 'z' : axis;
 }
 
 // Perspective calibration: map the shared visualcube `dist` (透视 slider → 2..10, default 6
@@ -386,8 +378,8 @@ export default function PuzzleImage({
   if (renderer === 'sr-puzzlegen') {
     const kind = srKindOf(spec.puzzleType, spec.puzzleVariant)!;
     const rotations = !rotationsMatchDefault(spec) ? [
-      { [srPuzzleAxis(spec.puzzleType, spec.rotateAxis1)]: spec.rotateAngle1 },
-      { [srPuzzleAxis(spec.puzzleType, spec.rotateAxis2)]: spec.rotateAngle2 },
+      { [srPromoteAxis(spec.puzzleType, spec.rotateAxis1)]: spec.rotateAngle1 },
+      { [srPromoteAxis(spec.puzzleType, spec.rotateAxis2)]: spec.rotateAngle2 },
     ] as { x?: number; y?: number; z?: number }[] : undefined;
     return (
       <div className={cls} {...dragHandlers}>
