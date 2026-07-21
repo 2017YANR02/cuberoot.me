@@ -133,8 +133,24 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
     }
   }
 
-  const bg = opts.background ? `<rect width="100%" height="100%" fill="${opts.background}"/>` : '';
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${bg}${content}</svg>`;
+  // viewBox 贴着拼图裁(抄 sr 的紧凑取景):包围盒 + 描边半宽(外框线外沿)+ 1px。
+  // 不裁的话导整张画布,拼图缩在中间、四周大片空边。
+  let bx = 0, by = 0, bw = W, bh = H;
+  if (facelets.length > 0) {
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const f of facelets) {
+      for (let i = 0; i < f.pts.length; i += 2) {
+        if (f.pts[i] < x0) x0 = f.pts[i]; if (f.pts[i] > x1) x1 = f.pts[i];
+        if (f.pts[i + 1] < y0) y0 = f.pts[i + 1]; if (f.pts[i + 1] > y1) y1 = f.pts[i + 1];
+      }
+    }
+    const pad = strokeW / 2 + 1;
+    bx = x0 - pad; by = y0 - pad; bw = x1 - x0 + pad * 2; bh = y1 - y0 + pad * 2;
+  }
+
+  const bg = opts.background
+    ? `<rect x="${fmt(bx)}" y="${fmt(by)}" width="${fmt(bw)}" height="${fmt(bh)}" fill="${opts.background}"/>` : '';
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${Math.max(1, Math.round(bw))}" height="${Math.max(1, Math.round(bh))}" viewBox="${fmt(bx)} ${fmt(by)} ${fmt(bw)} ${fmt(bh)}">${bg}${content}</svg>`;
 }
 
 /** 2D 凸包(Andrew monotone chain),返回逆时针顶点;共线点剔除。 */

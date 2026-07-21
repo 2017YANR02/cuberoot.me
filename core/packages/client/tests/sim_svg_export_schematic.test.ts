@@ -103,6 +103,17 @@ describe('exportSimSvgSchematic', () => {
     expect(svg).not.toContain(CUBE_FILL.F.toLowerCase()); // m=3 绿
   });
 
+  it('viewBox 贴拼图裁剪(sr 的紧凑取景),不导整张画布', () => {
+    const world = makeWorld(buildPyraScene());
+    const svg = exportSimSvgSchematic({ world });
+    const m = svg.match(/viewBox="(-?[\d.]+) (-?[\d.]+) ([\d.]+) ([\d.]+)"/)!;
+    expect(m).not.toBeNull();
+    // 画布 400×400,拼图只占中间一部分 → 裁剪后视窗必须显著小于画布
+    expect(Number(m[3])).toBeLessThan(400);
+    expect(Number(m[4])).toBeLessThan(400);
+    expect(Number(m[1])).toBeGreaterThan(0);
+  });
+
   it('相机跟随:旋转场景后输出改变(几何取自 matrixWorld,非固定标定)', () => {
     const scene = buildPyraScene();
     const world = makeWorld(scene);
