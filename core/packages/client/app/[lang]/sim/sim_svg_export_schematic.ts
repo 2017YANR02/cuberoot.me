@@ -17,6 +17,12 @@
  * 绕向朝外法向;含反烘 PIECE_SHRINK,经 matrixWorld 后落在未收缩的晶格位置,
  * 与邻块严格共点)。多边形按顶点序原样输出 —— 五边形 / 梯形小面同样一条 path,
  * 不会出现三角化内对角线。
+ *
+ * sr 的两个表现力扩展同样移植:
+ *  - 逐色描边:sticker 的 `userData.schematicStroke` 覆盖该面的描边色,缺省黑
+ *    (对应 sr svg.ts 的 `color.stroke || "#000000"`);
+ *  - arrows 箭头层:`opts.arrows` 的世界坐标线段随相机投影,画在所有小面之上、
+ *    不被凸包裁剪(对应 sr renderArrows + createMarkers)。
  */
 import * as THREE from 'three';
 import type World from './engine/world';
@@ -28,6 +34,18 @@ export interface SchematicSvgExportOptions {
   strokeWidth?: number;
   /** 背景色;默认 null = 透明。 */
   background?: string | null;
+  /** 箭头标注层(抄 sr 的 arrows:画在所有小面之上,不被凸包裁剪)。 */
+  arrows?: SchematicArrow[];
+}
+
+/** 教学标注箭头:世界坐标线段,p1 → p2(箭头指向 p2),随引擎相机投影。 */
+export interface SchematicArrow {
+  p1: [number, number, number];
+  p2: [number, number, number];
+  /** 线 + 箭头色;默认黑。 */
+  color?: string;
+  /** 线宽(SVG px);默认取 strokeWidth(strokeWidth 为 0 时 8)。 */
+  width?: number;
 }
 
 /** 场景是否含示意小面(伴图据此在示意 / 实模 BSP 两条导出路径间切换)。 */
@@ -52,10 +70,19 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
   const near = camera.near;
   const camPos = new THREE.Vector3().setFromMatrixPosition(camera.matrixWorld);
 
-  interface Facelet { pts: number[]; fill: string; z: number }
+  interface Facelet { pts: number[]; fill: string; stroke: string; z: number }
   const facelets: Facelet[] = [];
   const v = new THREE.Vector3();
   const v4 = new THREE.Vector4();
+
+  /** 世界坐标单点 → 屏幕坐标;点在近平面之后返回 null。 */
+  const project = (x: number, y: number, z: number): [number, number] | null => {
+    const p = v.set(x, y, z).applyMatrix4(viewMat);
+    if (p.z > -near) return null;
+    v4.set(p.x, p.y, p.z, 1).applyMatrix4(projMat);
+    const inv = 1 / v4.w;
+    return [(v4.x * inv * 0.5 + 0.5) * W, (0.5 - v4.y * inv * 0.5) * H];
+  };
 
   scene.traverseVisible((obj) => {
     const poly = obj.userData.schematicPoly as number[] | undefined;
@@ -67,6 +94,9 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
     if (mat.visible === false) return;
     const c = mat.color;
     const fill = c ? hexOf(c.r, c.g, c.b, false) : '#000000';
+    // 逐色描边(抄 sr svg.ts 的 `color.stroke || "#000000"`):贴纸可经 userData
+    // 覆盖自己的描边色(遮罩灰化 / 强调等),缺省统一黑。
+    const strokeColor = (obj.userData.schematicStroke as string | undefined) ?? '#000000';
 
     // 局部轮廓 → 世界坐标
     const worldPts: THREE.Vector3[] = [];
@@ -97,7 +127,7 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
       pts.push((v4.x * inv * 0.5 + 0.5) * W, (0.5 - v4.y * inv * 0.5) * H);
       zSum += p.z;
     }
-    facelets.push({ pts, fill, z: zSum / view.length });
+    facelets.push({ pts, fill, stroke: strokeColor, z: zSum / view.length });
   });
 
   // 远 → 近(凸体下可见面互不重叠,排序只是对轻微非凸的保护)
@@ -112,8 +142,9 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
   // join=round 照抄 sr(svg.ts):透视压扁的小面投影角可以极尖,miter 会沿角
   // 平分线拉出长针(内部结点偶有盖不住的露出来 = "刺");round 的圆帽半径只有
   // 半描边宽,黑压黑不可见。外缘的圆帽由凸包裁剪 + 外框线兜住,不上轮廓。
-  const stroke = strokeW > 0 ? ` stroke="#000000" stroke-width="${fmt(strokeW)}" stroke-linejoin="round"` : '';
-  const paths = facelets.map((f) => `<path d="${dOf(f.pts)}" fill="${f.fill}"${stroke}/>`).join('');
+  const strokeAttrOf = (color: string): string =>
+    strokeW > 0 ? ` stroke="${color}" stroke-width="${fmt(strokeW)}" stroke-linejoin="round"` : '';
+  const paths = facelets.map((f) => `<path d="${dOf(f.pts)}" fill="${f.fill}"${strokeAttrOf(f.stroke)}/>`).join('');
 
   // 外轮廓 = 可见小面投影的凸包(静止魔方是凸体)。小面描边在外缘晶格点的
   // miter 尖会伸出轮廓线(内部同类尖被邻面描边盖住,轮廓上无遮盖 → "毛刺"),
@@ -129,14 +160,44 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
       const hullD = dOf(hull.flat());
       content = `<clipPath id="sil"><path d="${hullD}"/></clipPath>`
         + `<g clip-path="url(#sil)">${paths}</g>`
-        + `<path d="${hullD}" fill="none"${stroke}/>`;
+        + `<path d="${hullD}" fill="none"${strokeAttrOf('#000000')}/>`;
     }
   }
 
+  // arrows 箭头层(抄 sr renderArrows:所有多边形画完后单独一遍,盖在最上层,
+  // 不参与凸包裁剪 —— 教学标注允许伸出轮廓)。箭头 marker 按色去重生成;
+  // markerUnits 默认 strokeWidth → 箭头三角随线宽缩放(sr createMarkers 同款)。
+  let defs = '';
+  let arrowsOut = '';
+  const arrowPads: { x: number; y: number; pad: number }[] = [];
+  if (opts.arrows?.length) {
+    const markerIds = new Map<string, string>();
+    for (const a of opts.arrows) {
+      const s1 = project(a.p1[0], a.p1[1], a.p1[2]);
+      const s2 = project(a.p2[0], a.p2[1], a.p2[2]);
+      if (!s1 || !s2) continue;
+      const color = a.color ?? '#000000';
+      const aw = a.width ?? (strokeW > 0 ? strokeW : 8);
+      let id = markerIds.get(color);
+      if (!id) {
+        id = `ah${markerIds.size}`;
+        markerIds.set(color, id);
+        defs += `<marker id="${id}" markerWidth="4" markerHeight="4" refX="3.2" refY="2" orient="auto">`
+          + `<path d="M0 0L4 2L0 4Z" fill="${color}"/></marker>`;
+      }
+      arrowsOut += `<line x1="${fmt(s1[0])}" y1="${fmt(s1[1])}" x2="${fmt(s2[0])}" y2="${fmt(s2[1])}"`
+        + ` stroke="${color}" stroke-width="${fmt(aw)}" stroke-linecap="round" marker-end="url(#${id})"/>`;
+      // 箭头三角伸出线端 ~0.8×线宽、侧向 ±2×线宽 → 取景留 2.5×线宽余量
+      for (const s of [s1, s2]) arrowPads.push({ x: s[0], y: s[1], pad: aw * 2.5 });
+    }
+    if (defs) defs = `<defs>${defs}</defs>`;
+  }
+
   // viewBox 贴着拼图裁(抄 sr 的紧凑取景):包围盒 + 描边半宽(外框线外沿)+ 1px。
-  // 不裁的话导整张画布,拼图缩在中间、四周大片空边。
+  // 不裁的话导整张画布,拼图缩在中间、四周大片空边。箭头端点(含自身余量)也
+  // 计入包围盒,标注伸出轮廓时视窗跟着扩。
   let bx = 0, by = 0, bw = W, bh = H;
-  if (facelets.length > 0) {
+  if (facelets.length > 0 || arrowPads.length > 0) {
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     for (const f of facelets) {
       for (let i = 0; i < f.pts.length; i += 2) {
@@ -144,13 +205,17 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
         if (f.pts[i + 1] < y0) y0 = f.pts[i + 1]; if (f.pts[i + 1] > y1) y1 = f.pts[i + 1];
       }
     }
+    for (const p of arrowPads) {
+      if (p.x - p.pad < x0) x0 = p.x - p.pad; if (p.x + p.pad > x1) x1 = p.x + p.pad;
+      if (p.y - p.pad < y0) y0 = p.y - p.pad; if (p.y + p.pad > y1) y1 = p.y + p.pad;
+    }
     const pad = strokeW / 2 + 1;
     bx = x0 - pad; by = y0 - pad; bw = x1 - x0 + pad * 2; bh = y1 - y0 + pad * 2;
   }
 
   const bg = opts.background
     ? `<rect x="${fmt(bx)}" y="${fmt(by)}" width="${fmt(bw)}" height="${fmt(bh)}" fill="${opts.background}"/>` : '';
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${Math.max(1, Math.round(bw))}" height="${Math.max(1, Math.round(bh))}" viewBox="${fmt(bx)} ${fmt(by)} ${fmt(bw)} ${fmt(bh)}">${bg}${content}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${Math.max(1, Math.round(bw))}" height="${Math.max(1, Math.round(bh))}" viewBox="${fmt(bx)} ${fmt(by)} ${fmt(bw)} ${fmt(bh)}">${bg}${defs}${content}${arrowsOut}</svg>`;
 }
 
 /** 2D 凸包(Andrew monotone chain),返回逆时针顶点;共线点剔除。 */

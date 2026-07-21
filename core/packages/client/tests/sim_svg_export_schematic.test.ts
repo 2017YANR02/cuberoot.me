@@ -114,6 +114,35 @@ describe('exportSimSvgSchematic', () => {
     expect(Number(m[1])).toBeGreaterThan(0);
   });
 
+  it('逐色描边:userData.schematicStroke 覆盖小面描边色,凸包外框仍默认黑', () => {
+    const scene = buildPyraScene();
+    scene.traverse((o) => { if (o.userData.schematicPoly) o.userData.schematicStroke = '#8811aa'; });
+    const svg = exportSimSvgSchematic({ world: makeWorld(scene), strokeWidth: 8 });
+    expect(svg.match(/stroke="#8811aa"/g)?.length).toBe(18); // 18 可见小面全部改色
+    expect(svg.match(/stroke="#000000"/g)?.length).toBe(1);  // 只剩外框默认黑
+  });
+
+  it('arrows 箭头层:线段 + marker 按色去重,画在最上层不被凸包裁剪,viewBox 随箭头扩', () => {
+    const world = makeWorld(buildPyraScene());
+    const vb = (s: string) => s.match(/viewBox="(-?[\d.]+) (-?[\d.]+) ([\d.]+) ([\d.]+)"/)!;
+    const base = exportSimSvgSchematic({ world });
+    const svg = exportSimSvgSchematic({ world, arrows: [
+      { p1: [-PYRA_A, 0, PYRA_A], p2: [PYRA_A, 0, PYRA_A] },
+      { p1: [0, -PYRA_A, PYRA_A], p2: [0, PYRA_A, PYRA_A], color: '#ff0000', width: 4 },
+    ] });
+    expect(svg.match(/<line /g)?.length).toBe(2);
+    expect(svg.match(/<marker /g)?.length).toBe(2); // 黑 / 红各一枚箭头 marker
+    expect(svg).toContain('marker-end="url(#');
+    expect(svg).toContain('stroke="#ff0000" stroke-width="4"');
+    // 层序:箭头在最后(所有小面 path、凸包外框之后 → 盖在最上)
+    expect(svg.lastIndexOf('<path')).toBeLessThan(svg.indexOf('<line'));
+    // 不被凸包裁剪:<line> 在 clip 组 </g> 之外
+    expect(svg.indexOf('</g>')).toBeLessThan(svg.indexOf('<line'));
+    // 取景:箭头伸出拼图右侧时视窗宽度随之扩大
+    const far = exportSimSvgSchematic({ world, arrows: [{ p1: [0, 0, PYRA_A], p2: [PYRA_A * 3, 0, PYRA_A] }] });
+    expect(Number(vb(far)[3])).toBeGreaterThan(Number(vb(base)[3]));
+  });
+
   it('相机跟随:旋转场景后输出改变(几何取自 matrixWorld,非固定标定)', () => {
     const scene = buildPyraScene();
     const world = makeWorld(scene);
