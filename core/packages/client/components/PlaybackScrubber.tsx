@@ -16,12 +16,15 @@ export default function PlaybackScrubber({
   className?: string;
   ariaLabel?: string;
 }) {
+  const max = Math.max(total, 1);
+  const pct = `${Math.max(0, Math.min(100, (step / max) * 100))}%`;
   return (
     <input
       type="range"
       className={className ? `playback-scrubber ${className}` : 'playback-scrubber'}
+      style={{ ['--pct' as string]: pct }}
       min={0}
-      max={Math.max(total, 1)}
+      max={max}
       value={step}
       disabled={disabled ?? total === 0}
       onChange={(e) => onScrub(Number(e.target.value))}

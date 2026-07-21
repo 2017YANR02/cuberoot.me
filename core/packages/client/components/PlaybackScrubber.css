@@ -1,12 +1,7 @@
+/* PlaybackScrubber — 布局 only。外观(轨道 + 把手 + accent 进度填充)由 globals.css 的
+   「进度 / 播放 scrubber 皮肤」统一提供(选择器含 .playback-scrubber);此前这里的
+   height / accent-color 会被全站基础皮肤按特异度吃掉(等于死代码),已移除。进度填充靠组件传 --pct。 */
 .playback-scrubber {
   flex: 1;
   min-width: 60px;
-  height: 4px;
-  accent-color: var(--accent);
-  cursor: pointer;
-}
-
-.playback-scrubber:disabled {
-  opacity: 0.4;
-  cursor: default;
 }

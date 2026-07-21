@@ -354,9 +354,7 @@ html:not([data-palette-scheme=dark]) .t10h-page {
 .t10h-play:active { transform: scale(0.95); }
 .t10h-scrub {
   flex: 1 1 200px;
-  height: 4px;
   min-width: 100px;
-  accent-color: var(--faint-foreground);
 }
 .t10h-speed {
   display: inline-flex;

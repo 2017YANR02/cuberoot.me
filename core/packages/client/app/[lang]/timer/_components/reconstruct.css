@@ -329,7 +329,6 @@
 .reconstruct-playback-slider {
   width: 100%;
   cursor: pointer;
-  accent-color: var(--muted-foreground);
 }
 .reconstruct-playback-slider:disabled {
   opacity: 0.4;

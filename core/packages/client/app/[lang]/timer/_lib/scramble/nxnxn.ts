@@ -1,4 +1,6 @@
 import { scramble444RandomState } from './scramble_444_rs';
+import { get222Mode } from '@/lib/scramble-222-mode';
+import { wcaPocketScramble, optimalPocketScramble } from '@/lib/pocket-scramble';
 
 /**
  * Random-move scrambles for NxN cubes (WCA-style face filtering).
@@ -54,8 +56,10 @@ function genFaceMoves(faces: readonly string[], len: number, rng: () => number):
 }
 
 export function scramble222(rng: () => number): string {
-  // 2x2 only needs 3 faces (U R F) since opposite faces are equivalent.
-  return genFaceMoves(['U', 'R', 'F'] as const, 11, rng);
+  // WCA 二阶 = 随机态求解(不是 random-move):走站内 TNoodle 移植(lib/pocket-scramble),与
+  // /scramble/gen 同源。口径由全站 2x2 设置(Scramble222ModePicker)决定 —— wca = 恰好 11 步、
+  // 握位代价最小(与赛场一致);optimal = HTM 最短 + Q|H(均 ~8.8 步)。二者都只含 U/R/F。
+  return get222Mode() === 'optimal' ? optimalPocketScramble(rng) : wcaPocketScramble(rng);
 }
 
 export function scramble333(rng: () => number): string {

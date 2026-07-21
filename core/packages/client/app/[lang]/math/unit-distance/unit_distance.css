@@ -681,7 +681,6 @@
 }
 .ud-sandbox-slider input[type=range] {
   width: 100%;
-  accent-color: var(--ud-accent);
 }
 
 .ud-sandbox-toggle {

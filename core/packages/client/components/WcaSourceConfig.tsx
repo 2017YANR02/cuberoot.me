@@ -151,6 +151,13 @@ export default function WcaSourceConfig({
   const canDifficulty = !!wev && DIFFICULTY_EVENTS.has(wev);
   const canMerge = !!wev && MERGE_EVENTS.has(wev);
 
+  // 「难度过滤」和「最优打乱」一样跨项目粘滞:在 3x3 族开了之后切到无难度数据的项目(如 6x6/魔表),
+  // 开关本身隐藏(canDifficulty=false),但设置值仍是 true → SoloView 的 wcaSpec.diff 照建 → 服务端拿
+  // 3x3 十字步数去筛该项目真题 → 全被过滤成空,误报「该难度组合没有匹配」。开关一消失就顺手复位。
+  useEffect(() => {
+    if (!canDifficulty && settings.wcaDifficultyOn) updateSettings({ wcaDifficultyOn: false });
+  }, [canDifficulty, settings.wcaDifficultyOn, updateSettings]);
+
   // comp 模式选中比赛后,提前探测该场在难度库有无步数数据(离线管道对新赛滞后)。没有 → 把「难度」开关灰锁,
   // 点击给原因,并让难度过滤对该场旁路(见 SoloView 的 wcaCompUnindexed)。'loading' 期间不灰(乐观)。
   const [compDiffCov, setCompDiffCov] = useState<'loading' | 'ok' | 'none'>('ok');
