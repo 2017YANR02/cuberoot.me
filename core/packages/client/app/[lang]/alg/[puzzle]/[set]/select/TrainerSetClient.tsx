@@ -14,6 +14,8 @@ import {
   type TrainerMarkBrush, type CaseMarkStatus,
 } from '@/lib/trainer-marks';
 import { caseKey } from '@/lib/trainer-case-key';
+import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
+import { displayZbllToken } from '@/lib/alg_case_display';
 import { CaseTreePicker } from '@/app/[lang]/alg/_trainer/trainer-components';
 import { resolveAlgPuzzle } from '@/app/[lang]/alg/_trainer/events';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -37,7 +39,8 @@ export default function TrainerSetClient() {
 
   // 从 subgroup 页训练按钮进来带 ?scope=<组slug>:只在该组内选 case(筛选/默认 replace)
   const [scopeParam] = useQueryState('scope');
-  const scopeSlug = scopeParam?.trim().toLowerCase() || null;
+  // 旧数字制子组 slug(u1 / pi 1 / as1 …)→ 新方向制(ur / pif / asf …),老 ?scope= 链接 / 书签不失效(migration 0081)
+  const scopeSlug = canonicalZbllSubgroupSlug(setSlug, scopeParam?.trim().toLowerCase() || null);
   // 按标记过滤显示(筛选 → 默认 replace)
   const [markFilter, setMarkFilter] = useQueryState(
     'mark',
@@ -151,7 +154,7 @@ export default function TrainerSetClient() {
           <ArrowLeft size={14} /> {tr({ zh: '返回', en: 'Back' })}
         </Link>
         <span style={{ fontSize: '1.1rem', fontWeight: 600 }}>
-          {puzzle} · {tr(meta)}{scopeSlug ? ` · ${scopeSlug.toUpperCase()}` : ''}
+          {puzzle} · {tr(meta)}{scopeSlug ? ` · ${setSlug === 'zbll' ? displayZbllToken(scopeSlug) : scopeSlug.toUpperCase()}` : ''}
         </span>
         <button
           className={`trainer-start-btn${!canStart ? ' is-disabled' : ''}`}

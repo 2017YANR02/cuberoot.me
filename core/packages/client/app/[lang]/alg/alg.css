@@ -1278,6 +1278,12 @@ a.alg-community-author:hover {
   flex-wrap: wrap;
   gap: 10px;
 }
+/* 顶部那排缩略图(当前 + 镜像 / 逆 / 镜像逆),与下面公式用一条分隔线隔开 */
+.alg-meta-top-grid {
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border-default);
+}
 .alg-meta-related-card {
   display: flex;
   flex-direction: column;
@@ -1296,8 +1302,17 @@ a.alg-community-author:hover {
 }
 .alg-meta-related-card.is-plain {
   cursor: default;
-  justify-content: center;
+  /* 纯文字卡片没缩略图,内容沉底,让 label/name 和「当前」卡片底部那两行水平对齐 */
+  justify-content: flex-end;
   min-width: 76px;
+}
+/* 当前 case 那张:不可点,不给 hover 高亮(它不是跳转目标,只是参照) */
+.alg-meta-related-card.is-self {
+  cursor: default;
+}
+.alg-meta-related-card.is-self:hover {
+  border-color: transparent;
+  background: none;
 }
 .alg-meta-related-label {
   font-size: 11px;
@@ -1307,6 +1322,47 @@ a.alg-community-author:hover {
   font-size: 12px;
   font-weight: 600;
   color: var(--foreground);
+}
+
+/* ── case 元数据独立详情页(/alg/<puzzle>/<set>/case/<name>,取代原弹窗)──
+   正文复用 .alg-meta-body,但详情页是整页滚动、不要弹窗那套内边距/自滚动。 */
+.alg-case-detail {
+  max-width: min(880px, 100%);
+  margin: 0 auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.alg-case-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.alg-case-detail-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted-foreground);
+  font-size: 14px;
+}
+.alg-case-detail-back:hover { color: var(--accent); }
+.alg-case-detail-title {
+  margin: 0;
+  font-size: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+}
+.alg-case-detail-msg {
+  margin: 0;
+  padding: 24px 0;
+  color: var(--muted-foreground);
+  text-align: center;
+}
+.alg-case-detail-body {
+  padding: 0;
+  overflow: visible;
 }
 
 .alg-meta-section {
@@ -1393,7 +1449,6 @@ a.alg-community-author:hover {
   padding-bottom: 12px;
   border-bottom: 1px solid var(--border-default);
 }
-.alg-meta-case-thumb { flex: none; }
 .alg-meta-case-algs {
   flex: 1;
   min-width: 0;

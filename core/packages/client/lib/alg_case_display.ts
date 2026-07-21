@@ -88,12 +88,22 @@ export function pllCommentLabel(name: string): string {
  */
 export const ZBLL_GROUP_RENAME: Record<string, string> = { S: 'S+', AS: 'S-' };
 
-/** 改 ZBLL 组 token 的组前缀:"S" → "S+","AS3" → "S-3";非 S/AS 原样。 */
-export function renameZbllGroupToken(token: string): string {
-  const m = /^(AS|S)(\d*)$/.exec(token.trim()); // AS 必须先匹配,否则 "AS" 会被当成 "A"+"S"
-  if (!m) return token;
-  const renamed = ZBLL_GROUP_RENAME[m[1]];
-  return renamed ? renamed + m[2] : token;
+/** ZBLL 顶层组 slug → 展示前缀。Sune S→S+,Antisune AS→S-,Pi 保留小写 i,其余大写。 */
+const ZBLL_TOP_DISPLAY: Record<string, string> = {
+  u: 'U', t: 'T', l: 'L', h: 'H', pi: 'Pi', s: 'S+', as: 'S-',
+};
+
+/**
+ * ZBLL 组 / 子组 token → 展示名。顶层组(u/t/l/h/pi/s/as)和方向制子组(ur/sb/asf/pif…)
+ * 都认,也兼容迁移前的数字制(u1→U1、s1→S+1)。S/AS 还原成 S+/S-,Pi 保留小写 i,方向
+ * 字母大写。
+ *   "ur"→"UR"  "sb"→"S+B"  "asf"→"S-F"  "pif"→"PiF"  "s"→"S+"  "pi"→"Pi"
+ */
+export function displayZbllToken(token: string): string {
+  const t = token.trim().toLowerCase().replace(/\s+/g, '');
+  const m = /^(as|s|pi|u|t|l|h)(.*)$/.exec(t); // 多字符前缀 as/pi 要排在单字母前
+  if (!m) return token.trim().toUpperCase();
+  return (ZBLL_TOP_DISPLAY[m[1]] ?? m[1].toUpperCase()) + m[2].toUpperCase();
 }
 
 /** ZBLL 案例名展示:"ZBLL AS 13" → "ZBLL S- 13","ZBLL S 13" → "ZBLL S+ 13";其余原样。 */

@@ -40,6 +40,19 @@ export function algCaseHref(puzzle: string, set: string, c: CaseRef): string {
 }
 
 /**
+ * 指向某一张 case 的**独立详情页**(元数据整页,替代原来的弹窗)。
+ *
+ * 走固定的 `case/` 段而不是 `/<子组>/<case>`:有子组的 set(zbll/1lll)和没子组的
+ * set(pll/ell)才能共用同一层级 —— 后者的 case 名会直接落到 `[subgroup]` 段上,和子组
+ * 路由撞车。片段仍用 case 名(`caseAnchor`),`findCaseByHash` 那三种写法照样认回。
+ */
+export function algCaseDetailHref(puzzle: string, set: string, c: CaseRef): string {
+  const base = `/alg/${puzzle}/${set}/case`;
+  if (c.name?.trim()) return `${base}/${caseAnchor(c.name)}`;
+  return c.id != null ? `${base}/case-${c.id}` : base;
+}
+
+/**
  * 落地时把 `#…` 认回是哪张 case。三种都收:
  *   1. `#Sune` —— 现在生成的
  *   2. `#S+-(27)` —— **卡面上**那个名字。oll / pll / 1lll 的主名是派生的(`c.name` 是
