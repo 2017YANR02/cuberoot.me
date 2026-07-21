@@ -21,7 +21,8 @@ import { FACE_NORMAL, FACE_NAME, CORNER_FACES, EDGE_FACES } from './megaState';
 import { roundedSolid, polytopeVerts, type Plane } from '../polytopeCut';
 import { defaultPlatonicColorSchemes } from '@/lib/puzzle-geometry/colors';
 import {
-  offsetInward, roundCorners, extrudeOntoFace, makeSticker, polyArea2, type V2,
+  offsetInward, roundCorners, extrudeOntoFace, makeSticker, polyArea2,
+  schematicPolyFromFacet, type V2,
 } from '../stickerGeom';
 
 /** Dodecahedron inradius (face-center distance) in world units — framed by the shared camera. */
@@ -96,7 +97,12 @@ function facetSticker(facet: THREE.Vector3[], faceIdx: number): THREE.Mesh | nul
   if (poly.length < 3) return null;
   const origin = centroid.clone().add(n.clone().multiplyScalar(STICKER_LIFT));
   const geo = extrudeOntoFace(poly, { u, v: w, n, origin }, STICKER_DEPTH);
-  return makeSticker(geo, stickerMats[faceIdx], bodyMat, { simStickerNormal: n.clone() });
+  return makeSticker(geo, stickerMats[faceIdx], bodyMat, {
+    simStickerNormal: n.clone(),
+    // 示意小面(sim_svg_export_schematic):facet 即理想晶格(相邻 cell 精确共享
+    // 切割面 → 共享棱同一组坐标),不 inset / 不 round / 不 lift
+    schematicPoly: schematicPolyFromFacet(facet, n),
+  });
 }
 
 export interface PieceBuild { pivot: THREE.Object3D; group: THREE.Group; }

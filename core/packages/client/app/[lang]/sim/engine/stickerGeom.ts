@@ -155,6 +155,25 @@ export function extrudeOntoFace(
   return geo;
 }
 
+/** 示意小面轮廓(sim_svg_export_schematic 消费):把一个小面的理想晶格顶点(未
+ *  inset / 未 lift,与邻块严格共点)绕质心按 outward 法向排成 CCW,返回扁平 xyz。
+ *  被 pyra 之外走 polytope facet 的引擎魔方(skewb / mega / fto)共用。 */
+export function schematicPolyFromFacet(facet: THREE.Vector3[], normal: THREE.Vector3): number[] {
+  const n = normal.clone().normalize();
+  const c = facet.reduce((a, p) => a.add(p), new THREE.Vector3()).multiplyScalar(1 / facet.length);
+  let u = Math.abs(n.y) < 0.9 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0);
+  u = u.sub(n.clone().multiplyScalar(u.dot(n))).normalize();
+  const w = new THREE.Vector3().crossVectors(n, u).normalize();
+  // (u, w, n) 右手系 → (u,w) 平面内按角升序 = 绕 n 的 CCW = 绕向朝外
+  const sorted = facet.slice().sort((a, b) => {
+    const da = a.clone().sub(c); const db = b.clone().sub(c);
+    return Math.atan2(da.dot(w), da.dot(u)) - Math.atan2(db.dot(w), db.dot(u));
+  });
+  const out: number[] = [];
+  for (const p of sorted) out.push(p.x, p.y, p.z);
+  return out;
+}
+
 /**
  * Build a sticker mesh from an extruded sticker geometry — the ONE place that encodes
  * the black-walls invariant so no puzzle can forget it. An `ExtrudeGeometry` has two

@@ -129,6 +129,16 @@ function insetShape(verts: [number, number][], inset: number): THREE.Shape {
   return s;
 }
 
+/** 示意小面(sim_svg_export_schematic):理想晶格多边形。SQ1 理想外形 = 正方体
+ *  [−W,W]³(2·LAYER_HEIGHT + MID_HEIGHT = 2W,bevel 余量不算),不 inset / 不
+ *  lift / 不留缝。贴纸 mesh 会被立体贴片开关改 scale.z(stickerThickness.ts),
+ *  所以多边形挂 PARENT frame + schematicInParent 标记,导出端走 parent.matrixWorld
+ *  免疫压扁。绕向朝外;底层 pivot.scale.y=−1 的镜像由导出端 det<0 翻转兜住。 */
+function schem(mesh: THREE.Mesh, pts: [number, number, number][]): void {
+  mesh.userData.schematicPoly = pts.flat();
+  mesh.userData.schematicInParent = true;
+}
+
 function mkStickerMat(color: number): THREE.MeshPhongMaterial {
   return new THREE.MeshPhongMaterial({
     color, specular: STICKER_SPECULAR, shininess: STICKER_SHININESS,
@@ -187,8 +197,10 @@ export function buildPieceMesh(piece: number, isTopLayer: boolean): PieceBuild {
   topSticker.userData.simRole = 'sticker'; // 立体贴片: flatten via mesh.scale.z (stickerThickness.ts)
   topSticker.userData.simFlatten = 'scaleZ';
   topSticker.userData.simStickerNormal = new THREE.Vector3(0, 0, 1); // 原核: body +z cap (rawBody.ts)
+  schem(topSticker, topInsetVerts.map(([x, y]): [number, number, number] => [x, y, LAYER_HEIGHT]));
   group.add(topSticker);
 
+  const K = WEDGE_HALF_CHORD, L = LAYER_HEIGHT;
   if (corner) {
     const matA = mkStickerMat(SQ1_COLORS[faces.sideA]);
     const matB = mkStickerMat(SQ1_COLORS[faces.sideB!]);
@@ -197,12 +209,14 @@ export function buildPieceMesh(piece: number, isTopLayer: boolean): PieceBuild {
     wallA.position.set(CORNER_FACE_CENTER, W + SIDE_OFFSET, LAYER_HEIGHT / 2);
     wallA.rotation.set(-Math.PI / 2, 0, 0);
     wallA.userData.simStickerNormal = new THREE.Vector3(0, 1, 0); // 原核: body +y face (rawBody.ts)
+    schem(wallA, [[K, W, 0], [K, W, L], [W, W, L], [W, W, 0]]);
     group.add(wallA);
 
     const wallB = mkRaisedRectSticker(TILE_W - 2 * SIDE_INSET_H, LAYER_HEIGHT - 2 * SIDE_INSET_V, matB);
     wallB.position.set(W + SIDE_OFFSET, CORNER_FACE_CENTER, LAYER_HEIGHT / 2);
     wallB.rotation.set(0, Math.PI / 2, Math.PI / 2);
     wallB.userData.simStickerNormal = new THREE.Vector3(1, 0, 0); // 原核: body +x face
+    schem(wallB, [[W, K, 0], [W, W, 0], [W, W, L], [W, K, L]]);
     group.add(wallB);
   } else {
     const matA = mkStickerMat(SQ1_COLORS[faces.sideA]);
@@ -210,6 +224,7 @@ export function buildPieceMesh(piece: number, isTopLayer: boolean): PieceBuild {
     wallA.position.set(W + SIDE_OFFSET, 0, LAYER_HEIGHT / 2);
     wallA.rotation.set(0, Math.PI / 2, Math.PI / 2);
     wallA.userData.simStickerNormal = new THREE.Vector3(1, 0, 0); // 原核: body +x face (rawBody.ts)
+    schem(wallA, [[W, -K, 0], [W, K, 0], [W, K, L], [W, -K, L]]);
     group.add(wallA);
   }
 
@@ -289,6 +304,12 @@ export function buildMiddlePair(): MiddlePair {
         0,
         axisFace === 'F' ? 1 : axisFace === 'B' ? -1 : 0,
       );
+      // 示意小面:中层带 y∈[−HALF_MID, HALF_MID],横向取整段(不 inset)
+      const h = HALF_MID;
+      if (axisFace === 'R') schem(mesh, [[W, -h, zTo], [W, -h, zFrom], [W, h, zFrom], [W, h, zTo]]);
+      else if (axisFace === 'L') schem(mesh, [[-W, -h, zFrom], [-W, -h, zTo], [-W, h, zTo], [-W, h, zFrom]]);
+      else if (axisFace === 'F') schem(mesh, [[xFrom, -h, W], [xTo, -h, W], [xTo, h, W], [xFrom, h, W]]);
+      else schem(mesh, [[xTo, -h, -W], [xFrom, -h, -W], [xFrom, h, -W], [xTo, h, -W]]);
       pivot.add(mesh);
     };
 

@@ -98,11 +98,16 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
     // 覆盖自己的描边色(遮罩灰化 / 强调等),缺省统一黑。
     const strokeColor = (obj.userData.schematicStroke as string | undefined) ?? '#000000';
 
-    // 局部轮廓 → 世界坐标
+    // 局部轮廓 → 世界坐标。schematicInParent(sq1):多边形挂父 frame,免疫贴纸
+    // mesh 自身的压扁 scale(立体贴片开关);镜像变换(sq1 底层 scale.y=−1)行列式
+    // 为负会翻转绕向,倒序还原朝外。
+    const mtx = (obj.userData.schematicInParent === true && mesh.parent)
+      ? mesh.parent.matrixWorld : mesh.matrixWorld;
     const worldPts: THREE.Vector3[] = [];
     for (let i = 0; i < poly.length; i += 3) {
-      worldPts.push(v.set(poly[i], poly[i + 1], poly[i + 2]).clone().applyMatrix4(mesh.matrixWorld));
+      worldPts.push(v.set(poly[i], poly[i + 1], poly[i + 2]).clone().applyMatrix4(mtx));
     }
+    if (mtx.determinant() < 0) worldPts.reverse();
     // 背面剔除:绕向朝外 → 法向背向相机的小面不可见(静止凸体,足够)
     const n = new THREE.Vector3().subVectors(worldPts[1], worldPts[0])
       .cross(new THREE.Vector3().subVectors(worldPts[2], worldPts[0]));
@@ -149,6 +154,9 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
   // 外轮廓 = 可见小面投影的凸包(静止魔方是凸体)。小面描边在外缘晶格点的
   // miter 尖会伸出轮廓线(内部同类尖被邻面描边盖住,轮廓上无遮盖 → "毛刺"),
   // 用凸包 clipPath 裁掉出界部分,再沿凸包描一条外框 → 外缘是数学直线。
+  // 凸性守卫:仅当可见小面恰好铺满凸包(投影面积和 ≈ 凸包面积)才启用 —— sq1
+  // 变形后外形非凸,凸包线会横跨凹口,此时跳过裁剪 + 外框,退回纯 round join
+  // (即 sr 原版的处理,外缘是半描边宽的小圆角)。
   let content = paths;
   if (strokeW > 0 && facelets.length > 0) {
     const hull = convexHull2D(facelets.flatMap((f) => {
@@ -156,7 +164,9 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
       for (let i = 0; i < f.pts.length; i += 2) out.push([f.pts[i], f.pts[i + 1]]);
       return out;
     }));
-    if (hull.length >= 3) {
+    const hullArea = hull.length >= 3 ? polyAreaOfFlat(hull.flat()) : 0;
+    const tiledArea = facelets.reduce((s, f) => s + polyAreaOfFlat(f.pts), 0);
+    if (hull.length >= 3 && Math.abs(hullArea - tiledArea) <= hullArea * 0.01) {
       const hullD = dOf(hull.flat());
       content = `<clipPath id="sil"><path d="${hullD}"/></clipPath>`
         + `<g clip-path="url(#sil)">${paths}</g>`
@@ -216,6 +226,16 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
   const bg = opts.background
     ? `<rect x="${fmt(bx)}" y="${fmt(by)}" width="${fmt(bw)}" height="${fmt(bh)}" fill="${opts.background}"/>` : '';
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${Math.max(1, Math.round(bw))}" height="${Math.max(1, Math.round(bh))}" viewBox="${fmt(bx)} ${fmt(by)} ${fmt(bw)} ${fmt(bh)}">${bg}${defs}${content}${arrowsOut}</svg>`;
+}
+
+/** 扁平 [x0,y0,x1,y1,…] 多边形的无符号面积(shoelace)。 */
+function polyAreaOfFlat(pts: number[]): number {
+  let a = 0;
+  for (let i = 0; i < pts.length; i += 2) {
+    const j = (i + 2) % pts.length;
+    a += pts[i] * pts[j + 1] - pts[j] * pts[i + 1];
+  }
+  return Math.abs(a) / 2;
 }
 
 /** 2D 凸包(Andrew monotone chain),返回逆时针顶点;共线点剔除。 */
