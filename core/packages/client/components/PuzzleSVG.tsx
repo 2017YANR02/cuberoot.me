@@ -1,14 +1,15 @@
 'use client';
 
 /**
- * PuzzleSVG — React wrapper around `sr-puzzlegen` for sq1 / megaminx / pyraminx / skewb.
+ * PuzzleSVG — React wrapper around the vendored sr-puzzlegen fork
+ * (@cuberoot/vendor-sr-puzzlegen) for sq1 / megaminx / pyraminx / skewb.
  *
  * Ported from packages/client-vite/src/components/PuzzleSVG.tsx.
  */
 import { useEffect, useMemo, useRef } from 'react';
 import { renderSkewbPyramidSvgParametric } from '@cuberoot/shared/skewb-pyramid-svg';
 import { canonicalSq1Alg } from '@/lib/sq1-svg';
-import { patchSrPuzzlegen, setSrPerspective } from '@/components/sr-puzzlegen-patch';
+import type { VisualizerType, PuzzleOptions, IColor, ArrowDefinition } from '@cuberoot/vendor-sr-puzzlegen';
 import { parseMask, toSrMask, type StickerId } from '@/lib/puzzle-image/puzzle-mask';
 import type { PuzzleType } from '@/lib/puzzle-image/types';
 
@@ -40,11 +41,8 @@ const TYPE_MAP: Record<PuzzleKind, string> = {
 };
 
 /** sr `IColor`. */
-export interface SrColor { value: string; stroke?: string }
-export interface SrArrow {
-  start: { face: string; sticker: number };
-  end: { face: string; sticker: number };
-}
+export type SrColor = IColor;
+export type SrArrow = ArrowDefinition;
 
 /** sr's own puzzle key, for the mask id space. sq1 has no derived map on purpose. */
 const MASK_PUZZLE: Partial<Record<PuzzleKind, PuzzleType>> = {
@@ -66,7 +64,7 @@ interface PuzzleSVGBaseProps {
   svgHeight?: number;
   rotations?: { x?: number; y?: number; z?: number }[];
   /** sr camera distance (透视). Omit → sr native (5). Larger = flatter, smaller = stronger
-   *  perspective; on-screen size stays constant. See setSrPerspective. */
+   *  perspective; on-screen size stays constant. Real fork option (SVGVisualizerOptions). */
   cameraDist?: number;
   /** Per-face colors. Honored ALONGSIDE a mask (sr applies the scheme after its
    *  simulator, so mask + alg survive) — prefer this over `stickerColors`. */
@@ -132,11 +130,10 @@ export function PuzzleSVG({
     const host = hostRef.current;
     if (!host) return;
 
-    import('sr-puzzlegen').then((mod) => {
+    import('@cuberoot/vendor-sr-puzzlegen').then((mod) => {
       if (cancelled || !host) return;
-      patchSrPuzzlegen(mod);
       host.innerHTML = '';
-      const puzzle: Record<string, unknown> = {};
+      const puzzle: PuzzleOptions = {};
       const isSq1 = kind === 'sq1' || kind === 'sq1-net';
       const norm = (s: string) => isSq1 ? canonicalSq1Alg(s) : s;
       if (caseAlg && caseAlg.trim()) puzzle.case = norm(caseAlg);
@@ -153,20 +150,20 @@ export function PuzzleSVG({
       }
       if (scheme) puzzle.scheme = scheme;
       if (arrows && arrows.length > 0) puzzle.arrows = arrows;
-      // Drive the sr camera distance (透视) for THIS render. Set right before SVG() so it
-      // wins the synchronous render; every PuzzleSVG render sets it (native when unset).
-      setSrPerspective(cameraDist ?? null);
+      const svgOpts = {
+        width: size, height: size,
+        ...(strokeWidth !== undefined ? { strokeWidth } : {}),
+        ...(minx !== undefined ? { minx } : {}),
+        ...(miny !== undefined ? { miny } : {}),
+        ...(svgWidth !== undefined ? { svgWidth } : {}),
+        ...(svgHeight !== undefined ? { svgHeight } : {}),
+        ...(arrowColor !== undefined ? { arrowColor } : {}),
+        // 透视: real fork option now (upstream needed a module-level camera patch).
+        ...(cameraDist !== undefined ? { cameraDist } : {}),
+        puzzle,
+      };
       try {
-        (mod as { SVG: (host: HTMLElement, type: string, opts: unknown) => void }).SVG(host, TYPE_MAP[kind], {
-          width: size, height: size,
-          ...(strokeWidth !== undefined ? { strokeWidth } : {}),
-          ...(minx !== undefined ? { minx } : {}),
-          ...(miny !== undefined ? { miny } : {}),
-          ...(svgWidth !== undefined ? { svgWidth } : {}),
-          ...(svgHeight !== undefined ? { svgHeight } : {}),
-          ...(arrowColor !== undefined ? { arrowColor } : {}),
-          puzzle,
-        });
+        mod.SVG(host, TYPE_MAP[kind] as VisualizerType, svgOpts);
       } catch (err) {
         host.innerHTML = `<div style="font-size:11px;color:#c66;padding:4px">render fail</div>`;
         console.warn('[PuzzleSVG] render failed', kind, err);

@@ -11,10 +11,10 @@
  * skewb-top uses @cuberoot/shared/skewb-pyramid-svg (pure string, no DOM).
  */
 import { parseHTML } from 'linkedom';
-// sr-puzzlegen's dist has bare `import "./foo"` (no .js) — fatal under raw Node
-// ESM strict mode. We rely on the server-wide esbuild bundle (build:bundle) to
-// resolve those internal paths; dev's tsx loader does the same.
-import { SVG as srSVG } from 'sr-puzzlegen';
+// Vendored fork (workspace pkg, tsc dist keeps upstream's extensionless relative
+// imports) — the server-wide esbuild bundle (build:bundle) resolves those internal
+// paths; dev's tsx loader does the same.
+import { SVG as srSVG } from '@cuberoot/vendor-sr-puzzlegen';
 import { renderSkewbPyramidSvgParametric } from '@cuberoot/shared/skewb-pyramid-svg';
 
 let domReady: Promise<void> | null = null;

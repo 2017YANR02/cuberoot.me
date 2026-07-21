@@ -24,7 +24,7 @@
     "maxmind": "^5.0.6",
     "postgres": "^3.4.9",
     "qrcode": "^1.5.4",
-    "sr-puzzlegen": "^1.0.4",
+    "@cuberoot/vendor-sr-puzzlegen": "workspace:*",
     "ws": "^8.20.0"
   },
   "devDependencies": {

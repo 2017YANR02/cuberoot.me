@@ -91,7 +91,7 @@
     "url": "https://github.com/tdecker91/puzzle-gen",
     "zh": "非 NxN puzzle SVG 渲染(Square-1 / Megaminx / Pyraminx / Skewb)",
     "en": "Non-NxN puzzle SVG renderer (Square-1 / Megaminx / Pyraminx / Skewb)",
-    "long_en": "non-cube WCA puzzle SVG renderer (`sr-puzzlegen` on npm; Square-1, Megaminx, Pyraminx, Skewb — iso / net / top variants) used by `/visualcube`"
+    "long_en": "non-cube WCA puzzle SVG renderer (`sr-puzzlegen` v1.0.4, vendored as `@cuberoot/vendor-sr-puzzlegen`; Square-1, Megaminx, Pyraminx, Skewb — iso / net / top variants) used by `/visualcube`"
   },
   {
     "name": "cube.rider.biz/visualcube.php",

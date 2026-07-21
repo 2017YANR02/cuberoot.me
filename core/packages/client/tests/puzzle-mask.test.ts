@@ -12,7 +12,7 @@ import { renderSkewbScrambleSvg, SKEWB_DEFAULT_COLORS } from '@/app/[lang]/scram
 import { renderMegaScrambleSvg, DEFAULT_MEGA_COLORS } from '@/app/[lang]/scramble/gen/_svg/mega_svg';
 import { renderUnfoldedSvg } from '@/app/[lang]/scramble/gen/_svg/cube_unfolded_svg';
 import { invertAlg } from '@/lib/cube3';
-import { PyraminxSimulator } from 'sr-puzzlegen/dist/lib/simulator/pyraminx/pyraminxSimulator';
+import { PyraminxSimulator } from '@cuberoot/vendor-sr-puzzlegen/simulator/pyraminx/pyraminxSimulator';
 import * as D from './_puzzle_mask_derive';
 
 const CUBE_SIZES = [2, 3, 4, 5, 6, 7];
