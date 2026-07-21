@@ -29,7 +29,6 @@ import CommunityAlgs from '@/components/CommunityAlgs';
 import AdminCaseEditor, { type AdminEditorState } from '@/components/AdminCaseEditor';
 import type { AlgInvalidMark } from '@/components/AlgEditor';
 import ValidationReportModal from '@/components/ValidationReportModal';
-import AlgCaseMetaModal from '@/components/AlgCaseMetaModal';
 import AlgPlayer from '@/components/AlgPlayer';
 import { useCopy } from '@/hooks/useCopy';
 import { stm } from '@cuberoot/shared/alg-notation';
@@ -37,10 +36,11 @@ import { listSubmissions } from '@/lib/alg_api';
 import { reorderCases, reorderCaseAlgs } from '@/lib/alg_sets_api';
 import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
 import { scanCases } from '@/lib/alg_validation_scan';
-import { caseAnchor, findCaseByHash } from '@/lib/alg_case_link';
+import { caseAnchor, findCaseByHash, algCaseDetailHref } from '@/lib/alg_case_link';
 import { replaceHash } from '@/lib/url_hash';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
-import { displayAlgCaseName, primaryCaseName, renameZbllGroupToken } from '@/lib/alg_case_display';
+import { displayAlgCaseName, primaryCaseName, displayZbllToken } from '@/lib/alg_case_display';
+import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
 import { ALG_TAG_LABEL, ALG_TAGS } from '@/lib/alg_tags';
 import { displayAlg } from '@/lib/alg_display';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -230,7 +230,7 @@ function SubgroupIndex({
       {groups.map(([topLabel, { sample, count }]) => {
         const firstAlg = sample.algs.flat()[0]?.alg ?? sample.standard ?? '';
         const slug = encodeURIComponent(topLabel.toLowerCase()) || '_'; // slug 用原名(避免 "+" 进 URL)
-        const dispTop = set === 'zbll' ? renameZbllGroupToken(topLabel) : topLabel; // 展示名:ZBLL S→S+, AS→S-
+        const dispTop = set === 'zbll' ? displayZbllToken(topLabel) : topLabel; // 展示名:ZBLL S→S+, AS→S-, Pi 保留小写 i
         // 1lll 的组号是纯数字(`06`),没人看得懂 —— 换成字母制 OLL 名,数字降为副名。
         const ollName = ollByGroup.get(topLabel);
         return (
@@ -289,7 +289,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
   const [validationOpen, setValidationOpen] = useState(false);
   const [validationRefreshKey, setValidationRefreshKey] = useState(0);
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
-  const [metaCase, setMetaCase] = useState<AlgCase | null>(null);
   const [flashId, setFlashId] = useState<number | null>(null);
   /** 点中的那张卡(黄框)。它同时是 URL 片段的来源 —— 复制地址栏就能把这张卡发给别人。 */
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -348,13 +347,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
     }
     const injective = new Set(m.values()).size === m.size;
     return injective ? m : new Map<string, string>();
-  }, [data]);
-
-  /** meta.no → case,给弹窗的镜像 / 逆做链接(**表编号**,不是 DB id) */
-  const byNo = useMemo(() => {
-    const m = new Map<number, AlgCase>();
-    for (const c of data?.cases ?? []) if (c.meta?.no != null) m.set(c.meta.no, c);
-    return m;
   }, [data]);
 
   /** 标签筛选真的在生效吗(选了 `oh`、且这个 set 确实有 `oh`)—— 生效时公式列表是个子集 */
@@ -525,7 +517,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
     setHash(frag ? `#${frag}` : '', { markActed: true });
   }, [selectedId, setHash]);
 
-  const subgroupSlug = subgroupParam ? decodeURIComponent(subgroupParam).toLowerCase() : null;
+  const rawSubgroupSlug = subgroupParam ? decodeURIComponent(subgroupParam).toLowerCase() : null;
+  // 旧数字制子组 slug(u1 / pi 1 / as1 …)→ 新方向制(ur / pif / asf …),老链接不失效(migration 0081)
+  const subgroupSlug = canonicalZbllSubgroupSlug(set, rawSubgroupSlug);
   const slugLevel: 'top' | 'sub' | null = useMemo(() => {
     if (!subgroupSlug || !data) return null;
     for (const c of data.cases) {
@@ -601,7 +595,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
   const dispToken = (slug: string) => {
     const oll = ollByGroup.get(slug.toUpperCase()) ?? ollByGroup.get(slug);
     if (oll) return oll;
-    return set === 'zbll' ? renameZbllGroupToken(slug.toUpperCase()) : slug.toUpperCase();
+    return set === 'zbll' ? displayZbllToken(slug) : slug.toUpperCase();
   };
   const subgroupDisplay = (
     slugLevel === 'sub' && subParentSlug && subgroupSlug
@@ -730,7 +724,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
                       mask={pickerMask}
                     />
                   </div>
-                  <div className="alg-subgroup-card-title">{set === 'zbll' ? renameZbllGroupToken(subLabel) : subLabel}</div>
+                  <div className="alg-subgroup-card-title">{set === 'zbll' ? displayZbllToken(subLabel) : subLabel}</div>
                   <div className="alg-subgroup-card-count">{count} {tr({ zh: '个', en: 'cases'
                 })}</div>
                 </Link>
@@ -815,14 +809,14 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
                             })()}
                             {c.number != null && <span className="alg-case-index">#{c.number}</span>}
                             {c.meta && (
-                              <button
-                                type="button"
+                              <Link
+                                href={algCaseDetailHref(puzzleParam, set, c)}
                                 className="alg-case-meta-btn"
-                                onClick={() => setMetaCase(c)}
+                                prefetch={false}
                                 title={tr({ zh: '元数据', en: 'Metadata' })}
                               >
                                 <Info size={13} />
-                              </button>
+                              </Link>
                             )}
                             {oriCount > 1 && (
                               <button
@@ -957,16 +951,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
         />
       )}
 
-      {metaCase?.meta && (
-        <AlgCaseMetaModal
-          caseObj={metaCase}
-          puzzle={puzzleParam as AlgPuzzle}
-          set={set}
-          byNo={byNo}
-          onClose={() => setMetaCase(null)}
-          onJump={(c) => setMetaCase(c)}
-        />
-      )}
     </div>
   );
 }
