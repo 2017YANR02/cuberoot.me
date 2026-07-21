@@ -510,10 +510,12 @@
 }
 
 /* 交换主图 / 伴图的浮动按钮 — 同款外观(上面的类出样式),钉在图像浮层右下内角。
-   浮层自身是定位上下文且 pointer-events:none,按钮收回 auto(继承同款类)。 */
+   浮层自身 pointer-events:none(拖拽穿透),按钮必须自己收回 auto —— 背面小窗那个
+   交换钮挂在画布层不需要,这里是浮层子元素,少了这条真实点击会穿透无效。 */
 .sim-image-swap {
   right: 6px;
   bottom: 6px;
+  pointer-events: auto;
 }
 
 /* 主图 ↔ 伴图交换态:伴图浮层铺满画布,实时 3D 缩进左上小框。引擎 canvas 不是 CSS
