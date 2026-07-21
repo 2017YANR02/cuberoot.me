@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import World, { type PuzzleKind } from './engine/world';
 import { bspSceneAudit, exportSimSvgBsp } from './sim_svg_export_bsp';
+import { exportSimSvgSchematic, hasSchematicFacelets } from './sim_svg_export_schematic';
 import type Cube from './engine/nxn/cube';
 import { SIZE } from './engine/define';
 import { createBackView, type BackView } from './engine/backView';
@@ -452,14 +453,16 @@ export default function SimPage() {
     persistItem('sim.panel.image', imageOpen ? '1' : '0');
   }, [imageOpen]);
 
-  // 示意伴图黑边宽(世界单位):导出时贴纸向质心内缩这么多,身下黑块露出黑框。
-  // 只影响 schematic 伴图,niche 外观,走 localStorage(同 sim.panel.image,非 URL)。
+  // 示意伴图黑描边宽(SVG px,显示端随缩放):每个小面独立描黑边的宽度。
+  // 只影响示意伴图,niche 外观,走 localStorage(同 sim.panel.image,非 URL)。
   const [imgOutline, setImgOutline] = useState<number>(() => {
-    if (typeof window === 'undefined') return 3;
+    if (typeof window === 'undefined') return 8;
     try {
-      const v = Number(localStorage.getItem('sim.img.outline'));
-      return Number.isFinite(v) && v > 0 ? v : 3;
-    } catch { return 3; }
+      const raw = localStorage.getItem('sim.img.outline');
+      if (raw === null) return 8;
+      const v = Number(raw);
+      return Number.isFinite(v) && v >= 0 ? v : 8;
+    } catch { return 8; }
   });
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -1754,13 +1757,15 @@ export default function SimPage() {
       if (stable < 1) { stable++; return; }
       if (sig === exportedSig) return;
       exportedSig = sig;
-      if (bspSceneAudit(world.scene).miscolors) { setEngineSvg(null); return; } // 原核分色:回退旧渲染器
-      // 拼图带严格版几何(userData.schematicGeom)时走示意模式:每个小面 = 严格
-      // 多边形 path、平色;没有的拼图仍导实模投影。
-      let schematic = false;
-      world.scene.traverse((o) => { if (o.userData.schematicGeom) schematic = true; });
       try {
-        setEngineSvg(exportSimSvgBsp({ world, maxTriangles: MAX_TRIS, schematic, schematicOutline: imgOutline }));
+        // 拼图带示意小面(userData.schematicPoly)→ SR 范式示意导出器:每个小面
+        // 独立多边形 + 黑描边,共享棱逐比特重合;其余拼图走实模 BSP 投影。
+        if (hasSchematicFacelets(world.scene)) {
+          setEngineSvg(exportSimSvgSchematic({ world, strokeWidth: imgOutline }));
+          return;
+        }
+        if (bspSceneAudit(world.scene).miscolors) { setEngineSvg(null); return; } // 原核分色:回退旧渲染器
+        setEngineSvg(exportSimSvgBsp({ world, maxTriangles: MAX_TRIS }));
       } catch (err) {
         if (!(err instanceof Error && err.message.startsWith('SVG_TOO_COMPLEX'))) {
           console.warn('[sim] BSP companion export failed', err);
@@ -1773,15 +1778,12 @@ export default function SimPage() {
   }, [imageStudioSupported, imageOpen, srCompanionForced, imgOutline,
       settings.faceColors, query.stickering, query.stickeringColor]);
 
-  // 伴图当前是否示意版(有严格版孪生)—— 决定黑边滑块是否可用。
+  // 伴图当前是否示意版(有示意小面)—— 决定黑边滑块是否可用。
   const [engineSchematic, setEngineSchematic] = useState(false);
   useEffect(() => {
     if (!(imageStudioSupported && imageOpen && !srCompanionForced)) { setEngineSchematic(false); return; }
     const world = worldRef.current;
-    if (!world) { setEngineSchematic(false); return; }
-    let has = false;
-    world.scene.traverse((o) => { if (o.userData.schematicGeom) has = true; });
-    setEngineSchematic(has);
+    setEngineSchematic(!!world && hasSchematicFacelets(world.scene));
   }, [imageStudioSupported, imageOpen, srCompanionForced, imgPuzzle.puzzleType, engineSvg]);
 
   // 2D flat-net view mode — NxN only (number puzzle), driven by the same live cube.
