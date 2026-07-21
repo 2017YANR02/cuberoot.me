@@ -468,6 +468,7 @@ a {
   background: transparent;
   color: var(--muted-foreground);
   cursor: pointer;
+  text-decoration: none;
   transition: color 0.15s;
   flex-shrink: 0;
 }
