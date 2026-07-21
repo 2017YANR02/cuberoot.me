@@ -9,6 +9,8 @@
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
 import { exportSimSvgBsp, exportSimSvgBspWithDebug, type OrderedScreenPoly } from '@/app/[lang]/sim/sim_svg_export_bsp';
+import { buildPyraPiece, buildCore, EDGE_PAIRS, PYRA_A } from '@/app/[lang]/sim/engine/pyra/pyraGeometry';
+import { CUBE_FILL } from '@/lib/cube-colors';
 
 const W = 200;
 const H = 200;
@@ -316,5 +318,54 @@ describe('exportSimSvgBsp', () => {
     expect(inputTris).toBe(6);
     expect(order.length).toBe(6);
     expectValidPainterOrder(order);
+  });
+
+  it('schematic:userData.schematicGeom 替换几何且平色(无光照);无严格版的 mesh 不变', () => {
+    const world = makeWorld();
+    // 高细分圆盘(实模) + 严格三角形(示意版):示意导出应只见 1 个三角
+    const disc = new THREE.Mesh(
+      new THREE.CircleGeometry(40, 64),
+      new THREE.MeshLambertMaterial({ color: new THREE.Color(1, 0, 0) }),
+    );
+    const tri = new THREE.BufferGeometry();
+    tri.setAttribute('position', new THREE.Float32BufferAttribute([-40, -40, 0, 40, -40, 0, 0, 40, 0], 3));
+    tri.computeVertexNormals();
+    disc.userData.schematicGeom = tri;
+    world.scene.add(disc);
+    world.scene.add(new THREE.AmbientLight(0xffffff, Math.PI / 2)); // 有光照会把红压到 #880000 系
+    const plain = exportSimSvgBspWithDebug({ world });
+    expect(plain.inputTris).toBe(64);
+    expect(plain.svg).not.toContain('#ff0000'); // Lambert 半亮
+    const schem = exportSimSvgBspWithDebug({ world, schematic: true });
+    expect(schem.inputTris).toBe(1); // 几何被严格版替换
+    expect(schem.svg).toContain('#ff0000'); // 平色 = 材质原色
+  });
+
+  it('pyraminx 示意导出:全部 mesh 带严格版几何,贴纸平色原值,painter 序对', () => {
+    const scene = new THREE.Scene();
+    scene.add(buildCore());
+    for (let k = 0; k < 4; k++) {
+      scene.add(buildPyraPiece('tip', k).pivot);
+      scene.add(buildPyraPiece('corner', k).pivot);
+    }
+    for (const [a, b] of EDGE_PAIRS) scene.add(buildPyraPiece('edge', a, b).pivot);
+    // 覆盖面守卫:每个 mesh 都必须有严格版(漏挂 = 该件在示意图里保留圆角/曲面)
+    let meshes = 0, withSchem = 0;
+    scene.traverse((o) => {
+      if ((o as THREE.Mesh).isMesh) { meshes++; if (o.userData.schematicGeom) withSchem++; }
+    });
+    expect(meshes).toBeGreaterThan(0);
+    expect(withSchem).toBe(meshes);
+    const camera = new THREE.PerspectiveCamera(50, 1, 1, 10000);
+    camera.position.set(PYRA_A * 1.6, PYRA_A * 1.4, PYRA_A * 2.6);
+    camera.lookAt(0, 0, 0);
+    camera.updateProjectionMatrix();
+    const world = { scene, camera, width: 400, height: 400 };
+    const { svg, order, inputTris } = exportSimSvgBspWithDebug({ world, schematic: true });
+    expect(inputTris).toBeLessThan(800); // 严格版量级;实模(圆化体+挤出贴纸)是万级
+    expectValidPainterOrder(order);
+    // 平色 ⇒ fill = CUBE_FILL 原 hex;该视角至少看到 2 个面色
+    const hexes = [CUBE_FILL.F, CUBE_FILL.R, CUBE_FILL.B, CUBE_FILL.D].map((h) => h.toLowerCase());
+    expect(hexes.filter((h) => svg.toLowerCase().includes(h)).length).toBeGreaterThanOrEqual(2);
   });
 });

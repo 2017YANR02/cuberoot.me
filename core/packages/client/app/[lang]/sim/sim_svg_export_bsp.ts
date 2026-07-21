@@ -31,6 +31,10 @@ export interface BspSvgExportOptions {
   srgbColors?: boolean;
   /** 面片总数上限(输入 + BSP 分裂产物),超出抛 SVG_TOO_COMPLEX。 */
   maxTriangles?: number;
+  /** 示意模式(伴图 / 缩略图预设):mesh 带 `userData.schematicGeom` 时用该严格版
+   *  几何替换(严格多边形贴纸 / 精确多面体块身,无圆角无曲面),并全场平色
+   *  (跳过光照,fill = 材质色)。没有严格版的 mesh 照常用原几何。 */
+  schematic?: boolean;
 }
 
 const DEFAULT_MAX_TRIS = 400_000;
@@ -227,6 +231,10 @@ export function bspSceneAudit(scene: THREE.Object3D): { losesDetail: boolean; mi
  *  填充规则自动处理)。链化失败返回 null(降级逐面片)。 */
 function mergeRunToLoops(run: number[][]): number[][] | null {
   const key = (x: number, y: number): string => `${Math.round(x / MERGE_QUANT)},${Math.round(y / MERGE_QUANT)}`;
+  // 输出坐标吸附到量化格点:相邻碎片的"同一个"顶点原始浮点可差 0~1/8px,直接
+  // 输出会在边界链上留下亚像素微锯齿(描边 join 处成毛刺);吸附后严格同点,
+  // 误差 ≤1/16px 不可见。
+  const snap = (v: number): number => Math.round(v / MERGE_QUANT) * MERGE_QUANT;
   const edges = new Map<string, [number, number, number, number]>();
   for (const pts of run) {
     const n = pts.length / 3;
@@ -242,7 +250,7 @@ function mergeRunToLoops(run: number[][]): number[][] | null {
       else {
         const fk = `${ka}|${kb}`;
         if (edges.has(fk)) return null; // 重边(翼形/自叠),放弃合并
-        edges.set(fk, [ax, ay, bx, by]);
+        edges.set(fk, [snap(ax), snap(ay), snap(bx), snap(by)]);
       }
     }
   }
@@ -348,8 +356,10 @@ export function exportSimSvgBspWithDebug(opts: BspSvgExportOptions): { svg: stri
   const e1 = new THREE.Vector3(); const e2 = new THREE.Vector3();
   const ln = new THREE.Vector3(); const tmpN = new THREE.Vector3();
 
+  const schematic = opts.schematic === true;
   for (const mesh of meshes) {
-    const geom = mesh.geometry as THREE.BufferGeometry;
+    const geom = (schematic && (mesh.userData.schematicGeom as THREE.BufferGeometry | undefined))
+      || (mesh.geometry as THREE.BufferGeometry);
     const posAttr = geom.getAttribute('position');
     if (!posAttr) continue;
     const normAttr = geom.getAttribute('normal') ?? null;
@@ -400,7 +410,7 @@ export function exportSimSvgBspWithDebug(opts: BspSvgExportOptions): { svg: stri
         const opacity = mat.transparent ? (mat.opacity ?? 1) : 1;
         if (opacity <= 0.01) continue;
         const side = mat.side ?? THREE.FrontSide;
-        const unlit = mat.isMeshBasicMaterial === true;
+        const unlit = schematic || mat.isMeshBasicMaterial === true;
         const matR = mat.color?.r ?? 1, matG = mat.color?.g ?? 1, matB = mat.color?.b ?? 1;
         const emR = mat.emissive?.r ?? 0, emG = mat.emissive?.g ?? 0, emB = mat.emissive?.b ?? 0;
 
@@ -556,13 +566,14 @@ export function exportSimSvgBspWithDebug(opts: BspSvgExportOptions): { svg: stri
   let curFill = '';
   let curOp = -1;
   let curD: string[] = [];
-  // join 不设 round:全部直线段(默认 miter,极尖角由 miterlimit 自动削成直切),
-  // 圆角 join 会把小碎片描成圆团、放大后像"黑点"。
+  // join 用 bevel(每个转角一刀直切):round 把小碎片描成圆团"黑点",miter 在
+  // 边界微锯齿顶点长出针刺(miterlimit 只截到 4×宽)。bevel 零外延、无圆弧、
+  // 无针刺,是唯一既保直线段又不放大顶点噪声的 join。
   const flush = (): void => {
     if (curD.length === 0) return;
     const attrs = curOp < 1
       ? ` fill-opacity="${fmt(curOp)}"`
-      : ` stroke="${curFill}" stroke-width="1.2"`;
+      : ` stroke="${curFill}" stroke-width="1.2" stroke-linejoin="bevel"`;
     body.push(`<path d="${curD.join('')}" fill="${curFill}"${attrs}/>`);
     curD = [];
   };
@@ -570,7 +581,7 @@ export function exportSimSvgBspWithDebug(opts: BspSvgExportOptions): { svg: stri
     if (it.solo) {
       flush();
       const op = it.opacity < 1 ? ` fill-opacity="${fmt(it.opacity)}"` : '';
-      const st = it.opacity < 1 ? '' : ` stroke="${it.fill}" stroke-width="${fmt(it.strokeW)}"`;
+      const st = it.opacity < 1 ? '' : ` stroke="${it.fill}" stroke-width="${fmt(it.strokeW)}" stroke-linejoin="bevel"`;
       body.push(`<path d="${it.d}" fill="${it.fill}"${op}${st}/>`);
       continue;
     }
