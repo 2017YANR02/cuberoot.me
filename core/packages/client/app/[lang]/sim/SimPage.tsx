@@ -314,7 +314,17 @@ export default function SimPage() {
   // inside the panel — the sim's own puzzle dropdown is the single selector, mapped here
   // into the studio's vocabulary (mirror → order-3 cube). imageStudioSupported (from the
   // simCaps registry) gates whether the panel shows at all.
-  const imageStudioSupported = puzzleCaps(puzzleParam).imageStudio;
+  // spec 渲染器(visualcube / sr)认识的拼图走完整 studio;其余引擎拼图(fto / 枫叶 /
+  // 恐龙 / 齿轮…)走 engine-only 模式 —— 伴图 = 引擎矢量镜像,面板只剩预览 + 截图组 +
+  // SVG/PNG 下载,且要求引擎路径激活(cubing.js 渲染下无 world,出不了伴图)。
+  const imgCaps = puzzleCaps(puzzleParam);
+  const imgSpecRenderable = typeof puzzleParam === 'number' || puzzleParam === 'mirror'
+    || puzzleParam === 'sq1' || puzzleParam === 'skewb'
+    || puzzleParam === 'pyraminx' || puzzleParam === 'megaminx';
+  const imgEngineActive = imgCaps.engine === 'always'
+    || (imgCaps.engine === 'engineMode' && query.renderer !== 'cubing');
+  const imageStudioSupported = imgCaps.imageStudio && (imgSpecRenderable || imgEngineActive);
+  const imageStudioEngineOnly = imageStudioSupported && !imgSpecRenderable;
   const imgPuzzle = useMemo((): { puzzleType: PuzzleType; cubeSize: number } => {
     if (typeof puzzleParam === 'number') return { puzzleType: 'cube', cubeSize: puzzleParam };
     if (puzzleParam === 'mirror') return { puzzleType: 'cube', cubeSize: 3 };
@@ -1637,7 +1647,9 @@ export default function SimPage() {
   // writer and there is nothing to clobber. A puzzle-type change also snaps the viewport
   // rotation to the new puzzle's clean iso (what clicking a puzzle chip used to do).
   useEffect(() => {
-    if (!imageStudioSupported) return;
+    // engine-only 拼图(fto / 枫叶…)不消费 spec(伴图直出 engineSvg),别把
+    // 'cube' 默认映射 + 视角标定写进 URL 的 img_* 参数。
+    if (!imageStudioSupported || imageStudioEngineOnly) return;
     const patch: Partial<ImageSpec> = {};
     if (imgSpec.puzzleType !== imgPuzzle.puzzleType) patch.puzzleType = imgPuzzle.puzzleType;
     if (imgSpec.cubeSize !== imgPuzzle.cubeSize) patch.cubeSize = imgPuzzle.cubeSize;
@@ -1700,7 +1712,7 @@ export default function SimPage() {
       }
     }
     if (Object.keys(patch).length > 0) setImgSpec(patch);
-  }, [imageStudioSupported, imgPuzzle, imgInherit, imgSpec,
+  }, [imageStudioSupported, imageStudioEngineOnly, imgPuzzle, imgInherit, imgSpec,
       settings.viewAngle, settings.viewGradient, settings.perspective, setImgSpec]);
 
   // ── 引擎 BSP 伴图镜像(sr / visualcube 伴图退役,Phase 3)────────────────
@@ -2011,12 +2023,13 @@ export default function SimPage() {
               simBridge={simBridge}
               previewHost={imageHost}
               engineSvg={engineSvg}
+              engineOnly={imageStudioEngineOnly}
               outlineWidth={engineSchematic ? imgOutline : undefined}
               onOutlineWidthChange={setImgOutline}
             />
           ) : (
-            // spec 渲染器不支持的拼图(枫叶 / 恐龙 / 齿轮 / PG 骨架族等)仍给
-            // 实时截图组(PNG / SVG / MP4)—— 截图能力覆盖菜单里的所有拼图。
+            // 面板不支持的拼图(cubing.js 渲染下的 fto / custom / PG 骨架族 —— 无
+            // world 出不了伴图)仍给实时截图组(PNG / SVG / MP4)。
             <SimCaptureGroup simBridge={simBridge} />
           )}
           {/* Group-theory panel = the visible half of the non-cubing.js view. Shows for any

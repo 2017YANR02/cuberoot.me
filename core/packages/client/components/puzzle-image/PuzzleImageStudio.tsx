@@ -177,13 +177,17 @@ export interface PuzzleImageStudioProps {
   previewHost?: HTMLElement | null;
   /** /sim 引擎 BSP 矢量镜像,透传 PuzzleImage(见其 engineSvg 注释)。 */
   engineSvg?: string | null;
+  /** engine-only 拼图(fto / 枫叶 / 恐龙 / 齿轮… —— spec 渲染器不认识):预览直出
+   *  engineSvg,隐藏所有 spec 控件与 API 链接(服务端渲染不了这些拼图),导出栏只剩
+   *  截图组 + SVG/PNG(下载的就是预览这份引擎矢量)。 */
+  engineOnly?: boolean;
   /** 示意伴图黑边宽(世界单位)。仅当伴图为示意版(有严格版孪生)时由 host 传值,
    *  值为 undefined 表示不适用 → 不渲染黑边滑块。 */
   outlineWidth?: number;
   onOutlineWidthChange?: (n: number) => void;
 }
 
-export default function PuzzleImageStudio({ spec, onSpecChange, mode, className, simBridge, previewHost, engineSvg, outlineWidth, onOutlineWidthChange }: PuzzleImageStudioProps) {
+export default function PuzzleImageStudio({ spec, onSpecChange, mode, className, simBridge, previewHost, engineSvg, engineOnly = false, outlineWidth, onOutlineWidthChange }: PuzzleImageStudioProps) {
   const t = useT();
   const s = spec;
   const set = useCallback(<K extends keyof ImageSpec>(key: K, value: ImageSpec[K]) => {
@@ -204,12 +208,18 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
 
   const previewRef = useRef<HTMLDivElement | null>(null);
 
+  // 预览当前显示的是否引擎矢量镜像(与 PuzzleImage 的 engineMirrors 同一条件):
+  // 是 → SVG/PNG 导出的必须就是它(所见即所得),而不是 spec 重渲染的近似版。
+  const engineShown = !!engineSvg && (engineOnly
+    || (s.puzzleType === 'cube' ? s.cubeView === 'normal' : s.puzzleVariant === 'iso'));
+
   // ── export ─────────────────────────────────────────────────────────────
   // Always ask the PURE renderer first — the old code scraped `.vc-preview > svg`
   // and silently exported an empty blob on the 3x3 net (paint editor = HTML divs,
   // no <svg> at all). Only the genuinely DOM-only renderers fall back to
   // serializing the live DOM.
   const getCurrentSvg = useCallback((): string => {
+    if (engineShown && engineSvg) return engineSvg;
     try {
       const pure = renderSpecSvg(s);
       if (pure) return pure;
@@ -221,7 +231,7 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
     // layout, so a tnoodle-net fallback would export a picture unlike the preview.
     const node = previewRef.current?.querySelector('svg');
     return node ? new XMLSerializer().serializeToString(node) : '';
-  }, [s]);
+  }, [s, engineShown, engineSvg]);
 
   const downloadSvg = () => {
     const out = getCurrentSvg();
@@ -253,7 +263,14 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
       canvas.height = s.imageSize;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
-      ctx.drawImage(img, 0, 0, s.imageSize, s.imageSize);
+      // 引擎矢量镜像是贴拼图裁剪的非方形 viewBox,硬拉成方形会变形 → contain-fit
+      // 居中(spec 渲染本来就是方形,fit 后不变)。
+      const iw = img.naturalWidth || s.imageSize;
+      const ih = img.naturalHeight || s.imageSize;
+      const k = Math.min(s.imageSize / iw, s.imageSize / ih);
+      const dw = iw * k;
+      const dh = ih * k;
+      ctx.drawImage(img, (s.imageSize - dw) / 2, (s.imageSize - dh) / 2, dw, dh);
       canvas.toBlob((pngBlob) => {
         if (!pngBlob) return;
         const pngUrl = URL.createObjectURL(pngBlob);
@@ -349,7 +366,25 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
     <section className="vc-preview-wrap" ref={previewRef}>
       {/* Page mode: interactive (drag-to-rotate, paint editor). Panel mode: a passive
           mirror — the sim's own 左右 / 上下 (and 透视 for the cube) drive the spec. */}
-      <PuzzleImage spec={s} onSpecChange={onSpecChange} interactive={mode === 'page'} engineSvg={engineSvg} />
+      {engineOnly ? (
+        // engine-only 拼图无 spec 渲染器可回退:有引擎矢量就显示(尺寸同 PuzzleImage
+        // 的 engineMirrors 分支:钉成方形显示框,viewBox + meet 保比例),没有就等静止帧。
+        engineSvg ? (
+          <div
+            className="vc-preview"
+            dangerouslySetInnerHTML={{
+              __html: engineSvg.replace(
+                /<svg\b([^>]*?)\swidth="[^"]*"\sheight="[^"]*"/,
+                `<svg$1 width="${s.imageSize}" height="${s.imageSize}"`,
+              ),
+            }}
+          />
+        ) : (
+          <div className="vc-preview vc-preview-pending">{t('等待引擎静止帧…', 'Waiting for a still frame…')}</div>
+        )
+      ) : (
+        <PuzzleImage spec={s} onSpecChange={onSpecChange} interactive={mode === 'page'} engineSvg={engineSvg} />
+      )}
     </section>
   );
 
@@ -362,19 +397,23 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
             看到的是同一个东西,离图更近;下面那排导出的是 spec 重渲染的结果。 */}
         {simBridge && <SimCaptureGroup simBridge={simBridge} />}
 
-        <CopyButton label={t('分享链接', 'Share URL')} getValue={() => shareUrl} />
-        <CopyButton label={t('API 链接', 'API URL')} getValue={() => apiSvgUrl} />
+        {/* 链接类按钮都指向服务端 spec 渲染(/visualcube 页 + /v1/visualcube.svg),
+            engine-only 拼图服务端画不了 → 只留 SVG/PNG(下载预览那份引擎矢量)。 */}
+        {!engineOnly && <CopyButton label={t('分享链接', 'Share URL')} getValue={() => shareUrl} />}
+        {!engineOnly && <CopyButton label={t('API 链接', 'API URL')} getValue={() => apiSvgUrl} />}
         <button type="button" className="vc-btn" onClick={downloadSvg}>
           <Download size={14} /> SVG
         </button>
         <button type="button" className="vc-btn" onClick={downloadPng}>
           <Download size={14} /> PNG
         </button>
-        <CopyButton
-          label={t('<img> 标签', '<img> tag')}
-          getValue={() => `<img src="${apiSvgUrl}" alt="cube" width="${s.imageSize}" height="${s.imageSize}" />`}
-        />
-        <CopyButton label="Markdown" getValue={() => `![cube](${apiSvgUrl})`} />
+        {!engineOnly && (
+          <CopyButton
+            label={t('<img> 标签', '<img> tag')}
+            getValue={() => `<img src="${apiSvgUrl}" alt="cube" width="${s.imageSize}" height="${s.imageSize}" />`}
+          />
+        )}
+        {!engineOnly && <CopyButton label="Markdown" getValue={() => `![cube](${apiSvgUrl})`} />}
       </section>
 
       <section className="vc-controls">
@@ -414,6 +453,7 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
           </div>
         )}
 
+        {!engineOnly && (
         <div className="vc-row">
           <label className="vc-label">{t('视图', 'View')}</label>
           <div className="vc-row-controls">
@@ -445,6 +485,7 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
             )}
           </div>
         </div>
+        )}
 
         <div className="vc-row">
           {isCube && showPuzzleControls && (
@@ -475,6 +516,7 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
           />
         </div>
 
+        {!engineOnly && (<>
         {showInheritedControls && (
           <div className="vc-row vc-row-block">
             <label className="vc-label">{t('公式', 'Algorithm')}</label>
@@ -794,8 +836,10 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
             />
           </>
         )}
+        </>)}
       </section>
 
+      {!engineOnly && (
       <details className="vc-api-doc">
         <summary>{t('API 用法（外部嵌入）', 'API usage (embed elsewhere)')}</summary>
         <p>
@@ -832,6 +876,7 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
           )}
         </p>
       </details>
+      )}
     </div>
   );
 }
