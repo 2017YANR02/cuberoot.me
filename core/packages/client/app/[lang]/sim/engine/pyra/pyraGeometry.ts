@@ -262,6 +262,9 @@ export function buildPyraPiece(kind: 'tip' | 'corner' | 'edge', a: number, b = -
     const sGeom = roundedTriSticker(inset(tri[0]), inset(tri[1]), inset(tri[2]), nrm);
     group.add(makeSticker(sGeom, stickerMat(FACE_COLOR[m]), bodyMat, {
       simStickerNormal: nrm.clone(), pyraFace: m,
+      // 建构标识(复原帧,跟块走):mask 直映用 —— canonical sid → 本 key 的派生表
+      // 见 tests/_engine_mask_derive.ts + lib/puzzle-image/data/engine-sid-map.json。
+      stickerKey: `${kind}${a}${b >= 0 ? `-${b}` : ''}:${m}`,
       schematicPoly: schematicPolyOf(tri[0], tri[1], tri[2], nrm, center),
     }));
   }

@@ -358,7 +358,10 @@ export default function PuzzleImage({
     className,
   ].filter(Boolean).join(' ');
 
-  // 引擎 BSP 矢量镜像:3D 投影视图直接显示引擎自己的精确投影(见 engineSvg 注释)
+  // 引擎 BSP 矢量镜像:3D 投影视图直接显示引擎自己的精确投影(见 engineSvg 注释)。
+  // 贴纸遮罩由 SimPage 单点负责:引擎直映认识的拼图把 mask 烙进 engineSvg,
+  // 不认识的置 engineSvg=null → 这里自然落回 spec 渲染器(sr/visualcube 认 mask),
+  // 任何一边都不会静默丢遮罩。
   const engineMirrors = spec.puzzleType === 'cube'
     ? spec.cubeView === 'normal'
     : spec.puzzleVariant === 'iso';
