@@ -157,10 +157,15 @@ const DEFAULT_CUSTOM_CUTS = 'c f 0.255';
 const SR_ANGLE_BASE: Partial<Record<PuzzleType, {
   yaw: number; pitch: number; yawSign: 1 | -1; pitchSign: 1 | -1;
 }>> = {
-  // sr identity shows the R-face where the sim shows F → +90 yaw; both signs match the sim.
-  // yaw biased 90→100 so the DEFAULT (左右 30) R-face width pixel-matches the engine's 72mm
-  // camera + bevel shading (sr's flat shading reads wider per degree — 默认精确 policy).
-  skewb: { yaw: 100, pitch: 0, yawSign: 1, pitchSign: 1 },
+  // sr identity shows the R-face where the sim shows F → ~+90 yaw; both signs match the sim.
+  // Calibrated at the DEFAULT view (左右 30) against the engine's own render by pixel-counting
+  // the projected faces: engine F:R green/red area = 2.08 and U-white fraction = 0.306. yaw 86
+  // lands the companion F:R at 2.10 and pitch +4 lands white at 0.315 (both within ~2%). The
+  // earlier {100,0} left the companion nearly F-on (R a sliver, F:R ≈ 5) — mis-calibrated once
+  // the renderer default moved to the engine; re-measured 2026-07-21. sr's flat shading reveals
+  // slightly less per degree than the 72mm bevel camera, so the fit is exact at the default
+  // view and approximate off it (default-精确 policy, shared by the other bases).
+  skewb: { yaw: 86, pitch: 4, yawSign: 1, pitchSign: 1 },
   // sq1 identity = bird's-eye on top (spin axis z); yaw maps straight (z = sim yaw), pitch
   // offsets −90 (front-on is 90° from bird's-eye): x = pitch_sim − 90. Verified z−36/x−59 = left.
   sq1: { yaw: 0, pitch: -90, yawSign: 1, pitchSign: 1 },
@@ -1676,7 +1681,7 @@ export default function SimPage() {
         if (imgSpec.rotateAngle2 !== a2) patch.rotateAngle2 = a2;
       }
     }
-    if (Object.keys(patch).length > 0) { if (typeof window !== 'undefined') { (window as any).__EFFA = ((window as any).__EFFA||0)+1; if ((window as any).__EFFA % 20 === 0) console.warn('[EFFA sim→spec]', (window as any).__EFFA, JSON.stringify(patch)); } setImgSpec(patch); }
+    if (Object.keys(patch).length > 0) setImgSpec(patch);
   }, [imageStudioSupported, imgPuzzle, imgInherit, imgSpec,
       settings.viewAngle, settings.viewGradient, settings.perspective, setImgSpec]);
 
