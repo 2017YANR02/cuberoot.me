@@ -166,8 +166,11 @@ export const DEFAULT_SETTINGS: SimSettings = {
   sensitivity: 50,
   scale: 50,
   perspective: 50,
-  viewAngle: 30,
-  viewGradient: 33,
+  // 引擎渲染的正方体开局默认视角 = 左右 30° / 上下 30°(度→内部:50 − 30/1.8 = 100/3)。
+  // 每种拼图落地时 SimPage 的 defaultViewFor 会按该拼图 + 当前渲染器重算覆盖这两值;
+  // 这里的默认只在 SSR / 首帧 / 无 puzzle 效应时短暂生效。
+  viewAngle: 100 / 3,
+  viewGradient: 100 / 3,
   speed: 50,
   thickness: true,
   hollow: false,
