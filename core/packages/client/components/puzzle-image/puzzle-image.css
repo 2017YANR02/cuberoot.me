@@ -70,6 +70,9 @@
 .vc-preview-pickable svg { pointer-events: auto; }
 .vc-preview-pickable [data-sid] { cursor: crosshair; }
 
+/* engine-only 拼图(fto / 枫叶…)引擎静止帧还没出来时的占位文案。 */
+.vc-preview-pending { background: none; color: var(--vc-text-dim); font-size: 12px; padding: 8px 0; }
+
 /* The solved-net click-to-gray editor mounted inside the 贴纸遮罩 row. */
 .vc-mask-editor { align-self: flex-start; max-width: 420px; }
 .vc-mask-editor svg { max-height: none; }
