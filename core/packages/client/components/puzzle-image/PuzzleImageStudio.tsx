@@ -177,9 +177,13 @@ export interface PuzzleImageStudioProps {
   previewHost?: HTMLElement | null;
   /** /sim 引擎 BSP 矢量镜像,透传 PuzzleImage(见其 engineSvg 注释)。 */
   engineSvg?: string | null;
+  /** 示意伴图黑边宽(世界单位)。仅当伴图为示意版(有严格版孪生)时由 host 传值,
+   *  值为 undefined 表示不适用 → 不渲染黑边滑块。 */
+  outlineWidth?: number;
+  onOutlineWidthChange?: (n: number) => void;
 }
 
-export default function PuzzleImageStudio({ spec, onSpecChange, mode, className, simBridge, previewHost, engineSvg }: PuzzleImageStudioProps) {
+export default function PuzzleImageStudio({ spec, onSpecChange, mode, className, simBridge, previewHost, engineSvg, outlineWidth, onOutlineWidthChange }: PuzzleImageStudioProps) {
   const t = useT();
   const s = spec;
   const set = useCallback(<K extends keyof ImageSpec>(key: K, value: ImageSpec[K]) => {
@@ -374,6 +378,24 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
       </section>
 
       <section className="vc-controls">
+        {outlineWidth !== undefined && onOutlineWidthChange && (
+          <div className="vc-row">
+            <label className="vc-label" htmlFor="vc-outline">{t('黑边', 'Outline')}</label>
+            <div className="vc-row-controls vc-outline-row">
+              <input
+                id="vc-outline"
+                type="range"
+                min={0}
+                max={8}
+                step={0.5}
+                value={outlineWidth}
+                onChange={(e) => onOutlineWidthChange(Number(e.target.value))}
+                aria-label={t('示意伴图黑边粗细', 'Schematic outline thickness')}
+              />
+              <span className="vc-outline-val">{outlineWidth}</span>
+            </div>
+          </div>
+        )}
         {showPuzzleControls && (
           <div className="vc-row">
             <label className="vc-label">{t('魔方', 'Puzzle')}</label>

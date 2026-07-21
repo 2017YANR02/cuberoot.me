@@ -82,11 +82,6 @@ const STICKER_DEPTH = 1.5;
  *  the sharp tetra dihedral and bleed color onto neighbors. Pair with low body rounding
  *  (narrow grooves) + low sticker protrusion (flat-ish) for a clean single-color face. */
 const STICKER_INSET_DIST = 0.6;
-/** 示意版贴纸的加大缩距(顶点向质心,边距 = 距离的一半 ≈ 1.5 单位 ≈ 投影 3px):
- *  黑色块身在每个小面四周(含外轮廓)露出均匀黑框,即示意图的"黑描边"——用几何
- *  而非 SVG stroke,面片被 BSP 切开时不会在面内画出假黑线。实模的 0.6 投影下
- *  亚像素,黑框感全靠内缝,外轮廓会彩色贴边。 */
-const SCHEMATIC_INSET_DIST = 3;
 const STICKER_CORNER_R = 0.16;
 const BODY_ROUND = 1;
 /** Each piece is shrunk toward its own centroid by this factor, opening a uniform
@@ -269,21 +264,18 @@ export function buildPyraPiece(kind: 'tip' | 'corner' | 'edge', a: number, b = -
     // Move each corner toward the centroid by an absolute distance (clamped well short
     // of the centroid), then lift along the outward normal — keeps the sticker inside
     // the eroded body top regardless of triangle size.
-    const insetBy = (p: THREE.Vector3, dist: number): THREE.Vector3 => {
+    const inset = (p: THREE.Vector3): THREE.Vector3 => {
       const toC = centroid.clone().sub(p);
-      const d = Math.min(dist, toC.length() * 0.5);
+      const d = Math.min(STICKER_INSET_DIST, toC.length() * 0.5);
       return p.clone().add(toC.setLength(d)).add(lift);
     };
-    const inset = (p: THREE.Vector3): THREE.Vector3 => insetBy(p, STICKER_INSET_DIST);
     const sGeom = roundedTriSticker(inset(tri[0]), inset(tri[1]), inset(tri[2]), nrm);
+    // 示意版贴纸 = 与小面齐平的严格三角形(仅抬升,不内缩);黑边宽由导出器的
+    // schematicOutline 在 export 时内缩控制(滑块可调),不烘进几何。
+    const flush = (p: THREE.Vector3): THREE.Vector3 => p.clone().add(lift);
     group.add(makeSticker(sGeom, stickerMat(FACE_COLOR[m]), bodyMat, {
       simStickerNormal: nrm.clone(), pyraFace: m,
-      schematicGeom: strictTriSticker(
-        insetBy(tri[0], SCHEMATIC_INSET_DIST),
-        insetBy(tri[1], SCHEMATIC_INSET_DIST),
-        insetBy(tri[2], SCHEMATIC_INSET_DIST),
-        nrm,
-      ),
+      schematicGeom: strictTriSticker(flush(tri[0]), flush(tri[1]), flush(tri[2]), nrm),
     }));
   }
 

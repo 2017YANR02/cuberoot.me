@@ -341,6 +341,35 @@ describe('exportSimSvgBsp', () => {
     expect(schem.svg).toContain('#ff0000'); // 平色 = 材质原色
   });
 
+  it('schematicOutline:贴纸(simRole=sticker)向质心内缩,越大越小;body 不缩', () => {
+    const world = makeWorld();
+    const stickerGeom = new THREE.BufferGeometry();
+    stickerGeom.setAttribute('position', new THREE.Float32BufferAttribute([-40, -40, 0, 40, -40, 0, 0, 40, 0], 3));
+    stickerGeom.computeVertexNormals();
+    const mkSticker = (): THREE.Mesh => {
+      const m = new THREE.Mesh(stickerGeom, new THREE.MeshBasicMaterial({ color: new THREE.Color(1, 0, 0) }));
+      m.userData.simRole = 'sticker';
+      m.userData.schematicGeom = stickerGeom;
+      return m;
+    };
+    const spanOf = (order: OrderedScreenPoly[]): number => {
+      let x0 = Infinity, x1 = -Infinity;
+      for (const o of order) for (let i = 0; i < o.pts.length; i += 3) { if (o.pts[i] < x0) x0 = o.pts[i]; if (o.pts[i] > x1) x1 = o.pts[i]; }
+      return x1 - x0;
+    };
+    world.scene.add(mkSticker());
+    const wide = exportSimSvgBspWithDebug({ world, schematic: true, schematicOutline: 0 });
+    const narrow = exportSimSvgBspWithDebug({ world, schematic: true, schematicOutline: 20 });
+    expect(spanOf(narrow.order)).toBeLessThan(spanOf(wide.order));
+    // body(非 sticker)不受 outline 影响
+    const body = new THREE.Mesh(stickerGeom, new THREE.MeshBasicMaterial({ color: new THREE.Color(0, 0, 0) }));
+    body.userData.simRole = 'body';
+    body.userData.schematicGeom = stickerGeom;
+    const w2 = makeWorld(); w2.scene.add(body);
+    expect(spanOf(exportSimSvgBspWithDebug({ world: w2, schematic: true, schematicOutline: 0 }).order))
+      .toBeCloseTo(spanOf(exportSimSvgBspWithDebug({ world: w2, schematic: true, schematicOutline: 20 }).order), 3);
+  });
+
   it('pyraminx 示意导出:全部 mesh 带严格版几何,贴纸平色原值,painter 序对', () => {
     const scene = new THREE.Scene();
     scene.add(buildCore());

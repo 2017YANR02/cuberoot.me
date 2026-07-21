@@ -35,6 +35,12 @@ export interface BspSvgExportOptions {
    *  几何替换(严格多边形贴纸 / 精确多面体块身,无圆角无曲面),并全场平色
    *  (跳过光照,fill = 材质色)。没有严格版的 mesh 照常用原几何。 */
   schematic?: boolean;
+  /** 示意模式贴纸黑边宽度(世界单位):>0 时把 `simRole==='sticker'` 的每个小面
+   *  在自身平面内向质心内缩该距离,让身下的黑色块身在四周(含外轮廓)露出均匀
+   *  黑框 —— 用几何而非 SVG 描边,面片被 BSP 切开也不在内部画假线。0 = 不内缩
+   *  (贴纸贴合小面边)。单三角小面(如 pyraminx)逐三角向自身质心内缩即精确;
+   *  多三角小面待整体轮廓内缩(TODO)。 */
+  schematicOutline?: number;
 }
 
 const DEFAULT_MAX_TRIS = 400_000;
@@ -370,6 +376,9 @@ export function exportSimSvgBspWithDebug(opts: BspSvgExportOptions): { svg: stri
     const instCount = inst ? inst.count : 1;
     const ro = mesh.renderOrder || 0;
     const mask = mesh.layers.mask;
+    // 示意黑边:该 mesh 是贴纸且开了黑边宽 → 每个小面在平面内向质心内缩(见选项)
+    const stickerInset = schematic && mesh.userData.simRole === 'sticker'
+      ? (opts.schematicOutline ?? 0) : 0;
 
     const vertTotal = index ? index.count : posAttr.count;
     if (vertTotal < 3) continue;
@@ -423,6 +432,18 @@ export function exportSimSvgBspWithDebug(opts: BspSvgExportOptions): { svg: stri
           va.fromBufferAttribute(posAttr, i0).applyMatrix4(instWorld);
           vb.fromBufferAttribute(posAttr, i1).applyMatrix4(instWorld);
           vc.fromBufferAttribute(posAttr, i2).applyMatrix4(instWorld);
+          if (stickerInset > 0) {
+            // 三顶点在自身平面内向质心内缩 stickerInset(世界单位),平面法向/方程
+            // 不变(质心在面内)→ 露出四周黑框。夹到 0.9×到质心距,防翻面。
+            const cx = (va.x + vb.x + vc.x) / 3, cy = (va.y + vb.y + vc.y) / 3, cz = (va.z + vb.z + vc.z) / 3;
+            const pull = (v: THREE.Vector3): void => {
+              const dx = cx - v.x, dy = cy - v.y, dz = cz - v.z;
+              const L = Math.hypot(dx, dy, dz) || 1;
+              const s = Math.min(stickerInset, L * 0.9) / L;
+              v.set(v.x + dx * s, v.y + dy * s, v.z + dz * s);
+            };
+            pull(va); pull(vb); pull(vc);
+          }
           e1.subVectors(vb, va);
           e2.subVectors(vc, va);
           ln.crossVectors(e1, e2);
