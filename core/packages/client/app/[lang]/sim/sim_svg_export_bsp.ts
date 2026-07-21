@@ -7,10 +7,11 @@
  * 切开(Sutherland–Hodgman),遮挡边界 = 平面求交直线,任意放大无锯齿。全程
  * 纯数学、不需要 WebGL,可在 Node 运行(服务端缩略图的前置条件)。
  *
- * 覆盖范围(伴图 / 缩略图场景):Mesh + InstancedMesh(instanceColor / 零缩放
- * 隐藏实例 / 材质组 / 顶点色 / Lambert 光照 / 透明 / emissive)。跳过:
- * SkinnedMesh(手)、Sprite(方位字母)、贴图(logo)、原核分色 —— 这些只出现
- * 在「截图 SVG」按钮的全设置场景,仍走 exportSimSvg 的 GPU depth-map 路径。
+ * 覆盖范围(伴图 / 缩略图 / 「截图 SVG」按钮默认路径):Mesh + InstancedMesh
+ * (instanceColor / 零缩放隐藏实例 / 材质组 / 顶点色 / Lambert 光照 / 透明 /
+ * emissive)。跳过:SkinnedMesh(手)、Sprite(方位字母)、贴图(logo)、原核
+ * 分色 —— 截图按钮检测到这些特性在场时回退 exportSimSvg 的 GPU depth-map 路径
+ * (SimCaptureGroup 的 gpuOnly 检测)。
  *
  * 输出阶段:paint 序中连续、同平面同色的面片做「共享边相消」边界重建,合并成
  * 单条 <path>(贴纸 / 面板恢复为一个多边形轮廓,path 数回到贴纸量级);重建
@@ -196,6 +197,29 @@ interface MaterialLike {
   vertexColors?: boolean;
   emissive?: THREE.Color;
   isMeshBasicMaterial?: boolean;
+  map?: unknown;
+}
+
+/** 场景特性审计 — 调用方据此决定是否用本管线:
+ *  - losesDetail:含 BSP 画不出的元素(手 SkinnedMesh / 方位字母 Sprite / logo
+ *    贴图),导出仍正确但缺这些元素。「截图 SVG」按钮(全保真诉求)据此回退
+ *    GPU depth-map 路径;伴图(镜像诉求)可忽略。
+ *  - miscolors:含 BSP 会**画错色**的特性(原核分色 aRaw:着色在 shader 里,
+ *    CPU 读 material.color 只能得底色)。任何调用方都应回退。 */
+export function bspSceneAudit(scene: THREE.Object3D): { losesDetail: boolean; miscolors: boolean } {
+  let losesDetail = false;
+  let miscolors = false;
+  scene.traverseVisible((o) => {
+    const any = o as unknown as { isSkinnedMesh?: boolean; isSprite?: boolean; isMesh?: boolean };
+    if (any.isSkinnedMesh || any.isSprite) { losesDetail = true; return; }
+    if (!any.isMesh) return;
+    const m = o as THREE.Mesh;
+    if ((m.geometry as THREE.BufferGeometry).getAttribute('aRaw')) { miscolors = true; return; }
+    for (const mat of Array.isArray(m.material) ? m.material : [m.material]) {
+      if ((mat as MaterialLike).map) { losesDetail = true; return; }
+    }
+  });
+  return { losesDetail, miscolors };
 }
 
 /** 共享边相消 + 链化:同平面同色面片簇 → 边界环(含洞,绕向天然相反,nonzero
@@ -371,6 +395,7 @@ export function exportSimSvgBspWithDebug(opts: BspSvgExportOptions): { svg: stri
       for (const range of ranges) {
         const mat = range.mat;
         if (mat.visible === false) continue;
+        if (mat.map) continue; // 贴图材质(logo 贴片):画成实心色块必错,直接不画
         const opacity = mat.transparent ? (mat.opacity ?? 1) : 1;
         if (opacity <= 0.01) continue;
         const side = mat.side ?? THREE.FrontSide;
