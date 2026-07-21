@@ -18,7 +18,8 @@ export default function Scramble333ModePicker({ active333, isZh }: Props) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
   return (
     <ScrambleModePickerRow
-      label={t('3x3 引擎', '3x3 engine')}
+      iconEvent="333"
+      label={t('引擎', 'engine')}
       value={mode === 'm2p'}
       onChange={(v) => setMode(v ? 'm2p' : 'wca')}
       onLabel="min2phase"

@@ -252,7 +252,7 @@ export const DEFAULTS: TimerSettings = {
   scrambleSource: 'wca',
   manualScrambles: '',
   timingEnabled: true,
-  wcaScrambleMode: 'date',
+  wcaScrambleMode: 'comp',
   wcaComp: '',
   wcaCompName: '',
   wcaCompCountry: '',

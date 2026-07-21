@@ -35,6 +35,7 @@ import { syncLangToUrl } from '@/i18n/i18n-client';
 import { generateScramble, registerScramble } from '../_lib/scramble';
 import { peekWca, nextWca, prefetchWca, hasWcaSource, isWcaSourceEmpty, isWcaCompUnindexed, probeCompCoverage, getCompCoverage, wcaEventId, wcaMetaFor, wcaPoolProgress, type WcaSourceSpec } from '../_lib/scramble/wca_pool';
 import { takeScramble } from '../_lib/scramble/scramble_pool';
+import { use222Mode } from '@/lib/scramble-222-mode';
 import { genByStepsScramble, genByStepsSig, wcaStepFilter } from '../_lib/scramble/gen-by-steps';
 import { formatScrambleForEvent } from '@/lib/sq1-svg';
 import { Flag } from '@/components/Flag';
@@ -316,6 +317,10 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   // 比赛模式但没选比赛 → 回退成「日期全时段随机真题」:仍出真实 WCA 打乱(随机抽),不落本地
   // 随机生成。走 date 池(fillDate,空 from/to = 全时段),经预热后秒出。否则 specKey 对空 comp
   // 返回 null,会静默变成本地生成打乱(见 wca_pool.specKey / fillDate)。
+  // 2x2 口径(WCA 11 步 ↔ 最优/Q|H):与 /scramble/gen 同一个全站设置(Scramble222ModePicker)。
+  // 真题:optimal → 服务端 God's-number 最优等态(复用 optimal_scramble);随机状态 → 见 scramble222。
+  const [mode222] = use222Mode();
+  const wcaOptimalOn = event === '222' ? mode222 === 'optimal' : settings.wcaUseOptimal;
   const wcaSpec = useMemo<WcaSourceSpec>(() => {
     const compMissing = settings.wcaScrambleMode === 'comp' && !settings.wcaComp;
     return {
@@ -327,7 +332,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       group: compMissing ? '' : settings.wcaGroup,
       from: compMissing ? '' : settings.wcaDateFrom,
       to: compMissing ? '' : settings.wcaDateTo,
-      optimal: settings.wcaUseOptimal,
+      optimal: wcaOptimalOn,
       // 难度过滤:未入库的比赛旁路(见 wcaCompUnindexed)。空比赛回退成「全时段随机真题」时仍生效——
       // 难度控件此时照常显示可操作(WcaSourceConfig 只看开关不看有无选中比赛),丢弃会静默出不符条件的
       // 打乱(如选了 0 步十字却拿到普通打乱);date 池服务端 /random 对空 from/to 走飞镖采样带环绕补齐,
@@ -342,11 +347,11 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       stepFilter: wcaStep ?? undefined,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [event, settings.wcaScrambleMode, settings.wcaComp, settings.wcaCompName, settings.wcaRound, settings.wcaGroup, settings.wcaDateFrom, settings.wcaDateTo, settings.wcaUseOptimal, settings.wcaDifficultyOn, settings.wcaDiffVariant, settings.wcaDiffStage, settings.wcaDiffColors, settings.wcaDiffSteps, settings.wcaDiffMerged, wcaStepSig, wcaCompUnindexed]);
+  }, [event, settings.wcaScrambleMode, settings.wcaComp, settings.wcaCompName, settings.wcaRound, settings.wcaGroup, settings.wcaDateFrom, settings.wcaDateTo, wcaOptimalOn, settings.wcaDifficultyOn, settings.wcaDiffVariant, settings.wcaDiffStage, settings.wcaDiffColors, settings.wcaDiffSteps, settings.wcaDiffMerged, wcaStepSig, wcaCompUnindexed]);
   const wcaSpecRef = useRef(wcaSpec);
   wcaSpecRef.current = wcaSpec;
   const wcaSourceSig = settings.scrambleSource === 'wca'
-    ? `${settings.wcaScrambleMode}|${settings.wcaComp}|${settings.wcaRound}|${settings.wcaGroup}|${settings.wcaDateFrom}|${settings.wcaDateTo}|${event}|${wcaDiffSig}|${wcaStepSig}|${wcaCompUnindexed ? 'U' : ''}`
+    ? `${settings.wcaScrambleMode}|${settings.wcaComp}|${settings.wcaRound}|${settings.wcaGroup}|${settings.wcaDateFrom}|${settings.wcaDateTo}|${event}|${wcaDiffSig}|${wcaStepSig}|${wcaCompUnindexed ? 'U' : ''}|${wcaOptimalOn ? 'O' : ''}`
     : 'random';
   // 按步数生成签名(2×2 / 金字塔,随机来源):开启且选了步数才生效,变了即重置打乱队列(同 wcaSourceSig 机制)。
   const genStepsSig = settings.scrambleSource === 'random'
@@ -406,9 +411,9 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     // 度量+区间进 pool key,改设置即换 buffer;拒绝采样 + IDA* 在后台 idle 生成,不阻塞计时。
     const byStepsScr = genByStepsScramble(event, s);
     if (byStepsScr) return takeScramble(byStepsScr.key, byStepsScr.gen, canGenScramble);
-    return takeScramble(`${event}|${s.cnMode}`, () => generateScramble(event), canGenScramble);
+    return takeScramble(`${event}|${s.cnMode}|${event === '222' ? mode222 : ''}`, () => generateScramble(event), canGenScramble);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [drillTarget, drillAllowed, event, settings.scrambleSource, wcaSourceSig, genStepsSig, manualSig, canGenScramble]);
+  }, [drillTarget, drillAllowed, event, settings.scrambleSource, wcaSourceSig, genStepsSig, manualSig, canGenScramble, mode222]);
 
   const [scrambleHist, setScrambleHist] = useState<{ list: string[]; idx: number }>(
     () => ({ list: [genScramble()], idx: 0 }),
@@ -495,7 +500,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   const poolRun = settings.scrambleSource === 'wca' && !scrambleLoading ? wcaPoolProgress(wcaSpec) : null;
   const poolRunDone = !!poolRun && poolRun.seen >= poolRun.total;
   // 开了「最优打乱」但这条是回退的原打乱(该难度档无最优等态)→ 在打乱右侧标「非最优」。
-  const wcaNonOptimal = settings.wcaUseOptimal && !!wcaSource?.nonOptimal;
+  const wcaNonOptimal = wcaOptimalOn && !!wcaSource?.nonOptimal;
   const wcaSrcDisplay = useMemo(() => {
     if (!wcaSource) return null;
     return {

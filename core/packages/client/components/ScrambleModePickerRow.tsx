@@ -7,10 +7,15 @@
  */
 import Link from '@/components/AppLink';
 import { HelpCircle } from 'lucide-react';
+import { EventIcon } from '@/components/EventIcon';
 import PillToggle from './PillToggle/PillToggle';
+import './scramble-mode-picker-row.css';
 
 interface Props {
-  label: string;
+  /** 项目图标(WCA event id,如 '222' / '555')替代文字里的「2x2 / 5x5」前缀;省略则只有文字。 */
+  iconEvent?: string;
+  /** 空/省略 → 不渲染标签(如计时器上,项目图标已在上方,无需重复「2x2」)。 */
+  label?: string;
   value: boolean;
   onChange: (v: boolean) => void;
   onLabel: string;
@@ -22,12 +27,17 @@ interface Props {
 }
 
 export default function ScrambleModePickerRow({
-  label, value, onChange, onLabel, offLabel, ariaLabel,
+  iconEvent, label, value, onChange, onLabel, offLabel, ariaLabel,
   helpHref, helpTitle, helpAriaLabel,
 }: Props) {
   return (
-    <div className="gen-555-mode-row">
-      <span className="gen-555-mode-label">{label}</span>
+    <div className="scramble-mode-row">
+      {(iconEvent || label) && (
+        <span className="scramble-mode-label">
+          {iconEvent && <EventIcon event={iconEvent} className="scramble-mode-icon" />}
+          {label}
+        </span>
+      )}
       <PillToggle
         value={value}
         onChange={onChange}
@@ -38,7 +48,7 @@ export default function ScrambleModePickerRow({
       {helpHref && (
         <Link
           href={helpHref}
-          className="gen-555-mode-info"
+          className="scramble-mode-info"
           title={helpTitle}
           aria-label={helpAriaLabel}
         >

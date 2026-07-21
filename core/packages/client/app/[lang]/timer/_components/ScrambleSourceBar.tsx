@@ -18,6 +18,7 @@ import WcaSourceConfig from '@/components/WcaSourceConfig';
 import GenStepsConfig from './GenStepsConfig';
 import { stepPuzzleOf } from '../_lib/scramble/step-metrics';
 import { tr } from '@/i18n/tr';
+import Scramble222ModePicker from '@/components/Scramble222ModePicker';
 
 interface Props {
   event: EventId;
@@ -60,6 +61,9 @@ export default function ScrambleSourceBar({ event, isZh }: Props) {
           source={src === 'wca' ? 'wca' : 'random'}
           settings={s}
           updateSettings={updateSettings}
+          // 2x2 口径 toggle(WCA 11 步 ↔ 最优/Q|H)塞进「按步数」顶行左侧,与它并排成一组;
+          // 对随机状态与 WCA 真题都生效(真题的「最优」= 服务端 God's-number 最优等态)。
+          extraToprow={event === '222' ? <Scramble222ModePicker active222 showLabel={false} /> : undefined}
         />
       )}
     </div>

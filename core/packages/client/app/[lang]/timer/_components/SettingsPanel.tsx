@@ -648,11 +648,13 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
                                       })
               : ((isZh ? `每天 ${currentDailyGoal} 次（全部项目合计）` : `${currentDailyGoal} solves/day (all events)`))}</span>
           </Row>
-          {hasOptimal && (
+          {/* 2x2 的「最优」已挪到打乱条上的口径 picker(Scramble222ModePicker,随机状态与真题统一),
+              这里只保留其余同态项目(斜转/金字塔/3x3 族)。 */}
+          {hasOptimal && event !== '222' && (
             <Row label={tr({ zh: '最优打乱', en: 'Optimal scramble'
           })}>
               <BoolToggle value={s.wcaUseOptimal} onChange={(v) => updateSettings({ wcaUseOptimal: v })} />
-              <span className="hint">{tr({ zh: '同态项目(如二阶/斜转/金字塔)优先用消歧后的唯一最优打乱,仅对 WCA 真题生效', en: 'for isomorphic puzzles (e.g. 2x2/Skewb/Pyraminx), prefer the disambiguated canonical scramble — WCA real scrambles only'
+              <span className="hint">{tr({ zh: '同态项目(如斜转/金字塔)优先用消歧后的唯一最优打乱,仅对 WCA 真题生效', en: 'for isomorphic puzzles (e.g. Skewb/Pyraminx), prefer the disambiguated canonical scramble — WCA real scrambles only'
           })}</span>
             </Row>
           )}

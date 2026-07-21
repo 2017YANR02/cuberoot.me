@@ -637,6 +637,7 @@ export default function Top10HistoryPage({
         </button>
         <input
           className="t10h-scrub"
+          style={{ ['--pct' as string]: `${Math.max(0, Math.min(100, ((Math.floor(dateMs) - startMs) / Math.max(1, endMs - startMs)) * 100))}%` }}
           type="range"
           min={startMs}
           max={endMs}

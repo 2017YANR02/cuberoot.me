@@ -233,7 +233,7 @@
 .sq1-input:focus { outline: none; border-color: var(--sq1-accent); }
 .sq1-input.is-error { border-color: var(--signal-danger); }
 
-.sq1-range { width: 100%; accent-color: var(--sq1-accent); }
+.sq1-range { width: 100%; }
 
 /* metric result cards (calculator) */
 .sq1-metric-grid {

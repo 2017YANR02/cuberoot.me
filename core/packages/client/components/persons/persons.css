@@ -897,7 +897,7 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td {
     background: var(--wp-surface); color: var(--wp-text);
 }
 .wp-ms-chip.is-off { opacity: 0.35; text-decoration: line-through; }
-.wp-ms-slider { flex: 1; max-width: 240px; accent-color: var(--wp-blue); }
+.wp-ms-slider { flex: 1; max-width: 240px; }
 .wp-ms-num { width: 64px; padding: 4px 6px; border-radius: 4px; border: 1px solid var(--wp-border); font: inherit; }
 .wp-ms-pct { color: var(--wp-text-sub); font-size: 0.85rem; }
 

@@ -726,7 +726,6 @@
 
 .slider-row input[type="range"] {
     width: 100%;
-    accent-color: var(--accent);
     margin-top: 4px;
 }
 

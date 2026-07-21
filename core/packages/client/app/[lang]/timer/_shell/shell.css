@@ -844,9 +844,13 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   max-width: min(96vw, 680px);
   margin: 0 auto;
   padding: 8px 12px;
+  /* 口径 toggle / 来源细项(比赛)/ 按步数 同一行排开,窄屏自然换行(用户要求「三行变一行」)。
+     手动输入的全宽 textarea 靠自身 width:100% 独占一行。 */
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  flex-flow: row wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 6px 14px;
   /* 内容完整展开,不裁剪、不出滚动条(用户要求)。整块靠自然高度,把计时读数往下挤。 */
   flex: none;
 }
@@ -856,8 +860,19 @@ html[data-theme=dark] { --scramble-fg: #fff; }
    标签已吃满剩余空间,justify-content 对其无副作用;手动输入行是 display:block,不受影响。 */
 .scramble-src-bar .settings-row,
 .scramble-src-bar .wca-src-diff { justify-content: center; }
+/* WcaSourceConfig / GenStepsConfig 的 wrapper(.wca-src-config)不自成一块:display:contents 让它
+   内部的「顶行(比赛下拉 / 按步数开关+度量)」直接成为 bar 的 flex 项,与口径 toggle 并排;而滑条、
+   难度子区、轮次/组别 各自 break 成整行 —— 步数滑杆独占一行(用户要求)。 */
+.scramble-src-bar .wca-src-config { display: contents; }
+.scramble-src-bar .wca-src-steps-range,
+.scramble-src-bar .wca-src-diff,
+.scramble-src-bar .wca-src-comp-rounds,
+.scramble-src-bar .wca-src-hint {
+  flex: 1 1 100%;
+  box-sizing: border-box;
+}
 /* 手动输入队列:整行让位给全宽文本域(不走 label+control 两列)。 */
-.scramble-src-bar .scramble-src-manual { display: block; }
+.scramble-src-bar .scramble-src-manual { display: block; flex: 1 1 100%; }
 .scramble-src-manual-input {
   width: 100%;
   box-sizing: border-box;

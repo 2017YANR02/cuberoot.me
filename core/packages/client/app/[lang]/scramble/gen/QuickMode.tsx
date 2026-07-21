@@ -12,6 +12,7 @@ import WcaEventSelector from '@/components/WcaEventSelector';
 import NumberCommitInput from '@/components/NumberCommitInput';
 import Scramble555ModePicker from '@/components/Scramble555ModePicker';
 import Scramble333ModePicker from '@/components/Scramble333ModePicker';
+import Scramble222ModePicker from '@/components/Scramble222ModePicker';
 import HighOrderNxNInput from '@/components/HighOrderNxNInput';
 import { EventIcon } from '@/components/EventIcon';
 import { ScramblePreview2D, eventHasScramblePreview } from '@/components/ScramblePreview2D';
@@ -376,6 +377,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
         )}
         <Scramble555ModePicker active555={events.has('555')} isZh={isZh} />
         <Scramble333ModePicker active333={events.has('333')} isZh={isZh} />
+        <Scramble222ModePicker active222={events.has('222')} />
         {events.has('sq1') && (
           <div className="gen-sq1-format">
             <span className="gen-sq1-format-label">{t('SQ1', 'SQ1')}</span>

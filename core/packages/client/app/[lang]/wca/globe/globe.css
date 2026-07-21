@@ -569,7 +569,6 @@
 }
 .globe-page .nav-popover-row input[type='range'] {
     width: 100%;
-    accent-color: #E07752;
     margin: 0;
 }
 .globe-page .nav-popover-val {
@@ -945,7 +944,6 @@
 .globe-page .wr-year-slider {
     width: 180px;
     cursor: pointer;
-    accent-color: var(--accent);
 }
 .globe-page .wr-year-label {
     font-variant-numeric: tabular-nums;
