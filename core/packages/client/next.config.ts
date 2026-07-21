@@ -253,6 +253,11 @@ const nextConfig: NextConfig = {
         // spike as the comp page above). One static sentinel shell.
         // See recon/person/[wcaId]/page.tsx.
         { source: "/:lang(en|zh)/recon/person/:wcaId", destination: "/:lang/recon/person/_" },
+        // Alg per-case metadata detail: pure client shell (loadAlg in the browser). The
+        // case space grows with the alg DB (1LLL alone ~4k cases), so route every case to
+        // ONE static sentinel shell — no per-case function render on a crawler sweep.
+        // See alg/[puzzle]/[set]/case/[name]/page.tsx.
+        { source: "/:lang(en|zh)/alg/:puzzle/:set/case/:name", destination: "/:lang/alg/_/_/case/_" },
       ],
       afterFiles: [
         // Dev only: FMC chain solver (vendored cubelib) runs as a local native

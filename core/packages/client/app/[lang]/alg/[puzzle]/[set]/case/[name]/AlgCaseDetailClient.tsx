@@ -8,7 +8,7 @@
  * 正文完全复用 {@link AlgCaseMetaContent},关联缩略图走 `jump:'link'`(真 <a>,中键可新开)。
  */
 import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import Link from '@/components/AppLink';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { loadAlg, type AlgCase, type AlgCaseMeta, type AlgFile, type AlgPuzzle } from '@cuberoot/shared';
@@ -18,13 +18,24 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
 import '../../../../alg.css';
 
-const pick = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : (v ?? ''));
-
 export default function AlgCaseDetailClient() {
-  const params = useParams<{ puzzle: string | string[]; set: string | string[]; name: string | string[] }>();
-  const puzzle = pick(params?.puzzle);
-  const set = pick(params?.set);
-  const name = pick(params?.name);
+  // Sentinel shell: page.tsx prerenders only /alg/_/_/case/_ and a next.config rewrite
+  // routes every real URL to it, so useParams would yield the "_" sentinels — the real
+  // puzzle/set/name come from window.location. null until mounted → SSR renders the
+  // loading shell (byte-identical for every case), avoiding a hydration mismatch.
+  const pathname = usePathname();
+  const [route, setRoute] = useState<{ puzzle: string; set: string; name: string } | null>(null);
+  useEffect(() => {
+    const m = window.location.pathname.match(/\/alg\/([^/]+)\/([^/]+)\/case\/([^/?#]+)/);
+    setRoute(m ? {
+      puzzle: decodeURIComponent(m[1]),
+      set: decodeURIComponent(m[2]),
+      name: decodeURIComponent(m[3]),
+    } : null);
+  }, [pathname]);
+  const puzzle = route?.puzzle ?? '';
+  const set = route?.set ?? '';
+  const name = route?.name ?? '';
 
   const [data, setData] = useState<AlgFile | null>(null);
   const [error, setError] = useState(false);
