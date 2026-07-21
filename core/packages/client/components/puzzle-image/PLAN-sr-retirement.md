@@ -54,8 +54,8 @@ sr 共 12 种 visualizer type、5 类拼图:
 | 视图 wca(记分表样式) | tnoodle 风格平面 | 同 net,引擎状态直出 | ⬜ |
 | 图片尺寸 (PX) | svg width/height | 导出参数(viewBox 已有,补输出尺寸) | ⬜ |
 | 箭头(面/从/到/过/缩放/影响/颜色 + DSL + 默认箭头色) | arrows 解析 + renderArrows | 导出器 `opts.arrows` 已通(世界坐标线段);差 DSL(`U0U2-red`)→ 贴纸中心坐标解析层 + UI 透传 | ⬜(底层 ✅) |
-| MASK 预设(fl/f2l/oll… + rot) | mask 枚举 | canonical DSL → 引擎贴纸 id 直映(Phase 3 既有条目) | ⬜ |
-| 贴纸遮罩(`U:0,2;F:3-5` + 点选编辑) | facelet 级遮罩 | 同上直映层;点选编辑 UI 照搬 | ⬜ |
+| MASK 预设(fl/f2l/oll… + rot) | mask 枚举 | canonical DSL → 引擎贴纸 key 直映(Phase 3 条目) | ◐(pyraminx 通,余下拼图待复制) |
+| 贴纸遮罩(`U:0,2;F:3-5` + 点选编辑) | facelet 级遮罩 | 同上直映层;点选编辑 UI 照搬 | ◐(同上) |
 | 壳体色 | cubeColor | 导出器 bodyColor 参数(inset 衬底色) | ✅(2026-07-21 inset 模型落地) |
 | 壳体不透明度 | cubeOpacity | 导出器 bodyOpacity | ✅(参数已留) |
 | 贴纸不透明度 | stickerOpacity | 导出器 stickerOpacity | ✅(参数已留) |
@@ -99,8 +99,8 @@ sr 共 12 种 visualizer type、5 类拼图:
 - [x] **NxN 伴图镜像(2026-07-21)**:cube:`normal` 视图同吃 `engineSvg`(plan/trans/net/wca 仍 visualcube/tnoodle)。伴图上限 64k 三角(普通阶 ≈88/块+204/贴纸,6x6≈5.7 万;超限收集期即抛,回退 visualcube 不卡页面);原核分色(aRaw,BSP 会画错色)经 `bspSceneAudit` 检测回退。N≥50 引擎自换简化几何,远期若要全阶镜像走 worker 化。
 - [x] **「截图 SVG」按钮切 BSP 默认(2026-07-21)**:引擎拼图下载路径不再走 GPU depth-map(其逐像素遮挡采样即毛刺来源,用户实测 pyraminx 下载件确认);`bspSceneAudit` 检出手/方位字母/logo 贴图/原核(BSP 画不全或画错)才回退 GPU 全保真路径。BSP 收集期跳过贴图材质(logo 贴片画成实心色块必错,宁缺)。
 - [ ] 待用户过目 4 拼图新旧观感(风格从 sr 平面示意 → 引擎实模投影)后,再决定是否需要示意图预设形态。
-- [ ] mask:canonical DSL → 引擎贴纸 id 直映(新 map,替代 SR_INDEX_MAP);顺带解锁 sq1 mask(sr 做不到,引擎能)。
-- [ ] 后悔药开关:`?img_engine=sr` query(+ env `NEXT_PUBLIC_SR_FALLBACK`)一键回退旧路径;sr 代码原样保留。
+- [~] mask 直映:canonical DSL → 引擎贴纸建构 key(`userData.stickerKey`),替代 SR_INDEX_MAP。**pyraminx 已通(2026-07-21)**:几何烙 key → `tests/_engine_mask_derive.ts` 共轭派生(引擎侧置换从建好的 3D 场景几何读出,双手性试解、镜像被拒、唯一性断言)→ `data/engine-sid-map.json` 锁表(engine-mask.test.ts,含端到端灰化)→ `toEngineMask` → schematic 导出器 `mask` 选项 → SimPage 烙进镜像。无表拼图 SimPage 置 engineSvg=null 回退 spec 渲染器,两条路都不丢遮罩。**待办:skewb / megaminx 同法复制;NxN instanced 要走 posit 追踪(色随打乱走,mesh 不动,另一条路);sq1 要先定义 canonical id 空间(解锁 sr 做不到的 sq1 mask)。**
+- [x] 后悔药开关(2026-07-21):`?img_engine=sr` query(单 URL)+ env `NEXT_PUBLIC_SR_FALLBACK=1`(部署级,build 时内联)回退旧路径;sr 代码原样保留。
 - [ ] skewb-top 自绘 fan 保留不动(它不是 sr,是示意图另一形态)。
 - 验收:/sim 面板 4 拼图默认角 + 极端拖动角逐像素判据;golden fixtures 主动重录并逐张 review diff;CaseThumb / pattern / batch-solver 页 playwright 截图对照;新旧 4 拼图对比图给用户过目一次(风格从 sr 平面示意变成引擎平色预设,视觉会变)。
 
