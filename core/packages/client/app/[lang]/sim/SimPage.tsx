@@ -1834,6 +1834,12 @@ export default function SimPage() {
             setEngineSvg(exportSimSvgSchematic({
               world,
               inset: imgOutline / 100,
+              // visualcube 壳体色/壳体不透明度/贴纸不透明度 三控件的引擎路等价
+              // (退役对照表 §2b:inset 模型衬底=壳体,贴纸=sticker)。默认
+              // #000000/100/100 与导出器默认同 → 不改的话逐比特不变。
+              bodyColor: imgSpec.cubeColor,
+              bodyOpacity: imgSpec.cubeOpacity,
+              stickerOpacity: imgSpec.stickerOpacity,
               mask: maskKeys?.size ? { keys: maskKeys, color: MASK_COLOR } : undefined,
             }));
             return;
@@ -1880,6 +1886,7 @@ export default function SimPage() {
     return () => { disposed = true; cancelAnimationFrame(raf); };
   }, [imageOpen, srCompanionForced, imageStudioEngineOnly, imgOutline,
       imgSpec.stickerMask, imgPuzzle.puzzleType,
+      imgSpec.cubeColor, imgSpec.cubeOpacity, imgSpec.stickerOpacity,
       settings.faceColors, query.stickering, query.stickeringColor]);
 
   // 伴图当前是否示意版(有示意小面)—— 决定黑边滑块是否可用。
