@@ -386,11 +386,11 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
                 id="vc-outline"
                 type="range"
                 min={0}
-                max={8}
+                max={20}
                 step={0.5}
                 value={outlineWidth}
                 onChange={(e) => onOutlineWidthChange(Number(e.target.value))}
-                aria-label={t('示意伴图黑边粗细', 'Schematic outline thickness')}
+                aria-label={t('示意伴图黑描边粗细', 'Schematic stroke thickness')}
               />
               <span className="vc-outline-val">{outlineWidth}</span>
             </div>

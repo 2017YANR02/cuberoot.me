@@ -66,7 +66,7 @@ sr 共 12 种 visualizer type、5 类拼图:
 ### Phase 2 — BSP 解析隐面消除导出路径(核心)✅ 2026-07-21(commit 9c1b0170b6)
 - [x] 独立模块 `sim_svg_export_bsp.ts`(与 GPU depth-map 截图路径并存):世界系三角形建 BSP 树,按相机 back-to-front 遍历得**精确** painter 序,SPAN 面片 Sutherland–Hodgman 解析切开;共面并档保 GL「先画先赢」语义(ro asc + seq desc)。纯数学无 WebGL,Node 可跑。
 - [x] 共享边相消边界重建:paint 序中连续同平面同色段合并为单 path(含洞,nonzero);链化失败降级逐面片,不产生错误画面。
-- [x] 「示意图预设」(schematic preset)机制(2026-07-21):导出器 `schematic` 选项 —— mesh 带 `userData.schematicGeom`(建模时同步产出的严格版:精确多面体块身 / 严格多边形贴纸,无圆角无曲面)即替换投影,全场平色(无光照)。伴图检测到严格版自动启用;每个小面 = 严格多边形 path(用户硬性要求:pyraminx 每个小面必须严格三角形),path 数回到贴纸量级。**pyraminx 已挂全 15 mesh**(块身精确凸包 / 贴纸单三角 / 核 0.9 四面体),覆盖面回归测试锁死;skewb/sq1/megaminx 逐个跟进。
+- [x] 「示意图」定稿(2026-07-21,3 轮迭代后弃 BSP 改 SR 范式):独立导出器 `sim_svg_export_schematic.ts` —— 只画彩色小面(sticker mesh 的 `userData.schematicPoly`,全三角轮廓 + 反烘 PIECE_SHRINK),**每个小面独立 path + 各自黑描边**(SR 的画法);相邻小面共享棱在建模层同点 → 描边逐比特重合(测试锁死:输出顶点去重数 = 晶格顶点数)。静止形态凸体、可见面互不遮挡 → 背面剔除即可,不需要隐面消除,**示意路径不走 BSP**(BSP 的共享边相消正好破坏描边重合,只留给实模投影)。相机取引擎 world,任意视角精确跟随。描边宽 = 面板「黑边」滑块(SVG px)。**pyraminx 36 贴纸已挂**,skewb/sq1/megaminx/NxN 跟进(NxN 四边形小面同一机制,轮廓即 quad)。
 - [x] 描边策略定稿(2026-07-21,两轮实测迭代):join 用 **bevel**(round 把亚像素碎片描成圆团"黑点";miter 在边界微锯齿顶点长针刺),描边宽 = min(1.2, 碎片平均宽) 随面积收缩,合并链化顶点吸附 1/8px 格点消微锯齿源头。两导出器同策略。
 - 验收(已做):单测 14 用例含解析 painter-order oracle(1/viewZ 屏幕空间仿射,重叠对逐一验证近盖远),互穿 + 循环遮挡(风车三板)通过;真实 skewb 场景 6.2k 三角 147ms(优于 GPU 路径参考值)。**毛刺结构性消失**(无逐像素采样、无细分,遮挡边界=平面求交直线)。
 

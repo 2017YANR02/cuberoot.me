@@ -161,25 +161,16 @@ function roundedBody(planes: Plane[]): THREE.BufferGeometry {
   return geom;
 }
 
-// ── 示意版几何(伴图 BSP 导出的 schematic 模式)─────────────────────────────
-// 不进 live 场景,只挂在对应 mesh 的 userData.schematicGeom 上,导出器按同一
-// matrixWorld 替换投影:每个小面在 SVG 里就是一条严格多边形 path,无圆角无曲面。
-
-/** 精确凸包块身(同一套割平面,不做 Minkowski 圆化)。 */
-function exactBody(planes: Plane[]): THREE.BufferGeometry {
-  return new ConvexGeometry(cellVerts(planes));
-}
-
-/** 严格三角形贴纸:单三角平面片,绕向朝 normal 外侧。 */
-function strictTriSticker(p0: THREE.Vector3, p1: THREE.Vector3, p2: THREE.Vector3, normal: THREE.Vector3): THREE.BufferGeometry {
-  const c = new THREE.Vector3().subVectors(p1, p0).cross(new THREE.Vector3().subVectors(p2, p0));
-  const [q1, q2] = c.dot(normal) >= 0 ? [p1, p2] : [p2, p1];
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute([
-    p0.x, p0.y, p0.z, q1.x, q1.y, q1.z, q2.x, q2.y, q2.z,
-  ], 3));
-  g.computeVertexNormals();
-  return g;
+/** 示意小面轮廓(sim_svg_export_schematic 消费):全三角(不 inset、不 lift),
+ *  绕向朝 normal 外侧,并反烘 PIECE_SHRINK(导出端 matrixWorld 会再乘收缩变换,
+ *  落回未收缩晶格位置)→ 相邻块的共享棱是同一组世界坐标,描边逐比特重合。 */
+function schematicPolyOf(p0: THREE.Vector3, p1: THREE.Vector3, p2: THREE.Vector3, normal: THREE.Vector3, center: THREE.Vector3): number[] {
+  const un = (p: THREE.Vector3): THREE.Vector3 =>
+    p.clone().sub(center.clone().multiplyScalar(1 - PIECE_SHRINK)).divideScalar(PIECE_SHRINK);
+  const a = un(p0); const b1 = un(p1); const b2 = un(p2);
+  const cr = new THREE.Vector3().subVectors(b1, a).cross(new THREE.Vector3().subVectors(b2, a));
+  const [q1, q2] = cr.dot(normal) >= 0 ? [b1, b2] : [b2, b1];
+  return [a.x, a.y, a.z, q1.x, q1.y, q1.z, q2.x, q2.y, q2.z];
 }
 
 /** Rounded-corner triangle sticker on the plane through p0/p1/p2 (already inset +
@@ -249,7 +240,6 @@ export function buildPyraPiece(kind: 'tip' | 'corner' | 'edge', a: number, b = -
 
   const bodyMesh = new THREE.Mesh(roundedBody(planes), bodyMat);
   bodyMesh.userData.simRole = 'body';
-  bodyMesh.userData.schematicGeom = exactBody(planes);
   group.add(bodyMesh);
 
   for (const m of pieceFaces(kind, a, b)) {
@@ -270,12 +260,9 @@ export function buildPyraPiece(kind: 'tip' | 'corner' | 'edge', a: number, b = -
       return p.clone().add(toC.setLength(d)).add(lift);
     };
     const sGeom = roundedTriSticker(inset(tri[0]), inset(tri[1]), inset(tri[2]), nrm);
-    // 示意版贴纸 = 与小面齐平的严格三角形(仅抬升,不内缩);黑边宽由导出器的
-    // schematicOutline 在 export 时内缩控制(滑块可调),不烘进几何。
-    const flush = (p: THREE.Vector3): THREE.Vector3 => p.clone().add(lift);
     group.add(makeSticker(sGeom, stickerMat(FACE_COLOR[m]), bodyMat, {
       simStickerNormal: nrm.clone(), pyraFace: m,
-      schematicGeom: strictTriSticker(flush(tri[0]), flush(tri[1]), flush(tri[2]), nrm),
+      schematicPoly: schematicPolyOf(tri[0], tri[1], tri[2], nrm, center),
     }));
   }
 
@@ -303,12 +290,6 @@ export function buildCore(): THREE.Mesh {
   const geom = new THREE.SphereGeometry(PYRA_A * 0.56, 32, 24);
   const mesh = new THREE.Mesh(geom, coreMat);
   mesh.userData.simRole = 'core';
-  // 示意版核:0.9 缩放正四面体 —— 缝隙里露出的是平行于外表面的平面(直边黑带)
-  // 而非球面曲线碎片。0.9A 深于收缩后任何外表面(shrink 后最浅面 ≈0.93A),不外
-  // 穿;四面体对 120° 顶点转动不变,静止帧导出姿态下永不穿层。
-  mesh.userData.schematicGeom = new ConvexGeometry(
-    VDIR.map((v) => new THREE.Vector3(...v).multiplyScalar(PYRA_A * 0.9)),
-  );
   return mesh;
 }
 
