@@ -8,7 +8,9 @@
     "build:bundle": "esbuild src/index.ts --bundle --platform=node --target=node22 --format=esm --outfile=dist/server.bundle.js --sourcemap --banner:js=\"import { createRequire } from 'module'; const require = createRequire(import.meta.url);\"",
     "start": "node dist/server.bundle.js",
     "typecheck": "tsc --noEmit",
-    "gen-title": "tsx src/tools/gen_title.ts"
+    "gen-title": "tsx src/tools/gen_title.ts",
+    "gen-glossary": "tsx scripts/gen-glossary.ts",
+    "gen-wiki-backfill": "tsx scripts/gen-wiki-backfill.ts"
   },
   "dependencies": {
     "@cuberoot/shared": "workspace:*",

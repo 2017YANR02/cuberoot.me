@@ -23,7 +23,7 @@ import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import {
   fetchWikiTerms, createTerm, updateTerm, deleteTerm,
   createAddition, updateAddition, deleteAddition,
-  type WikiList,
+  type WikiList, type WikiTerm, type TermInput,
 } from '@/lib/wiki-api';
 import { useHashHighlight } from '@/hooks/useHashHighlight';
 import './wiki.css';
@@ -61,6 +61,46 @@ function slugify(head: string) {
     .replace(/[^a-z0-9一-龥]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 60);
+}
+
+/** 词条是否已迁到结构化双语(0079+):任一 en/zh 列非 null。 */
+function isMigrated(e: WikiTerm) {
+  return e.headEn != null || e.headZh != null || e.bodyEn != null || e.bodyZh != null;
+}
+
+/** 标题中英对照:en/zh 齐全时并排,缺一语显另一语;旧行未迁移→回退 combined head。 */
+function renderHead(e: WikiTerm) {
+  const en = e.headEn?.trim();
+  const zh = e.headZh?.trim();
+  if (!en && !zh) return e.head;
+  return (
+    <>
+      {en && <span className="wiki-head-en">{en}</span>}
+      {en && zh ? ' ' : null}
+      {zh && <span className="wiki-head-zh">{zh}</span>}
+    </>
+  );
+}
+
+/** 正文中英对照:en 段 + zh 段各自成块;旧行未迁移→回退 combined body。返回 null 表无正文。 */
+function renderTermBody(e: WikiTerm) {
+  const en = e.bodyEn?.trim();
+  const zh = e.bodyZh?.trim();
+  if (!en && !zh) return e.body ? renderBodyLines(e.body) : null;
+  return (
+    <>
+      {en && <div className="wiki-body-lang wiki-body-en">{renderBodyLines(en)}</div>}
+      {zh && <div className="wiki-body-lang wiki-body-zh">{renderBodyLines(zh)}</div>}
+    </>
+  );
+}
+
+/** 编辑表单初值:已迁移→四字段;旧行(未迁移)→把 combined 塞进 EN 框避免丢内容。 */
+function termInitial(e: WikiTerm): TermInput {
+  if (isMigrated(e)) {
+    return { headEn: e.headEn ?? '', headZh: e.headZh ?? '', bodyEn: e.bodyEn ?? '', bodyZh: e.bodyZh ?? '' };
+  }
+  return { headEn: e.head, headZh: '', bodyEn: e.body, bodyZh: '' };
 }
 
 export default function WikiPage() {
@@ -147,8 +187,8 @@ export default function WikiPage() {
   // scroll-margin-top:100px,block:'start' 留出顶部余量;落点闪 1.8s。
   useHashHighlight({ highlightClass: 'hash-flash-target', block: 'start', linger: 1800, deps: [data] });
 
-  const onSaveTerm = async (id: number, head: string, body: string) => {
-    await updateTerm(id, { head, body });
+  const onSaveTerm = async (id: number, v: TermInput) => {
+    await updateTerm(id, v);
     setEditingTermId(null);
     await reload();
   };
@@ -174,8 +214,8 @@ export default function WikiPage() {
     setAddingNoteFor(null);
     await reload();
   };
-  const onCreateTerm = async (letter: string, head: string, body: string) => {
-    await createTerm({ letter, head, body });
+  const onCreateTerm = async (letter: string, v: TermInput) => {
+    await createTerm({ letter, ...v });
     setNewTermOpen(false);
     await reload();
   };
@@ -277,11 +317,9 @@ export default function WikiPage() {
                   <li key={e.id} id={slug} className="wiki-entry">
                     {editingTermId === e.id ? (
                       <TermForm
-                        initialHead={e.head}
-                        initialBody={e.body}
+                        initial={termInitial(e)}
                         onCancel={() => setEditingTermId(null)}
-                        onSave={(head, body) => onSaveTerm(e.id, head, body)}
-                        isZh={isZh}
+                        onSave={(v) => onSaveTerm(e.id, v)}
                       />
                     ) : (
                       <>
@@ -292,7 +330,7 @@ export default function WikiPage() {
                               href={`#${slug}`}
                               title={tr({ zh: '该词条链接', en: 'Link to this term' })}
                             >
-                              {e.head}
+                              {renderHead(e)}
                               <Link2 size={12} className="wiki-entry-anchor-icon" aria-hidden="true" />
                             </a>
                           </h3>
@@ -319,7 +357,7 @@ export default function WikiPage() {
                             </button>
                           )}
                         </div>
-                        {e.body && <div className="wiki-entry-body">{renderBodyLines(e.body)}</div>}
+                        {(() => { const b = renderTermBody(e); return b ? <div className="wiki-entry-body">{b}</div> : null; })()}
                         {e.source === 'user' && e.ownerName && (
                           <div className="wiki-entry-meta">
                             — {e.ownerName}
@@ -420,60 +458,88 @@ export default function WikiPage() {
       {newTermOpen && (
         <NewTermModal
           onCancel={() => setNewTermOpen(false)}
-          onSave={(letter, head, body) => onCreateTerm(letter, head, body)}
-          isZh={isZh}
+          onSave={(letter, v) => onCreateTerm(letter, v)}
         />
       )}
     </div>
   );
 }
 
+/** 双语词条表单主体:en/zh 各一组 标题+描述 框。新建与编辑共用。 */
+function BilingualFields(props: { v: TermInput; set: (patch: Partial<TermInput>) => void }) {
+  const { v, set } = props;
+  return (
+    <>
+      <div className="wiki-form-bi">
+        <input
+          type="text" className="wiki-form-input" value={v.headEn}
+          onChange={e => set({ headEn: e.target.value })}
+          placeholder={tr({ zh: '标题 EN(如 OLL (Orientation of LL))', en: 'Head EN (e.g. OLL (Orientation of LL))' })}
+          maxLength={200}
+        />
+        <input
+          type="text" className="wiki-form-input" value={v.headZh}
+          onChange={e => set({ headZh: e.target.value })}
+          placeholder={tr({ zh: '标题中文(如 顶层色向)', en: 'Head ZH (e.g. 顶层色向)' })}
+          maxLength={200}
+        />
+      </div>
+      <div className="wiki-form-bi">
+        <textarea
+          className="wiki-form-textarea" value={v.bodyEn}
+          onChange={e => set({ bodyEn: e.target.value })}
+          placeholder={tr({ zh: '描述 EN(可选,可多段)', en: 'Body EN (optional, multi-line)' })}
+          rows={3} maxLength={8192}
+        />
+        <textarea
+          className="wiki-form-textarea" value={v.bodyZh}
+          onChange={e => set({ bodyZh: e.target.value })}
+          placeholder={tr({ zh: '描述中文(可选,可多段)', en: 'Body ZH (optional, multi-line)' })}
+          rows={3} maxLength={8192}
+        />
+      </div>
+    </>
+  );
+}
+
+function useTermInput(initial: TermInput) {
+  const [v, setV] = useState<TermInput>(initial);
+  const set = useCallback((patch: Partial<TermInput>) => setV(p => ({ ...p, ...patch })), []);
+  const trimmed = (): TermInput => ({
+    headEn: v.headEn.trim(), headZh: v.headZh.trim(), bodyEn: v.bodyEn.trim(), bodyZh: v.bodyZh.trim(),
+  });
+  return { v, set, trimmed };
+}
+
 function TermForm(props: {
-  initialHead: string;
-  initialBody: string;
+  initial: TermInput;
   onCancel: () => void;
-  onSave: (head: string, body: string) => Promise<void> | void;
-  isZh: boolean;
+  onSave: (v: TermInput) => Promise<void> | void;
 }) {
-  const [head, setHead] = useState(props.initialHead);
-  const [body, setBody] = useState(props.initialBody);
+  const { v, set, trimmed } = useTermInput(props.initial);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   const onSubmit = async () => {
-    if (!head.trim()) { setErr('head required'); return; }
+    const t = trimmed();
+    if (!t.headEn && !t.headZh) { setErr(tr({ zh: '英文或中文标题至少填一个', en: 'Head required (EN or ZH)' })); return; }
     setSaving(true);
     setErr(null);
-    try { await props.onSave(head.trim(), body.trim()); }
+    try { await props.onSave(t); }
     catch (e) { setErr(e instanceof Error ? e.message : String(e)); }
     finally { setSaving(false); }
   };
 
   return (
     <div className="wiki-form">
-      <input
-        type="text"
-        className="wiki-form-input"
-        value={head}
-        onChange={e => setHead(e.target.value)}
-        placeholder={props.isZh ? '术语标题 (英文 + 可选中文)' : 'Term head'}
-        maxLength={200}
-      />
-      <textarea
-        className="wiki-form-textarea"
-        value={body}
-        onChange={e => setBody(e.target.value)}
-        placeholder={props.isZh ? '描述,可中英双语,可多段。' : 'Description (EN/ZH, multi-line OK).'}
-        rows={4}
-        maxLength={8192}
-      />
+      <BilingualFields v={v} set={set} />
       {err && <div className="wiki-form-err">{err}</div>}
       <div className="wiki-form-actions">
         <button type="button" className="wiki-btn wiki-btn-ghost" onClick={props.onCancel} disabled={saving}>
-          {props.isZh ? '取消' : 'Cancel'}
+          {tr({ zh: '取消', en: 'Cancel' })}
         </button>
         <button type="button" className="wiki-btn wiki-btn-primary" onClick={() => void onSubmit()} disabled={saving}>
-          {saving ? (props.isZh ? '保存中…' : 'Saving…') : (props.isZh ? '保存' : 'Save')}
+          {saving ? tr({ zh: '保存中…', en: 'Saving…' }) : tr({ zh: '保存', en: 'Save' })}
         </button>
       </div>
     </div>
@@ -525,26 +591,28 @@ function AdditionForm(props: {
 
 function NewTermModal(props: {
   onCancel: () => void;
-  onSave: (letter: string, head: string, body: string) => Promise<void> | void;
-  isZh: boolean;
+  onSave: (letter: string, v: TermInput) => Promise<void> | void;
 }) {
-  const [head, setHead] = useState('');
-  const [body, setBody] = useState('');
+  const { v, set, trimmed } = useTermInput({ headEn: '', headZh: '', bodyEn: '', bodyZh: '' });
   const [letter, setLetter] = useState('A');
+  const [letterTouched, setLetterTouched] = useState(false);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  // 依英文标题首字母自动归组(A..Z / 非字母→#);用户手动改过后不再自动
   useEffect(() => {
-    const c = head.trim().charAt(0).toUpperCase();
+    if (letterTouched) return;
+    const c = (v.headEn.trim() || v.headZh.trim()).charAt(0).toUpperCase();
     if (/^[A-Z]$/.test(c)) setLetter(c);
     else if (c) setLetter('#');
-  }, [head]);
+  }, [v.headEn, v.headZh, letterTouched]);
 
   const onSubmit = async () => {
-    if (!head.trim()) { setErr('head required'); return; }
+    const t = trimmed();
+    if (!t.headEn && !t.headZh) { setErr(tr({ zh: '英文或中文标题至少填一个', en: 'Head required (EN or ZH)' })); return; }
     setSaving(true);
     setErr(null);
-    try { await props.onSave(letter, head.trim(), body.trim()); }
+    try { await props.onSave(letter, t); }
     catch (e) { setErr(e instanceof Error ? e.message : String(e)); }
     finally { setSaving(false); }
   };
@@ -552,52 +620,29 @@ function NewTermModal(props: {
   return (
     <div className="wiki-modal-backdrop" onClick={props.onCancel}>
       <div className="wiki-modal" onClick={e => e.stopPropagation()}>
-        <h3 className="wiki-modal-title">{props.isZh ? '新建术语' : 'New term'}</h3>
+        <h3 className="wiki-modal-title">{tr({ zh: '新建术语', en: 'New term' })}</h3>
+
+        <BilingualFields v={v} set={set} />
 
         <label className="wiki-form-label">
-          {props.isZh ? '术语标题' : 'Head'}
-          <input
-            type="text"
-            className="wiki-form-input"
-            value={head}
-            onChange={e => setHead(e.target.value)}
-            placeholder={props.isZh ? '例如 OLL (Orientation of LL) 顶层色向' : 'e.g. OLL (Orientation of LL) 顶层色向'}
-            maxLength={200}
-            autoFocus
-          />
-        </label>
-
-        <label className="wiki-form-label">
-          {props.isZh ? '字母分组' : 'Letter'}
+          {tr({ zh: '字母分组', en: 'Letter' })}
           <select
-            className="wiki-form-input"
+            className="wiki-form-input wiki-form-letter"
             value={letter}
-            onChange={e => setLetter(e.target.value)}
+            onChange={e => { setLetter(e.target.value); setLetterTouched(true); }}
           >
             {LETTERS.map(l => <option key={l} value={l}>{l}</option>)}
           </select>
-        </label>
-
-        <label className="wiki-form-label">
-          {props.isZh ? '描述 (可选)' : 'Body (optional)'}
-          <textarea
-            className="wiki-form-textarea"
-            value={body}
-            onChange={e => setBody(e.target.value)}
-            placeholder={props.isZh ? '可中英双语,可多段。' : 'EN/ZH, multi-line OK.'}
-            rows={4}
-            maxLength={8192}
-          />
         </label>
 
         {err && <div className="wiki-form-err">{err}</div>}
 
         <div className="wiki-form-actions">
           <button type="button" className="wiki-btn wiki-btn-ghost" onClick={props.onCancel} disabled={saving}>
-            {props.isZh ? '取消' : 'Cancel'}
+            {tr({ zh: '取消', en: 'Cancel' })}
           </button>
           <button type="button" className="wiki-btn wiki-btn-primary" onClick={() => void onSubmit()} disabled={saving}>
-            {saving ? (props.isZh ? '保存中…' : 'Saving…') : (props.isZh ? '创建' : 'Create')}
+            {saving ? tr({ zh: '保存中…', en: 'Saving…' }) : tr({ zh: '创建', en: 'Create' })}
           </button>
         </div>
       </div>
