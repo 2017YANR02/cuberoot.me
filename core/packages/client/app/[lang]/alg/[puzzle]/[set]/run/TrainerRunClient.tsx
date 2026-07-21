@@ -6,13 +6,14 @@ import Link from '@/components/AppLink';
 import { useParams } from 'next/navigation';
 import { useQueryState } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Settings } from 'lucide-react';
+import { ArrowLeft, Settings, Copy, Check } from 'lucide-react';
 import { getAlgSetMeta, loadAlg, type AlgCase } from '@cuberoot/shared';
 import { useTrainerStore, TimerState, trainerPool } from '@/lib/trainer-store';
 import TimerFontPicker from '@/components/TimerFontPicker';
 import { useSpaceHoldTimer } from '@/hooks/useSpaceHoldTimer';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { useGestureWheel } from '@/hooks/useGestureWheel';
+import { useCopy } from '@/hooks/useCopy';
 import { shouldIgnoreTimerTarget } from '@/lib/timer-ignore-target';
 import GestureWheel from '@/components/GestureWheel';
 import BoolToggle from '@/components/BoolToggle';
@@ -92,6 +93,7 @@ export default function TrainerRunClient() {
   const createRoom = useTrainerStore(s => s.createRoom);
   const joinRoom = useTrainerStore(s => s.joinRoom);
   const leaveRoom = useTrainerStore(s => s.leaveRoom);
+  const { copied: codeCopied, copy: copyCode } = useCopy();
   const timerFont = useTrainerStore(s => s.timerFont);
   const setTimerFont = useTrainerStore(s => s.setTimerFont);
   const scrambleFont = useTrainerStore(s => s.scrambleFont);
@@ -207,6 +209,10 @@ export default function TrainerRunClient() {
   multiRef.current = multiScramble && !timing;
   const advanceScramble = useCallback(() => {
     const n = multiRef.current ? 3 : 1;
+    // 房间协同:领取是异步网络往返,连调 nextScramble 会被 roomBusy 串行化吞掉后两次 ——
+    // 交给单一 roomAdvance(n) 内部按序 await 领 n 步(三条一屏 = 切下一屏三条)。
+    const st = useTrainerStore.getState();
+    if (st.room) { void st.roomAdvance(n); return; }
     for (let i = 0; i < n; i++) nextScramble();
   }, [nextScramble]);
 
@@ -511,7 +517,8 @@ export default function TrainerRunClient() {
     : peek2;
   const next2Case = next2Entry ? findCaseByKey(cases, next2Entry.key) ?? null : null;
 
-  // 三条一屏只在不计时模式下成立(计时是一把一把的,一屏三条无从计时)。
+  // 三条一屏只在不计时模式下成立(计时是一把一把的,一屏三条无从计时)。房间协同同样支持:
+  // store 在房间里也维护 peek/peek2(靠 roomAdvance 预领),第 2、3 条照常从预抽取。
   const multi = multiScramble && !timing;
 
   // 「上一个」卡片(回看 + 标记):默认 = 打乱历史里的上一条,与「下一个」= 下一条对称 ——
@@ -649,7 +656,16 @@ export default function TrainerRunClient() {
                   <div className="trainer-opts-row trainer-room-row">
                     {room ? (
                       <>
-                        <span className="trainer-room-badge">{tr({ zh: '房间', en: 'Room' })} {room.code}</span>
+                        <button
+                          type="button"
+                          className="trainer-room-badge"
+                          onClick={() => copyCode(room.code)}
+                          title={tr({ zh: '复制房间码', en: 'Copy room code' })}
+                        >
+                          <span className="trainer-room-badge-label">{tr({ zh: '房间', en: 'Room' })}</span>
+                          <span className="trainer-room-badge-code">{room.code}</span>
+                          {codeCopied ? <Check size={13} /> : <Copy size={13} className="trainer-room-badge-copy" />}
+                        </button>
                         <span className="trainer-opts-label">
                           {tr({ zh: '全队', en: 'Team' })} {roomClaimed}/{room.total}
                         </span>
@@ -815,7 +831,7 @@ export default function TrainerRunClient() {
                   onChange={setPureScramble}
                   label={tr({ zh: '纯打乱', en: 'Plain scramble' })}
                 />
-                {/* 三条一屏只在不计时下有意义(计时是一把一把的),与「统计」正好互补出现 */}
+                {/* 三条一屏只在不计时下有意义(计时是一把一把的),与「统计」正好互补出现。 */}
                 {!timing && (
                   <BoolToggle
                     value={multiScramble}

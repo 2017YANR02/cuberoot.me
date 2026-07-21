@@ -697,12 +697,23 @@
 /* ─── 在线协同房间控件 ─── */
 .trainer-room-row { flex-wrap: wrap; gap: 8px 10px; }
 .trainer-room-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border: 1px solid var(--border-default);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
   font-family: var(--font-mono);
   font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.06em;
   color: var(--foreground);
+  cursor: pointer;
 }
+.trainer-room-badge:hover { background: color-mix(in srgb, var(--foreground) 10%, transparent); }
+.trainer-room-badge-label { font-weight: 500; color: var(--muted-foreground); }
+.trainer-room-badge-code { letter-spacing: 0.08em; }
+.trainer-room-badge-copy { color: var(--muted-foreground); }
 .trainer-room-btn {
   padding: 4px 12px;
   border: none;

@@ -22,7 +22,7 @@ const g = globalThis as unknown as { window?: unknown; localStorage?: ReturnType
 g.window = { addEventListener() {} };
 g.localStorage = makeLocalStorage();
 
-// 内存房间模拟:createRoom 记下 keys,claimRoom 顺序出队,nextRoundRoom 重置游标 + 轮次。
+// 内存房间模拟:createRoom 记下 keys,claimRoomBatch 顺序出队(最多 count 格),nextRoundRoom 重置游标 + 轮次。
 const sim = { code: 'ROOM1', order: 'shuffle' as 'seq' | 'shuffle', round: 1, total: 0, keys: [] as string[], idx: 0 };
 vi.mock('@/lib/trainer-room-api', () => ({
   createRoom: vi.fn(async (puzzle: string, set: string, order: 'seq' | 'shuffle', keys: string[]) => {
@@ -33,11 +33,15 @@ vi.mock('@/lib/trainer-room-api', () => ({
     code, puzzle: '3x3', set: 'pll', order: sim.order, round: sim.round, total: sim.total,
     claimed: sim.idx, done: sim.idx >= sim.total,
   })),
-  claimRoom: vi.fn(async (_code: string, round: number) => {
+  claimRoomBatch: vi.fn(async (_code: string, round: number, count: number) => {
     if (round < sim.round) return { kind: 'advanced', round: sim.round, total: sim.total };
     if (sim.idx >= sim.total) return { kind: 'done', round: sim.round, total: sim.total };
-    const i = sim.idx++;
-    return { kind: 'case', caseKey: sim.keys[i], index: i, round: sim.round, total: sim.total };
+    const cases: { caseKey: string; index: number }[] = [];
+    for (let i = 0; i < count && sim.idx < sim.total; i++) {
+      const idx = sim.idx++;
+      cases.push({ caseKey: sim.keys[idx], index: idx });
+    }
+    return { kind: 'cases', cases, round: sim.round, total: sim.total };
   }),
   nextRoundRoom: vi.fn(async (_code: string, round: number) => {
     if (round === sim.round) { sim.round++; sim.idx = 0; }
@@ -113,6 +117,42 @@ describe('trainer-store online room', () => {
     s = useTrainerStore.getState();
     expect(s.room).toBeNull();
     expect(s.currentKey).not.toBeNull();          // 本机重新出题
+  });
+
+  it('三条一屏:建房即领满三条(current+peek+peek2),切下一屏再领三条', async () => {
+    boot(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']);
+    const K = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'].map(n => caseKey(mkCase(n)));
+    const store = useTrainerStore.getState();
+    store.leaveRoom();          // 清掉上个用例可能残留的房间,避免 fillPreviews 误领
+    store.setTiming(false);     // 三条一屏仅不计时模式
+    store.setMultiScramble(true);
+
+    await useTrainerStore.getState().createRoom();
+    await flush();
+    let s = useTrainerStore.getState();
+    expect(s.currentKey).toBe(K[0]);
+    expect(s.peek?.key).toBe(K[1]);       // 预抽第 2 条
+    expect(s.peek2?.key).toBe(K[2]);      // 预抽第 3 条
+    expect(s.roomClaimed).toBe(3);        // 一次占了三格(用户确实一次做三条)
+    expect(s.hist.list.length).toBe(1);   // 仅 current 进历史,peek/peek2 是队尾预抽
+
+    // 切下一屏 = 连推 3 格,领全新三条
+    await useTrainerStore.getState().roomAdvance(3);
+    await flush();
+    s = useTrainerStore.getState();
+    expect(s.currentKey).toBe(K[3]);
+    expect(s.peek?.key).toBe(K[4]);
+    expect(s.peek2?.key).toBe(K[5]);
+    expect(s.roomClaimed).toBe(6);
+    // 上一屏三条(K0/K1/K2)已进历史,current(K3)在队尾 → 「上三个」正好取 idx-3..idx-1
+    const h = s.hist;
+    expect(h.list[h.idx].key).toBe(K[3]);
+    expect(h.list[h.idx - 1].key).toBe(K[2]);
+    expect(h.list[h.idx - 2].key).toBe(K[1]);
+    expect(h.list[h.idx - 3].key).toBe(K[0]);
+
+    store.leaveRoom();
+    store.setMultiScramble(false);        // 复位,避免污染其它用例
   });
 
   it('本机落后(别人已开新一轮)→ claim 返回 advanced → 自动重同步再领', async () => {
