@@ -7,6 +7,7 @@
 // useSearchParams at render) so this globally mounted control doesn't force
 // pages to bail to CSR during prerender.
 
+import type { MouseEvent } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { changeAppLanguage, normalizeAppLang, syncLangToUrl, type AppLang } from '@/i18n/i18n-client';
@@ -40,6 +41,12 @@ export default function LangToggle({ variant = 'inline', className, soft = false
   const current = normalizeAppLang(i18n.language);
   const next: AppLang = current === 'zh' ? 'en' : 'zh';
 
+  // 中键 / Ctrl 点新标签页要真 href:Pattern B 路径换语言。只用 pathname(不读
+  // window.search,以免全局挂载的本控件让 SSG 页 CSR bailout / hydration 错位);
+  // 查询串在新标签页丢弃可接受。英文裸路径,中文加 /zh 前缀。
+  const barePath = (pathname || '/').replace(/^\/(en|zh)(?=\/|$)/, '') || '/';
+  const targetHref = ((next === 'en' ? '' : '/zh') + (barePath === '/' ? '' : barePath)) || '/';
+
   const toggle = () => {
     changeAppLanguage(next);
     syncLangToUrl(next); // cookie + localStorage + html.lang (also adds ?lang=)
@@ -59,21 +66,28 @@ export default function LangToggle({ variant = 'inline', className, soft = false
     router.replace(`${path || '/'}${query}`);
   };
 
+  // 左键(无修饰)= 原地软切,保持 SPA;Ctrl/Cmd/Shift/中键 = 放行 href 默认(新标签页)。
+  const onLinkClick = (e: MouseEvent<HTMLAnchorElement>) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+    e.preventDefault();
+    toggle();
+  };
+
   const cls = ['lang-toggle', variant === 'fixed' ? 'lang-toggle--fixed' : '', className ?? '']
     .filter(Boolean)
     .join(' ');
 
   return (
     <div className="lang-toggle-wrap">
-      <button
-        type="button"
+      <a
+        href={targetHref}
         className={cls}
-        onClick={toggle}
+        onClick={onLinkClick}
         title="Language / 语言"
         aria-label={next === 'zh' ? '切换到简体中文' : 'Switch to English'}
       >
         <TranslateIcon size={14} />
-      </button>
+      </a>
     </div>
   );
 }

@@ -6,8 +6,8 @@
 // the site-search data layer only loads when the user actually opens search.
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Maximize2, Coffee, EyeOff, Heart, Home, Sparkles, Shuffle, Boxes, MessageSquarePlus } from 'lucide-react';
+import HomeLink from '@/components/HomeLink';
 import LandingSearch from '@/components/LandingSearch';
 import HeaderToggles from '@/components/HeaderToggles';
 import WcaAuth from '@/components/WcaAuth';
@@ -30,13 +30,13 @@ const CSS = `
 /* Controls render as a bare row of icons (no per-button card/border) — hover only. */
 .deskpet-toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;
   gap:4px;margin-top:10px;}
-.deskpet-toolbar button{display:flex;align-items:center;gap:6px;border:0;cursor:pointer;
-  padding:7px;border-radius:9px;
+.deskpet-toolbar button,.deskpet-toolbar a{display:flex;align-items:center;gap:6px;border:0;cursor:pointer;
+  padding:7px;border-radius:9px;text-decoration:none;
   font:13px/1 ui-sans-serif,system-ui,sans-serif;
   background:transparent;color:var(--foreground);transition:background .15s,color .15s;}
-.deskpet-toolbar button:hover{background:color-mix(in srgb, var(--foreground) 9%, transparent);}
-.deskpet-toolbar button.is-active{color:var(--accent);}
-.deskpet-toolbar button.is-active:hover{background:color-mix(in srgb, var(--accent) 12%, transparent);}
+.deskpet-toolbar button:hover,.deskpet-toolbar a:hover{background:color-mix(in srgb, var(--foreground) 9%, transparent);}
+.deskpet-toolbar button.is-active,.deskpet-toolbar a.is-active{color:var(--accent);}
+.deskpet-toolbar button.is-active:hover,.deskpet-toolbar a.is-active:hover{background:color-mix(in srgb, var(--accent) 12%, transparent);}
 .deskpet-toolbar .char-btn{padding:3px;overflow:hidden;}
 .deskpet-toolbar-thumb{width:26px;height:26px;object-fit:contain;}
 /* Donate heart — filled warm red, a theme-independent semantic color. */
@@ -116,7 +116,6 @@ export default function DeskPetSearch({
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const fbUnread = useFeedbackUnread();
-  const router = useRouter();
 
   // 反馈按钮红点跟共享未读数;关掉反馈弹窗后复查一次(可能刚读过)。轮询由桌宠统一做。
   useEffect(() => {
@@ -209,10 +208,9 @@ export default function DeskPetSearch({
         <LandingSearch cards={SEARCH_CARDS} lang={lang} />
       </div>
       <div className="deskpet-toolbar">
-        <button type="button" className="icon-only" onClick={() => { router.push(lang === 'zh' ? '/zh' : '/'); onClose(); }}
-          title={t('主页', 'Home')}>
+        <HomeLink className="icon-only" onClick={onClose} title={t('主页', 'Home')} aria-label={t('主页', 'Home')}>
           <Home size={16} />
-        </button>
+        </HomeLink>
         <HeaderToggles />
         <WcaAuth onNavigate={onClose} />
         <button type="button" className="icon-only" onClick={() => setDonateOpen(true)}
