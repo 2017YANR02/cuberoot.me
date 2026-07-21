@@ -25,7 +25,8 @@ import { FACE_NORMAL, FACE_PG } from './ftoState';
 import { roundedSolid, polytopeVerts, type Plane } from '../polytopeCut';
 import { defaultPlatonicColorSchemes } from '@/lib/puzzle-geometry/colors';
 import {
-  offsetInward, roundCorners, extrudeOntoFace, makeSticker, polyArea2, type V2,
+  offsetInward, roundCorners, extrudeOntoFace, makeSticker, polyArea2,
+  schematicPolyFromFacet, type V2,
 } from '../stickerGeom';
 
 /** Octahedron inradius (origin → face plane) in world units. Circumradius = √3·R_IN. */
@@ -109,7 +110,11 @@ function facetSticker(verts: THREE.Vector3[], faceIdx: number): THREE.Mesh | nul
   if (poly.length < 3) return null;
   const origin = centroid.clone().add(n.clone().multiplyScalar(STICKER_LIFT));
   const geo = extrudeOntoFace(poly, { u, v: w, n, origin }, STICKER_DEPTH);
-  return makeSticker(geo, stickerMats[faceIdx], bodyMat, { simStickerNormal: n.clone(), ftoFace: faceIdx });
+  return makeSticker(geo, stickerMats[faceIdx], bodyMat, {
+    simStickerNormal: n.clone(), ftoFace: faceIdx,
+    // 示意小面(sim_svg_export_schematic):facet 即理想晶格(cell 精确共享切割面)
+    schematicPoly: schematicPolyFromFacet(facet, n),
+  });
 }
 
 export interface FtoPieceBuild {
