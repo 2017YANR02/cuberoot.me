@@ -132,6 +132,18 @@ export const ENGINE_TWISTY = new Set<string>(['skewb', 'pyraminx', 'megaminx', '
  *  Copied verbatim from the vendored puzzle-geometry `FTO` entry. */
 const ENGINE_TWISTY_DEF: Record<string, string> = { fto: 'o f 0.333333333333333' };
 
+/** 每种拼图的开局默认视角(内部 0..100 的 viewAngle/viewGradient)。以显示度数表达意图:
+ *  megaminx 正对一面(左右 0°),fto 平视(上下 0°),pyraminx 与所有还原态是正方体的拼图都
+ *  30° / 30°。度→内部要按当前渲染器换算:左右在 twisty(cubing.js)量程 ±180°(系数 3.6)、
+ *  在引擎 ±90°(系数 1.8);上下两渲染器都是 ±90°(系数 1.8)。同一 viewAngle 字段在两渲染器
+ *  下含义不同,所以换拼图 / 换渲染器时必须按目标重算这两值,不能跨拼图沿用。 */
+function defaultViewFor(kind: SimPuzzle, twisty: boolean): { viewAngle: number; viewGradient: number } {
+  const yawDeg = kind === 'megaminx' ? 0 : 30;
+  const pitchDeg = kind === 'fto' ? 0 : 30;
+  const yawFactor = twisty ? 3.6 : 1.8;
+  return { viewAngle: 50 - yawDeg / yawFactor, viewGradient: 50 - pitchDeg / 1.8 };
+}
+
 // Default description for the Puzzle Cuts editor (puzzle=custom) — matches the
 // alpha.twizzle.net/explore landing example `c f 0.255`.
 const DEFAULT_CUSTOM_CUTS = 'c f 0.255';
@@ -433,6 +445,19 @@ export default function SimPage() {
 
   const settingsRef = useRef(settings);
   useEffect(() => { settingsRef.current = settings; }, [settings]);
+
+  // 换拼图 / 换渲染器 → 把视角落到该拼图的开局默认(defaultViewFor)。同为 NxN 只换阶数时
+  // 不重置,保留用户手调的角度;其余(换拼图类型、engine↔cubing 切换、首次挂载)都重取默认。
+  // 单个 viewAngle 字段在两渲染器下度数含义不同,所以这是唯一自洽的做法 —— 不能跨拼图沿用。
+  const prevViewPuzzleRef = useRef<SimPuzzle | null>(null);
+  useEffect(() => {
+    const prev = prevViewPuzzleRef.current;
+    prevViewPuzzleRef.current = puzzleParam;
+    if (typeof prev === 'number' && typeof puzzleParam === 'number') return; // 仅换阶数,保留手调
+    const dv = defaultViewFor(puzzleParam, twisty);
+    setSettings((s) => (s.viewAngle === dv.viewAngle && s.viewGradient === dv.viewGradient
+      ? s : { ...s, viewAngle: dv.viewAngle, viewGradient: dv.viewGradient }));
+  }, [puzzleParam, twisty]);
 
   // Host for the 图像 preview, floated over the canvas' top-left (the studio portals
   // its preview section in here — see PuzzleImageStudio previewHost). State, not a

@@ -393,9 +393,10 @@ export default function TwistySection({
   // 跟 SettingDrawer 里 NxN 的 applySettings 行为一致 — 滑条 0..100 同一坐标系。
   // viewAngle/viewGradient 只在 slider 真变化或 player 重建时同步,
   // 否则保留 cubing.js drag 累积出来的姿态 (跟 NxN orbit 同款)。
-  // megaminx 默认 WCA 朝向(白顶绿前)= lat 26.565 lon=0 — 首次挂载时强制,
-  // 不让 sim 全局 yaw/pitch 默认 (30/33 → lon=-72/lat=30.6) 覆盖。
-  // 用户主动调 slider 后照常同步。
+  // 视角完全由 settings.viewAngle/viewGradient 驱动(SimPage 的 defaultViewFor 已按拼图 +
+  // 渲染器把开局默认写进 settings:megaminx 0/30、pyraminx 30/30、skewb 30/30、fto 30/0),
+  // 这里不再对个别拼图硬编 twizzle 朝向。用户手拖 cube 后 cubing.js 自累积姿态,只在
+  // slider 真变或 player 重建时才回写(prevYaw/Pitch 门控)。
   const prevYawRef = useRef<number | null>(null);
   const prevPitchRef = useRef<number | null>(null);
   const prevNonceRef = useRef<number>(-1);
@@ -409,20 +410,11 @@ export default function TwistySection({
       ? 0.2 + (settings.speed / 50) * 0.8
       : 1 + ((settings.speed - 50) / 50) * 3;
     const isNewPlayer = prevNonceRef.current !== playerNonce;
-    // pyraminx / megaminx / skewb 默认走 alpha.twizzle.net 朝向 (lat=26.565° lon=0)。
-    // pyraminx 绿前黄下;megaminx 白顶绿前;skewb 白顶绿前。
-    const wcaDefault = (puzzle === 'megaminx' || puzzle === 'pyraminx' || puzzle === 'skewb')
-      ? { lat: 26.565, lon: 0 } : null;
-    if (isNewPlayer && wcaDefault) {
-      try { player.cameraLongitude = wcaDefault.lon; } catch { /* */ }
-      try { player.cameraLatitude = wcaDefault.lat; } catch { /* */ }
-    } else {
-      if (isNewPlayer || prevYawRef.current !== settings.viewAngle) {
-        try { player.cameraLongitude = yawDeg; } catch { /* */ }
-      }
-      if (isNewPlayer || prevPitchRef.current !== settings.viewGradient) {
-        try { player.cameraLatitude = pitchDeg; } catch { /* */ }
-      }
+    if (isNewPlayer || prevYawRef.current !== settings.viewAngle) {
+      try { player.cameraLongitude = yawDeg; } catch { /* */ }
+    }
+    if (isNewPlayer || prevPitchRef.current !== settings.viewGradient) {
+      try { player.cameraLatitude = pitchDeg; } catch { /* */ }
     }
     try { player.cameraDistance = dist; liveDistRef.current = dist; } catch { /* */ }
     try { player.tempoScale = tempo; } catch { /* */ }

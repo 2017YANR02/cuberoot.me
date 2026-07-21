@@ -113,7 +113,6 @@
 }
 .sim-slider input[type=range] {
   width: 100%;
-  accent-color: var(--accent);
 }
 
 /* 视角盘(OrbitPad):「左右 / 上下」合成的平面直角坐标系。盘是功能控制面(可拖靶面,
@@ -169,6 +168,12 @@
   justify-content: space-between;
   gap: 8px;
   color: var(--foreground);
+}
+/* 度数框只存整数角度(最宽 -180,3 位数 + 负号),不像通用滑条值要放 "1.00×",
+   收窄到刚好容下 4 个字符,别沿用 .sim-slider-val 的 3.5em。 */
+.sim-orbit-field .sim-slider-val {
+  width: 4ch;
+  box-sizing: content-box;
 }
 
 .sim-toggle {
