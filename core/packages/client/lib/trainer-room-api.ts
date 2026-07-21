@@ -13,12 +13,6 @@ export interface RoomInfo {
   total: number;
 }
 
-/** 领取结果三态:拿到一题 / 本轮领完(done)/ 本机落后需重同步到新一轮(advanced)。 */
-export type ClaimResult =
-  | { kind: 'case'; caseKey: string; index: number; round: number; total: number }
-  | { kind: 'done'; round: number; total: number }
-  | { kind: 'advanced'; round: number; total: number };
-
 async function postJson<T>(path: string, body: unknown): Promise<T> {
   const res = await fetch(apiUrl(path), {
     method: 'POST',
@@ -49,16 +43,30 @@ export async function getRoom(code: string): Promise<RoomInfo & { claimed: numbe
   return res.json();
 }
 
-/** 原子领取下一题(带本机所在轮次)。 */
-export async function claimRoom(code: string, round: number): Promise<ClaimResult> {
+/** 一批领取的一格。 */
+export interface ClaimedCase { caseKey: string; index: number }
+/** 批量领取结果:一批 case / 本轮领完 / 本机落后需重同步。 */
+export type ClaimBatchResult =
+  | { kind: 'cases'; cases: ClaimedCase[]; round: number; total: number }
+  | { kind: 'done'; round: number; total: number }
+  | { kind: 'advanced'; round: number; total: number };
+
+/**
+ * 一次原子领取最多 count 题(三条一屏一次占三格,省一次网络往返 + 一次限流额度)。
+ * 兼容旧后端:旧 `/claim` 忽略 count 只回单格 `{caseKey,index}` → 归一成 1 个 case,
+ * 前端照常工作(仅领到 1 条,后端升级后即领满 count)。
+ */
+export async function claimRoomBatch(code: string, round: number, count: number): Promise<ClaimBatchResult> {
   const r = await postJson<
     | { advanced: true; round: number; total: number }
     | { done: true; round: number; total: number }
-    | { caseKey: string; index: number; round: number; total: number }
-  >(`/v1/trainer/rooms/${code}/claim`, { round });
+    | { cases: ClaimedCase[]; round: number; total: number }
+    | { caseKey: string; index: number; round: number; total: number } // 旧后端单格
+  >(`/v1/trainer/rooms/${code}/claim`, { round, count });
   if ('advanced' in r) return { kind: 'advanced', round: r.round, total: r.total };
   if ('done' in r) return { kind: 'done', round: r.round, total: r.total };
-  return { kind: 'case', caseKey: r.caseKey, index: r.index, round: r.round, total: r.total };
+  if ('cases' in r) return { kind: 'cases', cases: r.cases, round: r.round, total: r.total };
+  return { kind: 'cases', cases: [{ caseKey: r.caseKey, index: r.index }], round: r.round, total: r.total };
 }
 
 /** 开下一轮(CAS,只第一个真正推进;其余读到已推进的轮)。 */

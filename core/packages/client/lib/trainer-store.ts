@@ -9,7 +9,7 @@ import { histBack, histForward, histPush, type ScrambleHist } from './scramble-h
 import { caseOrbit } from './alg_probability';
 import { petReact } from './deskpet';
 import { persistItem } from './safe-storage';
-import { createRoom as apiCreateRoom, getRoom as apiGetRoom, claimRoom, nextRoundRoom, type RoomOrder } from './trainer-room-api';
+import { createRoom as apiCreateRoom, getRoom as apiGetRoom, claimRoomBatch, nextRoundRoom, type RoomOrder } from './trainer-room-api';
 
 export const TimerState = {
   NOT_RUNNING: 0,
@@ -315,6 +315,8 @@ interface TrainerState {
   joinRoom: (code: string) => Promise<{ ok: boolean; error?: string }>;
   /** 离开房间,回到本机模式。 */
   leaveRoom: () => void;
+  /** 房间推进 steps 步(单条=1,三条一屏切下一屏=3),串行领取避免撞车。 */
+  roomAdvance: (steps: number) => Promise<void>;
 
   getTimerReady: (delayMs: number) => void;
   startTimer: () => void;
@@ -490,53 +492,123 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     cstimerize();
   };
 
+  /** 房间是否维护本地预抽(仅三条一屏:第 2、3 条来自 peek/peek2,需提前领取)。 */
+  const roomWantsPreviews = (st: TrainerState): boolean => st.multiScramble && !st.timing;
+
   /**
-   * 房间模式「下一题」:向服务器原子领取。三态:
-   *   - case:找 case → 本地生成打乱 → 落 current(recap.pos = 全局领取序号,即合并进度)
-   *   - done:本轮领完(队列对全员同时空)→ 弹「本轮结束」
-   *   - advanced:本机落后(别人已开新一轮)→ 同步 round 再领
-   * 无本地预抽(peek/peek2 = null):领取是网络往返,预抽等于替对方多占格,故房间模式不预抽。
-   * roomBusy 串行化:一次只在途一个领取,防连点重复推进。
+   * 一次原子领取最多 count 题,转成条目数组;只更新 roomClaimed / room 元信息,不落
+   * current/peek/history。三条一屏一次占三格 = 一次网络往返 + 一次限流额度(旧后端只回单格,
+   * 归一后仍工作,仅少领)。返回 { cases, terminal }:terminal='done'(本轮领完)/'advanced'
+   * (本机落后,已同步轮次)/undefined(拿到 cases)。
    */
-  const roomNext = async (): Promise<void> => {
+  const roomClaimBatch = async (
+    count: number,
+  ): Promise<{ cases: TrainerHistEntry[]; terminal?: 'done' | 'advanced' | 'error' }> => {
+    const st = get();
+    if (!st.room || !st.puzzle || count <= 0) return { cases: [] };
+    let res;
+    try { res = await claimRoomBatch(st.room.code, st.room.round, count); }
+    catch (e) { set({ roomError: (e as Error).message }); return { cases: [], terminal: 'error' }; }
+    const st2 = get();
+    if (!st2.room || !st2.puzzle) return { cases: [], terminal: 'error' };
+    if (res.kind === 'advanced') {
+      set({ room: { ...st2.room, round: res.round, total: res.total } });
+      return { cases: [], terminal: 'advanced' };
+    }
+    if (res.kind === 'done') {
+      set({ room: { ...st2.room, total: res.total }, roomClaimed: res.total });
+      return { cases: [], terminal: 'done' };
+    }
+    const cases: TrainerHistEntry[] = [];
+    let maxClaimed = st2.roomClaimed;
+    for (const { caseKey: k, index } of res.cases) {
+      const c = findCaseByKey(st2.cases, k);
+      if (!c) continue;
+      const scramble = generateScramble(c, st2.puzzle, st2.scrambleKind, { preAuf: st2.preAuf, postAuf: st2.postAuf });
+      cases.push({ key: k, name: c.name, scramble, recap: { pos: index + 1, total: res.total } });
+      maxClaimed = Math.max(maxClaimed, index + 1);
+    }
+    set({ roomClaimed: maxClaimed, room: { ...st2.room, round: res.round, total: res.total } });
+    return { cases };
+  };
+
+  /**
+   * 房间推进 steps 步(单条=1,三条一屏切下一屏=3)。串行化 + 批量领取:
+   *   ① 历史中段(←回看后)先向前翻,不领题(不发请求);
+   *   ② 到队尾把剩下的 need 步一次性批量领取 —— 已有的 peek/peek2 预抽先用上,只补差额。
+   * 三条一屏每切一屏 = 一次领取请求(与单条模式同频),不会撞 30 次/分的领取限流。
+   */
+  const roomAdvance = async (steps: number): Promise<void> => {
     const st0 = get();
-    if (!st0.room || st0.roomBusy || !st0.puzzle) return;
+    if (!st0.room || st0.roomBusy) return;
+    if (st0.timerState !== TimerState.NOT_RUNNING && st0.timerState !== TimerState.STOPPING) return;
     set({ roomBusy: true, roomError: null });
     try {
-      const res = await claimRoom(st0.room.code, st0.room.round);
-      const st = get();
-      if (!st.room) return; // 期间离开了房间
-      if (res.kind === 'advanced') {
-        set({ room: { ...st.room, round: res.round, total: res.total }, roomBusy: false });
-        void roomNext(); // 重同步到新一轮再领
+      let need = steps;
+      // ① 历史中段:向前翻,不领题
+      while (need > 0) {
+        const st = get();
+        if (st.recapRoundDone) { need = 0; break; }
+        const fwd = histForward(st.hist);
+        if (!fwd) break;
+        const cur = fwd.list[fwd.idx];
+        set({ hist: fwd, currentKey: cur.key, currentName: cur.name, currentScramble: cur.scramble, observingPinned: false });
+        cstimerize();
+        need--;
+      }
+      if (need <= 0) return;
+
+      // ② 队尾:凑一屏所需 = 前移 need 步 + (三条一屏再留 2 条预抽)。已有预抽先算进去,只领差额。
+      //    advanced(本机落后,别人已开新一轮)⟹ roomClaimBatch 已同步轮次,旧预抽作废,再领一次。
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const st = get();
+        const multi = roomWantsPreviews(st);
+        const wantAhead = need + (multi ? 2 : 0);           // current 之后需要多少条
+        const have = [st.peek, st.peek2].filter(Boolean) as TrainerHistEntry[];
+        const toClaim = Math.max(0, wantAhead - have.length);
+        const { cases: fresh, terminal } = toClaim > 0 ? await roomClaimBatch(toClaim) : { cases: [], terminal: undefined };
+        if (terminal === 'advanced') { set({ peek: null, peek2: null }); continue; } // 重同步后再领新一轮
+
+        const queue = [...have, ...fresh];                  // current 之后的虚拟队列
+        if (queue.length === 0) { set({ recapRoundDone: true }); return; }
+        // current 落在第 need 条(不足则落最后一条);其后两条作预抽
+        const k = Math.min(need, queue.length);
+        let hist = get().hist;
+        for (let i = 0; i < k; i++) hist = histPush(hist, queue[i]);
+        const current = queue[k - 1];
+        set({
+          hist,
+          currentKey: current.key, currentName: current.name, currentScramble: current.scramble,
+          peek: multi ? (queue[k] ?? null) : null,
+          peek2: multi ? (queue[k + 1] ?? null) : null,
+          observingPinned: false, recapRoundDone: false,
+        });
+        cstimerize();
         return;
       }
-      if (res.kind === 'done') {
-        set({ room: { ...st.room, total: res.total }, roomClaimed: res.total, recapRoundDone: true, roomBusy: false });
-        return;
-      }
-      const c = findCaseByKey(st.cases, res.caseKey);
-      if (!c) { set({ roomBusy: false, roomError: 'unknown case' }); return; }
-      const scramble = generateScramble(c, st.puzzle!, st.scrambleKind, { preAuf: st.preAuf, postAuf: st.postAuf });
-      const entry: TrainerHistEntry = {
-        key: res.caseKey, name: c.name, scramble, recap: { pos: res.index + 1, total: res.total },
-      };
-      set({
-        hist: histPush(st.hist, entry),
-        currentKey: entry.key,
-        currentName: entry.name,
-        currentScramble: entry.scramble,
-        peek: null,
-        peek2: null,
-        roomClaimed: res.index + 1,
-        room: { ...st.room, round: res.round, total: res.total },
-        observingPinned: false,
-        recapRoundDone: false,
-        roomBusy: false,
-      });
-      cstimerize();
-    } catch (e) {
-      set({ roomBusy: false, roomError: (e as Error).message });
+    } finally {
+      set({ roomBusy: false });
+    }
+  };
+
+  /**
+   * 三条一屏在房间里开启时补齐 peek/peek2(仅队尾;历史中段的 peek 恒代表队尾之后,不动)。
+   * setMultiScramble 打开三条一屏后调用,让当前这一屏立刻凑满三条,不必先切一次。一次批量领取。
+   */
+  const roomFillPreviews = async (): Promise<void> => {
+    const st = get();
+    if (!st.room || st.roomBusy || st.currentKey == null) return;
+    if (!roomWantsPreviews(st)) return;
+    const have = [st.peek, st.peek2].filter(Boolean).length;
+    if (have >= 2) return;
+    if (histForward(st.hist)) return; // 回看历史中段:peek 代表队尾之后,不动
+    set({ roomBusy: true });
+    try {
+      const { cases } = await roomClaimBatch(2 - have);
+      const queue = [st.peek, st.peek2, ...cases].filter(Boolean) as TrainerHistEntry[];
+      set({ peek: queue[0] ?? null, peek2: queue[1] ?? null });
+    } finally {
+      set({ roomBusy: false });
     }
   };
 
@@ -557,7 +629,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
         currentKey: null, currentName: null, currentScramble: null, peek: null, peek2: null,
         roomBusy: false,
       });
-      void roomNext();
+      void roomAdvance(1);
     } catch (e) {
       set({ roomBusy: false, roomError: (e as Error).message });
     }
@@ -731,6 +803,8 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     setMultiScramble: (v) => {
       set({ multiScramble: v });
       persistPrefs(prefsOf(get()));
+      // 房间里现开三条一屏:立刻补齐 peek/peek2,当前这屏马上凑满三条(否则要先切一次才补上)
+      if (v) void roomFillPreviews();
     },
     setTimerFont: (f) => {
       set({ timerFont: f });
@@ -756,7 +830,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
         return;
       }
       // 在线房间:队尾向服务器领取下一题(异步,不预抽)
-      if (st.room) { void roomNext(); return; }
+      if (st.room) { void roomAdvance(1); return; }
       // 本地分片:本机这一份的最后一题刚做完(当前题 pos === total)⟹ 暂停,弹「本轮复习结束」,
       // 等用户点「继续下一轮」再进下一轮(单机整集不打断,每轮无缝重洗)。
       const cur = st.hist.idx >= 0 ? st.hist.list[st.hist.idx] : null;
@@ -802,7 +876,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
           hist: EMPTY_HIST, currentKey: null, currentName: null, currentScramble: null, peek: null, peek2: null,
         });
         persistPrefs(prefsOf(get()));
-        void roomNext();
+        void roomAdvance(1);
         return { ok: true, code: info.code };
       } catch (e) {
         set({ roomBusy: false, roomError: (e as Error).message });
@@ -830,7 +904,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
           hist: EMPTY_HIST, currentKey: null, currentName: null, currentScramble: null, peek: null, peek2: null,
         });
         persistPrefs(prefsOf(get()));
-        void roomNext();
+        void roomAdvance(1);
         return { ok: true };
       } catch (e) {
         set({ roomBusy: false, roomError: (e as Error).message });
@@ -849,6 +923,8 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
         pickFresh();
       }
     },
+
+    roomAdvance,
 
     getTimerReady: (delayMs) => {
       if (get().timerState !== TimerState.NOT_RUNNING) return;
