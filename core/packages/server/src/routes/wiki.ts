@@ -31,6 +31,10 @@ interface TermRow {
   position: number;
   head: string;
   body: string;
+  head_en: string | null;
+  head_zh: string | null;
+  body_en: string | null;
+  body_zh: string | null;
   source: string;
   owner_wca_id: string | null;
   owner_name: string;
@@ -55,6 +59,10 @@ function termToJson(t: TermRow, additions: AdditionRow[] = []) {
     position: t.position,
     head: t.head,
     body: t.body,
+    headEn: t.head_en,
+    headZh: t.head_zh,
+    bodyEn: t.body_en,
+    bodyZh: t.body_zh,
     source: t.source,
     ownerWcaId: t.owner_wca_id,
     ownerName: t.owner_name,
@@ -95,6 +103,37 @@ function validateText(s: unknown, max: number, required: boolean): { ok: boolean
   return { ok: true, v };
 }
 
+interface BiFields { headEn: string; headZh: string; bodyEn: string; bodyZh: string; head: string; body: string }
+
+// 结构化双语入参 → 四字段 + 派生 combined head/body(供搜索/slug/兜底)。
+// 至少要有一侧 head(headEn 或 headZh)。兼容旧 { head, body } 单字段入参(结构化留空)。
+function parseBilingual(raw: {
+  headEn?: unknown; headZh?: unknown; bodyEn?: unknown; bodyZh?: unknown; head?: unknown; body?: unknown;
+}): { ok: true; v: BiFields } | { ok: false; error: string } {
+  const he = validateText(raw.headEn, HEAD_MAX, false);
+  if (!he.ok) return { ok: false, error: `headEn: ${he.error}` };
+  const hz = validateText(raw.headZh, HEAD_MAX, false);
+  if (!hz.ok) return { ok: false, error: `headZh: ${hz.error}` };
+  const be = validateText(raw.bodyEn, BODY_MAX, false);
+  if (!be.ok) return { ok: false, error: `bodyEn: ${be.error}` };
+  const bz = validateText(raw.bodyZh, BODY_MAX, false);
+  if (!bz.ok) return { ok: false, error: `bodyZh: ${bz.error}` };
+
+  // 兼容旧单字段:没给任何结构化 head,但给了 combined head → 原样存 combined,结构化留空
+  if (!he.v && !hz.v && raw.head !== undefined) {
+    const h = validateText(raw.head, HEAD_MAX, true);
+    if (!h.ok) return { ok: false, error: `head: ${h.error}` };
+    const b = validateText(raw.body, BODY_MAX, false);
+    if (!b.ok) return { ok: false, error: `body: ${b.error}` };
+    return { ok: true, v: { headEn: '', headZh: '', bodyEn: '', bodyZh: '', head: h.v, body: b.v } };
+  }
+  if (!he.v && !hz.v) return { ok: false, error: 'head required (headEn or headZh)' };
+
+  const head = [he.v, hz.v].filter(Boolean).join(' ');
+  const body = [be.v, bz.v].filter(Boolean).join('\n');
+  return { ok: true, v: { headEn: he.v, headZh: hz.v, bodyEn: be.v, bodyZh: bz.v, head, body } };
+}
+
 // GET /v1/wiki/terms — 全量列表,按 letter+position 排;additions inline 一起带回
 // NOTE: 不走 HTTP cache — 写操作 (create/update/delete) 立刻可见,避免"删了还在"。
 // 全量 payload ~100KB,登录用户日常浏览频率低,不缓存影响极小。
@@ -102,8 +141,8 @@ wikiRoutes.get('/wiki/terms', async (c) => {
   c.header('Cache-Control', 'no-store');
 
   const terms = await query<TermRow>(
-    `SELECT id, letter, position, head, body, source, owner_wca_id, owner_name,
-            created_at, updated_at
+    `SELECT id, letter, position, head, body, head_en, head_zh, body_en, body_zh,
+            source, owner_wca_id, owner_name, created_at, updated_at
      FROM wiki_terms
      WHERE deleted_at IS NULL
      ORDER BY letter, position, id`,
@@ -135,13 +174,11 @@ wikiRoutes.post('/wiki/terms', async (c) => {
   checkRateLimit(getIp(c));
   const user = await requireAuth(c);
 
-  const body = await c.req.json<{ letter?: unknown; head?: unknown; body?: unknown }>();
-  const letter = validateLetter(body.letter);
+  const raw = await c.req.json<Record<string, unknown>>();
+  const letter = validateLetter(raw.letter);
   if (!letter) return c.json({ error: 'letter must be one of # A..Z' }, 400);
-  const head = validateText(body.head, HEAD_MAX, true);
-  if (!head.ok) return c.json({ error: `head: ${head.error}` }, 400);
-  const bod = validateText(body.body, BODY_MAX, false);
-  if (!bod.ok) return c.json({ error: `body: ${bod.error}` }, 400);
+  const bi = parseBilingual(raw);
+  if (!bi.ok) return c.json({ error: bi.error }, 400);
 
   const maxPos = await query<{ max: number | null }>(
     'SELECT MAX(position) AS max FROM wiki_terms WHERE letter = ?',
@@ -150,10 +187,10 @@ wikiRoutes.post('/wiki/terms', async (c) => {
   const nextPos = (maxPos[0].max ?? -1) + 1;
 
   const inserted = await query<TermRow>(
-    `INSERT INTO wiki_terms (letter, position, head, body, source, owner_wca_id, owner_name)
-     VALUES (?, ?, ?, ?, 'user', ?, ?)
+    `INSERT INTO wiki_terms (letter, position, head, body, head_en, head_zh, body_en, body_zh, source, owner_wca_id, owner_name)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'user', ?, ?)
      RETURNING *`,
-    [letter, nextPos, head.v, bod.v, user.wcaId, user.name],
+    [letter, nextPos, bi.v.head, bi.v.body, bi.v.headEn, bi.v.headZh, bi.v.bodyEn, bi.v.bodyZh, user.wcaId, user.name],
   );
   return c.json(termToJson(inserted[0]));
 });
@@ -180,16 +217,14 @@ wikiRoutes.patch('/wiki/terms/:id', async (c) => {
     return c.json({ error: term.source === 'seed' ? 'Cannot edit seed terms' : 'Cannot edit others\' terms' }, 403);
   }
 
-  const body = await c.req.json<{ head?: unknown; body?: unknown }>();
-  const head = validateText(body.head, HEAD_MAX, true);
-  if (!head.ok) return c.json({ error: `head: ${head.error}` }, 400);
-  const bod = validateText(body.body, BODY_MAX, false);
-  if (!bod.ok) return c.json({ error: `body: ${bod.error}` }, 400);
+  const raw = await c.req.json<Record<string, unknown>>();
+  const bi = parseBilingual(raw);
+  if (!bi.ok) return c.json({ error: bi.error }, 400);
 
   const updated = await query<TermRow>(
-    `UPDATE wiki_terms SET head = ?, body = ?, updated_at = NOW()
+    `UPDATE wiki_terms SET head = ?, body = ?, head_en = ?, head_zh = ?, body_en = ?, body_zh = ?, updated_at = NOW()
      WHERE id = ? RETURNING *`,
-    [head.v, bod.v, id],
+    [bi.v.head, bi.v.body, bi.v.headEn, bi.v.headZh, bi.v.bodyEn, bi.v.bodyZh, id],
   );
   return c.json(termToJson(updated[0]));
 });

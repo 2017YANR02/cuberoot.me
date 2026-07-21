@@ -197,6 +197,11 @@
   margin: 0.15rem 0;
 }
 
+/* 正文中英对照:en 段与 zh 段之间留白分隔(无框,靠 gap) */
+.wiki-body-lang + .wiki-body-lang {
+  margin-top: 0.3rem;
+}
+
 .wiki-entry-body a {
   color: var(--accent);
   text-decoration: underline;
@@ -389,6 +394,27 @@
 .wiki-form-input:focus,
 .wiki-form-textarea:focus {
   border-color: var(--accent);
+}
+
+/* en/zh 两框并排;窄屏堆叠 */
+.wiki-form-bi {
+  display: flex;
+  gap: 8px;
+}
+.wiki-form-bi > * {
+  flex: 1;
+  min-width: 0;
+}
+@media (max-width: 480px) {
+  .wiki-form-bi {
+    flex-direction: column;
+  }
+}
+
+/* 字母分组下拉:fit-content,不撑满 */
+.wiki-form-letter {
+  width: auto;
+  align-self: flex-start;
 }
 
 .wiki-form-err {

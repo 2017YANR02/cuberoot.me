@@ -26,8 +26,14 @@ export interface WikiTerm {
   id: number;
   letter: string;
   position: number;
+  /** combined「英文 中文」;搜索/slug/兜底。结构化字段缺失时回退显示这个。 */
   head: string;
   body: string;
+  /** 结构化双语(0079+);seed 已回填,新建/编辑走这四个。null = 旧行未迁移,回退 combined。 */
+  headEn: string | null;
+  headZh: string | null;
+  bodyEn: string | null;
+  bodyZh: string | null;
   source: 'seed' | 'user';
   ownerWcaId: string | null;
   ownerName: string;
@@ -48,7 +54,9 @@ export async function fetchWikiTerms(): Promise<WikiList> {
   return handle<WikiList>(r);
 }
 
-export async function createTerm(body: { letter: string; head: string; body: string }): Promise<WikiTerm> {
+export interface TermInput { headEn: string; headZh: string; bodyEn: string; bodyZh: string }
+
+export async function createTerm(body: { letter: string } & TermInput): Promise<WikiTerm> {
   const r = await fetch(apiUrl('/v1/wiki/terms'), {
     method: 'POST',
     headers: authHeaders(),
@@ -57,7 +65,7 @@ export async function createTerm(body: { letter: string; head: string; body: str
   return handle<WikiTerm>(r);
 }
 
-export async function updateTerm(id: number, body: { head: string; body: string }): Promise<WikiTerm> {
+export async function updateTerm(id: number, body: TermInput): Promise<WikiTerm> {
   const r = await fetch(apiUrl(`/v1/wiki/terms/${id}`), {
     method: 'PATCH',
     headers: authHeaders(),
