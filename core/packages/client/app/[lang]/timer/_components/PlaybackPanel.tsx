@@ -153,6 +153,7 @@ export default function PlaybackPanel({ event, scramble, moves, totalMs }: Props
         <input
           type="range"
           className="reconstruct-playback-slider"
+          style={{ ['--pct' as string]: `${Math.max(0, Math.min(100, (idx / Math.max(1, total)) * 100))}%` }}
           min={0}
           max={total}
           step={1}

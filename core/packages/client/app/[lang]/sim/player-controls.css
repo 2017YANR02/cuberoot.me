@@ -725,7 +725,6 @@
 .sim-nail-shade input[type="range"] {
   width: 76px;
   height: 22px;
-  accent-color: var(--accent);
 }
 .sim-swatch:hover .sim-swatch-box {
   border-color: var(--accent-foreground);

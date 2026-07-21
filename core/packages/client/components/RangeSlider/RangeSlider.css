@@ -43,8 +43,15 @@
 }
 
 /* Both inputs overlay the full rail. pointer-events:none lets clicks fall
-   through to nothing (no track-jump), keeping both thumbs reachable. */
-.range-slider-input {
+   through to nothing (no track-jump), keeping both thumbs reachable.
+   NOTE: every input rule is scoped under `.range-slider` on purpose. globals.css
+   ships a base skin for bare `input[type='range']`, whose selectors
+   (`input[type='range']::-webkit-slider-runnable-track` = specificity 0,1,2)
+   out-specify a plain `.range-slider-input::…` (0,1,1) — that would repaint the
+   stacked inputs' native track grey and collapse their height, surfacing a
+   phantom second bar. The `.range-slider` ancestor lifts us to (0,2,x) so this
+   composite wins, exactly as ParamSliders scopes under `.param-slider`. */
+.range-slider .range-slider-input {
   position: absolute;
   top: 0;
   left: 0;
@@ -56,14 +63,14 @@
   appearance: none;
   pointer-events: none;
 }
-.range-slider-input-lo { z-index: 2; }
-.range-slider-input-hi { z-index: 3; }
-.range-slider-input:focus-visible { outline: none; }
+.range-slider .range-slider-input-lo { z-index: 2; }
+.range-slider .range-slider-input-hi { z-index: 3; }
+.range-slider .range-slider-input:focus-visible { outline: none; }
 
-.range-slider-input::-webkit-slider-runnable-track { height: var(--rs-h); background: transparent; }
-.range-slider-input::-moz-range-track { height: var(--rs-h); background: transparent; }
+.range-slider .range-slider-input::-webkit-slider-runnable-track { height: var(--rs-h); background: transparent; }
+.range-slider .range-slider-input::-moz-range-track { height: var(--rs-h); background: transparent; }
 
-.range-slider-input::-webkit-slider-thumb {
+.range-slider .range-slider-input::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   pointer-events: auto;
@@ -76,7 +83,7 @@
   box-shadow: 0 1px 3px var(--rs-thumb-shadow);
   cursor: pointer;
 }
-.range-slider-input::-moz-range-thumb {
+.range-slider .range-slider-input::-moz-range-thumb {
   pointer-events: auto;
   width: var(--rs-thumb);
   height: var(--rs-thumb);
@@ -86,8 +93,8 @@
   box-shadow: 0 1px 3px var(--rs-thumb-shadow);
   cursor: pointer;
 }
-.range-slider-input:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px var(--rs-focus); }
-.range-slider-input:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 3px var(--rs-focus); }
+.range-slider .range-slider-input:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px var(--rs-focus); }
+.range-slider .range-slider-input:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 3px var(--rs-focus); }
 
 .range-slider-marks {
   position: absolute;

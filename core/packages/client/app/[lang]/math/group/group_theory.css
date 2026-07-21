@@ -3269,7 +3269,6 @@ html[data-theme=dark] .gt-coset-cell { --coset-l: 40%; }
 }
 .gt-line-lights-slider {
   width: 220px;
-  accent-color: var(--accent);
 }
 .gt-line-lights-row {
   display: flex;
@@ -3630,7 +3629,6 @@ html[data-theme=dark] .gt-coset-cell { --coset-l: 40%; }
 }
 .gt-xyz-controls input[type=range] {
   width: 140px;
-  accent-color: var(--accent);
 }
 .gt-xyz-verdict {
   font-family: var(--serif);
@@ -4731,7 +4729,6 @@ html[data-theme=dark] .gt-coset-cell { --coset-l: 40%; }
 }
 .gt-rot-turner-controls input[type=range] {
   width: 120px;
-  accent-color: var(--accent);
 }
 .gt-rot-turner-btns {
   display: flex;
@@ -5254,7 +5251,6 @@ html[data-theme=dark] .gt-coset-cell { --coset-l: 40%; }
 .gt-useful-power-slider {
   flex: 1;
   min-width: 160px;
-  accent-color: var(--accent);
 }
 .gt-useful-power-ord {
   font-family: var(--mono);
@@ -5601,9 +5597,6 @@ html[data-theme=dark] .gt-coset-cell { --coset-l: 40%; }
   fill: var(--accent-2);
   stroke: var(--bg-elev);
   stroke-width: 2;
-}
-.gt-mix-slider {
-  accent-color: var(--accent);
 }
 .gt-mix-step,
 .gt-mix-tv {

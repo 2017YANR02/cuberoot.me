@@ -298,6 +298,7 @@ export default function SorRace() {
           {playing ? <Pause size={18} /> : <Play size={18} />}
         </button>
         <input className="t10h-scrub" type="range" min={0} max={Math.max(0, frames.length - 1)} step={1}
+          style={{ ['--pct' as string]: `${(Math.min(yearIdx, Math.max(0, frames.length - 1)) / Math.max(1, frames.length - 1)) * 100}%` }}
           value={Math.min(yearIdx, Math.max(0, frames.length - 1))}
           onChange={e => { setPlaying(false); setYearIdx(Number(e.target.value)); }}
           aria-label={tr({ zh: '日期', en: 'Date' })} />

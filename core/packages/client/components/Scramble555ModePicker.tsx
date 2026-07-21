@@ -18,7 +18,8 @@ export default function Scramble555ModePicker({ active555, isZh }: Props) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
   return (
     <ScrambleModePickerRow
-      label={t('5x5 打乱', '5x5 scramble')}
+      iconEvent="555"
+      label={t('打乱', 'scramble')}
       value={mode === 'rs'}
       onChange={(v) => setMode(v ? 'rs' : 'rm')}
       onLabel={t('随机状态', 'random-state')}

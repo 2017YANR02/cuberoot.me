@@ -1,0 +1,33 @@
+/* Shared scramble engine/mode toggle row (Scramble222/333/555ModePicker).
+ * Co-located with the component so it renders correctly wherever it's used
+ * (/scramble/gen config rows AND the timer's scramble-source bar) — the old
+ * gen-scoped .gen-555-mode-* rules only loaded on /scramble/gen. Site tokens
+ * so it follows light/dark + palettes everywhere. */
+
+.scramble-mode-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.scramble-mode-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    color: var(--muted-foreground);
+}
+/* 项目图标(替代「2x2 / 5x5」文字前缀),比描述词略大、跟随 currentColor(muted)。 */
+.scramble-mode-icon {
+    font-size: 1.5em;
+    color: var(--foreground);
+}
+
+.scramble-mode-info {
+    display: inline-flex;
+    align-items: center;
+    color: var(--muted-foreground);
+    transition: color 0.15s;
+}
+.scramble-mode-info:hover { color: var(--accent); }

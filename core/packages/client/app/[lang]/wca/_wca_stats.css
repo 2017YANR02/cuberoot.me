@@ -829,7 +829,6 @@
 .wr-year-slider {
   flex: 1;
   min-width: 200px;
-  accent-color: var(--accent);
   cursor: pointer;
 }
 

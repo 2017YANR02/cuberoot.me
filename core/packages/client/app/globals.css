@@ -868,3 +868,33 @@ input[type='range']:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ── 进度 / 播放 scrubber 皮肤(第二层)────────────────────────────────────────
+   在上面的基础皮肤之上,只把灰轨换成 accent 进度填充(--pct);把手 / 尺寸 / 圆角全部
+   沿用基础皮肤,所以 scrubber 和普通滑杆看起来是同一套,只多了「已播放」那截 accent。
+   共用者:recon / sim 播放条(.playback-scrubber,经 PlaybackBar)、wca 时间轴(.t10h-scrub)、
+   timer 复原(.reconstruct-playback-slider)。高特异度 input[type='range'].xxx::track (0,2,2)
+   压过上面基础皮肤的 track 规则(0,1,2),否则进度填充被灰轨盖掉(与 RangeSlider 同一个坑)。
+   --pct 由消费方按 value/max 传入(clamp 0–100%),未传 = 0%(退化成纯灰轨,不报错)。 */
+input[type='range'].playback-scrubber::-webkit-slider-runnable-track,
+input[type='range'].t10h-scrub::-webkit-slider-runnable-track,
+input[type='range'].reconstruct-playback-slider::-webkit-slider-runnable-track {
+  background: linear-gradient(
+    to right,
+    var(--accent) 0%,
+    var(--accent) var(--pct, 0%),
+    color-mix(in srgb, var(--foreground) 15%, transparent) var(--pct, 0%),
+    color-mix(in srgb, var(--foreground) 15%, transparent) 100%
+  );
+}
+input[type='range'].playback-scrubber::-moz-range-track,
+input[type='range'].t10h-scrub::-moz-range-track,
+input[type='range'].reconstruct-playback-slider::-moz-range-track {
+  background: linear-gradient(
+    to right,
+    var(--accent) 0%,
+    var(--accent) var(--pct, 0%),
+    color-mix(in srgb, var(--foreground) 15%, transparent) var(--pct, 0%),
+    color-mix(in srgb, var(--foreground) 15%, transparent) 100%
+  );
+}
