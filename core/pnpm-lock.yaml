@@ -96,6 +96,9 @@ importers:
       '@cuberoot/stack-kernel':
         specifier: workspace:*
         version: link:../stack-kernel
+      '@cuberoot/vendor-sr-puzzlegen':
+        specifier: workspace:*
+        version: link:../vendor-sr-puzzlegen
       '@cuberoot/visualcube':
         specifier: workspace:*
         version: link:../visualcube
@@ -240,9 +243,6 @@ importers:
       scramble-display:
         specifier: ^0.59.1
         version: 0.59.1
-      sr-puzzlegen:
-        specifier: ^1.0.4
-        version: 1.0.4
       sr-visualizer:
         specifier: ^1.0.13
         version: 1.0.13
@@ -347,6 +347,9 @@ importers:
       '@cuberoot/shared':
         specifier: workspace:*
         version: link:../shared
+      '@cuberoot/vendor-sr-puzzlegen':
+        specifier: workspace:*
+        version: link:../vendor-sr-puzzlegen
       '@cuberoot/visualcube':
         specifier: workspace:*
         version: link:../visualcube
@@ -377,9 +380,6 @@ importers:
       qrcode:
         specifier: ^1.5.4
         version: 1.5.4
-      sr-puzzlegen:
-        specifier: ^1.0.4
-        version: 1.0.4
       ws:
         specifier: ^8.20.0
         version: 8.20.0
@@ -451,6 +451,12 @@ importers:
       typescript:
         specifier: ^5.8.0
         version: 5.9.3
+
+  packages/vendor-sr-puzzlegen:
+    devDependencies:
+      typescript:
+        specifier: ~5.7.0
+        version: 5.7.3
 
   packages/visualcube:
     devDependencies:
@@ -3515,9 +3521,6 @@ packages:
   sql-escaper@1.3.3:
     resolution: {integrity: sha512-BsTCV265VpTp8tm1wyIm1xqQCS+Q9NHx2Sr+WcnUrgLrQ6yiDIvHYJV5gHxsj1lMBy2zm5twLaZao8Jd+S8JJw==}
     engines: {bun: '>=1.0.0', deno: '>=2.0.0', node: '>=12.0.0'}
-
-  sr-puzzlegen@1.0.4:
-    resolution: {integrity: sha512-n4UckgdOfdpOhHNL3bNXyogOSs2FDm/bwd1bYtf5ohmQejr0Qf6t6aF9zqEvzAHjbsjFUn31blcIP7DlasXsjQ==}
 
   sr-visualizer@1.0.13:
     resolution: {integrity: sha512-6/tivRwEttzIegF7jxtGBLpaQrYaBGNOmIpSGgp/9zYIH91rEGcpUG/TkmBqlqtxbWt6WF4y8cieUXE4V9F/Sw==}
@@ -7140,8 +7143,6 @@ snapshots:
   sprintf-js@1.0.3: {}
 
   sql-escaper@1.3.3: {}
-
-  sr-puzzlegen@1.0.4: {}
 
   sr-visualizer@1.0.13:
     dependencies:
