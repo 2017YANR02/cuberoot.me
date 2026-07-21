@@ -89,14 +89,15 @@ function renderHead(e: WikiTerm, both: boolean, single: 'zh' | 'en') {
   if (!en && !zh) return <>{e.head}{icon}</>;
   if (both && en && zh) {
     return (
-      <>
-        <span className="wiki-head-line">
+      <span className="wiki-head-bi">
+        <span className="wiki-head-seg">
           <LangTag k="en" /><span className="wiki-head-en">{en}</span>
         </span>
-        <span className="wiki-head-line">
-          <LangTag k="zh" /><span className="wiki-head-zh">{zh}</span>{icon}
+        <span className="wiki-head-seg">
+          <LangTag k="zh" /><span className="wiki-head-zh">{zh}</span>
         </span>
-      </>
+        {icon}
+      </span>
     );
   }
   const pick = single === 'zh' ? (zh || en) : (en || zh);
