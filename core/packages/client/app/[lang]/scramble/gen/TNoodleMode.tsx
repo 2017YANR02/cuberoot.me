@@ -60,7 +60,7 @@ import { SubsetColorPicker, useSubsetSelection } from '@/components/SubsetColorP
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { useCrossMap } from './useCrossMap';
 import { useCompSteps, normScramble } from './useCompSteps';
-import { displaySq1ForEvent } from './_svg/sq1_svg';
+import { displaySq1ForEvent } from '@cuberoot/shared/sq1-notation';
 import { useF2leoStepMap } from './useF2leoStepMap';
 import { useRoux223StepMap, useVariantStepMap, VARIANT_WASM_ID } from './useVariantStepMap';
 import { getRustCrossPool, poolSizeForDevice, type PoolNeed } from '@/lib/rust-cross-pool';

@@ -37,7 +37,7 @@ import { peekWca, nextWca, prefetchWca, hasWcaSource, isWcaSourceEmpty, isWcaCom
 import { takeScramble } from '../_lib/scramble/scramble_pool';
 import { use222Mode } from '@/lib/scramble-222-mode';
 import { genByStepsScramble, genByStepsSig, wcaStepFilter } from '../_lib/scramble/gen-by-steps';
-import { formatScrambleForEvent } from '@/lib/sq1-svg';
+import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { Flag } from '@/components/Flag';
 import { compFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags';
 import { localizeCompName } from '@/lib/comp-localize';

@@ -19,7 +19,7 @@ import TwistySection from '@/components/TwistySection';
 import SolutionView from '@/components/SolutionView';
 import { cleanForPlayer } from '@/lib/recon-alg-utils';
 import { computeAllStats } from '@/lib/recon-stats';
-import { formatScrambleForEvent } from '@/lib/sq1-svg';
+import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { parseReconId } from '@/lib/recon-seo';
 import '../../../recon.css';

@@ -16,7 +16,7 @@ import { localizeCompName } from '@/lib/comp-localize';
 import { loadFlagData, flagDataVersion, compFlagIso2 } from '@/lib/country-flags';
 import { EVENT_ZH, EVENT_EN } from '@/lib/event-constants';
 import { statsUrl } from '@/lib/stats-base';
-import { formatScrambleForEvent } from '@/lib/sq1-svg';
+import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { tr } from '@/i18n/tr';
 
 interface GluedScramble { ci: string; cn: string; r: string; g: string; n: number; tok: string }

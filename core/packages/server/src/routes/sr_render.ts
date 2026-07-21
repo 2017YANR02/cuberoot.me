@@ -16,6 +16,8 @@ import { parseHTML } from 'linkedom';
 // paths; dev's tsx loader does the same.
 import { SVG as srSVG } from '@cuberoot/vendor-sr-puzzlegen';
 import { renderSkewbPyramidSvgParametric } from '@cuberoot/shared/skewb-pyramid-svg';
+import { invert as invertSkewbAlg } from '@cuberoot/shared/skewb-notation';
+import { canonicalSq1Alg } from '@cuberoot/shared/sq1-notation';
 
 let domReady: Promise<void> | null = null;
 function ensureDom(): Promise<void> {
@@ -37,29 +39,6 @@ function srTypeOf(puzzle: Puzzle, variant: Variant): string | null {
   if (puzzle === 'pyraminx') return 'pyraminx';
   if (puzzle === 'skewb') return variant === 'top' ? null : 'skewb';
   return null;
-}
-
-/** Reverse a skewb alg token-by-token (R → R', R' → R, R2 → R2). */
-function invertSkewbAlg(alg: string): string {
-  return alg.trim().split(/\s+/).filter(Boolean).reverse().map((t) => {
-    if (t.endsWith("'")) return t.slice(0, -1);
-    if (t.endsWith('2')) return t;
-    return t + "'";
-  }).join(' ');
-}
-
-// Match client canonicalSq1Alg (sq1_svg.ts) — sr-puzzlegen's sq1 parser needs
-// `(t, b)` with comma+space and `/` as its own token.
-const SQ1_TOKEN_RE = /(\/)|\(?\s*(-?\d+)\s*(?:,\s*|\s+|(?=-?\d))(-?\d+)\s*\)?/g;
-function canonicalSq1Alg(alg: string): string {
-  const tokens: string[] = [];
-  const re = new RegExp(SQ1_TOKEN_RE.source, 'g');
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(alg)) !== null) {
-    if (m[1] === '/') tokens.push('/');
-    else tokens.push(`(${m[2]}, ${m[3]})`);
-  }
-  return tokens.join(' ');
 }
 
 /** Parse `r=y30x-30` style into sr-puzzlegen rotations. Drops z. */

@@ -6,7 +6,7 @@
  * A Square-2 is a Square-1 whose 8 corner pieces are each split in half, so every one of the 12 top and
  * 12 bottom pieces is an equal 30° wedge (1/12 of a turn). We therefore draw two stacked 12-wedge disks
  * (top above, bottom below) plus a thin equator strip, reusing the Square-1 wedge geometry from
- * `gen/_svg/sq1_svg.ts` but with ALL wedges (no 60° corners).
+ * `@/lib/sq1-svg` but with ALL wedges (no 60° corners).
  *
  * Colours are derived from the slot's home id (0..23): top home ids 0..11 take the 6 face hues split into
  * two ramps, bottom ids 12..23 likewise — so the solved state (each wedge at home) shows a regular,

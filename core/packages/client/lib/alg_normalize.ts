@@ -15,7 +15,7 @@
 import type { AlgPuzzle } from '@cuberoot/shared';
 import { toMoveString } from '@cuberoot/shared/alg-notation';
 import { toWca as skewbToWca } from '@cuberoot/shared/skewb-notation';
-import { canonicalSq1Alg } from '@/lib/sq1-svg';
+import { canonicalSq1Alg } from '@cuberoot/shared/sq1-notation';
 
 /** 用 WCA 面/宽/中层/转体记号的魔方 —— 这几种才能走 `toMoveString`。
  *  megaminx(`R++` `D--`)、sq1(`(1,0)/`)是另一套文法,喂进去只会炸。 */
