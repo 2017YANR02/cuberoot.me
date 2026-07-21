@@ -264,6 +264,15 @@ export default class InstancedRenderer extends THREE.Group {
     this.movingSticker = this.makeStickerMesh(this.stickerSlots.length, true);
     this.movingSticker.count = 0;
 
+    // 示意小面(sim_svg_export_schematic):理想晶格四边形 = 贴纸局部系 z=0 平面
+    // 上的整格正方形(±HALF,不 inset)。instanceMatrix = T(cubelet)·localMat 把
+    // z=0 落在 cubelet 表面、局部 +z 转向 face 外法向 → 相邻贴纸严格共边,localMat
+    // 的 zScale(立体贴片压扁)只作用于 z 轴,z=0 轮廓免疫。绕向 CCW 朝 +z(朝外)。
+    // 镜面几何(非均匀分层)不满足晶格假设 → enableMirror 时摘除。
+    const schematicQuad = [-HALF, -HALF, 0, HALF, -HALF, 0, HALF, HALF, 0, -HALF, HALF, 0];
+    this.staticSticker.userData.schematicInstancedPoly = schematicQuad;
+    this.movingSticker.userData.schematicInstancedPoly = schematicQuad;
+
     // 构造时 cubelet.matrix = 纯 translation (rot=identity, scale=1),T × localMat 简化为
     // localMat.elements 直接 copy + 12/13/14 加 cubelet.position。跳过 multiplyMatrices (64 mul) +
     // setMatrixAt (tmpMat.toArray)。movingSticker.setMatrixAt(HIDE_MAT) 也跳:moving count=0 当前不
@@ -1080,6 +1089,9 @@ export default class InstancedRenderer extends THREE.Group {
    *  the layer-thickness tables, then rebuild every matrix. Called once right after
    *  construction by the mirror Cube (order 3). */
   enableMirror(): void {
+    // 镜面块形非均匀,±HALF 理想晶格四边形不成立 → 摘掉示意标记,伴图回退实模 BSP
+    delete this.staticSticker.userData.schematicInstancedPoly;
+    delete this.movingSticker.userData.schematicInstancedPoly;
     const tables = mirrorTables(this.cube.order);
     const n = this.instanceToInitial.length;
     const centers = new Float32Array(n * 3);

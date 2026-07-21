@@ -6,8 +6,10 @@
  *  2. 相邻小面共享棱的描边完全重合(共享顶点输出后逐字符串相等 → 去重后的
  *     顶点数 = 晶格顶点数,而非 3×面数)。
  */
+import './_raf_stub'; // 必须最先:nxn/cube 的 import 链在模块加载期就起 rAF 循环
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
+import Cube from '@/app/[lang]/sim/engine/nxn/cube';
 import { exportSimSvgSchematic, hasSchematicFacelets } from '@/app/[lang]/sim/sim_svg_export_schematic';
 import { buildPyraPiece, buildCore, EDGE_PAIRS, PYRA_A } from '@/app/[lang]/sim/engine/pyra/pyraGeometry';
 import {
@@ -298,6 +300,47 @@ describe('exportSimSvgSchematic — fto', () => {
     expect(reps.length).toBe(28);
     expect(minGap(reps)).toBeGreaterThan(2);
     expect(svg).toContain('clipPath');
+  });
+});
+
+describe('exportSimSvgSchematic — NxN (InstancedRenderer)', () => {
+  it('3x3 F face-on:9 个整格四边形,晶格去重 16 点(4×4 网格),色取 instanceColor', () => {
+    const scene = new THREE.Scene();
+    scene.add(new Cube(3));
+    const world = worldFor(scene, new THREE.Vector3(0, 0, 1), 400);
+    const svg = exportSimSvgSchematic({ world });
+    expect(lCounts(svg).get(3)).toBe(9); // 全部四边形
+    expect(faceletDs(svg).length).toBe(9);
+    expect(svg.toLowerCase()).toContain(CUBE_FILL.F.toLowerCase());
+    expect(svg.toLowerCase()).not.toContain(CUBE_FILL.U.toLowerCase()); // 背剔
+    const reps = clusterReps(faceletVerts(svg));
+    expect(reps.length).toBe(16);
+    expect(minGap(reps)).toBeGreaterThan(2);
+    expect(svg).toContain('clipPath');
+    expect(hasSchematicFacelets(scene)).toBe(true);
+  });
+
+  it('斜视:三面可见 27 小面,面与面在立方棱上共点无错位', () => {
+    const scene = new THREE.Scene();
+    scene.add(new Cube(3));
+    const world = worldFor(scene, new THREE.Vector3(1, 0.9, 1), 460);
+    const svg = exportSimSvgSchematic({ world });
+    expect(faceletDs(svg).length).toBe(27);
+    expect(minGap(clusterReps(faceletVerts(svg)))).toBeGreaterThan(2);
+  });
+
+  it('镜面几何不满足晶格假设:enableMirror 摘除标记 → 回退 BSP 路径', () => {
+    const scene = new THREE.Scene();
+    scene.add(new Cube(3, true));
+    expect(hasSchematicFacelets(scene)).toBe(false);
+  });
+
+  it('maxFacelets 上限:超限抛 SVG_TOO_COMPLEX(伴图回退旧渲染器)', () => {
+    const scene = new THREE.Scene();
+    scene.add(new Cube(3));
+    const world = worldFor(scene, new THREE.Vector3(0, 0, 1), 400);
+    expect(() => exportSimSvgSchematic({ world, maxFacelets: 4 }))
+      .toThrow(/^SVG_TOO_COMPLEX/);
   });
 });
 

@@ -18,6 +18,10 @@
  * 与邻块严格共点)。多边形按顶点序原样输出 —— 五边形 / 梯形小面同样一条 path,
  * 不会出现三角化内对角线。
  *
+ * NxN(InstancedRenderer)走 `userData.schematicInstancedPoly`:同一块理想轮廓
+ * 按 per-instance 矩阵(matrixWorld × instanceMatrix[i])展开,填色取
+ * instanceColor[i];隐藏槽位(HIDE_MAT 零缩放)法向退化自动跳过。
+ *
  * sr 的两个表现力扩展同样移植:
  *  - 逐色描边:sticker 的 `userData.schematicStroke` 覆盖该面的描边色,缺省黑
  *    (对应 sr svg.ts 的 `color.stroke || "#000000"`);
@@ -36,6 +40,9 @@ export interface SchematicSvgExportOptions {
   background?: string | null;
   /** 箭头标注层(抄 sr 的 arrows:画在所有小面之上,不被凸包裁剪)。 */
   arrows?: SchematicArrow[];
+  /** 可见小面数上限(超高阶 NxN 的 SVG path 数防线);超限抛
+   *  `SVG_TOO_COMPLEX_SCHEMATIC`,调用方回退其它渲染器。默认 20000。 */
+  maxFacelets?: number;
 }
 
 /** 教学标注箭头:世界坐标线段,p1 → p2(箭头指向 p2),随引擎相机投影。 */
@@ -51,7 +58,9 @@ export interface SchematicArrow {
 /** 场景是否含示意小面(伴图据此在示意 / 实模 BSP 两条导出路径间切换)。 */
 export function hasSchematicFacelets(scene: THREE.Object3D): boolean {
   let found = false;
-  scene.traverse((o) => { if (o.userData.schematicPoly) found = true; });
+  scene.traverse((o) => {
+    if (o.userData.schematicPoly || o.userData.schematicInstancedPoly) found = true;
+  });
   return found;
 }
 
@@ -84,31 +93,17 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
     return [(v4.x * inv * 0.5 + 0.5) * W, (0.5 - v4.y * inv * 0.5) * H];
   };
 
-  scene.traverseVisible((obj) => {
-    const poly = obj.userData.schematicPoly as number[] | undefined;
-    if (!poly || poly.length < 9) return;
-    const mesh = obj as THREE.Mesh;
-    if (!mesh.isMesh) return;
-    // 材质色:sticker mesh 是 [capMat, wallMat],取 cap(彩色)那层;平色无光照。
-    const mat = (Array.isArray(mesh.material) ? mesh.material[0] : mesh.material) as { color?: THREE.Color; visible?: boolean };
-    if (mat.visible === false) return;
-    const c = mat.color;
-    const fill = c ? hexOf(c.r, c.g, c.b, false) : '#000000';
-    // 逐色描边(抄 sr svg.ts 的 `color.stroke || "#000000"`):贴纸可经 userData
-    // 覆盖自己的描边色(遮罩灰化 / 强调等),缺省统一黑。
-    const strokeColor = (obj.userData.schematicStroke as string | undefined) ?? '#000000';
-
-    // 局部轮廓 → 世界坐标。schematicInParent(sq1):多边形挂父 frame,免疫贴纸
-    // mesh 自身的压扁 scale(立体贴片开关);镜像变换(sq1 底层 scale.y=−1)行列式
-    // 为负会翻转绕向,倒序还原朝外。
-    const mtx = (obj.userData.schematicInParent === true && mesh.parent)
-      ? mesh.parent.matrixWorld : mesh.matrixWorld;
+  const maxFacelets = opts.maxFacelets ?? 20_000;
+  /** 一个小面:局部轮廓经 mtx 到世界 → 背面剔除 → 近平面裁剪 → 投影入列。 */
+  const addPoly = (poly: number[], mtx: THREE.Matrix4, fill: string, strokeColor: string): void => {
     const worldPts: THREE.Vector3[] = [];
     for (let i = 0; i < poly.length; i += 3) {
       worldPts.push(v.set(poly[i], poly[i + 1], poly[i + 2]).clone().applyMatrix4(mtx));
     }
+    // 镜像变换(sq1 底层 pivot.scale.y=−1)行列式为负会翻转绕向,倒序还原朝外
     if (mtx.determinant() < 0) worldPts.reverse();
-    // 背面剔除:绕向朝外 → 法向背向相机的小面不可见(静止凸体,足够)
+    // 背面剔除:绕向朝外 → 法向背向相机的小面不可见(静止凸体,足够)。
+    // 法向退化(HIDE_MAT 零缩放的隐藏 instance 槽位)同样在此跳过。
     const n = new THREE.Vector3().subVectors(worldPts[1], worldPts[0])
       .cross(new THREE.Vector3().subVectors(worldPts[2], worldPts[0]));
     const len = n.length();
@@ -132,7 +127,47 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
       pts.push((v4.x * inv * 0.5 + 0.5) * W, (0.5 - v4.y * inv * 0.5) * H);
       zSum += p.z;
     }
+    if (facelets.length >= maxFacelets) throw new Error('SVG_TOO_COMPLEX_SCHEMATIC: facelet cap exceeded');
     facelets.push({ pts, fill, stroke: strokeColor, z: zSum / view.length });
+  };
+
+  scene.traverseVisible((obj) => {
+    const mesh = obj as THREE.Mesh;
+    if (!mesh.isMesh) return;
+    // 材质色:sticker mesh 是 [capMat, wallMat],取 cap(彩色)那层;平色无光照。
+    const mat = (Array.isArray(mesh.material) ? mesh.material[0] : mesh.material) as { color?: THREE.Color; visible?: boolean };
+    if (mat.visible === false) return;
+    // 逐色描边(抄 sr svg.ts 的 `color.stroke || "#000000"`):贴纸可经 userData
+    // 覆盖自己的描边色(遮罩灰化 / 强调等),缺省统一黑。
+    const strokeColor = (obj.userData.schematicStroke as string | undefined) ?? '#000000';
+
+    // NxN InstancedRenderer:同一块理想轮廓 × per-instance 矩阵,填色 instanceColor
+    const ipoly = obj.userData.schematicInstancedPoly as number[] | undefined;
+    const im = obj as THREE.InstancedMesh;
+    if (ipoly && ipoly.length >= 9 && im.isInstancedMesh) {
+      const imat = new THREE.Matrix4();
+      const wmat = new THREE.Matrix4();
+      const ic = new THREE.Color();
+      for (let i = 0; i < im.count; i++) {
+        im.getMatrixAt(i, imat);
+        wmat.multiplyMatrices(im.matrixWorld, imat);
+        let fill = '#000000';
+        if (im.instanceColor) { im.getColorAt(i, ic); fill = hexOf(ic.r, ic.g, ic.b, false); }
+        else if (mat.color) fill = hexOf(mat.color.r, mat.color.g, mat.color.b, false);
+        addPoly(ipoly, wmat, fill, strokeColor);
+      }
+      return;
+    }
+
+    const poly = obj.userData.schematicPoly as number[] | undefined;
+    if (!poly || poly.length < 9) return;
+    const c = mat.color;
+    const fill = c ? hexOf(c.r, c.g, c.b, false) : '#000000';
+    // schematicInParent(sq1):多边形挂父 frame,免疫贴纸 mesh 自身的压扁 scale
+    // (立体贴片开关改 mesh.scale.z)。
+    const mtx = (obj.userData.schematicInParent === true && mesh.parent)
+      ? mesh.parent.matrixWorld : mesh.matrixWorld;
+    addPoly(poly, mtx, fill, strokeColor);
   });
 
   // 远 → 近(凸体下可见面互不重叠,排序只是对轻微非凸的保护)
