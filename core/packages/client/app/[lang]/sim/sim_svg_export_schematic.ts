@@ -1,14 +1,19 @@
 /**
- * sim_svg_export_schematic — 示意图导出器(SR 范式 × 引擎相机)。
+ * sim_svg_export_schematic — 示意图导出器(visualcube inset 范式 × 引擎相机)。
  *
  * 与 BSP 导出器(实模投影)的分工:示意图只画彩色小面(facelet),不画块身 /
  * 核 / 倒角。魔方静止形态是凸体,可见小面互不遮挡 —— 不需要隐面消除,更不需要
- * BSP。渲染范式抄 sr-puzzlegen(vendor-sr-puzzlegen/src/rendering):
+ * BSP。
  *
- *   每个小面 = 一条独立 <path>(严格多边形)+ 各自的黑描边。相邻小面共享的棱
- *   在建模层就是同一组世界坐标(引擎割平面求交,跨块误差 ~1e-9,远低于输出
- *   0.01px 量化)→ 两侧描边逐比特重合成一条干净黑线。这是 sr“严丝合缝”观感
- *   的来源;BSP 的共享边相消 + 切分正好破坏它,所以示意图不走 BSP。
+ * 网格模型抄 visualcube(vendor visualcube/src/cube/drawing.ts),不是描边:
+ *
+ *   每个小面 = 壳色衬底(理想晶格多边形原样)+ 贴纸(同多边形向心缩 1−inset)。
+ *   贴纸四周露出的衬底 = 黑网格。缝宽是小面尺寸的固定比例 —— 阶数再高小面再小,
+ *   网格永远等比,不会像绝对 px 描边那样在高阶把贴纸吞成一片黑(40 阶实测教训)。
+ *   相邻衬底共享的棱在建模层就是同一组世界坐标(引擎割平面求交,跨块误差 ~1e-9,
+ *   远低于输出 0.01px 量化)→ 衬底严丝合缝铺满外形,外轮廓即数学直线,不再需要
+ *   旧描边模型的凸包裁剪 + 外框 hack。衬底带一条同色 1px 描边封住相邻多边形间的
+ *   抗锯齿细缝(经典 SVG 邻接缝补法;同色不可见,外轮廓仅胖 0.5px)。
  *
  * 相机 / 状态直接取引擎 world → 任意视角精确跟随左侧 3D(sr 的 SR_ANGLE_BASE
  * 手工标定层在此路线不存在)。
@@ -22,11 +27,12 @@
  * 按 per-instance 矩阵(matrixWorld × instanceMatrix[i])展开,填色取
  * instanceColor[i];隐藏槽位(HIDE_MAT 零缩放)法向退化自动跳过。
  *
- * sr 的两个表现力扩展同样移植:
- *  - 逐色描边:sticker 的 `userData.schematicStroke` 覆盖该面的描边色,缺省黑
- *    (对应 sr svg.ts 的 `color.stroke || "#000000"`);
- *  - arrows 箭头层:`opts.arrows` 的世界坐标线段随相机投影,画在所有小面之上、
- *    不被凸包裁剪(对应 sr renderArrows + createMarkers)。
+ * visualcube 参数同步移植(退役对照表 §2b):壳体色 bodyColor、壳体不透明度
+ * bodyOpacity、贴纸不透明度 stickerOpacity。sr 的两个表现力扩展保留:
+ *  - 逐面衬底色:sticker 的 `userData.schematicStroke` 覆盖该小面的衬底色
+ *    (对应 sr svg.ts 的 `color.stroke || "#000000"`,遮罩灰化 / 强调用);
+ *  - arrows 箭头层:`opts.arrows` 的世界坐标线段随相机投影,画在所有小面之上
+ *    (对应 sr renderArrows + createMarkers)。
  */
 import * as THREE from 'three';
 import type World from './engine/world';
@@ -34,11 +40,18 @@ import { clipPolyByPlane, hexOf, fmt } from './sim_svg_export';
 
 export interface SchematicSvgExportOptions {
   world: Pick<World, 'scene' | 'camera' | 'width' | 'height'>;
-  /** 小面黑描边宽(SVG 坐标 px;显示端随 SVG 整体缩放)。0 = 不描边。默认 8。 */
-  strokeWidth?: number;
+  /** 网格缝宽 = 小面向心收缩比例(0–1)。0 = 贴纸铺满无网格。默认 0.15
+   *  (= visualcube 的 transScale 0.85)。 */
+  inset?: number;
+  /** 壳体色(衬底 / 网格色)。默认黑(= visualcube cubeColor)。 */
+  bodyColor?: string;
+  /** 壳体不透明度 0–100(= visualcube cubeOpacity)。默认 100。 */
+  bodyOpacity?: number;
+  /** 贴纸不透明度 0–100(= visualcube stickerOpacity)。默认 100。 */
+  stickerOpacity?: number;
   /** 背景色;默认 null = 透明。 */
   background?: string | null;
-  /** 箭头标注层(抄 sr 的 arrows:画在所有小面之上,不被凸包裁剪)。 */
+  /** 箭头标注层(抄 sr 的 arrows:画在所有小面之上)。 */
   arrows?: SchematicArrow[];
   /** 可见小面数上限(超高阶 NxN 的 SVG path 数防线);超限抛
    *  `SVG_TOO_COMPLEX_SCHEMATIC`,调用方回退其它渲染器。默认 20000。 */
@@ -51,7 +64,7 @@ export interface SchematicArrow {
   p2: [number, number, number];
   /** 线 + 箭头色;默认黑。 */
   color?: string;
-  /** 线宽(SVG px);默认取 strokeWidth(strokeWidth 为 0 时 8)。 */
+  /** 线宽(SVG px);默认 8。 */
   width?: number;
 }
 
@@ -70,7 +83,10 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
   const camera = world.camera as THREE.PerspectiveCamera;
   const W = Math.max(1, Math.round(world.width));
   const H = Math.max(1, Math.round(world.height));
-  const strokeW = opts.strokeWidth ?? 8;
+  const inset = Math.min(0.9, Math.max(0, opts.inset ?? 0.15));
+  const bodyColor = opts.bodyColor ?? '#000000';
+  const bodyOp = Math.min(100, Math.max(0, opts.bodyOpacity ?? 100));
+  const stickerOp = Math.min(100, Math.max(0, opts.stickerOpacity ?? 100));
 
   scene.updateMatrixWorld(true);
   camera.updateMatrixWorld(true);
@@ -79,7 +95,7 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
   const near = camera.near;
   const camPos = new THREE.Vector3().setFromMatrixPosition(camera.matrixWorld);
 
-  interface Facelet { pts: number[]; fill: string; stroke: string; z: number }
+  interface Facelet { pts: number[]; fill: string; body: string; z: number }
   const facelets: Facelet[] = [];
   const v = new THREE.Vector3();
   const v4 = new THREE.Vector4();
@@ -95,7 +111,7 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
 
   const maxFacelets = opts.maxFacelets ?? 20_000;
   /** 一个小面:局部轮廓经 mtx 到世界 → 背面剔除 → 近平面裁剪 → 投影入列。 */
-  const addPoly = (poly: number[], mtx: THREE.Matrix4, fill: string, strokeColor: string): void => {
+  const addPoly = (poly: number[], mtx: THREE.Matrix4, fill: string, body: string): void => {
     const worldPts: THREE.Vector3[] = [];
     for (let i = 0; i < poly.length; i += 3) {
       worldPts.push(v.set(poly[i], poly[i + 1], poly[i + 2]).clone().applyMatrix4(mtx));
@@ -128,7 +144,7 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
       zSum += p.z;
     }
     if (facelets.length >= maxFacelets) throw new Error('SVG_TOO_COMPLEX_SCHEMATIC: facelet cap exceeded');
-    facelets.push({ pts, fill, stroke: strokeColor, z: zSum / view.length });
+    facelets.push({ pts, fill, body, z: zSum / view.length });
   };
 
   scene.traverseVisible((obj) => {
@@ -137,9 +153,9 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
     // 材质色:sticker mesh 是 [capMat, wallMat],取 cap(彩色)那层;平色无光照。
     const mat = (Array.isArray(mesh.material) ? mesh.material[0] : mesh.material) as { color?: THREE.Color; visible?: boolean };
     if (mat.visible === false) return;
-    // 逐色描边(抄 sr svg.ts 的 `color.stroke || "#000000"`):贴纸可经 userData
-    // 覆盖自己的描边色(遮罩灰化 / 强调等),缺省统一黑。
-    const strokeColor = (obj.userData.schematicStroke as string | undefined) ?? '#000000';
+    // 逐面衬底色(抄 sr svg.ts 的 `color.stroke || "#000000"`):贴纸可经 userData
+    // 覆盖自己小面的衬底 / 网格色(遮罩灰化 / 强调等),缺省取全局壳体色。
+    const body = (obj.userData.schematicStroke as string | undefined) ?? bodyColor;
 
     // NxN InstancedRenderer:同一块理想轮廓 × per-instance 矩阵,填色 instanceColor
     const ipoly = obj.userData.schematicInstancedPoly as number[] | undefined;
@@ -154,7 +170,7 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
         let fill = '#000000';
         if (im.instanceColor) { im.getColorAt(i, ic); fill = hexOf(ic.r, ic.g, ic.b, false); }
         else if (mat.color) fill = hexOf(mat.color.r, mat.color.g, mat.color.b, false);
-        addPoly(ipoly, wmat, fill, strokeColor);
+        addPoly(ipoly, wmat, fill, body);
       }
       return;
     }
@@ -167,10 +183,11 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
     // (立体贴片开关改 mesh.scale.z)。
     const mtx = (obj.userData.schematicInParent === true && mesh.parent)
       ? mesh.parent.matrixWorld : mesh.matrixWorld;
-    addPoly(poly, mtx, fill, strokeColor);
+    addPoly(poly, mtx, fill, body);
   });
 
-  // 远 → 近(凸体下可见面互不重叠,排序只是对轻微非凸的保护)
+  // 远 → 近(凸体下可见面互不重叠,排序只是对轻微非凸的保护;衬底 + 贴纸按面
+  // 连续输出,近面衬底可正确压住远面贴纸)
   facelets.sort((a, b) => a.z - b.z);
 
   const dOf = (pts: number[]): string => {
@@ -179,39 +196,33 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
     return s + 'Z';
   };
 
-  // join=round 照抄 sr(svg.ts):透视压扁的小面投影角可以极尖,miter 会沿角
-  // 平分线拉出长针(内部结点偶有盖不住的露出来 = "刺");round 的圆帽半径只有
-  // 半描边宽,黑压黑不可见。外缘的圆帽由凸包裁剪 + 外框线兜住,不上轮廓。
-  const strokeAttrOf = (color: string): string =>
-    strokeW > 0 ? ` stroke="${color}" stroke-width="${fmt(strokeW)}" stroke-linejoin="round"` : '';
-  const paths = facelets.map((f) => `<path d="${dOf(f.pts)}" fill="${f.fill}"${strokeAttrOf(f.stroke)}/>`).join('');
-
-  // 外轮廓 = 可见小面投影的凸包(静止魔方是凸体)。小面描边在外缘晶格点的
-  // miter 尖会伸出轮廓线(内部同类尖被邻面描边盖住,轮廓上无遮盖 → "毛刺"),
-  // 用凸包 clipPath 裁掉出界部分,再沿凸包描一条外框 → 外缘是数学直线。
-  // 凸性守卫:仅当可见小面恰好铺满凸包(投影面积和 ≈ 凸包面积)才启用 —— sq1
-  // 变形后外形非凸,凸包线会横跨凹口,此时跳过裁剪 + 外框,退回纯 round join
-  // (即 sr 原版的处理,外缘是半描边宽的小圆角)。
-  let content = paths;
-  if (strokeW > 0 && facelets.length > 0) {
-    const hull = convexHull2D(facelets.flatMap((f) => {
-      const out: [number, number][] = [];
-      for (let i = 0; i < f.pts.length; i += 2) out.push([f.pts[i], f.pts[i + 1]]);
-      return out;
-    }));
-    const hullArea = hull.length >= 3 ? polyAreaOfFlat(hull.flat()) : 0;
-    const tiledArea = facelets.reduce((s, f) => s + polyAreaOfFlat(f.pts), 0);
-    if (hull.length >= 3 && Math.abs(hullArea - tiledArea) <= hullArea * 0.01) {
-      const hullD = dOf(hull.flat());
-      content = `<clipPath id="sil"><path d="${hullD}"/></clipPath>`
-        + `<g clip-path="url(#sil)">${paths}</g>`
-        + `<path d="${hullD}" fill="none"${strokeAttrOf('#000000')}/>`;
+  /** 投影多边形向心收缩(visualcube transScale 的 2D 版:顶点均值为心)。 */
+  const insetPts = (pts: number[]): number[] => {
+    let cx = 0, cy = 0;
+    const n = pts.length / 2;
+    for (let i = 0; i < pts.length; i += 2) { cx += pts[i]; cy += pts[i + 1]; }
+    cx /= n; cy /= n;
+    const k = 1 - inset;
+    const out: number[] = [];
+    for (let i = 0; i < pts.length; i += 2) {
+      out.push(cx + (pts[i] - cx) * k, cy + (pts[i + 1] - cy) * k);
     }
+    return out;
+  };
+
+  const bodyOpAttr = bodyOp < 100 ? ` opacity="${fmt(bodyOp / 100)}"` : '';
+  const stickerOpAttr = stickerOp < 100 ? ` opacity="${fmt(stickerOp / 100)}"` : '';
+  let content = '';
+  for (const f of facelets) {
+    if (inset > 0) {
+      content += `<path d="${dOf(f.pts)}" fill="${f.body}" stroke="${f.body}" stroke-width="1" stroke-linejoin="round"${bodyOpAttr}/>`;
+    }
+    content += `<path d="${dOf(inset > 0 ? insetPts(f.pts) : f.pts)}" fill="${f.fill}"${stickerOpAttr}/>`;
   }
 
-  // arrows 箭头层(抄 sr renderArrows:所有多边形画完后单独一遍,盖在最上层,
-  // 不参与凸包裁剪 —— 教学标注允许伸出轮廓)。箭头 marker 按色去重生成;
-  // markerUnits 默认 strokeWidth → 箭头三角随线宽缩放(sr createMarkers 同款)。
+  // arrows 箭头层(抄 sr renderArrows:所有多边形画完后单独一遍,盖在最上层 ——
+  // 教学标注允许伸出轮廓)。箭头 marker 按色去重生成;markerUnits 默认
+  // strokeWidth → 箭头三角随线宽缩放(sr createMarkers 同款)。
   let defs = '';
   let arrowsOut = '';
   const arrowPads: { x: number; y: number; pad: number }[] = [];
@@ -222,7 +233,7 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
       const s2 = project(a.p2[0], a.p2[1], a.p2[2]);
       if (!s1 || !s2) continue;
       const color = a.color ?? '#000000';
-      const aw = a.width ?? (strokeW > 0 ? strokeW : 8);
+      const aw = a.width ?? 8;
       let id = markerIds.get(color);
       if (!id) {
         id = `ah${markerIds.size}`;
@@ -238,7 +249,7 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
     if (defs) defs = `<defs>${defs}</defs>`;
   }
 
-  // viewBox 贴着拼图裁(抄 sr 的紧凑取景):包围盒 + 描边半宽(外框线外沿)+ 1px。
+  // viewBox 贴着拼图裁(抄 sr 的紧凑取景):包围盒 + 衬底封缝描边半宽(0.5)+ 1px。
   // 不裁的话导整张画布,拼图缩在中间、四周大片空边。箭头端点(含自身余量)也
   // 计入包围盒,标注伸出轮廓时视窗跟着扩。
   let bx = 0, by = 0, bw = W, bh = H;
@@ -254,40 +265,11 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
       if (p.x - p.pad < x0) x0 = p.x - p.pad; if (p.x + p.pad > x1) x1 = p.x + p.pad;
       if (p.y - p.pad < y0) y0 = p.y - p.pad; if (p.y + p.pad > y1) y1 = p.y + p.pad;
     }
-    const pad = strokeW / 2 + 1;
+    const pad = 1.5;
     bx = x0 - pad; by = y0 - pad; bw = x1 - x0 + pad * 2; bh = y1 - y0 + pad * 2;
   }
 
   const bg = opts.background
     ? `<rect x="${fmt(bx)}" y="${fmt(by)}" width="${fmt(bw)}" height="${fmt(bh)}" fill="${opts.background}"/>` : '';
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${Math.max(1, Math.round(bw))}" height="${Math.max(1, Math.round(bh))}" viewBox="${fmt(bx)} ${fmt(by)} ${fmt(bw)} ${fmt(bh)}">${bg}${defs}${content}${arrowsOut}</svg>`;
-}
-
-/** 扁平 [x0,y0,x1,y1,…] 多边形的无符号面积(shoelace)。 */
-function polyAreaOfFlat(pts: number[]): number {
-  let a = 0;
-  for (let i = 0; i < pts.length; i += 2) {
-    const j = (i + 2) % pts.length;
-    a += pts[i] * pts[j + 1] - pts[j] * pts[i + 1];
-  }
-  return Math.abs(a) / 2;
-}
-
-/** 2D 凸包(Andrew monotone chain),返回逆时针顶点;共线点剔除。 */
-function convexHull2D(pts: [number, number][]): [number, number][] {
-  const uniq = [...new Map(pts.map((p) => [`${p[0]},${p[1]}`, p])).values()]
-    .sort((a, b) => a[0] - b[0] || a[1] - b[1]);
-  if (uniq.length < 3) return uniq;
-  const cross = (o: [number, number], a: [number, number], b: [number, number]): number =>
-    (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
-  const half = (list: [number, number][]): [number, number][] => {
-    const out: [number, number][] = [];
-    for (const p of list) {
-      while (out.length >= 2 && cross(out[out.length - 2], out[out.length - 1], p) <= 0) out.pop();
-      out.push(p);
-    }
-    out.pop();
-    return out;
-  };
-  return [...half(uniq), ...half([...uniq].reverse())];
 }
