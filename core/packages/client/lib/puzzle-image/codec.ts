@@ -10,6 +10,7 @@
 import { DEFAULTS, FACE_DEFAULTS, rotationDefaultsFor, rotationsMatchDefault } from './defaults';
 import { MASK_ROTATIONS } from './masks';
 import type { ImageSpec, PuzzleType, SpecialView, PuzzleVariant } from './types';
+import { parseViewRotations } from '@cuberoot/shared/sr-rotations';
 
 /** Keys specToParams can emit, in emission order. The three mask/paint keys
  *  (`msk` sticker-mask DSL, `mkc` mask colour, `fc` painted facelet) sit LAST so
@@ -187,9 +188,9 @@ export function readSpecFromParams(params: ParamsInput, prefix: string, opts?: C
 
   const r = get('r');
   if (r) {
-    const matches = [...r.matchAll(/([xy])(-?\d{1,3})/g)];
-    if (matches[0]) { s.rotateAxis1 = matches[0][1]; s.rotateAngle1 = parseInt(matches[0][2], 10); }
-    if (matches[1]) { s.rotateAxis2 = matches[1][1]; s.rotateAngle2 = parseInt(matches[1][2], 10); }
+    const matches = parseViewRotations(r);
+    if (matches[0]) { s.rotateAxis1 = matches[0].axis; s.rotateAngle1 = matches[0].angle; }
+    if (matches[1]) { s.rotateAxis2 = matches[1].axis; s.rotateAngle2 = matches[1].angle; }
   }
 
   if (get('bg') != null) s.backgroundColor = get('bg') ?? '';
