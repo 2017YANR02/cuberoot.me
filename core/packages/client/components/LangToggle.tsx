@@ -43,9 +43,12 @@ export default function LangToggle({ variant = 'inline', className, soft = false
 
   // 中键 / Ctrl 点新标签页要真 href:Pattern B 路径换语言。只用 pathname(不读
   // window.search,以免全局挂载的本控件让 SSG 页 CSR bailout / hydration 错位);
-  // 查询串在新标签页丢弃可接受。英文裸路径,中文加 /zh 前缀。
+  // 原页查询串丢弃可接受。英文裸路径,中文加 /zh 前缀。
   const barePath = (pathname || '/').replace(/^\/(en|zh)(?=\/|$)/, '') || '/';
-  const targetHref = ((next === 'en' ? '' : '/zh') + (barePath === '/' ? '' : barePath)) || '/';
+  const targetPath = ((next === 'en' ? '' : '/zh') + (barePath === '/' ? '' : barePath)) || '/';
+  // 必带显式 ?lang=<目标语言>:新标签页 boot 时会按 cookie/localStorage 里存的旧语言
+  // 把裸英文 URL 又重定向回 /zh(反之亦然)——?lang= 覆盖存储偏好,锁定目标语言。
+  const targetHref = `${targetPath}?lang=${next}`;
 
   const toggle = () => {
     changeAppLanguage(next);
