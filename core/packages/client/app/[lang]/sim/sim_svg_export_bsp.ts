@@ -16,7 +16,8 @@
  * 输出阶段:paint 序中连续、同平面同色的面片做「共享边相消」边界重建,合并成
  * 单条 <path>(贴纸 / 面板恢复为一个多边形轮廓,path 数回到贴纸量级);重建
  * 失败(T 交点 / 精度)降级为逐面片输出,画面仍正确只是 path 变多。不透明
- * path 带同色描边盖抗锯齿细缝(与截图路径同策略)。
+ * path 带同色描边盖抗锯齿细缝(与截图路径同策略);描边宽随碎片面积收缩、
+ * join 全直线段(无 round),防亚像素碎片被描边吹成圆角"黑点"。
  */
 import * as THREE from 'three';
 import type World from './engine/world';
@@ -501,7 +502,8 @@ export function exportSimSvgBspWithDebug(opts: BspSvgExportOptions): { svg: stri
   }
 
   // ── 输出:同 (node, fill, opacity) 连续段先边界重建合并,再同色接续拼 path ──
-  interface EmitItem { fill: string; opacity: number; d: string; sliver: boolean; strokeW: number; }
+  /** solo = 描边宽自适应的小碎片,独立成 path;false = 可并进同色 run(1.2)。 */
+  interface EmitItem { fill: string; opacity: number; d: string; solo: boolean; strokeW: number; }
   const items: EmitItem[] = [];
 
   const dOf = (loop: number[], stride: number): string => {
@@ -511,7 +513,9 @@ export function exportSimSvgBspWithDebug(opts: BspSvgExportOptions): { svg: stri
   };
 
   const emitSingle = (pts: number[], fill: string, opacity: number): void => {
-    // 纤条(面积 < 周长 ⇔ 平均宽 < 0.5px)描边自适应,防吹胖(与截图路径同策)
+    // 描边宽 = min(1.2, 自身平均宽):大面统一 1.2 盖 AA 缝;小碎片(纤条 / 孤立
+    // 小片)随面积收缩 —— 否则同色描边会把亚像素几何吹成数倍大的"黑点"。不足
+    // 1.2 的单独成 path(并进同色大 run 会被 run 的 1.2 覆盖)。
     let area2 = 0, perim = 0;
     const n = pts.length / 3;
     for (let i = 0; i < n; i++) {
@@ -519,11 +523,8 @@ export function exportSimSvgBspWithDebug(opts: BspSvgExportOptions): { svg: stri
       area2 += pts[i * 3] * pts[j * 3 + 1] - pts[j * 3] * pts[i * 3 + 1];
       perim += Math.hypot(pts[j * 3] - pts[i * 3], pts[j * 3 + 1] - pts[i * 3 + 1]);
     }
-    const sliver = Math.abs(area2) < perim;
-    items.push({
-      fill, opacity, d: dOf(pts, 3), sliver,
-      strokeW: sliver ? Math.min(0.8, Math.max(0.25, 0.5 * Math.abs(area2) / Math.max(1e-6, perim))) : 1.2,
-    });
+    const w = Math.min(1.2, Math.max(0.25, 0.5 * Math.abs(area2) / Math.max(1e-6, perim)));
+    items.push({ fill, opacity, d: dOf(pts, 3), solo: w < 1.2, strokeW: w });
   };
 
   let runStart = 0;
@@ -536,7 +537,7 @@ export function exportSimSvgBspWithDebug(opts: BspSvgExportOptions): { svg: stri
     } else {
       const loops = mergeRunToLoops(order.slice(runStart, end).map((o) => o.pts));
       if (loops) {
-        items.push({ fill: first.fill, opacity: first.opacity, d: loops.map((l) => dOf(l, 2)).join(''), sliver: false, strokeW: 1.2 });
+        items.push({ fill: first.fill, opacity: first.opacity, d: loops.map((l) => dOf(l, 2)).join(''), solo: false, strokeW: 1.2 });
       } else {
         for (let i = runStart; i < end; i++) emitSingle(order[i].pts, order[i].fill, order[i].opacity);
       }
@@ -555,19 +556,21 @@ export function exportSimSvgBspWithDebug(opts: BspSvgExportOptions): { svg: stri
   let curFill = '';
   let curOp = -1;
   let curD: string[] = [];
+  // join 不设 round:全部直线段(默认 miter,极尖角由 miterlimit 自动削成直切),
+  // 圆角 join 会把小碎片描成圆团、放大后像"黑点"。
   const flush = (): void => {
     if (curD.length === 0) return;
     const attrs = curOp < 1
       ? ` fill-opacity="${fmt(curOp)}"`
-      : ` stroke="${curFill}" stroke-width="1.2" stroke-linejoin="round"`;
+      : ` stroke="${curFill}" stroke-width="1.2"`;
     body.push(`<path d="${curD.join('')}" fill="${curFill}"${attrs}/>`);
     curD = [];
   };
   for (const it of items) {
-    if (it.sliver) {
+    if (it.solo) {
       flush();
       const op = it.opacity < 1 ? ` fill-opacity="${fmt(it.opacity)}"` : '';
-      const st = it.opacity < 1 ? '' : ` stroke="${it.fill}" stroke-width="${fmt(it.strokeW)}" stroke-linejoin="round"`;
+      const st = it.opacity < 1 ? '' : ` stroke="${it.fill}" stroke-width="${fmt(it.strokeW)}"`;
       body.push(`<path d="${it.d}" fill="${it.fill}"${op}${st}/>`);
       continue;
     }
