@@ -207,8 +207,9 @@ function textureEntry(tex: THREE.Texture, cache: Map<THREE.Texture, TexEntry | n
   return entry;
 }
 
-/** Sutherland–Hodgman: 保留 n·p + d ≥ 0 的一侧。返回新数组(顶点为新建 Vector3)。 */
-function clipPolyByPlane(pts: THREE.Vector3[], nx: number, ny: number, nz: number, d: number): THREE.Vector3[] {
+/** Sutherland–Hodgman: 保留 n·p + d ≥ 0 的一侧。返回新数组(顶点为新建 Vector3)。
+ *  (export: sim_svg_export_bsp 复用) */
+export function clipPolyByPlane(pts: THREE.Vector3[], nx: number, ny: number, nz: number, d: number): THREE.Vector3[] {
   const out: THREE.Vector3[] = [];
   const n = pts.length;
   for (let i = 0; i < n; i++) {
@@ -279,7 +280,8 @@ function splitByStickerBorder(poly: THREE.Vector3[], n: THREE.Vector3): { inside
 }
 
 const _c = new THREE.Color();
-function hexOf(r: number, g: number, b: number, srgb: boolean): string {
+/** 线性(或 sRGB 直存)分量 → #rrggbb。(export: sim_svg_export_bsp 复用) */
+export function hexOf(r: number, g: number, b: number, srgb: boolean): string {
   if (srgb) {
     // 输入已是 sRGB 域(cubing.js 场景):字节直出
     const to = (v: number): string => Math.round(Math.min(1, Math.max(0, v)) * 255).toString(16).padStart(2, '0');
@@ -290,7 +292,8 @@ function hexOf(r: number, g: number, b: number, srgb: boolean): string {
   return `#${_c.getHexString()}`;
 }
 
-function fmt(v: number): number {
+/** 输出坐标压到 0.01px。(export: sim_svg_export_bsp 复用) */
+export function fmt(v: number): number {
   return Math.round(v * 100) / 100;
 }
 
