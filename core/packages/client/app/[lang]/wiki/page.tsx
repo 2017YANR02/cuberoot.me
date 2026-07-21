@@ -276,16 +276,6 @@ export default function WikiPage() {
 
       <main className="wiki-main">
         <h1 className="wiki-title">{tr({ zh: '魔方百科', en: 'Cubing Wiki' })}</h1>
-        <p className="wiki-lead">
-          {(isZh
-                              ? `${totalEntries} 条术语,中英对照,登录可增补。资料汇编自 `
-                              : `${totalEntries} terms, EN/ZH, sign in to contribute. Compiled from `)}
-          <a href="https://www.speedsolving.com/wiki" target="_blank" rel="noopener noreferrer">
-            speedsolving.com/wiki
-          </a>
-          {tr({ zh: ' 等公开资料。', en: ' and other public sources.'
-        })}
-        </p>
 
         <div className="wiki-search-wrap">
           <Search size={16} className="wiki-search-icon" aria-hidden="true" />
@@ -300,11 +290,11 @@ export default function WikiPage() {
           {query && <ClearButton onClick={() => setQuery('')} isZh={isZh} preserveFocus />}
         </div>
 
-        {q && (
-          <div className="wiki-search-meta">
-            {(isZh ? `匹配 ${matchedEntries} 条` : `${matchedEntries} match${matchedEntries === 1 ? '' : 'es'}`)}
-          </div>
-        )}
+        <div className="wiki-search-meta">
+          {q
+            ? tr({ zh: `匹配 ${matchedEntries} 条`, en: `${matchedEntries} match${matchedEntries === 1 ? '' : 'es'}` })
+            : tr({ zh: `${totalEntries} 条术语`, en: `${totalEntries} terms` })}
+        </div>
 
         {!q && (
           <nav className="wiki-alpha-bar" aria-label={tr({ zh: '按字母跳转', en: 'Jump by letter'
