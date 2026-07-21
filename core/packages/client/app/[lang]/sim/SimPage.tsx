@@ -459,16 +459,18 @@ export default function SimPage() {
     persistItem('sim.panel.image', imageOpen ? '1' : '0');
   }, [imageOpen]);
 
-  // 示意伴图黑描边宽(SVG px,显示端随缩放):每个小面独立描黑边的宽度。
+  // 示意伴图黑边 = 网格缝宽占小面的百分比(visualcube inset 模型:贴纸向心缩,
+  // 露出壳色衬底当网格;绝对 px 描边在高阶 NxN 会吞掉贴纸整图发黑)。
+  // 默认 15 = visualcube 的 transScale 0.85。
   // 只影响示意伴图,niche 外观,走 localStorage(同 sim.panel.image,非 URL)。
   const [imgOutline, setImgOutline] = useState<number>(() => {
-    if (typeof window === 'undefined') return 8;
+    if (typeof window === 'undefined') return 15;
     try {
       const raw = localStorage.getItem('sim.img.outline');
-      if (raw === null) return 8;
+      if (raw === null) return 15;
       const v = Number(raw);
-      return Number.isFinite(v) && v >= 0 ? v : 8;
-    } catch { return 8; }
+      return Number.isFinite(v) && v >= 0 ? v : 15;
+    } catch { return 15; }
   });
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -1817,7 +1819,9 @@ export default function SimPage() {
           // 拼图带示意小面(userData.schematicPoly)→ SR 范式示意导出器:每个小面
           // 独立多边形 + 黑描边,共享棱逐比特重合;其余拼图走实模 BSP 投影。
           if (hasSchematicFacelets(world.scene)) {
-            setEngineSvg(exportSimSvgSchematic({ world, strokeWidth: imgOutline }));
+            // 黑边滑块 = 网格缝宽占小面的百分比(inset 模型):比例量纲天然与
+            // 视口尺寸、阶数无关 —— 交换态小框视口、40 阶小贴纸下观感都恒定。
+            setEngineSvg(exportSimSvgSchematic({ world, inset: imgOutline / 100 }));
             return;
           }
           if (bspSceneAudit(world.scene).miscolors) { setEngineSvg(null); return; } // 原核分色:回退旧渲染器
