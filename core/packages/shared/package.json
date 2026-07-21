@@ -36,6 +36,10 @@
       "node": "./dist/skewb_notation.js",
       "default": "./src/skewb_notation.ts"
     },
+    "./sq1-notation": {
+      "node": "./dist/sq1_notation.js",
+      "default": "./src/sq1_notation.ts"
+    },
     "./admin": {
       "node": "./dist/admin.js",
       "default": "./src/admin.ts"

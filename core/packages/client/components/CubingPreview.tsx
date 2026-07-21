@@ -13,7 +13,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS } from '@/app/[lang]/scramble/gen/_svg/sq1_svg';
+import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS } from '@/lib/sq1-svg';
 import { renderMegaScrambleSvg, DEFAULT_MEGA_COLORS } from '@/app/[lang]/scramble/gen/_svg/mega_svg';
 
 interface CubingPreviewProps {

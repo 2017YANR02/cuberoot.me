@@ -13,7 +13,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 import { ArrowRightLeft } from 'lucide-react';
 import { findTokenPositions, extractAlgFromText, syncPlayerToMoveCount, countMovesExpanded, type TokenPosition } from '@/lib/recon-alg-utils';
-import { parseSq1Tokens } from '@/lib/sq1-svg';
+import { parseSq1Tokens } from '@cuberoot/shared/sq1-notation';
 import './solution_view.css';
 
 /** 获取点击在 DOM 元素纯文本中的绝对偏移 */

@@ -35,7 +35,7 @@ import { useBattleStore, battleToTimerEvent, timerToBattleEvent, keyToPlayer, pr
 import { PUZZLES, PENALTY, I18N_TEXT, BG_MAX_BYTES } from '@/app/[lang]/battle/_components/engine/constants';
 import { formatTimeHtml as formatTime } from '@/app/[lang]/timer/_shared/format';
 import { computeAo5 } from '@/app/[lang]/timer/_shared/stats-core';
-import { formatScrambleForEvent } from '@/lib/sq1-svg';
+import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import type { PenaltyType } from '@/app/[lang]/battle/_components/engine/constants';
 import HistoryPanel from '@/app/[lang]/battle/_components/HistoryPanel';
 import VsHistoryPanel from '@/app/[lang]/battle/_components/VsHistoryPanel';

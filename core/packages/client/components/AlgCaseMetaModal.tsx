@@ -25,7 +25,7 @@ import { ALG_TAG_LABEL } from '@/lib/alg_tags';
 import { primaryCaseName } from '@/lib/alg_case_display';
 import { algCaseHref } from '@/lib/alg_case_link';
 import { displayAlg } from '@/lib/alg_display';
-import { formatScrambleForEvent } from '@/lib/sq1-svg';
+import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { tr } from '@/i18n/tr';
 
 const METRIC_LABEL: Record<string, string> = { stm: 'STM', sqtm: 'SQTM', htm: 'HTM', qtm: 'QTM' };

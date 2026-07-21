@@ -56,7 +56,7 @@ import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import { RecordBadge } from '@/components/RecordBadge';
 import ReconPlayerCanvas from '@/components/recon/ReconPlayerCanvas';
 import SolutionView from '@/components/SolutionView';
-import { canonicalSq1Alg, formatScrambleForEvent, compactSq1Solution } from '@/lib/sq1-svg';
+import { canonicalSq1Alg, formatScrambleForEvent, compactSq1Solution } from '@cuberoot/shared/sq1-notation';
 import {
   buildNormalizedSolution, findCrossLineIndex, hasWideMoveInCrossSection,
 } from '@/lib/recon-norm-cross-extract';

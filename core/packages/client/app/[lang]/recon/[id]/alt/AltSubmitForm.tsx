@@ -12,7 +12,7 @@ import type { ReconSolve } from '@cuberoot/shared';
 import { getRecon, addAlternative, updateAlternative } from '@/lib/recon-api';
 import { revalidateRecon } from '../../revalidate-action';
 import { computeAllStats } from '@/lib/recon-stats';
-import { formatScrambleForEvent } from '@/lib/sq1-svg';
+import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { useAuthStore } from '@/lib/auth-store';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import ReconPlayerPane from '@/components/ReconPlayerPane';

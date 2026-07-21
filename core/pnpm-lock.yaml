@@ -325,6 +325,9 @@ importers:
 
   packages/scramble-stats-build:
     dependencies:
+      '@cuberoot/shared':
+        specifier: workspace:*
+        version: link:../shared
       yaml:
         specifier: ^2.6.0
         version: 2.8.3

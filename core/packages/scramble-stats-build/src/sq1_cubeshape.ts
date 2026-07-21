@@ -6,49 +6,12 @@
  *
  * 实现:把每层编码成 12 位「piece-start」掩码(每 30° sector 一位;corner 占两 sector =
  * 第一位 1 第二位 0,edge 占一 sector = 1),对 slash 操作(交换两层右半 + 层间自由旋转)从
- * cube shape 反向 BFS 建距离表;查询时用站内已验证的 tnoodle 端口 applySq1 求出最终 shape 后查表。
+ * cube shape 反向 BFS 建距离表;查询时用站内已验证的 tnoodle 端口 applySq1Scramble
+ *(@cuberoot/shared/sq1-notation,全站单一源)求出最终 shape 后查表。
  *
  * 校验:与 tnoodle 端口逐位等同的引擎 + 独立两版 BFS + Jaap 权威值三方一致(170 态 / God 7)。
  */
-
-// ── 记号解析 + 应用(逐字移植 app/[lang]/scramble/gen/_svg/sq1_svg.ts,保持 shape 与全站渲染一致)──
-const SQ1_TOKEN_RE = /(\/)|\(?\s*(-?\d+)\s*(?:,\s*|\s+|(?=-?\d))(-?\d+)\s*\)?|\(?\s*(-?\d+)\s*\)?/g;
-type Sq1Tok = { slice: true } | { top: number; bot: number };
-
-function parseSq1(alg: string): Sq1Tok[] {
-  const out: Sq1Tok[] = [];
-  const re = new RegExp(SQ1_TOKEN_RE.source, 'g');
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(alg)) !== null) {
-    if (m[1] === '/') out.push({ slice: true });
-    else if (m[2] !== undefined) out.push({ top: parseInt(m[2], 10), bot: parseInt(m[3]!, 10) });
-    else out.push({ top: parseInt(m[4]!, 10), bot: 0 });
-  }
-  return out;
-}
-
-const SOLVED_PIECES = [0, 0, 1, 2, 2, 3, 4, 4, 5, 6, 6, 7, 8, 9, 9, 10, 11, 11, 12, 13, 13, 14, 15, 15];
-
-function applySq1(scramble: string): number[] {
-  let pieces = SOLVED_PIECES.slice();
-  for (const tok of parseSq1(scramble)) {
-    if ('slice' in tok) {
-      const next = pieces.slice();
-      for (let i = 0; i < 6; i++) { const c = next[i + 12]; next[i + 12] = next[i + 6]; next[i + 6] = c; }
-      pieces = next;
-    } else {
-      const t = ((-tok.top % 12) + 12) % 12;
-      const b = ((-tok.bot % 12) + 12) % 12;
-      const next = pieces.slice();
-      const oldTop = pieces.slice(0, 12);
-      for (let i = 0; i < 12; i++) next[i] = oldTop[(t + i) % 12];
-      const oldBot = pieces.slice(12, 24);
-      for (let i = 0; i < 12; i++) next[i + 12] = oldBot[(b + i) % 12];
-      pieces = next;
-    }
-  }
-  return pieces;
-}
+import { applySq1Scramble } from '@cuberoot/shared/sq1-notation';
 
 // ── shape 编码:每层 12 位 piece-start 掩码 ──
 // bit i = 1 表示 slot i 是某 piece 的起始(edge 或 corner 第一 sector);0 = corner 第二 sector。
@@ -123,7 +86,7 @@ export function buildCubeshapeTable(): CubeshapeTable {
 
 /** 某打乱到 cube shape 的最少 slash 数;table 不识别该 shape(理论不应发生)时返回 -1。 */
 export function cubeshapeSlashes(table: CubeshapeTable, scramble: string): number {
-  const pieces = applySq1(scramble);
+  const pieces = applySq1Scramble(scramble).pieces;
   const k = stateKey(layerMarker(pieces, 0), layerMarker(pieces, 12));
   return table.get(k) ?? -1;
 }

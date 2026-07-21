@@ -39,7 +39,7 @@ import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
 import { scanCases } from '@/lib/alg_validation_scan';
 import { caseAnchor, findCaseByHash } from '@/lib/alg_case_link';
 import { replaceHash } from '@/lib/url_hash';
-import { formatScrambleForEvent } from '@/lib/sq1-svg';
+import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { displayAlgCaseName, primaryCaseName, renameZbllGroupToken } from '@/lib/alg_case_display';
 import { ALG_TAG_LABEL, ALG_TAGS } from '@/lib/alg_tags';
 import { displayAlg } from '@/lib/alg_display';

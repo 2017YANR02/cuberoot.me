@@ -5,7 +5,7 @@ import {
   compactSq1Alg,
   invertSq1Alg,
   simplifySq1Alg,
-} from '@/lib/sq1-svg';
+} from '@cuberoot/shared/sq1-notation';
 
 describe('SQ1 tokenizer — existing forms still parse', () => {
   // Lock down `30` → `(3,0)` via greedy backtrack (NOT a single 30 turn).

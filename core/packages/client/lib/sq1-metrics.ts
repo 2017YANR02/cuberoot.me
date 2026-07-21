@@ -13,7 +13,7 @@
  * Built on the shared parser in `sq1-svg.ts` so counts match the rest of the
  * site (scramble / recon / math).
  */
-import { parseSq1Tokens, type Sq1Token } from './sq1-svg';
+import { parseSq1Tokens, type Sq1Token } from '@cuberoot/shared/sq1-notation';
 
 export interface Sq1MoveCounts {
   twist: number;

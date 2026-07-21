@@ -109,9 +109,9 @@ function fmt(n: number): string {
  * in the half + 3 face-centers adjacent to X cycle; the opposite half stays put.
  *
  * WCA Regulations #12h covers 4 of the 8 corners (R=DRB, U=ULB, L=DLF, B=DLB);
- * cubing.js's skewb notation mapper additionally defines F=UFR, D=DFR. The other
- * two corners (ULF, URB) aren't reachable by a single letter and are expressed
- * via conjugates (y'-F-y for ULF, y-F-y' for URB) — see Sarah-notation translator.
+ * cubing.js's skewb notation mapper additionally defines F=UFR, D=DFR, and names
+ * the remaining two corners with two-letter grips: UL=ULF, UR=URB (what the
+ * Sarah-notation translator emits for Sarah L/R).
  *
  * image[face][sticker] indexing matches tnoodle's SkewbState (URFDLB face order,
  * 0=center, 1-4=corners in face-local TL/TR/BL/BR positions).
@@ -189,12 +189,18 @@ const FACE_CORNER_STICKER: ReadonlyArray<ReadonlyArray<number>> = [
 
 const WCA_LETTER_TO_CORNER: Record<string, number> = {
   R: 6, U: 3, L: 4, B: 7, F: 1, D: 5,
+  // cubing.js's two-letter grips for the remaining corners (UL=ULF, UR=URB) —
+  // the Sarah translator emits these for Sarah L/R. Verified UL ≡ y' F y and
+  // UR ≡ y F y' render byte-identical SVGs.
+  UL: 0, UR: 2,
 };
 
-// Standard right-handed 90° rotation matrices (WCA x/y/z convention).
-const X_ROT: Mat3 = [[1, 0, 0], [0, 0, -1], [0, 1, 0]];
-const Y_ROT: Mat3 = [[0, 0, 1], [0, 1, 0], [-1, 0, 0]];
-const Z_ROT: Mat3 = [[0, -1, 0], [1, 0, 0], [0, 0, 1]];
+// 90° rotation matrices in WCA x/y/z convention (x: F→U, y: F→L, z: U→R) for
+// column-vector matVec application. Verified against the 6 letter corners via
+// conjugate identities: y U y' ≡ UL, z F z' ≡ UL, x F x' ≡ D (cubing.js truth).
+const X_ROT: Mat3 = [[1, 0, 0], [0, 0, 1], [0, -1, 0]];
+const Y_ROT: Mat3 = [[0, 0, -1], [0, 1, 0], [1, 0, 0]];
+const Z_ROT: Mat3 = [[0, 1, 0], [-1, 0, 0], [0, 0, 1]];
 
 function matVec(M: Mat3, v: Vec3): Vec3 {
   return [
@@ -268,22 +274,26 @@ class SkewbStateWCA {
 
   applyMove(token: string) {
     if (!token) return;
-    const m = /^([RULBFDxyz])(['2]?)$/.exec(token.trim());
+    // Full token grammar `X`, `X'`, `X2`, `X2'`, ... — skewb-notation invert()
+    // emits `X2'` (the exact inverse of X², = X on order-3 corners), so net
+    // turns are computed mod the move order rather than pattern-matched.
+    const m = /^(UL|UR|[RULBFDxyz])(\d*)('?)$/.exec(token.trim());
     if (!m) return;
     const ch = m[1];
-    const suffix = m[2];
+    const amount = m[2] ? parseInt(m[2], 10) : 1;
+    const prime = m[3] === "'";
 
     if (ch === 'x' || ch === 'y' || ch === 'z') {
       const M = ch === 'x' ? X_ROT : ch === 'y' ? Y_ROT : Z_ROT;
-      const n = suffix === "'" ? 3 : suffix === '2' ? 2 : 1;
+      const n = ((prime ? -amount : amount) % 4 + 4) % 4;
       for (let i = 0; i < n; i++) this.rotationOnce(M);
       return;
     }
 
     const cornerIdx = WCA_LETTER_TO_CORNER[ch];
     if (cornerIdx === undefined) return;
-    // 3X = identity, so X2 ≡ X' (both = 2 CW turns).
-    const turns = suffix === '' ? 1 : 2;
+    // Corner twists are order 3: X2 ≡ X' (2 CW turns), X2' ≡ X, 3X = identity.
+    const turns = ((prime ? -amount : amount) % 3 + 3) % 3;
     for (let i = 0; i < turns; i++) this.cornerTurnOnce(cornerIdx);
   }
 

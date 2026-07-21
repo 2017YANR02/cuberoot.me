@@ -8,7 +8,7 @@
  * 复用站内统一解析器 parseSq1Tokens,口径与 /scramble、recon 一致。
  */
 import { useMemo, useState } from 'react';
-import { canonicalSq1Alg } from '@/lib/sq1-svg';
+import { canonicalSq1Alg } from '@cuberoot/shared/sq1-notation';
 import { sq1MoveCounts } from '@/lib/sq1-metrics';
 import { METRICS } from './sq1_data';
 
