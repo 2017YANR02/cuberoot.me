@@ -999,18 +999,20 @@ export function exportSimSvg(opts: SimSvgExportOptions): string {
   let curD: string[] = [];
   let clipId = 0;
 
+  // join 不设 round:全部直线段(默认 miter,极尖角由 miterlimit 自动削成直切),
+  // 与 BSP 导出器同策略,防小碎片被描成圆团。
   const flush = (): void => {
     if (curD.length === 0) return;
-    const opAttr = curOp < 1 ? ` fill-opacity="${fmt(curOp)}"` : ` stroke="${curFill}" stroke-width="1.2" stroke-linejoin="round"`;
+    const opAttr = curOp < 1 ? ` fill-opacity="${fmt(curOp)}"` : ` stroke="${curFill}" stroke-width="1.2"`;
     body.push(`<path d="${curD.join('')}" fill="${curFill}"${opAttr}/>`);
     curD = [];
   };
 
   for (const p of prims) {
     if (p.kind === 0) {
-      // 纤条状碎片(面积 < 周长 ⇔ 平均宽 < 0.5px,如近侧视的贴纸侧壁)单独输出,
-      // 描边宽自适应 ≈ 自身平均宽:封住相邻纤条间的 AA 发丝缝(1:1 不可见,高倍
-      // 放大成品红虚线),又不像统一 1.2px 那样把镜面沟槽暗线整条吹胖。
+      // 小碎片(纤条如近侧视的贴纸侧壁 / 孤立小片)单独输出,描边宽自适应
+      // = min(1.2, 自身平均宽):封住相邻碎片间的 AA 发丝缝(1:1 不可见,高倍
+      // 放大成品红虚线),又不像统一 1.2px 那样把亚像素几何吹成数倍大的"黑点"。
       let area2 = 0, perim = 0;
       const n = p.pts.length / 3;
       for (let i = 0; i < n; i++) {
@@ -1021,11 +1023,11 @@ export function exportSimSvg(opts: SimSvgExportOptions): string {
       let d = `M${fmt(p.pts[0])} ${fmt(p.pts[1])}`;
       for (let i = 3; i < p.pts.length; i += 3) d += `L${fmt(p.pts[i])} ${fmt(p.pts[i + 1])}`;
       d += 'Z';
-      if (Math.abs(area2) < perim) {
+      const sw = Math.min(1.2, Math.max(0.25, 0.5 * Math.abs(area2) / Math.max(1e-6, perim)));
+      if (sw < 1.2) {
         flush();
         const op = p.opacity < 1 ? ` fill-opacity="${fmt(p.opacity)}"` : '';
-        const sw = Math.min(0.8, Math.max(0.25, 0.5 * Math.abs(area2) / Math.max(1e-6, perim)));
-        const st = p.opacity < 1 ? '' : ` stroke="${p.fill}" stroke-width="${fmt(sw)}" stroke-linejoin="round"`;
+        const st = p.opacity < 1 ? '' : ` stroke="${p.fill}" stroke-width="${fmt(sw)}"`;
         body.push(`<path d="${d}" fill="${p.fill}"${op}${st}/>`);
         continue;
       }
