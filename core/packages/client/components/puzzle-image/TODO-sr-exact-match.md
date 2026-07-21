@@ -9,16 +9,18 @@
    - **pyraminx** → `CUBE_FILL` 按面 index
    - **megaminx** → cubing.js `defaultPlatonicColorSchemes()[12]`
    `srSchemeFor` 必须喂这些固定色,不能喂 `spec.faceU..B`(改色即分叉)。
-2. **异形默认左边 = cubing.js TwistyPlayer**(不是自有 3D 引擎;`ENGINE_TWISTY={skewb,pyraminx,megaminx,fto}`)。**sq1 例外**,左边是自有 sq1 3D 引擎。标定判据必须用**实际默认渲染器**。
+2. **异形默认左边 = 自有引擎**(`renderer` 默认自 `9a3155961e` 起为 `'group'`,`ENGINE_TWISTY={skewb,pyraminx,megaminx,fto}` 全走自有 3D;sq1 一直是自有 sq1 引擎)。标定判据必须用**实际默认渲染器** —— 2026-07 前的标定对着 cubing.js TwistyPlayer,渲染器默认切换后全部重标过一轮。
 3. **sr 各拼图有自带默认 `rotations`**(`sr/dist/lib/visualizer/options.js`):cube/skewb `[{y:45},{x:34}]`、sq1 `[{z:-34},{x:-56}]`、**pyraminx `[{z:60},{x:-60}]`**、megaminx **无**(identity=F 面朝前)。传显式 rotations 会**覆盖**这个默认。
 
-## 已完成(全部实证对齐左边)
+## 已完成(全部实证对齐左边 = 自有引擎;2026-07-21 重标)
 | 拼图 | 配色 | 朝向(SR_ANGLE_BASE) | 透视 | 状态 |
 |---|---|---|---|---|
-| **skewb** | `CUBE_FILL` ✅ | `{yaw:90}` ✅ | ✅ | 完成 |
-| **sq1** | `SQ1_COLORS` ✅ | `{yaw:0,pitch:-90}` ✅ | ✅ | 完成 |
-| **pyraminx** | `CUBE_FILL` ✅ | `{yaw:60,pitch:-91}`→显式 `[{z:60},{x:-60}]`=sr 默认菱形(尖朝上风筝),srPuzzleAxis y→z ✅ | ✅ | 完成(默认精确;旧标定错对着自有引擎的平面单面,已修) |
-| **megaminx** | sr12键→cubing 映射(代码钉死同手性)✅ | `{yaw:0,pitch:-12.6}`→棱朝前 U 顶 ✅ | ✅ | 完成(配色精确 + 朝向对齐 + **yaw 1:1 跟踪**) |
+| **skewb** | `CUBE_FILL` ✅ | `{yaw:100}`(几何 90=F 平视 + 默认偏置 10)✅ | ✅ | 完成 |
+| **sq1** | `SQ1_COLORS` ✅ | `{yaw:0,pitch:-90}`(渲染器没换,原标定仍准,实证复核)✅ | ✅ | 完成 |
+| **pyraminx** | `CUBE_FILL` ✅ | `{yaw:112,pitch:-90}`(几何 z=simYaw+120 / x=simPitch−90:sr z 尖轴自旋 红0/绿120/蓝240、x 俯拍0→平视−90;yaw 默认偏置 −8),srPuzzleAxis y→z ✅ | ✅ | 完成(0/0 锚点=正对绿面 精确;默认 30/30 红缝宽度像素对齐) |
+| **megaminx** | sr12键→cubing 映射(代码钉死同手性)✅ | `{yaw:0,pitch:-19}`(几何 −26.57=十二面体坐 D 面时 F 上仰角;偏置到默认 上下30 U 带宽度对齐)✅ | ✅ | 完成(yaw 1:1 跟踪实证,含 30° 方向核) |
+
+偏置原则 = **默认精确**:sr 相机对侧面/顶面的「每度揭露量」略低于引擎 72mm 相机,纯几何 base 在默认视角下缝/带偏窄;把差额并进 base 使默认像素对齐,偏离默认后近似(与旧标定同策)。
 
 - **透视 P2 ✅**:`sr-puzzlegen-patch.ts` patch `PolygonRenderer.render` 重建 camera.matrix,距离由 `PuzzleImage.srCameraDist(spec.dist)` 驱(SR_DIST_BASE=3.9),scale∝dist 保尺寸。四拼图透视滑杆实时驱动、方向跟左边。
 - **img_dist ✅**:非 cube 分支现也写 `patch.dist`,sr 消费它当透视 —— 不再是死参(原「切异形后残留」问题解决)。

@@ -158,26 +158,29 @@ const SR_ANGLE_BASE: Partial<Record<PuzzleType, {
   yaw: number; pitch: number; yawSign: 1 | -1; pitchSign: 1 | -1;
 }>> = {
   // sr identity shows the R-face where the sim shows F → +90 yaw; both signs match the sim.
-  skewb: { yaw: 90, pitch: 0, yawSign: 1, pitchSign: 1 },
+  // yaw biased 90→100 so the DEFAULT (左右 30) R-face width pixel-matches the engine's 72mm
+  // camera + bevel shading (sr's flat shading reads wider per degree — 默认精确 policy).
+  skewb: { yaw: 100, pitch: 0, yawSign: 1, pitchSign: 1 },
   // sq1 identity = bird's-eye on top (spin axis z); yaw maps straight (z = sim yaw), pitch
   // offsets −90 (front-on is 90° from bird's-eye): x = pitch_sim − 90. Verified z−36/x−59 = left.
   sq1: { yaw: 0, pitch: -90, yawSign: 1, pitchSign: 1 },
-  // pyraminx. sim = cubing.js TwistyPlayer default: apex-up tetra with an EDGE toward the camera —
-  // a kite silhouette (U top, R left, L right, B bottom), F(green) left face, R(red) right face.
-  // That IS sr's own default view: defaultPyraminxOptions.rotations = [{z:60},{x:-60}]. So the base
-  // resolves to a1=60 (→ z via srPuzzleAxis' y→z), a2=-60 (→ x), i.e. exactly sr's default — which
-  // also equals rotationDefaultsFor(pyraminx)={y:60,x:-60}, so the default passes `undefined`
-  // (sr's baked pose) and the first slider nudge continues from the SAME [{z:60},{x:-60}] with no
-  // jump. (An earlier calibration targeted the sim's in-house pyra engine — a flat single face —
-  // which is NOT the default renderer.) Colours: PuzzleImage srSchemeFor(pyraminx). Default exact.
-  pyraminx: { yaw: 60, pitch: -91, yawSign: 1, pitchSign: 1 },
-  // megaminx (spin axis y). sim = cubing.js edge-forward view: U on top, the F–R vertical edge at
-  // the camera, C on the bottom. sr identity is FACE-forward (F flat-on), so a1≈−36 (yaw 0) swings
-  // the F–R edge to front; the tilt is gentler than the sim's nominal pitch (cubing's camera gain
-  // differs, like pyraminx) so pitch offsets −12.6 → a2≈18 at default = the near-equatorial left.
-  // Colours: PuzzleImage srSchemeFor(megaminx) maps sr's 12 keys → cubing's scheme. Default exact;
-  // off-default tracking approximate.
-  megaminx: { yaw: 0, pitch: -12.6, yawSign: 1, pitchSign: 1 },
+  // pyraminx. sim = in-house engine (renderer defaults to 'group'): apex-up tetra, F(green)
+  // flat-on at yaw 0. sr's z spins the apex axis (red flat z0 / green z120 / blue z240, true
+  // degrees) and x pitches bird's-eye(0)→front-on(−90), composed z-then-x = the engine's
+  // Euler(yaw→pitch) order, so both axes map 1:1: z = simYaw + 120, x = simPitch − 90.
+  // yaw biased 120→112 so the DEFAULT (左右 30) R-face sliver width pixel-matches the
+  // engine's 72mm camera (sr reveals the side slightly less per degree — 默认精确 policy).
+  // (The previous {60,−91} kite base targeted the cubing.js TwistyPlayer edge-forward default,
+  // stale since the renderer default moved to the engine.) Colours: srSchemeFor(pyraminx).
+  pyraminx: { yaw: 112, pitch: -90, yawSign: 1, pitchSign: 1 },
+  // megaminx (spin axis y). sim = in-house engine: dodeca RESTS on D, so F sits in the upper
+  // belt with its normal tilted UP 26.57° (90 − 63.43 face-normal step). sr identity is F
+  // dead-on at the camera → geometric offset −26.57; biased to −19 so the DEFAULT (上下 30)
+  // U-band width pixel-matches the engine's 72mm camera (sr reveals the top slightly less
+  // per degree — same 默认精确/off-default-approximate policy as the other bases). (The
+  // previous −12.6 matched cubing.js's edge-forward default — stale since the renderer
+  // default moved to the engine.) Colours: srSchemeFor(megaminx) sr12→cubing map.
+  megaminx: { yaw: 0, pitch: -19, yawSign: 1, pitchSign: 1 },
 };
 
 /** Engine puzzle kinds that have a PG group-theory binding (kept in sync with the
