@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import World, { type PuzzleKind } from './engine/world';
 import { bspSceneAudit, exportSimSvgBsp } from './sim_svg_export_bsp';
+import { exportSimSvg } from './sim_svg_export';
 import { exportSimSvgSchematic, hasSchematicFacelets } from './sim_svg_export_schematic';
 import type Cube from './engine/nxn/cube';
 import { SIZE } from './engine/define';
@@ -96,9 +97,8 @@ import { reconEventForSim, buildReconSubmitQuery } from '@/lib/sim-recon-link';
 import { PG_DEF_BY_ID, isPgPuzzleId } from './pgCatalog';
 import { EXPLORE_BOUND } from './engine/exploreBound';
 import AlgsPanel from './AlgsPanel';
-import { puzzleCaps } from './simCaps';
 import PuzzleImageStudio, { type SimBridge } from '@/components/puzzle-image/PuzzleImageStudio';
-import SimCaptureGroup from '@/components/puzzle-image/SimCaptureGroup';
+import type { TwistyPlayerLike } from '@/components/puzzle-image/SimCaptureGroup';
 import { useImageSpec } from '@/components/puzzle-image/useImageSpec';
 import { rotationDefaultsFor } from '@/lib/puzzle-image/defaults';
 import type { InheritedFields } from '@/lib/puzzle-image/codec';
@@ -310,21 +310,17 @@ export default function SimPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // The puzzle-image studio is mounted as the /sim 图像 panel. Its puzzle is NOT chosen
-  // inside the panel — the sim's own puzzle dropdown is the single selector, mapped here
-  // into the studio's vocabulary (mirror → order-3 cube). imageStudioSupported (from the
-  // simCaps registry) gates whether the panel shows at all.
-  // spec 渲染器(visualcube / sr)认识的拼图走完整 studio;其余引擎拼图(fto / 枫叶 /
-  // 恐龙 / 齿轮…)走 engine-only 模式 —— 伴图 = 引擎矢量镜像,面板只剩预览 + 截图组 +
-  // SVG/PNG 下载,且要求引擎路径激活(cubing.js 渲染下无 world,出不了伴图)。
-  const imgCaps = puzzleCaps(puzzleParam);
+  // The puzzle-image studio is mounted as the /sim 图像 panel — every puzzle has it. Its
+  // puzzle is NOT chosen inside the panel — the sim's own puzzle dropdown is the single
+  // selector, mapped here into the studio's vocabulary (mirror → order-3 cube).
+  // spec 渲染器(visualcube / sr)认识的拼图走完整 studio;其余(fto / 枫叶 / 恐龙 /
+  // 齿轮 / PG 目录 / 自定义切割…)走 engine-only 模式 —— 伴图 = 实时矢量镜像(引擎
+  // world 走 BSP/示意导出;twisty 渲染时从 TwistyPlayer vantage 投影,同截图 SVG 路径),
+  // 面板只剩预览 + 截图组 + SVG/PNG 下载。
   const imgSpecRenderable = typeof puzzleParam === 'number' || puzzleParam === 'mirror'
     || puzzleParam === 'sq1' || puzzleParam === 'skewb'
     || puzzleParam === 'pyraminx' || puzzleParam === 'megaminx';
-  const imgEngineActive = imgCaps.engine === 'always'
-    || (imgCaps.engine === 'engineMode' && query.renderer !== 'cubing');
-  const imageStudioSupported = imgCaps.imageStudio && (imgSpecRenderable || imgEngineActive);
-  const imageStudioEngineOnly = imageStudioSupported && !imgSpecRenderable;
+  const imageStudioEngineOnly = !imgSpecRenderable;
   const imgPuzzle = useMemo((): { puzzleType: PuzzleType; cubeSize: number } => {
     if (typeof puzzleParam === 'number') return { puzzleType: 'cube', cubeSize: puzzleParam };
     if (puzzleParam === 'mirror') return { puzzleType: 'cube', cubeSize: 3 };
@@ -478,6 +474,20 @@ export default function SimPage() {
     if (typeof window === 'undefined') return;
     persistItem('sim.img.outline', String(imgOutline));
   }, [imgOutline]);
+
+  // 交换主图 ↔ 伴图(伴图铺满画布、实时 3D 缩进左上小框)。观察偏好,走 localStorage。
+  // 交换态下渲染器/world 真调到小框尺寸(resize 闭包读 imgSwapRef;CSS 只钉显示位),
+  // 否则 Toucher 的像素坐标与射线拾取对不上,小框里没法拖。
+  const [imgSwap, setImgSwap] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    try { return localStorage.getItem('sim.img.swap') === '1'; } catch { return false; }
+  });
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    persistItem('sim.img.swap', imgSwap ? '1' : '0');
+  }, [imgSwap]);
+  const imgSwapRef = useRef(false);
+  const resizeMainViewRef = useRef<(() => void) | null>(null);
 
   const settingsRef = useRef(settings);
   useEffect(() => { settingsRef.current = settings; }, [settings]);
@@ -751,15 +761,18 @@ export default function SimPage() {
     applySettings(world, settings);
 
     const resize = () => {
-      const w = container.clientWidth;
-      const h = container.clientHeight;
+      // float-size 先算(从容器全尺寸出),交换态的小框渲染尺寸取它。
+      layoutBackView();
+      const swapped = imgSwapRef.current;
+      const w = swapped ? backSizeRef.current : container.clientWidth;
+      const h = swapped ? backSizeRef.current : container.clientHeight;
       world.width = w;
       world.height = h;
       world.resize();
       renderer.setSize(w, h, true);
-      layoutBackView();
       world.dirty = true;
     };
+    resizeMainViewRef.current = resize;
     resize();
     window.addEventListener('resize', resize);
     const ro = new ResizeObserver(resize);
@@ -1384,6 +1397,7 @@ export default function SimPage() {
         worldRef.current = null;
         rendererRef.current = null;
         toucherRef.current = null;
+        resizeMainViewRef.current = null;
       };
       // If unmount happened during the await above, the cancelled-check at
       // the top short-circuits; if it happens here (between resolve and
@@ -1649,7 +1663,7 @@ export default function SimPage() {
   useEffect(() => {
     // engine-only 拼图(fto / 枫叶…)不消费 spec(伴图直出 engineSvg),别把
     // 'cube' 默认映射 + 视角标定写进 URL 的 img_* 参数。
-    if (!imageStudioSupported || imageStudioEngineOnly) return;
+    if (imageStudioEngineOnly) return;
     const patch: Partial<ImageSpec> = {};
     if (imgSpec.puzzleType !== imgPuzzle.puzzleType) patch.puzzleType = imgPuzzle.puzzleType;
     if (imgSpec.cubeSize !== imgPuzzle.cubeSize) patch.cubeSize = imgPuzzle.cubeSize;
@@ -1712,7 +1726,7 @@ export default function SimPage() {
       }
     }
     if (Object.keys(patch).length > 0) setImgSpec(patch);
-  }, [imageStudioSupported, imageStudioEngineOnly, imgPuzzle, imgInherit, imgSpec,
+  }, [imageStudioEngineOnly, imgPuzzle, imgInherit, imgSpec,
       settings.viewAngle, settings.viewGradient, settings.perspective, setImgSpec]);
 
   // ── 引擎 BSP 伴图镜像(sr / visualcube 伴图退役,Phase 3)────────────────
@@ -1729,7 +1743,7 @@ export default function SimPage() {
   });
   const [engineSvg, setEngineSvg] = useState<string | null>(null);
   useEffect(() => {
-    const active = imageStudioSupported && imageOpen && !srCompanionForced;
+    const active = imageOpen && !srCompanionForced;
     if (!active) { setEngineSvg(null); return; }
     // 伴图复杂度上限:普通阶几何 ≈ 88 三角/块 + 204 三角/贴纸,6x6 ≈ 5.7 万已是
     // 主线程单帧 ~1s 量级;更高阶(至 N≥50 换简化几何前)会到百万级,必须掐断。
@@ -1741,7 +1755,8 @@ export default function SimPage() {
     let stable = 0;
     let exportedSig = '';
     let disposed = false;
-    const sigOf = (world: World): string => {
+    type SvgView = Pick<World, 'scene' | 'camera' | 'width' | 'height'>;
+    const sigOf = (world: SvgView): string => {
       let h = 0;
       const mix = (v: number): void => { h = (h * 31 + Math.round(v * 1000)) | 0; };
       mix(world.width); mix(world.height);
@@ -1754,52 +1769,118 @@ export default function SimPage() {
         mix(e[12]); mix(e[13]); mix(e[14]); mix(e[0]); mix(e[5]); mix(e[9]);
         const im = m as THREE.InstancedMesh;
         if (im.isInstancedMesh) mix(im.instanceMatrix.version);
+        // twisty(cubing.js PG3D)转动/换色改的是顶点属性不是变换矩阵 —— 把
+        // position/color 的 version 掺进签名,静止检测才看得见它的变化。
+        const g = m.geometry as THREE.BufferGeometry | undefined;
+        if (g?.attributes) {
+          const pos = g.getAttribute('position');
+          if (pos) mix((pos as THREE.BufferAttribute).version);
+          const col = g.getAttribute('color');
+          if (col) mix((col as THREE.BufferAttribute).version);
+        }
       });
       return String(h);
+    };
+    // twisty 拼图(PG 目录 / 自定义切割 / cubing.js 渲染的 fto)无引擎 world:伴图
+    // 从 TwistyPlayer vantage 取 scene+camera,喂截图 SVG 同款投影导出器(painter,
+    // 颜色 sRGB 直存)。vantage 异步解析,缓存供采样拍同步用;每拍都发起刷新(不只
+    // 解析一次):自定义切割改 experimentalPuzzleDescription 时 player 原地换内部
+    // scene,缓存住旧 scene 伴图就冻住了。player 实例换了(切拼图)立即作废缓存。
+    let twistyView: { scene: THREE.Scene; camera: THREE.PerspectiveCamera; el: Element } | null = null;
+    let twistyRefreshing = false;
+    let twistyFor: unknown = null;
+    const refreshTwistyView = (tp: TwistyPlayerLike): void => {
+      if (twistyRefreshing || !tp.experimentalCurrentVantages) return;
+      twistyRefreshing = true;
+      void (async () => {
+        const vantage = [...await tp.experimentalCurrentVantages!()][0];
+        if (!vantage) return;
+        const camera = await vantage.camera();
+        const scene = await vantage.scene.scene();
+        if (disposed || twistyPlayerRef.current !== tp) return;
+        twistyView = { scene, camera, el: (vantage.contentWrapper ?? tp) as unknown as Element };
+      })().finally(() => { twistyRefreshing = false; });
     };
     const tick = (): void => {
       if (disposed) return;
       raf = requestAnimationFrame(tick);
       if (++frame % 8 !== 0) return; // ~7.5Hz 采样
       const world = worldRef.current;
-      if (!world) { if (exportedSig) { exportedSig = ''; setEngineSvg(null); } return; }
-      world.scene.updateMatrixWorld(true);
-      const sig = sigOf(world);
+      if (world) {
+        world.scene.updateMatrixWorld(true);
+        const sig = sigOf(world);
+        if (sig !== lastSig) { lastSig = sig; stable = 0; return; }
+        if (stable < 1) { stable++; return; }
+        if (sig === exportedSig) return;
+        exportedSig = sig;
+        try {
+          // 拼图带示意小面(userData.schematicPoly)→ SR 范式示意导出器:每个小面
+          // 独立多边形 + 黑描边,共享棱逐比特重合;其余拼图走实模 BSP 投影。
+          if (hasSchematicFacelets(world.scene)) {
+            setEngineSvg(exportSimSvgSchematic({ world, strokeWidth: imgOutline }));
+            return;
+          }
+          if (bspSceneAudit(world.scene).miscolors) { setEngineSvg(null); return; } // 原核分色:回退旧渲染器
+          setEngineSvg(exportSimSvgBsp({ world, maxTriangles: MAX_TRIS }));
+        } catch (err) {
+          if (!(err instanceof Error && err.message.startsWith('SVG_TOO_COMPLEX'))) {
+            console.warn('[sim] BSP companion export failed', err);
+          }
+          setEngineSvg(null); // 本帧回退旧渲染器
+        }
+        return;
+      }
+      // twisty 路径。spec 可渲染拼图(skewb/pyra/mega 在 cubing.js 渲染下)保持
+      // 既有 sr 伴图,不抢:只有 engine-only 拼图走 vantage 镜像。
+      if (!imageStudioEngineOnly) { if (exportedSig) { exportedSig = ''; setEngineSvg(null); } return; }
+      const tp = twistyPlayerRef.current as TwistyPlayerLike | null;
+      if (!tp) { if (exportedSig) { exportedSig = ''; setEngineSvg(null); } return; }
+      if (tp !== twistyFor) { twistyFor = tp; twistyView = null; }
+      refreshTwistyView(tp); // 每拍刷新缓存(异步),本拍仍用手头这份
+      if (!twistyView) return;
+      const rect = twistyView.el.getBoundingClientRect();
+      const view: SvgView = {
+        scene: twistyView.scene,
+        camera: twistyView.camera,
+        width: Math.max(1, Math.round(rect.width)),
+        height: Math.max(1, Math.round(rect.height)),
+      };
+      view.scene.updateMatrixWorld(true);
+      const sig = sigOf(view);
       if (sig !== lastSig) { lastSig = sig; stable = 0; return; }
       if (stable < 1) { stable++; return; }
       if (sig === exportedSig) return;
       exportedSig = sig;
       try {
-        // 拼图带示意小面(userData.schematicPoly)→ SR 范式示意导出器:每个小面
-        // 独立多边形 + 黑描边,共享棱逐比特重合;其余拼图走实模 BSP 投影。
-        if (hasSchematicFacelets(world.scene)) {
-          setEngineSvg(exportSimSvgSchematic({ world, strokeWidth: imgOutline }));
-          return;
-        }
-        if (bspSceneAudit(world.scene).miscolors) { setEngineSvg(null); return; } // 原核分色:回退旧渲染器
-        setEngineSvg(exportSimSvgBsp({ world, maxTriangles: MAX_TRIS }));
+        setEngineSvg(exportSimSvg({ world: view, srgbColors: true }));
       } catch (err) {
-        if (!(err instanceof Error && err.message.startsWith('SVG_TOO_COMPLEX'))) {
-          console.warn('[sim] BSP companion export failed', err);
-        }
-        setEngineSvg(null); // 本帧回退旧渲染器
+        console.warn('[sim] twisty companion export failed', err);
+        setEngineSvg(null);
       }
     };
     raf = requestAnimationFrame(tick);
     return () => { disposed = true; cancelAnimationFrame(raf); };
-  }, [imageStudioSupported, imageOpen, srCompanionForced, imgOutline,
+  }, [imageOpen, srCompanionForced, imageStudioEngineOnly, imgOutline,
       settings.faceColors, query.stickering, query.stickeringColor]);
 
   // 伴图当前是否示意版(有示意小面)—— 决定黑边滑块是否可用。
   const [engineSchematic, setEngineSchematic] = useState(false);
   useEffect(() => {
-    if (!(imageStudioSupported && imageOpen && !srCompanionForced)) { setEngineSchematic(false); return; }
+    if (!(imageOpen && !srCompanionForced)) { setEngineSchematic(false); return; }
     const world = worldRef.current;
     setEngineSchematic(!!world && hasSchematicFacelets(world.scene));
-  }, [imageStudioSupported, imageOpen, srCompanionForced, imgPuzzle.puzzleType, engineSvg]);
+  }, [imageOpen, srCompanionForced, imgPuzzle.puzzleType, engineSvg]);
 
   // 2D flat-net view mode — NxN only (number puzzle), driven by the same live cube.
   const netMode = settings.viewMode === 'net' && typeof puzzleParam === 'number';
+
+  // 主图 ↔ 伴图交换态生效条件(与画布 wrap 的 --imgswap class 同一判据):把它写进
+  // resize 闭包读的 ref,再触发一次重排,渲染器在全幅 ↔ 左上小框之间切换。
+  const imgSwapActive = imageOpen && imgSwap && !netMode;
+  useEffect(() => {
+    imgSwapRef.current = imgSwapActive;
+    resizeMainViewRef.current?.();
+  }, [imgSwapActive]);
 
   return (
     <div className={`sim-page${fullscreen ? ' sim-page--fullscreen' : ''}`} data-board-bg={settings.boardBg}>
@@ -1822,7 +1903,10 @@ export default function SimPage() {
 
       <div className="sim-body">
         <div className="sim-stage">
-        <div className={`sim-canvas-wrap${netMode ? ' sim-canvas-wrap--net' : ''}`} ref={containerRef}>
+        <div
+          className={`sim-canvas-wrap${netMode ? ' sim-canvas-wrap--net' : ''}${imgSwapActive ? ' sim-canvas-wrap--imgswap' : ''}`}
+          ref={containerRef}
+        >
           {netMode && (
             <SimCubeNet
               getWorld={getWorld}
@@ -1863,22 +1947,35 @@ export default function SimPage() {
               PuzzleImageStudio portal 进来 —— 面板折叠时 studio 不挂载,这里自然空着。
               portal 的容器必须是它独占的节点(React 不能同时管容器的 children 和
               portal 内容),所以关闭钮挂在外层、host 是里面那层。 */}
-          {imageStudioSupported && (
-            // 常挂:studio 现在常驻侧栏,预览总要有个 portal 落点。关掉只是 display:none
-            // (若卸载,previewHost 变 null → studio 会把预览渲回侧栏里)。
-            <div className="sim-image-overlay" style={{ display: imageOpen ? 'block' : 'none' }}>
-              <div className="sim-image-overlay-host" ref={setImageHost} />
+          {/* 常挂:studio 常驻侧栏,预览总要有个 portal 落点。关掉只是 display:none
+              (若卸载,previewHost 变 null → studio 会把预览渲回侧栏里)。 */}
+          <div className="sim-image-overlay" style={{ display: imageOpen ? 'block' : 'none' }}>
+            <div className="sim-image-overlay-host" ref={setImageHost} />
+            <button
+              type="button"
+              className="sim-float-close"
+              onClick={() => setImageOpen(false)}
+              title={t('关闭图像', 'Hide image')}
+              aria-label={t('关闭图像', 'Hide image')}
+            >
+              <X size={12} />
+            </button>
+            {/* 交换主图 ↔ 伴图:与背面小窗右下角的交换钮同款。开着时伴图铺满画布、
+                实时 3D 缩进左上小框(纯 CSS 换位,见 .sim-canvas-wrap--imgswap)。
+                net 视图没有可缩的主 3D → 不给按钮。 */}
+            {!netMode && (
               <button
                 type="button"
-                className="sim-float-close"
-                onClick={() => setImageOpen(false)}
-                title={t('关闭图像', 'Hide image')}
-                aria-label={t('关闭图像', 'Hide image')}
+                className="sim-backview-swap sim-image-swap"
+                onClick={() => setImgSwap((v) => !v)}
+                aria-pressed={imgSwap}
+                title={t('交换主图与伴图', 'Swap main view / companion image')}
+                aria-label={t('交换主图与伴图', 'Swap main view / companion image')}
               >
-                <X size={12} />
+                <ArrowLeftRight size={14} />
               </button>
-            </div>
-          )}
+            )}
+          </div>
           {/* Back-view window for the cuber engine (NxN / SQ1). Always mounted
               while the cuber engine is active so the second renderer's canvas
               stays attached across toggles; visibility flips with the setting.
@@ -1976,7 +2073,7 @@ export default function SimPage() {
             /* 两个浮层的「找回来」按钮,位置对应它们在画布上的角:图像在左上 → 按钮在
                最左;背面小窗在右上 → 按钮在最右。只在对应浮层关着时出现 —— 开着时关它
                的入口是浮层自己右上角那个 ×,这里再放一个同义按钮纯属占位。 */
-            imageButton={imageStudioSupported && !imageOpen ? (
+            imageButton={!imageOpen ? (
               <button
                 type="button"
                 className="playback-bar-btn"
@@ -2015,23 +2112,17 @@ export default function SimPage() {
           {/* 图像:不再套折叠区。图本身已经浮在画布左上角,侧栏这一段只剩控件 + 导出,
               一个「图像」标题栏既没东西可折叠也没图可指。显隐归浮层自己的 × 和播放条
               按钮(imageOpen),侧栏常驻。 */}
-          {imageStudioSupported ? (
-            <PuzzleImageStudio
-              mode="panel"
-              spec={imgSpec}
-              onSpecChange={setImgSpec}
-              simBridge={simBridge}
-              previewHost={imageHost}
-              engineSvg={engineSvg}
-              engineOnly={imageStudioEngineOnly}
-              outlineWidth={engineSchematic ? imgOutline : undefined}
-              onOutlineWidthChange={setImgOutline}
-            />
-          ) : (
-            // 面板不支持的拼图(cubing.js 渲染下的 fto / custom / PG 骨架族 —— 无
-            // world 出不了伴图)仍给实时截图组(PNG / SVG / MP4)。
-            <SimCaptureGroup simBridge={simBridge} />
-          )}
+          <PuzzleImageStudio
+            mode="panel"
+            spec={imgSpec}
+            onSpecChange={setImgSpec}
+            simBridge={simBridge}
+            previewHost={imageHost}
+            engineSvg={engineSvg}
+            engineOnly={imageStudioEngineOnly}
+            outlineWidth={engineSchematic ? imgOutline : undefined}
+            onOutlineWidthChange={setImgOutline}
+          />
           {/* Group-theory panel = the visible half of the non-cubing.js view. Shows for any
               PG-bound puzzle that isn't on cubing.js. Pure-engine PG puzzles (dino/heli/NxN)
               have no cubing.js option at all → the panel is always on for them. */}
