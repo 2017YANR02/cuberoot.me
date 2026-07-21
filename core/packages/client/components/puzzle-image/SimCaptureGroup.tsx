@@ -8,7 +8,7 @@
  *    截图能力覆盖菜单里的所有拼图,不随图像面板的 spec 渲染器支持面收窄。
  */
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Camera, Film } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 // Type-only imports (fully erased at build) — the concrete sim engine + export
@@ -57,6 +57,29 @@ export default function SimCaptureGroup({ simBridge }: { simBridge: SimBridge })
   const [progress, setProgress] = useState<ExportProgress | null>(null);
   const capturePreviewRef = useRef<HTMLCanvasElement | null>(null);
   const abortRef = useRef<{ aborted: boolean }>({ aborted: false });
+
+  // dev-only:Playwright / devtools 直取两条导出路径做 A/B(GPU depth-map vs
+  // BSP 解析隐面),不经下载。生产构建整段被 tree-shake。
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'development') return;
+    const w = window as unknown as { __simSvgExport?: unknown };
+    w.__simSvgExport = {
+      gpu: async () => {
+        const { exportSimSvg } = await import('@/app/[lang]/sim/sim_svg_export');
+        const world = simBridge.getWorld();
+        return world ? exportSimSvg({ world, renderer: simBridge.getRenderer() }) : null;
+      },
+      bsp: async () => {
+        const { exportSimSvgBspWithDebug } = await import('@/app/[lang]/sim/sim_svg_export_bsp');
+        const world = simBridge.getWorld();
+        if (!world) return null;
+        const t0 = performance.now();
+        const out = exportSimSvgBspWithDebug({ world });
+        return { ...out, ms: performance.now() - t0 };
+      },
+    };
+    return () => { delete w.__simSvgExport; };
+  }, [simBridge]);
 
   const downloadUrl = useCallback((url: string, filename: string) => {
     const a = document.createElement('a');
