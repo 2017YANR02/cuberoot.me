@@ -292,8 +292,6 @@ export default function WikiPage() {
           <input
             type="search"
             className="wiki-search-input"
-            placeholder={tr({ zh: '搜索术语 (如 CFOP / 翻棱 / sune)', en: 'Search terms (e.g. CFOP / EO / sune)'
-            })}
             value={query}
             onChange={e => setQuery(e.target.value)}
             autoComplete="off"
