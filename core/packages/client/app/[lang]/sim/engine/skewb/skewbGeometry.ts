@@ -21,7 +21,7 @@ import { SIZE } from '../define';
 import { CUBE_FILL } from '@/lib/cube-colors';
 import { ConvexGeometry } from 'three/examples/jsm/geometries/ConvexGeometry.js';
 import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { makeSticker } from '../stickerGeom';
+import { makeSticker, schematicPolyFromFacet } from '../stickerGeom';
 import { CORNER_AXIS, CENTER_AXIS } from './skewbState';
 
 /** Cube half-side (world units) — frames like the other engine puzzles. */
@@ -62,14 +62,15 @@ const DIAGS: THREE.Vector3[] = [
 interface Plane { n: THREE.Vector3; d: number; } // inside = n·v ≤ d
 
 /** Bounding planes of the piece whose representative outward direction is `rep`
- *  (a corner or face-centre direction): 6 cube faces + 4 cut planes (offset by SEAM
- *  onto rep's side of each diagonal). All normals unit, so `d` is a true distance. */
-function piecePlanes(rep: THREE.Vector3): Plane[] {
+ *  (a corner or face-centre direction): 6 cube faces + 4 cut planes (offset by `seam`
+ *  onto rep's side of each diagonal). All normals unit, so `d` is a true distance.
+ *  seam=0 = 理想深切几何(无缝),示意小面用它取严格共享的晶格。 */
+function piecePlanes(rep: THREE.Vector3, seam = SEAM): Plane[] {
   const planes: Plane[] = FACE_LETTERS.map((f) => ({ n: FACE_NORMAL[f].clone(), d: H }));
   for (const diag of DIAGS) {
     const s = rep.dot(diag) > 0 ? 1 : -1; // which side of this cut the piece is on
-    // piece is on {s·(diag·v) ≥ SEAM} ⟺ (−s·diag)·v ≤ −SEAM
-    planes.push({ n: diag.clone().multiplyScalar(-s), d: -SEAM });
+    // piece is on {s·(diag·v) ≥ seam} ⟺ (−s·diag)·v ≤ −seam
+    planes.push({ n: diag.clone().multiplyScalar(-s), d: -seam });
   }
   return planes;
 }
@@ -197,6 +198,8 @@ export interface PieceBuild { pivot: THREE.Object3D; group: THREE.Group; }
 function buildPiece(rep: THREE.Vector3, slotTag: { key: string; value: number }): PieceBuild {
   const planes = piecePlanes(rep);
   const verts = polytopeVerts(planes);
+  // 示意用理想深切几何(seam=0):相邻 piece 的小面在切割线上严格共点
+  const idealVerts = polytopeVerts(piecePlanes(rep, 0));
   const group = new THREE.Group();
 
   const bodyMesh = new THREE.Mesh(roundedBody(planes), bodyMat);
@@ -213,7 +216,11 @@ function buildPiece(rep: THREE.Vector3, slotTag: { key: string; value: number })
     const lift = nrm.clone().multiplyScalar(STICKER_LIFT);
     const sp = poly.map((p) => p.clone().lerp(centroid, STICKER_INSET).add(lift));
     const sGeom = roundedPolySticker(sp, nrm);
-    group.add(makeSticker(sGeom, stickerMat(SKEWB_FACE_COLOR[f]), bodyMat, { skewbFace: f, simStickerNormal: nrm.clone() }));
+    group.add(makeSticker(sGeom, stickerMat(SKEWB_FACE_COLOR[f]), bodyMat, {
+      skewbFace: f, simStickerNormal: nrm.clone(),
+      // 示意小面(sim_svg_export_schematic):理想晶格多边形(无缝、不 inset / lift)
+      schematicPoly: schematicPolyFromFacet(idealVerts.filter((v) => Math.abs(v.dot(nrm) - H) < 0.5), nrm),
+    }));
   }
 
   const pivot = new THREE.Object3D();
