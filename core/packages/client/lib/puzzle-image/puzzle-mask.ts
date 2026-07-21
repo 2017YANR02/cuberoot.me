@@ -19,6 +19,7 @@ import {
 } from './mask-core';
 import PIECE_GROUPS_JSON from './data/piece-groups.json';
 import SR_INDEX_MAP_JSON from './data/sr-index-map.json';
+import ENGINE_SID_MAP_JSON from './data/engine-sid-map.json';
 
 export { MASK_COLOR, CANONICAL_FACES, parseStickerId, parseMask, formatMask, toRenderMask };
 export type { StickerId, RenderMask, MaskRenderOptions };
@@ -26,6 +27,10 @@ export type { StickerId, RenderMask, MaskRenderOptions };
 export const PIECE_GROUPS = PIECE_GROUPS_JSON as Record<string, StickerId[][]>;
 export const SR_INDEX_MAP =
   SR_INDEX_MAP_JSON as unknown as Record<string, Record<string, [string, number]>>;
+/** canonical sid → /sim 引擎贴纸建构 key(mesh `userData.stickerKey`)。派生表,
+ *  禁手改:tests/_engine_mask_derive.ts 每次跑测重推比对(engine-mask.test.ts)。
+ *  这是 mask 直映(PLAN-sr-retirement §2b/Phase 3),最终取代 SR_INDEX_MAP。 */
+export const ENGINE_SID_MAP = ENGINE_SID_MAP_JSON as Record<string, Record<string, string>>;
 
 /** Every puzzle but the cube family is keyed by name alone (no size). */
 export type NonCubePuzzle = Exclude<PuzzleType, 'cube'>;
@@ -64,6 +69,30 @@ export function maskSupported(puzzle: PuzzleType, cubeSize?: number): boolean {
 /** Whether the sr-puzzlegen (iso / top) renderer can take a mask for this puzzle. */
 export function srMaskSupported(puzzle: PuzzleType): boolean {
   return puzzle === 'pyraminx' || puzzle === 'skewb' || puzzle === 'megaminx';
+}
+
+/** Whether the /sim engine companion mirror can take a mask (has a derived direct map). */
+export function engineMaskSupported(puzzle: PuzzleType): boolean {
+  return puzzle in ENGINE_SID_MAP;
+}
+
+/**
+ * Canonical ids → engine sticker build keys(mesh `userData.stickerKey`),喂
+ * `exportSimSvgSchematic` 的 `mask` 选项。undefined = 该拼图还没有派生直映表
+ * (调用方回退 spec 渲染器,不静默丢遮罩);表存在但 id 不在拼图上的静默跳过
+ * (与 toSrMask 同宽容度)。
+ */
+export function toEngineMask(
+  puzzle: PuzzleType, ids: Iterable<StickerId>,
+): Set<string> | undefined {
+  const table = ENGINE_SID_MAP[puzzle];
+  if (!table) return undefined;
+  const out = new Set<string>();
+  for (const sid of ids) {
+    const key = table[sid];
+    if (key) out.add(key);
+  }
+  return out;
 }
 
 // ─── derived tables ──────────────────────────────────────────────────────

@@ -51,6 +51,11 @@ export interface SchematicSvgExportOptions {
   stickerOpacity?: number;
   /** 背景色;默认 null = 透明。 */
   background?: string | null;
+  /** 贴纸遮罩(mask 直映):`userData.stickerKey ∈ keys` 的小面填 color(sr
+   *  applyMask 的灰化语义;衬底/网格不动)。key 表见
+   *  lib/puzzle-image/data/engine-sid-map.json(派生,canonical sid → key)。
+   *  贴纸 mesh 跟块走 → 复原帧作标的遮罩天然随打乱携带。 */
+  mask?: { keys: ReadonlySet<string>; color: string };
   /** 箭头标注层(抄 sr 的 arrows:画在所有小面之上)。 */
   arrows?: SchematicArrow[];
   /** 可见小面数上限(超高阶 NxN 的 SVG path 数防线);超限抛
@@ -178,7 +183,10 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
     const poly = obj.userData.schematicPoly as number[] | undefined;
     if (!poly || poly.length < 9) return;
     const c = mat.color;
-    const fill = c ? hexOf(c.r, c.g, c.b, false) : '#000000';
+    const key = obj.userData.stickerKey as string | undefined;
+    const fill = (opts.mask && key && opts.mask.keys.has(key))
+      ? opts.mask.color
+      : c ? hexOf(c.r, c.g, c.b, false) : '#000000';
     // schematicInParent(sq1):多边形挂父 frame,免疫贴纸 mesh 自身的压扁 scale
     // (立体贴片开关改 mesh.scale.z)。
     const mtx = (obj.userData.schematicInParent === true && mesh.parent)

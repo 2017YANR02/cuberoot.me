@@ -103,6 +103,8 @@ import { useImageSpec } from '@/components/puzzle-image/useImageSpec';
 import { rotationDefaultsFor } from '@/lib/puzzle-image/defaults';
 import type { InheritedFields } from '@/lib/puzzle-image/codec';
 import type { ImageSpec, PuzzleType } from '@/lib/puzzle-image/types';
+import { parseMask, MASK_COLOR } from '@/lib/puzzle-image/mask-core';
+import { toEngineMask } from '@/lib/puzzle-image/puzzle-mask';
 import GroupTheoryPanel, { type SimWorldView } from './GroupTheoryPanel';
 import { nxnHasPgKernel } from './engine/nxn/nxnPgBridge';
 import { stickeringMaskFn } from './engine/nxn/stickering';
@@ -1738,8 +1740,10 @@ export default function SimPage() {
   // 低频采样场景几何签名,连续两拍不变(≈0.25s 静止)才导出一次;twist 动画 /
   // 拖动期间不重算,伴图显示上一静止帧。原核分色(BSP 会画错色)、超高阶爆量
   // (SVG_TOO_COMPLEX)时置 null 回退旧渲染器(cube→visualcube,异形→sr)。
-  // 回退后悔药:/sim?img_engine=sr 强制全程旧路径。
+  // 回退后悔药:/sim?img_engine=sr 强制全程旧路径(单 URL);部署级一键回退走
+  // env NEXT_PUBLIC_SR_FALLBACK=1(build 时内联,免逐 URL 传参)。
   const [srCompanionForced] = useState<boolean>(() => {
+    if (process.env.NEXT_PUBLIC_SR_FALLBACK === '1') return true;
     if (typeof window === 'undefined') return false;
     try { return new URLSearchParams(window.location.search).get('img_engine') === 'sr'; } catch { return false; }
   });
@@ -1747,6 +1751,12 @@ export default function SimPage() {
   useEffect(() => {
     const active = imageOpen && !srCompanionForced;
     if (!active) { setEngineSvg(null); return; }
+    // 贴纸遮罩(mask 直映):有派生表的拼图把灰化烙进镜像;没有的整程置 null,
+    // PuzzleImage 落回 spec 渲染器(sr/visualcube 认 mask)—— 哪条路都不丢遮罩。
+    // engine-only 拼图没有遮罩编辑入口,忽略 URL 残值(免把伴图饿死在等待帧)。
+    const maskIds = imageStudioEngineOnly ? null : parseMask(imgSpec.stickerMask || '');
+    const maskKeys = maskIds?.size ? toEngineMask(imgPuzzle.puzzleType, maskIds) : null;
+    if (maskIds?.size && maskKeys === undefined) { setEngineSvg(null); return; }
     // 伴图复杂度上限:普通阶几何 ≈ 88 三角/块 + 204 三角/贴纸,6x6 ≈ 5.7 万已是
     // 主线程单帧 ~1s 量级;更高阶(至 N≥50 换简化几何前)会到百万级,必须掐断。
     // 超限在收集阶段即抛(几十 ms),伴图回退 visualcube,不卡页面。
@@ -1821,7 +1831,11 @@ export default function SimPage() {
           if (hasSchematicFacelets(world.scene)) {
             // 黑边滑块 = 网格缝宽占小面的百分比(inset 模型):比例量纲天然与
             // 视口尺寸、阶数无关 —— 交换态小框视口、40 阶小贴纸下观感都恒定。
-            setEngineSvg(exportSimSvgSchematic({ world, inset: imgOutline / 100 }));
+            setEngineSvg(exportSimSvgSchematic({
+              world,
+              inset: imgOutline / 100,
+              mask: maskKeys?.size ? { keys: maskKeys, color: MASK_COLOR } : undefined,
+            }));
             return;
           }
           if (bspSceneAudit(world.scene).miscolors) { setEngineSvg(null); return; } // 原核分色:回退旧渲染器
@@ -1865,6 +1879,7 @@ export default function SimPage() {
     raf = requestAnimationFrame(tick);
     return () => { disposed = true; cancelAnimationFrame(raf); };
   }, [imageOpen, srCompanionForced, imageStudioEngineOnly, imgOutline,
+      imgSpec.stickerMask, imgPuzzle.puzzleType,
       settings.faceColors, query.stickering, query.stickeringColor]);
 
   // 伴图当前是否示意版(有示意小面)—— 决定黑边滑块是否可用。
