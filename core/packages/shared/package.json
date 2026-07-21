@@ -40,6 +40,10 @@
       "node": "./dist/sq1_notation.js",
       "default": "./src/sq1_notation.ts"
     },
+    "./sr-rotations": {
+      "node": "./dist/sr_rotations.js",
+      "default": "./src/sr_rotations.ts"
+    },
     "./admin": {
       "node": "./dist/admin.js",
       "default": "./src/admin.ts"
