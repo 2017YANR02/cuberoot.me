@@ -26,6 +26,8 @@ import {
   type WikiList, type WikiTerm, type TermInput,
 } from '@/lib/wiki-api';
 import { useHashHighlight } from '@/hooks/useHashHighlight';
+import { useQueryState, parseAsBoolean } from 'nuqs';
+import BoolToggle from '@/components/BoolToggle';
 import './wiki.css';
 import '@/components/hash-highlight.css';
 import { tr } from '@/i18n/tr';
@@ -68,31 +70,61 @@ function isMigrated(e: WikiTerm) {
   return e.headEn != null || e.headZh != null || e.bodyEn != null || e.bodyZh != null;
 }
 
-/** 标题中英对照:en/zh 齐全时并排,缺一语显另一语;旧行未迁移→回退 combined head。 */
-function renderHead(e: WikiTerm) {
-  const en = e.headEn?.trim();
-  const zh = e.headZh?.trim();
-  if (!en && !zh) return e.head;
-  return (
-    <>
-      {en && <span className="wiki-head-en">{en}</span>}
-      {en && zh ? ' ' : null}
-      {zh && <span className="wiki-head-zh">{zh}</span>}
-    </>
-  );
+/** 极小语言标签 EN / 中;仅「中英对照」模式下前置于每段,标注语言归属。 */
+function LangTag({ k }: { k: 'en' | 'zh' }) {
+  return <span className={`wiki-lang-tag wiki-lang-tag-${k}`} aria-hidden="true">{k === 'en' ? 'EN' : '中'}</span>;
 }
 
-/** 正文中英对照:en 段 + zh 段各自成块;旧行未迁移→回退 combined body。返回 null 表无正文。 */
-function renderTermBody(e: WikiTerm) {
+/**
+ * 词条标题按显示模式渲染。
+ *   both & 双语齐全 → EN 一行 + 中 一行,各前置 LangTag;
+ *   否则(single 模式,或仅一种语言) → 只显示该语言,缺则回退另一语;
+ *   旧行未迁移(无结构化字段)→ 回退 combined head。
+ * 末尾统一附「复制链接」锚点图标(移进本函数,避免 both 模式下图标落到孤立一行)。
+ */
+function renderHead(e: WikiTerm, both: boolean, single: 'zh' | 'en') {
+  const en = e.headEn?.trim();
+  const zh = e.headZh?.trim();
+  const icon = <Link2 size={12} className="wiki-entry-anchor-icon" aria-hidden="true" />;
+  if (!en && !zh) return <>{e.head}{icon}</>;
+  if (both && en && zh) {
+    return (
+      <>
+        <span className="wiki-head-line">
+          <LangTag k="en" /><span className="wiki-head-en">{en}</span>
+        </span>
+        <span className="wiki-head-line">
+          <LangTag k="zh" /><span className="wiki-head-zh">{zh}</span>{icon}
+        </span>
+      </>
+    );
+  }
+  const pick = single === 'zh' ? (zh || en) : (en || zh);
+  return <>{pick}{icon}</>;
+}
+
+/**
+ * 词条正文按显示模式渲染。both & 双语齐全 → EN 段 + 中 段各成块并前置 LangTag;
+ * 否则只显示该语言(缺则回退另一语);旧行未迁移→回退 combined body。返回 null 表无正文。
+ */
+function renderTermBody(e: WikiTerm, both: boolean, single: 'zh' | 'en') {
   const en = e.bodyEn?.trim();
   const zh = e.bodyZh?.trim();
   if (!en && !zh) return e.body ? renderBodyLines(e.body) : null;
-  return (
-    <>
-      {en && <div className="wiki-body-lang wiki-body-en">{renderBodyLines(en)}</div>}
-      {zh && <div className="wiki-body-lang wiki-body-zh">{renderBodyLines(zh)}</div>}
-    </>
-  );
+  if (both && en && zh) {
+    return (
+      <>
+        <div className="wiki-body-lang wiki-body-en">
+          <LangTag k="en" /><div className="wiki-body-lang-text">{renderBodyLines(en)}</div>
+        </div>
+        <div className="wiki-body-lang wiki-body-zh">
+          <LangTag k="zh" /><div className="wiki-body-lang-text">{renderBodyLines(zh)}</div>
+        </div>
+      </>
+    );
+  }
+  const pick = single === 'zh' ? (zh || en) : (en || zh);
+  return pick ? renderBodyLines(pick) : null;
 }
 
 /** 编辑表单初值:已迁移→四字段;旧行(未迁移)→把 combined 塞进 EN 框避免丢内容。 */
@@ -106,6 +138,10 @@ function termInitial(e: WikiTerm): TermInput {
 export default function WikiPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
+  // 显示模式:中英对照(both)/ 仅当前站点语言。both 默认开,保留「中英对照」品牌;
+  // 关掉则跟随桌宠语言钮(i18n.language)= 仅中文 / 仅英文。
+  const [showBoth, setShowBoth] = useQueryState('bi', parseAsBoolean.withDefault(true));
+  const singleLang: 'zh' | 'en' = isZh ? 'zh' : 'en';
   useDocumentTitle('Wiki', 'Wiki');
   const user = useAuthStore(s => s.user);
   const isLoggedIn = !!user;
@@ -228,6 +264,13 @@ export default function WikiPage() {
           <span>{tr({ zh: '首页', en: 'Home'
         })}</span>
         </HomeLink>
+        <BoolToggle
+          className="wiki-bi-toggle"
+          value={showBoth}
+          onChange={(v) => void setShowBoth(v)}
+          label={tr({ zh: '中英对照', en: 'Bilingual' })}
+          ariaLabel={tr({ zh: '中英对照显示', en: 'Show both languages' })}
+        />
       </header>
 
       <main className="wiki-main">
@@ -330,8 +373,7 @@ export default function WikiPage() {
                               href={`#${slug}`}
                               title={tr({ zh: '该词条链接', en: 'Link to this term' })}
                             >
-                              {renderHead(e)}
-                              <Link2 size={12} className="wiki-entry-anchor-icon" aria-hidden="true" />
+                              {renderHead(e, showBoth, singleLang)}
                             </a>
                           </h3>
                           {(isAdmin || (isLoggedIn && myKey === e.ownerWcaId)) && (
@@ -357,7 +399,7 @@ export default function WikiPage() {
                             </button>
                           )}
                         </div>
-                        {(() => { const b = renderTermBody(e); return b ? <div className="wiki-entry-body">{b}</div> : null; })()}
+                        {(() => { const b = renderTermBody(e, showBoth, singleLang); return b ? <div className="wiki-entry-body">{b}</div> : null; })()}
                         {e.source === 'user' && e.ownerName && (
                           <div className="wiki-entry-meta">
                             — {e.ownerName}
