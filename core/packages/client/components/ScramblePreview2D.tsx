@@ -18,7 +18,7 @@ import {
 import {
   renderSq1ScrambleSvg,
   DEFAULT_SQ1_COLORS,
-} from '@/app/[lang]/scramble/gen/_svg/sq1_svg';
+} from '@/lib/sq1-svg';
 import {
   renderMegaScrambleSvg,
   DEFAULT_MEGA_COLORS,

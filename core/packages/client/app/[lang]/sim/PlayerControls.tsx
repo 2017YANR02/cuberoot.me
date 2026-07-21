@@ -102,7 +102,7 @@ import { useAuthStore } from '@/lib/auth-store';
 import {
   formatScrambleForEvent, canonicalSq1Alg, compactSq1Alg,
   simplifySq1Alg, invertSq1Alg,
-} from '@/lib/sq1-svg';
+} from '@cuberoot/shared/sq1-notation';
 import { toWca as toWcaSkewb, type SkewbNotation } from '@cuberoot/shared/skewb-notation';
 import SkewbNotationGuide from './SkewbNotationGuide';
 import {

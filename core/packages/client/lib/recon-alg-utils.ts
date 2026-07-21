@@ -3,7 +3,7 @@
  * extract alg from recon-prefixed text. Ported from packages/client-vite/src/utils/recon_alg_utils.ts.
  */
 import { etm } from '@cuberoot/shared/alg-notation';
-import { parseSq1Tokens } from './sq1-svg';
+import { parseSq1Tokens } from '@cuberoot/shared/sq1-notation';
 
 const STRIP_TOKENS = new Set([
   '[regrip]', '[lockup]', '[freePair]', '[free_pair]',

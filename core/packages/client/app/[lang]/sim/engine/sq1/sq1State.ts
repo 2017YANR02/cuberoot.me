@@ -9,11 +9,11 @@
  *   - 'turn'  : (top, bot) integer 30° unit layer rotations
  *   - 'slice' : flip the east-half slabs across the chord-perp axis
  *
- * Notation: parser is shared with `pages/gen/sq1_svg.ts` (single source of
+ * Notation: parser is `@cuberoot/shared/sq1-notation` (single source of
  * truth, `parseSq1Tokens`). Supports `(t,b) / (t,b) / ...`, paren-/comma-/
  * space-optional forms, and `t` single-number shorthand = `(t, 0)`.
  */
-import { parseSq1Tokens, type Sq1Token } from '@/lib/sq1-svg';
+import { parseSq1Tokens, type Sq1Token } from '@cuberoot/shared/sq1-notation';
 
 export interface Sq1State {
   /** True when the equator slice is in solved orientation (F on +Z, B on -Z). */

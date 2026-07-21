@@ -8,18 +8,11 @@
  */
 import { useEffect, useMemo, useRef } from 'react';
 import { renderSkewbPyramidSvgParametric } from '@cuberoot/shared/skewb-pyramid-svg';
-import { canonicalSq1Alg } from '@/lib/sq1-svg';
+import { canonicalSq1Alg } from '@cuberoot/shared/sq1-notation';
+import { invert as invertSkewbAlg } from '@cuberoot/shared/skewb-notation';
 import type { VisualizerType, PuzzleOptions, IColor, ArrowDefinition } from '@cuberoot/vendor-sr-puzzlegen';
 import { parseMask, toSrMask, type StickerId } from '@/lib/puzzle-image/puzzle-mask';
 import type { PuzzleType } from '@/lib/puzzle-image/types';
-
-function invertSkewbAlg(alg: string): string {
-  return alg.trim().split(/\s+/).filter(Boolean).reverse().map((t) => {
-    if (t.endsWith("'")) return t.slice(0, -1);
-    if (t.endsWith('2')) return t;
-    return t + "'";
-  }).join(' ');
-}
 
 export type PuzzleKind =
   | 'sq1' | 'sq1-net'

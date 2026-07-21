@@ -121,7 +121,9 @@ export function translate(alg: string): string {
  * naive "keep the 2" rule (right for 3x3/rotations) would be wrong.
  */
 function invertToken(tok: string): string {
-  const m = /^([A-Za-z])(\d*)('?)$/.exec(tok);
+  // `[A-Za-z]+` so WCA's two-letter grips (UL/UR) invert too, not just the
+  // single-letter Sarah/WCA tokens.
+  const m = /^([A-Za-z]+)(\d*)('?)$/.exec(tok);
   if (!m) return tok;
   const [, ch, digits, prime] = m;
   const repeat = digits && digits !== '1' ? digits : '';

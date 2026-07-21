@@ -17,7 +17,7 @@ import { type ReactNode, type RefObject } from 'react';
 import type World from '@/app/[lang]/sim/engine/world';
 import type Sq1Cube from '@/app/[lang]/sim/engine/sq1/Sq1Cube';
 import type { Sq1Move } from '@/app/[lang]/sim/engine/sq1/sq1State';
-import { parseSq1Tokens } from '@/lib/sq1-svg';
+import { parseSq1Tokens } from '@cuberoot/shared/sq1-notation';
 import ReconPlayerBase, { type ReconPlayerAdapter } from '@/components/recon/ReconPlayerBase';
 
 export default function Sq1ReconPlayer({

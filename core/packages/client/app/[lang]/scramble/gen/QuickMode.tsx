@@ -25,7 +25,7 @@ import type { RoundSheetInput } from './_tnoodle-pdf';
 import ProgressButton from './ProgressButton';
 import ScrambleLines from './ScrambleLines';
 import PillToggle from '@/components/PillToggle/PillToggle';
-import { displaySq1ForEvent } from './_svg/sq1_svg';
+import { displaySq1ForEvent } from '@cuberoot/shared/sq1-notation';
 
 const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
 

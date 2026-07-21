@@ -13,11 +13,8 @@ import {
 } from '@cuberoot/visualcube';
 import type { PuzzleKind } from '@/components/PuzzleSVG';
 import { invertAlg } from '@/lib/cube3';
-import {
-  renderSq1ScrambleSvg,
-  DEFAULT_SQ1_COLORS,
-  invertSq1Alg,
-} from '@/app/[lang]/scramble/gen/_svg/sq1_svg';
+import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS } from '@/lib/sq1-svg';
+import { invertSq1Alg } from '@cuberoot/shared/sq1-notation';
 import {
   renderMegaScrambleSvg,
   DEFAULT_MEGA_COLORS,

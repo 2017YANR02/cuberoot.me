@@ -7,7 +7,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import DiscreteHistogram, { type HistSeries } from './DiscreteHistogram';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
-import { formatScrambleForEvent } from '@/app/[lang]/scramble/gen/_svg/sq1_svg';
+import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { Flag } from '@/components/Flag';
 import { ListSelect, type ListSelectItem } from '@/components/ListSelect';
