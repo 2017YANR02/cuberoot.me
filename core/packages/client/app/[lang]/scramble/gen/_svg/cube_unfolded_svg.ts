@@ -37,9 +37,11 @@ const WCA_COLORS: string[] = [
 
 // Tnoodle CubePuzzle: cubieSize=10, gap=2 → gap-as-fraction-of-cubie = 0.2.
 // Stickers stroke is svglite default (1px on cubieSize=10) → 0.1 of a cubie.
+// Exported: the /sim interactive net (_SimCubeNet) shares the layout constants so
+// the paint editor, the engine companion export and this reference stay aligned.
 const STROKE_COLOR = '#000000';
-const GAP = 0.2;                  // gap between faces, in cell units (matches tnoodle 2/10)
-const STROKE_W = 0.1;             // sticker outline, relative to 1×1 cell (matches tnoodle 1/10)
+export const GAP = 0.2;           // gap between faces, in cell units (matches tnoodle 2/10)
+export const STROKE_W = 0.1;      // sticker outline, relative to 1×1 cell (matches tnoodle 1/10)
 
 const PUZZLE_TO_N: Record<string, number> = {
   '2x2x2': 2, '3x3x3': 3, '4x4x4': 4, '5x5x5': 5, '6x6x6': 6, '7x7x7': 7,
@@ -105,13 +107,14 @@ export function cubeStickerIdFromPosit(N: number, positIndex: number): StickerId
   return cubeStickerId(N, f, row, col);
 }
 
-export function renderUnfoldedSvg(N: number, scramble: string, opts?: MaskRenderOptions): string {
-  // Fast path (no mask, no ids): keep the Uint8Array color model — at N=300 the
-  // Int32 id model would be 4x the memory for no gain.
-  const tracked = !!(opts?.mask || opts?.stickerIds);
-  const posit = tracked ? simulateNxNIds(N, scramble) : simulateNxN(N, scramble);
-  const s2 = N * N;
-
+/**
+ * Shared SVG assembler. Both entry points — renderUnfoldedSvg (scramble-driven
+ * reference) and renderUnfoldedStateSvg (/sim engine companion, state-driven) —
+ * emit through here, so layout, stroke, attribute order and every byte of the
+ * markup match by construction instead of by parallel porting.
+ * `cell(f, i, j)` = fill (+ optional data-sid) for face f, drawn col i, drawn row j.
+ */
+function emitUnfolded(N: number, cell: (f: number, i: number, j: number) => { color: string; sid?: string }): string {
   // Tnoodle CubePuzzle layout — same width/height as before:
   //   total width  = (cubie+gap)*4 + gap = 4*N + 5*GAP
   //   total height = (cubie+gap)*3 + gap = 3*N + 4*GAP
@@ -132,26 +135,49 @@ export function renderUnfoldedSvg(N: number, scramble: string, opts?: MaskRender
   for (let f = 0; f < 6; f++) {
     const [ox, oy] = FACE_OFFSETS[f];
     for (let i = 0; i < N; i++) {
-      // L/B faces mirror horizontally relative to internal posit (verbatim cstimer convention)
-      const x = (f === FACE_L || f === FACE_B) ? N - 1 - i : i;
       for (let j = 0; j < N; j++) {
-        // D face mirrors vertically
-        const y = (f === FACE_D) ? N - 1 - j : j;
-        const v = posit[f * s2 + y * N + x];
-        let color: string;
-        if (tracked) {
-          const masked = opts?.mask?.ids.has(cubeStickerIdFromPosit(N, v)) ?? false;
-          color = masked ? opts!.mask!.color : WCA_COLORS[Math.floor(v / s2)];
-        } else {
-          color = WCA_COLORS[v];
-        }
-        const sid = opts?.stickerIds ? ` data-sid="${cubeStickerId(N, f, j, i)}"` : '';
+        const { color, sid } = cell(f, i, j);
         parts.push(
-          `<rect x="${ox + i}" y="${oy + j}" width="1" height="1" fill="${color}"${sid} stroke="${STROKE_COLOR}" stroke-width="${STROKE_W}"/>`,
+          `<rect x="${ox + i}" y="${oy + j}" width="1" height="1" fill="${color}"${sid ? ` data-sid="${sid}"` : ''} stroke="${STROKE_COLOR}" stroke-width="${STROKE_W}"/>`,
         );
       }
     }
   }
   parts.push('</svg>');
   return parts.join('');
+}
+
+export function renderUnfoldedSvg(N: number, scramble: string, opts?: MaskRenderOptions): string {
+  // Fast path (no mask, no ids): keep the Uint8Array color model — at N=300 the
+  // Int32 id model would be 4x the memory for no gain.
+  const tracked = !!(opts?.mask || opts?.stickerIds);
+  const posit = tracked ? simulateNxNIds(N, scramble) : simulateNxN(N, scramble);
+  const s2 = N * N;
+
+  return emitUnfolded(N, (f, i, j) => {
+    // L/B faces mirror horizontally relative to internal posit (verbatim cstimer
+    // convention); D face mirrors vertically.
+    const x = (f === FACE_L || f === FACE_B) ? N - 1 - i : i;
+    const y = (f === FACE_D) ? N - 1 - j : j;
+    const v = posit[f * s2 + y * N + x];
+    let color: string;
+    if (tracked) {
+      const masked = opts?.mask?.ids.has(cubeStickerIdFromPosit(N, v)) ?? false;
+      color = masked ? opts!.mask!.color : WCA_COLORS[Math.floor(v / s2)];
+    } else {
+      color = WCA_COLORS[v];
+    }
+    return { color, sid: opts?.stickerIds ? cubeStickerId(N, f, j, i) : undefined };
+  });
+}
+
+/**
+ * State-driven unfolded net for the /sim engine companion: the caller supplies
+ * the fill per drawn cell (face id f in cstimer order D L B U R F, row/col as
+ * drawn in the net — row 0 top, col 0 left). Same assembler as the reference →
+ * byte-identical chrome; only the fills differ by whatever state/palette the
+ * engine provides.
+ */
+export function renderUnfoldedStateSvg(N: number, colorAt: (f: number, row: number, col: number) => string): string {
+  return emitUnfolded(N, (f, i, j) => ({ color: colorAt(f, j, i) }));
 }
