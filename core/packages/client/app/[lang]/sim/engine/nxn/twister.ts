@@ -468,7 +468,10 @@ export default class Twister {
       }
     }
     // bench flag: window.__STACK_KERNEL_WASM = false 强制走 JS 对比。
-    const wasmEnabled = (window as unknown as { __STACK_KERNEL_WASM?: boolean }).__STACK_KERNEL_WASM ?? true;
+    // typeof 守卫:setup() 是 headless(Node)打乱应用主入口,window 不存在时默认开 WASM。
+    const wasmEnabled = (typeof window !== 'undefined'
+      ? (window as unknown as { __STACK_KERNEL_WASM?: boolean }).__STACK_KERNEL_WASM
+      : undefined) ?? true;
     if (STACK_KERNEL_READY && wasmEnabled && !hasSpecial) {
       // 批量收集所有 rotate 的 (dispatch, groupId),一次 WASM 调用。
       const N = order;
@@ -503,7 +506,8 @@ export default class Twister {
       }
       // 诊断:__STACK_KERNEL_NO_FLAT = true 切到 no_flat variant (跳 flat 读写,
       // cube state 一定错,只用来量 flat 操作的成本上限,验证 perSlab 是否值得做)。
-      const noFlat = (window as unknown as { __STACK_KERNEL_NO_FLAT?: boolean }).__STACK_KERNEL_NO_FLAT === true;
+      const noFlat = typeof window !== 'undefined'
+        && (window as unknown as { __STACK_KERNEL_NO_FLAT?: boolean }).__STACK_KERNEL_NO_FLAT === true;
       const fn = noFlat ? stackKernelApplyRotatesNoFlat : stackKernelApplyRotates;
       fn(
         rotatesDesc.subarray(0, rCount * 2),
@@ -619,7 +623,9 @@ export default class Twister {
         hasSpecial = true; break;
       }
     }
-    const wasmEnabled = (window as unknown as { __STACK_KERNEL_WASM?: boolean }).__STACK_KERNEL_WASM ?? true;
+    const wasmEnabled = (typeof window !== 'undefined'
+      ? (window as unknown as { __STACK_KERNEL_WASM?: boolean }).__STACK_KERNEL_WASM
+      : undefined) ?? true;
     if (!STACK_KERNEL_READY || !wasmEnabled || hasSpecial) {
       this.setup(exp, reverse, times);
       return;

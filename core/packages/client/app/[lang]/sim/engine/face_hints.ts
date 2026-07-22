@@ -184,6 +184,12 @@ export default class FaceHints extends THREE.Group {
     const distance = unit * distanceMul;
     const size = unit * sizeMul;
 
+    // headless 守卫(PLAN-sr-retirement Phase 1):World ctor 硬建 ~10 组 FaceHints,
+    // 字母纹理靠 DOM canvas 烤 —— 无 document(Node)时跳过建 sprite。方位字母是纯
+    // 视觉指示,headless 场景没有指针拖动也就永不 show();空 letterMats 下
+    // show/hide/tick 均安全 no-op。
+    if (typeof document === 'undefined') { this.visible = false; return; }
+
     for (const hint of hints) {
       const { tex, aspect } = makeLetterTexture(hint.letter);
       const letterMat = new THREE.SpriteMaterial({

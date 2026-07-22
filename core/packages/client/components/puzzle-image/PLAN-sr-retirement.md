@@ -84,6 +84,9 @@ sr 共 12 种 visualizer type、5 类拼图:
   - **观察(记 Phase 3 待查)**:所有 NxN 的 BSP 伴图「白(U 顶)面」系统性比 3D 低 ~6%、「绿(F 前)面」高 ~6%,四个阶(2/3/4/6)一致 → 非随机噪声,是 3D 顶面受光最强、AA 边界近白像素被就近计成白(BSP 路径比 schematic 的 0.1% 显著)。当前容差 8% 放得过、gross 回归(画错面/镜像/错打乱=双位数差)拦得住;真要压到 ≤2% 需 BSP 相机与 live 3D 相机零偏移复核 + 高光抑制,列 Phase 3 精修,不阻塞。不进 CI(要浏览器+WebGL+dev server)。
 
 ### Phase 1 — 引擎核心可 headless(抽包)
+**依赖图已做(2026-07-21,§5「抽包半径」前置)**:24,785 行 ~126 文件,**~65%(≈16.2k 行)可干净 headless**——群论内核 + 全拼图几何 + PG 桥 + `world.ts` 场景组装本就 renderer-free(THREE 只用 math/scene-graph 类;`engine/` 内唯一碰 `WebGLRenderer` 的是 `backView.ts`,主渲染器/rAF 帧循环本来就在 SimPage 不在 engine)。client 残留 ~35% = `hands/` 5.2k + 各 `*Drag.ts` 1.5k + `nxn/controller.ts` + `backView.ts` + 手势/动画播放 + logo 上传 + worker bootstrap(worker 做的活是纯 WASM 计算,headless 走同内核的同步 `setup()`,不需要 worker)。
+**真阻塞仅 4 点(全是小 gate/DI,非深重构)**:①`tweener.ts:100` 模块级单例 ctor 里 `requestAnimationFrame`——内核 import 即炸 Node(cube/group/twister 都 import 它);②`nxn/twister.ts:471/506/622` 同步 `setup()` 热路径无条件解引用 `window.__STACK_KERNEL_*`;③`world.ts:120` ctor 硬 `new Controller(this)`(启指针 rAF 环);④`world.ts:121-161` ctor 硬建 ~10 个 `FaceHints`(`document.createElement('canvas')` 烤字母纹理)。
+- [x] **headless gate 落地(2026-07-21)**:上述 4 点全部 gate/懒化(rAF typeof 守卫、window typeof 守卫、Controller 可选、FaceHints 惰性),/sim 行为不变。
 - [ ] 从 `app/[lang]/sim/engine` 抽 headless 核心到工作区包 `@cuberoot/sim-engine`:群论内核、拼图几何构建、场景组装、配色。禁 DOM/WebGL import(logo 纹理等 client-only 能力 gate 掉)。交互层(指针/动画/手/全身)留在 client。
 - [ ] client 全量改 import 路径;server 可 import(先例:server 已 import `@cuberoot/visualcube`、`@cuberoot/shared`)。
 - 验收:Node 裸脚本能建出 skewb world 并数出三角形;client typecheck + 全测试绿;/sim playwright smoke 行为不变。
