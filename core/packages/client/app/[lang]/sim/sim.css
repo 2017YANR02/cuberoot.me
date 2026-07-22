@@ -240,6 +240,13 @@
   font-size: 10px;
   letter-spacing: 0.3px;
 }
+/* 交换态:画布左上角归缩小的实时 3D canvas(z-index 10 > 浮层的 9),而 canvas 背景
+   透明 —— 按钮画在它下面,看得见却点不到(指针先被 canvas 接走)。挪到右上角 ×
+   左边(× 占 right 4–24)。 */
+.sim-canvas-wrap--imgswap .sim-image-source {
+  left: auto;
+  right: 28px;
+}
 
 /* 背景(BG)选择器浮层 —— 画布左下角(与右上背面小窗、左上图像浮层同族的角落控件)。
    PlayerControls 把选择器 portal 进 .sim-bg-overlay。压在 art-directed 五档画布背景
