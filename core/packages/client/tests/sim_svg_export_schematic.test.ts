@@ -368,6 +368,23 @@ describe('exportSimSvgSchematic', () => {
     expect(Number(vb(far)[3])).toBeGreaterThan(Number(vb(base)[3]));
   });
 
+  it('曲线箭头(visualcube s3):p3 → 二次贝塞尔 M…Q…,取景计入控制点', () => {
+    const world = makeWorld(buildPyraScene());
+    const vb = (s: string) => s.match(/viewBox="(-?[\d.]+) (-?[\d.]+) ([\d.]+) ([\d.]+)"/)!;
+    const p1: [number, number, number] = [-PYRA_A, 0, PYRA_A];
+    const p2: [number, number, number] = [PYRA_A, 0, PYRA_A];
+    const straight = exportSimSvgSchematic({ world, arrows: [{ p1, p2 }] });
+    const curved = exportSimSvgSchematic({
+      world, arrows: [{ p1, p2, p3: [0, PYRA_A * 3, PYRA_A] }],
+    });
+    // vc renderArrow 同式 path;直线版不出 Q。
+    expect(curved).toMatch(/<path d="M -?[\d.]+ -?[\d.]+ Q -?[\d.]+ -?[\d.]+ -?[\d.]+ -?[\d.]+" fill="none"[^>]*marker-end="url\(#/);
+    expect(straight).not.toContain(' Q ');
+    expect(straight).toContain('<line ');
+    // 控制点在拼图上方远处 → 取景高度比直线版大(曲线包围盒含 {p1,p3,p2} 凸包)。
+    expect(Number(vb(curved)[4])).toBeGreaterThan(Number(vb(straight)[4]));
+  });
+
   it('相机跟随:旋转场景后输出改变(几何取自 matrixWorld,非固定标定)', () => {
     const scene = buildPyraScene();
     const world = makeWorld(scene);
