@@ -33,6 +33,7 @@ import World, { type PuzzleKind } from './engine/world';
 import { bspSceneAudit, exportSimSvgBsp } from './sim_svg_export_bsp';
 import { exportSimSvg } from './sim_svg_export';
 import { exportSimSvgSchematic, hasSchematicFacelets } from './sim_svg_export_schematic';
+import { exportSimNetSvg } from './sim_net_export';
 import type Cube from './engine/nxn/cube';
 import { SIZE } from './engine/define';
 import { createBackView, type BackView } from './engine/backView';
@@ -1829,6 +1830,23 @@ export default function SimPage() {
       if (++frame % 8 !== 0) return; // ~7.5Hz 采样
       const world = worldRef.current;
       if (world) {
+        // 平面视图(net;后续 wca/plan 同路)——NxN 展开图从 cube.serialize() 逻辑态
+        // 直出,不走 3D 投影的静止采样(逻辑态即时、无相机)。签名 = 序列化串,复原
+        // 帧作标的遮罩天然随打乱携带。视图/配色变由 effect 重跑(重置 exportedSig)。
+        if (typeof world.puzzleKind === 'number' && imgSpec.cubeView === 'net') {
+          const nxn = world.cube as Cube;
+          const serialized = nxn.serialize();
+          const sig = 'net|' + nxn.order + '|' + serialized;
+          if (sig === exportedSig) return;
+          exportedSig = sig;
+          try {
+            setEngineSvg(exportSimNetSvg({ serialized, order: nxn.order, faceColors: settings.faceColors }));
+          } catch (err) {
+            console.warn('[sim] net companion export failed', err);
+            setEngineSvg(null);
+          }
+          return;
+        }
         world.scene.updateMatrixWorld(true);
         const sig = sigOf(world);
         if (sig !== lastSig) { lastSig = sig; stable = 0; return; }
@@ -1903,7 +1921,7 @@ export default function SimPage() {
   }, [imageOpen, srCompanionForced, imageStudioEngineOnly, imgOutline,
       imgSpec.stickerMask, imgPuzzle.puzzleType,
       imgSpec.cubeColor, imgSpec.cubeOpacity, imgSpec.stickerOpacity,
-      imgSpec.arrows, imgSpec.defaultArrowColor, puzzleParam,
+      imgSpec.arrows, imgSpec.defaultArrowColor, imgSpec.cubeView, puzzleParam,
       settings.faceColors, query.stickering, query.stickeringColor]);
 
   // 伴图当前是否示意版(有示意小面)—— 决定黑边滑块是否可用。
