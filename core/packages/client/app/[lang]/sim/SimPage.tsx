@@ -109,6 +109,7 @@ import GroupTheoryPanel, { type SimWorldView } from './GroupTheoryPanel';
 import { nxnHasPgKernel } from './engine/nxn/nxnPgBridge';
 import { stickeringMaskFn } from './engine/nxn/stickering';
 import { resolveStageMaskFn } from './engine/nxn/vcStageMask';
+import { resolveEngineArrows } from './engine/nxn/vcArrowBridge';
 import SimCubeNet from './_SimCubeNet';
 import {
   loadKeymap, saveKeymap, resetKeymap as resetKeymapStorage, type KeyMove,
@@ -1850,6 +1851,12 @@ export default function SimPage() {
               bodyOpacity: imgSpec.cubeOpacity,
               stickerOpacity: imgSpec.stickerOpacity,
               mask: maskKeys?.size ? { keys: maskKeys, color: MASK_COLOR } : undefined,
+              // 箭头标注(退役对照表 §2b):DSL `U0U2-red` → 引擎贴纸世界中心线段。
+              // NxN 专属(resolveEngineArrows 自查 schematicInstancedPoly + N≥2,非
+              // NxN 返 []);面朝背时导出器 project 得 null 自动跳过。
+              arrows: typeof puzzleParam === 'number'
+                ? resolveEngineArrows(world.scene, imgSpec.arrows, puzzleParam, imgSpec.defaultArrowColor)
+                : undefined,
             }));
             return;
           }
@@ -1896,6 +1903,7 @@ export default function SimPage() {
   }, [imageOpen, srCompanionForced, imageStudioEngineOnly, imgOutline,
       imgSpec.stickerMask, imgPuzzle.puzzleType,
       imgSpec.cubeColor, imgSpec.cubeOpacity, imgSpec.stickerOpacity,
+      imgSpec.arrows, imgSpec.defaultArrowColor, puzzleParam,
       settings.faceColors, query.stickering, query.stickeringColor]);
 
   // 伴图当前是否示意版(有示意小面)—— 决定黑边滑块是否可用。
