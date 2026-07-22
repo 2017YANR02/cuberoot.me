@@ -200,6 +200,17 @@ describe('exportSimSvgSchematic', () => {
     expect(svg).not.toContain(CUBE_FILL.F.toLowerCase()); // m=3 绿
   });
 
+  it('showHidden(X 光 / trans 视图):跳过背面剔除,背面小面(m=0 黄 / m=3 绿)也输出', () => {
+    const world = makeWorld(buildPyraScene());
+    const culled = faceletDs(exportSimSvgSchematic({ world })).length;
+    const svg = exportSimSvgSchematic({ world, showHidden: true });
+    const xray = svg.toLowerCase();
+    expect(xray).toContain(CUBE_FILL.D.toLowerCase()); // 背面黄现身
+    expect(xray).toContain(CUBE_FILL.F.toLowerCase()); // 背面绿现身
+    // 4 面全出(前 2 + 背 2)→ 面数多于剔除版;bodyOpacity 让前壳透出背面。
+    expect(faceletDs(svg).length).toBeGreaterThan(culled);
+  });
+
   it('viewBox 贴拼图裁剪(sr 的紧凑取景),不导整张画布', () => {
     const world = makeWorld(buildPyraScene());
     const svg = exportSimSvgSchematic({ world });

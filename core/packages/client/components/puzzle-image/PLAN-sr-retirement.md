@@ -49,7 +49,7 @@ sr 共 12 种 visualizer type、5 类拼图:
 |---|---|---|---|
 | 视图 normal(iso) | drawing.ts 三面投影 | /sim 伴图已镜像(示意/BSP) | ✅ |
 | 视图 plan(俯视含侧带) | 同上,俯视 + 四侧首排 | `sim_plan_export.ts` 的 `exportSimPlanSvg`:平面 OLL 图 = 中央 U 面 N×N + F(下)/B(上)/L(左)/R(右)顶排侧带,颜色全走已核验的 netIndexOf(`serialize[block·N²+netIndexOf]`),侧带按全局轴对齐(非镜像)。SimPage flat 分支 + engineMirrors/engineShown 收 `cubeView==='plan'` | ✅(2026-07-21;NxN;取等价平面 OLL 图而非 visualcube 略透视俯视;实测单移动 R 朝向/侧带左右序全对) |
-| 视图 trans(半透明) | cubeOpacity/stickerOpacity | 导出器 bodyOpacity/stickerOpacity 参数 + 预设 | ⬜ |
+| 视图 trans(半透明) | cubeOpacity/stickerOpacity | 示意导出器加 `showHidden`(跳背面剔除,已有 z 排序 far→near + bodyOpacity 让背贴纸透出前壳)；SimPage 对 `cubeView==='trans'` 套 visualcube 预设:银壳 #BFBFBF + 50% 不透明(未显式改壳色/不透明度时),X 光 3D | ✅(2026-07-21;NxN;实测与 visualcube trans 观感等价 —— 半透银壳 + 背贴纸透出) |
 | 视图 net(展开图) | 平面展开 | `sim_net_export.ts` 的 `exportSimNetSvg`:读 `cube.serialize()`(URFDLB N² 块,net 朝向)→ 十字布局逐格上引擎面色,纯字符串 SVG。布局常量与交互式 `_SimCubeNet` 单一源(它 import 这里)。SimPage engineSvg 效应加 net 分支(serialize 签名,不走 3D 采样);PuzzleImage/studio 的 engineMirrors/engineShown 收 `cubeView==='net'` | ✅(2026-07-21;NxN;实测跟踪打乱、下载同源;遮罩键 `face:idx` 已备,SimPage 侧透传待接) |
 | 视图 wca(记分表样式) | tnoodle 风格平面 | 同 net,引擎状态直出 | ✅(2026-07-21):cube 的 wca 与 net 是同一展开图(render.ts 两者同出 `renderUnfoldedSvg`,产出一致),故复用 `exportSimNetSvg`——SimPage net 分支 + engineMirrors/engineShown 均收 `cubeView==='wca'`。非 cube(skewb/mega)wca 仍走各自 scramble-display,不在 NxN 退役范围 |
 | 图片尺寸 (PX) | svg width/height | `lib/puzzle-image/engine-svg.ts` 的 `sizeEngineSvg`:root <svg> 宽高钉 size×size(viewBox 保留 → meet 等比不变形);显示 / studio 预览 / SVG 下载三处共用一份。PNG 下载走 canvas=imageSize² + contain-fit | ✅(2026-07-21;此前 SVG 下载漏套尺寸=导出器原生像素,已补) |
