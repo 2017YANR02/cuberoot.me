@@ -378,6 +378,10 @@ export default function SimPage() {
   // (twizzle-style controls directly under the puzzle). state (not ref) so the
   // portal re-renders once the node mounts.
   const [playbackSlot, setPlaybackSlot] = useState<HTMLDivElement | null>(null);
+  // Slot at the canvas' bottom-left corner that PlayerControls portals the 背景(BG)
+  // selector into (overlays the big cube, like the top-right back-view window). state
+  // (not ref) so the portal re-renders once the node mounts.
+  const [bgSlot, setBgSlot] = useState<HTMLDivElement | null>(null);
   const worldRef = useRef<World | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const toucherRef = useRef<Toucher | null>(null);
@@ -2047,6 +2051,9 @@ export default function SimPage() {
               <X size={12} />
             </button>
           )}
+          {/* 背景(BG)选择器浮层落点 —— 画布左下角(与右上角背面小窗、左上角图像浮层
+              同族的角落控件)。PlayerControls 把选择器 portal 进这里。空时 CSS 收起。 */}
+          <div className="sim-bg-overlay" ref={setBgSlot} />
         </div>
         <div className="sim-playback-under" ref={setPlaybackSlot} />
         </div>
@@ -2090,6 +2097,7 @@ export default function SimPage() {
             renderer={query.renderer}
             onRendererChange={handleRendererChange}
             playbackSlot={playbackSlot}
+            bgSlot={bgSlot}
             fullscreenButton={
               <button
                 type="button"
