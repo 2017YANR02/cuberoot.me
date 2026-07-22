@@ -2,11 +2,12 @@
 
 /**
  * 批量求解器的 case 图:NxN 走 VisualCube(iso / plan 顶视),Pyraminx 走
- * sr-puzzlegen。上游用 twistysim 渲染,这里换成站内渲染器;Skewb / Megaminx
+ * /sim 引擎静态渲染(EnginePuzzleSVG,原 sr-puzzlegen 已退,PLAN-sr-retirement
+ * §3)。上游用 twistysim 渲染,这里换成站内渲染器;Skewb / Megaminx
  * 记号映射未标定,暂不出图(选「无图像」语义)。
  */
 import { VisualCube } from '@/components/VisualCube';
-import { PuzzleSVG } from '@/components/PuzzleSVG';
+import { EnginePuzzleSVG } from '@/components/EnginePuzzleSVG';
 
 export type BatchImageKind = 'none' | '3x3x3-top' | '3x3x3' | '2x2x2-top' | '2x2x2' | '4x4x4' | '5x5x5' | 'pyraminx';
 
@@ -42,7 +43,7 @@ export default function CaseImage({ kind, setup, size, title }: { kind: BatchIma
   if (kind === 'pyraminx') {
     return (
       <span title={title} className="bsv-case-img">
-        <PuzzleSVG kind="pyraminx" alg={setup} size={size} />
+        <EnginePuzzleSVG kind="pyraminx" alg={setup} size={size} />
       </span>
     );
   }

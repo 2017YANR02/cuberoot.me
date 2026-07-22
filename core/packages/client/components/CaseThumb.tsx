@@ -8,6 +8,7 @@ import type { AlgPuzzle, AlgSticker } from '@cuberoot/shared';
 import { toWca as toWcaSkewb } from '@cuberoot/shared/skewb-notation';
 import { VisualCube } from '@/components/VisualCube';
 import { PuzzleSVG, type PuzzleKind } from '@/components/PuzzleSVG';
+import { EnginePuzzleSVG } from '@/components/EnginePuzzleSVG';
 import { apiUrl } from '@/lib/api-base';
 
 export const PUZZLE_SIZE: Record<AlgPuzzle, number> = {
@@ -62,9 +63,14 @@ export function CaseThumb({
     );
   }
   if (SR_PUZZLES.includes(puzzle)) {
-    const kind = srPuzzleKind(puzzle)!;
     const xform = puzzle === 'skewb' ? (s: string) => toWcaSkewb(s, 'sarah') : (s: string) => s;
     const driver = setup && setup.trim() ? { alg: xform(setup) } : { case: xform(alg) };
+    // pyraminx iso → /sim 引擎静态渲染(原 sr,PLAN-sr-retirement §3);
+    // megaminx-top / skewb-top 是俯视示意形态,保持原渲染器。
+    if (puzzle === 'pyraminx') {
+      return <EnginePuzzleSVG kind="pyraminx" {...driver} size={size} />;
+    }
+    const kind = srPuzzleKind(puzzle)!;
     return <PuzzleSVG kind={kind} {...driver} size={size} />;
   }
   if (maskOverride) {

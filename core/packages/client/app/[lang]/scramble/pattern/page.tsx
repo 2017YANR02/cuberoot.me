@@ -15,7 +15,7 @@ import { Sparkles, X, Copy, Check } from 'lucide-react';
 import { Alg } from 'cubing/alg';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { VisualCube } from '@/components/VisualCube';
-import { PuzzleSVG, type PuzzleKind } from '@/components/PuzzleSVG';
+import { EnginePuzzleSVG, type EnginePuzzleKind } from '@/components/EnginePuzzleSVG';
 import TwistySection from '@/components/TwistySection';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { renderClockScrambleSvg, DEFAULT_CLOCK_COLORS } from '../gen/_svg/clock_svg';
@@ -35,8 +35,8 @@ function inverseOf(algStr: string): string {
   try { return new Alg(algStr).invert().toString(); } catch { return algStr; }
 }
 
-/** Puzzle → PuzzleSVG kind. Returns null for NxN (use VisualCube) or clock (no preview). */
-function puzzleSvgKind(size: PuzzleSize): PuzzleKind | null {
+/** Puzzle → 引擎 iso kind(EnginePuzzleSVG,原 sr)。NxN 走 VisualCube、clock 无预览 → null。 */
+function puzzleSvgKind(size: PuzzleSize): EnginePuzzleKind | null {
   if (size === 'pyraminx') return 'pyraminx';
   if (size === 'megaminx') return 'megaminx';
   if (size === 'skewb') return 'skewb';
@@ -71,7 +71,7 @@ function PatternThumb({ pattern, size = 120 }: { pattern: Pattern; size?: number
   }
   const kind = puzzleSvgKind(puzzle);
   if (kind) {
-    return <PuzzleSVG kind={kind} case={pattern.alg} size={size} />;
+    return <EnginePuzzleSVG kind={kind} case={pattern.alg} size={size} />;
   }
   if (puzzle === 'clock') {
     // Clock notation is a scramble (forward), no inversion needed.
