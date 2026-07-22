@@ -38,11 +38,13 @@ export type NonCubePuzzle = Exclude<PuzzleType, 'cube'>;
 /**
  * Table key for a (puzzle, size), or null when no table exists for it.
  *
- * `sq1` is NOT maskable and never will be: sr-puzzlegen builds square-1 geometry
- * from the simulator at construction time (`applyAlgorithm()` early-returns for
- * square1, `stickerColors` is skipped for it), so `setValue(face, i, "mask")`
- * never reaches the drawn geometry. Our own `sq1_svg.ts` likewise draws from a
- * shape-dependent layer model with no stable per-sticker id space.
+ * `sq1` masking (2026-07-21) is a NEW capability sr-puzzlegen never had (its
+ * square-1 geometry is built from the simulator at construction time, so
+ * `setValue(face, i, "mask")` never reaches the drawn geometry). Ours works
+ * because the canonical sq1 id space is piece-keyed (mask-core header): the
+ * tnoodle state carries piece ids through every move, so both `sq1-svg.ts`
+ * (2D) and the engine companion (stickerKey) gray piece-followingly. The sr
+ * iso render still can't mask sq1 — `srMaskSupported` stays false for it.
  *
  * The cube family is only derived for N = 2..7 — every other N (and any puzzle
  * with no table) returns null instead of silently pretending.
@@ -72,13 +74,14 @@ export function srMaskSupported(puzzle: PuzzleType): boolean {
 }
 
 /**
- * Whether the /sim engine companion mirror can take a mask. `cube` (NxN) needs no
- * derived table: its engine instance keys ARE canonical sids (see toEngineMask),
- * so masking is an identity match against `userData.schematicInstanceKeys`. Every
- * other puzzle needs a geometry-derived direct map in ENGINE_SID_MAP.
+ * Whether the /sim engine companion mirror can take a mask. `cube` (NxN) and
+ * `sq1` need no derived table: their engine sticker keys ARE canonical sids
+ * (NxN via `schematicInstanceKeys`, sq1 via build-time `stickerKey` — see
+ * toEngineMask), so masking is an identity match. Every other puzzle needs a
+ * geometry-derived direct map in ENGINE_SID_MAP.
  */
 export function engineMaskSupported(puzzle: PuzzleType): boolean {
-  return puzzle === 'cube' || puzzle in ENGINE_SID_MAP;
+  return puzzle === 'cube' || puzzle === 'sq1' || puzzle in ENGINE_SID_MAP;
 }
 
 /**
@@ -90,10 +93,11 @@ export function engineMaskSupported(puzzle: PuzzleType): boolean {
 export function toEngineMask(
   puzzle: PuzzleType, ids: Iterable<StickerId>,
 ): Set<string> | undefined {
-  // NxN:引擎贴纸实例的 key 直接就是 canonical sid(`${U|R|F|D|L|B}${netIndex}`,
-  // instanced.ts 的 engineHomeSid),故恒等透传 —— 不需要也没有派生表。拼图上不存在
-  // 的 sid 留着无害(导出器 has() 永不命中,与非 cube 分支的静默跳过同宽容度)。
-  if (puzzle === 'cube') return new Set(ids);
+  // NxN 与 sq1:引擎贴纸 key 直接就是 canonical sid(NxN 是 instanced.ts 的
+  // engineHomeSid;sq1 是 sq1Geometry 建构时烙的 stickerKey),故恒等透传 ——
+  // 不需要也没有派生表。拼图上不存在的 sid 留着无害(导出器 has() 永不命中,
+  // 与非 cube 分支的静默跳过同宽容度)。
+  if (puzzle === 'cube' || puzzle === 'sq1') return new Set(ids);
   const table = ENGINE_SID_MAP[puzzle];
   if (!table) return undefined;
   const out = new Set<string>();

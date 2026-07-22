@@ -10,6 +10,7 @@
  * when slice is solved, back color otherwise).
  */
 import { applySq1Scramble, type Sq1State } from '@cuberoot/shared/sq1-notation';
+import type { MaskRenderOptions } from '@/lib/puzzle-image/mask-core';
 
 export const SQ1_FACE_KEYS = ['L', 'B', 'R', 'F', 'U', 'D'] as const;
 export type Sq1FaceKey = typeof SQ1_FACE_KEYS[number];
@@ -74,10 +75,27 @@ function cornerPolys(r: number): string[] {
   ];
 }
 
+/**
+ * Canonical sticker id for a piece's drawn poly index (mask-core sq1 空间,
+ * piece 本位:面 U0-7 / D8-15 / SA0-15 / SB{corner} / M0-5,单一源 = 引擎
+ * `sq1Geometry.pieceFaces()` 的 sideA/sideB 命名)。
+ *
+ * poly[0] = 顶/底面贴纸 → `U{p}`(top 层)/ `D{p}`(bottom 层,index=全局 piece id)。
+ * 侧贴纸:getPieceColors 在 bottom 层交换过 a/b(视觉镜像),而引擎 pieceFaces
+ * 不换(几何靠 pivot.scale.y=−1 镜像)—— 所以 top 层 poly[1]↔SA poly[2]↔SB,
+ * bottom 层 poly[1]↔SB poly[2]↔SA(edge 无 swap,两层 poly[1] 都是 SA)。
+ * equator 两矩形不发 id(tnoodle 2D 本就不逐贴纸画中层;M0-5 走引擎伴图)。
+ */
+function pieceStickerSid(piece: number, polyIdx: number): string {
+  if (polyIdx === 0) return piece <= 7 ? `U${piece}` : `D${piece}`;
+  if (!isCornerPiece(piece) || piece <= 7) return polyIdx === 1 ? `SA${piece}` : `SB${piece}`;
+  return polyIdx === 1 ? `SB${piece}` : `SA${piece}`; // bottom corner: swapped
+}
+
 /** Walk the 12-slot face array, drawing each piece + advancing rotation by piece span. */
 function drawFace(
   parts: string[], face: number[], cx: number, cy: number,
-  startAngle: number, scheme: string[],
+  startAngle: number, scheme: string[], opts?: MaskRenderOptions,
 ): void {
   let angle = startAngle;
   let ch = 0;
@@ -90,8 +108,13 @@ function drawFace(
     const colors = getPieceColors(piece, scheme);
     // Tnoodle iterates colors high-index → low so side2/side1 paint before main.
     for (let i = colors.length - 1; i >= 0; i--) {
+      // Mask 语义 = piece-following 免费获得:face 数组携带 piece id 随打乱走,
+      // sid 是 solved 帧命名,灰化自动跟块。
+      const sid = pieceStickerSid(piece, i);
+      const fill = opts?.mask?.ids.has(sid) ? opts.mask.color : colors[i];
+      const sidAttr = opts?.stickerIds ? ` data-sid="${sid}"` : '';
       parts.push(
-        `<path d="${polys[i]}" fill="${colors[i]}" stroke="#000" stroke-width="${STROKE_WIDTH}" stroke-linejoin="round" transform="translate(${cx},${cy}) rotate(${angle})" />`,
+        `<path d="${polys[i]}"${sidAttr} fill="${fill}" stroke="#000" stroke-width="${STROKE_WIDTH}" stroke-linejoin="round" transform="translate(${cx},${cy}) rotate(${angle})" />`,
       );
     }
     angle += 30 * (corner ? 2 : 1);
@@ -99,7 +122,7 @@ function drawFace(
   }
 }
 
-export function renderSq1Svg(state: Sq1State, colors: Record<string, string>): string {
+export function renderSq1Svg(state: Sq1State, colors: Record<string, string>, opts?: MaskRenderOptions): string {
   const { pieces, sliceSolved } = state;
   const scheme: string[] = SQ1_FACE_KEYS.map(
     (k) => colors[k] ?? DEFAULT_SQ1_COLORS[k],
@@ -125,14 +148,14 @@ export function renderSq1Svg(state: Sq1State, colors: Record<string, string>): s
   parts.push(`<rect x="${leftX}" y="${midY}" width="${cornerWidth}" height="${equatorH}" fill="none" stroke="#000" stroke-width="${STROKE_WIDTH}" />`);
 
   // Top face — initial rotation 90+15° puts piece 0 at the bottom-left going CW.
-  drawFace(parts, pieces.slice(0, 12), W / 2, H / 4, 90 + 15, scheme);
+  drawFace(parts, pieces.slice(0, 12), W / 2, H / 4, 90 + 15, scheme, opts);
   // Bottom face — mirrored angle.
-  drawFace(parts, pieces.slice(12, 24), W / 2, 3 * H / 4, -(90 + 15), scheme);
+  drawFace(parts, pieces.slice(12, 24), W / 2, 3 * H / 4, -(90 + 15), scheme, opts);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" stroke-linecap="round" style="width:100%;height:100%">${parts.join('')}</svg>`;
 }
 
 /** Convenience: scramble string + colors → final SVG. */
-export function renderSq1ScrambleSvg(scramble: string, colors: Record<string, string>): string {
-  return renderSq1Svg(applySq1Scramble(scramble), colors);
+export function renderSq1ScrambleSvg(scramble: string, colors: Record<string, string>, opts?: MaskRenderOptions): string {
+  return renderSq1Svg(applySq1Scramble(scramble), colors, opts);
 }

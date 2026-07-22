@@ -30,6 +30,7 @@ import { SkewbState, skewbStickerId, SKEWB_FACE_LABELS } from '@/app/[lang]/scra
 import { megaSolvedState, megaTurnFace, megaStickerId, MEGA_FACE_NAMES } from '@/app/[lang]/scramble/gen/_svg/mega_svg';
 import { doslice } from '@/app/[lang]/scramble/gen/_svg/nnn_sim';
 import { cubeStickerIdFromPosit, CUBE_FACE_LETTERS } from '@/app/[lang]/scramble/gen/_svg/cube_unfolded_svg';
+import { isCornerPiece as sq1IsCorner } from '@/app/[lang]/sim/engine/sq1/sq1Geometry';
 import { PyraminxSimulator } from '@cuberoot/vendor-sr-puzzlegen/simulator/pyraminx/pyraminxSimulator';
 import { SkewbSimulator } from '@cuberoot/vendor-sr-puzzlegen/simulator/skewb/skewbSimulator';
 import { MegaminxSimulator } from '@cuberoot/vendor-sr-puzzlegen/simulator/megaminx/megaminxSimulator';
@@ -160,6 +161,23 @@ export function derivePieceGroups(p: PuzzlePerms): string[][] {
   }
   const groups = [...buckets.values()].map((g) => g.map(p.id).sort());
   groups.sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
+  return groups;
+}
+
+// ─── sq1(piece 本位空间;组 = 定义自身,不走 fingerprint)──────────────────
+//
+// sq1 的 canonical sid 直接编码 piece id(mask-core 头注:U0-7 / D8-15 / SA / SB /
+// M0-5),分组不需要生成器指纹 —— 层转以 piece 为单位置换(sq1State 的 24 槽携带
+// piece id),贴纸↔piece 归属在建构里固定。单一源:引擎 `sq1Geometry` 的
+// isCornerPiece(sideA/sideB 命名也从它的 pieceFaces 出)。
+export function sq1PieceGroups(): string[][] {
+  const groups: string[][] = [];
+  for (let p = 0; p <= 15; p++) {
+    const g = [p <= 7 ? `U${p}` : `D${p}`, `SA${p}`];
+    if (sq1IsCorner(p)) g.push(`SB${p}`);
+    groups.push(g);
+  }
+  groups.push(['M0', 'M1', 'M2'], ['M3', 'M4', 'M5']); // equator big / small halves
   return groups;
 }
 
