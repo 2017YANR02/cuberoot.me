@@ -18,10 +18,11 @@
  *   衬底的三轮症状(错位 / 半透明叠加 / 格点圆角缺口连成波浪,2026-07-22 用户
  *   连抓三次)在此结构性不存在。
  *
- *   面板「等距内缩 + 同色 round-join 描边」:墨迹外缘只比真实轮廓胖 0.5px(封住
- *   面与面棱上的抗锯齿细缝,经典 SVG 邻接缝补法),而面的外角被磨成圆角 —— 角块
- *   不是数学尖角(对应 vc renderCubeOutline ×0.94 + stroke 0.1 round,见
- *   cornerRound)。圆角只发生在轮廓上,与 vc 一致。
+ *   面板「朝投影中心等比缩 + 同色 round-join 描边」(照抄 vc renderCubeOutline 的
+ *   ×0.94 + stroke 0.1 round):墨迹外缘落回真实轮廓附近(封住面与面棱上的抗锯齿
+ *   细缝),面的外角被磨成圆角 —— 角块不是数学尖角(见 cornerRound)。等比缩的
+ *   拉入量与角的锐钝无关,掠射角的尖角面板不会塌角(等距偏移会,2026-07-22 实测)。
+ *   圆角只发生在轮廓上,与 vc 一致。
  *
  * 相机 / 状态直接取引擎 world → 任意视角精确跟随左侧 3D(sr 的 SR_ANGLE_BASE
  * 手工标定层在此路线不存在)。
@@ -45,58 +46,6 @@
 import * as THREE from 'three';
 import type World from './engine/world';
 import { clipPolyByPlane, hexOf, fmt } from './sim_svg_export';
-
-/**
- * 凸多边形等距内缩 d(扁平 xy)—— 逐边沿**内法向**平移 d,再求相邻偏移边的交点。
- * 内法向按「指向质心」判定(小面均为凸形,质心必在内部),与顶点绕向无关。
- * 缩到自交 / 边近乎平行 / 面积翻号即返回 null,由调用方退回不缩的路径。
- *
- * 不用「朝质心等比缩」:那对长条小面的窄边缩得不够、宽边缩过头,做不到"墨迹正好
- * 落回原轮廓"这个前提。
- */
-function offsetInward(pts: number[], d: number): number[] | null {
-  const n = pts.length / 2;
-  if (n < 3 || !(d > 0)) return null;
-  let cx = 0, cy = 0;
-  for (let i = 0; i < pts.length; i += 2) { cx += pts[i]; cy += pts[i + 1]; }
-  cx /= n; cy /= n;
-
-  // 每条边偏移后的一点 + 方向。
-  const lines: { px: number; py: number; dx: number; dy: number }[] = [];
-  for (let i = 0; i < n; i++) {
-    const ax = pts[i * 2], ay = pts[i * 2 + 1];
-    const bx = pts[((i + 1) % n) * 2], by = pts[((i + 1) % n) * 2 + 1];
-    let ex = bx - ax, ey = by - ay;
-    const len = Math.hypot(ex, ey);
-    if (!(len > 1e-9)) return null;
-    ex /= len; ey /= len;
-    let nx = -ey, ny = ex;                                   // 一侧法向
-    if (nx * (cx - ax) + ny * (cy - ay) < 0) { nx = -nx; ny = -ny; } // 翻到朝内那侧
-    lines.push({ px: ax + nx * d, py: ay + ny * d, dx: ex, dy: ey });
-  }
-
-  const out: number[] = [];
-  for (let i = 0; i < n; i++) {
-    const a = lines[(i + n - 1) % n], b = lines[i];          // 顶点 i = 前一条边 ∩ 本条边
-    const det = a.dx * b.dy - a.dy * b.dx;
-    if (Math.abs(det) < 1e-9) return null;                   // 近乎平行,交点不可靠
-    const t = ((b.px - a.px) * b.dy - (b.py - a.py) * b.dx) / det;
-    out.push(a.px + a.dx * t, a.py + a.dy * t);
-  }
-
-  // 缩过头会自交:面积符号翻转或塌缩即判失败。
-  const area2 = (p: number[]): number => {
-    let s = 0;
-    for (let i = 0; i < p.length; i += 2) {
-      const j = (i + 2) % p.length;
-      s += p[i] * p[j + 1] - p[j] * p[i + 1];
-    }
-    return s;
-  };
-  const a0 = area2(pts), a1 = area2(out);
-  if (!(a0 * a1 > 0) || Math.abs(a1) < Math.abs(a0) * 0.05) return null;
-  return out;
-}
 
 /** 凸包(Andrew 单调链),入参/出参均为扁平 xy。共线点剔除:eps 取 1e-3(px² 量纲;
  *  晶格点共线的叉积误差 ~1e-6,真转角的叉积按面积量级为百千 —— 中间隔 6 个数量级)。 */
@@ -144,10 +93,10 @@ export interface SchematicSvgExportOptions {
   /** 背景色;默认 null = 透明。 */
   background?: string | null;
   /** 外轮廓圆角量 = 面板 round-join 描边宽占整体包围盒长边的比例(圆角半径 = 其半;
-   *  面板先等距内缩同样的量,墨迹范围不变 —— 见实现处注释)。visualcube 的外框走
-   *  `renderCubeOutline` + 分组 `stroke-width=0.1 stroke-linejoin=round`,那条圆角
-   *  接合就是它角块不锐利的来源。默认 0.0661 = vc 的 0.05 ÷ 它默认视角下的包围盒
-   *  半长边 0.7568。0 = 退回 1px 封缝描边,纯锐角。 */
+   *  面板先朝投影中心等比缩同样的量,墨迹落回轮廓 —— 见实现处注释)。visualcube 的
+   *  外框走 `renderCubeOutline` ×0.94 + 分组 `stroke-width=0.1 stroke-linejoin=round`,
+   *  那条圆角接合就是它角块不锐利的来源。默认 0.0661 = vc 的 0.05 ÷ 它默认视角下的
+   *  包围盒半长边 0.7568。0 = 退回 1px 封缝描边,纯锐角。 */
   cornerRound?: number;
   /** 贴纸遮罩(mask 直映):`userData.stickerKey ∈ keys` 的小面填 color(sr
    *  applyMask 的灰化语义;衬底/网格不动)。key 表见
@@ -351,10 +300,10 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
   const span = facelets.length > 0 ? Math.max(fx1 - fx0, fy1 - fy0) : 0;
 
   // ── 面板(vc renderCubeOutline):小面按世界平面分组,组投影顶点的凸包 = 整面 ──
-  // 外轮廓圆角:面板等距内缩 (roundW−1)/2 再描 roundW(round-join)—— 墨迹外缘落在
-  // 真实轮廓外 0.5px(封面与面棱上的抗锯齿缝),面的外角被磨成半径 roundW/2 的圆弧。
-  // 圆角只存在于面板外角(= 拼图轮廓),面板内部没有转角 —— 逐小面衬底时代的格点
-  // 圆角缺口(波浪)在此结构性不存在。
+  // 外轮廓圆角:面板朝投影中心等比缩(见 plateCore)再描 roundW(round-join)——
+  // 墨迹外缘落回真实轮廓附近(封面与面棱上的抗锯齿缝),面的外角被磨成半径
+  // roundW/2 的圆弧。圆角只存在于面板外角(= 拼图轮廓),面板内部没有转角 ——
+  // 逐小面衬底时代的格点圆角缺口(波浪)在此结构性不存在。
   const roundW = Math.max(1, (opts.cornerRound ?? 0.0661) * span);
   interface Plate { pts: number[]; body: string; z: number; solo: Facelet[] | null }
   const plateGroups = new Map<string, Facelet[]>();
@@ -393,13 +342,32 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
     }
     return out.sort((a, b) => a.z - b.z); // 远 → 近,与小面同序
   };
+  // 面板内缩 = **朝全局投影中心等比缩放**(照抄 vc renderCubeOutline 的 ×0.94):
+  // 拉入量 = (w/2)·R/Rmax ≤ w/2,与角的锐钝无关。**不能用等距偏移**:等距偏移在
+  // 锐角上的拉入量是 d/sin(θ/2),掠射角投影的面板角非常尖,会被拉进十几 px,描边
+  // 半径补不回来 → 角上缺一大块墨迹,背面贴纸从缺口裸露 / 正面贴纸尖角戳出轮廓
+  // (2026-07-22 用户抓的右上角)。缩放中心 = 整体包围盒中心(vc 的 viewbox 原点即
+  // 它的投影中心,同物);面板逐「面」而贴纸不缩 —— 与 vc 完全同构。
+  const gcx = (fx0 + fx1) / 2, gcy = (fy0 + fy1) / 2;
+  const plateCore = (hull: number[]): number[] | null => {
+    let rmax = 0;
+    for (let i = 0; i < hull.length; i += 2) {
+      rmax = Math.max(rmax, Math.hypot(hull[i] - gcx, hull[i + 1] - gcy));
+    }
+    if (rmax <= roundW) return null; // 面板贴着中心,缩不动 → 退 1px 锐角
+    const k = 1 - (roundW / 2) / rmax;
+    const out: number[] = [];
+    for (let i = 0; i < hull.length; i += 2) {
+      out.push(gcx + (hull[i] - gcx) * k, gcy + (hull[i + 1] - gcy) * k);
+    }
+    return out;
+  };
   const plateOf = (p: Plate): string => {
     if (p.solo) {
       return p.solo.map((f) =>
         `<path d="${dOf(f.pts)}" fill="${f.body}" stroke="${f.body}" stroke-width="1" stroke-linejoin="round"/>`).join('');
     }
-    // 偏移失败(面板太小 / 退化)→ 原样 1px 封缝描边,只是不圆角,不出错。
-    const core = roundW > 1 ? offsetInward(p.pts, (roundW - 1) / 2) : null;
+    const core = roundW > 1 ? plateCore(p.pts) : null;
     return `<path d="${dOf(core ?? p.pts)}" fill="${p.body}" stroke="${p.body}"`
       + ` stroke-width="${fmt(core ? roundW : 1)}" stroke-linejoin="round"/>`;
   };
