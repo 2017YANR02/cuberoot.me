@@ -253,7 +253,6 @@
   font-size: 12px;
   line-height: 1;
 }
-.sim-bg-overlay-label { white-space: nowrap; }
 /* 当前色块在固定深底上:描白边才不糊(设置面板那条 .sim-color-select-trigger
    .sim-swatch-box{border:--border-strong} 跟主题,深底上会隐身)。 */
 .sim-bg-overlay .sim-color-select-trigger .sim-swatch-box {

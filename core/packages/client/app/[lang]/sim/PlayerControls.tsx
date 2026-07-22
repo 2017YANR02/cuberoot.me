@@ -2698,9 +2698,9 @@ function PuzzleSettings({
   // 背景(BG)选择器:复用内核色那套弹出色块选择器(SwatchPopup),trigger 显当前
   // 背景,点开弹 5 档可视色块。原先埋在设置面板开关行,现 portal 到画布左下角浮层
   // (.sim-bg-overlay),贴着大图 —— 背景是画布属性,控件搬到画布上更直觉。
+  // 只留色块,不带文字标签 —— 色块本身就说明是什么(title 兜 a11y / 悬停提示)。
   const bgSelector = (
     <>
-      <span className="sim-bg-overlay-label">{t('背景', 'BG')}</span>
       <SwatchPopup
         title={t('背景', 'Background')}
         trigger={<span className={`sim-swatch-box sim-bg-box--${settings.boardBg}`} />}
