@@ -17,6 +17,7 @@
     "test:slow": "node scripts/test-slow.mjs",
     "test:solvers": "node scripts/test-solvers.mjs",
     "audit:overflow": "node scripts/mobile-overflow-audit.cjs",
+    "audit:svg": "node scripts/audit-sim-svg.mjs",
     "lint": "eslint ."
   },
   "dependencies": {
