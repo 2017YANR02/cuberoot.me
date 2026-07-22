@@ -490,6 +490,18 @@ export default function SimPage() {
     persistItem('sim.img.outline', String(imgOutline));
   }, [imgOutline]);
 
+  // 伴图渲染器:'engine' = 我们的引擎镜像(默认),'vc' = 落回 spec 渲染器(cube 即
+  // visualcube 本体)。浮层左上角的小钮切换,两条路线都留着,随时对着看。
+  // niche 外观偏好,走 localStorage(同 sim.img.outline,非 URL)。
+  const [imgSource, setImgSource] = useState<'engine' | 'vc'>(() => {
+    if (typeof window === 'undefined') return 'engine';
+    try { return localStorage.getItem('sim.img.source') === 'vc' ? 'vc' : 'engine'; } catch { return 'engine'; }
+  });
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    persistItem('sim.img.source', imgSource);
+  }, [imgSource]);
+
   // 交换主图 ↔ 伴图(伴图铺满画布、实时 3D 缩进左上小框)。观察偏好,走 localStorage。
   // 交换态下渲染器/world 真调到小框尺寸(resize 闭包读 imgSwapRef;CSS 只钉显示位),
   // 否则 Toucher 的像素坐标与射线拾取对不上,小框里没法拖。
@@ -2060,6 +2072,20 @@ export default function SimPage() {
             {/* 交换主图 ↔ 伴图:与背面小窗右下角的交换钮同款。开着时伴图铺满画布、
                 实时 3D 缩进左上小框(纯 CSS 换位,见 .sim-canvas-wrap--imgswap)。
                 net 视图没有可缩的主 3D → 不给按钮。 */}
+            {/* 伴图渲染器切换 —— 左上内角,与右上关闭钮同族。引擎镜像 ↔ spec 渲染器
+                (cube 即 visualcube 本体);对照模式两份都在画,这钮无意义 → 不给。
+                engine-only 拼图没有 spec 渲染器可落 → 也不给。 */}
+            {!imageStudioEngineOnly && imgEngineMode !== 'both' && (
+              <button
+                type="button"
+                className="sim-float-close sim-image-source"
+                onClick={() => setImgSource((v) => (v === 'vc' ? 'engine' : 'vc'))}
+                aria-pressed={imgSource === 'vc'}
+                title={t('伴图渲染器:引擎 / visualcube', 'Companion renderer: engine / visualcube')}
+              >
+                {imgSource === 'vc' ? 'VC' : t('引擎', 'ENG')}
+              </button>
+            )}
             {!netMode && (
               <button
                 type="button"
@@ -2224,6 +2250,7 @@ export default function SimPage() {
             outlineWidth={engineSchematic ? imgOutline : undefined}
             onOutlineWidthChange={setImgOutline}
             compare={imgEngineMode === 'both'}
+            preferSpecRender={imgSource === 'vc'}
           />
           {/* Group-theory panel = the visible half of the non-cubing.js view. Shows for any
               PG-bound puzzle that isn't on cubing.js. Pure-engine PG puzzles (dino/heli/NxN)
