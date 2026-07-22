@@ -1830,10 +1830,13 @@ export default function SimPage() {
       if (++frame % 8 !== 0) return; // ~7.5Hz 采样
       const world = worldRef.current;
       if (world) {
-        // 平面视图(net;后续 wca/plan 同路)——NxN 展开图从 cube.serialize() 逻辑态
+        // 平面视图(net / wca;后续 plan 同路)——NxN 展开图从 cube.serialize() 逻辑态
         // 直出,不走 3D 投影的静止采样(逻辑态即时、无相机)。签名 = 序列化串,复原
         // 帧作标的遮罩天然随打乱携带。视图/配色变由 effect 重跑(重置 exportedSig)。
-        if (typeof world.puzzleKind === 'number' && imgSpec.cubeView === 'net') {
+        // wca(记分表)= tnoodle 风格平面,cube 侧与 net 同一展开图(render.ts:两者同
+        // 出 renderUnfoldedSvg),故复用同一导出器。
+        if (typeof world.puzzleKind === 'number'
+          && (imgSpec.cubeView === 'net' || imgSpec.cubeView === 'wca')) {
           const nxn = world.cube as Cube;
           const serialized = nxn.serialize();
           const sig = 'net|' + nxn.order + '|' + serialized;
