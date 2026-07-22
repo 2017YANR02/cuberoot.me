@@ -29,6 +29,7 @@ import {
 } from '@/app/[lang]/sim/engine/sq1/sq1Geometry';
 import { solvedSq1 } from '@/app/[lang]/sim/engine/sq1/sq1State';
 import { CUBE_FILL } from '@/lib/cube-colors';
+import { auditSchematicSvg, cornerMismatches } from './_svg_invariants.mjs';
 
 function buildPyraScene(): THREE.Scene {
   const scene = new THREE.Scene();
@@ -229,7 +230,9 @@ describe('exportSimSvgSchematic', () => {
     expect(w).toBeGreaterThan(1); // 真圆角
 
     // 等比缩不变量:圆角面板顶点在「投影中心 → 锐角面板顶点」线段上,拉入量
-    // = (w/2)·R/Rmax(与角的锐钝无关 —— 等距偏移在掠射尖角上塌角,已废)。
+    // = (w/2)·R/Rglobal,**系数全图唯一**(vc 对所有面都是同一个 0.94)。逐面各按
+    // 自己的 rmax 归一会让相邻面共享的轮廓顶点缩到两个位置 → 描边圆弧圆心错开 →
+    // 角上叠出双弧凸起(normal 视图 UFL/DFR bug,2026-07-22)。
     const rawPts = backingDs(sharp).map(ptsOf);
     const corePts = backingDs(svg).map(ptsOf);
     expect(rawPts.length).toBe(2);
@@ -237,11 +240,11 @@ describe('exportSimSvgSchematic', () => {
     const all = rawPts.flat();
     const gcx = (Math.min(...all.map((p) => p[0])) + Math.max(...all.map((p) => p[0]))) / 2;
     const gcy = (Math.min(...all.map((p) => p[1])) + Math.max(...all.map((p) => p[1]))) / 2;
+    const rG = Math.max(...all.map((p) => Math.hypot(p[0] - gcx, p[1] - gcy)));
+    const k = 1 - (w / 2) / rG;
     for (let i = 0; i < rawPts.length; i++) {
       const raw = rawPts[i], core = corePts[i];
       expect(core.length).toBe(raw.length);
-      const rmax = Math.max(...raw.map((p) => Math.hypot(p[0] - gcx, p[1] - gcy)));
-      const k = 1 - (w / 2) / rmax;
       for (let j = 0; j < raw.length; j++) {
         expect(core[j][0]).toBeCloseTo(gcx + (raw[j][0] - gcx) * k, 1);
         expect(core[j][1]).toBeCloseTo(gcy + (raw[j][1] - gcy) * k, 1);
@@ -256,63 +259,46 @@ describe('exportSimSvgSchematic', () => {
 
   it('覆盖不变量(本轮 bug 的总闸):任何贴纸墨迹不越出面板墨迹;隐藏贴纸必被可见面板蒙住', () => {
     // 斜掠视角 + X 光 —— 等距偏移塌角 / toFixed 拆组 / 逐小面缺口全都在此配置下
-    // 露过馅(2026-07-22 用户连抓)。对每张贴纸密集采样,逐点断言落在对应面板
-    // 墨迹(核多边形 ⊕ 描边半径圆盘)之内。
+    // 露过馅(2026-07-22 用户连抓)。判据实现在 tests/_svg_invariants.mjs(与
+    // scripts/audit-sim-svg.mjs 现抓复判共用同一份):对每张贴纸密集采样,逐点断言
+    // 落在面板墨迹(核多边形 ⊕ 描边半径圆盘)之内。
     const scene = new THREE.Scene();
     scene.add(new Cube(3));
     const world = worldFor(scene, new THREE.Vector3(1, 0.35, 0.25), 470); // 掠射:侧面投影极尖
     const svg = exportSimSvgSchematic({ world, showHidden: true, bodyOpacity: 50, inset: 0.15 });
 
-    // 文档序拆层:隐藏贴纸 | g(隐藏面板) | g(可见面板) | 可见贴纸
-    const m = svg.match(/^(.*?)<g opacity="[^"]*">(.*?)<\/g><g opacity="[^"]*">(.*?)<\/g>(.*)$/s)!;
-    expect(m).not.toBeNull();
-    const plates = (seg: string): { pts: [number, number][]; w: number }[] =>
-      [...seg.matchAll(/<path d="([^"]+)" fill="#\w+" stroke="#\w+" stroke-width="([\d.]+)"/g)]
-        .map((x) => ({ pts: ptsOf(x[1]), w: Number(x[2]) }));
-    const hidPl = plates(m[2]), visPl = plates(m[3]);
-    const hidSt = faceletDs(m[1]).map(ptsOf), visSt = faceletDs(m[4]).map(ptsOf);
-    expect(hidPl.length).toBe(3);
-    expect(visPl.length).toBe(3);
-    expect(hidSt.length).toBe(27);
-    expect(visSt.length).toBe(27);
+    const { pass, checks, doc } = auditSchematicSvg(svg);
+    expect(doc.plateRuns.map((r) => r.length)).toEqual([3, 3]); // 隐藏面板 3 + 可见面板 3
+    expect(doc.hiddenStickers.length).toBe(27);
+    expect(doc.visibleStickers.length).toBe(27);
+    expect(checks.filter((c) => !c.pass)).toEqual([]);
+    expect(pass).toBe(true);
+  });
 
-    /** 点到多边形的带符号距离(内负外正,近似:边距 + 射线法内外)。 */
-    const sd = (poly: [number, number][], x: number, y: number): number => {
-      let inside = false, mind = Infinity;
-      for (let i = 0; i < poly.length; i++) {
-        const [ax, ay] = poly[i], [bx, by] = poly[(i + 1) % poly.length];
-        if (ay > y !== by > y && x < ((bx - ax) * (y - ay)) / (by - ay) + ax) inside = !inside;
-        const dx = bx - ax, dy = by - ay, L2 = dx * dx + dy * dy;
-        const t = L2 > 0 ? Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / L2)) : 0;
-        mind = Math.min(mind, Math.hypot(x - (ax + dx * t), y - (ay + dy * t)));
-      }
-      return inside ? -mind : mind;
-    };
-    const covered = (pl: { pts: [number, number][]; w: number }[], x: number, y: number): boolean =>
-      pl.some((p) => sd(p.pts, x, y) <= p.w / 2 + 0.05);
-    /** 三角扇网格采样贴纸内部与边缘。 */
-    const samples = (poly: [number, number][]): [number, number][] => {
-      const cx = poly.reduce((a, p) => a + p[0], 0) / poly.length;
-      const cy = poly.reduce((a, p) => a + p[1], 0) / poly.length;
-      const out: [number, number][] = [];
-      for (let i = 0; i < poly.length; i++) {
-        const [ax, ay] = poly[i], [bx, by] = poly[(i + 1) % poly.length];
-        for (let u = 0; u <= 4; u++) {
-          for (let v = 0; v + u <= 4; v++) {
-            const a = u / 4, b = v / 4, c = 1 - a - b;
-            out.push([cx * c + ax * a + bx * b, cy * c + ay * a + by * b]);
+  it('共享角顶点一致性(normal 视图 UFL/DFR 双弧凸起回归):内缩系数全图唯一', () => {
+    // 非对称视角下三个可见面各自的 rmax 不同 —— 若逐面归一化缩放系数,F 面与
+    // U/R 面共享的 UFL/DFR 轮廓顶点会缩到错开 ~0.5px 的两个位置,描边圆弧圆心
+    // 不重合,normal(不透明黑壳)下角上叠出肉眼可见的双弧黑凸起(2026-07-22)。
+    const scene = new THREE.Scene();
+    scene.add(new Cube(3));
+    const world = worldFor(scene, new THREE.Vector3(0.9, 0.55, 0.35), 470);
+    const svg = exportSimSvgSchematic({ world, inset: 0.15 }); // normal:不透明壳
+    const { doc } = auditSchematicSvg(svg);
+    expect(doc.plateRuns.map((r) => r.length)).toEqual([3]);
+    const mism = cornerMismatches(doc.plates);
+    expect(mism).toEqual([]);
+    // 且确实存在共享顶点(三面两两共享 2 个轮廓顶点 → 全等对 ≥ 6),不是空集空过
+    let shared = 0;
+    for (let a = 0; a < doc.plates.length; a++) {
+      for (let b = a + 1; b < doc.plates.length; b++) {
+        for (const p of doc.plates[a].pts) {
+          for (const q of doc.plates[b].pts) {
+            if (Math.hypot(p[0] - q[0], p[1] - q[1]) <= 0.02) shared++;
           }
         }
       }
-      return out;
-    };
-    const leak = (stickers: [number, number][][], pl: { pts: [number, number][]; w: number }[]): number => {
-      let n = 0;
-      for (const st of stickers) for (const [x, y] of samples(st)) if (!covered(pl, x, y)) n++;
-      return n;
-    };
-    expect(leak(visSt, [...hidPl, ...visPl])).toBe(0); // 可见贴纸不戳出面板墨迹
-    expect(leak(hidSt, visPl)).toBe(0);                // 隐藏贴纸全被可见面板蒙住(X 光纱)
+    }
+    expect(shared).toBeGreaterThanOrEqual(6);
   });
 
   it('背面剔除:背对相机的面(m=0 黄 / m=3 绿)不输出', () => {
