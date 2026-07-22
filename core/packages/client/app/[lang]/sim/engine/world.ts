@@ -2,7 +2,11 @@
 import Cube from "./nxn/cube";
 import { SIZE } from "./define";
 import * as THREE from "three";
-import Controller from "./nxn/controller";
+// headless 抽包边界(PLAN-sr-retirement Phase 1):交互层(指针 Controller、手 rig、
+// SMPL-X 资产 fetch)全部 client-only,World 只留 `import type` + 注入槽 —— 值层面
+// 零依赖,core 可整体进 headless 包。client 侧经 `worldInteraction.attachInteraction`
+// 注入 Controller;SimPage 另注入 handsFactory / smplxLoader(只有它有手/全身 UI)。
+import type Controller from "./nxn/controller";
 import Sq1Cube from "./sq1/Sq1Cube";
 import IvyCube from "./ivy/IvyCube";
 import DinoCube from "./dino/DinoCube";
@@ -16,8 +20,11 @@ import MegaminxCube from "./mega/MegaminxCube";
 import FtoCube from "./fto/FtoCube";
 import { APEX_UP_QUAT } from "./pyra/pyraGeometry";
 import FaceHints, { IVY_CORNER_HINTS, DINO_CORNER_HINTS, REDI_CORNER_HINTS, REX_CORNER_HINTS, HELI_EDGE_HINTS, SKEWB_CORNER_HINTS, PYRA_VERTEX_HINTS, MEGA_FACE_HINTS, FTO_FACE_HINTS } from "./face_hints";
-import HandsRig, { type HandsCubeLike } from "./hands/handsRig";
-import { loadSmplxFullBody } from "./hands/handModelMano";
+import type HandsRig from "./hands/handsRig";
+import type { HandsCubeLike } from "./hands/handsRig";
+
+/** SMPL-X 全身资产(loadSmplxFullBody 的返回形状;loader 由 client 注入)。 */
+export interface SmplxBodyAsset { geometry: THREE.BufferGeometry; heightM: number }
 
 /** Puzzle slot — NxN cube (order >= 1), SQ1, Ivy, Dino, Redi, Rex (corner-turning),
  *  Heli (edge-turning Helicopter Cube), Skewb (deep-cut corner-turning), or Pyraminx
@@ -74,7 +81,14 @@ export default class World {
   private smplxBodyWanted = false;
   private smplxBodyLoading = false;
 
-  public controller: Controller;
+  /** 指针交互控制器 —— client 经 attachInteraction 注入(headless 不注入,层转
+   *  逻辑照常走 twister/tweener)。definite-assignment:client 消费方(SimPage /
+   *  PlayerControls / SettingDrawer)一律在注入后访问。 */
+  public controller!: Controller;
+  /** 手 rig 工厂(client 注入;syncHands 惰性调用)。headless / 无手 UI 页不注入。 */
+  public handsFactory: (() => HandsRig) | null = null;
+  /** SMPL-X 全身资产 loader(client 注入;setSmplxBodyVisible 惰性调用)。 */
+  public smplxLoader: (() => Promise<SmplxBodyAsset>) | null = null;
 
   /** 方位指示器,拖动时淡入,挂在 scene 下跟随 scene.rotation。
    *  faceHints = 6 面字母(U/D/L/R/F/B,NxN/SQ1);ivyHints = Ivy 的 4 个角转
@@ -117,7 +131,6 @@ export default class World {
     this.camera.position.y = 0;
     this.camera.position.z = 0;
 
-    this.controller = new Controller(this);
     this.faceHints = new FaceHints();
     this.scene.add(this.faceHints);
     // Ivy: corner-turner — 4 twist-axis labels (R/L/D/B) at the corners, pushed a
@@ -184,7 +197,7 @@ export default class World {
       // SQ1: Controller reaches into cube.table.groups (NxN layer state) on
       // empty-space drag, which Sq1Cube doesn't have. Disable it; SimPage
       // installs a separate sq1 drag-rotate handler that updates this.cube.rotation.
-      this.controller.disable = true;
+      if (this.controller) this.controller.disable = true;
       this._ensureSq1Lights();
     } else if (kind === 'ivy') {
       if (this.ivyCube == null) {
@@ -194,7 +207,7 @@ export default class World {
       this.cube = this.ivyCube;
       // Like SQ1, Ivy has no NxN layer table; disable the NxN controller. SimPage
       // installs a whole-cube drag-rotate handler for it.
-      this.controller.disable = true;
+      if (this.controller) this.controller.disable = true;
       this._ensureSq1Lights(); // small oblique solid — reuse the wrap-around rig
     } else if (kind === 'dino') {
       if (this.dinoCube == null) {
@@ -205,7 +218,7 @@ export default class World {
       // Dino: same as SQ1 — the NxN Controller doesn't apply. SimPage installs a
       // dedicated dino drag-to-turn + view-rotate handler. Reuse the SQ1 rim-light
       // rig (Dino is a small object with many oblique tetra facets too).
-      this.controller.disable = true;
+      if (this.controller) this.controller.disable = true;
       this._ensureSq1Lights();
     } else if (kind === 'redi') {
       if (this.rediCube == null) {
@@ -216,7 +229,7 @@ export default class World {
       // Redi: corner-turning like Dino — the NxN Controller doesn't apply. SimPage
       // installs a dedicated redi drag-to-turn + view-rotate handler. Reuse the SQ1
       // rim-light rig (many oblique facets on the corner + edge pieces).
-      this.controller.disable = true;
+      if (this.controller) this.controller.disable = true;
       this._ensureSq1Lights();
     } else if (kind === 'rex') {
       if (this.rexCube == null) {
@@ -227,7 +240,7 @@ export default class World {
       // Rex: corner-turning (deep-cut FTO) — NxN Controller doesn't apply. SimPage
       // installs a dedicated rex drag-to-turn + view-rotate handler. Reuse the SQ1
       // rim-light rig (42 CSG pieces with many oblique curved facets).
-      this.controller.disable = true;
+      if (this.controller) this.controller.disable = true;
       this._ensureSq1Lights();
     } else if (kind === 'heli') {
       if (this.heliCube == null) {
@@ -238,7 +251,7 @@ export default class World {
       // Heli: edge-turning (Helicopter Cube) — NxN Controller doesn't apply. SimPage
       // installs a dedicated heli drag-to-turn + view-rotate handler. Reuse the SQ1
       // rim-light rig (32 solid wedge pieces with many oblique facets).
-      this.controller.disable = true;
+      if (this.controller) this.controller.disable = true;
       this._ensureSq1Lights();
     } else if (kind === 'gear') {
       if (this.gearCube == null) {
@@ -249,7 +262,7 @@ export default class World {
       // Gear: geared 180° face flips — NxN Controller doesn't apply. SimPage installs
       // a dedicated gear drag-to-turn + view-rotate handler (corner-gesture registry).
       // Reuse the SQ1 rim-light rig (toothed wheels with many oblique flanks).
-      this.controller.disable = true;
+      if (this.controller) this.controller.disable = true;
       this._ensureSq1Lights();
     } else if (kind === 'skewb') {
       if (this.skewbCube == null) {
@@ -260,7 +273,7 @@ export default class World {
       // Skewb: deep-cut corner-turning — NxN Controller doesn't apply. SimPage installs
       // a dedicated skewb drag-to-turn + view-rotate handler (corner-gesture registry).
       // Reuse the SQ1 rim-light rig (14 solid wedge pieces with many oblique facets).
-      this.controller.disable = true;
+      if (this.controller) this.controller.disable = true;
       this._ensureSq1Lights();
     } else if (kind === 'pyraminx') {
       if (this.pyraCube == null) {
@@ -271,7 +284,7 @@ export default class World {
       // Pyraminx: vertex-turning tetrahedron — NxN Controller doesn't apply. SimPage
       // installs a dedicated pyra drag-to-turn + view-rotate handler (corner-gesture
       // registry). Reuse the SQ1 rim-light rig (14 wedge pieces, many oblique facets).
-      this.controller.disable = true;
+      if (this.controller) this.controller.disable = true;
       this._ensureSq1Lights();
     } else if (kind === 'megaminx') {
       if (this.megaCube == null) {
@@ -282,7 +295,7 @@ export default class World {
       // Megaminx: face-turning dodecahedron — NxN Controller doesn't apply. SimPage
       // installs a dedicated mega drag-to-turn + view-rotate handler (corner-gesture
       // registry). Reuse the SQ1 rim-light rig (62 solid wedge pieces, many oblique facets).
-      this.controller.disable = true;
+      if (this.controller) this.controller.disable = true;
       this._ensureSq1Lights();
     } else if (kind === 'fto') {
       if (this.ftoCube == null) {
@@ -293,7 +306,7 @@ export default class World {
       // FTO: face-turning octahedron — NxN Controller doesn't apply. SimPage installs a
       // dedicated fto drag-to-turn + view-rotate handler (corner-gesture registry). Reuse
       // the SQ1 rim-light rig (51 solid wedge cells, many oblique facets).
-      this.controller.disable = true;
+      if (this.controller) this.controller.disable = true;
       this._ensureSq1Lights();
     } else if (kind === 'mirror') {
       if (this.mirrorCube == null) {
@@ -305,7 +318,7 @@ export default class World {
       // Mirror Cube IS a 3x3 — the NxN Controller applies unchanged (logical layer is
       // uniform; only the geometry is non-uniform), so no dedicated drag handler and
       // no rim-light rig (it's a full cube like NxN, not a small oblique solid).
-      this.controller.disable = false;
+      if (this.controller) this.controller.disable = false;
       this._removeSq1Lights();
     } else {
       if (this.cubes[kind] == undefined) {
@@ -314,7 +327,7 @@ export default class World {
         this.cubes[kind].instancedRenderer.thickness = true;
       }
       this.cube = this.cubes[kind];
-      this.controller.disable = false;
+      if (this.controller) this.controller.disable = false;
       this._removeSq1Lights();
     }
     this.puzzleKind = kind;
@@ -387,8 +400,8 @@ export default class World {
    *  手模 = MANO 独占(2026-07-11 内置 generic-hand 退役)。 */
   private syncHands(): void {
     const active = this.handsWanted && this.puzzleKind === 3;
-    if (active && this.hands == null) {
-      this.hands = new HandsRig();
+    if (active && this.hands == null && this.handsFactory) {
+      this.hands = this.handsFactory();
       this.hands.setFullBody(this.handsFullBodyWanted); // rig 晚于设置到位的回放
       this.scene.add(this.hands);
     }
@@ -415,9 +428,9 @@ export default class World {
   setSmplxBodyVisible(want: boolean): void {
     if (this.smplxBodyWanted === want) return;
     this.smplxBodyWanted = want;
-    if (want && this.smplxBody == null && !this.smplxBodyLoading) {
+    if (want && this.smplxBody == null && !this.smplxBodyLoading && this.smplxLoader) {
       this.smplxBodyLoading = true;
-      void loadSmplxFullBody()
+      void this.smplxLoader()
         .then(({ geometry, heightM }) => {
           // 平色近似手部肤色(比例核对用,不必烘贴图);光照同场景现有灯。
           const mat = new THREE.MeshStandardMaterial({ color: 0xd9af94, roughness: 0.8, metalness: 0 });

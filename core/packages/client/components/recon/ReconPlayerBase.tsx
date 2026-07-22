@@ -111,6 +111,7 @@ export default function ReconPlayerBase<M>({
     void (async () => {
       const THREE = await import('three');
       const { default: World } = await import('@/app/[lang]/sim/engine/world');
+      const { attachInteraction } = await import('@/app/[lang]/sim/worldInteraction');
       const wantBackView = adapterRef.current.backView;
       let mkBackView: ((px: number) => BackView) | null = null;
       if (wantBackView) {
@@ -124,6 +125,7 @@ export default function ReconPlayerBase<M>({
       if (!host) return;
 
       const world = new World();
+      attachInteraction(world); // controller 注入(原 World ctor 内联,headless 化后外置)
       adapterRef.current.setupPuzzle(world);
       // Orientation letters (U/D/L/R/F/B) — shown iff the back view is on (recon
       // submit forces both), hidden on the detail / SolutionView surfaces.
