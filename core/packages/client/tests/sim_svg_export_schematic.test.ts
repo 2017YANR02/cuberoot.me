@@ -165,9 +165,9 @@ describe('exportSimSvgSchematic', () => {
     // +z 视角可见面 m=1(红)m=2(蓝)
     expect(svg.toLowerCase()).toContain(CUBE_FILL.R.toLowerCase());
     expect(svg.toLowerCase()).toContain(CUBE_FILL.B.toLowerCase());
-    // 18 衬底:壳体色填充 + 同色 1px 封缝描边(旧凸包裁剪 + 外框 hack 已随
+    // 18 衬底:壳体色填充 + 同色封缝/圆角描边(旧凸包裁剪 + 外框 hack 已随
     // 描边模型退役 —— 衬底铺满外形,外轮廓天然是数学直线)
-    expect(svg.match(/fill="#000000" stroke="#000000" stroke-width="1"/g)?.length).toBe(18);
+    expect(svg.match(/fill="#000000" stroke="#000000" stroke-width="[\d.]+"/g)?.length).toBe(18);
     expect(svg).not.toContain('clipPath');
     // 贴纸缝:inset 后贴纸顶点离开晶格 → 与衬底顶点无一重合
     const lattice = clusterReps(backingVerts(svg));
@@ -187,10 +187,35 @@ describe('exportSimSvgSchematic', () => {
     const svg = exportSimSvgSchematic({
       world, bodyColor: '#333333', bodyOpacity: 40, stickerOpacity: 50,
     });
-    expect(svg.match(/fill="#333333" stroke="#333333" stroke-width="1"[^/]*opacity="0.4"/g)?.length).toBe(18);
+    expect(svg.match(/fill="#333333" stroke="#333333" stroke-width="[\d.]+"[^/]*opacity="0.4"/g)?.length).toBe(18);
     expect(svg.match(/opacity="0.5"/g)?.length).toBe(18); // 18 贴纸
     const opaque = exportSimSvgSchematic({ world });
     expect(opaque).not.toContain('opacity'); // 100% 时不冗余输出
+  });
+
+  it('外轮廓圆角:衬底缩 0.94 + round-join 粗描边(抄 visualcube,角块不锐利)', () => {
+    const world = makeWorld(buildPyraScene());
+    const svg = exportSimSvgSchematic({ world, inset: 0.15 });
+    expect(svg).toContain('stroke-linejoin="round"'); // 圆角接合 = 圆角的来源
+
+    // cornerRound:0 → 退回 1px 纯封缝描边(锐角);其衬底未缩,即真实小面包围盒。
+    const sharp = exportSimSvgSchematic({ world, inset: 0.15, cornerRound: 0 });
+    expect(sharp).toContain('stroke-width="1" stroke-linejoin="round"');
+    const raw = backingVerts(sharp);
+    const span = Math.max(
+      Math.max(...raw.map((p) => p[0])) - Math.min(...raw.map((p) => p[0])),
+      Math.max(...raw.map((p) => p[1])) - Math.min(...raw.map((p) => p[1])),
+    );
+    // 描边宽 = 0.0661 × 包围盒长边(vc 的 0.05 ÷ 默认视角半长边 0.7568)。
+    const w = Number(svg.match(/stroke-width="([\d.]+)" stroke-linejoin="round"/)![1]);
+    expect(w / span).toBeCloseTo(0.0661, 3);
+    expect(w).toBeGreaterThan(1); // 真圆角,不是旧的 1px 封缝
+
+    // 衬底确实被向包围盒中心缩了 0.94(缩放同心 → 邻块仍共点,只是整体小一圈)。
+    const shrunk = backingVerts(svg);
+    const sSpan = Math.max(...shrunk.map((p) => p[0])) - Math.min(...shrunk.map((p) => p[0]));
+    const rSpan = Math.max(...raw.map((p) => p[0])) - Math.min(...raw.map((p) => p[0]));
+    expect(sSpan / rSpan).toBeCloseTo(0.94, 2);
   });
 
   it('背面剔除:背对相机的面(m=0 黄 / m=3 绿)不输出', () => {
