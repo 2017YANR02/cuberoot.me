@@ -38,7 +38,7 @@
   ],
   "rows": [
     [
-      121,
+      122,
       "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
       "3x3x3 Cube",
       "[Cubing in Cill Chainnigh 2019](https://www.worldcubeassociation.org/competitions/CubinginCillChainnigh2019)",
@@ -136,17 +136,17 @@
       "[DFW Megacomp 2024](https://www.worldcubeassociation.org/competitions/DFWMegacomp2024)"
     ],
     [
-      71,
-      "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
-      "7x7x7 Cube",
-      "[SacCubing II 2017](https://www.worldcubeassociation.org/competitions/SacCubingII2017)",
+      72,
+      "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
+      "4x4x4 Cube",
+      "[Kubsala Winter 2023](https://www.worldcubeassociation.org/competitions/KubsalaWinter2023)",
       null
     ],
     [
       71,
-      "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
-      "4x4x4 Cube",
-      "[Kubsala Winter 2023](https://www.worldcubeassociation.org/competitions/KubsalaWinter2023)",
+      "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+      "7x7x7 Cube",
+      "[SacCubing II 2017](https://www.worldcubeassociation.org/competitions/SacCubingII2017)",
       null
     ],
     [
@@ -308,7 +308,7 @@
       "[Ahmet Çınar Ablak](https://www.worldcubeassociation.org/persons/2018ABLA01)",
       "4x4x4 Cube",
       "[Ankara Fall 2020](https://www.worldcubeassociation.org/competitions/AnkaraFall2020)",
-      null
+      "[WCA European Championship 2026](https://www.worldcubeassociation.org/competitions/Euro2026)"
     ],
     [
       54,
@@ -357,13 +357,20 @@
       "[Ahmet Çınar Ablak](https://www.worldcubeassociation.org/persons/2018ABLA01)",
       "3x3x3 Cube",
       "[Edukent Weekend 2022](https://www.worldcubeassociation.org/competitions/EdukentWeekend2022)",
-      null
+      "[WCA European Championship 2026](https://www.worldcubeassociation.org/competitions/Euro2026)"
     ],
     [
       53,
       "[Hassan Khanani](https://www.worldcubeassociation.org/persons/2018KHAN26)",
       "Square-1",
       "[Bethesda Summer Showdown 2024](https://www.worldcubeassociation.org/competitions/BethesdaSummerShowdown2024)",
+      null
+    ],
+    [
+      53,
+      "[Lingkun Jiang (姜凌坤)](https://www.worldcubeassociation.org/persons/2019JIAN54)",
+      "Pyraminx",
+      "[Chengdu Flash Cube Open 2023](https://www.worldcubeassociation.org/competitions/ChengduFlashCubeOpen2023)",
       null
     ],
     [
@@ -395,13 +402,6 @@
       "[WCA European Championship 2024](https://www.worldcubeassociation.org/competitions/Euro2024)"
     ],
     [
-      52,
-      "[Lingkun Jiang (姜凌坤)](https://www.worldcubeassociation.org/persons/2019JIAN54)",
-      "Pyraminx",
-      "[Chengdu Flash Cube Open 2023](https://www.worldcubeassociation.org/competitions/ChengduFlashCubeOpen2023)",
-      null
-    ],
-    [
       51,
       "[Vicenzo Guerino Cecchini](https://www.worldcubeassociation.org/persons/2015CECC01)",
       "Square-1",
@@ -420,7 +420,7 @@
       "[Ahmet Çınar Ablak](https://www.worldcubeassociation.org/persons/2018ABLA01)",
       "3x3x3 One-Handed",
       "[Edukent Weekend 2022](https://www.worldcubeassociation.org/competitions/EdukentWeekend2022)",
-      null
+      "[WCA European Championship 2026](https://www.worldcubeassociation.org/competitions/Euro2026)"
     ],
     [
       49,
@@ -455,7 +455,7 @@
       "[Ahmet Çınar Ablak](https://www.worldcubeassociation.org/persons/2018ABLA01)",
       "5x5x5 Cube",
       "[İzmir Open 2020](https://www.worldcubeassociation.org/competitions/IzmirOpen2020)",
-      null
+      "[WCA European Championship 2026](https://www.worldcubeassociation.org/competitions/Euro2026)"
     ],
     [
       47,
@@ -511,7 +511,7 @@
       "[Ahmet Çınar Ablak](https://www.worldcubeassociation.org/persons/2018ABLA01)",
       "Pyraminx",
       "[Qubes Don' Lie Bursa 2022](https://www.worldcubeassociation.org/competitions/QubesDonLieBursa2022)",
-      null
+      "[WCA European Championship 2026](https://www.worldcubeassociation.org/competitions/Euro2026)"
     ],
     [
       43,
@@ -563,6 +563,13 @@
       "[Steel City Sprint PA 2026](https://www.worldcubeassociation.org/competitions/SteelCitySprint2026)"
     ],
     [
+      43,
+      "[Kaique de Oliveira Neves](https://www.worldcubeassociation.org/persons/2022NEVE01)",
+      "2x2x2 Cube",
+      "[DNFools Boulevard 2023](https://www.worldcubeassociation.org/competitions/DNFoolsBoulevard2023)",
+      null
+    ],
+    [
       42,
       "[Przemysław Kaleta](https://www.worldcubeassociation.org/persons/2012KALE01)",
       "3x3x3 One-Handed",
@@ -575,13 +582,6 @@
       "2x2x2 Cube",
       "[Buccaneer Bonanza 2022](https://www.worldcubeassociation.org/competitions/BuccaneerBonanza2022)",
       "[ODU Big Blue Winter 2024](https://www.worldcubeassociation.org/competitions/ODUBigBlueWinter2024)"
-    ],
-    [
-      42,
-      "[Kaique de Oliveira Neves](https://www.worldcubeassociation.org/persons/2022NEVE01)",
-      "2x2x2 Cube",
-      "[DNFools Boulevard 2023](https://www.worldcubeassociation.org/competitions/DNFoolsBoulevard2023)",
-      null
     ],
     [
       41,
@@ -627,6 +627,13 @@
     ],
     [
       41,
+      "[Ryan Eckersley](https://www.worldcubeassociation.org/persons/2019ECKE02)",
+      "4x4x4 Blindfolded",
+      "[Rubik's UK Championship 2023](https://www.worldcubeassociation.org/competitions/RubiksUKChampionship2023)",
+      null
+    ],
+    [
+      41,
       "[Tomasz Pietruszka](https://www.worldcubeassociation.org/persons/2021PIET01)",
       "Megaminx",
       "[Żory Open 2024](https://www.worldcubeassociation.org/competitions/ZoryOpen2024)",
@@ -659,13 +666,6 @@
       "Megaminx",
       "[Singapore Championship 2019](https://www.worldcubeassociation.org/competitions/SingaporeChampionship2019)",
       "[WCA Asian Championship 2024](https://www.worldcubeassociation.org/competitions/RubiksWCAAsianChampionship2024)"
-    ],
-    [
-      40,
-      "[Ryan Eckersley](https://www.worldcubeassociation.org/persons/2019ECKE02)",
-      "4x4x4 Blindfolded",
-      "[Rubik's UK Championship 2023](https://www.worldcubeassociation.org/competitions/RubiksUKChampionship2023)",
-      null
     ],
     [
       40,
