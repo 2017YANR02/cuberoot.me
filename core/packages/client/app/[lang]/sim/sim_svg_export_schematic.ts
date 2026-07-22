@@ -201,8 +201,10 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
   const near = camera.near;
   const camPos = new THREE.Vector3().setFromMatrixPosition(camera.matrixWorld);
 
-  interface Facelet { pts: number[]; fill: string; body: string; z: number; hidden: boolean; plane: string }
+  interface Facelet { pts: number[]; fill: string; body: string; z: number; hidden: boolean; plane: number }
   const facelets: Facelet[] = [];
+  // 世界平面代表(面板分组用):plane 字段 = 此表下标。
+  const planeReps: { nx: number; ny: number; nz: number; d: number }[] = [];
   const v = new THREE.Vector3();
   const v4 = new THREE.Vector4();
 
@@ -235,9 +237,17 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
     const d = n.dot(worldPts[0]);
     const hidden = n.dot(camPos) - d <= 0; // 法向背向相机 = 这一面朝里
     if (cull && hidden) return;
-    // 世界平面签名:同一面的小面共面(法向 + 距离都一致到建模精度),量化后同 key。
-    // 面板(vc renderCubeOutline 的整面壳)按它分组。
-    const plane = `${n.x.toFixed(3)},${n.y.toFixed(3)},${n.z.toFixed(3)},${d.toFixed(1)}`;
+    // 世界平面归组:同一面的小面共面(法向 + 距离一致到建模精度)。**不能用 toFixed
+    // 量化当 key** —— 两个只差 2e-5 的距离若骑在舍入格线两侧就会被拆进两组,整面
+    // 面板碎成 8+1(2026-07-22 用户抓的 L/B/D 面波浪残留)。改为对代表平面做真比较:
+    // 法向点积 > 1−1e-6(夹角 < 0.08°,相邻面夹角至少 60° 量级,余量 3 个数量级)、
+    // 距离差 < 0.01 世界单位(小面尺寸 ~30,平行的对面相距 ~100,同样余量悬殊)。
+    let plane = -1;
+    for (let i = 0; i < planeReps.length; i++) {
+      const r = planeReps[i];
+      if (n.x * r.nx + n.y * r.ny + n.z * r.nz > 1 - 1e-6 && Math.abs(d - r.d) < 0.01) { plane = i; break; }
+    }
+    if (plane < 0) { plane = planeReps.length; planeReps.push({ nx: n.x, ny: n.y, nz: n.z, d }); }
 
     // 视空间 + 近平面裁剪(常规相机距不会触发,保护性)
     let view = worldPts.map((p) => p.clone().applyMatrix4(viewMat));
