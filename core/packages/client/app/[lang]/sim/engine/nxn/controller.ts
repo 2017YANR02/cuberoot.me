@@ -135,7 +135,9 @@ export default class Controller {
   constructor(world: World) {
     this.world = world;
     this.taps = [];
-    this.loop();
+    // headless 守卫(PLAN-sr-retirement Phase 1):World ctor 硬建 Controller,
+    // 无 rAF 环境(Node)不起指针拖动循环 —— headless 场景没有指针输入,循环无意义。
+    if (typeof requestAnimationFrame !== 'undefined') this.loop();
   }
 
   loop(): void {
