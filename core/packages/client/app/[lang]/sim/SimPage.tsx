@@ -34,6 +34,7 @@ import { bspSceneAudit, exportSimSvgBsp } from './sim_svg_export_bsp';
 import { exportSimSvg } from './sim_svg_export';
 import { exportSimSvgSchematic, hasSchematicFacelets } from './sim_svg_export_schematic';
 import { exportSimNetSvg } from './sim_net_export';
+import { exportSimPlanSvg } from './sim_plan_export';
 import type Cube from './engine/nxn/cube';
 import { SIZE } from './engine/define';
 import { createBackView, type BackView } from './engine/backView';
@@ -1830,25 +1831,33 @@ export default function SimPage() {
       if (++frame % 8 !== 0) return; // ~7.5Hz 采样
       const world = worldRef.current;
       if (world) {
-        // 平面视图(net / wca;后续 plan 同路)——NxN 展开图从 cube.serialize() 逻辑态
-        // 直出,不走 3D 投影的静止采样(逻辑态即时、无相机)。签名 = 序列化串,复原
-        // 帧作标的遮罩天然随打乱携带。视图/配色变由 effect 重跑(重置 exportedSig)。
-        // wca(记分表)= tnoodle 风格平面,cube 侧与 net 同一展开图(render.ts:两者同
-        // 出 renderUnfoldedSvg),故复用同一导出器。
-        if (typeof world.puzzleKind === 'number'
-          && (imgSpec.cubeView === 'net' || imgSpec.cubeView === 'wca')) {
-          const nxn = world.cube as Cube;
-          const serialized = nxn.serialize();
-          const sig = 'net|' + nxn.order + '|' + serialized;
-          if (sig === exportedSig) return;
-          exportedSig = sig;
-          try {
-            setEngineSvg(exportSimNetSvg({ serialized, order: nxn.order, faceColors: settings.faceColors }));
-          } catch (err) {
-            console.warn('[sim] net companion export failed', err);
-            setEngineSvg(null);
+        // 平面视图(net / wca / plan)——NxN 从 cube.serialize() 逻辑态直出,不走 3D
+        // 投影的静止采样(逻辑态即时、无相机)。签名 = 视图 + 序列化串,复原帧作标的
+        // 遮罩天然随打乱携带。视图/配色变由 effect 重跑(重置 exportedSig)。
+        //  net:展开十字;wca(记分表)= tnoodle 平面,cube 侧与 net 同一展开图
+        //  (render.ts 两者同出 renderUnfoldedSvg)→ 复用 exportSimNetSvg;
+        //  plan:俯视 OLL 图(U 面 + 四侧带)→ exportSimPlanSvg。
+        {
+          const cv = imgSpec.cubeView;
+          const flat = typeof world.puzzleKind === 'number'
+            && (cv === 'net' || cv === 'wca' || cv === 'plan');
+          if (flat) {
+            const nxn = world.cube as Cube;
+            const serialized = nxn.serialize();
+            const sig = cv + '|' + nxn.order + '|' + serialized;
+            if (sig === exportedSig) return;
+            exportedSig = sig;
+            try {
+              const fc = settings.faceColors;
+              setEngineSvg(cv === 'plan'
+                ? exportSimPlanSvg({ serialized, order: nxn.order, faceColors: fc })
+                : exportSimNetSvg({ serialized, order: nxn.order, faceColors: fc }));
+            } catch (err) {
+              console.warn('[sim] flat companion export failed', err);
+              setEngineSvg(null);
+            }
+            return;
           }
-          return;
         }
         world.scene.updateMatrixWorld(true);
         const sig = sigOf(world);
