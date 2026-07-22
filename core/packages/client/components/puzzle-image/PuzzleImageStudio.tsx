@@ -190,9 +190,12 @@ export interface PuzzleImageStudioProps {
    *  两份图,同一个 spec、同一个状态,用来肉眼比两条渲染路线的差异。
    *  /sim 由 `?img_engine=both` 打开;engineOnly 拼图没有 spec 渲染器可比,忽略。 */
   compare?: boolean;
+  /** 无视 engineSvg,强制走 spec 渲染器(cube 即 visualcube 本体)。/sim 浮层左上角
+   *  那个渲染器切换钮驱动;导出跟着显示走。对照模式下无效(那边两份都要画)。 */
+  preferSpecRender?: boolean;
 }
 
-export default function PuzzleImageStudio({ spec, onSpecChange, mode, className, simBridge, previewHost, engineSvg, engineOnly = false, outlineWidth, onOutlineWidthChange, compare = false }: PuzzleImageStudioProps) {
+export default function PuzzleImageStudio({ spec, onSpecChange, mode, className, simBridge, previewHost, engineSvg, engineOnly = false, outlineWidth, onOutlineWidthChange, compare = false, preferSpecRender = false }: PuzzleImageStudioProps) {
   const t = useT();
   const s = spec;
   const set = useCallback(<K extends keyof ImageSpec>(key: K, value: ImageSpec[K]) => {
@@ -213,9 +216,13 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
 
   const previewRef = useRef<HTMLDivElement | null>(null);
 
+  // 渲染器切换钮选了 visualcube → 当作没有引擎镜像,预览与导出一起落回 spec 渲染器。
+  // engine-only 拼图没有可落的 spec 渲染器,忽略该偏好。
+  const shownEngineSvg = preferSpecRender && !engineOnly ? null : engineSvg;
+
   // 预览当前显示的是否引擎矢量镜像(与 PuzzleImage 的 engineMirrors 同一条件):
   // 是 → SVG/PNG 导出的必须就是它(所见即所得),而不是 spec 重渲染的近似版。
-  const engineShown = !!engineSvg && (engineOnly
+  const engineShown = !!shownEngineSvg && (engineOnly
     || (s.puzzleType === 'cube'
       ? (s.cubeView === 'normal' || s.cubeView === 'net' || s.cubeView === 'wca'
         || s.cubeView === 'plan' || s.cubeView === 'trans')
@@ -229,7 +236,7 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
   const getCurrentSvg = useCallback((): string => {
     // 引擎镜像:所见即所得 —— 下载件也套图片尺寸(PX),否则导出的是导出器紧凑
     // 非方 viewBox 的原生像素尺寸,忽略了尺寸控件(退役对照表 §2b「图片尺寸」)。
-    if (engineShown && engineSvg) return sizeEngineSvg(engineSvg, s.imageSize);
+    if (engineShown && shownEngineSvg) return sizeEngineSvg(shownEngineSvg, s.imageSize);
     try {
       const pure = renderSpecSvg(s);
       if (pure) return pure;
@@ -241,7 +248,7 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
     // layout, so a tnoodle-net fallback would export a picture unlike the preview.
     const node = previewRef.current?.querySelector('svg');
     return node ? new XMLSerializer().serializeToString(node) : '';
-  }, [s, engineShown, engineSvg]);
+  }, [s, engineShown, shownEngineSvg]);
 
   const downloadSvg = () => {
     const out = getCurrentSvg();
@@ -403,7 +410,7 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
           </figure>
         </div>
       ) : (
-        <PuzzleImage spec={s} onSpecChange={onSpecChange} interactive={mode === 'page'} engineSvg={engineSvg} />
+        <PuzzleImage spec={s} onSpecChange={onSpecChange} interactive={mode === 'page'} engineSvg={shownEngineSvg} />
       )}
     </section>
   );

@@ -228,6 +228,18 @@
   top: 12px;
   right: 12px;
 }
+/* 伴图渲染器切换钮(引擎 ↔ visualcube)—— 图像浮层左上内角,与右上关闭钮同款
+   chrome、同一套 hover 浮现规则(靠共用 .sim-float-close 类)。装的是文字不是图标,
+   所以放开那条 20px 定宽,靠内容自适应。 */
+.sim-image-source {
+  left: 4px;
+  right: auto;
+  width: auto;
+  min-width: 20px;
+  padding: 0 5px;
+  font-size: 10px;
+  letter-spacing: 0.3px;
+}
 
 /* 背景(BG)选择器浮层 —— 画布左下角(与右上背面小窗、左上图像浮层同族的角落控件)。
    PlayerControls 把选择器 portal 进 .sim-bg-overlay。压在 art-directed 五档画布背景
