@@ -881,6 +881,10 @@ interface Props {
   /** DOM node below the cube canvas to portal the playback control row into
    *  (twizzle-style bar under the puzzle). Falls back to inline when absent. */
   playbackSlot?: HTMLElement | null;
+  /** DOM node at the canvas' bottom-left corner to portal the 背景(BG)selector into
+   *  (overlays the big cube view, like the top-right back-view window). When absent the
+   *  selector simply doesn't render — SimPage always provides the slot. */
+  bgSlot?: HTMLElement | null;
   /** 全屏/退出全屏按钮(SimPage 持有 fullscreen 状态),渲染在播放条按钮排最左
    *  (twizzle alpha.twizzle.net/edit 同款,全屏钮居首)。 */
   fullscreenButton?: ReactNode;
@@ -906,7 +910,7 @@ export default function PlayerControls({
   userMoveRef, twistyPlayerRef,
   skewbNotation, onSkewbNotationChange,
   renderer = 'cubing', onRendererChange,
-  playbackSlot, fullscreenButton, imageButton, backViewButton,
+  playbackSlot, bgSlot, fullscreenButton, imageButton, backViewButton,
   stickering = 'full', onStickeringChange,
   stickeringColor = 'yellow', onStickeringColorChange,
 }: Props) {
@@ -2306,6 +2310,7 @@ export default function PlayerControls({
         onRendererChange={onRendererChange}
         settings={settings}
         onSettingsChange={onSettingsChange}
+        bgSlot={bgSlot}
         t={t}
       />
       <KeymapModal
@@ -2592,7 +2597,7 @@ const UNIT_TPS: SliderUnit = { to: (v) => 60 / mapFrames(v), from: (tps) => (120
 function PuzzleSettings({
   order, onOrderChange, puzzleKind, onPuzzleChange,
   renderer, onRendererChange,
-  settings, onSettingsChange, t,
+  settings, onSettingsChange, bgSlot, t,
 }: {
   order: number;
   onOrderChange: (n: number) => void;
@@ -2602,6 +2607,9 @@ function PuzzleSettings({
   onRendererChange?: (r: 'cubing' | 'engine' | 'group') => void;
   settings: SimSettings;
   onSettingsChange: (s: SimSettings) => void;
+  /** 画布左下角浮层槽(SimPage 的 .sim-bg-overlay);背景选择器 portal 到这里,
+   *  贴在大图上而非埋在设置面板的开关行里。 */
+  bgSlot?: HTMLElement | null;
   t: (zh: string, en: string) => string;
 }) {
   const { i18n } = useTranslation();
@@ -2687,8 +2695,46 @@ function PuzzleSettings({
     } catch { /* 坏图忽略 */ }
   };
 
+  // 背景(BG)选择器:复用内核色那套弹出色块选择器(SwatchPopup),trigger 显当前
+  // 背景,点开弹 5 档可视色块。原先埋在设置面板开关行,现 portal 到画布左下角浮层
+  // (.sim-bg-overlay),贴着大图 —— 背景是画布属性,控件搬到画布上更直觉。
+  const bgSelector = (
+    <>
+      <span className="sim-bg-overlay-label">{t('背景', 'BG')}</span>
+      <SwatchPopup
+        title={t('背景', 'Background')}
+        trigger={<span className={`sim-swatch-box sim-bg-box--${settings.boardBg}`} />}
+      >
+        {(close) =>
+          ([
+            ['auto', t('跟随主题', 'Theme')],
+            ['white', t('纯白', 'White')],
+            ['dark', t('深灰', 'Dark')],
+            ['checkerDark', t('深色棋盘', 'Dark grid')],
+            ['checkerLight', t('浅色棋盘', 'Light grid')],
+          ] as [SimBoardBg, string][]).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              className={'sim-swatch' + (settings.boardBg === value ? ' active' : '')}
+              title={label}
+              aria-label={label}
+              aria-pressed={settings.boardBg === value}
+              onClick={() => { set('boardBg', value); close(); }}
+            >
+              <span className={`sim-swatch-box sim-bg-box--${value}`} />
+            </button>
+          ))
+        }
+      </SwatchPopup>
+    </>
+  );
+
   return (
     <section className="sim-puzzle">
+      {/* 背景选择器浮层 —— portal 到画布左下角(SimPage 的 .sim-bg-overlay)。slot 未
+          挂载(SimPage 恒提供)前不渲染。 */}
+      {bgSlot && createPortal(<div className="sim-bg-overlay-inner">{bgSelector}</div>, bgSlot)}
         <div className="sim-puzzle-body">
           <div className="sim-puzzle-row">
             <div className="sim-puzzle-section">
@@ -2818,38 +2864,8 @@ function PuzzleSettings({
             <Toggle label={t('动画', 'Animation')} value={settings.animatePlayback !== false} onChange={(v) => set('animatePlayback', v)} />
             {/* 方位字母常显:U/D/L/R/F/B(角/棱/面转拼图显对应标签),等同拖视角时浮现的标签但常驻。 */}
             <Toggle label={t('字母', 'Letters')} value={settings.faceLabels === true} onChange={(v) => set('faceLabels', v)} disabled={!caps.supports.faceLabels} title={hint(caps.supports.faceLabels)} />
-            {/* 背景:复用内核色那套弹出色块选择器(SwatchPopup),trigger 显当前背景,
-                点开弹出 5 个可视色块(直接预览各档外观)。左侧「背景 / BG」文字标签,
-                与其它开关行对齐。色值对齐 sim.css 里 .sim-canvas-wrap 的固定背景。 */}
-            <div className="sim-toggle sim-bg-toggle">
-              <span>{t('背景', 'BG')}</span>
-              <SwatchPopup
-                title={t('背景', 'Background')}
-                trigger={<span className={`sim-swatch-box sim-bg-box--${settings.boardBg}`} />}
-              >
-                {(close) =>
-                  ([
-                    ['auto', t('跟随主题', 'Theme')],
-                    ['white', t('纯白', 'White')],
-                    ['dark', t('深灰', 'Dark')],
-                    ['checkerDark', t('深色棋盘', 'Dark grid')],
-                    ['checkerLight', t('浅色棋盘', 'Light grid')],
-                  ] as [SimBoardBg, string][]).map(([value, label]) => (
-                    <button
-                      key={value}
-                      type="button"
-                      className={'sim-swatch' + (settings.boardBg === value ? ' active' : '')}
-                      title={label}
-                      aria-label={label}
-                      aria-pressed={settings.boardBg === value}
-                      onClick={() => { set('boardBg', value); close(); }}
-                    >
-                      <span className={`sim-swatch-box sim-bg-box--${value}`} />
-                    </button>
-                  ))
-                }
-              </SwatchPopup>
-            </div>
+            {/* 背景(BG)选择器已移到画布左下角浮层(见本组件顶部 bgSelector + SimPage
+                的 .sim-bg-overlay),不再占开关行。 */}
             {/* 顶面 U 中心 logo:无 / 网站 / 自定义上传。仅 NxN 奇数阶有正中心块时实际显示
                 (偶数阶 / 非 NxN 引擎里 setLogo 自动隐藏)。选「自定义」开文件选择器。 */}
             <label className={'sim-toggle' + (caps.supports.logo ? '' : ' sim-toggle--disabled')} title={hint(caps.supports.logo)}>
