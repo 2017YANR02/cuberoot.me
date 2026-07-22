@@ -2,7 +2,14 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src"
+    // rootDir 移除(2026-07-21):paths 引入 client 树后 src 不再是唯一根;tsc 在
+    // 这里只做 --noEmit typecheck(产物走 esbuild bundle),rootDir 无消费方。
+    // Phase 4(PLAN-sr-retirement):server 端 engine_render 直接 import client 的
+    // /sim 引擎源(headless 已由 Phase 1 gate/DI 保证)。tsx dev 与 esbuild bundle
+    // 都原生解析 tsconfig paths;lib 加 DOM 是因为 client 树里 client-only 模块
+    // (face_hints / logo 等)类型层引用 document —— 运行时全部 typeof-gate。
+    "paths": { "@/*": ["../client/*"] },
+    "lib": ["ES2022", "DOM", "DOM.Iterable"]
   },
   "include": ["src/**/*.ts"],
   "references": [

@@ -22,8 +22,11 @@
  */
 import { Hono } from 'hono';
 import { renderFromSimpleQuery } from '@cuberoot/visualcube';
+import { invertAlg } from '@/lib/cube3';
+import { invertSq1Alg } from '@cuberoot/shared/sq1-notation';
 import { renderPuzzleNetSVG } from './cubing_render.js';
 import { renderSrPuzzlegenSVG } from './sr_render.js';
+import { renderEngineIsoSVG } from './engine_render.js';
 
 export const cubeRoutes = new Hono();
 
@@ -81,11 +84,27 @@ cubeRoutes.get('/visualcube.svg', async (c) => {
     return c.text(`Server-side net render unavailable for ${puzzle}/${event}`, 501);
   }
 
-  // Non-cube iso/top: sr-puzzlegen via linkedom (+ shared skewb fan for skewb-top).
+  // Non-cube iso/top(Phase 4,PLAN-sr-retirement):iso 首选 /sim 引擎 headless
+  // 渲染(engine_render,与 /sim 伴图同导出器同观感),失败回退 sr-puzzlegen
+  // (后悔药,观察期后随 Phase 5 删);top 仍 sr(mega-top 俯视是 sr 特有形态,
+  // skewb-top 自绘 fan)。engine 路径 case = 先逆变换再正向 setup(与 client
+  // render.ts 同一 invert 函数集)。上线注意:响应观感变 → 消费方按缓存规则
+  // bump `v=`(nginx 24h cache 键含 query)。
   if (puzzle === 'sq1' || puzzle === 'megaminx' || puzzle === 'pyraminx' || puzzle === 'skewb') {
     const v: 'iso' | 'top' = view === 'top' ? 'top' : 'iso';
     const sizeRaw = parseInt(q('size') ?? '256', 10);
     const size = isNaN(sizeRaw) ? 256 : Math.max(32, Math.min(1000, sizeRaw));
+    if (v === 'iso') {
+      const forward = isCase
+        ? (puzzle === 'sq1' ? invertSq1Alg(algStr) : invertAlg(algStr))
+        : algStr;
+      const engineSvg = renderEngineIsoSVG(puzzle, forward, q('r'), size);
+      if (engineSvg) {
+        c.header('Content-Type', 'image/svg+xml; charset=utf-8');
+        c.header('Cache-Control', 'public, max-age=86400');
+        return c.body(engineSvg);
+      }
+    }
     const svg = await renderSrPuzzlegenSVG(puzzle, v, algStr, isCase, q('r'), size);
     if (svg) {
       c.header('Content-Type', 'image/svg+xml; charset=utf-8');
