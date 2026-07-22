@@ -78,9 +78,10 @@ sr 共 12 种 visualizer type、5 类拼图:
 
 ## 4. 方案分阶段
 
-### Phase 0 — 判据先行(小)
-- [ ] 固化现有 golden(`verify_puzzle_image_golden.cjs` 28 查询)为切换前基线。
-- [ ] 把本轮像素计数 oracle(GL `readPixels` vs SVG 栅格化,分色统计面积比)脚本化进 `scripts/`,作为逐拼图逐角度的对齐判据 —— 新路线的验收是「引擎 3D vs 引擎 SVG 同相机」,应逐像素级一致(≤1-2% AA 噪声),不再是 sr 时代的「面积比近似」。
+### Phase 0 — 判据先行(小)✅ 2026-07-21
+- [x] 固化现有 golden(`verify_puzzle_image_golden.cjs` 28 查询)为切换前基线。实证:对 /visualcube(page 模式)**28/28 逐字节吻合**,基线仍有效,覆盖全部渲染分派分支。
+- [x] 像素计数 oracle 脚本化 → `scripts/verify_engine_svg_pixel_oracle.cjs`:同页同相机下,栅格化「引擎导出伴图 SVG」与「WebGL 画布」各成 256²,逐色统计「该色/全部着色像素」面积比,断言两侧比例一致(容差默认 8%)。调色板取自 SVG 自己的 fill(按色相最近归桶 → 对打光免疫);saturated OR 近白才计入(滤灰塑料倒角)。实证 **8/8**(2026-07-21):pyraminx 0.1% / sq1 0.2%(schematic 精确跟随相机)、skewb 2.9% / mega 2.7%、**NxN(BSP)cube-2/3/4/6 全 6.2–6.8%**。
+  - **观察(记 Phase 3 待查)**:所有 NxN 的 BSP 伴图「白(U 顶)面」系统性比 3D 低 ~6%、「绿(F 前)面」高 ~6%,四个阶(2/3/4/6)一致 → 非随机噪声,是 3D 顶面受光最强、AA 边界近白像素被就近计成白(BSP 路径比 schematic 的 0.1% 显著)。当前容差 8% 放得过、gross 回归(画错面/镜像/错打乱=双位数差)拦得住;真要压到 ≤2% 需 BSP 相机与 live 3D 相机零偏移复核 + 高光抑制,列 Phase 3 精修,不阻塞。不进 CI(要浏览器+WebGL+dev server)。
 
 ### Phase 1 — 引擎核心可 headless(抽包)
 - [ ] 从 `app/[lang]/sim/engine` 抽 headless 核心到工作区包 `@cuberoot/sim-engine`:群论内核、拼图几何构建、场景组装、配色。禁 DOM/WebGL import(logo 纹理等 client-only 能力 gate 掉)。交互层(指针/动画/手/全身)留在 client。
