@@ -89,9 +89,12 @@ function schematicMeshWorld(scene: THREE.Object3D): THREE.Matrix4 | null {
 }
 
 /**
- * DSL(`U0U2-red,U6U8`)→ 世界坐标线段(喂 exportSimSvgSchematic 的 opts.arrows)。
- * NxN 专属(阶数 N;示意小面几何仅 NxN 走 instanced quad)。visualcube 的 scale(向中点
- * 收缩,10 = 不缩)照搬;influence/曲线(s3)暂不支持 —— 导出器只画直线段,退化为直箭头。
+ * DSL(`U0U2-red,U6U8U2-i15`)→ 世界坐标线段/曲线(喂 exportSimSvgSchematic 的
+ * opts.arrows)。NxN 专属(阶数 N;示意小面几何仅 NxN 走 instanced quad)。visualcube
+ * 语义照搬:scale(两端向中点收缩,10 = 不缩)、s3/influence(曲线控制点 = s3 贴纸
+ * 中心朝**未收缩弦中点**按 influence/5 缩放,vc renderArrow 同序:先取中点、再缩端点、
+ * 再缩控制点)。vc 在 2D 投影面上做这两个缩放,这里在 3D 贴纸面上做 —— 面内仿射经
+ * 投影仅差透视非线性,与 scale 既有实现同一近似。
  */
 export function resolveEngineArrows(
   scene: THREE.Object3D, dsl: string, N: number, defaultColor?: string,
@@ -102,24 +105,33 @@ export function resolveEngineArrows(
   const parsed = parseArrows(dsl);
   if (!parsed.length) return [];
   const out: SchematicArrow[] = [];
-  const a = new THREE.Vector3(), b = new THREE.Vector3(), mid = new THREE.Vector3();
+  const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3(), mid = new THREE.Vector3();
   for (const arrow of parsed) {
-    // visualcube:两端都在 s1.face(s2.face 仅解析)。
+    // visualcube:两端(与 s3)都在 s1.face(s2/s3 的 face 仅解析)。
     const f1 = faceletFromNet(arrow.s1.face, arrow.s1.n, N);
     const f2 = faceletFromNet(arrow.s1.face, arrow.s2.n, N);
     if (!f1 || !f2) continue;
     localStickerCenter(f1.face, f1.x, f1.y, f1.z, N, a).applyMatrix4(meshWorld);
     localStickerCenter(f2.face, f2.x, f2.y, f2.z, N, b).applyMatrix4(meshWorld);
+    mid.addVectors(a, b).multiplyScalar(0.5); // 未收缩弦中点(scale 与 influence 共用)
+    // 曲线(s3):控制点先于端点收缩无关 —— vc 用的就是未收缩中点。
+    let p3: [number, number, number] | undefined;
+    const f3 = arrow.s3 ? faceletFromNet(arrow.s1.face, arrow.s3.n, N) : null;
+    if (f3) {
+      localStickerCenter(f3.face, f3.x, f3.y, f3.z, N, c).applyMatrix4(meshWorld);
+      c.lerpVectors(mid, c, (arrow.influence ?? 10) / 5);
+      p3 = [c.x, c.y, c.z];
+    }
     // scale/10 向中点收缩两端(visualcube transScale;默认 10 → 因子 1 不变)。
     const k = (arrow.scale ?? 10) / 10;
     if (k !== 1) {
-      mid.addVectors(a, b).multiplyScalar(0.5);
       a.lerpVectors(mid, a, k);
       b.lerpVectors(mid, b, k);
     }
     out.push({
       p1: [a.x, a.y, a.z],
       p2: [b.x, b.y, b.z],
+      ...(p3 ? { p3 } : {}),
       // 空串(studio 默认箭头色未填)也算未设 → 兜底灰,否则导出器画成 stroke=""。
       color: arrow.color || (defaultColor && defaultColor.length ? defaultColor : DEFAULT_ARROW_COLOR),
     });
