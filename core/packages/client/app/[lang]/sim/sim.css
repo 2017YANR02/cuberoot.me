@@ -229,6 +229,47 @@
   right: 12px;
 }
 
+/* 背景(BG)选择器浮层 —— 画布左下角(与右上背面小窗、左上图像浮层同族的角落控件)。
+   PlayerControls 把选择器 portal 进 .sim-bg-overlay。压在 art-directed 五档画布背景
+   (纯白 / 深灰 / 两种棋盘)上,故用固定深底白字 chrome(同 .sim-float-close),不走
+   主题 token,免在纯白档隐身。 */
+.sim-bg-overlay {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  z-index: 9;
+}
+.sim-bg-overlay:empty { display: none; }
+.sim-bg-overlay-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.55);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
+}
+.sim-bg-overlay-label { white-space: nowrap; }
+/* 当前色块在固定深底上:描白边才不糊(设置面板那条 .sim-color-select-trigger
+   .sim-swatch-box{border:--border-strong} 跟主题,深底上会隐身)。 */
+.sim-bg-overlay .sim-color-select-trigger .sim-swatch-box {
+  border-color: rgba(255, 255, 255, 0.55);
+}
+/* 控件贴画布底沿 → 弹层向上展开(默认向下会被画布下沿裁掉),靠左对齐 + 单列。
+   anchored-panel: safe (左下角锚定,向上 + 向右单列展开;左缘 = 画布左内边距 8px、
+   右缘离画布右侧整幅距离,向上有整块画布高度 —— 任何方向都不越界) */
+.sim-bg-overlay .sim-color-select-panel {
+  top: auto;
+  bottom: calc(100% + 4px);
+  left: 0;
+  flex-direction: column;
+  flex-wrap: nowrap;
+}
+
 /* 图像面板 export 行里的实时截图子组(仅 /sim 面板模式渲染):排在静态导出按钮
    之上,整组换行独占一行,用一条 hairline 与下方分隔。按钮复用 studio 的 .vc-btn。 */
 .sim-side .vc-capture-group {
