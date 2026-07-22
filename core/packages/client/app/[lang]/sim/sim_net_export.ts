@@ -1,22 +1,27 @@
-// 引擎驱动的 NxN 展开图(net)导出器 —— 退役对照表 §2b「视图 net」的落点。
+// 引擎驱动的 NxN 展开图(net / wca)导出器 —— 退役对照表 §2b「视图 net / wca」的落点。
 //
-// 唯一源:布局常量(GAP / STROKE_W / FACE_ORDER / faceOffsets)与交互式 `_SimCubeNet`
-// 共用(它 import 这里),导出件与页内平面图逐格对齐、免两份漂移。状态取 `cube.serialize()`
-// (URFDLB 六个 N² 块,已是 net 朝向,见 cube.ts serialize())→ 逐格上引擎面色,产纯
-// 字符串 SVG(伴图显示 + SVG/PNG 下载同一份)。
+// **不再平行自绘**(plan 视图同款教训):SVG 装配直调 tnoodle 参照实现
+// cube_unfolded_svg 的共享 emitter(renderUnfoldedStateSvg),布局(GAP 0.2 /
+// stroke 0.1 / viewBox 4N+5G × 3N+4G)、属性顺序、字节格式与 studio 的 spec 渲染
+// (renderSpecSvg → renderUnfoldedSvg)按构造完全一致,引擎只负责喂色:状态取
+// `cube.serialize()`(URFDLB 六个 N² 块,已是 net 朝向)→ 逐格引擎面色。
 //
-// visualcube studio 的 wca(记分表)视图复用同布局(exportSimWcaSvg),只是 tnoodle 风格
-// 描边/底色微调。
+// 交互式 `_SimCubeNet` 仍从这里取布局常量(单一源,与导出件逐格对齐)。
+
+import { GAP, STROKE_W, renderUnfoldedStateSvg } from '../scramble/gen/_svg/cube_unfolded_svg';
 
 export type NetFaceLetter = 'U' | 'R' | 'F' | 'D' | 'L' | 'B';
 
-export const NET_GAP = 0.18;      // 面间距(格单位)
-export const NET_STROKE_W = 0.05; // 贴纸描边(相对 1×1 格)
+export const NET_GAP = GAP;           // 面间距(格单位)= tnoodle 2/10
+export const NET_STROKE_W = STROKE_W; // 贴纸描边(相对 1×1 格)= tnoodle 1/10
 
 /** serialize() 串里的 URFDLB 块顺序。 */
 export const NET_FACE_ORDER: NetFaceLetter[] = ['U', 'R', 'F', 'D', 'L', 'B'];
 
-/** 展开十字里每个面的西北角 (col, row)(格单位)。 */
+/** cstimer face id 序(cube_unfolded_svg emitter 的 f=0..5)。 */
+const CSTIMER_FACES: NetFaceLetter[] = ['D', 'L', 'B', 'U', 'R', 'F'];
+
+/** 展开十字里每个面的西北角 (col, row)(格单位),与 emitter 的 FACE_OFFSETS 同式。 */
 export function netFaceOffsets(N: number): Record<NetFaceLetter, [number, number]> {
   return {
     U: [2 * NET_GAP + N, NET_GAP],
@@ -34,21 +39,10 @@ export interface SimNetExportOptions {
   order: number;
   /** 面字母 → 色(引擎 settings.faceColors,单一源)。 */
   faceColors: Record<NetFaceLetter, string>;
-  /** 背景色;默认 null = 透明。 */
-  background?: string | null;
-  /** 贴纸描边色;默认黑(= visualcube 网格黑边)。 */
-  strokeColor?: string;
-  /** 描边宽(相对 1×1 格);默认 NET_STROKE_W。 */
-  strokeWidth?: number;
   /** 遮罩:net index(face 块内 row*N+col,全局 = 块基址 + 局部)∈ set 的格填 maskColor。
-   *  key = `${face}:${localIdx}`(localIdx = row*N+col),与 exportSimNetSvg 内部一致。 */
+   *  key = `${face}:${localIdx}`(localIdx = row*N+col)。 */
   mask?: { keys: ReadonlySet<string>; color: string };
 }
-
-const fmt = (n: number): string => {
-  const r = Math.round(n * 1000) / 1000;
-  return Object.is(r, -0) ? '0' : String(r);
-};
 
 /** URFDLB 面字母 → 引擎面色;非法字符落灰。 */
 function colorOf(ch: string, faceColors: Record<NetFaceLetter, string>): string {
@@ -58,39 +52,20 @@ function colorOf(ch: string, faceColors: Record<NetFaceLetter, string>): string 
 }
 
 /**
- * NxN 展开图 → 纯字符串 SVG。viewBox `0 0 (4N+5GAP) (3N+4GAP)`(= _SimCubeNet),width/height
- * 用 viewBox 尺寸(调用方经 sizeEngineSvg 钉图片尺寸)。
+ * NxN 展开图 → 纯字符串 SVG(伴图显示 + SVG/PNG 下载同一份;调用方经 sizeEngineSvg
+ * 钉图片尺寸)。字节格式 = renderUnfoldedSvg 参照(共享 emitter)。
  */
 export function exportSimNetSvg(opts: SimNetExportOptions): string {
   const N = Math.max(1, Math.round(opts.order));
   const facelets = opts.serialized;
-  const offs = netFaceOffsets(N);
-  const w = 4 * N + 5 * NET_GAP;
-  const h = 3 * N + 4 * NET_GAP;
-  const stroke = opts.strokeColor ?? '#000';
-  const sw = opts.strokeWidth ?? NET_STROKE_W;
   const maskKeys = opts.mask?.keys;
   const maskColor = opts.mask?.color;
 
-  let cells = '';
-  for (let fi = 0; fi < 6; fi++) {
-    const face = NET_FACE_ORDER[fi];
-    const [ox, oy] = offs[face];
-    const base = fi * N * N;
-    for (let r = 0; r < N; r++) {
-      for (let c = 0; c < N; c++) {
-        const local = r * N + c;
-        const ch = facelets[base + local] ?? '';
-        const masked = maskKeys?.has(`${face}:${local}`);
-        const fill = masked ? maskColor! : colorOf(ch, opts.faceColors);
-        cells += `<rect x="${fmt(ox + c)}" y="${fmt(oy + r)}" width="1" height="1"`
-          + ` fill="${fill}" stroke="${stroke}" stroke-width="${fmt(sw)}"/>`;
-      }
-    }
-  }
-
-  const bg = opts.background
-    ? `<rect x="0" y="0" width="${fmt(w)}" height="${fmt(h)}" fill="${opts.background}"/>` : '';
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${fmt(w)}" height="${fmt(h)}"`
-    + ` viewBox="0 0 ${fmt(w)} ${fmt(h)}">${bg}${cells}</svg>`;
+  return renderUnfoldedStateSvg(N, (f, row, col) => {
+    const face = CSTIMER_FACES[f];
+    const local = row * N + col;
+    if (maskKeys?.has(`${face}:${local}`)) return maskColor!;
+    const base = NET_FACE_ORDER.indexOf(face) * N * N;
+    return colorOf(facelets[base + local] ?? '', opts.faceColors);
+  });
 }

@@ -1,13 +1,21 @@
-// exportSimNetSvg:引擎驱动展开图(net)导出器。锁住十字布局 + 逐格上色 + 遮罩,
-// 与交互式 _SimCubeNet 同一布局源(退役对照表 §2b「视图 net」)。
+// exportSimNetSvg:引擎驱动展开图(net / wca)导出器。与 tnoodle 参照
+// renderUnfoldedSvg 共享同一 SVG emitter(cube_unfolded_svg)—— 复原态喂 tnoodle
+// 配色必须逐字节同款;另锁 54 格逐格归属(cstimer 面序换算不许错位)与遮罩。
+// 交互式 _SimCubeNet 同一布局源(退役对照表 §2b「视图 net / wca」)。
 import { describe, it, expect } from 'vitest';
 import {
-  exportSimNetSvg, netFaceOffsets, NET_GAP, NET_FACE_ORDER,
+  exportSimNetSvg, netFaceOffsets, NET_GAP, NET_FACE_ORDER, type NetFaceLetter,
 } from '@/app/[lang]/sim/sim_net_export';
+import { renderUnfoldedSvg } from '@/app/[lang]/scramble/gen/_svg/cube_unfolded_svg';
 
 const COLORS = {
   U: '#fff', R: '#f00', F: '#0f0', D: '#ff0', L: '#f90', B: '#00f',
 } as const;
+
+/** tnoodle CubePuzzle defaultColorScheme(renderUnfoldedSvg 的 WCA_COLORS)。 */
+const TNOODLE_COLORS: Record<NetFaceLetter, string> = {
+  U: '#FFFFFF', R: '#FF0000', F: '#00FF00', D: '#FFFF00', L: '#FF8000', B: '#0000FF',
+};
 
 /** 复原态 serialize:每块 N² 全该面字母(URFDLB 顺序)。 */
 function solvedSerialized(N: number): string {
@@ -15,6 +23,16 @@ function solvedSerialized(N: number): string {
 }
 
 describe('exportSimNetSvg', () => {
+  it('byte-identical to renderUnfoldedSvg for the solved state (N=2/3/4, tnoodle palette)', () => {
+    // 共享 emitter 的总闸:布局 / 描边 / 属性顺序 / 数字格式没有任何自绘余地。
+    for (const N of [2, 3, 4]) {
+      const svg = exportSimNetSvg({
+        serialized: solvedSerialized(N), order: N, faceColors: TNOODLE_COLORS,
+      });
+      expect(svg).toBe(renderUnfoldedSvg(N, ''));
+    }
+  });
+
   it('lays out 6·N² sticker rects in the URFDLB cross with viewBox 4N+5GAP × 3N+4GAP', () => {
     const N = 3;
     const svg = exportSimNetSvg({ serialized: solvedSerialized(N), order: N, faceColors: COLORS });
@@ -32,13 +50,29 @@ describe('exportSimNetSvg', () => {
     }
   });
 
-  it('reflects a scrambled serialize (different output than solved)', () => {
-    const solved = solvedSerialized(3);
-    // 交换 U 面第 0 格与 F 面第 0 格的颜色字母 → net 必须跟着变。
-    const scrambled = 'F' + solved.slice(1, 18) + 'U' + solved.slice(19);
-    const a = exportSimNetSvg({ serialized: solved, order: 3, faceColors: COLORS });
-    const b = exportSimNetSvg({ serialized: scrambled, order: 3, faceColors: COLORS });
-    expect(b).not.toBe(a);
+  it('54 格逐格归属:serialize 任一格改字母 → 恰该格的 rect 换色,落在自己面的偏移处', () => {
+    // 锁 URFDLB 块序 → cstimer 面序(D L B U R F)换算 + 行列直映(serialize 已是
+    // net 朝向,不许再套 cstimer 的 L/B/D 镜像)。
+    const N = 3;
+    const solved = solvedSerialized(N);
+    const base = exportSimNetSvg({ serialized: solved, order: N, faceColors: COLORS });
+    const baseRects = base.match(/<rect [^>]*>/g)!;
+    const offs = netFaceOffsets(N);
+    for (let g = 0; g < 6 * N * N; g++) {
+      const face = NET_FACE_ORDER[Math.floor(g / (N * N))];
+      const probeLetter = face === 'U' ? 'B' : 'U'; // 换成必不同色的字母
+      const mutated = solved.slice(0, g) + probeLetter + solved.slice(g + 1);
+      const svg = exportSimNetSvg({ serialized: mutated, order: N, faceColors: COLORS });
+      const rects = svg.match(/<rect [^>]*>/g)!;
+      const changed = rects.map((r, i) => (r === baseRects[i] ? -1 : i)).filter((i) => i >= 0);
+      expect(changed.length).toBe(1);
+      const m = rects[changed[0]].match(/x="(-?[\d.]+)" y="(-?[\d.]+)"[^>]*fill="([^"]+)"/)!;
+      const local = g % (N * N);
+      const [ox, oy] = offs[face];
+      expect(Number(m[1])).toBeCloseTo(ox + (local % N), 6);
+      expect(Number(m[2])).toBeCloseTo(oy + Math.floor(local / N), 6);
+      expect(m[3]).toBe(COLORS[probeLetter as NetFaceLetter]);
+    }
   });
 
   it('U-face NW corner sits right of L and above F (unfolded cross geometry)', () => {
