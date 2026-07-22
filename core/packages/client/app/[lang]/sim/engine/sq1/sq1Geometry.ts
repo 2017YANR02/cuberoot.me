@@ -197,6 +197,9 @@ export function buildPieceMesh(piece: number, isTopLayer: boolean): PieceBuild {
   topSticker.userData.simRole = 'sticker'; // 立体贴片: flatten via mesh.scale.z (stickerThickness.ts)
   topSticker.userData.simFlatten = 'scaleZ';
   topSticker.userData.simStickerNormal = new THREE.Vector3(0, 0, 1); // 原核: body +z cap (rawBody.ts)
+  // canonical sid 直接当引擎 key(mask-core sq1 空间,piece 本位;toEngineMask
+  // 恒等透传)—— 贴纸挂 piece pivot 上随打乱走,天然 piece-following 灰化。
+  topSticker.userData.stickerKey = piece <= 7 ? `U${piece}` : `D${piece}`;
   schem(topSticker, topInsetVerts.map(([x, y]): [number, number, number] => [x, y, LAYER_HEIGHT]));
   group.add(topSticker);
 
@@ -209,6 +212,7 @@ export function buildPieceMesh(piece: number, isTopLayer: boolean): PieceBuild {
     wallA.position.set(CORNER_FACE_CENTER, W + SIDE_OFFSET, LAYER_HEIGHT / 2);
     wallA.rotation.set(-Math.PI / 2, 0, 0);
     wallA.userData.simStickerNormal = new THREE.Vector3(0, 1, 0); // 原核: body +y face (rawBody.ts)
+    wallA.userData.stickerKey = `SA${piece}`; // sideA/sideB 命名单一源 = pieceFaces()
     schem(wallA, [[K, W, 0], [K, W, L], [W, W, L], [W, W, 0]]);
     group.add(wallA);
 
@@ -216,6 +220,7 @@ export function buildPieceMesh(piece: number, isTopLayer: boolean): PieceBuild {
     wallB.position.set(W + SIDE_OFFSET, CORNER_FACE_CENTER, LAYER_HEIGHT / 2);
     wallB.rotation.set(0, Math.PI / 2, Math.PI / 2);
     wallB.userData.simStickerNormal = new THREE.Vector3(1, 0, 0); // 原核: body +x face
+    wallB.userData.stickerKey = `SB${piece}`;
     schem(wallB, [[W, K, 0], [W, W, 0], [W, W, L], [W, K, L]]);
     group.add(wallB);
   } else {
@@ -224,6 +229,7 @@ export function buildPieceMesh(piece: number, isTopLayer: boolean): PieceBuild {
     wallA.position.set(W + SIDE_OFFSET, 0, LAYER_HEIGHT / 2);
     wallA.rotation.set(0, Math.PI / 2, Math.PI / 2);
     wallA.userData.simStickerNormal = new THREE.Vector3(1, 0, 0); // 原核: body +x face (rawBody.ts)
+    wallA.userData.stickerKey = `SA${piece}`;
     schem(wallA, [[W, -K, 0], [W, K, 0], [W, K, L], [W, -K, L]]);
     group.add(wallA);
   }
@@ -281,7 +287,7 @@ export function buildMiddlePair(): MiddlePair {
     pivot.add(bodyMesh);
 
     const stickerH = MID_HEIGHT - 2 * SIDE_INSET_V;
-    const addSticker = (color: number, axisFace: 'L' | 'R' | 'F' | 'B', zFrom: number, zTo: number, xFrom: number, xTo: number): void => {
+    const addSticker = (color: number, axisFace: 'L' | 'R' | 'F' | 'B', zFrom: number, zTo: number, xFrom: number, xTo: number, key: string): void => {
       let posX: number, posZ: number, rotY: number, tangentialLen: number;
       if (axisFace === 'L' || axisFace === 'R') {
         posX = (axisFace === 'R' ? +1 : -1) * (W + SIDE_OFFSET);
@@ -298,6 +304,7 @@ export function buildMiddlePair(): MiddlePair {
       const mesh = mkRaisedRectSticker(w, stickerH, mkStickerMat(color));
       mesh.position.set(posX, 0, posZ);
       mesh.rotation.set(0, rotY, 0);
+      mesh.userData.stickerKey = key; // canonical sid M0-5(mask-core sq1 空间)
       // 原核: body wall normal in the (rotateX-baked) middle frame (rawBody.ts).
       mesh.userData.simStickerNormal = new THREE.Vector3(
         axisFace === 'R' ? 1 : axisFace === 'L' ? -1 : 0,
@@ -314,13 +321,13 @@ export function buildMiddlePair(): MiddlePair {
     };
 
     if (kind === 'big') {
-      addSticker(SQ1_COLORS.R, 'R', -W, W, 0, 0);
-      addSticker(SQ1_COLORS.F, 'F', 0, 0, CUT_BOT_X, W);
-      addSticker(SQ1_COLORS.B, 'B', 0, 0, CUT_TOP_X, W);
+      addSticker(SQ1_COLORS.R, 'R', -W, W, 0, 0, 'M0');
+      addSticker(SQ1_COLORS.F, 'F', 0, 0, CUT_BOT_X, W, 'M1');
+      addSticker(SQ1_COLORS.B, 'B', 0, 0, CUT_TOP_X, W, 'M2');
     } else {
-      addSticker(SQ1_COLORS.L, 'L', -W, W, 0, 0);
-      addSticker(SQ1_COLORS.F, 'F', 0, 0, -W, CUT_BOT_X);
-      addSticker(SQ1_COLORS.B, 'B', 0, 0, -W, CUT_TOP_X);
+      addSticker(SQ1_COLORS.L, 'L', -W, W, 0, 0, 'M3');
+      addSticker(SQ1_COLORS.F, 'F', 0, 0, -W, CUT_BOT_X, 'M4');
+      addSticker(SQ1_COLORS.B, 'B', 0, 0, -W, CUT_TOP_X, 'M5');
     }
     return pivot;
   };

@@ -183,7 +183,6 @@ export function renderSpecSvg(s: ImageSpec, o?: SpecRenderOptions): string | nul
   if (isCubeNet && s.cubeSize === 3) return null; // InteractiveCubeNet paint editor
 
   if (isCubeNet || isCubeWca || isOtherUnfolded) {
-    // sq1 has no stable per-sticker id space → not maskable (see puzzle-mask.ts).
     const m = maskOptions(s, o);
     if (s.puzzleType === 'cube') {
       const raw = s.algorithm ?? '';
@@ -202,7 +201,7 @@ export function renderSpecSvg(s: ImageSpec, o?: SpecRenderOptions): string | nul
       ? (s.puzzleType === 'sq1' ? invertSq1Alg(raw) : invertAlg(raw))
       : raw;
     return s.puzzleType === 'sq1'
-      ? renderSq1ScrambleSvg(forward, DEFAULT_SQ1_COLORS)
+      ? renderSq1ScrambleSvg(forward, DEFAULT_SQ1_COLORS, m)
       : s.puzzleType === 'megaminx'
       ? renderMegaScrambleSvg(forward, DEFAULT_MEGA_COLORS, m)
       : s.puzzleType === 'pyraminx'
