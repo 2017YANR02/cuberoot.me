@@ -1842,7 +1842,8 @@ export default function SimPage() {
         // 遮罩天然随打乱携带。视图/配色变由 effect 重跑(重置 exportedSig)。
         //  net:展开十字;wca(记分表)= tnoodle 平面,cube 侧与 net 同一展开图
         //  (render.ts 两者同出 renderUnfoldedSvg)→ 复用 exportSimNetSvg;
-        //  plan:俯视 OLL 图(U 面 + 四侧斜切梯形带,忠实复刻 visualcube 透视)→ exportSimPlanSvg。
+        //  plan:俯视 OLL 图 → exportSimPlanSvg,内部直接调 visualcube 本体渲染
+        //  (引擎只喂 stickerColors),SVG 与 studio 的 plan 输出逐字节同款。
         {
           const cv = imgSpec.cubeView;
           const flat = typeof world.puzzleKind === 'number'
