@@ -343,31 +343,50 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
     return out.sort((a, b) => a.z - b.z); // 远 → 近,与小面同序
   };
   // 面板内缩 = **朝全局投影中心等比缩放**(照抄 vc renderCubeOutline 的 ×0.94):
-  // 拉入量 = (w/2)·R/Rmax ≤ w/2,与角的锐钝无关。**不能用等距偏移**:等距偏移在
+  // 拉入量 = (w/2)·R/Rglobal ≤ w/2,与角的锐钝无关。**不能用等距偏移**:等距偏移在
   // 锐角上的拉入量是 d/sin(θ/2),掠射角投影的面板角非常尖,会被拉进十几 px,描边
   // 半径补不回来 → 角上缺一大块墨迹,背面贴纸从缺口裸露 / 正面贴纸尖角戳出轮廓
   // (2026-07-22 用户抓的右上角)。缩放中心 = 整体包围盒中心(vc 的 viewbox 原点即
   // 它的投影中心,同物);面板逐「面」而贴纸不缩 —— 与 vc 完全同构。
+  //
+  // 系数必须**全图唯一**(vc 给所有面的都是同一个 0.94):相邻两面共享轮廓顶点,
+  // 若各按自己面的 rmax 归一,系数不同 → 共享顶点缩到两个不同的位置 → 描边圆弧
+  // 圆心错开 → 角上叠出双弧黑凸起(2026-07-22 用户抓的 normal 视图 UFL/DFR)。
   const gcx = (fx0 + fx1) / 2, gcy = (fy0 + fy1) / 2;
-  const plateCore = (hull: number[]): number[] | null => {
-    let rmax = 0;
-    for (let i = 0; i < hull.length; i += 2) {
-      rmax = Math.max(rmax, Math.hypot(hull[i] - gcx, hull[i + 1] - gcy));
+  let rGlobal = 0;
+  for (const f of facelets) {
+    for (let i = 0; i < f.pts.length; i += 2) {
+      rGlobal = Math.max(rGlobal, Math.hypot(f.pts[i] - gcx, f.pts[i + 1] - gcy));
     }
-    if (rmax <= roundW) return null; // 面板贴着中心,缩不动 → 退 1px 锐角
-    const k = 1 - (roundW / 2) / rmax;
+  }
+  const kGlobal = rGlobal > roundW ? 1 - (roundW / 2) / rGlobal : 0; // 0 = 图太小,退 1px 锐角
+  const plateCore = (hull: number[]): number[] | null => {
+    if (kGlobal <= 0) return null;
     const out: number[] = [];
     for (let i = 0; i < hull.length; i += 2) {
-      out.push(gcx + (hull[i] - gcx) * k, gcy + (hull[i + 1] - gcy) * k);
+      out.push(gcx + (hull[i] - gcx) * kGlobal, gcy + (hull[i + 1] - gcy) * kGlobal);
     }
     return out;
   };
+  // 面板墨迹的精确包围盒(顶点 ± 描边半宽):r < Rglobal 的轮廓顶点拉入量不足 w/2,
+  // 圆弧会探出小面包围盒最多 (w/2)·(1−r/R) —— 掠射角下可接近 w/2,取景必须按实际
+  // 墨迹算,不能再假设「胖 0.5px」。
+  let ix0 = Infinity, iy0 = Infinity, ix1 = -Infinity, iy1 = -Infinity;
+  const inkPts = (pts: number[], half: number): void => {
+    for (let i = 0; i < pts.length; i += 2) {
+      if (pts[i] - half < ix0) ix0 = pts[i] - half; if (pts[i] + half > ix1) ix1 = pts[i] + half;
+      if (pts[i + 1] - half < iy0) iy0 = pts[i + 1] - half; if (pts[i + 1] + half > iy1) iy1 = pts[i + 1] + half;
+    }
+  };
   const plateOf = (p: Plate): string => {
     if (p.solo) {
-      return p.solo.map((f) =>
-        `<path d="${dOf(f.pts)}" fill="${f.body}" stroke="${f.body}" stroke-width="1" stroke-linejoin="round"/>`).join('');
+      return p.solo.map((f) => {
+        inkPts(f.pts, 0.5);
+        return `<path d="${dOf(f.pts)}" fill="${f.body}" stroke="${f.body}" stroke-width="1" stroke-linejoin="round"/>`;
+      }).join('');
     }
     const core = roundW > 1 ? plateCore(p.pts) : null;
+    inkPts(core ?? p.pts, (core ? roundW : 1) / 2);
     return `<path d="${dOf(core ?? p.pts)}" fill="${p.body}" stroke="${p.body}"`
       + ` stroke-width="${fmt(core ? roundW : 1)}" stroke-linejoin="round"/>`;
   };
@@ -423,18 +442,18 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
     if (defs) defs = `<defs>${defs}</defs>`;
   }
 
-  // viewBox 贴着拼图裁(抄 sr 的紧凑取景):小面包围盒 + 衬底描边半宽 + 1px。
-  // 衬底缩 0.94 后再描边 roundW,外轮廓落在小面包围盒外 (0.94−1)·半跨 + roundW/2
-  // 处 —— 圆角越大这圈越宽,余量跟着算,别把圆角裁掉。不裁的话导整张画布,拼图
-  // 缩在中间、四周大片空边。箭头端点(含自身余量)也计入包围盒。
+  // viewBox 贴着拼图裁(抄 sr 的紧凑取景):小面包围盒 ∪ 面板墨迹包围盒(inkPts,
+  // 圆弧探出量已含) ∪ 箭头端点余量,再加 1.5px。不裁的话导整张画布,拼图缩在中间、
+  // 四周大片空边;裁太狠则掠射角下圆弧被切平。
   let bx = 0, by = 0, bw = W, bh = H;
   if (facelets.length > 0 || arrowPads.length > 0) {
     let x0 = fx0, y0 = fy0, x1 = fx1, y1 = fy1;
+    if (ix0 < x0) x0 = ix0; if (ix1 > x1) x1 = ix1;
+    if (iy0 < y0) y0 = iy0; if (iy1 > y1) y1 = iy1;
     for (const p of arrowPads) {
       if (p.x - p.pad < x0) x0 = p.x - p.pad; if (p.x + p.pad > x1) x1 = p.x + p.pad;
       if (p.y - p.pad < y0) y0 = p.y - p.pad; if (p.y + p.pad > y1) y1 = p.y + p.pad;
     }
-    // 圆角是「内缩再描边」,墨迹外缘仍只比轮廓胖 0.5px —— 余量不随圆角变。
     const pad = 1.5;
     bx = x0 - pad; by = y0 - pad; bw = x1 - x0 + pad * 2; bh = y1 - y0 + pad * 2;
   }
