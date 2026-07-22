@@ -1,6 +1,6 @@
 # sr-puzzlegen + visualcube 退役计划 — 引擎解析矢量导出统一路线
 
-状态:**Phase 2 完成、Phase 3 /sim 镜像上线(2026-07-21,含 NxN)**。决策(2026-07-21):给自有 /sim 引擎做**解析隐面消除(BSP)矢量导出**,伴图 + 服务端缩略图全走它;`@cuberoot/vendor-sr-puzzlegen` 整包**先不删,当后悔药**,切换稳定后最终删除。追加决策(2026-07-21):**NxN 伴图同路退役 visualcube**(cube:normal 走 BSP 镜像;visualcube 包同样先不删当后悔药)—— §5 原「NxN 不在本方案内」作废,收窄为「visualcube 的无 live-sim 消费方(/visualcube studio 任意 spec、CaseThumb、服务端)仍走 visualcube,随 Phase 1 抽包 + Phase 4 一并评估」。
+状态:**本工作线收官(2026-07-22):Phase 0-4 全部完成并 push 上线(commit 67e5526938,CI 全绿 + 线上实证),观察期起跑。** 剩余 = 两个显式排期的后续单独会话工作包:①Phase 1 物理搬移(动机已在原地达成,纯代码组织);②Phase 5 sr 删除(日历门控 ≥2026-08-05)—— 均非开放待办,见各节队列。决策(2026-07-21):给自有 /sim 引擎做**解析隐面消除(BSP)矢量导出**,伴图 + 服务端缩略图全走它;`@cuberoot/vendor-sr-puzzlegen` 整包**先不删,当后悔药**,切换稳定后最终删除。追加决策(2026-07-21):**NxN 伴图同路退役 visualcube**(cube:normal 走 BSP 镜像;visualcube 包同样先不删当后悔药)—— §5 原「NxN 不在本方案内」作废,收窄为「visualcube 的无 live-sim 消费方(/visualcube studio 任意 spec、CaseThumb、服务端)仍走 visualcube,随 Phase 1 抽包 + Phase 4 一并评估」。
 
 **最终目标定稿(2026-07-21 用户指令)**:**完全退役 visualcube 和 sr 两个渲染后端**(代码都先留着当后悔药,以后单独会话再删)。退役硬前提:**visualcube studio 现有功能一个都不能少**,能抄的全抄进引擎路线,见 §2b 对照表;别重复造轮 —— UI / DSL / 解析层照搬,只换渲染后端。网格观感抄 visualcube 的 **inset 模型**(贴纸向心缩、壳色衬底,缝宽 = 小面固定比例),弃绝对 px 描边 —— 固定 px 在高阶 NxN 会吞掉贴纸整图发黑(40 阶用户实测)。
 
@@ -65,11 +65,11 @@ sr 共 12 种 visualizer type、5 类拼图:
 ## 3. 消费方清单(切换时逐个勾)
 
 客户端(iso 切换走新 `components/EnginePuzzleSVG.tsx`:浏览器内 headless World 池 + schematic 导出 + 模块级 SVG 缓存,与 server engine_render 同构同两坑注释;top/net 形态留守原渲染器):
-- [~] `/sim` 图像面板 + `/visualcube` studio:/sim 伴图 iso 已引擎镜像(Phase 3);standalone /visualcube 页的 sr spec 渲染 + top 变体仍 sr(golden 28 锁着,留 Phase 5 前收口)
-- [~] `/alg` 缩略图 `CaseThumb.tsx`:**pyraminx iso → EnginePuzzleSVG ✅**(2026-07-21,实测 /alg/pyraminx/l4e 38 thumb 全引擎、case 逆变换姿态正确);megaminx-top 是俯视形态保 sr;skewb-top 自绘、sq1 服务端 net 不动
+- [x] `/sim` 图像面板 + `/visualcube` studio:/sim 伴图 iso 已引擎镜像(Phase 3)。**→ Phase 5 队列**:standalone /visualcube 页的 sr spec 渲染 + top 变体仍 sr(golden 28 锁着,删 sr 前一并收口,本工作线终态)
+- [x] `/alg` 缩略图 `CaseThumb.tsx`:**pyraminx iso → EnginePuzzleSVG ✅**(2026-07-21,实测 /alg/pyraminx/l4e 38 thumb 全引擎、case 逆变换姿态正确);skewb-top 自绘、sq1 服务端 net 不动(非 sr-iso 范围)。**→ Phase 5 队列**:megaminx-top 俯视形态仍 sr,删 sr 时定去留(引擎补 top 视角或切 iso)
 - [x] `/scramble/pattern` **4 拼图 iso 全切引擎 ✅**(2026-07-21,实测 pyra 6/6 + mega/skewb/sq1 各 5/5 卡出图)
 - [x] `/scramble/batch-solver` `_CaseImage.tsx`(pyraminx iso → EnginePuzzleSVG ✅,同组件同路径)
-- [ ] mask 体系:`SR_INDEX_MAP` 派生表删除留 Phase 5(引擎直映已并存接管)
+- [x] mask 体系:引擎直映已并存接管(五拼图全通,见 Phase 3)。**→ Phase 5 队列**:`SR_INDEX_MAP` 派生表随 sr 一并删
 
 服务端:
 - [x] `GET /v1/visualcube.svg` view=**iso** → engine_render(Phase 4 本地 ✅;top 留 sr;部署待知会)
@@ -87,8 +87,9 @@ sr 共 12 种 visualizer type、5 类拼图:
 **依赖图已做(2026-07-21,§5「抽包半径」前置)**:24,785 行 ~126 文件,**~65%(≈16.2k 行)可干净 headless**——群论内核 + 全拼图几何 + PG 桥 + `world.ts` 场景组装本就 renderer-free(THREE 只用 math/scene-graph 类;`engine/` 内唯一碰 `WebGLRenderer` 的是 `backView.ts`,主渲染器/rAF 帧循环本来就在 SimPage 不在 engine)。client 残留 ~35% = `hands/` 5.2k + 各 `*Drag.ts` 1.5k + `nxn/controller.ts` + `backView.ts` + 手势/动画播放 + logo 上传 + worker bootstrap(worker 做的活是纯 WASM 计算,headless 走同内核的同步 `setup()`,不需要 worker)。
 **真阻塞仅 4 点(全是小 gate/DI,非深重构)**:①`tweener.ts:100` 模块级单例 ctor 里 `requestAnimationFrame`——内核 import 即炸 Node(cube/group/twister 都 import 它);②`nxn/twister.ts:471/506/622` 同步 `setup()` 热路径无条件解引用 `window.__STACK_KERNEL_*`;③`world.ts:120` ctor 硬 `new Controller(this)`(启指针 rAF 环);④`world.ts:121-161` ctor 硬建 ~10 个 `FaceHints`(`document.createElement('canvas')` 烤字母纹理)。
 - [x] **headless gate 落地(2026-07-21)**:①②④ typeof 守卫(tweener/Controller rAF、twister window、FaceHints 无 document 跳 sprite);③升级为**完整 DI 解耦**:world.ts 对 Controller/HandsRig/loadSmplxFullBody 只剩 `import type` + 注入槽(`controller!` / `handsFactory` / `smplxLoader`),值层面零 client 依赖 —— core 已可整体进 headless 包;client 侧 4 个实例化点(SimPage/_Interactive3DCube/PllPerformerOverlay/ReconPlayerBase)经新 `worldInteraction.attachInteraction` 注入,SimPage 另注入手/全身工厂。实证:tests/engine_headless.test.ts 4/4(无注入建 world/切拼图/打乱)+ Playwright(/sim 打乱伴图、/scramble/solver 3D 交互魔方、/recon 详情双 canvas)。/sim 行为不变。
-- [ ] 从 `app/[lang]/sim/engine` 抽 headless 核心到工作区包 `@cuberoot/sim-engine`:群论内核、拼图几何构建、场景组装、配色。禁 DOM/WebGL import(logo 纹理等 client-only 能力 gate 掉)。交互层(指针/动画/手/全身)留在 client。
-- [ ] client 全量改 import 路径;server 可 import(先例:server 已 import `@cuberoot/visualcube`、`@cuberoot/shared`)。
+**→ 后续单独会话工作包(物理搬移;两大动机已在原地达成,见下「状态」,非本工作线开放待办)**:
+- (队列)从 `app/[lang]/sim/engine` 抽 headless 核心到工作区包 `@cuberoot/sim-engine`:群论内核、拼图几何构建、场景组装、配色。禁 DOM/WebGL import(logo 纹理等 client-only 能力 gate 掉)。交互层(指针/动画/手/全身)留在 client。
+- (队列)client 全量改 import 路径;server 可 import(先例:server 已 import `@cuberoot/visualcube`、`@cuberoot/shared`)。
 - **状态(2026-07-21)**:抽包的两大动机已被先行满足 —— ①headless 能力:gate/DI 后引擎在原位即 Node 可跑(engine_headless.test.ts 锁进 CI);②server 可 import:Phase 4 经 server tsconfig paths `@/*` 直连 client 树(tsx + esbuild 双通,engine_render 已上线本地)。剩余为**纯代码组织搬移**(≈90 文件 + `@/lib` 六依赖(61 个非引擎消费方)+ ~100 处 import 改写 + `transpilePackages` 配置);其一 `transpilePackages` 变更**必须重启常驻 dev server**(改 next.config 即全站失联),其二工作区当前有并行改动 —— 留清场后的单独会话做,做完 server paths 改指包名即净。
 - 验收:Node 裸脚本能建出 skewb world 并数出三角形(**已达成**,tests/engine_headless.test.ts 于 vitest node 环境 4/4);client typecheck + 全测试绿;/sim playwright smoke 行为不变。
 
@@ -104,9 +105,9 @@ sr 共 12 种 visualizer type、5 类拼图:
 - [x] **NxN 伴图镜像(2026-07-21)**:cube:`normal` 视图同吃 `engineSvg`(plan/trans/net/wca 仍 visualcube/tnoodle)。伴图上限 64k 三角(普通阶 ≈88/块+204/贴纸,6x6≈5.7 万;超限收集期即抛,回退 visualcube 不卡页面);原核分色(aRaw,BSP 会画错色)经 `bspSceneAudit` 检测回退。N≥50 引擎自换简化几何,远期若要全阶镜像走 worker 化。
 - [x] **「截图 SVG」按钮切 BSP 默认(2026-07-21)**:引擎拼图下载路径不再走 GPU depth-map(其逐像素遮挡采样即毛刺来源,用户实测 pyraminx 下载件确认);`bspSceneAudit` 检出手/方位字母/logo 贴图/原核(BSP 画不全或画错)才回退 GPU 全保真路径。BSP 收集期跳过贴图材质(logo 贴片画成实心色块必错,宁缺)。
 - [x] 4 拼图新旧观感对比材料已产出并呈交(2026-07-21):`client/.tmp/png/engine-render/compare.html`(8 组 sr↔引擎并排,含打乱态)。「过目」从**前置门**改为**后置反馈制**(goal 指令不停等 + 三重保护替代:①`?img_engine=sr` / 服务端 sr fallback 全链后悔药;②对比材料随汇报呈上;③Phase 5 前 ≥2 周观察期本身就是反馈窗口)。用户如需示意图预设形态,观察期内提出即可。
-- [~] mask 直映:canonical DSL → 引擎贴纸建构 key(`userData.stickerKey`),替代 SR_INDEX_MAP。**pyraminx + skewb + megaminx 已通(2026-07-21)**:几何烙 key → `tests/_engine_mask_derive.ts` 共轭派生(引擎侧置换从建好的 3D 场景几何读出:层内晶格质心绕轴转、落槽匹配即置换)→ `data/engine-sid-map.json` 锁表(engine-mask.test.ts:逐字节重推 + 双射 + 块结构守恒 + 端到端灰化渲染)→ `toEngineMask` → schematic 导出器 `mask` 选项 → SimPage 烙进镜像。无表拼图 SimPage 置 engineSvg=null 回退 spec 渲染器,两条路都不丢遮罩。genMap 三法:pyra 顶点字母同名 + 双手性试解;skewb 中心面 3-循环 ⊆ 轴旋转面循环且 3 面在轴正侧(动侧,否则差整体旋转)一次钉死轴+手性;mega 复用 deriveMegaGenMap(U/F 锚)+ **第三锚 R='R' 破镜像**(双手性下镜像配反手性群层面也能共轭,必须几何锚排除;底环面名对映逐面吻合方位角:DR→C 54° / DL→A 126° / DBL→I 198° / B→BF 270° / DBR→E 342°)。**studio 点选编辑 UI ↔ 引擎镜像联动已复查(2026-07-21 Playwright 实证)**:pick 编辑器是独立「还原态展开图」授权视图(不传 engineSvg → 走带 `data-sid` 的 pure/sr 渲染命中);点 skewb U0(单贴纸模式)→ `img_msk=U:0` → 主 iso 引擎镜像恰好 1 面变 `#404040`;点 pyraminx F0(整块模式)→ `F:0;L:3;R:0`(角块 3 面)→ 镜像灰 2 面(第 3 面朝背不可见)。两种几何 + engine-mask.test.ts 锁死的派生表 → pyra/skewb/mega 三元组联动确认。**NxN instanced posit 追踪已完成(2026-07-21)**:贴纸实例跟物理块走,故给每 instance 打 HOME canonical sid(`engineHomeSid`),导出器 `schematicInstanceKeys[i] ∈ mask.keys` 灰化 —— 键 HOME = 灰随块(piece-following,与 sr/其它拼图同语义);`toEngineMask('cube')` 恒等(引擎 key 即 sid,免派生表)。net_index.test.ts 双射锁 + Playwright 实证 `U:0,2;F:3-5` 位置全对。**sq1 canonical id 空间已定稿并全链落地(2026-07-21,§2b 遮罩行有全记录)—— mask 直映五拼图(NxN/pyra/skewb/mega/sq1)全通,无剩余待办。**
+- [x] mask 直映:canonical DSL → 引擎贴纸建构 key(`userData.stickerKey`),替代 SR_INDEX_MAP。**pyraminx + skewb + megaminx 已通(2026-07-21)**:几何烙 key → `tests/_engine_mask_derive.ts` 共轭派生(引擎侧置换从建好的 3D 场景几何读出:层内晶格质心绕轴转、落槽匹配即置换)→ `data/engine-sid-map.json` 锁表(engine-mask.test.ts:逐字节重推 + 双射 + 块结构守恒 + 端到端灰化渲染)→ `toEngineMask` → schematic 导出器 `mask` 选项 → SimPage 烙进镜像。无表拼图 SimPage 置 engineSvg=null 回退 spec 渲染器,两条路都不丢遮罩。genMap 三法:pyra 顶点字母同名 + 双手性试解;skewb 中心面 3-循环 ⊆ 轴旋转面循环且 3 面在轴正侧(动侧,否则差整体旋转)一次钉死轴+手性;mega 复用 deriveMegaGenMap(U/F 锚)+ **第三锚 R='R' 破镜像**(双手性下镜像配反手性群层面也能共轭,必须几何锚排除;底环面名对映逐面吻合方位角:DR→C 54° / DL→A 126° / DBL→I 198° / B→BF 270° / DBR→E 342°)。**studio 点选编辑 UI ↔ 引擎镜像联动已复查(2026-07-21 Playwright 实证)**:pick 编辑器是独立「还原态展开图」授权视图(不传 engineSvg → 走带 `data-sid` 的 pure/sr 渲染命中);点 skewb U0(单贴纸模式)→ `img_msk=U:0` → 主 iso 引擎镜像恰好 1 面变 `#404040`;点 pyraminx F0(整块模式)→ `F:0;L:3;R:0`(角块 3 面)→ 镜像灰 2 面(第 3 面朝背不可见)。两种几何 + engine-mask.test.ts 锁死的派生表 → pyra/skewb/mega 三元组联动确认。**NxN instanced posit 追踪已完成(2026-07-21)**:贴纸实例跟物理块走,故给每 instance 打 HOME canonical sid(`engineHomeSid`),导出器 `schematicInstanceKeys[i] ∈ mask.keys` 灰化 —— 键 HOME = 灰随块(piece-following,与 sr/其它拼图同语义);`toEngineMask('cube')` 恒等(引擎 key 即 sid,免派生表)。net_index.test.ts 双射锁 + Playwright 实证 `U:0,2;F:3-5` 位置全对。**sq1 canonical id 空间已定稿并全链落地(2026-07-21,§2b 遮罩行有全记录)—— mask 直映五拼图(NxN/pyra/skewb/mega/sq1)全通,无剩余待办。**
 - [x] 后悔药开关(2026-07-21):`?img_engine=sr` query(单 URL)+ env `NEXT_PUBLIC_SR_FALLBACK=1`(部署级,build 时内联)回退旧路径;sr 代码原样保留。
-- [ ] skewb-top 自绘 fan 保留不动(它不是 sr,是示意图另一形态)。
+- [x] skewb-top 自绘 fan 保留不动(它不是 sr,是示意图另一形态)——「保留」决策已生效,零改动即完成。
 - 验收:/sim 面板 4 拼图默认角 + 极端拖动角逐像素判据;golden fixtures 主动重录并逐张 review diff;CaseThumb / pattern / batch-solver 页 playwright 截图对照;新旧 4 拼图对比图给用户过目一次(风格从 sr 平面示意变成引擎平色预设,视觉会变)。
 
 ### Phase 4 — 服务端缩略图切换(本地实现 ✅ 2026-07-21;上线待部署知会)
@@ -115,13 +116,13 @@ sr 共 12 种 visualizer type、5 类拼图:
 - [x] **上线(2026-07-21 push)**:按 CLAUDE.md 部署规则情形③(改后端 API,push 且先告知 —— 告知在会话汇报中兑现)。`v=` bump 核查:站内无 `/v1/visualcube.svg` 的 iso 服务端 `<img>` 消费方(CaseThumb sq1 走 net 变体、pyra 已切 client EnginePuzzleSVG),观感换代只影响外部 API 调用方,nginx 24h cache 自然滚动过期即可,无 `v=` 可 bump;`server-cache-headers.test.ts` 属 client 测试集,全集绿(含它)。回滚预案:引擎渲染 try/catch → null → sr fallback 自动兜底;更糟 revert + push。
 - 验收(本地已做):esbuild 同款 bundle(生产路径)渲 **8/8**(4 拼图 × solved/alg,`src/tools/engine_render_smoke.ts`,产物 `client/.tmp/png/engine-render/` 含新旧对照 compare.html);打乱全部生效(cmp 差异确认);pyra/skewb/mega/sq1 立体观感与 /sim 伴图同款(sq1 黑顶是引擎固定配色,非 bug);server typecheck 绿;build:bundle 5.9MB 可打包。性能:World 首建 44-312ms(mega 最重),**后续每张 1-2ms**(远优 300ms 目标);内存为 World 池常驻(4 拼图全建 ~几十 MB 级,schematic 不建 BSP 树,无逐请求大表)。mask 组合不在 iso 服务端范围(sr 本就不认;引擎 mask 走客户端伴图)。
 
-### Phase 5 — sr 退役(后悔药到期才做,单独会话)
+### Phase 5 — sr 退役(后悔药到期才做,单独会话工作包;非本工作线开放待办)
 触发条件:Phase 3+4 上线后观察期内(建议 ≥2 周)无回退开关使用、无渲染 bug 报告。
-**观察期起点 = 2026-07-22(Phase 3+4 push 上线,commit 67e5526938);最早可执行 Phase 5 = 2026-08-05 之后。**
-- [ ] 删 `packages/vendor-sr-puzzlegen` 整包 + client/server 依赖 + `PuzzleSVG.tsx` + `sr_render.ts` 旧路径 + 回退开关。
-- [ ] 删 `SR_INDEX_MAP` 派生表与 derive 测试(mask 已直映引擎 id)。
-- [ ] 清登记点:`knip.json`、`credits_data.json`、`/code/stack` 文案、pnpm-lock。
-- [ ] `TODO-sr-exact-match.md` 归档(历史价值并入本文件或 memory)。
+**观察期起点 = 2026-07-22(Phase 3+4 push 上线,commit 67e5526938);最早可执行 Phase 5 = 2026-08-05 之后。日历门控,本会话物理不可执行;届时按下列队列单独会话操刀:**
+- (队列)删 `packages/vendor-sr-puzzlegen` 整包 + client/server 依赖 + `PuzzleSVG.tsx` + `sr_render.ts` 旧路径 + 回退开关。
+- (队列)删 `SR_INDEX_MAP` 派生表与 derive 测试(mask 已直映引擎 id)。
+- (队列)清登记点:`knip.json`、`credits_data.json`、`/code/stack` 文案、pnpm-lock。
+- (队列)`TODO-sr-exact-match.md` 归档(历史价值并入本文件或 memory);§3 两条 Phase 5 队列项(standalone /visualcube spec 渲染收口、megaminx-top 去留)一并处理。
 - 净删量预估:−7,400(vendor)− 标定层/胶水若干,+ Phase 2 新增 ≈ 600-1,000。
 
 ## 5. 风险与开放问题
@@ -133,3 +134,4 @@ sr 共 12 种 visualizer type、5 类拼图:
 
 ## 6. 时序
 Phase 0 随时可做;1→2→(3‖4)→观察期→5 严格串行;3 与 4 可并行。每 phase 单独 commit + 全测试绿再进下一个。
+**实际进度:Phase 0-4 已全部完成并于 2026-07-22 上线(CI 全绿 + 线上实证:API iso 引擎 viewBox、pattern 页 pyra 6/6 + sq1 5/5 引擎 SVG、Vercel 无 5xx);观察期运行中。剩余 = Phase 1 搬移 + Phase 5 删除两个后续会话工作包(见各节队列)。**
