@@ -186,9 +186,13 @@ export interface PuzzleImageStudioProps {
    *  示意版(有严格版孪生)时由 host 传值,undefined = 不适用 → 不渲染滑块。 */
   outlineWidth?: number;
   onOutlineWidthChange?: (n: number) => void;
+  /** 对照模式:预览并排显示「引擎镜像」与「spec 渲染器」(cube 即 visualcube 本体)
+   *  两份图,同一个 spec、同一个状态,用来肉眼比两条渲染路线的差异。
+   *  /sim 由 `?img_engine=both` 打开;engineOnly 拼图没有 spec 渲染器可比,忽略。 */
+  compare?: boolean;
 }
 
-export default function PuzzleImageStudio({ spec, onSpecChange, mode, className, simBridge, previewHost, engineSvg, engineOnly = false, outlineWidth, onOutlineWidthChange }: PuzzleImageStudioProps) {
+export default function PuzzleImageStudio({ spec, onSpecChange, mode, className, simBridge, previewHost, engineSvg, engineOnly = false, outlineWidth, onOutlineWidthChange, compare = false }: PuzzleImageStudioProps) {
   const t = useT();
   const s = spec;
   const set = useCallback(<K extends keyof ImageSpec>(key: K, value: ImageSpec[K]) => {
@@ -384,6 +388,20 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
         ) : (
           <div className="vc-preview vc-preview-pending">{t('等待静止帧…', 'Waiting for a still frame…')}</div>
         )
+      ) : compare ? (
+        // 对照模式(/sim?img_engine=both):同一个 spec 渲染两遍 —— 左边喂 engineSvg
+        // 走引擎镜像,右边把它掐掉、强制落回 spec 渲染器(cube = visualcube 本体)。
+        // 两边同源同态,差异就是引擎与原版的真实差异。
+        <div className="vc-compare">
+          <figure className="vc-compare-cell">
+            <PuzzleImage spec={s} interactive={false} engineSvg={engineSvg} />
+            <figcaption>{t('引擎', 'Engine')}</figcaption>
+          </figure>
+          <figure className="vc-compare-cell">
+            <PuzzleImage spec={s} interactive={false} engineSvg={null} />
+            <figcaption>visualcube</figcaption>
+          </figure>
+        </div>
       ) : (
         <PuzzleImage spec={s} onSpecChange={onSpecChange} interactive={mode === 'page'} engineSvg={engineSvg} />
       )}
