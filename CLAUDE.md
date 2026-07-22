@@ -78,6 +78,7 @@ pnpm --filter @cuberoot/client lint
 - 磁盘不够先 `df -h` 告诉我,别静默换方案。
 - 凭据:给用户服务器/DB 命令时从 `.password.md`(gitignored)读真实密码嵌入,不写 `<password>` 占位;命令不 commit。
 - 本地 PG:docker `pg13`(5433,pwd `dev`,db `cuberoot_db`);schema/load.sql 先本地验。
+- 本地改某域 DB 数据并预览:`seed:local <表>` 拉那域的表进 pg13 + `dev:local` 跑本地 API + `$env:LOCAL_DOMAINS='<域>'` 起前端(只该域走本地,登录/别的域/WCA 大表仍反代线上);禁默认全局连本地。范本 alg,详 `packages/server/scripts/README.md`。
 
 ## 测试
 
