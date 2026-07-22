@@ -29,6 +29,7 @@ import { invertAlg } from '@/lib/cube3';
 import { rotationDefaultsFor, rotationsMatchDefault } from '@/lib/puzzle-image/defaults';
 import { srPromoteAxis } from '@cuberoot/shared/sr-rotations';
 import { renderSpecSvg, srKindOf } from '@/lib/puzzle-image/render';
+import { sizeEngineSvg } from '@/lib/puzzle-image/engine-svg';
 import type { StickerId } from '@/lib/puzzle-image/mask-core';
 import type { ImageSpec, PuzzleType } from '@/lib/puzzle-image/types';
 
@@ -367,10 +368,7 @@ export default function PuzzleImage({
     : spec.puzzleVariant === 'iso';
   if (engineSvg && engineMirrors) {
     // 引擎镜像是全尺寸画布投影;钉成方形显示框,viewBox + 默认 meet 保比例。
-    const sized = engineSvg.replace(
-      /<svg\b([^>]*?)\swidth="[^"]*"\sheight="[^"]*"/,
-      `<svg$1 width="${spec.imageSize}" height="${spec.imageSize}"`,
-    );
+    const sized = sizeEngineSvg(engineSvg, spec.imageSize);
     return <div className={cls} dangerouslySetInnerHTML={{ __html: sized }} />;
   }
 
