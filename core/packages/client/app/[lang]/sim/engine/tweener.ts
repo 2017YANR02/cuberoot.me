@@ -40,7 +40,11 @@ export class Tweener {
 
   constructor() {
     this.tweens = [];
-    this.loop();
+    // headless 守卫(PLAN-sr-retirement Phase 1):本模块底部是 import 即执行的单例,
+    // 内核(cube/group/twister)import 它 → 无 rAF 环境(Node/服务端)构造即炸。
+    // headless 下不起自动环:调用方要么走 finish()(setup/reset 已如此,瞬时到位),
+    // 要么手动 update()(mp4 离线 tick 同款)。
+    if (typeof requestAnimationFrame !== 'undefined') this.loop();
   }
 
   loop(): void {
