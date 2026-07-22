@@ -213,7 +213,7 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
   // 是 → SVG/PNG 导出的必须就是它(所见即所得),而不是 spec 重渲染的近似版。
   const engineShown = !!engineSvg && (engineOnly
     || (s.puzzleType === 'cube'
-      ? (s.cubeView === 'normal' || s.cubeView === 'net')
+      ? (s.cubeView === 'normal' || s.cubeView === 'net' || s.cubeView === 'wca')
       : s.puzzleVariant === 'iso'));
 
   // ── export ─────────────────────────────────────────────────────────────
