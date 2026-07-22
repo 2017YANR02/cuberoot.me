@@ -12,8 +12,10 @@
  *   网格永远等比,不会像绝对 px 描边那样在高阶把贴纸吞成一片黑(40 阶实测教训)。
  *   相邻衬底共享的棱在建模层就是同一组世界坐标(引擎割平面求交,跨块误差 ~1e-9,
  *   远低于输出 0.01px 量化)→ 衬底严丝合缝铺满外形,外轮廓即数学直线,不再需要
- *   旧描边模型的凸包裁剪 + 外框 hack。衬底带一条同色 1px 描边封住相邻多边形间的
- *   抗锯齿细缝(经典 SVG 邻接缝补法;同色不可见,外轮廓仅胖 0.5px)。
+ *   旧描边模型的凸包裁剪 + 外框 hack。衬底带一条同色描边封住相邻多边形间的抗锯齿
+ *   细缝(经典 SVG 邻接缝补法),同色不可见;这条描边同时是**外轮廓圆角**的来源
+ *   —— 衬底先向投影中心缩 0.94、再用 round-join 的粗描边长回来,接合处被磨圆,
+ *   角块不锐利(抄 visualcube renderCubeOutline,见 cornerRound)。
  *
  * 相机 / 状态直接取引擎 world → 任意视角精确跟随左侧 3D(sr 的 SR_ANGLE_BASE
  * 手工标定层在此路线不存在)。
@@ -51,6 +53,12 @@ export interface SchematicSvgExportOptions {
   stickerOpacity?: number;
   /** 背景色;默认 null = 透明。 */
   background?: string | null;
+  /** 外轮廓圆角量 = 衬底描边宽占包围盒长边的比例。visualcube 的外框走
+   *  `renderCubeOutline` 顶点 ×0.94 + 分组 `stroke-width=0.1 stroke-linejoin=round`
+   *  —— 那条圆角接合就是它角块不锐利的来源。默认 0.0661 = 0.05 ÷ 默认视角下
+   *  vc 包围盒半长边 0.7568,与 OUTLINE_SHRINK 0.94 配对后轮廓落在真实角外
+   *  1.006 倍处(与 vc 同)。0 = 退回旧的 1px 封缝描边(纯锐角)。 */
+  cornerRound?: number;
   /** 贴纸遮罩(mask 直映):`userData.stickerKey ∈ keys` 的小面填 color(sr
    *  applyMask 的灰化语义;衬底/网格不动)。key 表见
    *  lib/puzzle-image/data/engine-sid-map.json(派生,canonical sid → key)。
@@ -228,12 +236,40 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
     return out;
   };
 
+  // 小面投影包围盒 —— 圆角描边宽按它的长边取,取景余量也按它算。
+  let fx0 = Infinity, fy0 = Infinity, fx1 = -Infinity, fy1 = -Infinity;
+  for (const f of facelets) {
+    for (let i = 0; i < f.pts.length; i += 2) {
+      if (f.pts[i] < fx0) fx0 = f.pts[i]; if (f.pts[i] > fx1) fx1 = f.pts[i];
+      if (f.pts[i + 1] < fy0) fy0 = f.pts[i + 1]; if (f.pts[i + 1] > fy1) fy1 = f.pts[i + 1];
+    }
+  }
+  const span = facelets.length > 0 ? Math.max(fx1 - fx0, fy1 - fy0) : 0;
+  const bcx = (fx0 + fx1) / 2, bcy = (fy0 + fy1) / 2;
+
+  // 外轮廓圆角(抄 visualcube renderCubeOutline):衬底先向投影中心缩 0.94,再用
+  // 一条 round-join 的同色粗描边长回来 —— 接合处被描边的圆角接头磨圆,角块不再是
+  // 尖角。相邻衬底同缩放同心 → 共享顶点仍严格重合,内部不裂缝;描边只在整体外
+  // 轮廓那一圈可见。vc 是逐「面」画外框,我们是逐小面,但内部接合被邻块盖住,
+  // 露在外面的只有拼图轮廓 —— 视觉等价。
+  const OUTLINE_SHRINK = 0.94;
+  const roundW = Math.max(1, (opts.cornerRound ?? 0.0661) * span);
+  const rounded = roundW > 1;
+  const shrinkPts = (pts: number[]): number[] => {
+    const out: number[] = [];
+    for (let i = 0; i < pts.length; i += 2) {
+      out.push(bcx + (pts[i] - bcx) * OUTLINE_SHRINK, bcy + (pts[i + 1] - bcy) * OUTLINE_SHRINK);
+    }
+    return out;
+  };
+
   const bodyOpAttr = bodyOp < 100 ? ` opacity="${fmt(bodyOp / 100)}"` : '';
   const stickerOpAttr = stickerOp < 100 ? ` opacity="${fmt(stickerOp / 100)}"` : '';
   let content = '';
   for (const f of facelets) {
     if (inset > 0) {
-      content += `<path d="${dOf(f.pts)}" fill="${f.body}" stroke="${f.body}" stroke-width="1" stroke-linejoin="round"${bodyOpAttr}/>`;
+      content += `<path d="${dOf(rounded ? shrinkPts(f.pts) : f.pts)}" fill="${f.body}" stroke="${f.body}"`
+        + ` stroke-width="${fmt(roundW)}" stroke-linejoin="round"${bodyOpAttr}/>`;
     }
     content += `<path d="${dOf(inset > 0 ? insetPts(f.pts) : f.pts)}" fill="${f.fill}"${stickerOpAttr}/>`;
   }
@@ -267,23 +303,18 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
     if (defs) defs = `<defs>${defs}</defs>`;
   }
 
-  // viewBox 贴着拼图裁(抄 sr 的紧凑取景):包围盒 + 衬底封缝描边半宽(0.5)+ 1px。
-  // 不裁的话导整张画布,拼图缩在中间、四周大片空边。箭头端点(含自身余量)也
-  // 计入包围盒,标注伸出轮廓时视窗跟着扩。
+  // viewBox 贴着拼图裁(抄 sr 的紧凑取景):小面包围盒 + 衬底描边半宽 + 1px。
+  // 衬底缩 0.94 后再描边 roundW,外轮廓落在小面包围盒外 (0.94−1)·半跨 + roundW/2
+  // 处 —— 圆角越大这圈越宽,余量跟着算,别把圆角裁掉。不裁的话导整张画布,拼图
+  // 缩在中间、四周大片空边。箭头端点(含自身余量)也计入包围盒。
   let bx = 0, by = 0, bw = W, bh = H;
   if (facelets.length > 0 || arrowPads.length > 0) {
-    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-    for (const f of facelets) {
-      for (let i = 0; i < f.pts.length; i += 2) {
-        if (f.pts[i] < x0) x0 = f.pts[i]; if (f.pts[i] > x1) x1 = f.pts[i];
-        if (f.pts[i + 1] < y0) y0 = f.pts[i + 1]; if (f.pts[i + 1] > y1) y1 = f.pts[i + 1];
-      }
-    }
+    let x0 = fx0, y0 = fy0, x1 = fx1, y1 = fy1;
     for (const p of arrowPads) {
       if (p.x - p.pad < x0) x0 = p.x - p.pad; if (p.x + p.pad > x1) x1 = p.x + p.pad;
       if (p.y - p.pad < y0) y0 = p.y - p.pad; if (p.y + p.pad > y1) y1 = p.y + p.pad;
     }
-    const pad = 1.5;
+    const pad = (inset > 0 ? roundW / 2 : 0.5) + 1;
     bx = x0 - pad; by = y0 - pad; bw = x1 - x0 + pad * 2; bh = y1 - y0 + pad * 2;
   }
 
