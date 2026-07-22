@@ -22,6 +22,7 @@ import { FACE, COLORS } from "../define";
 import { rawMaterial, rawMaterialBasic, buildRawAttributes, attachRawAttributes, setRawCoreBorder, type RawAttrs } from "./rawCore";
 import { mirrorTables } from "../mirror/mirrorGeometry";
 import { FM_DIM, FM_IGNORED, FM_ORIENTED, FM_ORIENTED2, type StickeringMaskFn } from "./stickering";
+import { engineHomeSid } from "./netIndex";
 
 const HALF = Cubelet.SIZE / 2;
 const HIDE_MAT = new THREE.Matrix4().makeScale(0, 0, 0);
@@ -272,6 +273,20 @@ export default class InstancedRenderer extends THREE.Group {
     const schematicQuad = [-HALF, -HALF, 0, HALF, -HALF, 0, HALF, HALF, 0, -HALF, HALF, 0];
     this.staticSticker.userData.schematicInstancedPoly = schematicQuad;
     this.movingSticker.userData.schematicInstancedPoly = schematicQuad;
+    // 每贴纸槽位的 HOME canonical sid(`${面字母}${netIndex}`)—— 示意导出器据此把
+    // 自由 facelet 遮罩(`U:0,2` DSL)灰化对应实例。槽位 i 恒绑 stickerSlots[i] 的
+    // (cubeletInitial, face);实例跟物理块走 → 键 HOME = 灰随块走(piece-following,
+    // 同 pyra/skewb/mega)。static/moving 同槽序 → 共用一份。仅在退役目标阶(N≤7,遮罩
+    // 派生表覆盖范围)算,高阶跳过省内存(无遮罩消费)。
+    if (this.cube.order <= 7) {
+      const keys = new Array<string>(this.stickerSlots.length);
+      for (let i = 0; i < this.stickerSlots.length; i++) {
+        const s = this.stickerSlots[i];
+        keys[i] = engineHomeSid(s.cubeletInitial, s.face, this.cube.order);
+      }
+      this.staticSticker.userData.schematicInstanceKeys = keys;
+      this.movingSticker.userData.schematicInstanceKeys = keys;
+    }
 
     // 构造时 cubelet.matrix = 纯 translation (rot=identity, scale=1),T × localMat 简化为
     // localMat.elements 直接 copy + 12/13/14 加 cubelet.position。跳过 multiplyMatrices (64 mul) +

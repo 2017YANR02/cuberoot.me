@@ -153,9 +153,10 @@ describe('toEngineMask / engineMaskSupported gates', () => {
     expect(engineMaskSupported('pyraminx')).toBe(true);
     expect(engineMaskSupported('skewb')).toBe(true);
     expect(engineMaskSupported('megaminx')).toBe(true);
-    expect(engineMaskSupported('cube')).toBe(false);
+    expect(engineMaskSupported('cube')).toBe(true);   // NxN 恒等映射(instanceKeys = canonical sid)
     expect(engineMaskSupported('sq1')).toBe(false);
-    expect(toEngineMask('cube', ['U0'])).toBeUndefined();
+    // cube:恒等透传(引擎实例 key 即 canonical sid);无派生表。
+    expect(toEngineMask('cube', ['U0', 'F3'])).toEqual(new Set(['U0', 'F3']));
     expect(toEngineMask('pyraminx', ['F5', 'D2'])).toEqual(new Set(['edge1-2:3', 'edge1-2:0']));
     expect(toEngineMask('pyraminx', ['ZZZ99'])).toEqual(new Set()); // 不在拼图上:静默跳过
   });
