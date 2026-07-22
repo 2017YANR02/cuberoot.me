@@ -52,7 +52,7 @@ sr 共 12 种 visualizer type、5 类拼图:
 | 视图 trans(半透明) | cubeOpacity/stickerOpacity | 导出器 bodyOpacity/stickerOpacity 参数 + 预设 | ⬜ |
 | 视图 net(展开图) | 平面展开 | /sim 已有引擎驱动 2D net,导出侧接同源 | ⬜ |
 | 视图 wca(记分表样式) | tnoodle 风格平面 | 同 net,引擎状态直出 | ⬜ |
-| 图片尺寸 (PX) | svg width/height | 导出参数(viewBox 已有,补输出尺寸) | ⬜ |
+| 图片尺寸 (PX) | svg width/height | `lib/puzzle-image/engine-svg.ts` 的 `sizeEngineSvg`:root <svg> 宽高钉 size×size(viewBox 保留 → meet 等比不变形);显示 / studio 预览 / SVG 下载三处共用一份。PNG 下载走 canvas=imageSize² + contain-fit | ✅(2026-07-21;此前 SVG 下载漏套尺寸=导出器原生像素,已补) |
 | 箭头(面/从/到/过/缩放/影响/颜色 + DSL + 默认箭头色) | arrows 解析 + renderArrows | `engine/nxn/vcArrowBridge.ts`:复用 visualcube `parseArrows`(不重造 DSL)→ `faceletFromNet`(netIndexOf 的逆,round-trip oracle 锁死全 6 面)→ 局部贴纸中心 × 示意 mesh matrixWorld(锚 mesh 变换,固定几何位、随相机+打乱精确)→ SimPage 烙进 `opts.arrows`。studio 箭头 UI/DSL 原样透传 | ✅ 直箭头(2026-07-21;NxN normal;色/缩放/默认色通,打乱不变性实测)。曲线(s3/influence 的二次贝塞尔)+ 单面外跨面 waypoint 暂缺 → 退化直线,导出器只画 `<line>` |
 | MASK 预设(fl/f2l/oll… + rot) | mask 枚举 | ①非 NxN 走 canonical DSL → 引擎贴纸 key 直映;②**NxN 整套 visualcube MASK 已并进 /sim 主魔方 stickering 下拉**(`engine/nxn/vcStageMask.ts`:复用 `makeMasking` + 标准展开图桥,逐小面二值灰化 3D 真机,伴图读 mesh 色天然跟随;按语义去重引擎自带阶段;crossColor 重定向)| ◐→**NxN ✅**(pyra/skewb/mega 直映通;sq1 id 空间待做) |
 | 贴纸遮罩(`U:0,2;F:3-5` + 点选编辑) | facelet 级遮罩 | 同上直映层;点选编辑 UI 照搬 | ◐(pyra/skewb/mega 通;NxN 伴图直映、sq1 待做) |
