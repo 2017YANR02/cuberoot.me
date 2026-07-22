@@ -56,6 +56,17 @@ function faceletDs(svg: string): string[] {
   return [...svg.matchAll(/<path d="([^"]+)" fill="[^"]+"\/>/g)].map((m) => m[1]);
 }
 
+/** 共点/晶格断言专用的导出:圆角版的衬底 path 是**等距内缩后的核**(墨迹靠 round-join
+ *  描边还原到原轮廓),顶点自然不在晶格上。cornerRound:0 关掉圆角 → 衬底 d 就是真实
+ *  小面轮廓,「相邻小面共点」才测得到。 */
+const latticeExport = (o: Parameters<typeof exportSimSvgSchematic>[0]): string =>
+  exportSimSvgSchematic({ ...o, cornerRound: 0 });
+
+/** path 的 d → 顶点数组。 */
+function ptsOf(d: string): [number, number][] {
+  return [...d.matchAll(/[ML](-?[\d.]+) (-?[\d.]+)/g)].map((m) => [Number(m[1]), Number(m[2])] as [number, number]);
+}
+
 /** 衬底 path 的 d(带同色封缝 stroke 的晶格多边形)。 */
 function backingDs(svg: string): string[] {
   return [...svg.matchAll(/<path d="([^"]+)" fill="[^"]+" stroke=/g)].map((m) => m[1]);
@@ -144,7 +155,7 @@ describe('exportSimSvgSchematic', () => {
 
   it('相邻棱严丝合缝:衬底顶点去重后 = 晶格顶点数(10+10−共享 4 = 16)', () => {
     const world = makeWorld(buildPyraScene());
-    const svg = exportSimSvgSchematic({ world });
+    const svg = latticeExport({ world });
     const verts = new Set<string>();
     let refs = 0;
     for (const d of backingDs(svg)) {
@@ -182,45 +193,76 @@ describe('exportSimSvgSchematic', () => {
     expect(clusterReps(vertsOf(faceletDs(bare))).length).toBe(16);
   });
 
-  it('visualcube 参数:bodyColor 换衬底色;body/stickerOpacity 出 opacity 属性', () => {
+  it('visualcube 参数:bodyColor 换衬底色;body/stickerOpacity 走**分组**不透明度', () => {
     const world = makeWorld(buildPyraScene());
     const svg = exportSimSvgSchematic({
       world, bodyColor: '#333333', bodyOpacity: 40, stickerOpacity: 50,
     });
-    expect(svg.match(/fill="#333333" stroke="#333333" stroke-width="[\d.]+"[^/]*opacity="0.4"/g)?.length).toBe(18);
-    expect(svg.match(/opacity="0.5"/g)?.length).toBe(18); // 18 贴纸
+    expect(svg.match(/fill="#333333" stroke="#333333"/g)?.length).toBe(18);
+    // 半透明整遍套一个 <g opacity>,不逐 path 挂 —— 逐 path 挂的话重叠区会二次
+    // 叠加(0.4 叠 0.4 = 0.64),X 光下角块附近糊成一堆深浅不一的方块。
+    expect(svg.match(/<g opacity="0.4">/g)?.length).toBe(1); // 衬底一组
+    expect(svg.match(/<g opacity="0.5">/g)?.length).toBe(1); // 贴纸一组
+    expect(svg).not.toMatch(/<path[^>]*opacity=/);           // path 上一个都没有
     const opaque = exportSimSvgSchematic({ world });
-    expect(opaque).not.toContain('opacity'); // 100% 时不冗余输出
+    expect(opaque).not.toContain('opacity'); // 100% 时不套组、不冗余输出
   });
 
-  it('外轮廓圆角:衬底 round-join 粗描边,宽度卡在 inset×最小小面(不啃邻居贴纸)', () => {
+  it('X 光分层照搬 visualcube:隐藏贴纸 → 隐藏壳 → 可见壳 → 可见贴纸,各一组', () => {
+    const world = makeWorld(buildPyraScene());
+    const svg = exportSimSvgSchematic({ world, showHidden: true, bodyOpacity: 50 });
+    // 四遍各自成组(贴纸两遍不透明 → 不套组),壳两遍各一个 <g opacity="0.5">。
+    expect(svg.match(/<g opacity="0.5">/g)?.length).toBe(2);
+    // 可见面的壳排在隐藏面贴纸之后 → 背面贴纸被蒙一层,前后层次成立。
+    const firstBody = svg.indexOf('<g opacity="0.5">');
+    const lastBody = svg.lastIndexOf('<g opacity="0.5">');
+    expect(firstBody).toBeGreaterThan(0);   // 前面先有隐藏面贴纸
+    expect(lastBody).toBeGreaterThan(firstBody);
+    expect(svg.slice(lastBody).includes('<path')).toBe(true); // 之后才是可见面贴纸
+  });
+
+  it('外轮廓圆角:内缩再描边 —— 墨迹范围不变(不越界啃邻居 / 不二次叠加)', () => {
     const world = makeWorld(buildPyraScene());
     const svg = exportSimSvgSchematic({ world, inset: 0.15 });
     const sharp = exportSimSvgSchematic({ world, inset: 0.15, cornerRound: 0 });
 
-    // 只加宽描边,几何一个字节没动 —— 先前那版还朝全局中心缩了 0.94,衬底相对
-    // 自己的贴纸整体平移,角块交接处直接糊掉(2026-07-22 用户抓的)。
-    expect(backingDs(svg)).toEqual(backingDs(sharp));
-    expect(faceletDs(svg)).toEqual(faceletDs(sharp));
     expect(sharp).toContain('stroke-width="1" stroke-linejoin="round"'); // 0 = 旧的锐角
-
     const w = Number(svg.match(/stroke-width="([\d.]+)" stroke-linejoin="round"/)![1]);
-    expect(w).toBeGreaterThan(1); // 真圆角,不是 1px 封缝
+    expect(w).toBeGreaterThan(1); // 真圆角
+    expect(svg).toContain('stroke-linejoin="round"');
 
-    // 上限:向外胀 w/2 不得超过邻居贴纸的内缩余量(inset/2 × 小面尺寸),
-    // 否则后画的衬底会啃掉先画的邻居贴纸 —— 即 w ≤ inset × 最小小面最小边。
-    const perFacelet = backingDs(sharp).map((d) => {
-      const pts = [...d.matchAll(/[ML](-?[\d.]+) (-?[\d.]+)/g)].map((m) => [Number(m[1]), Number(m[2])]);
-      const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
-      return Math.min(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
-    });
-    // 容差 0.02:输出经 fmt 量化到 0.01,顶点坐标也是,别把量化误差当越界。
-    expect(w).toBeLessThanOrEqual(0.15 * Math.min(...perFacelet) + 0.02);
+    // 核心不变量:墨迹外缘 = 内缩后的多边形 + w/2,应与原轮廓 + 0.5px 逐边重合。
+    // 先前两版分别(a)朝质心缩 0.94 → 贴纸错位、(b)直接加粗描边 → 向外胀 w/2,
+    // 啃邻居贴纸 + 半透明下交界处二次叠加变深(2026-07-22 用户两次抓到)。
+    const rawPts = backingDs(sharp).map(ptsOf);
+    const corePts = backingDs(svg).map(ptsOf);
+    expect(corePts.length).toBe(rawPts.length);
+    for (let i = 0; i < rawPts.length; i++) {
+      // 内缩多边形的每条边到原多边形对应边的距离 = (w−1)/2 → 描边外缘落在原轮廓外 0.5。
+      const raw = rawPts[i], core = corePts[i];
+      expect(core.length).toBe(raw.length);
+      const cen = (p: [number, number][]): [number, number] =>
+        [p.reduce((a, q) => a + q[0], 0) / p.length, p.reduce((a, q) => a + q[1], 0) / p.length];
+      const [rcx, rcy] = cen(raw);
+      for (let k = 0; k < raw.length; k++) {
+        // 每条边的内缩距离:边中点沿指向质心方向应恰好移动 (w−1)/2。
+        const a = raw[k], b = raw[(k + 1) % raw.length];
+        const ax = core[k], bx = core[(k + 1) % core.length];
+        const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+        const nx = (ax[0] + bx[0]) / 2, ny = (ax[1] + bx[1]) / 2;
+        // 沿边法向的位移分量 = 内缩量;切向分量随顶点外扩,不参与判定。
+        let ex = b[0] - a[0], ey = b[1] - a[1];
+        const L = Math.hypot(ex, ey); ex /= L; ey /= L;
+        let vx = -ey, vy = ex;
+        if (vx * (rcx - mx) + vy * (rcy - my) < 0) { vx = -vx; vy = -vy; }
+        expect((nx - mx) * vx + (ny - my) * vy).toBeCloseTo((w - 1) / 2, 1);
+      }
+    }
 
-    // 半透明壳体(trans 视图)同样圆角 —— 单层实现,没有二次叠加问题。
+    // 半透明壳体(trans 视图)同款圆角 —— 墨迹不重叠,没有二次叠加问题。
     const trans = exportSimSvgSchematic({ world, inset: 0.15, bodyOpacity: 50 });
-    const tw = Number(trans.match(/stroke-width="([\d.]+)" stroke-linejoin="round"/)![1]);
-    expect(tw).toBe(w);
+    expect(Number(trans.match(/stroke-width="([\d.]+)" stroke-linejoin="round"/)![1])).toBe(w);
+    expect(backingDs(trans)).toEqual(backingDs(svg));
   });
 
   it('背面剔除:背对相机的面(m=0 黄 / m=3 绿)不输出', () => {
@@ -312,7 +354,7 @@ describe('exportSimSvgSchematic — skewb', () => {
 
   it('F face-on:4 角三角 + 1 中心菱形,晶格去重 8 点(4 角 + 4 棱中点)', () => {
     const world = worldFor(buildSkewbScene(), new THREE.Vector3(0, 0, 1), SKEWB_H * 4);
-    const svg = exportSimSvgSchematic({ world });
+    const svg = latticeExport({ world });
     const l = lCounts(svg);
     expect(l.get(2)).toBe(4); // 三角
     expect(l.get(3)).toBe(1); // 菱形
@@ -337,7 +379,7 @@ describe('exportSimSvgSchematic — megaminx', () => {
     const scene = buildMegaScene();
     const [nx, ny, nz] = MEGA_FACE_NORMAL[0];
     const world = worldFor(scene, new THREE.Vector3(nx, ny, nz), MEGA_R * 4);
-    const svg = exportSimSvgSchematic({ world });
+    const svg = latticeExport({ world });
     const l = lCounts(svg);
     expect(l.get(4)).toBe(6);  // 中心五边形
     expect(l.get(3)).toBe(60); // 角 + 棱四边形
@@ -360,7 +402,7 @@ describe('exportSimSvgSchematic — fto', () => {
     const scene = buildFtoScene();
     const [nx, ny, nz] = FTO_FACE_NORMAL[0];
     const world = worldFor(scene, new THREE.Vector3(nx, ny, nz), FTO_R * 4);
-    const svg = exportSimSvgSchematic({ world });
+    const svg = latticeExport({ world });
     expect(lCounts(svg).get(2)).toBe(36); // 全部严格三角
     expect(faceletDs(svg).length).toBe(36);
     const reps = clusterReps(backingVerts(svg));
@@ -374,7 +416,7 @@ describe('exportSimSvgSchematic — NxN (InstancedRenderer)', () => {
     const scene = new THREE.Scene();
     scene.add(new Cube(3));
     const world = worldFor(scene, new THREE.Vector3(0, 0, 1), 400);
-    const svg = exportSimSvgSchematic({ world });
+    const svg = latticeExport({ world });
     expect(lCounts(svg).get(3)).toBe(9); // 全部四边形
     expect(faceletDs(svg).length).toBe(9);
     expect(svg.toLowerCase()).toContain(CUBE_FILL.F.toLowerCase());
@@ -389,7 +431,7 @@ describe('exportSimSvgSchematic — NxN (InstancedRenderer)', () => {
     const scene = new THREE.Scene();
     scene.add(new Cube(3));
     const world = worldFor(scene, new THREE.Vector3(1, 0.9, 1), 460);
-    const svg = exportSimSvgSchematic({ world });
+    const svg = latticeExport({ world });
     expect(faceletDs(svg).length).toBe(27);
     expect(minGap(clusterReps(backingVerts(svg)))).toBeGreaterThan(2);
   });
@@ -436,7 +478,7 @@ describe('exportSimSvgSchematic — sq1', () => {
   it('solved 俯视:顶层 8 小面(4 风筝 + 4 楔形),去重 13 点(心 1 + 割 8 + 角 4)', () => {
     const scene = buildSq1Scene();
     const world = worldFor(scene, new THREE.Vector3(0, 1, 0), SQ1_W * 4);
-    const svg = exportSimSvgSchematic({ world });
+    const svg = latticeExport({ world });
     const l = lCounts(svg);
     expect(l.get(3)).toBe(4); // 角块风筝
     expect(l.get(2)).toBe(4); // 楔块三角
@@ -458,7 +500,7 @@ describe('exportSimSvgSchematic — sq1', () => {
   it('斜视:顶 + 两侧墙 + 中层墙同时可见,墙面小面与顶面小面在立方棱上共点', () => {
     const scene = buildSq1Scene();
     const world = worldFor(scene, new THREE.Vector3(1, 0.8, 1), SQ1_W * 4.5);
-    const svg = exportSimSvgSchematic({ world });
+    const svg = latticeExport({ world });
     // 可见集非空且包含侧墙色(F/R 至少其一)与 U 色
     expect(faceletDs(svg).length).toBeGreaterThan(10);
     expect(svg.toLowerCase()).toContain(hexOfInt(SQ1_COLORS.U));
