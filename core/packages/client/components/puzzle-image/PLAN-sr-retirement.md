@@ -117,6 +117,7 @@ sr 共 12 种 visualizer type、5 类拼图:
 
 ### Phase 5 — sr 退役(后悔药到期才做,单独会话)
 触发条件:Phase 3+4 上线后观察期内(建议 ≥2 周)无回退开关使用、无渲染 bug 报告。
+**观察期起点 = 2026-07-22(Phase 3+4 push 上线,commit 67e5526938);最早可执行 Phase 5 = 2026-08-05 之后。**
 - [ ] 删 `packages/vendor-sr-puzzlegen` 整包 + client/server 依赖 + `PuzzleSVG.tsx` + `sr_render.ts` 旧路径 + 回退开关。
 - [ ] 删 `SR_INDEX_MAP` 派生表与 derive 测试(mask 已直映引擎 id)。
 - [ ] 清登记点:`knip.json`、`credits_data.json`、`/code/stack` 文案、pnpm-lock。
