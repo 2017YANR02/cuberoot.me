@@ -108,11 +108,11 @@ sr 共 12 种 visualizer type、5 类拼图:
 - [ ] skewb-top 自绘 fan 保留不动(它不是 sr,是示意图另一形态)。
 - 验收:/sim 面板 4 拼图默认角 + 极端拖动角逐像素判据;golden fixtures 主动重录并逐张 review diff;CaseThumb / pattern / batch-solver 页 playwright 截图对照;新旧 4 拼图对比图给用户过目一次(风格从 sr 平面示意变成引擎平色预设,视觉会变)。
 
-### Phase 4 — 服务端缩略图切换
-- [ ] `engine_render.ts` 替代 `sr_render.ts`:`@cuberoot/sim-engine` headless world + BSP 导出,输出纯字符串,**该路径不再需要 linkedom**。
-- [ ] `r=` 直接映射引擎相机;sq1/pyraminx 的 y→z promotion(`shared/sr_rotations.ts`)随之消亡或收缩。
-- [ ] 响应内容变 → 按缓存规则 bump `v=`;24h cache 保持。
-- 验收:本地 hono dev 渲 4 拼图 × iso/top × alg/case/mask 全组合对照;`server-cache-headers.test.ts` 绿;单张冷渲 ≤ 300ms;**服务器内存紧张**(见 nemesizer/L1 教训),BSP 树用完即弃、无常驻大表。
+### Phase 4 — 服务端缩略图切换(本地实现 ✅ 2026-07-21;上线待部署知会)
+- [x] **`engine_render.ts` 落地(本地)**:iso 首选引擎 headless 渲染(`server/src/routes/engine_render.ts`,cube.ts 分派引擎优先、null 回退 sr 后悔药;top 仍 sr:mega-top 俯视是 sr 特有形态、skewb-top 自绘 fan)。实现走 **tsconfig paths `@/*` → client 树**(tsx dev 与 esbuild bundle 都原生吃 paths;Phase 1 的 gate/DI 保证 headless import 安全),而非等抽包 —— 该路径**不需要 linkedom**;World 按拼图池化复用,`twister.setup()` 每请求从 solved 重放(全拼图统一入口)。抽包(Phase 1 checkbox)后 import 一换即净。两坑已踩平并注释:①headless 无 render 循环须手动 `camera.updateMatrixWorld`(否则 camPos=原点→背面剔除全灭只剩剪影);②视口必须真实像素尺寸(导出器坐标域=屏幕 px,1×1 视口下 1px 封缝描边吞成黑团)。
+- [x] `r=` 直接映射引擎场景欧拉(叠加在引擎默认视角上,= /sim 拖动语义);y→z promotion 不进引擎路径(sr 专属,随 sr 回退分支苟活到 Phase 5)。
+- [ ] **上线(需用户知会:push=上线+改后端)**:部署时按缓存规则 bump 消费方 `v=`(nginx 24h cache 键含 query,观感换代);`server-cache-headers.test.ts` 复跑。
+- 验收(本地已做):esbuild 同款 bundle(生产路径)渲 **8/8**(4 拼图 × solved/alg,`src/tools/engine_render_smoke.ts`,产物 `client/.tmp/png/engine-render/` 含新旧对照 compare.html);打乱全部生效(cmp 差异确认);pyra/skewb/mega/sq1 立体观感与 /sim 伴图同款(sq1 黑顶是引擎固定配色,非 bug);server typecheck 绿;build:bundle 5.9MB 可打包。性能:World 首建 44-312ms(mega 最重),**后续每张 1-2ms**(远优 300ms 目标);内存为 World 池常驻(4 拼图全建 ~几十 MB 级,schematic 不建 BSP 树,无逐请求大表)。mask 组合不在 iso 服务端范围(sr 本就不认;引擎 mask 走客户端伴图)。
 
 ### Phase 5 — sr 退役(后悔药到期才做,单独会话)
 触发条件:Phase 3+4 上线后观察期内(建议 ≥2 周)无回退开关使用、无渲染 bug 报告。
