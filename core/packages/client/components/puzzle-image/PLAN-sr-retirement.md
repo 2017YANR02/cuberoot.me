@@ -89,7 +89,8 @@ sr 共 12 种 visualizer type、5 类拼图:
 - [x] **headless gate 落地(2026-07-21)**:①②④ typeof 守卫(tweener/Controller rAF、twister window、FaceHints 无 document 跳 sprite);③升级为**完整 DI 解耦**:world.ts 对 Controller/HandsRig/loadSmplxFullBody 只剩 `import type` + 注入槽(`controller!` / `handsFactory` / `smplxLoader`),值层面零 client 依赖 —— core 已可整体进 headless 包;client 侧 4 个实例化点(SimPage/_Interactive3DCube/PllPerformerOverlay/ReconPlayerBase)经新 `worldInteraction.attachInteraction` 注入,SimPage 另注入手/全身工厂。实证:tests/engine_headless.test.ts 4/4(无注入建 world/切拼图/打乱)+ Playwright(/sim 打乱伴图、/scramble/solver 3D 交互魔方、/recon 详情双 canvas)。/sim 行为不变。
 - [ ] 从 `app/[lang]/sim/engine` 抽 headless 核心到工作区包 `@cuberoot/sim-engine`:群论内核、拼图几何构建、场景组装、配色。禁 DOM/WebGL import(logo 纹理等 client-only 能力 gate 掉)。交互层(指针/动画/手/全身)留在 client。
 - [ ] client 全量改 import 路径;server 可 import(先例:server 已 import `@cuberoot/visualcube`、`@cuberoot/shared`)。
-- 验收:Node 裸脚本能建出 skewb world 并数出三角形;client typecheck + 全测试绿;/sim playwright smoke 行为不变。
+- **状态(2026-07-21)**:抽包的两大动机已被先行满足 —— ①headless 能力:gate/DI 后引擎在原位即 Node 可跑(engine_headless.test.ts 锁进 CI);②server 可 import:Phase 4 经 server tsconfig paths `@/*` 直连 client 树(tsx + esbuild 双通,engine_render 已上线本地)。剩余为**纯代码组织搬移**(≈90 文件 + `@/lib` 六依赖(61 个非引擎消费方)+ ~100 处 import 改写 + `transpilePackages` 配置);其一 `transpilePackages` 变更**必须重启常驻 dev server**(改 next.config 即全站失联),其二工作区当前有并行改动 —— 留清场后的单独会话做,做完 server paths 改指包名即净。
+- 验收:Node 裸脚本能建出 skewb world 并数出三角形(**已达成**,tests/engine_headless.test.ts 于 vitest node 环境 4/4);client typecheck + 全测试绿;/sim playwright smoke 行为不变。
 
 ### Phase 2 — BSP 解析隐面消除导出路径(核心)✅ 2026-07-21(commit 9c1b0170b6)
 - [x] 独立模块 `sim_svg_export_bsp.ts`(与 GPU depth-map 截图路径并存):世界系三角形建 BSP 树,按相机 back-to-front 遍历得**精确** painter 序,SPAN 面片 Sutherland–Hodgman 解析切开;共面并档保 GL「先画先赢」语义(ro asc + seq desc)。纯数学无 WebGL,Node 可跑。
