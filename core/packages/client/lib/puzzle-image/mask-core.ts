@@ -16,6 +16,12 @@
  *   pyraminx  faces F D L R, slots 0..8 per the tnoodle net (pyraminx_svg header).
  *   skewb     faces U R F D L B, slots 0..4 (0 = center, 1..4 = corners).
  *   megaminx  faces U BL BR R F L D DR DBR B DBL DL, slots 0..9 = wedges, 10 = center.
+ *   sq1       piece-keyed (tnoodle piece ids 0..15): U0-7 top-face stickers,
+ *             D8-15 bottom-face (index = GLOBAL piece id), SA0-15 first side
+ *             sticker, SB second side (corners only), M0-5 equator (big R/F/B →
+ *             0/1/2, small L/F/B → 3/4/5). sideA/sideB naming single source =
+ *             engine `sq1Geometry.pieceFaces()`. New capability — sr-puzzlegen
+ *             never could mask sq1; the engine companion + sq1-svg 2D can.
  *
  * Semantics: a mask is authored in the SOLVED frame and carried by the state
  * machine, so the gray travels with the PIECE through the scramble (identical to
@@ -53,6 +59,8 @@ export const CANONICAL_FACES: Record<string, readonly string[]> = {
   pyraminx: ['F', 'D', 'L', 'R'],
   skewb: ['U', 'R', 'F', 'D', 'L', 'B'],
   megaminx: ['U', 'BL', 'BR', 'R', 'F', 'L', 'D', 'DR', 'DBR', 'B', 'DBL', 'DL'],
+  // sq1 是 piece 本位空间(见文件头);SA/SB 多字母面有 megaminx DBR 先例。
+  sq1: ['U', 'D', 'SA', 'SB', 'M'],
 };
 
 // ─── DSL: `U:0,2;F:3-5` ──────────────────────────────────────────────────

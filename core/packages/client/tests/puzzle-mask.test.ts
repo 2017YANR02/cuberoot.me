@@ -62,6 +62,7 @@ describe('piece groups', () => {
   it('re-derives byte-for-byte from the renderers (shipped-table lock)', () => {
     const derived: Record<string, string[][]> = {};
     for (const [k, p] of Object.entries(perms)) derived[k] = D.derivePieceGroups(p);
+    derived.sq1 = D.sq1PieceGroups(); // piece 本位定义式派生(见 derive 头注)
     expect(derived).toEqual(fixture);
   });
 
@@ -77,6 +78,7 @@ describe('piece groups', () => {
     expect(pieceGroups('pyraminx').length).toBe(14);
     expect(pieceGroups('skewb').length).toBe(14);
     expect(pieceGroups('megaminx').length).toBe(62);
+    expect(pieceGroups('sq1').length).toBe(18);   // 16 layer pieces + 2 equator halves
     expect(pieceGroups('cube', 2).length).toBe(8);
     expect(pieceGroups('cube', 3).length).toBe(26);
     expect(pieceGroups('cube', 4).length).toBe(56);
@@ -87,6 +89,7 @@ describe('piece groups', () => {
   it('covers every sticker exactly once', () => {
     const counts: Record<string, number> = {
       pyraminx: 36, skewb: 30, megaminx: 132,
+      sq1: 46, // 16 top/bottom-face + 24 side (8 corner×2 + 8 edge×1) + 6 equator
       ...Object.fromEntries(CUBE_SIZES.map((N) => [`cube${N}`, 6 * N * N])),
     };
     for (const [k, n] of Object.entries(counts)) {
@@ -179,9 +182,9 @@ describe('sr index map', () => {
 // ─── capability gates ────────────────────────────────────────────────────
 
 describe('capabilities', () => {
-  it('gates sq1 off', () => {
-    expect(maskSupported('sq1')).toBe(false);
-    expect(srMaskSupported('sq1')).toBe(false);
+  it('supports sq1 (piece-keyed space, 2026-07-21) but still gates it off sr', () => {
+    expect(maskSupported('sq1')).toBe(true);      // sq1-svg 2D + engine companion can mask
+    expect(srMaskSupported('sq1')).toBe(false);   // sr iso render still can't (build-time colors)
     for (const p of ['pyraminx', 'skewb', 'megaminx'] as const) {
       expect(maskSupported(p)).toBe(true);
     }
@@ -194,7 +197,7 @@ describe('capabilities', () => {
     expect(maskKey('cube', 3)).toBe('cube3');
     expect(maskKey('cube', 8)).toBeNull();
     expect(maskKey('cube')).toBeNull();            // no default N — an unstated size is unknown
-    expect(maskKey('sq1')).toBeNull();
+    expect(maskKey('sq1')).toBe('sq1');            // piece-keyed table since 2026-07-21
   });
 
   it('fails loudly instead of degrading to a one-sticker piece', () => {
@@ -203,7 +206,9 @@ describe('capabilities', () => {
     expect(() => pieceOf('cube', 'U0', 8)).toThrow(/no derived piece table/);
     expect(() => pieceGroups('cube', 8)).toThrow(/no derived piece table/);
     expect(() => expandToPieces('cube', ['U0'], 8)).toThrow(/no derived piece table/);
-    expect(() => pieceOf('sq1', 'U0', 3)).toThrow(/no derived piece table/);
+    // sq1 has a table now — a corner expands to its 3 stickers, a bad id still throws
+    expect(pieceOf('sq1', 'U0', 3)).toEqual(['U0', 'SA0', 'SB0']);
+    expect(() => pieceOf('sq1', 'U99', 3)).toThrow(/not on sq1/);
     // ...and the 4x4 id resolves correctly once the size is stated
     expect(pieceOf('cube', 'U12', 4).length).toBe(3);
   });
