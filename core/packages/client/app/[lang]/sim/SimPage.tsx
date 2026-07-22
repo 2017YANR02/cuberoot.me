@@ -1869,6 +1869,13 @@ export default function SimPage() {
           // 拼图带示意小面(userData.schematicPoly)→ SR 范式示意导出器:每个小面
           // 独立多边形 + 黑描边,共享棱逐比特重合;其余拼图走实模 BSP 投影。
           if (hasSchematicFacelets(world.scene)) {
+            // trans(X 光)视图:visualcube view=trans 预设 —— 银壳 50% 透明(未显式改
+            // 壳色/不透明度时),画背面小面,透过前壳看到背贴纸(退役对照表 §2b「视图
+            // trans」)。cube 专属;壳色/不透明度默认(#000000/100)才套预设,用户显式
+            // 调过则尊重其值。
+            const isTrans = typeof puzzleParam === 'number' && imgSpec.cubeView === 'trans';
+            const transBody = isTrans && imgSpec.cubeColor === '#000000' ? '#BFBFBF' : imgSpec.cubeColor;
+            const transOpacity = isTrans && imgSpec.cubeOpacity === 100 ? 50 : imgSpec.cubeOpacity;
             // 黑边滑块 = 网格缝宽占小面的百分比(inset 模型):比例量纲天然与
             // 视口尺寸、阶数无关 —— 交换态小框视口、40 阶小贴纸下观感都恒定。
             setEngineSvg(exportSimSvgSchematic({
@@ -1877,9 +1884,10 @@ export default function SimPage() {
               // visualcube 壳体色/壳体不透明度/贴纸不透明度 三控件的引擎路等价
               // (退役对照表 §2b:inset 模型衬底=壳体,贴纸=sticker)。默认
               // #000000/100/100 与导出器默认同 → 不改的话逐比特不变。
-              bodyColor: imgSpec.cubeColor,
-              bodyOpacity: imgSpec.cubeOpacity,
+              bodyColor: transBody,
+              bodyOpacity: transOpacity,
               stickerOpacity: imgSpec.stickerOpacity,
+              showHidden: isTrans,
               mask: maskKeys?.size ? { keys: maskKeys, color: MASK_COLOR } : undefined,
               // 箭头标注(退役对照表 §2b):DSL `U0U2-red` → 引擎贴纸世界中心线段。
               // NxN 专属(resolveEngineArrows 自查 schematicInstancedPoly + N≥2,非

@@ -61,6 +61,9 @@ export interface SchematicSvgExportOptions {
   /** 可见小面数上限(超高阶 NxN 的 SVG path 数防线);超限抛
    *  `SVG_TOO_COMPLEX_SCHEMATIC`,调用方回退其它渲染器。默认 20000。 */
   maxFacelets?: number;
+  /** X 光(visualcube view=trans):跳过背面剔除,连背面小面一起画。已有的 z 排序
+   *  (远→近)+ 壳体半透明(bodyOpacity)让背面透过前壳可见。默认 false(只画正面)。 */
+  showHidden?: boolean;
 }
 
 /** 教学标注箭头:世界坐标线段,p1 → p2(箭头指向 p2),随引擎相机投影。 */
@@ -115,6 +118,7 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
   };
 
   const maxFacelets = opts.maxFacelets ?? 20_000;
+  const cull = !opts.showHidden; // X 光时不剔除背面(仍跳退化/隐藏槽位)
   /** 一个小面:局部轮廓经 mtx 到世界 → 背面剔除 → 近平面裁剪 → 投影入列。 */
   const addPoly = (poly: number[], mtx: THREE.Matrix4, fill: string, body: string): void => {
     const worldPts: THREE.Vector3[] = [];
@@ -131,7 +135,7 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
     if (len < 1e-12) return;
     n.divideScalar(len);
     const d = n.dot(worldPts[0]);
-    if (n.dot(camPos) - d <= 0) return;
+    if (cull && n.dot(camPos) - d <= 0) return;
 
     // 视空间 + 近平面裁剪(常规相机距不会触发,保护性)
     let view = worldPts.map((p) => p.clone().applyMatrix4(viewMat));

@@ -363,11 +363,11 @@ export default function PuzzleImage({
   // 贴纸遮罩由 SimPage 单点负责:引擎直映认识的拼图把 mask 烙进 engineSvg,
   // 不认识的置 engineSvg=null → 这里自然落回 spec 渲染器(sr/visualcube 认 mask),
   // 任何一边都不会静默丢遮罩。
-  // normal(3D 投影镜像)+ net/wca(展开图)+ plan(俯视 OLL 图)都走 engineSvg
-  // (§2b 视图 net/wca/plan);trans 仍回退旧渲染器,直到其引擎路上线。
+  // cube 全部视图(normal 3D 投影 / net·wca 展开图 / plan 俯视 OLL / trans X 光 3D)
+  // 均走引擎 engineSvg(§2b 视图对照表 5 行全落引擎);非 cube 仍限 iso 镜像。
   const engineMirrors = spec.puzzleType === 'cube'
-    ? (spec.cubeView === 'normal' || spec.cubeView === 'net'
-      || spec.cubeView === 'wca' || spec.cubeView === 'plan')
+    ? (spec.cubeView === 'normal' || spec.cubeView === 'net' || spec.cubeView === 'wca'
+      || spec.cubeView === 'plan' || spec.cubeView === 'trans')
     : spec.puzzleVariant === 'iso';
   if (engineSvg && engineMirrors) {
     // 引擎镜像是全尺寸画布投影;钉成方形显示框,viewBox + 默认 meet 保比例。
