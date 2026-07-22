@@ -59,7 +59,7 @@ sr 共 12 种 visualizer type、5 类拼图:
 | 壳体色 | cubeColor | 导出器 bodyColor 参数(inset 衬底色) | ✅(已接 /sim 引擎伴图,2026-07-21) |
 | 壳体不透明度 | cubeOpacity | 导出器 bodyOpacity | ✅(已接引擎伴图) |
 | 贴纸不透明度 | stickerOpacity | 导出器 stickerOpacity | ✅(已接引擎伴图) |
-| 投影距离 | dist(透视强度) | 引擎相机距离/fov 映射 | ⬜ |
+| 投影距离 | dist(透视强度) | 引擎相机距离/fov 映射 | ✅(架构已满足,2026-07-21 核实):/sim「透视」滑块 = dolly-zoom 直控相机距离+FOV(35mm 等效焦距,PlayerControls `UNIT_FOCAL`),引擎镜像共享 live 相机 → 投影距离即透视滑块。且 `settings.perspective` 已写入 `img_dist`(SimPage 1704-1723)双向接线。studio 独立 `dist` 控件仅 standalone /visualcube 页显示(`showInheritedControls = mode==='page'`),驱动 visualcube 渲染,/sim panel 不显示 |
 | 黑边(网格缝宽) | inset 0.85 + 底色缝 | 示意导出器 inset 模型(滑块 = 缝宽占小面比例) | ✅(2026-07-21) |
 
 ## 3. 消费方清单(切换时逐个勾)
