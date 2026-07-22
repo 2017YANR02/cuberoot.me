@@ -30,6 +30,9 @@ import {
   X,
 } from 'lucide-react';
 import World, { type PuzzleKind } from './engine/world';
+import { attachInteraction } from './worldInteraction';
+import HandsRig from './engine/hands/handsRig';
+import { loadSmplxFullBody } from './engine/hands/handModelMano';
 import { bspSceneAudit, exportSimSvgBsp } from './sim_svg_export_bsp';
 import { exportSimSvg } from './sim_svg_export';
 import { exportSimSvgSchematic, hasSchematicFacelets } from './sim_svg_export_schematic';
@@ -603,6 +606,9 @@ export default function SimPage() {
       if (cancelled) return;
 
     const world = new World();
+    attachInteraction(world); // 指针控制器 client 注入(engine 核心已 headless 化)
+    world.handsFactory = () => new HandsRig();
+    world.smplxLoader = loadSmplxFullBody;
     worldRef.current = world;
     setWorldTick((n) => n + 1);
     // Any committed cube change (move / scramble / reset / replay fires callbacks)
