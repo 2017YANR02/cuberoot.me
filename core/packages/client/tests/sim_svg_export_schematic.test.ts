@@ -337,6 +337,30 @@ describe('exportSimSvgSchematic', () => {
     expect(exportSimSvgSchematic({ world })).not.toBe(before);
   });
 
+  it('平面归组抗量化边界:同面小面距离差 2e-5 且骑在 0.05 舍入格线两侧,仍归一块面板', () => {
+    // 回归 2026-07-22:toFixed 量化当分组 key 时,L/B/D 面的平面距离恰骑格线,
+    // 9 小面被拆成 8+1 → 8 那组缺角、凸包架桥、铺满检查判死 → 整面退化逐小面,
+    // 波浪重现。真比较聚类(点积 + 距离差)对此免疫。
+    const scene = new THREE.Scene();
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 3; c++) {
+        const m = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
+        // 平面 z ≈ 149.95(0.1 舍入格线):一半 149.94999、一半 149.95001。
+        const z = (r + c) % 2 === 0 ? 149.94999 : 149.95001;
+        const x = -75 + c * 50, y = -75 + r * 50;
+        m.userData.schematicPoly = [x, y, z, x + 50, y, z, x + 50, y + 50, z, x, y + 50, z];
+        scene.add(m);
+      }
+    }
+    const world = makeWorld(scene as never as ReturnType<typeof buildPyraScene>);
+    const svg = exportSimSvgSchematic({ world });
+    expect(faceletDs(svg).length).toBe(9);
+    const plates = backingDs(svg);
+    expect(plates.length).toBe(1); // 一整块面板,没有碎裂
+    // 且是圆角面板(strokeW > 1),不是铺满检查判死后的 1px 退化
+    expect(svg).not.toContain('stroke-width="1"');
+  });
+
   it('非凸布局(两个分离三角)照常输出:inset 模型无凸包依赖', () => {
     const scene = new THREE.Scene();
     for (const x of [-150, 100]) {
