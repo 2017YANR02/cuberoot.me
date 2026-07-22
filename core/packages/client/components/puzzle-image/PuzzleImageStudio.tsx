@@ -212,7 +212,9 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
   // 预览当前显示的是否引擎矢量镜像(与 PuzzleImage 的 engineMirrors 同一条件):
   // 是 → SVG/PNG 导出的必须就是它(所见即所得),而不是 spec 重渲染的近似版。
   const engineShown = !!engineSvg && (engineOnly
-    || (s.puzzleType === 'cube' ? s.cubeView === 'normal' : s.puzzleVariant === 'iso'));
+    || (s.puzzleType === 'cube'
+      ? (s.cubeView === 'normal' || s.cubeView === 'net')
+      : s.puzzleVariant === 'iso'));
 
   // ── export ─────────────────────────────────────────────────────────────
   // Always ask the PURE renderer first — the old code scraped `.vc-preview > svg`
