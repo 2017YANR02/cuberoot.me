@@ -18,6 +18,11 @@ export type { FaceValues } from './cube/masking.js'
 export { Axis } from './math.js'
 export { StickerDefinition } from './cube/models/sticker.js'
 export { Arrow } from './cube/models/arrow.js'
+// parseArrows(raw) → Arrow[] {s1,s2,s3,scale,influence,color}. Pure DSL parse
+// (`U0U2-red,U6U8`), no rendering; reused by /sim engine schematic export to draw the
+// same annotation arrows on the live 3D cube (PLAN-sr-retirement §2b). Same retirement
+// lifecycle as makeMasking above.
+export { parseArrows, parseArrow } from './cube/parsing/arrow.js'
 export type { ICubeOptions } from './cube/options.js'
 export { renderFromSimpleQuery, buildSimpleOptions } from './preset.js'
 export type { SimpleVisualCubeQuery } from './preset.js'
