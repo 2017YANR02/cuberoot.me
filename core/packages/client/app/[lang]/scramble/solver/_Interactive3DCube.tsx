@@ -104,13 +104,17 @@ export default function Interactive3DCube({
 
     void (async () => {
       const THREE = await import('three');
-      const { default: World } = await import('@/app/[lang]/sim/engine/world');
+      const [{ default: World }, { attachInteraction }] = await Promise.all([
+        import('@/app/[lang]/sim/engine/world'),
+        import('@/app/[lang]/sim/worldInteraction'),
+      ]);
       const { default: Toucher } = await import('@/app/[lang]/sim/Toucher');
       if (cancelled) return;
       const container = containerRef.current;
       if (!container) return;
 
       const world = new World();
+      attachInteraction(world); // 指针控制器 client 注入(engine 核心已 headless 化)
       worldRef.current = world;
 
       const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });

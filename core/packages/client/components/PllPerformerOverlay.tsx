@@ -153,11 +153,12 @@ export default function PllPerformerOverlay({
     let cleanup: (() => void) | null = null;
 
     void (async () => {
-      const [THREE, worldMod, twisterMod, timingMod] = await Promise.all([
+      const [THREE, worldMod, twisterMod, timingMod, interactionMod] = await Promise.all([
         import('three'),
         import('@/app/[lang]/sim/engine/world'),
         import('@/app/[lang]/sim/engine/nxn/twister'),
         import('@/app/[lang]/sim/engine/tweenTiming'),
+        import('@/app/[lang]/sim/worldInteraction'),
       ]);
       if (cancelled) return;
 
@@ -168,6 +169,7 @@ export default function PllPerformerOverlay({
       setFramesRef.current = (f: number) => { timing.frames = f; };
 
       const world = new World();
+      interactionMod.attachInteraction(world); // controller 注入(原 World ctor 内联,headless 化后外置)
       world.setPuzzle(3);
       worldRef.current = world;
 
