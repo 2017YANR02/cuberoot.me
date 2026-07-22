@@ -1951,13 +1951,17 @@ export default function SimPage() {
       imgSpec.arrows, imgSpec.defaultArrowColor, imgSpec.cubeView, puzzleParam,
       settings.faceColors, query.stickering, query.stickeringColor]);
 
-  // 伴图当前是否示意版(有示意小面)—— 决定黑边滑块是否可用。
+  // 伴图当前是否示意版(有示意小面)—— 决定黑边滑块是否可用。平面视图(net/wca/plan)
+  // 走各自的平面导出器,缝宽由 visualcube 本体定死,滑块对它们无效 → 不给。
   const [engineSchematic, setEngineSchematic] = useState(false);
   useEffect(() => {
     if (!(imageOpen && !srCompanionForced)) { setEngineSchematic(false); return; }
     const world = worldRef.current;
-    setEngineSchematic(!!world && hasSchematicFacelets(world.scene));
-  }, [imageOpen, srCompanionForced, imgPuzzle.puzzleType, engineSvg]);
+    const cv = imgSpec.cubeView;
+    const flat = !!world && typeof world.puzzleKind === 'number'
+      && (cv === 'net' || cv === 'wca' || cv === 'plan');
+    setEngineSchematic(!flat && !!world && hasSchematicFacelets(world.scene));
+  }, [imageOpen, srCompanionForced, imgPuzzle.puzzleType, imgSpec.cubeView, engineSvg]);
 
   // 2D flat-net view mode — NxN only (number puzzle), driven by the same live cube.
   const netMode = settings.viewMode === 'net' && typeof puzzleParam === 'number';
