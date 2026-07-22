@@ -23,31 +23,20 @@ import type World from './engine/world';
 import type CubeType from './engine/nxn/cube';
 import { TwistAction } from './engine/nxn/twister';
 import { useT } from '@/hooks/useT';
+// 布局单一源:与静态导出器 sim_net_export 共用(退役对照表 §2b「视图 net」),平面图
+// 与导出件逐格对齐、免两份漂移。
+import {
+  NET_GAP as GAP, NET_STROKE_W as STROKE_W,
+  NET_FACE_ORDER as FACE_ORDER, netFaceOffsets as faceOffsets,
+  type NetFaceLetter,
+} from './sim_net_export';
 
-type FaceLetter = 'U' | 'R' | 'F' | 'D' | 'L' | 'B';
+type FaceLetter = NetFaceLetter;
 type Axis = 'x' | 'y' | 'z';
 
 /** Above this order the per-sticker DOM + O(N²) serialize() per move get heavy and a
  *  flat net is impractical — fall back to a note (use 立体图 instead). */
 export const NET_MAX_ORDER = 50;
-
-const GAP = 0.18;        // gap between faces, in cell units
-const STROKE_W = 0.05;   // sticker outline, relative to a 1×1 cell
-
-/** URFDLB block order in the serialize() string. */
-const FACE_ORDER: FaceLetter[] = ['U', 'R', 'F', 'D', 'L', 'B'];
-
-/** NW-corner (col, row) of each face in the unfolded cross, in cell units. */
-function faceOffsets(N: number): Record<FaceLetter, [number, number]> {
-  return {
-    U: [2 * GAP + N, GAP],
-    L: [GAP, 2 * GAP + N],
-    F: [2 * GAP + N, 2 * GAP + N],
-    R: [3 * GAP + 2 * N, 2 * GAP + N],
-    B: [4 * GAP + 3 * N, 2 * GAP + N],
-    D: [2 * GAP + N, 3 * GAP + 2 * N],
-  };
-}
 
 interface DragRule {
   axis: Axis;

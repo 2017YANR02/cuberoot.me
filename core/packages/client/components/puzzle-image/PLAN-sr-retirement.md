@@ -50,7 +50,7 @@ sr 共 12 种 visualizer type、5 类拼图:
 | 视图 normal(iso) | drawing.ts 三面投影 | /sim 伴图已镜像(示意/BSP) | ✅ |
 | 视图 plan(俯视含侧带) | 同上,俯视 + 四侧首排 | 引擎相机 top 预设 + 示意导出;侧带形态待设计 | ⬜ |
 | 视图 trans(半透明) | cubeOpacity/stickerOpacity | 导出器 bodyOpacity/stickerOpacity 参数 + 预设 | ⬜ |
-| 视图 net(展开图) | 平面展开 | /sim 已有引擎驱动 2D net,导出侧接同源 | ⬜ |
+| 视图 net(展开图) | 平面展开 | `sim_net_export.ts` 的 `exportSimNetSvg`:读 `cube.serialize()`(URFDLB N² 块,net 朝向)→ 十字布局逐格上引擎面色,纯字符串 SVG。布局常量与交互式 `_SimCubeNet` 单一源(它 import 这里)。SimPage engineSvg 效应加 net 分支(serialize 签名,不走 3D 采样);PuzzleImage/studio 的 engineMirrors/engineShown 收 `cubeView==='net'` | ✅(2026-07-21;NxN;实测跟踪打乱、下载同源;遮罩键 `face:idx` 已备,SimPage 侧透传待接) |
 | 视图 wca(记分表样式) | tnoodle 风格平面 | 同 net,引擎状态直出 | ⬜ |
 | 图片尺寸 (PX) | svg width/height | `lib/puzzle-image/engine-svg.ts` 的 `sizeEngineSvg`:root <svg> 宽高钉 size×size(viewBox 保留 → meet 等比不变形);显示 / studio 预览 / SVG 下载三处共用一份。PNG 下载走 canvas=imageSize² + contain-fit | ✅(2026-07-21;此前 SVG 下载漏套尺寸=导出器原生像素,已补) |
 | 箭头(面/从/到/过/缩放/影响/颜色 + DSL + 默认箭头色) | arrows 解析 + renderArrows | `engine/nxn/vcArrowBridge.ts`:复用 visualcube `parseArrows`(不重造 DSL)→ `faceletFromNet`(netIndexOf 的逆,round-trip oracle 锁死全 6 面)→ 局部贴纸中心 × 示意 mesh matrixWorld(锚 mesh 变换,固定几何位、随相机+打乱精确)→ SimPage 烙进 `opts.arrows`。studio 箭头 UI/DSL 原样透传 | ✅ 直箭头(2026-07-21;NxN normal;色/缩放/默认色通,打乱不变性实测)。曲线(s3/influence 的二次贝塞尔)+ 单面外跨面 waypoint 暂缺 → 退化直线,导出器只画 `<line>` |
