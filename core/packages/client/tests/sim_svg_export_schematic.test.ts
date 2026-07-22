@@ -193,29 +193,34 @@ describe('exportSimSvgSchematic', () => {
     expect(opaque).not.toContain('opacity'); // 100% 时不冗余输出
   });
 
-  it('外轮廓圆角:衬底缩 0.94 + round-join 粗描边(抄 visualcube,角块不锐利)', () => {
+  it('外轮廓圆角:衬底 round-join 粗描边,宽度卡在 inset×最小小面(不啃邻居贴纸)', () => {
     const world = makeWorld(buildPyraScene());
     const svg = exportSimSvgSchematic({ world, inset: 0.15 });
-    expect(svg).toContain('stroke-linejoin="round"'); // 圆角接合 = 圆角的来源
-
-    // cornerRound:0 → 退回 1px 纯封缝描边(锐角);其衬底未缩,即真实小面包围盒。
     const sharp = exportSimSvgSchematic({ world, inset: 0.15, cornerRound: 0 });
-    expect(sharp).toContain('stroke-width="1" stroke-linejoin="round"');
-    const raw = backingVerts(sharp);
-    const span = Math.max(
-      Math.max(...raw.map((p) => p[0])) - Math.min(...raw.map((p) => p[0])),
-      Math.max(...raw.map((p) => p[1])) - Math.min(...raw.map((p) => p[1])),
-    );
-    // 描边宽 = 0.0661 × 包围盒长边(vc 的 0.05 ÷ 默认视角半长边 0.7568)。
-    const w = Number(svg.match(/stroke-width="([\d.]+)" stroke-linejoin="round"/)![1]);
-    expect(w / span).toBeCloseTo(0.0661, 3);
-    expect(w).toBeGreaterThan(1); // 真圆角,不是旧的 1px 封缝
 
-    // 衬底确实被向包围盒中心缩了 0.94(缩放同心 → 邻块仍共点,只是整体小一圈)。
-    const shrunk = backingVerts(svg);
-    const sSpan = Math.max(...shrunk.map((p) => p[0])) - Math.min(...shrunk.map((p) => p[0]));
-    const rSpan = Math.max(...raw.map((p) => p[0])) - Math.min(...raw.map((p) => p[0]));
-    expect(sSpan / rSpan).toBeCloseTo(0.94, 2);
+    // 只加宽描边,几何一个字节没动 —— 先前那版还朝全局中心缩了 0.94,衬底相对
+    // 自己的贴纸整体平移,角块交接处直接糊掉(2026-07-22 用户抓的)。
+    expect(backingDs(svg)).toEqual(backingDs(sharp));
+    expect(faceletDs(svg)).toEqual(faceletDs(sharp));
+    expect(sharp).toContain('stroke-width="1" stroke-linejoin="round"'); // 0 = 旧的锐角
+
+    const w = Number(svg.match(/stroke-width="([\d.]+)" stroke-linejoin="round"/)![1]);
+    expect(w).toBeGreaterThan(1); // 真圆角,不是 1px 封缝
+
+    // 上限:向外胀 w/2 不得超过邻居贴纸的内缩余量(inset/2 × 小面尺寸),
+    // 否则后画的衬底会啃掉先画的邻居贴纸 —— 即 w ≤ inset × 最小小面最小边。
+    const perFacelet = backingDs(sharp).map((d) => {
+      const pts = [...d.matchAll(/[ML](-?[\d.]+) (-?[\d.]+)/g)].map((m) => [Number(m[1]), Number(m[2])]);
+      const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
+      return Math.min(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
+    });
+    // 容差 0.02:输出经 fmt 量化到 0.01,顶点坐标也是,别把量化误差当越界。
+    expect(w).toBeLessThanOrEqual(0.15 * Math.min(...perFacelet) + 0.02);
+
+    // 半透明壳体(trans 视图)同样圆角 —— 单层实现,没有二次叠加问题。
+    const trans = exportSimSvgSchematic({ world, inset: 0.15, bodyOpacity: 50 });
+    const tw = Number(trans.match(/stroke-width="([\d.]+)" stroke-linejoin="round"/)![1]);
+    expect(tw).toBe(w);
   });
 
   it('背面剔除:背对相机的面(m=0 黄 / m=3 绿)不输出', () => {
