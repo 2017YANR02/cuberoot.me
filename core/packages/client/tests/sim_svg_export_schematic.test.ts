@@ -56,11 +56,12 @@ function faceletDs(svg: string): string[] {
   return [...svg.matchAll(/<path d="([^"]+)" fill="[^"]+"\/>/g)].map((m) => m[1]);
 }
 
-/** 共点/晶格断言专用的导出:圆角版的衬底 path 是**等距内缩后的核**(墨迹靠 round-join
- *  描边还原到原轮廓),顶点自然不在晶格上。cornerRound:0 关掉圆角 → 衬底 d 就是真实
- *  小面轮廓,「相邻小面共点」才测得到。 */
+/** 共点/晶格断言专用的导出:衬底已是整面面板(凸包),不再逐小面 —— 晶格共点改由
+ *  inset:0 的贴纸测(贴纸铺满时 = 真实小面轮廓,与旧的逐小面衬底逐点相同)。 */
 const latticeExport = (o: Parameters<typeof exportSimSvgSchematic>[0]): string =>
-  exportSimSvgSchematic({ ...o, cornerRound: 0 });
+  exportSimSvgSchematic({ ...o, inset: 0 });
+/** latticeExport 的顶点集(= 晶格顶点)。 */
+const latticeVerts = (svg: string): [number, number][] => vertsOf(faceletDs(svg));
 
 /** path 的 d → 顶点数组。 */
 function ptsOf(d: string): [number, number][] {
@@ -91,11 +92,6 @@ function vertsOf(ds: string[]): [number, number][] {
     }
   }
   return out;
-}
-
-/** 晶格共点断言用:衬底 path 的全部输出顶点(贴纸被 inset,不在晶格上)。 */
-function backingVerts(svg: string): [number, number][] {
-  return vertsOf(backingDs(svg));
 }
 
 /** 把顶点按 eps 聚成簇(0.01px 量化孪生并簇),返回簇代表。代表数 = 真实晶格
@@ -140,12 +136,15 @@ describe('exportSimSvgSchematic', () => {
     expect(hasSchematicFacelets(new THREE.Scene())).toBe(false);
   });
 
-  it('每个小面 = 严格三角形:2 个可见面 × 9 小面,贴纸 + 衬底各 18 条 path', () => {
+  it('每个小面 = 严格三角形 ×18;衬底 = 每可见面一整块面板(vc renderCubeOutline)', () => {
     const world = makeWorld(buildPyraScene());
     const svg = exportSimSvgSchematic({ world });
     const ds = faceletDs(svg);
     expect(ds.length).toBe(18);
-    expect(backingDs(svg).length).toBe(18);
+    // 面板逐「面」而非逐小面:2 个可见面 = 2 条衬底 path(凸包 = 面三角)。
+    // 逐小面衬底(54 角、36 内部格点接头)是波浪 / 叠加 / 错位三轮症状的结构根源,已废。
+    expect(backingDs(svg).length).toBe(2);
+    for (const d of backingDs(svg)) expect(d.match(/L/g)?.length).toBe(2); // 面板即三角
     for (const d of ds) {
       // M + 2 个 L + Z = 严格三角形,无 BSP 切分碎片
       expect(d.match(/M/g)?.length).toBe(1);
@@ -153,12 +152,12 @@ describe('exportSimSvgSchematic', () => {
     }
   });
 
-  it('相邻棱严丝合缝:衬底顶点去重后 = 晶格顶点数(10+10−共享 4 = 16)', () => {
+  it('相邻棱严丝合缝:晶格顶点去重后 = 晶格顶点数(10+10−共享 4 = 16)', () => {
     const world = makeWorld(buildPyraScene());
-    const svg = latticeExport({ world });
+    const svg = latticeExport({ world }); // inset:0 → 贴纸铺满 = 真实小面轮廓
     const verts = new Set<string>();
     let refs = 0;
-    for (const d of backingDs(svg)) {
+    for (const d of faceletDs(svg)) {
       for (const m of d.matchAll(/[ML](-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)/g)) {
         verts.add(`${m[1]},${m[2]}`);
         refs++;
@@ -170,35 +169,34 @@ describe('exportSimSvgSchematic', () => {
     expect(verts.size).toBe(16);
   });
 
-  it('inset 网格:衬底黑 + 同色封缝描边;inset:0 = 无衬底、贴纸铺满回到晶格', () => {
+  it('inset 网格:面板黑 + 内缩贴纸透缝;inset:0 = 无面板、贴纸铺满回到晶格', () => {
     const world = makeWorld(buildPyraScene());
     const svg = exportSimSvgSchematic({ world, inset: 0.15 });
     // +z 视角可见面 m=1(红)m=2(蓝)
     expect(svg.toLowerCase()).toContain(CUBE_FILL.R.toLowerCase());
     expect(svg.toLowerCase()).toContain(CUBE_FILL.B.toLowerCase());
-    // 18 衬底:壳体色填充 + 同色封缝/圆角描边(旧凸包裁剪 + 外框 hack 已随
-    // 描边模型退役 —— 衬底铺满外形,外轮廓天然是数学直线)
-    expect(svg.match(/fill="#000000" stroke="#000000" stroke-width="[\d.]+"/g)?.length).toBe(18);
+    // 2 面板:壳体色填充 + 同色描边;网格 = 面板从内缩贴纸的缝隙里透出(vc 模型)。
+    expect(svg.match(/fill="#000000" stroke="#000000" stroke-width="[\d.]+"/g)?.length).toBe(2);
     expect(svg).not.toContain('clipPath');
-    // 贴纸缝:inset 后贴纸顶点离开晶格 → 与衬底顶点无一重合
-    const lattice = clusterReps(backingVerts(svg));
+    // 贴纸缝:inset 后贴纸顶点离开晶格 → 与晶格顶点无一重合
+    const lattice = clusterReps(latticeVerts(latticeExport({ world })));
     const stickerReps = clusterReps(vertsOf(faceletDs(svg)));
     for (const s of stickerReps) {
       expect(lattice.some((l) => Math.hypot(l[0] - s[0], l[1] - s[1]) < 0.5)).toBe(false);
     }
-    // inset 0:贴纸铺满,无衬底无描边,贴纸顶点回到晶格(去重 16)
+    // inset 0:贴纸铺满,无面板无描边,贴纸顶点回到晶格(去重 16)
     const bare = exportSimSvgSchematic({ world, inset: 0 });
     expect(bare).not.toContain('stroke');
     expect(backingDs(bare).length).toBe(0);
     expect(clusterReps(vertsOf(faceletDs(bare))).length).toBe(16);
   });
 
-  it('visualcube 参数:bodyColor 换衬底色;body/stickerOpacity 走**分组**不透明度', () => {
+  it('visualcube 参数:bodyColor 换面板色;body/stickerOpacity 走**分组**不透明度', () => {
     const world = makeWorld(buildPyraScene());
     const svg = exportSimSvgSchematic({
       world, bodyColor: '#333333', bodyOpacity: 40, stickerOpacity: 50,
     });
-    expect(svg.match(/fill="#333333" stroke="#333333"/g)?.length).toBe(18);
+    expect(svg.match(/fill="#333333" stroke="#333333"/g)?.length).toBe(2);
     // 半透明整遍套一个 <g opacity>,不逐 path 挂 —— 逐 path 挂的话重叠区会二次
     // 叠加(0.4 叠 0.4 = 0.64),X 光下角块附近糊成一堆深浅不一的方块。
     expect(svg.match(/<g opacity="0.4">/g)?.length).toBe(1); // 衬底一组
@@ -221,24 +219,23 @@ describe('exportSimSvgSchematic', () => {
     expect(svg.slice(lastBody).includes('<path')).toBe(true); // 之后才是可见面贴纸
   });
 
-  it('外轮廓圆角:内缩再描边 —— 墨迹范围不变(不越界啃邻居 / 不二次叠加)', () => {
+  it('外轮廓圆角:面板内缩再描边 —— 墨迹落回轮廓 +0.5px,圆角只在面的外角', () => {
     const world = makeWorld(buildPyraScene());
     const svg = exportSimSvgSchematic({ world, inset: 0.15 });
     const sharp = exportSimSvgSchematic({ world, inset: 0.15, cornerRound: 0 });
 
-    expect(sharp).toContain('stroke-width="1" stroke-linejoin="round"'); // 0 = 旧的锐角
+    expect(sharp).toContain('stroke-width="1" stroke-linejoin="round"'); // 0 = 锐角
     const w = Number(svg.match(/stroke-width="([\d.]+)" stroke-linejoin="round"/)![1]);
     expect(w).toBeGreaterThan(1); // 真圆角
-    expect(svg).toContain('stroke-linejoin="round"');
 
-    // 核心不变量:墨迹外缘 = 内缩后的多边形 + w/2,应与原轮廓 + 0.5px 逐边重合。
-    // 先前两版分别(a)朝质心缩 0.94 → 贴纸错位、(b)直接加粗描边 → 向外胀 w/2,
-    // 啃邻居贴纸 + 半透明下交界处二次叠加变深(2026-07-22 用户两次抓到)。
-    const rawPts = backingDs(sharp).map(ptsOf);
-    const corePts = backingDs(svg).map(ptsOf);
-    expect(corePts.length).toBe(rawPts.length);
+    // 核心不变量:圆角面板 = 锐角面板等距内缩 (w−1)/2 再描 w → 墨迹外缘落在真实
+    // 轮廓外 0.5px。面板是整面一块,内部没有格点转角 —— 逐小面时代每个格点的圆角
+    // 缺口连成的「波浪」(2026-07-22 用户抓的)结构性不存在。
+    const rawPts = backingDs(sharp).map(ptsOf);   // 锐角面板 = 真实面轮廓(凸包)
+    const corePts = backingDs(svg).map(ptsOf);    // 圆角面板 = 内缩核
+    expect(rawPts.length).toBe(2);                // 2 个可见面各一块
+    expect(corePts.length).toBe(2);
     for (let i = 0; i < rawPts.length; i++) {
-      // 内缩多边形的每条边到原多边形对应边的距离 = (w−1)/2 → 描边外缘落在原轮廓外 0.5。
       const raw = rawPts[i], core = corePts[i];
       expect(core.length).toBe(raw.length);
       const cen = (p: [number, number][]): [number, number] =>
@@ -259,7 +256,7 @@ describe('exportSimSvgSchematic', () => {
       }
     }
 
-    // 半透明壳体(trans 视图)同款圆角 —— 墨迹不重叠,没有二次叠加问题。
+    // 半透明壳体(trans 视图)同款圆角 —— 面板内部无重叠,没有二次叠加问题。
     const trans = exportSimSvgSchematic({ world, inset: 0.15, bodyOpacity: 50 });
     expect(Number(trans.match(/stroke-width="([\d.]+)" stroke-linejoin="round"/)![1])).toBe(w);
     expect(backingDs(trans)).toEqual(backingDs(svg));
@@ -294,12 +291,23 @@ describe('exportSimSvgSchematic', () => {
     expect(Number(m[1])).toBeGreaterThan(0);
   });
 
-  it('逐面衬底色:userData.schematicStroke 覆盖该小面衬底,其余仍默认壳体色', () => {
+  it('逐面衬底色:schematicStroke 全面覆盖 → 面板改色;同面混色 → 退回逐小面衬底', () => {
     const scene = buildPyraScene();
     scene.traverse((o) => { if (o.userData.schematicPoly) o.userData.schematicStroke = '#8811aa'; });
     const svg = exportSimSvgSchematic({ world: makeWorld(scene) });
-    expect(svg.match(/fill="#8811aa" stroke="#8811aa"/g)?.length).toBe(18); // 全部改色
-    expect(svg).not.toContain('#000000'); // 默认黑衬底一条不剩
+    expect(svg.match(/fill="#8811aa" stroke="#8811aa"/g)?.length).toBe(2); // 2 面板改色
+    expect(svg).not.toContain('#000000'); // 默认黑一条不剩
+
+    // 同一面内只改一张贴纸的衬底色 → 凸包面板会吞掉覆盖,必须退回逐小面(该面
+    // 18 → 9+9 张 1px 衬底,两种颜色都保留)。
+    const scene2 = buildPyraScene();
+    let done = false;
+    scene2.traverse((o) => {
+      if (!done && o.userData.schematicPoly) { o.userData.schematicStroke = '#8811aa'; done = true; }
+    });
+    const svg2 = exportSimSvgSchematic({ world: makeWorld(scene2) });
+    expect(svg2).toContain('#8811aa');
+    expect(svg2).toContain('#000000');
   });
 
   it('arrows 箭头层:线段 + marker 按色去重,画在最上层,viewBox 随箭头扩', () => {
@@ -359,7 +367,7 @@ describe('exportSimSvgSchematic — skewb', () => {
     expect(l.get(2)).toBe(4); // 三角
     expect(l.get(3)).toBe(1); // 菱形
     expect(faceletDs(svg).length).toBe(5);
-    const reps = clusterReps(backingVerts(svg));
+    const reps = clusterReps(latticeVerts(svg));
     expect(reps.length).toBe(8);
     expect(minGap(reps)).toBeGreaterThan(2); // 无亚像素伪共点
   });
@@ -384,7 +392,7 @@ describe('exportSimSvgSchematic — megaminx', () => {
     expect(l.get(4)).toBe(6);  // 中心五边形
     expect(l.get(3)).toBe(60); // 角 + 棱四边形
     expect(faceletDs(svg).length).toBe(66);
-    const verts = backingVerts(svg);
+    const verts = latticeVerts(svg);
     const reps = clusterReps(verts);
     expect(reps.length).toBeLessThan(verts.length / 2); // 强共享:晶格点被多面引用
     expect(minGap(reps)).toBeGreaterThan(2);
@@ -405,7 +413,7 @@ describe('exportSimSvgSchematic — fto', () => {
     const svg = latticeExport({ world });
     expect(lCounts(svg).get(2)).toBe(36); // 全部严格三角
     expect(faceletDs(svg).length).toBe(36);
-    const reps = clusterReps(backingVerts(svg));
+    const reps = clusterReps(latticeVerts(svg));
     expect(reps.length).toBe(28);
     expect(minGap(reps)).toBeGreaterThan(2);
   });
@@ -421,7 +429,7 @@ describe('exportSimSvgSchematic — NxN (InstancedRenderer)', () => {
     expect(faceletDs(svg).length).toBe(9);
     expect(svg.toLowerCase()).toContain(CUBE_FILL.F.toLowerCase());
     expect(svg.toLowerCase()).not.toContain(CUBE_FILL.U.toLowerCase()); // 背剔
-    const reps = clusterReps(backingVerts(svg));
+    const reps = clusterReps(latticeVerts(svg));
     expect(reps.length).toBe(16);
     expect(minGap(reps)).toBeGreaterThan(2);
     expect(hasSchematicFacelets(scene)).toBe(true);
@@ -433,7 +441,7 @@ describe('exportSimSvgSchematic — NxN (InstancedRenderer)', () => {
     const world = worldFor(scene, new THREE.Vector3(1, 0.9, 1), 460);
     const svg = latticeExport({ world });
     expect(faceletDs(svg).length).toBe(27);
-    expect(minGap(clusterReps(backingVerts(svg)))).toBeGreaterThan(2);
+    expect(minGap(clusterReps(latticeVerts(svg)))).toBeGreaterThan(2);
   });
 
   it('镜面几何不满足晶格假设:enableMirror 摘除标记 → 回退 BSP 路径', () => {
@@ -484,7 +492,7 @@ describe('exportSimSvgSchematic — sq1', () => {
     expect(l.get(2)).toBe(4); // 楔块三角
     expect(faceletDs(svg).length).toBe(8);
     expect(svg.toLowerCase()).toContain(hexOfInt(SQ1_COLORS.U));
-    const reps = clusterReps(backingVerts(svg));
+    const reps = clusterReps(latticeVerts(svg));
     expect(reps.length).toBe(13);
     expect(minGap(reps)).toBeGreaterThan(2);
   });
@@ -504,7 +512,7 @@ describe('exportSimSvgSchematic — sq1', () => {
     // 可见集非空且包含侧墙色(F/R 至少其一)与 U 色
     expect(faceletDs(svg).length).toBeGreaterThan(10);
     expect(svg.toLowerCase()).toContain(hexOfInt(SQ1_COLORS.U));
-    const reps = clusterReps(backingVerts(svg));
+    const reps = clusterReps(latticeVerts(svg));
     expect(minGap(reps)).toBeGreaterThan(2); // 顶/墙/中层三方交界处无亚像素错位
   });
 });
