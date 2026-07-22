@@ -12,10 +12,9 @@
  *   网格永远等比,不会像绝对 px 描边那样在高阶把贴纸吞成一片黑(40 阶实测教训)。
  *   相邻衬底共享的棱在建模层就是同一组世界坐标(引擎割平面求交,跨块误差 ~1e-9,
  *   远低于输出 0.01px 量化)→ 衬底严丝合缝铺满外形,外轮廓即数学直线,不再需要
- *   旧描边模型的凸包裁剪 + 外框 hack。衬底带一条同色描边封住相邻多边形间的抗锯齿
- *   细缝(经典 SVG 邻接缝补法),同色不可见;这条描边同时是**外轮廓圆角**的来源
- *   —— 衬底先向投影中心缩 0.94、再用 round-join 的粗描边长回来,接合处被磨圆,
- *   角块不锐利(抄 visualcube renderCubeOutline,见 cornerRound)。
+ *   旧描边模型的凸包裁剪 + 外框 hack。衬底带一条同色 round-join 描边:既封住相邻
+ *   多边形间的抗锯齿细缝(经典 SVG 邻接缝补法,同色不可见),又把外轮廓的转角磨成
+ *   圆角 —— 角块不是数学尖角(对应 visualcube renderCubeOutline,见 cornerRound)。
  *
  * 相机 / 状态直接取引擎 world → 任意视角精确跟随左侧 3D(sr 的 SR_ANGLE_BASE
  * 手工标定层在此路线不存在)。
@@ -53,11 +52,11 @@ export interface SchematicSvgExportOptions {
   stickerOpacity?: number;
   /** 背景色;默认 null = 透明。 */
   background?: string | null;
-  /** 外轮廓圆角量 = 衬底描边宽占包围盒长边的比例。visualcube 的外框走
-   *  `renderCubeOutline` 顶点 ×0.94 + 分组 `stroke-width=0.1 stroke-linejoin=round`
-   *  —— 那条圆角接合就是它角块不锐利的来源。默认 0.0661 = 0.05 ÷ 默认视角下
-   *  vc 包围盒半长边 0.7568,与 OUTLINE_SHRINK 0.94 配对后轮廓落在真实角外
-   *  1.006 倍处(与 vc 同)。0 = 退回旧的 1px 封缝描边(纯锐角)。 */
+  /** 外轮廓圆角量 = 衬底 round-join 描边宽占小面包围盒长边的比例(圆角半径 = 其半)。
+   *  visualcube 的外框走 `renderCubeOutline` + 分组 `stroke-width=0.1
+   *  stroke-linejoin=round`,那条圆角接合就是它角块不锐利的来源。默认 0.0661 =
+   *  vc 的 0.05 ÷ 它默认视角下的包围盒半长边 0.7568;实际宽度还会被 `inset × 最小
+   *  小面最小边` 卡住(不卡会啃掉邻居贴纸)。0 = 退回 1px 封缝描边,纯锐角。 */
   cornerRound?: number;
   /** 贴纸遮罩(mask 直映):`userData.stickerKey ∈ keys` 的小面填 color(sr
    *  applyMask 的灰化语义;衬底/网格不动)。key 表见
@@ -245,30 +244,42 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
     }
   }
   const span = facelets.length > 0 ? Math.max(fx1 - fx0, fy1 - fy0) : 0;
-  const bcx = (fx0 + fx1) / 2, bcy = (fy0 + fy1) / 2;
-
-  // 外轮廓圆角(抄 visualcube renderCubeOutline):衬底先向投影中心缩 0.94,再用
-  // 一条 round-join 的同色粗描边长回来 —— 接合处被描边的圆角接头磨圆,角块不再是
-  // 尖角。相邻衬底同缩放同心 → 共享顶点仍严格重合,内部不裂缝;描边只在整体外
-  // 轮廓那一圈可见。vc 是逐「面」画外框,我们是逐小面,但内部接合被邻块盖住,
-  // 露在外面的只有拼图轮廓 —— 视觉等价。
-  const OUTLINE_SHRINK = 0.94;
-  const roundW = Math.max(1, (opts.cornerRound ?? 0.0661) * span);
-  const rounded = roundW > 1;
-  const shrinkPts = (pts: number[]): number[] => {
-    const out: number[] = [];
-    for (let i = 0; i < pts.length; i += 2) {
-      out.push(bcx + (pts[i] - bcx) * OUTLINE_SHRINK, bcy + (pts[i + 1] - bcy) * OUTLINE_SHRINK);
+  // 最小小面的最小边 —— 圆角描边的上限按它卡(见下)。
+  let minDim = Infinity;
+  for (const f of facelets) {
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (let i = 0; i < f.pts.length; i += 2) {
+      if (f.pts[i] < x0) x0 = f.pts[i]; if (f.pts[i] > x1) x1 = f.pts[i];
+      if (f.pts[i + 1] < y0) y0 = f.pts[i + 1]; if (f.pts[i + 1] > y1) y1 = f.pts[i + 1];
     }
-    return out;
-  };
+    const d = Math.min(x1 - x0, y1 - y0);
+    if (d < minDim) minDim = d;
+  }
+
+  // 外轮廓圆角(对应 visualcube renderCubeOutline 的 round-join 粗描边):把封缝描边
+  // 加粗,round 接头把每个转角磨成半径 roundW/2 的圆弧。内部接头被邻块盖住,露在外
+  // 面的只有拼图轮廓 —— vc 是逐「面」一块外框,我们逐小面,视觉等价。
+  //
+  // 宽度上限 = inset × 最小小面的最小边,**必须卡**:描边向外胀 roundW/2,一旦超过
+  // 邻居贴纸的内缩余量(= inset/2 × 小面尺寸),远→近交错输出时后画的衬底就会啃掉
+  // 先画的邻居贴纸边缘 —— 实测角块交接处糊成一片(2026-07-22 用户抓的)。高阶小面
+  // 更小,不卡的话啃得更狠。3x3 下限值 ≈ 0.05·span,目标 0.0661·span,取到 76%,
+  // 圆角半径比 vc 略小一点点,肉眼几乎无差。
+  //
+  // 不缩 0.94(vc renderCubeOutline 那一步):vc 是整面一块外框,等比缩不动内部;
+  // 我们逐小面,朝全局中心缩会让每片衬底相对自己的贴纸向内平移(离中心越远移得越
+  // 多),贴纸直接错位跑到邻居身上。轮廓因此比 vc 胖 roundW/2,外圈壳色略厚。
+  //
+  // 单层实现(不另加垫层)→ 半透明壳体不会二次叠加,trans 与 normal 同款圆角。
+  const roundTarget = (opts.cornerRound ?? 0.0661) * span;
+  const roundW = Math.max(1, Math.min(roundTarget, inset * minDim));
 
   const bodyOpAttr = bodyOp < 100 ? ` opacity="${fmt(bodyOp / 100)}"` : '';
   const stickerOpAttr = stickerOp < 100 ? ` opacity="${fmt(stickerOp / 100)}"` : '';
   let content = '';
   for (const f of facelets) {
     if (inset > 0) {
-      content += `<path d="${dOf(rounded ? shrinkPts(f.pts) : f.pts)}" fill="${f.body}" stroke="${f.body}"`
+      content += `<path d="${dOf(f.pts)}" fill="${f.body}" stroke="${f.body}"`
         + ` stroke-width="${fmt(roundW)}" stroke-linejoin="round"${bodyOpAttr}/>`;
     }
     content += `<path d="${dOf(inset > 0 ? insetPts(f.pts) : f.pts)}" fill="${f.fill}"${stickerOpAttr}/>`;
