@@ -12,9 +12,10 @@
  *   网格永远等比,不会像绝对 px 描边那样在高阶把贴纸吞成一片黑(40 阶实测教训)。
  *   相邻衬底共享的棱在建模层就是同一组世界坐标(引擎割平面求交,跨块误差 ~1e-9,
  *   远低于输出 0.01px 量化)→ 衬底严丝合缝铺满外形,外轮廓即数学直线,不再需要
- *   旧描边模型的凸包裁剪 + 外框 hack。衬底带一条同色 round-join 描边:既封住相邻
- *   多边形间的抗锯齿细缝(经典 SVG 邻接缝补法,同色不可见),又把外轮廓的转角磨成
- *   圆角 —— 角块不是数学尖角(对应 visualcube renderCubeOutline,见 cornerRound)。
+ *   旧描边模型的凸包裁剪 + 外框 hack。衬底「等距内缩 + 同色 round-join 描边」:墨迹
+ *   外缘仍只比轮廓胖 0.5px(封住相邻多边形间的抗锯齿细缝,经典 SVG 邻接缝补法),
+ *   转角却被磨成圆角 —— 角块不是数学尖角(对应 visualcube renderCubeOutline,
+ *   见 cornerRound)。
  *
  * 相机 / 状态直接取引擎 world → 任意视角精确跟随左侧 3D(sr 的 SR_ANGLE_BASE
  * 手工标定层在此路线不存在)。
@@ -39,6 +40,58 @@ import * as THREE from 'three';
 import type World from './engine/world';
 import { clipPolyByPlane, hexOf, fmt } from './sim_svg_export';
 
+/**
+ * 凸多边形等距内缩 d(扁平 xy)—— 逐边沿**内法向**平移 d,再求相邻偏移边的交点。
+ * 内法向按「指向质心」判定(小面均为凸形,质心必在内部),与顶点绕向无关。
+ * 缩到自交 / 边近乎平行 / 面积翻号即返回 null,由调用方退回不缩的路径。
+ *
+ * 不用「朝质心等比缩」:那对长条小面的窄边缩得不够、宽边缩过头,做不到"墨迹正好
+ * 落回原轮廓"这个前提。
+ */
+function offsetInward(pts: number[], d: number): number[] | null {
+  const n = pts.length / 2;
+  if (n < 3 || !(d > 0)) return null;
+  let cx = 0, cy = 0;
+  for (let i = 0; i < pts.length; i += 2) { cx += pts[i]; cy += pts[i + 1]; }
+  cx /= n; cy /= n;
+
+  // 每条边偏移后的一点 + 方向。
+  const lines: { px: number; py: number; dx: number; dy: number }[] = [];
+  for (let i = 0; i < n; i++) {
+    const ax = pts[i * 2], ay = pts[i * 2 + 1];
+    const bx = pts[((i + 1) % n) * 2], by = pts[((i + 1) % n) * 2 + 1];
+    let ex = bx - ax, ey = by - ay;
+    const len = Math.hypot(ex, ey);
+    if (!(len > 1e-9)) return null;
+    ex /= len; ey /= len;
+    let nx = -ey, ny = ex;                                   // 一侧法向
+    if (nx * (cx - ax) + ny * (cy - ay) < 0) { nx = -nx; ny = -ny; } // 翻到朝内那侧
+    lines.push({ px: ax + nx * d, py: ay + ny * d, dx: ex, dy: ey });
+  }
+
+  const out: number[] = [];
+  for (let i = 0; i < n; i++) {
+    const a = lines[(i + n - 1) % n], b = lines[i];          // 顶点 i = 前一条边 ∩ 本条边
+    const det = a.dx * b.dy - a.dy * b.dx;
+    if (Math.abs(det) < 1e-9) return null;                   // 近乎平行,交点不可靠
+    const t = ((b.px - a.px) * b.dy - (b.py - a.py) * b.dx) / det;
+    out.push(a.px + a.dx * t, a.py + a.dy * t);
+  }
+
+  // 缩过头会自交:面积符号翻转或塌缩即判失败。
+  const area2 = (p: number[]): number => {
+    let s = 0;
+    for (let i = 0; i < p.length; i += 2) {
+      const j = (i + 2) % p.length;
+      s += p[i] * p[j + 1] - p[j] * p[i + 1];
+    }
+    return s;
+  };
+  const a0 = area2(pts), a1 = area2(out);
+  if (!(a0 * a1 > 0) || Math.abs(a1) < Math.abs(a0) * 0.05) return null;
+  return out;
+}
+
 export interface SchematicSvgExportOptions {
   world: Pick<World, 'scene' | 'camera' | 'width' | 'height'>;
   /** 网格缝宽 = 小面向心收缩比例(0–1)。0 = 贴纸铺满无网格。默认 0.15
@@ -52,11 +105,11 @@ export interface SchematicSvgExportOptions {
   stickerOpacity?: number;
   /** 背景色;默认 null = 透明。 */
   background?: string | null;
-  /** 外轮廓圆角量 = 衬底 round-join 描边宽占小面包围盒长边的比例(圆角半径 = 其半)。
-   *  visualcube 的外框走 `renderCubeOutline` + 分组 `stroke-width=0.1
-   *  stroke-linejoin=round`,那条圆角接合就是它角块不锐利的来源。默认 0.0661 =
-   *  vc 的 0.05 ÷ 它默认视角下的包围盒半长边 0.7568;实际宽度还会被 `inset × 最小
-   *  小面最小边` 卡住(不卡会啃掉邻居贴纸)。0 = 退回 1px 封缝描边,纯锐角。 */
+  /** 外轮廓圆角量 = 衬底 round-join 描边宽占小面包围盒长边的比例(圆角半径 = 其半;
+   *  衬底先等距内缩同样的量,墨迹范围不变 —— 见实现处注释)。visualcube 的外框走
+   *  `renderCubeOutline` + 分组 `stroke-width=0.1 stroke-linejoin=round`,那条圆角
+   *  接合就是它角块不锐利的来源。默认 0.0661 = vc 的 0.05 ÷ 它默认视角下的包围盒
+   *  半长边 0.7568。0 = 退回 1px 封缝描边,纯锐角。 */
   cornerRound?: number;
   /** 贴纸遮罩(mask 直映):`userData.stickerKey ∈ keys` 的小面填 color(sr
    *  applyMask 的灰化语义;衬底/网格不动)。key 表见
@@ -110,7 +163,7 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
   const near = camera.near;
   const camPos = new THREE.Vector3().setFromMatrixPosition(camera.matrixWorld);
 
-  interface Facelet { pts: number[]; fill: string; body: string; z: number }
+  interface Facelet { pts: number[]; fill: string; body: string; z: number; hidden: boolean }
   const facelets: Facelet[] = [];
   const v = new THREE.Vector3();
   const v4 = new THREE.Vector4();
@@ -142,7 +195,8 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
     if (len < 1e-12) return;
     n.divideScalar(len);
     const d = n.dot(worldPts[0]);
-    if (cull && n.dot(camPos) - d <= 0) return;
+    const hidden = n.dot(camPos) - d <= 0; // 法向背向相机 = 这一面朝里
+    if (cull && hidden) return;
 
     // 视空间 + 近平面裁剪(常规相机距不会触发,保护性)
     let view = worldPts.map((p) => p.clone().applyMatrix4(viewMat));
@@ -160,7 +214,7 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
       zSum += p.z;
     }
     if (facelets.length >= maxFacelets) throw new Error('SVG_TOO_COMPLEX_SCHEMATIC: facelet cap exceeded');
-    facelets.push({ pts, fill, body, z: zSum / view.length });
+    facelets.push({ pts, fill, body, z: zSum / view.length, hidden });
   };
 
   scene.traverseVisible((obj) => {
@@ -244,46 +298,51 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
     }
   }
   const span = facelets.length > 0 ? Math.max(fx1 - fx0, fy1 - fy0) : 0;
-  // 最小小面的最小边 —— 圆角描边的上限按它卡(见下)。
-  let minDim = Infinity;
-  for (const f of facelets) {
-    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-    for (let i = 0; i < f.pts.length; i += 2) {
-      if (f.pts[i] < x0) x0 = f.pts[i]; if (f.pts[i] > x1) x1 = f.pts[i];
-      if (f.pts[i + 1] < y0) y0 = f.pts[i + 1]; if (f.pts[i + 1] > y1) y1 = f.pts[i + 1];
-    }
-    const d = Math.min(x1 - x0, y1 - y0);
-    if (d < minDim) minDim = d;
-  }
 
-  // 外轮廓圆角(对应 visualcube renderCubeOutline 的 round-join 粗描边):把封缝描边
-  // 加粗,round 接头把每个转角磨成半径 roundW/2 的圆弧。内部接头被邻块盖住,露在外
-  // 面的只有拼图轮廓 —— vc 是逐「面」一块外框,我们逐小面,视觉等价。
+  // 外轮廓圆角(对应 visualcube renderCubeOutline 的 round-join 粗描边)。
   //
-  // 宽度上限 = inset × 最小小面的最小边,**必须卡**:描边向外胀 roundW/2,一旦超过
-  // 邻居贴纸的内缩余量(= inset/2 × 小面尺寸),远→近交错输出时后画的衬底就会啃掉
-  // 先画的邻居贴纸边缘 —— 实测角块交接处糊成一片(2026-07-22 用户抓的)。高阶小面
-  // 更小,不卡的话啃得更狠。3x3 下限值 ≈ 0.05·span,目标 0.0661·span,取到 76%,
-  // 圆角半径比 vc 略小一点点,肉眼几乎无差。
+  // 关键是**墨迹不许越界**。直接给衬底加粗描边会向外胀 roundW/2:胀过邻居贴纸的
+  // 内缩余量就啃掉贴纸边缘;即使没啃到,两片衬底的描边在每条小面交界处也互相重叠
+  // —— 壳体半透明时那圈重叠二次叠加(0.5 叠 0.5 = 0.75),网格线中间比两侧深一档,
+  // 角块交接处一片脏(2026-07-22 用户两次抓到)。
   //
-  // 不缩 0.94(vc renderCubeOutline 那一步):vc 是整面一块外框,等比缩不动内部;
-  // 我们逐小面,朝全局中心缩会让每片衬底相对自己的贴纸向内平移(离中心越远移得越
-  // 多),贴纸直接错位跑到邻居身上。轮廓因此比 vc 胖 roundW/2,外圈壳色略厚。
+  // 正解是先把多边形**等距内缩** (roundW−1)/2 再描 roundW:描边外缘正好落回原轮廓
+  // 外 0.5px —— 与原来那条 1px 封缝描边的墨迹范围逐像素相同(既封住抗锯齿细缝,
+  // 又不多占邻居一分),而转角被 round 接头磨成半径 roundW/2 的圆弧。画序、不透明
+  // 度、相邻关系全都不动,trans 与 normal 自然同款圆角。
   //
-  // 单层实现(不另加垫层)→ 半透明壳体不会二次叠加,trans 与 normal 同款圆角。
-  const roundTarget = (opts.cornerRound ?? 0.0661) * span;
-  const roundW = Math.max(1, Math.min(roundTarget, inset * minDim));
+  // 内缩用真正的等距偏移(逐边沿内法向平移后求交),不是朝质心等比缩 —— 等比缩对
+  // 长条小面的窄边缩得不够、宽边缩过头,墨迹照样越界。
+  const roundW = Math.max(1, (opts.cornerRound ?? 0.0661) * span);
 
-  const bodyOpAttr = bodyOp < 100 ? ` opacity="${fmt(bodyOp / 100)}"` : '';
-  const stickerOpAttr = stickerOp < 100 ? ` opacity="${fmt(stickerOp / 100)}"` : '';
-  let content = '';
-  for (const f of facelets) {
-    if (inset > 0) {
-      content += `<path d="${dOf(f.pts)}" fill="${f.body}" stroke="${f.body}"`
-        + ` stroke-width="${fmt(roundW)}" stroke-linejoin="round"${bodyOpAttr}/>`;
-    }
-    content += `<path d="${dOf(inset > 0 ? insetPts(f.pts) : f.pts)}" fill="${f.fill}"${stickerOpAttr}/>`;
-  }
+  const backingOf = (f: Facelet): string => {
+    // 偏移失败(小面太小 / 退化)→ 该片退回 1px 封缝描边,只是不圆角,不出错。
+    const core = roundW > 1 ? offsetInward(f.pts, (roundW - 1) / 2) : null;
+    return `<path d="${dOf(core ?? f.pts)}" fill="${f.body}" stroke="${f.body}"`
+      + ` stroke-width="${fmt(core ? roundW : 1)}" stroke-linejoin="round"/>`;
+  };
+  const stickerOf = (f: Facelet): string =>
+    `<path d="${dOf(inset > 0 ? insetPts(f.pts) : f.pts)}" fill="${f.fill}"/>`;
+
+  // 半透明层**必须整遍套一个 <g opacity>,不能逐 path 挂**:SVG 的 opacity 是逐元素
+  // 合成的,两片 50% 银叠一起就是 75%、三片 87.5%。X 光(showHidden)下正反两面的
+  // 小面在投影上大量重叠,逐 path 挂 = 角块附近一堆深浅不一的银方块(2026-07-22
+  // 用户抓的「贴片」)。套组则先把组内容拍平再整体乘 alpha,叠多少层都还是一档。
+  //
+  // 分组与顺序照搬 visualcube drawing.ts:隐藏面贴纸 → 隐藏面壳 → 可见面壳 →
+  // 可见面贴纸。壳铺满整面(只有贴纸内缩),所以可见面那遍壳天然把背面贴纸蒙上
+  // 一层,X 光的前后层次就是这么来的。
+  const g = (inner: string, op: number): string =>
+    inner && op < 100 ? `<g opacity="${fmt(op / 100)}">${inner}</g>` : inner;
+  const hid = facelets.filter((f) => f.hidden);
+  const vis = facelets.filter((f) => !f.hidden);
+  const join = (list: Facelet[], f: (x: Facelet) => string): string => list.map(f).join('');
+
+  const content =
+    g(join(hid, stickerOf), stickerOp)
+    + (inset > 0 ? g(join(hid, backingOf), bodyOp) : '')
+    + (inset > 0 ? g(join(vis, backingOf), bodyOp) : '')
+    + g(join(vis, stickerOf), stickerOp);
 
   // arrows 箭头层(抄 sr renderArrows:所有多边形画完后单独一遍,盖在最上层 ——
   // 教学标注允许伸出轮廓)。箭头 marker 按色去重生成;markerUnits 默认
@@ -325,7 +384,8 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
       if (p.x - p.pad < x0) x0 = p.x - p.pad; if (p.x + p.pad > x1) x1 = p.x + p.pad;
       if (p.y - p.pad < y0) y0 = p.y - p.pad; if (p.y + p.pad > y1) y1 = p.y + p.pad;
     }
-    const pad = (inset > 0 ? roundW / 2 : 0.5) + 1;
+    // 圆角是「内缩再描边」,墨迹外缘仍只比轮廓胖 0.5px —— 余量不随圆角变。
+    const pad = 1.5;
     bx = x0 - pad; by = y0 - pad; bw = x1 - x0 + pad * 2; bh = y1 - y0 + pad * 2;
   }
 
