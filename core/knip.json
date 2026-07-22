@@ -1,7 +1,7 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "ignore": ["cube555-daemon/**", "**/pkg/*_bg.wasm.d.ts"],
-  "ignoreBinaries": ["netstat", "wasm-pack"],
+  "ignoreBinaries": ["netstat", "wasm-pack", "pwsh"],
   "ignoreDependencies": ["tsx"],
   "workspaces": {
     "packages/client": {
