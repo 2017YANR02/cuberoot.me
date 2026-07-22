@@ -22,6 +22,7 @@ import CubeVirtualKeyboard from '@/components/CubeVirtualKeyboard';
 import PuzzleImage from '@/components/puzzle-image/PuzzleImage';
 import { publicApiUrl } from '@/lib/api-base';
 import { appendArrow, buildArrowEntry } from '@/lib/puzzle-image/arrows';
+import { sizeEngineSvg } from '@/lib/puzzle-image/engine-svg';
 import { pzlShort, specToParams } from '@/lib/puzzle-image/codec';
 import { formatMask, parseMask, type StickerId } from '@/lib/puzzle-image/mask-core';
 import { maskSupported, pieceOf } from '@/lib/puzzle-image/puzzle-mask';
@@ -219,7 +220,9 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
   // no <svg> at all). Only the genuinely DOM-only renderers fall back to
   // serializing the live DOM.
   const getCurrentSvg = useCallback((): string => {
-    if (engineShown && engineSvg) return engineSvg;
+    // 引擎镜像:所见即所得 —— 下载件也套图片尺寸(PX),否则导出的是导出器紧凑
+    // 非方 viewBox 的原生像素尺寸,忽略了尺寸控件(退役对照表 §2b「图片尺寸」)。
+    if (engineShown && engineSvg) return sizeEngineSvg(engineSvg, s.imageSize);
     try {
       const pure = renderSpecSvg(s);
       if (pure) return pure;
@@ -373,12 +376,7 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
         engineSvg ? (
           <div
             className="vc-preview"
-            dangerouslySetInnerHTML={{
-              __html: engineSvg.replace(
-                /<svg\b([^>]*?)\swidth="[^"]*"\sheight="[^"]*"/,
-                `<svg$1 width="${s.imageSize}" height="${s.imageSize}"`,
-              ),
-            }}
+            dangerouslySetInnerHTML={{ __html: sizeEngineSvg(engineSvg, s.imageSize) }}
           />
         ) : (
           <div className="vc-preview vc-preview-pending">{t('等待静止帧…', 'Waiting for a still frame…')}</div>
