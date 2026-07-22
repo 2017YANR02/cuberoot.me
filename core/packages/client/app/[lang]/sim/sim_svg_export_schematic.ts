@@ -173,11 +173,17 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
       const imat = new THREE.Matrix4();
       const wmat = new THREE.Matrix4();
       const ic = new THREE.Color();
+      // 自由 facelet 遮罩:每实例 HOME sid ∈ mask.keys → 灰(instanced.ts 建槽位键;
+      // 键 HOME 位置 = 灰随物理块走)。无键(高阶/镜面回退)则整体不 mask。
+      const ikeys = opts.mask
+        ? (obj.userData.schematicInstanceKeys as string[] | undefined)
+        : undefined;
       for (let i = 0; i < im.count; i++) {
         im.getMatrixAt(i, imat);
         wmat.multiplyMatrices(im.matrixWorld, imat);
         let fill = '#000000';
-        if (im.instanceColor) { im.getColorAt(i, ic); fill = hexOf(ic.r, ic.g, ic.b, false); }
+        if (ikeys && opts.mask!.keys.has(ikeys[i])) fill = opts.mask!.color;
+        else if (im.instanceColor) { im.getColorAt(i, ic); fill = hexOf(ic.r, ic.g, ic.b, false); }
         else if (mat.color) fill = hexOf(mat.color.r, mat.color.g, mat.color.b, false);
         addPoly(ipoly, wmat, fill, body);
       }

@@ -71,9 +71,14 @@ export function srMaskSupported(puzzle: PuzzleType): boolean {
   return puzzle === 'pyraminx' || puzzle === 'skewb' || puzzle === 'megaminx';
 }
 
-/** Whether the /sim engine companion mirror can take a mask (has a derived direct map). */
+/**
+ * Whether the /sim engine companion mirror can take a mask. `cube` (NxN) needs no
+ * derived table: its engine instance keys ARE canonical sids (see toEngineMask),
+ * so masking is an identity match against `userData.schematicInstanceKeys`. Every
+ * other puzzle needs a geometry-derived direct map in ENGINE_SID_MAP.
+ */
 export function engineMaskSupported(puzzle: PuzzleType): boolean {
-  return puzzle in ENGINE_SID_MAP;
+  return puzzle === 'cube' || puzzle in ENGINE_SID_MAP;
 }
 
 /**
@@ -85,6 +90,10 @@ export function engineMaskSupported(puzzle: PuzzleType): boolean {
 export function toEngineMask(
   puzzle: PuzzleType, ids: Iterable<StickerId>,
 ): Set<string> | undefined {
+  // NxN:引擎贴纸实例的 key 直接就是 canonical sid(`${U|R|F|D|L|B}${netIndex}`,
+  // instanced.ts 的 engineHomeSid),故恒等透传 —— 不需要也没有派生表。拼图上不存在
+  // 的 sid 留着无害(导出器 has() 永不命中,与非 cube 分支的静默跳过同宽容度)。
+  if (puzzle === 'cube') return new Set(ids);
   const table = ENGINE_SID_MAP[puzzle];
   if (!table) return undefined;
   const out = new Set<string>();

@@ -15,34 +15,20 @@
 // 分层:本文件是 client-only 增强(engine core stickering.ts 保持 visualcube-free);
 // Phase 1 headless 抽包时随 visualcube 消费方一并处理。
 import { makeMasking, type FaceValues, type Masking } from '@cuberoot/visualcube';
-import { FACE } from '../define';
 import {
   FM_REGULAR, FM_IGNORED, crossXform, stickeringGroupsFor,
   type StickeringMaskFn, type StickeringGroup,
 } from './stickering';
+// 纯坐标(netIndexOf + 面映射)独立成 netIndex.ts(零依赖),这里 re-export 保 API;
+// 引擎渲染层(instanced.ts)引纯模块,不经本文件(本文件叠 makeMasking 会拖 visualcube)。
+import { netIndexOf, ENGINE_TO_VC_FACE } from './netIndex';
 import {
   CORE_MASKS, EXTENDED_MASKS,
   SIZE2_MASKS, SIZE4_MASKS, SIZE5_MASKS, SIZE6_MASKS, SIZE7_MASKS, SIZE9_MASKS,
   type MaskOption,
 } from '@/lib/puzzle-image/masks';
 
-// 引擎 FACE(L0 R1 D2 U3 B4 F5)→ visualcube Face 编号(U0 R1 F2 D3 L4 B5)。
-const ENGINE_TO_VC_FACE: Record<number, number> = {
-  [FACE.U]: 0, [FACE.R]: 1, [FACE.F]: 2, [FACE.D]: 3, [FACE.L]: 4, [FACE.B]: 5,
-};
-
-/** 引擎某面上的贴纸(cubelet x,y,z + 该面)→ visualcube 展开图 index(row*N+col)。 */
-export function netIndexOf(x: number, y: number, z: number, face: number, max: number, N: number): number {
-  switch (face) {
-    case FACE.U: return z * N + x;              // U:row=z(0=B侧) col=x(0=L)
-    case FACE.D: return (max - z) * N + x;       // D:row=max-z(0=F侧) col=x
-    case FACE.F: return (max - y) * N + x;       // F:row=max-y(0=U) col=x
-    case FACE.B: return (max - y) * N + (max - x); // B:镜像 col=max-x
-    case FACE.R: return (max - y) * N + (max - z); // R:col=max-z(0=F侧)
-    case FACE.L: return (max - y) * N + z;        // L:col=z(0=B侧)
-    default: return 0;
-  }
-}
+export { netIndexOf };
 
 /** visualcube Masking 名 → 引擎 stickering 遮罩函数(逐小面二值)。该阶数无此遮罩
  *  (makeMasking 抛错)→ null,调用方回退 full。 */
