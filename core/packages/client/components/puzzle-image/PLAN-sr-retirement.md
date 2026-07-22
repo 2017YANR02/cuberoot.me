@@ -64,15 +64,15 @@ sr 共 12 种 visualizer type、5 类拼图:
 
 ## 3. 消费方清单(切换时逐个勾)
 
-客户端(全走 `PuzzleSVG.tsx`):
-- [ ] `/sim` 图像面板 + `/visualcube` studio(`PuzzleImage.tsx` 的 `'sr-puzzlegen'` renderer,8 个 kind:sq1/mega/pyra/skewb × iso/top)
-- [ ] `/alg` 缩略图 `CaseThumb.tsx`(megaminx-top、pyraminx;skewb-top 自绘、sq1 走服务端 net,不受影响)
-- [ ] `/scramble/pattern`(sq1/mega/pyra/skewb iso,`case=`)
-- [ ] `/scramble/batch-solver` `_CaseImage.tsx`(pyraminx iso)
-- [ ] mask 体系:`lib/puzzle-image/puzzle-mask.ts` 的 `SR_INDEX_MAP` 派生表 + `tests/_puzzle_mask_derive.ts` + `puzzle-mask.test.ts`
+客户端(iso 切换走新 `components/EnginePuzzleSVG.tsx`:浏览器内 headless World 池 + schematic 导出 + 模块级 SVG 缓存,与 server engine_render 同构同两坑注释;top/net 形态留守原渲染器):
+- [~] `/sim` 图像面板 + `/visualcube` studio:/sim 伴图 iso 已引擎镜像(Phase 3);standalone /visualcube 页的 sr spec 渲染 + top 变体仍 sr(golden 28 锁着,留 Phase 5 前收口)
+- [~] `/alg` 缩略图 `CaseThumb.tsx`:**pyraminx iso → EnginePuzzleSVG ✅**(2026-07-21,实测 /alg/pyraminx/l4e 38 thumb 全引擎、case 逆变换姿态正确);megaminx-top 是俯视形态保 sr;skewb-top 自绘、sq1 服务端 net 不动
+- [x] `/scramble/pattern` **4 拼图 iso 全切引擎 ✅**(2026-07-21,实测 pyra 6/6 + mega/skewb/sq1 各 5/5 卡出图)
+- [x] `/scramble/batch-solver` `_CaseImage.tsx`(pyraminx iso → EnginePuzzleSVG ✅,同组件同路径)
+- [ ] mask 体系:`SR_INDEX_MAP` 派生表删除留 Phase 5(引擎直映已并存接管)
 
 服务端:
-- [ ] `GET /v1/visualcube.svg` view=iso|top(`cube.ts` → `sr_render.ts`,linkedom)
+- [x] `GET /v1/visualcube.svg` view=**iso** → engine_render(Phase 4 本地 ✅;top 留 sr;部署待知会)
 
 退役时要一并清的登记点:`client/server package.json` 依赖、`knip.json`、`about/credits_data.json`、`/code/stack` 的 `pnpm.tsx`/`monorepo.tsx` 文案、pnpm-lock。
 

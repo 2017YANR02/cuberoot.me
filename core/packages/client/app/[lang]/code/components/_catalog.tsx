@@ -1304,7 +1304,15 @@ export const CATALOG: ComponentEntry[] = [
     category: 'display',
     zh: `渲染 SQ1 / megaminx / pyraminx / skewb 的静态 2D 平面图或顶视图,可传 alg / case 打乱,用来展示某个状态。`,
     en: `Renders static 2D net / top-view SVGs for SQ1/megaminx/pyraminx/skewb from an alg or case; use to show a puzzle state.`,
-    note: { zh: `依赖 sr-puzzlegen,运行时动态 import。`, en: `Lazy-imports sr-puzzlegen at runtime.` },
+    note: { zh: `依赖 sr-puzzlegen,运行时动态 import。iso 用法请改用 EnginePuzzleSVG(sr 退役中,只剩 top/net 形态留守)。`, en: `Lazy-imports sr-puzzlegen at runtime. For iso use EnginePuzzleSVG instead (sr is being retired; only top/net forms remain here).` },
+  },
+  {
+    name: 'EnginePuzzleSVG',
+    import: "import { EnginePuzzleSVG } from '@/components/EnginePuzzleSVG';",
+    category: 'display',
+    zh: `SQ1 / megaminx / pyraminx / skewb 的 iso 静态图,/sim 引擎 headless 渲染(与 live sim 同观感),传 alg / case;替代 PuzzleSVG 的 iso 用法。`,
+    en: `Static iso SVGs for SQ1/megaminx/pyraminx/skewb rendered headlessly by the /sim engine (same look as the live sim) from an alg or case; replaces PuzzleSVG's iso use.`,
+    note: { zh: `引擎懒 import + 模块级 SVG 缓存;top / net 形态仍走 PuzzleSVG / 服务端。`, en: `Lazy-imports the engine + module-level SVG cache; top/net forms stay on PuzzleSVG / the server.` },
   },
   {
     name: 'CubingPreview',
