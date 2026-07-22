@@ -1760,11 +1760,16 @@ export default function SimPage() {
   // (SVG_TOO_COMPLEX)时置 null 回退旧渲染器(cube→visualcube,异形→sr)。
   // 回退后悔药:/sim?img_engine=sr 强制全程旧路径(单 URL);部署级一键回退走
   // env NEXT_PUBLIC_SR_FALLBACK=1(build 时内联,免逐 URL 传参)。
-  const [srCompanionForced] = useState<boolean>(() => {
-    if (process.env.NEXT_PUBLIC_SR_FALLBACK === '1') return true;
-    if (typeof window === 'undefined') return false;
-    try { return new URLSearchParams(window.location.search).get('img_engine') === 'sr'; } catch { return false; }
+  // img_engine:engine(默认)/ sr(强制旧路径)/ both(并排对照,两条路线同时画)。
+  const [imgEngineMode] = useState<'engine' | 'sr' | 'both'>(() => {
+    if (process.env.NEXT_PUBLIC_SR_FALLBACK === '1') return 'sr';
+    if (typeof window === 'undefined') return 'engine';
+    try {
+      const v = new URLSearchParams(window.location.search).get('img_engine');
+      return v === 'sr' || v === 'both' ? v : 'engine';
+    } catch { return 'engine'; }
   });
+  const srCompanionForced = imgEngineMode === 'sr';
   const [engineSvg, setEngineSvg] = useState<string | null>(null);
   useEffect(() => {
     const active = imageOpen && !srCompanionForced;
@@ -2218,6 +2223,7 @@ export default function SimPage() {
             engineOnly={imageStudioEngineOnly}
             outlineWidth={engineSchematic ? imgOutline : undefined}
             onOutlineWidthChange={setImgOutline}
+            compare={imgEngineMode === 'both'}
           />
           {/* Group-theory panel = the visible half of the non-cubing.js view. Shows for any
               PG-bound puzzle that isn't on cubing.js. Pure-engine PG puzzles (dino/heli/NxN)
