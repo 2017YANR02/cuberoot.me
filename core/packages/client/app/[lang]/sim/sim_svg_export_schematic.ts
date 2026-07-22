@@ -117,6 +117,9 @@ export interface SchematicSvgExportOptions {
 export interface SchematicArrow {
   p1: [number, number, number];
   p2: [number, number, number];
+  /** 曲线控制点(visualcube s3:贴纸中心经弦中点 influence/5 缩放,由桥算好);
+   *  有则画二次贝塞尔 `M p1 Q p3 p2`(vc renderArrow 同式),无则直线。 */
+  p3?: [number, number, number];
   /** 线 + 箭头色;默认黑。 */
   color?: string;
   /** 线宽(SVG px);默认 8。 */
@@ -425,6 +428,8 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
       const s1 = project(a.p1[0], a.p1[1], a.p1[2]);
       const s2 = project(a.p2[0], a.p2[1], a.p2[2]);
       if (!s1 || !s2) continue;
+      // 曲线(visualcube s3/influence):控制点也投影;投影失败(出画)退化直线。
+      const s3 = a.p3 ? project(a.p3[0], a.p3[1], a.p3[2]) : null;
       const color = a.color ?? '#000000';
       const aw = a.width ?? 8;
       let id = markerIds.get(color);
@@ -434,10 +439,16 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
         defs += `<marker id="${id}" markerWidth="4" markerHeight="4" refX="3.2" refY="2" orient="auto">`
           + `<path d="M0 0L4 2L0 4Z" fill="${color}"/></marker>`;
       }
-      arrowsOut += `<line x1="${fmt(s1[0])}" y1="${fmt(s1[1])}" x2="${fmt(s2[0])}" y2="${fmt(s2[1])}"`
-        + ` stroke="${color}" stroke-width="${fmt(aw)}" stroke-linecap="round" marker-end="url(#${id})"/>`;
-      // 箭头三角伸出线端 ~0.8×线宽、侧向 ±2×线宽 → 取景留 2.5×线宽余量
-      for (const s of [s1, s2]) arrowPads.push({ x: s[0], y: s[1], pad: aw * 2.5 });
+      // 二次贝塞尔 `M p1 Q p3 p2` = vc renderArrow 的 path 同式;marker orient=auto
+      // 自动取末端切线(p3→p2)定箭头朝向,与 vc 手算 rotation 语义一致。
+      arrowsOut += s3
+        ? `<path d="M ${fmt(s1[0])} ${fmt(s1[1])} Q ${fmt(s3[0])} ${fmt(s3[1])} ${fmt(s2[0])} ${fmt(s2[1])}"`
+          + ` fill="none" stroke="${color}" stroke-width="${fmt(aw)}" stroke-linecap="round" marker-end="url(#${id})"/>`
+        : `<line x1="${fmt(s1[0])}" y1="${fmt(s1[1])}" x2="${fmt(s2[0])}" y2="${fmt(s2[1])}"`
+          + ` stroke="${color}" stroke-width="${fmt(aw)}" stroke-linecap="round" marker-end="url(#${id})"/>`;
+      // 箭头三角伸出线端 ~0.8×线宽、侧向 ±2×线宽 → 取景留 2.5×线宽余量;二次曲线
+      // 全程落在 {p1,p3,p2} 凸包内 → 控制点一并计入即覆盖曲线包围盒。
+      for (const s of s3 ? [s1, s2, s3] : [s1, s2]) arrowPads.push({ x: s[0], y: s[1], pad: aw * 2.5 });
     }
     if (defs) defs = `<defs>${defs}</defs>`;
   }
