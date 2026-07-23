@@ -70,7 +70,7 @@ import { heliPickHit, heliResolveMove, heliResolveLive, type HeliPickHit } from 
 import { heliMoveToString, type HeliMove } from './engine/heli/heliState';
 import GearCube from './engine/gear/GearCube';
 import { gearPickHit, gearResolveMove, gearResolveLive, type GearPickHit } from './engine/gear/gearDrag';
-import { gearMoveToString, type GearMove } from './engine/gear/gearState';
+import { gearMoveToString, parseGearMoves, type GearMove } from './engine/gear/gearState';
 import SkewbCube from './engine/skewb/SkewbCube';
 import { skewbPickHit, skewbResolveMove, skewbResolveLive, type SkewbPickHit } from './engine/skewb/skewbDrag';
 import { skewbMoveToString, type SkewbMove } from './engine/skewb/skewbState';
@@ -1643,14 +1643,29 @@ export default function SimPage() {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const k = keymapRef.current[e.code];
       if (!k) return;
-      e.preventDefault();
       const world = worldRef.current;
       if (!world) return;
       const cube = asNxN(world);
-      if (!cube) return;
-      const action = new TwistAction(k.sign, k.reverse, 1);
-      cube.twister.twist(action, false, true);
-      userMoveRef.current?.(action);
+      if (cube) {
+        e.preventDefault();
+        const action = new TwistAction(k.sign, k.reverse, 1);
+        cube.twister.twist(action, false, true);
+        userMoveRef.current?.(action);
+        return;
+      }
+      // Gear cube: same physical keys as 3x3, but its grammar only knows the 6 basic
+      // faces (U R F D L B) — route those to a single 180° flip; wide/slice/rotation
+      // keys don't parse and stay silent no-ops (don't swallow the keystroke).
+      if (world.cube instanceof GearCube) {
+        const gear = world.cube;
+        const moves = parseGearMoves(new TwistAction(k.sign, k.reverse, 1).value);
+        if (moves.length !== 1) return;
+        e.preventDefault();
+        if (gear.twister.twist(moves[0], false, true)) {
+          userMoveRef.current?.(gearMoveToString(moves[0]));
+        }
+        return;
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
