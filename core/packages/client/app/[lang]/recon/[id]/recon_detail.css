@@ -400,6 +400,42 @@
   color: var(--faint-foreground);
 }
 
+/* 可见性徽标(非公开状态):不公开列出 / 私享 */
+.recon-vis-badge {
+  gap: 4px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.recon-vis-badge svg { flex: none; }
+.recon-vis-badge--private {
+  border-color: color-mix(in srgb, var(--muted-foreground) 35%, transparent);
+  background: color-mix(in srgb, var(--muted-foreground) 12%, transparent);
+  color: var(--muted-foreground);
+}
+
+/* 私享门(非本人访问私享复盘时的占位) */
+.recon-private-gate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 56px 20px;
+  text-align: center;
+  color: var(--muted-foreground);
+}
+.recon-private-gate svg { color: var(--faint-foreground); }
+.recon-private-gate-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--foreground);
+  margin: 4px 0 0;
+}
+.recon-private-gate-sub { font-size: 0.9rem; margin: 0 0 8px; }
+
 /* 复盘者=提交者同一人时,双图标并排 */
 .detail-meta-label-dual {
   gap: 4px;

@@ -69,7 +69,7 @@ const ALLOWED_COLUMNS = new Set([
   'cross_type', 'cross_stm', 'f2l', 'll', 's_move', 'cross_color',
   'cube', 'reconer', 'reconer_id', 'group_id', 'recon_date', 'created_at',
   'added_by', 'added_by_id', 'comp_wca_id', 'person_country', 'co_persons',
-  'video_url', 'alternatives', 'dup_reason',
+  'video_url', 'alternatives', 'dup_reason', 'visibility',
 ]);
 
 // 同选手+同打乱重复提交时,用户必须二选一说明原因(否则后端拒收)。空=非重复提交。
@@ -79,6 +79,10 @@ export type DupReason = (typeof DUP_REASONS)[number];
 // 复盘性质三值枚举(2026-07,原 0/1 布尔迁移而来:1→wca,0→practice)。
 export const RECON_OFFICIAL = ['wca', 'non_wca', 'practice'] as const;
 export type ReconOfficial = (typeof RECON_OFFICIAL)[number];
+
+// 可见性三值枚举(YouTube 风格,见 migrations/0085)。缺省 = 'public'。
+export const RECON_VISIBILITY = ['public', 'unlisted', 'private'] as const;
+export type ReconVisibility = (typeof RECON_VISIBILITY)[number];
 
 /**
  * 归一化 official 到三值枚举字符串,兼容:新枚举串 / 旧布尔(0|1) / 旧数字串('0'|'1')/ boolean。
@@ -256,6 +260,12 @@ export function validateRow(row: Record<string, unknown>): string[] {
     errors.push(`official must be one of: ${RECON_OFFICIAL.join(', ')}`);
   }
 
+  // visibility: 三值枚举(public / unlisted / private);空由 DB 默认兜底
+  if (row.visibility !== undefined && row.visibility !== null
+      && !(RECON_VISIBILITY as readonly string[]).includes(String(row.visibility))) {
+    errors.push(`visibility must be one of: ${RECON_VISIBILITY.join(', ')}`);
+  }
+
   // co_persons: JSON 数组 [{name, id?, country?}],各字段长度对齐 person 列
   if (row.co_persons !== undefined && row.co_persons !== null) {
     let arr: unknown;
@@ -382,6 +392,16 @@ export async function requireAuth(c: Context): Promise<WcaUser> {
   if (BANNED_WCA_IDS.includes(user.wcaId)) {
     throw new Error('Your account has been suspended');
   }
+  return user;
+}
+
+/**
+ * 可选认证——有合法 token 返回用户,否则返回 null(不抛)。
+ * 给公开 GET 端点做「所有者可见自己的非公开数据」的鉴权用(如可见性过滤)。
+ */
+export async function optionalAuth(c: Context): Promise<WcaUser | null> {
+  const user = await authenticateUser(c.req.header('Authorization'));
+  if (!user || BANNED_WCA_IDS.includes(user.wcaId)) return null;
   return user;
 }
 

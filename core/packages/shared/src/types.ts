@@ -50,10 +50,15 @@ export interface CompPersonalRecordSlot {
 /** 复盘性质:wca=WCA 官方比赛, non_wca=非 WCA 比赛, practice=练习(个人/家用还原) */
 export type ReconOfficial = 'wca' | 'non_wca' | 'practice';
 
+/** 复盘可见性(YouTube 风格):public=公开列出 / unlisted=不公开列出(有链接可看) / private=私享(仅添加者本人 + 管理员可见) */
+export type ReconVisibility = 'public' | 'unlisted' | 'private';
+
 export interface ReconSolve {
   id: number;
   /** 比赛性质(见 ReconOfficial);旧布尔 official=1 迁移为 'wca',=0 为 'practice' */
   official: ReconOfficial;
+  /** 可见性(见 ReconVisibility);默认 public。缺省(旧数据)视为 public。见 migrations/0085 */
+  visibility?: ReconVisibility;
   /** 项目（如 "3x3", "2x2", "3bld"） */
   event: string;
   /** 解法方法（如 "CFOP", "Roux", "ZB"） */

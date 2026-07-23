@@ -15,6 +15,7 @@ import {
   Pencil, Trash2, Pin, PinOff, Plus, Key,
   Globe, Radio, ClipboardPaste, ChevronDown, ChevronUp,
   GitFork, ArrowLeft, Copy, Check, Maximize2, Minimize2,
+  Lock, Link2, LogIn,
 } from 'lucide-react';
 import type { ReconSolve, ReconComment, ReconAlternative } from '@cuberoot/shared';
 import {
@@ -166,7 +167,35 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
   }, [loadData, id]);
 
   if (loading) return <div className="recon-page"><div className="recon-loading">{t('common.loading')}</div></div>;
-  if (error) return <div className="recon-page"><div className="recon-error"><TriangleAlert size={16} /> {error}</div></div>;
+  // 私享复盘对非添加者本人:服务端 403 → getRecon 抛「private」→ 这里给一个体面的私享门,
+  // 而不是裸报错。未登录则提示登录(登录后可能是本人 → 重新拉即可见)。
+  if (error) {
+    const isPrivate = /private/i.test(error);
+    if (isPrivate) {
+      return (
+        <div className="recon-page detail-page">
+          <div className="detail-header-block">
+            <div className="detail-header-nav">
+              <Link href="/recon" className="recon-back-link">
+                <ArrowLeft size={14} /> {tr({ zh: '返回列表', en: 'Back to list' })}
+              </Link>
+            </div>
+          </div>
+          <div className="recon-private-gate">
+            <Lock size={32} strokeWidth={1.5} />
+            <p className="recon-private-gate-title">{tr({ zh: '这是一条私享复盘', en: 'This reconstruction is private' })}</p>
+            <p className="recon-private-gate-sub">{tr({ zh: '只有添加者本人可以查看。', en: 'Only the person who added it can view it.' })}</p>
+            {!useAuthStore.getState().user && (
+              <button type="button" className="recon-btn" onClick={() => useAuthStore.getState().login()}>
+                <LogIn size={14} /> {tr({ zh: '登录', en: 'Sign in' })}
+              </button>
+            )}
+          </div>
+        </div>
+      );
+    }
+    return <div className="recon-page"><div className="recon-error"><TriangleAlert size={16} /> {error}</div></div>;
+  }
   if (!solve) return <div className="recon-page"><div className="recon-error">{t('recon.notFound')}</div></div>;
 
   const solutionText = solve.solution || solve.recon || '';
@@ -236,6 +265,17 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
             </span>
           )}
           {solve.city && <span className="detail-meta-item">{displayCity(solve.city, isZh)}</span>}
+          {/* 可见性徽标——仅非公开(不公开列出 / 私享)时显示,提示当前分享状态 */}
+          {solve.visibility === 'unlisted' && (
+            <span className="detail-meta-item recon-vis-badge" title={tr({ zh: '不在列表中显示,仅凭链接可访问', en: 'Not listed; accessible only via the link' })}>
+              <Link2 size={13} /> {tr({ zh: '不公开列出', en: 'Unlisted' })}
+            </span>
+          )}
+          {solve.visibility === 'private' && (
+            <span className="detail-meta-item recon-vis-badge recon-vis-badge--private" title={tr({ zh: '仅添加者本人可见', en: 'Visible only to you' })}>
+              <Lock size={13} /> {tr({ zh: '私享', en: 'Private' })}
+            </span>
+          )}
         </div>
       </div>
 
