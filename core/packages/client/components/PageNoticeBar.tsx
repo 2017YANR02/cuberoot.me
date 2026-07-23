@@ -4,7 +4,7 @@
 //   - 访客:看到匹配当前页的 enabled 通知,可关闭(内容变更后重新出现)。
 //   - 管理员:任意页顶部直接 添加 / 编辑 / 删除本页通知,作用路径默认当前页、可改 /* 覆盖全站。
 // 数据走 /v1/page-notices(公开读 + admin 写),鉴权 authHeaders(WCA OAuth / X-Admin-Key)。
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { Info, AlertTriangle, Wrench, X, Pencil, Plus, Trash2, Laptop, Globe } from 'lucide-react';
 import { useIsAdmin } from '@/lib/auth-store';
@@ -80,7 +80,36 @@ const PRESETS: { label: { en: string; zh: string }; level: NoticeLevel; bodyZh: 
   { label: { en: 'Beta / preview', zh: '预览版' }, level: 'info',
     bodyZh: '本页为预览版,仅供体验,数据与样式后续可能调整。',
     bodyEn: 'This is a preview build for early access; data and layout may still change.' },
+  { label: { en: 'New feature', zh: '新功能' }, level: 'info',
+    bodyZh: '本页上线了新功能,欢迎体验。',
+    bodyEn: 'A new feature just landed on this page — give it a try.' },
 ];
+
+// 通知正文里的裸 http/https URL 自动变成可点链接(正文由管理员撰写,可信;只认 http/https,
+// 天然排除 javascript:/data:)。URL 结尾紧贴的中英句读 / 右括号不算进链接。
+const URL_RE = /https?:\/\/\S+/g;
+const URL_TRAIL_RE = /[.,;:!?'")\]}，。;：！？、）】》]+$/;
+
+function linkifyText(text: string): ReactNode {
+  const out: ReactNode[] = [];
+  let last = 0;
+  let key = 0;
+  URL_RE.lastIndex = 0;
+  for (let m = URL_RE.exec(text); m; m = URL_RE.exec(text)) {
+    let url = m[0];
+    const trail = url.match(URL_TRAIL_RE)?.[0] ?? '';
+    if (trail) url = url.slice(0, -trail.length);
+    if (m.index > last) out.push(text.slice(last, m.index));
+    out.push(
+      <a key={key++} className="page-notice-link" href={url} target="_blank" rel="noopener noreferrer">{url}</a>,
+    );
+    if (trail) out.push(trail);
+    last = m.index + m[0].length;
+  }
+  if (out.length === 0) return text;          // 没有 URL:原样返回,避免多包一层
+  if (last < text.length) out.push(text.slice(last));
+  return out;
+}
 
 interface FormState {
   id: number | null;   // null = 新建
@@ -227,7 +256,7 @@ export default function PageNoticeBar() {
               </button>
             )}
             <Icon className="page-notice-icon" size={17} aria-hidden />
-            <div className="page-notice-body">{pick(n)}</div>
+            <div className="page-notice-body">{linkifyText(pick(n))}</div>
             {!isAdmin && n.dismissible && (
               <div className="page-notice-actions">
                 <button type="button" className="page-notice-btn" onClick={() => dismiss(n)}

@@ -31,6 +31,15 @@
   word-break: break-word;
 }
 
+/* 正文里自动识别的超链接:跟随当前级别色,长 URL 允许任意处断行不撑破窄屏 */
+.page-notice-link {
+  color: var(--pn-color);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  word-break: break-all;
+}
+.page-notice-link:hover { text-decoration-thickness: 2px; }
+
 .page-notice-actions { flex: none; display: flex; align-items: center; gap: 2px; }
 
 .page-notice-btn {
