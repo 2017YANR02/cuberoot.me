@@ -59,7 +59,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   comp_follows cube cubeopt_solve cubing_live feedback forum health historical_ranks
 //   membership nav_sites nemesizer notifications ops page_notices paint progress recon scramble_555
 //   scramble_marks sponsors timer_backups trainer_rooms wca_format wca_fun_stats wca_proxy
-//   wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wiki
+//   wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wechat_jssdk wiki
 // ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
   // ---- auth ----
@@ -295,6 +295,9 @@ const ENDPOINTS: Ep[] = [
   { d: 'forum', m: 'POST', p: '/v1/forum/reports/:id/resolve', g: 'admin', zh: '标记举报已处理', en: 'Mark report resolved' },
   { d: 'forum', m: 'GET', p: '/v1/forum/review', g: 'admin', zh: '待审核队列(新用户主题 + 回帖)', en: 'Review queue (new users’ threads + replies)' },
   { d: 'forum', m: 'POST', p: '/v1/forum/review/:type/:id/:action', g: 'admin', zh: '审核:通过 / 驳回(thread|post,驳回可附原因)', en: 'Moderate: approve / reject (thread|post, optional reject reason)' },
+
+  // ---- wechat ----
+  { d: 'wechat', m: 'GET', p: '/v1/wechat/jssdk-signature', g: 'public', zh: '微信 JS-SDK wx.config 签名(朋友圈/会话分享卡片;未配公众号返回 disabled)', en: 'WeChat JS-SDK wx.config signature (Moments/chat share card; returns disabled when the MP account is unconfigured)' },
 
   // ---- content ----
   { d: 'content', m: 'GET', p: '/v1/wiki/terms', g: 'public', c: 'cdn', zh: '术语表', en: 'Wiki terms' },
