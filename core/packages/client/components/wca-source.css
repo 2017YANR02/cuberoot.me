@@ -22,6 +22,9 @@
 /* 开关类分组(标签+PillToggle):标签紧挨控件,不用 flex:1 撑开。 */
 .settings-row-tight-group { display: inline-flex; align-items: center; gap: 6px; }
 .settings-row-tight-group .settings-row-label { flex: 0 0 auto; }
+/* color-scheme 交给 globals.css 的 `select, input[type=date] { color-scheme: inherit }`
+   —— 这里若钉 `light dark`,原生下拉面板跟系统走(浅色系统 = 白面板),与暗色页面 +
+   首页「近期打乱」同款下拉不一致。 */
 .settings-row-control input[type="number"],
 .settings-row-control-select {
   background: var(--background);
@@ -30,7 +33,6 @@
   border-radius: 4px;
   padding: 4px 8px;
   font-size: 13px;
-  color-scheme: light dark;
 }
 .settings-row-control input[type="number"] { width: 80px; }
 .settings-row-control input[type="range"] { width: 140px; }
@@ -65,7 +67,6 @@
   border-radius: 4px;
   padding: 4px 8px;
   font-size: 13px;
-  color-scheme: light dark;
 }
 .wca-src-dash { color: var(--muted-foreground); }
 .wca-src-hint {

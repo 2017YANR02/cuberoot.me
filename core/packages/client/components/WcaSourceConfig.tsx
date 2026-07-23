@@ -17,13 +17,13 @@ import type { Comp } from '@/lib/comp-search';
 import { fetchWcaScrambles, type WcaScrambleRow } from '@/lib/wca-results-api';
 import { roundTypeShort } from '@/lib/comp-schedule';
 import { ROUND_ORDER } from '@/lib/wca-round-meta';
-import { wcaEventId, WCA_OPTIMAL_EVENTS, probeCompCoverage, getCompCoverage } from '@/app/[lang]/timer/_lib/scramble/wca_pool';
+import { wcaEventId, probeCompCoverage, getCompCoverage, WCA_OPTIMAL_EVENTS } from '@/app/[lang]/timer/_lib/scramble/wca_pool';
 import { groupIdxOf } from '@/lib/wca-scramble-group';
 import type { EventId } from '@/app/[lang]/timer/_lib/types';
 import { VariantSelect } from '@/components/VariantSelect';
 import { RangeSlider } from '@/components/RangeSlider/RangeSlider';
 import { useSubsetSelection, SubsetColorPicker } from '@/components/SubsetColorPicker/SubsetColorPicker';
-import { stageLabel, VARIANT_ORDER, VARIANT_STAGES, type ScrambleVariant } from '@/lib/scramble-variants';
+import { stageLabel, LENGTH_VARIANT, WHOLE_VARIANT, usesStepsIndex, uiVariantOf, uiVariantOptions, uiStagesOf, dataVariantOfStage } from '@/lib/scramble-variants';
 import { statsUrl } from '@/lib/stats-base';
 import { tr } from '@/i18n/tr';
 import './wca-source.css';
@@ -51,6 +51,10 @@ interface DiffHist { min: number; max: number; counts: Record<string, number> }
 interface DiffDistJson {
   sets: Record<string, { variants: Record<string, { data: Record<string, Record<string, DiffHist>> }> }>;
 }
+
+// 打乱长度直方图(stats/scramble/event_lengths.json):counts[招式数] = 条数。用于「打乱」这一项的
+// 可用性判断(定长项目只有一个键)与滑块端点。
+interface EventLengthsJson { events: Record<string, { counts: Record<string, number> }> }
 
 /**
  * The slice of settings this config reads / writes. Decoupled from the timer's
@@ -87,9 +91,6 @@ export default function WcaSourceConfig({
   isZh, event, settings, updateSettings,
 }: Props) {
   const wev = wcaEventId(event);
-  // 同态项目集合唯一来源(WCA_OPTIMAL_EVENTS)——「最优打乱」开关本身渲染在设置弹层(SettingsPanel),
-  // 这里只用同一份判定复位越界值(见下方 effect),避免两处判据不一致。
-  const hasOptimal = !!wev && WCA_OPTIMAL_EVENTS.has(wev);
   const mode = settings.wcaScrambleMode;
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
@@ -119,12 +120,9 @@ export default function WcaSourceConfig({
   }, [evRows, settings.wcaRound]);
   const hasEvent = evRows === null ? null : evRows.length > 0;
 
-  // 「最优打乱」是跨项目粘滞的设置;切到不支持最优等态的项目(如魔表)后,开关本身会隐藏,
-  // 但设置值若仍是 true,fillComp/fillDate 会去要求 optimal_scramble 非空 —— 该项目永远没有,
-  // 于是真实打乱被全部过滤成空,误报「没有真题」。开关一消失就顺手把它复位。
-  useEffect(() => {
-    if (!hasOptimal && settings.wcaUseOptimal) updateSettings({ wcaUseOptimal: false });
-  }, [hasOptimal, settings.wcaUseOptimal, updateSettings]);
+  // 「最优打乱」是跨项目粘滞的设置(默认开),切到不支持最优等态的项目(如魔表)不复位 ——
+  // 复位会让默认开的值在逛一次魔表后永久变假。安全性由 wca_pool 保证:specKey/fillComp/fillDate
+  // 都用 supportsOptimal(w) 与 spec.optimal 取与,不支持的项目直接忽略该标志,不会把真题过滤成空。
 
   // Reset round/group when they fall outside the loaded comp's options.
   useEffect(() => {
@@ -173,7 +171,8 @@ export default function WcaSourceConfig({
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, settings.wcaComp, wev, canDifficulty]);
-  const diffLocked = compDiffCov === 'none';
+  // 灰锁只对「阶段步数」这类方法成立 —— 整体 / 打乱各有自己的数据源,该场有没有回填阶段步数与它们无关。
+  const diffLocked = compDiffCov === 'none' && usesStepsIndex(settings.wcaDiffVariant);
   const [showDiffWhy, setShowDiffWhy] = useState(false);
   useEffect(() => { setShowDiffWhy(false); }, [settings.wcaComp, diffLocked]); // 换比赛 / 状态变即收起原因
 
@@ -187,6 +186,18 @@ export default function WcaSourceConfig({
     return () => { cancelled = true; };
   }, []);
 
+  // 打乱长度直方图(~2KB,同 /scramble/stats 长度 tab):决定「打乱」这一项给不给、滑块端点多少。
+  const [eventLengths, setEventLengths] = useState<EventLengthsJson | null>(null);
+  useEffect(() => {
+    if (!canDifficulty) return;
+    let cancelled = false;
+    void fetch(statsUrl('/stats/scramble/event_lengths.json'))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => { if (!cancelled && j?.events) setEventLengths(j as EventLengthsJson); })
+      .catch(() => { /* 拉不到 → 不给「打乱」这一项 */ });
+    return () => { cancelled = true; };
+  }, [canDifficulty]);
+
   // 配色子集:复用 /scramble/stats 的选择器;sel.subsetKey 变化写回 settings(filter 性质)。
   const diffSel = useSubsetSelection('cn', settings.wcaDiffColors);
   useEffect(() => {
@@ -194,25 +205,45 @@ export default function WcaSourceConfig({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [diffSel.subsetKey]);
 
-  const orderIdx = (k: string) => { const i = (VARIANT_ORDER as readonly string[]).indexOf(k); return i < 0 ? 999 : i; };
-  const variantOpts = useMemo(() => {
-    const keys = layout
-      ? Object.keys(layout.variants)
-      : (VARIANT_ORDER as readonly string[]).filter((v) => (VARIANT_STAGES[v as ScrambleVariant]?.length ?? 0) > 0);
-    return [...keys].sort((a, b) => orderIdx(a) - orderIdx(b));
-  }, [layout]);
-  const stageOpts = useMemo(() => {
-    if (layout?.variants[settings.wcaDiffVariant]) return Object.keys(layout.variants[settings.wcaDiffVariant]);
-    return VARIANT_STAGES[settings.wcaDiffVariant as ScrambleVariant] ?? [];
-  }, [layout, settings.wcaDiffVariant]);
+  // 方法 / 阶段两个下拉与首页「近期打乱」同一套聚合(lib/scramble-variants):方法只出 9 项
+  // (块族折成「砖」、eoline 并入「EO」),细分落到阶段下拉。设置里仍存底层数据变体 + 阶段键
+  // (= 后端筛选与 distribution 查表的口径),UI 侧按 uiVariantOf 反推当前方法。
+  // 「整体」(整解最优 HTM)不在 steps 布局里 —— 它的步数存在另一张表(wca_scramble_optimal.htm,
+  // 见 server 的 isWholeSolve),故不看布局;但那张表只灌了同态项目(见 WCA_OPTIMAL_EVENTS,
+  // 盲拧/多盲的 WCA 打乱带宽块定向后缀,最优等态不成立)→ 只对这些项目给这一项。
+  // 「打乱」(按原打乱招式数取题)同理不看布局,谓词直接落打乱文本(server 的 isLengthFilter);
+  // 只对长度真的会变的项目给这一项(定长项目的 counts 只有一个键,筛了没意义)。
+  const canWhole = !!wev && WCA_OPTIMAL_EVENTS.has(wev);
+  const lenCounts = wev ? eventLengths?.events?.[wev]?.counts : undefined;
+  const canLength = Object.keys(lenCounts ?? {}).length > 1;
+  // 两个伪方法的「阶段」是同名占位键,布局里当然查不到 —— 不特判会把它们的唯一阶段过滤空,
+  // 点了下拉却什么也不发生。
+  const hasStage = (dv: string, stage: string) => (
+    dv === WHOLE_VARIANT ? canWhole
+      : dv === LENGTH_VARIANT ? canLength
+        : (layout ? !!layout.variants[dv]?.[stage] : true));
+  const hasVariant = (dv: string) => (dv === WHOLE_VARIANT ? canWhole : (layout ? !!layout.variants[dv] : true));
+  const variantOpts = useMemo(
+    () => [...uiVariantOptions(hasVariant), ...(canLength ? [LENGTH_VARIANT] : [])],
+    [layout, canWhole, canLength], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+  const uiVariant = uiVariantOf(settings.wcaDiffVariant);
+  const stagesOfUi = (v: string) => uiStagesOf(v).filter((s) => hasStage(dataVariantOfStage(v, s), s));
+  const stageOpts = useMemo(() => stagesOfUi(uiVariant), [layout, uiVariant]); // eslint-disable-line react-hooks/exhaustive-deps
+  // 选方法 / 阶段都要连带写回数据变体(聚合方法下,变体由阶段决定)。
+  const pickStage = (v: string, s: string) => updateSettings({ wcaDiffVariant: dataVariantOfStage(v, s), wcaDiffStage: s });
+  const pickVariant = (v: string) => {
+    const s = stagesOfUi(v)[0];
+    if (s) pickStage(v, s);
+  };
 
   // 方法切换后阶段不在新方法里 → 回退首个;方法不在可选列表 → 回退首个。
   useEffect(() => {
-    if (variantOpts.length && !variantOpts.includes(settings.wcaDiffVariant)) updateSettings({ wcaDiffVariant: variantOpts[0] });
+    if (variantOpts.length && !variantOpts.includes(uiVariant)) pickVariant(variantOpts[0]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [variantOpts]);
   useEffect(() => {
-    if (stageOpts.length && !stageOpts.includes(settings.wcaDiffStage)) updateSettings({ wcaDiffStage: stageOpts[0] });
+    if (stageOpts.length && !stageOpts.includes(settings.wcaDiffStage)) pickStage(uiVariant, stageOpts[0]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stageOpts]);
 
@@ -230,11 +261,31 @@ export default function WcaSourceConfig({
   }, [canDifficulty, settings.wcaDifficultyOn, diffDist]);
 
   // 整解(方法 '333')无配色维度,数据落伪子集 'ALL';其余按所选底色子集查直方图。
-  const effectiveDiffSubset = settings.wcaDiffVariant === '333' ? 'ALL' : diffSel.subsetKey;
+  const isWhole = settings.wcaDiffVariant === WHOLE_VARIANT;
+  // 「打乱」(伪变体)按招式数筛,端点来自长度直方图而非 distribution;同样无底色 / 无阶段。
+  const isLength = settings.wcaDiffVariant === LENGTH_VARIANT;
+  const effectiveDiffSubset = isWhole ? 'ALL' : diffSel.subsetKey;
+  // 长度端点:合并开 → 3x3 族各项目长度直方图取并;否则只看当前项目。
+  const lenBounds = useMemo<[number, number] | null>(() => {
+    if (!isLength) return null;
+    const evs = canMerge && settings.wcaDiffMerged ? [...MERGE_EVENT_LIST] : (wev ? [wev] : []);
+    let lo = Infinity;
+    let hi = -Infinity;
+    for (const e of evs) {
+      for (const k of Object.keys(eventLengths?.events?.[e]?.counts ?? {})) {
+        const n = Number(k);
+        if (!Number.isInteger(n)) continue;
+        if (n < lo) lo = n;
+        if (n > hi) hi = n;
+      }
+    }
+    return hi >= lo ? [lo, hi] : null;
+  }, [isLength, eventLengths, canMerge, settings.wcaDiffMerged, wev]);
   // 端点必须与后端取题池同口径,否则滑杆放得出池子里根本没有的步数(BG 十字 8 步全库只有一条,
   // 且在 333bf —— 练 333 时选 8 必然空手)。合并开 → 3x3 族各项目端点取并(= server 的 FAMILY_333,
   // 不含 333mbf,它不在 steps 表里);合并关 → 只看当前项目自己的 per-event 集。
   const [stepLo, stepHi] = useMemo<[number, number]>(() => {
+    if (isLength) return lenBounds ?? [STEP_MIN, STEP_MAX];
     const bounds = (setKey: string): [number, number] | null => {
       const h = diffDist?.sets?.[setKey]?.variants?.[settings.wcaDiffVariant]?.data?.[settings.wcaDiffStage]?.[effectiveDiffSubset];
       if (!h || !Number.isFinite(h.min) || !Number.isFinite(h.max) || h.max < h.min) return null;
@@ -254,7 +305,7 @@ export default function WcaSourceConfig({
     if (hi >= lo) return [lo, hi];
     // per-event 集缺失(旧 distribution.json)→ 退合并池端点,再退静态范围
     return bounds('wca') ?? [STEP_MIN, STEP_MAX];
-  }, [diffDist, settings.wcaDiffVariant, settings.wcaDiffStage, effectiveDiffSubset, settings.wcaDiffMerged, canMerge, wev]);
+  }, [diffDist, settings.wcaDiffVariant, settings.wcaDiffStage, effectiveDiffSubset, settings.wcaDiffMerged, canMerge, wev, isLength, lenBounds]);
   // 刻度尽量标全整数;范围宽到标签会重叠时,按 nice 步长(1/2/5/10…)抽稀,始终含两端。
   const stepMarks = useMemo(() => {
     const span = stepHi - stepLo;
@@ -308,6 +359,9 @@ export default function WcaSourceConfig({
   // 端点收窄后把已存的范围夹回去(持久化,过滤口径与滑块一致)。
   useEffect(() => {
     if (!(canDifficulty && settings.wcaDifficultyOn) || settings.wcaDiffSteps.length === 0) return;
+    // 新旧范围完全不相交(十字 0–8 → 整体 12–19 这种跨方法切换)→ 夹只会坍成一个端点(12 步整解全库
+    // 才 2 条,一开就「无匹配」)。这种情况放开成整段,让用户自己再缩。
+    if (diffHi < stepLo || diffLo > stepHi) { updateSettings({ wcaDiffSteps: stepRange(stepLo, stepHi) }); return; }
     if (shownLo !== diffLo || shownHi !== diffHi) updateSettings({ wcaDiffSteps: stepRange(shownLo, shownHi) });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stepLo, stepHi]);
@@ -413,24 +467,28 @@ export default function WcaSourceConfig({
       {canDifficulty && settings.wcaDifficultyOn && !diffLocked && (
         <div className="wca-src-diff">
           <div className="wca-src-diff-row">
-            <SubsetColorPicker sel={diffSel} isZh={isZh} />
+            {/* 整解按整颗魔方的最优步数、「打乱」按招式数,都没有「底色」这一维 → 不给选择器。 */}
+            {!isWhole && !isLength && <SubsetColorPicker sel={diffSel} isZh={isZh} />}
             <VariantSelect
               className="settings-row-control-select"
-              value={settings.wcaDiffVariant}
+              value={uiVariant}
               options={variantOpts}
-              onChange={(v) => updateSettings({ wcaDiffVariant: v })}
+              onChange={pickVariant}
               isZh={isZh}
               ariaLabel={tr({ zh: '方法', en: 'Method' })}
             />
-            <VariantSelect
-              className="settings-row-control-select"
-              value={settings.wcaDiffStage}
-              options={stageOpts}
-              onChange={(s) => updateSettings({ wcaDiffStage: s })}
-              isZh={isZh}
-              label={stageLabel}
-              ariaLabel={tr({ zh: '阶段', en: 'Stage' })}
-            />
+            {/* 「打乱」筛的是招式数,没有阶段可选 → 阶段下拉整个不给(占位键与方法同名)。 */}
+            {!isLength && (
+              <VariantSelect
+                className="settings-row-control-select"
+                value={settings.wcaDiffStage}
+                options={stageOpts}
+                onChange={(s) => pickStage(uiVariant, s)}
+                isZh={isZh}
+                label={stageLabel}
+                ariaLabel={tr({ zh: '阶段', en: 'Stage' })}
+              />
+            )}
           </div>
           <div className="wca-src-steps-range">
             <RangeSlider
@@ -439,7 +497,7 @@ export default function WcaSourceConfig({
               value={dragSteps ?? [shownLo, shownHi]}
               onChange={onStepsDrag}
               marks={stepMarks}
-              ariaLabel={tr({ zh: '步数范围', en: 'Step range' })}
+              ariaLabel={isLength ? tr({ zh: '打乱长度范围', en: 'Scramble length range' }) : tr({ zh: '步数范围', en: 'Step range' })}
             />
           </div>
         </div>

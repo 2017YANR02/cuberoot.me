@@ -20,6 +20,7 @@ import { statsUrl } from '@/lib/stats-base';
 import { fetchWcaScrambles } from '@/lib/wca-results-api';
 import { fetchByDifficulty } from '@/lib/scramble-by-difficulty';
 import { groupIdxOf } from '@/lib/wca-scramble-group';
+import { LENGTH_VARIANT } from '@/lib/scramble-variants';
 import { fetchPuzzleExamples, type PuzzleExamplesJson } from '@/lib/puzzle-examples';
 import { scrambleStepMetric } from './gen-by-steps';
 import type { EventId } from '../types';
@@ -43,6 +44,11 @@ const EVENT_MAP: Partial<Record<EventId, string>> = {
 // toggle is just a convenience that mirrors this set.
 export const WCA_OPTIMAL_EVENTS = new Set(['333', '333oh', '333ft', '333fm', '222', 'pyram', 'skewb']);
 function supportsOptimal(w: string): boolean { return WCA_OPTIMAL_EVENTS.has(w); }
+// 「打乱」难度筛(按原打乱招式数取题)与「最优打乱」互斥:最优打乱是同态最短打乱,长度 = 整解最优
+// HTM,拿它去配「原打乱 19 步」只会显示一条 17 步的打乱 —— 用户看到的步数与所选对不上(而且那已经
+// 是「整体」这个方法的语义)。故长度筛一律出原打乱,忽略粘滞的 wcaUseOptimal。
+const isLengthDiff = (spec: WcaSourceSpec): boolean => spec.diff?.variant === LENGTH_VARIANT && spec.diff.steps.length > 0;
+const wantOptimal = (spec: WcaSourceSpec, w: string): boolean => !!spec.optimal && supportsOptimal(w) && !isLengthDiff(spec);
 
 // 一次向 /random 要几条。服务端把 count 钳在 SERVER_MAX_COUNT 内,本值必须 <= 它,
 // 否则「回得比要的少」不再等价于「已穷尽」,封闭集判定(见 closedFor)会误判。
@@ -242,7 +248,7 @@ function specKey(spec: WcaSourceSpec): string | null {
   if (!w) return null;
   // 该项目不支持最优等态(见 supportsOptimal)时忽略 spec.optimal —— 否则粘滞的 wcaUseOptimal=true
   // 残留到切换后的项目,会算出一个「最优池」key,而这个项目永远没有 optimal_scramble,查回空。
-  const opt = spec.optimal && supportsOptimal(w) ? '|opt' : ''; // 原始/最优打乱用不同池,切换即重灌
+  const opt = wantOptimal(spec, w) ? '|opt' : ''; // 原始/最优打乱用不同池,切换即重灌
   // 「按步数」过滤两种模式都生效,进 key(切换度量/区间即重灌)。
   const sf = spec.stepFilter ? `|S:${spec.stepFilter.metric}:${spec.stepFilter.lo}.${spec.stepFilter.hi}` : '';
   // 难度过滤 date + comp 两模式都生效;steps 非空才计入池 key(切换难度即重灌)。
@@ -386,7 +392,7 @@ export function getCompCoverage(comp: string, wcaEvent: string): boolean | null 
 async function fillComp(spec: WcaSourceSpec, key: string): Promise<void> {
   const w = wev(spec);
   if (!w) return;
-  const useOptimal = spec.optimal && supportsOptimal(w);
+  const useOptimal = wantOptimal(spec, w);
   let rows = compRows[key];
   if (!rows) {
     rows = spec.diff && spec.diff.steps.length > 0
@@ -418,7 +424,7 @@ async function seedPrecomputed(spec: WcaSourceSpec, key: string): Promise<number
   const bins = entry?.metrics?.[sf.metric]?.bins;
   if (!entry || !bins) return 0;
   // 最优模式与 live 语义一致:只端有最优等态的示例(最优打乱同态,度量值不变),不静默回退原打乱。
-  const useOptimal = !!spec.optimal && supportsOptimal(wev(spec)!);
+  const useOptimal = wantOptimal(spec, wev(spec)!);
   const list: string[] = [];
   for (let v = sf.lo; v <= sf.hi; v++) {
     const samples = bins[String(v)];
@@ -457,7 +463,7 @@ function refillFrom(q: string[], src: string[]): void {
 async function fillDate(spec: WcaSourceSpec, key: string): Promise<void> {
   const w = wev(spec);
   if (!w) return;
-  const useOptimal = spec.optimal && supportsOptimal(w);
+  const useOptimal = wantOptimal(spec, w);
   const buildQs = () => {
     const qs = new URLSearchParams({ event: w, count: String(FETCH_COUNT) });
     if (spec.from) qs.set('from', spec.from);
