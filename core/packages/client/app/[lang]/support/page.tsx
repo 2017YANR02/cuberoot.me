@@ -8,7 +8,7 @@
  * 数据走 /v1/sponsors + /v1/contributors。
  */
 import { useEffect, useMemo, useState } from 'react';
-import { Heart, Plus, Pencil, Trash2, Crown } from 'lucide-react';
+import { Heart, Plus, Pencil, Trash2, Crown, List, X } from 'lucide-react';
 import { tr, useLang } from '@/i18n/tr';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import AppLink from '@/components/AppLink';
@@ -79,16 +79,18 @@ function SponsorCard({ sponsor, isZh, admin, onEdit, onDelete }: {
   );
 }
 
-function ContributorCard({ contributor, isZh, admin, onEdit, onDelete, onBump }: {
+function ContributorCard({ contributor, isZh, admin, onEdit, onDelete, onBump, onOpenDetail }: {
   contributor: Contributor;
   isZh: boolean;
   admin: boolean;
   onEdit: (ct: Contributor) => void;
   onDelete: (ct: Contributor) => void;
   onBump: (ct: Contributor) => void;
+  onOpenDetail: (ct: Contributor) => void;
 }) {
   const name = displayCuberName(contributor.name, isZh);
   const countTitle = tr({ zh: '贡献 {n} 次', en: '{n} contributions' }).replace('{n}', String(contributor.score));
+  const hasDetail = contributor.contributions.length > 0;
   return (
     <div className="sponsor-card">
       <PersonAvatar name={name} wcaId={contributor.wcaId} avatarUrl={contributor.avatarUrl} />
@@ -104,7 +106,58 @@ function ContributorCard({ contributor, isZh, admin, onEdit, onDelete, onBump }:
       ) : (
         <span className="contrib-score" title={countTitle}>{contributor.score}</span>
       )}
+      {hasDetail && (
+        <button className="contrib-detail-open" onClick={() => onOpenDetail(contributor)}>
+          <List size={11} />
+          {tr({ zh: '查看贡献', en: 'View details' })}
+        </button>
+      )}
       {admin && <AdminBtns item={contributor} onEdit={onEdit} onDelete={onDelete} />}
+    </div>
+  );
+}
+
+// 展开一位贡献者的每次贡献内容明细(点卡片上的「查看贡献」打开)。
+function ContributorDetail({ contributor, isZh, onClose }: {
+  contributor: Contributor;
+  isZh: boolean;
+  onClose: () => void;
+}) {
+  const name = displayCuberName(contributor.name, isZh);
+  const items = contributor.contributions;
+  return (
+    <div className="sponsor-editor-backdrop" onClick={onClose}>
+      <div className="contrib-detail" onClick={e => e.stopPropagation()}>
+        <div className="sponsor-editor-head">
+          <div className="contrib-detail-person">
+            <PersonAvatar name={name} wcaId={contributor.wcaId} avatarUrl={contributor.avatarUrl} />
+            <div className="contrib-detail-person-text">
+              <PersonName name={name} wcaId={contributor.wcaId} />
+              <span className="contrib-detail-count">
+                {tr({ zh: '共 {n} 次贡献', en: '{n} contributions' }).replace('{n}', String(contributor.score))}
+              </span>
+            </div>
+          </div>
+          <button className="sponsor-editor-close" onClick={onClose} aria-label="close"><X size={18} /></button>
+        </div>
+        <div className="contrib-detail-body">
+          {items.length === 0 ? (
+            <div className="contrib-detail-empty">{tr({ zh: '暂无明细', en: 'No details yet' })}</div>
+          ) : (
+            <ol className="contrib-detail-list">
+              {items.map((ct, i) => {
+                const text = isZh ? (ct.zh || ct.en) : (ct.en || ct.zh);
+                return (
+                  <li className="contrib-detail-item" key={i}>
+                    {ct.date && <span className="contrib-detail-date">{ct.date}</span>}
+                    <span className="contrib-detail-text">{text}</span>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -126,6 +179,7 @@ export default function SupportPage() {
   const [expanded, setExpanded] = useState(false);
   const [donateOpen, setDonateOpen] = useState(false);
   const [editorTarget, setEditorTarget] = useState<EditorTarget | null>(null);
+  const [detailContributor, setDetailContributor] = useState<Contributor | null>(null);
 
   useEffect(() => {
     let cancel = false;
@@ -308,6 +362,7 @@ export default function SupportPage() {
                   onEdit={x => setEditorTarget({ kind: 'contributor', initial: x })}
                   onDelete={handleDeleteContributor}
                   onBump={handleBump}
+                  onOpenDetail={setDetailContributor}
                 />
               ))}
             </div>
@@ -315,6 +370,13 @@ export default function SupportPage() {
         </section>
       )}
 
+      {detailContributor && (
+        <ContributorDetail
+          contributor={detailContributor}
+          isZh={isZh}
+          onClose={() => setDetailContributor(null)}
+        />
+      )}
       {donateOpen && <DonateModal lang={isZh ? 'zh' : 'en'} onClose={() => setDonateOpen(false)} />}
       {editorTarget && (
         <SupportEditor
