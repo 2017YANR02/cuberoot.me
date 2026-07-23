@@ -7,7 +7,7 @@ import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
 import { netIndexOf } from '@/app/[lang]/sim/engine/nxn/vcStageMask';
 import { faceletFromNet, resolveEngineArrows } from '@/app/[lang]/sim/engine/nxn/vcArrowBridge';
-import { FACE } from '@/app/[lang]/sim/engine/define';
+import { FACE, SIZE } from '@/app/[lang]/sim/engine/define';
 
 // 引擎 FACE → visualcube Face 编号(vcStageMask 的 ENGINE_TO_VC_FACE,此处内联对照)。
 const ENGINE_TO_VC: Record<number, number> = {
@@ -100,6 +100,8 @@ describe('resolveEngineArrows 曲线(s3/influence,visualcube renderArrow 语义)
     const scene = fakeScene();
     const straight = resolveEngineArrows(scene, 'U0U8', 3)[0];
     expect(straight.p3).toBeUndefined();
+    // 线宽 = vc 0.12/N × 边长 = 0.12 × 格距(fakeScene 单位变换 → 格距 = SIZE),世界单位。
+    expect(straight.width).toBeCloseTo(0.12 * SIZE, 10);
     // i5 → 因子 1:控制点 = s3 贴纸中心本身(在 U 面平面上,y 与两端相同)。
     const raw = resolveEngineArrows(scene, 'U0U8U2-i5', 3)[0];
     expect(raw.p3).toBeDefined();

@@ -104,6 +104,12 @@ export function resolveEngineArrows(
   if (!meshWorld) return [];
   const parsed = parseArrows(dsl);
   if (!parsed.length) return [];
+  // vc 箭头线宽 = 0.12/cubeSize(renderArrow 所在 <g> 的 stroke-width),单位下立方体
+  // 经 scale(1/N) 后边长恰 1 → 线宽 = 0.12 × 格距。这里换算成世界单位(格距 = SIZE ×
+  // 锚 mesh 世界缩放),导出器再按中心深度透视比例转 px;箭头头 marker 随线宽等比,
+  // 头/线比例已在导出器按 vc 三角(0.033/0.12)锁定。
+  const meshScale = new THREE.Vector3().setFromMatrixScale(meshWorld).x;
+  const width = 0.12 * SIZE * meshScale;
   const out: SchematicArrow[] = [];
   const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3(), mid = new THREE.Vector3();
   for (const arrow of parsed) {
@@ -131,6 +137,7 @@ export function resolveEngineArrows(
     out.push({
       p1: [a.x, a.y, a.z],
       p2: [b.x, b.y, b.z],
+      width,
       ...(p3 ? { p3 } : {}),
       // 空串(studio 默认箭头色未填)也算未设 → 兜底灰,否则导出器画成 stroke=""。
       color: arrow.color || (defaultColor && defaultColor.length ? defaultColor : DEFAULT_ARROW_COLOR),
