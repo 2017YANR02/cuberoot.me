@@ -43,13 +43,13 @@ const APP = join(ROOT, 'app');
 const ALLOWED_ON_DEMAND: Record<string, string> = {
   // (a) real SEO — generateMetadata + server-rendered per-id content, ISR-cached:
   '[lang]/recon/[id]/page.tsx': 'SEO: generateMetadata + per-id server render, ISR-cached',
+  '[lang]/forum/t/[id]/page.tsx': 'SEO: generateMetadata + per-id server render, ISR-cached (share cards)',
   '[lang]/wca/[statId]/page.tsx': 'bounded: ~80 fixed stat pages',
   // (b) bounded id spaces — small finite sets, top out at a few hundred invocations:
   '[lang]/math/group/[slug]/page.tsx': 'bounded: ~62 group-theory sections',
   '[lang]/tutorial/[slug]/page.tsx': 'bounded: fixed tutorial set',
   '[lang]/tutorial/c/[cat]/page.tsx': 'bounded: fixed tutorial categories',
   '[lang]/wca/prediction/333/[sectionId]/page.tsx': 'bounded: fixed prediction sections',
-  '[lang]/alg/[puzzle]/[set]/[subgroup]/page.tsx': 'bounded: alg DB (finite puzzles x sets x subgroups)',
   // Grandfathered: unbounded-shaped (recon id) client shells, but only reachable as deep
   // sub-pages of an existing recon and the recon corpus is small today, so not a spike
   // vector yet. Convert to the sentinel shell if recon traffic grows.  [[revisit]]
