@@ -74,9 +74,11 @@ const MAX_CONTENT_LEN = 50000;
 
 // ── 发帖审核(issue #36,Discourse approve-post-count 模式)────────────────────
 // 新用户前 N 帖(含主题首帖)须管理员过审才公开;已过审帖数 >= N 视为可信直发。
+// 默认 0 = 关闭前置审核,新用户直接发(敏感词命中仍进队列,举报仍独立处理);
+// 需要恢复"先审后发"时设 FORUM_APPROVE_POST_COUNT=N。
 const APPROVE_POST_COUNT = (() => {
   const n = Number(process.env.FORUM_APPROVE_POST_COUNT);
-  return Number.isInteger(n) && n >= 0 ? n : 3;
+  return Number.isInteger(n) && n >= 0 ? n : 0;
 })();
 // 敏感词(Discourse watched words):命中则连可信用户也进队列。逗号分隔,大小写不敏感。
 const WATCH_WORDS = (process.env.FORUM_WATCH_WORDS ?? '')
@@ -509,7 +511,8 @@ forumRoutes.post('/forum/posts', async (c) => {
     'SELECT COUNT(*)::int AS n FROM forum_posts WHERE thread_id = ? AND id <= ?', [threadId, newId],
   );
 
-  // 已发布回帖 → 主题作者(notify 内部会剔除 actor 自己:自己回自己的帖不通知)。
+  // 已发布回帖 → 主题作者 + 管理员(notify 内部去重 + 剔除 actor 自己:
+  //   管理员正好是楼主只收一条,自己回自己的帖不通知)。
   // 待审回帖 → 管理员;过审时才通知主题作者(见 /forum/review 审核端点)。
   await notifyBestEffort(status === 'pending'
     ? {
@@ -522,7 +525,7 @@ forumRoutes.post('/forum/posts', async (c) => {
         link: '/forum/review',
       }
     : {
-        recipients: [threads[0].author_id],
+        recipients: [threads[0].author_id, ...adminRecipients()],
         kind: 'forum_reply',
         actorKey: authUser.wcaId,
         actorName: authUser.name,
