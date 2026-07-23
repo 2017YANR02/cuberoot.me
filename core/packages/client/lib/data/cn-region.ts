@@ -2,6 +2,8 @@
 // CN_PLACE_PROVINCE: 规范化中国地名(省份 / 城市,去非字母数字 + 小写)→ 所属省份(简体 + 英文)。
 //   选手页「去过的省份」用:WCA comp.city 各段规范化后查此表;查不到回退国家「中国」。
 // CN_PLACE_ZH: 规范化英文/拼音地名 → 该地自身简体名(城市 / 省份 / 港澳台);/zh 下本地化城市名用。
+// CN_PLACE_DISAMBIG: 同拼音异地城市消歧,key = `城市拼音|省份拼音` → 该城简体名。扁平 CN_PLACE_ZH
+//   每个拼音只存一个,碰撞时另一城被丢弃;消费端有省份段时先查此表选对(台州/泰州、苏州/宿州 等)。
 // 重新生成:node packages/client/scripts/gen-cn-region.mjs [data.sql]
 
 export const CN_PLACE_PROVINCE: Record<string, { zh: string; en: string }> = {
@@ -1215,4 +1217,23 @@ export const CN_PLACE_ZH: Record<string, string> = {
   "zimbabwe": "Zimbabwe",
   "ziyang": "资阳",
   "zunyi": "遵义",
+};
+
+export const CN_PLACE_DISAMBIG: Record<string, string> = {
+  "baoshan|shanghai": "宝山",
+  "baoshan|yunnan": "保山",
+  "fuzhou|fujian": "福州",
+  "fuzhou|jiangxi": "抚州",
+  "qianjiang|chongqing": "黔江",
+  "qianjiang|hubei": "潜江",
+  "suzhou|anhui": "宿州",
+  "suzhou|jiangsu": "苏州",
+  "taizhou|jiangsu": "泰州",
+  "taizhou|zhejiang": "台州",
+  "wuxi|chongqing": "巫溪",
+  "wuxi|jiangsu": "无锡",
+  "yichun|heilongjiang": "伊春",
+  "yichun|jiangxi": "宜春",
+  "yulin|guangxi": "玉林",
+  "yulin|shaanxi": "榆林",
 };
