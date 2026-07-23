@@ -80,6 +80,13 @@ export interface TimerSettings {
   /** PLL trainer case-id whitelist (e.g. ["T", "Y"]). undefined / [] = all 21. */
   pllSubset?: string[];
 
+  /** Pre-scramble orientation for normal scrambles — rotation prefix applied
+   *  to the scramble image only ('' = UF). See scramble/pre_scramble.ts. */
+  preScr: string;
+
+  /** Same, for training scrambles (CFOP-step / LL-subset events). */
+  preScrT: string;
+
   /** Color neutral scramble mode (3x3-shaped events only). */
   cnMode: 'none' | 'single' | 'dual' | 'six';
 
@@ -246,6 +253,8 @@ export const DEFAULTS: TimerSettings = {
   showHeatmap: true,
   multiStage: false,
   bldMemo: true,
+  preScr: '',    // (UF)
+  preScrT: 'z2', // (DF) — LL cases are read yellow-up (csTimer's default)
   cnMode: 'none',
   voiceInspection: 'none',
   statsAoWindows: [5, 12],
@@ -260,7 +269,7 @@ export const DEFAULTS: TimerSettings = {
   wcaGroup: '',
   wcaDateFrom: '',
   wcaDateTo: '',
-  wcaUseOptimal: false,
+  wcaUseOptimal: true,
   wcaDifficultyOn: false,
   wcaDiffVariant: 'std',
   wcaDiffStage: 'cross',

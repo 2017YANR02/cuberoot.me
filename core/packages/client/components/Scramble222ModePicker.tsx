@@ -2,7 +2,7 @@
 
 /**
  * 2x2 打乱口径 toggle:WCA 官方 11 步 ↔ 最优(最短)。
- * 只在用户选中 2x2 时显示;localStorage 持久。默认 WCA。两者都经 TNoodle 握位模型选最顺手的等价打乱。
+ * 只在用户选中 2x2 时显示;localStorage 持久。默认最优。两者都经 TNoodle 握位模型选最顺手的等价打乱。
  */
 import { tr } from '@/i18n/tr';
 import { use222Mode } from '@/lib/scramble-222-mode';

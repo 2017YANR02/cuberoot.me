@@ -35,6 +35,7 @@ import { syncLangToUrl } from '@/i18n/i18n-client';
 import { generateScramble, registerScramble } from '../_lib/scramble';
 import { peekWca, nextWca, prefetchWca, hasWcaSource, isWcaSourceEmpty, isWcaCompUnindexed, probeCompCoverage, getCompCoverage, wcaEventId, wcaMetaFor, wcaPoolProgress, type WcaSourceSpec } from '../_lib/scramble/wca_pool';
 import { takeScramble } from '../_lib/scramble/scramble_pool';
+import { applyPreScramble, preScrambleFor } from '../_lib/scramble/pre_scramble';
 import { use222Mode } from '@/lib/scramble-222-mode';
 import { genByStepsScramble, genByStepsSig, wcaStepFilter } from '../_lib/scramble/gen-by-steps';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
@@ -42,6 +43,7 @@ import { Flag } from '@/components/Flag';
 import { compFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags';
 import { localizeCompName } from '@/lib/comp-localize';
 import { compSourceLine } from '@/lib/comp-schedule';
+import { usesStepsIndex } from '@/lib/scramble-variants';
 import { useAuthStore } from '@/lib/auth-store';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import { displayCuberName } from '@/lib/cuber-name-display';
@@ -304,8 +306,10 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   const [wcaCompUnindexed, setWcaCompUnindexed] = useState(false);
   useEffect(() => {
     const w = wcaEventId(event);
+    // 「整体」/「打乱」不查阶段步数索引 → 该场有没有回填与它们无关,不旁路(见 usesStepsIndex)。
     if (settings.scrambleSource !== 'wca' || settings.wcaScrambleMode !== 'comp'
-        || !settings.wcaComp || !settings.wcaDifficultyOn || !w) { setWcaCompUnindexed(false); return; }
+        || !settings.wcaComp || !settings.wcaDifficultyOn || !w
+        || !usesStepsIndex(settings.wcaDiffVariant)) { setWcaCompUnindexed(false); return; }
     const cached = getCompCoverage(settings.wcaComp, w);
     if (cached !== null) { setWcaCompUnindexed(cached === false); return; }
     let cancelled = false;
@@ -313,7 +317,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       if (!cancelled) setWcaCompUnindexed(r === false);
     });
     return () => { cancelled = true; };
-  }, [settings.scrambleSource, settings.wcaScrambleMode, settings.wcaComp, settings.wcaCompName, settings.wcaDifficultyOn, event]);
+  }, [settings.scrambleSource, settings.wcaScrambleMode, settings.wcaComp, settings.wcaCompName, settings.wcaDifficultyOn, settings.wcaDiffVariant, event]);
   // 比赛模式但没选比赛 → 回退成「日期全时段随机真题」:仍出真实 WCA 打乱(随机抽),不落本地
   // 随机生成。走 date 池(fillDate,空 from/to = 全时段),经预热后秒出。否则 specKey 对空 comp
   // 返回 null,会静默变成本地生成打乱(见 wca_pool.specKey / fillDate)。
@@ -426,6 +430,11 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     setScrambleHist(next);
   }, []);
   const scramble = scrambleHist.list[scrambleHist.idx] ?? '';
+  // 「预打乱朝向」只进打乱图,不改打乱正文(同 csTimer:正文保持官方口径,图按你手持的朝向画)。
+  const previewScramble = applyPreScramble(
+    scramble,
+    preScrambleFor(event, settings.preScr, settings.preScrT),
+  );
 
   // WCA mode: an empty slot means the pool was momentarily dry — fetch a real
   // scramble and fill it in, showing a loading state until it lands. We never
@@ -1687,7 +1696,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
             <div className="shell-corner-net">
               <div className="shell-corner-net-imgbox">
                 <div className="shell-corner-net-img">
-                  <CubePreview event={event} scramble={scramble} height="var(--cube-h)" colors={settings.colors} visualization={settings.prefer3D ? '3D' : '2D'} />
+                  <CubePreview event={event} scramble={previewScramble} height="var(--cube-h)" colors={settings.colors} visualization={settings.prefer3D ? '3D' : '2D'} />
                 </div>
               </div>
             </div>

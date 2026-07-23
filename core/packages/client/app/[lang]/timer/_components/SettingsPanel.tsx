@@ -21,6 +21,7 @@ import { reanalyzeAll } from '../_lib/storage/reanalyze';
 import { eventInfo, type EventId } from '../_lib/types';
 import { WCA_COLORS } from '../_lib/cube/colors';
 import { wcaEventId, WCA_OPTIMAL_EVENTS } from '../_lib/scramble/wca_pool';
+import { PRE_SCRAMBLES } from '../_lib/scramble/pre_scramble';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { CountryInput } from '@/components/CountryInput';
 import PillToggle from '@/components/PillToggle/PillToggle';
@@ -654,8 +655,6 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
             <Row label={tr({ zh: '最优打乱', en: 'Optimal scramble'
           })}>
               <BoolToggle value={s.wcaUseOptimal} onChange={(v) => updateSettings({ wcaUseOptimal: v })} />
-              <span className="hint">{tr({ zh: '同态项目(如斜转/金字塔)优先用消歧后的唯一最优打乱,仅对 WCA 真题生效', en: 'for isomorphic puzzles (e.g. Skewb/Pyraminx), prefer the disambiguated canonical scramble — WCA real scrambles only'
-          })}</span>
             </Row>
           )}
           <Row label={tr({ zh: '自动打卡', en: 'Auto-mark done'
@@ -686,6 +685,26 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
             >
               <option value={2}>x.xx</option>
               <option value={3}>x.xxx</option>
+            </select>
+          </Row>
+          <Row label={tr({ zh: '预打乱朝向', en: 'Pre-scramble'
+        })}>
+            <select
+              className="settings-row-control-select"
+              value={s.preScr}
+              onChange={(e) => updateSettings({ preScr: e.target.value })}
+            >
+              {PRE_SCRAMBLES.map((o) => <option key={o.label} value={o.value}>{o.label}</option>)}
+            </select>
+          </Row>
+          <Row label={tr({ zh: '训练预打乱朝向', en: 'Training pre-scramble'
+        })}>
+            <select
+              className="settings-row-control-select"
+              value={s.preScrT}
+              onChange={(e) => updateSettings({ preScrT: e.target.value })}
+            >
+              {PRE_SCRAMBLES.map((o) => <option key={o.label} value={o.value}>{o.label}</option>)}
             </select>
           </Row>
           <Row label={tr({ zh: '颜色中立', en: 'Color neutral'
