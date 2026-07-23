@@ -97,8 +97,8 @@ export default function ForumReviewPage() {
           <h1><T zh="论坛审核" en="Forum moderation" /></h1>
           <p className="forum-subtitle">
             <T
-              zh="新用户的帖子先审后发;举报由这里处理。"
-              en="New users' posts are held for review; reports are handled here too."
+              zh="命中敏感词的帖子会先审后发;举报也在这里处理。"
+              en="Posts hitting watched words are held for review; reports are handled here too."
             />
           </p>
         </div>
