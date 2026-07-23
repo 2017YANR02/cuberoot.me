@@ -10,7 +10,7 @@ import {
 import { renderPyraScrambleSvg, PYRA_DEFAULT_COLORS } from '@/app/[lang]/scramble/gen/_svg/pyraminx_svg';
 import { renderSkewbScrambleSvg, SKEWB_DEFAULT_COLORS } from '@/app/[lang]/scramble/gen/_svg/skewb_svg';
 import { renderMegaScrambleSvg, DEFAULT_MEGA_COLORS } from '@/app/[lang]/scramble/gen/_svg/mega_svg';
-import { renderUnfoldedSvg } from '@/app/[lang]/scramble/gen/_svg/cube_unfolded_svg';
+import { renderUnfoldedSvg } from '@cuberoot/shared/cube-unfolded-svg';
 import { invertAlg } from '@/lib/cube3';
 import { PyraminxSimulator } from '@cuberoot/vendor-sr-puzzlegen/simulator/pyraminx/pyraminxSimulator';
 import * as D from './_puzzle_mask_derive';
