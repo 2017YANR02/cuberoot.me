@@ -6,7 +6,9 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { validateRow } from '../../server/src/utils/recon_helpers';
+import {
+  validateRow, visibilityDiscoverFilter, visibilityOwnerFilter, ADMIN_WCA_IDS,
+} from '../../server/src/utils/recon_helpers';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const CLIENT = join(here, '..', 'lib', 'recon-alg-utils.ts');
@@ -80,5 +82,44 @@ describe('server validateRow enforces visibility enum', () => {
 
   it('rejects an unknown visibility value', () => {
     expect(validateRow({ visibility: 'secret' }).some(e => e.includes('visibility'))).toBe(true);
+  });
+});
+
+// 可见性读过滤(server routes/recon.ts 各读端点的鉴权核心):
+//   · 发现面(社区总表 / 比赛页):管理员看全部,其余人(含内容所有者)只看 public;
+//   · 定向面(个人页 / 按选手查):管理员看全部,所有者额外看自己添加的非公开,匿名只 public。
+// 锁住 SQL 子句 + 参数,防回归把非公开泄露进公共发现流。
+describe('visibility read filters (admin bypass / owner / anon)', () => {
+  const adminId = ADMIN_WCA_IDS[0];
+  const admin = adminId ? { wcaId: adminId, name: 'Admin' } : null;
+  const user = { wcaId: '2015ZZZZ01', name: 'User' };
+
+  it('discover: anon → public only', () => {
+    expect(visibilityDiscoverFilter(null)).toEqual({ clause: "visibility = 'public'", params: [] });
+  });
+  it('discover: normal user → public only (own non-public never enters discovery)', () => {
+    expect(visibilityDiscoverFilter(user)).toEqual({ clause: "visibility = 'public'", params: [] });
+  });
+  it('discover: admin → all rows', () => {
+    if (!admin) return; // 无配置管理员时跳过(理论上 allowlist 至少一人)
+    expect(visibilityDiscoverFilter(admin)).toEqual({ clause: '1=1', params: [] });
+  });
+
+  it('owner: anon → public only', () => {
+    expect(visibilityOwnerFilter(null)).toEqual({ clause: "visibility = 'public'", params: [] });
+  });
+  it('owner: user → public OR own', () => {
+    expect(visibilityOwnerFilter(user)).toEqual({
+      clause: "(visibility = 'public' OR added_by_id = ?)", params: [user.wcaId],
+    });
+  });
+  it('owner: admin → all rows', () => {
+    if (!admin) return;
+    expect(visibilityOwnerFilter(admin)).toEqual({ clause: '1=1', params: [] });
+  });
+  it('owner: honors table-prefixed columns for JOIN queries', () => {
+    expect(visibilityOwnerFilter(user, 'recons.visibility', 'recons.added_by_id')).toEqual({
+      clause: "(recons.visibility = 'public' OR recons.added_by_id = ?)", params: [user.wcaId],
+    });
   });
 });

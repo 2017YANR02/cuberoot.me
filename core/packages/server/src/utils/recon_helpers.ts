@@ -406,6 +406,39 @@ export async function optionalAuth(c: Context): Promise<WcaUser | null> {
 }
 
 /**
+ * 可见性读过滤——纯发现面(社区总表 / 比赛页):
+ *   管理员看全部;其余人(含内容所有者本人)只看 public。
+ * 与 YouTube 一致:你的非公开(unlisted / private)不进公共发现流,即便你自己浏览也不混入。
+ * ⚠️ 仅可用于 no-store 端点——响应随「是否管理员」变化,若被共享缓存(nginx/CDN)缓存会把
+ *    非公开泄露给匿名者。带 public/max-age 的端点(/today /latest /same-scramble)禁用本过滤,
+ *    一律硬编码 visibility='public'。
+ * 返回 { clause, params }:clause 直接拼进 WHERE,params 依序追加到查询参数。
+ */
+export function visibilityDiscoverFilter(
+  me: WcaUser | null,
+  visCol = 'visibility',
+): { clause: string; params: string[] } {
+  if (me && ADMIN_WCA_IDS.includes(me.wcaId)) return { clause: '1=1', params: [] };
+  return { clause: `${visCol} = 'public'`, params: [] };
+}
+
+/**
+ * 可见性读过滤——定向面(个人主页 / 按选手查):
+ *   管理员看全部;内容所有者(added_by_id 命中)额外看到自己添加的非公开;匿名只看 public。
+ * ⚠️ 同上,仅可用于 no-store 端点。
+ * visCol / ownerCol 支持带表前缀(如 'recons.visibility'),用于 JOIN 查询。
+ */
+export function visibilityOwnerFilter(
+  me: WcaUser | null,
+  visCol = 'visibility',
+  ownerCol = 'added_by_id',
+): { clause: string; params: string[] } {
+  if (me && ADMIN_WCA_IDS.includes(me.wcaId)) return { clause: '1=1', params: [] };
+  if (me) return { clause: `(${visCol} = 'public' OR ${ownerCol} = ?)`, params: [me.wcaId] };
+  return { clause: `${visCol} = 'public'`, params: [] };
+}
+
+/**
  * 要求管理员权限
  */
 export async function requireAdmin(c: Context): Promise<WcaUser> {

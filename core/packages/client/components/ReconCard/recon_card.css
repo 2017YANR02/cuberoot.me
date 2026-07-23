@@ -81,6 +81,25 @@
   color: var(--foreground);
   border: 1px solid var(--border-default);
 }
+/* media 角标：可见性(仅非公开可见,与视频标错开放左上角) */
+.recon-card-vis {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--background) 82%, transparent);
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border-default));
+}
+.recon-card-vis--private {
+  color: var(--muted-foreground);
+  border-color: var(--border-default);
+}
 
 .recon-card-body {
   display: flex;
