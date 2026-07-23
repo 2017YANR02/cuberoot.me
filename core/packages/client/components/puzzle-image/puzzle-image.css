@@ -89,6 +89,7 @@
 .vc-mask-editor { align-self: flex-start; max-width: 420px; }
 .vc-mask-editor svg { max-height: none; }
 .vc-mask-hint { font-size: 12px; color: var(--vc-text-dim); }
+.vc-arrow-pick-color { display: inline-flex; align-items: center; flex: 0 0 auto; }
 
 .vc-exports { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 18px; }
 

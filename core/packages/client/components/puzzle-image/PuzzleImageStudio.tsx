@@ -21,7 +21,7 @@ import PillToggle from '@/components/PillToggle/PillToggle';
 import CubeVirtualKeyboard from '@/components/CubeVirtualKeyboard';
 import PuzzleImage from '@/components/puzzle-image/PuzzleImage';
 import { publicApiUrl } from '@/lib/api-base';
-import { appendArrow, buildArrowEntry } from '@/lib/puzzle-image/arrows';
+import { appendArrow, buildArrowEntry, removeArrowByPoints } from '@/lib/puzzle-image/arrows';
 import { sizeEngineSvg } from '@/lib/puzzle-image/engine-svg';
 import { pzlShort, specToParams } from '@/lib/puzzle-image/codec';
 import { formatMask, parseMask, type StickerId } from '@/lib/puzzle-image/mask-core';
@@ -364,6 +364,58 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
     set('arrows', appendArrow(s.arrows, entry));
   };
 
+  // ── arrow click-to-draw (点选编辑) ─────────────────────────────────────────
+  // Authors on the SAME solved wca net the mask editor uses: a net click yields a
+  // StickerId (`U0`), which IS an arrow DSL point verbatim (mask-core header).
+  // Straight = 2 clicks (起点→终点); curved = 3 clicks (起点→终点→过点) → DSL
+  // `U0U8U4`, matching the numeric builder's from/to/pass field order. Cross-face
+  // allowed (`U0R2`) — strictly more than the builder, which forces one face.
+  // Arrows don't render on the net (only the plan/3D preview above), so the net
+  // stays a clean reference; the drawn arrow appears live in the main preview.
+  const [arrowEditing, setArrowEditing] = useState(false);
+  const [arrowCurved, setArrowCurved] = useState(false);
+  const [arrowPending, setArrowPending] = useState<StickerId[]>([]);
+  const arrowNeed = arrowCurved ? 3 : 2;
+  const handleArrowClick = useCallback((sid: StickerId) => {
+    // Re-click the most-recent pending point → step back (undo / cancel).
+    if (arrowPending.length && arrowPending[arrowPending.length - 1] === sid) {
+      setArrowPending(arrowPending.slice(0, -1));
+      return;
+    }
+    if (arrowPending.includes(sid)) return; // a point can't repeat within one arrow
+    const next = [...arrowPending, sid];
+    if (next.length < arrowNeed) { setArrowPending(next); return; }
+    // Commit: re-drawing the identical arrow erases it (toggle), else append.
+    const removed = removeArrowByPoints(s.arrows, next);
+    if (removed !== null) {
+      set('arrows', removed);
+    } else {
+      const c = s.arrowColor.startsWith('#') ? s.arrowColor.slice(1) : s.arrowColor;
+      set('arrows', appendArrow(s.arrows, `${next.join('')}-${c}`));
+    }
+    setArrowPending([]);
+  }, [arrowPending, arrowNeed, s.arrows, s.arrowColor, set]);
+  const resetArrowPick = useCallback(() => setArrowPending([]), []);
+  // Clean solved net for arrow authoring; every pending point is highlighted by
+  // borrowing the mask channel (colored with the current arrow color).
+  const arrowAuthoringSpec = useMemo<ImageSpec>(() => ({
+    ...s, algorithm: '', arrows: '', stageMask: '', maskAlg: '',
+    cubeView: 'wca', puzzleVariant: 'wca',
+    stickerMask: formatMask(arrowPending),
+    maskColor: s.arrowColor,
+  }), [s, arrowPending]);
+  const arrowPickHint = arrowPending.length === 0
+    ? (arrowCurved
+        ? t('曲线:依次点 起点 → 终点 → 过点(3 点);重复同一条可删除',
+            'Curved: click source → target → waypoint (3 points); re-draw to remove')
+        : t('点还原展开图:先点起点,再点终点(同/跨面);重复同一条可删除',
+            'Click the solved net: source then target (any face); re-draw to remove'))
+    : arrowPending.length === 1
+    ? t(`起点 ${arrowPending[0]} — 再点终点${arrowCurved ? '(共 3 点)' : ''};点回它取消`,
+        `Source ${arrowPending[0]} — click target${arrowCurved ? ' (3 total)' : ''}; click it again to cancel`)
+    : t(`起 ${arrowPending[0]} 止 ${arrowPending[1]} — 再点「过」点定曲线;点回上点撤销`,
+        `From ${arrowPending[0]} to ${arrowPending[1]} — click the waypoint; click last to undo`);
+
   // ── algorithm textarea (uncontrolled, keyboard writes straight to the DOM) ──
   const algRef = useRef<HTMLTextAreaElement | null>(null);
   const syncAlgFromDom = useCallback(() => {
@@ -661,7 +713,40 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
                 <button type="button" className="vc-btn-icon" onClick={() => set('arrows', '')} title="Clear">
                   <Trash2 size={14} />
                 </button>
+                <button
+                  type="button"
+                  className={`vc-btn vc-btn-sm${arrowEditing ? ' vc-btn-active' : ''}`}
+                  onClick={() => { setArrowEditing((v) => !v); resetArrowPick(); }}
+                >
+                  <MousePointerClick size={14} /> {t('点选编辑', 'Pick')}
+                </button>
               </div>
+              {arrowEditing && (
+                <>
+                  <div className="vc-row-controls">
+                    <PillToggle
+                      value={arrowCurved}
+                      onChange={(v) => { setArrowCurved(v); resetArrowPick(); }}
+                      onLabel={t('曲线', 'Curved')}
+                      offLabel={t('直线', 'Straight')}
+                      ariaLabel={t('箭头形状', 'Arrow shape')}
+                    />
+                    <label className="vc-arrow-pick-color" title={t('箭头色', 'Arrow color')}>
+                      <input
+                        type="color" className="vc-color-sm" value={s.arrowColor}
+                        onChange={(e) => set('arrowColor', e.target.value)}
+                      />
+                    </label>
+                    <span className="vc-mask-hint">{arrowPickHint}</span>
+                  </div>
+                  <PuzzleImage
+                    spec={arrowAuthoringSpec}
+                    interactive={false}
+                    onStickerClick={handleArrowClick}
+                    className="vc-mask-editor"
+                  />
+                </>
+              )}
               <ColorRow
                 label={t('默认箭头色', 'Default Arrow Color')}
                 value={s.defaultArrowColor}

@@ -39,3 +39,34 @@ export function appendArrow(existing: string, entry: string): string {
   if (!entry) return existing;
   return existing ? existing + ',' + entry : entry;
 }
+
+/**
+ * Leading point sequence of one entry, e.g. `U0R2U4-s10-ff0000` → `['U0','R2','U4']`.
+ * A cube arrow point is `<face><index>` (face ∈ U R F D L B) — the SAME id space as
+ * the mask-core StickerId (see mask-core.ts header), so a net click yields a point
+ * verbatim. Suffixes (`-s` scale / `-i` influence / `-color`) live after the first
+ * `-` and carry no face+digit run, so cutting there isolates the points.
+ */
+export function arrowPoints(entry: string): string[] {
+  return entry.split('-')[0].match(/[URFDLB]\d+/g) ?? [];
+}
+
+/**
+ * Toggle-remove any arrow whose leading point sequence is EXACTLY `points`
+ * (order-sensitive; suffixes ignored). `['U0','U8']` erases a straight `U0U8` but
+ * leaves a curved `U0U8U4` alone — re-drawing the identical arrow erases it, a
+ * different shape (even same endpoints) adds a new one. Returns the rewritten
+ * string when ≥1 matched (dropped), or null when none matched — the click-to-draw
+ * editor then ADDs the arrow instead.
+ */
+export function removeArrowByPoints(existing: string, points: string[]): string | null {
+  if (!existing || points.length < 2) return null;
+  let matched = false;
+  const kept = existing.split(',').filter((e) => {
+    const pts = arrowPoints(e);
+    const hit = pts.length === points.length && pts.every((p, i) => p === points[i]);
+    if (hit) matched = true;
+    return !hit;
+  });
+  return matched ? kept.join(',') : null;
+}
