@@ -1200,16 +1200,6 @@ a.alg-community-author:hover {
   font-size: 13px;
   width: fit-content;
 }
-.alg-case-meta-btn {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px;
-  border: none;
-  background: none;
-  color: var(--muted-foreground);
-  cursor: pointer;
-}
-.alg-case-meta-btn:hover { color: var(--accent); }
 
 /* 宽度**由内容定**:`max-content` = 最长那条公式一行放下所需的宽,短公式的 case(PLL)就窄。
    钉死 800px 的话,PLL 那种四五十字符的 case 会拖着半屏空白。上限管住全库最长的一条
@@ -1365,6 +1355,31 @@ a.alg-community-author:hover {
   overflow: visible;
 }
 
+/* 非 meta case(f2l / oll / coll / cmll / zbls …)的精简正文:大魔方图 + 可播放公式行。 */
+.alg-case-detail-lean {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.alg-case-detail-lean-thumb {
+  align-self: flex-start;
+}
+.alg-case-detail-lean-algs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.alg-case-detail-ori {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.alg-case-detail-ori-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+
 .alg-meta-section {
   margin-top: 8px;
   display: flex;
@@ -1491,6 +1506,24 @@ a.alg-community-author:hover {
 .alg-alg-invalid-icon {
   flex: none;
   color: var(--destructive);
+}
+
+/* 整卡跳转:一张覆盖满卡片的透明 <a>(stretched-link)。缩略图 + 名字这类「非交互」内容留在
+   覆盖层之下 ⟹ 点它们落到 <a> 上跳转;公式行 / 复制 / 播放 / 社区 / y 切换 / admin 这些「要交互
+   或要选中」的抬到覆盖层之上(position:relative + z-index)⟹ 照常点。真 <a>,中键可新开。 */
+.alg-case-cardlink {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+}
+/* 抬到覆盖层(z:1)之上的静态内容。admin 编辑按钮 / 拖把本就是 absolute + z≥2,不用动。 */
+.alg-case-algs,
+.alg-case-standard,
+.alg-community,
+.alg-case-y-btn {
+  position: relative;
+  z-index: 2;
 }
 
 /* 点中的那张(URL 片段指着它)—— 黄框。

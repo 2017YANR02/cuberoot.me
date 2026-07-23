@@ -21,6 +21,8 @@ import PillToggle from '@/components/PillToggle/PillToggle';
 import AlgCaseMetaModal from '@/components/AlgCaseMetaModal';
 import { CaseThumb } from '@/components/CaseThumb';
 import { caseKey, findCaseByKey } from '@/lib/trainer-case-key';
+import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
+import { displayZbllToken } from '@/lib/alg_case_display';
 import { availableKinds, purifyScramble, SCRAMBLE_KINDS, type ScrambleKind } from '@/lib/trainer-scramble';
 import { useTrainerMarks, markStatus, markStarred, type CaseMarkStatus } from '@/lib/trainer-marks';
 import { ALG_SET_UNIVERSE } from '@/lib/alg_probability';
@@ -45,7 +47,16 @@ export default function TrainerRunClient() {
 
   // 训练范围:subgroup 页的训练按钮带 ?scope=<组slug> 进来,只练该组(筛选/默认 replace)
   const [scopeParam] = useQueryState('scope');
-  const scopeSlug = scopeParam?.trim().toLowerCase() || null;
+  // 旧数字制子组 slug(u1 / pi 1 / as1 …)→ 新方向制(ur / pif / asf …),老 ?scope= 链接 / 书签不失效(migration 0081)
+  const scopeSlug = canonicalZbllSubgroupSlug(setSlug, scopeParam?.trim().toLowerCase() || null);
+
+  // 房间邀请码:创建/加入房间后写进 ?room=CODE,地址栏本身即分享链接;别人打开该链接
+  // → session 载好后自动加入(见下方 effect)。离开房间清空。
+  const [roomParam, setRoomParam] = useQueryState('room');
+  const autoJoinRef = useRef(false);
+  // 邀请链接携带创建者的视图偏好:?multi=1 = 三条一屏(依赖不计时)。进房间后应用一次。
+  const [multiParam] = useQueryState('multi');
+  const viewApplied = useRef(false);
 
   const puzzle = resolveAlgPuzzle(puzzleParam);   // 接受 event code(333)或 legacy puzzle 名(3x3)
   const meta = puzzle ? getAlgSetMeta(puzzle, setSlug) : undefined;
@@ -84,8 +95,6 @@ export default function TrainerRunClient() {
   const setProbMode = useTrainerStore(s => s.setProbMode);
   const recapOrder = useTrainerStore(s => s.recapOrder);
   const setRecapOrder = useTrainerStore(s => s.setRecapOrder);
-  const coop = useTrainerStore(s => s.coop);
-  const setCoop = useTrainerStore(s => s.setCoop);
   const room = useTrainerStore(s => s.room);
   const roomBusy = useTrainerStore(s => s.roomBusy);
   const roomClaimed = useTrainerStore(s => s.roomClaimed);
@@ -153,6 +162,27 @@ export default function TrainerRunClient() {
       .then(d => loadSession(puzzle, setSlug, d.cases))
       .catch(e => console.error('[trainer] loadAlg failed', e));
   }, [puzzle, setSlug, meta, storePuzzle, storeSet, cases.length, loadSession]);
+
+  // 分享链接 ?room=CODE:本集 session 载好后自动加入该房间(仅一次;已在房间/正忙/无码则跳过)。
+  // joinRoom 要求 store 已 loadSession 到对应 puzzle/set,故等 cases 到位再试;失败(房间不存在/
+  // 过期/集不匹配)则清掉 URL 里的码并由 roomError 提示。
+  useEffect(() => {
+    if (!roomParam || room || roomBusy || autoJoinRef.current) return;
+    if (storePuzzle !== puzzle || storeSet !== setSlug || cases.length === 0) return;
+    autoJoinRef.current = true;
+    // 失败(房间不存在/过期/集不匹配)不清 ?room —— 保留链接,由下方 landing 显示 roomError 并给出「去选择」出口。
+    void joinRoom(roomParam);
+  }, [roomParam, room, roomBusy, storePuzzle, storeSet, puzzle, setSlug, cases.length, joinRoom]);
+
+  // 邀请链接的 ?multi=1:套用创建者的「三条一屏」视图(依赖不计时,一并关计时)。gate 在 roomParam
+  // 而非已建立的 room —— 必须在自动 join 的 roomAdvance 领题之前就把视图就绪,否则会先按单条领题、
+  // 切成三条一屏后 peek/peek2 为空只剩一条。只应用一次(viewApplied),之后用户自己改不再被覆盖。
+  useEffect(() => {
+    if (viewApplied.current || multiParam !== '1' || !roomParam) return;
+    viewApplied.current = true;
+    setTiming(false);
+    setMultiScramble(true);
+  }, [multiParam, roomParam, setTiming, setMultiScramble]);
 
   // scope slug → 该组全部 case key(与 AlgCategoryView 的 top/sub 两级匹配同一套约定)
   const scopedKeys = useMemo(() => {
@@ -276,6 +306,24 @@ export default function TrainerRunClient() {
   const [metaCase, setMetaCase] = useState<AlgCase | null>(null);
   const [joinCode, setJoinCode] = useState('');
 
+  // 复制邀请链接(当前页 URL + ?room=CODE):队友粘到浏览器打开即自动加入本房间。
+  // 当前在用三条一屏(不计时)时带上 ?multi=1,让队友打开也套用同一视图。
+  const copyRoomLink = useCallback(() => {
+    if (typeof window === 'undefined' || !room) return;
+    const u = new URL(window.location.href);
+    u.searchParams.set('room', room.code);
+    if (multiScramble && !timing) u.searchParams.set('multi', '1');
+    else u.searchParams.delete('multi');
+    copyCode(u.toString());
+  }, [room, multiScramble, timing, copyCode]);
+
+  // 手动输码加入:成功后清输入框并把码写进 ?room=,使地址栏成为可分享链接。
+  const doJoin = useCallback(() => {
+    const code = joinCode.trim();
+    if (!code) return;
+    void joinRoom(code).then(r => { if (r.ok) { setJoinCode(''); void setRoomParam(code.toUpperCase()); } });
+  }, [joinCode, joinRoom, setRoomParam]);
+
   // 齿轮设置弹出面板(训练选项全收在里面),点外部关闭。
   // 监听 pointerdown 而非 mousedown:stage 手势层在 pointerdown 里 preventDefault,
   // 会抑制后续的兼容性 mousedown —— 挂 mousedown 的话点 stage 空白永远关不上。
@@ -294,7 +342,8 @@ export default function TrainerRunClient() {
     document.addEventListener('pointerdown', handler);
     return () => document.removeEventListener('pointerdown', handler);
   }, [optsOpen]);
-  const stageMounted = !!(puzzle && meta) && !(pool.length === 0 && cases.length > 0);
+  // 房间模式题面由服务端队列领取,本机 selected 可空(经邀请链接进来的新设备)—— 不算「未选」。
+  const stageMounted = !!(puzzle && meta) && !(pool.length === 0 && cases.length > 0 && !room);
 
   /** meta.no → case:元数据弹窗里的镜像 / 逆链接用(同 AlgCategoryView) */
   const byNo = useMemo(() => {
@@ -477,18 +526,27 @@ export default function TrainerRunClient() {
 
   const selectHref = `/alg/${puzzleParam}/${setSlug}/select${scopeSlug ? `?scope=${encodeURIComponent(scopeSlug)}` : ''}`;
 
-  if (pool.length === 0 && cases.length > 0) {
+  // 本机没选 case:房间模式(题面来自服务端队列)不算「未选」,不拦。经邀请链接进来时
+  // 显示「正在加入房间…」而非「去选择」,避免加入完成前闪一下空态;链接失效则给原因 + 出口。
+  if (pool.length === 0 && cases.length > 0 && !room) {
+    const joiningViaLink = !!roomParam;
     return (
       <div className="trainer-root">
         <div className="trainer-landing-empty">
-          {tr({ zh: '尚未选 case', en: 'No cases selected'
-        })}
-          <div style={{ marginTop: 16 }}>
-            <Link href={selectHref} className="trainer-start-btn">
-              {tr({ zh: '去选择', en: 'Pick cases'
-            })}
-            </Link>
-          </div>
+          {joiningViaLink && !roomError ? (
+            tr({ zh: '正在加入房间…', en: 'Joining room…' })
+          ) : (
+            <>
+              {joiningViaLink
+                ? tr({ zh: `无法加入房间(${roomError})`, en: `Couldn't join room (${roomError})` })
+                : tr({ zh: '尚未选 case', en: 'No cases selected' })}
+              <div style={{ marginTop: 16 }}>
+                <Link href={selectHref} className="trainer-start-btn">
+                  {tr({ zh: '去选择', en: 'Pick cases' })}
+                </Link>
+              </div>
+            </>
+          )}
         </div>
       </div>
     );
@@ -572,7 +630,7 @@ export default function TrainerRunClient() {
         })}
         </Link>
         <span style={{ fontSize: '1rem', color: 'var(--muted-foreground)' }}>
-          {puzzle} · {tr(meta)}{scopeSlug ? ` · ${scopeSlug.toUpperCase()}` : ''}
+          {puzzle} · {tr(meta)}{scopeSlug ? ` · ${setSlug === 'zbll' ? displayZbllToken(scopeSlug) : scopeSlug.toUpperCase()}` : ''}
         </span>
         {/* 训练选项全收进齿轮弹出面板,齿轮居中吸在页面正上方
             (data-no-timer:面板空白不触发按压计时) */}
@@ -590,15 +648,11 @@ export default function TrainerRunClient() {
           {recapShown && recapCur && (
             <span className="trainer-recap-progress">
               {recapCur.pos}/{recapCur.total}
-              {room ? (
+              {room && (
                 <span className="trainer-recap-coop">
                   {tr({ zh: `房间 ${room.code} 全队`, en: `room ${room.code} team` })}
                 </span>
-              ) : coop.on && coop.n >= 2 ? (
-                <span className="trainer-recap-coop">
-                  {tr({ zh: `协同 ${coop.k + 1}/${coop.n} 台`, en: `team ${coop.k + 1}/${coop.n}` })}
-                </span>
-              ) : null}
+              )}
             </span>
           )}
           {optsOpen && (
@@ -659,8 +713,8 @@ export default function TrainerRunClient() {
                         <button
                           type="button"
                           className="trainer-room-badge"
-                          onClick={() => copyCode(room.code)}
-                          title={tr({ zh: '复制房间码', en: 'Copy room code' })}
+                          onClick={copyRoomLink}
+                          title={tr({ zh: '复制邀请链接(队友打开即加入)', en: 'Copy invite link (teammates join on open)' })}
                         >
                           <span className="trainer-room-badge-label">{tr({ zh: '房间', en: 'Room' })}</span>
                           <span className="trainer-room-badge-code">{room.code}</span>
@@ -669,7 +723,11 @@ export default function TrainerRunClient() {
                         <span className="trainer-opts-label">
                           {tr({ zh: '全队', en: 'Team' })} {roomClaimed}/{room.total}
                         </span>
-                        <button type="button" className="trainer-room-btn is-ghost" onClick={leaveRoom}>
+                        <button
+                          type="button"
+                          className="trainer-room-btn is-ghost"
+                          onClick={() => { leaveRoom(); void setRoomParam(null); autoJoinRef.current = false; }}
+                        >
                           {tr({ zh: '离开', en: 'Leave' })}
                         </button>
                       </>
@@ -678,7 +736,7 @@ export default function TrainerRunClient() {
                         <button
                           type="button"
                           className="trainer-room-btn"
-                          onClick={() => void createRoom()}
+                          onClick={() => void createRoom().then(r => { if (r.ok && r.code) void setRoomParam(r.code); })}
                           disabled={roomBusy}
                         >
                           {tr({ zh: '创建房间', en: 'Create room' })}
@@ -689,7 +747,7 @@ export default function TrainerRunClient() {
                           type="text"
                           value={joinCode}
                           onChange={e => setJoinCode(e.target.value)}
-                          onKeyDown={e => { if (e.key === 'Enter' && joinCode.trim()) void joinRoom(joinCode).then(r => { if (r.ok) setJoinCode(''); }); }}
+                          onKeyDown={e => { if (e.key === 'Enter') doJoin(); }}
                           placeholder={tr({ zh: '房间码', en: 'Code' })}
                           autoComplete="off"
                           spellCheck={false}
@@ -698,7 +756,7 @@ export default function TrainerRunClient() {
                         <button
                           type="button"
                           className="trainer-room-btn"
-                          onClick={() => void joinRoom(joinCode).then(r => { if (r.ok) setJoinCode(''); })}
+                          onClick={doJoin}
                           disabled={roomBusy || !joinCode.trim()}
                         >
                           {tr({ zh: '加入', en: 'Join' })}
@@ -710,81 +768,14 @@ export default function TrainerRunClient() {
                   <div className="trainer-opts-hint">
                     {room
                       ? tr({
-                          zh: '在线协同:全队共享一条队列,各设备领到的 case 互不重复,合起来正好覆盖全部一次;全队领完自动一起进下一轮',
-                          en: 'Online coop: the team shares one queue, each device gets distinct cases that together cover the set exactly once; the round ends for everyone at once',
+                          zh: '在线协同:全队共享一条队列,各设备领到的 case 互不重复,合起来正好覆盖全部一次;全队领完自动一起进下一轮。点上方「房间」徽章复制邀请链接,队友打开即加入',
+                          en: 'Online coop: the team shares one queue, each device gets distinct cases that together cover the set exactly once; the round ends for everyone at once. Tap the “Room” badge above to copy an invite link — teammates join on open',
                         })
                       : tr({
-                          zh: '创建房间把当前选中的 case 作为全队题库(按上方顺序/乱序),其他设备输房间码加入,自动分工不重不漏',
-                          en: 'Create a room to share the selected cases as the team pool (using the order above); others join by code for automatic, no-overlap division',
+                          zh: '创建房间把全部选中的 case 作为全队题库,进度接着你当前的往下走(你已刷的算你的份,不再派给别人;队友接着分工),其他设备输房间码或打开邀请链接加入,自动分工不重不漏',
+                          en: 'Create a room with all selected cases as the team pool; progress continues from where you are (the ones you’ve done count as yours and aren’t re-served — teammates pick up the rest). Others join by code or invite link for automatic, no-overlap division',
                         })}
                   </div>
-                </>
-              )}
-              {/* 本地分片:多台设备帮同一选手打乱时,把复习队列切成 n 份各做一份(离线可用,进房间则隐藏) */}
-              {mode === 'recap' && !room && (
-                <>
-                  <div className="trainer-opts-row">
-                    <BoolToggle
-                      value={coop.on}
-                      onChange={v => setCoop({ ...coop, on: v })}
-                      label={tr({ zh: '本地分片', en: 'Local split' })}
-                    />
-                  </div>
-                  {coop.on && (
-                    <>
-                      <div className="trainer-opts-row trainer-coop-row">
-                        {recapOrder === 'shuffle' && (
-                          <span className="trainer-coop-field">
-                            <span className="trainer-opts-label">{tr({ zh: '协同码', en: 'Code' })}</span>
-                            <input
-                              className="trainer-coop-code"
-                              type="text"
-                              value={coop.code}
-                              onChange={e => setCoop({ ...coop, code: e.target.value })}
-                              placeholder="TEAM"
-                              autoComplete="off"
-                              spellCheck={false}
-                              aria-label={tr({ zh: '协同码', en: 'Team code' })}
-                            />
-                          </span>
-                        )}
-                        <span className="trainer-coop-field">
-                          <span className="trainer-opts-label">{tr({ zh: '共', en: 'Of' })}</span>
-                          <select
-                            className="trainer-coop-sel"
-                            value={coop.n}
-                            onChange={e => setCoop({ ...coop, n: Number(e.target.value) })}
-                            aria-label={tr({ zh: '协同设备总数', en: 'Total devices' })}
-                          >
-                            {[2, 3, 4, 5, 6].map(n => <option key={n} value={n}>{n}</option>)}
-                          </select>
-                          <span className="trainer-opts-label">{tr({ zh: '台', en: 'devices' })}</span>
-                        </span>
-                        <span className="trainer-coop-field">
-                          <span className="trainer-opts-label">{tr({ zh: '本机第', en: 'This is #' })}</span>
-                          <select
-                            className="trainer-coop-sel"
-                            value={coop.k}
-                            onChange={e => setCoop({ ...coop, k: Number(e.target.value) })}
-                            aria-label={tr({ zh: '本机分片序号', en: 'This device index' })}
-                          >
-                            {Array.from({ length: coop.n }, (_, i) => <option key={i} value={i}>{i + 1}</option>)}
-                          </select>
-                        </span>
-                      </div>
-                      <div className="trainer-opts-hint">
-                        {recapOrder === 'shuffle'
-                          ? tr({
-                              zh: '各设备输入相同协同码 + 相同「共几台」,各选不同「本机第几台」;乱序两台同码才对齐,合起来覆盖全部各一次',
-                              en: 'Every device: same code + same total, each picks a distinct index. Shuffled order aligns only when codes match; together they cover every case once',
-                            })
-                          : tr({
-                              zh: '各设备选相同「共几台」+ 不同「本机第几台」,按 set 顺序切分,合起来覆盖全部各一次(顺序模式无需协同码)',
-                              en: 'Every device: same total, distinct index. Split by set order covers every case once; no code needed in order mode',
-                            })}
-                      </div>
-                    </>
-                  )}
                 </>
               )}
               {probSupported && mode === 'train' && (
@@ -983,8 +974,8 @@ export default function TrainerRunClient() {
           {/* 离屏预取即将要显示的图(全部 size=140,与左栏/卡片同一 URL → 共用浏览器缓存):
               ① next(换题后 = 左栏当前图 / 也是「上一个」卡片的图);② next2(换题后 =「下一个」
               卡片的图,靠二级预抽 peek2 提前一格备好)。换题时三处都命中缓存秒出,不等网络往返
-              (打乱公式是本地状态所以本就瞬间出)。任一缩略图开着就预取。 */}
-          {(showStageThumb || showNextCard || showPrevCard) && (
+              (打乱公式是本地状态所以本就瞬间出)。「打乱图」关时三处卡片都不出图,无需预取。 */}
+          {showStageThumb && (
             <div className="trainer-thumb-prefetch" aria-hidden>
               {nextCase && nextScrambleStr && (
                 <CaseThumb
@@ -1047,6 +1038,7 @@ export default function TrainerRunClient() {
                   scramble={shownScramble(e.scramble)}
                   c={c}
                   isZh={isZh}
+                  showThumb={showStageThumb}
                   onShowCase={c.meta ? (cc) => setMetaCase(cc) : undefined}
                   header={i === 0 ? tr({ zh: '上三个', en: 'Previous 3' }) : undefined}
                   markSlot={<CaseMarkBar k={caseKey(c)} />}
@@ -1060,6 +1052,7 @@ export default function TrainerRunClient() {
                 scramble={shownScramble(prevSolveScramble)}
                 c={prevCase}
                 isZh={isZh}
+                showThumb={showStageThumb}
                 onShowCase={prevCase.meta ? (c) => setMetaCase(c) : undefined}
                 header={prevHeader}
                 markSlot={<CaseMarkBar k={caseKey(prevCase)} />}
@@ -1074,6 +1067,7 @@ export default function TrainerRunClient() {
                 scramble={shownScramble(nextScrambleStr)}
                 c={nextCase}
                 isZh={isZh}
+                showThumb={showStageThumb}
                 onShowCase={nextCase?.meta ? (c) => setMetaCase(c) : undefined}
                 header={tr({ zh: '下一个', en: 'Next up' })}
               />
@@ -1108,9 +1102,8 @@ export default function TrainerRunClient() {
         />
       )}
 
-      {/* 协同复习:本机这一份出完 → 弹「本轮复习结束」,「继续下一轮」进下一轮。
-          零后端:各设备各自在自己那份出完时弹,不跨设备等齐(份额相近,大致同时)。 */}
-      {recapRoundDone && (
+      {/* 在线房间复习:全队刷完本轮共享队列 → 弹「本轮复习结束」,「继续下一轮」全员一起开新一轮。 */}
+      {recapRoundDone && room && (
         <div
           className="trainer-round-modal-backdrop"
           role="dialog"
@@ -1120,15 +1113,10 @@ export default function TrainerRunClient() {
           <div className="trainer-round-modal" onClick={e => e.stopPropagation()}>
             <h2>{tr({ zh: '本轮复习结束', en: 'Round complete' })}</h2>
             <p>
-              {room
-                ? tr({
-                    zh: `全队已刷完本轮全部 ${room.total} 个 case!点「继续下一轮」大家一起开新一轮${room.order === 'shuffle' ? '(重新洗牌)' : ''}。`,
-                    en: `The team finished all ${room.total} cases this round! Hit “Next round” to start a fresh round together${room.order === 'shuffle' ? ' (reshuffled)' : ''}.`,
-                  })
-                : tr({
-                    zh: `本机第 ${coop.k + 1}/${coop.n} 份已全部过完${recapCur ? `(${recapCur.total} 把)` : ''}。各设备刷完自己那份即完成本轮 —— 大家一起进下一轮。`,
-                    en: `This device finished its share (#${coop.k + 1} of ${coop.n}${recapCur ? `, ${recapCur.total} cases` : ''}). Every device completes its own share — start the next round together.`,
-                  })}
+              {tr({
+                zh: `全队已刷完本轮全部 ${room.total} 个 case!点「继续下一轮」大家一起开新一轮${room.order === 'shuffle' ? '(重新洗牌)' : ''}。`,
+                en: `The team finished all ${room.total} cases this round! Hit “Next round” to start a fresh round together${room.order === 'shuffle' ? ' (reshuffled)' : ''}.`,
+              })}
             </p>
             <button
               type="button"

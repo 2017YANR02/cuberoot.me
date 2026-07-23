@@ -15,7 +15,7 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Plus, Pencil, ShieldCheck, GripVertical, Info, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Plus, Pencil, ShieldCheck, GripVertical, AlertTriangle } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, useSortable, arrayMove, rectSortingStrategy, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -36,7 +36,7 @@ import { listSubmissions } from '@/lib/alg_api';
 import { reorderCases, reorderCaseAlgs } from '@/lib/alg_sets_api';
 import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
 import { scanCases } from '@/lib/alg_validation_scan';
-import { caseAnchor, findCaseByHash, algCaseDetailHref } from '@/lib/alg_case_link';
+import { caseAnchor, findCaseByHash, algCaseDetailHref, buildCaseSlugMap, caseSlugBase } from '@/lib/alg_case_link';
 import { replaceHash } from '@/lib/url_hash';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { displayAlgCaseName, primaryCaseName, displayZbllToken } from '@/lib/alg_case_display';
@@ -262,9 +262,11 @@ export interface AlgCategoryViewProps {
   puzzleParam: string;
   set: string;
   subgroupParam?: string;
+  /** 上层(哨兵壳分流)已经加载好的整份 set,直接复用免二次拉。admin 仍会 fresh 重拉。 */
+  initialData?: AlgFile;
 }
 
-export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: AlgCategoryViewProps) {
+export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initialData }: AlgCategoryViewProps) {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const validPuzzle = isPuzzle(puzzleParam);
@@ -277,7 +279,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
     return `${puzzleParam} · ${setName}`;
   })();
   useDocumentTitle(algSetTitle, algSetTitle);
-  const [data, setData] = useState<AlgFile | null>(null);
+  const [data, setData] = useState<AlgFile | null>(initialData ?? null);
   const [error, setError] = useState<string | null>(null);
   const [activeOri, setActiveOri] = useState(0);
   const [caseOri, setCaseOri] = useState<Record<string, number>>({});
@@ -427,13 +429,8 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
   useEffect(() => {
     if (!validPuzzle || !meta) { setError('unknown set'); setData(null); return; }
     setError(null);
-    setData(null);
-    // admin 必须绕开那 1 小时的 Cache-Control。他刚删掉的那条公式,DB 里确实没了,
-    // 但浏览器缓存里那份旧响应还在 —— 而 Ctrl+Shift+R 只绕文档和子资源的缓存,
-    // **绕不过页面加载后 JS 自己发的 fetch()**,那一发照样命中旧响应。结果就是:
-    // 保存成功、页面也对,一强刷,删掉的公式原地复活。fresh 就是为这个留的口子。
-    loadAlg(puzzleParam, set, { fresh: isAdmin }).then(d => {
-      setData(d);
+    // >100 个 case 的非 umbrella set 默认全折(zbll/1lll 走子组页不折)。
+    const applyCollapse = (d: AlgFile) => {
       if (d.cases.length > 100 && !meta.umbrella) {
         const groups = new Set<string>();
         for (const c of d.cases) groups.add(c.subgroup || '');
@@ -441,8 +438,19 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
       } else {
         setCollapsedGroups(new Set());
       }
+    };
+    // 哨兵壳分流已经把整份 set 拉好传下来(initialData):非 admin 直接复用,免二次 fetch。
+    if (initialData && !isAdmin) { setData(initialData); applyCollapse(initialData); return; }
+    setData(null);
+    // admin 必须绕开那 1 小时的 Cache-Control。他刚删掉的那条公式,DB 里确实没了,
+    // 但浏览器缓存里那份旧响应还在 —— 而 Ctrl+Shift+R 只绕文档和子资源的缓存,
+    // **绕不过页面加载后 JS 自己发的 fetch()**,那一发照样命中旧响应。结果就是:
+    // 保存成功、页面也对,一强刷,删掉的公式原地复活。fresh 就是为这个留的口子。
+    loadAlg(puzzleParam, set, { fresh: isAdmin }).then(d => {
+      setData(d);
+      applyCollapse(d);
     }).catch(e => setError(String(e)));
-  }, [puzzleParam, set, validPuzzle, meta, isAdmin]);
+  }, [puzzleParam, set, validPuzzle, meta, isAdmin, initialData]);
 
   /** admin 才扫。case 改完(data 变 / validationRefreshKey)重扫,红标跟着消。 */
   useEffect(() => {
@@ -499,23 +507,8 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
     },
   });
 
-  /**
-   * 点卡片 = 选中它,URL 片段同步成这张卡的名字(`#Sune`)—— 地址栏直接可以复制去分享。
-   * 再点一下取消。用 replaceState 写(见 lib/url_hash.ts):点七张卡不该欠七次后退。
-   */
-  const selectCase = useCallback((c: AlgCase, e: React.MouseEvent<HTMLElement>) => {
-    if (c.id == null) return;
-    // 卡里全是真控件(复制 / 编辑 / 播放 / y 切换 …),别抢它们的点击
-    if ((e.target as HTMLElement).closest('button, a, input, textarea, select, [role="button"]')) return;
-    // 正在划选公式文本,不是在选卡
-    if (window.getSelection()?.toString()) return;
-    const on = selectedId !== c.id;
-    setSelectedId(on ? c.id : null);
-    const frag = on ? caseAnchor(c.name) : '';
-    replaceHash(frag);
-    // 自己点的:同步给 hook 并标记已处理,别再自动滚/闪一次
-    setHash(frag ? `#${frag}` : '', { markActed: true });
-  }, [selectedId, setHash]);
+  // 点卡片现在是**跳到该 case 的独立页**(卡上的 <a class="alg-case-cardlink"> 覆盖层),不再是
+  // 选中 + 写 hash。`selectedId` 仅由下面的 hash hook(从详情页返回带 #name 落地时)设置,用来高亮。
 
   const rawSubgroupSlug = subgroupParam ? decodeURIComponent(subgroupParam).toLowerCase() : null;
   // 旧数字制子组 slug(u1 / pi 1 / as1 …)→ 新方向制(ur / pif / asf …),老链接不失效(migration 0081)
@@ -564,6 +557,13 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
     }
     return Array.from(map.entries());
   }, [visibleCases]);
+
+  /** 整个 set 的 case → 唯一短链 slug(点卡片跳转用)。落地解析用同一份算法,见 alg_case_link。 */
+  const slugMap = useMemo(() => (data ? buildCaseSlugMap(data.cases, set) : null), [data, set]);
+  const caseDetailHref = useCallback(
+    (c: AlgCase) => algCaseDetailHref(puzzleParam, set, (c.id != null && slugMap?.byId.get(c.id)) || caseSlugBase(set, c)),
+    [slugMap, puzzleParam, set],
+  );
 
   if (!validPuzzle || !meta) {
     return <div className="alg-root"><div className="alg-empty">Unknown set: {puzzleParam}/{set}</div></div>;
@@ -771,11 +771,18 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
                     <article
                       className={`alg-case${flashId === c.id ? ' is-flash' : ''}${selectedId === c.id ? ' is-selected' : ''}${c.id != null && invalidIds.has(c.id) ? ' is-invalid' : ''}`}
                       id={c.id != null ? `case-${c.id}` : undefined}
-                      onClick={(e) => selectCase(c, e)}
                       title={c.id != null && invalidIds.has(c.id)
                         ? tr({ zh: '这个 case 有公式校验不通过', en: 'This case has failing algs' })
                         : undefined}
                     >
+                      {/* 整卡跳到这张 case 的独立页(缩略图 + 名字 = 跳转区;公式/复制/播放/社区区
+                          z-index 抬到覆盖层之上,照常交互)。真 <a>,中键可新开。 */}
+                      <Link
+                        href={caseDetailHref(c)}
+                        className="alg-case-cardlink"
+                        prefetch={false}
+                        aria-label={primaryCaseName(puzzleParam, set, c)}
+                      />
                       {isAdmin && c.id != null && (
                         <button
                           type="button"
@@ -808,16 +815,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
                               return disp.startsWith(primary) ? null : <span className="alg-case-index">{disp}</span>;
                             })()}
                             {c.number != null && <span className="alg-case-index">#{c.number}</span>}
-                            {c.meta && (
-                              <Link
-                                href={algCaseDetailHref(puzzleParam, set, c)}
-                                className="alg-case-meta-btn"
-                                prefetch={false}
-                                title={tr({ zh: '元数据', en: 'Metadata' })}
-                              >
-                                <Info size={13} />
-                              </Link>
-                            )}
                             {oriCount > 1 && (
                               <button
                                 type="button"
