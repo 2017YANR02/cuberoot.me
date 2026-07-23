@@ -19,6 +19,97 @@ import { primaryCaseName } from '@/lib/alg_case_display';
 
 type CaseRef = { id?: number | null; name?: string; subgroup?: string };
 
+/**
+ * case → **短 URL 片段**的原始素材:有 mark(`meta.ollcp`)就用它(剥掉冗余的 `SET-` 前缀,
+ * 同 {@link primaryCaseName}),否则退回 case 名。ZBLL `UR3`→`ur3`、`S+B1`→`s+b1`、
+ * PLL `PLL-A+`→`a+`;非 meta 的 F2L `A+`→`a+`、OLL `OLL 27`→`oll-27`。
+ *
+ * `+` / `-` **保留**(实测本站 nginx+Vercel 全链路不会把 path 里的 `+` 转成空格),这样
+ * 短链和社区记号一致、最好认。空格→`-`,其余非 `[a-z0-9+-]` 也→`-`。
+ */
+export function slugifyCasePart(s: string): string {
+  return s.trim().toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9+-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+/** mark 的原始素材(剥 `SET-` 前缀);非 meta case 用 case 名。 */
+function caseSlugSource(set: string, c: AlgCase): string {
+  const mark = c.meta?.ollcp;
+  if (!mark) return c.name;
+  const prefix = `${set.toUpperCase()}-`;
+  return mark.startsWith(prefix) ? mark.slice(prefix.length) : mark;
+}
+
+/** 一张 case 的**基础** slug(未去重)。见 {@link buildCaseSlugMap} 做全集内唯一化。 */
+export function caseSlugBase(set: string, c: AlgCase): string {
+  return slugifyCasePart(caseSlugSource(set, c));
+}
+
+export interface CaseSlugMap {
+  /** DB id → 唯一 slug(生成链接用) */
+  byId: Map<number, string>;
+  /** slug → case(落地解析用) */
+  bySlug: Map<string, AlgCase>;
+}
+
+/**
+ * 给**整个 set** 建立 case ↔ slug 的双向唯一映射。
+ *
+ * 绝大多数 set 的基础 slug 已经全集唯一(mark 天生唯一;多数 set 的 case 名也唯一),直接用。
+ * 少数 set(zbls:每个子组下都有 `EO`/`Line`/`VP`… 同名 case)基础 slug 撞车 —— 撞的那些
+ * 用**顶层子组**限定成 `<子组>-<名>`(`a+-eo`),子组内名唯一 ⟹ 限定后唯一。极端兜底再追加序号。
+ *
+ * 生成端(列表卡片)和落地端(详情页)都从**同一份 set 数据**(同一 API、同序)算这张表,
+ * 所以两边得到完全一致的 slug —— 是个确定性双射,不用把 slug 存进 DB。
+ */
+export function buildCaseSlugMap(cases: AlgCase[], set: string): CaseSlugMap {
+  const bases = cases.map(c => caseSlugBase(set, c));
+  const count = new Map<string, number>();
+  for (const b of bases) count.set(b, (count.get(b) ?? 0) + 1);
+
+  const byId = new Map<number, string>();
+  const bySlug = new Map<string, AlgCase>();
+  const used = new Set<string>();
+
+  cases.forEach((c, i) => {
+    let slug = bases[i];
+    if ((count.get(slug) ?? 0) > 1) {
+      const top = slugifyCasePart((c.subgroup || '').split('/', 1)[0] || '');
+      slug = top ? `${top}-${bases[i]}` : bases[i];
+    }
+    if (used.has(slug)) {
+      let n = 2;
+      let cand = `${slug}-${n}`;
+      while (used.has(cand)) cand = `${slug}-${++n}`;
+      slug = cand;
+    }
+    used.add(slug);
+    bySlug.set(slug, c);
+    if (c.id != null) byId.set(c.id, slug);
+  });
+
+  return { byId, bySlug };
+}
+
+/**
+ * 落地:URL 片段 → case。先查确定性 slug 表(`ur3` / `s+b1` / `a+-eo`),再退回
+ * {@link findCaseByHash}(手打的 case 名 / 卡面名 / 老 `case-<id>`),都没有返 null。
+ */
+export function resolveCaseSlug(
+  cases: AlgCase[],
+  slug: string,
+  puzzle: string,
+  set: string,
+): AlgCase | null {
+  let key = slug;
+  try { key = decodeURIComponent(slug); } catch { /* 半截转义:原样 */ }
+  key = key.trim().toLowerCase();
+  const map = buildCaseSlugMap(cases, set);
+  return map.bySlug.get(key) ?? findCaseByHash(cases, slug, puzzle, set) ?? null;
+}
+
 /** case 名 → URL 片段。空格换 `-`(`#EG1-S-1` 比 `#EG1%20S%201` 好读),其余照常转义。 */
 export function caseAnchor(name: string): string {
   return encodeURIComponent(name.trim().replace(/\s+/g, '-'));
@@ -32,24 +123,24 @@ function anchorKey(s: string): string {
 }
 
 export function algCaseHref(puzzle: string, set: string, c: CaseRef): string {
-  const top = (c.subgroup || '').split('/', 1)[0];
+  // **最深**的那段子组(`U/UR` → `ur`),不是顶层(`u`)。ZBLL/1LLL 的顶层组页面渲染的是
+  // 二级**子组选择器**,那张 case 卡根本不在,`#anchor` 高亮会落空;深链到子组页才看得见它。
+  const parts = (c.subgroup || '').split('/').filter(Boolean);
+  const seg = parts[parts.length - 1] || '';
   const base = `/alg/${puzzle}/${set}`;
-  const path = top ? `${base}/${encodeURIComponent(top.toLowerCase())}` : base;
+  const path = seg ? `${base}/${encodeURIComponent(seg.toLowerCase())}` : base;
   if (c.name?.trim()) return `${path}#${caseAnchor(c.name)}`;
   return c.id != null ? `${path}#case-${c.id}` : path;
 }
 
 /**
- * 指向某一张 case 的**独立详情页**(元数据整页,替代原来的弹窗)。
- *
- * 走固定的 `case/` 段而不是 `/<子组>/<case>`:有子组的 set(zbll/1lll)和没子组的
- * set(pll/ell)才能共用同一层级 —— 后者的 case 名会直接落到 `[subgroup]` 段上,和子组
- * 路由撞车。片段仍用 case 名(`caseAnchor`),`findCaseByHash` 那三种写法照样认回。
+ * 指向某一张 case 的**独立详情页**,短链形式 `/alg/<puzzle>/<set>/<slug>` ——
+ * 和子组页(`/alg/<puzzle>/<set>/<子组>`)同层。`slug` 由 {@link buildCaseSlugMap} 全集唯一化
+ * (`ur3` / `s+b1` / `a+-eo`),`[subgroup]` 路由落地时先按子组匹配、匹配不到再当 case 解析,
+ * 两者 slug 空间实测不撞(`ur` vs `ur3`)。老的 `/case/<name>` 段已废弃。
  */
-export function algCaseDetailHref(puzzle: string, set: string, c: CaseRef): string {
-  const base = `/alg/${puzzle}/${set}/case`;
-  if (c.name?.trim()) return `${base}/${caseAnchor(c.name)}`;
-  return c.id != null ? `${base}/case-${c.id}` : base;
+export function algCaseDetailHref(puzzle: string, set: string, slug: string): string {
+  return `/alg/${puzzle}/${set}/${slug}`;
 }
 
 /**
