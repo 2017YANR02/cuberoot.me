@@ -1,13 +1,16 @@
 /* PageNoticeBar — 每页顶部管理员通知条(维护中 / WIP / 已知 bug)。
    颜色一律走 theme token,自动 light/dark + 配色主题跟随。 */
 
-.page-notice-wrap { width: 100%; }
+/* 通知条内容约束到内容宽度并居中,超宽屏不再从最左边缘一路铺到最右 */
+.page-notice-wrap { width: 100%; --pn-max-w: 1100px; }
 
 .page-notice {
   --pn-color: var(--signal-info);
   display: flex;
   align-items: flex-start;
   gap: 0.5rem;
+  max-width: var(--pn-max-w);
+  margin-inline: auto;
   padding: 0.5rem 0.9rem;
   background: color-mix(in srgb, var(--pn-color) 12%, transparent);
   border-left: 3px solid var(--pn-color);
@@ -55,12 +58,15 @@
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 
-/* admin:通知入口 + 环境切换同处一行 */
+/* admin:通知入口 + 环境切换同处一行,对齐到与通知同一居中列 */
 .page-notice-adminbar {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 6px 12px;
+  max-width: var(--pn-max-w);
+  margin-inline: auto;
+  padding-inline: 0.9rem;
 }
 
 /* admin:本地 ↔ 线上 环境切换(高亮当前所在环境,兼作指示) */
