@@ -14,6 +14,7 @@ export function netErrorMessage(e: unknown): { zh: string; en: string } {
   const msg = e instanceof Error ? e.message : String(e ?? '');
   if (msg === 'room not found') return { zh: '房间不存在或已过期', en: 'Room not found or expired' };
   if (msg === 'room full') return { zh: '房间人数已满', en: 'Room is full' };
+  if (msg === 'name taken') return { zh: '这个名字房里已经有人用了,换一个', en: 'That name is already taken in this room' };
   if (/HTTP 404/.test(msg)) return { zh: '联机服务暂不可用,请稍后重试', en: 'Online service is unavailable — please try again later' };
   if (/HTTP 5\d\d/.test(msg)) return { zh: '服务器开小差了,请稍后重试', en: 'Server error — please try again later' };
   if (/failed to fetch|networkerror|load failed/i.test(msg)) return { zh: '网络连接失败,请检查网络', en: 'Network error — check your connection' };

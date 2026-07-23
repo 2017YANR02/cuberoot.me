@@ -108,6 +108,23 @@
   outline: none;
 }
 .net-input:focus { border-color: var(--ring); }
+/* 登录用户身份行(不填昵称,直接显示 WCA 姓名+ID) */
+.net-identity-me {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  padding: 6px 12px 6px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--toggle-on) 12%, transparent);
+  max-width: 100%;
+}
+.net-identity-avatar { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; flex: none; }
+.net-identity-name { font-size: 14px; font-weight: 600; color: var(--foreground); }
+.net-identity-wcaid { font-family: var(--font-mono); font-size: 11px; color: var(--muted-foreground); letter-spacing: 0.02em; }
+/* 玩家条 / 榜里的国旗 */
+.net-p-flag { width: 18px; height: 12px; flex: none; border-radius: 2px; }
+.net-st-flag { width: 18px; height: 12px; flex: none; border-radius: 2px; }
 .net-input-code {
   width: 130px;
   font-family: var(--font-mono);
