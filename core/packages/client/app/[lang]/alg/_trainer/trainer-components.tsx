@@ -14,7 +14,7 @@ import {
   type CaseMarks, type CaseMarkStatus, type TrainerMarkBrush,
 } from '@/lib/trainer-marks';
 import { caseKey } from '@/lib/trainer-case-key';
-import { primaryCaseName } from '@/lib/alg_case_display';
+import { primaryCaseName, displayZbllToken } from '@/lib/alg_case_display';
 import { tr } from '@/i18n/tr';
 
 export function formatMs(ms: number, precision = 2): string {
@@ -68,7 +68,7 @@ export function ScrambleHeader({ scramble, label, font = 'sans' }: { scramble: s
 }
 
 export function SolveCard({
-  puzzle, set, scramble, c, header, markSlot, onShowCase,
+  puzzle, set, scramble, c, header, markSlot, onShowCase, showThumb = true,
 }: {
   puzzle: AlgPuzzle;
   set: string;
@@ -82,6 +82,8 @@ export function SolveCard({
   markSlot?: ReactNode;
   /** 点 case 名弹出该情况的详情弹窗(元数据 / 公式)。 */
   onShowCase?: (c: AlgCase) => void;
+  /** 打乱图开关(「打乱图」关时整卡不出 CaseThumb)。默认 true。 */
+  showThumb?: boolean;
 }) {
   return (
     <div className="trainer-solve-card">
@@ -99,19 +101,21 @@ export function SolveCard({
         })}</div>
       ) : (
         <>
-          <div className="trainer-solve-thumb">
-            <CaseThumb
-              puzzle={puzzle}
-              set={set}
-              sticker={c.sticker}
-              alg={c.algs.flat()[0]?.alg ?? c.standard ?? ''}
-              // 图从「实际打乱」渲染(含 pre/post-AUF),而非 case 规范 setup —— 否则
-              // 图与卡片上的打乱公式朝向对不上(3x3/2x2 才有 AUF;其余打乱==规范 setup)。
-              setup={scramble ?? c.setup}
-              // 与左栏大图 / 离屏预取同 size=140:同一 URL 共用浏览器缓存,换题时秒出不再重取。
-              size={140}
-            />
-          </div>
+          {showThumb && (
+            <div className="trainer-solve-thumb">
+              <CaseThumb
+                puzzle={puzzle}
+                set={set}
+                sticker={c.sticker}
+                alg={c.algs.flat()[0]?.alg ?? c.standard ?? ''}
+                // 图从「实际打乱」渲染(含 pre/post-AUF),而非 case 规范 setup —— 否则
+                // 图与卡片上的打乱公式朝向对不上(3x3/2x2 才有 AUF;其余打乱==规范 setup)。
+                setup={scramble ?? c.setup}
+                // 与左栏大图 / 离屏预取同 size=140:同一 URL 共用浏览器缓存,换题时秒出不再重取。
+                size={140}
+              />
+            </div>
+          )}
           <div className="trainer-solve-row">
             {onShowCase ? (
               <button
@@ -393,7 +397,7 @@ export function CaseTreePicker({
                 >
                   <TriCheckbox checked={topAll} indeterminate={!topAll && !topNone} />
                   <TopThumb g={top} />
-                  <span>{set.toUpperCase()} {top.label}</span>
+                  <span>{set.toUpperCase()} {set === 'zbll' ? displayZbllToken(top.label) : top.label}</span>
                   <span style={{ color: 'var(--muted-foreground)', fontWeight: 400, fontSize: '0.85rem' }}>
                     ({topSelectedCount}/{top.allCases.length})
                   </span>
@@ -439,7 +443,7 @@ export function CaseTreePicker({
                                 ? <VisualCube algorithm={subSampleAlg} setup={subCases[0].setup} view="pll" mask="coll" size={36} />
                                 : <CaseThumb puzzle={puzzle} set={set} sticker={subCases[0].sticker}
                                     alg={subSampleAlg} setup={subCases[0].setup} size={36} />}
-                              <span>{subLabel}</span>
+                              <span>{set === 'zbll' ? displayZbllToken(subLabel) : subLabel}</span>
                               <span style={{ color: 'var(--muted-foreground)', fontWeight: 400, fontSize: '0.85rem' }}>
                                 ({subSelectedCount}/{subCases.length})
                               </span>
