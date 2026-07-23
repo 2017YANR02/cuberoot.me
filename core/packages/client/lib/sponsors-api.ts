@@ -43,12 +43,21 @@ export async function deleteSponsor(id: number): Promise<{ ok: boolean }> {
 
 const CONTRIB_BASE = API_ORIGIN + '/v1/contributors';
 
+/** 一次贡献的内容明细。zh/en 至少填一个(展示时缺一回退另一),date 可选(如 "2026-07-16")。 */
+export interface Contribution {
+  zh: string;
+  en: string;
+  date?: string;
+}
+
 export interface Contributor {
   id: number;
   name: string;
   score: number;
   wcaId?: string;
   avatarUrl?: string;
+  /** 每次贡献的内容明细(与 score 解耦,可空)。 */
+  contributions: Contribution[];
 }
 
 export interface ContributorInput {
@@ -56,20 +65,26 @@ export interface ContributorInput {
   score?: number;
   wcaId?: string | null;
   avatarUrl?: string | null;
+  contributions?: Contribution[];
+}
+
+// 旧后端 / 1h 缓存的响应可能没有 contributions 字段:补成空数组,让上层能放心 .length。
+function normContributor(c: Contributor): Contributor {
+  return { ...c, contributions: Array.isArray(c.contributions) ? c.contributions : [] };
 }
 
 export async function listContributors(): Promise<Contributor[]> {
-  return handleApi<Contributor[]>(await fetch(CONTRIB_BASE));
+  return (await handleApi<Contributor[]>(await fetch(CONTRIB_BASE))).map(normContributor);
 }
 export async function createContributor(body: ContributorInput): Promise<Contributor> {
-  return handleApi<Contributor>(await fetch(CONTRIB_BASE, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) }));
+  return normContributor(await handleApi<Contributor>(await fetch(CONTRIB_BASE, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) })));
 }
 export async function updateContributor(id: number, body: ContributorInput): Promise<Contributor> {
-  return handleApi<Contributor>(await fetch(`${CONTRIB_BASE}/${id}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(body) }));
+  return normContributor(await handleApi<Contributor>(await fetch(`${CONTRIB_BASE}/${id}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(body) })));
 }
 /** score 原子 +1(admin 点卡片上的数字)。 */
 export async function bumpContributor(id: number): Promise<Contributor> {
-  return handleApi<Contributor>(await fetch(`${CONTRIB_BASE}/${id}/bump`, { method: 'POST', headers: authHeaders() }));
+  return normContributor(await handleApi<Contributor>(await fetch(`${CONTRIB_BASE}/${id}/bump`, { method: 'POST', headers: authHeaders() })));
 }
 export async function deleteContributor(id: number): Promise<{ ok: boolean }> {
   return handleApi<{ ok: boolean }>(await fetch(`${CONTRIB_BASE}/${id}`, { method: 'DELETE', headers: authHeaders() }));
