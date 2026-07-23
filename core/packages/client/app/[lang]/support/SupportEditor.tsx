@@ -10,13 +10,14 @@
  * 保存走 sponsors-api,成功后 onSaved(saved) 由父组件刷新本地列表。
  */
 import { useEffect, useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Plus, Trash2 } from 'lucide-react';
 import { tr, useLang } from '@/i18n/tr';
 import { WcaPersonPicker } from '@/components/WcaPersonPicker';
 import { fetchPersonCard, type WcaPersonLite } from '@/lib/wca-api';
 import {
   createSponsor, updateSponsor, type Sponsor, type SponsorInput,
   createContributor, updateContributor, type Contributor, type ContributorInput,
+  type Contribution,
 } from '@/lib/sponsors-api';
 
 export type EditorTarget =
@@ -52,6 +53,10 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
   const isZh = lang !== 'en';
   const initial = target.initial;
   const [draft, setDraft] = useState(() => toDraft(target));
+  // 贡献明细独立管理(数组,与 draft 的字符串字段分开,避免 set() 类型混淆)。
+  const [contribs, setContribs] = useState<Contribution[]>(
+    () => (target.kind === 'contributor' ? target.initial?.contributions ?? [] : []),
+  );
   const [picked, setPicked] = useState<WcaPersonLite | null>(
     initial?.wcaId ? { id: initial.wcaId, name: initial.name, country_iso2: '' } : null,
   );
@@ -60,6 +65,7 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
 
   useEffect(() => {
     setDraft(toDraft(target));
+    setContribs(target.kind === 'contributor' ? target.initial?.contributions ?? [] : []);
     setPicked(target.initial?.wcaId ? { id: target.initial.wcaId, name: target.initial.name, country_iso2: '' } : null);
   }, [target]);
 
@@ -77,6 +83,16 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
 
   function set<K extends keyof ReturnType<typeof toDraft>>(k: K, v: string) {
     setDraft(d => ({ ...d, [k]: v }));
+  }
+
+  function addContrib() {
+    setContribs(list => [...list, { zh: '', en: '', date: '' }]);
+  }
+  function removeContrib(i: number) {
+    setContribs(list => list.filter((_, idx) => idx !== i));
+  }
+  function setContribField(i: number, k: keyof Contribution, v: string) {
+    setContribs(list => list.map((ct, idx) => (idx === i ? { ...ct, [k]: v } : ct)));
   }
 
   async function handlePick(c: WcaPersonLite | null) {
@@ -102,11 +118,23 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
         const score = Number(draft.score);
         if (!Number.isInteger(score) || score < 0) { setErr(tr({ zh: '贡献次数无效', en: 'Invalid count'
         })); setSaving(false); return; }
+        // 去掉两语都空的行,并 trim/清掉空 date,再落库。
+        const contributions: Contribution[] = contribs
+          .map(ct => {
+            const zh = ct.zh.trim();
+            const en = ct.en.trim();
+            const date = ct.date?.trim();
+            const item: Contribution = { zh, en };
+            if (date) item.date = date;
+            return item;
+          })
+          .filter(ct => ct.zh || ct.en);
         const body: ContributorInput = {
           name: draft.name.trim(),
           wcaId: draft.wcaId.trim().toUpperCase() || null,
           avatarUrl: draft.avatarUrl.trim() || null,
           score,
+          contributions,
         };
         saved = target.initial ? await updateContributor(target.initial.id, body) : await createContributor(body);
       } else {
@@ -175,11 +203,60 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
           </label>
 
           {target.kind === 'contributor' ? (
-            <label className="sponsor-editor-row">
-              <span>{tr({ zh: '贡献次数', en: 'Contribution count'
-              })} *</span>
-              <input className="sponsor-editor-input" type="number" min="0" step="1" value={draft.score} onChange={e => set('score', e.target.value)} />
-            </label>
+            <>
+              <label className="sponsor-editor-row">
+                <span>{tr({ zh: '贡献次数', en: 'Contribution count'
+                })} *</span>
+                <input className="sponsor-editor-input" type="number" min="0" step="1" value={draft.score} onChange={e => set('score', e.target.value)} />
+              </label>
+
+              <div className="sponsor-editor-row">
+                <span>{tr({ zh: '贡献明细', en: 'Contribution details' })}</span>
+                <span className="sponsor-editor-hint">{tr({
+                  zh: '每条记录一次贡献的内容(中英至少填一个,搜不到就回退到另一语言);次数可与明细条数不同',
+                  en: 'One entry per contribution (fill zh and/or en — the missing one falls back to the other); the count above may differ from the number of entries',
+                })}</span>
+                <div className="contrib-edit-list">
+                  {contribs.map((ct, i) => (
+                    <div className="contrib-edit-item" key={i}>
+                      <div className="contrib-edit-item-head">
+                        <input
+                          className="sponsor-editor-input contrib-edit-date"
+                          value={ct.date ?? ''}
+                          onChange={e => setContribField(i, 'date', e.target.value)}
+                          placeholder={tr({ zh: '日期(可选,如 2026-07-16)', en: 'Date (optional, e.g. 2026-07-16)' })}
+                        />
+                        <button
+                          type="button"
+                          className="contrib-edit-del"
+                          onClick={() => removeContrib(i)}
+                          aria-label={tr({ zh: '删除这条', en: 'Remove entry' })}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                      <textarea
+                        className="sponsor-editor-textarea"
+                        rows={2}
+                        value={ct.zh}
+                        onChange={e => setContribField(i, 'zh', e.target.value)}
+                        placeholder={tr({ zh: '中文描述', en: 'Chinese description' })}
+                      />
+                      <textarea
+                        className="sponsor-editor-textarea"
+                        rows={2}
+                        value={ct.en}
+                        onChange={e => setContribField(i, 'en', e.target.value)}
+                        placeholder={tr({ zh: 'English 描述(可选)', en: 'English description (optional)' })}
+                      />
+                    </div>
+                  ))}
+                  <button type="button" className="contrib-edit-add" onClick={addContrib}>
+                    <Plus size={13} /> {tr({ zh: '添加一条', en: 'Add entry' })}
+                  </button>
+                </div>
+              </div>
+            </>
           ) : (
             <>
               <div className="sponsor-editor-row-2">

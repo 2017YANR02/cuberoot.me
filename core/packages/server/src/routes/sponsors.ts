@@ -192,6 +192,16 @@ sponsorsRoutes.delete('/sponsors/:id', async (c) => {
 // score = 贡献次数,admin 每收到一次反馈/bug/建议点数字 +1(/:id/bump)。
 
 const SCORE_MAX = 1_000_000;
+const CONTRIB_ITEMS_MAX = 500;   // 单个贡献者最多明细条数
+const CONTRIB_TEXT_MAX = 1000;   // 单条 zh/en 文本上限
+const CONTRIB_DATE_MAX = 40;     // 日期/时间标签(自由文本)上限
+
+// 一次贡献的内容明细。存 contributors.contributions(JSONB 数组)。
+interface Contribution {
+  zh: string;
+  en: string;
+  date?: string;
+}
 
 interface ContributorRow {
   id: number | string;
@@ -199,6 +209,7 @@ interface ContributorRow {
   wca_id: string | null;
   avatar_url: string | null;
   score: number | string;
+  contributions: unknown; // JSONB —— driver 已反序列化成 JS 值
 }
 
 function contributorToJson(r: ContributorRow): Record<string, unknown> {
@@ -206,6 +217,7 @@ function contributorToJson(r: ContributorRow): Record<string, unknown> {
     id: Number(r.id),
     name: r.name,
     score: Number(r.score),
+    contributions: Array.isArray(r.contributions) ? r.contributions : [],
   };
   if (r.wca_id) o.wcaId = r.wca_id;
   if (r.avatar_url) o.avatarUrl = r.avatar_url;
@@ -217,6 +229,7 @@ interface ContributorInput {
   wcaId?: string | null;
   avatarUrl?: string | null;
   score?: number;
+  contributions?: unknown;
 }
 
 interface NormalizedContributor {
@@ -224,6 +237,34 @@ interface NormalizedContributor {
   wca_id: string | null;
   avatar_url: string | null;
   score: number;
+  contributions: Contribution[];
+}
+
+// contributions 校验:数组,每项 { zh, en, date? },zh/en 至少一个非空。
+function parseContributions(v: unknown): { error: string } | { value: Contribution[] } {
+  if (v == null) return { value: [] };
+  if (!Array.isArray(v)) return { error: 'contributions must be an array' };
+  if (v.length > CONTRIB_ITEMS_MAX) return { error: 'too many contributions' };
+  const out: Contribution[] = [];
+  for (const raw of v) {
+    if (!raw || typeof raw !== 'object') return { error: 'contribution must be an object' };
+    const o = raw as Record<string, unknown>;
+    if (o.zh != null && typeof o.zh !== 'string') return { error: 'contribution.zh must be a string' };
+    if (o.en != null && typeof o.en !== 'string') return { error: 'contribution.en must be a string' };
+    const zh = typeof o.zh === 'string' ? o.zh.trim() : '';
+    const en = typeof o.en === 'string' ? o.en.trim() : '';
+    if (!zh && !en) return { error: 'contribution needs zh or en text' };
+    if (zh.length > CONTRIB_TEXT_MAX || en.length > CONTRIB_TEXT_MAX) return { error: 'contribution text too long' };
+    const item: Contribution = { zh, en };
+    if (o.date != null && o.date !== '') {
+      if (typeof o.date !== 'string') return { error: 'contribution.date must be a string' };
+      const date = o.date.trim();
+      if (date.length > CONTRIB_DATE_MAX) return { error: 'contribution date too long' };
+      if (date) item.date = date;
+    }
+    out.push(item);
+  }
+  return { value: out };
 }
 
 function validateContributor(b: ContributorInput): { error: string } | { value: NormalizedContributor } {
@@ -243,7 +284,18 @@ function validateContributor(b: ContributorInput): { error: string } | { value: 
   const avatarRes = parseAvatarUrl(b.avatarUrl);
   if ('error' in avatarRes) return avatarRes;
 
-  return { value: { name: b.name.trim(), wca_id: wcaRes.value, avatar_url: avatarRes.value, score } };
+  const contribRes = parseContributions(b.contributions);
+  if ('error' in contribRes) return contribRes;
+
+  return {
+    value: {
+      name: b.name.trim(),
+      wca_id: wcaRes.value,
+      avatar_url: avatarRes.value,
+      score,
+      contributions: contribRes.value,
+    },
+  };
 }
 
 // GET /v1/contributors — 全表,score 降序
@@ -266,10 +318,10 @@ sponsorsRoutes.post('/contributors', async (c) => {
   const f = res.value;
 
   const inserted = await query<ContributorRow>(
-    `INSERT INTO contributors (name, wca_id, avatar_url, score)
-     VALUES (?, ?, ?, ?)
+    `INSERT INTO contributors (name, wca_id, avatar_url, score, contributions)
+     VALUES (?, ?, ?, ?, ?::jsonb)
      RETURNING *`,
-    [f.name, f.wca_id, f.avatar_url, f.score],
+    [f.name, f.wca_id, f.avatar_url, f.score, f.contributions],
   );
   return c.json(contributorToJson(inserted[0]));
 });
@@ -289,10 +341,10 @@ sponsorsRoutes.put('/contributors/:id', async (c) => {
 
   const updated = await query<ContributorRow>(
     `UPDATE contributors SET
-       name = ?, wca_id = ?, avatar_url = ?, score = ?
+       name = ?, wca_id = ?, avatar_url = ?, score = ?, contributions = ?::jsonb
      WHERE id = ?
      RETURNING *`,
-    [f.name, f.wca_id, f.avatar_url, f.score, id],
+    [f.name, f.wca_id, f.avatar_url, f.score, f.contributions, id],
   );
   if (updated.length === 0) return c.json({ error: 'Not found' }, 404);
   return c.json(contributorToJson(updated[0]));

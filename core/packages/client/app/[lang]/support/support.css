@@ -226,6 +226,24 @@
 .contrib-score-btn:hover { background: color-mix(in srgb, var(--accent) 24%, transparent); }
 .contrib-score-btn:active { transform: translateY(1px); }
 
+/* 「查看贡献」:有明细时卡片底部的低调按钮,点开 .contrib-detail 弹窗 */
+.contrib-detail-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 1px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 0.7rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.contrib-detail-open:hover { color: var(--accent); }
+.contrib-detail-open svg { opacity: 0.8; }
+
 .support-more {
   display: block;
   margin: 2rem auto 0;
@@ -366,6 +384,95 @@
 .sponsor-editor-save:hover { background: color-mix(in srgb, var(--primary) 88%, black); }
 .sponsor-editor-save:disabled,
 .sponsor-editor-cancel:disabled { opacity: 0.6; cursor: default; }
+
+/* ── 编辑器里的贡献明细列表(每条一 card:日期 + 中/英文本 + 删除)── */
+.contrib-edit-list { display: grid; gap: 0.6rem; }
+.contrib-edit-item {
+  display: grid;
+  gap: 5px;
+  padding: 0.6rem;
+  border: 1px solid var(--border-default);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--foreground) 3%, transparent);
+}
+.contrib-edit-item-head { display: flex; align-items: center; gap: 6px; }
+.contrib-edit-item-head .contrib-edit-date { flex: 1; min-width: 0; }
+.contrib-edit-del {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border: 1px solid var(--border-default);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.contrib-edit-del:hover { color: var(--destructive); border-color: var(--destructive); }
+.contrib-edit-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  justify-self: start;
+  padding: 5px 12px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 0.8rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.contrib-edit-add:hover {
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+  border-color: var(--accent);
+}
+
+/* ── 贡献明细弹窗(公开视图,点卡片「查看贡献」打开)── */
+.contrib-detail {
+  width: 100%;
+  max-width: 460px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-default);
+  border-radius: 14px;
+  background: var(--popover);
+  color: var(--foreground);
+  box-shadow: 0 20px 60px color-mix(in srgb, var(--foreground) 22%, transparent);
+  overflow: hidden;
+}
+.contrib-detail-person { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.contrib-detail-person .sponsor-avatar { width: 40px; height: 40px; }
+.contrib-detail-person-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.contrib-detail-person-text .sponsor-name { font-size: 0.95rem; }
+.contrib-detail-count { font-size: 0.72rem; color: var(--muted-foreground); }
+
+.contrib-detail-body { padding: 1rem 1.25rem 1.25rem; overflow-y: auto; }
+.contrib-detail-empty {
+  padding: 1.5rem 0;
+  text-align: center;
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+}
+.contrib-detail-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.75rem; }
+.contrib-detail-item {
+  display: grid;
+  gap: 2px;
+  padding-left: 0.85rem;
+  border-left: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.contrib-detail-date { font-size: 0.7rem; font-weight: 600; color: var(--accent); }
+.contrib-detail-text {
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--foreground);
+  overflow-wrap: anywhere;
+}
 
 @media (max-width: 480px) {
   .support-page { padding: 1.75rem 0.75rem 3rem; }
