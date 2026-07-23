@@ -213,6 +213,9 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
   // straight from the sim (SimPage injects them via the codec), 背景色 defaults to
   // transparent, and 视角旋转 to the puzzle's clean iso. One control per concept.
   const showInheritedControls = mode === 'page';
+  // 阶段遮罩同理:sim 工具栏的 stickering 下拉已并入整个 vc MASK 清单(vcStageMask.ts
+  // 去重合并),且实时 3D + 引擎伴图都跟它走;panel 里这行是只喂 spec 渲染的重复入口。
+  const showStageMask = mode === 'page';
 
   const previewRef = useRef<HTMLDivElement | null>(null);
 
@@ -652,7 +655,7 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
           </div>
         )}
 
-        {isCube && projected && (
+        {showStageMask && isCube && projected && (
           <div className="vc-row">
             <label className="vc-label">{t('Mask', 'Stage Mask')}</label>
             <div className="vc-row-controls">
