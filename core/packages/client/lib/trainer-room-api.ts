@@ -26,11 +26,14 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-/** 建房:keys 应为规范序全集(池)。返回房间码等。 */
+/**
+ * 建房:keys = 全集(池)。start(默认 0)= 建房者已单机刷过的前缀数,房间从第 start+1 格派发,
+ * 前 start 格记为已完成、永不派发(队友接着分工);total 仍是全集大小。返回房间码等 + claimed(=start)。
+ */
 export async function createRoom(
-  puzzle: string, set: string, order: RoomOrder, keys: string[],
-): Promise<RoomInfo> {
-  return postJson<RoomInfo>('/v1/trainer/rooms', { puzzle, set, order, keys });
+  puzzle: string, set: string, order: RoomOrder, keys: string[], start = 0,
+): Promise<RoomInfo & { claimed?: number }> {
+  return postJson<RoomInfo & { claimed?: number }>('/v1/trainer/rooms', { puzzle, set, order, keys, start });
 }
 
 /** 房间状态(轮询合并进度 / 探知是否已开下一轮)。房间不存在 → 抛。 */

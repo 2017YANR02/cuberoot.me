@@ -6,7 +6,9 @@ import { checkRateLimit } from '../utils/recon_helpers.js';
 /**
  * /v1/trainer/rooms — 公式训练器「协同房间」(多设备在线复习分工)。
  *
- *   POST /trainer/rooms                  — 建房:{puzzle,set,order,keys[]} → {code,round,total,order}
+ *   POST /trainer/rooms                  — 建房:{puzzle,set,order,keys[],start?} → {code,round,total,order,claimed}
+ *                                          start(默认0,夹0..total-1)= 建房者已单机刷过的前缀数,房间从第 start+1
+ *                                          格派发;前 start 格记为建房者已完成、永不派发(队友接着分工)
  *   GET  /trainer/rooms/:code            — 房间状态(轮询合并进度):{round,total,claimed,done,...}
  *   POST /trainer/rooms/:code/claim      — 领取下一题:{round,count?} → {caseKey,index,cases,round,total} | {done} | {advanced}
  *                                          count(默认1,夹1..12)一次占多格(三条一屏);cases[]=本次领到的格,
@@ -87,7 +89,7 @@ trainerRoomsRoutes.post('/trainer/rooms', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
 
-  let body: { puzzle?: unknown; set?: unknown; order?: unknown; keys?: unknown };
+  let body: { puzzle?: unknown; set?: unknown; order?: unknown; keys?: unknown; start?: unknown };
   try { body = await c.req.json(); } catch { return c.json({ error: 'invalid body' }, 400); }
 
   const puzzle = typeof body.puzzle === 'string' ? body.puzzle.trim() : '';
@@ -98,6 +100,11 @@ trainerRoomsRoutes.post('/trainer/rooms', async (c) => {
   if (!keys) return c.json({ error: 'invalid keys' }, 400);
 
   const queue = order === 'seq' ? keys : shuffle(keys);
+  // 起始游标:建房者若已单机复习到第 N 个,可带 start=N-1 让房间从第 N 个派发 —— 队列仍是全集
+  // (total 不变),但前 start 格记为建房者已完成、永不派发,队友从第 start+1 个接着分工。
+  // 夹 [0, total-1](至少留 1 格可领)。默认 0 = 从头(旧前端不带此字段即此行为,向后兼容)。
+  const startRaw = Number.isInteger(body.start) ? (body.start as number) : 0;
+  const start = Math.min(Math.max(0, startRaw), Math.max(0, queue.length - 1));
   const now = Date.now();
 
   // 惰性清理:顺手删掉过期房间(不阻塞主流程,错了也无所谓)
@@ -110,10 +117,10 @@ trainerRoomsRoutes.post('/trainer/rooms', async (c) => {
       await query(
         `INSERT INTO trainer_rooms
            (code, puzzle, set_slug, order_mode, keys, round, queue, next_index, total, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?::jsonb, 1, ?::jsonb, 0, ?, ?, ?)`,
-        [code, puzzle, setSlug, order, keys, queue, queue.length, now, now],
+         VALUES (?, ?, ?, ?, ?::jsonb, 1, ?::jsonb, ?, ?, ?, ?)`,
+        [code, puzzle, setSlug, order, keys, queue, start, queue.length, now, now],
       );
-      return c.json({ code, round: 1, total: queue.length, order, puzzle, set: setSlug });
+      return c.json({ code, round: 1, total: queue.length, order, puzzle, set: setSlug, claimed: start });
     } catch (e) {
       // 主键冲突才重试;其它错误直接抛
       if (String((e as Error).message).includes('duplicate') || String((e as Error).message).includes('unique')) continue;

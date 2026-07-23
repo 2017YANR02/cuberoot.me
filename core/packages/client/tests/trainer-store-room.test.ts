@@ -25,9 +25,9 @@ g.localStorage = makeLocalStorage();
 // 内存房间模拟:createRoom 记下 keys,claimRoomBatch 顺序出队(最多 count 格),nextRoundRoom 重置游标 + 轮次。
 const sim = { code: 'ROOM1', order: 'shuffle' as 'seq' | 'shuffle', round: 1, total: 0, keys: [] as string[], idx: 0 };
 vi.mock('@/lib/trainer-room-api', () => ({
-  createRoom: vi.fn(async (puzzle: string, set: string, order: 'seq' | 'shuffle', keys: string[]) => {
-    sim.order = order; sim.round = 1; sim.total = keys.length; sim.keys = keys; sim.idx = 0;
-    return { code: sim.code, puzzle, set, order, round: 1, total: keys.length };
+  createRoom: vi.fn(async (puzzle: string, set: string, order: 'seq' | 'shuffle', keys: string[], start = 0) => {
+    sim.order = order; sim.round = 1; sim.total = keys.length; sim.keys = keys; sim.idx = start;
+    return { code: sim.code, puzzle, set, order, round: 1, total: keys.length, claimed: start };
   }),
   getRoom: vi.fn(async (code: string) => ({
     code, puzzle: '3x3', set: 'pll', order: sim.order, round: sim.round, total: sim.total,
@@ -126,6 +126,8 @@ describe('trainer-store online room', () => {
     store.leaveRoom();          // 清掉上个用例可能残留的房间,避免 fillPreviews 误领
     store.setTiming(false);     // 三条一屏仅不计时模式
     store.setMultiScramble(true);
+    // leaveRoom 会触发单机 pickFresh 建复习队列;本用例测「无进度建房领全集」,先清掉单机进度。
+    useTrainerStore.setState({ recapQueue: [], recapPos: 0, recapSig: '' });
 
     await useTrainerStore.getState().createRoom();
     await flush();
@@ -153,6 +155,29 @@ describe('trainer-store online room', () => {
 
     store.leaveRoom();
     store.setMultiScramble(false);        // 复位,避免污染其它用例
+  });
+
+  it('有复习进度:建房全集都入,从已刷处继续、进度接着显示 recapPos/总数', async () => {
+    useTrainerStore.getState().leaveRoom();
+    boot(['A', 'B', 'C', 'D', 'E']);
+    const K = ['A', 'B', 'C', 'D', 'E'].map(n => caseKey(mkCase(n)));
+    // 白盒:模拟单机 seq 复习已刷过前 2 个(A、B),recapPos=3 指向当前题(C)。
+    // timing=true/multi=false:单条领取,currentKey 可确定断言。
+    useTrainerStore.setState({
+      mode: 'recap', recapOrder: 'seq', recapQueue: K, recapPos: 3, recapSig: 'sig',
+      timing: true, multiScramble: false,
+    });
+
+    await useTrainerStore.getState().createRoom();
+    await flush();
+    const s = useTrainerStore.getState();
+    expect(sim.keys).toEqual(K);                  // 全集都入(total 不变 = 5)
+    expect(s.room?.total).toBe(5);
+    expect(sim.idx).toBe(3);                       // 起始游标 = start+1(前 2 格已跳过,首题领了第 3 格)
+    expect(s.currentKey).toBe(K[2]);              // 从第 3 个(index 2)继续 = 单机当前题 C
+    expect(curRecap()).toEqual({ pos: 3, total: 5 }); // 进度接着显示 3/5,不重置到 1
+
+    useTrainerStore.getState().leaveRoom();
   });
 
   it('本机落后(别人已开新一轮)→ claim 返回 advanced → 自动重同步再领', async () => {
