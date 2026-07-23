@@ -85,13 +85,22 @@ export function reconTimeText(solve: ReconSolve): string {
   return formatReconSingle(solve.event, solve.value, solve.rawTime);
 }
 
-/** Server-side fetch of one recon by id with ISR caching. Returns null on any
- *  failure (404 / network) so callers can decide notFound() vs safe fallback. */
-export async function fetchReconForSeo(id: string): Promise<ReconSolve | null> {
+/** Server-side fetch of one recon by id with ISR caching.
+ *  Returns:
+ *   - the recon on success (public / unlisted — anyone with the link);
+ *   - the string 'private' when the recon exists but is私享 (server 403 + {private})
+ *     — the SSR fetch is unauthenticated so it can never see private content; the
+ *     detail page renders a client gate that re-fetches with the viewer's token;
+ *   - null on genuine 404 / network failure → callers notFound(). */
+export async function fetchReconForSeo(id: string): Promise<ReconSolve | 'private' | null> {
   try {
     const res = await fetch(apiUrl(`/v1/recon/${encodeURIComponent(id)}`), {
       next: { revalidate: REVALIDATE, tags: [reconCacheTag(id)] },
     });
+    if (res.status === 403) {
+      const body = await res.json().catch(() => null) as { private?: boolean } | null;
+      return body?.private ? 'private' : null;
+    }
     if (!res.ok) return null;
     return (await res.json()) as ReconSolve;
   } catch {

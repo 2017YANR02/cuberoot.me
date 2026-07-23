@@ -846,6 +846,50 @@
   font-weight: 600;
 }
 
+/* —— 可见性(YouTube 风格三选一:公开 / 不公开列出 / 私享) —— */
+.submit-visibility { display: flex; flex-direction: column; gap: 8px; }
+.visibility-options { display: flex; flex-direction: column; gap: 8px; }
+.visibility-option {
+  appearance: none;
+  font: inherit;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-default);
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.visibility-option:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border-default));
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+}
+.visibility-option.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.visibility-option-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  color: var(--muted-foreground);
+}
+.visibility-option.active .visibility-option-icon { color: var(--accent); }
+.visibility-option-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.visibility-option-title { font-size: 0.9rem; font-weight: 600; }
+.visibility-option.active .visibility-option-title { color: var(--accent); }
+.visibility-option-desc {
+  font-size: 0.78rem;
+  color: var(--muted-foreground);
+  line-height: 1.35;
+}
+
 /* --- 解法 label 后的 STM/TPS 内联显示 --- */
 .submit-label-stats {
   font-weight: normal;
