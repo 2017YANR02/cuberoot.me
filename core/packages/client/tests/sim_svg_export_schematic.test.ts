@@ -360,12 +360,31 @@ describe('exportSimSvgSchematic', () => {
     expect(svg.match(/<line /g)?.length).toBe(2);
     expect(svg.match(/<marker /g)?.length).toBe(2); // 黑 / 红各一枚箭头 marker
     expect(svg).toContain('marker-end="url(#');
-    expect(svg).toContain('stroke="#ff0000" stroke-width="4"');
+    // width 是世界单位,经同一透视比例换算 → px 线宽比 = 世界线宽比(4 : 默认 8)。
+    const swOf = (re: RegExp) => Number(svg.match(re)![1]);
+    expect(swOf(/<line[^>]*stroke="#ff0000" stroke-width="([\d.]+)"/)
+      / swOf(/<line[^>]*stroke="#000000" stroke-width="([\d.]+)"/)).toBeCloseTo(0.5, 2);
     // 层序:箭头在最后(所有小面 path 之后 → 盖在最上)
     expect(svg.lastIndexOf('<path')).toBeLessThan(svg.indexOf('<line'));
     // 取景:箭头伸出拼图右侧时视窗宽度随之扩大
     const far = exportSimSvgSchematic({ world, arrows: [{ p1: [0, 0, PYRA_A], p2: [PYRA_A * 3, 0, PYRA_A] }] });
     expect(Number(vb(far)[3])).toBeGreaterThan(Number(vb(base)[3]));
+  });
+
+  it('箭头线宽随视口等比(世界单位 × 中心深度透视比例;交换态小视口爆粗回归)+ vc 头比例', () => {
+    const scene = buildPyraScene();
+    const w1 = makeWorld(scene);
+    const w2 = { ...w1, width: 133, height: 133 }; // 交换态左上小框量级
+    const arrows = [{ p1: [-PYRA_A, 0, PYRA_A] as [number, number, number], p2: [PYRA_A, 0, PYRA_A] as [number, number, number] }];
+    const sw = (s: string) => Number(s.match(/<line[^>]* stroke-width="([\d.]+)"/)![1]);
+    const big = exportSimSvgSchematic({ world: w1, arrows });
+    const small = exportSimSvgSchematic({ world: w2, arrows });
+    // px 线宽 ∝ 视口高度 → 相对拼图的粗细恒定(旧固定 8px 在小视口下相对爆粗 3 倍)。
+    expect(sw(small) / sw(big)).toBeCloseTo(133 / 400, 3);
+    // 箭头头 = vc renderArrow 三角换算到 strokeWidth 单位(×0.033/0.12):
+    // 尖端伸出 1.5868、底边缩进 0.792、半宽 1.375 —— 头/线比例与 vc 逐数锁定。
+    expect(big).toContain('markerWidth="2.3788" markerHeight="2.75" refX="0.792" refY="1.375"');
+    expect(big).toContain('<path d="M 2.3788 1.375 L 0 0 L 0 2.75 Z"');
   });
 
   it('曲线箭头(visualcube s3):p3 → 二次贝塞尔 M…Q…,取景计入控制点', () => {
