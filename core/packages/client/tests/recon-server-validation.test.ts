@@ -64,3 +64,21 @@ describe('server validateRow accepts cosmetic chars outside comments', () => {
     expect(errs.some(e => e.includes('non-ASCII'))).toBe(true);
   });
 });
+
+// 可见性(migrations/0085):public / unlisted / private 三值枚举;缺省(不带该字段)由 DB
+// 默认 'public' 兜底,校验放行;非法值必须被拒,防绕过前端写入坏数据。
+describe('server validateRow enforces visibility enum', () => {
+  it('accepts the three valid values', () => {
+    for (const v of ['public', 'unlisted', 'private']) {
+      expect(validateRow({ visibility: v }).filter(e => e.includes('visibility'))).toEqual([]);
+    }
+  });
+
+  it('accepts rows that omit visibility (DB default fills in)', () => {
+    expect(validateRow({ event: '3x3' }).filter(e => e.includes('visibility'))).toEqual([]);
+  });
+
+  it('rejects an unknown visibility value', () => {
+    expect(validateRow({ visibility: 'secret' }).some(e => e.includes('visibility'))).toBe(true);
+  });
+});

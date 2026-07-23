@@ -10,7 +10,7 @@ import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import {
   rowToJson, jsonToRow, validateRow,
-  requireAuth, requireAdmin, checkRateLimit,
+  requireAuth, requireAdmin, optionalAuth, checkRateLimit,
   buildInsert, buildUpdate, buildDuplicateQuery, DUP_REASONS, ADMIN_WCA_IDS,
 } from '../utils/recon_helpers.js';
 import { fetchCubingAttempts } from '../utils/cubing_proxy.js';
@@ -43,7 +43,7 @@ const LIST_COLUMNS = [
   'reconer', 'reconer_id',
   'value', 'raw_time', 'average', 'ao_type',
   'regional_single_record', 'regional_average_record', 'regional_aoxr_record',
-  'stm', 'tps',
+  'stm', 'tps', 'visibility',
   // 多数解的打乱在 optimal_scramble；缺的（社区 Home 解等 ~234 条）落在 wca_scramble。
   // COALESCE 回退到 wca_scramble（仍以 optimal_scramble 列名出，客户端 optimalScramble||wcaScramble 无感），
   // 让卡片视图打乱图 + 搜索都拿得到打乱；只给缺 optimal 的行加数据，不对全表多带一列。
@@ -64,14 +64,26 @@ reconRoutes.get('/recon/list', async (c) => {
   const wcaId = c.req.query('wcaId');
   const comp = c.req.query('comp');
 
+  // 可见性:所有公开发现入口(社区总表 / 比赛页)一律只回 public;非公开(unlisted / private)
+  // 不进任何列表,连本人也不在这些「发现」面上看到自己的(与 YouTube 一致:你的不公开视频不进
+  // 公共推荐)。只有按选手定向查询(?wcaId,喂个人页 + 提交表单自动填充)才对本人放行自己的非公开。
   let rows: Record<string, unknown>[];
   if (wcaId) {
-    rows = await query(`SELECT ${LIST_COLUMNS} FROM recons WHERE person_id = ? ORDER BY id DESC`, [wcaId]);
+    const me = await optionalAuth(c);
+    const visClause = me ? `(visibility = 'public' OR added_by_id = ?)` : `visibility = 'public'`;
+    const params = me ? [wcaId, me.wcaId] : [wcaId];
+    rows = await query(
+      `SELECT ${LIST_COLUMNS} FROM recons WHERE person_id = ? AND ${visClause} ORDER BY id DESC`,
+      params,
+    );
   } else if (comp) {
-    // 比赛页(/wca/comp)逐把成绩 → 复盘的跳转映射:只拉本场的复盘(comp_wca_id 命中)。
-    rows = await query(`SELECT ${LIST_COLUMNS} FROM recons WHERE comp_wca_id = ? ORDER BY id DESC`, [comp]);
+    // 比赛页(/wca/comp)逐把成绩 → 复盘的跳转映射:只拉本场的公开复盘(comp_wca_id 命中)。
+    rows = await query(
+      `SELECT ${LIST_COLUMNS} FROM recons WHERE comp_wca_id = ? AND visibility = 'public' ORDER BY id DESC`,
+      [comp],
+    );
   } else {
-    rows = await query(`SELECT ${LIST_COLUMNS} FROM recons ORDER BY id DESC`);
+    rows = await query(`SELECT ${LIST_COLUMNS} FROM recons WHERE visibility = 'public' ORDER BY id DESC`);
   }
 
   return c.json(rows.map(rowToJson));
@@ -89,6 +101,7 @@ reconRoutes.get('/recon/:id/same-scramble', async (c) => {
     `WITH target AS (SELECT ${norm} AS k FROM recons WHERE id = ?)
      SELECT ${LIST_COLUMNS} FROM recons, target
      WHERE recons.id <> ?
+       AND recons.visibility = 'public'
        AND target.k <> ''
        AND ${norm.replace(/optimal_scramble/g, 'recons.optimal_scramble').replace(/wca_scramble/g, 'recons.wca_scramble')} = target.k
      ORDER BY raw_time ASC NULLS LAST
@@ -110,12 +123,18 @@ reconRoutes.get('/recon/person/:wcaId', async (c) => {
   const wcaId = (c.req.param('wcaId') ?? '').trim();
   if (!wcaId) return c.json([]);
   const coMatch = JSON.stringify([{ id: wcaId }]);
+  // 可见性:公开的全放行;非公开(unlisted / private)仅当查看者是添加者本人时才带出,
+  // 让本人在自己的个人页看得到自己不公开列出 / 私享的复盘。
+  const me = await optionalAuth(c);
+  const visClause = me ? `(recons.visibility = 'public' OR recons.added_by_id = ?)` : `recons.visibility = 'public'`;
+  const visParams = me ? [me.wcaId] : [];
   const rows = await query<Record<string, unknown>>(
     `SELECT ${PERSON_COLUMNS} FROM recons
-     WHERE person_id = ? OR reconer_id = ? OR added_by_id = ?
-        OR NULLIF(co_persons, '')::jsonb @> ?::jsonb
+     WHERE (person_id = ? OR reconer_id = ? OR added_by_id = ?
+        OR NULLIF(co_persons, '')::jsonb @> ?::jsonb)
+       AND ${visClause}
      ORDER BY id DESC`,
-    [wcaId, wcaId, wcaId, coMatch],
+    [wcaId, wcaId, wcaId, coMatch, ...visParams],
   );
   return c.json(rows.map(rowToJson));
 });
@@ -124,7 +143,7 @@ reconRoutes.get('/recon/person/:wcaId', async (c) => {
 // 首页「今日复盘」用:取 id 最大(最新录入)的一条,含 solution 等全字段 + edits 覆盖层。
 // NOTE: 必须先于 /:id 注册,否则 'latest' 会被当成 :id。
 reconRoutes.get('/recon/latest', async (c) => {
-  const rows = await query('SELECT * FROM recons ORDER BY id DESC LIMIT 1');
+  const rows = await query(`SELECT * FROM recons WHERE visibility = 'public' ORDER BY id DESC LIMIT 1`);
   if (rows.length === 0) {
     c.header('Cache-Control', 'public, max-age=300');
     return c.json(null);
@@ -155,9 +174,10 @@ reconRoutes.get('/recon/today', async (c) => {
   const rows = await query<Record<string, unknown>>(
     `SELECT ${TODAY_COLUMNS} FROM recons
      WHERE created_at IS NOT NULL
+       AND visibility = 'public'
        AND ${dayExpr} = (
          SELECT ${dayExpr} FROM recons
-         WHERE created_at IS NOT NULL
+         WHERE created_at IS NOT NULL AND visibility = 'public'
          ORDER BY created_at DESC, id DESC LIMIT 1
        )
      ORDER BY created_at DESC, id DESC
@@ -165,7 +185,7 @@ reconRoutes.get('/recon/today', async (c) => {
   );
   if (rows.length === 0) {
     // created_at 全空的旧库:退回最新一条
-    const fallback = await query<Record<string, unknown>>(`SELECT ${TODAY_COLUMNS} FROM recons ORDER BY id DESC LIMIT 1`);
+    const fallback = await query<Record<string, unknown>>(`SELECT ${TODAY_COLUMNS} FROM recons WHERE visibility = 'public' ORDER BY id DESC LIMIT 1`);
     c.header('Cache-Control', 'public, max-age=300');
     return c.json(fallback.map(rowToJson));
   }
@@ -912,7 +932,19 @@ reconRoutes.get('/recon/:id', async (c) => {
     return c.json({ error: 'Not found' }, 404);
   }
 
-  const result = rowToJson(rows[0] as Record<string, unknown>);
+  // 私享(private):仅添加者本人 + 管理员可取,其余人 403(且携 private 标记,让详情页
+  // SSR 能区分「私享」与「不存在」——私享渲染登录门,不存在走 404)。public / unlisted 放行。
+  const raw = rows[0] as Record<string, unknown>;
+  if (raw.visibility === 'private') {
+    c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+    const me = await optionalAuth(c);
+    const isOwner = !!me && (me.wcaId === raw.added_by_id || ADMIN_WCA_IDS.includes(me.wcaId));
+    if (!isOwner) {
+      return c.json({ error: 'This reconstruction is private', private: true }, 403);
+    }
+  }
+
+  const result = rowToJson(raw);
 
   // 合并编辑覆盖层(PG JSONB driver 已经反序列化为 JS object)
   const edits = await query<{ fields: Record<string, unknown> }>(

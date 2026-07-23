@@ -14,6 +14,9 @@ CREATE TABLE recons (
   -- 复盘性质:wca=WCA 官方比赛 / non_wca=非 WCA 比赛 / practice=练习(见 migrations/0065)
   official        VARCHAR(10) NOT NULL DEFAULT 'wca'
                     CHECK (official IN ('wca', 'non_wca', 'practice')),
+  -- 可见性:public=公开列出 / unlisted=不公开列出(仅直链)/ private=私享(仅本人+管理员)(见 migrations/0085)
+  visibility      VARCHAR(10) NOT NULL DEFAULT 'public'
+                    CHECK (visibility IN ('public', 'unlisted', 'private')),
   event           VARCHAR(20) NOT NULL DEFAULT '3x3',
   method          VARCHAR(20),
   date            DATE,

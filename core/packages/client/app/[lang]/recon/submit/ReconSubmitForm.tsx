@@ -66,7 +66,7 @@ import { simPuzzleForReconEvent, buildSimQuery } from '@/lib/sim-recon-link';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { loadComps, type Comp } from '@/lib/comp-search';
 import type { WcaPersonLite } from '@/lib/wca-api';
-import { ArrowLeft, ArrowRightLeft, History, Home, LogIn, UserPlus, ListPlus, AlertTriangle, Rows3 } from 'lucide-react';
+import { ArrowLeft, ArrowRightLeft, History, Home, LogIn, UserPlus, ListPlus, AlertTriangle, Rows3, Globe, Link2, Lock } from 'lucide-react';
 import { Spinner } from '@/components/Spinner/Spinner';
 import '../recon.css';
 import './recon_submit.css';
@@ -95,7 +95,15 @@ const REUSE_KEYS: (keyof ReconSolve)[] = [
   'average', 'aoType', 'regionalAverageRecord',
   'cube', 'videoUrl', 'note', 'caption',
   'reconer', 'reconerId', 'reconDate',
+  'visibility',
 ];
+// 可见性选项(YouTube 风格):公开列出 / 不公开列出(仅直链)/ 私享(仅本人)。值入 recons.visibility。
+const VISIBILITY_OPTIONS = [
+  { value: 'public', Icon: Globe, title: { zh: '公开', en: 'Public' }, desc: { zh: '所有人都能在复盘列表里发现', en: 'Anyone can find it in the reconstruction list' } },
+  { value: 'unlisted', Icon: Link2, title: { zh: '不公开列出', en: 'Unlisted' }, desc: { zh: '不进列表,但有链接的人都能看', en: 'Not listed, but anyone with the link can view' } },
+  { value: 'private', Icon: Lock, title: { zh: '私享', en: 'Private' }, desc: { zh: '只有你自己能看', en: 'Only you can view' } },
+] as const;
+
 // 同选手 + 同打乱重复提交时,必须二选一说明原因(值入 recons.dup_reason);占位打乱 '?' 已豁免不判重。
 const DUP_REASON_OPTIONS = [
   { value: 'repeat_scramble', label: { zh: '重复打乱', en: 'Repeat scramble' } },
@@ -182,6 +190,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
   const [form, setForm] = useState<Partial<ReconSolve>>({
     official: 'wca',
+    visibility: 'public',
     event: '3x3',
     method: 'CFOP',
     person: '',
@@ -2102,6 +2111,32 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     placeholder="yyyy-mm-dd" pattern="\d{4}-\d{2}-\d{2}" />
                 </label>
               </div>
+
+            {/* 可见性(YouTube 风格三选一):公开列出 / 不公开列出 / 私享 */}
+            <div className="submit-block submit-visibility">
+              <span className="submit-label">{tr({ zh: '可见性', en: 'Visibility' })}</span>
+              <div className="visibility-options" role="radiogroup" aria-label={tr({ zh: '可见性', en: 'Visibility' })}>
+                {VISIBILITY_OPTIONS.map(opt => {
+                  const active = (form.visibility ?? 'public') === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      className={`visibility-option${active ? ' active' : ''}`}
+                      onClick={() => setField('visibility', opt.value)}
+                    >
+                      <span className="visibility-option-icon"><opt.Icon size={18} /></span>
+                      <span className="visibility-option-text">
+                        <span className="visibility-option-title">{tr(opt.title)}</span>
+                        <span className="visibility-option-desc">{tr(opt.desc)}</span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
             {/* Submit buttons */}
             <div className="submit-actions">
