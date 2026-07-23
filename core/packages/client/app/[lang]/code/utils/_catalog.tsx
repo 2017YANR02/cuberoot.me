@@ -136,6 +136,15 @@ export const CATALOG: UtilEntry[] = [
     en: 'Shared single-line solve state machine for the 15 puzzle-optimal-solver pages: unifies sync (setTimeout-deferred) and async (cancellable Promise) engines into one idle/solving/done/error state; tableErrorMode splits offline-table fetch failures from notation-parse failures (message prefixed bad:).',
   },
   {
+    name: 'useWeChatShare',
+    sig: 'useWeChatShare(data: WeChatShareData | null | undefined): void',
+    imp: "import { useWeChatShare } from '@/hooks/useWeChatShare';",
+    usage: "useWeChatShare({ title: seo.title, desc: seo.excerpt, imgUrl });",
+    category: 'hook',
+    zh: '给单个页面覆盖微信朋友圈/会话分享卡片的标题/描述/图片(全站默认见 components/WeChatShareSync,用当前 document.title)。非微信内置浏览器 / 后端未配公众号 → 静默 no-op。',
+    en: 'Per-page override of the WeChat Moments/chat share-card title/desc/image (site default: components/WeChatShareSync, using document.title). No-ops outside WeChat or when the backend has no MP account configured.',
+  },
+  {
     name: 'useT',
     sig: 'useT(): (zh: string, en: string) => string',
     imp: "import { useT } from '@/hooks/useT';",

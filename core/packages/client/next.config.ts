@@ -238,10 +238,12 @@ const nextConfig: NextConfig = {
         // id was a MISS function render of an auth-gated, zero-SEO edit form.
         // One static shell backs every id (see recon/submit/[editId]/page.tsx).
         { source: "/:lang(en|zh)/recon/submit/:editId", destination: "/:lang/recon/submit/_" },
-        // Forum subforum + thread pages: unbounded id spaces, same sentinel
-        // shells (see forum/f/[slug]/page.tsx and forum/t/[id]/page.tsx).
+        // Forum subforum list: unbounded slug space, sentinel shell (client reads
+        // the slug from window.location — see forum/f/[slug]/page.tsx).
         { source: "/:lang(en|zh)/forum/f/:slug", destination: "/:lang/forum/f/_" },
-        { source: "/:lang(en|zh)/forum/t/:id", destination: "/:lang/forum/t/_" },
+        // NOTE: /forum/t/:id is deliberately NOT a sentinel — it runs ISR +
+        // generateMetadata so a shared thread link carries a per-thread social
+        // card (title + excerpt). See forum/t/[id]/page.tsx (mirrors recon/[id]).
         // Competition detail: ~17k comps, pure client shell (all data fetched in the
         // browser). Same sentinel trick — one static shell backs every comp slug so a
         // crawler / post-deploy sweep never burns a function render per slug (this was
@@ -253,11 +255,14 @@ const nextConfig: NextConfig = {
         // spike as the comp page above). One static sentinel shell.
         // See recon/person/[wcaId]/page.tsx.
         { source: "/:lang(en|zh)/recon/person/:wcaId", destination: "/:lang/recon/person/_" },
-        // Alg per-case metadata detail: pure client shell (loadAlg in the browser). The
-        // case space grows with the alg DB (1LLL alone ~4k cases), so route every case to
-        // ONE static sentinel shell — no per-case function render on a crawler sweep.
-        // See alg/[puzzle]/[set]/case/[name]/page.tsx.
-        { source: "/:lang(en|zh)/alg/:puzzle/:set/case/:name", destination: "/:lang/alg/_/_/case/_" },
+        // Alg subgroup list AND per-case detail share one segment
+        // (/alg/<puzzle>/<set>/<seg>): <seg> is either a subgroup (ur / u / a+) or a
+        // single case (ur3 / s+b1 / a+-eo). Both are pure client shells (loadAlg in the
+        // browser). The space grows with the alg DB (1LLL alone ~3.4k cases), so route
+        // every URL to ONE static sentinel shell — no per-URL function render on a
+        // crawler sweep. The negative lookahead keeps the real static siblings
+        // (run / select) on their own routes. See alg/[puzzle]/[set]/[subgroup]/page.tsx.
+        { source: "/:lang(en|zh)/alg/:puzzle/:set/:seg((?!run$|select$)[^/]+)", destination: "/:lang/alg/_/_/_" },
       ],
       afterFiles: [
         // Dev only: FMC chain solver (vendored cubelib) runs as a local native
