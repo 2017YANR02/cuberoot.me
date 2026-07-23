@@ -1,13 +1,13 @@
 # Scramble samples — eo / eo_xcross / W / bin 5
-# Population in this bin: 710
+# Population in this bin: 712
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 1663999001,R2 U2 B D2 B' R2 F2 D2 R2 F' U' R2 F' D' F2 R2 B2 L',W,GA Cubers Return A 2021 (2021-07-10),333oh Final B E2
 4008423001,R2 U2 F' U R U2 D2 R2 F2 U' R U2 L D2 L' B2 L',W,Hanoi COP Open 2024 (2024-08-11),333 R1 F #5
-1228058002,B2 U2 R2 U2 R2 D B2 L2 F' D2 B R2 F L2 D' F' U R' B' D,W,Israel Summer Open 2019 (2019-07-17~18),333mbf Final A #1
+5754535010,R2 D L2 F' B2 D2 L2 B D' F L B2 U2 R' D2 L B2 D2 L B,W,CubingUSA New England Quiet Championship 2026 (2026-07-18),333mbf Final A #1
 3939169016,D2 R U2 R U2 L' U2 R' F2 B L B' L U L2 U L2 F L2 U2,W,Big and Blind North Andover 2024 (2024-07-13),333mbf Final B #1
 28514001,F U2 F2 R2 F2 D2 B U L2 B' U2 D2 L2 B U2 F R2 U2 B',W,Bucharest Rubik Summer 2014 (2014-06-15),333 R2 B E2
 1039850001,D R' F2 B L F R F' L' B L2 U2 D' B2 R2 B2 U' B2 D',W,Carte Blanche Kube Open 2019 (2019-03-02~03),333oh Final D #4

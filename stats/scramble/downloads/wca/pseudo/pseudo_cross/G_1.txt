@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_cross / G / bin 1
-# Population in this bin: 328
+# Population in this bin: 330
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 16806001,L2 B L2 F2 L2 R2 F' R2 F' D2 F' D R U2 L' B' U2 L' U' F' U2 B R,G,Castellon Open 2014 (2014-05-02~03),333bf Final A #2
@@ -33,7 +33,7 @@
 419419001,D2 R' U D R2 D' F' U R' B L2 F2 U' L2 D L2 D B2 L2 D',G,Cubelelo Winter Open 2016 (2016-12-22~23),333 R1 B #2
 426374001,F2 L' D2 R2 F2 R B2 R B' L2 R U L' F' U R F2 R',G,Dutch Winter 2017 (2017-01-06~07),333 R2 B E2
 5027894001,B' L' D2 L2 B2 D' L2 R2 D' U' B R B U2 L2 U B2 F L2,G,Visé Sunday Open 2025 (2025-09-14),333 Final B #1
-5603707001,F D U2 L U2 L2 F2 R2 U2 R' B F R' B D B' D' B' F',G,Chengdu Welcoming Summer 2026 (2026-05-04),333 R1 G #2
+5750550009,R2 B' D2 R2 U2 F2 R' F2 R2 F2 U2 R' B' R2 B D' L' D' B2 L B2,G,GAN New Zealand Nationals 2026 (2026-07-10~12),333mbf Final A E1
 444278001,B2 F' D2 L2 F2 U2 L2 B R2 U R D L B2 D F' R' D' B' U L' F',G,Wisconsin Winter 2017 (2017-02-12),333bf R1 B #1
 4433820001,F' B2 L' B2 L2 B' L' F' U2 D' B2 U2 F2 U L2 U' D2 L',G,Paulo VI Cartago 2025 (2025-01-19),333 R2 B E2
 4546543001,U' D' B D' B D2 B2 D' B U B2 R' F2 D2 L' U2 D2 R,G,SoCal Speedcubing at Super STEM Saturday 2025 (2025-03-08),333 R1 A #4
@@ -122,7 +122,7 @@
 1283036001,D2 L B2 D B' L2 B2 D' F L' B' L2 U2 F' R2 L2 D2 R2 F,G,CCC Qualification Saratov 2019 (2019-08-24~25),333oh Final B #4
 1291031035,R2 B2 L2 D U2 R2 F2 U F D' R B' R2 U2 B' D2 L' D' R B R,G,Big n Blind in Bangalore 2019 (2019-08-31~09-02),333mbf Final A #2
 1296129052,B2 D2 R2 D L2 F2 D' B2 U2 F2 R' F2 U' L F L U B2 D2 R2 B R,G,Mental Breakdown Germany 2019 (2019-09-14~15),333mbf Final A #2
-1309476001,B D2 B' L2 B R2 U2 F U2 F2 D F' R F2 U2 B2 F2 R U F',G,UPM Open 2019 (2019-09-21~22),333 R2 B #3
+5750594009,R2 B' D2 R2 U2 F2 R' F2 R2 F2 U2 R' B' R2 B D' L' D' B2 L B2,G,GAN New Zealand Nationals 2026 (2026-07-10~12),333mbf Final A #2
 3867591001,B2 D L2 U2 B' L U2 B' R2 F R2 F2 U L2 U B2 D' L2 U2,G,Spokane Spring 2024 (2024-06-15),333oh R1 B E1
 1333411001,F2 D' U' B2 D R2 U' R B' F' U R U2 F D' B F D R',G,Shandong Open 2019 (2019-10-04~05),333 R1 H E2
 1337177033,F2 R' D2 L' R2 B2 D2 U2 B' L2 R' B' D F D L' D' L2 U2 B,G,Altona Algorithms 2019 (2019-10-05~06),333mbf Final A #1

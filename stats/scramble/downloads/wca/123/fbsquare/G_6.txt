@@ -2,7 +2,7 @@
 # Population in this bin: 61
 # Samples listed: 61 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 105122001,R2 D B2 L2 U B2 D2 L2 R2 B2 U' B L' U2 R' B' L U' F' D' R',G,New Avge Open 2015 (2015-01-31~02-01),333 R2 A #2

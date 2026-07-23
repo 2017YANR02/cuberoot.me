@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxxcross / R / bin 7
-# Population in this bin: 876
+# Population in this bin: 880
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 3853392001,L' B L' U2 D2 R2 F D' L F' D2 R2 U F2 D F2 D L2,R,Prime Cubing Day Seoul 2024 (2024-06-15),333 R1 E E1
@@ -121,7 +121,7 @@
 4393167001,R2 F2 D2 U2 F' D2 F' U B' R2 B2 L2 B U F' U B R',R,Twixmas Flen 2024 (2024-12-27~29),333 R1 C #5
 573288001,D2 F2 L2 F2 R' U2 R F2 D2 R D L D R' B2 L2 F R',R,Kota Raja Open 2017 (2017-08-20),333oh Final B #2
 1141267027,B2 U2 L F2 L' F2 L U R F2 R' F L U2 F D' B D2 B' L,R,Cervantes Cubea 2019 (2019-03-30~31),333mbf Final A #1
-1327415027,B R2 F' L2 D2 B2 F' D2 L2 F D' B' L' R F' U B L' D L D2 B' L,R,Comas Speedsolving 2019 (2019-09-28~29),333mbf Final A #1
+5753241001,D' R2 F2 B2 R' U2 D R L' D' R2 U D2 R2 U2 F2 R,R,UNSA Speedcubing Otoño 2026 (2026-07-18~19),333 Final A #4
 5549391001,B R2 D2 F' U2 B R' B U' B2 U L2 R2 U L D' L2,R,Amman Spring A 2026 (2026-04-17),333 Final A #5
 2523402001,F2 L' D2 L2 B' L2 U2 B' L2 B' R2 L F' R' U2 R B2 U',R,Cavite Speedcubing Open IV 2023 (2023-02-26),333 R2 B #5
 1151595001,U2 L D2 R2 D2 B2 L' F' D B2 F' L U B L' D U' F,R,LLS II 2019 (2019-05-18),333 R1 C #2

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xcross / BGOR / bin 2
-# Population in this bin: 533
+# Population in this bin: 534
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 3733001,U2 R F' L' B2 L F2 R D' F' L2 D2 F2 D2 L' U2 R2 U2,G,Kharkiv Special 2014 (2014-03-22),333ft R1 A #2
@@ -20,7 +20,7 @@
 2918825001,R' U' F L' U' R2 D' R F' R' B' L2 B2 R2 D2 F U2 L2 B L2 F2 L2 U' R' U' F,G,Aldeilla FMC Open 2023 (2023-07-22~23),333fm Final A #2
 122236001,F2 U' F2 D U R2 D U' F L U' B' L2 D2 L U B2 D2,G,Topkek Rubik's Open 2015 (2015-03-29),333 R1 A #4
 5460766001,B R' U2 L' D' F2 L2 R2 D2 U' F2 R B' D2 U F' D2 U2,G,MYHM HaNxNoi 2026 (2026-03-21~22),333 R1 A #5
-149376001,L' D' R' F2 U2 L U B' R L F2 D2 L2 F' R2 U2 B' R2 U2 F',R,Velbert Open 2015 (2015-06-06~07),333oh R1 A #3
+5756413001,B D F D2 L2 B' F2 R2 B U2 B' U' L' U2 L B U B' D2,R,Guelaguetza Oaxaca 2026 (2026-07-18~19),333oh R2 B #4
 3130949001,B U2 R U B2 L2 D L2 D2 F2 U' L2 F R' B2 D R2 D L2,B,Mongolian Championship 2023 (2023-09-30~10-01),333 R1 C #2
 5034811002,B2 U L2 U2 B2 D' R2 B2 L B2 D' U R' D F' D2 R' F' D B' L,B,Cube Factory League Brzeziny 2025 (2025-09-20~21),333mbf Final D #1
 188075001,U' L2 U F2 L2 R2 U2 F' U' B2 D' L2 D R2 B' U,O,LMDL Open 2015 (2015-09-12),333 R1 B #3

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / BGOR / bin 6
-# Population in this bin: 260
+# Population in this bin: 262
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 6373001,U D2 F U' L' F2 D R2 L D' L2 D' F2 R2 F2 U F2 R2 D,B,Rumia Open 2014 (2014-03-29~30),333 R1 A E2
@@ -135,13 +135,13 @@
 4528530001,F' R' B2 R D2 F2 L F2 L B2 F2 R' F' U' R' U' F L' F R2,O,Kyiv Big & Blind Winter 2025 (2025-02-22~23),333 R1 D #4
 2497401001,F U2 F' L2 B' L2 F' D B' D2 F D' U2 L R2 B D R2,O,Waterloo Favourites B 2023 (2023-02-19),333oh Final A #3
 2512292001,L2 D2 R2 D F2 D2 U' F U2 F2 R2 F2 R2 D R' B2 R D2,R,Bretzel Open 2023 (2023-02-25~26),333oh R1 C E2
-4944492001,F2 D U' B2 D R2 U' R F' R U2 B2 L2 B' R F D2 R B R2,B,UNICAMP Cube 2025 (2025-08-16),333bf R1 B #1
+5752138001,F R2 F L' F2 L2 B' D2 B F2 L2 D F D' U2 F' L2 R',R,Nanchang Summer 2026 (2026-07-18),333 R3 B #4
 2566905001,B' L F U2 L B2 U R2 F' D' L2 F2 U L2 D2 B2 U' B' L,B,Porcelain Cubing 2023 (2023-03-18~19),333oh Final A #5
 2568701050,B' R' B2 F D2 F' L2 U2 L' U' B2 L' D2 B' R2 D2 R B R2,O,Di Tella Open 2023 (2023-03-18~19),333mbf Final B #1
 2584817001,L2 D2 R' U2 L' U R' U2 L F' U' F D2,G,Pickering D 2023 (2023-03-26),333 R2 B #2
 2609415001,L U' F R2 B2 L2 D2 B L2 B' D' L' F2 L D U' L2 B F2,O,Cube Carnival Bangladesh 2023 (2023-03-31),333oh Final B E2
 2659245001,D' U' R2 F2 D2 B2 D F2 L' F' D L' U2 F2 L U2 R' U L,R,DC Open April Saturday 2023 (2023-04-22),333 R1 A #4
-5034902001,B2 F2 L' B2 R' D2 B2 R2 U B' U F2 D2 F R F R2 U' R2,O,Corby Autumn 2025 (2025-09-20~21),333 R1 B #4
+5754530001,B' L2 B' L2 B2 U B2 D' F2 R' U B2 D2 F2 D' L' D,O,Run & Cube 5K Cubikon NH 2026 (2026-07-15),333oh Final B E2
 2686675001,L2 R U2 L2 R' F2 R F2 D' R' D2 L2 U2 B L F2 R' F2 D',O,Chilling in Canberra 2023 (2023-05-06~07),333oh R1 B #3
 2727996001,L2 R2 B' F' L2 F L2 U F L2 R' U2 L D' F U2 B U2,G,BC Spring Solving A 2023 (2023-05-21),333 R1 B #4
 5164135001,F L2 B R2 D2 L2 F D2 R2 U' B R2 B2 D2 R U2 R' D' F',O,Sequoia Cubing 2025 (2025-11-01),333oh R1 B #2

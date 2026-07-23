@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxcross / B / bin 4
-# Population in this bin: 156
-# Samples listed: 156 (all entries in this bin)
+# Population in this bin: 157
+# Samples listed: 157 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 31993001,B2 D' L2 B2 R2 F2 U' L2 U B' U' B F' R B' L B' F2 L',B,ULA Rubiks 2014 (2014-06-27~28),333 R2 B #2
@@ -161,3 +161,4 @@
 5702637001,F2 D' B2 R' B2 L2 D2 L2 F2 L2 B D F' U2 B F L U,B,WCA South American Championship 2026 (2026-06-12~15),333oh R1 A #3
 5714305001,D' B2 D' L' F D R U D' R2 D2 L2 B2 U' D2 B R B2 L',B,Ruta Cubera: Vila-real Open 2026 (2026-06-20~21),333bf Final B E1
 5714763014,U F' R D' U2 B F2 R2 B D2 R2 L U' B2 R2 F2 L' D L,B,Greenwoods Big Blind & Beyond 2026 (2026-06-21),333mbf Final A #1
+5753833001,D2 R' D F2 R D F' D F D' R2 D' R2 F2 U2 L2 D2,B,South Omaha Scramble 2026 (2026-07-18),333oh R1 A #3

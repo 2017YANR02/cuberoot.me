@@ -2,7 +2,7 @@
 # Population in this bin: 5
 # Samples listed: 5 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 1228058002,B2 U2 R2 U2 R2 D B2 L2 F' D2 B R2 F L2 D' F' U R' B' D,R,Israel Summer Open 2019 (2019-07-17~18),333mbf Final A #1

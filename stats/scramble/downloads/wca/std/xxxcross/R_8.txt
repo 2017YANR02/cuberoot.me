@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxcross / R / bin 8
-# Population in this bin: 957
+# Population in this bin: 960
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 4676817001,R' U2 B U2 B' R2 F U' B' F' U' F D R2 D2 L2 B,R,Let's Twist Again Landsbro 2025 (2025-04-26~27),333 Final B #1
@@ -198,7 +198,7 @@
 3462388001,U' L' B L2 F2 U' F2 D R2 D U2 R2 B R D R F U' B,R,Oasis de Castilla 2024 (2024-01-28),333 R2 B #4
 3955413001,B R B' R' U2 B R2 U' R D' R' U2 L D2 R' U2 D2 F2 L,R,Rubik's WCA North American Championship 2024 (2024-07-18~21),333oh R1 I E2
 4864237001,F2 R U2 B R2 L D' F L' F2 L2 D' R2 U2 D' B' D2,R,Long Beach Fantastic Memory Challenge 2025 (2025-07-13),333bf Final A E2
-1920153001,L D2 B2 D' L2 B2 D' B2 U R2 D R' B2 R B L' U2 L',R,Brasília Autumn 2022 (2022-05-14~15),333 R1 D #1
+5752543001,L F' U B U' B2 R2 F' B2 R' F2 D2 R F2 D2 R' L2 F2 B',R,Mountain House Open 2026 (2026-07-18),333oh R1 B #1
 690038001,R2 B2 D' F2 D' U' R2 U' F2 U' B R2 U2 R' D' L D2 R F' D2,R,Caribe Challenge 2018 (2018-01-20~21),333bf Final C E2
 3067618001,R' F' D' F2 D' R2 U L2 R2 U F D2 U2 L' D' U' F L2 R2,R,Square-Fun in Bloomsburg 2023 (2023-09-09),333oh Final A #5
 1474912017,R2 B2 L2 D' L2 R2 B2 D L2 B2 L R' D B2 F' L R2 U L' D' B2 L B,R,Dallas Cubemas 2019 (2019-12-21~22),333mbf Final C #1

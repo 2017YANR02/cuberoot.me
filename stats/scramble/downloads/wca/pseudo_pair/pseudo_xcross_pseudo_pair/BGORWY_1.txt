@@ -2,7 +2,7 @@
 # Population in this bin: 32
 # Samples listed: 32 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 205892001,F2 D B2 R2 U' F2 L2 U' R' D2 B' F' L2 F' R' D2 U2 R B' L B2,Y,Beijing Open 2015 (2015-10-24~25),333bf R1 A #2

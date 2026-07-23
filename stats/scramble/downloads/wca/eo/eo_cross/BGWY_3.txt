@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / BGWY / bin 3
-# Population in this bin: 823
+# Population in this bin: 825
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 1706763001,D' B2 F2 U L2 D2 L2 B2 D' R U L' D2 L2 D' B L D' L',Y,Kharkiv Cubefall 2021 (2021-10-23~24),333 R2 B #4
@@ -48,7 +48,7 @@
 4289625001,B' D2 L F2 R' U2 R F2 L' B' R F' R' F R U2 R U,B,Campeonato Brasileiro de Cubo Mágico 2024 (2024-11-15~17),333 R2 B #4
 3991472001,R F2 R' D2 L' B2 D2 R B L B R2 F' L F' L2 R2 B2,B,Slovak Nationals 2024 (2024-08-02~04),333 R3 B E2
 228118001,F2 U' F2 U B2 U' F2 L2 U' R' U2 L U' R D2 U2 F' R' D' F2 L' F',Y,Santa Lucía Open 2015 (2015-12-12),333bf Final A #1
-1434621001,U R2 D' F2 U B2 U' L2 U' B' D' F2 U' L F R2 U' F',G,Lion's Cup 2019 (2019-11-30),333 R2 A #5
+5754407001,U' R B2 U' B' D F2 L' B L' B2 U2 F2 D F2 B2 R2 B2 D',G,Chenango County Summer 2026 (2026-07-19),333 Final B #4
 2240139001,D F2 U L2 D F2 U' F2 L2 B U B' U2 F2 L U2 B F' R2,G,Santiago UV Open 2022 (2022-10-15~16),333 R2 B E1
 255120001,L B' L' D' F' U' B D' B' R2 L U2 B' D2 R2 B2 R2 L2 B,Y,Melrose Winter 2016 (2016-02-20),333 R2 A #2
 3992980001,F L2 U' B2 R2 F2 U' R2 B' L' R' D' L' F2 D B D U,B,Michigan Mini 21 2024 (2024-08-06),333 R2 B E1

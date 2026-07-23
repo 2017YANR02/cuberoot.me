@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / W / bin 2
-# Population in this bin: 408
+# Population in this bin: 410
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 3147741001,F R' D B2 R2 D' R' U2 F L2 F2 R D2 L2 U2 F2 L D2 U L,W,Nacionales Uruguayas 2023 (2023-10-06~08),333bf R1 B E1
@@ -98,7 +98,7 @@
 835031031,L2 B2 L2 R2 D U2 F L' D' U R U' B2 F' U B' R2 F L' F',W,WCA European Championship 2018 (2018-07-19~22),333mbf Final A #1
 835312001,R2 B2 F2 D2 L' D2 B2 D2 R D' L' U2 B' L U F2 R2 U2 L2,W,Uzhgorod Summer 2018 (2018-07-14~15),333oh R1 B E1
 863986001,B2 R' D2 U2 F2 R2 U2 L2 F' R' B2 L2 F' U' L2 R' F L' R',W,Ark 2018 (2018-08-24~26),333 R2 B #5
-864502001,F2 U B2 U' F2 U' B2 L' F' D B L U2 R B D L' R',W,Sens Open 2018 (2018-08-25~26),333oh Final A E2
+5750761001,R B U L2 U2 L2 F R2 B D2 U F' L' U B2 D U R2,W,GAN New Zealand Nationals 2026 (2026-07-10~12),333oh R2 A #4
 871051001,R' D' F U2 F' L B D2 L2 B L B2 D2 R2 L' U2 R2 D2 F2,W,Winnipeg Open 2018 (2018-09-02),333 R2 A E1
 5403818001,R U R U2 B2 R2 F' R2 D2 F2 R2 D2 R2 U' R F R U2 B2 R',W,Happy Cubing Honduras 2026 (2026-02-22),333 R1 A #2
 3651201001,D' U2 B2 D B2 L2 B2 L D' U2 R B2 D' R' D' U R F2 L' F2,W,IndalOpen 2024 (2024-04-06~07),333bf Final A E1
@@ -171,7 +171,7 @@
 1853941001,R' F2 L2 U2 B2 U L2 B2 U' R B2 F' L' D2 L F' D' R B2,W,Ohio State Expo Open 2022 (2022-04-01~03),333 R1 A #5
 1883091031,R D2 R D2 B2 D' B' R' U' B L2 B' R2 B2 U2 L2 D2 B R' U2 B' L',W,Paris Open 2022 (2022-04-16~18),333mbf Final A #1
 1912867001,F' L' F' B R' D F2 B' L' R2 U D2 R2 F2 D2 L2 U F,W,Princeton Spring 2022 (2022-05-07),333 Final A E1
-5034297001,D L U' L D F2 D2 L2 U2 B L2 U' B L' U L R B' L2,W,Cubing Kerala Travancore Open 2025 (2025-09-21),333mbf Final A #1
+5754535010,R2 D L2 F' B2 D2 L2 B D' F L B2 U2 R' D2 L B2 D2 L B,W,CubingUSA New England Quiet Championship 2026 (2026-07-18),333mbf Final A #1
 4410104019,D R' B F L2 B U2 L2 F' U2 L B U2 R D' F U2 R2 B',W,Vilnius Winter Open 2025 (2025-01-04~05),333mbf Final A #1
 5170456001,U2 B' L' D F2 D2 F L' B U2 D2 R2 D' B2 D2 R2 F2 B2 R2,W,Thailand Cool Down 2025 (2025-11-08~09),333 R1 C #3
 2018571013,B' R' U2 B' L D2 L D' L D' L2 U2 F2 U' B2 U' L2 F' D2 L B2,W,Rubik's WCA European Championship 2022 (2022-07-14~17),333mbf Final A #1

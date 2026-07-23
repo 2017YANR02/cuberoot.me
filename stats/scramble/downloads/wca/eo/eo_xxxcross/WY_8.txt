@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / WY / bin 8
-# Population in this bin: 230
+# Population in this bin: 231
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 13215001,B2 L2 D' B2 D F2 D R2 F2 R U L2 U R U,Y,Velbert Easter Open 2014 (2014-04-18~20),333 R2 B #5
@@ -123,7 +123,7 @@
 2370933001,F' D B R2 D2 L' F2 R B2 U2 L' U2 B F R U2 R' B D2,Y,Malaysia Cube Championship 2022 (2022-12-09~11),333 Final A #3
 2372469001,F L2 F2 L2 D2 B2 D2 F' U2 F D' U' F D' L U B' L2 U' F' L2,Y,Cube With Intention in Denton 2022 (2022-12-17),333bf R1 A #2
 2446637001,R2 B2 U' L2 B2 F2 R2 F' R' D2 B D2 U B L B' D U',W,Bundle Up Broomfield 2023 (2023-01-21),333oh Final B #4
-5265640001,F' U B2 L2 F2 U B2 D' U B' R2 D R' U' R' B' L2 R2,Y,Linz Nikolaus Day 2025 (2025-12-06),333 R1 C #4
+5750999001,B' D B2 D' L2 F2 U R2 B' R' D B R B2 D F2 L' U' L2 U,Y,GAN New Zealand Nationals 2026 (2026-07-10~12),333bf R1 B E2
 2552821001,R D B' L' D2 B2 R U2 F2 L' F R' D R D' R2 B2 R,W,Central Washington Evens 2023 (2023-03-12),333 R1 D #2
 2565891001,B2 L2 B' F' D2 F' D' F D' U B U' F U2 R' D,Y,Mölnlycke Open 2023 (2023-03-18~19),333 Final A #4
 2700440001,U' B2 D' U2 F' D2 F U' R2 F' L B2 L' B F U',Y,I Candanguim 2023 (2023-05-07),333 Final B #4

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / Y / bin 3
-# Population in this bin: 707
+# Population in this bin: 708
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 1067552001,B' D2 R2 F D2 B U L B' L B2 U' F' D2 R2 D' U2,Y,Astrakhan Spring Open 2019 (2019-03-23~24),333 R1 A #5
@@ -12,7 +12,7 @@
 3746075001,F' L' B2 D2 F' D2 R2 F' L U' L2 U2 D F2 L2 D2 L' U' B,Y,Very Mini-sota 2024 (2024-05-09),333bf Final A E2
 4121262001,D' L F D2 R2 U F D2 R' U2 L F2 U2 L F2 R B2 L2,Y,UMBC Fall 2024 (2024-09-21),333oh Final C #4
 54732001,L' F2 L D2 U2 F2 R F2 U2 R' B2 U' B' D' R2 D F' U R',Y,Iutopia Open 2014 (2014-08-30),333 R2 A #2
-1068702001,D2 F U2 F2 L2 U2 F2 U2 F' D U2 R2 F R2 F2 U' L F2 U2 L B,Y,Dąbrowa Górnicza Spring 2019 (2019-03-24),333bf R1 B E2
+5750453011,F L2 U2 F U2 B2 D2 F' R2 U2 F' U' F U' B2 D L F2 R' D,Y,BLD Astana Summer 2026 (2026-07-16),333mbf Final A #1
 3938862001,F' D2 F' R2 B' L2 D2 U2 R' U' L D' F2 U2 B' L' R',Y,Dobeles Vasara 2024 (2024-07-13~14),333oh R1 B #5
 3260067001,U' F' D' R2 D L2 F B' R D' R' B2 R2 U2 D' R2 L2,Y,Utah Championship 2023 (2023-11-11~12),333 Final A #3
 4182077001,R' U' F U F U' F' L2 R2 F2 U2 B D2 F' U2 D' L F' L D F2 U2 R' U' F,Y,FMC Ukrainian Nationals 2024 (2024-10-12),333fm R1 A #1

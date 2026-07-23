@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xcross / G / bin 4
-# Population in this bin: 461
+# Population in this bin: 462
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 261001,R' F D L2 F' B U R2 B' R F L2 U L2 U' R2 U2 L2,G,Montréal Open 2014 (2014-03-15),333 R2 B #1
@@ -177,7 +177,7 @@
 2425654001,D' R2 D F' U2 R2 F2 U' L' F' U F2 D2 R2 U R2 U B',G,Buckeye Big Brain 2023 (2023-01-14~15),333bf R1 A E1
 5304310063,D' R' D2 B2 L2 U2 B' U2 F2 D2 F D' R2 U2 B2 L' D F U2 L,G,New York Multimate PBQ III 2025 (2025-12-27~28),333mbf R1 A #1
 1357438001,R B2 L2 U2 D2 R B' D' B U2 D' B2 R2 F2 R2 D' F2 U,G,Road to IC - Milano 2019 (2019-10-19~20),333 R2 C E2
-5579565001,D R2 F2 U' F2 R2 D2 L D2 F U F U' B F' U' L2,G,GLS Gdańsk III 2026 (2026-04-25~26),333 R2 B #1
+5749641010,R U2 B' D2 L' F R' B R' D2 R' U2 D2 R B2 R U2 D' R2 D',G,Warm Up Lent 2026 (2026-07-10~12),333mbf Final A #1
 1372783001,D2 F2 R2 D2 R F2 U2 R2 U R D' B2 D L U' B2 D2,G,UK Championship 2019 (2019-10-25~27),333 R1 B E1
 5174482001,L2 U' L D L2 F2 U' F2 U2 B2 L B' D' B D' R' B,G,Trujillo Cubing Fest 2025 (2025-11-09),333 R1 G #5
 5047757001,U L2 B L' F R F R F2 L2 D2 B2 R2 B' R2 F R2 U,G,Sej Sejere Sejs 2025 (2025-09-27~28),333 R1 A E2

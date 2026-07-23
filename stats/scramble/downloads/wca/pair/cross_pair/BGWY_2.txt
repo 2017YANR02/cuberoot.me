@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / BGWY / bin 2
-# Population in this bin: 787
+# Population in this bin: 790
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 28543001,D2 R2 D2 B F L2 B U' F' U F' D U' R' D2 R2 F2 U2 L2 U2,G,Bucharest Rubik Summer 2014 (2014-06-15),333bf Final A #1

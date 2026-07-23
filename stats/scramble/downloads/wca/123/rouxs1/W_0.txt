@@ -2,7 +2,7 @@
 # Population in this bin: 2
 # Samples listed: 2 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 3487378001,F U B U L2 B L U F2 U R2 F' L2 D2 R2 D2 F' D' L2,W,NoVa Cube Winter 2024 (2024-02-03),333bf Final B E2

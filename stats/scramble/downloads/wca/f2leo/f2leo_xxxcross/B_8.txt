@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / B / bin 8
-# Population in this bin: 904
+# Population in this bin: 908
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 2652480001,D2 F2 U F2 U' F2 D' F2 U' R' D' R' U R2 U B U' L' R,B,Palmerston North 2023 (2023-04-16),333 R1 B #2
@@ -43,7 +43,7 @@
 148275001,U2 L2 D' L2 U' L2 U L2 R2 B2 L B2 F' L B2 L' B' L2 R2,B,Speed Days Kraśnik 2015 (2015-05-30~31),333 R1 A #1
 149476001,B' L F2 L2 F L2 U2 D B R F' U D' R2 D' L2 D' L2 U2,B,Bratislava No-Cutoff Open 2015 (2015-06-06~07),333 Final A #2
 5632277001,U2 F' L2 B2 R2 U2 F L2 F U B' U' B2 R U B F2 D' R2,B,Westerns Warmup Riverside B 2026 (2026-05-16),333 Final A #3
-4561003001,B2 L' D2 F D' L' B L2 U2 L' D2 F2 L' D2 L' U2 F2 U' B L' F,B,Jus'Cubing Side Events BLR Mar 2025 (2025-03-16),333bf Final A E1
+5753582001,L' D2 R2 B R D B U2 B D U2 F2 R' F2 B2 U2 R F2 U2,B,Canadian Prairie Championship 2026 (2026-07-17~19),333oh R1 A #4
 2517695001,U' R' F2 D B' L U2 L' U2 B' R' U2 B2 U' B2 U B2 U2,B,Lincolnshire Winter 2023 (2023-02-25~26),333 R1 D #3
 5697838001,R D R D2 F2 R2 D2 B2 L' B D F' L' D' U' R' B2,B,Valdepeñas Open 2026 (2026-06-13~14),333 R2 A #5
 1295945001,L' R2 U2 L R2 U2 B2 F2 U R' D' B' U' R' D2 R D' F R' B',B,Norrkubing 2019 (2019-09-13~15),333bf R2 A #2

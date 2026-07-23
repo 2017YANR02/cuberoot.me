@@ -2,7 +2,7 @@
 # Population in this bin: 125
 # Samples listed: 125 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 31993001,B2 D' L2 B2 R2 F2 U' L2 U B' U' B F' R B' L B' F2 L',B,ULA Rubiks 2014 (2014-06-27~28),333 R2 B #2

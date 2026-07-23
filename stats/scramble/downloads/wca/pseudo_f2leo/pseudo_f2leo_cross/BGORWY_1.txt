@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / BGORWY / bin 1
-# Population in this bin: 251
+# Population in this bin: 253
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 29329001,B2 R2 F2 U R2 U B2 U2 B U L2 D' F D2 U' L2 U,O,No Parity Open 2014 (2014-06-21),333 R2 A E2
@@ -84,7 +84,7 @@
 910159001,B2 L2 R2 F2 D B2 R2 D U2 B D B L' R2 U' L2 U B' U2,Y,Trujillo Open 2018 (2018-10-20),333oh Final A #1
 5237403001,D2 L F2 U' F2 L2 U' R2 D' F' L' B2 L' D L' F2 D' F,W,Hangzhou Winter 2025 (2025-11-29),333 R1 F #3
 954332020,L2 B2 L2 D2 U' R2 D2 R' U' L R2 D2 L F U2 F L2 B R' D2,B,Nacionales Argentinas 2018 (2018-12-08~09),333mbf Final E #1
-994685001,R2 U R2 L' F2 U' B L2 B' L' F2 R2 U2 F2 U' F2 U2 R2 F2,B,Mongolia Championship 2019 (2019-01-26~27),333 R1 G E1
+5750550009,R2 B' D2 R2 U2 F2 R' F2 R2 F2 U2 R' B' R2 B D' L' D' B2 L B2,G,GAN New Zealand Nationals 2026 (2026-07-10~12),333mbf Final A E1
 5746603001,U F D L B D' R2 U' F2 U2 L2 B2 R B2 R U2 R' D' F,W,Cube4fun Lublin Summer 2026 (2026-07-12),333 R1 A #4
 1020684001,D2 F L2 D2 R2 B' U2 B2 L B L' D2 F' L' B' L D2 L' F2,R,Bremium Cubing 2019 (2019-02-16~17),333bf R1 B E2
 1062102001,D2 L2 U2 F2 D2 F2 L' U2 R2 B2 R2 B D' B' D' L B2 R D',B,Las Vegas Spring 2019 (2019-03-23),333oh Final A #3
@@ -121,7 +121,7 @@
 1990030008,U2 B2 U F' U R U' L' U2 F2 U2 F2 L' U2 R' U2 R2 B2 F U L2 U2,W,Rome Mental Breakdown 2022 (2022-06-25~26),333mbf Final A #2
 5149958034,L' B2 D L2 R2 D' L2 D' F D F2 L' F' R' F2 D B2 D' B2 L2,Y,Furesø 3x3 Frenzy 2025 (2025-11-01~02),333mbf Final A #3
 2058578026,L' R2 F2 U' R2 D' R2 U F2 L2 R2 U' L B' R' D2 F2 D' B D' L,O,Tashkent Open 2022 (2022-07-30~31),333mbf Final A #1
-5602154001,U L2 D2 L' F D R F B' R' F' L2 U2 F2 R2 U2 F U',O,MilaNxNesas en La MataNxNza 2026 (2026-05-02~03),333 R1 C #3
+5750594009,R2 B' D2 R2 U2 F2 R' F2 R2 F2 U2 R' B' R2 B D' L' D' B2 L B2,G,GAN New Zealand Nationals 2026 (2026-07-10~12),333mbf Final A #2
 2083438001,F2 R' D2 L2 U D2 L B2 U2 R2 D2 R2 B' D2 B' L2 U R2,R,Edén Cubing 2022 (2022-08-06~07),333 R1 F #1
 5173659001,D2 L F2 D2 L2 F2 U R2 B2 U2 L' B' D' U' B L2 D' L',W,Kjeller Open 2025 (2025-11-08~09),333 R2 C E2
 2166259001,U' R2 D2 L' F2 L D' B R' L2 U2 B2 U2 F2 U' L2 B2 R2 B2,W,Wakefield Autumn 2022 (2022-09-10~11),333 R2 C #1

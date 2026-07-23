@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / BGOR / bin 4
-# Population in this bin: 227
+# Population in this bin: 228
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 31993001,B2 D' L2 B2 R2 F2 U' L2 U B' U' B F' R B' L B' F2 L',B,ULA Rubiks 2014 (2014-06-27~28),333 R2 B #2
@@ -180,7 +180,7 @@
 5430066001,F2 L' F2 L2 D2 L2 D' U2 F2 L' U2 L D R F R2 U' F2,O,Back to Downtown Singapore 2026 (2026-03-08),333oh R1 C #5
 4332300001,R' U R2 U2 F' D2 B D2 R2 F' L D' R2 B L' B' U2 R,B,Berkeley December Weekday Tricubealon 2024 (2024-12-04),333oh R1 A #5
 4380385001,L' F2 D2 R U' L D B2 L2 D B2 D' L2 B2 D2 L',O,Clash of Cubers: Celebes Speedcubing Masters 2024 (2024-12-14~15),333 R1 F E2
-4393147059,D2 B2 L2 B' U F' B' R2 D B2 L2 U L2 F2 U R2 B2 D' R F' L' F',O,Lužice Winter 2024 (2024-12-21~22),333mbf Final A #1
+5753833001,D2 R' D F2 R D F' D F D' R2 D' R2 F2 U2 L2 D2,B,South Omaha Scramble 2026 (2026-07-18),333oh R1 A #3
 4430001001,D' B2 D' U2 B2 U' F2 R' D2 L' B R B' D L D2 U' R,G,Aachen Open 2025 (2025-01-18~19),333 R2 B #3
 4471270011,B2 D' B R2 D2 B2 D2 B' R2 B D F' R' F' L D R B2 D2 B R',G,DFW Mega Mental Breakdown 2025 (2025-02-01~02),333mbf Final B #2
 4486197001,B' D2 L2 F U' F2 R U R F2 U R2 U F2 R2 B2 D2 F,G,Cubing Returns Nagpur 2025 (2025-02-16),333 R1 D #2

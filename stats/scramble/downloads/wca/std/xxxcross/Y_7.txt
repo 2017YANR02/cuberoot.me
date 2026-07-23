@@ -2,7 +2,7 @@
 # Population in this bin: 79
 # Samples listed: 79 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 14858001,U' L2 B2 L D R B' R2 B2 R' U' B2 R2 B2 L D2 L' F2 R,Y,Didas Brest 2014 (2014-04-26~27),333 R2 A #1

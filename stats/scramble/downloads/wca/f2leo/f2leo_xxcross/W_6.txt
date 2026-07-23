@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / W / bin 6
-# Population in this bin: 733
+# Population in this bin: 735
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 946420001,D2 B D2 F' R2 B' L2 B D' L2 R F2 L' B2 F L2 U B2,W,Rocky Top 2018 (2018-12-01~02),333oh R1 B E1

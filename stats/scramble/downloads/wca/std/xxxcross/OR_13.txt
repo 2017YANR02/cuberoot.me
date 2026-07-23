@@ -2,7 +2,7 @@
 # Population in this bin: 30
 # Samples listed: 30 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 345869001,R2 B U R' F' D L F U2 D F2 R2 F' L2 F' D2 F' U2 B' D2 F2,O,Crazy Cubes Open 2016 (2016-08-14),333 R1 A #5

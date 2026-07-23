@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / O / bin 9
-# Population in this bin: 317
+# Population in this bin: 321
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 5035001,F2 D2 F2 U2 L U2 B2 R' U2 L' F U' B' L' D' L2 F' R2 U' R',O,Tula Open 2014 (2014-03-28~30),333 Final A #1
@@ -123,7 +123,7 @@
 1333528001,B2 D' F2 U L2 D' F2 D F' L U2 L B' L' B L U L2 R' D' B' L,O,Shandong Open 2019 (2019-10-04~05),333bf R1 D E1
 5406786001,L D2 B R2 U2 L D2 U2 L D2 F2 R2 D2 F2 B L2 D' L U F R2,O,Lierskogen Vinterkubing 2026 (2026-02-21~22),333oh R1 B #2
 3765551001,F R U F2 U2 L2 U L2 F2 D' R B' R2 D2 L' D B2 D' B',O,SacCubing XVII 2024 (2024-05-18),333 R1 A #3
-1479716007,U F2 D B2 U' L2 D2 B2 R2 B F' U' R' B2 D2 F2 L2 F' R U' R B',O,VJTI Mumbai Cube Open 2019 (2019-12-27~28),333mbf Final B #2
+5755579001,L2 U2 F' R2 U' R2 D2 B2 D R2 U' F2 L B' R' U L' B F U',O,Rubik's WCA European Championship 2026 (2026-07-16~19),333 R2 A #5
 4073558001,F2 B L' F D B R B' R2 D2 F2 R2 B D2 L D' L2,O,Swisscubing Cup V 2024 (2024-08-31~09-01),333 Final B E2
 1511290001,R U F2 D B R2 F D' B R' L U2 F2 U' D2 L2 F2 D,O,Jieyang Winter 2020 (2020-01-19),333oh R1 C #2
 1567599001,F2 D2 B2 L2 U F2 R2 U' F' L' R' B R2 D' U L B2 F2 L,O,Trujillo Happy New Year 2020 (2020-02-22),333 R1 D #3
@@ -169,12 +169,12 @@
 2667011001,B2 L D' B' U' R' L' U F' R2 U F2 U2 F2 B2 L2 D' L2 U' L',O,CubingZA Cape Cubes Autumn 2023 (2023-04-22~23),333 R1 B E2
 4524330038,U' D F' B' U B D2 R2 F R F2 U2 L' B2 L2 U' F' L2 U2,O,Efficient in Elmsford Winter 2025 (2025-02-22~23),333mbf Final A #3
 2763044074,F2 L2 U' F2 D2 L2 B2 L2 F D L2 R D U2 F2 L2 F U L' R' B' L,O,Please Be Quiet in Tashkent 2023 (2023-05-27~28),333mbf Final A #1
-2763044130,F2 R2 D2 B2 L2 F2 L2 U2 B R F L D B' D B U F L,O,Please Be Quiet in Tashkent 2023 (2023-05-27~28),333mbf Final A #1
+5750065001,B2 D' B U2 B L U F2 B R' U2 R2 F2 L2 U2 R2 F' R2 B',O,Golden Square Shopping 2026 (2026-07-11~12),333 Final A #3
 2800128027,U' L B2 D2 B2 F U2 L2 F2 U2 L2 D' R2 F2 R F U2 B R B' L2,O,Please Be Solved Vancouver 2023 (2023-06-17),333mbf Final B #1
 3904825001,F2 D' B' R L2 U2 R2 F2 U' R2 B2 U2 B' D R B L R F2,O, Wembley Quimbaya 2024 (2024-06-30),333 Final B E1
 3767086001,D' B L' F2 U2 R F2 U2 B2 U' L' D' L' R' U' B' D2 F',O,Quito Free 2024 (2024-05-18),333 R1 B #5
 2936532006,B' R2 L2 B2 D2 B D F2 D2 R' D2 B2 L' B2 U2 B' U' L' D2 B,O,Vietnam Championship 2023 (2023-07-14~16),333mbf Final A #1
-3850789001,B2 L2 D2 R B2 D2 F2 D2 U2 L B2 D L' U' L2 B F R D2,O,Ilulissat 2024 (2024-06-15),333 Final A #1
+5753072001,R' U' L' D' R B D' R2 F B2 U F' L2 B D2 F D2 L2 B',O,UNSA Speedcubing Otoño 2026 (2026-07-18~19),333oh R1 A #1
 5655248001,U B R B' R' F2 R' B L R2 D' R2 F2 U B2 L2 U D B,O,Sheffield Spring 2026 (2026-05-23~24),333oh Final A #1
 5351178004,B R2 U2 B D' R U' F' U B L' U F2 R2 D2 L2 F2 D2 B R',O,Wellington Mind Games 2026 (2026-01-31),333mbf Final A #2
 3005861001,F' R' F2 U' F2 B D B2 R U2 R U2 L D2 L2 B D' B2,O,Rubik's x Speedcubing Canada All-Stars 2023 (2023-08-25),333 R1 A #4

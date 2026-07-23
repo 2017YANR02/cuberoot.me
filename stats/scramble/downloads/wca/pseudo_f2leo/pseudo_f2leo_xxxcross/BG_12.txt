@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / BG / bin 12
-# Population in this bin: 203
+# Population in this bin: 204
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 6449001,R2 D2 U R2 U B2 U B2 F2 D2 B' L' D B' F2 D2 L F' D F' R2,B,Rumia Open 2014 (2014-03-29~30),333oh R2 A E1
@@ -15,7 +15,7 @@
 124262001,L U R' B2 L2 F L' U2 F2 L U D2 F' R2 U2 B' L2 D2 F2,B,First Guwahati Open 2015 (2015-04-04~05),333 R1 G #2
 131591001,D R2 B2 L2 R2 U2 L2 D B2 R2 F' L U L R D2 F' L F' R,B,Slovenian Open 2015 (2015-04-18~19),333 R2 B #2
 135044001,L2 D2 F2 U R2 U L2 R' F' D' R U B D2 L F' R U2,B,La Florida Open V2 2015 (2015-04-25),333 R1 E E1
-178345001,F2 D2 L2 D' R2 B2 U L2 B2 F' R F U B D2 R' B2 L D' L,B,SCMU Freedom Open 2015 (2015-08-15~16),333 R2 A #1
+5750888001,D' B L R2 D2 L2 U' B2 D' L2 F2 B L U R' D' U' B2,B,GAN New Zealand Nationals 2026 (2026-07-10~12),333oh R1 A E1
 238900001,L' B2 D2 R' U D R' F' R' L' D2 F R2 D2 B2 U2 F R2 L2 B,B,Great Indian Cubeathon 2016 (2016-01-08~10),333oh R1 E #3
 317441001,L' B' U L U D F' U B L' F2 B2 L2 D' F2 L2 B2 U B2 U' D2,B,Slow N Steady Spring 2016 (2016-06-18~19),333 R1 C #1
 319308001,B2 L2 D2 U' F2 R2 D R2 D2 B' F U R' B' L' D F2 R2 F U,B,Indiana 2016 (2016-06-25~26),333 R1 F #4

@@ -2,7 +2,7 @@
 # Population in this bin: 5
 # Samples listed: 5 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 682432001,D2 F2 L' F D' F R' D' R2 L' U' R2 D2 R2 L' F2 U2 R,R,Tulcan Open 2018 (2018-01-06),333 R1 B #2

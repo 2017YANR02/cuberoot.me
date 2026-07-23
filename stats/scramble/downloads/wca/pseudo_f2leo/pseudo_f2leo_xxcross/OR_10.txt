@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / OR / bin 10
-# Population in this bin: 635
+# Population in this bin: 639
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 1734001,B' L2 F' R2 B' D2 F L2 R2 D' B F2 D' F U' B2 R F2 L' B',O,Kansai Open 2014 (2014-03-21~22),333 R2 B E1
@@ -23,7 +23,7 @@
 107786001,F B2 L D' B2 R B' L' U B R U' F2 U F2 D B2,O,Copa Rubik Sigi 2015 (2015-01-31),333 Final A #3
 114511001,B2 L' F U2 L' U' F2 D' R L B L2 U R2 F2 D2 B2 U F2 U',O,Montgròs Open 2015 (2015-02-28~03-01),333oh R1 B E2
 3545832055,U' F2 D2 L' D2 F2 L F2 L F2 D' B U' B2 R U' B2 L' U F L2 U',O,Please Be Quiet Taiwan 2024 (2024-02-24~25),333mbf Final A #1
-131809001,U R2 B2 F2 D B2 U' F2 L2 D2 F2 L' B' F' U' L D B' U2 F2 R',O,SPCS Stanford Spring 2015 (2015-04-19),333 R2 A #1
+5752571001,U L' B U2 F' L D' B2 R2 F L' U2 L2 B2 L' D2 B2 R U2 B2,O,Mountain House Open 2026 (2026-07-18),333 R2 B #2
 5431176001,R' D2 L2 D B2 D2 F2 U' R2 B L D' F' R2 F R' F D' R2 F',O,Głuszyca Open 2026 (2026-03-07~08),333 R2 C E2
 140541001,B2 D2 B2 R2 U' R2 B2 D' L2 U2 R' U' B' L' D2 B2 L2 B D F,O,Serbian Open 2015 (2015-05-16~17),333oh R2 A #5
 153848001,D2 B D' R2 U' R' B D2 B D F2 U2 L2 F' D2 R2,O,Pune Fall Open V2.0 2015 (2015-06-21),333 R1 C #2

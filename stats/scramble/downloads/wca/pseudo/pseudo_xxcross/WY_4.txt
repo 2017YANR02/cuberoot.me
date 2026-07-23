@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxcross / WY / bin 4
-# Population in this bin: 339
+# Population in this bin: 342
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 3998525002,F2 R' D2 R' U2 B2 R F2 D2 U R2 U L D2 B' L' R F2 L' B R',W,Blind Till Nine in Vietnam 2024 (2024-08-10),333mbf Final A #2
@@ -91,7 +91,7 @@
 717300001,U D' F2 U' F2 L' U' F' U B U F2 U' R2 D R2 L2 F2 L2,Y,CCS 2018 (2018-03-02~03),333oh R1 A #3
 736085001,F U F D R U2 L2 B2 R' D2 L2 U2 D F2 L2 U' L2,Y,ODU Big Blue Spring 2018 (2018-03-31),333 R1 A #5
 739447001,L' U' R B2 D F' R F2 D F L U R2 D F2 U D F2 L2,W,Happy Autumn MDQ 2018 (2018-03-30~31),333oh R1 E #5
-4526209001,B2 R' L2 F2 U' B2 R2 D2 F2 L2 R2 F R2 F D' R' D' L2 B2,Y,Sqauckland 2025 (2025-02-22),333 R1 C E2
+5755399001,R' U' F L F L' R' D2 U2 F2 R' D2 R' D R' F' D' L2 B2 F R' B' R' U' F,Y,Rubik's WCA European Championship 2026 (2026-07-16~19),333fm Final A #3
 4582952001,L2 R2 F' L2 U2 B R2 F' R2 F2 L U R F2 R' B D2 L' B2 L2 U,W,Big Side & Blind Olsztyn 2025 (2025-03-22~23),333bf R2 B #2
 2987761001,B2 L' U2 F2 D2 R U2 R2 B2 U R D' F2 R' U B L B',Y,Araruama Open 2023 (2023-08-19~20),333oh R1 B #4
 779453001,D2 B2 L2 B F' U2 L2 F' R' D F U' B' F' L2 F R2 D U',W,Play Cube 2018 (2018-05-13),333 R1 H #1
@@ -200,7 +200,7 @@
 2398392001,F2 L R2 B2 D2 L' D2 L D2 U2 R' D' R' D' F2 L2,Y,Taiwan Championship 2022 (2022-12-16~18),333oh R1 B #2
 3775316001,F U D2 F2 L F2 D2 U2 R2 U2 F D' F' U2 R' U' L B2,W,CubeX Summer Open Bangalore 2024 (2024-05-18~19),333oh R1 C E1
 4991650068,F' R2 U2 F2 U R' U' R' F R2 L D2 R2 U2 D2 F2 R' F' D,W,West Coast Cubing Western Championship 2025 (2025-08-29~31),333mbf Final A #2
-4283698001,R' F2 R U2 R D2 B2 D2 R2 F L U' R' U F L' D',Y,Arizona Mini 2024 (2024-11-16),333 Final A #5
+5752054001,F' B U2 R D F' R' D2 R' B' R2 D2 B' R2 D2 F R2 U2 B2,W,Nanchang Summer 2026 (2026-07-18),333 Final A #2
 5008626001,D' L2 D2 F2 D2 R B2 R' B F' D2 L F2 R2 F' L' D' F2,W,Champagne Open 2025 (2025-09-06~07),333oh R1 B #4
 2625231001,F' U2 F U2 B R2 B D2 F L D' R D' L2 B D2 F L2 D2 L2 B R2,W,Essex Spring 2023 (2023-04-08~09),333bf R1 B #3
 4519693001,L2 B L2 F' L2 R2 U2 F R U2 B' U' L2 D' B' R D2 R,W,Synocubix Gandhinagar 2025 (2025-02-22~23),333 R2 A #2

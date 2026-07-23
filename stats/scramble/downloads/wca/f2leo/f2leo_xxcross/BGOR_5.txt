@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / BGOR / bin 5
-# Population in this bin: 249
+# Population in this bin: 250
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 5433363044,D' R' B2 D' L F' U2 B' U2 R' D2 L U2 D2 L F2 R U2 L B,O,BrizZon Side Open II 2026 (2026-03-07~08),333mbf Final A #2
@@ -69,7 +69,7 @@
 4886393001,D' U' R2 U B2 F2 U' B2 R D' L F D' R' D F' D' B2 D,R,Small Sides Alphen 2025 (2025-07-26),333 Final B #5
 4892565001,L' D2 B' U2 B D F L' B2 U2 R' B2 L2 D2 L' F2 B2,B,Cuenca Open 2025 (2025-07-26~27),333oh R1 A #2
 833220001,D2 F D2 F' R2 D2 R2 U2 R2 B' R D2 F' D R F L F R2 B,R,Ekat Summer 2018 (2018-07-21~22),333 Final A E1
-5693041049,F2 L2 F U2 B L2 R2 F2 R2 L U B' R2 F D U F U R2 B' L2,G,Brilliant Big & Blind Bravo Orlando 2026 (2026-06-06~07),333mbf Final B #1
+5753833001,D2 R' D F2 R D F' D F D' R2 D' R2 F2 U2 L2 D2,B,South Omaha Scramble 2026 (2026-07-18),333oh R1 A #3
 842295001,L2 R2 U' R2 B2 R2 D U' R B F D' B' U2 L D' B2 L' R' U',R,CubingUSA Nationals 2018 (2018-07-27~29),333 R1 Z #5
 842540001,B2 U2 L D2 L' U2 R' F2 L B' D' B' U2 L' R U' R' D2 R',B,VCP Invierno 2018 (2018-07-28),333 R1 A #2
 848934005,F2 R2 F2 D2 L2 F2 R F2 R B D' B' L2 D F2 L2 B U2 B2 L,G,Project Radom 2018 (2018-08-04~05),333mbf Final A #1

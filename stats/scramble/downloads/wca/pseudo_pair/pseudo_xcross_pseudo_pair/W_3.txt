@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / W / bin 3
-# Population in this bin: 703
+# Population in this bin: 707
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 3350547001,R2 F2 L2 D' B2 R2 D2 R2 D2 L' D U2 B L2 D' U' B2 F' D,W,Italian Championship 2023 (2023-12-08~10),333 R2 A E1
@@ -148,7 +148,7 @@
 5163556001,U F2 U2 L2 U2 B R2 B L2 B U' F2 L' B U2 L D U2 R,W,Korum Winter Cube Challenge 2025 (2025-11-01~02),333oh Final A E2
 684349001,L2 U2 L2 U2 F' U2 F D2 B' U2 B L' D B2 L2 F' R' D L2 R,W,PDX Cubing for Causes 2018 (2018-01-13),333 R2 A #1
 4119302001,L' B' U2 L2 F' U2 L2 B' D' B U2 F U2 B2 D L U2 L',W,Brown Fall Seongnam 2024 (2024-09-21),333 R1 B #2
-689593001,U2 R2 B2 F U2 B2 F' R2 U2 L2 R2 D' F L F' L D' U L,W,Geethanjali Cube Open 2018 (2018-01-21),333oh Final A #5
+5753638001,U2 L' F2 U R2 B2 D2 F2 R D B' L' D' L2 D' R' U' L2 U,W,Canadian Prairie Championship 2026 (2026-07-17~19),333bf Final A #5
 4003572001,B' D2 B' R2 B U2 R2 U2 B R2 B D R' D U' F2 U2 B' F',W,Ankara August 2024 (2024-08-10~11),333 R1 A E2
 2726356010,L U2 L2 D2 U' F2 U' F2 R' D2 F' L' R F R2 B2 U2 L2,W,PBQ Green Bay 2023 (2023-05-21),333mbf Final A #2
 2388472001,L2 F' L U2 R2 L D B R' F2 B2 R' F2 L U2 R' B2 L' B',W,Mor Raipur Cubing Challenge 2022 (2022-12-18),333 R1 I #2
@@ -157,7 +157,7 @@
 1091723001,U' D2 B' U' L2 U2 B' L' D' R2 L' F R2 F2 R2 F' L2 F,W,Indian Nationals 2019 (2019-04-11~14),333 R1 I E1
 4500317001,D R2 U2 B2 D' L2 D2 B2 L' U B' L2 B2 D U' R' U' F,W,Central Asian Tour Bishkek 2025 (2025-02-15~16),333 Final A E1
 728484001,D F2 U2 B2 U L2 U' F2 D R' F L' F' U R2 U F2 D,W,Ponikva Open 2018 (2018-03-17),333oh R1 A #3
-4308235007,D2 L2 F' R2 F R2 U2 B L2 U2 B L2 R' F D F D' B' R B R',W,DNFeandon't Guadalajara 2024 (2024-11-23~24),333mbf Final A #1
+5757773001,L' U2 B U2 F2 D2 U2 F R2 F' D2 B' U L' U B2 L' D2,W,Kyrgyzstan Nationals 2026 (2026-07-18~19),333oh R1 A #2
 3429290001,F' D' F U' R B2 L2 D2 L' F2 R B R' B' R2 U2 F' D',W,Hayange Open 2024 (2024-01-20~21),333 R1 D #3
 1488948001,R2 D2 B' F' U2 F U2 L2 R' F' R' F' U' R' B D' U' L U',W,Södertälje New Year 2020 (2020-01-04),333 R1 B #5
 758484001,B' R2 F' D2 L2 U2 B R2 B R2 F' D' B U2 R' F R F' U2 B',W,SNZ Southern 2018 (2018-04-21),333bf Final B #2

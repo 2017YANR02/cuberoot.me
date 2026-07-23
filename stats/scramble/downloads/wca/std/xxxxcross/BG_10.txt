@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / BG / bin 10
-# Population in this bin: 728
+# Population in this bin: 731
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 4332297001,F' R2 U2 L2 B' L F D' R2 B' U' L2 D' R2 U D',G,Berkeley December Weekday Tricubealon 2024 (2024-12-04),333oh R1 A #2
@@ -59,7 +59,7 @@
 3212702001,F' L B D L B2 R' U2 R2 U2 B2 U2 B2 U' R' U2 R D' L' B,B,Davis Fall 2023 (2023-10-29),333 R1 A #1
 1761308001,B' D L2 R2 D' B2 D L2 B2 R2 D2 B' R' F' R D2 B' D2 F2,B,New Beginning Santa Cruz 2021 (2021-12-10~11),333 R1 C #3
 4324135001,D' L2 F2 U R' D' L' B F2 R F2 R B2 L U2 F D2,G,Barcelona Open 2024 (2024-11-30~12-01),333 R1 E #5
-3048944001,F' D' F' D2 F' L' D L F2 R F2 L F2 D2 F2 L' U' F U,G,Champagne Open 2023 (2023-09-02~03),333oh R1 A #2
+5755926001,R B' R' D' B2 R2 D' B2 R2 L' B R' D L' D2 B' D R2,B,Hillister Cube Hustle 2026 (2026-07-18),333 R1 B #4
 2815231001,U F' L F L2 B' D2 B2 L2 D2 F2 D U2 F U L' D2 F2,G,Bulldog Spring 2023 (2023-06-17),333oh R1 C #3
 294902001,D' F2 D2 L2 B2 U2 L2 D' B2 U' L F2 D' R F L D2 R U F',B,Canarias Open 2016 (2016-05-07),333 R2 B #3
 305578001,L2 U2 B2 F2 U2 L' B2 R' U F L' B D' U' F' D2 B U F',B,Connor's Cube Day 2016 (2016-05-29),333 R1 C #1

@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / O / bin 8
-# Population in this bin: 70
-# Samples listed: 70 (all entries in this bin)
+# Population in this bin: 71
+# Samples listed: 71 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 61068001,B U F L' B' D' F2 D' L' F L2 B2 R2 L2 D2 R2 L' F2 D2,O,Spanish Championship 2014 (2014-09-26~28),333 R3 A #4
@@ -75,3 +75,4 @@
 5523467001,L' B R F L2 D R U' F R2 F D R2 D' R2 U2 L2 U2 R2,O,Cube Against Cancer Minnesota 2026 (2026-04-11),333oh R1 C E2
 5568152001,F U B L' B2 D R2 U2 F2 D2 F2 U F L U F' D' R' F2,O,Split Open 2026 (2026-04-18~19),333 Final A #5
 5598519001,F L D' F U F' R' B' R2 U' L2 D2 F2 R2 D F2 R2 F L',O,All Rounders Katowice I 2026 (2026-05-01~03),333 R2 C #5
+5749804001,B' F2 D B2 R2 U F2 D B2 F' U' R' B' D F R F' U' L',O,Warm Up Lent 2026 (2026-07-10~12),333 R2 C #3

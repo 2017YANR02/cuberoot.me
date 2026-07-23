@@ -1,8 +1,8 @@
 # Scramble samples — std / cross / BGORWY / bin 1
-# Population in this bin: 598
+# Population in this bin: 602
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 3806975001,L F2 U' L2 U2 R B' D2 L B2 R L2 F2 U2 L' B D L2,G,TCG Space lll Santa Anita 2024 (2024-05-25~26),333 R1 B #1
@@ -153,7 +153,7 @@
 2352421001,D' B2 R B2 D2 B2 L2 F2 L2 D B2 D B L2 R' D' R' F' R,G,BCM Arya Cubing Challenge 2022 (2022-12-04),333oh R1 D E2
 4968942001,U2 F D B' L' B2 D2 F2 R2 U' L B' F R2 B D B',O,Cubing in Terredise 2025 (2025-08-23),333 R2 B E2
 824872001,D B2 F2 U R2 B2 D F2 U' R2 U' B F2 L' F2 R' U2 L' R F L',B,Bolivia Nationals 2018 (2018-07-05~07),333bf Final A E1
-2081834001,D' F2 R U2 R B2 F2 L2 U2 F2 B' L' R B D' U B2,O,Real Cube 2022 (2022-08-06~07),333 Final B #5
+5750594009,R2 B' D2 R2 U2 F2 R' F2 R2 F2 U2 R' B' R2 B D' L' D' B2 L B2,G,GAN New Zealand Nationals 2026 (2026-07-10~12),333mbf Final A #2
 4634815001,B' U B R' U R F2 B2 L D2 B' L2 B' R2 U2 R2 U2 L' F2,G,Gliwice Open 2025 (2025-04-12),333bf Final A #3
 834062010,D2 L2 F2 D R2 F2 U B2 L2 D' R' D2 R F2 R B' U' F2 R F2 L' F2,G,Shenzhen Open 2018 (2018-07-21~22),333mbf Final A #1
 5435669001,L2 F2 U' L2 F2 R2 U' L' B2 R2 B' U' B2 F' D2 U B L2 U',G,Bern Cubing Festival 2026 (2026-03-08),333 Final C #1

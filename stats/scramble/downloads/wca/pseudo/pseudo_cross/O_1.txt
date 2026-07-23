@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_cross / O / bin 1
-# Population in this bin: 345
+# Population in this bin: 346
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 4347560001,U2 D' L2 F' L U' L2 F' D2 F2 L2 D L2 U R2 D R D,O,KUbing Nepal 2024 (2024-12-05~06),333 R1 A #5
@@ -102,7 +102,7 @@
 5492760001,F2 U2 B' L' B' R2 B' R' U2 R' F2 U' L2 U L2 U2 B2 D L2 B R,O,New York Multimate PBQ IV 2026 (2026-03-27~29),333mbf R1 A #2
 861772001,B2 D2 R' U2 F2 L F2 D2 B2 F R2 B D' F L' D' R U2 B' F L2 U,O,SESC Camaquã 2018 (2018-08-18~19),333bf R1 B E2
 881098001,D B2 D L2 D2 U' R2 U' L D F L' U B' F2 U2 R' B,O,Kaspiy Open 2018 (2018-09-08~09),333 R1 A #3
-3886385001,U' B U' F' B' R F2 R' D2 L2 U2 B D2 B U2 F2 U2 L2 B',O, Vasconcubos 2024 (2024-06-22~23),333 R2 B #1
+5757259001,B2 F2 U2 L2 D' U R' D2 R' B R D' L U' R B2 D F',O,GAN Philippine Championship 2026 (2026-07-09~12),333 R2 E #3
 936688001,F2 R2 B L2 F2 R2 D2 U2 F' D2 R D' R2 D2 L' B' D F2 R' B2,O,Brugge Open 2018 (2018-11-17~18),333 Final B #5
 4132648001,B F2 U2 F2 L2 D L2 U2 L2 U' F' U F' U2 R U L2 D',O,Makati Speedcubing Open 2024 (2024-09-22),333 R2 A #5
 951224001,L B2 L U2 L U2 F2 R' B2 U2 F U2 L' B' R2 U L2 R F L' F,O,GLS Cup Final 2018 (2018-12-01~02),333bf R1 A #3

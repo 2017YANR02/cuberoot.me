@@ -2,7 +2,7 @@
 # Population in this bin: 12
 # Samples listed: 12 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 189328001,D2 F' D2 R2 F' R2 U2 B' R2 B2 U' F' D R2 D2 F' D F',O,MCC Gamma 2015 (2015-09-13),333 R1 B #4

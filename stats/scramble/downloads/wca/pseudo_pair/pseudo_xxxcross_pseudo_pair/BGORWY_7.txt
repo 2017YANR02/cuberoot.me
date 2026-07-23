@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / BGORWY / bin 7
-# Population in this bin: 729
+# Population in this bin: 731
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 1327415027,B R2 F' L2 D2 B2 F' D2 L2 F D' B' L' R F' U B L' D L D2 B' L,R,Comas Speedsolving 2019 (2019-09-28~29),333mbf Final A #1

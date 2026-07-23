@@ -2,7 +2,7 @@
 # Population in this bin: 380
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 4190940001,U L D' R2 F' U2 F' L' F U F2 D2 F2 U R2 D F2 L2 U' R',B,CubingUSA Mid-Atlantic Championship 2024 (2024-10-12~14),333 R1 C E2

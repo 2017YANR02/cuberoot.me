@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / B / bin 5
-# Population in this bin: 50
-# Samples listed: 50 (all entries in this bin)
+# Population in this bin: 51
+# Samples listed: 51 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 189381001,L' F2 D2 L R D2 R' F2 U F L' U B R2 B' L F' L' F2,B,MCC Gamma 2015 (2015-09-13),333oh R1 C #3
@@ -55,3 +55,4 @@
 5669975001,R' B' L2 U2 D B2 D F L' F R F2 U2 R L' F2 R',B,ROC the Cube NY 2026 (2026-05-30),333 Final A E2
 5692705035,D F2 R' U' F2 D B2 R2 D2 U B D2 R2 B' R2 F2 R B L' F2,B,CubingUSA Great Lakes Championship 2026 (2026-06-05~07),333mbf Final A #1
 5714305001,D' B2 D' L' F D R U D' R2 D2 L2 B2 U' D2 B R B2 L',B,Ruta Cubera: Vila-real Open 2026 (2026-06-20~21),333bf Final B E1
+5753833001,D2 R' D F2 R D F' D F D' R2 D' R2 F2 U2 L2 D2,B,South Omaha Scramble 2026 (2026-07-18),333oh R1 A #3

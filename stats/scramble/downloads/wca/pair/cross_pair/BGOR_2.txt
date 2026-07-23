@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / BGOR / bin 2
-# Population in this bin: 774
+# Population in this bin: 775
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 3187898001,D2 L2 U2 L' U2 L' U2 L' D2 B2 U B2 F2 R2 F' D F' U,B,Zamiin-Uud Open 2023 (2023-10-21),333 R1 H E1
@@ -121,7 +121,7 @@
 5539908001,R2 L F' L' F L D2 B2 L2 D' F2 L2 D2 F' L2 F2,R,NZ South Island Championship 2026 (2026-04-10~12),333 Final A #2
 3940648001,B' U R B2 L2 D' R L2 D2 R2 D2 B U2 F R2 L' F' L,G,Camino al SAC Aves María 2024 (2024-07-13~14),333 R1 B #5
 633373001,R U' R2 U' B2 D' B2 U2 L D2 F2 B U2 D2 F R2 F R2,R,Shri Ram Cubing Challenge 2017 (2017-11-04~05),333 Final A #1
-636792001,D B L' B2 D2 F' U2 R' D2 L D' R2 U2 F B R2 U2 F2 D2,O,Latvian Open 2017 (2017-11-04~05),333 R2 A E1
+5749996001,B U R2 U2 B' L' F' D L2 U D2 F B' R2 B U2 D,G,Warm Up Lent 2026 (2026-07-10~12),333 R3 B E2
 4269348022,F2 L2 B L2 B' D2 U2 B' R2 D' L' R D' F R D B2 L R' B' L2,R,Norrlandsmästerskapet 2024 (2024-11-08~10),333mbf Final A #1
 642388001,R' F R2 D' L2 B' R L2 B D' L' B2 L' U2 D2 F2 R U2 B2 D2,G,SSL 4 Mora 2017 (2017-11-11~12),333oh R1 A #4
 1410354001,B2 F2 D' F2 L2 D U2 R2 D' L2 F R F R B2 R2 D2 U R B2,R,Cubes Masters Zhytomyr 2019 (2019-11-16~17),333ft Final B #4

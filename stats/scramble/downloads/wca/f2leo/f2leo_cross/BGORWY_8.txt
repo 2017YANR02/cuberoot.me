@@ -2,7 +2,7 @@
 # Population in this bin: 12
 # Samples listed: 12 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 577814001,U2 B' R2 D2 B D2 F' U2 F2 U R' D' L' B' F2 D' F2 U B2 L,B,Spokane Valley Summer 2017 (2017-08-26),333 R1 A E2

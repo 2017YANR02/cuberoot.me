@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / WY / bin 6
-# Population in this bin: 615
+# Population in this bin: 616
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 1584013001,L2 R2 D2 U' B2 L2 D R2 U' L' B L' U L B' R' D R2 B',W,Hamburg International 2020 (2020-02-29~03-01),333 R1 C #5
@@ -60,7 +60,7 @@
 310517001,D' B2 L2 U' B2 U B2 D2 L2 D2 L2 F' L' R2 F2 L2 D' B2 U,W,Łódź Cubing Summer 2016 (2016-06-04~05),333 R2 A #4
 319053001,D' B2 F2 L2 B2 U F2 D' L2 U' R' F2 R' B R' B D B' R',W,West Friesche Open 2016 (2016-06-26),333 R1 B #3
 4561366001,R2 D R U2 B D F' U R2 U B2 U2 R2 B2 D' R2 B2 F' L,W,Oulu 2025 (2025-03-15~16),333oh R1 A #4
-334010001,R2 U' B2 R2 B2 D2 R2 D2 U' F' R B R' U2 F2 U2 L' U,W,Westlake Open 2016 (2016-07-23),333 R1 C #3
+5752107001,L2 B2 R2 U B2 U' R2 U2 B2 R2 F2 U2 B' L' R2 F' L2 D',W,Nanchang Summer 2026 (2026-07-18),333 R2 C #3
 5361501001,U' F2 U2 B L2 B' F2 R2 F2 D B' U2 F2 D' F' R2,W,Stenay Que le Début 2026 (2026-01-31~02-01),333 R1 B #2
 361773001,D2 F2 U B2 F2 L2 D' B2 D' R2 D' F' U F R2 F2 L' B' D2,W,Tecla Rubik 2016 (2016-09-10),333 Final A #4
 4807417001,U' B2 F2 U R2 U2 F2 U2 F2 D F R U2 R D2 R2 D',W,Ukrainian Open 2025 (2025-06-14~15),333 R1 C #3

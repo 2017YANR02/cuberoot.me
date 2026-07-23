@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xcross / B / bin 4
-# Population in this bin: 434
+# Population in this bin: 435
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 70358001,F' D F' D F2 R' B D R' U2 R2 F L2 B' R2 U2 F2 R2 B2 R2,B,Saint Petersburg Open 2014 (2014-10-25~26),333 R1 A #3

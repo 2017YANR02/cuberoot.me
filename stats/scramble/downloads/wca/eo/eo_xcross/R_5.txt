@@ -1,14 +1,14 @@
 # Scramble samples — eo / eo_xcross / R / bin 5
-# Population in this bin: 677
+# Population in this bin: 679
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 11317001,D2 F2 U2 R2 F U B U' R' U2 D2 F R2 B' R2 B2 L2 B,R,Nanjing Spring 2014 (2014-04-07),333 R2 A #2
 2127389001,L F B' U2 L' U F' R U2 B2 L' D2 R B2 U' L2 F',R,Irvine Summer 2022 (2022-08-28),333 R1 A #4
 2551147046,R B' D' R2 U B2 F2 U2 R2 D' F' D2 R' F2 R U2 B U' B,R,Bishop's Stortford Spring - British Blind Off 2023 (2023-03-11~12),333mbf Final A #2
-2112413018,U' F B2 L' B R2 L2 B' R' B' R2 L' U2 R' U2 D2 F2 L' D2 L2 U',R,Vilnius Open 2022 (2022-08-20~21),333mbf Final A #1
+5750461001,U' R2 B2 L F2 L B2 D2 B2 F' L B R2 D' B2 F L D' B D,R,BLD Astana Summer 2026 (2026-07-16),333bf Final A #3
 3090915001,L B2 D2 L2 R' B' L' B2 R B' D2 B' L' B2 D U2 B,R,Slovak Nationals 2023 (2023-09-15~17),333bf Final A #3
 4427978001,U2 D2 B U' F2 D L2 U' B2 D R F' B2 U2 B' D2 R2 U2 B2,R,Happy Suseong 2025 (2025-01-18~19),333 Final A #5
 71062001,F2 L2 D2 L2 B R2 D2 B' R F D2 L' F2 U2 L R2 U' F D2,R,Tathva Cube Open 2014 (2014-11-01),333 Final A #4

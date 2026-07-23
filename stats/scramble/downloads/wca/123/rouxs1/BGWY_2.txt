@@ -1,8 +1,8 @@
 # Scramble samples — 123 / rouxs1 / BGWY / bin 2
-# Population in this bin: 519
+# Population in this bin: 523
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 749001,B' F' L2 B' R2 F' D2 R' D2 F R2 F' D L B' L' R' F2,Y,Bogotá Cúbico 2014 (2014-03-15),333 R1 A #2
@@ -176,7 +176,7 @@
 2309992001,U L F' D R2 D R' F2 L2 U' R2 L' B2 L' D2 R2 L',Y,Buenos Aires Cubea 2022 (2022-11-19~20),333 R1 F #3
 5226284001,L' U2 B2 R' B2 L2 R2 B' D' L' R F L2 B D U2 L2 F2,W,Tuparendi Open Quati 2025 (2025-11-29~30),333 R1 A #4
 1130026001,R2 U L2 U' L2 F2 U' B2 U B L2 B' U R2 B2 L2 U' R' D',Y,Jakarta Mini Open 2019 (2019-05-04~05),333 R2 A #4
-5416363001,D' B2 D R2 B2 F2 D F2 L2 F D L B U2 R' U B2 U2 L,G,Good Solves in Gibson Park 2026 (2026-03-01),333 Final A #1
+5756324001,U R' B R2 B2 U2 L2 D F2 L2 B2 L' D' F2 R U L' D F',W,Guelaguetza Oaxaca 2026 (2026-07-18~19),333oh R1 B #2
 4029122010,F2 B' L' U2 F B' R2 B2 U' F' D' B2 R2 D' F2 U R2 D2 B R,W,Couffoul'Events 2024 (2024-08-16~18),333mbf Final B #1
 1175117001,F2 L' D B2 R2 D2 B R B2 R F L2 F' U2 B R2 B,G,Beijing Summer 2019 (2019-06-07~08),333oh Final A #2
 3650559001,F L F2 R' U2 L' F2 D2 B2 L' B L R' D2 L' D2 R',W,Sanda Spring 2024 (2024-04-06~07),333 R1 C #5

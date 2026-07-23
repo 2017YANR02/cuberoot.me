@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / ORWY / bin 2
-# Population in this bin: 581
+# Population in this bin: 582
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 2305080021,D F' R2 U F2 U2 D F' U' R2 B2 R2 D2 F' U2 L U L B,R,Just Cube Joburg 2022 (2022-11-12~13),333mbf Final A #1

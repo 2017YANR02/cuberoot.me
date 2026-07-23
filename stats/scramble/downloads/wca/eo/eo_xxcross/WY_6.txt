@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / WY / bin 6
-# Population in this bin: 212
+# Population in this bin: 213
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 33688001,D' L D2 R2 L' D R' B' D L' F D2 R2 B2 U2 B2 D2 B D2,Y,P3 Grand Open 2014 (2014-06-28~29),333 R1 S E2
@@ -176,7 +176,7 @@
 4471554001,D' L D2 L2 U' B2 L2 B' L' B2 D2 L' B2 L2 F' U2 R',Y,Azores Cubikon 2025 (2025-02-08),333oh Final B #1
 4485067001,B2 F2 U2 B2 U' R2 D' U2 B' D F D' U R B2 R D' U F2,Y,Lopes Up AZ 2025 (2025-02-15),333oh Final A #1
 4549813001,U' D2 F' D' B D' R' L F' D2 F2 L2 B' R2 L2 D2 R2 L',W,Cubing Returns to PCMC 2025 (2025-03-08~09),333 R1 F E2
-4553224001,F' U' L2 U L2 F' D2 L' D' L2 U' L2 U F2 U' D2 R2 B,Y,Greater Toronto 2025 (2025-03-09),333 R2 A #5
+5757960001,D2 B2 D' U2 L' F2 L2 R' B2 D2 L' F2 U' L2 B F' U2 L' F',W,Kyrgyzstan Nationals 2026 (2026-07-18~19),333oh R1 A E2
 4581507001,R2 U F2 L2 U' R2 B2 D U2 L' D' L' B2 L2 F L' U' L,W,Lakewood Newcomers 2025 (2025-03-22),333oh R1 A #4
 4595511001,R' U' F L B' U L' D' B L U L' F' R' D2 L D2 R' U2 R2 U2 L D' R' U' F,Y,Buckeye Big Brain Ohio State 2025 (2025-03-08~09),333fm Final A #3
 4624480003,B' U' B L2 B' F2 R2 U2 R2 D' L B2 D B R' B2 D F' L' F,W,Nittedal Mental Breakdown Spring 2025 (2025-04-05~06),333mbf Final A #3

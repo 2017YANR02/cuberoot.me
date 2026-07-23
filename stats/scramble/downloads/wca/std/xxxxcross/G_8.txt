@@ -2,7 +2,7 @@
 # Population in this bin: 4
 # Samples listed: 4 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 189945001,D B2 L B' L' B' D L D B2 L' F2 U R2 U B2 U2 D',G,Brisbane Spring 2015 (2015-09-19),333 R1 F E1

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_cross / BG / bin 1
-# Population in this bin: 664
+# Population in this bin: 666
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 4635102044,D' L' F2 L2 D2 F' B D' L F2 B2 D2 F U2 L2 U2 B' D2 F L2,B,Tip of Skåne 2025 (2025-04-12),333mbf Final A #1

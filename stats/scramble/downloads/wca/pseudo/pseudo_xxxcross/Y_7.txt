@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxxcross / Y / bin 7
-# Population in this bin: 861
+# Population in this bin: 863
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 4187118001,D L2 R2 D2 L B2 R F L' D2 R2 D' L B2 R F,Y,Tarazona de la Mancha Open 2024 (2024-10-12~13),333 R2 A E1

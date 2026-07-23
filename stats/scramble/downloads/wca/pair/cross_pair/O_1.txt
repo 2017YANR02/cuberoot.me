@@ -2,7 +2,7 @@
 # Population in this bin: 14
 # Samples listed: 14 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 781796001,D2 L D2 B2 D2 B2 L2 U2 L' B' U R B2 U' L F2 L R' F',O,Shanghai Love in ECNU 2018 (2018-05-19~20),333 R1 D #1

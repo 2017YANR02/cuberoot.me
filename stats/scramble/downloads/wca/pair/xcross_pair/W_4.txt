@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / W / bin 4
-# Population in this bin: 296
+# Population in this bin: 297
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 739001,U L2 F2 D' R2 D' F2 U2 R2 F2 R F L2 D L R' F' L2 U' L' R' D',W,Bogotá Cúbico 2014 (2014-03-15),333bf Final A E1
@@ -96,7 +96,7 @@
 890244001,L2 B2 L2 F2 U2 R' D2 U2 R2 D' R B' L' D2 F2 L' D' R D2,W,Salesianos Open 2018 (2018-09-29~30),333 R1 C #4
 4214351016,L' B' L2 D L D2 R2 D2 F2 R' B2 U L2 U2 B F' U' F' L' F,W,Valsugana Speedcubing 2024 (2024-10-19~20),333mbf Final A #1
 909725003,U F2 U2 B2 U L2 F2 R2 D' B2 L' D' R2 U2 L F D2 B U B' L' F',W,Supreme South Open 2018 (2018-10-13~14),333mbf Final A #1
-934567001,L U2 R2 B2 F2 U2 R' D2 U2 B' U B2 R2 D2 R2 B L' B F U2,W,Fargo Fall 2018 (2018-11-17~18),333oh Final B #5
+5757773001,L' U2 B U2 F2 D2 U2 F R2 F' D2 B' U L' U B2 L' D2,W,Kyrgyzstan Nationals 2026 (2026-07-18~19),333oh R1 A #2
 936724012,R2 F2 L2 U2 R2 U F2 U' L2 U2 L2 F' L2 F' U2 L U2 B' D' R B R',W,Silent Swap Open 2018 (2018-11-17~18),333mbf Final A #1
 5297738001,L2 U2 R' U2 F2 L' B2 R U L2 D F' L2 U' R2 B' R' U,W,Plaza Madero Chía VII 2025 (2025-12-27),333 Final B #1
 4818957001,U' R' B D' B2 L' U2 L' B U2 L' D2 R U2 B2 L2 B2 F' L',W,Prague Summer Opener 2025 (2025-06-21~22),333bf Final A #3

@@ -2,7 +2,7 @@
 # Population in this bin: 6
 # Samples listed: 6 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 100145001,F' L2 F2 U2 L2 F2 U2 L2 U2 F' R U' L' D' U L' F U F2 U',R,PB Smashathon 2015 (2015-01-17~18),333 R1 G E1

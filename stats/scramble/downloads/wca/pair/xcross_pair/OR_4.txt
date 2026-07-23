@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / OR / bin 4
-# Population in this bin: 606
+# Population in this bin: 607
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 1537044001,U2 B2 L2 U2 B2 D' R2 U2 R2 U2 F2 R' D' R' U' L2 U L2 F' L2 D,O,Centauros Open 2020 (2020-02-01~02),333oh R2 A E1

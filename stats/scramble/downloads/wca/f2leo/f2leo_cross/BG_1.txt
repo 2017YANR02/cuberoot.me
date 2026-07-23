@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / BG / bin 1
-# Population in this bin: 24
-# Samples listed: 24 (all entries in this bin)
+# Population in this bin: 26
+# Samples listed: 26 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 238917001,F2 U B2 D' F2 D' L2 D2 R2 F D F L' R2 B L' B,G,Great Indian Cubeathon 2016 (2016-01-08~10),333oh R1 G E1
@@ -29,3 +29,5 @@
 4843398001,F' L B2 R' B' L D2 L' F2 U D2 L' B2 L' F2 B2 R' D2 R2,G,Taipei Summer Open 2025 (2025-06-28~29),333 R1 C E2
 5569643029,D R2 F2 R2 B2 D' U' F2 L2 B D' B R2 F2 U2 F2 D2 B',B,Langenstein City Blind Open 2026 (2026-04-18~19),333mbf Final B #1
 5732545001,R' B' D2 R2 B2 L2 B D2 L2 R2 D L' B' D2 B R2 D2 F,B,Cubing at COTA 2026 (2026-06-27),333oh Final A #2
+5750550009,R2 B' D2 R2 U2 F2 R' F2 R2 F2 U2 R' B' R2 B D' L' D' B2 L B2,G,GAN New Zealand Nationals 2026 (2026-07-10~12),333mbf Final A E1
+5750594009,R2 B' D2 R2 U2 F2 R' F2 R2 F2 U2 R' B' R2 B D' L' D' B2 L B2,G,GAN New Zealand Nationals 2026 (2026-07-10~12),333mbf Final A #2

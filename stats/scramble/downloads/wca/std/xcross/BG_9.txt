@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / BG / bin 9
-# Population in this bin: 361
+# Population in this bin: 362
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 3749098035,D F' B2 U R2 B' L' U' R' B' L' D2 B2 R' L D2 B R',B,Kensington May Upstairs 2024 (2024-05-11~12),333mbf Final A #1
@@ -35,7 +35,7 @@
 4056093021,R F B2 L2 D B2 U' L2 D F2 U' L' R' B' U' F D2 R D F2 L B',B,Kārķi Open 2024 (2024-08-23~25),333mbf Final A #1
 471242001,L B' L2 F D B' U F' L' B U R F2 B2 U2 F2 R2 L' F2,B,Michigan Cubing Club Beta 2017 (2017-03-18~19),333oh Final A #1
 4427854003,D B D' R2 U' R2 U' R2 U B2 U2 L2 B2 F' L' D' U R' U2 L' D2,B,SacQuiet Winter 2025 (2025-01-18),333mbf Final A #2
-3767413001,D2 R2 D L2 B2 U' R2 U2 L2 R D2 R2 F L U L' D' B F' U',B,Bucharest Cubing May B 2024 (2024-05-19),333 R1 C E1
+5750514048,L B D2 L2 D2 L' U2 L B2 R U2 D B2 L R2 D R B' R' U L' F2,B,GAN New Zealand Nationals 2026 (2026-07-10~12),333mbf Final A #1
 483021001,R2 U' B2 U' R2 D2 B2 U2 B' L' D2 R2 D2 R2 F' U' L B' D R',B,Eugene 3x3 Mania 2017 (2017-04-08),333oh Final A #2
 487154001,L2 D' R2 B2 U' F2 D2 U L2 D2 F' L U R D L2 F L' U2,B,SSL 2 Stockholm 2017 (2017-04-08~09),333 R2 D #1
 498979001,U2 B2 R2 U F2 L2 U2 R2 U L2 B R' D' R' U L' B2 R U B2,B,Rubik Ec Open 2017 (2017-04-29~30),333 R1 E #4

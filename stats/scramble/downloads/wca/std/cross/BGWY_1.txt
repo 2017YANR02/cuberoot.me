@@ -1,8 +1,8 @@
 # Scramble samples — std / cross / BGWY / bin 1
-# Population in this bin: 381
+# Population in this bin: 385
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 6462001,U L2 D U2 R2 U R2 B F' L' U F' L R2 B' F' D',W,Rumia Open 2014 (2014-03-29~30),333bf R1 A E2
@@ -25,7 +25,7 @@
 3252201001,L2 F U D2 B2 R F R2 F2 R F2 L F2 L B2 U2 L2 B R2,G,The Last Frontier Fall 2023 (2023-11-04),333 R1 C E2
 4137532001,R D L2 B2 L2 R2 U2 L2 F' U2 R F' D2 F L2 D' L2 B,G,Arizona Autumn 2024 (2024-09-28),333 R2 A #1
 3034111001,R D2 R2 B F D2 B U2 D L' B' R2 D L' D2 B' L' D2,G,Nacionales Argentinas 2023 (2023-09-01~03),333 R1 B #3
-4589834001,U2 L2 B2 U R2 B2 D2 R B' D' F2 U2 F2 R' U L2 R F',B,Slow N Steady UMD Spring 2025 (2025-03-23),333oh R1 C E1
+5757773001,L' U2 B U2 F2 D2 U2 F R2 F' D2 B' U L' U B2 L' D2,W,Kyrgyzstan Nationals 2026 (2026-07-18~19),333oh R1 A #2
 238917001,F2 U B2 D' F2 D' L2 D2 R2 F D F L' R2 B L' B,G,Great Indian Cubeathon 2016 (2016-01-08~10),333oh R1 G E1
 4353510085,U2 R2 B2 U2 F2 U2 B R2 B' L2 F' L2 U L D2 R D L' D2 L2 U2 L2 U',W,Bogotá No Duerme 2024 (2024-12-13~14),333mbf Final A #1
 5453935049,D' R' U2 R F2 D2 R' D2 F2 L' D' R2 B' L D B U' B U L',W,SCU III: FMC Triple-Scoop 2026 (2026-03-14~15),333mbf Final A #2
@@ -42,7 +42,7 @@
 4354990001,F' R2 U2 L2 R2 F U2 R2 B' D R B D B' U2 L' U2 F2 R',W,Bristol Winter Open 2024 (2024-12-14),333 R1 A #4
 4937847047,F' R2 U' L2 U L2 R2 B2 D B L F2 L D2 B' L' R D' L' B,Y,BrizZon Side Open IV 2025 (2025-08-15~17),333mbf Final B #1
 4082042001,D' F2 U2 D' L B' R B F2 R U2 L B2 R2 B2 D2 U' B2,G,Champagne Open 2024 (2024-09-07~08),333 Final A E1
-379700001,L2 B2 D2 L' U2 R U2 F2 U2 F' L' B2 F' R2 B2 D' L B R,W,Cubing ATMOSphere 2016 (2016-10-15~16),333oh R1 D E2
+5750594009,R2 B' D2 R2 U2 F2 R' F2 R2 F2 U2 R' B' R2 B D' L' D' B2 L B2,G,GAN New Zealand Nationals 2026 (2026-07-10~12),333mbf Final A #2
 383553001,B2 D2 L2 F2 L2 R2 U L2 F D' R' B2 U B F2 L B L2 U',W,Tathva Cube Open 2016 (2016-10-22~23),333oh R2 B #4
 385440001,U2 B2 U' L2 D' F2 L2 U' B2 F2 R2 B U2 B2 L' F' U' L2 B' F U' L B',Y,Amalthea SCMU Open 2016 (2016-10-23),333bf Final F E1
 385748001,L R2 D2 F2 L U2 B2 F2 U R2 F L' B2 F D F2 D2 B,Y,Amalthea SCMU Open 2016 (2016-10-23),333 Final D #1

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_cross_pseudo_pair / WY / bin 1
-# Population in this bin: 341
+# Population in this bin: 342
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 5640748001,U2 R' U L F B2 R L2 U' F2 R2 L2 D2 R2 L2 F2 B L D,Y,Perth Puzzle Party 2026 (2026-05-16),333 Final A #1
@@ -59,7 +59,7 @@
 5569300001,B' F2 L U2 L D2 F2 L U' R2 F D2 L R' F2 L' R' B2,W,Twist and Turn Ghent 2026 (2026-04-18~19),333oh Final B #5
 5416109001,U' R2 D' B2 U D' F' U' B2 L D F2 U R2 F2 B2 L2 D2 L',W,Wichita Art Museum 2026 (2026-02-28),333bf Final B #5
 5690708001,U' L U' B U' L2 B2 U F2 U2 F2 L2 U R' D' U2 B D' B' R2,W,SAJ Águas da Prata 2026 (2026-06-06~07),333 R1 A #3
-505712001,R D2 B D F B' D2 B2 U2 L' F' L2 D2 F2 R2 B2 R2 D2,W,Shenyang Spring 2017 (2017-05-13~14),333oh Final A #2
+5756483001,D2 R2 U' F2 R' F2 U F' U2 D L2 F2 U' F2 R2,Y,Guelaguetza Oaxaca 2026 (2026-07-18~19),333 R1 B E1
 5456522001,U' L U2 F2 L' B2 U B' D B2 U D B2 R2 U2 B' L2 B',Y,Penghu Spring Cube Open 2026 (2026-03-14),333 R1 A #4
 3588340001,R' B R L2 U2 L2 D B2 F2 U L2 U R2 B L D' F2 U' F L,W,Puzzlin' Polokwane 2024 (2024-03-15~16),333oh R1 B #5
 3626045001,F2 R2 B R U2 D R2 F' U' F' B2 D2 R B2 L F2 R' L,W,Eretum II: Easter Edition 2024 (2024-03-30),333oh R1 A E2

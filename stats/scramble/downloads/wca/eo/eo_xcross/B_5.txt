@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / B / bin 5
-# Population in this bin: 676
+# Population in this bin: 680
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 558001,L F2 L2 B2 F2 D2 L D2 B U B F' L2 F' L' D' R D2,B,Hessen Open 2014 (2014-03-15~16),333 R1 C E1
@@ -130,7 +130,7 @@
 5533379001,U2 L2 F2 R2 B' R2 D2 F R2 B D R2 U L' D' F2 R' F' L',B,Desafio Aves María Sabaneta 2026 (2026-04-12),333oh R1 B #4
 5134573001,B2 R2 B R2 U' B2 D' L2 D2 F L D2 L D B R2,B,İzmir October 2025 (2025-10-25~26),333 R2 A #4
 678610027,L2 D2 F2 L2 F2 L2 D' L2 U2 F' U F L2 D' F' D F2 D U L' F,B,Bheja Fry Year End Open 2017 (2017-12-30~31),333mbf Final A #3
-3530074001,U L2 D' F2 R2 B2 D2 L' U2 R2 B2 F L2 U B2 L' U2 R' U2,B,Happy Crew Déjà Vu Colorado 2024 (2024-02-24),333oh Final A #4
+5752176001,F' U R2 F R2 F' R' U F2 R2 D' L2 F2 R2 U2 F2 L F2,B,Nanchang Summer 2026 (2026-07-18),333 R3 B #5
 1720821001,U F' R B' U2 R B R2 D R' L' U2 B2 L U2 L F2 L2,B,Missoula 2021 (2021-11-06~07),333 R2 C #1
 1643649001,D' B2 U' B' U2 F2 L2 F2 U2 R2 D' F' D R2 B' F U2 L,B,Solving in Sale 2021 (2021-04-10~11),333 R1 A #1
 1562788001,L R' D2 U2 L' F2 R U2 B' F' U' B U B' R2 D B R,B,Hernando Summer 2020 (2020-02-22~23),333 R1 C #2
