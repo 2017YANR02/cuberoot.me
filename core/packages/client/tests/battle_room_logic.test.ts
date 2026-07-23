@@ -125,6 +125,7 @@ describe('netErrorMessage', () => {
   it('已知业务错误给对应措辞', () => {
     expect(netErrorMessage(new Error('room not found')).zh).toBe('房间不存在或已过期');
     expect(netErrorMessage(new Error('room full')).zh).toBe('房间人数已满');
+    expect(netErrorMessage(new Error('name taken')).zh).toBe('这个名字房里已经有人用了,换一个');
   });
   it('网络错误 + 5xx 各自归类', () => {
     expect(netErrorMessage(new TypeError('Failed to fetch')).zh).toBe('网络连接失败,请检查网络');

@@ -8,6 +8,10 @@ export type NetPenalty = 'ok' | '+2' | 'dnf';
 
 export interface NetPlayerEntry {
   name: string;
+  /** WCA ID(登录用户 / 选了 WCA 选手时有;纯昵称访客为空)。 */
+  wcaId?: string;
+  /** 国家 iso2(有则玩家条显国旗)。 */
+  iso2?: string;
   /** 加入时刻(服务器毫秒)— 玩家条按此排序,顺序稳定。 */
   joined: number;
   /** 最近一次心跳(服务器毫秒)— 离线判定。 */
@@ -18,6 +22,13 @@ export interface NetPlayerEntry {
   at: number;
   /** 该玩家所选项目(timer EventId);缺省回落房间默认项目。 */
   event?: string;
+}
+
+/** 加入房间的身份:登录用户 = WCA 姓名+ID;访客 = 选中的 WCA 选手,或纯昵称。 */
+export interface NetIdentity {
+  name: string;
+  wcaId?: string;
+  iso2?: string;
 }
 
 export interface NetResult { t: number; p: NetPenalty }
@@ -66,13 +77,13 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
 }
 
 /** 建房(建房者即首位玩家,项目=建房项目)。scramble = 本机为第 1 轮该项目生成的打乱。 */
-export function createNetRoom(event: string, scramble: string, name: string): Promise<NetRoomState & { playerId: string }> {
-  return postJson('/v1/battle/rooms', { event, scramble, name });
+export function createNetRoom(event: string, scramble: string, id: NetIdentity): Promise<NetRoomState & { playerId: string }> {
+  return postJson('/v1/battle/rooms', { event, scramble, name: id.name, wcaId: id.wcaId, iso2: id.iso2 });
 }
 
-/** 加入房间(满员/不存在 → 抛错)。默认项目 = 房间项目。 */
-export function joinNetRoom(code: string, name: string): Promise<NetRoomState & { playerId: string }> {
-  return postJson(`/v1/battle/rooms/${code}/join`, { name });
+/** 加入房间(满员/不存在/重名 → 抛错)。默认项目 = 房间项目。 */
+export function joinNetRoom(code: string, id: NetIdentity): Promise<NetRoomState & { playerId: string }> {
+  return postJson(`/v1/battle/rooms/${code}/join`, { name: id.name, wcaId: id.wcaId, iso2: id.iso2 });
 }
 
 /** 轮询房间状态;带 pid 顺手刷新在线心跳。房间不存在 → 抛。 */
