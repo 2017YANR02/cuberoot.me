@@ -4,6 +4,11 @@ import { createHash, randomBytes } from 'node:crypto';
 /**
  * /v1/wechat/jssdk-signature — 微信 JS-SDK `wx.config` 签名。
  *
+ * ⚠️ 永久休眠(2026-07 定论):本站公众号是**个人订阅号**,微信对个人订阅号关闭了「微信
+ *    认证」→ 永远拿不到 JS-SDK「分享接口」权限。即便配了下面的 env,分享卡也设不上
+ *    (updateTimelineShareData permission denied)。别再叫用户配 env / 认证 —— 对个人号是死路;
+ *    唯一复活路 = 换企业主体认证服务号。留着仅为将来换号。背景见记忆 project_social_share_cards。
+ *
  * 朋友圈 / 会话「自定义分享卡片」必须在微信内置浏览器里调 wx.config +
  * updateTimelineShareData / updateAppMessageShareData;wx.config 需要用公众号的
  * jsapi_ticket 对「当前页面 URL」做 SHA1 签名。本端点:
@@ -13,7 +18,7 @@ import { createHash, randomBytes } from 'node:crypto';
  *     → { appId, timestamp, nonceStr, signature }   已配置且成功
  *     → { disabled: true }                           未配公众号 env(前端静默 no-op)
  *
- * 上线前提(公众号后台,一次性):
+ * 复活前提(仅当日后换成【企业主体认证服务号】;个人订阅号无论如何做不到):
  *   ① 服务号/订阅号 → 设置与开发 → 公众号设置 → 功能设置 →「JS 接口安全域名」加 cuberoot.me
  *      (需把校验文件 MP_verify_*.txt 放到站点根,可托管进 client/public/)。
  *   ② 基本配置 →「IP 白名单」加本服务器出口 IP,否则换 access_token 报 40164。

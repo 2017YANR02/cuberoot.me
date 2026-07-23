@@ -1,5 +1,6 @@
 'use client';
 
+// ⚠️ 本账号(个人订阅号)永久无法激活微信自定义分享 —— 详见 lib/wechat-share.ts 顶部。留着仅为将来换企业认证服务号。
 // 在微信内配置**本页**的分享卡片(会话 + 朋友圈)。给需要富化卡片(自定义描述 / 专属图)
 // 的页面用 —— 传随语言 / 数据变化的 title/desc/imgUrl。pathname 变化(SPA 导航)时重配。
 // 非微信环境零副作用。站点级默认(用 document.title 兜底)见 components/WeChatShareSync。
