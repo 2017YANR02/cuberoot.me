@@ -47,6 +47,8 @@ const ROOM_TTL_MS = 24 * 60 * 60 * 1000;
 const CODE_RE = /^[A-Z0-9]{4,12}$/;
 const EVENT_RE = /^[A-Za-z0-9]{2,16}$/;
 const PID_RE = /^[a-z0-9]{6,16}$/;
+const WCA_ID_RE = /^\d{4}[A-Z]{4}\d{2}$/;
+const ISO2_RE = /^[A-Za-z]{2}$/;
 const PHASES = new Set(['idle', 'inspecting', 'solving']);
 const PENALTIES = new Set(['ok', '+2', 'dnf']);
 
@@ -86,7 +88,17 @@ function parseScramble(raw: unknown): string | null {
   return s;
 }
 
-interface PlayerEntry { name: string; joined: number; seen: number; ph: string; at: number; event: string }
+/** WCA ID(可选,登录/选了 WCA 选手时带);非法一律丢弃当访客处理。 */
+function parseWcaId(raw: unknown): string | undefined {
+  return typeof raw === 'string' && WCA_ID_RE.test(raw) ? raw : undefined;
+}
+
+/** 国家 iso2(可选,给玩家条国旗用);统一大写。 */
+function parseIso2(raw: unknown): string | undefined {
+  return typeof raw === 'string' && ISO2_RE.test(raw) ? raw.toUpperCase() : undefined;
+}
+
+interface PlayerEntry { name: string; wcaId?: string; iso2?: string; joined: number; seen: number; ph: string; at: number; event: string }
 interface RoomResult { t: number; p: string }
 interface RoomHistoryEntry {
   round: number;
@@ -164,13 +176,15 @@ battleRoomsRoutes.post('/battle/rooms', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
 
-  let body: { event?: unknown; scramble?: unknown; name?: unknown };
+  let body: { event?: unknown; scramble?: unknown; name?: unknown; wcaId?: unknown; iso2?: unknown };
   try { body = await c.req.json(); } catch { return c.json({ error: 'invalid body' }, 400); }
 
   const event = parseEvent(body.event);
   const scramble = parseScramble(body.scramble);
   if (!event || !scramble) return c.json({ error: 'invalid event/scramble' }, 400);
   const name = sanitizeName(body.name);
+  const wcaId = parseWcaId(body.wcaId);
+  const iso2 = parseIso2(body.iso2);
 
   const now = Date.now();
   // 惰性清理:顺手删掉过期房间(不阻塞主流程)
@@ -178,7 +192,7 @@ battleRoomsRoutes.post('/battle/rooms', async (c) => {
 
   const pid = randPid();
   const players: Record<string, PlayerEntry> = {
-    [pid]: { name, joined: now, seen: now, ph: 'idle', at: now, event },
+    [pid]: { name, ...(wcaId ? { wcaId } : {}), ...(iso2 ? { iso2 } : {}), joined: now, seen: now, ph: 'idle', at: now, event },
   };
   const scrambles: Record<string, string> = { [event]: scramble };
 
@@ -206,9 +220,11 @@ battleRoomsRoutes.post('/battle/rooms/:code/join', async (c) => {
   const code = parseCode(c.req.param('code'));
   if (!code) return c.json({ error: 'invalid code' }, 400);
 
-  let body: { name?: unknown };
+  let body: { name?: unknown; wcaId?: unknown; iso2?: unknown };
   try { body = await c.req.json(); } catch { body = {}; }
   const name = sanitizeName(body.name);
+  const wcaId = parseWcaId(body.wcaId);
+  const iso2 = parseIso2(body.iso2);
 
   const room = await getRoomRow(code);
   if (!room) return c.json({ error: 'room not found' }, 404);
@@ -217,16 +233,29 @@ battleRoomsRoutes.post('/battle/rooms/:code/join', async (c) => {
 
   const now = Date.now();
   const pid = randPid();
-  const entry: PlayerEntry = { name, joined: now, seen: now, ph: 'idle', at: now, event: room.event };
+  const entry: PlayerEntry = {
+    name, ...(wcaId ? { wcaId } : {}), ...(iso2 ? { iso2 } : {}),
+    joined: now, seen: now, ph: 'idle', at: now, event: room.event,
+  };
+  // 重名拦截(大小写不敏感)在同一条 UPDATE 里原子完成:仅当房内无同名玩家时才写入,
+  // 避免「先读后写」的 TOCTOU 让两人同名挤进来。0 行更新 = 房间没了 或 重名。
   const rows = await query<RoomRow>(
-    `UPDATE battle_rooms
+    `UPDATE battle_rooms b
      SET players = players || jsonb_build_object(?::text, ?::jsonb), updated_at = ?
      WHERE code = ?
+       AND NOT EXISTS (
+         SELECT 1 FROM jsonb_each(b.players) AS e(k, v)
+         WHERE lower(v ->> 'name') = lower(?)
+       )
      RETURNING ${ROOM_COLS}`,
-    [pid, entry, now, code],
+    [pid, entry, now, code, name],
   );
-  if (!rows[0]) return c.json({ error: 'room not found' }, 404);
-  return c.json({ playerId: pid, ...stateJson(rows[0]) });
+  if (rows[0]) return c.json({ playerId: pid, ...stateJson(rows[0]) });
+
+  // 没写进去:复查区分「房间没了」与「重名」
+  const after = await getRoomRow(code);
+  if (!after) return c.json({ error: 'room not found' }, 404);
+  return c.json({ error: 'name taken' }, 409);
 });
 
 // GET /battle/rooms/:code?pid=X — 状态轮询;带 pid 时刷新该玩家在线心跳(seen)

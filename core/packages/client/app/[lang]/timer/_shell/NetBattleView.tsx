@@ -33,6 +33,9 @@ import { SegmentTime } from '@/components/SegmentTime';
 import CubeRootLogo from '@/components/CubeRootLogo';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { EventIcon } from '@/components/EventIcon';
+import { WcaPersonPicker } from '@/components/WcaPersonPicker';
+import { Flag } from '@/components/Flag';
+import type { WcaPersonLite } from '@/lib/wca-api';
 import { shouldIgnoreTimerTarget } from '@/lib/timer-ignore-target';
 import { useAuthStore } from '@/lib/auth-store';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -45,7 +48,7 @@ import { useTranslation } from 'react-i18next';
 import {
   createNetRoom, joinNetRoom, getNetRoom, postNetStatus, postNetResult,
   nextNetRound, leaveNetRoom, postNetEvent, ensureNetScramble,
-  type NetRoomState, type NetPenalty, type NetResult,
+  type NetRoomState, type NetPenalty, type NetResult, type NetIdentity,
 } from '@/lib/battle-room-api';
 import {
   effectiveNetMs, roundWinners, sortedNetPlayers, isNetOnline, blendClockOffset,
@@ -100,7 +103,8 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
   const offsetRef = useRef<number | null>(null);
 
   // ── 大厅表单 ────────────────────────────────────────────────
-  const [name, setName] = useState('');
+  const [name, setName] = useState('');                         // 访客自由昵称(未选 WCA 选手时用)
+  const [picked, setPicked] = useState<WcaPersonLite | null>(null); // 访客选中的 WCA 选手
   const [joinCode, setJoinCode] = useState('');
   const [lobbyEvent, setLobbyEvent] = useState('333');
   /** 邀请链接进来时预读的房间信息(项目 + 在场者),让加入者先确认进的是哪个房。 */
@@ -108,9 +112,14 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
   useEffect(() => {
     try { setName(localStorage.getItem(LS_NAME) || ''); } catch { /* ignore */ }
   }, []);
-  // 登录用户默认用 WCA 姓名(本地存过昵称则本地优先)
-  const effName = (name.trim() || authUser?.name || '').trim();
-  const effNameRef = useRef(effName); effNameRef.current = effName;
+  // 身份:登录用户直接用 WCA 姓名+ID(不填昵称);访客选了 WCA 选手用其姓名+ID,否则用自由昵称。
+  const identity: NetIdentity | null = useMemo(() => {
+    if (authUser) return { name: authUser.name, wcaId: authUser.wcaId || undefined, iso2: authUser.country || undefined };
+    if (picked) return { name: picked.name, wcaId: picked.id, iso2: picked.country_iso2 || undefined };
+    const t = name.trim();
+    return t ? { name: t } : null;
+  }, [authUser, picked, name]);
+  const identityRef = useRef(identity); identityRef.current = identity;
 
   const applyState = useCallback((st: NetRoomState) => {
     offsetRef.current = blendClockOffset(offsetRef.current, st.now, Date.now());
@@ -275,24 +284,24 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
 
   // ── 建房 / 加入 / 恢复 / 离开 ───────────────────────────────
   const doCreate = useCallback(() => {
-    if (busy) return;
-    const nm = effNameRef.current;
+    const id = identityRef.current;
+    if (busy || !id) return;
     setBusy(true); setErr(null);
     const ev = lobbyEvent;
     const scr = generateScramble(ev as EventId);
-    void createNetRoom(ev, scr, nm)
-      .then((st) => { adopt(st, nm); void setRoomParam(st.code); })
+    void createNetRoom(ev, scr, id)
+      .then((st) => { adopt(st, id.name); void setRoomParam(st.code); })
       .catch((e: Error) => setErr(tr(netErrorMessage(e))))
       .finally(() => setBusy(false));
   }, [busy, lobbyEvent, adopt, setRoomParam]);
 
   const doJoin = useCallback((rawCode: string) => {
     const codeUp = rawCode.trim().toUpperCase();
-    if (!codeUp || busy) return;
-    const nm = effNameRef.current;
+    const id = identityRef.current;
+    if (!codeUp || busy || !id) return;
     setBusy(true); setErr(null);
-    void joinNetRoom(codeUp, nm)
-      .then((st) => { adopt(st, nm); setJoinCode(''); void setRoomParam(st.code); })
+    void joinNetRoom(codeUp, id)
+      .then((st) => { adopt(st, id.name); setJoinCode(''); void setRoomParam(st.code); })
       .catch((e: Error) => setErr(tr(netErrorMessage(e))))
       .finally(() => setBusy(false));
   }, [busy, adopt, setRoomParam]);
@@ -544,6 +553,31 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
     </header>
   );
 
+  // 身份字段:登录用户直接显示其 WCA 姓名+ID(不填昵称);访客用 WcaPersonPicker
+  // (搜姓名/WCA ID,复用 recon 的选手选择器),选不到就把输入当自由昵称。
+  const identityField = (
+    <div className="net-field">
+      <span className="net-field-label">{tr({ zh: '选手', en: 'Player' })}</span>
+      {authUser ? (
+        <div className="net-identity-me">
+          {authUser.avatar
+            ? <img src={authUser.avatar} alt="" className="net-identity-avatar" width={24} height={24} />
+            : null}
+          <span className="net-identity-name">{authUser.name}</span>
+          {authUser.wcaId ? <span className="net-identity-wcaid">{authUser.wcaId}</span> : null}
+        </div>
+      ) : (
+        <WcaPersonPicker
+          value={picked}
+          onChange={setPicked}
+          onQueryChange={setName}
+          isZh={isZh}
+          placeholder={tr({ zh: '搜姓名 / WCA ID,或直接输入昵称', en: 'Search name / WCA ID, or type a nickname' })}
+        />
+      )}
+    </div>
+  );
+
   if (!room) {
     // 邀请链接进来(URL 带 room=)→ 加入模式:聚焦「加入这个房」,不喧宾夺主放创建。
     const inviteCode = roomParam ? roomParam.trim().toUpperCase() : null;
@@ -603,24 +637,13 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
                 <p className="net-lobby-hint">{tr({ zh: '正在读取房间…', en: 'Loading room…' })}</p>
               ) : null}
 
-              <label className="net-field">
-                <span className="net-field-label">{tr({ zh: '你的昵称', en: 'Your nickname' })}</span>
-                <input
-                  className="net-input"
-                  data-no-timer
-                  value={name}
-                  maxLength={24}
-                  placeholder={authUser?.name || tr({ zh: '你的名字', en: 'Your name' })}
-                  onChange={(e) => setName(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' && peek) doJoin(inviteCode); }}
-                />
-              </label>
+              {identityField}
 
               <button
                 type="button"
                 className="net-btn net-btn-primary net-btn-lg"
                 onClick={() => doJoin(inviteCode)}
-                disabled={busy || !peek}
+                disabled={busy || !peek || !identity}
               >
                 {tr({ zh: '加入房间', en: 'Join room' })}
               </button>
@@ -650,17 +673,7 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
                 })}
               </p>
 
-              <label className="net-field">
-                <span className="net-field-label">{tr({ zh: '昵称', en: 'Nickname' })}</span>
-                <input
-                  className="net-input"
-                  data-no-timer
-                  value={name}
-                  maxLength={24}
-                  placeholder={authUser?.name || tr({ zh: '你的名字', en: 'Your name' })}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </label>
+              {identityField}
 
               <div className="net-field">
                 <span className="net-field-label">{tr({ zh: '项目', en: 'Event' })}</span>
@@ -673,7 +686,7 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
                 />
               </div>
 
-              <button type="button" className="net-btn net-btn-primary net-btn-lg" onClick={doCreate} disabled={busy}>
+              <button type="button" className="net-btn net-btn-primary net-btn-lg" onClick={doCreate} disabled={busy || !identity}>
                 {tr({ zh: '创建房间', en: 'Create room' })}
               </button>
 
@@ -694,7 +707,7 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
                   type="button"
                   className="net-btn"
                   onClick={() => doJoin(joinCode)}
-                  disabled={busy || !joinCode.trim()}
+                  disabled={busy || !joinCode.trim() || !identity}
                 >
                   {tr({ zh: '加入', en: 'Join' })}
                 </button>
@@ -765,7 +778,8 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
                   title={eventDisplayName(netEventToSelectorId(pEvent), isZh)}
                 />
               )}
-              <span className="net-p-name" title={p.name}>
+              {p.iso2 && <Flag iso2={p.iso2} className="net-p-flag" />}
+              <span className="net-p-name" title={p.wcaId ? `${p.name} · ${p.wcaId}` : p.name}>
                 {p.name}
                 {mine && <span className="net-p-me">{tr({ zh: '(我)', en: ' (me)' })}</span>}
               </span>
@@ -960,7 +974,8 @@ function NetStatsPanel({ room, pid, isZh, precision, colors, onClose }: NetStats
                         className="net-st-eventicon"
                         title={eventDisplayName(netEventToSelectorId(pEvent), isZh)}
                       />
-                      <span className="net-st-nametext" title={p.name}>{p.name}</span>
+                      {p.iso2 && <Flag iso2={p.iso2} className="net-st-flag" />}
+                      <span className="net-st-nametext" title={p.wcaId ? `${p.name} · ${p.wcaId}` : p.name}>{p.name}</span>
                     </td>
                     <td className="net-st-wins">{room.scores[p.id] ?? 0}</td>
                     <td>{fmtStat(stats.single, precision)}</td>
