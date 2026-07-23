@@ -12,6 +12,10 @@
  *   view                     cube:     iso | plan | f2l | oll | pll | pll-iso | trans | net
  *                            non-cube: iso | top | net | wca   (was: variant=)
  *   mask                     explicit Masking enum value
+ *   sch                      face colors U R F D L B (cube renderer only): `wrgyob`
+ *                            abbreviations or comma hex/names, `#` optional. Default
+ *                            stays the legacy yellow-top scheme (alg-case ecosystem);
+ *                            studio links always pass sch (its default is WCA white-top)
  *   size                     32-1000; default 256
  *   pzl                      numeric (NxN size 1-50) OR keyword
  *                            (cube | sq1 | mega | pyra | skewb); legacy `puzzle=`
@@ -59,8 +63,7 @@ cubeRoutes.get('/visualcube.svg', async (c) => {
   const algStr = q('case') ?? q('alg') ?? q('setup') ?? '';
   const isCase = q('case') != null;
 
-  // `view=wca` is the tnoodle-port unfolded layout — server doesn't ship a TS port,
-  // so reuse the cubing.js scramble-display net renderer (close-enough WCA preview).
+  // net/wca = the unfolded-cross layout (tnoodle style).
   const wantsNet = view === 'net' || view === 'wca';
 
   if (wantsNet) {
@@ -132,6 +135,7 @@ cubeRoutes.get('/visualcube.svg', async (c) => {
     setup: q('setup'),
     view,
     mask: q('mask'),
+    sch: q('sch'),
     size: q('size'),
     cubeSize: q('cubeSize'),
     // Only pass pzl when numeric — keyword values (sq1/mega/pyra/skewb/cube)

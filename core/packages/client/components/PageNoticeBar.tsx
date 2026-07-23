@@ -6,7 +6,10 @@
 // 数据走 /v1/page-notices(公开读 + admin 写),鉴权 authHeaders(WCA OAuth / X-Admin-Key)。
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
-import { Info, AlertTriangle, Wrench, X, Pencil, Plus, Trash2, Laptop, Globe } from 'lucide-react';
+import {
+  Info, AlertTriangle, Wrench, X, Pencil, Plus, Trash2, Laptop, Globe,
+  Hammer, Bug, RefreshCw, FlaskConical, Eye, Sparkles, Rocket, Megaphone, Gift, Bell, Zap,
+} from 'lucide-react';
 import { useIsAdmin } from '@/lib/auth-store';
 import { useLiveUrlSuffix } from '@/hooks/useLiveUrlSuffix';
 import { tr, T, useLang } from '@/i18n/tr';
@@ -24,6 +27,19 @@ const LEVEL_ICON: Record<NoticeLevel, typeof Info> = {
   warning: AlertTriangle,
   maintenance: Wrench,
 };
+
+// 可选图标库(存 key 到 notice.icon;空 = 按 level 回退)。key 列表与 server 校验白名单保持一致。
+const ICONS: Record<string, typeof Info> = {
+  info: Info, warning: AlertTriangle, wrench: Wrench, hammer: Hammer, bug: Bug,
+  refresh: RefreshCw, flask: FlaskConical, eye: Eye, sparkles: Sparkles, rocket: Rocket,
+  megaphone: Megaphone, gift: Gift, bell: Bell, zap: Zap,
+};
+const ICON_KEYS = Object.keys(ICONS);
+
+// 渲染用图标:优先 notice 自带 icon,无效 / 未设则回退到 level 默认图标。
+function iconFor(n: { icon?: string; level: NoticeLevel }): typeof Info {
+  return (n.icon && ICONS[n.icon]) || LEVEL_ICON[n.level];
+}
 
 const DISMISS_KEY = 'pn-dismissed';
 
@@ -61,26 +77,26 @@ function EnvSwitch() {
 }
 
 // 常用模板:点一下填 级别 + 中英文,填完仍可自由改。
-const PRESETS: { label: { en: string; zh: string }; level: NoticeLevel; bodyZh: string; bodyEn: string }[] = [
-  { label: { en: 'Maintenance', zh: '维护中' }, level: 'maintenance',
+const PRESETS: { label: { en: string; zh: string }; level: NoticeLevel; icon: string; bodyZh: string; bodyEn: string }[] = [
+  { label: { en: 'Maintenance', zh: '维护中' }, level: 'maintenance', icon: 'wrench',
     bodyZh: '本页正在维护,稍后恢复,给你带来不便敬请谅解。',
     bodyEn: 'This page is under maintenance and will be back shortly. Sorry for the inconvenience.' },
-  { label: { en: 'Work in progress', zh: '开发中' }, level: 'info',
+  { label: { en: 'Work in progress', zh: '开发中' }, level: 'info', icon: 'hammer',
     bodyZh: '本页仍在开发中,功能尚不完整,后续会持续完善。',
     bodyEn: 'This page is still under development; some features are incomplete and will keep improving.' },
-  { label: { en: 'Known issue', zh: '已知问题' }, level: 'warning',
+  { label: { en: 'Known issue', zh: '已知问题' }, level: 'warning', icon: 'bug',
     bodyZh: '本页存在已知问题,我们正在修复,感谢反馈与耐心。',
     bodyEn: 'This page has a known issue we are working to fix. Thanks for your patience.' },
-  { label: { en: 'Data updating', zh: '数据更新中' }, level: 'info',
+  { label: { en: 'Data updating', zh: '数据更新中' }, level: 'info', icon: 'refresh',
     bodyZh: '数据正在更新,部分内容可能暂不准确,稍后刷新即可。',
     bodyEn: 'Data is currently updating; some content may be temporarily inaccurate. Please check back soon.' },
-  { label: { en: 'Experimental', zh: '实验性功能' }, level: 'warning',
+  { label: { en: 'Experimental', zh: '实验性功能' }, level: 'warning', icon: 'flask',
     bodyZh: '实验性功能,行为可能随时变化,请谨慎使用。',
     bodyEn: 'Experimental feature — behavior may change at any time. Use with caution.' },
-  { label: { en: 'Beta / preview', zh: '预览版' }, level: 'info',
+  { label: { en: 'Beta / preview', zh: '预览版' }, level: 'info', icon: 'eye',
     bodyZh: '本页为预览版,仅供体验,数据与样式后续可能调整。',
     bodyEn: 'This is a preview build for early access; data and layout may still change.' },
-  { label: { en: 'New feature', zh: '新功能' }, level: 'info',
+  { label: { en: 'New feature', zh: '新功能' }, level: 'info', icon: 'sparkles',
     bodyZh: '本页上线了新功能,欢迎体验。',
     bodyEn: 'A new feature just landed on this page — give it a try.' },
 ];
@@ -115,6 +131,7 @@ interface FormState {
   id: number | null;   // null = 新建
   path: string;
   level: NoticeLevel;
+  icon: string;        // '' = 按 level 回退
   bodyZh: string;
   bodyEn: string;
   enabled: boolean;
@@ -170,13 +187,13 @@ export default function PageNoticeBar() {
       existing = (await fetchAllPageNotices()).find((n) => n.path === key);
     } catch { /* 拿不到就当全新 */ }
     setForm(existing
-      ? { id: existing.id, path: existing.path, level: existing.level, bodyZh: existing.bodyZh, bodyEn: existing.bodyEn, enabled: existing.enabled, dismissible: existing.dismissible }
-      : { id: null, path: key, level: 'info', bodyZh: '', bodyEn: '', enabled: true, dismissible: true });
+      ? { id: existing.id, path: existing.path, level: existing.level, icon: existing.icon ?? '', bodyZh: existing.bodyZh, bodyEn: existing.bodyEn, enabled: existing.enabled, dismissible: existing.dismissible }
+      : { id: null, path: key, level: 'info', icon: '', bodyZh: '', bodyEn: '', enabled: true, dismissible: true });
   };
 
   const openEdit = (n: PageNotice) => {
     setErr(null);
-    setForm({ id: n.id, path: n.path, level: n.level, bodyZh: n.bodyZh, bodyEn: n.bodyEn, enabled: n.enabled, dismissible: n.dismissible });
+    setForm({ id: n.id, path: n.path, level: n.level, icon: n.icon ?? '', bodyZh: n.bodyZh, bodyEn: n.bodyEn, enabled: n.enabled, dismissible: n.dismissible });
   };
 
   const save = async () => {
@@ -187,6 +204,7 @@ export default function PageNoticeBar() {
       const body: PageNoticeInput = {
         path: form.path.trim(),
         level: form.level,
+        icon: form.icon,
         bodyZh: form.bodyZh.trim(),
         bodyEn: form.bodyEn.trim(),
         enabled: form.enabled,
@@ -246,7 +264,7 @@ export default function PageNoticeBar() {
   return (
     <div className="page-notice-wrap" ref={wrapRef}>
       {visible.map((n) => {
-        const Icon = LEVEL_ICON[n.level];
+        const Icon = iconFor(n);
         return (
           <div key={n.id} className="page-notice" data-level={n.level} role="status">
             {isAdmin && (
@@ -303,6 +321,36 @@ export default function PageNoticeBar() {
               label={<T en="Dismissible" zh="可关闭" />} ariaLabel={tr({ en: 'Dismissible', zh: '可关闭' })} />
           </div>
 
+          <div className="page-notice-field">
+            <span><T en="Icon" zh="图标" /></span>
+            <div className="page-notice-iconpicker">
+              {(() => {
+                const AutoIcon = LEVEL_ICON[form.level];
+                return (
+                  <button type="button"
+                    className={`page-notice-iconbtn${form.icon === '' ? ' is-active' : ''}`}
+                    onClick={() => setForm({ ...form, icon: '' })}
+                    title={tr({ en: 'Auto (by level)', zh: '自动(按级别)' })}
+                    aria-label={tr({ en: 'Auto icon by level', zh: '按级别自动图标' })}
+                    aria-pressed={form.icon === ''}>
+                    <AutoIcon size={16} aria-hidden />
+                  </button>
+                );
+              })()}
+              {ICON_KEYS.map((k) => {
+                const KIcon = ICONS[k];
+                return (
+                  <button key={k} type="button"
+                    className={`page-notice-iconbtn${form.icon === k ? ' is-active' : ''}`}
+                    onClick={() => setForm({ ...form, icon: k })}
+                    title={k} aria-label={k} aria-pressed={form.icon === k}>
+                    <KIcon size={16} aria-hidden />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <p className="page-notice-hint">
             <T
               en="Enabled: whether this notice shows at all (off = saved but hidden from everyone). Dismissible: whether visitors can click × to close it (off = always shown, cannot be dismissed)."
@@ -312,12 +360,16 @@ export default function PageNoticeBar() {
 
           <div className="page-notice-field">
             <div className="page-notice-presets">
-              {PRESETS.map((p) => (
-                <button key={p.label.en} type="button" className="page-notice-preset"
-                  onClick={() => setForm({ ...form, level: p.level, bodyZh: p.bodyZh, bodyEn: p.bodyEn })}>
-                  {tr(p.label)}
-                </button>
-              ))}
+              {PRESETS.map((p) => {
+                const PIcon = ICONS[p.icon] ?? LEVEL_ICON[p.level];
+                return (
+                  <button key={p.label.en} type="button" className="page-notice-preset"
+                    onClick={() => setForm({ ...form, level: p.level, icon: p.icon, bodyZh: p.bodyZh, bodyEn: p.bodyEn })}>
+                    <PIcon size={13} aria-hidden />
+                    {tr(p.label)}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

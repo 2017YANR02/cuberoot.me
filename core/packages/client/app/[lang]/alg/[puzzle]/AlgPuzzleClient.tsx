@@ -15,6 +15,9 @@ import { ALG_CATALOG, ALG_PUZZLES, loadAlg, type AlgCase, type AlgPuzzle } from 
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
 import { CaseThumb } from '@/components/CaseThumb';
+import AlgCard from '@/components/AlgCard';
+import { FaceletsCube } from '@/components/FaceletsCube';
+import { TOTAL_CASES as LSLL_TOTAL, categoryCardFacelets } from '@/lib/lsll/model';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../alg.css';
 import { tr } from '@/i18n/tr';
@@ -113,27 +116,26 @@ export default function AlgPuzzleClient() {
           const first = firstCases[s.slug];
           const firstAlg = first?.algs.flat()[0]?.alg ?? first?.standard ?? '';
           return (
-            <Link key={s.slug} href={`/alg/${puzzle}/${s.slug}`} className="alg-bento-card">
-              <div className="alg-bento-thumb">
-                {first && (
-                  <CaseThumb
-                    puzzle={puzzle}
-                    set={s.slug}
-                    sticker={first.sticker}
-                    alg={firstAlg}
-                    setup={first.setup}
-                    size={96}
-                  />
-                )}
-              </div>
-              <div className="alg-bento-title">{tr(s)}</div>
-              <div className="alg-bento-count">
-                {n == null ? '…' : n < 0 ? '!' : `${n} ${tr({ zh: '个', en: 'cases'
-                })}`}
-              </div>
-            </Link>
+            <AlgCard
+              key={s.slug}
+              href={`/alg/${puzzle}/${s.slug}`}
+              thumb={first && (
+                <CaseThumb puzzle={puzzle} set={s.slug} sticker={first.sticker} alg={firstAlg} setup={first.setup} size={96} />
+              )}
+              title={tr(s)}
+              count={n == null ? '…' : n < 0 ? '!' : n}
+            />
           );
         })}
+        {puzzle === '3x3' && (
+          <AlgCard
+            href="/alg/lsll"
+            prefetch={false}
+            thumb={<FaceletsCube fd={categoryCardFacelets('ap')} size={96} alt="LSLL" />}
+            title="LSLL"
+            count={LSLL_TOTAL.toLocaleString()}
+          />
+        )}
       </div>
 
       {TRAINER_MODULES[puzzle] && (

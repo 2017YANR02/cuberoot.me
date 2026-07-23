@@ -28,7 +28,7 @@ import {
   SKEWB_DEFAULT_COLORS,
 } from '@/app/[lang]/scramble/gen/_svg/skewb_svg';
 import { renderUnfoldedSvg } from '@cuberoot/shared/cube-unfolded-svg';
-import { DEFAULTS, FACE_DEFAULTS, rotationsMatchDefault } from './defaults';
+import { DEFAULTS, rotationsMatchDefault } from './defaults';
 import { parseStickerId, toRenderMask, type MaskRenderOptions } from './mask-core';
 import type { ImageSpec, PuzzleType, PuzzleVariant } from './types';
 
@@ -129,15 +129,13 @@ export function specToCubeOptions(s: ImageSpec): ICubeOptions {
   const stickerColors = cubeStickerColors(s);
   if (stickerColors) opts.stickerColors = stickerColors;
 
-  const schDiff =
-    s.faceU !== FACE_DEFAULTS.U || s.faceR !== FACE_DEFAULTS.R ||
-    s.faceF !== FACE_DEFAULTS.F || s.faceD !== FACE_DEFAULTS.D ||
-    s.faceL !== FACE_DEFAULTS.L || s.faceB !== FACE_DEFAULTS.B;
-  if (schDiff) {
-    opts.colorScheme = {
-      0: s.faceU, 1: s.faceR, 2: s.faceF, 3: s.faceD, 4: s.faceL, 5: s.faceB,
-    };
-  }
+  // Always pass the spec's scheme explicitly. The studio default (FACE_DEFAULTS =
+  // WCA white-top) deliberately differs from the visualcube package default
+  // (legacy yellow-top, kept for the alg-case view presets), so "omit when equal
+  // to defaults" would silently render the wrong palette for a default spec.
+  opts.colorScheme = {
+    0: s.faceU, 1: s.faceR, 2: s.faceF, 3: s.faceD, 4: s.faceL, 5: s.faceB,
+  };
 
   const axisEnum = (a: string): Axis => (a === 'x' ? Axis.X : a === 'y' ? Axis.Y : Axis.Z);
   if (!rotationsMatchDefault(s)) {

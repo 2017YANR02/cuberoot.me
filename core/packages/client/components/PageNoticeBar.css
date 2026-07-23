@@ -146,16 +146,40 @@ textarea.page-notice-input { resize: vertical; min-height: 46px; }
 
 .page-notice-presets { display: flex; flex-wrap: wrap; gap: 6px; }
 .page-notice-preset {
-  padding: 3px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px 3px 8px;
   font-size: 0.78rem;
   color: var(--foreground);
   background: color-mix(in srgb, var(--foreground) 6%, transparent);
   border: 1px solid var(--border-default);
   border-radius: 999px;
 }
+.page-notice-preset > svg { color: var(--muted-foreground); }
 .page-notice-preset:hover {
   border-color: var(--ring);
   background: color-mix(in srgb, var(--foreground) 10%, transparent);
+}
+
+/* 图标选择器:自动(按级别)+ 一排可选 lucide 图标 */
+.page-notice-iconpicker { display: flex; flex-wrap: wrap; gap: 4px; }
+.page-notice-iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  color: var(--muted-foreground);
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  border: 1px solid var(--border-default);
+  border-radius: 7px;
+}
+.page-notice-iconbtn:hover { color: var(--foreground); border-color: var(--ring); }
+.page-notice-iconbtn.is-active {
+  color: var(--primary-foreground);
+  background: var(--primary);
+  border-color: var(--primary);
 }
 .page-notice-editor-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 

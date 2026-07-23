@@ -6,15 +6,16 @@ import { describe, it, expect } from 'vitest';
 import {
   exportSimNetSvg, netFaceOffsets, NET_GAP, NET_FACE_ORDER, type NetFaceLetter,
 } from '@/app/[lang]/sim/sim_net_export';
-import { renderUnfoldedSvg } from '@cuberoot/shared/cube-unfolded-svg';
+import { renderUnfoldedSvg, WCA_COLORS } from '@cuberoot/shared/cube-unfolded-svg';
 
 const COLORS = {
   U: '#fff', R: '#f00', F: '#0f0', D: '#ff0', L: '#f90', B: '#00f',
 } as const;
 
-/** tnoodle CubePuzzle defaultColorScheme(renderUnfoldedSvg 的 WCA_COLORS)。 */
-const TNOODLE_COLORS: Record<NetFaceLetter, string> = {
-  U: '#FFFFFF', R: '#FF0000', F: '#00FF00', D: '#FFFF00', L: '#FF8000', B: '#0000FF',
+/** renderUnfoldedSvg 的默认 palette(WCA_COLORS,cstimer 面序 D L B U R F)。 */
+const EMITTER_COLORS: Record<NetFaceLetter, string> = {
+  D: WCA_COLORS[0], L: WCA_COLORS[1], B: WCA_COLORS[2],
+  U: WCA_COLORS[3], R: WCA_COLORS[4], F: WCA_COLORS[5],
 };
 
 /** 复原态 serialize:每块 N² 全该面字母(URFDLB 顺序)。 */
@@ -23,11 +24,11 @@ function solvedSerialized(N: number): string {
 }
 
 describe('exportSimNetSvg', () => {
-  it('byte-identical to renderUnfoldedSvg for the solved state (N=2/3/4, tnoodle palette)', () => {
+  it('byte-identical to renderUnfoldedSvg for the solved state (N=2/3/4, emitter palette)', () => {
     // 共享 emitter 的总闸:布局 / 描边 / 属性顺序 / 数字格式没有任何自绘余地。
     for (const N of [2, 3, 4]) {
       const svg = exportSimNetSvg({
-        serialized: solvedSerialized(N), order: N, faceColors: TNOODLE_COLORS,
+        serialized: solvedSerialized(N), order: N, faceColors: EMITTER_COLORS,
       });
       expect(svg).toBe(renderUnfoldedSvg(N, ''));
     }

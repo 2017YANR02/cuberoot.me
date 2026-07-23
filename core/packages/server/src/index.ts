@@ -42,6 +42,7 @@ import { paintRoutes } from './routes/paint.js';
 import { forumRoutes } from './routes/forum.js';
 import { notificationRoutes } from './routes/notifications.js';
 import { trainerRoomsRoutes } from './routes/trainer_rooms.js';
+import { battleRoomsRoutes } from './routes/battle_rooms.js';
 import { wechatJssdkRoutes } from './routes/wechat_jssdk.js';
 import { ensureDaemon as ensureCubeoptDaemon, isEnabled as cubeoptEnabled } from './cubeopt/daemon.js';
 import { startWcaPastResultsMonitor } from './monitors/wca_past_results.js';
@@ -136,6 +137,7 @@ app.route('/v1', paintRoutes);
 app.route('/v1', forumRoutes);
 app.route('/v1', notificationRoutes);
 app.route('/v1', trainerRoomsRoutes);
+app.route('/v1', battleRoomsRoutes);
 app.route('/v1', wechatJssdkRoutes);
 
 // Kick off nemesizer dataset load asynchronously — the worker would otherwise
