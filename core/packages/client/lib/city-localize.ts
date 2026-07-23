@@ -3,7 +3,7 @@
 // (PLACE_CITY_ZH 城市段 + PLACE_ADMIN_ZH 行政区段,key=`${ISO2}:${normSeg}`,来源见
 // scripts/gen-place-zh.mjs:GeoNames exonym + OpenCC + LLM 兜底);两路都再回退手维护 CITY_ZH;最后原文。
 
-import { CN_PLACE_ZH } from '@/lib/data/cn-region';
+import { CN_PLACE_ZH, CN_PLACE_DISAMBIG } from '@/lib/data/cn-region';
 import { PLACE_CITY_ZH, PLACE_ADMIN_ZH } from '@/lib/data/place-zh';
 
 // 手维护补充表(覆盖层 / 无 iso2 调用时的兜底 / 台湾等 CN_PLACE_ZH 未覆盖处)。
@@ -89,8 +89,21 @@ function localizePlaceZh(city: string, iso2?: string | null): string {
   if (!segs.length) return city;
   const I = (iso2 || '').toUpperCase();
   if (GREATER_CN.has(I)) {
-    // 大中华区:CN_PLACE_ZH(cubingchina 全量)优先,缺则回退生成字典 / 手维护(覆盖台湾等)。
-    return segs.map((seg, idx) => CN_PLACE_ZH[cnNorm(seg)] ?? translateSeg(seg, idx, I)).join(', ');
+    // 大中华区:先用同串省份段消歧同拼音异地城市(台州/泰州、苏州/宿州…),扁平 CN_PLACE_ZH 每个拼音
+    // 只存一个,碰撞城市非此即彼必错一半;再 CN_PLACE_ZH 全量,缺则回退生成字典 / 手维护(覆盖台湾等)。
+    const pins = segs.map(cnNorm);
+    return segs
+      .map((seg, idx) => {
+        const k = pins[idx];
+        for (let j = 0; j < pins.length; j++) {
+          if (j !== idx) {
+            const dis = CN_PLACE_DISAMBIG[`${k}|${pins[j]}`];
+            if (dis) return dis;
+          }
+        }
+        return CN_PLACE_ZH[k] ?? translateSeg(seg, idx, I);
+      })
+      .join(', ');
   }
   return segs.map((seg, idx) => translateSeg(seg, idx, I)).join(', ');
 }

@@ -22,11 +22,19 @@ const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '');
 
 function cnProvince(city: string): { zh: string; en: string } | null {
   if (!city) return null;
-  for (const seg of city.split(',')) {
-    const hit = CN_PLACE_PROVINCE[norm(seg)];
+  const keys = city.split(',').map((s) => norm(s)).filter(Boolean);
+  // 1) 优先显式省份段(段规范化后自身即省份)。否则同拼音城市段会抢先误判 —— 如「台州, 浙江」的
+  //    城市段 taizhou 在 CN_PLACE_PROVINCE 里指向江苏(泰州的省),会把浙江台州错算成江苏。
+  for (const k of keys) {
+    const hit = CN_PLACE_PROVINCE[k];
+    if (hit && (k === norm(hit.en) || k === norm(hit.en) + 'province')) return hit;
+  }
+  // 2) 回退:任一段(城市)推断所属省份(无显式省份段时,如裸城市名)。
+  for (const k of keys) {
+    const hit = CN_PLACE_PROVINCE[k];
     if (hit) return hit;
   }
-  return CN_PLACE_PROVINCE[norm(city)] ?? null;
+  return null;
 }
 
 export function buildRegionStats(comps: WcaCompetition[], isZh: boolean): RegionStat[] {
