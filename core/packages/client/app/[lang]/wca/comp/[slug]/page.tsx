@@ -1,3 +1,8 @@
+// Per-item share card (og:title/description specific to this comp, like recon/forum
+// have) was evaluated 2026-07-23 and SHELVED for ROI, not rejected — full plan + the
+// beforeFiles/afterFiles rewrite trap it must navigate are written up, don't re-derive
+// from scratch: see memory project_social_share_cards (or ask the user for that doc).
+//
 // Server wrapper for /wca/comp/[slug]. CompDetailPage is 'use client' and loads ALL
 // data client-side (fetch + WebSocket), so the server render produces only the empty
 // <Suspense fallback={null}> shell — identical for every slug.
