@@ -98,11 +98,11 @@ export default function LsllGroupClient() {
       </div>
 
       <div className="lsll-pager">
-        <button type="button" disabled={cur <= 1} onClick={() => setPage(cur - 1)}>
+        <button type="button" className="lsll-pager-btn" disabled={cur <= 1} onClick={() => setPage(cur - 1)}>
           {tr({ zh: '上一页', en: 'Prev' })}
         </button>
         <span>{cur} / {pageCount.toLocaleString()}</span>
-        <button type="button" disabled={cur >= pageCount} onClick={() => setPage(cur + 1)}>
+        <button type="button" className="lsll-pager-btn" disabled={cur >= pageCount} onClick={() => setPage(cur + 1)}>
           {tr({ zh: '下一页', en: 'Next' })}
         </button>
         <span>{filtered.length.toLocaleString()} {tr({ zh: '个匹配', en: 'matched' })}</span>
