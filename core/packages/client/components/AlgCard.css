@@ -1,0 +1,71 @@
+/* /alg 全站统一缩略图卡片。见 components/AlgCard.tsx。
+   基底是原来的子组卡外观(套列表 / 子组选择 / 封面共用),名字 + 数量同一行、不带「个」。 */
+.alg-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px 14px;
+  background: var(--card);
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  text-decoration: none !important;
+  color: var(--foreground);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+.alg-card:hover {
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+.alg-card-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 96px; /* 加载中缩略图未到位时,卡片不塌 */
+}
+/* 名字 + 数量同一行 */
+.alg-card-foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+.alg-card-title {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.alg-card-count {
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.alg-card-sub {
+  font-size: 12px;
+  color: var(--muted-foreground);
+  opacity: 0.85;
+}
+/* 组封面(可展开):淡强调底 + 角标箭头,标明「点了展开这一组」。 */
+.alg-card--cover {
+  background: color-mix(in srgb, var(--accent) 7%, var(--card));
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--border-default));
+}
+.alg-card--cover:hover {
+  background: color-mix(in srgb, var(--accent) 14%, var(--card));
+  border-color: var(--accent);
+}
+.alg-card--cover .alg-card-title {
+  color: var(--accent);
+}
+.alg-card-chevron {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: inline-flex;
+  color: var(--muted-foreground);
+}

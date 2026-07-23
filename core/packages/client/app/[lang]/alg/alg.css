@@ -76,49 +76,14 @@ html[data-theme=dark] .alg-root {
 .alg-index-credit a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 .alg-index-credit a:hover { color: var(--accent); }
 
+/* 套列表网格。卡片统一走 components/AlgCard(.alg-card),此处只管网格排布。 */
 .alg-bento {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 24px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-}
-.alg-bento-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 24px;
-  background: var(--card);
-  border: 1px solid var(--border-default);
-  border-radius: 12px;
-  text-decoration: none !important;
-  color: var(--foreground);
-  text-align: center;
-  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
-}
-.alg-bento-card:hover {
-  background: color-mix(in srgb, var(--foreground) 6%, transparent);
-  border-color: var(--accent);
-  transform: translateY(-1px);
-}
-.alg-bento-icon {
-  color: var(--accent);
-}
-.alg-bento-thumb {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 96px;
-}
-.alg-bento-title {
-  font-size: 18px;
-  font-weight: 600;
-}
-.alg-bento-count {
-  color: var(--muted-foreground);
-  font-size: 13px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
 }
 
 /* ── category page ── */
@@ -332,45 +297,14 @@ html[data-theme=dark] .alg-root {
 }
 
 /* ── umbrella subgroup picker (e.g. ZBLL → U/L/T/H/Pi/S/AS) ── */
+/* 子组选择网格。卡片统一走 components/AlgCard(.alg-card),此处只管网格排布。 */
 .alg-subgroup-grid {
   max-width: 1200px;
   margin: 0 auto;
   padding: 16px 24px;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 16px;
-}
-.alg-subgroup-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 16px 12px 14px;
-  background: var(--card);
-  border: 1px solid var(--border-default);
-  border-radius: 10px;
-  text-decoration: none !important;
-  color: var(--foreground);
-  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
-}
-.alg-subgroup-card:hover {
-  background: color-mix(in srgb, var(--foreground) 6%, transparent);
-  border-color: var(--accent);
-  transform: translateY(-1px);
-}
-.alg-subgroup-thumb {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.alg-subgroup-card-title {
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-.alg-subgroup-card-count {
-  font-size: 12px;
-  color: var(--muted-foreground);
+  gap: 12px;
 }
 
 /* ZBLS subgroup-picker grid — denser than ZBLL (more groups, smaller cards). */
@@ -378,10 +312,58 @@ html[data-theme=dark] .alg-root {
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
 }
 
+/* ── 两级 umbrella 落地页就地展开(ZBLL / OLLCP…,顶层组不多)──
+   每组一行:首格「组封面卡」(点开/折叠)+ 其后二级子组卡,**同一网格、等宽等高、魔方图一样大**;
+   点封面就地展开/收起,省掉进 /zbll/u 那一跳。一行放不下就自然折行(容器封顶 1200px)。 */
+.alg-l2-index {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 12px 24px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+/* 每组自己一个网格(封面卡 + 子组卡都是 .alg-card)。列宽收紧到桌面能一行放下一整组
+   (ZBLL:封面 + 6 子组 = 7 个)。封面的强调底 / chevron 见 components/AlgCard.css。 */
+.alg-l2-grid {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+
 .alg-case-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+}
+/* 「只看图」列表:密排画廊(缩略图居中 + 名字),点整卡进详情页看公式。公式/社区区不渲染。 */
+.alg-case-list.is-cards {
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+}
+.alg-case-list.is-cards .alg-case {
+  padding: 14px 12px;
+  gap: 8px;
+}
+.alg-case-list.is-cards .alg-case-head {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+}
+.alg-case-list.is-cards .alg-case-info {
+  flex: 0 0 auto;
+  align-items: center;
+  width: 100%;
+}
+.alg-case-list.is-cards .alg-case-name {
+  justify-content: center;
+  flex-wrap: wrap;
+}
+/* 图 / 公式 开关:header 是 baseline 对齐,胶囊按自身高度垂直居中才不偏 */
+.alg-view-toggle {
+  align-self: center;
 }
 .alg-case {
   background: var(--card);
@@ -975,6 +957,8 @@ a.alg-community-author:hover {
 
 @media (max-width: 480px) {
   .alg-case-list { grid-template-columns: 1fr; }
+  /* 只看图时窄屏仍保持两列画廊 —— 一列太空、认图效率低 */
+  .alg-case-list.is-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .alg-bento { grid-template-columns: 1fr; }
 }
 
@@ -1448,12 +1432,6 @@ a.alg-community-author:hover {
   flex: 1;
   min-width: 0;
 }
-/* 组卡副名:字母制 OLL 名当标题之后,原来的 `1LLL 06` 降到这里 */
-.alg-subgroup-card-sub {
-  margin-right: 6px;
-  opacity: 0.7;
-}
-
 /* 弹窗顶部的 case 本体:缩略图 + 公式。跳到镜像 / 逆之后,列表里根本没渲染那张卡
    (它多半在别的组),这块就是唯一能看到「它长什么样、怎么打」的地方。 */
 .alg-meta-case {

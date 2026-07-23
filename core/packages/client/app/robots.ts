@@ -32,6 +32,12 @@ export default function robots(): MetadataRoute.Robots {
       { userAgent: '*', allow: '/', disallow: ['/stats/', '/api/', '/recon/submit/'] },
       { userAgent: BLOCKED_BOTS, disallow: '/' },
     ],
-    sitemap: 'https://cuberoot.me/sitemap.xml',
+    sitemap: [
+      'https://cuberoot.me/sitemap.xml',
+      // Recon detail pages live in a SEPARATE runtime-cached sitemap
+      // (app/recon-sitemap.xml/route.ts) so a slow recon API can never break the
+      // build — see app/sitemap.ts. Advertise it here so crawlers still find it.
+      'https://cuberoot.me/recon-sitemap.xml',
+    ],
   };
 }

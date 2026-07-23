@@ -1,13 +1,20 @@
 import { SOLVED_FACELET } from '@/app/[lang]/scramble/solver/facelet';
+import { CUBE_FILL } from '@/lib/cube-colors';
 import type { FaceKey, ImageSpec, PuzzleType, PuzzleVariant } from './types';
 
+// Studio default scheme = the site-standard WCA white-top palette (lib/cube-colors
+// CUBE_FILL — same source as the /sim engine and the net/wca emitters), NOT the
+// visualcube package default (legacy yellow-top, kept for the alg-case ecosystem:
+// view=oll/pll/f2l thumbnails). specToCubeOptions passes it explicitly whenever it
+// differs from the package default, so /visualcube renders WCA by default and its
+// normal/plan/trans output matches the /sim companion byte-for-byte.
 export const FACE_DEFAULTS: Record<FaceKey, string> = {
-  U: '#fefe00',
-  R: '#00d800',
-  F: '#ee0000',
-  D: '#ffffff',
-  L: '#0000f2',
-  B: '#ffa100',
+  U: CUBE_FILL.U,
+  R: CUBE_FILL.R,
+  F: CUBE_FILL.F,
+  D: CUBE_FILL.D,
+  L: CUBE_FILL.L,
+  B: CUBE_FILL.B,
 };
 
 export const DEFAULTS: ImageSpec = {

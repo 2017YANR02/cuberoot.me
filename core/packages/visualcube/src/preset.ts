@@ -1,5 +1,5 @@
 /**
- * Simple-query renderer — turns a small map of `alg / view / mask / size / cubeSize / bg / cc / co`
+ * Simple-query renderer — turns a small map of `alg / view / mask / size / cubeSize / sch / bg / cc / co`
  * params into a complete `<svg>` string. Encapsulates the `view → mask + view + scheme` preset
  * mapping so the Hono server route, the Vite dev middleware, and any client-side caller all stay
  * in lock-step.
@@ -9,6 +9,7 @@
 import { Face, Masking } from './cube/constants.js';
 import type { ICubeOptions } from './cube/options.js';
 import { renderCubeSVG } from './index.js';
+import { parseColorScheme } from './cube/parsing/colorScheme.js';
 
 const DEFAULT_ALG = "R U R' U R U2 R'"; // Sune (OLL 27)
 const DEFAULT_SIZE = 256;
@@ -63,6 +64,11 @@ export interface SimpleVisualCubeQuery {
   /** NxN puzzle dimension, 2..7. Accepts both `cubeSize` and PHP-style `pzl`. */
   cubeSize?: string | number;
   pzl?: string | number;
+  /** Face color scheme, U R F D L B order — PHP visualcube `sch=`: either the
+   *  abbreviation string (`wrgyob` = WCA white-top) or a comma list of hex/names
+   *  (leading `#` optional). Overrides every view-implied scheme. Lets a caller
+   *  (e.g. the /visualcube studio's API links) reproduce its face colors exactly. */
+  sch?: string;
   bg?: string;
   cc?: string;
   co?: string | number;
@@ -117,6 +123,15 @@ export function buildSimpleOptions(q: SimpleVisualCubeQuery): ICubeOptions {
 
   // OLL view defaults to the orientation-only color scheme (unless the caller supplied an explicit mask).
   if (view === 'oll' && !explicitMask) opts.colorScheme = OLL_STAGE_SCHEME;
+
+  // Explicit scheme wins over every view preset. `#` stripped per token first —
+  // parseColor's unanchored hex regex would otherwise turn `#ffffff` into `##ffffff`.
+  if (q.sch) {
+    const raw = q.sch.includes(',')
+      ? q.sch.split(',').map((t) => t.replace(/^#/, '')).join(',')
+      : q.sch;
+    opts.colorScheme = parseColorScheme(raw);
+  }
 
   return opts;
 }

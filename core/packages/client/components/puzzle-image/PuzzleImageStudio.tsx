@@ -330,6 +330,15 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
     } else {
       if (s.cubeView !== 'normal') p.set('view', s.cubeView);
       if (s.cubeSize !== DEFAULTS.cubeSize) p.set('pzl', String(s.cubeSize));
+      // Always spell the scheme out: the endpoint's bare default is the package's
+      // legacy yellow-top (kept for alg-case thumbnails), while the studio default
+      // is WCA white-top — an sch-less link would silently flip the colors. Not
+      // for net/wca (fixed shared palette on both sides, no scheme knob). `#`
+      // stripped — the API prepends it per token.
+      if (s.cubeView !== 'net' && s.cubeView !== 'wca') {
+        p.set('sch', [s.faceU, s.faceR, s.faceF, s.faceD, s.faceL, s.faceB]
+          .map((c) => c.replace(/^#/, '').toLowerCase()).join(','));
+      }
     }
     if (s.stageMask) p.set('mask', s.stageMask);
     if (s.imageSize !== DEFAULTS.imageSize) p.set('size', String(s.imageSize));
@@ -706,6 +715,13 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
                   type="text" className="vc-text" value={s.stickerMask}
                   placeholder="U:0,2;F:3-5"
                   onChange={(e) => set('stickerMask', e.target.value)}
+                  onKeyDown={(e) => {
+                    // 空值时按 → :接受 placeholder 示例为实值(shell 式 ghost text 补全)。
+                    if (e.key === 'ArrowRight' && s.stickerMask === '') {
+                      e.preventDefault();
+                      set('stickerMask', 'U:0,2;F:3-5');
+                    }
+                  }}
                 />
                 <button
                   type="button" className="vc-btn-icon" title="Clear"
@@ -867,12 +883,18 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
               onChange={(v) => set('stickerOpacity', v)}
               onReset={() => set('stickerOpacity', DEFAULTS.stickerOpacity)}
             />
-            <NumberRow
-              label={t('投影距离', 'Projection Distance')}
-              value={s.dist} min={1} max={100}
-              onChange={(v) => set('dist', v)}
-              onReset={() => set('dist', DEFAULTS.dist)}
-            />
+            {/* 投影距离:/sim panel 里 dist 由 sim 的「透视」滑块单向驱动(SimPage 相机
+                镜像 effect:透视→dist,imgSpec 变即重算),面板再放独立滑块会被立刻拍回。
+                与 视角旋转 / 背景色 同属「sim 拥有的相机概念」→ 只在 page 模式露出;
+                panel 里改投影距离走 sim 自己的透视滑块(一个概念一个控件)。 */}
+            {showInheritedControls && (
+              <NumberRow
+                label={t('投影距离', 'Projection Distance')}
+                value={s.dist} min={1} max={100}
+                onChange={(v) => set('dist', v)}
+                onReset={() => set('dist', DEFAULTS.dist)}
+              />
+            )}
           </>
         )}
         </>)}

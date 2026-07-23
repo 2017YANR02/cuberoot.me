@@ -31,15 +31,19 @@ export type StickerId = string;
 export interface RenderMask { ids: Set<StickerId>; color: string; }
 export interface MaskRenderOptions { mask?: RenderMask; stickerIds?: boolean; }
 
-// WCA colors keyed by cstimer face id (D L B U R F = 0..5). Matches tnoodle
-// CubePuzzle.java defaultColorScheme.
-const WCA_COLORS: string[] = [
-  '#FFFF00', // D yellow
-  '#FF8000', // L orange (heraldic tincture)
-  '#0000FF', // B blue
+// WCA scheme keyed by cstimer face id (D L B U R F = 0..5). Face→color mapping
+// follows tnoodle CubePuzzle.java defaultColorScheme; the hex values are the
+// site-standard palette (visualcube ColorCode = client lib/cube-colors CUBE_FILL
+// = /sim engine DEFAULT_FACE_COLORS), NOT tnoodle's pure hues — so studio, /sim
+// companion, server API and scramble previews all emit byte-identical fills.
+// Exported for palette-drift locks (tests) and same-purpose consumers.
+export const WCA_COLORS: string[] = [
+  '#FEFE00', // D yellow
+  '#FFA100', // L orange
+  '#0000F2', // B blue
   '#FFFFFF', // U white
-  '#FF0000', // R red
-  '#00FF00', // F green
+  '#EE0000', // R red
+  '#00D800', // F green
 ];
 
 // Tnoodle CubePuzzle: cubieSize=10, gap=2 → gap-as-fraction-of-cubie = 0.2.

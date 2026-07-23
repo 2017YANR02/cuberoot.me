@@ -1889,7 +1889,9 @@ export default function SimPage() {
             try {
               const fc = settings.faceColors;
               setEngineSvg(cv === 'plan'
-                ? exportSimPlanSvg({ serialized, order: nxn.order, faceColors: fc })
+                // plan 透视投影随 spec 的 dist/opacity/旋转变 → 传 imgSpec,渲染旋钮
+                // 复用 specToCubeOptions,与 VC 路逐字节同(net 是 2D emitter,无关 spec)。
+                ? exportSimPlanSvg({ serialized, order: nxn.order, faceColors: fc, spec: imgSpec })
                 : exportSimNetSvg({ serialized, order: nxn.order, faceColors: fc }));
             } catch (err) {
               console.warn('[sim] flat companion export failed', err);
@@ -1926,7 +1928,11 @@ export default function SimPage() {
               bodyColor: transBody,
               bodyOpacity: transOpacity,
               stickerOpacity: imgSpec.stickerOpacity,
-              showHidden: isTrans,
+              // 背面 = 只要壳透明就画,判据同 visualcube drawing.ts(`cubeOpacity<100`
+              // 即渲 hiddenFaces),不是"仅 trans 视图"。normal 视图把壳不透明度调低
+              // (X 光)时 VC 会透出 B/L/D 背贴纸,引擎也必须跟。transOpacity 是引擎侧
+              // 等价 VC cubeOpacity 的量(trans 预设注入 50;其余取用户值)。
+              showHidden: transOpacity < 100,
               mask: maskKeys?.size ? { keys: maskKeys, color: MASK_COLOR } : undefined,
               // 箭头标注(退役对照表 §2b):DSL `U0U2-red` → 引擎贴纸世界中心线段。
               // NxN 专属(resolveEngineArrows 自查 schematicInstancedPoly + N≥2,非
@@ -1980,6 +1986,10 @@ export default function SimPage() {
   }, [imageOpen, srCompanionForced, imageStudioEngineOnly, imgOutline,
       imgSpec.stickerMask, imgPuzzle.puzzleType,
       imgSpec.cubeColor, imgSpec.cubeOpacity, imgSpec.stickerOpacity,
+      // plan companion 透视投影随这些旋钮变(specToCubeOptions 单一源):dist(透视)、
+      // 旋转、背景。net/BSP 不用,但一并列入无害(只多一次同结果重算)。
+      imgSpec.dist, imgSpec.rotateAxis1, imgSpec.rotateAxis2,
+      imgSpec.rotateAngle1, imgSpec.rotateAngle2, imgSpec.backgroundColor,
       imgSpec.arrows, imgSpec.defaultArrowColor, imgSpec.cubeView, puzzleParam,
       settings.faceColors, query.stickering, query.stickeringColor]);
 
