@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / O / bin 5
-# Population in this bin: 899
+# Population in this bin: 902
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 7910001,R2 U' B2 U L2 F2 R' B R' F2 U' B D2 U' F L2 R2 U,O,Welwyn Garden City Open 2014 (2014-04-05~06),333bf Final B #3

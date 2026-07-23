@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / Y / bin 8
-# Population in this bin: 896
+# Population in this bin: 899
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 5090348001,R' U2 R B R' U' B R D L2 F L2 F D2 F2 B U R',Y,Puzzling Puzzles Vantaa 2025 (2025-10-11~12),333oh R1 A #4
@@ -194,7 +194,7 @@
 1328620001,U2 R2 B F2 R2 F' D2 F2 D F2 L2 D R' D2 L2 F2 L2 F U,Y,SNU Autumn Open 2019 (2019-09-29),333ft R1 A #5
 2389245001,B2 L' B2 L' D2 L' D2 U2 F' D2 U2 L R D' L U' L R B,Y,Cubing Saturday in SSN 2022 (2022-12-17),333 R1 D #2
 730649001,U B2 U F2 D' U' B2 F2 L F' U' F2 U' L D B D2 B2,Y,Bacau Easter Open 2018 (2018-03-24),333 R1 D E1
-5423734001,B2 L' B' L2 D U R2 D' L2 B2 L2 R' U2 R B' U F' L,Y,Moura Lacerda Open 2026 (2026-02-28~03-01),333 R1 A #3
+5753891001,R B' D L2 U2 D2 B R F B D' L2 U' L2 U B2 U B2,Y,South Omaha Scramble 2026 (2026-07-18),333oh R1 A #5
 4435250001,L' U L D2 L2 F2 U2 F2 R' F2 D U F' L2 U' B2 U2 F2,Y,Bethesda Winter Wonderland 2025 (2025-01-18),333 R2 A #2
 736726001,F' R D R2 B' U B U F D' L' U2 F2 L' U2 R2 U2 F2 D2,Y,Cubalaya 2018 (2018-03-31),333 Final A E2
 1349795029,B2 U2 R' U2 F2 L U2 L F2 U' B F R2 D' B L2 U2 L2 B D' B' L2,Y,345 Cube Day Allen 2019 (2019-10-13),333mbf Final B #2

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_cross / OR / bin 1
-# Population in this bin: 700
+# Population in this bin: 703
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 4859789001,D R' B2 L2 U' F2 D' U F2 U' R F2 L2 D' B' L' B R' B2,O,Santo Domingo Summer 2025 (2025-07-05~06),333oh R1 B #2
@@ -131,7 +131,7 @@
 4874782001,R' L2 B2 D' L2 D' B2 F2 U2 R' D' F2 L2 R' B' D2 U2 R2 D,O,UCLA Summer 2025 (2025-07-20),333 R1 B #3
 660927016,L2 F2 U2 F' U2 F R2 B' L' B2 D B' F L' U' L' R U F' L B2,R,Singapore Rubik's Cube Competition 2016 (2016-02-20~21),333mbf Final A #1
 5099434057,B' F2 L U2 B2 F2 L' B2 D F L' R U R F U' R D' L' F,R,Thailand Championship 2025 (2025-10-11~13),333mbf Final A #1
-4233099001,U R2 D2 B2 D' B D' B2 R2 B' L2 D' R F2 U2 F2 U',O,Move It Midland 2024 (2024-10-26),333 R2 B #2
+5757259001,B2 F2 U2 L2 D' U R' D2 R' B R D' L U' R B2 D F',O,GAN Philippine Championship 2026 (2026-07-09~12),333 R2 E #3
 4467997001,U L2 U' B2 L2 R2 B' L B2 F' R U2 B F' D R2 F2 U2,O,Crevalcore al Cubo 2025 (2025-02-01~02),333 R2 C E2
 4239566001,B2 D2 B2 U2 B L2 U2 B' U R' D R B' L D' B D' U' L2,O,Stockholmsligan 306: Ofrivillig Spion - 2024 (2024-10-31),333 Final B E1
 1281532001,B R2 U2 L2 U2 R2 B2 L2 F' R2 F R' U2 R2 F' L' B2 D' R2 D' R,O,Ukrainian Nationals 2019 (2019-08-23~25),333 R1 B E2

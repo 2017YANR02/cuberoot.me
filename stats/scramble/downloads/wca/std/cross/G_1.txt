@@ -1,8 +1,8 @@
 # Scramble samples — std / cross / G / bin 1
-# Population in this bin: 91
-# Samples listed: 91 (all entries in this bin)
+# Population in this bin: 93
+# Samples listed: 93 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 57297001,R D B D2 F2 L2 U R2 L' U' F2 D2 B2 L2 D,G,Beijing Autumn 2014 (2014-09-13),333 Final A #2
@@ -96,3 +96,5 @@
 5454936001,F' R' B2 R' U2 R' D2 U2 L R2 F2 U' L' D B' D U' B2 U2,G,St. John's Winter 2026 (2026-03-15),333 R2 A #1
 5543888007,F R D' L2 R2 B2 F' D2 F2 R2 U' F U2 L2 U B' R' U B' L2,G,Please Be Quiet Singapore April 2026 (2026-04-18),333mbf Final A #1
 5738047001,B2 R F2 U2 F2 L D2 R U' L2 U2 F' R2 F' D R' U' B2,G,Åland Open 2026 (2026-07-03~05),333 R1 A E1
+5750550009,R2 B' D2 R2 U2 F2 R' F2 R2 F2 U2 R' B' R2 B D' L' D' B2 L B2,G,GAN New Zealand Nationals 2026 (2026-07-10~12),333mbf Final A E1
+5750594009,R2 B' D2 R2 U2 F2 R' F2 R2 F2 U2 R' B' R2 B D' L' D' B2 L B2,G,GAN New Zealand Nationals 2026 (2026-07-10~12),333mbf Final A #2

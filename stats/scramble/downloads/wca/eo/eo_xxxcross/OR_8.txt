@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / OR / bin 8
-# Population in this bin: 239
+# Population in this bin: 241
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 5225508001,B' D2 U2 F R2 B2 R2 F' U' R' U' R F' L' F2 R U B,R,Hvidovre Open 2025 (2025-11-29~30),333 R2 A #1
@@ -45,7 +45,7 @@
 680008001,B2 D' F2 L2 D2 F2 U2 F2 U2 R' B2 L' B D2 U2 L2 D B' L' R' U' L B,R,Malaysian Cube Championship 2017 (2017-12-30~31),333bf Final A #1
 684534001,B' L2 B2 L' D' F U F U' F2 B L2 U2 F2 L2 F' U2 B',O,Etna Open 2018 (2018-01-13~14),333 R1 B #4
 5517582001,R2 B2 F' L2 U2 B2 L' U R B' L' D2 L2 B' L' R2 U,O,Dobřejovice Special 2026 (2026-04-11),333oh Final D #5
-710021001,F' R2 U2 R' U2 R' U D L2 B2 U2 L2 D2 R2 D2 B,O,Vedruna Balaguer Open 2018 (2018-02-17~18),333 R1 C E2
+5753241001,D' R2 F2 B2 R' U2 D R L' D' R2 U D2 R2 U2 F2 R,R,UNSA Speedcubing Otoño 2026 (2026-07-18~19),333 Final A #4
 781935001,F2 U2 B L2 B R2 D2 F' D2 B2 D' L2 U' R F2 L2 R2 F2 R,R,ZHBIT Open 2018 (2018-05-20),333 R2 A #2
 786434010,U2 B2 R D2 R' D2 U2 R' U2 R' U L' U' L' B2 U' B2 L2,R,YJ Fest 2018 (2018-05-18~20),333mbf Final A #1
 793777001,L2 F2 U L2 D U F' U F R2 D2 U' B' D' L2 U2,R,Slovakian Cube Day 2018 (2018-05-27),333 Final A #2
@@ -115,7 +115,7 @@
 2297396001,R' D' R D R L' B' D B2 U D2 F2 D F2 D' R' F' U,O,Cerrillos al Cubo 2022 (2022-11-05),333 Final A #5
 2305483001,F' U F' U2 B' L2 F D2 U2 L2 U B' L' U2 B2 D2 L2 F2,R,Minerva Open 2022 (2022-11-12),333oh R2 B #1
 2333532001,D2 L' D R D' L2 B' R2 U2 R F R2 U2 D2 F' B2 D2 R2 F,O,Oxente Open 2022 (2022-11-26~27),333 Final A E1
-5513644001,D2 R D2 U2 L U2 B2 L2 D2 U' R2 D' L' R D' L,R,DFW Cubing Spring 2026 (2026-03-28~29),333 Final M #3
+5752543001,L F' U B U' B2 R2 F' B2 R' F2 D2 R F2 D2 R' L2 F2 B',R,Mountain House Open 2026 (2026-07-18),333oh R1 B #1
 2372945023,R' L2 B' L' D2 R' U2 R' U2 B R D2 F2 L U2 L U2 L B2,R,Ota Blind Winter 2022 (2022-12-18),333mbf Final A #1
 2372946041,R2 F' L' F' D' L2 U' F2 R' B2 U F2 D' B2 R2 F2 D' F2 B L B',R,Ota Blind Winter 2022 (2022-12-18),333mbf Final B #1
 5516180001,L' U2 L2 U2 F R2 B' U2 B R U2 R' B F2 L' F D,R,Marble City Cubing NY 2026 (2026-04-11),333 Final B #1

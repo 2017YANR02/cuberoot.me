@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / R / bin 2
-# Population in this bin: 860
+# Population in this bin: 861
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 1710001,L U2 L' F2 L U2 L' B2 U2 B2 L2 D' L2 F' U2 F' U2 L F',R,Kansai Open 2014 (2014-03-21~22),333 R1 C #3
@@ -142,7 +142,7 @@
 2581856001,L2 F2 R2 F2 U L U L' D2 F2 U' B2 R2 F2 L2 U B' U2,R,Aarhus Spring 2023 (2023-03-25~26),333 R2 A #2
 1022187001,R2 D2 U2 R D2 L B2 R2 F' L F2 R' D2 R F' L D B2,R,Bay Area Speedcubin' 14 2019 (2019-02-16),333 R2 A E2
 528075001,U' L2 B2 D' F2 U2 L2 F' L D2 F L2 F D2 R' U R2,R,QUALberta 2017 (2017-06-10),333 R2 A E1
-533830001,R' F2 D2 R2 U2 R' U2 L B2 D' U' R D' B2 U2 R' D2,R,SnoCo Cubing Summer 2017 (2017-06-17),333 R1 C #2
+5755309050,U' F' B2 L D2 L2 B D' F' U2 R2 U2 L2 D2 F U2 D2 F' D' L2 U,R,Rubik's WCA European Championship 2026 (2026-07-16~19),333mbf Final A #2
 534605001,D2 R' L' D' B D B' R L F' U2 D F2 R2 F2 R2 D F2 U,R,Plentzia Open 2017 (2017-06-17~18),333 R2 B E1
 535756001,R' B2 R D2 R2 U2 F2 U2 B2 F' L' R' U L F2 R2 B' D2,R,Kvissel Open 2017 (2017-06-17~18),333oh R1 B E2
 1076087013,R B2 L2 B2 U2 B2 R F2 L' B' U2 R' U2 L2 D2 R B' F2 R' B R,R,Norwegian Championship 2019 (2019-03-29~31),333mbf Final A #1

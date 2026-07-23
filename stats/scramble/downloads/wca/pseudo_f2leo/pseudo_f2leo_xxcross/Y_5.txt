@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / Y / bin 5
-# Population in this bin: 962
+# Population in this bin: 964
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 3904784001,L2 B2 L2 D B2 L2 D' F2 L2 F R' U R2 D2 B D U' B U2,Y, Wembley Quimbaya 2024 (2024-06-30),333 R1 A E2
@@ -13,7 +13,7 @@
 3657583005,U2 F2 D L' B' U2 L' U D2 F' U2 R2 F' L2 F2 R2 F' U2 D2 F2 L B2,Y,Big n BLD Finprov 2024 (2024-04-07),333mbf Final A #1
 33688001,D' L D2 R2 L' D R' B' D L' F D2 R2 B2 U2 B2 D2 B D2,Y,P3 Grand Open 2014 (2014-06-28~29),333 R1 S E2
 4146561001,R2 D' L2 U' L2 F2 D' F' L' F' D' B R' B D2 R2 U,Y,Bay Area Speedcubin' 65 - Berkeley 2024 (2024-09-29),333oh R1 C E1
-4136280001,B2 L' D2 R2 U' L2 F2 D B R F U' F2 R2 U' R2 D L2,Y,Mauritian Odyssey 2024 (2024-09-28),333 Final B #2
+5750594026,F2 U F B2 R D2 B2 D2 F2 U2 R U R F U L2 U L' F2,Y,GAN New Zealand Nationals 2026 (2026-07-10~12),333mbf Final A #2
 3909088001,U' L2 B U B2 R2 U' D2 F' U2 L U2 R F2 U2 D2 L' B2 L,Y,Auckland Matariki Open 2024 (2024-06-28~29),333oh R1 B E2
 55145001,L2 B' F' R2 F2 L2 B' U' L2 B' U2 L' F U' F R2,Y,360 Degree Wellness Open 2014 (2014-08-30),333 R1 B #4
 1776814001,R' F U' F' R2 U F' D' B U B' F2 D' R2 L2 D' F2,Y,Northside Duology Part 2 2022 (2022-01-08~09),333 R1 D #1
@@ -43,7 +43,7 @@
 2235492001,B D L' B2 D2 R2 B2 U2 L2 U R2 F2 U2 F R U2 F' L' D,Y,Swisscubing Cup V 2022 (2022-10-08~09),333oh R1 B #5
 5017372001,L2 U B2 D2 B2 F2 R2 B2 R2 L D' R D U L' D2 U' B2,Y,Irbid Summer 2025 (2025-09-13),333 Final B #3
 1024083006,F L2 F R2 F2 R2 U2 B F D' B D' B2 R F2 D2 U B' U' B',Y,I Hope It's Solved Edmonton 2019 (2019-02-16~17),333mbf Final A #2
-152327001,D2 L2 B2 L2 U' L2 D R2 D' L' B' D L2 R2 F2 U' F2 U,Y,Cowboys Summer 2015 (2015-06-13~14),333fm Final A #1
+5750140001,B2 D F2 L2 D B2 F2 D' U2 F2 B R D2 F L' D2 B' R' D' U2,Y,Golden Square Shopping 2026 (2026-07-11~12),333 R1 B E1
 4329039001,B' R' L2 B' R' B R' B' R2 U' F2 U' F2 D B2 L2 B2 U' R2 B',Y,Wiltshire November 2024 (2024-11-30~12-01),333 R2 A E1
 5522242001,D2 F2 U B2 L2 D F2 U B2 D L F' D2 L' R F U L D L',Y,Jesuitinas Txantrea Open 2026 (2026-04-11~12),333 Final A E2
 157968001,D' F2 D R2 D2 B2 F2 R2 U L' D R2 D F L D' U' B' F U2,Y,SoCal Supercomp 2015 (2015-06-27~28),333 R2 A E2

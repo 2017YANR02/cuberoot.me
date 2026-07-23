@@ -2,7 +2,7 @@
 # Population in this bin: 124
 # Samples listed: 124 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 15655001,U2 L2 F U2 B' F D2 R2 B L2 U2 L B R D B2 U' B F' R,W,Japan Contest Spring 2014 (2014-04-29),333 R1 C #1

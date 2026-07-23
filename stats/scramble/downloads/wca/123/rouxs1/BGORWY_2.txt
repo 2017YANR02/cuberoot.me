@@ -1,14 +1,14 @@
 # Scramble samples — 123 / rouxs1 / BGORWY / bin 2
-# Population in this bin: 780
+# Population in this bin: 784
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 5355244033,B2 D2 B2 L U2 R2 B2 F2 L' B U' F' D F' L2 U' R2 D2 F' L' F2,O,BrizZon Side Open 2026 (2026-01-31~02-01),333mbf Final A #2
 2496259001,L' D' R D' F2 L2 D B2 R2 U F' D' R D' B2 L' R2,G,Sleepless in Seattle 2023 (2023-02-18~19),333 Final B #3
 1940225001,D2 B D2 F' R2 B R2 F2 D2 B U2 D B' D B' L B2 F D',W,3x3x3 Only Hamilton B 2022 (2022-05-29),333 R2 D #4
-5695560015,F2 L R' B2 F2 R U2 B2 D B' U2 B2 D' B' L F D F' D2,B,Jog Your Memory Joondalup 2026 (2026-06-13),333mbf Final A #1
+5754239001,B2 D' L F2 D' F2 B L' B' F2 U' B2 U2 F2 R2 U F2 B2 U2,B,Japan Championship 2026 (2026-07-18~19),333oh Final A E1
 2462509001,D' R' F R2 U2 F U2 R2 D' L' F' L2 U' L' D' L U2,O,Oʻahu ʻOhana Cubing 2023 (2023-01-28),333 R1 E #5
 3305281012,B2 U R' F' R F2 U' L' B2 D' F2 R2 F2 D R2 B2 L B R',W,Please Be Solved This Time Joburg 2023 (2023-11-26),333mbf Final A #2
 38039001,U R2 U2 L2 D' B2 L2 R U' R' U F D2 U R2 F2 L' R',Y,Dixon Summer 2014 (2014-07-19),333 R2 A E1

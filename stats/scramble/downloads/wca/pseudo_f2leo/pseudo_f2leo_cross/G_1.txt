@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / G / bin 1
-# Population in this bin: 41
-# Samples listed: 41 (all entries in this bin)
+# Population in this bin: 43
+# Samples listed: 43 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 41772001,D' R2 B2 D R2 B' D F D2 B' F' D2 R2 D F2,G,Indian Nationals 2014 (2014-07-25~27),333 R1 A #5
@@ -46,3 +46,5 @@
 4938578001,D' R2 D F D' B2 D2 F' R' U2 L2 U2 L2 F2 B' L2 B L2 D2,G,East Cobb Summer 2025 (2025-08-16),333 R1 B #4
 5318143001,L' U2 L F' R B2 R' B R D2 R2 B2 U2 L' U2 R F2 U,G,Beijing Winter 2026 (2026-01-10~11),333 R3 B #1
 5634398032,L U R2 F2 R2 F2 D F2 D2 L2 F2 B' U' L' B2 D2 L D' R D2 B R,G,Please Don't DNF Beijing 2026 (2026-05-16~17),333mbf Final A #2
+5750550009,R2 B' D2 R2 U2 F2 R' F2 R2 F2 U2 R' B' R2 B D' L' D' B2 L B2,G,GAN New Zealand Nationals 2026 (2026-07-10~12),333mbf Final A E1
+5750594009,R2 B' D2 R2 U2 F2 R' F2 R2 F2 U2 R' B' R2 B D' L' D' B2 L B2,G,GAN New Zealand Nationals 2026 (2026-07-10~12),333mbf Final A #2

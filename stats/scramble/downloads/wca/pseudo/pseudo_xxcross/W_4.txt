@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxcross / W / bin 4
-# Population in this bin: 175
-# Samples listed: 175 (all entries in this bin)
+# Population in this bin: 176
+# Samples listed: 176 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 3194001,L' U2 L' R2 F2 R D2 F D L' R D' B2 D' F R2 B2 L,W,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 H E1
@@ -180,3 +180,4 @@
 5659838001,U2 R' F R U' B D' B2 U2 B2 L U' D B2 U' F2 D F2 U2,W,GAN CubingVic 2026 (2026-05-23~24),333 R1 B #3
 5709769001,B L' F L B' U' B' L B2 R2 F2 R D2 L2 F2 U2 B U2 L',W,Oslo Open 2026 (2026-06-19~21),333 R3 B #5
 5744704001,U' F' D2 B' R L' F R2 L2 F2 U B2 U' B L' B2 R,W,Bursa Summer 2026 (2026-07-04~05),333 R1 B #2
+5752054001,F' B U2 R D F' R' D2 R' B' R2 D2 B' R2 D2 F R2 U2 B2,W,Nanchang Summer 2026 (2026-07-18),333 Final A #2

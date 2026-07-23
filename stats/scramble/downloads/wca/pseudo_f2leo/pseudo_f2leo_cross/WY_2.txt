@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / WY / bin 2
-# Population in this bin: 809
+# Population in this bin: 811
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 4311551015,B2 U2 R2 B2 F2 D2 U' R2 F2 R' U' B L' U' B' F L2 F' D2 B R',Y,East Bay Big and Blind 2024 (2024-11-24),333mbf Final A #1

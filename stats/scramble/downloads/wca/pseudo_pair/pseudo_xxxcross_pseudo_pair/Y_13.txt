@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / Y / bin 13
-# Population in this bin: 220
+# Population in this bin: 221
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 31996001,F' B' U F2 U2 F' U2 D R F L2 B2 R' L' D2 L' B2 L F2 B2 L,Y,ULA Rubiks 2014 (2014-06-27~28),333 R2 B #5
@@ -104,7 +104,7 @@
 1536923001,U2 R2 D L2 B2 D' U' L2 D' B2 L' B' U' B2 D R B' F U' B2 F',Y,Centauros Open 2020 (2020-02-01~02),333 R1 B #2
 1640145001,U' B2 U' F' R2 D2 L2 F2 U2 F D2 R' D' U B2 L' R D2 F',Y,Guangzhou Panyu Afternoon 2021 (2021-02-28),333 R1 F E1
 1687779001,D2 B U L R2 D2 F' R2 F R2 B2 D2 R' B2 D' U F R' U',Y,Horse City 2021 (2021-08-21~22),333 R1 B E1
-1691176001,R2 U2 F' R2 F' D2 F L2 F' R' B D' L' B F2 R' F' U B R,Y,September Speedcubing Tour Rzeszów 2021 (2021-09-11~12),333oh Final A #3
+5750453010,F' U L2 R2 U' L2 U2 F2 U L B2 F L2 B L' R' F' D F2 L2 U2,Y,BLD Astana Summer 2026 (2026-07-16),333mbf Final A #1
 1697041037,B2 D' B' R' F U2 L' U2 F L2 D R F2 B2 L' D2 F2 L D',Y,Polish Championship 2021 (2021-10-01~03),333mbf Final A #2
 1716127001,F2 D F2 R U2 L2 R D2 L2 R' B U2 R D2 U R2 F2 R D L B',Y,Speedcubers Elite Lima 2021 (2021-10-30~31),333bf Final A #3
 1836288001,L' B2 R U' F' R L' D' R2 B' R2 D' F2 B2 U' R2 F2 U' B2 D,Y,Maine Spring 2022 (2022-03-19),333 R1 B #1

@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxxcross / B / bin 11
-# Population in this bin: 566
+# Population in this bin: 567
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 4096276001,B' R2 F R2 B' D2 F U R U D2 R2 L2 D R2 U B2 D,B,Laos Championship 2024 (2024-09-14),333oh Final B E2

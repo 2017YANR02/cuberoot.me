@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xcross / BGORWY / bin 2
-# Population in this bin: 812
+# Population in this bin: 813
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 2261741080,B' L F' B D2 B L' F2 R D B2 D' R2 U2 F2 L' F L',Y,Mini Mental Breakdown San Diego 2022 (2022-10-23),333mbf Final B #1
@@ -181,7 +181,7 @@
 5433200001,U2 L2 B U L2 B2 L2 U' F2 U B2 F' L F' U' L2 B' L2 R2 D2,R,BrizZon Side Open II 2026 (2026-03-07~08),333bf R2 B E2
 741319001,D2 F2 L' R' B2 F2 R' B2 R' U' L D2 B' D2 L B' L2 B' U2,R,Cross-strait Cubing Exchange 2018 (2018-04-06~07),333oh Final A E1
 1912827001,L B L D B U F L2 F' R B2 R2 L2 B' R2 B2,W,Princeton Spring 2022 (2022-05-07),333 R1 D #1
-747320001,D2 R2 D2 R2 U' L' B2 L2 D2 R U2 F' L' F' D U',R,Xi'an Cherry Blossom 2018 (2018-04-06~07),333oh Final A #4
+5756413001,B D F D2 L2 B' F2 R2 B U2 B' U' L' U2 L B U B' D2,R,Guelaguetza Oaxaca 2026 (2026-07-18~19),333oh R2 B #4
 3295752001,D' R F2 U' L2 R2 F2 D2 U B' F L2 U F L' B2 R U2 L',W,Stevenage November 2023 (2023-11-25~26),333 R1 F #2
 923140001,L2 R2 F2 L2 D' F2 U' R2 F2 D2 B F' L' F' R' B U F R' F' L2,O,Respect Kansas 2018 (2018-11-03),333bf Final A #2
 759475006,U' R2 D' L2 U2 R2 U2 R B D R D B' R2 D' R' U B2 U' L2 U2,W,Oakridge Cube Open - April 2018 (2018-04-14~15),333mbf Final A #1

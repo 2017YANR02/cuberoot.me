@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / ORWY / bin 10
-# Population in this bin: 60
-# Samples listed: 60 (all entries in this bin)
+# Population in this bin: 61
+# Samples listed: 61 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 12863001,D2 F2 R2 B D2 U2 F' D2 B' U' R' B' U' L2 R U L' F D L2,O,Pantheon Cube Open 2014 (2014-04-12),333 R1 T #2
@@ -65,3 +65,4 @@
 5541527001,B R2 F B2 R2 L' U' F U2 D F2 R2 L2 B2 U R2 F D B',O,Muri Twist Till It Works 2026 (2026-04-11~12),333 Final A #5
 5593686001,R D2 U2 F' U2 B2 F2 U2 L2 F R D U L D F D' B' F',O,Foshan Open 2026 (2026-05-02~03),333 R1 H E2
 5673106001,B2 R2 B' L' F' U R2 D' R B F2 U' F2 R2 U' F2 R2 F2 D' F2,O,Beskidy Cubing Days 2026 (2026-05-30~31),333 R1 C #5
+5754542031,L' B R' U2 B2 L2 B2 L2 D B' U F' D2 U2 R D' R' B R',O,CubingUSA New England Quiet Championship 2026 (2026-07-18),333mbf Final A #2

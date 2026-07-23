@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / BGWY / bin 6
-# Population in this bin: 424
+# Population in this bin: 425
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 3270001,D2 R D2 R' F2 D2 F2 R2 F2 R B U' R' U B' U' R2 D F',B,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 S #5
@@ -47,7 +47,7 @@
 383337001,B2 R U2 R' U R D2 L' U2 R F2 U D2 L2 F2 D,W,Tathva Cube Open 2016 (2016-10-22~23),333 R1 A #5
 5028412001,U' B U B2 L' R' D2 L' D2 F2 L' U2 B U' F L2 B R2 B,G,Benicia Open 2025 (2025-09-13),333 R1 A #1
 392723001,L2 R2 B' L2 B' L2 B2 D2 F D2 F L' D' U' R' F L R' D' L,Y,Jawa Timur Open 2016 (2016-11-05~06),333 R1 A E1
-4020383005,D2 U2 B2 D' U2 R' D2 U L' D2 R' D' U L F U,Y,Shhicago II 2024 (2024-08-17~18),333mbf Final B #3
+5757960001,D2 B2 D' U2 L' F2 L2 R' B2 D2 L' F2 U' L2 B F' U2 L' F',W,Kyrgyzstan Nationals 2026 (2026-07-18~19),333oh R1 A E2
 5584382001,B2 D2 U2 R2 B U2 L' D B2 D L2 R F2 D R U,Y,Welcome Guayaquil Open 2026 (2026-04-25),333 R2 A #4
 424141001,B' U2 B2 D2 U2 L2 B D L2 B' L2 F' U L2 B' U' L B',Y,Greece Winter Open 2016 (2016-12-28~29),333oh R1 B E2
 430516001,R' U2 R2 B2 L B2 L' D2 B2 R U F' U' R' U' L2 D2 B D2 R' D,Y,Dnepr Super Blind 2017 (2017-01-07~08),333bf R2 B #2

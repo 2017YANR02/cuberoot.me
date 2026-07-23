@@ -2,7 +2,7 @@
 # Population in this bin: 113
 # Samples listed: 113 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 49816001,L' F U' D R B D B2 D L B' R2 D F2 L2 D2 L2 F2,O,Summer with Cubers 2014 (2014-08-14~15),333 R2 B #1

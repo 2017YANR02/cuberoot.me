@@ -2,7 +2,7 @@
 # Population in this bin: 34
 # Samples listed: 34 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 150879001,D2 R2 D' L2 D F2 D2 R2 B2 U2 L F' U2 R' U' F' L F' U2 L' F',W,Nanchang Open 2015 (2015-06-14),333bf Final A E2

@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / W / bin 6
-# Population in this bin: 105
-# Samples listed: 105 (all entries in this bin)
+# Population in this bin: 106
+# Samples listed: 106 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 232664001,B U' F2 B' D R2 F' D F' D' B U2 B2 R2 U2 F',W,Sivar Open 2015 (2015-12-20),333oh R1 C E1
@@ -110,3 +110,4 @@
 5367757001,D2 B' D' R U' L2 U R' F' U D2 R2 L2 B2 L2 F' B D,W,Arroios Winter 2026 (2026-02-07),333bf R1 A #1
 5550210001,R' F R D2 R B' R B D' B R2 U' B2 U2 F2 U' R2 D2,W,Cube Factory League Jeżów 2026 (2026-04-18~19),333 R1 A #3
 5624519001,D2 R2 U L2 R2 F2 D2 L2 B' D B D F' L D U' L R',W,Surat Cube Open 2026 (2026-05-10),333 Final A #1
+5757960001,D2 B2 D' U2 L' F2 L2 R' B2 D2 L' F2 U' L2 B F' U2 L' F',W,Kyrgyzstan Nationals 2026 (2026-07-18~19),333oh R1 A E2

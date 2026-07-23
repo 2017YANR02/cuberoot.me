@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / W / bin 8
-# Population in this bin: 914
+# Population in this bin: 916
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 3839483001,R2 B' L B L' B2 U2 F2 D2 L' F2 U' R' B2 D' B U' F2,W,24 Horas em Salvador 2024 (2024-06-08~09),333 Final A E2
@@ -157,7 +157,7 @@
 5624519001,D2 R2 U L2 R2 F2 D2 L2 B' D B D F' L D U' L R',W,Surat Cube Open 2026 (2026-05-10),333 Final A #1
 4413237001,R F2 U' R' F2 U2 B2 R' F2 U2 D' B' L' D2 F' R' U' B,W,Gem City Ohio Showdown 2025 (2025-01-11),333 Final A #1
 660707002,U' L2 U F2 R2 B2 D2 L2 F2 U F' L D' F D' L D2 R2 F2 D2 B R,W,Mega Rubik 2015 (2015-05-02~03),333mbf Final A #1
-4844810001,B' U' F2 R L U2 L' B U2 D B2 D' B2 R2 B2 U R' U,W,IFAB Sides Santa Maria 2025 (2025-07-05),333oh R1 B #2
+5757011001,F' R2 D B2 R2 U F2 D2 L' F' R U R2 U' L B R D' L2,W,GAN Philippine Championship 2026 (2026-07-09~12),333oh R1 D #1
 660748026,D B2 L2 D2 R2 U R2 B2 R2 U' B2 L D B2 L2 D' B F2 L' D' B' L,W,SoCal Supercomp 2015 (2015-06-27~28),333mbf Final A #1
 4141792001,U2 L2 R2 B2 L2 D L2 D' F2 D B' D R' F R2 F D R U',W,Leicestershire Autumn 2024 (2024-09-28~29),333 R2 A E2
 4920801001,F2 U' B R2 B R2 U2 F D' R' D2 B L' D2 F D' L2,W,Cubing in the Ocean County 2025 (2025-08-09),333 R1 D #4

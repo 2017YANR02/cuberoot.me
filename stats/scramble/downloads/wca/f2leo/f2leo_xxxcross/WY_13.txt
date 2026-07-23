@@ -2,7 +2,7 @@
 # Population in this bin: 41
 # Samples listed: 41 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 133100001,B' U2 D B2 R2 B U R' B2 L D2 B' U2 B' D2 B2 U2 F' U2 R2 D2,W,FNSM Open 2015 (2015-04-18~19),333oh Final B #4

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / BGORWY / bin 4
-# Population in this bin: 333
+# Population in this bin: 336
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 10812001,B2 L R' D2 B2 F D F R D2 L' B L B' U' R,W,Open Cube Project 2014 (2014-04-12),333 Final A E2
@@ -40,7 +40,7 @@
 345892001,U2 D F2 D2 B R F' U D' L B2 U D L2 D B2 D B2 U',B,Crazy Cubes Open 2016 (2016-08-14),333 R2 A E2
 5587689001,U L2 U2 B2 D2 L B2 L U F2 D L' R' B' L D' U' B,B,Odd Day in Hong Kong 2026 (2026-04-26),333 R1 D E1
 379726001,L D2 R U2 R' U2 B R B' D' R U' F' R' D' F D',Y,Cubing ATMOSphere 2016 (2016-10-15~16),333oh R1 H #5
-383382001,R2 L' F' L2 F2 U2 R B R' D R2 D' B2 U F2 D F2 R2,R,Tathva Cube Open 2016 (2016-10-22~23),333 R1 H #1
+5751664001,L2 U2 L2 B F L2 B F2 L F D' R' D2 B2 U' R2 D2 U',Y,Bring the Heat AZ 2026 (2026-07-18),333 R1 B #1
 410742001,D F2 L2 D L2 U F2 L2 U L2 B R D' F U L2 U' B2 R2,B,Urdaneta City Fiesta Open 2016 (2016-12-04),333 R1 A #1
 4949325001,L2 U2 F U2 L2 B U2 L D2 L' R' B' D B R B F D,W,Korea Open 2025 (2025-08-15~17),333 R2 D E2
 430292001,U2 L2 R2 B' R2 B F U' L U' B L2 B L2 F' R' U B,G,Chișinău Winter 2017 (2017-01-08),333 R2 B #2
@@ -80,7 +80,7 @@
 777595028,D2 F2 R' B2 R' D2 L D2 R2 U' L' B F R' F' R' B' R2 F U L',Y,Qualifornia 2018 (2018-05-06),333mbf Final A #1
 779453001,D2 B2 L2 B F' U2 L2 F' R' D F U' B' F' L2 F R2 D U',W,Play Cube 2018 (2018-05-13),333 R1 H #1
 780658001,U L2 F B' D R' L' D2 L D2 F' L2 U2 F2 D R2 D' F2 U,O,BU Spring 2018 (2018-05-12),333 R1 C #1
-792695001,U' F2 D F2 D F2 L2 F2 L2 D R B2 R2 D' B D B2 D' R,W,Bayou Bash 2018 (2018-06-02),333oh R1 A E1
+5752054001,F' B U2 R D F' R' D2 R' B' R2 D2 B' R2 D2 F R2 U2 B2,W,Nanchang Summer 2026 (2026-07-18),333 Final A #2
 793541001,D2 R2 D B2 D2 B2 R2 B2 L2 B' F' L' B U' L' U2 L' D' B' L2 U2 L2 U2,B,Schwandorf Open 2018 (2018-06-02~03),333bf R1 B E2
 4486197001,B' D2 L2 F U' F2 R U R F2 U R2 U F2 R2 B2 D2 F,G,Cubing Returns Nagpur 2025 (2025-02-16),333 R1 D #2
 809386040,L2 F' D2 F' R2 F' R' F2 L' D' B F R2 F2 D' U' R F L,Y,CubingUSA Western Championship 2018 (2018-06-15~17),333mbf Final B #2
@@ -124,7 +124,7 @@
 4471270011,B2 D' B R2 D2 B2 D2 B' R2 B D F' R' F' L D R B2 D2 B R',G,DFW Mega Mental Breakdown 2025 (2025-02-01~02),333mbf Final B #2
 1178110013,F2 L2 F2 L2 U2 F2 U L2 D' L' R2 D' B R F' R2 U F' U2 B' L',W,Ukrainian Open 2019 (2019-06-08~09),333mbf Final A #1
 1181413001,U2 F2 R2 D2 L2 U2 R2 F' L' U' R2 B F L' R2 B D U' F D2,G,Blind N' Feet Wisconsin 2019 (2019-06-15),333bf R1 A E2
-4709061010,B2 L' D' F' D2 B2 R U2 R' B2 R' U F' U L' R B F2 L' F2,R,Rio Cubolympics 2025 (2025-05-01~04),333mbf Final A #3
+5753833001,D2 R' D F2 R D F' D F D' R2 D' R2 F2 U2 L2 D2,B,South Omaha Scramble 2026 (2026-07-18),333oh R1 A #3
 1213011001,D2 L2 D L2 B2 D L2 B' D' R' B' F2 D2 R' D2 F' U L,R,Palestine Open 2019 (2019-07-06~07),333oh Final A #3
 4678636001,B' L' D L' U2 B2 L' U2 D B2 U' L' R' F L' B',B,Martigny Open 2025 (2025-04-26~27),333 R2 A #1
 1265184001,F' R' L U L2 U D' F R F' R' B2 L2 D2 R U2 R' B2 L2 B2,G,Kharkiv Open 2019 (2019-08-17~18),333ft Final B #4

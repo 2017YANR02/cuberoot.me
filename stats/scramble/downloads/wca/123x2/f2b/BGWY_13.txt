@@ -1,8 +1,8 @@
 # Scramble samples — 123x2 / f2b / BGWY / bin 13
-# Population in this bin: 42
-# Samples listed: 42 (all entries in this bin)
+# Population in this bin: 43
+# Samples listed: 43 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 163363001,U2 L F' B R L2 F' U F D' B2 R' B2 U2 L' D2 R2 B2 L',B,TCG & Friends 2015 (2015-07-11~12),333 R1 B #2
@@ -47,3 +47,4 @@
 5340572001,B2 D2 R2 D2 L2 U2 F2 L2 U F' L R D B U' F' R B2 U F',B,Agoura Winter 2026 (2026-01-24),333 R1 A #3
 5420802001,R' B2 R2 F2 U L2 U R' U' B2 F' D' U' B2 F D' B' L',B,Pinoy Side Events Open 2026 (2026-02-28),333 Final B E2
 5552524001,D' L2 D L2 D2 B2 D' F2 B D2 L' U' R2 B' L D' L' R U',B,Lakewood Spring 2026 (2026-04-18),333 R1 D #2
+5754892001,B' U' R2 B R2 B2 U2 R2 F' R2 F U2 R' D U2 B' L F D' R',B,ACA Cube Fest Baku 2026 (2026-07-17~18),333 Final B #5

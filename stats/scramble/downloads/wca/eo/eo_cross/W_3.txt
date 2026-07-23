@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / W / bin 3
-# Population in this bin: 200
-# Samples listed: 200 (all entries in this bin)
+# Population in this bin: 201
+# Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 14804001,D L2 B2 R2 F2 R2 D R2 D' R2 B F2 D2 U L2 U2 B' U L R' U2 L,W,Didas Brest 2014 (2014-04-26~27),333bf Final A #2
@@ -168,7 +168,7 @@
 4465248001,R L2 D2 L2 U F2 L2 F2 D2 R2 L B2 D L' U' F2 L2 F2 L,W,DSF Generalforsamlingen 2025 (2025-02-01~02),333bf R2 B E1
 4485602001,D2 U2 L' D2 B2 F2 R' B2 D2 F L' F D' R2 B' D L' R2 D',W,GA Cubers Please Banana Quiet 2025 (2025-02-15),333bf Final B #3
 4501732001,L' U F U2 B2 D2 F2 R2 F' L2 F U2 F2 R' U L2 D' R' F' D,W,Campos do Jordão Open 2025 (2025-02-15~16),333oh Final A E1
-4550949001,F' B2 L2 U2 L D L D R' D B2 D2 R L2 U2 L2,W,Gdańska Liga Speedcubingu II 2025 (2025-03-08~09),333 R1 D #2
+5754535010,R2 D L2 F' B2 D2 L2 B D' F L B2 U2 R' D2 L B2 D2 L B,W,CubingUSA New England Quiet Championship 2026 (2026-07-18),333mbf Final A #1
 4560997001,B' U2 B2 L2 R2 F' L2 F' D' U' L' F2 R' D' F' R F' U' F' L2 U,W,Jus'Cubing Side Events BLR Mar 2025 (2025-03-16),333bf R1 B #3
 4562069001,R L2 F2 D U' L2 D2 U' R2 L' B2 L' U' R U' F' D,W,Cube Factory League Jeżów 2025 (2025-03-15~16),333 R2 B #5
 4628158001,R2 F2 L B2 R2 U2 R B2 U' F2 L2 D' B U2 L2 F' D F',W,Langenstein City Blind Open 2025 (2025-04-05~06),333oh R1 A #3

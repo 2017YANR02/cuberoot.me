@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / OR / bin 2
-# Population in this bin: 111
-# Samples listed: 111 (all entries in this bin)
+# Population in this bin: 112
+# Samples listed: 112 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 17474001,D2 B2 L2 B D2 L2 R2 F2 D' L D R U' L2 F U2 F' U',R,Apollo Open 2014 (2014-05-04),333 R2 B E1
@@ -116,3 +116,4 @@
 5604508001,F2 U2 L U' R2 F2 D' L2 F2 L' D2 R2 B2 D2 F2 D2 R B U L' F,O,Start of Summer Beijing 2026 (2026-05-01~02),333bf R1 A #1
 5677610006,B2 L2 U2 F2 D L2 F' L R B' D' F2 L D U B' D F' L2,O,New York Multimate PBQ V 2026 (2026-05-29~31),333mbf R1 B #1
 5690417025,R' D' L2 B2 U2 B2 U2 L2 B' D' R2 U R2 B' R2 F2 U' L2 U',R,Headache in Kode 2026 (2026-06-05~07),333mbf R1 B #1
+5756413001,B D F D2 L2 B' F2 R2 B U2 B' U' L' U2 L B U B' D2,R,Guelaguetza Oaxaca 2026 (2026-07-18~19),333oh R2 B #4

@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / G / bin 2
-# Population in this bin: 183
-# Samples listed: 183 (all entries in this bin)
+# Population in this bin: 184
+# Samples listed: 184 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 28543001,D2 R2 D2 B F L2 B U' F' U F' D U' R' D2 R2 F2 U2 L2 U2,G,Bucharest Rubik Summer 2014 (2014-06-15),333bf Final A #1
@@ -188,3 +188,4 @@
 5548050001,B L' F2 R L D' R' L2 B2 U2 D' F2 D B2 U' L2 R D',G,Eugene Spring 2026 (2026-04-18),333 Final B #1
 5556227001,B' D U2 B2 L B2 D2 L2 R U2 L B2 U R D B' D2 R' D' F,G,COMO Cube-Off 2026 (2026-04-18),333 R2 C #1
 5726809001,L B2 L R' F2 R2 B2 R' U2 R U2 B R' D B2 D',G,Re-Laois the Cubers 2026 (2026-06-27~28),333 R2 A #3
+5749996001,B U R2 U2 B' L' F' D L2 U D2 F B' R2 B U2 D,G,Warm Up Lent 2026 (2026-07-10~12),333 R3 B E2

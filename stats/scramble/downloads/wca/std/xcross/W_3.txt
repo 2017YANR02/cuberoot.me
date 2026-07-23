@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / W / bin 3
-# Population in this bin: 135
-# Samples listed: 135 (all entries in this bin)
+# Population in this bin: 136
+# Samples listed: 136 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 14365001,D' R' D2 R2 L D' R2 B R L F U2 F2 L2 B L2 B2 U2 B' L2,W,Hsinchu Spring Open 2014 (2014-04-27),333 R2 A #4
@@ -140,3 +140,4 @@
 5571248001,R' U' F U2 F2 R2 B2 U B2 R2 U B2 R D2 U L2 F2 D' U2 B' U' R' U' F,W,Fewest Moves Bogotá XII 2026 (2026-04-25),333fm Final A #2
 5603706001,U2 F D2 F R2 U2 L B2 L2 F2 U F2 U D R2 D L2 F D',W,Chengdu Welcoming Summer 2026 (2026-05-04),333 R1 G #1
 5691926001,B2 F2 U2 F2 L D2 R D' F D2 L2 D F' L2 F2 L U2 B,W,Swisscubing Cup Mental Breakdown I 2026 (2026-06-06~07),333mbf Final B #2
+5752931001,D B D' L2 U2 F R2 F R2 U2 B L2 R B' U R2 U' R2 F2,W,Delhi Summer Showdown 2026 (2026-07-19),333 R1 F #1

@@ -2,7 +2,7 @@
 # Population in this bin: 11
 # Samples listed: 11 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 290788001,B2 U' R2 L' U2 R' F2 D' B' R F B2 U2 R B2 D2 R' F2 U2 L,B,Do the Cube at the DoSeum 2016 (2016-05-01),333oh Final A #3

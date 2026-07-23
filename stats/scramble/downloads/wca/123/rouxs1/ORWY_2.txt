@@ -1,8 +1,8 @@
 # Scramble samples — 123 / rouxs1 / ORWY / bin 2
-# Population in this bin: 539
+# Population in this bin: 541
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 3820216001,F U F2 D L2 R2 U' L2 U' L2 F U2 L2 D' F2 L' D' B U' B',R,Tianjin Open 2024 (2024-06-01),333bf R1 A #2
@@ -58,7 +58,7 @@
 4332229001,U' B2 D L2 D2 F2 R D B' R' B2 F2 D2 U' B' F2 D,W,Berkeley December Weekday Tricubealon 2024 (2024-12-04),333 R1 A #5
 328358001,F' R2 F2 R2 D2 B' F U' F2 U2 L U2 R' U' B' U' L2 B2,Y,Hefei Open 2016 (2016-07-15~17),333oh Final A #3
 4563159001,B U2 F R2 B2 F D2 F L2 D' L2 F2 R U2 B' U F' D' L2,Y,Liberty Science Center Open B 2025 (2025-03-16),333 R2 A #2
-5152247001,L B' U2 F2 L2 U2 L B R U2 F2 D' L2 B2 R2 L2 D',W,Pune Twistathon 2025 (2025-11-01~02),333 Final B E2
+5756324001,U R' B R2 B2 U2 L2 D F2 L2 B2 L' D' F2 R U L' D F',W,Guelaguetza Oaxaca 2026 (2026-07-18~19),333oh R1 B #2
 4618693001,F2 U' F2 U' R2 F2 R2 D R2 B' D' U2 R2 F' U R' F2 R2 F2,R,Edén Bogotá II 2025 (2025-04-05),333oh R1 B #3
 346735001,L R U2 B2 D2 U2 L2 R U' R2 F2 R2 F' D U F D,R,Santo Domingo Summer 2016 (2016-08-13~14),333 Final A #2
 358190001,L' F' R' U2 L F2 U' R' F R' F' L2 B2 U2 R F2 L U2 R,R,Sesc Camaquã 2016 (2016-09-03~04),333oh R1 A #2

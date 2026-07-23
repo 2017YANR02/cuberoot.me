@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / G / bin 1
-# Population in this bin: 16
-# Samples listed: 16 (all entries in this bin)
+# Population in this bin: 18
+# Samples listed: 18 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 238917001,F2 U B2 D' F2 D' L2 D2 R2 F D F L' R2 B L' B,G,Great Indian Cubeathon 2016 (2016-01-08~10),333oh R1 G E1
@@ -21,3 +21,5 @@
 4596661001,F2 R B' R2 D' B2 D' R2 F L2 F2 U2 F D2 U B' U' R',G,CubeCo Coastal Cubing KZN 2025 (2025-03-21~22),333 Final B #2
 4909935001,L' B' L' B' L2 U2 L2 U B2 D L2 B' L D2 B D U' L',G,Makati Heroes Speedcubing 2025 (2025-08-02),333 R1 A #4
 5435669001,L2 F2 U' L2 F2 R2 U' L' B2 R2 B' U' B2 F' D2 U B L2 U',G,Bern Cubing Festival 2026 (2026-03-08),333 Final C #1
+5750550009,R2 B' D2 R2 U2 F2 R' F2 R2 F2 U2 R' B' R2 B D' L' D' B2 L B2,G,GAN New Zealand Nationals 2026 (2026-07-10~12),333mbf Final A E1
+5750594009,R2 B' D2 R2 U2 F2 R' F2 R2 F2 U2 R' B' R2 B D' L' D' B2 L B2,G,GAN New Zealand Nationals 2026 (2026-07-10~12),333mbf Final A #2

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / BG / bin 7
-# Population in this bin: 256
+# Population in this bin: 257
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 31496001,R2 U' R' F' B L D2 F' B D' F U L2 D' F2 D B2 U' F2,G,Excellite Cube Open 2014 (2014-06-22),333 R1 F E1
@@ -179,7 +179,7 @@
 3614879001,L B' U2 F2 D2 L2 B2 L' U2 F2 D' U' F2 R D2 U' B2 D',G,Uppsalaligan 3: Puppet - 2024 (2024-03-25),333oh Final B #2
 5226045001,F2 B2 L' U2 L2 U2 D' B L U' L2 B2 D' F2 D F2 L2 D2 R2 B,G,Guadix Open 2025 (2025-11-29~30),333 R2 C E1
 3646111001,B2 U' B2 U F2 L2 U2 B' D' B U2 B' D B2 L' F' D B,G,Busan Spring 2024 (2024-04-06~07),333 R1 A #5
-4837851001,F B2 R' F2 L D2 R' U2 L2 U' B R B2 R D' F D B,B,Ulaanbaatar Summer 2025 (2025-06-28),333 R1 E #5
+5752031001,B2 D2 L2 F' D2 B' F' R2 F' R2 D2 R F R' B2 R U L' U2 F,G,Nanchang Summer 2026 (2026-07-18),333 R2 C #1
 3664645001,F2 B R2 D L F' U' R' D2 L' U2 R U2 B2 L2 D2 R' D L' F2 D',G,Nittedal Mental Breakdown 2024 (2024-04-13~14),333bf Final A E1
 3783920001,U2 R B' R2 B2 L' D2 R2 U2 R B2 F' D B' R' U B R D',B,Skewb Wins Panamá 2024 (2024-05-18),333 R1 A #5
 3845467001,D2 F' D2 U2 L2 F2 U2 B U2 L F R2 D2 F2 D' U F D' R' D,G,Vancouver's on Tracks 2024 (2024-06-08),333bf Final B #1

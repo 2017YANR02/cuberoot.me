@@ -2,7 +2,7 @@
 # Population in this bin: 53
 # Samples listed: 53 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 35123001,D2 F2 D R2 U2 B2 U F2 L2 R2 D R' B2 R2 U B' F' U2 R U B2,O,Plentzia Open 2014 (2014-06-28~29),333oh R1 A E1

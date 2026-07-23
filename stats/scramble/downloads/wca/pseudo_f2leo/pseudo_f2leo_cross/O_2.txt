@@ -2,7 +2,7 @@
 # Population in this bin: 421
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 5607893001,F2 L2 F2 D B' R2 F D R2 U L2 U' F2 D B D2 R' B',O,Spring Breeze in Burnaby 2026 (2026-05-03),333 Final A #5

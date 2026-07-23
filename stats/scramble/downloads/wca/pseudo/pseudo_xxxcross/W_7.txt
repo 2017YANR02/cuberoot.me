@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxxcross / W / bin 7
-# Population in this bin: 900
+# Population in this bin: 902
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 4542026001,B' R2 D2 B2 F' D2 R2 F' R' F L2 U2 R U F2 U' L',W,Nepali Nationals 2025 (2025-02-27~03-01),333oh R1 A #1
@@ -38,7 +38,7 @@
 142697001,L' B2 L' F2 U2 B2 R2 F2 D' R F' R F D' L D' R2 U,W,Welwyn Garden City 2015 (2015-05-23~24),333oh Final B E2
 3979756001,L2 U2 F2 R2 D' L2 U' F2 L D R' F U2 F L2 R U F' R',W,Rubik's WCA European Championship 2024 (2024-07-25~28),333 R1 D #4
 2861134001,B L2 U2 B F2 R2 U2 B' D U B' R' U2 L R F' R2 F U2,W,Hvidovre Sommer 2023 (2023-07-08~09),333 R1 B E1
-5277504001,R2 D' F' U D F2 U B' L2 F' L2 F2 D2 L2 D2 R' F D',W,Stockholmsligan Sita - Nyoka 2025 (2025-12-18),333oh Final A #5
+5753976001,D L' B D2 B2 L' B2 L B2 R2 D2 L2 D' F' D2 R' B' U L' B2,W,South Omaha Scramble 2026 (2026-07-18),333 R1 D E2
 1892519026,F D B2 F2 U B2 D' R2 D R' F' R2 B2 L2 U2 B L B',W,Skjetten Mental Breakdown 2022 (2022-04-23~24),333mbf Final A #1
 3133239001,L2 F2 R2 D2 F2 R2 D L B2 U2 L' B' D' F' L B' U2 L',W,Primavera Paceña 2023 (2023-09-30),333 R2 D #5
 1004596001,D' B2 D' F2 U2 L2 U' L' B' R2 B' D F2 L2 B F' R' D' U',W,Macedonia Winter 2019 (2019-02-02~03),333 R2 C #4

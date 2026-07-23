@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / G / bin 3
-# Population in this bin: 201
+# Population in this bin: 202
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 28514001,F U2 F2 R2 F2 D2 B U L2 B' U2 D2 L2 B U2 F R2 U2 B',G,Bucharest Rubik Summer 2014 (2014-06-15),333 R2 B E2
@@ -169,7 +169,7 @@
 4581977001,R2 D B' U2 R L B2 D' B' L' D F2 D' B2 D' R2 U2 L2 F2 L B,G,Kaisaniemi Cubing 2025 (2025-03-22~23),333bf Final B E2
 4602889001,D' U' F2 R2 F2 D' L2 F2 D2 R' U2 R' B2 D2 B' R B' U2,G,First Solves Gothenburg 2025 (2025-03-29~30),333 Final B E1
 4603889001,B2 R2 F2 D2 B2 R F' L2 R2 F2 R' D' B2 D R2 F R',G,Dåstrup Diverse 2025 (2025-03-29~30),333 R1 C #2
-4692628001,U' L2 B' U B' U' F' U' F2 R2 U L2 F2 D L2 B U' F',G,The Battle of Lexington Semiquincentennial 2025 (2025-04-26~27),333 R2 A E2
+5754407001,U' R B2 U' B' D F2 L' B L' B2 U2 F2 D F2 B2 R2 B2 D',G,Chenango County Summer 2026 (2026-07-19),333 Final B #4
 4706596001,L2 F' U2 L2 B R2 F2 L U2 B' R' F2 R U F' D' F2 L2,G,Songinokhairkhan Cup 2025 (2025-05-03),333 R1 I #3
 4743381001,R' U' F L B2 D2 U2 L' B2 D2 R2 B2 L' F2 R' B' L' B U' B2 F' U' R' B R' U' F,G,Kölner Kubing 2025 (2025-05-23~25),333fm Final A #2
 4779009001,R D B2 L2 B2 F2 L' U2 L B2 R' B R2 U R2 B2 R' B,G,Esbjerg Open 2025 (2025-06-07),333 R1 B #2

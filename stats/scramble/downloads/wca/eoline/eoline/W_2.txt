@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / W / bin 2
-# Population in this bin: 871
+# Population in this bin: 876
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 1100196001,F R2 F' D2 R2 B' D' F2 R2 D' F' R2 B' D F R2 D',W,SnoCo Feet Fest 2019 (2019-04-13),333 R1 A E1
@@ -141,7 +141,7 @@
 615845001,F2 L' R2 B2 L' B2 F2 D2 F D F2 R2 D F2 U' R' B2 U' R',W,Rocket City 2.0 2017 (2017-10-14),333 R2 A #3
 4240642001,L B' L D' L U2 R2 F' D' R2 B' D2 R2 U2 F2 L2 F2 D2 L2,W,Nayarit Open 2024 (2024-10-26~27),333 Final A #5
 1826636001,D' L2 D' F2 D F' D L2 D' F' D L2 U' L2 F2 L,W,Northern Colorado Cubing 2022 (2022-03-12),333 R1 C #4
-5173606001,R2 U2 F' R2 B2 U2 R2 D' R2 F2 U2 B' R2 D' R2 B F2 D,W,Kjeller Open 2025 (2025-11-08~09),333 R1 A #3
+5750550009,R2 B' D2 R2 U2 F2 R' F2 R2 F2 U2 R' B' R2 B D' L' D' B2 L B2,W,GAN New Zealand Nationals 2026 (2026-07-10~12),333mbf Final A E1
 3428788001,L' F R2 L' F B2 R' U L F2 B' R2 B' D' F',W,Manchester Winter 2024 (2024-01-20~21),333 R2 C #1
 953812003,U2 R2 U' R2 D' R2 U2 B2 D2 L U' R D' L U' L2 U L2 U',W,Festival SESC Cubo Mágico 2018 (2018-12-08~09),333mbf Final B #2
 2939522001,L2 U2 R2 D2 F L2 B L2 U2 B R' U F L2 R D' L U R2,W,Maru Cube Day 2023 (2023-07-22~23),333 R2 F E2

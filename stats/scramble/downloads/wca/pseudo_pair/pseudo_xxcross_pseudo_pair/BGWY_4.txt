@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / BGWY / bin 4
-# Population in this bin: 223
+# Population in this bin: 226
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 10812001,B2 L R' D2 B2 F D F R D2 L' B L B' U' R,W,Open Cube Project 2014 (2014-04-12),333 Final A E2
@@ -29,9 +29,9 @@
 5240283001,B' L D2 F2 L' F2 L2 R F2 D2 L2 B2 F R' U R' U' F' R2,Y,Clash of Cubers III Davao 2025 (2025-11-30),333 Final A #2
 410742001,D F2 L2 D L2 U F2 L2 U L2 B R D' F U L2 U' B2 R2,B,Urdaneta City Fiesta Open 2016 (2016-12-04),333 R1 A #1
 5596304001,U' L2 D L2 D L2 D2 B2 L2 D' R' B' L D2 L' U' L D' L,W,Rahn Education Open 2026 (2026-05-01~03),333oh Final B #2
-433258001,B2 U' L2 R2 D B2 D2 R2 F R F2 L2 B' L' D' F' L B' D,G,Santa Fe Open 2016 (2016-12-10),333 R1 D E1
+5753833001,D2 R' D F2 R D F' D F D' R2 D' R2 F2 U2 L2 D2,B,South Omaha Scramble 2026 (2026-07-18),333oh R1 A #3
 451205001,U B' D2 R' D' L D' L' D R' L2 B D2 B L2 D2 F2 R2 B,W,P3 Grand Open - Feb 2017 (2017-02-26),333 R1 C E1
-468612001,F D2 F2 L2 D2 U2 B2 L2 D' L2 B' U B' R U F R F',W,Unionville Open Spring 2017 (2017-03-18~19),333 R2 A #2
+5752054001,F' B U2 R D F' R' D2 R' B' R2 D2 B' R2 D2 F R2 U2 B2,W,Nanchang Summer 2026 (2026-07-18),333 Final A #2
 496175001,U R2 L B2 D F R2 D R U' L2 U2 F R2 F U2 L2 F' R2,W,Bukidnon Speedcubing Challenge 2017 (2017-04-22),333 Final B #4
 528982001,D2 U2 F U2 B2 D2 F R F' D2 F L2 D L' F' R2 D' F2,W,Ticino Open 2017 (2017-06-10~11),333oh R2 A E2
 595691001,L2 U R2 D' B2 D' L2 R2 D' F D' U2 R' B' U B' U L' R,W,Golden Rubik's Cube 2017 (2017-09-14~15),333oh R1 A #3

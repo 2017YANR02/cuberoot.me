@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / BGWY / bin 3
-# Population in this bin: 528
+# Population in this bin: 529
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 4701564001,B2 R2 D B R D2 R U2 R2 F L D F' U' R' B2,W,Hessen Mini Open 2025 (2025-05-02),333 Final B #4
@@ -42,7 +42,7 @@
 324884001,D2 L2 F2 L2 R2 D2 F2 U' L2 F' U' B' D R B' F2 D2 U F' U2,W,Bolivia Nationals 2016 (2016-07-01~03),333 R3 A #4
 2786289019,B2 U' B' D2 B D' B' R2 L2 D R' L2 U' B2 U2 D2 L2 D L2,G,BLDepok 2023 (2023-06-10),333mbf Final A #1
 344431001,D2 B2 D2 L2 R D2 R' B' L' B L D' L' D2 U' R F' L2,G,CEIC Masterda Open 2016 (2016-08-06~07),333oh Final B #5
-346735001,L R U2 B2 D2 U2 L2 R U' R2 F2 R2 F' D U F D,Y,Santo Domingo Summer 2016 (2016-08-13~14),333 Final A #2
+5752931001,D B D' L2 U2 F R2 F R2 U2 B L2 R B' U R2 U' R2 F2,W,Delhi Summer Showdown 2026 (2026-07-19),333 R1 F #1
 2176229001,U F' U2 R2 U' B2 D' L2 D' L2 B2 L' B L2 U2 F' U2 B' D',B,Delhi Big Cube Open 2022 (2022-09-17~18),333 Final A E2
 5688157001,B' R' U2 L' D2 F' L F' U2 D2 R2 D B2 U D F U,G,LCCC Cubing Summer 2026 (2026-06-06),333 R1 D #1
 3258097001,L2 F2 B R2 B R' L2 U2 L' D L2 B2 L D2 L' U2 F2 R' D',G,Guildford Autumn 2023 (2023-11-11~12),333bf Final A E1

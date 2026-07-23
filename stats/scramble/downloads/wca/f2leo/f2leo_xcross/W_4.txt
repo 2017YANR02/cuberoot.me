@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xcross / W / bin 4
-# Population in this bin: 414
+# Population in this bin: 416
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 2533429046,U' F2 D R' U' D L F D' U2 F R2 B2 L2 D2 F2 B' R2 U2 D B' L2,W,MBLD in a Madison Meeting Room 2023 (2023-03-04~05),333mbf Final A #2
@@ -74,7 +74,7 @@
 543128001,R' B2 R' F2 L F2 R B2 D' B2 F2 R U' L2 R' B2 D2 F',W,LETI Open 2017 (2017-07-01~02),333 R2 B E1
 543171001,R2 B2 D2 U2 L2 D2 B' R2 F2 U' F2 D2 L2 F' D2 F' D' L B' L',W,LETI Open 2017 (2017-07-01~02),333bf Final A E1
 5384059025,F' U2 F2 U' D2 R' D L' F2 R B' U2 R2 F' D2 L2 U2 L' D,W,Bara Multi-Blind i Jönköping 2026 (2026-02-15),333mbf R1 B #1
-5738865001,D2 F2 L' B2 L U2 R2 B2 F2 L' B' D2 B' R' B D' F L,W,Hanoi CSP Open 2026 (2026-06-28),333 R1 B E1
+5750749001,D2 B' L2 B L' D' R L F D2 F B D2 F' R2 B2 U2 L2 B2 L,W,GAN New Zealand Nationals 2026 (2026-07-10~12),333bf R1 A #4
 5424434001,B' L2 F2 U B' R' U D2 B2 L2 U2 R' D2 F2 B2 L F' R2 U2 B,W,Richardshhhon 2026 (2026-02-28~03-01),333bf R2 A #5
 567814001,L2 F U2 B2 L2 F2 U2 F' D2 L2 D' R2 B D' F' D' B D2 L' B,W,Cross-strait Cubing Exchange 2017 (2017-08-12~13),333oh R1 B #4
 4088324015,F U2 D R2 B R' B2 U2 F R B L2 B R2 B2 R2 F' U2 B L' F2,W,Svealandsmästerskapet 2024 (2024-09-06~08),333mbf Final A #1

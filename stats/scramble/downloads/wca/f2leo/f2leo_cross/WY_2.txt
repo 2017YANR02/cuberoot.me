@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / WY / bin 2
-# Population in this bin: 282
+# Population in this bin: 283
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 4280293025,L' F' D L' D2 L' F B' L B2 U' R2 L2 U' R2 D L2 U' B',W,Kubing in Kapiti 2024 (2024-11-09),333mbf Final A #1
@@ -15,7 +15,7 @@
 258790001,U' F' B2 L2 D' R D F2 B2 R' F' U F2 U' F2 U' R2 U,Y,Ignus Open 2016 (2016-02-28),333 Final B E1
 4623419001,D R2 F2 U R' F' R U' B2 D' L2 U F2 R2 D2 R' B,Y,Kirkkonummen Kuutionvääntelyt 2025 (2025-04-04~06),333 R2 C E2
 261248001,B' R2 F D2 B' R2 F' D' L2 B' L2 B D' B2 U2 R B D2 L' F2,Y,GLS Cup I 2016 (2016-02-27),333bf Final A E1
-4925373001,U F R' U' L2 D2 R2 F2 D L' B2 L2 U2 F B2 R2 B' D2 B,Y,Pocos Cupos Bogotá XIV 2025 (2025-08-10),333mbf Final B #1
+5750761001,R B U L2 U2 L2 F R2 B D2 U F' L' U B2 D U R2,W,GAN New Zealand Nationals 2026 (2026-07-10~12),333oh R2 A #4
 5592278001,U' R2 D2 U L2 R2 F2 R2 U2 L2 U' F U' R2 B F2 D R' F2 D,W,Western Sicily Open 2026 (2026-05-01~03),333 R2 B #2
 4356573001,U2 R' B2 L' R2 D U' L2 U' R2 F' R' B2 R2 B2 F' L',W,Kirkland Pyra Fest 2024 (2024-12-14),333oh R1 B E1
 310093001,R2 F L2 R2 F2 R2 U2 F D B' R2 U R2 B2 U F L F L2,Y,Cube4Cam 2016 (2016-06-04),333 R1 I #2

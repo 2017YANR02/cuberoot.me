@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / Y / bin 2
-# Population in this bin: 196
-# Samples listed: 196 (all entries in this bin)
+# Population in this bin: 197
+# Samples listed: 197 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 68774001,D2 R2 D' R U2 L' D R' L' B' D' R2 F2 U F2 U F2 B2 U' D2,Y,Hungarian Open 2014 (2014-10-17~19),333oh R2 B E1
@@ -201,3 +201,4 @@
 5682755001,U' F R2 F' U2 B2 R2 B' R2 U' L B U' L' R' U R B' R2,Y,Summertime Speedcubin' in Negros 2026 (2026-05-30~31),333 R1 B E2
 5688308051,F' U' F' D2 B2 D2 L' D2 R' D2 U R' U2 R2 U' B' D' U B R2,Y,More Than One Cube Shanghai 2026 (2026-06-06~07),333mbf Final A #3
 5743026001,R2 B2 R2 D2 U' L' R' B' D' R2 U R' D2 B L F U,Y,Victoria Gardens Lviv 2026 (2026-07-04~05),333 R1 A #3
+5756483001,D2 R2 U' F2 R' F2 U F' U2 D L2 F2 U' F2 R2,Y,Guelaguetza Oaxaca 2026 (2026-07-18~19),333 R1 B E1

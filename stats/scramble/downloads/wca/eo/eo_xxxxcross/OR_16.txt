@@ -2,7 +2,7 @@
 # Population in this bin: 42
 # Samples listed: 42 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 94846001,B R2 B D2 R2 B F2 D2 B D L R' F L' F2 L' U B2 R' D B R2,O,Austin Cubing Limits 2015 (2015-01-03),333bf Final A #2

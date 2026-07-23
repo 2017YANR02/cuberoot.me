@@ -1,8 +1,8 @@
 # Scramble samples — 123 / rouxs1 / BG / bin 2
-# Population in this bin: 253
+# Population in this bin: 255
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 5542001,D' R2 L' F' R2 B2 U B L' U2 F2 L2 U2 F2 B2 U' R2 D' R2 U',B,Swiss Open 2014 (2014-03-29~30),333oh R1 A #2
@@ -129,7 +129,7 @@
 2513808001,B2 D B' R2 F U' L' F2 R' D' U2 R2 B' D2 L2 D2 L2 B U2 B',G,Amore Open 2023 (2023-02-25~26),333bf Final A #3
 2536708008,F2 U2 B2 U2 L2 D' F D U2 B U2 R2 F' R' D2 R D L2 U2,B,I Hope It's Solved Calgary 2023 (2023-03-04~05),333mbf Final A #1
 2563747001,F U2 R2 F2 R2 F L2 F R2 F2 D' R' U' B' R2 B' F R2 F R,G,GLS II 2023 (2023-03-11~12),333 R2 D #1
-2590117001,B2 L D2 B2 R' B2 L2 B2 R' D B2 D2 U' F L' U' L R',G,Nanaimo Swing into Spring 2023 (2023-03-25~26),333 R1 B E1
+5754239001,B2 D' L F2 D' F2 B L' B' F2 U' B2 U2 F2 R2 U F2 B2 U2,B,Japan Championship 2026 (2026-07-18~19),333oh Final A E1
 2600327040,D B' R L2 U' L2 D' R2 B2 D' R' D2 R' B D B R B R',G,Please Be Quiet Brisbane 2023 (2023-04-01~02),333mbf Final A #1
 2624637001,L B2 U2 R2 B2 R2 F2 U' F2 U' B L B' R B U B' L2 B,B,Washtenaw Spring A 2023 (2023-04-08),333 R1 B E1
 2633655001,F' R B2 D F' D2 B F2 R U2 F2 U2 R' D2 F2 R2 B2 F R2,G,You Only Need a 3x3 AZ 2023 (2023-04-15),333 Final A #1

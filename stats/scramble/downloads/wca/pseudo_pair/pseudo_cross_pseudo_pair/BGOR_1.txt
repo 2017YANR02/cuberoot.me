@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_cross_pseudo_pair / BGOR / bin 1
-# Population in this bin: 682
+# Population in this bin: 685
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 3220764001,F L F' R2 B D2 R2 D2 R2 B2 L2 B U L' U L2 D2 L2 B2,R,Broome Open 2023 (2023-11-04),333 Final A #3

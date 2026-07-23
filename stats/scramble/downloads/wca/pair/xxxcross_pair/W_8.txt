@@ -2,7 +2,7 @@
 # Population in this bin: 128
 # Samples listed: 128 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 13193001,B F2 R2 U2 F2 D R2 B' D2 U' B' R F U2 F2 R',W,Velbert Easter Open 2014 (2014-04-18~20),333 R1 A #4

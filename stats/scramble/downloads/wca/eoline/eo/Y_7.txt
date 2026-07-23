@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eo / Y / bin 7
-# Population in this bin: 110
-# Samples listed: 110 (all entries in this bin)
+# Population in this bin: 111
+# Samples listed: 111 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 1252001,D' B R2 U L' B' R F L' D R L2 U2 R' B2 U2 F2 U2 R2 D2,Y,Shepparton Autumn 2014 (2014-03-22),333 R1 B E2
@@ -115,3 +115,4 @@
 5740089001,U2 F2 D2 F2 U2 L2 F R2 B R2 U2 R' F2 U' R2 F L' U R2 D' R,Y,Slovak Championship 2026 (2026-07-02~05),333oh Final A #5
 5742360001,L B2 R U' R F L F' L2 B' D2 L2 F' R2 F2 D2 R2 L' D' F',Y,Rubik's WCA North American Championship 2026 (2026-07-02~05),333 R1 L #4
 5742533001,L2 R2 F' L2 B R2 U2 B2 L2 D R' B' U' L F R' D2 B2 L2,Y,Rubik's WCA North American Championship 2026 (2026-07-02~05),333oh R1 E E1
+5754542031,L' B R' U2 B2 L2 B2 L2 D B' U F' D2 U2 R D' R' B R',Y,CubingUSA New England Quiet Championship 2026 (2026-07-18),333mbf Final A #2

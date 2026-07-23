@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / WY / bin 10
-# Population in this bin: 621
+# Population in this bin: 623
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 1258630001,D' L2 R2 F2 D' R2 B2 F' R D' B L D B2 D U2 F L' U,W,Baoji Open 2019 (2019-08-11),333 R2 D #4

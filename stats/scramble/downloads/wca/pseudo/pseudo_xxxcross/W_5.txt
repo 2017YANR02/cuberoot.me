@@ -2,7 +2,7 @@
 # Population in this bin: 7
 # Samples listed: 7 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 1178110013,F2 L2 F2 L2 U2 F2 U L2 D' L' R2 D' B R F' R2 U F' U2 B' L',W,Ukrainian Open 2019 (2019-06-08~09),333mbf Final A #1

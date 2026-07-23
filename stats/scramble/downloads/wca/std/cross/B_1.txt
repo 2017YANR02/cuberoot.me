@@ -2,7 +2,7 @@
 # Population in this bin: 94
 # Samples listed: 94 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 66339001,U R2 D2 B R B' R' U' R2 U2 B2 L D2 R2 B2 R2 F2 L' B2,B,Montevideo Open 2014 (2014-10-11),333 R2 B #3

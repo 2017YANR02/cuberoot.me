@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_cross_pseudo_pair / G / bin 1
-# Population in this bin: 170
-# Samples listed: 170 (all entries in this bin)
+# Population in this bin: 172
+# Samples listed: 172 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 25223001,D2 L2 R2 B2 F' L2 D2 F2 U2 L U2 F R2 U R F2 D2 F' R',G,National Cubing Region Open 2014 (2014-05-31~06-01),333 R1 O #1
@@ -175,3 +175,5 @@
 5726809001,L B2 L R' F2 R2 B2 R' U2 R U2 B R' D B2 D',G,Re-Laois the Cubers 2026 (2026-06-27~28),333 R2 A #3
 5738122001,D2 R' U2 R2 D2 F2 D2 F2 R' D2 U' B U' B R2 B2 L D2 F2 L B,G,Åland Open 2026 (2026-07-03~05),333bf Final A E2
 5746263001,B L' F D F2 D F2 R2 U2 L2 F2 R F R2 B2 D2 U2 R2 D L B',G,Sleep & Solve Landsbro 2026 (2026-07-11~12),333mbf Final A #1
+5750550009,R2 B' D2 R2 U2 F2 R' F2 R2 F2 U2 R' B' R2 B D' L' D' B2 L B2,G,GAN New Zealand Nationals 2026 (2026-07-10~12),333mbf Final A E1
+5750594009,R2 B' D2 R2 U2 F2 R' F2 R2 F2 U2 R' B' R2 B D' L' D' B2 L B2,G,GAN New Zealand Nationals 2026 (2026-07-10~12),333mbf Final A #2

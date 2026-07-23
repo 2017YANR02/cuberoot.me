@@ -2,7 +2,7 @@
 # Population in this bin: 131
 # Samples listed: 131 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 38031001,B' R2 L' D2 B D' L' B' L D F2 U L2 D F2 D' F2 L2 B2,B,Dixon Summer 2014 (2014-07-19),333 R1 B #5

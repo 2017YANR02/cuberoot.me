@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / ORWY / bin 2
-# Population in this bin: 785
+# Population in this bin: 787
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 4772900001,R U B' L2 D2 F' D2 U2 R2 F R2 F R D' L' F L F R2 B R2,W,Kewbz Scottish Championship 2025 (2025-05-30~06-01),333bf Final B #2
@@ -171,7 +171,7 @@
 4332935001,U F B2 R2 U2 R U2 R2 B2 R' F D' L F L2 F2 L R2,R,Cube Factory Rogów 2024 (2024-11-30~12-01),333 R1 D E1
 4592776001,B' U' B F L2 F' R2 D2 F' D2 F2 L R2 B U' B' D2 B2,R,Minnesota Newcomer Sunday 2025 (2025-03-23),333 R2 C #4
 4036742001,B2 U B D B2 D' L2 B2 D B2 U B F U R' U' R D',W,Kublördag Jönköping III - 2024 (2024-08-24),333 R1 B #5
-4544991001,L' D' B2 L' D2 L2 R' U2 B2 R D2 B' D' B F U L2 D',W,Villavicencio 2025 (2025-03-08),333 Final B E1
+5756483001,D2 R2 U' F2 R' F2 U F' U2 D L2 F2 U' F2 R2,Y,Guelaguetza Oaxaca 2026 (2026-07-18~19),333 R1 B E1
 3294539001,L F' L D' R F U2 F R B2 U' F U2 F B2 U2 R2 B L2,R,Halifax Fall 2023 (2023-11-25),333 R2 C E1
 812085001,D B' U R' U2 R B U B' U2 B2 R2 F' R2 U2 B' R2,O,Fairview Cube Day 2018 (2018-06-24),333 R1 B E2
 5306467001,B' L2 D2 F' R2 U2 F' D2 U2 L D' L B2 R D' F2 U2 B2,R,Weston-super-Mare Winter 2026 (2026-01-03~04),333 R2 A #3

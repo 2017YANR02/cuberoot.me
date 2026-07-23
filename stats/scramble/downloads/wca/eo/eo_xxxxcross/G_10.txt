@@ -2,7 +2,7 @@
 # Population in this bin: 43
 # Samples listed: 43 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 25765001,R2 U F' U F' R2 D F2 L F2 L2 D2 R F2 L' D2 L B2,G,Erfurt Open 2014 (2014-06-07~08),333 R2 A #4

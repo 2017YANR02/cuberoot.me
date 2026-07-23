@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / G / bin 6
-# Population in this bin: 816
+# Population in this bin: 818
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 951223001,L2 U' F2 D' R2 F2 U2 R2 U' B' D R' B D2 B D U2 B2 L2 U2 B' L2,G,GLS Cup Final 2018 (2018-12-01~02),333bf R1 A #2
@@ -152,7 +152,7 @@
 5579035001,R2 F L2 F2 U2 B L2 D2 U2 L' U2 B2 D F' U F' D' U,G,UCOM Paraguay 2026 (2026-04-25~26),333 Final A #2
 3713634001,B2 D F2 U' L2 B2 D L2 D' B' U B' U L B R B' U' F2,G,DFW Cubing Spring 2024 (2024-04-28),333oh Final A #1
 4603899001,L' D' R2 U' B2 R2 B R2 B U2 B' D2 U F' D' F L F2 D',G,Dåstrup Diverse 2025 (2025-03-29~30),333 R2 A #5
-4988638001,F' U2 F2 D2 B2 L R2 B2 L B R B2 D2 L B' D' F2 R U' L2 U',G,Schnelle Solves Siegen v2 2025 (2025-08-30~31),333bf Final A #3
+5750514015,F2 R' U' F' D2 R2 F' D2 F2 L B2 R' F2 U2 R D2 B' U2 L',G,GAN New Zealand Nationals 2026 (2026-07-10~12),333mbf Final A #1
 2854370001,L2 D2 F' L2 U2 B' L2 D2 F D' F' L2 U' L2 D2 U R F2 L2,G,Las Acacias al Cubo Open 2023 (2023-07-01),333oh R1 A #2
 3095670001,L2 B2 L U' D' L' B' L U F2 D2 L2 D' B2 U' R2 U L2 F2,G,Foothills NxNs 2023 (2023-09-23),333 R2 B #5
 2413225001,L B L' D2 L2 F2 D2 R' F2 R2 D2 L' U B D B D L2 D',G,Lynnwood Winter 2023 (2023-01-07),333 R1 B E2

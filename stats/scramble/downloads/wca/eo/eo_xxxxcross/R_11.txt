@@ -1,15 +1,15 @@
 # Scramble samples — eo / eo_xxxxcross / R / bin 11
-# Population in this bin: 514
+# Population in this bin: 516
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 5671196001,D R2 F' D' L D2 F' R2 L2 B2 U F2 L2 U R2 U' B2 U2 F2,R,Magnolia State Cubing 2026 (2026-05-30),333 R2 B E2
 1815684001,R B2 D L2 U2 R2 B2 U F2 D2 L2 F2 B' U L' D B' L' F L2,R,Ixchel 2022 (2022-02-19),333 R2 C E2
 28574001,D2 L2 U2 R' B2 F2 U2 F2 L' F2 U L D L2 B' R2 D' L2 U,R,BASC 3: Flagj Day 2014 (2014-06-14),333 R2 A E1
 33782001,L2 F2 L' B' R' F B2 D2 L U2 D' F2 B2 U L2 B2 U' R2,R,P3 Grand Open 2014 (2014-06-28~29),333oh R1 D #3
-2372951001,R' U' F R2 F' U2 D R U F' U' D2 R' U2 F2 R' D2 L F2 D F2 R' U' F,R,FMC Ukraine Friendship 2022 (2022-12-17),333fm Final A #2
+5756939001,R F2 U F2 U F2 U B2 U2 L2 F2 R' B F2 D' L' D' L2 U',R,San Gil Plaza V 2026 (2026-07-18),333 Final B E2
 54310001,R' F2 B2 R2 B2 L' D B2 R' B2 D R2 B2 U' F2 D' F2,R,Kharkiv Cube Day 2014 (2014-08-30),333 R2 B #1
 65785001,F2 R2 D2 R2 D B2 L2 B2 R2 U2 L' U F2 R D F R' U2 B',R,Back to 360 2014 (2014-10-11~12),333 R2 A #4
 4188874001,B' L' U' D2 R' B' L2 F U2 L' R2 F' U2 B2 U2 F R2 D2,R,Cubo em Etapas Vila Velha 2024 (2024-10-12~13),333oh R1 A #5
@@ -199,7 +199,7 @@
 5076895011,L2 U2 L' F' R U D' R' L2 D L2 F L2 F R2 F2 B' R D',R,Australian Nationals 2025 (2025-10-02~05),333mbf Final A #1
 1306022001,R2 U' R2 B2 R2 U' R U2 R' D L U2 R' F2 D2 F2 U2,R,Tassin-la-Demi-Cube Open 2019 (2019-09-21~22),333oh R2 A #1
 1309451001,R' U2 F2 D2 L B2 L D2 L2 R B2 D' U' B' F2 L' U' L2 U2,R,UPM Open 2019 (2019-09-21~22),333 R1 C E1
-4251371001,L2 D R B2 L2 F B2 U' L' U2 R U L2 U' F2 D2 L2 B2 U',R,Canadian Prairie Championship 2024 (2024-11-02~03),333 R1 B #3
+5755413001,F2 D F' U2 L' R' B2 L2 R F2 D2 F L2 F2 D R D2 F' L2,R,Rubik's WCA European Championship 2026 (2026-07-16~19),333 R2 A #3
 3975037001,B' L F2 U2 D' R D F2 U2 B' R2 U2 R2 F2 L2 F' L' D' B,R,Cochabamba Ultra Cube 2024 (2024-07-21),333 R1 F #3
 1352399001,L' D' B R2 F U2 R' B R' B' L' D2 R2 D2 F2 R U2 L' B2,R,Belgorod Open 2019 (2019-10-12~13),333oh Final A #4
 2439324001,R' L2 D2 B D2 F R2 B2 L2 F' D2 F D U F' R U2 L D U2,R,Melbourne Summer 2023 (2023-01-20~22),333 R2 A #2

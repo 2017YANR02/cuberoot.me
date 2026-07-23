@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / OR / bin 9
-# Population in this bin: 127
-# Samples listed: 127 (all entries in this bin)
+# Population in this bin: 128
+# Samples listed: 128 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 12678001,F' D2 U2 B' L2 B' R2 F2 U2 B2 D2 U' B' R' D2 F' D L' B F D2,O,Pantheon Cube Open 2014 (2014-04-12),333oh Final H E1
@@ -132,3 +132,4 @@
 5676131001,R U' B' L R2 D' U2 R2 F2 D B2 D2 B2 F' L R2 D2 F U F',O,Franconia Cube Days 2026 (2026-05-30~31),333 Final C #4
 5692503001,R' D2 L B2 F2 L U2 R' U' L' B F D F L R' F' D' L,O,CubingUSA Great Lakes Championship 2026 (2026-06-05~07),333oh R1 C #5
 5723008001,B' D U' B2 L2 R2 U R2 U B' U2 L2 R2 B' U2 L B2 R F',O,Défi à l'Alliance Française El Salvador 2026 (2026-06-27),333 R1 A #4
+5752094001,F2 U' L2 U F2 U' F2 U' B2 R2 B U' F2 U R' U L F' D' U2,O,Nanchang Summer 2026 (2026-07-18),333oh R1 B #3

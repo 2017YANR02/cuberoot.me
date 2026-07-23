@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / WY / bin 9
-# Population in this bin: 297
+# Population in this bin: 298
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 5742360001,L B2 R U' R F L F' L2 B' D2 L2 F' R2 F2 D2 R2 L' D' F',W,Rubik's WCA North American Championship 2026 (2026-07-02~05),333 R1 L #4
@@ -85,7 +85,7 @@
 862247001,L2 B2 D2 U2 B D2 B F R B' F2 U2 B2 U' F' U' B' D L',W,Zhanjiang Open 2018 (2018-08-26),333 R1 A E1
 4867715001,R' F2 U2 F2 L2 D2 L D2 R' F2 D R' B L2 F R' D2 B' D B,W,Tooele Open A 2025 (2025-07-18),333 R1 B #3
 4867858001,D2 F R2 D2 B D2 B' R2 U2 L' U R' U2 B' D2 L2 U2 L2 D',W,Tooele Open A 2025 (2025-07-18),333oh Final B E1
-5144983001,U' R2 D' L2 U2 L2 D' L2 F2 D' L2 B D2 R F U' B L' F' L',W,Pampanga Speedcubing Open 2025 (2025-10-25),333 R2 C #4
+5753685001,U2 F' U2 F2 L2 D' L2 D L' U B R' U F L B2 R2 D,W,Canadian Prairie Championship 2026 (2026-07-17~19),333 R2 A E1
 4356181001,L U2 L2 B2 D2 B' R2 F' L U' F2 U' R' D' R2 B D2 L',W,Sin Fronteras Lite Ecuador 2024 (2024-12-14),333oh Final A #1
 947712001,L2 R2 D' U' F2 R2 D2 U' F2 L' R2 D' F R B F D L' F D,W,Romanian National Day 2018 (2018-11-30~12-02),333oh R1 A E2
 4381995001,L' D2 F R' U' F2 B' U2 D' B R U2 R2 D2 F' U2 R2 F2 D2,W,Viña Christmas 2024 (2024-12-21~22),333 R1 A #1

@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / BG / bin 3
-# Population in this bin: 415
+# Population in this bin: 416
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 17503001,R U2 R' F U2 F' R2 F2 D2 R' L2 U' L2 U D2 F2 U L2 U2,B,Mumbai Summer Open 2014 (2014-05-03~04),333 R1 C E2
@@ -171,7 +171,7 @@
 4918489030,F B' R' D F2 R2 L U' R D L2 F2 D' L2 B2 D' R2 D2 R D,B,Slovak Championship 2025 (2025-08-01~03),333mbf Final A #1
 1796552001,B2 U2 B U2 R2 B' F L' B R2 D2 U2 R2 U2 F L',B,Wakefield Open 2022 (2022-01-29~30),333 R1 G E2
 4544439001,U B U2 B2 F U2 R2 F U2 F' L' D R2 U F' D L U' B2 D2,G,Eaubonne Open 2025 (2025-03-01~02),333 Final A #3
-1850766001,B U L2 U2 L F R2 F B2 U2 F2 B2 R2 U2 L' D2 R B2 R,G,Cube4fun League III Lubartów 2022 (2022-03-26~27),333 R1 C #2
+5754407001,U' R B2 U' B' D F2 L' B L' B2 U2 F2 D F2 B2 R2 B2 D',G,Chenango County Summer 2026 (2026-07-19),333 Final B #4
 5513103001,D2 F L2 D2 B' D2 U2 R2 B2 L B U2 B' L2 F R' B2 U2,G,DFW Cubing Spring 2026 (2026-03-28~29),333oh R2 B E2
 4207621001,F' B2 R F R2 L2 B2 D B2 D L2 B L2 U2 B D2 B2 R2 D,B,Cubetcha MN 2024 (2024-10-19),333 R1 B #3
 4984982001,F U' B' L2 F2 U2 B D' B2 U F' D' R2 B U' R,G,Lakeside Megaminx Fiesta Augustów 2025 (2025-08-30~31),333oh R1 A #1

@@ -2,7 +2,7 @@
 # Population in this bin: 142
 # Samples listed: 142 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 6373001,U D2 F U' L' F2 D R2 L D' L2 D' F2 R2 F2 U F2 R2 D,O,Rumia Open 2014 (2014-03-29~30),333 R1 A E2

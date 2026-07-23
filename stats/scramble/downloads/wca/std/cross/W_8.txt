@@ -1,8 +1,8 @@
 # Scramble samples — std / cross / W / bin 8
-# Population in this bin: 681
+# Population in this bin: 683
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 1421414017,B2 R2 B2 U R2 F2 U2 L2 R' U2 F2 D R2 B U' F' D' R D' U L B2,W,I Hope It's Solved Edmonton 2 2019 (2019-11-23~24),333mbf Final B #3
@@ -113,7 +113,7 @@
 3616260002,F2 L' U2 R D2 R B2 R2 D2 B2 U L' B R2 D B R' U2 F2 D,W,Festival Cubero Bogotá 2024 (2024-03-23~24),333mbf Final A #1
 5255104001,L2 R U2 B2 R2 B' D2 U2 L2 U2 L F' D2 L' B F' U B,W,Pucallpa al Cubo 2025 (2025-12-07),333 R2 D #1
 4426997001,R2 U B R' L' U' R2 L2 F' D U2 F' L2 F' D2 F R2 F' R2 L2,W,Prescott Winter 2025 (2025-01-18),333 R2 B #3
-4955347001,U' L' D2 U2 L2 B' L2 U2 B2 F' R2 D2 L' R2 B' F' U' L2 R',W,Hsinchu Summer Open 2025 (2025-08-17),333 R2 C #1
+5755679001,R F' D B L D' R' D R L D2 L' U2 D2 L U R2 B',W,Rubik's WCA European Championship 2026 (2026-07-16~19),333oh Final A E1
 3751097001,L F2 L' F' D R L' U' B F2 U' R2 F2 U' F2 U' R2 F2 D R2 B' L,W,GLS III 2024 (2024-05-11~12),333bf Final A E2
 3203465050,R F R' L2 B' U2 F' R2 U2 F L2 D2 R' D' U' F' L' R' U2 B,W,Zomblinders Lima 2023 (2023-10-29),333mbf Final A #1
 2520205043,B2 D' R U2 F2 B R B2 L2 B' R2 B' D2 L2 U2 L2 B' L2 R B L' F2,W,Brussels Blind Open 2023 (2023-02-25~26),333mbf Final A #3
@@ -160,7 +160,7 @@
 1461197001,F2 R' F R' L F R2 B D2 L D' R2 B2 U2 B2 R2 F2 D F2 U,W,TCG Spring 2019 (2019-12-14~15),333 R1 D #4
 5733574045,L B L' D2 R D2 R U2 B2 F2 U2 F2 R U B' F L' B' D U2 L' F',W,CF Goes Sideways VI Brzeziny 2026 (2026-06-27~28),333mbf Final B #2
 726236011,F2 L2 B L2 F L2 F2 U2 F U2 F2 R U R' D' U2 F' L R2 U' R' B R',W,Indian Open 2018 (2018-03-17~18),333mbf Final A #1
-728058001,R' U' F R2 U2 L2 F2 L' U2 R2 F2 D2 B D2 R D U' L R2 B' F2 U2 F' R' U' F,W,Aftab Cubing Days 2018 (2018-03-15~17),333fm Final A #1
+5755310001,U2 F' L2 D' U2 F2 U' F2 L2 F2 L2 U' R' U L F L2 U L' D,W,Rubik's WCA European Championship 2026 (2026-07-16~19),333oh R1 A #2
 3647656001,U2 L' D2 R D B D' F' R2 U2 D2 B2 R B2 D2 L F2 D2 L' U,W,Lente Spring 2024 (2024-04-07),333 R1 B #2
 4923794001,R' U' F L' F' L2 F R' D B L U L2 D L2 U2 R2 B2 U2 L U2 D2 R' U' F,W,Back to Banja Luka 2025 (2025-08-09~10),333fm Final A #1
 5597516005,U2 L2 B2 R' U2 L' R' D2 F U' B2 F L' D' B' F R2 B2 L' F2,W,Nordic & Swedish Championship 2026 (2026-05-01~03),333mbf Final A #1

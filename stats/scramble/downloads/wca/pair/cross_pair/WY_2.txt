@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / WY / bin 2
-# Population in this bin: 401
+# Population in this bin: 403
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 47921001,F U2 F D2 F' R2 F L2 F R2 D' L2 R B2 R F2 D' F' U2,W,Rubik's Cube European Championships 2014 (2014-08-08~10),333 R1 O #5
@@ -129,7 +129,7 @@
 3361995001,B' L B' R F2 R' U B2 D2 B' D' B2 D' L2 U' L2 B2 L2 B2,W,Pocos Cupos Floridablanca 2023 (2023-12-17),333 R1 E E1
 1194590001,U2 R' L2 D' R U2 F U' B2 U2 D F' B2 D2 F B2 D2 L2 B',W,Bulldog Qualifier 2019 (2019-06-22~23),333ft Final B #5
 5640748001,U2 R' U L F B2 R L2 U' F2 R2 L2 D2 R2 L2 F2 B L D,Y,Perth Puzzle Party 2026 (2026-05-16),333 Final A #1
-2788315001,R' U2 B' R L' F2 B U2 L' F2 L U2 R F2 R U B',Y,Energy Cube Ciechanów 2023 (2023-06-10~11),333 Final A #5
+5756483001,D2 R2 U' F2 R' F2 U F' U2 D L2 F2 U' F2 R2,Y,Guelaguetza Oaxaca 2026 (2026-07-18~19),333 R1 B E1
 1244762001,U' D2 F2 B2 L F U2 F' R2 D F2 R2 L' B2 U2 B2 R U2 R',Y,Baku Summer 2019 (2019-08-04),333oh Final C #4
 1251082001,D2 B L2 U2 B' D2 R2 F' L U2 F U' B U L' B' L B,Y,CubingUSA Nationals 2019 (2019-08-01~04),333 R1 R #2
 4356573001,U2 R' B2 L' R2 D U' L2 U' R2 F' R' B2 R2 B2 F' L',W,Kirkland Pyra Fest 2024 (2024-12-14),333oh R1 B E1

@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / R / bin 4
-# Population in this bin: 306
+# Population in this bin: 307
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 3938051001,U D R' B2 U' F R F2 L' U' R2 B2 U2 D' R2 U D L,R,Varna Open 2024 (2024-07-13),333 Final A #2

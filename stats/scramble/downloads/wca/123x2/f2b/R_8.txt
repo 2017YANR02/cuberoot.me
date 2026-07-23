@@ -1,8 +1,8 @@
 # Scramble samples — 123x2 / f2b / R / bin 8
-# Population in this bin: 402
+# Population in this bin: 404
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 20355001,U2 L' U2 B2 F2 L' R' U2 R' U F R' B' U2 B D2 B L' F D B R2,R,San Pedro de Macoris Open 2014 (2014-05-18),333bf Final A #3

@@ -2,7 +2,7 @@
 # Population in this bin: 2
 # Samples listed: 2 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 1411389001,D2 R2 B D2 B2 R2 B' R2 U2 F R' B L2 R2 D' U L B' D2 U,W,SnoCo Fall 2019 (2019-11-16),333 R2 B E1

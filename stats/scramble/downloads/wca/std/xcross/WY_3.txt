@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / WY / bin 3
-# Population in this bin: 267
+# Population in this bin: 268
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 4933863001,L2 F2 R B2 U2 R B2 L U' L' D2 F' D' F R2 D F2 L2,Y,Visayas Championship 2025 (2025-08-09~10),333 R2 A E1
@@ -91,7 +91,7 @@
 4289296001,R2 U2 B2 F' L2 B L2 D2 L U' R B2 U' B F2 L' R D,Y,Camuni al Cubo 2024 (2024-11-16~17),333oh R1 A #3
 5418247049,R' B L2 B U R2 F2 R2 B2 D2 R2 D' L R D2 B' F2 D' F2 D,Y,WIW at Opole 2026 (2026-02-28~03-01),333mbf Final A #1
 1125495001,D F D L' D F B2 R B' U B' U2 L U2 R D2 R' D2 F2,W,Guiyang Open 2019 (2019-05-01~02),333 R1 A #4
-1127104001,D2 B2 L' F2 D2 U2 L' D R2 F2 R F' U2 B2 D U L2 D',Y,Xiamen Open 2019 (2019-05-04),333 R1 F #1
+5752931001,D B D' L2 U2 F R2 F R2 U2 B L2 R B' U R2 U' R2 F2,W,Delhi Summer Showdown 2026 (2026-07-19),333 R1 F #1
 4885580001,L2 U2 L2 D' U2 R2 F2 L D2 F2 L F L F D2 F' D' B,W,Sandnes Summer Fun 2025 (2025-07-25),333 R2 A #3
 1136061001,L2 D2 B U2 F' L2 U2 B D2 U B U L2 R D L D U2 R2,W,Hessen Open 2019 (2019-05-11~12),333oh R1 B E2
 4639381001,D2 B2 R2 U2 B U2 F2 L2 D2 U L F2 U L2 B U' L2 R2 B',Y,UCD Cube Days 2025 (2025-04-12~13),333bf Final A E2

@@ -1,8 +1,8 @@
 # Scramble samples — 123 / rouxs1 / W / bin 2
-# Population in this bin: 142
-# Samples listed: 142 (all entries in this bin)
+# Population in this bin: 144
+# Samples listed: 144 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 7049001,D' L2 D F2 R U D L' U L2 F' R2 F2 L2 U2 F2 U2 F' U2,W,CSP Open 2014 (2014-03-30),333 R1 A E2
@@ -147,3 +147,5 @@
 5678183001,D' B' U2 B' L2 U2 B' U2 B U2 L' D2 L B' D L' D' R2 U L' F2,W,Shhicago V 2026 (2026-05-29~30),333bf R1 C #5
 5697437027,R2 L U L B' L' U L2 U2 L2 B2 R2 L' U2 B2 L F' L2 D2 B R,W,Side N Blind Narre Warren 2026 (2026-06-13~14),333mbf Final A #2
 5743448001,F' R L2 U R2 F2 U2 R2 B2 D L U L2 R D2 B2 F' U',W,Tlaxcala Open 10 Aniversario 2026 (2026-07-04~05),333oh R2 A #4
+5752076001,L F2 R U' F2 R2 F2 D2 L2 D L2 F2 B D U2 B2 F' L' U',W,Nanchang Summer 2026 (2026-07-18),333 R1 F #2
+5756324001,U R' B R2 B2 U2 L2 D F2 L2 B2 L' D' F2 R U L' D F',W,Guelaguetza Oaxaca 2026 (2026-07-18~19),333oh R1 B #2

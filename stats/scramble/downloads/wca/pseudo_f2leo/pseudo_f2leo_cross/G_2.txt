@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / G / bin 2
-# Population in this bin: 438
+# Population in this bin: 439
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-15
+# Generated: 2026-07-23
 # Columns: id,scramble,bottom_color,competition,round
 
 10544001,F2 D2 R' F2 L2 R' D2 R B F2 D' L' D' B2 L' R B' F2,G,Northpark Adelaide 2014 (2014-04-12),333 R2 A #3
@@ -59,7 +59,7 @@
 411983001,D L B L' B2 R U' R' D' R' F2 L2 U F2 B2 D R2 F2 U',G,Fuenlabrada Open 2016 (2016-12-10~11),333oh R1 B #4
 440766001,F' U' R U B2 U R' L U' B U2 F2 R' B2 L' U2 R B2,G,Cube Challenge Quark 2017 (2017-02-05),333 R2 B #5
 4674189001,B' U F' L2 D2 R2 B2 U2 F' D2 L2 F D L2 R F U2 B2 L' D',G,Madrid Cundinamarca VII 2025 (2025-04-26),333 R1 C #4
-464368001,U' L2 F L F2 U F' B' R2 U' R F2 R2 L U2 R2 B2 L' F2,G,AZCubing Spring 2017 (2017-03-11),333 R2 B #4
+5757684001,R2 D' B2 L2 U2 B2 L2 D2 B' L B U' L2 R' D R' U2 R D2,G,GAN Philippine Championship 2026 (2026-07-09~12),333 R1 D E2
 4808113001,B2 L2 U R2 U2 L2 U2 B U' B' F2 D' L F2 U' B R' F D,G,Santpedor Open 2025 (2025-06-14~15),333 R1 A #1
 1965608001,B L U2 F' L' D2 B2 L D R2 D2 R D2 B2 R' F2 R2 U' L' F',G,UBC Side Events 2022 (2022-06-11),333mbf Final A #1
 479758001,R2 F R2 F2 D2 R2 D' B F' R2 D B' L2 F' R2 U2 B,G,Milan Cube Day 2017 (2017-04-02),333oh Final B #2
