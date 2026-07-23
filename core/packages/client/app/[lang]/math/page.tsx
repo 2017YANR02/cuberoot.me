@@ -54,6 +54,12 @@ const CARDS: Card[] = [
     en: { title: 'Case probability & symmetry', desc: 'Why H perm is 1/72: AUF orbits, Burnside counting, all 62,208 last-layer states enumerated live' }
 },
   {
+    to: '/math/lsll',
+    Icon: Boxes,
+    zh: { title: 'LSLL 情况计数', desc: '最后一槽 + 顶层为什么是 583,284:原始态 → 两侧 AUF 的 Z4×Z4 商 → Burnside,含只商起手 AUF 的 2,332,800' },
+    en: { title: 'Counting LSLL cases', desc: 'Why last-slot + last-layer is 583,284: raw states → two-sided AUF Z4×Z4 quotient → Burnside, incl. the pre-AUF-only 2,332,800' }
+},
+  {
     to: '/math/unit-distance',
     Icon: Ruler,
     zh: { title: '单位距离问题', desc: 'OpenAI 2026:AI 自主推翻 Erdős 1946 平面单位距离猜想,5 个互动可视化' },

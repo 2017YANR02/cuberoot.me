@@ -1,0 +1,437 @@
+/* NetBattleView — /timer 联机对战(?players=net)。
+   色值全走 globals.css token(自动 light/dark);布局靠 gap/margin,不包卡片框。 */
+
+/* ── 顶栏芯片 ─────────────────────────────────────────────── */
+.net-event-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: var(--foreground);
+  white-space: nowrap;
+}
+.net-event-chip svg { width: 16px; height: 16px; }
+.net-round-chip {
+  font-size: 12px;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+/* 顶栏「我的项目」选择器:紧凑,不占额外框 */
+.net-my-event { display: inline-flex; align-items: center; }
+.net-my-event :is(button, [role='button']) { font-size: 13px; }
+/* 玩家条内每人项目小图标(仅房内多项目时显示) */
+.net-p-event { width: 15px; height: 15px; flex: none; opacity: 0.85; }
+.net-code-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: color-mix(in srgb, var(--toggle-on) 14%, transparent);
+  color: var(--foreground);
+  border-radius: 7px;
+  padding: 4px 9px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.net-code-badge:hover { background: color-mix(in srgb, var(--toggle-on) 22%, transparent); }
+.net-code-label { color: var(--muted-foreground); }
+.net-code-code {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+/* ── 大厅 ─────────────────────────────────────────────────── */
+.net-lobby {
+  /* 定宽居中卡片:两种模式(创建/加入)宽度一致,内部一律左对齐,不因有无项目
+     图标栏而忽宽忽窄。项目图标网格在此宽度内自动折行。 */
+  width: min(92vw, 460px);
+  margin: 40px auto 0;
+  padding: 0 16px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.net-lobby-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--foreground);
+  margin: 0;
+}
+.net-lobby-code {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--toggle-on);
+  background: color-mix(in srgb, var(--toggle-on) 14%, transparent);
+  border-radius: 7px;
+  padding: 2px 10px;
+}
+.net-btn-lg {
+  padding: 11px 22px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.net-lobby-switch {
+  align-self: flex-start;
+  margin-top: -4px;
+}
+.net-lobby-hint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--muted-foreground);
+}
+.net-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.net-field-label {
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.net-input {
+  align-self: flex-start;
+  width: 220px;
+  max-width: 100%;
+  padding: 7px 10px;
+  font-size: 14px;
+  color: var(--foreground);
+  background: transparent;
+  border: 1px solid var(--input);
+  border-radius: 7px;
+  outline: none;
+}
+.net-input:focus { border-color: var(--ring); }
+.net-input-code {
+  width: 130px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.net-btn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  font-size: 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+}
+.net-btn:hover { background: color-mix(in srgb, var(--foreground) 6%, transparent); }
+.net-btn:disabled { opacity: 0.45; cursor: default; }
+.net-btn-primary {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-color: var(--primary);
+}
+.net-btn-primary:hover { background: color-mix(in srgb, var(--primary) 88%, black); }
+.net-btn.is-ghost {
+  border-color: transparent;
+  color: var(--muted-foreground);
+  padding: 5px 10px;
+  font-size: 12px;
+}
+.net-lobby-or {
+  font-size: 12px;
+  color: var(--faint-foreground);
+}
+.net-join-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.net-err {
+  font-size: 13px;
+  color: var(--destructive);
+}
+
+/* ── 房间内玩家条 ─────────────────────────────────────────── */
+.net-players {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  padding: 8px 16px 0;
+}
+.net-player {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.net-player.is-offline { opacity: 0.45; }
+.net-p-name {
+  font-size: 13px;
+  color: var(--foreground);
+  max-width: 10em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.net-player.is-me .net-p-name { font-weight: 700; }
+.net-p-me { color: var(--faint-foreground); font-weight: 400; }
+.net-p-score {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  font-family: var(--font-mono);
+}
+.net-p-trophy { color: var(--signal-warning); }
+.net-p-status {
+  font-size: 12px;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+.net-p-status.is-live { color: var(--signal-info); }
+.net-p-status.is-off { color: var(--faint-foreground); }
+.net-p-time {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+.net-p-time.is-dnf { color: var(--destructive); }
+
+/* ── 面板内子状态区 ───────────────────────────────────────── */
+.net-substate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.net-substate .net-btn { align-self: center; }
+.net-substate-hint {
+  font-size: 13px;
+  color: var(--muted-foreground);
+  text-align: center;
+}
+.net-round-result {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--foreground);
+  text-align: center;
+}
+.net-penalty-row {
+  display: flex;
+  gap: 6px;
+}
+.net-pen-btn {
+  padding: 3px 12px;
+  font-size: 12px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.net-pen-btn:hover { background: color-mix(in srgb, var(--foreground) 6%, transparent); }
+.net-pen-btn.active {
+  border-color: var(--toggle-on);
+  color: var(--toggle-on);
+  font-weight: 700;
+}
+.net-copied {
+  margin-left: 8px;
+  font-size: 12px;
+  color: var(--signal-success);
+}
+
+/* 计时中隐去全部环境元素(玩家条跟随 surface-chrome 淡出,shell.css 已有规则;
+   这里兜底 net 专属元素) */
+.net-shell[data-solving='true'] .net-players { opacity: 0; pointer-events: none; }
+
+/* ── 战绩面板(overlay:榜 + 每轮回放)────────────────────────── */
+.net-stats-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: color-mix(in srgb, var(--background) 60%, transparent);
+  backdrop-filter: blur(3px);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 5vh 16px;
+  overflow-y: auto;
+}
+.net-stats-panel {
+  width: min(96vw, 620px);
+  background: var(--popover);
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  padding: 16px 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 12px 40px color-mix(in srgb, var(--foreground) 16%, transparent);
+}
+.net-stats-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.net-stats-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--foreground);
+}
+.net-stats-title svg { color: var(--signal-warning); }
+
+/* 榜 */
+.net-standings-scroll { overflow-x: auto; }
+.net-standings {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.net-standings th {
+  text-align: right;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  padding: 4px 8px;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border-default);
+}
+.net-standings th.net-st-name { text-align: left; }
+.net-standings td {
+  text-align: right;
+  padding: 6px 8px;
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-default) 55%, transparent);
+}
+.net-standings tr.is-me td { background: color-mix(in srgb, var(--toggle-on) 9%, transparent); }
+.net-st-name {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  text-align: left !important;
+  font-family: inherit !important;
+}
+.net-st-eventicon { width: 16px; height: 16px; flex: none; }
+.net-st-nametext {
+  max-width: 9em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.net-st-wins { color: var(--accent) !important; font-weight: 700; }
+.net-st-mox {
+  margin-left: 5px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--faint-foreground);
+}
+
+/* 每轮回放 */
+.net-rounds {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.net-round-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-default);
+}
+.net-round-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--foreground);
+}
+.net-round-live {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--signal-info);
+  background: color-mix(in srgb, var(--signal-info) 14%, transparent);
+  border-radius: 5px;
+  padding: 1px 7px;
+}
+.net-round-egroup {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.net-round-cube { flex: none; line-height: 0; }
+.net-round-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.net-round-scr {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.net-round-eventicon { width: 14px; height: 14px; flex: none; transform: translateY(2px); }
+.net-round-scrtext {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+  word-break: break-word;
+}
+.net-round-rows {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 16px;
+}
+.net-round-row {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  min-width: 0;
+}
+.net-round-pname {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  color: var(--foreground);
+  max-width: 9em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.net-round-row.is-winner .net-round-pname { font-weight: 700; }
+.net-round-ptime {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--foreground);
+  white-space: nowrap;
+}
+.net-round-ptime.is-dnf { color: var(--destructive); }
+
+/* ── 窄屏(<480px):玩家条纵向密排,大厅输入行可换行 ───────── */
+@media (max-width: 480px) {
+  .net-players { gap: 2px 14px; padding-top: 6px; }
+  .net-p-name { max-width: 7em; }
+  .net-lobby { margin-top: 24px; }
+  .net-stats-overlay { padding: 3vh 10px; }
+  .net-stats-panel { padding: 14px 14px 20px; }
+}

@@ -994,6 +994,14 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: '图从后端 /v1/visualcube.svg 取(数据驱动),后端挂时不显示。', en: 'The image is fetched from the backend /v1/visualcube.svg (data-driven); it won’t render if the backend is down.' },
   },
   {
+    name: 'FaceletsCube',
+    import: "import { FaceletsCube } from '@/components/FaceletsCube';",
+    category: 'display',
+    zh: '54 位 fd 贴纸串 → 3x3 状态图,纯前端本地渲染(visualcube 引擎,无后端)。状态没有对应 alg 时用它(如 LSLL 的 58 万 case 缩略图);有 alg/setup 时仍走 <VisualCube>。',
+    en: 'A 54-char fd sticker string → 3x3 state image, rendered locally (visualcube engine, no backend). Use when a state has no generating alg (e.g. the 583k LSLL case thumbs); with an alg/setup prefer <VisualCube>.',
+    usage: "<FaceletsCube fd={caseFacelets(state)} size={88} />",
+  },
+  {
     name: 'ScramblePreview2D',
     import: "import { ScramblePreview2D } from '@/components/ScramblePreview2D';",
     category: 'display',

@@ -37,6 +37,7 @@ export default [
       'public/cubeopt/**', // wasm-bindgen glue
       'public/ffmpeg/**', // vendored ffmpeg.wasm
       'public/scramble_module.js', // emscripten output
+      'public/vendor/**', // vendored 3rd-party scripts (e.g. jweixin WeChat JS-SDK)
       'wasm/**', // wasm-bindgen glue
     ],
   },

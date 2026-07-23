@@ -13,6 +13,7 @@
  * WCA (pure-silver render would be unreadable for scramble verification).
  */
 import { simulateNxN } from '@cuberoot/shared/nnn-sim';
+import { WCA_COLORS } from '@cuberoot/shared/cube-unfolded-svg';
 
 const SIZE = 3;
 const S2 = SIZE * SIZE;
@@ -21,8 +22,9 @@ const S2 = SIZE * SIZE;
  *  pair (D+U=L+R=F+B=0). 0.45/0.30/0.15 are the 3 mirror-cube layer offsets. */
 const HEIGHTS = [0.45, 0.15, 0.3, -0.45, -0.15, -0.3];
 
-/** WCA colors in cstimer face order D L B U R F. */
-const COLORS = ['#FFFF00', '#FF8000', '#0000FF', '#FFFFFF', '#FF0000', '#00FF00'];
+/** WCA colors in cstimer face order D L B U R F — same palette (and order) as the
+ *  NxN unfolded previews, so the gen page's per-event images stay hue-consistent. */
+const COLORS = WCA_COLORS;
 
 /** neighbor[face][edge_dir] = neighbor_face*4 + neighbor_edge. Edge dirs:
  *  0=top, 1=bottom, 2=left, 3=right. Verbatim cstimer table. */

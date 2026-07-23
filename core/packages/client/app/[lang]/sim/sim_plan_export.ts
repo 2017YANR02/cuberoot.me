@@ -5,10 +5,17 @@
 // (同外框 outlineWidth+0.1 描边、同 0.85/0.94 内缩、同 OLL 0.2 外推、同分组与不透明度),
 // 不存在"看着像"的偏差。先前两版(平矩形版、手工投影版)都因手抄几何而与原版不一致,已废。
 //
-// 唯一需要证明的是**索引空间**:引擎 serialize() 的 6N² 字符串(块序 U R F D L B、块内
-// row-major)与 visualcube stickerColors 的下标空间是否 1:1。已用「逐 facelet 单点着色 →
-// 比对白格质心」在 N=3 全 54 位上核验为恒等映射(tests/sim_plan_export.test.ts)。
-import { renderCubeSVG } from '@cuberoot/visualcube';
+// **渲染旋钮走 studio 单一源**:plan 是透视投影,面板大小随 `dist` 变(透视滑块);
+// stickerOpacity / cubeOpacity / 壳色 / 背景 / 旋转同样影响输出。这些一律复用
+// `specToCubeOptions(spec)`(与 VC 路 renderSpecSvg 同一份映射),companion 只把
+// 状态换成引擎实时态:覆盖 stickerColors、清 alg(实时态已烙进颜色,不能再被 alg
+// 二次置换)、钉 view=plan。故任意 dist/opacity 下 engine 与 VC 逐字节同。
+//
+// 索引空间已核验:引擎 serialize() 的 6N² 串(块序 U R F D L B、块内 row-major)与
+// visualcube stickerColors 下标 1:1 恒等(tests/sim_plan_export.test.ts)。
+import { renderCubeSVG, type ICubeOptions } from '@cuberoot/visualcube';
+import { specToCubeOptions } from '@/lib/puzzle-image/render';
+import type { ImageSpec } from '@/lib/puzzle-image/types';
 import type { NetFaceLetter } from './sim_net_export';
 
 export interface SimPlanExportOptions {
@@ -16,8 +23,12 @@ export interface SimPlanExportOptions {
   serialized: string;
   order: number;
   faceColors: Record<NetFaceLetter, string>;
+  /** studio 渲染旋钮的单一源:dist / opacity / 壳 / 背景 / 旋转全从这里取(经
+   *  specToCubeOptions),保证与 VC 路(renderSpecSvg)逐字节同。省略 = 纯默认。 */
+  spec?: ImageSpec;
   background?: string | null;
-  /** 输出 <svg> 的 width/height(PuzzleImage 会再用 sizeEngineSvg 钉成显示尺寸)。 */
+  /** 输出 <svg> 的 width/height(PuzzleImage 会再用 sizeEngineSvg 钉成图片尺寸)。
+   *  省略时用 spec.imageSize(经 specToCubeOptions),与 studio 一致。 */
   size?: number;
 }
 
@@ -26,7 +37,6 @@ const FACE_LETTERS = 'URFDLB';
 /** NxN 俯视 OLL 图 —— 由 visualcube 本体渲染,状态来自引擎。 */
 export function exportSimPlanSvg(opts: SimPlanExportOptions): string {
   const N = Math.max(1, Math.round(opts.order));
-  const size = opts.size ?? 256;
   const fc = opts.faceColors;
 
   // serialize() 下标 = stickerColors 下标(恒等,见文件头核验)。
@@ -36,12 +46,22 @@ export function exportSimPlanSvg(opts: SimPlanExportOptions): string {
     stickerColors.push(FACE_LETTERS.includes(ch) ? fc[ch as NetFaceLetter] : '#444');
   }
 
-  return renderCubeSVG({
+  // 旋钮基座:有 spec 走 studio 单一源;无 spec 退纯默认方形。
+  const base: ICubeOptions = opts.spec
+    ? specToCubeOptions(opts.spec)
+    : { cubeSize: N, width: opts.size ?? 256, height: opts.size ?? 256 };
+
+  const cubeOpts: ICubeOptions = {
+    ...base,
     cubeSize: N,
     view: 'plan',
-    width: size,
-    height: size,
     stickerColors,
+    // 实时态已在 stickerColors 里,清掉 alg 防二次置换(specToCubeOptions 会按
+    // spec.algorithm 填这两个)。
+    algorithm: undefined,
+    case: undefined,
+    ...(opts.size ? { width: opts.size, height: opts.size } : {}),
     ...(opts.background ? { backgroundColor: opts.background } : {}),
-  });
+  };
+  return renderCubeSVG(cubeOpts);
 }

@@ -25,11 +25,14 @@ import {
 } from '@cuberoot/shared';
 import { VisualCube } from '@/components/VisualCube';
 import { CaseThumb } from '@/components/CaseThumb';
+import AlgCard from '@/components/AlgCard';
 import CommunityAlgs from '@/components/CommunityAlgs';
 import AdminCaseEditor, { type AdminEditorState } from '@/components/AdminCaseEditor';
 import type { AlgInvalidMark } from '@/components/AlgEditor';
 import ValidationReportModal from '@/components/ValidationReportModal';
 import AlgPlayer from '@/components/AlgPlayer';
+import PillToggle from '@/components/PillToggle/PillToggle';
+import { persistItem } from '@/lib/safe-storage';
 import { useCopy } from '@/hooks/useCopy';
 import { stm } from '@cuberoot/shared/alg-notation';
 import { listSubmissions } from '@/lib/alg_api';
@@ -202,6 +205,21 @@ function SortableCaseCard({ id, draggable, children }: { id: number; draggable: 
   );
 }
 
+/** umbrella 二级选择页 / 一级展开里的缩略图遮罩:只显示与该阶段相关的贴纸(角块 LL)。 */
+const LEVEL2_PICKER_MASK: Record<string, string> = {
+  zbll: 'coll', '1lll': 'coll', ollcp: 'coll',
+};
+
+/**
+ * umbrella set 的落地页(`/alg/<p>/<set>`)。
+ *
+ * 两级 umbrella 且顶层组不多(ZBLL 7 组 / OLLCP…:子组形如 `U/UR`)——**就地展开**:每组一行,
+ * 首格是「组封面卡」(点它展开 / 收起该组),其后是二级子组卡(`UR`/`UL`…,直接链到 case 列表)。
+ * 封面卡与子组卡**同一个网格、等宽等高、魔方图一样大**,省掉「先进 /zbll/u 再挑」那一跳,默认全展开。
+ *
+ * 顶层组很多(1LLL 40+)——就地展开会太长,退回顶层卡片网格(点进 `/set/<组>` 的二级选择页)。
+ * 单级 umbrella(ZBLS / VLS:顶层组直接装 case)——没有二级可展,同样是卡片网格(直接链到 case)。
+ */
 function SubgroupIndex({
   puzzle, set, cases, ollByGroup,
 }: {
@@ -212,46 +230,96 @@ function SubgroupIndex({
   ollByGroup: Map<string, string>;
   isZh: boolean;
 }) {
-  const groups = useMemo(() => {
-    const map = new Map<string, { sample: AlgCase; count: number }>();
+  // 顶层组 → { 代表 case, 组内总数, 二级子组(parts[1] → 代表 case + 计数) }
+  const tops = useMemo(() => {
+    const map = new Map<string, { sample: AlgCase; total: number; subs: Map<string, { sample: AlgCase; count: number }> }>();
     for (const c of cases) {
-      const top = (c.subgroup || '').split('/', 1)[0];
-      const existing = map.get(top);
-      if (existing) existing.count++;
-      else map.set(top, { sample: c, count: 1 });
+      const parts = (c.subgroup || '').split('/');
+      const top = parts[0] || '';
+      let e = map.get(top);
+      if (!e) { e = { sample: c, total: 0, subs: new Map() }; map.set(top, e); }
+      e.total++;
+      if (parts.length >= 2 && parts[1]) {
+        const se = e.subs.get(parts[1]);
+        if (se) se.count++;
+        else e.subs.set(parts[1], { sample: c, count: 1 });
+      }
     }
     return Array.from(map.entries());
   }, [cases]);
 
-  const useF2lThumb = puzzle === '3x3' && set === 'zbls';
+  // 就地展开只在「两级 + 顶层组不多」时用;组太多(1LLL)就地展开会太长,退回卡片网格。
+  const inlineExpand = tops.some(([, e]) => e.subs.size > 0) && tops.length <= 10;
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set()); // 默认全展开(一眼看全所有二级子组)
+  const toggle = (t: string) => setCollapsed(prev => {
+    const next = new Set(prev);
+    if (next.has(t)) next.delete(t); else next.add(t);
+    return next;
+  });
 
-  return (
-    <div className={`alg-subgroup-grid${useF2lThumb ? ' is-f2l-thumb' : ''}`}>
-      {groups.map(([topLabel, { sample, count }]) => {
-        const firstAlg = sample.algs.flat()[0]?.alg ?? sample.standard ?? '';
-        const slug = encodeURIComponent(topLabel.toLowerCase()) || '_'; // slug 用原名(避免 "+" 进 URL)
-        const dispTop = set === 'zbll' ? displayZbllToken(topLabel) : topLabel; // 展示名:ZBLL S→S+, AS→S-, Pi 保留小写 i
-        // 1lll 的组号是纯数字(`06`),没人看得懂 —— 换成字母制 OLL 名,数字降为副名。
-        const ollName = ollByGroup.get(topLabel);
-        return (
-          <Link
-            key={topLabel || '_root_'}
-            href={`/alg/${puzzle}/${set}/${slug}`}
-            className="alg-subgroup-card"
-          >
-            <div className="alg-subgroup-thumb">
-              {useF2lThumb
+  const useF2lThumb = puzzle === '3x3' && set === 'zbls';
+  const pickerMask = LEVEL2_PICKER_MASK[set];
+
+  // 卡片网格:单级 umbrella(直接链到 case),或组太多的两级 umbrella(链到二级选择页)。
+  if (!inlineExpand) {
+    return (
+      <div className={`alg-subgroup-grid${useF2lThumb ? ' is-f2l-thumb' : ''}`}>
+        {tops.map(([topLabel, { sample, total }]) => {
+          const firstAlg = sample.algs.flat()[0]?.alg ?? sample.standard ?? '';
+          const slug = encodeURIComponent(topLabel.toLowerCase()) || '_'; // slug 用原名(避免 "+" 进 URL)
+          const dispTop = set === 'zbll' ? displayZbllToken(topLabel) : topLabel;
+          const ollName = ollByGroup.get(topLabel);
+          return (
+            <AlgCard
+              key={topLabel || '_root_'}
+              href={`/alg/${puzzle}/${set}/${slug}`}
+              thumb={useF2lThumb
                 ? <CaseThumb puzzle={puzzle} set={set} sticker={sample.sticker} alg={firstAlg} setup={sample.setup} size={110} />
-                : <VisualCube setup={sample.setup} algorithm={firstAlg} view="oll" size={120} />}
-            </div>
-            <div className="alg-subgroup-card-title">
-              {ollName ?? (useF2lThumb ? (dispTop || tr({ zh: '其他', en: 'Other' })) : `${set.toUpperCase()} ${dispTop || tr({ zh: '其他', en: 'Other' })}`)}
-            </div>
-            <div className="alg-subgroup-card-count">
-              {ollName && <span className="alg-subgroup-card-sub">{set.toUpperCase()} {dispTop}</span>}
-              {count} {tr({ zh: '个', en: 'cases' })}
-            </div>
-          </Link>
+                : <VisualCube setup={sample.setup} algorithm={firstAlg} view="oll" size={110} />}
+              title={ollName ?? (useF2lThumb ? (dispTop || tr({ zh: '其他', en: 'Other' })) : `${set.toUpperCase()} ${dispTop || tr({ zh: '其他', en: 'Other' })}`)}
+              count={total}
+              sub={ollName ? `${set.toUpperCase()} ${dispTop}` : undefined}
+            />
+          );
+        })}
+      </div>
+    );
+  }
+
+  // 就地展开:每组一行 —— 封面卡(点开/折叠)+ 二级子组卡,同一网格等宽等高。
+  return (
+    <div className="alg-l2-index">
+      {tops.map(([topLabel, e]) => {
+        const isCollapsed = collapsed.has(topLabel);
+        const firstAlg = e.sample.algs.flat()[0]?.alg ?? e.sample.standard ?? '';
+        const dispTop = set === 'zbll' ? displayZbllToken(topLabel) : topLabel;
+        // 封面卡标题不必再带 set 名(页首 H1 已写 ZBLL)。1lll 组号是纯数字 → 换字母制 OLL 名。
+        const ollName = ollByGroup.get(topLabel);
+        const title = ollName ?? (dispTop || tr({ zh: '其他', en: 'Other' }));
+        return (
+          <div key={topLabel || '_root_'} className="alg-subgroup-grid alg-l2-grid">
+            <AlgCard
+              expand={isCollapsed ? 'closed' : 'open'}
+              onClick={() => toggle(topLabel)}
+              tooltip={isCollapsed ? tr({ zh: '展开', en: 'Expand' }) : tr({ zh: '收起', en: 'Collapse' })}
+              thumb={<VisualCube setup={e.sample.setup} algorithm={firstAlg} view="oll" size={110} />}
+              title={title}
+              count={e.total}
+            />
+            {!isCollapsed && Array.from(e.subs.entries()).map(([subLabel, { sample, count }]) => {
+              const subFirstAlg = sample.algs.flat()[0]?.alg ?? sample.standard ?? '';
+              const subSlug = encodeURIComponent(subLabel.toLowerCase());
+              return (
+                <AlgCard
+                  key={subLabel}
+                  href={`/alg/${puzzle}/${set}/${subSlug}`}
+                  thumb={<CaseThumb puzzle={puzzle} set={set} sticker={sample.sticker} alg={subFirstAlg} setup={sample.setup} size={110} mask={pickerMask} />}
+                  title={set === 'zbll' ? displayZbllToken(subLabel) : subLabel}
+                  count={count}
+                />
+              );
+            })}
+          </div>
         );
       })}
     </div>
@@ -325,6 +393,18 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   // 筛选 → replace(不往历史里塞;CLAUDE.md「URL 状态」)
   const [tagFilter, setTagFilter] = useQueryState('tag', parseAsStringEnum<AlgTag | 'all'>(['all', ...ALG_TAGS]).withDefault('all'));
   const animatable = true;
+
+  // 列表视图:`cards` = 只看图(密排画廊,点整卡进详情页看公式),`full` = 公式内联(旧行为)。
+  // 默认只看图 —— 列表是「认图/浏览」页,公式是详情页的事,顺带让首屏不挂一堆 AlgPlayer / 社区区更轻。
+  // 存 localStorage(跨页显示偏好,不是页内可分享状态,故不进 URL):想常看公式的人切一次全站生效。
+  const [view, setView] = useState<'cards' | 'full'>(() => {
+    if (typeof window === 'undefined') return 'cards';
+    try { return localStorage.getItem('alg-list-view') === 'full' ? 'full' : 'cards'; } catch { return 'cards'; }
+  });
+  const changeView = useCallback((next: 'cards' | 'full') => {
+    setView(next);
+    persistItem('alg-list-view', next);
+  }, []);
 
   /** 这个 set 里实际出现过的标签 —— 没有就不渲染筛选器 */
   const availableTags = useMemo(() => {
@@ -627,7 +707,19 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
           <span className="alg-cat-count">{visibleCases.length} {tr({ zh: '个', en: 'cases'
         })}</span>
         )}
-        {data && !showSubgroupPicker && availableTags.length > 0 && (
+        {/* 图 / 公式 视图开关(只在真列出 case 的页面;子组选择页没有卡片) */}
+        {data && !showSubgroupPicker && !showSubSubgroupPicker && (
+          <PillToggle
+            value={view === 'full'}
+            onChange={(on) => changeView(on ? 'full' : 'cards')}
+            onLabel={tr({ zh: '公式', en: 'Algs' })}
+            offLabel={tr({ zh: '图', en: 'Images' })}
+            ariaLabel={tr({ zh: '切换只看图 / 看公式', en: 'Toggle images-only / show algs' })}
+            className="alg-view-toggle"
+          />
+        )}
+        {/* 标签筛选只在公式内联时有意义(只看图时没公式可筛) */}
+        {data && !showSubgroupPicker && !showSubSubgroupPicker && view === 'full' && availableTags.length > 0 && (
           <select
             className="alg-tag-filter"
             value={tagFilter}
@@ -698,9 +790,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       )}
 
       {data && showSubSubgroupPicker && (() => {
-        const LEVEL2_PICKER_MASK: Record<string, string> = {
-          zbll: 'coll', '1lll': 'coll', ollcp: 'coll',
-        };
         const pickerMask = LEVEL2_PICKER_MASK[set];
         return (
           <div className="alg-subgroup-grid">
@@ -708,26 +797,13 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
               const firstAlg = sample.algs.flat()[0]?.alg ?? sample.standard ?? '';
               const sub2Slug = encodeURIComponent(subLabel.toLowerCase());
               return (
-                <Link
+                <AlgCard
                   key={subLabel}
                   href={`/alg/${puzzleParam}/${set}/${sub2Slug}`}
-                  className="alg-subgroup-card"
-                >
-                  <div className="alg-subgroup-thumb">
-                    <CaseThumb
-                      puzzle={puzzleParam as AlgPuzzle}
-                      set={set}
-                      sticker={sample.sticker}
-                      alg={firstAlg}
-                      setup={sample.setup}
-                      size={120}
-                      mask={pickerMask}
-                    />
-                  </div>
-                  <div className="alg-subgroup-card-title">{set === 'zbll' ? displayZbllToken(subLabel) : subLabel}</div>
-                  <div className="alg-subgroup-card-count">{count} {tr({ zh: '个', en: 'cases'
-                })}</div>
-                </Link>
+                  thumb={<CaseThumb puzzle={puzzleParam as AlgPuzzle} set={set} sticker={sample.sticker} alg={firstAlg} setup={sample.setup} size={110} mask={pickerMask} />}
+                  title={set === 'zbll' ? displayZbllToken(subLabel) : subLabel}
+                  count={count}
+                />
               );
             })}
           </div>
@@ -757,7 +833,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                   items={cases.map(c => c.id).filter((x): x is number => typeof x === 'number')}
                   strategy={rectSortingStrategy}
                 >
-              <div className="alg-case-list">
+              <div className={`alg-case-list${view === 'cards' ? ' is-cards' : ''}`}>
                 {cases.map(c => {
                   const rawOri = caseOri[c.name] ?? activeOri;
                   const oriIdx = rawOri < c.algs.length ? rawOri : 0;
@@ -827,9 +903,10 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                               </button>
                             )}
                           </div>
-                          {c.setup && <SetupLine puzzle={puzzleParam} setup={c.setup} />}
+                          {view === 'full' && c.setup && <SetupLine puzzle={puzzleParam} setup={c.setup} />}
                         </div>
                       </div>
+                      {view === 'full' && (<>
                       <div className="alg-case-algs">
                         {(() => {
                           // 筛了标签就别拖:看到的是子集,拖出来的顺序对不上真实数组
@@ -892,6 +969,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                           });
                         }}
                       />
+                      </>)}
                     </article>
                     </SortableCaseCard>
                   );

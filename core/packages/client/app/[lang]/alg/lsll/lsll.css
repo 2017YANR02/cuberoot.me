@@ -1,0 +1,289 @@
+/* /alg/lsll — LSLL 公式集。复用 alg.css 的 bento/header 骨架,这里只补自有部分。 */
+
+.lsll-intro {
+  margin: 4px 0 14px;
+  color: var(--muted-foreground);
+  font-size: 13.5px;
+  line-height: 1.65;
+  max-width: 720px;
+}
+.lsll-intro code {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--foreground);
+}
+
+.lsll-locate {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 18px;
+  flex-wrap: wrap;
+}
+.lsll-locate-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 0 1 420px;
+  min-width: 220px;
+}
+.lsll-locate-input {
+  width: 100%;
+  padding: 7px 30px 7px 10px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  border: 1px solid var(--input);
+  border-radius: 8px;
+}
+.lsll-locate-input:focus {
+  outline: none;
+  border-color: var(--ring);
+}
+.lsll-locate-field .clear-btn {
+  position: absolute;
+  right: 6px;
+}
+.lsll-locate-btn {
+  padding: 7px 14px;
+  font-size: 13px;
+  color: var(--accent-foreground);
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.lsll-locate-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.lsll-locate-error {
+  margin: -8px 0 16px;
+  font-size: 13px;
+  color: var(--destructive);
+}
+.lsll-locate-hit {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: -8px 0 16px;
+  font-size: 13px;
+  color: var(--foreground);
+}
+
+.lsll-kind-title {
+  margin: 22px 0 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.lsll-kind-title .lsll-kind-count {
+  margin-left: 8px;
+  font-weight: 400;
+  font-size: 12.5px;
+  color: var(--muted-foreground);
+}
+
+.lsll-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 0 0 12px;
+}
+.lsll-chips-label {
+  font-size: 12.5px;
+  color: var(--muted-foreground);
+}
+.lsll-chip {
+  padding: 4px 10px;
+  font-size: 12.5px;
+  color: var(--muted-foreground);
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.lsll-chip.active {
+  color: var(--accent-foreground);
+  background: var(--accent);
+}
+
+.lsll-case-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 10px;
+}
+.lsll-case-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 2px;
+  text-decoration: none;
+  border-radius: 10px;
+  content-visibility: auto;
+  contain-intrinsic-size: 130px;
+}
+.lsll-case-card:hover {
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+}
+.lsll-case-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+
+.lsll-pager {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+.lsll-pager button {
+  padding: 5px 12px;
+  font-size: 13px;
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 7%, transparent);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.lsll-pager button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* case 详情 */
+.lsll-case-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 22px;
+  flex-wrap: wrap;
+  margin: 6px 0 8px;
+}
+.lsll-meta {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 14px;
+  font-size: 13.5px;
+  align-self: center;
+}
+.lsll-meta dt {
+  color: var(--muted-foreground);
+}
+.lsll-meta dd {
+  margin: 0;
+  color: var(--foreground);
+}
+.lsll-meta dd code {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+
+.lsll-section {
+  margin: 20px 0;
+}
+.lsll-section h2 {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.lsll-note {
+  font-size: 13px;
+  color: var(--faint-foreground);
+}
+.lsll-alg-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--foreground);
+}
+.lsll-copy-btn {
+  padding: 3px 10px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+  background: color-mix(in srgb, var(--foreground) 7%, transparent);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.lsll-verify-input {
+  width: min(420px, 100%);
+  padding: 7px 10px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  border: 1px solid var(--input);
+  border-radius: 8px;
+}
+.lsll-verify-input:focus {
+  outline: none;
+  border-color: var(--ring);
+}
+
+/* ZBLS 交叉链接(人类公式指向) */
+.lsll-zbls-refs {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.lsll-zbls-ref {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 7px 14px;
+  text-decoration: none;
+  border-radius: 8px;
+  background: var(--accent-soft);
+}
+.lsll-zbls-ref:hover {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+.lsll-zbls-name {
+  font-weight: 600;
+  color: var(--accent);
+}
+.lsll-zbls-count {
+  font-size: 12.5px;
+  color: var(--muted-foreground);
+}
+.lsll-verify-ok {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--signal-success);
+}
+.lsll-verify-bad {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--destructive);
+}
+
+/* 视口收紧:与 alg.css 的 .alg-bento / .alg-cat-header 同一容器约定。
+   放末尾,水平 margin/padding 覆盖上面各自的 shorthand。 */
+.lsll-intro,
+.lsll-locate,
+.lsll-locate-error,
+.lsll-locate-hit,
+.lsll-kind-title,
+.lsll-chips,
+.lsll-case-grid,
+.lsll-pager,
+.lsll-case-head,
+.lsll-section {
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 24px;
+  padding-right: 24px;
+}

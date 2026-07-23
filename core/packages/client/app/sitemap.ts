@@ -1,13 +1,17 @@
 import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { MetadataRoute } from 'next';
-import type { ReconSolve } from '@cuberoot/shared';
-import { apiUrl } from '@/lib/api-base';
-import { reconCanonical, reconPathSeg } from '@/lib/recon-seo';
 
-// Statically generated at build time → the fs scan below runs during
-// `next build` (where app/ source exists) and the result is baked into the
-// static /sitemap.xml served by both Vercel and the self-hosted standalone.
+// Static-routes sitemap. The fs scan below runs during `next build` (where app/
+// source exists) and the result is baked into the static /sitemap.xml served by
+// both Vercel and the self-hosted standalone.
+//
+// This file has NO network I/O, so it can never time out the build. The dynamic,
+// slow recon URLs live in a SEPARATE runtime-cached sitemap
+// (app/recon-sitemap.xml/route.ts), advertised alongside this one in app/robots.ts.
+// That split is deliberate: the recon list is ~1.3MB / ~13s and fetching it here
+// at build used to blow Next's 60s per-page static-generation cap whenever the API
+// was busy and fail the whole deploy. A slow/degraded API must never break a build.
 export const dynamic = 'force-static';
 
 // Canonical host is the bare domain (www redirects to it). List final, non-redirecting URLs.
@@ -44,39 +48,7 @@ function scanRoutes(): string[] {
   return found;
 }
 
-// Fetch all OFFICIAL recons at build and emit one sitemap entry each (Pattern B
-// alternates via reconCanonical). Any failure (network / non-ok / parse) is
-// swallowed so it never breaks the rest of the sitemap. Non-official recons are
-// noindex on the detail page → excluded here (contradictory + crawl-budget waste).
-// NOTE: one sitemap file caps at 50k URLs; with ~2375 recons we're well under.
-// If recons ever approach that, split via generateSitemaps() — not needed now.
-async function reconEntries(): Promise<MetadataRoute.Sitemap> {
-  try {
-    const res = await fetch(apiUrl('/v1/recon/list'));
-    if (!res.ok) return [];
-    const list = (await res.json()) as ReconSolve[];
-    if (!Array.isArray(list)) return [];
-    return list
-      .filter((r) => r.official === 'wca')
-      .map((r) => {
-        const id = String(r.id);
-        // Slugged segment (`<id>-<slug>`); reconPathSeg falls back to bare id if
-        // the list row lacks the fields needed for a slug — never breaks build.
-        const seg = reconPathSeg(r);
-        const en = reconCanonical(id, 'en', seg);
-        const zhUrl = reconCanonical(id, 'zh', seg);
-        return {
-          url: en,
-          lastModified: r.date ? new Date(r.date) : new Date(),
-          alternates: { languages: { en, zh: zhUrl, 'x-default': en } },
-        };
-      });
-  } catch {
-    return [];
-  }
-}
-
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+export default function sitemap(): MetadataRoute.Sitemap {
   const routes = [...new Set([...scanRoutes(), ...EXTRA])]
     .filter((r) => !EXCLUDE.has(r))
     .sort();
@@ -84,12 +56,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const en = (path: string) => (path ? `${BASE}/${path}` : `${BASE}/`);
   const zh = (path: string) => (path ? `${BASE}/zh/${path}` : `${BASE}/zh`);
   const now = new Date();
-  const staticEntries: MetadataRoute.Sitemap = routes.map((path) => ({
+  return routes.map((path) => ({
     url: en(path),
     lastModified: now,
     alternates: {
       languages: { en: en(path), zh: zh(path), 'x-default': en(path) },
     },
   }));
-  return [...staticEntries, ...(await reconEntries())];
 }
