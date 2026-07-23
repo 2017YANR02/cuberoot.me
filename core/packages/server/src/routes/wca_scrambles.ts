@@ -133,6 +133,26 @@ function planDifficulty(layout: StepsLayout | null, variant: string, stage: stri
   return { predCol, allSlots, gmCol, subsetSlots, subsetPos };
 }
 
+// ── 「整体」方法(整解最优 HTM)────────────────────────────────────────────────
+// 阶段步数在 wca_scramble_steps.steps[] 槽位里,整解不在(离线 steps 管道只算阶段);整解步数是
+// wca_scramble_optimal.htm(0047)。故整解难度筛换一张源表 + 换一个谓词,其余(合并池 / 日期 /
+// 比赛名 / 国家 / 分页 / 飞镖采样)与阶段筛完全同构 —— 两处路由都只在这三点上分叉:
+//   源表 wca_scramble_steps → wca_scramble_optimal(自然键、rnd 列同名,join 与采样代码原样复用)
+//   谓词 LEAST(所选底色槽) → s.htm(整解无底色维度,colors 参数只作校验、不参与筛选)
+//   稀有侧表 / gm 前过滤 / 逐底色 cols 列 → 均不适用(前者是 steps 专属,后者整解无底色)
+const WHOLE_VARIANT = '333';
+const isWholeSolve = (variant: string, stage: string) => variant === WHOLE_VARIANT && stage === WHOLE_VARIANT;
+const STEPS_TABLE = 'wca_scramble_steps';
+const WHOLE_TABLE = 'wca_scramble_optimal';
+
+// ── 「打乱」方法(原始 WCA 打乱的招式数)──────────────────────────────────────
+// 第三种源:谓词直接落在 wca_scrambles 自己身上(打乱文本的招式数),不需要任何派生表。
+// ⚠️ LEN_EXPR 必须与 migration 0083 的表达式索引逐字符一致,否则 planner 认不出该索引。
+const LENGTH_VARIANT = 'length';
+const isLengthFilter = (variant: string, stage: string) => variant === LENGTH_VARIANT && stage === LENGTH_VARIANT;
+const SCRAMBLES_TABLE = 'wca_scrambles';
+const LEN_EXPR = (alias: string) => `cardinality(regexp_split_to_array(btrim(${alias}.scramble), '\\s+'))`;
+
 // ── 稀有档侧表路由(wca_scramble_steps_rare,migration 0062)──────────────────
 // 所选每个底色槽在每个查询 bin 上都命中 layout.tails(该 (slot,val) 全库计数 ≤ K,其全部行
 // 已在侧表)→ 子集最小值 = bin 的候选行必然在侧表里,可(slot,val)直达,免大表扫描。
@@ -314,16 +334,23 @@ wcaScramblesRoutes.get('/wca/scrambles/random', async (c) => {
 
   try {
     if (wantDifficulty) {
-      const layout = await getStepsLayout();
-      const plan = planDifficulty(layout, dVariant, dStage, dColors);
+      // 三种源:阶段步数(steps 槽位)/ 整解最优 HTM(optimal 表)/ 打乱招式数(打乱文本自己)。
+      const whole = isWholeSolve(dVariant, dStage);
+      const byLength = isLengthFilter(dVariant, dStage);
+      const derived = !whole && !byLength;   // 只有阶段筛要查 steps 布局
+      const srcTable = whole ? WHOLE_TABLE : byLength ? SCRAMBLES_TABLE : STEPS_TABLE;
+      const layout = derived ? await getStepsLayout() : null;
+      const plan = derived ? planDifficulty(layout, dVariant, dStage, dColors) : null;
       // 布局未就绪(冷启动 / meta 读取失败)是「暂态不可用」,非「该难度无真题」。用 503 而非 404,
       // 客户端据此重试而不是误判为空(404 专留给查询成功但 0 行的「确实无匹配」,见末尾)。
-      if (!plan) return c.json({ error: 'difficulty data not available', event }, 503);
+      if (derived && !plan) return c.json({ error: 'difficulty data not available', event }, 503);
 
       // 稀有档:所选 bins 全部命中侧表尾部 → 直查侧表(候选 ≤ 6×K×|bins|,先 LIMIT 再 join 取文本)。
       // tails 按全 event 合并计数 → 按 events 过滤后 0 行 = 该(些)项目在此难度档确实无真题(可靠 404)。
       // 侧表主键是 (slot,val,...),event_id 不是前导列 —— 合并与否都走同一段 (slot,val) 直达,代价相同。
-      if (rareCovers(layout, plan, dSteps)) {
+      // 整解不走侧表(rare 是 steps 槽位专属):整解每个 bin 都有 (event_id,htm,rnd) 索引直达,
+      // 稀有档(12 步全库 2 条)同样是一次索引区间扫描,不需要额外的尾部物化表。
+      if (plan && rareCovers(layout, plan, dSteps)) {
         const cond = rareBranchSql(plan, dSteps);
         const rWhere: string[] = [`r.event_id IN (${events.map(() => '?').join(',')})`, `(${cond})`];
         const rParams: unknown[] = [...events];
@@ -349,11 +376,17 @@ wcaScramblesRoutes.get('/wca/scrambles/random', async (c) => {
         c.header('Cache-Control', 'no-store');
         return c.json({ event, scrambles: drows.map(toScrambleMeta) });
       }
-      const diffWhere = `${plan.predCol} IN (${dSteps.join(',')})`;
+      // 阶段:LEAST(所选底色槽);整解:htm;打乱长度:招式数(后两者无底色维度,dColors 只作参数校验)。
+      const diffWhere = plan ? `${plan.predCol} IN (${dSteps.join(',')})`
+        : byLength ? `${LEN_EXPR('s')} IN (${dSteps.join(',')})`
+          : `s.htm IN (${dSteps.join(',')})`;
+      // 长度源就是 wca_scrambles 自己 —— 自然键在这张表里偶有重复(WCA dump 同场两套 scramble),
+      // 按自然键自 join 会成对翻倍,故改用 id(PK)对上。
+      const wsJoin = byLength ? 'JOIN wca_scrambles ws ON ws.id = s.id' : STEPS_WS_JOIN;
       // 子集底色前过滤:子集最小 ∈ steps ⟹ 六色最小 ≤ max(steps),加 `gmCol <= max` 走 gm 列 / std 深阶段
       // LEAST 表达式索引,把整分区扫描降到小候选集。dSteps 已由 parseStepList 校验为整数,内联安全。
-      // 六色查询 predCol 即 gmCol(已直接命中索引)→ 不再重复加。
-      const gmPrefilter = plan.gmCol && plan.predCol !== plan.gmCol ? ` AND ${plan.gmCol} <= ${Math.max(...dSteps)}` : '';
+      // 六色查询 predCol 即 gmCol(已直接命中索引)→ 不再重复加。整解无 gm 列 → 不前过滤。
+      const gmPrefilter = plan?.gmCol && plan.predCol !== plan.gmCol ? ` AND ${plan.gmCol} <= ${Math.max(...dSteps)}` : '';
       let drows: RandomRow[];
       // 难度模式下,optimal 是「软偏好」而非硬过滤:稀有 bin(如 0 步十字,全表仅 2 条)可能命中真题,
       // 但它们都还没算出最优等态(wca_scramble_optimal 覆盖不全),硬加 `o IS NOT NULL` 会把本就存在的真题
@@ -370,20 +403,32 @@ wcaScramblesRoutes.get('/wca/scrambles/random', async (c) => {
         // 必然是各 event 各自前 count 条的子集。单 event 时退化成一次索引扫描,不比原来贵。
         // 另外先在 steps 表 LIMIT、再 join 文本/比赛表,比原先平铺 join 更快(全热实测 26ms → 6ms)。
         const evPlaceholders = events.map(() => '?').join(',');
+        // 整解同理再按 htm 值展开一层:索引是 (event_id, htm, rnd),htm 一旦写成 IN(…) 就不再是等值
+        // 前导列,ORDER BY rnd 只能落回 Sort(18 步一档 88 万行)。每个 (项目, 步数) 各取前 count 条
+        // 再归并,同样精确。阶段筛没有这层 —— 它的谓词是 LEAST(槽位),本来就靠 (event_id,rnd) 边扫边过滤。
+        // 整解 / 长度同理再按 bin 值展开一层:索引是 (event_id, htm|长度, rnd),该列一旦写成 IN(…)
+        // 就不再是等值前导列,ORDER BY rnd 只能落回 Sort(19 步长度一档 31 万行)。每个 (项目, bin)
+        // 各取前 count 条再归并,同样精确。阶段筛没有这层 —— 它的谓词是 LEAST(槽位),本来就靠
+        // (event_id,rnd) 边扫边过滤。
+        const binJoin = plan ? '' : `CROSS JOIN unnest(ARRAY[${dSteps.join(',')}]::int[]) AS hv(h)`;
+        const rowPred = plan ? `${gmPrefilter} AND ${diffWhere}`
+          : byLength ? ` AND ${LEN_EXPR('s')} = hv.h`
+            : ' AND s.htm = hv.h';
+        // 长度源没有自然键那几列可带出来(也不需要),用 id 串到外层 ws。
+        const keyCols = (a: string) => (byLength ? `${a}.id` : `${a}.competition_id, ${a}.event_id, ${a}.round_type_id, ${a}.group_id, ${a}.is_extra, ${a}.scramble_num`);
         const dartSql = (cmp: '>=' | '<', withOpt: boolean) => `SELECT ${RANDOM_COLS}
-             FROM (SELECT m.competition_id, m.event_id, m.round_type_id, m.group_id,
-                          m.is_extra, m.scramble_num, m.rnd
+             FROM (SELECT ${keyCols('m')}, m.rnd
                      FROM unnest(ARRAY[${evPlaceholders}]::varchar[]) AS ev(e)
+                     ${binJoin}
                      CROSS JOIN LATERAL (
-                       SELECT s.competition_id, s.event_id, s.round_type_id, s.group_id,
-                              s.is_extra, s.scramble_num, s.rnd
-                         FROM wca_scramble_steps s
-                         ${withOpt ? STEPS_OPT_JOIN : ''}
-                        WHERE s.event_id = ev.e${gmPrefilter} AND ${diffWhere} AND s.rnd ${cmp} ?
+                       SELECT ${keyCols('s')}, s.rnd
+                         FROM ${srcTable} s
+                         ${withOpt && !whole ? STEPS_OPT_JOIN : ''}
+                        WHERE s.event_id = ev.e${rowPred} AND s.rnd ${cmp} ?
                         ORDER BY s.rnd LIMIT ?) m
                     ORDER BY m.rnd LIMIT ?) s
-             ${STEPS_WS_JOIN}
-             LEFT JOIN wca_competitions c ON c.id = s.competition_id
+             ${wsJoin}
+             LEFT JOIN wca_competitions c ON c.id = ws.competition_id
              ${OPT_JOIN}
             ORDER BY s.rnd, ws.id LIMIT ?`;
         const runDart = async (withOpt: boolean): Promise<RandomRow[]> => {
@@ -404,10 +449,10 @@ wcaScramblesRoutes.get('/wca/scrambles/random', async (c) => {
         if (hasTo) { dWhere.push('start_date <= ?'); dParams.push(to); }
         const runComp = (opt: string) => query<RandomRow>(
           `SELECT ${RANDOM_COLS}
-             FROM wca_scramble_steps s
+             FROM ${srcTable} s
              JOIN (SELECT id, name FROM wca_competitions WHERE ${dWhere.join(' AND ')}
                     ORDER BY random() LIMIT ${COMP_SAMPLE}) c ON c.id = s.competition_id
-             ${STEPS_WS_JOIN}
+             ${wsJoin}
              ${OPT_JOIN}
             WHERE s.event_id IN (${events.map(() => '?').join(',')})${gmPrefilter} AND ${diffWhere} ${opt}
             ORDER BY random() LIMIT ?`,
@@ -512,9 +557,14 @@ wcaScramblesRoutes.get('/wca/scrambles/by-difficulty', async (c) => {
   const offset = (page - 1) * pageSize;
 
   try {
-    const layout = await getStepsLayout();
-    const plan = planDifficulty(layout, variant, stage, colors);
-    if (!plan) {
+    // 三种源(同 /random):阶段步数 / 整解最优 HTM / 打乱招式数,后两者不需要 steps 布局。
+    const whole = isWholeSolve(variant, stage);
+    const byLength = isLengthFilter(variant, stage);
+    const derived = !whole && !byLength;
+    const srcTable = whole ? WHOLE_TABLE : byLength ? SCRAMBLES_TABLE : STEPS_TABLE;
+    const layout = derived ? await getStepsLayout() : null;
+    const plan = derived ? planDifficulty(layout, variant, stage, colors) : null;
+    if (derived && !plan) {
       // 布局/数据未就绪(管道还没灌)→ 优雅返回空,不 500。
       c.header('Cache-Control', 'no-store');
       return c.json({ total: 0, page, pageSize, scrambles: [] });
@@ -522,7 +572,8 @@ wcaScramblesRoutes.get('/wca/scrambles/by-difficulty', async (c) => {
 
     // 稀有档:该 bin 在所选各底色槽都命中侧表尾部 → 全部查询(facet/count/列表)直查侧表,
     // 免大表扫描(此前稀有 bin 列举 = 全表扫只捞几条,实测 8s)。列表先 LIMIT 再 join 取文本。
-    if (rareCovers(layout, plan, [bin])) {
+    // 整解不适用(侧表是 steps 槽位的尾部物化;整解走 (event_id,htm,rnd) 索引即可)。
+    if (plan && rareCovers(layout, plan, [bin])) {
       const rWhere: string[] = [`(${rareBranchSql(plan, [bin])})`];
       const rParams: unknown[] = [];
       if (hasEvent) { rWhere.push('r.event_id = ?'); rParams.push(event); }
@@ -579,9 +630,12 @@ wcaScramblesRoutes.get('/wca/scrambles/by-difficulty', async (c) => {
       return c.json({ total, page, pageSize, scrambles });
     }
 
-    const where: string[] = [`${plan.predCol} = ${bin}`]; // bin 已校验为整数,内联安全
+    // bin 已校验为整数,内联安全。
+    const where: string[] = [plan ? `${plan.predCol} = ${bin}` : byLength ? `${LEN_EXPR('s')} = ${bin}` : `s.htm = ${bin}`];
+    // 长度源即 wca_scrambles 自己;自然键在这张表里偶有重复,自 join 要用 id(PK)对上(同 /random)。
+    const wsJoin = byLength ? 'JOIN wca_scrambles ws ON ws.id = s.id' : STEPS_WS_JOIN;
     // 子集底色前过滤:子集最小 = bin ⟹ gmCol <= bin → 走 (event_id,gm_*,rnd) 索引,避免整分区扫描。
-    if (plan.gmCol && plan.predCol !== plan.gmCol) where.push(`${plan.gmCol} <= ${bin}`);
+    if (plan?.gmCol && plan.predCol !== plan.gmCol) where.push(`${plan.gmCol} <= ${bin}`);
     const params: unknown[] = [];
     if (hasEvent) { where.push('s.event_id = ?'); params.push(event); }
 
@@ -590,7 +644,7 @@ wcaScramblesRoutes.get('/wca/scrambles/by-difficulty', async (c) => {
     if (facet === 'country') {
       const rows = await query<{ id: string; n: string }>(
         `SELECT c.country_id AS id, count(*)::text AS n
-           FROM wca_scramble_steps s
+           FROM ${srcTable} s
            JOIN wca_competitions c ON c.id = s.competition_id
           WHERE ${where.join(' AND ')} AND c.country_id IS NOT NULL
           GROUP BY c.country_id
@@ -613,23 +667,24 @@ wcaScramblesRoutes.get('/wca/scrambles/by-difficulty', async (c) => {
 
     const cntRows = await query<{ n: string }>(
       `SELECT count(*)::text AS n
-         FROM wca_scramble_steps s
+         FROM ${srcTable} s
          ${needComp ? 'JOIN wca_competitions c ON c.id = s.competition_id' : ''}
         WHERE ${whereSql}`,
       params,
     );
     const total = Number(cntRows[0]?.n ?? 0);
 
+    // 逐底色步数列(前端画 argmin 底色点)。整解无底色维度 → 全 NULL,前端照旧收到 6 元 cols。
     const colSel = STEP_COLORS6
-      .map((ch, i) => `s.steps[${plan.allSlots[i]}] AS c${ch.toLowerCase()}`)
+      .map((ch, i) => (plan ? `s.steps[${plan.allSlots[i]}]` : 'NULL::smallint') + ` AS c${ch.toLowerCase()}`)
       .join(', ');
     const rows = await query<ByDiffRow>(
       `SELECT ws.competition_id, ws.event_id, ws.round_type_id, ws.group_id,
               (ws.is_extra = 1) AS is_extra, ws.scramble_num, ws.scramble,
               c.name AS comp_name, c.start_date AS comp_date, o.optimal_scramble, ${colSel}
-         FROM wca_scramble_steps s
-         ${STEPS_WS_JOIN}
-         LEFT JOIN wca_competitions c ON c.id = s.competition_id
+         FROM ${srcTable} s
+         ${wsJoin}
+         LEFT JOIN wca_competitions c ON c.id = ws.competition_id
          ${OPT_JOIN}
         WHERE ${whereSql}
         ORDER BY c.start_date DESC NULLS LAST, ws.competition_id, ws.scramble_num
