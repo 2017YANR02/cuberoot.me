@@ -144,7 +144,7 @@
   font-size: 13px;
   color: var(--muted-foreground);
 }
-.lsll-pager button {
+.lsll-pager-btn {
   padding: 5px 12px;
   font-size: 13px;
   color: var(--foreground);
@@ -153,7 +153,7 @@
   border-radius: 8px;
   cursor: pointer;
 }
-.lsll-pager button:disabled {
+.lsll-pager-btn:disabled {
   opacity: 0.4;
   cursor: default;
 }
