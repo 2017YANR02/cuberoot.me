@@ -5,12 +5,13 @@
  *       list-persons
  * NOTE: 迁移自 PHP recon/api/index.php → Hono
  */
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import {
   rowToJson, jsonToRow, validateRow,
   requireAuth, requireAdmin, optionalAuth, checkRateLimit,
+  visibilityDiscoverFilter, visibilityOwnerFilter,
   buildInsert, buildUpdate, buildDuplicateQuery, DUP_REASONS, ADMIN_WCA_IDS,
 } from '../utils/recon_helpers.js';
 import { fetchCubingAttempts } from '../utils/cubing_proxy.js';
@@ -27,6 +28,21 @@ async function reconNotifyMeta(reconId: number): Promise<{ title: string; link: 
   const r = rows[0];
   const title = [r?.person, r?.event, r?.comp].filter(Boolean).join(' ') || `#${reconId}`;
   return { title, link: `/recon/${reconId}` };
+}
+
+/**
+ * 派生读端点(评论 / 编辑历史)的私享鉴权:
+ *   父 recon 私享(private)且查看者非添加者本人、非管理员 → 返回 true(调用方应回 403)。
+ *   public / unlisted / 不存在 → false(放行)——unlisted 与详情页一致:有链接即可看,含其评论 / 历史。
+ * 端点因此按查看者变化,务必配 no-store(否则共享缓存会把私享派生数据泄露给匿名)。
+ */
+async function privateReconForbidden(c: Context, reconId: string | number): Promise<boolean> {
+  const rows = await query<{ visibility: string | null; added_by_id: string | null }>(
+    'SELECT visibility, added_by_id FROM recons WHERE id = ?', [reconId],
+  );
+  if (rows[0]?.visibility !== 'private') return false;
+  const me = await optionalAuth(c);
+  return !(me && (me.wcaId === rows[0].added_by_id || ADMIN_WCA_IDS.includes(me.wcaId)));
 }
 
 // ==================== GET /v1/recon/list ====================
@@ -63,27 +79,32 @@ reconRoutes.get('/recon/list', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   const wcaId = c.req.query('wcaId');
   const comp = c.req.query('comp');
+  const me = await optionalAuth(c);
 
-  // 可见性:所有公开发现入口(社区总表 / 比赛页)一律只回 public;非公开(unlisted / private)
-  // 不进任何列表,连本人也不在这些「发现」面上看到自己的(与 YouTube 一致:你的不公开视频不进
-  // 公共推荐)。只有按选手定向查询(?wcaId,喂个人页 + 提交表单自动填充)才对本人放行自己的非公开。
+  // 可见性(本端点 no-store,可安全按查看者变化):
+  //   · 管理员——处处看全部(含 unlisted / private),供站务审核 / 总览。
+  //   · 定向查询(?wcaId,喂个人页 + 提交表单自动填充):本人额外看到自己添加的非公开。
+  //   · 纯发现面(社区总表 / 比赛页):其余人一律只看 public——与 YouTube 一致,你的非公开不进公共流。
   let rows: Record<string, unknown>[];
   if (wcaId) {
-    const me = await optionalAuth(c);
-    const visClause = me ? `(visibility = 'public' OR added_by_id = ?)` : `visibility = 'public'`;
-    const params = me ? [wcaId, me.wcaId] : [wcaId];
+    const { clause, params } = visibilityOwnerFilter(me);
     rows = await query(
-      `SELECT ${LIST_COLUMNS} FROM recons WHERE person_id = ? AND ${visClause} ORDER BY id DESC`,
-      params,
+      `SELECT ${LIST_COLUMNS} FROM recons WHERE person_id = ? AND ${clause} ORDER BY id DESC`,
+      [wcaId, ...params],
     );
   } else if (comp) {
-    // 比赛页(/wca/comp)逐把成绩 → 复盘的跳转映射:只拉本场的公开复盘(comp_wca_id 命中)。
+    // 比赛页(/wca/comp)逐把成绩 → 复盘的跳转映射:本场公开复盘(comp_wca_id 命中),管理员另见非公开。
+    const { clause, params } = visibilityDiscoverFilter(me);
     rows = await query(
-      `SELECT ${LIST_COLUMNS} FROM recons WHERE comp_wca_id = ? AND visibility = 'public' ORDER BY id DESC`,
-      [comp],
+      `SELECT ${LIST_COLUMNS} FROM recons WHERE comp_wca_id = ? AND ${clause} ORDER BY id DESC`,
+      [comp, ...params],
     );
   } else {
-    rows = await query(`SELECT ${LIST_COLUMNS} FROM recons WHERE visibility = 'public' ORDER BY id DESC`);
+    const { clause, params } = visibilityDiscoverFilter(me);
+    rows = await query(
+      `SELECT ${LIST_COLUMNS} FROM recons WHERE ${clause} ORDER BY id DESC`,
+      params,
+    );
   }
 
   return c.json(rows.map(rowToJson));
@@ -123,11 +144,10 @@ reconRoutes.get('/recon/person/:wcaId', async (c) => {
   const wcaId = (c.req.param('wcaId') ?? '').trim();
   if (!wcaId) return c.json([]);
   const coMatch = JSON.stringify([{ id: wcaId }]);
-  // 可见性:公开的全放行;非公开(unlisted / private)仅当查看者是添加者本人时才带出,
-  // 让本人在自己的个人页看得到自己不公开列出 / 私享的复盘。
+  // 可见性:公开的全放行;非公开(unlisted / private)对添加者本人放行(自己的个人页看得到自己的),
+  // 管理员看全部。端点 no-store,可安全按查看者变化。
   const me = await optionalAuth(c);
-  const visClause = me ? `(recons.visibility = 'public' OR recons.added_by_id = ?)` : `recons.visibility = 'public'`;
-  const visParams = me ? [me.wcaId] : [];
+  const { clause: visClause, params: visParams } = visibilityOwnerFilter(me, 'recons.visibility', 'recons.added_by_id');
   const rows = await query<Record<string, unknown>>(
     `SELECT ${PERSON_COLUMNS} FROM recons
      WHERE (person_id = ? OR reconer_id = ? OR added_by_id = ?
@@ -142,6 +162,8 @@ reconRoutes.get('/recon/person/:wcaId', async (c) => {
 // ==================== GET /v1/recon/latest ====================
 // 首页「今日复盘」用:取 id 最大(最新录入)的一条,含 solution 等全字段 + edits 覆盖层。
 // NOTE: 必须先于 /:id 注册,否则 'latest' 会被当成 :id。
+// ⚠️ 本端点(同 /today /same-scramble)带 public/max-age,响应会进共享缓存 → 禁止按查看者变化,
+//    可见性一律硬编码 visibility='public'(连管理员也不在这里拿非公开),否则会把非公开泄露给匿名。
 reconRoutes.get('/recon/latest', async (c) => {
   const rows = await query(`SELECT * FROM recons WHERE visibility = 'public' ORDER BY id DESC LIMIT 1`);
   if (rows.length === 0) {
@@ -286,6 +308,11 @@ reconRoutes.get('/recon/comments', async (c) => {
   const reconId = c.req.query('reconId');
   if (!reconId) {
     return c.json({ error: 'reconId is required' }, 400);
+  }
+  // 私享复盘的评论串同样只对本人 / 管理员开放(与详情页一致;unlisted 放行)。
+  if (await privateReconForbidden(c, reconId)) {
+    c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+    return c.json({ error: 'This reconstruction is private', private: true }, 403);
   }
   const rows = await query<{
     id: number; recon_id: number; author_id: string; author_name: string;
@@ -461,8 +488,18 @@ reconRoutes.put('/recon/comments/:id/pin', async (c) => {
 
 // GET /v1/recon/edits
 reconRoutes.get('/recon/edits', async (c) => {
+  // edits.fields 可能覆盖 solution 等敏感字段。列表 overlay 用的全量 dump 按查看者可见性过滤:
+  // 管理员看全部;本人看自己添加的非公开;其余人只看 public。JOIN recons 判可见性(r.id::text
+  // = e.solve_id 避免对 solve_id 做数值解析,orphan 编辑无对应 recon 自然被 INNER JOIN 丢弃)。
+  // 因按查看者变化,必须 no-store。
+  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+  const me = await optionalAuth(c);
+  const { clause, params } = visibilityOwnerFilter(me, 'r.visibility', 'r.added_by_id');
   const rows = await query<{ solve_id: string; fields: Record<string, unknown> | string }>(
-    'SELECT solve_id, fields FROM edits'
+    `SELECT e.solve_id, e.fields FROM edits e
+     JOIN recons r ON r.id::text = e.solve_id
+     WHERE ${clause}`,
+    params,
   );
   // NOTE: 返回 {solveId: fields} 的 map (空时返回 {} 而非 []);PG JSONB 列由 driver 直接反序列化
   const edits: Record<string, unknown> = {};
@@ -551,6 +588,11 @@ reconRoutes.post('/recon/save-history', async (c) => {
 // GET /v1/recon/history?id=xxx
 reconRoutes.get('/recon/history', async (c) => {
   const solveId = c.req.query('id') ?? '';
+  // 编辑历史含 solution 等完整前后快照——私享复盘只对本人 / 管理员开放(unlisted 放行)。
+  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+  if (await privateReconForbidden(c, solveId)) {
+    return c.json({ error: 'This reconstruction is private', private: true }, 403);
+  }
   const rows = await query<{
     id: string; solve_id: string; before_snapshot: string | null;
     after_fields: string | null; edited_by: string; edited_at: number;
@@ -899,9 +941,14 @@ reconRoutes.get('/recon/user-stats', async (c) => {
   const wcaId = (c.req.query('wcaId') ?? '').trim();
   if (!wcaId) return c.json({ reconCount: 0, addedCount: 0 });
 
+  // 计数按可见性过滤,与个人页可见列表同口径:管理员计全部;本人计入自己添加的非公开;其余人只计
+  // public。否则头部数字 > 实际可见条数,并泄露非公开的存在。因按查看者变化 → no-store。
+  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+  const me = await optionalAuth(c);
+  const { clause, params } = visibilityOwnerFilter(me);
   const [reconRows, addedRows] = await Promise.all([
-    query<{ c: number }>('SELECT COUNT(*) AS c FROM recons WHERE reconer_id = ?', [wcaId]),
-    query<{ c: number }>('SELECT COUNT(*) AS c FROM recons WHERE added_by_id = ?', [wcaId]),
+    query<{ c: number }>(`SELECT COUNT(*) AS c FROM recons WHERE reconer_id = ? AND ${clause}`, [wcaId, ...params]),
+    query<{ c: number }>(`SELECT COUNT(*) AS c FROM recons WHERE added_by_id = ? AND ${clause}`, [wcaId, ...params]),
   ]);
   return c.json({
     reconCount: Number(reconRows[0]?.c ?? 0),
@@ -911,9 +958,11 @@ reconRoutes.get('/recon/user-stats', async (c) => {
 
 // GET /v1/recon/list-persons
 reconRoutes.get('/recon/list-persons', async (c) => {
+  // 选手选择器(导航用):只列有「公开」复盘的选手。本端点 public/max-age 进共享缓存,不能按
+  // 查看者变化,故一律 public——否则只有私享复盘的选手会出现在选择器里,泄露其存在。
   const rows = await query(
     `SELECT person, person_id, MAX(person_country) AS person_country
-     FROM recons WHERE person_id IS NOT NULL AND person IS NOT NULL
+     FROM recons WHERE person_id IS NOT NULL AND person IS NOT NULL AND visibility = 'public'
      GROUP BY person, person_id ORDER BY person`
   );
   c.header('Cache-Control', 'public, max-age=300');

@@ -5,7 +5,7 @@
 // 从 app/[lang]/recon/page.tsx 提取,样式见 ./recon_card.css。
 import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
-import { Video } from 'lucide-react';
+import { Video, Link2, Lock } from 'lucide-react';
 import type { ReconSolve } from '@cuberoot/shared';
 import { pickReconCover, coverSyncSrc, loadBiliCover, loadDouyinCover } from '@/lib/recon-video-cover';
 import { formatAvg, formatReconSingle } from '@/lib/recon-utils';
@@ -73,6 +73,13 @@ function ReconCardMedia({ solve, isZh }: { solve: ReconSolve; isZh: boolean }) {
         </div>
       )}
       {hasVideo && <span className="recon-card-video"><Video size={13} /></span>}
+      {/* 可见性角标——仅非公开时出现(这些卡片只对本人 / 管理员进列表),标明分享状态 */}
+      {solve.visibility === 'unlisted' && (
+        <span className="recon-card-vis" title={tr({ zh: '不公开列出', en: 'Unlisted' })}><Link2 size={12} /></span>
+      )}
+      {solve.visibility === 'private' && (
+        <span className="recon-card-vis recon-card-vis--private" title={tr({ zh: '私享', en: 'Private' })}><Lock size={12} /></span>
+      )}
     </>
   );
 }
