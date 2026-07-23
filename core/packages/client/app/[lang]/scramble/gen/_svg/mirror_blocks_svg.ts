@@ -12,7 +12,7 @@
  * the polygon-offset rendering is mirror-blocks-specific. Colors are standard
  * WCA (pure-silver render would be unreadable for scramble verification).
  */
-import { simulateNxN } from './nnn_sim';
+import { simulateNxN } from '@cuberoot/shared/nnn-sim';
 
 const SIZE = 3;
 const S2 = SIZE * SIZE;

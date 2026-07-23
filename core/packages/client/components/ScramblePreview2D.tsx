@@ -63,7 +63,7 @@ import { renderBakedNet } from '@/app/[lang]/scramble/gen/_svg/_baked_nets';
 import {
   renderUnfoldedSvgForEvent,
   eventToCubeSize,
-} from '@/app/[lang]/scramble/gen/_svg/cube_unfolded_svg';
+} from '@cuberoot/shared/cube-unfolded-svg';
 // mask-core, NOT puzzle-mask: this component only parses a mask string, it never
 // expands pieces — so it must not pull the derived tables (lib/puzzle-image/data)
 // into the chunk of every page that shows a scramble preview.

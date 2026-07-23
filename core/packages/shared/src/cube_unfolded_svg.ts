@@ -22,7 +22,14 @@
  * unified with mirror-blocks renderer.
  */
 import { simulateNxN, simulateNxNIds, FACE_D, FACE_L, FACE_B, FACE_U, FACE_R, FACE_F } from './nnn_sim';
-import type { MaskRenderOptions, StickerId } from '@/lib/puzzle-image/mask-core';
+
+// Mask option shape. Structurally identical to the client's `lib/puzzle-image/
+// mask-core` types (StickerId is just a string), so client callers keep passing
+// their own `MaskRenderOptions` unchanged — declared here so this shared module
+// carries no `@/…` client dependency. mask-core stays the client's authoring source.
+export type StickerId = string;
+export interface RenderMask { ids: Set<StickerId>; color: string; }
+export interface MaskRenderOptions { mask?: RenderMask; stickerIds?: boolean; }
 
 // WCA colors keyed by cstimer face id (D L B U R F = 0..5). Matches tnoodle
 // CubePuzzle.java defaultColorScheme.
