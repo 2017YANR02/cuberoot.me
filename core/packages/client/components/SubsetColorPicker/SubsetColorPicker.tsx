@@ -44,15 +44,62 @@ export function fillColorsForSubset(letters: ColorLetter[]): string[] {
 }
 // 一个子集色块的内层 tile:单色实底,多色像切蛋糕一样从正方形中点等分扇形(所有颜色共用中点)。
 // picker 选项、六色 tile、RecentScrambles hero 圆点共用;外层尺寸/形状/边框由调用方的容器决定(配 overflow:hidden 裁切)。
-export function SubsetSwatch({ colors }: { colors: ColorLetter[] }) {
+export function SubsetSwatch({ colors, highlight }: { colors: ColorLetter[]; highlight?: ColorLetter }) {
   if (colors.length <= 1) {
     return <span className="subset-swatch-tile" style={colors[0] ? { background: COLOR_HEX[colors[0]] } : undefined} />;
   }
+  // highlight = 多色档里「实际胜出/使用的那个底色」→ 走 SVG 分片,给该片描边;
+  // 否则用廉价 conic-gradient(picker / hero 等全部现有调用方不变)。
+  const hi = highlight ? colors.indexOf(highlight) : -1;
+  if (hi >= 0) return <SubsetSwatchPie colors={colors} hiIndex={hi} />;
   const seg = 360 / colors.length; // 等分扇形角度(6→60°, 4→90°, 2→180°)
   const stops = colors
     .map((c, i) => `${COLOR_HEX[c]} ${(i * seg).toFixed(3)}deg ${((i + 1) * seg).toFixed(3)}deg`)
     .join(', ');
   return <span className="subset-swatch-tile" style={{ background: `conic-gradient(from -90deg, ${stops})` }} />;
+}
+
+// 多色档色块的 SVG 版:等分扇形填色(**填满整个圆角方形,与 conic-gradient 同形**,扇形延伸到方形四角,
+// 非圆形)。标注「实际用的那个底色」的方式 = 在该片上放一个实心圆点(白点 + 细暗描边,任何底色都可见)。
+// 仅综合视图的稀有卡需要标出胜出底色时才用;角度同 conic 版(`from -90deg`:0 号色从正西起、顺时针)。
+const SWATCH_CORNERS: [number, [number, number]][] = [
+  [45, [100, 0]], [135, [100, 100]], [225, [0, 100]], [315, [0, 0]],
+];
+function SubsetSwatchPie({ colors, hiIndex }: { colors: ColorLetter[]; hiIndex: number }) {
+  const seg = 360 / colors.length;
+  // 罗盘角(自正上、顺时针)→ 该射线与方形边界的交点(方形半宽 50)。
+  const edge = (phiDeg: number): [number, number] => {
+    const a = (phiDeg * Math.PI) / 180;
+    const dx = Math.sin(a), dy = -Math.cos(a);
+    const t = Math.min(dx ? 50 / Math.abs(dx) : Infinity, dy ? 50 / Math.abs(dy) : Infinity);
+    return [50 + t * dx, 50 + t * dy];
+  };
+  // 第 i 色的扇形多边形:中心 → φ0 边界点 →(区间内的方形角,按角升序)→ φ1 边界点 → 闭合。
+  const wedge = (i: number): string => {
+    const p0 = -90 + i * seg;
+    const p1 = p0 + seg;
+    const pts: [number, number][] = [[50, 50], edge(p0)];
+    const mids: [number, [number, number]][] = [];
+    for (const [base, xy] of SWATCH_CORNERS) for (const k of [-1, 0, 1]) {
+      const ca = base + 360 * k;
+      if (ca > p0 && ca < p1) mids.push([ca, xy]);
+    }
+    mids.sort((a, b) => a[0] - b[0]);
+    for (const [, xy] of mids) pts.push(xy);
+    pts.push(edge(p1));
+    return `M${pts.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(' L')} Z`;
+  };
+  // 胜出片角平分线方向、约 55% 半径处放一个实心圆点,标出「实际用的底色」。
+  const phiMid = -90 + (hiIndex + 0.5) * seg;
+  const [ex, ey] = edge(phiMid);
+  const dotX = 50 + (ex - 50) * 0.55;
+  const dotY = 50 + (ey - 50) * 0.55;
+  return (
+    <svg className="subset-swatch-tile" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+      {colors.map((c, i) => <path key={c} d={wedge(i)} fill={COLOR_HEX[c]} />)}
+      <circle cx={dotX} cy={dotY} r="15" fill="#fff" stroke="#000" strokeOpacity="0.5" strokeWidth="2.5" />
+    </svg>
+  );
 }
 
 // 菜单里的行序(用户指定):双 → 六 → 单 → 四。
@@ -181,7 +228,13 @@ export function useSubsetSelection(initialMode: ColorMode = 'cn', initialSubsetK
   }, [colorMode, singleColor, dualPairKey, quadExcludedPairKey]);
 }
 
-export function SubsetColorPicker({ sel, isZh, className }: { sel: SubsetSelection; isZh: boolean; className?: string }) {
+// allOption:可选的「综合」档(合并全部底色档)。仅首页概率视图传入 —— stats / StageSolver / 类型视图
+// 都是「选一个档」的语境,不传就完全不出现这一项(菜单/触发按钮均无变化)。active 时触发钮显示「综合」
+// 文字、菜单里该整行高亮,其余色块不高亮(调用方把 sel.subsetKey 置空即可)。
+export function SubsetColorPicker({ sel, isZh, className, allOption }: {
+  sel: SubsetSelection; isZh: boolean; className?: string;
+  allOption?: { active: boolean; onSelect: () => void };
+}) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -213,6 +266,9 @@ export function SubsetColorPicker({ sel, isZh, className }: { sel: SubsetSelecti
       : colors.map((c) => COLOR_NAME[c][isZh ? 'zh' : 'en']).join(isZh ? '' : '+'));
   const modeName = MODE_LABEL[sel.colorMode][isZh ? 'zh' : 'en'];
   const curTitle = colorTitle(sel.selectedColors);
+  const aggName = tr({ zh: '综合', en: 'All' });
+  const aggTitle = tr({ zh: '综合:合并全部底色档取最稀有', en: 'All neutralities combined — rarest across every subset' });
+  const aggActive = !!allOption?.active;
 
   return (
     <div ref={rootRef} className={`subset-picker${className ? ` ${className}` : ''}`}>
@@ -223,14 +279,28 @@ export function SubsetColorPicker({ sel, isZh, className }: { sel: SubsetSelecti
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="true"
         aria-expanded={open}
-        aria-label={`${tr({ zh: '底色', en: 'Bottom color' })}: ${modeName} ${curTitle}`}
-        title={curTitle}
+        aria-label={aggActive
+          ? `${tr({ zh: '底色', en: 'Bottom color' })}: ${aggName}`
+          : `${tr({ zh: '底色', en: 'Bottom color' })}: ${modeName} ${curTitle}`}
+        title={aggActive ? aggTitle : curTitle}
       >
-        <span className="subset-swatch is-static" aria-hidden="true"><SubsetSwatch colors={sel.selectedColors} /></span>
+        {aggActive
+          ? <span className="subset-agg-trigger">{aggName}</span>
+          : <span className="subset-swatch is-static" aria-hidden="true"><SubsetSwatch colors={sel.selectedColors} /></span>}
       </button>
 
       {open && (
         <div ref={panelRef} className="subset-picker-panel" role="group" aria-label={tr({ zh: '底色', en: 'Bottom color' })}>
+          {/* 「综合」整行(仅概率视图传 allOption):横跨两列,合并全部底色档。 */}
+          {allOption && (
+            <button
+              type="button"
+              className={`subset-agg-item${aggActive ? ' is-active' : ''}`}
+              onClick={() => { allOption.onSelect(); setOpen(false); btnRef.current?.focus(); }}
+              aria-pressed={aggActive}
+              title={aggTitle}
+            >{tr({ zh: '综合', en: 'All' })}</button>
+          )}
           {/* 两列网格(模式名 | 色块行),行用 Fragment 直接摊进网格 = 四档模式名左边缘自动对齐。 */}
           {MODE_ORDER.map((m) => (
             <Fragment key={m}>

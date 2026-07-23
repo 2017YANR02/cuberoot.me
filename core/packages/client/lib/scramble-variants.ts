@@ -17,7 +17,7 @@ export interface VariantLabel { zh: string; en: string }
 
 export const VARIANT_LABEL: Record<ScrambleVariant, VariantLabel> = {
   // 整解:整个 3x3 最优解(stats 难度 tab 的一个方法,阶段只有 '333' 自身)。
-  '333': { zh: '魔方', en: 'Cube' },
+  '333': { zh: '整体', en: 'Full' },
   std: { zh: '标准', en: 'Standard' },
   eo: { zh: 'EO', en: 'EO' },
   pair: { zh: '基态', en: 'Pair' },
@@ -74,9 +74,26 @@ export const EO_STAGE_VARIANT: Record<string, ScrambleVariant> = {
   cross: 'eo', xc: 'eo', xxc: 'eo', xxxc: 'eo', xxxxc: 'eo',
 };
 
+// 「打乱」是方法下拉里的伪变体:选中即按**原始 WCA 打乱的招式数**分桶 / 取题(其余变体都是难度
+// 口径)。刻意不进 ScrambleVariant 类型 —— 它没有求解引擎、没有阶段、也没有底色维度,进了
+// VARIANT_STAGES / StageSolver 那几张表只会让每个消费者都得特判掉。共用方:首页「近期打乱」
+// (按长度分桶展示)、/timer 真题难度筛(按长度取题,服务端谓词见 routes/wca_scrambles.ts)。
+export const LENGTH_VARIANT = 'length';
+const LENGTH_LABEL: VariantLabel = { zh: '打乱', en: 'Length' };
+
+/** 「整体」= 整解最优步数(方法键与阶段键同名)。 */
+export const WHOLE_VARIANT = '333';
+/**
+ * 该方法的步数是否来自阶段步数索引(wca_scramble_steps)。
+ * 「整体」查 wca_scramble_optimal.htm、「打乱」直接数打乱招式数 —— 都不受某场比赛有没有回填
+ * 阶段步数影响,故不该被「该场未入库」的判定连坐。
+ */
+export const usesStepsIndex = (variant: string): boolean =>
+  variant !== WHOLE_VARIANT && variant !== LENGTH_VARIANT;
+
 /** 变体显示名;未知 key 回退原样。 */
 export const variantLabel = (key: string, isZh: boolean): string => {
-  const m = VARIANT_LABEL[key as ScrambleVariant];
+  const m = key === LENGTH_VARIANT ? LENGTH_LABEL : VARIANT_LABEL[key as ScrambleVariant];
   return m ? (isZh ? m.zh : m.en) : key;
 };
 
@@ -88,7 +105,7 @@ export const variantLabel = (key: string, isZh: boolean): string => {
 
 const STAGE_BASE: Record<string, VariantLabel> = {
   // 整解:整个 3x3 的最优解步数(stats 页专属阶段,数据驱动;StageSolver/gen 不含)。
-  '333': { zh: '魔方', en: 'Cube' },
+  '333': { zh: '整体', en: 'Full' },
   cross: { zh: '十字', en: 'Cross' },
   xcross: { zh: 'XCross', en: 'XCross' },
   xxcross: { zh: 'XXCross', en: 'XXCross' },
@@ -161,3 +178,31 @@ export const VARIANT_STAGES: Record<ScrambleVariant, string[]> = {
 // 聚合方法 'eo' 在阶段下拉里的完整序(跨两个数据变体):EO → EOLine → EO+十字系列。
 // 刻意不塞进 VARIANT_STAGES.eo —— 那个数组是 StageSolver 的 WASM 阶段索引契约(i ↔ 阶段 id)。
 export const EO_UI_STAGES: string[] = [...VARIANT_STAGES.eoline, ...VARIANT_STAGES.eo];
+
+// ── 方法/阶段下拉的 UI 聚合(首页 RecentScrambles 与 /timer 真题难度筛共用)────────
+// 数据层有 13 个变体(块族 4 个 + eo/eoline 2 个各自独立),下拉只给 9 个方法:块族折成
+// 「砖」、eoline 并入「EO」,细分落到阶段下拉。存回设置 / 查表一律用数据变体。
+
+/** 数据变体 → 方法下拉里的 UI 项(块族折成 'block';eoline 并入 'eo')。 */
+export const uiVariantOf = (dataVariant: string): string =>
+  (isBlockVariant(dataVariant) ? 'block' : dataVariant === 'eoline' ? 'eo' : dataVariant);
+
+/** 方法下拉选项 = VARIANT_ORDER 里有数据的项;聚合项只要有一个成员变体有数据就算。 */
+export const uiVariantOptions = (hasData: (dataVariant: string) => boolean): string[] =>
+  VARIANT_ORDER.filter((v) => (
+    v === 'block' ? BLOCK_DATA_VARIANTS.some(hasData)
+      : v === 'eo' ? EO_DATA_VARIANTS.some(hasData)
+        : hasData(v)
+  ));
+
+/** UI 方法 → 阶段下拉的规范键序(聚合方法跨数据变体展开;「打乱」无阶段,用同名键占位)。 */
+export const uiStagesOf = (uiVariant: string): string[] =>
+  (uiVariant === 'eo' ? EO_UI_STAGES
+    : uiVariant === LENGTH_VARIANT ? [LENGTH_VARIANT]
+      : (VARIANT_STAGES[uiVariant as ScrambleVariant] ?? []));
+
+/** UI 方法 + 阶段键 → 底层数据变体(过滤 / 查表口径)。 */
+export const dataVariantOfStage = (uiVariant: string, stage: string): string => (
+  uiVariant === 'block' ? (BLOCK_STAGE_VARIANT[stage] ?? '123')
+    : uiVariant === 'eo' ? (EO_STAGE_VARIANT[stage] ?? 'eo')
+      : uiVariant);
