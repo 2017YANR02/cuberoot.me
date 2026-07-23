@@ -21,12 +21,12 @@ import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { Flag } from '@/components/Flag';
-import { SubsetColorPicker, SubsetSwatch, useSubsetSelection, type ColorLetter, type ColorMode, type SubsetSelection } from '@/components/SubsetColorPicker/SubsetColorPicker';
+import { SubsetColorPicker, SubsetSwatch, useSubsetSelection, COLOR_LETTERS, COLOR_NAME, type ColorLetter, type ColorMode, type SubsetSelection } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import { localizeCompName } from '@/lib/comp-localize';
 import { loadFlagData, flagDataVersion, compFlagIso2 } from '@/lib/country-flags';
 import { compSourceLine } from '@/lib/comp-schedule';
 import { statsUrl } from '@/lib/stats-base';
-import { VARIANT_ORDER, stageLabel, variantLabel, BLOCK_DATA_VARIANTS, BLOCK_STAGE_VARIANT, isBlockVariant, EO_DATA_VARIANTS, EO_STAGE_VARIANT, VARIANT_STAGES } from '@/lib/scramble-variants';
+import { VARIANT_ORDER, stageLabel, variantLabel, BLOCK_DATA_VARIANTS, BLOCK_STAGE_VARIANT, EO_DATA_VARIANTS, EO_STAGE_VARIANT, VARIANT_STAGES, LENGTH_VARIANT, uiVariantOf, uiVariantOptions } from '@/lib/scramble-variants';
 import { VariantSelect } from '@/components/VariantSelect';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { fetchRecentScramblesEvents, type RecentScramblesEventsJson, type RecentScrMeta } from '@/lib/recent-scrambles-events';
@@ -55,10 +55,6 @@ interface RecentScramblesJson {
 // 整解变体:难度 = 整个 3x3 的最优 HTM, 没有「底色」这一维 -> 固定子集键(同 distribution.json)。
 const WHOLE_SOLVE = '333';
 const WHOLE_SOLVE_SUBSET = 'ALL';
-
-// 数据变体 -> 方法下拉里的 UI 项(块族折成 'block';EOLine 并入 'eo')。
-const uiVariantOf = (dataVariant: string): string =>
-  isBlockVariant(dataVariant) ? 'block' : dataVariant === 'eoline' ? 'eo' : dataVariant;
 
 // 概率提示数据源 = /scramble/stats 的 distribution.json('wca' 合并池:全部 WCA 三阶打乱)。
 interface DistHist { counts: Record<string, number> }
@@ -236,12 +232,18 @@ const RARE_THRESHOLDS = [
 const RARE_DEFAULT = 1e-4;
 const RARE_CAP = 60; // 渲染上限(每张卡含 SVG 预览 + ObjectURL,过多伤性能);超出给提示
 
-interface RareEntry { id: string; uiVariant: string; metric: string; step: number; color: ColorLetter | ''; p: number }
+interface RareEntry { id: string; uiVariant: string; metric: string; step: number; color: ColorLetter | ''; subsetKey: string; p: number }
 
-// 横扫本批 rank 的每个 (变体 × 类型 × 底色子集 × 步数) 桶,用 distribution 算概率,收集 p < threshold
-// 的全部样例。同一打乱(id)可在多个桶里稀有,按 id 去重,只保留概率最低(最稀有)的那次,
-// 结果按概率升序(最稀有在前)。返回 UI 层的 variant(块族归并为 'block')。
-function collectRareScrambles(data: RecentScramblesJson, dist: DistributionJson, threshold: number): RareEntry[] {
+// 在**选定的底色中性档**(subsetKey,如 'WY' 双色)下横扫本批 rank 的每个 (变体 × 类型 × 步数) 桶,
+// 用 distribution 的**同档**分布算概率,收集 p < threshold 的样例。整解('333' 的 'ALL' 档,与底色无关)
+// 恒纳入。刻意不跨中性档取 min:单色 1/12k ≠ 六色 1/12k(苹果比橘子),且好运尾里单色数值天然最小、
+// 会永远压过六/双/四色 —— 只在同一档内比较,六/双/四色才有机会上榜。
+// subsetKey === null = 「综合」:合并全部 13 档,不设过滤,按 id 取跨档最稀有那次(数值上单色偏多,
+// 是用户显式选择的「任一中性视角下最稀有」口径)。同一打乱(id)按 id 去重保留最稀有那次,
+// 按概率升序返回。UI 层 variant(块族归并为 'block')。
+function collectRareScrambles(
+  data: RecentScramblesJson, dist: DistributionJson, threshold: number, subsetKey: string | null,
+): RareEntry[] {
   const wcaVars = dist.sets?.wca?.variants;
   if (!wcaVars || !data.rank) return [];
   const best = new Map<string, RareEntry>();
@@ -256,13 +258,16 @@ function collectRareScrambles(data: RecentScramblesJson, dist: DistributionJson,
       if (!distStageKey) continue;
       const stageData = distVar.data[distStageKey];
       const bySubset = byMetric[metric];
-      for (const subsetKey in bySubset) {
-        const counts = stageData?.[subsetKey]?.counts;
+      for (const sk in bySubset) {
+        // 综合(null)= 收全部档;否则只看选中档 + 整解 ALL(色无关,恒纳入)。
+        if (subsetKey !== null && sk !== subsetKey && sk !== WHOLE_SOLVE_SUBSET) continue;
+        const byStep = bySubset[sk];
+        if (!byStep) continue;
+        const counts = stageData?.[sk]?.counts;
         if (!counts) continue;
         let total = 0;
         for (const k in counts) total += counts[k];
         if (total <= 0) continue;
-        const byStep = bySubset[subsetKey];
         for (const stepStr in byStep) {
           const entries = byStep[stepStr];
           if (!entries?.length) continue;
@@ -273,13 +278,32 @@ function collectRareScrambles(data: RecentScramblesJson, dist: DistributionJson,
           const step = Number(stepStr);
           for (const [id, color] of entries) {
             const prev = best.get(id);
-            if (!prev || p < prev.p) best.set(id, { id, uiVariant, metric, step, color, p });
+            if (!prev || p < prev.p) best.set(id, { id, uiVariant, metric, step, color, subsetKey: sk, p });
           }
         }
       }
     }
   }
   return [...best.values()].sort((a, b) => a.p - b.p);
+}
+
+// 「综合」卡专用:把胜出档 subsetKey('WY'/'BGORWY'/'Y'/'ALL' …)拆成色字母。整解 'ALL' 无底色维度
+// → 空数组(不画点)。给卡片左上角画的是**整档色块**(多色档 = 扇形拼色),而非单个胜出色 —— 否则
+// 多色档也只显示一个色点,会被误读成单色底。
+const COLOR_SET = new Set<ColorLetter>(COLOR_LETTERS);
+const subsetColorsOf = (key: string): ColorLetter[] =>
+  key.split('').filter((c): c is ColorLetter => COLOR_SET.has(c as ColorLetter));
+// 档色块的可读标题(hover / a11y):单/双/四/六色 +(≤四色列具体色名)+ 多色档标出实际胜出的底色。
+// 走 tr() 避免内联 isZh 文案三元。
+function subsetDotTitle(colors: ColorLetter[], winner?: ColorLetter): string {
+  const tier = colors.length >= 6 ? tr({ zh: '六色', en: 'CN' })
+    : colors.length === 1 ? tr({ zh: '单色', en: 'Single' })
+      : colors.length === 2 ? tr({ zh: '双色', en: 'Dual' })
+        : tr({ zh: '四色', en: 'Quad' });
+  const base = colors.length <= 4 ? `${tier} ${colors.map((c) => tr(COLOR_NAME[c])).join(' ')}` : tier;
+  return (winner && colors.length > 1)
+    ? `${base} ${tr({ zh: '底', en: 'base' })} ${tr(COLOR_NAME[winner])}`
+    : base;
 }
 
 // 稀有卡顶标签:变体 + 类型(相同则合一)+ 步数,与下钻视图两个下拉口径一致。
@@ -293,16 +317,23 @@ function rarityTag(uiVariant: string, metric: string, step: number, isZh: boolea
 // 步数下拉选项标签(zh「N 步」/ en「N」)。tr 包住避免内联 isZh 文案三元。
 const stepOptionLabel = (n: number) => tr({ zh: `${n} 步`, en: String(n) });
 
-// 3x3 变体下拉里的伪变体:选中即按**原打乱长度**分桶(其余变体都是难度口径)。数据同其它项目走
-// eventsJson;放在变体下拉而非视图下拉,因为它和「魔方 / 标准 / DR」一样是「按什么分桶」的选择。
-const LENGTH_VARIANT = 'length';
-const variantOrLengthLabel = (key: string, isZh: boolean): string => (
-  key === LENGTH_VARIANT ? tr({ zh: '打乱', en: 'Length' }) : variantLabel(key, isZh)
-);
+// 伪变体「打乱」(按原打乱长度分桶)的键与标签在 lib/scramble-variants 单源(/timer 真题难度筛
+// 也用同一个)。本页的数据同其它项目走 eventsJson;放在变体下拉而非视图下拉,因为它和
+// 「整体 / 标准 / DR」一样是「按什么分桶」的选择。
 
 // Pattern B: English is bare; only Chinese is /zh-prefixed.
 const langPrefix = (lang: 'zh' | 'en') => (lang === 'zh' ? '/zh' : '');
-const genHref = (lp: string, ci: string) => `${lp}/scramble/gen?comp=${encodeURIComponent(ci)}`;
+// 比赛来源 → 该场比赛页的「打乱」视图,深链定位到这条打乱的 项目/轮次/组别/序号。
+//  - round 传 WCA round_type_id(m.r);比赛页 ?round= 认字母 id,会自动规范化成第几轮的数字。
+//  - attempt 传打乱 label:备打为 E 前缀(与 compSourceLine 同口径),否则就是序号。
+const compScrambleHref = (lp: string, m: RecentScrMeta | ScrMeta): string => {
+  const p = new URLSearchParams({ view: 'scramble' });
+  if (m.e) p.set('event', m.e);
+  if (m.r) p.set('round', m.r);
+  if (m.g) p.set('group', m.g);
+  if (m.n) p.set('attempt', m.x ? `E${m.n}` : String(m.n));
+  return `${lp}/wca/comp/${encodeURIComponent(m.ci)}?${p.toString()}`;
+};
 // (变体, 类型) → analyzer StageSolver 的 method + 阶段索引(深链直达「砖 / F2B」这类视图)。
 // 333(整解)无 StageSolver 方法 → null,不附加参数。metric 短键(xc)与阶段全名(xcross)经
 // stageLabel 归一后按位匹配。
@@ -338,7 +369,7 @@ const analyzerHref = (
 function CompSource({ m, lp, isZh, row }: { m: RecentScrMeta | ScrMeta; lp: string; isZh: boolean; row?: boolean }) {
   const iso2 = compFlagIso2(m.ci);
   return (
-    <Link href={genHref(lp, m.ci)} prefetch={false} className={row ? 'rs-row-comp' : 'rs-hero-src'}>
+    <Link href={compScrambleHref(lp, m)} prefetch={false} className={row ? 'rs-row-comp' : 'rs-hero-src'}>
       {iso2 && <Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
       <span className={row ? 'rs-row-name' : 'rs-src-comp'}>{localizeCompName(m.ci, m.cn, isZh)}</span>
       <EventIcon event={m.e} className="rs-evt" />
@@ -349,24 +380,33 @@ function CompSource({ m, lp, isZh, row }: { m: RecentScrMeta | ScrMeta; lp: stri
 
 // 统一打乱小卡(2 列网格单元):魔方图 + 打乱记号 + 比赛来源,可选左上角底色点。
 // 整卡非单一 <a>(内部「大图 / analyzer / gen」三个并列链接,禁嵌套),与原 hero 同结构。
-function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color, rarity, optimal }: {
+function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color, dotColors, dotTitle, rarity, optimal }: {
   event: string;
   scramble: string;
   m?: RecentScrMeta | ScrMeta;
   lp: string;
   isZh: boolean;
   ssTarget?: { method: string; stage: number } | null;
-  color?: ColorLetter;
+  color?: ColorLetter;                 // analyzer 深链锁定的视角(胜出色);缺省不锁
+  // 左上角底色点显示的色集。缺省 = [color](单个胜出色)。「综合」视图传整个胜出档的色集
+  // (多色档 → 扇形拼色),避免多色档被误读成单色底;dotTitle 为该档可读名(hover / a11y)。
+  dotColors?: ColorLetter[];
+  dotTitle?: string;
   // 稀有汇总卡专用:顶部「变体 类型 步数」标签 + 概率徽章(下钻视图不传,概率在头部统一显示)。
   rarity?: { tag: string; prob: string };
   // 显示的是最优等态打乱(非该场原打乱的记号)→ 悬停说明,免得被当成比赛原打乱。
   optimal?: boolean;
 }) {
+  const dotList = dotColors ?? (color ? [color] : []);
   return (
     <div className="rs-scard">
       <div className="rs-scard-cube">
         <ScramblePreview2D event={event} scramble={scramble} size={58} fullSizeLink linkTitle={tr({ zh: '查看大图', en: 'View full size' })} />
-        {color && <span className="rs-scard-dot" aria-hidden="true"><SubsetSwatch colors={[color]} /></span>}
+        {dotList.length > 0 && (
+          <span className="rs-scard-dot" title={dotTitle} aria-label={dotTitle} aria-hidden={dotTitle ? undefined : true}>
+            <SubsetSwatch colors={dotList} highlight={dotList.length > 1 ? color : undefined} />
+          </span>
+        )}
       </div>
       <div className="rs-scard-body">
         {rarity && (
@@ -486,10 +526,15 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
   const [metric, setMetric] = useState('cross');
   const [step, setStep] = useState<number | null>(null);
   const sel = useSubsetSelection('dual');
+  // 概率视图专用的底色档:默认双色白黄(WY)。独立于类型视图的 sel —— 类型视图会被 findRarestSelection
+  // 自动定位到最稀有(单色)那格,概率视图不该被它带走,故各持一份。
+  const rareSel = useSubsetSelection('dual');
   // 视图:'type' 按 变体/类型/底色/步数 下钻单桶(变体可选 LENGTH_VARIANT = 按原打乱长度分桶);
-  // 'rare' 横扫全部组合,列出概率 < threshold 的稀有打乱。
+  // 'rare' 在选定底色档内横扫全部 变体×类型,列出概率 < threshold 的稀有打乱。
   const [mode, setMode] = useState<'type' | 'rare'>('type');
   const [threshold, setThreshold] = useState(RARE_DEFAULT);
+  // 概率视图的「综合」档:合并全部底色档取跨档最稀有(picker 里的第 5 个选项)。与 rareSel 互斥。
+  const [rareAgg, setRareAgg] = useState(false);
 
   // 首屏一次性把默认选择定位到本批全局概率最低(最稀有)的那一格;用户手动改过任一选择器即不再覆盖。
   const pickedRef = useRef(false);
@@ -515,17 +560,22 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
     selectByKey: (key: string) => { markTouched(); sel.selectByKey(key); },
   };
 
+  // 概率视图的底色选择器:点任一色块即退出「综合」;综合选中时 subsetKey 置空 = 不高亮任何色块。
+  const rarePickerSel: SubsetSelection = {
+    ...rareSel,
+    subsetKey: rareAgg ? '' : rareSel.subsetKey,
+    setColorMode: (m: ColorMode) => { setRareAgg(false); rareSel.setColorMode(m); },
+    selectOption: (id: string) => { setRareAgg(false); rareSel.selectOption(id); },
+    selectByKey: (key: string) => { setRareAgg(false); rareSel.selectByKey(key); },
+  };
+
   const hasData = (v: string) => {
     const r = data?.rank?.[v];
     if (!r) return false;
     return Object.values(r).some((byColor) => Object.values(byColor).some((byStep) => Object.keys(byStep).length > 0));
   };
-  const variants = useMemo(() => VARIANT_ORDER.filter((v) =>
-    v === 'block' ? BLOCK_DATA_VARIANTS.some(hasData)
-      : v === 'eo' ? EO_DATA_VARIANTS.some(hasData)
-        : hasData(v),
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  ), [data]);
+  const variants = useMemo(() => uiVariantOptions(hasData), [data]);
 
   // 长度桶在 eventsJson(同其它项目);本批没有长度数据就不在变体下拉里给这一项。
   const hasLength = Object.keys(eventsJson?.events?.['333']?.length ?? {}).length > 0;
@@ -588,10 +638,13 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
     return `${lp}/scramble/stats${qs ? `?${qs}` : ''}`;
   }, [prob, dataVariant, isWhole, subsetKey, lp]);
 
-  // 稀有汇总:横扫全部组合,概率 < threshold 的去重打乱(最稀有在前)。仅 rare 模式计算。
+  // 稀有汇总:在选定底色档(rareSel)内、或「综合」(rareAgg=合并全档),概率 < threshold 的去重打乱
+  // (最稀有在前)。仅 rare 模式计算。
   const rare = useMemo(
-    () => (mode === 'rare' && data && dist ? collectRareScrambles(data, dist, threshold) : []),
-    [mode, data, dist, threshold],
+    () => (mode === 'rare' && data && dist
+      ? collectRareScrambles(data, dist, threshold, rareAgg ? null : rareSel.subsetKey)
+      : []),
+    [mode, data, dist, threshold, rareAgg, rareSel.subsetKey],
   );
 
   const modePill = (
@@ -610,7 +663,7 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
       options={variantOptions}
       onChange={(v) => { markTouched(); setVariant(v); }}
       isZh={isZh}
-      label={variantOrLengthLabel}
+      label={variantLabel}
       ariaLabel={tr({ zh: '变体', en: 'Variant' })}
     />
   );
@@ -632,7 +685,8 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
     <>
       <div className="rs-head">
         {modePill}
-        {mode === 'rare' ? (
+        {mode === 'rare' ? (<>
+          <SubsetColorPicker sel={rarePickerSel} isZh={isZh} allOption={{ active: rareAgg, onSelect: () => setRareAgg(true) }} />
           <select
             className="rs-select"
             value={threshold}
@@ -644,7 +698,7 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
               <option key={t.label} value={t.v}>{`< ${t.label}`}</option>
             ))}
           </select>
-        ) : (<>
+        </>) : (<>
         {!isWhole && <SubsetColorPicker sel={pickerSel} isZh={isZh} />}
         {variantSelect}
         {metrics.length > 1 && (
@@ -667,20 +721,27 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
         rare.length > 0 ? (
           <>
             <div className="rs-cards scroll-panel">
-              {rare.slice(0, RARE_CAP).map((r) => (
-                <ScrambleCard
-                  key={r.id}
-                  event="333"
-                  scramble={data.opt?.[r.id] ?? data.scr[r.id] ?? ''}
-                  optimal={!!data.opt?.[r.id]}
-                  m={data.meta[r.id]}
-                  lp={lp}
-                  isZh={isZh}
-                  ssTarget={stageSolverTarget(r.uiVariant, r.metric)}
-                  color={r.color || undefined}
-                  rarity={{ tag: rarityTag(r.uiVariant, r.metric, r.step, isZh), prob: formatProb(r.p) ?? '' }}
-                />
-              ))}
+              {rare.slice(0, RARE_CAP).map((r) => {
+                // 综合视图:点显示整个胜出档的色集(多色档 = 扇形拼色),消除「多色档被当单色底」歧义。
+                // 具体档视图:档已由 picker 明示,点仍显示单个胜出色。
+                const aggColors = rareAgg ? subsetColorsOf(r.subsetKey) : [];
+                return (
+                  <ScrambleCard
+                    key={r.id}
+                    event="333"
+                    scramble={data.opt?.[r.id] ?? data.scr[r.id] ?? ''}
+                    optimal={!!data.opt?.[r.id]}
+                    m={data.meta[r.id]}
+                    lp={lp}
+                    isZh={isZh}
+                    ssTarget={stageSolverTarget(r.uiVariant, r.metric)}
+                    color={r.color || undefined}
+                    dotColors={aggColors.length > 0 ? aggColors : undefined}
+                    dotTitle={aggColors.length > 0 ? subsetDotTitle(aggColors, r.color || undefined) : undefined}
+                    rarity={{ tag: rarityTag(r.uiVariant, r.metric, r.step, isZh), prob: formatProb(r.p) ?? '' }}
+                  />
+                );
+              })}
             </div>
             {rare.length > RARE_CAP && (
               <div className="rs-rare-more">{tr({ zh: `仅显示最稀有的 ${RARE_CAP} 条(共 ${rare.length} 条)`, en: `Showing the ${RARE_CAP} rarest of ${rare.length}` })}</div>

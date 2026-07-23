@@ -93,3 +93,29 @@
 .subset-swatch.is-static { cursor: inherit; }
 /* 触发按钮里的色块小一号,和文字视觉等高 */
 .subset-picker-mode .subset-swatch { width: 1.05rem; height: 1.05rem; border-radius: 4px; }
+
+/* 「综合」档(仅概率视图):触发钮显示文字,菜单里是横跨两列的整行选项。 */
+.subset-agg-trigger {
+  font-size: 0.82rem;
+  line-height: 1.05rem;
+  white-space: nowrap;
+}
+.subset-agg-item {
+  grid-column: 1 / -1;
+  justify-self: start;
+  appearance: none;
+  font: inherit;
+  font-size: 0.78rem;
+  line-height: 1.2;
+  padding: 0.3rem 0.6rem;
+  color: inherit;
+  background: transparent;
+  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.12s, color 0.12s;
+}
+.subset-agg-item:hover { border-color: color-mix(in srgb, currentColor 45%, transparent); }
+.subset-agg-item.is-active { border-color: var(--accent); color: var(--accent); }
+.subset-agg-item:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
