@@ -216,6 +216,15 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
   // 阶段遮罩同理:sim 工具栏的 stickering 下拉已并入整个 vc MASK 清单(vcStageMask.ts
   // 去重合并),且实时 3D + 引擎伴图都跟它走;panel 里这行是只喂 spec 渲染的重复入口。
   const showStageMask = mode === 'page';
+  // net 与 wca 对 cube 输出的是同一张 tnoodle 展开十字:render.ts 两者同落
+  // renderUnfoldedSvg,/sim 伴图更是都走 exportSimNetSvg 逐字节相等。唯一非冗余处 =
+  // 独立 /visualcube 页的 3×3——net 换成可涂色编辑器(net-paint-3x3 → 复用 solver 的
+  // InteractiveCubeNet)。故 net chip 只在「page 模式 + 3×3」露出;其余(panel、N≠3)
+  // 只留 wca 单一入口,不再让两个 chip 出一模一样的图。
+  const showNetView = mode === 'page' && s.cubeSize === 3;
+  // net chip 收起时,若 spec 仍持有 net(旧 URL / 持久化)按 wca 高亮——该场合两者渲染
+  // 逐字节相等,不动底层 spec(回到 page+3×3 时 net 记忆仍在)。
+  const activeCubeView = isCube && s.cubeView === 'net' && !showNetView ? 'wca' : s.cubeView;
 
   const previewRef = useRef<HTMLDivElement | null>(null);
 
@@ -488,11 +497,11 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
           <label className="vc-label">{t('视图', 'View')}</label>
           <div className="vc-row-controls">
             {isCube ? (
-              (['normal', 'plan', 'trans', 'net', 'wca'] as SpecialView[]).map((v) => (
+              (['normal', 'plan', 'trans', ...(showNetView ? ['net'] : []), 'wca'] as SpecialView[]).map((v) => (
                 <button
                   key={v}
                   type="button"
-                  className={`vc-btn vc-btn-sm${s.cubeView === v ? ' vc-btn-active' : ''}`}
+                  className={`vc-btn vc-btn-sm${activeCubeView === v ? ' vc-btn-active' : ''}`}
                   onClick={() => set('cubeView', v)}
                 >
                   {v}
