@@ -2,7 +2,32 @@
    颜色一律走 theme token,自动 light/dark + 配色主题跟随。 */
 
 /* 通知条内容约束到内容宽度并居中,超宽屏不再从最左边缘一路铺到最右 */
-.page-notice-wrap { width: 100%; --pn-max-w: 1100px; }
+/* 横幅调色板:能对上语义 token 的直接引用(自动跟随 light/dark + 配色主题);
+   token 没覆盖的三个色相(紫/青/粉)才落 hex,并在 dark 下换一档更亮的值。 */
+.page-notice-wrap {
+  width: 100%;
+  --pn-max-w: 1100px;
+  --pn-c-blue: var(--signal-info);
+  --pn-c-green: var(--signal-success);
+  --pn-c-amber: var(--signal-warning);
+  --pn-c-red: var(--destructive);
+  --pn-c-terracotta: var(--accent);
+  --pn-c-purple: #8b5cf6;
+  --pn-c-cyan: #0e9aa7;
+  --pn-c-pink: #db2777;
+}
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme=light]) .page-notice-wrap {
+    --pn-c-purple: #a78bfa;
+    --pn-c-cyan: #34d0e0;
+    --pn-c-pink: #f472b6;
+  }
+}
+html[data-theme=dark] .page-notice-wrap {
+  --pn-c-purple: #a78bfa;
+  --pn-c-cyan: #34d0e0;
+  --pn-c-pink: #f472b6;
+}
 
 .page-notice {
   --pn-color: var(--signal-info);
@@ -21,6 +46,16 @@
 .page-notice + .page-notice { border-top: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent); }
 .page-notice[data-level="warning"] { --pn-color: var(--signal-warning); }
 .page-notice[data-level="maintenance"] { --pn-color: var(--destructive); }
+
+/* 显式选色覆盖级别默认色。与上面 data-level 同特异度(0,2,0),靠排在后面取胜——别往上挪。 */
+.page-notice[data-color="blue"]       { --pn-color: var(--pn-c-blue); }
+.page-notice[data-color="green"]      { --pn-color: var(--pn-c-green); }
+.page-notice[data-color="amber"]      { --pn-color: var(--pn-c-amber); }
+.page-notice[data-color="red"]        { --pn-color: var(--pn-c-red); }
+.page-notice[data-color="terracotta"] { --pn-color: var(--pn-c-terracotta); }
+.page-notice[data-color="purple"]     { --pn-color: var(--pn-c-purple); }
+.page-notice[data-color="cyan"]       { --pn-color: var(--pn-c-cyan); }
+.page-notice[data-color="pink"]       { --pn-color: var(--pn-c-pink); }
 
 .page-notice-icon { flex: none; color: var(--pn-color); margin-top: 2px; }
 
@@ -156,7 +191,8 @@ textarea.page-notice-input { resize: vertical; min-height: 46px; }
   border: 1px solid var(--border-default);
   border-radius: 999px;
 }
-.page-notice-preset > svg { color: var(--muted-foreground); }
+/* 图标按预设自己的横幅色上色,选之前就能看出这条通知会是什么颜色 */
+.page-notice-preset > svg { color: var(--pn-preset-c, var(--muted-foreground)); }
 .page-notice-preset:hover {
   border-color: var(--ring);
   background: color-mix(in srgb, var(--foreground) 10%, transparent);
@@ -180,6 +216,29 @@ textarea.page-notice-input { resize: vertical; min-height: 46px; }
   color: var(--primary-foreground);
   background: var(--primary);
   border-color: var(--primary);
+}
+
+/* 颜色选择器:自动(按级别)+ 一排色块 */
+.page-notice-colorpicker { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.page-notice-swatch {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  background: var(--pn-swatch-c, transparent);
+  border: 1px solid color-mix(in srgb, var(--foreground) 20%, transparent);
+  border-radius: 999px;
+}
+/* 「自动」用斜杠底纹表示「不指定颜色」 */
+.page-notice-swatch.is-auto {
+  background: repeating-linear-gradient(
+    45deg,
+    transparent 0 3px,
+    color-mix(in srgb, var(--foreground) 28%, transparent) 3px 6px
+  );
+}
+.page-notice-swatch:hover { border-color: var(--ring); }
+.page-notice-swatch.is-active {
+  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--foreground);
 }
 .page-notice-editor-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 

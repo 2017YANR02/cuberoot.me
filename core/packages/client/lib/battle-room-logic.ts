@@ -15,6 +15,8 @@ export function netErrorMessage(e: unknown): { zh: string; en: string } {
   if (msg === 'room not found') return { zh: '房间不存在或已过期', en: 'Room not found or expired' };
   if (msg === 'room full') return { zh: '房间人数已满', en: 'Room is full' };
   if (msg === 'name taken') return { zh: '这个名字房里已经有人用了,换一个', en: 'That name is already taken in this room' };
+  if (msg === 'not admin') return { zh: '你已不是房主了', en: 'You are no longer the host' };
+  if (msg === 'player not in room') return { zh: 'TA 已经不在房间里了', en: 'That player is no longer in the room' };
   if (/HTTP 404/.test(msg)) return { zh: '联机服务暂不可用,请稍后重试', en: 'Online service is unavailable — please try again later' };
   if (/HTTP 5\d\d/.test(msg)) return { zh: '服务器开小差了,请稍后重试', en: 'Server error — please try again later' };
   if (/failed to fetch|networkerror|load failed/i.test(msg)) return { zh: '网络连接失败,请检查网络', en: 'Network error — check your connection' };
@@ -101,6 +103,31 @@ export function pendingCount(state: NetRoomState): number {
   const online = sortedNetPlayers(state.players).filter(p => isNetOnline(p, state.now));
   const res = state.results[String(state.round)] ?? {};
   return online.filter(p => !res[p.id]).length;
+}
+
+/** 我是不是房主(admin 由服务端给,房主离场时已回落到最早加入者)。 */
+export function isNetAdmin(state: NetRoomState, pid: string | null): boolean {
+  return !!pid && state.admin === pid;
+}
+
+/**
+ * 「同时开始」门控:房主开了 syncStart 时,本轮起表要等所有「在线且未交卷」的人都点准备。
+ *   gated   — 我现在被这道门拦着(还没起表:未交卷、在线人数 ≥2、且尚未落倒计时)
+ *   ready   — 我已按下准备
+ *   waiting — 还没准备的人数(含我)
+ * 少于 2 人不设门(一个人还等谁);离线者不阻塞,与 isRoundComplete 同口径。
+ */
+export interface NetSyncGate { gated: boolean; ready: boolean; waiting: number }
+export function syncGate(state: NetRoomState, pid: string | null): NetSyncGate {
+  const res = state.results[String(state.round)] ?? {};
+  const contenders = sortedNetPlayers(state.players).filter(p => isNetOnline(p, state.now) && !res[p.id]);
+  const ready = !!pid && state.players[pid]?.ph === 'ready';
+  const iAmContender = !!pid && contenders.some(p => p.id === pid);
+  return {
+    gated: !!state.syncStart && iAmContender && contenders.length >= 2 && state.startAt === null,
+    ready,
+    waiting: contenders.filter(p => p.ph !== 'ready').length,
+  };
 }
 
 /**

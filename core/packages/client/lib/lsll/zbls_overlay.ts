@@ -29,3 +29,6 @@ export function zblsForKey(keyStr: string): ZblsRef[] | null {
 
 /** 全库收录的 LSLL case 数(= zbls 案例数)。 */
 export const ZBLS_COVERED_COUNT = Object.keys(MAP).length;
+
+/** 已收录公式的 LSLL case key(base36)全表 —— 训练器「只练已收录」模式取样用。 */
+export const ZBLS_COVERED_KEYS = Object.keys(MAP);

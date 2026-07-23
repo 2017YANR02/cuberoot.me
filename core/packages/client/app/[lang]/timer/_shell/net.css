@@ -16,6 +16,13 @@
   color: var(--muted-foreground);
   white-space: nowrap;
 }
+/* 「同时起表」房设提示(全房可见,房主在管理面板里开关) */
+.net-sync-chip {
+  font-size: 12px;
+  color: var(--toggle-on);
+  white-space: nowrap;
+}
+.net-admin-btn svg { color: var(--signal-warning); }
 /* 顶栏「我的项目」选择器:紧凑,不占额外框 */
 .net-my-event { display: inline-flex; align-items: center; }
 .net-my-event :is(button, [role='button']) { font-size: 13px; }
@@ -213,7 +220,10 @@
   white-space: nowrap;
 }
 .net-p-status.is-live { color: var(--signal-info); }
+.net-p-status.is-ready { color: var(--toggle-on); }
 .net-p-status.is-off { color: var(--faint-foreground); }
+/* 房主小皇冠(玩家条 + 管理面板共用) */
+.net-p-crown { flex: none; color: var(--signal-warning); align-self: center; }
 .net-p-time {
   font-size: 13px;
   font-weight: 600;
@@ -267,9 +277,8 @@
   color: var(--signal-success);
 }
 
-/* 计时中隐去全部环境元素(玩家条跟随 surface-chrome 淡出,shell.css 已有规则;
-   这里兜底 net 专属元素) */
-.net-shell[data-solving='true'] .net-players { opacity: 0; pointer-events: none; }
+/* 玩家条计时中「不」淡出:联机对战的重点就是盯着对手滚动读数,
+   自己起表后反而更想看 —— 与 Solo 的极简计时刻意不同,别再给它加 data-solving 淡出。 */
 
 /* ── 战绩面板(overlay:榜 + 每轮回放)────────────────────────── */
 .net-stats-overlay {
@@ -310,6 +319,46 @@
   color: var(--foreground);
 }
 .net-stats-title svg { color: var(--signal-warning); }
+
+/* ── 房间管理面板(房设 + 转让房主 + 踢人)────────────────────── */
+.net-admin-setting {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.net-admin-note {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--muted-foreground);
+}
+.net-admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.net-admin-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+.net-admin-name {
+  font-size: 13px;
+  color: var(--foreground);
+  max-width: 12em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.net-admin-metext { font-size: 12px; color: var(--faint-foreground); }
+.net-admin-row .net-btn { align-self: center; }
+.net-admin-kick { color: var(--destructive); }
+.net-admin-kick.is-confirm {
+  color: var(--destructive-foreground);
+  background: var(--destructive);
+  border-color: var(--destructive);
+}
 
 /* 榜 */
 .net-standings-scroll { overflow-x: auto; }

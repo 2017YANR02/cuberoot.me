@@ -54,6 +54,13 @@ export interface TimerHandle {
   onPressDown: () => void;
   onPressUp: () => void;
   reset: () => void;
+  /**
+   * Start the timer immediately, bypassing hold/inspection — used by the online
+   * battle's synchronized start (everyone's countdown hits zero at the same
+   * instant). `elapsedMs` back-dates the start so a client that learned about
+   * the go-signal a little late still shows the true elapsed time.
+   */
+  startNow: (elapsedMs?: number) => void;
   /** Soft-cancel an in-progress hold/inspection arm WITHOUT clearing the last
    *  result or the displayed time — used when a press turns into a gesture. */
   cancelArm: () => void;
@@ -250,6 +257,27 @@ export function useTimer(onSolve?: (result: SolveResult) => void): TimerHandle {
     }
   }, [setLastMsSafe, setPhaseSafe, stopHoldTimer, stopInspectionTick, stopTick]);
 
+  // Synchronized start (online battle): no hold cycle, no inspection — the
+  // countdown already served as inspection, so any pending inspection state is
+  // cleared to keep the +2/DNF logic from firing on a solve that never inspected.
+  const startNow = useCallback((elapsedMs = 0) => {
+    stopHoldTimer();
+    stopInspectionTick();
+    stopTick();
+    pendingInspectionStartRef.current = false;
+    inspectionStartRef.current = 0;
+    setInspectionDisplayMs(0);
+    setLastMsSafe(null);
+    const late = Math.max(0, elapsedMs);
+    startTsRef.current = performance.now() - late;
+    setDisplayMs(late);
+    setPhaseSafe('running');
+    play('start');
+    tickRef.current = window.setInterval(() => {
+      setDisplayMs(performance.now() - startTsRef.current);
+    }, TICK_MS);
+  }, [setLastMsSafe, setPhaseSafe, stopHoldTimer, stopInspectionTick, stopTick]);
+
   const reset = useCallback(() => {
     stopTick();
     stopInspectionTick();
@@ -293,6 +321,7 @@ export function useTimer(onSolve?: (result: SolveResult) => void): TimerHandle {
     onPressDown,
     onPressUp,
     reset,
+    startNow,
     cancelArm,
   };
 }

@@ -53,16 +53,16 @@ export default function LsllMathPage() {
           <p className="lmath-lead">
             <T
               zh={<>LSLL(Last Slot and Last Layer)= 一步解掉<strong>最后一槽 + 整个顶层</strong>。
-                「一个 case」的定义里藏着一个群作用:开始前、结束后各允许转一下 U 层(起手 / 收尾 AUF),
+                「一个 case」的定义里藏着一个群作用:开始前、结束后各允许转一下 U 层(pre-AUF / post-AUF),
                 case 不变 —— 这是 <TeX src={R`\mathbb{Z}_4\times\mathbb{Z}_4`} />(16 元)。把 9,331,200 个物理态
-                按这个作用归并,轨道数就是 case 数。下面一步步算清楚,并给出<strong>只商起手 AUF</strong>那个
-                中间量。本文是 <Link href="/math/probability">{t('末层 AUF 概率', 'last-layer AUF probability')}</Link> 一页
+                按这个作用归并,轨道数就是 case 数。下面一步步算清楚,并分别给出<strong>只商 pre-AUF</strong>、
+                <strong>只商 post-AUF</strong> 那个中间量。本文是 <Link href="/math/probability">{t('末层 AUF 概率', 'last-layer AUF probability')}</Link> 一页
                 在「最后一槽」上的推广。</>}
               en={<>LSLL (Last Slot and Last Layer) means solving the <strong>last slot and the whole top layer</strong> in
                 one look. The definition of “one case” hides a group action: a U turn is allowed before and after the
-                algorithm (pre / post AUF) without changing the case — an action of <TeX src={R`\mathbb{Z}_4\times\mathbb{Z}_4`} /> (16
+                algorithm (pre-AUF / post-AUF) without changing the case — an action of <TeX src={R`\mathbb{Z}_4\times\mathbb{Z}_4`} /> (16
                 elements). Collapsing the 9,331,200 physical states under it gives the case count. We derive it step by
-                step, including the intermediate count where <strong>only the pre-AUF</strong> is quotiented. This is the{' '}
+                step, including the intermediate counts where <strong>only the pre-AUF</strong> and <strong>only the post-AUF</strong> are quotiented. This is the{' '}
                 <Link href="/math/probability">{t('末层 AUF 概率', 'last-layer AUF probability')}</Link> page extended to the last slot.</>}
             />
           </p>
@@ -74,7 +74,7 @@ export default function LsllMathPage() {
             </div>
             <div className="lmath-num-card">
               <div className="lmath-num">2,332,800</div>
-              <div className="lmath-num-label">{t('只商起手 AUF(单侧)', 'quotient by pre-AUF only')}</div>
+              <div className="lmath-num-label">{t('只商单侧 AUF(pre = post)', 'one AUF only (pre = post)')}</div>
             </div>
             <div className="lmath-num-card">
               <div className="lmath-num">583,284</div>
@@ -138,13 +138,13 @@ export default function LsllMathPage() {
           </p>
           <ul className="lmath-body">
             <li><T
-              zh={<><strong><TeX src={R`T_{\text{phys}}`} />(左乘 <TeX src="U" />,收尾 / post-AUF)</strong>:物理转顶层,把 4 顶位的
+              zh={<><strong><TeX src={R`T_{\text{phys}}`} />(左乘 <TeX src="U" />,post-AUF)</strong>:物理转顶层,把 4 顶位的
                 <strong>内容</strong>循环移一格;槽块不动,朝向不变(绕 U/D 轴既不扭角也不翻棱)。</>}
               en={<><strong><TeX src={R`T_{\text{phys}}`} /> (left-mult by <TeX src="U" />, post-AUF)</strong>: physically turns the top,
                 cycling the <strong>contents</strong> of the 4 top slots; slot pieces and orientations are untouched.</>}
             /></li>
             <li><T
-              zh={<><strong><TeX src={R`T_{\text{home}}`} />(右乘 <TeX src="U" />,起手 / pre-AUF)</strong>:在还原态上先转一下 =
+              zh={<><strong><TeX src={R`T_{\text{home}}`} />(右乘 <TeX src="U" />,pre-AUF)</strong>:在还原态上先转一下 =
                 重标「哪个位算 home」,<strong>只换身份标签不搬块</strong>。</>}
               en={<><strong><TeX src={R`T_{\text{home}}`} /> (right-mult by <TeX src="U" />, pre-AUF)</strong>: a U on the solved state =
                 relabelling which slot is “home”, <strong>renaming identities without moving anything</strong>.</>}
@@ -162,38 +162,50 @@ export default function LsllMathPage() {
 
         {/* ── §3 single quotient ── */}
         <section className="lmath-section">
-          <h2 className="lmath-h2">{t('三、只商起手 AUF、不商收尾(中间量)', '3. Quotient by pre-AUF only (the intermediate count)')}</h2>
+          <h2 className="lmath-h2">{t('三、只商单侧 AUF(pre 或 post 皆可)', '3. Quotient by one AUF (pre or post)')}</h2>
+          <div className="lmath-note">
+            <T
+              zh={<><strong>「商」在魔方里是什么?</strong>把「我们认作同一 case」的态捏成一个点来数。起手 / 收尾多转一下 U
+                不产生新的公式需求,这些态属于同一条<strong>轨道</strong>;商空间(轨道集 <TeX src={R`G\backslash X`} />)的大小 =
+                真正不同的 case 数。一句话:<strong>数 case = 数轨道,不是数态</strong>。</>}
+              en={<><strong>What does “quotient” mean here?</strong> It collapses the states we agree are the same case into one point.
+                A stray U before or after needs no new algorithm, so those states share one <strong>orbit</strong>; the size of the
+                quotient (the orbit set <TeX src={R`G\backslash X`} />) is the number of genuinely distinct cases. In short:
+                <strong> counting cases = counting orbits, not states</strong>.</>}
+            />
+          </div>
           <p className="lmath-body">
             <T
-              zh={<>只用<strong>单个 <TeX src={R`\mathbb{Z}_4`} /></strong> 去商。关键:这个作用<strong>自由</strong>(无不动点)。</>}
-              en={<>Quotient by a <strong>single <TeX src={R`\mathbb{Z}_4`} /></strong>. Key fact: this action is <strong>free</strong> (no fixed points).</>}
+              zh={<>先只用<strong>单个 <TeX src={R`\mathbb{Z}_4`} /></strong> 去商。关键:<strong>无论取哪一侧</strong>,这个作用都<strong>自由</strong>(无不动点)。</>}
+              en={<>Quotient by a <strong>single <TeX src={R`\mathbb{Z}_4`} /></strong>. Key fact: <strong>whichever side we pick</strong>, the action is <strong>free</strong> (no fixed points).</>}
             />
           </p>
           <ul className="lmath-body">
             <li><T
-              zh={<>对 <TeX src={R`T_{\text{phys}}^{a}`} />(<TeX src={R`a\neq0`} />):4 个顶角位永远装 4 个<strong>互异</strong>的角块;
+              zh={<><strong>post-AUF</strong> <TeX src={R`T_{\text{phys}}^{a}`} />(<TeX src={R`a\neq0`} />):4 个顶角位永远装 4 个<strong>互异</strong>的角块;
                 不动点要求位置 <TeX src="p" /> 与 <TeX src={R`p+a`} /> 装同一块 —— 不可能。</>}
-              en={<>For <TeX src={R`T_{\text{phys}}^{a}`} /> (<TeX src={R`a\neq0`} />): the 4 top corner slots always hold 4 <strong>distinct</strong>
+              en={<><strong>post-AUF</strong> <TeX src={R`T_{\text{phys}}^{a}`} /> (<TeX src={R`a\neq0`} />): the 4 top corner slots always hold 4 <strong>distinct</strong>
                 corners; a fixed point needs positions <TeX src="p" /> and <TeX src={R`p+a`} /> to hold the same piece — impossible.</>}
             /></li>
             <li><T
-              zh={<>对 <TeX src={R`T_{\text{home}}^{b}`} />(<TeX src={R`b\neq0`} />):不动点要求每个顶块标签 <TeX src="i" /> 满足
-                <TeX src={R`i=i+b`} />;顶层里始终坐着真顶层块(标签 0–3),逼出 <TeX src={R`b=0`} />,矛盾。</>}
-              en={<>For <TeX src={R`T_{\text{home}}^{b}`} /> (<TeX src={R`b\neq0`} />): a fixed point needs every top label <TeX src="i" /> to satisfy
+              zh={<><strong>pre-AUF</strong> <TeX src={R`T_{\text{home}}^{b}`} />(<TeX src={R`b\neq0`} />):不动点要求每个顶块标签 <TeX src="i" /> 满足
+                <TeX src={R`\;i=i+b`} />;顶层里始终坐着真顶层块(标签 0–3),逼出 <TeX src={R`b=0`} />,矛盾。</>}
+              en={<><strong>pre-AUF</strong> <TeX src={R`T_{\text{home}}^{b}`} /> (<TeX src={R`b\neq0`} />): a fixed point needs every top label <TeX src="i" /> to satisfy
                 <TeX src={R`\;i=i+b`} />; genuine top-layer pieces (labels 0–3) sit on top, forcing <TeX src={R`b=0`} /> — contradiction.</>}
             /></li>
           </ul>
           <p className="lmath-body">
-            <T zh={<>自由作用 ⇒ 每条轨道恰 4 元,轨道数 = 总数 ÷ 4:</>}
-               en={<>A free action ⇒ every orbit has exactly 4 elements, so the count is the total ÷ 4:</>} />
+            <T zh={<>自由作用 ⇒ 每条轨道恰 4 元,轨道数 = 总数 ÷ 4。两侧各算一遍,数值相同:</>}
+               en={<>A free action ⇒ every orbit has exactly 4 elements, so the count is the total ÷ 4. Do it on each side — same number:</>} />
           </p>
-          <Block src={R`\#\{\text{pre-AUF only}\}=\frac{N_{\text{raw}}}{4}=\frac{9{,}331{,}200}{4}=2{,}332{,}800 .`} />
+          <Block src={R`\#\{\text{pre-AUF only}\}=\#\{\text{post-AUF only}\}=\frac{N_{\text{raw}}}{4}=\frac{9{,}331{,}200}{4}=2{,}332{,}800 .`} />
           <div className="lmath-note">
             <T
-              zh={<><strong>只商收尾 AUF 也是 2,332,800</strong>(同样自由)。两个单侧商相等不是巧合:不动点只在
-                <strong>两个 AUF 同时作用</strong>、且只在「槽对已归位」的态里出现 —— 见下节。</>}
-              en={<><strong>Quotienting by post-AUF alone also gives 2,332,800</strong> (also free). The two single-sided counts agree
-                because fixed points appear only when <strong>both AUFs act together</strong>, and only among slot-solved states — see below.</>}
+              zh={<>两个单侧商相等不是巧合,<strong>但这不等于「双侧就再 ÷4」</strong>:不动点只在 <strong>pre-AUF 与 post-AUF 同时作用</strong>、
+                且只在「槽对已归位」的态里出现,所以天真地 <TeX src={R`\tfrac{2{,}332{,}800}{4}=583{,}200`} /> 会差一点点 —— 见下节 Burnside。</>}
+              en={<>The two single-sided counts agreeing is no accident, <strong>but it does not mean “both sides = ÷4 again”</strong>: fixed points
+                appear only when <strong>pre-AUF and post-AUF act together</strong>, and only among slot-solved states, so the naïve{' '}
+                <TeX src={R`\tfrac{2{,}332{,}800}{4}=583{,}200`} /> is slightly off — see Burnside below.</>}
             />
           </div>
         </section>
@@ -314,7 +326,7 @@ export default function LsllMathPage() {
           </div>
           <p className="lmath-body">
             <T
-              zh={<><TeX src={R`15{,}552=62{,}208/4`} />:大类吸收起手 AUF 后,类内就是「末层 62,208 态 ÷ 收尾 AUF」。42 类 =
+              zh={<><TeX src={R`15{,}552=62{,}208/4`} />:大类吸收 pre-AUF 后,类内就是「末层 62,208 态 ÷ post-AUF」。42 类 =
                 24(角棱都在顶,<TeX src={R`d\!\in\!\{0,1,2,3\}\times c\times e`} />)+ 6 + 6 + 6(槽对归位 <TeX src={R`c\times e`} />)。</>}
               en={<><TeX src={R`15{,}552=62{,}208/4`} />: once a family absorbs the pre-AUF, inside it is “62,208 last-layer states ÷ post-AUF”.
                 42 = 24 (both on top, <TeX src={R`d\!\in\!\{0,1,2,3\}\times c\times e`} />) + 6 + 6 + 6 (slot-solved <TeX src={R`c\times e`} />).</>}

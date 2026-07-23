@@ -7,7 +7,7 @@
  */
 import { useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Dumbbell } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr, T } from '@/i18n/tr';
 import { ClearButton } from '@/components/ClearButton';
@@ -52,6 +52,9 @@ export default function LsllHubPage() {
         <h1 className="alg-cat-title">
           <span>LSLL <span className="alg-cat-count">{TOTAL_CASES.toLocaleString()} {tr({ zh: '个', en: 'cases' })}</span></span>
         </h1>
+        <Link href="/alg/lsll/train" className="lsll-train-btn" prefetch={false}>
+          <Dumbbell size={15} /> {tr({ zh: '训练', en: 'Train' })}
+        </Link>
       </div>
 
       <p className="lsll-intro">

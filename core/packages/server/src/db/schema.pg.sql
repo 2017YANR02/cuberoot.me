@@ -460,6 +460,7 @@ CREATE TABLE page_notices (
   path         TEXT         NOT NULL UNIQUE,
   level        TEXT         NOT NULL DEFAULT 'info' CHECK (level IN ('info','warning','maintenance')),
   icon         TEXT         NOT NULL DEFAULT '',  -- 可选 lucide 图标 key(空=按 level 回退);见 PageNoticeBar ICONS
+  color        TEXT         NOT NULL DEFAULT '',  -- 可选横幅颜色 key(空=按 level 回退);见 PageNoticeBar COLORS
   body_en      TEXT         NOT NULL DEFAULT '',
   body_zh      TEXT         NOT NULL DEFAULT '',
   enabled      BOOLEAN      NOT NULL DEFAULT TRUE,

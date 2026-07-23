@@ -13,6 +13,97 @@
   color: var(--foreground);
 }
 
+/* 右上角训练入口(推到 header 行尾) */
+.lsll-train-btn {
+  margin-left: auto;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-foreground);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none !important;
+  white-space: nowrap;
+}
+.lsll-train-btn:hover { background: color-mix(in srgb, var(--accent) 88%, black); }
+
+/* ---- /alg/lsll/train 训练器 ---- */
+.lsll-train-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0 0 16px;
+}
+.lsll-train-scope {
+  width: fit-content;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--input);
+  background: var(--card);
+  color: var(--foreground);
+  font-size: 13.5px;
+}
+.lsll-train-next,
+.lsll-train-reveal {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-default);
+  background: var(--card);
+  color: var(--foreground);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.lsll-train-next { background: var(--accent); color: var(--accent-foreground); border-color: transparent; }
+.lsll-train-next:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 88%, black); }
+.lsll-train-reveal:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.lsll-train-next:disabled,
+.lsll-train-reveal:disabled { opacity: 0.5; cursor: default; }
+
+.lsll-train-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.lsll-train-body { flex: 1 1 300px; min-width: 240px; }
+.lsll-train-label {
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint-foreground);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.lsll-train-scramble {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  color: var(--foreground);
+  line-height: 1.6;
+  word-break: break-word;
+}
+.lsll-train-answer { margin-top: 18px; }
+.lsll-train-refs { margin-top: 16px; }
+.lsll-train-none {
+  font-size: 13px;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+}
+.lsll-train-caselink {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--accent);
+}
+
 .lsll-locate {
   display: flex;
   align-items: center;

@@ -4,7 +4,7 @@
 //   - 访客:看到匹配当前页的 enabled 通知,可关闭(内容变更后重新出现)。
 //   - 管理员:任意页顶部直接 添加 / 编辑 / 删除本页通知,作用路径默认当前页、可改 /* 覆盖全站。
 // 数据走 /v1/page-notices(公开读 + admin 写),鉴权 authHeaders(WCA OAuth / X-Admin-Key)。
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode, type CSSProperties } from 'react';
 import { usePathname } from 'next/navigation';
 import {
   Info, AlertTriangle, Wrench, X, Pencil, Plus, Trash2, Laptop, Globe,
@@ -41,6 +41,13 @@ function iconFor(n: { icon?: string; level: NoticeLevel }): typeof Info {
   return (n.icon && ICONS[n.icon]) || LEVEL_ICON[n.level];
 }
 
+// 可选横幅调色板(存 key 到 notice.color;空 = 按 level 回退)。每个 key 对应 CSS 变量
+// --pn-c-<key>(定义在 PageNoticeBar.css,theme-aware),渲染时 data-color 选中即改 --pn-color。
+// key 列表与 server 校验白名单保持一致。
+const COLOR_KEYS = ['blue', 'green', 'amber', 'red', 'terracotta', 'purple', 'cyan', 'pink'];
+const isColor = (c: string | undefined): c is string => !!c && COLOR_KEYS.includes(c);
+const colorVar = (key: string) => `var(--pn-c-${key})`;
+
 const DISMISS_KEY = 'pn-dismissed';
 
 // 管理员本地 / 线上环境切换目标 origin(切换时保留当前 path+query+hash)。
@@ -76,27 +83,28 @@ function EnvSwitch() {
   );
 }
 
-// 常用模板:点一下填 级别 + 中英文,填完仍可自由改。
-const PRESETS: { label: { en: string; zh: string }; level: NoticeLevel; icon: string; bodyZh: string; bodyEn: string }[] = [
-  { label: { en: 'Maintenance', zh: '维护中' }, level: 'maintenance', icon: 'wrench',
+// 常用模板:点一下填 级别 + 图标 + 颜色 + 中英文,填完仍可自由改。
+// 颜色刻意七个各不相同(红/蓝/琥珀/青/紫/赤陶/绿),让通知一眼能按语义区分,不再清一色蓝。
+const PRESETS: { label: { en: string; zh: string }; level: NoticeLevel; icon: string; color: string; bodyZh: string; bodyEn: string }[] = [
+  { label: { en: 'Maintenance', zh: '维护中' }, level: 'maintenance', icon: 'wrench', color: 'red',
     bodyZh: '本页正在维护,稍后恢复,给你带来不便敬请谅解。',
     bodyEn: 'This page is under maintenance and will be back shortly. Sorry for the inconvenience.' },
-  { label: { en: 'Work in progress', zh: '开发中' }, level: 'info', icon: 'hammer',
+  { label: { en: 'Work in progress', zh: '开发中' }, level: 'info', icon: 'hammer', color: 'blue',
     bodyZh: '本页仍在开发中,功能尚不完整,后续会持续完善。',
     bodyEn: 'This page is still under development; some features are incomplete and will keep improving.' },
-  { label: { en: 'Known issue', zh: '已知问题' }, level: 'warning', icon: 'bug',
+  { label: { en: 'Known issue', zh: '已知问题' }, level: 'warning', icon: 'bug', color: 'amber',
     bodyZh: '本页存在已知问题,我们正在修复,感谢反馈与耐心。',
     bodyEn: 'This page has a known issue we are working to fix. Thanks for your patience.' },
-  { label: { en: 'Data updating', zh: '数据更新中' }, level: 'info', icon: 'refresh',
+  { label: { en: 'Data updating', zh: '数据更新中' }, level: 'info', icon: 'refresh', color: 'cyan',
     bodyZh: '数据正在更新,部分内容可能暂不准确,稍后刷新即可。',
     bodyEn: 'Data is currently updating; some content may be temporarily inaccurate. Please check back soon.' },
-  { label: { en: 'Experimental', zh: '实验性功能' }, level: 'warning', icon: 'flask',
+  { label: { en: 'Experimental', zh: '实验性功能' }, level: 'warning', icon: 'flask', color: 'purple',
     bodyZh: '实验性功能,行为可能随时变化,请谨慎使用。',
     bodyEn: 'Experimental feature — behavior may change at any time. Use with caution.' },
-  { label: { en: 'Beta / preview', zh: '预览版' }, level: 'info', icon: 'eye',
+  { label: { en: 'Beta / preview', zh: '预览版' }, level: 'info', icon: 'eye', color: 'terracotta',
     bodyZh: '本页为预览版,仅供体验,数据与样式后续可能调整。',
     bodyEn: 'This is a preview build for early access; data and layout may still change.' },
-  { label: { en: 'New feature', zh: '新功能' }, level: 'info', icon: 'sparkles',
+  { label: { en: 'New feature', zh: '新功能' }, level: 'info', icon: 'sparkles', color: 'green',
     bodyZh: '本页上线了新功能,欢迎体验。',
     bodyEn: 'A new feature just landed on this page — give it a try.' },
 ];
@@ -132,6 +140,7 @@ interface FormState {
   path: string;
   level: NoticeLevel;
   icon: string;        // '' = 按 level 回退
+  color: string;       // '' = 按 level 回退
   bodyZh: string;
   bodyEn: string;
   enabled: boolean;
@@ -187,13 +196,13 @@ export default function PageNoticeBar() {
       existing = (await fetchAllPageNotices()).find((n) => n.path === key);
     } catch { /* 拿不到就当全新 */ }
     setForm(existing
-      ? { id: existing.id, path: existing.path, level: existing.level, icon: existing.icon ?? '', bodyZh: existing.bodyZh, bodyEn: existing.bodyEn, enabled: existing.enabled, dismissible: existing.dismissible }
-      : { id: null, path: key, level: 'info', icon: '', bodyZh: '', bodyEn: '', enabled: true, dismissible: true });
+      ? { id: existing.id, path: existing.path, level: existing.level, icon: existing.icon ?? '', color: existing.color ?? '', bodyZh: existing.bodyZh, bodyEn: existing.bodyEn, enabled: existing.enabled, dismissible: existing.dismissible }
+      : { id: null, path: key, level: 'info', icon: '', color: '', bodyZh: '', bodyEn: '', enabled: true, dismissible: true });
   };
 
   const openEdit = (n: PageNotice) => {
     setErr(null);
-    setForm({ id: n.id, path: n.path, level: n.level, icon: n.icon ?? '', bodyZh: n.bodyZh, bodyEn: n.bodyEn, enabled: n.enabled, dismissible: n.dismissible });
+    setForm({ id: n.id, path: n.path, level: n.level, icon: n.icon ?? '', color: n.color ?? '', bodyZh: n.bodyZh, bodyEn: n.bodyEn, enabled: n.enabled, dismissible: n.dismissible });
   };
 
   const save = async () => {
@@ -205,6 +214,7 @@ export default function PageNoticeBar() {
         path: form.path.trim(),
         level: form.level,
         icon: form.icon,
+        color: form.color,
         bodyZh: form.bodyZh.trim(),
         bodyEn: form.bodyEn.trim(),
         enabled: form.enabled,
@@ -266,7 +276,8 @@ export default function PageNoticeBar() {
       {visible.map((n) => {
         const Icon = iconFor(n);
         return (
-          <div key={n.id} className="page-notice" data-level={n.level} role="status">
+          <div key={n.id} className="page-notice" data-level={n.level}
+            data-color={isColor(n.color) ? n.color : undefined} role="status">
             {isAdmin && (
               <button type="button" className="page-notice-btn page-notice-edit" onClick={() => openEdit(n)}
                 aria-label={tr({ en: 'Edit notice', zh: '编辑通知' })}>
@@ -351,6 +362,25 @@ export default function PageNoticeBar() {
             </div>
           </div>
 
+          <div className="page-notice-field">
+            <span><T en="Banner color" zh="横幅颜色" /></span>
+            <div className="page-notice-colorpicker">
+              <button type="button"
+                className={`page-notice-swatch is-auto${form.color === '' ? ' is-active' : ''}`}
+                onClick={() => setForm({ ...form, color: '' })}
+                title={tr({ en: 'Auto (by level)', zh: '自动(按级别)' })}
+                aria-label={tr({ en: 'Auto color by level', zh: '按级别自动配色' })}
+                aria-pressed={form.color === ''} />
+              {COLOR_KEYS.map((c) => (
+                <button key={c} type="button"
+                  className={`page-notice-swatch${form.color === c ? ' is-active' : ''}`}
+                  style={{ '--pn-swatch-c': colorVar(c) } as CSSProperties}
+                  onClick={() => setForm({ ...form, color: c })}
+                  title={c} aria-label={c} aria-pressed={form.color === c} />
+              ))}
+            </div>
+          </div>
+
           <p className="page-notice-hint">
             <T
               en="Enabled: whether this notice shows at all (off = saved but hidden from everyone). Dismissible: whether visitors can click × to close it (off = always shown, cannot be dismissed)."
@@ -364,7 +394,8 @@ export default function PageNoticeBar() {
                 const PIcon = ICONS[p.icon] ?? LEVEL_ICON[p.level];
                 return (
                   <button key={p.label.en} type="button" className="page-notice-preset"
-                    onClick={() => setForm({ ...form, level: p.level, icon: p.icon, bodyZh: p.bodyZh, bodyEn: p.bodyEn })}>
+                    style={{ '--pn-preset-c': colorVar(p.color) } as CSSProperties}
+                    onClick={() => setForm({ ...form, level: p.level, icon: p.icon, color: p.color, bodyZh: p.bodyZh, bodyEn: p.bodyEn })}>
                     <PIcon size={13} aria-hidden />
                     {tr(p.label)}
                   </button>
