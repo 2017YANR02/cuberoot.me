@@ -122,7 +122,9 @@ export interface SchematicArrow {
   p3?: [number, number, number];
   /** 线 + 箭头色;默认黑。 */
   color?: string;
-  /** 线宽(SVG px);默认 8。 */
+  /** 线宽(**世界单位**;导出时按拼图中心深度的透视比例统一换算 px)。vc 的箭头
+   *  线宽随立方体几何等比(0.12/N × 边长),桥按 0.12×格距 算好传入;固定 px 会在
+   *  交换态小框视口下相对爆粗(2026-07-22)。默认 8。 */
   width?: number;
 }
 
@@ -423,6 +425,13 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
   let arrowsOut = '';
   const arrowPads: { x: number; y: number; pad: number }[] = [];
   if (opts.arrows?.length) {
+    // 线宽换算:vc 把箭头线宽/头尺寸定在**投影后 2D 单位**里(0.12/N、0.033/N,单位=
+    // 立方体边长;其 project(p,dist) 在 z=dist 即立方体中心深度处比例恰为 1)。引擎路
+    // 等价:width 取世界单位,用拼图中心(世界原点)深度处的透视比例统一换算 px ——
+    // 与 vc 同为全程单一比例,不随端点深度摆动;也因此与视口尺寸解耦(交换态下
+    // world 真调到左上小框尺寸,固定 px 线宽曾相对爆粗数倍,2026-07-22)。
+    const zc = Math.abs(v.set(0, 0, 0).applyMatrix4(viewMat).z);
+    const pxPerWorld = zc > 1e-6 ? (projMat.elements[5] * H) / (2 * zc) : 1;
     const markerIds = new Map<string, string>();
     for (const a of opts.arrows) {
       const s1 = project(a.p1[0], a.p1[1], a.p1[2]);
@@ -431,13 +440,17 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
       // 曲线(visualcube s3/influence):控制点也投影;投影失败(出画)退化直线。
       const s3 = a.p3 ? project(a.p3[0], a.p3[1], a.p3[2]) : null;
       const color = a.color ?? '#000000';
-      const aw = a.width ?? 8;
+      const aw = (a.width ?? 8) * pxPerWorld;
       let id = markerIds.get(color);
       if (!id) {
         id = `ah${markerIds.size}`;
         markerIds.set(color, id);
-        defs += `<marker id="${id}" markerWidth="4" markerHeight="4" refX="3.2" refY="2" orient="auto">`
-          + `<path d="M0 0L4 2L0 4Z" fill="${color}"/></marker>`;
+        // 箭头头 = vc renderArrow 的三角(`M 5.77,0 L -2.88,5 L -2.88,-5`,scale
+        // 0.033/N)换算到 markerUnits=strokeWidth 单位(÷ 线宽系数 0.12/N → ×0.275):
+        // 尖端伸出端点 1.5868、底边缩进 0.792、半宽 1.375;refX 让端点落在与 vc
+        // translate(p2) 同一锚点。
+        defs += `<marker id="${id}" markerWidth="2.3788" markerHeight="2.75" refX="0.792" refY="1.375" orient="auto">`
+          + `<path d="M 2.3788 1.375 L 0 0 L 0 2.75 Z" fill="${color}"/></marker>`;
       }
       // 二次贝塞尔 `M p1 Q p3 p2` = vc renderArrow 的 path 同式;marker orient=auto
       // 自动取末端切线(p3→p2)定箭头朝向,与 vc 手算 rotation 语义一致。
@@ -446,8 +459,8 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
           + ` fill="none" stroke="${color}" stroke-width="${fmt(aw)}" stroke-linecap="round" marker-end="url(#${id})"/>`
         : `<line x1="${fmt(s1[0])}" y1="${fmt(s1[1])}" x2="${fmt(s2[0])}" y2="${fmt(s2[1])}"`
           + ` stroke="${color}" stroke-width="${fmt(aw)}" stroke-linecap="round" marker-end="url(#${id})"/>`;
-      // 箭头三角伸出线端 ~0.8×线宽、侧向 ±2×线宽 → 取景留 2.5×线宽余量;二次曲线
-      // 全程落在 {p1,p3,p2} 凸包内 → 控制点一并计入即覆盖曲线包围盒。
+      // 箭头三角伸出线端 ~1.59×线宽、侧向 ±1.375×线宽 → 取景留 2.5×线宽余量;二次
+      // 曲线全程落在 {p1,p3,p2} 凸包内 → 控制点一并计入即覆盖曲线包围盒。
       for (const s of s3 ? [s1, s2, s3] : [s1, s2]) arrowPads.push({ x: s[0], y: s[1], pad: aw * 2.5 });
     }
     if (defs) defs = `<defs>${defs}</defs>`;
