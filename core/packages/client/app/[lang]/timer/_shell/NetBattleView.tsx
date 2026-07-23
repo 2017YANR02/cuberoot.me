@@ -16,11 +16,16 @@
  *
  * 身份:无需登录,随机 playerId;sessionStorage 存 {code,pid,name},刷新页面原地
  * 恢复身份(不重复加入);昵称记 localStorage,登录用户默认用 WCA 姓名。
+ *
+ * 房主:建房者是首任房主,可转让、可踢人、可改房设(授权在服务端,按钮只是装饰)。
+ * 房设「同时开始计时」开启后,本轮在线未交卷的人(≥2)全部点过准备,服务端落一个
+ * start_at,各端按时钟偏移换算到本机同一时刻,倒计时归零 → timer.startNow() 同时起表
+ * (倒计时即观察,不再走 inspection)。
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useQueryState } from 'nuqs';
-import { Copy, Check, LogOut, Swords, Trophy, RotateCcw, BarChart3, X } from 'lucide-react';
+import { Copy, Check, LogOut, Swords, Trophy, RotateCcw, BarChart3, X, Crown, UserMinus } from 'lucide-react';
 
 import TimingSurface from './TimingSurface';
 import { useTimer, type SolveResult } from '../_lib/useTimer';
@@ -48,19 +53,24 @@ import { useTranslation } from 'react-i18next';
 import {
   createNetRoom, joinNetRoom, getNetRoom, postNetStatus, postNetResult,
   nextNetRound, leaveNetRoom, postNetEvent, ensureNetScramble,
+  postNetSyncStart, postNetAdmin, postNetKick,
   type NetRoomState, type NetPenalty, type NetResult, type NetIdentity,
 } from '@/lib/battle-room-api';
 import {
   effectiveNetMs, roundWinners, sortedNetPlayers, isNetOnline, blendClockOffset,
   isRoundComplete, pendingCount, NET_EVENTS, netEventToSelectorId, selectorIdToNetEvent,
   playerEventOf, myScramble, playerStats, playerTimeline, roundViews, netErrorMessage,
+  isNetAdmin, syncGate,
 } from '@/lib/battle-room-logic';
+import BoolToggle from '@/components/BoolToggle';
 
 import './shell.css';
 import './net.css';
 
 const LS_NAME = 'net_battle_name';
 const SS_KEY = 'net_battle_session';
+/** 生成的房间码固定 5 位;填满即自动加入。 */
+const JOIN_CODE_LEN = 5;
 
 interface SavedSession { code: string; pid: string; name: string }
 
@@ -97,6 +107,7 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [showStats, setShowStats] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
   const roomRef = useRef(room); roomRef.current = room;
   const pidRef = useRef(pid); pidRef.current = pid;
   /** 服务器时钟 - 本机时钟(EMA;对手滚动读数换算用)。 */
@@ -142,6 +153,16 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
   const canAdvance = !!room && !!pid && !!myResult;
   const canSolveRef = useRef(canSolve); canSolveRef.current = canSolve;
   const canAdvanceRef = useRef(canAdvance && complete); canAdvanceRef.current = canAdvance && complete;
+
+  // ── 房主 / 同时开始 ─────────────────────────────────────────
+  const iAmAdmin = !!room && isNetAdmin(room, pid);
+  const gate = room
+    ? syncGate(room, pid)
+    : { gated: false, ready: false, waiting: 0 };
+  const startAt = room?.startAt ?? null;
+  /** 倒计时剩余毫秒(仅倒计时期间非 null,驱动读数显示 3/2/1)。 */
+  const [countdownMs, setCountdownMs] = useState<number | null>(null);
+  const gateRef = useRef(gate.gated); gateRef.current = gate.gated;
 
   const solvingRoundRef = useRef(0);
   const advBusyRef = useRef(false);
@@ -202,9 +223,44 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
     else if (timer.phase === 'running') void postNetStatus(r.code, id, 'solving').catch(() => {});
   }, [timer.phase]);
 
+  // ── 同时开始:准备开关 + 倒计时归零同时起表 ────────────────────
+  const { reset: timerReset, startNow: timerStartNow } = timer;
+
+  /** 切换自己的「准备」状态;最后一个准备的人这一跳会带回 startAt(服务端落的倒计时起点)。 */
+  const toggleReady = useCallback(() => {
+    const r = roomRef.current, id = pidRef.current;
+    if (!r || !id) return;
+    const next = r.players[id]?.ph === 'ready' ? 'idle' : 'ready';
+    void postNetStatus(r.code, id, next).then(applyState).catch(() => {});
+  }, [applyState]);
+
+  // 倒计时:startAt(服务器时钟)换算到本机(减去时钟偏移),归零即 startNow 同时起表。
+  // 每个 startAt 只消费一次;迟到超过 3s(刚切回页面/刚进房)不硬起表,免得读数一上来就是几十秒。
+  const autoStartedRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (startAt === null) { setCountdownMs(null); return; }
+    if (autoStartedRef.current === startAt) return;
+    let iv = 0;
+    const tick = () => {
+      const left = startAt - (Date.now() + (offsetRef.current ?? 0));
+      if (left > 0) { setCountdownMs(left); return; }
+      window.clearInterval(iv);
+      setCountdownMs(null);
+      if (autoStartedRef.current === startAt) return;
+      autoStartedRef.current = startAt;
+      const late = -left;
+      if (late > 3000) return;
+      const r = roomRef.current, id = pidRef.current;
+      if (!r || !id || r.results[String(r.round)]?.[id]) return; // 已交卷的人不跟着起表
+      timerStartNow(late);
+    };
+    tick();
+    iv = window.setInterval(tick, 50);
+    return () => window.clearInterval(iv);
+  }, [startAt, timerStartNow]);
+
   // 新一轮到达(自己开的或轮询收到):计时器空闲/停止时归零;计时中不打断
   const prevRoundRef = useRef<number | null>(null);
-  const { reset: timerReset } = timer;
   useEffect(() => {
     if (!room) { prevRoundRef.current = null; return; }
     if (prevRoundRef.current !== null && room.round > prevRoundRef.current) {
@@ -228,7 +284,13 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
     const tick = async () => {
       try {
         const st = await getNetRoom(code, pid);
-        if (!stopped) applyState(st);
+        if (stopped) return;
+        // 自己已不在玩家表里 = 被房主踢了(房间还在,只是没我了)
+        if (!st.players[pid]) {
+          handleRoomGone(tr({ zh: '你已被房主移出房间', en: 'The host removed you from the room' }));
+          return;
+        }
+        applyState(st);
       } catch (e) {
         if (!stopped && (e as Error).message === 'room not found') {
           handleRoomGone(tr({ zh: '房间已解散或过期', en: 'Room was closed or expired' }));
@@ -306,6 +368,19 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
       .finally(() => setBusy(false));
   }, [busy, adopt, setRoomParam]);
 
+  // 房间码填满(5 位)即自动加入,无需按钮;同一码只试一次(改码 / 失败后可再试)。
+  // 只在「房间码」变化时触发(身份走 ref,不进依赖),避免访客还在逐字打名字时就
+  // 拿半截昵称抢先加入;身份未就绪(访客没填名)时不自动加,回车可兜底。
+  const autoJoinedRef = useRef('');
+  useEffect(() => {
+    const c = joinCode.trim().toUpperCase();
+    if (c.length !== JOIN_CODE_LEN || busy || !identityRef.current) return;
+    if (autoJoinedRef.current === c) return;
+    autoJoinedRef.current = c;
+    doJoin(c);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [joinCode, busy, doJoin]);
+
   // 邀请链接 ?room=CODE 自动进房:先试 sessionStorage 同码恢复身份(刷新不重复加入),
   // 只有「刷新同一房间」(sessionStorage 有本房身份)才自动恢复、不重复加入;
   // 其余情况(别人点邀请链接首次进来)一律落加入页,把房间码预填好,昵称也从
@@ -337,6 +412,27 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
     })();
   }, [roomParam, room, busy, applyState]);
 
+  // ── 房主操作(授权在服务端;这里只管发请求 + 同步状态)────────────
+  const setSyncStart = useCallback((v: boolean) => {
+    const r = roomRef.current, id = pidRef.current;
+    if (!r || !id) return;
+    void postNetSyncStart(r.code, id, v).then(applyState).catch((e: Error) => setErr(tr(netErrorMessage(e))));
+  }, [applyState]);
+
+  const transferAdmin = useCallback((target: string) => {
+    const r = roomRef.current, id = pidRef.current;
+    if (!r || !id) return;
+    void postNetAdmin(r.code, id, target)
+      .then((st) => { applyState(st); setShowAdmin(false); })
+      .catch((e: Error) => setErr(tr(netErrorMessage(e))));
+  }, [applyState]);
+
+  const kickPlayer = useCallback((target: string) => {
+    const r = roomRef.current, id = pidRef.current;
+    if (!r || !id) return;
+    void postNetKick(r.code, id, target).then(applyState).catch((e: Error) => setErr(tr(netErrorMessage(e))));
+  }, [applyState]);
+
   const doLeave = useCallback(() => {
     const r = roomRef.current, id = pidRef.current;
     setRoom(null); setPid(null); setErr(null);
@@ -356,9 +452,11 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
       if (canAdvanceRef.current) advance();
       return;
     }
+    // 房间要求同时起表且还没进倒计时:按压 = 切换「准备」,不直接起表
+    if (gateRef.current) { toggleReady(); return; }
     timer.onPressDown();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [advance]);
+  }, [advance, toggleReady]);
   const pressDownRef = useRef(pressDown); pressDownRef.current = pressDown;
   const pressUpRef = useRef(timer.onPressUp); pressUpRef.current = timer.onPressUp;
 
@@ -448,7 +546,11 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
   const inspectionLimit = settings.inspection > 0 ? settings.inspection : 15;
   const myPenalty: NetPenalty = myResult?.p ?? 'ok';
 
+  /** 同时起表倒计时正在走(且我还没交卷)→ 读数位显示 3/2/1。 */
+  const showCountdown = countdownMs !== null && !myResult;
+
   const colorClass = useMemo(() => {
+    if (showCountdown) return 'inspection';
     if (timer.phase === 'holding') return 'holding';
     if (timer.phase === 'ready') return 'ready';
     if (timer.phase === 'running') return 'running';
@@ -462,9 +564,10 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
     }
     if (myResult && myPenalty === 'dnf') return 'dnf';
     return '';
-  }, [timer.phase, timer.inspectionDisplayMs, inspectionLimit, myResult, myPenalty]);
+  }, [showCountdown, timer.phase, timer.inspectionDisplayMs, inspectionLimit, myResult, myPenalty]);
 
   const digitsText = useMemo(() => {
+    if (showCountdown) return String(Math.max(1, Math.ceil((countdownMs ?? 0) / 1000)));
     if (timer.phase === 'inspecting') {
       const remaining = Math.max(0, Math.ceil((inspectionLimit * 1000 - timer.inspectionDisplayMs) / 1000));
       if (timer.inspectionDisplayMs > inspectionLimit * 1000 + 2000) return 'DNF';
@@ -481,7 +584,7 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
       return formatMs(myResult.t, settings.precision);
     }
     return formatMs(timer.displayMs, settings.precision);
-  }, [timer.phase, timer.inspectionDisplayMs, timer.displayMs, inspectionLimit, myResult, myPenalty, settings.hideTime, settings.precision, settings.runningPrecision]);
+  }, [showCountdown, countdownMs, timer.phase, timer.inspectionDisplayMs, timer.displayMs, inspectionLimit, myResult, myPenalty, settings.hideTime, settings.precision, settings.runningPrecision]);
 
   const fontSize = `calc(clamp(48px, 10vw, 132px) * ${settings.timerFontScale})`;
 
@@ -515,6 +618,11 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
             {tr({ zh: `第 ${room.round} 轮`, en: `Round ${room.round}` })}
           </span>
         )}
+        {room?.syncStart && (
+          <span className="net-sync-chip" title={tr({ zh: '本房要求全员同时起表', en: 'This room requires a synchronized start' })}>
+            {tr({ zh: '同时起表', en: 'Sync start' })}
+          </span>
+        )}
       </div>
       <div className="shell-topbar-right">
         {room && (
@@ -528,6 +636,17 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
             >
               <BarChart3 size={14} />
             </button>
+            {iAmAdmin && (
+              <button
+                type="button"
+                className="tb-btn net-admin-btn"
+                onClick={() => setShowAdmin(true)}
+                title={tr({ zh: '房间管理', en: 'Room settings' })}
+                aria-label={tr({ zh: '房间管理', en: 'Room settings' })}
+              >
+                <Crown size={14} />
+              </button>
+            )}
             <button
               type="button"
               className="net-code-badge"
@@ -572,7 +691,6 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
           onChange={setPicked}
           onQueryChange={setName}
           isZh={isZh}
-          placeholder={tr({ zh: '搜姓名 / WCA ID,或直接输入昵称', en: 'Search name / WCA ID, or type a nickname' })}
         />
       )}
     </div>
@@ -693,24 +811,17 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
               <div className="net-lobby-or">{tr({ zh: '有房间码?', en: 'Have a code?' })}</div>
 
               <div className="net-join-row">
+                {/* 填满 5 位即自动加入,无「加入」按钮 */}
                 <input
                   className="net-input net-input-code"
                   data-no-timer
                   value={joinCode}
-                  maxLength={12}
+                  maxLength={JOIN_CODE_LEN}
                   placeholder={tr({ zh: '房间码', en: 'Room code' })}
                   onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                   onKeyDown={(e) => { if (e.key === 'Enter') doJoin(joinCode); }}
                   aria-label={tr({ zh: '房间码', en: 'Room code' })}
                 />
-                <button
-                  type="button"
-                  className="net-btn"
-                  onClick={() => doJoin(joinCode)}
-                  disabled={busy || !joinCode.trim() || !identity}
-                >
-                  {tr({ zh: '加入', en: 'Join' })}
-                </button>
               </div>
 
               {err && <div className="net-err">{err}</div>}
@@ -765,6 +876,8 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
             );
           } else if (p.ph === 'inspecting') {
             statusNode = <span className="net-p-status is-live">{tr({ zh: '观察中', en: 'inspecting' })}</span>;
+          } else if (p.ph === 'ready') {
+            statusNode = <span className="net-p-status is-ready">{tr({ zh: '已准备', en: 'ready' })}</span>;
           } else {
             statusNode = <span className="net-p-status">{tr({ zh: '等待', en: 'waiting' })}</span>;
           }
@@ -779,6 +892,9 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
                 />
               )}
               {p.iso2 && <Flag iso2={p.iso2} className="net-p-flag" />}
+              {p.id === room.admin && (
+                <Crown size={12} className="net-p-crown" aria-label={tr({ zh: '房主', en: 'Host' })} />
+              )}
               <span className="net-p-name" title={p.wcaId ? `${p.name} · ${p.wcaId}` : p.name}>
                 {p.name}
                 {mine && <span className="net-p-me">{tr({ zh: '(我)', en: ' (me)' })}</span>}
@@ -877,7 +993,35 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
               )}
             </div>
           )}
-          {!myResult && timer.phase === 'idle' && players.length < 2 && (
+          {/* 同时起表:全员准备才开倒计时(按空格 / 点击也等同「准备」)*/}
+          {!myResult && gate.gated && (timer.phase === 'idle' || timer.phase === 'stopped') && (
+            <div className="net-substate" data-no-timer>
+              <button
+                type="button"
+                className={`net-btn${gate.ready ? '' : ' net-btn-primary'}`}
+                onClick={toggleReady}
+              >
+                {gate.ready ? tr({ zh: '取消准备', en: 'Cancel ready' }) : tr({ zh: '我准备好了', en: "I'm ready" })}
+              </button>
+              <div className="net-substate-hint">
+                {gate.ready
+                  ? tr({
+                      zh: `等其他人准备(还差 ${gate.waiting} 人)…`,
+                      en: `Waiting for others to get ready (${gate.waiting} left)…`,
+                    })
+                  : tr({
+                      zh: '本房要求同时起表:全员准备后 3 秒倒计时一起开始',
+                      en: 'This room starts together — a 3s countdown begins once everyone is ready',
+                    })}
+              </div>
+            </div>
+          )}
+          {showCountdown && (
+            <div className="net-substate net-substate-hint" data-no-timer>
+              {tr({ zh: '一起起表,准备!', en: 'Starting together — get ready!' })}
+            </div>
+          )}
+          {!myResult && !gate.gated && !showCountdown && timer.phase === 'idle' && players.length < 2 && (
             <div className="net-substate net-substate-hint">
               {tr({ zh: '把房间码或邀请链接发给朋友,等 TA 加入', en: 'Share the room code or invite link and wait for others' })}
             </div>
@@ -885,6 +1029,17 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
           {err && <div className="net-err" data-no-timer>{err}</div>}
         </TimingSurface>
       </div>
+
+      {showAdmin && iAmAdmin && (
+        <NetAdminPanel
+          room={room}
+          pid={pid}
+          onSyncStart={setSyncStart}
+          onTransfer={transferAdmin}
+          onKick={kickPlayer}
+          onClose={() => setShowAdmin(false)}
+        />
+      )}
 
       {showStats && (
         <NetStatsPanel
@@ -896,6 +1051,93 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
           onClose={() => setShowStats(false)}
         />
       )}
+    </div>
+  );
+}
+
+// ── 房间管理面板(仅房主可见:房设 + 转让房主 + 踢人)──────────────────────────
+interface NetAdminPanelProps {
+  room: NetRoomState;
+  pid: string | null;
+  onSyncStart: (v: boolean) => void;
+  onTransfer: (target: string) => void;
+  onKick: (target: string) => void;
+  onClose: () => void;
+}
+
+function NetAdminPanel({ room, pid, onSyncStart, onTransfer, onKick, onClose }: NetAdminPanelProps) {
+  const players = sortedNetPlayers(room.players);
+  // 踢人两步确认:误点一下不会直接把人踢出去(对战中很恼人)。
+  const [confirmKick, setConfirmKick] = useState<string | null>(null);
+
+  return (
+    <div className="net-stats-overlay" onClick={onClose} role="presentation">
+      <div className="net-stats-panel" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+        <header className="net-stats-head">
+          <h2 className="net-stats-title net-admin-title">
+            <Crown size={16} />
+            {tr({ zh: '房间管理', en: 'Room settings' })}
+          </h2>
+          <button
+            type="button"
+            className="tb-btn"
+            onClick={onClose}
+            title={tr({ zh: '关闭', en: 'Close' })}
+            aria-label={tr({ zh: '关闭', en: 'Close' })}
+          >
+            <X size={16} />
+          </button>
+        </header>
+
+        <div className="net-admin-setting">
+          <BoolToggle
+            value={room.syncStart}
+            onChange={onSyncStart}
+            label={tr({ zh: '同时开始计时', en: 'Synchronized start' })}
+          />
+          <p className="net-admin-note">
+            {tr({
+              zh: '开启后各自不能想开就开:本轮在场的人都点过「准备」,才会 3 秒倒计时,归零全房同时起表(倒计时即观察时间)。',
+              en: 'When on, nobody starts alone — once everyone still in this round taps “ready”, a 3-second countdown runs and all timers start together (the countdown doubles as inspection).',
+            })}
+          </p>
+        </div>
+
+        <div className="net-admin-list">
+          {players.map((p) => {
+            const isAdminRow = p.id === room.admin;
+            const mine = p.id === pid;
+            return (
+              <div key={p.id} className="net-admin-row">
+                {p.iso2 && <Flag iso2={p.iso2} className="net-st-flag" />}
+                {isAdminRow && <Crown size={12} className="net-p-crown" />}
+                <span className="net-admin-name" title={p.wcaId ? `${p.name} · ${p.wcaId}` : p.name}>{p.name}</span>
+                {mine ? (
+                  <span className="net-admin-metext">{tr({ zh: '(我)', en: '(me)' })}</span>
+                ) : (
+                  <>
+                    <button type="button" className="net-btn is-ghost" onClick={() => onTransfer(p.id)}>
+                      {tr({ zh: '设为房主', en: 'Make host' })}
+                    </button>
+                    <button
+                      type="button"
+                      className={`net-btn is-ghost net-admin-kick${confirmKick === p.id ? ' is-confirm' : ''}`}
+                      onClick={() => {
+                        if (confirmKick === p.id) { onKick(p.id); setConfirmKick(null); }
+                        else setConfirmKick(p.id);
+                      }}
+                      onBlur={() => setConfirmKick((c) => (c === p.id ? null : c))}
+                    >
+                      <UserMinus size={12} />
+                      {confirmKick === p.id ? tr({ zh: '确认踢出', en: 'Confirm' }) : tr({ zh: '踢出', en: 'Kick' })}
+                    </button>
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }

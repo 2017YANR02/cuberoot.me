@@ -8,6 +8,8 @@ pub mod prune_tables;
 
 pub mod block222_solver;
 pub mod block223_solver;
+// lsll:最后一槽 + 顶层 HTM 最优(PoC)。整方目标 + 多张投影 PDB 启发式 IDA*;自包含。
+pub mod lsll_solver;
 // chain:mallard 式链式 EO→DR→HTR→[FR]→Finish 编排(全自包含,native+wasm 双轨)。
 pub mod chain_solver;
 pub mod cross_solver;

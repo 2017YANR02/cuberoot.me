@@ -5,7 +5,7 @@ import { describe, it, expect } from 'vitest';
 import {
   effectiveNetMs, roundWinners, sortedNetPlayers, isNetOnline, blendClockOffset,
   isRoundComplete, pendingCount, OFFLINE_MS, netEventToSelectorId, selectorIdToNetEvent, NET_EVENTS,
-  playerTimeline, playerStats, roundViews, netErrorMessage,
+  playerTimeline, playerStats, roundViews, netErrorMessage, isNetAdmin, syncGate,
 } from '@/lib/battle-room-logic';
 import type { NetPlayerEntry, NetResult, NetRoomState, NetRoundHistory } from '@/lib/battle-room-api';
 
@@ -18,7 +18,8 @@ function player(joined: number, over: Partial<NetPlayerEntry> = {}): NetPlayerEn
 function state(over: Partial<NetRoomState>): NetRoomState {
   return {
     code: 'ABCDE', event: '333', round: 1, scrambles: { '333': "R U R' U'" },
-    players: {}, results: {}, history: [], scores: {}, now: NOW, ...over,
+    players: {}, results: {}, history: [], scores: {},
+    admin: '', syncStart: false, startAt: null, now: NOW, ...over,
   };
 }
 
@@ -118,6 +119,49 @@ describe('isRoundComplete / pendingCount', () => {
   });
 });
 
+describe('isNetAdmin / syncGate', () => {
+  const two = { a: player(1), b: player(2) };
+
+  it('房主判定按服务端给的 admin;pid 为空不算', () => {
+    const st = state({ players: two, admin: 'a' });
+    expect(isNetAdmin(st, 'a')).toBe(true);
+    expect(isNetAdmin(st, 'b')).toBe(false);
+    expect(isNetAdmin(st, null)).toBe(false);
+  });
+
+  it('没开同时起表 → 不设门', () => {
+    expect(syncGate(state({ players: two }), 'a').gated).toBe(false);
+  });
+
+  it('开了同时起表:2 人未交卷 → 设门,waiting 数只算未准备的', () => {
+    const st = state({ players: two, syncStart: true });
+    expect(syncGate(st, 'a')).toEqual({ gated: true, ready: false, waiting: 2 });
+    const half = state({ players: { a: player(1, { ph: 'ready' }), b: player(2) }, syncStart: true });
+    expect(syncGate(half, 'a')).toEqual({ gated: true, ready: true, waiting: 1 });
+  });
+
+  it('只剩 1 人未交卷(或独自在房)→ 不设门,一个人不用等谁', () => {
+    const st = state({ players: two, syncStart: true, results: { '1': { b: ok(5000) } } });
+    expect(syncGate(st, 'a').gated).toBe(false);
+    expect(syncGate(state({ players: { a: player(1) }, syncStart: true }), 'a').gated).toBe(false);
+  });
+
+  it('已交卷的人不再被门拦;倒计时已落(startAt)也放行', () => {
+    const done = state({ players: two, syncStart: true, results: { '1': { a: ok(5000) } } });
+    expect(syncGate(done, 'a').gated).toBe(false);
+    const counting = state({ players: two, syncStart: true, startAt: NOW + 3000 });
+    expect(syncGate(counting, 'a').gated).toBe(false);
+  });
+
+  it('离线者不阻塞:仅剩 1 名在线未交卷 → 不设门', () => {
+    const st = state({
+      players: { a: player(1), gone: player(2, { seen: NOW - OFFLINE_MS - 1 }) },
+      syncStart: true,
+    });
+    expect(syncGate(st, 'a').gated).toBe(false);
+  });
+});
+
 describe('netErrorMessage', () => {
   it('裸 HTTP 404(后端无该路由)不透传状态码,翻成人话', () => {
     expect(netErrorMessage(new Error('HTTP 404')).zh).toBe('联机服务暂不可用,请稍后重试');
@@ -126,6 +170,7 @@ describe('netErrorMessage', () => {
     expect(netErrorMessage(new Error('room not found')).zh).toBe('房间不存在或已过期');
     expect(netErrorMessage(new Error('room full')).zh).toBe('房间人数已满');
     expect(netErrorMessage(new Error('name taken')).zh).toBe('这个名字房里已经有人用了,换一个');
+    expect(netErrorMessage(new Error('not admin')).zh).toBe('你已不是房主了');
   });
   it('网络错误 + 5xx 各自归类', () => {
     expect(netErrorMessage(new TypeError('Failed to fetch')).zh).toBe('网络连接失败,请检查网络');

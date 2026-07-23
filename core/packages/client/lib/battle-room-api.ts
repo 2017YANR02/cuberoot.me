@@ -3,7 +3,7 @@
 // 项目模型:每人可选自己的项目(默认 = 建房项目),同项目玩家共享一条打乱(公平),不同项目各一条。
 import { apiUrl } from './api-base';
 
-export type NetPhase = 'idle' | 'inspecting' | 'solving' | 'done';
+export type NetPhase = 'idle' | 'ready' | 'inspecting' | 'solving' | 'done';
 export type NetPenalty = 'ok' | '+2' | 'dnf';
 
 export interface NetPlayerEntry {
@@ -59,6 +59,12 @@ export interface NetRoomState {
   /** 已结束各轮战绩(最近 50 轮,旧→新);single/ao5/moX + 战绩面板据此算。 */
   history: NetRoundHistory[];
   scores: Record<string, number>;
+  /** 房主 pid(建房者;可转让/踢人/改房设。房主离场后服务端读时回落最早加入者)。 */
+  admin: string;
+  /** 房设:是否要求全员同时起表(房主开关)。 */
+  syncStart: boolean;
+  /** 本轮同时起表时刻(服务器毫秒);未进入倒计时为 null。 */
+  startAt: number | null;
   /** 服务器当前毫秒 — 时钟偏移估计用 */
   now: number;
 }
@@ -96,9 +102,29 @@ export async function getNetRoom(code: string, pid?: string): Promise<NetRoomSta
   return res.json();
 }
 
-/** 上报实时状态(开始观察/开始计时/回到空闲)。失败静默 — 纯装饰性信息。 */
-export function postNetStatus(code: string, pid: string, ph: 'idle' | 'inspecting' | 'solving'): Promise<void> {
-  return postJson<{ ok: true }>(`/v1/battle/rooms/${code}/status`, { pid, ph }).then(() => undefined);
+/**
+ * 上报实时状态(准备/开始观察/开始计时/回到空闲),返回最新房间状态。
+ * ph='ready' 且房间开了「同时开始」时,最后一个准备的人这一跳会带回 startAt(倒计时起点)。
+ */
+export function postNetStatus(
+  code: string, pid: string, ph: 'idle' | 'ready' | 'inspecting' | 'solving',
+): Promise<NetRoomState> {
+  return postJson(`/v1/battle/rooms/${code}/status`, { pid, ph });
+}
+
+/** 房主改房设:是否要求全员同时起表。非房主 → 抛 'not admin'。 */
+export function postNetSyncStart(code: string, pid: string, syncStart: boolean): Promise<NetRoomState> {
+  return postJson(`/v1/battle/rooms/${code}/settings`, { pid, syncStart });
+}
+
+/** 房主把房主身份转让给房里另一位玩家。 */
+export function postNetAdmin(code: string, pid: string, target: string): Promise<NetRoomState> {
+  return postJson(`/v1/battle/rooms/${code}/admin`, { pid, target });
+}
+
+/** 房主把某位玩家移出房间(不能踢自己)。 */
+export function postNetKick(code: string, pid: string, target: string): Promise<NetRoomState> {
+  return postJson(`/v1/battle/rooms/${code}/kick`, { pid, target });
 }
 
 /** 改自己所选项目 + 顺带 lazy 填该项目当前轮打乱(已有则沿用)。返回新房间状态。 */
