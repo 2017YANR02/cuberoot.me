@@ -10,6 +10,7 @@ export interface PageNotice {
   path: string;
   level: NoticeLevel;
   icon?: string;       // lucide 图标 key(空 = 按 level 回退);老后端可能不返回,故可选
+  color?: string;      // 横幅颜色 key(空 = 按 level 回退);老后端可能不返回,故可选
   bodyEn: string;
   bodyZh: string;
   enabled: boolean;
@@ -21,6 +22,7 @@ export interface PageNoticeInput {
   path: string;
   level: NoticeLevel;
   icon: string;
+  color: string;
   bodyEn: string;
   bodyZh: string;
   enabled: boolean;

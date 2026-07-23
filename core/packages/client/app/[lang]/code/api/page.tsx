@@ -362,11 +362,14 @@ const ENDPOINTS: Ep[] = [
   { d: 'timer', m: 'POST', p: '/v1/battle/rooms', g: 'public', zh: '建联机对战房间(多设备同打乱各自计时),返回房间码', en: 'Create an online battle room (multi-device, same scramble); returns a room code' },
   { d: 'timer', m: 'POST', p: '/v1/battle/rooms/:code/join', g: 'public', zh: '加入对战房间', en: 'Join a battle room' },
   { d: 'timer', m: 'GET', p: '/v1/battle/rooms/:code', g: 'public', c: 'no-store', zh: '房间状态轮询(带 pid 刷心跳)', en: 'Poll room state (pid refreshes heartbeat)' },
-  { d: 'timer', m: 'POST', p: '/v1/battle/rooms/:code/status', g: 'public', zh: '上报实时状态(观察中/计时中)', en: 'Report live phase (inspecting/solving)' },
+  { d: 'timer', m: 'POST', p: '/v1/battle/rooms/:code/status', g: 'public', zh: '上报实时状态(准备/观察中/计时中);全员准备即落同时起表时刻', en: 'Report live phase (ready/inspecting/solving); stamps the shared start once everyone is ready' },
   { d: 'timer', m: 'POST', p: '/v1/battle/rooms/:code/event', g: 'public', zh: '改自己项目(顺带 lazy 填该项目打乱)', en: 'Change own event (lazily fills that event’s scramble)' },
   { d: 'timer', m: 'POST', p: '/v1/battle/rooms/:code/scramble', g: 'public', zh: 'lazy 填某项目当前轮打乱(set-if-absent)', en: 'Lazily set an event’s scramble for this round (set-if-absent)' },
   { d: 'timer', m: 'POST', p: '/v1/battle/rooms/:code/result', g: 'public', zh: '交本轮成绩(重复交 = 改罚时)', en: 'Submit round result (resubmit = adjust penalty)' },
   { d: 'timer', m: 'POST', p: '/v1/battle/rooms/:code/next', g: 'public', zh: '开下一轮(CAS,服务端结算胜者)', en: 'Start next round (CAS; server settles the winner)' },
+  { d: 'timer', m: 'POST', p: '/v1/battle/rooms/:code/settings', g: 'public', zh: '房主改房设(同时开始计时)', en: 'Host updates room settings (synchronized start)' },
+  { d: 'timer', m: 'POST', p: '/v1/battle/rooms/:code/admin', g: 'public', zh: '房主转让给房里另一位玩家', en: 'Transfer host to another player in the room' },
+  { d: 'timer', m: 'POST', p: '/v1/battle/rooms/:code/kick', g: 'public', zh: '房主把某位玩家移出房间', en: 'Host removes a player from the room' },
   { d: 'timer', m: 'POST', p: '/v1/battle/rooms/:code/leave', g: 'public', zh: '离开房间(空房即删)', en: 'Leave the room (empty room is deleted)' },
 
   // ---- analytics ----

@@ -13,13 +13,24 @@ import { checkRateLimit } from '../utils/recon_helpers.js';
  *   POST /battle/rooms                    — 建房:{event,scramble,name} → {playerId, ...state}
  *   POST /battle/rooms/:code/join         — 加入:{name} → {playerId, ...state}(默认项目=房间项目)
  *   GET  /battle/rooms/:code?pid=X        — 房间状态(轮询;带 pid 时顺手刷新在线心跳)
- *   POST /battle/rooms/:code/status       — 实时状态:{pid,ph}(idle|inspecting|solving)
+ *   POST /battle/rooms/:code/status       — 实时状态:{pid,ph}(idle|ready|inspecting|solving)
  *   POST /battle/rooms/:code/event        — 改自己项目:{pid,event,scramble}(顺带 lazy 填该项目打乱)
  *   POST /battle/rooms/:code/scramble     — lazy 填某项目当前轮打乱:{event,scramble}(set-if-absent)
  *   POST /battle/rooms/:code/result       — 交成绩:{pid,round,t,p};轮次落后 → {advanced,...state}
  *   POST /battle/rooms/:code/next         — 开下一轮(CAS 只第一个成功):{pid,round,scramble}
  *                                           服务端按项目分组结算胜者进 scores + 压历史
+ *   POST /battle/rooms/:code/settings     — 房主改房设:{pid,syncStart}
+ *   POST /battle/rooms/:code/admin        — 房主转让:{pid,target}
+ *   POST /battle/rooms/:code/kick         — 房主踢人:{pid,target}
  *   POST /battle/rooms/:code/leave        — 离开:{pid};房间空了即删
+ *
+ * 房主(admin):建房者是首任房主,可转让、可踢人、可改房设。房主离场后由「最早加入者」
+ * 自动接任 —— 读时回落(effectiveAdmin),不写库,免竞态。所有房主操作都在服务端校验
+ * 请求者 pid === 当前房主,客户端隐藏按钮只是装饰。
+ *
+ * 同时开始计时(sync_start):房主开启后,本轮「在线且未交卷」的玩家(≥2 人)全部点过
+ * 准备(ph='ready'),服务端才落 start_at = now + 3s;各端用轮询估出的时钟偏移把它换算成
+ * 本机时刻,倒计时归零同时起表。开下一轮 / 关掉开关即清 start_at。
  *
  * 无需登录 —— 房间码即房间身份,随机 playerId 即玩家身份。成绩/状态都是单行 jsonb 原子合并
  * (行锁串行化),实时性 = 客户端 1s 轮询 GET(no-store)。响应都带 now(服务器毫秒),客户端
@@ -43,13 +54,17 @@ const MAX_HISTORY = 50;
 const MAX_SCRAMBLE_EVENTS = 16;
 /** 过期房间:24h 无活动惰性清理。 */
 const ROOM_TTL_MS = 24 * 60 * 60 * 1000;
+/** 心跳超时:与客户端 OFFLINE_MS 同口径(轮询 1s,给足抖动余量)。 */
+const OFFLINE_MS = 15_000;
+/** 「同时开始」倒计时:全员准备到起表的提前量(> 轮询周期,慢的一端也来得及看到)。 */
+const COUNTDOWN_MS = 3_000;
 
 const CODE_RE = /^[A-Z0-9]{4,12}$/;
 const EVENT_RE = /^[A-Za-z0-9]{2,16}$/;
 const PID_RE = /^[a-z0-9]{6,16}$/;
 const WCA_ID_RE = /^\d{4}[A-Z]{4}\d{2}$/;
 const ISO2_RE = /^[A-Za-z]{2}$/;
-const PHASES = new Set(['idle', 'inspecting', 'solving']);
+const PHASES = new Set(['idle', 'ready', 'inspecting', 'solving']);
 const PENALTIES = new Set(['ok', '+2', 'dnf']);
 
 function randCode(): string {
@@ -98,6 +113,21 @@ function parseIso2(raw: unknown): string | undefined {
   return typeof raw === 'string' && ISO2_RE.test(raw) ? raw.toUpperCase() : undefined;
 }
 
+/**
+ * 重名去重:名已被占用则依次尝试「名 (2)」「名 (3)」…(大小写不敏感,截断保 NAME_MAX)。
+ * 同一 WCA ID 两台设备也能同房对战,靠这个加后缀区分,而不是拒绝加入。
+ */
+function uniqueName(base: string, takenLower: Set<string>): string {
+  if (!takenLower.has(base.toLowerCase())) return base;
+  for (let n = 2; n < 100; n++) {
+    const suffix = ` (${n})`;
+    const head = base.slice(0, Math.max(1, NAME_MAX - suffix.length));
+    const cand = head + suffix;
+    if (!takenLower.has(cand.toLowerCase())) return cand;
+  }
+  return base; // 兜底(几乎不可能:玩家数 ≤ MAX_PLAYERS)
+}
+
 interface PlayerEntry { name: string; wcaId?: string; iso2?: string; joined: number; seen: number; ph: string; at: number; event: string }
 interface RoomResult { t: number; p: string }
 interface RoomHistoryEntry {
@@ -118,16 +148,48 @@ interface RoomRow {
   results: Record<string, Record<string, RoomResult>>;
   history: RoomHistoryEntry[];
   scores: Record<string, number>;
+  admin: string | null;                            // 房主 pid(不在房里则读时回落最早加入者)
+  sync_start: boolean;                             // 是否要求全员同时起表
+  start_at: string | number | null;                // 本轮同时起表时刻(BIGINT,driver 可能给字符串)
 }
 
-const ROOM_COLS = 'code, event, round, scrambles, players, results, history, scores';
+const ROOM_COLS = 'code, event, round, scrambles, players, results, history, scores, admin, sync_start, start_at';
+
+/**
+ * 当前房主:admin 仍在房里就是他;否则最早加入者接任(加入时刻相同按 pid 定序)。
+ * 读时回落而非写库 —— 房主掉线/离场无需额外一次 UPDATE,也没有并发改写竞态。
+ */
+function effectiveAdmin(r: RoomRow): string {
+  if (r.admin && r.players[r.admin]) return r.admin;
+  let best = '';
+  for (const [id, p] of Object.entries(r.players)) {
+    if (!best) { best = id; continue; }
+    const cur = r.players[best];
+    if (p.joined < cur.joined || (p.joined === cur.joined && id < best)) best = id;
+  }
+  return best;
+}
 
 /** 统一的状态响应(轮询/各写操作都回它,客户端一把同步)。 */
 function stateJson(r: RoomRow) {
   return {
     code: r.code, event: r.event, round: r.round, scrambles: r.scrambles ?? {},
-    players: r.players, results: r.results, history: r.history ?? [], scores: r.scores, now: Date.now(),
+    players: r.players, results: r.results, history: r.history ?? [], scores: r.scores,
+    admin: effectiveAdmin(r), syncStart: !!r.sync_start,
+    startAt: r.start_at == null ? null : Number(r.start_at),
+    now: Date.now(),
   };
+}
+
+/**
+ * 「同时开始」的开表条件:本轮在线且未交卷的玩家 ≥2 人且全部已准备。
+ * 少于 2 人不设门(一个人还要等谁),离线者不阻塞(AFK 的人不该卡住全房)。
+ */
+function allReady(r: RoomRow, now: number): boolean {
+  const res = r.results[String(r.round)] ?? {};
+  const contenders = Object.entries(r.players).filter(([id, p]) => now - p.seen <= OFFLINE_MS && !res[id]);
+  if (contenders.length < 2) return false;
+  return contenders.every(([, p]) => p.ph === 'ready');
 }
 
 async function getRoomRow(code: string): Promise<RoomRow | null> {
@@ -200,11 +262,14 @@ battleRoomsRoutes.post('/battle/rooms', async (c) => {
     const code = randCode();
     try {
       await query(
-        `INSERT INTO battle_rooms (code, event, round, scrambles, players, results, history, scores, created_at, updated_at)
-         VALUES (?, ?, 1, ?::jsonb, ?::jsonb, '{}'::jsonb, '[]'::jsonb, '{}'::jsonb, ?, ?)`,
-        [code, event, scrambles, players, now, now],
+        `INSERT INTO battle_rooms (code, event, round, scrambles, players, results, history, scores, admin, created_at, updated_at)
+         VALUES (?, ?, 1, ?::jsonb, ?::jsonb, '{}'::jsonb, '[]'::jsonb, '{}'::jsonb, ?, ?, ?)`,
+        [code, event, scrambles, players, pid, now, now],
       );
-      return c.json({ playerId: pid, code, event, round: 1, scrambles, players, results: {}, history: [], scores: {}, now });
+      return c.json({
+        playerId: pid, code, event, round: 1, scrambles, players, results: {}, history: [], scores: {},
+        admin: pid, syncStart: false, startAt: null, now,
+      });
     } catch (e) {
       if (String((e as Error).message).includes('duplicate') || String((e as Error).message).includes('unique')) continue;
       throw e;
@@ -226,35 +291,37 @@ battleRoomsRoutes.post('/battle/rooms/:code/join', async (c) => {
   const wcaId = parseWcaId(body.wcaId);
   const iso2 = parseIso2(body.iso2);
 
-  const room = await getRoomRow(code);
-  if (!room) return c.json({ error: 'room not found' }, 404);
-  // 软上限:并发同时挤进来可能略过 8,无伤大雅
-  if (Object.keys(room.players).length >= MAX_PLAYERS) return c.json({ error: 'room full' }, 409);
-
   const now = Date.now();
   const pid = randPid();
-  const entry: PlayerEntry = {
-    name, ...(wcaId ? { wcaId } : {}), ...(iso2 ? { iso2 } : {}),
-    joined: now, seen: now, ph: 'idle', at: now, event: room.event,
-  };
-  // 重名拦截(大小写不敏感)在同一条 UPDATE 里原子完成:仅当房内无同名玩家时才写入,
-  // 避免「先读后写」的 TOCTOU 让两人同名挤进来。0 行更新 = 房间没了 或 重名。
-  const rows = await query<RoomRow>(
-    `UPDATE battle_rooms b
-     SET players = players || jsonb_build_object(?::text, ?::jsonb), updated_at = ?
-     WHERE code = ?
-       AND NOT EXISTS (
-         SELECT 1 FROM jsonb_each(b.players) AS e(k, v)
-         WHERE lower(v ->> 'name') = lower(?)
-       )
-     RETURNING ${ROOM_COLS}`,
-    [pid, entry, now, code, name],
-  );
-  if (rows[0]) return c.json({ playerId: pid, ...stateJson(rows[0]) });
+  // 重名不拒绝,自动加后缀去重:同一 WCA ID 两台设备也能同房对战,名字用「名 (2)」区分。
+  // 每次算出的唯一名再用 NOT EXISTS 原子写入(行锁下),并发抢到同名则重读重算,最多试几次。
+  for (let attempt = 0; attempt < MAX_PLAYERS + 4; attempt++) {
+    const cur = await getRoomRow(code);
+    if (!cur) return c.json({ error: 'room not found' }, 404);
+    // 软上限:并发同时挤进来可能略过 8,无伤大雅
+    if (Object.keys(cur.players).length >= MAX_PLAYERS) return c.json({ error: 'room full' }, 409);
 
-  // 没写进去:复查区分「房间没了」与「重名」
-  const after = await getRoomRow(code);
-  if (!after) return c.json({ error: 'room not found' }, 404);
+    const takenLower = new Set(Object.values(cur.players).map((p) => (p.name || '').toLowerCase()));
+    const finalName = uniqueName(name, takenLower);
+    const entry: PlayerEntry = {
+      name: finalName, ...(wcaId ? { wcaId } : {}), ...(iso2 ? { iso2 } : {}),
+      joined: now, seen: now, ph: 'idle', at: now, event: cur.event,
+    };
+    // 仅当选定名此刻仍无人占用时才写入(行锁下原子);抢名失败 → 0 行 → 循环重算。
+    const rows = await query<RoomRow>(
+      `UPDATE battle_rooms b
+       SET players = players || jsonb_build_object(?::text, ?::jsonb), updated_at = ?
+       WHERE code = ?
+         AND NOT EXISTS (
+           SELECT 1 FROM jsonb_each(b.players) AS e(k, v)
+           WHERE lower(v ->> 'name') = lower(?)
+         )
+       RETURNING ${ROOM_COLS}`,
+      [pid, entry, now, code, finalName],
+    );
+    if (rows[0]) return c.json({ playerId: pid, ...stateJson(rows[0]) });
+  }
+  // 极端并发下反复抢名失败(几乎不可能:玩家数 ≤ MAX_PLAYERS)
   return c.json({ error: 'name taken' }, 409);
 });
 
@@ -285,7 +352,7 @@ battleRoomsRoutes.get('/battle/rooms/:code', async (c) => {
   return c.json(stateJson(room));
 });
 
-// POST /battle/rooms/:code/status — 实时状态(开始观察/开始计时/回到空闲)
+// POST /battle/rooms/:code/status — 实时状态(准备/开始观察/开始计时/回到空闲)
 // 不限流:每次 solve 至多两三次,且同一 WiFi 下多名玩家共享出口 IP,全局限流会误伤。
 battleRoomsRoutes.post('/battle/rooms/:code/status', async (c) => {
   c.header('Cache-Control', 'no-store');
@@ -299,15 +366,27 @@ battleRoomsRoutes.post('/battle/rooms/:code/status', async (c) => {
   if (!pid || !ph) return c.json({ error: 'invalid pid/ph' }, 400);
 
   const now = Date.now();
-  const rows = await query<{ code: string }>(
+  const rows = await query<RoomRow>(
     `UPDATE battle_rooms
      SET players = players || jsonb_build_object(?::text, (players -> ?) || ?::jsonb), updated_at = ?
      WHERE code = ? AND jsonb_exists(players, ?)
-     RETURNING code`,
+     RETURNING ${ROOM_COLS}`,
     [pid, pid, { ph, at: now, seen: now }, now, code, pid],
   );
-  if (!rows[0]) return c.json({ error: 'room or player not found' }, 404);
-  return c.json({ ok: true, now });
+  let room = rows[0];
+  if (!room) return c.json({ error: 'room or player not found' }, 404);
+
+  // 「同时开始」:这一跳把最后一个人置成 ready 了 → 落倒计时起点(set-if-null,并发只一个生效)。
+  if (ph === 'ready' && room.sync_start && room.start_at == null && allReady(room, now)) {
+    const upd = await query<RoomRow>(
+      `UPDATE battle_rooms SET start_at = ?, updated_at = ?
+       WHERE code = ? AND start_at IS NULL
+       RETURNING ${ROOM_COLS}`,
+      [now + COUNTDOWN_MS, now, code],
+    );
+    if (upd[0]) room = upd[0];
+  }
+  return c.json(stateJson(room));
 });
 
 // POST /battle/rooms/:code/event — 玩家改自己项目 + lazy 填该项目当前轮打乱
@@ -463,7 +542,7 @@ battleRoomsRoutes.post('/battle/rooms/:code/next', async (c) => {
   const upd = await query<RoomRow>(
     `UPDATE battle_rooms
      SET round = round + 1, scrambles = ?::jsonb, results = '{}'::jsonb, history = ?::jsonb,
-         scores = ?::jsonb, players = ?::jsonb, updated_at = ?
+         scores = ?::jsonb, players = ?::jsonb, start_at = NULL, updated_at = ?
      WHERE code = ? AND round = ?
      RETURNING ${ROOM_COLS}`,
     [scrambles, history, scores, players, now, code, reqRound],
@@ -474,6 +553,100 @@ battleRoomsRoutes.post('/battle/rooms/:code/next', async (c) => {
   const after = await getRoomRow(code);
   if (!after) return c.json({ error: 'room not found' }, 404);
   return c.json(stateJson(after));
+});
+
+/**
+ * 房主操作的公共前置:取房 + 校验请求者就是当前房主。
+ * 客户端隐藏按钮只是装饰,授权一律在这里做。
+ */
+async function requireAdmin(code: string, pid: string | null): Promise<
+  { room: RoomRow } | { error: string; status: 400 | 403 | 404 }
+> {
+  if (!pid) return { error: 'invalid pid', status: 400 };
+  const room = await getRoomRow(code);
+  if (!room) return { error: 'room not found', status: 404 };
+  if (effectiveAdmin(room) !== pid) return { error: 'not admin', status: 403 };
+  return { room };
+}
+
+// POST /battle/rooms/:code/settings — 房主改房设(目前只有「同时开始计时」)
+battleRoomsRoutes.post('/battle/rooms/:code/settings', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const code = parseCode(c.req.param('code'));
+  if (!code) return c.json({ error: 'invalid code' }, 400);
+
+  let body: { pid?: unknown; syncStart?: unknown };
+  try { body = await c.req.json(); } catch { body = {}; }
+  const pid = typeof body.pid === 'string' && PID_RE.test(body.pid) ? body.pid : null;
+  if (typeof body.syncStart !== 'boolean') return c.json({ error: 'invalid body' }, 400);
+  const syncStart = body.syncStart;
+
+  const gate = await requireAdmin(code, pid);
+  if ('error' in gate) return c.json({ error: gate.error }, gate.status);
+
+  // 关掉开关同时清 start_at:别把已经在倒计时的人挂在半空。
+  const rows = await query<RoomRow>(
+    `UPDATE battle_rooms
+     SET sync_start = ?, start_at = CASE WHEN ? THEN start_at ELSE NULL END, updated_at = ?
+     WHERE code = ?
+     RETURNING ${ROOM_COLS}`,
+    [syncStart, syncStart, Date.now(), code],
+  );
+  if (!rows[0]) return c.json({ error: 'room not found' }, 404);
+  return c.json(stateJson(rows[0]));
+});
+
+// POST /battle/rooms/:code/admin — 转让房主给房里另一位玩家
+battleRoomsRoutes.post('/battle/rooms/:code/admin', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const code = parseCode(c.req.param('code'));
+  if (!code) return c.json({ error: 'invalid code' }, 400);
+
+  let body: { pid?: unknown; target?: unknown };
+  try { body = await c.req.json(); } catch { body = {}; }
+  const pid = typeof body.pid === 'string' && PID_RE.test(body.pid) ? body.pid : null;
+  const target = typeof body.target === 'string' && PID_RE.test(body.target) ? body.target : null;
+  if (!target) return c.json({ error: 'invalid target' }, 400);
+
+  const gate = await requireAdmin(code, pid);
+  if ('error' in gate) return c.json({ error: gate.error }, gate.status);
+  if (!gate.room.players[target]) return c.json({ error: 'player not in room' }, 404);
+
+  const rows = await query<RoomRow>(
+    `UPDATE battle_rooms SET admin = ?, updated_at = ?
+     WHERE code = ? AND jsonb_exists(players, ?)
+     RETURNING ${ROOM_COLS}`,
+    [target, Date.now(), code, target],
+  );
+  if (!rows[0]) return c.json({ error: 'player not in room' }, 404);
+  return c.json(stateJson(rows[0]));
+});
+
+// POST /battle/rooms/:code/kick — 房主把某位玩家移出房间(不能踢自己)
+battleRoomsRoutes.post('/battle/rooms/:code/kick', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const code = parseCode(c.req.param('code'));
+  if (!code) return c.json({ error: 'invalid code' }, 400);
+
+  let body: { pid?: unknown; target?: unknown };
+  try { body = await c.req.json(); } catch { body = {}; }
+  const pid = typeof body.pid === 'string' && PID_RE.test(body.pid) ? body.pid : null;
+  const target = typeof body.target === 'string' && PID_RE.test(body.target) ? body.target : null;
+  if (!target) return c.json({ error: 'invalid target' }, 400);
+  if (target === pid) return c.json({ error: 'cannot kick yourself' }, 400);
+
+  const gate = await requireAdmin(code, pid);
+  if ('error' in gate) return c.json({ error: gate.error }, gate.status);
+
+  // 被踢者的成绩留在 results/history(战绩回放不该出现空洞),只摘玩家与胜场。
+  const rows = await query<RoomRow>(
+    `UPDATE battle_rooms SET players = players - ?, scores = scores - ?, updated_at = ?
+     WHERE code = ?
+     RETURNING ${ROOM_COLS}`,
+    [target, target, Date.now(), code],
+  );
+  if (!rows[0]) return c.json({ error: 'room not found' }, 404);
+  return c.json(stateJson(rows[0]));
 });
 
 // POST /battle/rooms/:code/leave — 离开;房间空了即删

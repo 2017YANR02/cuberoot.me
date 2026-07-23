@@ -22,6 +22,10 @@ const ICON_KEYS = new Set([
   'info', 'warning', 'wrench', 'hammer', 'bug', 'refresh', 'flask', 'eye',
   'sparkles', 'rocket', 'megaphone', 'gift', 'bell', 'zap',
 ]);
+// 可选横幅颜色 key 白名单,与 client PageNoticeBar.tsx 的 COLORS 保持一致('' = 按 level 回退)。
+const COLOR_KEYS = new Set([
+  'blue', 'green', 'amber', 'red', 'terracotta', 'purple', 'cyan', 'pink',
+]);
 const PATH_MAX = 300;
 const BODY_MAX = 2000;
 
@@ -30,6 +34,7 @@ interface NoticeRow {
   path: string;
   level: string;
   icon: string | null;
+  color: string | null;
   body_en: string;
   body_zh: string;
   enabled: boolean;
@@ -43,6 +48,7 @@ function rowToJson(r: NoticeRow) {
     path: r.path,
     level: r.level,
     icon: r.icon ?? '',
+    color: r.color ?? '',
     bodyEn: r.body_en,
     bodyZh: r.body_zh,
     enabled: r.enabled,
@@ -63,6 +69,7 @@ interface NoticeInput {
   path?: unknown;
   level?: unknown;
   icon?: unknown;
+  color?: unknown;
   bodyEn?: unknown;
   bodyZh?: unknown;
   enabled?: unknown;
@@ -70,7 +77,7 @@ interface NoticeInput {
 }
 
 interface Normalized {
-  path: string; level: Level; icon: string; bodyEn: string; bodyZh: string;
+  path: string; level: Level; icon: string; color: string; bodyEn: string; bodyZh: string;
   enabled: boolean; dismissible: boolean;
 }
 
@@ -80,8 +87,9 @@ function validate(b: NoticeInput): { error?: string; v?: Normalized } {
   if (path.length > PATH_MAX) return { error: 'path too long' };
   const level = (typeof b.level === 'string' ? b.level : 'info') as Level;
   if (!LEVELS.includes(level)) return { error: 'invalid level' };
-  // icon 非白名单一律降级为 ''(回退到 level 图标),不报错——前端可能发未知 key。
+  // icon / color 非白名单一律降级为 ''(回退到 level 默认),不报错——前端可能发未知 key。
   const icon = typeof b.icon === 'string' && ICON_KEYS.has(b.icon) ? b.icon : '';
+  const color = typeof b.color === 'string' && COLOR_KEYS.has(b.color) ? b.color : '';
   if (b.bodyEn != null && typeof b.bodyEn !== 'string') return { error: 'bodyEn must be string' };
   if (b.bodyZh != null && typeof b.bodyZh !== 'string') return { error: 'bodyZh must be string' };
   const bodyEn = (typeof b.bodyEn === 'string' ? b.bodyEn : '').trim();
@@ -90,7 +98,7 @@ function validate(b: NoticeInput): { error?: string; v?: Normalized } {
   if (!bodyEn && !bodyZh) return { error: 'body required (en or zh)' };
   return {
     v: {
-      path, level, icon, bodyEn, bodyZh,
+      path, level, icon, color, bodyEn, bodyZh,
       enabled: b.enabled !== false,       // 缺省 true
       dismissible: b.dismissible !== false, // 缺省 true
     },
@@ -123,13 +131,14 @@ pageNoticesRoutes.put('/page-notices', async (c) => {
   if (error || !v) return c.json({ error: error ?? 'invalid' }, 400);
 
   const rows = await query<NoticeRow>(
-    `INSERT INTO page_notices (path, level, icon, body_en, body_zh, enabled, dismissible)
-     VALUES (?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO page_notices (path, level, icon, color, body_en, body_zh, enabled, dismissible)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT (path) DO UPDATE SET
-       level = EXCLUDED.level, icon = EXCLUDED.icon, body_en = EXCLUDED.body_en, body_zh = EXCLUDED.body_zh,
+       level = EXCLUDED.level, icon = EXCLUDED.icon, color = EXCLUDED.color,
+       body_en = EXCLUDED.body_en, body_zh = EXCLUDED.body_zh,
        enabled = EXCLUDED.enabled, dismissible = EXCLUDED.dismissible, updated_at = NOW()
      RETURNING *`,
-    [v.path, v.level, v.icon, v.bodyEn, v.bodyZh, v.enabled, v.dismissible],
+    [v.path, v.level, v.icon, v.color, v.bodyEn, v.bodyZh, v.enabled, v.dismissible],
   );
   return c.json(rowToJson(rows[0]));
 });
