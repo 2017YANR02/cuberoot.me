@@ -75,7 +75,7 @@ export default function MccPage() {
   const t = useT();
   const params = useParams();
   const isZh = params?.lang === 'zh';
-  useDocumentTitle('MCC 公式测速', 'Movecount Coefficient');
+  useDocumentTitle('MCC (步数系数)', 'Movecount Coefficient');
 
   const [input, setInput] = useState('');
   const [puzzle, setPuzzle] = useQueryState('p', parseAsStringEnum<Puzzle>(['333', '222']).withDefault('333'));
@@ -154,7 +154,7 @@ export default function MccPage() {
   return (
     <div className="mcc-page">
       <header className="mcc-header">
-        <h1>{t('MCC 公式测速', 'Movecount Coefficient')}</h1>
+        <h1>{t('MCC (步数系数)', 'Movecount Coefficient')}</h1>
         <p className="mcc-lead">
           {isPocket
             ? t(
