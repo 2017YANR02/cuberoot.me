@@ -8,7 +8,7 @@
 //
 // 交互式 `_SimCubeNet` 仍从这里取布局常量(单一源,与导出件逐格对齐)。
 
-import { GAP, STROKE_W, renderUnfoldedStateSvg } from '../scramble/gen/_svg/cube_unfolded_svg';
+import { GAP, STROKE_W, renderUnfoldedStateSvg } from '@cuberoot/shared/cube-unfolded-svg';
 
 export type NetFaceLetter = 'U' | 'R' | 'F' | 'D' | 'L' | 'B';
 

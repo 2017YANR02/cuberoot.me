@@ -69,6 +69,14 @@
       "node": "./dist/payment.js",
       "default": "./src/payment.ts"
     },
+    "./cube-unfolded-svg": {
+      "node": "./dist/cube_unfolded_svg.js",
+      "default": "./src/cube_unfolded_svg.ts"
+    },
+    "./nnn-sim": {
+      "node": "./dist/nnn_sim.js",
+      "default": "./src/nnn_sim.ts"
+    },
     "./data/*.json": "./data/*.json"
   },
   "scripts": {

@@ -22,7 +22,7 @@
  */
 import { jsPDF } from 'jspdf';
 import 'svg2pdf.js';
-import { renderUnfoldedSvgForEvent, eventToCubeSize } from './_svg/cube_unfolded_svg';
+import { renderUnfoldedSvgForEvent, eventToCubeSize } from '@cuberoot/shared/cube-unfolded-svg';
 import { renderClockScrambleSvg, DEFAULT_CLOCK_COLORS } from './_svg/clock_svg';
 import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS } from '@/lib/sq1-svg';
 import { renderMirrorBlocksScrambleSvg } from './_svg/mirror_blocks_svg';

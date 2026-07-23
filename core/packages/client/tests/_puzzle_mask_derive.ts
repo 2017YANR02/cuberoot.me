@@ -28,8 +28,8 @@
 import { PyraminxState, pyraStickerId, PYRA_FACE_LABELS } from '@/app/[lang]/scramble/gen/_svg/pyraminx_svg';
 import { SkewbState, skewbStickerId, SKEWB_FACE_LABELS } from '@/app/[lang]/scramble/gen/_svg/skewb_svg';
 import { megaSolvedState, megaTurnFace, megaStickerId, MEGA_FACE_NAMES } from '@/app/[lang]/scramble/gen/_svg/mega_svg';
-import { doslice } from '@/app/[lang]/scramble/gen/_svg/nnn_sim';
-import { cubeStickerIdFromPosit, CUBE_FACE_LETTERS } from '@/app/[lang]/scramble/gen/_svg/cube_unfolded_svg';
+import { doslice } from '@cuberoot/shared/nnn-sim';
+import { cubeStickerIdFromPosit, CUBE_FACE_LETTERS } from '@cuberoot/shared/cube-unfolded-svg';
 import { isCornerPiece as sq1IsCorner } from '@/app/[lang]/sim/engine/sq1/sq1Geometry';
 import { PyraminxSimulator } from '@cuberoot/vendor-sr-puzzlegen/simulator/pyraminx/pyraminxSimulator';
 import { SkewbSimulator } from '@cuberoot/vendor-sr-puzzlegen/simulator/skewb/skewbSimulator';

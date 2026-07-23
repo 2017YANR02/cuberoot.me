@@ -6,7 +6,7 @@ import { describe, it, expect } from 'vitest';
 import {
   exportSimNetSvg, netFaceOffsets, NET_GAP, NET_FACE_ORDER, type NetFaceLetter,
 } from '@/app/[lang]/sim/sim_net_export';
-import { renderUnfoldedSvg } from '@/app/[lang]/scramble/gen/_svg/cube_unfolded_svg';
+import { renderUnfoldedSvg } from '@cuberoot/shared/cube-unfolded-svg';
 
 const COLORS = {
   U: '#fff', R: '#f00', F: '#0f0', D: '#ff0', L: '#f90', B: '#00f',

@@ -27,7 +27,7 @@ import {
   renderSkewbScrambleSvg,
   SKEWB_DEFAULT_COLORS,
 } from '@/app/[lang]/scramble/gen/_svg/skewb_svg';
-import { renderUnfoldedSvg } from '@/app/[lang]/scramble/gen/_svg/cube_unfolded_svg';
+import { renderUnfoldedSvg } from '@cuberoot/shared/cube-unfolded-svg';
 import { DEFAULTS, FACE_DEFAULTS, rotationsMatchDefault } from './defaults';
 import { parseStickerId, toRenderMask, type MaskRenderOptions } from './mask-core';
 import type { ImageSpec, PuzzleType, PuzzleVariant } from './types';
