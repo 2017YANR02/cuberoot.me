@@ -31,29 +31,9 @@ export type TrainerRecapOrder = 'shuffle' | 'seq';
 export type TrainerTimerFont = 'lcd' | 'mono' | 'liberation' | 'sans';
 
 /**
- * 协同刷题(零后端分片):一个选手旁边多台设备各开一个账号帮忙打乱时,把复习队列
- * 按 `i % n === k` 切成 n 份,本机只出第 k 份(0 起),合起来正好覆盖全集不重不漏。
- * `code` 仅乱序模式用作确定性洗牌种子 —— 各设备同码 → 同一条全序 → 分片对齐;
- * 顺序模式(按 set 原序)本身确定,不需要 code。off = 单机整集。
- */
-export interface TrainerCoop {
-  on: boolean;
-  code: string;
-  /** 共几台(≥2 才生效)。 */
-  n: number;
-  /** 本机第几台,0 起(< n)。 */
-  k: number;
-}
-const DEFAULT_COOP: TrainerCoop = { on: false, code: '', n: 2, k: 0 };
-/** 分片生效条件:开了且至少 2 台。 */
-const coopActive = (c: TrainerCoop): boolean => c.on && c.n >= 2;
-/** 本机分片号(钳到 [0, n)),用于 `i % n === kk` 过滤。 */
-const coopShard = (c: TrainerCoop): number => ((c.k % c.n) + c.n) % c.n;
-
-/**
  * 在线协同房间(后端 trainer_rooms):房间持有共享 case 队列 + 领取游标,本机「下一题」向
  * 服务器原子领取 —— 多设备不重不漏、动态均衡、支持乱序(队列服务端洗)。房间态是运行时的,
- * 不落 prefs / localStorage(刷新即离开;要续会话再重新加入)。room 非空时压过本地分片。
+ * 不落 prefs / localStorage(刷新即离开;要续会话再重新加入)。
  */
 export interface TrainerRoom {
   code: string;
@@ -130,14 +110,12 @@ interface TrainerPrefs {
   pureScramble: boolean;
   /** 三条一屏(仅不计时模式):一屏出 3 条打乱,拧完 3 条再点一次切下一屏。 */
   multiScramble: boolean;
-  /** 复习模式多设备协同分片配置(记住搭档 = 存进 prefs 下次自动恢复)。 */
-  coop: TrainerCoop;
 }
 const DEFAULT_PREFS: TrainerPrefs = {
-  preAuf: true, postAuf: true, timing: true, mode: 'recap', probMode: 'uniform',
+  preAuf: true, postAuf: true, timing: false, mode: 'recap', probMode: 'uniform',
   recapOrder: 'shuffle', timerFont: 'lcd', scrambleFont: 'sans',
   showPrevCard: true, showNextCard: true, showStats: true, showStageThumb: true,
-  pureScramble: true, multiScramble: false, coop: DEFAULT_COOP,
+  pureScramble: true, multiScramble: false,
 };
 const PREFS_KEY = 'trainer:prefs';
 
@@ -162,45 +140,13 @@ const prefsOf = (st: TrainerPrefs): TrainerPrefs => ({
   timerFont: st.timerFont, scrambleFont: st.scrambleFont,
   showPrevCard: st.showPrevCard, showNextCard: st.showNextCard, showStats: st.showStats,
   showStageThumb: st.showStageThumb, pureScramble: st.pureScramble,
-  multiScramble: st.multiScramble, coop: st.coop,
+  multiScramble: st.multiScramble,
 });
 
 const shuffle = <T,>(arr: T[]): T[] => {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-};
-
-/** 字符串 → 32 位种子(FNV-1a),空串也有确定值。 */
-const seedFromString = (s: string): number => {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return h >>> 0;
-};
-
-/** mulberry32:确定性 PRNG。 */
-const mulberry32 = (seed: number): (() => number) => {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-};
-
-/** 确定性洗牌(同 seed 同序):协同乱序模式各设备必须切在同一条全序上。 */
-const seededShuffle = <T,>(arr: T[], seed: number): T[] => {
-  const a = [...arr];
-  const rnd = mulberry32(seed);
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(rnd() * (i + 1));
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
@@ -244,9 +190,9 @@ interface TrainerState {
    */
   observingPinned: boolean;
   /**
-   * 协同复习:本机这一份刚出完(当前题是本轮最后一题)时置 true —— 出下一题被拦住,
-   * 弹「本轮复习结束」提示,`continueRecapRound()` 才进下一轮。本地分片模式各设备各自弹;
-   * 在线房间模式队列服务端共享,领完对全员同时弹(真·多方共同刷完)。
+   * 在线房间复习:本机领到的这一份刚出完时置 true —— 出下一题被拦住,弹「本轮复习结束」
+   * 提示,`continueRecapRound()` 才进下一轮。队列服务端共享,领完对全员同时弹(真·多方
+   * 共同刷完)。单机整集不置位(每轮无缝重洗)。
    */
   recapRoundDone: boolean;
 
@@ -274,7 +220,6 @@ interface TrainerState {
   showStageThumb: boolean;
   pureScramble: boolean;
   multiScramble: boolean;
-  coop: TrainerCoop;
 
   /** recap 模式的洗牌队列:pool 变了(recapSig 失配)重洗。 */
   recapQueue: string[];
@@ -300,7 +245,6 @@ interface TrainerState {
   setShowStageThumb: (v: boolean) => void;
   setPureScramble: (v: boolean) => void;
   setMultiScramble: (v: boolean) => void;
-  setCoop: (c: TrainerCoop) => void;
 
   /** 下一个打乱:历史中段先前进,到队尾才出新题(train 随机 / recap 逐个)。 */
   nextScramble: () => void;
@@ -382,32 +326,17 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     let entryRecap: { pos: number; total: number } | undefined;
 
     if (st.mode === 'recap') {
-      const coop = st.coop;
-      const active = coopActive(coop);
-      // sig 纳入协同配置:改「共几台/第几台/码/开关」都要重建队列(重新分片)
-      const sig = [...pool].sort().join('|') + (active ? `#${coop.code}/${coop.n}/${coop.k}` : '');
+      const sig = [...pool].sort().join('|');
       let q = st.recapQueue;
       let pos = st.recapPos;
       if (st.recapSig !== sig || pos >= q.length) {
-        // 规范序:按 set 里 case 的原始顺序(与本机的勾选先后无关)—— 协同分片对齐的基准。
-        // 乱序协同必须在这条规范序上洗牌,否则两台「同一批 case 但勾选顺序不同」洗出的全序
-        // 就不一致,分片会既重叠又漏。单机乱序用不到规范序(自己一台无需对齐),仍随机洗 pool。
-        const inPool = new Set(pool);
-        const ordered = st.cases.map(caseKey).filter(k => inPool.has(k));
-        let full: string[];
         if (st.recapOrder === 'seq') {
-          full = ordered;                                   // 顺序:规范序本身(协同无需 code)
-        } else if (active) {
-          full = seededShuffle(ordered, seedFromString(coop.code)); // 协同乱序:规范序上确定性洗牌
+          // 顺序:按 set 里 case 的原始顺序(与本机的勾选先后无关)。
+          const inPool = new Set(pool);
+          q = st.cases.map(caseKey).filter(k => inPool.has(k));
         } else {
-          full = shuffle(pool);                             // 单机乱序:随机洗,无需对齐
+          q = shuffle(pool);                                // 乱序:随机洗。
         }
-        // 协同:在同一条全序上按 i % n === kk 切到本机那一份(顺序/乱序同理,不重不漏)
-        if (active) {
-          const kk = coopShard(coop);
-          full = full.filter((_, i) => i % coop.n === kk);
-        }
-        q = full;
         pos = 0;
       }
       key = q[pos];
@@ -772,14 +701,6 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       // 房间模式顺序由服务端队列定,本地不重出(改 recapOrder 只影响下次建房)
       if (!get().room && get().mode === 'recap' && get().timerState === TimerState.NOT_RUNNING) pickFresh();
     },
-    setCoop: (c) => {
-      // k 越界钳回 [0, n)(改 n 时上层已收敛,这里兜底防持久化里的脏值)
-      const n = Math.max(2, Math.floor(c.n) || 2);
-      const coop: TrainerCoop = { on: c.on, code: c.code, n, k: Math.min(Math.max(0, Math.floor(c.k) || 0), n - 1) };
-      set({ coop, recapSig: '' }); // 清 sig ⟹ 下一题按新分片重建队列
-      persistPrefs(prefsOf(get()));
-      if (!get().room && get().mode === 'recap' && get().timerState === TimerState.NOT_RUNNING) pickFresh();
-    },
     setShowPrevCard: (v) => {
       set({ showPrevCard: v });
       persistPrefs(prefsOf(get()));
@@ -831,13 +752,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       }
       // 在线房间:队尾向服务器领取下一题(异步,不预抽)
       if (st.room) { void roomAdvance(1); return; }
-      // 本地分片:本机这一份的最后一题刚做完(当前题 pos === total)⟹ 暂停,弹「本轮复习结束」,
-      // 等用户点「继续下一轮」再进下一轮(单机整集不打断,每轮无缝重洗)。
-      const cur = st.hist.idx >= 0 ? st.hist.list[st.hist.idx] : null;
-      if (coopActive(st.coop) && cur?.recap && cur.recap.pos >= cur.recap.total) {
-        set({ recapRoundDone: true });
-        return;
-      }
+      // 单机整集:队尾不打断,每轮无缝重洗(「本轮复习结束」弹窗只房间模式弹)。
       // 已在队尾:把预抽的下一题(peek)扶正为当前题,peek2 递补为新 peek,再预抽新的 peek2。
       // 这样「你先前看到的下一题」就是「现在要做的这一题」,预览稳定不重roll;右卡预览也提前
       // 一格备好(peek2),换题时右图秒出。
@@ -846,8 +761,8 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
 
     continueRecapRound: () => {
       if (!get().recapRoundDone) return;
-      if (get().room) { void roomContinue(); return; } // 房间:请求开新一轮再领第一题
-      promoteNext(); // 本地:内部 set 会清 recapRoundDone,并把 peek(下一轮首题)扶正为当前题
+      // recapRoundDone 只在房间模式置位(单机整集每轮无缝重洗,不弹窗)。
+      if (get().room) void roomContinue(); // 房间:请求开新一轮再领第一题
     },
 
     prevScramble: () => {
@@ -862,17 +777,27 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     createRoom: async () => {
       const st = get();
       if (!st.puzzle || !st.set) return { ok: false, error: 'no set loaded' };
-      // 规范序全集(与本地分片同基准)——池为空不建房
       const pool = new Set(trainerPool(st.selected, st.scope));
-      const keys = st.cases.map(caseKey).filter(k => pool.has(k));
+      const poolKeys = st.cases.map(caseKey).filter(k => pool.has(k)); // 规范序全集
+      // 房间题库 = 全集(都入,total 不变);建房者已单机刷到 recapPos ⟹ 用 start=recapPos-1 让房间从
+      // 第 recapPos 格派发:前 start 格记为建房者已完成、永不派发,队友接着分工,进度接着显示 recapPos/总数。
+      // 为让「跳过的前缀」正好是已刷的那几个,直接把本机复习队列(已按 seq/shuffle 排好的全集)整条交给房间
+      // 并 order='seq' 保序(否则服务端重洗会把前缀打乱、跳过的就不是已刷的了)。仅当队列恰好覆盖当前池时
+      // 才走这条;否则(train 模式 / 尚未起步 / 选择变过)退回规范序全集从头开始。
+      const rq = st.recapQueue;
+      const rqMatchesPool = rq.length === poolKeys.length && rq.every(k => pool.has(k));
+      const useQueue = st.mode === 'recap' && rqMatchesPool && st.recapPos > 1;
+      const keys = useQueue ? rq : poolKeys;
+      const order: RoomOrder = useQueue ? 'seq' : st.recapOrder;
+      const start = useQueue ? Math.min(st.recapPos - 1, keys.length - 1) : 0;
       if (keys.length === 0) return { ok: false, error: 'empty pool' };
       set({ roomBusy: true, roomError: null });
       try {
-        const info = await apiCreateRoom(st.puzzle, st.set, st.recapOrder, keys);
+        const info = await apiCreateRoom(st.puzzle, st.set, order, keys, start);
         set({
           mode: 'recap',
           room: { code: info.code, order: info.order, round: info.round, total: info.total },
-          roomClaimed: 0, recapRoundDone: false, roomBusy: false,
+          roomClaimed: start, recapRoundDone: false, roomBusy: false,
           hist: EMPTY_HIST, currentKey: null, currentName: null, currentScramble: null, peek: null, peek2: null,
         });
         persistPrefs(prefsOf(get()));
