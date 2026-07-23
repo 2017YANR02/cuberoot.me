@@ -66,6 +66,7 @@ import {
   DiscussionComposer, DiscussionEditBox, UserHeadline, ItemMenu, UserAvatarFallback,
 } from '@/components/Discussion';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useWeChatShare } from '@/hooks/useWeChatShare';
 import { parseReconId, reconPathSeg } from '@/lib/recon-seo';
 import '../recon.css';
 import './recon_detail.css';
@@ -134,6 +135,12 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
     return parts.length > 0 ? parts.join(' ') : fallback;
   })();
   useDocumentTitle(reconTitle, reconTitle);
+  // 微信朋友圈/会话卡片:标题=成绩(时间 项目 选手),描述补上比赛+日期。私享门(下方 early return)
+  // 之前 solve 为 null,传 null 即 no-op;非微信内置浏览器同样静默。
+  const reconShareDesc = solve?.comp
+    ? `${localizeCompName(solve.compWcaId ?? '', solve.comp, isZh)}${solve.date ? ` ${solve.date.slice(0, 10)}` : ''}`
+    : '';
+  useWeChatShare(solve ? { title: reconTitle, desc: reconShareDesc } : null);
 
   const [flagVer, setFlagVer] = useState(() => flagDataVersion());
   useEffect(() => {
