@@ -59,21 +59,26 @@ const EVENT_TO_CSTIMER_SCRTYPE: Record<EventId, string> = {
 
 /**
  * Convert one of our Solves to a cstimer per-solve tuple:
- *   [[time_cs, penalty], scramble, comment, ts_seconds]
+ *   [[penalty, time_ms], scramble, comment, ts_seconds]
  *
- * Mirrors import_cstimer.ts:160-181 inversely:
- *   - DNF → time[1] === -1 (we encode the original recorded cs in time[0]
- *     so the import can recover it; import accepts either -1 or a real cs).
- *   - +2  → time[1] === 2000, time[0] === recorded cs (pre-penalty)
- *   - ok  → time[1] === 0,    time[0] === recorded cs
+ * The penalty comes FIRST and the time is in MILLISECONDS — verified against
+ * upstream csTimer, which writes the tuple in lib/tdconverter.js:112-126 and
+ * reads the final result as `time[0] + time[1]` in stats/stats.js:1288,
+ * stats/hugestat.js:27 and tools/onlinecomp.js:294. (We previously emitted
+ * `[time_cs, penalty]`, which round-tripped against our own importer but was
+ * unreadable by real csTimer, and made real csTimer files import as all-zero.)
+ *
+ *   - DNF → penalty -1, time_ms = the recorded time (csTimer keeps it)
+ *   - +2  → penalty 2000, time_ms = recorded time BEFORE the penalty
+ *   - ok  → penalty 0
  */
 function solveToTuple(s: Solve): [[number, number], string, string, number] {
-  const cs = Math.max(0, Math.round(s.timeMs / 10));
+  const ms = Math.max(0, Math.round(s.timeMs));
   let pen: number;
   if (s.penalty === 'DNF') pen = -1;
   else if (s.penalty === '+2') pen = 2000;
   else pen = 0;
-  return [[cs, pen], s.scramble ?? '', s.comment ?? '', Math.floor(s.ts / 1000)];
+  return [[pen, ms], s.scramble ?? '', s.comment ?? '', Math.floor(s.ts / 1000)];
 }
 
 interface ExportResult {
