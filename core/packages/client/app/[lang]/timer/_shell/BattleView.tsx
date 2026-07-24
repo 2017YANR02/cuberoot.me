@@ -46,6 +46,8 @@ import CubingPreview from '@/components/CubingPreview';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { EventIcon } from '@/components/EventIcon';
 import { isWcaEvent } from '@/lib/wca-events';
+import { ALL_EVENT_IDS } from '@/lib/event-constants';
+import { eventInfo, fromWcaSpelling } from '@/app/[lang]/timer/_lib/types';
 import RankBadge from './RankBadge';
 import { useRankCountry } from '@/app/[lang]/timer/_shared/use-rank-country';
 import { useSettings, updateSettings } from '@/app/[lang]/timer/_lib/settings';
@@ -70,19 +72,18 @@ function getScrambleAutoScale(scramble: string): number {
   return Math.max(0.7, Math.sqrt(100 / len));
 }
 
-// NOTE: battle 的 18 个项目里有两个非 WCA(fto / kilominx)，走 appendEvents 文字标签。
-// 其余直接映射到 ALL_EVENT_IDS 的 WCA id(333mbf / minx / pyram 等本就一致)。
-const BATTLE_WCA_IDS = new Set<string>(
-  PUZZLES.map(p => p.id).filter(id => isWcaEvent(id)),
-);
-const BATTLE_APPEND_EVENTS: ReadonlyArray<{ id: string; iconClass: string; textLabel?: string }> = [
-  { id: 'fto', iconClass: '', textLabel: 'FTO' },
-  { id: 'kilominx', iconClass: '', textLabel: 'Kilominx' },
-];
-const BATTLE_AVAILABLE_EVENTS = new Set<string>([
-  ...BATTLE_WCA_IDS,
-  ...BATTLE_APPEND_EVENTS.map(e => e.id),
-]);
+// NOTE: 选择器的可选集 + 「其他」追加项全部由 PUZZLES 派生(PUZZLES 本身派生自 timer 的
+// BATTLE_EVENT_IDS),不再手写第二份清单 —— 往对战里加项目只改那张表即可。
+// ALL_EVENT_IDS(WCA 21 项)里有的走官方图标网格,没有的(fto / kilominx)走 appendEvents;
+// 两者都有 unofficial-* 内联图标,故 iconClass 直接给 EventIcon 的映射键。
+// tooltip 不传 label:eventDisplayName(id, isZh) 已双语覆盖 fto / kilominx,传死字符串反而丢中文。
+const BATTLE_APPEND_EVENTS: ReadonlyArray<{ id: string; iconClass: string; textLabel?: string }> =
+  PUZZLES.filter(p => !ALL_EVENT_IDS.includes(p.id)).map(p => ({
+    id: p.id,
+    iconClass: eventInfo(fromWcaSpelling(p.id)).icon ?? '',
+    textLabel: p.name.en,
+  }));
+const BATTLE_AVAILABLE_EVENTS = new Set<string>(PUZZLES.map(p => p.id));
 
 // NOTE: 有效成绩 ms → RankBadge 厘秒(DNF/未完成 → null)
 function effectiveCentis(time: number, penalty: PenaltyType): number | null {

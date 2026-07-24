@@ -5,6 +5,7 @@ import type { EventId } from '../_lib/types';
 import { EVENTS } from '../_lib/types';
 import { generateScramble } from '../_lib/scramble';
 import { warmup333 } from '../_lib/scramble/kociemba/random_state';
+import { fillNonWca, isNonWcaEvent } from '../_lib/scramble/nonwca';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
 
@@ -40,6 +41,11 @@ export default function BulkScrambleModal({ defaultEvent, isZh, onClose }: Props
     try {
       if (['333', '333oh', '333fm'].includes(event)) {
         await warmup333();
+      }
+      // Non-WCA puzzles are generated off-thread by the csTimer worker; fill the
+      // queue first so the synchronous loop below never drains it to ''.
+      if (isNonWcaEvent(event)) {
+        await fillNonWca(event, count);
       }
       const out: string[] = [];
       for (let i = 0; i < count; i++) {
