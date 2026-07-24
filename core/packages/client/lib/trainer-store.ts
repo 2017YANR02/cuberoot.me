@@ -21,8 +21,11 @@ export const TimerState = {
 export type TimerState = (typeof TimerState)[keyof typeof TimerState];
 
 export type TrainerPenalty = 'ok' | '+2' | 'DNF';
-/** train = 随机抽取;recap = 打乱顺序后不重复逐个过一遍,过完重新洗牌。 */
-export type TrainerMode = 'train' | 'recap';
+/**
+ * train = 随机抽取;recap = 打乱顺序后不重复逐个过一遍,过完重新洗牌;
+ * memo = 记忆模式(间隔重复):只出「到期该复习的 + 限额内的新卡」,看图回忆公式后自评。
+ */
+export type TrainerMode = 'train' | 'recap' | 'memo';
 /** uniform = 每个 case 1/N;real = 按数学真实概率(权重 = 轨道大小 16/cn)。 */
 export type TrainerProbMode = 'uniform' | 'real';
 /** recap 过一遍的顺序:shuffle = 洗牌(历史默认),seq = 按 set 里的 case 顺序。 */
@@ -110,12 +113,26 @@ interface TrainerPrefs {
   pureScramble: boolean;
   /** 三条一屏(仅不计时模式):一屏出 3 条打乱,拧完 3 条再点一次切下一屏。 */
   multiScramble: boolean;
+  /** 记忆模式:每场最多学几张新卡(0 = 只复习不学新的)。 */
+  srsNewLimit: number;
+  /** 记忆模式:每场卡片总数上限。 */
+  srsSessionLimit: number;
+  /** 记忆模式:到期卡与新卡都用完后,继续按「最该练的」加练补满本场。 */
+  srsFillExtra: boolean;
+  /** 记忆模式:按记忆进展自动升降「学习中 / 已掌握」标记。 */
+  srsAutoMark: boolean;
+  /** 记忆模式:揭示公式时一并展示 3D 演示。 */
+  srsShowPlayer: boolean;
+  /** 计时/复习模式里做完一把也计入记忆调度(同一 case 每到期一次只计一把)。 */
+  srsFromSolves: boolean;
 }
 const DEFAULT_PREFS: TrainerPrefs = {
   preAuf: true, postAuf: true, timing: false, mode: 'recap', probMode: 'uniform',
   recapOrder: 'shuffle', timerFont: 'lcd', scrambleFont: 'sans',
   showPrevCard: true, showNextCard: true, showStats: true, showStageThumb: true,
   pureScramble: true, multiScramble: false,
+  srsNewLimit: 10, srsSessionLimit: 60, srsFillExtra: true, srsAutoMark: true, srsShowPlayer: false,
+  srsFromSolves: true,
 };
 const PREFS_KEY = 'trainer:prefs';
 
@@ -141,6 +158,9 @@ const prefsOf = (st: TrainerPrefs): TrainerPrefs => ({
   showPrevCard: st.showPrevCard, showNextCard: st.showNextCard, showStats: st.showStats,
   showStageThumb: st.showStageThumb, pureScramble: st.pureScramble,
   multiScramble: st.multiScramble,
+  srsNewLimit: st.srsNewLimit, srsSessionLimit: st.srsSessionLimit,
+  srsFillExtra: st.srsFillExtra, srsAutoMark: st.srsAutoMark, srsShowPlayer: st.srsShowPlayer,
+  srsFromSolves: st.srsFromSolves,
 });
 
 const shuffle = <T,>(arr: T[]): T[] => {
@@ -220,6 +240,12 @@ interface TrainerState {
   showStageThumb: boolean;
   pureScramble: boolean;
   multiScramble: boolean;
+  srsNewLimit: number;
+  srsSessionLimit: number;
+  srsFillExtra: boolean;
+  srsAutoMark: boolean;
+  srsShowPlayer: boolean;
+  srsFromSolves: boolean;
 
   /** recap 模式的洗牌队列:pool 变了(recapSig 失配)重洗。 */
   recapQueue: string[];
@@ -245,6 +271,12 @@ interface TrainerState {
   setShowStageThumb: (v: boolean) => void;
   setPureScramble: (v: boolean) => void;
   setMultiScramble: (v: boolean) => void;
+  setSrsNewLimit: (v: number) => void;
+  setSrsSessionLimit: (v: number) => void;
+  setSrsFillExtra: (v: boolean) => void;
+  setSrsAutoMark: (v: boolean) => void;
+  setSrsShowPlayer: (v: boolean) => void;
+  setSrsFromSolves: (v: boolean) => void;
 
   /** 下一个打乱:历史中段先前进,到队尾才出新题(train 随机 / recap 逐个)。 */
   nextScramble: () => void;
@@ -728,6 +760,32 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       persistPrefs(prefsOf(get()));
       // 房间里现开三条一屏:立刻补齐 peek/peek2,当前这屏马上凑满三条(否则要先切一次才补上)
       if (v) void roomFillPreviews();
+    },
+    // 记忆模式的四个额度/开关:改了只影响「下一场」怎么组队列,当前这场不重排
+    // (刷到一半突然把卡片抽掉最劝退)。MemoryTrainer 里有显式的「重开一场」。
+    setSrsNewLimit: (v) => {
+      set({ srsNewLimit: Math.max(0, Math.min(200, Math.round(v))) });
+      persistPrefs(prefsOf(get()));
+    },
+    setSrsSessionLimit: (v) => {
+      set({ srsSessionLimit: Math.max(5, Math.min(500, Math.round(v))) });
+      persistPrefs(prefsOf(get()));
+    },
+    setSrsFillExtra: (v) => {
+      set({ srsFillExtra: v });
+      persistPrefs(prefsOf(get()));
+    },
+    setSrsAutoMark: (v) => {
+      set({ srsAutoMark: v });
+      persistPrefs(prefsOf(get()));
+    },
+    setSrsShowPlayer: (v) => {
+      set({ srsShowPlayer: v });
+      persistPrefs(prefsOf(get()));
+    },
+    setSrsFromSolves: (v) => {
+      set({ srsFromSolves: v });
+      persistPrefs(prefsOf(get()));
     },
     setTimerFont: (f) => {
       set({ timerFont: f });

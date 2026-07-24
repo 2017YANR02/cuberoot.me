@@ -30,11 +30,23 @@ import {
   TimerDisplay, ScrambleHeader, SolveCard, StatsList, HistoryList, CaseMarkBar,
 } from '@/app/[lang]/alg/_trainer/trainer-components';
 import { RoomQrModal } from '@/app/[lang]/alg/_trainer/RoomQrModal';
+import MemoryTrainer from '@/app/[lang]/alg/_trainer/MemoryTrainer';
+import SetProgressStrip from '@/app/[lang]/alg/_trainer/SetProgressStrip';
 import { resolveAlgPuzzle } from '@/app/[lang]/alg/_trainer/events';
+import { useAlgSrs, autoMarkFromSrs } from '@/lib/alg-srs-store';
+import { gradeFromSolve } from '@/lib/alg-srs';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '@/app/[lang]/alg/_trainer/trainer.css';
+import '@/app/[lang]/alg/_trainer/memory.css';
 import '@/app/[lang]/alg/alg.css';
 import { tr } from '@/i18n/tr';
+
+/** 三种训练模式的标签(topbar 下的分段切换)。 */
+const MODES: Array<{ id: 'train' | 'recap' | 'memo'; zh: string; en: string; tip: { zh: string; en: string } }> = [
+  { id: 'train', zh: '训练', en: 'Train', tip: { zh: '随机抽取,同一 case 可能连续出现', en: 'Random draw' } },
+  { id: 'recap', zh: '复习', en: 'Recap', tip: { zh: '选中的 case 洗牌后各出一遍', en: 'Each selected case once per round' } },
+  { id: 'memo', zh: '记忆', en: 'Memory', tip: { zh: '间隔重复:看图回忆公式,按记忆强度排期', en: 'Spaced repetition: recall from the picture, scheduled by memory strength' } },
+];
 
 const TIMER_DELAY_MS = 0;
 
@@ -58,6 +70,9 @@ export default function TrainerRunClient() {
   // 邀请链接携带创建者的视图偏好:?multi=1 = 三条一屏(依赖不计时)。进房间后应用一次。
   const [multiParam] = useQueryState('multi');
   const viewApplied = useRef(false);
+  // 深链模式:进度总览页的「复习 N」直接带 ?mode=memo 进来。只应用一次,之后用户自己切不再被覆盖。
+  const [modeParam] = useQueryState('mode');
+  const modeApplied = useRef(false);
 
   const puzzle = resolveAlgPuzzle(puzzleParam);   // 接受 event code(333)或 legacy puzzle 名(3x3)
   const meta = puzzle ? getAlgSetMeta(puzzle, setSlug) : undefined;
@@ -96,6 +111,18 @@ export default function TrainerRunClient() {
   const setProbMode = useTrainerStore(s => s.setProbMode);
   const recapOrder = useTrainerStore(s => s.recapOrder);
   const setRecapOrder = useTrainerStore(s => s.setRecapOrder);
+  const srsNewLimit = useTrainerStore(s => s.srsNewLimit);
+  const setSrsNewLimit = useTrainerStore(s => s.setSrsNewLimit);
+  const srsSessionLimit = useTrainerStore(s => s.srsSessionLimit);
+  const setSrsSessionLimit = useTrainerStore(s => s.setSrsSessionLimit);
+  const srsFillExtra = useTrainerStore(s => s.srsFillExtra);
+  const setSrsFillExtra = useTrainerStore(s => s.setSrsFillExtra);
+  const srsAutoMark = useTrainerStore(s => s.srsAutoMark);
+  const setSrsAutoMark = useTrainerStore(s => s.setSrsAutoMark);
+  const srsShowPlayer = useTrainerStore(s => s.srsShowPlayer);
+  const setSrsShowPlayer = useTrainerStore(s => s.setSrsShowPlayer);
+  const srsFromSolves = useTrainerStore(s => s.srsFromSolves);
+  const setSrsFromSolves = useTrainerStore(s => s.setSrsFromSolves);
   const room = useTrainerStore(s => s.room);
   const roomBusy = useTrainerStore(s => s.roomBusy);
   const roomClaimed = useTrainerStore(s => s.roomClaimed);
@@ -152,10 +179,13 @@ export default function TrainerRunClient() {
 
   // per-case 学习标记(pill / 轮盘掌握位 / M 键):本地 + 登录后云端合并
   const loadMarks = useTrainerMarks(s => s.loadMarks);
+  const loadSrs = useAlgSrs(s => s.loadSrs);
   useEffect(() => {
     if (!puzzle || !meta) return;
     loadMarks(puzzle, setSlug);
-  }, [puzzle, setSlug, meta, loadMarks]);
+    // 记忆调度(间隔重复)与标记同源同步 —— 顶部进度条要显示「待复习」,不进记忆模式也得装
+    loadSrs(puzzle, setSlug);
+  }, [puzzle, setSlug, meta, loadMarks, loadSrs]);
 
   useEffect(() => {
     if (!puzzle || !meta) return;
@@ -186,6 +216,13 @@ export default function TrainerRunClient() {
     setMultiScramble(true);
   }, [multiParam, roomParam, setTiming, setMultiScramble]);
 
+  useEffect(() => {
+    if (modeApplied.current) return;
+    if (modeParam !== 'memo' && modeParam !== 'train' && modeParam !== 'recap') return;
+    modeApplied.current = true;
+    setMode(modeParam);
+  }, [modeParam, setMode]);
+
   // scope slug → 该组全部 case key(与 AlgCategoryView 的 top/sub 两级匹配同一套约定)
   const scopedKeys = useMemo(() => {
     if (!scopeSlug || cases.length === 0) return null;
@@ -198,6 +235,11 @@ export default function TrainerRunClient() {
   useEffect(() => {
     setScope(scopedKeys);
   }, [scopedKeys, setScope]);
+
+  // 顶部进度条统计的范围 = 本页可见的整套(有 scope 就是该组),与「选了哪几个」无关 ——
+  // 它回答的是「这一套我学到哪了」,不是「这一场练几个」。
+  const allKeys = useMemo(() => cases.map(caseKey), [cases]);
+  const stripKeys = scopedKeys ?? allKeys;
 
   const pool = useMemo(() => trainerPool(selected, scope), [selected, scope]);
 
@@ -250,10 +292,15 @@ export default function TrainerRunClient() {
 
   // Space-bar timing (keyboard). Touch/mouse press-to-time is handled by the
   // gesture-wheel hook below so a press can also drive the radial dial.
+  // 记忆模式自己接管全部键盘/指针(空格 = 揭示公式,1-4 = 评分),这里的计时与手势一律让位。
+  const isMemo = mode === 'memo';
+  const isMemoRef = useRef(false);
+  isMemoRef.current = isMemo;
+
   useSpaceHoldTimer({
     state: timerState,
     delayMs: TIMER_DELAY_MS,
-    enabled: timing && !recapRoundDone, // 「本轮结束」弹窗开着时别让空格误起表
+    enabled: timing && !recapRoundDone && !isMemo, // 「本轮结束」弹窗开着时别让空格误起表
     getTimerReady,
     startTimer,
     stopTimer,
@@ -263,6 +310,7 @@ export default function TrainerRunClient() {
   // ←/→ 打乱历史(同 /timer);不计时模式下空格也直接切下一个打乱。
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
+      if (isMemoRef.current) return;   // 记忆模式的键盘在 MemoryTrainer 里
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA'
         || target.tagName === 'SELECT' || target.isContentEditable)) return;
@@ -350,7 +398,7 @@ export default function TrainerRunClient() {
     return () => document.removeEventListener('pointerdown', handler);
   }, [optsOpen]);
   // 房间模式题面由服务端队列领取,本机 selected 可空(经邀请链接进来的新设备)—— 不算「未选」。
-  const stageMounted = !!(puzzle && meta) && !(pool.length === 0 && cases.length > 0 && !room);
+  const stageMounted = !!(puzzle && meta) && !isMemo && !(pool.length === 0 && cases.length > 0 && !room);
 
   /** meta.no → case:元数据弹窗里的镜像 / 逆链接用(同 AlgCategoryView) */
   const byNo = useMemo(() => {
@@ -456,6 +504,7 @@ export default function TrainerRunClient() {
     };
     let pressed = false;
     const down = (e: PointerEvent) => {
+      if (isMemoRef.current) return;   // 记忆模式没有「点空白 = 下一题」这回事
       if (e.pointerType === 'mouse' && e.button !== 0) return;
       // 设置面板开着时,面板外的按压只该关面板 —— 不该顺带切打乱/触发计时。
       if (optsOpenRef.current) return;
@@ -481,6 +530,34 @@ export default function TrainerRunClient() {
       document.removeEventListener('pointerup', up);
     };
   }, [advanceScramble, stopTimer, getTimerReady, startTimer, setTimerState]);
+
+  /**
+   * 计时成绩也算一次「复习」—— 手上做出来了就是记得住,这一把该喂回记忆调度里,
+   * 否则计时练一整晚,记忆模式明天还当你没碰过。
+   *
+   * 去重:只有**当前到期**(或从没练过)的 case 才计分。同一个 case 在一场里连做十把,
+   * 第一把之后它已经被排到未来了,后面九把不再改期 —— 这正是间隔重复要的语义。
+   * 快慢基线取本场全部成功成绩的中位数(见 gradeFromSolve)。
+   */
+  const gradeSrs = useAlgSrs(s => s.grade);
+  const lastGradedSolve = useRef(-1);
+  useEffect(() => {
+    if (!srsFromSolves || solves.length === 0) return;
+    const okMs = solves.filter(s => s.penalty === 'ok').map(s => s.ms).sort((a, b) => a - b);
+    const median = okMs.length >= 3 ? okMs[Math.floor(okMs.length / 2)] : null;
+    const now = Date.now();
+    for (let i = Math.max(0, lastGradedSolve.current + 1); i < solves.length; i++) {
+      const sv = solves[i];
+      lastGradedSolve.current = i;
+      const rec = useAlgSrs.getState().recs[sv.caseKey];
+      if (rec && rec.n > 0 && rec.d > now) continue;   // 这张卡今天已经排过期了
+      const g = gradeFromSolve(sv.ms, sv.penalty, median);
+      const next = gradeSrs(sv.caseKey, g);
+      if (useTrainerStore.getState().srsAutoMark) autoMarkFromSrs(sv.caseKey, next, g);
+    }
+  }, [solves, srsFromSolves, gradeSrs]);
+  // 换 set 重新计数(成绩列表是 per-set 的)
+  useEffect(() => { lastGradedSolve.current = solves.length - 1; }, [storePuzzle, storeSet]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── 成绩驱动的标记升降级建议(只建议不自动改,标记主权在用户)──
   // 升:该 case 近 5 把全成功,且这 5 把的中位数不慢于本 session 全部成功成绩的中位数
@@ -533,9 +610,13 @@ export default function TrainerRunClient() {
 
   const selectHref = `/alg/${puzzleParam}/${setSlug}/select${scopeSlug ? `?scope=${encodeURIComponent(scopeSlug)}` : ''}`;
 
+  // 记忆模式按「整套(或该组)」排期 —— 用户从来没进过 select 页也该能直接开练,
+  // 所以没勾选时回落到本页范围内的全部 case,而不是把人赶去选择页。
+  const memoPool = pool.length > 0 ? pool : stripKeys;
+
   // 本机没选 case:房间模式(题面来自服务端队列)不算「未选」,不拦。经邀请链接进来时
   // 显示「正在加入房间…」而非「去选择」,避免加入完成前闪一下空态;链接失效则给原因 + 出口。
-  if (pool.length === 0 && cases.length > 0 && !room) {
+  if (pool.length === 0 && cases.length > 0 && !room && !isMemo) {
     const joiningViaLink = !!roomParam;
     return (
       <div className="trainer-root">
@@ -681,39 +762,85 @@ export default function TrainerRunClient() {
                   </select>
                 </div>
               )}
-              <div className="trainer-opts-row">
-                <BoolToggle
-                  value={timing}
-                  onChange={setTiming}
-                  label={tr({ zh: '计时', en: 'Timing' })}
-                />
-                <PillToggle
-                  value={mode === 'recap'}
-                  onChange={v => setMode(v ? 'recap' : 'train')}
-                  onLabel={tr({ zh: '复习', en: 'Recap' })}
-                  offLabel={tr({ zh: '训练', en: 'Train' })}
-                  ariaLabel={tr({ zh: '训练 / 复习模式', en: 'Train / recap mode' })}
-                  disabled={!!room}
-                />
-                {mode === 'recap' && (
-                  <PillToggle
-                    value={recapOrder === 'shuffle'}
-                    onChange={v => setRecapOrder(v ? 'shuffle' : 'seq')}
-                    onLabel={tr({ zh: '乱序', en: 'Shuffled' })}
-                    offLabel={tr({ zh: '顺序', en: 'In order' })}
-                    ariaLabel={tr({ zh: '复习顺序', en: 'Recap order' })}
-                    disabled={!!room}
+              {!isMemo && (
+                <div className="trainer-opts-row">
+                  <BoolToggle
+                    value={timing}
+                    onChange={setTiming}
+                    label={tr({ zh: '计时', en: 'Timing' })}
                   />
-                )}
-              </div>
+                  {mode === 'recap' && (
+                    <PillToggle
+                      value={recapOrder === 'shuffle'}
+                      onChange={v => setRecapOrder(v ? 'shuffle' : 'seq')}
+                      onLabel={tr({ zh: '乱序', en: 'Shuffled' })}
+                      offLabel={tr({ zh: '顺序', en: 'In order' })}
+                      ariaLabel={tr({ zh: '复习顺序', en: 'Recap order' })}
+                      disabled={!!room}
+                    />
+                  )}
+                </div>
+              )}
               <div className="trainer-opts-hint">
                 {mode === 'train'
                   ? tr({ zh: '随机抽取,同一 case 可能连续出现', en: 'Random draw, the same case may repeat' })
-                  : tr({
+                  : mode === 'recap'
+                  ? tr({
                       zh: '选中的 n 个 case 洗牌后各出一遍,出完重洗。轮内 ≤ n 把必出全部;跨轮看单个 case 最坏间隔 2n−1',
                       en: 'All n selected cases once per shuffled round, reshuffle when done. Every case within ≤ n draws of a round; worst same-case gap across rounds is 2n−1',
+                    })
+                  : tr({
+                      zh: '看图回忆公式后自评,系统按 SM-2 间隔重复排期:记得越牢下次间隔越长,忘了当场重来。每天只出到期的那些',
+                      en: 'Recall the alg from the picture, then grade yourself. An SM-2 spaced-repetition schedule stretches the interval as memory holds and repeats it immediately when it breaks — only due cards come up each day',
                     })}
               </div>
+              {isMemo && (
+                <>
+                  <div className="trainer-opts-row">
+                    <label className="trainer-opts-num">
+                      <span className="trainer-opts-label">{tr({ zh: '每场新卡', en: 'New/session' })}</span>
+                      <input
+                        type="number" min={0} max={200} step={1}
+                        value={srsNewLimit}
+                        onChange={e => setSrsNewLimit(Number(e.target.value))}
+                        aria-label={tr({ zh: '每场最多学几张新卡', en: 'Max new cards per session' })}
+                      />
+                    </label>
+                    <label className="trainer-opts-num">
+                      <span className="trainer-opts-label">{tr({ zh: '每场上限', en: 'Cards/session' })}</span>
+                      <input
+                        type="number" min={5} max={500} step={5}
+                        value={srsSessionLimit}
+                        onChange={e => setSrsSessionLimit(Number(e.target.value))}
+                        aria-label={tr({ zh: '每场卡片总数上限', en: 'Max cards per session' })}
+                      />
+                    </label>
+                  </div>
+                  <div className="trainer-opts-row">
+                    <BoolToggle
+                      value={srsFillExtra}
+                      onChange={setSrsFillExtra}
+                      label={tr({ zh: '加练', en: 'Extra drill' })}
+                    />
+                    <BoolToggle
+                      value={srsAutoMark}
+                      onChange={setSrsAutoMark}
+                      label={tr({ zh: '自动标记', en: 'Auto marks' })}
+                    />
+                    <BoolToggle
+                      value={srsShowPlayer}
+                      onChange={setSrsShowPlayer}
+                      label={tr({ zh: '总是演示', en: 'Always animate' })}
+                    />
+                  </div>
+                  <div className="trainer-opts-hint">
+                    {tr({
+                      zh: '加练 = 到期卡与新卡都用完后,继续按「最容易忘的」补满本场;自动标记 = 第一次记住升「学习中」,间隔过 21 天升「已掌握」,忘了打回「学习中」(「搁置」永不自动改)',
+                      en: 'Extra drill tops the session up with your shakiest cards once due + new run out. Auto marks promote to Learning on first recall, to Mastered once the interval passes 21 days, and back to Learning on a lapse (Paused is never touched automatically)',
+                    })}
+                  </div>
+                </>
+              )}
               {/* 在线房间:后端共享队列,多设备原子领取 —— 不重不漏、动态均衡、真·合并进度 */}
               {mode === 'recap' && (
                 <>
@@ -856,6 +983,24 @@ export default function TrainerRunClient() {
                   label={timing ? tr({ zh: '统计', en: 'Stats' }) : tr({ zh: '历史', en: 'History' })}
                 />
               </div>
+              {/* 计时练的这几把也算复习 —— 不然计时练一晚上,记忆模式明天还当你没碰过 */}
+              {timing && (
+                <>
+                  <div className="trainer-opts-row">
+                    <BoolToggle
+                      value={srsFromSolves}
+                      onChange={setSrsFromSolves}
+                      label={tr({ zh: '成绩计入记忆', en: 'Solves feed memory' })}
+                    />
+                  </div>
+                  <div className="trainer-opts-hint">
+                    {tr({
+                      zh: 'DNF 记「忘了」,明显慢于本场中位数记「犹豫」,正常记「记得」,明显快记「秒答」。同一个 case 每到期一次只计一把,连做十把不会把间隔吹上天',
+                      en: 'A DNF counts as “forgot”, clearly slower than your session median as “hard”, normal as “good”, clearly faster as “easy”. Each case counts once per time it comes due, so ten reps in a row can’t inflate the interval',
+                    })}
+                  </div>
+                </>
+              )}
               {/* 三条一屏时「下一个」已经在主屏第 2 条里,那张卡片不出 —— 开关一起隐掉,
                   不留一个按了没反应的死开关;「上一个」则整屏回看,改叫「上三个」。 */}
               <div className="trainer-opts-row">
@@ -910,6 +1055,41 @@ export default function TrainerRunClient() {
         </div>
       </div>
 
+      {/* 模式分段 + 本套进度条。放在 topbar 正下方:进训练页第一眼就知道「这套学到哪了、
+          今天还有多少要复习」,而不是要跑去 /alg/progress 才看得到。 */}
+      <div className="trainer-modes" data-no-timer role="group"
+        aria-label={tr({ zh: '训练模式', en: 'Training mode' })}>
+        {MODES.map(m => (
+          <button
+            key={m.id}
+            type="button"
+            className={`trainer-mode-tab${mode === m.id ? ' is-active' : ''}`}
+            onClick={() => setMode(m.id)}
+            disabled={!!room && m.id !== 'recap'}
+            aria-pressed={mode === m.id}
+            title={tr(m.tip)}
+          >
+            {tr({ zh: m.zh, en: m.en })}
+          </button>
+        ))}
+      </div>
+      <SetProgressStrip
+        keys={stripKeys}
+        selectHref={selectHref}
+        onStartMemo={() => setMode('memo')}
+        compact
+      />
+
+      {isMemo ? (
+        <MemoryTrainer
+          puzzle={puzzle}
+          set={setSlug}
+          cases={cases}
+          pool={memoPool}
+          scrambleKind={scrambleKind}
+          onExit={() => setMode('recap')}
+        />
+      ) : (
       <div className={`trainer-run${sidebarShown ? '' : ' trainer-run--solo'}`}>
         <div className="trainer-stage" ref={stageRef}>
           {/* 三条一屏:当前 + 屏上第 2、3 条(队尾时 = 预抽的 peek / peek2,回看过则是历史里
@@ -1116,6 +1296,7 @@ export default function TrainerRunClient() {
           </aside>
         )}
       </div>
+      )}
 
       <GestureWheel ref={wheelRef} isZh={isZh} labels={wheelLabels} />
 
