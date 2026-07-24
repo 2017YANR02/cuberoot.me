@@ -1,0 +1,96 @@
+/**
+ * csTimer JSON interop — REAL upstream wire format.
+ *
+ * The per-solve tuple csTimer writes is:
+ *
+ *   [[penalty, totalMs, ...phaseSplits], scramble, comment, unixSeconds]
+ *
+ * penalty is 0 (none) / 2000 (+2) / -1 (DNF); the time is in MILLISECONDS and
+ * is the value BEFORE the penalty is applied. Upstream references (local clone
+ * at D:\cube\cstimer):
+ *   - src/js/lib/tdconverter.js:112-126  — writes time[0] = -1 / 2000 / 0,
+ *     then fills time[1..] with millisecond values and builds the 4-tuple.
+ *   - src/js/stats/stats.js:1288, src/js/stats/hugestat.js:27,
+ *     src/js/tools/onlinecomp.js:294 — all read the final result as
+ *     `time[0] + time[1]`, which only type-checks if [0] is the penalty.
+ *
+ * We used to emit and parse `[timeCs, penalty]` (reversed, centiseconds). That
+ * round-tripped against ourselves but meant a genuine csTimer export imported
+ * as all-zero times, and our export was unreadable by csTimer. These fixtures
+ * are written in the upstream format on purpose — they are the regression
+ * guard for that fix, so do NOT "fix" them to match our encoder.
+ */
+
+import { describe, it, expect } from 'vitest';
+import { parseCstimerExport } from '@/app/[lang]/timer/_lib/storage/import_cstimer';
+import { importCstimerJson } from '@/app/[lang]/timer/_lib/storage/import_export';
+
+/** A minimal but genuine-shaped csTimer export: one 3x3 session, 4 solves. */
+function realCstimerExport(): string {
+  const session1 = [
+    // plain solve — 12.34s
+    [[0, 12340], "R U R' U'", '', 1_700_000_000],
+    // +2 — recorded 9.87s, so it displays as 11.87
+    [[2000, 9870], "F R U R' U' F'", 'lockup', 1_700_000_100],
+    // DNF — csTimer keeps the recorded time alongside the -1
+    [[-1, 15020], "L D L' D'", '', 1_700_000_200],
+    // multi-phase (csTimer's default 4-phase 3x3): the total first, then the
+    // cumulative splits back-to-front → [pen, total, +oll, +f2l, cross]
+    [[0, 20000, 15000, 9000, 2000], 'U2 R2 F2', '', 1_700_000_300],
+  ];
+
+  return JSON.stringify({
+    session1: JSON.stringify(session1),
+    properties: {
+      sessionData: JSON.stringify({
+        '1': { name: '3x3', opt: { scrType: '333' }, rank: 1 },
+      }),
+    },
+  });
+}
+
+describe('csTimer import — upstream tuple order', () => {
+  it('reads [penalty, timeMs] and keeps milliseconds', () => {
+    const sessions = parseCstimerExport(realCstimerExport());
+    expect(sessions).toHaveLength(1);
+    const s = sessions[0];
+    expect(s.event).toBe('333');
+    expect(s.solves).toHaveLength(4);
+
+    expect(s.solves[0].timeMs).toBe(12340);
+    expect(s.solves[0].penalty).toBe('ok');
+
+    expect(s.solves[1].timeMs).toBe(9870);
+    expect(s.solves[1].penalty).toBe('+2');
+    expect(s.solves[1].comment).toBe('lockup');
+
+    // DNF keeps its recorded time rather than collapsing to 0.
+    expect(s.solves[2].timeMs).toBe(15020);
+    expect(s.solves[2].penalty).toBe('DNF');
+  });
+
+  it('recovers 4-phase splits into `stages`', () => {
+    const sessions = parseCstimerExport(realCstimerExport());
+    const multi = sessions[0].solves[3];
+    expect(multi.timeMs).toBe(20000);
+    // time = [pen, 20000, 15000, 9000, 2000] → cross 2000, f2l 9000, oll 15000
+    expect(multi.stages).toEqual({ cross: 2000, f2l: 9000, oll: 15000, pll: 20000 });
+  });
+
+  it('the second importer (importCstimerJson) agrees with the first', () => {
+    const byEvent = importCstimerJson(realCstimerExport());
+    expect(byEvent).not.toBeNull();
+    const solves = byEvent!['333'];
+    expect(solves.map(s => s.timeMs)).toEqual([12340, 9870, 15020, 20000]);
+    expect(solves.map(s => s.penalty)).toEqual(['ok', '+2', 'DNF', 'ok']);
+  });
+});
+
+describe('csTimer import — regression guard on the old reversed format', () => {
+  it('does NOT read a plain solve as time 0', () => {
+    // Under the old `[timeCs, penalty]` reading, [0, 12340] parsed as
+    // cs = 0 → timeMs = 0. Every imported solve was 0.00.
+    const sessions = parseCstimerExport(realCstimerExport());
+    expect(sessions[0].solves[0].timeMs).not.toBe(0);
+  });
+});

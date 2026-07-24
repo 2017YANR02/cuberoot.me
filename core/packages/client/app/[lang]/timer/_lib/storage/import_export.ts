@@ -195,22 +195,19 @@ export function importCstimerJson(text: string): Record<string, Solve[]> | null 
       const dateSec = entry[3];
 
       if (!Array.isArray(time) || time.length < 2) continue;
-      const cs = Number(time[0]);
-      const pen = Number(time[1]);
-      if (!Number.isFinite(cs) || !Number.isFinite(pen)) continue;
+      // [penalty, totalMs, ...phaseSplits] — penalty first, time in ms. See the
+      // long note in import_cstimer.ts; verified against upstream csTimer
+      // (lib/tdconverter.js:112-126 writes it, stats/stats.js:1288 reads
+      // time[0] + time[1] as the final result).
+      const pen = Number(time[0]);
+      const totalMs = Number(time[1]);
+      if (!Number.isFinite(pen) || !Number.isFinite(totalMs)) continue;
 
       let penalty: Solve['penalty'];
-      let timeMs: number;
-      if (pen === -1 || cs === -1) {
-        penalty = 'DNF';
-        timeMs = cs === -1 ? 0 : cs * 10;
-      } else if (pen === 2000) {
-        penalty = '+2';
-        timeMs = cs * 10;
-      } else {
-        penalty = 'ok';
-        timeMs = cs * 10;
-      }
+      if (pen === -1) penalty = 'DNF';
+      else if (pen === 2000) penalty = '+2';
+      else penalty = 'ok';
+      const timeMs = Math.max(0, totalMs);
 
       const ts = Number(dateSec);
       const solve: Solve = {

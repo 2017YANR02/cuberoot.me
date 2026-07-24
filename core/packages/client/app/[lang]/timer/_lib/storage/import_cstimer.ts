@@ -163,21 +163,36 @@ export function parseCstimerExport(jsonText: string): CstimerSessionParsed[] {
       const comment = entry[2];
       const dateSec = entry[3];
       if (!Array.isArray(time) || time.length < 2) continue;
-      const cs = Number(time[0]);
-      const pen = Number(time[1]);
-      if (!Number.isFinite(cs) || !Number.isFinite(pen)) continue;
+      // csTimer's per-solve time array is [penalty, totalMs, ...phaseSplits]:
+      //   time[0] penalty — 0 = none, 2000 = +2, -1 = DNF
+      //   time[1] recorded time in MILLISECONDS, before the penalty is added
+      // Verified against upstream: lib/tdconverter.js:112-126 writes the tuple,
+      // and stats/stats.js:1288 / stats/hugestat.js:27 / tools/onlinecomp.js:294
+      // all read the final time as time[0] + time[1].
+      const pen = Number(time[0]);
+      const totalMs = Number(time[1]);
+      if (!Number.isFinite(pen) || !Number.isFinite(totalMs)) continue;
 
       let penalty: Solve['penalty'];
-      let timeMs: number;
-      if (pen === -1 || cs === -1) {
-        penalty = 'DNF';
-        timeMs = cs === -1 ? 0 : cs * 10;
-      } else if (pen === 2000) {
-        penalty = '+2';
-        timeMs = cs * 10;
-      } else {
-        penalty = 'ok';
-        timeMs = cs * 10;
+      if (pen === -1) penalty = 'DNF';
+      else if (pen === 2000) penalty = '+2';
+      else penalty = 'ok';
+      // csTimer keeps the real recorded time on a DNF, so we preserve it too.
+      const timeMs = Math.max(0, totalMs);
+
+      // Multi-phase solves carry cumulative splits after the total, ordered
+      // back-to-front (tdconverter.js:124 fills `time[len-j]` descending, so
+      // time[1] is the total and the highest index is the first phase). Our
+      // `stages` field models exactly csTimer's default 4-phase 3x3 split, so
+      // we only map that shape and ignore any other phase count.
+      let stages: Solve['stages'];
+      if (time.length === 5) {
+        const cross = Number(time[4]);
+        const f2l = Number(time[3]);
+        const oll = Number(time[2]);
+        if ([cross, f2l, oll].every(v => Number.isFinite(v) && v >= 0)) {
+          stages = { cross, f2l, oll, pll: timeMs };
+        }
       }
 
       const ts = Number(dateSec);
@@ -189,6 +204,7 @@ export function parseCstimerExport(jsonText: string): CstimerSessionParsed[] {
         event,
         ts: Number.isFinite(ts) ? ts * 1000 : Date.now(),
         comment: typeof comment === 'string' && comment.length > 0 ? comment : undefined,
+        ...(stages ? { stages } : {}),
       });
     }
     solves.sort((a, b) => a.ts - b.ts);
