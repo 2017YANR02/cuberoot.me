@@ -60,6 +60,52 @@ const CSTIMER_EVENT_MAP: Record<string, EventId> = {
   'mmagic': 'mmagic',
 };
 
+/* ------------------------------------------------------------------ */
+/* DNS <-> csTimer codec                                               */
+/* ------------------------------------------------------------------ */
+//
+// csTimer has no "Did Not Start" code — its penalty field is only
+// 0 / 2000 / -1. We therefore write a DNS as a DNF (-1) and mark it by
+// prefixing the comment with "DNS ", then sniff that prefix back off on
+// import. Real csTimer degrades it to "a DNF with a note", which is the
+// correct behaviour: DNS scores identically to DNF.
+//
+// Only consulted when the penalty is -1, so an ordinary comment that happens
+// to start with "DNS" on a *successful* solve is never misread.
+
+/** Matches "DNS", "DNS " and "DNS <rest>" — the shapes `encodeDnsComment` emits. */
+export const CSTIMER_DNS_RE = /^DNS(?:\s+|$)/;
+
+/** Attach the DNS marker to a comment for csTimer export. */
+export function encodeDnsComment(comment: string | undefined): string {
+  const rest = (comment ?? '').trim();
+  return rest ? `DNS ${rest}` : 'DNS';
+}
+
+/** Strip the DNS marker. Returns null when the comment isn't DNS-marked. */
+export function decodeDnsComment(comment: string): string | null {
+  if (!CSTIMER_DNS_RE.test(comment)) return null;
+  return comment.replace(CSTIMER_DNS_RE, '');
+}
+
+/**
+ * Resolve the penalty + comment of an imported csTimer solve, promoting a
+ * DNS-marked DNF back to a real DNS. Shared by both importers.
+ */
+export function applyDnsSniff(
+  penalty: Solve['penalty'],
+  rawComment: unknown,
+): { penalty: Solve['penalty']; comment: string | undefined } {
+  const text = typeof rawComment === 'string' ? rawComment : '';
+  if (penalty === 'DNF') {
+    const stripped = decodeDnsComment(text);
+    if (stripped !== null) {
+      return { penalty: 'DNS', comment: stripped.length > 0 ? stripped : undefined };
+    }
+  }
+  return { penalty, comment: text.length > 0 ? text : undefined };
+}
+
 function normalizeEventKey(raw: unknown): { event: EventId; matched: boolean } {
   if (typeof raw !== 'string') return { event: '333', matched: false };
   const k = raw.toLowerCase().trim().replace(/[\s_-]/g, '');
@@ -177,6 +223,9 @@ export function parseCstimerExport(jsonText: string): CstimerSessionParsed[] {
       if (pen === -1) penalty = 'DNF';
       else if (pen === 2000) penalty = '+2';
       else penalty = 'ok';
+      // A DNF whose comment starts with "DNS" is one of our own DNS exports.
+      const sniffed = applyDnsSniff(penalty, comment);
+      penalty = sniffed.penalty;
       // csTimer keeps the real recorded time on a DNF, so we preserve it too.
       const timeMs = Math.max(0, totalMs);
 
@@ -203,7 +252,7 @@ export function parseCstimerExport(jsonText: string): CstimerSessionParsed[] {
         scramble: typeof scramble === 'string' ? scramble : '',
         event,
         ts: Number.isFinite(ts) ? ts * 1000 : Date.now(),
-        comment: typeof comment === 'string' && comment.length > 0 ? comment : undefined,
+        comment: sniffed.comment,
         ...(stages ? { stages } : {}),
       });
     }

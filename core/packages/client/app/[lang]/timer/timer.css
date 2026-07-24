@@ -927,6 +927,64 @@
   gap: 6px;
   flex-shrink: 0;
 }
+/* wca-source.css gives borders to `input[type="number"]` and the select, but
+   not to text inputs — so 目标时间 / 观察提示音 / 同步种子 / 轮次时限 all render
+   as bare text with no box, which reads as a label rather than something you
+   can type in. Scoped to this modal so the shared primitives stay untouched;
+   CountryInput is excluded because it brings its own frame. */
+.timer-modal .settings-row-control input[type="text"]:not(.country-input-field) {
+  background: var(--background);
+  color: var(--foreground);
+  border: 1px solid var(--input);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 13px;
+}
+
+/* ── Shortcut (keymap) editor ─────────────────────────────
+   The bind button doubles as the current-binding readout, so it is sized to
+   its content rather than pinned — a "Shift + D" label must not be clipped by
+   a width chosen for "F". While capturing it swaps to a longer prompt, which
+   is why nothing here fixes a width. */
+.keymap-bind-btn {
+  font: inherit;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  min-width: max-content;
+  padding: 3px 10px;
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  background: var(--shell-chip);
+  color: var(--foreground);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.keymap-bind-btn:hover { background: var(--shell-hover); }
+.keymap-bind-btn[data-capturing='true'] {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-family: inherit;
+}
+.keymap-reject {
+  margin: 6px 0;
+  font-size: 12px;
+  color: var(--signal-warning);
+}
+.keymap-actions { margin-top: 8px; }
+.keymap-actions .hint-btn {
+  background: transparent;
+  border: 1px solid var(--border-default);
+  color: var(--muted-foreground);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.keymap-actions .hint-btn:hover {
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+  color: var(--foreground);
+}
+
 .cstimer-import-actions .hint-btn {
   background: transparent;
   border: 1px solid var(--border-default);
@@ -938,39 +996,6 @@
 .cstimer-import-actions .hint-btn:hover { background: var(--shell-hover); color: var(--foreground); }
 .cstimer-import-actions .hint-btn:disabled { opacity: 0.5; cursor: default; }
 .cstimer-import-actions .hint-btn:disabled:hover { background: transparent; color: var(--muted-foreground); }
-
-.color-grid {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 8px;
-  margin-bottom: 8px;
-}
-.color-cell {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: var(--muted-foreground);
-}
-.color-cell input[type="color"] {
-  width: 40px; height: 28px;
-  background: transparent;
-  border: 1px solid var(--border-default);
-  border-radius: 4px;
-  cursor: pointer;
-  padding: 0;
-}
-.reset-btn {
-  background: var(--shell-chip);
-  color: var(--muted-foreground);
-  border: 1px solid var(--border-default);
-  border-radius: 4px;
-  padding: 4px 10px;
-  font-size: 12px;
-  cursor: pointer;
-}
-.reset-btn:hover { background: var(--shell-hover); color: var(--foreground); }
 
 /* --- Shortcuts modal --- */
 .shortcuts-modal { max-width: 560px; }
@@ -1068,6 +1093,35 @@
   pointer-events: none;
 }
 
+/* 3D (gyro) mode drops the tinted plate: the WebGL canvas is alpha and renders
+   a perspective solid, so a flat translucent rectangle behind it reads as a
+   stray box rather than as a backing. Selected via :has() on the canvas host so
+   the wrapper's owner (SoloView) doesn't have to know which mode is live.
+   The 2D net keeps its plate — it needs the contrast against the timer. */
+.timer-live-cube:has(.timer-live-cube-3d) {
+  padding: 0;
+  background: none;
+  line-height: 0;
+}
+
+/* Calibrate button. The wrapper is pointer-events:none so the overlay never
+   steals a tap meant for the timer surface — this one control opts back in. */
+.live-cube-calibrate {
+  display: block;
+  margin: 4px 0 0 auto;
+  padding: 2px 8px;
+  font: inherit;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+  background: color-mix(in srgb, var(--foreground) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--foreground) 20%, transparent);
+  border-radius: 4px;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.live-cube-calibrate:hover { color: var(--foreground); }
+
 /* --- Tablet (≤768px): shrink secondary overlays.
    Drops live-cube to ~80px and tightens corner padding so it doesn't crowd
    the bottom panel. Toolbar / goal / target stay full size. */
@@ -1095,15 +1149,19 @@
     padding: 14px;
   }
   /* .settings-row flex-wrap override lives in _components/wca-source.css */
-  .color-grid { grid-template-columns: repeat(3, 1fr); }
 
   /* Wider tap target on history rows. */
   .history-row { padding: 10px 14px; }
 }
 
 @media (max-width: 480px) {
-  /* Live smart-cube state: hide entirely on phones. The user can still see
-     cube state via the main scramble-driven CubePreview above the timer. */
+  /* Live smart-cube state: hide entirely on phones — both the 2D net and the
+     3D gyro view (the 3D one especially: a WebGL context running beside a
+     running timer on a phone is not worth a 140px corner thumbnail). The user
+     can still see cube state via the main scramble-driven CubePreview above
+     the timer. LiveCubeState mirrors this exact 480px breakpoint in JS so the
+     3D branch is never even mounted here — display:none would otherwise leave a
+     live WebGL context rendering into a zero-size box. Keep the two in sync. */
   .timer-live-cube { display: none; }
   /* Target indicator: shrink padding/font so it doesn't push into the
      timer display. Stay visible — it's the whole point of the running phase
@@ -1428,6 +1486,7 @@
   .shell-bottombar,
   .shell-corner-net,
   .timer-stage-splits,
+  .timer-live-tps,
   .timer-hint,
   .case-stats-panel,
   .timer-modal-overlay {

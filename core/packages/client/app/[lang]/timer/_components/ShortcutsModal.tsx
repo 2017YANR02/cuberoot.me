@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useMemo, useRef } from 'react';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
+import { useSettings } from '../_lib/settings';
+import { bindingsForAction, formatBinding, resolveKeymap, type TimerActionId } from '../_lib/keymap';
 
 interface Props {
   isZh: boolean;
@@ -24,15 +26,28 @@ const TIMING: ShortcutRow[] = [
 },
 ];
 
-const HISTORY: ShortcutRow[] = [
-  { keys: ['Z'],         en: 'Delete the last solve (undo).',                   zh: '删除最近一次成绩（撤销）。'
-},
-  { keys: ['2'],         en: 'Toggle +2 on the last solve (when stopped).',     zh: '已停止时切换最近成绩的 +2 罚时。'
-},
-  { keys: ['D'],         en: 'Toggle DNF on the last solve (when stopped).',    zh: '已停止时切换最近成绩的 DNF。'
-},
-  { keys: ['1', '…', '9'], en: 'Open the Nth-most-recent solve detail.',         zh: '打开倒数第 N 次成绩的详情面板。'
-},
+/** Descriptions for the rebindable actions. The KEYS come from the live
+ *  keymap, so this modal is a real reference rather than a stale copy of what
+ *  the bindings used to be. Split by section to match how the timer reads. */
+const ACTION_DESC: Record<TimerActionId, { en: string; zh: string }> = {
+  'delete-last': { en: 'Delete the last solve (undo).', zh: '删除最近一次成绩（撤销）。' },
+  'toggle-plus2': { en: 'Toggle +2 on the last solve (when stopped).', zh: '已停止时切换最近成绩的 +2 罚时。' },
+  'toggle-dnf': { en: 'Toggle DNF on the last solve (when stopped).', zh: '已停止时切换最近成绩的 DNF。' },
+  'toggle-dns': { en: 'Toggle DNS (did not start) on the last solve.', zh: '切换最近成绩的 DNS（未开始）。' },
+  'next-scramble': { en: 'Next scramble (new one at the end of history).', zh: '下一条打乱（到末尾则生成新的）。' },
+  'prev-scramble': { en: 'Previous scramble (revisit history).', zh: '上一条打乱（回看历史）。' },
+  'toggle-fullscreen': { en: 'Toggle fullscreen.', zh: '切换全屏。' },
+};
+
+const HISTORY_ACTIONS: TimerActionId[] = ['delete-last', 'toggle-plus2', 'toggle-dnf', 'toggle-dns'];
+const NAV_ACTIONS: TimerActionId[] = ['next-scramble', 'prev-scramble', 'toggle-fullscreen'];
+
+/** Fixed rows that aren't rebindable, appended to their section. */
+const HISTORY_FIXED: ShortcutRow[] = [
+  { keys: ['1', '…', '9'], en: 'Open the Nth-most-recent solve detail.', zh: '打开倒数第 N 次成绩的详情面板。' },
+];
+const NAV_FIXED: ShortcutRow[] = [
+  { keys: ['Click strip'], en: 'Refresh scramble.', zh: '点击打乱条换打乱。' },
 ];
 
 const MULTISTAGE: ShortcutRow[] = [
@@ -46,19 +61,6 @@ const MULTISTAGE: ShortcutRow[] = [
 
 const BLD: ShortcutRow[] = [
   { keys: ['Enter'], en: 'During BLD solve: mark memo done.',   zh: '盲拧运行中：标记记忆完成。'
-},
-];
-
-const NAV: ShortcutRow[] = [
-  { keys: ['→'],         en: 'Next scramble (new one at the end of history).',  zh: '下一条打乱（到末尾则生成新的）。'
-},
-  { keys: ['←'],         en: 'Previous scramble (revisit history).',            zh: '上一条打乱（回看历史）。'
-},
-  { keys: [','],         en: 'Generate a new scramble.',                        zh: '生成下一个打乱。'
-},
-  { keys: ['F'],         en: 'Toggle fullscreen.',                              zh: '切换全屏。'
-},
-  { keys: ['Click strip'], en: 'Refresh scramble.',                             zh: '点击打乱条换打乱。'
 },
 ];
 
@@ -85,6 +87,20 @@ const GESTURES: ShortcutRow[] = [
 
 export default function ShortcutsModal({ isZh, onClose }: Props) {
   const titleId = useId();
+  const settings = useSettings();
+  const keymap = useMemo(() => resolveKeymap(settings.keymap), [settings.keymap]);
+  const rowsFor = (ids: TimerActionId[], fixed: ShortcutRow[]): ShortcutRow[] => [
+    ...ids
+      .map((id): ShortcutRow | null => {
+        const bindings = bindingsForAction(keymap, id);
+        // An action the user unbound has nothing to show — skip it rather than
+        // print an empty key cell.
+        if (bindings.length === 0) return null;
+        return { keys: bindings.map(formatBinding), ...ACTION_DESC[id] };
+      })
+      .filter((r): r is ShortcutRow => r !== null),
+    ...fixed,
+  ];
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
   const isMobile = useIsMobile(480);
 
@@ -125,7 +141,7 @@ export default function ShortcutsModal({ isZh, onClose }: Props) {
         })}</h2>
 
         {isMobile && (
-          <div className="modal-section" style={{ fontSize: 12, color: '#888' }}>
+          <div className="modal-section" style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>
             {tr({ zh: '提示：触屏设备无键盘快捷键；接外接键盘后可用以下绑定。', en: 'Note: shortcuts apply when an external keyboard is attached.'
             })}
           </div>
@@ -134,13 +150,13 @@ export default function ShortcutsModal({ isZh, onClose }: Props) {
         <Section title={tr({ zh: '计时', en: 'Timing'
         })} rows={TIMING} isZh={isZh} isMobile={isMobile} />
         <Section title={tr({ zh: '历史', en: 'History'
-        })} rows={HISTORY} isZh={isZh} isMobile={isMobile} />
+        })} rows={rowsFor(HISTORY_ACTIONS, HISTORY_FIXED)} isZh={isZh} isMobile={isMobile} />
         <Section title={tr({ zh: 'CFOP 分阶段（设置里开启）', en: 'CFOP splits (enable in settings)'
         })} rows={MULTISTAGE} isZh={isZh} isMobile={isMobile} />
         <Section title={tr({ zh: '盲拧（设置里开启）', en: 'BLD (enable in settings)'
         })} rows={BLD} isZh={isZh} isMobile={isMobile} />
         <Section title={tr({ zh: '导航', en: 'Navigation'
-        })} rows={NAV} isZh={isZh} isMobile={isMobile} />
+        })} rows={rowsFor(NAV_ACTIONS, NAV_FIXED)} isZh={isZh} isMobile={isMobile} />
 
         <div className="modal-section" style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>
           {tr({ zh: '手势（触屏）：在计时区按住并拖向某方向，松手执行；轻触不拖 = 正常计时。', en: 'Gestures (touch): press the timer area and drag toward a direction, release to fire; a plain tap-and-hold still times.'
@@ -148,6 +164,12 @@ export default function ShortcutsModal({ isZh, onClose }: Props) {
         </div>
         <Section title={tr({ zh: '手势', en: 'Gestures'
         })} rows={GESTURES} isZh={isZh} isMobile={isMobile} />
+        <div className="modal-section" style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>
+          {tr({
+            zh: '手势轮固定 8 个方向，没有 DNS 的位置：DNS 只能走键盘（可在设置里改键），或在成绩详情 / 长按菜单里设置。',
+            en: 'The gesture wheel is a fixed 8-slot radial with no free direction, so DNS is keyboard-only (rebindable in settings) or set from the solve detail / long-press menu.',
+          })}
+        </div>
 
         <div className="modal-actions" style={actionsStyle}>
           <button ref={closeBtnRef} className="primary modal-action-btn" style={closeBtnStyle} onClick={onClose}>{tr({ zh: '关闭', en: 'Close'
@@ -161,9 +183,9 @@ export default function ShortcutsModal({ isZh, onClose }: Props) {
 function Section({ title, rows, isMobile }: { title: string; rows: ShortcutRow[]; isZh: boolean; isMobile: boolean }) {
   const sectionStyle = isMobile ? { marginBottom: 10 } : undefined;
   const rowStyle = isMobile
-    ? ({ display: 'flex', flexDirection: 'column' as const, gap: 2, padding: '6px 0', borderBottom: '1px solid #1f1f23' })
+    ? ({ display: 'flex', flexDirection: 'column' as const, gap: 2, padding: '6px 0', borderBottom: '1px solid var(--border-default)' })
     : undefined;
-  const descStyle = isMobile ? { fontSize: 13, lineHeight: 1.4, color: '#bbb' } : undefined;
+  const descStyle = isMobile ? { fontSize: 13, lineHeight: 1.4, color: 'var(--muted-foreground)' } : undefined;
   return (
     <div className="modal-section" style={sectionStyle}>
       <h3 className="settings-h3">{title}</h3>

@@ -21,13 +21,21 @@
  * 房设「同时开始计时」开启后,本轮在线未交卷的人(≥2)全部点过准备,服务端落一个
  * start_at,各端按时钟偏移换算到本机同一时刻,倒计时归零 → timer.startNow() 同时起表
  * (倒计时即观察,不再走 inspection)。
+ *
+ * 智能魔方(蓝牙):与 Solo 共用 useBluetoothCube + BluetoothModal。房内做两件事 ——
+ * ①魔方回到还原态即停表(与 Solo 完全一致);②赛前自动预备。自动预备在「同时起表」
+ * 的门控期 / 倒计时期被完整禁用(理由见 autoReadyEnabled 处的长注释):那种房里按下
+ * 的语义是「向全房上报准备」,不是「起自己的表」,不能交给魔方代劳。
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useQueryState } from 'nuqs';
-import { Copy, Check, LogOut, Swords, Trophy, RotateCcw, BarChart3, X, Crown, UserMinus } from 'lucide-react';
+import { Copy, Check, LogOut, Swords, Trophy, RotateCcw, BarChart3, X, Crown, UserMinus, Bluetooth } from 'lucide-react';
 
 import TimingSurface from './TimingSurface';
+import BluetoothModal from '../_components/BluetoothModal';
+import { useBluetoothCube } from '../_lib/bluetooth';
+import { useAutoReady } from '../_lib/bluetooth/auto_ready';
 import { useTimer, type SolveResult } from '../_lib/useTimer';
 import { useSettings } from '../_lib/settings';
 import { formatMs } from '../_lib/stats';
@@ -64,6 +72,8 @@ import {
 } from '@/lib/battle-room-logic';
 import BoolToggle from '@/components/BoolToggle';
 
+// BluetoothModal 与打乱条(.scramble-strip / .timer-modal*)的样式都在 timer.css。
+import '../timer.css';
 import './shell.css';
 import './net.css';
 
@@ -163,6 +173,7 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
   /** 倒计时剩余毫秒(仅倒计时期间非 null,驱动读数显示 3/2/1)。 */
   const [countdownMs, setCountdownMs] = useState<number | null>(null);
   const gateRef = useRef(gate.gated); gateRef.current = gate.gated;
+  const startAtRef = useRef(startAt); startAtRef.current = startAt;
 
   const solvingRoundRef = useRef(0);
   const advBusyRef = useRef(false);
@@ -444,6 +455,109 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
     if (r && id) void leaveNetRoom(r.code, id).catch(() => {});
   }, [setRoomParam, timerReset]);
 
+  // ── 智能魔方(蓝牙)──────────────────────────────────────────
+  // 与 Solo 同一个 hook + 同一个弹窗(不 fork BluetoothModal)。房内只接两件事:
+  // 还原即停表、赛前自动预备。手动 MAC 输入沿用 Solo 那套「延迟 promise」:
+  // hook 需要 MAC 时挂起,弹窗把用户输入的值 resolve 回去。
+  const [bluetoothOpen, setBluetoothOpen] = useState(false);
+  const [macPrompt, setMacPrompt] = useState<{ deviceName: string; isWrongKey?: boolean } | null>(null);
+  const macResolverRef = useRef<((m: string | null) => void) | null>(null);
+  const requestMac = useCallback((deviceName: string, isWrongKey?: boolean) => new Promise<string | null>((resolve) => {
+    macResolverRef.current = resolve;
+    setMacPrompt({ deviceName, isWrongKey });
+  }), []);
+  const resolveMac = useCallback((mac: string | null) => {
+    macResolverRef.current?.(mac);
+    macResolverRef.current = null;
+    setMacPrompt(null);
+  }, []);
+
+  // 连接提示复用房间自己的 err 行 —— 本文件唯一的通知位,不引 Solo 的 toast。
+  // 掉线 / 重连中 / 重连失败写进去;重连成功只撤「我们写的那条」,不误清别人的报错。
+  const btNoticeRef = useRef<string | null>(null);
+  const setBtNotice = useCallback((msg: string | null) => {
+    const prev = btNoticeRef.current;
+    btNoticeRef.current = msg;
+    if (msg !== null) { setErr(msg); return; }
+    setErr((cur) => (cur !== null && cur === prev ? null : cur));
+  }, []);
+
+  // hook 只给一个 onMove;订阅者(当前只有自动预备)统一从这里分发,与 Solo 的
+  // bluetoothSubscribersRef 同构 —— 以后要加实时魔方/TPS 直接往里加订阅即可。
+  const btSubscribersRef = useRef<Set<(m: string, ts: number) => void>>(new Set());
+
+  const bluetoothCube = useBluetoothCube({
+    onMove: (move, ts) => {
+      for (const sub of btSubscribersRef.current) {
+        try { sub(move, ts); } catch (e) { console.error('[bt-broadcast]', e); }
+      }
+    },
+    // 魔方回到还原态 = 停表,与 Solo 逐字一致。只在真的在计时时停,所以别人回合里
+    // 随手把魔方拧回还原不会替你交卷。停表走 onPressDown → useTimer 结算 → onSolve
+    // 上报成绩,同时起表(startNow 起的表)和普通起表都落在同一条路径上。
+    onSolved: () => {
+      if (phaseRef.current === 'running') timer.onPressDown();
+    },
+    onNeedMac: requestMac,
+    onConnectionEvent: (ev) => {
+      if (ev.kind === 'disconnected' && ev.reason === 'manual') return; // 用户自己点的断开
+      if (ev.kind === 'reconnected') { setBtNotice(null); return; }
+      setBtNotice(
+        ev.kind === 'disconnected'
+          ? tr({ zh: '智能魔方连接断开', en: 'Smart cube disconnected' })
+          : ev.kind === 'reconnecting'
+            ? tr({
+                zh: `正在重连智能魔方(第 ${ev.attempt}/${ev.maxAttempts} 次)`,
+                en: `Reconnecting to smart cube (${ev.attempt}/${ev.maxAttempts})`,
+              })
+            : tr({ zh: '智能魔方重连失败,请重新配对', en: 'Smart cube reconnect failed — pair again' }),
+      );
+    },
+  });
+
+  /**
+   * 自动预备:拧完打乱把魔方放稳 2 秒(或 U U' U U')= 替你按一下「预备」。
+   * 注意它并不起表 —— useTimer 收到的是 onPressDown,进的是观察 / hold,真正起表仍
+   * 要松手,与 Solo 同义。
+   *
+   * 「同时起表」房里必须整段关掉,不是保守,是那个房设下按下的语义变了:
+   *   1) 门控期(gate.gated)按下 = toggleReady,向服务端上报「我准备好了」。全员准备
+   *      服务端就落 startAt,3 秒后**全房**一起起表。让魔方替人上报等于让「把魔方放
+   *      桌上两秒」去替全房按发车键 —— 起身倒杯水就满足条件,把还没就位的人拖进起表。
+   *   2) 上报走的是 toggle,而 useAutoReady 每次布防只 fire 一次:万一在「已准备」时
+   *      打中,反而把自己的准备取消掉,房间卡在等一个不会再自己准备的人 —— 正是要
+   *      避免的死锁。
+   *   3) 倒计时期(startAt !== null)已无「预备」可言,起表由 startNow 接管;此时进
+   *      hold 只会和它打架。
+   * 交卷后(!canSolve)同样关闭:那时按下 = 开下一轮,绝不能让魔方替全房翻页。
+   * 于是同时起表房里魔方只剩「还原即停表」,发车键始终在人手上;非同时起表的房
+   * (默认)行为与 Solo 完全一致。
+   * 顺带一个好处:enabled 随轮次翻转(交卷→关,新一轮→开),等于每轮自动重新布防,
+   * useAutoReady 的「一次性 fire」正好按轮复位。
+   */
+  const autoReadyEnabled =
+    settings.bluetoothAutoReady !== 'off'
+    && bluetoothCube.status.connected
+    && canSolve
+    && !gate.gated
+    && startAt === null;
+  useAutoReady({
+    enabled: autoReadyEnabled,
+    mode: settings.bluetoothAutoReady === 'double-flick' ? 'double-flick' : 'still',
+    onReady: () => {
+      // fire 与判定之间隔着 2 秒静置,期间房间状态可能已经变(别人开了同时起表 /
+      // 倒计时落下来了),这里按 ref 复查一遍,门一合上就作废。
+      if (gateRef.current || startAtRef.current !== null || !canSolveRef.current) return;
+      const ph = phaseRef.current;
+      if (ph === 'idle' || ph === 'inspecting' || ph === 'stopped') timer.onPressDown();
+    },
+    onMoveSubscriber: (cb) => {
+      const subs = btSubscribersRef.current;
+      subs.add(cb);
+      return () => { subs.delete(cb); };
+    },
+  });
+
   // ── 按压接线(pointer 在计时面板 + 空格全局)────────────────────
   const pressDown = useCallback(() => {
     if (phaseRef.current === 'running') { timer.onPressDown(); return; }
@@ -485,9 +599,15 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
     };
   }, [inRoom]);
 
+  // 弹层打开时全局空格不进计时(同 Solo 的 anyModalOpen)。蓝牙弹窗里有 MAC 输入框,
+  // 战绩 / 管理面板可以点到背景 —— 焦点一旦不在 button/input 上,空格就会穿透去
+  // 「准备」或起表。
+  const overlayOpen = showStats || showAdmin || bluetoothOpen;
+  const overlayOpenRef = useRef(overlayOpen); overlayOpenRef.current = overlayOpen;
   useEffect(() => {
     if (!inRoom) return;
     const kd = (e: KeyboardEvent) => {
+      if (overlayOpenRef.current) return;
       if (shouldIgnoreTimerTarget(e.target)) return;
       if (phaseRef.current === 'running') { e.preventDefault(); pressDownRef.current(); return; }
       if (e.code === 'Space') {
@@ -496,6 +616,7 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
       }
     };
     const ku = (e: KeyboardEvent) => {
+      if (overlayOpenRef.current) return;
       if (shouldIgnoreTimerTarget(e.target)) return;
       if (e.code === 'Space') { e.preventDefault(); pressUpRef.current(); }
     };
@@ -627,6 +748,20 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
       <div className="shell-topbar-right">
         {room && (
           <>
+            <button
+              type="button"
+              className={`tb-btn${bluetoothCube.status.connected ? ' connected' : ''}`}
+              onClick={() => setBluetoothOpen(true)}
+              title={bluetoothCube.status.connected
+                ? tr({
+                    zh: `已连接 ${bluetoothCube.status.deviceName}（还原即停表）`,
+                    en: `Connected: ${bluetoothCube.status.deviceName} (solving the cube stops the timer)`,
+                  })
+                : tr({ zh: '智能魔方（iOS 用 Bluefy）', en: 'Smart cube (use Bluefy on iOS)' })}
+              aria-label={tr({ zh: '智能魔方', en: 'Smart cube' })}
+            >
+              <Bluetooth size={14} />
+            </button>
             <button
               type="button"
               className="tb-btn"
@@ -936,7 +1071,6 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
                     event={myEvent as EventId}
                     scramble={myScr}
                     height="var(--cube-h)"
-                    colors={settings.colors}
                     visualization={settings.prefer3D ? '3D' : '2D'}
                   />
                 </div>
@@ -1014,6 +1148,16 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
                       en: 'This room starts together — a 3s countdown begins once everyone is ready',
                     })}
               </div>
+              {/* 连了魔方且开了自动预备的人,这里要明说自动预备被停用了 —— 否则会
+                  站着等魔方替自己准备,把全房卡住。 */}
+              {bluetoothCube.status.connected && settings.bluetoothAutoReady !== 'off' && (
+                <div className="net-substate-hint">
+                  {tr({
+                    zh: '同时起表期间不自动预备:请自己点「准备」,魔方只负责还原时停表',
+                    en: 'Auto-ready is off during a synchronized start — tap “ready” yourself; the cube only stops the timer',
+                  })}
+                </div>
+              )}
             </div>
           )}
           {showCountdown && (
@@ -1047,8 +1191,28 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
           pid={pid}
           isZh={isZh}
           precision={settings.precision}
-          colors={settings.colors}
           onClose={() => setShowStats(false)}
+        />
+      )}
+
+      {bluetoothOpen && (
+        <BluetoothModal
+          isZh={isZh}
+          cube={bluetoothCube}
+          macPrompt={macPrompt}
+          onSubmitMac={(mac) => resolveMac(mac)}
+          onCancelMac={() => resolveMac(null)}
+          onClose={() => { if (macResolverRef.current) resolveMac(null); setBluetoothOpen(false); }}
+          onConnect={async () => {
+            try { await bluetoothCube.connect(); }
+            catch (e) {
+              // NO_WEB_BLUETOOTH 由弹窗自己讲(envAdvice 那一段),不重复报。
+              const msg = (e as Error).message ?? String(e);
+              if (msg !== 'NO_WEB_BLUETOOTH') {
+                setBtNotice(tr({ zh: `连接失败:${msg}`, en: `Connection failed: ${msg}` }));
+              }
+            }
+          }}
         />
       )}
     </div>
@@ -1150,7 +1314,6 @@ interface NetStatsPanelProps {
   pid: string | null;
   isZh: boolean;
   precision: Precision;
-  colors: React.ComponentProps<typeof CubePreview>['colors'];
   onClose: () => void;
 }
 
@@ -1168,7 +1331,7 @@ function fmtNetResult(r: NetResult | undefined, precision: Precision): string {
   return formatMs(effectiveNetMs(r), precision) + (r.p === '+2' ? '+' : '');
 }
 
-function NetStatsPanel({ room, pid, isZh, precision, colors, onClose }: NetStatsPanelProps) {
+function NetStatsPanel({ room, pid, isZh, precision, onClose }: NetStatsPanelProps) {
   const players = sortedNetPlayers(room.players);
   const views = roundViews(room);
 
@@ -1261,7 +1424,7 @@ function NetStatsPanel({ room, pid, isZh, precision, colors, onClose }: NetStats
                     <div key={ev} className="net-round-egroup">
                       {scr ? (
                         <div className="net-round-cube">
-                          <CubePreview event={ev as EventId} scramble={scr} height="52px" colors={colors} visualization="2D" />
+                          <CubePreview event={ev as EventId} scramble={scr} height="52px" visualization="2D" />
                         </div>
                       ) : null}
                       <div className="net-round-body">

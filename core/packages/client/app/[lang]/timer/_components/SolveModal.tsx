@@ -2,8 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from 'react';
 import type { Solve, Penalty } from '../_lib/types';
-import { effectiveMs } from '../_lib/types';
-import { formatMs } from '../_lib/stats';
+import { formatEventMs, formatMs, formatSolveResult, isMbldDnf, mbldPoints } from '../_lib/stats';
 import CubePreview from '../_lib/cube/CubePreview';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
@@ -70,6 +69,48 @@ function StageSplits({ stages, totalMs }: { stages: NonNullable<Solve['stages']>
   );
 }
 
+/**
+ * MBLD breakdown. The modal title already shows the WCA result string via
+ * `formatSolveResult`; this spells out the arithmetic behind it, and names
+ * 9f12c when the attempt is voided by the rule rather than by a penalty.
+ */
+function MbldBreakdown({ solve }: { solve: Solve }) {
+  const m = solve.mbld;
+  if (!m) return null;
+  const points = mbldPoints(solve) ?? 0;
+  const unsolved = m.attempted - m.solved;
+  const rows: Array<{ name: string; value: string }> = [
+    { name: tr({ zh: '已还原', en: 'Solved' }), value: String(m.solved) },
+    { name: tr({ zh: '未还原', en: 'Unsolved' }), value: String(unsolved) },
+    { name: tr({ zh: '已尝试', en: 'Attempted' }), value: String(m.attempted) },
+    { name: tr({ zh: '净得分', en: 'Net score' }), value: `${m.solved} − ${unsolved} = ${points}` },
+  ];
+  return (
+    <div className="stage-splits-table">
+      {rows.map(r => (
+        <div className="stage-row" key={r.name}>
+          <span className="stage-name">{r.name}</span>
+          <span className="stage-dur"></span>
+          <span className="stage-cum">{r.value}</span>
+        </div>
+      ))}
+      <div className="stage-row stage-total">
+        <span className="stage-name">{tr({ zh: '用时', en: 'Time' })}</span>
+        <span className="stage-dur"></span>
+        <span className="stage-cum">{formatMs(solve.timeMs, 0)}</span>
+      </div>
+      {isMbldDnf(solve) && (
+        <div style={{ marginTop: 6, fontSize: 12, color: 'var(--signal-warning)' }}>
+          {tr({
+            zh: '按规则 9f12c 记 DNF：净得分小于 0，或只还原了 1 个魔方。',
+            en: 'Scored DNF by Regulation 9f12c: net score below 0, or only 1 puzzle solved.',
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface Props {
   solve: Solve;
   index: number;
@@ -106,7 +147,6 @@ export default function SolveModal({ solve, index, isZh, onClose, onChangePenalt
     firstButtonRef.current?.focus();
   }, []);
 
-  const eff = effectiveMs(solve);
   const dt = new Date(solve.ts);
 
   const overlayStyle = isMobile ? { padding: 8 } : undefined;
@@ -134,13 +174,12 @@ export default function SolveModal({ solve, index, isZh, onClose, onChangePenalt
         onClick={(e) => e.stopPropagation()}
       >
         <h2 id={titleId}>
-          #{index + 1} · {formatMs(eff)}
+          #{index + 1} · {formatSolveResult(solve)}
           {solve.penalty === '+2' && ' (+2)'}
-          {solve.penalty === 'DNF' && ' DNF'}
         </h2>
         <div className="modal-section">
           <div>{tr({ zh: '原始时间', en: 'Raw time'
-        })}: {formatMs(solve.timeMs)}</div>
+        })}: {formatEventMs(solve.event, solve.timeMs)}</div>
           <div>{tr({ zh: '日期', en: 'Date' })}: {dt.toLocaleString()}</div>
         </div>
         <div className="modal-section">
@@ -163,6 +202,12 @@ export default function SolveModal({ solve, index, isZh, onClose, onChangePenalt
             <h3 className="settings-h3">{tr({ zh: '记忆 / 执行', en: 'Memo / Execution'
             })}</h3>
             <BldSplits bld={solve.bld} isZh={isZh} totalMs={solve.timeMs} />
+          </div>
+        )}
+        {solve.mbld && (
+          <div className="modal-section">
+            <h3 className="settings-h3">{tr({ zh: '多盲成绩', en: 'Multi-Blind result' })}</h3>
+            <MbldBreakdown solve={solve} />
           </div>
         )}
         <div className="modal-section">
@@ -224,6 +269,14 @@ export default function SolveModal({ solve, index, isZh, onClose, onChangePenalt
             onClick={() => onChangePenalty('DNF')}
           >
             DNF
+          </button>
+          <button
+            className={solve.penalty === 'DNS' ? 'modal-action-btn primary' : 'modal-action-btn'}
+            style={actionBtnStyle}
+            onClick={() => onChangePenalty('DNS')}
+            title={tr({ zh: '未开始（DNS）— 与 DNF 同样计入平均', en: 'Did Not Start — scored like a DNF in every average' })}
+          >
+            DNS
           </button>
           {solve.moves && solve.moves.length > 0 && onOpenReconstruct && (
             <button className="modal-action-btn" style={actionBtnStyle} onClick={onOpenReconstruct}>

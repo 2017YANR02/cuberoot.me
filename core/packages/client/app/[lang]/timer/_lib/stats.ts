@@ -6,7 +6,7 @@
  * passed in must already be ordered oldest → newest).
  */
 
-import type { Solve, EventId } from './types';
+import type { Solve, EventId, Penalty } from './types';
 import { effectiveMs } from './types';
 
 /** WCA trim count: ceil(n/20), but at least 1 for n in [3,20]. */
@@ -110,14 +110,32 @@ export function bestAverageOfN(solves: Solve[], n: number): number | null {
 }
 
 /**
+ * FMC stores a move count as `moves * 1000` ms. Its mean is ROUNDED to two
+ * decimals of a move (WCA A7c / 9f8) rather than truncated to centiseconds
+ * like a time mean (9f7) — and 0.01 move == 10 ms in our encoding, so the two
+ * rules differ only in floor-vs-round. Applied only when the whole window is
+ * FMC; a mixed window is nonsense and falls back to the time rule.
+ */
+function isFmcWindow(window: Solve[]): boolean {
+  return window.length > 0 && window.every(s => s.event === '333fm');
+}
+
+function roundMeanFor(window: Solve[], raw: number): number {
+  if (!Number.isFinite(raw)) return raw;
+  return isFmcWindow(window) ? Math.round(raw / 10) * 10 : truncToCs(raw);
+}
+
+/**
  * Mean of N over the last N solves — no trim, all solves count.
- * Any DNF in the window → Infinity. Per WCA 9f7 the mean is truncated to cs.
+ * Any DNF/DNS in the window → Infinity. Per WCA 9f7 the mean is truncated to
+ * cs; the FMC mean is rounded to 2 dp instead (see `roundMeanFor`).
  */
 export function meanOfN(solves: Solve[], n: number): number | null {
   if (solves.length < n) return null;
-  const last = solves.slice(-n).map(effectiveMs);
+  const window = solves.slice(-n);
+  const last = window.map(effectiveMs);
   if (last.some(t => t === Infinity)) return Infinity;
-  return truncToCs(last.reduce((a, b) => a + b, 0) / n);
+  return roundMeanFor(window, last.reduce((a, b) => a + b, 0) / n);
 }
 
 /**
@@ -136,13 +154,17 @@ export function bestOfN(solves: Solve[], n: number): number | null {
 export function bestMeanOfN(solves: Solve[], n: number): number | null {
   if (solves.length < n) return null;
   let best = Infinity;
+  let bestWindow: Solve[] = [];
   for (let i = 0; i + n <= solves.length; i++) {
-    const window = solves.slice(i, i + n).map(effectiveMs);
+    const slice = solves.slice(i, i + n);
+    const window = slice.map(effectiveMs);
     if (window.some(t => t === Infinity)) continue;
     const m = window.reduce((a, b) => a + b, 0) / n;
-    if (m < best) best = m;
+    if (m < best) { best = m; bestWindow = slice; }
   }
-  return Number.isFinite(best) ? truncToCs(best) : best;
+  // Same FMC round-vs-truncate rule as `meanOfN` so "best mo3" agrees with the
+  // live mo3 when they land on the same window.
+  return Number.isFinite(best) ? roundMeanFor(bestWindow, best) : best;
 }
 
 /** Best best-of-N across the entire solve history. */
@@ -170,29 +192,52 @@ export function eventDefaultFormat(event: EventId): EventFormat {
   return { kind: 'ao5', n: 5 };
 }
 
-/** Compute primary average per event format over the most recent solves. */
-export function formatPrimary(solves: Solve[], fmt: EventFormat): string {
+/** Compute primary average per event format over the most recent solves.
+ *  Pass `event` to format FMC as move counts. MBLD needs no branch here: its
+ *  `eventDefaultFormat` is 'single', and the single branch already delegates to
+ *  `formatSolveResult`, which renders the full "11/13 58:02" result. */
+export function formatPrimary(solves: Solve[], fmt: EventFormat, event?: EventId): string {
+  const f = (ms: number | null) => (event ? formatEventMs(event, ms) : formatMs(ms));
   if (solves.length < fmt.n) return '-';
-  if (fmt.kind === 'ao5')    return formatMs(averageOfN(solves, fmt.n));
-  if (fmt.kind === 'mo3')    return formatMs(meanOfN(solves, fmt.n));
-  if (fmt.kind === 'bo3')    return formatMs(bestOfN(solves, fmt.n));
+  if (fmt.kind === 'ao5')    return f(averageOfN(solves, fmt.n));
+  if (fmt.kind === 'mo3')    return f(meanOfN(solves, fmt.n));
+  if (fmt.kind === 'bo3')    return f(bestOfN(solves, fmt.n));
   // single
   const last = solves[solves.length - 1];
-  return formatMs(effectiveMs(last));
+  return event ? formatSolveResult(last) : formatMs(effectiveMs(last));
 }
 
 /** Best historical primary across all solves for the given format. */
-export function formatBestPrimary(solves: Solve[], fmt: EventFormat): string {
+export function formatBestPrimary(solves: Solve[], fmt: EventFormat, event?: EventId): string {
+  const f = (ms: number | null) => (event ? formatEventMs(event, ms) : formatMs(ms));
   if (solves.length < fmt.n) return '-';
-  if (fmt.kind === 'ao5')    return formatMs(bestAverageOfN(solves, fmt.n));
-  if (fmt.kind === 'mo3')    return formatMs(bestMeanOfN(solves, fmt.n));
-  if (fmt.kind === 'bo3')    return formatMs(bestBestOfN(solves, fmt.n));
-  return formatMs(bestSingle(solves));
+  // MBLD ranks on points, so its "best" is a whole attempt rather than a
+  // number — resolve the attempt and print its WCA result string.
+  if (event === '333mbld') {
+    const best = bestMbldSolve(solves);
+    return best === null ? 'DNF' : formatMbldResult(best);
+  }
+  if (fmt.kind === 'ao5')    return f(bestAverageOfN(solves, fmt.n));
+  if (fmt.kind === 'mo3')    return f(bestMeanOfN(solves, fmt.n));
+  if (fmt.kind === 'bo3')    return f(bestBestOfN(solves, fmt.n));
+  return f(bestSingle(solves, event));
 }
 
-/** Best single (lowest effective time, ignoring DNFs unless all are DNF). */
-export function bestSingle(solves: Solve[]): number | null {
+/**
+ * Best single (lowest effective time, ignoring DNFs unless all are DNF).
+ *
+ * @param event optional. Pass '333mbld' and "best" switches to the WCA ranking
+ *   (most points, then shortest time — `compareMbld`) instead of the shortest
+ *   time; the returned number is then that winning attempt's duration, which is
+ *   the only number a caller can meaningfully plot for it. Callers wanting the
+ *   attempt itself (to render "11/13 58:02") should use `bestMbldSolve`.
+ */
+export function bestSingle(solves: Solve[], event?: EventId): number | null {
   if (solves.length === 0) return null;
+  if (event === '333mbld') {
+    const best = bestMbldSolve(solves);
+    return best === null ? Infinity : effectiveMs(best);
+  }
   let best = Infinity;
   for (const s of solves) {
     const e = effectiveMs(s);
@@ -245,6 +290,204 @@ export function formatMs(ms: number | null, precision: 0 | 1 | 2 | 3 = 2): strin
   if (hours > 0) return `${hours}:${p2(minutes)}:${p2(seconds)}${frac}`;
   if (minutes > 0) return `${minutes}:${p2(seconds)}${frac}`;
   return `${seconds}${frac}`;
+}
+
+/**
+ * Short display token for a penalty. Exists so display sites can tell DNS
+ * apart from DNF — `formatMs` only sees the effective time (Infinity for
+ * both) and has ~122 call sites, so it deliberately stays penalty-blind.
+ */
+export function penaltyLabel(p: Penalty): string {
+  if (p === 'ok') return 'OK';
+  return p; // '+2' | 'DNF' | 'DNS'
+}
+
+/**
+ * Format a value for an event, honouring FMC's move-count encoding
+ * (`moves * 1000` ms). A whole number of moves renders as an integer ("27");
+ * a fractional value — i.e. an FMC mean — renders at 2 dp ("26.33"), per WCA.
+ * Every other event falls through to `formatMs`.
+ */
+export function formatEventMs(event: EventId, ms: number | null, precision: 0 | 1 | 2 | 3 = 2): string {
+  if (event !== '333fm') return formatMs(ms, precision);
+  if (ms === null) return '-';
+  if (!Number.isFinite(ms)) return 'DNF';
+  const moves = Math.max(0, ms) / 1000;
+  return Number.isInteger(moves) ? String(moves) : moves.toFixed(2);
+}
+
+/* ------------------------------------------------------------------ */
+/* 3x3x3 Multi-Blind — WCA Regulation 9f12c                            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Post-penalty attempt duration in ms. Unlike `effectiveMs` this never
+ * collapses to Infinity: an MBLD DNF still HAS a recorded time (it is the
+ * 9f12c tiebreaker, and we show it to the user), so the DNF-ness is carried by
+ * `isMbldDnf` / `penalty` instead of by the number.
+ */
+function mbldTimeMs(s: Solve): number {
+  return s.penalty === '+2' ? s.timeMs + 2000 : s.timeMs;
+}
+
+/**
+ * WCA net score: puzzles solved minus puzzles NOT solved. Returns null for a
+ * solve carrying no MBLD payload (i.e. every non-MBLD event).
+ */
+export function mbldPoints(s: Solve): number | null {
+  const m = s.mbld;
+  if (!m) return null;
+  return m.solved - (m.attempted - m.solved);
+}
+
+/**
+ * Does this attempt score DNF under WCA Regulation 9f12c?
+ *
+ * 9f12c, verbatim:
+ *   "For 3x3x3 Multi-Blind, rankings are assessed based on the number of
+ *    puzzles solved minus the number of puzzles not solved, where a greater
+ *    difference is better. If the difference is less than 0, or if only 1
+ *    puzzle is solved, the attempt is considered unsolved (DNF). ..."
+ *
+ * So the boundary is `points < 0`, NOT `points < 1`. A 2/4 attempt scores
+ * exactly 0 points and is a perfectly valid result — the WCA still records
+ * them today. A 1/2 attempt is a DNF because only 1 puzzle was solved, even
+ * though its difference is also 0. Those two cases are why the rule needs both
+ * clauses; collapsing them into `points < 1` would wrongly void every 2/4.
+ *
+ * Does NOT consider `penalty` — a caller wanting "is this row a DNF for any
+ * reason" should check `penalty` too. This function answers only the 9f12c
+ * question, so the entry point can *derive* the penalty from it.
+ */
+export function isMbldDnf(s: Solve): boolean {
+  const m = s.mbld;
+  if (!m) return false;
+  if (m.solved < 2) return true;
+  return m.solved - (m.attempted - m.solved) < 0;
+}
+
+/**
+ * WCA result string: "11/13 58:02" — solved/attempted plus the attempt time
+ * truncated to whole seconds (the WCA records MBLD times in seconds).
+ *
+ * A DNS reads "DNS". An attempt that fails 9f12c — or that the user explicitly
+ * marked DNF — reads "DNF (1/5 10:00)": the numbers are kept because this is a
+ * practice timer and the user still wants to see what they got.
+ */
+export function formatMbldResult(s: Solve): string {
+  const m = s.mbld;
+  if (!m) return formatSolveResult(s);
+  if (s.penalty === 'DNS') return 'DNS';
+  const body = `${m.solved}/${m.attempted} ${formatMs(mbldTimeMs(s), 0)}`;
+  return s.penalty === 'DNF' || isMbldDnf(s) ? `DNF (${body})` : body;
+}
+
+/** Is this attempt a DNF for ANY reason (9f12c, an explicit DNF, or a DNS)? */
+function mbldIsUnranked(s: Solve): boolean {
+  return !s.mbld || s.penalty === 'DNF' || s.penalty === 'DNS' || isMbldDnf(s);
+}
+
+/**
+ * Rank two MBLD attempts per 9f12c: more points first, ties broken by shorter
+ * time, remaining ties by fewer unsolved puzzles (11/13 beats 12/15 — same 9
+ * points, but fewer misses). Any DNF ranks after every valid attempt.
+ *
+ * Returns < 0 when `a` ranks ahead of `b`, so `[...solves].sort(compareMbld)`
+ * yields best-first.
+ */
+export function compareMbld(a: Solve, b: Solve): number {
+  const aDnf = mbldIsUnranked(a);
+  const bDnf = mbldIsUnranked(b);
+  if (aDnf !== bDnf) return aDnf ? 1 : -1;
+  if (aDnf) return 0;
+  const pa = mbldPoints(a)!;
+  const pb = mbldPoints(b)!;
+  if (pa !== pb) return pb - pa;
+  const ta = mbldTimeMs(a);
+  const tb = mbldTimeMs(b);
+  if (ta !== tb) return ta - tb;
+  const ua = a.mbld!.attempted - a.mbld!.solved;
+  const ub = b.mbld!.attempted - b.mbld!.solved;
+  return ua - ub;
+}
+
+/**
+ * Why a typed MBLD attempt was rejected. A machine-readable reason so the rule
+ * lives here (testable, no React) while the wording stays at the UI edge.
+ */
+export type MbldEntryError =
+  /** attempted is missing / not a whole number / < 2 */
+  | 'attempted'
+  /** solved is missing / not a whole number / negative */
+  | 'solved'
+  /** solved > attempted */
+  | 'solved-exceeds-attempted'
+  /** time is missing / not positive */
+  | 'time';
+
+export type MbldEntryCheck =
+  | { ok: true; solved: number; attempted: number; ms: number }
+  | { ok: false; reason: MbldEntryError };
+
+/**
+ * Validate one manually-entered MBLD attempt. Inputs are already-parsed
+ * numbers; pass null for anything the caller could not read.
+ *
+ * Boundaries, checked in this order:
+ *   attempted  whole number ≥ 2. There is no 1-cube attempt: solving it is
+ *              "only 1 puzzle solved" and failing it is −1 point, so 9f12c
+ *              makes every possible outcome a DNF.
+ *   solved     whole number, 0 ≤ solved ≤ attempted.
+ *   ms         > 0.
+ *
+ * A valid-but-DNF attempt (2/6, or 1/2) is accepted, not rejected — it is a
+ * real result the user may want on record. Only *impossible* input is refused;
+ * the DNF itself is derived later via `isMbldDnf`.
+ */
+export function checkMbldEntry(
+  solved: number | null,
+  attempted: number | null,
+  ms: number | null,
+): MbldEntryCheck {
+  if (attempted === null || !Number.isSafeInteger(attempted) || attempted < 2) {
+    return { ok: false, reason: 'attempted' };
+  }
+  if (solved === null || !Number.isSafeInteger(solved) || solved < 0) {
+    return { ok: false, reason: 'solved' };
+  }
+  if (solved > attempted) {
+    return { ok: false, reason: 'solved-exceeds-attempted' };
+  }
+  if (ms === null || !Number.isFinite(ms) || ms <= 0) {
+    return { ok: false, reason: 'time' };
+  }
+  return { ok: true, solved, attempted, ms };
+}
+
+/** Highest-ranked MBLD attempt per `compareMbld`, or null if none is valid. */
+export function bestMbldSolve(solves: Solve[]): Solve | null {
+  let best: Solve | null = null;
+  for (const s of solves) {
+    if (mbldIsUnranked(s)) continue;
+    if (best === null || compareMbld(s, best) < 0) best = s;
+  }
+  return best;
+}
+
+/* ------------------------------------------------------------------ */
+
+/**
+ * Format one solve's own result for a row / detail view: DNS reads "DNS"
+ * rather than collapsing into "DNF", FMC reads as a move count, and an MBLD
+ * attempt reads as its full WCA result string ("11/13 58:02") rather than a
+ * bare time.
+ */
+export function formatSolveResult(s: Solve, precision: 0 | 1 | 2 | 3 = 2): string {
+  // MBLD owns its whole display (points + time + the 9f12c DNF rule), so it
+  // short-circuits before the time formatters.
+  if (s.mbld) return formatMbldResult(s);
+  if (s.penalty === 'DNS') return 'DNS';
+  return formatEventMs(s.event, effectiveMs(s), precision);
 }
 
 /** Standard deviation (ms) of an array of effective times — null if < 2 valid. */
@@ -338,10 +581,21 @@ export function subXBreakdown(solves: Solve[]): Array<{ threshold: number; label
 /**
  * Identify which solve is currently the PB (best single, ignoring DNFs).
  * Returns the index in the original `solves` array, or -1 if all DNF / empty.
+ *
+ * @param event optional. Pass '333mbld' and the PB is chosen by the WCA
+ *   ranking (`compareMbld`) instead of by shortest time — a slower attempt
+ *   that solved more cubes IS the better result.
  */
-export function pbSingleIndex(solves: Solve[]): number {
-  let best = Infinity;
+export function pbSingleIndex(solves: Solve[], event?: EventId): number {
   let idx = -1;
+  if (event === '333mbld') {
+    for (let i = 0; i < solves.length; i++) {
+      if (mbldIsUnranked(solves[i])) continue;
+      if (idx < 0 || compareMbld(solves[i], solves[idx]) < 0) idx = i;
+    }
+    return idx;
+  }
+  let best = Infinity;
   for (let i = 0; i < solves.length; i++) {
     const t = effectiveMs(solves[i]);
     if (t < best) { best = t; idx = i; }
@@ -352,7 +606,8 @@ export function pbSingleIndex(solves: Solve[]): number {
 /** Compute a row of stats. Returns formatted strings ready for display. */
 export interface StatsSummary {
   count: number;
-  /** Non-DNF solves — the numerator in the success/total ratio. */
+  /** Successful solves — DNF *and* DNS both count as unsolved. Numerator in
+   *  the success/total ratio. */
   solved: number;
   best: string;
   worst: string;
@@ -379,32 +634,44 @@ export interface StatsSummary {
   wpa12: string;
 }
 
-export function summarize(solves: Solve[]): StatsSummary {
+/**
+ * @param event optional — pass it and every value is formatted for that event
+ *   (FMC renders move counts instead of times). Omitted = plain time strings,
+ *   which is what non-event-scoped callers want.
+ */
+export function summarize(solves: Solve[], event?: EventId): StatsSummary {
+  const f = (ms: number | null) => (event ? formatEventMs(event, ms) : formatMs(ms));
+  // MBLD's best is ranked on points, not time, and prints as a result string.
+  // Every other row below is a time statistic and stays event-agnostic.
+  const bestMbld = event === '333mbld' ? bestMbldSolve(solves) : null;
+  const bestStr = event === '333mbld'
+    ? (bestMbld === null ? 'DNF' : formatMbldResult(bestMbld))
+    : f(bestSingle(solves, event));
   return {
     count: solves.length,
-    solved: solves.reduce((n, s) => n + (s.penalty === 'DNF' ? 0 : 1), 0),
-    best: formatMs(bestSingle(solves)),
-    worst: formatMs(worstSingle(solves)),
-    mean: formatMs(meanOfAll(solves)),
-    ao5: formatMs(averageOfN(solves, 5)),
-    ao12: formatMs(averageOfN(solves, 12)),
-    ao50: formatMs(averageOfN(solves, 50)),
-    ao100: formatMs(averageOfN(solves, 100)),
-    ao1000: formatMs(averageOfN(solves, 1000)),
-    mo3: formatMs(meanOfN(solves, 3)),
-    bo3: formatMs(bestOfN(solves, 3)),
-    bestAo5: formatMs(bestAverageOfN(solves, 5)),
-    bestAo12: formatMs(bestAverageOfN(solves, 12)),
-    bestAo50: formatMs(bestAverageOfN(solves, 50)),
-    bestAo100: formatMs(bestAverageOfN(solves, 100)),
-    bestAo1000: formatMs(bestAverageOfN(solves, 1000)),
-    bestMo3: formatMs(bestMeanOfN(solves, 3)),
-    bestBo3: formatMs(bestBestOfN(solves, 3)),
-    sd: stdDev(solves) === null ? '—' : formatMs(Math.round(stdDev(solves)!)),
+    solved: solves.reduce((n, s) => n + (s.penalty === 'DNF' || s.penalty === 'DNS' ? 0 : 1), 0),
+    best: bestStr,
+    worst: f(worstSingle(solves)),
+    mean: f(meanOfAll(solves)),
+    ao5: f(averageOfN(solves, 5)),
+    ao12: f(averageOfN(solves, 12)),
+    ao50: f(averageOfN(solves, 50)),
+    ao100: f(averageOfN(solves, 100)),
+    ao1000: f(averageOfN(solves, 1000)),
+    mo3: f(meanOfN(solves, 3)),
+    bo3: f(bestOfN(solves, 3)),
+    bestAo5: f(bestAverageOfN(solves, 5)),
+    bestAo12: f(bestAverageOfN(solves, 12)),
+    bestAo50: f(bestAverageOfN(solves, 50)),
+    bestAo100: f(bestAverageOfN(solves, 100)),
+    bestAo1000: f(bestAverageOfN(solves, 1000)),
+    bestMo3: f(bestMeanOfN(solves, 3)),
+    bestBo3: f(bestBestOfN(solves, 3)),
+    sd: stdDev(solves) === null ? '—' : f(Math.round(stdDev(solves)!)),
     cv: formatPct(coefficientOfVariation(solves)),
-    bpa5: formatMs(bpa(solves, 5)),
-    wpa5: formatMs(wpa(solves, 5)),
-    bpa12: formatMs(bpa(solves, 12)),
-    wpa12: formatMs(wpa(solves, 12)),
+    bpa5: f(bpa(solves, 5)),
+    wpa5: f(wpa(solves, 5)),
+    bpa12: f(bpa(solves, 12)),
+    wpa12: f(wpa(solves, 12)),
   };
 }

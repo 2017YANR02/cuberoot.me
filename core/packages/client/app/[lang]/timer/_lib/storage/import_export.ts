@@ -13,6 +13,7 @@
 
 import type { EventId, Solve } from '../types';
 import { newId } from './db';
+import { applyDnsSniff } from './import_cstimer';
 
 /* ------------------------------------------------------------------ */
 /* cstimer event id → our EventId mapping                              */
@@ -207,17 +208,21 @@ export function importCstimerJson(text: string): Record<string, Solve[]> | null 
       if (pen === -1) penalty = 'DNF';
       else if (pen === 2000) penalty = '+2';
       else penalty = 'ok';
+      // csTimer has no DNS code — we export one as a DNF whose comment starts
+      // with "DNS". Sniff it back off here (same helper the per-session parser
+      // uses, so the two importers can never drift).
+      const sniffed = applyDnsSniff(penalty, comment);
       const timeMs = Math.max(0, totalMs);
 
       const ts = Number(dateSec);
       const solve: Solve = {
         id: newId(),
         timeMs,
-        penalty,
+        penalty: sniffed.penalty,
         scramble: typeof scramble === 'string' ? scramble : '',
         event: eventId,
         ts: Number.isFinite(ts) ? ts * 1000 : Date.now(),
-        comment: typeof comment === 'string' && comment.length > 0 ? comment : undefined,
+        comment: sniffed.comment,
       };
 
       if (!byEvent[eventId]) byEvent[eventId] = [];
@@ -332,13 +337,16 @@ function formatMmSsMmm(ms: number): string {
  * - OK:  MM:SS.mmm
  * - +2:  MM:SS.mmm+   (effective time = raw + 2000)
  * - DNF: DNF
+ * - DNS: DNS
  */
 export function exportSpeedstacks(solves: Solve[]): string {
   if (!solves || solves.length === 0) return '';
   const sorted = solves.slice().sort((a, b) => a.ts - b.ts);
   const lines: string[] = [];
   for (const s of sorted) {
-    if (s.penalty === 'DNF') {
+    if (s.penalty === 'DNS') {
+      lines.push('DNS');
+    } else if (s.penalty === 'DNF') {
       lines.push('DNF');
     } else if (s.penalty === '+2') {
       lines.push(formatMmSsMmm(s.timeMs + 2000) + '+');

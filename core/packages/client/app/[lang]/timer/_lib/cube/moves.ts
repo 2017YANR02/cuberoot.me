@@ -135,3 +135,52 @@ export function parseScramble(scramble: string): ParsedMove[] {
   }
   return out;
 }
+
+/**
+ * Same as `parseScramble` but reports what it could NOT understand.
+ *
+ * `parseToken` swallows anything it doesn't recognise (megaminx `R++`, stray
+ * letters, typos) and returns `[]`, which is right for a best-effort scramble
+ * preview but wrong for validating a user-typed FMC solution — a typo'd token
+ * would silently vanish and the remaining moves would be scored as if the
+ * solution were complete. Callers that must reject garbage use this instead.
+ *
+ * Comments run to end of LINE (`R U // cross`, `R U # cross`) and are dropped
+ * whole, not reported — people paste annotated solutions. `parseScramble` only
+ * skips the `//` token itself and then chokes on the prose after it, which is
+ * why this can't just delegate.
+ */
+export function parseScrambleStrict(scramble: string): { moves: ParsedMove[]; bad: string[] } {
+  const moves: ParsedMove[] = [];
+  const bad: string[] = [];
+  for (const line of (scramble ?? '').split(/[\r\n]+/)) {
+    const code = line.replace(/(\/\/|#).*$/, '');
+    for (const t of code.split(/[\s,]+/).filter(Boolean)) {
+      const parsed = parseToken(t);
+      if (parsed.length === 0) { bad.push(t); continue; }
+      moves.push(...parsed);
+    }
+  }
+  return { moves, bad };
+}
+
+/**
+ * Outer Block Turn Metric (WCA Regulations 12a2 / E2b), the metric FMC is
+ * scored in: every face turn AND every wide (block) turn counts 1, whole-cube
+ * rotations count 0, and a slice (M / E / S) counts 2.
+ *
+ * The slice rule needs no special case here because `parseToken` already
+ * expands M / E / S into the two block turns that realise it (`Lw` + `L'` for
+ * M, etc.), so the naive per-move count lands on 2 by construction.
+ *
+ * Deliberately NOT `reconstruct/slice.ts`'s `htmCount`, which scores slice
+ * moves as 0 and would under-count any solution that uses them.
+ */
+export function obtmCount(moves: ParsedMove[]): number {
+  let n = 0;
+  for (const mv of moves) {
+    if (mv.isRotation) continue;
+    n++;
+  }
+  return n;
+}

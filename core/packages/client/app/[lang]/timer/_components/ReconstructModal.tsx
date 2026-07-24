@@ -20,6 +20,8 @@ import { computeStageAverages, computeStageSegments } from '../_lib/reconstruct/
 import type { StageAverages } from '../_lib/reconstruct/stage_segments';
 import { encodeReplayUrl } from '../_lib/share/encode';
 import { nxnSizeForEvent } from '../_lib/cube';
+import { toReconEventId } from '../_shared/event-bridge';
+import { buildExternalLinks } from '@/lib/recon-utils';
 import { memoize3bld } from '../_lib/solver/bld_helper';
 import PlaybackPanel from './PlaybackPanel';
 import { useIsMobile } from '@/hooks/useIsMobile';
@@ -51,6 +53,14 @@ const BLD_MEMO_EVENTS = new Set<EventId>(['333bld', '333ni']);
 function formatSec(ms: number, digits = 2): string {
   return (ms / 1000).toFixed(digits) + 's';
 }
+
+/** `.modal-action-btn` is styled for <button>; an <a> needs the UA link
+ *  underline/color stripped and the same centred box. */
+const EXTERNAL_LINK_STYLE = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  textDecoration: 'none',
+} as const;
 
 interface AccordionSectionProps {
   title: ReactNode;
@@ -141,6 +151,20 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
   const [moveListExpanded, setMoveListExpanded] = useState(false);
   const playbackAvailable = moves.length > 0 && nxnSizeForEvent(solve.event) !== null;
   const canShare = moves.length > 0;
+
+  // External alg viewers (alg.cubing.net / twizzle for non-cubes, plus
+  // cubedb.net). Reuses /recon's battle-tested builder — it keys on recon
+  // event ids, so bridge our EventId first. null = no single puzzle applies
+  // (relays / custom), in which case we render no links.
+  const externalLinks = useMemo(() => {
+    if (!canShare) return null;
+    const reconEvent = toReconEventId(solve.event);
+    if (!reconEvent) return null;
+    const alg = moves.map(m => m.m).join(' ');
+    if (!alg.trim()) return null;
+    return buildExternalLinks(reconEvent, solve.scramble ?? '', alg);
+  }, [canShare, solve.event, solve.scramble, moves]);
+
   const handleCopyShare = async () => {
     try {
       const url = encodeReplayUrl(solve);
@@ -420,6 +444,30 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
               : tr({ zh: '复制分享链接', en: 'Copy share link'
                                       })}
           </button>
+          {externalLinks && (
+            <>
+              <a
+                className="modal-action-btn"
+                style={EXTERNAL_LINK_STYLE}
+                href={externalLinks.algUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={tr({ zh: `在 ${externalLinks.algSiteName} 打开`, en: `Open on ${externalLinks.algSiteName}` })}
+              >
+                {externalLinks.algSiteName}
+              </a>
+              <a
+                className="modal-action-btn"
+                style={EXTERNAL_LINK_STYLE}
+                href={externalLinks.cubedbUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={tr({ zh: '在 cubedb.net 打开', en: 'Open on cubedb.net' })}
+              >
+                cubedb.net
+              </a>
+            </>
+          )}
           <button className="modal-action-btn" ref={closeBtnRef} onClick={onClose}>
             {tr({ zh: '关闭', en: 'Close'
             })}

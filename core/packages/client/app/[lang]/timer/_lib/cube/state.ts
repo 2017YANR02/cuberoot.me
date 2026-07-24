@@ -608,6 +608,27 @@ export function applyScramble(n: number, scramble: string): CubeFaces {
   return applyMoves(solved(n), n, parseScramble(scramble));
 }
 
+/**
+ * True when every face is monochrome — i.e. the cube is solved.
+ *
+ * Rotation-invariant by construction: we compare each face against its own
+ * first sticker rather than against a fixed colour scheme, so a solved cube
+ * that has been turned by x / y / z still reads as solved. That is exactly
+ * what WCA 9f/A3b1 wants for FMC ("the solution may end in any orientation"),
+ * so no extra normalisation is needed.
+ */
+export function isSolvedFaces(f: CubeFaces): boolean {
+  for (const k of ['U', 'D', 'F', 'B', 'L', 'R'] as Face[]) {
+    const arr = f[k];
+    if (arr.length === 0) return false;
+    const c = arr[0];
+    for (let i = 1; i < arr.length; i++) {
+      if (arr[i] !== c) return false;
+    }
+  }
+  return true;
+}
+
 /** Compare two states for equality (used in tests). */
 export function facesEqual(a: CubeFaces, b: CubeFaces): boolean {
   for (const f of ['U', 'D', 'F', 'B', 'L', 'R'] as Face[]) {

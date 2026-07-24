@@ -29,7 +29,14 @@ export type EventId =
   // Free-form (user types own scramble)
   | 'custom';
 
-export type Penalty = 'ok' | '+2' | 'DNF';
+/**
+ * 'DNS' = Did Not Start (WCA 9f2 / A1a4): the attempt was never begun. It is
+ * scored exactly like a DNF everywhere (Infinity in every average, excluded
+ * from "solved" counts) — the distinction is purely a record-keeping /
+ * display one, so keep the two branches separate at display sites and use
+ * `penaltyLabel()` from `stats.ts` rather than `formatMs()`.
+ */
+export type Penalty = 'ok' | '+2' | 'DNF' | 'DNS';
 
 export interface Solve {
   /** Sortable id: timestamp + random suffix; sorted by ts not id */
@@ -55,6 +62,18 @@ export interface Solve {
   /** Blindfolded memo split. memoMs is elapsed at the moment user marked
    *  "memo done". Execution time = timeMs - memoMs. */
   bld?: { memoMs: number };
+  /** 3x3x3 Multi-Blind attempt (event '333mbld'): how many of the puzzles
+   *  taken on were actually solved.
+   *
+   *  `timeMs` stays a REAL millisecond duration. We deliberately do NOT store
+   *  the WCA's packed `DDDTTTTTMM` integer: packing would poison every
+   *  `formatMs` call site, all three charts (they plot `effectiveMs` on a time
+   *  axis), `bestSingle`, and every sort. Keeping the time real means charts
+   *  and history stay correct for free, and only *ranking* and *labelling*
+   *  special-case MBLD — see `mbldPoints` / `isMbldDnf` / `compareMbld` /
+   *  `formatMbldResult` in stats.ts. Being an optional field, no stored solve
+   *  needs migrating. */
+  mbld?: { solved: number; attempted: number };
   /** Trainer case id — set only for OLL/PLL/COLL/CMLL/ZBLL/EG1/EG2 events.
    * For OLL/PLL it's the case key from oll.json/pll.json (e.g. "OLL 1", "Aa").
    * For other trainers it's the alg string used to build the scramble. */
@@ -81,8 +100,12 @@ export function isBldEvent(id: EventId): boolean {
   return BLD_EVENT_IDS.has(id);
 }
 
-/** Effective time after penalty (Infinity for DNF). */
+/** Effective time after penalty (Infinity for DNS / DNF). */
 export function effectiveMs(s: Solve): number {
+  // DNS first: it must never fall through to the +2 / raw branches. Returning
+  // Infinity here is what makes DNS behave as DNF in every stat — stats.ts
+  // only ever looks at effective times, never at `penalty` itself.
+  if (s.penalty === 'DNS') return Infinity;
   if (s.penalty === 'DNF') return Infinity;
   if (s.penalty === '+2') return s.timeMs + 2000;
   return s.timeMs;

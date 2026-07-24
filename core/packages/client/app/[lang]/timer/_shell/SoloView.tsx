@@ -23,6 +23,7 @@ import {
   Bluetooth, Mic, BarChart3, Plus, Wrench, ListPlus, Printer, FileText,
   FileSpreadsheet, AlertTriangle, Target, Crosshair, Keyboard, Link2, Globe,
   ListOrdered, LineChart, Brain, X, Check, CheckCircle2, Footprints, Repeat,
+  Timer,
 } from 'lucide-react';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { CubingIcon, EventIcon } from '@/components/EventIcon/EventIcon';
@@ -51,7 +52,7 @@ import { fetchMarks, addMark, markKey, type ScrambleMark } from '../_lib/marks';
 import { getLastPickedCase, type TrainerKind } from '../_lib/scramble/training';
 import { warmup333, randomState333Sync } from '../_lib/scramble/kociemba/random_state';
 import { useTimer, type TimerPhase } from '../_lib/useTimer';
-import { formatMs, bestSingle, bestAverageOfN, summarize } from '../_lib/stats';
+import { formatMs, bestSingle, bestAverageOfN, bestMbldSolve, compareMbld, summarize } from '../_lib/stats';
 import type { EventId, Penalty, Solve } from '../_lib/types';
 import { EVENTS, isBldEvent } from '../_lib/types';
 import {
@@ -63,8 +64,13 @@ import { formatTargetTime, useSettings, getSettings, updateSettings } from '../_
 import { warmupSound } from '../_lib/sound';
 import { getMetronome } from '../_lib/sound/metronome';
 import { useBluetoothCube } from '../_lib/bluetooth';
+import { mirrorForBrand, sensorBasisForBrand, type Quat } from '../_lib/bluetooth/orientation';
+import { applyScramble, facesEqual, type CubeFaces } from '../_lib/cube/state';
+import { nxnSizeForEvent } from '../_lib/cube/colors';
+import { DIGIT_OPENS_SOLVE, bindingForEvent, resolveKeymap } from '../_lib/keymap';
 import { useAutoReady } from '../_lib/bluetooth/auto_ready';
 import { useStackmat } from '../_lib/stackmat';
+import { useBluetoothTimer } from '../_lib/bluetooth/timer';
 import { useMultiStage } from '../_lib/multistage';
 import { useBldMemo } from '../_lib/useBldMemo';
 
@@ -79,6 +85,8 @@ import { decodeReplayParam } from '../_lib/share/decode';
 import { extractReplayParam } from '../_lib/share/paste_import';
 import SettingsPanel from '../_components/SettingsPanel';
 import GoalProgress from '../_components/GoalProgress';
+import RoundPanel from '../_components/RoundPanel';
+import { roundAttempts } from '../_lib/round';
 import ShortcutsModal from '../_components/ShortcutsModal';
 import BluetoothModal from '../_components/BluetoothModal';
 import TrainerSubsetModal from '../_components/TrainerSubsetModal';
@@ -120,6 +128,10 @@ import './shell.css';
 import { tr } from '@/i18n/tr';
 
 const TRAINER_KINDS = new Set<EventId>(['oll', 'pll', 'coll', 'cmll', 'zbll', 'eg1', 'eg2']);
+
+/** Rolling window for the live TPS readout, in moves. Short enough to react to
+ *  a pause or a lockup, long enough not to swing wildly on a single fast pair. */
+const TPS_WINDOW_MOVES = 12;
 
 /** Timer EventIds that map to a real WCA event (drive WcaEventSelector
  *  active state). The rest render via appendEvents. */
@@ -574,7 +586,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     if (sig === prev) return;
     lastSolveSigRef.current[event] = sig;
     if (prev === undefined || !s || !authUser) return;
-    if (s.penalty === 'DNF') return;
+    if (s.penalty === 'DNF' || s.penalty === 'DNS') return;
     const meta = wcaMetaFor(s.scramble);
     if (!meta) return;
     const key = markKey(meta);
@@ -666,9 +678,19 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       const after = [...before, solve];
       const isNew = (b: number | null, a: number | null): boolean =>
         a !== null && Number.isFinite(a) && (b === null || !Number.isFinite(b) || a < b);
-      if (isNew(bestAverageOfN(before, 12), bestAverageOfN(after, 12))
-        || isNew(bestAverageOfN(before, 5), bestAverageOfN(after, 5))
-        || isNew(bestSingle(before), bestSingle(after))) {
+      // MBLD ranks by points first and only then by time (WCA 9f12c), so
+      // "smaller number is better" is simply the wrong comparison for it —
+      // a slower 11/13 beats a faster 5/6. Averages aren't shown for MBLD.
+      const newSingle = ev === '333mbld'
+        ? (() => {
+            const b = bestMbldSolve(before);
+            const a = bestMbldSolve(after);
+            return a !== null && (b === null || compareMbld(a, b) < 0);
+          })()
+        : isNew(bestSingle(before, ev), bestSingle(after, ev));
+      if (newSingle
+        || (ev !== '333mbld' && (isNew(bestAverageOfN(before, 12), bestAverageOfN(after, 12))
+          || isNew(bestAverageOfN(before, 5), bestAverageOfN(after, 5))))) {
         petReact('happy');
       }
     }
@@ -718,7 +740,18 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     setMacPrompt(null);
   }, []);
 
+  // ── Orientation (gyroscope) ─────────────────────────────────────
+  // The sample rate is 20-50 Hz and the only consumer is the 3D view's frame
+  // loop, so the value lives in a ref: putting it in state would re-render this
+  // entire shell at gyro cadence for a number nothing here reads.
+  const gyroQuatRef = useRef<Quat | null>(null);
+  const [calibrateNonce, setCalibrateNonce] = useState(0);
+  const want3dLiveCube = settings.liveCubeView === '3d';
+
   const bluetoothCube = useBluetoothCube({
+    // Passing onGyro is what turns the stream on at all (MoYu32 has an explicit
+    // enable opcode), so only ask for it when the 3D view could use it.
+    onGyro: want3dLiveCube ? (q) => { gyroQuatRef.current = q; } : undefined,
     onMove: (move: string, ts: number) => {
       const faces = bluetoothCubeRef.current?.getFaces();
       if (faces) consumeFacesRef.current(faces);
@@ -730,6 +763,24 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       if (phaseSnapshotRef.current === 'running') timer.onPressDown();
     },
     onNeedMac: requestMac,
+    // The hook has always emitted these; nothing consumed them, so a cube that
+    // dropped mid-session went quiet with no explanation. Surface them.
+    onConnectionEvent: (ev) => {
+      if (ev.kind === 'disconnected' && ev.reason === 'manual') return; // user asked for it
+      setInfoToast({
+        msg:
+          ev.kind === 'disconnected'
+            ? tr({ zh: '智能魔方连接断开', en: 'Smart cube disconnected' })
+            : ev.kind === 'reconnecting'
+              ? tr({
+                  zh: `正在重连智能魔方（第 ${ev.attempt}/${ev.maxAttempts} 次）`,
+                  en: `Reconnecting to smart cube (${ev.attempt}/${ev.maxAttempts})`,
+                })
+              : ev.kind === 'reconnected'
+                ? tr({ zh: '智能魔方已重新连接', en: 'Smart cube reconnected' })
+                : tr({ zh: '智能魔方重连失败，请重新配对', en: 'Smart cube reconnect failed — pair again' }),
+      });
+    },
   });
 
   useAutoReady({
@@ -772,6 +823,106 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     return () => { subs.delete(mirror); };
   }, []);
 
+  // ── Scramble verification ───────────────────────────────────────
+  // A smart cube knows its own state, so it can answer the one question the
+  // scramble line can't: did the user actually apply it correctly? We compare
+  // the tracked facelets against the scramble applied to a solved cube.
+  //
+  // Only 3x3: the tracker models a 3x3 (every smart cube on the market is one),
+  // and events whose scramble isn't plain face notation (FMC's solution, MBLD's
+  // multiple scrambles) have nothing meaningful to compare against.
+  const scrambleTarget = useMemo<CubeFaces | null>(() => {
+    if (nxnSizeForEvent(event) !== 3) return null;
+    if (event === '333fm' || event === '333mbld') return null;
+    if (!scramble.trim()) return null;
+    try { return applyScramble(3, scramble); } catch { return null; }
+  }, [event, scramble]);
+
+  // null = not applicable / nothing to say yet. The tracker only means anything
+  // once the cube has actually been turned, so we stay quiet until then.
+  const [scrambleMatch, setScrambleMatch] = useState<boolean | null>(null);
+  const scrambleTargetRef = useRef<CubeFaces | null>(null);
+  useEffect(() => {
+    scrambleTargetRef.current = scrambleTarget;
+    setScrambleMatch(null);
+  }, [scrambleTarget]);
+  useEffect(() => {
+    const subs = bluetoothSubscribersRef.current;
+    const verify = () => {
+      const target = scrambleTargetRef.current;
+      if (!target) return;
+      // Only meaningful before the solve starts — mid-solve the cube is
+      // deliberately no longer in the scrambled state.
+      const ph = phaseSnapshotRef.current;
+      if (ph === 'running') return;
+      const faces = bluetoothCubeRef.current?.getFaces();
+      if (!faces) return;
+      setScrambleMatch(facesEqual(faces, target));
+    };
+    subs.add(verify);
+    return () => { subs.delete(verify); };
+  }, []);
+
+  // ── Round simulation ────────────────────────────────────────────
+  // The round is a VIEW over the solve history, not a second store: it is the
+  // tail slice of this event's solves. That keeps solves as the single source
+  // of truth (deleting one just shortens the round) and means nothing extra
+  // has to be persisted or migrated.
+  //
+  // `roundStartCount` is how many solves existed when the user asked for a new
+  // round. null = no explicit start, so the round is simply the last N solves,
+  // which is what you want when you turn the feature on mid-session.
+  const [roundStartCount, setRoundStartCount] = useState<number | null>(null);
+  useEffect(() => { setRoundStartCount(null); }, [event]);
+  const startNewRound = useCallback(() => {
+    setRoundStartCount(solvesRef.current.length);
+  }, []);
+  const roundSolves = useMemo(() => {
+    if (!settings.round.on) return [];
+    const n = roundAttempts(settings.round.format);
+    // Clamp: deleting solves can leave the marker past the end of the list.
+    const from = roundStartCount === null
+      ? Math.max(0, solves.length - n)
+      : Math.min(roundStartCount, solves.length);
+    return solves.slice(from, from + n);
+  }, [solves, roundStartCount, settings.round.on, settings.round.format]);
+
+  // ── Live move count + TPS ───────────────────────────────────────
+  // Turns per second was previously only available after the fact, in the
+  // reconstruction modal. The move recorder already stamps every turn, so the
+  // same numbers can be shown live. Rolling rather than cumulative: an average
+  // over the whole solve barely moves after a few seconds, which makes it
+  // useless as feedback — a short window actually tracks what the hands do.
+  const [liveTps, setLiveTps] = useState<{ count: number; tps: number } | null>(null);
+  // Own window rather than reading movesRef: subscriber order in the Set is an
+  // implementation detail, and depending on the recorder having already pushed
+  // this move would be a silent off-by-one if that ever changed.
+  const tpsWindowRef = useRef<number[]>([]);
+  const tpsCountRef = useRef(0);
+  useEffect(() => {
+    const subs = bluetoothSubscribersRef.current;
+    const meter = (_m: string, ts: number) => {
+      if (phaseSnapshotRef.current !== 'running') return;
+      const win = tpsWindowRef.current;
+      win.push(ts);
+      if (win.length > TPS_WINDOW_MOVES) win.shift();
+      tpsCountRef.current += 1;
+      const span = win.length > 1 ? ts - win[0] : 0;
+      setLiveTps({
+        count: tpsCountRef.current,
+        tps: span > 0 ? ((win.length - 1) * 1000) / span : 0,
+      });
+    };
+    subs.add(meter);
+    return () => { subs.delete(meter); };
+  }, []);
+  useEffect(() => {
+    if (timer.phase === 'running') return;
+    tpsWindowRef.current = [];
+    tpsCountRef.current = 0;
+    setLiveTps(null);
+  }, [timer.phase]);
+
   // ── WCA inspection-phase move classification ───────────────────
   const [inspectionIllegalCount, setInspectionIllegalCount] = useState(0);
   const prevPhaseRef = useRef(timer.phase);
@@ -796,15 +947,25 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     return () => { subs.delete(inspector); };
   }, []);
 
-  // ── Stackmat ────────────────────────────────────────────────────
-  const stackmatRecordRef = useRef<((ms: number) => void) | null>(null);
-  stackmatRecordRef.current = (ms: number) => {
+  // ── External timing devices (Stackmat mic + BLE smart timers) ───
+  // All of them hand us a time the DEVICE measured, so we record it verbatim
+  // rather than re-timing locally.
+  const externalTimeRecordRef = useRef<((ms: number) => void) | null>(null);
+  externalTimeRecordRef.current = (ms: number) => {
     const solve = makeSolve({ timeMs: ms, scramble: scrambleAtStartRef.current, event, penalty: 'ok' });
     setLastPenalty('ok');
     setByEvent(prev => ({ ...prev, [event]: [...(prev[event] ?? []), solve] }));
     nextScramble();
   };
-  const stackmat = useStackmat({ onStop: (ms) => stackmatRecordRef.current?.(ms) });
+  const stackmat = useStackmat({ onStop: (ms) => externalTimeRecordRef.current?.(ms) });
+
+  const bleTimer = useBluetoothTimer({
+    onStop: (ms) => externalTimeRecordRef.current?.(ms),
+    onNeedMac: (deviceName) => requestMac(deviceName),
+    onConnectionLost: () => {
+      setInfoToast({ msg: tr({ zh: '计时器连接断开', en: 'Timer disconnected' }) });
+    },
+  });
 
   // ── Metronome ───────────────────────────────────────────────────
   useEffect(() => {
@@ -863,7 +1024,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
 
   // ── Solve mutators ──────────────────────────────────────────────
   const updateSolve = useCallback((solveId: string, patch: Partial<Solve>) => {
-    if (patch.penalty === 'DNF') petReact('error');
+    if (patch.penalty === 'DNF' || patch.penalty === 'DNS') petReact('error');
     setByEvent(prev => ({
       ...prev,
       [event]: (prev[event] ?? []).map(s => s.id === solveId ? { ...s, ...patch } : s),
@@ -1054,6 +1215,11 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     modalSolve !== null || reconstructSolve !== null;
   const anyModalOpenRef = useRef(anyModalOpen);
   useEffect(() => { anyModalOpenRef.current = anyModalOpen; }, [anyModalOpen]);
+  // Through a ref so rebinding a key doesn't tear down and re-add the window
+  // listeners — and so the handler's dep array stays as it was.
+  const resolvedKeymap = useMemo(() => resolveKeymap(settings.keymap), [settings.keymap]);
+  const keymapRef = useRef(resolvedKeymap);
+  useEffect(() => { keymapRef.current = resolvedKeymap; }, [resolvedKeymap]);
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (anyModalOpenRef.current) return;
@@ -1096,31 +1262,40 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       // 计时进行中按任意键停止(stage 标记 / BLD memo 等功能键已在上面 return)。
       if (ph === 'running') { e.preventDefault(); onPressDown(); return; }
       if (ph === 'holding' || ph === 'ready' || ph === 'inspecting') return;
+      // ── Rebindable tail. Everything above this point is fixed: it either
+      //    guards the handler or owns Space/Escape, which must always work.
       const cur = solvesRef.current;
       const last = cur[cur.length - 1];
-      if (e.code === 'KeyZ' && !e.ctrlKey && !e.metaKey) {
-        if (last) { deleteSolve(last.id); setLastPenalty(null); }
-        return;
+      const binding = bindingForEvent(e);
+      const action = binding ? keymapRef.current[binding] : undefined;
+      const togglePenalty = (p: Penalty) => {
+        if (!last) return;
+        const next: Penalty = last.penalty === p ? 'ok' : p;
+        updateSolve(last.id, { penalty: next });
+        setLastPenalty(next);
+      };
+      switch (action) {
+        case 'delete-last':
+          if (last) { deleteSolve(last.id); setLastPenalty(null); }
+          return;
+        case 'toggle-plus2': togglePenalty('+2'); return;
+        case 'toggle-dnf': togglePenalty('DNF'); return;
+        case 'toggle-dns': togglePenalty('DNS'); return;
+        // Arrow keys scroll the page by default; the others don't need it.
+        case 'next-scramble': e.preventDefault(); nextScramble(); return;
+        case 'prev-scramble': e.preventDefault(); prevScramble(); return;
+        case 'toggle-fullscreen': toggleFullscreen(); return;
+        default: break;
       }
-      if (e.code === 'Digit2' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
-        if (last) { const p: Penalty = last.penalty === '+2' ? 'ok' : '+2'; updateSolve(last.id, { penalty: p }); setLastPenalty(p); }
-        return;
-      }
-      if (e.code === 'KeyD' && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) {
-        if (last) { const p: Penalty = last.penalty === 'DNF' ? 'ok' : 'DNF'; updateSolve(last.id, { penalty: p }); setLastPenalty(p); }
-        return;
-      }
-      const m = e.code.match(/^Digit([1-9])$/);
+      // Digit1-9 opens the Nth-from-last solve. Not rebindable (it's a family,
+      // not one action) and checked after the keymap, so a digit bound to an
+      // action — Digit2 → +2 by default — keeps shadowing it, as it always has.
+      const m = e.code.match(DIGIT_OPENS_SOLVE);
       if (m && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
         const n = Number(m[1]);
         const idx = cur.length - n;
         if (idx >= 0) setModalSolve({ s: cur[idx], idx });
-        return;
       }
-      if (e.code === 'Comma') { nextScramble(); return; }
-      if (e.code === 'ArrowLeft') { e.preventDefault(); prevScramble(); return; }
-      if (e.code === 'ArrowRight') { e.preventDefault(); nextScramble(); return; }
-      if (e.code === 'KeyF') { toggleFullscreen(); }
     };
     const onKeyUp = (e: KeyboardEvent) => {
       if (anyModalOpenRef.current) return;
@@ -1208,22 +1383,52 @@ export default function SoloView({ playersControl }: SoloViewProps) {
 
   // ── More menu items ─────────────────────────────────────────────
   const moreItems = useMemo<MoreMenuItem[]>(() => [
-    ...(isMobile ? [
-      {
-        icon: <Mic size={14} />,
-        label: stackmat.status.listening
-          ? tr({ zh: 'Stackmat 监听中（点击停止）', en: 'Stackmat listening (stop)'
-                    })
-          : tr({ zh: '启用 Stackmat（麦克风）', en: 'Enable Stackmat (mic)'
-                    }),
-        onClick: async () => {
-          if (stackmat.status.listening) stackmat.stop();
-          else {
-            try { await stackmat.start(); }
-            catch (err) { alert((isZh ? `麦克风启用失败：${(err as Error).message}` : `Mic error: ${(err as Error).message}`)); }
-          }
-        },
+    // External timing devices. These used to sit inside the mobile-only block,
+    // which made the Stackmat toggle unreachable on desktop — exactly where a
+    // Stackmat is most likely to be plugged in.
+    {
+      icon: <Mic size={14} />,
+      label: stackmat.status.listening
+        ? tr({ zh: 'Stackmat 监听中（点击停止）', en: 'Stackmat listening (stop)' })
+        : tr({ zh: '启用 Stackmat（麦克风）', en: 'Enable Stackmat (mic)' }),
+      onClick: async () => {
+        if (stackmat.status.listening) { stackmat.stop(); return; }
+        try { await stackmat.start(); }
+        catch (err) {
+          setInfoToast({
+            msg: tr({
+              zh: `麦克风启用失败：${(err as Error).message}`,
+              en: `Mic error: ${(err as Error).message}`,
+            }),
+          });
+        }
       },
+    },
+    {
+      icon: <Timer size={14} />,
+      label: bleTimer.status.connected
+        ? tr({
+            zh: `计时器：${bleTimer.status.deviceName}（点击断开）`,
+            en: `Timer: ${bleTimer.status.deviceName} (disconnect)`,
+          })
+        : tr({ zh: '连接蓝牙计时器', en: 'Connect Bluetooth timer' }),
+      onClick: async () => {
+        if (bleTimer.status.connected) { bleTimer.disconnect(); return; }
+        try { await bleTimer.connect(); }
+        catch (err) {
+          const kind = (err as Error & { kind?: string }).kind;
+          setInfoToast({
+            msg: kind === 'no-web-bluetooth'
+              ? tr({ zh: '当前浏览器不支持 Web Bluetooth', en: 'This browser has no Web Bluetooth' })
+              : tr({
+                  zh: `连接计时器失败：${(err as Error).message}`,
+                  en: `Timer connect failed: ${(err as Error).message}`,
+                }),
+          });
+        }
+      },
+    },
+    ...(isMobile ? [
       { icon: <BarChart3 size={14} />, label: tr({ zh: '统计', en: 'Stats'
     }), onClick: () => setStatsModalOpen(true) },
       {
@@ -1267,7 +1472,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     }), onClick: () => window.print() },
     { icon: <Trash2 size={14} />, label: tr({ zh: '清空当前项目', en: 'Clear current event'
     }), onClick: clearAll, danger: true, disabled: !solves.length },
-  ], [isZh, handleImport, handleExport, handleExportCsv, handleExportSs, clearAll, solves.length, drillAllowed, drillTarget, fullscreen, toggleFullscreen, handlePasteReplay, isMobile, stackmat, i18n, event]);
+  ], [isZh, handleImport, handleExport, handleExportCsv, handleExportSs, clearAll, solves.length, drillAllowed, drillTarget, fullscreen, toggleFullscreen, handlePasteReplay, isMobile, stackmat, bleTimer, i18n, event]);
 
   const allSolves = useMemo(() => {
     const out: Solve[] = [];
@@ -1276,7 +1481,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   }, [byEvent]);
 
   // ── Derived display (digits text + color class) ─────────────────
-  const stats = useMemo(() => summarize(solves), [solves]);
+  const stats = useMemo(() => summarize(solves, event), [solves, event]);
   const inspectionLimit = settings.inspection;
   const colorClass = useMemo(() => {
     if (timer.phase === 'holding') return 'holding';
@@ -1290,7 +1495,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       if (sec >= 8) return 'inspection-warn-8';
       return 'inspection';
     }
-    if (timer.phase === 'stopped' && lastPenalty === 'DNF') return 'dnf';
+    if (timer.phase === 'stopped' && (lastPenalty === 'DNF' || lastPenalty === 'DNS')) return 'dnf';
     return '';
   }, [timer.phase, timer.inspectionDisplayMs, inspectionLimit, lastPenalty]);
 
@@ -1306,6 +1511,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     if (timer.phase === 'running') {
       return settings.hideTime ? '…' : formatMs(timer.displayMs, settings.runningPrecision);
     }
+    if (timer.phase === 'stopped' && lastPenalty === 'DNS') return 'DNS';
     if (timer.phase === 'stopped' && lastPenalty === 'DNF') return 'DNF';
     if (timer.phase === 'stopped' && lastPenalty === '+2') return formatMs(timer.displayMs + 2000, settings.precision) + '+';
     return formatMs(timer.displayMs, settings.precision);
@@ -1318,7 +1524,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   const stoppedCentis = useMemo<number | null>(() => {
     if (!settings.timingEnabled) return null;
     if (timer.phase !== 'stopped') return null;
-    if (lastPenalty === 'DNF' || !Number.isFinite(timer.displayMs)) return null;
+    if (lastPenalty === 'DNF' || lastPenalty === 'DNS' || !Number.isFinite(timer.displayMs)) return null;
     const ms = lastPenalty === '+2' ? timer.displayMs + 2000 : timer.displayMs;
     return Math.round(ms / 10);
   }, [timer.phase, timer.displayMs, lastPenalty, settings.timingEnabled]);
@@ -1346,6 +1552,11 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   const [eventPickerOpen, setEventPickerOpen] = useState(false);
 
   const distractionFree = timer.phase === 'running' && !prefersReducedMotion;
+  // Opt-in, and stronger than `distractionFree`: that one only fades
+  // .surface-chrome, this also takes the side panel and the solver rail. It is
+  // NOT gated on prefers-reduced-motion — the user asked for things to be
+  // hidden, not animated; the reduced-motion block below drops the transition.
+  const hideAllUi = timer.phase === 'running' && settings.hideAllUiWhileRunning;
 
   const togglePanel = useCallback((tab: PanelTab) => {
     setPanelTab(prev => (prev === tab ? null : tab));
@@ -1452,7 +1663,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
 
   return (
     <div
-      className={`timer-shell${fullscreen ? ' fullscreen' : ''}${distractionFree ? ' is-solving' : ''}${isDesktop && panelTab ? ' panel-open' : ''}`}
+      className={`timer-shell${fullscreen ? ' fullscreen' : ''}${distractionFree ? ' is-solving' : ''}${hideAllUi ? ' hide-ui' : ''}${isDesktop && panelTab ? ' panel-open' : ''}`}
       data-solving={timer.phase === 'running' ? 'true' : undefined}
     >
       <div className="print-only-header">
@@ -1557,6 +1768,10 @@ export default function SoloView({ playersControl }: SoloViewProps) {
           scrambleSlot={
             <div
               className={`scramble-strip sf-${settings.scrambleFont}${settings.compactScramble ? ' compact' : ''}`}
+              // Smart-cube scramble check: 'ok' once the cube's tracked state
+              // equals this scramble applied to a solved cube. Absent when
+              // there's no cube, no comparable state, or nothing turned yet.
+              data-scramble-match={scrambleMatch === null ? undefined : scrambleMatch ? 'ok' : 'off'}
               style={{ '--scramble-scale': settings.scrambleFontScale } as React.CSSProperties}
               onClick={() => {
                 const action = settings.scrambleClickAction;
@@ -1620,6 +1835,13 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                     : settings.scrambleSource === 'manual' && manualQueue.length === 0
                       ? <span className="scramble-empty">{tr({ zh: '在上方「打乱来源」粘贴打乱,每行一条', en: 'Paste scrambles above — one per line' })}</span>
                       : <span className="scramble-empty">—</span>}</span>
+              {scrambleMatch !== null && (
+                <span className="scramble-verify" data-ok={scrambleMatch ? 'true' : 'false'}>
+                  {scrambleMatch
+                    ? tr({ zh: '打乱已就绪', en: 'Scrambled' })
+                    : tr({ zh: '与打乱不符', en: 'Doesn’t match' })}
+                </span>
+              )}
               {wcaSrcDisplay && (
                 <div className="scramble-src-row">
                 <a
@@ -1696,7 +1918,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
             <div className="shell-corner-net">
               <div className="shell-corner-net-imgbox">
                 <div className="shell-corner-net-img">
-                  <CubePreview event={event} scramble={previewScramble} height="var(--cube-h)" colors={settings.colors} visualization={settings.prefer3D ? '3D' : '2D'} />
+                  <CubePreview event={event} scramble={previewScramble} height="var(--cube-h)" visualization={settings.prefer3D ? '3D' : '2D'} />
                 </div>
               </div>
             </div>
@@ -1732,6 +1954,12 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                 </div>
               )}
             </>
+          )}
+          {timer.phase === 'running' && liveTps && (
+            <div className="timer-live-tps">
+              <span>{liveTps.count} {tr({ zh: '步', en: 'moves' })}</span>
+              <span>{liveTps.tps.toFixed(2)} TPS</span>
+            </div>
           )}
           {timer.phase === 'running' && multiStageActive && (
             <div className="timer-stage-splits">
@@ -1771,6 +1999,14 @@ export default function SoloView({ playersControl }: SoloViewProps) {
         {/* Goal pill + trainer subset + solver hints (chrome, fade while solving) */}
         <div className="shell-undersurface surface-chrome">
           <GoalProgress solves={allSolves} goal={settings.dailySolveGoal ?? null} isZh={isZh} />
+          <RoundPanel
+            solves={roundSolves}
+            config={settings.round}
+            targetMs={settings.targetMsByEvent[event] ?? null}
+            event={event}
+            precision={settings.precision}
+            onReset={startNewRound}
+          />
           {(event === 'oll' || event === 'pll') && (() => {
             const total = event === 'oll' ? OLL_CASES.length : PLL_CASES.length;
             const subset = event === 'oll' ? settings.ollSubset : settings.pllSubset;
@@ -1951,7 +2187,34 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       {bluetoothCube.status.connected && (
         <div className="timer-live-cube" title={tr({ zh: '智能魔方实时状态（每次拧动同步）', en: 'Live smart-cube state (updates per move)'
         })}>
-          <LiveCubeState event={event} scramble={scramble} moves={liveMoves} size={120} />
+          <LiveCubeState
+            event={event}
+            scramble={scramble}
+            moves={liveMoves}
+            mode={want3dLiveCube && bluetoothCube.status.hasGyro ? '3d' : '2d'}
+            quatRef={gyroQuatRef}
+            calibrateToken={calibrateNonce}
+            sensorBasis={sensorBasisForBrand(bluetoothCube.status.brand)}
+            mirror={mirrorForBrand(bluetoothCube.status.brand)}
+            size3d={140}
+          />
+          {/* Which way the sensor thinks is "up" is unverified for every brand
+              (we own no smart cube), so the fix is manual: hold the cube
+              upright, tap, and that pose becomes the reference. pointer-events
+              are off on the wrapper — re-enable them just for the button. */}
+          {want3dLiveCube && bluetoothCube.status.hasGyro && (
+            <button
+              type="button"
+              className="live-cube-calibrate"
+              onClick={() => setCalibrateNonce(n => n + 1)}
+              title={tr({
+                zh: '把魔方当前朝向设为正面朝上的基准',
+                en: 'Set the cube’s current orientation as the upright reference',
+              })}
+            >
+              {tr({ zh: '校准朝向', en: 'Calibrate' })}
+            </button>
+          )}
         </div>
       )}
     </div>
