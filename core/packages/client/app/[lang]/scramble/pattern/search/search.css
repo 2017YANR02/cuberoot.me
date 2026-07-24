@@ -1,0 +1,315 @@
+/* /scramble/pattern/search — Cube Explorer Pattern Editor 移植 */
+
+.psc-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+  /* 图案"灰"类的展示色(第 6 个色板) */
+  --psc-gray: color-mix(in srgb, var(--foreground) 22%, transparent);
+}
+
+.psc-header h1 {
+  font-size: 1.35rem;
+  margin: 0 0 6px;
+}
+
+.psc-sub {
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+  line-height: 1.55;
+  margin: 0 0 18px;
+  max-width: 720px;
+}
+
+/* ── 示例预设 ── */
+
+.psc-examples {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.psc-example {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 10px;
+  font-size: 0.8rem;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+.psc-example:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+}
+
+.psc-example:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.psc-example-mini {
+  display: grid;
+  grid-template-columns: repeat(3, 6px);
+  grid-auto-rows: 6px;
+  gap: 1px;
+}
+
+.psc-example-mini i {
+  border-radius: 1px;
+}
+
+/* ── 色板 ── */
+
+.psc-palette-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.psc-label {
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+  margin-right: 4px;
+}
+
+.psc-swatch {
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--border-default);
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.psc-swatch.is-active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+/* ── 5 个图案编辑器 ── */
+
+.psc-editors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px 24px;
+  margin-bottom: 18px;
+}
+
+.psc-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 30px);
+  grid-auto-rows: 30px;
+  gap: 3px;
+  width: max-content;
+}
+
+.psc-cell {
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.psc-cell:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.psc-faces {
+  display: flex;
+  gap: 3px;
+  margin-top: 6px;
+}
+
+.psc-face {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 4px;
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.psc-face.is-on {
+  background: var(--toggle-on);
+  border-color: var(--toggle-on);
+  color: #fff;
+}
+
+.psc-face.is-partial {
+  border-color: var(--toggle-on);
+  color: var(--toggle-on);
+}
+
+.psc-face:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+/* ── 选项与操作 ── */
+
+.psc-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 24px;
+  margin-bottom: 14px;
+}
+
+.psc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.psc-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  font-size: 0.85rem;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+.psc-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+}
+
+.psc-btn-primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.psc-btn-primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--primary) 88%, black);
+}
+
+.psc-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.psc-hint {
+  font-size: 0.8rem;
+  color: var(--signal-warning);
+}
+
+.psc-status {
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+  margin-bottom: 14px;
+}
+
+.psc-error {
+  color: var(--destructive);
+}
+
+/* ── 结果 ── */
+
+.psc-results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.psc-result {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.psc-result-svg {
+  flex: none;
+  width: 96px;
+  height: 96px;
+}
+
+.psc-result-svg svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.psc-result-body {
+  min-width: 0;
+}
+
+.psc-result-head {
+  font-size: 0.75rem;
+  color: var(--faint-foreground);
+  margin-bottom: 3px;
+}
+
+.psc-result-alg {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.psc-result-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.psc-result-count {
+  font-size: 0.72rem;
+  color: var(--muted-foreground);
+}
+
+.psc-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.psc-copy:hover {
+  color: var(--foreground);
+}
+
+/* ── 窄屏 ── */
+
+@media (max-width: 480px) {
+  .psc-editors {
+    gap: 14px 16px;
+  }
+
+  .psc-grid {
+    grid-template-columns: repeat(3, 34px);
+    grid-auto-rows: 34px;
+  }
+
+  .psc-results {
+    grid-template-columns: 1fr;
+  }
+}

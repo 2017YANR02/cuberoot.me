@@ -11,7 +11,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Sparkles, X, Copy, Check } from 'lucide-react';
+import { Sparkles, X, Copy, Check, Search } from 'lucide-react';
+import AppLink from '@/components/AppLink';
 import { Alg } from 'cubing/alg';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { VisualCube } from '@/components/VisualCube';
@@ -144,6 +145,10 @@ export default function PatternsPage() {
           <Sparkles size={20} className="pat-title-icon" />
           <h1>{t('图案集', 'Cube Patterns')}</h1>
         </div>
+        <AppLink href="/scramble/pattern/search" prefetch={false} className="pat-search-link">
+          <Search size={15} />
+          {t('图案搜索', 'Pattern Search')}
+        </AppLink>
       </header>
 
       <main className="pat-main">

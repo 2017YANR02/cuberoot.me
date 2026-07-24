@@ -11,7 +11,7 @@
 import type { CubieCube } from './_kociemba/cube';
 
 // 8 个角块,每个对应 [U/D 面 sticker idx, side1, side2] (cstimer 顺序)
-const CORNER_FACELET: ReadonlyArray<readonly [number, number, number]> = [
+export const CORNER_FACELET: ReadonlyArray<readonly [number, number, number]> = [
   [8, 9, 20],   // URF
   [6, 18, 38],  // UFL
   [0, 36, 47],  // ULB
@@ -23,7 +23,7 @@ const CORNER_FACELET: ReadonlyArray<readonly [number, number, number]> = [
 ];
 
 // 12 个棱块,每个对应 [primary, secondary] sticker idx
-const EDGE_FACELET: ReadonlyArray<readonly [number, number]> = [
+export const EDGE_FACELET: ReadonlyArray<readonly [number, number]> = [
   [5, 10],   // UR
   [7, 19],   // UF
   [3, 37],   // UL
