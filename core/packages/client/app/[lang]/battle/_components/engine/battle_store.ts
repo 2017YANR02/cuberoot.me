@@ -13,27 +13,24 @@ import { generateScramble, generateScrambleImageUrl } from './scramble_engine';
 import { getEffectiveTimeFromEntry, computeAo5, computeAverage } from '@/app/[lang]/timer/_shared/stats-core';
 import { getSettings } from '@/app/[lang]/timer/_lib/settings';
 import { peekWca, nextWca, prefetchWca, hasWcaSource, type WcaSourceSpec } from '@/app/[lang]/timer/_lib/scramble/wca_pool';
-import type { EventId } from '@/app/[lang]/timer/_lib/types';
+import { fromWcaSpelling, toWcaSpelling, type EventId } from '@/app/[lang]/timer/_lib/types';
 import { persistItem } from '@/lib/safe-storage';
 
-// Battle puzzle id → timer EventId (so the shared wca_pool, keyed by timer
-// EventId, accepts battle's WCA-native ids). Unmapped ids pass through; events
-// with no real comp scrambles (fto / kilominx) resolve to no source and fall
-// back to a generated scramble.
-const BATTLE_TO_TIMER_EVENT: Record<string, EventId> = {
-  minx: 'mega', pyram: 'pyra',
-  '333bf': '333bld', '444bf': '444bld', '555bf': '555bld', '333mbf': '333mbld',
-};
+// Battle puzzle id ⇄ timer EventId. Both directions come from the ONE mapping
+// table in timer/_lib/types.ts (`toWcaSpelling` / `fromWcaSpelling`) — battle
+// keeps its cubing.js spellings ('333bf', 'minx', …) because EVENT_TO_CSTIMER is
+// keyed on them, so the two vocabularies are reconciled by mapping, not renaming.
+//
+// battleToTimerEvent feeds the shared wca_pool (keyed by timer EventId); events
+// with no real comp scrambles (fto / kilominx) resolve to no source there and
+// fall back to a generated scramble.
 export function battleToTimerEvent(id: string): EventId {
-  return (BATTLE_TO_TIMER_EVENT[id] ?? id) as EventId;
+  return fromWcaSpelling(id);
 }
-// Inverse of the above — used to read a shared /timer?event= link (written in
-// timer EventId form, matching Solo) back into battle-native puzzle ids.
-const TIMER_TO_BATTLE_EVENT: Record<string, string> = Object.fromEntries(
-  Object.entries(BATTLE_TO_TIMER_EVENT).map(([battleId, timerId]) => [timerId, battleId]),
-);
+// Used to read a shared /timer?event= link (written in timer EventId form,
+// matching Solo) back into battle-native puzzle ids.
 export function timerToBattleEvent(id: string): string {
-  return TIMER_TO_BATTLE_EVENT[id] ?? id;
+  return toWcaSpelling(id as EventId);
 }
 
 // KeyboardEvent.key → player slot, given the store's (possibly user-customized)

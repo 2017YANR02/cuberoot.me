@@ -3,6 +3,8 @@
  * 1:1 翻译自 battle.js（行 13~90）
  */
 
+import { BATTLE_EVENT_IDS, eventInfo, toWcaSpelling } from '@/app/[lang]/timer/_lib/types';
+
 // NOTE: cubing.js event ID → [csTimer scrambler type, 默认步数] 映射
 // 步数来源：csTimer 的 scrdata 定义（WCA 标准值）
 export const EVENT_TO_CSTIMER: Record<string, [string, number]> = {
@@ -37,41 +39,38 @@ export interface PuzzleInfo {
   name: PuzzleName;
 }
 
-// NOTE: 所有 WCA 官方项目 + 显示名
-export const PUZZLES: PuzzleInfo[] = [
-  // WCA 速拧
-  { id: '222',    name: { en: '2×2',      zh: '二阶'
-} },
-  { id: '333',    name: { en: '3×3',      zh: '三阶'
-} },
-  { id: '444',    name: { en: '4×4',      zh: '四阶'
-} },
-  { id: '555',    name: { en: '5×5',      zh: '五阶'
-} },
-  { id: '666',    name: { en: '6×6',      zh: '六阶'
-} },
-  { id: '777',    name: { en: '7×7',      zh: '七阶'
-} },
-  { id: '333oh',  name: { en: 'OH',       zh: '单手'
-} },
-  // WCA 盲拧
-  { id: '333bf',  name: { en: '3BLD',     zh: '三盲' } },
-  { id: '444bf',  name: { en: '4BLD',     zh: '四盲' } },
-  { id: '555bf',  name: { en: '5BLD',     zh: '五盲' } },
-  { id: '333mbf', name: { en: 'MBLD',     zh: '多盲' } },
-  // WCA 异形
-  { id: 'clock',  name: { en: 'Clock',    zh: '魔表'
-} },
-  { id: 'minx',   name: { en: 'Megaminx', zh: '五魔方' } },
-  { id: 'pyram',  name: { en: 'Pyraminx', zh: '金字塔' } },
-  { id: 'skewb',  name: { en: 'Skewb',    zh: '斜转'
-} },
-  { id: 'sq1',    name: { en: 'SQ1',      zh: 'SQ1' } },
-  // 非 WCA（cubing.js 支持）
-  { id: 'fto',       name: { en: 'FTO',      zh: 'FTO' } },
-  { id: 'kilominx',  name: { en: 'Kilominx', zh: '二阶五魔'
-} },
-];
+// NOTE: 对战格子窄,显示名比 timer 的 EVENTS 更短(「单手」而非「三阶单手」)。这里只覆盖
+// 名字,项目**清单**不在这里定义 —— 见下方 PUZZLES。
+const BATTLE_NAMES: Record<string, PuzzleName> = {
+  '222':      { en: '2×2',      zh: '二阶' },
+  '333':      { en: '3×3',      zh: '三阶' },
+  '444':      { en: '4×4',      zh: '四阶' },
+  '555':      { en: '5×5',      zh: '五阶' },
+  '666':      { en: '6×6',      zh: '六阶' },
+  '777':      { en: '7×7',      zh: '七阶' },
+  '333oh':    { en: 'OH',       zh: '单手' },
+  '333bf':    { en: '3BLD',     zh: '三盲' },
+  '444bf':    { en: '4BLD',     zh: '四盲' },
+  '555bf':    { en: '5BLD',     zh: '五盲' },
+  '333mbf':   { en: 'MBLD',     zh: '多盲' },
+  'clock':    { en: 'Clock',    zh: '魔表' },
+  'minx':     { en: 'Megaminx', zh: '五魔方' },
+  'pyram':    { en: 'Pyraminx', zh: '金字塔' },
+  'skewb':    { en: 'Skewb',    zh: '斜转' },
+  'sq1':      { en: 'SQ1',      zh: 'SQ1' },
+  'fto':      { en: 'FTO',      zh: 'FTO' },
+  'kilominx': { en: 'Kilominx', zh: '二阶五魔' },
+};
+
+// NOTE: 对战的项目清单由 timer 的 BATTLE_EVENT_IDS(单一数据源)派生,不再手写第二份 —
+// 只加到一边(solo 有、对战没有,或反过来)在编译期/CI 就会暴露:
+// 缺名字 → BATTLE_NAMES 兜底成 timer 的英文名;缺打乱 → EVENT_TO_CSTIMER 少一条,
+// tests/timer_battle_event_sync.test.ts 直接红。
+export const PUZZLES: PuzzleInfo[] = BATTLE_EVENT_IDS.map((eventId) => {
+  const id = toWcaSpelling(eventId);
+  const info = eventInfo(eventId);
+  return { id, name: BATTLE_NAMES[id] ?? { en: info.nameEn, zh: info.nameZh } };
+});
 
 // NOTE: 罚时类型枚举
 export const PENALTY = {
