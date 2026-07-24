@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { X, GitCompare, ChevronDown, ChevronUp, CheckSquare, Trash2, MoreVertical, Check, Clipboard, MessageSquare } from 'lucide-react';
 import type { Solve, Penalty } from '../_lib/types';
 import { effectiveMs } from '../_lib/types';
-import { formatMs, averageOfN } from '../_lib/stats';
+import { formatMs, formatEventMs, formatSolveResult, averageOfN } from '../_lib/stats';
 import CompareSolvesModal from './CompareSolvesModal';
 import { computeAllTags, TAG_DEFS, ALL_TAG_IDS } from '../_lib/storage/auto_tag';
 import type { TagId } from '../_lib/storage/auto_tag';
@@ -71,7 +71,7 @@ function parseDateEnd(input: string): number | null {
   return dt.getTime();
 }
 
-const ALL_PENALTIES: Penalty[] = ['ok', '+2', 'DNF'];
+const ALL_PENALTIES: Penalty[] = ['ok', '+2', 'DNF', 'DNS'];
 
 const MOBILE_QUERY = '(max-width: 480px)';
 const MOBILE_TAG_CAP = 2;
@@ -254,7 +254,12 @@ export default function HistoryPanel({
   // trimmed aoN ending at the (original-order) solve index i. O(N·n) per window.
   // aoPb[n][i] flags the rows where that aoN set a new running best (PB) — used
   // to drop a "PB" badge straight into the matching ao column.
-  const visibleAoWindows = aoWindows.filter(n => n >= 2);
+  // The panel only ever shows one event's history, so per-event decisions can
+  // be made from the first solve.
+  const panelEvent = solves.length > 0 ? solves[0].event : null;
+  // MBLD ranks on points, not time — a rolling mean of its attempt durations is
+  // a garbage number, so the columns are dropped rather than filled with one.
+  const visibleAoWindows = (panelEvent === '333mbld' ? [] : aoWindows).filter(n => n >= 2);
   const aoColKey = visibleAoWindows.join(',');
   const { aoCols, aoPb } = useMemo(() => {
     const cols: Record<number, (number | null)[]> = {};
@@ -279,15 +284,21 @@ export default function HistoryPanel({
   // row's own content and never line up across rows. Pin a FIXED ao width =
   // widest rendered value/label + room for the PB badge, so every row's grid
   // resolves identically (and adapts per event: 3x3 is narrow, big cubes wider).
+  // The rolling-average columns are formatted per-event — FMC renders move
+  // counts, not times.
+  const fmtAo = useCallback(
+    (v: number | null) => (panelEvent === null ? formatMs(v) : formatEventMs(panelEvent, v)),
+    [panelEvent],
+  );
   const aoMaxLen = useMemo(() => {
     let max = 4; // "0.00"
     for (const n of visibleAoWindows) {
       max = Math.max(max, `ao${n}`.length);
-      for (const v of (aoCols[n] ?? [])) max = Math.max(max, (v == null ? '-' : formatMs(v)).length);
+      for (const v of (aoCols[n] ?? [])) max = Math.max(max, (v == null ? '-' : fmtAo(v)).length);
     }
     return max;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aoCols, aoColKey]);
+  }, [aoCols, aoColKey, fmtAo]);
   const aoColW = `calc(${aoMaxLen}ch + 28px)`;
   const aoTmpl = visibleAoWindows.length ? ' ' + visibleAoWindows.map(() => aoColW).join(' ') : '';
   const headTmpl = `32px minmax(0,1fr)${aoTmpl}`;
@@ -1014,14 +1025,15 @@ export default function HistoryPanel({
         {filteredReversed.length > 0 && !compareMode && !selectMode && (
           <div className="history-cols-head" style={{ gridTemplateColumns: headTmpl }}>
             <span className="idx">#</span>
-            <span>{tr({ zh: '时间', en: 'Time'
-            })}</span>
+            {/* MBLD's column holds "11/13 58:02", not a time. */}
+            <span>{panelEvent === '333mbld'
+              ? tr({ zh: '成绩', en: 'Result' })
+              : tr({ zh: '时间', en: 'Time' })}</span>
             {visibleAoWindows.map(n => <span key={n} className="hao-head">ao{n}</span>)}
           </div>
         )}
         {filteredReversed.map((s) => {
           const realIdx = idToRealIdx.get(s.id) ?? -1;
-          const time = effectiveMs(s);
           const isSelected = compareMode && selectedIds.includes(s.id);
           const isBulkSelected = selectMode && bulkSelected.has(s.id);
 
@@ -1094,17 +1106,21 @@ export default function HistoryPanel({
               )}
               <div className="idx">{realIdx + 1}</div>
               <div className="time">
-                {formatMs(time)}
+                {/* formatSolveResult, not formatMs: it renders DNS as "DNS"
+                    (formatMs only sees Infinity, same as a DNF), FMC as a
+                    move count rather than "27.330", and an MBLD attempt as its
+                    WCA result string ("11/13 58:02") rather than a bare time. */}
+                {formatSolveResult(s)}
                 {s.penalty === '+2' && <span className="penalty-flag">(+2)</span>}
-                {/* DNF already shown by the time column (formatMs → "DNF") — no
-                    extra flag/tag (penalty also drops the 'dnf'/'plus2' chips below). */}
+                {/* DNF / DNS already shown by the time column — no extra
+                    flag/tag (penalty also drops the 'dnf'/'dns'/'plus2' chips below). */}
                 {s.comment && <span className="comment-flag" title={s.comment}>·</span>}
                 {(() => {
                   // pb-ao5 / pb-ao12 render as "PB" badges inside the ao5 / ao12
                   // columns instead — keep only single-PB + the descriptive tags here.
-                  // 'dnf'/'plus2' are conveyed by the time column + (+2) flag — drop
-                  // the redundant chips. pb-ao5/pb-ao12 render in their ao columns.
-                  const ts = (tagsByid.get(s.id) ?? []).filter(t => t !== 'pb-ao5' && t !== 'pb-ao12' && t !== 'dnf' && t !== 'plus2');
+                  // 'dnf'/'dns'/'plus2' are conveyed by the time column + (+2) flag —
+                  // drop the redundant chips. pb-ao5/pb-ao12 render in their ao columns.
+                  const ts = (tagsByid.get(s.id) ?? []).filter(t => t !== 'pb-ao5' && t !== 'pb-ao12' && t !== 'dnf' && t !== 'dns' && t !== 'plus2');
                   if (ts.length === 0) return null;
                   const cap = isMobile ? MOBILE_TAG_CAP : ts.length;
                   const shown = ts.slice(0, cap);
@@ -1142,7 +1158,7 @@ export default function HistoryPanel({
               {visibleAoWindows.map(n => (
                 <div className="hao" key={n}>
                   <span className="record-num-cell">
-                    {formatMs(aoCols[n]?.[realIdx] ?? null)}
+                    {fmtAo(aoCols[n]?.[realIdx] ?? null)}
                     {aoPb[n]?.[realIdx] && <RecordBadge record="PB" variant="inline" />}
                   </span>
                 </div>
@@ -1290,6 +1306,16 @@ export default function HistoryPanel({
               <span className="row-quick-glyph">DNF</span>
               <span>DNF</span>
             </button>
+            <button
+              type="button"
+              role="menuitem"
+              className={`row-quick-item${s.penalty === 'DNS' ? ' active' : ''}`}
+              onClick={() => setQuickPenalty(s, 'DNS')}
+              title={tr({ zh: '未开始（DNS）', en: 'Did Not Start' })}
+            >
+              <span className="row-quick-glyph">DNS</span>
+              <span>DNS</span>
+            </button>
             <div className="row-quick-sep" role="separator" />
             <button type="button" role="menuitem" className="row-quick-item" onClick={() => doQuickComment(s, quickMenu.index)}>
               <MessageSquare size={14} />
@@ -1314,7 +1340,7 @@ export default function HistoryPanel({
             <div className="row-quick-sheet-backdrop" data-no-timer onClick={closeQuickMenu}>
               <div className="row-quick-sheet" ref={quickMenuRef} role="menu" onClick={(e) => e.stopPropagation()}>
                 <div className="row-quick-sheet-head">
-                  #{quickMenu.index + 1} · {formatMs(effectiveMs(s))}
+                  #{quickMenu.index + 1} · {formatSolveResult(s)}
                 </div>
                 {items}
               </div>
@@ -1322,7 +1348,9 @@ export default function HistoryPanel({
           );
         }
         // Desktop: anchored popup. Clamp to viewport.
-        const MENU_W = 184, MENU_H = 300;
+        // Height must cover every item (OK / +2 / DNF / DNS / comment / copy /
+        // delete + 2 separators) or the viewport clamp lets the menu overflow.
+        const MENU_W = 184, MENU_H = 336;
         const left = Math.min(quickMenu.x, (typeof window !== 'undefined' ? window.innerWidth : 1280) - MENU_W - 8);
         const top = Math.min(quickMenu.y, (typeof window !== 'undefined' ? window.innerHeight : 800) - MENU_H - 8);
         return (

@@ -9,6 +9,7 @@
 import type { EventId, Solve } from '../types';
 import { EVENTS, eventInfo } from '../types';
 import { loadAll } from './db';
+import { encodeDnsComment } from './import_cstimer';
 
 /**
  * Inverse of `CSTIMER_EVENT_MAP` in import_cstimer.ts. We pick a single
@@ -71,14 +72,19 @@ const EVENT_TO_CSTIMER_SCRTYPE: Record<EventId, string> = {
  *   - DNF → penalty -1, time_ms = the recorded time (csTimer keeps it)
  *   - +2  → penalty 2000, time_ms = recorded time BEFORE the penalty
  *   - ok  → penalty 0
+ *   - DNS → csTimer has no DNS code, so we emit DNF (-1) and prefix the
+ *     comment with "DNS ". `parseCstimerExport` / `importCstimerJson` sniff
+ *     that prefix back off. Real csTimer just shows it as a DNF with a note,
+ *     which is the correct degradation (DNS scores as DNF everywhere).
  */
 function solveToTuple(s: Solve): [[number, number], string, string, number] {
   const ms = Math.max(0, Math.round(s.timeMs));
   let pen: number;
-  if (s.penalty === 'DNF') pen = -1;
+  if (s.penalty === 'DNF' || s.penalty === 'DNS') pen = -1;
   else if (s.penalty === '+2') pen = 2000;
   else pen = 0;
-  return [[pen, ms], s.scramble ?? '', s.comment ?? '', Math.floor(s.ts / 1000)];
+  const comment = s.penalty === 'DNS' ? encodeDnsComment(s.comment) : (s.comment ?? '');
+  return [[pen, ms], s.scramble ?? '', comment, Math.floor(s.ts / 1000)];
 }
 
 interface ExportResult {

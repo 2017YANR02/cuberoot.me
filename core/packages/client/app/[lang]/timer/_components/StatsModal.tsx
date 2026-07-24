@@ -16,7 +16,8 @@ import {
   eventDefaultFormat,
   sdOfLastN,
   sdOfBestAoN,
-  formatMs,
+  formatEventMs,
+  formatSolveResult,
 } from '../_lib/stats';
 import { bucketStats, bucketBoundaries, type BucketStats } from '../_lib/stats_buckets';
 import ScatterChart from './charts/ScatterChart';
@@ -87,29 +88,32 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
   const evName = evInfo ? ((isZh ? evInfo.nameZh : evInfo.nameEn)) : event;
   const fmt = eventDefaultFormat(event);
 
-  const summary = useMemo(() => summarize(solves), [solves]);
-  const pbIdx = useMemo(() => pbSingleIndex(solves), [solves]);
+  const summary = useMemo(() => summarize(solves, event), [solves, event]);
+  /** Event-aware value formatter — FMC values are move counts, not times. */
+  const f = (ms: number | null) => formatEventMs(event, ms);
+  const pbIdx = useMemo(() => pbSingleIndex(solves, event), [solves, event]);
   const pbDate = pbIdx >= 0 ? new Date(solves[pbIdx].ts) : null;
-  const pbStr = pbIdx >= 0 ? formatMs(effectiveMs(solves[pbIdx])) : '—';
+  // Whole-solve render so a DNS-flavoured row can't come out as a time.
+  const pbStr = pbIdx >= 0 ? formatSolveResult(solves[pbIdx]) : '—';
   const subX = useMemo(() => subXBreakdown(solves), [solves]);
   const streak = useMemo(() => longestStreak(solves), [solves]);
-  const best = bestSingle(solves);
+  const best = bestSingle(solves, event);
 
   // Numeric ms values for the WCA records overlay. We can't reuse the
   // formatted strings on `summary` because the overlay needs to compute
   // a numeric gap against the WR.
   const userPbSingleMs = useMemo<number | null>(() => {
-    const v = bestSingle(solves);
+    const v = bestSingle(solves, event);
     return v !== null && Number.isFinite(v) ? v : null;
-  }, [solves]);
+  }, [solves, event]);
   const userPbAvgMs = useMemo<number | null>(() => {
     let v: number | null;
     if (fmt.kind === 'ao5')      v = bestAverageOfN(solves, fmt.n);
     else if (fmt.kind === 'mo3') v = bestMeanOfN(solves, fmt.n);
     else if (fmt.kind === 'bo3') v = bestBestOfN(solves, fmt.n);
-    else                          v = bestSingle(solves);
+    else                          v = bestSingle(solves, event);
     return v !== null && Number.isFinite(v) ? v : null;
-  }, [solves, fmt.kind, fmt.n]);
+  }, [solves, fmt.kind, fmt.n, event]);
 
   // Time-period buckets — current and previous period, computed once per render.
   const periods = useMemo(() => {
@@ -133,14 +137,14 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
   lines.push([tr({ zh: '次数', en: 'Count'
 }), String(summary.count)]);
   if (best !== null) lines.push([tr({ zh: '最佳单次', en: 'Best single'
-}), formatMs(best)]);
+}), f(best)]);
   if (pbDate) lines.push([tr({ zh: 'PB 日期', en: 'PB date' }), pbDate.toLocaleDateString()]);
   lines.push([tr({ zh: '平均', en: 'Mean' }), summary.mean]);
   lines.push(['σ', summary.sd]);
   lines.push(['CV', summary.cv]);
   // σ suffix (cstimer-style): the std-dev of the times composing an average.
   const sdSuffix = (ms: number | null): string =>
-    (ms === null || !Number.isFinite(ms)) ? '' : ` (σ ${formatMs(Math.round(ms))})`;
+    (ms === null || !Number.isFinite(ms)) ? '' : ` (σ ${f(Math.round(ms))})`;
   const curSd = (n: number) => sdSuffix(sdOfLastN(solves, n));
   const bestSd = (n: number) => sdSuffix(sdOfBestAoN(solves, n));
   if (fmt.kind === 'mo3' || event === '333fm') {
@@ -166,7 +170,7 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
 
   // Format helper for a single row of period stats (used by JSX + copy text).
   const fmtBucketRow = (b: BucketStats): string =>
-    `n=${b.count}  best=${formatMs(b.best)}  ao5=${formatMs(b.ao5)}  ao12=${formatMs(b.ao12)}  mean=${formatMs(b.mean)}`;
+    `n=${b.count}  best=${f(b.best)}  ao5=${f(b.ao5)}  ao12=${f(b.ao12)}  mean=${f(b.mean)}`;
 
   // Period rows in the order shown in the UI.
   const periodRows: Array<{ key: 'today' | 'week' | 'month' | 'year'; label: string; vsLabel: string; cur: BucketStats; prev: BucketStats }> = [
@@ -224,7 +228,7 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
     const diff = Math.abs(cur - prev);
     return (
       <span style={{ color: better ? '#3aa757' : '#d04848', marginLeft: 4 }}>
-        {better ? '▲' : '▼'} {formatMs(diff)}
+        {better ? '▲' : '▼'} {f(diff)}
       </span>
     );
   };
@@ -339,10 +343,10 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
                 <tr key={r.key}>
                   <td style={cellStyle}>{r.label}</td>
                   <td style={numCellStyle}>{r.cur.count}</td>
-                  <td style={numCellStyle}>{formatMs(r.cur.best)}</td>
-                  <td style={numCellStyle}>{formatMs(r.cur.ao5)}</td>
-                  <td style={numCellStyle}>{formatMs(r.cur.ao12)}</td>
-                  <td style={numCellStyle}>{formatMs(r.cur.mean)}</td>
+                  <td style={numCellStyle}>{f(r.cur.best)}</td>
+                  <td style={numCellStyle}>{f(r.cur.ao5)}</td>
+                  <td style={numCellStyle}>{f(r.cur.ao12)}</td>
+                  <td style={numCellStyle}>{f(r.cur.mean)}</td>
                   <td style={{ ...cellStyle, fontSize: '0.85em' }}>
                     <span style={{ opacity: 0.6, marginRight: 4 }}>vs {r.vsLabel}:</span>
                     <span style={{ marginRight: 8 }}>

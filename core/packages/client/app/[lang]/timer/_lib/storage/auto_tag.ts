@@ -15,6 +15,7 @@
 
 import type { Solve } from '../types';
 import { effectiveMs } from '../types';
+import { compareMbld } from '../stats';
 
 export type TagId =
   | 'fast-cross'
@@ -25,6 +26,7 @@ export type TagId =
   | 'pb-ao5'
   | 'pb-ao12'
   | 'dnf'
+  | 'dns'
   | 'plus2';
 
 export interface TagDef {
@@ -44,6 +46,7 @@ export const TAG_DEFS: Record<TagId, TagDef> = {
   'fast-cross':{ id: 'fast-cross',tone: 'green', labelEn: 'fast cross',  labelZh: '十字快' },
   'slow-cross':{ id: 'slow-cross',tone: 'red',   labelEn: 'slow cross',  labelZh: '十字慢' },
   'dnf':       { id: 'dnf',       tone: 'muted', labelEn: 'DNF',         labelZh: 'DNF' },
+  'dns':       { id: 'dns',       tone: 'muted', labelEn: 'DNS',         labelZh: 'DNS' },
   'plus2':     { id: 'plus2',     tone: 'muted', labelEn: '+2',          labelZh: '+2' },
 };
 
@@ -51,7 +54,7 @@ export const ALL_TAG_IDS: TagId[] = [
   'pb-single', 'pb-ao5', 'pb-ao12',
   'oll-skip', 'pll-skip',
   'fast-cross', 'slow-cross',
-  'dnf', 'plus2',
+  'dnf', 'dns', 'plus2',
 ];
 
 const FAST_CROSS_MS = 1500;
@@ -85,6 +88,10 @@ export function computeAllTags(history: Solve[]): Map<string, TagId[]> {
 
   // Track running best non-DNF single, best ao5, best ao12 seen so far.
   let bestSingle = Infinity;
+  // MBLD ranks by points before time (WCA 9f12c), so "smallest effectiveMs" is
+  // the wrong test for it — a slower 11/13 is a PB over a faster 5/6. Tracked
+  // as the best solve rather than a number because the comparison needs both.
+  let bestMbld: Solve | null = null;
   let bestAo5 = Infinity;
   let bestAo12 = Infinity;
 
@@ -94,6 +101,7 @@ export function computeAllTags(history: Solve[]): Map<string, TagId[]> {
 
     // Penalty-based.
     if (s.penalty === 'DNF') tags.push('dnf');
+    else if (s.penalty === 'DNS') tags.push('dns');
     else if (s.penalty === '+2') tags.push('plus2');
 
     // Cross / skip from stage segments.
@@ -108,10 +116,17 @@ export function computeAllTags(history: Solve[]): Map<string, TagId[]> {
     }
 
     // PB single — best non-DNF up to and including this solve.
-    const eff = effectiveMs(s);
-    if (Number.isFinite(eff) && eff < bestSingle) {
-      bestSingle = eff;
-      tags.push('pb-single');
+    if (s.mbld) {
+      if (Number.isFinite(effectiveMs(s)) && (bestMbld === null || compareMbld(s, bestMbld) < 0)) {
+        bestMbld = s;
+        tags.push('pb-single');
+      }
+    } else {
+      const eff = effectiveMs(s);
+      if (Number.isFinite(eff) && eff < bestSingle) {
+        bestSingle = eff;
+        tags.push('pb-single');
+      }
     }
 
     // PB ao5 / ao12 — beats every prior window of the same length.

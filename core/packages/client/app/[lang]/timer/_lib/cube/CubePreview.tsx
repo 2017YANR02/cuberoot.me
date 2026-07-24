@@ -28,9 +28,6 @@ interface CubePreviewProps {
    *  string for fluid sizing) — see CubingPreview. */
   height?: number | string;
   className?: string;
-  /** Reserved for future palette overrides; scramble-display uses its own
-   * (WCA-correct) palette and ignores this. */
-  colors?: Partial<Record<'U'|'D'|'F'|'B'|'L'|'R', string>>;
   /** Forwarded to CubingPreview. Default 2D. */
   visualization?: '2D' | '3D';
 }

@@ -37,6 +37,11 @@ function realCstimerExport(): string {
     // multi-phase (csTimer's default 4-phase 3x3): the total first, then the
     // cumulative splits back-to-front → [pen, total, +oll, +f2l, cross]
     [[0, 20000, 15000, 9000, 2000], 'U2 R2 F2', '', 1_700_000_300],
+    // DNS — csTimer has no DNS code, so we write it as a DNF (-1) whose
+    // comment carries a "DNS " marker; a genuine csTimer file never has this
+    // and just reads as a plain DNF.
+    [[-1, 0], "B2 D' L2", 'DNS arrived late', 1_700_000_400],
+    [[-1, 0], "F2 U' R2", 'DNS', 1_700_000_500],
   ];
 
   return JSON.stringify({
@@ -55,7 +60,7 @@ describe('csTimer import — upstream tuple order', () => {
     expect(sessions).toHaveLength(1);
     const s = sessions[0];
     expect(s.event).toBe('333');
-    expect(s.solves).toHaveLength(4);
+    expect(s.solves).toHaveLength(6);
 
     expect(s.solves[0].timeMs).toBe(12340);
     expect(s.solves[0].penalty).toBe('ok');
@@ -81,8 +86,30 @@ describe('csTimer import — upstream tuple order', () => {
     const byEvent = importCstimerJson(realCstimerExport());
     expect(byEvent).not.toBeNull();
     const solves = byEvent!['333'];
-    expect(solves.map(s => s.timeMs)).toEqual([12340, 9870, 15020, 20000]);
-    expect(solves.map(s => s.penalty)).toEqual(['ok', '+2', 'DNF', 'ok']);
+    expect(solves.map(s => s.timeMs)).toEqual([12340, 9870, 15020, 20000, 0, 0]);
+    expect(solves.map(s => s.penalty)).toEqual(['ok', '+2', 'DNF', 'ok', 'DNS', 'DNS']);
+  });
+});
+
+describe('csTimer DNS marker', () => {
+  it('promotes a "DNS"-marked DNF back to DNS and strips the marker', () => {
+    const solves = parseCstimerExport(realCstimerExport())[0].solves;
+    expect(solves[4].penalty).toBe('DNS');
+    expect(solves[4].comment).toBe('arrived late');
+    // Marker with no trailing note → no comment at all.
+    expect(solves[5].penalty).toBe('DNS');
+    expect(solves[5].comment).toBeUndefined();
+  });
+
+  it('leaves an ordinary DNF alone', () => {
+    const solves = parseCstimerExport(realCstimerExport())[0].solves;
+    expect(solves[2].penalty).toBe('DNF');
+    expect(solves[2].comment).toBeUndefined();
+  });
+
+  it('both importers agree on the DNS rows', () => {
+    const byEvent = importCstimerJson(realCstimerExport())!;
+    expect(byEvent['333'].slice(4).map(s => s.comment)).toEqual(['arrived late', undefined]);
   });
 });
 

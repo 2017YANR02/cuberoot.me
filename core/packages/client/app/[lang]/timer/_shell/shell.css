@@ -313,6 +313,28 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 /* "non-optimal" hint — shown to the right of the scramble when 最优打乱 is on but
    this difficulty bin had no optimal-equivalent, so the original WCA scramble is
    served instead. Small, muted, non-interactive tag. */
+/* Smart-cube scramble check. Same pill as .scramble-nonopt, recoloured by
+   verdict: green = the cube's own state matches this scramble, warning = it
+   doesn't. Only rendered when a cube is connected and has been turned, so its
+   absence is "unknown", never "wrong". */
+.scramble-verify {
+  flex: none;
+  font-size: 11px;
+  line-height: 1;
+  padding: 3px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+  cursor: default;
+}
+.scramble-verify[data-ok='true'] {
+  background: color-mix(in srgb, var(--signal-success) 16%, transparent);
+  color: var(--signal-success);
+}
+.scramble-verify[data-ok='false'] {
+  background: color-mix(in srgb, var(--signal-warning) 16%, transparent);
+  color: var(--signal-warning);
+}
+
 .scramble-nonopt {
   flex: none;
   font-family: var(--font-mono);
@@ -384,6 +406,20 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   background: color-mix(in srgb, var(--destructive) 14%, transparent);
   color: var(--destructive);
   font-size: 12px;
+}
+
+/* Live move count + rolling TPS, running phase only. Deliberately quiet
+   (muted, monospace) — it sits under a huge readout and must not compete with
+   it. Monospace also stops the digits jittering as the numbers change. */
+.timing-surface .timer-live-tps {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 12px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--muted-foreground);
+  white-space: nowrap;
 }
 
 /* Stage splits + bld chips */
@@ -902,9 +938,23 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 /* Scramble + cube fade (opacity:0) but KEEP their box while running, so the
    centered column's height is constant and the readout never jumps on start. */
 
+/* "Hide all UI while running" (opt-in setting). Goes further than .is-solving:
+   that only touches .surface-chrome, which leaves the side panel and the solver
+   rail on screen. Targets the rail's CHILDREN because .shell-rail is
+   `display: contents` on mobile, where opacity would do nothing. Everything
+   fades rather than unmounting, so the layout can't reflow mid-solve. */
+.timer-shell.hide-ui .shell-panel,
+.timer-shell.hide-ui .shell-rail > * {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .surface-chrome,
   .timer-shell.is-solving .surface-chrome { transition: none; }
+  .timer-shell.hide-ui .shell-panel,
+  .timer-shell.hide-ui .shell-rail > * { transition: none; }
   .timer-display { transition: none; }
 }
 

@@ -3,12 +3,13 @@
 import { useMemo, useState } from 'react';
 import { X, Plus } from 'lucide-react';
 import type { Solve, EventId } from '../_lib/types';
-import { effectiveMs } from '../_lib/types';
 import {
   subXBreakdown,
   averageOfN,
   bestAverageOfN,
   bestSingle,
+  bestMbldSolve,
+  formatMbldResult,
   worstSingle,
   meanOfAll,
   meanOfN,
@@ -21,6 +22,8 @@ import {
   bpa,
   wpa,
   formatMs,
+  formatEventMs,
+  formatSolveResult,
 } from '../_lib/stats';
 import { useSettings, updateSettings, MAX_AO_WINDOWS } from '../_lib/settings';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
@@ -29,7 +32,8 @@ import { tr } from '@/i18n/tr';
 interface Props {
   solves: Solve[];
   isZh: boolean;
-  /** Kept for call-site compatibility; the cstimer table is event-agnostic. */
+  /** Optional — the table layout is event-agnostic, but the *values* are not:
+   *  pass it and FMC renders move counts instead of times. */
   event?: EventId;
 }
 
@@ -52,7 +56,9 @@ function isEmptyVal(v: string): boolean {
   return v === '-' || v === '—';
 }
 
-export default function StatsPanel({ solves, isZh }: Props) {
+export default function StatsPanel({ solves, isZh, event }: Props) {
+  /** Event-aware value formatter — FMC values are move counts, not times. */
+  const f = (ms: number | null) => (event ? formatEventMs(event, ms) : formatMs(ms));
   const settings = useSettings();
   const [expanded, setExpanded] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
@@ -87,21 +93,26 @@ export default function StatsPanel({ solves, isZh }: Props) {
         key: 'time',
         label: tr({ zh: '单次', en: 'time'
         }),
-        cur: last ? formatMs(effectiveMs(last)) : '-',
-        best: formatMs(bestSingle(solves)),
+        // Whole-solve render so a DNS row reads "DNS", not "DNF"/a number.
+        cur: last ? formatSolveResult(last) : '-',
+        // MBLD ranks by points before time (WCA 9f12c), so the "best" cell
+        // has to pick the highest-scoring attempt, not the fastest one.
+        best: event === '333mbld'
+          ? (() => { const b = bestMbldSolve(solves); return b ? formatMbldResult(b) : '—'; })()
+          : f(bestSingle(solves, event)),
       },
     ];
     for (const n of windows) {
       rows.push({
         key: `ao${n}`,
         label: `ao${n}`,
-        cur: formatMs(averageOfN(solves, n)),
-        best: formatMs(bestAverageOfN(solves, n)),
+        cur: f(averageOfN(solves, n)),
+        best: f(bestAverageOfN(solves, n)),
         n,
       });
     }
     return rows;
-  }, [solves, windows, isZh]);
+  }, [solves, windows, isZh, event]);
 
   // ── footer + extras ──
   const count = solves.length;
@@ -111,21 +122,21 @@ export default function StatsPanel({ solves, isZh }: Props) {
 
   const extras = useMemo(() => {
     const rows: { lbl: string; val: string }[] = [
-      { lbl: tr({ zh: '平均', en: 'mean' }),  val: formatMs(meanOfAll(solves)) },
-      { lbl: tr({ zh: '最差', en: 'worst' }), val: formatMs(worstSingle(solves)) },
-      { lbl: 'mo3',  val: formatMs(meanOfN(solves, 3)) },
-      { lbl: tr({ zh: 'mo3 最佳', en: 'best mo3' }), val: formatMs(bestMeanOfN(solves, 3)) },
-      { lbl: 'bo3',  val: formatMs(bestOfN(solves, 3)) },
-      { lbl: tr({ zh: 'bo3 最佳', en: 'best bo3' }), val: formatMs(bestBestOfN(solves, 3)) },
+      { lbl: tr({ zh: '平均', en: 'mean' }),  val: f(meanOfAll(solves)) },
+      { lbl: tr({ zh: '最差', en: 'worst' }), val: f(worstSingle(solves)) },
+      { lbl: 'mo3',  val: f(meanOfN(solves, 3)) },
+      { lbl: tr({ zh: 'mo3 最佳', en: 'best mo3' }), val: f(bestMeanOfN(solves, 3)) },
+      { lbl: 'bo3',  val: f(bestOfN(solves, 3)) },
+      { lbl: tr({ zh: 'bo3 最佳', en: 'best bo3' }), val: f(bestBestOfN(solves, 3)) },
     ];
     // Live BPA/WPA for any window that is one solve away from completing.
     for (const n of windows) {
       if (solves.length === n - 1) {
-        rows.push({ lbl: `BPA/WPA(${n})`, val: `${formatMs(bpa(solves, n))} / ${formatMs(wpa(solves, n))}` });
+        rows.push({ lbl: `BPA/WPA(${n})`, val: `${f(bpa(solves, n))} / ${f(wpa(solves, n))}` });
       }
     }
     return rows;
-  }, [solves, windows, isZh]);
+  }, [solves, windows, isZh, event]);
 
   const presetActive = (n: number) => windows.includes(n);
 
@@ -220,7 +231,7 @@ export default function StatsPanel({ solves, isZh }: Props) {
 
       {/* Footer: σ / CV / count */}
       <div className="stats-foot">
-        <span>σ {sd === null ? '—' : formatMs(Math.round(sd))}</span>
+        <span>σ {sd === null ? '—' : f(Math.round(sd))}</span>
         <span>CV {formatPct(cv)}</span>
         <span>{tr({ zh: '总数', en: 'count'
         })} {count}</span>
