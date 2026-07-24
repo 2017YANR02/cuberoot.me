@@ -35,6 +35,16 @@
 .pat-title-icon { color: var(--pat-accent); }
 .pat-title h1 { font-size: 1.15rem; margin: 0; font-weight: 600; }
 
+.pat-search-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--pat-accent);
+    text-decoration: none;
+}
+.pat-search-link:hover { text-decoration: underline; }
+
 .pat-main {
     max-width: 1200px;
     margin: 0 auto;
