@@ -25,7 +25,9 @@ const TREE_URL = 'https://api.github.com/repos/cubing/icons/git/trees/main?recur
 const UPSTREAM_BLOB = 'https://github.com/cubing/icons/blob/main/src/svg';
 
 // Site-own icons that intentionally have no upstream counterpart — never drift.
-const LOCAL_ONLY = new Set(['unofficial/rex.svg']);
+// (222_mirror_blocks: upstream only ships the 3x3 mirror-blocks glyph; the 2x2 variant
+//  was drawn here in the same style for the /sim puzzle picker.)
+const LOCAL_ONLY = new Set(['unofficial/rex.svg', 'unofficial/222_mirror_blocks.svg']);
 
 const args = process.argv.slice(2);
 const reportIdx = args.indexOf('--report');

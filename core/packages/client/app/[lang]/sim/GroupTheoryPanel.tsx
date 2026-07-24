@@ -48,7 +48,7 @@ export interface SimWorldView {
 
 /** Fixed engine puzzle kinds wired to a PG kernel (kept in sync with pgBindings). NxN
  *  cubes (numeric puzzle string) are detected via nxnHasPgKernel. */
-const PG_BOUND: Record<string, true> = { pyraminx: true, dino: true, skewb: true, heli: true, megaminx: true, fto: true, redi: true, ivy: true, rex: true, mirror: true };
+const PG_BOUND: Record<string, true> = { pyraminx: true, dino: true, skewb: true, heli: true, megaminx: true, fto: true, redi: true, ivy: true, rex: true, mirror: true, mirror2: true };
 const isBound = (puzzle: string): boolean =>
   !!PG_BOUND[puzzle] || EXPLORE_BOUND.has(puzzle) || nxnHasPgKernel(parseInt(puzzle, 10));
 

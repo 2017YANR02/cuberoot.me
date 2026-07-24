@@ -49,11 +49,14 @@ const PERM_BRIDGES: Record<string, PermBridge<any>> = {
 /** Fixed (non-NxN) engine puzzle kinds that have a group-theory binding (PG or perm) plus
  *  the cubing.js "explore" ids bound to a facts-only kernel. */
 export const PG_BOUND_PUZZLES = [
-  ...Object.keys(BRIDGES), ...Object.keys(PERM_BRIDGES), 'mirror', ...EXPLORE_BOUND_IDS,
+  ...Object.keys(BRIDGES), ...Object.keys(PERM_BRIDGES), 'mirror', 'mirror2', ...EXPLORE_BOUND_IDS,
 ];
 
+/** Mirror-cube engine kinds → the NxN order they are mechanically identical to. */
+const MIRROR_ORDER: Record<string, number> = { mirror: 3, mirror2: 2 };
+
 /** All PG (cubing.js) bridges as a flat list (fixed + NxN 2..N), for the offline facts
- *  generator. Mirror reuses nxnPgBridge(3)'s '3x3x3' facts, so it is not listed separately. */
+ *  generator. Mirror reuses nxnPgBridge(3 / 2)'s facts, so it is not listed separately. */
 export function allBridges(): MoveBridge<any>[] {
   const list: MoveBridge<any>[] = Object.values(BRIDGES);
   for (let n = NXN_PG_MIN; n <= NXN_PG_MAX; n++) list.push(nxnPgBridge(n));
@@ -79,15 +82,18 @@ function nxnOrder(puzzle: string | number): number | null {
 
 export function hasPgBinding(puzzle: string | number): boolean {
   if (typeof puzzle === 'string'
-    && (puzzle in BRIDGES || puzzle in PERM_BRIDGES || puzzle === 'mirror' || EXPLORE_BOUND.has(puzzle))) return true;
+    && (puzzle in BRIDGES || puzzle in PERM_BRIDGES || puzzle in MIRROR_ORDER || EXPLORE_BOUND.has(puzzle))) return true;
   return nxnOrder(puzzle) !== null;
 }
 
 export function createBinding(puzzle: string | number): GroupKernel | null {
   const n = nxnOrder(puzzle);
   if (n !== null) return new PgEngineBinding(nxnPgBridge(n));
-  // Mirror Cube is mechanically a 3x3x3 (the engine runs Cube(3)); reuse the 3x3 kernel.
-  if (puzzle === 'mirror') return new PgEngineBinding(nxnPgBridge(3));
+  // A Mirror Cube is mechanically the plain NxN of its order (the engine runs
+  // Cube(n, mirror=true)); reuse that order's kernel.
+  if (typeof puzzle === 'string' && puzzle in MIRROR_ORDER) {
+    return new PgEngineBinding(nxnPgBridge(MIRROR_ORDER[puzzle]));
+  }
   if (typeof puzzle === 'string' && puzzle in PERM_BRIDGES) return new PermEngineBinding(PERM_BRIDGES[puzzle]);
   // cubing.js "explore" puzzles (no in-house engine): facts-only kernel over outer turns.
   if (typeof puzzle === 'string' && EXPLORE_BOUND.has(puzzle)) return new ExploreFactsBinding(puzzle, PG_DEF_BY_ID[puzzle]);

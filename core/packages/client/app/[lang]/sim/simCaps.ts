@@ -77,9 +77,11 @@ const CAPS: Record<string, SimPuzzleCaps> = {
   pyraminx: { engine: 'engineMode', carve: 'corner' },
   megaminx: { engine: 'engineMode', carve: 'face' },
   fto: { engine: 'engineMode', carve: 'face' },
-  // Mirror Cube — order-3 NxN engine (uniform logic, non-uniform geometry). Like NxN
-  // it has no single moving group to lift off, so no carve. Studio renders it as a cube.
+  // Mirror Cube — NxN engine (uniform logic, non-uniform geometry), order 3 / order 2.
+  // Like NxN it has no single moving group to lift off, so no carve. Studio renders it
+  // as a cube of the matching order.
   mirror: { engine: 'always' },
+  mirror2: { engine: 'always' },
 };
 
 /** Static capabilities for a puzzle kind (independent of the active renderer). */
@@ -158,7 +160,9 @@ export function resolveCaps(kind: SimPuzzle, renderer: SimRenderer): ResolvedCap
   const carve = engineActive ? (c.carve ?? null) : null;
   const isolate = engineActive ? (c.isolate ?? []) : [];
   const isNxN = typeof kind === 'number';
-  const isMirror = kind === 'mirror';
+  const isMirror = kind === 'mirror' || kind === 'mirror2';
+  // 顶面 logo 贴在 U 面正中心块上 → 只有奇数阶有那块(Cube.setLogo 对偶数阶是空操作)。
+  const hasCentrePiece = (isNxN && (kind as number) % 2 === 1) || kind === 'mirror';
   // 方位字母 overlay 仅这三个拼图在 cubing.js 渲染下有(FACE_TABLES);engine 渲染走自有 faceHints。
   // FTO / PG explore 在 cubing.js 下无 overlay → 字母仍不支持。
   const overlayLabels = kind === 'skewb' || kind === 'pyraminx' || kind === 'megaminx';
@@ -185,9 +189,10 @@ export function resolveCaps(kind: SimPuzzle, renderer: SimRenderer): ResolvedCap
       // 面色: only the NxN InstancedRenderer (and Mirror, which IS the NxN engine) re-applies
       // face colors live; other engine-body puzzles bake their sticker colors at construction.
       faceColors: isNxN || isMirror,
-      // 顶面 U 中心 logo: NxN InstancedRenderer 特性 —— 含镜面(它是 order-3 NxN 引擎,
-      // 走同一条 cube.setLogo() 路径,有正中心块)。其它 engine-body 拼图无中心贴片不支持。
-      logo: isNxN || isMirror,
+      // 顶面 U 中心 logo: NxN InstancedRenderer 特性 —— 含三阶镜面(它是 order-3 NxN
+      // 引擎,走同一条 cube.setLogo() 路径)。偶数阶(含二阶镜面)没有 U 面正中心块,
+      // setLogo 本就是空操作 → 直接灰掉。其它 engine-body 拼图无中心贴片不支持。
+      logo: hasCentrePiece,
       carve: carve !== null,
       isolate: isolate.length > 0,
       // 手指(指法演示): rig 的握持/手势按 order-3 标定,且要求 NxN 引擎的

@@ -103,14 +103,15 @@ export default class Cube extends THREE.Group {
         initialsMap.set(positionIdx, cubelet);
       }
     }
-    // Mirror cube only: the engine omits interior cubies, but the mirror needs the dead-
-    // center cubie to fill the central cavity that an inner-layer (E/M/S) turn exposes.
+    // Odd-order mirror cube only: the engine omits interior cubies, but the mirror needs
+    // the dead-center cubie to fill the central cavity that an inner-layer (E/M/S) turn
+    // exposes. An even order has no inner layer and no dead-center cubie — nothing to fill.
     // A normal cube hides that cavity behind a CubeGroup panel (see group.ts); the mirror
     // drops the panel and lets this real cubie fill it through the shared mirrorMat path,
     // so the fill is non-uniform + core-pivoted like every other piece. It stays static
     // (d-check leaves exist=false → GroupTable skips it), which is what we want: a box at
     // the core, axis-aligned, never poking out.
-    if (mirror) {
+    if (mirror && N % 2 === 1) {
       const c = (N - 1) / 2;
       const centerIdx = c + c * N + c * N2;
       const center = make(centerIdx);
