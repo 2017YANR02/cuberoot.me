@@ -34,9 +34,21 @@
   {
     "name": "cs0x7f/cstimer",
     "url": "https://github.com/cs0x7f/cstimer",
-    "zh": "csTimer 计时器(integrated)+ 非 WCA 打乱引擎(/scramble/gen 30+ puzzle 走 vendor 进 tools/cstimer-scramble/);部分 /scramble/solver 求解器也直接 wrap cstimer 自带 solver 当引擎(dino = redi IDA*、大金字塔 mpyrso = 两阶段)",
-    "en": "csTimer & WCA random-state scramble engine; non-WCA puzzle scramble engine for /scramble/gen (vendored in tools/cstimer-scramble/); a few /scramble/solver solvers also wrap cstimer's own solver as the solve engine (Dino = redi IDA*, Master Pyraminx = two-phase)",
+    "zh": "csTimer 计时器(integrated)+ 非 WCA 打乱引擎(/scramble/gen 30+ puzzle 走 vendor 进 tools/cstimer-scramble/);部分 /scramble/solver 求解器也直接 wrap cstimer 自带 solver 当引擎(dino = redi IDA*、大金字塔 mpyrso = 两阶段);/timer 的智能魔方与智能计时器协议(GAN / 魔域 / 奇艺 / GoCube / Giiker)亦按其实现移植",
+    "en": "csTimer & WCA random-state scramble engine; non-WCA puzzle scramble engine for /scramble/gen (vendored in tools/cstimer-scramble/); a few /scramble/solver solvers also wrap cstimer's own solver as the solve engine (Dino = redi IDA*, Master Pyraminx = two-phase); /timer's smart-cube and smart-timer protocols (GAN / MoYu / QiYi / GoCube / Giiker) are ported from its implementations too",
     "long_en": "professional speedcubing timer & WCA random-state scramble engine; also vendored at tools/cstimer-scramble/ to power non-WCA puzzle generation (gear/ivy/dino/sq2/giga/pyracrystal/heli/curvycopter/cuboids/15-puzzle/bicube/siamese cubes/...) via classic Web Worker bridge; for a few puzzles whose state space is too large for a full BFS/table, cstimer's own solver is wrapped directly as the SOLVING engine in /scramble/solver (Dino = redi IDA*, Master Pyraminx = two-phase); cstimer's megascramble model + poly3dlib geometry (makePuzzle) are also used as the bit-exact piece-model oracle when building from-scratch reductions (e.g. the Helicopter Cube and the Siamese 2×2×2 solvers)"
+  },
+  {
+    "name": "afedotov/gan-web-bluetooth",
+    "url": "https://github.com/afedotov/gan-web-bluetooth",
+    "zh": "GAN 智能魔方协议参考;/timer 的 GAN Gen2 / Gen4 陀螺仪四元数位布局按其规格实现",
+    "en": "GAN smart-cube protocol reference; /timer's GAN Gen2 / Gen4 gyroscope quaternion bit layouts follow its spec"
+  },
+  {
+    "name": "lukeburong/weilong-v10-ai-protocol",
+    "url": "https://github.com/lukeburong/weilong-v10-ai-protocol",
+    "zh": "魔域 MoYu32 (威龙 V10 AI) 协议文档;/timer 的 MoYu32 驱动与陀螺仪解码据此实现",
+    "en": "MoYu32 (WeiLong V10 Ai) protocol documentation; /timer's MoYu32 driver and gyroscope decoding are built from it"
   },
   {
     "name": "cs0x7f/cube555",
@@ -206,9 +218,9 @@
   {
     "name": "Herbert Kociemba — Two-Phase Algorithm & Cube Explorer",
     "url": "https://kociemba.org/cube.htm",
-    "zh": "Kociemba 两阶段算法 + 立方坐标模型(corner/edge 排列 / twist / flip 编码、面转表):/scramble/solver 的 3×3 两阶段解(含 crz3a 疯狂 3×3)、STM 最优解器的状态编码、cube48opt 服务端最优解器都基于此;Cube Explorer 是已知唯一的 STM 最优解器(参照);/scramble/pattern/search 的图案搜索移植自 Cube Explorer 的 Pattern Editor(PatternSearch.pas)",
-    "en": "Kociemba's two-phase algorithm + cube coordinate model (corner/edge perm, twist, flip encoders; face-move tables) underpin the /scramble/solver 3×3 two-phase solve (incl. the crz3a Crazy-3×3 solver), the STM optimal solver's state encoding, and the server-side cube48opt optimal solver; Cube Explorer is the only known prior STM-optimal solver (reference); /scramble/pattern/search ports Cube Explorer's Pattern Editor (PatternSearch.pas)",
-    "long_en": "Herbert Kociemba's two-phase algorithm and the Singmaster cubie coordinate model (corner/edge permutation ranks, corner-twist / edge-flip ranks, face-move arrays — also as ported in cs0x7f's min2phase.js) are the basis of the site's client-side 3×3 two-phase solver (the derive-scramble flow + the crz3a solver), the new pure-TS 3×3×3 STM optimal solver's state encoding (cross-validated against these tables), and the server-side cube48opt optimal-solve daemon. Cube Explorer (kociemba.org) is the only known pre-existing STM-optimal solver — the reference our STM goal-test (centers must end home) follows. The /scramble/pattern/search page is a faithful port of Cube Explorer's Pattern Editor (PatternSearch.pas: abstract face-pattern DFS with color-class bijection matching, continuity check, and isomorphism dedup)"
+    "zh": "Kociemba 两阶段算法 + 立方坐标模型(corner/edge 排列 / twist / flip 编码、面转表):/scramble/solver 的 3×3 两阶段解(含 crz3a 疯狂 3×3)、STM 最优解器的状态编码、cube48opt 服务端最优解器都基于此;Cube Explorer 是已知唯一的 STM 最优解器(参照);/scramble/pattern/search 的图案搜索移植自 Cube Explorer 的 Pattern Editor(PatternSearch.pas);/scramble/symmetry 的对称型搜索与 33 种类型数据移植自 Symmetry Editor(SymSearch.pas + Symmetries.pas + CubeDefs.pas)",
+    "en": "Kociemba's two-phase algorithm + cube coordinate model (corner/edge perm, twist, flip encoders; face-move tables) underpin the /scramble/solver 3×3 two-phase solve (incl. the crz3a Crazy-3×3 solver), the STM optimal solver's state encoding, and the server-side cube48opt optimal solver; Cube Explorer is the only known prior STM-optimal solver (reference); /scramble/pattern/search ports Cube Explorer's Pattern Editor (PatternSearch.pas), and /scramble/symmetry ports its Symmetry Editor (SymSearch.pas + Symmetries.pas + CubeDefs.pas)",
+    "long_en": "Herbert Kociemba's two-phase algorithm and the Singmaster cubie coordinate model (corner/edge permutation ranks, corner-twist / edge-flip ranks, face-move arrays — also as ported in cs0x7f's min2phase.js) are the basis of the site's client-side 3×3 two-phase solver (the derive-scramble flow + the crz3a solver), the new pure-TS 3×3×3 STM optimal solver's state encoding (cross-validated against these tables), and the server-side cube48opt optimal-solve daemon. Cube Explorer (kociemba.org) is the only known pre-existing STM-optimal solver — the reference our STM goal-test (centers must end home) follows. The /scramble/pattern/search page is a faithful port of Cube Explorer's Pattern Editor (PatternSearch.pas: abstract face-pattern DFS with color-class bijection matching, continuity check, and isomorphism dedup). The /scramble/symmetry page ports the Symmetry Editor: the 48 symmetry cubie tables of Symmetries.pas, the 33 subgroup bitmasks and per-type position counts of CubeDefs.pas / SymSearch.pas, and the symmetry-constrained DFS of SymSearch.pas (equivariant piece placement, antisymmetry, per-face colour counts, permutation parity modes, exact-symmetry filtering)"
   },
   {
     "name": "Richard E. Korf — IDA* + Pattern Databases",
