@@ -17,7 +17,11 @@
  *   `@types` packages. These declarations are intentionally narrow.
  */
 
+import type { GyroSink, GyroQuaternion, GyroVelocity } from './gan_crypto';
+import type { MacAdvSpec } from './mac';
 import type { CubeBrand } from './types';
+
+export type { GyroSink, GyroQuaternion, GyroVelocity };
 
 /* ------------------------------------------------------------------ */
 /*  Minimal Web Bluetooth ambient types                               */
@@ -132,6 +136,13 @@ export interface CubeDriverStartResult {
   battery: () => Promise<number | null>;
   /** Tear down notification subscriptions; safe to call multiple times. */
   cleanup: () => void;
+  /**
+   * Turn the cube's orientation stream on/off at runtime, for the brands
+   * whose firmware gates it behind a command (MoYu32's 0xAC). Absent when
+   * the brand has no such switch — GAN and GoCube push orientation frames
+   * unconditionally, so there is nothing to toggle.
+   */
+  setGyro?: (enabled: boolean) => Promise<void>;
 }
 
 export interface CubeDriverContext {
@@ -148,6 +159,18 @@ export interface CubeDriverContext {
    * re-prompts the user (cstimer's keyCheck → reqMacAddr behaviour).
    */
   onKeyError?: () => void;
+  /**
+   * Called for every orientation sample a gyro-capable driver decodes.
+   * Optional on purpose: passing it is what asks a brand with a firmware
+   * gyro switch (MoYu32) to turn its stream on, and drivers that can't
+   * decode orientation simply never call it.
+   *
+   * The quaternion is scalar-first `{w,x,y,z}` in the cube's own sensor
+   * frame — raw, uncalibrated, un-remapped. `./orientation.ts` owns
+   * calibration, the per-brand axis basis and smoothing; a driver must not
+   * pre-massage the sample.
+   */
+  onGyro?: GyroSink;
 }
 
 export interface CubeDriver {
@@ -164,6 +187,31 @@ export interface CubeDriver {
    * The hook will resolve a MAC (and prompt the user if needed) before start().
    */
   needsMac?: boolean;
+  /**
+   * How this brand's cubes advertise their MAC: which Company Identifier
+   * Codes to ask Chrome for, and how the manufacturer payload is laid out.
+   * The hook unions every driver's `cics` into `optionalManufacturerData`
+   * (Chrome strips manufacturer data for any CIC you didn't ask for) and
+   * tries every layout against the first advertisement it sees.
+   */
+  macAdv?: MacAdvSpec;
+  /**
+   * Vendor-documented fallback MAC derived from the BLE device name, for the
+   * brands that publish a fixed prefix (MoYu32's `WCU_MY32_XXYY` →
+   * `CF:30:16:00:XX:YY`). Tried after advertisements / saved / an embedded
+   * full MAC and before the manual prompt. Returns null when the name does
+   * not match the documented pattern — never a guess.
+   */
+  defaultMac?(device: BluetoothDevice): string | null;
+  /**
+   * True when this driver can decode an orientation quaternion off the wire.
+   * Surfaced as `status.hasGyro` so the UI can offer a live-cube view only
+   * for cubes that will actually feed it. Declaring it does NOT mean the
+   * physical cube has a working gyro — GAN's gen2 hardware-info event has a
+   * "gyro enabled" bit we don't act on, and a cube can simply be an older
+   * non-gyro batch.
+   */
+  hasGyro?: boolean;
   /** Returns true if `device` looks like one of this driver's cubes. */
   matches(device: BluetoothDevice): boolean;
   /**
