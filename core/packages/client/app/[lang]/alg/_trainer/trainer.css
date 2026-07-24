@@ -508,6 +508,7 @@
 .trainer-opts-row {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;   /* 开关多的行(如 打乱图/纯打乱/三条一屏/历史)超过面板宽就换行,别溢出右缘 */
   gap: 10px;
 }
 /* 标签宽度贴合文字(不设 min-width 撑对齐 —— 两字标签「概率」会和控件之间留一截空) */
