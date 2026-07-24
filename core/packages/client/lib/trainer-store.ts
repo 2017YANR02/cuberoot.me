@@ -52,7 +52,7 @@ export interface TrainerSolve {
 }
 
 /** 打乱历史里的一条(←/→ 回看):case 身份 + 当时出的那条打乱。 */
-interface TrainerHistEntry {
+export interface TrainerHistEntry {
   key: string;
   name: string;
   scramble: string;
@@ -252,6 +252,8 @@ interface TrainerState {
   continueRecapRound: () => void;
   /** 上一个打乱(可连按,直到最旧一条)。 */
   prevScramble: () => void;
+  /** 打乱历史里直接跳到第 i 条(「历史」列表点选,不重出打乱)。 */
+  jumpToHist: (i: number) => void;
 
   /** 用当前池 + 复习顺序建在线房间,建成即进房间模式并领第一题。 */
   createRoom: () => Promise<{ ok: boolean; code?: string; error?: string }>;
@@ -772,6 +774,20 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       if (!back) return;
       const cur = back.list[back.idx];
       set({ hist: back, currentKey: cur.key, currentName: cur.name, currentScramble: cur.scramble, observingPinned: false, recapRoundDone: false });
+    },
+
+    // 「历史」列表点选:直接把光标落到第 i 条(打乱已存在历史里,不重出 —— 不走 cstimerize,
+    // 否则会拿已解好的打乱当占位再解一次、换成另一条)。计时中不跳;越界 / 原地忽略。
+    jumpToHist: (i) => {
+      const st = get();
+      if (st.timerState !== TimerState.NOT_RUNNING && st.timerState !== TimerState.STOPPING) return;
+      if (i < 0 || i >= st.hist.list.length || i === st.hist.idx) return;
+      const cur = st.hist.list[i];
+      set({
+        hist: { list: st.hist.list, idx: i },
+        currentKey: cur.key, currentName: cur.name, currentScramble: cur.scramble,
+        observingPinned: false, recapRoundDone: false,
+      });
     },
 
     createRoom: async () => {

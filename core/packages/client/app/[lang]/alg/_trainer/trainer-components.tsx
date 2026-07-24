@@ -8,12 +8,13 @@ import { CaseThumb } from '@/components/CaseThumb';
 import { VisualCube } from '@/components/VisualCube';
 import { SegmentTime } from '@/components/SegmentTime';
 import { TimerState } from '@/lib/trainer-store';
-import type { TrainerSolve, TrainerPenalty } from '@/lib/trainer-store';
+import type { TrainerSolve, TrainerPenalty, TrainerHistEntry } from '@/lib/trainer-store';
+import type { ScrambleHist } from '@/lib/scramble-history';
 import {
   useTrainerMarks, markStatus, markStarred, MARK_STATUS_LABEL,
   type CaseMarks, type CaseMarkStatus, type TrainerMarkBrush,
 } from '@/lib/trainer-marks';
-import { caseKey } from '@/lib/trainer-case-key';
+import { caseKey, findCaseByKey } from '@/lib/trainer-case-key';
 import { primaryCaseName, displayZbllToken } from '@/lib/alg_case_display';
 import { tr } from '@/i18n/tr';
 
@@ -177,6 +178,54 @@ export function StatsList({
               {formatSolveTime(s)}
             </span>
           ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * 不计时模式的「历史」面板:列出打乱历史(hist.list),点某条 = 跳回查看那条打乱(主屏 +
+ * 上/下卡片一起切过去)。不计时没有用时可统计 —— 列的是 case 名(而非成绩),当前所在条高亮。
+ * 与计时模式的 StatsList 复用同一套卡片 / 药丸样式。
+ */
+export function HistoryList({
+  hist, cases, puzzle, set, onPick,
+}: {
+  hist: ScrambleHist<TrainerHistEntry>;
+  cases: AlgCase[];
+  puzzle: AlgPuzzle;
+  set: string;
+  /** 点第 i 条:跳到该历史条目。 */
+  onPick: (i: number) => void;
+}) {
+  // set 名当页首已给(topbar「3×3 · ZBLL …」),chip 里再顶个 "ZBLL " 冗余 —— 剥掉只留组号。
+  const setPrefix = new RegExp('^' + set.toUpperCase() + '\\s+', 'i');
+  return (
+    <div className="trainer-stats-card">
+      <div className="trainer-card-header">
+        <span>{tr({ zh: '历史', en: 'History' })}</span>
+      </div>
+      <hr className="trainer-card-divider" />
+      {hist.list.length === 0 ? (
+        <div className="trainer-stats-empty">{tr({ zh: '暂无打乱历史', en: 'No scrambles yet'
+        })}</div>
+      ) : (
+        <div className="trainer-stats-list">
+          {hist.list.map((e, i) => {
+            const c = findCaseByKey(cases, e.key);
+            const name = (c ? primaryCaseName(puzzle, set, c) : e.name).replace(setPrefix, '');
+            return (
+              <span
+                key={i}
+                className={`trainer-stat-time${hist.idx === i ? ' is-active' : ''}`}
+                onClick={() => onPick(i)}
+                title={e.scramble}
+              >
+                {name}
+              </span>
+            );
+          })}
         </div>
       )}
     </div>
