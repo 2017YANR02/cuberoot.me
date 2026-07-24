@@ -1,0 +1,460 @@
+/* 记忆模式(闪卡 + 间隔重复)与训练页顶部进度条。配色全走 globals token,派生色用 color-mix。 */
+
+/* ── 模式分段(训练 / 复习 / 记忆)──────────────────────────── */
+
+.trainer-modes {
+  display: flex;
+  gap: 2px;
+  max-width: 1160px;
+  margin: -8px auto 0;
+  padding: 0 20px;
+}
+.trainer-mode-tab {
+  padding: 5px 14px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-family: inherit;
+  font-size: 0.86rem;
+  cursor: pointer;
+}
+.trainer-mode-tab.is-active {
+  background: color-mix(in srgb, var(--foreground) 9%, transparent);
+  color: var(--foreground);
+  font-weight: 600;
+}
+.trainer-mode-tab:disabled { color: var(--faint-foreground); cursor: default; }
+@media (hover: hover) {
+  .trainer-mode-tab:not(:disabled):not(.is-active):hover { color: var(--foreground); }
+}
+
+/* 记忆模式的数字额度输入(齿轮面板内) */
+.trainer-opts-num { display: inline-flex; align-items: center; gap: 6px; }
+.trainer-opts-num input {
+  width: 4.5em;
+  padding: 3px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--input);
+  background: var(--background);
+  color: var(--foreground);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 顶部进度条(SetProgressStrip)────────────────────────────── */
+
+.trainer-strip {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 6px 20px 10px;
+}
+.trainer-strip.is-compact { padding-top: 2px; padding-bottom: 8px; }
+
+.trainer-strip-bar {
+  display: flex;
+  height: 5px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--foreground) 9%, transparent);
+}
+.trainer-strip-bar .is-mastered { background: var(--signal-success); }
+.trainer-strip-bar .is-learning { background: var(--signal-warning); }
+.trainer-strip-bar .is-paused { background: var(--faint-foreground); }
+
+.trainer-strip-nums {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: 7px;
+}
+.trainer-strip-num {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 0.74rem;
+  color: var(--muted-foreground);
+  text-decoration: none;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  cursor: default;
+}
+a.trainer-strip-num, button.trainer-strip-num { cursor: pointer; }
+.trainer-strip-num b {
+  font-size: 0.98rem;
+  font-weight: 650;
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+}
+.trainer-strip-num.is-mastered b { color: var(--signal-success); }
+.trainer-strip-num.is-learning b { color: var(--signal-warning); }
+.trainer-strip-num.is-due.is-hot b { color: var(--accent); }
+.trainer-strip-num.is-streak b {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--signal-warning);
+}
+@media (hover: hover) {
+  a.trainer-strip-num:hover span,
+  button.trainer-strip-num:hover span { color: var(--accent); }
+}
+
+.trainer-strip-sep {
+  width: 1px;
+  align-self: stretch;
+  min-height: 16px;
+  background: color-mix(in srgb, var(--foreground) 14%, transparent);
+}
+
+.trainer-strip-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  font-size: 0.74rem;
+  color: var(--muted-foreground);
+  text-decoration: none;
+}
+@media (hover: hover) {
+  .trainer-strip-more:hover { color: var(--accent); }
+}
+
+/* ── 记忆模式主体 ─────────────────────────────────────────────── */
+
+.srs-root {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 4px 20px 40px;
+  width: 100%;
+}
+
+.srs-empty,
+.srs-done {
+  max-width: 560px;
+  margin: 48px auto;
+  padding: 0 20px;
+  text-align: center;
+  color: var(--muted-foreground);
+}
+.srs-done h2 {
+  margin: 0 0 14px;
+  font-size: 1.35rem;
+  font-weight: 620;
+  color: var(--foreground);
+}
+.srs-done-sub { font-size: 0.86rem; line-height: 1.6; margin: 14px 0 0; }
+.srs-done-stats {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px 32px;
+}
+.srs-done-stat { display: flex; flex-direction: column; line-height: 1.15; }
+.srs-done-stat b {
+  font-size: 1.7rem;
+  font-weight: 650;
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+}
+.srs-done-stat span { font-size: 0.76rem; color: var(--muted-foreground); }
+.srs-done-stat.is-again b { color: var(--destructive); }
+.srs-done-stat.is-easy b { color: var(--signal-success); }
+.srs-done-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+.srs-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border-default);
+  background: transparent;
+  color: var(--foreground);
+  font-size: 0.87rem;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: none;
+}
+.srs-btn.is-primary {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-color: transparent;
+}
+@media (hover: hover) {
+  .srs-btn:hover { border-color: var(--border-strong); }
+  .srs-btn.is-primary:hover { background: color-mix(in srgb, var(--primary) 88%, black); }
+}
+
+/* 本场进度 */
+.srs-session-head { margin: 2px 0 20px; }
+.srs-session-bar {
+  display: flex;
+  height: 4px;
+  border-radius: 2px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--foreground) 9%, transparent);
+}
+.srs-session-bar span {
+  background: var(--accent);
+  transition: width 0.22s ease;
+}
+.srs-session-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-top: 7px;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+.srs-session-count {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.srs-session-count i { font-style: normal; color: var(--faint-foreground); margin: 0 1px; }
+.srs-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
+.srs-chip.is-due { color: var(--signal-info); }
+.srs-chip.is-new { color: var(--accent); }
+.srs-chip.is-extra { color: var(--muted-foreground); }
+
+/* 卡片本体 —— 不画外框,靠留白与层级分区 */
+.srs-card { display: flex; flex-direction: column; align-items: center; }
+
+.srs-card-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.srs-kind {
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  color: var(--muted-foreground);
+}
+.srs-kind.is-new { background: var(--accent-soft); color: var(--accent); }
+.srs-kind.is-due { background: color-mix(in srgb, var(--signal-info) 15%, transparent); color: var(--signal-info); }
+.srs-case-name {
+  font-size: 1.02rem;
+  font-weight: 620;
+  color: var(--foreground);
+}
+.srs-case-star { fill: var(--signal-warning); color: var(--signal-warning); }
+.srs-mini-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--faint-foreground);
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .srs-mini-btn:hover { color: var(--accent); background: color-mix(in srgb, var(--foreground) 7%, transparent); }
+}
+.srs-mini-btn[aria-pressed='true'] { color: var(--signal-warning); }
+
+.srs-thumb { line-height: 0; }
+.srs-thumb :is(img, svg) { max-width: 100%; height: auto; }
+
+.srs-scramble {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  max-width: 100%;
+}
+.srs-scramble code {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.88rem;
+  color: var(--muted-foreground);
+  overflow-wrap: anywhere;
+}
+
+/* 揭示前 */
+.srs-reveal-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 24px 0 8px;
+}
+.srs-reveal-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 26px;
+  border-radius: 10px;
+  border: 1px solid var(--border-strong);
+  background: var(--card);
+  color: var(--foreground);
+  font-size: 0.95rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .srs-reveal-btn:hover { border-color: var(--accent); color: var(--accent); }
+}
+.srs-reveal-btn kbd {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.7rem;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border-default);
+  color: var(--faint-foreground);
+}
+.srs-reveal-hint { margin: 0; font-size: 0.78rem; color: var(--faint-foreground); text-align: center; }
+
+/* 揭示后 */
+.srs-answer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  margin-top: 18px;
+}
+.srs-alg-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.25rem;
+  font-weight: 560;
+  color: var(--foreground);
+  text-align: center;
+  overflow-wrap: anywhere;
+  line-height: 1.45;
+}
+.srs-alg-main u.wavy { text-decoration: underline wavy; }
+
+.srs-answer-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin-top: 10px;
+}
+.srs-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 0;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 0.76rem;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.srs-link-btn:disabled { color: var(--faint-foreground); cursor: default; }
+@media (hover: hover) {
+  .srs-link-btn:not(:disabled):hover { color: var(--accent); }
+}
+
+.srs-alts {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 10px;
+  font-size: 0.88rem;
+  color: var(--muted-foreground);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.srs-alts u.wavy { text-decoration: underline wavy; }
+
+.srs-player { margin-top: 14px; }
+
+/* 四档评分 */
+.srs-grades {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  max-width: 520px;
+  margin-top: 22px;
+}
+.srs-grade {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 4px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--border-default);
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+  color: var(--foreground);
+}
+.srs-grade-label { font-size: 0.9rem; font-weight: 560; }
+.srs-grade-iv {
+  font-size: 0.7rem;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+.srs-grade kbd {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.64rem;
+  color: var(--faint-foreground);
+}
+.srs-grade.is-again { border-color: color-mix(in srgb, var(--destructive) 45%, transparent); }
+.srs-grade.is-hard { border-color: color-mix(in srgb, var(--signal-warning) 45%, transparent); }
+.srs-grade.is-good { border-color: color-mix(in srgb, var(--signal-success) 45%, transparent); }
+.srs-grade.is-easy { border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+.srs-grade.is-again .srs-grade-label { color: var(--destructive); }
+.srs-grade.is-hard .srs-grade-label { color: var(--signal-warning); }
+.srs-grade.is-good .srs-grade-label { color: var(--signal-success); }
+.srs-grade.is-easy .srs-grade-label { color: var(--accent); }
+@media (hover: hover) {
+  .srs-grade.is-again:hover { background: color-mix(in srgb, var(--destructive) 12%, transparent); }
+  .srs-grade.is-hard:hover { background: color-mix(in srgb, var(--signal-warning) 12%, transparent); }
+  .srs-grade.is-good:hover { background: color-mix(in srgb, var(--signal-success) 12%, transparent); }
+  .srs-grade.is-easy:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+}
+
+/* 卡片记忆档案 */
+.srs-card-foot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  width: 100%;
+  max-width: 520px;
+  margin-top: 20px;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--foreground) 9%, transparent);
+  font-size: 0.73rem;
+  color: var(--faint-foreground);
+}
+.srs-phase.is-new { color: var(--accent); }
+.srs-phase.is-relearn { color: var(--destructive); }
+.srs-phase.is-young { color: var(--signal-warning); }
+.srs-phase.is-mature { color: var(--signal-success); }
+.srs-foot-lapse { color: var(--destructive); }
+.srs-foot-sp { flex: 1 1 auto; min-width: 0; }
+
+@media (max-width: 520px) {
+  .srs-root { padding-left: 14px; padding-right: 14px; }
+  .srs-grades { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .srs-alg-main { font-size: 1.08rem; }
+  .trainer-strip { padding-left: 14px; padding-right: 14px; }
+}

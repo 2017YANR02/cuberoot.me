@@ -55,7 +55,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   equals the set mounted via app.route('/v1', …) in packages/server/src/index.ts.
 //   CI red here = a newly-mounted route is undocumented: add its endpoints below,
 //   then add the file stem to this list.
-//   account_auth alg alg_marks alg_sets analytics announced_comps article auth battle_rooms cn_comp_names colpi
+//   account_auth alg alg_marks alg_srs alg_sets analytics announced_comps article auth battle_rooms cn_comp_names colpi
 //   comp_follows cube cubeopt_solve cubing_live feedback forum health historical_ranks
 //   membership nav_sites nemesizer notifications ops page_notices paint progress recon scramble_555
 //   scramble_marks sponsors timer_backups trainer_rooms wca_format wca_fun_stats wca_proxy
@@ -232,6 +232,10 @@ const ENDPOINTS: Ep[] = [
   { d: 'alg', m: 'GET', p: '/v1/alg/marks', g: 'login', zh: '跨 set 标记聚合(进度总览)', en: 'Cross-set mark summary' },
   { d: 'alg', m: 'GET', p: '/v1/alg/marks/:puzzle/:set', g: 'login', zh: '我的 case 学习标记', en: 'My case learning marks' },
   { d: 'alg', m: 'PUT', p: '/v1/alg/marks/:puzzle/:set', g: 'login', zh: '批量写 case 标记', en: 'Bulk-write case marks' },
+  { d: 'alg', m: 'GET', p: '/v1/alg/srs', g: 'login', zh: '跨 set 记忆记录 + 每日复习量(进度总览)', en: 'Cross-set memory records + daily review log' },
+  { d: 'alg', m: 'GET', p: '/v1/alg/srs/:puzzle/:set', g: 'login', zh: '我的 case 记忆调度状态', en: 'My per-case memory schedule' },
+  { d: 'alg', m: 'PUT', p: '/v1/alg/srs/:puzzle/:set', g: 'login', zh: '批量写记忆调度状态', en: 'Bulk-write memory schedule' },
+  { d: 'alg', m: 'PUT', p: '/v1/alg/srs/daily', g: 'login', zh: '合并每日复习量(同日取较大值)', en: 'Merge daily review counts (per-day max)' },
   { d: 'alg', m: 'GET', p: '/v1/progress/:algSetId', g: 'login', zh: '读取训练进度', en: 'Read training progress' },
   { d: 'alg', m: 'POST', p: '/v1/progress/:algSetId', g: 'login', zh: '保存训练进度', en: 'Save training progress' },
   { d: 'alg', m: 'POST', p: '/v1/trainer/rooms', g: 'public', zh: '建协同房间(多设备复习分工),返回房间码', en: 'Create a coop room (multi-device recap split); returns a room code' },

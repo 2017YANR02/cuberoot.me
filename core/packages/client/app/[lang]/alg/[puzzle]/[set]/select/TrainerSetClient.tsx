@@ -17,9 +17,12 @@ import { caseKey } from '@/lib/trainer-case-key';
 import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
 import { displayZbllToken } from '@/lib/alg_case_display';
 import { CaseTreePicker } from '@/app/[lang]/alg/_trainer/trainer-components';
+import SetProgressStrip from '@/app/[lang]/alg/_trainer/SetProgressStrip';
 import { resolveAlgPuzzle } from '@/app/[lang]/alg/_trainer/events';
+import { useAlgSrs } from '@/lib/alg-srs-store';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '@/app/[lang]/alg/_trainer/trainer.css';
+import '@/app/[lang]/alg/_trainer/memory.css';
 import { tr } from '@/i18n/tr';
 
 /** 显示过滤:按标记只看一类(大 set 里找 case 用)。 */
@@ -60,13 +63,15 @@ export default function TrainerSetClient() {
   const marks = useTrainerMarks(s => s.marks);
   const applyMarks = useTrainerMarks(s => s.applyMarks);
   const loadMarks = useTrainerMarks(s => s.loadMarks);
+  const loadSrs = useAlgSrs(s => s.loadSrs);
   /** 画笔:null = 普通选择;其余 = 点 cell / 组头 涂该标记(再涂同标记 = 清除)。会话内状态,不进 URL。 */
   const [brush, setBrush] = useState<TrainerMarkBrush | null>(null);
 
   useEffect(() => {
     if (!puzzle || !meta) return;
     loadMarks(puzzle, setSlug);
-  }, [puzzle, setSlug, meta, loadMarks]);
+    loadSrs(puzzle, setSlug);   // 顶部进度条要显示「待复习」
+  }, [puzzle, setSlug, meta, loadMarks, loadSrs]);
 
   useEffect(() => {
     if (!puzzle || !meta) return;
@@ -85,26 +90,15 @@ export default function TrainerSetClient() {
     return hit.length > 0 ? hit : cases;
   }, [cases, scopeSlug]);
 
-  // 学习进度统计 + 过滤后的可见 case(过滤只影响显示,不动 selected)
-  const { progress, visibleCases } = useMemo(() => {
-    let mastered = 0, learning = 0, paused = 0;
-    for (const c of scopedCases) {
-      const st = markStatus(marks, caseKey(c));
-      if (st === 'mastered') mastered++;
-      else if (st === 'learning') learning++;
-      else if (st === 'paused') paused++;
-    }
-    const matches = (c: AlgCase): boolean => {
+  // 过滤后的可见 case(过滤只影响显示,不动 selected)。进度统计在 SetProgressStrip 里算。
+  const visibleCases = useMemo(() => {
+    if (markFilter === 'all') return scopedCases;
+    return scopedCases.filter((c) => {
       const k = caseKey(c);
-      if (markFilter === 'all') return true;
       if (markFilter === 'star') return markStarred(marks, k);
       const st = markStatus(marks, k);
       return markFilter === 'none' ? !st : st === markFilter;
-    };
-    return {
-      progress: { mastered, learning, paused, total: scopedCases.length },
-      visibleCases: markFilter === 'all' ? scopedCases : scopedCases.filter(matches),
-    };
+    });
   }, [scopedCases, marks, markFilter]);
 
   if (!puzzle || !meta) {
@@ -142,7 +136,9 @@ export default function TrainerSetClient() {
     setSelected([...kept, ...scopedCases.map(caseKey).filter(pred)]);
   };
 
-  const pct = (n: number) => progress.total > 0 ? (n / progress.total) * 100 : 0;
+  // 进度条统计 scope 内的整套(不受「只看某类」的显示过滤影响)
+  const scopedKeys = scopedCases.map(caseKey);
+  const selectBase = `/alg/${puzzleParam}/${setSlug}/select${scopeQuery}`;
 
   return (
     <div className="trainer-root">
@@ -156,6 +152,15 @@ export default function TrainerSetClient() {
         <span style={{ fontSize: '1.1rem', fontWeight: 600 }}>
           {puzzle} · {tr(meta)}{scopeSlug ? ` · ${setSlug === 'zbll' ? displayZbllToken(scopeSlug) : scopeSlug.toUpperCase()}` : ''}
         </span>
+        {/* 记忆模式按整套排期,不依赖勾选 —— 真 <a>,中键可新开标签页 */}
+        <Link
+          href={`/alg/${puzzleParam}/${setSlug}/run${scopeQuery ? `${scopeQuery}&` : '?'}mode=memo`}
+          className="trainer-memo-btn"
+          prefetch={false}
+          title={tr({ zh: '看图回忆公式,按记忆强度排期', en: 'Recall from the picture, scheduled by memory strength' })}
+        >
+          {tr({ zh: '记忆', en: 'Memory' })}
+        </Link>
         <button
           className={`trainer-start-btn${!canStart ? ' is-disabled' : ''}`}
           onClick={() => router.push(`${langPrefix}/alg/${puzzleParam}/${setSlug}/run${scopeQuery}`) /* allow-button-nav: disabled 门控(canStart)的开始按钮,选 case 后才跳 /run */}
@@ -171,22 +176,8 @@ export default function TrainerSetClient() {
         })}</div>
       ) : (
         <>
-          {/* 本 set 学习进度:已掌握绿段 + 学习中橙段;跨 set 汇总在 /alg/progress */}
-          <div className="trainer-progress">
-            <div className="trainer-progress-bar" aria-hidden>
-              <span className="is-mastered" style={{ width: `${pct(progress.mastered)}%` }} />
-              <span className="is-learning" style={{ width: `${pct(progress.learning)}%` }} />
-            </div>
-            <div className="trainer-progress-text">
-              {tr({ zh: '已掌握', en: 'Mastered' })} {progress.mastered}
-              {progress.learning > 0 && <> {tr({ zh: '学习中', en: 'learning' })} {progress.learning}</>}
-              {progress.paused > 0 && <> {tr({ zh: '搁置', en: 'paused' })} {progress.paused}</>}
-              {' / '}{progress.total}
-              <Link href="/alg/progress" className="trainer-progress-link" prefetch={false}>
-                {tr({ zh: '进度总览', en: 'All progress' })}
-              </Link>
-            </div>
-          </div>
+          {/* 本 set 学习进度 + 待复习 / 连续天数。与 run 页共用同一条(components 单一源) */}
+          <SetProgressStrip keys={scopedKeys} selectHref={selectBase} />
 
           <div className="trainer-marks-toolbar">
             <label className="trainer-marks-tool">
