@@ -59,6 +59,24 @@ html[data-theme=dark] .page-notice-wrap {
 
 .page-notice-icon { flex: none; color: var(--pn-color); margin-top: 2px; }
 
+/* ── 首页(landing)三行合一(issue #41) ──
+   仅当通知栏的下一个兄弟是 .landing-page(即首页)时生效,其它页保持「通知 + 管理员条」上下两行。
+   目标:通知文字(左) + 管理员环境切换(中右) + 语言/头像(最右,由 landing.css 上提)同处一行。 */
+.page-notice-wrap:has(+ .landing-page) { position: relative; }
+/* 给通知正文右侧留出控件区(语言/头像常驻;管理员另有环境切换),避免换行的长 URL 跑到控件下面。 */
+.page-notice-wrap:has(+ .landing-page) .page-notice { padding-right: 6.5rem; }
+/* 管理员环境切换 / 添加入口:绝对定位到通知行右侧、语言/头像左边(留出约 5.5rem 给右上角语言+头像)。 */
+.page-notice-wrap:has(+ .landing-page) .page-notice-adminbar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: calc(max(2rem, (100vw - var(--pn-max-w)) / 2) + 5.5rem);
+  width: auto;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
 /* admin:编辑入口放最左,与图标同起始行 */
 .page-notice-edit { flex: none; margin: -1px 0 0 -2px; }
 

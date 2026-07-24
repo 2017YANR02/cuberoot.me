@@ -38,7 +38,12 @@
    宽屏不贴浏览器最右侧;窄屏退回页面自身的 padding 地板。 */
 .landing-page .landing-auth {
     position: absolute;
-    top: calc(1.1rem + var(--sat));
+    /* 三行合一(issue #41):把语言/头像上提、覆盖到顶部通知条那一行,而不是被通知条挤到下面。
+       通知条实际高度由 PageNoticeBar 写入 --page-notice-h(无通知时为 0)。本容器精确覆盖
+       通知条那一行(top = -通知条高度、height = 通知条高度),再 align-items:center →
+       语言/头像自动在通知条行内垂直居中,不依赖具体像素。无通知时 top/height 归 0,落在页首顶端。 */
+    top: calc(var(--sat) - var(--page-notice-h, 0px));
+    height: var(--page-notice-h, 0px);
     right: max(2rem, var(--sar), calc((100vw - 1100px) / 2));
     z-index: 5;
     display: flex;
