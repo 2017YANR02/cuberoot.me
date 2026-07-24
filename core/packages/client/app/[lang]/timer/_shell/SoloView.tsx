@@ -54,7 +54,8 @@ import { warmup333, randomState333Sync } from '../_lib/scramble/kociemba/random_
 import { useTimer, type TimerPhase } from '../_lib/useTimer';
 import { formatMs, bestSingle, bestAverageOfN, bestMbldSolve, compareMbld, summarize } from '../_lib/stats';
 import type { EventId, Penalty, Solve } from '../_lib/types';
-import { EVENTS, isBldEvent } from '../_lib/types';
+import { EVENTS, isBldEvent, toWcaSpelling, fromWcaSpelling } from '../_lib/types';
+import { isNonWcaEvent, prefetchNonWca, nextNonWcaScramble } from '../_lib/scramble/nonwca';
 import {
   loadAll, saveAll, exportJson, importJson, makeSolve,
   importCstimerJson, exportCsv, exportSpeedstacks,
@@ -163,28 +164,21 @@ const APPEND_EVENTS: ReadonlyArray<{ id: string; iconClass: string; label?: stri
   { id: 'eg1',    iconClass: '', textLabel: 'EG-1' },
   { id: 'eg2',    iconClass: '', textLabel: 'EG-2' },
   { id: 'custom', iconClass: '', textLabel: 'Custom' },
+  // 非 WCA puzzle(打乱来自 vendored csTimer 引擎,见 _lib/scramble/nonwca.ts)。
+  // 清单从 EVENTS 的 'nonwca' 组派生 —— 加一个 puzzle 只改 types.ts + nonwca.ts。
+  ...EVENTS.filter(e => e.group === 'nonwca').map(e => ({
+    id: e.id as string,
+    iconClass: e.icon ?? '',
+    label: `${e.nameEn} / ${e.nameZh}`,
+    textLabel: e.nameEn,
+  })),
 ];
 
-/** Map a timer EventId -> the id the WcaEventSelector renders as active. */
-function eventToSelectorId(ev: EventId): string {
-  if (ev === '333bld') return '333bf';
-  if (ev === '333mbld') return '333mbf';
-  if (ev === '444bld') return '444bf';
-  if (ev === '555bld') return '555bf';
-  if (ev === 'mega') return 'minx';
-  if (ev === 'pyra') return 'pyram';
-  return ev;
-}
-/** Inverse: selector id -> timer EventId. */
-function selectorIdToEvent(id: string): EventId {
-  if (id === '333bf') return '333bld';
-  if (id === '333mbf') return '333mbld';
-  if (id === '444bf') return '444bld';
-  if (id === '555bf') return '555bld';
-  if (id === 'minx') return 'mega';
-  if (id === 'pyram') return 'pyra';
-  return id as EventId;
-}
+/** Map a timer EventId -> the id the WcaEventSelector renders as active, and
+ *  back. Both directions come from the shared table in _lib/types.ts (the same
+ *  one the battle engine's puzzle ids are derived from). */
+const eventToSelectorId = toWcaSpelling;
+const selectorIdToEvent = fromWcaSpelling;
 
 function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState<boolean>(() =>
@@ -423,6 +417,9 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     // deterministic seeded-sync mode where consumption order must stay exact.
     const s = getSettings();
     if (s.syncSeed) return generateScramble(event);
+    // 非 WCA puzzle:打乱在 csTimer Worker 里算,nonwca.ts 自带队列。别再套一层
+    // scramble_pool —— 那会把「还在生成」的 '' 也缓存进 buffer。'' 由下面的 effect 补。
+    if (isNonWcaEvent(event)) return generateScramble(event);
     // 「按步数生成」(2×2 / 金字塔):从完整状态空间均匀采样、按所选度量最优步数过滤(非案例库)。
     // 度量+区间进 pool key,改设置即换 buffer;拒绝采样 + IDA* 在后台 idle 生成,不阻塞计时。
     const byStepsScr = genByStepsScramble(event, s);
@@ -494,6 +491,30 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     return () => { cancelled = true; if (retryTimer) window.clearTimeout(retryTimer); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scramble, settings.scrambleSource, wcaSourceSig, applyScrambleHist]);
+
+  // 非 WCA puzzle(FTO / 二阶五魔 / 齿轮…):打乱由 vendored csTimer 引擎在 Worker 里算
+  // (随机态 IDA*,FTO 单条 1~3s),同 WCA 真题一样是异步的 —— 队列干了就先出 '',这里补上,
+  // 期间显示转圈(而不是掉进 '—' 或退化成三阶打乱)。队列已有货时只做后台预取,不动当前打乱。
+  // 手动输入模式例外:那里的 '' 表示「队列是空的,去粘贴打乱」(strip 有对应提示),
+  // 不是「还在生成」—— 塞一条生成打乱进去会把提示吞掉。
+  const [nonWcaLoading, setNonWcaLoading] = useState(false);
+  useEffect(() => {
+    if (!isNonWcaEvent(event) || settings.scrambleSource === 'manual') { setNonWcaLoading(false); return; }
+    prefetchNonWca(event);
+    if (scramble !== '') { setNonWcaLoading(false); return; }
+    let cancelled = false;
+    setNonWcaLoading(true);
+    void nextNonWcaScramble(event).then((real) => {
+      if (cancelled) return;
+      setNonWcaLoading(false);
+      const cur = scrambleHistRef.current;
+      if (!real || cur.list[cur.idx] !== '') return;
+      const list = [...cur.list];
+      list[cur.idx] = real;
+      applyScrambleHist({ list, idx: cur.idx });
+    });
+    return () => { cancelled = true; };
+  }, [event, scramble, settings.scrambleSource, applyScrambleHist]);
 
   // Warm the WCA pool ahead of demand (on source change / when mode turns on).
   useEffect(() => {
@@ -1788,10 +1809,12 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                   : tr({ zh: '点击换一个打乱', en: 'Click to refresh'
                                       })}
             >
-              <span className="scramble-text">{scrambleLoading
+              <span className="scramble-text">{scrambleLoading || nonWcaLoading
                 // 转圈取代了原来的「加载真实打乱…」文字,所以它是唯一的加载提示 → 传 label 供读屏。
                 // 原来包在外面的 .scramble-loading 没有任何 CSS 规则也没有别的消费者,一并去掉。
-                ? <Spinner size={22} label={tr({ zh: '加载真实打乱', en: 'Loading real scramble' })} />
+                ? <Spinner size={22} label={nonWcaLoading
+                    ? tr({ zh: '生成打乱', en: 'Generating scramble' })
+                    : tr({ zh: '加载真实打乱', en: 'Loading real scramble' })} />
                 : wcaSourceEmpty
                   ? <span className="scramble-empty">{
                       // 「按步数」过滤在 comp/date 两模式都生效,先判——真题近上帝数,低步数常无匹配。

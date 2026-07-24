@@ -20,6 +20,9 @@ export type EventId =
   // Other puzzles
   | 'pyra' | 'skewb' | 'sq1' | 'mega' | 'clock'
   | 'magic' | 'mmagic'
+  // Non-WCA puzzles (scrambled by the vendored csTimer engine — see
+  // _lib/scramble/nonwca.ts for the id → scrambler-key table)
+  | 'fto' | 'kilominx' | 'gear' | 'ivy' | 'redi' | 'mpyram'
   // Relays
   | 'r3' | 'r4' | 'r5'
   // CFOP step training
@@ -116,7 +119,14 @@ export interface EventInfo {
   nameEn: string;
   nameZh: string;
   /** Group for picker UI; events of same group are listed together */
-  group: 'wca' | 'bld' | 'relay' | 'puzzle' | 'cfop' | 'll' | 'misc';
+  group: 'wca' | 'bld' | 'relay' | 'puzzle' | 'nonwca' | 'cfop' | 'll' | 'misc';
+  /**
+   * cubing-icons key for pickers that render an icon grid (components/EventIcon
+   * `CubingIcon`). Only set for events the WCA icon set doesn't cover by id —
+   * i.e. the non-WCA puzzles, whose glyphs live under `unofficial-*`. WCA events
+   * are looked up as `event-<wca id>` and need nothing here.
+   */
+  icon?: string;
 }
 
 export const EVENTS: EventInfo[] = [
@@ -165,6 +175,15 @@ export const EVENTS: EventInfo[] = [
   { id: 'mmagic', nameEn: 'Master Magic',nameZh: '六块魔板',   group: 'puzzle'
 },
 
+  // Non-WCA puzzles. Names follow wiki/glossary.json (the site's term base),
+  // trimmed of the generic 「魔方」 suffix the way the WCA entries above are.
+  { id: 'fto',      nameEn: 'FTO',             nameZh: '转面八面体', group: 'nonwca', icon: 'unofficial-fto' },
+  { id: 'kilominx', nameEn: 'Kilominx',        nameZh: '二阶五魔',   group: 'nonwca', icon: 'unofficial-kilominx' },
+  { id: 'gear',     nameEn: 'Gear Cube',       nameZh: '齿轮魔方',   group: 'nonwca', icon: 'unofficial-gear' },
+  { id: 'ivy',      nameEn: 'Ivy Cube',        nameZh: '枫叶魔方',   group: 'nonwca', icon: 'unofficial-ivy' },
+  { id: 'redi',     nameEn: 'Redi Cube',       nameZh: '热帝魔方',   group: 'nonwca', icon: 'unofficial-redi' },
+  { id: 'mpyram',   nameEn: 'Master Pyraminx', nameZh: '四阶金字塔', group: 'nonwca', icon: 'unofficial-mpyram' },
+
   // CFOP step training
   { id: 'cross',  nameEn: 'Cross only',  nameZh: '十字训练',   group: 'cfop'
 },
@@ -190,3 +209,62 @@ export const EVENTS: EventInfo[] = [
 export function eventInfo(id: EventId): EventInfo {
   return EVENTS.find(e => e.id === id) ?? EVENTS[0];
 }
+
+/* ------------------------------------------------------------------ */
+/* Timer EventId ⇄ WCA / cubing.js spelling                            */
+/* ------------------------------------------------------------------ */
+//
+// Two other surfaces key on the WCA / cubing.js spelling of an event rather
+// than on our EventId:
+//
+//   1. the 1v1 Battle engine (app/[lang]/battle/_components/engine/*) — ported
+//      code whose puzzle ids double as the key of its own csTimer scrambler
+//      table (EVENT_TO_CSTIMER). Renaming them there would break that table,
+//      so we map instead.
+//   2. components/WcaEventSelector — its icon grid is keyed on WCA event ids.
+//
+// Both want the SAME spelling, so one table serves both. Only ids that
+// genuinely differ are listed; everything else round-trips unchanged.
+
+const TIMER_TO_WCA_SPELLING: Partial<Record<EventId, string>> = {
+  '333bld': '333bf',
+  '333mbld': '333mbf',
+  '444bld': '444bf',
+  '555bld': '555bf',
+  mega: 'minx',
+  pyra: 'pyram',
+};
+
+const WCA_SPELLING_TO_TIMER: Record<string, EventId> = Object.fromEntries(
+  Object.entries(TIMER_TO_WCA_SPELLING).map(([timerId, wcaId]) => [wcaId, timerId as EventId]),
+);
+
+/** Timer EventId → the WCA / cubing.js spelling (battle puzzle id, selector id). */
+export function toWcaSpelling(id: EventId): string {
+  return TIMER_TO_WCA_SPELLING[id] ?? id;
+}
+
+/** Inverse of `toWcaSpelling`. Unknown ids pass through (cast, not validated). */
+export function fromWcaSpelling(id: string): EventId {
+  return WCA_SPELLING_TO_TIMER[id] ?? (id as EventId);
+}
+
+/**
+ * The events 1v1 Battle offers, in the order its picker lists them — the single
+ * source of truth for the battle puzzle list. `battle/_components/engine/
+ * constants.ts` builds its `PUZZLES` array from this, so an event can never be
+ * added to one side only.
+ *
+ * Solo offers strictly more (relays, CFOP/LL trainers, custom, extra non-WCA
+ * puzzles); that asymmetry is intended — battle is a head-to-head race, so it
+ * only carries puzzles both players can actually be scored on.
+ */
+export const BATTLE_EVENT_IDS: ReadonlyArray<EventId> = [
+  '222', '333', '444', '555', '666', '777', '333oh',
+  '333bld', '444bld', '555bld', '333mbld',
+  'clock', 'mega', 'pyra', 'skewb', 'sq1',
+  'fto', 'kilominx',
+];
+
+/** `BATTLE_EVENT_IDS` in the battle engine's own spelling, same order. */
+export const BATTLE_PUZZLE_IDS: ReadonlyArray<string> = BATTLE_EVENT_IDS.map(toWcaSpelling);

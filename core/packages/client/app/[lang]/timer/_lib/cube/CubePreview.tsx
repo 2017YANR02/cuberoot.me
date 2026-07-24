@@ -10,9 +10,10 @@
  *
  *   pyra / skewb / sq1 / mega / clock                    → scramble-display
  *   222/333/444/555/666/777 + their bld/oh/fm variants   → scramble-display
+ *   fto                                                  → scramble-display
  *   r3 / r4 / r5                                         → 3x3 of first sub
  *   custom                                               → best-effort 3x3
- *   magic / mmagic                                       → blank "no preview"
+ *   magic / mmagic + the other non-WCA ids               → blank "no preview"
  */
 
 import type { JSX } from 'react';
@@ -111,6 +112,16 @@ export default function CubePreview(props: CubePreviewProps): JSX.Element {
     case 'sq1':
     case 'mega':
     case 'clock':
+    // FTO is the one non-WCA puzzle where csTimer's scramble notation is also
+    // valid cubing.js notation (verified in tests/timer_nonwca_scramble.test.ts,
+    // which applies every generated scramble to cubing.js's `fto` KPuzzle).
+    //
+    // The others deliberately fall through to the "no preview" box rather than
+    // risk drawing a wrong cube: kilominx / redi have a cubing.js puzzle but a
+    // DIFFERENT notation (csTimer emits corner grips like `DBL` / lowercase
+    // `r`, which cubing.js rejects — an unparseable alg would silently render a
+    // SOLVED puzzle), and gear / ivy / mpyram have no cubing.js puzzle at all.
+    case 'fto':
       return <CubingPreview event={event} scramble={scramble} size={size} height={height} className={className} visualization={v} />;
     case 'r3':
     case 'r4':

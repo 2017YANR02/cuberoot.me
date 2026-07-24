@@ -7,6 +7,10 @@
  *      coordinate first).
  *   2. Add the generator to the appropriate sibling file (bld/relay/etc.).
  *   3. Add a registerScramble(...) line below.
+ *
+ * For a non-WCA puzzle the vendored csTimer engine already scrambles, step 2 is
+ * just one line in `nonwca.ts`'s NON_WCA table — the loop at the bottom picks it
+ * up automatically. Do not hand-write a scrambler for those.
  */
 
 import { registerScramble } from './index';
@@ -31,6 +35,7 @@ import {
   scrambleEg2,
 } from './training';
 import { scrambleMagic, scrambleMmagic, scrambleCustom } from './others_extra';
+import { NON_WCA_EVENT_IDS, takeNonWcaScramble } from './nonwca';
 
 // We register inside a microtask so this side-effect runs AFTER index.ts has
 // finished evaluating its top-level statements — otherwise registerScramble's
@@ -69,4 +74,12 @@ registerScramble('eg2', scrambleEg2);
 registerScramble('magic', scrambleMagic);
 registerScramble('mmagic', scrambleMmagic);
 registerScramble('custom', scrambleCustom);
+
+// Non-WCA puzzles (FTO / Kilominx / …). The scrambles come from the vendored
+// csTimer engine in a Web Worker, so the sync generator here just drains the
+// queue nonwca.ts keeps topped up; '' means "still generating", and SoloView
+// fills it in (spinner) rather than falling through to a 3x3 scramble.
+for (const id of NON_WCA_EVENT_IDS) {
+  registerScramble(id, () => takeNonWcaScramble(id));
+}
 });

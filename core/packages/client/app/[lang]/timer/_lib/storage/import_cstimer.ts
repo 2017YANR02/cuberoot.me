@@ -58,6 +58,14 @@ const CSTIMER_EVENT_MAP: Record<string, EventId> = {
   'eg2': 'eg2',
   'magic': 'magic',
   'mmagic': 'mmagic',
+  // Non-WCA puzzles — inverse of EVENT_TO_CSTIMER_SCRTYPE in export_cstimer.ts,
+  // plus the plain ids so a hand-named session ("FTO") still resolves.
+  'fto': 'fto', 'ftoso': 'fto',
+  'kilominx': 'kilominx', 'klmso': 'kilominx', 'kilo': 'kilominx',
+  'gear': 'gear', 'gearso': 'gear', 'gearo': 'gear',
+  'ivy': 'ivy', 'ivyso': 'ivy', 'ivyo': 'ivy',
+  'redi': 'redi', 'rediso': 'redi',
+  'mpyram': 'mpyram', 'mpyrso': 'mpyram', 'mpyr': 'mpyram',
 };
 
 /* ------------------------------------------------------------------ */
