@@ -102,6 +102,29 @@ function phase1Heuristic(p: PruneTables, twist: number, flip: number, sliceRaw: 
   return Math.max(a, b);
 }
 
+/* ────────────────────────────────────────────────────────────────────── *
+ *  Hard deadline (opt-in via SolveOptions.hardTimeout)
+ *
+ *  `timeoutMs` 本身只在 phase-1 出解的回调里生效。高度对称的状态可能在某个
+ *  深度层里搜很久都不出 phase-1 解,那条回调根本不被调用,于是实际耗时能比
+ *  预算高一两个数量级。开 hardTimeout 后在 IDA 节点循环里按节点计数查时钟,
+ *  超时置 aborted、层层立即返回 false(不能返回 true —— 那在 search2 里会被
+ *  当成"找到解"而吐出错误路径)。
+ *  单线程 + 一次只跑一个 solveCube,模块级状态足够,不引入额外参数。
+ * ────────────────────────────────────────────────────────────────────── */
+
+let deadline = 0; // epoch ms;0 = 不启用
+let nodeTick = 0;
+let aborted = false;
+
+function timeUp(): boolean {
+  if (aborted) return true;
+  if (deadline === 0) return false;
+  if ((++nodeTick & 0x3ff) !== 0) return false;
+  if (Date.now() > deadline) { aborted = true; return true; }
+  return false;
+}
+
 /**
  * Run IDA* on phase 1; for each solution found at depth ≤ phase1MaxDepth,
  * yield it (as an array of move indices). Caller then runs phase 2 from
@@ -124,6 +147,7 @@ function ida1(
        limit <= maxDepth; limit++) {
     if (search1(startSt.twist, startSt.flip, startSt.sliceRaw, 0, limit, -1, path,
                 mt, pt, onSolution)) return;
+    if (aborted) return;
   }
 }
 
@@ -139,6 +163,7 @@ function search1(
   pt: PruneTables,
   onSolution: (sol: number[]) => boolean,
 ): boolean {
+  if (timeUp()) return false;
   if (depth === limit) {
     // Goal in phase-1 coord space?
     if (twist === 0 && flip === 0 && sliceRaw === 494) {
@@ -159,6 +184,7 @@ function search1(
     path[depth] = m;
     if (search1(newTwist, newFlip, newSliceRaw, depth + 1, limit, m, path, mt, pt, onSolution))
       return true;
+    if (aborted) return false;
   }
   return false;
 }
@@ -194,6 +220,7 @@ function ida2(
     if (search2(cperm, eperm, sperm, 0, limit, prevMoveLast, path, mt, pt)) {
       return Array.from(path.subarray(0, limit));
     }
+    if (aborted) return null;
   }
   return null;
 }
@@ -209,6 +236,7 @@ function search2(
   mt: MoveTables,
   pt: PruneTables,
 ): boolean {
+  if (timeUp()) return false;
   if (depth === limit) {
     return cperm === 0 && eperm === 0 && sperm === 0;
   }
@@ -224,6 +252,7 @@ function search2(
     path[depth] = m;
     if (search2(newCperm, newEperm, newSperm, depth + 1, limit, m, path, mt, pt))
       return true;
+    if (aborted) return false;
   }
   return false;
 }
@@ -237,8 +266,13 @@ export interface SolveOptions {
   maxTotalLen?: number;
   /** Stop searching once a solution of this length or shorter is found. Default 21. */
   targetLen?: number;
-  /** Hard timeout in ms (best-effort, checked between IDA depth bumps). */
+  /** Timeout in ms. Default 200. Only checked when a phase-1 solution surfaces
+   *  unless `hardTimeout` is set. */
   timeoutMs?: number;
+  /** 让 `timeoutMs` 成为真正的上限:在 IDA 节点循环里查时钟。默认关,因为开了
+   *  以后超时仍无解就会抛错(现有调用方靠"搜到为止"的宽松语义)。批量求解
+   *  一堆状态、必须卡住尾延迟时才开。 */
+  hardTimeout?: boolean;
   /** Search depth bound for phase 1. Default 12. */
   phase1MaxDepth?: number;
   /** Search depth bound for phase 2. Default 18. */
@@ -258,10 +292,16 @@ export function solveCube(
   const startTime = Date.now();
   const timeout = opts.timeoutMs ?? 200;
 
+  aborted = false;
+  nodeTick = 0;
+  deadline = opts.hardTimeout ? startTime + timeout : 0;
+
   let best: number[] | null = null;
 
   ida1(start, mt, pt, phase1Max, (phase1Sol) => {
-    if (Date.now() - startTime > timeout) return true;
+    // 软超时只用来"停止继续优化",不能让调用方空手而归 —— 手上还没有任何解就
+    // 收工,只会变成 "no solution found"。真正想卡住尾延迟的用 hardTimeout。
+    if (best && Date.now() - startTime > timeout) return true;
 
     // Apply phase-1 moves to get the starting state for phase 2.
     let cur = cloneCubie(start);
@@ -286,8 +326,11 @@ export function solveCube(
     return false;
   });
 
+  deadline = 0;
   if (!best) {
-    throw new Error('Kociemba: no solution found within depth bound');
+    throw new Error(aborted
+      ? `Kociemba: timed out after ${timeout}ms`
+      : 'Kociemba: no solution found within depth bound');
   }
   return best;
 }

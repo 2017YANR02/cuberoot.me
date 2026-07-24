@@ -1,0 +1,516 @@
+/* /scramble/symmetry —— 对称型工作台。双主题,全部走 :root token。 */
+
+.sym-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 4rem;
+  color: var(--foreground);
+}
+
+/*──────────────────── 页头 / 视图切换 ────────────────────*/
+
+.sym-header h1 {
+  margin: 0 0 0.4rem;
+  font-size: 1.9rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.sym-lead {
+  margin: 0;
+  max-width: 68ch;
+  color: var(--muted-foreground);
+  line-height: 1.7;
+  font-size: 0.9rem;
+}
+
+.sym-tabs {
+  display: flex;
+  gap: 0.3rem;
+  margin: 1.4rem 0 0.4rem;
+}
+
+.sym-tab {
+  padding: 0.34rem 0.85rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 0.86rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.sym-tab:hover { color: var(--foreground); }
+
+.sym-tab.is-on {
+  color: var(--accent-foreground);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+/*──────────────────── 区块骨架 ────────────────────*/
+
+.sym-block {
+  margin-top: 1.6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.55rem;
+}
+
+.sym-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.sym-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  letter-spacing: 0.02em;
+}
+
+.sym-hint {
+  margin: 0;
+  max-width: 74ch;
+  font-size: 0.78rem;
+  line-height: 1.65;
+  color: var(--muted-foreground);
+}
+
+.sym-warn {
+  margin: 0;
+  max-width: 74ch;
+  font-size: 0.78rem;
+  line-height: 1.65;
+  color: var(--signal-warning);
+}
+
+.sym-error { color: var(--destructive); font-size: 0.78rem; }
+
+.sym-muted { color: var(--muted-foreground); }
+
+.sym-typename {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+/*──────────────────── 表单件 ────────────────────*/
+
+.sym-select {
+  align-self: flex-start;
+  width: fit-content;
+  padding: 0.32rem 0.55rem;
+  border: 1px solid var(--input);
+  border-radius: 7px;
+  background: var(--card);
+  color: var(--foreground);
+  font-size: 0.84rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.sym-select:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
+.sym-select:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.sym-input {
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--input);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  line-height: 1.7;
+  resize: vertical;
+}
+
+.sym-input:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
+
+.sym-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.34rem 0.7rem;
+  border: 1px solid var(--border-default);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 0.82rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.sym-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--foreground) 6%, transparent); }
+.sym-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.sym-btn-primary {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-weight: 500;
+  padding: 0.42rem 1rem;
+}
+
+.sym-btn-primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--primary) 88%, black);
+}
+
+.sym-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.sym-chip {
+  min-width: 2rem;
+  padding: 0.26rem 0.6rem;
+  border: 1px solid var(--border-default);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+  font-family: var(--font-mono);
+  cursor: pointer;
+}
+
+.sym-chip:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+}
+
+.sym-chip.is-on {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.sym-chip:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.sym-opts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.4rem;
+}
+
+.sym-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.7rem;
+  margin-top: 1.5rem;
+}
+
+.sym-status {
+  margin-top: 0.9rem;
+  font-size: 0.82rem;
+  color: var(--muted-foreground);
+}
+
+.sym-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.45rem;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 0.74rem;
+  font-family: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.sym-copy:hover {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+}
+
+.sym-badge {
+  padding: 0.1rem 0.4rem;
+  border-radius: 5px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.sym-alg {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: var(--foreground);
+  word-break: break-word;
+}
+
+/*──────────────────── 类型信息 ────────────────────*/
+
+.sym-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.8rem;
+  margin: 0;
+  width: 100%;
+}
+
+.sym-facts > div { display: flex; flex-direction: column; gap: 0.1rem; }
+.sym-facts-wide { flex-basis: 100%; }
+
+.sym-facts dt {
+  font-size: 0.72rem;
+  color: var(--faint-foreground);
+  letter-spacing: 0.02em;
+}
+
+.sym-facts dd {
+  margin: 0;
+  font-size: 0.86rem;
+  font-family: var(--font-mono);
+  color: var(--foreground);
+}
+
+.sym-facts-wide dd { font-family: inherit; line-height: 1.6; }
+
+/*──────────────────── 48 元素网格 ────────────────────*/
+
+.sym-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  width: 100%;
+}
+
+.sym-class {
+  display: grid;
+  grid-template-columns: 6.5rem 1fr;
+  align-items: start;
+  gap: 0.5rem;
+}
+
+.sym-class-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  padding-top: 0.28rem;
+}
+
+.sym-class-name {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--foreground);
+}
+
+.sym-class-name em {
+  font-style: normal;
+  color: var(--muted-foreground);
+  margin-right: 0.1rem;
+}
+
+.sym-class-note {
+  font-size: 0.68rem;
+  line-height: 1.35;
+  color: var(--faint-foreground);
+}
+
+.sym-class-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.sym-el {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0.16rem 0.4rem 0.16rem 0.24rem;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--foreground) 3%, transparent);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+button.sym-el:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--foreground) 9%, transparent);
+}
+
+button.sym-el:disabled { cursor: not-allowed; opacity: 0.6; }
+span.sym-el { cursor: default; }
+
+.sym-el.is-on {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--signal-success) 18%, transparent);
+  border-color: color-mix(in srgb, var(--signal-success) 55%, transparent);
+}
+
+.sym-el.is-anti {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--signal-info) 18%, transparent);
+  border-color: color-mix(in srgb, var(--signal-info) 55%, transparent);
+}
+
+.sym-el-label { line-height: 1; }
+
+/*──────────────────── 元素图示 ────────────────────*/
+
+.sym-glyph { display: block; flex: none; overflow: visible; }
+
+.sym-glyph.tone-face { --sym-tone: var(--destructive); }
+.sym-glyph.tone-corner { --sym-tone: var(--signal-success); }
+.sym-glyph.tone-edge { --sym-tone: var(--signal-info); }
+.sym-glyph.tone-point { --sym-tone: var(--accent); }
+
+.sym-glyph-face {
+  stroke: color-mix(in srgb, var(--foreground) 32%, transparent);
+  stroke-width: 0.7;
+  stroke-linejoin: round;
+}
+
+.sym-glyph-face-u { fill: color-mix(in srgb, var(--foreground) 14%, transparent); }
+.sym-glyph-face-r { fill: color-mix(in srgb, var(--foreground) 8%, transparent); }
+.sym-glyph-face-f { fill: color-mix(in srgb, var(--foreground) 3%, transparent); }
+
+.sym-glyph-plane {
+  fill: color-mix(in srgb, var(--sym-tone) 32%, transparent);
+  stroke: var(--sym-tone);
+  stroke-width: 1;
+  stroke-linejoin: round;
+}
+
+.sym-glyph-axis {
+  stroke: var(--sym-tone);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.sym-glyph-dot { fill: var(--sym-tone); }
+
+.sym-glyph-dot.is-hollow {
+  fill: var(--background);
+  stroke: var(--sym-tone);
+  stroke-width: 1.2;
+}
+
+/*──────────────────── 结果 / 分析 / 图鉴 的行 ────────────────────*/
+
+.sym-cube { display: block; flex: none; line-height: 0; }
+.sym-cube svg { display: block; }
+
+.sym-cube-empty {
+  width: 72px;
+  height: 72px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+}
+
+.sym-results {
+  list-style: none;
+  margin: 1.2rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+  gap: 1.1rem 1.6rem;
+}
+
+.sym-result {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.sym-result-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.sym-result-head {
+  display: flex;
+  gap: 0.6rem;
+  font-size: 0.74rem;
+}
+
+.sym-result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.1rem;
+}
+
+.sym-analyzed,
+.sym-catalog {
+  list-style: none;
+  margin: 1.2rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+.sym-analyzed-row,
+.sym-cat-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.9rem;
+}
+
+.sym-analyzed-body,
+.sym-cat-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.sym-analyzed-facts,
+.sym-cat-head,
+.sym-cat-facts,
+.sym-cat-alg {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.8rem;
+  font-size: 0.78rem;
+}
+
+.sym-cat-desc {
+  margin: 0;
+  max-width: 70ch;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+}
+
+/*──────────────────── 窄屏 ────────────────────*/
+
+@media (max-width: 640px) {
+  .sym-page { padding: 1rem 0.75rem 3rem; }
+  .sym-header h1 { font-size: 1.45rem; }
+
+  .sym-class {
+    grid-template-columns: 1fr;
+    gap: 0.2rem;
+  }
+
+  .sym-class-head {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 0.4rem;
+    padding-top: 0;
+  }
+
+  .sym-results { grid-template-columns: 1fr; }
+
+  .sym-opts { gap: 0.45rem 1rem; }
+}
