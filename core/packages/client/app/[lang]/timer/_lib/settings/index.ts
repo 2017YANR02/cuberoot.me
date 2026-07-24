@@ -6,6 +6,7 @@
  * re-render when settings change.
  */
 
+import { DEFAULT_ROUND_CONFIG, type RoundConfig } from '../round';
 import { useSyncExternalStore } from 'react';
 import { persistItem } from '@/lib/safe-storage';
 
@@ -26,14 +27,8 @@ export interface TimerSettings {
   /** Hide running time (show only "...") until the timer stops. */
   hideTime: boolean;
 
-  /** Cube preview color override (hex). null → use WCA defaults. */
-  colors: Partial<Record<'U'|'D'|'F'|'B'|'L'|'R', string>>;
-
   /** Show the cube net preview alongside the scramble. */
   showCubePreview: boolean;
-
-  /** Show histogram + trend charts in the bottom panel. */
-  showCharts: boolean;
 
   /** Final-result precision: 2 = centiseconds (x.xx), 3 = milliseconds (x.xxx). */
   precision: 2 | 3;
@@ -64,9 +59,6 @@ export interface TimerSettings {
 
   /** Render the scramble preview as 3D drag-rotatable cube instead of 2D net. */
   prefer3D: boolean;
-
-  /** Show the GitHub-style practice heatmap in the bottom panel. */
-  showHeatmap: boolean;
 
   /** Track CFOP stage splits (cross / F2L / OLL / PLL) on NxN events. */
   multiStage: boolean;
@@ -198,6 +190,34 @@ export interface TimerSettings {
   bluetoothAutoReady: 'off' | 'still' | 'double-flick';
 
   /**
+   * How the live smart-cube mirror (the corner window that appears once a cube
+   * is connected) renders.
+   *   '2d' — the flat net. Works for every event and needs only the move stream.
+   *   '3d' — a three.js cube whose orientation follows the cube's gyroscope.
+   *          Only some protocols carry orientation at all, so this is a request,
+   *          not a guarantee: with no gyro samples the view stays on the net
+   *          rather than showing a frozen 3D cube. Also forces the gyro stream
+   *          on, which costs battery — hence opt-in.
+   */
+  liveCubeView: '2d' | '3d';
+
+  /**
+   * Keyboard-binding OVERRIDES for the rebindable timer actions — not the
+   * resolved map. Merged over `DEFAULT_KEYMAP` (see ../keymap.ts), so bindings
+   * added in a later release still reach a user who customised one key. An
+   * explicit `null` means "unbound" and survives the merge.
+   */
+  keymap: Record<string, import('../keymap').TimerActionId | null>;
+
+  /**
+   * Round simulation — practise under real WCA round conditions (format,
+   * cutoff, time limit). The round's attempts are NOT persisted: solves are
+   * stored as usual and the round is just a tail slice of them, so there is no
+   * second source of truth to keep in sync. See ../round.ts.
+   */
+  round: RoundConfig;
+
+  /**
    * When the inspection countdown begins.
    *   'down' — first space-down (current cstimer behaviour)
    *   'up'   — only on key release; matches stackmat habit
@@ -238,9 +258,7 @@ export const DEFAULTS: TimerSettings = {
   soundsEnabled: false,
   volume: 0.5,
   hideTime: false,
-  colors: {},
   showCubePreview: true,
-  showCharts: true,
   precision: 3,
   runningPrecision: 3,
   timerFontScale: 1,
@@ -250,7 +268,6 @@ export const DEFAULTS: TimerSettings = {
   holdMs: 550,
   compactScramble: false,
   prefer3D: false,
-  showHeatmap: true,
   multiStage: false,
   bldMemo: true,
   preScr: '',    // (UF)
@@ -290,6 +307,9 @@ export const DEFAULTS: TimerSettings = {
   syncSeedCounter: 0,
   autoBackupEvery: 10,
   bluetoothAutoReady: 'off',
+  liveCubeView: '2d',
+  keymap: {},
+  round: DEFAULT_ROUND_CONFIG,
   inspectionTrigger: 'down',
   targetMsByEvent: {},
   dailySolveGoal: null,

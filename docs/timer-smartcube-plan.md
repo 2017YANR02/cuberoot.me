@@ -275,6 +275,20 @@ FMC mo3 已经有了（`stats.ts:164`），缺的是**显示** —— `timeMs = 
 
 交付时如实列出「已证 / 未证」两栏。
 
+## 对拍抓到的真 bug（2026-07-24，无硬件验证的第一批战果）
+
+`tests/bluetooth_parity.test.ts` 跑通后，立刻在**现有**驱动里抓到三个此前无人发现的缺陷。三个都靠「与 cstimer 原版对拍」判定，不需要硬件：
+
+1. **`qiyi.ts` 把每一个转向都读反了。** cstimer `qiyicube.js:199` 是 `power = [0, 2][mv & 1]`（奇数码 = 逆时针），我们 `qiyi.ts:335` 写成 `(mv & 1) !== 0 ? 0 : 2`（奇数码 = 顺时针）。字节 1..12 在 cstimer 解出 `L' L R' R D' D U' U F' F B' B`，我们解出的正好是整个镜像。面和丢帧恢复都对，唯独方向位反了 —— **所有奇艺智能魔方的每一步都是反的**。**已修复（2026-07-24）**，并加了一条硬编码 cstimer 真值表的回归钉，外加显式 `not.toEqual(镜像)` 断言（原来的表征测试只比面、方向反了照样过）。
+2. **`giiker.ts` 把 0xA7 混淆帧全丢了。** cstimer 的 `toHexVal` 去混淆后会 `raw.slice(0, 18)`，即 36 个 nibble；而 `giiker.ts:173` 写着 `if (valhex.length < 40) return;` —— 36 < 40，帧被直接丢弃。解密代码是写对了的，但结果在下一个函数里被扔掉。**跑混淆固件的 Giiker / 小米魔方能连上、然后一步都不上报。****已修复（2026-07-24）**：下限改 36，`diffMoves` 按实际窗口长度工作（明文 40 nibble = 4 步历史，去混淆 36 nibble = 2 步）；36 这个常数由测试里跑 cstimer 自己的 `toHexVal` 断言得出，不是我们的解读。
+3. **`moyu.ts` 把旋转增量当有符号读，cstimer 当无符号。** `moyucube.js:80` 是 `Math.round(getUint8(off+5) / 36)`，我们 `moyu.ts:83` 把 >127 转成负数。增量字节 `0xE2` 时 cstimer 出 `D`、我们什么都不出，而且 `faceStatus` 累加器从此错位。哪种读法物理上正确需要硬件才能定，cstimer 是我们唯一的判据，所以先标记不擅自「归一化」。 **已修复（2026-07-24）**：改为 `getUint8`，与上游一致；同时 `faceStatus` 回到上游字面式 `(curRot + 9) % 9`。副作用是逆时针分支从此不可达 —— 上游 `moyucube.js:86-87` 同样不可达，属忠实移植而非新引入，已在文件头注明。
+
+另有一批「不算 bug 但已记录」的差异（GAN v2 mode-4 播种没有 cstimer 的 `CubieCube.verify()` 门、QiYi 未知 opcode 的 `lastTs` 更新时机、QiYi 缺 facelet 交叉校验、GoCube keep-alive 节奏），以及几处**我们比 cstimer 更安全**的地方（越界招式码 cstimer 会直接抛异常，我们有护栏）。全部写在测试文件的注释里。
+
+**三个修复都做了突变验证**（把 bug 逐个塞回去确认对应的钉会红，再还原）：qiyi 反转 → 6 红；giiker 守卫改回 `< 40` → 1 红；moyu 改回 int8 → 2 红。parity 套件现在 47/47 全绿，零 expected-failure。
+
+**副产物**：并行 agent 正在重构 `gan_v2.ts` 时，harness 立刻抓到了半保存状态（15 个失败），改完又回到全绿 —— 顺带证明了新抽出的 `deriveKeyFromMac` 产出的握手密文与 cstimer 仍然逐字节一致。
+
 ## 执行顺序与并行划分
 
 用 workflow 并行推进，**按文件域切分，避免撞车**。`SoloView.tsx` 是所有人都想碰的热点文件 —— 它只由一个 agent 串行改，其他 agent 把需要的改动以 patch 描述交回。

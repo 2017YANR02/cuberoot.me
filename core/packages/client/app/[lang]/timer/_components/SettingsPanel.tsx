@@ -4,7 +4,7 @@
  * Settings panel — modal launched from the topbar gear button.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, ChevronRight, CloudDownload, CloudUpload, Download, FileSpreadsheet, LogIn, RefreshCw, Target, X } from 'lucide-react';
 import { formatTargetTime, parseDailySolveGoal, parseTargetTime, resetSettings, updateSettings, useSettings } from '../_lib/settings';
 import TimerFontPicker from '@/components/TimerFontPicker';
@@ -19,13 +19,22 @@ import { uploadBackup, restoreFromCloud, fetchBackupMeta, formatSyncTime, type C
 import { useAuthStore } from '@/lib/auth-store';
 import { reanalyzeAll } from '../_lib/storage/reanalyze';
 import { eventInfo, type EventId } from '../_lib/types';
-import { WCA_COLORS } from '../_lib/cube/colors';
 import { wcaEventId, WCA_OPTIMAL_EVENTS } from '../_lib/scramble/wca_pool';
 import { PRE_SCRAMBLES } from '../_lib/scramble/pre_scramble';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { CountryInput } from '@/components/CountryInput';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { tr } from '@/i18n/tr';
+import { cutoffPhase, roundAttempts, type RoundFormat } from '../_lib/round';
+import {
+  RESERVED_BINDINGS,
+  TIMER_ACTIONS,
+  bindingForEvent,
+  bindingsForAction,
+  formatBinding,
+  resolveKeymap,
+  type TimerActionId,
+} from '../_lib/keymap';
 // .settings-row* 原语来自 wca-source.css(现已提取到共享 components/)—— 以前靠
 // WcaSourceConfig 顺带 import 进来,「打乱来源」那节移出后这里得自己 import,否则每个 Row 掉样式。
 import '@/components/wca-source.css';
@@ -182,6 +191,23 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
     const parsed = parseDailySolveGoal(raw);
     updateSettings({ dailySolveGoal: parsed });
     setGoalInput(parsed === null ? '' : String(parsed));
+  }
+
+  // Round-simulation cutoff / time limit. Free-form while editing, committed on
+  // blur or Enter, exactly like the target-time field above — and parsed by the
+  // same `parseTargetTime`, so `1:00`, `60`, `10.50` all mean what they look like.
+  const [roundCutoffInput, setRoundCutoffInput] = useState<string>(() => formatTargetTime(s.round.cutoffMs));
+  const [roundLimitInput, setRoundLimitInput] = useState<string>(() => formatTargetTime(s.round.limitMs));
+  // 0 until a cutoff is actually typed in, which would make the hint read
+  // "the first 0 attempts" — fall back to the clamped configured length so the
+  // sentence still describes what will happen once a value lands.
+  const roundAttemptCount = roundAttempts(s.round.format);
+  const roundCutoffPhase = cutoffPhase(s.round, roundAttemptCount)
+    || Math.max(1, Math.min(s.round.cutoffAttempts, roundAttemptCount - 1));
+  function commitRoundLimitField(field: 'cutoffMs' | 'limitMs', raw: string): void {
+    const parsed = parseTargetTime(raw);
+    updateSettings({ round: { ...s.round, [field]: parsed } });
+    (field === 'cutoffMs' ? setRoundCutoffInput : setRoundLimitInput)(formatTargetTime(parsed));
   }
 
   const [beepAtInput, setBeepAtInput] = useState<string>(() => (s.inspectionBeepAt ?? []).join(','));
@@ -594,6 +620,20 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
             })}</option>
             </select>
             <span className="hint">{tr({ zh: "still = 解完后保持 2 秒不动；double-flick = 解完后做 U U' U U' 确认", en: "still = solved + 2s no move; double-flick = perform U U' U U' to confirm"
+            })}</span>
+          </Row>
+          <Row label={tr({ zh: '实况魔方小窗', en: 'Live cube window'
+        })}>
+            <PillToggle
+              value={s.liveCubeView === '3d'}
+              onChange={(v) => updateSettings({ liveCubeView: v ? '3d' : '2d' })}
+              onLabel={tr({ zh: '三维', en: '3D' })}
+              offLabel={tr({ zh: '展开图', en: 'Net' })}
+              ariaLabel={tr({ zh: '实况魔方小窗渲染方式', en: 'Live cube window rendering' })}
+            />
+            <span className="hint">{tr({
+              zh: '连上智能魔方后右下角的小窗。三维模式跟随魔方陀螺仪转动，仅三阶、且魔方本身推送姿态时生效，否则自动退回展开图',
+              en: 'The corner window shown once a cube is connected. 3D follows the cube’s gyroscope — 3x3 only, and only when the cube actually reports orientation; otherwise it falls back to the net',
             })}</span>
           </Row>
           <Row label={tr({ zh: '隐藏运行中的时间', en: 'Hide time while running'
@@ -1203,14 +1243,6 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
             <span className="hint">{tr({ zh: '可拖动旋转；关闭则展开 2D 平面', en: 'drag to rotate; off = 2D net'
             })}</span>
           </Row>
-          <Row label={tr({ zh: '显示图表', en: 'Show charts'
-        })}>
-            <BoolToggle value={s.showCharts} onChange={(v) => updateSettings({ showCharts: v })} />
-          </Row>
-          <Row label={tr({ zh: '显示练习日历', en: 'Show practice heatmap'
-        })}>
-            <BoolToggle value={s.showHeatmap} onChange={(v) => updateSettings({ showHeatmap: v })} />
-          </Row>
           <Row label={tr({ zh: '点击打乱条', en: 'Scramble click action'
         })}>
             <select
@@ -1258,37 +1290,83 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
         </AccordionSection>
 
         <AccordionSection
-          id="cube-colors"
-          title={tr({ zh: '配色（魔方面）', en: 'Cube colors' })}
+          id="round"
+          title={tr({ zh: '轮次模拟', en: 'Round simulation' })}
+          defaultExpanded={false}
+          useMobile={isMobile}
+          expanded={expandedSections}
+          setExpanded={setExpandedSections}
+          headerControl={
+            <BoolToggle
+              value={s.round.on}
+              onChange={(v) => updateSettings({ round: { ...s.round, on: v } })}
+            />
+          }
+        >
+          <Row label={tr({ zh: '赛制', en: 'Format' })}>
+            <select
+              className="settings-row-control-select"
+              value={s.round.format}
+              onChange={(e) => updateSettings({ round: { ...s.round, format: e.target.value as RoundFormat } })}
+            >
+              <option value="ao5">{tr({ zh: '五次去头尾平均 (ao5)', en: 'Average of 5' })}</option>
+              <option value="mo3">{tr({ zh: '三次均值 (mo3)', en: 'Mean of 3' })}</option>
+              <option value="bo3">{tr({ zh: '三次取最好 (bo3)', en: 'Best of 3' })}</option>
+              <option value="bo1">{tr({ zh: '一次 (bo1)', en: 'Best of 1' })}</option>
+            </select>
+            <span className="hint">{tr({
+              zh: '按真实比赛轮次练习。成绩照常记录，轮次只跟踪最近这一组，不额外存东西',
+              en: 'Practise under real round conditions. Solves are recorded as usual — the round is just the most recent group of them',
+            })}</span>
+          </Row>
+          <Row label={tr({ zh: '过关线', en: 'Cutoff' })}>
+            <input
+              type="text"
+              value={roundCutoffInput}
+              placeholder={tr({ zh: '留空 = 无', en: 'blank = none' })}
+              onChange={(e) => setRoundCutoffInput(e.target.value)}
+              onBlur={(e) => commitRoundLimitField('cutoffMs', e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') commitRoundLimitField('cutoffMs', (e.target as HTMLInputElement).value); }}
+              style={{ fontFamily: 'ui-monospace, monospace' }}
+            />
+            <span className="hint">{tr({
+              zh: `前 ${roundCutoffPhase} 把里至少一把严格快过它，才能继续后面的把数（WCA 9g）`,
+              en: `at least one of the first ${roundCutoffPhase} attempts must be strictly faster to continue (WCA 9g)`,
+            })}</span>
+          </Row>
+          <Row label={tr({ zh: '时限', en: 'Time limit' })}>
+            <input
+              type="text"
+              value={roundLimitInput}
+              placeholder={tr({ zh: '留空 = 无', en: 'blank = none' })}
+              onChange={(e) => setRoundLimitInput(e.target.value)}
+              onBlur={(e) => commitRoundLimitField('limitMs', e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') commitRoundLimitField('limitMs', (e.target as HTMLInputElement).value); }}
+              style={{ fontFamily: 'ui-monospace, monospace' }}
+            />
+            <PillToggle
+              value={s.round.cumulative}
+              onChange={(v) => updateSettings({ round: { ...s.round, cumulative: v } })}
+              onLabel={tr({ zh: '累计', en: 'cumulative' })}
+              offLabel={tr({ zh: '每把', en: 'per attempt' })}
+              ariaLabel={tr({ zh: '时限口径', en: 'Time-limit basis' })}
+            />
+            <span className="hint">{tr({
+              zh: '每把 = 单把时限（WCA A1a1）；累计 = 整轮共用一份额度（A1a2），用完后剩余把数记 DNS',
+              en: 'per attempt = a limit on each solve (WCA A1a1); cumulative = one budget for the whole round (A1a2) — attempts left once it runs out are DNS',
+            })}</span>
+          </Row>
+        </AccordionSection>
+
+        <AccordionSection
+          id="keymap"
+          title={tr({ zh: '快捷键', en: 'Shortcuts' })}
           defaultExpanded={false}
           useMobile={isMobile}
           expanded={expandedSections}
           setExpanded={setExpandedSections}
         >
-          <div className="color-grid">
-            {(['U', 'D', 'F', 'B', 'L', 'R'] as const).map(face => {
-              const cur = s.colors[face] ?? WCA_COLORS[face];
-              return (
-                <label key={face} className="color-cell">
-                  <span>{face}</span>
-                  <input
-                    type="color"
-                    value={cur}
-                    onChange={(e) => updateSettings({
-                      colors: { ...s.colors, [face]: e.target.value },
-                    })}
-                  />
-                </label>
-              );
-            })}
-          </div>
-          <button
-            className="reset-btn"
-            onClick={() => updateSettings({ colors: {} })}
-          >
-            {tr({ zh: '恢复 WCA 配色', en: 'Reset to WCA colors'
-            })}
-          </button>
+          <KeymapEditor />
         </AccordionSection>
 
         <div className="modal-actions">
@@ -1315,5 +1393,107 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
       <span className="settings-row-label">{label}</span>
       <span className="settings-row-control">{children}</span>
     </div>
+  );
+}
+
+/**
+ * Keyboard-binding editor for the rebindable timer actions.
+ *
+ * Capture-on-press rather than an on-screen keyboard grid: /sim's keymap UI
+ * uses a grid because its bindings are one key → one move, but the timer needs
+ * `Shift+` combinations, which a flat grid cannot express. `keyLabel` (the part
+ * that IS shared) is reused via `formatBinding`.
+ *
+ * Only Shift is offered as a modifier — Ctrl/Meta belong to the browser and the
+ * OS, and shadowing Ctrl+D or Cmd+F would be hostile.
+ */
+function KeymapEditor() {
+  const s = useSettings();
+  const keymap = useMemo(() => resolveKeymap(s.keymap), [s.keymap]);
+  const [capturing, setCapturing] = useState<TimerActionId | null>(null);
+  const [rejected, setRejected] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!capturing) return;
+    const onKey = (e: KeyboardEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.code === 'Escape') { setCapturing(null); setRejected(null); return; }
+      // Shift alone isn't a binding — the user is still mid-chord.
+      if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') return;
+      const binding = bindingForEvent(e);
+      if (!binding) {
+        setRejected(tr({ zh: 'Ctrl / Cmd / Alt 组合键留给浏览器，不能占用', en: 'Ctrl / Cmd / Alt combinations belong to the browser' }));
+        return;
+      }
+      if (RESERVED_BINDINGS.has(binding)) {
+        setRejected(tr({
+          zh: `${formatBinding(binding)} 是计时器自己的按键（开始 / 停止 / 取消），不能改绑`,
+          en: `${formatBinding(binding)} is the timer's own key (start / stop / cancel) and can't be rebound`,
+        }));
+        return;
+      }
+      // Rebinding a key that already has an owner moves it; the old action is
+      // left unbound rather than silently firing two things on one press.
+      const next: Record<string, TimerActionId | null> = { ...s.keymap };
+      for (const [b, a] of Object.entries(keymap)) {
+        if (a === capturing) next[b] = null;      // clear this action's old keys
+      }
+      next[binding] = capturing;
+      updateSettings({ keymap: next });
+      setCapturing(null);
+      setRejected(null);
+    };
+    // Capture phase: the timer's own window listener must not see these.
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [capturing, keymap, s.keymap]);
+
+  return (
+    <>
+      {TIMER_ACTIONS.map(action => {
+        const bindings = bindingsForAction(keymap, action.id);
+        const active = capturing === action.id;
+        return (
+          <Row key={action.id} label={tr(action)}>
+            <button
+              type="button"
+              className="keymap-bind-btn"
+              data-capturing={active ? 'true' : undefined}
+              onClick={() => { setCapturing(active ? null : action.id); setRejected(null); }}
+            >
+              {active
+                ? tr({ zh: '按下新按键…（Esc 取消）', en: 'Press a key… (Esc to cancel)' })
+                : bindings.length > 0
+                  ? bindings.map(formatBinding).join(' / ')
+                  : tr({ zh: '未绑定', en: 'Unbound' })}
+            </button>
+            {bindings.length > 0 && !active && (
+              <button
+                type="button"
+                className="hint-btn"
+                onClick={() => {
+                  const next: Record<string, TimerActionId | null> = { ...s.keymap };
+                  for (const b of bindings) next[b] = null;
+                  updateSettings({ keymap: next });
+                }}
+              >
+                {tr({ zh: '解除', en: 'Unbind' })}
+              </button>
+            )}
+          </Row>
+        );
+      })}
+      {rejected && <div className="keymap-reject">{rejected}</div>}
+      <div className="keymap-actions">
+        <button
+          type="button"
+          className="hint-btn"
+          onClick={() => updateSettings({ keymap: {} })}
+        >
+          {tr({ zh: '恢复默认快捷键', en: 'Reset shortcuts to defaults' })}
+        </button>
+      </div>
+    </>
   );
 }

@@ -495,6 +495,9 @@
 
 /* ── 窄屏(<480px):玩家条纵向密排,大厅输入行可换行 ───────── */
 @media (max-width: 480px) {
+  /* 顶栏右侧多了「智能魔方」按钮,窄屏一行要挤;房间码本身就够辨识,
+     省掉前面「房间」二字正好把这一格补回来,不必让整条右组换行。 */
+  .net-code-label { display: none; }
   .net-players { gap: 2px 14px; padding-top: 6px; }
   .net-p-name { max-width: 7em; }
   .net-lobby { margin-top: 24px; }
