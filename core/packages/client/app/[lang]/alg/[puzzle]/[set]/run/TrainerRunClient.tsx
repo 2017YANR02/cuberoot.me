@@ -6,7 +6,7 @@ import Link from '@/components/AppLink';
 import { useParams } from 'next/navigation';
 import { useQueryState } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Settings, Copy, Check } from 'lucide-react';
+import { ArrowLeft, Settings, Copy, Check, QrCode } from 'lucide-react';
 import { getAlgSetMeta, loadAlg, type AlgCase } from '@cuberoot/shared';
 import { useTrainerStore, TimerState, trainerPool } from '@/lib/trainer-store';
 import TimerFontPicker from '@/components/TimerFontPicker';
@@ -27,8 +27,9 @@ import { availableKinds, purifyScramble, SCRAMBLE_KINDS, type ScrambleKind } fro
 import { useTrainerMarks, markStatus, markStarred, type CaseMarkStatus } from '@/lib/trainer-marks';
 import { ALG_SET_UNIVERSE } from '@/lib/alg_probability';
 import {
-  TimerDisplay, ScrambleHeader, SolveCard, StatsList, CaseMarkBar,
+  TimerDisplay, ScrambleHeader, SolveCard, StatsList, HistoryList, CaseMarkBar,
 } from '@/app/[lang]/alg/_trainer/trainer-components';
+import { RoomQrModal } from '@/app/[lang]/alg/_trainer/RoomQrModal';
 import { resolveAlgPuzzle } from '@/app/[lang]/alg/_trainer/events';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '@/app/[lang]/alg/_trainer/trainer.css';
@@ -123,6 +124,7 @@ export default function TrainerRunClient() {
   const pinObserving = useTrainerStore(s => s.pinObserving);
   const nextScramble = useTrainerStore(s => s.nextScramble);
   const prevScramble = useTrainerStore(s => s.prevScramble);
+  const jumpToHist = useTrainerStore(s => s.jumpToHist);
   const recapRoundDone = useTrainerStore(s => s.recapRoundDone);
   const continueRecapRound = useTrainerStore(s => s.continueRecapRound);
   const getTimerReady = useTrainerStore(s => s.getTimerReady);
@@ -305,17 +307,22 @@ export default function TrainerRunClient() {
   const [copied, setCopied] = useState(false);
   const [metaCase, setMetaCase] = useState<AlgCase | null>(null);
   const [joinCode, setJoinCode] = useState('');
+  const [qrOpen, setQrOpen] = useState(false);
 
-  // 复制邀请链接(当前页 URL + ?room=CODE):队友粘到浏览器打开即自动加入本房间。
-  // 当前在用三条一屏(不计时)时带上 ?multi=1,让队友打开也套用同一视图。
-  const copyRoomLink = useCallback(() => {
-    if (typeof window === 'undefined' || !room) return;
+  // 邀请链接 = 当前页 URL + ?room=CODE(队友粘到浏览器 / 扫码打开即自动加入本房间)。
+  // 当前在用三条一屏(不计时)时带上 ?multi=1,让队友打开也套用同一视图。复制与二维码同一份。
+  const roomInviteUrl = useCallback((): string | null => {
+    if (typeof window === 'undefined' || !room) return null;
     const u = new URL(window.location.href);
     u.searchParams.set('room', room.code);
     if (multiScramble && !timing) u.searchParams.set('multi', '1');
     else u.searchParams.delete('multi');
-    copyCode(u.toString());
-  }, [room, multiScramble, timing, copyCode]);
+    return u.toString();
+  }, [room, multiScramble, timing]);
+  const copyRoomLink = useCallback(() => {
+    const url = roomInviteUrl();
+    if (url) copyCode(url);
+  }, [roomInviteUrl, copyCode]);
 
   // 手动输码加入:成功后清输入框并把码写进 ?room=,使地址栏成为可分享链接。
   const doJoin = useCallback(() => {
@@ -445,7 +452,7 @@ export default function TrainerRunClient() {
     const isBlank = (t: EventTarget | null): boolean => {
       if (shouldIgnoreTimerTarget(t)) return false;
       if (!(t instanceof Element)) return false;
-      return t.closest('.trainer-stage, .trainer-sidebar, .alg-admin-modal-backdrop, .gesture-wheel') === null;
+      return t.closest('.trainer-stage, .trainer-sidebar, .alg-admin-modal-backdrop, .gesture-wheel, .trainer-qr-backdrop') === null;
     };
     let pressed = false;
     const down = (e: PointerEvent) => {
@@ -610,8 +617,11 @@ export default function TrainerRunClient() {
     if (timerState === TimerState.NOT_RUNNING) advanceScramble();
   };
 
-  // 不计时没有用时可统计,统计卡片(和它的开关)整块不出现,不是留一个空/永远关着的卡片
+  // 计时:统计=成绩用时列表。不计时:同一个开关切成「历史」=打乱历史列表(点某条跳回看那条打乱)。
+  // 两者用同一 showStats 偏好,互补出现;都开着侧栏才铺。
   const statsVisible = timing && showStats;
+  const historyVisible = !timing && showStats;
+  const sidebarShown = showPrevCard || (showNextCard && !multi) || statsVisible || historyVisible;
 
   // pre-AUF 只对「顶层 case + U 可作 AUF」的场景有意义(F2L 类打乱前加 U 会换 case)
   const preAufSupported = (puzzle === '3x3' || puzzle === '2x2') && cases[0]?.sticker.kind !== 'f2l';
@@ -719,6 +729,15 @@ export default function TrainerRunClient() {
                           <span className="trainer-room-badge-label">{tr({ zh: '房间', en: 'Room' })}</span>
                           <span className="trainer-room-badge-code">{room.code}</span>
                           {codeCopied ? <Check size={13} /> : <Copy size={13} className="trainer-room-badge-copy" />}
+                        </button>
+                        <button
+                          type="button"
+                          className="trainer-room-qr-btn"
+                          onClick={() => setQrOpen(true)}
+                          title={tr({ zh: '二维码(队友扫码加入)', en: 'QR code (teammates scan to join)' })}
+                          aria-label={tr({ zh: '房间二维码', en: 'Room QR code' })}
+                        >
+                          <QrCode size={15} />
                         </button>
                         <span className="trainer-opts-label">
                           {tr({ zh: '全队', en: 'Team' })} {roomClaimed}/{room.total}
@@ -830,13 +849,12 @@ export default function TrainerRunClient() {
                     label={tr({ zh: '三条一屏', en: 'Three at once' })}
                   />
                 )}
-                {timing && (
-                  <BoolToggle
-                    value={showStats}
-                    onChange={setShowStats}
-                    label={tr({ zh: '统计', en: 'Stats' })}
-                  />
-                )}
+                {/* 计时 = 成绩统计;不计时 = 打乱历史(查看以前的打乱)。同一开关,标签随模式变。 */}
+                <BoolToggle
+                  value={showStats}
+                  onChange={setShowStats}
+                  label={timing ? tr({ zh: '统计', en: 'Stats' }) : tr({ zh: '历史', en: 'History' })}
+                />
               </div>
               {/* 三条一屏时「下一个」已经在主屏第 2 条里,那张卡片不出 —— 开关一起隐掉,
                   不留一个按了没反应的死开关;「上一个」则整屏回看,改叫「上三个」。 */}
@@ -892,7 +910,7 @@ export default function TrainerRunClient() {
         </div>
       </div>
 
-      <div className={`trainer-run${showPrevCard || (showNextCard && !multi) || statsVisible ? '' : ' trainer-run--solo'}`}>
+      <div className={`trainer-run${sidebarShown ? '' : ' trainer-run--solo'}`}>
         <div className="trainer-stage" ref={stageRef}>
           {/* 三条一屏:当前 + 屏上第 2、3 条(队尾时 = 预抽的 peek / peek2,回看过则是历史里
               后两条),拧完三条再点一次切下一屏。打乱与图交错成六行,每条紧跟自己那张图。
@@ -1023,7 +1041,7 @@ export default function TrainerRunClient() {
           )}
         </div>
 
-        {(showPrevCard || (showNextCard && !multi) || statsVisible) && (
+        {sidebarShown && (
           <aside className="trainer-sidebar">
             {/* 上一个:刚做完那把(图+名+打乱)+ 标记条,标记打在这把上。第一把之前无成绩,不出。
                 三条一屏 → 上三个:上一屏那三条各一张卡片,每张自带标记条(键盘 1-4 仍打最近那条)。 */}
@@ -1085,6 +1103,16 @@ export default function TrainerRunClient() {
                 }}
               />
             )}
+            {/* 不计时:打乱历史列表(点某条 = 跳回看那条打乱),方便回看以前的打乱。 */}
+            {historyVisible && (
+              <HistoryList
+                hist={hist}
+                cases={cases}
+                puzzle={puzzle}
+                set={setSlug}
+                onPick={jumpToHist}
+              />
+            )}
           </aside>
         )}
       </div>
@@ -1101,6 +1129,14 @@ export default function TrainerRunClient() {
           onJump={(c) => setMetaCase(c)}
         />
       )}
+
+      {/* 房间邀请二维码:队友扫码即进房。room 消失(离开)自动收起。 */}
+      {qrOpen && room && (() => {
+        const url = roomInviteUrl();
+        return url ? (
+          <RoomQrModal url={url} code={room.code} onClose={() => setQrOpen(false)} />
+        ) : null;
+      })()}
 
       {/* 在线房间复习:全队刷完本轮共享队列 → 弹「本轮复习结束」,「继续下一轮」全员一起开新一轮。 */}
       {recapRoundDone && room && (
