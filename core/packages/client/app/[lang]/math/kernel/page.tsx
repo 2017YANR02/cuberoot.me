@@ -64,6 +64,8 @@ const PUZZLES: Puz[] = [
   { key: '3x3x3', sim: '3', zh: '三阶', en: '3×3×3', path: 'pg', solvable: false },
   { key: '3x3x3', sim: 'mirror', zh: '镜面魔方', en: 'Mirror Cube', path: 'pg', solvable: false,
     note: { zh: '机械上就是三阶,复用其群', en: 'mechanically a 3×3×3 — reuses its group' } },
+  { key: '2x2x2', sim: 'mirror2', zh: '二阶镜面', en: 'Mirror 2×2', path: 'pg', solvable: true,
+    note: { zh: '机械上就是二阶,复用其群', en: 'mechanically a 2×2×2 — reuses its group' } },
   { key: '4x4x4', sim: '4', zh: '四阶', en: '4×4×4', path: 'pg', solvable: false },
   { key: '5x5x5', sim: '5', zh: '五阶', en: '5×5×5', path: 'pg', solvable: false },
   { key: 'pyraminx', sim: 'pyraminx', zh: '金字塔', en: 'Pyraminx', path: 'pg', solvable: true },

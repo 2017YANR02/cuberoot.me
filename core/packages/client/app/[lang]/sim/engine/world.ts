@@ -30,7 +30,7 @@ export interface SmplxBodyAsset { geometry: THREE.BufferGeometry; heightM: numbe
  *  Heli (edge-turning Helicopter Cube), Skewb (deep-cut corner-turning), or Pyraminx
  *  (vertex-turning tetrahedron). Skewb + Pyraminx are the in-house engine alternatives
  *  to the cubing.js TwistyPlayer renders (chosen via the `renderer` toggle). */
-export type PuzzleKind = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'skewb' | 'pyraminx' | 'megaminx' | 'fto' | 'mirror';
+export type PuzzleKind = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'skewb' | 'pyraminx' | 'megaminx' | 'fto' | 'mirror' | 'mirror2';
 
 export default class World {
   public width = 1;
@@ -62,9 +62,10 @@ export default class World {
   private pyraCube: PyraCube | null = null;
   private megaCube: MegaminxCube | null = null;
   private ftoCube: FtoCube | null = null;
-  /** Mirror Cube (Bump Cube) — an order-3 Cube with non-uniform geometry; separate
-   *  cache so it never collides with the plain 3x3 in cubes[3]. */
-  private mirrorCube: Cube | null = null;
+  /** Mirror Cube (Bump Cube) — a Cube with non-uniform geometry, keyed by order
+   *  (3 = 'mirror', 2 = 'mirror2'); separate cache so it never collides with the
+   *  plain cube of the same order in cubes[order]. */
+  private mirrorCubes: Record<number, Cube> = {};
   /** Current puzzle kind, mirrors what was last passed to setPuzzle. */
   public puzzleKind: PuzzleKind = 3;
   public callbacks: (() => void)[] = [];
@@ -308,14 +309,16 @@ export default class World {
       // the SQ1 rim-light rig (51 solid wedge cells, many oblique facets).
       if (this.controller) this.controller.disable = true;
       this._ensureSq1Lights();
-    } else if (kind === 'mirror') {
-      if (this.mirrorCube == null) {
-        this.mirrorCube = new Cube(3, true);
-        this.mirrorCube.callbacks.push(this.callback);
-        this.mirrorCube.instancedRenderer.thickness = true;
+    } else if (kind === 'mirror' || kind === 'mirror2') {
+      const n = kind === 'mirror2' ? 2 : 3;
+      if (this.mirrorCubes[n] == null) {
+        const c = new Cube(n, true);
+        c.callbacks.push(this.callback);
+        c.instancedRenderer.thickness = true;
+        this.mirrorCubes[n] = c;
       }
-      this.cube = this.mirrorCube;
-      // Mirror Cube IS a 3x3 — the NxN Controller applies unchanged (logical layer is
+      this.cube = this.mirrorCubes[n];
+      // A Mirror Cube IS an NxN — the NxN Controller applies unchanged (logical layer is
       // uniform; only the geometry is non-uniform), so no dedicated drag handler and
       // no rim-light rig (it's a full cube like NxN, not a small oblique solid).
       if (this.controller) this.controller.disable = false;

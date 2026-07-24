@@ -290,7 +290,8 @@ const PUZZLE_TYPE_OPTIONS = [
   { value: 'rex',      iconClass: 'unofficial-rex', labelZh: 'Rex', labelEn: 'Rex Cube' },
   { value: 'heli',     iconClass: 'unofficial-helicopter', labelZh: '直升机', labelEn: 'Helicopter' },
   { value: 'gear',     iconClass: 'unofficial-gear', labelZh: '齿轮', labelEn: 'Gear Cube' },
-  { value: 'mirror',   iconClass: 'event-333', labelZh: '镜面', labelEn: 'Mirror' },
+  { value: 'mirror',   iconClass: 'unofficial-333_mirror_blocks', labelZh: '镜面', labelEn: 'Mirror' },
+  { value: 'mirror2',  iconClass: 'unofficial-222_mirror_blocks', labelZh: '二阶镜面', labelEn: 'Mirror 2x2' },
 ] as const;
 
 // Engine puzzles above + cubing.js PuzzleGeometry puzzles (explore set, rendered
@@ -385,7 +386,7 @@ function randomMoveScrambleNxN(N: number): string {
 }
 
 /** SimPage puzzle kind. */
-export type SimPuzzle = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'pyraminx' | 'skewb' | 'megaminx' | 'fto' | 'mirror' | 'custom' | PgPuzzleId;
+export type SimPuzzle = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'pyraminx' | 'skewb' | 'megaminx' | 'fto' | 'mirror' | 'mirror2' | 'custom' | PgPuzzleId;
 
 function isTwistyPuzzle(p: SimPuzzle): p is 'pyraminx' | 'skewb' | 'megaminx' | 'fto' {
   return p === 'pyraminx' || p === 'skewb' || p === 'megaminx' || p === 'fto';
@@ -2622,7 +2623,7 @@ function PuzzleSettings({
   // dropdown). Adding a puzzle's controls = one simCaps entry, never an edit to the JSX.
   const caps = resolveCaps(puzzleKind, renderer);
   const isNxNLocal = typeof puzzleKind === 'number';
-  const isMirror = puzzleKind === 'mirror';
+  const isMirror = puzzleKind === 'mirror' || puzzleKind === 'mirror2';
   // 灰掉「该拼图暂不支持」的控件时,hover 给出统一说明。engineMode 拼图(斜转/金字塔/五魔/FTO)
   // 在 cubing.js 渲染下引擎特性不生效,但切到「群论内核」即点亮 → 附一句提示往哪切;PG 探索
   // 拼图切渲染也不会启用(引擎未建),只给通用说明。
@@ -2742,7 +2743,7 @@ function PuzzleSettings({
                 value={typeof puzzleKind === 'number' ? 'nxn' : String(puzzleKind)}
                 isZh={isZh}
                 onChange={(v) => {
-                  if (v === 'sq1' || v === 'ivy' || v === 'dino' || v === 'redi' || v === 'rex' || v === 'heli' || v === 'gear' || v === 'pyraminx' || v === 'skewb' || v === 'megaminx' || v === 'fto' || v === 'mirror' || v === 'custom') onPuzzleChange(v);
+                  if (v === 'sq1' || v === 'ivy' || v === 'dino' || v === 'redi' || v === 'rex' || v === 'heli' || v === 'gear' || v === 'pyraminx' || v === 'skewb' || v === 'megaminx' || v === 'fto' || v === 'mirror' || v === 'mirror2' || v === 'custom') onPuzzleChange(v);
                   else if (isPgPuzzleId(v)) onPuzzleChange(v as PgPuzzleId);
                   else onPuzzleChange(order || 3);
                 }}
