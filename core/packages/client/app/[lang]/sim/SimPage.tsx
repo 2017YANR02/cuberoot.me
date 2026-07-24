@@ -201,13 +201,14 @@ const SR_ANGLE_BASE: Partial<Record<PuzzleType, {
 
 /** Engine puzzle kinds that have a PG group-theory binding (kept in sync with the
  *  pgBindings registry + GroupTheoryPanel.PG_BOUND). Gates the `renderer='group'` panel. */
-const PG_BOUND_KINDS = new Set<string>(['pyraminx', 'skewb', 'dino', 'heli', 'megaminx', 'fto', 'redi', 'ivy', 'rex', 'mirror']);
+const PG_BOUND_KINDS = new Set<string>(['pyraminx', 'skewb', 'dino', 'heli', 'megaminx', 'fto', 'redi', 'ivy', 'rex', 'mirror', 'mirror2']);
 
 /** Narrow `world.cube` to the NxN Cube type. Returns null for every non-NxN engine puzzle.
- *  正向判断(NxN = 数字阶数 或 mirror),不再用排除法枚举 —— 旧写法漏了 'pyraminx',
+ *  正向判断(NxN = 数字阶数 或 镜面),不再用排除法枚举 —— 旧写法漏了 'pyraminx',
  *  stickering effect 对 PyraCube 取 instancedRenderer 直接崩整页(?puzzle=pyraminx 白屏)。 */
 function asNxN(world: World): Cube | null {
-  return (typeof world.puzzleKind === 'number' || world.puzzleKind === 'mirror') ? (world.cube as Cube) : null;
+  const k = world.puzzleKind;
+  return (typeof k === 'number' || k === 'mirror' || k === 'mirror2') ? (world.cube as Cube) : null;
 }
 
 /** 3x3 sticker click rules. See Vite original for the geometry derivation. */
@@ -304,7 +305,7 @@ export default function SimPage() {
     if (raw === 'pyraminx' || raw === 'skewb' || raw === 'megaminx') return raw;
     if (raw === 'fto') return 'fto';
     if (raw === 'custom') return 'custom';
-    if (raw === 'mirror') return 'mirror';
+    if (raw === 'mirror' || raw === 'mirror2') return raw;
     if (isPgPuzzleId(raw)) return raw as SimPuzzle;
     const n = parseInt(raw, 10);
     if (!Number.isFinite(n) || n < 1 || n > 400) return 3;
@@ -321,18 +322,19 @@ export default function SimPage() {
 
   // The puzzle-image studio is mounted as the /sim 图像 panel — every puzzle has it. Its
   // puzzle is NOT chosen inside the panel — the sim's own puzzle dropdown is the single
-  // selector, mapped here into the studio's vocabulary (mirror → order-3 cube).
+  // selector, mapped here into the studio's vocabulary (mirror → cube of that order).
   // spec 渲染器(visualcube / sr)认识的拼图走完整 studio;其余(fto / 枫叶 / 恐龙 /
   // 齿轮 / PG 目录 / 自定义切割…)走 engine-only 模式 —— 伴图 = 实时矢量镜像(引擎
   // world 走 BSP/示意导出;twisty 渲染时从 TwistyPlayer vantage 投影,同截图 SVG 路径),
   // 面板只剩预览 + 截图组 + SVG/PNG 下载。
   const imgSpecRenderable = typeof puzzleParam === 'number' || puzzleParam === 'mirror'
-    || puzzleParam === 'sq1' || puzzleParam === 'skewb'
+    || puzzleParam === 'mirror2' || puzzleParam === 'sq1' || puzzleParam === 'skewb'
     || puzzleParam === 'pyraminx' || puzzleParam === 'megaminx';
   const imageStudioEngineOnly = !imgSpecRenderable;
   const imgPuzzle = useMemo((): { puzzleType: PuzzleType; cubeSize: number } => {
     if (typeof puzzleParam === 'number') return { puzzleType: 'cube', cubeSize: puzzleParam };
     if (puzzleParam === 'mirror') return { puzzleType: 'cube', cubeSize: 3 };
+    if (puzzleParam === 'mirror2') return { puzzleType: 'cube', cubeSize: 2 };
     if (puzzleParam === 'sq1' || puzzleParam === 'skewb'
       || puzzleParam === 'pyraminx' || puzzleParam === 'megaminx') {
       return { puzzleType: puzzleParam, cubeSize: 3 };
@@ -1445,9 +1447,10 @@ export default function SimPage() {
   const handlePuzzle = useCallback((kind: SimPuzzle) => {
     setPuzzleKind(kind);
     if (typeof kind === 'number') setOrder(kind);
-    // Mirror Cube is an order-3 NxN under the hood — pin order to 3 so the NxN
-    // scramble/play path (which reads `order`) drives a standard 3x3.
+    // A Mirror Cube is an NxN under the hood — pin `order` to its logical order so the
+    // NxN scramble/play path (which reads `order`) drives a standard 3x3 / 2x2.
     else if (kind === 'mirror') setOrder(3);
+    else if (kind === 'mirror2') setOrder(2);
     const world = worldRef.current;
     // Always write the puzzle id (incl. '3') so it's forced into the URL — never
     // omit it, or the selection reads back as the 3x3 default on reload/share.

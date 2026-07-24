@@ -1102,7 +1102,7 @@ export default class InstancedRenderer extends THREE.Group {
 
   /** Switch this renderer to mirror-cube geometry: build per-instance center/scale from
    *  the layer-thickness tables, then rebuild every matrix. Called once right after
-   *  construction by the mirror Cube (order 3). */
+   *  construction by a mirror Cube (order 3 or 2). */
   enableMirror(): void {
     // 镜面块形非均匀,±HALF 理想晶格四边形不成立 → 摘掉示意标记,伴图回退实模 BSP
     delete this.staticSticker.userData.schematicInstancedPoly;
@@ -1120,13 +1120,11 @@ export default class InstancedRenderer extends THREE.Group {
     }
     this._mirrorCenters = centers;
     this._mirrorScales = scales;
-    // Core-cubie center = the point all 3 turn axes pass through. For an odd order it is
-    // the dead-center cubie (lx=ly=lz=(order-1)/2); the layers being non-uniform puts it
-    // off the bounding-box origin, so face turns must pivot here (see _mirrorPivot).
-    const order = this.cube.order;
-    const c = (order - 1) / 2;
-    const centerInit = c * order * order + c * order + c;
-    const pc = tables.center(centerInit);
+    // The core = the point all 3 turn axes pass through (odd order: the dead-center
+    // cubie's centre; even order: the one triple cut-plane intersection). The layers
+    // being non-uniform puts it off the bounding-box origin, so face turns must pivot
+    // here (see _mirrorPivot).
+    const pc = tables.pivot();
     this._mirrorPivot = new THREE.Vector3(pc[0], pc[1], pc[2]);
     this.rebuildAll();
   }
