@@ -20,12 +20,20 @@
  * reproducible from the seed printed in the test name.
  *
  * ---------------------------------------------------------------------------
- * KNOWN DIVERGENCES (real bugs found by this harness) — see the QiYi block:
- *   * QiYi move direction is INVERTED in our driver. csTimer decodes
- *     `power = [0, 2][mv & 1]` (odd move byte -> prime); `qiyi.ts` decodes
- *     `(mv & 1) !== 0 ? 0 : 2` (odd move byte -> clockwise). Every QiYi turn
- *     comes out mirrored. Pinned below by `it.fails` + an exact
- *     characterisation test; NOT papered over.
+ * BUGS THIS HARNESS FOUND — all three are now FIXED, and each has a dedicated
+ * regression test that goes red the moment the old behaviour comes back:
+ *   * QiYi move direction was INVERTED (`qiyi.ts` decoded `(mv & 1) ? 0 : 2`
+ *     where csTimer decodes `power = [0, 2][mv & 1]`). Pinned by
+ *     "move direction matches csTimer" + "REGRESSION PIN: … not the mirror".
+ *   * Giiker dropped every 0xA7-obfuscated frame (`valhex.length < 40` guard
+ *     vs csTimer's 36-nibble de-obfuscated output). Pinned by
+ *     "0xA7-obfuscated frames decode like csTimer" + the toHexVal length
+ *     contract test that asserts 40 / 36 straight out of csTimer's own code.
+ *   * MoYu read the rotation delta as a SIGNED int8 where csTimer uses
+ *     `getUint8`. Pinned by "delta bytes > 127 decode like csTimer".
+ *
+ * DOCUMENTED (still-open) divergences live in the tests named
+ * "DOCUMENTED DIVERGENCE"; they are behavioural choices, not defects.
  * ---------------------------------------------------------------------------
  */
 
@@ -37,7 +45,7 @@ import { gocubeDriver } from '@/app/[lang]/timer/_lib/bluetooth/gocube';
 import { moyuDriver } from '@/app/[lang]/timer/_lib/bluetooth/moyu';
 import { giikerDriver } from '@/app/[lang]/timer/_lib/bluetooth/giiker';
 import { makeFakeGatt, type FakeCharacteristic, type FakeWrite } from '@/tests/_fake_gatt';
-import { createCstimerSandbox, cstimerFileExists, type CstimerSandbox } from '@/tests/_cstimer_sandbox';
+import { createCstimerSandbox, cstimerFileExists, extractFunction, type CstimerSandbox } from '@/tests/_cstimer_sandbox';
 import {
   GAN_V2_SERVICE, GAN_V2_READ, GAN_V2_WRITE, QIYI_SERVICE, QIYI_CHAR,
   installGanCrypto, installQiyiCrypto, type GanCrypto, type QiyiCrypto,
@@ -453,20 +461,21 @@ describeIf('QiYi <-> csTimer qiyicube.js', () => {
   });
 
   /* ----------------------------------------------------------------
-   * FOUND BUG — QiYi turn direction is inverted in `qiyi.ts`.
+   * FIXED BUG (was: QiYi turn direction inverted in `qiyi.ts`).
    *
-   *   csTimer  (qiyicube.js:199)  power = [0, 2][mv & 1]
+   *   csTimer  (qiyicube.js:199)  var power = [0, 2][todoMoves[i][0] & 1];
    *                               -> odd  move byte => power 2 => "X'"
    *                               -> even move byte => power 0 => "X"
-   *   ours     (qiyi.ts:335)      power = (mv & 1) !== 0 ? 0 : 2
-   *                               -> odd  move byte => "X"
-   *                               -> even move byte => "X'"
+   *   ours BEFORE (qiyi.ts:174)   power = (mv & 1) !== 0 ? 0 : 2
+   *   ours AFTER                  power = (mv & 1) !== 0 ? 2 : 0
    *
-   * `it.fails` keeps the suite green while pinning the defect: the moment
-   * `qiyi.ts` is fixed, THIS test starts failing and must be promoted to a
-   * plain `it`. Do not delete it to make things quiet.
+   * The two tests below are the regression pins: the first walks all 12 move
+   * bytes through both implementations, the second asserts we are NOT the
+   * mirror image (which is what re-introducing the bug would produce).
    * ---------------------------------------------------------------- */
-  it.fails('KNOWN BUG: full move stream should match csTimer (direction is inverted)', async () => {
+
+  /** Drive move bytes 1..12 through both sides; returns the rig. */
+  async function sweepAllMoveBytes(): Promise<QiyiRig> {
     const rig = await makeQiyiRig();
     const solved = qiyiResetCube(rig.sb);
     rig.feed(rig.crypto.build(qiyiFrameBody({ opcode: 2, ts: 1000, facelet: solved, battery: 70 })));
@@ -479,35 +488,31 @@ describeIf('QiYi <-> csTimer qiyicube.js', () => {
         history: [{ ts: 0, mv: 0 }],
       })));
     }
+    return rig;
+  }
+
+  it('move direction matches csTimer for every move byte 1..12', async () => {
+    const rig = await sweepAllMoveBytes();
     expectSameMoves(rig.ourMoves, rig.cstimerMoves(), 'qiyi-direction');
   });
 
-  it('characterises the QiYi divergence EXACTLY: face is right, direction is flipped', async () => {
-    const rig = await makeQiyiRig();
-    const solved = qiyiResetCube(rig.sb);
-    rig.feed(rig.crypto.build(qiyiFrameBody({ opcode: 2, ts: 1000, facelet: solved, battery: 70 })));
-    let ts = 1000;
-    for (let mv = 1; mv <= 12; mv++) {
-      ts += 500;
-      const facelet = qiyiApplyMoves(rig.sb, [mv]);
-      rig.feed(rig.crypto.build(qiyiFrameBody({
-        opcode: 3, ts, facelet, curMove: mv, battery: 70,
-        history: [{ ts: 0, mv: 0 }],
-      })));
-    }
+  it('REGRESSION PIN: the QiYi move table is csTimer’s, not the mirror', async () => {
+    const rig = await sweepAllMoveBytes();
     const theirs = rig.cstimerMoves();
+    // csTimer's ground truth for move bytes 1..12 (odd byte -> prime).
     expect(theirs).toEqual([
       "L'", 'L', "R'", 'R', "D'", 'D', "U'", 'U', "F'", 'F', "B'", 'B',
     ]);
-    // Same 12 axes, in the same order...
+    expect(rig.ourMoves).toEqual(theirs);
+    // The axis choice was never wrong, so an equal-faces assertion alone would
+    // NOT catch a re-inversion. Assert the directions explicitly too.
     expect(rig.ourMoves.map(faceOnly)).toEqual(theirs.map(faceOnly));
-    // ...but every single direction is the opposite one.
     const flip = (m: string): string => (m.endsWith("'") ? m.slice(0, -1) : `${m}'`);
-    expect(rig.ourMoves).toEqual(theirs.map(flip));
+    expect(rig.ourMoves).not.toEqual(theirs.map(flip));
   });
 
   for (const seedName of ['qi-alpha', 'qi-bravo', 'qi-charlie', 'qi-delta']) {
-    it(`randomised session: AXIS sequence matches csTimer (seed=${seedName})`, async () => {
+    it(`randomised session matches csTimer move-for-move (seed=${seedName})`, async () => {
       const rand = xorshift32(fnv1a32(seedName));
       const rig = await makeQiyiRig();
       const sc = buildQiyiScenario(rig.sb, rig.crypto, rand, { rounds: 35 });
@@ -518,11 +523,10 @@ describeIf('QiYi <-> csTimer qiyicube.js', () => {
       // proves the harness (history window, drop recovery, CRC, AES) is right.
       expectSameMoves(theirs, sc.expected, `qiyi-truth/${seedName}`);
       expect(theirs.length).toBeGreaterThan(35);
-      // Our driver picks the same faces in the same order and recovers exactly
-      // the same dropped-frame history — only the direction bit is inverted.
+      // Our driver picks the same faces in the same order, decodes the same
+      // directions, and recovers exactly the same dropped-frame history.
       expectSameMoves(rig.ourMoves.map(faceOnly), theirs.map(faceOnly), `qiyi-face/${seedName}`);
-      const flip = (m: string): string => (m.endsWith("'") ? m.slice(0, -1) : `${m}'`);
-      expectSameMoves(rig.ourMoves, theirs.map(flip), `qiyi-flip/${seedName}`);
+      expectSameMoves(rig.ourMoves, theirs, `qiyi-full/${seedName}`);
     });
   }
 
@@ -728,32 +732,39 @@ describeIf('MoYu AI <-> csTimer moyucube.js', () => {
   });
 
   /* ----------------------------------------------------------------
-   * FOUND DIVERGENCE — MoYu rotation delta signedness.
+   * FIXED BUG (was: MoYu rotation delta read as a SIGNED int8).
    *
-   *   csTimer (moyucube.js:80)  dir = Math.round(getUint8(off+5) / 36)
+   *   csTimer (moyucube.js:80)  var dir = Math.round(data.getUint8(offset + 5) / 36);
    *                             -> byte 0xE2 (226) => dir = +6
-   *   ours    (moyu.ts:83)      re-interprets the byte as SIGNED int8
+   *   ours BEFORE (moyu.ts:88)  dirSigned = raw > 127 ? raw - 256 : raw
    *                             -> byte 0xE2 => -30 => dir = -1
+   *   ours AFTER                dir = Math.round(dv.getUint8(offset + 5) / 36)
    *
-   * Consequence: for any delta byte > 127 the two implementations disagree on
-   * both the emitted move and the stored `faceStatus` accumulator, so the
-   * streams desynchronise from that point on. Which reading is physically
-   * right cannot be settled without hardware; csTimer is our only oracle, so
-   * this is flagged, not silently normalised.
+   * With the signed reading, every delta byte > 127 disagreed on BOTH the
+   * emitted move and the stored `faceStatus` accumulator, so the streams
+   * desynchronised from that point on — moves went missing for good.
    * ---------------------------------------------------------------- */
-  it.fails('KNOWN DIVERGENCE: delta bytes > 127 should decode like csTimer', async () => {
-    const rig = await makeMoyuRig();
-    rig.feed(moyuTurnFrame([{ ts: 65536, face: 0, dir: 0xe2 }]));
-    expectSameMoves(rig.ourMoves, rig.cstimerMoves(), 'moyu-signed');
-  });
-
-  it('characterises the MoYu signedness divergence exactly', async () => {
+  it('delta bytes > 127 decode like csTimer (unsigned, not int8)', async () => {
     const rig = await makeMoyuRig();
     rig.feed(moyuTurnFrame([{ ts: 65536, face: 0, dir: 0xe2 }]));
     // csTimer reads 226 -> +6 steps -> crosses the boundary -> emits "D".
     expect(rig.cstimerMoves()).toEqual(['D']);
-    // We read 226 as -30 -> -1 step -> no boundary crossing -> emit nothing.
-    expect(rig.ourMoves).toEqual([]);
+    // An int8 reading would give -30 -> -1 step -> no crossing -> nothing.
+    expect(rig.ourMoves).not.toEqual([]);
+    expectSameMoves(rig.ourMoves, rig.cstimerMoves(), 'moyu-unsigned');
+  });
+
+  it('REGRESSION PIN: high delta bytes keep faceStatus in sync across frames', async () => {
+    const rig = await makeMoyuRig();
+    // Every byte here is >= 0x80, i.e. exactly the range the int8 bug broke.
+    // The accumulator must walk 0 -> 6 -> 12%9=3 -> 9%9=0 -> 5 on face 0,
+    // so csTimer emits on the 1st and 4th frame; a signed reading would run
+    // the accumulator backwards and emit nothing at all.
+    for (const dir of [0xe2, 0xe2, 0xe2, 0xff]) {
+      rig.feed(moyuTurnFrame([{ ts: 65536, face: 0, dir }]));
+    }
+    expect(rig.cstimerMoves().length).toBeGreaterThan(0);
+    expectSameMoves(rig.ourMoves, rig.cstimerMoves(), 'moyu-facestatus');
   });
 });
 
@@ -865,31 +876,62 @@ describeIf('Giiker <-> csTimer giikercube.js', () => {
   }
 
   /* ----------------------------------------------------------------
-   * FOUND BUG — our Giiker driver drops EVERY 0xA7-obfuscated frame.
+   * FIXED BUG (was: our Giiker driver dropped EVERY 0xA7-obfuscated frame).
    *
    *   csTimer (giikercube.js:84)  raw = raw.slice(0, 18) after decrypting,
    *                               so `valhex` is 36 nibbles and the move
    *                               window it reads is `valhex.slice(32, 40)`
    *                               -> only 2 entries -> ONE move per frame.
-   *   ours    (giiker.ts:173)     `if (valhex.length < 40) return;`
-   *                               -> 36 < 40, so the frame is discarded and
-   *                                  no move is ever emitted.
+   *   ours BEFORE (giiker.ts:173) `if (valhex.length < 40) return;`
+   *                               -> 36 < 40, so the frame was discarded and
+   *                                  no move was ever emitted.
+   *   ours AFTER                  `if (valhex.length < 36) return;` plus a
+   *                               variable-length history window (4 moves on
+   *                               plain frames, 2 on de-obfuscated ones).
    *
-   * Net effect: on the obfuscated Giiker / Mi Smart firmware our timer sees a
-   * connected cube that never reports a turn. The decrypt code in `toHexVal`
-   * is present but its output is thrown away one function later.
+   * Net effect of the bug: on the obfuscated Giiker / Mi Smart firmware our
+   * timer saw a connected cube that never reported a turn. The decrypt code in
+   * `toHexVal` was present but its output was thrown away one function later.
    * ---------------------------------------------------------------- */
-  it.fails('KNOWN BUG: 0xA7-obfuscated frames should decode like csTimer', async () => {
-    const { rig } = await obfuscatedRun();
-    expectSameMoves(rig.ourMoves, rig.cstimerMoves(), 'giiker-obfuscated');
-  });
-
-  it('characterises the Giiker obfuscated-frame bug exactly', async () => {
+  it('0xA7-obfuscated frames decode like csTimer', async () => {
     const { rig, expected } = await obfuscatedRun();
     // csTimer decodes all four (init readValue + 3 notifications).
     expect(rig.cstimerMoves()).toEqual(expected);
-    // We emit nothing at all — every obfuscated frame fails the `< 40` guard.
-    expect(rig.ourMoves).toEqual([]);
+    // Anything that drops obfuscated frames emits [] here.
+    expect(rig.ourMoves).not.toEqual([]);
+    expectSameMoves(rig.ourMoves, rig.cstimerMoves(), 'giiker-obfuscated');
+  });
+
+  /**
+   * REGRESSION PIN for the guard constant. Runs csTimer's OWN `toHexVal` (a
+   * self-contained function inside `execMain`, sliced out by brace matching)
+   * so the 40-vs-36 contract comes from upstream, not from our reading of it.
+   * A `< 40` guard cannot survive this test plus the one above.
+   */
+  it('csTimer’s toHexVal yields 40 nibbles plain / 36 de-obfuscated', async () => {
+    const rig = await makeGiikerRig(giikerStateFrame({ moves: [{ face: 1, dir: 1 }] }));
+    rig.sb.run(`
+      ${extractFunction(rig.sb.source('hardware/giikercube.js'), 'toHexVal')}
+      function __hex(bytes) {
+        var ab = new ArrayBuffer(bytes.length);
+        var u8 = new Uint8Array(ab);
+        for (var i = 0; i < bytes.length; i++) u8[i] = bytes[i] & 0xff;
+        return toHexVal(new DataView(ab));
+      }
+    `);
+    const plain = giikerStateFrame({ moves: [{ face: 2, dir: 1 }, { face: 3, dir: 2 }] });
+    const hex = (frame: number[]): number[] => {
+      rig.sb.run(`__hexIn = ${JSON.stringify(frame)};`);
+      return Array.from(rig.sb.run<ArrayLike<number>>('__hex(__hexIn)'), Number);
+    };
+    const plainHex = hex(plain);
+    const obfHex = hex(obfuscate(plain.slice(0, 18), 3, 9));
+    expect(plainHex.length).toBe(40);
+    expect(obfHex.length).toBe(36);
+    // ...and the newest move still sits at nibbles 32/33 in BOTH variants, so
+    // the emitted stream is variant-independent.
+    expect(plainHex.slice(32, 34)).toEqual([2, 1]);
+    expect(obfHex.slice(32, 34)).toEqual([2, 1]);
   });
 });
 

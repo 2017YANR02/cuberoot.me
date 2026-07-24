@@ -14,9 +14,10 @@
  *   3. A value the user typed in a previous session (persisted per device).
  *   4. A manual prompt (handled by the hook / UI layer, not here).
  *
- * This module is faithful to cstimer's `gancube.js` / `bluetooth.js`:
- *   - the GAN company-identifier-code (CIC) list,
- *   - the "last 6 manufacturer-data bytes, reversed" MAC layout.
+ * Brands disagree on BOTH halves of this, so both are parameterised (see
+ * `MacAdvSpec`): the CIC list to ask Chrome for, and how to read six bytes
+ * out of the manufacturer payload. Faithful to cstimer's `gancube.js`,
+ * `moyu32cube.js`, `qiyicube.js` / `qiyitimer.js` and `bluetooth.js`.
  */
 
 import { persistItem } from '@/lib/safe-storage';
@@ -27,6 +28,89 @@ import { persistItem } from '@/lib/safe-storage';
  * CIC has changed across firmware batches.
  */
 export const GAN_CIC_LIST: number[] = Array.from({ length: 256 }, (_v, i) => (i << 8) | 0x01);
+
+/**
+ * Company Identifier Codes MoYu32 (WCU_MY32_*) cubes advertise under:
+ * 0x0100 .. 0xFF00, i.e. `(i + 1) << 8` for i in 0..254.
+ *
+ * cstimer's `moyu32cube.js` explains why the list looks like this: once the
+ * cube is bound in the WCU app its CIC becomes the two high bytes of the
+ * 32-bit account ID (little-endian), so it is effectively arbitrary. 0x0000
+ * is deliberately EXCLUDED — Chromium's `WTF::HashMap` rejects 0 as a key and
+ * asking for it breaks `device.gatt.connect()` outright. Consequence: unbound
+ * cubes, and cubes bound to an account ID below 65536, have no auto-MAC and
+ * fall through to the manual prompt.
+ */
+export const MOYU32_CIC_LIST: number[] = Array.from({ length: 255 }, (_v, i) => (i + 1) << 8);
+
+/** The single CIC QiYi uses for both the smart cube and the smart timer. */
+export const QIYI_CIC_LIST: number[] = [0x0504];
+
+/**
+ * How to pull six MAC bytes out of a manufacturer-data payload.
+ *
+ *   'last6-reversed'  — GAN and MoYu32. cstimer reads
+ *                       `dv[byteLength - 1 - i]` for i in 0..5.
+ *   'first6-reversed' — QiYi (cube and timer). cstimer reads `dv[5 - i]`,
+ *                       i.e. `qiyitimer.js:200-203` / `qiyicube.js:96-98`.
+ *
+ * Both end up little-endian relative to their window; they differ only in
+ * WHICH six bytes of the payload carry the address.
+ */
+export type MacPayloadLayout = 'last6-reversed' | 'first6-reversed';
+
+/** A brand's advertisement fingerprint: where to look, and how to read it. */
+export interface MacAdvSpec {
+  /** Label used only in comments / debugging. */
+  brand: string;
+  /** CICs to match against `manufacturerData`, in order. */
+  cics: readonly number[];
+  /** Payload layout for this brand. */
+  layout: MacPayloadLayout;
+  /**
+   * Truncate the payload to this many bytes before applying the layout.
+   * cstimer's GAN path slices the manufacturer data to 9 bytes
+   * (`gancube.js:168`) before taking the last six; its MoYu32 and QiYi paths
+   * do not slice at all. For a 9-byte payload the two agree, but a longer
+   * payload would read a different window, so keep the distinction.
+   */
+  maxPayloadBytes?: number;
+}
+
+export const GAN_MAC_ADV: MacAdvSpec = {
+  brand: 'gan',
+  cics: GAN_CIC_LIST,
+  layout: 'last6-reversed',
+  maxPayloadBytes: 9,
+};
+
+export const MOYU32_MAC_ADV: MacAdvSpec = {
+  brand: 'moyu32',
+  cics: MOYU32_CIC_LIST,
+  layout: 'last6-reversed',
+};
+
+export const QIYI_MAC_ADV: MacAdvSpec = {
+  brand: 'qiyi',
+  cics: QIYI_CIC_LIST,
+  layout: 'first6-reversed',
+};
+
+/** Every spec we know, in the order the hook tries them by default. */
+export const ALL_MAC_ADV_SPECS: readonly MacAdvSpec[] = [GAN_MAC_ADV, MOYU32_MAC_ADV, QIYI_MAC_ADV];
+
+/**
+ * Reorder the spec list so the brand the device NAME points at is tried
+ * first. This only matters for the Bluefy code path, where the browser hands
+ * us a bare `DataView` with no CIC attached and we therefore cannot tell the
+ * brands apart from the data alone.
+ */
+export function macAdvSpecsForDevice(name: string | null | undefined): readonly MacAdvSpec[] {
+  const n = (name ?? '').trim();
+  if (/^WCU/i.test(n)) return [MOYU32_MAC_ADV, GAN_MAC_ADV, QIYI_MAC_ADV];
+  if (/^(QY-QYSC|XMD-Tornado|QY-Timer)/i.test(n)) return [QIYI_MAC_ADV, GAN_MAC_ADV, MOYU32_MAC_ADV];
+  return ALL_MAC_ADV_SPECS;
+}
 
 const MAC_RE = /^([0-9a-f]{2}[:-]){5}[0-9a-f]{2}$/i;
 
@@ -49,16 +133,22 @@ export function macStringToBytes(mac: string | null | undefined): Uint8Array {
 }
 
 /**
- * Extract the MAC from the last 6 bytes (reversed) of `len` data bytes read
- * via `getByte`. Mirrors cstimer: it slices the manufacturer payload to 9
- * bytes and reads `dv[byteLength - i - 1]` for i in 0..5.
+ * Read six MAC bytes out of a `len`-byte payload accessed through `getByte`,
+ * per `spec`. Returns "XX:XX:XX:XX:XX:XX" or null when the payload is short.
  */
-function macFromPayload(getByte: (k: number) => number, len: number): string | null {
-  const n = Math.min(len, 9);
+function macFromPayload(
+  getByte: (k: number) => number,
+  len: number,
+  spec: MacAdvSpec,
+): string | null {
+  const n = spec.maxPayloadBytes === undefined ? len : Math.min(len, spec.maxPayloadBytes);
   if (n < 6) return null;
   const parts: string[] = [];
   for (let i = 0; i < 6; i++) {
-    parts.push((getByte(n - 1 - i) & 0xff).toString(16).padStart(2, '0'));
+    // 'last6-reversed': dv[n-1], dv[n-2], … dv[n-6]  (GAN, MoYu32)
+    // 'first6-reversed': dv[5],  dv[4],   … dv[0]    (QiYi cube + timer)
+    const idx = spec.layout === 'last6-reversed' ? n - 1 - i : 5 - i;
+    parts.push((getByte(idx) & 0xff).toString(16).padStart(2, '0'));
   }
   return parts.join(':').toUpperCase();
 }
@@ -67,24 +157,48 @@ function macFromPayload(getByte: (k: number) => number, len: number): string | n
  * Pull the cube MAC out of an `advertisementreceived` event's manufacturer
  * data. Handles both the Chrome `Map<companyId, DataView>` shape and Bluefy's
  * bare `DataView` (which keeps the 2-byte company-id prefix).
+ *
+ * `specs` is tried in order; the first CIC hit wins. On the Bluefy path there
+ * is no CIC to match on, so `specs[0]`'s layout is used — which is why
+ * `macAdvSpecsForDevice` puts the name-implied brand first.
  */
 export function extractMacFromManufacturerData(
   mfData: BluetoothManufacturerData | DataView,
+  specs: readonly MacAdvSpec[] = ALL_MAC_ADV_SPECS,
 ): string | null {
+  if (specs.length === 0) return null;
   if (mfData instanceof DataView) {
-    // Bluefy: [companyId(2)] [payload(9)] — skip the 2-byte prefix.
+    // Bluefy: [companyId(2)] [payload…] — skip the 2-byte prefix.
     const payloadStart = 2;
     const len = Math.max(0, mfData.byteLength - payloadStart);
-    return macFromPayload((k) => mfData.getUint8(payloadStart + k), len);
+    return macFromPayload((k) => mfData.getUint8(payloadStart + k), len, specs[0]);
   }
-  for (const id of GAN_CIC_LIST) {
-    if (mfData.has(id)) {
+  for (const spec of specs) {
+    for (const id of spec.cics) {
+      if (!mfData.has(id)) continue;
       const dv = mfData.get(id);
       if (!dv) continue;
-      return macFromPayload((k) => dv.getUint8(k), dv.byteLength);
+      const mac = macFromPayload((k) => dv.getUint8(k), dv.byteLength, spec);
+      if (mac) return mac;
     }
   }
   return null;
+}
+
+/** Options for `watchAdvertisementsMac`. */
+export interface MacWatchOptions {
+  /**
+   * CICs to accept. Together with `layout` this forms an ad-hoc single spec,
+   * overriding `specs`. Provided because a caller that already knows the
+   * brand shouldn't have to build a `MacAdvSpec`.
+   */
+  cics?: readonly number[];
+  /** Payload layout to pair with `cics`. Defaults to GAN's. */
+  layout?: MacPayloadLayout;
+  /** Full spec list to try in order. Defaults to `macAdvSpecsForDevice`. */
+  specs?: readonly MacAdvSpec[];
+  /** Give up after this long. cstimer waits 10s. */
+  timeoutMs?: number;
 }
 
 /**
@@ -93,7 +207,14 @@ export function extractMacFromManufacturerData(
  * data. Never rejects — the caller treats null as "fall through to next
  * source". Default 10s timeout matches cstimer.
  */
-export function watchAdvertisementsMac(device: BluetoothDevice, timeoutMs = 10000): Promise<string | null> {
+export function watchAdvertisementsMac(
+  device: BluetoothDevice,
+  opts: MacWatchOptions = {},
+): Promise<string | null> {
+  const specs: readonly MacAdvSpec[] = opts.cics
+    ? [{ brand: 'custom', cics: opts.cics, layout: opts.layout ?? 'last6-reversed' }]
+    : (opts.specs ?? macAdvSpecsForDevice(device.name));
+  const timeoutMs = opts.timeoutMs ?? 10000;
   if (typeof device.watchAdvertisements !== 'function') return Promise.resolve(null);
   return new Promise<string | null>((resolve) => {
     const abort = new AbortController();
@@ -107,7 +228,11 @@ export function watchAdvertisementsMac(device: BluetoothDevice, timeoutMs = 1000
       resolve(mac);
     };
     const onAdv = (ev: BluetoothAdvertisingEvent): void => {
-      finish(extractMacFromManufacturerData(ev.manufacturerData));
+      // Resolve on the FIRST advertisement, match or not — cstimer's
+      // `waitForAdvs` does the same. Waiting for a match instead would stall
+      // every connect by the full timeout for the brands that carry no
+      // manufacturer data at all (GoCube, Giiker, MoYu MHC).
+      finish(extractMacFromManufacturerData(ev.manufacturerData, specs));
     };
     const timer = setTimeout(() => finish(null), timeoutMs);
     device.addEventListener('advertisementreceived', onAdv);

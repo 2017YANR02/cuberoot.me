@@ -16,6 +16,13 @@
  *   Char (turn):    00001003-0000-1000-8000-00805f9b34fb     (notify, moves)
  *   Char (gyro):    00001004-0000-1000-8000-00805f9b34fb     (notify, ignored)
  *
+ * No orientation decode: cstimer's `onGyroEvent` is a bare
+ * `giikerutil.log('[moyucube] Received gyro event', value)` with no parser,
+ * and there is no public write-up of this characteristic's layout (unlike
+ * MoYu's newer WCU_MY32 protocol, whose 0xAB packet is documented). So we
+ * keep the no-op subscription and leave `hasGyro` unset rather than invent a
+ * byte layout we could not falsify without hardware.
+ *
  * Frames are unencrypted. The turn characteristic delivers a single packet
  * per notification:
  *
@@ -26,11 +33,13 @@
  *     byte 2,3       : high 16 bits of timestamp
  *     byte 4         : face index 0..5 in the cube's native (FRBLUD-ish)
  *                      ordering; remap with [3,4,5,1,2,0] to URFDLB.
- *     byte 5         : signed-ish rotation delta in ~36° units (one quarter
+ *     byte 5         : UNSIGNED rotation delta in ~36° units (one quarter
  *                      turn ≈ +5 units; the cube counts rotation modulo 9
  *                      on `faceStatus[face]`, and emits a discrete move only
  *                      when the accumulator crosses the half-revolution
- *                      boundary at 5).
+ *                      boundary at 5). cstimer reads it with `getUint8`, so a
+ *                      byte ≥ 0x80 is a LARGE forward delta, not a backward
+ *                      one; re-reading it as int8 desyncs `faceStatus`.
  *
  * Move emission rule (mirrors cstimer):
  *   prevRot = faceStatus[face]
@@ -40,6 +49,8 @@
  *   if prevRot <= 4 and curRot >= 5  → CW   (no suffix)
  *   if prevRot >= 5 and curRot <= 4  → CCW  (`'`)
  *   else: no move (sub-quarter wiggle).
+ * With an unsigned delta the raw curRot never decreases, so the CCW branch is
+ * unreachable — kept because cstimer keeps it, not because it can fire.
  *
  * Half-turns surface as two consecutive same-direction quarter-turn frames.
  *
@@ -76,23 +87,20 @@ function parseTurn(dv: DataView, faceStatus: Int8Array): string[] {
     const offset = 1 + i * 6;
     const face = dv.getUint8(offset + 4);
     if (face > 5) continue;
-    // Cstimer rounds dir to nearest /36. Sometimes the cube reports a small
-    // decay tick (|dir| < 18 → rounds to 0) which we ignore.
-    const dirRaw = dv.getUint8(offset + 5);
-    // Treat as signed 8-bit so backward rotations land negative.
-    const dirSigned = dirRaw > 127 ? dirRaw - 256 : dirRaw;
-    const dir = Math.round(dirSigned / 36);
+    // Cstimer rounds dir to nearest /36 on the UNSIGNED byte. A small decay
+    // tick (dir < 18 → rounds to 0) contributes nothing, so skip it.
+    const dir = Math.round(dv.getUint8(offset + 5) / 36);
     if (dir === 0) continue;
 
     const prevRot = faceStatus[face];
     const curRotRaw = prevRot + dir;
     // cstimer compares against the UN-wrapped raw value so that a quarter-tick
-    // wrap across 9->0 (or 0->-1->8) doesn't synthesise a phantom inverse move.
-    // We then store the wrapped value for the next frame.
-    faceStatus[face] = ((curRotRaw % 9) + 9) % 9;
+    // wrap across 9->0 doesn't synthesise a phantom inverse move. We then
+    // store the wrapped value for the next frame.
+    faceStatus[face] = (curRotRaw + 9) % 9;
 
     let pow: 0 | 2 | -1 = -1;
-    if (prevRot >= 5 && curRotRaw <= 4) pow = 2;       // CCW
+    if (prevRot >= 5 && curRotRaw <= 4) pow = 2;       // CCW (see header note)
     else if (prevRot <= 4 && curRotRaw >= 5) pow = 0;  // CW
     if (pow === -1) continue;
 

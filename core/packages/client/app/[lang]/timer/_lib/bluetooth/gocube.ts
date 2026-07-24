@@ -26,7 +26,10 @@
  *          direction bit (b & 1): 0 = CW, 1 = CCW.
  *   0x02 — full state dump (54 stickers). We don't track facelets here, the
  *          shared CubeStateTracker does.
- *   0x03 — orientation quaternion (ignored).
+ *   0x03 — orientation quaternion. UNLIKE every other brand here this is
+ *          PLAINTEXT ASCII, not packed binary: the payload is the four
+ *          components as base-10 signed decimal strings joined by '#'
+ *          ("x#y#z#w"), each over 16384 (2^14). See `parseGoCubeQuaternion`.
  *   0x05 — battery level: payload[0] is percent.
  *   0x07 — offline solves stats (ignored).
  *   0x08 — cube type / firmware (ignored).
@@ -42,7 +45,7 @@
  *   0x32 command and wait briefly for the 0x05 reply, just like cstimer.
  */
 
-import type { CubeDriver, CubeDriverStartResult } from './driver';
+import type { CubeDriver, CubeDriverStartResult, GyroQuaternion } from './driver';
 import type { CubeBrand } from './types';
 
 const UUID_SUFFIX = '-b5a3-f393-e0a9-e50e24dcca9e';
@@ -62,16 +65,64 @@ const URFDLB = 'URFDLB';
 // firmware does not stop pushing notifications.
 const REACK_EVERY = 20;
 
+/** 2^14 — GoCube's fixed-point divisor for the quaternion components. */
+const QUAT_SCALE = 16384;
+
+/**
+ * Decode an opcode-0x03 orientation payload.
+ *
+ * `dv` is the whole notification; `payloadLen` is `byteLength - 6`, so the
+ * payload occupies bytes [3, 3 + payloadLen) — the same window as
+ * `buffer.slice(3, byteLength - 3)`.
+ *
+ * The payload is ASCII, e.g. `-13528#4096#0#16384`, i.e. FOUR base-10 signed
+ * integers separated by 0x23 ('#') in **x, y, z, w** order (note: NOT
+ * scalar-first), each divided by 16384 to land in [-1, 1].
+ *
+ * SOURCE NOTE: cstimer's `gocube.js` has this branch completely empty
+ * (`} else if (msgType == 3) { // quaternion`), so the layout is NOT from
+ * cstimer. It is from two independent public references that agree:
+ *   - oddpetersson/gocube-protocol, which documents MsgOrientation (type
+ *     0x03) as "x#y#z#w" with ASCII values,
+ *   - cubing.js `src/cubing/bluetooth/smart-puzzle/gocube.ts`, which does
+ *     `bufferToString(buffer.buffer.slice(3, byteLength - 3)).split("#")
+ *      .map(s => parseInt(s, 10) / 16384)` and feeds the results to
+ *     `new Quaternion(coords[0], coords[1], coords[2], coords[3])` — three.js
+ *     `Quaternion(x, y, z, w)`.
+ *
+ * We deliberately do NOT reproduce cubing.js's follow-up `targetQuat.y =
+ * -targetQuat.y`: that is a fix-up for THEIR world/camera convention, not part
+ * of the wire format. Axis remapping belongs in `orientation.ts`'s per-brand
+ * basis table, which is the single place that knows about our renderer.
+ *
+ * Returns null when the payload doesn't parse — a partial notification or a
+ * firmware that words it differently must not surface as a NaN quaternion.
+ */
+export function parseGoCubeQuaternion(dv: DataView, payloadLen: number): GyroQuaternion | null {
+  if (payloadLen < 7) return null; // shortest plausible "0#0#0#0"
+  let text = '';
+  for (let i = 0; i < payloadLen; i++) text += String.fromCharCode(dv.getUint8(3 + i));
+  const parts = text.split('#');
+  if (parts.length !== 4) return null;
+  const nums = parts.map((s) => parseInt(s, 10));
+  if (nums.some((n) => !Number.isFinite(n))) return null;
+  const [x, y, z, w] = nums;
+  return { w: w / QUAT_SCALE, x: x / QUAT_SCALE, y: y / QUAT_SCALE, z: z / QUAT_SCALE };
+}
+
 export const gocubeDriver: CubeDriver = {
   brand: 'gocube' satisfies CubeBrand,
   service: GOCUBE_SERVICE,
+  // Plaintext protocol: no AES, no MAC, so this is the one brand whose gyro
+  // we can reason about end-to-end from the bytes alone.
+  hasGyro: true,
 
   matches(device: BluetoothDevice): boolean {
     const n = device.name ?? '';
     return /^(GoCube|Rubiks?)/i.test(n);
   },
 
-  async start(server, onMove): Promise<CubeDriverStartResult> {
+  async start(server, onMove, ctx): Promise<CubeDriverStartResult> {
     const service = await server.getPrimaryService(GOCUBE_SERVICE);
     const writeChar = await service.getCharacteristic(GOCUBE_WRITE_CHAR);
     const notifyChar = await service.getCharacteristic(GOCUBE_NOTIFY_CHAR);
@@ -116,13 +167,22 @@ export const gocubeDriver: CubeDriver = {
           movesSinceAck = 0;
           void writeCmd(CMD_STATE).catch(() => {});
         }
+      } else if (opcode === 0x03) {
+        // Orientation. GoCube pushes these ~15x/s once connected, so only
+        // pay the ASCII parse when someone is listening.
+        if (ctx?.onGyro) {
+          const q = parseGoCubeQuaternion(dv, payloadLen);
+          // No angular velocity in this protocol — the second arg stays
+          // undefined rather than being faked from finite differences.
+          if (q) ctx.onGyro(q);
+        }
       } else if (opcode === 0x05 && payloadLen >= 1) {
         lastBattery = dv.getUint8(3);
         const waiters = batteryWaiters;
         batteryWaiters = [];
         for (const w of waiters) w(lastBattery);
       }
-      // 0x02 (state), 0x03 (quat), 0x07 (offline), 0x08 (cube type): ignored.
+      // 0x02 (state), 0x07 (offline), 0x08 (cube type): ignored.
     };
 
     notifyChar.addEventListener('characteristicvaluechanged', onChar);

@@ -6,7 +6,16 @@
  * import cycle.
  */
 
-export type CubeBrand = 'gan-v2' | 'gan-v3' | 'gan-v4' | 'gocube' | 'qiyi' | 'giiker' | 'moyu' | 'unknown';
+/**
+ * `moyu` is the older unencrypted MHC protocol (MoYu AI Cube); `moyu32` is
+ * the encrypted WCU_MY32 protocol every currently-sold MoYu smart cube
+ * (WeiLong V10 Ai onward) speaks. They share nothing but the vendor.
+ */
+export type CubeBrand =
+  | 'gan-v2' | 'gan-v3' | 'gan-v4'
+  | 'gocube' | 'qiyi' | 'giiker'
+  | 'moyu' | 'moyu32'
+  | 'unknown';
 
 export interface BluetoothCubeStatus {
   connected: boolean;
@@ -15,4 +24,12 @@ export interface BluetoothCubeStatus {
   battery: number | null;
   /** Pretty name like "GAN 356 i3 (XX:XX)" — for the UI. */
   deviceName: string;
+  /**
+   * True when the connected driver can decode an orientation quaternion off
+   * the wire, i.e. passing `onGyro` to the hook will actually produce
+   * samples. This is a PROTOCOL capability, not a hardware probe: an old
+   * non-gyro batch of a gyro-capable model still reports true and simply
+   * never emits.
+   */
+  hasGyro: boolean;
 }

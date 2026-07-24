@@ -19,12 +19,15 @@
  * Cube4U / supercube i3s revisions wrap a 0xA7-tagged ciphertext that we
  * decrypt via the published key (cstimer toHexVal logic).
  *
- * We treat each notification as carrying 4 historical moves (8 nibbles at
- * offsets 32..39), newest first. We dedupe against the previous notification
- * by remembering the 4-move window and only forwarding the freshest "new"
- * moves. Over a normal turn cadence that means exactly 1 move per
- * notification; if the host JS event loop stalls we recover up to 4 turns of
- * backlog.
+ * Each notification carries a move history window starting at nibble 32,
+ * newest first. Its LENGTH depends on the frame variant, because cstimer's
+ * `toHexVal` truncates de-obfuscated frames to 18 bytes (giikercube.js:84):
+ *   plain 20-byte frame   -> 40 nibbles -> valhex[32..39] -> 4 moves
+ *   0xA7-obfuscated frame -> 36 nibbles -> valhex[32..35] -> 2 moves
+ * We dedupe against the previous notification by remembering that window and
+ * only forwarding the freshest "new" moves. Over a normal turn cadence that
+ * means exactly 1 move per notification; if the host JS event loop stalls we
+ * recover up to a whole window of backlog.
  *
  * Move-byte encoding (cstimer):
  *   face nibble (1..6) → "BDLURF"[face - 1]
@@ -62,9 +65,10 @@ const GIIKER_DIR_SUFFIX = ['', '2', "'"] as const;
 
 /**
  * Decrypt the 20-byte raw frame to the 18 plaintext bytes per cstimer's
- * toHexVal. Returns 36 nibbles (most significant nibble first within each
- * byte). For untagged frames we still produce the 40-nibble (20-byte) array
- * so callers can read `valhex[32..39]` for the move history.
+ * toHexVal, which drops the tag + key byte with `raw = raw.slice(0, 18)`.
+ * Returns 36 nibbles (most significant nibble first within each byte) for
+ * 0xA7-tagged frames, and the full 40 for untagged ones. Either way the cube
+ * state occupies nibbles 0..30 and the move history starts at nibble 32.
  */
 function toHexVal(dv: DataView): number[] {
   if (dv.byteLength < 20) return [];
@@ -98,54 +102,56 @@ function formatMove(faceNib: number, dirNib: number): string | null {
   return `${face}${suffix}`;
 }
 
+/** Pack a nibble window into (face, dir) byte codes, newest first. */
+function toMoveCodes(nibbles: ReadonlyArray<number>): number[] {
+  const codes: number[] = [];
+  for (let i = 0; i + 1 < nibbles.length; i += 2) {
+    codes.push((nibbles[i] << 4) | nibbles[i + 1]);
+  }
+  return codes;
+}
+
 /**
  * Compare the move-history window in this notification against the previous
  * one and return the new moves (oldest first, ready to push into onMove).
  *
- * Window layout: 8 nibbles = 4 moves, newest first. Cstimer's `prevMoves`
- * array is indexed `[newest, ..., oldest]`. So a cube that has just turned R
- * once after R' will produce `[R, R', ...]` whereas the previous frame was
+ * Window layout: 2 nibbles per move, newest first — 4 moves on plain frames,
+ * 2 on de-obfuscated ones. Cstimer's `prevMoves` array is indexed
+ * `[newest, ..., oldest]`. So a cube that has just turned R once after R'
+ * will produce `[R, R', ...]` whereas the previous frame was
  * `[R', ..., older]`. We therefore identify how many leading entries are new
  * by aligning the second-newest of THIS frame with the newest of the
- * PREVIOUS frame. That count is bounded by 0..4.
+ * PREVIOUS frame. That count is bounded by 0..windowLength.
  */
 function diffMoves(
   curr: ReadonlyArray<number>,
   prev: ReadonlyArray<number> | null,
 ): number[] {
-  // curr/prev each hold 8 nibbles. Pack into 4 16-bit move codes for compare.
-  const currCodes: number[] = [];
-  for (let i = 0; i < 8; i += 2) {
-    currCodes.push((curr[i] << 4) | curr[i + 1]);
-  }
+  const currCodes = toMoveCodes(curr);
   if (!prev) {
     // First notification ever: don't replay history, just emit the newest.
     if (currCodes[0] === 0) return [];
     return [currCodes[0]];
   }
-  const prevCodes: number[] = [];
-  for (let i = 0; i < 8; i += 2) {
-    prevCodes.push((prev[i] << 4) | prev[i + 1]);
-  }
+  const prevCodes = toMoveCodes(prev);
+  const n = currCodes.length;
   // Find the smallest k >= 1 such that currCodes[k..] aligns with
-  // prevCodes[0..3-k]. k is the number of new moves (1..4); if no alignment
-  // we treat all 4 as new (very rare — usually means we missed > 4 turns).
-  for (let k = 1; k <= 4; k++) {
+  // prevCodes[0..]. k is the number of new moves (1..n); k = n always aligns
+  // vacuously, which is the "we missed a whole window of turns" fallback.
+  for (let k = 1; k <= n; k++) {
     let ok = true;
-    for (let j = 0; j + k < 4; j++) {
+    for (let j = 0; j + k < n && j < prevCodes.length; j++) {
       if (currCodes[j + k] !== prevCodes[j]) { ok = false; break; }
     }
-    if (ok) {
-      // Oldest-first, drop placeholder zero codes.
-      const out: number[] = [];
-      for (let i = k - 1; i >= 0; i--) {
-        if (currCodes[i] !== 0) out.push(currCodes[i]);
-      }
-      return out;
+    if (!ok) continue;
+    // Oldest-first, drop placeholder zero codes.
+    const out: number[] = [];
+    for (let i = k - 1; i >= 0; i--) {
+      if (currCodes[i] !== 0) out.push(currCodes[i]);
     }
+    return out;
   }
-  // No alignment: emit all four newest-first reversed to oldest-first.
-  return [currCodes[3], currCodes[2], currCodes[1], currCodes[0]].filter(c => c !== 0);
+  return [];
 }
 
 export const giikerDriver: CubeDriver = {
@@ -170,7 +176,10 @@ export const giikerDriver: CubeDriver = {
 
     const handleFrame = (dv: DataView): void => {
       const valhex = toHexVal(dv);
-      if (valhex.length < 40) return;
+      // 36 nibbles is the floor: cstimer truncates de-obfuscated frames to 18
+      // bytes, which still covers the state (0..30) plus one history slot.
+      // Anything shorter is a runt frame we cannot read a move out of.
+      if (valhex.length < 36) return;
       const history = valhex.slice(32, 40);
       const codes = diffMoves(history, prevHistoryNibbles);
       prevHistoryNibbles = history;
