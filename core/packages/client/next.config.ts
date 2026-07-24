@@ -272,12 +272,6 @@ const nextConfig: NextConfig = {
         ...(process.env.NODE_ENV === "development"
           ? [{ source: "/v1/fmc/:path*", destination: "http://127.0.0.1:8099/:path*" }]
           : []),
-        // Dev only: forum API is served by a locally-run Hono server (:3001)
-        // until the routes ship to prod — only /v1/forum goes local, every
-        // other /v1 endpoint keeps hitting prod data via the rule below.
-        ...(process.env.NODE_ENV === "development"
-          ? [{ source: "/v1/forum/:path*", destination: "http://127.0.0.1:3001/v1/forum/:path*" }]
-          : []),
         // Dev + opt-in: route selected /v1 domains to the locally-run Hono server
         // (:3001) against local pg13, so DATA edits for those domains (case moves,
         // subgroup renames, new wiki terms, …) can be verified locally BEFORE push.
