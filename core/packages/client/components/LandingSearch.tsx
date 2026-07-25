@@ -216,7 +216,7 @@ export default function LandingSearch({ cards, lang }: Props) {
     if (aboutMatches.length > 0) { pushInternal(langHref(`/wca/about/${aboutMatches[0].id}`)); return; }
     if (stackMatches.length > 0) { pushInternal(langHref(`/code/stack/${stackMatches[0].slug}`)); return; }
     if (glossaryMatches.length > 0) { pushInternal(`${langHref('/wiki')}#${glossaryMatches[0].slug}`); return; }
-    if (algSetMatches.length > 0) { const a = algSetMatches[0]; pushInternal(langHref(`/alg/${a.puzzle}/${a.setSlug}`)); return; }
+    if (algSetMatches.length > 0) { pushInternal(langHref(algSetMatches[0].path)); return; }
     if (compMatches.length > 0) {
       pushInternal(compLinkProps(compMatches[0].id, undefined, lang).href);
       return;
@@ -623,7 +623,7 @@ export default function LandingSearch({ cards, lang }: Props) {
                 {algSetMatches.map(a => (
                   <Link
                     key={`${a.puzzle}/${a.setSlug}`}
-                    href={langHref(`/alg/${a.puzzle}/${a.setSlug}`)}
+                    href={langHref(a.path)}
                     prefetch={false}
                     className="landing-search-item"
                     onClick={closeAfter}
