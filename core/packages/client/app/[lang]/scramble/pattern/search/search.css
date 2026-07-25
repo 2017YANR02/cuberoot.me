@@ -24,11 +24,20 @@
 /* ── 示例预设 ── */
 
 .psc-examples {
+  margin-bottom: 12px;
+}
+
+.psc-examples-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  margin-bottom: 12px;
+}
+
+.psc-example-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
 }
 
 .psc-example {
@@ -62,6 +71,83 @@
 
 .psc-example-mini i {
   border-radius: 1px;
+}
+
+/* 管理员:管理 / 完成 钮 + 每条示例的排序·编辑·删除 */
+
+.psc-ex-manage {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  font-size: 0.76rem;
+  border: 1px dashed var(--border-default);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.psc-ex-manage:hover {
+  color: var(--foreground);
+}
+
+/* 「存为示例」与既有示例区分开:虚线边 = 还不是一条示例 */
+.psc-ex-add {
+  border-style: dashed;
+  color: var(--muted-foreground);
+}
+
+.psc-ex-ctl {
+  display: inline-flex;
+  align-items: center;
+}
+
+.psc-ex-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  border: none;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.psc-ex-btn:hover:not(:disabled) {
+  color: var(--foreground);
+}
+
+.psc-ex-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.psc-ex-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.psc-input {
+  width: 9rem;
+  padding: 5px 8px;
+  font-size: 0.82rem;
+  border: 1px solid var(--input);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--foreground);
+}
+
+.psc-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+.psc-ex-error {
+  margin-top: 8px;
+  font-size: 0.8rem;
 }
 
 /* ── 色板 ── */
