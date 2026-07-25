@@ -1,6 +1,6 @@
 // 选手页「AoXR」列 —— 一场比赛里某项目跨轮次的「平均的平均」。
 // 口径与世界榜 /wca/wr_aoxr 严格一致(stats-build/src/core/ao_rounds.ts):
-//   · 该场该项目「恰好 X 个」有效轮次(average > 0)时才成立,X ∈ [1,4];0 个或 >4 个不出值
+//   · 该场该项目「恰好 X 个」有效轮次(average > 0)时才成立,X ∈ [1,4]
 //     (某轮平均 DNF → 该场掉一档:4 轮变 Ao3R,与世界榜同)
 //   · 均值 Math.round 后再格式化(483.5 → 4.84;截断会写成 4.83,与世界榜差一个单位)
 //   · 多盲无官方平均,整项排除
@@ -11,7 +11,8 @@
 import type { WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
 import { isMbldEvent } from '@/lib/mbf-average';
 
-/** 世界榜只有 Ao1R…Ao4R 四档;更多轮次的老赛制场次不属任何档 */
+/** 世界榜只有 Ao1R…Ao4R 四档(ROUND_COUNTS)。WCA 一场比赛单项目不会超过 4 轮,
+ *  这里只作防御上限:真出现异常数据时留空,而不是算出个查无此档的 Ao5R。 */
 const MAX_ROUNDS = 4;
 
 export interface AoxrCell {
