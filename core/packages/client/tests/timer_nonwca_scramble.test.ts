@@ -127,16 +127,28 @@ describe('fto (ftoso)', () => {
   it('is valid cubing.js FTO notation and actually scrambles the puzzle', async () => {
     const kpuzzle = await puzzles.fto.kpuzzle();
     const solved = kpuzzle.defaultPattern();
-    for (let i = 0; i < 2; i++) {
+    // BL/BR is what separates an FTO scramble from a 3x3 one — FTO's other six
+    // faces are spelled U/D/L/R/F/B, so a cube scramble would parse cleanly
+    // here. But the check only holds in AGGREGATE: measured over 600 draws,
+    // roughly 1% of csTimer's FTO scrambles happen to use none of the two back
+    // faces, so asserting it per-draw is a ~1%-per-run flake (it fired). Six
+    // draws puts a false red at ~1e-12.
+    const draws: string[] = [];
+    for (let i = 0; i < 6; i++) {
       const s = ask('ftoso');
+      draws.push(s);
       // applyAlg throws on any move the FTO KPuzzle doesn't define, so a pass
       // here proves every token is a legal face turn of THIS puzzle.
       const state = solved.applyAlg(new Alg(s));
       expect(state.isIdentical(solved), `fto scramble left the puzzle solved: ${s}`).toBe(false);
-      // csTimer's FTO scrambles use the BL/BR grips a 3x3 scramble never has —
-      // a cheap guard against silently falling back to a cube scrambler.
-      expect(/\b(BL|BR)['2]?\b/.test(s), `fto scramble has no BL/BR grip: ${s}`).toBe(true);
     }
+    const faces = new Set(
+      draws.flatMap((s) => tokens(s)).map((t) => t.replace(/['2]/g, '')),
+    );
+    expect(
+      faces.has('BL') || faces.has('BR'),
+      `no BL/BR grip in any of 6 fto scrambles — is this the cube scrambler? ${draws.join(' | ')}`,
+    ).toBe(true);
   }, 120_000);
 });
 

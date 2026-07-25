@@ -83,8 +83,15 @@ const RCON = new Uint8Array([0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x8
 /*  AES-128 core                                                       */
 /* ================================================================== */
 
+/**
+ * An expanded key: 11 round keys of 16 bytes. Structurally just a
+ * `Uint8Array` — the alias exists so signatures say which of the two byte
+ * arrays they want, since `aesEncryptBlock(block, w)` takes both.
+ */
+export type AesRoundKeys = Uint8Array;
+
 /** Expand a 16-byte key into the 176-byte round-key schedule. */
-export function expandKey(key: Uint8Array): Uint8Array {
+export function expandKey(key: Uint8Array): AesRoundKeys {
   const w = new Uint8Array(176);
   w.set(key.subarray(0, 16), 0);
   let i = 16;

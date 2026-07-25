@@ -44,7 +44,7 @@
  * drop those frames too.
  */
 
-import { crc16CcittFalse } from './crc';
+import { crc16CcittFalse } from '../crc';
 import type { BluetoothTimerDriver, BluetoothTimerStartResult } from './driver';
 import type { ExternalTimerEvent, ExternalTimerState } from './types';
 

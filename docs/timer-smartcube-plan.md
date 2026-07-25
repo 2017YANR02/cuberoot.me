@@ -314,3 +314,20 @@ FMC mo3 已经有了（`stats.ts:164`），缺的是**显示** —— `timeMs = 
 
 1. 拿一份真实 csTimer 导出验 `import_cstimer.ts` 的元组顺序（见 3.3 的 ⚠️）—— 是 bug 就先修，否则 DNS/MBLD 全压在坏地基上
 2. 先跑通 `tests/bluetooth_parity.test.ts` 的最小骨架（拿现有 `gan_v2` 或 `qiyi` 对拍一次），**证明「无硬件验证」这条路真的成立**，再往上堆 MoYu32
+
+## 收尾（2026-07-25）
+
+计划已全部落地并随并发 session 的 push 上了线（commit `b2219a0393` / `93785d2737` / `37dfb8563c`，rebase 后的 SHA）。这一轮只做确定有把握的收尾：
+
+**已做**
+- AES 去重：删掉 `bluetooth/timer/aes128.ts`，QiYi 计时器改用 `bluetooth/gan_crypto.ts`（新增 `AesRoundKeys` 别名）。两处 ECB 调用点都只喂整 16 字节块，所以老版本「截断到 16 的倍数」和新版本「输出与输入等长」行为一致。
+- MAC 去重：`timer/mac.ts` 从 137 行缩到只剩 `qiyiTimerMacFromName`。广播监听 / 归一化 / 转字节全部改走 `bluetooth/mac.ts` 的 `QIYI_MAC_ADV`（CIC 0x0504 + 前 6 字节倒序，与 QiYi 智能魔方同一份）。
+- CRC 去重：`timer/crc.ts` 上提为 `bluetooth/crc.ts`，QiYi 智能魔方驱动里那份私有 `crc16Modbus` 删掉改 import（两份逐字节相同）。
+- QiYi 从设备名造 MAC 的政策不一致：不改行为（就是 cstimer `initMac` 的默认），但在 `timer/mac.ts` 里写清了为什么这里允许猜 OUI 而 GAN 那边禁止 —— GAN 跨批次有多个 OUI，猜错会派生出错误密钥并静默失败；QiYi 这两个前缀各对一条产品线，猜错只是 hello 没人应答。
+- FTO 图标「空方块」：**不是 bug**。把 `unofficial-fto` 放大 8 倍截图看过，是上游 cubing/icons 的三角密铺图案，18px 下本来就糊成一团深色块。DOM / SVG / fill 全部正常。
+- `tests/timer_nonwca_scramble.test.ts` 的 FTO 守卫是真 flaky：实测 600 抽里约 1% 的 FTO 打乱恰好一个 BL/BR 都不含，原来的逐抽断言就是 1%/次的假红（已经红过一次）。改成 6 抽取并集判断。同类守卫实测 kilominx 0/400、redi 0/400，量级差两个数量级，不动。
+
+**仍未做（理由）**
+- QiYi Tornado V4 陀螺仪：cstimer 自己没实现，等于从零逆协议，没有对拍基准。
+- 四个老 sim-embed 调用点迁到 `mountSimWorld.ts`：不是纯重构。`ReconPlayerBase` / `_Interactive3DCube` 现在用的是未设上限的 `setPixelRatio(devicePixelRatio)`，`mountSimWorld` 默认 cap 2；`PllPerformerOverlay` 的 rAF 里还嵌了自己的动画链；`EnginePuzzleSVG` 在模块作用域建 World、压根没有 renderer 循环。四个都得逐个真跑一遍才能确认无视觉回归。
+- 真机验证：仍然零硬件。陀螺仪坐标系 / 手性 / 广播取 MAC / GATT 握手时序全部未验。

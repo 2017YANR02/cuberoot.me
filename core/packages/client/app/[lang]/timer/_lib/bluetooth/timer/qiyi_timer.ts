@@ -51,11 +51,10 @@
  *       data[5..8]    solveTime   (big-endian u32, ms — the live reading)
  */
 
-import { aesEcbDecrypt, aesEcbEncrypt, expandKey, type AesRoundKeys } from './aes128';
-import { crc16Modbus } from './crc';
+import { aesEcbDecrypt, aesEcbEncrypt, expandKey, type AesRoundKeys } from '../gan_crypto';
+import { QIYI_CIC_LIST, macStringToBytes, normalizeMac } from '../mac';
+import { crc16Modbus } from '../crc';
 import type { BluetoothTimerDriver, BluetoothTimerStartResult } from './driver';
-import { timerMacToBytes } from './mac';
-import { QIYI_TIMER_CIC_LIST } from './mac';
 import type { ExternalTimerEvent, ExternalTimerState } from './types';
 
 export const QIYI_TIMER_SERVICE = '0000fd50-0000-1000-8000-00805f9b34fb';
@@ -164,8 +163,11 @@ export function encodeQiyiTimerPackets(
 
 /** Hello payload: 11 fixed bytes then the 6 MAC bytes in REVERSE order. */
 export function buildQiyiHelloContent(mac: string): number[] | null {
-  const bytes = timerMacToBytes(mac);
-  if (!bytes) return null;
+  // `macStringToBytes` answers zeros for malformed input; the timer would then
+  // silently ignore a hello addressed to 00:00:00:00:00:00, so reject first.
+  const norm = normalizeMac(mac);
+  if (!norm) return null;
+  const bytes = macStringToBytes(norm);
   const content = [0, 0, 0, 0, 0, 33, 8, 0, 1, 5, 90];
   for (let i = 5; i >= 0; i--) content.push(bytes[i]);
   return content;
@@ -342,7 +344,7 @@ export const qiyiTimerDriver: BluetoothTimerDriver = {
   kind: 'qiyi-timer',
   service: QIYI_TIMER_SERVICE,
   namePrefixes: QIYI_TIMER_NAME_PREFIXES,
-  manufacturerDataCics: QIYI_TIMER_CIC_LIST,
+  manufacturerDataCics: QIYI_CIC_LIST,
   needsMac: true,
 
   matches(device: BluetoothDevice): boolean {
