@@ -20,6 +20,8 @@ import { CompCell } from '@/components/CompCell/CompCell';
 import { compLinkProps } from '@/lib/comp-link';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
 import { computePrRank } from '../../logic/progress';
+import { computeAoxr, aoxrKey } from '../../logic/aoxr';
+import { AoxrValue, aoxrHint } from './AoxrValue';
 import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } from '@/lib/wca-round-meta';
 import { AttemptsList } from './AttemptsList';
 import { AverageValueCell } from './AverageValueCell';
@@ -283,6 +285,28 @@ function EventRoundsList({
     deps: [displayRows, count],
   });
 
+  // AoXR(跨轮平均)按 (比赛 × 项目) 聚合,与单次/平均同用「订正后」的有效值。
+  const aoxrMap = useMemo(
+    () => computeAoxr(effResultsForRank, comps),
+    [effResultsForRank, comps],
+  );
+  // AoXR 列跨「同一场比赛」的全部轮次合并成一格:组首行记组大小(= rowSpan),其余行记 0 不出格。
+  // 两个约束:① 排序视图(sort.key 非空)行已被拉平打散,同场行不再相邻 → 每行各自出格;
+  // ② 渐进渲染只挂前 count 行,合并格不能跨到尚未挂出的行 → 组大小按已挂出的部分截断。
+  const aoxrSpans = useMemo(() => {
+    const n = Math.min(count, displayRows.length);
+    const spans = new Array<number>(n).fill(1);
+    if (sort.key) return spans;
+    spans.fill(0);
+    for (let i = 0; i < n;) {
+      let j = i;
+      while (j < n && displayRows[j].competition_id === displayRows[i].competition_id) j++;
+      spans[i] = j - i;
+      i = j;
+    }
+    return spans;
+  }, [displayRows, count, sort.key]);
+
   const buildAnchorHref = (compId: string, roundType: string) =>
     `${pathname}${search}${resultRowHash(compId, eventId, roundType)}`;
   // 整行点击 → 切 hash,只是点 td 空白处生效;内部 Link/button 走自己 (closest 'a, button' 跳过).
@@ -336,6 +360,12 @@ function EventRoundsList({
                 {t('平均', 'Avg')}{isMbldEvent(eventId) && <UnofficialMark />}{sortArrow('average')}
               </button>
             </th>
+            <th className="wp-th-aoxr">
+              <span className="wp-th-info">
+                AoXR
+                <InfoTooltip content={aoxrHint()} />
+              </span>
+            </th>
             <th className="wp-th-attempts">
               <span className="wp-att-head" style={{ '--att-cols': maxAttempts } as React.CSSProperties}>
                 {maxAttempts > 0 && (
@@ -355,7 +385,7 @@ function EventRoundsList({
           </tr>
         </thead>
         <tbody>
-          {displayRows.slice(0, count).map((r) => {
+          {displayRows.slice(0, count).map((r, ri) => {
             const cmp = compById.get(r.competition_id);
             const rank = r.live ? prRankLive?.get(r.id) : prRank.get(r.id);
             const liveRank = r.live ? livePrRanks.get(r.id) : null;
@@ -478,6 +508,11 @@ function EventRoundsList({
                     />
                   )}
                 </td>
+                {aoxrSpans[ri] > 0 && (
+                  <td className="wp-cell-aoxr" rowSpan={aoxrSpans[ri]}>
+                    <AoxrValue cell={aoxrMap.get(aoxrKey(r.competition_id, eventId))} eventId={eventId} />
+                  </td>
+                )}
                 <td className={`wp-cell-attempts ${isMbldEvent(eventId) ? 'wp-cell-attempts--mbld' : ''} ${showAttemptRanks ? '' : 'wp-cell-attempts--center'}`}>
                   <AttemptsList
                     attempts={effAttempts}

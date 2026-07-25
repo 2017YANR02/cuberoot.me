@@ -609,13 +609,15 @@ a.wp-round-tag-link:hover {
 .wp-bycomp-table tbody tr.wp-row-anchorable {
     cursor: pointer;
 }
-.wp-bycomp-table tbody tr.wp-row-anchorable:hover td {
+/* 行高亮(hover / hash 锚点)一律跳过 AoXR 列:它是跨该场全部轮次的合并格,挂在组首行上,
+   选中组首行时整格(跨 3—4 行)会一起染色,看着像高亮了一整组,与「只选中一行」矛盾。 */
+.wp-bycomp-table tbody tr.wp-row-anchorable:hover td:not(.wp-cell-aoxr) {
     background: color-mix(in srgb, var(--wp-text) 3%, transparent);
 }
 /* hash 锚点命中的行持续高亮 — 仿 WCA regulations 行级锚点黄底,直到下次切换 hash.
    class 由 ByEventView / ByCompList useEffect 维护(SPA lazy mount 后 :target 不重绑) */
-.wp-bycomp-table tbody tr.wp-row-target td,
-.wp-bycomp-table tbody tr.wp-row-target:hover td {
+.wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-aoxr),
+.wp-bycomp-table tbody tr.wp-row-target:hover td:not(.wp-cell-aoxr) {
     background: rgba(255, 224, 70, 0.42);
 }
 /* 左侧实心强调条,让选中行一眼可辨 */
@@ -623,11 +625,11 @@ a.wp-round-tag-link:hover {
     box-shadow: inset 3px 0 0 #f5b301;
 }
 @media (prefers-color-scheme: dark) {
-    html:not([data-theme=light]) .wp-bycomp-table tbody tr.wp-row-target td {
+    html:not([data-theme=light]) .wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-aoxr) {
         background: rgba(255, 213, 79, 0.30);
     }
 }
-html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td {
+html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-aoxr) {
     background: rgba(255, 213, 79, 0.30);
 }
 
@@ -720,6 +722,26 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td {
     font-size: 0.72rem; line-height: 1.2; font-weight: 400;
     color: var(--wp-text-mute); font-variant-numeric: tabular-nums;
 }
+/* ── AoXR 列(跨轮平均,口径见 logic/aoxr.ts)──────────────────────────────
+   一场比赛该项目的全部轮次合并成一格。左侧一条淡分隔线把「逐轮成绩」与「整场聚合」分开。
+   合并格必须垂直居中,且要压过上面 .wp-row-changed / .wp-row-has-recon-stats 的整行 top 对齐
+   (那两条是行级规则,合并格跨多行时贴顶会与任何一行都不齐)→ 同特异性靠后覆盖,不用 !important。 */
+.wp-bycomp-table thead th.wp-th-aoxr { text-align: center; border-left: 1px solid var(--wp-border); }
+.wp-bycomp-table tbody tr td.wp-cell-aoxr {
+    text-align: center;
+    vertical-align: middle;
+    border-left: 1px solid var(--wp-border);
+    padding-left: 14px; padding-right: 14px;
+    white-space: nowrap;
+}
+.wp-aoxr { display: inline-flex; flex-direction: column; align-items: center; line-height: 1.3; }
+.wp-aoxr-label { font-size: 0.6rem; font-weight: 600; color: var(--wp-text-mute); }
+.wp-aoxr-value { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--wp-text); }
+.wp-aoxr-empty { color: var(--wp-text-mute); }
+/* 含直播(非官方)轮次:只做与 .wp-row-live 同款的轻微弱化,不加额外标记 —— 同行已有橙色
+   「直播」标,格内再标一次是重复;PR 角标照出(名次走「官方 + 直播」序列,同单次/平均列)。 */
+.wp-aoxr--unofficial .wp-aoxr-value { color: var(--wp-text-sub); font-weight: 500; }
+
 /* 详细成绩下方补的 stm/tps 值行:小一号 + 更淡,右对齐(继承 .wp-att)与上方成绩逐列对齐 */
 .wp-cell-attempts .wp-att-sub {
     font-size: 0.72rem; line-height: 1.2; font-weight: 400; color: var(--wp-text-mute);

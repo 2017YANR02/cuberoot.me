@@ -13,6 +13,8 @@ import { CompCell } from '@/components/CompCell/CompCell';
 import { compLinkProps } from '@/lib/comp-link';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
 import { computePrRank } from '../../logic/progress';
+import { computeAoxr, aoxrKey, type AoxrCell } from '../../logic/aoxr';
+import { AoxrValue, aoxrHint } from './AoxrValue';
 import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } from '@/lib/wca-round-meta';
 import { AttemptsList } from './AttemptsList';
 import { AverageValueCell } from './AverageValueCell';
@@ -91,9 +93,14 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
   // 名次数字优先用本地 prRankLive,cubing pS/pA 仅作兜底(本地无效时,如缺把数)。
   const livePrRanks = useLivePrRanks(results, wcaId);
 
+  // AoXR(跨轮平均)按 (比赛 × 项目) 聚合,与单次/平均同用「订正后」的有效值。
+  const aoxrMap = useMemo(
+    () => (comps ? computeAoxr(effResultsForRank, comps) : new Map<string, AoxrCell>()),
+    [effResultsForRank, comps],
+  );
+
   const grouped = useMemo(() => {
     if (!results || !comps) return null;
-    const compById = new Map(comps.map((c) => [c.id, c]));
     const byComp = new Map<string, WcaResultRow[]>();
     for (const r of results) {
       const arr = byComp.get(r.competition_id);
@@ -103,14 +110,21 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
     const compsDesc = comps.slice().sort((a, b) => b.start_date.localeCompare(a.start_date));
     return compsDesc
       .filter((c) => byComp.has(c.id))
-      .map((c) => ({
-        comp: c,
-        rows: byComp.get(c.id)!.slice().sort((a, b) => {
+      .map((c) => {
+        const rows = byComp.get(c.id)!.slice().sort((a, b) => {
           if (a.event_id !== b.event_id) return a.event_id.localeCompare(b.event_id);
           return (ROUND_ORDER[a.round_type_id] ?? 99) - (ROUND_ORDER[b.round_type_id] ?? 99);
-        }),
-        compById, // unused but keeps closure happy
-      }));
+        });
+        // AoXR 列跨该场同项目的全部轮次合并成一格:组首行记录组大小(= rowSpan),其余行记 0 不出格。
+        const aoxrSpans = new Array<number>(rows.length).fill(0);
+        for (let i = 0; i < rows.length;) {
+          let j = i;
+          while (j < rows.length && rows[j].event_id === rows[i].event_id) j++;
+          aoxrSpans[i] = j - i;
+          i = j;
+        }
+        return { comp: c, rows, aoxrSpans };
+      });
   }, [results, comps]);
 
   // 行级 hash 锚点(#r-{comp}-{event}-{round}):点整行 → URL 片段更新,该行黄色高亮持续到
@@ -164,18 +178,24 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
               <th className="wp-th-narrow">{t('排名', 'Pos')}</th>
               <th>{t('单次', 'Single')}</th>
               <th>{t('平均', 'Avg')}</th>
+              <th className="wp-th-aoxr">
+                <span className="wp-th-info">
+                  AoXR
+                  <InfoTooltip content={aoxrHint()} />
+                </span>
+              </th>
               <th className="wp-th-attempts">
                 <span className="wp-att-head"><span>{t('详细成绩', 'Attempts')}</span></span>
               </th>
             </tr>
           </thead>
-          {grouped.map(({ comp, rows }) => {
+          {grouped.map(({ comp, rows, aoxrSpans }) => {
             // event 内只在第一行显示项目名,视觉分组
             let lastEvent = '';
             return (
               <tbody key={comp.id} className="wp-bycomp-group">
                 <tr className="wp-bycomp-group-row">
-                  <th colSpan={6} scope="colgroup">
+                  <th colSpan={7} scope="colgroup">
                     <div className="wp-bycomp-grouphead">
                       <Link
                         {...compLinkProps(comp.id, { view: 'result' })}
@@ -186,7 +206,7 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                     </div>
                   </th>
                 </tr>
-                {rows.map((r) => {
+                {rows.map((r, ri) => {
                     const rank = r.live ? prRankLive?.get(r.id) : prRank.get(r.id);
                     const liveRank = r.live ? livePrRanks.get(r.id) : null;
                     const singleRank = rank?.singleRank ?? liveRank?.pS ?? null;
@@ -299,6 +319,11 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                             />
                           )}
                         </td>
+                        {aoxrSpans[ri] > 0 && (
+                          <td className="wp-cell-aoxr" rowSpan={aoxrSpans[ri]}>
+                            <AoxrValue cell={aoxrMap.get(aoxrKey(comp.id, r.event_id))} eventId={r.event_id} />
+                          </td>
+                        )}
                         <td className={`wp-cell-attempts ${isMbldEvent(r.event_id) ? 'wp-cell-attempts--mbld' : ''} ${showAttemptRanks ? '' : 'wp-cell-attempts--center'}`}>
                           <AttemptsList
                             attempts={effAttempts}
