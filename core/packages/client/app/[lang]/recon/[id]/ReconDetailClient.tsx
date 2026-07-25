@@ -24,7 +24,7 @@ import {
 } from '@/lib/recon-api';
 import { revalidateRecon } from '../revalidate-action';
 import {
-  formatTime, isBldEvent, wcaPersonUrl,
+  formatTime, isBldEvent,
   buildExternalLinks, FACE_COLORS, attemptsPerRound, localizeRound,
   formatReconSingle,
 } from '@/lib/recon-utils';
@@ -63,7 +63,7 @@ import {
 } from '@/lib/recon-norm-cross-extract';
 import { computeAllStats, buildCaption, buildCaptionHeader } from '@/lib/recon-stats';
 import {
-  DiscussionComposer, DiscussionEditBox, UserHeadline, ItemMenu, UserAvatarFallback,
+  DiscussionComposer, DiscussionEditBox, UserHeadline, AuthorName, ItemMenu, UserAvatarFallback,
 } from '@/components/Discussion';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useWeChatShare } from '@/hooks/useWeChatShare';
@@ -371,14 +371,10 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
       ? solve.reconerId === solve.addedById
       : displayCuberName(solve.reconer, isZh) === displayCuberName(solve.addedBy, isZh));
 
+  // 复盘者 / 添加者的 id 是归属键 ownerKey,不一定是 WCA id —— 出链判定收敛在 AuthorName。
   const renderContributor = (name: string, id?: string) => (
     <span className="detail-meta-value">
-      {id && <Flag iso2={personFlagIso2(id)} className="yt-comment-flag" />}
-      {id ? (
-        <a href={wcaPersonUrl(id)} target="_blank" rel="noopener noreferrer">
-          {displayCuberName(name, isZh)}
-        </a>
-      ) : displayCuberName(name, isZh)}
+      <AuthorName id={id} name={name} />
     </span>
   );
 

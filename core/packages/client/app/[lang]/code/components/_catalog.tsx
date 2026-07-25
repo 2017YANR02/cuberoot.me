@@ -1507,8 +1507,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'DiscussionComposer',
     import: "import { DiscussionComposer } from '@/components/Discussion';",
     category: 'more',
-    zh: `评论 / 另解共用的 UI 原子集,导出 YouTube 风格提交框 DiscussionComposer、编辑框 DiscussionEditBox、作者元信息条 UserHeadline、三点菜单 ItemMenu、头像 fallback UserAvatarFallback。`,
-    en: `Shared comment/alt-solution UI atoms: exports the YouTube-style composer DiscussionComposer, edit box DiscussionEditBox, author meta line UserHeadline, kebab menu ItemMenu, and avatar fallback UserAvatarFallback.`,
+    zh: `评论 / 另解共用的 UI 原子集,导出 YouTube 风格提交框 DiscussionComposer、编辑框 DiscussionEditBox、作者名 AuthorName、作者元信息条 UserHeadline、三点菜单 ItemMenu、头像 fallback UserAvatarFallback。AuthorName 是全站「归属键 ownerKey → 要不要出 WCA 外链」的唯一判定点(合成 u<uid> 账号没有 WCA 档案页)。`,
+    en: `Shared comment/alt-solution UI atoms: exports the YouTube-style composer DiscussionComposer, edit box DiscussionEditBox, author name AuthorName, author meta line UserHeadline, kebab menu ItemMenu, and avatar fallback UserAvatarFallback. AuthorName is the single place deciding whether an ownerKey earns an outbound WCA link (synthetic u<uid> accounts have no WCA profile).`,
     note: { zh: `多组件原子集(无默认导出),按需具名引入;Composer / UserHeadline 依赖 auth store。`, en: `A multi-component atom set (no default export); import members by name. Composer/UserHeadline depend on the auth store.` },
   },
   {
