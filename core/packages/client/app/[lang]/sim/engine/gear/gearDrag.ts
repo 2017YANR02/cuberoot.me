@@ -105,12 +105,21 @@ export function gearResolveLive(
   const originWorld = new THREE.Vector3().setFromMatrixPosition(cube.matrixWorld);
   const score = scoreCornerTwist(
     hit.candidates,
-    (f) => _axis.set(FACE_AXIS[f][0], FACE_AXIS[f][1], FACE_AXIS[f][2]).transformDirection(scene.matrixWorld),
+    // Face axes live in the cube's LOCAL frame — use the cube's world matrix (not the
+    // scene's) so drags still resolve correctly after an x/y/z reorientation is folded
+    // into the cube's own quaternion.
+    (f) => _axis.set(FACE_AXIS[f][0], FACE_AXIS[f][1], FACE_AXIS[f][2]).transformDirection(cube.matrixWorld),
     hit.point, originWorld, dxPx, dyPx, camera, width, height, 0.2,
   );
   if (!score) return null;
   // dir=+1 = drag along +(axis × r) = counter-clockwise seen from outside = primed.
-  return { move: { face: score.corner, amt: score.dir === 1 ? -1 : 1 }, tangentX: score.tangentX, tangentY: score.tangentY };
+  // Record the WORLD letter for the resolved local face: the engine remaps letters
+  // through the live orientation (GearCube.remapFace), so feeding the world letter
+  // both turns the face the user actually grabbed and keeps history replayable.
+  return {
+    move: { face: cube.worldLetterForFace(score.corner), amt: score.dir === 1 ? -1 : 1 },
+    tangentX: score.tangentX, tangentY: score.tangentY,
+  };
 }
 
 /** Discrete-fire path: just the move. */

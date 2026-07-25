@@ -149,6 +149,21 @@ export default class SkewbCube extends CornerTurnCube<CornerMove> {
     return { corner: best, dir: move.dir };
   }
 
+  /** Inverse of remapGrip: the world-fixed LETTER whose twist turns local grip `grip`
+   *  right now — the drag path records this so history replays through remapGrip.
+   *  Same contract as PyraCube.letterFor / GearCube.worldLetterForFace. */
+  worldLetterForGrip(grip: number): number {
+    const q = this.quaternion;
+    if (q.x === 0 && q.y === 0 && q.z === 0 && q.w === 1) return grip;
+    const worldDir = this.axes[grip].clone().applyQuaternion(q);
+    let best = grip, bestDot = -Infinity;
+    for (let g = 0; g < 8; g++) {
+      const d = this.axes[g].dot(worldDir);
+      if (d > bestDot) { bestDot = d; best = g; }
+    }
+    return best;
+  }
+
   /** Fold a rotation into the group's quaternion (world-frame premultiply). */
   private bakeRotation(move: SkewbRotMove): void {
     this.quaternion.premultiply(_rotQuat.setFromAxisAngle(ROT_AXIS[move.rot], rotAngle(move.dir)));

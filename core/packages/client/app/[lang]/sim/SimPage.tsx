@@ -1656,9 +1656,9 @@ export default function SimPage() {
         userMoveRef.current?.(action);
         return;
       }
-      // Gear cube: same physical keys as 3x3, but its grammar only knows the 6 basic
-      // faces (U R F D L B) — route those to a single 180° flip; wide/slice/rotation
-      // keys don't parse and stay silent no-ops (don't swallow the keystroke).
+      // Gear cube: same physical keys as 3x3 — the 6 basic faces (U R F D L B) route
+      // to a single 180° flip, x/y/z (+ prime) to a whole-cube rotation (issue #38);
+      // wide/slice keys don't parse and stay silent no-ops (don't swallow the keystroke).
       if (world.cube instanceof GearCube) {
         const gear = world.cube;
         const moves = parseGearMoves(new TwistAction(k.sign, k.reverse, 1).value);

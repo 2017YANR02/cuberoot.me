@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
-  solvedGear, applyGearFlip, applyGearMove, isSolvedGear,
+  solvedGear, applyGearFlip, applyGearMove, isSolvedGear, isGearRot,
   parseGearMoves, gearMoveToString, gearMovesToString, invertGearMoves, reduceGearAlg,
-  normalizeAmt, type GearPieceState, type GearMove,
+  normalizeAmt, type GearPieceState, type GearMove, type GearAnyMove,
 } from '@/app/[lang]/sim/engine/gear/gearState';
 import { GEAR_SOLVED, GEAR_TOTAL_STATES, gearApplyToken, solveGear, randomGearScramble, gearApply } from '@/lib/gear-solver';
 
@@ -138,7 +138,7 @@ describe('gearState piece model (vs lib/gear-solver, the cstimer-bit-exact oracl
     expect(gearMoveToString({ face: 0, amt: -6 })).toBe('U6');   // ±6 coincide
     expect(normalizeAmt(12)).toBe(0);
     expect(parseGearMoves('U0 U7 xyz U')).toHaveLength(1);       // junk skipped, no throw
-    const moves: GearMove[] = parseGearMoves("U2 R' F3");
+    const moves: GearAnyMove[] = parseGearMoves("U2 R' F3");
     expect(gearMovesToString(invertGearMoves(moves))).toBe("F3' R U2'");
     expect(reduceGearAlg('U U')).toBe('U2');
     expect(reduceGearAlg("U U'")).toBe('');
@@ -159,5 +159,46 @@ describe('gearState piece model (vs lib/gear-solver, the cstimer-bit-exact oracl
       for (const m of invertGearMoves(moves)) st = applyGearMove(st, m);
       expect(keyOf(st)).toBe(keyOf(solvedGear()));
     }
+  });
+
+  // Whole-cube rotations x / y / z (issue #38): parsed like the Skewb's, they permute
+  // no piece — the engine carries them on the render group's quaternion, so at the
+  // state layer they are exact no-ops and notation must round-trip / invert / barrier.
+  describe('whole-cube rotations', () => {
+    it('parse + toString round-trip, mixed with face flips', () => {
+      const moves = parseGearMoves("y x' z2 U R2' z");
+      expect(moves).toHaveLength(6);
+      expect(moves.slice(0, 3).every(isGearRot)).toBe(true);
+      expect(moves[0]).toEqual({ rot: 1, dir: 1 });
+      expect(moves[1]).toEqual({ rot: 0, dir: -1 });
+      expect(moves[2]).toEqual({ rot: 2, dir: 2 });
+      expect(isGearRot(moves[3])).toBe(false);
+      expect(gearMovesToString(moves)).toBe("y x' z2 U R2' z");
+      // x2' / y3 are not in the grammar (only ' and 2 suffixes)
+      expect(parseGearMoves("x2' y3 U")).toHaveLength(1);
+    });
+
+    it('rotations are state no-ops (solvedness / bijection key unaffected)', () => {
+      let st = solvedGear();
+      for (const m of parseGearMoves("y x' z2")) st = applyGearMove(st, m);
+      expect(keyOf(st)).toBe(keyOf(solvedGear()));
+      st = applyGearMove(st, { face: 1, amt: 1 });          // R
+      const scrambledKey = keyOf(st);
+      expect(isSolvedGear(st)).toBe(false);
+      st = applyGearMove(st, { rot: 1, dir: 1 });           // y
+      expect(keyOf(st)).toBe(scrambledKey);
+      expect(isSolvedGear(st)).toBe(false);
+    });
+
+    it('invert: x2 stays x2, quarter rotations flip, order reverses', () => {
+      expect(gearMovesToString(invertGearMoves(parseGearMoves("y U x2 z' R3")))).toBe("R3' z x2 U' y'");
+    });
+
+    it('reduce: rotations are fold barriers and are never merged', () => {
+      expect(reduceGearAlg('U y U')).toBe('U y U');   // different physical faces
+      expect(reduceGearAlg("U U' y")).toBe('y');
+      expect(reduceGearAlg("y y'")).toBe("y y'");     // rotations left as-is (Skewb semantics)
+      expect(reduceGearAlg('U2 y U3 U3')).toBe('U2 y U6');
+    });
   });
 });

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { autoSpaceMoves, autoSpaceAfterComment, autoCloseBracket, cleanAlgText } from '@/lib/alg-autospace';
+import { autoSpaceMoves, autoSpaceMovesSimple, autoSpaceAfterComment, autoCloseBracket, cleanAlgText } from '@/lib/alg-autospace';
 
 describe('autoSpaceMoves — 相邻转动自动加空格', () => {
   // 模拟「刚输入第二步那个面字母」后的一次 onInput 调用
@@ -45,6 +45,49 @@ describe('autoSpaceMoves — 相邻转动自动加空格', () => {
 
   it('注释里不加空格', () => {
     expect(typed('// RL').value).toBe('// RL');
+  });
+});
+
+describe('autoSpaceMovesSimple — 单字母 token 简化规则(齿轮魔方)', () => {
+  const typed = (value: string) => autoSpaceMovesSimple(value, value.length, 'insertText');
+
+  it('相邻面字母之间加空格(虚拟键盘裸插字母的兜底)', () => {
+    expect(typed('UR').value).toBe('U R');
+    expect(typed('RL').value).toBe('R L');
+  });
+
+  it('无 UD/FB 连写豁免(gear 语法没有连写,UD 会变废 token)', () => {
+    expect(typed('UD').value).toBe('U D');
+    expect(typed('FB').value).toBe('F B');
+    expect(typed("U'D").value).toBe("U' D");
+  });
+
+  it('后缀数字 2-6 算 token 结尾(gear 的 U3..U6 记号)', () => {
+    expect(typed('U3R').value).toBe('U3 R');
+    expect(typed('U6D').value).toBe('U6 D');
+    expect(typed('U2R').value).toBe('U2 R');
+  });
+
+  it('整体转体 x/y/z 同样断词', () => {
+    expect(typed('Uy').value).toBe('U y');
+    expect(typed('xy').value).toBe('x y');
+    expect(typed("y'U").value).toBe("y' U");
+  });
+
+  it("后缀撇号/数字不断词(留在上一 token 上)", () => {
+    expect(typed("U'").value).toBe("U'");
+    expect(typed('U3').value).toBe('U3');
+    expect(typed('x2').value).toBe('x2');
+  });
+
+  it('中途插入:光标后紧跟字母时在光标处断词', () => {
+    // "U|R" 处输入 3 → "U3 R"
+    expect(autoSpaceMovesSimple('U3R', 2, 'insertText').value).toBe('U3 R');
+  });
+
+  it('注释里不动;非 insertText 不动', () => {
+    expect(typed('// UR').value).toBe('// UR');
+    expect(autoSpaceMovesSimple('UR', 2, 'deleteContentBackward').value).toBe('UR');
   });
 });
 

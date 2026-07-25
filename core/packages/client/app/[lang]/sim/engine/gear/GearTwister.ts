@@ -7,12 +7,15 @@
 import TweenTwister from '../TweenTwister';
 import { tweenDuration } from '../tweenTiming';
 import type GearCube from './GearCube';
-import { parseGearMoves, type GearMove } from './gearState';
+import { parseGearMoves, isGearRot, type GearAnyMove } from './gearState';
 
-export default class GearTwister extends TweenTwister<GearMove> {
+export default class GearTwister extends TweenTwister<GearAnyMove> {
   constructor(cube: GearCube) { super(cube); }
-  protected parse(scramble: string): GearMove[] { return parseGearMoves(scramble); }
-  protected framesFor(move: GearMove): number {
+  protected parse(scramble: string): GearAnyMove[] { return parseGearMoves(scramble); }
+  protected framesFor(move: GearAnyMove): number {
+    // A whole-cube rotation is a 90° (or 180° for x2) reorientation, timed like a
+    // normal quarter / half turn.
+    if (isGearRot(move)) return tweenDuration(move.dir === 2 ? 2 : 1);
     return tweenDuration(Math.min(2 * Math.abs(move.amt), 6));
   }
 }
