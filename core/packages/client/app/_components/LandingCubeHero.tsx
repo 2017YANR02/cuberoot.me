@@ -10,13 +10,11 @@ import { useEffect, useRef, useState } from 'react';
 import { Box } from 'lucide-react';
 import type Cube from '@/app/[lang]/sim/engine/nxn/cube';
 
-// 4 moves, group order 12 — replaying it forever passes back through the solved
-// state every 12 reps, so the idle loop never needs a snap-reset (the previous
-// cubing.js version rewound its timeline, which jumped visibly).
-const IDLE_ALG = "S' U' M' y2";
-const IDLE_ALG_MOVES = 4;
+// Plays once on mount and stops. (The previous cubing.js version looped by
+// rewinding its timeline, which snapped the cube back to solved every 4 moves.)
+const INTRO_ALG = "S' U' M' y2";
 // Frames per quarter turn @60Hz (engine default 30) — slower reads as ambient.
-const IDLE_FRAMES = 42;
+const INTRO_FRAMES = 42;
 // Camera pull-back. /sim uses 5; tighter here so the cube fills the card slot.
 const PERSPECTIVE = 4.4;
 // Drag-orbit radians per pixel, same constant the recon player uses.
@@ -61,6 +59,25 @@ export default function LandingCubeHero() {
       renderer.domElement.style.touchAction = 'pan-y';
       slot.appendChild(renderer.domElement);
 
+      // Render on demand: the intro plays once, so park the rAF when the twister
+      // has drained and nothing has been redrawn for a while, and wake it again on
+      // pointer input or resize.
+      let raf = 0;
+      let idle = 0;
+      const loop = () => {
+        if (world.dirty) {
+          renderer.clear();
+          renderer.render(world.scene, world.camera);
+          world.dirty = false;
+          idle = 0;
+        } else if (++idle > 20 && cube.twister.length === 0) {
+          raf = 0;
+          return;
+        }
+        raf = requestAnimationFrame(loop);
+      };
+      const wake = () => { idle = 0; if (!raf) raf = requestAnimationFrame(loop); };
+
       const resize = () => {
         const w = slot.clientWidth;
         const h = slot.clientHeight;
@@ -70,6 +87,7 @@ export default function LandingCubeHero() {
         world.resize();
         renderer.setSize(w, h, true);
         world.dirty = true;
+        wake();
       };
       resize();
       const ro = new ResizeObserver(resize);
@@ -97,6 +115,7 @@ export default function LandingCubeHero() {
         world.scene.rotation.x = Math.max(-QUARTER, Math.min(QUARTER, world.scene.rotation.x + dy * ORBIT_K));
         world.scene.updateMatrix();
         world.dirty = true;
+        wake();
       };
       const onUp = (e: PointerEvent) => {
         dragging = false;
@@ -107,34 +126,15 @@ export default function LandingCubeHero() {
       renderer.domElement.addEventListener('pointerup', onUp);
       renderer.domElement.addEventListener('pointercancel', onUp);
 
-      // Idle animation: keep the twister queue topped up rather than restarting it
-      // on completion. twister.update() is registered in cube.callbacks and drains
-      // one move per tween, so a non-empty queue plays gaplessly; pushing from a
-      // timer (not from that callback) stays clear of the tweener's update loop,
-      // where a same-tick push is silently dropped.
+      // Intro animation, played once. twister.update() is registered in
+      // cube.callbacks and drains one queued move per tween, so pushing the whole
+      // alg up front plays it gaplessly and then leaves the cube at rest.
       const prevFrames = timing.frames;
-      timing.frames = IDLE_FRAMES;
-      const topUp = () => {
-        if (cube.twister.length < IDLE_ALG_MOVES) cube.twister.push(IDLE_ALG);
-      };
-      topUp();
-      // Self-limiting when the tab is hidden: rAF stops, tweens stop draining, the
-      // queue stays long and nothing more is pushed.
-      const feeder = window.setInterval(topUp, 300);
-
-      let raf = 0;
-      const loop = () => {
-        if (world.dirty) {
-          renderer.clear();
-          renderer.render(world.scene, world.camera);
-          world.dirty = false;
-        }
-        raf = requestAnimationFrame(loop);
-      };
-      loop();
+      timing.frames = INTRO_FRAMES;
+      cube.twister.push(INTRO_ALG);
+      wake();
 
       cleanup = () => {
-        window.clearInterval(feeder);
         cancelAnimationFrame(raf);
         ro.disconnect();
         timing.frames = prevFrames;
