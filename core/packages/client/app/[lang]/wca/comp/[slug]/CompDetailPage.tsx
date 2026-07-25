@@ -34,6 +34,7 @@ import { fetchWcaScrambles } from '@/lib/wca-results-api';
 import { formatDateRangeIso, formatDateTimeLocal, toIsoDate, weekdayRangeLabel } from '@/lib/wca-date';
 import { localizeCity } from '@/lib/city-localize';
 import { getSimilarComps, type SeriesComp } from '@/lib/comp-series';
+import { getSameCityComps } from '@/lib/comp-city';
 import { compLinkProps } from '@/lib/comp-link';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import BoolToggle from '@/components/BoolToggle';
@@ -643,28 +644,71 @@ function decodeEntities(s: string): string {
     .replace(/&amp;/g, '&');
 }
 
-// 「相似比赛」列表 —— 每行一场同系列比赛(旗 + 全名带年份 + 日期 + 地点),点进对应比赛页。
+// 「相似比赛」列表 —— 每行一场比赛(旗 + 全名带年份 + 日期 + 地点),点进对应比赛页。
 // 用全名(保留年份/版本号)而非精简名:年份/版本号正是区分同系列各场的关键。
-function SimilarCompsView({ comps, isZh, lang }: { comps: SeriesComp[]; isZh: boolean; lang: 'zh' | 'en' }) {
+// showPlace=false 用于「同城市」分区:地点整段恒等于分区标题,逐行重复只是噪声。
+function SimilarCompList({ comps, isZh, lang, showPlace = true }: {
+  comps: SeriesComp[]; isZh: boolean; lang: 'zh' | 'en'; showPlace?: boolean;
+}) {
   return (
     <ul className="comp-similar-list">
       {comps.map(c => {
         const name = localizeCompName(c.id, decodeEntities(c.name), isZh);
         const date = formatDateRangeIso(c.start, c.end || c.start);
-        const city = c.city ? (isZh ? localizeCity(c.city, true, c.country) : c.city) : '';
-        const place = city ? `${city}${tr({ zh: '，', en: ', ' })}${countryName(c.country, isZh)}` : countryName(c.country, isZh);
         return (
           <li key={c.id}>
             <Link {...compLinkProps(c.id, undefined, lang)} className="comp-similar-item">
               <Flag iso2={c.country} className="comp-similar-flag" />
               <span className="comp-similar-name">{name}</span>
-              <span className="comp-similar-place">{place}</span>
+              {showPlace && <span className="comp-similar-place">{compPlace(c, isZh)}</span>}
               <span className="comp-similar-date">{date}</span>
             </Link>
           </li>
         );
       })}
     </ul>
+  );
+}
+
+function compPlace(c: SeriesComp, isZh: boolean): string {
+  const city = c.city ? localizeCity(c.city, isZh, c.country) : '';
+  return city ? `${city}${tr({ zh: '，', en: ', ' })}${countryName(c.country, isZh)}` : countryName(c.country, isZh);
+}
+
+// 同城市比赛先只铺前 CITY_PREVIEW 场:热门城市(波哥大 178 场)整列铺开是长得没边的一屏。
+const CITY_PREVIEW = 20;
+
+// 「相似比赛」tab 正文 —— 两类分区:同系列(名字/官方锦标赛类型)与同城市(只比城市)。
+// 同城市里剔掉已在同系列列过的场次,同一场比赛不重复出现。
+function SimilarCompsView({ series, sameCity, isZh, lang }: {
+  series: SeriesComp[]; sameCity: SeriesComp[]; isZh: boolean; lang: 'zh' | 'en';
+}) {
+  const [cityExpanded, setCityExpanded] = useState(false);
+  const cityShown = cityExpanded ? sameCity : sameCity.slice(0, CITY_PREVIEW);
+  const cityHidden = sameCity.length - cityShown.length;
+  return (
+    <div className="comp-similar">
+      {series.length > 0 && (
+        <section>
+          <h3 className="comp-similar-title">{tr({ zh: '同系列', en: 'Same series' })}</h3>
+          <SimilarCompList comps={series} isZh={isZh} lang={lang} />
+        </section>
+      )}
+      {sameCity.length > 0 && (
+        <section>
+          <h3 className="comp-similar-title">
+            {tr({ zh: '同城市', en: 'Same city' })}
+            <span className="comp-similar-title-note">{compPlace(sameCity[0], isZh)}</span>
+          </h3>
+          <SimilarCompList comps={cityShown} isZh={isZh} lang={lang} showPlace={false} />
+          {cityHidden > 0 && (
+            <button type="button" className="comp-similar-more" onClick={() => setCityExpanded(true)}>
+              {tr({ zh: `显示全部 ${sameCity.length} 场`, en: `Show all ${sameCity.length}` })}
+            </button>
+          )}
+        </section>
+      )}
+    </div>
   );
 }
 
@@ -875,7 +919,21 @@ export default function CompDetailPage() {
     getSimilarComps(slug).then(list => { if (alive) setSimilarComps(list); }).catch(() => {});
     return () => { alive = false; };
   }, [slug]);
-  const showSimilarTab = similarComps.length > 0;
+  // 同城市(第 3 条判据:只比城市)。整取的 comp_series.json 装不下它 —— 分片成一国一文件,
+  // 只拉本场所在国那份(见 lib/comp-city.ts)。已在「同系列」里出现过的场次剔掉,不重复列。
+  const [sameCityComps, setSameCityComps] = useState<SeriesComp[]>([]);
+  const compIso2 = compInfo?.country_iso2 || compFlagIso2(slug);
+  const similarIds = useMemo(() => similarComps.map(c => c.id), [similarComps]);
+  useEffect(() => {
+    setSameCityComps([]);
+    if (!slug || !compIso2) return;
+    let alive = true;
+    getSameCityComps(slug, compIso2, compInfo?.city, similarIds)
+      .then(list => { if (alive) setSameCityComps(list); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [slug, compIso2, compInfo?.city, similarIds]);
+  const showSimilarTab = similarComps.length > 0 || sameCityComps.length > 0;
   // 领奖台:各项目决赛前三。比赛结束(所有项目末轮都有成绩)且有领奖台时默认展示。
   // 领奖台 / 纪录要看全部项目的末轮,分片数据只有一个项目 — 必须等全量到位才算,
   // 否则会短暂算出「只有一个项目的领奖台」。tab 迟一步出现,同 scramble / similar 两个 tab 的做法。
@@ -1761,7 +1819,7 @@ export default function CompDetailPage() {
         {isScramble ? (
           <CompScramblesTab slug={slug} />
         ) : isSimilar ? (
-          <SimilarCompsView comps={similarComps} isZh={isZh} lang={isZh ? 'zh' : 'en'} />
+          <SimilarCompsView series={similarComps} sameCity={sameCityComps} isZh={isZh} lang={isZh ? 'zh' : 'en'} />
         ) : isSchedule ? (
           schedView === 'poster' ? (
             <CompPoster

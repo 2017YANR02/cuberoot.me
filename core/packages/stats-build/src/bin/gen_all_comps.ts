@@ -10,7 +10,7 @@ import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { query, closePool } from '../core/database.js';
 import type { RowDataPacket } from 'mysql2';
-import { buildCompSeriesIndex, type SeriesComp } from '@cuberoot/shared/comp-series';
+import { buildCompSeriesIndex, buildCompCityIndexes, type SeriesComp } from '@cuberoot/shared/comp-series';
 import { enrichCompElevations } from '../elevation.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -26,6 +26,9 @@ const COMP_DUAL_OUTPUT_PATH = resolve(__dirname, '../../../../../stats/comp_dual
 // 覆盖 past(本次刚生成的 out) + upcoming(读已提交的 all_upcoming_comps.json,比周更 dump 新)。
 const UPCOMING_INPUT_PATH = resolve(__dirname, '../../../../../stats/all_upcoming_comps.json');
 const COMP_SERIES_OUTPUT_PATH = resolve(__dirname, '../../../../../stats/comp_series.json');
+// 「同城市」分片索引:一国一文件 stats/comp_city/<ISO2>.json,详情页只拉当前比赛所在国那份
+// (整合进 comp_series.json 会让它翻倍,见 shared/comp_series.ts 末尾注释)。
+const COMP_CITY_OUTPUT_DIR = resolve(__dirname, '../../../../../stats/comp_city');
 
 // NOTE: WCA 内部 event_id → 前端短名（与 fetch_upcoming_comps.ts EVENT_DISPLAY_ORDER 保持一致）
 const EVENT_SHORT: Record<string, string> = {
@@ -272,13 +275,29 @@ async function main() {
   for (const cr of champRows) {
     (champByComp[cr.competition_id] ??= []).push(cr.championship_type);
   }
-  const seriesIdx = buildCompSeriesIndex([
+  const seriesInput: SeriesComp[] = [
     ...upcoming.map(toSeries),
     ...(out as RawComp[]).map(toSeries),
-  ], champByComp);
+  ];
+  const seriesIdx = buildCompSeriesIndex(seriesInput, champByComp);
   const seriesJson = JSON.stringify(seriesIdx);
   writeFileSync(COMP_SERIES_OUTPUT_PATH, seriesJson, 'utf-8');
   console.log(`Generated ${COMP_SERIES_OUTPUT_PATH}: ${seriesIdx.series.length} series, ${Object.keys(seriesIdx.byId).length} comps, ${Math.round(Buffer.byteLength(seriesJson) / 1024)} KB`);
+
+  // ── 「同城市」分片索引 → comp_city/<ISO2>.json ────────────────────────────
+  // 第 3 条判据(只看城市)。一国一文件,详情页只拉当前比赛所在国那份;每次全量重写(不删旧文件,
+  // 同步用的 rsync 也是纯增量 —— 某国的比赛只增不减,不会有该删的残留)。
+  mkdirSync(COMP_CITY_OUTPUT_DIR, { recursive: true });
+  const cityIdx = buildCompCityIndexes(seriesInput);
+  let cityComps = 0;
+  let cityBytes = 0;
+  for (const [iso2, idx] of Object.entries(cityIdx)) {
+    const json = JSON.stringify(idx);
+    writeFileSync(resolve(COMP_CITY_OUTPUT_DIR, `${iso2}.json`), json, 'utf-8');
+    cityBytes += Buffer.byteLength(json);
+    for (const list of Object.values(idx)) cityComps += list.length;
+  }
+  console.log(`Generated ${COMP_CITY_OUTPUT_DIR}: ${Object.keys(cityIdx).length} countries, ${cityComps} comps, ${Math.round(cityBytes / 1024)} KB`);
 
   // ── 双轮权威标记 → comp_dual.json (含未结束比赛) ──────────────────────────────
   const dualObj: Record<string, string[]> = {};

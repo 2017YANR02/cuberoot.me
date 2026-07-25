@@ -3,6 +3,7 @@
 //   2. WCA 官方 championship_type(world / _大洲 / greater_china / 国家 ISO2)—— 权威把
 //      「历年名字一直在变」的世锦赛 / 洲锦赛 / 国家锦标赛归为一类(名字匹配对这些无能为力:
 //      世锦赛叫过 "Rubik's World Championship" / "World Rubik's Cube Championship" …)。
+// 第 3 条判据「只看城市」单独走分片索引,见本文件末尾 buildCompCityIndexes。
 // gen_all_comps 用它产 stats/comp_series.json(详情页读),客户端只读预算好的索引;
 // 行为由 tests/comp-series.test.ts 锁。
 //
@@ -116,4 +117,51 @@ export function buildCompSeriesIndex(
     for (const c of arr) (byId[c.id] ??= []).push(gi);
   }
   return { series, byId };
+}
+
+// ── 第 3 条判据:只看城市 ────────────────────────────────────────────────────
+// 「同城市」不能塞进 comp_series.json:几乎每场比赛都属于某个城市组(17.7k 场里 15.7k 场
+// 所在城市 ≥2 场),全塞进去索引从 232KB gzip 涨到 ~490KB —— 而详情页一进就要整取它。
+// 故按国家分片成 stats/comp_city/<ISO2>.json,客户端只拉当前比赛所在国那一份
+// (最大 US ~65KB gzip,多数国家 <10KB)。城市名用 WCA cityName 原串精确比对
+// (含州/省后缀,如 "Melbourne, Victoria"),不做归一 —— 同城比赛的 cityName 本就同源同串。
+
+/** 同城市索引里的一场比赛:[id, name, start, end];国家由文件名隐含,城市由键隐含。 */
+export type CityComp = [id: string, name: string, start: string, end: string];
+
+/** 一个国家的同城市索引:cityName 原串 → 该城市所有比赛(新→旧);只留 ≥2 场的城市。 */
+export type CompCityIndex = Record<string, CityComp[]>;
+
+/**
+ * 建同城市索引,按国家 ISO2 分片:{ US: { "Berkeley, California": [[id,name,start,end], …] } }。
+ * 与 buildCompSeriesIndex 同约定:重复 id 只留第一份(upcoming 应排在 past 前),
+ * 组内按开始日期新→旧、同日按 id 升序;无 city 或无 country 的比赛不参与。
+ */
+export function buildCompCityIndexes(comps: SeriesComp[]): Record<string, CompCityIndex> {
+  const seen = new Set<string>();
+  const byCountry = new Map<string, Map<string, CityComp[]>>();
+  for (const c of comps) {
+    if (!c.id || seen.has(c.id)) continue;
+    seen.add(c.id);
+    const city = (c.city ?? '').trim();
+    const country = (c.country ?? '').trim().toUpperCase();
+    if (!city || !country) continue;
+    let cities = byCountry.get(country);
+    if (!cities) { cities = new Map(); byCountry.set(country, cities); }
+    let list = cities.get(city);
+    if (!list) { list = []; cities.set(city, list); }
+    list.push([c.id, c.name, c.start, c.end || c.start]);
+  }
+
+  const out: Record<string, CompCityIndex> = {};
+  for (const [country, cities] of byCountry) {
+    const kept: CompCityIndex = {};
+    for (const [city, list] of cities) {
+      if (list.length < 2) continue;
+      list.sort((a, b) => (a[2] < b[2] ? 1 : a[2] > b[2] ? -1 : a[0] < b[0] ? -1 : 1));
+      kept[city] = list;
+    }
+    if (Object.keys(kept).length > 0) out[country] = kept;
+  }
+  return out;
 }
