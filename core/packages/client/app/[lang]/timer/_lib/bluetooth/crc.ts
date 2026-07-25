@@ -1,5 +1,8 @@
 /**
- * The two CRC-16 variants the smart timers use.
+ * The two CRC-16 variants the QiYi / GAN devices use. Shared by both sides of
+ * this directory: the QiYi smart CUBE (`./qiyi.ts`) and the QiYi smart TIMER
+ * (`./timer/qiyi_timer.ts`) checksum their messages the same way, and the GAN
+ * timer uses the CCITT variant.
  *
  *   CRC-16/CCITT-FALSE  — GAN Smart Timer frame checksum.
  *       width=16 poly=0x1021 init=0xFFFF refin=false refout=false xorout=0x0000

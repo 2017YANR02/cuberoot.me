@@ -34,6 +34,7 @@
 
 import type { CubeDriver, CubeDriverStartResult } from './driver';
 import type { CubeBrand } from './types';
+import { crc16Modbus } from './crc';
 import { aesEcbDecrypt, aesEcbEncrypt, expandKey } from './gan_crypto';
 import { QIYI_MAC_ADV } from './mac';
 
@@ -58,21 +59,6 @@ const QIYI_AXIS_LUT: ReadonlyArray<number> = [4, 1, 3, 0, 2, 5];
 const QIYI_MAGIC = 0xfe;
 const OP_HELLO = 0x02;
 const OP_STATE = 0x03;
-
-/* ================================================================== */
-/*  CRC-16/MODBUS — same polynomial as cstimer                         */
-/* ================================================================== */
-
-function crc16Modbus(data: Uint8Array): number {
-  let crc = 0xffff;
-  for (let i = 0; i < data.length; i++) {
-    crc ^= data[i];
-    for (let j = 0; j < 8; j++) {
-      crc = (crc & 1) !== 0 ? (crc >>> 1) ^ 0xa001 : crc >>> 1;
-    }
-  }
-  return crc & 0xffff;
-}
 
 /* ================================================================== */
 /*  Frame builders & parser                                            */

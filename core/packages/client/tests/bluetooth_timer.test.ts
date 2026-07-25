@@ -35,15 +35,23 @@ import {
   decodeQiyiTimerPayload,
   encodeQiyiTimerPackets,
   parseQiyiTimerFrame,
-  extractQiyiTimerMac,
   qiyiTimerMacFromName,
-  normalizeTimerMac,
 } from '@/app/[lang]/timer/_lib/bluetooth/timer';
 import {
   aesDecryptBlock,
   aesEncryptBlock,
   expandKey,
-} from '@/app/[lang]/timer/_lib/bluetooth/timer/aes128';
+} from '@/app/[lang]/timer/_lib/bluetooth/gan_crypto';
+// The QiYi timer advertises exactly like the QiYi cube, so MAC discovery is
+// the shared cube path with `QIYI_MAC_ADV` — not a timer-specific copy.
+import {
+  QIYI_MAC_ADV,
+  extractMacFromManufacturerData,
+  normalizeMac,
+} from '@/app/[lang]/timer/_lib/bluetooth/mac';
+
+const extractQiyiTimerMac = (mf: BluetoothManufacturerData | DataView): string | null =>
+  extractMacFromManufacturerData(mf, [QIYI_MAC_ADV]);
 
 const ascii = (s: string): Uint8Array => Uint8Array.from(s, (c) => c.charCodeAt(0));
 const hex = (b: Uint8Array): string => Array.from(b).map((x) => x.toString(16).padStart(2, '0')).join('');
@@ -462,10 +470,10 @@ describe('QiYi timer MAC discovery', () => {
   });
 
   it('normalises MAC strings and rejects junk', () => {
-    expect(normalizeTimerMac('cc:a1:00:00:8f:2a')).toBe('CC:A1:00:00:8F:2A');
-    expect(normalizeTimerMac('CC-A1-00-00-8F-2A')).toBe('CC:A1:00:00:8F:2A');
-    expect(normalizeTimerMac('CCA100008F2A')).toBeNull();
-    expect(normalizeTimerMac('')).toBeNull();
-    expect(normalizeTimerMac(undefined)).toBeNull();
+    expect(normalizeMac('cc:a1:00:00:8f:2a')).toBe('CC:A1:00:00:8F:2A');
+    expect(normalizeMac('CC-A1-00-00-8F-2A')).toBe('CC:A1:00:00:8F:2A');
+    expect(normalizeMac('CCA100008F2A')).toBeNull();
+    expect(normalizeMac('')).toBeNull();
+    expect(normalizeMac(undefined)).toBeNull();
   });
 });
