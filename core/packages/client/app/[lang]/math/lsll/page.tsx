@@ -4,7 +4,7 @@
  * /math/lsll — LSLL(最后一槽 + 顶层)情况计数长文。
  *
  * 严格推导 583,284:原始态 (5!·5!/2)·3⁴·2⁴ = 9,331,200 → 两侧 AUF 的 Z4×Z4 商 → Burnside。
- * 顺带给出只商单侧 AUF(自由作用)的中间量 2,332,800,并对齐 42 大类账本与
+ * 三类(再商 mid-AUF)实测非良定义:mid 依赖所选 ZBLS 公式,详见 §3。并对齐 42 大类账本与
  * /alg/lsll 页那条 288×7776/4 + (3916+3888)×3 速记式。与 /alg/lsll 双向链接。
  *
  * 与 /math/probability(末层 62,208 态的 AUF 概率)同源,是它在"最后一槽"上的推广。
@@ -55,14 +55,15 @@ export default function LsllMathPage() {
               zh={<>LSLL(Last Slot and Last Layer)= 一步解掉<strong>最后一槽 + 整个顶层</strong>。
                 「一个 case」的定义里藏着一个群作用:开始前、结束后各允许转一下 U 层(pre-AUF / post-AUF),
                 case 不变 —— 这是 <TeX src={R`\mathbb{Z}_4\times\mathbb{Z}_4`} />(16 元)。把 9,331,200 个物理态
-                按这个作用归并,轨道数就是 case 数。下面一步步算清楚,并分别给出<strong>只商 pre-AUF</strong>、
-                <strong>只商 post-AUF</strong> 那个中间量。本文是 <Link href="/math/probability">{t('末层 AUF 概率', 'last-layer AUF probability')}</Link> 一页
-                在「最后一槽」上的推广。</>}
+                按这个作用归并,轨道数就是 case 数。下面一步步算清楚;<strong>§3</strong> 再看把 LSLL 拆成
+                ZBLS + ZBLL 之后冒出来的<strong>第三个 AUF</strong> —— 以及它为什么<strong>不</strong>给出一个规范的 case 数。
+                本文是 <Link href="/math/probability">{t('末层 AUF 概率', 'last-layer AUF probability')}</Link> 一页在「最后一槽」上的推广。</>}
               en={<>LSLL (Last Slot and Last Layer) means solving the <strong>last slot and the whole top layer</strong> in
                 one look. The definition of “one case” hides a group action: a U turn is allowed before and after the
                 algorithm (pre-AUF / post-AUF) without changing the case — an action of <TeX src={R`\mathbb{Z}_4\times\mathbb{Z}_4`} /> (16
                 elements). Collapsing the 9,331,200 physical states under it gives the case count. We derive it step by
-                step, including the intermediate counts where <strong>only the pre-AUF</strong> and <strong>only the post-AUF</strong> are quotiented. This is the{' '}
+                step; <strong>§3</strong> then looks at the <strong>third AUF</strong> that appears once LSLL is split into ZBLS + ZBLL —
+                and why it does <strong>not</strong> yield a canonical case count. This is the{' '}
                 <Link href="/math/probability">{t('末层 AUF 概率', 'last-layer AUF probability')}</Link> page extended to the last slot.</>}
             />
           </p>
@@ -73,12 +74,12 @@ export default function LsllMathPage() {
               <div className="lmath-num-label">{t('原始物理态', 'raw physical states')}</div>
             </div>
             <div className="lmath-num-card">
-              <div className="lmath-num">2,332,800</div>
-              <div className="lmath-num-label">{t('只商单侧 AUF(pre = post)', 'one AUF only (pre = post)')}</div>
+              <div className="lmath-num">583,284</div>
+              <div className="lmath-num-label">{t('二类:商 pre + post = case 数', 'class 2: pre + post = # cases')}</div>
             </div>
             <div className="lmath-num-card">
-              <div className="lmath-num">583,284</div>
-              <div className="lmath-num-label">{t('两侧 AUF 全商 = case 数', 'both AUFs = # cases')}</div>
+              <div className="lmath-num">147,508</div>
+              <div className="lmath-num-label">{t('三类:再商 mid(依公式表,见三)', 'class 3: + mid (algorithm-dependent, §3)')}</div>
             </div>
             <div className="lmath-num-card">
               <div className="lmath-num">42</div>
@@ -162,7 +163,7 @@ export default function LsllMathPage() {
 
         {/* ── §3 single quotient ── */}
         <section className="lmath-section">
-          <h2 className="lmath-h2">{t('三、只商单侧 AUF(pre 或 post 皆可)', '3. Quotient by one AUF (pre or post)')}</h2>
+          <h2 className="lmath-h2">{t('三、三个 AUF:pre / mid / post', '3. Three AUFs: pre / mid / post')}</h2>
           <div className="lmath-note">
             <T
               zh={<><strong>「商」在魔方里是什么?</strong>把「我们认作同一 case」的态捏成一个点来数。起手 / 收尾多转一下 U
@@ -176,36 +177,138 @@ export default function LsllMathPage() {
           </div>
           <p className="lmath-body">
             <T
-              zh={<>先只用<strong>单个 <TeX src={R`\mathbb{Z}_4`} /></strong> 去商。关键:<strong>无论取哪一侧</strong>,这个作用都<strong>自由</strong>(无不动点)。</>}
-              en={<>Quotient by a <strong>single <TeX src={R`\mathbb{Z}_4`} /></strong>. Key fact: <strong>whichever side we pick</strong>, the action is <strong>free</strong> (no fixed points).</>}
+              zh={<>把 LSLL 拆成速拧实际的两段 —— 先 <strong>ZBLS</strong>(解掉最后一槽、顺手翻正顶层棱),再 <strong>ZBLL</strong>(一步解掉顶层)——
+                中间还能垫一个顶转。于是完整解法长这样,共<strong>三个</strong> AUF:</>}
+              en={<>Split LSLL the way speedcubers actually do — first <strong>ZBLS</strong> (finish the last slot, orienting the top edges on the way),
+                then <strong>ZBLL</strong> (one-shot last layer) — with a spare top turn in between. A full solution carries <strong>three</strong> AUFs:</>}
+            />
+          </p>
+          <Block src={R`g\cdot \underbrace{U^{a}}_{\text{pre}}\cdot Z \cdot \underbrace{U^{m}}_{\text{mid}} \cdot L \cdot \underbrace{U^{p}}_{\text{post}} = e .`} />
+          <ul className="lmath-body">
+            <li><T
+              zh={<><strong>pre-AUF</strong>:认图前转顶层。在状态上 = <strong>右乘 <TeX src="U" /></strong>。</>}
+              en={<><strong>pre-AUF</strong>: turning the top before recognising. On states this is <strong>right-multiplication by <TeX src="U" /></strong>.</>}
+            /></li>
+            <li><T
+              zh={<><strong>mid-AUF</strong>:ZBLS 做完、ZBLL 之前的那一下。</>}
+              en={<><strong>mid-AUF</strong>: the turn after ZBLS and before ZBLL.</>}
+            /></li>
+            <li><T
+              zh={<><strong>post-AUF</strong>:做完这一下魔方就完全还原。在状态上 = <strong>左乘 <TeX src="U" /></strong>。</>}
+              en={<><strong>post-AUF</strong>: after it the cube is solved. On states this is <strong>left-multiplication by <TeX src="U" /></strong>.</>}
+            /></li>
+          </ul>
+          <p className="lmath-body">
+            <T
+              zh={<>pre 和 post 是状态空间上的<strong>规范</strong>作用:一个右乘、一个左乘,互相交换,合起来正是 §2 的
+                <TeX src={R`\;\mathbb{Z}_4\times\mathbb{Z}_4`} /> —— 二类计数 583,284 就是它的轨道数(§4)。
+                <strong>mid 不是</strong>:一个置换只有左右两侧,「第三个 AUF」必须借 ZBLS/ZBLL 的两段拆分才有定义。把它翻译到状态上,得到的是</>}
+              en={<>pre and post are <strong>canonical</strong> actions on the state space: one right-, one left-multiplication, and they commute — exactly the
+                <TeX src={R`\;\mathbb{Z}_4\times\mathbb{Z}_4`} /> of §2, whose orbit count is the 583,284 of §4.
+                <strong>mid is not</strong>: a permutation has only two sides, so a “third AUF” needs the ZBLS/ZBLL split to even be defined. Translated back to states it reads</>}
+            />
+          </p>
+          <Block src={R`s \;\longmapsto\; s\cdot\bigl(W\,U^{-k}\,W^{-1}\bigr),\qquad W=U^{a}Z .`} />
+          <p className="lmath-body">
+            <T
+              zh={<>作用里明晃晃地含着 <TeX src="Z" /> —— <strong>你选哪条 ZBLS 公式,mid 就是什么作用</strong>。这不是记号问题,是实打实的后果。</>}
+              en={<>The action visibly contains <TeX src="Z" /> — <strong>whichever ZBLS algorithm you pick, that is what mid does</strong>. This is not a notational quibble; it has teeth.</>}
+            />
+          </p>
+
+          <h3 className="lmath-body" style={{ fontWeight: 700, color: 'var(--foreground)', marginBottom: 4 }}>
+            {t('结构:哪一部分是硬的', 'Structure: which part is rock-solid')}
+          </h3>
+          <p className="lmath-body">
+            <T
+              zh={<>记 <TeX src={R`\Phi`} /> 为 ZBLS 构型空间(槽角的位置与扭、槽棱的位置与翻、其余 4 个棱位的 EO),
+                <TeX src={R`|\Phi|=5\cdot3\times5\cdot2\times\tfrac{2^{5}}{2}=1200`} />。pre-AUF 作用在它上面,Burnside 给 <strong>306</strong> 个 ZBLS 大类
+                —— 站内 zbls 公式集恰好 <strong>305 = 306 − 全解态</strong>,自洽。轨道谱:</>}
+              en={<>Let <TeX src={R`\Phi`} /> be the ZBLS configuration space (slot corner’s position and twist, slot edge’s position and flip, and the EO of the other 4 edge slots),
+                <TeX src={R`|\Phi|=5\cdot3\times5\cdot2\times\tfrac{2^{5}}{2}=1200`} />. pre-AUF acts on it; Burnside gives <strong>306</strong> ZBLS families
+                — and the site’s zbls set holds exactly <strong>305 = 306 − solved</strong>. Its orbit spectrum:</>}
+            />
+          </p>
+          <Block src={R`4\cdot 297+2\cdot 3+1\cdot 6=1200,\qquad 297+3+6=306 .`} />
+          <p className="lmath-body">
+            <T
+              zh={<>固定一条 <TeX src={R`Z_\varphi`} /> 后,每个 fiber(<TeX src={R`9{,}331{,}200/1200=7776`} /> 个态)与 ZBLL 态空间一一对应,
+                其上 mid = 右乘 <TeX src="U" />、post = 左乘 <TeX src="U" />,双侧商 = <strong>494</strong>(= 通行的 ZBLL 493 + 全解态)。于是:</>}
+              en={<>Once a <TeX src={R`Z_\varphi`} /> is fixed, each fiber (<TeX src={R`9{,}331{,}200/1200=7776`} /> states) matches the ZBLL state space, on which
+                mid = right-<TeX src="U" /> and post = left-<TeX src="U" />, with two-sided quotient <strong>494</strong> (= the usual ZBLL 493 + solved). Hence:</>}
             />
           </p>
           <ul className="lmath-body">
             <li><T
-              zh={<><strong>post-AUF</strong> <TeX src={R`T_{\text{phys}}^{a}`} />(<TeX src={R`a\neq0`} />):4 个顶角位永远装 4 个<strong>互异</strong>的角块;
-                不动点要求位置 <TeX src="p" /> 与 <TeX src={R`p+a`} /> 装同一块 —— 不可能。</>}
-              en={<><strong>post-AUF</strong> <TeX src={R`T_{\text{phys}}^{a}`} /> (<TeX src={R`a\neq0`} />): the 4 top corner slots always hold 4 <strong>distinct</strong>
-                corners; a fixed point needs positions <TeX src="p" /> and <TeX src={R`p+a`} /> to hold the same piece — impossible.</>}
+              zh={<>对 <strong>297 个自由</strong>大类,pre 被完全吸收,fiber 里只剩 mid 与 post,每类贡献恰 494 —— <strong>与公式选择无关</strong>:
+                <TeX src={R`\;297\times494=146{,}718`} />。</>}
+              en={<>For the <strong>297 free</strong> families, pre is fully absorbed and only mid and post remain inside the fiber, contributing exactly 494 each
+                — <strong>independent of any algorithm choice</strong>: <TeX src={R`\;297\times494=146{,}718`} />.</>}
             /></li>
             <li><T
-              zh={<><strong>pre-AUF</strong> <TeX src={R`T_{\text{home}}^{b}`} />(<TeX src={R`b\neq0`} />):不动点要求每个顶块标签 <TeX src="i" /> 满足
-                <TeX src={R`\;i=i+b`} />;顶层里始终坐着真顶层块(标签 0–3),逼出 <TeX src={R`b=0`} />,矛盾。</>}
-              en={<><strong>pre-AUF</strong> <TeX src={R`T_{\text{home}}^{b}`} /> (<TeX src={R`b\neq0`} />): a fixed point needs every top label <TeX src="i" /> to satisfy
-                <TeX src={R`\;i=i+b`} />; genuine top-layer pieces (labels 0–3) sit on top, forcing <TeX src={R`b=0`} /> — contradiction.</>}
+              zh={<>对<strong>剩下 9 个</strong>有 pre-AUF 对称的大类,stabilizer 会在 fiber 上多诱导一个「右乘
+                <TeX src={R`\;V=Z^{-1}U^{k}Z`} />」,而 <TeX src="V" /> 直接依赖 <TeX src="Z" />。</>}
+              en={<>For the <strong>remaining 9</strong> families with pre-AUF symmetry, the stabiliser induces one more action on the fiber, “right-multiply by
+                <TeX src={R`\;V=Z^{-1}U^{k}Z`} />”, and <TeX src="V" /> depends directly on <TeX src="Z" />.</>}
             /></li>
           </ul>
+
+          <h3 className="lmath-body" style={{ fontWeight: 700, color: 'var(--foreground)', marginBottom: 4 }}>
+            {t('实测:三类计数不是良定义的不变量', 'Measured: the three-AUF count is not a well-defined invariant')}
+          </h3>
           <p className="lmath-body">
-            <T zh={<>自由作用 ⇒ 每条轨道恰 4 元,轨道数 = 总数 ÷ 4。两侧各算一遍,数值相同:</>}
-               en={<>A free action ⇒ every orbit has exactly 4 elements, so the count is the total ÷ 4. Do it on each side — same number:</>} />
+            <T
+              zh={<>取同一个对称大类,把公式换成另一条<strong>同样合法</strong>的(只在尾部接一条末层公式,它照样解掉该 ZBLS 构型),轨道数就变:</>}
+              en={<>Take one symmetric family and swap in another <strong>equally valid</strong> algorithm (append a last-layer alg — it still solves that ZBLS configuration). The orbit count moves:</>}
+            />
           </p>
-          <Block src={R`\#\{\text{pre-AUF only}\}=\#\{\text{post-AUF only}\}=\frac{N_{\text{raw}}}{4}=\frac{9{,}331{,}200}{4}=2{,}332{,}800 .`} />
+          <div className="lmath-table-wrap">
+            <table className="lmath-table">
+              <thead>
+                <tr>
+                  <th><T zh="大类 / 所用 ZBLS 公式" en="family / ZBLS algorithm used" /></th>
+                  <th className="is-num"><T zh="轨道数" en="orbits" /></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Solved Pair / I:<code>F R U R&apos; U&apos; F&apos;</code></td><td className="is-num">19</td></tr>
+                <tr><td>{t('同上 + Sune', 'same + Sune')}</td><td className="is-num">62</td></tr>
+                <tr><td>{t('同上 + T-perm', 'same + T-perm')}</td><td className="is-num">89</td></tr>
+                <tr><td>D+ / D L:<code>U F&apos; (L&apos; U2 L U&apos;)2 F</code></td><td className="is-num">127</td></tr>
+                <tr><td>{t('同上 + U-perm', 'same + U-perm')}</td><td className="is-num">494</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p className="lmath-body">
+            <T
+              zh={<>所以「把三个 AUF 全商掉」<strong>不产生一个规范的 case 数</strong>。能钉死的是:</>}
+              en={<>So “quotient by all three AUFs” <strong>does not yield a canonical case count</strong>. What can be pinned down:</>}
+            />
+          </p>
+          <div className="lmath-table-wrap">
+            <table className="lmath-table">
+              <thead>
+                <tr>
+                  <th><T zh="量" en="quantity" /></th>
+                  <th className="is-num"><T zh="值" en="value" /></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><T zh="硬结论(297 个自由大类,与选择无关)" en="rock-solid (297 free families, choice-independent)" /></td><td className="is-num is-hot">146,718</td></tr>
+                <tr><td><T zh="严格区间(9 个对称大类各 ∈ [1, 494];全解态那类恒为 494)" en="strict range (9 symmetric families each ∈ [1, 494]; the solved one is always 494)" /></td><td className="is-num">147,220 – 151,164</td></tr>
+                <tr><td><T zh="站内当前公式库这一实例(305 / 305 个 ZBLS case 全有公式)" en="the site’s current algorithm set, as one instance (all 305 / 305 ZBLS cases covered)" /></td><td className="is-num">147,508</td></tr>
+                <tr className="is-total"><td><T zh="天真估算 583,284 ÷ 4" en="naïve 583,284 ÷ 4" /></td><td className="is-num">145,821</td></tr>
+              </tbody>
+            </table>
+          </div>
           <div className="lmath-note">
             <T
-              zh={<>两个单侧商相等不是巧合,<strong>但这不等于「双侧就再 ÷4」</strong>:不动点只在 <strong>pre-AUF 与 post-AUF 同时作用</strong>、
-                且只在「槽对已归位」的态里出现,所以天真地 <TeX src={R`\tfrac{2{,}332{,}800}{4}=583{,}200`} /> 会差一点点 —— 见下节 Burnside。</>}
-              en={<>The two single-sided counts agreeing is no accident, <strong>but it does not mean “both sides = ÷4 again”</strong>: fixed points
-                appear only when <strong>pre-AUF and post-AUF act together</strong>, and only among slot-solved states, so the naïve{' '}
-                <TeX src={R`\tfrac{2{,}332{,}800}{4}=583{,}200`} /> is slightly off — see Burnside below.</>}
+              zh={<>天真值<strong>必然偏小</strong>:pre / mid / post 并不构成一个自由的 <TeX src={R`(\mathbb{Z}_4)^3`} /> 作用 —— pre 动的是大类
+                <TeX src={R`\;\varphi`} />,mid 与 post 动的是 fiber 内部,三者互相纠缠。真值下界 147,220 已经高于 145,821。
+                这些数由 <code>scripts/lsll-class3.mts</code> 实证(|Φ| = 1200、306、297/3/6、7776、494 逐项复算)。</>}
+              en={<>The naïve value is <strong>necessarily too small</strong>: pre / mid / post do not form a free <TeX src={R`(\mathbb{Z}_4)^3`} /> action — pre moves the family
+                <TeX src={R`\;\varphi`} /> while mid and post move within the fiber, and the three interlock. Even the lower bound 147,220 exceeds 145,821.
+                All of these are computed by <code>scripts/lsll-class3.mts</code> (|Φ| = 1200, 306, 297/3/6, 7776, 494 each re-derived).</>}
             />
           </div>
         </section>
@@ -274,6 +377,23 @@ export default function LsllMathPage() {
           </div>
           <p className="lmath-body">
             <T
+              zh={<>表里那两个数不是天上掉的。不动态要求「置换与 <TeX src={R`U^a`} /> 的循环结构相容 + 朝向沿轨道常值 + 朝向和守恒」,再被角棱<strong>同奇偶</strong>砍一半:</>}
+              en={<>Those two entries are derived, not asserted. A fixed state needs its permutation to commute with the cycle structure of <TeX src={R`U^a`} />,
+                its orientations constant along each cycle, and the orientation sums to survive — then the <strong>equal-parity</strong> coupling halves it:</>}
+            />
+          </p>
+          <Block src={R`\underbrace{4}_{\text{CP}}\cdot\underbrace{1}_{\text{CO}:\,4c\equiv0}\cdot\underbrace{4}_{\text{EP}}\cdot\underbrace{2}_{\text{EO}}\big/\underbrace{2}_{\text{parity}}=16,\qquad
+\underbrace{8}_{\text{CP}}\cdot\underbrace{3}_{\text{CO}:\,c_1+c_2\equiv0}\cdot\underbrace{8}_{\text{EP}}\cdot\underbrace{4}_{\text{EO}}\big/\underbrace{2}_{\text{parity}}=384 .`} />
+          <p className="lmath-body">
+            <T
+              zh={<>左式是 <TeX src={R`a,b\in\{1,3\}`} />(顶层 4 位被 4-循环打转:中心化子 4 元,CO 常值 <TeX src="c" /> 要 <TeX src={R`4c\equiv c\equiv0\ (\mathrm{mod}\ 3)`} /> 逼出 <TeX src="c=0`" />,EO 常值总翻恒偶故 2 种);
+                右式是 <TeX src={R`(2,2)`} />(顶层拆成两个 2-循环:中心化子 <TeX src={R`24/3=8`} />,两条轨道各一个常值扭且 <TeX src={R`2(c_1+c_2)\equiv0`} />,EO 每轨道常值 <TeX src={R`2^2=4`} /> 种)。</>}
+              en={<>The left is <TeX src={R`a,b\in\{1,3\}`} /> (the 4 top slots form one 4-cycle: centraliser of order 4; a constant twist <TeX src="c" /> needs <TeX src={R`4c\equiv c\equiv0`} />, forcing <TeX src="c=0" />; constant flip always sums even, so 2 choices);
+                the right is <TeX src={R`(2,2)`} /> (two 2-cycles: centraliser <TeX src={R`24/3=8`} />, one constant twist per cycle with <TeX src={R`2(c_1+c_2)\equiv0`} />, and <TeX src={R`2^2=4`} /> flip patterns).</>}
+            />
+          </p>
+          <p className="lmath-body">
+            <T
               zh={<><TeX src={R`e=1`} /> 全翻不成立:<TeX src="a,b" /> 全非零的不动态里,顶层棱翻必须<strong>整体常值</strong>,而常值翻总翻 <TeX src={R`\equiv 0`} />,与 <TeX src={R`e=1`} /> 冲突。于是</>}
               en={<><TeX src={R`e=1`} /> kills them: a fixed state under <TeX src="a,b" /> both non-zero forces a <strong>constant</strong> flip on the top edges, whose total <TeX src={R`\equiv 0`} /> clashes with <TeX src={R`e=1`} />. Hence</>}
             />
@@ -340,10 +460,10 @@ export default function LsllMathPage() {
           <p className="lmath-body">
             <T
               zh={<>一个不依赖上面任何解析推导的脚本,把 9,331,200 个原始态逐个做 16 元 canonical 去重,得
-                <strong> cases = 583,284、42 大类、每类计数与上表逐项吻合</strong>;单侧 4 元去重得 <strong>2,332,800</strong>。
+                <strong> cases = 583,284、42 大类、每类计数与上表逐项吻合</strong>。
                 解析与暴力两条路完全一致(站内回归测试锁死这些数)。</>}
               en={<>A script independent of the derivation canonicalises all 9,331,200 raw states under the 16 images and gets
-                <strong> cases = 583,284, 42 families, every subtotal matching the table</strong>; the 4-image quotient gives <strong>2,332,800</strong>.
+                <strong> cases = 583,284, 42 families, every subtotal matching the table</strong>.
                 Analytic and brute-force agree (a regression test pins these numbers).</>}
             />
           </p>
