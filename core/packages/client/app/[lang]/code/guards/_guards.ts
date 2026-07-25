@@ -132,6 +132,12 @@ export const CI_GUARDS_UI: CiGuard[] = [
     en: { title: 'scramble/solver copy-paste solver pages', desc: 'The single-line puzzle-optimal solver pages under /scramble/solver (28 of them) go through the shared PuzzleSolverPage base (config-driven SolverSpec + one-line render) — no more hand-rolled SolveState / reqRef / renderSingle (~130 lines each). A new _*Solver.tsx not importing PuzzleSolverPage changes the set and turns CI red; genuinely bespoke ones (custom UI — only Cube3 / Sq1 remain) join the BESPOKE allowlist as a review signal.' },
   },
   {
+    id: 'owner-key-not-wca-id',
+    test: 'owner-key-not-wca-id.test.ts',
+    zh: { title: '归属键当 WCA id 拼链接', desc: '站内「作者 / 贡献者 / 投稿者」字段存的是归属键 ownerKey:绑了 WCA 的账号是真 wca_id,没绑的是合成 `u<uid>`。拿它直接拼档案页 = 死链(issue #45:/recon 详情页把复盘者 u144 拼成 worldcubeassociation.org/persons/u144,WCA 官网 404;站内 /wca/persons/u144 同样查无此人)。出链判定收敛在两个入口 —— 站内走 PersonLink(非 WCA id 自动降级成纯文本),WCA 外链走 Discussion 的 AuthorName;谁再拿 authorId / addedById / reconerId 这类变量手搓 persons 链接直接红。' },
+    en: { title: 'ownerKey used as a WCA id in links', desc: 'Author/contributor/submitter fields store the site-wide ownerKey: a real wca_id for WCA-linked accounts, a synthetic `u<uid>` otherwise. Formatting that straight into a profile URL yields a dead link (issue #45: the /recon detail page turned reconstructor u144 into worldcubeassociation.org/persons/u144, a 404 upstream — and /wca/persons/u144 is equally unknown here). Link decisions funnel through two entry points: PersonLink for internal links (non-WCA ids degrade to plain text) and Discussion’s AuthorName for the outbound WCA link; hand-rolling a persons URL from authorId / addedById / reconerId turns CI red.' },
+  },
+  {
     id: 'hash-nav-single-source',
     test: 'hash-nav-single-source.test.ts',
     zh: { title: 'hash 锚点滚动+高亮各写一份', desc: '「点某项 → URL 片段 → 滚到它并高亮」原本六处各手搓(/wiki 词条、person 两张成绩表、/alg 公式卡、/wca/prediction 项目段、论坛帖子),ByCompList/ByEventView 更是逐字复制。已抽成 useHashHighlight(差异点 resolve / reveal / linger / highlightClass / onScroll / deps 全作 options)。除该 hook 外任何文件再挂 hashchange 监听 = CI 红,指回 hook;OAuth 回调等另类用途走 ALLOWLIST + 理由。' },
@@ -190,6 +196,12 @@ export const CI_GUARDS_API: CiGuard[] = [
     test: 'one_email_per_account.test.ts',
     zh: { title: '一个账号只能绑一个邮箱', desc: '约束铺三层:0078 偏唯一索引(唯一真保证,挡并发)+ addIdentity 先行检查回 has-email + 前端已有邮箱时不给绑定入口。重点守跨包字面量耦合 —— 服务端错误串和前端 authErrorText 的 includes() 靠同一句英文对上,改一边措辞前端就静默退化成把英文糊给用户。' },
     en: { title: 'One email per account', desc: 'Enforced in three layers: the 0078 partial unique index (the only real guarantee — it stops concurrent double-binds), an addIdentity pre-check returning has-email, and the panel hiding the link entry once an email exists. Mainly guards a cross-package literal: the server error string and the client authErrorText includes() match on the same English sentence, so rewording one side silently degrades the UI into showing raw English.' },
+  },
+  {
+    id: 'wca-link-onboarding',
+    test: 'wca_link_onboarding.test.ts',
+    zh: { title: '注册后引导绑 WCA 只问新人', desc: '登录与注册合流后,只有服务端知道账号是不是刚建的 —— loginWithIdentity 回 isNew,四条合流的登录路(邮箱码 / 手机码 / Google / 国内三方)透传,前端只在 isNew && 还没绑 WCA 时插一步引导。两种坏法都不会有人报 bug:isNew 丢了 → 新人再也不被问;条件写成只看有没有绑 WCA → 老用户每次登录都被问一遍。另守两条:isNew 不进 365 天的 JWT(它只描述这一次请求),引导不给手填 WCA ID 的输入框(手填没有所有权证明,等于让人认领别人的成绩)。' },
+    en: { title: 'WCA link onboarding asks new users only', desc: 'With sign-in and sign-up merged, only the server knows whether an account was just created — loginWithIdentity returns isNew, the four merged routes (email code / phone code / Google / Chinese socials) pass it through, and the client inserts the “do you have a WCA ID?” step only when isNew && not yet linked. Both failure modes are silent: lose isNew and new users stop being asked; key the check on hasWca alone and every unlinked returning user gets asked on every sign-in. Also guards two invariants: isNew never enters the 365-day JWT (it describes one request, not the session), and the prompt offers no free-text WCA ID field (typing one proves no ownership — it would let anyone claim someone else’s results).' },
   },
 ];
 

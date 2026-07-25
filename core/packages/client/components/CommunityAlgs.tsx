@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { useAlgTextField } from '@/hooks/useAlgTextField';
 import { Plus, Trash2, Pencil, Check, X } from 'lucide-react';
 import type { AlgSubmission, AlgSticker } from '@cuberoot/shared';
-import Link from '@/components/AppLink';
+import PersonLink from '@/components/PersonLink';
 import { addSubmission, updateSubmission, deleteSubmission } from '@/lib/alg_api';
 import { validateAlgCase, setupForCase } from '@/lib/alg_validation';
 import { displayAlg } from '@/lib/alg_display';
@@ -188,13 +188,15 @@ export default function CommunityAlgs({ puzzle, setSlug, caseName, sticker, setu
               <>
                 <code className="alg-community-alg">{s.alg}</code>
                 {s.notes && <span className="alg-community-notes">{s.notes}</span>}
-                <Link
-                  href={`/wca/persons/${encodeURIComponent(s.authorId)}`}
+                {/* authorId 是归属键 ownerKey,没绑 WCA 的账号是合成 `u<uid>`——
+                    PersonLink 对非 WCA id 自动降级成纯文本,不出死链。 */}
+                <PersonLink
+                  wcaId={s.authorId}
                   className="alg-community-author"
                   title={`${tr({ zh: '投稿者', en: 'Submitted by' })}: ${s.authorName} (${s.authorId})`}
                 >
                   {displayCuberName(s.authorName, isZh)}
-                </Link>
+                </PersonLink>
                 {canEdit && (
                   <span className="alg-community-actions">
                     <button type="button" className="alg-community-action-btn" onClick={() => startEdit(s)} title={tr({ zh: '编辑', en: 'Edit' })}>
