@@ -1911,7 +1911,32 @@ td.is-pr {
 }
 
 /* ── 相似比赛列表(/wca/comp/[slug] 的「相似比赛」tab) ──
-   一行一场同系列比赛:旗 + 全名(带年份/版本号) + 日期 + 地点,点进对应比赛页。 */
+   一行一场比赛:旗 + 全名(带年份/版本号) + 日期 + 地点,点进对应比赛页。
+   两个分区:同系列(名字/官方锦标赛类型)、同城市(只比城市,后者行内不重复地点)。 */
+.comp-similar { display: flex; flex-direction: column; gap: 1.1rem; margin-top: 6px; }
+.comp-similar-title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.comp-similar-title-note { font-size: 0.85em; font-weight: 400; color: var(--muted-foreground); }
+.comp-similar-more {
+  align-self: flex-start;
+  margin-top: 6px;
+  padding: 0.35rem 0.6rem;
+  border: none;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--foreground) 7%, transparent);
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 0.85em;
+  cursor: pointer;
+}
+.comp-similar-more:hover { background: color-mix(in srgb, var(--foreground) 12%, transparent); color: var(--foreground); }
 .comp-similar-list {
   list-style: none;
   margin: 6px 0 0;
@@ -1946,7 +1971,10 @@ td.is-pr {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+/* 窄屏:整行放不下就换行,但旗必须跟名字同行(name 别钉 flex-basis:100%,否则旗被单独
+   挤成一行);地点 / 日期落到第二行,靠 padding-left 与名字左沿对齐。 */
 @media (max-width: 480px) {
   .comp-similar-item { flex-wrap: wrap; gap: 0.25rem 0.55rem; }
-  .comp-similar-name { flex-basis: 100%; }
+  .comp-similar-place, .comp-similar-date { padding-left: calc(1.33em + 0.6rem); }
+  .comp-similar-date { width: auto; }
 }

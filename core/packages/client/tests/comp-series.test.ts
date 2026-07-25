@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { seriesKey, buildCompSeriesIndex, type SeriesComp } from '@cuberoot/shared/comp-series';
+import { seriesKey, buildCompSeriesIndex, buildCompCityIndexes, type SeriesComp } from '@cuberoot/shared/comp-series';
 
 describe('seriesKey', () => {
   it('strips trailing year + roman-numeral edition to a shared stem', () => {
@@ -154,5 +154,44 @@ describe('buildCompSeriesIndex — championship grouping (authoritative champion
     );
     expect(idx.series.length).toBe(1);
     expect(idx.byId['USANationals2013']).toEqual([0]);
+  });
+});
+
+describe('buildCompCityIndexes — same-city grouping (per-country shards)', () => {
+  const mk = (id: string, name: string, start: string, country: string, city?: string): SeriesComp =>
+    ({ id, name, country, start, end: start, ...(city ? { city } : {}) });
+
+  it('shards by country and keys by the raw WCA cityName, newest-first', () => {
+    const idx = buildCompCityIndexes([
+      mk('BeijingOpen2024', 'Beijing Open 2024', '2024-05-01', 'CN', 'Beijing'),
+      mk('WinterInBeijing2026', 'Winter in Beijing 2026', '2026-01-10', 'CN', 'Beijing'),
+      mk('MelbourneCubeDay2019', 'Melbourne Cube Day 2019', '2019-03-02', 'AU', 'Melbourne, Victoria'),
+      mk('MelbourneSummer2020', 'Melbourne Summer 2020', '2020-01-11', 'AU', 'Melbourne, Victoria'),
+    ]);
+    expect(Object.keys(idx).sort()).toEqual(['AU', 'CN']);
+    expect(idx.CN.Beijing.map(c => c[0])).toEqual(['WinterInBeijing2026', 'BeijingOpen2024']);
+    // 州/省后缀原样保留:同城比赛的 cityName 同源同串,不做归一。
+    expect(idx.AU['Melbourne, Victoria'].map(c => c[0])).toEqual(['MelbourneSummer2020', 'MelbourneCubeDay2019']);
+    expect(idx.CN.Beijing[0]).toEqual(['WinterInBeijing2026', 'Winter in Beijing 2026', '2026-01-10', '2026-01-10']);
+  });
+
+  it('drops single-comp cities, city-less comps, and countries left with nothing', () => {
+    const idx = buildCompCityIndexes([
+      mk('ShanghaiOpen2024', 'Shanghai Open 2024', '2024-05-01', 'CN', 'Shanghai'),   // 该城只此一场
+      mk('BeijingOpen2024', 'Beijing Open 2024', '2024-05-01', 'CN', 'Beijing'),
+      mk('BeijingOpen2025', 'Beijing Open 2025', '2025-05-01', 'CN', 'Beijing'),
+      mk('NoCityComp2024', 'No City Comp 2024', '2024-05-01', 'FR'),                  // 无城市
+    ]);
+    expect(Object.keys(idx)).toEqual(['CN']);
+    expect(Object.keys(idx.CN)).toEqual(['Beijing']);
+  });
+
+  it('dedups repeated ids (past+upcoming overlap), keeping the first', () => {
+    const idx = buildCompCityIndexes([
+      mk('BeijingOpen2025', 'Beijing Open 2025', '2025-05-01', 'CN', 'Beijing'),
+      mk('BeijingOpen2025', 'Beijing Open 2025', '2025-05-01', 'CN', 'Beijing'),
+      mk('BeijingOpen2024', 'Beijing Open 2024', '2024-05-01', 'CN', 'Beijing'),
+    ]);
+    expect(idx.CN.Beijing.map(c => c[0])).toEqual(['BeijingOpen2025', 'BeijingOpen2024']);
   });
 });
