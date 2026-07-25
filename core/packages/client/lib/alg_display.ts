@@ -22,3 +22,21 @@ export function displayAlg(alg: string): string {
   // 整条公式就是一个 U(理论上不该有)—— 剥空了就别剥。
   return stripped || alg;
 }
+
+/**
+ * 多朝向 case(f2l 类的 FR / FL / BL / BR 四个槽)第 `oriIdx` 个朝向的**显示用** setup。
+ *
+ * 显示路径与校验路径差一个整体转体,别混用:
+ *   显示(这里)  `setup y^k`      —— 图与播放器要的是「同一个 case 摆在第 k 个槽」
+ *   校验         `y^-k setup y^k` —— 见 alg_validation.ts 的 `setupForCase`(f2l 判据自带 24 朝向容忍)
+ *
+ * 曾经是 AlgCategoryView 的私有函数,case 详情页因此没用上:详情页把四个朝向的公式全渲染
+ * 出来却一律传未调整的 setup,导致 FL/BL/BR 三组的缩略图与动画演的都是**别的** case
+ * (拿它校 f2l 全部 622 条只过 164 条 = 只有 FR 那组)。提到这里给两边共用。
+ */
+const ORI_SUFFIX = ['', 'y', 'y2', "y'"];
+
+export function oriAdjustSetup(setup: string, oriIdx: number): string {
+  if (!setup || oriIdx === 0) return setup;
+  return `${setup} ${ORI_SUFFIX[oriIdx % 4]}`;
+}

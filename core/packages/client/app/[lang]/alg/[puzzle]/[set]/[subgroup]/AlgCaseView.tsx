@@ -11,10 +11,15 @@
  *    关联缩略图走 `jump:'link'`(真 <a>,中键可新开),slug 从全集唯一表拿。
  *  - 无 `meta`(f2l / oll / coll / cmll / zbls …):精简正文 —— 大魔方图 + 可播放公式行。
  *  - 两者都挂社区公式(登录用户可加/改自己的)。
+ *
+ * admin 的三件套和 case 列表页对齐,只是粒度降到这一张 case:标题旁的铅笔开
+ * {@link AdminCaseEditor}、「校验」只扫这张、公式行可拖(顺序 = 主推解法)。
  */
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
-import { ArrowLeft, ExternalLink, Copy, Check, Shuffle } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Copy, Check, Shuffle, Pencil } from 'lucide-react';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import type { AlgCase, AlgEntry, AlgFile, AlgPuzzle, AlgSubmission } from '@cuberoot/shared';
 import { stm } from '@cuberoot/shared/alg-notation';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
@@ -22,10 +27,15 @@ import AlgCaseMetaContent from '@/components/AlgCaseMetaContent';
 import { CaseThumb } from '@/components/CaseThumb';
 import AlgPlayer from '@/components/AlgPlayer';
 import CommunityAlgs from '@/components/CommunityAlgs';
+import AdminCaseEditor, { type AdminEditorState } from '@/components/AdminCaseEditor';
+import AlgAdminValidate from '@/components/AlgAdminValidate';
+import SortableAlgRow from '@/components/SortableAlgRow';
 import { algCaseHref, algCaseDetailHref, buildCaseSlugMap } from '@/lib/alg_case_link';
 import { primaryCaseName, displayAlgCaseName } from '@/lib/alg_case_display';
-import { displayAlg } from '@/lib/alg_display';
+import { displayAlg, oriAdjustSetup } from '@/lib/alg_display';
 import { listSubmissions } from '@/lib/alg_api';
+import { reorderCaseAlgs } from '@/lib/alg_sets_api';
+import { useIsAdmin } from '@/lib/auth-store';
 import { useCopy } from '@/hooks/useCopy';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
@@ -72,7 +82,17 @@ function PlayableAlgRow({ entry, puzzle, set, setup }: { entry: AlgEntry; puzzle
   );
 }
 
-export default function AlgCaseView({ puzzle, set, caseObj, data }: { puzzle: AlgPuzzle; set: string; caseObj: AlgCase; data: AlgFile }) {
+export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { puzzle: AlgPuzzle; set: string; caseObj: AlgCase; data: AlgFile }) {
+  /**
+   * 显示的这张 case 自己拿一份 —— admin 改完 / 拖完就地更新,不回写上层的 `data`:
+   * 上层是按 **slug** 解析出这张 case 的,改了名字再回写会当场解析失败(整页变「没找到」)。
+   * 代价是关联缩略图(镜像/逆)那份 `data` 会短暂过期,刷新即一致。
+   */
+  const [caseObj, setCaseObj] = useState(caseProp);
+  useEffect(() => { setCaseObj(caseProp); }, [caseProp]);
+  const [deleted, setDeleted] = useState(false);
+  const isAdmin = useIsAdmin();
+  const [editorState, setEditorState] = useState<AdminEditorState | null>(null);
   const m = caseObj.meta;
   const primary = primaryCaseName(puzzle, set, caseObj);
   // 副名:meta case 的原始站名(`ZBLL U 1`)、非 meta 的原始名 —— 和主名不同才显示,免重复。
@@ -108,6 +128,53 @@ export default function AlgCaseView({ puzzle, set, caseObj, data }: { puzzle: Al
   const oriNames = caseObj.oriNames;
   const multiOri = !!oriNames && oriNames.length > 1;
 
+  // ── admin:公式顺序可拖(第一条是主推解法)。和 case 列表页同一套 —— 乐观更新,失败回滚,
+  //    落库走 reorderCaseAlgs(整条 case PUT,只动 algs)。
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const dragAlgs = isAdmin && caseObj.id != null;
+  const algDragId = (ori: number, i: number) => `alg-${ori}-${i}`;
+  const handleAlgDragEnd = (oriIdx: number) => (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id || caseObj.id == null) return;
+    const idxOf = (id: string | number) => Number(String(id).split('-').pop());
+    const from = idxOf(active.id);
+    const to = idxOf(over.id);
+    const rows = caseObj.algs[oriIdx] ?? [];
+    const sane = (n: number) => Number.isInteger(n) && n >= 0 && n < rows.length;
+    if (!sane(from) || !sane(to)) return;
+
+    const before = caseObj.algs;
+    const after = caseObj.algs.map((ori, i) => (i === oriIdx ? arrayMove(ori, from, to) : ori));
+    setCaseObj(c => ({ ...c, algs: after }));
+    reorderCaseAlgs(puzzle, set, caseObj, after).catch(err => {
+      console.error('reorder algs failed', err);
+      alert(`Reorder failed: ${err.message}`);
+      setCaseObj(c => ({ ...c, algs: before }));
+    });
+  };
+  /** 一组公式行套上 dnd 上下文(meta 正文只有第 0 个朝向,精简正文每个朝向各一套)。 */
+  const withDnd = (oriIdx: number) => (rows: React.ReactNode) => (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleAlgDragEnd(oriIdx)}>
+      <SortableContext
+        items={(caseObj.algs[oriIdx] ?? []).map((_, i) => algDragId(oriIdx, i))}
+        strategy={verticalListSortingStrategy}
+      >
+        {rows}
+      </SortableContext>
+    </DndContext>
+  );
+
+  if (deleted) {
+    return (
+      <div className="alg-case-detail">
+        <p className="alg-case-detail-msg">{tr({ zh: '这张 case 已删除。', en: 'This case has been deleted.' })}</p>
+        <p className="alg-case-detail-msg">
+          <Link href={backHref} prefetch={false}>{tr({ zh: '回到列表', en: 'Back to the list' })}</Link>
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="alg-case-detail">
       <div className="alg-case-detail-head">
@@ -121,7 +188,22 @@ export default function AlgCaseView({ puzzle, set, caseObj, data }: { puzzle: Al
           <Link href={backHref} className="alg-meta-head-open" prefetch={false} title={tr({ zh: '在列表中打开', en: 'Open in the list' })}>
             <ExternalLink size={14} />
           </Link>
+          {isAdmin && caseObj.id != null && (
+            <button
+              type="button"
+              className="alg-admin-edit-btn"
+              onClick={() => setEditorState({ mode: 'edit', existing: caseObj })}
+              title={tr({ zh: '编辑 case (admin)', en: 'Edit case (admin)' })}
+            >
+              <Pencil size={12} />
+            </button>
+          )}
         </h1>
+        {/* 校验只扫这一张 —— 报告里点失败项就开上面同一个编辑器,不再叠第二个 */}
+        <AlgAdminValidate
+          scope={{ kind: 'case', puzzle, set, caseObj }}
+          onPickCase={(_p, _s, c) => setEditorState({ mode: 'edit', existing: c })}
+        />
       </div>
 
       {m ? (
@@ -132,6 +214,10 @@ export default function AlgCaseView({ puzzle, set, caseObj, data }: { puzzle: Al
             set={set}
             byNo={byNo}
             jump={{ kind: 'link', href: hrefFor }}
+            algsWrap={dragAlgs ? withDnd(0) : undefined}
+            algRowWrap={dragAlgs
+              ? (row, i) => <SortableAlgRow key={algDragId(0, i)} id={algDragId(0, i)} draggable>{row}</SortableAlgRow>
+              : undefined}
           />
         </div>
       ) : (
@@ -141,14 +227,21 @@ export default function AlgCaseView({ puzzle, set, caseObj, data }: { puzzle: Al
           </div>
           {caseObj.setup && <SetupLine puzzle={puzzle} setup={caseObj.setup} />}
           <div className="alg-case-detail-lean-algs">
-            {caseObj.algs.map((oriAlgs, oi) => (
-              <div key={oi} className="alg-case-detail-ori">
-                {multiOri && <div className="alg-case-detail-ori-label">{oriNames![oi]}</div>}
-                {oriAlgs.map((entry, i) => (
-                  <PlayableAlgRow key={`${oi}:${i}`} entry={entry} puzzle={puzzle} set={set} setup={caseObj.setup} />
-                ))}
-              </div>
-            ))}
+            {caseObj.algs.map((oriAlgs, oi) => {
+              const rows = oriAlgs.map((entry, i) => {
+                // setup 必须跟着朝向走 —— 四个槽共用一条原始 setup 时,FL/BL/BR 演的是别的 case
+                const row = <PlayableAlgRow entry={entry} puzzle={puzzle} set={set} setup={oriAdjustSetup(caseObj.setup, oi)} />;
+                return dragAlgs
+                  ? <SortableAlgRow key={algDragId(oi, i)} id={algDragId(oi, i)} draggable>{row}</SortableAlgRow>
+                  : <Fragment key={`${oi}:${i}`}>{row}</Fragment>;
+              });
+              return (
+                <div key={oi} className="alg-case-detail-ori">
+                  {multiOri && <div className="alg-case-detail-ori-label">{oriNames![oi]}</div>}
+                  {dragAlgs ? withDnd(oi)(rows) : rows}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -169,6 +262,20 @@ export default function AlgCaseView({ puzzle, set, caseObj, data }: { puzzle: Al
           });
         }}
       />
+
+      {editorState && (
+        <AdminCaseEditor
+          puzzle={puzzle}
+          setSlug={set}
+          state={editorState}
+          onClose={() => setEditorState(null)}
+          onSaved={(action) => {
+            // 'add' 在详情页开不出来(只有编辑入口),真来了也只当没这张的事。
+            if (action.type === 'update') setCaseObj(action.updated);
+            else if (action.type === 'delete') setDeleted(true);
+          }}
+        />
+      )}
     </div>
   );
 }

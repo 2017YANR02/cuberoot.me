@@ -24,6 +24,7 @@ import {
 import { tr } from '@/i18n/tr';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import BoolToggle from '@/components/BoolToggle';
+import AlgViewModeToggle, { type AlgViewMode } from '@/components/AlgViewModeToggle';
 import { SortArrow } from '@/components/SortArrow';
 import { ClearButton } from '@/components/ClearButton';
 import { SearchInput } from '@/components/SearchInput';
@@ -188,6 +189,16 @@ function BoolToggleDemo() {
     <div className="cg-row">
       <BoolToggle value={on} onChange={setOn} label={tr({ zh: '废止项', en: 'Cancelled' })} />
       <BoolToggle value={off} onChange={setOff} label={tr({ zh: '未登领奖台', en: 'No podium' })} />
+    </div>
+  );
+}
+
+function AlgViewModeToggleDemo() {
+  // 演示用本地 state:真页面走 useAlgViewMode()(会落 localStorage),这里不该改用户的全站偏好。
+  const [v, setV] = useState<AlgViewMode>('cards');
+  return (
+    <div className="cg-row">
+      <AlgViewModeToggle value={v} onChange={setV} />
     </div>
   );
 }
@@ -749,6 +760,16 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Boolean switch: an iOS-style knob on the left + a label on the right (the label is clickable too). For toggling a single thing on/off (show cancelled events / only un-podiumed / enable animation…). Replace all checkboxes (☑) site-wide with it. For a genuine two-choice (A/B each meaningful), use PillToggle’s inline-label form instead.',
     usage: '<BoolToggle value={on} onChange={setOn} label="废止项" />',
     Demo: BoolToggleDemo,
+  },
+  {
+    name: 'AlgViewModeToggle',
+    import: "import AlgViewModeToggle, { useAlgViewMode } from '@/components/AlgViewModeToggle';",
+    category: 'toggle',
+    zh: '/alg 下所有 case 列表页的「图 / 公式」视图开关(PillToggle 的一层语义封装)。图 = 只看缩略图的密排画廊(默认,点卡进详情看公式),公式 = 公式内联。配套 useAlgViewMode() 读写唯一的 localStorage key `alg-list-view` —— 跨页显示偏好、不进 URL,用户切一次全站的 case 列表都生效。新做 case 列表页直接用这一对,别再各写各的开关和 key。',
+    en: 'The images / algs view switch shared by every case-list page under /alg (a semantic wrapper over PillToggle). Images = a dense thumbnail gallery (the default — click a card for the algs), Algs = algorithms inlined. The paired useAlgViewMode() hook reads and writes the single localStorage key `alg-list-view`: a cross-page display preference, deliberately not in the URL, so flipping it once applies to every case list site-wide. Use this pair on any new case-list page instead of rolling another toggle and key.',
+    usage: 'const [view, changeView] = useAlgViewMode();\n<AlgViewModeToggle value={view} onChange={changeView} className="alg-view-toggle" />',
+    Demo: AlgViewModeToggleDemo,
+    note: { zh: '演示用的是本地 state;真页面必须走 useAlgViewMode(),否则偏好不跨页。className 由页面给(定位用),组件自身不带页面样式。', en: 'The demo uses local state; real pages must go through useAlgViewMode() or the preference won’t carry across pages. className is supplied by the page (for positioning) — the component ships no page-level styling.' },
   },
   {
     name: 'HeaderToggles',
@@ -1710,9 +1731,25 @@ export const CATALOG: ComponentEntry[] = [
     name: 'ValidationReportModal',
     import: "import ValidationReportModal from '@/components/ValidationReportModal';",
     category: 'more',
-    zh: `公式库校验报告弹窗,扫描某个 set 或全库逐条验证 setup + alg 是否还原,列出失败项可点击跳到对应 case 修改;管理员维护 alg 库时用。`,
-    en: `Alg-library validation report modal that scans one set or all sets, checks each setup+alg solves, and lists clickable failures jumping to the offending case; used by admins.`,
-    note: { zh: `需传 scope / onClose / onPickCase,可选 refreshKey 触发重校验。`, en: `Takes scope/onClose/onPickCase, with an optional refreshKey to re-validate.` },
+    zh: `公式库校验报告弹窗,按 case / set / 魔方 / 全库四种粒度逐条验证 setup + alg 是否还原,列出失败项可点击跳到对应 case 修改;管理员维护 alg 库时用。`,
+    en: `Alg-library validation report modal that scans one case, one set, one puzzle or every set, checks each setup+alg solves, and lists clickable failures jumping to the offending case; used by admins.`,
+    note: { zh: `需传 scope / onClose / onPickCase,可选 refreshKey 触发重校验。页面上一般不直接用它,走 AlgAdminValidate。`, en: `Takes scope/onClose/onPickCase, with an optional refreshKey to re-validate. Pages normally mount AlgAdminValidate instead of this directly.` },
+  },
+  {
+    name: 'AlgAdminValidate',
+    import: "import AlgAdminValidate from '@/components/AlgAdminValidate';",
+    category: 'more',
+    zh: `admin 才可见的「校验」按钮,点开 ValidationReportModal 并在报告里点失败项时开 case 编辑器;/alg 各层页面(全库 / 单个魔方 / 单张 case)共用这一个入口。`,
+    en: `Admin-only "Validate" button that opens the ValidationReportModal and pops the case editor when a failure row is clicked; the shared entry point across /alg levels (all sets, one puzzle, one case).`,
+    note: { zh: `需传 scope,可选 label / className / onPickCase(宿主页自带编辑器时接管)/ onSaved。非 admin 渲染 null(用 hydration-safe 的 useIsAdmin)。`, en: `Takes scope, plus optional label/className/onPickCase (when the host page owns the editor) and onSaved. Renders null for non-admins via the hydration-safe useIsAdmin.` },
+  },
+  {
+    name: 'SortableAlgRow',
+    import: "import SortableAlgRow from '@/components/SortableAlgRow';",
+    category: 'more',
+    zh: `一条公式的 dnd-kit 拖动外壳:admin 模式下在行左侧挂半隐的拖动 handle,顺序即主推解法;case 列表页和 case 详情页共用。`,
+    en: `dnd-kit drag wrapper for a single alg row, rendering a half-hidden grip on the left for admins (row order = recommended alg); shared by the case list and case detail pages.`,
+    note: { zh: `需传 id / draggable / children,外面自备 DndContext + SortableContext,落库调 reorderCaseAlgs。`, en: `Takes id/draggable/children; the caller supplies DndContext + SortableContext and persists via reorderCaseAlgs.` },
   },
   {
     name: 'AdminCaseEditor',
@@ -1887,5 +1924,16 @@ export const CATALOG: ComponentEntry[] = [
     category: 'more',
     zh: `选手页「成绩」tab 容器,按项目 / 按比赛子切换 + 项目图标条,合并官方与直播(非官方)成绩并 lazy 加载 ByEventView / ByCompList,子状态走 nuqs。`,
     en: `The person page's Results tab container: By-Event/By-Competition sub-toggle plus an event-icon strip, merging official and live (unofficial) results and lazy-loading ByEventView/ByCompList, sub-state via nuqs.`,
+  },
+  {
+    name: 'mountSimWorld',
+    import: "import { mountSimWorld } from '@/components/sim-embed/mountSimWorld';",
+    category: 'more',
+    zh: `把 /sim 引擎嵌进任意 DOM 容器的唯一生命周期封装(不是 React 组件,是普通函数):建 WebGLRenderer + World、挂 canvas、ResizeObserver 同步 world.width/height + resize()、跑只在 dirty 时渲染的 rAF、dispose 收 GL 上下文。onFrame(world, dt) 是引擎本身没有的逐帧钩子(返回 true = 标脏),陀螺仪朝向 / 自定义缓动都挂这里;interactive 默认 false(只读嵌入禁挂指针 Controller,否则与调用方抢同一个 transform)。`,
+    en: `The single lifecycle wrapper for embedding the /sim engine in any DOM host (a plain function, not a React component): builds the WebGLRenderer + World, appends the canvas, mirrors the host box into world.width/height + resize() via ResizeObserver, runs a rAF that renders only while dirty, and disposes the GL context. onFrame(world, dt) is the per-frame hook the engine itself lacks (return true to mark dirty) — gyro orientation, custom easing, anything frame-driven; interactive defaults to false since a read-only embed must not attach the pointer Controller or it fights the caller for the same transform.`,
+    note: {
+      zh: `刻意不放 hooks/(要能从非 React 路径调,如 EnginePuzzleSVG)。调用方一律 await import() 本模块,three 才不会进首包。2026-07-24 只做了抽取:ReconPlayerBase / _Interactive3DCube / PllPerformerOverlay / EnginePuzzleSVG 四处仍是各自的手抄副本,迁移是后续工作。`,
+      en: `Deliberately not in hooks/ — it must stay callable from non-React paths (EnginePuzzleSVG). Callers should await import() this module so three stays out of the initial bundle. Shipped 2026-07-24 as an extraction only: ReconPlayerBase, _Interactive3DCube, PllPerformerOverlay and EnginePuzzleSVG still carry their own hand-rolled copies; migrating them is follow-up work.`,
+    },
   },
 ];
