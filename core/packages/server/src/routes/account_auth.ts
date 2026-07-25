@@ -18,8 +18,10 @@ import {
   getIdentities, getUserById, findUserByWcaId, publicUser,
   normalizeEmail, isValidEmail, normalizePhone, isValidPhone, isValidPassword,
   loginWithPassword, setPassword, clearPassword, getPasswordHash, verifyPassword,
+  ownerKey, primaryHandle,
   type Provider,
 } from '../utils/account.js';
+import { deleteAccount } from '../utils/account_delete.js';
 import { emailConfigured, sendEmailCode } from '../utils/email.js';
 import { smsConfigured, sendSmsCode } from '../utils/sms.js';
 import { googleConfigured, googleClientId, googleRelayUrl, verifyGoogleAssertion } from '../utils/google.js';
@@ -97,11 +99,11 @@ accountAuthRoutes.post('/auth/social/:provider', async (c) => {
   } catch {
     return c.json({ error: `invalid ${provider} code` }, 401);
   }
-  const user = await loginWithIdentity(provider as SocialProvider, g.sub, {
+  const { user, isNew } = await loginWithIdentity(provider as SocialProvider, g.sub, {
     name: g.name || '', avatar: g.avatar ?? null,
   });
   const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
-  return c.json({ token, user: publicUser(user) });
+  return c.json({ token, user: publicUser(user), isNew });
 });
 
 // ── 国内三方绑定(登录态,把该身份加到当前账号)──
@@ -152,10 +154,10 @@ accountAuthRoutes.post('/auth/email/verify', async (c) => {
   if (!isValidEmail(norm) || !/^\d{6}$/.test(code ?? '')) return c.json({ error: 'invalid input' }, 400);
   const ok = await verifyCode('email', norm, 'login', code as string);
   if (!ok) return c.json({ error: 'wrong or expired code' }, 401);
-  const user = await loginWithIdentity('email', norm, { name: norm.split('@')[0] });
+  const { user, isNew } = await loginWithIdentity('email', norm, { name: norm.split('@')[0] });
   // amr=email_code:本次会话已证明邮箱所有权 → 15 分钟内可免旧密码重设密码(忘记密码路径)。
   const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name, amr: 'email_code' });
-  return c.json({ token, user: publicUser(user) });
+  return c.json({ token, user: publicUser(user), isNew });
 });
 
 accountAuthRoutes.post('/auth/phone/send', async (c) => {
@@ -184,9 +186,9 @@ accountAuthRoutes.post('/auth/phone/verify', async (c) => {
   const ok = await verifyCode('phone', norm, 'login', code as string);
   if (!ok) return c.json({ error: 'wrong or expired code' }, 401);
   const name = `尾号${norm.slice(-4)}`;
-  const user = await loginWithIdentity('phone', norm, { name });
+  const { user, isNew } = await loginWithIdentity('phone', norm, { name });
   const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
-  return c.json({ token, user: publicUser(user) });
+  return c.json({ token, user: publicUser(user), isNew });
 });
 
 // ── 邮箱 + 密码登录(账号已存在且已设密码即可;不依赖邮件服务)──
@@ -376,12 +378,12 @@ accountAuthRoutes.post('/auth/google', async (c) => {
   } catch {
     return c.json({ error: 'invalid Google token' }, 401);
   }
-  const user = await loginWithIdentity('google', g.sub, {
+  const { user, isNew } = await loginWithIdentity('google', g.sub, {
     name: g.name || g.email?.split('@')[0] || '',
     avatar: g.picture ?? null,
   });
   const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
-  return c.json({ token, user: publicUser(user) });
+  return c.json({ token, user: publicUser(user), isNew });
 });
 
 accountAuthRoutes.post('/auth/link/google', async (c) => {
@@ -416,6 +418,41 @@ accountAuthRoutes.post('/auth/unlink', async (c) => {
   const user = await getUserById(uid);
   const token = user ? signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name }) : undefined;
   return c.json({ ok: true, token, user: user ? publicUser(user) : undefined, identities: await getIdentities(uid) });
+});
+
+/**
+ * ── 注销账号(立即生效,不可恢复)──
+ *
+ * 两道闸,缺一不可:
+ *   ① 照抄主标识 —— 防手滑。会话已经证明「是本人」,这一步证明的是「不是点错了」,
+ *      故比对的串要用户自己认得出(邮箱 / 手机 / WCA ID,见 shared 的 primaryHandle)。
+ *   ② 设了密码的账号必须再输一次密码 —— localStorage 里的 token 有可能是被人拿走的,
+ *      注销不可撤销,不能只凭一个会话就执行。**这里不认 amr=email_code 的 grant**:
+ *      那个 grant 是为「忘了密码还能重设」开的口子,给不可逆操作放行等于把它变成后门。
+ *      真忘了密码的人:先移除密码(那才是 grant 该管的事),再回来注销。
+ */
+accountAuthRoutes.post('/auth/account/delete', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  const uid = await requireUserId(c);
+  const { confirm, password } = await c.req.json<{ confirm?: string; password?: string }>().catch(() => ({ confirm: undefined, password: undefined }));
+  const user = await getUserById(uid);
+  if (!user) return c.json({ error: 'account not found' }, 404);
+
+  const handle = primaryHandle(await getIdentities(uid), uid);
+  // 邮箱按小写存、WCA ID 全大写,用户照抄时大小写常对不上 —— 比对前统一折叠,别为这个卡人。
+  if (!handle || (confirm ?? '').trim().toLowerCase() !== handle.toLowerCase()) {
+    return c.json({ error: 'confirmation does not match' }, 400);
+  }
+
+  const pwHash = await getPasswordHash(uid);
+  if (pwHash && !(typeof password === 'string' && await verifyPassword(password, pwHash))) {
+    return c.json({ error: 'wrong current password' }, 401);
+  }
+
+  // 业务表按归属键存(不是 uid),两个键都要传进去。
+  await deleteAccount(uid, ownerKey(uid, user.wca_id));
+  return c.json({ ok: true });
 });
 
 // ── 我的身份列表(附是否已设密码,供账号面板显示「设置 / 修改密码」)──

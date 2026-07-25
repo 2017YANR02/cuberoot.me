@@ -9,6 +9,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Loader2, Eye, EyeOff, Mail, Smartphone, KeyRound } from 'lucide-react';
 import { SiWechat, SiQq, SiAlipay } from 'react-icons/si';
+import { primaryHandle } from '@cuberoot/shared/account';
+import AppLink from '@/components/AppLink';
 import { useAuthStore, applySession } from '@/lib/auth-store';
 import { useLang } from '@/i18n/tr';
 import {
@@ -16,6 +18,7 @@ import {
   loginPassword, setPassword as apiSetPassword, removePassword,
   linkEmailSend, linkEmailVerify, linkPhoneSend, linkPhoneVerify,
   unlinkIdentity, fetchIdentities, fetchAuthProviders, loginGoogle, linkGoogle, replaceEmailVerify,
+  deleteAccount,
   type Identity, type AuthProviders, type SocialProvider,
 } from '@/lib/account-api';
 import { requestGoogleAssertion } from '@/lib/google-auth';
@@ -25,6 +28,14 @@ import './auth-panel.css';
 const ICON = 16;
 const CODE_LEN = 6;
 type Channel = 'email' | 'phone';
+
+/**
+ * 登录/注册完成时回传给宿主页的信息。isNew 由服务端给(登录与注册合流,只有它知道账号是不是
+ * 刚建的),hasWca 说明账号已带 WCA 身份。两者一起决定要不要给新人做「有 WCA ID 吗」的引导:
+ * 只对刚注册、且还没绑 WCA 的人问一次。
+ */
+export interface SignedIn { isNew?: boolean; hasWca?: boolean }
+type OnSignedIn = (info?: SignedIn) => void;
 
 /** Google 官方四色 "G" 标(内嵌 SVG,自包含,不依赖外部图标 CDN)。 */
 function GoogleGlyph({ size = 16 }: { size?: number }) {
@@ -119,6 +130,7 @@ function authErrorText(raw: string, t: (zh: string, en: string) => string): stri
   if (m.includes('wrong or expired')) return t('验证码错误或已过期', 'Wrong or expired code');
   if (m.includes('wrong email or password')) return t('邮箱或密码错误,或该邮箱未设密码', 'Wrong email or password (or no password set)');
   if (m.includes('wrong current password')) return t('当前密码不正确', 'Current password is incorrect');
+  if (m.includes('confirmation does not match')) return t('输入的内容与账号标识不一致', "That doesn't match your account identifier");
   if (m.includes('invalid password')) return t('密码至少 8 位', 'Password must be at least 8 characters');
   if (m.includes('not configured')) return t('该登录方式暂未开放', "This sign-in method isn't available yet");
   if (m.includes('account already has an email')) return t('一个账号只能绑定一个邮箱,请先解绑现有邮箱', 'An account can have only one email — unlink the current one first');
@@ -140,7 +152,7 @@ function authErrorText(raw: string, t: (zh: string, en: string) => string): stri
  *   link     绑到当前账号
  *   replace  换掉当前账号已有的邮箱(仅 email)—— 发码与 link 同一条链路,只有最后落库不同
  */
-function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' | 'link' | 'replace'; onDone: () => void }) {
+function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' | 'link' | 'replace'; onDone: OnSignedIn }) {
   const lang = useLang();
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
   const [target, setTarget] = useState('');
@@ -182,7 +194,7 @@ function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' |
       } else {
         const r = channel === 'email' ? await verifyEmailCode(target, code) : await verifyPhoneCode(target, code);
         applySession(r.token, r.user);
-        onDone();
+        onDone({ isNew: r.isNew, hasWca: !!r.user.wcaId });
       }
     } catch (e) {
       setError(authErrorText(e instanceof Error ? e.message : String(e), t));
@@ -272,7 +284,7 @@ function PasswordInput({ value, onChange, placeholder, autoComplete, autoFocus, 
  * reset=true 时是「忘记密码」进来的:同一套验证码,只是验完不关窗,交由上层引导设新密码。
  */
 function EmailCodeFlow({ email, setEmail, onDone, toPassword, reset }: {
-  email: string; setEmail: (v: string) => void; onDone: () => void; toPassword: () => void; reset?: boolean;
+  email: string; setEmail: (v: string) => void; onDone: OnSignedIn; toPassword: () => void; reset?: boolean;
 }) {
   const lang = useLang();
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
@@ -301,7 +313,7 @@ function EmailCodeFlow({ email, setEmail, onDone, toPassword, reset }: {
     try {
       const r = await verifyEmailCode(email, code);
       applySession(r.token, r.user);
-      onDone();
+      onDone({ isNew: r.isNew, hasWca: !!r.user.wcaId });
     } catch (e) {
       setError(authErrorText(e instanceof Error ? e.message : String(e), t));
     } finally {
@@ -362,8 +374,9 @@ function EmailCodeFlow({ email, setEmail, onDone, toPassword, reset }: {
 }
 
 /** 邮箱 + 密码登录(受控 email;仅登录已设密码的账号,未设密码走验证码 + 账号面板设密码)。 */
+// 密码登录只对「已注册且已设密码」的账号成立 → 永远不是新注册,onDone 不带 info。
 function EmailPasswordFlow({ email, setEmail, onDone, toCode, onForgot }: {
-  email: string; setEmail: (v: string) => void; onDone: () => void; toCode: () => void; onForgot: () => void;
+  email: string; setEmail: (v: string) => void; onDone: OnSignedIn; toCode: () => void; onForgot: () => void;
 }) {
   const lang = useLang();
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
@@ -423,7 +436,7 @@ function EmailPasswordFlow({ email, setEmail, onDone, toCode, onForgot }: {
  * 直接落到「设置新密码」表单(免旧密码,后端认这个 grant)。等价于别家的重置邮件链接,
  * 但不必再发第二种邮件、也不必再造一个 /reset-password 页。
  */
-function EmailAuth({ onDone }: { onDone: () => void }) {
+function EmailAuth({ onDone }: { onDone: OnSignedIn }) {
   const lang = useLang();
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
   const [email, setEmail] = useState('');
@@ -435,7 +448,7 @@ function EmailAuth({ onDone }: { onDone: () => void }) {
       <div className="auth-flow">
         <p className="auth-hint">{t('邮箱已验证。设置一个新密码,下次即可用它登录。', 'Email verified. Set a new password to sign in with next time.')}</p>
         <SetPasswordForm needCurrent={false} label={t('新密码', 'New password')} onDone={onDone} />
-        <button className="auth-textbtn" onClick={onDone}>{t('跳过', 'Skip')}</button>
+        <button className="auth-textbtn" onClick={() => onDone()}>{t('跳过', 'Skip')}</button>
       </div>
     );
   }
@@ -452,7 +465,7 @@ function EmailAuth({ onDone }: { onDone: () => void }) {
     <EmailCodeFlow
       email={email} setEmail={setEmail}
       reset={mode === 'reset'}
-      onDone={() => (mode === 'reset' ? setNewPw(true) : onDone())}
+      onDone={(info) => (mode === 'reset' ? setNewPw(true) : onDone(info))}
       toPassword={() => setMode('password')}
     />
   );
@@ -592,8 +605,11 @@ function RemovePasswordForm({ needCurrent, onDone, onCancel }: {
   );
 }
 
-/** 登录 / 注册表单。`onDone` 在拿到会话后触发(/account 用它回跳 ?next=)。 */
-export function LoginForm({ onDone }: { onDone: () => void }) {
+/**
+ * 登录 / 注册表单。`onDone(info)` 在拿到会话后触发 —— /account 用它决定去哪:新注册且没绑 WCA
+ * 的先做一步引导,否则回跳 ?next=。
+ */
+export function LoginForm({ onDone }: { onDone: OnSignedIn }) {
   const lang = useLang();
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
   const loginWithWca = useAuthStore((s) => s.loginWithWca);
@@ -623,7 +639,7 @@ export function LoginForm({ onDone }: { onDone: () => void }) {
       const assertion = await requestGoogleAssertion(clientId, relayUrl);
       const r = await loginGoogle(assertion);
       applySession(r.token, r.user);
-      onDone();
+      onDone({ isNew: r.isNew, hasWca: !!r.user.wcaId });
     } catch (e) {
       setGError(authErrorText(e instanceof Error ? e.message : String(e), t));
     } finally {
@@ -716,6 +732,56 @@ export function LoginForm({ onDone }: { onDone: () => void }) {
   );
 }
 
+/**
+ * 发起「绑定 WCA」的 OAuth。与「用 WCA 登录」同一条授权链路,靠 sessionStorage 里的 intent
+ * 让 callback 页走 link 分支(加身份)而不是 login 分支(另建账号)。
+ * returnTo:授权完成后落到哪。新人引导用它把人直接送回 ?next= 的来处,不在账号页多停一站。
+ */
+function startWcaLink(loginWithWca: (returnTo?: string) => void, returnTo?: string): void {
+  try { sessionStorage.setItem('wca_oauth_intent', 'link'); } catch { /* 隐私模式忽略 */ }
+  loginWithWca(returnTo);
+}
+
+/**
+ * 新人引导:刚注册、账号还没有 WCA 身份时问一次「有没有 WCA ID」。渲染于 /account,由页面在
+ * LoginForm 的 onDone 里切进来 —— 挡在回跳 ?next= 之前,是注册流程的最后一步,不是弹窗打断。
+ *
+ * 只给 OAuth 一条路,**不提供手填 WCA ID 的输入框**:手填没有所有权证明,等于让任何人认领
+ * 别人的成绩与纪录。问句本身也得解释「WCA ID 是什么」—— 会走到这一步的人多半是刚入坑的,
+ * 直接问一个术语,他答不上来。
+ */
+export function WcaLinkPrompt({ returnTo, onSkip }: { returnTo?: string | null; onSkip: () => void }) {
+  const lang = useLang();
+  const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
+  const loginWithWca = useAuthStore((s) => s.loginWithWca);
+  return (
+    <>
+      <h2 className="auth-title">{t('你有 WCA ID 吗?', 'Do you have a WCA ID?')}</h2>
+      <div className="auth-flow">
+        <p className="auth-lead">
+          {t('WCA ID 是参加过 WCA 官方比赛后拿到的编号,形如 ', 'A WCA ID is the number you get after competing in an official WCA competition, like ')}
+          <span className="auth-sample">2016ABCD01</span>
+          {t('。绑定后,你的成绩、个人纪录、比赛历史和复盘会直接出现在这里。', '. Link it and your results, personal records, competition history and reconstructions all show up here.')}
+        </p>
+        <div className="auth-sso-list">
+          <SsoButton
+            icon={<WcaGlyph size={ICON} />}
+            label={t('有,绑定我的 WCA 账号', 'Yes, link my WCA account')}
+            onClick={() => startWcaLink(loginWithWca, returnTo ?? undefined)}
+          />
+        </div>
+        <button type="button" className="auth-textbtn" onClick={onSkip}>
+          {t('我还没有 WCA ID', "I don't have one yet")}
+        </button>
+        <p className="auth-hint auth-fineprint">
+          {t('授权在 WCA 官网完成,我们看不到你的密码;以后随时可以在账号设置里绑定。',
+            'Authorization happens on the WCA website — we never see your password. You can link it any time from account settings.')}
+        </p>
+      </div>
+    </>
+  );
+}
+
 const PROVIDER_LABEL: Record<string, { zh: string; en: string }> = {
   email: { zh: '邮箱', en: 'Email' },
   phone: { zh: '手机', en: 'Phone' },
@@ -791,11 +857,8 @@ export function AccountPanel() {
     }
   };
 
-  const linkWcaStart = () => {
-    // 告诉 callback 页这次是「绑定」而非「登录」。
-    try { sessionStorage.setItem('wca_oauth_intent', 'link'); } catch { /* ignore */ }
-    loginWithWca();
-  };
+  // 绑完回本页(账号设置就是来处),故不传 returnTo。
+  const linkWcaStart = () => startWcaLink(loginWithWca);
 
   const linkGoogleStart = async () => {
     const { googleClientId: clientId, googleRelayUrl: relayUrl } = avail;
@@ -1024,6 +1087,144 @@ export function AccountPanel() {
           onCancel={() => setPwAction(null)}
         />
       )}
+    </>
+  );
+}
+
+/**
+ * 注销账号。**独立一屏**,不是账号面板底部的一个红按钮 —— 这件事不可撤销,要先把「删什么、
+ * 留什么」摊开讲清楚,再问一次确认;塞在面板末尾的按钮会被顺手点掉。入口在账号设置最底部
+ * (一条不起眼的文字按钮),链到 /account?view=delete,所以这一屏也能被中键新开、后退退出。
+ *
+ * 确认方式是照抄主标识(邮箱 / 手机 / WCA ID)而不是弹个「确定吗」:后者点两下就过了,
+ * 前者要求人先认一眼这是哪个账号 —— 多账号的人最容易在这里删错。
+ */
+export function DeleteAccountPanel({ backHref }: { backHref: string }) {
+  const lang = useLang();
+  const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
+  const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
+  const [handle, setHandle] = useState<string | null>(null);
+  const [hasPassword, setHasPassword] = useState(false);
+  const [confirm, setConfirm] = useState('');
+  const [pw, setPw] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    void fetchIdentities().then((acct) => {
+      setHandle(primaryHandle(acct.identities, user?.uid));
+      setHasPassword(acct.hasPassword);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 大小写折叠比对,与服务端同一判据 —— 邮箱按小写存、WCA ID 全大写,照抄时对不上很常见。
+  const matched = !!handle && confirm.trim().toLowerCase() === handle.toLowerCase();
+
+  const submit = useCallback(async () => {
+    setError(null);
+    setBusy(true);
+    try {
+      await deleteAccount(confirm.trim(), hasPassword ? pw : undefined);
+      logout();       // 账号已经没了,本地会话立刻清掉,别留一个指向空账号的 token
+      setDone(true);
+    } catch (e) {
+      setError(authErrorText(e instanceof Error ? e.message : String(e), t));
+      setBusy(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [confirm, pw, hasPassword, logout]);
+
+  if (done) {
+    return (
+      <>
+        <h2 className="auth-title">{t('账号已注销', 'Account deleted')}</h2>
+        <div className="auth-flow">
+          <p className="auth-lead">
+            {t('你的账号和私有数据已经删除,登录方式即刻失效。感谢一路同行。',
+              'Your account and private data are gone, and your sign-in methods no longer work. Thanks for having been here.')}
+          </p>
+          <AppLink href="/" className="auth-textbtn">{t('返回首页', 'Back to home')}</AppLink>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <h2 className="auth-title">{t('注销账号', 'Delete account')}</h2>
+      <div className="auth-flow">
+        <p className="auth-lead">
+          {t('注销立即生效,无法撤销,也没有恢复期。', 'Deletion takes effect immediately. It cannot be undone, and there is no grace period.')}
+        </p>
+
+        <p className="auth-dl-head">{t('永久删除', 'Permanently deleted')}</p>
+        <ul className="auth-dl">
+          <li>{t('登录方式(邮箱 / 手机 / WCA / 第三方绑定)', 'Sign-in methods (email / phone / WCA / third-party links)')}</li>
+          <li>{t('计时器云备份、训练成绩、公式掌握与记忆进度', 'Timer backups, training results, algorithm mastery and review progress')}</li>
+          <li>{t('关注的比赛、打乱标记、画板作品', 'Followed competitions, scramble marks, drawings')}</li>
+          <li>{t('通知与反馈会话', 'Notifications and feedback threads')}</li>
+          <li>{t('私享 / 不公开列出的复盘', 'Private and unlisted reconstructions')}</li>
+        </ul>
+
+        <p className="auth-dl-head">{t('留在站上,但不再关联到你', 'Stays on the site, no longer tied to you')}</p>
+        <ul className="auth-dl">
+          <li>{t('论坛主题与回帖、评论、公式提交', 'Forum threads and replies, comments, algorithm submissions')}</li>
+          <li>{t('已公开的复盘', 'Public reconstructions')}</li>
+        </ul>
+        <p className="auth-hint">
+          {t('作者位会显示为「已注销用户」,不再带你的 WCA ID 或邮箱 —— 这样别人的讨论不会断链、公开复盘的链接也不会失效。如有付费订单,交易记录会作为对账凭证保留。',
+            'These keep an author slot reading “Deleted user”, with no WCA ID or email attached — so other people’s discussions stay intact and public reconstruction links keep working. Any purchase records are kept for accounting.')}
+        </p>
+
+        {handle === null ? (
+          <div className="auth-loading"><Loader2 size={ICON} className="auth-spin" /></div>
+        ) : handle === '' ? (
+          /* 身份列表没拉到(会话过期 / 接口不通)。这时不能渲染确认框:比对串是空的,按钮
+             永远点不亮,人只会以为自己抄错了。说清楚为什么,别给一个死掉的表单。 */
+          <p className="auth-error">
+            {t('读不到账号信息,请刷新页面后重试。', 'Could not load your account details — reload the page and try again.')}
+          </p>
+        ) : (
+          <>
+            <label className="auth-label">
+              {t('输入 ', 'Type ')}<span className="auth-sample">{handle}</span>{t(' 以确认', ' to confirm')}
+            </label>
+            <input
+              className="auth-input"
+              value={confirm}
+              autoFocus
+              autoComplete="off"
+              spellCheck={false}
+              onChange={(e) => setConfirm(e.target.value)}
+            />
+            {hasPassword && (
+              <>
+                <label className="auth-label">{t('当前密码', 'Current password')}</label>
+                <PasswordInput
+                  value={pw}
+                  onChange={setPw}
+                  autoComplete="current-password"
+                  onEnter={() => { if (matched && pw && !busy) void submit(); }}
+                />
+              </>
+            )}
+            {error && <p className="auth-error">{error}</p>}
+            <button
+              type="button"
+              className="auth-danger"
+              disabled={busy || !matched || (hasPassword && !pw)}
+              onClick={() => void submit()}
+            >
+              {busy ? <Loader2 size={ICON} className="auth-spin" /> : null}
+              {t('永久注销账号', 'Permanently delete my account')}
+            </button>
+            <AppLink href={backHref} className="auth-textbtn" prefetch={false}>{t('取消', 'Cancel')}</AppLink>
+          </>
+        )}
+      </div>
     </>
   );
 }

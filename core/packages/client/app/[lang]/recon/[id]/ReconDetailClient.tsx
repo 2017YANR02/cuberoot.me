@@ -29,7 +29,7 @@ import {
   formatReconSingle,
 } from '@/lib/recon-utils';
 import { compLinkProps } from '@/lib/comp-link';
-import { displayCuberName } from '@/lib/cuber-name-display';
+import { displayCuberName, ownerDisplayName } from '@/lib/cuber-name-display';
 import { eventDisplayName, toWcaEventId } from '@/lib/wca-events';
 import { EventIcon } from '@/components/EventIcon';
 import { loadFlagData, flagDataVersion, personFlagIso2 } from '@/lib/country-flags';
@@ -1758,7 +1758,7 @@ function CommentsView({
   };
 
   const startReply = (parent: ReconComment) => {
-    const name = displayCuberName(parent.authorName || '', isZh);
+    const name = ownerDisplayName(parent.authorId, parent.authorName, isZh);
     setReplyingToId(parent.id);
     setReplyText(`@${name} `);
     setExpandedReplies(prev => new Set(prev).add(parent.id));

@@ -7,7 +7,7 @@
 import { Pin, Lock, MessageSquare, Eye } from 'lucide-react';
 import Link from '@/components/AppLink';
 import { tr, useLang } from '@/i18n/tr';
-import { displayCuberName } from '@/lib/cuber-name-display';
+import { ownerDisplayName } from '@/lib/cuber-name-display';
 import type { ForumThread, LatestThread, SearchThread } from '@/lib/forum-api';
 import { formatRelativeTime, formatCount } from '../_lib/forum-format';
 
@@ -24,8 +24,8 @@ type RowThread = ForumThread & Partial<Pick<LatestThread, 'forumSlug' | 'forumNa
 export function ThreadRow({ thread }: { thread: RowThread }) {
   const lang = useLang();
   const zh = lang === 'zh';
-  const starter = displayCuberName(thread.authorName, zh);
-  const lastBy = displayCuberName(thread.lastPostAuthorName, zh);
+  const starter = ownerDisplayName(thread.authorId, thread.authorName, zh);
+  const lastBy = ownerDisplayName(thread.lastPostAuthorId, thread.lastPostAuthorName, zh);
   const forumName = zh ? thread.forumNameZh : thread.forumNameEn;
   const lastPage = lastPostPage(thread);
   return (

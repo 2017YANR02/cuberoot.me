@@ -178,6 +178,43 @@
 .auth-primary:disabled { opacity: 0.55; cursor: not-allowed; }
 .auth-primary:not(:disabled):hover { background: color-mix(in srgb, var(--primary) 88%, black); }
 
+/* 注销那一下。形制与 .auth-primary 完全一致(同尺寸同位置),只有颜色是危险色 ——
+   不做得更大更醒目:这不是本页要推着人完成的动作,只是必须存在的那个出口。 */
+.auth-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 14px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--destructive-foreground);
+  background: var(--destructive);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.auth-danger:disabled { opacity: 0.45; cursor: not-allowed; }
+.auth-danger:not(:disabled):hover { background: color-mix(in srgb, var(--destructive) 88%, black); }
+
+/* 注销屏的「删什么 / 留什么」两张清单。小标题贴着清单,清单本身不加框不加底色:
+   这段是要被读进去的正文,套成卡片反而变成可以跳过的插图。 */
+.auth-dl-head {
+  margin: 10px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+.auth-dl {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--muted-foreground);
+}
+.auth-dl li::marker { color: var(--faint-foreground); }
+
 .auth-textbtn {
   align-self: center;
   padding: 4px 8px;
@@ -191,6 +228,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  text-decoration: none;   /* 同款样式也用在 <a> 上(注销屏的「取消」/「返回首页」) */
 }
 .auth-textbtn:hover { color: var(--foreground); }
 
@@ -204,6 +242,23 @@
   font-size: 13px;
   color: var(--destructive);
 }
+
+/* ── 新人引导「你有 WCA ID 吗」的说明段 ──
+   比 .auth-hint 大一档:这段话要真被读进去(它负责解释 WCA ID 是什么、绑了有什么用),
+   不是补充说明。末尾那句免责小字仍走 .auth-hint。 */
+.auth-lead {
+  margin: 0 0 6px;
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--muted-foreground);
+}
+.auth-sample {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--foreground);
+  white-space: nowrap;
+}
+.auth-fineprint { margin-top: 6px; line-height: 1.6; }
 
 .auth-spin { animation: auth-spin 0.8s linear infinite; }
 @keyframes auth-spin { to { transform: rotate(360deg); } }

@@ -13,7 +13,7 @@ import { TriangleAlert } from 'lucide-react';
 import type { ReconSolve } from '@cuberoot/shared';
 import { getRecon } from '@/lib/recon-api';
 import { getPuzzleId } from '@/lib/recon-utils';
-import { displayCuberName } from '@/lib/cuber-name-display';
+import { ownerDisplayName } from '@/lib/cuber-name-display';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import TwistySection from '@/components/TwistySection';
 import SolutionView from '@/components/SolutionView';
@@ -84,7 +84,7 @@ export default function ReconAltViewClient() {
     <div className="recon-page submit-page">
       <div className="submit-header">
         <div className="detail-header">
-          <h1>{displayCuberName(alt.addedBy || '', isZh)}</h1>
+          <h1>{ownerDisplayName(alt.addedById, alt.addedBy, isZh)}</h1>
         </div>
       </div>
 

@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { Link2, Quote, Pencil, Trash2, Check, Flag, ShieldCheck, Hourglass, CircleX } from 'lucide-react';
 import PersonLink from '@/components/PersonLink';
 import { tr, useLang } from '@/i18n/tr';
-import { displayCuberName } from '@/lib/cuber-name-display';
+import { ownerDisplayName } from '@/lib/cuber-name-display';
 import { renderArticleMarkdown } from '@/lib/article-markdown';
 import type { ForumPost, PostAuthor, ReactionKind } from '@/lib/forum-api';
 import { formatRelativeTime, formatJoinedMonth, formatCount } from '../_lib/forum-format';
@@ -41,7 +41,7 @@ export function PostCard({
   const lang = useLang();
   const zh = lang === 'zh';
   const [copied, setCopied] = useState(false);
-  const name = displayCuberName(author?.name || post.authorName, zh);
+  const name = ownerDisplayName(post.authorId, author?.name || post.authorName, zh);
 
   const copyPermalink = async () => {
     try {

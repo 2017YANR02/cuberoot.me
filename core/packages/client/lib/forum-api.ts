@@ -262,6 +262,7 @@ export interface ForumReport {
   postId: number;
   threadId: number;
   threadTitle: string;
+  postAuthorId: string;
   postAuthorName: string;
   excerpt: string;
   reporterId: string;
