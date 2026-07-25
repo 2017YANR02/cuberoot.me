@@ -57,7 +57,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   then add the file stem to this list.
 //   account_auth alg alg_marks alg_srs alg_sets analytics announced_comps article auth battle_rooms cn_comp_names colpi
 //   comp_follows cube cubeopt_solve cubing_live feedback forum health historical_ranks
-//   membership nav_sites nemesizer notifications ops page_notices paint progress recon scramble_555
+//   membership nav_sites nemesizer notifications ops page_notices paint pattern_examples progress recon scramble_555
 //   scramble_marks sponsors timer_backups trainer_rooms wca_format wca_fun_stats wca_proxy
 //   wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wechat_jssdk wiki
 // ─ covers-routes-end ─
@@ -353,6 +353,11 @@ const ENDPOINTS: Ep[] = [
   { d: 'content', m: 'GET', p: '/v1/page-notices/manage', g: 'admin', zh: '全部通知(含停用)', en: 'All notices incl. disabled' },
   { d: 'content', m: 'PUT', p: '/v1/page-notices', g: 'admin', zh: '按路径新增/编辑通知', en: 'Upsert notice by path' },
   { d: 'content', m: 'DELETE', p: '/v1/page-notices/:id', g: 'admin', zh: '删通知', en: 'Delete notice' },
+  { d: 'content', m: 'GET', p: '/v1/pattern-examples', g: 'public', zh: '图案搜索示例预设', en: 'Pattern-search example presets' },
+  { d: 'content', m: 'POST', p: '/v1/pattern-examples', g: 'admin', zh: '新增示例预设', en: 'Add example preset' },
+  { d: 'content', m: 'PUT', p: '/v1/pattern-examples/reorder', g: 'admin', zh: '示例重排', en: 'Reorder examples' },
+  { d: 'content', m: 'PUT', p: '/v1/pattern-examples/:id', g: 'admin', zh: '编辑示例预设', en: 'Edit example preset' },
+  { d: 'content', m: 'DELETE', p: '/v1/pattern-examples/:id', g: 'admin', zh: '删示例预设', en: 'Delete example preset' },
   { d: 'content', m: 'GET', p: '/v1/paint/drawings', g: 'login', zh: '我的矢量画作', en: 'My paint drawings' },
   { d: 'content', m: 'GET', p: '/v1/paint/drawings/:id', g: 'public', zh: '单个画作', en: 'Single drawing' },
   { d: 'content', m: 'POST', p: '/v1/paint/drawings', g: 'login', zh: '保存画作', en: 'Save drawing' },
