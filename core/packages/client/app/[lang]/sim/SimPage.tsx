@@ -624,6 +624,11 @@ export default function SimPage() {
     world.handsFactory = () => new HandsRig();
     world.smplxLoader = loadSmplxFullBody;
     worldRef.current = world;
+    // 手部标定/穿模 oracle 的句柄(scratchpad Playwright 脚本经它驱动 rig 内部)。
+    // 仅 dev:生产 build 里 NODE_ENV 被替换成字面量,整个分支被摇掉。
+    if (process.env.NODE_ENV !== 'production') {
+      (window as unknown as { __simWorld?: World }).__simWorld = world;
+    }
     setWorldTick((n) => n + 1);
     // Any committed cube change (move / scramble / reset / replay fires callbacks)
     // re-poses the pivots, so a stale SQ1/Ivy freeze snap-back would corrupt them —
