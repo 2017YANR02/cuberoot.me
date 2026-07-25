@@ -103,7 +103,15 @@ export function skewbResolveLive(
     hit.point, originWorld, dxPx, dyPx, camera, width, height, 0.2,
   );
   if (!score) return null;
-  return { move: { corner: score.corner, dir: score.dir }, tangentX: score.tangentX, tangentY: score.tangentY };
+  // Record the WORLD letter for the resolved local grip: SkewbCube.beginMove remaps
+  // letters through the live orientation (remapGrip), so feeding the local grip index
+  // directly would double-map after an x/y/z rotation and twist the wrong cap. The
+  // world letter both twists the grip the user actually dragged and keeps history
+  // replayable — same contract as pyraDrag's cube.letterFor.
+  return {
+    move: { corner: cube.worldLetterForGrip(score.corner), dir: score.dir },
+    tangentX: score.tangentX, tangentY: score.tangentY,
+  };
 }
 
 /** Discrete-fire path: just the move (no live tracking). */

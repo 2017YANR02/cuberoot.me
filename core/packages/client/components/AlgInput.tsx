@@ -15,7 +15,7 @@ import {
   type RefObject,
 } from 'react';
 import {
-  autoSpaceMoves, autoSpaceMovesCE, getTextBeforeCaret,
+  autoSpaceMoves, autoSpaceMovesSimple, autoSpaceMovesCE, getTextBeforeCaret,
   cleanAlgText, cleanAlgTextCE,
   autoSpaceAfterComment, autoCloseBracket,
 } from '@/lib/alg-autospace';
@@ -35,7 +35,8 @@ export interface AlgInputProps {
   initialHtml?: string;
   markable?: boolean;
   multiline?: boolean;
-  autoSpace?: boolean;
+  /** true = WCA 规则;'simple' = 单字母 token 简化规则(齿轮魔方,无连写豁免);false = 关。 */
+  autoSpace?: boolean | 'simple';
   autoResize?: boolean;
   placeholder?: string;
   className?: string;
@@ -165,7 +166,9 @@ const AlgInput = forwardRef<AlgInputHandle, AlgInputProps>(function AlgInput(pro
       el.setSelectionRange(c.cursor, c.cursor);
     }
     if (autoSpace) {
-      let adj = autoSpaceMoves(el.value, el.selectionStart ?? 0, inputType);
+      let adj = autoSpace === 'simple'
+        ? autoSpaceMovesSimple(el.value, el.selectionStart ?? 0, inputType)
+        : autoSpaceMoves(el.value, el.selectionStart ?? 0, inputType);
       adj = autoSpaceAfterComment(adj.value, adj.cursor, inputType);
       adj = autoCloseBracket(adj.value, adj.cursor, inputType);
       if (adj.value !== el.value) {
@@ -180,7 +183,8 @@ const AlgInput = forwardRef<AlgInputHandle, AlgInputProps>(function AlgInput(pro
 
   const runCeInput = (el: HTMLDivElement, inputType: string) => {
     cleanAlgTextCE(el);
-    if (autoSpace) autoSpaceMovesCE(el, inputType);
+    // 'simple' 只给 textarea 场景(/sim 解法框);contenteditable 只有 WCA 规则版。
+    if (autoSpace === true) autoSpaceMovesCE(el, inputType);
     const text = el.textContent ?? '';
     onChange?.(text, el.innerHTML);
     onCaretChange?.(text, getTextBeforeCaret(el).length);
