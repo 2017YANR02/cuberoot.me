@@ -13,13 +13,25 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, memo } from 'react';
 import { useQueryState } from 'nuqs';
-import { Search, Square as StopIcon, Eraser, Copy, Check } from 'lucide-react';
+import {
+  Search, Square as StopIcon, Eraser, Copy, Check,
+  Plus, Pencil, Trash2, ChevronLeft, ChevronRight,
+} from 'lucide-react';
 import { renderCubeSVG } from '@cuberoot/visualcube';
 import BoolToggle from '@/components/BoolToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from '@/hooks/useT';
 import { FACE_COLORS } from '@/lib/recon-utils';
-import { GRAY, isEmptyPattern } from './_pattern_core';
+import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
+import {
+  listPatternExamples, createPatternExample, updatePatternExample,
+  deletePatternExample, reorderPatternExamples, type PatternExample,
+} from '@/lib/pattern-examples-api';
+import { isEmptyPattern } from './_pattern_core';
+import {
+  DEFAULT_Q, decodeQ, defaultAssign, defaultPatterns, encodeQ, miniCells,
+  type Assign, type Patterns,
+} from './_q';
 import type { WorkerRes } from './_search.worker';
 import './search.css';
 
@@ -31,44 +43,6 @@ const PALETTE: string[] = [
   FACE_COLORS.R, FACE_COLORS.Y, FACE_COLORS.G, FACE_COLORS.B, FACE_COLORS.W,
   'var(--psc-gray)',
 ];
-
-type Patterns = number[][]; // 5 × 9
-type Assign = boolean[][]; // 5 × 6
-
-const defaultPatterns = (): Patterns => Array.from({ length: 5 }, () => new Array(9).fill(GRAY));
-const defaultAssign = (): Assign => Array.from({ length: 5 }, () => new Array(6).fill(false));
-
-/** 示例预设:图案 1 + 全六面分配(结果数/耗时已实测:全部瞬时完成)。 */
-const EXAMPLES: { zh: string; en: string; pattern: number[] }[] = [
-  { zh: '棋盘', en: 'Checkerboard', pattern: [0, 1, 0, 1, 0, 1, 0, 1, 0] },
-  { zh: '六点', en: 'Six spots', pattern: [0, 0, 0, 0, 1, 0, 0, 0, 0] },
-  { zh: '十字', en: 'Crosses', pattern: [1, 0, 1, 0, 0, 0, 1, 0, 1] },
-  { zh: '条纹', en: 'Stripes', pattern: [0, 1, 2, 0, 1, 2, 0, 1, 2] },
-];
-
-function encodeQ(patterns: Patterns, assign: Assign): string | null {
-  const cells = patterns.flat().join('');
-  let mask = '';
-  for (let j = 0; j < 5; j++) {
-    let m = 0;
-    for (let f = 0; f < 6; f++) if (assign[j][f]) m |= 1 << f;
-    mask += m.toString(16).padStart(2, '0');
-  }
-  if (/^5{45}$/.test(cells) && mask === '0000000000') return null;
-  return `${cells}-${mask}`;
-}
-
-function decodeQ(q: string | null): { patterns: Patterns; assign: Assign } | null {
-  if (!q || !/^[0-5]{45}-[0-9a-f]{10}$/.test(q)) return null;
-  const patterns = defaultPatterns();
-  const assign = defaultAssign();
-  for (let j = 0; j < 5; j++) {
-    for (let i = 0; i < 9; i++) patterns[j][i] = Number(q[j * 9 + i]);
-    const m = parseInt(q.slice(46 + j * 2, 48 + j * 2), 16);
-    for (let f = 0; f < 6; f++) assign[j][f] = (m & (1 << f)) !== 0;
-  }
-  return { patterns, assign };
-}
 
 interface ResultItem {
   facelet: string;
@@ -140,10 +114,32 @@ export default function PatternSearchPage() {
   const [workerError, setWorkerError] = useState<string | null>(null);
   const workerRef = useRef<Worker | null>(null);
 
+  // 示例预设(DB,管理员自维护)。null = 还没拉到 / 拉失败 → 整排不渲染
+  const user = useAuthStore((s) => s.user);
+  const isAdmin = !!user && ADMIN_WCA_IDS.includes(user.wcaId);
+  const [examples, setExamples] = useState<PatternExample[] | null>(null);
+  const [adminMode, setAdminMode] = useState(false);
+  const [form, setForm] = useState<null | { id: number | null; nameZh: string; nameEn: string; useCurrent: boolean }>(null);
+  const [adminErr, setAdminErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const curQ = encodeQ(patterns, assign);
+  const curEmpty = patterns.every(isEmptyPattern);
+
+  const reloadExamples = useCallback(async () => {
+    try {
+      setExamples(await listPatternExamples());
+    } catch {
+      setExamples((prev) => prev ?? []); // 拉不到就当空表,不挡搜索功能
+    }
+  }, []);
+
+  useEffect(() => { void reloadExamples(); }, [reloadExamples]);
+
   // 编辑状态 → URL(replace,可分享)
   useEffect(() => {
-    setQ(encodeQ(patterns, assign));
-  }, [patterns, assign, setQ]);
+    setQ(curQ === DEFAULT_Q ? null : curQ);
+  }, [curQ, setQ]);
 
   useEffect(() => () => workerRef.current?.terminate(), []);
 
@@ -177,13 +173,57 @@ export default function PatternSearchPage() {
     setPatterns(defaultPatterns());
   };
 
-  const loadExample = (pattern: number[]) => {
-    const ps = defaultPatterns();
-    ps[0] = pattern.slice();
-    const as = defaultAssign();
-    as[0] = new Array(6).fill(true);
-    setPatterns(ps);
-    setAssign(as);
+  const loadExample = (ex: PatternExample) => {
+    const d = decodeQ(ex.q);
+    if (!d) return; // 坏数据不动现场
+    setPatterns(d.patterns);
+    setAssign(d.assign);
+    setContinuous(ex.continuous);
+  };
+
+  //── 管理员:示例增删改排序 ──
+  const runAdmin = async (fn: () => Promise<unknown>) => {
+    setBusy(true);
+    setAdminErr(null);
+    try {
+      await fn();
+      await reloadExamples();
+    } catch (e) {
+      setAdminErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const submitForm = () => {
+    if (!form) return;
+    const target = form.id === null ? null : examples?.find((x) => x.id === form.id);
+    const body = {
+      nameZh: form.nameZh.trim(),
+      nameEn: form.nameEn.trim(),
+      q: form.useCurrent || !target ? curQ : target.q,
+      continuous: form.useCurrent || !target ? continuous : target.continuous,
+    };
+    if (!body.nameZh || !body.nameEn) return;
+    void runAdmin(async () => {
+      if (form.id === null) await createPatternExample(body);
+      else await updatePatternExample(form.id, body);
+      setForm(null);
+    });
+  };
+
+  const removeExample = (ex: PatternExample) => {
+    if (!window.confirm(t(`删除示例「${ex.nameZh}」?`, `Delete example “${ex.nameEn}”?`))) return;
+    void runAdmin(() => deletePatternExample(ex.id));
+  };
+
+  const moveExample = (index: number, delta: number) => {
+    if (!examples) return;
+    const to = index + delta;
+    if (to < 0 || to >= examples.length) return;
+    const ids = examples.map((x) => x.id);
+    [ids[index], ids[to]] = [ids[to], ids[index]];
+    void runAdmin(() => reorderPatternExamples(ids));
   };
 
   // 每面需至少分配一个非空图案,否则无解(上游会静默空转;这里入口拦截并给原因)
@@ -264,25 +304,115 @@ export default function PatternSearchPage() {
         </p>
       </header>
 
-      <section className="psc-examples" aria-label={t('示例', 'Examples')}>
-        <span className="psc-label">{t('示例', 'Examples')}</span>
-        {EXAMPLES.map((ex) => (
-          <button
-            key={ex.en}
-            type="button"
-            className="psc-example"
-            onClick={() => loadExample(ex.pattern)}
-            disabled={running}
-          >
-            <span className="psc-example-mini" aria-hidden>
-              {ex.pattern.map((c, i) => (
-                <i key={i} style={{ background: PALETTE[c] }} />
-              ))}
-            </span>
-            {t(ex.zh, ex.en)}
-          </button>
-        ))}
-      </section>
+      {examples && (examples.length > 0 || isAdmin) && (
+        <section className="psc-examples" aria-label={t('示例', 'Examples')}>
+          <div className="psc-examples-row">
+            <span className="psc-label">{t('示例', 'Examples')}</span>
+            {examples.map((ex, i) => (
+              <span className="psc-example-wrap" key={ex.id}>
+                <button
+                  type="button"
+                  className="psc-example"
+                  onClick={() => loadExample(ex)}
+                  disabled={running}
+                >
+                  <span className="psc-example-mini" aria-hidden>
+                    {miniCells(ex.q).map((c, k) => (
+                      <i key={k} style={{ background: PALETTE[c] }} />
+                    ))}
+                  </span>
+                  {t(ex.nameZh, ex.nameEn)}
+                </button>
+                {adminMode && (
+                  <span className="psc-ex-ctl">
+                    <button type="button" className="psc-ex-btn" onClick={() => moveExample(i, -1)} disabled={busy || i === 0} aria-label={t('左移', 'Move left')}>
+                      <ChevronLeft size={13} />
+                    </button>
+                    <button type="button" className="psc-ex-btn" onClick={() => moveExample(i, 1)} disabled={busy || i === examples.length - 1} aria-label={t('右移', 'Move right')}>
+                      <ChevronRight size={13} />
+                    </button>
+                    <button
+                      type="button"
+                      className="psc-ex-btn"
+                      onClick={() => { setAdminErr(null); setForm({ id: ex.id, nameZh: ex.nameZh, nameEn: ex.nameEn, useCurrent: false }); }}
+                      disabled={busy}
+                      aria-label={t('编辑', 'Edit')}
+                    >
+                      <Pencil size={13} />
+                    </button>
+                    <button type="button" className="psc-ex-btn" onClick={() => removeExample(ex)} disabled={busy} aria-label={t('删除', 'Delete')}>
+                      <Trash2 size={13} />
+                    </button>
+                  </span>
+                )}
+              </span>
+            ))}
+            {isAdmin && (
+              adminMode ? (
+                <>
+                  <button
+                    type="button"
+                    className="psc-example psc-ex-add"
+                    onClick={() => { setAdminErr(null); setForm({ id: null, nameZh: '', nameEn: '', useCurrent: true }); }}
+                    disabled={busy || curEmpty}
+                    title={curEmpty ? t('先在下面摆一个图案', 'Lay out a pattern below first') : undefined}
+                  >
+                    <Plus size={14} />
+                    {t('把当前图案存为示例', 'Save current as example')}
+                  </button>
+                  <button type="button" className="psc-ex-manage" onClick={() => { setAdminMode(false); setForm(null); }}>
+                    {t('完成', 'Done')}
+                  </button>
+                </>
+              ) : (
+                <button type="button" className="psc-ex-manage" onClick={() => setAdminMode(true)}>
+                  <Pencil size={13} />
+                  {t('管理示例', 'Manage')}
+                </button>
+              )
+            )}
+          </div>
+
+          {form && (
+            <div className="psc-ex-form">
+              <input
+                className="psc-input"
+                value={form.nameZh}
+                onChange={(e) => setForm({ ...form, nameZh: e.target.value })}
+                placeholder={t('中文名', 'Chinese name')}
+                maxLength={60}
+              />
+              <input
+                className="psc-input"
+                value={form.nameEn}
+                onChange={(e) => setForm({ ...form, nameEn: e.target.value })}
+                placeholder={t('英文名', 'English name')}
+                maxLength={60}
+              />
+              {form.id !== null && (
+                <BoolToggle
+                  value={form.useCurrent}
+                  onChange={(v) => setForm({ ...form, useCurrent: v })}
+                  label={t('替换成当前图案', 'Replace with current pattern')}
+                />
+              )}
+              <button
+                type="button"
+                className="psc-btn psc-btn-primary"
+                onClick={submitForm}
+                disabled={busy || !form.nameZh.trim() || !form.nameEn.trim() || (form.useCurrent && curEmpty)}
+              >
+                {t('保存', 'Save')}
+              </button>
+              <button type="button" className="psc-btn" onClick={() => setForm(null)} disabled={busy}>
+                {t('取消', 'Cancel')}
+              </button>
+            </div>
+          )}
+
+          {adminErr && <div className="psc-error psc-ex-error">{adminErr}</div>}
+        </section>
+      )}
 
       <section className="psc-palette-row" aria-label={t('图案颜色', 'Pattern type')}>
         <span className="psc-label">{t('图案颜色', 'Pattern type')}</span>
