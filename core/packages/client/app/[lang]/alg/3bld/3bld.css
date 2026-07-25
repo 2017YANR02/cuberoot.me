@@ -742,15 +742,14 @@
   font-size: 0.76rem;
   color: var(--faint-foreground);
 }
-.bld-comm-alg-text {
-  font-family: var(--font-mono, monospace);
-  font-size: 1.05rem;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  word-break: break-word;
-  color: var(--foreground);
-  line-height: 1.6;
+/* 焦点面板的公式列表复用 alg.css 的 `.alg-alg-row`(拖拽 handle 也认它),这里只补
+   纵向间距;整行不可点(只有右边那颗复制键能点),所以把它的 pointer 手势收掉。 */
+.bld-comm-alg-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
+.bld-comm-alg-list .alg-alg-row { cursor: default; }
 .bld-comm-assoc {
   display: flex;
   align-items: flex-start;
@@ -798,6 +797,19 @@
 .bld-comm-card.is-active {
   border-color: color-mix(in srgb, var(--accent) 65%, transparent);
   background: var(--accent-soft);
+}
+/* admin 的编辑笔是 absolute 的,得挂在卡片**外面** —— 按钮不能嵌按钮。
+   外层只管定位(单格 grid,子项默认拉满),视觉全留在 .bld-comm-card 上。 */
+.bld-comm-card-wrap {
+  position: relative;
+  display: grid;
+}
+.bld-comm-card-wrap:hover .alg-admin-edit-btn-corner { opacity: 1; }
+/* 校验不过 → 红框(同 .alg-case.is-invalid)。原因挂卡片 title,
+   具体是哪一条公式则在焦点面板里逐行标红。 */
+.bld-comm-card.is-invalid {
+  border-color: var(--destructive);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--destructive) 30%, transparent);
 }
 .bld-comm-card-thumb {
   display: flex;

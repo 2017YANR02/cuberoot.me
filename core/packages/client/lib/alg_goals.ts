@@ -57,6 +57,11 @@ export const SET_GOAL: Record<string, AlgGoal> = {
   // 见 docs/alg-data-cleanup.md。
   '3x3/adv-f2l': 'skip',
   '3x3/fruf': 'f2l',
+  // 3BLD 换位子:一条公式就是一个三循环,`setup`(= case 态)加上它必须**整魔方还原**。
+  // 必须显式写在这儿 —— 这两套的 sticker 是 `raw`(三循环跨层,face 那套顶面+四侧边描述不了),
+  // 而 `goalOf` 对 raw 的兜底是 `skip`,不列的话 818 条一条都不校验,坏数据静默入库。
+  '3x3/comm-corner': 'solve',
+  '3x3/comm-edge': 'solve',
   // 2x2 Ortega:先做一面(不是一层),OLL 只要求两面各自同色;PBL 是收尾一步,整魔方还原
   '2x2/ortega-oll': 'co',
   '2x2/ortega-pbl': 'solve',
