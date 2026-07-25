@@ -6,6 +6,8 @@
 // 重新生成:见 scripts/gen-place-zh.mjs 顶部。
 export const PLACE_CITY_ZH: Record<string, string> = {
   // 手补(重跑 gen 需离线 GeoNames dump,本机暂缺;源已入 scripts/place-tail-zh.json,重跑会归位重排):
+  "PT:machico": "马希科",
+  "MT:valletta": "瓦莱塔",
   "PL:koszalin": "科沙林",
   "FR:tinqueux": "廷克",
   "CH:surseelu": "苏尔塞",
@@ -3763,6 +3765,7 @@ export const PLACE_CITY_ZH: Record<string, string> = {
 };
 export const PLACE_ADMIN_ZH: Record<string, string> = {
   // 手补(同上,源在 scripts/place-tail-zh.json):
+  "PT:madeira": "马德拉",
   "FR:saintmartin": "圣马丁",
   "ZA:mpumalanga": "普马兰加",
   "NL:sintmaarten": "圣马丁",
