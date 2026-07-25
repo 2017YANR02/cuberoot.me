@@ -7,10 +7,14 @@
  * remaining slot AND keeps EO.
  *
  * Modeled on `f2l_lookup.ts`. Same fingerprint (per-slot pair piece + sticker
- * positions). The only difference: ZBLS data has a single orientation per
- * case (algs[0] only, no per-slot variants), so the table is built by iterating
- * over all 4 slot indices for each case — at lookup time, the matching
- * fingerprint pins which slot the alg actually solves.
+ * positions).
+ *
+ * **Only `algs[0]` (the FR group) goes into the table, on purpose.** Since
+ * 2026-07-24 each ZBLS case also carries FL/BL/BR groups, but those are the
+ * same solution re-lettered under y — feeding them in would file FL-frame move
+ * strings under FR-frame fingerprints. The table is keyed on FR only and the
+ * caller rotates the user's pattern so its pair sits in FR before querying;
+ * every AUF is enumerated here, so all 4 turns of a case are covered.
  *
  * Build cost: ~6000 simulations on first use (lazy, cached). Lookup: O(1).
  */

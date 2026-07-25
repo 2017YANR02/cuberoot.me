@@ -122,8 +122,9 @@ export function checkPrecondition(
 }
 
 /**
- * 从 setup 文本直接判前提。**带 24 朝向容忍** —— 库里 112 条 zbls setup 末尾留着 `y`/`y'`
- * 这类整体转体,不容忍的话底两层会被当成侧面,全体误判。与 `reachesGoal` 同一套做法。
+ * 从 setup 文本直接判前提。**带 24 朝向容忍** —— 库里的 setup 常带整体转体(vls 56 条、
+ * cls 49 条;zbls 那 112 条已在 2026-07-24 归一到 FR 时抽掉),不容忍的话底两层会被当成
+ * 侧面,全体误判。与 `reachesGoal` 同一套做法。
  */
 export async function checkSetupPrecondition(
   setup: string,
