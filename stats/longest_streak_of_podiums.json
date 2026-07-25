@@ -256,6 +256,13 @@
     ],
     [
       56,
+      "[Nicole Jnus Macalalad](https://www.worldcubeassociation.org/persons/2018MACA02)",
+      "Megaminx",
+      "[Cube Ala-Eh V 2020](https://www.worldcubeassociation.org/competitions/CubeAlaEhV2020)",
+      null
+    ],
+    [
+      56,
       "[Ahmet Çınar Ablak](https://www.worldcubeassociation.org/persons/2018ABLA01)",
       "2x2x2 Cube",
       "[Ankara Winter 2022](https://www.worldcubeassociation.org/competitions/AnkaraWinter2022)",
@@ -294,13 +301,6 @@
       "[Damián Jail Campos](https://www.worldcubeassociation.org/persons/2015CAMP03)",
       "Megaminx",
       "[La Plata Open 2015](https://www.worldcubeassociation.org/competitions/LaPlataOpen2015)",
-      null
-    ],
-    [
-      55,
-      "[Nicole Jnus Macalalad](https://www.worldcubeassociation.org/persons/2018MACA02)",
-      "Megaminx",
-      "[Cube Ala-Eh V 2020](https://www.worldcubeassociation.org/competitions/CubeAlaEhV2020)",
       null
     ],
     [
@@ -732,10 +732,10 @@
     ],
     [
       38,
-      "[Sean Patrick Villanueva](https://www.worldcubeassociation.org/persons/2017VILL41)",
-      "3x3x3 Cube",
-      "[Fairview Cube Day 2018](https://www.worldcubeassociation.org/competitions/FairviewCubeDay2018)",
-      "[WCA World Championship 2023](https://www.worldcubeassociation.org/competitions/WC2023)"
+      "[Juan de Dios Noriega Sánchez](https://www.worldcubeassociation.org/persons/2017SANC24)",
+      "4x4x4 Cube",
+      "[Fénix México 2022](https://www.worldcubeassociation.org/competitions/FenixMexico2022)",
+      null
     ]
   ]
 }
