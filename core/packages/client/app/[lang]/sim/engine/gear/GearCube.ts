@@ -25,8 +25,8 @@ import MoveHistory from '../MoveHistory';
 import { makeAnim, type PieceAnim } from '../pieceAnim';
 import type { TweenCube } from '../TweenTwister';
 import {
-  type GearMove, type GearPieceState,
-  solvedGear, applyGearMove, isSolvedGear, gearMoveToString,
+  type GearMove, type GearRotMove, type GearAnyMove, type GearPieceState,
+  solvedGear, applyGearMove, isSolvedGear, isGearRot, gearMoveToString,
   FACE_AXIS, FACE_CORNER_SLOTS, FACE_GEAR_SLOTS, FACE_EQUATOR_RING, MIDDLE_CENTER_SLOTS,
 } from './gearState';
 import {
@@ -46,8 +46,30 @@ interface PieceEntry { pivot: THREE.Object3D; group: THREE.Group; }
 
 const _axis = new THREE.Vector3();
 const _q = new THREE.Quaternion();
+const _rotQuat = new THREE.Quaternion();
+const _invQuat = new THREE.Quaternion();
 
-export default class GearCube extends THREE.Group implements TweenCube<GearMove> {
+/** World rotation axes for x / y / z. */
+const ROT_AXIS = [
+  new THREE.Vector3(1, 0, 0),
+  new THREE.Vector3(0, 1, 0),
+  new THREE.Vector3(0, 0, 1),
+] as const;
+
+/** Signed angle of a rotation move: bare (dir 1) = −90° (clockwise about the axis = the
+ *  WCA / cubing.js x·y·z convention), prime = +90°, double = 180°. */
+function rotAngle(dir: 1 | -1 | 2): number {
+  return dir === 2 ? Math.PI : -dir * (Math.PI / 2);
+}
+
+// Whole-cube rotations (x / y / z) follow the SkewbCube recipe: a rotation permutes no
+// piece (the discrete state COULDN'T express one anyway — gears never leave their ring,
+// but a quarter rotation maps rings onto each other), so the reorientation rides on the
+// group's OWN quaternion. Face LETTERS are world-fixed, not cube-fixed — after `y`, a
+// typed `R` must flip whatever face is now on the right — so every face move is remapped
+// through the live orientation before it drives the tables (remapFace), while history
+// still records the letter the user typed (so replay re-derives it).
+export default class GearCube extends THREE.Group implements TweenCube<GearAnyMove> {
   readonly puzzleType = 'gear' as const;
   order = 0;
   dirty = true;
@@ -97,9 +119,67 @@ export default class GearCube extends THREE.Group implements TweenCube<GearMove>
   gearSlotOf(ring: number, pieceId: number): number { return this.state.ring[ring].indexOf(pieceId); }
   centerSlotOf(pieceId: number): number { return this.state.cent.indexOf(pieceId); }
 
-  /** Animation plan for one move: three fixed-axis groups (face −amt·π, middle
-   *  −amt·π/2, equator-gear spins +amt·8π/3), pieces read off the LIVE state. */
-  beginMove(move: GearMove): PieceAnim[] {
+  /** Every top-level pivot (gears by their orbit pivot — the spin pivot is its child
+   *  and follows) — the set a whole-cube rotation spins. */
+  private allPivots(): THREE.Object3D[] {
+    const out: THREE.Object3D[] = [];
+    for (const p of this.cornerPieces) out.push(p.pivot);
+    for (const p of this.centerPieces) out.push(p.pivot);
+    for (const ring of this.gearPieces) for (const p of ring) out.push(p.pivot);
+    out.push(this.corePiece.pivot);
+    return out;
+  }
+
+  /** The local face a world-fixed letter flips under the current reorientation. Home
+   *  orientation (no rotation yet) → the letter's own face, bit-for-bit unchanged. */
+  private remapFace(move: GearMove): GearMove {
+    const q = this.quaternion;
+    if (q.x === 0 && q.y === 0 && q.z === 0 && q.w === 1) return move;
+    const a = FACE_AXIS[move.face];
+    const d = _axis.set(a[0], a[1], a[2]).applyQuaternion(_invQuat.copy(q).invert());
+    let best = move.face, bestDot = -Infinity;
+    for (let f = 0; f < 6; f++) {
+      const dot = FACE_AXIS[f][0] * d.x + FACE_AXIS[f][1] * d.y + FACE_AXIS[f][2] * d.z;
+      if (dot > bestDot) { bestDot = dot; best = f; }
+    }
+    return { face: best, amt: move.amt };
+  }
+
+  /** Inverse of remapFace: the world-fixed LETTER whose flip turns local face `face`
+   *  right now — the drag path records this so history replays through remapFace. */
+  worldLetterForFace(face: number): number {
+    const q = this.quaternion;
+    if (q.x === 0 && q.y === 0 && q.z === 0 && q.w === 1) return face;
+    const a = FACE_AXIS[face];
+    const d = _axis.set(a[0], a[1], a[2]).applyQuaternion(q);
+    let best = face, bestDot = -Infinity;
+    for (let f = 0; f < 6; f++) {
+      const dot = FACE_AXIS[f][0] * d.x + FACE_AXIS[f][1] * d.y + FACE_AXIS[f][2] * d.z;
+      if (dot > bestDot) { bestDot = dot; best = f; }
+    }
+    return best;
+  }
+
+  /** Fold a rotation into the group's quaternion (world-frame premultiply). */
+  private bakeRotation(move: GearRotMove): void {
+    this.quaternion.premultiply(_rotQuat.setFromAxisAngle(ROT_AXIS[move.rot], rotAngle(move.dir)));
+  }
+
+  beginMove(move: GearAnyMove): PieceAnim[] {
+    if (!isGearRot(move)) return this.beginFaceMove(this.remapFace(move));
+    const angle = rotAngle(move.dir);
+    // Express the world axis in the group's CURRENT local frame so the animated spin
+    // stays visually correct even when earlier rotations have already reoriented it.
+    const localAxis = ROT_AXIS[move.rot].clone()
+      .applyQuaternion(_invQuat.copy(this.quaternion).invert());
+    const delta = _rotQuat.setFromAxisAngle(localAxis, angle);
+    return this.allPivots().map((pivot) => makeAnim(pivot, delta, localAxis, angle));
+  }
+
+  /** Animation plan for one face flip (already remapped to the LOCAL face): three
+   *  fixed-axis groups (face −amt·π, middle −amt·π/2, equator-gear spins +amt·8π/3),
+   *  pieces read off the LIVE state. */
+  private beginFaceMove(move: GearMove): PieceAnim[] {
     const f = move.face;
     const n = _axis.set(FACE_AXIS[f][0], FACE_AXIS[f][1], FACE_AXIS[f][2]);
     const anims: PieceAnim[] = [];
@@ -144,29 +224,39 @@ export default class GearCube extends THREE.Group implements TweenCube<GearMove>
     return anims;
   }
 
-  /** Snap pivots to end pose, advance discrete state, record history. */
-  finishMove(anims: PieceAnim[], move: GearMove): void {
-    for (const a of anims) a.pivot.quaternion.copy(a.endQuat);
-    this.state = applyGearMove(this.state, move);
+  /** Snap pivots to end pose, advance discrete state, record history. A rotation
+   *  instead undoes the animated pivot spin and bakes into the group quaternion; a
+   *  face move advances the state with the REMAPPED local face while history keeps
+   *  the letter the user typed (so replay re-derives it through remapFace). */
+  finishMove(anims: PieceAnim[], move: GearAnyMove): void {
+    if (isGearRot(move)) {
+      for (const a of anims) a.pivot.quaternion.copy(a.startQuat); // undo the animated spin
+      this.bakeRotation(move);
+    } else {
+      for (const a of anims) a.pivot.quaternion.copy(a.endQuat);
+      this.state = applyGearMove(this.state, this.remapFace(move));
+    }
     this.history.record(gearMoveToString(move));
     this.dirty = true;
     for (const cb of this.callbacks) cb();
   }
 
-  applyMoveInstant(move: GearMove): void {
+  applyMoveInstant(move: GearAnyMove): void {
     this.finishMove(this.beginMove(move), move);
   }
 
   /** Snap a move into place without recording history (undo/redo replay). */
-  applyMoveSilent(move: GearMove): void {
-    const anims = this.beginMove(move);
-    for (const a of anims) a.pivot.quaternion.copy(a.endQuat);
-    this.state = applyGearMove(this.state, move);
+  applyMoveSilent(move: GearAnyMove): void {
+    if (isGearRot(move)) { this.bakeRotation(move); this.dirty = true; return; }
+    const local = this.remapFace(move);
+    for (const a of this.beginFaceMove(local)) a.pivot.quaternion.copy(a.endQuat);
+    this.state = applyGearMove(this.state, local);
     this.dirty = true;
   }
 
   reset(): void {
     this.state = solvedGear();
+    this.quaternion.identity();
     for (const p of this.cornerPieces) p.pivot.quaternion.identity();
     for (const p of this.centerPieces) p.pivot.quaternion.identity();
     for (const ring of this.gearPieces) for (const p of ring) {

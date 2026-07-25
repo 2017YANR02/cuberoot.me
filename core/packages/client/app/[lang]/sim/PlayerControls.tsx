@@ -60,7 +60,7 @@ import {
   parseHeliMoves, heliMovesToString, randomHeliScrambleMoves, type HeliMove,
 } from './engine/heli/heliState';
 import {
-  parseGearMoves, gearMovesToString, invertGearMoves, reduceGearAlg, randomGearScrambleMoves, type GearMove,
+  parseGearMoves, gearMovesToString, invertGearMoves, reduceGearAlg, randomGearScrambleMoves, type GearAnyMove,
 } from './engine/gear/gearState';
 import {
   parseSkewbMoves, skewbMovesToString, randomSkewbScramble, isSkewbRot, type SkewbMove,
@@ -589,8 +589,8 @@ const CORNER_SPECS: Record<CornerKind, CornerSpec> = {
   },
   gear: {
     parse: parseGearMoves,
-    toString: (m) => gearMovesToString(m as GearMove[]),
-    invert: (m) => invertGearMoves(m as GearMove[]),
+    toString: (m) => gearMovesToString(m as GearAnyMove[]),
+    invert: (m) => invertGearMoves(m as GearAnyMove[]),
     reduce: reduceGearAlg,
     // uniform random state + optimal path (lib/gear-solver, cstimer gearo semantics)
     scramble: () => gearMovesToString(randomGearScrambleMoves()),
@@ -974,8 +974,12 @@ export default function PlayerControls({
   // single letter: NxN/twisty WCA alg, Ivy, SQ1 (no letters, no-op either way), and the
   // 'redi' / 'pyraminx' corner-engine notations (F/L/B/R and U/L/R/B). It must stay off
   // for the other corner-engine notations, which use multi-letter tokens per move
-  // ("UFR"/"UF"/"BL" …) that auto-spacing would split mid-token.
+  // ("UFR"/"UF"/"BL" …) that auto-spacing would split mid-token. Gear's tokens are
+  // single-letter too, but the WCA rules misfire on its grammar (UD/FB glue exemption,
+  // suffix digits 3-6) — it gets the 'simple' variant instead of the full WCA one.
   const algAutoSpaceSafe = !corner || cornerKind === 'redi' || cornerKind === 'pyraminx';
+  const algAutoSpace: boolean | 'simple' =
+    algAutoSpaceSafe ? true : cornerKind === 'gear' ? 'simple' : false;
   // "Derive scramble from solution" (cubedb-style) is 3x3-only — the solver is.
   const is3x3 = !isSq1 && !isIvy && !corner && !isTwistyMode && order === 3;
   const { i18n } = useTranslation();
@@ -1362,11 +1366,17 @@ export default function PlayerControls({
 
   const animatingScrambleRef = useRef(false);
   const scrambleReqIdRef = useRef(0);
+  // 上一次驱动过魔方状态的解法文本 —— auto-reset effect 用它判断「这次变更是不是
+  // 纯末尾追加」:是,且开着「动画」,就在当前状态上动画转新招,而不是整段瞬切重放。
+  const prevAlgTextRef = useRef(alg);
 
   useEffect(() => {
+    const actions: unknown[] = isSq1 ? sq1Actions : isIvy ? ivyActions : corner ? cornerActions : nxnItems;
+    const prevText = prevAlgTextRef.current;
+    prevAlgTextRef.current = algDraft;
     if (skipAutoResetRef.current) {
       skipAutoResetRef.current = false;
-      setStep(isSq1 ? sq1Actions.length : isIvy ? ivyActions.length : corner ? cornerActions.length : nxnItems.length);
+      setStep(actions.length);
       return;
     }
     if (animatingScrambleRef.current) {
@@ -1374,35 +1384,75 @@ export default function PlayerControls({
       setStep(0);
       return;
     }
+    // 解法框正被编辑(光标在框里):魔方跟随光标 —— 事件里的 caret sync 因 actions
+    // 未更新而跳过了,这里用本轮的新 actions 落实(打一个 U,魔方立刻转 U;删掉则回退)。
+    const algEl = algElRef.current;
+    if (algEl instanceof HTMLTextAreaElement && document.activeElement === algEl) {
+      const n = caretStepOf(algEl.value, algEl.selectionStart ?? algEl.value.length);
+      if (n !== null) {
+        // 「动画」开着且这次是纯末尾追加一招(魔方已停在前 n−1 步):在当前状态上
+        // 动画转这一招(与手势/键映射同一体验)。其余情况(中途编辑/删除/一次粘贴
+        // 多招/algorithm 模式基座会变)仍整段瞬切重放。SQ1/Ivy 沿 stepForward
+        // 的先例保持瞬切。
+        if (
+          settings.animatePlayback !== false && settings.playbackMode !== 'algorithm'
+          && !isSq1 && !isIvy && world
+          && n === actions.length && stepRef.current === n - 1
+          && algDraft.startsWith(prevText)
+        ) {
+          if (corner) {
+            (world.cube as unknown as CornerCube).twister.twist(actions[n - 1], false, true);
+            stepRef.current = n;
+            setStep(n);
+            return;
+          }
+          const it = nxnItems[n - 1];
+          // 手部演示开着时仍走 jumpToStep(它会重推演握姿);动画追加不带手部模拟。
+          if (it.kind === 'move' && !world.hands?.isEnabled) {
+            (world.cube as import('./engine/nxn/cube').default).twister.twist(it.action, false, true);
+            stepRef.current = n;
+            setStep(n);
+            return;
+          }
+        }
+        jumpToStep(n);
+        return;
+      }
+    }
     jumpToStep(stepRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setupDraft, nxnItems, sq1Actions, ivyActions, cornerActions, settings.playbackMode]);
 
-  const handleCaretSync = useCallback((text: string, caretIndex: number) => {
-    // Remember the caret so the highlight can follow the move it sits on (twizzle
-    // rule, see the highlightRange memo) — separate from the cube state, which is
-    // driven by jumpToStep(moves-before-caret) below.
-    setCaretChar(caretIndex);
+  /** 光标位置 → 光标前的完整步数(各拼图各自的 parser);解析不了返回 null。 */
+  const caretStepOf = useCallback((text: string, caretIndex: number): number | null => {
     const before = text.slice(0, caretIndex);
     if (!isSq1 && !isIvy && !corner) {
       // NxN 直接喂原文(parseNxnItems 自己剥注释):extractAlgFromText 会把
       // ↑/↓/· 当装饰剥掉,经它一遍换握步就数丢了。
-      try { jumpToStep(parseNxnItems(before).length); } catch { /* ignore */ }
-      return;
+      try { return parseNxnItems(before).length; } catch { return null; }
     }
     const algBefore = extractAlgFromText(before);
-    if (isSq1) {
-      jumpToStep(parseSq1Scramble(algBefore).length);
-      return;
-    }
+    if (isSq1) return parseSq1Scramble(algBefore).length;
     if (isIvy) {
-      try { jumpToStep(parseIvyMoves(algBefore).length); } catch { /* ignore */ }
-      return;
+      try { return parseIvyMoves(algBefore).length; } catch { return null; }
     }
-    if (corner) {
-      jumpToStep(corner.parse(algBefore).length);
-    }
-  }, [jumpToStep, isSq1, isIvy, corner]);
+    if (corner) return corner.parse(algBefore).length;
+    return null;
+  }, [isSq1, isIvy, corner]);
+
+  const handleCaretSync = useCallback((text: string, caretIndex: number) => {
+    // Remember the caret so the highlight can follow the move it sits on (twizzle
+    // rule, see the highlightRange memo) — separate from the cube state, which is
+    // driven by jumpToStep(moves-before-caret).
+    setCaretChar(caretIndex);
+    // 打字/删除刚改了文本:此刻 memoized actions 还是旧的,jumpToStep 会被 clamp 到旧
+    // 长度 → 魔方不动(虚拟键盘没有 keyup 兜底,#38 后续「输入 U 不转」)。文本变更的
+    // 跳步交给下面的 auto-reset effect 用本轮新 actions 落实;这里只处理纯光标移动
+    // (点击/方向键,文本没变,actions 就是新的)。
+    if (text !== algDraft) return;
+    const n = caretStepOf(text, caretIndex);
+    if (n !== null) jumpToStep(n);
+  }, [algDraft, caretStepOf, jumpToStep]);
 
   // 「动画」开着时,上一步/下一步在当前状态上顺播/倒播这一步(与播放循环同一
   // 转动动画路径),而不是 jumpToStep 的整段重放瞬切;关着时保持瞬切。
@@ -1687,7 +1737,8 @@ export default function PlayerControls({
     if (isSq1 || isIvy || isTwistyMode) return;
     if (corner) {
       // corner-registry engines (gear/dino/…): route the keys the puzzle's own
-      // grammar parses (gear: U R F D L B); everything else is a silent no-op.
+      // grammar parses (gear: U R F D L B + x/y/z rotations); everything else is
+      // a silent no-op.
       if (!world) return;
       const text = new TwistAction(k.sign, !!k.reverse, 1).value;
       let moves: unknown[] = [];
@@ -2121,7 +2172,7 @@ export default function PlayerControls({
             initialText={algDraft}
             rows={1}
             spellCheck={false}
-            autoSpace={algAutoSpaceSafe}
+            autoSpace={algAutoSpace}
             autoResize
             className={showAlgOverlay ? 'sim-player-input sim-player-input--hl' : 'sim-player-input'}
             placeholder={t('解法', 'Solution')}

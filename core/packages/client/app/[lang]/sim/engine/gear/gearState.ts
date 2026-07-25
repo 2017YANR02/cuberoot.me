@@ -25,6 +25,12 @@
  * `U2`..`U6` / `U2'`..`U5'` = 2..6 flips (12 ≡ identity, so ±6 coincide → `6`).
  * Scrambles come from lib/gear-solver (uniform random state + optimal path) and use
  * only U/R/F exactly like cstimer's `gearo`.
+ *
+ * Whole-cube rotations `x y z` (+ `'`/`2`) parse like the Skewb's: a rotation
+ * permutes NO piece, so applyGearMove leaves the state untouched — the engine
+ * carries the reorientation on its render group's quaternion (see GearCube). The
+ * discrete model COULDN'T express a 90° reorientation anyway: gears never leave
+ * their ring, but a quarter rotation maps rings onto each other (see ROTATED_SOLVED).
  */
 import { randomGearScramble } from '@/lib/gear-solver';
 
@@ -82,6 +88,18 @@ const rot180 = (v: V3, n: V3): V3 => {
 export interface GearMove {
   face: number;
   amt: number;
+}
+
+/** A whole-cube reorientation (x / y / z). `rot` 0/1/2 = the x/y/z axis; `dir` 1 = the
+ *  bare quarter turn, −1 = prime, 2 = half turn — same shape as the Skewb's rot move. */
+export interface GearRotMove { rot: 0 | 1 | 2; dir: 1 | -1 | 2; }
+
+/** A gear token: a face flip, or a whole-cube rotation. */
+export type GearAnyMove = GearMove | GearRotMove;
+
+/** Narrow a gear token to a whole-cube rotation. */
+export function isGearRot(move: GearAnyMove): move is GearRotMove {
+  return 'rot' in move;
 }
 
 // ── static membership tables (derived from coordinates) ────────────────────────────
@@ -168,7 +186,10 @@ export function applyGearFlip(st: GearPieceState, face: number, sign: 1 | -1): G
   return { cp, cent, ring, phase };
 }
 
-export function applyGearMove(st: GearPieceState, move: GearMove): GearPieceState {
+export function applyGearMove(st: GearPieceState, move: GearAnyMove): GearPieceState {
+  // A whole-cube rotation re-holds the puzzle without permuting any piece — the
+  // engine carries the reorientation on its render group, the state is unchanged.
+  if (isGearRot(move)) return st;
   const sign = move.amt >= 0 ? 1 : -1;
   let s = st;
   for (let i = 0; i < Math.abs(move.amt); i++) s = applyGearFlip(s, move.face, sign as 1 | -1);
@@ -235,6 +256,8 @@ export function isSolvedGear(st: GearPieceState): boolean {
 // ── notation: parse / render / invert / reduce ──────────────────────────────────────
 const FACE_IDX: Record<string, number> = { U: 0, R: 1, F: 2, D: 3, L: 4, B: 5 };
 const TOKEN_RE = /^([URFDLB])([2-6]?)('?)$/;
+// Whole-cube rotations x / y / z, optionally primed or doubled (Skewb's grammar).
+const ROT_RE = /^([xyz])(['2]?)$/;
 
 /** Canonicalize a flip count into (−6, 6] with 0 dropped by callers. */
 export function normalizeAmt(amt: number): number {
@@ -243,12 +266,21 @@ export function normalizeAmt(amt: number): number {
   return a;
 }
 
-/** Parse a scramble/alg string into moves; unknown tokens are skipped (the /sim
- *  input box must never crash on a stray token — strict parsing lives in the solver). */
-export function parseGearMoves(text: string): GearMove[] {
-  const out: GearMove[] = [];
+/** Parse a scramble/alg string into moves — face flips and whole-cube rotations
+ *  (x / x' / x2); unknown tokens are skipped (the /sim input box must never crash
+ *  on a stray token — strict parsing lives in the solver). */
+export function parseGearMoves(text: string): GearAnyMove[] {
+  const out: GearAnyMove[] = [];
   for (const tok of text.trim().split(/\s+/)) {
     if (!tok) continue;
+    const r = ROT_RE.exec(tok);
+    if (r) {
+      out.push({
+        rot: (r[1] === 'x' ? 0 : r[1] === 'y' ? 1 : 2) as 0 | 1 | 2,
+        dir: r[2] === '2' ? 2 : r[2] === "'" ? -1 : 1,
+      });
+      continue;
+    }
     const m = TOKEN_RE.exec(tok);
     if (!m) continue;
     const n = m[2] ? parseInt(m[2], 10) : 1;
@@ -258,29 +290,39 @@ export function parseGearMoves(text: string): GearMove[] {
   return out;
 }
 
-export function gearMoveToString(move: GearMove): string {
+export function gearMoveToString(move: GearAnyMove): string {
+  if (isGearRot(move)) {
+    return 'xyz'[move.rot] + (move.dir === 2 ? '2' : move.dir === -1 ? "'" : '');
+  }
   const a = normalizeAmt(move.amt);
   const f = GEAR_FACE_NAMES[move.face];
   if (a >= 0) return a === 1 ? f : `${f}${a}`;
   return a === -1 ? `${f}'` : `${f}${-a}'`;
 }
 
-export function gearMovesToString(moves: GearMove[]): string {
+export function gearMovesToString(moves: GearAnyMove[]): string {
   return moves.map(gearMoveToString).join(' ');
 }
 
-export function invertGearMoves(moves: GearMove[]): GearMove[] {
-  return moves.slice().reverse()
-    .map((m) => ({ face: m.face, amt: normalizeAmt(-m.amt) }))
-    .filter((m) => m.amt !== 0);
+export function invertGearMoves(moves: GearAnyMove[]): GearAnyMove[] {
+  const out: GearAnyMove[] = [];
+  for (let i = moves.length - 1; i >= 0; i--) {
+    const m = moves[i];
+    // Rotation inverse: x2 stays x2, else flip the quarter turn.
+    if (isGearRot(m)) { out.push({ rot: m.rot, dir: m.dir === 2 ? 2 : (m.dir === 1 ? -1 : 1) }); continue; }
+    const amt = normalizeAmt(-m.amt);
+    if (amt !== 0) out.push({ face: m.face, amt });
+  }
+  return out;
 }
 
-/** Fold adjacent same-face tokens mod 12 (消步). */
+/** Fold adjacent same-face tokens mod 12 (消步). Rotations are left as-is and act
+ *  as fold barriers — after `U y U` the two U's are different physical faces. */
 export function reduceGearAlg(s: string): string {
-  const out: GearMove[] = [];
+  const out: GearAnyMove[] = [];
   for (const m of parseGearMoves(s)) {
     const last = out[out.length - 1];
-    if (last && last.face === m.face) {
+    if (!isGearRot(m) && last && !isGearRot(last) && last.face === m.face) {
       const net = normalizeAmt(last.amt + m.amt);
       out.pop();
       if (net !== 0) out.push({ face: m.face, amt: net });
@@ -292,6 +334,6 @@ export function reduceGearAlg(s: string): string {
 }
 
 /** cstimer-uniform random scramble (random reachable state + optimal path, U/R/F). */
-export function randomGearScrambleMoves(): GearMove[] {
+export function randomGearScrambleMoves(): GearAnyMove[] {
   return parseGearMoves(randomGearScramble());
 }

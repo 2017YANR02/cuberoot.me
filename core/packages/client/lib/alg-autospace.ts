@@ -172,6 +172,39 @@ export function autoCloseBracket(
   return { value, cursor };
 }
 
+// ── 单字母 token 语法(齿轮魔方)的简化自动空格 ──
+// gear 记号 = 面 URFDLB / 转体 xyz + 后缀 2-6 与 '(见 engine/gear/gearState)。
+// WCA 版 autoSpaceMoves 对它不适用:①UD/FB 连写豁免会把 `UD` 拼成废 token(gear
+// 语法没有连写);②后缀数字 3-6 不在 MOVE_END_RE 里,`U3` 后接 R 不会断开。
+const SIMPLE_MOVE_START_RE = /[URFDLBxyz]/;
+const SIMPLE_MOVE_END_RE = /[URFDLBxyz'2-6]/;
+
+/** 简化自动空格:新输入一个面/转体字母,且前一字符是上一 token 的结尾 → 补空格;
+ *  无连写豁免。给虚拟键盘裸插字母的场景兜底(点 U 再点 R → `U R` 而非 `UR`)。 */
+export function autoSpaceMovesSimple(
+  value: string,
+  cursor: number,
+  inputType: string,
+): { value: string; cursor: number } {
+  if (inputType !== 'insertText') return { value, cursor };
+  if (cursor >= 2) {
+    const newChar = value[cursor - 1];
+    const prevChar = value[cursor - 2];
+    if (SIMPLE_MOVE_START_RE.test(newChar) && SIMPLE_MOVE_END_RE.test(prevChar) && !inComment(value, cursor - 1)) {
+      value = value.slice(0, cursor - 1) + ' ' + value.slice(cursor - 1);
+      cursor += 1;
+    }
+  }
+  if (cursor >= 1 && cursor < value.length) {
+    const newChar = value[cursor - 1];
+    const nextChar = value[cursor];
+    if (SIMPLE_MOVE_END_RE.test(newChar) && SIMPLE_MOVE_START_RE.test(nextChar) && !inComment(value, cursor - 1)) {
+      value = value.slice(0, cursor) + ' ' + value.slice(cursor);
+    }
+  }
+  return { value, cursor };
+}
+
 export function autoSpaceMoves(
   value: string,
   cursor: number,
