@@ -1,15 +1,16 @@
 'use client';
 
 /**
- * Rotatable 3D state painter for the 3×3 solver — reuses the /sim cuber WebGL
- * engine (huazhechen/cuber) verbatim, in a "paint mode", instead of drawing our
- * own cube. The engine renders an order-3 cube; we drive it as a pure painter:
+ * Rotatable 3D state painter — reuses the /sim cuber WebGL engine
+ * (huazhechen/cuber) verbatim, in a "paint mode", instead of drawing our own
+ * cube. The engine is order-generic (world.order = spec.n), so the same painter
+ * serves 3×3 (default) and 2×2 (`spec={CUBE2_PAINT}`):
  *
  *   - controller.paintMode + dragEmpty='view'  → every drag orbits the view,
  *     never twists a layer; a tap still fires controller.taps.
  *   - taps → map (cubelet index, world face) → facelet index → paintSticker.
  *   - facelet (React state, shared with the 2D net) is the source of truth; on
- *     every change we push all 54 sticker labels into the cube via cube.stick.
+ *     every change we push all 6n² sticker labels into the cube via cube.stick.
  *     Cube.serialize()'s ordering is the standard Kociemba URFDLB facelet, so
  *     FACELET_MAP (which mirrors it) round-trips painted state to the solver.
  *
@@ -18,24 +19,26 @@
  * when the user opens 立体图).
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RotateCcw } from 'lucide-react';
 import type * as THREE from 'three';
 import type World from '@/app/[lang]/sim/engine/world';
 import type Cube from '@/app/[lang]/sim/engine/nxn/cube';
 import type Toucher from '@/app/[lang]/sim/Toucher';
-import { FACES, usePainter, type FaceLetter, type PaintColor } from './_paint-shared';
+import {
+  FACES, CUBE3_PAINT, usePainter, type FaceLetter, type PaintColor, type PaintSpec,
+} from './_paint-shared';
 import { PaintPalette, PaintActions } from './_PaintToolbar';
 
 // cuber FACE enum: L0 R1 D2 U3 B4 F5
 const FACE = { L: 0, R: 1, D: 2, U: 3, B: 4, F: 5 } as const;
 
 // facelet idx (URFDLB) → (cubelet position index, local face) for a never-twisted
-// order-3 cube. Mirrors Cube.serialize()'s loops exactly (verified U/R against
+// order-N cube. Mirrors Cube.serialize()'s loops exactly (verified U/R against
 // the Kociemba CORNER_FACELET table in facelet.ts).
-const FACELET_MAP: { cube: number; face: number }[] = (() => {
-  const N = 3, out: { cube: number; face: number }[] = [];
+function buildFaceletMap(N: number): { cube: number; face: number }[] {
+  const out: { cube: number; face: number }[] = [];
   const idx = (x: number, y: number, z: number) => z * N * N + y * N + x;
   let x: number, y: number, z: number;
   y = N - 1; for (z = 0; z < N; z++) for (x = 0; x < N; x++) out.push({ cube: idx(x, y, z), face: FACE.U });
@@ -45,14 +48,7 @@ const FACELET_MAP: { cube: number; face: number }[] = (() => {
   x = 0; for (y = N - 1; y >= 0; y--) for (z = 0; z < N; z++) out.push({ cube: idx(x, y, z), face: FACE.L });
   z = 0; for (y = N - 1; y >= 0; y--) for (x = N - 1; x >= 0; x--) out.push({ cube: idx(x, y, z), face: FACE.B });
   return out;
-})();
-
-// (cubelet index, face) → facelet idx, for the tap handler.
-const REVERSE_MAP: Map<string, number> = (() => {
-  const m = new Map<string, number>();
-  FACELET_MAP.forEach((e, i) => m.set(`${e.cube}_${e.face}`, i));
-  return m;
-})();
+}
 
 // Default view (the cuber engine's own initial scene.rotation — U top, F front, R right).
 const DEFAULT_ROT_X = Math.PI / 6;
@@ -61,12 +57,15 @@ const ORBIT_K = 0.008; // radians per px dragged
 
 export interface Interactive3DCubeProps {
   facelet: string;
+  /** Cube order + legality model. Defaults to 3×3. */
+  spec?: PaintSpec;
   onChange: (next: string) => void;
   activeColor: PaintColor;
   onActiveColorChange: (c: PaintColor) => void;
   pixelSize: number;
   onSolve?: (facelet: string) => void;
   solveLabel?: { zh: string; en: string };
+  solveTitle?: { zh: string; en: string };
   onSecondaryAction?: (facelet: string) => void;
   secondaryActionLabel?: { zh: string; en: string };
   secondaryActionTitle?: { zh: string; en: string };
@@ -77,19 +76,30 @@ export interface Interactive3DCubeProps {
 }
 
 export default function Interactive3DCube({
-  facelet, onChange, activeColor, onActiveColorChange, pixelSize, onSolve, solveLabel,
+  facelet, spec = CUBE3_PAINT, onChange, activeColor, onActiveColorChange, pixelSize, onSolve, solveLabel, solveTitle,
   onSecondaryAction, secondaryActionLabel, secondaryActionTitle, secondaryBusy, optimalToggle, hideSolve, plainSolve,
 }: Interactive3DCubeProps) {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const t = (zh: string, en: string) => (isZh ? zh : en);
 
-  const { paint, rejectMsg } = usePainter({ facelet, onChange, activeColor, isZh });
+  const { paint, rejectMsg } = usePainter({ facelet, onChange, activeColor, isZh, spec });
   // taps fire from the engine's closure; keep the latest paint()/onActiveColorChange reachable by ref.
   const paintRef = useRef(paint);
   useEffect(() => { paintRef.current = paint; }, [paint]);
   const onActiveColorChangeRef = useRef(onActiveColorChange);
   useEffect(() => { onActiveColorChangeRef.current = onActiveColorChange; }, [onActiveColorChange]);
+
+  // Order-dependent sticker maps. The mount effect runs once, so it reads them
+  // through a ref (a component instance never changes cube order in practice).
+  const faceletMap = useMemo(() => buildFaceletMap(spec.n), [spec.n]);
+  const reverseMap = useMemo(() => {
+    const m = new Map<string, number>();
+    faceletMap.forEach((e, i) => m.set(`${e.cube}_${e.face}`, i));
+    return m;
+  }, [faceletMap]);
+  const mapsRef = useRef({ faceletMap, reverseMap, spec });
+  useEffect(() => { mapsRef.current = { faceletMap, reverseMap, spec }; }, [faceletMap, reverseMap, spec]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<World | null>(null);
@@ -115,6 +125,7 @@ export default function Interactive3DCube({
 
       const world = new World();
       attachInteraction(world); // 指针控制器 client 注入(engine 核心已 headless 化)
+      if (world.order !== mapsRef.current.spec.n) world.order = mapsRef.current.spec.n;
       worldRef.current = world;
 
       const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
@@ -144,11 +155,13 @@ export default function Interactive3DCube({
       };
       world.controller.taps.push((index, face, tapOpts) => {
         if (index < 0 || face === null) return;
-        const fi = REVERSE_MAP.get(`${index}_${face}`);
+        const { reverseMap: rev, spec: sp } = mapsRef.current;
+        const fi = rev.get(`${index}_${face}`);
         if (fi === undefined) return;
-        if (fi % 9 === 4) {
+        const per = sp.n * sp.n;
+        if (sp.fixedCenters && fi % per === (per - 1) / 2) {
           // center (fixed) — tapping it picks its color instead of painting.
-          if (tapOpts.button === 0) onActiveColorChangeRef.current(FACES[Math.floor(fi / 9)] as FaceLetter);
+          if (tapOpts.button === 0) onActiveColorChangeRef.current(FACES[Math.floor(fi / per)] as FaceLetter);
           return;
         }
         paintRef.current(fi, tapOpts.button === 2 ? 'X' : undefined);
@@ -207,13 +220,13 @@ export default function Interactive3DCube({
     const world = worldRef.current;
     if (!world || !ready) return;
     const cube = world.cube as Cube;
-    for (let i = 0; i < 54; i++) {
-      const e = FACELET_MAP[i];
+    for (let i = 0; i < faceletMap.length; i++) {
+      const e = faceletMap[i];
       const ch = facelet[i];
       cube.stick(e.cube, e.face, ch === 'X' ? 'Gray' : ch);
     }
     world.dirty = true;
-  }, [facelet, ready]);
+  }, [facelet, ready, faceletMap]);
 
   const resetView = () => {
     const world = worldRef.current;
@@ -253,9 +266,11 @@ export default function Interactive3DCube({
 
       <PaintActions
         facelet={facelet}
+        spec={spec}
         onChange={onChange}
         onSolve={onSolve}
         solveLabel={solveLabel}
+        solveTitle={solveTitle}
         onSecondaryAction={onSecondaryAction}
         secondaryActionLabel={secondaryActionLabel}
         secondaryActionTitle={secondaryActionTitle}

@@ -1,16 +1,22 @@
 'use client';
 
 /**
- * Shared paint primitives for the 3×3 solver state painters.
+ * Shared paint primitives for the solver state painters.
  *
  * Both the 2D net painter (_InteractiveCubeNet) and the 3D rotatable cube
- * painter (_Interactive3DCube) edit the SAME 54-char URFDLB facelet string and
- * obey the same per-piece sticker rules (no duplicate / opposite colors on one
- * cubie). Constants + paint logic live here so the two views stay bit-identical.
+ * painter (_Interactive3DCube) edit the SAME URFDLB facelet string and obey the
+ * same per-piece sticker rules (no duplicate / opposite colors on one cubie).
+ * Constants + paint logic live here so the two views stay bit-identical.
+ *
+ * Everything order-specific (how many stickers, how many of each color, which
+ * stickers share a cubie, what counts as legal, whether centers are fixed) is a
+ * PaintSpec: CUBE3_PAINT here, CUBE2_PAINT in _paint-spec-222 (which owns the
+ * 2×2 model so this module stays free of the pocket solver import). Every entry
+ * point defaults to CUBE3_PAINT, so pre-existing 3×3 callers are unchanged.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { SOLVED_FACELET, STICKER_SIBLINGS, cubieToFacelet } from './facelet';
+import { SOLVED_FACELET, STICKER_SIBLINGS, cubieToFacelet, validateFacelet } from './facelet';
 import { applySequence, solvedCubie } from './_kociemba/cube';
 
 export type FaceLetter = 'U' | 'R' | 'F' | 'D' | 'L' | 'B';
@@ -44,10 +50,47 @@ export const EMPTY_FACELET = (() => {
 
 export { SOLVED_FACELET };
 
-/** URFDLB face + (row,col) → facelet index 0..53 (row-major per face). */
-export function faceletIdx(face: FaceLetter, row: number, col: number): number {
-  return FACES.indexOf(face) * 9 + row * 3 + col;
+/** URFDLB face + (row,col) → facelet index (row-major per face; n = cube order). */
+export function faceletIdx(face: FaceLetter, row: number, col: number, n = 3): number {
+  return FACES.indexOf(face) * n * n + row * n + col;
 }
+
+/**
+ * Everything the shared painters need to know about a cube order. `n` drives the
+ * net layout / 3D cube order; the rest is the legality model.
+ */
+export interface PaintSpec {
+  /** Cube order — 3 or 2. */
+  n: number;
+  /** Sticker count = 6·n². */
+  size: number;
+  /** Max stickers per color = n² (a color's whole face). */
+  maxPerColor: number;
+  /** Per-sticker same-cubie partners (2 for a corner, 1 for an edge, 0 for a center). */
+  siblings: ReadonlyArray<readonly number[]>;
+  /** All-empty state ('X' everywhere paintable). */
+  empty: string;
+  solved: string;
+  /** 3×3 has fixed centers (unpaintable, click-to-pick); 2×2 has none. */
+  fixedCenters: boolean;
+  /** null = physically legal; otherwise a raw reason for `friendlyErr`. */
+  validate: (facelet: string) => string | null;
+  friendlyErr: (msg: string, isZh: boolean) => string;
+  randomLegal: () => string;
+}
+
+export const CUBE3_PAINT: PaintSpec = {
+  n: 3,
+  size: 54,
+  maxPerColor: 9,
+  siblings: STICKER_SIBLINGS,
+  empty: EMPTY_FACELET,
+  solved: SOLVED_FACELET,
+  fixedCenters: true,
+  validate: validateFacelet,
+  friendlyErr: friendlyValidErr,
+  randomLegal: randomLegalFacelet,
+};
 
 /** A random *legal* state — 25 random HTM moves from solved. */
 export function randomLegalFacelet(): string {
@@ -89,19 +132,18 @@ export type PaintReject =
   | { kind: 'full'; color: FaceLetter };
 export type PaintOutcome = { ok: true; next: string } | { ok: false; reject: PaintReject };
 
-/** Every color (including its 1 fixed center) may appear at most this many times. */
-const MAX_PER_COLOR = 9;
-
 /**
  * Paint sticker `idx` with `color`, enforcing the per-cubie rules: a single
  * piece can't carry two stickers of the same color, nor two opposite-face
- * colors, nor push a color's total count past 9 (1 center + 8 others). Painting
+ * colors, nor push a color's total count past one whole face (n²). Painting
  * 'X' (erase) is always allowed. Returns the next facelet or a rejection
  * reason (no mutation).
  */
-export function paintSticker(facelet: string, idx: number, color: PaintColor): PaintOutcome {
+export function paintSticker(
+  facelet: string, idx: number, color: PaintColor, spec: PaintSpec = CUBE3_PAINT,
+): PaintOutcome {
   if (color !== 'X') {
-    for (const sib of STICKER_SIBLINGS[idx]) {
+    for (const sib of spec.siblings[idx]) {
       const sibColor = facelet[sib] as PaintColor;
       if (sibColor === 'X') continue;
       if (sibColor === color) return { ok: false, reject: { kind: 'dup' } };
@@ -112,7 +154,7 @@ export function paintSticker(facelet: string, idx: number, color: PaintColor): P
     if (facelet[idx] !== color) {
       let count = 0;
       for (let i = 0; i < facelet.length; i++) if (facelet[i] === color) count++;
-      if (count >= MAX_PER_COLOR) return { ok: false, reject: { kind: 'full', color } };
+      if (count >= spec.maxPerColor) return { ok: false, reject: { kind: 'full', color } };
     }
   }
   const arr = facelet.split('');
@@ -120,12 +162,14 @@ export function paintSticker(facelet: string, idx: number, color: PaintColor): P
   return { ok: true, next: arr.join('') };
 }
 
-function rejectText(r: PaintReject, isZh: boolean): string {
+function rejectText(r: PaintReject, isZh: boolean, spec: PaintSpec): string {
   const t = (z: string, e: string) => (isZh ? z : e);
-  if (r.kind === 'dup') return t('一个角/棱块上不能有重复颜色', 'A piece cannot have two stickers of the same color');
-  if (r.kind === 'full') return t(`${r.color} 颜色已用满 9 格`, `Color ${r.color} is already used on all 9 stickers`);
+  // 二阶只有角块,三阶有角也有棱 —— 报错里别提不存在的块型(英文一律 "A piece")。
+  const piece = spec.n === 2 ? '一个角块' : '一个角/棱块';
+  if (r.kind === 'dup') return t(`${piece}上不能有重复颜色`, 'A piece cannot have two stickers of the same color');
+  if (r.kind === 'full') return t(`${r.color} 颜色已用满 ${spec.maxPerColor} 格`, `Color ${r.color} is already used on all ${spec.maxPerColor} stickers`);
   return t(
-    `一个角/棱块上不能同时含相对面颜色(${r.sib} 与 ${r.active})`,
+    `${piece}上不能同时含相对面颜色(${r.sib} 与 ${r.active})`,
     `A piece cannot have opposite-face colors (${r.sib} and ${r.active})`,
   );
 }
@@ -141,23 +185,24 @@ export function usePainter(opts: {
   onChange: (next: string) => void;
   activeColor: PaintColor;
   isZh: boolean;
+  spec?: PaintSpec;
 }) {
-  const { facelet, onChange, activeColor, isZh } = opts;
+  const { facelet, onChange, activeColor, isZh, spec = CUBE3_PAINT } = opts;
   const [rejectMsg, setRejectMsg] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
   const paint = useCallback((idx: number, color: PaintColor = activeColor) => {
-    const res = paintSticker(facelet, idx, color);
+    const res = paintSticker(facelet, idx, color, spec);
     if (res.ok) {
       setRejectMsg(null);
       onChange(res.next);
     } else {
-      setRejectMsg(rejectText(res.reject, isZh));
+      setRejectMsg(rejectText(res.reject, isZh, spec));
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => setRejectMsg(null), 2500);
     }
-  }, [facelet, activeColor, onChange, isZh]);
+  }, [facelet, activeColor, onChange, isZh, spec]);
 
   return { paint, rejectMsg };
 }

@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Shared paint controls for the 3×3 state painters (2D net + 3D cube).
+ * Shared paint controls for the state painters (2D net + 3D cube, order 3 or 2).
  * Split in two so callers can place the color palette beside the canvas and
  * the action buttons (Empty/Clean/Random/Solve) below, spanning both:
  *   - PaintPalette: color swatches, stacked one per row.
@@ -14,10 +14,9 @@ import { useTranslation } from 'react-i18next';
 import BoolToggle from '@/components/BoolToggle';
 import { useT } from '@/hooks/useT';
 import { tr } from '@/i18n/tr';
-import { validateFacelet } from './facelet';
 import {
-  COLOR_HEX, EMPTY_COLOR_HEX, EMPTY_FACELET, SOLVED_FACELET,
-  friendlyValidErr, randomLegalFacelet, type PaintColor, type FaceLetter,
+  COLOR_HEX, CUBE3_PAINT, EMPTY_COLOR_HEX,
+  type PaintColor, type FaceLetter, type PaintSpec,
 } from './_paint-shared';
 
 // Palette display order (top→bottom): gray, white, yellow, green, blue, red, orange.
@@ -63,9 +62,13 @@ export function PaintPalette({ activeColor, onActiveColorChange }: PaintPaletteP
 
 export interface PaintActionsProps {
   facelet: string;
+  /** Cube order + legality model. Defaults to 3×3. */
+  spec?: PaintSpec;
   onChange: (next: string) => void;
   onSolve?: (facelet: string) => void;
   solveLabel?: { zh: string; en: string };
+  /** Tooltip for the Solve button (defaults to the 3×3 cubeopt wording). */
+  solveTitle?: { zh: string; en: string };
   /** A second action button after Solve, e.g. "derive solution" alongside "derive scramble". */
   onSecondaryAction?: (facelet: string) => void;
   secondaryActionLabel?: { zh: string; en: string };
@@ -83,7 +86,7 @@ export interface PaintActionsProps {
 }
 
 export function PaintActions({
-  facelet, onChange, onSolve, solveLabel, onSecondaryAction, secondaryActionLabel, secondaryActionTitle,
+  facelet, spec = CUBE3_PAINT, onChange, onSolve, solveLabel, solveTitle, onSecondaryAction, secondaryActionLabel, secondaryActionTitle,
   secondaryBusy, optimalToggle, rejectMsg, hideSolve, plainSolve,
 }: PaintActionsProps) {
   const { i18n } = useTranslation();
@@ -94,9 +97,9 @@ export function PaintActions({
   const hasEmpty = useMemo(() => facelet.includes('X'), [facelet]);
   const validErr = useMemo(() => {
     if (hasEmpty) return null;
-    const raw = validateFacelet(facelet);
-    return raw ? friendlyValidErr(raw, isZh) : null;
-  }, [facelet, hasEmpty, isZh]);
+    const raw = spec.validate(facelet);
+    return raw ? spec.friendlyErr(raw, isZh) : null;
+  }, [facelet, hasEmpty, isZh, spec]);
   const solveBlocked = hasEmpty || !!validErr;
 
   const goSolve = () => {
@@ -109,13 +112,20 @@ export function PaintActions({
     <div className="vc-paint-controls">
       <style>{ACTIONS_CSS}</style>
       <div className="vc-paint-actions">
-        <button type="button" className="vc-paint-btn" onClick={() => onChange(EMPTY_FACELET)} title={t('全部置灰(保留中心)', 'Clear all stickers (centers preserved)')}>
+        <button
+          type="button"
+          className="vc-paint-btn"
+          onClick={() => onChange(spec.empty)}
+          title={spec.fixedCenters
+            ? t('全部置灰(保留中心)', 'Clear all stickers (centers preserved)')
+            : t('全部置灰', 'Clear all stickers')}
+        >
           <span>{t('清空', 'Empty')}</span>
         </button>
-        <button type="button" className="vc-paint-btn" onClick={() => onChange(SOLVED_FACELET)} title={t('还原到 solved', 'Reset to solved')}>
+        <button type="button" className="vc-paint-btn" onClick={() => onChange(spec.solved)} title={t('还原到 solved', 'Reset to solved')}>
           <span>{t('还原', 'Clean')}</span>
         </button>
-        <button type="button" className="vc-paint-btn" onClick={() => onChange(randomLegalFacelet())} title={t('随机合法状态(25 步随机 HTM)', 'Random legal state (25 random HTM moves)')}>
+        <button type="button" className="vc-paint-btn" onClick={() => onChange(spec.randomLegal())} title={t('随机合法状态', 'Random legal state')}>
           <span>{t('随机', 'Random')}</span>
         </button>
         {optimalToggle && (
@@ -129,10 +139,11 @@ export function PaintActions({
           <button
             type="button"
             className={`vc-paint-btn${plainSolve ? '' : ' vc-paint-btn-primary'}`}
-            disabled={solveBlocked || facelet === SOLVED_FACELET}
+            disabled={solveBlocked || facelet === spec.solved}
             onClick={goSolve}
             title={validErr
-              ?? (hasEmpty ? t('还有空缺颜色未填', 'Some stickers are still empty') : t('用 cubeopt 求最优解', 'Solve optimally with cubeopt'))}
+              ?? (hasEmpty ? t('还有空缺颜色未填', 'Some stickers are still empty')
+                : (solveTitle ? tr(solveTitle) : t('用 cubeopt 求最优解', 'Solve optimally with cubeopt')))}
           >
             <span>{solveLabel ? tr(solveLabel) : t('求最优解', 'Solve')}</span>
           </button>

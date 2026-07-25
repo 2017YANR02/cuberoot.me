@@ -1,7 +1,8 @@
 'use client';
 
 /**
- * 2D net state painter for the 3×3 solver — the unfolded URFDLB cross.
+ * 2D net state painter — the unfolded URFDLB cross, order 3 (default) or 2
+ * (`spec={CUBE2_PAINT}`).
  *
  * Ported from packages/client-vite/src/pages/visualcube/InteractiveCubeNet.tsx.
  * Constants, sibling-rule paint logic, and the toolbar are now shared with the
@@ -12,8 +13,8 @@
 
 import { useTranslation } from 'react-i18next';
 import {
-  FACES, COLOR_HEX, EMPTY_COLOR_HEX, faceletIdx, usePainter,
-  type FaceLetter, type PaintColor,
+  FACES, COLOR_HEX, CUBE3_PAINT, EMPTY_COLOR_HEX, faceletIdx, usePainter,
+  type FaceLetter, type PaintColor, type PaintSpec,
 } from './_paint-shared';
 import { PaintPalette, PaintActions } from './_PaintToolbar';
 
@@ -21,7 +22,8 @@ import { PaintPalette, PaintActions } from './_PaintToolbar';
 export { EMPTY_FACELET } from './_paint-shared';
 export type { PaintColor, FaceLetter } from './_paint-shared';
 
-// Net layout: [row, col] of each face's top-left cell in the 4×3 cross grid.
+// Net layout: [row, col] of each face's top-left cell in the 4×3 cross grid
+// (measured in faces — multiply by the cube order for sticker coordinates).
 const FACE_BASE: Record<FaceLetter, [number, number]> = {
   U: [0, 1],
   L: [1, 0],
@@ -33,12 +35,15 @@ const FACE_BASE: Record<FaceLetter, [number, number]> = {
 
 export interface InteractiveCubeNetProps {
   facelet: string;
+  /** Cube order + legality model. Defaults to 3×3. */
+  spec?: PaintSpec;
   onChange: (next: string) => void;
   activeColor: PaintColor;
   onActiveColorChange: (c: PaintColor) => void;
   pixelSize: number;
   onSolve?: (facelet: string) => void;
   solveLabel?: { zh: string; en: string };
+  solveTitle?: { zh: string; en: string };
   onSecondaryAction?: (facelet: string) => void;
   secondaryActionLabel?: { zh: string; en: string };
   secondaryActionTitle?: { zh: string; en: string };
@@ -49,24 +54,27 @@ export interface InteractiveCubeNetProps {
 }
 
 export default function InteractiveCubeNet({
-  facelet, onChange, activeColor, onActiveColorChange, pixelSize, onSolve, solveLabel,
+  facelet, spec = CUBE3_PAINT, onChange, activeColor, onActiveColorChange, pixelSize, onSolve, solveLabel, solveTitle,
   onSecondaryAction, secondaryActionLabel, secondaryActionTitle, secondaryBusy, optimalToggle, hideSolve, plainSolve,
 }: InteractiveCubeNetProps) {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const t = (zh: string, en: string) => (isZh ? zh : en);
 
-  const { paint, rejectMsg } = usePainter({ facelet, onChange, activeColor, isZh });
+  const { paint, rejectMsg } = usePainter({ facelet, onChange, activeColor, isZh, spec });
 
-  const ss = Math.max(10, Math.floor(pixelSize / 13));
-  const totalW = ss * 12 + 16;
-  const totalH = ss * 9 + 16;
+  const n = spec.n;
+  // The cross is 4n wide and 3n tall; +1 keeps a sticker's worth of breathing room
+  // (the 3×3 case is the historical pixelSize/13).
+  const ss = Math.max(10, Math.floor(pixelSize / (4 * n + 1)));
+  const totalW = ss * 4 * n + 16;
+  const totalH = ss * 3 * n + 16;
 
   const stickers: { idx: number; face: FaceLetter; r: number; c: number }[] = [];
   for (const f of FACES) {
-    for (let r = 0; r < 3; r++) {
-      for (let c = 0; c < 3; c++) {
-        stickers.push({ idx: faceletIdx(f, r, c), face: f, r, c });
+    for (let r = 0; r < n; r++) {
+      for (let c = 0; c < n; c++) {
+        stickers.push({ idx: faceletIdx(f, r, c, n), face: f, r, c });
       }
     }
   }
@@ -78,11 +86,11 @@ export default function InteractiveCubeNet({
         <div className="vc-net-canvas" style={{ width: totalW, height: totalH }}>
           {stickers.map(({ idx, face, r, c }) => {
             const [baseR, baseC] = FACE_BASE[face];
-            const px = 8 + (baseC * 3 + c) * ss;
-            const py = 8 + (baseR * 3 + r) * ss;
+            const px = 8 + (baseC * n + c) * ss;
+            const py = 8 + (baseR * n + r) * ss;
             const ch = facelet[idx] as PaintColor;
             const color = ch === 'X' ? EMPTY_COLOR_HEX : (COLOR_HEX[ch as FaceLetter] ?? '#404040');
-            const isCenter = r === 1 && c === 1;
+            const isCenter = spec.fixedCenters && r === (n - 1) / 2 && c === (n - 1) / 2;
             return (
               <button
                 key={idx}
@@ -97,8 +105,8 @@ export default function InteractiveCubeNet({
                   e.preventDefault();
                   if (!isCenter) paint(idx, 'X');
                 }}
-                title={isCenter ? t('点击取色', 'Pick this color') : `${face}${r * 3 + c + 1}${t('(右键置灰)', ' (right-click to erase)')}`}
-                aria-label={isCenter ? `Pick color ${face}` : `Sticker ${face}${r * 3 + c + 1} = ${ch}`}
+                title={isCenter ? t('点击取色', 'Pick this color') : `${face}${r * n + c + 1}${t('(右键置灰)', ' (right-click to erase)')}`}
+                aria-label={isCenter ? `Pick color ${face}` : `Sticker ${face}${r * n + c + 1} = ${ch}`}
               />
             );
           })}
@@ -109,9 +117,11 @@ export default function InteractiveCubeNet({
 
       <PaintActions
         facelet={facelet}
+        spec={spec}
         onChange={onChange}
         onSolve={onSolve}
         solveLabel={solveLabel}
+        solveTitle={solveTitle}
         onSecondaryAction={onSecondaryAction}
         secondaryActionLabel={secondaryActionLabel}
         secondaryActionTitle={secondaryActionTitle}
