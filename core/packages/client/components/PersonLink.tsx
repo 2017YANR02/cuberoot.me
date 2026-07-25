@@ -9,10 +9,13 @@
 //     each would be a prefetch storm.
 //   - display defaults to displayCuberName(name, isZh); pass `children` to
 //     override (e.g. nameByMode, or a Flag + name composition inside the link).
+//   - 非 WCA id 降级成纯文本:站内作者字段存的是归属键 ownerKey(shared/account.ts),
+//     没绑 WCA 的账号是合成 `u<uid>`,/wca/persons/u144 查无此人 → 不该出链接。
 
 import type { ReactNode } from 'react';
 import AppLink from '@/components/AppLink';
 import { displayCuberName } from '@/lib/cuber-name-display';
+import { isWcaIdFormat } from '@cuberoot/shared/account';
 
 /** Bare profile path (no lang prefix — AppLink adds it). Use for non-AppLink
  *  href builders too (they prepend their own prefix). */
@@ -34,9 +37,13 @@ interface Props {
 export default function PersonLink({
   wcaId, name, isZh = false, className, prefetch = false, title, children,
 }: Props) {
+  const body = children ?? (name != null ? displayCuberName(name, isZh) : wcaId);
+  if (!isWcaIdFormat(wcaId)) {
+    return <span className={className} title={title}>{body}</span>;
+  }
   return (
     <AppLink href={personHref(wcaId)} prefetch={prefetch} className={className} title={title}>
-      {children ?? (name != null ? displayCuberName(name, isZh) : wcaId)}
+      {body}
     </AppLink>
   );
 }

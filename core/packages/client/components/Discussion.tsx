@@ -14,6 +14,7 @@ import { Flag } from '@/components/Flag';
 import { wcaPersonUrl } from '@/lib/recon-utils';
 import { personFlagIso2 } from '@/lib/country-flags';
 import { toIsoDate } from '@/lib/wca-date';
+import { isWcaIdFormat } from '@cuberoot/shared/account';
 
 /** textarea 高度跟随内容——空时 1 行,粘贴长解法时自动撑开 */
 function autoResize(el: HTMLTextAreaElement | null) {
@@ -169,7 +170,33 @@ export function DiscussionEditBox({
   );
 }
 
-/** 作者元信息条:国旗 + 名字(链到 WCA profile)+ 时间戳 */
+/**
+ * 作者 / 贡献者名:国旗 + 名字。
+ * id 是全站归属键 ownerKey(shared/account.ts):绑了 WCA = 真 wca_id,没绑 = 合成 `u<uid>`。
+ * 合成键在 WCA 官网没有档案页(/persons/u144 是 404),所以只有真 WCA id 才出外链。
+ * 国旗同理:查不到国籍时不渲染(空 iso2 会渲染成一个空白占位方块)。
+ */
+export function AuthorName({ id, name, className }: {
+  id: string | undefined | null;
+  name: string | undefined | null;
+  className?: string;
+}) {
+  const { i18n } = useTranslation();
+  const displayName = displayCuberName(name || '', i18n.language === 'zh');
+  const iso2 = id ? personFlagIso2(id) : '';
+  return (
+    <>
+      {iso2 && <Flag iso2={iso2} className="yt-comment-flag" />}
+      {id && isWcaIdFormat(id) ? (
+        <a href={wcaPersonUrl(id)} target="_blank" rel="noopener noreferrer" className={className}>
+          {displayName}
+        </a>
+      ) : <span className={className}>{displayName}</span>}
+    </>
+  );
+}
+
+/** 作者元信息条:国旗 + 名字(真 WCA id 才链到 WCA profile)+ 时间戳 */
 export function UserHeadline({
   authorId, authorName, createdAt, suffix,
 }: {
@@ -179,17 +206,9 @@ export function UserHeadline({
   /** 时间戳后追加文本(如 "(已编辑)") */
   suffix?: ReactNode;
 }) {
-  const { i18n } = useTranslation();
-  const isZh = i18n.language === 'zh';
-  const displayName = displayCuberName(authorName || '', isZh);
   return (
     <div className="yt-comment-meta">
-      {authorId && <Flag iso2={personFlagIso2(authorId)} className="yt-comment-flag" />}
-      {authorId ? (
-        <a href={wcaPersonUrl(authorId)} target="_blank" rel="noopener noreferrer" className="yt-comment-author">
-          {displayName}
-        </a>
-      ) : <span className="yt-comment-author">{displayName}</span>}
+      <AuthorName id={authorId} name={authorName} className="yt-comment-author" />
       <span className="yt-comment-time">
         {toIsoDate(new Date(createdAt * 1000))}
         {suffix}
