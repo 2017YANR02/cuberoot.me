@@ -221,9 +221,44 @@
 .lsll-case-card:hover {
   background: color-mix(in srgb, var(--foreground) 6%, transparent);
 }
+.lsll-case-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+}
 .lsll-case-label {
   font-family: var(--font-mono);
   font-size: 11px;
+  color: var(--muted-foreground);
+}
+
+/* 公式模式:一行一个 case(图 + 现算解法),列宽放够一条 ~20 步的解。 */
+.lsll-case-grid.is-algs {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+.lsll-case-card.is-algs {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  content-visibility: visible;
+}
+.lsll-case-card.is-algs .lsll-case-body {
+  align-items: flex-start;
+  flex: 1 1 auto;
+}
+.lsll-case-alg {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--foreground);
+  word-break: break-word;
+}
+.lsll-alg-note {
+  margin: -4px 0 12px;
+  font-size: 12.5px;
   color: var(--muted-foreground);
 }
 
@@ -368,6 +403,7 @@
 .lsll-locate-hit,
 .lsll-kind-title,
 .lsll-chips,
+.lsll-alg-note,
 .lsll-case-grid,
 .lsll-pager,
 .lsll-case-head,

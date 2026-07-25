@@ -67,9 +67,20 @@ interface Props {
   /** 同一个 set 里的 `meta.no` → case,用来把镜像/逆做成链接 */
   byNo: Map<number, AlgCase>;
   jump: RelatedJump;
+  /**
+   * 公式列表的外壳 / 每一行的外壳。默认原样返回 —— 只有 case 详情页的 admin 会传:
+   * 它拿这两个口子把公式行包进 dnd-kit(DndContext + SortableAlgRow),好拖顺序。
+   * 展示逻辑仍在这里,不在外面复制一份 AlgLine。
+   */
+  algsWrap?: (rows: React.ReactNode) => React.ReactNode;
+  algRowWrap?: (row: React.ReactNode, index: number) => React.ReactNode;
 }
 
-export default function AlgCaseMetaContent({ caseObj, puzzle, set, byNo, jump }: Props) {
+export default function AlgCaseMetaContent({
+  caseObj, puzzle, set, byNo, jump,
+  algsWrap = (rows) => rows,
+  algRowWrap = (row) => row,
+}: Props) {
   const m = caseObj.meta as AlgCaseMeta;
 
   /** 首个朝向的公式(1lll / zbll / pll / ell 都只有一个朝向)。显示 / 步数都剥掉收尾 AUF。 */
@@ -168,14 +179,15 @@ export default function AlgCaseMetaContent({ caseObj, puzzle, set, byNo, jump }:
 
       <div className="alg-meta-case">
         <div className="alg-meta-case-algs">
-          {algs.map(a => (
+          {algsWrap(algs.map((a, i) => algRowWrap(
             <AlgLine
               key={a.key}
               label={a.tags.map(t => ALG_TAG_LABEL[t]()).join(' ')}
               alg={a.text}
               len={a.len}
-            />
-          ))}
+            />,
+            i,
+          )))}
         </div>
       </div>
 
