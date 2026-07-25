@@ -18,23 +18,21 @@
  * `connect()` rejects with a tagged `Error` (`err.kind === 'no-web-bluetooth'`)
  * so the caller can reuse the smart-cube env-advice modal verbatim.
  *
- * Known follow-ups for whoever merges this with the cube side:
- *   - `./aes128.ts` duplicates the AES-128-ECB routines that are private to
- *     `../qiyi.ts`; fold them into one shared module.
- *   - `./mac.ts` duplicates `../mac.ts`'s advertisement plumbing because the
- *     QiYi timer reads the FIRST six manufacturer bytes reversed while the
- *     cubes read the LAST six. `watchAdvertisementsMac` should take the CIC
- *     list and the layout as parameters, and this file should then keep only
- *     the QiYi-timer constants + the device-name fallback.
- *   - `./types.ts` (`ExternalTimerSource`) is device-agnostic and is imported
- *     by the mic Stackmat; it would sit better in a neutral
- *     `_lib/external_timer/` than under `bluetooth/`.
+ * Crypto and MAC discovery are shared with the cube side: AES comes from
+ * `../gan_crypto.ts` and advertisement watching from `../mac.ts` (the QiYi
+ * timer advertises exactly like the QiYi cube, `QIYI_MAC_ADV`). Only the
+ * device-name MAC fallback is timer-specific — `./mac.ts`.
+ *
+ * Known follow-up: `./types.ts` (`ExternalTimerSource`) is device-agnostic and
+ * is imported by the mic Stackmat; it would sit better in a neutral
+ * `_lib/external_timer/` than under `bluetooth/`.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { BluetoothTimerDriver } from './driver';
 import { ganTimerDriver } from './gan_timer';
-import { normalizeTimerMac, qiyiTimerMacFromName, watchQiyiTimerAdvertisementsMac } from './mac';
+import { QIYI_MAC_ADV, normalizeMac, watchAdvertisementsMac } from '../mac';
+import { qiyiTimerMacFromName } from './mac';
 import { qiyiTimerDriver } from './qiyi_timer';
 import {
   createExternalTimerBus,
@@ -77,14 +75,8 @@ export {
   parseQiyiTimerFrame,
   qiyiTimerDriver,
 } from './qiyi_timer';
-export { crc16CcittFalse, crc16Modbus } from './crc';
-export {
-  QIYI_TIMER_CIC_LIST,
-  extractQiyiTimerMac,
-  normalizeTimerMac,
-  qiyiTimerMacFromName,
-  watchQiyiTimerAdvertisementsMac,
-} from './mac';
+export { crc16CcittFalse, crc16Modbus } from '../crc';
+export { qiyiTimerMacFromName } from './mac';
 
 /* ------------------------------------------------------------------ */
 /*  Driver registry                                                    */
@@ -239,10 +231,10 @@ export function createBluetoothTimerSource(
       // browser connects. csTimer's qiyitimer.js does the same.
       let mac: string | null = null;
       if (picker.needsMac) {
-        mac = normalizeTimerMac(await watchQiyiTimerAdvertisementsMac(picked))
+        mac = normalizeMac(await watchAdvertisementsMac(picked, { specs: [QIYI_MAC_ADV] }))
           ?? qiyiTimerMacFromName(picked.name);
         if (!mac && opts.onNeedMac) {
-          try { mac = normalizeTimerMac(await opts.onNeedMac(picked.name ?? '')); }
+          try { mac = normalizeMac(await opts.onNeedMac(picked.name ?? '')); }
           catch { mac = null; }
         }
       }
