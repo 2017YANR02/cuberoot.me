@@ -800,6 +800,7 @@ export default function TrainerRunClient() {
                     <label className="trainer-opts-num">
                       <span className="trainer-opts-label">{tr({ zh: '每场新卡', en: 'New/session' })}</span>
                       <input
+                        className="trainer-opts-num-input"
                         type="number" min={0} max={200} step={1}
                         value={srsNewLimit}
                         onChange={e => setSrsNewLimit(Number(e.target.value))}
@@ -809,6 +810,7 @@ export default function TrainerRunClient() {
                     <label className="trainer-opts-num">
                       <span className="trainer-opts-label">{tr({ zh: '每场上限', en: 'Cards/session' })}</span>
                       <input
+                        className="trainer-opts-num-input"
                         type="number" min={5} max={500} step={5}
                         value={srsSessionLimit}
                         onChange={e => setSrsSessionLimit(Number(e.target.value))}
