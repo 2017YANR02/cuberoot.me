@@ -84,7 +84,10 @@ for (const c of db.cases) {
   const key = keyOfSetup(c.setup || '');
   if (!key) { misses.push(`${c.subgroup} | ${c.name} | ${c.setup}`); continue; }
   mapped++;
-  const algCount = Array.isArray(c.algs) ? c.algs.reduce((n, ori) => n + (Array.isArray(ori) ? ori.length : 0), 0) : 0;
+  // 只数**第一组**(FR)。zbls 2026-07-24 起是四朝向数据(`algs` 4 组,见
+  // `scripts/normalize-slot-to-fr.mts`),但四个朝向是同一条解法的四个视角,不是四种解法 ——
+  // LSLL case 页那句「N 条公式」问的是有几种解法,全组求和会把它虚报成 4 倍。
+  const algCount = Array.isArray(c.algs) && Array.isArray(c.algs[0]) ? c.algs[0].length : 0;
   (overlay[key] ??= []).push({
     name: c.name, subgroup: c.subgroup ?? '',
     slug: (c.id != null && slugMap.byId.get(c.id)) || '',
