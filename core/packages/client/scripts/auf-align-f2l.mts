@@ -28,6 +28,12 @@
  * 再和紧随的 U 合并 —— `=y U F R…` 补 U' 得 `=y F R…`,而不是难看的 `=U' y U F R…`。
  * 合并只碰「补进去的那一步和它紧邻的那一步」,不动上游别处的写法。
  *
+ * ## setup 是给人看的,写法也得干净
+ *
+ * 「打乱」那一行(`SetupLine`)把 setup 原文显示出来、还能点复制,所以它不只要语义对、
+ * 写法也要正常。补 U 之后一律过 {@link tidyMoves} 折 mod 4 —— 别用 cubing.js 的
+ * `experimentalSimplify`,它会把 `U2 U2` 合成 `U4`(见那个函数的注释)。
+ *
  * ## 用法
  *
  *   pnpm exec tsx scripts/auf-align-f2l.mts [set…]          # 干跑,只报告
@@ -52,6 +58,7 @@ const ADMIN_KEY = process.env.ADMIN_API_KEY ?? '';
 const argv = process.argv.slice(2);
 const SEND = argv.includes('--send');
 const THROTTLE_MS = Number(argv.find(a => a.startsWith('--throttle='))?.slice(11) ?? 2100);
+const SHOW = Number(argv.find(a => a.startsWith('--show='))?.slice(7) ?? 5);
 const RATE_WINDOW_MS = 60_000;
 const SETS = argv.filter(a => !a.startsWith('--'));
 
@@ -98,6 +105,57 @@ function sigOf(p: KPattern): Sig {
 
 /** `U`/`U2`/`U'` 的写法;j 已折 mod 4,0 → 空串。 */
 const uMove = (j: number) => UPOW[((j % 4) + 4) % 4];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 招式串收拾:合并相邻同族 + 转动量折 mod 4
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** `[2R]` `Rw2'` `M2` `y'` …:可选层前缀 + 族名 + 可选圈数 + 可选撇。 */
+const MOVE_RE = /^(\d*)([A-Za-z]+w?)(\d*)('?)$/;
+
+/**
+ * 相邻同族招式合并、转动量折回 0..3、折出 0 的整步删掉。3x3 上所有族(面 / 中层 /
+ * 宽层 / 整体转体)阶都是 4,所以折 mod 4 不改变语义。
+ *
+ * **别指望 cubing.js 的 `experimentalSimplify` 干这件事** —— 它只合并相邻同面招式,
+ * 不知道阶是 4,`U2` 接 `U2` 会给你 `U4`(转一圈 = 没转)。语义没错,所以画出来的图、
+ * 跑出来的判据全是对的,**但 setup 那一行文字是显示给人看、还能点复制的**,
+ * `F' U F U4` 就是脏数据。2026-07-25 修过一次:上一版本这里直接用 simplify 的输出,
+ * 给 41 条 zbls setup 留下了 `U3`/`U4`/`U5`。
+ *
+ * 删掉一步之后左右两边可能又变成同族相邻(`R U4 R` → `R R`),所以做到不动为止。
+ * 认不出来的 token(不该有,兜底)原样留着,并且不跨过它合并。
+ *
+ * **没被合并、量也在 |amt| ≤ 2 内的 token 一律原样保留** —— 上游写的 `U2'`(与 `U2` 等价)
+ * 是它自己的记号习惯,不是我要修的东西;这个函数只负责铲越界的量,不做全库风格统一。
+ */
+function tidyMoves(s: string): string {
+  let toks = s.split(/\s+/).filter(Boolean);
+  for (let round = 0; round < 8; round++) {
+    // src = 该组仍是「原封不动的单个 token」时的原文;一旦合并过就置 null
+    const out: { fam: string | null; src: string | null; amt: number }[] = [];
+    for (const t of toks) {
+      const m = MOVE_RE.exec(t);
+      if (!m) { out.push({ fam: null, src: t, amt: 0 }); continue; }
+      const [, layer, fam, turns, prime] = m;
+      const amt = (turns ? Number(turns) : 1) * (prime ? -1 : 1);
+      const key = `${layer}${fam}`;
+      const last = out[out.length - 1];
+      if (last && last.fam === key) { last.amt += amt; last.src = null; }
+      else out.push({ fam: key, src: t, amt });
+    }
+    const next = out.flatMap(x => {
+      if (x.fam === null) return [x.src!];
+      if (x.src !== null && x.amt !== 0 && Math.abs(x.amt) <= 2) return [x.src];
+      const a = ((x.amt % 4) + 4) % 4;
+      if (a === 0) return [];
+      return [x.fam + (a === 1 ? '' : a === 2 ? '2' : "'")];
+    });
+    if (next.length === toks.length && next.every((t, i) => t === toks[i])) break;
+    toks = next;
+  }
+  return toks.join(' ');
+}
 
 /**
  * 在 `alg` 开头插入 `U^j`。上游标注留在最前;穿过开头那串整体 y 转体(与 U 可交换);
@@ -176,6 +234,18 @@ interface Plan {
 
 type Ctx = { f2lSig: Map<string, string> };
 
+const flat = (a?: AlgEntry[][]) => (a ?? []).map(g => g.map(e => e.alg).join(' / ')).join(' || ');
+
+/**
+ * 这个 case 到底有没有变。**不能拿 `m !== 0` 当判据** —— setup 只是需要收拾写法
+ * (`U4` → 删)时 m 就是 0,用 m 判会把这些漏掉,正是 2026-07-25 那 41 条的成因。
+ */
+function changed(p: Plan): boolean {
+  return (p.c.setup || '').trim() !== p.setupNew
+    || flat(p.c.algs) !== flat(p.algsNew)
+    || (p.standardNew ?? null) !== (p.c.standard ?? null);
+}
+
 /**
  * 故意没有 f2l 对应的 subgroup。f2l 的 41 个 case 全是**未解**的对子,「对子已解」不在其中 ——
  * 这类 case 无从对齐(U 也转不动已归位的对子),是预期跳过,不是失败。除它以外任何排不出
@@ -203,9 +273,8 @@ function planCase(c: AlgCase, ctx: Ctx): Plan {
   const j = (4 - m) % 4;
   const algsNew = (c.algs ?? []).map(g => g.map(e => ({ ...e, alg: prependU(e.alg, j) })));
   const standardNew = c.standard ? prependU(c.standard, j) : null;
-  const setupNew = m === 0
-    ? toMoveString(setup)
-    : new Alg(`${toMoveString(setup)} ${UPOW[m]}`).experimentalSimplify({ cancel: true }).toString();
+  // 无条件过 tidyMoves —— m=0 时它就是那把「把库里已有的 U4 收拾干净」的扫帚
+  const setupNew = tidyMoves(`${toMoveString(setup)} ${UPOW[m]}`.trim());
 
   return { c, m, free, setupNew, algsNew, standardNew };
 }
@@ -218,6 +287,15 @@ function verify(p: Plan, ctx: Ctx, set: string): string[] {
 
   const sig = sigOf(apply(p.setupNew)).pair;
   if (sig !== target) bad.push(`${tag}: 归一后签名 ${sig} ≠ f2l ${target}`);
+
+  // 新 setup 必须**逐块**等于「旧 setup · U^m」—— 这一条专门卡 tidyMoves:签名只看对子,
+  // 收拾招式串要是把十字或别的槽动了,只有整状态比才抓得到。
+  const want = apply(`${toMoveString(p.c.setup || '')} ${UPOW[p.m]}`.trim());
+  const gotP = apply(p.setupNew);
+  if (JSON.stringify(gotP.patternData) !== JSON.stringify(want.patternData)) {
+    bad.push(`${tag}: 收拾后的 setup「${p.setupNew}」与「旧 setup · U^${p.m}」不是同一状态`);
+  }
+  if (!sigOf(gotP).clean) bad.push(`${tag}: 收拾后底十字/另三槽不完好`);
 
   const oriSetup = (gi: number) => (gi === 0 ? p.setupNew : `${p.setupNew} ${YPOW[gi]}`);
   p.algsNew.forEach((g, gi) => g.forEach((e, i) => {
@@ -280,6 +358,26 @@ function selfTest(): void {
     }
   }
   console.log(`[自检] prependU ${cases.length} 例通过(写法 + 语义)`);
+
+  const tidy: [string, string][] = [
+    ["F' U F U2 U2", "F' U F"],            // 上一版留下的 U4:整步删掉
+    ["R U' R' U2 U2 U", "R U' R' U"],      // U5 → U
+    ["F' U F U2 U", "F' U F U'"],          // U3 → U'
+    ["R U4 R", 'R2'],                      // 删完左右同族 ⟹ 再合一轮
+    ["M2 M", "M'"],                        // 中层同族照样合
+    ["R U R'", "R U R'"],                  // 干净的原样不动
+    ["Rw2 R", 'Rw2 R'],                    // Rw 与 R 不同族,不许合
+    ["F' U2' F", "F' U2' F"],              // 上游的 U2' 记号照原样,不统一成 U2
+    ["F' U2' U2 F", ''],                   // 但它参与合并就按标准写法算(这里连带 F' F 一起消完)
+  ];
+  for (const [inp, want] of tidy) {
+    const got = tidyMoves(inp);
+    if (got !== want) throw new Error(`selfTest 失败: tidyMoves("${inp}") = "${got}",期望 "${want}"`);
+    if (JSON.stringify(apply(inp).patternData) !== JSON.stringify(apply(got).patternData)) {
+      throw new Error(`selfTest 语义不符: tidyMoves("${inp}")`);
+    }
+  }
+  console.log(`[自检] tidyMoves ${tidy.length} 例通过(写法 + 语义)`);
 }
 
 async function run(set: string, ctx: Ctx): Promise<void> {
@@ -298,7 +396,8 @@ async function run(set: string, ctx: Ctx): Promise<void> {
   const tally = new Map<number, number>();
   for (const p of plans) tally.set(p.m, (tally.get(p.m) ?? 0) + 1);
   console.log(`\n[盘点] 需要补的 U : ${[...tally].sort((a, b) => a[0] - b[0]).map(([k, v]) => `U^${k}=${v}`).join('  ')}`);
-  console.log(`[盘点] 要改的 case: ${plans.filter(p => p.m !== 0).length} / ${plans.length}`);
+  console.log(`[盘点] 要改的 case: ${plans.filter(changed).length} / ${plans.length}`);
+  console.log(`[盘点]   其中只是收拾 setup 写法(m=0): ${plans.filter(p => changed(p) && p.m === 0).length}`);
   console.log(`[盘点] 对子全在槽: ${plans.filter(p => p.free).length}(AUF 转不动它,不改)`);
   if (skips.length) console.log(`[盘点] 预期跳过  : ${skips.length}(${skips.join(', ')} —— f2l 里没有「对子已解」这个 case)`);
   if (fails.length) {
@@ -320,8 +419,8 @@ async function run(set: string, ctx: Ctx): Promise<void> {
   console.log(`\n[校验] 归一后不过的: ${bad.length}`);
   for (const b of bad.slice(0, 15)) console.log(`  ${b}`);
 
-  console.log('\n[样例] 前 5 个要改的:');
-  for (const p of plans.filter(x => x.m !== 0).slice(0, 5)) {
+  console.log(`\n[样例] 前 ${SHOW} 个要改的(--show=N 调条数):`);
+  for (const p of plans.filter(changed).slice(0, SHOW)) {
     console.log(`  ${p.c.subgroup}/${p.c.name}  补 U^${(4 - p.m) % 4}`);
     console.log(`    setup: ${p.c.setup}  →  ${p.setupNew}`);
     console.log(`    alg  : ${p.c.algs?.[0]?.[0]?.alg}  →  ${p.algsNew[0]?.[0]?.alg}`);
@@ -340,7 +439,7 @@ async function run(set: string, ctx: Ctx): Promise<void> {
     return;
   }
 
-  const todo = plans.filter(p => p.m !== 0);
+  const todo = plans.filter(changed);
   console.log(`\n[发送] ${todo.length} 个 case,间隔 ${THROTTLE_MS}ms…`);
   let sent = 0;
   for (const p of todo) {
@@ -378,7 +477,6 @@ async function run(set: string, ctx: Ctx): Promise<void> {
   const after = await loadSet(set);
   const byId = new Map(after.map(c => [c.id, c]));
   let diff = 0;
-  const flat = (a?: AlgEntry[][]) => (a ?? []).map(g => g.map(e => e.alg).join(' / ')).join(' || ');
   for (const p of todo) {
     const got = byId.get(p.c.id!);
     if (!got) { console.log(`  回读缺 ${p.c.subgroup}/${p.c.name}`); diff++; continue; }
