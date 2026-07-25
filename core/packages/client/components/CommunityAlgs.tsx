@@ -17,7 +17,7 @@ import { validateAlgCase, setupForCase } from '@/lib/alg_validation';
 import { displayAlg } from '@/lib/alg_display';
 import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
-import { displayCuberName } from '@/lib/cuber-name-display';
+import { ownerDisplayName } from '@/lib/cuber-name-display';
 import { tr } from '@/i18n/tr';
 
 interface Props {
@@ -195,7 +195,7 @@ export default function CommunityAlgs({ puzzle, setSlug, caseName, sticker, setu
                   className="alg-community-author"
                   title={`${tr({ zh: '投稿者', en: 'Submitted by' })}: ${s.authorName} (${s.authorId})`}
                 >
-                  {displayCuberName(s.authorName, isZh)}
+                  {ownerDisplayName(s.authorId, s.authorName, isZh)}
                 </PersonLink>
                 {canEdit && (
                   <span className="alg-community-actions">

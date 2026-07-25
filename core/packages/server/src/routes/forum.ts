@@ -852,10 +852,10 @@ forumRoutes.get('/forum/reports', async (c) => {
   const rows = await query<{
     id: string; post_id: string; reporter_id: string; reporter_name: string; reason: string;
     created_at: Date; resolved_at: Date | null;
-    thread_id: string; thread_title: string; post_author_name: string; content: string;
+    thread_id: string; thread_title: string; post_author_id: string; post_author_name: string; content: string;
   }>(
     `SELECT r.id, r.post_id, r.reporter_id, r.reporter_name, r.reason, r.created_at, r.resolved_at,
-            p.thread_id, t.title AS thread_title, p.author_name AS post_author_name, p.content
+            p.thread_id, t.title AS thread_title, p.author_id AS post_author_id, p.author_name AS post_author_name, p.content
      FROM forum_reports r
      JOIN forum_posts p ON p.id = r.post_id
      JOIN forum_threads t ON t.id = p.thread_id
@@ -865,7 +865,7 @@ forumRoutes.get('/forum/reports', async (c) => {
   return c.json({
     reports: rows.map((r) => ({
       id: Number(r.id), postId: Number(r.post_id), threadId: Number(r.thread_id),
-      threadTitle: r.thread_title, postAuthorName: r.post_author_name,
+      threadTitle: r.thread_title, postAuthorId: r.post_author_id, postAuthorName: r.post_author_name,
       excerpt: r.content.slice(0, 200),
       reporterId: r.reporter_id, reporterName: r.reporter_name, reason: r.reason,
       createdAt: r.created_at, resolvedAt: r.resolved_at,
