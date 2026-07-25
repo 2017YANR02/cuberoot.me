@@ -57,7 +57,19 @@ export interface GlossaryHit { head: string; body: string; slug: string }
 export interface AboutHit { id: string; titleZh: string; titleEn: string
  }
 export interface StackHit extends StackToolMeta {}
-export interface AlgSetHit { puzzle: string; setSlug: string }
+export interface AlgSetHit { puzzle: string; setSlug: string; path: string }
+
+/**
+ * DB 里有、但 `/alg/<puzzle>/<slug>` 这条路由**不存在**的 set。
+ *
+ * 那条路由的 `generateStaticParams` 是从 `ALG_CATALOG`(硬编码表)生成的,配
+ * `dynamicParams = false` ⟹ 只进 `alg_sets` 表不进 catalog 的 set,拼出来的地址是 404。
+ * 3BLD 换位子字典就是这种:数据在 DB(admin 才改得动),UI 在 `/alg/3bld/comm`。
+ */
+const ALG_SET_PATH_OVERRIDE: Record<string, string> = {
+  '3x3/comm-corner': '/alg/3bld/comm',
+  '3x3/comm-edge': '/alg/3bld/comm',
+};
 
 export const METRIC_LABEL_OVERRIDE: Record<string, string> = { 'Ao3': 'Mo3' };
 
@@ -223,7 +235,11 @@ function loadAlgSets(): Promise<AlgSetRecord[] | null> {
   algSetsPromise = fetch(`${API_ORIGIN}/v1/alg/sets`)
     .then(r => (r.ok ? r.json() as Promise<AlgSetRow[]> : null))
     .then(rows => rows?.map(r => ({
-      hit: { puzzle: r.puzzle, setSlug: r.setSlug },
+      hit: {
+        puzzle: r.puzzle,
+        setSlug: r.setSlug,
+        path: ALG_SET_PATH_OVERRIDE[`${r.puzzle}/${r.setSlug}`] ?? `/alg/${r.puzzle}/${r.setSlug}`,
+      },
       hay: `${r.puzzle}\n${r.setSlug}`.toLowerCase(),
     })) ?? null)
     .catch(() => null);
