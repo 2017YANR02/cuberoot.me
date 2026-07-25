@@ -31,7 +31,7 @@
 
 /* 记忆模式的数字额度输入(齿轮面板内) */
 .trainer-opts-num { display: inline-flex; align-items: center; gap: 6px; }
-.trainer-opts-num input {
+.trainer-opts-num-input {
   width: 4.5em;
   padding: 3px 6px;
   border-radius: 6px;
