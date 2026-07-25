@@ -6,7 +6,7 @@
  * 本体 puzzle 无关:pocket(2x2x2)先行,pyraminx / skewb / sq1 后续各自
  * 写一个 spec + 路由页复用(见 solver/VARIANT_PLAYBOOK.md §8)。
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useQueryState, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { Spinner } from '@/components/Spinner/Spinner';
@@ -46,7 +46,16 @@ interface SolveOutcome {
   ms: number;
 }
 
-export function PuzzleOptimalSolver({ spec }: { spec: OptimalSolverSpec }) {
+export interface PuzzleOptimalSolverProps {
+  spec: OptimalSolverSpec;
+  /** Extra input UI above the scramble panel (2×2 的画状态画板 —— 见 solver/_Cube2Solver)。 */
+  topSlot?: ReactNode;
+  /** Hide the scramble panel (and skip the Rust worker/pool warm-up + auto-solve)
+   *  while another input mode owns the screen. */
+  hidePanel?: boolean;
+}
+
+export function PuzzleOptimalSolver({ spec, topSlot, hidePanel }: PuzzleOptimalSolverProps) {
   const { i18n } = useTranslation();
   void i18n;
   useDocumentTitle(spec.title.zh, spec.title.en);
@@ -61,21 +70,24 @@ export function PuzzleOptimalSolver({ spec }: { spec: OptimalSolverSpec }) {
   const seq = useRef(0);
 
   // 随机按钮首击免冷启:挂载后 idle 预热打乱池(222 级别建表很轻)。
+  // hidePanel 时(画板视图当家)不预热 —— 那条路子在纯 TS 里本地解,起 worker / 拉表全是白干。
   useEffect(() => {
+    if (hidePanel) return;
     const id = window.setTimeout(() => prewarmScramble(spec.event), 800);
     return () => window.clearTimeout(id);
-  }, [spec.event]);
+  }, [spec.event, hidePanel]);
 
   // 档1 求解器预热:挂载后 idle 起 worker + 拉预算距离表(throwaway solve),把首查
   // 成本(下表 ~0.3-1MB)藏在用户操作前 —— 等用户粘/生成打乱时 worker 已就绪,秒出。
   useEffect(() => {
+    if (hidePanel) return;
     const id = window.setTimeout(() => {
       const pool = getRustCrossPool(spec.need, Math.min(2, poolSizeForDevice()));
       spec.solve(pool, 'U').catch(() => { /* 预热失败无所谓,真求解时会重试 */ });
     }, 300);
     return () => window.clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [spec.need]);
+  }, [spec.need, hidePanel]);
 
   const lines = useMemo(
     () => scramble.split('\n').map((s) => s.trim()).filter(Boolean),
@@ -93,7 +105,7 @@ export function PuzzleOptimalSolver({ spec }: { spec: OptimalSolverSpec }) {
   useEffect(() => {
     const id = ++seq.current;
     setError(null);
-    if (!trimmed || badToken || lineCount > 1) {
+    if (hidePanel || !trimmed || badToken || lineCount > 1) {
       setResult(null);
       setSolving(false);
       return;
@@ -115,7 +127,7 @@ export function PuzzleOptimalSolver({ spec }: { spec: OptimalSolverSpec }) {
     }, 250);
     return () => window.clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trimmed, badToken, lineCount, spec.need]);
+  }, [trimmed, badToken, lineCount, spec.need, hidePanel]);
 
   const showResult = result && result.scramble === trimmed && !badToken;
 
@@ -145,7 +157,9 @@ export function PuzzleOptimalSolver({ spec }: { spec: OptimalSolverSpec }) {
         <SolveTabs puzzle={puzzle} mode="solve" />
       </div>
 
-      <SolvePanel
+      {topSlot}
+
+      {!hidePanel && <SolvePanel
         spec={batchSpec}
         scramble={scramble}
         onScrambleChange={(v) => void setScramble(v)}
@@ -197,7 +211,7 @@ export function PuzzleOptimalSolver({ spec }: { spec: OptimalSolverSpec }) {
             )}
           </>
         )}
-      />
+      />}
     </div>
   );
 }
