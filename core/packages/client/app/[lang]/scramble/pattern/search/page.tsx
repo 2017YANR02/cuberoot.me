@@ -325,10 +325,10 @@ export default function PatternSearchPage() {
                 </button>
                 {adminMode && (
                   <span className="psc-ex-ctl">
-                    <button type="button" className="psc-ex-btn" onClick={() => moveExample(i, -1)} disabled={busy || i === 0} aria-label={t('左移', 'Move left')}>
+                    <button type="button" className="psc-ex-btn" onClick={() => moveExample(i, -1)} disabled={busy || i === 0} aria-label={t('左移', 'Move left')} title={t('左移', 'Move left')}>
                       <ChevronLeft size={13} />
                     </button>
-                    <button type="button" className="psc-ex-btn" onClick={() => moveExample(i, 1)} disabled={busy || i === examples.length - 1} aria-label={t('右移', 'Move right')}>
+                    <button type="button" className="psc-ex-btn" onClick={() => moveExample(i, 1)} disabled={busy || i === examples.length - 1} aria-label={t('右移', 'Move right')} title={t('右移', 'Move right')}>
                       <ChevronRight size={13} />
                     </button>
                     <button
@@ -336,11 +336,12 @@ export default function PatternSearchPage() {
                       className="psc-ex-btn"
                       onClick={() => { setAdminErr(null); setForm({ id: ex.id, nameZh: ex.nameZh, nameEn: ex.nameEn, useCurrent: false }); }}
                       disabled={busy}
-                      aria-label={t('编辑', 'Edit')}
+                      aria-label={t('重命名', 'Rename')}
+                      title={t('重命名', 'Rename')}
                     >
                       <Pencil size={13} />
                     </button>
-                    <button type="button" className="psc-ex-btn" onClick={() => removeExample(ex)} disabled={busy} aria-label={t('删除', 'Delete')}>
+                    <button type="button" className="psc-ex-btn" onClick={() => removeExample(ex)} disabled={busy} aria-label={t('删除', 'Delete')} title={t('删除', 'Delete')}>
                       <Trash2 size={13} />
                     </button>
                   </span>
