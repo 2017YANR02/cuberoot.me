@@ -12,7 +12,7 @@ import { tr, T, useLang } from '@/i18n/tr';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useIsAdmin } from '@/lib/auth-store';
 import { renderArticleMarkdown } from '@/lib/article-markdown';
-import { displayCuberName } from '@/lib/cuber-name-display';
+import { ownerDisplayName } from '@/lib/cuber-name-display';
 import {
   fetchReviewQueue, moderateReview, fetchReports, resolveReport,
   type ReviewItem, type ForumReport,
@@ -131,7 +131,7 @@ export default function ForumReviewPage() {
                       ? tr({ zh: '新主题', en: 'New thread' })
                       : tr({ zh: '回帖', en: 'Reply' })}
                   </span>
-                  <span className="forum-review-item-author">{displayCuberName(item.authorName, zh)}</span>
+                  <span className="forum-review-item-author">{ownerDisplayName(item.authorId, item.authorName, zh)}</span>
                   <span className="forum-review-item-time">{formatRelativeTime(item.createdAt, lang)}</span>
                   {item.type === 'thread' && (item.forumNameZh || item.forumNameEn) && (
                     <span className="forum-review-item-forum">{zh ? item.forumNameZh : item.forumNameEn}</span>
@@ -186,9 +186,9 @@ export default function ForumReviewPage() {
                         {tr({ zh: '举报', en: 'Report' })}
                       </span>
                       <span className="forum-review-item-author">
-                        {displayCuberName(r.reporterName, zh)}
+                        {ownerDisplayName(r.reporterId, r.reporterName, zh)}
                         {' → '}
-                        {displayCuberName(r.postAuthorName, zh)}
+                        {ownerDisplayName(r.postAuthorId, r.postAuthorName, zh)}
                       </span>
                       <span className="forum-review-item-time">{formatRelativeTime(r.createdAt, lang)}</span>
                       {r.resolvedAt && (

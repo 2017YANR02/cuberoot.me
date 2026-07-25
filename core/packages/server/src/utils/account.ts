@@ -13,6 +13,7 @@ import { JWT_SECRET } from './session.js';
 // 纯逻辑(归属键 + 输入校验)在 shared,前后端共用 + 客户端可单测;这里再导出保持调用方不变。
 export {
   ownerKey, isWcaIdFormat, normalizeEmail, isValidEmail, normalizePhone, isValidPhone, isValidPassword,
+  primaryHandle, deletedOwnerKey, isDeletedOwner,
 } from '@cuberoot/shared/account';
 
 export type Provider = 'email' | 'phone' | 'wca' | 'apple' | 'google' | 'wechat' | 'alipay' | 'qq';
@@ -228,12 +229,16 @@ export async function findUserByIdentity(provider: Provider, providerUid: string
 /**
  * 用某身份登录:命中已有身份即返回其账号;否则新建账号 + 该身份(单事务,唯一约束防并发重复)。
  * profile.wcaId 非空时同步写 app_users.wca_id 镜像列(仅 wca provider 用)。
+ *
+ * isNew 区分「注册」与「登录」—— 登录/注册合并成一条流程(免用户枚举)后,服务端是唯一
+ * 知道这次到底建没建账号的一方。前端只在 isNew 时才做新人引导(问有没有 WCA ID),
+ * 老用户每次登录都被问一遍会很烦。**不进 JWT**:它只描述这一次请求,不是会话属性。
  */
 export async function loginWithIdentity(
   provider: Provider,
   providerUid: string,
   profile: { name?: string; avatar?: string | null; wcaId?: string | null },
-): Promise<AppUser> {
+): Promise<{ user: AppUser; isNew: boolean }> {
   const existing = await findUserByIdentity(provider, providerUid);
   if (existing) {
     // 机会式回填展示名/头像(不覆盖用户已自定义的非空名)。
@@ -246,7 +251,7 @@ export async function loginWithIdentity(
         [profile.name ?? '', profile.avatar ?? null, existing.id],
       );
     }
-    return (await getUserById(existing.id)) ?? existing;
+    return { user: (await getUserById(existing.id)) ?? existing, isNew: false };
   }
   try {
     const created = await sql.begin(async (tx) => {
@@ -260,11 +265,12 @@ export async function loginWithIdentity(
         VALUES (${u.id}, ${provider}, ${providerUid}, NOW())`;
       return u;
     });
-    return created as AppUser;
+    return { user: created as AppUser, isNew: true };
   } catch {
     // 并发下另一个请求已创建同一身份(唯一约束触发,事务回滚无孤儿)→ 重查返回。
+    // 账号确实是这一瞬间建的,但建它的是另一个请求,本次不认领 isNew(引导只做一次)。
     const raced = await findUserByIdentity(provider, providerUid);
-    if (raced) return raced;
+    if (raced) return { user: raced, isNew: false };
     throw new Error('account creation failed');
   }
 }

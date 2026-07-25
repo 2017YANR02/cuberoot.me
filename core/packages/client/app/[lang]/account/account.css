@@ -64,6 +64,21 @@
 /* 登录方式视图末尾,与凭据列表拉开距离 */
 .account-creds .account-logout { margin-top: 20px; }
 
+/* 注销入口。整页最后一项,和「退出」之间空出一大截 —— 两者手感必须完全不同:
+   退出是随手可点的按钮,这里只是一行小字链接,颜色到 hover 才转危险色。 */
+.account-delete {
+  display: block;
+  margin-top: 40px;
+  font-size: 0.78rem;
+  color: var(--faint-foreground);
+  text-decoration: none;
+  width: fit-content;
+}
+.account-delete:hover {
+  color: var(--destructive);
+  text-decoration: underline;
+}
+
 .account-id-row { margin-bottom: 32px; }
 .account-name {
   margin: 0;

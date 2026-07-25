@@ -9,7 +9,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Key, MoreVertical } from 'lucide-react';
 import { useAuthStore, useAuthUser } from '@/lib/auth-store';
-import { displayCuberName } from '@/lib/cuber-name-display';
+import { ownerDisplayName } from '@/lib/cuber-name-display';
 import { Flag } from '@/components/Flag';
 import { wcaPersonUrl } from '@/lib/recon-utils';
 import { personFlagIso2 } from '@/lib/country-flags';
@@ -182,7 +182,7 @@ export function AuthorName({ id, name, className }: {
   className?: string;
 }) {
   const { i18n } = useTranslation();
-  const displayName = displayCuberName(name || '', i18n.language === 'zh');
+  const displayName = ownerDisplayName(id, name, i18n.language === 'zh');
   const iso2 = id ? personFlagIso2(id) : '';
   return (
     <>

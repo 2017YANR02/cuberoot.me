@@ -13,6 +13,9 @@ export interface SessionUser {
 export interface SessionResp {
   token: string;
   user: SessionUser;
+  /** 这次是「注册」而非「登录」(登录/注册合流,只有服务端知道账号是不是刚建的)。
+   *  新人才做「有 WCA ID 吗」的引导 —— 老用户每次登录都被问一遍会很烦。 */
+  isNew?: boolean;
 }
 export interface Identity {
   provider: string;
@@ -44,6 +47,12 @@ export const setPassword = (password: string, currentPassword?: string) =>
 // 移除密码,退回纯验证码登录(同 Notion 的 Remove password)。凭据要求同上。
 export const removePassword = (currentPassword?: string) =>
   post<{ ok: true; hasPassword: false }>('/v1/auth/password/remove', { currentPassword }, true);
+/**
+ * 注销账号(立即生效,不可恢复)。confirm 要与账号主标识一致(shared 的 primaryHandle:
+ * 邮箱 > 手机 > WCA ID),设了密码的账号还要一并交当前密码 —— 两道闸都在服务端复核。
+ */
+export const deleteAccount = (confirm: string, password?: string) =>
+  post<{ ok: true }>('/v1/auth/account/delete', { confirm, password }, true);
 export const sendPhoneCode = (phone: string) => post<{ ok: true }>('/v1/auth/phone/send', { phone });
 export const verifyPhoneCode = (phone: string, code: string) => post<SessionResp>('/v1/auth/phone/verify', { phone, code });
 
