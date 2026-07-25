@@ -280,6 +280,51 @@ export function closureWithAnti(symSeed: Iterable<number>, asymSeed: Iterable<nu
   return { sym: listToMask(sym.flatMap((v, i) => (v ? [i] : []))), asym: listToMask(asym.flatMap((v, i) => (v ? [i] : []))) };
 }
 
+/**
+ * 取消勾选一个元素:返回一组新种子,使闭包里不再含 idx。
+ *
+ * 单纯把 idx 从种子里删掉是不够的 —— 亮着的元素多半不是种子,而是别的元素乘出来的
+ * (D2 里 C₂(R) = C₂(U)·C₂(F)),闭包会把它原样加回来,点击表现成"没反应"。
+ * 所以退到不含 idx 的最大子群:按"用户显式点过的种子优先、其余亮着的元素按阶降序"
+ * 依次试着留下,凡是会把 idx 乘出来的就丢掉(贪心,结果一定是原群的子群)。
+ */
+export function seedsWithoutElement(
+  idx: number,
+  symSeeds: readonly number[],
+  asymSeeds: readonly number[],
+  selfInverse: boolean,
+): { symSeeds: number[]; asymSeeds: number[] } {
+  const bit = 1n << BigInt(idx);
+  const withSelf = (a: readonly number[]) => (selfInverse ? [...a, 0] : [...a]);
+  const cur = closureWithAnti(symSeeds, withSelf(asymSeeds));
+
+  /** 候选顺序:原种子(保住用户意图) → 其余亮着的元素(阶大的先试,尽量多留)。 */
+  const cands = (seeds: readonly number[], mask: bigint) => {
+    const seen = new Set<number>([0, idx]);
+    const out: number[] = [];
+    for (const s of [
+      ...seeds,
+      ...maskToList(mask).sort((a, b) => elementOrder(b) - elementOrder(a)),
+    ]) {
+      if (seen.has(s)) continue;
+      seen.add(s);
+      out.push(s);
+    }
+    return out;
+  };
+
+  const nextSym: number[] = [];
+  for (const c of cands(symSeeds, cur.sym)) {
+    if ((closure([...nextSym, c]) & bit) === 0n) nextSym.push(c);
+  }
+  const nextAsym: number[] = [];
+  for (const c of cands(asymSeeds, cur.asym)) {
+    const g = closureWithAnti(nextSym, withSelf([...nextAsym, c]));
+    if (((g.sym | g.asym) & bit) === 0n) nextAsym.push(c);
+  }
+  return { symSeeds: nextSym, asymSeeds: nextAsym };
+}
+
 /** 正规化子 N(H) = { g : gHg⁻¹ = H }(上游 curSymNormal)。 */
 export function normalizer(mask: bigint): bigint {
   const has = maskToList(mask);

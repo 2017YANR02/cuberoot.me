@@ -26,7 +26,7 @@ import { useT } from '@/hooks/useT';
 import { cubieToFacelet, normalizeFacelet, validateFacelet, faceletToCubie } from '../solver/facelet';
 import {
   SYM_TYPES, SYM_ELEMENTS, SYM_CLASS_ORDER, SYM_CLASS_INFO, TYPE_DESC,
-  symMask, antisymMask, classifyMask, closure, closureWithAnti, generatorsOf,
+  symMask, antisymMask, classifyMask, closure, closureWithAnti, generatorsOf, seedsWithoutElement,
   maskToList, maskOrder, TOTAL_POSITIONS, SYMMETRIC_POSITIONS,
   type SymClass,
 } from './_sym_core';
@@ -265,14 +265,20 @@ function SearchView({ t, typeIdx, setTypeIdx }: {
 
   const toggleElement = (idx: number) => {
     if (idx === 0) return; // 恒等永远在
-    const seeds = antiMode ? asymSeeds : symSeeds;
-    const setSeeds = antiMode ? setAsymSeeds : setSymSeeds;
-    const next = seeds.includes(idx) ? seeds.filter((s) => s !== idx) : [...seeds, idx];
-    setSeeds(next);
-    if (!antiMode) {
-      const ti = classifyMask(closure(next));
-      if (ti >= 0) setTypeIdx(ti);
-    }
+    // 判"亮着"要看闭包而不是种子:亮着的元素多半是别的元素乘出来的,
+    // 从种子里删不掉它(seedsWithoutElement 负责退到不含它的最大子群)。
+    const lit = (((sym | asym) >> BigInt(idx)) & 1n) === 1n;
+    const next = lit
+      ? seedsWithoutElement(idx, symSeeds, asymSeeds, selfInverse)
+      : antiMode
+        ? { symSeeds, asymSeeds: [...asymSeeds, idx] }
+        : { symSeeds: [...symSeeds, idx], asymSeeds };
+    setSymSeeds(next.symSeeds);
+    setAsymSeeds(next.asymSeeds);
+    const ti = classifyMask(
+      closureWithAnti(next.symSeeds, selfInverse ? [...next.asymSeeds, 0] : next.asymSeeds).sym,
+    );
+    if (ti >= 0) setTypeIdx(ti);
   };
 
   const clearAll = () => {

@@ -11,6 +11,7 @@ import { describe, it, expect } from 'vitest';
 import {
   N_SYM, SYMS, SYM_INV, SYM_MULT, SYM_MATRIX, SYM_ELEMENTS, SYM_TYPES,
   symMask, antisymMask, classifyMask, classifyCube, maskOrder, closure,
+  closureWithAnti, seedsWithoutElement,
   normalizer, invertCubie, conjugate, TOTAL_POSITIONS, SYMMETRIC_POSITIONS,
   maskToList, generatorsOf,
 } from '@/app/[lang]/scramble/symmetry/_sym_core';
@@ -262,6 +263,60 @@ describe('正规化子', () => {
     }
     expect(normalizer(1n)).toBe((1n << 48n) - 1n);
     expect(normalizer((1n << 48n) - 1n)).toBe((1n << 48n) - 1n);
+  });
+});
+
+describe('取消勾选元素(seedsWithoutElement)', () => {
+  const lit = (s: number[], a: number[], selfInv = false) => {
+    const c = closureWithAnti(s, selfInv ? [...a, 0] : a);
+    return c.sym | c.asym;
+  };
+  const has = (mask: bigint, idx: number) => ((mask >> BigInt(idx)) & 1n) === 1n;
+
+  /** 网格里亮着的每个元素都必须点得掉 —— 包括不是种子、由乘积生成出来的那些。 */
+  it('33 种类型里的任一亮元素都能被关掉,且结果仍是原群的子群', () => {
+    for (const ty of SYM_TYPES) {
+      const seeds = generatorsOf(ty.mask);
+      for (const idx of maskToList(ty.mask)) {
+        if (idx === 0) continue;
+        const next = seedsWithoutElement(idx, seeds, [], false);
+        const after = lit(next.symSeeds, next.asymSeeds);
+        expect(has(after, idx)).toBe(false);
+        expect(after & ty.mask).toBe(after); // 只会变小,不会跑出原群
+        expect(maskOrder(after)).toBeLessThan(maskOrder(ty.mask));
+      }
+    }
+  });
+
+  it('D2(face) 里点掉乘积生成的那个 C₂ 会退回 C₂(以前从种子里删删不掉)', () => {
+    const d2 = SYM_TYPES.find((t) => t.name === 'D2(face)')!;
+    const seeds = generatorsOf(d2.mask);
+    expect(seeds).toHaveLength(2); // 三个 C₂ 只有两个是种子,第三个是乘出来的
+    const derived = maskToList(d2.mask).find((s) => s !== 0 && !seeds.includes(s))!;
+    const next = seedsWithoutElement(derived, seeds, [], false);
+    expect(maskOrder(lit(next.symSeeds, next.asymSeeds))).toBe(2);
+  });
+
+  it('自逆时反对称集跟着 sym 走,关掉的元素两边都不亮', () => {
+    const d4h = SYM_TYPES.find((t) => t.name === 'D4h')!;
+    const seeds = generatorsOf(d4h.mask);
+    for (const idx of maskToList(d4h.mask)) {
+      if (idx === 0) continue;
+      const next = seedsWithoutElement(idx, seeds, [], true);
+      expect(has(lit(next.symSeeds, next.asymSeeds, true), idx)).toBe(false);
+    }
+  });
+
+  it('反对称种子若能把该元素乘回来也会被丢掉', () => {
+    // sym = C₂(U),asym = σh(U) → 陪集乘出 i 那一类;点掉任何亮着的都得真灭。
+    const c2u = SYM_ELEMENTS.find((e) => e.label === 'C₂(U)')!.idx;
+    const sh = SYM_ELEMENTS.find((e) => e.cls === 'sh')!.idx;
+    const before = lit([c2u], [sh]);
+    for (const idx of maskToList(before)) {
+      if (idx === 0) continue;
+      const next = seedsWithoutElement(idx, [c2u], [sh], false);
+      expect(has(lit(next.symSeeds, next.asymSeeds), idx)).toBe(false);
+    }
   });
 });
 
