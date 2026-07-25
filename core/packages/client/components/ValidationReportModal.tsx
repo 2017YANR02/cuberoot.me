@@ -3,7 +3,13 @@
 /**
  * 一次性扫描 alg DB 的「setup + alg = 目标态」校验报告 modal。
  *
- * 入口:AlgCategoryView 顶部 admin 按钮「校验」→ scope { kind: 'set' }。
+ * 四种粒度,`/alg` 下每一层各用一个(入口统一走 `AlgAdminValidate`,
+ * case 列表页则由 AlgCategoryView 自己挂 —— 它还要把改完的 case 写回已加载的 data):
+ *   - `case`   单张 case 的详情页
+ *   - `set`    set 首页 / 子组选择页 / case 列表页
+ *   - `puzzle` `/alg/<puzzle>` 公式集网格
+ *   - `all`    `/alg` 首页(全库)
+ *
  * 扫描逻辑在 `lib/alg_validation_scan.ts`(卡片红框、个人页汇总共用同一份)。
  *
  * 失败项可点击,触发父组件打开对应 case 的 admin editor。
@@ -12,12 +18,14 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Play, ExternalLink } from 'lucide-react';
-import { type AlgPuzzle } from '@cuberoot/shared';
-import { scanTargets, allTargets, type AlgFailure } from '@/lib/alg_validation_scan';
+import { ALG_CATALOG, type AlgCase, type AlgPuzzle } from '@cuberoot/shared';
+import { scanCases, scanTargets, allTargets, type AlgFailure } from '@/lib/alg_validation_scan';
 import { tr } from '@/i18n/tr';
 
 export type ValidationScope =
+  | { kind: 'case'; puzzle: AlgPuzzle; set: string; caseObj: AlgCase }
   | { kind: 'set'; puzzle: AlgPuzzle; set: string }
+  | { kind: 'puzzle'; puzzle: AlgPuzzle }
   | { kind: 'all' };
 
 export type FailureItem = AlgFailure;
@@ -40,10 +48,13 @@ export default function ValidationReportModal({
   const [error, setError] = useState<string | null>(null);
   const cancelRef = useRef(false);
 
-  const targets = useMemo(
-    () => (scope.kind === 'set' ? [{ puzzle: scope.puzzle, set: scope.set }] : allTargets()),
-    [scope],
-  );
+  const targets = useMemo(() => {
+    if (scope.kind === 'case' || scope.kind === 'set') return [{ puzzle: scope.puzzle, set: scope.set }];
+    if (scope.kind === 'puzzle') {
+      return (ALG_CATALOG[scope.puzzle] ?? []).map(s => ({ puzzle: scope.puzzle, set: s.slug }));
+    }
+    return allTargets();
+  }, [scope]);
 
   const run = async () => {
     cancelRef.current = false;
@@ -51,6 +62,18 @@ export default function ValidationReportModal({
     setFailures([]);
     setError(null);
     try {
+      // 单张 case:它就在手上了,别为一张卡再把整个 set 拉一遍(scanTargets 会 fresh 重拉)。
+      if (scope.kind === 'case') {
+        const total = scope.caseObj.algs.reduce((n, ori) => n + ori.length, 0);
+        setProgress({ done: 0, total });
+        const found = await scanCases(scope.puzzle, scope.set, [scope.caseObj], {
+          shouldCancel: () => cancelRef.current,
+        });
+        if (cancelRef.current) return;
+        setProgress({ done: total, total });
+        setFailures(found);
+        return;
+      }
       const found = await scanTargets(targets, {
         onProgress: (done, total) => setProgress({ done, total }),
         shouldCancel: () => cancelRef.current,
@@ -70,9 +93,21 @@ export default function ValidationReportModal({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshKey]);
 
-  const title = scope.kind === 'set'
-    ? tr({ zh: `校验 ${scope.puzzle} / ${scope.set}`, en: `Validate ${scope.puzzle} / ${scope.set}` })
-    : tr({ zh: '校验全库', en: 'Validate all sets' });
+  const title = (() => {
+    if (scope.kind === 'case') {
+      return tr({
+        zh: `校验 ${scope.puzzle} / ${scope.set} ${scope.caseObj.name}`,
+        en: `Validate ${scope.puzzle} / ${scope.set} ${scope.caseObj.name}`,
+      });
+    }
+    if (scope.kind === 'set') {
+      return tr({ zh: `校验 ${scope.puzzle} / ${scope.set}`, en: `Validate ${scope.puzzle} / ${scope.set}` });
+    }
+    if (scope.kind === 'puzzle') {
+      return tr({ zh: `校验 ${scope.puzzle} 全部公式集`, en: `Validate all ${scope.puzzle} sets` });
+    }
+    return tr({ zh: '校验全库', en: 'Validate all sets' });
+  })();
 
   return (
     <div className="alg-admin-modal-backdrop" onClick={onClose} role="dialog" aria-modal="true">

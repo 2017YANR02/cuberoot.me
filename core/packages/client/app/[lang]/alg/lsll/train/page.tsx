@@ -19,8 +19,7 @@ import {
   CATEGORIES, decodeKey, enumerateCategory, caseFacelets, keyToString, keyFromString,
   type LsllState,
 } from '@/lib/lsll/model';
-import { setupForCase } from '@/lib/lsll/setup';
-import { invertMoveString } from '@cuberoot/shared/alg-notation';
+import { setupForCase, solutionForSetup } from '@/lib/lsll/setup';
 import { zblsForKey, ZBLS_COVERED_KEYS, type ZblsRef } from '@/lib/lsll/zbls_overlay';
 import '../../alg.css';
 import '../lsll.css';
@@ -83,10 +82,7 @@ export default function LsllTrainPage() {
   const keyStr = key == null ? '' : keyToString(key);
   const refs: ZblsRef[] | null = keyStr ? zblsForKey(keyStr) : null;
   // 打乱本身 = cubing.js 两阶段解取逆,故取逆回来就是一条有效解法(每个 case 都有)。
-  let solution = '';
-  if (scramble) {
-    try { solution = invertMoveString(scramble); } catch { solution = ''; }
-  }
+  const solution = solutionForSetup(scramble);
 
   return (
     <div className="alg-root">

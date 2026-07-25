@@ -31,8 +31,8 @@ import AdminCaseEditor, { type AdminEditorState } from '@/components/AdminCaseEd
 import type { AlgInvalidMark } from '@/components/AlgEditor';
 import ValidationReportModal from '@/components/ValidationReportModal';
 import AlgPlayer from '@/components/AlgPlayer';
-import PillToggle from '@/components/PillToggle/PillToggle';
-import { persistItem } from '@/lib/safe-storage';
+import SortableAlgRow from '@/components/SortableAlgRow';
+import AlgViewModeToggle, { useAlgViewMode } from '@/components/AlgViewModeToggle';
 import { useCopy } from '@/hooks/useCopy';
 import { stm } from '@cuberoot/shared/alg-notation';
 import { listSubmissions } from '@/lib/alg_api';
@@ -45,16 +45,13 @@ import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { displayAlgCaseName, primaryCaseName, displayZbllToken } from '@/lib/alg_case_display';
 import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
 import { ALG_TAG_LABEL, ALG_TAGS } from '@/lib/alg_tags';
-import { displayAlg } from '@/lib/alg_display';
+import { displayAlg, oriAdjustSetup } from '@/lib/alg_display';
+import { sanitizeAlgHtml } from '@/lib/alg_html';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useHashHighlight } from '@/hooks/useHashHighlight';
 import { tr } from '@/i18n/tr';
 
-const ORI_SUFFIX = ['', 'y', 'y2', "y'"];
-function oriAdjustSetup(setup: string, oriIdx: number): string {
-  if (!setup || oriIdx === 0) return setup;
-  return `${setup} ${ORI_SUFFIX[oriIdx]}`;
-}
+// oriAdjustSetup 已提到 lib/alg_display 与 case 详情页共用(详情页原先漏了它,见那里的注释)。
 
 function shortOriName(name: string): string {
   const map: Record<string, string> = {
@@ -65,17 +62,6 @@ function shortOriName(name: string): string {
 
 function isPuzzle(s: string): s is AlgPuzzle {
   return (ALG_PUZZLES as readonly string[]).includes(s);
-}
-
-const ALG_HTML_TAG_WHITELIST = new Set(['u', 's', 'em', 'strong', 'sub', 'sup']);
-function sanitizeAlgHtml(html: string): string {
-  return html.replace(/<(\/?)([a-z][a-z0-9]*)\b([^>]*)>/gi, (_full, slash, tag, attrs) => {
-    const t = tag.toLowerCase();
-    if (!ALG_HTML_TAG_WHITELIST.has(t)) return '';
-    if (slash) return `</${t}>`;
-    if (t === 'u' && /\bclass\s*=\s*["']?wavy["']?/i.test(attrs)) return '<u class="wavy">';
-    return `<${t}>`;
-  });
 }
 
 /** 打乱行。复制的是**屏幕上这一条**(sq1 之类会重排格式),不是库里的原文。 */
@@ -141,39 +127,6 @@ function AlgRow({ entry, expanded, onToggle, animatable, puzzle, set, setup, inv
       </div>
       {expanded && animatable && <AlgPlayer alg={alg} puzzle={puzzle} set={set} setup={setup} />}
     </>
-  );
-}
-
-/**
- * 一条公式的 sortable 外壳(admin 才拖得动)。
- *
- * handle 单独一个 —— 整行是「点了播放动画」的 role=button,不能拿它当拖把。
- * 内层 DndContext 嵌在 case 那层里:外层的 listeners 只挂在卡片的 grip 上,两边不打架。
- */
-function SortableAlgRow({ id, draggable, children }: { id: string; draggable: boolean; children: React.ReactNode }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled: !draggable });
-  const style: React.CSSProperties = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-    position: 'relative',
-  };
-  return (
-    <div ref={setNodeRef} style={style} className={draggable ? 'alg-alg-sortable' : undefined}>
-      {draggable && (
-        <button
-          type="button"
-          className="alg-alg-drag-handle"
-          {...attributes}
-          {...listeners}
-          onClick={(e) => e.stopPropagation()}
-          title={tr({ zh: '拖动调整公式顺序', en: 'Drag to reorder algs' })}
-        >
-          <GripVertical size={12} />
-        </button>
-      )}
-      {children}
-    </div>
   );
 }
 
@@ -394,17 +347,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   const [tagFilter, setTagFilter] = useQueryState('tag', parseAsStringEnum<AlgTag | 'all'>(['all', ...ALG_TAGS]).withDefault('all'));
   const animatable = true;
 
-  // 列表视图:`cards` = 只看图(密排画廊,点整卡进详情页看公式),`full` = 公式内联(旧行为)。
-  // 默认只看图 —— 列表是「认图/浏览」页,公式是详情页的事,顺带让首屏不挂一堆 AlgPlayer / 社区区更轻。
-  // 存 localStorage(跨页显示偏好,不是页内可分享状态,故不进 URL):想常看公式的人切一次全站生效。
-  const [view, setView] = useState<'cards' | 'full'>(() => {
-    if (typeof window === 'undefined') return 'cards';
-    try { return localStorage.getItem('alg-list-view') === 'full' ? 'full' : 'cards'; } catch { return 'cards'; }
-  });
-  const changeView = useCallback((next: 'cards' | 'full') => {
-    setView(next);
-    persistItem('alg-list-view', next);
-  }, []);
+  // 列表视图(`cards` 只看图 / `full` 公式内联)。语义 + localStorage key 都在
+  // AlgViewModeToggle 里,`/alg` 下所有 case 列表页共用同一个偏好。
+  const [view, changeView] = useAlgViewMode();
 
   /** 这个 set 里实际出现过的标签 —— 没有就不渲染筛选器 */
   const availableTags = useMemo(() => {
@@ -709,14 +654,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
         )}
         {/* 图 / 公式 视图开关(只在真列出 case 的页面;子组选择页没有卡片) */}
         {data && !showSubgroupPicker && !showSubSubgroupPicker && (
-          <PillToggle
-            value={view === 'full'}
-            onChange={(on) => changeView(on ? 'full' : 'cards')}
-            onLabel={tr({ zh: '公式', en: 'Algs' })}
-            offLabel={tr({ zh: '图', en: 'Images' })}
-            ariaLabel={tr({ zh: '切换只看图 / 看公式', en: 'Toggle images-only / show algs' })}
-            className="alg-view-toggle"
-          />
+          <AlgViewModeToggle value={view} onChange={changeView} className="alg-view-toggle" />
         )}
         {/* 标签筛选只在公式内联时有意义(只看图时没公式可筛) */}
         {data && !showSubgroupPicker && !showSubSubgroupPicker && view === 'full' && availableTags.length > 0 && (
@@ -740,7 +678,10 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
             {tr({ zh: '训练', en: 'Train' })}
           </Link>
         )}
-        {isAdmin && data && !showSubgroupPicker && (
+        {/* 新增 / 校验作用在**整个 set** 上,和这一层是不是列 case 卡片无关 ——
+            子组选择页(umbrella set 首页,如 /alg/3x3/zbls)照样要有:那一层没有卡片可点,
+            但「这套公式集有没有校验不过的」正是从这儿开始查的。 */}
+        {isAdmin && data && (
           <>
             <button
               type="button"

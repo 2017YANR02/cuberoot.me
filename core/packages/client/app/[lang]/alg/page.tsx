@@ -3,14 +3,14 @@
 /**
  * /alg landing — port of packages/client-vite/src/pages/alg/AlgIndexPage.tsx.
  *
- * Admin "Validate all" button stubbed for now — auth_store + ADMIN_WCA_IDS
- * not yet ported into client. The validate-all flow re-enables once
- * @cuberoot/shared exports the OAuth hook and we port useAuthStore.
+ * admin 的「校验全库」在标题行右侧(AlgAdminValidate,scope = all)—— 全站唯一一处
+ * 一次扫完所有 (puzzle, set) 的入口。
  */
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ALG_PUZZLES } from '@cuberoot/shared';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import AlgAdminValidate from '@/components/AlgAdminValidate';
 import BackHome from '@/components/BackHome';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
@@ -44,6 +44,10 @@ export default function AlgIndexPage() {
               <GraduationCap size={16} aria-hidden="true" />
               {tr({ zh: '学习进度', en: 'Progress' })}
             </Link>
+            <AlgAdminValidate
+              scope={{ kind: 'all' }}
+              label={tr({ zh: '校验全库', en: 'Validate all' })}
+            />
           </div>
         </div>
       </div>

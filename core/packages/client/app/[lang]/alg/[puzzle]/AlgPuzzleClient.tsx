@@ -16,6 +16,7 @@ import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
 import { CaseThumb } from '@/components/CaseThumb';
 import AlgCard from '@/components/AlgCard';
+import AlgAdminValidate from '@/components/AlgAdminValidate';
 import { FaceletsCube } from '@/components/FaceletsCube';
 import { TOTAL_CASES as LSLL_TOTAL, categoryCardFacelets } from '@/lib/lsll/model';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -108,6 +109,11 @@ export default function AlgPuzzleClient() {
           <EventIcon event={puzzle} className="alg-cat-title-icon" />
           <span>{eventDisplayName(puzzle, isZh)} {tr({ zh: '公式', en: 'Algorithms' })}</span>
         </h1>
+        {/* 这一层就是「这个魔方的所有公式集」,校验粒度跟着它 —— 一次扫完本页列出的每套 */}
+        <AlgAdminValidate
+          scope={{ kind: 'puzzle', puzzle }}
+          label={tr({ zh: '校验本页公式集', en: 'Validate these sets' })}
+        />
       </div>
 
       <div className="alg-bento">

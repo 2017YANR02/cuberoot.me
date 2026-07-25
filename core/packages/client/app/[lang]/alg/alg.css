@@ -723,8 +723,10 @@ html[data-theme=dark] .alg-root {
 .alg-alg-drag-handle:focus-visible { opacity: 1; }
 .alg-alg-drag-handle:hover { color: var(--accent); }
 .alg-alg-drag-handle:active { cursor: grabbing; }
-/* handle 占的那点位置从行的左内边距里让出来,别把公式文本挤动 */
-.alg-alg-sortable .alg-alg-row { padding-left: 18px; }
+/* handle 占的那点位置从行的左内边距里让出来,别把公式文本挤动。
+   `.alg-meta-algline` 是 case 详情页(富元数据正文)里的公式行,同一个 handle 也压它。 */
+.alg-alg-sortable .alg-alg-row,
+.alg-alg-sortable .alg-meta-algline { padding-left: 18px; }
 /* 触屏没有 hover:一直显出来,否则管理员在手机上根本拖不动 */
 @media (hover: none) {
   .alg-alg-drag-handle { opacity: 1; }
