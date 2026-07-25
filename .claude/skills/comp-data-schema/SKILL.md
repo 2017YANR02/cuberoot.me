@@ -12,6 +12,7 @@ description: "Use when touching WCA competition JSON (upcoming_comps/all_past_co
 | `/stats/upcoming_comps.json` | `fetch_upcoming_comps.ts`（stats-build） | `.github/workflows/update_upcoming.yml`（每天 20:00 UTC） | UpcomingComps Top 模式（只含有顶尖选手参赛的比赛 + cubing.com 中国比赛） |
 | `/stats/all_upcoming_comps.json` | 同上脚本第二段 | 同上 | Globe upcoming 模式 + UpcomingComps All 模式（WCA 全球全量 upcoming） |
 | `/stats/all_past_comps.json` | `core/packages/stats-build/src/bin/gen_all_comps.ts` | `.github/workflows/stats.yml`（每周日 20:00 UTC） | Globe history 模式（WCA 历史所有已结束比赛） |
+| `/stats/comp_series.json`、`/stats/comp_city/<ISO2>.json` | 同上脚本尾段（分组算法在 `@cuberoot/shared/comp-series`） | 同上 | 详情页「相似比赛」tab：同系列（名字/championship_type，整取）+ 同城市（一国一文件，只拉当前比赛所在国） |
 
 ## `upcoming_comps.json`（Top 模式专用）
 
