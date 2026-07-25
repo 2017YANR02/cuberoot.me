@@ -53,16 +53,27 @@ export function formatDateRangeIso(startISO: string, endISO?: string | null): st
 }
 
 /**
+ * 粗饼 API 的 type 字段:'WCA' = WCA 认证赛(alias 去横杠即 WCA id);
+ * 其余(实测 'other')是民间赛,没有 WCA id,自有站/WCA 官网都没有该比赛页。
+ * 与 stats-build/fetch_upcoming_comps.ts 的 `c.type !== 'WCA'` 过滤同一判据。
+ */
+export function isWcaCubingComp(compType: string | null | undefined): boolean {
+  return compType === 'WCA';
+}
+
+/**
  * cubing.com 的 alias 是「插了横杠的 WCA 比赛 id」(HuanggangOpen2026 → Huanggang-Open-2026)。
- * 去横杠还原成 WCA id 再建自有站链接(WCA id 本身从不含横杠)。alias 缺失 → null,回退原链。
+ * 去横杠还原成 WCA id 再建自有站链接(WCA id 本身从不含横杠)。
+ * alias 缺失、或该赛不是 WCA 认证赛(民间赛无 WCA id,/wca/comp/<id> 必 404)→ null,回退粗饼原链。
  */
 export function siteCompUrlFromCubingAlias(
   alias: string | null | undefined,
+  compType: string | null | undefined,
   eventId?: string | null,
   roundNumber?: number | null,
   zh = false,
 ): string | null {
-  if (!alias) return null;
+  if (!alias || !isWcaCubingComp(compType)) return null;
   return siteCompUrl(alias.replace(/-/g, ''), eventId, roundNumber, zh);
 }
 

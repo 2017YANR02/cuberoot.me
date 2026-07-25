@@ -5,7 +5,7 @@
  */
 import { sendBark } from './bark.js';
 import { countPushed, getPushedSet, markPushed, type MonitorId } from './state.js';
-import { POLL_INTERVAL_MS, siteCompUrlFromCubingAlias, formatDateRangeIso } from './config.js';
+import { POLL_INTERVAL_MS, siteCompUrlFromCubingAlias, formatDateRangeIso, isWcaCubingComp } from './config.js';
 import { startPoller } from './poll.js';
 
 const MONITOR: MonitorId = 'cubing_comp';
@@ -16,6 +16,8 @@ interface CubingComp {
   id: number | string;
   name: string;
   alias?: string;
+  /** 'WCA' = WCA 认证赛;'other' = 民间赛(无 WCA id)。 */
+  type?: string;
   url?: string;
   date: { from: number; to: number };
   locations?: { province?: string; city?: string }[];
@@ -57,8 +59,9 @@ async function queryCompetitions(): Promise<CubingComp[]> {
 }
 
 /**
- * 项目数:粗饼 API 不含项目列表,而其比赛皆 WCA 赛(alias 去横杠=WCA id),
- * 转查 WCA REST 单赛端点拿 event_ids(与 WCA 监控同源)。失败/非 WCA 赛 → null,文案省略该段。
+ * 项目数:粗饼 API 不含项目列表,WCA 认证赛(alias 去横杠=WCA id)
+ * 转查 WCA REST 单赛端点拿 event_ids(与 WCA 监控同源)。失败 → null,文案省略该段。
+ * 民间赛(type='other')不进这里 —— 无 WCA id,查了必 404。
  */
 async function fetchEventCount(alias: string | undefined): Promise<number | null> {
   if (!alias) return null;
@@ -85,15 +88,18 @@ async function formatCompMessage(comp: CubingComp): Promise<{ title: string; bod
   const loc = comp.locations?.[0];
   const city = loc ? `${loc.province ?? ''}${loc.city ?? ''}` : '未知';
   const limit = comp.competitor_limit ?? 0;
-  const eventCount = await fetchEventCount(comp.alias);
+  const eventCount = isWcaCubingComp(comp.type) ? await fetchEventCount(comp.alias) : null;
   const eventStr = eventCount != null ? ` | ${eventCount}个项目` : '';
   const limitStr = limit ? ` | 上限${limit}` : '';
   return {
     // 粗饼仅收中国大陆比赛,国旗恒 🇨🇳。
     title: `比赛公示快讯! ${comp.name}`,
     body: `${dateStr} | ${city}🇨🇳${eventStr}${limitStr}`,
-    // 比赛链接指向自有站(alias 去横杠=WCA id);恒落 /zh;alias 缺失时回退 cubing.com。
-    url: siteCompUrlFromCubingAlias(comp.alias, undefined, undefined, true) ?? `https://cubing.com${comp.url ?? ''}`,
+    // WCA 认证赛链接指向自有站(alias 去横杠=WCA id),恒落 /zh;
+    // 民间赛(type='other')自有站无该比赛页 → 回退粗饼比赛页 /competition/<alias>。
+    url:
+      siteCompUrlFromCubingAlias(comp.alias, comp.type, undefined, undefined, true)
+      ?? (comp.url ? `https://cubing.com${comp.url}` : `https://cubing.com/competition/${comp.alias ?? ''}`),
   };
 }
 
