@@ -162,13 +162,17 @@ function search(perm: number, orient: number, depth: number, length: number, las
   }
 }
 
-/** 早退 IDA:该状态是否存在恰好 length 步的解(不枚举全部,找到即返回)。 */
-function solvableIn(perm: number, orient: number, length: number, lastMove: number): boolean {
+/**
+ * 早退 IDA:该状态是否存在恰好 length 步的解(不枚举全部,找到即返回)。命中时 curSol[0..length-1]
+ * 就是那条解(optimalPocketSolveCodes 直接读它;search 的全枚举会自己覆盖每一格,不受影响)。
+ */
+function solvableIn(perm: number, orient: number, length: number, lastMove: number, depth = 0): boolean {
   if (length === 0) return perm === 0 && orient === 0;
   if (prunPerm[perm] > length || prunOrient[orient] > length) return false;
   for (let m = 0; m < N_MOVES; m++) {
     if ((m / 3 | 0) === (lastMove / 3 | 0)) continue;
-    if (solvableIn(permMove[perm * N_MOVES + m], oriMove[orient * N_MOVES + m], length - 1, m)) return true;
+    curSol[depth] = m;
+    if (solvableIn(permMove[perm * N_MOVES + m], oriMove[orient * N_MOVES + m], length - 1, m, depth + 1)) return true;
   }
   return false;
 }
@@ -178,6 +182,24 @@ function optimalLen(perm: number, orient: number): number {
   let len = Math.max(prunPerm[perm], prunOrient[orient]); // 有效下界
   while (!solvableIn(perm, orient, len, 42)) len++;
   return len;
+}
+
+/** 招式名(code 0..8),与 ELEMS / INV_NAME 同序:U U2 U' R R2 R' F F2 F'。 */
+export const POCKET_MOVE_NAMES: readonly string[] = ['U', 'U2', "U'", 'R', 'R2', "R'", 'F', 'F2', "F'"];
+
+/**
+ * 归一化态(DBL 角在位且朝向 0)的 HTM 最优解 —— 返回招式 code 序列(依次施加即还原)。
+ * 只要一条解,故走早退 IDA(不像打乱那样在等长解里挑手感)。lib/pocket-facelet 的
+ * 「画状态求解」用它:那边先用整体旋转把 DBL 转回原位,再把解的面名换回所画的朝向。
+ */
+export function optimalPocketSolveCodes(cp: Int8Array, co: Int8Array): number[] {
+  init();
+  const perm = permRank(cp);
+  const orient = oriRank(co);
+  const len = optimalLen(perm, orient); // 命中那次把解留在 curSol 里
+  const out: number[] = [];
+  for (let i = 0; i < len; i++) out.push(curSol[i]);
+  return out;
 }
 
 /** 把解序(code)转成打乱串(逆序 + 逐招取逆)。 */

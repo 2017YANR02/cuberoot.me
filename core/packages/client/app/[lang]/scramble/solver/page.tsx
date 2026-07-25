@@ -4,7 +4,9 @@
  * /scramble/solver — 统一「求解」路由,按 ?event= 分发到对应求解器:
  *   event=333(或缺省) → 3×3 cubeopt 最优解(_Cube3Solver,全站唯一发 COOP/COEP 的文档,
  *                        需 SharedArrayBuffer)
- *   event=222/pyram/skewb → PuzzleOptimalSolver(Rust WASM 全空间精确表,无 COEP)
+ *   event=222 → 2×2 最优解(_Cube2Solver = PuzzleOptimalSolver + 画状态画板;打乱走 Rust WASM,
+ *               画出来的状态走纯 TS 本地精确表 lib/pocket-facelet)
+ *   event=pyram/skewb → PuzzleOptimalSolver(Rust WASM 全空间精确表,无 COEP)
  *   event=sq1 → SQ1 两阶段近最优解(_Sq1Solver,纯 TS,无 worker)
  *   event=ivy → 枫叶魔方整解最优(_IvySolver,纯 TS,29,160 态全图 BFS,无 worker)
  *   event=133 → 1×3×3 花型整解最优(_FloppySolver,纯 TS,192 态全图 BFS,无 worker)
@@ -54,6 +56,7 @@ const Loading = () => <div style={{ padding: 16 }}>Loading…</div>;
 const ScrambleStatsPage = dynamic(() => import('../stats/page'), { ssr: false, loading: Loading });
 
 const Cube3Solver = dynamic(() => import('./_Cube3Solver'), { ssr: false, loading: Loading });
+const Cube2Solver = dynamic(() => import('./_Cube2Solver'), { ssr: false, loading: Loading });
 const Sq1Solver = dynamic(() => import('./_Sq1Solver'), { ssr: false, loading: Loading });
 const Sq2Solver = dynamic(() => import('./_Sq2Solver'), { ssr: false, loading: Loading });
 const Ssq1Solver = dynamic(() => import('./_Ssq1Solver'), { ssr: false, loading: Loading });
@@ -90,6 +93,7 @@ const PuzzleOptimalSolver = dynamic(
 
 function SolverDispatch() {
   const event = useSearchParams().get('event') ?? '333';
+  if (event === '222') return <Cube2Solver />;
   if (event === 'sq1') return <Sq1Solver />;
   if (event === 'sq2') return <Sq2Solver />;
   if (event === 'ssq1') return <Ssq1Solver />;
