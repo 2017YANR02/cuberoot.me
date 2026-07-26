@@ -381,23 +381,11 @@
 /* ---- 原站 ---- */
 
 .predict-origin {
-  margin-top: 2.5rem;
-  padding-top: 1.25rem;
+  margin-top: 2rem;
+  padding-top: 0.9rem;
   border-top: 1px solid var(--border-default);
-}
-
-.predict-origin h2 {
-  margin: 0 0 0.4rem;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--muted-foreground);
-}
-
-.predict-origin p {
-  margin: 0 0 0.75rem;
-  color: var(--muted-foreground);
-  font-size: 0.85rem;
-  line-height: 1.6;
+  color: var(--faint-foreground);
+  font-size: 0.8rem;
 }
 
 .predict-origin a {
@@ -408,21 +396,10 @@
   white-space: nowrap;
 }
 
-.predict-origin-frame {
-  display: block;
-  width: 100%;
-  /* 够高才装得下原站「控件 + 题板」的整段布局,免得读者在嵌套框里再滚一次 */
-  height: 60rem;
-  border: 1px solid var(--border-default);
-  border-radius: 10px;
-  background: var(--card);
-}
-
 @media (max-width: 480px) {
   .predict-page { padding: 0.5rem 0.75rem 2.5rem; }
   .predict-header h1 { font-size: 1.25rem; }
   .predict-controls { gap: 0.6rem 0.9rem; }
   .predict-clock { font-size: 1.1rem; }
   .predict-move-list li { font-size: 1rem; min-width: 2.2rem; }
-  .predict-origin-frame { height: 44rem; }
 }
