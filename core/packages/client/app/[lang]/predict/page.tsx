@@ -30,7 +30,7 @@ import { tr } from '@/i18n/tr';
 import { CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '@/lib/cube-colors';
 import { CUBE_ORIENTATIONS, orientedFaceColors } from '@/lib/cube-orientation';
 import {
-  generateChallenge, FACE_LETTERS, faceletFace,
+  generateChallenge, FACE_LETTERS, faceletFace, BLANK,
   MOVE_COUNT_MIN, MOVE_COUNT_MAX, CROSS_EDGES_MIN, CROSS_EDGES_MAX,
   type PredictChallenge, type PredictMode, type PieceKind, type ScrambleSource,
 } from './_lib/challenge';
@@ -197,8 +197,8 @@ function PredictPageInner() {
    * 播到一半改它会把那一步的动画吃掉。
    */
   const labels = useMemo(() => {
-    if (!challenge) return Array<string>(54).fill('Gray');
-    const out = [...challenge.startFacelets].map((ch) => (ch === '.' ? 'Gray' : shown[ch as CubeFace]));
+    if (!challenge) return Array<string>(54).fill(BLANK);
+    const out = [...challenge.startFacelets].map((ch) => (ch === '.' ? BLANK : shown[ch as CubeFace]));
     if (!over) {
       challenge.targets.forEach((t, i) => {
         if (found[i]) out[t.answerFacelet] = shown[FACE_LETTERS[t.colorFace]];

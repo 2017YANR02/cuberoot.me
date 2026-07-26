@@ -24,6 +24,11 @@ import { F2L_ALGS } from './f2l_algs';
 
 /** 本位面序号 → 面字母(与 cube333 的 FACE_CH 同序)。 */
 export const FACE_LETTERS: readonly CubeFace[] = ['U', 'R', 'F', 'D', 'L', 'B'];
+/**
+ * 非目标格的引擎色标签(`engine/define.ts` 的 `COLORS.Blank`,压暗的空格)。
+ * 题板与出题两边都用它,别一边写 'Blank' 一边写 'Gray'(那样只暗一半)。
+ */
+export const BLANK = 'Blank';
 /** 对面。 */
 const OPPOSITE = [3, 4, 5, 0, 1, 2];
 
