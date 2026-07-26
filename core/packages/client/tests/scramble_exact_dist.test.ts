@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   EXACT_DIST, EXACT_STAGES, SLOT_OK,
-  exactColorsOf, exactMean, exactRatio, exactRatios, formatExactPct, getExactCell,
+  compactExact, exactColorsOf, exactMean, exactRatio, exactRatios, formatExactPct, getExactCell,
   groupDigits, isSlotApplicable,
   type ExactFull, type ExactStage,
 } from '@/app/[lang]/scramble/stats/_data/exact_dist';
@@ -198,5 +198,33 @@ describe('格式化', () => {
     expect(formatExactPct(0.511647)).toBe('51.1647%');
     expect(formatExactPct(0)).toBe('0%');
     expect(formatExactPct(1e-12)).toBe('1.00e-10%');
+  });
+
+  it('柱顶紧凑写法:一路带到 E,且不改变数量级', () => {
+    expect(compactExact('1')).toBe('1');
+    expect(compactExact('9809')).toBe('9809');
+    expect(compactExact('46381')).toBe('46.3k');
+    expect(compactExact('12836210229')).toBe('12.8B');
+    expect(compactExact('980995276800')).toBe('980B');
+    expect(compactExact('695280402432000')).toBe('695T');
+    // 双色底 XCross 的两个极端 —— 只到 P 会写出「25284.7P」这种东西
+    expect(compactExact('25284688565714070184')).toBe('25.2E');
+    expect(compactExact('43252003274489856000')).toBe('43.2E');
+  });
+
+  it('紧凑写法与完整值同源 —— 位数不会错档', () => {
+    eachCell((_s, _sl, _c, cell) => {
+      const c = cell as ExactFull;
+      if (c.kind !== 'full') return;
+      for (const v of c.counts) {
+        const compact = compactExact(v);
+        // 反解出的量级必须与原字符串位数一致(容 1 位:紧凑保留 1~3 位整数)
+        const m = /^([\d.]+)([kMBTPE]?)$/.exec(compact);
+        expect(m).not.toBe(null);
+        const exp = { '': 0, k: 3, M: 6, B: 9, T: 12, P: 15, E: 18 }[m![2]] ?? 0;
+        const approx = Number(m![1]) * Math.pow(10, exp);
+        expect(Math.abs(approx - Number(v)) / Number(v)).toBeLessThan(0.1);
+      }
+    });
   });
 });

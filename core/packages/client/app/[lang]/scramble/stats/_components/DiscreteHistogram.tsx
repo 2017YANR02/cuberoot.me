@@ -13,6 +13,16 @@ export interface HistSeries {
   // NOTE: 设置后图例可点击，用于循环切换颜色（single/dual/quad 模式）
   onLegendClick?: () => void;
   legendHint?: string;
+  // ── 精确穷举分布专用（见 _data/exact_dist.ts）─────────────────────────
+  // 那批数据的计数超 Number.MAX_SAFE_INTEGER 三个数量级（双色底 XCross d=7 是
+  // 25,284,688,565,714,070,184），counts 里只能放丢了精度的近似值 —— 仅用于定 x 轴范围。
+  // 真正的比例/标签/总数走下面三个字段，全部在数据层用 BigInt 算好再传进来。
+  ratios?: Record<string, number>;   // 归一化占比（0..1），有它就不再 raw/total
+  exactLabel?: Record<string, string>; // 柱顶计数文字（已带千分位）
+  exactTotal?: string;                 // 图例「共 N」
+  // NOTE: 画成虚线描边而非实心柱，且不参与并排分槽 —— 用于把理论分布套在真题实心柱外面，
+  // 两者重合时一眼可见。设了它的 series 不计入 barW 的等分。
+  outline?: boolean;
 }
 
 interface Props {
@@ -52,11 +62,14 @@ interface Props {
   // (全空间状态 / 子问题的子状态 / 某个子集),光秃秃一个「共 378」会被读成 378 个魔方状态。
   // 不传则退回中性的「共 N」。
   totalUnit?: { zh: string; en: string };
+  // NOTE: 对数 y 轴。精确穷举分布跨 10 个数量级(51% ↔ 4.7e-9%),线性轴下两端的极小档
+  // 柱高不足 1px,整条尾巴看不见。仅在能定出有效对数区间时生效(全零/单点自动退回线性)。
+  logY?: boolean;
 }
 
 const W = 760, H = 400;
 
-export default function DiscreteHistogram({ series, yMode = 'percent', chartMode = 'pdf', clickableBins, selectedBin, onBarClick, onChartModeToggle, onYModeToggle, setOptions, activeSet, onSetChange, hideLegendColors, formatBin, showBarLabels, gapAware, meanValue, meanLabel, medianValue, medianLabel, showTotal = true, totalUnit }: Props) {
+export default function DiscreteHistogram({ series, yMode = 'percent', chartMode = 'pdf', clickableBins, selectedBin, onBarClick, onChartModeToggle, onYModeToggle, setOptions, activeSet, onSetChange, hideLegendColors, formatBin, showBarLabels, gapAware, meanValue, meanLabel, medianValue, medianLabel, showTotal = true, totalUnit, logY }: Props) {
   const clickableSet = useMemo(() => new Set(clickableBins ?? []), [clickableBins]);
   // NOTE: 图例放在图表左上空白区（0..low-count 的柱子永远很矮），不再占右边 pad
   // 均值/中位数标注需要底部多留一行,两者都传时再加宽 b。
@@ -88,7 +101,11 @@ export default function DiscreteHistogram({ series, yMode = 'percent', chartMode
       let cum = 0;
       for (let v = mn; v <= mx; v++) {
         const raw = s.counts[String(v)] ?? 0;
-        const pdf = yMode === 'percent' ? raw / tot : raw;
+        // ratios 优先(精确穷举分布):比例已在数据层用 BigInt 算好,不能再走 raw/tot ——
+        // 那条路上的 raw 是丢了精度的近似值。count 模式无精确口径,退回近似 raw 仅作视觉。
+        const pdf = yMode === 'percent'
+          ? (s.ratios ? (s.ratios[String(v)] ?? 0) : raw / tot)
+          : raw;
         cum += pdf;
         out[v] = chartMode === 'cdf' ? cum : pdf;
       }
@@ -114,7 +131,31 @@ export default function DiscreteHistogram({ series, yMode = 'percent', chartMode
   const groupPad = 0.15;
   const slotInnerW = slotW * (1 - groupPad);
   const slotPadL = (slotW - slotInnerW) / 2;
-  const barW = slotInnerW / series.length;
+  // 描边 series(理论分布)套在实心柱外面,不占并排槽位 —— 只有实心的参与等分。
+  const solidIdx = series.map((s, i) => (s.outline ? -1 : i)).filter((i) => i >= 0);
+  const barW = slotInnerW / Math.max(solidIdx.length, 1);
+
+  // 对数 y 轴的区间。取所有 series 的最小正值到峰值,跨度不足一个数量级就退回线性 ——
+  // 否则 log 轴反而把差异压平。
+  const logDomain = (() => {
+    if (!logY) return null;
+    let mn = Infinity;
+    for (const vs of values) {
+      for (const k of Object.keys(vs)) {
+        const v = vs[Number(k)];
+        if (v > 0 && v < mn) mn = v;
+      }
+    }
+    if (!Number.isFinite(mn) || mn <= 0 || yMax <= 0) return null;
+    const lo = Math.floor(Math.log10(mn)), hi = Math.ceil(Math.log10(yMax));
+    return hi - lo >= 1 ? { lo, hi } : null;
+  })();
+  /** 值 → 0..1 的高度比例。线性即 v/yMax;对数走 log10 区间归一。 */
+  const yFrac = (v: number) => {
+    if (v <= 0) return 0;
+    if (!logDomain) return v / yMax;
+    return Math.max(0, (Math.log10(v) - logDomain.lo) / (logDomain.hi - logDomain.lo));
+  };
 
   // gapAware:稀疏整数轴(如姓名「字符长度」,中间有空档长度无人)。
   //   ① x 轴只标有数据的 bin(贪心 ~24px 间距抽稀),不标空档(否则标了点不动);
@@ -141,13 +182,20 @@ export default function DiscreteHistogram({ series, yMode = 'percent', chartMode
   }
 
   const yTicks: number[] = [];
-  const yStep = niceStep(yMax, 5);
-  for (let v = 0; v <= yMax * 1.01; v += yStep) yTicks.push(v);
+  if (logDomain) {
+    for (let e = logDomain.lo; e <= logDomain.hi; e++) yTicks.push(Math.pow(10, e));
+  } else {
+    const yStep = niceStep(yMax, 5);
+    for (let v = 0; v <= yMax * 1.01; v += yStep) yTicks.push(v);
+  }
 
-  const fmtY = (v: number) =>
-    yMode === 'percent'
-      ? `${(v * 100).toFixed(v < 0.01 ? 2 : v < 0.1 ? 1 : 0)}%`
-      : v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(Math.round(v));
+  const fmtY = (v: number) => {
+    if (yMode !== 'percent') return v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(Math.round(v));
+    const p = v * 100;
+    // 对数轴上刻度是 10 的幂,小到 1e-7% —— 定宽小数位会全印成 0%
+    if (logDomain && p > 0 && p < 0.01) return `${p.toExponential(0)}%`;
+    return `${p.toFixed(v < 0.01 ? 2 : v < 0.1 ? 1 : 0)}%`;
+  };
 
   // 柱顶计数:千万级以上改紧凑写法,否则 15 位数字(魔表全空间精确计数)会横向撞成一片。
   const fmtCount = (n: number) => (n >= 1e7 ? compactNum(n) : n.toLocaleString());
@@ -164,7 +212,8 @@ export default function DiscreteHistogram({ series, yMode = 'percent', chartMode
     return `${(p * 100).toFixed(1)}%`;
   };
 
-  const showLabels = showBarLabels ?? (series.length === 1);
+  // 叠加对照(实心真题 + 描边理论)算「单条」—— 标签仍描述实心那条,不该因为多套了个轮廓就消失。
+  const showLabels = showBarLabels ?? (solidIdx.length === 1);
   // 柱多→格窄,标签字号自适应缩小,避免相邻 1/N 标签横向撞在一起。
   const labelFont = slotW < 22 ? 7.5 : slotW < 28 ? 8.5 : slotW < 36 ? 9.5 : 10;
 
@@ -187,7 +236,7 @@ export default function DiscreteHistogram({ series, yMode = 'percent', chartMode
         </defs>
         {/* Y grid + ticks */}
         {yTicks.map((v, i) => {
-          const y = PAD.t + chartH - (v / yMax) * chartH;
+          const y = PAD.t + chartH - yFrac(v) * chartH;
           return (
             <g key={`y${i}`}>
               <line x1={PAD.l} x2={PAD.l + chartW} y1={y} y2={y} style={{ stroke: 'var(--border)' }} strokeDasharray="2,3" />
@@ -231,15 +280,17 @@ export default function DiscreteHistogram({ series, yMode = 'percent', chartMode
             {Array.from({ length: nBins }, (_, i) => xMin + i).map((v, bi) => {
               const yVal = values[si][v] ?? 0;
               if (yVal <= 0) return null;
-              const h = (yVal / yMax) * chartH;
-              const x = PAD.l + bi * slotW + slotPadL + si * barW;
-              const fill = `url(#${gradIdFor(si)})`;
+              const h = yFrac(yVal) * chartH;
+              // 描边 series 铺满整格内宽(套住下方所有实心柱);实心 series 按自己的槽位并排。
+              const slotOrder = solidIdx.indexOf(si);
+              const x = s.outline ? PAD.l + bi * slotW + slotPadL : PAD.l + bi * slotW + slotPadL + slotOrder * barW;
+              const fill = s.outline ? 'none' : `url(#${gradIdFor(si)})`;
               const isClickable = clickableSet.has(v);
               const isSelected = selectedBin === v;
               const defaultStroke = s.stroke ?? (needsStroke(s.fillColors) ? '#d4d4d4' : undefined);
-              const stroke = isSelected ? '#C15F3C' : defaultStroke;
-              const strokeW = isSelected ? 2 : (defaultStroke ? 1 : 0);
-              const rectW = Math.max(barW - 1, 0.5);
+              const stroke = s.outline ? (s.stroke ?? 'var(--accent)') : (isSelected ? '#C15F3C' : defaultStroke);
+              const strokeW = s.outline ? 1.6 : (isSelected ? 2 : (defaultStroke ? 1 : 0));
+              const rectW = s.outline ? slotInnerW : Math.max(barW - 1, 0.5);
               return (
                 <rect
                   key={`b${si}_${v}`}
@@ -250,10 +301,12 @@ export default function DiscreteHistogram({ series, yMode = 'percent', chartMode
                   fill={fill}
                   stroke={stroke}
                   strokeWidth={strokeW}
-                  opacity={series.length > 1 ? 0.82 : 0.92}
-                  className={isClickable ? 'scramble-hist-bar-clickable' : undefined}
-                  style={isClickable && onBarClick ? { cursor: 'pointer' } : undefined}
-                  onClick={isClickable && onBarClick ? () => onBarClick(v) : undefined}
+                  strokeDasharray={s.outline ? '3,2.5' : undefined}
+                  opacity={s.outline ? 1 : (solidIdx.length > 1 ? 0.82 : 0.92)}
+                  className={isClickable && !s.outline ? 'scramble-hist-bar-clickable' : undefined}
+                  style={isClickable && onBarClick && !s.outline ? { cursor: 'pointer' } : undefined}
+                  onClick={isClickable && onBarClick && !s.outline ? () => onBarClick(v) : undefined}
+                  pointerEvents={s.outline ? 'none' : undefined}
                 />
               );
             })}
@@ -310,7 +363,7 @@ export default function DiscreteHistogram({ series, yMode = 'percent', chartMode
         )}
         {/* 整列透明 hit-rect：边到边铺满整格(slotW，无列间间隙),覆盖柱子及下方 x 轴标签,
             点该列任意位置都能选中该 bin —— 跟「点 0~7 数字所在列」一致,不留死区。 */}
-        {onBarClick && clickableBins && series.length === 1 && Array.from({ length: nBins }, (_, i) => xMin + i).map((v, bi) => {
+        {onBarClick && clickableBins && solidIdx.length === 1 && Array.from({ length: nBins }, (_, i) => xMin + i).map((v, bi) => {
           if (!clickableSet.has(v)) return null;
           // gapAware 时命中区扩到相邻有数据 bin 的中点(填满空档);否则单格宽。
           const span = gapAware ? hitSpans.get(v) : undefined;
@@ -329,26 +382,30 @@ export default function DiscreteHistogram({ series, yMode = 'percent', chartMode
         })}
         {/* 柱上方标签（单 series）。PDF: 计数 + 百分比；CDF: 累积计数 + 累积百分比 */}
         {showLabels && Array.from({ length: nBins }, (_, i) => xMin + i).map((v, bi) => {
-          const s = series[0];
-          const yVal = values[0][v] ?? 0;
+          // 标签描述的是实心那条(描边 series 只是套在外面的理论轮廓,不另标数字)。
+          const si0 = solidIdx[0] ?? 0;
+          const s = series[si0];
+          const yVal = values[si0][v] ?? 0;
           if (yVal <= 0) return null;
-          const h = (yVal / yMax) * chartH;
+          const h = yFrac(yVal) * chartH;
           const cx = PAD.l + bi * slotW + slotW / 2;
           const topY = PAD.t + chartH - h - 6;
-          const tot = totals[0] || 1;
-          let countDisp: number;
+          const tot = totals[si0] || 1;
+          let countText: string;
           let pctDisp: number;
           if (chartMode === 'cdf') {
-            countDisp = Math.round(yMode === 'percent' ? yVal * tot : yVal);
+            countText = fmtCount(Math.round(yMode === 'percent' ? yVal * tot : yVal));
             pctDisp = yMode === 'percent' ? yVal : yVal / tot;
           } else {
-            countDisp = s.counts[String(v)] ?? 0;
-            pctDisp = countDisp / tot;
+            const raw = s.counts[String(v)] ?? 0;
+            // 精确穷举分布:计数超 Number 安全区,只能用数据层传来的字符串;比例同理走 ratios。
+            countText = s.exactLabel?.[String(v)] ?? fmtCount(raw);
+            pctDisp = s.ratios ? (s.ratios[String(v)] ?? 0) : raw / tot;
           }
           return (
             // pointer-events:none 让点到数字标签时穿透到下方整列 hit-rect,不挡选中。
             <g key={`lb${v}`} style={{ pointerEvents: 'none' }}>
-              <text x={cx} y={topY - 12} textAnchor="middle" fontSize={labelFont} style={{ fill: 'var(--text)' }}>{fmtCount(countDisp)}</text>
+              <text x={cx} y={topY - 12} textAnchor="middle" fontSize={labelFont} style={{ fill: 'var(--text)' }}>{countText}</text>
               <text x={cx} y={topY} textAnchor="middle" fontSize={labelFont} style={{ fill: 'var(--text-sub)' }}>{fmtPct(pctDisp)}</text>
             </g>
           );
@@ -398,10 +455,15 @@ export default function DiscreteHistogram({ series, yMode = 'percent', chartMode
             </button>
           </div>
         )}
-        {showTotal && series.length === 1 && (
+        {showTotal && solidIdx.length === 1 && (
           <span className="scramble-hist-total">
             {(() => {
-              const n = (totals[0] ?? 0).toLocaleString();
+              // 分母认 exactTotal 那条,而不是"第一条实心" —— 叠加对照时实心柱是真题样本、
+              // 描边才是理论分布,分母该报理论的状态空间(真题样本量在这个语境下不是分母)。
+              // 精确穷举的状态空间超 Number 安全区,只能用数据层传来的字符串。
+              const withExact = series.find((s) => s.exactTotal);
+              const si0 = solidIdx[0] ?? 0;
+              const n = withExact?.exactTotal ?? (totals[si0] ?? 0).toLocaleString();
               if (!totalUnit) return tr({ zh: `共 ${n}`, en: `${n} in total` });
               return tr({ zh: `共 ${n} ${totalUnit.zh}`, en: `${n} ${totalUnit.en}` });
             })()}

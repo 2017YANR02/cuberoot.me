@@ -976,3 +976,50 @@ a.scramble-timeline-scramble:hover {
   color: var(--text);
   margin: 0 0 0.75rem;
 }
+
+/* ── 精确穷举集专属 ─────────────────────────────────────────────── */
+/* 两个显示口径钮(叠加真题对照 / 对数 y 轴)+ 说明气泡。紧凑靠左,不用 spacer 撑两端。 */
+.scramble-stats-exact-toggles {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+/* 该 (阶段,槽位,底色) 没有完整分布可画时的说明位 —— 不画空图,直接讲清缺什么、卡在哪。 */
+.scramble-stats-exact-empty {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+  line-height: 1.7;
+}
+.scramble-stats-exact-empty p {
+  margin: 0;
+}
+.scramble-stats-exact-empty p + p {
+  margin-top: 0.5rem;
+  color: var(--faint-foreground);
+}
+.scramble-stats-exact-zero {
+  color: var(--muted-foreground);
+}
+.scramble-stats-exact-zero b {
+  display: block;
+  margin-top: 0.25rem;
+  font-family: var(--font-mono);
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+/* 叠加开关里的虚线示意 —— 与图中 WCA 真题那条轮廓同款,免得用户猜哪条是哪条。 */
+.scramble-stats-overlay-swatch {
+  display: inline-block;
+  width: 18px;
+  height: 9px;
+  margin: 0 0.35em;
+  vertical-align: -1px;
+  border: 1.5px dashed var(--muted-foreground);
+  border-radius: 1px;
+}
