@@ -838,6 +838,13 @@
   line-height: 1.55;
   color: var(--muted-foreground);
 }
+.trainer-round-modal-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
 .trainer-round-modal-btn {
   padding: 9px 22px;
   border: none;

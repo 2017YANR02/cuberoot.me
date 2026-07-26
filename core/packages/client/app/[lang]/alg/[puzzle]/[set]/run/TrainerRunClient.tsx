@@ -181,6 +181,9 @@ export default function TrainerRunClient() {
   const jumpToHist = useTrainerStore(s => s.jumpToHist);
   const recapRoundDone = useTrainerStore(s => s.recapRoundDone);
   const continueRecapRound = useTrainerStore(s => s.continueRecapRound);
+  const dismissRecapRound = useTrainerStore(s => s.dismissRecapRound);
+  const recapRoundPrompt = useTrainerStore(s => s.recapRoundPrompt);
+  const setRecapRoundPrompt = useTrainerStore(s => s.setRecapRoundPrompt);
   const getTimerReady = useTrainerStore(s => s.getTimerReady);
   const startTimer = useTrainerStore(s => s.startTimer);
   const stopTimer = useTrainerStore(s => s.stopTimer);
@@ -383,12 +386,16 @@ export default function TrainerRunClient() {
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA'
         || target.tagName === 'SELECT' || target.isContentEditable)) return;
-      // 「本轮结束」弹窗开着时:回车/空格/Esc/→ 进下一轮,其余键一律吞掉(别打标记/翻历史)
+      // 「本轮结束」弹窗开着时:回车/空格/→ 进下一轮,其余键一律吞掉(别打标记/翻历史)
       const st0 = useTrainerStore.getState();
       if (st0.recapRoundDone) {
-        if (e.code === 'Enter' || e.code === 'Space' || e.code === 'Escape' || e.code === 'ArrowRight') {
+        if (e.code === 'Enter' || e.code === 'Space' || e.code === 'ArrowRight') {
           e.preventDefault();
           st0.continueRecapRound();
+        } else if (e.code === 'Escape') {
+          // 单机:Esc = 「先不了」,停在最后这题;房间没这个选项,仍等同「继续下一轮」
+          e.preventDefault();
+          if (st0.room) st0.continueRecapRound(); else st0.dismissRecapRound();
         }
         return;
       }
@@ -569,7 +576,7 @@ export default function TrainerRunClient() {
     const isBlank = (t: EventTarget | null): boolean => {
       if (shouldIgnoreTimerTarget(t)) return false;
       if (!(t instanceof Element)) return false;
-      return t.closest('.trainer-stage, .trainer-sidebar, .alg-admin-modal-backdrop, .gesture-wheel, .trainer-qr-backdrop') === null;
+      return t.closest('.trainer-stage, .trainer-sidebar, .alg-admin-modal-backdrop, .gesture-wheel, .trainer-qr-backdrop, .trainer-round-modal-backdrop') === null;
     };
     let pressed = false;
     const down = (e: PointerEvent) => {
@@ -922,6 +929,13 @@ export default function TrainerRunClient() {
                         onLabel={tr({ zh: '乱序', en: 'Shuffled' })}
                         offLabel={tr({ zh: '顺序', en: 'In order' })}
                         ariaLabel={tr({ zh: '复习顺序', en: 'Recap order' })}
+                        disabled={!!room}
+                      />
+                      {/* 刷完一轮停一下 —— 关掉 = 出完直接重洗接着刷(池子只有三五个 case 时别弹) */}
+                      <BoolToggle
+                        value={recapRoundPrompt}
+                        onChange={setRecapRoundPrompt}
+                        label={tr({ zh: '刷完一轮提示', en: 'Pause at round end' })}
                         disabled={!!room}
                       />
                       {/* 刷到一半想重来:清掉「7/472」这个本轮进度,重洗后从第 1 个再走一遍 */}
@@ -1500,27 +1514,39 @@ export default function TrainerRunClient() {
         </div>
       )}
 
-      {/* 「下一轮」会重洗队列并把全队进度清零 —— 只认按钮,点背景不触发(误触代价太大) */}
-      {recapRoundDone && room && (
-        <div className="trainer-round-modal-backdrop" role="dialog" aria-modal="true">
+      {/* 「下一轮」会重洗队列(房间还会把全队进度清零)—— 只认按钮,点背景不触发(误触代价太大) */}
+      {recapRoundDone && (
+        <div className="trainer-round-modal-backdrop" role="dialog" aria-modal="true" data-no-timer>
           <div className="trainer-round-modal">
             <h2>{tr({ zh: '本轮复习结束', en: 'Round complete' })}</h2>
             <p>
-              {tr({
-                zh: `全队已刷完本轮全部 ${room.total} 个 case!点「继续下一轮」大家一起开新一轮${room.order === 'shuffle' ? '(重新洗牌)' : ''}。`,
-                en: `The team finished all ${room.total} cases this round! Hit “Next round” to start a fresh round together${room.order === 'shuffle' ? ' (reshuffled)' : ''}.`,
-              })}
+              {room
+                ? tr({
+                    zh: `全队已刷完本轮全部 ${room.total} 个 case!点「继续下一轮」大家一起开新一轮${room.order === 'shuffle' ? '(重新洗牌)' : ''}。`,
+                    en: `The team finished all ${room.total} cases this round! Hit “Next round” to start a fresh round together${room.order === 'shuffle' ? ' (reshuffled)' : ''}.`,
+                  })
+                : tr({
+                    zh: `选中的 ${recapCur?.total ?? 0} 个 case 都过了一遍!点「继续下一轮」${recapOrder === 'shuffle' ? '重新洗牌' : '按原顺序'}再走一遍。`,
+                    en: `You’ve been through all ${recapCur?.total ?? 0} selected cases! Hit “Next round” to run them again${recapOrder === 'shuffle' ? ', reshuffled' : ' in the same order'}.`,
+                  })}
             </p>
             {roomError && <p className="trainer-room-err">{roomError}</p>}
-            <button
-              type="button"
-              className="trainer-round-modal-btn"
-              onClick={continueRecapRound}
-              disabled={roomBusy}
-              autoFocus
-            >
-              {tr({ zh: '继续下一轮', en: 'Next round' })}
-            </button>
+            <div className="trainer-round-modal-actions">
+              {!room && (
+                <button type="button" className="trainer-opts-btn is-ghost" onClick={dismissRecapRound}>
+                  {tr({ zh: '先不了', en: 'Not now' })}
+                </button>
+              )}
+              <button
+                type="button"
+                className="trainer-round-modal-btn"
+                onClick={continueRecapRound}
+                disabled={roomBusy}
+                autoFocus
+              >
+                {tr({ zh: '继续下一轮', en: 'Next round' })}
+              </button>
+            </div>
           </div>
         </div>
       )}

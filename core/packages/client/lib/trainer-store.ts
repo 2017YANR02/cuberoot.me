@@ -156,6 +156,8 @@ interface TrainerPrefs {
   srsFromSolves: boolean;
   /** 换到下一题时,把刚做完那个 case 默认标成「已掌握」(只动还没标过的,不覆盖手动标记)。 */
   autoMasterOnAdvance: boolean;
+  /** 复习模式整轮刷完时先停下来弹「本轮复习结束」,而不是无声重洗接着刷。 */
+  recapRoundPrompt: boolean;
 }
 const DEFAULT_PREFS: TrainerPrefs = {
   preAuf: true, postAuf: true, timing: false, mode: 'recap', probMode: 'uniform',
@@ -163,7 +165,7 @@ const DEFAULT_PREFS: TrainerPrefs = {
   showPrevCard: true, showNextCard: true, showStats: true, showStageThumb: true,
   pureScramble: true, multiScramble: false,
   srsNewLimit: 10, srsSessionLimit: 60, srsFillExtra: true, srsAutoMark: true, srsShowPlayer: false,
-  srsFromSolves: true, autoMasterOnAdvance: true,
+  srsFromSolves: true, autoMasterOnAdvance: true, recapRoundPrompt: true,
 };
 const PREFS_KEY = 'trainer:prefs';
 
@@ -192,6 +194,7 @@ const prefsOf = (st: TrainerPrefs): TrainerPrefs => ({
   srsNewLimit: st.srsNewLimit, srsSessionLimit: st.srsSessionLimit,
   srsFillExtra: st.srsFillExtra, srsAutoMark: st.srsAutoMark, srsShowPlayer: st.srsShowPlayer,
   srsFromSolves: st.srsFromSolves, autoMasterOnAdvance: st.autoMasterOnAdvance,
+  recapRoundPrompt: st.recapRoundPrompt,
 });
 
 const shuffle = <T,>(arr: T[]): T[] => {
@@ -247,11 +250,17 @@ interface TrainerState {
    */
   observingPinned: boolean;
   /**
-   * 在线房间复习:本机领到的这一份刚出完时置 true —— 出下一题被拦住,弹「本轮复习结束」
-   * 提示,`continueRecapRound()` 才进下一轮。队列服务端共享,领完对全员同时弹(真·多方
-   * 共同刷完)。单机整集不置位(每轮无缝重洗)。
+   * 复习一轮刷完时置 true —— 出下一题被拦住,弹「本轮复习结束」提示,
+   * `continueRecapRound()` 才进下一轮。
+   * 在线房间:队列服务端共享,领完对全员同时弹(真·多方共同刷完),恒弹。
+   * 单机整集:受 `recapRoundPrompt` 开关控制(关掉 = 每轮无缝重洗,老行为)。
    */
   recapRoundDone: boolean;
+  /**
+   * 单机:用户在「本轮复习结束」里选了「先不了」—— 本轮不再弹,下次换题直接进新一轮。
+   * 运行时态,进新一轮(promoteNext / pickFresh)自动清掉。
+   */
+  recapRoundAcked: boolean;
 
   // 在线协同房间(运行时态,不持久化)
   room: TrainerRoom | null;
@@ -284,6 +293,7 @@ interface TrainerState {
   srsShowPlayer: boolean;
   srsFromSolves: boolean;
   autoMasterOnAdvance: boolean;
+  recapRoundPrompt: boolean;
 
   /** recap 模式的洗牌队列:pool 变了(recapSig 失配)重洗。 */
   recapQueue: string[];
@@ -308,6 +318,9 @@ interface TrainerState {
   setRecapOrder: (o: TrainerRecapOrder) => void;
   /** 清空本轮复习进度:重洗队列、从第 1 个重新开始(不动成绩与学习标记)。 */
   restartRecapRound: () => void;
+  setRecapRoundPrompt: (v: boolean) => void;
+  /** 「本轮复习结束」里选「先不了」:关掉弹窗停在原地,本轮不再弹。 */
+  dismissRecapRound: () => void;
   setTimerFont: (f: TrainerTimerFont) => void;
   setScrambleFont: (f: TrainerTimerFont) => void;
   setShowPrevCard: (v: boolean) => void;
@@ -472,6 +485,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       peek2: c ? c.entry : null,
       observingPinned: false,
       recapRoundDone: false,
+      recapRoundAcked: false,
     });
     cstimerize();
   };
@@ -497,6 +511,8 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       peek2: c ? c.entry : null,
       observingPinned: false,
       recapRoundDone: false,
+      // 已经翻进新一轮 ⟹ 上一轮的「先不了」失效,下一轮刷完照弹
+      recapRoundAcked: false,
     });
     cstimerize();
   };
@@ -536,8 +552,23 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     };
   };
 
-  /** 房间是否维护本地预抽(仅三条一屏:第 2、3 条来自 peek/peek2,需提前领取)。 */
-  const roomWantsPreviews = (st: TrainerState): boolean => st.multiScramble && !st.timing;
+  /**
+   * 屏上是不是一次摆三条(三条一屏且不计时)—— 第 2、3 条就是 peek / peek2。
+   * 房间据此决定要不要提前领两条;本轮进度判定也据此看屏上最后一条而非 current。
+   */
+  const screenShowsThree = (st: TrainerState): boolean => st.multiScramble && !st.timing;
+
+  /**
+   * 屏上最后一条是不是本轮的最后一个 case(= 再点一下就翻进下一轮)。
+   * 三条一屏时屏上摆的是 current + peek + peek2,判据要看 peek2 而不是 current,
+   * 否则「19/21 那一屏其实已经把 20、21 摆出来了」会被误判成还没刷完。
+   */
+  const atRoundTail = (st: TrainerState): boolean => {
+    if (st.mode !== 'recap') return false;
+    const cur = st.hist.idx >= 0 ? st.hist.list[st.hist.idx] : null;
+    const tail = (screenShowsThree(st) ? (st.peek2 ?? st.peek) : null) ?? cur;
+    return !!tail?.recap && tail.recap.pos >= tail.recap.total;
+  };
 
   const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 
@@ -625,7 +656,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       //    advanced(本机落后,别人已开新一轮)⟹ roomClaimBatch 已同步轮次,旧预抽作废,再领一次。
       for (let attempt = 0; attempt < 2; attempt++) {
         const st = get();
-        const multi = roomWantsPreviews(st);
+        const multi = screenShowsThree(st);
         const wantAhead = need + (multi ? 2 : 0);           // current 之后需要多少条
         const have = [st.peek, st.peek2].filter(Boolean) as TrainerHistEntry[];
         const toClaim = Math.max(0, wantAhead - have.length);
@@ -664,7 +695,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
   const roomFillPreviews = async (): Promise<void> => {
     const st = get();
     if (!st.room || st.roomBusy || st.currentKey == null) return;
-    if (!roomWantsPreviews(st)) return;
+    if (!screenShowsThree(st)) return;
     const have = [st.peek, st.peek2].filter(Boolean).length;
     if (have >= 2) return;
     if (histForward(st.hist)) return; // 回看历史中段:peek 代表队尾之后,不动
@@ -752,6 +783,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       observingIdx: Math.max(0, persisted.solves.length - 1),
       observingPinned: false,
       recapRoundDone: false,
+      recapRoundAcked: false,
       room: null, roomBusy: false, roomClaimed: 0, roomError: null,
     });
     if (trainerPool(selected, get().scope).length > 0) pickFresh();
@@ -778,6 +810,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     observingIdx: 0,
     observingPinned: false,
     recapRoundDone: false,
+    recapRoundAcked: false,
     room: null,
     roomBusy: false,
     roomClaimed: 0,
@@ -859,12 +892,24 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     restartRecapRound: () => {
       const st = get();
       if (st.room || st.mode !== 'recap') return; // 房间轮次由服务端队列定,本地不重开
-      set({ recapQueue: [], recapPos: 0, recapSig: '' }); // 清 sig ⟹ 下一抽重洗、从第 1 格起
+      // 清 sig ⟹ 下一抽重洗、从第 1 格起;顺手收掉「本轮结束」弹窗(重开就是新一轮)
+      set({ recapQueue: [], recapPos: 0, recapSig: '', recapRoundDone: false, recapRoundAcked: false });
       // 计时中不打断手上这把(新一轮从下一题起);空闲则立刻从头出第一题
       if (st.timerState === TimerState.NOT_RUNNING) {
         set({ hist: EMPTY_HIST });
         pickFresh();
       }
+    },
+    setRecapRoundPrompt: (v) => {
+      // 关掉时把已经弹出来的收掉(房间的那份不归这个开关管,别误收)
+      if (!v && !get().room) set({ recapRoundPrompt: v, recapRoundDone: false });
+      else set({ recapRoundPrompt: v });
+      persistPrefs(prefsOf(get()));
+    },
+    // 「先不了」:停在最后这题(不换题),本轮不再弹 —— 再点一下就直接进新一轮
+    dismissRecapRound: () => {
+      if (!get().recapRoundDone) return;
+      set({ recapRoundDone: false, recapRoundAcked: true });
     },
     setShowPrevCard: (v) => {
       set({ showPrevCard: v });
@@ -947,7 +992,12 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       }
       // 在线房间:队尾向服务器领取下一题(异步,不预抽)
       if (st.room) { void roomAdvance(1); return; }
-      // 单机整集:队尾不打断,每轮无缝重洗(「本轮复习结束」弹窗只房间模式弹)。
+      // 单机整集刷完一轮:先停下来弹「本轮复习结束」,由用户决定要不要再来一轮
+      //(「先不了」= acked,停在原地不再弹;关掉 recapRoundPrompt = 老行为,无缝重洗)。
+      if (st.recapRoundPrompt && !st.recapRoundAcked && atRoundTail(st)) {
+        set({ recapRoundDone: true });
+        return;
+      }
       // 已在队尾:把预抽的下一题(peek)扶正为当前题,peek2 递补为新 peek,再预抽新的 peek2。
       // 这样「你先前看到的下一题」就是「现在要做的这一题」,预览稳定不重roll;右卡预览也提前
       // 一格备好(peek2),换题时右图秒出。
@@ -956,8 +1006,12 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
 
     continueRecapRound: () => {
       if (!get().recapRoundDone) return;
-      // recapRoundDone 只在房间模式置位(单机整集每轮无缝重洗,不弹窗)。
-      if (get().room) void roomContinue(); // 房间:请求开新一轮再领第一题
+      if (get().room) { void roomContinue(); return; } // 房间:请求开新一轮再领第一题
+      // 单机:预抽的 peek 已经是新一轮的第 1 个(draw 在队列走完时就重洗了),扶正即可。
+      // 三条一屏:屏上那三条都是本轮的,要一次翻过去三条,否则新一屏会带上刚做完的两条。
+      const n = screenShowsThree(get()) ? 3 : 1;
+      set({ recapRoundDone: false });
+      for (let i = 0; i < n; i++) promoteNext();
     },
 
     prevScramble: () => {
