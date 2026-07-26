@@ -263,6 +263,8 @@ interface TrainerState {
   setMode: (m: TrainerMode) => void;
   setProbMode: (m: TrainerProbMode) => void;
   setRecapOrder: (o: TrainerRecapOrder) => void;
+  /** 清空本轮复习进度:重洗队列、从第 1 个重新开始(不动成绩与学习标记)。 */
+  restartRecapRound: () => void;
   setTimerFont: (f: TrainerTimerFont) => void;
   setScrambleFont: (f: TrainerTimerFont) => void;
   setShowPrevCard: (v: boolean) => void;
@@ -458,6 +460,8 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
   /** 房间是否维护本地预抽(仅三条一屏:第 2、3 条来自 peek/peek2,需提前领取)。 */
   const roomWantsPreviews = (st: TrainerState): boolean => st.multiScramble && !st.timing;
 
+  const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
+
   /**
    * 一次原子领取最多 count 题,转成条目数组;只更新 roomClaimed / room 元信息,不落
    * current/peek/history。三条一屏一次占三格 = 一次网络往返 + 一次限流额度(旧后端只回单格,
@@ -469,9 +473,21 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
   ): Promise<{ cases: TrainerHistEntry[]; terminal?: 'done' | 'advanced' | 'error' }> => {
     const st = get();
     if (!st.room || !st.puzzle || count <= 0) return { cases: [] };
+    // 429(限流)/ 网络抖动是暂态失败,退避重试一次再认输 —— 认输也只报错,绝不能当「本轮领完」
     let res;
-    try { res = await claimRoomBatch(st.room.code, st.room.round, count); }
-    catch (e) { set({ roomError: (e as Error).message }); return { cases: [], terminal: 'error' }; }
+    for (let attempt = 0; ; attempt++) {
+      try { res = await claimRoomBatch(st.room.code, st.room.round, count); break; }
+      catch (e) {
+        const msg = (e as Error).message;
+        if (attempt === 0 && /rate limit|429|fetch|network|load failed/i.test(msg)) {
+          await sleep(1500);
+          if (!get().room) return { cases: [], terminal: 'error' };
+          continue;
+        }
+        set({ roomError: msg });
+        return { cases: [], terminal: 'error' };
+      }
+    }
     const st2 = get();
     if (!st2.room || !st2.puzzle) return { cases: [], terminal: 'error' };
     if (res.kind === 'advanced') {
@@ -492,6 +508,11 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       maxClaimed = Math.max(maxClaimed, index + 1);
     }
     set({ roomClaimed: maxClaimed, room: { ...st2.room, round: res.round, total: res.total } });
+    // 领到了格但本集里一个都找不到(房间与本机的 case key 对不上)是数据错,不是「刷完了」
+    if (cases.length === 0) {
+      set({ roomError: 'claimed cases not in this set' });
+      return { cases: [], terminal: 'error' };
+    }
     return { cases };
   };
 
@@ -531,6 +552,9 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
         const toClaim = Math.max(0, wantAhead - have.length);
         const { cases: fresh, terminal } = toClaim > 0 ? await roomClaimBatch(toClaim) : { cases: [], terminal: undefined };
         if (terminal === 'advanced') { set({ peek: null, peek2: null }); continue; } // 重同步后再领新一轮
+        // 领取失败(限流 / 断网 / 后端出错)绝不能冒充「本轮结束」—— 那个弹窗会骗用户点「继续
+        // 下一轮」,而下一轮是真的会把全队进度重置的。只报错,题面原地不动,用户重试即可。
+        if (terminal === 'error') return;
 
         const queue = [...have, ...fresh];                  // current 之后的虚拟队列
         if (queue.length === 0) { set({ recapRoundDone: true }); return; }
@@ -734,6 +758,18 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       persistPrefs(prefsOf(get()));
       // 房间模式顺序由服务端队列定,本地不重出(改 recapOrder 只影响下次建房)
       if (!get().room && get().mode === 'recap' && get().timerState === TimerState.NOT_RUNNING) pickFresh();
+    },
+    // 「7/472 刷到一半想重来」:只清本轮队列进度,成绩 / 学习标记 / 记忆排期一概不动
+    //(那三样是长期资产,清进度是「这一遍重刷」而不是「从没学过」)。
+    restartRecapRound: () => {
+      const st = get();
+      if (st.room || st.mode !== 'recap') return; // 房间轮次由服务端队列定,本地不重开
+      set({ recapQueue: [], recapPos: 0, recapSig: '' }); // 清 sig ⟹ 下一抽重洗、从第 1 格起
+      // 计时中不打断手上这把(新一轮从下一题起);空闲则立刻从头出第一题
+      if (st.timerState === TimerState.NOT_RUNNING) {
+        set({ hist: EMPTY_HIST });
+        pickFresh();
+      }
     },
     setShowPrevCard: (v) => {
       set({ showPrevCard: v });

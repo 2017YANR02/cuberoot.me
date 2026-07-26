@@ -83,6 +83,31 @@ describe('trainer-store recap queue', () => {
     expect(curRecap()).toEqual({ pos: 1, total: 2 });
   });
 
+  it('重开一轮:进度归 1,成绩不动', () => {
+    boot(['A', 'B', 'C', 'D']);
+    const st = useTrainerStore.getState();
+    st.setMode('recap');
+    st.setRecapOrder('seq');
+    useTrainerStore.getState().nextScramble();
+    useTrainerStore.getState().nextScramble();
+    expect(curRecap()).toEqual({ pos: 3, total: 4 });
+    const solvesBefore = useTrainerStore.getState().solves;
+    useTrainerStore.getState().restartRecapRound();
+    expect(curRecap()).toEqual({ pos: 1, total: 4 });
+    expect(useTrainerStore.getState().hist.list.length).toBe(1); // 打乱历史一并清空
+    expect(useTrainerStore.getState().solves).toBe(solvesBefore); // 成绩是长期资产,不清
+  });
+
+  it('训练模式下重开一轮是空操作', () => {
+    boot(['A', 'B', 'C']);
+    const st = useTrainerStore.getState();
+    st.setMode('train');
+    useTrainerStore.getState().nextScramble();
+    const before = useTrainerStore.getState().hist.list.length;
+    useTrainerStore.getState().restartRecapRound();
+    expect(useTrainerStore.getState().hist.list.length).toBe(before);
+  });
+
   it('训练模式无 recap 进度,永不暂停', () => {
     boot(['A', 'B', 'C']);
     const st = useTrainerStore.getState();
