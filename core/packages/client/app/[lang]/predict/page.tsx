@@ -117,6 +117,9 @@ const FACE_NAMES: Record<CubeFace, { zh: string; en: string }> = {
 
 const LEGEND_FACES: CubeFace[] = ['U', 'D', 'F', 'B', 'L', 'R'];
 
+/** 六个中心的 facelet(URFDLB 每面第 5 格)。中心不动,拿来当方位锚。 */
+const CENTER_FACELETS: readonly number[] = [4, 13, 22, 31, 40, 49];
+
 /** 被复刻的原站(见 /about 致谢),页面底部给个链接。 */
 const ORIGIN_URL = 'https://app--cube-lookahead-24bc12e4.base44.app/';
 
@@ -267,12 +270,17 @@ function PredictPageInner() {
     return out;
   }, [challenge, found, over]);
 
-  /** 压暗的 facelet:目标块剩下的贴纸。要问的是「白色那枚落在哪」,同块的绿橙两枚
-   *  只是用来认出这是同一个角块,不该跟它一样亮。 */
+  /**
+   * 压暗的 facelet = 目标块剩下的贴纸 + 六个中心。
+   *
+   * 前者:问的是「白色那枚落在哪」,同块的绿橙两枚只用来认出这是同一个角块,不该跟它一样亮。
+   * 后者:中心不动,是读方位的锚(哪面是绿面);压暗才不跟目标抢眼 —— 满色中心在灰底上
+   * 比目标还显眼,这题就变成「找那个不是中心的彩格」了。
+   */
   const dim = useMemo(() => {
     if (!challenge) return EMPTY_FACELETS;
     const asked = new Set(challenge.targets.map((t) => t.startFacelet));
-    const out: number[] = [];
+    const out = CENTER_FACELETS.filter((f) => !asked.has(f));
     [...challenge.startFacelets].forEach((ch, i) => { if (ch !== '.' && !asked.has(i)) out.push(i); });
     return out;
   }, [challenge]);

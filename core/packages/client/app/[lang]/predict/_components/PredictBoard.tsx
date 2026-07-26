@@ -34,7 +34,7 @@ import { timing } from '@/app/[lang]/sim/engine/tweenTiming';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { tr } from '@/i18n/tr';
 import { engineHomeSid } from '@/app/[lang]/sim/engine/nxn/netIndex';
-import { FM_REGULAR, FM_DIM, FM_IGNORED } from '@/app/[lang]/sim/engine/nxn/stickering';
+import { FM_OUTLINE, FM_DIM, FM_IGNORED } from '@/app/[lang]/sim/engine/nxn/stickering';
 
 /** 复盘动画每 90° 的帧数(引擎默认 30,这里快一档);挂载时设,卸载时还回去。 */
 const PLAY_FRAMES = 16;
@@ -246,22 +246,27 @@ export default function PredictBoard({
    * 两者正交,所以这个 effect 不碰几何、也不会吃掉动画。
    *
    * 三档,不是两档:
-   *   满色 = 题面点名的那一枚(要找的就是它);
-   *   `FM_DIM`(自己的颜色减半)= 目标块剩下的贴纸 —— 得看得出这几枚是同一块,
-   *     不然「追踪这个角块」就只剩一枚孤零零的色片;
-   *   `FM_IGNORED`(整片 #666 灰)= 其余 50 来格,和上游那版一样是灰底。
+   *   `FM_OUTLINE`(满色 + 描边)= 题面点名的那一枚。光靠满色在灰底上还不够跳 ——
+   *     描边给它一圈高亮框,而颜色留着不动(这块板子问的就是「那枚什么色的贴纸」,
+   *     换色的记号法在这里等于把题干抹了);
+   *   `FM_DIM`(自己的颜色减半)= 目标块剩下的贴纸 + 六个中心 —— 前者得看得出这几枚
+   *     是同一块,后者是方位参照(压暗才不跟目标抢);
+   *   `FM_IGNORED`(整片 #666 灰)= 其余 40 来格,和上游那版一样是灰底。
    */
   useEffect(() => {
     const mount = mountRef.current;
     if (!mount || !ready) return;
     const cube = mount.world.cube as Cube;
+    // /sim 把压暗的白钉在 #dddddd(免得跟 ignored 灰撞),可那跟满色白根本分不出 ——
+    // 这块板子上白中心、白目标可能同时在场,压暗的白得一眼是暗的。
+    cube.instancedRenderer.dimWhite = '#aaaaaa';
     const sid = (f: number) => engineHomeSid(faceletMap[f].cube, faceletMap[f].face, 3);
     const full = new Set(bright.map(sid));
     const half = new Set(dim.map(sid));
     cube.instancedRenderer.setStickering(
       full.size === 0 && half.size === 0 ? null : (initial, face) => {
         const s = engineHomeSid(initial, face, 3);
-        return full.has(s) ? FM_REGULAR : half.has(s) ? FM_DIM : FM_IGNORED;
+        return full.has(s) ? FM_OUTLINE : half.has(s) ? FM_DIM : FM_IGNORED;
       },
     );
     mount.invalidate();

@@ -41,6 +41,7 @@ const FTO_GROUPS: StickeringGroup[] = [
 // 省掉一条前缀标签。默认值排第一位。
 const PICK_OPTIONS: { v: CustomTreatment; zh: string; en: string }[] = [
   { v: 'regular', zh: '选中 原色', en: 'Picked: color' },
+  { v: 'outline', zh: '选中 原色 + 描边', en: 'Picked: color + outline' },
   { v: 'dim', zh: '选中 压暗', en: 'Picked: dim' },
   { v: 'ignored', zh: '选中 变灰', en: 'Picked: gray' },
 ];
