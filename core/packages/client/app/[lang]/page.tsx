@@ -13,7 +13,6 @@ import Link from '@/components/AppLink';
 import LangToggle from '@/components/LangToggle';
 import { useTranslation } from 'react-i18next';
 import { useAuthUser, nextQuery } from '@/lib/auth-store';
-import LandingCubeHero from '../_components/LandingCubeHero';
 import { TEXTS, SECTIONS } from '@/lib/landing-sections';
 
 // Below-the-fold widgets — dynamic to defer client hydrate / chunk fetch.
@@ -132,21 +131,20 @@ export default function LandingPage() {
             </div>
             <div className="cards-container">
               {sec.cards.map((card) => {
-                const iconSize = card.tier === 'hero-side' ? 36
-                  : card.tier === 'medium' ? 34
-                  : card.tier === 'utility' ? 22
-                  : 30;
+                const iconSize = card.tier === 'medium' ? 28
+                  : card.tier === 'utility' ? 20
+                  : 26;
                 const content = (
                   <>
-                    <div className="card-icon">
-                      {card.tier === 'hero'
-                        ? <LandingCubeHero />
-                        : card.iconImg
+                    {(card.iconImg || card.Icon) && (
+                      <div className="card-icon">
+                        {card.iconImg
                           ? <img src={card.iconImg} alt={`${t(card.nameKey)} Logo`} className="cstimer-logo" />
                           : card.Icon
                             ? <card.Icon size={iconSize} strokeWidth={1.5} />
                             : null}
-                    </div>
+                      </div>
+                    )}
                     <div className="card-name">{t(card.nameKey)}</div>
                   </>
                 );

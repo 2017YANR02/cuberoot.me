@@ -222,14 +222,14 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
 .landing-page .cards-sections {
     display: flex;
     flex-direction: column;
-    gap: 5rem;
+    gap: 3.5rem;
     max-width: 1100px;
     width: 100%;
 }
 .landing-page .cards-section {
     display: flex;
     flex-direction: column;
-    gap: 1.75rem;
+    gap: 1.25rem;
 }
 /* V2 section header: eyebrow + serif title + sub-line */
 .landing-page .section-header {
@@ -274,52 +274,40 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
 .landing-page .cards-container {
     display: grid;
     grid-template-columns: repeat(12, 1fr);
-    grid-auto-rows: minmax(90px, auto);
-    gap: 1rem;
+    grid-auto-rows: minmax(72px, auto);
+    gap: 0.75rem;
     width: 100%;
 }
 
 /* Tier 分配 */
-.landing-page .card.tier-hero {
-    grid-column: span 6;
-    grid-row: span 2;
-    min-height: 360px;         /* 给 cube (max 280) + padding + name 足够空间 */
-    flex-direction: column;    /* 大魔方卡仍纵向:cube 占满 + 名字在下 */
-}
-
-.landing-page .card.tier-hero-side {
-    grid-column: span 6;
-    min-height: 152px;
-}
-
 .landing-page .card.tier-medium {
     grid-column: span 4;
-    min-height: 140px;
+    min-height: 96px;
 }
 
 .landing-page .card.tier-standard {
     grid-column: span 3;
-    min-height: 120px;
+    min-height: 88px;
 }
 
 .landing-page .card.tier-utility {
     grid-column: span 12;
-    min-height: 72px;
+    min-height: 56px;
     flex-direction: row;
-    padding: 0.75rem 1.25rem;
+    padding: 0.6rem 1.25rem;
     gap: 0.75rem;
     justify-content: center;
 }
 
 /* ── 卡片基础 ── */
-/* 图标 + 文字同一行:左图标右文字(tier-hero 大魔方卡例外,仍纵向) */
+/* 图标 + 文字同一行:左图标右文字 */
 .landing-page .card {
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    gap: 0.6rem;
-    padding: 1.5rem 1rem;
+    gap: 0.55rem;
+    padding: 1rem 0.85rem;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 14px;
@@ -358,8 +346,6 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
     transition: color 0.18s ease;
 }
 
-.landing-page .card.tier-hero .card-name { font-size: 1rem; }
-.landing-page .card.tier-hero-side .card-name { font-size: 1.25rem; }
 .landing-page .card.tier-standard .card-name { font-size: 1.1rem; }
 .landing-page .card.tier-utility .card-name { font-size: 0.95rem; }
 
@@ -394,39 +380,10 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
     pointer-events: none;
 }
 
-/* ── Trainer hero 卡：3D 魔方占满 ── */
-.landing-page .card.tier-hero .card-icon {
-    flex: 1;
-    width: 100%;
-    align-items: center;
-    justify-content: center;
-}
-
-.landing-page .card.tier-hero .cube-hero-slot {
-    width: 100%;
-    height: 100%;
-    min-height: 0;             /* 不强占,跟父 card-icon flex 自适应 */
-    max-height: 280px;         /* 上限:防被 stretch 过大 */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-}
-
-.landing-page .cube-hero-fallback {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    min-height: 0;
-    color: var(--text-sub);
-}
-
 /* ── csTimer logo ── */
 .landing-page .cstimer-logo {
-    width: 2rem;
-    height: 2rem;
+    width: 1.65rem;
+    height: 1.65rem;
     border-radius: 6px;
     display: block;
 }
@@ -438,8 +395,6 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
 
 /* ── 响应式 ── */
 @media (max-width: 1024px) {
-    .landing-page .card.tier-hero { grid-column: span 12; grid-row: span 1; min-height: 300px; }
-    .landing-page .card.tier-hero-side { grid-column: span 6; }
     .landing-page .card.tier-medium { grid-column: span 6; }
     .landing-page .card.tier-standard { grid-column: span 6; }
     .landing-page .card.tier-utility { grid-column: span 6; }
@@ -451,25 +406,17 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
     }
     .landing-page .cards-container {
         grid-template-columns: repeat(2, 1fr);
-        gap: 0.75rem;
+        gap: 0.6rem;
     }
-    .landing-page .card.tier-hero,
-    .landing-page .card.tier-hero-side,
     .landing-page .card.tier-medium,
     .landing-page .card.tier-standard,
     .landing-page .card.tier-utility {
         grid-column: span 1;
         grid-row: auto;
-        min-height: 100px;
+        min-height: 74px;
         flex-direction: row;
         justify-content: center;
-        padding: 1.25rem 0.75rem;
-    }
-    .landing-page .card.tier-hero {
-        grid-column: span 2;
-        min-height: 260px;          /* 给 cube + name 留够空间 */
-        padding: 1rem 0.75rem 1rem;
-        flex-direction: column;     /* 大魔方卡仍纵向 */
+        padding: 0.85rem 0.6rem;
     }
 }
 

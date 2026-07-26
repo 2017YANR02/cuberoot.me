@@ -16,9 +16,12 @@
  * 启动 1k / 5k / 自定义,Stop/Reset 可控。
  */
 import { useCallback, useRef, useState } from 'react';
-import { randomScrambleForEvent } from 'cubing/scramble';
 import { htm } from '@cuberoot/shared/alg-notation';
 import { TeX } from '../../god/_components/Tex';
+
+// 采样器只有用户点「开始」才跑,cubing/scramble(~185KB)静态 import 会让整页首屏
+// 白付这份体积。首次采样时再取。
+const loadScrambler = () => import('cubing/scramble').then((m) => m.randomScrambleForEvent);
 
 interface Props {
   isZh: boolean;
@@ -63,6 +66,7 @@ export default function LiveSampler({ isZh, onSamples }: Props) {
     const tgt = localTotal + target;
 
     try {
+      const randomScrambleForEvent = await loadScrambler();
       while (runningRef.current && localTotal < tgt) {
         const batch = await Promise.all(
           Array.from({ length: 4 }, () => randomScrambleForEvent('333').then((a) => a.toString())),

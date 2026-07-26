@@ -10,3 +10,10 @@
   margin-bottom: 12px;
 }
 
+/* cubing/twisty(~592KB)是动态 import 的,player 落地前 container 是空的。fill 模式
+   的高度由父页面给(recon 的 player-pane),非 fill 模式这里兜一个下限 —— 否则 chunk
+   一到,下文被顶开一次。player 挂上后 :empty 自动失效,不影响任何已有布局。 */
+.twisty-section:not(.twisty-section--fill) .twisty-container:empty {
+  min-height: 240px;
+}
+

@@ -52,7 +52,11 @@ import '@/i18n/i18n-client';
 type ShowMode = 'persons' | 'results';
 
 // echarts-for-react / SorRace 仅客户端,名次和的名人堂时间线 + 排名演化用,懒挂.
-const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
+// 图表自身带 height:190,但 chunk 到之前这块是 0 高 → 常显位置会跳一下。占位补上。
+const ReactECharts = dynamic(() => import('echarts-for-react'), {
+  ssr: false,
+  loading: () => <div style={{ height: 190 }} aria-hidden="true" />,
+});
 const SorRace = dynamic(() => import('@/components/wca-stats/SorRace'), { ssr: false });
 // 单项视图(单次 / 平均)排名表上方常显的「纪录走势」bar chart race —— 复用 wr_metric 的同款组件(受控:
 // controlledEventId=当前单项, controlledMetric=single/average)。组件较重(含视频导出/canvas),懒挂 + 仅客户端.
