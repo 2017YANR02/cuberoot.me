@@ -390,7 +390,9 @@ function ttlFor(source: SourceId): number {
 //     语义变更但响应 shape 不变 → 必须 bump 整体失效,否则旧 payload 顶 7 天 TTL.
 // v4: Reg 9i2 同日裁决(单日赛)—— 跨比赛「日掩」降级 + sk/ak provenance;
 //     并修好 WCA Live 源 record tag 的 camelCase 字段名(此前恒空).
-const SCHEMA_VERSION = 4;
+// v5: 同日成绩池改为独立留存(v4 拿 L1 当数据源,150 条上限让同日两个赛场互相看不见,
+//     跨比赛裁决实际没生效)—— 必须让 v4 期间存下的错误裁决整体失效.
+const SCHEMA_VERSION = 5;
 
 const startDateCache = new Map<string, { d: string | null; end: string | null; at: number }>();
 const START_DATE_CACHE_TTL = 60 * 60_000;
@@ -676,34 +678,55 @@ function ymd(d: string | null): string | null {
   return d ? String(d).slice(0, 10) : null;
 }
 
+// ─── 同日成绩池(Reg 9i2)──────────────────────────────────────────────────
+// 「日历日 → 比赛 → 该场各 scope 的最好成绩」,prewarm 每扫到一场就写一条.
+//
+// 不能拿 L1 当数据源:L1 上限 150 条而 prewarm 每轮扫 ~700 场,同一天的两个赛场几乎不会
+// 同时在里面 —— 2026-07-25 芜湖与 Tarlac 实测互相看不见,两边各自把自己当当日最好,
+// 跨比赛裁决等于没跑.这里独立留存,不受 L1 淘汰影响.
+//
+// 按比赛整条覆盖(而非直接并入全局 min):某场成绩被改判 / 撤销时旧值不会残留.
+const DAY_POOL_KEEP_DAYS = 4;
+const dayPool = new Map<string, Map<string, DayBest>>();
+
+function rememberCompDay(date: string, data: CompData): void {
+  const per = emptyDayBest();
+  foldCompIntoDayBest(per, data);
+  let byComp = dayPool.get(date);
+  if (!byComp) { byComp = new Map(); dayPool.set(date, byComp); }
+  byComp.set(data.slug, per);
+  if (dayPool.size > DAY_POOL_KEEP_DAYS) {
+    const dates = [...dayPool.keys()].sort();   // ISO 日期串可直接字典序比较
+    while (dates.length > DAY_POOL_KEEP_DAYS) dayPool.delete(dates.shift() as string);
+  }
+}
+
+function mergeDayBest(into: DayBest, from: DayBest): void {
+  for (const scope of ['wr', 'cr', 'nr'] as const) {
+    for (const [key, entry] of from[scope]) {
+      const prev = into[scope].get(key);
+      if (prev === undefined || entry.value < prev.value) into[scope].set(key, entry);
+    }
+  }
+}
+
 /** 汇总「本场比赛所在日历日、全球已达成的最好成绩」,供 Reg 9i2 同日裁决用.
  *
- *  数据来自进程内 L1 —— prewarm 覆盖 wca_competitions 里 [今天-30d, 今天+60d] 的全球比赛,
- *  比赛日 ±2d 的还有 65s 快刷,所以同一天的其它赛场基本都在 cache 里,无需额外网络请求.
- *
  *  只处理单日赛:Reg 9i2 判定单位是「轮次的最后一个日历日」,多日赛没有轮次日期就无法
- *  确定某一轮落在哪天,宁可不裁决(退回本场 running-min)也不误伤跨日的合法第二条纪录. */
+ *  确定某一轮落在哪天,宁可不裁决(退回本场 running-min)也不误伤跨日的合法第二条纪录.
+ *
+ *  收敛靠 prewarm:比赛日 ±2d 的比赛每 65s 强制回源重算,所以某场首次入池时即使还没见过
+ *  同日别场,下一轮就能看到(池是跨请求持久的,不随 CompData 缓存过期). */
 async function buildDayBest(data: CompData): Promise<DayBest | null> {
   const self = await getCompDates(data.slug);
   const date = ymd(self.start);
   if (!date || date !== ymd(self.end)) return null;
 
+  rememberCompDay(date, data);
+  const byComp = dayPool.get(date);
+  if (!byComp || byComp.size === 0) return null;
   const day = emptyDayBest();
-  let folded = 0;
-  for (const other of cache.values()) {
-    if (other.slug !== data.slug) {
-      const d = await getCompDates(other.slug);
-      if (ymd(d.start) !== date || ymd(d.end) !== date) continue;
-    }
-    foldCompIntoDayBest(day, other);
-    folded++;
-  }
-  // 本场可能还没进 L1(首次 loadComp 时 enrich 先于 l1Set)→ 补一次.
-  if (!cache.has(data.slug)) {
-    foldCompIntoDayBest(day, data);
-    folded++;
-  }
-  if (folded === 0) return null;
+  for (const per of byComp.values()) mergeDayBest(day, per);
   return day;
 }
 
