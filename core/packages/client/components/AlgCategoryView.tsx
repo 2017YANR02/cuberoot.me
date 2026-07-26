@@ -15,7 +15,7 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Plus, Pencil, ShieldCheck, GripVertical, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Plus, Pencil, ShieldCheck, GripVertical, AlertTriangle, FlipHorizontal2 } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, useSortable, arrayMove, rectSortingStrategy, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -32,6 +32,7 @@ import type { AlgInvalidMark } from '@/components/AlgEditor';
 import ValidationReportModal from '@/components/ValidationReportModal';
 import AlgPlayer from '@/components/AlgPlayer';
 import SortableAlgRow from '@/components/SortableAlgRow';
+import AlgMirrorPanel, { hasMirror } from '@/components/AlgMirrorPanel';
 import AlgViewModeToggle, { useAlgViewMode } from '@/components/AlgViewModeToggle';
 import { useCopy } from '@/hooks/useCopy';
 import { stm } from '@cuberoot/shared/alg-notation';
@@ -84,9 +85,15 @@ function SetupLine({ puzzle, setup }: { puzzle: string; setup: string }) {
   );
 }
 
-function AlgRow({ entry, expanded, onToggle, animatable, puzzle, set, setup, invalid }: { entry: AlgEntry; expanded: boolean; onToggle: () => void; animatable: boolean; puzzle: AlgPuzzle; set: string; setup?: string; invalid?: string }) {
+function AlgRow({ entry, expanded, onToggle, animatable, puzzle, set, setup, invalid, mirror }: {
+  entry: AlgEntry; expanded: boolean; onToggle: () => void; animatable: boolean;
+  puzzle: AlgPuzzle; set: string; setup?: string; invalid?: string;
+  /** 有值 = 这个 set 吃镜像系统,行尾出翻转图标;`partner` 是伙伴 case 名(没建链时为 null) */
+  mirror?: { partner: string | null; self: string };
+}) {
   const { alg, algHtml } = entry;
   const { copied, copy } = useCopy();
+  const [mirrorOpen, setMirrorOpen] = useState(false);
   // 显示 / 复制都剥掉收尾 AUF;下面的 AlgPlayer 拿的仍是完整公式,动画才停在还原态。
   const algShown = formatScrambleForEvent(puzzle, displayAlg(alg));
   // 步数要数**屏幕上这一条**。`entry.stm` 是入库值(含收尾 AUF),拿它当徽章就会
@@ -116,6 +123,17 @@ function AlgRow({ entry, expanded, onToggle, animatable, puzzle, set, setup, inv
           ? <span className="alg-alg-text" dangerouslySetInnerHTML={{ __html: sanitizeAlgHtml(algHtml) }} />
           : <span className="alg-alg-text">{algShown}</span>}
         {shownStm != null && <span className="alg-alg-len" title="STM">{shownStm}</span>}
+        {mirror && (
+          <button
+            type="button"
+            className={`alg-mirror-toggle${mirrorOpen ? ' is-on' : ''}`}
+            aria-expanded={mirrorOpen}
+            onClick={(e) => { e.stopPropagation(); setMirrorOpen(o => !o); }}
+            title={tr({ zh: '镜像公式', en: 'Mirrored algs' })}
+          >
+            <FlipHorizontal2 size={14} />
+          </button>
+        )}
         <button
           type="button"
           className="alg-alg-copy-btn"
@@ -125,6 +143,9 @@ function AlgRow({ entry, expanded, onToggle, animatable, puzzle, set, setup, inv
           {copied ? <Check size={14} /> : <Copy size={14} className="alg-alg-copy-icon" />}
         </button>
       </div>
+      {mirror && mirrorOpen && (
+        <AlgMirrorPanel alg={alg} puzzle={puzzle} mirrorName={mirror.partner} selfName={mirror.self} />
+      )}
       {expanded && animatable && <AlgPlayer alg={alg} puzzle={puzzle} set={set} setup={setup} />}
     </>
   );
@@ -583,6 +604,21 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     return Array.from(map.entries());
   }, [visibleCases]);
 
+  /**
+   * 公式行尾那个镜像入口(issue #40 T5 的 U1)。三份镜像是纯重写,**不依赖建链**,
+   * 所以只要 set 在名单里就出;`mirror_case_id` 落库之后才多标出伙伴的名字。
+   * 伙伴要在**全量** case 里找 —— 它可能正好被标签筛掉或不在当前子组。
+   */
+  const mirrorFor = useCallback((c: AlgCase) => {
+    if (!hasMirror(puzzleParam, set)) return undefined;
+    const self = primaryCaseName(puzzleParam, set, c);
+    const id = c.mirrorCaseId;
+    if (id == null) return { partner: null, self };
+    if (id === c.id) return { partner: self, self };
+    const p = data?.cases.find(x => x.id === id);
+    return { partner: p ? primaryCaseName(puzzleParam, set, p) : null, self };
+  }, [data, puzzleParam, set]);
+
   /** 整个 set 的 case → 唯一短链 slug(点卡片跳转用)。落地解析用同一份算法,见 alg_case_link。 */
   const slugMap = useMemo(() => (data ? buildCaseSlugMap(data.cases, set) : null), [data, set]);
   const caseDetailHref = useCallback(
@@ -868,6 +904,8 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                                 set={set}
                                 setup={oriAdjustSetup(c.setup, oriIdx)}
                                 invalid={c.id != null ? invalidAlgs.get(`${c.id}:${oriIdx}:${trueIdx}`) : undefined}
+                                // 镜像只挂第 0 视角:别的视角本身就是它的 y 重贴,再镜一遍是同一批公式换个说法
+                                mirror={oriIdx === 0 ? mirrorFor(c) : undefined}
                               />
                             );
                             const key = `${entry.altId ?? ''}::${trueIdx}`;
