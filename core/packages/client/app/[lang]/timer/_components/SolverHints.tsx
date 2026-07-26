@@ -17,7 +17,8 @@ import { Star, ChevronRight } from 'lucide-react';
 import { solve2x2, solve2x2Face } from '../_lib/solver/cube2x2';
 import { solvePyra, solvePyraV } from '../_lib/solver/pyra';
 import { solveSkewb, solveSkewbFace } from '../_lib/solver/skewb';
-import { solveSq1, type Sq1Result } from '../_lib/solver/sq1';
+import { cstimerSolveByKey } from '@/lib/cstimer-scramble';
+import { sq1MoveCounts } from '@/lib/sq1-metrics';
 import { solveMega, type MegaSolveResult } from '../_lib/solver/mega';
 import StepSolve from './StepSolve';
 import { tr } from '@/i18n/tr';
@@ -201,10 +202,15 @@ interface Sq1Props {
   isZh: boolean;
 }
 
+/** Square-1 的解走 worker 里的 cs0x7f sq12phase(和 /scramble/solver?event=sq1 同一个引擎)。
+ *  站内原来那份 gsolver 移植分不出同层内的具体块,出的「解」只还原形状与分层 —— 判据见
+ *  tests/sq1_solver_oracle.test.ts。 */
 function Sq1Hints({ scramble, isZh }: Sq1Props) {
+  void isZh;
   const [open, setOpen] = useState(false);
-  const [computed, setComputed] = useState<Sq1Result | null>(null);
+  const [computed, setComputed] = useState<{ solution: string; wca: number } | null>(null);
   const [computing, setComputing] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   const cacheKey = useMemo(() => scramble, [scramble]);
 
@@ -215,33 +221,24 @@ function Sq1Hints({ scramble, isZh }: Sq1Props) {
     }
     setComputing(true);
     setComputed(null);
+    setFailed(false);
     let cancelled = false;
-    const t = setTimeout(() => {
-      if (cancelled) return;
-      try {
-        const r = solveSq1(scramble);
-        if (!cancelled) {
-          setComputed(r);
-          setComputing(false);
-        }
-      } catch {
-        if (!cancelled) {
-          setComputed({ stages: [], totalMoves: 0 });
-          setComputing(false);
-        }
-      }
-    }, 0);
-    return () => {
-      cancelled = true;
-      clearTimeout(t);
-    };
+    cstimerSolveByKey('sqrs', scramble).then(
+      (solution) => {
+        if (cancelled) return;
+        setComputed({ solution, wca: sq1MoveCounts(solution).wca });
+        setComputing(false);
+      },
+      () => {
+        if (cancelled) return;
+        setFailed(true);
+        setComputing(false);
+      },
+    );
+    return () => { cancelled = true; };
   }, [open, cacheKey, scramble]);
 
   const title = tr({ zh: 'Square-1 解法提示', en: 'Square-1 solver hints' });
-  const stageNameZh: Record<string, string> = {
-    'Shape': '形状',
-    'Permutation': '颜色还原',
-  };
 
   return (
     <div style={wrapperStyle}>
@@ -264,30 +261,19 @@ function Sq1Hints({ scramble, isZh }: Sq1Props) {
                 })}
               </div>
             )}
+            {failed && !computing && (
+              <div style={{ opacity: 0.6, fontSize: 13 }}>
+                {tr({ zh: '未找到解', en: 'No solution found' })}
+              </div>
+            )}
             {computed && (
-              <>
-                {computed.stages.map(s => (
-                  <div key={s.head} style={rowStyle}>
-                    <span style={labelStyle}>
-                      {isZh ? (stageNameZh[s.head] ?? s.head) : s.head}
-                    </span>
-                    <span style={countStyle}>
-                      {s.failed ? '—' : s.moves.length}
-                    </span>
-                    <span style={algStyle}>
-                      {s.failed
-                        ? tr({ zh: '未找到', en: 'no solution' })
-                        : s.moves.join(' ')}
-                    </span>
-                  </div>
-                ))}
-                <div style={rowStyle}>
-                  <span style={labelBestStyle}>{tr({ zh: '总计 (token)', en: 'Total (tokens)'
-                })}</span>
-                  <span style={countBestStyle}>{computed.totalMoves}</span>
-                  <span style={algStyle} />
-                </div>
-              </>
+              <div style={rowStyle}>
+                <span style={labelBestStyle}>{tr({ zh: '近最优 (12c4)', en: 'Near-optimal (12c4)' })}</span>
+                <span style={countBestStyle}>{computed.wca}</span>
+                <span style={algStyle}>
+                  {computed.solution || tr({ zh: '已还原', en: 'already solved' })}
+                </span>
+              </div>
             )}
           </div>
         )}

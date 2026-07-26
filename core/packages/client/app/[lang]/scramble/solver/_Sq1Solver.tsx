@@ -3,10 +3,16 @@
 /**
  * /scramble/sq1 — Square-1 在线求解器。
  *
- * 用站内现有的 TS 两阶段引擎(timer/_lib/solver/sq1 的 solveSq1,Cube Shape → Permutation)
- * 求一个**近最优**解,并对结果同时报三套计步口径(扭转 / WCA 12c4 / 面转)。
- * 引擎的 BFS 最小化的是「顶转 + 底转 + 切片」token 数,约等于面转口径下的近最优;
- * 真最优(单阶段 IDA*)与 WCA 12c4 口径的上帝之数详见 /math/sq1。
+ * 引擎 = **cs0x7f 的 sq12phase**(cstimer 自带,`tools/cstimer-scramble/scramble/
+ * scramble_sq1_new.js`;上游只用它生成随机态打乱,我们在同一份搜索上加了一层
+ * `solveScramble` 反过来求解,细节见该文件末尾的注释块),经 worker 调用,出**近最优**解,
+ * 并对同一段解报三套计步口径(扭转 / WCA 12c4 / 面转)。真最优(单阶段 IDA*)与
+ * WCA 12c4 口径的上帝之数详见 /math/sq1。
+ *
+ * 换引擎的原因(2026-07-26):原先用的是 timer/_lib/solver/sq1(cstimer gsolver 移植),
+ * 它的状态串只把块分成 {顶棱/顶角/底棱/底角} 四类、也不跟踪赤道朝向,所以「排列」阶段
+ * 根本分不出同层内的具体块 —— 出的解只还原形状与分层,单个层转 (1,0) 甚至被判成
+ * 「已是还原态」。判据(tnoodle 件位模型独立复核)见 tests/sq1_solver_oracle.test.ts。
  *
  * 打乱的**输入**有两种视图(`?view=`):`flat` 静态展开图(默认,零 WebGL),
  * `board` 可拖立体转盘(`_InteractiveSq1Board`,拖出来的每一步写回打乱框)。
@@ -25,21 +31,18 @@ import { useT } from '@/hooks/useT';
 import { tr } from '@/i18n/tr';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { pooledScramble, prewarmScramble } from '@/lib/cubing-scramble';
+import { cstimerSolveByKey } from '@/lib/cstimer-scramble';
 import { sq1MoveCounts, type Sq1MoveCounts } from '@/lib/sq1-metrics';
-import { solveSq1 } from '../../timer/_lib/solver/sq1';
 import SolveTabs from '../_components/SolveTabs';
 import { SolvePanel, type BatchSpec } from '../_components/BatchSolvePanel';
 import InteractiveSq1Board from './_InteractiveSq1Board';
 import '../_components/puzzle_optimal_solver.css';
 import './sq1_solver.css';
 
-interface StageView { head: string; moves: string; raw: number; }
 interface Outcome {
   scramble: string;
   solution: string;
-  stages: StageView[];
   counts: Sq1MoveCounts;
-  ok: boolean;
 }
 
 const METRIC_CARDS = [
@@ -48,16 +51,9 @@ const METRIC_CARDS = [
   { key: 'face' as const, cls: 'is-face', name: { zh: '面转', en: 'Face-turn' }, rule: { zh: '双层=2', en: 'double=2' }, god: '31' },
 ];
 
-function solveScramble(scramble: string): Outcome {
-  const res = solveSq1(scramble);
-  const ok = res.stages.length === 2 && !res.stages.some((s) => s.failed);
-  const stages: StageView[] = res.stages.map((s) => ({
-    head: s.head,
-    moves: s.moves.join(' '),
-    raw: s.rawMoves.length,
-  }));
-  const solution = res.stages.flatMap((s) => s.moves).join(' ');
-  return { scramble, solution, stages, counts: sq1MoveCounts(solution), ok };
+async function solveScramble(scramble: string): Promise<Outcome> {
+  const solution = await cstimerSolveByKey('sqrs', scramble);
+  return { scramble, solution, counts: sq1MoveCounts(solution) };
 }
 
 type View = 'flat' | 'board';
@@ -80,7 +76,11 @@ export default function Sq1SolverPage() {
   const seq = useRef(0);
 
   useEffect(() => {
-    const id = window.setTimeout(() => prewarmScramble('sq1'), 800);
+    const id = window.setTimeout(() => {
+      void prewarmScramble('sq1');
+      // 空串 = 还原态,秒回,但会让 worker 把形状 / 排列剪枝表建起来。
+      void cstimerSolveByKey('sqrs', '').catch(() => { /* 预热失败不影响真求解报错 */ });
+    }, 800);
     return () => window.clearTimeout(id);
   }, []);
 
@@ -96,7 +96,7 @@ export default function Sq1SolverPage() {
   const trimmed = lines[0] ?? '';
   const hasTokens = useMemo(() => /[\d/]/.test(trimmed), [trimmed]);
 
-  // 打乱变化 → 防抖求解。引擎是同步 BFS,首次会懒建剪枝表(≤100k),用 timeout 让出主线程。
+  // 打乱变化 → 防抖求解。搜索在 worker 里(首次会建形状/排列剪枝表),主线程不冻。
   // 仅单条(≤1 行)时跑,≥2 行交给 SolvePanel 的批量求解。
   useEffect(() => {
     const id = ++seq.current;
@@ -108,22 +108,24 @@ export default function Sq1SolverPage() {
     }
     setSolving(true);
     const timer = window.setTimeout(() => {
-      try {
-        const out = solveScramble(trimmed);
-        if (seq.current !== id) return;
-        setResult(out);
-        if (!out.ok) setError('illegal');
-        setSolving(false);
-      } catch (e) {
-        if (seq.current !== id) return;
-        setError(String((e as Error)?.message ?? e));
-        setSolving(false);
-      }
+      solveScramble(trimmed).then(
+        (out) => {
+          if (seq.current !== id) return;
+          setResult(out);
+          setSolving(false);
+        },
+        (e: unknown) => {
+          if (seq.current !== id) return;
+          // 引擎唯一的失败模式是「这串不是合法 SQ1 状态」(记号能解析但形状不可达)。
+          setError((e as Error)?.message?.includes('no solution') ? 'illegal' : String((e as Error)?.message ?? e));
+          setSolving(false);
+        },
+      );
     }, 200);
     return () => window.clearTimeout(timer);
   }, [trimmed, hasTokens, lineCount]);
 
-  const showResult = result && result.scramble === trimmed && result.ok;
+  const showResult = result && result.scramble === trimmed;
 
   const batchSpec: BatchSpec = useMemo(() => ({
     event: 'sq1',
@@ -133,17 +135,12 @@ export default function Sq1SolverPage() {
       en: 'one scramble per line, e.g. (1,0)/(-3,3)/(0,-3)/',
     },
     validate: (line) => (/[\d/]/.test(line.trim()) ? null : line.trim()),
-    solveOne: (s) => new Promise((resolve, reject) => {
-      // 同步 BFS,setTimeout 让出主线程让进度更新 + 不冻 UI。
-      window.setTimeout(() => {
-        try {
-          const out = solveScramble(s);
-          if (!out.ok) { reject(new Error('illegal')); return; }
-          resolve({ len: out.counts.wca, solution: out.solution });
-        } catch (e) { reject(e as Error); }
-      }, 0);
-    }),
+    solveOne: (s) => solveScramble(s).then((out) => ({
+      len: out.counts.wca,
+      solution: out.solution,
+    })),
     randomOne: () => pooledScramble('sq1'),
+    // 一个 worker 一条搜索,并发没有意义(反而抢同一份剪枝表)。
     concurrency: 1,
   }), []);
 
@@ -229,22 +226,7 @@ export default function Sq1SolverPage() {
                     {result.counts.turns + result.counts.slices === 0 ? (
                       <p className="pos-result-solved">{tr({ zh: '已是还原态', en: 'Already solved' })}</p>
                     ) : (
-                      <>
-                        <div className="sq1s-solbox">{result.solution}</div>
-                        <div className="sq1s-stages">
-                          {result.stages.map((s) => (
-                            <div key={s.head} className="sq1s-stage">
-                              <div className="sq1s-stage-head">
-                                {s.head === 'Shape' ? tr({ zh: '方块形', en: 'Cube shape' }) : tr({ zh: '排列', en: 'Permutation' })}
-                              </div>
-                              <div className="sq1s-stage-moves">
-                                {s.moves || tr({ zh: '(无)', en: '(none)' })}
-                                <span className="sq1s-stage-count"> {tr({ zh: `${s.raw} 面转`, en: `${s.raw} face turns` })}</span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </>
+                      <div className="sq1s-solbox">{result.solution}</div>
                     )}
                   </>
                 )}
@@ -257,8 +239,8 @@ export default function Sq1SolverPage() {
       <div className="sq1s-caveat">
         <strong>{tr({ zh: '关于「最优」', en: 'About "optimal"' })}</strong>{' '}
         {tr({
-          zh: '这是两阶段近最优解(先归方块形再解排列),不保证全局最少步;真最优要单阶段 IDA*。三个步数里,"/" 切片在任何度量都计 1,差异只在层转:同一段解满足 扭转 ≤ WCA 12c4 ≤ 面转。WCA 12c4 正是计时器报的打乱长度度量,而它的上帝之数至今没人算出来。',
-          en: 'This is a two-phase near-optimal solution (cube shape, then permutation) — not guaranteed minimal; true optimal needs single-phase IDA*. Across the three counts, a "/" slice always counts 1; the only divergence is layer turns, so twist ≤ WCA 12c4 ≤ face-turn. WCA 12c4 is the metric your timer reports as scramble length — and its God\'s number has never been computed.',
+          zh: '这是 cs0x7f 的 sq12phase 两阶段近最优解(先归方块形再解排列,cstimer 生成随机态打乱用的就是它),不保证全局最少步;真最优要单阶段 IDA*。三个步数里,"/" 切片在任何度量都计 1,差异只在层转:同一段解满足 扭转 ≤ WCA 12c4 ≤ 面转。WCA 12c4 正是计时器报的打乱长度度量,而它的上帝之数至今没人算出来。',
+          en: "This is cs0x7f's sq12phase two-phase near-optimal solution (cube shape, then permutation — the same search csTimer uses to generate random-state scrambles), not guaranteed minimal; true optimal needs single-phase IDA*. Across the three counts, a \"/\" slice always counts 1; the only divergence is layer turns, so twist ≤ WCA 12c4 ≤ face-turn. WCA 12c4 is the metric your timer reports as scramble length — and its God's number has never been computed.",
         })}
         {' '}
         <AppLink href="/math/god?event=sq1">

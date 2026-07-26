@@ -1,4 +1,22 @@
 /**
+ * ⚠️ RETIRED (2026-07-26) — DO NOT wire this into any new UI. No app code calls
+ * it any more; `/scramble/solver?event=sq1` and the timer's Square-1 hints both
+ * run cs0x7f's sq12phase in the cstimer worker instead
+ * (`cstimerSolveByKey('sqrs', scramble)`).
+ *
+ * Why: the state string below labels pieces by CLASS only — `0`/`A` for a top
+ * edge/corner-half, `1`/`B` for a bottom one — so all four edges of a layer are
+ * indistinguishable, and the equator's orientation isn't tracked at all. The
+ * "Permutation" step therefore cannot solve a permutation: its solutions only
+ * restore the cube shape and put every piece back in its home LAYER. A single
+ * layer turn like `(1,0)` matches a PERM_TARGETS pattern outright, so the old
+ * solver page reported "already solved" for it. Cross-checked against the
+ * tnoodle piece model in `tests/sq1_solver_oracle.test.ts`; the round-trip in
+ * `tests/sq1_solver.test.ts` never caught it because it re-used THIS engine as
+ * its own oracle.
+ *
+ * Kept only so that test can keep documenting the limitation.
+ *
  * Square-1 CSP (Cube Shape → Permutation) two-step solver, ported from
  * cstimer `tools/gsolver.js` `sq1Cube` block.
  *

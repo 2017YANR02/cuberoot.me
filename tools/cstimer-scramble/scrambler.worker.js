@@ -78,9 +78,14 @@ function generate(key, length, state) {
 // Used by the in-site solver pages for random-state puzzles that ship a real
 // cstimer two-phase solver (mpyr Master Pyraminx). Near-optimal, not provably
 // optimal; validity (scramble∘solution = solved) is the contract.
+//
+// `sqrs` is Square-1: cs0x7f's sq12phase (scramble_sq1_new.js). Upstream only
+// generates, so `solveScramble` there is our own wrapper around the same search
+// — see the comment block at the bottom of that file.
 const SOLVERS = {
   mpyrso: (scramble) => self.mpyr.solveScramble(scramble),
   dinoso: (scramble) => self.redi.solveScramble(scramble),
+  sqrs: (scramble) => self.sq1.solveScramble(scramble),
 };
 
 function solve(key, scramble) {

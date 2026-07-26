@@ -26,38 +26,6 @@
 .sq1s-mcard.is-face .sq1s-mval { color: var(--signal-info); }
 .sq1s-mgod { font-size: 0.68rem; color: var(--faint-foreground); margin-top: 5px; }
 
-.sq1s-stages {
-  margin: 12px 0;
-  border: 1px solid var(--border-default);
-  border-radius: 10px;
-  overflow: hidden;
-}
-.sq1s-stage {
-  display: flex;
-  gap: 12px;
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--border-default);
-  font-size: 0.9rem;
-}
-.sq1s-stage:last-child { border-bottom: none; }
-.sq1s-stage-head {
-  flex: 0 0 88px;
-  color: var(--muted-foreground);
-  font-size: 0.78rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding-top: 2px;
-}
-.sq1s-stage-moves {
-  flex: 1;
-  font-family: var(--font-mono, ui-monospace), monospace;
-  color: var(--foreground);
-  word-break: break-word;
-  line-height: 1.5;
-}
-.sq1s-stage-count { color: var(--faint-foreground); font-size: 0.78rem; }
-
 .sq1s-caveat {
   margin: 14px 0;
   padding: 12px 16px;
