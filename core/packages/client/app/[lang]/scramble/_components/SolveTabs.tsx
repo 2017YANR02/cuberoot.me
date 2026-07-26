@@ -31,7 +31,7 @@ import { ALL_EVENT_IDS, CANCELLED_EVENT_IDS } from '@/lib/event-constants';
 import { useT } from '@/hooks/useT';
 import './solve_tabs.css';
 
-export type SolvePuzzle = '3x3' | '2x2x2' | 'pyraminx' | 'skewb' | 'sq1' | 'sq2' | 'ssq1' | 'bsq' | 'ivy' | '133' | '223' | '233' | '334' | '335' | '336' | '337' | '8p' | '15p' | 'sfl' | 'ufo' | 'cm2' | 'cm3' | 'heli' | 'helicv' | 'ctico' | 'dmd' | 'gear' | 'mpyrso' | 'dino' | 'crz3a' | 'bic' | 'sia123' | 'sia222';
+export type SolvePuzzle = '3x3' | '2x2x2' | 'pyraminx' | 'skewb' | 'sq1' | 'sq2' | 'ssq1' | 'bsq' | 'clock' | 'ivy' | '133' | '223' | '233' | '334' | '335' | '336' | '337' | '8p' | '15p' | 'sfl' | 'ufo' | 'cm2' | 'cm3' | 'heli' | 'helicv' | 'ctico' | 'dmd' | 'gear' | 'mpyrso' | 'dino' | 'crz3a' | 'bic' | 'sia123' | 'sia222';
 export type SolveSub = 'optimal' | 'stage' | 'cfop' | 'fmc';
 
 interface SolveTabsProps {
@@ -55,6 +55,7 @@ const EVENT_ID: Record<SolvePuzzle, string> = {
   sq2: 'sq2',
   ssq1: 'ssq1',
   bsq: 'bsq',
+  clock: 'clock',
   ivy: 'ivy',
   '133': '133',
   '223': '223',
@@ -84,7 +85,7 @@ const EVENT_ID: Record<SolvePuzzle, string> = {
 // 求解中心项目行 = 一个 PuzzlePicker 下拉:WCA 组 + 非 WCA 家族组(数据驱动:lib/cstimer-scramble
 // 标 solvable 的 puzzle 自动出现在对应家族),后续 puzzle 免改本组件。
 const PUZZLE_BY_EVENT: Record<string, SolvePuzzle> = {
-  '333': '3x3', '222': '2x2x2', pyram: 'pyraminx', skewb: 'skewb', sq1: 'sq1', sq2: 'sq2', ssq1: 'ssq1', bsq: 'bsq', ivy: 'ivy', '133': '133', '223': '223', '233': '233', '334': '334', '335': '335', '336': '336', '337': '337', '8p': '8p', '15p': '15p', sfl: 'sfl', ufo: 'ufo', cm2: 'cm2', cm3: 'cm3', heli: 'heli', helicv: 'helicv', ctico: 'ctico', dmd: 'dmd', gear: 'gear', mpyrso: 'mpyrso', dino: 'dino', crz3a: 'crz3a', bic: 'bic', sia123: 'sia123', sia222: 'sia222',
+  '333': '3x3', '222': '2x2x2', pyram: 'pyraminx', skewb: 'skewb', sq1: 'sq1', sq2: 'sq2', ssq1: 'ssq1', bsq: 'bsq', clock: 'clock', ivy: 'ivy', '133': '133', '223': '223', '233': '233', '334': '334', '335': '335', '336': '336', '337': '337', '8p': '8p', '15p': '15p', sfl: 'sfl', ufo: 'ufo', cm2: 'cm2', cm3: 'cm3', heli: 'heli', helicv: 'helicv', ctico: 'ctico', dmd: 'dmd', gear: 'gear', mpyrso: 'mpyrso', dino: 'dino', crz3a: 'crz3a', bic: 'bic', sia123: 'sia123', sia222: 'sia222',
 };
 // mode='solve'(求解/分析页,分布嵌在下方)的顶部项目行放出**全部 WCA 项目**:有求解器的 5 个
 // 跳求解器,其余(4x4/5x5/6x6/7x7/魔表/五魔/各盲/最少步 等)无求解器,跳到该项目的分布页

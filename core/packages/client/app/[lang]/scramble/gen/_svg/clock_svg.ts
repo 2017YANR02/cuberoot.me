@@ -86,23 +86,47 @@ export function applyClockScramble(scramble: string): ClockState {
 }
 
 // ─── SVG renderer ─────────────────────────────────────────────────────────
-// All constants verbatim from ClockPuzzle.java.
-const STROKE_WIDTH = 2;
-const FACE_STROKE_WIDTH = 1;
-const RADIUS = 70;
-const CLOCK_RADIUS = 14;
-const CLOCK_OUTER_RADIUS = 21;
-const POINT_RADIUS = (CLOCK_RADIUS + CLOCK_OUTER_RADIUS) / 2;
-const TICK_R = 1;
-const TOP_TICK_R = 2;
-const ARROW_HEIGHT = 10;
-const ARROW_RADIUS = 2;
-const PIN_RADIUS = 4;
+// All constants verbatim from ClockPuzzle.java. Exported (not re-derived) so the
+// interactive clock in components/InteractiveClock.tsx draws on exactly the same
+// grid — the solver/sim board and the scramble image must line up pixel for pixel.
+export const STROKE_WIDTH = 2;
+export const FACE_STROKE_WIDTH = 1;
+export const RADIUS = 70;
+export const CLOCK_RADIUS = 14;
+export const CLOCK_OUTER_RADIUS = 21;
+export const POINT_RADIUS = (CLOCK_RADIUS + CLOCK_OUTER_RADIUS) / 2;
+export const TICK_R = 1;
+export const TOP_TICK_R = 2;
+export const ARROW_HEIGHT = 10;
+export const ARROW_RADIUS = 2;
+export const PIN_RADIUS = 4;
 const ARROW_ANGLE = Math.PI / 2 - Math.acos(ARROW_RADIUS / ARROW_HEIGHT);
-const GAP = 5;
+export const GAP = 5;
 
-const W = 4 * (RADIUS + GAP);
-const H = 2 * (RADIUS + GAP);
+export const W = 4 * (RADIUS + GAP);
+export const H = 2 * (RADIUS + GAP);
+
+/** 指针形状(单个表盘的箭头 path,指向 12 点)。 */
+export const CLOCK_ARROW_PATH = (() => {
+  const ax = ARROW_RADIUS * Math.cos(ARROW_ANGLE);
+  const ay = -ARROW_RADIUS * Math.sin(ARROW_ANGLE);
+  return `M 0 0 L ${ax} ${ay} L 0 ${-ARROW_HEIGHT} L ${-ax} ${ay} Z`;
+})();
+
+/** 表盘 i(0..17)在 viewBox 里的圆心。0..8 落左半区,9..17 落右半区。 */
+export function clockDialCenter(i: number): { x: number; y: number } {
+  const local = i < 9 ? i : i - 9;
+  const baseX = (i < 9 ? 1 : 3) * (RADIUS + GAP);
+  return {
+    x: baseX + 2 * ((local % 3) - 1) * CLOCK_OUTER_RADIUS,
+    y: (RADIUS + GAP) + 2 * (Math.floor(local / 3) - 1) * CLOCK_OUTER_RADIUS,
+  };
+}
+
+/** 半区中心(side 0 = 左 = posit[0..8],side 1 = 右 = posit[9..17])。 */
+export function clockPanelCenter(side: 0 | 1): { x: number; y: number } {
+  return { x: (side * 2 + 1) * (RADIUS + GAP), y: RADIUS + GAP };
+}
 
 export function renderClockSvg(state: ClockState, colors: Record<string, string>): string {
   const { posit, rightSideUp } = state;
@@ -159,9 +183,7 @@ export function renderClockSvg(state: ClockState, colors: Record<string, string>
   }
 
   // 18 arrows (one per dial, both faces)
-  const ax = ARROW_RADIUS * Math.cos(ARROW_ANGLE);
-  const ay = -ARROW_RADIUS * Math.sin(ARROW_ANGLE);
-  const arrowPath = `M 0 0 L ${ax} ${ay} L 0 ${-ARROW_HEIGHT} L ${-ax} ${ay} Z`;
+  const arrowPath = CLOCK_ARROW_PATH;
   for (let i = 0; i < 18; i++) {
     const isFrontDial = i < 9;
     // sidePrefix: same XOR semantics as Java ((clock<9) ^ rightSideUp)

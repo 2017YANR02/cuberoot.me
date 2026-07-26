@@ -48,6 +48,8 @@ import WcaEventSelector from '@/components/WcaEventSelector';
 import HeaderToggles from '@/components/HeaderToggles';
 import CubeShorthand from '@/components/CubeShorthand';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
+import InteractiveClock, { type ClockBoardMode } from '@/components/InteractiveClock';
+import { clockStateFromAlg } from '@/lib/clock-solver';
 import { VisualCube } from '@/components/VisualCube';
 import { AttemptsList } from '@/components/persons/sections/results/AttemptsList';
 import { AttemptsGrid } from '@/components/wca-results/AttemptsGrid';
@@ -463,6 +465,12 @@ function ScramblePreview2DDemo() {
       <ScramblePreview2D event="skewb" scramble="R U L B R L U R B" size={84} />
     </div>
   );
+}
+
+function InteractiveClockDemo() {
+  const [state, setState] = useState(() => clockStateFromAlg('UR3+ DL2- U5+ y2 ALL4+'));
+  const [mode, setMode] = useState<ClockBoardMode>('edit');
+  return <InteractiveClock state={state} onChange={setState} mode={mode} onModeChange={setMode} maxWidth={360} />;
 }
 
 // VisualCube fetches its SVG from the backend via apiUrl(), which resolves to a
@@ -1030,6 +1038,19 @@ export const CATALOG: ComponentEntry[] = [
     en: 'The 2D unfolded scramble net (WCA net), pure client-side SVG (no backend). "Scramble image" means this, not a 3D iso view. Covers 2–7×7 / pyraminx / skewb / SQ1 / megaminx / clock / mirror.',
     usage: '<ScramblePreview2D event="333" scramble={scr} size={60} />',
     Demo: ScramblePreview2DDemo,
+  },
+  {
+    name: 'InteractiveClock',
+    import: "import InteractiveClock from '@/components/InteractiveClock';",
+    category: 'display',
+    zh: '交互式 2D 魔表(可编辑 / 可拧),/scramble/solver?event=clock 的平面视图与 /sim 的魔表模拟器共用。编辑模式拖指针改状态,角盘正反自动联动所以画不出非法态;拧模式点针脚切上下、在半区里拖 = 一次 WCA 招式。几何常量取自 tnoodle 的 clock_svg,与打乱图逐像素同格。',
+    en: 'The interactive 2D Rubik\'s Clock (paint or turn) — shared by the /scramble/solver?event=clock 2D view and the /sim clock simulator. Edit mode drags hands directly and keeps each corner\'s front/back pair negated, so an illegal state cannot be drawn; turn mode taps pins up/down and a drag over either half is one WCA move. Geometry comes from the tnoodle clock_svg constants, so it lines up pixel-for-pixel with the scramble image.',
+    usage: '<InteractiveClock state={s} onChange={setS} mode={mode} onModeChange={setMode} />',
+    note: {
+      zh: 'cubing.js / twizzle 的魔表只有 2D 且只能播放(拖不动指针),所以这份交互必须自有。',
+      en: "cubing.js / twizzle only ships a play-only 2D clock (its hands are not draggable), so this interaction has to be ours.",
+    },
+    Demo: InteractiveClockDemo,
   },
   {
     name: 'PuzzleImage',
