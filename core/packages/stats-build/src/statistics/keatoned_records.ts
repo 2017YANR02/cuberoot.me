@@ -98,7 +98,7 @@ export class KeatonedRecords extends GroupedStatistic {
         // NOTE: 谁抹掉的 —— 只对命中的 (日期, 当日最好) 逐条回查,走索引,几十次单行查询。
         for (const h of hits) {
           const winner = await dbQuery(`
-            SELECT person.name person_name, comp.cell_name comp_name, res.competition_id
+            SELECT person.name person_name, res.person_id, comp.cell_name comp_name, res.competition_id
             FROM results res
             JOIN competitions c ON c.id = res.competition_id
             JOIN persons person ON person.wca_id = res.person_id AND person.sub_id = 1
@@ -108,6 +108,7 @@ export class KeatonedRecords extends GroupedStatistic {
             LIMIT 1
           `);
           h['beater_name'] = winner[0]?.['person_name'] ?? '';
+          h['beater_id'] = winner[0]?.['person_id'] ?? '';
           h['beater_comp'] = winner[0]?.['comp_name'] ?? '';
           h['beater_comp_id'] = winner[0]?.['competition_id'] ?? '';
           out.push(h);
@@ -143,14 +144,19 @@ export class KeatonedRecords extends GroupedStatistic {
         const kind = isAvg ? 'average' : 'single';
         const value = new SolveTime(eventId, kind, Number(r['value'])).clockFormat();
         const beat = new SolveTime(eventId, kind, Number(r['day_best'])).clockFormat();
+        // 掩它的人也写成选手链接 —— 渲染器只对 WCA 选手链接做人名本地化(中文名 / 剥括号)
+        // 和补国旗,写成裸文本就会在中文表里留下 "Shotaro Makisumi (牧角章太郎)" 这种原始名。
+        const beater = r['beater_id']
+          ? `[${r['beater_name']}](https://www.worldcubeassociation.org/persons/${r['beater_id']})`
+          : String(r['beater_name'] ?? '');
         return [
           `[${r['person_name']}](https://www.worldcubeassociation.org/persons/${r['person_id']})`,
           `**${value}**`,
           isAvg ? 'Average' : 'Single',
           `[${r['comp_name']}](https://www.worldcubeassociation.org/competitions/${r['competition_id']})`,
           r['beater_comp_id']
-            ? `${r['beater_name']} ${beat} — [${r['beater_comp']}](https://www.worldcubeassociation.org/competitions/${r['beater_comp_id']})`
-            : `${r['beater_name']} ${beat}`,
+            ? `${beater} ${beat} — [${r['beater_comp']}](https://www.worldcubeassociation.org/competitions/${r['beater_comp_id']})`
+            : `${beater} ${beat}`,
           ymd(r['date']),
         ];
       });
