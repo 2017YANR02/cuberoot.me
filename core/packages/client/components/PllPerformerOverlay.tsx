@@ -143,8 +143,9 @@ export default function PllPerformerOverlay({
     world.dirty = true;
   }, []);
 
-  // ── World init: dynamic-import three + the cuber engine, mount ONE
-  //    transparent renderer, set the PLL framing, own render loop. ──────────
+  // ── World init: 共享的 /sim 嵌入生命周期(mountSimWorld)+ 本浮层自己的两件事:
+  //    PLL 识别用的取景角度、以及「立方体只占舞台一小块」的尺寸(舞台其余留给桌宠的
+  //    身体和爪子,所以画布不是 host 的 client box,走 mountSimWorld 的 measure)。──
   useEffect(() => {
     const stage = stageRef.current;
     if (!stage) return;
@@ -153,41 +154,41 @@ export default function PllPerformerOverlay({
     let cleanup: (() => void) | null = null;
 
     void (async () => {
-      const [THREE, worldMod, twisterMod, timingMod, interactionMod] = await Promise.all([
-        import('three'),
-        import('@/app/[lang]/sim/engine/world'),
+      const [embed, twisterMod, timingMod] = await Promise.all([
+        import('@/components/sim-embed/mountSimWorld'),
         import('@/app/[lang]/sim/engine/nxn/twister'),
         import('@/app/[lang]/sim/engine/tweenTiming'),
-        import('@/app/[lang]/sim/worldInteraction'),
       ]);
       if (cancelled) return;
 
-      const World = worldMod.default;
       const { TwistAction } = twisterMod;
       const { timing } = timingMod;
       twistActionCtorRef.current = TwistAction;
       setFramesRef.current = (f: number) => { timing.frames = f; };
 
-      const world = new World();
-      interactionMod.attachInteraction(world); // controller 注入(原 World ctor 内联,headless 化后外置)
-      world.setPuzzle(3);
-      worldRef.current = world;
-
-      const renderer = new THREE.WebGLRenderer({
-        antialias: true, alpha: true, preserveDrawingBuffer: true,
+      // Cube canvas edge as a fraction of the stage edge. Mirrors the CSS
+      // --cube-size custom property (kept in sync so the claws/body math lines
+      // up with the rendered canvas). ~52% → prominent but leaves clawd's eyes
+      // peeking above and its claws gripping the lower corners.
+      const cubeBoxFraction = 0.52;
+      const mount = embed.mountSimWorld({
+        host: stage,
+        interactive: true,
+        // Slightly tighter framing than /sim so the cube fills the stage.
+        perspective: 4,
+        measure: (host) => {
+          const edge = Math.round(Math.min(host.clientWidth, host.clientHeight) * cubeBoxFraction);
+          return { width: edge, height: edge };
+        },
       });
-      renderer.autoClear = false;
-      renderer.setClearColor(0xffffff, 0);
-      renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
-      rendererRef.current = renderer;
+      const world = mount.world;
+      worldRef.current = world;
+      rendererRef.current = mount.renderer;
 
-      stage.appendChild(renderer.domElement);
-      renderer.domElement.style.outline = 'none';
-      renderer.domElement.style.display = 'block';
       // Cube canvas sits in the vertical CENTER of the stage (CSS) so clawd's
       // native body hugs it from behind — eyes peeking above, claws gripping the
       // lower corners in front.
-      renderer.domElement.classList.add('pll-perf-cube-canvas');
+      mount.renderer.domElement.classList.add('pll-perf-cube-canvas');
 
       // Near-front PLL-recognition framing: U on top, white front, slight
       // viewer-above tilt — NOT the /sim default iso angle. matrixAutoUpdate is
@@ -196,29 +197,7 @@ export default function PllPerformerOverlay({
       world.scene.rotation.y = -Math.PI / 16; // tiny yaw for depth
       world.scene.rotation.z = 0;
       world.scene.updateMatrix();
-
-      // Slightly tighter framing than /sim so the cube fills the stage.
-      world.perspective = 4;
-
-      // Cube canvas edge as a fraction of the stage edge. Mirrors the CSS
-      // --cube-size custom property (kept in sync so the claws/body math lines
-      // up with the rendered canvas). ~52% → prominent but leaves clawd's eyes
-      // peeking above and its claws gripping the lower corners.
-      const cubeBoxFraction = 0.52;
-
-      const resize = () => {
-        const stageEdge = Math.min(stage.clientWidth, stage.clientHeight);
-        const w = Math.round(stageEdge * cubeBoxFraction);
-        const h = w;
-        world.width = w;
-        world.height = h;
-        world.resize();
-        renderer.setSize(w, h, true); // updateStyle=true: canvas is its own ~60% box
-        world.dirty = true;
-      };
-      resize();
-      const ro = new ResizeObserver(resize);
-      ro.observe(stage);
+      mount.invalidate();
 
       // Move-completion chain: world.callbacks fires on cube.callback() at each
       // move drop. Advance to the next move only when the cube confirms (hands
@@ -253,25 +232,8 @@ export default function PllPerformerOverlay({
       applyCase(caseRef.current);
       setWorldReady((n) => n + 1);
 
-      let raf = 0;
-      const loop = () => {
-        if (world.dirty || world.cube.dirty) {
-          renderer.clear();
-          renderer.render(world.scene, world.camera);
-          world.dirty = false;
-          world.cube.dirty = false;
-        }
-        raf = requestAnimationFrame(loop);
-      };
-      loop();
-
       cleanup = () => {
-        cancelAnimationFrame(raf);
-        ro.disconnect();
-        if (renderer.domElement.parentNode) {
-          renderer.domElement.parentNode.removeChild(renderer.domElement);
-        }
-        renderer.dispose();
+        mount.dispose();
         worldRef.current = null;
         rendererRef.current = null;
         readyRef.current = false;

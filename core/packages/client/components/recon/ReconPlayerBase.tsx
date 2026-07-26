@@ -102,146 +102,82 @@ export default function ReconPlayerBase<M>({
     if (target != null) setStep(target);
   }, [applyStep, setStep]);
 
-  // ── Mount: lazy-load three + cuber World, build the puzzle, render loop +
-  //    optional back view, drag-to-orbit ──
+  // ── Mount: 共享的 /sim 嵌入生命周期(mountSimWorld:渲染器 / 尺寸 / 只在脏时渲染的
+  //    rAF / 卸载)+ 共享的拖拽手势(attachOrbitTap,钳 pitch 的看图档),本文件只留
+  //    「拼图怎么建」「小窗怎么摆」这两件自己的事 ──
   useEffect(() => {
     let cancelled = false;
     let cleanup: (() => void) | null = null;
 
     void (async () => {
-      const THREE = await import('three');
-      const { default: World } = await import('@/app/[lang]/sim/engine/world');
-      const { attachInteraction } = await import('@/app/[lang]/sim/worldInteraction');
-      const wantBackView = adapterRef.current.backView;
-      let mkBackView: ((px: number) => BackView) | null = null;
-      if (wantBackView) {
-        const { SIZE } = await import('@/app/[lang]/sim/engine/define');
-        const { createBackView } = await import('@/app/[lang]/sim/engine/backView');
-        if (cancelled) return;
-        mkBackView = (px: number) => createBackView(THREE, SIZE, px);
-      }
+      const [embed, gesture, three, defineMod, backMod] = await Promise.all([
+        import('@/components/sim-embed/mountSimWorld'),
+        import('@/components/sim-embed/orbitTapGesture'),
+        import('three'),
+        import('@/app/[lang]/sim/engine/define'),
+        import('@/app/[lang]/sim/engine/backView'),
+      ]);
       if (cancelled) return;
       const host = hostRef.current;
       if (!host) return;
 
-      const world = new World();
-      attachInteraction(world); // controller 注入(原 World ctor 内联,headless 化后外置)
-      adapterRef.current.setupPuzzle(world);
       // Orientation letters (U/D/L/R/F/B) — shown iff the back view is on (recon
       // submit forces both), hidden on the detail / SolutionView surfaces.
-      if (wantBackView) world.faceHints.show(); else world.faceHints.hide();
-      worldRef.current = world;
-
-      const renderer = new THREE.WebGLRenderer({
-        antialias: true, alpha: true, preserveDrawingBuffer: true,
+      const wantBackView = adapterRef.current.backView;
+      const mount = embed.mountSimWorld({
+        host,
+        interactive: true,
+        faceHints: wantBackView,
+        // 看图页要满像素比(贴纸边界 / 方位字母都要清楚),不吃默认的 2× 上限。
+        pixelRatioCap: Number.POSITIVE_INFINITY,
+        // 右下角小窗跟着主视图一起画(只在真渲染了那一帧)。
+        onRendered: (w) => { backViewRef.current?.render(w); },
       });
-      renderer.autoClear = false;
-      renderer.setClearColor(0xffffff, 0);
-      renderer.setPixelRatio(window.devicePixelRatio);
-      renderer.domElement.style.outline = 'none';
-      renderer.domElement.style.touchAction = 'none';
-      renderer.domElement.style.display = 'block';
-      host.appendChild(renderer.domElement);
-      rendererRef.current = renderer;
+      const world = mount.world;
+      adapterRef.current.setupPuzzle(world);
+      worldRef.current = world;
+      rendererRef.current = mount.renderer;
 
-      if (mkBackView) {
-        const bv = mkBackView(120);
+      if (wantBackView) {
+        const bv = backMod.createBackView(three, defineMod.SIZE, 120);
         backViewRef.current = bv;
-        if (backFrameRef.current) backFrameRef.current.appendChild(bv.domElement);
+        backFrameRef.current?.appendChild(bv.domElement);
       }
 
-      const resize = () => {
-        const w = host.clientWidth;
-        const h = host.clientHeight;
-        if (w <= 0 || h <= 0) return;
-        world.width = w;
-        world.height = h;
-        world.resize();
-        renderer.setSize(w, h, true);
+      // 小窗边长跟主画布走(主画布自己的尺寸由 mountSimWorld 的 ResizeObserver 管)。
+      const sizeBackView = () => {
+        const bv = backViewRef.current;
         const frame = backFrameRef.current;
-        if (backViewRef.current && frame) {
-          const bs = Math.round(Math.min(132, Math.max(72, Math.min(w, h) * 0.3)));
-          frame.style.width = `${bs}px`;
-          frame.style.height = `${bs}px`;
-          backViewRef.current.setSize(bs);
-        }
-        world.dirty = true;
+        if (!bv || !frame) return;
+        const edge = Math.min(host.clientWidth, host.clientHeight);
+        const bs = Math.round(Math.min(132, Math.max(72, edge * 0.3)));
+        frame.style.width = `${bs}px`;
+        frame.style.height = `${bs}px`;
+        bv.setSize(bs);
+        mount.invalidate();
       };
-      resize();
-      const ro = new ResizeObserver(resize);
+      sizeBackView();
+      const ro = new ResizeObserver(sizeBackView);
       ro.observe(host);
 
-      // Drag-to-orbit the view (read-only — no cube interaction).
-      const ORBIT_K = 0.01;
-      const Q = Math.PI / 2;
-      let dragging = false;
-      let lastX = 0;
-      let lastY = 0;
-      const onDown = (e: PointerEvent) => {
-        if (e.pointerType === 'mouse' && e.button !== 0) return;
-        dragging = true;
-        lastX = e.clientX;
-        lastY = e.clientY;
-        try { renderer.domElement.setPointerCapture(e.pointerId); } catch { /* */ }
-      };
-      const onMove = (e: PointerEvent) => {
-        if (!dragging) return;
-        const dx = e.clientX - lastX;
-        const dy = e.clientY - lastY;
-        lastX = e.clientX;
-        lastY = e.clientY;
-        world.scene.rotation.y += dx * ORBIT_K;
-        world.scene.rotation.x = Math.max(-Q, Math.min(Q, world.scene.rotation.x + dy * ORBIT_K));
-        world.scene.updateMatrix();
-        world.dirty = true;
-      };
-      const onUp = (e: PointerEvent) => {
-        dragging = false;
-        try { renderer.domElement.releasePointerCapture(e.pointerId); } catch { /* */ }
-      };
-      renderer.domElement.addEventListener('pointerdown', onDown);
-      renderer.domElement.addEventListener('pointermove', onMove);
-      renderer.domElement.addEventListener('pointerup', onUp);
-      renderer.domElement.addEventListener('pointercancel', onUp);
-
-      let raf = 0;
-      let lastFrameAt = performance.now();
-      const loop = () => {
-        const now = performance.now();
-        const dt = now - lastFrameAt;
-        lastFrameAt = now;
-        // Fade the orientation letters in (and keep them rendered).
-        if (world.faceHints.tick(dt)) world.dirty = true;
-        if (world.dirty || world.cube.dirty) {
-          renderer.clear();
-          renderer.render(world.scene, world.camera);
-          backViewRef.current?.render(world);
-          world.dirty = false;
-          world.cube.dirty = false;
-        }
-        raf = requestAnimationFrame(loop);
-      };
-      loop();
+      // 只读预览:拖动一律转视角(钳 pitch,永远正着看),不碰魔方。右键菜单照常
+      // (这里没有右键交互,拦了反而怪)。
+      const detach = gesture.attachOrbitTap({
+        world,
+        canvas: mount.renderer.domElement,
+        preventContextMenu: false,
+      });
 
       // Initial state — scramble applied, solution at step 0.
       applyStep(stepRef.current);
       setReady(true);
 
       cleanup = () => {
-        cancelAnimationFrame(raf);
+        detach();
         ro.disconnect();
-        renderer.domElement.removeEventListener('pointerdown', onDown);
-        renderer.domElement.removeEventListener('pointermove', onMove);
-        renderer.domElement.removeEventListener('pointerup', onUp);
-        renderer.domElement.removeEventListener('pointercancel', onUp);
-        if (renderer.domElement.parentNode) {
-          renderer.domElement.parentNode.removeChild(renderer.domElement);
-        }
         backViewRef.current?.dispose();
         backViewRef.current = null;
-        (world.cube as { dispose?: () => void }).dispose?.();
-        renderer.dispose();
-        renderer.forceContextLoss?.();
+        mount.dispose();
         worldRef.current = null;
         rendererRef.current = null;
       };

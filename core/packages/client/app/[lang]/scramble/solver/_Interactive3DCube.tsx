@@ -6,68 +6,75 @@
  * cube. The engine is order-generic (world.order = spec.n), so the same painter
  * serves 3×3 (default) and 2×2 (`spec={CUBE2_PAINT}`):
  *
- *   - controller.paintMode + dragEmpty='view'  → every drag orbits the view,
- *     never twists a layer; a tap still fires controller.taps. Orbit is the same
- *     unbounded two-axis accumulation /sim's「视角」mode uses, so the cube can be
- *     spun freely in any direction (no ±90° pitch clamp).
- *   - taps → map (cubelet index, world face) → facelet index → paintSticker.
+ *   - controller.paintMode + dragEmpty='orbit' → every drag orbits the view,
+ *     never twists a layer; a tap still fires controller.taps. Orbit is /sim's
+ *    「自动转体」(`orbitSceneAutoRotate`): the view stays inside ±90° and every
+ *     90° of excess is folded into a real whole-cube y/x twist, so the cube turns
+ *     under fixed lighting like a physical puzzle in hand instead of the camera
+ *     flying around a cube whose shading never changes.
+ *   - taps → (current slot, world face) → the cubelet living there → its HOME
+ *     address (initial index, local face) → facelet index → paintSticker. That
+ *     detour is what makes painting survive the whole-cube twists above: facelet
+ *     ↔ engine addressing (`faceletMap`, `cube.stick`) is home-based, and after a
+ *     y/x twist the slot the finger hit is no longer the cubelet's home slot.
  *   - facelet (React state, shared with the 2D net) is the source of truth; on
  *     every change we push all 6n² sticker labels into the cube via cube.stick.
  *     Cube.serialize()'s ordering is the standard Kociemba URFDLB facelet, so
  *     FACELET_MAP (which mirrors it) round-trips painted state to the solver.
  *
- * three (0.183: ~740KB minified, ~0.2MB over the wire) + the cuber engine are
- * dynamically imported so they stay out of the COEP-isolated solver's initial
- * bundle. Since 立体 is the DEFAULT view, that load is *scheduled* rather than
- * awaited straight from mount — see preloadPaintEngine below.
+ * 渲染器生命周期走共享的 `mountSimWorld`,外壳(等第一帧 → 转圈 → 重置视角)走共享的
+ * `<SimStage>` —— 与金字塔/斜转画板、SQ1 转盘、预判题板同一份。NxN 的**拾取**仍走
+ * cuber controller 的 `taps`(instanced 渲染,raycast 只给 instanceId,拿不到贴纸),
+ * 这点与异形画板的 raycast 路线是真差异,不强合。
+ *
+ * three(0.183: ~740KB minified, ~0.2MB over the wire)+ 引擎全部动态 import,所以
+ * COEP 隔离的求解器页初始包里没有它们。立体是**默认**视图,所以那次加载是被 SimStage
+ * 排到第一帧之后,而不是从 mount 直接 await。
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { RotateCcw } from 'lucide-react';
-import type * as THREE from 'three';
-import type World from '@/app/[lang]/sim/engine/world';
 import type Cube from '@/app/[lang]/sim/engine/nxn/cube';
 import type Toucher from '@/app/[lang]/sim/Toucher';
-import { yawSign } from '@/app/[lang]/sim/engine/viewControls'; // pure math, no three import
-import { Spinner } from '@/components/Spinner/Spinner';
+import type { SimMount } from '@/components/sim-embed/mountSimWorld';
+import SimStage from '@/components/sim-embed/SimStage';
 import { onIdle } from '@/lib/on-idle';
 
 /**
- * three + cuber engine, fetched once per page load and shared by every painter
- * instance (2×2 / 3×3, and remounts when the user tabs away and back).
+ * mountSimWorld(内含 three + 引擎)、Toucher、视角助手,每个页面加载只拉一次,
+ * 所有画板实例共享(2×2 / 3×3,以及用户切走再切回来的重挂载)。
  *
- * Deliberately NOT awaited straight from the mount effect: importing three also
- * *parses and executes* it on the main thread, which would land in the middle of
- * the solver's first paint. `afterFirstPaint()` lets the shell (tabs, palette,
- * canvas frame) hit the screen first; the download then overlaps with whatever the
- * user does next. All four modules are fetched in ONE Promise.all — the previous
- * three → world/interaction → Toucher waterfall cost two extra round trips for no
- * reason. Callers that know 3D is off-screen (2D / scramble / recon views) can
- * call preloadPaintEngine() during idle so switching to 立体 is instant — the
- * cached promise makes that a no-op if it's already in flight.
+ * 三个模块一次 `Promise.all` 拉完 —— 以前 three → world/interaction → Toucher 是
+ * 串行瀑布,白白多两个往返。知道 3D 此刻不在屏上的调用方(2D / 打乱 / 复盘视图)可以
+ * 在空闲时 `preloadPaintEngine()` 预热,切到「立体」就不用等;已经在飞的话缓存的
+ * promise 让它是个空操作。
  */
 type PaintEngine = {
-  THREE: typeof THREE;
-  World: typeof World;
-  attachInteraction: (w: World) => World;
+  mountSimWorld: typeof import('@/components/sim-embed/mountSimWorld').mountSimWorld;
   Toucher: typeof Toucher;
+  orbitSceneAutoRotate: typeof import('@/app/[lang]/sim/engine/viewControls').orbitSceneAutoRotate;
+  resetSceneView: typeof import('@/app/[lang]/sim/engine/viewControls').resetSceneView;
+  TwistAction: typeof import('@/app/[lang]/sim/engine/nxn/twister').TwistAction;
+  /** /sim 默认灵敏度那一档。 */
+  orbitK: number;
 };
 let enginePromise: Promise<PaintEngine> | null = null;
 
 export function preloadPaintEngine(): Promise<PaintEngine> {
   enginePromise ??= (async () => {
-    const [three, world, interaction, toucher] = await Promise.all([
-      import('three'),
-      import('@/app/[lang]/sim/engine/world'),
-      import('@/app/[lang]/sim/worldInteraction'),
+    const [embed, toucher, view, twister] = await Promise.all([
+      import('@/components/sim-embed/mountSimWorld'),
       import('@/app/[lang]/sim/Toucher'),
+      import('@/app/[lang]/sim/engine/viewControls'),
+      import('@/app/[lang]/sim/engine/nxn/twister'),
     ]);
     return {
-      THREE: three,
-      World: world.default,
-      attachInteraction: interaction.attachInteraction,
+      mountSimWorld: embed.mountSimWorld,
       Toucher: toucher.default,
+      orbitSceneAutoRotate: view.orbitSceneAutoRotate,
+      resetSceneView: view.resetSceneView,
+      TwistAction: twister.TwistAction,
+      orbitK: view.ORBIT_K,
     };
   })();
   return enginePromise;
@@ -83,12 +90,6 @@ export function useIdlePreloadPaintEngine(enabled: boolean): void {
   }, [enabled]);
 }
 
-/** Resolve after the browser has painted at least one frame (rAF fires pre-paint,
- *  so a nested rAF is the earliest "the pixels are up" signal). */
-const afterFirstPaint = () => new Promise<void>((resolve) => {
-  if (typeof requestAnimationFrame !== 'function') { resolve(); return; }
-  requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
-});
 import {
   FACES, CUBE3_PAINT, usePainter, type FaceLetter, type PaintColor, type PaintSpec,
 } from './_paint-shared';
@@ -97,11 +98,6 @@ import { PaintPalette, PaintActions } from './_PaintToolbar';
 // facelet idx (URFDLB) → (cubelet position index, local face). Shared with
 // /predict's board — see components/sim-embed/faceletMap.
 import { buildFaceletMap, buildReverseFaceletMap } from '@/components/sim-embed/faceletMap';
-
-// Default view (the cuber engine's own initial scene.rotation — U top, F front, R right).
-const DEFAULT_ROT_X = Math.PI / 6;
-const DEFAULT_ROT_Y = -Math.PI / 4 + Math.PI / 16;
-const ORBIT_K = 0.01; // radians per px dragged — /sim 灵敏度默认(mapOrbitK(50))同值
 
 export interface Interactive3DCubeProps {
   facelet: string;
@@ -129,7 +125,6 @@ export default function Interactive3DCube({
 }: Interactive3DCubeProps) {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  const t = (zh: string, en: string) => (isZh ? zh : en);
 
   const { paint, rejectMsg } = usePainter({ facelet, onChange, activeColor, isZh, spec });
   // taps fire from the engine's closure; keep the latest paint()/onActiveColorChange reachable by ref.
@@ -138,185 +133,104 @@ export default function Interactive3DCube({
   const onActiveColorChangeRef = useRef(onActiveColorChange);
   useEffect(() => { onActiveColorChangeRef.current = onActiveColorChange; }, [onActiveColorChange]);
 
-  // Order-dependent sticker maps. The mount effect runs once, so it reads them
-  // through a ref (a component instance never changes cube order in practice).
+  // Order-dependent sticker maps. The mount runs once, so it reads them through
+  // a ref (a component instance never changes cube order in practice).
   const faceletMap = useMemo(() => buildFaceletMap(spec.n), [spec.n]);
   const reverseMap = useMemo(() => buildReverseFaceletMap(faceletMap), [faceletMap]);
   const mapsRef = useRef({ faceletMap, reverseMap, spec });
   useEffect(() => { mapsRef.current = { faceletMap, reverseMap, spec }; }, [faceletMap, reverseMap, spec]);
 
-  const containerRef = useRef<HTMLDivElement>(null);
-  const worldRef = useRef<World | null>(null);
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const toucherRef = useRef<Toucher | null>(null);
+  const mountRef = useRef<SimMount | null>(null);
+  const resetViewRef = useRef<() => void>(() => {});
   const [ready, setReady] = useState(false);
-  // 转圈只在「慢到人能察觉」时才出现:chunk 命中缓存时 3D 几乎立刻就位,先闪一下
-  // spinner 比空着更吵。250ms 是常见的 spinner-delay 阈值。
-  const [showBusy, setShowBusy] = useState(false);
-  useEffect(() => {
-    if (ready) return;
-    const id = setTimeout(() => setShowBusy(true), 250);
-    return () => clearTimeout(id);
-  }, [ready]);
 
-  // Mount the cuber engine once (dynamic import keeps three out of the initial bundle).
-  useEffect(() => {
-    let cancelled = false;
-    let cleanup: (() => void) | null = null;
+  const mountEngine = async (host: HTMLElement): Promise<() => void> => {
+    const {
+      mountSimWorld, Toucher: TouchClass, orbitSceneAutoRotate, resetSceneView, TwistAction, orbitK,
+    } = await preloadPaintEngine();
 
-    void (async () => {
-      await afterFirstPaint();
-      if (cancelled) return;
-      const { THREE, World, attachInteraction, Toucher } = await preloadPaintEngine();
-      if (cancelled) return;
-      const container = containerRef.current;
-      if (!container) return;
+    // 画板一律满像素比(涂色要看清贴纸边界),所以不吃 mountSimWorld 默认的 2× 上限。
+    const mount = mountSimWorld({
+      host,
+      puzzle: mapsRef.current.spec.n,
+      interactive: true,
+      pixelRatioCap: Number.POSITIVE_INFINITY,
+    });
+    mountRef.current = mount;
+    const world = mount.world;
+    const cube = world.cube as Cube;
 
-      const world = new World();
-      attachInteraction(world); // 指针控制器 client 注入(engine 核心已 headless 化)
-      if (world.order !== mapsRef.current.spec.n) world.order = mapsRef.current.spec.n;
-      worldRef.current = world;
+    // 重置视角 = 视角回家 **且** 把自动转体累计的整体转体退回去(涂色板的姿态就是这两样),
+    // 否则按了「重置」魔方还歪着(白面朝右),用户会以为按钮坏了。cube.reset() 只动位置 /
+    // 朝向,贴纸颜色挂在 cubelet 上不受影响。
+    resetViewRef.current = () => { cube.reset(); resetSceneView(world); mount.invalidate(); };
 
-      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
-      renderer.autoClear = false;
-      renderer.setClearColor(0xffffff, 0);
-      renderer.setPixelRatio(window.devicePixelRatio);
-      rendererRef.current = renderer;
-      container.appendChild(renderer.domElement);
-      renderer.domElement.style.outline = 'none';
-      renderer.domElement.style.touchAction = 'none';
-      renderer.domElement.style.display = 'block';
+    const toucher = new TouchClass();
+    toucher.init(mount.renderer.domElement, world.controller.touch);
 
-      const toucher = new Toucher();
-      toucher.init(renderer.domElement, world.controller.touch);
-      toucherRef.current = toucher;
-
-      // Paint mode: drags orbit (never twist), taps paint.
-      world.controller.dragEmpty = 'view';
-      world.controller.paintMode = true;
-      world.controller.onOrbit = (dx, dy) => {
-        const w = worldRef.current;
-        if (!w) return;
-        // /sim 的「视角」模式:两轴都无界累加,可以一直转下去 —— 不钳 pitch 到 ±90°
-        // (钳了就翻不过顶/底,看不到 D 面外沿),也不把跨 90° 折成 x/y 整体转。
-        // yawSign 抵消上下颠倒那半圈的左右反向(与 /sim 同一处修正)。
-        w.scene.rotation.y += dx * ORBIT_K * yawSign(w.scene.rotation.x);
-        w.scene.rotation.x += dy * ORBIT_K;
-        w.scene.updateMatrix();
-        w.dirty = true;
-      };
-      world.controller.taps.push((index, face, tapOpts) => {
-        if (index < 0 || face === null) return;
-        const { reverseMap: rev, spec: sp } = mapsRef.current;
-        const fi = rev.get(`${index}_${face}`);
-        if (fi === undefined) return;
-        const per = sp.n * sp.n;
-        if (sp.fixedCenters && fi % per === (per - 1) / 2) {
-          // center (fixed) — tapping it picks its color instead of painting.
-          if (tapOpts.button === 0) onActiveColorChangeRef.current(FACES[Math.floor(fi / per)] as FaceLetter);
-          return;
-        }
-        paintRef.current(fi, tapOpts.button === 2 ? 'X' : undefined);
+    // Paint mode: drags orbit (never twist a layer), taps paint. 「自动转体」= 视角超出
+    // ±90° 的部分折成真正的整体 y/x 转体(与 /sim 同一份 foldViewIntoTwists)。
+    world.controller.dragEmpty = 'orbit';
+    world.controller.paintMode = true;
+    world.controller.onOrbit = (dx, dy) => {
+      orbitSceneAutoRotate(world, dx, dy, orbitK, (axis, reverse) => {
+        cube.twister.twist(new TwistAction(axis, reverse, 1), true, true);
       });
+    };
+    world.controller.taps.push((slot, face, tapOpts) => {
+      if (slot < 0 || face === null) return;
+      const { reverseMap: rev, spec: sp } = mapsRef.current;
+      // 手指点到的是**当前**槽位 + **世界**面;facelet 表是 home 寻址(initial 索引 + 本地面)。
+      // 没转过体时两者恒等,转过体后必须经这枚 cubelet 换算回去。
+      const cubelet = cube.cubelets.get(slot);
+      if (!cubelet) return;
+      const fi = rev.get(`${cubelet.initial}_${cubelet.getFace(face)}`);
+      if (fi === undefined) return;
+      const per = sp.n * sp.n;
+      if (sp.fixedCenters && fi % per === (per - 1) / 2) {
+        // center (fixed) — tapping it picks its color instead of painting.
+        if (tapOpts.button === 0) onActiveColorChangeRef.current(FACES[Math.floor(fi / per)] as FaceLetter);
+        return;
+      }
+      paintRef.current(fi, tapOpts.button === 2 ? 'X' : undefined);
+    });
 
-      const onContextMenu = (e: MouseEvent) => e.preventDefault();
-      renderer.domElement.addEventListener('contextmenu', onContextMenu);
+    const onContextMenu = (e: MouseEvent) => e.preventDefault();
+    mount.renderer.domElement.addEventListener('contextmenu', onContextMenu);
 
-      const resize = () => {
-        const w = container.clientWidth, h = container.clientHeight;
-        world.width = w;
-        world.height = h;
-        world.resize();
-        renderer.setSize(w, h, true);
-        world.dirty = true;
-      };
-      resize();
-      const ro = new ResizeObserver(resize);
-      ro.observe(container);
-
-      let raf = 0;
-      const loop = () => {
-        if (world.dirty) {
-          renderer.clear();
-          renderer.render(world.scene, world.camera);
-          world.dirty = false;
-        }
-        raf = requestAnimationFrame(loop);
-      };
-      loop();
-
-      setReady(true); // triggers the facelet→cube sync effect
-
-      cleanup = () => {
-        cancelAnimationFrame(raf);
-        ro.disconnect();
-        renderer.domElement.removeEventListener('contextmenu', onContextMenu);
-        world.controller.stop();
-        toucher.destroy();
-        if (renderer.domElement.parentNode) renderer.domElement.parentNode.removeChild(renderer.domElement);
-        renderer.dispose();
-        (world.cube as Cube).dispose?.();
-        worldRef.current = null;
-        rendererRef.current = null;
-        toucherRef.current = null;
-      };
-      if (cancelled) cleanup();
-    })();
-
-    return () => { cancelled = true; cleanup?.(); };
-  }, []);
+    return () => {
+      mount.renderer.domElement.removeEventListener('contextmenu', onContextMenu);
+      toucher.destroy();
+      mount.dispose();
+      mountRef.current = null;
+    };
+  };
 
   // facelet (source of truth) → cube sticker labels. 'X' → 'Gray' (unknown label
   // falls back to COLORS.Gray in the renderer).
   useEffect(() => {
-    const world = worldRef.current;
-    if (!world || !ready) return;
-    const cube = world.cube as Cube;
+    const mount = mountRef.current;
+    if (!mount || !ready) return;
+    const cube = mount.world.cube as Cube;
     for (let i = 0; i < faceletMap.length; i++) {
       const e = faceletMap[i];
       const ch = facelet[i];
       cube.stick(e.cube, e.face, ch === 'X' ? 'Gray' : ch);
     }
-    world.dirty = true;
+    mount.invalidate();
   }, [facelet, ready, faceletMap]);
-
-  const resetView = () => {
-    const world = worldRef.current;
-    if (!world) return;
-    world.scene.rotation.x = DEFAULT_ROT_X;
-    world.scene.rotation.y = DEFAULT_ROT_Y;
-    world.scene.rotation.z = 0;
-    world.scene.updateMatrix();
-    world.dirty = true;
-  };
 
   return (
     <div className="vc-cube3d">
       <style>{INLINE_CSS}</style>
       <div className="vc-cube3d-body">
-        <div className="vc-cube3d-stage-wrap">
-          <div className="vc-cube3d-stage">
-            <div
-              ref={containerRef}
-              className="vc-cube3d-canvas"
-              style={{ width: pixelSize, height: pixelSize }}
-            />
-            {!ready && showBusy && (
-              <span className="vc-cube3d-busy">
-                <Spinner size={22} label={t('正在加载立体画板', 'Loading the 3D painter')} />
-              </span>
-            )}
-            <button
-              type="button"
-              className="vc-cube3d-reset"
-              onClick={resetView}
-              title={t('重置视角', 'Reset view')}
-              aria-label={t('重置视角', 'Reset view')}
-            >
-              <RotateCcw size={14} />
-            </button>
-          </div>
-        </div>
+        <SimStage
+          size={pixelSize}
+          mount={mountEngine}
+          onReady={() => setReady(true)}
+          onResetView={() => resetViewRef.current()}
+          className="vc-cube3d-stage"
+        />
 
         <PaintPalette activeColor={activeColor} onActiveColorChange={onActiveColorChange} />
       </div>
@@ -350,33 +264,10 @@ const INLINE_CSS = `
   display: flex; flex-direction: column; align-items: center;
   gap: 0.75rem;
 }
-.vc-cube3d-stage-wrap {
-  display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
-}
-.vc-cube3d-stage { position: relative; line-height: 0; }
-.vc-cube3d-canvas {
+.vc-cube3d-stage .sim-stage-canvas {
   cursor: crosshair;
-  touch-action: none;
-  -webkit-user-select: none; user-select: none;
   background: rgba(255,255,255,0.025);
   border-radius: 8px;
   overflow: hidden;
-}
-.vc-cube3d-reset {
-  position: absolute; top: 8px; right: 8px;
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 28px; height: 28px;
-  background: var(--panel-sub, #2a2a2a);
-  border: 1px solid var(--border, #444);
-  color: var(--text-muted, #aaa);
-  border-radius: 6px; cursor: pointer;
-  transition: border-color 0.12s ease, color 0.12s ease;
-}
-.vc-cube3d-reset:hover { border-color: var(--accent, #ff8800); color: var(--accent, #ff8800); }
-.vc-cube3d-busy {
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  color: var(--text-muted, #888);
-  pointer-events: none;
 }
 `;
