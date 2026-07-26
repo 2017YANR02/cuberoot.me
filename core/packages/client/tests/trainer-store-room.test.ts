@@ -173,16 +173,21 @@ describe('trainer-store online room', () => {
     store.setMultiScramble(false);        // 复位,避免污染其它用例
   });
 
-  it('有复习进度:建房全集都入,从已刷处继续、进度接着显示 recapPos/总数', async () => {
+  it('有复习进度:建房全集都入,从当前题接着来、进度不重置', async () => {
     useTrainerStore.getState().leaveRoom();
     boot(['A', 'B', 'C', 'D', 'E']);
     const K = ['A', 'B', 'C', 'D', 'E'].map(n => caseKey(mkCase(n)));
-    // 白盒:模拟单机 seq 复习已刷过前 2 个(A、B),recapPos=3 指向当前题(C)。
-    // timing=true/multi=false:单条领取,currentKey 可确定断言。
-    useTrainerStore.setState({
-      mode: 'recap', recapOrder: 'seq', recapQueue: K, recapPos: 3, recapSig: 'sig',
-      timing: true, multiScramble: false,
-    });
+    // 走真实路径攒进度:seq 复习刷过 A、B,当前题是 C(3/5)。单条领取便于断言 currentKey。
+    const st0 = useTrainerStore.getState();
+    st0.setTiming(true);
+    st0.setMultiScramble(false);
+    st0.setMode('recap');
+    st0.setRecapOrder('seq');
+    st0.restartRecapRound();
+    useTrainerStore.getState().nextScramble();
+    useTrainerStore.getState().nextScramble();
+    expect(curRecap()).toEqual({ pos: 3, total: 5 });
+    expect(useTrainerStore.getState().currentKey).toBe(K[2]);
 
     await useTrainerStore.getState().createRoom();
     await flush();
@@ -194,6 +199,53 @@ describe('trainer-store online room', () => {
     expect(curRecap()).toEqual({ pos: 3, total: 5 }); // 进度接着显示 3/5,不重置到 1
 
     useTrainerStore.getState().leaveRoom();
+  });
+
+  // 生产事故回归(2026-07-26):刚开页面就建房,全队从 3/472 起步、头两个 case 永不派发。
+  // 因 createRoom 拿 recapPos 当「已刷前缀」,而它是「已抽到第几格」—— 预抽 peek/peek2 让它
+  // 一开局就等于 3,于是 start=2。线上 16 个房无一幸免:建房后 <200ms 游标即到 3,且这条分支
+  // 顺手把 order 钉成 seq(store 默认是 shuffle,用户选的乱序全被吞掉)。
+  it('毫无进度就建房:从第 1 格派发,且不篡改用户选的乱序', async () => {
+    useTrainerStore.getState().leaveRoom();
+    boot(['A', 'B', 'C', 'D', 'E']);
+    const st0 = useTrainerStore.getState();
+    st0.setTiming(true);
+    st0.setMultiScramble(false);
+    st0.setMode('recap');
+    st0.setRecapOrder('shuffle');
+    st0.restartRecapRound();                       // 开局:current = 1/5,而 recapPos 已是 3
+    expect(curRecap()).toEqual({ pos: 1, total: 5 });
+    expect(useTrainerStore.getState().recapPos).toBe(3); // ← 就是这个数曾被当成「已刷 3 个」
+
+    await useTrainerStore.getState().createRoom();
+    await flush();
+    expect(sim.idx).toBe(1);                       // 首题领的是第 1 格(曾是第 3 格)
+    expect(curRecap()).toEqual({ pos: 1, total: 5 }); // ← 事故点:曾显示 3/5
+    expect(sim.order).toBe('shuffle');             // 用户选的顺序照旧(曾被钉死成 seq)
+
+    useTrainerStore.getState().leaveRoom();
+  });
+
+  it('退出房间回单机:本轮从头开始,不接着房间的进度', async () => {
+    useTrainerStore.getState().leaveRoom();
+    boot(['A', 'B', 'C', 'D', 'E']);
+    const st0 = useTrainerStore.getState();
+    st0.setTiming(true);
+    st0.setMultiScramble(false);
+    st0.setMode('recap');
+    st0.setRecapOrder('seq');
+    await useTrainerStore.getState().createRoom();
+    await flush();
+    useTrainerStore.getState().nextScramble();
+    await flush();
+    useTrainerStore.getState().nextScramble();
+    await flush();
+    expect(curRecap()).toEqual({ pos: 3, total: 5 });   // 房间里刷到第 3 题
+
+    useTrainerStore.getState().leaveRoom();
+    await flush();
+    expect(useTrainerStore.getState().room).toBeNull();
+    expect(curRecap()).toEqual({ pos: 1, total: 5 });   // 单机是自己的一轮,从 1 起
   });
 
   // 生产事故回归(2026-07-26):claim 被限流 429,客户端把「领取失败」当成「本轮领完」,
