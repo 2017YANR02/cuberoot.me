@@ -120,12 +120,22 @@ console.log(`S = M ∘ y²(前后镜 = 左右镜再转半圈):成立 ${sEqMy2},�
 
 // ── 验证 3:setup 与 alg 一起镜像后仍然能解 ──
 // F2L case 解完 = 底两层还原(顶层照旧是乱的),不能用整方 isSolved 判。
-function f2lDone(alg: string): boolean {
+//
+// **必须模 24 个整体转体**:F2L 公式带 `y'` / `d` 开头是家常便饭(换个槽拧),收尾时魔方
+// 整个偏过去了,底两层照样是解好的。不除掉转体会把 51 条完全正常的公式误判成脏数据
+// —— 本脚本早先就报过这个假警报。判据的单一权威是 lib/alg_goals.ts 的 CUBE_ORIENTATIONS。
+const ORIENT: string[] = [];
+for (const t of ['', 'x', 'x2', "x'", 'z', "z'"]) for (const y of ['', 'y', 'y2', "y'"]) ORIENT.push(`${t} ${y}`.trim());
+
+function f2lDoneExact(alg: string): boolean {
   const p = KP.defaultPattern().applyAlg(alg);
   const c = p.patternData.CORNERS, e = p.patternData.EDGES;
   for (let i = 4; i < 8; i++) if (c.pieces[i] !== i || c.orientation[i] !== 0) return false;   // D 层 4 角
   for (let i = 4; i < 12; i++) if (e.pieces[i] !== i || e.orientation[i] !== 0) return false;  // D 层 + E 层 8 棱
   return true;
+}
+function f2lDone(alg: string): boolean {
+  return ORIENT.some((r) => f2lDoneExact(r ? `${alg} ${r}` : alg));
 }
 
 let algOk = 0, algBad = 0, baseBad = 0;
