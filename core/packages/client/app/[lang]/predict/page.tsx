@@ -38,7 +38,7 @@ import './predict.css';
 
 /** 还没出题时:空标签 = 用块自己的颜色(还原态),遮罩为空 = 不压暗。 */
 const EMPTY_LABELS: readonly string[] = Array<string>(54).fill('');
-const EMPTY_BRIGHT: readonly number[] = [];
+const EMPTY_FACELETS: readonly number[] = [];
 
 const PredictBoard = dynamic(() => import('./_components/PredictBoard'), {
   ssr: false,
@@ -205,17 +205,26 @@ function PredictPageInner() {
   }, [challenge, shown]);
 
   /**
-   * 保持满色的 facelet:目标块整块 + 已经答对的落点(当记号,这题一结束就撤)。
+   * 满色的 facelet:题面点名的那几枚贴纸 + 已经答对的落点(当记号,这题一结束就撤)。
    *
    * 走题板的阶段遮罩而不是改色,所以它怎么变都不会打断复盘动画。
    */
   const bright = useMemo(() => {
-    if (!challenge) return EMPTY_BRIGHT;
-    const out: number[] = [];
-    [...challenge.startFacelets].forEach((ch, i) => { if (ch !== '.') out.push(i); });
+    if (!challenge) return EMPTY_FACELETS;
+    const out = challenge.targets.map((t) => t.startFacelet);
     if (!over) challenge.targets.forEach((t, i) => { if (found[i]) out.push(t.answerFacelet); });
     return out;
   }, [challenge, found, over]);
+
+  /** 压暗的 facelet:目标块剩下的贴纸。要问的是「白色那枚落在哪」,同块的绿橙两枚
+   *  只是用来认出这是同一个角块,不该跟它一样亮。 */
+  const dim = useMemo(() => {
+    if (!challenge) return EMPTY_FACELETS;
+    const asked = new Set(challenge.targets.map((t) => t.startFacelet));
+    const out: number[] = [];
+    [...challenge.startFacelets].forEach((ch, i) => { if (ch !== '.' && !asked.has(i)) out.push(i); });
+    return out;
+  }, [challenge]);
 
   // 十字模式恒为「找棱」,追踪选择器换成「找几条」。
   const kindDisabled = mode === 'cross';
@@ -325,6 +334,7 @@ function PredictPageInner() {
         <PredictBoard
           labels={labels}
           bright={bright}
+          dim={dim}
           onSticker={onSticker}
           focusFaces={focus?.faces}
           focusNonce={focus?.nonce ?? 0}
