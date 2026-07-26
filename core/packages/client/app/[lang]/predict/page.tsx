@@ -83,6 +83,11 @@ function algErrorText(e: MoveInputError): { zh: string; en: string } {
         zh: `不认识「${e.token}」:只收 U R F D L B(可加 ' 或 2);宽转 r / Rw、中层 M E S、转体 x y z 都追不了。`,
         en: `Cannot read “${e.token}”: only U R F D L B (each with an optional ' or 2) — no wide turns, slices or rotations.`,
       };
+    case 'parens':
+      return {
+        zh: '括号没配对。(输入框打「(」会自动补上「)」,再打一个就多了。)',
+        en: 'Unbalanced parentheses. (Typing “(” already closes itself, so typing “)” adds a spare one.)',
+      };
     case 'tooLong':
       return {
         zh: `${e.count} 步太长了,最多 ${CUSTOM_MOVES_MAX} 步。`,
