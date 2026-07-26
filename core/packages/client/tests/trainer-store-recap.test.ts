@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 // 回归:单机复习(recap)队列契约。
 //  1) 复习队列 = 选中池整集(不分片);
 //  2) 顺序模式(seq)= set 原序,与勾选先后无关;
-//  3) 整集出完无缝重洗,不置 recapRoundDone(「本轮复习结束」弹窗只在线房间模式弹);
+//  3) 整集出完停下来弹「本轮复习结束」(recapRoundPrompt,默认开;关掉 = 无缝重洗);
 //  4) 训练模式(train)无 recap 进度,永不暂停。
 // 白盒读 store.recapQueue —— draw() 把复习队列写在这里(其长度即侧栏显示的 recap total)。
 
@@ -46,7 +46,11 @@ const curRecap = () => {
 };
 
 describe('trainer-store recap queue', () => {
-  beforeEach(() => { g.localStorage = makeLocalStorage(); });
+  beforeEach(() => {
+    g.localStorage = makeLocalStorage();
+    useTrainerStore.getState().setRecapRoundPrompt(true); // store 跨用例常驻,偏好显式复位
+    useTrainerStore.getState().setMultiScramble(false);
+  });
 
   it('复习队列 = 选中池整集(不分片)', () => {
     const names = ['A', 'B', 'C', 'D', 'E'];
@@ -71,12 +75,67 @@ describe('trainer-store recap queue', () => {
     expect(useTrainerStore.getState().recapQueue).toEqual(keys);
   });
 
-  it('整集出完无缝重洗,不置 recapRoundDone', () => {
+  it('整集出完停下来弹窗,「继续下一轮」才进新一轮', () => {
     boot(['A', 'B']);
     const st = useTrainerStore.getState();
     st.setMode('recap');
     st.setRecapOrder('seq');
     expect(curRecap()).toEqual({ pos: 1, total: 2 });
+    useTrainerStore.getState().nextScramble();        // {2,2}
+    expect(curRecap()).toEqual({ pos: 2, total: 2 });
+    useTrainerStore.getState().nextScramble();        // 出完 → 拦住,弹「本轮复习结束」
+    expect(useTrainerStore.getState().recapRoundDone).toBe(true);
+    expect(curRecap()).toEqual({ pos: 2, total: 2 });  // 题面停在最后这个,没偷偷翻页
+    useTrainerStore.getState().continueRecapRound();
+    expect(useTrainerStore.getState().recapRoundDone).toBe(false);
+    expect(curRecap()).toEqual({ pos: 1, total: 2 });
+  });
+
+  it('「先不了」停在原地,再点一下直接进新一轮(本轮不再弹)', () => {
+    boot(['A', 'B']);
+    const st = useTrainerStore.getState();
+    st.setMode('recap');
+    st.setRecapOrder('seq');
+    useTrainerStore.getState().nextScramble();
+    useTrainerStore.getState().nextScramble();
+    expect(useTrainerStore.getState().recapRoundDone).toBe(true);
+    useTrainerStore.getState().dismissRecapRound();
+    expect(useTrainerStore.getState().recapRoundDone).toBe(false);
+    expect(curRecap()).toEqual({ pos: 2, total: 2 });  // 关掉弹窗不换题
+    useTrainerStore.getState().nextScramble();         // 这一下不再弹,直接进新一轮
+    expect(useTrainerStore.getState().recapRoundDone).toBe(false);
+    expect(curRecap()).toEqual({ pos: 1, total: 2 });
+    // 新一轮刷完照弹(acked 只管上一轮)
+    useTrainerStore.getState().nextScramble();
+    useTrainerStore.getState().nextScramble();
+    expect(useTrainerStore.getState().recapRoundDone).toBe(true);
+  });
+
+  // 三条一屏:屏上摆的是 current + peek + peek2,所以「刷完没」要看 peek2 而不是 current,
+  // 「继续下一轮」也得一次翻过去三条 —— 否则新一屏会带上刚做完的那两条。
+  it('三条一屏:整屏三条都是本轮的,弹窗与继续都按屏算', () => {
+    boot(['A', 'B', 'C', 'D', 'E', 'F']);
+    const st = useTrainerStore.getState();
+    st.setMode('recap');
+    st.setRecapOrder('seq');
+    st.setMultiScramble(true);
+    const screenNext = () => { for (let i = 0; i < 3; i++) useTrainerStore.getState().nextScramble(); };
+    expect(curRecap()).toEqual({ pos: 1, total: 6 });   // 屏上 1、2、3
+    screenNext();
+    expect(curRecap()).toEqual({ pos: 4, total: 6 });   // 屏上 4、5、6 = 本轮最后一屏
+    screenNext();
+    expect(useTrainerStore.getState().recapRoundDone).toBe(true);
+    expect(curRecap()).toEqual({ pos: 4, total: 6 });   // 停在原地,没把新一轮的混进这一屏
+    useTrainerStore.getState().continueRecapRound();
+    expect(curRecap()).toEqual({ pos: 1, total: 6 });   // 新一屏 = 新一轮的 1、2、3
+  });
+
+  it('关掉「刷完一轮提示」= 老行为,无缝重洗', () => {
+    boot(['A', 'B']);
+    const st = useTrainerStore.getState();
+    st.setMode('recap');
+    st.setRecapOrder('seq');
+    st.setRecapRoundPrompt(false);
     useTrainerStore.getState().nextScramble();        // {2,2}
     useTrainerStore.getState().nextScramble();        // 出完 → 直接进下一轮,不暂停
     expect(useTrainerStore.getState().recapRoundDone).toBe(false);
