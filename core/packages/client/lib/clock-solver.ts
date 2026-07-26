@@ -570,6 +570,64 @@ export function clockScrambleForState(state: ClockState): string {
   return parts.join(' ');
 }
 
+// ─── 算法层算子(/sim 播放条 + 求解页共用) ──────────────────────────────────
+
+/**
+ * 一条算法的逆。魔表群是阿贝尔群 —— 招式两两可交换,所以逆 = 每步幅度取反,**顺序无关**
+ * (不必像非交换群那样再倒序)。
+ */
+export function invertClockMoves(moves: readonly ClockMove[]): ClockMove[] {
+  return moves.map((m) => ({ ...m, amount: mod12(-m.amount) }));
+}
+
+/**
+ * 补齐末尾姿势:让 `text` 里 y2 的**奇偶**等于 `endsFlipped`,差一个就补一个。
+ *
+ * `clockMovesToString` 的规范形是「正面招式 y2 背面招式」——**有背面招式就自带一个 y2**,
+ * 于是收在翻面态。原算法翻了偶数次(如 `... y2 ... y2 ...`)时两者就差一个 y2,末态的两个
+ * 9 元块会整块对调。凡是"重新序列化一段魔表算法"的地方都要过这一道。
+ */
+export function withClockFlipParity(text: string, endsFlipped: boolean): string {
+  const writtenFlipped = (text.match(/(?:^| )y2(?: |$)/g) ?? []).length % 2 === 1;
+  if (writtenFlipped === endsFlipped) return text;
+  return text ? `${text} y2` : 'y2';
+}
+
+/** 一段算法里 y2 的奇偶(= 末了是否翻着面)。 */
+export function clockAlgEndsFlipped(alg: string): boolean {
+  return alg.trim().split(/\s+/).filter((t) => t === 'y2').length % 2 === 1;
+}
+
+/**
+ * 消步:把针脚组合相同的招式合并成一步(幅度相加 mod 12),幅度归零的整步丢掉。
+ *
+ * 同样吃阿贝尔性:**不限于相邻**的同组合招式也能合并,因为任意两步都可交换、随便挪到一起。
+ * (其它魔方的消步只敢折相邻两步,那是非交换群的限制。)合并只在用户已经用到的针脚组合里
+ * 做,不改记号词汇 —— 想要真最短请用求解器(`solveClock`),想要 WCA 规范 14 步用
+ * `canonicalClockMoves`。末尾姿势保持不变(见 `withClockFlipParity`)。
+ */
+export function reduceClockAlg(alg: string): string {
+  const sum = new Map<string, { side: 0 | 1; mask: number; amount: number }>();
+  const order: string[] = [];
+  for (const m of parseClockMoves(alg)) {
+    const key = `${m.side}:${m.mask}`;
+    const prev = sum.get(key);
+    if (prev) prev.amount = mod12(prev.amount + m.amount);
+    else { sum.set(key, { side: m.side, mask: m.mask, amount: mod12(m.amount) }); order.push(key); }
+  }
+  const out: ClockMove[] = [];
+  for (const key of order) {
+    const m = sum.get(key);
+    if (m && m.amount !== 0) out.push(m);
+  }
+  return withClockFlipParity(clockMovesToString(out), clockAlgEndsFlipped(alg));
+}
+
+/** 一条随机 WCA 打乱(均匀随机状态反推,与官方打乱同分布同格式)。 */
+export function randomClockScramble(rand: () => number = Math.random): string {
+  return clockScrambleForState(randomClockState(rand));
+}
+
 /** 随机状态(均匀分布在 12^14 上),= WCA 打乱的分布。 */
 export function randomClockState(rand: () => number = Math.random): ClockState {
   const posit = new Array<number>(18).fill(0);

@@ -4,7 +4,7 @@
  * /scramble/solver?event=clock —— 魔表求解器。
  *
  * 三个视图(魔表没有立体形态,`/sim` 与 twizzle 都是 2D,所以没有「立体」那一项):
- *   ?view=board    交互式 2D 魔表(默认):拖指针画状态,或切「拧」模式点针脚真拧
+ *   ?view=board    交互式 2D 魔表(默认):拖指针摆状态,或切「转动」模式点针脚真转
  *   ?view=scramble 打乱框(SolvePanel,含批量 + 统计)
  *   ?view=recon    复盘:输入一段解法,取逆同步到画板
  *
@@ -22,8 +22,8 @@ import { useT } from '@/hooks/useT';
 import { tr } from '@/i18n/tr';
 import {
   SOLVED_CLOCK, applyClockMoves, canonicalClockMoves, clockMovesToString,
-  clockScrambleForState, clockStateFromAlg, isClockSolved, parseClockMoves,
-  randomClockState, solveClock, type ClockState,
+  clockScrambleForState, clockStateFromAlg, invertClockMoves, isClockSolved,
+  parseClockMoves, randomClockState, solveClock, type ClockState,
 } from '@/lib/clock-solver';
 import SolveTabs from '../_components/SolveTabs';
 import { SolvePanel, type BatchSpec } from '../_components/BatchSolvePanel';
@@ -31,13 +31,6 @@ import '../_components/puzzle_optimal_solver.css';
 import './clock_solver.css';
 
 type View = 'board' | 'scramble' | 'recon';
-
-const mod12 = (x: number) => ((x % 12) + 12) % 12;
-
-/** 一条魔表算法的逆:招式可交换,所以只需把每步幅度取反(顺序无所谓)。 */
-function invertAlg(alg: string) {
-  return parseClockMoves(alg).map((m) => ({ ...m, amount: mod12(-m.amount) }));
-}
 
 interface Solved {
   optimal: string;
@@ -101,7 +94,7 @@ export default function ClockSolver() {
     const raw = reconInput.trim();
     if (!raw) return { state: null as ClockState | null, err: null as string | null, moves: 0 };
     try {
-      const inv = invertAlg(raw);
+      const inv = invertClockMoves(parseClockMoves(raw));
       return { state: applyClockMoves(SOLVED_CLOCK(), inv), err: null, moves: inv.length };
     } catch (e) {
       return { state: null, err: String((e as Error)?.message ?? e), moves: 0 };
