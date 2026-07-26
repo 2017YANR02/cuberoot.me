@@ -30,14 +30,25 @@ import type { NextRequest } from 'next/server';
 const SUPPORTED_LOCALES = ['en', 'zh'] as const;
 type Locale = typeof SUPPORTED_LOCALES[number];
 
-// The systemd standalone server (behind nginx) cannot transparently serve a
-// middleware *rewrite*: it does not consume the x-middleware-rewrite header
-// internally and self-proxies the rewrite using x-forwarded-proto=https against
-// its own HTTP-only :3002 → `write EPROTO ... packet length too long` → 500
-// (vercel/next.js#91844 + #54450). Vercel's edge AND `next dev` both serve the
-// rewrite correctly. Mirror next.config's standalone gate (isProd && !isVercel)
-// so ONLY this target swaps the bare→/en rewrite for a 307 redirect.
+// A self-hosted Next server behind a TLS-terminating proxy cannot transparently
+// serve a middleware *rewrite*: it does not consume the x-middleware-rewrite
+// header internally and self-proxies the rewrite using x-forwarded-proto=https
+// against its own HTTP-only port → `write EPROTO ... packet length too long` →
+// 500 (vercel/next.js#91844 + #54450). Only Vercel's edge serves it correctly.
+//
+// The build-time gate mirrors next.config's standalone gate (isProd &&
+// !isVercel) — that's the systemd :3002 target behind nginx.
 const IS_STANDALONE = process.env.NODE_ENV === 'production' && process.env.VERCEL !== '1';
+
+// …but the same EPROTO 500 hits `next dev` whenever it is ALSO reached through
+// a TLS-terminating proxy — dev.cuberoot.me → frp → local :3000, where nginx
+// sends X-Forwarded-Proto: https. NODE_ENV is 'development' there, so the
+// build-time gate misses it and every bare (English) URL 500s while /zh works.
+// Decide per request instead: forwarded https + not Vercel ⇒ can't rewrite.
+function cannotRewrite(req: NextRequest): boolean {
+  if (IS_STANDALONE) return true;
+  return process.env.VERCEL !== '1' && req.headers.get('x-forwarded-proto') === 'https';
+}
 
 // App-root routes that are NOT under app/[lang]/* — route handlers, OAuth, the
 // worker-asset trees, the kill-switch service worker. These pass through
@@ -153,11 +164,11 @@ export function proxy(req: NextRequest) {
   const target = url.clone();
   target.pathname = `/en${pathname === '/' ? '' : pathname}`;
 
-  // Standalone can't transparently rewrite (see IS_STANDALONE note): fall back to
-  // a 307 → /en. English then lives at /en there (canonical stays bare via the
-  // Link header on the /en serve in branch 2). 307 not 308: the en-vs-zh choice
-  // is per-user (cookie / Accept-Language) and must never be cached permanently.
-  if (IS_STANDALONE) {
+  // Can't transparently rewrite (see cannotRewrite): fall back to a 307 → /en.
+  // English then lives at /en there (canonical stays bare via the Link header on
+  // the /en serve in branch 2). 307 not 308: the en-vs-zh choice is per-user
+  // (cookie / Accept-Language) and must never be cached permanently.
+  if (cannotRewrite(req)) {
     const res = NextResponse.redirect(target, 307);
     if (req.cookies.get('lang')?.value !== 'en') setLangCookie(res, 'en');
     return res;
