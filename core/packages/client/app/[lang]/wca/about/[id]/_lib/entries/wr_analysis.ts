@@ -10,11 +10,13 @@ const wr_aoxr: AboutEntry = {
   badgeZh: '世界纪录',
   badgeEn: 'World record',
   introZh: [
-    '`AoXR` 把一场比赛里**所有轮次**的 average 再做一次平均。X = 1, 2, 3, 4,分别对应"恰好打了 1/2/3/4 轮"的情况。比赛圈内最常用 `Ao3R`(预赛 + 半决 + 决赛)和 `Ao4R`(加一个 1/4 决)。',
+    '`AoXR` 把一场比赛里**所有轮次**的 average 再做一次平均。X = 该场该项目的轮次数(1—4)。比赛圈内最常用 `Ao3R`(预赛 + 半决 + 决赛)和 `Ao4R`(加一个 1/4 决)。',
+    '两条准入前提:**打满**该项目的全部轮次(即打进决赛)、且**每轮都有有效平均**。四轮的项目只打两轮就被淘汰不能冒充 `Ao2R`;任意一轮平均 DNF 则整场不计。',
     '它度量一个选手「单场稳定输出」的能力 —— 不像 single 那样靠手气,也不像 ao5 那样有掐尾。被 4 轮挤进来的选手,平均都得过硬。',
   ],
   introEn: [
-    '`AoXR` is the **average of the averages** a competitor posted across all rounds in a single competition. X ∈ {1, 2, 3, 4}, depending on how many rounds they actually competed in.',
+    '`AoXR` is the **average of the averages** a competitor posted across all rounds in a single competition. X = the number of rounds that event had at that comp (1—4).',
+    'Two prerequisites: they **competed in every round** (i.e. made the final) and **every round produced a valid average**. Getting knocked out after 2 of 4 rounds is not an `Ao2R`; one DNF average voids the whole competition.',
     'It measures within-comp consistency: not luck-of-the-single, and broader than ao5 because every round counts.',
   ],
   stats: [
@@ -29,13 +31,16 @@ const wr_aoxr: AboutEntry = {
   ],
   sourceZh: [
     '直接读 WCA 开发者 dump 的 `results` 表 — 每行一个轮次成绩;join `persons`(`sub_id = 1` 取主身份)和 `competitions`(取 `start_date` / `cell_name`)。只看 `average > 0`(过滤 DNF 和未提交)。',
+    '另用一条轻量查询捞「标记行」(决赛轮 / 无有效平均的轮)判准入:某 (选手, 比赛) 有有效平均的决赛轮、且没有任何无效平均的轮 —— 才进入下一步。',
   ],
   sourceEn: [
     'Reads the WCA developer-dump `results` table — one row per round result — joined to `persons` (`sub_id = 1`) for the main identity and `competitions` for `start_date` / `cell_name`. Filters `average > 0` (drops DNFs and not-attempted).',
+    'A second lightweight query pulls the "marker" rows (final rounds / rounds without a valid average) to decide eligibility: a (person, comp) pair qualifies when it has a final round with a valid average and no round without one.',
   ],
   sourceCode: {
     lang: 'sql',
-    body: `SELECT event_id, average, round_type_id,
+    body: `-- 值:每轮一行
+SELECT event_id, average, round_type_id,
        competition_id, person_id,
        competition.start_date
 FROM results
@@ -43,7 +48,13 @@ JOIN persons ON persons.wca_id = results.person_id
             AND persons.sub_id = 1
 JOIN competitions ON competitions.id = results.competition_id
 WHERE average > 0
-ORDER BY start_date;`,
+ORDER BY start_date;
+
+-- 准入:打满(有决赛轮) ∧ 无 DNF 轮
+SELECT competition_id, person_id, (average <= 0) AS bad
+FROM results
+WHERE event_id = ?
+  AND (round_type_id IN ('c','f') OR average <= 0);`,
   },
   steps: [
     {
@@ -53,9 +64,16 @@ ORDER BY start_date;`,
       bodyEn: 'Collect all round averages a single person posted at one competition. Key = `competition_id:person_id`.'
     },
     {
+      titleZh: '筛准入:打满 + 无 DNF',
+      titleEn: 'Gate: all rounds, no DNF',
+      bodyZh: '丢掉两类组:①没有决赛轮成绩的(= 没打满 —— WCA 轮次是严格淘汰序列,进了决赛就说明前面每轮都打过;B-决赛 `b` 不算);②有任何一轮没打出有效平均的。',
+      bodyEn: 'Drop two kinds of group: (1) no final-round result (= did not compete in every round — WCA rounds are a strict elimination sequence, so making the final implies all earlier rounds; a B-Final `b` does not count); (2) any round without a valid average.',
+      highlight: true
+    },
+    {
       titleZh: '按轮次 type 排序 + 选 X 档',
       titleEn: 'Sort by round type, pick tier',
-      bodyZh: '组内按 `round_type_id` 排:`1/d → 2/e → 3/g → c/f`(预赛、半决、决赛、综合);再按"组里恰好有 X 个轮次"拆成 4 个 sub-stat(Ao1R / Ao2R / Ao3R / Ao4R)。',
+      bodyZh: '组内按 `round_type_id` 排:`1/d → 2/e → 3/g → c/f`(预赛、半决、决赛、综合);再按"组里有 X 个轮次"拆成 4 个 sub-stat(Ao1R / Ao2R / Ao3R / Ao4R)。',
       bodyEn: 'Within a group, sort by `round_type_id` (1/d → 2/e → 3/g → c/f). Bucket each group by its round count X (1, 2, 3, or 4) — each bucket feeds one of Ao1R / Ao2R / Ao3R / Ao4R.'
     },
     {
@@ -83,8 +101,8 @@ ORDER BY start_date;`,
       labelZh: '公式',
       labelEn: 'Formula',
       expr: 'AoXR(p, c) = (1/X) · Σᵢ averageᵢ(p, c, roundᵢ)',
-      bodyZh: 'p = 选手,c = 比赛,roundᵢ = 第 i 轮(按 type 排序),averageᵢ = 该轮 average。X = 该选手在该比赛的轮次数。',
-      bodyEn: 'p = person, c = competition, roundᵢ = i-th round (sorted by type), averageᵢ = that round\'s average. X = number of rounds the person ran in that comp.'
+      bodyZh: 'p = 选手,c = 比赛,roundᵢ = 第 i 轮(按 type 排序),averageᵢ = 该轮 average。X = 该场该项目的轮次数 —— 选手必须每轮都打且每轮都有 average,否则该 (p, c) 不产生 AoXR。',
+      bodyEn: 'p = person, c = competition, roundᵢ = i-th round (sorted by type), averageᵢ = that round\'s average. X = the number of rounds that event had at that comp — the person must have competed in all of them with a valid average each, otherwise (p, c) yields no AoXR.'
     },
     {
       labelZh: '相邻 WR 进步百分比',
@@ -95,13 +113,15 @@ ORDER BY start_date;`,
     },
   ],
   edgesZh: [
-    '只算 `average > 0` 的轮次。DNF 平均(value = -1)和未提交(value = 0)被排除 — 一个选手即使打了 4 轮但有一轮 DNF,会被算成 Ao3R 而不是 Ao4R。',
+    '任一轮没有有效平均就整场作废:DNF 平均(-1)、未过及格线没打出平均、2003—2005 那种无平均赛制(Bo2/Bo3)的轮次都会让该场不计 —— 不会掉档凑成 Ao3R。',
+    '没打满不计:四轮的项目只打到复赛(被淘汰)不产生 Ao2R。判据是有没有决赛轮成绩;老比赛的 B-决赛(`b`)不算决赛,因为 A 决赛在其之后照常举行。',
     '同日两条不同比赛的 AoXR 不会合并 — 每条都是独立"事件"。',
     '与 WCA 官方"Average of X solves"(ao5/mo3)完全不同 — 这里 X 是**轮次数**,不是单次还原数。',
     '`sub_id = 1` 过滤副身份(改名、换国籍的选手 dump 里会有多行 persons,只取主行)。',
   ],
   edgesEn: [
-    'Only rounds with `average > 0` count. DNF averages (-1) and not-attempted (0) are excluded — someone who ran 4 rounds with one DNF\'d average lands in Ao3R, not Ao4R.',
+    'One round without a valid average voids the whole competition: a DNF average (-1), missing the cutoff, or a 2003—2005 no-average round format (Bo2/Bo3) all disqualify it — it does not fall back to Ao3R.',
+    'Not competing in every round means no entry: knocked out after 2 of 4 rounds yields no Ao2R. The test is whether a final-round result exists; a B-Final (`b`) in old comps does not count, since the A final still ran afterwards.',
     'Two AoXRs on the same date from different comps are not merged — each comp is its own event.',
     'Different from WCA "Average of X solves" (ao5 / mo3) — here X counts **rounds**, not solves.',
     '`sub_id = 1` filters out alt identities (renames, country changes — only the primary person row is kept).',

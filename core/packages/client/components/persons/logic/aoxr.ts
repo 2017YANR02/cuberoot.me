@@ -1,13 +1,13 @@
 // 选手页「AoXR」列 —— 一场比赛里某项目跨轮次的「平均的平均」。
-//   · 前提:必须打满该场该项目的全部轮次。四轮的项目只打到复赛就被淘汰 → 不出 AoXR,
-//     否则「只打了两轮」会冒充 Ao2R,与真·两轮赛制的 Ao2R 混在一起比。
+// 口径与世界榜 /wca/wr_aoxr 严格一致(stats-build/src/core/ao_rounds.ts):
+//   · 前提一「打满」:必须参加该场该项目的全部轮次。四轮的项目只打到复赛就被淘汰 → 不出
+//     AoXR,否则「只打了两轮」会冒充 Ao2R,与真·两轮赛制的 Ao2R 混在一起比。
 //     判据:本人有决赛轮成绩(WCA 轮次是严格淘汰序列,进了决赛 ⇒ 前面每轮都打过)。
-//   · 该场该项目「恰好 X 个」有效轮次(average > 0)时才成立,X ∈ [1,4]
-//     (某轮平均 DNF → 该场掉一档:4 轮变 Ao3R,与世界榜同)
+//   · 前提二「无 DNF」:每一轮都得有有效平均(average > 0)。任何一轮平均 DNF / 未过及格线
+//     没打出平均 → 整场不出值(不再像早期那样掉一档凑成 Ao3R)。
+//   · 于是 X = 该场轮数 = 有效平均个数,X ∈ [1,4]
 //   · 均值 Math.round 后再格式化(483.5 → 4.84;截断会写成 4.83,与世界榜差一个单位)
 //   · 多盲无官方平均,整项排除
-// 值的算法与世界榜 /wca/wr_aoxr(stats-build/src/core/ao_rounds.ts)一致;世界榜目前不带
-// 「打满」前提,故它可能收录本页不显示的场次(榜取每人最小值,实际影响仅限极少数场次)。
 // PR 名次口径同 logic/progress.ts 的 computePrRank:同「项目 × X 档」内按时间序 dense rank,
 // 一经赋值冻结(Ao3R 只和 Ao3R 比 —— 轮数不同不可比)。直播(非官方)组不进官方序列,
 // 自己另算一份「官方 + 直播」的名次,与成绩表 prRank / prRankLive 的分层一致。
@@ -41,8 +41,10 @@ interface Bucket {
   eventId: string;
   averages: number[];
   hasLive: boolean;
-  /** 打过决赛轮 = 打满该项目所有轮次(决赛平均 DNF 也算打过) */
+  /** 打过决赛轮 = 打满该项目所有轮次 */
   reachedFinal: boolean;
+  /** 有轮次没打出有效平均(DNF / 未过及格线)→ 整场不出值 */
+  hasDnfRound: boolean;
 }
 
 /** 本人全部 results(需已叠加成绩变更链)+ comps → (比赛 × 项目) → AoXR 格 */
@@ -60,17 +62,22 @@ export function computeAoxr(
     const key = aoxrKey(r.competition_id, r.event_id);
     let b = buckets.get(key);
     if (!b) {
-      b = { compId: r.competition_id, eventId: r.event_id, averages: [], hasLive: false, reachedFinal: false };
+      b = {
+        compId: r.competition_id, eventId: r.event_id,
+        averages: [], hasLive: false, reachedFinal: false, hasDnfRound: false,
+      };
       buckets.set(key, b);
     }
     if (r.average > 0) b.averages.push(r.average);
+    else b.hasDnfRound = true;
     if (r.live) b.hasLive = true;
     if (FINAL_ROUND_TYPES.has(r.round_type_id)) b.reachedFinal = true;
   }
 
   // 时间序 = 比赛日期 → 比赛 id(同日多场时稳定),与 computePrRank 同口径
   const ordered = [...buckets.entries()]
-    .filter(([, b]) => b.reachedFinal && b.averages.length >= 1 && b.averages.length <= MAX_ROUNDS)
+    .filter(([, b]) => b.reachedFinal && !b.hasDnfRound
+      && b.averages.length >= 1 && b.averages.length <= MAX_ROUNDS)
     .sort((a, b) => {
       const da = compDate.get(a[1].compId) ?? '';
       const db = compDate.get(b[1].compId) ?? '';
