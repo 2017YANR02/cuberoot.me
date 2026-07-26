@@ -145,12 +145,12 @@ const INLINE_CSS = `
 }
 .vc-net-canvas {
   position: relative;
-  background: rgba(255,255,255,0.04);
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
   border-radius: 6px;
 }
 .vc-net-sticker {
   position: absolute;
-  border: 1px solid rgba(0,0,0,0.5);
+  border: 1px solid color-mix(in srgb, var(--foreground) 45%, transparent);
   border-radius: 2px;
   padding: 0;
   cursor: crosshair;
@@ -158,11 +158,11 @@ const INLINE_CSS = `
 }
 .vc-net-sticker:hover:not(:disabled) {
   transform: scale(1.08);
-  border-color: #fff;
+  border-color: var(--foreground);
   z-index: 1;
 }
 .vc-net-sticker.is-center {
   cursor: pointer;
-  border-color: rgba(0,0,0,0.7);
+  border-color: color-mix(in srgb, var(--foreground) 70%, transparent);
 }
 `;

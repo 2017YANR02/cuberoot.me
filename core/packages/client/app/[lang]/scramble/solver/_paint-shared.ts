@@ -60,7 +60,7 @@ export function faceletIdx(face: FaceLetter, row: number, col: number, n = 3): n
  * net layout / 3D cube order; the rest is the legality model.
  */
 export interface PaintSpec {
-  /** Cube order — 3 or 2. */
+  /** Cube order — 3 or 2. Non-NxN puzzles (skewb) set 0 and own their own canvas. */
   n: number;
   /** Sticker count = 6·n². */
   size: number;
@@ -71,8 +71,25 @@ export interface PaintSpec {
   /** All-empty state ('X' everywhere paintable). */
   empty: string;
   solved: string;
-  /** 3×3 has fixed centers (unpaintable, click-to-pick); 2×2 has none. */
+  /** 3×3 has fixed centers (unpaintable, click-to-pick); 2×2 / skewb have none. */
   fixedCenters: boolean;
+  /**
+   * Per-face swatch colors. Defaults to the WCA cube scheme (COLOR_HEX); the skewb
+   * spec overrides it with tnoodle's own scheme so the painter, the preview SVG and
+   * the printed tnoodle sheet all show the same puzzle.
+   */
+  colors?: Readonly<Record<FaceLetter, string>>;
+  /**
+   * 对面色表(同一块上不能同时出现)。缺省 = 立方体那套 U↔D / R↔L / F↔B。
+   * 金字塔要显式传 `{}`:它只有 4 个面且两两相邻,L 与 R 是**合法**的一条棱 ——
+   * 沿用立方体的表会把真实存在的棱当非法拦掉。
+   */
+  opposite?: Readonly<Partial<Record<FaceLetter, FaceLetter>>>;
+  /**
+   * 中文报错里「块」怎么叫(如 `'一个角块'`)。只中文需要 —— 英文那几句一律说 "A piece",
+   * 不点块型。默认按 `n` 推(二阶=角块,三阶=角/棱块)。
+   */
+  pieceLabel?: string;
   /** null = physically legal; otherwise a raw reason for `friendlyErr`. */
   validate: (facelet: string) => string | null;
   friendlyErr: (msg: string, isZh: boolean) => string;
@@ -143,11 +160,12 @@ export function paintSticker(
   facelet: string, idx: number, color: PaintColor, spec: PaintSpec = CUBE3_PAINT,
 ): PaintOutcome {
   if (color !== 'X') {
+    const opposite = spec.opposite ?? OPPOSITE_FACE;
     for (const sib of spec.siblings[idx]) {
       const sibColor = facelet[sib] as PaintColor;
       if (sibColor === 'X') continue;
       if (sibColor === color) return { ok: false, reject: { kind: 'dup' } };
-      if (OPPOSITE_FACE[sibColor as FaceLetter] === color) {
+      if (opposite[sibColor as FaceLetter] === color) {
         return { ok: false, reject: { kind: 'opp', sib: sibColor as FaceLetter, active: color } };
       }
     }
@@ -164,8 +182,8 @@ export function paintSticker(
 
 function rejectText(r: PaintReject, isZh: boolean, spec: PaintSpec): string {
   const t = (z: string, e: string) => (isZh ? z : e);
-  // 二阶只有角块,三阶有角也有棱 —— 报错里别提不存在的块型(英文一律 "A piece")。
-  const piece = spec.n === 2 ? '一个角块' : '一个角/棱块';
+  // 二阶 / 斜转只有角块,三阶有角也有棱 —— 报错里别提不存在的块型(英文一律 "A piece")。
+  const piece = spec.pieceLabel ?? (spec.n === 2 ? '一个角块' : '一个角/棱块');
   if (r.kind === 'dup') return t(`${piece}上不能有重复颜色`, 'A piece cannot have two stickers of the same color');
   if (r.kind === 'full') return t(`${r.color} 颜色已用满 ${spec.maxPerColor} 格`, `Color ${r.color} is already used on all ${spec.maxPerColor} stickers`);
   return t(
