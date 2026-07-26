@@ -1,0 +1,311 @@
+/* /predict 预判训练 —— 双主题(走 :root token,light/dark 自动翻)。
+   魔方色是数据不是主题色,一律从 lib/cube-colors 经内联 style 传进来。 */
+
+.predict-page {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 0.75rem 1rem 3rem;
+  color: var(--foreground);
+}
+
+/* 工具栏:左返回右开关,这是明确要两端对齐的那一类 */
+.predict-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.predict-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.predict-header p {
+  margin: 0.25rem 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.9rem;
+}
+
+.predict-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem 1.25rem;
+  margin: 1rem 0;
+}
+
+.predict-control {
+  display: flex;
+  flex-direction: column;
+  align-self: flex-start;
+  gap: 0.3rem;
+}
+
+.predict-control > span {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.predict-select {
+  width: fit-content;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--input);
+  border-radius: 7px;
+  background: var(--card);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 0.9rem;
+}
+
+.predict-select:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+/* ---- 题板 ---- */
+
+.predict-stage {
+  position: relative;
+  width: 100%;
+}
+
+/* 正方形题板:宽度自己收到 min(容器, 视口高) —— 用 max-height 卡的话
+   aspect-ratio 拉不回宽度,画布会被压成扁的。 */
+.predict-board {
+  position: relative;
+  width: min(100%, 62vh);
+  aspect-ratio: 1;
+  margin: 0 auto;
+}
+
+.predict-board-canvas {
+  position: absolute;
+  inset: 0;
+  cursor: crosshair;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  overflow: hidden;
+}
+
+.predict-board-busy {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted-foreground);
+  pointer-events: none;
+}
+
+.predict-board-reset {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--border-default);
+  border-radius: 7px;
+  background: var(--card);
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: border-color 0.12s ease, color 0.12s ease;
+}
+
+.predict-board-reset:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.predict-clock {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 0.3rem 0.7rem;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  font-family: var(--font-mono), monospace;
+  font-size: 1.35rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.predict-wrong {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--destructive);
+  pointer-events: none;
+}
+
+.predict-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---- 题面 ---- */
+
+.predict-prompt {
+  margin: 0.75rem 0 0;
+}
+
+.predict-prompt p {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.3rem 0;
+  font-size: 0.95rem;
+}
+
+.predict-prompt p.is-found {
+  color: var(--signal-success);
+}
+
+.predict-color {
+  padding: 0.05rem 0.4rem;
+  border: 1px solid color-mix(in srgb, var(--foreground) 22%, transparent);
+  border-radius: 5px;
+  font-weight: 700;
+}
+
+.predict-done {
+  margin-top: 0.5rem;
+  color: var(--signal-success);
+  font-weight: 700;
+}
+
+.predict-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.9rem 0;
+}
+
+.predict-deal {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.9rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.predict-deal:hover {
+  background: color-mix(in srgb, var(--primary) 88%, black);
+}
+
+.predict-progress {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.predict-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.3rem 0.65rem;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.predict-chip.is-found {
+  border-color: var(--signal-success);
+  color: var(--signal-success);
+}
+
+.predict-chip-count {
+  font-family: var(--font-mono), monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- 招式 ---- */
+
+.predict-moves h2 {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+
+.predict-move-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.predict-move-list li {
+  min-width: 2.6rem;
+  padding: 0.35rem 0.55rem;
+  /* 白/黄贴纸色在浅色背景上没边界,统一描一圈中性描边 */
+  border: 1px solid color-mix(in srgb, var(--foreground) 22%, transparent);
+  border-radius: 7px;
+  font-family: var(--font-mono), monospace;
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.predict-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.9rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+}
+
+.predict-legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  white-space: nowrap;
+}
+
+.predict-legend i {
+  width: 0.6rem;
+  height: 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--foreground) 25%, transparent);
+  border-radius: 50%;
+}
+
+.predict-hint {
+  margin: 0.6rem 0 0;
+  color: var(--faint-foreground);
+  font-size: 0.78rem;
+}
+
+@media (max-width: 480px) {
+  .predict-page { padding: 0.5rem 0.75rem 2.5rem; }
+  .predict-header h1 { font-size: 1.25rem; }
+  .predict-controls { gap: 0.6rem 0.9rem; }
+  .predict-clock { font-size: 1.1rem; }
+  .predict-move-list li { font-size: 1rem; min-width: 2.2rem; }
+}

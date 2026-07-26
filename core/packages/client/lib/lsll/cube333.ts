@@ -63,9 +63,17 @@ export function applyAlg(s: Cube333, alg: string): Cube333 {
 
 // ---- facelets(visualcube fd 序:U0-8 R9-17 F18-26 D27-35 L36-44 B45-53) ----
 const CF = [[8, 9, 20], [6, 18, 38], [0, 36, 47], [2, 45, 11], [29, 26, 15], [27, 44, 24], [33, 53, 42], [35, 17, 51]];
-const CCOL = [[0, 1, 2], [0, 2, 4], [0, 4, 5], [0, 5, 1], [3, 2, 1], [3, 4, 2], [3, 5, 4], [3, 1, 5]];
+/** 角块 piece 的 3 枚贴纸颜色(面序号 0=U 1=R 2=F 3=D 4=L 5=B),序与 CF 的 slot 对齐。 */
+export const CORNER_COLORS: ReadonlyArray<readonly [number, number, number]> = [
+  [0, 1, 2], [0, 2, 4], [0, 4, 5], [0, 5, 1], [3, 2, 1], [3, 4, 2], [3, 5, 4], [3, 1, 5],
+];
+const CCOL = CORNER_COLORS;
 const EF = [[5, 10], [7, 19], [3, 37], [1, 46], [32, 16], [28, 25], [30, 43], [34, 52], [23, 12], [21, 41], [50, 39], [48, 14]];
-const ECOL = [[0, 1], [0, 2], [0, 4], [0, 5], [3, 1], [3, 2], [3, 4], [3, 5], [2, 1], [2, 4], [5, 4], [5, 1]];
+/** 棱块 piece 的 2 枚贴纸颜色,序与 EF 的 slot 对齐。 */
+export const EDGE_COLORS: ReadonlyArray<readonly [number, number]> = [
+  [0, 1], [0, 2], [0, 4], [0, 5], [3, 1], [3, 2], [3, 4], [3, 5], [2, 1], [2, 4], [5, 4], [5, 1],
+];
+const ECOL = EDGE_COLORS;
 const FACE_CH = ['u', 'r', 'f', 'd', 'l', 'b'];
 
 export function toFacelets(s: Cube333): string {
