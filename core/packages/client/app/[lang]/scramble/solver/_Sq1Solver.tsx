@@ -14,8 +14,10 @@
  * 根本分不出同层内的具体块 —— 出的解只还原形状与分层,单个层转 (1,0) 甚至被判成
  * 「已是还原态」。判据(tnoodle 件位模型独立复核)见 tests/sq1_solver_oracle.test.ts。
  *
- * 打乱的**输入**有两种视图(`?view=`):`flat` 静态展开图(默认,零 WebGL),
- * `board` 可拖立体转盘(`_InteractiveSq1Board`,拖出来的每一步写回打乱框)。
+ * 打乱的**输入**有两种视图(`?view=`):`board` 可拖立体转盘(默认,
+ * `_InteractiveSq1Board`,拖出来的每一步写回打乱框)、`flat` 静态展开图(零 WebGL)。
+ * 默认给转盘是因为空打乱框 + 静态图 = 一片空白,页面看着像没做完(与二阶 / 金字塔 /
+ * 斜转的画状态页一致:立体在最前、也是默认)。
  * 斜转 / 金字塔 / 二阶那三块是平面涂色画板,SQ1 不能照做 —— 它的状态是形状 + 排列,
  * 不是 facelet 串,涂色表达不了(理由详见 `_InteractiveSq1Board` 头注)。
  */
@@ -67,7 +69,7 @@ export default function Sq1SolverPage() {
   const [scramble, setScramble] = useQueryState('scramble', parseAsString.withDefault(''));
   const [view, setView] = useQueryState(
     'view',
-    parseAsStringEnum<View>(['flat', 'board']).withDefault('flat'),
+    parseAsStringEnum<View>(['board', 'flat']).withDefault('board'),
   );
   const [boardSize, setBoardSize] = useState(300);
   const [solving, setSolving] = useState(false);
@@ -168,8 +170,8 @@ export default function Sq1SolverPage() {
                 onChange={(v) => void setView(v as View)}
                 allLabel=""
                 items={[
-                  { value: 'flat', label: t('平面', '2D') },
                   { value: 'board', label: t('立体', '3D') },
+                  { value: 'flat', label: t('平面', '2D') },
                 ]}
               />
             </div>
@@ -182,11 +184,12 @@ export default function Sq1SolverPage() {
                   pixelSize={boardSize}
                 />
               </div>
-            ) : trimmed && hasTokens ? (
+            ) : (
+              // 空框 / 半截记号 → 画还原态(空串),别留一片空白。
               <div className="pos-preview">
-                <ScramblePreview2D event="sq1" scramble={trimmed} size={96} />
+                <ScramblePreview2D event="sq1" scramble={hasTokens ? trimmed : ''} size={96} />
               </div>
-            ) : null}
+            )}
 
             {trimmed && hasTokens && (
               <div className="pos-result" aria-live="polite">

@@ -4,8 +4,9 @@
  * /scramble/solver?event=pyram —— 金字塔求解器。
  *
  * 结构与 `_SkewbSolver` / `_Cube2Solver` 同构:打乱框走 PuzzleOptimalSolver(Rust WASM 精确表),
- * 本文件在它上面加三个视图:
- *   ?view=net      2D 展开图画板(默认):点格涂色,涂满 36 格立刻出最优解
+ * 本文件在它上面加四个视图:
+ *   ?view=cube     可转的立体画板(默认,/sim 的金字塔引擎;点贴纸涂色、拖动转视角)
+ *   ?view=net      2D 展开图画板(同一份 facelet,36 格)
  *   ?view=scramble 打乱框(含批量)
  *   ?view=recon    复盘:输入一段解法,取逆同步到画板
  *
@@ -25,10 +26,11 @@ import {
 import { PuzzleOptimalSolver } from '../_components/PuzzleOptimalSolver';
 import { SPEC_BY_EVENT } from './_puzzle-specs';
 import InteractivePyraNet from './_InteractivePyraNet';
-import { PYRA_PAINT } from './_paint-spec-pyra';
+import Interactive3DPuzzle from './_Interactive3DPuzzle';
+import { PYRA_PAINT, PYRA_PALETTE_FACES } from './_paint-spec-pyra';
 import type { PaintColor } from './_paint-shared';
 
-type View = 'net' | 'scramble' | 'recon';
+type View = 'cube' | 'net' | 'scramble' | 'recon';
 
 export default function PyraSolver() {
   const t = useT();
@@ -38,7 +40,7 @@ export default function PyraSolver() {
   const [scrambleFirst] = useState(() => scramble.trim().length > 0);
   const [view, setView] = useQueryState(
     'view',
-    parseAsStringEnum<View>(['net', 'scramble', 'recon']).withDefault(scrambleFirst ? 'scramble' : 'net'),
+    parseAsStringEnum<View>(['cube', 'net', 'scramble', 'recon']).withDefault(scrambleFirst ? 'scramble' : 'cube'),
   );
 
   const [facelet, setFacelet] = useState(EMPTY_PYRA_FACELET);
@@ -104,6 +106,22 @@ export default function PyraSolver() {
 
   const painting = view !== 'scramble';
 
+  const painterProps = {
+    spec: PYRA_PAINT,
+    facelet,
+    onChange: setFacelet,
+    activeColor: color,
+    onActiveColorChange: setColor,
+    pixelSize: canvasSize,
+    onSolve: deriveScramble,
+    solveLabel: { zh: '求打乱', en: 'Scramble' },
+    solveTitle: {
+      zh: '反推一条到达所画状态的打乱,填进打乱框(状态逐格一致)',
+      en: 'Derive a scramble that reaches the painted state and put it in the scramble box (sticker-for-sticker identical)',
+    },
+    plainSolve: true,
+  };
+
   return (
     <PuzzleOptimalSolver
       spec={spec}
@@ -118,6 +136,7 @@ export default function PyraSolver() {
               onChange={(v) => void setView(v as View)}
               allLabel=""
               items={[
+                { value: 'cube', label: t('立体', '3D') },
                 { value: 'net', label: t('平面', '2D') },
                 { value: 'scramble', label: t('打乱', 'Scramble') },
                 { value: 'recon', label: t('复盘', 'Reconstruction') },
@@ -148,21 +167,9 @@ export default function PyraSolver() {
               )}
 
               <div className="pyra-paint-canvas">
-                <InteractivePyraNet
-                  spec={PYRA_PAINT}
-                  facelet={facelet}
-                  onChange={setFacelet}
-                  activeColor={color}
-                  onActiveColorChange={setColor}
-                  pixelSize={canvasSize}
-                  onSolve={deriveScramble}
-                  solveLabel={{ zh: '求打乱', en: 'Scramble' }}
-                  solveTitle={{
-                    zh: '反推一条到达所画状态的打乱,填进打乱框(状态逐格一致)',
-                    en: 'Derive a scramble that reaches the painted state and put it in the scramble box (sticker-for-sticker identical)',
-                  }}
-                  plainSolve
-                />
+                {view === 'cube'
+                  ? <Interactive3DPuzzle puzzle="pyraminx" paletteFaces={PYRA_PALETTE_FACES} {...painterProps} />
+                  : <InteractivePyraNet {...painterProps} />}
               </div>
 
               <div className="pyra-paint-out" aria-live="polite">
