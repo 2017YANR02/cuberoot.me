@@ -1218,16 +1218,18 @@ export default function CompDetailPage() {
 
   const cubingWsStatus = useLiveStream({ compId: isCubing ? (data?.compId ?? null) : null, applyPatch });
 
+  // 只跟踪正在看的那一轮,不是全场。WCA Live 那边 subscription 走不通(check_origin
+  // 403),useWcaLiveStream 改成轮询 GraphQL query 后,订阅范围直接等于流量:
+  // 一场比赛 29 轮批量查会撞 WCA Live 的 complexity 上限(实测 ≤5 轮过、10 轮起报
+  // "Operation is too complex"),而单轮响应人多时就有近 20KB。
+  // eventParam/roundParam 空时上面那个 effect 会把默认轮写回 URL,所以这里不会长期空。
   const wcaLiveRounds = useMemo(() => {
-    if (!isWcaLive || !data) return [];
-    const out: { liveId: string; eventId: string; roundTypeId: string; format: string }[] = [];
-    for (const ev of data.events) {
-      for (const rd of ev.rs) {
-        if (rd.liveId) out.push({ liveId: rd.liveId, eventId: ev.i, roundTypeId: rd.i, format: rd.f });
-      }
-    }
-    return out;
-  }, [isWcaLive, data]);
+    if (!isWcaLive || !data || !eventParam || !roundParam) return [];
+    const ev = data.events.find(e => e.i === eventParam);
+    const rd = ev?.rs.find(r => r.i === roundParam);
+    if (!ev || !rd?.liveId) return [];
+    return [{ liveId: rd.liveId, eventId: ev.i, roundTypeId: rd.i, format: rd.f }];
+  }, [isWcaLive, data, eventParam, roundParam]);
   const wcaLiveNumMap = useMemo(() => {
     const map = new Map<string, number>();
     if (!data) return map;
@@ -1730,7 +1732,7 @@ export default function CompDetailPage() {
                 })} {new Date(data.fetchedAt).toLocaleTimeString()}
               </span>
             )}
-            {!isWca && <LiveIndicator status={wsStatus} isZh={isZh} />}
+            {!isWca && <LiveIndicator status={wsStatus} isZh={isZh} source={isWcaLive ? 'wca_live' : 'cubing'} />}
             {!isWca && wsStatus !== 'open' && (
               <button type="button" className="comp-refresh-btn" onClick={refresh} disabled={refreshing} title={tr({ zh: '刷新', en: 'Refresh'
             })}>
@@ -3735,7 +3737,9 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
   );
 }
 
-function LiveIndicator({ status }: { status: WsStatus; isZh: boolean }) {
+// tooltip 必须跟着实际生效的源走:指示灯的 status 是 isWcaLive ? wcaLiveStatus : cubingWsStatus,
+// 以前这里写死 cubing.com,于是国外比赛(走 WCA Live)出问题时 tooltip 指着一个好着的源。
+function LiveIndicator({ status, source }: { status: WsStatus; isZh: boolean; source: 'cubing' | 'wca_live' }) {
   const label = (() => {
     switch (status) {
       case 'open':       return tr({ zh: '实时', en: 'Live'
@@ -3751,8 +3755,12 @@ function LiveIndicator({ status }: { status: WsStatus; isZh: boolean }) {
   })();
   if (!label) return null;
   return (
-    <span className={`comp-live-indicator status-${status}`} title={tr({ zh: 'wss://cubing.com/ws 实时推送', en: 'wss://cubing.com/ws live stream'
-    })}>
+    <span
+      className={`comp-live-indicator status-${status}`}
+      title={source === 'wca_live'
+        ? tr({ zh: 'WCA Live 轮次成绩(每 15 秒拉取)', en: 'WCA Live round results (polled every 15s)' })
+        : tr({ zh: 'wss://cubing.com/ws 实时推送', en: 'wss://cubing.com/ws live stream' })}
+    >
       <span className="comp-live-dot" />
       {label}
     </span>
