@@ -31,6 +31,54 @@ const DEFAULT_ROT_Y = -Math.PI / 4 + Math.PI / 16;
 /** 每拖 1px 转多少弧度,与 /sim 灵敏度默认值一致。 */
 const ORBIT_K = 0.01;
 
+/**
+ * 「转到看得见某一面」的视角(pitch, yaw)。
+ *
+ * `scene.rotation` 是 z=0 的 XYZ 欧拉角,即 M = Rx(pitch)·Ry(yaw):yaw 先在方块自身
+ * 坐标里转,Rx 再整体后仰。于是把某面转到镜头前只需让 Ry 把它的法向送到 +z:侧面靠
+ * yaw(F=0 / R=-90° / B=180° / L=+90°),顶底靠 pitch(±90°)。都留 22.5° 余量,
+ * 免得正对镜头变成一张没有立体感的平面图。
+ */
+const Q = Math.PI / 8;
+const LOOK_AT: Record<string, readonly [number, number]> = {
+  // 顶/底必须 yaw=0:正对 U/D 时 yaw 变成面内自转,给个 45° 就成了一个转 45° 的菱形,方向全乱。
+  U: [Math.PI / 2 - Q, 0],
+  D: [-Math.PI / 2 + Q, 0],
+  F: [Q, -Q],
+  B: [Q, Math.PI - Q],
+  R: [Q, -Math.PI / 2 + Q],
+  L: [Q, Math.PI / 2 - Q],
+};
+
+const FACE_NORMALS: Record<string, readonly [number, number, number]> = {
+  U: [0, 1, 0], D: [0, -1, 0], F: [0, 0, 1], B: [0, 0, -1], R: [1, 0, 0], L: [-1, 0, 0],
+};
+
+/** 某个面在这个姿态下有多正对镜头 —— 法向经 Rx(pitch)·Ry(yaw) 后的 z 分量,>0 = 看得见。 */
+function towardCamera(face: string, pitch: number, yaw: number): number {
+  const [x, y, z] = FACE_NORMALS[face];
+  const zy = -x * Math.sin(yaw) + z * Math.cos(yaw); // Ry 之后的 z
+  return y * Math.sin(pitch) + zy * Math.cos(pitch); // 再过 Rx
+}
+
+/**
+ * 挑一个尽量把这几个面同时露出来的视角:先比露出几个,再比露出来的那些正不正对。
+ *
+ * 平手时比「看得见的部分之和」而不是最差的那一个 —— 目标面正好互为对面(F 与 B)时,
+ * 后者会挑一个两面都只擦到边的折中角度,结果哪一面都看不清。
+ */
+function poseShowing(faces: readonly string[]): readonly [number, number] {
+  let best: readonly [number, number] = [DEFAULT_ROT_X, DEFAULT_ROT_Y];
+  if (faces.length === 0) return best;
+  let bestScore = -Infinity;
+  for (const pose of Object.values(LOOK_AT)) {
+    const seen = faces.map((f) => towardCamera(f, pose[0], pose[1])).filter((z) => z > 0.15);
+    const score = seen.length * 10 + seen.reduce((a, z) => a + z, 0);
+    if (score > bestScore) { bestScore = score; best = pose; }
+  }
+  return best;
+}
+
 type BoardEngine = {
   mountSimWorld: (opts: { host: HTMLElement; interactive: boolean; perspective: number }) => SimMount;
   Toucher: typeof Toucher;
@@ -59,9 +107,12 @@ export interface PredictBoardProps {
   /** 54 个引擎色标签,facelet(URFDLB)序;'Gray' = 灰底。 */
   labels: readonly string[];
   onSticker: (faceletIndex: number) => void;
+  /** 要露给玩家看的面(U/D/L/R/F/B),视角会转到尽量同时看见它们;`focusNonce` 变一次转一次。 */
+  focusFaces?: readonly string[];
+  focusNonce?: number;
 }
 
-export default function PredictBoard({ labels, onSticker }: PredictBoardProps) {
+export default function PredictBoard({ labels, onSticker, focusFaces, focusNonce = 0 }: PredictBoardProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mountRef = useRef<SimMount | null>(null);
   const toucherRef = useRef<Toucher | null>(null);
@@ -148,15 +199,30 @@ export default function PredictBoard({ labels, onSticker }: PredictBoardProps) {
     mount.invalidate();
   }, [labels, ready, faceletMap]);
 
-  const resetView = () => {
+  const setView = (pitch: number, yaw: number) => {
     const world = mountRef.current?.world;
     if (!world) return;
-    world.scene.rotation.x = DEFAULT_ROT_X;
-    world.scene.rotation.y = DEFAULT_ROT_Y;
+    world.scene.rotation.x = pitch;
+    world.scene.rotation.y = yaw;
     world.scene.rotation.z = 0;
     world.scene.updateMatrix();
     world.dirty = true;
   };
+
+  /** 复位 = 回到「看得见这题」的角度(没给焦点面就回引擎默认视角)。 */
+  const resetView = () => {
+    const pose = poseShowing(focusFaces ?? []);
+    setView(pose[0], pose[1]);
+  };
+
+  // 出题和「显示答案」都得把相关的面转到镜头前 —— 目标块很可能就在背面,不转等于没显示。
+  useEffect(() => {
+    if (!ready || !focusFaces?.length) return;
+    const pose = poseShowing(focusFaces);
+    setView(pose[0], pose[1]);
+    // setView 只读 ref,不进依赖;nonce 变一次就转一次(同一批面也要能再转回去)。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, focusNonce]);
 
   return (
     <div className="predict-board">

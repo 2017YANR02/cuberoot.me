@@ -67,6 +67,11 @@ export interface PredictChallenge {
    * 中心块永远上色(当参照系),其余只有目标块的贴纸上色。
    */
   startFacelets: string;
+  /**
+   * 同一套画法,但画在招式做完之后的盘面上 —— 即「显示答案」那一视图:
+   * 目标块整块(2/3 枚贴纸全上色)出现在它的落点,朝向也一眼看得出。
+   */
+  endFacelets: string;
 }
 
 export interface PredictOptions {
@@ -111,6 +116,25 @@ export function stickerFacelet(state: Cube333, kind: 'corner' | 'edge', piece: n
 function pieceFacelets(state: Cube333, kind: 'corner' | 'edge', piece: number): number[] {
   const n = kind === 'corner' ? 3 : 2;
   return Array.from({ length: n }, (_, k) => stickerFacelet(state, kind, piece, k));
+}
+
+/** facelet 序号 → 它在哪个面(URFDLB 分段,与 FACE_LETTERS 同序)。 */
+export const faceletFace = (facelet: number): number => Math.floor(facelet / 9);
+
+/** 中心恒亮的 6 个 facelet —— 全灰的魔方上没有它们就读不出朝向。 */
+const CENTERS = [4, 13, 22, 31, 40, 49];
+
+/** 把目标块整块画到它在 `state` 下的位置上,其余留灰。 */
+function paintPieces(state: Cube333, picks: readonly { kind: 'corner' | 'edge'; piece: number }[]): string {
+  const out = Array<string>(54).fill('.');
+  CENTERS.forEach((idx, face) => { out[idx] = FACE_LETTERS[face]; });
+  for (const p of picks) {
+    const colors = p.kind === 'corner' ? cornerColorsOf(p.piece) : edgeColorsOf(p.piece);
+    for (const [k, f] of pieceFacelets(state, p.kind, p.piece).entries()) {
+      out[f] = FACE_LETTERS[colors[k]];
+    }
+  }
+  return out.join('');
 }
 
 const cornerColorsOf = (piece: number): readonly number[] => CORNER_COLORS[piece];
@@ -236,15 +260,8 @@ export function generateChallenge(opts: PredictOptions): PredictChallenge {
     : randomMoves(Math.min(Math.max(opts.moveCount, MOVE_COUNT_MIN), MOVE_COUNT_MAX), rnd);
   const end = applyAlg(start, moves.join(' '));
 
-  const facelets = Array<string>(54).fill('.');
-  // 6 个中心恒亮 —— 全灰的魔方上没有它们就读不出朝向。
-  [4, 13, 22, 31, 40, 49].forEach((idx, face) => { facelets[idx] = FACE_LETTERS[face]; });
-
   const targets: PredictTarget[] = picks.map((p) => {
     const colors = p.kind === 'corner' ? cornerColorsOf(p.piece) : edgeColorsOf(p.piece);
-    for (const [k, f] of pieceFacelets(start, p.kind, p.piece).entries()) {
-      facelets[f] = FACE_LETTERS[colors[k]];
-    }
     return {
       kind: p.kind,
       piece: p.piece,
@@ -255,5 +272,11 @@ export function generateChallenge(opts: PredictOptions): PredictChallenge {
     };
   });
 
-  return { moves, placement, targets, startFacelets: facelets.join('') };
+  return {
+    moves,
+    placement,
+    targets,
+    startFacelets: paintPieces(start, picks),
+    endFacelets: paintPieces(end, picks),
+  };
 }
