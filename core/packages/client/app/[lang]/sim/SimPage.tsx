@@ -84,7 +84,8 @@ import FtoCube from './engine/fto/FtoCube';
 import { ftoPickHit, ftoResolveMove, ftoResolveLive, type FtoPickHit } from './engine/fto/ftoDrag';
 import { ftoMoveToString, type FtoMove } from './engine/fto/ftoState';
 import {
-  orbitScene, orbitSceneFree, orbitSceneAutoRotate, foldViewIntoTwists, snapViewToQuadrant,
+  orbitScene, orbitSceneFree, orbitSceneAutoRotate, foldViewIntoTurns, snapViewToQuadrant,
+  type BodyTurn, type ViewTurns,
 } from './engine/viewControls';
 import {
   CornerTurnGesture, type CornerGestureCtx, type CornerGestureHandle, type CornerTurnAdapter,
@@ -714,13 +715,21 @@ export default function SimPage() {
       syncViewToSettings();
     };
 
-    /** 「自动转体」折出来的那个 90°:落成瞬时整体转体 + 记一步。 */
-    const commitWholeCube = (cube: NonNullable<ReturnType<typeof asNxN>>) =>
-      (axis: 'x' | 'y', reverse: boolean) => {
-        const action = new TwistAction(axis, reverse, 1);
-        cube.twister.twist(action, true, true);
-        userMoveRef.current?.(action);
-      };
+    /** 「自动转体」折出来的那个 90°:落成瞬时整体转体 + 记一步。
+     *
+     *  /sim 这档**两根轴都折**:俯仰折得不精确(非象限偏航下会跳一帧,见 `ViewTurns`),
+     *  但它要把上下拖也记成一步 `x`,宁可跳也不能不记。纯视觉的求解器画板只折偏航。 */
+    const wholeCubeTurns = (cube: NonNullable<ReturnType<typeof asNxN>>): ViewTurns => {
+      const turn = (axis: 'x' | 'y'): BodyTurn => ({
+        quantum: Math.PI / 2,
+        commit: (positive) => {
+          const action = new TwistAction(axis, positive, 1);
+          cube.twister.twist(action, true, true);
+          userMoveRef.current?.(action);
+        },
+      });
+      return { y: turn('y'), x: turn('x') };
+    };
 
     world.controller.onOrbit = (dx, dy) => {
       const k = mapOrbitK(settingsRef.current.sensitivity);
@@ -730,7 +739,7 @@ export default function SimPage() {
       if (settingsRef.current.dragEmpty === 'view' || settingsRef.current.pointerTurns === false) {
         orbitSceneFree(world, dx, dy, k);
       } else if (cube) {
-        orbitSceneAutoRotate(world, dx, dy, k, commitWholeCube(cube));
+        orbitSceneAutoRotate(world, dx, dy, k, wholeCubeTurns(cube));
       } else {
         // 整体转体吃不下的拼图(这条路只有 NxN 走,留作防御)→ 钳住。
         orbitScene(world, dx, dy, k);
@@ -1624,7 +1633,7 @@ export default function SimPage() {
       if (v >= end) {
         swapTweenRef.current = null;
         // 'orbit' mode folds any ±90° view excess into real y moves as the user
-        // drags past it (foldViewIntoTwists, via onOrbit) — a swap's 180° flip is no
+        // drags past it (foldViewIntoTurns, via onOrbit) — a swap's 180° flip is no
         // different, so fold it here too instead of leaving scene.rotation.y
         // sitting out of range: otherwise the *next* background drag, however
         // tiny, would silently absorb this whole leftover swing into a spurious
@@ -1635,11 +1644,16 @@ export default function SimPage() {
         // it needs no reconciliation; 'view' mode never commits moves at all.
         const cube = asNxN(w);
         if (cube && settingsRef.current.dragEmpty === 'orbit') {
-          foldViewIntoTwists(w, (axis, reverse) => {
-            const action = new TwistAction(axis, reverse, 1);
-            cube.twister.twist(action, true, true);
-            userMoveRef.current?.(action);
-          }, ['y']);
+          foldViewIntoTurns(w, {
+            y: {
+              quantum: Math.PI / 2,
+              commit: (positive) => {
+                const action = new TwistAction('y', positive, 1);
+                cube.twister.twist(action, true, true);
+                userMoveRef.current?.(action);
+              },
+            },
+          });
         }
         return true;
       }

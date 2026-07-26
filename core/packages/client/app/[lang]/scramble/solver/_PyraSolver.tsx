@@ -5,7 +5,7 @@
  *
  * 结构与 `_SkewbSolver` / `_Cube2Solver` 同构:打乱框走 PuzzleOptimalSolver(Rust WASM 精确表),
  * 本文件在它上面加四个视图:
- *   ?view=cube     可转的立体画板(默认,/sim 的金字塔引擎;点贴纸涂色、拖动转视角)
+ *   ?view=cube     可转的立体画板(默认,/sim 的金字塔引擎;点贴纸涂色、拖动整体转体)
  *   ?view=net      2D 展开图画板(同一份 facelet,36 格)
  *   ?view=scramble 打乱框(含批量)
  *   ?view=recon    复盘:输入一段解法,取逆同步到画板
