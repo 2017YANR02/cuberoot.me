@@ -57,22 +57,31 @@ export const CLOCK_CORNER_NAMES = ['UL', 'UR', 'DL', 'DR'] as const;
 const UL = 1, UR = 2, DL = 4, DR = 8;
 const ALL_PINS = UL | UR | DL | DR;
 
+// 下面四张表是「物理角位 ↔ 表盘下标」的唯一来源:求解器、交互式画板(components/
+// InteractiveClock)、测试都从这里取,别在别处重抄一份镜像关系。
+
 /** 角 c 的正面象限(4 个表盘)。 */
-const FRONT_QUAD: readonly (readonly number[])[] = [
+export const CLOCK_FRONT_QUAD: readonly (readonly number[])[] = [
   [0, 1, 3, 4], // UL
   [1, 2, 4, 5], // UR
   [3, 4, 6, 7], // DL
   [4, 5, 7, 8], // DR
 ];
 /** 角 c 的反面象限。反面 3×3 左右镜像,所以 UL 角落在反面网格的右上。 */
-const BACK_QUAD: readonly (readonly number[])[] = [
+export const CLOCK_BACK_QUAD: readonly (readonly number[])[] = [
   [10, 11, 13, 14], // UL
   [9, 10, 12, 13],  // UR
   [13, 14, 16, 17], // DL
   [12, 13, 15, 16], // DR
 ];
-const FRONT_CORNER_DIAL = [0, 2, 6, 8];
-const BACK_CORNER_DIAL = [11, 9, 17, 15];
+/** 角 c 的正面 / 反面角盘下标(两者恒互为相反数)。 */
+export const CLOCK_FRONT_CORNER_DIAL: readonly number[] = [0, 2, 6, 8];
+export const CLOCK_BACK_CORNER_DIAL: readonly number[] = [11, 9, 17, 15];
+
+const FRONT_QUAD = CLOCK_FRONT_QUAD;
+const BACK_QUAD = CLOCK_BACK_QUAD;
+const FRONT_CORNER_DIAL = CLOCK_FRONT_CORNER_DIAL;
+const BACK_CORNER_DIAL = CLOCK_BACK_CORNER_DIAL;
 
 /** 15 种针脚组合的固定编号(0..14):4 单角 → 4 邻边对 → 7 个"全覆盖"组合。 */
 export const CLOCK_TYPE_MASKS: readonly number[] = [
