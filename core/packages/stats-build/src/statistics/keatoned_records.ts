@@ -124,10 +124,19 @@ export class KeatonedRecords extends GroupedStatistic {
 
   transform(rows: RowDataPacket[]): [string, unknown[][]][] {
     return EVENTS_ENTRIES.map(([eventId, eventName]) => {
-      // 倒序:最近发生的排在最前(同日多条保持 queryResults 的次序,Array#sort 稳定)。
+      // 倒序:最近发生的排在最前。
+      // 同日无从再分先后(dump 里只有比赛日期,没有轮次时刻),给个确定的二级序:
+      // 先单次后平均、组内成绩由快到慢 —— 否则 2003-08-24 World Championship 那 28 条
+      // 落在页面上就是一串乱数,看着像根本没排过。单次和平均不同量纲,必须先分组再比。
       const hits = rows
         .filter(r => r['event_id'] === eventId)
-        .sort((a, b) => ymd(b['date']).localeCompare(ymd(a['date'])));
+        .sort((a, b) => {
+          const d = ymd(b['date']).localeCompare(ymd(a['date']));
+          if (d !== 0) return d;
+          const kind = Number(a['is_avg']) - Number(b['is_avg']);
+          if (kind !== 0) return kind;
+          return Number(a['value']) - Number(b['value']);
+        });
 
       const results = hits.map(r => {
         const isAvg = Number(r['is_avg']) === 1;
