@@ -296,8 +296,8 @@ function writeRec(st: AlgSrsState, key: string, rec: SrsRec, nextRecs: SrsRecs):
 // ── 记忆进展 → 学习标记的自动升降 ───────────────────────────────────
 
 /**
- * 按记忆进展维护「学习中 / 已掌握」标记(记忆模式与计时训练共用这一份):
- *   第一次记住 → 学习中;间隔涨过 MASTER_DAYS → 已掌握;已掌握的忘了 → 打回学习中。
+ * 按记忆进展维护「不熟 / 已掌握」标记(记忆模式与计时训练共用这一份):
+ *   第一次记住 → 不熟;间隔涨过 MASTER_DAYS → 已掌握;已掌握的忘了 → 打回不熟。
  * 「搁置」是用户明确表达的意愿,任何情况下都不动。调用方负责判断偏好开关。
  */
 export function autoMarkFromSrs(key: string, next: SrsRec, grade: SrsGrade): void {

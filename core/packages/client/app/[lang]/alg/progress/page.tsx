@@ -4,7 +4,7 @@
  * /alg/progress — 公式学习进度总览。
  *
  * 两套数据合在一起讲同一件事:
- *   ① 手动标记(alg_case_marks):学习中 / 已掌握 / 搁置 / 星标 —— 用户自己的判断。
+ *   ① 手动标记(alg_case_marks):不熟 / 已掌握 / 搁置 / 星标 —— 用户自己的判断。
  *   ② 记忆调度(alg_case_srs):到期时刻 / 间隔 / 遗忘次数 —— 系统算出来的记忆强度。
  * 标记回答「我认不认」,调度回答「还记不记得住」。分开采集,合起来展示。
  *
@@ -21,7 +21,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { getSessionToken } from '@/lib/auth-store';
 import { API_ORIGIN } from '@/lib/api-base';
-import { loadMarkOverview, resetSetMarks, type MarkOverview, type SetMarkSummary } from '@/lib/trainer-marks';
+import { loadMarkOverview, resetSetMarks, MARK_STATUS_LABEL, type MarkOverview, type SetMarkSummary } from '@/lib/trainer-marks';
 import { loadSrsDashboard, resetSetSrs, resetSrsDaily, type SrsOverview } from '@/lib/alg-srs-store';
 import {
   dueForecast, heatmapGrid, streakDays, dayKey, retention, weakness,
@@ -270,7 +270,7 @@ function SetProgressRow({ row, onReset, busy }: {
         )}
         {marks.learning > 0 && (
           <Link href={`${base}?mark=learning`} className="alg-prog-stat is-learning" prefetch={false}>
-            {tr({ zh: '学习中', en: 'Learning' })} {marks.learning}
+            {MARK_STATUS_LABEL.learning()} {marks.learning}
           </Link>
         )}
         {marks.paused > 0 && (
@@ -485,8 +485,8 @@ export default function AlgProgressPage() {
   /** 清一套:标记 + 记忆排期。云端先删,失败就整个中止(不留「本地清了云端还在」的半态)。 */
   const resetOne = async (row: SetRow) => {
     const ok = window.confirm(tr({
-      zh: `重置「${row.name}」的学习进度?\n\n已掌握 / 学习中 / 搁置 / 星标 和这一套的记忆排期都会清空,不能撤销。复习日历不受影响。`,
-      en: `Reset your progress on ${row.name}?\n\nIts marks (mastered / learning / paused / starred) and memory schedule will be cleared. This cannot be undone. The review calendar is not affected.`,
+      zh: `重置「${row.name}」的学习进度?\n\n已掌握 / 不熟 / 搁置 / 星标 和这一套的记忆排期都会清空,不能撤销。复习日历不受影响。`,
+      en: `Reset your progress on ${row.name}?\n\nIts marks (mastered / shaky / paused / starred) and memory schedule will be cleared. This cannot be undone. The review calendar is not affected.`,
     }));
     if (!ok) return;
     setResetting(row.key);
@@ -558,8 +558,8 @@ export default function AlgProgressPage() {
             <p>{tr({ zh: '还没有任何学习记录。', en: 'Nothing tracked yet.' })}</p>
             <p className="alg-prog-empty-hint">
               {tr({
-                zh: '进任意公式集,用「记忆」模式看图回忆公式并自评,或手动标上「学习中 / 已掌握 / 搁置」—— 进度、复习排期和记忆曲线都会汇总到这里。',
-                en: 'Open any set and use Memory mode — recall each alg from its picture and grade yourself — or mark cases as Learning / Mastered / Paused. Progress, review scheduling and your memory curve all land here.',
+                zh: '进任意公式集,用「记忆」模式看图回忆公式并自评,或手动标上「不熟 / 已掌握 / 搁置」—— 进度、复习排期和记忆曲线都会汇总到这里。',
+                en: 'Open any set and use Memory mode — recall each alg from its picture and grade yourself — or mark cases as Shaky / Mastered / Paused. Progress, review scheduling and your memory curve all land here.',
               })}
             </p>
             <Link href="/alg" className="alg-prog-cta" prefetch={false}>
@@ -572,7 +572,7 @@ export default function AlgProgressPage() {
               <StatTile n={totals.mastered} label={tr({ zh: '已掌握', en: 'Mastered' })} tone="ok"
                 sub={totals.known > 0 ? `/ ${totals.known}` : undefined} />
               <StatTile n={totals.due} label={tr({ zh: '待复习', en: 'Due now' })} tone={totals.due > 0 ? 'due' : undefined} />
-              <StatTile n={totals.learning} label={tr({ zh: '学习中', en: 'Learning' })} tone="warn" />
+              <StatTile n={totals.learning} label={MARK_STATUS_LABEL.learning()} tone="warn" />
               <StatTile n={today} label={tr({ zh: '今日复习', en: 'Reviewed today' })} />
               <StatTile
                 n={<span className="alg-prog-streak"><Flame size={17} />{streak}</span>}
