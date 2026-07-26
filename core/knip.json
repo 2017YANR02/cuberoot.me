@@ -33,7 +33,7 @@
       "entry": ["*.{mjs,ts}", "src/**/*.{mjs,ts}"]
     },
     "packages/scramble-stats-build": {
-      "entry": ["*.{mjs,ts}", "src/**/*.{mjs,ts}"]
+      "entry": ["*.{mjs,ts,mts}", "src/**/*.{mjs,ts,mts}"]
     },
     "packages/wb-build": {
       "entry": ["src/**/*.{mjs,ts}"]
