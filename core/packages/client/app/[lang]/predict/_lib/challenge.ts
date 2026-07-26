@@ -67,11 +67,6 @@ export interface PredictChallenge {
    * 中心块永远上色(当参照系),其余只有目标块的贴纸上色。
    */
   startFacelets: string;
-  /**
-   * 同一套画法,但画在招式做完之后的盘面上 —— 即「显示答案」那一视图:
-   * 目标块整块(2/3 枚贴纸全上色)出现在它的落点,朝向也一眼看得出。
-   */
-  endFacelets: string;
 }
 
 export interface PredictOptions {
@@ -272,11 +267,5 @@ export function generateChallenge(opts: PredictOptions): PredictChallenge {
     };
   });
 
-  return {
-    moves,
-    placement,
-    targets,
-    startFacelets: paintPieces(start, picks),
-    endFacelets: paintPieces(end, picks),
-  };
+  return { moves, placement, targets, startFacelets: paintPieces(start, picks) };
 }
