@@ -1270,11 +1270,26 @@ a.alg-community-author:hover {
   gap: 10px;
   font-size: 13px;
 }
+/* 编号 / 子集 / OLL / 角换 / 生成元 / 对称性:每条值都只有几个字符,一行一条时右边空掉大半。
+   三列并排;`.is-wide`(出现概率:两个 chip + 「原理」)独占一整行。
+   列数写死 3 而不是 `auto-fit`:弹窗宽度是 `max-content`,auto-fit 在固有尺寸阶段会按项数铺开
+   把弹窗一路撑到上限。写死 3 列,这块的固有宽 = 3 × 最宽一格,撑不动弹窗。 */
+.alg-meta-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px 18px;
+}
+.alg-meta-facts > .is-wide { grid-column: 1 / -1; }
+@media (max-width: 560px) {
+  .alg-meta-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 .alg-meta-key {
   flex: none;
   min-width: 5.5em;
   color: var(--muted-foreground);
 }
+/* 网格里每格自成一条,键不必再互相对齐 —— 5.5em 的固定键宽只会把值挤出格。 */
+.alg-meta-facts .alg-meta-key { min-width: 0; }
 .alg-meta-val {
   display: flex;
   align-items: center;
