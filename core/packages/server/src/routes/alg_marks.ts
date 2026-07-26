@@ -4,7 +4,7 @@ import { query } from '../db/connection.js';
 import { requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
 
 /**
- * /v1/alg/marks — 公式训练器 per-case 学习标记(学习中/已掌握/搁置 + 星标)。
+ * /v1/alg/marks — 公式训练器 per-case 学习标记(不熟/已掌握 + 星标)。
  *
  *   GET /alg/marks/:puzzle/:set — 当前用户该 set 的全部标记
  *       { marks: { [caseKey]: { s?: status, f?: 1, t: updatedAt } } }
@@ -23,7 +23,8 @@ const MAX_MARKS_PER_USER = 20000;
 /** 单次批量 PUT 的条数上限(整 set 一键涂满 = 1LLL 3915 条,留余量)。 */
 const MAX_ITEMS_PER_PUT = 5000;
 
-const STATUSES = new Set(['learning', 'mastered', 'paused']);
+// 'paused'(搁置)已退役 —— migration 0093 清了存量,老客户端再写就当非法状态挡掉。
+const STATUSES = new Set(['learning', 'mastered']);
 
 /** puzzle/set slug shape(与 alg_sets 的 slug 同域):小写字母数字 + 连字符。 */
 function parseSlug(raw: string | undefined, max: number): string | null {
@@ -40,12 +41,12 @@ interface MarkRow { case_key: string; status: string | null; starred: boolean; u
 
 /**
  * GET /alg/marks — 当前用户跨全部 set 的标记聚合(/alg/progress 学习进度页用)。
- *   { sets: [{ puzzle, set, learning, mastered, paused, starred }] }
+ *   { sets: [{ puzzle, set, learning, mastered, starred }] }
  * 只回计数,不回 case_key(明细走 per-set GET);单次 GROUP BY,便宜。
  * 注意:此路由必须在 /alg/marks/:puzzle/:set 之前不敏感——Hono 按精确路径匹配,
  * /alg/marks 与 /alg/marks/:p/:s 是两条不同路径,顺序无关。
  */
-interface MarkAggRow { puzzle: string; set_slug: string; learning: number; mastered: number; paused: number; starred: number }
+interface MarkAggRow { puzzle: string; set_slug: string; learning: number; mastered: number; starred: number }
 
 algMarksRoutes.get('/alg/marks', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -55,7 +56,6 @@ algMarksRoutes.get('/alg/marks', async (c) => {
     `SELECT puzzle, set_slug,
             COUNT(*) FILTER (WHERE status = 'learning')::int AS learning,
             COUNT(*) FILTER (WHERE status = 'mastered')::int AS mastered,
-            COUNT(*) FILTER (WHERE status = 'paused')::int  AS paused,
             COUNT(*) FILTER (WHERE starred)::int            AS starred
        FROM alg_case_marks WHERE wca_id = ?
       GROUP BY puzzle, set_slug
@@ -68,7 +68,6 @@ algMarksRoutes.get('/alg/marks', async (c) => {
       set: r.set_slug,
       learning: Number(r.learning),
       mastered: Number(r.mastered),
-      paused: Number(r.paused),
       starred: Number(r.starred),
     })),
   });

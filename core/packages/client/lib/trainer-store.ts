@@ -156,8 +156,6 @@ interface TrainerPrefs {
   srsFromSolves: boolean;
   /** 换到下一题时,把刚做完那个 case 默认标成「已掌握」(只动还没标过的,不覆盖手动标记)。 */
   autoMasterOnAdvance: boolean;
-  /** 复习模式整轮刷完时先停下来弹「本轮复习结束」,而不是无声重洗接着刷。 */
-  recapRoundPrompt: boolean;
 }
 const DEFAULT_PREFS: TrainerPrefs = {
   preAuf: true, postAuf: true, timing: false, mode: 'recap', probMode: 'uniform',
@@ -165,7 +163,7 @@ const DEFAULT_PREFS: TrainerPrefs = {
   showPrevCard: true, showNextCard: true, showStats: true, showStageThumb: true,
   pureScramble: true, multiScramble: false,
   srsNewLimit: 10, srsSessionLimit: 60, srsFillExtra: true, srsAutoMark: true, srsShowPlayer: false,
-  srsFromSolves: true, autoMasterOnAdvance: true, recapRoundPrompt: true,
+  srsFromSolves: true, autoMasterOnAdvance: true,
 };
 const PREFS_KEY = 'trainer:prefs';
 
@@ -194,7 +192,6 @@ const prefsOf = (st: TrainerPrefs): TrainerPrefs => ({
   srsNewLimit: st.srsNewLimit, srsSessionLimit: st.srsSessionLimit,
   srsFillExtra: st.srsFillExtra, srsAutoMark: st.srsAutoMark, srsShowPlayer: st.srsShowPlayer,
   srsFromSolves: st.srsFromSolves, autoMasterOnAdvance: st.autoMasterOnAdvance,
-  recapRoundPrompt: st.recapRoundPrompt,
 });
 
 const shuffle = <T,>(arr: T[]): T[] => {
@@ -252,8 +249,8 @@ interface TrainerState {
   /**
    * 复习一轮刷完时置 true —— 出下一题被拦住,弹「本轮复习结束」提示,
    * `continueRecapRound()` 才进下一轮。
-   * 在线房间:队列服务端共享,领完对全员同时弹(真·多方共同刷完),恒弹。
-   * 单机整集:受 `recapRoundPrompt` 开关控制(关掉 = 每轮无缝重洗,老行为)。
+   * 在线房间:队列服务端共享,领完对全员同时弹(真·多方共同刷完)。
+   * 单机整集:刷完必弹 —— 一轮走完是个节点,别无声重洗接着刷。
    */
   recapRoundDone: boolean;
   /**
@@ -293,7 +290,6 @@ interface TrainerState {
   srsShowPlayer: boolean;
   srsFromSolves: boolean;
   autoMasterOnAdvance: boolean;
-  recapRoundPrompt: boolean;
 
   /** recap 模式的洗牌队列:pool 变了(recapSig 失配)重洗。 */
   recapQueue: string[];
@@ -318,7 +314,6 @@ interface TrainerState {
   setRecapOrder: (o: TrainerRecapOrder) => void;
   /** 清空本轮复习进度:重洗队列、从第 1 个重新开始(不动成绩与学习标记)。 */
   restartRecapRound: () => void;
-  setRecapRoundPrompt: (v: boolean) => void;
   /** 「本轮复习结束」里选「先不了」:关掉弹窗停在原地,本轮不再弹。 */
   dismissRecapRound: () => void;
   setTimerFont: (f: TrainerTimerFont) => void;
@@ -900,12 +895,6 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
         pickFresh();
       }
     },
-    setRecapRoundPrompt: (v) => {
-      // 关掉时把已经弹出来的收掉(房间的那份不归这个开关管,别误收)
-      if (!v && !get().room) set({ recapRoundPrompt: v, recapRoundDone: false });
-      else set({ recapRoundPrompt: v });
-      persistPrefs(prefsOf(get()));
-    },
     // 「先不了」:停在最后这题(不换题),本轮不再弹 —— 再点一下就直接进新一轮
     dismissRecapRound: () => {
       if (!get().recapRoundDone) return;
@@ -993,8 +982,8 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       // 在线房间:队尾向服务器领取下一题(异步,不预抽)
       if (st.room) { void roomAdvance(1); return; }
       // 单机整集刷完一轮:先停下来弹「本轮复习结束」,由用户决定要不要再来一轮
-      //(「先不了」= acked,停在原地不再弹;关掉 recapRoundPrompt = 老行为,无缝重洗)。
-      if (st.recapRoundPrompt && !st.recapRoundAcked && atRoundTail(st)) {
+      //(「先不了」= acked,停在原地不再弹,再点一下直接进新一轮)。
+      if (!st.recapRoundAcked && atRoundTail(st)) {
         set({ recapRoundDone: true });
         return;
       }

@@ -30,7 +30,7 @@ import {
   buildSrsQueue, previewIntervals, srsPhase,
   type SrsGrade, type SrsQueueItem, type SrsRec,
 } from '@/lib/alg-srs';
-import { useTrainerMarks, markStarred, markStatus } from '@/lib/trainer-marks';
+import { useTrainerMarks, markStarred } from '@/lib/trainer-marks';
 import { tr } from '@/i18n/tr';
 
 /** 四档自评。颜色沿用全站状态色:忘了=危险、犹豫=警告、记得=成功、秒答=品牌强调。 */
@@ -110,14 +110,8 @@ export default function MemoryTrainer({
   const recsRef = useRef(recs);
   recsRef.current = recs;
   const poolSig = pool.join('|');
-  // 「搁置」= 用户说了先不学这个。出题池是他自己勾的,照勾出题;记忆队列是系统替他决定
-  // 今天练什么 —— 那就该听这句话,把搁置的整个跳过。排期记录不动,取消搁置接着往下排。
-  // 同 recs:只读快照、不进依赖,免得场中途标一个搁置就把当前队列洗掉。
-  const activePool = useMemo(() => pool.filter(k => markStatus(marks, k) !== 'paused'), [pool, marks]);
-  const activeRef = useRef(activePool);
-  activeRef.current = activePool;
   const rebuild = useCallback(() => {
-    const q = buildSrsQueue(activeRef.current, recsRef.current, Date.now(), {
+    const q = buildSrsQueue(pool, recsRef.current, Date.now(), {
       newLimit, sessionLimit, fillExtra,
     });
     setQueue(q);
@@ -243,18 +237,6 @@ export default function MemoryTrainer({
 
   if (pool.length === 0) {
     return <div className="srs-empty">{tr({ zh: '尚未选 case', en: 'No cases selected' })}</div>;
-  }
-
-  // 选了,但选中的全被搁置了 —— 说清楚是这个原因,别落进下面那句「都还在记忆里」
-  if (activePool.length === 0) {
-    return (
-      <div className="srs-empty">
-        {tr({
-          zh: '选中的 case 都标了「搁置」,记忆模式会跳过它们。取消搁置或另选几个再来。',
-          en: 'Every case you picked is marked Paused, and memory mode skips those. Un-pause some, or pick others.',
-        })}
-      </div>
-    );
   }
 
   if (queue.length === 0) {

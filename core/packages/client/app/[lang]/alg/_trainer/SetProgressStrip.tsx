@@ -3,7 +3,7 @@
 /**
  * 训练页顶部的「这一套我练到哪了」进度条 —— 把 /alg/progress 的核心信息前置到正在练的地方。
  *
- * 一条四段进度条(已掌握 / 不熟 / 搁置 / 未学)+ 右侧几个可点的数字:到期、今日已复习、
+ * 一条三段进度条(已掌握 / 不熟 / 未学)+ 右侧几个可点的数字:到期、今日已复习、
  * 连续天数。数字本身就是入口:点「到期」直接切进记忆模式,点标记数跳到 select 页的对应筛选。
  *
  * 只读 —— 它不改任何状态,数据全来自 trainer-marks / alg-srs 两个 store。
@@ -19,23 +19,21 @@ import { tr } from '@/i18n/tr';
 export interface SetProgressCounts {
   mastered: number;
   learning: number;
-  paused: number;
   untouched: number;
   total: number;
 }
 
-/** 从标记表里数一套(scope 内)的四态分布。 */
+/** 从标记表里数一套(scope 内)的三态分布。 */
 export function countSetProgress(
-  keys: string[], status: (k: string) => 'learning' | 'mastered' | 'paused' | undefined,
+  keys: string[], status: (k: string) => 'learning' | 'mastered' | undefined,
 ): SetProgressCounts {
-  let mastered = 0, learning = 0, paused = 0;
+  let mastered = 0, learning = 0;
   for (const k of keys) {
     const s = status(k);
     if (s === 'mastered') mastered++;
     else if (s === 'learning') learning++;
-    else if (s === 'paused') paused++;
   }
-  return { mastered, learning, paused, untouched: keys.length - mastered - learning - paused, total: keys.length };
+  return { mastered, learning, untouched: keys.length - mastered - learning, total: keys.length };
 }
 
 export default function SetProgressStrip({
@@ -59,18 +57,15 @@ export default function SetProgressStrip({
     () => countSetProgress(keys, k => markStatus(marks, k)),
     [keys, marks],
   );
-  // 记忆队列跳过「搁置」(见 MemoryTrainer),这里也得跳 —— 否则点进去发现没那么多卡,
-  // 这个数字就是在骗人。
   const due = useMemo(() => {
     const now = Date.now();
     let n = 0;
     for (const k of keys) {
-      if (markStatus(marks, k) === 'paused') continue;
       const r = recs[k];
       if (r && r.n > 0 && r.d <= now) n++;
     }
     return n;
-  }, [keys, recs, marks]);
+  }, [keys, recs]);
 
   const todayCount = Math.max(daily[dayKey(Date.now())]?.[0] ?? 0, sessionCount);
   const streak = useMemo(() => streakDays(daily, Date.now()), [daily]);
@@ -91,7 +86,6 @@ export default function SetProgressStrip({
       >
         <span className="is-mastered" style={{ width: pct(counts.mastered) }} />
         <span className="is-learning" style={{ width: pct(counts.learning) }} />
-        <span className="is-paused" style={{ width: pct(counts.paused) }} />
       </div>
 
       <div className="trainer-strip-nums">

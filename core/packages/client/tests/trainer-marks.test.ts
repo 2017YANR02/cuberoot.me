@@ -18,9 +18,9 @@ describe('mergeMarks (LWW)', () => {
 
   it('cloud newer wins and nothing is uploaded', () => {
     const local: CaseMarks = { 'T|T1': { s: 'mastered', t: 100 } };
-    const cloud: CaseMarks = { 'T|T1': { s: 'paused', f: 1, t: 200 } };
+    const cloud: CaseMarks = { 'T|T1': { s: 'learning', f: 1, t: 200 } };
     const { merged, toUpload } = mergeMarks(local, cloud);
-    expect(merged['T|T1']).toEqual({ s: 'paused', f: 1, t: 200 });
+    expect(merged['T|T1']).toEqual({ s: 'learning', f: 1, t: 200 });
     expect(toUpload).toEqual([]);
   });
 
@@ -60,9 +60,9 @@ describe('mergeMarks (LWW)', () => {
   });
 
   it('cloud-only marks merge in untouched', () => {
-    const cloud: CaseMarks = { 'T|T9': { s: 'paused', t: 50 } };
+    const cloud: CaseMarks = { 'T|T9': { s: 'mastered', t: 50 } };
     const { merged, toUpload } = mergeMarks({}, cloud);
-    expect(merged['T|T9']).toEqual({ s: 'paused', t: 50 });
+    expect(merged['T|T9']).toEqual({ s: 'mastered', t: 50 });
     expect(toUpload).toEqual([]);
   });
 
@@ -81,29 +81,28 @@ describe('summarizeMarks', () => {
       'T|1': { s: 'mastered', t: 1 },
       'T|2': { s: 'mastered', f: 1, t: 1 }, // mastered AND starred → both +1
       'T|3': { s: 'learning', t: 1 },
-      'T|4': { s: 'paused', t: 1 },
       'T|5': { f: 1, t: 1 },  // 只星标(未定状态)→ starred +1,状态 0
       'T|6': { t: 1 },        // 墓碑 → 全不计
     };
     // starred = T|2 + T|5 = 2(星标与状态独立计)
-    expect(summarizeMarks(marks)).toEqual({ learning: 1, mastered: 2, paused: 1, starred: 2 });
+    expect(summarizeMarks(marks)).toEqual({ learning: 1, mastered: 2, starred: 2 });
   });
 
   it('empty marks → all zero', () => {
-    expect(summarizeMarks({})).toEqual({ learning: 0, mastered: 0, paused: 0, starred: 0 });
+    expect(summarizeMarks({})).toEqual({ learning: 0, mastered: 0, starred: 0 });
   });
 });
 
 describe('combineOverviews', () => {
   it('cloud wins per set; local-only sets are kept', () => {
-    const cloud: MarkOverview = { '3x3/pll': { learning: 0, mastered: 5, paused: 0, starred: 1 } };
+    const cloud: MarkOverview = { '3x3/pll': { learning: 0, mastered: 5, starred: 1 } };
     const local: MarkOverview = {
-      '3x3/pll': { learning: 3, mastered: 1, paused: 0, starred: 0 }, // 被云端覆盖
-      '3x3/oll': { learning: 2, mastered: 0, paused: 0, starred: 0 }, // 云端没有 → 保留
+      '3x3/pll': { learning: 3, mastered: 1, starred: 0 }, // 被云端覆盖
+      '3x3/oll': { learning: 2, mastered: 0, starred: 0 }, // 云端没有 → 保留
     };
     expect(combineOverviews(cloud, local)).toEqual({
-      '3x3/pll': { learning: 0, mastered: 5, paused: 0, starred: 1 },
-      '3x3/oll': { learning: 2, mastered: 0, paused: 0, starred: 0 },
+      '3x3/pll': { learning: 0, mastered: 5, starred: 1 },
+      '3x3/oll': { learning: 2, mastered: 0, starred: 0 },
     });
   });
 });
@@ -131,7 +130,7 @@ describe('scanLocalOverview', () => {
       'cuberoot-timer.v3': 'unrelated',                            // 非标记键 → 忽略
     });
     expect(scanLocalOverview()).toEqual({
-      '3x3/pll': { learning: 1, mastered: 1, paused: 0, starred: 1 },
+      '3x3/pll': { learning: 1, mastered: 1, starred: 1 },
     });
   });
 

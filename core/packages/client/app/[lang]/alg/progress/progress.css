@@ -315,7 +315,6 @@
 }
 .alg-prog-bar .is-mastered { background: var(--signal-success); }
 .alg-prog-bar .is-learning { background: var(--signal-warning); }
-.alg-prog-bar .is-paused { background: var(--faint-foreground); }
 
 /* 分类跳转:纯文字 stat-link(非 chip;数字是进度数据本身),点了跳到该 set 的 ?mark= 过滤 */
 .alg-prog-stats { display: flex; flex-wrap: wrap; gap: 2px 16px; }

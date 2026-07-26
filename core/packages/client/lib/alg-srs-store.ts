@@ -298,12 +298,11 @@ function writeRec(st: AlgSrsState, key: string, rec: SrsRec, nextRecs: SrsRecs):
 /**
  * 按记忆进展维护「不熟 / 已掌握」标记(记忆模式与计时训练共用这一份):
  *   第一次记住 → 不熟;间隔涨过 MASTER_DAYS → 已掌握;已掌握的忘了 → 打回不熟。
- * 「搁置」是用户明确表达的意愿,任何情况下都不动。调用方负责判断偏好开关。
+ * 调用方负责判断偏好开关。
  */
 export function autoMarkFromSrs(key: string, next: SrsRec, grade: SrsGrade): void {
   const mk = useTrainerMarks.getState();
   const cur = markStatus(mk.marks, key);
-  if (cur === 'paused') return;
   if (grade === 0) {
     if (cur === 'mastered') mk.applyMarks([key], { s: 'learning' });
     return;
