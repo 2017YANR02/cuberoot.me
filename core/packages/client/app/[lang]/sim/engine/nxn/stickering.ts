@@ -5,13 +5,16 @@
 // (initial, face) 上,渲染层按 slot 改色 → 颜色随块走,打乱后依然标注同一批块。
 import { FACE } from "../define";
 
-/** facelet 级遮罩码(渲染层消费):0 原色 / 1 变暗 / 2 忽略灰 / 3 EO 青 / 4 第二定向黄。 */
-export type FaceletMask = 0 | 1 | 2 | 3 | 4;
+/** facelet 级遮罩码(渲染层消费):0 原色 / 1 变暗 / 2 忽略灰 / 3 EO 青 / 4 第二定向黄 /
+ *  5 原色 + 描边。0-4 逐条对着 cubing.js 的 PieceStickering;5 是站内加的 —— 不换色,
+ *  沿贴纸边缘描一圈高亮色(engine/nxn/stickerOutline.ts),给「就是要盯这一枚」的场合。 */
+export type FaceletMask = 0 | 1 | 2 | 3 | 4 | 5;
 export const FM_REGULAR = 0 as const;
 export const FM_DIM = 1 as const;
 export const FM_IGNORED = 2 as const;
 export const FM_ORIENTED = 3 as const;
 export const FM_ORIENTED2 = 4 as const;
+export const FM_OUTLINE = 5 as const;
 
 export type StickeringMaskFn = (initial: number, face: number) => FaceletMask;
 

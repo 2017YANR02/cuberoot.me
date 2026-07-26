@@ -1,10 +1,11 @@
 import { describe, it, expect } from 'vitest';
+import * as THREE from 'three';
 import Cube from '@/app/[lang]/sim/engine/nxn/cube';
 import { engineHomeSid } from '@/app/[lang]/sim/engine/nxn/netIndex';
 import {
   customMaskFn, pickedSids, pieceSids, toggleSids, countSids,
 } from '@/app/[lang]/sim/engine/nxn/customStickering';
-import { FM_REGULAR, FM_DIM, FM_IGNORED } from '@/app/[lang]/sim/engine/nxn/stickering';
+import { FM_REGULAR, FM_DIM, FM_IGNORED, FM_OUTLINE } from '@/app/[lang]/sim/engine/nxn/stickering';
 import { buildFaceletMap } from '@/components/sim-embed/faceletMap';
 import { solvedCube, applyAlg } from '@/lib/lsll/cube333';
 import { stickerFacelet } from '@/app/[lang]/predict/_lib/challenge';
@@ -151,6 +152,10 @@ describe('customMaskFn', () => {
     // 选中置灰
     const gray = customMaskFn(3, 'U:4', 'ignored', 'regular')!;
     expect(gray(on.cube, on.face)).toBe(FM_IGNORED);
+    // 描边:选中的保原色再描一圈,其余照常
+    const outline = customMaskFn(3, 'U:4', 'outline', 'dim')!;
+    expect(outline(on.cube, on.face)).toBe(FM_OUTLINE);
+    expect(outline(off.cube, off.face)).toBe(FM_DIM);
   });
 
   it('画法缺省 = 原色 + 灰(老链接不变)', () => {
@@ -164,6 +169,55 @@ describe('customMaskFn', () => {
 
   it('清单空时画法也不生效(仍是不遮罩)', () => {
     expect(customMaskFn(3, '', 'regular', 'dim')).toBeNull();
+  });
+});
+
+describe('描边(FM_OUTLINE)落到渲染层', () => {
+  /** 贴纸 mesh 上的 per-instance 描边开关(shader 读的就是这条 attribute)。 */
+  const outlineFlags = (cube: Cube): Float32Array =>
+    cube.instancedRenderer.staticSticker.geometry.getAttribute('aOutline').array as Float32Array;
+
+  it('只有被标 outline 的槽位开描边,static / moving 共用同一份', () => {
+    const cube = new Cube(3);
+    cube.instancedRenderer.setStickering(customMaskFn(3, 'U:4;F:0', 'outline', 'dim'));
+    const flags = outlineFlags(cube);
+    const slots = cube.instancedRenderer.stickerSlots;
+    expect(flags).toHaveLength(slots.length);
+    const on = new Set<string>();
+    for (let i = 0; i < slots.length; i++) {
+      if (flags[i] === 1) on.add(engineHomeSid(slots[i].cubeletInitial, slots[i].face, 3));
+    }
+    expect([...on].sort()).toEqual(['F0', 'U4']);
+    // moving 那只 mesh 复用 static 的几何 → 转层途中描边不会掉
+    expect(cube.instancedRenderer.movingSticker.geometry)
+      .toBe(cube.instancedRenderer.staticSticker.geometry);
+  });
+
+  it('换阶段 / 清阶段都要把旧描边收掉', () => {
+    const cube = new Cube(3);
+    cube.instancedRenderer.setStickering(customMaskFn(3, 'U:4', 'outline', 'dim'));
+    expect([...outlineFlags(cube)].filter((v) => v === 1)).toHaveLength(1);
+    // 同一批贴纸改成「原色」这一档
+    cube.instancedRenderer.setStickering(customMaskFn(3, 'U:4', 'regular', 'dim'));
+    expect([...outlineFlags(cube)].some((v) => v === 1)).toBe(false);
+    cube.instancedRenderer.setStickering(customMaskFn(3, 'U:4', 'outline', 'dim'));
+    cube.instancedRenderer.setStickering(null);
+    expect([...outlineFlags(cube)].some((v) => v === 1)).toBe(false);
+  });
+
+  it('描边只是加一圈边,颜色仍是本来那枚贴纸的色(不像 ignored 会被灰盖掉)', () => {
+    const cube = new Cube(3);
+    const slots = cube.instancedRenderer.stickerSlots;
+    const idx = slots.findIndex((s) => engineHomeSid(s.cubeletInitial, s.face, 3) === 'U4');
+    const read = (): string => {
+      const c = new THREE.Color();
+      cube.instancedRenderer.staticSticker.getColorAt(idx, c);
+      return c.getHexString();
+    };
+    cube.instancedRenderer.setStickering(null);
+    const plain = read();
+    cube.instancedRenderer.setStickering(customMaskFn(3, 'U:4', 'outline', 'ignored'));
+    expect(read()).toBe(plain);
   });
 });
 
