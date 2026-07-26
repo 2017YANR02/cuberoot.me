@@ -30,11 +30,15 @@ import { tr } from '@/i18n/tr';
 import { CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '@/lib/cube-colors';
 import { CUBE_ORIENTATIONS, orientedFaceColors } from '@/lib/cube-orientation';
 import {
-  generateChallenge, FACE_LETTERS, faceletFace, BLANK,
+  generateChallenge, FACE_LETTERS, faceletFace,
   MOVE_COUNT_MIN, MOVE_COUNT_MAX, CROSS_EDGES_MIN, CROSS_EDGES_MAX,
   type PredictChallenge, type PredictMode, type PieceKind, type ScrambleSource,
 } from './_lib/challenge';
 import './predict.css';
+
+/** 还没出题时:空标签 = 用块自己的颜色(还原态),遮罩为空 = 不压暗。 */
+const EMPTY_LABELS: readonly string[] = Array<string>(54).fill('');
+const EMPTY_BRIGHT: readonly number[] = [];
 
 const PredictBoard = dynamic(() => import('./_components/PredictBoard'), {
   ssr: false,
@@ -189,23 +193,29 @@ function PredictPageInner() {
   }, [challenge, revealed, found]);
 
   /**
-   * 54 个引擎色标签:灰底 + 目标块起点上色。
+   * 54 个引擎色标签 = **起点盘面的真实颜色**(按朝向翻译)。
    *
-   * 只画**起点**:落点是靠题板真转招式转过去的(复盘动画),自己再算一套落点盘面
-   * 就成了第二个真源。答对的落点先补一枚色当标记,这题一结束就撤掉 —— 那只是个记号
-   * 不是真贴纸,跟着转会变成一枚乱飞的色块;而且 labels 一变题板就得整盘重贴,
-   * 播到一半改它会把那一步的动画吃掉。
+   * 只画起点:落点是题板自己把那串公式真转过去得到的(复盘动画),另算一套落点盘面
+   * 就成了第二个真源。这份只跟题 + 朝向有关,答对与否不进来 —— labels 一变题板就得
+   * 整盘重贴,播到一半改它会把那一步的动画吃掉。
    */
   const labels = useMemo(() => {
-    if (!challenge) return Array<string>(54).fill(BLANK);
-    const out = [...challenge.startFacelets].map((ch) => (ch === '.' ? BLANK : shown[ch as CubeFace]));
-    if (!over) {
-      challenge.targets.forEach((t, i) => {
-        if (found[i]) out[t.answerFacelet] = shown[FACE_LETTERS[t.colorFace]];
-      });
-    }
+    if (!challenge) return EMPTY_LABELS;
+    return [...challenge.startColors].map((ch) => shown[ch as CubeFace]);
+  }, [challenge, shown]);
+
+  /**
+   * 保持满色的 facelet:目标块整块 + 已经答对的落点(当记号,这题一结束就撤)。
+   *
+   * 走题板的阶段遮罩而不是改色,所以它怎么变都不会打断复盘动画。
+   */
+  const bright = useMemo(() => {
+    if (!challenge) return EMPTY_BRIGHT;
+    const out: number[] = [];
+    [...challenge.startFacelets].forEach((ch, i) => { if (ch !== '.') out.push(i); });
+    if (!over) challenge.targets.forEach((t, i) => { if (found[i]) out.push(t.answerFacelet); });
     return out;
-  }, [challenge, found, over, shown]);
+  }, [challenge, found, over]);
 
   // 十字模式恒为「找棱」,追踪选择器换成「找几条」。
   const kindDisabled = mode === 'cross';
@@ -314,6 +324,7 @@ function PredictPageInner() {
       <div className="predict-stage">
         <PredictBoard
           labels={labels}
+          bright={bright}
           onSticker={onSticker}
           focusFaces={focus?.faces}
           focusNonce={focus?.nonce ?? 0}
