@@ -5,6 +5,7 @@
 
 import { toWcaEventId } from './wca-events';
 import { apiUrl } from './api-base';
+import { judgeRecordTag, type JudgedRecord, type KeatonedInfo, type RecordsSnapshot } from './record-tag';
 
 /** Recon round (`1`/`2`/`3`/`f`) → WCA round_type_id variants (incl. combined / cutoff). */
 export const ROUND_VARIANTS: Record<string, string[]> = {
@@ -274,8 +275,12 @@ export async function fetchCubingAttempts(
 }
 
 interface CubingLiveUser { wcaid?: string; countryId?: string; continentId?: string }
-interface CubingLiveResult { n: number; b?: number; a?: number; pS?: number; pA?: number }
-interface CubingRecordsSnapshot { wr?: Record<string, number>; cr?: Record<string, number>; nr?: Record<string, number> }
+interface CubingLiveResult {
+  n: number; b?: number; a?: number; pS?: number; pA?: number;
+  sr?: string; ar?: string | number;
+  sk?: KeatonedInfo | null; ak?: KeatonedInfo | null;
+}
+type CubingRecordsSnapshot = RecordsSnapshot;
 interface CubingLiveData {
   users?: Record<string, CubingLiveUser>;
   resultsByRound?: Record<string, CubingLiveResult[]>;
@@ -348,27 +353,17 @@ export async function fetchCubingPrRanks(
 function inferLiveTag(
   value: number, wcaEventId: string, isAvg: boolean,
   user: CubingLiveUser | undefined, snap: CubingRecordsSnapshot | undefined,
-): 'WR' | 'CR' | 'NR' | '' {
-  if (!snap || !value || value <= 0) return '';
-  const k = `${wcaEventId}|${isAvg ? '1' : '0'}`;
-  const wrMin = snap.wr?.[k];
-  if (wrMin !== undefined && value <= wrMin) return 'WR';
-  if (!user) return '';
-  if (user.continentId) {
-    const crMin = snap.cr?.[`${k}|${user.continentId}`];
-    if (crMin !== undefined && value <= crMin) return 'CR';
-  }
-  if (user.countryId) {
-    const nrMin = snap.nr?.[`${k}|${user.countryId}`];
-    if (nrMin !== undefined && value <= nrMin) return 'NR';
-  }
-  return '';
+): JudgedRecord {
+  return judgeRecordTag(value, wcaEventId, isAvg, user, snap);
 }
 
 export interface CubingLiveResultInfo {
   pS: number | null; pA: number | null;
-  singleTag: 'WR' | 'CR' | 'NR' | '';
-  averageTag: 'WR' | 'CR' | 'NR' | '';
+  singleTag: string;
+  averageTag: string;
+  /** 「日掩」:够到了该级纪录但同日别处更快(Reg 9i2),见 lib/record-tag。 */
+  singleKeatoned: KeatonedInfo | null;
+  averageKeatoned: KeatonedInfo | null;
 }
 
 /**
@@ -388,10 +383,20 @@ export async function fetchCubingLiveResultInfo(
   const snap = data.currentRecords;
   const bestVal = typeof hit.b === 'number' ? hit.b : (bestCs ?? 0);
   const avgVal = typeof hit.a === 'number' ? hit.a : (avgCs ?? 0);
+  // 服务端 enrich 已按 Reg 9i2 裁决过 sr/ar/sk/ak —— 优先用它,client 推断只兜底
+  // (老缓存 payload 没有这些字段时)。两条路径同一套 judgeRecordTag。
+  const single = hit.sk !== undefined || hit.sr !== undefined
+    ? { tag: hit.sr ?? '', keatoned: hit.sk ?? null }
+    : inferLiveTag(bestVal, wcaEventId, false, user, snap);
+  const average = hit.ak !== undefined || hit.ar !== undefined
+    ? { tag: String(hit.ar ?? ''), keatoned: hit.ak ?? null }
+    : inferLiveTag(avgVal, wcaEventId, true, user, snap);
   return {
     pS: typeof hit.pS === 'number' ? hit.pS : null,
     pA: typeof hit.pA === 'number' ? hit.pA : null,
-    singleTag: inferLiveTag(bestVal, wcaEventId, false, user, snap),
-    averageTag: inferLiveTag(avgVal, wcaEventId, true, user, snap),
+    singleTag: single.tag,
+    averageTag: average.tag,
+    singleKeatoned: single.keatoned,
+    averageKeatoned: average.keatoned,
   };
 }

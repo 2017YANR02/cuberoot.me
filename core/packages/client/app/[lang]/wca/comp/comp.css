@@ -1029,6 +1029,19 @@ td.is-pr {
   font-weight: 600;
   color: var(--muted-foreground);
 }
+/* 「日掩」交代:这条成绩本可以是某级纪录,同日被谁抹掉了(Reg 9i2)。 */
+.comp-keatoned-note {
+  margin-top: 4px;
+  font-size: 0.7rem;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+}
+.comp-keatoned-note a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .comp-round-modal .comp-modal-footer {
   border-top: none;
   padding: 4px 12px 12px;
