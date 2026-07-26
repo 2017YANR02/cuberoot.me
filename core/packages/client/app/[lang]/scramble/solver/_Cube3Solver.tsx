@@ -37,7 +37,7 @@ import {
   solvedCubie,
 } from './_kociemba/cube';
 import InteractiveCubeNet, { EMPTY_FACELET, type PaintColor } from './_InteractiveCubeNet';
-import Interactive3DCube from './_Interactive3DCube';
+import Interactive3DCube, { useIdlePreloadPaintEngine } from './_Interactive3DCube';
 import { useT } from "@/hooks/useT";
 import BoolToggle from '@/components/BoolToggle';
 import { ListSelect } from '@/components/ListSelect';
@@ -172,15 +172,17 @@ export default function Cube3Solver() {
   const saveDirRef = useRef<FileSystemDirectoryHandle | null>(null);
   const [saveDirName, setSaveDirName] = useState<string | null>(null);
   const justGeneratedRef = useRef(false);
-  // Input method in URL (?view): 'net' = paint the 2D unfolded cross,
-  // 'cube' = paint the rotatable 3D cube, 'scramble' = type one or more scramble
+  // Input method in URL (?view): 'cube' = paint the rotatable 3D cube (default),
+  // 'net' = paint the 2D unfolded cross, 'scramble' = type one or more scramble
   // formulas (one per line — shares the `scrambles` state with the batch solve
   // pipeline below), 'recon' = type a single reconstruction (the inverse of the
   // scramble). All four feed the same cube state (paintFacelet).
   const [viewMode, setViewMode] = useQueryState(
     'view',
-    parseAsStringEnum<'net' | 'cube' | 'scramble' | 'recon'>(['net', 'cube', 'scramble', 'recon']).withDefault('net'),
+    parseAsStringEnum<'net' | 'cube' | 'scramble' | 'recon'>(['net', 'cube', 'scramble', 'recon']).withDefault('cube'),
   );
+  // 立体是默认视图,组件自己会加载引擎;从别的视图进来时空闲预热,切过去不等。
+  useIdlePreloadPaintEngine(viewMode !== 'cube');
   const [reconInput, setReconInput] = useState('');
   // Paint-row secondary action: false → fast Kociemba solution (求解法),
   // true → optimal solve of the painted state via cubeopt/cloud (最优求解).
@@ -906,8 +908,8 @@ export default function Cube3Solver() {
             onChange={(v) => setViewMode(v as 'net' | 'cube' | 'scramble' | 'recon')}
             allLabel=""
             items={[
-              { value: 'net', label: t('平面', '2D') },
               { value: 'cube', label: t('立体', '3D') },
+              { value: 'net', label: t('平面', '2D') },
               { value: 'scramble', label: t('打乱', 'Scramble') },
               { value: 'recon', label: t('复盘', 'Reconstruction') },
             ]}

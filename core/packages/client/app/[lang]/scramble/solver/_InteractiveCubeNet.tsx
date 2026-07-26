@@ -140,8 +140,8 @@ const INLINE_CSS = `
   display: flex; flex-direction: column; align-items: center; gap: 0.75rem;
 }
 .vc-net-body {
-  display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: center;
-  gap: 1rem;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 0.75rem;
 }
 .vc-net-canvas {
   position: relative;

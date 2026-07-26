@@ -17,6 +17,18 @@ export function orbitScene(world: World, dx: number, dy: number, k: number): voi
   world.dirty = true;
 }
 
+/** Sign to apply to a horizontal drag delta before it lands in `scene.rotation.y`.
+ *
+ *  `scene.rotation` is an 'XYZ' euler with z=0, i.e. M = Rx(pitch)·Ry(yaw): yaw spins
+ *  about the cube's OWN up-axis, which Rx then tilts. Once pitch passes ±90° that axis
+ *  points down in world space, so the same dx reads as the opposite direction on screen
+ *  ("D 面朝上时左右拖反了"). cos(pitch) < 0 is exactly the upside-down half — negate there.
+ *  Modes that keep pitch inside ±90° (orbitScene's clamp, NxN's commit-at-90° orbit/rotate)
+ *  always get +1, so this is a no-op for them. */
+export function yawSign(pitch: number): number {
+  return Math.cos(pitch) < 0 ? -1 : 1;
+}
+
 /** Snap the scene orientation to the nearest 90° about each axis — the release behavior
  *  for the "drag empty space = rotate" setting, so the cube settles to an axis-aligned
  *  pose instead of a tilted one. */
