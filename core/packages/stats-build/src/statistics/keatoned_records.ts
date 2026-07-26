@@ -41,12 +41,16 @@ export class KeatonedRecords extends GroupedStatistic {
     this.titleZh = '日掩纪录';
     this.note = 'World records that were never recognized: a faster result of the same kind landed on the same calendar date, so under Regulation 9i2 only that one counted. Named after Keaton Ellis, whose 5.09 at River Hill Fall 2015 was erased hours later by Lucas Etter\'s 4.90.';
     this.noteZh = '够到了世界纪录却从未被认定的成绩:同一日历日出现了更快的同类成绩,按规则 9i2 只认最好的那条。「日掩」一词源自 Keaton Ellis —— 他在 2015 年 River Hill Fall 打出的 5.09 破了当时的世界纪录,几小时后被同场 Lucas Etter 的 4.90 抹掉。';
+    // 掩它的那条成绩拆成 人 / 成绩 / 比赛 三列,与左边被掩的那条一一对照,
+    // 而不是挤成一格文本 —— 那样人名、成绩、比赛名连读,也没法各自对齐。
     this.tableHeader = {
       'Person': 'left',
       'Result': 'right',
       'Type': 'center',
       'Competition': 'left',
       'Beaten by': 'left',
+      'Beating result': 'right',
+      'Beating competition': 'left',
       'Date': 'center',
     };
   }
@@ -144,19 +148,22 @@ export class KeatonedRecords extends GroupedStatistic {
         const kind = isAvg ? 'average' : 'single';
         const value = new SolveTime(eventId, kind, Number(r['value'])).clockFormat();
         const beat = new SolveTime(eventId, kind, Number(r['day_best'])).clockFormat();
-        // 掩它的人也写成选手链接 —— 渲染器只对 WCA 选手链接做人名本地化(中文名 / 剥括号)
-        // 和补国旗,写成裸文本就会在中文表里留下 "Shotaro Makisumi (牧角章太郎)" 这种原始名。
+        // 掩它的人 / 比赛都写成链接 —— 渲染器只对 WCA 链接做人名本地化(中文名 / 剥括号)、
+        // 比赛名本地化和补国旗,写成裸文本就会留下 "Shotaro Makisumi (牧角章太郎)" 这种原始名。
         const beater = r['beater_id']
           ? `[${r['beater_name']}](https://www.worldcubeassociation.org/persons/${r['beater_id']})`
           : String(r['beater_name'] ?? '');
+        const beaterComp = r['beater_comp_id']
+          ? `[${r['beater_comp']}](https://www.worldcubeassociation.org/competitions/${r['beater_comp_id']})`
+          : String(r['beater_comp'] ?? '');
         return [
           `[${r['person_name']}](https://www.worldcubeassociation.org/persons/${r['person_id']})`,
           `**${value}**`,
           isAvg ? 'Average' : 'Single',
           `[${r['comp_name']}](https://www.worldcubeassociation.org/competitions/${r['competition_id']})`,
-          r['beater_comp_id']
-            ? `${beater} ${beat} — [${r['beater_comp']}](https://www.worldcubeassociation.org/competitions/${r['beater_comp_id']})`
-            : `${beater} ${beat}`,
+          beater,
+          beat,
+          beaterComp,
           ymd(r['date']),
         ];
       });
