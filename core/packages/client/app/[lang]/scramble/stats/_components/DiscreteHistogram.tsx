@@ -1,6 +1,7 @@
 'use client';
 
-import { useId, useMemo } from 'react';
+import { useId, useMemo, useState } from 'react';
+import BoolToggle from '@/components/BoolToggle';
 import { tr } from '@/i18n/tr';
 import './DiscreteHistogram.css';
 
@@ -64,13 +65,20 @@ interface Props {
   totalUnit?: { zh: string; en: string };
   // NOTE: 对数 y 轴。精确穷举分布跨 10 个数量级(51% ↔ 4.7e-9%),线性轴下两端的极小档
   // 柱高不足 1px,整条尾巴看不见。仅在能定出有效对数区间时生效(全零/单点自动退回线性)。
+  // 开关由本组件自带(图例区),所有调用方免配即得;传 logY + onLogYToggle 则转为受控,
+  // 用于把状态提到 URL(见 scramble/stats 的 ?log)。
   logY?: boolean;
+  onLogYToggle?: (v: boolean) => void;
 }
 
 const W = 760, H = 400;
 
-export default function DiscreteHistogram({ series, yMode = 'percent', chartMode = 'pdf', clickableBins, selectedBin, onBarClick, onChartModeToggle, onYModeToggle, setOptions, activeSet, onSetChange, hideLegendColors, formatBin, showBarLabels, gapAware, meanValue, meanLabel, medianValue, medianLabel, showTotal = true, totalUnit, logY }: Props) {
+export default function DiscreteHistogram({ series, yMode = 'percent', chartMode = 'pdf', clickableBins, selectedBin, onBarClick, onChartModeToggle, onYModeToggle, setOptions, activeSet, onSetChange, hideLegendColors, formatBin, showBarLabels, gapAware, meanValue, meanLabel, medianValue, medianLabel, showTotal = true, totalUnit, logY, onLogYToggle }: Props) {
   const clickableSet = useMemo(() => new Set(clickableBins ?? []), [clickableBins]);
+  // 对数开关:调用方给了 logY 就是受控(状态在它那儿,通常是 URL),否则组件自管。
+  const [logSelf, setLogSelf] = useState(false);
+  const logOn = logY ?? logSelf;
+  const setLog = onLogYToggle ?? setLogSelf;
   // NOTE: 图例放在图表左上空白区（0..low-count 的柱子永远很矮），不再占右边 pad
   // 均值/中位数标注需要底部多留一行,两者都传时再加宽 b。
   const hasAnnRow2 = meanValue != null && medianValue != null;
@@ -80,8 +88,11 @@ export default function DiscreteHistogram({ series, yMode = 'percent', chartMode
   // NOTE: svg 内 <linearGradient> id 必须全局唯一，用 React 的 useId 前缀
   const gradPrefix = useId().replace(/:/g, '_');
 
-  const { xMin, xMax, yMax, totals, values } = useMemo(() => {
+  const { xMin, xMax, yMax, totals, values, canLog } = useMemo(() => {
     let mn = Infinity, mx = -Infinity;
+    // 对数轴值不值得给:看原始计数里最大档与最小非零档差几个数量级。用计数而非当前
+    // yMode/chartMode 下的值,开关的出现与否才不会随 %/计数、PDF/CDF 来回跳。
+    let cMin = Infinity, cMax = 0;
     const totals: number[] = [];
     for (const s of series) {
       let tot = 0;
@@ -91,9 +102,11 @@ export default function DiscreteHistogram({ series, yMode = 'percent', chartMode
         tot += c;
         if (v < mn) mn = v;
         if (v > mx) mx = v;
+        if (c > 0) { if (c < cMin) cMin = c; if (c > cMax) cMax = c; }
       }
       totals.push(tot);
     }
+    const canLog = cMin > 0 && Number.isFinite(cMin) && cMax / cMin >= 10;
     if (!Number.isFinite(mn)) { mn = 0; mx = 0; }
     const values = series.map((s, i) => {
       const tot = totals[i] || 1;
@@ -119,7 +132,7 @@ export default function DiscreteHistogram({ series, yMode = 'percent', chartMode
         for (const n of values) if ((n[v] ?? 0) > ymx) ymx = n[v] ?? 0;
       }
     }
-    return { xMin: mn, xMax: mx, yMax: ymx || 1, totals, values };
+    return { xMin: mn, xMax: mx, yMax: ymx || 1, totals, values, canLog };
   }, [series, yMode, chartMode]);
 
   if (series.length === 0 || !Number.isFinite(xMin)) {
@@ -138,7 +151,7 @@ export default function DiscreteHistogram({ series, yMode = 'percent', chartMode
   // 对数 y 轴的区间。取所有 series 的最小正值到峰值,跨度不足一个数量级就退回线性 ——
   // 否则 log 轴反而把差异压平。
   const logDomain = (() => {
-    if (!logY) return null;
+    if (!logOn) return null;
     let mn = Infinity;
     for (const vs of values) {
       for (const k of Object.keys(vs)) {
@@ -444,15 +457,26 @@ export default function DiscreteHistogram({ series, yMode = 'percent', chartMode
             </div>
           );
         })}
-        {onChartModeToggle && (
+        {(onChartModeToggle || canLog) && (
           <div className="scramble-hist-legend-toggles">
-            <button
-              className="scramble-hist-legend-btn"
-              onClick={onChartModeToggle}
-              title={`Switch to ${chartMode === 'pdf' ? 'CDF' : 'PDF'}`}
-            >
-              {chartMode === 'pdf' ? 'PDF' : 'CDF'}
-            </button>
+            {onChartModeToggle && (
+              <button
+                className="scramble-hist-legend-btn"
+                onClick={onChartModeToggle}
+                title={`Switch to ${chartMode === 'pdf' ? 'CDF' : 'PDF'}`}
+              >
+                {chartMode === 'pdf' ? 'PDF' : 'CDF'}
+              </button>
+            )}
+            {/* 跨度不足一个数量级时对数轴只会把差异压平,开关直接不出 —— 别给一个按了没反应的钮 */}
+            {canLog && (
+              <BoolToggle
+                className="scramble-hist-log-toggle"
+                value={logOn}
+                onChange={setLog}
+                label={tr({ zh: '对数 y 轴', en: 'Log y' })}
+              />
+            )}
           </div>
         )}
         {showTotal && solidIdx.length === 1 && (

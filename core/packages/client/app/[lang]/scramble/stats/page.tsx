@@ -1412,6 +1412,8 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
           medianLabel={avgStats ? `${tr({ zh: '中位数', en: 'median' })} ${(avgStats.median / avgDenom).toFixed(1)}` : undefined}
           onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
           onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
+          logY={logY}
+          onLogYToggle={setLogY}
         />
       </div>
       <AvgExamplesPanel
@@ -1446,11 +1448,8 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
               </>
             )}
           />
-          <BoolToggle
-            value={logY}
-            onChange={setLogY}
-            label={tr({ zh: '对数 y 轴', en: 'Log y-axis' })}
-          />
+          {/* 对数 y 轴的开关不在这行 —— 它已下放到 DiscreteHistogram 自带的图例区,
+              全站每张分布图都有一个;这里只把状态接到 URL(?log)。 */}
           <InfoTooltip
             icon={HelpCircle}
             variant="modal"
@@ -1504,7 +1503,8 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             selectedBin={selectedBin}
             onBarClick={isExact ? undefined : handleBarClick}
             hideLegendColors
-            logY={isExact ? logY : undefined}
+            logY={logY}
+            onLogYToggle={setLogY}
             meanValue={extendedStats?.mean}
             medianValue={extendedStats?.median}
             onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
