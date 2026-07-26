@@ -131,6 +131,7 @@ pnpm --filter @cuberoot/client lint
 - 文案走 `tr({en,zh})` / `<T en zh/>` / `useT()`;长文/复用走 `t()` + `en.json`/`zh.json`;HTML lang `en`/`zh-Hans`。
 - 禁内联 `isZh`/`i18n.language` 文案三元(`isZh ? '中' : 'EN'`);`isZh` 仅可作 util 参数。守卫:hook + CI ratchet。细则调 skill `i18n`。
 - 魔方术语 zh 以 `client/app/[lang]/wiki/glossary.json` 为准,禁直译;陷阱表+黑名单守卫见 skill `i18n`。
+- 站内违禁词表 `.claude/banned-words.json`(hook `block-banned-words` 写入即拦,`.claude/` 自身豁免);用户说「添加违禁词:x」= 往该表加 `{word,use,why}` 一条。行内豁免注释 `allow-banned-word`。
 
 ## Skill 路由
 
