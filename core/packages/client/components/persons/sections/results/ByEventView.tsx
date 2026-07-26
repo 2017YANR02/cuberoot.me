@@ -398,6 +398,9 @@ function EventRoundsList({
               ? mbldAvgRecords?.get(mbldAvgRecordKey(wcaId, r.competition_id, eventId, r.round_type_id)) ?? null
               : null;
             const averageRecord = r.regional_average_record || mbldAvgRec || (liveRank?.averageTag || null);
+            // 「日掩」只在直播/未公示阶段有意义 —— 官方值一出就以官方为准(Reg 9i2 已在其中生效)。
+            const singleKeatoned = r.regional_single_record ? null : (liveRank?.singleKeatoned ?? null);
+            const averageKeatoned = r.regional_average_record ? null : (liveRank?.averageKeatoned ?? null);
             const showComp = !grouped || r.competition_id !== lastCompId;
             lastCompId = r.competition_id;
             // 拆 status:approved 进有效值显示;pending 仅作「待审核」标记(不改官方值)。
@@ -473,11 +476,13 @@ function EventRoundsList({
                   <span className="record-num-cell">
                     <ResultChangeChain oldValues={oldBest} eventId={eventId} kind="single" note={chain?.[chain.length - 1]?.note} />
                     {formatWcaResult(effBest, eventId, 'single')}
-                    {singleRecord
-                      ? <RecordBadge record={singleRecord} variant="inline" />
-                      : singleRank
-                        ? <RecordBadge record={singleRank === 1 ? 'PR' : `PR${singleRank}`} variant="inline" />
-                        : null}
+                    {singleKeatoned
+                      ? <RecordBadge record={singleRecord} keatoned={singleKeatoned} keatonedEventId={eventId} variant="inline" />
+                      : singleRecord
+                        ? <RecordBadge record={singleRecord} variant="inline" />
+                        : singleRank
+                          ? <RecordBadge record={singleRank === 1 ? 'PR' : `PR${singleRank}`} variant="inline" />
+                          : null}
                   </span>
                 </td>
                 <td className={`wp-cell-result ${oldAvg.length > 0 ? 'wp-cell-changed' : ''}`}>
@@ -488,6 +493,7 @@ function EventRoundsList({
                         attempts={effAttempts}
                         eventId={eventId}
                         averageRecord={averageRecord}
+                        averageKeatoned={averageKeatoned}
                         averageRank={averageRank}
                         oldValues={oldAvg}
                         note={chain?.[chain.length - 1]?.note}
@@ -502,6 +508,7 @@ function EventRoundsList({
                       attempts={effAttempts}
                       eventId={eventId}
                       averageRecord={averageRecord}
+                      averageKeatoned={averageKeatoned}
                       averageRank={averageRank}
                       oldValues={oldAvg}
                       note={chain?.[chain.length - 1]?.note}

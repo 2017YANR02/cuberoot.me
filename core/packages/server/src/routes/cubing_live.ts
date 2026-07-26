@@ -13,7 +13,7 @@ import WebSocket from 'ws';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import type { CompPersonalRecordSlot } from '@cuberoot/shared';
 import { query } from '../db/connection.js';
-import { enrichComp, resolvePersonIso2, type CompRecordsSnapshot } from '../utils/current_records.js';
+import { enrichComp, resolvePersonIso2, emptyDayBest, foldCompIntoDayBest, type CompRecordsSnapshot, type DayBest, type KeatonedInfo } from '../utils/current_records.js';
 import { getCnCompZh } from '../utils/cn_comp_zh_cache.js';
 import { trimToRounds, resolveOnlyKeys } from '../utils/comp_trim.js';
 import { getUpcomingComps } from '../utils/upcoming_comps_cache.js';
@@ -74,6 +74,8 @@ interface LiveResult {
   v: number[];      // attempts (centiseconds)
   sr: string;       // single record marker
   ar: string | number; // average record marker
+  sk?: KeatonedInfo | null;  // 单次「日掩」:够到了 sk.level,但同日别处更快(Reg 9i2)
+  ak?: KeatonedInfo | null;  // 平均「日掩」
   // 历史 PR 排名(仅 wca_db 路径填充):该值在本比赛开始日之前的该选手该项目所有历史成绩中排第几.
   // dense rank:同值同 rank;1 = PR(最快);2/3/... = 历史第 N 快.
   // 同比赛内多轮按 round_type_id 顺序累积,后置轮也参与累积排名.
@@ -386,33 +388,42 @@ function ttlFor(source: SourceId): number {
 // v2: 同场比赛内纪录推进式判定(初赛破纪录后,后置轮较慢成绩不再误标 WR/CR/NR).
 // v3: 单次 PR 名次(pS)计入历史平均里的每一把(非最佳把),更晚更慢单次不再误标 PR2;
 //     语义变更但响应 shape 不变 → 必须 bump 整体失效,否则旧 payload 顶 7 天 TTL.
-const SCHEMA_VERSION = 3;
+// v4: Reg 9i2 同日裁决(单日赛)—— 跨比赛「日掩」降级 + sk/ak provenance;
+//     并修好 WCA Live 源 record tag 的 camelCase 字段名(此前恒空).
+const SCHEMA_VERSION = 4;
 
-const startDateCache = new Map<string, { d: string | null; at: number }>();
+const startDateCache = new Map<string, { d: string | null; end: string | null; at: number }>();
 const START_DATE_CACHE_TTL = 60 * 60_000;
 
 async function getCompStartDate(wcaId: string): Promise<string | null> {
+  return (await getCompDates(wcaId)).start;
+}
+
+/** 比赛起止日.Reg 9i2 的判定单位是「日历日」,单日赛(start === end)才能确定
+ *  每一轮落在哪天 —— 多日赛没有轮次日期,不参与跨比赛同日裁决. */
+async function getCompDates(wcaId: string): Promise<{ start: string | null; end: string | null }> {
   const hit = startDateCache.get(wcaId);
-  if (hit && Date.now() - hit.at < START_DATE_CACHE_TTL) return hit.d;
+  if (hit && Date.now() - hit.at < START_DATE_CACHE_TTL) return { start: hit.d, end: hit.end };
   try {
     // 先精确匹配走 PK 索引(快路径).WCA 规范 id 有非直觉大小写(StartofSummerBeijing2026
     // 里的小写 of),缓存/feed 偶尔带异形大小写(StartOfSummer…)精确查不到 → null 会让近期窗
     // 失效,放过已被超越的旧纪录.miss 时再大小写不敏感兜底一次(全表扫,仅极少数异形 id 命中).
-    let rows = await query<{ start_date: string | null }>(
-      `SELECT start_date FROM wca_competitions WHERE id = ? LIMIT 1`,
+    let rows = await query<{ start_date: string | null; end_date: string | null }>(
+      `SELECT start_date, end_date FROM wca_competitions WHERE id = ? LIMIT 1`,
       [wcaId],
     );
     if (rows.length === 0) {
-      rows = await query<{ start_date: string | null }>(
-        `SELECT start_date FROM wca_competitions WHERE LOWER(id) = LOWER(?) LIMIT 1`,
+      rows = await query<{ start_date: string | null; end_date: string | null }>(
+        `SELECT start_date, end_date FROM wca_competitions WHERE LOWER(id) = LOWER(?) LIMIT 1`,
         [wcaId],
       );
     }
     const d = rows[0]?.start_date || null;
-    startDateCache.set(wcaId, { d, at: Date.now() });
-    return d;
+    const end = rows[0]?.end_date || null;
+    startDateCache.set(wcaId, { d, end, at: Date.now() });
+    return { start: d, end };
   } catch {
-    return null;
+    return { start: null, end: null };
   }
 }
 
@@ -655,9 +666,45 @@ const ROUND_NAME: Record<string, string> = {
  *  - 现有 results 的空 sr/ar 用 wca_results_flat 当前 MIN 推断填充
  *  - 附加 currentRecords 快照供 client 给 WS 实时推送的成绩做同款推断
  *  非阻塞:无 records 缓存时全部跳过(首请求秒出,fallback 到原行为). */
-function enrichRecordTags(data: CompData): void {
-  const snapshot = enrichComp(data.users, data.resultsByRound, data.events);
+async function enrichRecordTags(data: CompData): Promise<void> {
+  const dayBest = await buildDayBest(data);
+  const snapshot = enrichComp(data.users, data.resultsByRound, data.events, dayBest);
   if (snapshot) data.currentRecords = snapshot;
+}
+
+function ymd(d: string | null): string | null {
+  return d ? String(d).slice(0, 10) : null;
+}
+
+/** 汇总「本场比赛所在日历日、全球已达成的最好成绩」,供 Reg 9i2 同日裁决用.
+ *
+ *  数据来自进程内 L1 —— prewarm 覆盖 wca_competitions 里 [今天-30d, 今天+60d] 的全球比赛,
+ *  比赛日 ±2d 的还有 65s 快刷,所以同一天的其它赛场基本都在 cache 里,无需额外网络请求.
+ *
+ *  只处理单日赛:Reg 9i2 判定单位是「轮次的最后一个日历日」,多日赛没有轮次日期就无法
+ *  确定某一轮落在哪天,宁可不裁决(退回本场 running-min)也不误伤跨日的合法第二条纪录. */
+async function buildDayBest(data: CompData): Promise<DayBest | null> {
+  const self = await getCompDates(data.slug);
+  const date = ymd(self.start);
+  if (!date || date !== ymd(self.end)) return null;
+
+  const day = emptyDayBest();
+  let folded = 0;
+  for (const other of cache.values()) {
+    if (other.slug !== data.slug) {
+      const d = await getCompDates(other.slug);
+      if (ymd(d.start) !== date || ymd(d.end) !== date) continue;
+    }
+    foldCompIntoDayBest(day, other);
+    folded++;
+  }
+  // 本场可能还没进 L1(首次 loadComp 时 enrich 先于 l1Set)→ 补一次.
+  if (!cache.has(data.slug)) {
+    foldCompIntoDayBest(day, data);
+    folded++;
+  }
+  if (folded === 0) return null;
+  return day;
 }
 
 /** 给 cubing / wca / wca_live 源的 data 补 Psych Sheet 用的 personalRecords + per-result pS/pA dense rank:
@@ -1254,8 +1301,9 @@ interface WcaLiveResult {
   ranking: number | null;
   best: number | null;
   average: number | null;
-  single_record_tag: string | null;
-  average_record_tag: string | null;
+  // WCA Live GraphQL 返回 camelCase — 写成 snake_case 会恒 undefined,上游 tag 全丢.
+  singleRecordTag: string | null;
+  averageRecordTag: string | null;
   attempts: WcaLiveAttempt[];
   person: { id: string; name: string; wcaId: string; country: { iso2: string } };
 }
@@ -1349,8 +1397,9 @@ async function loadFromWcaLive(wcaId: string, onProgress?: ProgressFn, prefetche
           e: link.eventId, r: link.roundTypeId, f: link.format,
           b: r.best ?? 0, a: r.average ?? 0,
           v: r.attempts.map(a => a.result),
-          sr: r.single_record_tag ?? '',
-          ar: r.average_record_tag ?? '',
+          // WCA Live 也会给 'PR' —— 个人最佳走 pS/pA 名次机制,这里只收地区纪录.
+          sr: RECORD_TAGS.has(r.singleRecordTag ?? '') ? r.singleRecordTag as string : '',
+          ar: RECORD_TAGS.has(r.averageRecordTag ?? '') ? r.averageRecordTag as string : '',
         });
       }
       resultsByRound[`${link.eventId}:${link.roundTypeId}`] = liveResults;
@@ -1378,7 +1427,7 @@ async function loadFromWcaLive(wcaId: string, onProgress?: ProgressFn, prefetche
     membersByFilter: { females: [], children: [], newcomers: [] },
     fetchedAt: Date.now(),
   };
-  enrichRecordTags(data);
+  await enrichRecordTags(data);
   await enrichPersonalRecords(data);
   return data;
 }
@@ -1439,7 +1488,7 @@ async function loadFromCubing(wcaId: string, onProgress?: ProgressFn, prefetched
     membersByFilter,
     fetchedAt: Date.now(),
   };
-  enrichRecordTags(data);
+  await enrichRecordTags(data);
   await enrichPersonalRecords(data);
   return data;
 }

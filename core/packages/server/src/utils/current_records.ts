@@ -32,6 +32,44 @@ export interface CompRecordsSnapshot {
   wr: Record<string, number>;  // 全集(项目少,~34 条)
   cr: Record<string, number>;  // 仅本场涉及的洲
   nr: Record<string, number>;  // 仅本场涉及的国家
+  /** 同日已达成的最好成绩(含本场).client 给 WS 新成绩判定「日掩」用,key 规则同上. */
+  day?: DayBestSnapshot;
+}
+
+/** 「日掩」(keatoned):成绩本身够到了某级地区纪录,但同一日历日已有更快的,
+ *  按 WCA Reg 9i2「同日只认最好」不予认定.词源见 2015-11-21 Keaton Ellis 的 5.09
+ *  被同场同日 Lucas Etter 的 4.90 抹掉. */
+export interface KeatonedInfo {
+  level: string;          // 被掩掉的级别:WR / CR / NR
+  byValue: number;        // 当日压过它的成绩
+  byComp: string;         // 那场比赛的 wca id
+  byCompName: string;
+  byPerson: string;
+  byPersonIso2: string;
+}
+
+/** 某一日历日、某个 scope 下已知的最好成绩(跨比赛). */
+export interface DayBestEntry {
+  value: number;
+  comp: string;
+  compName: string;
+  person: string;
+  personIso2: string;
+}
+
+/** 同日最好成绩池.key 规则与 CurrentRecords 一致:
+ *  wr `event|isAvg`、cr `event|isAvg|continent`、nr `event|isAvg|country`. */
+export interface DayBest {
+  wr: Map<string, DayBestEntry>;
+  cr: Map<string, DayBestEntry>;
+  nr: Map<string, DayBestEntry>;
+}
+
+/** DayBest 的 JSON 形态(发给 client). */
+export interface DayBestSnapshot {
+  wr: Record<string, DayBestEntry>;
+  cr: Record<string, DayBestEntry>;
+  nr: Record<string, DayBestEntry>;
 }
 
 let cached: CurrentRecords | null = null;
@@ -156,6 +194,7 @@ export function resolvePersonIso2(region: string, countryId?: string): string {
 
 interface MinimalUser {
   region: string;
+  name?: string;
   countryId?: string;
   continentId?: string;
 }
@@ -167,6 +206,8 @@ interface MinimalResult {
   a: number;
   sr: string;
   ar: string | number;
+  sk?: KeatonedInfo | null;   // 单次「日掩」:本可达成 sk.level,被同日更快的抹掉
+  ak?: KeatonedInfo | null;   // 平均「日掩」
 }
 
 interface MinimalRound { i: string; }
@@ -194,7 +235,8 @@ function valueOf(lr: MinimalResult, isAvg: boolean): number {
 
 /** 按 running min 判定 tag(WR>CR>NR),并把更好的成绩并入各 scope 的 running min.
  *  传进来的是赛前基线的进度副本:同场比赛里破纪录后会逐步压低门槛,
- *  这样初赛破纪录、后置轮较慢的成绩就不会再被误标(无赛前基线的 scope 不追踪,同原行为). */
+ *  这样初赛破纪录、后置轮较慢的成绩就不会再被误标(无赛前基线的 scope 不追踪,同原行为).
+ *  仅在拿不到同日成绩池(多日赛无轮次日期)时走这条兜底路径. */
 function stepRecord(
   value: number,
   eventId: string,
@@ -222,6 +264,107 @@ function stepRecord(
   return tag;
 }
 
+/** 按 WCA Reg 9i2 判定 tag:门槛是赛前基线,但同一日历日只认当日最好的那条.
+ *  从高到低走 WR → CR → NR:
+ *    够不着这一级        → 试下一级
+ *    够得着但当日有更快的 → 「日掩」(记下最高的那一级),继续试下一级
+ *    够得着且是当日最好   → 定级返回(并列同值也算,Reg 9i1a)
+ *  Crimson 7.72 平 WR 但同日陈震 6.99 更快 → WR/CR 双双被掩,落到 NR(PH). */
+function judgeByDay(
+  value: number,
+  eventId: string,
+  isAvg: boolean,
+  u: MinimalUser | undefined,
+  base: CurrentRecords,
+  day: DayBest,
+): { tag: string; keatoned: KeatonedInfo | null } {
+  const k = `${eventId}|${isAvg ? '1' : '0'}`;
+  const scopes: { level: string; key: string; baseline: number | undefined; winner: DayBestEntry | undefined }[] = [
+    { level: 'WR', key: k, baseline: base.wr.get(k), winner: day.wr.get(k) },
+  ];
+  if (u?.continentId) {
+    const ck = `${k}|${u.continentId}`;
+    scopes.push({ level: 'CR', key: ck, baseline: base.cr.get(ck), winner: day.cr.get(ck) });
+  }
+  if (u?.countryId) {
+    const nk = `${k}|${u.countryId}`;
+    scopes.push({ level: 'NR', key: nk, baseline: base.nr.get(nk), winner: day.nr.get(nk) });
+  }
+
+  let keatoned: KeatonedInfo | null = null;
+  for (const s of scopes) {
+    if (s.baseline === undefined) continue;   // 无赛前基线的 scope 不追踪(同原行为)
+    if (value > s.baseline) continue;         // 够不着这一级
+    if (s.winner && value > s.winner.value) {
+      // 够得着,但当日已有更快的 → 被日掩.只记最高的那一级.
+      if (!keatoned) {
+        keatoned = {
+          level: s.level,
+          byValue: s.winner.value,
+          byComp: s.winner.comp,
+          byCompName: s.winner.compName,
+          byPerson: s.winner.person,
+          byPersonIso2: s.winner.personIso2,
+        };
+      }
+      continue;
+    }
+    return { tag: s.level, keatoned };
+  }
+  return { tag: '', keatoned };
+}
+
+/** 把一场比赛的成绩并入同日最好池.同一 scope 取更小值;并列(同值)保留先入者. */
+export function foldCompIntoDayBest(
+  day: DayBest,
+  comp: { slug: string; name: string; users: Record<string, MinimalUser>; resultsByRound: Record<string, MinimalResult[]> },
+): void {
+  const recs = peekCurrentRecords();
+  if (!recs) return;
+  const countryOf = new Map<string, { countryId: string; continentId: string | undefined; iso2: string }>();
+  for (const [num, u] of Object.entries(comp.users)) {
+    const cid = u.countryId ?? resolveCountryId(u.region, recs);
+    if (!cid) continue;
+    countryOf.set(num, {
+      countryId: cid,
+      continentId: u.continentId ?? recs.countryIdToContinent.get(cid),
+      iso2: (recs.countryIdToIso2.get(cid) ?? '').toUpperCase(),
+    });
+  }
+
+  for (const [key, list] of Object.entries(comp.resultsByRound)) {
+    const sep = key.indexOf(':');
+    const eventId = sep >= 0 ? key.slice(0, sep) : key;
+    for (const lr of list) {
+      const who = countryOf.get(String(lr.n));
+      const person = comp.users[String(lr.n)] as (MinimalUser & { name?: string }) | undefined;
+      for (const isAvg of [false, true] as const) {
+        const value = isAvg ? lr.a : lr.b;
+        if (!value || value <= 0) continue;
+        const entry: DayBestEntry = {
+          value,
+          comp: comp.slug,
+          compName: comp.name,
+          person: person?.name ?? '',
+          personIso2: who?.iso2 ?? '',
+        };
+        const k = `${eventId}|${isAvg ? '1' : '0'}`;
+        const put = (m: Map<string, DayBestEntry>, mk: string) => {
+          const prev = m.get(mk);
+          if (prev === undefined || value < prev.value) m.set(mk, entry);
+        };
+        put(day.wr, k);
+        if (who?.continentId) put(day.cr, `${k}|${who.continentId}`);
+        if (who) put(day.nr, `${k}|${who.countryId}`);
+      }
+    }
+  }
+}
+
+export function emptyDayBest(): DayBest {
+  return { wr: new Map(), cr: new Map(), nr: new Map() };
+}
+
 /** 综合处理一场比赛的数据:
  *  1) 解析每个 user 的 countryId/continentId,attach 进 users (mutate).
  *  2) 给现有 results 的空 sr/ar 推断 tag (mutate).
@@ -232,6 +375,7 @@ export function enrichComp(
   users: Record<string, MinimalUser>,
   resultsByRound: Record<string, MinimalResult[]>,
   events?: MinimalEvent[],
+  dayBest?: DayBest | null,
 ): CompRecordsSnapshot | null {
   const recs = peekCurrentRecords();
   if (!recs) return null;
@@ -273,11 +417,20 @@ export function enrichComp(
         for (const lr of ordered) {
           const val = valueOf(lr, isAvg);
           if (val <= 0) continue;
-          const already = isAvg ? lr.ar : lr.sr;
-          const tag = stepRecord(val, eventId, isAvg, users[String(lr.n)], runWr, runCr, runNr);
-          if (tag && !already) {
-            if (isAvg) lr.ar = tag;
-            else lr.sr = tag;
+          if (dayBest) {
+            // Reg 9i2 路径:同日只认最好.裁决结果覆盖上游 tag —— cubing.com / WCA Live
+            // 都只看本场 + 现存纪录,不做跨比赛同日判定,它们标的 WR 可能已被别处抹掉.
+            const { tag, keatoned } = judgeByDay(val, eventId, isAvg, users[String(lr.n)], recs, dayBest);
+            if (isAvg) { if (tag || keatoned) lr.ar = tag; lr.ak = keatoned; }
+            else { if (tag || keatoned) lr.sr = tag; lr.sk = keatoned; }
+          } else {
+            // 兜底(多日赛拿不到轮次日期):沿用赛前基线 + 轮次时序 running-min,只填空不覆盖.
+            const already = isAvg ? lr.ar : lr.sr;
+            const tag = stepRecord(val, eventId, isAvg, users[String(lr.n)], runWr, runCr, runNr);
+            if (tag && !already) {
+              if (isAvg) lr.ar = tag;
+              else lr.sr = tag;
+            }
           }
         }
       }
@@ -301,5 +454,17 @@ export function enrichComp(
     const country = k.split('|')[2];
     if (countriesInComp.has(country)) nr[k] = v;
   }
-  return { wr, cr, nr };
+
+  let day: DayBestSnapshot | undefined;
+  if (dayBest) {
+    day = { wr: {}, cr: {}, nr: {} };
+    for (const [k, v] of dayBest.wr) day.wr[k] = v;
+    for (const [k, v] of dayBest.cr) {
+      if (continentsInComp.has(k.split('|')[2])) day.cr[k] = v;
+    }
+    for (const [k, v] of dayBest.nr) {
+      if (countriesInComp.has(k.split('|')[2])) day.nr[k] = v;
+    }
+  }
+  return { wr, cr, nr, day };
 }

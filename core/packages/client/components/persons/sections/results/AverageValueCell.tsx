@@ -10,9 +10,10 @@ import { unofficialAoN } from '@/lib/unofficial-average';
 import { tr } from '@/i18n/tr';
 import { ResultChangeChain } from './ChangedResultValue';
 import { AvgDec } from '@/components/wca-results/AvgDec';
+import type { KeatonedInfo } from '@/lib/record-tag';
 
 export function AverageValueCell({
-  effAvg, attempts, eventId, averageRecord, averageRank, oldValues, note, decimalAlign,
+  effAvg, attempts, eventId, averageRecord, averageRank, oldValues, note, decimalAlign, averageKeatoned,
 }: {
   effAvg: number;
   attempts: number[];
@@ -23,15 +24,19 @@ export function AverageValueCell({
   note?: string | null;
   // 小数点对齐模式(详细成绩带 平均STM/TPS 时):平均值走 AvgDec 铺进 .wp-avg-cell 网格,与下两行小数点对齐。
   decimalAlign?: boolean;
+  // 「日掩」:够到了该级纪录但同日别处更快(Reg 9i2)。见 lib/record-tag。
+  averageKeatoned?: KeatonedInfo | null;
 }) {
   const timed = eventId !== '333mbf' && eventId !== '333fm';
   const unof = effAvg === 0 && timed ? unofficialAoN(attempts) : null;
 
-  const badge = averageRecord
-    ? <RecordBadge record={averageRecord} variant="inline" />
-    : averageRank
-      ? <RecordBadge record={averageRank === 1 ? 'PR' : `PR${averageRank}`} variant="inline" />
-      : null;
+  const badge = averageKeatoned
+    ? <RecordBadge record={averageRecord} keatoned={averageKeatoned} keatonedEventId={eventId} keatonedIsAvg variant="inline" />
+    : averageRecord
+      ? <RecordBadge record={averageRecord} variant="inline" />
+      : averageRank
+        ? <RecordBadge record={averageRank === 1 ? 'PR' : `PR${averageRank}`} variant="inline" />
+        : null;
   // 满 5 把复盘轮才会带小数点对齐(平均值为普通计时值,非 unofficial / MBLD)。变更链(旧值划线)
   // 极罕见于此类轮 → 该模式下略过 ResultChangeChain,保 .wp-avg-cell 两列网格结构不破。
   if (decimalAlign && !unof) {

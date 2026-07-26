@@ -58,6 +58,7 @@ import { useCompRowChangeMap } from '@/components/persons/logic/use-row-change-m
 import { ResultChangeChain } from '@/components/persons/sections/results/ChangedResultValue';
 import type { ResultChangeTarget } from '@/components/persons/sections/results/ResultChangeEditor';
 import type { ResultChange } from '@/lib/result-watch-api';
+import { judgeRecordTag, type KeatonedInfo, type RecordsSnapshot } from '@/lib/record-tag';
 import '../comp.css';
 import { tr } from '@/i18n/tr';
 import i18n from '@/i18n/i18n-client';
@@ -91,11 +92,7 @@ interface User {
   eventIds?: string[];
 }
 
-interface CompRecordsSnapshot {
-  wr: Record<string, number>;
-  cr: Record<string, number>;
-  nr: Record<string, number>;
-}
+type CompRecordsSnapshot = RecordsSnapshot;
 
 interface RoundMeta {
   i: string;
@@ -122,6 +119,8 @@ interface LiveResult {
   i: number; c: number; n: number; e: string; r: string; f: string;
   b: number; a: number; v: number[]; sr: string; ar: string | number;
   pS?: number; pA?: number;
+  // 「日掩」:够到了该级地区纪录,但同一日历日已有更快的(Reg 9i2).服务端 enrich 时填.
+  sk?: KeatonedInfo | null; ak?: KeatonedInfo | null;
 }
 
 interface MembersByFilter {
@@ -157,6 +156,7 @@ function regionToIso2(region: string): string {
   return countryToIso2(region) || '';
 }
 
+// WS 实时推送的新成绩还没经过服务端 enrich,这里跑同一套 Reg 9i2 判定(含「日掩」).
 function inferLiveRecordTag(
   value: number,
   eventId: string,
@@ -164,20 +164,7 @@ function inferLiveRecordTag(
   user: User | undefined,
   snapshot: CompRecordsSnapshot | undefined,
 ): string {
-  if (!snapshot || !value || value <= 0) return '';
-  const k = `${eventId}|${isAvg ? '1' : '0'}`;
-  const wrMin = snapshot.wr[k];
-  if (wrMin !== undefined && value <= wrMin) return 'WR';
-  if (!user) return '';
-  if (user.continentId) {
-    const crMin = snapshot.cr[`${k}|${user.continentId}`];
-    if (crMin !== undefined && value <= crMin) return 'CR';
-  }
-  if (user.countryId) {
-    const nrMin = snapshot.nr[`${k}|${user.countryId}`];
-    if (nrMin !== undefined && value <= nrMin) return 'NR';
-  }
-  return '';
+  return judgeRecordTag(value, eventId, isAvg, user, snapshot).tag;
 }
 
 function classifyPr(result: LiveResult, pb: PbByEvent | null): { singleRank: number | null; averageRank: number | null } {
@@ -210,6 +197,33 @@ function prBadgeFor(rank: number | null | undefined): string | null {
 
 function formatLive(value: number, eventId: string, isAverage: boolean): string {
   return formatWcaResult(value, eventId, isAverage ? 'average' : 'single', { zero: 'empty' });
+}
+
+/** 一条成绩的纪录标志:地区纪录 tag > 「日掩」合并 badge > PR 名次角标。
+ *  被日掩时即使 tag 为空也要渲染 —— 那正是「本可以是 WR」这条信息的唯一载体。 */
+function ResultRecordBadge({ tag, keatoned, iso2, fallback, eventId, isAvg }: {
+  tag: string;
+  keatoned?: KeatonedInfo | null;
+  iso2: string;
+  fallback?: string | null;
+  eventId: string;
+  isAvg: boolean;
+}) {
+  if (keatoned) {
+    return (
+      <RecordBadge
+        record={tag || null}
+        keatoned={keatoned}
+        keatonedEventId={eventId}
+        keatonedIsAvg={isAvg}
+        variant="inline"
+        iso2={iso2}
+      />
+    );
+  }
+  if (tag) return <RecordBadge record={tag} variant="inline" iso2={iso2} />;
+  if (fallback) return <RecordBadge record={fallback} variant="inline" />;
+  return null;
 }
 
 // 盲拧项目:上游不计算平均,需从 attempts 现算并展示 (3BLD 今年起 bo5 → 展示 ao5;4/5BLD 仍 bo3 → 展示 mo3).
@@ -2334,9 +2348,8 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
                       <span className="record-num-cell">
                         <ResultChangeChain oldValues={changeChainOldValues(chain, 'average')} eventId={r.e} kind="average" note={chain?.[chain.length - 1]?.note} />
                         {formatLive(effAvg, r.e, true)}
-                        {r.ar
-                          ? <RecordBadge record={String(r.ar)} variant="inline" iso2={regionToIso2(u.region)} />
-                          : averageBadge ? <RecordBadge record={averageBadge} variant="inline" /> : null}
+                        <ResultRecordBadge tag={String(r.ar || '')} keatoned={r.ak} iso2={regionToIso2(u.region)} fallback={averageBadge} eventId={r.e} isAvg />
+
                       </span>
                     </td>
                   ) : null;
@@ -2345,9 +2358,8 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
                       <span className="record-num-cell">
                         <ResultChangeChain oldValues={changeChainOldValues(chain, 'best')} eventId={r.e} kind="single" note={chain?.[chain.length - 1]?.note} />
                         {formatLive(effBest, r.e, false)}
-                        {r.sr
-                          ? <RecordBadge record={r.sr} variant="inline" iso2={regionToIso2(u.region)} />
-                          : singleBadge ? <RecordBadge record={singleBadge} variant="inline" /> : null}
+                        <ResultRecordBadge tag={r.sr} keatoned={r.sk} iso2={regionToIso2(u.region)} fallback={singleBadge} eventId={r.e} isAvg={false} />
+
                       </span>
                     </td>
                   );
@@ -2688,9 +2700,8 @@ function CombinedDualRoundsTable({ data, ev, r1, r2, isZh, pbMap, compIso2, memb
                 <td key="avg" className={`td-avg${!singleFirst ? ' is-rank-col' : ''}`}>
                   <span className="record-num-cell">
                     {formatLive(effectiveAvg(sr.res), ev.i, true)}
-                    {sr.res.ar
-                      ? <RecordBadge record={String(sr.res.ar)} variant="inline" iso2={regionToIso2(u.region)} />
-                      : averageBadge ? <RecordBadge record={averageBadge} variant="inline" /> : null}
+                    <ResultRecordBadge tag={String(sr.res.ar || '')} keatoned={sr.res.ak} iso2={regionToIso2(u.region)} fallback={averageBadge} eventId={ev.i} isAvg />
+
                   </span>
                 </td>
               ) : null;
@@ -2698,9 +2709,8 @@ function CombinedDualRoundsTable({ data, ev, r1, r2, isZh, pbMap, compIso2, memb
                 <td key="best" className={`td-best${singleFirst ? ' is-rank-col' : ''}`}>
                   <span className="record-num-cell">
                     {formatLive(sr.res.b, ev.i, false)}
-                    {sr.res.sr
-                      ? <RecordBadge record={sr.res.sr} variant="inline" iso2={regionToIso2(u.region)} />
-                      : singleBadge ? <RecordBadge record={singleBadge} variant="inline" /> : null}
+                    <ResultRecordBadge tag={sr.res.sr} keatoned={sr.res.sk} iso2={regionToIso2(u.region)} fallback={singleBadge} eventId={ev.i} isAvg={false} />
+
                   </span>
                 </td>
               );
@@ -3291,15 +3301,11 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
                           <td>{place}</td>
                           <td>
                             {formatLive(result.b, result.e, false)}
-                            {result.sr
-                              ? <RecordBadge record={result.sr} variant="inline" iso2={regionToIso2(u.region)} />
-                              : singleBadge ? <RecordBadge record={singleBadge} variant="inline" /> : null}
+                            <ResultRecordBadge tag={result.sr} keatoned={result.sk} iso2={regionToIso2(u.region)} fallback={singleBadge} eventId={result.e} isAvg={false} />
                           </td>
                           <td>
                             {showAvg ? formatLive(effectiveAvg(result), result.e, true) : ''}
-                            {showAvg && (result.ar
-                              ? <RecordBadge record={String(result.ar)} variant="inline" iso2={regionToIso2(u.region)} />
-                              : averageBadge ? <RecordBadge record={averageBadge} variant="inline" /> : null)}
+                            {showAvg && <ResultRecordBadge tag={String(result.ar || '')} keatoned={result.ak} iso2={regionToIso2(u.region)} fallback={averageBadge} eventId={result.e} isAvg />}
                           </td>
                           {Array.from({ length: attemptCount }).map((_, i) => (
                             <td key={i} className={`td-attempt ${isAo5Bracketed(atts, i) ? 'td-attempt-trimmed' : ''}`}>
@@ -3492,12 +3498,35 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
 
   // 地区纪录标签(NR/CR/AsR…)+ 世界名次拼成右上角标组「AsR/WR3」(与 PR mark 同款整体上标,
   // 内部 badge 归 baseline,名次纯文本紧随其后);WR 本身=世界第一不附 /WRn。
-  const renderRecordMark = (tag: string, info: RankResult | null | undefined) => (
+  const renderRecordMark = (tag: string, info: RankResult | null | undefined, k?: KeatonedInfo | null, isAvg = false) => (
     <span className="comp-pr-mark">
-      <RecordBadge record={tag} variant="inline" iso2={iso2} />
+      <RecordBadge
+        record={tag || null}
+        keatoned={k}
+        keatonedEventId={result.e}
+        keatonedIsAvg={isAvg}
+        variant="inline"
+        iso2={iso2}
+      />
       {info?.world && tag.toUpperCase() !== 'WR' && <span className="comp-pr-mark-rank">/WR{info.world.rank}</span>}
     </span>
   );
+
+  // 弹窗里给「日掩」一句完整交代:被谁、在哪场、多快 —— badge 只是记号,来龙去脉在这.
+  const renderKeatonedNote = (k: KeatonedInfo, isAvg: boolean) => {
+    const who = displayCuberName(k.byPerson, tr({ zh: true, en: false }));
+    const v = formatLive(k.byValue, result.e, isAvg);
+    return (
+      <div className="comp-keatoned-note">
+        {tr({
+          zh: `按规则 9i2「同日只认最好」,这条 ${k.level} 不予认定 —— 同一天 `,
+          en: `Under Regulation 9i2 only the best result of the day counts, so this ${k.level} is not recognized — `,
+        })}
+        <Link href={`/wca/comp/${k.byComp}?view=result&event=${result.e}`}>{k.byCompName}</Link>
+        {tr({ zh: ` 的 ${who} 打出了 ${v}。`, en: ` saw ${who} get ${v} that same day.` })}
+      </div>
+    );
+  };
 
   async function handleCopy() {
     if (!hasEventsRef.current || !prefetchRef.current) {
@@ -3633,10 +3662,10 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
                     {formatLive(effectiveAvg(result), result.e, true)}
                     {renderPrMark(avgRankInfo)}
                   </span>
-                ) : result.ar ? (
+                ) : (result.ar || result.ak) ? (
                   <span className="comp-pr-value">
                     {formatLive(effectiveAvg(result), result.e, true)}
-                    {renderRecordMark(String(result.ar), avgRankInfo)}
+                    {renderRecordMark(String(result.ar || ''), avgRankInfo, result.ak, true)}
                   </span>
                 ) : (
                   <span className="record-num-cell">
@@ -3646,6 +3675,7 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
                 )
               ) : '—'}
             </div>
+            {showAvgSection && result.ak && renderKeatonedNote(result.ak, true)}
           </section>
           <section className="comp-round-modal-section">
             <div className="comp-round-modal-label">{tr({ zh: '单次', en: 'Best'
@@ -3657,10 +3687,10 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
                     {formatLive(result.b, result.e, false)}
                     {renderPrMark(singleRankInfo)}
                   </span>
-                ) : result.sr ? (
+                ) : (result.sr || result.sk) ? (
                   <span className="comp-pr-value">
                     {formatLive(result.b, result.e, false)}
-                    {renderRecordMark(String(result.sr), singleRankInfo)}
+                    {renderRecordMark(String(result.sr || ''), singleRankInfo, result.sk, false)}
                   </span>
                 ) : (
                   <span className="record-num-cell">
@@ -3670,6 +3700,7 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
                 )
               ) : '—'}
             </div>
+            {result.b !== 0 && result.sk && renderKeatonedNote(result.sk, false)}
           </section>
         </div>
         <footer className="comp-modal-footer comp-round-modal-footer">
