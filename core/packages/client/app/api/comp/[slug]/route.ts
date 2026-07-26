@@ -74,9 +74,12 @@ export async function GET(
   const allFinished = eventList.length > 0 &&
     eventList.every(ev => Array.isArray(ev?.rs) && ev.rs!.length > 0 && ev.rs!.every(rd => rd?.s === 1));
 
+  // max-age=0 是给浏览器的:不写它,响应到浏览器手上只剩裸 `public`(Vercel 会摘掉
+  // s-maxage),浏览器转而用启发式缓存(RFC 9111 §4.2.2)自己定新鲜期,成绩订正 /
+  // WS 补丁就可能被一份说不清多旧的本地副本盖住。s-maxage 照旧只管边缘。
   const cacheControl = allFinished
-    ? 'public, s-maxage=86400, stale-while-revalidate=604800'
-    : 'public, s-maxage=30, stale-while-revalidate=600';
+    ? 'public, max-age=0, must-revalidate, s-maxage=86400, stale-while-revalidate=604800'
+    : 'public, max-age=0, must-revalidate, s-maxage=30, stale-while-revalidate=600';
 
   return new Response(JSON.stringify(data), {
     headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': cacheControl },

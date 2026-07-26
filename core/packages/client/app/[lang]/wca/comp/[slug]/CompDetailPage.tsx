@@ -11,7 +11,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, X as XIcon, RefreshCw, Info, Copy, Check, Radio, ArrowUp, ArrowDown, Ban, Download } from 'lucide-react';
-import { toPng } from 'html-to-image';
 import { Flag } from '@/components/Flag';
 import { RecordBadge } from '@/components/RecordBadge';
 import { eventDisplayName, isWcaEvent } from '@/lib/wca-events';
@@ -35,6 +34,7 @@ import { formatDateRangeIso, formatDateTimeLocal, toIsoDate, weekdayRangeLabel }
 import { localizeCity } from '@/lib/city-localize';
 import { getSimilarComps, type SeriesComp } from '@/lib/comp-series';
 import { getSameCityComps } from '@/lib/comp-city';
+import { onIdle } from '@/lib/on-idle';
 import { compLinkProps } from '@/lib/comp-link';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import BoolToggle from '@/components/BoolToggle';
@@ -43,11 +43,9 @@ import { EventIcon } from '@/components/EventIcon';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { isMbldEvent, computeMbfMo3 } from '@/lib/mbf-average';
 import { UnofficialMark } from '@/components/UnofficialMark';
-import { rememberRecent } from '../page';
+import { rememberRecent } from '@/lib/comp-recent';
 import { useLiveStream, applyResultPatch, type LivePatch, type WsStatus } from '@/hooks/useLiveStream';
 import { useWcaLiveStream, type WcaLiveRoundUpdate } from '@/hooks/useWcaLiveStream';
-import ScheduleView, { ScheduleControls } from './ScheduleView';
-import CompPoster from './CompPoster';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import LangToggle from '@/components/LangToggle';
 import { useCompFollows, FollowStar } from '@/components/CompFollow';
@@ -58,7 +56,7 @@ import { buildReconPersonAttemptMap, findReconForPersonAttempt, buildReconSubmit
 import { roundLabel, ROUND_HINT_ZH, ROUND_HINT_EN } from '@/lib/wca-round-meta';
 import { useCompRowChangeMap } from '@/components/persons/logic/use-row-change-map';
 import { ResultChangeChain } from '@/components/persons/sections/results/ChangedResultValue';
-import { ResultChangeEditor, type ResultChangeTarget } from '@/components/persons/sections/results/ResultChangeEditor';
+import type { ResultChangeTarget } from '@/components/persons/sections/results/ResultChangeEditor';
 import type { ResultChange } from '@/lib/result-watch-api';
 import '../comp.css';
 import { tr } from '@/i18n/tr';
@@ -67,6 +65,21 @@ import i18n from '@/i18n/i18n-client';
 // 「打乱」tab:把 /scramble/gen 的比赛模式整套内嵌进来。重(WASM 求解器 + 打乱引擎),
 // 懒加载 —— 只有用户点开「打乱」才拉这部分 JS,不拖累比赛页首屏。
 const CompScramblesTab = dynamic(() => import('./CompScramblesTab'), { ssr: false });
+// 同理:赛程 tab (ScheduleView + 它的工具条)、海报布局、以及管理员改成绩的编辑器,
+// 都只在特定 tab / 权限下才渲染,不该进首屏 chunk。
+const ScheduleView = dynamic(() => import('./ScheduleView'), { ssr: false });
+const ScheduleControls = dynamic(() => import('./ScheduleView').then(m => m.ScheduleControls), { ssr: false });
+const CompPoster = dynamic(() => import('./CompPoster'), { ssr: false });
+const ResultChangeEditor = dynamic(
+  () => import('@/components/persons/sections/results/ResultChangeEditor').then(m => m.ResultChangeEditor),
+  { ssr: false },
+);
+
+// html-to-image 只在导出分享图 / 海报时用到,按需 import(首屏不带)。
+async function exportNodeToPng(node: HTMLElement): Promise<string> {
+  const { toPng } = await import('html-to-image');
+  return toPng(node, { pixelRatio: 2 });
+}
 
 interface User {
   number: number;
@@ -828,7 +841,9 @@ export default function CompDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<{ step: string; filter?: string; done: number; total: number } | null>(null);
   const [, setFlagDataVer] = useState(0);
-  useEffect(() => { loadFlagData().then(setFlagDataVer); }, []);
+  // persons: false —— 本页国旗全部走 countryToIso2(user.region)(payload 自带 region)
+  // 与 compFlagIso2,用不到 person_countries.json 那 1.3MB。
+  useEffect(() => { loadFlagData({ persons: false }).then(setFlagDataVer); }, []);
 
   const [pbVer, setPbVer] = useState(0);
   type ModalState =
@@ -916,8 +931,12 @@ export default function CompDetailPage() {
     setSimilarComps([]);
     if (!slug) return;
     let alive = true;
-    getSimilarComps(slug).then(list => { if (alive) setSimilarComps(list); }).catch(() => {});
-    return () => { alive = false; };
+    // comp_series.json ~300KB,只决定「相似比赛」tab 亮不亮 —— 推到空闲再拉,
+    // 别跟成绩数据抢首屏的连接。
+    const cancelIdle = onIdle(() => {
+      getSimilarComps(slug).then(list => { if (alive) setSimilarComps(list); }).catch(() => {});
+    });
+    return () => { alive = false; cancelIdle(); };
   }, [slug]);
   // 同城市(第 3 条判据:只比城市)。整取的 comp_series.json 装不下它 —— 分片成一国一文件,
   // 只拉本场所在国那份(见 lib/comp-city.ts)。已在「同系列」里出现过的场次剔掉,不重复列。
@@ -928,10 +947,13 @@ export default function CompDetailPage() {
     setSameCityComps([]);
     if (!slug || !compIso2) return;
     let alive = true;
-    getSameCityComps(slug, compIso2, compInfo?.city, similarIds)
-      .then(list => { if (alive) setSameCityComps(list); })
-      .catch(() => {});
-    return () => { alive = false; };
+    // 同 comp_series:一国一文件也有几百 KB(美国 300KB),同样推到空闲。
+    const cancelIdle = onIdle(() => {
+      getSameCityComps(slug, compIso2, compInfo?.city, similarIds)
+        .then(list => { if (alive) setSameCityComps(list); })
+        .catch(() => {});
+    });
+    return () => { alive = false; cancelIdle(); };
   }, [slug, compIso2, compInfo?.city, similarIds]);
   const showSimilarTab = similarComps.length > 0 || sameCityComps.length > 0;
   // 领奖台:各项目决赛前三。比赛结束(所有项目末轮都有成绩)且有领奖台时默认展示。
@@ -1427,13 +1449,22 @@ export default function CompDetailPage() {
       setPbMap(obj);
       return;
     }
+    // 服务端没给 personalRecords 时才逐人问 WCA API(一人一请求)。必须走 prefetchPbs 的
+    // 限并发队列:大比赛 1000+ 选手直接 Promise.all 会一次性打满浏览器连接池,把同页
+    // 其它请求(成绩数据 / 国旗表)全挤到队尾。
     const ids = Object.values(data.users).map(u => u.wcaid).filter(Boolean);
-    Promise.all(ids.map(async id => [id, await fetchPb(id)] as const))
-      .then(pairs => {
+    if (ids.length === 0) return;
+    let cancelled = false;
+    prefetchPbs(ids)
+      .then(async () => {
+        if (cancelled) return;
         const obj: Record<string, PbByEvent | null> = {};
-        for (const [id, pb] of pairs) obj[id] = pb;
-        setPbMap(obj);
-      });
+        // prefetchPbs 跑完后 fetchPb 全是缓存命中,这里只是把 map 取出来
+        for (const id of ids) obj[id] = await fetchPb(id);
+        if (!cancelled) setPbMap(obj);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
   }, [data, pbVer]);
 
   const onChangeRound = (value: string) => {
@@ -3153,7 +3184,7 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
     if (closeBtn) closeBtn.style.display = 'none';
     if (actions) actions.style.display = 'none';
     try {
-      const dataUrl = await toPng(node, { pixelRatio: 2 });
+      const dataUrl = await exportNodeToPng(node);
       const a = document.createElement('a');
       a.href = dataUrl;
       a.download = `${data.slug}-${u.wcaid || number}-all-${isZh ? 'zh' : 'en'}.png`;
@@ -3509,7 +3540,7 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
     if (closeBtn) closeBtn.style.display = 'none';
     if (footer) footer.style.display = 'none';
     try {
-      const dataUrl = await toPng(node, { pixelRatio: 2 });
+      const dataUrl = await exportNodeToPng(node);
       const a = document.createElement('a');
       a.href = dataUrl;
       a.download = `${data.slug}-${eventId}-${roundId}-${u.wcaid || number}-${isZh ? 'zh' : 'en'}.png`;

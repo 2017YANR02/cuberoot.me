@@ -172,24 +172,47 @@ export function searchCountries(
 let _personCountries: Record<string, string> | null = null;
 let _compCountries: Record<string, string> | null = null;
 let _compNamesZh: Record<string, string> | null = null;
-let _loadPromise: Promise<void> | null = null;
+let _personsPromise: Promise<void> | null = null;
+let _compsPromise: Promise<void> | null = null;
 let _flagDataVersion = 0;
 
-export function loadFlagData(): Promise<number> {
-  if (!_loadPromise) {
-    _loadPromise = Promise.all([
-      fetch(statsUrl('/stats/person_countries.json')).then(r => r.ok ? r.json() : {}).catch(() => ({})),
+function loadPersons(): Promise<void> {
+  if (!_personsPromise) {
+    _personsPromise = fetch(statsUrl('/stats/person_countries.json'))
+      .then(r => (r.ok ? r.json() : {}))
+      .catch(() => ({}))
+      .then((persons) => { _personCountries = persons; _flagDataVersion++; });
+  }
+  return _personsPromise;
+}
+
+function loadComps(): Promise<void> {
+  if (!_compsPromise) {
+    _compsPromise = Promise.all([
       fetch(statsUrl('/stats/comp_countries.json')).then(r => r.ok ? r.json() : {}).catch(() => ({})),
       fetch(statsUrl('/stats/comp_names_zh.json')).then(r => r.ok ? r.json() : {}).catch(() => ({})),
-    ]).then(async ([persons, comps, compZh]) => {
-      _personCountries = persons;
+    ]).then(async ([comps, compZh]) => {
       _compCountries = comps;
       _compNamesZh = compZh as Record<string, string>;
       await refreshCnCompNamesFallback();
       _flagDataVersion++;
     });
   }
-  return _loadPromise.then(() => _flagDataVersion);
+  return _compsPromise;
+}
+
+/**
+ * 加载国旗 / 中文名映射表。
+ *
+ * person_countries.json 是全站最大的一张表 (1.3MB gzip),但只有 personFlagIso2 用得到 ——
+ * 按比赛渲染国旗的页面 (比赛详情页等) 走 countryToIso2(user.region) + compFlagIso2,一个字节
+ * 都用不上。`persons: false` 跳过它,只拉 comp_countries + comp_names_zh (共 ~170KB)。
+ * 两部分各自 memoize,先瘦后全 / 先全后瘦都只各拉一次。
+ */
+export function loadFlagData(opts?: { persons?: boolean }): Promise<number> {
+  const wantPersons = opts?.persons !== false;
+  const parts = wantPersons ? [loadPersons(), loadComps()] : [loadComps()];
+  return Promise.all(parts).then(() => _flagDataVersion);
 }
 
 async function refreshCnCompNamesFallback(): Promise<void> {
