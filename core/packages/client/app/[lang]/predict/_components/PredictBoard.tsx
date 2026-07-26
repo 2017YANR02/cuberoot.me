@@ -9,7 +9,7 @@
  *     (两轴无界累加,不钳 pitch),再给一个复位按钮。
  *   - 不开 /sim 那套方位字母:这里六个中心是上了色的,颜色比字母更快读出方位,而
  *     字母浮在面正上方会正好压住贴纸。
- *   - 颜色逐贴纸给:`labels[i]` 是 facelet i 的引擎色标签('Gray' = 灰底)。
+ *   - 颜色逐贴纸给:`labels[i]` 是 facelet i 的引擎色标签('Blank' = 压暗的空格)。
  *   - 复盘动画不另算盘面:题板一律「起点上色 + 真转招式」,让引擎自己把贴纸转过去
  *     (`twister.push` 逐步动画 / `setup` 瞬时跳转)。`cube.stick` 按**原始位置**寻址,
  *     所以每次改色必须先 `setup('')` 复位几何,再按当前步重放回去。
@@ -28,6 +28,7 @@ import { yawSign } from '@/app/[lang]/sim/engine/viewControls';
 import { timing } from '@/app/[lang]/sim/engine/tweenTiming';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { tr } from '@/i18n/tr';
+import { BLANK } from '../_lib/challenge';
 
 /** 引擎自己的初始视角(U 上 F 前 R 右),复位就回这里。 */
 const DEFAULT_ROT_X = Math.PI / 6;
@@ -112,7 +113,7 @@ const afterFirstPaint = () => new Promise<void>((resolve) => {
 });
 
 export interface PredictBoardProps {
-  /** 54 个引擎色标签,facelet(URFDLB)序;'Gray' = 灰底。 */
+  /** 54 个引擎色标签,facelet(URFDLB)序;'Blank' = 压暗的空格(非目标块)。 */
   labels: readonly string[];
   onSticker: (faceletIndex: number) => void;
   /** 要露给玩家看的面(U/D/L/R/F/B),视角会转到尽量同时看见它们;`focusNonce` 变一次转一次。 */
@@ -230,7 +231,7 @@ export default function PredictBoard({
       // stick 按原始位置寻址,转过之后再上色会贴到别的块上 —— 先复位再上色。
       cube.twister.setup('');
       for (let i = 0; i < faceletMap.length; i++) {
-        cube.stick(faceletMap[i].cube, faceletMap[i].face, labels[i] ?? 'Gray');
+        cube.stick(faceletMap[i].cube, faceletMap[i].face, labels[i] ?? BLANK);
       }
       const done = moves.slice(0, step).join(' ');
       if (done) cube.twister.setup(done);
