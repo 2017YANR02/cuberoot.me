@@ -157,11 +157,23 @@
      注脚保留,与电脑端一致。 */
   .ongoing-comps-tabs {
     grid-auto-columns: max-content;
+    /* 放得下才居中:溢出时 center 会把首个标签推到 scrollLeft:0 的左侧(实测 -81px)、
+       左右滑也够不到,safe 在溢出时退回起点对齐。旧引擎不识别 safe 时留在 center。 */
     justify-content: center;
+    justify-content: safe center;
     overflow-x: auto;
+    /* overflow-x:auto 会把 overflow-y 从 visible 提成 auto;配合下面 is-active 下划线原本
+       向下探出的 1px,这条横条就成了纵向滚动容器,触屏上下滑被它吃掉(自身滚 1px、页面
+       不动)。锁死 overflow-y:横条只左右滑,纵向手势交回页面。issue #46 */
+    overflow-y: hidden;
     scrollbar-width: none;
   }
   .ongoing-comps-tabs::-webkit-scrollbar { display: none; }
+  /* 同上:窄屏把下划线整条收进标签内,不再向下探出(否则既造纵向溢出,又会被上面的
+     overflow-y:hidden 裁成 1px)。代价是 active 段下方多露 1px 底边线。 */
+  .ongoing-comps-tabs .ongoing-comps-tab.is-active::after {
+    bottom: 0;
+  }
   .ongoing-comps-tab {
     padding: 0.55rem 0.6rem;
     letter-spacing: 0.03em;
