@@ -20,6 +20,20 @@ interface Row {
 
 const db: { rows: Row[]; log: string[] } = { rows: [], log: [] };
 
+/**
+ * 学 jsonb 存进去会重排键 —— 先比键长再比字节序。假库不学这一手,
+ * 「没变就别写」那条路会假过:读回来的键序与现构对象一致,逐字比对当然相等。
+ */
+function asJsonb<T>(v: T): T {
+  if (Array.isArray(v)) return v.map(asJsonb) as unknown as T;
+  if (v && typeof v === 'object') {
+    const src = v as Record<string, unknown>;
+    const keys = Object.keys(src).sort((a, b) => a.length - b.length || (a < b ? -1 : a > b ? 1 : 0));
+    return Object.fromEntries(keys.map(k => [k, asJsonb(src[k])])) as unknown as T;
+  }
+  return v;
+}
+
 vi.mock('../../server/src/db/connection.js', () => ({
   query: async (text: string, params: unknown[] = []) => {
     if (text.startsWith('SELECT')) {
@@ -31,7 +45,7 @@ vi.mock('../../server/src/db/connection.js', () => ({
       const [algs, id] = params as [AlgEntry[][], number];
       db.log.push(`update ${id}`);
       const row = db.rows.find(r => r.id === id);
-      if (row) row.algs = algs;
+      if (row) row.algs = asJsonb(algs);
       return [];
     }
     throw new Error(`假库不认识这条 SQL:${text}`);
