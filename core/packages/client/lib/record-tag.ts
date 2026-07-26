@@ -47,9 +47,13 @@ export interface RecordsSnapshot {
 export interface JudgedRecord {
   tag: 'WR' | 'CR' | 'NR' | '';
   keatoned: KeatonedInfo | null;
+  /** 掩掉这条成绩的那几条同日成绩(每个被掩级别一条,按人 + 场去重)。
+   *  client 专用附加输出,服务端 judgeByDay 不需要:用来把这些「官方 dump 里还没有」的
+   *  更快成绩并进世界/全国名次,见 lib/comp-live-rank 的 applyDayRankDelta。 */
+  keatonedBy: DayBestEntry[];
 }
 
-const NONE: JudgedRecord = { tag: '', keatoned: null };
+const NONE: JudgedRecord = { tag: '', keatoned: null, keatonedBy: [] };
 
 interface JudgeUser {
   continentId?: string;
@@ -85,11 +89,13 @@ export function judgeRecordTag(
   }
 
   let keatoned: KeatonedInfo | null = null;
+  const by = new Map<string, DayBestEntry>();
   for (const s of scopes) {
     if (s.baseline === undefined) continue;
     if (value > s.baseline) continue;
 
     if (s.winner && value > s.winner.value) {
+      by.set(`${s.winner.comp}|${s.winner.person}`, s.winner);
       if (!keatoned) {
         keatoned = {
           level: s.level,
@@ -102,9 +108,9 @@ export function judgeRecordTag(
       }
       continue;
     }
-    return { tag: s.level, keatoned };
+    return { tag: s.level, keatoned, keatonedBy: [...by.values()] };
   }
-  return { tag: '', keatoned };
+  return { tag: '', keatoned, keatonedBy: [...by.values()] };
 }
 
 /** 「日掩」的一句话交代,给 badge 当 title / 无障碍文本。 */

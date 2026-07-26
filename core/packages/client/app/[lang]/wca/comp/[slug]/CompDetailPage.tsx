@@ -20,7 +20,7 @@ import { countryName } from '@/lib/country-name';
 import { localizeCompName, resolveCompName } from '@/lib/comp-localize';
 import { nameToCubingSlug, wcaIdToCubingSlug } from '@cuberoot/shared/cubing-slug';
 import { fetchRankForWca, getCachedRankForWca, prefetchRanksForWca, type RankResult } from '@/lib/rank-client';
-import { adjustRankWithLiveComp, type LiveCompEntry } from '@/lib/comp-live-rank';
+import { adjustRankWithLiveComp, applyDayRankDelta, type LiveCompEntry } from '@/lib/comp-live-rank';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { apiUrl } from '@/lib/api-base';
 import { statsUrl } from '@/lib/stats-base';
@@ -3482,11 +3482,19 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
   const singleRankBase = getCachedRankForWca(result.e, result.b, 'single', country, data.slug);
   const avgRankBase = getCachedRankForWca(result.e, effectiveAvg(result), 'average', country, data.slug);
   // 把本场实时成绩并进官方名次,修掉「官方 dump 滞后 → 假全国/世界第几」(同场更快成绩官方未计入)。
+  // 再叠一层同日跨场的:被「日掩」的成绩,掩它的那几条也不在官方 dump 里,不加就会出现
+  // 「badge 已标明当天有人更快,名次却还是 WR1」。
+  const singleKeatonedBy = judgeRecordTag(result.b, result.e, false, u, data.currentRecords).keatonedBy;
+  const avgKeatonedBy = judgeRecordTag(effectiveAvg(result), result.e, true, u, data.currentRecords).keatonedBy;
   const singleRankInfo = singleRankBase
-    ? adjustRankWithLiveComp(singleRankBase, buildLiveCompEntries(data, pbMap, result.e, 'single'), result.b, number, country)
+    ? applyDayRankDelta(
+        adjustRankWithLiveComp(singleRankBase, buildLiveCompEntries(data, pbMap, result.e, 'single'), result.b, number, country),
+        singleKeatonedBy, country)
     : singleRankBase;
   const avgRankInfo = avgRankBase
-    ? adjustRankWithLiveComp(avgRankBase, buildLiveCompEntries(data, pbMap, result.e, 'average'), effectiveAvg(result), number, country)
+    ? applyDayRankDelta(
+        adjustRankWithLiveComp(avgRankBase, buildLiveCompEntries(data, pbMap, result.e, 'average'), effectiveAvg(result), number, country),
+        avgKeatonedBy, country)
     : avgRankBase;
 
   // 破 PR:把 PR 框 + NR/WR 名次拼成一个右上角标组「PR/NR3/WR3」(只 PR 带框,名次纯文本,/ 分割).

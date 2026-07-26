@@ -12,13 +12,14 @@
 
 import { describe, it, expect } from 'vitest';
 import { judgeRecordTag, type RecordsSnapshot } from '@/lib/record-tag';
+import { applyDayRankDelta } from '@/lib/comp-live-rank';
 
 const CN = { countryId: 'China', continentId: '_Asia' };
 const PH = { countryId: 'Philippines', continentId: '_Asia' };
 const US = { countryId: 'USA', continentId: '_North America' };
 
-function entry(value: number, person: string, comp: string) {
-  return { value, comp, compName: comp, person, personIso2: '' };
+function entry(value: number, person: string, comp: string, personIso2 = '') {
+  return { value, comp, compName: comp, person, personIso2 };
 }
 
 // 2026-07-25:赛前基线 + 当日全球最好(6.99 陈震@芜湖;菲律宾范围内最好是 7.72 Crimson)
@@ -27,12 +28,25 @@ const JULY25: RecordsSnapshot = {
   cr: { '333oh|1|_Asia': 801 },
   nr: { '333oh|1|China': 822, '333oh|1|Philippines': 809 },
   day: {
-    wr: { '333oh|1': entry(699, 'Zhen Chen', 'WuhuOpen2026') },
-    cr: { '333oh|1|_Asia': entry(699, 'Zhen Chen', 'WuhuOpen2026') },
+    wr: { '333oh|1': entry(699, 'Zhen Chen', 'WuhuOpen2026', 'CN') },
+    cr: { '333oh|1|_Asia': entry(699, 'Zhen Chen', 'WuhuOpen2026', 'CN') },
     nr: {
-      '333oh|1|China': entry(699, 'Zhen Chen', 'WuhuOpen2026'),
-      '333oh|1|Philippines': entry(772, 'Crimson Arradaza', 'TarlacSpeedcubingOpen2026'),
+      '333oh|1|China': entry(699, 'Zhen Chen', 'WuhuOpen2026', 'CN'),
+      '333oh|1|Philippines': entry(772, 'Crimson Arradaza', 'TarlacSpeedcubingOpen2026', 'PH'),
     },
+  },
+};
+
+// 2015-11-21 River Hill Fall 2015:赛前 333 单次 WR/NAR/USA NR 都是 5.25(Collin Burns),
+// Keaton Ellis 5.09 与 Lucas Etter 4.90 同场同日 —— 三级全被同胞抢走。
+const RIVER_HILL: RecordsSnapshot = {
+  wr: { '333|0': 525 },
+  cr: { '333|0|_North America': 525 },
+  nr: { '333|0|USA': 525 },
+  day: {
+    wr: { '333|0': entry(490, 'Lucas Etter', 'RiverHillFall2015', 'US') },
+    cr: { '333|0|_North America': entry(490, 'Lucas Etter', 'RiverHillFall2015', 'US') },
+    nr: { '333|0|USA': entry(490, 'Lucas Etter', 'RiverHillFall2015', 'US') },
   },
 };
 
@@ -77,17 +91,7 @@ describe('Reg 9i2 同日裁决', () => {
   });
 
   it('Keaton Ellis 5.09:WR 和 NR 双双被同胞抢走 → 官方那条 tag 为空', () => {
-    const riverHill: RecordsSnapshot = {
-      wr: { '333|0': 525 },
-      cr: { '333|0|_North America': 525 },
-      nr: { '333|0|USA': 525 },
-      day: {
-        wr: { '333|0': entry(490, 'Lucas Etter', 'RiverHillFall2015') },
-        cr: { '333|0|_North America': entry(490, 'Lucas Etter', 'RiverHillFall2015') },
-        nr: { '333|0|USA': entry(490, 'Lucas Etter', 'RiverHillFall2015') },
-      },
-    };
-    const r = judgeRecordTag(509, '333', false, US, riverHill);
+    const r = judgeRecordTag(509, '333', false, US, RIVER_HILL);
     expect(r.tag).toBe('');
     expect(r.keatoned?.level).toBe('WR');
     expect(r.keatoned?.byPerson).toBe('Lucas Etter');
@@ -98,5 +102,42 @@ describe('Reg 9i2 同日裁决', () => {
     const r = judgeRecordTag(772, '333oh', true, PH, noDay);
     expect(r.tag).toBe('WR');
     expect(r.keatoned).toBeNull();
+  });
+});
+
+// 名次侧:官方 dump 里没有任何当日成绩,掩掉这条的那几条得并进世界/全国名次,
+// 否则 badge 说「当天有人更快」而名次还写着 WR1。
+describe('日掩 → 名次修正', () => {
+  const rank = (world: number, nat: number | null) => ({
+    world: { rank: world, total: 1000 },
+    national: nat === null ? null : { rank: nat, total: 100 },
+    continental: null,
+  });
+
+  it('掩它的同一个人跨两级(WR + AsR)只算一次', () => {
+    const r = judgeRecordTag(772, '333oh', true, PH, JULY25);
+    expect(r.keatonedBy.map(e => e.person)).toEqual(['Zhen Chen']);
+  });
+
+  it('Crimson 7.72:世界第 1 → 第 2,菲律宾名次不动(掩它的是中国人)', () => {
+    const r = judgeRecordTag(772, '333oh', true, PH, JULY25);
+    const out = applyDayRankDelta(rank(1, 1), r.keatonedBy, 'PH');
+    expect(out.world.rank).toBe(2);
+    expect(out.national?.rank).toBe(1);
+  });
+
+  it('Keaton 5.09:掩它的是同胞 → 世界和全国名次一起 +1', () => {
+    const r = judgeRecordTag(509, '333', false, US, RIVER_HILL);
+    expect(r.keatonedBy.map(e => e.person)).toEqual(['Lucas Etter']);
+    const out = applyDayRankDelta(rank(1, 1), r.keatonedBy, 'US');
+    expect(out.world.rank).toBe(2);
+    expect(out.national?.rank).toBe(2);
+  });
+
+  it('没被日掩 → 名次原样返回', () => {
+    const r = judgeRecordTag(699, '333oh', true, CN, JULY25);
+    expect(r.keatonedBy).toEqual([]);
+    const base = rank(1, 1);
+    expect(applyDayRankDelta(base, r.keatonedBy, 'CN')).toBe(base);
   });
 });

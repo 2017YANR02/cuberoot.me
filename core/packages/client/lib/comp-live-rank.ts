@@ -52,3 +52,30 @@ export function adjustRankWithLiveComp(
     national: base.national ? { ...base.national, rank: base.national.rank + dNat } : base.national,
   };
 }
+
+/**
+ * 同日、别处赛场的更快成绩带来的名次修正 —— adjustRankWithLiveComp 的跨比赛版。
+ *
+ * 官方 dump 里没有任何当日成绩,adjustRankWithLiveComp 只补上了本场的,于是「被日掩」的
+ * 成绩会自相矛盾:badge 已经标明当天有人更快,名次却还写着 WR1(例:Crimson 的 7.72 被同日
+ * Wuhu Open 的 6.99 掩掉,却显示世界第 1)。掩它的那几条得一并计入。
+ *
+ * 只在成绩被日掩时调用是安全的:能掩掉它的成绩同样破了该级赛前基线,持有者赛前 PB 必然
+ * 慢于基线(否则基线就不是那个数),官方名次里必然还没算上它,不存在重复加。够不到基线的
+ * 普通成绩不走这条 —— 那时同日更快的人官方 PB 多半已经排在前面,加了才是错的。
+ */
+export function applyDayRankDelta(
+  base: RankResult,
+  keatonedBy: { personIso2: string }[],
+  countryIso2: string,
+): RankResult {
+  if (keatonedBy.length === 0) return base;
+  const dNat = countryIso2
+    ? keatonedBy.filter(e => (e.personIso2 || '').toUpperCase() === countryIso2.toUpperCase()).length
+    : 0;
+  return {
+    ...base,
+    world: { ...base.world, rank: base.world.rank + keatonedBy.length },
+    national: base.national && dNat ? { ...base.national, rank: base.national.rank + dNat } : base.national,
+  };
+}
