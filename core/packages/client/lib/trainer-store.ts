@@ -60,7 +60,8 @@ export interface TrainerHistEntry {
   name: string;
   scramble: string;
   /** recap 模式下该条在本轮的位置(1 起)/ 本轮总数 —— 进度条随「当前题」而非预抽的
-   *  下一题走(有 lookahead 后 store 的 recapPos 已领先当前题一格)。 */
+   *  下一题走:store 的 recapPos 是「已抽到第几格」,因预抽 peek/peek2 最多领先当前题两格。
+   *  凡是要问「用户刷到第几个了」的地方,一律读这里,别读 recapPos。 */
   recap?: { pos: number; total: number };
 }
 
@@ -949,12 +950,18 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       // 为让「跳过的前缀」正好是已刷的那几个,直接把本机复习队列(已按 seq/shuffle 排好的全集)整条交给房间
       // 并 order='seq' 保序(否则服务端重洗会把前缀打乱、跳过的就不是已刷的了)。仅当队列恰好覆盖当前池时
       // 才走这条;否则(train 模式 / 尚未起步 / 选择变过)退回规范序全集从头开始。
+      //
+      // 「已刷到第几格」必须读当前题自己记的 pos,不能读 st.recapPos —— 后者是「已抽到第几格」,
+      // 因预抽 peek/peek2 领先当前题最多两格。拿它当已刷前缀,刚开页面(current=1/N,recapPos=3)
+      // 建的房会 start=2:全队从 3/N 起步,头两个 case 永不派发。(线上 16 个房全中,见 0077 表
+      // next_index 建房后 <200ms 即到 3;且 order 被这条分支一律钉成 seq,用户选的乱序也没生效。)
+      const curPos = st.hist.idx >= 0 ? (st.hist.list[st.hist.idx]?.recap?.pos ?? 0) : 0;
       const rq = st.recapQueue;
       const rqMatchesPool = rq.length === poolKeys.length && rq.every(k => pool.has(k));
-      const useQueue = st.mode === 'recap' && rqMatchesPool && st.recapPos > 1;
+      const useQueue = st.mode === 'recap' && rqMatchesPool && curPos > 1;
       const keys = useQueue ? rq : poolKeys;
       const order: RoomOrder = useQueue ? 'seq' : st.recapOrder;
-      const start = useQueue ? Math.min(st.recapPos - 1, keys.length - 1) : 0;
+      const start = useQueue ? Math.min(curPos - 1, keys.length - 1) : 0;
       if (keys.length === 0) return { ok: false, error: 'empty pool' };
       set({ roomBusy: true, roomError: null });
       try {
