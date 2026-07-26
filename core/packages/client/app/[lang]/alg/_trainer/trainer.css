@@ -735,6 +735,53 @@
 }
 .trainer-mix-chip-x:hover { color: var(--foreground); background: color-mix(in srgb, var(--foreground) 12%, transparent); }
 
+/* 合练成员不够时的现场选集器(MixSetPicker) */
+.trainer-mix-pick { max-width: 720px; margin: 0 auto; padding: 32px 0 40px; }
+.trainer-mix-pick-title { margin: 0 0 6px; font-size: 1.25rem; font-weight: 650; }
+.trainer-mix-pick-hint {
+  margin: 0 0 18px;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+}
+.trainer-mix-pick-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.trainer-mix-pick-item {
+  padding: 7px 14px;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.trainer-mix-pick-item:hover { background: color-mix(in srgb, var(--foreground) 8%, transparent); }
+.trainer-mix-pick-item.is-on {
+  border-color: var(--toggle-on);
+  background: color-mix(in srgb, var(--toggle-on) 16%, transparent);
+  font-weight: 600;
+}
+.trainer-mix-pick-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 22px;
+}
+.trainer-mix-pick-need { font-size: 0.82rem; color: var(--muted-foreground); }
+.trainer-mix-pick-back { font-size: 0.82rem; color: var(--muted-foreground); }
+.trainer-mix-pick-back:hover { color: var(--foreground); }
+.trainer-mix-pick-saved {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 26px;
+}
+
 /* 设置面板里的通用小按钮(建房/加入/离开/重开一轮共用;is-ghost = 次要动作) */
 .trainer-opts-btn {
   display: inline-flex;

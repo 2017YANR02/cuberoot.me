@@ -23,7 +23,7 @@ g.localStorage = makeLocalStorage();
 
 const { caseKey, splitCaseKey, groupKeysBySet } = await import('@/lib/trainer-case-key');
 const { parseMixSets, MIX_SLUG } = await import('@/lib/alg-mix');
-const { mixSessionId, roomSetId } = await import('@/lib/trainer-store');
+const { mixSessionId, roomSetId, useTrainerStore } = await import('@/lib/trainer-store');
 const { useTrainerMarks, markStatus } = await import('@/lib/trainer-marks');
 const { useAlgSrs } = await import('@/lib/alg-srs-store');
 const { ALG_CATALOG } = await import('@cuberoot/shared');
@@ -128,5 +128,34 @@ describe('合练进度回写各自的 set', () => {
     useAlgSrs.getState().grade('T|T', 3);
     const recs = readLocal('srs:recs:3x3/pll') as Record<string, { n: number }>;
     expect(recs['T|T']?.n).toBe(1);
+  });
+});
+
+describe('首开合练的默认选择', () => {
+  beforeEach(() => { g.localStorage = makeLocalStorage(); });
+
+  const mk = (srcSet: string, name: string) => ({
+    subgroup: 'T', name, srcSet, standard: "R U R' U'", algs: [], sticker: { kind: 'pll' },
+  } as unknown as import('@cuberoot/shared').AlgCase);
+  const mixCases = [mk('pll', 'T'), mk('zbll', 'Ua'), mk('zbll', 'Ub')];
+
+  it('头一次进就全选 —— 点「直接开练」不该撞上「尚未选 case」', () => {
+    useTrainerStore.getState().loadMixSession('3x3', ['zbll', 'pll'], mixCases);
+    expect(useTrainerStore.getState().selected.sort()).toEqual(
+      ['pll:T|T', 'zbll:T|Ua', 'zbll:T|Ub'],
+    );
+  });
+
+  it('开过之后取消到零 = 用户本意,重进不再自动全选', () => {
+    useTrainerStore.getState().loadMixSession('3x3', ['pll', 'zbll'], mixCases);
+    useTrainerStore.getState().setSelected([]);
+    useTrainerStore.getState().loadMixSession('3x3', ['pll', 'zbll'], mixCases);
+    expect(useTrainerStore.getState().selected).toEqual([]);
+  });
+
+  it('单集会话照旧空选(先经 select 页挑 case)', () => {
+    const single = [mk('pll', 'T')].map(c => ({ ...c, srcSet: undefined }));
+    useTrainerStore.getState().loadSession('3x3', 'pll', single);
+    expect(useTrainerStore.getState().selected).toEqual([]);
   });
 });
