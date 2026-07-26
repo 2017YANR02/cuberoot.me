@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  generateChallenge, stickerFacelet, randomMoves, FACE_LETTERS,
+  generateChallenge, stickerFacelet, randomMoves, parseMoveInput, FACE_LETTERS, CUSTOM_MOVES_MAX,
   type PredictOptions, type PredictMode, type PieceKind,
 } from '@/app/[lang]/predict/_lib/challenge';
 import { solvedCube, applyAlg, toFacelets, CORNER_COLORS, EDGE_COLORS } from '@/lib/lsll/cube333';
@@ -61,6 +61,38 @@ describe('stickerFacelet — 手推的落点', () => {
         }
       }
     }
+  });
+});
+
+describe('parseMoveInput — 自己输入的那条公式', () => {
+  it('六个面转照收,写法归一到 X / X\' / X2', () => {
+    expect(parseMoveInput("R U R' U'").moves).toEqual(['R', 'U', "R'", "U'"]);
+    expect(parseMoveInput("R2' F3 D2").moves).toEqual(['R2', "F'", 'D2']);
+    // 弯引号(从网页/中文输入法粘出来的)当撇号,分组括号当空格
+    expect(parseMoveInput('(R U R’ U’)').moves).toEqual(['R', 'U', "R'", "U'"]);
+    // 换行 / 多空格都只是分隔符
+    expect(parseMoveInput('R\n\nU   F').moves).toEqual(['R', 'U', 'F']);
+  });
+
+  it('追不了的记号一律当场拒,并把那个词原样退回来', () => {
+    // 小写在魔方记号里是宽转,不是 R —— 悄悄按 R 解释,出的题答案就是错的
+    for (const bad of ['r', 'Rw', 'M', "S2", 'x', "y'", 'z2', 'U*', '3']) {
+      const res = parseMoveInput(`R ${bad} U`);
+      expect(res.moves).toBeNull();
+      expect(res.error).toEqual({ kind: 'token', token: bad });
+    }
+  });
+
+  it('要展开的记号也拒:悄悄展开错了没人看得出来', () => {
+    expect(parseMoveInput('[R, U]').error).toEqual({ kind: 'token', token: '[R,' });
+    // 括号换空格而不是删掉 —— 删掉会变成合法的 `R U3`(= U'),意思全变了
+    expect(parseMoveInput('(R U)3').error).toEqual({ kind: 'token', token: '3' });
+  });
+
+  it('空 / 超长各有各的说法', () => {
+    expect(parseMoveInput('   ').error).toEqual({ kind: 'empty' });
+    const n = CUSTOM_MOVES_MAX + 1;
+    expect(parseMoveInput(Array(n).fill('R').join(' ')).error).toEqual({ kind: 'tooLong', count: n });
   });
 });
 
@@ -174,6 +206,19 @@ describe('generateChallenge', () => {
       const moves = randomMoves(20, rnd);
       for (let i = 1; i < moves.length; i++) expect(moves[i][0]).not.toBe(moves[i - 1][0]);
     }
+  });
+
+  it('自己输入档:题面就是你写的那条,答案由它算', () => {
+    const c = generateChallenge(opts({ source: 'custom', customMoves: ['R', "U'", 'F2'], moveCount: 9 }));
+    expect(c.moves).toEqual(['R', "U'", 'F2']);
+    const start = applyAlg(solvedCube(), c.placement.join(' '));
+    const end = applyAlg(start, "R U' F2");
+    for (const t of c.targets) expect(t.answerFacelet).toBe(stickerFacelet(end, t.kind, t.piece, t.sticker));
+  });
+
+  it('自己输入档兜住上限,超出的截掉', () => {
+    const long = Array.from({ length: CUSTOM_MOVES_MAX + 5 }, (_, i) => (i % 2 ? 'U' : 'R'));
+    expect(generateChallenge(opts({ source: 'custom', customMoves: long })).moves).toHaveLength(CUSTOM_MOVES_MAX);
   });
 
   it('F2L 公式档忽略步数,直接给一条公式', () => {

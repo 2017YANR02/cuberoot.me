@@ -11,7 +11,8 @@
  *   - 配色走站内单一源(白上绿前红右),另给 24 个拿方朝向可切 —— 与 /timer 的
  *     「预打乱朝向」共用 lib/cube-orientation 那张表;
  *   - 视角可自由旋转到背面(原站锁死正面),否则落在背面的答案点不到;
- *   - 六面浮 U/D/L/R/F/B 字母作参照,而不是把字母印在中心贴纸上。
+ *   - 六面浮 U/D/L/R/F/B 字母作参照,而不是把字母印在中心贴纸上;
+ *   - 公式除了随机 / 随机 F2L,还可以自己输入(原站只有前两档),练自己那条。
  *
  * 出题与判定全在 _lib/challenge.ts(纯函数,tests/predict_challenge.test.ts 锁),
  * 本文件只管交互与呈现。
@@ -19,8 +20,9 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { useQueryState, parseAsStringEnum, parseAsInteger } from 'nuqs';
+import { useQueryState, parseAsStringEnum, parseAsInteger, parseAsString } from 'nuqs';
 import { RefreshCw, Check, X, Eye, ArrowRight, ExternalLink } from 'lucide-react';
+import AlgInput from '@/components/AlgInput';
 import BackHome from '@/components/BackHome';
 import HeaderToggles from '@/components/HeaderToggles';
 import LiquidGlassChips from '@/components/LiquidGlassChips';
@@ -30,9 +32,9 @@ import { tr } from '@/i18n/tr';
 import { CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '@/lib/cube-colors';
 import { CUBE_ORIENTATIONS, orientedFaceColors } from '@/lib/cube-orientation';
 import {
-  generateChallenge, FACE_LETTERS, faceletFace,
-  MOVE_COUNT_MIN, MOVE_COUNT_MAX, CROSS_EDGES_MIN, CROSS_EDGES_MAX,
-  type PredictChallenge, type PredictMode, type PieceKind, type ScrambleSource,
+  generateChallenge, parseMoveInput, FACE_LETTERS, faceletFace,
+  MOVE_COUNT_MIN, MOVE_COUNT_MAX, CROSS_EDGES_MIN, CROSS_EDGES_MAX, CUSTOM_MOVES_MAX,
+  type PredictChallenge, type PredictMode, type PieceKind, type ScrambleSource, type MoveInputError,
 } from './_lib/challenge';
 import './predict.css';
 
@@ -44,6 +46,10 @@ const PredictBoard = dynamic(() => import('./_components/PredictBoard'), {
   ssr: false,
   loading: () => <div className="predict-board" aria-hidden="true" />,
 });
+
+/** 站内那块公式键盘。只有「自己输入」这一档用得上,所以别让它进首包 —— 手机上
+ *  AlgInput 会把系统键盘关掉(inputMode='none'),没有它就没法打字。 */
+const CubeKeyboardSection = dynamic(() => import('@/components/CubeKeyboardSection'), { ssr: false });
 
 const MODES: PredictMode[] = ['normal', 'cross', 'twoLayers', 'f2l'];
 const MODE_LABELS: Record<PredictMode, { zh: string; en: string }> = {
@@ -60,11 +66,30 @@ const KIND_LABELS: Record<PieceKind, { zh: string; en: string }> = {
   pair: { zh: '一对', en: 'Pair' },
 };
 
-const SOURCES: ScrambleSource[] = ['random', 'f2lAlg'];
+const SOURCES: ScrambleSource[] = ['random', 'f2lAlg', 'custom'];
 const SOURCE_LABELS: Record<ScrambleSource, { zh: string; en: string }> = {
   random: { zh: '随机公式', en: 'Random moves' },
   f2lAlg: { zh: '随机 F2L 公式', en: 'Random F2L algs' },
+  custom: { zh: '自己输入', en: 'Your own' },
 };
+
+/** 自己输入的公式没通过检查时说人话 —— 光说「无效」等于让人自己猜哪个词写错了。 */
+function algErrorText(e: MoveInputError): { zh: string; en: string } {
+  switch (e.kind) {
+    case 'empty':
+      return { zh: '写一条公式,回车出题。', en: 'Type an algorithm, then press Enter.' };
+    case 'token':
+      return {
+        zh: `不认识「${e.token}」:只收 U R F D L B(可加 ' 或 2);宽转 r / Rw、中层 M E S、转体 x y z 都追不了。`,
+        en: `Cannot read “${e.token}”: only U R F D L B (each with an optional ' or 2) — no wide turns, slices or rotations.`,
+      };
+    case 'tooLong':
+      return {
+        zh: `${e.count} 步太长了,最多 ${CUSTOM_MOVES_MAX} 步。`,
+        en: `${e.count} moves is too long — ${CUSTOM_MOVES_MAX} max.`,
+      };
+  }
+}
 
 /** 面 → 颜色名(按站内标准配色:U 白 D 黄 F 绿 B 蓝 L 橙 R 红)。 */
 const COLOR_NAMES: Record<CubeFace, { zh: string; en: string }> = {
@@ -114,8 +139,11 @@ function PredictPageInner() {
     parseAsInteger.withDefault(1).withOptions({ history: 'replace', scroll: false }));
   const [orientation, setOrientation] = useQueryState('ori',
     parseAsStringEnum<string>(CUBE_ORIENTATIONS.map((o) => o.value)).withDefault('').withOptions({ history: 'replace', scroll: false }));
+  const [alg, setAlg] = useQueryState('alg',
+    parseAsString.withDefault('').withOptions({ history: 'replace', scroll: false }));
 
   const [challenge, setChallenge] = useState<PredictChallenge | null>(null);
+  const [algError, setAlgError] = useState<MoveInputError | null>(null);
   const [found, setFound] = useState<boolean[]>([]);
   const [wrong, setWrong] = useState(false);
   const [revealed, setRevealed] = useState(false);
@@ -124,6 +152,10 @@ function PredictPageInner() {
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
   const startedAt = useRef(0);
+  const algElRef = useRef<HTMLTextAreaElement | null>(null);
+  /** 出题时读的是 ref 而不是 state:公式每敲一个字都在变,不能每个字换一题。 */
+  const algRef = useRef(alg);
+  useEffect(() => { algRef.current = alg; }, [alg]);
 
   const shown = useMemo(() => orientedFaceColors(orientation), [orientation]);
   const solved = challenge != null && found.length > 0 && found.every(Boolean);
@@ -137,8 +169,22 @@ function PredictPageInner() {
     setFocus((f) => ({ faces, nonce: (f?.nonce ?? 0) + 1 }));
   }, []);
 
-  const deal = useCallback(() => {
-    const next = generateChallenge({ mode, kind, source, moveCount, crossEdges, orientation });
+  /**
+   * 出一题。`algText` 给「自己输入」那档用:回车时直接把输入框里的原文递进来,
+   * 不经过 state 一轮,免得刚敲完的那个字还没落到 ref 上。
+   */
+  const deal = useCallback((algText?: string) => {
+    let customMoves: readonly string[] = [];
+    if (source === 'custom') {
+      const parsed = parseMoveInput(algText ?? algRef.current);
+      setAlgError(parsed.error);
+      // 公式不合法就不出题:硬出一道等于把「我看不懂你写的」变成一道答案随机的题。
+      if (parsed.error) { setChallenge(null); return; }
+      customMoves = parsed.moves;
+    } else {
+      setAlgError(null);
+    }
+    const next = generateChallenge({ mode, kind, source, moveCount, crossEdges, orientation, customMoves });
     setChallenge(next);
     focusOn(next.targets.map((t) => t.startFacelet));
     setWrong(false);
@@ -303,6 +349,37 @@ function PredictPageInner() {
           />
         </div>
 
+        {source === 'custom' && (
+          <div className="predict-control predict-control--alg">
+            <span>{tr({ zh: '你的公式', en: 'Your algorithm' })}</span>
+            <AlgInput
+              elementRef={algElRef as React.RefObject<HTMLTextAreaElement | HTMLDivElement | null>}
+              initialText={alg}
+              className="predict-alg-input"
+              rows={1}
+              autoSpace
+              autoResize
+              placeholder="R U R' U'"
+              onChange={(text) => void setAlg(text)}
+              onKeyDown={(e) => {
+                // 回车 = 出题(而不是在单行框里换行)。组字中的回车是输入法在选词,别抢。
+                if (e.key !== 'Enter' || (e.nativeEvent as KeyboardEvent).isComposing) return;
+                e.preventDefault();
+                deal((e.currentTarget as HTMLTextAreaElement).value);
+              }}
+            />
+            <CubeKeyboardSection
+              target={algElRef as React.RefObject<HTMLTextAreaElement | HTMLDivElement | null>}
+              onInput={() => { if (algElRef.current) void setAlg(algElRef.current.value); }}
+            />
+            <p className={algError ? 'predict-alg-error' : 'predict-hint'}>
+              {algError
+                ? tr(algErrorText(algError))
+                : tr({ zh: '回车出题;换一题 = 同一条公式换个起点。', en: 'Enter deals; New challenge re-rolls the start position.' })}
+            </p>
+          </div>
+        )}
+
         {source === 'random' && (
           <label className="predict-control">
             <span>{tr({ zh: '步数', en: 'Length' })}</span>
@@ -438,7 +515,7 @@ function PredictPageInner() {
       </div>
 
       <div className="predict-actions">
-        <button type="button" className="predict-deal" onClick={deal}>
+        <button type="button" className="predict-deal" onClick={() => deal()}>
           <RefreshCw size={16} aria-hidden="true" />
           {tr({ zh: '换一题', en: 'New challenge' })}
         </button>
