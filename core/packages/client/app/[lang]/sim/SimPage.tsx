@@ -114,7 +114,7 @@ import GroupTheoryPanel, { type SimWorldView } from './GroupTheoryPanel';
 import { nxnHasPgKernel } from './engine/nxn/nxnPgBridge';
 import { stickeringMaskFn } from './engine/nxn/stickering';
 import {
-  CUSTOM_STICKERING, customMaskFn, pickedSids, toggleSids, type PickGrain,
+  CUSTOM_STICKERING, CUSTOM_TREATMENTS, customMaskFn, pickedSids, toggleSids, type PickGrain,
 } from './engine/nxn/customStickering';
 import { resolveStageMaskFn } from './engine/nxn/vcStageMask';
 import { resolveEngineArrows } from './engine/nxn/vcArrowBridge';
@@ -292,6 +292,10 @@ export default function SimPage() {
       // 自定义阶段(stickering=custom)选中的贴纸清单,mask-core 的 `U:0,2;F:3-5`
       // DSL,写在还原帧 → 可分享。选取粒度/编辑开关是临时的作图状态,不进 URL。
       stickeringMask: parseAsString.withDefault(''),
+      // 自定义阶段的画法:选中的 / 其余的各自保原色(regular)、压暗(dim)还是置灰
+      // (ignored)。默认「选中原色 + 其余灰」;换成「其余暗」就是 CLL 那类预设的层次。
+      stickeringPick: parseAsStringEnum([...CUSTOM_TREATMENTS]).withDefault('regular'),
+      stickeringRest: parseAsStringEnum([...CUSTOM_TREATMENTS]).withDefault('ignored'),
     },
     { history: 'replace', scroll: false },
   );
@@ -1536,11 +1540,12 @@ export default function SimPage() {
     cube.instancedRenderer.setStickering(
       typeof puzzleParam !== 'number' ? null
         : query.stickering === CUSTOM_STICKERING
-          ? customMaskFn(cube.order, query.stickeringMask)
+          ? customMaskFn(cube.order, query.stickeringMask, query.stickeringPick, query.stickeringRest)
           : (stickeringMaskFn(cube.order, query.stickering, query.stickeringColor)
             ?? resolveStageMaskFn(cube.order, query.stickering, query.stickeringColor)),
     );
-  }, [twisty, worldTick, puzzleParam, query.stickering, query.stickeringColor, query.stickeringMask]);
+  }, [twisty, worldTick, puzzleParam, query.stickering, query.stickeringColor, query.stickeringMask,
+    query.stickeringPick, query.stickeringRest]);
 
   // 自定义阶段编辑态:点击 = 选贴纸,且拖拽一律转视角(paintMode)——不然点歪一点
   // 就当成拖层把魔方拧了。关掉编辑后立刻还原成正常的点击转层。
@@ -2337,6 +2342,10 @@ export default function SimPage() {
             onCustomEditingChange={setCustomEditing}
             customGrain={customGrain}
             onCustomGrainChange={setCustomGrain}
+            customPick={query.stickeringPick}
+            onCustomPickChange={(v) => setQuery({ stickeringPick: v })}
+            customRest={query.stickeringRest}
+            onCustomRestChange={(v) => setQuery({ stickeringRest: v })}
           />
           {/* 图像:不再套折叠区。图本身已经浮在画布左上角,侧栏这一段只剩控件 + 导出,
               一个「图像」标题栏既没东西可折叠也没图可指。显隐归浮层自己的 × 和播放条

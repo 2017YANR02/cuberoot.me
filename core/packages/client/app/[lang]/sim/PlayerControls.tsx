@@ -121,7 +121,7 @@ import { fileToLogoDataUrl } from './engine/nxn/logo';
 import { PG_PUZZLES, isPgPuzzleId, type PgPuzzleId } from './pgCatalog';
 import { resolveCaps } from './simCaps';
 import StickeringSelect from './StickeringSelect';
-import type { PickGrain } from './engine/nxn/customStickering';
+import type { PickGrain, CustomTreatment } from './engine/nxn/customStickering';
 import { simulateGrips, type GripName, type GripSimStep, type HandSide, type PinSpec } from './engine/hands/handsRig';
 import { stripGripMarks } from '@cuberoot/shared/alg-notation';
 import { stripFtnBlocks, FTN_TOKEN, parseFtnPin } from './engine/hands/ftn';
@@ -925,6 +925,11 @@ interface Props {
   onCustomEditingChange?: (v: boolean) => void;
   customGrain?: PickGrain;
   onCustomGrainChange?: (v: PickGrain) => void;
+  /** 自定义阶段的画法:选中的 / 其余的各自原色、压暗还是置灰。 */
+  customPick?: CustomTreatment;
+  onCustomPickChange?: (v: CustomTreatment) => void;
+  customRest?: CustomTreatment;
+  onCustomRestChange?: (v: CustomTreatment) => void;
 }
 
 export default function PlayerControls({
@@ -941,6 +946,8 @@ export default function PlayerControls({
   stickeringMask = '', onStickeringMaskClear,
   customEditing = true, onCustomEditingChange,
   customGrain = 'sticker', onCustomGrainChange,
+  customPick = 'regular', onCustomPickChange,
+  customRest = 'ignored', onCustomRestChange,
 }: Props) {
   const isSq1 = puzzleKind === 'sq1';
   const isIvy = puzzleKind === 'ivy';
@@ -2115,6 +2122,8 @@ export default function PlayerControls({
         puzzleKind={puzzleKind} value={stickering} onChange={onStickeringChange}
         color={stickeringColor} onColorChange={onStickeringColorChange}
         mask={stickeringMask} onMaskClear={onStickeringMaskClear}
+        pick={customPick} onPickChange={onCustomPickChange}
+        rest={customRest} onRestChange={onCustomRestChange}
         editing={customEditing} onEditingChange={onCustomEditingChange}
         grain={customGrain} onGrainChange={onCustomGrainChange}
       />
