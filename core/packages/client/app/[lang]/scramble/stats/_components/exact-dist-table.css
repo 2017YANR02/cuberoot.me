@@ -1,0 +1,53 @@
+/* 精确穷举分布的逐档数据表。数字列走等宽字体右对齐,长数字在自己的容器里横滚。 */
+
+.exact-table {
+  margin-top: 18px;
+}
+
+.exact-table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.exact-table table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 12px;
+}
+
+.exact-table th,
+.exact-table td {
+  padding: 4px 10px;
+  text-align: right;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.exact-table th {
+  font-weight: 500;
+  color: var(--muted-foreground);
+}
+
+.exact-table th:first-child,
+.exact-table td:first-child {
+  text-align: left;
+}
+
+.exact-table td.num {
+  font-family: var(--font-mono);
+}
+
+.exact-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.exact-table-sum td {
+  color: var(--muted-foreground);
+  border-top: 1px solid var(--border-strong);
+}
+
+.exact-table-note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}

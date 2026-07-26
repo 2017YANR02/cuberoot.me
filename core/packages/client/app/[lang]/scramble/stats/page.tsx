@@ -21,9 +21,17 @@ import ScrambleLengthView, {
 import FirstAppearanceTimeline, { type TimelineEntry } from './_components/FirstAppearanceTimeline';
 import FullScrambleList, { FullScrambleFilterBar } from './_components/FullScrambleList';
 import AvgExamplesPanel, { type AvgGroupCase } from './_components/AvgExamplesPanel';
+import ExactCoverageMatrix from './_components/ExactCoverageMatrix';
+import ExactDistTable from './_components/ExactDistTable';
+import {
+  EXACT_STAGES, SLOT_LABEL, SLOT_OK,
+  compactExact, exactColorsOf, exactMean, exactRatios, getExactCell, groupDigits,
+  type ExactColors, type ExactFull, type ExactSlot, type ExactStage,
+} from './_data/exact_dist';
 import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
 import { CSTIMER_SOLVABLE_IDS } from '@/lib/cstimer-scramble';
 import PillToggle from '@/components/PillToggle/PillToggle';
+import BoolToggle from '@/components/BoolToggle';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { HelpCircle } from 'lucide-react';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
@@ -167,6 +175,21 @@ function uiLangOf(l: string): 'zh' | 'en' {
 // 暂无难度数据,选中显示占位(用户后续会逐个加入)。
 const DIFFICULTY_EVENTS = new Set(['333', '333oh', '333bf', '333fm', '333ft', '333mbf', '333mbo']);
 
+// ── 精确穷举数据集 ─────────────────────────────────────────────────────────
+// 这批分布不进 distribution.json(19 个数据集不到 5KB,且计数超 Number 安全区),
+// 而是 _data/exact_dist.ts 的 TS 常量。这里只合成一个同形状的空壳 SetData 塞进 sets,
+// 让数据集下拉 / 阶段下拉 / variant 回退这些既有逻辑原样复用;真正的数值走 EXACT_DIST 旁路。
+const EXACT_SET_KEY = 'exact';
+const EXACT_SET_META: SetData = {
+  label: 'Exhaustive',
+  label_zh: '精确穷举',
+  sample_count: 0,
+  variants: {
+    // 只有标准 CFOP 阶段序有精确数据;stages 供阶段下拉用,data 恒空(数值不走这里)。
+    std: { sample_count: 0, stages: EXACT_STAGES, data: {} },
+  },
+};
+
 // 长度 tab「合并/分开」只对属于某 MERGE_GROUP 的项目有意义(333↔单手、三盲↔多盲);
 // 其余项目(4x4/5x5/魔表 等)无可合并对象,不显示该钮。
 const LENGTH_MERGE_EVENTS = new Set(MERGE_GROUPS.flatMap((g) => g.members));
@@ -279,6 +302,12 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   const variant = variantRaw as VariantKey;
   const setVariant = setVariantRaw as unknown as (v: VariantKey) => void;
   const [stage, setStage] = useQueryState(k('stage'), parseAsString.withDefault('cross'));
+  // 槽位(?slot)—— 精确穷举集专属维度,经验分布没有这个轴(分析器恒对 4 个 F2L 槽取 min)。
+  // 只在精确集渲染,且按阶段动态列出有意义的档,故不污染 WCA 集的键空间。filter 性质 → replace。
+  const [slotRaw, setSlot] = useQueryState(k('slot'), parseAsString.withDefault('unfixed'));
+  // 叠加 WCA 真题对照(?ovl)、对数 y 轴(?log)—— 都是精确集下的显示口径,filter 性质 → replace。
+  const [overlayOn, setOverlayOn] = useQueryState(k('ovl'), parseAsBoolean.withDefault(true));
+  const [logY, setLogY] = useQueryState(k('log'), parseAsBoolean.withDefault(false));
   // 底色子集进 URL(?colors):首次挂载从 URL 还原,之后 subsetKey 变化写回(filter → replace)。
   const [colorsParam, setColorsParam] = useQueryState(k('colors'), parseAsString);
   const sel = useSubsetSelection('cn', colorsParam ?? undefined);
@@ -441,14 +470,30 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     }
   }, [lengthsData, event]);
 
+  // sets = JSON 里的 + 合成的精确穷举集。下游一切(数据集下拉 / currentSet / 阶段下拉)
+  // 都从这里取,精确集因此不需要在各处特判「这个 set 存不存在」。
+  const allSets = useMemo<Record<string, SetData> | null>(
+    () => (data ? { ...data.sets, [EXACT_SET_KEY]: EXACT_SET_META } : null),
+    [data],
+  );
+
   useEffect(() => {
-    if (data && !data.sets[dataset]) {
-      const first = Object.keys(data.sets).find((k) => !data.sets[k].event);
+    if (allSets && !allSets[dataset]) {
+      const first = Object.keys(allSets).find((k) => !allSets[k].event);
       if (first) setDataset(first);
     }
-  }, [data, dataset]);
+  }, [allSets, dataset]);
 
-  const currentSet = useMemo(() => data?.sets[scrambleSet] ?? null, [data, scrambleSet]);
+  const currentSet = useMemo(() => allSets?.[scrambleSet] ?? null, [allSets, scrambleSet]);
+
+  // ── 精确穷举集的派生量 ────────────────────────────────────────────────
+  const isExact = dataset === EXACT_SET_KEY;
+  // 槽位:切阶段后旧档可能不适用(如 XCross 的「固定相邻双槽」切到 Cross),回退 unfixed。
+  const slot = (isExact && SLOT_OK[stage as ExactStage]?.includes(slotRaw as ExactSlot))
+    ? (slotRaw as ExactSlot) : 'unfixed';
+  useEffect(() => {
+    if (isExact && slotRaw !== slot) setSlot(slot);
+  }, [isExact, slotRaw, slot]);
 
   const currentStages = useMemo(() => {
     if (!currentSet) return [] as string[];
@@ -482,13 +527,29 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     ? (dataset === 'wca' && DIFFICULTY_EVENTS.has(event) && !is333)
     : !!lengthsData?.events[event];
   const avgOn = avgMode && avgAvailable;
+  // 精确穷举:当前 (阶段, 槽位, 底色) 对应的数据格。四色底在这批数据里无对应口径 → null。
+  const exactColors: ExactColors | null = isExact ? exactColorsOf(subsetKey) : null;
+  const exactCell = useMemo(
+    () => (isExact ? getExactCell(stage, slot, subsetKey) : null),
+    [isExact, stage, slot, subsetKey],
+  );
+  const exactFull: ExactFull | null = exactCell?.kind === 'full' ? exactCell : null;
+
   // 当前直方图计数:整解 + QTM → counts_qtm(暂空);其余一律 counts。
   const activeCounts = useMemo<Record<string, number>>(() => {
+    // 精确穷举:这里放的是**丢了精度的近似值**,只用来定 x 轴范围和 count 模式的柱高;
+    // 真正的比例 / 柱顶数字 / 总数走下面 series 里的 ratios / exactLabel / exactTotal。
+    if (isExact) {
+      if (!exactFull) return {};
+      const out: Record<string, number> = {};
+      exactFull.counts.forEach((c, d) => { out[String(d)] = Number(c); });
+      return out;
+    }
     if (!currentSet) return {};
     const hist = currentSet.variants[variant]?.data[stage]?.[effectiveSubset];
     if (!hist) return {};
     return (is333 && optMetric === 'qtm') ? (hist.counts_qtm ?? {}) : hist.counts;
-  }, [currentSet, variant, stage, effectiveSubset, is333, optMetric]);
+  }, [isExact, exactFull, currentSet, variant, stage, effectiveSubset, is333, optMetric]);
 
   // 切换阶段时重置整解口径(离开/进入 333 都回到 HTM)。
   useEffect(() => { setOptMetric('htm'); }, [stage]);
@@ -556,6 +617,8 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   useEffect(() => {
     // 组平均模式:重置选中(单条 bin 值在平均空间无意义),等用户点柱触发按需加载。
     if (avgOn) { setSelectedBin(null); return; }
+    // 精确穷举是全状态空间的理论分布,不来自任何打乱池 —— 没有「示例打乱」可点。
+    if (isExact) { setSelectedBin(null); return; }
     if (previewBins.length > 0) {
       setSelectedBin(previewBins[0]);
       ensureExamplesLoaded();
@@ -576,20 +639,54 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   // 换 set/变体/阶段/底色/步数/度量 → 清国家筛选(避免筛着一个国家切走后列表空/口径错位)。
   useEffect(() => { setFilterCountry(null); }, [scrambleSet, variant, stage, effectiveSubset, selectedBin, optMetric]);
 
+  // 同 (阶段, 底色) 的 WCA 真题经验分布 —— 精确集下用作叠加对照。
+  // 只有「不固定槽」可比:真题分析器恒对 4 个 F2L 槽取 min,与固定槽是两回事。
+  const overlayCounts = useMemo<Record<string, number> | null>(() => {
+    if (!isExact || !overlayOn || slot !== 'unfixed' || !exactFull || !data) return null;
+    return data.sets.wca?.variants.std?.data[stage]?.[subsetKey]?.counts ?? null;
+  }, [isExact, overlayOn, slot, exactFull, data, stage, subsetKey]);
+
   const series = useMemo<HistSeries[]>(() => {
     if (Object.keys(activeCounts).length === 0) return [];
+    // 精确穷举:精确值全部预先算好传进去(见 HistSeries 的 ratios/exactLabel/exactTotal)。
+    if (isExact && exactFull) {
+      // 柱顶走紧凑写法 —— 13 个柱子上排 11~20 位的完整数字会横向撞成一片;
+      // 完整精确值由图下方的数据表承担。
+      const label: Record<string, string> = {};
+      exactFull.counts.forEach((c, d) => { label[String(d)] = compactExact(c); });
+      const theory: HistSeries = {
+        name: modeLabel,
+        fillColors: fillColorsForSubset(selectedColors),
+        counts: activeCounts,
+        ratios: exactRatios(exactFull),
+        exactLabel: label,
+        exactTotal: groupDigits(exactFull.total),
+      };
+      // 叠加时理论是主角(实心柱 + 柱顶数字 + 分母),真题作虚线轮廓套在外面当对照 ——
+      // 这是「精确穷举」数据集,柱顶该报理论的精确状态数,不是真题的采样条数。
+      if (overlayCounts) {
+        return [
+          theory,
+          { name: 'WCA', fillColors: [], stroke: 'var(--muted-foreground)', counts: overlayCounts, outline: true },
+        ];
+      }
+      return [theory];
+    }
     return [{
       // 整解:中性暖色单色;其余按所选配色子集渐变。
       name: is333 ? (optMetric === 'qtm' ? 'QTM' : 'HTM') : modeLabel,
       fillColors: is333 ? ['#8B7D72'] : fillColorsForSubset(selectedColors),
       counts: activeCounts,
     }];
-  }, [activeCounts, is333, optMetric, selectedColors, modeLabel]);
+  }, [activeCounts, isExact, exactFull, overlayCounts, is333, optMetric, selectedColors, modeLabel]);
 
   const extendedStats = useMemo(() => {
+    // 精确集的均值必须用 BigInt 直算 Σd·count/total —— computeStats 走 Number 累加,
+    // 在 4.3e19 这种量级上会偏掉(单色底 Cross 会算出 5.8120 而非金标的 5.8121)。
+    if (isExact) return exactFull ? { mean: exactMean(exactFull), median: NaN } : null;
     if (series.length !== 1) return null;
     return computeStats(series[0].counts);
-  }, [series]);
+  }, [isExact, exactFull, series]);
 
   // 组平均(难度 tab):从 avgData 取当前 (set,variant,stage,subset) 的 ne/we 直方图。
   // 键为 round(平均 × avg_denom),故摘要统计需 ÷ avgDenom 还原成步数。
@@ -751,7 +848,8 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   }, [tab, isPuzzleEvent, faPuzzle, event]);
 
   // 时间线视图可用性:长度 tab 该项目有数据;难度 tab 三阶族 或 有首现数据的 puzzle。
-  const canTimeline = tab === 'length'
+  // 精确穷举没有「首次出现在哪场比赛」——它不来自任何打乱池,时间线不适用。
+  const canTimeline = isExact ? false : tab === 'length'
     ? !!faLen?.events[event]
     : isPuzzleEvent
       ? !!faPuzzle?.puzzles[PUZZLE_EVENT_MAP[event]]
@@ -842,12 +940,11 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     />
   );
 
-  // Dataset toggle (difficulty tab only): the two top-level sets (WCA / xcross)
-  // become a PillToggle sitting just left of the merge toggle. Rendered only when
-  // exactly two top-level datasets exist. xcross(双色底 10f)是纯三阶概念,只在三阶族项目
-  // (DIFFICULTY_EVENTS)出现 —— 4x4/5x5/魔表/各盲 等非三阶项目难度 tab 只是占位,不给这个切换。
-  const topSets = data ? Object.entries(data.sets).filter(([, s]) => !s.event) : [];
-  const datasetToggle = (tab === 'difficulty' && DIFFICULTY_EVENTS.has(event) && topSets.length === 2) ? (() => {
+  // 数据集下拉(仅难度 tab):顶级数据集三档 —— WCA 真题池 / 双色底 10f xcross 合成池 /
+  // 精确穷举(全状态空间理论分布)。三者都是纯三阶概念,只在三阶族项目(DIFFICULTY_EVENTS)出现;
+  // 4x4/5x5/魔表/各盲 等非三阶项目难度 tab 只是占位,不给这个切换。
+  const topSets = allSets ? Object.entries(allSets).filter(([, s]) => !s.event) : [];
+  const datasetToggle = (tab === 'difficulty' && DIFFICULTY_EVENTS.has(event) && topSets.length >= 2) ? (() => {
     const lab = (s: SetData) => (isZh && s.label_zh) ? s.label_zh : s.label;
     const labelByKey = Object.fromEntries(topSets.map(([k, s]) => [k, lab(s)]));
     return (
@@ -1245,6 +1342,22 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
         })}
           />
         </label>
+        {/* 槽位:精确穷举集专属。按阶段动态列出有意义的档 —— Cross 没有 F2L 槽的概念、
+            XCross 只解 1 槽(谈不上相邻/对角)、XXCross 要 2 槽(谈不上固定单槽),
+            不适用的入口直接不给,不留会算出垃圾值的选项。只剩一档时不渲染下拉。 */}
+        {isExact && SLOT_OK[stage as ExactStage] && SLOT_OK[stage as ExactStage].length > 1 && (
+          <label>
+            <VariantSelect
+              className="scramble-stats-select"
+              value={slot}
+              options={SLOT_OK[stage as ExactStage]}
+              onChange={(v) => setSlot(v)}
+              isZh={isZh}
+              label={(v) => tr(SLOT_LABEL[v as ExactSlot])}
+              ariaLabel={tr({ zh: '槽位', en: 'Slot' })}
+            />
+          </label>
+        )}
         {is333 && (
           <div className="scramble-stats-puzzle-toggle">
             <span className="scramble-stats-puzzle-toggle-label">{tr({ zh: '度量', en: 'Metric' })}</span>
@@ -1315,24 +1428,109 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
       </>
       ) : (
       <>
+      {/* 精确穷举的两个显示口径。叠加只在「不固定槽」可用 —— 固定槽与真题分析器
+          (恒对 4 个 F2L 槽取 min)不是一回事,没有可比对象。 */}
+      {isExact && exactFull && (
+        <div className="scramble-stats-exact-toggles">
+          <BoolToggle
+            value={overlayOn && slot === 'unfixed'}
+            onChange={setOverlayOn}
+            disabled={slot !== 'unfixed'}
+            ariaLabel={tr({ zh: '叠加 WCA 真题对照', en: 'Overlay WCA scrambles' })}
+            label={(
+              <>
+                {tr({ zh: '叠加', en: 'Overlay' })}
+                {/* 虚线示意 = 图里那条轮廓,免得用户去猜哪条是真题 */}
+                <i className="scramble-stats-overlay-swatch" aria-hidden />
+                {tr({ zh: 'WCA 真题对照', en: 'WCA scrambles' })}
+              </>
+            )}
+          />
+          <BoolToggle
+            value={logY}
+            onChange={setLogY}
+            label={tr({ zh: '对数 y 轴', en: 'Log y-axis' })}
+          />
+          <InfoTooltip
+            icon={HelpCircle}
+            variant="modal"
+            content={[
+              tr({
+                zh: '精确穷举 = 把整个状态空间跑穷举 BFS 得到的理论分布,与任何打乱池无关;WCA 那档是拿真实打乱跑分析器得到的经验分布。两者叠在一起,可以直接看出 WCA 打乱离均匀随机态有多近。',
+                en: 'Exhaustive = the theoretical distribution from a full BFS over the entire state space, independent of any scramble pool; the WCA dataset is the empirical distribution from running the analyzer on real scrambles. Overlaying them shows how close WCA scrambles are to a uniformly random state.',
+              }),
+              tr({
+                zh: '对数 y 轴:这批分布跨 10 个数量级(最大档 51%,最小档 4.7e-9%),线性轴下两端的极小档柱高不足一个像素。',
+                en: 'Log y-axis: these distributions span 10 orders of magnitude (largest bin 51%, smallest 4.7e-9%); on a linear axis the tails are under one pixel tall.',
+              }),
+              tr({
+                zh: '槽位:「不固定槽」对 4 个 F2L 槽取最小值,与真题分析器同口径;固定槽是精确集独有的额外内容。',
+                en: 'Slot: “any slot” takes the minimum over all four F2L slots, matching the analyzer; the fixed-slot variants are exclusive to the exhaustive dataset.',
+              }),
+            ].join('\n\n')}
+          />
+        </div>
+      )}
+
       <div className="scramble-stats-chart-wrapper">
-        <DiscreteHistogram
-          series={series}
-          isZh={isZh}
-          yMode={yMode}
-          chartMode={chartMode}
-          clickableBins={previewBins}
-          selectedBin={selectedBin}
-          onBarClick={handleBarClick}
-          hideLegendColors
-          meanValue={extendedStats?.mean}
-          medianValue={extendedStats?.median}
-          onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
-          onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
-        />
+        {isExact && !exactFull ? (
+          // 该格没有完整分布可画。别显示空图 —— 直接说明有什么、缺什么、卡在哪。
+          <div className="scramble-stats-exact-empty">
+            {!exactColors ? (
+              <p>{tr({
+                zh: '四色底在这批数据里没有对应口径 —— 精确穷举只算了单色底、双色底与六色底三档。',
+                en: 'There is no four-color counterpart in this dataset — the exhaustive computation covers single, dual and color-neutral bottoms only.',
+              })}</p>
+            ) : exactCell?.kind === 'zero' ? (
+              <>
+                <p className="scramble-stats-exact-zero">
+                  {tr({ zh: '0 步状态数', en: '0-move states' })}
+                  <b>{groupDigits(exactCell.zero)}</b>
+                </p>
+                <p>{tr(exactCell.blocked)}</p>
+              </>
+            ) : (
+              <p>{tr({ zh: '该组合未计算', en: 'This combination has not been computed' })}</p>
+            )}
+          </div>
+        ) : (
+          <DiscreteHistogram
+            series={series}
+            isZh={isZh}
+            yMode={yMode}
+            chartMode={chartMode}
+            // 精确穷举是全空间的理论分布,不来自任何打乱池 —— 没有示例打乱可点。
+            clickableBins={isExact ? [] : previewBins}
+            selectedBin={selectedBin}
+            onBarClick={isExact ? undefined : handleBarClick}
+            hideLegendColors
+            logY={isExact ? logY : undefined}
+            meanValue={extendedStats?.mean}
+            medianValue={extendedStats?.median}
+            onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
+            onYModeToggle={isExact ? undefined : () => setYMode(yMode === 'percent' ? 'count' : 'percent')}
+          />
+        )}
       </div>
 
-      <ExamplesPanel
+      {/* 完整精确值:图上柱顶是紧凑写法,逐位数字在这张表里看。 */}
+      {isExact && exactFull && <ExactDistTable cell={exactFull} overlay={overlayCounts} />}
+
+      {isExact && (
+        <ExactCoverageMatrix
+          stage={stage}
+          slot={slot}
+          colors={exactColors}
+          onPick={(st, sl, c) => {
+            setStage(st);
+            setSlot(sl);
+            // 底色是共享控件(SubsetColorPicker),点矩阵切列时同步过去。
+            sel.selectByKey(c);
+          }}
+        />
+      )}
+
+      {!isExact && <ExamplesPanel
         isZh={isZh}
         lang={(i18n.language.startsWith('zh') ? 'zh' : 'en')}
         scrambleSet={scrambleSet}
@@ -1354,7 +1552,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
         dataset={dataset}
         filterCountry={filterCountry}
         onFilterCountry={setFilterCountry}
-      />
+      />}
 
       </>
       )}

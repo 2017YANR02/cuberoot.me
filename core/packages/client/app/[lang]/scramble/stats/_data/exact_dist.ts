@@ -64,8 +64,9 @@ export interface ExactFull {
   total: string;
   counts: string[];
 }
-/** 只算出了 0 步状态数(完整分布跑不动或无可信金标)。blocked = 卡在哪,直接显示给用户。 */
-export interface ExactZeroOnly {
+/** 只算出了 0 步状态数(完整分布跑不动或无可信金标)。blocked = 卡在哪,直接显示给用户。
+ *  不单独导出 —— 消费方一律经 ExactCell 收窄(cell.kind === 'zero')。 */
+interface ExactZeroOnly {
   kind: 'zero';
   zero: string;
   blocked: { zh: string; en: string };
@@ -320,4 +321,30 @@ export function formatExactPct(ratio: number): string {
   if (ratio === 0) return '0%';
   const p = ratio * 100;
   return p >= 0.0001 ? `${p.toFixed(4)}%` : `${p.toExponential(2)}%`;
+}
+
+// 紧凑写法的进位表。必须一路带到 E(10^18)—— 双色底 XCross 的 d=7 是 2.5×10^19,
+// 只到 P 会写出「25284.7P」这种东西。
+const COMPACT_UNITS: readonly [number, string][] = [
+  [18, 'E'], [15, 'P'], [12, 'T'], [9, 'B'], [6, 'M'], [3, 'k'],
+];
+
+/**
+ * 柱顶用的紧凑计数。完整的 11~20 位数字在 13 个柱子上会横向撞成一片,
+ * 故图上走紧凑写法,完整精确值由图下方的数据表承担(两者同源,都从 counts 字符串来)。
+ */
+export function compactExact(s: string): string {
+  const len = s.length;
+  if (len <= 4) return s;
+  for (const [exp, suffix] of COMPACT_UNITS) {
+    if (len > exp) {
+      const intLen = len - exp;
+      const head = s.slice(0, intLen);
+      // 4 位以上整数部分不再带小数(1234B 已够长);否则补一位小数
+      if (intLen >= 3) return `${head}${suffix}`;
+      const dec = s[intLen];
+      return dec === '0' ? `${head}${suffix}` : `${head}.${dec}${suffix}`;
+    }
+  }
+  return groupDigits(s);
 }
