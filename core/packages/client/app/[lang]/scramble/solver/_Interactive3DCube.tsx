@@ -8,10 +8,11 @@
  *
  *   - controller.paintMode + dragEmpty='orbit' → every drag orbits the view,
  *     never twists a layer; a tap still fires controller.taps. Orbit is /sim's
- *    「自动转体」(`orbitSceneAutoRotate`): the view stays inside ±90° and every
- *     90° of excess is folded into a real whole-cube y/x twist, so the cube turns
- *     under fixed lighting like a physical puzzle in hand instead of the camera
- *     flying around a cube whose shading never changes.
+ *    「自动转体」(`orbitSceneAutoRotate`): every 90° of yaw excess is folded into a
+ *     real whole-cube y twist, so the cube turns under fixed lighting like a physical
+ *     puzzle in hand instead of the camera flying around a cube whose shading never
+ *     changes. Pitch stays clamped to ±90° (bird's-eye / worm's-eye, so U and D are
+ *     still one tap away) — folding it isn't seamless, see viewControls `ViewTurns`.
  *   - taps → (current slot, world face) → the cubelet living there → its HOME
  *     address (initial index, local face) → facelet index → paintSticker. That
  *     detour is what makes painting survive the whole-cube twists above: facelet
@@ -168,13 +169,18 @@ export default function Interactive3DCube({
     const toucher = new TouchClass();
     toucher.init(mount.renderer.domElement, world.controller.touch);
 
-    // Paint mode: drags orbit (never twist a layer), taps paint. 「自动转体」= 视角超出
-    // ±90° 的部分折成真正的整体 y/x 转体(与 /sim 同一份 foldViewIntoTwists)。
+    // Paint mode: drags orbit (never twist a layer), taps paint. 「自动转体」= 左右拖每积累
+    // 90° 就折成真正的整体 y 转体(与 /sim 同一份 foldViewIntoTurns);上下拖钳在 ±90°
+    // (那里正好正俯视 / 正仰视,U/D 照样点得到)—— 俯仰折叠在非象限偏航下会跳一帧,画板
+    // 不记步、没有非折不可的理由,就不折。理由与实测见 viewControls 的 `ViewTurns`。
     world.controller.dragEmpty = 'orbit';
     world.controller.paintMode = true;
     world.controller.onOrbit = (dx, dy) => {
-      orbitSceneAutoRotate(world, dx, dy, orbitK, (axis, reverse) => {
-        cube.twister.twist(new TwistAction(axis, reverse, 1), true, true);
+      orbitSceneAutoRotate(world, dx, dy, orbitK, {
+        y: {
+          quantum: Math.PI / 2,
+          commit: (positive) => cube.twister.twist(new TwistAction('y', positive, 1), true, true),
+        },
       });
     };
     world.controller.taps.push((slot, face, tapOpts) => {

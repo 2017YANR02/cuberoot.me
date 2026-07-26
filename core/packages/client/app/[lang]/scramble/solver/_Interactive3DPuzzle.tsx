@@ -21,15 +21,22 @@
  * 立体画板、平面展开图、打乱预览图三者同色。
  *
  * 外壳(等第一帧 → 动态 import → 转圈 → 重置视角)走共享的 `<SimStage>`,指针
- * (拖=转视角 / 点=涂色 / 右键=置灰)走共享的 `attachOrbitTap`,与二阶画板、SQ1
- * 转盘、recon 播放器同一份。orbit 用**钳住**档 —— 这正是 /sim 对金字塔 / 斜转的
- *「自动转体」路径(角转引擎没有整体转体这一步,`dragEmpty` 的 orbit 与 view 两档在
- * 那边落到同一个 `orbitScene`);pitch 钳在 ±90° 时正好正对着底面,每张贴纸都点得到。
+ * (拖=整体转体 / 点=涂色 / 右键=置灰)走共享的 `attachOrbitTap`,与二阶画板、SQ1
+ * 转盘、recon 播放器同一份。拖动是 /sim 的「自动转体」:左右拖每积累一个量子就折成拼图
+ * **真正的整体转体**(见 `BODY_TURN`),灯挂在 scene 上不跟着转 → 拼图像在手里翻,而不是
+ * 相机绕着一块光影恒定的拼图飞;上下拖仍钳在 ±90°(那里正好正俯视 / 正仰视,每张贴纸都点
+ * 得到,且俯仰折叠本身不精确 —— 理由见 viewControls 的 `ViewTurns`)。
+ *
+ * 转体只动本体姿态、不换贴纸身份:`stickerKey → facelet 下标` 那张表是按 mesh 建的,
+ * 转过体后同一屏幕位置命中的是**另一张**贴纸、于是涂到另一格 —— 与 NxN 画板同一套语义
+ * (facelet 串永远是拼图自己那一帧,你只是把它转过来看别的面)。
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type * as THREE from 'three';
+import type { PyraMove } from '@/app/[lang]/sim/engine/pyra/pyraState';
+import type { SkewbMove } from '@/app/[lang]/sim/engine/skewb/skewbState';
 import type { SimMount } from '@/components/sim-embed/mountSimWorld';
 import SimStage from '@/components/sim-embed/SimStage';
 import { useT } from '@/hooks/useT';
@@ -38,6 +45,24 @@ import { PaintPalette, PaintActions } from './_PaintToolbar';
 
 /** 引擎自有渲染 + 有派生 sid 表的拼图,目前这两个有画状态求解器。 */
 export type PaintPuzzle3D = 'pyraminx' | 'skewb';
+
+/**
+ * 每种拼图的「整体转体」:折叠量子 + 落到引擎的那一步。两条都是引擎自己的 `y`(WCA re-hold,
+ * 骑本体四元数、一块不动),所以量子必须是该拼图真有的整体转体角。
+ *
+ * `positive` = 绕**世界竖直轴**正向转一个量子(折叠把视角退回来,补的就得是正向)。两个引擎
+ * 的 dir 符号约定相反:金字塔 `angle = dir·120°`,斜转 `angle = −dir·90°`,所以正向一个是
+ * dir +1、一个是 dir −1 —— 都取各自的「y 撇」。
+ */
+const BODY_TURN: Record<PaintPuzzle3D, {
+  quantum: number;
+  move: (positive: boolean) => PyraMove | SkewbMove;
+}> = {
+  // 正四面体绕 U 顶点轴 120°(VERTEX_NAMES[0] = U;摆位把该轴摆成了世界 +Y)。
+  pyraminx: { quantum: (2 * Math.PI) / 3, move: (pos) => ({ vertex: 0, part: 'rot', dir: pos ? 1 : -1 }) },
+  // 斜转是立方体:绕竖直轴 90°(rot 1 = y 轴)。
+  skewb: { quantum: Math.PI / 2, move: (pos) => ({ rot: 1, dir: pos ? -1 : 1 }) },
+};
 
 /** 一张贴纸:它自己的 cap 材质(clone 过,可独立改色)+ 它是 facelet 的第几格。 */
 interface StickerRef {
@@ -129,11 +154,24 @@ export default function Interactive3DPuzzle({
       stickers.push({ mesh, mat: cap as unknown as { color: THREE.Color }, idx });
     });
 
+    // 整体转体:引擎联合类型里 applyMoveSilent 的参数各不相同(而 puzzle 只在运行时才定),
+    // 这里按当前这条分支收窄。silent = 只把 re-hold 烙进本体姿态,不进历史、不发回调。
+    const cube = mount.world.cube as unknown as {
+      applyMoveSilent: (move: PyraMove | SkewbMove) => void;
+      reset: () => void;
+    };
+    const body = BODY_TURN[puzzle];
+    const turns = {
+      y: { quantum: body.quantum, commit: (pos: boolean) => cube.applyMoveSilent(body.move(pos)) },
+    };
+
     const raycaster = new three.Raycaster();
     const vec2 = new three.Vector2();
     engRef.current = {
       mount, stickers, raycaster, vec2,
-      resetView: () => { view.resetSceneView(mount.world); mount.invalidate(); },
+      // 重置 = 视角回家 **且** 把自动转体累计的整体转体退回去,否则按了「重置」拼图还歪着。
+      // reset() 只动姿态,贴纸颜色挂在各自 clone 出来的材质上,不受影响。
+      resetView: () => { cube.reset(); view.resetSceneView(mount.world); mount.invalidate(); },
     };
 
     /** 画布局部坐标 → 命中的 facelet 下标(没打到贴纸就 null)。 */
@@ -151,6 +189,7 @@ export default function Interactive3DPuzzle({
     const detach = gesture.attachOrbitTap({
       world: mount.world,
       canvas: mount.renderer.domElement,
+      autoRotate: turns,
       onTap: (x, y, button) => {
         const idx = pickIdx(x, y);
         if (idx !== null) paintRef.current(idx, button === 0 ? undefined : 'X');
@@ -194,8 +233,8 @@ export default function Interactive3DPuzzle({
       />
 
       <p className="vc-p3d-hint">
-        {t('点一下贴纸涂色(右键置灰),拖动转视角 —— 立体画板不转魔方。',
-          'Tap a sticker to paint it (right-click to erase); drag to orbit — the 3D painter never turns the puzzle.')}
+        {t('点一下贴纸涂色(右键置灰),拖动整体转体 —— 立体画板不会拧动任何一层。',
+          'Tap a sticker to paint it (right-click to erase); drag to turn the whole puzzle — the 3D painter never twists a layer.')}
       </p>
 
       <PaintActions

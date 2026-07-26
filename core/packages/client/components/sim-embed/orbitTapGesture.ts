@@ -7,15 +7,18 @@
  * `_Interactive3DPuzzle` / `_InteractiveSq1Board` / `recon/ReconPlayerBase`
  * 各写了一遍(~45 行 ×3),`ORBIT_K = 0.01` 更是全站五份。
  *
- * 拖动一律 `orbitScene`(pitch 钳 ±90°,永远正着看)—— 这正是 /sim 对这些引擎拼图的
- * 「自动转体 / 视角」路径:角转 / 棱转 / SQ1 引擎没有整体转体这一步,`dragEmpty` 的
- * 两档在那边落到同一个 `orbitScene`。NxN 的「自动转体」不在这儿,它走 controller 的
- * `onOrbit` → `orbitSceneAutoRotate`(把视角超出的 90° 折成真正的整体转体)。
+ * 拖动默认 `orbitScene`(pitch 钳 ±90°,永远正着看)。给了 `autoRotate` 就升级成 /sim 的
+ * 「自动转体」:偏航每积累一个量子就折成拼图**真正的整体转体**(金字塔绕顶点轴 120°、
+ * 斜转绕竖直轴 90°),灯挂在 scene 上不跟着转,于是是拼图在手里翻而不是相机绕着飞。
+ * 引擎没有整体转体这一步的拼图(SQ1)不给 `autoRotate`,落回 `orbitScene`。NxN 的自动转体
+ * 不在这儿,它走 controller 的 `onOrbit` → 同一个 `orbitSceneAutoRotate`。
  *
  * 拼图本身要吃掉这次拖动(SQ1 拖层转、金字塔拖着转角)就实现 `onDragBegin`:返回
  * `true` = 我接管,手势不再 orbit,后续 move/up 走 `onDragMove` / `onDragEnd`。
  */
-import { orbitScene, ORBIT_K } from '@/app/[lang]/sim/engine/viewControls';
+import {
+  orbitScene, orbitSceneAutoRotate, ORBIT_K, type ViewTurns,
+} from '@/app/[lang]/sim/engine/viewControls';
 import type World from '@/app/[lang]/sim/engine/world';
 
 export interface OrbitTapOptions {
@@ -24,6 +27,8 @@ export interface OrbitTapOptions {
   canvas: HTMLElement;
   /** orbit 系数,默认 `ORBIT_K`(/sim 灵敏度 50 那一档)。 */
   k?: number;
+  /** 给了就走「自动转体」:偏航折成引擎真正的整体转体(俯仰仍钳 ±90°)。不给 = 纯视角。 */
+  autoRotate?: ViewTurns;
   /** 起手阈值(px):小于它算「点一下」。默认 6,与 /sim 同值。 */
   threshold?: number;
   /**
@@ -47,7 +52,7 @@ export interface OrbitTapOptions {
 /** 装上手势,返回卸载函数(卸干净所有监听)。 */
 export function attachOrbitTap(opts: OrbitTapOptions): () => void {
   const {
-    world, canvas, k = ORBIT_K, threshold = 6,
+    world, canvas, k = ORBIT_K, threshold = 6, autoRotate,
     onTap, onDragBegin, onDragMove, onDragEnd, preventContextMenu = true,
   } = opts;
 
@@ -92,7 +97,9 @@ export function attachOrbitTap(opts: OrbitTapOptions): () => void {
         return;
       }
     }
-    orbitScene(world, e.clientX - lastX, e.clientY - lastY, k);
+    const [ox, oy] = [e.clientX - lastX, e.clientY - lastY];
+    if (autoRotate) orbitSceneAutoRotate(world, ox, oy, k, autoRotate);
+    else orbitScene(world, ox, oy, k);
     lastX = e.clientX;
     lastY = e.clientY;
   };
