@@ -61,7 +61,6 @@
 }
 .trainer-strip-bar .is-mastered { background: var(--signal-success); }
 .trainer-strip-bar .is-learning { background: var(--signal-warning); }
-.trainer-strip-bar .is-paused { background: var(--faint-foreground); }
 
 .trainer-strip-nums {
   display: flex;

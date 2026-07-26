@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 // 回归:单机复习(recap)队列契约。
 //  1) 复习队列 = 选中池整集(不分片);
 //  2) 顺序模式(seq)= set 原序,与勾选先后无关;
-//  3) 整集出完停下来弹「本轮复习结束」(recapRoundPrompt,默认开;关掉 = 无缝重洗);
+//  3) 整集出完必停下来弹「本轮复习结束」(不可关);
 //  4) 训练模式(train)无 recap 进度,永不暂停。
 // 白盒读 store.recapQueue —— draw() 把复习队列写在这里(其长度即侧栏显示的 recap total)。
 
@@ -48,7 +48,6 @@ const curRecap = () => {
 describe('trainer-store recap queue', () => {
   beforeEach(() => {
     g.localStorage = makeLocalStorage();
-    useTrainerStore.getState().setRecapRoundPrompt(true); // store 跨用例常驻,偏好显式复位
     useTrainerStore.getState().setMultiScramble(false);
   });
 
@@ -128,18 +127,6 @@ describe('trainer-store recap queue', () => {
     expect(curRecap()).toEqual({ pos: 4, total: 6 });   // 停在原地,没把新一轮的混进这一屏
     useTrainerStore.getState().continueRecapRound();
     expect(curRecap()).toEqual({ pos: 1, total: 6 });   // 新一屏 = 新一轮的 1、2、3
-  });
-
-  it('关掉「刷完一轮提示」= 老行为,无缝重洗', () => {
-    boot(['A', 'B']);
-    const st = useTrainerStore.getState();
-    st.setMode('recap');
-    st.setRecapOrder('seq');
-    st.setRecapRoundPrompt(false);
-    useTrainerStore.getState().nextScramble();        // {2,2}
-    useTrainerStore.getState().nextScramble();        // 出完 → 直接进下一轮,不暂停
-    expect(useTrainerStore.getState().recapRoundDone).toBe(false);
-    expect(curRecap()).toEqual({ pos: 1, total: 2 });
   });
 
   it('重开一轮:进度归 1,成绩不动', () => {

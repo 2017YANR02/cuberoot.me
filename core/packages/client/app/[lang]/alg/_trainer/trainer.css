@@ -227,7 +227,7 @@
 }
 
 /* ─── 学习标记(角标 / 画笔 / 进度 / 工具栏) ─── */
-/* 右上状态角标:✓ 已掌握(绿)/ ● 学习中(橙)/ ⏸ 搁置(灰)。
+/* 右上状态角标:✓ 已掌握(绿)/ ● 不熟(橙)。
    角标压在图外沿,cell 无 overflow:hidden,负偏移安全。 */
 .trainer-mark-badge {
   position: absolute; top: -5px; right: -5px;
@@ -238,7 +238,6 @@
   box-shadow: 0 0 0 2px var(--background);
 }
 .trainer-mark-badge.is-learning { background: var(--signal-warning); width: 12px; height: 12px; top: -3px; right: -3px; }
-.trainer-mark-badge.is-paused { background: var(--faint-foreground); }
 .trainer-mark-star {
   position: absolute; top: -6px; left: -6px;
   color: var(--signal-warning);
@@ -296,13 +295,11 @@
 }
 .trainer-mark-btn.is-active.is-learning { color: var(--signal-warning); }
 .trainer-mark-btn.is-active.is-mastered { color: var(--signal-success); }
-.trainer-mark-btn.is-active.is-paused   { color: var(--foreground); }
 .trainer-mark-btn.is-active.is-star      { color: var(--signal-warning); }
 .trainer-mark-btn-star { fill: currentColor; }
 .trainer-mark-dot { width: 9px; height: 9px; border-radius: 50%; }
 .trainer-mark-dot.is-learning { background: var(--signal-warning); }
 .trainer-mark-dot.is-mastered { background: var(--signal-success); }
-.trainer-mark-dot.is-paused { background: var(--faint-foreground); }
 
 /* 成绩驱动的升降级建议条(stage 内,data-no-timer) */
 .trainer-mark-suggest {

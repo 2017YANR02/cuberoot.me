@@ -28,7 +28,7 @@ import '@/app/[lang]/alg/_trainer/memory.css';
 import { tr } from '@/i18n/tr';
 
 /** 显示过滤:按标记只看一类(大 set 里找 case 用)。 */
-const MARK_FILTERS = ['all', 'none', 'learning', 'mastered', 'paused', 'star'] as const;
+const MARK_FILTERS = ['all', 'none', 'learning', 'mastered', 'star'] as const;
 type MarkFilter = (typeof MARK_FILTERS)[number];
 
 export default function TrainerSetClient() {
@@ -249,7 +249,7 @@ export default function TrainerSetClient() {
                 aria-label={tr({ zh: '标记画笔', en: 'Mark brush' })}
               >
                 <option value="off">{tr({ zh: '关(点选 case)', en: 'Off (pick cases)' })}</option>
-                {(['learning', 'mastered', 'paused'] as CaseMarkStatus[]).map(s => (
+                {(['learning', 'mastered'] as CaseMarkStatus[]).map(s => (
                   <option key={s} value={s}>{MARK_STATUS_LABEL[s]()}</option>
                 ))}
                 <option value="star">{tr({ zh: '星标', en: 'Star' })}</option>
@@ -268,15 +268,14 @@ export default function TrainerSetClient() {
                 <option value="none">{tr({ zh: '未学', en: 'Unlearned' })}</option>
                 <option value="learning">{MARK_STATUS_LABEL.learning()}</option>
                 <option value="mastered">{MARK_STATUS_LABEL.mastered()}</option>
-                <option value="paused">{MARK_STATUS_LABEL.paused()}</option>
                 <option value="star">{tr({ zh: '星标', en: 'Starred' })}</option>
               </select>
             </label>
-            {/* 快选:一键把训练范围对准短板(替换选择;未掌握不含搁置) */}
+            {/* 快选:一键把训练范围对准短板(替换选择) */}
             <span className="trainer-marks-tool">
               <span className="trainer-opts-label">{tr({ zh: '快选', en: 'Select' })}</span>
               <button type="button" className="trainer-quick-btn"
-                onClick={() => quickSelect(k => { const st = markStatus(marks, k); return st !== 'mastered' && st !== 'paused'; })}>
+                onClick={() => quickSelect(k => markStatus(marks, k) !== 'mastered')}>
                 {tr({ zh: '未掌握', en: 'Not mastered' })}
               </button>
               <button type="button" className="trainer-quick-btn"

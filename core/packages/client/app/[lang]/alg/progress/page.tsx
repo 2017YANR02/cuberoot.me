@@ -4,7 +4,7 @@
  * /alg/progress — 公式学习进度总览。
  *
  * 两套数据合在一起讲同一件事:
- *   ① 手动标记(alg_case_marks):不熟 / 已掌握 / 搁置 / 星标 —— 用户自己的判断。
+ *   ① 手动标记(alg_case_marks):不熟 / 已掌握 / 星标 —— 用户自己的判断。
  *   ② 记忆调度(alg_case_srs):到期时刻 / 间隔 / 遗忘次数 —— 系统算出来的记忆强度。
  * 标记回答「我认不认」,调度回答「还记不记得住」。分开采集,合起来展示。
  *
@@ -53,7 +53,7 @@ interface SetRow {
   srs: SrsSetStat;
 }
 
-const emptyMarks = (): SetMarkSummary => ({ learning: 0, mastered: 0, paused: 0, starred: 0 });
+const emptyMarks = (): SetMarkSummary => ({ learning: 0, mastered: 0, starred: 0 });
 
 /** 两张表的 key 并集 → 按 puzzle 分组的行,保持 ALG_CATALOG 里的 set 顺序。 */
 function buildRows(
@@ -234,8 +234,8 @@ function SetProgressRow({ row, onReset, busy }: {
   const { marks, srs } = row;
   const denom = row.total && row.total > 0
     ? row.total
-    : (marks.learning + marks.mastered + marks.paused) || 1;
-  const untouched = Math.max(0, denom - marks.mastered - marks.learning - marks.paused);
+    : (marks.learning + marks.mastered) || 1;
+  const untouched = Math.max(0, denom - marks.mastered - marks.learning);
   const pct = (n: number) => `${(n / denom) * 100}%`;
   return (
     <div className="alg-prog-row">
@@ -260,7 +260,6 @@ function SetProgressRow({ row, onReset, busy }: {
         aria-label={tr({ zh: `已掌握 ${marks.mastered} / ${denom}`, en: `${marks.mastered} of ${denom} mastered` })}>
         <span className="is-mastered" style={{ width: pct(marks.mastered) }} />
         <span className="is-learning" style={{ width: pct(marks.learning) }} />
-        <span className="is-paused" style={{ width: pct(marks.paused) }} />
       </div>
       <div className="alg-prog-stats">
         {marks.starred > 0 && (
@@ -271,11 +270,6 @@ function SetProgressRow({ row, onReset, busy }: {
         {marks.learning > 0 && (
           <Link href={`${base}?mark=learning`} className="alg-prog-stat is-learning" prefetch={false}>
             {MARK_STATUS_LABEL.learning()} {marks.learning}
-          </Link>
-        )}
-        {marks.paused > 0 && (
-          <Link href={`${base}?mark=paused`} className="alg-prog-stat is-paused" prefetch={false}>
-            {tr({ zh: '搁置', en: 'Paused' })} {marks.paused}
           </Link>
         )}
         {untouched > 0 && (
@@ -448,7 +442,7 @@ export default function AlgProgressPage() {
     };
     for (const rows of byPuzzle.values()) {
       for (const r of rows) {
-        const n = r.marks.learning + r.marks.mastered + r.marks.paused;
+        const n = r.marks.learning + r.marks.mastered;
         if (n === 0 && r.marks.starred === 0 && r.srs.tracked === 0) continue;
         t.sets++;
         t.marked += n;
@@ -485,8 +479,8 @@ export default function AlgProgressPage() {
   /** 清一套:标记 + 记忆排期。云端先删,失败就整个中止(不留「本地清了云端还在」的半态)。 */
   const resetOne = async (row: SetRow) => {
     const ok = window.confirm(tr({
-      zh: `重置「${row.name}」的学习进度?\n\n已掌握 / 不熟 / 搁置 / 星标 和这一套的记忆排期都会清空,不能撤销。复习日历不受影响。`,
-      en: `Reset your progress on ${row.name}?\n\nIts marks (mastered / shaky / paused / starred) and memory schedule will be cleared. This cannot be undone. The review calendar is not affected.`,
+      zh: `重置「${row.name}」的学习进度?\n\n已掌握 / 不熟 / 星标 和这一套的记忆排期都会清空,不能撤销。复习日历不受影响。`,
+      en: `Reset your progress on ${row.name}?\n\nIts marks (mastered / shaky / starred) and memory schedule will be cleared. This cannot be undone. The review calendar is not affected.`,
     }));
     if (!ok) return;
     setResetting(row.key);
@@ -558,8 +552,8 @@ export default function AlgProgressPage() {
             <p>{tr({ zh: '还没有任何学习记录。', en: 'Nothing tracked yet.' })}</p>
             <p className="alg-prog-empty-hint">
               {tr({
-                zh: '进任意公式集,用「记忆」模式看图回忆公式并自评,或手动标上「不熟 / 已掌握 / 搁置」—— 进度、复习排期和记忆曲线都会汇总到这里。',
-                en: 'Open any set and use Memory mode — recall each alg from its picture and grade yourself — or mark cases as Shaky / Mastered / Paused. Progress, review scheduling and your memory curve all land here.',
+                zh: '进任意公式集,用「记忆」模式看图回忆公式并自评,或手动标上「不熟 / 已掌握」—— 进度、复习排期和记忆曲线都会汇总到这里。',
+                en: 'Open any set and use Memory mode — recall each alg from its picture and grade yourself — or mark cases as Shaky or Mastered. Progress, review scheduling and your memory curve all land here.',
               })}
             </p>
             <Link href="/alg" className="alg-prog-cta" prefetch={false}>
