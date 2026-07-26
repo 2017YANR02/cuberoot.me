@@ -2,8 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { computeAoxr, aoxrKey } from '@/components/persons/logic/aoxr';
 import type { WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
 
-// 选手页 AoXR 列的口径回归:必须与世界榜 /wca/wr_aoxr
-// (stats-build/src/core/ao_rounds.ts)逐值一致,否则同一场比赛两处显示不同数字。
+// 选手页 AoXR 列的口径回归。
+// 值的算法必须与世界榜 /wca/wr_aoxr(stats-build/src/core/ao_rounds.ts)逐值一致,
+// 否则同一场比赛两处显示不同数字;本页额外多一条「必须打满该项目全部轮次」的前提。
 // fixture = 2023GENG02 耿暄一的真实三阶成绩(WCA API),期望值取自 stats/wr_aoxr.json:
 //   Ao4R 4.21(该榜三阶第 1 行) / Ao3R 4.31 / Ao2R 4.84 —— 锁死,改算法必须主动改基线。
 
@@ -14,11 +15,11 @@ function comp(id: string, start_date: string): WcaCompetition {
   return { id, name: id, city: '', country_iso2: 'CN', start_date, end_date: start_date };
 }
 
-/** 一场比赛某项目的 N 个轮次:averages 按时间序给(末位=决赛) */
+/** 一场比赛某项目的 N 个轮次:averages 按时间序给(默认末位=决赛;roundIds 可显式指定轮次 id) */
 function rounds(
   compId: string,
   averages: number[],
-  opts: { eventId?: string; live?: boolean } = {},
+  opts: { eventId?: string; live?: boolean; roundIds?: string[] } = {},
 ): WcaResultRow[] {
   const eventId = opts.eventId ?? '333';
   const n = averages.length;
@@ -27,7 +28,7 @@ function rounds(
     competition_id: compId,
     event_id: eventId,
     // 2 轮 = 一轮 + 决赛,3 轮 = 一/二 + 决赛,以此类推
-    round_type_id: i === n - 1 ? 'f' : ROUND_IDS[i],
+    round_type_id: opts.roundIds ? opts.roundIds[i] : (i === n - 1 ? 'f' : ROUND_IDS[i]),
     format_id: 'a',
     best: average > 0 ? average - 30 : average,
     average,
@@ -104,6 +105,64 @@ describe('computeAoxr — 档位边界', () => {
       [comp('C', '2026-05-01')],
     );
     expect(map.get(aoxrKey('C', '333mbf'))).toBeUndefined();
+  });
+});
+
+describe('computeAoxr — 必须打满该项目全部轮次', () => {
+  it('四轮的项目只打到复赛(无决赛轮)→ 无值,不冒充 Ao2R', () => {
+    const map = computeAoxr(
+      rounds('NanchangSummer2026', [996, 1069], { roundIds: ['1', '2'] }),
+      [comp('NanchangSummer2026', '2026-07-18')],
+    );
+    expect(map.get(aoxrKey('NanchangSummer2026', '333'))).toBeUndefined();
+  });
+
+  it('打进决赛 → 照常出值(同样两轮,但这场只有两轮)', () => {
+    const map = computeAoxr(
+      rounds('C', [996, 1069], { roundIds: ['1', 'f'] }),
+      [comp('C', '2026-07-18')],
+    );
+    const cell = map.get(aoxrKey('C', '333'))!;
+    expect(cell.x).toBe(2);
+    expect(cell.value).toBe(1033);   // 1032.5 → 1033
+  });
+
+  it('决赛平均 DNF 仍算打满 → 降一档,不整场作废', () => {
+    const map = computeAoxr(
+      rounds('C', [399, 442, 410, -1], { roundIds: ['1', '2', '3', 'f'] }),
+      [comp('C', '2026-05-01')],
+    );
+    const cell = map.get(aoxrKey('C', '333'))!;
+    expect(cell.x).toBe(3);
+    expect(cell.value).toBe(417);    // (399+442+410)/3 = 417
+  });
+
+  it('组合决赛 c 算决赛;B-决赛 b 不算(A 决赛在其之后照常举行)', () => {
+    const map = computeAoxr([
+      ...rounds('Combined', [500, 520], { roundIds: ['d', 'c'] }),
+      ...rounds('BFinal', [500, 520], { roundIds: ['1', 'b'] }),
+    ], [comp('Combined', '2005-05-01'), comp('BFinal', '2005-06-01')]);
+    expect(map.get(aoxrKey('Combined', '333'))!.x).toBe(2);
+    expect(map.get(aoxrKey('BFinal', '333'))).toBeUndefined();
+  });
+
+  it('被淘汰的场次不占 PR 名次序列', () => {
+    const map = computeAoxr([
+      ...rounds('A', [500, 520], { roundIds: ['1', 'f'] }),          // 510 → PR1
+      ...rounds('KnockedOut', [400, 410], { roundIds: ['1', '2'] }), // 无值:4.05 不该压后面的场次
+      ...rounds('B', [480, 500], { roundIds: ['1', 'f'] }),          // 490 → 仍是 PR1
+    ], [comp('A', '2026-06-01'), comp('KnockedOut', '2026-06-10'), comp('B', '2026-06-20')]);
+    expect(map.get(aoxrKey('KnockedOut', '333'))).toBeUndefined();
+    expect(map.get(aoxrKey('A', '333'))!.prRank).toBe(1);
+    expect(map.get(aoxrKey('B', '333'))!.prRank).toBe(1);
+  });
+
+  it('直播场同样要打满:决赛未开打的进行中比赛不出值', () => {
+    const map = computeAoxr(
+      rounds('LiveOngoing', [400, 410], { roundIds: ['1', '2'], live: true }),
+      [comp('LiveOngoing', '2026-06-10')],
+    );
+    expect(map.get(aoxrKey('LiveOngoing', '333'))).toBeUndefined();
   });
 });
 
