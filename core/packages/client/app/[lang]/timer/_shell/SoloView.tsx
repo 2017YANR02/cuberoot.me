@@ -64,7 +64,7 @@ import {
 } from '../_lib/storage/db';
 import { formatTargetTime, useSettings, getSettings, updateSettings } from '../_lib/settings';
 import { warmupSound } from '../_lib/sound';
-import { getMetronome } from '../_lib/sound/metronome';
+import { setMetronomeHold } from '@/lib/metronome';
 import { useBluetoothCube } from '../_lib/bluetooth';
 import { mirrorForBrand, sensorBasisForBrand, type Quat } from '../_lib/bluetooth/orientation';
 import { applyScramble, facesEqual, type CubeFaces } from '../_lib/cube/state';
@@ -990,17 +990,16 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   });
 
   // ── Metronome ───────────────────────────────────────────────────
+  // Holds the shared metronome on for the inspect/solve stretch instead of
+  // driving it directly, so it hands control straight back to the floating
+  // panel afterwards (and never stops a panel the user started themselves).
+  // Releasing only on unmount keeps the beat continuous across inspect→run.
   useEffect(() => {
-    const m = getMetronome();
-    const active = settings.metronomeOn && (timer.phase === 'inspecting' || timer.phase === 'running');
-    if (active) {
-      if (!m.isRunning()) m.start(settings.metronomeBpm);
-      else m.setBpm(settings.metronomeBpm);
-    } else if (m.isRunning()) {
-      m.stop();
-    }
-    return () => { m.stop(); };
-  }, [settings.metronomeOn, settings.metronomeBpm, timer.phase]);
+    setMetronomeHold('timer',
+      settings.metronomeOn && (timer.phase === 'inspecting' || timer.phase === 'running'));
+  }, [settings.metronomeOn, timer.phase]);
+
+  useEffect(() => () => setMetronomeHold('timer', false), []);
 
   // ── Press input wiring (pointer + mouse fallback) ───────────────
   const { onPressDown, onPressUp, reset, cancelArm } = timer;

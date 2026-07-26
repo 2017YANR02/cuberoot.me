@@ -156,9 +156,12 @@ export interface TimerSettings {
   /** Hide entire UI (topbar / scramble / charts) while timer is running. */
   hideAllUiWhileRunning: boolean;
 
-  /** Metronome on/off and tempo (BPM range 30..300). */
+  /**
+   * Tick along during inspection / solve. Tempo is not stored here — it lives
+   * in the site-wide metronome (`lib/metronome`) that the floating panel shares,
+   * so the two can't fight over one audio source.
+   */
   metronomeOn: boolean;
-  metronomeBpm: number;
 
   /**
    * Inspection seconds at which to play a short beep (cstimer "beep at"
@@ -301,7 +304,6 @@ export const DEFAULTS: TimerSettings = {
   scrambleClickMigrated: false,
   hideAllUiWhileRunning: false,
   metronomeOn: false,
-  metronomeBpm: 120,
   inspectionBeepAt: [],
   syncSeed: null,
   syncSeedCounter: 0,
