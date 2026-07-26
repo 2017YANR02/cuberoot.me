@@ -15,67 +15,44 @@
  */
 import { Alg, Move, QuantumMove } from 'cubing/alg';
 import { KPattern, type KPuzzle } from 'cubing/kpuzzle';
+import { ROTATE_Y, mirrorFamily, mirrorKeepsAmount } from '@cuberoot/shared/alg-notation';
 
 /** `[family, 是否反向]`;缺项 = 该 family 不认识(直接抛)。 */
 export type Mapped = readonly [string, boolean];
 export type FaceMap = Record<string, Mapped>;
 
+/** 两张表接着用:先按 a 重写,再按 b;反向标记异或。 */
+function compose(a: FaceMap, b: FaceMap): FaceMap {
+  const out: FaceMap = {};
+  for (const [fam, [next, flip]] of Object.entries(a)) {
+    const hit = b[next];
+    if (!hit) throw new Error(`compose: ${next} 不在第二张表里`);
+    out[fam] = [hit[0], flip !== hit[1]];
+  }
+  return out;
+}
+
 /**
  * `R_1` = `y' X y`:面按 **R→F→L→B→R** 走(即 y 的转动方向)。
- * 中层/转体跟着它们「跟随的面」走:M 跟 L、S 跟 F、E 跟 D;x 跟 R、y 跟 U、z 跟 F。
- *   M(跟 L) → 跟 B 的中层 = S'    S(跟 F) → 跟 L 的中层 = M
- *   x(跟 R) → 跟 F 的转体 = z     z(跟 F) → 跟 L 的转体 = x'
+ * 表**不在这儿写** —— 单一真源是 `@cuberoot/shared/alg-notation` 的 `ROTATE_Y`
+ * (那边连小写内层切 `m`/`s`/`e` 都列全了)。R_2 / R_3 由它自乘得到,不手抄。
  */
-export const MAP_Y1: FaceMap = {
-  R: ['F', false], F: ['L', false], L: ['B', false], B: ['R', false],
-  r: ['f', false], f: ['l', false], l: ['b', false], b: ['r', false],
-  Rw: ['Fw', false], Fw: ['Lw', false], Lw: ['Bw', false], Bw: ['Rw', false],
-  M: ['S', true], S: ['M', false], E: ['E', false],
-  x: ['z', false], z: ['x', true], y: ['y', false],
-  U: ['U', false], D: ['D', false], u: ['u', false], d: ['d', false],
-  Uw: ['Uw', false], Dw: ['Dw', false],
-};
-
-/** `R_2` = `y2 X y2`:对面互换。 */
-export const MAP_Y2: FaceMap = {
-  R: ['L', false], L: ['R', false], F: ['B', false], B: ['F', false],
-  r: ['l', false], l: ['r', false], f: ['b', false], b: ['f', false],
-  Rw: ['Lw', false], Lw: ['Rw', false], Fw: ['Bw', false], Bw: ['Fw', false],
-  M: ['M', true], S: ['S', true], E: ['E', false],
-  x: ['x', true], z: ['z', true], y: ['y', false],
-  U: ['U', false], D: ['D', false], u: ['u', false], d: ['d', false],
-  Uw: ['Uw', false], Dw: ['Dw', false],
-};
-
-/** `R_3` = `y X y'`:面按 R→B→L→F→R 走。 */
-export const MAP_Y3: FaceMap = {
-  R: ['B', false], B: ['L', false], L: ['F', false], F: ['R', false],
-  r: ['b', false], b: ['l', false], l: ['f', false], f: ['r', false],
-  Rw: ['Bw', false], Bw: ['Lw', false], Lw: ['Fw', false], Fw: ['Rw', false],
-  M: ['S', false], S: ['M', true], E: ['E', false],
-  x: ['z', true], z: ['x', false], y: ['y', false],
-  U: ['U', false], D: ['D', false], u: ['u', false], d: ['d', false],
-  Uw: ['Uw', false], Dw: ['Dw', false],
-};
-
+export const MAP_Y1: FaceMap = Object.fromEntries(
+  Object.entries(ROTATE_Y).map(([fam, [next, sign]]) => [fam, [next, sign === -1] as Mapped]),
+);
+export const MAP_Y2: FaceMap = compose(MAP_Y1, MAP_Y1);
+export const MAP_Y3: FaceMap = compose(MAP_Y2, MAP_Y1);
 export const FACE_MAP: FaceMap[] = [{}, MAP_Y1, MAP_Y2, MAP_Y3];
 
 /**
- * 左右镜(M 平面,R↔L)。**除 `M` 和 `x` 外全部反向**。
- *
- * 判据是一句话:**绕镜面法向那根轴转的不反向,别的都反向**。法向 = x 轴,所以 `M`(绕 x 的中层)
- * 和 `x`(绕 x 的转体)保持原向 —— 轴本身被镜像翻了一次,和手性那次抵消。逐招验算:
- *   `x = R M' L'` → 镜像 `L' M' R` = `R M' L'` = **x**(同轴可交换)
- *   `y = U E' D'` → 镜像 `U' E D` = **y'**;`z = F S B'` → 镜像 `F' S' B` = **z'**
- * (这三条 `selfTestRelabel` 会逐招对撞,推错了当场抛 —— `x` 就是这么抓出来的。)
+ * 左右镜(M 平面,R↔L)。同样**不在这儿定规则** —— 走 shared 的 `mirrorFamily` /
+ * `mirrorKeepsAmount`,它俩把「落在镜面法向轴上的 `M`/`m`/`x` 不取反」这条豁免写死了
+ * (那份注释原话:「这个错犯过两次,别来第三次」—— 我照着几何重推了一遍,`x` 又推反了,
+ * 靠 `selfTestRelabel` 的贴纸反射对撞抓出来。所以这里只引用,不复述)。
  */
-export const MIRROR_LR: FaceMap = {
-  R: ['L', true], L: ['R', true], F: ['F', true], B: ['B', true], U: ['U', true], D: ['D', true],
-  r: ['l', true], l: ['r', true], f: ['f', true], b: ['b', true], u: ['u', true], d: ['d', true],
-  Rw: ['Lw', true], Lw: ['Rw', true], Fw: ['Fw', true], Bw: ['Bw', true], Uw: ['Uw', true], Dw: ['Dw', true],
-  M: ['M', false], S: ['S', true], E: ['E', true],
-  x: ['x', false], y: ['y', true], z: ['z', true],
-};
+export const MIRROR_LR: FaceMap = Object.fromEntries(
+  Object.keys(ROTATE_Y).map(fam => [fam, [mirrorFamily(fam, 'M'), !mirrorKeepsAmount(fam, 'M')] as Mapped]),
+);
 
 export const YPOW = ['', 'y', 'y2', "y'"];
 export const YPOW_INV = ['', "y'", 'y2', 'y'];
@@ -200,7 +177,12 @@ export function selfTestRelabel(kpuzzle: KPuzzle): void {
   const apply = (s: string) => SOLVED.applyAlg(new Alg(s || ''));
   const eq = (a: KPattern, b: KPattern) => JSON.stringify(a.patternData) === JSON.stringify(b.patternData);
 
-  const families = Object.keys(MAP_Y1);
+  // shared 的表覆盖到小写内层切 `m`/`s`/`e`,但 cubing.js 的 3x3 KPuzzle 不认它们
+  // (`Invalid move for KPuzzle (3x3x3): e`)—— 验不了就跳过并报数,别假装验过。
+  const playable = (fam: string) => { try { apply(new Move(fam, 1).toString()); return true; } catch { return false; } };
+  const families = Object.keys(MAP_Y1).filter(playable);
+  const skipped = Object.keys(MAP_Y1).filter(f => !playable(f));
+
   let n = 0;
   for (let k = 1; k <= 3; k++) {
     for (const fam of families) {
@@ -213,13 +195,14 @@ export function selfTestRelabel(kpuzzle: KPuzzle): void {
       }
     }
   }
-  console.log(`[selfTest] y 重贴表 OK —— ${n} 个 (转动 × y 次数) 组合与 KPuzzle 共轭逐一相等`);
+  const skipNote = skipped.length ? `(3x3 KPuzzle 不认 ${skipped.join('/')},这几族未验)` : '';
+  console.log(`[selfTest] y 重贴表 OK —— ${n} 个 (转动 × y 次数) 组合与 KPuzzle 共轭逐一相等 ${skipNote}`);
 
   // 锚点:课本上的 F2L 左右镜
   const anchor = mirrorAlg("R U R' U'");
   if (anchor !== "L' U' L U") throw new Error(`镜像锚点错:mirrorAlg("R U R' U'") = "${anchor}"`);
 
-  const pool = Object.keys(MIRROR_LR);
+  const pool = Object.keys(MIRROR_LR).filter(playable);
   const rand = rng(20260726);
   let m2 = 0;
   for (let t = 0; t < 400; t++) {
