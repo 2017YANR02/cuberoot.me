@@ -64,13 +64,15 @@ export default function PersonDetailClient() {
     setLiveResults(null); setLiveComps(null); setFormer([]);
     let cancelled = false;
     loadFlagData().catch(() => { /* fallback to en */ });
-    fetchWcaPerson(wcaId)
+    // 三个官方源都传后台重验回调:localStorage 缓存 24h,但成绩公示当天必须自愈 ——
+    // 直播行在官方收录后被服务端删掉,旧缓存会让那场比赛整场消失(见 wca-person-api 注释)。
+    fetchWcaPerson(wcaId, (p) => { if (!cancelled) setProfile(p); })
       .then((p) => { if (!cancelled) setProfile(p); })
       .catch((e) => { if (!cancelled) setError(String(e?.message ?? e)); });
-    fetchWcaPersonResults(wcaId)
+    fetchWcaPersonResults(wcaId, (r) => { if (!cancelled) setResults(r); })
       .then((r) => { if (!cancelled) setResults(r); })
       .catch(() => { /* keep degraded UI */ });
-    fetchWcaPersonCompetitions(wcaId)
+    fetchWcaPersonCompetitions(wcaId, (c) => { if (!cancelled) setComps(c); })
       .then((c) => { if (!cancelled) setComps(c); })
       .catch(() => { /* keep degraded UI */ });
     fetchWcaPersonLiveResults(wcaId)
