@@ -6,21 +6,52 @@ import { persistItem } from './safe-storage';
 
 const BASE = 'https://www.worldcubeassociation.org/api/v0';
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+// 缓存命中但年龄超过这个值时,后台静默回源重验一次(stale-while-revalidate)。
+// 成绩公示当天必须能自愈:比赛期间显示的「直播·非官方」行在官方收录后会被服务端删掉
+// (wca_live_person_results 按 comp 清行),若官方成绩这边只认 24h 硬缓存,昨天来过的
+// 访客今天会看到那场比赛整场消失 —— 直播行没了,官方行还卡在旧缓存里。
+const REVALIDATE_AFTER_MS = 5 * 60 * 1000;
 
 interface CacheEntry<T> { t: number; v: T; }
 
-function cacheGet<T>(key: string): T | null {
+function cacheRead<T>(key: string): { v: T; age: number } | null {
   try {
     const raw = localStorage.getItem(key);
     if (!raw) return null;
     const { t, v } = JSON.parse(raw) as CacheEntry<T>;
-    if (Date.now() - t > CACHE_TTL_MS) return null;
-    return v;
+    return { v, age: Date.now() - t };
   } catch { return null; }
+}
+
+function cacheGet<T>(key: string): T | null {
+  const hit = cacheRead<T>(key);
+  return hit && hit.age <= CACHE_TTL_MS ? hit.v : null;
 }
 
 function cacheSet<T>(key: string, value: T): void {
   persistItem(key, JSON.stringify({ t: Date.now(), v: value }));
+}
+
+/**
+ * 24h 缓存 + stale-while-revalidate:命中即返(重复访问仍然瞬开),旧值在后台回源,
+ * 数据真变了才回调 onFresh 让调用方更新。不传 onFresh = 保持纯缓存语义。
+ */
+async function cachedFetch<T>(key: string, load: () => Promise<T>, onFresh?: (v: T) => void): Promise<T> {
+  const hit = cacheRead<T>(key);
+  if (hit && hit.age <= CACHE_TTL_MS) {
+    if (onFresh && hit.age > REVALIDATE_AFTER_MS) {
+      void load()
+        .then((fresh) => {
+          cacheSet(key, fresh);
+          if (JSON.stringify(fresh) !== JSON.stringify(hit.v)) onFresh(fresh);
+        })
+        .catch(() => { /* 后台重验失败:继续用旧值 */ });
+    }
+    return hit.v;
+  }
+  const fresh = await load();
+  cacheSet(key, fresh);
+  return fresh;
 }
 
 export interface WcaPersonRecord {
@@ -47,15 +78,15 @@ export interface WcaPersonProfile {
   records: { world: number; continental: number; national: number; total: number };
 }
 
-export async function fetchWcaPerson(wcaId: string): Promise<WcaPersonProfile> {
-  const key = `wca:person:${wcaId}`;
-  const cached = cacheGet<WcaPersonProfile>(key);
-  if (cached) return cached;
-  const res = await fetch(`${BASE}/persons/${encodeURIComponent(wcaId)}`);
-  if (!res.ok) throw new Error(`WCA API ${res.status}`);
-  const json = (await res.json()) as WcaPersonProfile;
-  cacheSet(key, json);
-  return json;
+export async function fetchWcaPerson(
+  wcaId: string,
+  onFresh?: (p: WcaPersonProfile) => void,
+): Promise<WcaPersonProfile> {
+  return cachedFetch(`wca:person:${wcaId}`, async () => {
+    const res = await fetch(`${BASE}/persons/${encodeURIComponent(wcaId)}`);
+    if (!res.ok) throw new Error(`WCA API ${res.status}`);
+    return (await res.json()) as WcaPersonProfile;
+  }, onFresh);
 }
 
 export interface WcaResultRow {
@@ -77,29 +108,29 @@ export interface WcaResultRow {
   source?: string;          // 'cubing' | 'wca_live'(仅 live 行)
 }
 
-export async function fetchWcaPersonResults(wcaId: string): Promise<WcaResultRow[]> {
+export async function fetchWcaPersonResults(
+  wcaId: string,
+  onFresh?: (rows: WcaResultRow[]) => void,
+): Promise<WcaResultRow[]> {
   // v2: 加了 regional_single_record / regional_average_record 字段,需让旧缓存 miss
-  const key = `wca:results:v2:${wcaId}`;
-  const cached = cacheGet<WcaResultRow[]>(key);
-  if (cached) return cached;
-  const res = await fetch(`${BASE}/persons/${encodeURIComponent(wcaId)}/results`);
-  if (!res.ok) throw new Error(`WCA API ${res.status}`);
-  const arr = (await res.json()) as any[];
-  const out: WcaResultRow[] = arr.map((r) => ({
-    id: r.id,
-    competition_id: r.competition_id,
-    event_id: r.event_id,
-    round_type_id: r.round_type_id,
-    format_id: r.format_id,
-    best: r.best,
-    average: r.average,
-    pos: r.pos,
-    attempts: Array.isArray(r.attempts) ? r.attempts : [],
-    regional_single_record: r.regional_single_record ?? null,
-    regional_average_record: r.regional_average_record ?? null,
-  }));
-  cacheSet(key, out);
-  return out;
+  return cachedFetch(`wca:results:v2:${wcaId}`, async () => {
+    const res = await fetch(`${BASE}/persons/${encodeURIComponent(wcaId)}/results`);
+    if (!res.ok) throw new Error(`WCA API ${res.status}`);
+    const arr = (await res.json()) as any[];
+    return arr.map((r) => ({
+      id: r.id,
+      competition_id: r.competition_id,
+      event_id: r.event_id,
+      round_type_id: r.round_type_id,
+      format_id: r.format_id,
+      best: r.best,
+      average: r.average,
+      pos: r.pos,
+      attempts: Array.isArray(r.attempts) ? r.attempts : [],
+      regional_single_record: r.regional_single_record ?? null,
+      regional_average_record: r.regional_average_record ?? null,
+    })) as WcaResultRow[];
+  }, onFresh);
 }
 
 // 历史身份(曾用名 / 曾用国籍)。WCA 公开 API 不含此项,走我们后端的 wca_person_aka 小表。
@@ -326,21 +357,21 @@ export async function fetchWcaPersonLiveResults(wcaId: string): Promise<PersonLi
   return { wcaId, comps: json.comps ?? [], results };
 }
 
-export async function fetchWcaPersonCompetitions(wcaId: string): Promise<WcaCompetition[]> {
-  const key = `wca:comps:${wcaId}`;
-  const cached = cacheGet<WcaCompetition[]>(key);
-  if (cached) return cached;
-  const res = await fetch(`${BASE}/persons/${encodeURIComponent(wcaId)}/competitions`);
-  if (!res.ok) throw new Error(`WCA API ${res.status}`);
-  const arr = (await res.json()) as any[];
-  const out: WcaCompetition[] = arr.map((c) => ({
-    id: c.id,
-    name: c.name,
-    city: c.city,
-    country_iso2: c.country_iso2,
-    start_date: c.start_date,
-    end_date: c.end_date,
-  }));
-  cacheSet(key, out);
-  return out;
+export async function fetchWcaPersonCompetitions(
+  wcaId: string,
+  onFresh?: (comps: WcaCompetition[]) => void,
+): Promise<WcaCompetition[]> {
+  return cachedFetch(`wca:comps:${wcaId}`, async () => {
+    const res = await fetch(`${BASE}/persons/${encodeURIComponent(wcaId)}/competitions`);
+    if (!res.ok) throw new Error(`WCA API ${res.status}`);
+    const arr = (await res.json()) as any[];
+    return arr.map((c) => ({
+      id: c.id,
+      name: c.name,
+      city: c.city,
+      country_iso2: c.country_iso2,
+      start_date: c.start_date,
+      end_date: c.end_date,
+    })) as WcaCompetition[];
+  }, onFresh);
 }
