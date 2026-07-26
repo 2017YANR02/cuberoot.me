@@ -33,7 +33,7 @@ import SortableAlgRow from '@/components/SortableAlgRow';
 import AlgMirrorPanel, { hasMirror } from '@/components/AlgMirrorPanel';
 import { algCaseHref, algCaseDetailHref, buildCaseSlugMap } from '@/lib/alg_case_link';
 import { primaryCaseName, displayAlgCaseName } from '@/lib/alg_case_display';
-import { displayAlg, oriAdjustSetup } from '@/lib/alg_display';
+import { displayAlg, oriAdjustSetup, shortOriName } from '@/lib/alg_display';
 import { listSubmissions } from '@/lib/alg_api';
 import { reorderCaseAlgs } from '@/lib/alg_sets_api';
 import { useIsAdmin } from '@/lib/auth-store';
@@ -57,10 +57,12 @@ function SetupLine({ puzzle, setup }: { puzzle: string; setup: string }) {
 }
 
 /** 可播放的公式行(点一下展开 3D 动画)。非 meta 精简正文用,复用列表的 .alg-alg-* 样式。 */
-function PlayableAlgRow({ entry, puzzle, set, setup, mirror }: {
+function PlayableAlgRow({ entry, puzzle, set, setup, mirror, ori = 0 }: {
   entry: AlgEntry; puzzle: AlgPuzzle; set: string; setup?: string;
   /** 有值 = 这个 set 吃镜像系统,行尾出 ⧉;`partner` 是伙伴 case 名(没建链时为 null) */
   mirror?: { partner: string | null; self: string };
+  /** 这条公式在第几个视角(0=FR),镜像面板要拿它算落点 */
+  ori?: number;
 }) {
   const [open, setOpen] = useState(false);
   const [mirrorOpen, setMirrorOpen] = useState(false);
@@ -95,7 +97,7 @@ function PlayableAlgRow({ entry, puzzle, set, setup, mirror }: {
         </button>
       </div>
       {mirror && mirrorOpen && (
-        <AlgMirrorPanel alg={entry.alg} puzzle={puzzle} mirrorName={mirror.partner} selfName={mirror.self} />
+        <AlgMirrorPanel alg={entry.alg} puzzle={puzzle} mirrorName={mirror.partner} selfName={mirror.self} ori={ori} />
       )}
       {open && <AlgPlayer alg={entry.alg} puzzle={puzzle} set={set} setup={setup} />}
     </>
@@ -281,12 +283,11 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
             {caseObj.algs.map((oriAlgs, oi) => {
               const rows = oriAlgs.map((entry, i) => {
                 // setup 必须跟着朝向走 —— 四个槽共用一条原始 setup 时,FL/BL/BR 演的是别的 case
-                // 镜像只挂第 0 朝向:别的朝向本身就是它的 y 重贴,再镜一遍是同一批公式换个说法
                 const row = (
                   <PlayableAlgRow
-                    entry={entry} puzzle={puzzle} set={set}
+                    entry={entry} puzzle={puzzle} set={set} ori={oi}
                     setup={oriAdjustSetup(caseObj.setup, oi)}
-                    mirror={oi === 0 && mirror ? { partner: mirror.partner, self: mirror.self } : undefined}
+                    mirror={mirror ? { partner: mirror.partner, self: mirror.self } : undefined}
                   />
                 );
                 return dragAlgs
@@ -295,7 +296,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
               });
               return (
                 <div key={oi} className="alg-case-detail-ori">
-                  {multiOri && <div className="alg-case-detail-ori-label">{oriNames![oi]}</div>}
+                  {multiOri && <div className="alg-case-detail-ori-label">{shortOriName(oriNames![oi])}</div>}
                   {dragAlgs ? withDnd(oi)(rows) : rows}
                 </div>
               );

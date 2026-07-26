@@ -94,11 +94,39 @@ export default function AlgCaseMetaContent({
     };
   }), [caseObj.algs, puzzle]);
 
-  const related = useMemo(() => ([
-    { label: tr({ zh: '镜像', en: 'Mirror' }), self: tr({ zh: '自镜像', en: 'self-mirror' }), no: m.mirror },
-    { label: tr({ zh: '逆', en: 'Inverse' }), self: tr({ zh: '自逆', en: 'self-inverse' }), no: m.inv },
-    { label: tr({ zh: '镜像逆', en: 'Inv. mirror' }), self: tr({ zh: '自镜像逆', en: 'self-inv-mirror' }), no: m.im },
-  ].filter(r => r.no != null)), [m.mirror, m.inv, m.im]);
+  /**
+   * 这一族:当前 case + 镜像 / 逆 / 镜像逆,拆成三堆。
+   *   `family`    有图可贴的(含当前那张),按 `meta.no` 排 —— 这一族无论从哪张进来都是同一批,
+   *               按编号排就得到同一个顺序,所以点来点去图不换位。
+   *   `selfNotes` 该关联项就是当前 case 自己(自镜像 / 自逆),只标一句话。
+   *   `missing`   编号在本 set 里查不到对应 case(数据缺口),只报编号。
+   */
+  const { family, selfNotes, missing } = useMemo(() => {
+    const rels = [
+      { key: 'mirror', label: tr({ zh: '镜像', en: 'Mirror' }), self: tr({ zh: '自镜像', en: 'self-mirror' }), no: m.mirror },
+      { key: 'inv', label: tr({ zh: '逆', en: 'Inverse' }), self: tr({ zh: '自逆', en: 'self-inverse' }), no: m.inv },
+      { key: 'im', label: tr({ zh: '镜像逆', en: 'Inv. mirror' }), self: tr({ zh: '自镜像逆', en: 'self-inv-mirror' }), no: m.im },
+    ].filter(r => r.no != null);
+
+    const fam: Array<{ key: string; label: string; case: AlgCase; no: number; current: boolean }> = [{
+      key: 'self',
+      label: tr({ zh: '原始', en: 'Origin' }),
+      case: caseObj,
+      no: m.no ?? -1,
+      current: true,
+    }];
+    const notes: Array<{ key: string; text: string }> = [];
+    const gone: Array<{ key: string; label: string; no: number }> = [];
+
+    for (const r of rels) {
+      if (r.no === m.no) { notes.push({ key: r.key, text: r.self }); continue; }
+      const target = byNo.get(r.no!);
+      if (!target) { gone.push({ key: r.key, label: r.label, no: r.no! }); continue; }
+      fam.push({ key: r.key, label: r.label, case: target, no: r.no!, current: false });
+    }
+    fam.sort((a, b) => a.no - b.no);
+    return { family: fam, selfNotes: notes, missing: gone };
+  }, [m.mirror, m.inv, m.im, m.no, byNo, caseObj]);
 
   const sym = m.sym ?? {};
   const symFlags = [
@@ -112,69 +140,64 @@ export default function AlgCaseMetaContent({
 
   return (
     <>
-      {/* 顶部一排缩略图:原始 case + 镜像 / 逆 / 镜像逆,并排对比。
-          点镜像/逆:弹窗里切成那个 case,详情页里跳到那个 case 的详情页。 */}
+      {/* 顶部一排缩略图:这一族(自己 + 镜像 / 逆 / 镜像逆)并排对比。
+          点其中一张:弹窗里切成那个 case,详情页里跳到那个 case 的详情页。
+
+          位置按 `meta.no` 排,**不按与当前 case 的关系排** —— 这一族四个 case 无论从哪一张
+          进来都是同一批,按编号排就是同一个顺序,点来点去图不会互相换位。标签仍是相对当前
+          case 说的(在镜像那张上,当前这张就标「镜像」),当前那张恒定加框。 */}
       <div className="alg-meta-related-grid alg-meta-top-grid">
-        <div className="alg-meta-related-card is-self">
-          <CaseThumb
-            puzzle={puzzle}
-            set={set}
-            sticker={caseObj.sticker}
-            alg={caseObj.algs[0]?.[0]?.alg || caseObj.setup || ''}
-            setup={caseObj.setup}
-            size={76}
-          />
-          <span className="alg-meta-related-label">{tr({ zh: '原始', en: 'Origin' })}</span>
-          <span className="alg-meta-related-name">{primaryCaseName(puzzle, set, caseObj)}</span>
-        </div>
-        {related.map(r => {
-          // 自镜像 / 自逆:该关联项就是原始 case 本身,不重复贴图,直接标自身对称性(自镜像/自逆/自镜像逆)
-          if (r.no === m.no) {
-            return (
-              <div key={r.label} className="alg-meta-related-card is-plain">
-                <span className="alg-meta-related-label">{r.self}</span>
-                {/* 空占位撑出 name 行高度,让上面的 self 文字和带图卡片的 label 行(原始/镜像/逆)水平对齐 */}
-                <span className="alg-meta-related-name" aria-hidden="true">{' '}</span>
-              </div>
-            );
-          }
-          const target = byNo.get(r.no!);
-          if (!target) {
-            return (
-              <div key={r.label} className="alg-meta-related-card is-plain">
-                <span className="alg-meta-related-label">{r.label}</span>
-                <span className="alg-meta-related-name">#{r.no}</span>
-              </div>
-            );
-          }
+        {family.map(f => {
           const inner = (
             <>
               <CaseThumb
                 puzzle={puzzle}
                 set={set}
-                sticker={target.sticker}
-                alg={target.algs[0]?.[0]?.alg || target.setup || ''}
-                setup={target.setup}
+                sticker={f.case.sticker}
+                alg={f.case.algs[0]?.[0]?.alg || f.case.setup || ''}
+                setup={f.case.setup}
                 size={76}
               />
-              <span className="alg-meta-related-label">{r.label}</span>
-              <span className="alg-meta-related-name">{primaryCaseName(puzzle, set, target)}</span>
+              <span className="alg-meta-related-label">{f.label}</span>
+              <span className="alg-meta-related-name">{primaryCaseName(puzzle, set, f.case)}</span>
             </>
           );
-          const title = tr({ zh: `跳到${r.label}`, en: `Go to ${r.label.toLowerCase()}` });
+          // 当前这张不是跳转目标,只是参照 —— 不给 hover、不可点。
+          if (f.current) {
+            return (
+              <div key={f.key} className="alg-meta-related-card is-self is-current">{inner}</div>
+            );
+          }
+          const title = tr({ zh: `跳到${f.label}`, en: `Go to ${f.label.toLowerCase()}` });
           if (jump.kind === 'link') {
             return (
-              <Link key={r.label} href={jump.href(target)} className="alg-meta-related-card" prefetch={false} title={title}>
+              <Link key={f.key} href={jump.href(f.case)} className="alg-meta-related-card" prefetch={false} title={title}>
                 {inner}
               </Link>
             );
           }
           return (
-            <button key={r.label} type="button" className="alg-meta-related-card" onClick={() => jump.onJump(target)} title={title}>
+            <button key={f.key} type="button" className="alg-meta-related-card" onClick={() => jump.onJump(f.case)} title={title}>
               {inner}
             </button>
           );
         })}
+        {/* 自镜像 / 自逆:那一项就是当前 case 本身,不重复贴一张一样的图,只标一句。
+            上面的空占位把这行文字压到与带图卡片的 label 行同一条水平线上。 */}
+        {selfNotes.map(n => (
+          <div key={n.key} className="alg-meta-related-card is-plain">
+            <span className="alg-meta-related-thumb-gap" aria-hidden="true" />
+            <span className="alg-meta-related-label">{n.text}</span>
+          </div>
+        ))}
+        {/* 关联编号在本 set 里找不到对应 case(数据缺口),只报编号。 */}
+        {missing.map(x => (
+          <div key={x.key} className="alg-meta-related-card is-plain">
+            <span className="alg-meta-related-thumb-gap" aria-hidden="true" />
+            <span className="alg-meta-related-label">{x.label}</span>
+            <span className="alg-meta-related-name">#{x.no}</span>
+          </div>
+        ))}
       </div>
 
       <div className="alg-meta-case">
