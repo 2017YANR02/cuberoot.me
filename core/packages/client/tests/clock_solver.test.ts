@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { describe, it, expect } from 'vitest';
 import {
   CLOCK_TYPE_MASKS,
@@ -311,6 +313,59 @@ describe('clock 距离分布 vs Jaap 的 God 表', () => {
     const bulk = hist[8] + hist[9] + hist[10] + hist[11];
     expect(bulk / N).toBeGreaterThan(0.95);
   }, 120_000);
+});
+
+// ─── 距离 12 的那一档:对 Rokicki 的 39,248 个位置逐条实解 ────────────────────
+// 数据集 solver/reference/clock/dist12.txt 是全空间计算的产物(见该目录 README §6),
+// 把「最难的一档」变成可精确对账的测试集 —— 分布表里唯一一档我们能逐个验完的高档位。
+// CI 不跑(仓库只 sparse checkout core/,文件不在 → 自动 skip)。
+
+const DIST12_PATH = fileURLToPath(new URL('../../../../solver/reference/clock/dist12.txt', import.meta.url));
+/** dist12.txt 的 14 列(OptClock 格式)对应本仓库 posit 的哪个盘。 */
+const DIST12_TO_POSIT = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 13, 14, 16];
+
+function dist12StateFromLine(line: string): ClockState {
+  const nums = line.trim().split(/\s+/).map(Number);
+  const posit = new Array<number>(18).fill(0);
+  DIST12_TO_POSIT.forEach((dial, i) => { posit[dial] = nums[i]; });
+  for (let c = 0; c < 4; c++) posit[BACK_CORNER_DIAL[c]] = mod12(-posit[FRONT_CORNER_DIAL[c]]);
+  return { posit, rightSideUp: true };
+}
+
+const dist12Lines = existsSync(DIST12_PATH)
+  ? readFileSync(DIST12_PATH, 'utf8').split('\n').filter((l) => l.trim())
+  : null;
+
+describe.skipIf(!dist12Lines)('clock 距离 12 档 vs Rokicki 的 dist12.txt', () => {
+  it('文件条数 == Jaap 表的 d=12 档,且无重复、格式合法', () => {
+    const lines = dist12Lines!;
+    expect(BigInt(lines.length)).toBe(JAAP_DISTRIBUTION[12]);
+    expect(new Set(lines.map((l) => l.trim())).size).toBe(lines.length);
+    for (const line of lines) {
+      const nums = line.trim().split(/\s+/).map(Number);
+      expect(nums).toHaveLength(14);
+      expect(nums.every((n) => Number.isInteger(n) && n >= 0 && n < 12)).toBe(true);
+    }
+  });
+
+  // 默认等距抽 300 条(约 5s);CLOCK_DIST12_FULL=1 跑全部 39,248 条(约 11 分钟)。
+  const full = process.env.CLOCK_DIST12_FULL === '1';
+  it(`每个位置的最优解恰为 12 步(${full ? '全量 39,248' : '抽样 300'})`, () => {
+    const lines = dist12Lines!;
+    const stride = full ? 1 : Math.floor(lines.length / 300);
+    let checked = 0;
+    for (let i = 0; i < lines.length; i += stride) {
+      const state = dist12StateFromLine(lines[i]);
+      expect(invalidClockCorner(state.posit)).toBe(null);
+      const sol = solveClock(state);
+      // 逐条断言会淹没输出,只在不等于 12 时报出具体行号
+      if (sol.length !== 12) throw new Error(`dist12.txt 第 ${i + 1} 行解出 ${sol.length} 步,应为 12:${lines[i]}`);
+      // 解确实还原(不是只对上了步数)
+      expect(isClockSolved(applyClockMoves(state, sol.moves))).toBe(true);
+      checked++;
+    }
+    expect(checked).toBeGreaterThan(full ? 39_000 : 250);
+  }, full ? 1_800_000 : 180_000);
 });
 
 // ─── 测试自用的独立 14 维模型(不复用求解器内部的坐标切分) ──────────────────
