@@ -1355,7 +1355,7 @@ a.alg-community-author:hover {
   border-color: transparent;
   background: none;
 }
-/* 当前看的是哪一张,恒定框住 —— 这一族的位置按编号钉死了,不标就认不出自己在看哪张 */
+/* 当前看的是哪一张,恒定框住 —— 它固定排最左,框只是再确认一次「基准是这张」 */
 .alg-meta-related-card.is-current,
 .alg-meta-related-card.is-current:hover {
   border-color: var(--border-strong);

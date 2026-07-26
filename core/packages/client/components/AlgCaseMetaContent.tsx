@@ -97,8 +97,8 @@ export default function AlgCaseMetaContent({
 
   /**
    * 这一族:当前 case + 镜像 / 逆 / 镜像逆,拆成三堆。
-   *   `family`    有图可贴的(含当前那张),按 `meta.no` 排 —— 这一族无论从哪张进来都是同一批,
-   *               按编号排就得到同一个顺序,所以点来点去图不换位。
+   *   `family`    有图可贴的(含当前那张)。当前这张恒定排头,其余按 `meta.no` 排 ——
+   *               「我在看哪张」得有个固定落点,眼睛不用每次先找框。
    *   `selfNotes` 该关联项就是当前 case 自己(自镜像 / 自逆),只标一句话。
    *   `missing`   编号在本 set 里查不到对应 case(数据缺口),只报编号。
    *
@@ -140,8 +140,10 @@ export default function AlgCaseMetaContent({
       famAt.set(r.no!, fam.length);
       fam.push({ key: r.key, labels: [r.label], case: target, no: r.no!, current: false });
     }
-    fam.sort((a, b) => a.no - b.no);
-    return { family: fam, selfNotes: notes, missing: gone };
+    // 排头那张(当前 case)不参与排序,后面的按编号排,顺序才和从哪张进来无关。
+    const [self, ...rest] = fam;
+    rest.sort((a, b) => a.no - b.no);
+    return { family: [self, ...rest], selfNotes: notes, missing: gone };
   }, [m.mirror, m.inv, m.im, m.no, byNo, caseObj]);
 
   const sym = m.sym ?? {};
@@ -159,9 +161,8 @@ export default function AlgCaseMetaContent({
       {/* 顶部一排缩略图:这一族(自己 + 镜像 / 逆 / 镜像逆)并排对比。
           点其中一张:弹窗里切成那个 case,详情页里跳到那个 case 的详情页。
 
-          位置按 `meta.no` 排,**不按与当前 case 的关系排** —— 这一族无论从哪一张进来都是同一批,
-          按编号排就是同一个顺序,点来点去图不会互相换位。标签仍是相对当前 case 说的(在镜像
-          那张上,当前这张就标「镜像」),当前那张恒定加框。 */}
+          当前这张(标「原始」、恒定加框)钉最左,剩下的按 `meta.no` 排 —— 关系是相对当前 case
+          说的(跳到镜像那张之后,原来那张就标「镜像」),所以基准点摆在最左边读起来才顺。 */}
       <div className="alg-meta-related-grid alg-meta-top-grid">
         {family.map(f => {
           const labelText = f.labels.join(', ');
