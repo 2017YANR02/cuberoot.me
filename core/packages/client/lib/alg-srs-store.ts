@@ -363,6 +363,9 @@ function dropPendingSrs(puzzle: string, setSlug: string): void {
  */
 export async function resetSetSrs(puzzle: string, setSlug: string): Promise<void> {
   dropPendingSrs(puzzle, setSlug);
+  // 用户显式点了重置 → 给云端一次干净的机会。cloudDown 可能是本次会话早先某个瞬时
+  // 失败留下的粘滞状态,不清掉的话 cloudPut 直接返回 false,重置会永远「失败」。
+  cloudDown = false;
   const local = loadLocalRecs(puzzle, setSlug);
   let keys = Object.keys(local);
 
@@ -394,6 +397,7 @@ export async function resetSetSrs(puzzle: string, setSlug: string): Promise<void
  */
 export async function resetSrsDaily(): Promise<{ cloudCleared: boolean }> {
   let cloudCleared = true;
+  cloudDown = false;   // 同 resetSetSrs:显式操作不受早先瞬时失败的粘滞状态影响
   if (cloudEnabled()) {
     try {
       await handleApi(await fetch(apiUrl('/v1/alg/srs/daily'), {
