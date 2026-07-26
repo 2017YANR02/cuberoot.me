@@ -46,7 +46,7 @@ const STAT_CATEGORIES = [
   {
     nameEn: 'Results & Records', nameZh: '成绩与纪录',
     iconName: 'BarChart3',
-    ids: ['best_potential_fmc_mean', 'best_round', 'most_frequent_results',
+    ids: ['best_potential_fmc_mean', 'best_round', 'keatoned_records', 'most_frequent_results',
           'moving_average', 'smallest_diff_between_single_and_average', 'yearly_rankings',
           'date_match_pr'],
   },
