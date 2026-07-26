@@ -28,18 +28,14 @@ import type Cube from '@/app/[lang]/sim/engine/nxn/cube';
 import type Toucher from '@/app/[lang]/sim/Toucher';
 import type { SimMount } from '@/components/sim-embed/mountSimWorld';
 import { buildFaceletMap, buildReverseFaceletMap } from '@/components/sim-embed/faceletMap';
-import { yawSign } from '@/app/[lang]/sim/engine/viewControls';
+import { HOME_SCENE_ROT, ORBIT_K, orbitSceneFree } from '@/app/[lang]/sim/engine/viewControls';
+import { afterFirstPaint } from '@/components/sim-embed/SimStage';
 import { timing } from '@/app/[lang]/sim/engine/tweenTiming';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { tr } from '@/i18n/tr';
 import { engineHomeSid } from '@/app/[lang]/sim/engine/nxn/netIndex';
 import { FM_REGULAR, FM_DIM, FM_IGNORED } from '@/app/[lang]/sim/engine/nxn/stickering';
 
-/** 引擎自己的初始视角(U 上 F 前 R 右),复位就回这里。 */
-const DEFAULT_ROT_X = Math.PI / 6;
-const DEFAULT_ROT_Y = -Math.PI / 4 + Math.PI / 16;
-/** 每拖 1px 转多少弧度,与 /sim 灵敏度默认值一致。 */
-const ORBIT_K = 0.01;
 /** 复盘动画每 90° 的帧数(引擎默认 30,这里快一档);挂载时设,卸载时还回去。 */
 const PLAY_FRAMES = 16;
 
@@ -83,7 +79,7 @@ function towardCamera(face: string, pitch: number, yaw: number): number {
  * 后者会挑一个两面都只擦到边的折中角度,结果哪一面都看不清。
  */
 function poseShowing(faces: readonly string[]): readonly [number, number] {
-  let best: readonly [number, number] = [DEFAULT_ROT_X, DEFAULT_ROT_Y];
+  let best: readonly [number, number] = [HOME_SCENE_ROT.x, HOME_SCENE_ROT.y];
   if (faces.length === 0) return best;
   let bestScore = -Infinity;
   for (const pose of Object.values(LOOK_AT)) {
@@ -113,12 +109,6 @@ export function preloadBoardEngine(): Promise<BoardEngine> {
   })();
   return enginePromise;
 }
-
-/** 浏览器至少画过一帧后再拉引擎,免得 three 的解析卡在首屏那一帧里。 */
-const afterFirstPaint = () => new Promise<void>((resolve) => {
-  if (typeof requestAnimationFrame !== 'function') { resolve(); return; }
-  requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
-});
 
 export interface PredictBoardProps {
   /** 54 个引擎色标签,facelet(URFDLB)序 —— 整盘的真实颜色,空串 = 用块自己的色。 */
@@ -189,14 +179,10 @@ export default function PredictBoard({
 
       world.controller.dragEmpty = 'view';
       world.controller.paintMode = true;
-      world.controller.onOrbit = (dx, dy) => {
-        // 两轴都无界累加 —— 钳了 pitch 就翻不过顶/底,背面的答案就点不到。
-        // yawSign 抵消上下颠倒那半圈的左右反向(与 /sim 同一处修正)。
-        world.scene.rotation.y += dx * ORBIT_K * yawSign(world.scene.rotation.x);
-        world.scene.rotation.x += dy * ORBIT_K;
-        world.scene.updateMatrix();
-        world.dirty = true;
-      };
+      // 无界 orbit(两轴一直累加,含 yawSign 修正)—— 钳了 pitch 就翻不过顶/底,
+      // 背面的答案就点不到。题板故意**不**走求解器画板那档「自动转体」:那档会把视角
+      // 折成真的整体转体,而这里整盘题面(labels/stickering)是按 home 面序喂进来的。
+      world.controller.onOrbit = (dx, dy) => orbitSceneFree(world, dx, dy, ORBIT_K);
       world.controller.taps.push((index, face) => {
         if (index < 0 || face === null) return;
         const fi = reverseMap.get(`${index}_${face}`);

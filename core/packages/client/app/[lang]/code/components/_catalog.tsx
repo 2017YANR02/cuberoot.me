@@ -1960,8 +1960,30 @@ export const CATALOG: ComponentEntry[] = [
     zh: `把 /sim 引擎嵌进任意 DOM 容器的唯一生命周期封装(不是 React 组件,是普通函数):建 WebGLRenderer + World、挂 canvas、ResizeObserver 同步 world.width/height + resize()、跑只在 dirty 时渲染的 rAF、dispose 收 GL 上下文。onFrame(world, dt) 是引擎本身没有的逐帧钩子(返回 true = 标脏),陀螺仪朝向 / 自定义缓动都挂这里;interactive 默认 false(只读嵌入禁挂指针 Controller,否则与调用方抢同一个 transform)。`,
     en: `The single lifecycle wrapper for embedding the /sim engine in any DOM host (a plain function, not a React component): builds the WebGLRenderer + World, appends the canvas, mirrors the host box into world.width/height + resize() via ResizeObserver, runs a rAF that renders only while dirty, and disposes the GL context. onFrame(world, dt) is the per-frame hook the engine itself lacks (return true to mark dirty) — gyro orientation, custom easing, anything frame-driven; interactive defaults to false since a read-only embed must not attach the pointer Controller or it fights the caller for the same transform.`,
     note: {
-      zh: `刻意不放 hooks/(要能从非 React 路径调,如 EnginePuzzleSVG)。调用方一律 await import() 本模块,three 才不会进首包。2026-07-24 只做了抽取:ReconPlayerBase / _Interactive3DCube / PllPerformerOverlay / EnginePuzzleSVG 四处仍是各自的手抄副本,迁移是后续工作。`,
-      en: `Deliberately not in hooks/ — it must stay callable from non-React paths (EnginePuzzleSVG). Callers should await import() this module so three stays out of the initial bundle. Shipped 2026-07-24 as an extraction only: ReconPlayerBase, _Interactive3DCube, PllPerformerOverlay and EnginePuzzleSVG still carry their own hand-rolled copies; migrating them is follow-up work.`,
+      zh: `刻意不放 hooks/(要能从非 React 路径调,如 EnginePuzzleSVG)。调用方一律 await import() 本模块,three 才不会进首包。measure(host) 覆盖画布尺寸(PLL 浮层的立方体只占舞台一小块),onRendered(world) 给跟着主视图一起画的第二个渲染器(recon 的 backView 小窗)。2026-07-26 迁移收尾:ReconPlayerBase / _Interactive3DCube / PllPerformerOverlay 的手抄副本已删,只剩 EnginePuzzleSVG 走 headless 共享 World(无渲染器,不适用)。`,
+      en: `Deliberately not in hooks/ — it must stay callable from non-React paths (EnginePuzzleSVG). Callers should await import() this module so three stays out of the initial bundle. measure(host) overrides the canvas size (the PLL overlay's cube occupies only part of its stage); onRendered(world) drives a second renderer that paints with the main view (recon's back-view window). Migration finished 2026-07-26: the hand-rolled copies in ReconPlayerBase, _Interactive3DCube and PllPerformerOverlay are gone; only EnginePuzzleSVG stays out (headless shared World, no renderer).`,
+    },
+  },
+  {
+    name: 'SimStage',
+    import: "import SimStage from '@/components/sim-embed/SimStage';",
+    category: 'more',
+    zh: `嵌入式 3D 画布的「壳」:等第一帧画完再跑 mount(three 的解析不撞首屏)、方形 host、只有慢过 250ms 才出现的转圈、右上角「重置视角」按钮。mount(host) 里 await import 引擎、返回卸载函数;只跑一次(要读最新 props 走 ref)。size 不传就由 CSS 定尺寸。`,
+    en: `The shell around an embedded 3D canvas: defers mount until after the first paint (so parsing three never lands mid-first-paint), a square host, a spinner that only appears if loading takes over 250ms, and a "reset view" button in the corner. Its mount(host) awaits the engine import and returns a teardown; it runs exactly once (read fresh props through refs). Omit size to let CSS size the canvas.`,
+    note: {
+      zh: `二阶/三阶涂色板、金字塔/斜转涂色板、SQ1 转盘共用;视角复位走 engine/viewControls 的 HOME_SCENE_ROT(别再各抄一份 π/6)。`,
+      en: `Shared by the 2×2/3×3 painter, the Pyraminx/Skewb painter and the Square-1 board; reset goes through HOME_SCENE_ROT in engine/viewControls instead of re-typing π/6 per file.`,
+    },
+  },
+  {
+    name: 'attachOrbitTap',
+    import: "import { attachOrbitTap } from '@/components/sim-embed/orbitTapGesture';",
+    category: 'more',
+    zh: `嵌入式 3D 画布的指针手势:超过阈值(默认 6px)算拖 → 转视角(orbitScene,pitch 钳 ±90°,与 /sim 对角转/棱转/SQ1 引擎的「自动转体」同一条路径),否则算点一下 → onTap(x, y, button)。拼图要自己吃掉这次拖动(SQ1 层转)就用 onDragBegin 返回 true 接管,再走 onDragMove / onDragEnd。返回卸载函数。`,
+    en: `The pointer gesture for an embedded 3D canvas: past the threshold (6px by default) a drag orbits the view (orbitScene, pitch clamped to ±90° — the same path /sim's「自动转体」takes for corner/edge-turning and Square-1 engines), otherwise it is a tap → onTap(x, y, button). A puzzle that wants the drag for itself (Square-1 layer turns) returns true from onDragBegin to take over, then gets onDragMove/onDragEnd. Returns a teardown function.`,
+    note: {
+      zh: `NxN 不走这里:它的「自动转体」在 controller 的 onOrbit → viewControls 的 orbitSceneAutoRotate,视角每超出 90° 就折成一次真正的整体转体(灯光不跟着转,手感像实物)。`,
+      en: `NxN does not use this: its「自动转体」lives on the controller's onOrbit → orbitSceneAutoRotate in viewControls, folding every 90° of view excess into a real whole-cube twist (the lights stay put, so it feels like turning a physical puzzle).`,
     },
   },
 ];
