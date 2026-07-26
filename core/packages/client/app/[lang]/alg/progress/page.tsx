@@ -21,8 +21,8 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { getSessionToken } from '@/lib/auth-store';
 import { API_ORIGIN } from '@/lib/api-base';
-import { loadMarkOverview, type MarkOverview, type SetMarkSummary } from '@/lib/trainer-marks';
-import { loadSrsDashboard, type SrsOverview } from '@/lib/alg-srs-store';
+import { loadMarkOverview, resetSetMarks, type MarkOverview, type SetMarkSummary } from '@/lib/trainer-marks';
+import { loadSrsDashboard, resetSetSrs, resetSrsDaily, type SrsOverview } from '@/lib/alg-srs-store';
 import {
   dueForecast, heatmapGrid, streakDays, dayKey, retention, weakness,
   emptySrsStat, MASTER_DAYS, type SrsDaily, type SrsRecs, type SrsSetStat,
@@ -225,7 +225,11 @@ function MaturityBar({ neverStudied, relearn, young, mature }: {
   );
 }
 
-function SetProgressRow({ row }: { row: SetRow }) {
+function SetProgressRow({ row, onReset, busy }: {
+  row: SetRow;
+  onReset: (row: SetRow) => void;
+  busy: boolean;
+}) {
   const base = `/alg/${row.puzzle}/${row.slug}/select`;
   const { marks, srs } = row;
   const denom = row.total && row.total > 0
@@ -289,6 +293,17 @@ function SetProgressRow({ row }: { row: SetRow }) {
             {tr({ zh: '忘过', en: 'Lapses' })} {srs.lapses}
           </span>
         )}
+        {/* 重置这一套:标记 + 记忆排期一起清,复习日历(跨 set 的活动流水)不动 */}
+        <button
+          type="button"
+          className="alg-prog-stat is-reset"
+          onClick={() => onReset(row)}
+          disabled={busy}
+        >
+          {busy
+            ? tr({ zh: '重置中…', en: 'Resetting…' })
+            : tr({ zh: '重置', en: 'Reset' })}
+        </button>
       </div>
     </div>
   );
@@ -400,25 +415,25 @@ export default function AlgProgressPage() {
   const [recs, setRecs] = useState<Record<string, SrsRecs>>({});
   const [daily, setDaily] = useState<SrsDaily>({});
   const [counts, setCounts] = useState<Record<string, number>>({});
+  /** 正在重置的对象:set 的 `puzzle/slug`,或 'all'。 */
+  const [resetting, setResetting] = useState<string | null>(null);
   const loggedIn = typeof window !== 'undefined' && !!getSessionToken();
 
-  useEffect(() => {
-    let cancelled = false;
+  const refresh = useCallback(async () => {
     const now = Date.now();
-    Promise.all([
+    const [mk, srs, ct] = await Promise.all([
       loadMarkOverview(),
       loadSrsDashboard(now),
       fetchSetCounts().catch(() => ({})),
-    ]).then(([mk, srs, ct]) => {
-      if (cancelled) return;
-      setCounts(ct);
-      setSrsOv(srs.overview);
-      setRecs(srs.recs);
-      setDaily(srs.daily);
-      setMarks(mk);
-    });
-    return () => { cancelled = true; };
+    ]);
+    setCounts(ct);
+    setSrsOv(srs.overview);
+    setRecs(srs.recs);
+    setDaily(srs.daily);
+    setMarks(mk);
   }, []);
+
+  useEffect(() => { void refresh(); }, [refresh]);
 
   const byPuzzle = useMemo<Map<AlgPuzzle, SetRow[]>>(
     () => (marks ? buildRows(marks, srsOv, counts) : new Map()),
@@ -464,7 +479,65 @@ export default function AlgProgressPage() {
     return retention(all);
   }, [recs]);
 
-  const hasAny = totals.sets > 0;
+  // 每套都重置完了、只剩复习日历时也不能落回空态 —— 否则日历还在,却没有入口清它
+  const hasAny = totals.sets > 0 || Object.keys(daily).length > 0;
+
+  /** 清一套:标记 + 记忆排期。云端先删,失败就整个中止(不留「本地清了云端还在」的半态)。 */
+  const resetOne = async (row: SetRow) => {
+    const ok = window.confirm(tr({
+      zh: `重置「${row.name}」的学习进度?\n\n已掌握 / 学习中 / 搁置 / 星标 和这一套的记忆排期都会清空,不能撤销。复习日历不受影响。`,
+      en: `Reset your progress on ${row.name}?\n\nIts marks (mastered / learning / paused / starred) and memory schedule will be cleared. This cannot be undone. The review calendar is not affected.`,
+    }));
+    if (!ok) return;
+    setResetting(row.key);
+    try {
+      await resetSetMarks(row.puzzle, row.slug);
+      await resetSetSrs(row.puzzle, row.slug);
+      await refresh();
+    } catch (e) {
+      console.warn('[alg/progress] reset failed', e);
+      window.alert(tr({
+        zh: '重置失败:云端没同步成功,进度原样保留。检查网络后再试一次。',
+        en: 'Reset failed — the change did not reach the server, so nothing was cleared. Check your connection and try again.',
+      }));
+    } finally {
+      setResetting(null);
+    }
+  };
+
+  /** 清全部:每一套 + 复习日历 / 连续天数。 */
+  const resetAll = async () => {
+    const rows = [...byPuzzle.values()].flat();
+    const ok = window.confirm(tr({
+      zh: `重置全部学习进度?\n\n${rows.length} 套公式集的标记与记忆排期、复习日历、连续天数会全部清空,不能撤销。`,
+      en: `Reset all learning progress?\n\nMarks and memory schedules across ${rows.length} sets, plus the review calendar and day streak, will all be cleared. This cannot be undone.`,
+    }));
+    if (!ok) return;
+    setResetting('all');
+    try {
+      for (const row of rows) {
+        await resetSetMarks(row.puzzle, row.slug);
+        await resetSetSrs(row.puzzle, row.slug);
+      }
+      const { cloudCleared } = await resetSrsDaily();
+      await refresh();
+      if (!cloudCleared) {
+        window.alert(tr({
+          zh: '标记和记忆排期都清干净了,但复习日历只清掉了本机那一份 —— 服务器没删成功,下次同步会合并回来。',
+          en: 'Marks and memory schedules are cleared, but the review calendar was only cleared on this device — the server did not accept the delete, so it will sync back.',
+        }));
+      }
+    } catch (e) {
+      console.warn('[alg/progress] reset all failed', e);
+      window.alert(tr({
+        zh: '重置中断:云端没同步成功。已清掉的部分不会回来,剩下的原样保留,检查网络后可以再点一次。',
+        en: 'Reset interrupted — the server did not accept the change. What was already cleared stays cleared; the rest is untouched. Check your connection and run it again.',
+      }));
+      await refresh();
+    } finally {
+      setResetting(null);
+    }
+  };
 
   return (
     <div className="alg-root">
@@ -564,10 +637,41 @@ export default function AlgProgressPage() {
                     <span>{eventDisplayName(p, isZh)}</span>
                   </h3>
                   <div className="alg-prog-sets">
-                    {byPuzzle.get(p)!.map(row => <SetProgressRow key={row.slug} row={row} />)}
+                    {byPuzzle.get(p)!.map(row => (
+                      <SetProgressRow
+                        key={row.slug}
+                        row={row}
+                        onReset={resetOne}
+                        busy={resetting === row.key || resetting === 'all'}
+                      />
+                    ))}
                   </div>
                 </div>
               ))}
+            </section>
+
+            {/* 重置全部:放在最底下,离日常操作最远的地方 */}
+            <section className="alg-prog-section">
+              <button
+                type="button"
+                className="alg-prog-reset-all"
+                onClick={resetAll}
+                disabled={resetting !== null}
+              >
+                {resetting === 'all'
+                  ? tr({ zh: '重置中…', en: 'Resetting…' })
+                  : tr({ zh: '重置全部学习进度', en: 'Reset all progress' })}
+              </button>
+              <p className="alg-prog-sub">
+                {tr({
+                  zh: loggedIn
+                    ? '清空全部标记、记忆排期与复习日历,所有设备一起生效,不能撤销。'
+                    : '清空本机的全部标记、记忆排期与复习日历,不能撤销。',
+                  en: loggedIn
+                    ? 'Clears every mark, memory schedule and the review calendar, on all your devices. Cannot be undone.'
+                    : 'Clears every mark, memory schedule and the review calendar stored on this device. Cannot be undone.',
+                })}
+              </p>
             </section>
 
             <p className="alg-prog-foot">

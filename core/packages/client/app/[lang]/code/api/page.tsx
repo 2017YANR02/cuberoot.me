@@ -236,6 +236,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'alg', m: 'GET', p: '/v1/alg/srs/:puzzle/:set', g: 'login', zh: '我的 case 记忆调度状态', en: 'My per-case memory schedule' },
   { d: 'alg', m: 'PUT', p: '/v1/alg/srs/:puzzle/:set', g: 'login', zh: '批量写记忆调度状态', en: 'Bulk-write memory schedule' },
   { d: 'alg', m: 'PUT', p: '/v1/alg/srs/daily', g: 'login', zh: '合并每日复习量(同日取较大值)', en: 'Merge daily review counts (per-day max)' },
+  { d: 'alg', m: 'DELETE', p: '/v1/alg/srs/daily', g: 'login', zh: '清空复习日历(重置全部进度)', en: 'Clear the review calendar (full progress reset)' },
   { d: 'alg', m: 'GET', p: '/v1/progress/:algSetId', g: 'login', zh: '读取训练进度', en: 'Read training progress' },
   { d: 'alg', m: 'POST', p: '/v1/progress/:algSetId', g: 'login', zh: '保存训练进度', en: 'Save training progress' },
   { d: 'alg', m: 'POST', p: '/v1/trainer/rooms', g: 'public', zh: '建协同房间(多设备复习分工),返回房间码', en: 'Create a coop room (multi-device recap split); returns a room code' },
