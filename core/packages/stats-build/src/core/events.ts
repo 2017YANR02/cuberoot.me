@@ -123,6 +123,7 @@ export const HEADER_ZH: Record<string, string> = {
   'Podiums': '登上领奖台',
   'Rank': '排名',
   'Result': '成绩',
+  'Beaten by': '当日更快者',
   'Details': '详情',
   'Gain': '提升',
   'Days': '天数',
