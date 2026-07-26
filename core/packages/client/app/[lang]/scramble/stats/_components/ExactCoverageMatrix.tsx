@@ -133,8 +133,21 @@ export default function ExactCoverageMatrix({ stage, slot, colors, onPick }: Pro
                   return (
                     <td key={key}>
                       <div className={`exact-cov-cell is-zero${selected ? ' is-selected' : ''}`}>
-                        <span className="exact-cov-state">{tr({ zh: '仅 0 步', en: '0-move count only' })}</span>
-                        <span className="exact-cov-val">{groupDigits(cell.zero)}</span>
+                        <span className="exact-cov-state">
+                          {cell.top
+                            ? tr({ zh: '只知道两端', en: 'Both ends only' })
+                            : tr({ zh: '仅 0 步', en: '0-move count only' })}
+                        </span>
+                        <span className="exact-cov-val">
+                          {tr({ zh: '0 步 ', en: 'd=0 ' })}{groupDigits(cell.zero)}
+                        </span>
+                        {/* 最深一档:中间跑不动,但极值档的状态数是知道的 —— 这一格里最有信息量的数 */}
+                        {cell.top && (
+                          <span className="exact-cov-val is-top">
+                            {tr({ zh: `${cell.top.depth} 步 `, en: `d=${cell.top.depth} ` })}
+                            {groupDigits(cell.top.count)}
+                          </span>
+                        )}
                         <span className="exact-cov-blocked">{tr(cell.blocked)}</span>
                       </div>
                     </td>
@@ -155,10 +168,13 @@ export default function ExactCoverageMatrix({ stage, slot, colors, onPick }: Pro
           })}
         </li>
         <li>
-          <b className="is-zero">{tr({ zh: '仅 0 步', en: '0-move count only' })}</b>
+          <b className="is-zero">{tr({ zh: '只有端点', en: 'Endpoints only' })}</b>
           {tr({
-            zh: `${countKind('zero')} 项 —— 0 步状态数由容斥算出,完整分布受内存或金标所限未算`,
-            en: `${countKind('zero')} of them — the 0-move count comes from inclusion-exclusion; the full distribution is blocked by memory or by the lack of a trusted ground truth`,
+            zh: `${countKind('zero')} 项 —— 0 步状态数由容斥算出,完整分布受内存或金标所限未算;`
+              + '六色底 XCross 另有最深一档(10 步 438 个)由上游穷举搜索给出',
+            en: `${countKind('zero')} of them — the 0-move count comes from inclusion-exclusion and the full `
+              + 'distribution is blocked by memory or by the lack of a trusted ground truth; colour-neutral '
+              + 'XCross additionally has its deepest bin (438 states at 10 moves) from an upstream exhaustive search',
           })}
         </li>
         <li>
