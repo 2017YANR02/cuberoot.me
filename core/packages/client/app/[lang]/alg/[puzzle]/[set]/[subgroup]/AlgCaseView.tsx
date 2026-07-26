@@ -17,7 +17,7 @@
  */
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
-import { ArrowLeft, ExternalLink, Copy, Check, Shuffle, Pencil } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Copy, Check, Shuffle, Pencil, FlipHorizontal2 } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import type { AlgCase, AlgEntry, AlgFile, AlgPuzzle, AlgSubmission } from '@cuberoot/shared';
@@ -30,6 +30,7 @@ import CommunityAlgs from '@/components/CommunityAlgs';
 import AdminCaseEditor, { type AdminEditorState } from '@/components/AdminCaseEditor';
 import AlgAdminValidate from '@/components/AlgAdminValidate';
 import SortableAlgRow from '@/components/SortableAlgRow';
+import AlgMirrorPanel, { hasMirror } from '@/components/AlgMirrorPanel';
 import { algCaseHref, algCaseDetailHref, buildCaseSlugMap } from '@/lib/alg_case_link';
 import { primaryCaseName, displayAlgCaseName } from '@/lib/alg_case_display';
 import { displayAlg, oriAdjustSetup } from '@/lib/alg_display';
@@ -56,8 +57,13 @@ function SetupLine({ puzzle, setup }: { puzzle: string; setup: string }) {
 }
 
 /** 可播放的公式行(点一下展开 3D 动画)。非 meta 精简正文用,复用列表的 .alg-alg-* 样式。 */
-function PlayableAlgRow({ entry, puzzle, set, setup }: { entry: AlgEntry; puzzle: AlgPuzzle; set: string; setup?: string }) {
+function PlayableAlgRow({ entry, puzzle, set, setup, mirror }: {
+  entry: AlgEntry; puzzle: AlgPuzzle; set: string; setup?: string;
+  /** 有值 = 这个 set 吃镜像系统,行尾出 ⧉;`partner` 是伙伴 case 名(没建链时为 null) */
+  mirror?: { partner: string | null; self: string };
+}) {
   const [open, setOpen] = useState(false);
+  const [mirrorOpen, setMirrorOpen] = useState(false);
   const { copied, copy } = useCopy();
   const shown = formatScrambleForEvent(puzzle, displayAlg(entry.alg));
   const len = entry.stm == null ? null : stm(displayAlg(entry.alg));
@@ -73,10 +79,24 @@ function PlayableAlgRow({ entry, puzzle, set, setup }: { entry: AlgEntry; puzzle
       >
         <span className="alg-alg-text">{shown}</span>
         {len != null && <span className="alg-alg-len" title="STM">{len}</span>}
+        {mirror && (
+          <button
+            type="button"
+            className={`alg-mirror-toggle${mirrorOpen ? ' is-on' : ''}`}
+            aria-expanded={mirrorOpen}
+            onClick={(e) => { e.stopPropagation(); setMirrorOpen(o => !o); }}
+            title={tr({ zh: '镜像公式', en: 'Mirrored algs' })}
+          >
+            <FlipHorizontal2 size={14} />
+          </button>
+        )}
         <button type="button" className="alg-alg-copy-btn" onClick={(e) => { e.stopPropagation(); copy(shown); }} title="copy">
           {copied ? <Check size={14} /> : <Copy size={14} className="alg-alg-copy-icon" />}
         </button>
       </div>
+      {mirror && mirrorOpen && (
+        <AlgMirrorPanel alg={entry.alg} puzzle={puzzle} mirrorName={mirror.partner} selfName={mirror.self} />
+      )}
       {open && <AlgPlayer alg={entry.alg} puzzle={puzzle} set={set} setup={setup} />}
     </>
   );
@@ -127,6 +147,21 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
 
   const oriNames = caseObj.oriNames;
   const multiOri = !!oriNames && oriNames.length > 1;
+
+  /**
+   * 镜像伙伴(issue #40 T5)。三份镜像公式是纯重写,**不依赖建链**,所以只要这个 set
+   * 在名单里就能展开;`mirror_case_id` 落库之后才多出上面那张伙伴缩略卡。
+   * 自镜像(指向自己)不出卡 —— 点过去还是本页,只在公式行里标一句。
+   */
+  const mirror = useMemo(() => {
+    if (!hasMirror(puzzle, set)) return null;
+    const id = caseObj.mirrorCaseId;
+    if (id == null) return { partner: null, self: primary, card: null };
+    if (caseObj.id != null && id === caseObj.id) return { partner: primary, self: primary, card: null };
+    const c = data.cases.find(x => x.id === id);
+    if (!c) return { partner: null, self: primary, card: null };
+    return { partner: primaryCaseName(puzzle, set, c), self: primary, card: c };
+  }, [puzzle, set, caseObj.mirrorCaseId, caseObj.id, data, primary]);
 
   // ── admin:公式顺序可拖(第一条是主推解法)。和 case 列表页同一套 —— 乐观更新,失败回滚,
   //    落库走 reorderCaseAlgs(整条 case PUT,只动 algs)。
@@ -225,12 +260,35 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
           <div className="alg-case-detail-lean-thumb">
             <CaseThumb puzzle={puzzle} set={set} sticker={caseObj.sticker} alg={caseObj.algs[0]?.[0]?.alg || caseObj.setup || ''} setup={caseObj.setup} size={150} />
           </div>
+          {mirror?.card && (
+            <div className="alg-mirror-row">
+              <span className="alg-mirror-label">{tr({ zh: '镜像 case', en: 'Mirror case' })}</span>
+              <Link href={hrefFor(mirror.card)} className="alg-mirror-link" prefetch={false}>
+                <CaseThumb
+                  puzzle={puzzle}
+                  set={set}
+                  sticker={mirror.card.sticker}
+                  alg={mirror.card.algs[0]?.[0]?.alg || mirror.card.setup || ''}
+                  setup={mirror.card.setup}
+                  size={44}
+                />
+                <span className="alg-mirror-name">{mirror.partner}</span>
+              </Link>
+            </div>
+          )}
           {caseObj.setup && <SetupLine puzzle={puzzle} setup={caseObj.setup} />}
           <div className="alg-case-detail-lean-algs">
             {caseObj.algs.map((oriAlgs, oi) => {
               const rows = oriAlgs.map((entry, i) => {
                 // setup 必须跟着朝向走 —— 四个槽共用一条原始 setup 时,FL/BL/BR 演的是别的 case
-                const row = <PlayableAlgRow entry={entry} puzzle={puzzle} set={set} setup={oriAdjustSetup(caseObj.setup, oi)} />;
+                // 镜像只挂第 0 朝向:别的朝向本身就是它的 y 重贴,再镜一遍是同一批公式换个说法
+                const row = (
+                  <PlayableAlgRow
+                    entry={entry} puzzle={puzzle} set={set}
+                    setup={oriAdjustSetup(caseObj.setup, oi)}
+                    mirror={oi === 0 && mirror ? { partner: mirror.partner, self: mirror.self } : undefined}
+                  />
+                );
                 return dragAlgs
                   ? <SortableAlgRow key={algDragId(oi, i)} id={algDragId(oi, i)} draggable>{row}</SortableAlgRow>
                   : <Fragment key={`${oi}:${i}`}>{row}</Fragment>;

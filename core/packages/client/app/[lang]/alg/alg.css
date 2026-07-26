@@ -1625,3 +1625,93 @@ a.alg-community-author:hover {
   text-decoration: none !important;
 }
 .alg-mix-bar-go:hover { background: color-mix(in srgb, var(--toggle-on) 64%, black); }
+
+/* ── 镜像公式行内展开(issue #40 T5 的 U1;组件 components/AlgMirrorPanel.tsx) ───────── */
+.alg-mirror-toggle {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  padding: 2px 4px;
+  cursor: pointer;
+  color: var(--muted-foreground);
+  border-radius: 4px;
+}
+.alg-mirror-toggle:hover { background: color-mix(in srgb, var(--foreground) 6%, transparent); color: var(--foreground); }
+.alg-mirror-toggle.is-on { color: var(--accent); }
+
+/* 三行是拿来**互相对照**的,所以整块一个网格、三行列对齐(每行各自 flex 会让 `y²` 那行
+   的公式错位)。`justify-content: start` 让整块靠左紧凑 —— 不拿 spacer 把复制按钮顶到行尾。 */
+.alg-mirror-panel {
+  display: grid;
+  grid-template-columns: max-content max-content minmax(0, max-content) max-content;
+  justify-content: start;
+  align-items: baseline;
+  column-gap: 8px;
+  row-gap: 4px;
+  /* 缩进对齐源公式,一眼看出是它的三份镜像;不套边框(留白 + 竖线足够分层) */
+  margin: 2px 0 6px 12px;
+  padding-left: 10px;
+  border-left: 2px solid color-mix(in srgb, var(--foreground) 14%, transparent);
+  font-size: 12px;
+}
+/* 行本身不成盒 —— 四个子元素直接落进上面那张网格,三行才对得齐 */
+.alg-mirror-line { display: contents; }
+.alg-mirror-label {
+  flex: none;
+  /* CJK 单行标签禁定宽 px —— 微信内置浏览器字体偏宽会折行 */
+  white-space: nowrap;
+  color: var(--muted-foreground);
+}
+.alg-mirror-where {
+  flex: none;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--faint-foreground);
+}
+.alg-mirror-alg {
+  font-family: var(--font-mono), Consolas, monospace;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  color: var(--foreground);
+}
+@media (max-width: 480px) {
+  /* 窄屏一行塞不下「标签 + 落点 + 公式 + 复制」,每条镜像折成两行:上排注解、下排公式。
+     此时列对齐让位于放得下,所以每行各自成盒。 */
+  .alg-mirror-panel { display: flex; flex-direction: column; gap: 6px; }
+  .alg-mirror-line {
+    display: grid;
+    grid-template-columns: minmax(0, max-content) max-content;
+    grid-template-areas:
+      'label where'
+      'alg   copy';
+    justify-content: start;
+    column-gap: 8px;
+    row-gap: 2px;
+    align-items: baseline;
+  }
+  .alg-mirror-label { grid-area: label; }
+  .alg-mirror-where { grid-area: where; }
+  .alg-mirror-alg { grid-area: alg; }
+  .alg-mirror-line .alg-alg-copy-btn { grid-area: copy; }
+}
+
+/* 伙伴 case 缩略卡(case 详情页,建链之后才出现) */
+.alg-mirror-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0 8px;
+  font-size: 12px;
+}
+.alg-mirror-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: inherit;
+  text-decoration: none;
+}
+.alg-mirror-link:hover .alg-mirror-name { color: var(--accent); }
+.alg-mirror-name { font-weight: 600; }
