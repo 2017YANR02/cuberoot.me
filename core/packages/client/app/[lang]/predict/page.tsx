@@ -83,7 +83,7 @@ const FACE_NAMES: Record<CubeFace, { zh: string; en: string }> = {
 
 const LEGEND_FACES: CubeFace[] = ['U', 'D', 'F', 'B', 'L', 'R'];
 
-/** 被复刻的原站(见 /about 致谢),嵌在页面底部可以直接对着玩。 */
+/** 被复刻的原站(见 /about 致谢),页面底部给个链接。 */
 const ORIGIN_URL = 'https://app--cube-lookahead-24bc12e4.base44.app/';
 
 /** 复盘时两步之间的间隔;留一点余量,别在上一步的转动还没落地就催下一步。 */
@@ -479,28 +479,14 @@ function PredictPageInner() {
         </p>
       </section>
 
-      <section className="predict-origin">
-        <h2>{tr({ zh: '玩法原型', en: 'The original' })}</h2>
-        <p>
-          {tr({
-            zh: '本页复刻自 Dan Boharon 的 Cube Lookahead Challenge。原站嵌在下面,可以直接对着玩。',
-            en: "This page is a port of Dan Boharon's Cube Lookahead Challenge. The original is embedded below.",
-          })}
-          {' '}
-          <a href={ORIGIN_URL} target="_blank" rel="noreferrer">
-            {tr({ zh: '新标签打开', en: 'Open in a new tab' })}
-            <ExternalLink size={12} aria-hidden="true" />
-          </a>
-        </p>
-        {/* loading=lazy:它是个完整的 React 应用,滚到这儿才让它加载,别拖累本页首屏。 */}
-        <iframe
-          className="predict-origin-frame"
-          src={ORIGIN_URL}
-          title="Cube Lookahead Challenge — Dan Boharon"
-          loading="lazy"
-          sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-        />
-      </section>
+      <p className="predict-origin">
+        {tr({ zh: '复刻自 Dan Boharon 的 Cube Lookahead Challenge:', en: 'Ported from Dan Boharon’s Cube Lookahead Challenge:' })}
+        {' '}
+        <a href={ORIGIN_URL} target="_blank" rel="noreferrer">
+          {ORIGIN_URL.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+          <ExternalLink size={12} aria-hidden="true" />
+        </a>
+      </p>
     </div>
   );
 }
