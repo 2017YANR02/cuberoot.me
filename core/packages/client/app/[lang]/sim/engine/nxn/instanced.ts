@@ -116,6 +116,10 @@ export default class InstancedRenderer extends THREE.Group {
    * 打乱 / slice 动画中标注的始终是同一批实体块。只改 instance color,不动矩阵,
    * 与 strip(remove)/ 镜面 / rebuildAll 正交。 */
   private stickeringCodes: Uint8Array | null = null;
+  /** FM_DIM 下纯白压到哪。白色减半 = 灰,会跟 FM_IGNORED 那档灰撞,所以 /sim 只压到
+   * #dddddd(cubing.js PG3D 同款)。没有 ignored 灰、又要让满色白贴纸跳出来的场合
+   * (/predict 的目标贴纸)设 null,白就跟其余颜色一样老实减半。 */
+  dimWhite: string | null = "#dddddd";
 
   // toggles
   private _thickness = true;
@@ -959,8 +963,8 @@ export default class InstancedRenderer extends THREE.Group {
     if (code === FM_ORIENTED2) { this.tmpColor.set(0xfffdaa); return; }
     this.tmpColor.set(COLORS[faceLabel ?? "Gray"] ?? COLORS.Gray);
     if (code === FM_DIM) {
-      if (this.tmpColor.getHex() === 0xffffff) {
-        this.tmpColor.set(0xdddddd);
+      if (this.dimWhite !== null && this.tmpColor.getHex() === 0xffffff) {
+        this.tmpColor.set(this.dimWhite);
       } else {
         // ×0.5 要在 sRGB 分量上做(twizzle 的暗度):ColorManagement 下 set(hex)
         // 已转线性,直接 multiplyScalar 是线性域减半,视觉只暗 ~27% 看不出来。

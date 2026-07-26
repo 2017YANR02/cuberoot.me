@@ -23,16 +23,11 @@ export const STICKER_INNER = SIZE - 2 * STICKER_BORDER_WIDTH - STICKER_EDGE_WIDT
  *  唯一源:`Cubelet` 贴片几何与原核黑缝 SDF 都用它,保证原核贴片圆角 == 六色贴片圆角。 */
 export const STICKER_CORNER_RADIUS = STICKER_INNER / 8;
 
-// 标准 WCA 6 面色取自全站单一来源 lib/cube-colors;Core/Gray/Blank/High 是 sim 专属。
+// 标准 WCA 6 面色取自全站单一来源 lib/cube-colors;Core/Gray/High 是 sim 专属。
 import { CUBE_FILL } from "@/lib/cube-colors";
 export const COLORS: { [key: string]: string } = {
   ...CUBE_FILL,
   Core: "#202020",
   Gray: "#808080",
-  // 「这一格没有身份,只是个可点的空格」——/predict 只亮目标块、整盘其余全是它,
-  // 比 Gray 压得暗,亮色才跳得出来;又要明显亮过块身 Core,不然格子边界没了、点不准。
-  // 阶段遮罩那档「与本阶段无关」的灰是另一回事(#666666,在 instanced.resolveStickerColor),
-  // 那是「有颜色但不相干」,盘上大多数贴纸仍是彩的,别把两者并成一个常量。
-  Blank: "#4a4a4a",
   High: "#FF0080",
 };
