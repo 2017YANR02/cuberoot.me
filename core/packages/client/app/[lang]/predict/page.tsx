@@ -58,7 +58,7 @@ const KIND_LABELS: Record<PieceKind, { zh: string; en: string }> = {
 
 const SOURCES: ScrambleSource[] = ['random', 'f2lAlg'];
 const SOURCE_LABELS: Record<ScrambleSource, { zh: string; en: string }> = {
-  random: { zh: '随机招式', en: 'Random moves' },
+  random: { zh: '随机公式', en: 'Random moves' },
   f2lAlg: { zh: '随机 F2L 公式', en: 'Random F2L algs' },
 };
 
@@ -238,7 +238,7 @@ function PredictPageInner() {
       <header className="predict-header">
         <h1>{tr({ zh: '预判训练', en: 'Lookahead Challenge' })}</h1>
         <p>{tr({
-          zh: '在脑子里把招式做完,点出高亮贴纸最终停在哪一格。',
+          zh: '在脑子里把公式做完,点出高亮贴纸最终停在哪一格。',
           en: 'Run the moves in your head, then click the square the highlighted sticker lands on.',
         })}</p>
       </header>
@@ -276,11 +276,11 @@ function PredictPageInner() {
         )}
 
         <div className="predict-control">
-          <span>{tr({ zh: '招式', en: 'Moves' })}</span>
+          <span>{tr({ zh: '公式', en: 'Moves' })}</span>
           <LiquidGlassChips<ScrambleSource>
             items={SOURCES} value={source} onChange={(v) => void setSource(v)}
             getLabel={(s) => tr(SOURCE_LABELS[s])}
-            ariaLabel={tr({ zh: '招式来源', en: 'Move source' })}
+            ariaLabel={tr({ zh: '公式来源', en: 'Move source' })}
           />
         </div>
 
@@ -445,7 +445,7 @@ function PredictPageInner() {
       </div>
 
       <section className="predict-moves">
-        <h2>{tr({ zh: '要做的招式', en: 'Execute these moves' })}</h2>
+        <h2>{tr({ zh: '要做的公式', en: 'Execute these moves' })}</h2>
         <ol className="predict-move-list">
           {challenge?.moves.map((m, i) => {
             const face = shown[m[0] as CubeFace];
