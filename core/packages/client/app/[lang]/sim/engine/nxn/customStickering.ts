@@ -14,7 +14,7 @@
 import { FACE } from '../define';
 import { engineHomeSid } from './netIndex';
 import { parseMask, formatMask, type StickerId } from '@/lib/puzzle-image/mask-core';
-import { FM_REGULAR, FM_DIM, FM_IGNORED, type FaceletMask, type StickeringMaskFn } from './stickering';
+import { FM_REGULAR, FM_DIM, FM_IGNORED, FM_OUTLINE, type FaceletMask, type StickeringMaskFn } from './stickering';
 import type Cube from './cube';
 
 /** 阶段下拉里代表「自定义」的值(URL `?stickering=custom`)。 */
@@ -24,17 +24,20 @@ export const CUSTOM_STICKERING = 'custom';
 export type PickGrain = 'sticker' | 'piece';
 
 /**
- * 一枚贴纸的画法。预设阶段本来就在混用这三档(如 CLL = 顶层原色 + 前两层压暗),
+ * 一枚贴纸的画法。预设阶段本来就在混用前三档(如 CLL = 顶层原色 + 前两层压暗),
  * 自定义把「选中的」和「其余的」各挑一档交给用户,于是同样画得出预设那种层次。
+ * `outline` 是站内加的第四档:**不换色**,沿边缘描一圈高亮 —— 要指认「就是这一枚」
+ * 而又不能把它的颜色盖掉时用(见 engine/nxn/stickerOutline.ts)。
  * (FM_ORIENTED/2 是 twizzle 表示「只看朝向」的记号色,与点选语义无关,不开放。)
  */
-export const CUSTOM_TREATMENTS = ['regular', 'dim', 'ignored'] as const;
+export const CUSTOM_TREATMENTS = ['regular', 'dim', 'ignored', 'outline'] as const;
 export type CustomTreatment = (typeof CUSTOM_TREATMENTS)[number];
 
 const TREATMENT_CODE: Record<CustomTreatment, FaceletMask> = {
   regular: FM_REGULAR,
   dim: FM_DIM,
   ignored: FM_IGNORED,
+  outline: FM_OUTLINE,
 };
 
 /** cubelet 的 home 网格坐标(initial 索引的编码,见 netIndex.ts)。 */

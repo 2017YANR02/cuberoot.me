@@ -21,7 +21,8 @@ import CubeGroup from "./group";
 import { FACE, COLORS } from "../define";
 import { rawMaterial, rawMaterialBasic, buildRawAttributes, attachRawAttributes, setRawCoreBorder, type RawAttrs } from "./rawCore";
 import { mirrorTables } from "../mirror/mirrorGeometry";
-import { FM_DIM, FM_IGNORED, FM_ORIENTED, FM_ORIENTED2, type StickeringMaskFn } from "./stickering";
+import { FM_DIM, FM_IGNORED, FM_ORIENTED, FM_ORIENTED2, FM_OUTLINE, type StickeringMaskFn } from "./stickering";
+import { injectStickerOutline, type OutlineUniform } from "./stickerOutline";
 import { engineHomeSid } from "./netIndex";
 
 const HALF = Cubelet.SIZE / 2;
@@ -116,6 +117,16 @@ export default class InstancedRenderer extends THREE.Group {
    * 打乱 / slice 动画中标注的始终是同一批实体块。只改 instance color,不动矩阵,
    * 与 strip(remove)/ 镜面 / rebuildAll 正交。 */
   private stickeringCodes: Uint8Array | null = null;
+  /** FM_DIM 下纯白压到哪。白色减半 = 灰,会跟 FM_IGNORED 那档灰撞,所以 /sim 压到
+   *  `#dddddd`(cubing.js PG3D 同款)。代价是它跟满色白几乎分不出 —— 板子上同时有满色白
+   *  贴纸时(/predict)调成更暗的一档,让「压暗的白」一眼是暗的。 */
+  dimWhite = "#dddddd";
+  /** 描边(FM_OUTLINE)的 per-instance 开关,static / moving 共享一份(同槽序)。 */
+  private outlineFlags!: THREE.InstancedBufferAttribute;
+  private outlineColor!: OutlineUniform;
+  /** 贴纸几何的自用克隆:`aOutline` 是 per-instance 属性,而 Cubelet._STICKER / _ARROW
+   *  是全站共享的静态几何,直接挂上去会串到同页别的 renderer(/sim 与嵌入板同时活着)。 */
+  private stickerGeos = new Map<THREE.BufferGeometry, THREE.BufferGeometry>();
 
   // toggles
   private _thickness = true;
@@ -261,6 +272,8 @@ export default class InstancedRenderer extends THREE.Group {
     const isSuperOrderForSticker = this.cube.order >= __PERF_FLAGS.superOrderThreshold;
     this.stickerMaterial = isSuperOrderForSticker ? new THREE.MeshBasicMaterial() : new THREE.MeshLambertMaterial();
     this.movingStickerMaterial = isSuperOrderForSticker ? new THREE.MeshBasicMaterial() : new THREE.MeshLambertMaterial();
+    this.outlineColor = injectStickerOutline([this.stickerMaterial, this.movingStickerMaterial]);
+    this.outlineFlags = new THREE.InstancedBufferAttribute(new Float32Array(this.stickerSlots.length), 1);
     this.staticSticker = this.makeStickerMesh(this.stickerSlots.length, false);
     this.movingSticker = this.makeStickerMesh(this.stickerSlots.length, true);
     this.movingSticker.count = 0;
@@ -402,10 +415,21 @@ export default class InstancedRenderer extends THREE.Group {
     return m;
   }
 
+  /** 共享静态几何 → 本 renderer 的克隆(挂着 `aOutline`),每种基础几何只克隆一次。 */
+  private stickerGeometry(base: THREE.BufferGeometry): THREE.BufferGeometry {
+    let geo = this.stickerGeos.get(base);
+    if (!geo) {
+      geo = base.clone();
+      geo.setAttribute('aOutline', this.outlineFlags);
+      this.stickerGeos.set(base, geo);
+    }
+    return geo;
+  }
+
   private makeStickerMesh(count: number, moving: boolean): THREE.InstancedMesh {
     // 排除法测试: 仅 sticker geometry 改 PlaneGeometry,其它(material/frame)不动
     const isSuperOrder = this.cube.order >= __PERF_FLAGS.superOrderThreshold;
-    const baseGeo = isSuperOrder ? Cubelet._STICKER_LOW : Cubelet._STICKER;
+    const baseGeo = this.stickerGeometry(isSuperOrder ? Cubelet._STICKER_LOW : Cubelet._STICKER);
     const m = new THREE.InstancedMesh(
       moving ? this.staticSticker?.geometry ?? baseGeo : baseGeo,
       moving ? this.movingStickerMaterial : this.stickerMaterial,
@@ -928,8 +952,10 @@ export default class InstancedRenderer extends THREE.Group {
   set arrow(value: boolean) {
     if (value === this._arrow) return;
     this._arrow = value;
-    this.staticSticker.geometry = value ? Cubelet._ARROW : Cubelet._STICKER;
-    this.movingSticker.geometry = value ? Cubelet._ARROW : Cubelet._STICKER;
+    // 走 stickerGeometry():箭头几何也得是挂着 aOutline 的自用克隆,否则一开箭头描边就没了。
+    const geo = this.stickerGeometry(value ? Cubelet._ARROW : Cubelet._STICKER);
+    this.staticSticker.geometry = geo;
+    this.movingSticker.geometry = geo;
     this.staticHint.geometry = value ? Cubelet._HINT_ARROW : Cubelet._HINT;
     this.movingHint.geometry = value ? Cubelet._HINT_ARROW : Cubelet._HINT;
     this.cube.dirty = true;
@@ -960,7 +986,7 @@ export default class InstancedRenderer extends THREE.Group {
     this.tmpColor.set(COLORS[faceLabel ?? "Gray"] ?? COLORS.Gray);
     if (code === FM_DIM) {
       if (this.tmpColor.getHex() === 0xffffff) {
-        this.tmpColor.set(0xdddddd);
+        this.tmpColor.set(this.dimWhite);
       } else {
         // ×0.5 要在 sRGB 分量上做(twizzle 的暗度):ColorManagement 下 set(hex)
         // 已转线性,直接 multiplyScalar 是线性域减半,视觉只暗 ~27% 看不出来。
@@ -1018,7 +1044,19 @@ export default class InstancedRenderer extends THREE.Group {
       }
       this.stickeringCodes = codes;
     }
+    // 描边不是颜色,走 shader 的 per-instance 开关(见 stickerOutline.ts)。
+    const flags = this.outlineFlags.array as Float32Array;
+    for (let i = 0; i < flags.length; i++) {
+      flags[i] = this.stickeringCodes?.[i] === FM_OUTLINE ? 1 : 0;
+    }
+    this.outlineFlags.needsUpdate = true;
     this.refreshStickerColors();
+  }
+
+  /** 描边色(FM_OUTLINE 那一档)。默认 define.COLORS.High。 */
+  setOutlineColor(hex: string): void {
+    this.outlineColor.value.set(hex);
+    this.cube.dirty = true;
   }
 
   /** 用户改了 6 面色:写 COLORS map + 重刷所有 sticker / hint instance color。
@@ -1144,5 +1182,8 @@ export default class InstancedRenderer extends THREE.Group {
     this.movingHintMaterial.dispose();
     this._rawFrameGeo?.dispose();
     this._rawInnerGeo?.dispose();
+    // 贴纸几何是自用克隆(挂 aOutline),共享的那份不能碰,这份必须自己收。
+    for (const geo of this.stickerGeos.values()) geo.dispose();
+    this.stickerGeos.clear();
   }
 }
