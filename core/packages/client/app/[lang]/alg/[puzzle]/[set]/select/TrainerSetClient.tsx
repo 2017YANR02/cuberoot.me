@@ -18,6 +18,7 @@ import { caseKey } from '@/lib/trainer-case-key';
 import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
 import { displayZbllToken } from '@/lib/alg_case_display';
 import { CaseTreePicker } from '@/app/[lang]/alg/_trainer/trainer-components';
+import MixSetPicker from '@/app/[lang]/alg/_trainer/MixSetPicker';
 import SetProgressStrip from '@/app/[lang]/alg/_trainer/SetProgressStrip';
 import { resolveAlgPuzzle } from '@/app/[lang]/alg/_trainer/events';
 import { useAlgSrs } from '@/lib/alg-srs-store';
@@ -64,13 +65,17 @@ export default function TrainerSetClient() {
     [isMix, puzzle, setsParam],
   );
   const mixKey = mixSets.join(',');
-  const meta = puzzle
-    ? (isMix
-        ? (mixSets.length >= MIX_MIN_SETS
-            ? { zh: mixTitle(puzzle, mixSets), en: mixTitle(puzzle, mixSets) }
-            : undefined)
-        : getAlgSetMeta(puzzle, setSlug))
-    : undefined;
+  // 必须 memo:合练的 meta 是现造的字面量,身份每次 render 都变,而它进了装载 effect 的
+  // 依赖 —— 不 memo 就是「effect → set state → 新 meta → effect」的死循环。
+  const meta = useMemo(() => (
+    puzzle
+      ? (isMix
+          ? (mixSets.length >= MIX_MIN_SETS
+              ? { zh: mixTitle(puzzle, mixSets), en: mixTitle(puzzle, mixSets) }
+              : undefined)
+          : getAlgSetMeta(puzzle, setSlug))
+      : undefined
+  ), [puzzle, isMix, mixSets, setSlug]);
 
   const cases = useTrainerStore(s => s.cases);
   const selected = useTrainerStore(s => s.selected);
@@ -142,14 +147,20 @@ export default function TrainerSetClient() {
   }, [scopedCases, marks, markFilter]);
 
   if (!puzzle || !meta) {
+    // 合练成员不够:直接给选集器(SSG 壳读不到 query,挂载前先「加载中」免闪)
+    if (puzzle && isMix) {
+      return (
+        <div className="trainer-root">
+          {mounted
+            ? <MixSetPicker puzzle={puzzle} puzzleParam={puzzleParam} leaf="select" initial={mixSets} />
+            : <div className="trainer-landing-empty">{tr({ zh: '加载中…', en: 'Loading…' })}</div>}
+        </div>
+      );
+    }
     return (
       <div className="trainer-root">
         <div className="trainer-landing-empty">
-          {isMix
-            ? (mounted
-                ? tr({ zh: '合练至少要选两套公式集', en: 'A combined drill needs at least two sets' })
-                : tr({ zh: '加载中…', en: 'Loading…' }))
-            : `${tr({ zh: '未知公式集', en: 'Unknown set' })}: ${puzzleParam}/${setSlug}`}
+          {tr({ zh: '未知公式集', en: 'Unknown set' })}: {puzzleParam}/{setSlug}
         </div>
       </div>
     );
