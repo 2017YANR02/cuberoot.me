@@ -1759,8 +1759,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'AlgCaseMetaModal',
     import: "import AlgCaseMetaModal from '@/components/AlgCaseMetaModal';",
     category: 'more',
-    zh: `公式 case 的富元数据弹窗:缩略图 + 公式、编号 / 子集 / OLL / 角换 / 叠加类型 / 生成元 / 对称性 / 打乱 / 四套最优解 / COEP,外加镜像、逆、镜像逆三张可点的 case 图(点了直接换 case)。只有从站长 1LLL 表导入的 case(1lll / zbll / pll / ell)有 meta。`,
-    en: `Rich metadata modal for an alg case: thumbnail plus algs, number, subset, OLL, CP, composite type, generators, symmetry, scramble, four optimal-length metrics, COEP, and clickable thumbnails of the mirror / inverse / inverse-mirror case. Only cases imported from the 1LLL sheet carry meta.`,
+    zh: `公式 case 的富元数据弹窗:缩略图 + 公式、编号 / 子集 / OLL / 角换 / 叠加类型 / 生成元 / 对称性 / 打乱 / 四套最优解 / COEP,外加镜像、逆、镜像逆的可点 case 图(点了直接换 case;两个关系指向同一个 case 时合成一张,标签并列)。只有从站长 1LLL 表导入的 case(1lll / zbll / pll / ell)有 meta。`,
+    en: `Rich metadata modal for an alg case: thumbnail plus algs, number, subset, OLL, CP, composite type, generators, symmetry, scramble, four optimal-length metrics, COEP, and clickable thumbnails of the mirror / inverse / inverse-mirror case (two relations pointing at the same case share one thumbnail). Only cases imported from the 1LLL sheet carry meta.`,
     note: { zh: `需传 caseObj / puzzle / set / byNo(meta.no → case,用于关联跳转)/ onClose / onJump。「在列表中打开」跳 \`#case-<id>\` 锚点,由 AlgCategoryView 滚过去并高亮。`, en: `Takes caseObj, puzzle, set, byNo (meta.no → case, for the related-case links), onClose and onJump. "Open in list" targets a #case-<id> anchor that AlgCategoryView scrolls to and flashes.` },
   },
   {
