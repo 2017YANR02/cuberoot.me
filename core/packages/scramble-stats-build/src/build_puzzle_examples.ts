@@ -52,6 +52,7 @@ const PUZZLES: PuzzleSpec[] = [
   { key: 'pyraminx', event: 'pyram', metricsCsv: { file: 'pyraminx_metrics.csv', cols: ['v', 'cube'] } },
   { key: 'skewb', event: 'skewb' },
   { key: 'sq1', event: 'sq1', exact: true }, // 精确档:bins=wca_exact、binsAlt=slash(opt_scramble 驱动「原始/最优」)
+  { key: 'clock', event: 'clock' }, // analyzer = src/clock_analyzer.mts(TS),带 soln 列 → 有「原始/最优」切换
 ];
 
 type Sample = [string, string, string?]; // [id, scramble, optScramble?]
@@ -64,11 +65,35 @@ function invertAlg(s: string): string {
     .join(' ');
 }
 
+// 魔表记号(`UR3+` / `ALL5-` / `y2`)不吃上面那套撇号规则 → 走求解器自己的取逆算子当单一源。
+// 跨包动态 import(与 build_puzzle_sampled_dist / clock_analyzer 同一套 default-interop:client
+// 的 .ts 在无 "type":"module" 的包里被 tsx 当 CJS 加载,具名 import 不绑定)。
+const CLOCK_SOLVER_REL = '../../client/lib/clock-solver';
+interface ClockAlgOps {
+  parseClockMoves(alg: string): unknown[];
+  invertClockMoves(moves: readonly unknown[]): unknown[];
+  clockMovesToString(moves: readonly unknown[]): string;
+}
+async function clockInverter(): Promise<(s: string) => string> {
+  const m = (await import(CLOCK_SOLVER_REL)) as { default?: ClockAlgOps } & ClockAlgOps;
+  const c = (m.default && typeof m.default === 'object' ? m.default : m) as ClockAlgOps;
+  // 阿贝尔群 + 规范形:取逆 = 每步幅度取反,顺序与那个 y2 的位置都不用动。
+  return (s: string) => c.clockMovesToString(c.invertClockMoves(c.parseClockMoves(s)));
+}
+
+/** 该 puzzle 的「解法 → 最优等价打乱」反演器(魔表另一套记号)。 */
+async function inverterFor(key: string): Promise<(s: string) => string> {
+  return key === 'clock' ? await clockInverter() : invertAlg;
+}
+
 // 流式读 <key>.csv 的 soln 列(analyzer 开 PUZZLE_EMIT_SOLN 时产),仅取被采样 id,
 // 反演为「最优等价打乱」。无 soln 列(如 sq1 近最优口径)→ 返回空表,前端自动只显原始。
-async function loadOptScrambles(csvPath: string, wantedIds: Set<string>): Promise<Map<string, string>> {
+async function loadOptScrambles(
+  csvPath: string, wantedIds: Set<string>, puzzleKey: string,
+): Promise<Map<string, string>> {
   const out = new Map<string, string>();
   if (wantedIds.size === 0) return out;
+  const invert = await inverterFor(puzzleKey);
   const rl = readline.createInterface({ input: fs.createReadStream(csvPath, 'utf-8'), crlfDelay: Infinity });
   let idIdx = -1, solnIdx = -1, headerDone = false;
   for await (const line of rl) {
@@ -85,7 +110,7 @@ async function loadOptScrambles(csvPath: string, wantedIds: Set<string>): Promis
     const id = c[idIdx];
     if (!wantedIds.has(id)) continue;
     const soln = c[solnIdx];
-    if (soln && soln !== '-') out.set(id, invertAlg(soln));
+    if (soln && soln !== '-') out.set(id, invert(soln));
   }
   return out;
 }
@@ -444,7 +469,7 @@ async function main() {
         }
       }
       // 最优等价打乱 = <key>.csv 的 soln 反演(状态属性,与口径无关)→ 保住示例卡「原始/最优」切换。
-      const optOf = await loadOptScrambles(path.join(dataRoot, spec.key, `${spec.key}.csv`), wantedIds);
+      const optOf = await loadOptScrambles(path.join(dataRoot, spec.key, `${spec.key}.csv`), wantedIds, spec.key);
       // 全量 id(countryDist 按国聚合用)= 各口径全量桶并集(所有口径同一 id 集)。
       const allIds = new Set<string>();
       for (const col of spec.metricsCsv.cols) for (const ids of perMetricFull[col].values()) for (const id of ids) allIds.add(id);
@@ -542,7 +567,7 @@ async function main() {
     }
 
     // 2b. near 档最优等价打乱(invert soln);精确档用 bucketExactSq1 已转标准记号的 exactOpt。
-    const nearOpt = spec.exact ? new Map<string, string>() : await loadOptScrambles(csvPath, wantedIds);
+    const nearOpt = spec.exact ? new Map<string, string>() : await loadOptScrambles(csvPath, wantedIds, spec.key);
 
     // 3. 组装 bins(丢弃 txt 里缺失打乱的 id,正常不应发生)。原始 + 最优都标准记号,前端统一 compact 成简写。
     const assemble = (sampled: Map<number, string[]>, optMap: Map<string, string>): Record<string, Sample[]> => {

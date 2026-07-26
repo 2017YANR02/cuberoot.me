@@ -139,8 +139,11 @@ pnpm --filter @cuberoot/client test:solvers clock
 CLOCK_DIST12_FULL=1 pnpm --filter @cuberoot/client test:solvers clock
 ```
 
-分布表本身的三层核验(恒等式 / d ≤ 3 精确枚举 / 抽样)在
-`core/packages/client/scripts/clock/verify_distribution.mts`。
+分布表本身的三层核验(恒等式 / 低档精确枚举 / 抽样)在
+`core/packages/client/scripts/clock/verify_distribution.mts`。**d ≤ 4 各档已用本仓库自己的招式模型
+独立重算并逐档吻合**(`--depth 4`,4.01 亿元组、约 3.2 GB、数分钟;`317,141,342` 那一档即此)。
+表格本身进了 `client/lib/clock-solver.ts` 的 `CLOCK_LENGTH_DISTRIBUTION`,常数级恒等式护栏在
+`tests/clock_distribution.test.ts`(CI 常跑),消费方是 `/scramble/stats?event=clock` 的难度曲线。
 
 ---
 

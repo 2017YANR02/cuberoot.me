@@ -52,11 +52,13 @@ $PkgDir      = $PSScriptRoot
 #          不在 $PUZZLE 注册表(无全表查表型 analyzer); 由下方「SQ1 块」增量调 inject_sq1_{wca,slash}_exact.ps1
 #          (需本机 13GB sq1_wca_jsqfull.bin; 缺表则告警跳过, 分布留旧值)。build_puzzle_dist 读 exact CSV。
 #          近最优(twophase)2026-06-18 退役, 代码仍在 solver/src/sq1_twophase.rs 作对照。
-#   clock = 暂无 solver, 未注册; 接入时一并加 soln 列。
+#   clock = 精确最优解, 带 soln 列。analyzer 是 **TS** 不是 Rust exe(魔表求解器本就是纯 TS,
+#           client/lib/clock-solver.ts,可证最优 ~10ms/态): 注册表用 tsx 字段代替 exe。
 $PUZZLE = @{
   '222'    = @{ event = '222';   exe = 'cube222_analyzer.exe' }
   pyraminx = @{ event = 'pyram'; exe = 'pyraminx_analyzer.exe' }
   skewb    = @{ event = 'skewb'; exe = 'skewb_analyzer.exe' }
+  clock    = @{ event = 'clock'; tsx = 'src/clock_analyzer.mts' }
 }
 
 # sq1 不在 $PUZZLE 注册表(走精确 inject 脚本, 见下方 SQ1 块), 但默认 / 一条龙都要带它。
@@ -151,8 +153,17 @@ if (-not $BuildOnly) {
 
     # ---- 2. 增量解算 (txt - csv 的 id 差集, 分块 analyzer + 校验追加) ----
     Step "[$name] 解算补缺"
-    $exe = Join-Path $SolverRel $spec.exe
-    if (-not (Test-Path $exe)) { throw "analyzer 不存在: $exe (先 cargo build --release --bin $($spec.exe -replace '\.exe$',''))" }
+    # analyzer 两种形态, 同一套 CLI 契约(stdin=块文件路径, 产 <块名>_<key>.csv):
+    #   exe = Rust 全表查表型 (solver/target/release/*_analyzer.exe)
+    #   tsx = TS 求解器 (魔表: 求解器本就是纯 TS, 没有 Rust 版可编)
+    if ($spec.tsx) {
+      $script = Join-Path $PkgDir $spec.tsx
+      if (-not (Test-Path $script)) { throw "analyzer 脚本不存在: $script" }
+      $exe = $null
+    } else {
+      $exe = Join-Path $SolverRel $spec.exe
+      if (-not (Test-Path $exe)) { throw "analyzer 不存在: $exe (先 cargo build --release --bin $($spec.exe -replace '\.exe$',''))" }
+    }
     $done = Load-Ids $csv $true
     $todo = [Collections.Generic.List[string]]::new()
     foreach ($line in [IO.File]::ReadLines($txt)) {
@@ -167,7 +178,12 @@ if (-not $BuildOnly) {
       $n = [Math]::Min($ChunkSize, $todo.Count - $i)
       [IO.File]::WriteAllLines($chunkIn, $todo.GetRange($i, $n))
       if (Test-Path $chunkOut) { Remove-Item $chunkOut -Force }
-      $chunkIn | & $exe 2>&1 | Where-Object { $_ -notmatch '^\[PROG\]' } | Out-Null
+      if ($exe) {
+        $chunkIn | & $exe 2>&1 | Where-Object { $_ -notmatch '^\[PROG\]' } | Out-Null
+      } else {
+        # tsx 型: 与 exe 同契约(stdin 一行 = 块路径)。CWD 必须是本包, 相对 import 才对得上。
+        $chunkIn | & pnpm --dir $PkgDir exec tsx $spec.tsx 2>&1 | Where-Object { $_ -notmatch '^\[PROG\]' } | Out-Null
+      }
       if ($LASTEXITCODE -ne 0) { throw "[$name] analyzer 失败 (块 @$i)" }
       $outRows = 0; foreach($l in [IO.File]::ReadLines($chunkOut)){ $outRows++ }
       if ($outRows -ne $n + 1) { throw "[$name] 块 @$i 行数不符: 期望 $($n+1)(含 header) 实得 $outRows" }

@@ -132,7 +132,10 @@ console.log(`  枚举完成 ${fmt(n)} 个元组,用时 ${((Date.now() - t0) / 10
 let allMatch = true;
 let prevDistinct = 0n;
 for (let d = 0; d <= MAX_DEPTH; d++) {
-  const slice = keys.slice(0, cut[d]);
+  // subarray 是**视图**不是拷贝(`--depth 4` 下 slice 会再要一份 3.2 GB,本机 4.9 GB 空闲装不下)。
+  // 就地排序前缀是安全的:各档前缀彼此嵌套,排序只在前缀内部换位,下一个更长前缀的元素集合
+  // 作为多重集不变 —— 我们只数各前缀里的相异值,顺序无所谓。
+  const slice = keys.subarray(0, cut[d]);
   slice.sort();
   let distinct = 0;
   for (let i = 0; i < slice.length; i++) if (i === 0 || slice[i] !== slice[i - 1]) distinct++;

@@ -149,7 +149,8 @@ export default function DiscreteHistogram({ series, yMode = 'percent', chartMode
       ? `${(v * 100).toFixed(v < 0.01 ? 2 : v < 0.1 ? 1 : 0)}%`
       : v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(Math.round(v));
 
-  const fmtCount = (n: number) => n.toLocaleString();
+  // 柱顶计数:千万级以上改紧凑写法,否则 15 位数字(魔表全空间精确计数)会横向撞成一片。
+  const fmtCount = (n: number) => (n >= 1e7 ? compactNum(n) : n.toLocaleString());
   const fmtPct = (p: number) => {
     if (p === 0) return '0%';
     // 概率 < 1% 时改写成 1/N 频率(分子恒为 1),取 2 位有效数字避免长尾噪声;
@@ -431,9 +432,19 @@ function needsStroke(colors: string[]): boolean {
 }
 
 // 紧凑数字:1000→1k、960000→960k、1500000→1.5M,用于窄柱上的 1/N 标签。
+// 必须一路带到 P(10^15):魔表的分布是**全空间精确计数**(12^14 ≈ 1.28e15),只到 M 会写出
+// 「1/1300000000000M」这种东西。
+// [进位, 后缀, 取整阈值](阈值沿用原来的 k/M 口径,不动既有页面的写法)
+const COMPACT_UNITS: readonly [number, string, number][] = [
+  [1e15, 'P', 10], [1e12, 'T', 10], [1e9, 'B', 10], [1e6, 'M', 10], [1e3, 'k', 100],
+];
 function compactNum(n: number): string {
-  if (n >= 1e6) { const m = n / 1e6; return `${m >= 10 ? Math.round(m) : m.toFixed(1).replace(/\.0$/, '')}M`; }
-  if (n >= 1e3) { const k = n / 1e3; return `${k >= 100 ? Math.round(k) : k.toFixed(1).replace(/\.0$/, '')}k`; }
+  for (const [scale, suffix, roundAt] of COMPACT_UNITS) {
+    if (n >= scale) {
+      const v = n / scale;
+      return `${v >= roundAt ? Math.round(v) : v.toFixed(1).replace(/\.0$/, '')}${suffix}`;
+    }
+  }
   return n.toLocaleString();
 }
 
