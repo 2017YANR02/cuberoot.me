@@ -273,9 +273,10 @@
 /* 标记条自成一行、整体居中(卡片标题下方) */
 .trainer-mark-row { display: flex; justify-content: center; margin-bottom: 10px; }
 /* 每行 2 个(圆点+文字),2 列网格 */
+/* 按钮数量随「过了就算掌握」变(3 或 4),用 flex 自然折行 —— 定死 2 列会在 3 个时留个空洞 */
 .trainer-mark-bar {
-  display: grid;
-  grid-template-columns: repeat(2, max-content);
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px 16px;
 }
