@@ -7,9 +7,11 @@
  *   - `paintMode` + `dragEmpty='view'`:任何拖拽都只转视角,绝不拧层;单击照旧派
  *     `taps`,于是「点某枚贴纸」就有了。答案可能落在背面,所以视角必须能转到底
  *     (两轴无界累加,不钳 pitch),再给一个复位按钮。
- *   - 不开 /sim 那套方位字母:这里六个中心是上了色的,颜色比字母更快读出方位,而
- *     字母浮在面正上方会正好压住贴纸。
- *   - 颜色逐贴纸给:`labels[i]` 是 facelet i 的引擎色标签('Blank' = 压暗的空格)。
+ *   - 不常驻方位字母(只在转视角时由引擎自己淡入淡出):整盘颜色都画出来了,读方位
+ *     靠颜色就够,常驻的字母浮在面正上方反而会压住贴纸。
+ *   - 颜色逐贴纸给:`labels[i]` 是 facelet i 的引擎色标签(整盘真实颜色)。
+ *   - 「只亮目标块」不靠改色,靠 /sim 那套阶段遮罩:`setStickering` 把 `bright` 之外
+ *     的贴纸压成 FM_DIM(各自颜色减半),遮罩定义在还原帧上 → 复盘转动时高亮跟着块走。
  *   - 复盘动画不另算盘面:题板一律「起点上色 + 真转招式」,让引擎自己把贴纸转过去
  *     (`twister.push` 逐步动画 / `setup` 瞬时跳转)。`cube.stick` 按**原始位置**寻址,
  *     所以每次改色必须先 `setup('')` 复位几何,再按当前步重放回去。
@@ -28,7 +30,9 @@ import { yawSign } from '@/app/[lang]/sim/engine/viewControls';
 import { timing } from '@/app/[lang]/sim/engine/tweenTiming';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { tr } from '@/i18n/tr';
-import { BLANK } from '../_lib/challenge';
+import { engineHomeSid } from '@/app/[lang]/sim/engine/nxn/netIndex';
+import { customMaskFn } from '@/app/[lang]/sim/engine/nxn/customStickering';
+import { formatMask, type StickerId } from '@/lib/puzzle-image/mask-core';
 
 /** 引擎自己的初始视角(U 上 F 前 R 右),复位就回这里。 */
 const DEFAULT_ROT_X = Math.PI / 6;
@@ -39,6 +43,7 @@ const ORBIT_K = 0.01;
 const PLAY_FRAMES = 16;
 
 const NO_MOVES: readonly string[] = [];
+const NO_BRIGHT: readonly number[] = [];
 
 /**
  * 「转到看得见某一面」的视角(pitch, yaw)。
@@ -113,8 +118,10 @@ const afterFirstPaint = () => new Promise<void>((resolve) => {
 });
 
 export interface PredictBoardProps {
-  /** 54 个引擎色标签,facelet(URFDLB)序;'Blank' = 压暗的空格(非目标块)。 */
+  /** 54 个引擎色标签,facelet(URFDLB)序 —— 整盘的真实颜色,空串 = 用块自己的色。 */
   labels: readonly string[];
+  /** 保持满色的 facelet(目标块整块);其余一律压暗。空 = 不压暗(整盘原色)。 */
+  bright?: readonly number[];
   onSticker: (faceletIndex: number) => void;
   /** 要露给玩家看的面(U/D/L/R/F/B),视角会转到尽量同时看见它们;`focusNonce` 变一次转一次。 */
   focusFaces?: readonly string[];
@@ -126,7 +133,7 @@ export interface PredictBoardProps {
 }
 
 export default function PredictBoard({
-  labels, onSticker, focusFaces, focusNonce = 0, moves = NO_MOVES, step = 0,
+  labels, bright = NO_BRIGHT, onSticker, focusFaces, focusNonce = 0, moves = NO_MOVES, step = 0,
 }: PredictBoardProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mountRef = useRef<SimMount | null>(null);
@@ -231,13 +238,33 @@ export default function PredictBoard({
       // stick 按原始位置寻址,转过之后再上色会贴到别的块上 —— 先复位再上色。
       cube.twister.setup('');
       for (let i = 0; i < faceletMap.length; i++) {
-        cube.stick(faceletMap[i].cube, faceletMap[i].face, labels[i] ?? BLANK);
+        cube.stick(faceletMap[i].cube, faceletMap[i].face, labels[i] ?? '');
       }
       const done = moves.slice(0, step).join(' ');
       if (done) cube.twister.setup(done);
     }
     mount.invalidate();
   }, [labels, step, moves, ready, faceletMap]);
+
+  /**
+   * 只亮目标块 = /sim 的阶段遮罩(`setStickering`),不是另一套改色:遮罩键在还原帧的
+   * 贴纸上,复盘转动时高亮自己跟着块跑;上色那条路(`stick`)照旧给整盘真实颜色,
+   * 两者正交,所以这个 effect 不碰几何、也不会吃掉动画。
+   *
+   * `dimWhite = null`:/sim 把压暗的白特判成 #dddddd(免得跟 ignored 灰撞),这里没有
+   * ignored 灰,却有满色白贴纸要跳出来 —— #dddddd 跟 #ffffff 根本分不出,必须老实减半。
+   */
+  useEffect(() => {
+    const mount = mountRef.current;
+    if (!mount || !ready) return;
+    const cube = mount.world.cube as Cube;
+    cube.instancedRenderer.dimWhite = null;
+    const sids = bright.map((f) => engineHomeSid(faceletMap[f].cube, faceletMap[f].face, 3) as StickerId);
+    cube.instancedRenderer.setStickering(
+      sids.length === 0 ? null : customMaskFn(3, formatMask(new Set(sids)), 'regular', 'dim'),
+    );
+    mount.invalidate();
+  }, [bright, ready, faceletMap]);
 
   const setView = (pitch: number, yaw: number) => {
     const world = mountRef.current?.world;

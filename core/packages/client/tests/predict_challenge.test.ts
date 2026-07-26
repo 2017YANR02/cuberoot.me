@@ -85,21 +85,36 @@ describe('generateChallenge', () => {
     expect(generateChallenge(opts({ moveCount: 7 })).moves).toHaveLength(7);
   });
 
-  it('起始盘面:6 个中心恒亮,其余只有目标块的贴纸有色', () => {
+  // baseline 改过一次(2026-07-26):题板从「灰底 + 只有目标块有色」改成「整盘真实颜色,
+  // 非目标格压暗」。于是 startColors 接管整盘颜色,startFacelets 退化成纯高亮清单,
+  // 中心也不再恒亮 —— 颜色都在了,中心满色只会跟目标抢眼。
+  it('起始盘面满色的只有目标块,中心不再特殊', () => {
     const c = generateChallenge(opts({ kind: 'corner' }));
-    for (const [i, face] of [4, 13, 22, 31, 40, 49].entries()) {
-      expect(c.startFacelets[face]).toBe(FACE_LETTERS[i]);
-    }
     const colored = [...c.startFacelets].filter((ch) => ch !== '.').length;
-    expect(colored).toBe(6 + 3); // 中心 6 + 一个角块 3
+    expect(colored).toBe(3); // 一个角块 3 枚,不含中心
+    for (const face of [4, 13, 22, 31, 40, 49]) {
+      if (c.targets.every((t) => t.startFacelet !== face)) expect(c.startFacelets[face]).toBe('.');
+    }
     expect(c.startFacelets[c.targets[0].startFacelet]).toBe(FACE_LETTERS[c.targets[0].colorFace]);
   });
 
-  it('起始盘面画的就是目标块整块 —— 题板靠「起点上色 + 真转招式」放动画,少一枚贴纸就断链', () => {
+  it('startColors = 起点盘面的真实颜色,且与高亮清单逐格一致', () => {
+    for (let seed = 1; seed <= 30; seed++) {
+      const c = generateChallenge(opts({ kind: 'pair', random: seeded(seed) }));
+      // 与自己的 placement 独立重算一遍(题板就是照这份上色的)
+      expect(c.startColors).toBe(toFacelets(applyAlg(solvedCube(), c.placement.join(' '))).toUpperCase());
+      expect(c.startColors).toHaveLength(54);
+      for (let i = 0; i < 54; i++) {
+        if (c.startFacelets[i] !== '.') expect(c.startColors[i]).toBe(c.startFacelets[i]);
+      }
+    }
+  });
+
+  it('高亮的就是目标块整块 —— 题板靠「起点上色 + 真做那串公式」放动画,少一枚贴纸就断链', () => {
     for (let seed = 1; seed <= 30; seed++) {
       for (const [kind, stickers] of [['edge', 2], ['corner', 3], ['pair', 5]] as [PieceKind, number][]) {
         const c = generateChallenge(opts({ kind, random: seeded(seed) }));
-        expect([...c.startFacelets].filter((ch) => ch !== '.').length).toBe(6 + stickers);
+        expect([...c.startFacelets].filter((ch) => ch !== '.').length).toBe(stickers);
         for (const t of c.targets) {
           expect(c.startFacelets[t.startFacelet]).toBe(FACE_LETTERS[t.colorFace]);
         }

@@ -15,7 +15,7 @@
  * 改变答案,只改变屏幕上的颜色和题面里念的颜色名。
  */
 import {
-  solvedCube, applyAlg, cornerFaceletIdx, edgeFaceletIdx,
+  solvedCube, applyAlg, toFacelets, cornerFaceletIdx, edgeFaceletIdx,
   CORNER_COLORS, EDGE_COLORS, type Cube333,
 } from '@/lib/lsll/cube333';
 import type { CubeFace } from '@/lib/cube-colors';
@@ -24,11 +24,6 @@ import { F2L_ALGS } from './f2l_algs';
 
 /** 本位面序号 → 面字母(与 cube333 的 FACE_CH 同序)。 */
 export const FACE_LETTERS: readonly CubeFace[] = ['U', 'R', 'F', 'D', 'L', 'B'];
-/**
- * 非目标格的引擎色标签(`engine/define.ts` 的 `COLORS.Blank`,压暗的空格)。
- * 题板与出题两边都用它,别一边写 'Blank' 一边写 'Gray'(那样只暗一半)。
- */
-export const BLANK = 'Blank';
 /** 对面。 */
 const OPPOSITE = [3, 4, 5, 0, 1, 2];
 
@@ -68,8 +63,13 @@ export interface PredictChallenge {
   placement: string[];
   targets: PredictTarget[];
   /**
-   * 起始盘面的 54 格显示内容:面字母 = 按本位面上色,'.' = 灰。
-   * 中心块永远上色(当参照系),其余只有目标块的贴纸上色。
+   * 起始盘面 54 格的真实颜色(面字母)。整盘都画出来,只是非目标格压暗
+   * (/sim 阶段遮罩那档 dim:保留各自颜色减半),所以这里必须是全色而非「灰底」。
+   */
+  startColors: string;
+  /**
+   * 哪几格满色 = 目标块整块的贴纸,其余 '.'(压暗)。
+   * **不含中心**:整盘颜色都在了,中心不再需要当参照系,它满色只会跟目标抢眼。
    */
   startFacelets: string;
 }
@@ -121,13 +121,9 @@ function pieceFacelets(state: Cube333, kind: 'corner' | 'edge', piece: number): 
 /** facelet 序号 → 它在哪个面(URFDLB 分段,与 FACE_LETTERS 同序)。 */
 export const faceletFace = (facelet: number): number => Math.floor(facelet / 9);
 
-/** 中心恒亮的 6 个 facelet —— 全灰的魔方上没有它们就读不出朝向。 */
-const CENTERS = [4, 13, 22, 31, 40, 49];
-
-/** 把目标块整块画到它在 `state` 下的位置上,其余留灰。 */
+/** 目标块整块的贴纸 → 面字母(= 满色那几格),其余 '.'(压暗)。 */
 function paintPieces(state: Cube333, picks: readonly { kind: 'corner' | 'edge'; piece: number }[]): string {
   const out = Array<string>(54).fill('.');
-  CENTERS.forEach((idx, face) => { out[idx] = FACE_LETTERS[face]; });
   for (const p of picks) {
     const colors = p.kind === 'corner' ? cornerColorsOf(p.piece) : edgeColorsOf(p.piece);
     for (const [k, f] of pieceFacelets(state, p.kind, p.piece).entries()) {
@@ -272,5 +268,12 @@ export function generateChallenge(opts: PredictOptions): PredictChallenge {
     };
   });
 
-  return { moves, placement, targets, startFacelets: paintPieces(start, picks) };
+  return {
+    moves,
+    placement,
+    targets,
+    // toFacelets 出的是小写(cube333 内部记号),这里统一成 CubeFace 的大写面字母。
+    startColors: toFacelets(start).toUpperCase(),
+    startFacelets: paintPieces(start, picks),
+  };
 }
