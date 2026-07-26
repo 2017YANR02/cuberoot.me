@@ -124,9 +124,10 @@ export class KeatonedRecords extends GroupedStatistic {
 
   transform(rows: RowDataPacket[]): [string, unknown[][]][] {
     return EVENTS_ENTRIES.map(([eventId, eventName]) => {
+      // 倒序:最近发生的排在最前(同日多条保持 queryResults 的次序,Array#sort 稳定)。
       const hits = rows
         .filter(r => r['event_id'] === eventId)
-        .sort((a, b) => ymd(a['date']).localeCompare(ymd(b['date'])));
+        .sort((a, b) => ymd(b['date']).localeCompare(ymd(a['date'])));
 
       const results = hits.map(r => {
         const isAvg = Number(r['is_avg']) === 1;
