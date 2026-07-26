@@ -348,13 +348,20 @@ describe.skipIf(!dist12Lines)('clock 距离 12 档 vs Rokicki 的 dist12.txt', (
     }
   });
 
-  // 默认等距抽 300 条(约 5s);CLOCK_DIST12_FULL=1 跑全部 39,248 条(约 11 分钟)。
+  // d=12 是这个求解器的**最坏情形**:两侧迭代加深都要把 cap 抬到顶才收敛。实测 70.9 ms/个,
+  // 是随机态均值(12.5 ms)的 5.7 倍 → 全量 39,248 条约 46 分钟。
+  // 默认等距抽 300 条(约 21s);CLOCK_DIST12_FULL=1 跑全量。
+  //
+  // 全量拆成 8 段各自一个 it:同步 for 循环打断不了 vitest 的超时计时器,单个 it 一旦超时只会
+  // 在**跑完之后**才被判失败(白跑一场,2026-07-25 实测 40 分钟换来一条 timeout)。分段后每段
+  // 约 6 分钟,预算稳稳够,进度也逐段可见。
   const full = process.env.CLOCK_DIST12_FULL === '1';
-  it(`每个位置的最优解恰为 12 步(${full ? '全量 39,248' : '抽样 300'})`, () => {
+  const CHUNKS = full ? 8 : 1;
+
+  function checkRange(from: number, to: number, stride: number): number {
     const lines = dist12Lines!;
-    const stride = full ? 1 : Math.floor(lines.length / 300);
     let checked = 0;
-    for (let i = 0; i < lines.length; i += stride) {
+    for (let i = from; i < to; i += stride) {
       const state = dist12StateFromLine(lines[i]);
       expect(invalidClockCorner(state.posit)).toBe(null);
       const sol = solveClock(state);
@@ -364,8 +371,19 @@ describe.skipIf(!dist12Lines)('clock 距离 12 档 vs Rokicki 的 dist12.txt', (
       expect(isClockSolved(applyClockMoves(state, sol.moves))).toBe(true);
       checked++;
     }
-    expect(checked).toBeGreaterThan(full ? 39_000 : 250);
-  }, full ? 1_800_000 : 180_000);
+    return checked;
+  }
+
+  const totalLines = dist12Lines?.length ?? 0;
+  for (let c = 0; c < CHUNKS; c++) {
+    const from = Math.floor((c * totalLines) / CHUNKS);
+    const to = Math.floor(((c + 1) * totalLines) / CHUNKS);
+    const stride = full ? 1 : Math.max(1, Math.floor(totalLines / 300));
+    const label = full ? `全量 ${c + 1}/${CHUNKS}(第 ${from + 1}–${to} 行)` : '抽样 300';
+    it(`每个位置的最优解恰为 12 步 — ${label}`, () => {
+      expect(checkRange(from, to, stride)).toBeGreaterThan(full ? 4_800 : 250);
+    }, full ? 900_000 : 180_000);
+  }
 });
 
 // ─── 测试自用的独立 14 维模型(不复用求解器内部的坐标切分) ──────────────────
