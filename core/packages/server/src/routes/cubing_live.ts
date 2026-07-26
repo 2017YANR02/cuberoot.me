@@ -392,7 +392,9 @@ function ttlFor(source: SourceId): number {
 //     并修好 WCA Live 源 record tag 的 camelCase 字段名(此前恒空).
 // v5: 同日成绩池改为独立留存(v4 拿 L1 当数据源,150 条上限让同日两个赛场互相看不见,
 //     跨比赛裁决实际没生效)—— 必须让 v4 期间存下的错误裁决整体失效.
-const SCHEMA_VERSION = 5;
+// v6: 池按「距今天多远」淘汰(v5 只留最新 4 个日期,被 prewarm 扫到的未来比赛挤掉当天的桶);
+//     ymd() 补上 pg 的 Date 形态.
+const SCHEMA_VERSION = 6;
 
 const startDateCache = new Map<string, { d: string | null; end: string | null; at: number }>();
 const START_DATE_CACHE_TTL = 60 * 60_000;
@@ -674,8 +676,15 @@ async function enrichRecordTags(data: CompData): Promise<void> {
   if (snapshot) data.currentRecords = snapshot;
 }
 
-function ymd(d: string | null): string | null {
-  return d ? String(d).slice(0, 10) : null;
+// pg 把 DATE 列解成「本地时区午夜」的 Date;String(Date) 会变成 "Sat Jul 25 2026 …",
+// 直接 slice 会得到 "Sat Jul 25" 这种既不能比较也不能 Date.parse 的串.
+function ymd(d: unknown): string | null {
+  if (!d) return null;
+  if (d instanceof Date) {
+    const p = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  }
+  return String(d).slice(0, 10);
 }
 
 // ─── 同日成绩池(Reg 9i2)──────────────────────────────────────────────────
@@ -686,8 +695,25 @@ function ymd(d: string | null): string | null {
 // 跨比赛裁决等于没跑.这里独立留存,不受 L1 淘汰影响.
 //
 // 按比赛整条覆盖(而非直接并入全局 min):某场成绩被改判 / 撤销时旧值不会残留.
-const DAY_POOL_KEEP_DAYS = 4;
+//
+// 淘汰按「距今天多远」,不能按「只留最新的 N 个日期」—— prewarmHotComps 扫的是
+// [今天-30d, 今天+60d] 共 700 场、横跨 90 个日期,留最新 N 个等于全留未来那些还没有成绩的
+// 空桶,当天的桶反复被挤掉.实测就是这样:fastPrewarm 里排在前面的 Tarlac 每轮都拿到刚被
+// 清空的桶(只有自己),排在后面的芜湖才看得到 Tarlac —— 一边永远错、一边碰巧对.
+const DAY_POOL_WINDOW_DAYS = 10;
 const dayPool = new Map<string, Map<string, DayBest>>();
+
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+/** 距今天 ≤ DAY_POOL_WINDOW_DAYS 天.9i2 裁决只在「直播中 → WCA 公示前」这段窗口有意义:
+ *  更远的未来比赛还没有成绩,更早的已公示比赛直接走官方 tag. */
+function inPoolWindow(date: string): boolean {
+  const d = Date.parse(`${date}T00:00:00Z`);
+  if (Number.isNaN(d)) return false;
+  return Math.abs(d - Date.parse(`${todayIso()}T00:00:00Z`)) / 86400_000 <= DAY_POOL_WINDOW_DAYS;
+}
 
 function rememberCompDay(date: string, data: CompData): void {
   const per = emptyDayBest();
@@ -695,9 +721,8 @@ function rememberCompDay(date: string, data: CompData): void {
   let byComp = dayPool.get(date);
   if (!byComp) { byComp = new Map(); dayPool.set(date, byComp); }
   byComp.set(data.slug, per);
-  if (dayPool.size > DAY_POOL_KEEP_DAYS) {
-    const dates = [...dayPool.keys()].sort();   // ISO 日期串可直接字典序比较
-    while (dates.length > DAY_POOL_KEEP_DAYS) dayPool.delete(dates.shift() as string);
+  for (const key of dayPool.keys()) {
+    if (!inPoolWindow(key)) dayPool.delete(key);
   }
 }
 
@@ -721,6 +746,7 @@ async function buildDayBest(data: CompData): Promise<DayBest | null> {
   const self = await getCompDates(data.slug);
   const date = ymd(self.start);
   if (!date || date !== ymd(self.end)) return null;
+  if (!inPoolWindow(date)) return null;
 
   rememberCompDay(date, data);
   const byComp = dayPool.get(date);
