@@ -5,8 +5,8 @@
  *
  * 打乱框那条路子还是 PuzzleOptimalSolver(Rust WASM 全空间精确表);本文件在它上面加了
  * 三阶那套「画状态求解」:
- *   ?view=net   平面展开图画板(24 格)
- *   ?view=cube  可转的立体画板(同一份 facelet,/sim 引擎 order=2)
+ *   ?view=cube  可转的立体画板(默认,/sim 引擎 order=2)
+ *   ?view=net   平面展开图画板(同一份 facelet,24 格)
  *   ?view=scramble 打乱框(PuzzleOptimalSolver 自己那套,含批量)
  *
  * 与三阶的差别:二阶最优解**纯 TS 本地即时算**(lib/pocket-facelet:整体旋转归一化 +
@@ -27,7 +27,7 @@ import {
 import { PuzzleOptimalSolver } from '../_components/PuzzleOptimalSolver';
 import { SPEC_BY_EVENT } from './_puzzle-specs';
 import InteractiveCubeNet from './_InteractiveCubeNet';
-import Interactive3DCube from './_Interactive3DCube';
+import Interactive3DCube, { useIdlePreloadPaintEngine } from './_Interactive3DCube';
 import { CUBE2_PAINT } from './_paint-spec-222';
 import type { PaintColor } from './_paint-shared';
 
@@ -44,8 +44,11 @@ export default function Cube2Solver() {
   const [scrambleFirst] = useState(() => scramble.trim().length > 0);
   const [view, setView] = useQueryState(
     'view',
-    parseAsStringEnum<View>(['net', 'cube', 'scramble']).withDefault(scrambleFirst ? 'scramble' : 'net'),
+    parseAsStringEnum<View>(['net', 'cube', 'scramble']).withDefault(scrambleFirst ? 'scramble' : 'cube'),
   );
+
+  // 立体是默认视图,组件自己会加载引擎;从别的视图进来时空闲预热,切过去不等。
+  useIdlePreloadPaintEngine(view !== 'cube');
 
   const [facelet, setFacelet] = useState(EMPTY_POCKET_FACELET);
   const [color, setColor] = useState<PaintColor>('U');
@@ -126,8 +129,8 @@ export default function Cube2Solver() {
               onChange={(v) => void setView(v as View)}
               allLabel=""
               items={[
-                { value: 'net', label: t('平面', '2D') },
                 { value: 'cube', label: t('立体', '3D') },
+                { value: 'net', label: t('平面', '2D') },
                 { value: 'scramble', label: t('打乱', 'Scramble') },
               ]}
             />

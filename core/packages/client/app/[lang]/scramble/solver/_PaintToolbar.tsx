@@ -2,9 +2,9 @@
 
 /**
  * Shared paint controls for the state painters (2D net + 3D cube, order 3 or 2).
- * Split in two so callers can place the color palette beside the canvas and
- * the action buttons (Empty/Clean/Random/Solve) below, spanning both:
- *   - PaintPalette: color swatches, stacked one per row.
+ * Split in two so callers can stack the color palette under the canvas and
+ * the action buttons (Empty/Clean/Random/Solve) below that:
+ *   - PaintPalette: color swatches in a single horizontal row (wraps if narrow).
  *   - PaintActions: Empty/Clean/Random/Solve + the validity error / reject flash.
  */
 
@@ -19,7 +19,8 @@ import {
   type PaintColor, type FaceLetter, type PaintSpec,
 } from './_paint-shared';
 
-// Palette display order (top→bottom): gray, white, yellow, green, blue, red, orange.
+// Palette display order (left→right): white, yellow, green, blue, red, orange —
+// then the gray "erase" swatch, which sits next to its 右键置灰 hint.
 const PALETTE_ORDER: FaceLetter[] = ['U', 'D', 'F', 'B', 'R', 'L'];
 
 export interface PaintPaletteProps {
@@ -33,18 +34,6 @@ export function PaintPalette({ activeColor, onActiveColorChange }: PaintPaletteP
   return (
     <div className="vc-paint-palette">
       <style>{PALETTE_CSS}</style>
-      <div className="vc-paint-empty-row">
-        <button
-          key="X"
-          type="button"
-          className={`vc-paint-swatch vc-paint-swatch-empty${activeColor === 'X' ? ' is-active' : ''}`}
-          style={{ background: EMPTY_COLOR_HEX }}
-          onClick={() => onActiveColorChange('X')}
-          title={t('空缺(灰)', 'Empty (gray)')}
-          aria-label="empty"
-        />
-        <span className="vc-paint-empty-hint">{t('右键置灰', 'Right-click to erase')}</span>
-      </div>
       {PALETTE_ORDER.map((f) => (
         <button
           key={f}
@@ -56,6 +45,16 @@ export function PaintPalette({ activeColor, onActiveColorChange }: PaintPaletteP
           aria-label={`color ${f}`}
         />
       ))}
+      <button
+        key="X"
+        type="button"
+        className={`vc-paint-swatch vc-paint-swatch-empty${activeColor === 'X' ? ' is-active' : ''}`}
+        style={{ background: EMPTY_COLOR_HEX }}
+        onClick={() => onActiveColorChange('X')}
+        title={t('空缺(灰)', 'Empty (gray)')}
+        aria-label="empty"
+      />
+      <span className="vc-paint-empty-hint">{t('右键置灰', 'Right-click to erase')}</span>
     </div>
   );
 }
@@ -177,8 +176,11 @@ export function PaintActions({
 
 const PALETTE_CSS = `
 .vc-paint-palette {
-  display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem;
+  display: flex; flex-flow: row wrap; align-items: center; justify-content: center;
+  gap: 0.35rem 0.4rem;
 }
+/* Separate the "erase" swatch (last, next to its hint) from the six real colors. */
+.vc-paint-swatch-empty { margin-left: 0.35rem; }
 .vc-paint-swatch {
   width: 30px; height: 30px;
   border: 2px solid rgba(255,255,255,0.2);
@@ -192,12 +194,9 @@ const PALETTE_CSS = `
   border-color: var(--accent, #ff8800);
   box-shadow: 0 0 0 2px rgba(255,136,0,0.3);
 }
-.vc-paint-empty-row {
-  display: flex; align-items: center; gap: 0.5rem;
-}
 .vc-paint-empty-hint {
   font-size: 0.72rem; color: var(--text-muted, #888);
-  white-space: nowrap;
+  white-space: nowrap; margin-left: 0.2rem;
 }
 `;
 

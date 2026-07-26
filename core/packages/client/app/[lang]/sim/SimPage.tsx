@@ -83,7 +83,7 @@ import { megaMoveToString, type MegaMove } from './engine/mega/megaState';
 import FtoCube from './engine/fto/FtoCube';
 import { ftoPickHit, ftoResolveMove, ftoResolveLive, type FtoPickHit } from './engine/fto/ftoDrag';
 import { ftoMoveToString, type FtoMove } from './engine/fto/ftoState';
-import { orbitScene, snapViewToQuadrant } from './engine/viewControls';
+import { orbitScene, snapViewToQuadrant, yawSign } from './engine/viewControls';
 import {
   CornerTurnGesture, type CornerGestureCtx, type CornerGestureHandle, type CornerTurnAdapter,
 } from './engine/cornerTurnGesture';
@@ -695,7 +695,9 @@ export default function SimPage() {
 
     world.controller.onOrbit = (dx, dy) => {
       const k = mapOrbitK(settingsRef.current.sensitivity);
-      world.scene.rotation.y += dx * k;
+      // yawSign: 'view' 模式可以把 pitch 转过 ±90°(上下颠倒),那半圈里 yaw 轴朝下,
+      // 不翻符号左右拖就是反的。orbit/rotate 模式 pitch 恒在 ±90° 内 → 恒 +1。
+      world.scene.rotation.y += dx * k * yawSign(world.scene.rotation.x);
       world.scene.rotation.x += dy * k;
       const cube = asNxN(world);
       // 手拧锁 → 按 'view' 处理:纯改 scene.rotation,不把跨 ±90° 的视角折成 y/x 记步。
