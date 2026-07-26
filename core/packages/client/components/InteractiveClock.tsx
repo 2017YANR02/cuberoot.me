@@ -10,9 +10,10 @@
  * 几何常量全部从 `clock_svg.ts`(tnoodle `ClockPuzzle.java` 的移植)取,不重抄 → 本板与站内
  * 打乱图逐像素同格。角位 ↔ 表盘下标的镜像关系从 `lib/clock-solver` 的四张表取,同样不重抄。
  *
- * 两种模式:
- *   edit —— 直接拖指针改状态。**角盘正反联动**(front + back ≡ 0)由组件维持,所以用户画不出非法态。
- *   turn —— 真拧:点针脚切上下,再在任一半区里拖 = 一次 WCA 招式(招式 = 该面朝上的针脚组合 × 幅度)。
+ * 两种模式(UI 上叫「摆盘 / 转动」):
+ *   edit(摆盘)—— 直接拖指针摆状态,不产生招式。**角盘正反联动**(front + back ≡ 0)由组件维持,
+ *            所以用户摆不出非法态;真魔表转一次至少带动一组盘,单独摆一个盘是这个模式独有的。
+ *   turn(转动)—— 真转:点针脚切上下,再在任一半区里拖 = 一次 WCA 招式(招式 = 该面朝上的针脚组合 × 幅度)。
  *            两个半区同屏,所以不翻面也能拧背面;`y2` 按钮保留真实翻面(交换两块 + 针脚上下互换)。
  */
 
@@ -92,6 +93,10 @@ export interface InteractiveClockProps {
   colors?: Record<string, string>;
   /** 画板最大宽度(px),默认 560。 */
   maxWidth?: number;
+  /** 指针的**额外偏转**(单位:格,可为小数),用于播放动画时让指针真的扫过去。
+   *  下标是「当前朝己」帧的表盘号,与 `state.posit` 同帧。宿主每帧重绘才有效;
+   *  不传 = 静态板(求解页就不传)。 */
+  animOffset?: (dial: number) => number;
   /** 隐藏组件自带的模式切换 + y2 按钮(宿主自己摆时用)。 */
   hideControls?: boolean;
   className?: string;
@@ -99,7 +104,7 @@ export interface InteractiveClockProps {
 
 export default function InteractiveClock({
   state, onChange, mode = 'edit', onModeChange, onMove,
-  pinsUp: pinsUpProp, onPinsUpChange, colors, maxWidth = 560, hideControls, className,
+  pinsUp: pinsUpProp, onPinsUpChange, colors, maxWidth = 560, animOffset, hideControls, className,
 }: InteractiveClockProps) {
   const t = useT();
   const svgRef = useRef<SVGSVGElement>(null);
@@ -167,7 +172,7 @@ export default function InteractiveClock({
     if (mode !== 'turn') return;
     const mask = maskFor(side);
     if (mask === 0) {
-      say(t('这一面没有朝上的针脚,拧不动 —— 先点针脚切上下。',
+      say(t('这一面没有朝上的针脚,转不动 —— 先点针脚切上下。',
         'No pin is up on this side, so nothing turns — tap a pin to flip it first.'));
       return;
     }
@@ -286,7 +291,7 @@ export default function InteractiveClock({
           const border = get(`${key}HandBorder`);
           const hand = get(`${key}Hand`);
           return (
-            <g key={`hand-${i}`} transform={`translate(${c.x},${c.y}) rotate(${state.posit[i] * 30})`}>
+            <g key={`hand-${i}`} transform={`translate(${c.x},${c.y}) rotate(${(state.posit[i] + (animOffset?.(i) ?? 0)) * 30})`}>
               <path d={CLOCK_ARROW_PATH} stroke={border} strokeWidth={STROKE_WIDTH} fill={border} strokeLinejoin="round" />
               <circle cx={0} cy={0} r={ARROW_RADIUS} stroke={border} strokeWidth={STROKE_WIDTH} fill={border} />
               <path d={CLOCK_ARROW_PATH} fill={hand} />
@@ -353,8 +358,8 @@ export default function InteractiveClock({
             <PillToggle
               value={mode === 'turn'}
               onChange={(v) => onModeChange(v ? 'turn' : 'edit')}
-              offLabel={t('编辑', 'Edit')}
-              onLabel={t('拧', 'Turn')}
+              offLabel={t('摆盘', 'Edit')}
+              onLabel={t('转动', 'Turn')}
               ariaLabel={t('画板模式', 'Board mode')}
             />
           )}
@@ -381,8 +386,8 @@ function turnHint(maskLeft: number, maskRight: number, t: (zh: string, en: strin
   const right = maskRight ? clockPinName(maskRight) : null;
   if (!left && !right) return t('四个针脚都在同一面 —— 不可能,先点一个。', 'All four pins are on one side — tap one to flip it.');
   const parts = [
-    left ? t(`左半区拧 = ${left}`, `drag the left side = ${left}`) : null,
-    right ? t(`右半区拧 = ${right}`, `drag the right side = ${right}`) : null,
+    left ? t(`左半区转 = ${left}`, `drag the left side = ${left}`) : null,
+    right ? t(`右半区转 = ${right}`, `drag the right side = ${right}`) : null,
   ].filter(Boolean);
   return `${t('点针脚切上下;', 'Tap a pin to flip it up or down; ')}${parts.join(t('、', ', '))}`;
 }
