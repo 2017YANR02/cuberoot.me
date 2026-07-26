@@ -1023,7 +1023,10 @@ td.is-pr {
   margin-left: 4px;
   white-space: nowrap;
 }
-.comp-pr-mark .record-badge { vertical-align: baseline; }
+/* 外层已经整体 super,内部 badge 一律归 baseline,和紧随其后的 /WRn 名次文本同一条线。
+   「日掩」合并 badge 的 class 是 .record-keatoned(不带 .record-badge),得单列。 */
+.comp-pr-mark .record-badge,
+.comp-pr-mark .record-keatoned { vertical-align: baseline; }
 .comp-pr-mark-rank {
   font-size: 0.6rem;
   font-weight: 600;
