@@ -134,6 +134,21 @@ describe('日掩 → 名次修正', () => {
     expect(out.national?.rank).toBe(2);
   });
 
+  it('掩它的是本人同日更靠后的一轮 → 名次不动(一人只占一格)', () => {
+    // 陈震初赛 7.99 够得着 AsR(8.01),被自己决赛的 6.99 掩掉;不能把自己挤下去。
+    const r = judgeRecordTag(799, '333oh', true, CN, JULY25);
+    expect(r.keatoned?.level).toBe('CR');
+    const base = rank(6, 2);
+    const out = applyDayRankDelta(base, r.keatonedBy, 'CN', { person: 'Zhen Chen', comp: 'WuhuOpen2026' });
+    expect(out).toBe(base);
+  });
+
+  it('同名但不同场 → 不当成本人', () => {
+    const r = judgeRecordTag(772, '333oh', true, PH, JULY25);
+    const out = applyDayRankDelta(rank(1, 1), r.keatonedBy, 'PH', { person: 'Zhen Chen', comp: 'SomeOtherComp2026' });
+    expect(out.world.rank).toBe(2);
+  });
+
   it('没被日掩 → 名次原样返回', () => {
     const r = judgeRecordTag(699, '333oh', true, CN, JULY25);
     expect(r.keatonedBy).toEqual([]);
