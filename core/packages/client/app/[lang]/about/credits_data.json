@@ -248,5 +248,12 @@
     "zh": "魔表 God's number = 12 的证明与全空间分析:Jakob Kogler 2014 首证,Tomas Rokicki 用陪集求解器算出完整距离分布并公布 39,248 个距离 12 的位置(dist12.txt,本站用作求解器的精确对账集);Michael Gottlieb + Ben Whitmore 的 OptClock 与 Shuang Chen 的 ClockSolver.java 是两份独立的单状态最优求解器。四份代码原样收藏在 solver/reference/clock/(只读、不编译);本站 lib/clock-solver.ts 为独立实现,未取用其代码",
     "en": "The proof that God's number for Clock is 12 and the full-space analysis: first proven by Jakob Kogler (2014); Tomas Rokicki computed the complete distance distribution with a coset solver and published all 39,248 distance-12 positions (dist12.txt — used here as an exact regression oracle); OptClock (Michael Gottlieb + Ben Whitmore) and ClockSolver.java (Shuang Chen) are two independent single-position optimal solvers. All four are archived verbatim under solver/reference/clock/ (read-only, never compiled); our lib/clock-solver.ts is an independent implementation and uses none of their code",
     "long_en": "Prior art for optimally solving the Rubik's Clock. Jakob Kogler (2014) first proved God's number is 12 using a one-side lookup table plus iterative-deepening DFS. Tomas Rokicki then computed the complete distance distribution over all 1,283,918,464,548,864 states with a coset solver (subgroup fixing the front cross, 248,832 cosets reduced to 9,906 by mirror / rotation / coprime-multiplication symmetry, ~3 days on a couple of desktops) and published both his source (clockcoset11.cpp) and the 39,248 distance-12 positions (dist12.txt). OptClock by Michael Gottlieb (qqwref) with a Qt GUI by Ben Whitmore is the two-phase single-position optimal solver used to verify those positions. Shuang Chen's ClockSolver.java (GPLv3) is an independent Java optimal solver. All are archived read-only under solver/reference/clock/ with a README explaining each algorithm; dist12.txt is wired into our test suite so the hardest depth bucket is verified exactly rather than by sampling"
+  },
+  {
+    "name": "Dan Boharon — Cube Lookahead Challenge",
+    "url": "https://app--cube-lookahead-24bc12e4.base44.app/",
+    "zh": "/predict 预判训练的玩法原型(模式设定与 F2L 公式池)",
+    "en": "Gameplay original behind /predict (modes + F2L alg pool)",
+    "long_en": "lookahead challenge concept, game modes, F2L insertion pool"
   }
 ]

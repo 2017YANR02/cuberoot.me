@@ -5,7 +5,7 @@
 import {
   Film, ScanSearch, BookOpen, Shuffle, Library, BookA,
   Compass, Grid2x2, Trophy, Timer as TimerIcon, ImagePlus, Code as CodeIcon,
-  Brain, Box, Sigma, Scale, Sprout, Brush, MessagesSquare, Shapes, Blocks, type LucideIcon,
+  Brain, Box, Sigma, Scale, Sprout, Brush, MessagesSquare, Shapes, Blocks, Eye, type LucideIcon,
 } from 'lucide-react';
 import { type LandingSearchCard } from '@/components/LandingSearch';
 
@@ -32,6 +32,8 @@ export const TEXTS: Record<string, { en: string; zh: string
   globe:           { en: 'Globe', zh: '地球' },
   cstimer:         { en: 'csTimer', zh: 'csTimer' },
   timer:           { en: 'Timer', zh: '计时器'
+},
+  predict:         { en: 'Lookahead', zh: '预判'
 },
   frameCount:      { en: 'Frame Count', zh: '数帧'
 },
@@ -116,6 +118,7 @@ export const SECTIONS: Section[] = [
       { id: 'algdb',    href: '/alg',          internal: true, tier: 'standard', Icon: Blocks,    nameKey: 'algdb' },
       { id: 'timer',    href: '/timer',        internal: true, tier: 'standard', Icon: TimerIcon, nameKey: 'timer' },
       { id: 'memo',     href: '/memo',         internal: true, tier: 'standard', Icon: Brain,     nameKey: 'memo' },
+      { id: 'predict',  href: '/predict',      internal: true, tier: 'standard', Icon: Eye,       nameKey: 'predict' },
       { id: 'trainer',  href: '/alg-trainers', internal: true, tier: 'standard', iconImg: '/icons/upstream/algtrainer.png', nameKey: 'algTrainer' },
       { id: 'cstimer',  href: '/cstimer',      internal: true, tier: 'standard', nameKey: 'cstimer', iconImg: '/cstimer_logo.png' },
     ],
