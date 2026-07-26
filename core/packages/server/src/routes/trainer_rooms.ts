@@ -31,6 +31,17 @@ const MAX_KEY_LEN = 160;
 /** 过期房间:24h 无活动惰性清理。 */
 const ROOM_TTL_MS = 24 * 60 * 60 * 1000;
 
+/**
+ * 房间路由的限流额度(独立桶,不与 recon 写操作共用那 30/分)。
+ * 领取是「每换一题一次」的常规操作 —— 不计时模式下连按空格轻松破 1 次/秒,
+ * 再叠上 4G / 校园网 NAT 后面多人共享出口 IP,共用保守额度必然误伤。
+ */
+const RATE = {
+  create: { bucket: 'trainer-room-create', max: 20 },
+  claim: { bucket: 'trainer-room-claim', max: 300 },
+  nextRound: { bucket: 'trainer-room-next', max: 60 },
+} as const;
+
 function randCode(): string {
   let s = '';
   for (let i = 0; i < CODE_LEN; i++) {
@@ -87,7 +98,7 @@ interface RoomRow {
 // POST /trainer/rooms — 建房
 trainerRoomsRoutes.post('/trainer/rooms', async (c) => {
   c.header('Cache-Control', 'no-store');
-  checkRateLimit(getIp(c));
+  checkRateLimit(getIp(c), RATE.create);
 
   let body: { puzzle?: unknown; set?: unknown; order?: unknown; keys?: unknown; start?: unknown };
   try { body = await c.req.json(); } catch { return c.json({ error: 'invalid body' }, 400); }
@@ -150,7 +161,7 @@ trainerRoomsRoutes.get('/trainer/rooms/:code', async (c) => {
 // POST /trainer/rooms/:code/claim — 原子领取下一题
 trainerRoomsRoutes.post('/trainer/rooms/:code/claim', async (c) => {
   c.header('Cache-Control', 'no-store');
-  checkRateLimit(getIp(c));
+  checkRateLimit(getIp(c), RATE.claim);
   const code = parseCode(c.req.param('code'));
   if (!code) return c.json({ error: 'invalid code' }, 400);
 
@@ -212,7 +223,7 @@ trainerRoomsRoutes.post('/trainer/rooms/:code/claim', async (c) => {
 // POST /trainer/rooms/:code/next-round — 开下一轮(CAS:只第一个真正推进,其余读到已推进的轮)
 trainerRoomsRoutes.post('/trainer/rooms/:code/next-round', async (c) => {
   c.header('Cache-Control', 'no-store');
-  checkRateLimit(getIp(c));
+  checkRateLimit(getIp(c), RATE.nextRound);
   const code = parseCode(c.req.param('code'));
   if (!code) return c.json({ error: 'invalid code' }, 400);
 
