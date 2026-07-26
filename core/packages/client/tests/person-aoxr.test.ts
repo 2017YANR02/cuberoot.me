@@ -2,9 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { computeAoxr, aoxrKey } from '@/components/persons/logic/aoxr';
 import type { WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
 
-// 选手页 AoXR 列的口径回归。
-// 值的算法必须与世界榜 /wca/wr_aoxr(stats-build/src/core/ao_rounds.ts)逐值一致,
-// 否则同一场比赛两处显示不同数字;本页额外多一条「必须打满该项目全部轮次」的前提。
+// 选手页 AoXR 列的口径回归:必须与世界榜 /wca/wr_aoxr
+// (stats-build/src/core/ao_rounds.ts)逐值一致,否则同一场比赛两处显示不同数字。
+// 两条准入前提(两处同款):打满该项目全部轮次(有决赛轮成绩)+ 每轮都有有效平均。
 // fixture = 2023GENG02 耿暄一的真实三阶成绩(WCA API),期望值取自 stats/wr_aoxr.json:
 //   Ao4R 4.21(该榜三阶第 1 行) / Ao3R 4.31 / Ao2R 4.84 —— 锁死,改算法必须主动改基线。
 
@@ -72,14 +72,20 @@ describe('computeAoxr — 与世界榜同口径', () => {
 });
 
 describe('computeAoxr — 档位边界', () => {
-  it('某轮平均 DNF → 该场掉一档(4 轮变 Ao3R,只算有效轮)', () => {
+  it('某轮平均 DNF → 整场不出值(不掉档凑成 Ao3R)', () => {
     const map = computeAoxr(
       rounds('C', [399, -1, 410, 434]),
       [comp('C', '2026-05-01')],
     );
-    const cell = map.get(aoxrKey('C', '333'))!;
-    expect(cell.x).toBe(3);
-    expect(cell.value).toBe(414);   // (399+410+434)/3 = 414.33 → 414
+    expect(map.get(aoxrKey('C', '333'))).toBeUndefined();
+  });
+
+  it('未过及格线没打出平均(average = 0)同样作废', () => {
+    const map = computeAoxr(
+      rounds('C', [0, 434], { roundIds: ['d', 'f'] }),
+      [comp('C', '2026-05-01')],
+    );
+    expect(map.get(aoxrKey('C', '333'))).toBeUndefined();
   });
 
   it('5 轮以上是防御上限(WCA 不会出现)→ 留空,不算出查无此档的 Ao5R', () => {
@@ -108,7 +114,7 @@ describe('computeAoxr — 档位边界', () => {
   });
 });
 
-describe('computeAoxr — 必须打满该项目全部轮次', () => {
+describe('computeAoxr — 准入前提:打满全部轮次 + 每轮都有平均', () => {
   it('四轮的项目只打到复赛(无决赛轮)→ 无值,不冒充 Ao2R', () => {
     const map = computeAoxr(
       rounds('NanchangSummer2026', [996, 1069], { roundIds: ['1', '2'] }),
@@ -127,14 +133,22 @@ describe('computeAoxr — 必须打满该项目全部轮次', () => {
     expect(cell.value).toBe(1033);   // 1032.5 → 1033
   });
 
-  it('决赛平均 DNF 仍算打满 → 降一档,不整场作废', () => {
+  it('打满四轮但决赛平均 DNF → 无值(两个前提是「且」)', () => {
     const map = computeAoxr(
       rounds('C', [399, 442, 410, -1], { roundIds: ['1', '2', '3', 'f'] }),
       [comp('C', '2026-05-01')],
     );
+    expect(map.get(aoxrKey('C', '333'))).toBeUndefined();
+  });
+
+  it('打满四轮且四轮都有平均 → Ao4R', () => {
+    const map = computeAoxr(
+      rounds('C', [399, 442, 410, 434], { roundIds: ['1', '2', '3', 'f'] }),
+      [comp('C', '2026-05-01')],
+    );
     const cell = map.get(aoxrKey('C', '333'))!;
-    expect(cell.x).toBe(3);
-    expect(cell.value).toBe(417);    // (399+442+410)/3 = 417
+    expect(cell.x).toBe(4);
+    expect(cell.value).toBe(421);    // (399+442+410+434)/4 = 421.25 → 421
   });
 
   it('组合决赛 c 算决赛;B-决赛 b 不算(A 决赛在其之后照常举行)', () => {

@@ -1,5 +1,14 @@
 // NOTE: AoRounds 抽象基类——跨轮次 average of averages
-// AoXR = 一场比赛中某人恰好参加了 X 轮时，各轮 average 的均值
+// AoXR = 一场比赛中某人打满该项目全部 X 轮时，各轮 average 的均值
+//
+// 准入门槛（两条都要，与选手页 client/components/persons/logic/aoxr.ts 同款）：
+//   ① 打满：该 (person, comp, event) 有决赛轮成绩（round_type_id ∈ f/c）。WCA 轮次是严格
+//      淘汰序列，进了决赛 ⇒ 前面每轮都打过；四轮项目只打两轮被淘汰不能冒充 Ao2R。
+//      B-决赛(b) 不算——A 决赛在其之后照常举行，打 B-决赛的人没打满。
+//   ② 无 DNF：每一轮都有有效平均（average > 0）。任意一轮平均 DNF / 未过及格线没打出平均
+//      / 该轮用的是无平均赛制（2003-2005 的 Bo2/Bo3 轮）→ 整场作废，不再掉档凑 Ao3R。
+// 于是 X = 该场轮数 = 有效平均个数。
+//
 // 支持双视图 JSON：排名（ranking）+ WR 历史（history）
 //
 // NOTE: 一次性计算模式——第一个子类运行时，为 ROUND_COUNTS=[1,2,3,4]
@@ -26,6 +35,38 @@ const ROUND_SORT_ORDER: Record<string, number> = {
 
 // NOTE: 所有子类的 round_count 枚举——一次性为 4 种 rc 批量计算
 const ROUND_COUNTS = [1, 2, 3, 4] as const;
+
+// NOTE: 准入门槛（见文件头 ①②）——只捞两类「标记行」（决赛轮 / 无有效平均的轮），
+// 在 JS 里合成每组的「打满 ∧ 无 DNF」。等价于让 MySQL 按 (comp, person) GROUP BY 全表
+// HAVING 两条件，但快一个数量级（333: 4.6s vs 66s，无索引可用的大 GROUP BY 要建临时表排序），
+// 回传行数也只有全量的百分之几（333: 23 万 vs 176 万）。两种写法在 333 上都是 213166 组。
+async function loadEligibleGroups(eventId: string): Promise<Set<string>> {
+  const rows = await dbQuery<RowDataPacket[]>(`
+    SELECT competition_id, person_id, (average <= 0) AS bad
+    FROM results
+    WHERE event_id = '${eventId}'
+      AND (round_type_id IN ('c','f') OR average <= 0)
+  `);
+  const eligible = new Set<string>();
+  const bad = new Set<string>();
+  for (const r of rows) {
+    const key = `${r['competition_id']}:${r['person_id']}`;
+    if (Number(r['bad'])) bad.add(key);
+    else eligible.add(key);          // 有效平均的决赛轮 = 打满
+  }
+  for (const key of bad) eligible.delete(key);
+  return eligible;
+}
+
+// NOTE: 就地裁掉不达标的组——4 种 rc 共用同一份 grouped，裁一次全受益
+function pruneIneligible(
+  grouped: Map<string, { rows: RowDataPacket[]; meta: RowDataPacket }>,
+  eligible: Set<string>,
+): void {
+  for (const key of grouped.keys()) {
+    if (!eligible.has(key)) grouped.delete(key);
+  }
+}
 
 // --- 预计算缓存 ---
 // 结构：roundCount -> { historyData, rankingData }
@@ -116,6 +157,7 @@ export abstract class AoRounds extends GroupedStatistic {
           grouped.set(key, { rows: [r], meta: r });
         }
       }
+      pruneIneligible(grouped, await loadEligibleGroups(eventId));
 
       // NOTE: 对每种 rc 筛选、计算排名和 WR 历史
       for (const rc of ROUND_COUNTS) {
@@ -216,6 +258,7 @@ export abstract class AoRounds extends GroupedStatistic {
           grouped.set(key, { rows: [r], meta: r });
         }
       }
+      pruneIneligible(grouped, await loadEligibleGroups(eventId));
 
       const computed = filterAndCompute(grouped, rc);
       const ranking = buildRanking(computed, eventId);
@@ -237,6 +280,7 @@ interface ComputedEntry {
 }
 
 // NOTE: 从已分组数据中筛选恰好有 rc 条记录的组，计算 AoXR
+// 入参 grouped 已过准入门槛（pruneIneligible）：组内每轮都有有效平均，故 rows.length = 该场轮数
 function filterAndCompute(
   grouped: Map<string, { rows: RowDataPacket[]; meta: RowDataPacket }>,
   rc: number,

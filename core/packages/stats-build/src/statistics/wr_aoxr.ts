@@ -15,8 +15,8 @@ export class WrAoxr extends Statistic {
     super();
     this.title = 'AoXR';
     this.titleZh = 'AoXR';
-    this.note = 'Averages computed across all rounds a competitor participated in during a single competition.';
-    this.noteZh = '选手在单场比赛中参加的所有轮次的平均成绩。';
+    this.note = 'Mean of a competitor\'s round averages at a single competition. It counts only when they competed in every round of that event (i.e. made the final) and every round produced a valid average — one DNF average voids the whole competition. X = the number of rounds.';
+    this.noteZh = '选手在单场比赛某项目各轮平均的均值。两个前提:①打满该项目全部轮次(即打进决赛);②每轮都有有效平均,任意一轮平均 DNF 则整场不计。X = 该场轮数。';
   }
 
   query(): string { return ''; }
