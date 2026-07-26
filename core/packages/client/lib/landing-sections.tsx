@@ -5,7 +5,7 @@
 import {
   Film, ScanSearch, BookOpen, Shuffle, Library, BookA,
   Compass, Grid2x2, Trophy, Timer as TimerIcon, ImagePlus, Code as CodeIcon,
-  Brain, Box, Sigma, Scale, Sprout, Brush, MessagesSquare, Shapes, type LucideIcon,
+  Brain, Box, Sigma, Scale, Sprout, Brush, MessagesSquare, Shapes, Blocks, type LucideIcon,
 } from 'lucide-react';
 import { type LandingSearchCard } from '@/components/LandingSearch';
 
@@ -81,7 +81,7 @@ export const TEXTS: Record<string, { en: string; zh: string
 },
 };
 
-export type Tier = 'hero' | 'hero-side' | 'medium' | 'standard' | 'utility';
+export type Tier = 'medium' | 'standard' | 'utility';
 
 export interface CardConfig {
   id: string;
@@ -113,7 +113,7 @@ export const SECTIONS: Section[] = [
     sub:     { en: 'Drill algorithms, race the clock, battle head-to-head, recall image pairs.', zh: '背公式、计时、对战、记忆 — 把每一步打磨到肌肉记忆。'
     },
     cards: [
-      { id: 'algdb',    href: '/alg',          internal: true, tier: 'hero',     nameKey: 'algdb' },
+      { id: 'algdb',    href: '/alg',          internal: true, tier: 'standard', Icon: Blocks,    nameKey: 'algdb' },
       { id: 'timer',    href: '/timer',        internal: true, tier: 'standard', Icon: TimerIcon, nameKey: 'timer' },
       { id: 'memo',     href: '/memo',         internal: true, tier: 'standard', Icon: Brain,     nameKey: 'memo' },
       { id: 'trainer',  href: '/alg-trainers', internal: true, tier: 'standard', iconImg: '/icons/upstream/algtrainer.png', nameKey: 'algTrainer' },

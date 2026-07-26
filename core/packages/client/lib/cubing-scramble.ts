@@ -18,8 +18,6 @@
  *      4x4 pool is sized to keep every worker fed (worker_count + 2);
  *      other events stay at 3 since their solver is single-worker anyway.
  */
-import { randomScrambleForEvent } from 'cubing/scramble';
-import { setSearchDebug } from 'cubing/search';
 import { cstimerScramble444 } from './cstimer-444';
 import { fetch555Scramble, fetch555ScrambleBatch } from './scramble-555-server';
 import { get555Mode, on555ModeChange } from './scramble-555-mode';
@@ -29,14 +27,34 @@ import { wcaPocketScramble, optimalPocketScramble } from './pocket-scramble';
 import { get222Mode, on222ModeChange } from './scramble-222-mode';
 import { toWcaEventId } from './wca-events';
 
-// Tell cubing.js to start the next prefetched scramble the instant the
-// current one resolves (default 'auto' waits 1s idle). For user-cadence
-// generation (click → look → click again) this makes the 2nd+ click feel
-// instant for free.
-try {
-  setSearchDebug({ scramblePrefetchLevel: 'immediate' });
-} catch {
-  // setSearchDebug should always succeed but never let it crash module init.
+/**
+ * cubing/scramble + cubing/search on demand.
+ *
+ * Statically importing them drags ~185KB (unminified, 6 chunks) into the first
+ * load of EVERY page that touches this module — /scramble/gen, the solvers,
+ * /sim's PlayerControls — even though nothing is needed until a scramble is
+ * actually generated. One cached promise, fetched on first use.
+ *
+ * setSearchDebug rides along: it tells cubing.js to start the next prefetched
+ * scramble the instant the current one resolves (default 'auto' waits 1s idle),
+ * which makes the 2nd+ click feel instant. It only has to be set before the
+ * first randomScrambleForEvent call, and it is — same promise, ahead of it.
+ */
+let cubingScramblePromise: Promise<typeof import('cubing/scramble')> | null = null;
+function loadCubingScramble(): Promise<typeof import('cubing/scramble')> {
+  cubingScramblePromise ??= (async () => {
+    const [scramble, search] = await Promise.all([
+      import('cubing/scramble'),
+      import('cubing/search'),
+    ]);
+    try {
+      search.setSearchDebug({ scramblePrefetchLevel: 'immediate' });
+    } catch {
+      // setSearchDebug should always succeed but never let it break generation.
+    }
+    return scramble;
+  })();
+  return cubingScramblePromise;
 }
 
 export const TNOODLE_WCA_EVENTS = [
@@ -242,6 +260,7 @@ async function generateScramble(wcaId: string): Promise<string> {
   if (cubingId === '333' && get333Mode() === 'm2p') {
     return m2pScramble333();
   }
+  const { randomScrambleForEvent } = await loadCubingScramble();
   const alg = await randomScrambleForEvent(cubingId);
   return alg.toString();
 }
