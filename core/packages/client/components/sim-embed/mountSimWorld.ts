@@ -59,6 +59,16 @@ export interface SimMountOpts {
    * gyro orientation, custom easing, anything that must run each frame.
    */
   onFrame?: (world: World, dtMs: number) => boolean;
+  /**
+   * 主渲染刚画完时调用(只在真的渲染了那一帧)。给「跟着主视图一起画的第二个渲染器」
+   * 用 —— 目前是 recon 播放器右下角那个 backView 小窗。
+   */
+  onRendered?: (world: World) => void;
+  /**
+   * 画布尺寸。默认取 host 的 client box;返回别的尺寸就按它渲染(PLL 表演浮层的
+   * 立方体只占舞台的一小块,舞台还要留给桌宠的身体和爪子)。
+   */
+  measure?: (host: HTMLElement) => { width: number; height: number };
 }
 
 export interface SimMount {
@@ -79,6 +89,8 @@ export function mountSimWorld(opts: SimMountOpts): SimMount {
     perspective,
     pixelRatioCap = 2,
     onFrame,
+    onRendered,
+    measure,
   } = opts;
 
   const world = new World();
@@ -109,8 +121,9 @@ export function mountSimWorld(opts: SimMountOpts): SimMount {
   host.appendChild(canvas);
 
   const resize = (): void => {
-    const w = host.clientWidth;
-    const h = host.clientHeight;
+    const box = measure?.(host);
+    const w = box ? box.width : host.clientWidth;
+    const h = box ? box.height : host.clientHeight;
     if (w <= 0 || h <= 0) return;
     world.width = w;
     world.height = h;
@@ -138,6 +151,7 @@ export function mountSimWorld(opts: SimMountOpts): SimMount {
     if (world.dirty || world.cube.dirty) {
       renderer.clear();
       renderer.render(world.scene, world.camera);
+      onRendered?.(world);
       world.dirty = false;
       world.cube.dirty = false;
     }

@@ -21,6 +21,7 @@ import FtoCube from "./fto/FtoCube";
 import ClockBoard from "./clock/clockBoard";
 import { APEX_UP_QUAT } from "./pyra/pyraGeometry";
 import FaceHints, { IVY_CORNER_HINTS, DINO_CORNER_HINTS, REDI_CORNER_HINTS, REX_CORNER_HINTS, HELI_EDGE_HINTS, SKEWB_CORNER_HINTS, PYRA_VERTEX_HINTS, MEGA_FACE_HINTS, FTO_FACE_HINTS } from "./face_hints";
+import { HOME_SCENE_ROT } from "./viewControls";
 import type HandsRig from "./hands/handsRig";
 import type { HandsCubeLike } from "./hands/handsRig";
 
@@ -122,8 +123,8 @@ export default class World {
   constructor() {
     this.scene = new THREE.Scene();
     this.scene.matrixAutoUpdate = false;
-    this.scene.rotation.x = Math.PI / 6;
-    this.scene.rotation.y = -Math.PI / 4 + Math.PI / 16;
+    // 初始视角的单一源(嵌入页的「重置视角」按钮回的就是它)。
+    this.scene.rotation.set(HOME_SCENE_ROT.x, HOME_SCENE_ROT.y, HOME_SCENE_ROT.z);
 
     // NOTE: ambient + directional 组合 (×π 是 three r155+ 物理光照补偿)
     // directional 给贴片侧面阴影,配合 cubelet.thickness=true 出立体感

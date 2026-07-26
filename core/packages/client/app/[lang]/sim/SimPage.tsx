@@ -83,7 +83,9 @@ import { megaMoveToString, type MegaMove } from './engine/mega/megaState';
 import FtoCube from './engine/fto/FtoCube';
 import { ftoPickHit, ftoResolveMove, ftoResolveLive, type FtoPickHit } from './engine/fto/ftoDrag';
 import { ftoMoveToString, type FtoMove } from './engine/fto/ftoState';
-import { orbitScene, snapViewToQuadrant, yawSign } from './engine/viewControls';
+import {
+  orbitScene, orbitSceneFree, orbitSceneAutoRotate, foldViewIntoTwists, snapViewToQuadrant,
+} from './engine/viewControls';
 import {
   CornerTurnGesture, type CornerGestureCtx, type CornerGestureHandle, type CornerTurnAdapter,
 } from './engine/cornerTurnGesture';
@@ -712,54 +714,27 @@ export default function SimPage() {
       syncViewToSettings();
     };
 
+    /** 「自动转体」折出来的那个 90°:落成瞬时整体转体 + 记一步。 */
+    const commitWholeCube = (cube: NonNullable<ReturnType<typeof asNxN>>) =>
+      (axis: 'x' | 'y', reverse: boolean) => {
+        const action = new TwistAction(axis, reverse, 1);
+        cube.twister.twist(action, true, true);
+        userMoveRef.current?.(action);
+      };
+
     world.controller.onOrbit = (dx, dy) => {
       const k = mapOrbitK(settingsRef.current.sensitivity);
-      // yawSign: 'view' 模式可以把 pitch 转过 ±90°(上下颠倒),那半圈里 yaw 轴朝下,
-      // 不翻符号左右拖就是反的。orbit/rotate 模式 pitch 恒在 ±90° 内 → 恒 +1。
-      world.scene.rotation.y += dx * k * yawSign(world.scene.rotation.x);
-      world.scene.rotation.x += dy * k;
       const cube = asNxN(world);
-      // 手拧锁 → 按 'view' 处理:纯改 scene.rotation,不把跨 ±90° 的视角折成 y/x 记步。
+      // 手拧锁 → 按 'view' 处理:纯改 scene.rotation(无界,可以上下颠倒着看),
+      // 不把跨 ±90° 的视角折成 y/x 记步。
       if (settingsRef.current.dragEmpty === 'view' || settingsRef.current.pointerTurns === false) {
-        world.scene.updateMatrix();
-        world.dirty = true;
-        syncViewToSettings();
-        return;
-      }
-      if (cube) {
-        let safety = 8;
-        while (world.scene.rotation.y > Q && safety-- > 0) {
-          const action = new TwistAction('y', true, 1);
-          cube.twister.twist(action, true, true);
-          userMoveRef.current?.(action);
-          world.scene.rotation.y -= Q;
-        }
-        safety = 8;
-        while (world.scene.rotation.y < -Q && safety-- > 0) {
-          const action = new TwistAction('y', false, 1);
-          cube.twister.twist(action, true, true);
-          userMoveRef.current?.(action);
-          world.scene.rotation.y += Q;
-        }
-        safety = 8;
-        while (world.scene.rotation.x > Q && safety-- > 0) {
-          const action = new TwistAction('x', true, 1);
-          cube.twister.twist(action, true, true);
-          userMoveRef.current?.(action);
-          world.scene.rotation.x -= Q;
-        }
-        safety = 8;
-        while (world.scene.rotation.x < -Q && safety-- > 0) {
-          const action = new TwistAction('x', false, 1);
-          cube.twister.twist(action, true, true);
-          userMoveRef.current?.(action);
-          world.scene.rotation.x += Q;
-        }
+        orbitSceneFree(world, dx, dy, k);
+      } else if (cube) {
+        orbitSceneAutoRotate(world, dx, dy, k, commitWholeCube(cube));
       } else {
-        world.scene.rotation.x = Math.max(-Q, Math.min(Q, world.scene.rotation.x));
+        // 整体转体吃不下的拼图(这条路只有 NxN 走,留作防御)→ 钳住。
+        orbitScene(world, dx, dy, k);
       }
-      world.scene.updateMatrix();
-      world.dirty = true;
       syncViewToSettings();
     };
 
@@ -1649,7 +1624,7 @@ export default function SimPage() {
       if (v >= end) {
         swapTweenRef.current = null;
         // 'orbit' mode folds any ±90° view excess into real y moves as the user
-        // drags past it (onOrbit's wrap loop below) — a swap's 180° flip is no
+        // drags past it (foldViewIntoTwists, via onOrbit) — a swap's 180° flip is no
         // different, so fold it here too instead of leaving scene.rotation.y
         // sitting out of range: otherwise the *next* background drag, however
         // tiny, would silently absorb this whole leftover swing into a spurious
@@ -1660,23 +1635,11 @@ export default function SimPage() {
         // it needs no reconciliation; 'view' mode never commits moves at all.
         const cube = asNxN(w);
         if (cube && settingsRef.current.dragEmpty === 'orbit') {
-          const Q = Math.PI / 2;
-          let safety = 8;
-          while (w.scene.rotation.y > Q && safety-- > 0) {
-            const action = new TwistAction('y', true, 1);
+          foldViewIntoTwists(w, (axis, reverse) => {
+            const action = new TwistAction(axis, reverse, 1);
             cube.twister.twist(action, true, true);
             userMoveRef.current?.(action);
-            w.scene.rotation.y -= Q;
-          }
-          safety = 8;
-          while (w.scene.rotation.y < -Q && safety-- > 0) {
-            const action = new TwistAction('y', false, 1);
-            cube.twister.twist(action, true, true);
-            userMoveRef.current?.(action);
-            w.scene.rotation.y += Q;
-          }
-          w.scene.updateMatrix();
-          w.dirty = true;
+          }, ['y']);
         }
         return true;
       }
