@@ -276,7 +276,8 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
         <div className="alg-admin-modal-main">
           <aside className="alg-admin-modal-side">
             {setup.trim() ? (
-              <AlgPlayer ref={playerHandleRef} alg={debouncedPreviewAlg} puzzle={puzzle} set={setSlug} setup={setup} fillPane />
+              // 光标同步要 cubing.js 的 player 实例(`getPlayer()`),sim 那版没有对应物 → 钉死 twisty
+              <AlgPlayer ref={playerHandleRef} alg={debouncedPreviewAlg} puzzle={puzzle} set={setSlug} setup={setup} fillPane engine="twisty" />
             ) : (
               <div className="alg-admin-modal-side-empty">
                 {tr({ zh: '填入 Setup 公式后,左侧会显示动画演示', en: 'Enter a setup to preview here' })}

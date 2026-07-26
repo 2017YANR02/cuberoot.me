@@ -831,6 +831,53 @@ html[data-theme=dark] .alg-root {
   padding: 8px 0 4px;
 }
 
+/* ── 公式动画(/sim 引擎那版)────────────────────────────────────────────── */
+.alg-sim-player {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0 4px;
+}
+.alg-sim-player.is-fill { width: 100%; }
+/* 控件挤在画布下面一行,窄屏放不下就折行 —— 别给它们塞 spacer 撑成两端对齐 */
+.alg-sim-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  max-width: 100%;
+}
+.alg-sim-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.alg-sim-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  color: var(--foreground);
+}
+.alg-sim-btn:disabled { opacity: 0.35; cursor: default; }
+.alg-sim-btn.is-primary { color: var(--foreground); }
+.alg-sim-scrub {
+  width: 120px;
+  max-width: 40vw;
+  accent-color: var(--accent);
+}
+.alg-sim-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ── Community-submitted algs ───────────────────────────────────────────── */
 .alg-community {
   display: flex;
@@ -1278,9 +1325,12 @@ a.alg-community-author:hover {
 }
 .alg-meta-related-card.is-plain {
   cursor: default;
-  /* 纯文字卡片没缩略图,内容沉底,让 label/name 和「当前」卡片底部那两行水平对齐 */
-  justify-content: flex-end;
   min-width: 76px;
+}
+/* 纯文字卡片没缩略图 —— 空出一格同高的位置,它的标签才和图卡的标签在同一条水平线上 */
+.alg-meta-related-thumb-gap {
+  display: block;
+  height: 76px;
 }
 /* 当前 case 那张:不可点,不给 hover 高亮(它不是跳转目标,只是参照) */
 .alg-meta-related-card.is-self {
@@ -1289,6 +1339,12 @@ a.alg-community-author:hover {
 .alg-meta-related-card.is-self:hover {
   border-color: transparent;
   background: none;
+}
+/* 当前看的是哪一张,恒定框住 —— 这一族的位置按编号钉死了,不标就认不出自己在看哪张 */
+.alg-meta-related-card.is-current,
+.alg-meta-related-card.is-current:hover {
+  border-color: var(--border-strong);
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
 }
 .alg-meta-related-label {
   font-size: 11px;
