@@ -85,3 +85,8 @@
   color: var(--foreground);
   word-break: break-word;
 }
+
+/* 打乱输入视图切换(平面展开图 / 可拖立体转盘)。 */
+.sq1s-view { width: fit-content; max-width: 100%; margin: 12px 0 4px; }
+.sq1s-view .list-select-popup { min-width: 0; width: max-content; right: auto; }
+.sq1s-board { display: flex; justify-content: center; margin: 4px 0 12px; }

@@ -7,14 +7,21 @@
  * 求一个**近最优**解,并对结果同时报三套计步口径(扭转 / WCA 12c4 / 面转)。
  * 引擎的 BFS 最小化的是「顶转 + 底转 + 切片」token 数,约等于面转口径下的近最优;
  * 真最优(单阶段 IDA*)与 WCA 12c4 口径的上帝之数详见 /math/sq1。
+ *
+ * 打乱的**输入**有两种视图(`?view=`):`flat` 静态展开图(默认,零 WebGL),
+ * `board` 可拖立体转盘(`_InteractiveSq1Board`,拖出来的每一步写回打乱框)。
+ * 斜转 / 金字塔 / 二阶那三块是平面涂色画板,SQ1 不能照做 —— 它的状态是形状 + 排列,
+ * 不是 facelet 串,涂色表达不了(理由详见 `_InteractiveSq1Board` 头注)。
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useQueryState, parseAsString } from 'nuqs';
+import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight } from 'lucide-react';
 import AppLink from '@/components/AppLink';
+import { ListSelect } from '@/components/ListSelect';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useT } from '@/hooks/useT';
 import { tr } from '@/i18n/tr';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { pooledScramble, prewarmScramble } from '@/lib/cubing-scramble';
@@ -22,6 +29,7 @@ import { sq1MoveCounts, type Sq1MoveCounts } from '@/lib/sq1-metrics';
 import { solveSq1 } from '../../timer/_lib/solver/sq1';
 import SolveTabs from '../_components/SolveTabs';
 import { SolvePanel, type BatchSpec } from '../_components/BatchSolvePanel';
+import InteractiveSq1Board from './_InteractiveSq1Board';
 import '../_components/puzzle_optimal_solver.css';
 import './sq1_solver.css';
 
@@ -52,12 +60,20 @@ function solveScramble(scramble: string): Outcome {
   return { scramble, solution, stages, counts: sq1MoveCounts(solution), ok };
 }
 
+type View = 'flat' | 'board';
+
 export default function Sq1SolverPage() {
   const { i18n } = useTranslation();
   void i18n;
+  const t = useT();
   useDocumentTitle('SQ1 求解器', 'Square-1 Solver');
 
   const [scramble, setScramble] = useQueryState('scramble', parseAsString.withDefault(''));
+  const [view, setView] = useQueryState(
+    'view',
+    parseAsStringEnum<View>(['flat', 'board']).withDefault('flat'),
+  );
+  const [boardSize, setBoardSize] = useState(300);
   const [solving, setSolving] = useState(false);
   const [result, setResult] = useState<Outcome | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -66,6 +82,13 @@ export default function Sq1SolverPage() {
   useEffect(() => {
     const id = window.setTimeout(() => prewarmScramble('sq1'), 800);
     return () => window.clearTimeout(id);
+  }, []);
+
+  useEffect(() => {
+    const upd = () => setBoardSize(Math.min(320, Math.max(200, window.innerWidth - 64)));
+    upd();
+    window.addEventListener('resize', upd);
+    return () => window.removeEventListener('resize', upd);
   }, []);
 
   const lines = useMemo(() => scramble.split('\n').map((s) => s.trim()).filter(Boolean), [scramble]);
@@ -141,11 +164,32 @@ export default function Sq1SolverPage() {
               })}
             </p>
 
-            {trimmed && hasTokens && (
+            <div className="sq1s-view">
+              <ListSelect
+                clearable={false}
+                value={view}
+                onChange={(v) => void setView(v as View)}
+                allLabel=""
+                items={[
+                  { value: 'flat', label: t('平面', '2D') },
+                  { value: 'board', label: t('立体', '3D') },
+                ]}
+              />
+            </div>
+
+            {view === 'board' ? (
+              <div className="sq1s-board">
+                <InteractiveSq1Board
+                  scramble={scramble}
+                  onScrambleChange={(v) => void setScramble(v)}
+                  pixelSize={boardSize}
+                />
+              </div>
+            ) : trimmed && hasTokens ? (
               <div className="pos-preview">
                 <ScramblePreview2D event="sq1" scramble={trimmed} size={96} />
               </div>
-            )}
+            ) : null}
 
             {trimmed && hasTokens && (
               <div className="pos-result" aria-live="polite">
