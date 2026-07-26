@@ -121,6 +121,7 @@ import { fileToLogoDataUrl } from './engine/nxn/logo';
 import { PG_PUZZLES, isPgPuzzleId, type PgPuzzleId } from './pgCatalog';
 import { resolveCaps } from './simCaps';
 import StickeringSelect from './StickeringSelect';
+import type { PickGrain } from './engine/nxn/customStickering';
 import { simulateGrips, type GripName, type GripSimStep, type HandSide, type PinSpec } from './engine/hands/handsRig';
 import { stripGripMarks } from '@cuberoot/shared/alg-notation';
 import { stripFtnBlocks, FTN_TOKEN, parseFtnPin } from './engine/hands/ftn';
@@ -917,6 +918,13 @@ interface Props {
   /** 十字(底面)颜色(cubedb Cross Color),仅 NxN 引擎遮罩;默认黄(=D,恒等)。 */
   stickeringColor?: string;
   onStickeringColorChange?: (v: string) => void;
+  /** 自定义阶段:选中的贴纸清单(mask-core DSL)+ 作图开关。状态归 SimPage。 */
+  stickeringMask?: string;
+  onStickeringMaskClear?: () => void;
+  customEditing?: boolean;
+  onCustomEditingChange?: (v: boolean) => void;
+  customGrain?: PickGrain;
+  onCustomGrainChange?: (v: PickGrain) => void;
 }
 
 export default function PlayerControls({
@@ -930,6 +938,9 @@ export default function PlayerControls({
   playbackSlot, bgSlot, fullscreenButton, imageButton, backViewButton,
   stickering = 'full', onStickeringChange,
   stickeringColor = 'yellow', onStickeringColorChange,
+  stickeringMask = '', onStickeringMaskClear,
+  customEditing = true, onCustomEditingChange,
+  customGrain = 'sticker', onCustomGrainChange,
 }: Props) {
   const isSq1 = puzzleKind === 'sq1';
   const isIvy = puzzleKind === 'ivy';
@@ -2099,7 +2110,15 @@ export default function PlayerControls({
   // 按阶段展示色块(twizzle edit 同款,issue #27)— 播放条最左。支持面走 simCaps
   // (NxN 引擎 ≥2 阶 / cubing.js megaminx·fto),不支持的拼图整个隐藏。
   const stickeringSelect = resolveCaps(puzzleKind, renderer).supports.stickering && onStickeringChange
-    ? <StickeringSelect puzzleKind={puzzleKind} value={stickering} onChange={onStickeringChange} color={stickeringColor} onColorChange={onStickeringColorChange} />
+    ? (
+      <StickeringSelect
+        puzzleKind={puzzleKind} value={stickering} onChange={onStickeringChange}
+        color={stickeringColor} onColorChange={onStickeringColorChange}
+        mask={stickeringMask} onMaskClear={onStickeringMaskClear}
+        editing={customEditing} onEditingChange={onCustomEditingChange}
+        grain={customGrain} onGrainChange={onCustomGrainChange}
+      />
+    )
     : null;
 
   return (

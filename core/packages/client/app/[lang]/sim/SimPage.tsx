@@ -113,6 +113,9 @@ import { toEngineMask } from '@/lib/puzzle-image/puzzle-mask';
 import GroupTheoryPanel, { type SimWorldView } from './GroupTheoryPanel';
 import { nxnHasPgKernel } from './engine/nxn/nxnPgBridge';
 import { stickeringMaskFn } from './engine/nxn/stickering';
+import {
+  CUSTOM_STICKERING, customMaskFn, pickedSids, toggleSids, type PickGrain,
+} from './engine/nxn/customStickering';
 import { resolveStageMaskFn } from './engine/nxn/vcStageMask';
 import { resolveEngineArrows } from './engine/nxn/vcArrowBridge';
 import SimCubeNet from './_SimCubeNet';
@@ -286,6 +289,9 @@ export default function SimPage() {
       // 十字(底面)颜色(cubedb 的 Cross Color):整套阶段遮罩旋转到所选颜色的面。
       // 默认 yellow(=D,恒等)省略;仅 NxN 引擎遮罩消费,megaminx/fto 无此参数。
       stickeringColor: parseAsString.withDefault('yellow'),
+      // 自定义阶段(stickering=custom)选中的贴纸清单,mask-core 的 `U:0,2;F:3-5`
+      // DSL,写在还原帧 → 可分享。选取粒度/编辑开关是临时的作图状态,不进 URL。
+      stickeringMask: parseAsString.withDefault(''),
     },
     { history: 'replace', scroll: false },
   );
@@ -523,6 +529,13 @@ export default function SimPage() {
   const settingsRef = useRef(settings);
   useEffect(() => { settingsRef.current = settings; }, [settings]);
 
+  // 自定义阶段的作图状态:编辑开关 + 选取粒度。都是临时的「怎么解释点击」,不进 URL
+  // (进 URL 的只有选中清单 stickeringMask —— 那才是可分享的内容)。
+  const [customEditing, setCustomEditing] = useState(true);
+  const [customGrain, setCustomGrain] = useState<PickGrain>('sticker');
+  // 点击处理装在 world 初始化的闭包里(只注册一次),要读最新状态只能过 ref。
+  const customPickRef = useRef<((idx: number, face: FACE) => void) | null>(null);
+
   // 换拼图 / 换渲染器 → 把视角落到该拼图的开局默认(defaultViewFor)。同为 NxN 只换阶数时
   // 不重置,保留用户手调的角度;其余(换拼图类型、engine↔cubing 切换、首次挂载)都重取默认。
   // 单个 viewAngle 字段在两渲染器下度数含义不同,所以这是唯一自洽的做法 —— 不能跨拼图沿用。
@@ -750,6 +763,9 @@ export default function SimPage() {
       if (face === null) return;
       const cube = asNxN(world);
       if (!cube) return;
+      // 自定义阶段编辑中:这一下是「选贴纸」,不是转层。
+      const pick = customPickRef.current;
+      if (pick) { pick(idx, face); return; }
       // 「动画」关 → 单击表面转动也瞬切(fast=true),与拖层 / 键盘一致。
       const fast = settingsRef.current.animatePlayback === false;
       const N = cube.order;
@@ -1515,14 +1531,44 @@ export default function SimPage() {
     if (!world) return;
     const cube = asNxN(world);
     if (!cube) return;
-    // 引擎自带阶段优先;它不认的名字(visualcube 搬来的整套 MASK)落到 vc 遮罩桥。
+    // 自定义阶段是用户点出来的清单,先截住(否则「custom」会被当未知阶段名);
+    // 其余:引擎自带阶段优先,它不认的名字(visualcube 搬来的整套 MASK)落到 vc 遮罩桥。
     cube.instancedRenderer.setStickering(
-      typeof puzzleParam === 'number'
-        ? (stickeringMaskFn(cube.order, query.stickering, query.stickeringColor)
-          ?? resolveStageMaskFn(cube.order, query.stickering, query.stickeringColor))
-        : null,
+      typeof puzzleParam !== 'number' ? null
+        : query.stickering === CUSTOM_STICKERING
+          ? customMaskFn(cube.order, query.stickeringMask)
+          : (stickeringMaskFn(cube.order, query.stickering, query.stickeringColor)
+            ?? resolveStageMaskFn(cube.order, query.stickering, query.stickeringColor)),
     );
-  }, [twisty, worldTick, puzzleParam, query.stickering, query.stickeringColor]);
+  }, [twisty, worldTick, puzzleParam, query.stickering, query.stickeringColor, query.stickeringMask]);
+
+  // 自定义阶段编辑态:点击 = 选贴纸,且拖拽一律转视角(paintMode)——不然点歪一点
+  // 就当成拖层把魔方拧了。关掉编辑后立刻还原成正常的点击转层。
+  useEffect(() => {
+    const world = worldRef.current;
+    if (!world) return;
+    const active = !twisty && typeof puzzleParam === 'number'
+      && query.stickering === CUSTOM_STICKERING && customEditing;
+    if (!active) {
+      customPickRef.current = null;
+      world.controller.paintMode = false;
+      return;
+    }
+    world.controller.paintMode = true;
+    customPickRef.current = (idx, face) => {
+      const cube = asNxN(world);
+      if (!cube) return;
+      const sids = pickedSids(cube, idx, face, customGrain);
+      if (sids.length === 0) return;
+      // 清空后写 null,让默认值把参数从 URL 里摘掉。
+      setQuery({ stickeringMask: toggleSids(query.stickeringMask, sids) || null });
+    };
+    return () => {
+      customPickRef.current = null;
+      world.controller.paintMode = false;
+    };
+  }, [twisty, worldTick, puzzleParam, query.stickering, query.stickeringMask,
+    customEditing, customGrain, setQuery]);
 
   const prevSettingsRef = useRef<SimSettings | null>(null);
   useEffect(() => {
@@ -2285,6 +2331,12 @@ export default function SimPage() {
             onStickeringChange={(v) => setQuery({ stickering: v === 'full' ? null : v })}
             stickeringColor={query.stickeringColor}
             onStickeringColorChange={(v) => setQuery({ stickeringColor: v === 'yellow' ? null : v })}
+            stickeringMask={query.stickeringMask}
+            onStickeringMaskClear={() => setQuery({ stickeringMask: null })}
+            customEditing={customEditing}
+            onCustomEditingChange={setCustomEditing}
+            customGrain={customGrain}
+            onCustomGrainChange={setCustomGrain}
           />
           {/* 图像:不再套折叠区。图本身已经浮在画布左上角,侧栏这一段只剩控件 + 导出,
               一个「图像」标题栏既没东西可折叠也没图可指。显隐归浮层自己的 × 和播放条
