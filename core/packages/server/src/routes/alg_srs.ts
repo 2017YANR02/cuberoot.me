@@ -13,6 +13,8 @@ import { requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
  *       t = 上次复习时间,兼作 LWW 版本号:只接受不比现有旧的写。
  *   GET /alg/srs — 跨全部 set 的记录(进度总览页),上限 MAX_ROWS 行
  *   PUT /alg/srs/daily — 每日日志合并(同一天取较大值:离线多设备各刷各的,取 max 不会重复计)
+ *   DELETE /alg/srs/daily — 清空每日日志(进度页「重置全部」;合并语义是取 max,
+ *       靠 PUT 归零做不到,只能真删)
  *
  * 身份始终取 requireAuth(c).wcaId;客户端不传 userId。
  */
@@ -139,6 +141,14 @@ algSrsRoutes.put('/alg/srs/daily', async (c) => {
     values,
   );
   return c.json({ ok: true, days: parsed.length });
+});
+
+algSrsRoutes.delete('/alg/srs/daily', async (c) => {
+  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+  checkRateLimit(getIp(c));
+  const authUser = await requireAuth(c);
+  await query('DELETE FROM alg_srs_daily WHERE wca_id = ?', [authUser.wcaId]);
+  return c.json({ ok: true });
 });
 
 algSrsRoutes.put('/alg/srs/:puzzle/:set', async (c) => {
