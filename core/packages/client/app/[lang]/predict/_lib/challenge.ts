@@ -29,12 +29,14 @@ const OPPOSITE = [3, 4, 5, 0, 1, 2];
 
 export type PredictMode = 'normal' | 'cross' | 'twoLayers' | 'f2l';
 export type PieceKind = 'edge' | 'corner' | 'pair';
-export type ScrambleSource = 'random' | 'f2lAlg';
+export type ScrambleSource = 'random' | 'f2lAlg' | 'custom';
 
 export const MOVE_COUNT_MIN = 1;
 export const MOVE_COUNT_MAX = 20;
 export const CROSS_EDGES_MIN = 1;
 export const CROSS_EDGES_MAX = 4;
+/** 自己输入的公式最多几步 —— 追踪一枚贴纸再长也没意义,而且题面那排卡片会溢出。 */
+export const CUSTOM_MOVES_MAX = 40;
 
 /** 目标块被甩到起点位置用的隐藏乱转步数(与被复刻的原站一致)。 */
 const PLACEMENT_MOVES = 15;
@@ -83,6 +85,8 @@ export interface PredictOptions {
   crossEdges: number;
   /** 拿方朝向前缀,'' = (UF)。 */
   orientation: string;
+  /** source='custom' 时用它当题面,已经过 `parseMoveInput`。空 = 一步不转(答案就在原地)。 */
+  customMoves?: readonly string[];
   /** 注入随机源,测试里可给确定性实现。 */
   random?: () => number;
 }
@@ -147,6 +151,49 @@ export function randomMoves(count: number, rnd: () => number): string[] {
     out.push(face + pick(TURN_SUFFIXES, rnd));
   }
   return out;
+}
+
+/**
+ * 玩家自己输入的公式 → 题面那串。
+ *
+ * 判定层(`applyAlg`)只有六个外层面转,所以这里也只收这六个:宽转 `Rw`/`r`、中层
+ * `M E S`、转体 `x y z` 一律**当场拒**并把那个词原样退回去 —— 悄悄按别的意思解释,
+ * 出的题答案就是错的。同理不吃换位子 `[R, U]` / 重复 `(R U)3`:那两种记号要展开,
+ * 展开错了没人看得出来,不如让人自己写平。
+ *
+ * 收下的:大小写严格(小写在魔方记号里是宽转,不是同一个转动)、`’`/`′` 当 `'`、
+ * 分组括号当空格。输出统一成 `R` / `R'` / `R2` 三种写法。
+ */
+const CUSTOM_TOKEN = /^([URFDLB])(2'?|'|3)?$/;
+
+export type MoveInputError =
+  | { kind: 'empty' }
+  | { kind: 'token'; token: string }
+  | { kind: 'tooLong'; count: number };
+
+export type MoveInputResult =
+  | { moves: string[]; error: null }
+  | { moves: null; error: MoveInputError };
+
+export function parseMoveInput(text: string): MoveInputResult {
+  const tokens = text
+    .replace(/[’‘`´′]/g, "'")
+    // 括号换成空格而不是删掉:`(R U)3` 删掉括号会变成合法的 `R U3`(= U'),
+    // 换空格则剩下一个孤立的 `3`,老实报错。
+    .replace(/[()]/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (tokens.length === 0) return { moves: null, error: { kind: 'empty' } };
+  if (tokens.length > CUSTOM_MOVES_MAX) return { moves: null, error: { kind: 'tooLong', count: tokens.length } };
+  const moves: string[] = [];
+  for (const tok of tokens) {
+    const m = CUSTOM_TOKEN.exec(tok);
+    if (!m) return { moves: null, error: { kind: 'token', token: tok } };
+    const suffix = m[2] === "2'" ? '2' : m[2] === '3' ? "'" : (m[2] ?? '');
+    moves.push(m[1] + suffix);
+  }
+  return { moves, error: null };
 }
 
 interface PiecePools {
@@ -251,9 +298,13 @@ export function generateChallenge(opts: PredictOptions): PredictChallenge {
   const placement = randomMoves(PLACEMENT_MOVES, rnd);
   const start = applyAlg(solvedCube(), placement.join(' '));
 
-  const moves = opts.source === 'f2lAlg'
-    ? pick(F2L_ALGS, rnd).split(' ').filter(Boolean)
-    : randomMoves(Math.min(Math.max(opts.moveCount, MOVE_COUNT_MIN), MOVE_COUNT_MAX), rnd);
+  // custom 那档的合法性在 `parseMoveInput` 就判掉了(UI 不合法压根不出题);
+  // 这里只兜住长度,喂进 applyAlg 的必须是它认得的六个面转。
+  const moves = opts.source === 'custom'
+    ? [...(opts.customMoves ?? [])].slice(0, CUSTOM_MOVES_MAX)
+    : opts.source === 'f2lAlg'
+      ? pick(F2L_ALGS, rnd).split(' ').filter(Boolean)
+      : randomMoves(Math.min(Math.max(opts.moveCount, MOVE_COUNT_MIN), MOVE_COUNT_MAX), rnd);
   const end = applyAlg(start, moves.join(' '));
 
   const targets: PredictTarget[] = picks.map((p) => {
