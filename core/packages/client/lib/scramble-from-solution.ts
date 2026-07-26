@@ -21,10 +21,14 @@
  * cleaned full solution returns to solved up to a whole-cube rotation.
  */
 import { Alg } from 'cubing/alg';
-import { experimentalSolve3x3x3IgnoringCenters } from 'cubing/search';
 import type { KPattern, KPuzzle } from 'cubing/kpuzzle';
 import { getCube3 } from '@/lib/cube3';
 import { cleanForPlayer } from '@/lib/recon-alg-utils';
+
+// cubing/search 静态 import 会把 ~185KB 的求解 chunk 拉进引用方的首包(这里只有
+// /sim 的 PlayerControls),而它只在用户真的「从解法反推打乱」时才跑。按需取。
+const loadSolver = () => import('cubing/search')
+  .then((m) => m.experimentalSolve3x3x3IgnoringCenters);
 
 /** Lazily computed once: the 24 whole-cube rotations as Alg strings. */
 let _rotationsPromise: Promise<string[]> | null = null;
@@ -83,6 +87,7 @@ export async function equivalentCleanScramble(setupAlg: string): Promise<string>
   }
   if (!oriented || oriented.isIdentical(solved)) return '';
 
+  const experimentalSolve3x3x3IgnoringCenters = await loadSolver();
   const solution = await experimentalSolve3x3x3IgnoringCenters(oriented);
   // min2phase prints inverted doubles as `R2'`; `R2` reads cleaner for a scramble.
   return solution.invert().toString().replace(/2'/g, '2');

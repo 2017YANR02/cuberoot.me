@@ -23,10 +23,12 @@ import './probability.css';
 import { useT } from '@/hooks/useT';
 import { T } from '@/i18n/tr';
 
-const UniverseBuilder = dynamic(() => import('./_components/UniverseBuilder'), { ssr: false });
-const OrbitExplorer = dynamic(() => import('./_components/OrbitExplorer'), { ssr: false });
-const BurnsideLab = dynamic(() => import('./_components/BurnsideLab'), { ssr: false });
-const SetAccounting = dynamic(() => import('./_components/SetAccounting'), { ssr: false });
+// 四个都是长文里的交互实验块:占位撑住高度,chunk 落地时不把下文顶开(CLS)。
+const labBox = () => <div style={{ minHeight: 360 }} aria-hidden="true" />;
+const UniverseBuilder = dynamic(() => import('./_components/UniverseBuilder'), { ssr: false, loading: labBox });
+const OrbitExplorer = dynamic(() => import('./_components/OrbitExplorer'), { ssr: false, loading: labBox });
+const BurnsideLab = dynamic(() => import('./_components/BurnsideLab'), { ssr: false, loading: labBox });
+const SetAccounting = dynamic(() => import('./_components/SetAccounting'), { ssr: false, loading: labBox });
 
 export default function ProbabilityPage() {
   useTranslation();

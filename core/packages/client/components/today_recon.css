@@ -31,12 +31,16 @@
 }
 .tr-all:hover { color: var(--accent); }
 
-/* 卡片网格:一行两卡(手机端 / 电脑端统一,见 issue #41)。超出固定高度走右侧滚动条
+/* 卡片网格:宽屏一行三卡(1100px 容器 → 每卡约 350px,缩略图 116px 定高不受影响),
+   ≤900px 退回两卡(手机端沿用两卡,见 issue #41)。超出固定高度走右侧滚动条
    (.scroll-panel)。minmax(0,…) 让列缩到容器、不被卡片内容顶宽。 */
 .tr-cards {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.75rem;
+}
+@media (max-width: 900px) {
+  .tr-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 /* 复盘卡带缩略图、较高 —— 比共享面板默认值留更高,容下约两行后再滚动 */
 .tr-cards.scroll-panel { max-height: clamp(20rem, 60vh, 32rem); }

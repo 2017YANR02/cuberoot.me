@@ -1,7 +1,7 @@
 'use client';
 
 // Landing「今日复盘」— /recon 最新录入那天的全部复盘。每次加载自动取最新一天。
-// 一行两卡,手机端 / 电脑端统一(issue #41,复用 /recon?view=grid 的 ReconCard 竖排卡);
+// 宽屏一行三卡、≤900px 两卡(复用 /recon?view=grid 的 ReconCard 竖排卡);
 // 超出固定高度的部分走右侧滚动条(.scroll-panel,与「比赛中心」同一套)。点卡进 /recon/[id] 看完整回放。
 // 数据:lib/recon-api getTodayRecons()(主用 /v1/recon/today,回退 /latest 单条)。
 import { useEffect, useState } from 'react';

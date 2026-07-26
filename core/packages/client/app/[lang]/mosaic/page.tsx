@@ -12,12 +12,14 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './mosaic.css';
 import { tr } from '@/i18n/tr';
 
-const UploadStage = dynamic(() => import('./_components/stages/UploadStage'), { ssr: false });
-const CropStage = dynamic(() => import('./_components/stages/CropStage'), { ssr: false });
-const MethodChooseStage = dynamic(() => import('./_components/stages/MethodChooseStage'), { ssr: false });
-const VariantChooseStage = dynamic(() => import('./_components/stages/VariantChooseStage'), { ssr: false });
-const AdjustStage = dynamic(() => import('./_components/stages/AdjustStage'), { ssr: false });
-const PaletteStage = dynamic(() => import('./_components/stages/PaletteStage'), { ssr: false });
+// wizard 每一步都是独立 chunk:切步时给同高占位,免得页面在空白与内容间弹一下。
+const stageBox = () => <div style={{ minHeight: '60vh' }} aria-hidden="true" />;
+const UploadStage = dynamic(() => import('./_components/stages/UploadStage'), { ssr: false, loading: stageBox });
+const CropStage = dynamic(() => import('./_components/stages/CropStage'), { ssr: false, loading: stageBox });
+const MethodChooseStage = dynamic(() => import('./_components/stages/MethodChooseStage'), { ssr: false, loading: stageBox });
+const VariantChooseStage = dynamic(() => import('./_components/stages/VariantChooseStage'), { ssr: false, loading: stageBox });
+const AdjustStage = dynamic(() => import('./_components/stages/AdjustStage'), { ssr: false, loading: stageBox });
+const PaletteStage = dynamic(() => import('./_components/stages/PaletteStage'), { ssr: false, loading: stageBox });
 
 const STAGE_TITLE_KEY: Record<Stage, string> = {
   'upload': 'mosaic.topbar.upload',

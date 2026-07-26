@@ -45,7 +45,11 @@ import { tr } from '@/i18n/tr';
 // EventIcon inlines all WCA event SVGs (~68KB gzip);only used in recon hits.
 const EventIcon = dynamic(
   () => import('@/components/EventIcon/EventIcon').then(m => ({ default: m.EventIcon })),
-  { ssr: false },
+  {
+    ssr: false,
+    // 同尺寸空位:图标晚到时结果行不左右抖(CSS 里是 1.2em 见方)。
+    loading: () => <span className="landing-search-event-icon" aria-hidden="true" />,
+  },
 );
 
 const ICON_MAP: Record<string, LucideIcon> = {
