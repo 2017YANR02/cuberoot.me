@@ -12,7 +12,7 @@ import { Hono } from 'hono';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { requireAdminOrApiKey, checkRateLimit } from '../utils/recon_helpers.js';
-import { syncMirrorAndLog } from '../utils/alg_mirror.js';
+import { syncMirrorAndLog, syncMirrorForCase } from '../utils/alg_mirror.js';
 
 export const algSetsRoutes = new Hono();
 
@@ -269,6 +269,103 @@ algSetsRoutes.put('/alg/sets/:puzzle/:set/reorder', async (c) => {
   );
 
   return c.json({ ok: true });
+});
+
+// PUT /v1/alg/sets/:puzzle/:set/mirror-links — admin 建镜像链(issue #40 T5 §5.4)
+//
+// body: { links: [{ id, mirrorCaseId }], dryRun?: boolean }
+//
+// `links` 是该 set 的**全量**链表,不是增量:列出的建链,**没列出的一律置 NULL**。
+// 这样同一份 `scripts/mirror-link-plan.mts` 的产物重跑多少遍结果都一样,也能靠「从表里拿掉」解链。
+//
+// 建完链立刻把整个 set 重算一遍公式 —— 生成条是链 + 原创条的函数,链变了公式就得跟着变,
+// 而 syncMirrorForCase 平时只在单个 case 保存时触发,建链这一步没人替它跑。
+//
+// NOTE: 与 /reorder 同理放在 /cases/:id 之前,免得 id="mirror-links" 被那条路由吃掉。
+algSetsRoutes.put('/alg/sets/:puzzle/:set/mirror-links', async (c) => {
+  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+  checkRateLimit(getIp(c));
+  await requireAdminOrApiKey(c);
+
+  const puzzle = c.req.param('puzzle');
+  const set = c.req.param('set');
+  const body = await c.req.json<{ links?: unknown; dryRun?: unknown }>();
+  if (!Array.isArray(body.links)) return c.json({ error: 'links must be array' }, 400);
+
+  const want = new Map<number, number>();
+  for (const raw of body.links) {
+    const l = raw as { id?: unknown; mirrorCaseId?: unknown };
+    const id = Number(l.id);
+    const mid = Number(l.mirrorCaseId);
+    if (!Number.isInteger(id) || id <= 0) return c.json({ error: `bad id ${String(l.id)}` }, 400);
+    if (!Number.isInteger(mid) || mid <= 0) return c.json({ error: `bad mirrorCaseId for id ${id}` }, 400);
+    if (want.has(id)) return c.json({ error: `duplicate id ${id}` }, 400);
+    want.set(id, mid);
+  }
+
+  const rows = await query<{ id: number | string; mirror_case_id: number | string | null }>(
+    'SELECT id, mirror_case_id FROM alg_cases WHERE puzzle = ? AND set_slug = ?',
+    [puzzle, set],
+  );
+  if (rows.length === 0) return c.json({ error: 'set has no cases' }, 404);
+  const have = new Map(rows.map(r => [Number(r.id), r.mirror_case_id == null ? null : Number(r.mirror_case_id)]));
+
+  // 链必须互指。半条链会让一边生成、另一边不生成,是最难查的那种数据错 —— 入口就拦掉。
+  for (const [id, mid] of want) {
+    if (!have.has(id)) return c.json({ error: `id ${id} not in ${puzzle}/${set}` }, 400);
+    if (!have.has(mid)) return c.json({ error: `mirrorCaseId ${mid} not in ${puzzle}/${set}` }, 400);
+    if (want.get(mid) !== id) return c.json({ error: `link ${id}→${mid} is not mutual` }, 400);
+  }
+
+  const toSet = [...want].filter(([id, mid]) => have.get(id) !== mid);
+  const toClear = [...have].filter(([id, mid]) => mid != null && !want.has(id)).map(([id]) => id);
+
+  if (body.dryRun) {
+    return c.json({
+      ok: true, dryRun: true, cases: rows.length,
+      wouldLink: toSet.length, wouldClear: toClear.length,
+    });
+  }
+
+  if (toSet.length) {
+    const valuesSql = toSet.map(() => '(?::bigint, ?::bigint)').join(', ');
+    const params: unknown[] = [];
+    for (const [id, mid] of toSet) params.push(id, mid);
+    params.push(puzzle, set);
+    await query(
+      `UPDATE alg_cases AS a SET mirror_case_id = v.mid
+       FROM (VALUES ${valuesSql}) AS v(id, mid)
+       WHERE a.id = v.id AND a.puzzle = ? AND a.set_slug = ?`,
+      params,
+    );
+  }
+  if (toClear.length) {
+    await query(
+      `UPDATE alg_cases SET mirror_case_id = NULL
+       WHERE puzzle = ? AND set_slug = ? AND id IN (${toClear.map(() => '?').join(', ')})`,
+      [puzzle, set, ...toClear],
+    );
+  }
+
+  // 一对只算一次 —— 从伙伴那边再算一遍结果相同,白跑一趟。没建链的也要算,那是「剥掉残留生成条」。
+  const algsUpdated: number[] = [];
+  const notes: string[] = [];
+  const done = new Set<number>();
+  for (const id of have.keys()) {
+    if (done.has(id)) continue;
+    done.add(id);
+    const partner = want.get(id);
+    if (partner != null) done.add(partner);
+    const r = await syncMirrorForCase(puzzle, set, id);
+    algsUpdated.push(...r.updated);
+    notes.push(...r.notes);
+  }
+
+  return c.json({
+    ok: true, cases: rows.length,
+    linked: toSet.length, cleared: toClear.length,
+    algsUpdated: algsUpdated.length, notes,
+  });
 });
 
 // DELETE /v1/alg/sets/:puzzle/:set/cases/:id — admin 删 case
