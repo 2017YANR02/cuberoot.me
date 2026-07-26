@@ -352,7 +352,7 @@
 
 .trainer-stage {
   text-align: center;
-  padding: 12px 20px 40px;
+  padding: 12px 20px;
   /* iOS Safari 长按会触发文本选择 / 放大镜,影响计时手感;
      stage(打乱+按钮+大计时数字)整块禁掉。sidebar 不动以便复制成绩 scramble。
      touch-action:none 让按住拖动走 pointermove(径向轮盘),不被滚动吞掉。 */
@@ -553,13 +553,15 @@
 .trainer-sidebar {
   display: flex; flex-direction: column; gap: 16px;
 }
-.trainer-solve-card,
 .trainer-stats-card {
   background: color-mix(in srgb, var(--foreground) 3%, transparent);
   border: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
   border-radius: 10px;
   padding: 14px 16px;
 }
+/* 上一个 / 下一个不套框:三列共用行高(见 .trainer-run 的 subgrid),框一画就得被拉到
+   最高那列的高度,内容再怎么贴边也堵不住框里的空。层次交给间距,不交给边框。 */
+.trainer-solve-card { padding: 0 4px; }
 .trainer-card-header {
   display: flex; align-items: center; justify-content: space-between;
   flex-wrap: wrap; gap: 8px 12px;
@@ -590,6 +592,19 @@
 .trainer-solve-thumb {
   display: flex; justify-content: center;
   margin: 0;
+}
+/* 图本身也是「打开该情况」的入口(真 button,剥掉 UA 样式);hover 才给提示,触屏不留假态 */
+.trainer-solve-thumb.is-clickable {
+  appearance: none; -webkit-appearance: none;
+  width: 100%;
+  background: none; border: none; padding: 0;
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .trainer-solve-thumb.is-clickable:hover { opacity: 0.82; }
+}
+.trainer-solve-thumb.is-clickable:focus-visible {
+  outline: 2px solid var(--ring); outline-offset: 3px; border-radius: 6px;
 }
 /* 卡片上半:标题行 + 打乱;下半:图。两段是 subgrid 的两行(见 .trainer-run) */
 .trainer-card-head { display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; }
