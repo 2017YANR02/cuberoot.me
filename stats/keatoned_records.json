@@ -32,7 +32,19 @@
     {
       "key": "beaten_by",
       "label": "Beaten by",
-      "labelZh": "Beaten by",
+      "labelZh": "当日更快者",
+      "align": "left"
+    },
+    {
+      "key": "beating_result",
+      "label": "Beating result",
+      "labelZh": "其成绩",
+      "align": "right"
+    },
+    {
+      "key": "beating_competition",
+      "label": "Beating competition",
+      "labelZh": "其比赛",
       "align": "left"
     },
     {
@@ -52,7 +64,9 @@
           "**5.47**",
           "Average",
           "[Missoula 2021](https://www.worldcubeassociation.org/competitions/Missoula2021)",
-          "Max Park 5.32 — [Missoula 2021](https://www.worldcubeassociation.org/competitions/Missoula2021)",
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "5.32",
+          "[Missoula 2021](https://www.worldcubeassociation.org/competitions/Missoula2021)",
           "2021-11-07"
         ],
         [
@@ -60,7 +74,9 @@
           "**5.09**",
           "Single",
           "[River Hill Fall 2015](https://www.worldcubeassociation.org/competitions/RiverHillFall2015)",
-          "Lucas Etter 4.90 — [River Hill Fall 2015](https://www.worldcubeassociation.org/competitions/RiverHillFall2015)",
+          "[Lucas Etter](https://www.worldcubeassociation.org/persons/2011ETTE01)",
+          "4.90",
+          "[River Hill Fall 2015](https://www.worldcubeassociation.org/competitions/RiverHillFall2015)",
           "2015-11-21"
         ],
         [
@@ -68,7 +84,9 @@
           "**15.28**",
           "Average",
           "[Caltech Fall 2004](https://www.worldcubeassociation.org/competitions/CaltechFall2004)",
-          "Shotaro Makisumi (牧角章太郎) 14.52 — [Caltech Fall 2004](https://www.worldcubeassociation.org/competitions/CaltechFall2004)",
+          "[Shotaro Makisumi (牧角章太郎)](https://www.worldcubeassociation.org/persons/2003MAKI01)",
+          "14.52",
+          "[Caltech Fall 2004](https://www.worldcubeassociation.org/competitions/CaltechFall2004)",
           "2004-10-16"
         ],
         [
@@ -76,7 +94,9 @@
           "**14.61**",
           "Single",
           "[Caltech Spring 2004](https://www.worldcubeassociation.org/competitions/CaltechSpring2004)",
-          "Shotaro Makisumi (牧角章太郎) 12.11 — [Caltech Spring 2004](https://www.worldcubeassociation.org/competitions/CaltechSpring2004)",
+          "[Shotaro Makisumi (牧角章太郎)](https://www.worldcubeassociation.org/persons/2003MAKI01)",
+          "12.11",
+          "[Caltech Spring 2004](https://www.worldcubeassociation.org/competitions/CaltechSpring2004)",
           "2004-04-03"
         ],
         [
@@ -84,199 +104,19 @@
           "**15.33**",
           "Single",
           "[Caltech Winter 2004](https://www.worldcubeassociation.org/competitions/CaltechWinter2004)",
-          "Shotaro Makisumi (牧角章太郎) 14.76 — [Caltech Winter 2004](https://www.worldcubeassociation.org/competitions/CaltechWinter2004)",
+          "[Shotaro Makisumi (牧角章太郎)](https://www.worldcubeassociation.org/persons/2003MAKI01)",
+          "14.76",
+          "[Caltech Winter 2004](https://www.worldcubeassociation.org/competitions/CaltechWinter2004)",
           "2004-01-24"
-        ],
-        [
-          "[Shotaro Makisumi (牧角章太郎)](https://www.worldcubeassociation.org/persons/2003MAKI01)",
-          "**20.30**",
-          "Single",
-          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "Jess Bonde 16.53 — [World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "2003-08-24"
-        ],
-        [
-          "[Katsuyuki Konishi (小西克幸)](https://www.worldcubeassociation.org/persons/2003KONI01)",
-          "**20.93**",
-          "Single",
-          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "Jess Bonde 16.53 — [World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "2003-08-24"
-        ],
-        [
-          "[David Allen](https://www.worldcubeassociation.org/persons/2003ALLE01)",
-          "**17.96**",
-          "Single",
-          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "Jess Bonde 16.53 — [World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "2003-08-24"
-        ],
-        [
-          "[Jessica Fridrich](https://www.worldcubeassociation.org/persons/1982FRID01)",
-          "**19.77**",
-          "Single",
-          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "Jess Bonde 16.53 — [World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "2003-08-24"
-        ],
-        [
-          "[Doug Li](https://www.worldcubeassociation.org/persons/2003LIDO01)",
-          "**20.36**",
-          "Single",
-          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "Jess Bonde 16.53 — [World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "2003-08-24"
-        ],
-        [
-          "[Andy Camann](https://www.worldcubeassociation.org/persons/2003CAMA01)",
-          "**20.54**",
-          "Single",
-          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "Jess Bonde 16.53 — [World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "2003-08-24"
-        ],
-        [
-          "[Chris Hardwick](https://www.worldcubeassociation.org/persons/2003HARD01)",
-          "**21.95**",
-          "Single",
-          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "Jess Bonde 16.53 — [World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "2003-08-24"
-        ],
-        [
-          "[Katsuyuki Konishi (小西克幸)](https://www.worldcubeassociation.org/persons/2003KONI01)",
-          "**18.51**",
-          "Single",
-          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "Jess Bonde 16.53 — [World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "2003-08-24"
-        ],
-        [
-          "[Masayuki Akimoto (秋元正行)](https://www.worldcubeassociation.org/persons/2003AKIM01)",
-          "**19.51**",
-          "Single",
-          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "Jess Bonde 16.53 — [World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "2003-08-24"
-        ],
-        [
-          "[Shotaro Makisumi (牧角章太郎)](https://www.worldcubeassociation.org/persons/2003MAKI01)",
-          "**21.34**",
-          "Single",
-          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "Jess Bonde 16.53 — [World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "2003-08-24"
-        ],
-        [
-          "[Lars Petrus](https://www.worldcubeassociation.org/persons/1982PETR01)",
-          "**21.92**",
-          "Single",
-          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "Jess Bonde 16.53 — [World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "2003-08-24"
         ],
         [
           "[David Allen](https://www.worldcubeassociation.org/persons/2003ALLE01)",
           "**16.99**",
           "Single",
           "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "Jess Bonde 16.53 — [World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "2003-08-24"
-        ],
-        [
-          "[Gene Means](https://www.worldcubeassociation.org/persons/2003MEAN01)",
-          "**17.20**",
-          "Single",
-          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "Jess Bonde 16.53 — [World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "2003-08-24"
-        ],
-        [
-          "[Dan Knights](https://www.worldcubeassociation.org/persons/2003KNIG01)",
-          "**17.36**",
-          "Single",
-          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "Jess Bonde 16.53 — [World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "2003-08-24"
-        ],
-        [
-          "[Jessica Fridrich](https://www.worldcubeassociation.org/persons/1982FRID01)",
-          "**18.07**",
-          "Single",
-          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "Jess Bonde 16.53 — [World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "2003-08-24"
-        ],
-        [
-          "[Jon Morris](https://www.worldcubeassociation.org/persons/2003MORR02)",
-          "**18.71**",
-          "Single",
-          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "Jess Bonde 16.53 — [World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "2003-08-24"
-        ],
-        [
-          "[Andy Camann](https://www.worldcubeassociation.org/persons/2003CAMA01)",
-          "**19.39**",
-          "Single",
-          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "Jess Bonde 16.53 — [World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "2003-08-24"
-        ],
-        [
-          "[Chris Hardwick](https://www.worldcubeassociation.org/persons/2003HARD01)",
-          "**21.09**",
-          "Single",
-          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "Jess Bonde 16.53 — [World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "2003-08-24"
-        ],
-        [
-          "[Grant Tregay](https://www.worldcubeassociation.org/persons/2003TREG02)",
-          "**22.44**",
-          "Single",
-          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "Jess Bonde 16.53 — [World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "2003-08-24"
-        ],
-        [
-          "[Ryan Knapton](https://www.worldcubeassociation.org/persons/2003KNAP01)",
-          "**22.60**",
-          "Single",
-          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "Jess Bonde 16.53 — [World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "2003-08-24"
-        ],
-        [
-          "[Lars Vandenbergh](https://www.worldcubeassociation.org/persons/2003VAND01)",
-          "**19.27**",
-          "Single",
-          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "Jess Bonde 16.53 — [World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "2003-08-24"
-        ],
-        [
           "[Jess Bonde](https://www.worldcubeassociation.org/persons/2003BOND01)",
-          "**19.21**",
-          "Single",
+          "16.53",
           "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "Jess Bonde 16.53 — [World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "2003-08-24"
-        ],
-        [
-          "[Ron van Bruchem](https://www.worldcubeassociation.org/persons/2003BRUC01)",
-          "**19.46**",
-          "Single",
-          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "Jess Bonde 16.53 — [World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "2003-08-24"
-        ],
-        [
-          "[David Wesley](https://www.worldcubeassociation.org/persons/2003WESL01)",
-          "**19.81**",
-          "Single",
-          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "Jess Bonde 16.53 — [World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
           "2003-08-24"
         ],
         [
@@ -284,7 +124,29 @@
           "**17.12**",
           "Single",
           "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "Jess Bonde 16.53 — [World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "[Jess Bonde](https://www.worldcubeassociation.org/persons/2003BOND01)",
+          "16.53",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "2003-08-24"
+        ],
+        [
+          "[Gene Means](https://www.worldcubeassociation.org/persons/2003MEAN01)",
+          "**17.20**",
+          "Single",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "[Jess Bonde](https://www.worldcubeassociation.org/persons/2003BOND01)",
+          "16.53",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "2003-08-24"
+        ],
+        [
+          "[Dan Knights](https://www.worldcubeassociation.org/persons/2003KNIG01)",
+          "**17.36**",
+          "Single",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "[Jess Bonde](https://www.worldcubeassociation.org/persons/2003BOND01)",
+          "16.53",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
           "2003-08-24"
         ],
         [
@@ -292,7 +154,49 @@
           "**17.95**",
           "Single",
           "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "Jess Bonde 16.53 — [World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "[Jess Bonde](https://www.worldcubeassociation.org/persons/2003BOND01)",
+          "16.53",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "2003-08-24"
+        ],
+        [
+          "[David Allen](https://www.worldcubeassociation.org/persons/2003ALLE01)",
+          "**17.96**",
+          "Single",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "[Jess Bonde](https://www.worldcubeassociation.org/persons/2003BOND01)",
+          "16.53",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "2003-08-24"
+        ],
+        [
+          "[Jessica Fridrich](https://www.worldcubeassociation.org/persons/1982FRID01)",
+          "**18.07**",
+          "Single",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "[Jess Bonde](https://www.worldcubeassociation.org/persons/2003BOND01)",
+          "16.53",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "2003-08-24"
+        ],
+        [
+          "[Katsuyuki Konishi (小西克幸)](https://www.worldcubeassociation.org/persons/2003KONI01)",
+          "**18.51**",
+          "Single",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "[Jess Bonde](https://www.worldcubeassociation.org/persons/2003BOND01)",
+          "16.53",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "2003-08-24"
+        ],
+        [
+          "[Jon Morris](https://www.worldcubeassociation.org/persons/2003MORR02)",
+          "**18.71**",
+          "Single",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "[Jess Bonde](https://www.worldcubeassociation.org/persons/2003BOND01)",
+          "16.53",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
           "2003-08-24"
         ],
         [
@@ -300,7 +204,109 @@
           "**18.76**",
           "Single",
           "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "Jess Bonde 16.53 — [World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "[Jess Bonde](https://www.worldcubeassociation.org/persons/2003BOND01)",
+          "16.53",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "2003-08-24"
+        ],
+        [
+          "[Jess Bonde](https://www.worldcubeassociation.org/persons/2003BOND01)",
+          "**19.21**",
+          "Single",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "[Jess Bonde](https://www.worldcubeassociation.org/persons/2003BOND01)",
+          "16.53",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "2003-08-24"
+        ],
+        [
+          "[Lars Vandenbergh](https://www.worldcubeassociation.org/persons/2003VAND01)",
+          "**19.27**",
+          "Single",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "[Jess Bonde](https://www.worldcubeassociation.org/persons/2003BOND01)",
+          "16.53",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "2003-08-24"
+        ],
+        [
+          "[Andy Camann](https://www.worldcubeassociation.org/persons/2003CAMA01)",
+          "**19.39**",
+          "Single",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "[Jess Bonde](https://www.worldcubeassociation.org/persons/2003BOND01)",
+          "16.53",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "2003-08-24"
+        ],
+        [
+          "[Ron van Bruchem](https://www.worldcubeassociation.org/persons/2003BRUC01)",
+          "**19.46**",
+          "Single",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "[Jess Bonde](https://www.worldcubeassociation.org/persons/2003BOND01)",
+          "16.53",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "2003-08-24"
+        ],
+        [
+          "[Masayuki Akimoto (秋元正行)](https://www.worldcubeassociation.org/persons/2003AKIM01)",
+          "**19.51**",
+          "Single",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "[Jess Bonde](https://www.worldcubeassociation.org/persons/2003BOND01)",
+          "16.53",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "2003-08-24"
+        ],
+        [
+          "[Jessica Fridrich](https://www.worldcubeassociation.org/persons/1982FRID01)",
+          "**19.77**",
+          "Single",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "[Jess Bonde](https://www.worldcubeassociation.org/persons/2003BOND01)",
+          "16.53",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "2003-08-24"
+        ],
+        [
+          "[David Wesley](https://www.worldcubeassociation.org/persons/2003WESL01)",
+          "**19.81**",
+          "Single",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "[Jess Bonde](https://www.worldcubeassociation.org/persons/2003BOND01)",
+          "16.53",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "2003-08-24"
+        ],
+        [
+          "[Shotaro Makisumi (牧角章太郎)](https://www.worldcubeassociation.org/persons/2003MAKI01)",
+          "**20.30**",
+          "Single",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "[Jess Bonde](https://www.worldcubeassociation.org/persons/2003BOND01)",
+          "16.53",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "2003-08-24"
+        ],
+        [
+          "[Doug Li](https://www.worldcubeassociation.org/persons/2003LIDO01)",
+          "**20.36**",
+          "Single",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "[Jess Bonde](https://www.worldcubeassociation.org/persons/2003BOND01)",
+          "16.53",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "2003-08-24"
+        ],
+        [
+          "[Andy Camann](https://www.worldcubeassociation.org/persons/2003CAMA01)",
+          "**20.54**",
+          "Single",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "[Jess Bonde](https://www.worldcubeassociation.org/persons/2003BOND01)",
+          "16.53",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
           "2003-08-24"
         ],
         [
@@ -308,7 +314,79 @@
           "**20.92**",
           "Single",
           "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
-          "Jess Bonde 16.53 — [World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "[Jess Bonde](https://www.worldcubeassociation.org/persons/2003BOND01)",
+          "16.53",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "2003-08-24"
+        ],
+        [
+          "[Katsuyuki Konishi (小西克幸)](https://www.worldcubeassociation.org/persons/2003KONI01)",
+          "**20.93**",
+          "Single",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "[Jess Bonde](https://www.worldcubeassociation.org/persons/2003BOND01)",
+          "16.53",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "2003-08-24"
+        ],
+        [
+          "[Chris Hardwick](https://www.worldcubeassociation.org/persons/2003HARD01)",
+          "**21.09**",
+          "Single",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "[Jess Bonde](https://www.worldcubeassociation.org/persons/2003BOND01)",
+          "16.53",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "2003-08-24"
+        ],
+        [
+          "[Shotaro Makisumi (牧角章太郎)](https://www.worldcubeassociation.org/persons/2003MAKI01)",
+          "**21.34**",
+          "Single",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "[Jess Bonde](https://www.worldcubeassociation.org/persons/2003BOND01)",
+          "16.53",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "2003-08-24"
+        ],
+        [
+          "[Lars Petrus](https://www.worldcubeassociation.org/persons/1982PETR01)",
+          "**21.92**",
+          "Single",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "[Jess Bonde](https://www.worldcubeassociation.org/persons/2003BOND01)",
+          "16.53",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "2003-08-24"
+        ],
+        [
+          "[Chris Hardwick](https://www.worldcubeassociation.org/persons/2003HARD01)",
+          "**21.95**",
+          "Single",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "[Jess Bonde](https://www.worldcubeassociation.org/persons/2003BOND01)",
+          "16.53",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "2003-08-24"
+        ],
+        [
+          "[Grant Tregay](https://www.worldcubeassociation.org/persons/2003TREG02)",
+          "**22.44**",
+          "Single",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "[Jess Bonde](https://www.worldcubeassociation.org/persons/2003BOND01)",
+          "16.53",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "2003-08-24"
+        ],
+        [
+          "[Ryan Knapton](https://www.worldcubeassociation.org/persons/2003KNAP01)",
+          "**22.60**",
+          "Single",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
+          "[Jess Bonde](https://www.worldcubeassociation.org/persons/2003BOND01)",
+          "16.53",
+          "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
           "2003-08-24"
         ]
       ]
@@ -322,7 +400,9 @@
           "**0.52**",
           "Single",
           "[Grudziądz Open 2016](https://www.worldcubeassociation.org/competitions/GrudziadzOpen2016)",
-          "Maciej Czapiewski 0.49 — [Grudziądz Open 2016](https://www.worldcubeassociation.org/competitions/GrudziadzOpen2016)",
+          "[Maciej Czapiewski](https://www.worldcubeassociation.org/persons/2014CZAP01)",
+          "0.49",
+          "[Grudziądz Open 2016](https://www.worldcubeassociation.org/competitions/GrudziadzOpen2016)",
           "2016-03-20"
         ],
         [
@@ -330,7 +410,9 @@
           "**0.72**",
           "Single",
           "[Trentin Open 2011](https://www.worldcubeassociation.org/competitions/TrentinOpen2011)",
-          "Christian Kaserer 0.69 — [Trentin Open 2011](https://www.worldcubeassociation.org/competitions/TrentinOpen2011)",
+          "[Christian Kaserer](https://www.worldcubeassociation.org/persons/2009KASE02)",
+          "0.69",
+          "[Trentin Open 2011](https://www.worldcubeassociation.org/competitions/TrentinOpen2011)",
           "2011-11-13"
         ],
         [
@@ -338,7 +420,9 @@
           "**0.83**",
           "Single",
           "[Trentin Open 2011](https://www.worldcubeassociation.org/competitions/TrentinOpen2011)",
-          "Christian Kaserer 0.69 — [Trentin Open 2011](https://www.worldcubeassociation.org/competitions/TrentinOpen2011)",
+          "[Christian Kaserer](https://www.worldcubeassociation.org/persons/2009KASE02)",
+          "0.69",
+          "[Trentin Open 2011](https://www.worldcubeassociation.org/competitions/TrentinOpen2011)",
           "2011-11-13"
         ],
         [
@@ -346,7 +430,9 @@
           "**4.09**",
           "Single",
           "[Swedish CubeDay 2005](https://www.worldcubeassociation.org/competitions/SwedishCubeday2005)",
-          "Gunnar Kantare Krig 3.94 — [Swedish CubeDay 2005](https://www.worldcubeassociation.org/competitions/SwedishCubeday2005)",
+          "[Gunnar Kantare Krig](https://www.worldcubeassociation.org/persons/2004KRIG01)",
+          "3.94",
+          "[Swedish CubeDay 2005](https://www.worldcubeassociation.org/competitions/SwedishCubeday2005)",
           "2005-12-11"
         ]
       ]
@@ -360,7 +446,9 @@
           "**20.14**",
           "Average",
           "[Bay Area Speedcubin' 29 PM 2022](https://www.worldcubeassociation.org/competitions/BayAreaSpeedcubin29PM2022)",
-          "Max Park 19.88 — [Bay Area Speedcubin' 29 PM 2022](https://www.worldcubeassociation.org/competitions/BayAreaSpeedcubin29PM2022)",
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "19.88",
+          "[Bay Area Speedcubin' 29 PM 2022](https://www.worldcubeassociation.org/competitions/BayAreaSpeedcubin29PM2022)",
           "2022-04-03"
         ],
         [
@@ -368,7 +456,9 @@
           "**23.63**",
           "Average",
           "[German Big Cube Open 2017](https://www.worldcubeassociation.org/competitions/GermanBigCubeOpen2017)",
-          "Sebastian Weyer 23.03 — [German Big Cube Open 2017](https://www.worldcubeassociation.org/competitions/GermanBigCubeOpen2017)",
+          "[Sebastian Weyer](https://www.worldcubeassociation.org/persons/2010WEYE02)",
+          "23.03",
+          "[German Big Cube Open 2017](https://www.worldcubeassociation.org/competitions/GermanBigCubeOpen2017)",
           "2017-07-02"
         ],
         [
@@ -376,7 +466,9 @@
           "**24.02**",
           "Single",
           "[Euro 2014](https://www.worldcubeassociation.org/competitions/Euro2014)",
-          "Sebastian Weyer 21.97 — [Euro 2014](https://www.worldcubeassociation.org/competitions/Euro2014)",
+          "[Sebastian Weyer](https://www.worldcubeassociation.org/persons/2010WEYE02)",
+          "21.97",
+          "[Euro 2014](https://www.worldcubeassociation.org/competitions/Euro2014)",
           "2014-08-10"
         ],
         [
@@ -384,7 +476,9 @@
           "**45.57**",
           "Average",
           "[Shenzhen Summer Open 2009](https://www.worldcubeassociation.org/competitions/ShenzhenSummerOpen2009)",
-          "Han-Cyun Chen (陳翰群) 43.43 — [Taiwan Summer Open 2009](https://www.worldcubeassociation.org/competitions/TaiwanSummerOpen2009)",
+          "[Han-Cyun Chen (陳翰群)](https://www.worldcubeassociation.org/persons/2008CHEN06)",
+          "43.43",
+          "[Taiwan Summer Open 2009](https://www.worldcubeassociation.org/competitions/TaiwanSummerOpen2009)",
           "2009-08-23"
         ],
         [
@@ -392,7 +486,9 @@
           "**53.27**",
           "Average",
           "[Tokyo Open 2008](https://www.worldcubeassociation.org/competitions/TokyoOpen2008)",
-          "Keisuke Hiraya (平谷啓輔) 52.31 — [Tokyo Open 2008](https://www.worldcubeassociation.org/competitions/TokyoOpen2008)",
+          "[Keisuke Hiraya (平谷啓輔)](https://www.worldcubeassociation.org/persons/2007HIRA02)",
+          "52.31",
+          "[Tokyo Open 2008](https://www.worldcubeassociation.org/competitions/TokyoOpen2008)",
           "2008-08-02"
         ],
         [
@@ -400,7 +496,9 @@
           "**1:13.03**",
           "Single",
           "[US Nationals 2004](https://www.worldcubeassociation.org/competitions/US2004)",
-          "Chris Hardwick 1:12.85 — [US Nationals 2004](https://www.worldcubeassociation.org/competitions/US2004)",
+          "[Chris Hardwick](https://www.worldcubeassociation.org/persons/2003HARD01)",
+          "1:12.85",
+          "[US Nationals 2004](https://www.worldcubeassociation.org/competitions/US2004)",
           "2004-07-10"
         ]
       ]
@@ -414,7 +512,9 @@
           "**48.85**",
           "Average",
           "[LatAm Tour - Chia 2017](https://www.worldcubeassociation.org/competitions/LatinAmericaCubingTourChia2017)",
-          "Feliks Zemdegs 47.88 — [LatAm Tour - Chia 2017](https://www.worldcubeassociation.org/competitions/LatinAmericaCubingTourChia2017)",
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "47.88",
+          "[LatAm Tour - Chia 2017](https://www.worldcubeassociation.org/competitions/LatinAmericaCubingTourChia2017)",
           "2017-06-29"
         ],
         [
@@ -422,7 +522,9 @@
           "**49.64**",
           "Average",
           "[Euro 2016](https://www.worldcubeassociation.org/competitions/Euro2016)",
-          "Feliks Zemdegs 49.32 — [Euro 2016](https://www.worldcubeassociation.org/competitions/Euro2016)",
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "49.32",
+          "[Euro 2016](https://www.worldcubeassociation.org/competitions/Euro2016)",
           "2016-07-17"
         ],
         [
@@ -430,7 +532,9 @@
           "**59.54**",
           "Average",
           "[Melbourne Summer 2012](https://www.worldcubeassociation.org/competitions/MelbourneSummer2012)",
-          "Feliks Zemdegs 57.94 — [Melbourne Summer 2012](https://www.worldcubeassociation.org/competitions/MelbourneSummer2012)",
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "57.94",
+          "[Melbourne Summer 2012](https://www.worldcubeassociation.org/competitions/MelbourneSummer2012)",
           "2012-02-25"
         ],
         [
@@ -438,7 +542,9 @@
           "**59.53**",
           "Single",
           "[World Championship 2011](https://www.worldcubeassociation.org/competitions/WC2011)",
-          "Feliks Zemdegs 56.22 — [World Championship 2011](https://www.worldcubeassociation.org/competitions/WC2011)",
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "56.22",
+          "[World Championship 2011](https://www.worldcubeassociation.org/competitions/WC2011)",
           "2011-10-16"
         ],
         [
@@ -446,7 +552,9 @@
           "**1:02.40**",
           "Single",
           "[Melbourne Summer 2011](https://www.worldcubeassociation.org/competitions/MelbourneSummer2011)",
-          "Feliks Zemdegs 1:01.59 — [Melbourne Summer 2011](https://www.worldcubeassociation.org/competitions/MelbourneSummer2011)",
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "1:01.59",
+          "[Melbourne Summer 2011](https://www.worldcubeassociation.org/competitions/MelbourneSummer2011)",
           "2011-01-30"
         ],
         [
@@ -454,7 +562,9 @@
           "**1:10.67**",
           "Average",
           "[Australian Nationals 2010](https://www.worldcubeassociation.org/competitions/AustralianNationals2010)",
-          "Feliks Zemdegs 1:07.59 — [Australian Nationals 2010](https://www.worldcubeassociation.org/competitions/AustralianNationals2010)",
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "1:07.59",
+          "[Australian Nationals 2010](https://www.worldcubeassociation.org/competitions/AustralianNationals2010)",
           "2010-09-05"
         ],
         [
@@ -462,7 +572,9 @@
           "**1:16.02**",
           "Single",
           "[Taiwan Winter Open 2009](https://www.worldcubeassociation.org/competitions/TaiwanWinterOpen2009)",
-          "Hsuan Chang (張璿) 1:13.28 — [Taiwan Winter Open 2009](https://www.worldcubeassociation.org/competitions/TaiwanWinterOpen2009)",
+          "[Hsuan Chang (張璿)](https://www.worldcubeassociation.org/persons/2008CHAN09)",
+          "1:13.28",
+          "[Taiwan Winter Open 2009](https://www.worldcubeassociation.org/competitions/TaiwanWinterOpen2009)",
           "2009-02-08"
         ],
         [
@@ -470,7 +582,9 @@
           "**1:32.21**",
           "Average",
           "[US Nationals and Open 2008](https://www.worldcubeassociation.org/competitions/USOpen2008)",
-          "Dan Cohen 1:29.40 — [US Nationals and Open 2008](https://www.worldcubeassociation.org/competitions/USOpen2008)",
+          "[Dan Cohen](https://www.worldcubeassociation.org/persons/2007COHE01)",
+          "1:29.40",
+          "[US Nationals and Open 2008](https://www.worldcubeassociation.org/competitions/USOpen2008)",
           "2008-07-20"
         ],
         [
@@ -478,7 +592,9 @@
           "**2:17.09**",
           "Single",
           "[Euro 2004](https://www.worldcubeassociation.org/competitions/Euro2004)",
-          "Lars Vandenbergh 2:08.45 — [Euro 2004](https://www.worldcubeassociation.org/competitions/Euro2004)",
+          "[Lars Vandenbergh](https://www.worldcubeassociation.org/persons/2003VAND01)",
+          "2:08.45",
+          "[Euro 2004](https://www.worldcubeassociation.org/competitions/Euro2004)",
           "2004-08-08"
         ]
       ]
@@ -492,7 +608,9 @@
           "**1:08.98**",
           "Single",
           "[Southeast Championship 2022](https://www.worldcubeassociation.org/competitions/SoutheastChampionship2022)",
-          "Max Park 59.74 — [Southeast Championship 2022](https://www.worldcubeassociation.org/competitions/SoutheastChampionship2022)",
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "59.74",
+          "[Southeast Championship 2022](https://www.worldcubeassociation.org/competitions/SoutheastChampionship2022)",
           "2022-07-31"
         ],
         [
@@ -500,7 +618,9 @@
           "**1:12.84**",
           "Average",
           "[Southeast Championship 2022](https://www.worldcubeassociation.org/competitions/SoutheastChampionship2022)",
-          "Max Park 1:09.23 — [Southeast Championship 2022](https://www.worldcubeassociation.org/competitions/SoutheastChampionship2022)",
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "1:09.23",
+          "[Southeast Championship 2022](https://www.worldcubeassociation.org/competitions/SoutheastChampionship2022)",
           "2022-07-31"
         ],
         [
@@ -508,7 +628,9 @@
           "**1:37.09**",
           "Average",
           "[Adelaide Summer 2017](https://www.worldcubeassociation.org/competitions/AdelaideSummer2017)",
-          "Feliks Zemdegs 1:34.68 — [Adelaide Summer 2017](https://www.worldcubeassociation.org/competitions/AdelaideSummer2017)",
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "1:34.68",
+          "[Adelaide Summer 2017](https://www.worldcubeassociation.org/competitions/AdelaideSummer2017)",
           "2017-01-21"
         ]
       ]
@@ -522,7 +644,9 @@
           "**1:57.59**",
           "Single",
           "[WCCT Fresno 2018](https://www.worldcubeassociation.org/competitions/WCCTFresno2018)",
-          "Max Park 1:47.89 — [WCCT Fresno 2018](https://www.worldcubeassociation.org/competitions/WCCTFresno2018)",
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "1:47.89",
+          "[WCCT Fresno 2018](https://www.worldcubeassociation.org/competitions/WCCTFresno2018)",
           "2018-07-14"
         ],
         [
@@ -530,7 +654,9 @@
           "**2:01.87**",
           "Average",
           "[WCCT Fresno 2018](https://www.worldcubeassociation.org/competitions/WCCTFresno2018)",
-          "Max Park 1:57.10 — [WCCT Fresno 2018](https://www.worldcubeassociation.org/competitions/WCCTFresno2018)",
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "1:57.10",
+          "[WCCT Fresno 2018](https://www.worldcubeassociation.org/competitions/WCCTFresno2018)",
           "2018-07-14"
         ],
         [
@@ -538,7 +664,9 @@
           "**2:06.72**",
           "Average",
           "[COpen2 2018](https://www.worldcubeassociation.org/competitions/Cerritos2018)",
-          "Max Park 2:04.32 — [COpen2 2018](https://www.worldcubeassociation.org/competitions/Cerritos2018)",
+          "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+          "2:04.32",
+          "[COpen2 2018](https://www.worldcubeassociation.org/competitions/Cerritos2018)",
           "2018-04-14"
         ],
         [
@@ -546,7 +674,9 @@
           "**2:02.90**",
           "Single",
           "[Heartland Champs 2018](https://www.worldcubeassociation.org/competitions/HeartlandChampionships2018)",
-          "Kevin Hays 1:59.95 — [Heartland Champs 2018](https://www.worldcubeassociation.org/competitions/HeartlandChampionships2018)",
+          "[Kevin Hays](https://www.worldcubeassociation.org/persons/2009HAYS01)",
+          "1:59.95",
+          "[Heartland Champs 2018](https://www.worldcubeassociation.org/competitions/HeartlandChampionships2018)",
           "2018-03-11"
         ],
         [
@@ -554,7 +684,9 @@
           "**2:09.61**",
           "Average",
           "[Heartland Champs 2018](https://www.worldcubeassociation.org/competitions/HeartlandChampionships2018)",
-          "Kevin Hays 2:08.71 — [Heartland Champs 2018](https://www.worldcubeassociation.org/competitions/HeartlandChampionships2018)",
+          "[Kevin Hays](https://www.worldcubeassociation.org/persons/2009HAYS01)",
+          "2:08.71",
+          "[Heartland Champs 2018](https://www.worldcubeassociation.org/competitions/HeartlandChampionships2018)",
           "2018-03-11"
         ],
         [
@@ -562,7 +694,9 @@
           "**2:50.90**",
           "Average",
           "[US Nationals 2014](https://www.worldcubeassociation.org/competitions/USNationals2014)",
-          "Feliks Zemdegs 2:48.16 — [US Nationals 2014](https://www.worldcubeassociation.org/competitions/USNationals2014)",
+          "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
+          "2:48.16",
+          "[US Nationals 2014](https://www.worldcubeassociation.org/competitions/USNationals2014)",
           "2014-08-03"
         ],
         [
@@ -570,7 +704,9 @@
           "**3:41.53**",
           "Average",
           "[Polish Nationals 2010](https://www.worldcubeassociation.org/competitions/PolishNationals2010)",
-          "Michał Halczuk 3:40.33 — [Polish Nationals 2010](https://www.worldcubeassociation.org/competitions/PolishNationals2010)",
+          "[Michał Halczuk](https://www.worldcubeassociation.org/persons/2006HALC01)",
+          "3:40.33",
+          "[Polish Nationals 2010](https://www.worldcubeassociation.org/competitions/PolishNationals2010)",
           "2010-08-29"
         ]
       ]
@@ -584,7 +720,9 @@
           "**15.17**",
           "Single",
           "[Florida Fall 2021](https://www.worldcubeassociation.org/competitions/FloridaFall2021)",
-          "Tommy Cherry 14.67 — [Florida Fall 2021](https://www.worldcubeassociation.org/competitions/FloridaFall2021)",
+          "[Tommy Cherry](https://www.worldcubeassociation.org/persons/2015CHER07)",
+          "14.67",
+          "[Florida Fall 2021](https://www.worldcubeassociation.org/competitions/FloridaFall2021)",
           "2021-12-12"
         ],
         [
@@ -592,7 +730,9 @@
           "**22.44**",
           "Average",
           "[Longhorn Cube Day 2017](https://www.worldcubeassociation.org/competitions/LonghornCubeDay2017)",
-          "Angelo Zhang 22.36 — [Longhorn Cube Day 2017](https://www.worldcubeassociation.org/competitions/LonghornCubeDay2017)",
+          "[Angelo Zhang](https://www.worldcubeassociation.org/persons/2014ZHAN01)",
+          "22.36",
+          "[Longhorn Cube Day 2017](https://www.worldcubeassociation.org/competitions/LonghornCubeDay2017)",
           "2017-11-18"
         ],
         [
@@ -600,7 +740,9 @@
           "**18.46**",
           "Single",
           "[LatAm Tour - Lima 2017](https://www.worldcubeassociation.org/competitions/LatinAmericaCubingTourLima2017)",
-          "Gianfranco Huanqui 18.31 — [LatAm Tour - Lima 2017](https://www.worldcubeassociation.org/competitions/LatinAmericaCubingTourLima2017)",
+          "[Gianfranco Huanqui](https://www.worldcubeassociation.org/persons/2013HUAN29)",
+          "18.31",
+          "[LatAm Tour - Lima 2017](https://www.worldcubeassociation.org/competitions/LatinAmericaCubingTourLima2017)",
           "2017-06-25"
         ],
         [
@@ -608,7 +750,9 @@
           "**27.33**",
           "Single",
           "[Euro 2012](https://www.worldcubeassociation.org/competitions/Euro2012)",
-          "Marcell Endrey 26.36 — [Euro 2012](https://www.worldcubeassociation.org/competitions/Euro2012)",
+          "[Marcell Endrey](https://www.worldcubeassociation.org/persons/2007ENDR01)",
+          "26.36",
+          "[Euro 2012](https://www.worldcubeassociation.org/competitions/Euro2012)",
           "2012-10-14"
         ],
         [
@@ -616,7 +760,9 @@
           "**41.61**",
           "Single",
           "[Beijing Summer Open 2009](https://www.worldcubeassociation.org/competitions/BeijingSummerOpen2009)",
-          "Haiyan Zhuang (庄海燕) 35.96 — [Beijing Summer Open 2009](https://www.worldcubeassociation.org/competitions/BeijingSummerOpen2009)",
+          "[Haiyan Zhuang (庄海燕)](https://www.worldcubeassociation.org/persons/2008ZHUA01)",
+          "35.96",
+          "[Beijing Summer Open 2009](https://www.worldcubeassociation.org/competitions/BeijingSummerOpen2009)",
           "2009-08-16"
         ],
         [
@@ -624,7 +770,9 @@
           "**1:54.33**",
           "Single",
           "[World Championship 2005](https://www.worldcubeassociation.org/competitions/WC2005)",
-          "Leyan Lo 1:46.47 — [World Championship 2005](https://www.worldcubeassociation.org/competitions/WC2005)",
+          "[Leyan Lo](https://www.worldcubeassociation.org/persons/2004LOLE01)",
+          "1:46.47",
+          "[World Championship 2005](https://www.worldcubeassociation.org/competitions/WC2005)",
           "2005-11-06"
         ],
         [
@@ -632,7 +780,9 @@
           "**2:12.98**",
           "Single",
           "[Northern CA 2005](https://www.worldcubeassociation.org/competitions/NorthernCA2005)",
-          "Tyson Mao (毛台勝) 1:58.32 — [Northern CA 2005](https://www.worldcubeassociation.org/competitions/NorthernCA2005)",
+          "[Tyson Mao (毛台勝)](https://www.worldcubeassociation.org/persons/2004MAOT02)",
+          "1:58.32",
+          "[Northern CA 2005](https://www.worldcubeassociation.org/competitions/NorthernCA2005)",
           "2005-09-17"
         ]
       ]
@@ -646,7 +796,9 @@
           "**30.67**",
           "Average",
           "[PKU FM 2012](https://www.worldcubeassociation.org/competitions/PKUFM2012)",
-          "Shuang Chen (陈霜) 30.00 — [PKU FM 2012](https://www.worldcubeassociation.org/competitions/PKUFM2012)",
+          "[Shuang Chen (陈霜)](https://www.worldcubeassociation.org/persons/2008CHEN27)",
+          "30.00",
+          "[PKU FM 2012](https://www.worldcubeassociation.org/competitions/PKUFM2012)",
           "2012-05-26"
         ],
         [
@@ -654,7 +806,9 @@
           "**38.67**",
           "Average",
           "[PKU Fewest Moves 2010](https://www.worldcubeassociation.org/competitions/PKUFMC2010)",
-          "Hong Zhang (张宏) 35.67 — [PKU Fewest Moves 2010](https://www.worldcubeassociation.org/competitions/PKUFMC2010)",
+          "[Hong Zhang (张宏)](https://www.worldcubeassociation.org/persons/2008ZHAN13)",
+          "35.67",
+          "[PKU Fewest Moves 2010](https://www.worldcubeassociation.org/competitions/PKUFMC2010)",
           "2010-04-10"
         ],
         [
@@ -662,7 +816,9 @@
           "**40.33**",
           "Average",
           "[PKU Fewest Moves 2010](https://www.worldcubeassociation.org/competitions/PKUFMC2010)",
-          "Hong Zhang (张宏) 35.67 — [PKU Fewest Moves 2010](https://www.worldcubeassociation.org/competitions/PKUFMC2010)",
+          "[Hong Zhang (张宏)](https://www.worldcubeassociation.org/persons/2008ZHAN13)",
+          "35.67",
+          "[PKU Fewest Moves 2010](https://www.worldcubeassociation.org/competitions/PKUFMC2010)",
           "2010-04-10"
         ]
       ]
@@ -676,7 +832,9 @@
           "**26.36**",
           "Average",
           "[US Nationals 2006](https://www.worldcubeassociation.org/competitions/US2006)",
-          "Ryan Patricio 24.03 — [US Nationals 2006](https://www.worldcubeassociation.org/competitions/US2006)",
+          "[Ryan Patricio](https://www.worldcubeassociation.org/persons/2004PATR01)",
+          "24.03",
+          "[US Nationals 2006](https://www.worldcubeassociation.org/competitions/US2006)",
           "2006-08-06"
         ],
         [
@@ -684,7 +842,9 @@
           "**41.99**",
           "Single",
           "[US Nationals 2004](https://www.worldcubeassociation.org/competitions/US2004)",
-          "Chris Hardwick 25.95 — [US Nationals 2004](https://www.worldcubeassociation.org/competitions/US2004)",
+          "[Chris Hardwick](https://www.worldcubeassociation.org/persons/2003HARD01)",
+          "25.95",
+          "[US Nationals 2004](https://www.worldcubeassociation.org/competitions/US2004)",
           "2004-07-10"
         ]
       ]
@@ -698,7 +858,9 @@
           "**24.87**",
           "Average",
           "[Guangzhou Special 2025](https://www.worldcubeassociation.org/competitions/GuangzhouSpecial2025)",
-          "Ziyu Wu (吴子钰) 24.76 — [Guangzhou Special 2025](https://www.worldcubeassociation.org/competitions/GuangzhouSpecial2025)",
+          "[Ziyu Wu (吴子钰)](https://www.worldcubeassociation.org/persons/2016WUZI04)",
+          "24.76",
+          "[Guangzhou Special 2025](https://www.worldcubeassociation.org/competitions/GuangzhouSpecial2025)",
           "2025-11-08"
         ],
         [
@@ -706,7 +868,9 @@
           "**26.07**",
           "Average",
           "[Central Asian Tour Astana 2025](https://www.worldcubeassociation.org/competitions/CentralAsianTourAstana2025)",
-          "Timofei Tarasenko 25.36 — [Central Asian Tour Astana 2025](https://www.worldcubeassociation.org/competitions/CentralAsianTourAstana2025)",
+          "[Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09)",
+          "25.36",
+          "[Central Asian Tour Astana 2025](https://www.worldcubeassociation.org/competitions/CentralAsianTourAstana2025)",
           "2025-02-09"
         ],
         [
@@ -714,7 +878,9 @@
           "**29.25**",
           "Average",
           "[Buenos Aires Cubea 2022](https://www.worldcubeassociation.org/competitions/BuenosAiresCubea2022)",
-          "Leandro Martín López 28.56 — [Buenos Aires Cubea 2022](https://www.worldcubeassociation.org/competitions/BuenosAiresCubea2022)",
+          "[Leandro Martín López](https://www.worldcubeassociation.org/persons/2018LOPE22)",
+          "28.56",
+          "[Buenos Aires Cubea 2022](https://www.worldcubeassociation.org/competitions/BuenosAiresCubea2022)",
           "2022-11-20"
         ],
         [
@@ -722,7 +888,9 @@
           "**41.73**",
           "Average",
           "[US Nationals 2016](https://www.worldcubeassociation.org/competitions/USNationals2016)",
-          "Juan Pablo Huanqui 40.94 — [US Nationals 2016](https://www.worldcubeassociation.org/competitions/USNationals2016)",
+          "[Juan Pablo Huanqui](https://www.worldcubeassociation.org/persons/2013HUAN30)",
+          "40.94",
+          "[US Nationals 2016](https://www.worldcubeassociation.org/competitions/USNationals2016)",
           "2016-07-31"
         ],
         [
@@ -730,7 +898,9 @@
           "**51.04**",
           "Average",
           "[Danish Open 2011](https://www.worldcubeassociation.org/competitions/DanishOpen2011)",
-          "Simon Westlund 49.90 — [Danish Open 2011](https://www.worldcubeassociation.org/competitions/DanishOpen2011)",
+          "[Simon Westlund](https://www.worldcubeassociation.org/persons/2008WEST02)",
+          "49.90",
+          "[Danish Open 2011](https://www.worldcubeassociation.org/competitions/DanishOpen2011)",
           "2011-04-24"
         ],
         [
@@ -738,7 +908,9 @@
           "**48.78**",
           "Single",
           "[Euro 2010](https://www.worldcubeassociation.org/competitions/Euro2010)",
-          "Bálint Bodor 47.53 — [Euro 2010](https://www.worldcubeassociation.org/competitions/Euro2010)",
+          "[Bálint Bodor](https://www.worldcubeassociation.org/persons/2008BODO01)",
+          "47.53",
+          "[Euro 2010](https://www.worldcubeassociation.org/competitions/Euro2010)",
           "2010-10-03"
         ],
         [
@@ -746,7 +918,9 @@
           "**1:44.69**",
           "Single",
           "[World Championship 2005](https://www.worldcubeassociation.org/competitions/WC2005)",
-          "Stefan Pochmann 1:41.82 — [World Championship 2005](https://www.worldcubeassociation.org/competitions/WC2005)",
+          "[Stefan Pochmann](https://www.worldcubeassociation.org/persons/2003POCH01)",
+          "1:41.82",
+          "[World Championship 2005](https://www.worldcubeassociation.org/competitions/WC2005)",
           "2005-11-06"
         ]
       ]
@@ -760,7 +934,9 @@
           "**0.98**",
           "Single",
           "[Byczy Cube Race 2018](https://www.worldcubeassociation.org/competitions/ByczyCubeRace2018)",
-          "Dominik Górny 0.91 — [Byczy Cube Race 2018](https://www.worldcubeassociation.org/competitions/ByczyCubeRace2018)",
+          "[Dominik Górny](https://www.worldcubeassociation.org/persons/2015GORN01)",
+          "0.91",
+          "[Byczy Cube Race 2018](https://www.worldcubeassociation.org/competitions/ByczyCubeRace2018)",
           "2018-06-24"
         ],
         [
@@ -768,7 +944,9 @@
           "**5.51**",
           "Average",
           "[Pabianice Open 2008](https://www.worldcubeassociation.org/competitions/PabianiceOpen2008)",
-          "Tomasz Kiedrowicz 5.04 — [Pabianice Open 2008](https://www.worldcubeassociation.org/competitions/PabianiceOpen2008)",
+          "[Tomasz Kiedrowicz](https://www.worldcubeassociation.org/persons/2006KIED01)",
+          "5.04",
+          "[Pabianice Open 2008](https://www.worldcubeassociation.org/competitions/PabianiceOpen2008)",
           "2008-05-10"
         ],
         [
@@ -776,7 +954,9 @@
           "**7.63**",
           "Average",
           "[Wroclaw Open 2007](https://www.worldcubeassociation.org/competitions/WroclawOpen2007)",
-          "Grzegorz Łuczyna 6.23 — [Wroclaw Open 2007](https://www.worldcubeassociation.org/competitions/WroclawOpen2007)",
+          "[Grzegorz Łuczyna](https://www.worldcubeassociation.org/persons/2005LUCZ01)",
+          "6.23",
+          "[Wroclaw Open 2007](https://www.worldcubeassociation.org/competitions/WroclawOpen2007)",
           "2007-07-08"
         ],
         [
@@ -784,7 +964,9 @@
           "**6.30**",
           "Single",
           "[Polish Open 2006](https://www.worldcubeassociation.org/competitions/PolishOpen2006)",
-          "Piotr Kózka 4.18 — [Polish Open 2006](https://www.worldcubeassociation.org/competitions/PolishOpen2006)",
+          "[Piotr Kózka](https://www.worldcubeassociation.org/persons/2005KOZK01)",
+          "4.18",
+          "[Polish Open 2006](https://www.worldcubeassociation.org/competitions/PolishOpen2006)",
           "2006-09-17"
         ],
         [
@@ -792,7 +974,9 @@
           "**8.72**",
           "Average",
           "[Polish Open 2006](https://www.worldcubeassociation.org/competitions/PolishOpen2006)",
-          "Grzegorz Łuczyna 8.46 — [Polish Open 2006](https://www.worldcubeassociation.org/competitions/PolishOpen2006)",
+          "[Grzegorz Łuczyna](https://www.worldcubeassociation.org/persons/2005LUCZ01)",
+          "8.46",
+          "[Polish Open 2006](https://www.worldcubeassociation.org/competitions/PolishOpen2006)",
           "2006-09-17"
         ],
         [
@@ -800,7 +984,9 @@
           "**14.55**",
           "Average",
           "[Polish Open 2005](https://www.worldcubeassociation.org/competitions/PolishOpen2005)",
-          "Piotr Kózka 11.22 — [Polish Open 2005](https://www.worldcubeassociation.org/competitions/PolishOpen2005)",
+          "[Piotr Kózka](https://www.worldcubeassociation.org/persons/2005KOZK01)",
+          "11.22",
+          "[Polish Open 2005](https://www.worldcubeassociation.org/competitions/PolishOpen2005)",
           "2005-09-18"
         ],
         [
@@ -808,7 +994,9 @@
           "**8.36**",
           "Single",
           "[Swedish Open 2005](https://www.worldcubeassociation.org/competitions/SwedishOpen2005)",
-          "Gunnar Kantare Krig 6.55 — [Swedish Open 2005](https://www.worldcubeassociation.org/competitions/SwedishOpen2005)",
+          "[Gunnar Kantare Krig](https://www.worldcubeassociation.org/persons/2004KRIG01)",
+          "6.55",
+          "[Swedish Open 2005](https://www.worldcubeassociation.org/competitions/SwedishOpen2005)",
           "2005-09-11"
         ],
         [
@@ -816,7 +1004,9 @@
           "**12.30**",
           "Single",
           "[Swedish Open 2005](https://www.worldcubeassociation.org/competitions/SwedishOpen2005)",
-          "Gunnar Kantare Krig 6.55 — [Swedish Open 2005](https://www.worldcubeassociation.org/competitions/SwedishOpen2005)",
+          "[Gunnar Kantare Krig](https://www.worldcubeassociation.org/persons/2004KRIG01)",
+          "6.55",
+          "[Swedish Open 2005](https://www.worldcubeassociation.org/competitions/SwedishOpen2005)",
           "2005-09-11"
         ],
         [
@@ -824,7 +1014,9 @@
           "**14.87**",
           "Average",
           "[Swedish Open 2005](https://www.worldcubeassociation.org/competitions/SwedishOpen2005)",
-          "Gunnar Kantare Krig 14.81 — [Swedish Open 2005](https://www.worldcubeassociation.org/competitions/SwedishOpen2005)",
+          "[Gunnar Kantare Krig](https://www.worldcubeassociation.org/persons/2004KRIG01)",
+          "14.81",
+          "[Swedish Open 2005](https://www.worldcubeassociation.org/competitions/SwedishOpen2005)",
           "2005-09-11"
         ]
       ]
@@ -838,7 +1030,9 @@
           "**2.51**",
           "Average",
           "[Grand Forks 2024](https://www.worldcubeassociation.org/competitions/GrandForks2024)",
-          "Volodymyr Kapustianskyi 2.39 — [Grand Forks 2024](https://www.worldcubeassociation.org/competitions/GrandForks2024)",
+          "[Volodymyr Kapustianskyi](https://www.worldcubeassociation.org/persons/2022KAPU01)",
+          "2.39",
+          "[Grand Forks 2024](https://www.worldcubeassociation.org/competitions/GrandForks2024)",
           "2024-09-14"
         ],
         [
@@ -846,7 +1040,9 @@
           "**2.34**",
           "Single",
           "[No Triangle in Rzeszów 2024](https://www.worldcubeassociation.org/competitions/NoTriangleinRzeszow2024)",
-          "Eryk Kasperek 2.31 — [No Triangle in Rzeszów 2024](https://www.worldcubeassociation.org/competitions/NoTriangleinRzeszow2024)",
+          "[Eryk Kasperek](https://www.worldcubeassociation.org/persons/2021KASP01)",
+          "2.31",
+          "[No Triangle in Rzeszów 2024](https://www.worldcubeassociation.org/competitions/NoTriangleinRzeszow2024)",
           "2024-05-19"
         ],
         [
@@ -854,7 +1050,9 @@
           "**5.02**",
           "Average",
           "[Shanghai Winter 2018](https://www.worldcubeassociation.org/competitions/ShanghaiWinter2018)",
-          "Tairan Zhong (钟泰然) 4.95 — [Shanghai Winter 2018](https://www.worldcubeassociation.org/competitions/ShanghaiWinter2018)",
+          "[Tairan Zhong (钟泰然)](https://www.worldcubeassociation.org/persons/2013ZHON04)",
+          "4.95",
+          "[Shanghai Winter 2018](https://www.worldcubeassociation.org/competitions/ShanghaiWinter2018)",
           "2018-01-21"
         ],
         [
@@ -862,7 +1060,9 @@
           "**6.64**",
           "Average",
           "[Oxford Open 2014](https://www.worldcubeassociation.org/competitions/OxfordOpen2014)",
-          "Evan Liu 6.61 — [Oxford Open 2014](https://www.worldcubeassociation.org/competitions/OxfordOpen2014)",
+          "[Evan Liu](https://www.worldcubeassociation.org/persons/2009LIUE01)",
+          "6.61",
+          "[Oxford Open 2014](https://www.worldcubeassociation.org/competitions/OxfordOpen2014)",
           "2014-05-18"
         ],
         [
@@ -870,7 +1070,9 @@
           "**8.41**",
           "Average",
           "[Japan Open 2010](https://www.worldcubeassociation.org/competitions/JapanOpen2010)",
-          "Yu Sajima (佐島優) 7.96 — [Japan Open 2010](https://www.worldcubeassociation.org/competitions/JapanOpen2010)",
+          "[Yu Sajima (佐島優)](https://www.worldcubeassociation.org/persons/2008SAJI01)",
+          "7.96",
+          "[Japan Open 2010](https://www.worldcubeassociation.org/competitions/JapanOpen2010)",
           "2010-03-28"
         ],
         [
@@ -878,7 +1080,9 @@
           "**9.94**",
           "Single",
           "[German Open 2004](https://www.worldcubeassociation.org/competitions/GermanOpen2004)",
-          "Stefan Pochmann 9.54 — [German Open 2004](https://www.worldcubeassociation.org/competitions/GermanOpen2004)",
+          "[Stefan Pochmann](https://www.worldcubeassociation.org/persons/2003POCH01)",
+          "9.54",
+          "[German Open 2004](https://www.worldcubeassociation.org/competitions/GermanOpen2004)",
           "2004-04-24"
         ]
       ]
@@ -892,7 +1096,9 @@
           "**1.62**",
           "Average",
           "[Pretzel Mania 2022](https://www.worldcubeassociation.org/competitions/PretzelMania2022)",
-          "Zayn Khanani 1.56 — [Pretzel Mania 2022](https://www.worldcubeassociation.org/competitions/PretzelMania2022)",
+          "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
+          "1.56",
+          "[Pretzel Mania 2022](https://www.worldcubeassociation.org/competitions/PretzelMania2022)",
           "2022-09-04"
         ],
         [
@@ -900,7 +1106,9 @@
           "**4.26**",
           "Average",
           "[Kaliska Open 2014](https://www.worldcubeassociation.org/competitions/KaliskaOpen2014)",
-          "Jonatan Kłosko 3.15 — [Kaliska Open 2014](https://www.worldcubeassociation.org/competitions/KaliskaOpen2014)",
+          "[Jonatan Kłosko](https://www.worldcubeassociation.org/persons/2013KOSK01)",
+          "3.15",
+          "[Kaliska Open 2014](https://www.worldcubeassociation.org/competitions/KaliskaOpen2014)",
           "2014-08-17"
         ],
         [
@@ -908,7 +1116,9 @@
           "**4.41**",
           "Average",
           "[Kaliska Open 2014](https://www.worldcubeassociation.org/competitions/KaliskaOpen2014)",
-          "Jonatan Kłosko 3.15 — [Kaliska Open 2014](https://www.worldcubeassociation.org/competitions/KaliskaOpen2014)",
+          "[Jonatan Kłosko](https://www.worldcubeassociation.org/persons/2013KOSK01)",
+          "3.15",
+          "[Kaliska Open 2014](https://www.worldcubeassociation.org/competitions/KaliskaOpen2014)",
           "2014-08-17"
         ],
         [
@@ -916,7 +1126,9 @@
           "**4.46**",
           "Average",
           "[Kaliska Open 2014](https://www.worldcubeassociation.org/competitions/KaliskaOpen2014)",
-          "Jonatan Kłosko 3.15 — [Kaliska Open 2014](https://www.worldcubeassociation.org/competitions/KaliskaOpen2014)",
+          "[Jonatan Kłosko](https://www.worldcubeassociation.org/persons/2013KOSK01)",
+          "3.15",
+          "[Kaliska Open 2014](https://www.worldcubeassociation.org/competitions/KaliskaOpen2014)",
           "2014-08-17"
         ],
         [
@@ -924,7 +1136,9 @@
           "**3.46**",
           "Single",
           "[PNExpress Open 2014](https://www.worldcubeassociation.org/competitions/PangasinanOpen2014)",
-          "Mharr Justhinne Ampong 3.21 — [PNExpress Open 2014](https://www.worldcubeassociation.org/competitions/PangasinanOpen2014)",
+          "[Mharr Justhinne Ampong](https://www.worldcubeassociation.org/persons/2012AMPO01)",
+          "3.21",
+          "[PNExpress Open 2014](https://www.worldcubeassociation.org/competitions/PangasinanOpen2014)",
           "2014-02-08"
         ],
         [
@@ -932,7 +1146,9 @@
           "**7.75**",
           "Average",
           "[Blizzard Town 2014](https://www.worldcubeassociation.org/competitions/BlizzardTown2014)",
-          "John Brechon 7.46 — [Blizzard Town 2014](https://www.worldcubeassociation.org/competitions/BlizzardTown2014)",
+          "[John Brechon](https://www.worldcubeassociation.org/persons/2010BREC01)",
+          "7.46",
+          "[Blizzard Town 2014](https://www.worldcubeassociation.org/competitions/BlizzardTown2014)",
           "2014-01-11"
         ],
         [
@@ -940,7 +1156,9 @@
           "**6.00**",
           "Single",
           "[Houston Winter 2014](https://www.worldcubeassociation.org/competitions/HoustonWinterOpen2014)",
-          "Walker Welch 4.63 — [Houston Winter 2014](https://www.worldcubeassociation.org/competitions/HoustonWinterOpen2014)",
+          "[Walker Welch](https://www.worldcubeassociation.org/persons/2011WELC01)",
+          "4.63",
+          "[Houston Winter 2014](https://www.worldcubeassociation.org/competitions/HoustonWinterOpen2014)",
           "2014-01-04"
         ],
         [
@@ -948,7 +1166,9 @@
           "**6.43**",
           "Single",
           "[Houston Winter 2014](https://www.worldcubeassociation.org/competitions/HoustonWinterOpen2014)",
-          "Walker Welch 4.63 — [Houston Winter 2014](https://www.worldcubeassociation.org/competitions/HoustonWinterOpen2014)",
+          "[Walker Welch](https://www.worldcubeassociation.org/persons/2011WELC01)",
+          "4.63",
+          "[Houston Winter 2014](https://www.worldcubeassociation.org/competitions/HoustonWinterOpen2014)",
           "2014-01-04"
         ],
         [
@@ -956,7 +1176,9 @@
           "**6.56**",
           "Single",
           "[Houston Winter 2014](https://www.worldcubeassociation.org/competitions/HoustonWinterOpen2014)",
-          "Walker Welch 4.63 — [Houston Winter 2014](https://www.worldcubeassociation.org/competitions/HoustonWinterOpen2014)",
+          "[Walker Welch](https://www.worldcubeassociation.org/persons/2011WELC01)",
+          "4.63",
+          "[Houston Winter 2014](https://www.worldcubeassociation.org/competitions/HoustonWinterOpen2014)",
           "2014-01-04"
         ],
         [
@@ -964,15 +1186,9 @@
           "**8.15**",
           "Single",
           "[Houston Winter 2014](https://www.worldcubeassociation.org/competitions/HoustonWinterOpen2014)",
-          "Walker Welch 4.63 — [Houston Winter 2014](https://www.worldcubeassociation.org/competitions/HoustonWinterOpen2014)",
-          "2014-01-04"
-        ],
-        [
-          "[Ryan Przybocki](https://www.worldcubeassociation.org/persons/2013PRZY02)",
-          "**12.20**",
-          "Average",
+          "[Walker Welch](https://www.worldcubeassociation.org/persons/2011WELC01)",
+          "4.63",
           "[Houston Winter 2014](https://www.worldcubeassociation.org/competitions/HoustonWinterOpen2014)",
-          "Walker Welch 8.16 — [Houston Winter 2014](https://www.worldcubeassociation.org/competitions/HoustonWinterOpen2014)",
           "2014-01-04"
         ],
         [
@@ -980,7 +1196,19 @@
           "**10.67**",
           "Average",
           "[Houston Winter 2014](https://www.worldcubeassociation.org/competitions/HoustonWinterOpen2014)",
-          "Walker Welch 8.16 — [Houston Winter 2014](https://www.worldcubeassociation.org/competitions/HoustonWinterOpen2014)",
+          "[Walker Welch](https://www.worldcubeassociation.org/persons/2011WELC01)",
+          "8.16",
+          "[Houston Winter 2014](https://www.worldcubeassociation.org/competitions/HoustonWinterOpen2014)",
+          "2014-01-04"
+        ],
+        [
+          "[Ryan Przybocki](https://www.worldcubeassociation.org/persons/2013PRZY02)",
+          "**12.20**",
+          "Average",
+          "[Houston Winter 2014](https://www.worldcubeassociation.org/competitions/HoustonWinterOpen2014)",
+          "[Walker Welch](https://www.worldcubeassociation.org/persons/2011WELC01)",
+          "8.16",
+          "[Houston Winter 2014](https://www.worldcubeassociation.org/competitions/HoustonWinterOpen2014)",
           "2014-01-04"
         ]
       ]
@@ -994,15 +1222,9 @@
           "**5.43**",
           "Average",
           "[Northeast Championship 2022](https://www.worldcubeassociation.org/competitions/NortheastChampionship2022)",
-          "Max Siauw 5.02 — [Northeast Championship 2022](https://www.worldcubeassociation.org/competitions/NortheastChampionship2022)",
-          "2022-05-30"
-        ],
-        [
           "[Max Siauw](https://www.worldcubeassociation.org/persons/2017SIAU02)",
-          "**5.82**",
-          "Average",
+          "5.02",
           "[Northeast Championship 2022](https://www.worldcubeassociation.org/competitions/NortheastChampionship2022)",
-          "Max Siauw 5.02 — [Northeast Championship 2022](https://www.worldcubeassociation.org/competitions/NortheastChampionship2022)",
           "2022-05-30"
         ],
         [
@@ -1010,7 +1232,9 @@
           "**5.58**",
           "Average",
           "[Northeast Championship 2022](https://www.worldcubeassociation.org/competitions/NortheastChampionship2022)",
-          "Max Siauw 5.02 — [Northeast Championship 2022](https://www.worldcubeassociation.org/competitions/NortheastChampionship2022)",
+          "[Max Siauw](https://www.worldcubeassociation.org/persons/2017SIAU02)",
+          "5.02",
+          "[Northeast Championship 2022](https://www.worldcubeassociation.org/competitions/NortheastChampionship2022)",
           "2022-05-30"
         ],
         [
@@ -1018,7 +1242,19 @@
           "**5.59**",
           "Average",
           "[Northeast Championship 2022](https://www.worldcubeassociation.org/competitions/NortheastChampionship2022)",
-          "Max Siauw 5.02 — [Northeast Championship 2022](https://www.worldcubeassociation.org/competitions/NortheastChampionship2022)",
+          "[Max Siauw](https://www.worldcubeassociation.org/persons/2017SIAU02)",
+          "5.02",
+          "[Northeast Championship 2022](https://www.worldcubeassociation.org/competitions/NortheastChampionship2022)",
+          "2022-05-30"
+        ],
+        [
+          "[Max Siauw](https://www.worldcubeassociation.org/persons/2017SIAU02)",
+          "**5.82**",
+          "Average",
+          "[Northeast Championship 2022](https://www.worldcubeassociation.org/competitions/NortheastChampionship2022)",
+          "[Max Siauw](https://www.worldcubeassociation.org/persons/2017SIAU02)",
+          "5.02",
+          "[Northeast Championship 2022](https://www.worldcubeassociation.org/competitions/NortheastChampionship2022)",
           "2022-05-30"
         ],
         [
@@ -1026,7 +1262,9 @@
           "**9.37**",
           "Average",
           "[Slow N Steady Fall 2016](https://www.worldcubeassociation.org/competitions/SlowNSteadyFall2016)",
-          "Brandon Lin (林博浩) 9.33 — [Slow N Steady Fall 2016](https://www.worldcubeassociation.org/competitions/SlowNSteadyFall2016)",
+          "[Brandon Lin (林博浩)](https://www.worldcubeassociation.org/persons/2011LINB01)",
+          "9.33",
+          "[Slow N Steady Fall 2016](https://www.worldcubeassociation.org/competitions/SlowNSteadyFall2016)",
           "2016-09-24"
         ],
         [
@@ -1034,7 +1272,9 @@
           "**19.14**",
           "Average",
           "[Cheonan 2008](https://www.worldcubeassociation.org/competitions/Cheonan2008)",
-          "Kang Ji-Jon 17.77 — [Cheonan 2008](https://www.worldcubeassociation.org/competitions/Cheonan2008)",
+          "[Kang Ji-Jon](https://www.worldcubeassociation.org/persons/2007JIJO01)",
+          "17.77",
+          "[Cheonan 2008](https://www.worldcubeassociation.org/competitions/Cheonan2008)",
           "2008-07-27"
         ]
       ]
@@ -1048,7 +1288,9 @@
           "**26.17**",
           "Average",
           "[SE Champ 2018](https://www.worldcubeassociation.org/competitions/SEChamp2018)",
-          "Daniel Rose-Levine 23.69 — [SE Champ 2018](https://www.worldcubeassociation.org/competitions/SEChamp2018)",
+          "[Daniel Rose-Levine](https://www.worldcubeassociation.org/persons/2015ROSE01)",
+          "23.69",
+          "[SE Champ 2018](https://www.worldcubeassociation.org/competitions/SEChamp2018)",
           "2018-04-15"
         ],
         [
@@ -1056,7 +1298,9 @@
           "**26.81**",
           "Average",
           "[SE Champ 2018](https://www.worldcubeassociation.org/competitions/SEChamp2018)",
-          "Daniel Rose-Levine 23.69 — [SE Champ 2018](https://www.worldcubeassociation.org/competitions/SEChamp2018)",
+          "[Daniel Rose-Levine](https://www.worldcubeassociation.org/persons/2015ROSE01)",
+          "23.69",
+          "[SE Champ 2018](https://www.worldcubeassociation.org/competitions/SEChamp2018)",
           "2018-04-15"
         ],
         [
@@ -1064,7 +1308,9 @@
           "**31.92**",
           "Average",
           "[Valeparaibano 2013](https://www.worldcubeassociation.org/competitions/Valeparaibano2013)",
-          "Gabriel Pereira Campanha 30.57 — [Valeparaibano 2013](https://www.worldcubeassociation.org/competitions/Valeparaibano2013)",
+          "[Gabriel Pereira Campanha](https://www.worldcubeassociation.org/persons/2012CAMP03)",
+          "30.57",
+          "[Valeparaibano 2013](https://www.worldcubeassociation.org/competitions/Valeparaibano2013)",
           "2013-12-01"
         ],
         [
@@ -1072,7 +1318,9 @@
           "**3:09.63**",
           "Average",
           "[SveKub 2006](https://www.worldcubeassociation.org/competitions/Svekub2006)",
-          "Anssi Vanhala 1:28.14 — [SveKub 2006](https://www.worldcubeassociation.org/competitions/Svekub2006)",
+          "[Anssi Vanhala](https://www.worldcubeassociation.org/persons/2005VANH01)",
+          "1:28.14",
+          "[SveKub 2006](https://www.worldcubeassociation.org/competitions/Svekub2006)",
           "2006-03-19"
         ]
       ]
@@ -1086,7 +1334,9 @@
           "**0.94**",
           "Average",
           "[Hong Kong Open 2009](https://www.worldcubeassociation.org/competitions/HongKongOpen2009)",
-          "Tang Yiu Chun (鄧耀俊) 0.90 — [Hong Kong Open 2009](https://www.worldcubeassociation.org/competitions/HongKongOpen2009)",
+          "[Tang Yiu Chun (鄧耀俊)](https://www.worldcubeassociation.org/persons/2009CHUN07)",
+          "0.90",
+          "[Hong Kong Open 2009](https://www.worldcubeassociation.org/competitions/HongKongOpen2009)",
           "2009-07-19"
         ],
         [
@@ -1094,7 +1344,9 @@
           "**1.02**",
           "Single",
           "[Belgian Open 2007](https://www.worldcubeassociation.org/competitions/BelgianOpen2007)",
-          "Mátyás Kuti 0.86 — [Belgian Open 2007](https://www.worldcubeassociation.org/competitions/BelgianOpen2007)",
+          "[Mátyás Kuti](https://www.worldcubeassociation.org/persons/2006KUTI01)",
+          "0.86",
+          "[Belgian Open 2007](https://www.worldcubeassociation.org/competitions/BelgianOpen2007)",
           "2007-02-25"
         ],
         [
@@ -1102,7 +1354,9 @@
           "**1.93**",
           "Single",
           "[Euro 2004](https://www.worldcubeassociation.org/competitions/Euro2004)",
-          "Stefan Pochmann 1.43 — [Euro 2004](https://www.worldcubeassociation.org/competitions/Euro2004)",
+          "[Stefan Pochmann](https://www.worldcubeassociation.org/persons/2003POCH01)",
+          "1.43",
+          "[Euro 2004](https://www.worldcubeassociation.org/competitions/Euro2004)",
           "2004-08-08"
         ],
         [
@@ -1110,7 +1364,9 @@
           "**2.81**",
           "Single",
           "[German Open 2004](https://www.worldcubeassociation.org/competitions/GermanOpen2004)",
-          "Jaap Scherphuis 2.09 — [German Open 2004](https://www.worldcubeassociation.org/competitions/GermanOpen2004)",
+          "[Jaap Scherphuis](https://www.worldcubeassociation.org/persons/2003SCHE01)",
+          "2.09",
+          "[German Open 2004](https://www.worldcubeassociation.org/competitions/GermanOpen2004)",
           "2004-04-24"
         ]
       ]
@@ -1124,7 +1380,9 @@
           "**1.90**",
           "Single",
           "[Swedish Open 2007](https://www.worldcubeassociation.org/competitions/SwedishOpen2007)",
-          "Máté Horváth 1.83 — [Swedish Open 2007](https://www.worldcubeassociation.org/competitions/SwedishOpen2007)",
+          "[Máté Horváth](https://www.worldcubeassociation.org/persons/2007HORV01)",
+          "1.83",
+          "[Swedish Open 2007](https://www.worldcubeassociation.org/competitions/SwedishOpen2007)",
           "2007-08-26"
         ],
         [
@@ -1132,7 +1390,9 @@
           "**2.16**",
           "Single",
           "[Belgian Open 2007](https://www.worldcubeassociation.org/competitions/BelgianOpen2007)",
-          "Máté Horváth 2.02 — [Belgian Open 2007](https://www.worldcubeassociation.org/competitions/BelgianOpen2007)",
+          "[Máté Horváth](https://www.worldcubeassociation.org/persons/2007HORV01)",
+          "2.02",
+          "[Belgian Open 2007](https://www.worldcubeassociation.org/competitions/BelgianOpen2007)",
           "2007-02-25"
         ],
         [
@@ -1140,7 +1400,9 @@
           "**2.44**",
           "Single",
           "[Belgian Open 2007](https://www.worldcubeassociation.org/competitions/BelgianOpen2007)",
-          "Máté Horváth 2.02 — [Belgian Open 2007](https://www.worldcubeassociation.org/competitions/BelgianOpen2007)",
+          "[Máté Horváth](https://www.worldcubeassociation.org/persons/2007HORV01)",
+          "2.02",
+          "[Belgian Open 2007](https://www.worldcubeassociation.org/competitions/BelgianOpen2007)",
           "2007-02-25"
         ],
         [
@@ -1148,7 +1410,9 @@
           "**2.65**",
           "Average",
           "[Belgian Open 2007](https://www.worldcubeassociation.org/competitions/BelgianOpen2007)",
-          "Milán Baticz 2.27 — [Belgian Open 2007](https://www.worldcubeassociation.org/competitions/BelgianOpen2007)",
+          "[Milán Baticz](https://www.worldcubeassociation.org/persons/2005BATI01)",
+          "2.27",
+          "[Belgian Open 2007](https://www.worldcubeassociation.org/competitions/BelgianOpen2007)",
           "2007-02-25"
         ],
         [
@@ -1156,7 +1420,9 @@
           "**3.06**",
           "Average",
           "[Belgian Open 2007](https://www.worldcubeassociation.org/competitions/BelgianOpen2007)",
-          "Milán Baticz 2.27 — [Belgian Open 2007](https://www.worldcubeassociation.org/competitions/BelgianOpen2007)",
+          "[Milán Baticz](https://www.worldcubeassociation.org/persons/2005BATI01)",
+          "2.27",
+          "[Belgian Open 2007](https://www.worldcubeassociation.org/competitions/BelgianOpen2007)",
           "2007-02-25"
         ],
         [
@@ -1164,7 +1430,9 @@
           "**6.07**",
           "Single",
           "[Caltech Fall 2004](https://www.worldcubeassociation.org/competitions/CaltechFall2004)",
-          "Sunil Pedapudi 5.16 — [Caltech Fall 2004](https://www.worldcubeassociation.org/competitions/CaltechFall2004)",
+          "[Sunil Pedapudi](https://www.worldcubeassociation.org/persons/2004PEDA01)",
+          "5.16",
+          "[Caltech Fall 2004](https://www.worldcubeassociation.org/competitions/CaltechFall2004)",
           "2004-10-16"
         ],
         [
@@ -1172,7 +1440,9 @@
           "**8.03**",
           "Single",
           "[Caltech Fall 2004](https://www.worldcubeassociation.org/competitions/CaltechFall2004)",
-          "Sunil Pedapudi 5.16 — [Caltech Fall 2004](https://www.worldcubeassociation.org/competitions/CaltechFall2004)",
+          "[Sunil Pedapudi](https://www.worldcubeassociation.org/persons/2004PEDA01)",
+          "5.16",
+          "[Caltech Fall 2004](https://www.worldcubeassociation.org/competitions/CaltechFall2004)",
           "2004-10-16"
         ]
       ]
