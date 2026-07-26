@@ -44,6 +44,19 @@ const EMPTY: MirrorSyncReport = { updated: [], notes: [] };
 export const mirrorAlgSyncEnabled = (puzzle: string, set: string) =>
   MIRROR_ALG_SYNC_SETS.has(`${puzzle}/${set}`);
 
+/**
+ * 比「有没有变」用的规范形。
+ *
+ * 不能直接 `JSON.stringify` 比:jsonb 存进去会按(键长, 字节序)重排键,读回来的
+ * `{alg, gen, src, altId}` 与我们现构的 `{alg, altId, gen, src}` 逐字不等 —— 于是每次保存
+ * 都判成「变了」,把两行白写一遍。排序后再比才是真的比内容。
+ */
+const canon = (v: unknown): string => JSON.stringify(v, (_k, val) =>
+  val && typeof val === 'object' && !Array.isArray(val)
+    ? Object.fromEntries(Object.keys(val as Record<string, unknown>).sort()
+        .map(k => [k, (val as Record<string, unknown>)[k]]))
+    : val);
+
 const toPairCase = (r: MirrorRow): MirrorPairCase => ({
   id: Number(r.id),
   algs: (Array.isArray(r.algs) ? r.algs : []) as AlgEntry[][],
@@ -97,12 +110,12 @@ export async function syncMirrorForCase(
   const result = regenerateMirrorAlgs(self, partner);
   notes.push(...result.notes);
 
-  const before = new Map<number, string>([[self.id, JSON.stringify(self.algs)]]);
-  if (partner && partner.id !== self.id) before.set(partner.id, JSON.stringify(partner.algs));
+  const before = new Map<number, string>([[self.id, canon(self.algs)]]);
+  if (partner && partner.id !== self.id) before.set(partner.id, canon(partner.algs));
 
   const updated: number[] = [];
   for (const [id, algs] of result.algsById) {
-    if (JSON.stringify(algs) === before.get(id)) continue;
+    if (canon(algs) === before.get(id)) continue;
     // postgres@3 自己会 stringify jsonb 参数 —— 别再手动 JSON.stringify(会落成字符串字面量)
     await query('UPDATE alg_cases SET algs = ?::jsonb WHERE id = ?', [algs, id]);
     updated.push(id);

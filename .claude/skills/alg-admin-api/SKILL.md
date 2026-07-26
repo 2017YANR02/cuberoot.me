@@ -24,7 +24,7 @@ KEY=$(grep -oP 'ADMIN_API_KEY\*\* \| `\K[^`]+' D:/cube/cuberoot.me/.password.md)
 
 **别在对话明文打 key**,用 `$KEY`。
 
-## 4 个 admin 端点
+## 5 个 admin 端点
 
 base = `https://api.cuberoot.me/v1/alg/sets`(prod)。
 
@@ -34,8 +34,15 @@ base = `https://api.cuberoot.me/v1/alg/sets`(prod)。
 | 修改 case | PUT | `/:p/:s/cases/:id` | 同上 |
 | 删 case | DELETE | `/:p/:s/cases/:id` | — |
 | 重排 case 顺序 | PUT | `/:p/:s/reorder` | `{ ids: number[] }` —— 必须该 set 全部 case id 的新顺序,server 重写 position=0..N-1 |
+| 建镜像链 | PUT | `/:p/:s/mirror-links` | `{ links: [{id, mirrorCaseId}], dryRun? }` —— 该 set 的**全量**链表,没列出的一律解链 |
 
-注意 **reorder 路径是 `/reorder` 而非 `/cases/order`**(后者会被 `/cases/:id` 路由捕获,id="order"→NaN→400 invalid id)。
+注意 **reorder 路径是 `/reorder` 而非 `/cases/order`**(后者会被 `/cases/:id` 路由捕获,id="order"→NaN→400 invalid id);`/mirror-links` 同理。
+
+### mirror-links(issue #40 T5)
+
+链表由 `packages/client/scripts/mirror-link-plan.mts` 算(输出 `.tmp/mirror-link-plan.json`,只算不写)。端点会校验链**互指**、id 都在本 set,然后把整个 set 的镜像公式重算一遍并落库 —— 建链本身不触发单 case 的保存同步,所以这一步必须由端点自己补。幂等:同一份链表重跑返回 `linked:0, algsUpdated:0`。
+
+只有 `3x3/f2l`、`3x3/zbls` 会真的生成公式(`MIRROR_ALG_SYNC_SETS`);`3x3/cls` 有伙伴但只存一个视角,建链只是让 case 页显示伙伴。
 
 ### 调用范例
 
