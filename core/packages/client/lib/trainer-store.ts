@@ -71,6 +71,28 @@ interface PersistedSession {
 
 const sessionKey = (p: string, s: string) => `trainer:${p}/${s}`;
 
+/**
+ * 合练会话的 id(勾选 / 成绩按它单独存一份,不与任何单集会话混)。
+ * 成员先排序 ⟹ 「PLL + ZBLL」和「ZBLL + PLL」是同一场,不会各留一份进度。
+ */
+export const mixSessionId = (sets: readonly string[]) => `mix:${[...sets].sort().join('+')}`;
+export const isMixSession = (sessionId: string) => sessionId.startsWith('mix:');
+/** 合练 id → 成员 set 列表。 */
+export const mixMembers = (sessionId: string): string[] =>
+  isMixSession(sessionId) ? sessionId.slice(4).split('+').filter(Boolean) : [];
+
+/**
+ * 房间 API 只收 `[A-Za-z0-9_-]{1,48}` 的 set id —— 合练 id 带 `:` `+`,得先净化。
+ * 双方(建房/加入)都走这一个函数,所以只要成员相同就一定对得上。太长则退化成短哈希。
+ */
+export function roomSetId(sessionId: string): string {
+  const safe = sessionId.replace(/[^A-Za-z0-9_-]/g, '_');
+  if (safe.length <= 48) return safe;
+  let h = 5381;
+  for (let i = 0; i < sessionId.length; i++) h = (((h << 5) + h) ^ sessionId.charCodeAt(i)) >>> 0;
+  return `mix_${h.toString(36)}`;
+}
+
 const loadPersisted = (p: string, s: string): PersistedSession => {
   if (typeof window === 'undefined') return { selected: [], solves: [] };
   try {
@@ -174,7 +196,13 @@ const shuffle = <T,>(arr: T[]): T[] => {
 
 interface TrainerState {
   puzzle: AlgPuzzle | null;
+  /** 会话 id:单集 = set slug;合练 = `mix:pll+zbll`(勾选 / 成绩按它单独存)。 */
   set: string | null;
+  /**
+   * 合练会话的成员 set(单集为 null)。非空时 `cases` 里每个 case 带 `srcSet`,
+   * caseKey 因此带前缀,而标记 / 记忆仍按各自 set 落地(见 trainer-marks / alg-srs-store)。
+   */
+  sets: string[] | null;
   cases: AlgCase[];
   selected: string[];
   /**
@@ -253,6 +281,11 @@ interface TrainerState {
   recapSig: string;
 
   loadSession: (p: AlgPuzzle, s: string, cases: AlgCase[]) => void;
+  /**
+   * 合练:一次装 N 个 set。`cases` 必须已按成员顺序拼好且每个带 `srcSet`
+   * (调用方 loadAlg 完各自 stamp,store 不管数据从哪来)。
+   */
+  loadMixSession: (p: AlgPuzzle, sets: string[], cases: AlgCase[]) => void;
   setSelected: (keys: string[]) => void;
   setScope: (keys: string[] | null) => void;
   setScrambleKind: (k: ScrambleKind) => void;
@@ -640,9 +673,42 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     cstimerize();
   };
 
+  /** 起一场会话(单集 / 合练共用):清干净运行时态,按持久化的勾选出第一题。 */
+  const startSession = (
+    puzzle: AlgPuzzle, sessionId: string, sets: string[] | null, cases: AlgCase[],
+  ) => {
+    const persisted = loadPersisted(puzzle, sessionId);
+    const valid = new Set(cases.map(caseKey));
+    const selected = persisted.selected.filter(k => valid.has(k));
+    set({
+      puzzle,
+      set: sessionId,
+      sets,
+      cases,
+      selected,
+      solves: persisted.solves,
+      currentKey: null,
+      currentName: null,
+      currentScramble: null,
+      peek: null,
+      peek2: null,
+      hist: EMPTY_HIST,
+      recapQueue: [],
+      recapPos: 0,
+      recapSig: '',
+      timerState: TimerState.NOT_RUNNING,
+      observingIdx: Math.max(0, persisted.solves.length - 1),
+      observingPinned: false,
+      recapRoundDone: false,
+      room: null, roomBusy: false, roomClaimed: 0, roomError: null,
+    });
+    if (trainerPool(selected, get().scope).length > 0) pickFresh();
+  };
+
   return {
     puzzle: null,
     set: null,
+    sets: null,
     cases: [],
     selected: [],
     scope: null,
@@ -669,34 +735,11 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     recapPos: 0,
     recapSig: '',
 
-    loadSession: (puzzle, setSlug, cases) => {
-      const persisted = loadPersisted(puzzle, setSlug);
-      const valid = new Set(cases.map(caseKey));
-      const selected = persisted.selected.filter(k => valid.has(k));
-      set({
-        puzzle,
-        set: setSlug,
-        cases,
-        selected,
-        solves: persisted.solves,
-        currentKey: null,
-        currentName: null,
-        currentScramble: null,
-        peek: null,
-        peek2: null,
-        hist: EMPTY_HIST,
-        recapQueue: [],
-        recapPos: 0,
-        recapSig: '',
-        timerState: TimerState.NOT_RUNNING,
-        observingIdx: Math.max(0, persisted.solves.length - 1),
-        observingPinned: false,
-        recapRoundDone: false,
-        room: null, roomBusy: false, roomClaimed: 0, roomError: null,
-      });
-      if (trainerPool(selected, get().scope).length > 0) {
-        pickFresh();
-      }
+    loadSession: (puzzle, setSlug, cases) => startSession(puzzle, setSlug, null, cases),
+
+    loadMixSession: (puzzle, sets, cases) => {
+      const members = [...sets].sort();
+      startSession(puzzle, mixSessionId(members), members, cases);
     },
 
     // 换打乱类型立刻重出当前这道题 —— 不然要等下一次出题才生效,
@@ -903,7 +946,8 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       if (keys.length === 0) return { ok: false, error: 'empty pool' };
       set({ roomBusy: true, roomError: null });
       try {
-        const info = await apiCreateRoom(st.puzzle, st.set, order, keys, start);
+        // 房间只收 [A-Za-z0-9_-] 的 set id;合练 id 走 roomSetId 净化(建/加入同一函数)
+        const info = await apiCreateRoom(st.puzzle, roomSetId(st.set), order, keys, start);
         set({
           mode: 'recap',
           room: { code: info.code, order: info.order, round: info.round, total: info.total },
@@ -927,8 +971,9 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       set({ roomBusy: true, roomError: null });
       try {
         const info = await apiGetRoom(code);
-        // 房间绑定 (puzzle,set):不同集不能混(领来的 case_key 不在本集里)
-        if (info.puzzle !== st.puzzle || info.set !== st.set) {
+        // 房间绑定 (puzzle,set):不同集不能混(领来的 case_key 不在本集里)。
+        // 合练房间的 set 是净化后的合练 id ⟹ 成员集合不同的两场自然对不上,不会串。
+        if (info.puzzle !== st.puzzle || info.set !== roomSetId(st.set)) {
           set({ roomBusy: false });
           return { ok: false, error: `room is for ${info.puzzle}/${info.set}` };
         }

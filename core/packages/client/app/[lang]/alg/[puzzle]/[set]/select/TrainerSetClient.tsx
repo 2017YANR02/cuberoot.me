@@ -8,7 +8,8 @@ import { useQueryState, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
 import { getAlgSetMeta, loadAlg, type AlgCase } from '@cuberoot/shared';
-import { useTrainerStore } from '@/lib/trainer-store';
+import { MIX_SLUG, MIX_MIN_SETS, parseMixSets, mixTitle, mixHref, loadMixCases, setLabel } from '@/lib/alg-mix';
+import { useTrainerStore, mixSessionId } from '@/lib/trainer-store';
 import {
   useTrainerMarks, markStatus, markStarred, MARK_STATUS_LABEL,
   type TrainerMarkBrush, type CaseMarkStatus,
@@ -42,8 +43,12 @@ export default function TrainerSetClient() {
 
   // 从 subgroup 页训练按钮进来带 ?scope=<组slug>:只在该组内选 case(筛选/默认 replace)
   const [scopeParam] = useQueryState('scope');
+  // 合练没有子组范围可言(?scope= 是某一套内部的分组),一律忽略
+  const isMix = setSlug === MIX_SLUG;
   // 旧数字制子组 slug(u1 / pi 1 / as1 …)→ 新方向制(ur / pif / asf …),老 ?scope= 链接 / 书签不失效(migration 0081)
-  const scopeSlug = canonicalZbllSubgroupSlug(setSlug, scopeParam?.trim().toLowerCase() || null);
+  const scopeSlug = isMix
+    ? null
+    : canonicalZbllSubgroupSlug(setSlug, scopeParam?.trim().toLowerCase() || null);
   // 按标记过滤显示(筛选 → 默认 replace)
   const [markFilter, setMarkFilter] = useQueryState(
     'mark',
@@ -51,11 +56,26 @@ export default function TrainerSetClient() {
   );
 
   const puzzle = resolveAlgPuzzle(puzzleParam);   // 接受 event code(333)或 legacy puzzle 名(3x3)
-  const meta = puzzle ? getAlgSetMeta(puzzle, setSlug) : undefined;
+
+  // 合练:`/alg/<puzzle>/mix/select?sets=pll,zbll`
+  const [setsParam] = useQueryState('sets');
+  const mixSets = useMemo(
+    () => (isMix ? parseMixSets(puzzle ?? null, setsParam) : []),
+    [isMix, puzzle, setsParam],
+  );
+  const mixKey = mixSets.join(',');
+  const meta = puzzle
+    ? (isMix
+        ? (mixSets.length >= MIX_MIN_SETS
+            ? { zh: mixTitle(puzzle, mixSets), en: mixTitle(puzzle, mixSets) }
+            : undefined)
+        : getAlgSetMeta(puzzle, setSlug))
+    : undefined;
 
   const cases = useTrainerStore(s => s.cases);
   const selected = useTrainerStore(s => s.selected);
   const loadSession = useTrainerStore(s => s.loadSession);
+  const loadMixSession = useTrainerStore(s => s.loadMixSession);
   const setSelected = useTrainerStore(s => s.setSelected);
   const storePuzzle = useTrainerStore(s => s.puzzle);
   const storeSet = useTrainerStore(s => s.set);
@@ -63,23 +83,43 @@ export default function TrainerSetClient() {
   const marks = useTrainerMarks(s => s.marks);
   const applyMarks = useTrainerMarks(s => s.applyMarks);
   const loadMarks = useTrainerMarks(s => s.loadMarks);
+  const loadMarksMulti = useTrainerMarks(s => s.loadMarksMulti);
   const loadSrs = useAlgSrs(s => s.loadSrs);
+  const loadSrsMulti = useAlgSrs(s => s.loadSrsMulti);
   /** 画笔:null = 普通选择;其余 = 点 cell / 组头 涂该标记(再涂同标记 = 清除)。会话内状态,不进 URL。 */
   const [brush, setBrush] = useState<TrainerMarkBrush | null>(null);
 
-  useEffect(() => {
-    if (!puzzle || !meta) return;
-    loadMarks(puzzle, setSlug);
-    loadSrs(puzzle, setSlug);   // 顶部进度条要显示「待复习」
-  }, [puzzle, setSlug, meta, loadMarks, loadSrs]);
+  // SSG 壳里读不到 `?sets=`(静态 HTML 没有 query),挂载前别急着说「至少要选两套」
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     if (!puzzle || !meta) return;
-    if (storePuzzle === puzzle && storeSet === setSlug && cases.length > 0) return;
+    if (isMix) {
+      const sets = mixKey.split(',').filter(Boolean);
+      loadMarksMulti(puzzle, sets);
+      loadSrsMulti(puzzle, sets);
+      return;
+    }
+    loadMarks(puzzle, setSlug);
+    loadSrs(puzzle, setSlug);   // 顶部进度条要显示「待复习」
+  }, [puzzle, setSlug, meta, isMix, mixKey, loadMarks, loadSrs, loadMarksMulti, loadSrsMulti]);
+
+  useEffect(() => {
+    if (!puzzle || !meta) return;
+    const sessionId = isMix ? mixSessionId(mixKey.split(',').filter(Boolean)) : setSlug;
+    if (storePuzzle === puzzle && storeSet === sessionId && cases.length > 0) return;
+    if (isMix) {
+      const sets = mixKey.split(',').filter(Boolean);
+      loadMixCases(puzzle, sets)
+        .then(all => loadMixSession(puzzle, sets, all))
+        .catch(e => console.error('[trainer] loadMixCases failed', e));
+      return;
+    }
     loadAlg(puzzle, setSlug)
       .then(d => loadSession(puzzle, setSlug, d.cases))
       .catch(e => console.error('[trainer] loadAlg failed', e));
-  }, [puzzle, setSlug, meta, storePuzzle, storeSet, cases.length, loadSession]);
+  }, [puzzle, setSlug, meta, isMix, mixKey, storePuzzle, storeSet, cases.length, loadSession, loadMixSession]);
 
   // scope 内的 case(与 run 页同一套 top/sub 两级 slug 匹配);无 scope 或 slug 落空 = 全部
   const scopedCases = useMemo(() => {
@@ -105,7 +145,11 @@ export default function TrainerSetClient() {
     return (
       <div className="trainer-root">
         <div className="trainer-landing-empty">
-          {tr({ zh: '未知公式集', en: 'Unknown set' })}: {puzzleParam}/{setSlug}
+          {isMix
+            ? (mounted
+                ? tr({ zh: '合练至少要选两套公式集', en: 'A combined drill needs at least two sets' })
+                : tr({ zh: '加载中…', en: 'Loading…' }))
+            : `${tr({ zh: '未知公式集', en: 'Unknown set' })}: ${puzzleParam}/${setSlug}`}
         </div>
       </div>
     );
@@ -138,15 +182,20 @@ export default function TrainerSetClient() {
 
   // 进度条统计 scope 内的整套(不受「只看某类」的显示过滤影响)
   const scopedKeys = scopedCases.map(caseKey);
-  const selectBase = `/alg/${puzzleParam}/${setSlug}/select${scopeQuery}`;
+  const selectBase = isMix
+    ? mixHref(puzzleParam, mixSets, 'select')
+    : `/alg/${puzzleParam}/${setSlug}/select${scopeQuery}`;
+  const runBase = isMix
+    ? mixHref(puzzleParam, mixSets, 'run')
+    : `/alg/${puzzleParam}/${setSlug}/run${scopeQuery}`;
+  const backHref = isMix
+    ? `/alg/${puzzleParam}`
+    : (scopeSlug ? `/alg/${puzzleParam}/${setSlug}/${scopeSlug}` : `/alg/${puzzleParam}/${setSlug}`);
 
   return (
     <div className="trainer-root">
       <div className="trainer-topbar">
-        <Link
-          href={scopeSlug ? `/alg/${puzzleParam}/${setSlug}/${scopeSlug}` : `/alg/${puzzleParam}/${setSlug}`}
-          className="trainer-back"
-        >
+        <Link href={backHref} className="trainer-back">
           <ArrowLeft size={14} /> {tr({ zh: '返回', en: 'Back' })}
         </Link>
         <span style={{ fontSize: '1.1rem', fontWeight: 600 }}>
@@ -154,7 +203,7 @@ export default function TrainerSetClient() {
         </span>
         {/* 记忆模式按整套排期,不依赖勾选 —— 真 <a>,中键可新开标签页 */}
         <Link
-          href={`/alg/${puzzleParam}/${setSlug}/run${scopeQuery ? `${scopeQuery}&` : '?'}mode=memo`}
+          href={`${runBase}${runBase.includes('?') ? '&' : '?'}mode=memo`}
           className="trainer-memo-btn"
           prefetch={false}
           title={tr({ zh: '看图回忆公式,按记忆强度排期', en: 'Recall from the picture, scheduled by memory strength' })}
@@ -163,7 +212,7 @@ export default function TrainerSetClient() {
         </Link>
         <button
           className={`trainer-start-btn${!canStart ? ' is-disabled' : ''}`}
-          onClick={() => router.push(`${langPrefix}/alg/${puzzleParam}/${setSlug}/run${scopeQuery}`) /* allow-button-nav: disabled 门控(canStart)的开始按钮,选 case 后才跳 /run */}
+          onClick={() => router.push(`${langPrefix}${runBase}`) /* allow-button-nav: disabled 门控(canStart)的开始按钮,选 case 后才跳 /run */}
           disabled={!canStart}
         >
           {tr({ zh: '训练', en: 'Train'
@@ -238,17 +287,42 @@ export default function TrainerSetClient() {
             </div>
           )}
 
-          <CaseTreePicker
-            puzzle={puzzle}
-            set={setSlug}
-            cases={visibleCases}
-            selected={selectedSet}
-            onChange={(next) => setSelected([...next])}
-            isZh={isZh}
-            marks={marks}
-            brush={brush}
-            onPaint={onPaint}
-          />
+          {/* 合练按成员集分块 —— 两套里都有叫「T」的组,混在一棵树里会并成一组、认不出谁是谁 */}
+          {isMix ? mixSets.map(slug => {
+            const own = visibleCases.filter(c => c.srcSet === slug);
+            if (own.length === 0) return null;
+            return (
+              <section key={slug} className="trainer-mix-section">
+                <h2 className="trainer-mix-section-title">
+                  {setLabel(puzzle, slug)}
+                  <span>{own.filter(c => selectedSet.has(caseKey(c))).length}/{own.length}</span>
+                </h2>
+                <CaseTreePicker
+                  puzzle={puzzle}
+                  set={slug}
+                  cases={own}
+                  selected={selectedSet}
+                  onChange={(next) => setSelected([...next])}
+                  isZh={isZh}
+                  marks={marks}
+                  brush={brush}
+                  onPaint={onPaint}
+                />
+              </section>
+            );
+          }) : (
+            <CaseTreePicker
+              puzzle={puzzle}
+              set={setSlug}
+              cases={visibleCases}
+              selected={selectedSet}
+              onChange={(next) => setSelected([...next])}
+              isZh={isZh}
+              marks={marks}
+              brush={brush}
+              onPaint={onPaint}
+            />
+          )}
         </>
       )}
     </div>
