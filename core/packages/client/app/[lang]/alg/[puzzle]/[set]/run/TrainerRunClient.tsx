@@ -33,6 +33,7 @@ import {
 import { RoomQrModal } from '@/app/[lang]/alg/_trainer/RoomQrModal';
 import MemoryTrainer from '@/app/[lang]/alg/_trainer/MemoryTrainer';
 import SetProgressStrip from '@/app/[lang]/alg/_trainer/SetProgressStrip';
+import MixSetPicker from '@/app/[lang]/alg/_trainer/MixSetPicker';
 import { resolveAlgPuzzle } from '@/app/[lang]/alg/_trainer/events';
 import { useAlgSrs, autoMarkFromSrs } from '@/lib/alg-srs-store';
 import { gradeFromSolve } from '@/lib/alg-srs';
@@ -89,11 +90,15 @@ export default function TrainerRunClient() {
     [isMix, puzzle, setsParam],
   );
   const mixReady = isMix && mixSets.length >= MIX_MIN_SETS;
-  const meta = puzzle
-    ? (isMix
-        ? (mixReady ? { zh: mixTitle(puzzle, mixSets), en: mixTitle(puzzle, mixSets) } : undefined)
-        : getAlgSetMeta(puzzle, setSlug))
-    : undefined;
+  // 必须 memo:合练的 meta 是现造的字面量,身份每次 render 都变,而它进了下面装载
+  // effect 的依赖 —— 不 memo 就是「effect → set state → 新 meta → effect」的死循环。
+  const meta = useMemo(() => (
+    puzzle
+      ? (isMix
+          ? (mixReady ? { zh: mixTitle(puzzle, mixSets), en: mixTitle(puzzle, mixSets) } : undefined)
+          : getAlgSetMeta(puzzle, setSlug))
+      : undefined
+  ), [puzzle, isMix, mixReady, mixSets, setSlug]);
 
   const cases = useTrainerStore(s => s.cases);
   const selected = useTrainerStore(s => s.selected);
@@ -642,14 +647,20 @@ export default function TrainerRunClient() {
   };
 
   if (!puzzle || !meta) {
+    // 合练成员不够:直接给选集器(SSG 壳读不到 query,挂载前先「加载中」免闪)
+    if (puzzle && isMix) {
+      return (
+        <div className="trainer-root">
+          {mounted
+            ? <MixSetPicker puzzle={puzzle} puzzleParam={puzzleParam} leaf="run" initial={mixSets} />
+            : <div className="trainer-landing-empty">{tr({ zh: '加载中…', en: 'Loading…' })}</div>}
+        </div>
+      );
+    }
     return (
       <div className="trainer-root">
         <div className="trainer-landing-empty">
-          {isMix
-            ? (mounted
-                ? tr({ zh: '合练至少要选两套公式集', en: 'A combined drill needs at least two sets' })
-                : tr({ zh: '加载中…', en: 'Loading…' }))
-            : `${tr({ zh: '未知公式集', en: 'Unknown set' })}: ${puzzleParam}/${setSlug}`}
+          {tr({ zh: '未知公式集', en: 'Unknown set' })}: {puzzleParam}/{setSlug}
         </div>
       </div>
     );

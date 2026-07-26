@@ -93,6 +93,12 @@ export function roomSetId(sessionId: string): string {
   return `mix_${h.toString(36)}`;
 }
 
+/** 这场会话有没有落过盘 —— 区分「从没开过」与「开过但把 case 全取消了」。 */
+const hasPersisted = (p: string, s: string): boolean => {
+  if (typeof window === 'undefined') return false;
+  try { return localStorage.getItem(sessionKey(p, s)) !== null; } catch { return false; }
+};
+
 const loadPersisted = (p: string, s: string): PersistedSession => {
   if (typeof window === 'undefined') return { selected: [], solves: [] };
   try {
@@ -676,10 +682,16 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
   /** 起一场会话(单集 / 合练共用):清干净运行时态,按持久化的勾选出第一题。 */
   const startSession = (
     puzzle: AlgPuzzle, sessionId: string, sets: string[] | null, cases: AlgCase[],
+    opts?: { defaultAll?: boolean },
   ) => {
     const persisted = loadPersisted(puzzle, sessionId);
     const valid = new Set(cases.map(caseKey));
-    const selected = persisted.selected.filter(k => valid.has(k));
+    let selected = persisted.selected.filter(k => valid.has(k));
+    // 头一次开这场合练:用户点的就是「这几套一起练」,默认全选,免得进来先撞一句「尚未选 case」。
+    // 单集流程一律先经 select 页挑 case,不改它。开过后取消到零 = 用户本意,落过盘就照他的来。
+    if (opts?.defaultAll && selected.length === 0 && !hasPersisted(puzzle, sessionId)) {
+      selected = cases.map(caseKey);
+    }
     set({
       puzzle,
       set: sessionId,
@@ -739,7 +751,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
 
     loadMixSession: (puzzle, sets, cases) => {
       const members = [...sets].sort();
-      startSession(puzzle, mixSessionId(members), members, cases);
+      startSession(puzzle, mixSessionId(members), members, cases, { defaultAll: true });
     },
 
     // 换打乱类型立刻重出当前这道题 —— 不然要等下一次出题才生效,
