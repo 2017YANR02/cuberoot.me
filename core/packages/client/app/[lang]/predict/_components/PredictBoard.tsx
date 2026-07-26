@@ -7,8 +7,9 @@
  *   - `paintMode` + `dragEmpty='view'`:任何拖拽都只转视角,绝不拧层;单击照旧派
  *     `taps`,于是「点某枚贴纸」就有了。答案可能落在背面,所以视角必须能转到底
  *     (两轴无界累加,不钳 pitch),再给一个复位按钮。
- *   - 不常驻方位字母(只在转视角时由引擎自己淡入淡出):整盘颜色都画出来了,读方位
- *     靠颜色就够,常驻的字母浮在面正上方反而会压住贴纸。
+ *   - 方位字母常驻(`faceHints: true`,= /sim 设置里「字母」开着的状态,本页不给开关):
+ *     题面大半格子是压暗的,只靠颜色认方位不够,U/D/L/R/F/B 得一直看得见。引擎里
+ *     `show()` 只设目标透明度、`tick` 每帧淡入,没人 `hide()` 就一直亮着。
  *   - 颜色逐贴纸给:`labels[i]` 是 facelet i 的引擎色标签(整盘真实颜色)。
  *   - 「只亮目标块」不靠改色,靠 /sim 那套阶段遮罩:`setStickering` 把 `bright` 之外
  *     的贴纸压成 FM_DIM(各自颜色减半),遮罩定义在还原帧上 → 复盘转动时高亮跟着块走。
@@ -94,7 +95,9 @@ function poseShowing(faces: readonly string[]): readonly [number, number] {
 }
 
 type BoardEngine = {
-  mountSimWorld: (opts: { host: HTMLElement; interactive: boolean; perspective: number }) => SimMount;
+  mountSimWorld: (opts: {
+    host: HTMLElement; interactive: boolean; perspective: number; faceHints: boolean;
+  }) => SimMount;
   Toucher: typeof Toucher;
 };
 
@@ -171,7 +174,9 @@ export default function PredictBoard({
 
       // perspective 比引擎默认(5)松一档:题板是正方形,转到角对角时立方体最长,
       // 松一点才不会顶到画布边。
-      const mount = mountSimWorld({ host, interactive: true, perspective: 5.6 });
+      // faceHints:方位字母强制常驻(本页不给 toggle)。字母浮在 2.6×SIZE 处,取景半径
+      // 是 3×SIZE,不会顶出画框。
+      const mount = mountSimWorld({ host, interactive: true, perspective: 5.6, faceHints: true });
       mountRef.current = mount;
       const world: World = mount.world;
 
