@@ -14,7 +14,7 @@
 import { FACE } from '../define';
 import { engineHomeSid } from './netIndex';
 import { parseMask, formatMask, type StickerId } from '@/lib/puzzle-image/mask-core';
-import { FM_REGULAR, FM_IGNORED, type StickeringMaskFn } from './stickering';
+import { FM_REGULAR, FM_DIM, FM_IGNORED, type FaceletMask, type StickeringMaskFn } from './stickering';
 import type Cube from './cube';
 
 /** 阶段下拉里代表「自定义」的值(URL `?stickering=custom`)。 */
@@ -22,6 +22,20 @@ export const CUSTOM_STICKERING = 'custom';
 
 /** 选取粒度:一次点中一枚贴纸,还是它所在的整块。 */
 export type PickGrain = 'sticker' | 'piece';
+
+/**
+ * 一枚贴纸的画法。预设阶段本来就在混用这三档(如 CLL = 顶层原色 + 前两层压暗),
+ * 自定义把「选中的」和「其余的」各挑一档交给用户,于是同样画得出预设那种层次。
+ * (FM_ORIENTED/2 是 twizzle 表示「只看朝向」的记号色,与点选语义无关,不开放。)
+ */
+export const CUSTOM_TREATMENTS = ['regular', 'dim', 'ignored'] as const;
+export type CustomTreatment = (typeof CUSTOM_TREATMENTS)[number];
+
+const TREATMENT_CODE: Record<CustomTreatment, FaceletMask> = {
+  regular: FM_REGULAR,
+  dim: FM_DIM,
+  ignored: FM_IGNORED,
+};
 
 /** cubelet 的 home 网格坐标(initial 索引的编码,见 netIndex.ts)。 */
 function homeCoords(cubeletInitial: number, N: number): [number, number, number] {
@@ -67,13 +81,21 @@ export function pickedSids(cube: Cube, positionIndex: number, worldFace: number,
 }
 
 /**
- * 贴纸清单 → 阶段遮罩函数。选中的保原色,其余置灰(FM_IGNORED,同 Cross/F2L 等
- * 阶段对无关块的处理);空清单返回 null = 不遮罩,好让用户看着真配色去点第一枚。
+ * 贴纸清单 → 阶段遮罩函数。选中的按 pick 画、其余按 rest 画(默认 = 保原色 + 置灰,
+ * 同 Cross/F2L 等阶段对无关块的处理;rest 换成 dim 即 CLL 那类预设的层次)。
+ * 空清单返回 null = 不遮罩,好让用户看着真配色去点第一枚。
  */
-export function customMaskFn(order: number, mask: string): StickeringMaskFn | null {
+export function customMaskFn(
+  order: number,
+  mask: string,
+  pick: CustomTreatment = 'regular',
+  rest: CustomTreatment = 'ignored',
+): StickeringMaskFn | null {
   const ids = parseMask(mask);
   if (ids.size === 0) return null;
-  return (initial, face) => (ids.has(engineHomeSid(initial, face, order)) ? FM_REGULAR : FM_IGNORED);
+  const on = TREATMENT_CODE[pick] ?? FM_REGULAR;
+  const off = TREATMENT_CODE[rest] ?? FM_IGNORED;
+  return (initial, face) => (ids.has(engineHomeSid(initial, face, order)) ? on : off);
 }
 
 /** 切换一组 sid:整组已全选则整组取消,否则整组选上(整块粒度下才有「半选」)。 */

@@ -4,7 +4,7 @@ import { engineHomeSid } from '@/app/[lang]/sim/engine/nxn/netIndex';
 import {
   customMaskFn, pickedSids, pieceSids, toggleSids, countSids,
 } from '@/app/[lang]/sim/engine/nxn/customStickering';
-import { FM_REGULAR, FM_IGNORED } from '@/app/[lang]/sim/engine/nxn/stickering';
+import { FM_REGULAR, FM_DIM, FM_IGNORED } from '@/app/[lang]/sim/engine/nxn/stickering';
 import { buildFaceletMap } from '@/components/sim-embed/faceletMap';
 import { solvedCube, applyAlg } from '@/lib/lsll/cube333';
 import { stickerFacelet } from '@/app/[lang]/predict/_lib/challenge';
@@ -135,6 +135,35 @@ describe('customMaskFn', () => {
     const fn = customMaskFn(3, 'F:0')!;
     const { cube: pos, face } = MAP3[18]; // F 面左上角
     expect(fn(pos, face)).toBe(FM_REGULAR);
+  });
+
+  it('画法可选:选中 / 其余各自原色、压暗、置灰', () => {
+    const on = MAP3[4];   // U 中心(选中)
+    const off = MAP3[22]; // D 中心(未选中)
+    // 其余压暗 = CLL 那类预设的层次
+    const cll = customMaskFn(3, 'U:4', 'regular', 'dim')!;
+    expect(cll(on.cube, on.face)).toBe(FM_REGULAR);
+    expect(cll(off.cube, off.face)).toBe(FM_DIM);
+    // 反过来:压暗选中的、其余保持原色
+    const hide = customMaskFn(3, 'U:4', 'dim', 'regular')!;
+    expect(hide(on.cube, on.face)).toBe(FM_DIM);
+    expect(hide(off.cube, off.face)).toBe(FM_REGULAR);
+    // 选中置灰
+    const gray = customMaskFn(3, 'U:4', 'ignored', 'regular')!;
+    expect(gray(on.cube, on.face)).toBe(FM_IGNORED);
+  });
+
+  it('画法缺省 = 原色 + 灰(老链接不变)', () => {
+    const fn = customMaskFn(3, 'U:4')!;
+    const explicit = customMaskFn(3, 'U:4', 'regular', 'ignored')!;
+    for (const f of [0, 4, 22, 45]) {
+      const { cube, face } = MAP3[f];
+      expect(fn(cube, face)).toBe(explicit(cube, face));
+    }
+  });
+
+  it('清单空时画法也不生效(仍是不遮罩)', () => {
+    expect(customMaskFn(3, '', 'regular', 'dim')).toBeNull();
   });
 });
 
