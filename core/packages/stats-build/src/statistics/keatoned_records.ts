@@ -10,9 +10,12 @@
 // 算法:按项目 + 单次/平均各自重建「世界纪录日线」(截至前一日的累计最小值),命中条件是
 //   ① 不差于前一日的纪录线(平纪录也算,Reg 9i1a)
 //   ② 不是当日最好
-//   ③ 官方 regional_*_record 为空
-// ③ 同时兼作校正:轮次日期在 dump 里拿不到,只能用比赛末日近似,多日赛会把不同日的轮次
-// 压成一天;凡是官方真给了纪录标记的,说明并没有被掩,直接排除 —— 官方标记就是判据。
+//   ③ 官方标记不是 WR
+// ③ 的含义:官方真给了 WR 就是被认定了,排除;给了 NR/CR(或什么都没给)正是「WR 被掩」
+// 的两种下场 —— 降级拿到低一级,或连低级也被同胞抢走(Keaton Ellis)。曾要求「标记全空」,
+// 那会漏掉降级的一类(如 Crimson Arradaza 平 WR 的 7.72 只拿到 PH NR)。
+// 轮次日期在 dump 里拿不到,只能用比赛末日近似;多日赛会把不同日的轮次压成一天,该近似
+// 与现表其余行一致(WC2003 那批同源)。
 import { GroupedStatistic } from '../core/grouped_statistic.js';
 import { EVENTS_ENTRIES } from '../core/events.js';
 import { SolveTime } from '../core/solve_time.js';
@@ -67,7 +70,7 @@ export class KeatonedRecords extends GroupedStatistic {
             FROM results res
             JOIN competitions c ON c.id = res.competition_id
             WHERE res.event_id = '${eventId}' AND res.${m.col} > 0
-              AND (res.${m.tag} IS NULL OR res.${m.tag} = '')
+              AND (res.${m.tag} IS NULL OR res.${m.tag} <> 'WR')
           ),
           allv AS (
             SELECT c.end_date d, res.${m.col} v
