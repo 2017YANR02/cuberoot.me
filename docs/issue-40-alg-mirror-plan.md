@@ -2,9 +2,9 @@
 
 > 本文 = 逐条分析 + 方案 + 待拍板问题清单。分 6 个子任务(T1–T6)。
 >
-> **进度**(2026-07-24):T1 数学页 ✅ 已改完;T3 公式/图 toggle ✅ 已铺开;
-> **T4 ✅ 已落库**(zbls 305 + wv 27 归一 FR + 四朝向);T2 前置已备齐,UI 未做;
-> T5 镜像系统等拍板;T6 长线。
+> **进度**(2026-07-25):T1 数学页 ✅ 已改完(三类口径已修正为 306 × 494,见 §1.3c);
+> T2 一步/两步 toggle ✅ 已做完;T3 公式/图 toggle ✅ 已铺开;
+> **T4 ✅ 已落库**(zbls 305 + wv 27 归一 FR + 四朝向);T5 镜像系统等拍板;T6 长线。
 
 ## 0 依赖链(实施中发现,与最初排期不同)
 
@@ -40,8 +40,10 @@ T4 (zbls setup 清洗 + FR 归一)
 
 另外提醒:issue 说三类「相当于是从第二类里每 4 个选一个代表元」——**做不到**。
 三类根本不是二类的商(mid 不作用在局面上,见 §1.3c),583,284 / 151,164 ≈ **3.858** 也不是整 4。
-T2 那张表只能是「二类 case → 它走出来的 (ZBLS case, ZBLL case) 路线」,靠枚举产出,
-不能按「每 4 个取 1」机械切。
+
+> **2026-07-25 再更新**:T2 落地后连那张「二类 case → 路线」的映射表也不需要了 ——
+> 两步浏览的是路线本身,ZBLS 与 ZBLL 两半各自枚举就够(见 T2 节),不必从二类那 58 万条走过来。
+> T4 依旧是前置:ZBLS case 的名字与公式来自归一后的 zbls 集。
 
 ---
 
@@ -160,12 +162,30 @@ ollcp / OLLCP27 2    "U R2' D' R U' R' D R' U R' U' z'"   ← 底两层没解干
 
 ---
 
-## T2 /alg/lsll:二类/三类 toggle
+## T2 /alg/lsll:一步 / 两步 toggle ✅ 已完成(2026-07-25)
 
-- **交互**:页头 `PillToggle`(≤4 选项、二选一场景,符合站规),`useQueryState('cls', parseAsStringEnum(['2','3']).withDefault('2'))`。
-- **代表元**:每个三类轨道取二类 canonical key 最小者(issue:"这你自己选就行")。T1 产出的映射表编译成静态数据(42 大类 × 组内配对,存分块 JSON 或按 family 惰性加载;83k+ 组,直接全量 JSON 约几 MB,倾向按 family 分块放 `stats/` 或 client 内嵌压缩位图 —— 实现期定,原则:不进首屏 bundle)。
-- **影响面**:hub 总数与 family 计数(三类模式显示 N₃ 及各类三类计数)、`[group]` 列表过滤、case 页(非代表元显示"三类代表元是 →xxx"跳转)、train 取样(三类模式只抽代表元)。
-- 新增 `TOTAL_CASES_CLASS3` 常数 + 回归测试。
+> 原方案写在"三类 = 二类的商、取代表元"的假设上,那个假设是错的(§1.3c)。
+> 落地按修正后的口径重做:三类不是二类的子集,而是**两步路线** = (ZBLS case, ZBLL case) 有序对。
+
+- **交互**:页头 `PillToggle`「一步 / 两步」(用户看得懂的说法,二类/三类的数学名留在 /math/lsll),
+  `useQueryState('cls', parseAsStringEnum(['2','3']).withDefault('2').withOptions({ history: 'push' }))`,
+  hub 与 `[group]` 各一个,链接互相带 `?cls=3`。
+- **没有代表元、也不需要映射表**。两半各自枚举即可,合起来 306 × 494 = 151,164 —— 常数级数据,
+  不用分块 JSON、不进 `stats/`、不占 bundle。`lib/lsll/class3.ts`:
+  - ZBLS 构型 φ = (槽角位+朝向, 槽棱位, 5 个棱位的 EO),1,200 个,商 pre-AUF → **306**;
+  - ZBLL 态 = 槽对归位 + EO 全正,7,776 个,`canonicalKey` 双侧商 → **494**;
+  - 两半各自出图(ZBLS 图只画朝向:正 = U 面黄、翻 = 侧面黄;ZBLL 图走 plan 视图)。
+- **浏览顺序照两步解法的顺序**:`[group]?cls=3` 先列本大类的 ZBLS case(TT/CS/ES 各 8、
+  D±/O 各 4、F/C± 各 2),挑一个再看它后面的 494 个 ZBLL case(48/页,11 页);
+  单条路线 `/alg/lsll/route?z=&l=`(静态壳 + query,同 case 页,免 Vercel 配额)。
+- **接站内公式库**:`scripts/gen-lsll-zbll-overlay.mts` → `lib/lsll/zbll_algs.json`,
+  zbll 集 472 + pll 集 21 = **493 全部命中且零碰撞**(剩下那 1 个就是跳过)。
+  与 zbls 那支(305/306)是一对。
+- **train 不动**。旧方案的"三类只抽代表元"随代表元一起作废;真要练两步,前半段 = zbls 库训练器、
+  后半段 = zbll/pll 库训练器,都已存在,不在 LSLL 页重造。
+- **两条闭环当回归**(`tests/lsll_class3_model.test.ts`,12 条):纯组合枚举 vs 人工录入的公式集,
+  两边独立 —— 306 个构型的 42 组分布逐组等于 zbls 库(+O 那格全解)、305 条 setup 落到 305 个不同构型
+  且大类判定一致;494 个 ZBLL case 恰好盖住 493 条库引用。数字口径本身仍锁在 `lsll_class3_structure.test.ts`。
 
 ---
 

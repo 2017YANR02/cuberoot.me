@@ -1,27 +1,32 @@
 'use client';
 
 /**
- * /alg/lsll/[group] — 大类内浏览:枚举全部 case(客户端组合数学生成,无后端),
- * 翻棱数筛选 + 分页。case 缩略图为精确贴纸态(FaceletsCube)。
+ * /alg/lsll/[group] — 大类内浏览。
  *
- * 「图 / 公式」开关同全站(AlgViewModeToggle)。本页没有公式库,公式**现算**:
- * setupForCase 出打乱(cubing.js 两阶段解取逆),再取一次逆就是一条有效解法 ——
+ * 一步(`?cls=2`,默认):枚举全部 case(客户端组合数学生成,无后端),翻棱数筛选 + 分页。
+ * 两步(`?cls=3`):走 LsllRouteBrowser,浏览 (ZBLS case, ZBLL case) 路线。
+ *
+ * 「图 / 公式」开关同全站(AlgViewModeToggle),只对一步模式有意义。本页没有公式库,
+ * 公式**现算**:setupForCase 出打乱(cubing.js 两阶段解取逆),再取一次逆就是一条有效解法 ——
  * 与 /alg/lsll/train 的揭示同一条路子,不新造数据源。一页 48 个,逐个串行算,
  * 算好一个贴一个;算过的进模块级缓存,翻回来不重算。
  */
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { useQueryState, parseAsInteger } from 'nuqs';
+import { useQueryState, parseAsInteger, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { ArrowLeft } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
 import { FaceletsCube } from '@/components/FaceletsCube';
 import AlgViewModeToggle, { useAlgViewMode } from '@/components/AlgViewModeToggle';
+import PillToggle from '@/components/PillToggle/PillToggle';
 import {
   categoryBySlug, enumerateCategory, unpackState, classify, caseFacelets, keyToString,
 } from '@/lib/lsll/model';
+import { class3CountForFamily } from '@/lib/lsll/class3';
 import { setupForCase, solutionForSetup } from '@/lib/lsll/setup';
+import LsllRouteBrowser from './LsllRouteBrowser';
 import '../../alg.css';
 import '../lsll.css';
 
@@ -36,12 +41,17 @@ export default function LsllGroupClient() {
   const cat = categoryBySlug(slug);
   useDocumentTitle(cat ? `LSLL ${cat.letter}` : 'LSLL', cat ? `LSLL ${cat.letter}` : 'LSLL');
 
+  const [cls, setCls] = useQueryState(
+    'cls',
+    parseAsStringEnum(['2', '3']).withDefault('2').withOptions({ history: 'push' }),
+  );
+  const twoLook = cls === '3';
   const [eoBad, setEoBad] = useQueryState('eo', parseAsInteger.withDefault(-1));
   const [page, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
   const [view, changeView] = useAlgViewMode();
 
-  // 全类枚举一次(memo);再按翻棱数过滤。
-  const allKeys = useMemo(() => (cat ? enumerateCategory(cat.slug) : []), [cat]);
+  // 全类枚举一次(memo);再按翻棱数过滤。两步模式用不上,别白付这 ~100ms。
+  const allKeys = useMemo(() => (cat && !twoLook ? enumerateCategory(cat.slug) : []), [cat, twoLook]);
   const withMeta = useMemo(
     () => allKeys.map((k) => ({ k, eoBad: classify(unpackState(k)).eoBad })),
     [allKeys],
@@ -66,7 +76,7 @@ export default function LsllGroupClient() {
   /** 本页已算出的解法(`''` = 算失败)。只在公式模式下填。 */
   const [solutions, setSolutions] = useState<Record<number, string>>({});
   useEffect(() => {
-    if (view !== 'full') return;
+    if (view !== 'full' || twoLook) return;
     let cancelled = false;
     // 缓存里已有的先贴上(翻页回来 / 图↔公式来回切,不该再等一遍)
     const seeded: Record<number, string> = {};
@@ -104,15 +114,30 @@ export default function LsllGroupClient() {
   return (
     <div className="alg-root">
       <div className="alg-cat-header">
-        <Link href="/alg/lsll" className="alg-back">
+        <Link href={`/alg/lsll${twoLook ? '?cls=3' : ''}`} className="alg-back">
           <ArrowLeft size={14} /> LSLL
         </Link>
         <h1 className="alg-cat-title">
-          <span>{cat.letter} <span className="alg-cat-count">{cat.count.toLocaleString()} {tr({ zh: '个', en: 'cases' })}</span></span>
+          <span>{cat.letter} <span className="alg-cat-count">
+            {(twoLook ? class3CountForFamily(cat.slug) : cat.count).toLocaleString()}{' '}
+            {tr({ zh: twoLook ? '条路线' : '个', en: twoLook ? 'routes' : 'cases' })}
+          </span></span>
         </h1>
-        <AlgViewModeToggle value={view} onChange={changeView} className="alg-view-toggle" />
+        <PillToggle
+          className="alg-view-toggle"
+          value={twoLook}
+          onChange={(v) => setCls(v ? '3' : '2')}
+          offLabel={tr({ zh: '一步', en: 'One-look' })}
+          onLabel={tr({ zh: '两步', en: 'Two-look' })}
+          ariaLabel={tr({ zh: '一步 / 两步', en: 'One-look / two-look' })}
+        />
+        {!twoLook && <AlgViewModeToggle value={view} onChange={changeView} className="alg-view-toggle" />}
       </div>
 
+      {twoLook && <LsllRouteBrowser family={cat.slug} />}
+
+      {!twoLook && (
+      <>
       <div className="lsll-chips">
         <span className="lsll-chips-label">{tr({ zh: '顶层翻棱', en: 'Bad edges' })}</span>
         <button
@@ -179,6 +204,8 @@ export default function LsllGroupClient() {
         </button>
         <span>{filtered.length.toLocaleString()} {tr({ zh: '个匹配', en: 'matched' })}</span>
       </div>
+      </>
+      )}
     </div>
   );
 }
