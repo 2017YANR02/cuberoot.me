@@ -117,8 +117,8 @@ export function SolveCard({
         {!scramble || !c ? (
           <div className="trainer-stats-empty">{tr({ zh: '暂无成绩', en: 'No solves yet'
           })}</div>
-        ) : showThumb && (
-          <div className="trainer-solve-thumb">
+        ) : showThumb && (() => {
+          const thumb = (
             <CaseThumb
               puzzle={puzzle}
               set={set}
@@ -130,8 +130,23 @@ export function SolveCard({
               // 与左栏大图 / 离屏预取同 size=140:同一 URL 共用浏览器缓存,换题时秒出不再重取。
               size={140}
             />
-          </div>
-        )}
+          );
+          // 图和名字指的是同一个 case,点哪个都该开详情 —— 图还是更大更好点的那个目标。
+          // 真 <button>(剥 UA 样式),不用 div onClick:iOS Safari 的 tap 只在原生可交互元素上可靠。
+          return onShowCase ? (
+            <button
+              type="button"
+              className="trainer-solve-thumb is-clickable"
+              onClick={() => onShowCase(c)}
+              title={tr({ zh: '查看该情况', en: 'View this case' })}
+              aria-label={`${primaryCaseName(puzzle, set, c)} — ${tr({ zh: '查看该情况', en: 'View this case' })}`}
+            >
+              {thumb}
+            </button>
+          ) : (
+            <div className="trainer-solve-thumb">{thumb}</div>
+          );
+        })()}
       </div>
     </div>
   );
