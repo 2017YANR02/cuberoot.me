@@ -697,7 +697,11 @@
 .trainer-room-badge-label { font-weight: 500; color: var(--muted-foreground); }
 .trainer-room-badge-code { letter-spacing: 0.08em; }
 .trainer-room-badge-copy { color: var(--muted-foreground); }
-.trainer-room-btn {
+/* 设置面板里的通用小按钮(建房/加入/离开/重开一轮共用;is-ghost = 次要动作) */
+.trainer-opts-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   padding: 4px 12px;
   border: none;
   border-radius: 7px;
@@ -707,14 +711,14 @@
   font-weight: 600;
   cursor: pointer;
 }
-.trainer-room-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--toggle-on) 64%, black); }
-.trainer-room-btn:disabled { opacity: 0.5; cursor: default; }
-.trainer-room-btn.is-ghost {
+.trainer-opts-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--toggle-on) 64%, black); }
+.trainer-opts-btn:disabled { opacity: 0.5; cursor: default; }
+.trainer-opts-btn.is-ghost {
   background: transparent;
   border: 1px solid var(--border-default);
   color: var(--muted-foreground);
 }
-.trainer-room-btn.is-ghost:hover:not(:disabled) { background: color-mix(in srgb, var(--foreground) 8%, transparent); }
+.trainer-opts-btn.is-ghost:hover:not(:disabled) { background: color-mix(in srgb, var(--foreground) 8%, transparent); }
 .trainer-room-err { color: color-mix(in srgb, var(--destructive) 90%, var(--foreground)); }
 
 /* ─── 协同「本轮复习结束」弹窗 ─── */
@@ -760,8 +764,29 @@
   font-weight: 600;
   cursor: pointer;
 }
-.trainer-round-modal-btn:hover { background: color-mix(in srgb, var(--toggle-on) 64%, black); }
+.trainer-round-modal-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--toggle-on) 64%, black); }
 .trainer-round-modal-btn:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.trainer-round-modal-btn:disabled { opacity: 0.5; cursor: default; }
+
+/* 房间领题失败的常驻提示(限流 / 断网):贴底居中,不挡题面 */
+.trainer-room-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(92vw, 460px);
+  padding: 8px 14px;
+  border: 1px solid color-mix(in srgb, var(--destructive) 40%, var(--border-default));
+  border-radius: 10px;
+  background: var(--card);
+  color: color-mix(in srgb, var(--destructive) 90%, var(--foreground));
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
 
 /* ─── 房间邀请二维码 ─── */
 .trainer-room-qr-btn {

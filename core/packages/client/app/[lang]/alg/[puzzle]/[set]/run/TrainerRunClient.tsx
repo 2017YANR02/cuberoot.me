@@ -6,7 +6,7 @@ import Link from '@/components/AppLink';
 import { useParams } from 'next/navigation';
 import { useQueryState } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Settings, Copy, Check, QrCode } from 'lucide-react';
+import { ArrowLeft, Settings, Copy, Check, QrCode, RotateCcw } from 'lucide-react';
 import { getAlgSetMeta, loadAlg, type AlgCase } from '@cuberoot/shared';
 import { useTrainerStore, TimerState, trainerPool } from '@/lib/trainer-store';
 import TimerFontPicker from '@/components/TimerFontPicker';
@@ -111,6 +111,7 @@ export default function TrainerRunClient() {
   const setProbMode = useTrainerStore(s => s.setProbMode);
   const recapOrder = useTrainerStore(s => s.recapOrder);
   const setRecapOrder = useTrainerStore(s => s.setRecapOrder);
+  const restartRecapRound = useTrainerStore(s => s.restartRecapRound);
   const srsNewLimit = useTrainerStore(s => s.srsNewLimit);
   const setSrsNewLimit = useTrainerStore(s => s.setSrsNewLimit);
   const srsSessionLimit = useTrainerStore(s => s.srsSessionLimit);
@@ -770,14 +771,28 @@ export default function TrainerRunClient() {
                     label={tr({ zh: '计时', en: 'Timing' })}
                   />
                   {mode === 'recap' && (
-                    <PillToggle
-                      value={recapOrder === 'shuffle'}
-                      onChange={v => setRecapOrder(v ? 'shuffle' : 'seq')}
-                      onLabel={tr({ zh: '乱序', en: 'Shuffled' })}
-                      offLabel={tr({ zh: '顺序', en: 'In order' })}
-                      ariaLabel={tr({ zh: '复习顺序', en: 'Recap order' })}
-                      disabled={!!room}
-                    />
+                    <>
+                      <PillToggle
+                        value={recapOrder === 'shuffle'}
+                        onChange={v => setRecapOrder(v ? 'shuffle' : 'seq')}
+                        onLabel={tr({ zh: '乱序', en: 'Shuffled' })}
+                        offLabel={tr({ zh: '顺序', en: 'In order' })}
+                        ariaLabel={tr({ zh: '复习顺序', en: 'Recap order' })}
+                        disabled={!!room}
+                      />
+                      {/* 刷到一半想重来:清掉「7/472」这个本轮进度,重洗后从第 1 个再走一遍 */}
+                      <button
+                        type="button"
+                        className="trainer-opts-btn is-ghost"
+                        onClick={restartRecapRound}
+                        disabled={!!room}
+                        title={room
+                          ? tr({ zh: '房间轮次由全队共享,离开房间才能重开', en: 'Room rounds are shared by the team — leave the room to restart' })
+                          : tr({ zh: '清空本轮进度,重新从第 1 个开始', en: 'Clear this round’s progress and start over from the first case' })}
+                      >
+                        <RotateCcw size={13} /> {tr({ zh: '重开一轮', en: 'Restart round' })}
+                      </button>
+                    </>
                   )}
                 </div>
               )}
@@ -873,7 +888,7 @@ export default function TrainerRunClient() {
                         </span>
                         <button
                           type="button"
-                          className="trainer-room-btn is-ghost"
+                          className="trainer-opts-btn is-ghost"
                           onClick={() => { leaveRoom(); void setRoomParam(null); autoJoinRef.current = false; }}
                         >
                           {tr({ zh: '离开', en: 'Leave' })}
@@ -883,7 +898,7 @@ export default function TrainerRunClient() {
                       <>
                         <button
                           type="button"
-                          className="trainer-room-btn"
+                          className="trainer-opts-btn"
                           onClick={() => void createRoom().then(r => { if (r.ok && r.code) void setRoomParam(r.code); })}
                           disabled={roomBusy}
                         >
@@ -903,7 +918,7 @@ export default function TrainerRunClient() {
                         />
                         <button
                           type="button"
-                          className="trainer-room-btn"
+                          className="trainer-opts-btn"
                           onClick={doJoin}
                           disabled={roomBusy || !joinCode.trim()}
                         >
@@ -1322,14 +1337,21 @@ export default function TrainerRunClient() {
       })()}
 
       {/* 在线房间复习:全队刷完本轮共享队列 → 弹「本轮复习结束」,「继续下一轮」全员一起开新一轮。 */}
+      {/* 房间领题失败(限流 / 断网)必须看得见 —— 否则「按了没反应」会被误读成刷完了。
+          设置面板里那条同样的提示只有开着面板才看得到,这里补一条常驻的。 */}
+      {room && roomError && !recapRoundDone && (
+        <div className="trainer-room-toast" role="status" data-no-timer>
+          <span>{tr({ zh: '领取下一个 case 失败', en: 'Could not fetch the next case' })}:{roomError}</span>
+          <button type="button" className="trainer-opts-btn is-ghost" onClick={onNextCase} disabled={roomBusy}>
+            {tr({ zh: '重试', en: 'Retry' })}
+          </button>
+        </div>
+      )}
+
+      {/* 「下一轮」会重洗队列并把全队进度清零 —— 只认按钮,点背景不触发(误触代价太大) */}
       {recapRoundDone && room && (
-        <div
-          className="trainer-round-modal-backdrop"
-          role="dialog"
-          aria-modal="true"
-          onClick={continueRecapRound}
-        >
-          <div className="trainer-round-modal" onClick={e => e.stopPropagation()}>
+        <div className="trainer-round-modal-backdrop" role="dialog" aria-modal="true">
+          <div className="trainer-round-modal">
             <h2>{tr({ zh: '本轮复习结束', en: 'Round complete' })}</h2>
             <p>
               {tr({
@@ -1337,10 +1359,12 @@ export default function TrainerRunClient() {
                 en: `The team finished all ${room.total} cases this round! Hit “Next round” to start a fresh round together${room.order === 'shuffle' ? ' (reshuffled)' : ''}.`,
               })}
             </p>
+            {roomError && <p className="trainer-room-err">{roomError}</p>}
             <button
               type="button"
               className="trainer-round-modal-btn"
               onClick={continueRecapRound}
+              disabled={roomBusy}
               autoFocus
             >
               {tr({ zh: '继续下一轮', en: 'Next round' })}
