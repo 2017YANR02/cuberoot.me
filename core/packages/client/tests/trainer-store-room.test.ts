@@ -226,9 +226,12 @@ describe('trainer-store online room', () => {
     useTrainerStore.getState().leaveRoom();
   });
 
-  it('退出房间回单机:本轮从头开始,不接着房间的进度', async () => {
+  // 退房后本轮接着走,而不是从 1/N 重来 —— 否则房间里刷过的全白刷、还得再刷一遍。
+  // 与建房那条互为逆操作(建房把本机进度带进房间,退房把房间进度带回本机)。
+  it('退出房间回单机:停在同一题、进度接着走,刷过的不再出', async () => {
     useTrainerStore.getState().leaveRoom();
     boot(['A', 'B', 'C', 'D', 'E']);
+    const K = ['A', 'B', 'C', 'D', 'E'].map(n => caseKey(mkCase(n)));
     const st0 = useTrainerStore.getState();
     st0.setTiming(true);
     st0.setMultiScramble(false);
@@ -240,12 +243,35 @@ describe('trainer-store online room', () => {
     await flush();
     useTrainerStore.getState().nextScramble();
     await flush();
-    expect(curRecap()).toEqual({ pos: 3, total: 5 });   // 房间里刷到第 3 题
+    expect(curRecap()).toEqual({ pos: 3, total: 5 });   // 房间里刷到第 3 题(C)
+    expect(useTrainerStore.getState().currentKey).toBe(K[2]);
 
     useTrainerStore.getState().leaveRoom();
     await flush();
-    expect(useTrainerStore.getState().room).toBeNull();
-    expect(curRecap()).toEqual({ pos: 1, total: 5 });   // 单机是自己的一轮,从 1 起
+    const s = useTrainerStore.getState();
+    expect(s.room).toBeNull();
+    expect(curRecap()).toEqual({ pos: 3, total: 5 });   // 进度接着显示 3/5
+    expect(s.currentKey).toBe(K[2]);                    // 还停在同一题,不重发也不跳过
+
+    useTrainerStore.getState().nextScramble();
+    expect(curRecap()).toEqual({ pos: 4, total: 5 });
+    expect(useTrainerStore.getState().currentKey).toBe(K[3]); // 接着往下,A/B 不再出
+  });
+
+  it('退房时若一题都没领到(建房即退),照旧整轮从头开始', async () => {
+    useTrainerStore.getState().leaveRoom();
+    boot(['A', 'B', 'C', 'D', 'E']);
+    const st0 = useTrainerStore.getState();
+    st0.setTiming(true);
+    st0.setMultiScramble(false);
+    st0.setMode('recap');
+    st0.setRecapOrder('seq');
+    st0.restartRecapRound();
+    useTrainerStore.setState({ room: { code: 'ROOM1', order: 'seq', round: 1, total: 5 }, hist: { list: [], idx: -1 } });
+
+    useTrainerStore.getState().leaveRoom();
+    await flush();
+    expect(curRecap()).toEqual({ pos: 1, total: 5 });
   });
 
   // 生产事故回归(2026-07-26):claim 被限流 429,客户端把「领取失败」当成「本轮领完」,
