@@ -56,6 +56,7 @@ export const REGISTRY: Record<string, () => Promise<Record<string, unknown>>> = 
   'best_round': () => import('../statistics/best_round.js'),
   'competition_days_count_by_region': () => import('../statistics/competition_days_count_by_region.js'),
   'longest_standing_records': () => import('../statistics/longest_standing_records.js'),
+  'keatoned_records': () => import('../statistics/keatoned_records.js'),
   'most_competitions_before_winning': () => import('../statistics/most_competitions_before_winning.js'),
   'most_frequent_results': () => import('../statistics/most_frequent_results.js'),
   'most_podiums_together': () => import('../statistics/most_podiums_together.js'),

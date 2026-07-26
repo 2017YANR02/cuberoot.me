@@ -165,6 +165,11 @@
           "titleZh": "最佳轮次"
         },
         {
+          "id": "keatoned_records",
+          "titleEn": "Keatoned records",
+          "titleZh": "日掩纪录"
+        },
+        {
           "id": "most_frequent_results",
           "titleEn": "Most frequent results",
           "titleZh": "最常出现的成绩"
