@@ -1,0 +1,69 @@
+/* 交互式 2D 魔表(components/InteractiveClock.tsx)。
+   表盘本体的配色来自 tnoodle 官方色(与打乱图一致,不吃主题);外围控件走 :root token。 */
+
+.iclock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.iclock-svg {
+  display: block;
+  width: 100%;
+  aspect-ratio: 2 / 1;
+  /* 拖指针 / 拧的时候别让页面跟着滚 */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.iclock-svg.is-edit .iclock-hit { cursor: grab; }
+.iclock-svg.is-edit .iclock-hit:active { cursor: grabbing; }
+.iclock-svg.is-turn .iclock-grab { cursor: grab; }
+.iclock-svg.is-turn .iclock-grab:active { cursor: grabbing; }
+.iclock-pin { cursor: pointer; }
+
+.iclock-pin-dot {
+  fill: color-mix(in srgb, var(--foreground) 45%, transparent);
+  stroke: none;
+  transition: r 0.12s ease, fill 0.12s ease;
+}
+.iclock-pin.is-up .iclock-pin-dot {
+  fill: var(--accent);
+  stroke: var(--card);
+  stroke-width: 1.5;
+}
+
+.iclock-bar {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.iclock-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: var(--card);
+  border: 1px solid var(--border-default);
+  color: var(--foreground);
+  padding: 0.3rem 0.6rem;
+  border-radius: 5px;
+  font-size: 0.8rem;
+  font-family: var(--font-mono);
+  cursor: pointer;
+}
+.iclock-btn:hover:not(:disabled) { border-color: var(--accent); }
+.iclock-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.iclock-hint {
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+  text-align: center;
+  max-width: 34rem;
+  margin: 0;
+}

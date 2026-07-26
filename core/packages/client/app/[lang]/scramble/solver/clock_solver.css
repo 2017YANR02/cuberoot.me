@@ -1,0 +1,98 @@
+/* /scramble/solver?event=clock —— 魔表求解页。表盘本体在 components/interactive_clock.css。 */
+
+.clocks-view {
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto 0.75rem;
+}
+/* 视图切换器:3 个短项,下拉贴合内容(默认 min-width 是给带搜索的长列表的) */
+.clocks-view .list-select-popup { min-width: 0; width: max-content; right: auto; }
+
+.clocks-out {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+}
+
+.clocks-badge {
+  font-size: 0.72rem;
+  color: var(--muted-foreground);
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  padding: 0.05rem 0.3rem;
+}
+
+.clocks-canon {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.4rem;
+  max-width: 40rem;
+}
+.clocks-canon-head {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+.clocks-canon code {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--muted-foreground);
+  word-break: break-word;
+}
+
+.clocks-actions {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.clocks-btn {
+  background: var(--card);
+  border: 1px solid var(--border-default);
+  color: var(--foreground);
+  padding: 0.35rem 0.6rem;
+  border-radius: 5px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.clocks-btn:hover:not(:disabled) { border-color: var(--accent); }
+.clocks-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.clocks-wrote {
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+  margin: 0;
+  max-width: 40rem;
+  word-break: break-word;
+}
+.clocks-wrote code { font-family: var(--font-mono); color: var(--foreground); }
+
+.clocks-recon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+.clocks-recon-input {
+  width: 100%;
+  max-width: 40rem;
+  background: var(--card);
+  border: 1px solid var(--input);
+  border-radius: 6px;
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  padding: 0.5rem 0.6rem;
+  resize: vertical;
+}
+.clocks-recon-input:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
+.clocks-recon-err { font-size: 0.8rem; color: var(--destructive); text-align: center; }
+.clocks-recon-ok { font-size: 0.8rem; color: var(--muted-foreground); text-align: center; }
