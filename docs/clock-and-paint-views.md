@@ -124,10 +124,27 @@ tnoodle 移植)都带完整 move 语义 + 展开图。→ 平面画板可直接�
 脚本带 `--depth 4` 可把 317,141,342 那一档也变成精确证明(4.01 亿元组、约 3.3 GB、数分钟),
 默认不跑。
 
+**追加(2026-07-25,用户要求收藏全空间算法):** 上游那几份代码已找到并原样收藏进
+`solver/reference/clock/`(只读、不编译、无任何 workspace import,目录 README 逐份讲清算法):
+
+| 文件 | 作者 | 是什么 |
+|------|------|--------|
+| `clockcoset11.cpp` | Tomas Rokicki | **唯一真正算穿 12^14 的代码**。陪集分解(固定正面十字的 12^9 子群 → 12^5 个陪集,靠镜像/旋转/乘互质数压到 9,906 个代表元)+ SWAR 内核 `do12()`(一个 64 位字 12 条 5 bit 车道同时取 min)。单陪集 <3 分钟/核,总计约 3 天。发布版 `N = 10`(作者把程序写成 hours 2..12 通用做交叉验证),跑真魔表要改 `N = 12`(内存 12^8 字 = 3.2 GiB) |
+| `dist12.txt` | Tomas Rokicki | 全部 **39,248** 个距离 12 的位置 |
+| `optclock.cpp` / `optclock_stats.cpp` / `optclock_readme.txt` | Michael Gottlieb + Ben Whitmore | OptClock:两阶段(phase 2 全表 12^6 落盘 3 MB + 枚举 12^8 个 phase 1 解) |
+| `ClockSolver.java` | Shuang Chen (cs0x7f) | 独立 Java 最优求解器,**GPLv3**(许可证原样保留;不链接不编译,无传染) |
+
+Kogler 本人那份最早的证明程序**没有公开源码**,只有方法描述(单侧表 + 迭代加深到深度 6 + 逆状态
+对称),已写进目录 README。
+
+`dist12.txt` 顺手把**最难的一档变成可精确对账的测试集** —— 这是分布表里唯一一个我们能逐条验完的
+高档位。映射(OptClock 14 列 → 本仓库 `posit`)与测试都在 `tests/clock_solver.test.ts`。
+
 待办:
-- [ ] `/code/solvers/_fleet.ts` 登记 + `credits_data.json` 注明 tnoodle move 表出处(OptClock 只作
-      先验参考,未用其代码)
-- [ ] 可选:跑一次 `--depth 4` 把第 5 档也钉成精确证明
+- [ ] `/code/solvers/_fleet.ts` 登记
+- [x] `credits_data.json`:补 tnoodle(move 表语义锚)、Jaap(分布表)、Kogler/Rokicki/OptClock/cs0x7f
+      (先行工作 + 收藏,**未取用其代码**)三条
+- [ ] 可选:跑一次 `--depth 4` 把第 5 档(317,141,342)也钉成精确证明
 
 ### P2 魔表求解页(平面 / 打乱 / 复盘)
 - [ ] `solver/_ClockSolver.tsx`:视图切换 + 三视图
@@ -188,4 +205,6 @@ tnoodle 移植)都带完整 move 语义 + 展开图。→ 平面画板可直接�
 - God's number for Clock = 12:https://speedsolving.com/forum/threads/gods-number-for-clock-found.47822
 - OptClock 最优求解器:https://www.speedsolving.com/threads/optclock-optimal-rubiks-clock-solver.47747/
 - Jaap's Puzzle Page(魔表群结构 / 30 种招式 / 均值 9.4337):https://www.jaapsch.net/puzzles/clock.htm
+- Rokicki 的全空间陪集计算(附源码 + dist12.txt):http://cube20.org/clock/
 - twizzle 魔表(2D):https://alpha.twizzle.net/edit/?puzzle=clock
+- **本仓库的算法收藏**:`solver/reference/clock/README.md`

@@ -228,5 +228,25 @@
     "zh": "Korf 的 IDA* + 模式数据库(AAAI 1997)+ 滑块 walking-distance 启发:STM 最优解器的角表(8!×3⁷)+ 双 6 棱表(12P6×2⁶)、h=max(...) 可采纳启发,数字华容道 15p 的 walking-distance,cube48opt 3×3 最优解都出自此法",
     "en": "Korf's IDA* with pattern databases (AAAI 1997) + the sliding-tile walking-distance heuristic: the STM optimal solver's corner PDB (8!×3⁷) + two 6-edge PDBs (12P6×2⁶) with h = max(...), the 15-puzzle (15p) walking-distance optimal solve, and cube48opt's 3×3 optimal solve all use this method",
     "long_en": "Richard E. Korf's 'Finding Optimal Solutions to Rubik's Cube Using Pattern Databases' (AAAI 1997) — max/additive pattern-database IDA* — is the method behind the pure-TS 3×3×3 STM optimal solver (corner PDB 8!×3⁷ + two disjoint 6-edge PDBs 12P6×2⁶, admissible h = max of EXACT BFS distances rebuilt over the 27 STM generators) and, via his walking-distance heuristic, the 15-puzzle optimal solver (/scramble/solver 15p); the server-side cube48opt 3×3 optimal-solve daemon is in the same lineage"
+  },
+  {
+    "name": "thewca/tnoodle-lib",
+    "url": "https://github.com/thewca/tnoodle-lib",
+    "zh": "WCA 官方打乱程序库:魔表的 18 位状态模型与招式表(ClockPuzzle.java)移植为 clock_svg.ts,也是本站魔表求解器 lib/clock-solver.ts 的招式语义锚点;打乱图渲染与各项目配色方案亦照其实现",
+    "en": "The WCA's official scrambling library: the Clock's 18-dial state model and move table (ClockPuzzle.java) are ported as clock_svg.ts and are the move-semantics anchor for our Clock solver (lib/clock-solver.ts); the scramble-image renderer and per-event colour schemes follow its implementation too",
+    "long_en": "TNoodle is the World Cube Association's official scramble generator. Its `ClockPuzzle.java` (18-dial posit model, the 18 pin-subset move rows, the y2 presentation flip, and the default per-part colour scheme) is ported verbatim to `clock_svg.ts`, which then serves as the independent gold standard the pure-TS optimal Clock solver is cross-validated against, cell by cell"
+  },
+  {
+    "name": "Jaap Scherphuis — Jaap's Puzzle Page",
+    "url": "https://www.jaapsch.net/puzzles/clock.htm",
+    "zh": "魔表的群论背景与 God's algorithm 距离分布表(12^14 个状态逐档统计):/scramble/stats 的魔表分布页与求解器回归测试都以此为基准",
+    "en": "Rubik's Clock group theory and the God's-algorithm distance distribution (per-depth counts over all 12^14 states): the basis for our Clock distribution page and the solver's regression tests"
+  },
+  {
+    "name": "Rubik's Clock 最优求解先行工作(Kogler / Rokicki / OptClock / cs0x7f)",
+    "url": "http://cube20.org/clock/",
+    "zh": "魔表 God's number = 12 的证明与全空间分析:Jakob Kogler 2014 首证,Tomas Rokicki 用陪集求解器算出完整距离分布并公布 39,248 个距离 12 的位置(dist12.txt,本站用作求解器的精确对账集);Michael Gottlieb + Ben Whitmore 的 OptClock 与 Shuang Chen 的 ClockSolver.java 是两份独立的单状态最优求解器。四份代码原样收藏在 solver/reference/clock/(只读、不编译);本站 lib/clock-solver.ts 为独立实现,未取用其代码",
+    "en": "The proof that God's number for Clock is 12 and the full-space analysis: first proven by Jakob Kogler (2014); Tomas Rokicki computed the complete distance distribution with a coset solver and published all 39,248 distance-12 positions (dist12.txt — used here as an exact regression oracle); OptClock (Michael Gottlieb + Ben Whitmore) and ClockSolver.java (Shuang Chen) are two independent single-position optimal solvers. All four are archived verbatim under solver/reference/clock/ (read-only, never compiled); our lib/clock-solver.ts is an independent implementation and uses none of their code",
+    "long_en": "Prior art for optimally solving the Rubik's Clock. Jakob Kogler (2014) first proved God's number is 12 using a one-side lookup table plus iterative-deepening DFS. Tomas Rokicki then computed the complete distance distribution over all 1,283,918,464,548,864 states with a coset solver (subgroup fixing the front cross, 248,832 cosets reduced to 9,906 by mirror / rotation / coprime-multiplication symmetry, ~3 days on a couple of desktops) and published both his source (clockcoset11.cpp) and the 39,248 distance-12 positions (dist12.txt). OptClock by Michael Gottlieb (qqwref) with a Qt GUI by Ben Whitmore is the two-phase single-position optimal solver used to verify those positions. Shuang Chen's ClockSolver.java (GPLv3) is an independent Java optimal solver. All are archived read-only under solver/reference/clock/ with a README explaining each algorithm; dist12.txt is wired into our test suite so the hardest depth bucket is verified exactly rather than by sampling"
   }
 ]
