@@ -13,7 +13,7 @@ import Link from '@/components/AppLink';
 import LangToggle from '@/components/LangToggle';
 import { useTranslation } from 'react-i18next';
 import { useAuthUser, nextQuery } from '@/lib/auth-store';
-import { TEXTS, SECTIONS } from '@/lib/landing-sections';
+import { TEXTS, SECTIONS, PRIMARY_CARDS } from '@/lib/landing-sections';
 
 // Below-the-fold widgets — dynamic to defer client hydrate / chunk fetch.
 // Min-height placeholders match approximate rendered sizes to avoid layout
@@ -100,26 +100,38 @@ export default function LandingPage() {
       </div>
       <h1 className="landing-tagline">{t('tagline')}</h1>
 
-      <RecentScrambles lang={lang} />
-      <TodayRecon lang={lang} />
+      {/* 主入口 — 标语正下方,五张最常用直达卡(计时器 / 公式 / 模拟 / 复盘 / 打乱) */}
+      <div className="primary-hero-grid">
+        {PRIMARY_CARDS.map((c) => (
+          <Link key={c.id} href={c.href} className="hero-card" id={`card-${c.id}`} prefetch={false}>
+            <div className="hero-card-icon">
+              {c.Icon ? <c.Icon size={30} strokeWidth={1.5} /> : null}
+            </div>
+            <div className="hero-card-name">{t(c.nameKey)}</div>
+          </Link>
+        ))}
+      </div>
 
-      <OngoingComps lang={lang} />
-
-      {/* WCA 入口 — 顶层,原单张「WCA 统计」hero 拆成四张直达卡:比赛 / 纪录 / 排名 / 统计 */}
+      {/* WCA 入口 — 紧接主入口,原单张「WCA 统计」hero 拆成四张直达卡:比赛 / 纪录 / 排名 / 统计 */}
       <div className="wca-hero-grid">
         {WCA_ENTRIES.map((e) => (
-          <Link key={e.href} href={e.href} className="wca-hero-card" prefetch={false}>
-            <div className="wca-hero-card-icon">
+          <Link key={e.href} href={e.href} className="hero-card" prefetch={false}>
+            <div className="hero-card-icon">
               {e.img
-                ? <img src={e.img} alt="WCA" className="wca-hero-card-logo" />
+                ? <img src={e.img} alt="WCA" className="hero-card-logo" />
                 : e.Icon
                   ? <e.Icon size={30} strokeWidth={1.5} />
                   : null}
             </div>
-            <div className="wca-hero-card-name">{tr({ zh: e.zh, en: e.en })}</div>
+            <div className="hero-card-name">{tr({ zh: e.zh, en: e.en })}</div>
           </Link>
         ))}
       </div>
+
+      <RecentScrambles lang={lang} />
+      <TodayRecon lang={lang} />
+
+      <OngoingComps lang={lang} />
 
       <div className="cards-sections">
         {SECTIONS.map((sec) => (
