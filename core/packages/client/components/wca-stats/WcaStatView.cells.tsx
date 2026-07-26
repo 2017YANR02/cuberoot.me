@@ -68,7 +68,7 @@ function renderInline(text: string, keyBase: string): React.ReactNode {
 
 // 渲染一段含 [文本](链接) 的 markdown 为带国旗 / 本地化的链接节点。
 // 从 renderCell 内提取到模块级,供普通单元格与 people 列表复用。
-function renderLinkedSegment(segment: string, segIdx: number, columnKey: string | undefined, isZh: boolean | undefined, withFlag = true): React.ReactNode {
+function renderLinkedSegment(segment: string, segIdx: number, isZh: boolean | undefined, withFlag = true): React.ReactNode {
   const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
@@ -87,8 +87,10 @@ function renderLinkedSegment(segment: string, segIdx: number, columnKey: string 
       parts.push(' ');
     }
     let displayText = match[1];
-    // '1st'/'2nd'/'3rd' 是领奖台式人名列(best_round / round_top3_sum),同 person 列一样剥括号 + 中译
-    if (columnKey === 'person' || columnKey === 'name' || columnKey === '1st' || columnKey === '2nd' || columnKey === '3rd') {
+    // 指向 WCA 选手页 = 这段就是人名,按全站规范中译 / 剥括号,不看它落在哪一列 ——
+    // 原先靠列名白名单(person/name/1st/2nd/3rd)认人名,人名出现在别的列(如 keatoned_records
+    // 的「当日更快者」)就漏了,表里会留下 "Shotaro Makisumi (牧角章太郎)" 这种原始名。
+    if (wcaId) {
       if (isZh) {
         const zhName = translatePersonLink(displayText);
         displayText = zhName || stripChineseParens(displayText);
@@ -170,12 +172,12 @@ export function renderCell(value: unknown, columnKey?: string, isZh?: boolean): 
   const brParts = str.split(/<br\s*\/?>/i);
   const hasBr = brParts.length > 1;
 
-  if (!hasBr) return renderLinkedSegment(str, 0, columnKey, isZh);
+  if (!hasBr) return renderLinkedSegment(str, 0, isZh);
 
   const result: React.ReactNode[] = [];
   brParts.forEach((part, i) => {
     if (i > 0) result.push(<br key={`br-${i}`} />);
-    result.push(renderLinkedSegment(part, i, columnKey, isZh));
+    result.push(renderLinkedSegment(part, i, isZh));
   });
   return <>{result}</>;
 }
