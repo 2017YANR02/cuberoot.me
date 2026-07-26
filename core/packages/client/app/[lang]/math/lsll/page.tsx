@@ -56,14 +56,15 @@ export default function LsllMathPage() {
                 「一个 case」的定义里藏着一个群作用:开始前、结束后各允许转一下 U 层(pre-AUF / post-AUF),
                 case 不变 —— 这是 <TeX src={R`\mathbb{Z}_4\times\mathbb{Z}_4`} />(16 元)。把 9,331,200 个物理态
                 按这个作用归并,轨道数就是 case 数。下面一步步算清楚;<strong>§3</strong> 再看把 LSLL 拆成
-                ZBLS + ZBLL 之后冒出来的<strong>第三个 AUF</strong> —— 以及它为什么<strong>不</strong>给出一个规范的 case 数。
+                ZBLS + ZBLL 之后冒出来的<strong>第三个 AUF</strong> —— 为什么不能拿它再商一次,以及正确的数法
+                (<strong>306 × 494 = 151,164</strong>)。
                 本文是 <Link href="/math/probability">{t('末层 AUF 概率', 'last-layer AUF probability')}</Link> 一页在「最后一槽」上的推广。</>}
               en={<>LSLL (Last Slot and Last Layer) means solving the <strong>last slot and the whole top layer</strong> in
                 one look. The definition of “one case” hides a group action: a U turn is allowed before and after the
                 algorithm (pre-AUF / post-AUF) without changing the case — an action of <TeX src={R`\mathbb{Z}_4\times\mathbb{Z}_4`} /> (16
                 elements). Collapsing the 9,331,200 physical states under it gives the case count. We derive it step by
                 step; <strong>§3</strong> then looks at the <strong>third AUF</strong> that appears once LSLL is split into ZBLS + ZBLL —
-                and why it does <strong>not</strong> yield a canonical case count. This is the{' '}
+                why you must not quotient by it, and what the right count is (<strong>306 × 494 = 151,164</strong>). This is the{' '}
                 <Link href="/math/probability">{t('末层 AUF 概率', 'last-layer AUF probability')}</Link> page extended to the last slot.</>}
             />
           </p>
@@ -78,8 +79,8 @@ export default function LsllMathPage() {
               <div className="lmath-num-label">{t('二类:商 pre + post = case 数', 'class 2: pre + post = # cases')}</div>
             </div>
             <div className="lmath-num-card">
-              <div className="lmath-num">147,508</div>
-              <div className="lmath-num-label">{t('三类:再商 mid(依公式表,见三)', 'class 3: + mid (algorithm-dependent, §3)')}</div>
+              <div className="lmath-num">151,164</div>
+              <div className="lmath-num-label">{t('三类:两步路线 306 × 494(见三)', 'class 3: two-look routes, 306 × 494 (§3)')}</div>
             </div>
             <div className="lmath-num-card">
               <div className="lmath-num">42</div>
@@ -254,7 +255,7 @@ export default function LsllMathPage() {
           </ul>
 
           <h3 className="lmath-body" style={{ fontWeight: 700, color: 'var(--foreground)', marginBottom: 4 }}>
-            {t('实测:三类计数不是良定义的不变量', 'Measured: the three-AUF count is not a well-defined invariant')}
+            {t('实测:拿 mid 再商一次会漂', 'Measured: quotienting by mid drifts')}
           </h3>
           <p className="lmath-body">
             <T
@@ -281,8 +282,78 @@ export default function LsllMathPage() {
           </div>
           <p className="lmath-body">
             <T
-              zh={<>所以「把三个 AUF 全商掉」<strong>不产生一个规范的 case 数</strong>。能钉死的是:</>}
-              en={<>So “quotient by all three AUFs” <strong>does not yield a canonical case count</strong>. What can be pinned down:</>}
+              zh={<>最后一行值得盯住:<strong>换对公式,轨道数会回到满格 494</strong>。这不是巧合,下面会证明它对九个对称大类全部成立。</>}
+              en={<>Watch the last row: <strong>with the right algorithm the count climbs back to the full 494</strong>. Not a coincidence — below we show it holds for all nine symmetric families.</>}
+            />
+          </p>
+
+          <h3 className="lmath-body" style={{ fontWeight: 700, color: 'var(--foreground)', marginBottom: 4 }}>
+            {t('正确的数法:不商,而是乘', 'The right count: multiply, don’t quotient')}
+          </h3>
+          <p className="lmath-body">
+            <T
+              zh={<>毛病出在硬把 mid 塞成「局面之间的等价关系」。局面是死的 —— 你插不插那一下 <TeX src="U" />,魔方摆在那儿一动不动;
+                mid 发生在<strong>解法</strong>上,不发生在局面上。两步解法里真正在变的,是<strong>一对图</strong>:
+                先认出一个 ZBLS case,做完之后看到一个 ZBLL case。这两个集合各自都跟公式无关,于是</>}
+              en={<>The mistake is forcing mid into an equivalence between <em>states</em>. A state does not budge when you insert that
+                <TeX src={R`\;U`} /> — mid happens to the <strong>solution</strong>, not to the cube. What actually varies across a two-look solve is a
+                <strong> pair of pictures</strong>: the ZBLS case you recognise first, the ZBLL case you meet second. Both sets are algorithm-free, so</>}
+            />
+          </p>
+          <Block src={R`N_3=\underbrace{306}_{\text{ZBLS}}\times\underbrace{494}_{\text{ZBLL}}=151{,}164 .`} />
+          <p className="lmath-body">
+            <T
+              zh={<>306 = <TeX src={R`\Phi`} /> 模 pre-AUF(上面刚算过),494 = 7776 个 ZBLL 态模两侧 AUF。
+                <strong>每一个组合都真会发生</strong>:固定任意一条 <TeX src={R`Z_\varphi`} />,它的 fiber 打满整个 ZBLL 空间 ——
+                所以这个乘积对<strong>任何</strong>公式表都给同一个数。扣掉「全部已解」那一格 = <strong>151,163</strong>。</>}
+              en={<>306 is <TeX src={R`\Phi`} /> mod pre-AUF (computed just above); 494 is the 7776 ZBLL states mod both AUFs.
+                <strong> Every combination really occurs</strong>: fix any <TeX src={R`Z_\varphi`} /> and its fiber covers the whole ZBLL space —
+                so the product is the same number for <strong>any</strong> algorithm set. Drop the fully-solved cell and it is <strong>151,163</strong>.</>}
+            />
+          </p>
+
+          <h3 className="lmath-body" style={{ fontWeight: 700, color: 'var(--foreground)', marginBottom: 4 }}>
+            {t('佐证一:同一构造在末层上复现社区数字', 'Check 1: the same construction reproduces the community’s LL numbers')}
+          </h3>
+          <p className="lmath-body">
+            <T
+              zh={<>把「两步 = 两个 case 集合相乘」套到 OLL → PLL 上:216 个朝向态模 pre-AUF = <strong>58</strong> 个 OLL(57 + 跳O),
+                288 个置换态模两侧 AUF = <strong>22</strong> 个 PLL(21 + 跳P) —— 正是大家在用的数。
+                从没有人把两步末层定义成「1LLL 的 3916 ÷ 4 = 979」;那个数离 <TeX src={R`58\times22=1276`} /> 差得远,
+                和这里 <TeX src={R`583{,}284\div4=145{,}821`} /> 离 151,164 差得远,是同一回事。
+                而且 OLL 里同样有对称 case(同一条公式、不同 AUF 进,出来不同 PLL),社区面对完全一样的现象,选的就是乘法。</>}
+              en={<>Apply “two looks = product of two case sets” to OLL → PLL: 216 orientation states mod pre-AUF = <strong>58</strong> OLL cases (57 + skip),
+                288 permutation states mod both AUFs = <strong>22</strong> PLL cases (21 + skip) — precisely the numbers everyone uses.
+                Nobody defines two-look LL as “1LLL’s 3916 ÷ 4 = 979”; that misses <TeX src={R`58\times22=1276`} /> by a mile, exactly as
+                <TeX src={R`\;583{,}284\div4=145{,}821`} /> misses 151,164. And OLL has symmetric cases too (one algorithm, different AUFs in, different PLL out) —
+                the community met the identical phenomenon and chose multiplication.</>}
+            />
+          </p>
+
+          <h3 className="lmath-body" style={{ fontWeight: 700, color: 'var(--foreground)', marginBottom: 4 }}>
+            {t('佐证二:151,164 恰是商定义的上确界', 'Check 2: 151,164 is exactly the supremum of the quotient count')}
+          </h3>
+          <p className="lmath-body">
+            <T
+              zh={<>对称大类的轨道数 = 494 当且仅当那个多出来的生成元 <TeX src="V" /> 落在 <TeX src={R`\langle U\rangle`} /> 里;
+                而换一条合法 ZBLS 公式,恰好就是把 <TeX src="V" /> 在 ZBLL 群里<strong>共轭</strong>一次。于是问题化成
+                「<TeX src="V" /> 的共轭类碰不碰得到 <TeX src={R`\langle U\rangle`} />」—— 7776 个元素直接全扫,
+                <strong>9 个对称大类全部可达</strong>(<TeX src={R`|\mathrm{Stab}|=4`} /> 的共轭到 <TeX src={R`U^{\pm1}`} />,
+                <TeX src={R`|\mathrm{Stab}|=2`} /> 的共轭到 <TeX src={R`U^{2}`} />)。记商定义算出的 case 数为 <TeX src="Q" />,则</>}
+              en={<>A symmetric family hits 494 exactly when the extra generator <TeX src="V" /> lands inside <TeX src={R`\langle U\rangle`} /> —
+                and swapping in another legal ZBLS algorithm is precisely a <strong>conjugation</strong> of <TeX src="V" /> inside the ZBLL group.
+                So the question becomes “does <TeX src="V" />’s conjugacy class meet <TeX src={R`\langle U\rangle`} />?” Scanning all 7776 elements:
+                <strong> all 9 symmetric families reach it</strong> (<TeX src={R`|\mathrm{Stab}|=4`} /> conjugates to <TeX src={R`U^{\pm1}`} />,
+                <TeX src={R`\;|\mathrm{Stab}|=2`} /> to <TeX src={R`U^{2}`} />). Writing <TeX src="Q" /> for the quotient count,</>}
+            />
+          </p>
+          <Block src={R`\sup_{\{Z_\varphi\}} Q \;=\; 306\times 494 \;=\; 151{,}164 .`} />
+          <p className="lmath-body">
+            <T
+              zh={<>也就是说,商定义永远不会超过这个乘积,而且够得着。它每低一点,都是某条具体公式
+                <strong>把两个本来不同的 ZBLL case 强行粘在一起</strong>丢掉的信息 —— 那是公式的副作用,不是魔方的性质。</>}
+              en={<>So the quotient count never exceeds the product, and the bound is attained. Every unit below it is information a particular algorithm
+                <strong> destroyed by gluing two genuinely different ZBLL cases together</strong> — a side effect of the algorithm, not a property of the cube.</>}
             />
           </p>
           <div className="lmath-table-wrap">
@@ -294,21 +365,26 @@ export default function LsllMathPage() {
                 </tr>
               </thead>
               <tbody>
-                <tr><td><T zh="硬结论(297 个自由大类,与选择无关)" en="rock-solid (297 free families, choice-independent)" /></td><td className="is-num is-hot">146,718</td></tr>
-                <tr><td><T zh="严格区间(9 个对称大类各 ∈ [1, 494];全解态那类恒为 494)" en="strict range (9 symmetric families each ∈ [1, 494]; the solved one is always 494)" /></td><td className="is-num">147,220 – 151,164</td></tr>
-                <tr><td><T zh="站内当前公式库这一实例(305 / 305 个 ZBLS case 全有公式)" en="the site’s current algorithm set, as one instance (all 305 / 305 ZBLS cases covered)" /></td><td className="is-num">147,508</td></tr>
+                <tr><td><T zh="三类 case 数 = 306 × 494,与公式表无关" en="class-3 count = 306 × 494, algorithm-free" /></td><td className="is-num is-hot">151,164</td></tr>
+                <tr><td><T zh="其中 297 个自由大类的贡献" en="of which the 297 free families contribute" /></td><td className="is-num">146,718</td></tr>
+                <tr><td><T zh="商定义在站内当前公式库下(= 151,164 − 3,656 被粘掉)" en="the quotient count under the site’s current set (= 151,164 − 3,656 glued away)" /></td><td className="is-num">147,508</td></tr>
+                <tr><td><T zh="商定义的严格区间" en="strict range of the quotient count" /></td><td className="is-num">147,220 – 151,164</td></tr>
                 <tr className="is-total"><td><T zh="天真估算 583,284 ÷ 4" en="naïve 583,284 ÷ 4" /></td><td className="is-num">145,821</td></tr>
               </tbody>
             </table>
           </div>
           <div className="lmath-note">
             <T
-              zh={<>天真值<strong>必然偏小</strong>:pre / mid / post 并不构成一个自由的 <TeX src={R`(\mathbb{Z}_4)^3`} /> 作用 —— pre 动的是大类
-                <TeX src={R`\;\varphi`} />,mid 与 post 动的是 fiber 内部,三者互相纠缠。真值下界 147,220 已经高于 145,821。
-                这些数由 <code>scripts/lsll-class3.mts</code> 实证(|Φ| = 1200、306、297/3/6、7776、494 逐项复算)。</>}
-              en={<>The naïve value is <strong>necessarily too small</strong>: pre / mid / post do not form a free <TeX src={R`(\mathbb{Z}_4)^3`} /> action — pre moves the family
-                <TeX src={R`\;\varphi`} /> while mid and post move within the fiber, and the three interlock. Even the lower bound 147,220 exceeds 145,821.
-                All of these are computed by <code>scripts/lsll-class3.mts</code> (|Φ| = 1200, 306, 297/3/6, 7776, 494 each re-derived).</>}
+              zh={<>一处诚实的说明:一类、二类数的是<strong>局面</strong>(你可能面对的那张图),151,164 数的是<strong>两步路线</strong>
+                (先后看到的两张图)。这确实是两种不同的量 —— 但三类从头到尾问的就是路线,而这是它唯一良定义的版本。
+                天真值 <TeX src={R`583{,}284\div4`} /> <strong>必然偏小</strong>:pre / mid / post 不构成自由的
+                <TeX src={R`\;(\mathbb{Z}_4)^3`} /> 作用 —— pre 动的是大类 <TeX src={R`\varphi`} />,mid 与 post 动的是 fiber 内部。
+                所有数字由 <code>scripts/lsll-class3.mts</code> 实证(|Φ| = 1200、306、297/3/6、7776、494、共轭类扫描逐项复算)。</>}
+              en={<>One honest caveat: classes 1 and 2 count <strong>positions</strong> (the picture you may face); 151,164 counts <strong>two-look routes</strong>
+                (the ordered pair of pictures). These are genuinely different quantities — but routes are what class 3 was always asking about, and this is
+                its only well-defined form. The naïve <TeX src={R`583{,}284\div4`} /> is <strong>necessarily too small</strong>: pre / mid / post do not form a free
+                <TeX src={R`\;(\mathbb{Z}_4)^3`} /> action — pre moves the family <TeX src={R`\varphi`} />, mid and post move inside the fiber.
+                Every number here is recomputed by <code>scripts/lsll-class3.mts</code> (|Φ| = 1200, 306, 297/3/6, 7776, 494, plus the conjugacy scan).</>}
             />
           </div>
         </section>

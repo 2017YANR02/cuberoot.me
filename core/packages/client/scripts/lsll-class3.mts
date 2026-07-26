@@ -1,16 +1,19 @@
 /**
  * LSLL 三类 AUF(pre / mid / post)case 数 N₃ 的精确计算。issue #40 T1。
  *
- * 二类(pre+post,583,284)已由 lib/lsll/model.ts 锁死。三类多商一个 mid-AUF ——
- * 「ZBLS 做完、ZBLL 之前」的转顶层。mid 不是状态空间上的规范作用:它要借助
- * ZBLS/ZBLL 的两段拆分才有定义,故本脚本按速拧现实固定「每个 ZBLS case 一条公式
- * Z_φ」(取站内 zbls 公式库的主推解法)。
+ * 二类(pre+post,583,284)已由 lib/lsll/model.ts 锁死。三类多出一个 mid-AUF ——
+ * 「ZBLS 做完、ZBLL 之前」的转顶层。关键:mid 不作用在状态上(局面不因为你插一下 U
+ * 而改变),它作用在**解法**上。硬拿它再商一次就得先指定「每个 ZBLS case 用哪条公式
+ * Z_φ」,而 9 个有 pre-AUF 对称的构型会把这个选择泄进结果里 —— 数字随公式库漂。
+ *
+ * 良定义的 N₃ = 两步路线数 = ZBLS case 数 × ZBLL case 数 = 306 × 494 = 151,164。
+ * 两个集合都是规范的,乘积对任何公式表都一样;且它恰好是商定义的**上确界**(见文末扫描)。
  *
  * 结构(本脚本逐条实证,不靠信任):
  *   Φ = ZBLS 构型空间,|Φ| = 1200;模 pre-AUF 得 306 个 ZBLS case(DB 305 = 306 − 全解态)。
- *   固定 Z_φ 后 fiber ≅ ZBLL 空间(7776),mid = 右乘 U、post = 左乘 U,双侧商 = 493。
- *   pre-AUF 的 stabilizer 若非平凡,还会在 fiber 上多诱导一个「右乘 V = Z⁻¹UᵏZ」。
- *   ⇒ N₃ = 297·493 + Σ(9 个对称 φ 的轨道数)。
+ *   固定 Z_φ 后 fiber ≅ ZBLL 空间(7776),mid = 右乘 U、post = 左乘 U,双侧商 = 494。
+ *   pre-AUF 的 stabilizer 若非平凡,还会在 fiber 上多诱导一个「右乘 V = Z⁻¹UᵏZ」——
+ *   这一项正是公式依赖的来源;换公式 = 把 V 在 ZBLL 群内共轭一次。
  *
  * 跑:NODE_OPTIONS=--no-experimental-strip-types pnpm --filter @cuberoot/client exec tsx scripts/lsll-class3.mts
  *    (Node ≥23 的原生 .ts 剥离会抢在 tsx 的 loader 前面,不加这个 flag 会报「没有 applyMove 导出」。)
@@ -40,6 +43,8 @@ function inverse(s: Cube333): Cube333 {
 }
 
 const U1 = applyMove(solvedCube(), 'U', 1);
+const UPOW: Cube333[] = [solvedCube()];
+for (let i = 1; i < 4; i++) UPOW.push(compose(UPOW[i - 1], U1));
 
 // ── LSLL 坐标 ──
 // 槽角 = piece 4 (DFR),可落在 URF/UFL/ULB/UBR/DFR = 位置 0,1,2,3,4
@@ -261,9 +266,7 @@ for (const [rep, st] of stabOf) {
   const Z = algToCube(hit.alg);
   const Zi = inverse(Z);
   const k = 4 / st; // |Stab|=4 → 生成元 U;|Stab|=2 → 生成元 U²
-  let Uk = solvedCube();
-  for (let i = 0; i < k; i++) Uk = compose(Uk, U1);
-  const V = compose(compose(Zi, Uk), Z);
+  const V = compose(compose(Zi, UPOW[k]), Z);
   let n: number;
   try { n = countOrbits([midGen, postGen, (t) => compose(t, V)]); } catch (e) {
     detail.push(`⚠ ${hit.subgroup}/${hit.name}: V 不在 ZBLL 群内(公式没把 φ 解干净?)—— ${(e as Error).message}`);
@@ -273,13 +276,43 @@ for (const [rep, st] of stabOf) {
   detail.push(`${hit.subgroup}/${hit.name}  |Stab|=${st}  Z="${hit.alg}"  → 轨道 ${n}`);
 }
 
-console.log('\n对称 φ 逐条:');
+console.log('\n对称 φ 逐条(商定义):');
 for (const d of detail) console.log('  ' + d);
 const free = [...stabOf.values()].filter((v) => v === 1).length;
-console.log(`\n自由类 ${free} × ${base} = ${free * base}  ← 与公式表选择无关,硬结论`);
-console.log(`当前站内公式库下 N₃ = ${total}`);
-console.log(`严格区间:N₃ ∈ [${free * base + base + 8}, ${free * base + 9 * base}]`);
-console.log(`对照:二类 583,284;issue 的估算 583284/4 = ${583284 / 4} ← 真值必然大于它`);
-console.log(`\n※ N₃ 非良定义:mid-AUF 要靠 ZBLS/ZBLL 的两段拆分才有定义,换一条同样合法的`);
-console.log(`  ZBLS 公式,对称构型的轨道数就变(实测同一构型 19 ↔ 62 ↔ 89)。只有 9 个有`);
-console.log(`  pre-AUF 对称的构型受影响,297 个自由构型的 ${free * base} 是硬的。`);
+console.log(`\n自由类 ${free} × ${base} = ${free * base}  ← 与公式表选择无关`);
+console.log(`商定义在当前站内公式库下 = ${total}`);
+console.log(`商定义的严格区间 ∈ [${free * base + base + 8}, ${free * base + 9 * base}]`);
+console.log(`对照:二类 583,284;天真估算 583284/4 = ${583284 / 4} ← 必然偏小`);
+
+// ── §4 良定义的 N₃:两步组合数 ──
+// mid 不作用在状态上(它作用在解法上),硬商会漂。真正跟公式无关的量是
+// 「(ZBLS case, ZBLL case) 组合」—— 两个集合都是规范的,乘起来即可。
+const N3 = orbits.size * base;
+console.log(`\n══ N₃(两步组合)= ZBLS case ${orbits.size} × ZBLL case ${base} = ${N3} ══`);
+console.log(`   扣掉「全部已解」那一格 = ${N3 - 1}`);
+console.log(`   每个组合都真会出现:固定任一条 Z_φ,它的 fiber 打满整个 ZBLL 空间 ⇒ 与公式表无关。`);
+
+// 上确界检验:对称 φ 取满 base ⟺ V ∈ ⟨U⟩;换一条合法公式 = 把 V 在 ZBLL 群内共轭一次。
+// 故「base 可达」⟺ V 的共轭类与 ⟨U⟩ 相交。ZBLL 群只有 7776 个元素,直接全扫。
+const IN_U = new Set(UPOW.map(keyOf));
+let allReach = true;
+console.log('\nsup 检验:V 的 ZBLL-共轭类碰不碰得到 ⟨U⟩(碰得到 ⟹ 存在合法公式使该类取满 494):');
+for (const [rep, st] of stabOf) {
+  if (st === 1) continue;
+  const hit = dbByOrbit.get(rep);
+  const Zc = hit ? algToCube(hit.alg) : solvedCube();
+  const V = compose(compose(inverse(Zc), UPOW[4 / st]), Zc);
+  let j = -1;
+  for (const b of ZBLL_STATES) {
+    const c = compose(compose(inverse(b), V), b);
+    if (IN_U.has(keyOf(c))) { j = UPOW.findIndex((u) => keyOf(u) === keyOf(c)); break; }
+  }
+  if (j < 0) allReach = false;
+  const tag = hit ? `${hit.subgroup}/${hit.name}` : '[全解 φ]';
+  console.log(`  ${tag.padEnd(16)} |Stab|=${st}  ${j < 0 ? '✗ 共轭类与 ⟨U⟩ 不相交' : `✓ 可共轭到 U^${j}`}`);
+}
+console.log(allReach
+  ? `⇒ 9 个对称 φ 全部可达 ⇒ sup(商定义) = ${N3},与两步组合数相等。`
+  : '⇒ 存在够不着 494 的对称 φ,sup < 两步组合数。');
+console.log(`\n※ 商定义每低于 ${N3} 一点,都是某条具体公式把两个本来不同的 ZBLL case`);
+console.log(`  强行粘在一起丢掉的信息(当前公式库丢了 ${N3 - total} 个),那是公式的副作用,不是魔方的性质。`);

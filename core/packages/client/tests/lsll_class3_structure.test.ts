@@ -151,13 +151,90 @@ describe('LSLL 三类 AUF 的结构常数(/math/lsll §3)', () => {
     expect(new Set(states.map((_, i) => find(i))).size).toBe(494);
   });
 
-  it('三类计数的硬下界基石:297 个自由大类 × 494 = 146,718', () => {
-    expect(297 * 494).toBe(146718);
+  it('三类 case 数 = 两步组合 306 × 494 = 151,164(与公式表无关)', () => {
+    // mid-AUF 不作用在状态上,作用在解法上 ⇒ 不能拿它再商一次。良定义的量是
+    // 「(ZBLS case, ZBLL case) 组合数」:两个集合各自规范,乘积对任何公式表都一样。
+    expect(306 * 494).toBe(151164);
+    expect(151164 - 1).toBe(151163);        // 扣掉「全部已解」那一格
+  });
+
+  it('商定义的形状:硬部分 146,718、区间 [147,220, 151,164]、上确界 = 组合数', () => {
+    expect(297 * 494).toBe(146718);          // 297 个自由大类,与选择无关
     // 9 个对称大类每个 ∈ [1, 494],全解那类恒为 494 ⇒ 严格区间
     expect(146718 + 494 + 8 * 1).toBe(147220);
     expect(146718 + 9 * 494).toBe(151164);
-    // issue 的天真估算 583,284/4 落在区间下方 ⇒ 真值必然大于它
+    // 上界 = 组合数,且 scripts/lsll-class3.mts 的共轭类扫描证明 9 个对称类全部够得着
+    expect(146718 + 9 * 494).toBe(306 * 494);
+    // 站内当前公式库这一实例:低于上确界的部分 = 被公式强行粘掉的 ZBLL case
+    expect(151164 - 147508).toBe(3656);
+    // 天真估算 583,284/4 落在区间下方 ⇒ 商定义的真值必然大于它
     expect(583284 / 4).toBe(145821);
     expect(145821 < 147220).toBe(true);
+  });
+
+  it('同一构造套到末层上复现社区数字:OLL 58、PLL 22', () => {
+    // 判据:三类 = 两步 case 集合相乘。拿它去数 OLL→PLL,应当给出大家在用的 57+跳 / 21+跳。
+    const U_C = [3, 0, 1, 2];                // U 把位置 p 上的块送到 U_C[p]
+
+    // OLL:朝向态 = 角扭 4 元(和 ≡ 0 mod 3)× 棱翻 4 元(和 ≡ 0 mod 2)= 27 × 8
+    const ori: [number[], number[]][] = [];
+    for (let c = 0; c < 81; c++) {
+      const co = [0, 1, 2, 3].map((i) => Math.floor(c / 3 ** i) % 3);
+      if (co.reduce((a, b) => a + b) % 3) continue;
+      for (let e = 0; e < 16; e++) {
+        const eo = [0, 1, 2, 3].map((i) => (e >> i) & 1);
+        if (eo.reduce((a, b) => a + b) % 2) continue;
+        ori.push([co, eo]);
+      }
+    }
+    expect(ori.length).toBe(216);
+    const rotOri = ([co, eo]: [number[], number[]], k: number): [number[], number[]] => {
+      let c = co, o = eo;
+      for (let i = 0; i < k; i++) {
+        const nc: number[] = [], no: number[] = [];
+        for (let p = 0; p < 4; p++) { nc[U_C[p]] = c[p]; no[U_C[p]] = o[p]; }
+        c = nc; o = no;
+      }
+      return [c, o];
+    };
+    const kOri = (s: [number[], number[]]) => `${s[0].join('')}|${s[1].join('')}`;
+    const oll = new Set(ori.map((s) => {
+      let best = kOri(s);
+      for (let k = 1; k < 4; k++) { const t = kOri(rotOri(s, k)); if (t < best) best = t; }
+      return best;
+    }));
+    expect(oll.size).toBe(58);               // 57 + 跳 O
+
+    // PLL:角/棱置换同奇偶 = 4!·4!/2 = 288,模 pre-AUF(左)+ post-AUF(右)
+    const perms: number[][] = [];
+    (function gen(cur: number[], left: number[]) {
+      if (!left.length) { perms.push(cur); return; }
+      for (const x of left) gen([...cur, x], left.filter((y) => y !== x));
+    })([], [0, 1, 2, 3]);
+    const sgn = (p: number[]) => {
+      let n = 0;
+      for (let i = 0; i < 4; i++) for (let j = i + 1; j < 4; j++) if (p[i] > p[j]) n++;
+      return n & 1;
+    };
+    const mul = (a: number[], b: number[]) => a.map((_, i) => a[b[i]]);
+    const Up = [0, 1, 2, 3].map((i) => U_C.indexOf(i));
+    const pllStates = perms.flatMap((s) => perms.filter((t) => sgn(t) === sgn(s)).map((t) => [s, t]));
+    expect(pllStates.length).toBe(288);
+    const pll = new Set(pllStates.map(([s, t]) => {
+      let best: string | null = null;
+      for (let a = 0; a < 4; a++) for (let b = 0; b < 4; b++) {
+        let L = [0, 1, 2, 3], R = [0, 1, 2, 3];
+        for (let i = 0; i < a; i++) L = mul(Up, L);
+        for (let i = 0; i < b; i++) R = mul(R, Up);
+        const k = `${mul(mul(L, s), R).join('')}|${mul(mul(L, t), R).join('')}`;
+        if (best === null || k < best) best = k;
+      }
+      return best;
+    }));
+    expect(pll.size).toBe(22);               // 21 + 跳 P
+
+    // 两步末层 = 58 × 22;而 1LLL 的 3916 ÷ 4 = 979 与它差得远 —— 正如 583,284 ÷ 4 之于 151,164。
+    expect(oll.size * pll.size).toBe(1276);
+    expect(3916 / 4).toBe(979);
   });
 });
