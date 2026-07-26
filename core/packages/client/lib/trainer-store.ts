@@ -148,7 +148,7 @@ interface TrainerPrefs {
   srsSessionLimit: number;
   /** 记忆模式:到期卡与新卡都用完后,继续按「最该练的」加练补满本场。 */
   srsFillExtra: boolean;
-  /** 记忆模式:按记忆进展自动升降「学习中 / 已掌握」标记。 */
+  /** 记忆模式:按记忆进展自动升降「不熟 / 已掌握」标记。 */
   srsAutoMark: boolean;
   /** 记忆模式:揭示公式时一并展示 3D 演示。 */
   srsShowPlayer: boolean;
