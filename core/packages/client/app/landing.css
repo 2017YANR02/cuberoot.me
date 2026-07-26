@@ -38,17 +38,25 @@
    宽屏不贴浏览器最右侧;窄屏退回页面自身的 padding 地板。 */
 .landing-page .landing-auth {
     position: absolute;
-    /* 三行合一(issue #41):把语言/头像上提、覆盖到顶部通知条那一行,而不是被通知条挤到下面。
-       通知条实际高度由 PageNoticeBar 写入 --page-notice-h(无通知时为 0)。本容器精确覆盖
-       通知条那一行(top = -通知条高度、height = 通知条高度),再 align-items:center →
-       语言/头像自动在通知条行内垂直居中,不依赖具体像素。无通知时 top/height 归 0,落在页首顶端。 */
-    top: calc(var(--sat) - var(--page-notice-h, 0px));
-    height: var(--page-notice-h, 0px);
+    /* 基准位(页面顶部没有通知条时):页首 1.1rem。 */
+    top: calc(1.1rem + var(--sat));
     right: max(2rem, var(--sar), calc((100vw - 1100px) / 2));
     z-index: 5;
     display: flex;
     align-items: center;
     gap: 0.5rem;
+}
+/* 三行合一(issue #41):有通知条时把语言/头像上提、覆盖到通知条那一行,而不是被挤到下面。
+   通知条实际高度由 PageNoticeBar 写入 --page-notice-h;本容器覆盖那一行(top = -通知条高度、
+   min-height = 通知条高度)+ align-items:center → 行内垂直居中,不依赖具体像素。
+   必须是 min-height 不是 height:高度为 0 时(通知条被访客关掉 / 该页没有通知 / 首帧还没写入)
+   height:0 配 align-items:center 会把控件上半截推出视口 —— 登录按钮从中间被截断。
+   :has 不支持的浏览器整条规则失效,退回上面的基准位(通知条下方),同样完整可见。
+   通知条那一行右端要给这块悬浮让位(padding-right / 管理员条锚点),见 PageNoticeBar.css
+   的 .page-notice-wrap:has(+ .landing-page) 两条 —— 改这里的宽度要同步改那边的预留。 */
+body:has(.page-notice-wrap) .landing-page .landing-auth {
+    top: calc(var(--sat) - var(--page-notice-h, 0px));
+    min-height: var(--page-notice-h, 0px);
 }
 .landing-page .landing-auth-btn {
     display: inline-flex;
