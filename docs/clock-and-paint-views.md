@@ -141,17 +141,44 @@ Kogler 本人那份最早的证明程序**没有公开源码**,只有方法描�
 高档位。映射(OptClock 14 列 → 本仓库 `posit`)与测试都在 `tests/clock_solver.test.ts`。
 
 待办:
-- [ ] `/code/solvers/_fleet.ts` 登记
+- [!] `/code/solvers` 看板登记 —— **卡在分类上,要用户拍板**。`_fleet.ts` 的 `NONWCA_TS` 被 CI
+      守卫 `code-solvers-fleet-sync` 锁死「event 集 == `CSTIMER_SOLVABLE_IDS`」,魔表是 **WCA 项目**、
+      不在那个集合里,硬塞进去 CI 直接红。而现有四档 tier 也没有一档描述得准:魔表不是全 BFS(A)、
+      不是离线表(B)、不是 IDA*(C)、更不是近最优(D),它是「代数拆分 + 两侧迭代加深」的可证最优。
+      两条路选一条:①加一个 `WCA_TS` 分区(纯 TS 的 WCA 项目求解器,目前只有魔表);
+      ②把 tier taxonomy 加一档。**没敢猜**(该文件头注明写着 do NOT guess)。
 - [x] `credits_data.json`:补 tnoodle(move 表语义锚)、Jaap(分布表)、Kogler/Rokicki/OptClock/cs0x7f
       (先行工作 + 收藏,**未取用其代码**)三条
 - [ ] 可选:跑一次 `--depth 4` 把第 5 档(317,141,342)也钉成精确证明
 
-### P2 魔表求解页(平面 / 打乱 / 复盘)
-- [ ] `solver/_ClockSolver.tsx`:视图切换 + 三视图
-- [ ] 交互式 2D 魔表组件(点表盘 ±1、拖指针、点针脚翻转、y2 翻面)—— `clock_svg.ts` 的几何常量
-      抽出共用,与 `/sim` 共享同一个组件
-- [ ] `page.tsx` dispatch + `SolveTabs` 的 `PUZZLE_BY_EVENT`/`EVENT_ID` 加 `clock`
-- [ ] `ScramblePreview2D` 已支持 clock,确认求解页预览走通
+### P2 魔表求解页(平面 / 打乱 / 复盘)— **完成** ✅
+
+- [x] `components/InteractiveClock.tsx` + `interactive_clock.css` —— **共用件**,求解页的「平面」
+      视图与 `/sim`(P3)用同一份。两种模式:
+      - **编辑**:拖指针设表盘。角盘正反自动联动(front + back ≡ 0)→ **画不出非法态**,压根没有
+        「状态非法」这条路径要处理。
+      - **拧**:点针脚切上下,在任一半区里拖 = 一次 WCA 招式(针脚组合 × 幅度),实时跟手、松手
+        回调 `onMove`。两个半区同屏 ⇒ 不翻面也能拧背面;`y2` 按钮仍做真翻面(交换两块 + 针脚反转)。
+- [x] `solver/_ClockSolver.tsx` —— 三视图 + 最优解 + WCA 规范 ≤14 步分解 + 还原 / 随机 / 求打乱。
+- [x] `page.tsx` dispatch + `SolveTabs` 的 `SolvePuzzle`/`EVENT_ID`/`PUZZLE_BY_EVENT` 加 `clock`。
+- [x] `clock_svg.ts` 的几何常量改为 **export**(不再各算一份),角位 ↔ 表盘的镜像关系统一从
+      `lib/clock-solver` 的四张表取 → 画板与打乱图逐像素同格。
+- [x] `/code` 组件目录登记 `InteractiveClock`。
+
+浏览器实证(非推断):
+
+| 检查 | 结果 |
+|------|------|
+| 拧模式拖 90° | 落 `UR+DL+DR3-`,**手算复核** WCA 规范解 `DR3+ R3- D3-` 确实把 18 个盘全归零 |
+| 编辑模式点表盘 0 的 3 点钟方向 | `posit[0]=3` 且 `posit[11]=9` 自动联动;最优 2 步(手算确认 1 步不可能) |
+| 复盘输入 6 步算法 | 反解回原算法本身(6 种 type 各用一次 ⇒ 必最优) |
+| 求打乱 → `ScramblePreview2D` | 官方打乱图与画板同形(左淡右深、指针逐个对上) |
+| 375px 窄屏 | 无横向溢出(`scrollWidth` 360 < 375),表盘热区 44.8px |
+| 控制台 | 0 error 0 warning |
+
+一个刻意的设计:WCA 打乱串中间带一个 `y2`,所以粘一条打乱进来,画板会按**打乱完手里那个姿势**
+显示(两块对调 + 配色换面)—— 与官方打乱图一致。但「求打乱」写回的那条**不回流**(记了自己写
+的那条跳过),否则画板会凭空翻个个儿。
 
 ### P3 魔表进 /sim(2D 交互式)
 - [ ] SimPage 加第三条渲染路径(现有:自有 Three.js world / cubing.js TwistyPlayer)承载 2D 魔表
