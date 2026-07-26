@@ -10,6 +10,9 @@
 //                  两套输入 + 自带本地最优解显示,不是单行族
 //   _ClockSolver — 魔表:输入是交互式钟面(InteractiveClock)而非打乱串,
 //                  三视图(平面/打乱后/回放)并排,没有"一行 spec"可言
+//   _SkewbSolver — 斜转:与 _Cube2Solver 同构(PuzzleOptimalSolver + 展开图画板 + 复盘三视图,
+//                  本地 lib/skewb-solver 出最优解),同样不是单行族
+//   _PyraSolver  — 金字塔:同上(lib/pyraminx-solver,核心精确表 + 尖块 DP)
 // 新写的 _XxxSolver.tsx 若没 import PuzzleSolverPage,集合就变 → CI 红。两条出路:
 //   ① 它其实是单行族 → 照 _IvySolver.tsx 迁到 SolverSpec + 基座(集合不变,推荐);
 //   ② 它真是异形(自定义 UI)→ 把文件名加进 BESPOKE(改白名单当 review 信号)。
@@ -23,7 +26,10 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..'); // packages/cl
 const SOLVER_DIR = join(ROOT, 'app', '[lang]', 'scramble', 'solver');
 
 // 合法"不走基座"的异形求解器(自定义 UI,与单行 puzzle-optimal 族不同)。
-const BESPOKE = ['_ClockSolver.tsx', '_Cube2Solver.tsx', '_Cube3Solver.tsx', '_Sq1Solver.tsx'];
+const BESPOKE = [
+  '_ClockSolver.tsx', '_Cube2Solver.tsx', '_Cube3Solver.tsx', '_PyraSolver.tsx',
+  '_SkewbSolver.tsx', '_Sq1Solver.tsx',
+];
 
 describe('scramble/solver — puzzle-optimal pages share PuzzleSolverPage base', () => {
   it('every _*Solver.tsx imports PuzzleSolverPage except the known bespoke set', () => {

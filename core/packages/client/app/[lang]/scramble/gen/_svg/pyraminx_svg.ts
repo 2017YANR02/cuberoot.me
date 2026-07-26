@@ -155,7 +155,8 @@ function intersect(p1: Pt, p2: Pt, p3: Pt, p4: Pt): Pt {
   };
 }
 
-function drawTriangle(out: string[], cx: number, cy: number, pointUp: boolean, faceState: number[], pieceSize: number, scheme: string[], faceLabel: string, opts?: MaskRenderOptions): void {
+/** 一个面的 9 块子三角(展开图坐标),顺序 = tnoodle 的 slot 0..8。 */
+function facePolys(cx: number, cy: number, pointUp: boolean, pieceSize: number): Array<Array<[number, number]>> {
   const tri = makeTriangle(pointUp, pieceSize);
   const xpoints = [tri.vx[0] + cx, tri.vx[1] + cx, tri.vx[2] + cx];
   const ypoints = [tri.vy[0] + cy, tri.vy[1] + cy, tri.vy[2] + cy];
@@ -198,20 +199,54 @@ function drawTriangle(out: string[], cx: number, cy: number, pointUp: boolean, f
       [center.x, center.y],
     ]);
   }
-
-  for (let i = 0; i < polys.length; i++) {
-    const id = faceState[i] ?? 0;
-    const masked = opts?.mask?.ids.has(pyraStickerId(id)) ?? false;
-    const fill = masked ? opts!.mask!.color : (scheme[Math.floor(id / 9)] ?? '#888');
-    const sid = opts?.stickerIds ? ` data-sid="${faceLabel}${i}"` : '';
-    const d = `M${polys[i].map((p) => `${fmt(p[0])},${fmt(p[1])}`).join(' L')} Z`;
-    out.push(`<path d="${d}" fill="${fill}"${sid} stroke="#000" stroke-width="${STROKE_W}" stroke-linejoin="round"/>`);
-  }
+  return polys;
 }
 
 function fmt(n: number): string {
   // 3 decimal places; trim trailing zeros.
   return Number(n.toFixed(3)).toString();
+}
+
+export interface PyraNetCell {
+  face: number;
+  slot: number;
+  /** `face * 9 + slot` —— 与 lib/pyraminx-solver 的 facelet 下标同一套。 */
+  index: number;
+  points: Array<[number, number]>;
+}
+
+export interface PyraNetGeometry {
+  width: number;
+  height: number;
+  cells: PyraNetCell[];
+}
+
+/**
+ * 展开图的 36 块子三角(净几何,不含颜色)。预览图与交互画板(`_InteractivePyraNet`)共用这一份 ——
+ * 画板要给每块挂点击事件,不能只有拼好的 SVG 字符串。
+ *
+ * 四个面的位置 = tnoodle drawMinx 的 face 原点(各展开三角形的重心):F 顶部朝上,D 底部朝下,
+ * L 左上朝下,R 右上朝下。
+ */
+export function pyraNetGeometry(): PyraNetGeometry {
+  const origins: Array<[number, number, boolean]> = [
+    [2 * GAP + 3 * PIECE_SIZE, GAP + SQRT3 * PIECE_SIZE, true],                    // F
+    [2 * GAP + 3 * PIECE_SIZE, 2 * GAP + 2 * SQRT3 * PIECE_SIZE, false],           // D
+    [GAP + 1.5 * PIECE_SIZE, GAP + 0.5 * SQRT3 * PIECE_SIZE, false],               // L
+    [3 * GAP + 4.5 * PIECE_SIZE, GAP + 0.5 * SQRT3 * PIECE_SIZE, false],           // R
+  ];
+  const cells: PyraNetCell[] = [];
+  origins.forEach(([cx, cy, pointUp], face) => {
+    facePolys(cx, cy, pointUp, PIECE_SIZE).forEach((points, slot) => {
+      cells.push({ face, slot, index: face * PYRA_STICKERS_PER_FACE + slot, points });
+    });
+  });
+  return {
+    // Tnoodle preferredSize: width = 6*pieceSize + 4*gap; height = 3*sqrt(3)*pieceSize + 3*gap
+    width: 6 * PIECE_SIZE + 4 * GAP,
+    height: 3 * SQRT3 * PIECE_SIZE + 3 * GAP,
+    cells,
+  };
 }
 
 /** Render a pyraminx scramble preview SVG (transparent background). */
@@ -226,22 +261,18 @@ export function renderPyraScrambleSvg(
   }
 
   const scheme: string[] = FACE_LABELS.map((f) => colors[f] ?? PYRA_DEFAULT_COLORS[f]);
-
-  // Tnoodle preferredSize: width = 6*pieceSize + 4*gap; height = 3*sqrt(3)*pieceSize + 3*gap
-  const w = 6 * PIECE_SIZE + 4 * GAP;
-  const h = 3 * SQRT3 * PIECE_SIZE + 3 * GAP;
+  const { width: w, height: h, cells } = pyraNetGeometry();
 
   const out: string[] = [];
   out.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${fmt(w)} ${fmt(h)}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%">`);
-  // Tnoodle drawMinx face origins (centroids of each unfolded triangle)
-  // F (face 0): top-center, point-up
-  drawTriangle(out, 2 * GAP + 3 * PIECE_SIZE, GAP + SQRT3 * PIECE_SIZE,         true,  state.image[0], PIECE_SIZE, scheme, 'F', opts);
-  // D (face 1): bottom-center, point-down
-  drawTriangle(out, 2 * GAP + 3 * PIECE_SIZE, 2 * GAP + 2 * SQRT3 * PIECE_SIZE, false, state.image[1], PIECE_SIZE, scheme, 'D', opts);
-  // L (face 2): upper-left, point-down
-  drawTriangle(out, GAP + 1.5 * PIECE_SIZE,    GAP + 0.5 * SQRT3 * PIECE_SIZE,  false, state.image[2], PIECE_SIZE, scheme, 'L', opts);
-  // R (face 3): upper-right, point-down
-  drawTriangle(out, 3 * GAP + 4.5 * PIECE_SIZE, GAP + 0.5 * SQRT3 * PIECE_SIZE, false, state.image[3], PIECE_SIZE, scheme, 'R', opts);
+  for (const cell of cells) {
+    const id = state.image[cell.face][cell.slot] ?? 0;
+    const masked = opts?.mask?.ids.has(pyraStickerId(id)) ?? false;
+    const fill = masked ? opts!.mask!.color : (scheme[Math.floor(id / PYRA_STICKERS_PER_FACE)] ?? '#888');
+    const sid = opts?.stickerIds ? ` data-sid="${FACE_LABELS[cell.face]}${cell.slot}"` : '';
+    const d = `M${cell.points.map((p) => `${fmt(p[0])},${fmt(p[1])}`).join(' L')} Z`;
+    out.push(`<path d="${d}" fill="${fill}"${sid} stroke="#000" stroke-width="${STROKE_W}" stroke-linejoin="round"/>`);
+  }
   out.push('</svg>');
   return out.join('');
 }
