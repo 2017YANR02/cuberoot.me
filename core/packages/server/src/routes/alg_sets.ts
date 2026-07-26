@@ -12,6 +12,7 @@ import { Hono } from 'hono';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { requireAdminOrApiKey, checkRateLimit } from '../utils/recon_helpers.js';
+import { syncMirrorAndLog } from '../utils/alg_mirror.js';
 
 export const algSetsRoutes = new Hono();
 
@@ -37,6 +38,8 @@ interface AlgCaseRow {
   ori_names: unknown;
   trainer_key: string | null;
   meta: unknown;          // AlgCaseMeta — 只有从站长 1LLL 表导入的 case 才有
+  /** 镜像伙伴的 case id(issue #40 T5,0092 迁移加的列)。互指;自镜像指自己。 */
+  mirror_case_id: number | string | null;
   updated_at: string | Date;
 }
 
@@ -54,6 +57,7 @@ function caseRowToJson(c: AlgCaseRow): Record<string, unknown> {
   if (c.ori_names) out.oriNames = c.ori_names;
   if (c.trainer_key) out.trainerKey = c.trainer_key;
   if (c.meta) out.meta = c.meta;
+  if (c.mirror_case_id != null) out.mirrorCaseId = Number(c.mirror_case_id);
   return out;
 }
 
@@ -172,6 +176,9 @@ algSetsRoutes.post('/alg/sets/:puzzle/:set/cases', async (c) => {
       body.trainerKey ?? null,
     ],
   );
+  // 新 case 还没有镜像伙伴,这一步现在必然是空转 —— 留着是为了建链脚本跑完之后
+  // 「新增 case 时顺手把伙伴那边补上」也能自动成立,不用再回来改一次路由。
+  await syncMirrorAndLog(puzzle, set, Number(inserted[0].id));
   return c.json(caseRowToJson(inserted[0]));
 });
 
@@ -210,6 +217,9 @@ algSetsRoutes.put('/alg/sets/:puzzle/:set/cases/:id', async (c) => {
     ],
   );
   if (updated.length === 0) return c.json({ error: 'Not found' }, 404);
+  // 公式改了 → 伙伴那边的自动镜像份重算。case 内拖拽重排走的也是这条 PUT,
+  // 所以 §5.5 的「排序传播」不需要单独端点:重算本来就按源顺序排。
+  await syncMirrorAndLog(puzzle, set, id);
   return c.json(caseRowToJson(updated[0]));
 });
 
@@ -272,10 +282,17 @@ algSetsRoutes.delete('/alg/sets/:puzzle/:set/cases/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (!Number.isFinite(id)) return c.json({ error: 'invalid id' }, 400);
 
-  const deleted = await query<{ id: number | string }>(
-    'DELETE FROM alg_cases WHERE id = ? AND puzzle = ? AND set_slug = ? RETURNING id',
+  // 伙伴 id 要在删之前问 —— 删完 `ON DELETE SET NULL` 就把那边的链抹掉了,再问就是 null。
+  const deleted = await query<{ id: number | string; mirror_case_id: number | string | null }>(
+    'DELETE FROM alg_cases WHERE id = ? AND puzzle = ? AND set_slug = ? RETURNING id, mirror_case_id',
     [id, puzzle, set],
   );
   if (deleted.length === 0) return c.json({ error: 'Not found' }, 404);
+
+  // 前伙伴那边留着一批指向已死 case 的生成公式。它的链此刻已被置 NULL,
+  // 所以重算走的是「只剥不生成」那条路,正好把孤儿清掉。
+  const exPartner = deleted[0].mirror_case_id == null ? null : Number(deleted[0].mirror_case_id);
+  if (exPartner != null && exPartner !== id) await syncMirrorAndLog(puzzle, set, exPartner);
+
   return c.json({ ok: true });
 });

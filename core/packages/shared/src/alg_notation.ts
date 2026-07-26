@@ -160,7 +160,7 @@ export function cubeOnly(s: string): string {
 }
 
 /** 一个 move 写回原文:`R` / `R2` / `R2'` / `3Rw4'`。`amount` 照写不折 mod 4。 */
-function renderMove(m: ParsedMove): string {
+export function renderMove(m: Pick<ParsedMove, 'family' | 'amount'> & { layer?: string }): string {
   const n = Math.abs(m.amount);
   return `${m.layer ?? ''}${m.family}${n === 1 ? '' : n}${m.amount < 0 ? "'" : ''}`;
 }
