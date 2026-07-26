@@ -2,7 +2,7 @@
 
 // Ported from packages/client-vite/src/pages/trainer/components.tsx
 import { useMemo, useState, type ReactNode } from 'react';
-import { Trash2, ChevronDown, ChevronRight, Check, Pause, Star } from 'lucide-react';
+import { Trash2, ChevronDown, ChevronRight, Check, Star } from 'lucide-react';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import { CaseThumb } from '@/components/CaseThumb';
 import { VisualCube } from '@/components/VisualCube';
@@ -240,7 +240,7 @@ function TriCheckbox({ checked, indeterminate }: { checked: boolean; indetermina
   return <span className={`trainer-checkbox${cls}`} aria-hidden />;
 }
 
-/** run 页卡片头的学习标记直选条:可直接点的按钮(不熟 / 已掌握 / 搁置 / 星标),
+/** run 页卡片头的学习标记直选条:可直接点的按钮(不熟 / 已掌握 / 星标),
  *  再点同一个 = 取消该标记。数字键 1-4 仍是快捷键(绑定在 TrainerRunClient 的
  *  keydown 里,title 里带提示),但不再渲染可见的数字小标。data-no-timer:按压不触发计时。
  *
@@ -250,7 +250,6 @@ function TriCheckbox({ checked, indeterminate }: { checked: boolean; indetermina
 const MARK_ACTIONS: { digit: string; s?: CaseMarkStatus; star?: boolean }[] = [
   { digit: '1', s: 'learning' },
   { digit: '2', s: 'mastered' },
-  { digit: '3', s: 'paused' },
   { digit: '4', star: true },
 ];
 
@@ -288,7 +287,7 @@ export function CaseMarkBar({ k }: { k: string }) {
   );
 }
 
-/** case 图上的学习标记角标:右上状态(✓ 已掌握 / ● 不熟 / ⏸ 搁置),左上星标。 */
+/** case 图上的学习标记角标:右上状态(✓ 已掌握 / ● 不熟),左上星标。 */
 export function CaseMarkBadges({ marks, k }: { marks: CaseMarks; k: string }) {
   const st = markStatus(marks, k);
   const starred = markStarred(marks, k);
@@ -297,9 +296,7 @@ export function CaseMarkBadges({ marks, k }: { marks: CaseMarks; k: string }) {
     <>
       {st && (
         <span className={`trainer-mark-badge is-${st}`} aria-hidden>
-          {st === 'mastered' ? <Check size={11} strokeWidth={3.5} />
-            : st === 'paused' ? <Pause size={9} strokeWidth={3} />
-            : null /* learning = 纯色圆点 */}
+          {st === 'mastered' ? <Check size={11} strokeWidth={3.5} /> : null /* learning = 纯色圆点 */}
         </span>
       )}
       {starred && <Star className="trainer-mark-star" size={13} aria-hidden />}

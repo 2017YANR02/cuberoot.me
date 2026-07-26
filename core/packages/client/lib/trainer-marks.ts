@@ -1,6 +1,6 @@
 'use client';
 
-// 公式训练器 per-case 学习标记(不熟/已掌握/搁置 + 难点星标)。
+// 公式训练器 per-case 学习标记(不熟/已掌握 + 难点星标)。
 // 未登录:localStorage 本地存;登录:本地 + 云端(/v1/alg/marks)双写,
 // 进页时拉云端做单条 last-write-wins 合并(本地较新的差异回传),之后写操作
 // 乐观更新本地 + 防抖批量 PUT。清除标记留 { t } 墓碑,否则合并会从云端复活。
@@ -12,15 +12,14 @@ import { persistItem } from './safe-storage';
 import { groupKeysBySet } from './trainer-case-key';
 import { tr } from '@/i18n/tr';
 
-export type CaseMarkStatus = 'learning' | 'mastered' | 'paused';
+export type CaseMarkStatus = 'learning' | 'mastered';
 
 export const MARK_STATUS_LABEL: Record<CaseMarkStatus, () => string> = {
   learning: () => tr({ zh: '不熟', en: 'Shaky' }),
   mastered: () => tr({ zh: '已掌握', en: 'Mastered' }),
-  paused: () => tr({ zh: '搁置', en: 'Paused' }),
 };
 
-/** select 页画笔:三个状态 + 星标 + 清除(null = 普通选择模式)。 */
+/** select 页画笔:两个状态 + 星标 + 清除(null = 普通选择模式)。 */
 export type TrainerMarkBrush = CaseMarkStatus | 'star' | 'clear';
 
 /** 一条标记:s = 状态(无 = 未学),f = 星标,t = 最后修改时间(LWW 用)。s/f 全空 = 墓碑。 */
@@ -54,6 +53,26 @@ const persistLocal = (p: string, s: string, marks: CaseMarks) => {
 interface PutItem { k: string; s: CaseMarkStatus | null; f: boolean; t: number }
 
 const toPutItem = (k: string, m: CaseMark): PutItem => ({ k, s: m.s ?? null, f: m.f === 1, t: m.t });
+
+/**
+ * 「搁置」已退役(勾选与否本身就是「练不练它」那个开关,两套机制只会互相打架)。
+ * 读到的旧数据一律当没标过 —— 星标留着,`t` 推到现在:只有更新的 t 才能在 LWW 里
+ * 盖掉别的设备和云端还留着的那条「搁置」,否则下次合并它又活回来。
+ * 返回的 `cleaned` 由调用方上云;没有旧数据时原样返回,不产生无谓的同步。
+ */
+function dropRetiredPaused(marks: CaseMarks, now: number): { marks: CaseMarks; cleaned: PutItem[] } {
+  const out: CaseMarks = {};
+  const cleaned: PutItem[] = [];
+  for (const k in marks) {
+    const m = marks[k];
+    if ((m.s as string | undefined) !== 'paused') { out[k] = m; continue; }
+    const next: CaseMark = { t: now };
+    if (m.f === 1) next.f = 1;
+    out[k] = next;
+    cleaned.push(toPutItem(k, next));
+  }
+  return cleaned.length > 0 ? { marks: out, cleaned } : { marks, cleaned };
+}
 
 /**
  * 本地 vs 云端单条 LWW 合并(纯函数,tests/trainer-marks.test.ts 直测):
@@ -130,6 +149,16 @@ function queueUpload(puzzle: string, set: string, items: PutItem[]) {
   flushTimer = setTimeout(() => { void flushPending(); }, 800);
 }
 
+/** 装本地一套,顺手洗掉退役的「搁置」(落地 + 排队上云,让云端那份也跟着掉)。 */
+function loadLocalClean(p: string, s: string): CaseMarks {
+  const { marks, cleaned } = dropRetiredPaused(loadLocal(p, s), Date.now());
+  if (cleaned.length > 0) {
+    persistLocal(p, s, marks);
+    queueUpload(p, s, cleaned);
+  }
+  return marks;
+}
+
 /** 立即冲掉防抖队列并等待落库(进度总览页拉聚合前调,避免刚标的没上云)。 */
 export async function flushMarks(): Promise<void> {
   if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
@@ -190,7 +219,10 @@ async function fetchSetMarks(puzzle: string, setSlug: string): Promise<CaseMarks
     const data = await handleApi<{ marks: CaseMarks }>(
       await fetch(apiUrl(`/v1/alg/marks/${puzzle}/${setSlug}`), { headers: authHeaders(false) }),
     );
-    return data.marks;
+    // 云端可能还留着老版本设备写上去的「搁置」——同样洗掉,并把清除回传
+    const { marks, cleaned } = dropRetiredPaused(data.marks, Date.now());
+    if (cleaned.length > 0) queueUpload(puzzle, setSlug, cleaned);
+    return marks;
   } catch (e) {
     console.warn('[trainer-marks] cloud load failed, local only', e);
     return null;
@@ -205,7 +237,7 @@ export const useTrainerMarks = create<TrainerMarksState>((set, get) => ({
 
   loadMarks: (puzzle, setSlug) => {
     const token = ++loadToken;
-    set({ puzzle, set: setSlug, sets: null, marks: loadLocal(puzzle, setSlug) });
+    set({ puzzle, set: setSlug, sets: null, marks: loadLocalClean(puzzle, setSlug) });
     if (!getSessionToken()) return;
     void (async () => {
       const cloud = await fetchSetMarks(puzzle, setSlug);
@@ -228,7 +260,7 @@ export const useTrainerMarks = create<TrainerMarksState>((set, get) => ({
       return out;
     };
     const local: CaseMarks = {};
-    for (const slug of sets) Object.assign(local, prefixed(slug, loadLocal(puzzle, slug)));
+    for (const slug of sets) Object.assign(local, prefixed(slug, loadLocalClean(puzzle, slug)));
     set({ puzzle, set: sets.join('+'), sets: [...sets], marks: local });
     if (!getSessionToken()) return;
     void (async () => {
@@ -238,7 +270,7 @@ export const useTrainerMarks = create<TrainerMarksState>((set, get) => ({
       const merged: CaseMarks = { ...get().marks };
       for (const { slug, cloud } of results) {
         if (!cloud) continue;
-        const cur = loadLocal(puzzle, slug);
+        const cur = loadLocalClean(puzzle, slug);
         const r = mergeMarks(cur, cloud);
         persistLocal(puzzle, slug, r.merged);
         Object.assign(merged, prefixed(slug, r.merged));
@@ -321,11 +353,11 @@ export const markStarred = (marks: CaseMarks, key: string): boolean => marks[key
 // ── 跨 set 学习进度总览(/alg/progress) ──────────────────────────────
 
 /** 一套 set 的标记计数(分子);total 分母来自 /v1/alg/sets 的 count,不在这里。 */
-export interface SetMarkSummary { learning: number; mastered: number; paused: number; starred: number }
+export interface SetMarkSummary { learning: number; mastered: number; starred: number }
 /** key = `${puzzle}/${set}`。 */
 export type MarkOverview = Record<string, SetMarkSummary>;
 
-const emptySummary = (): SetMarkSummary => ({ learning: 0, mastered: 0, paused: 0, starred: 0 });
+const emptySummary = (): SetMarkSummary => ({ learning: 0, mastered: 0, starred: 0 });
 
 /** 把一套 set 的 CaseMarks 归约成计数(墓碑 = 无 s 无 f,不计)。 */
 export function summarizeMarks(marks: CaseMarks): SetMarkSummary {
@@ -334,7 +366,6 @@ export function summarizeMarks(marks: CaseMarks): SetMarkSummary {
     const m = marks[k];
     if (m.s === 'learning') sum.learning++;
     else if (m.s === 'mastered') sum.mastered++;
-    else if (m.s === 'paused') sum.paused++;
     if (m.f === 1) sum.starred++;
   }
   return sum;
@@ -357,7 +388,7 @@ export function scanLocalOverview(): MarkOverview {
     try {
       const marks = JSON.parse(localStorage.getItem(k) ?? '{}') as CaseMarks;
       const sum = summarizeMarks(marks);
-      if (sum.learning || sum.mastered || sum.paused || sum.starred) out[ps] = sum;
+      if (sum.learning || sum.mastered || sum.starred) out[ps] = sum;
     } catch { /* 坏 JSON 跳过 */ }
   }
   return out;
@@ -371,7 +402,7 @@ async function fetchCloudOverview(): Promise<MarkOverview> {
   const out: MarkOverview = {};
   for (const s of data.sets) {
     out[`${s.puzzle}/${s.set}`] = {
-      learning: s.learning, mastered: s.mastered, paused: s.paused, starred: s.starred,
+      learning: s.learning, mastered: s.mastered, starred: s.starred,
     };
   }
   return out;

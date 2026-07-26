@@ -182,8 +182,6 @@ export default function TrainerRunClient() {
   const recapRoundDone = useTrainerStore(s => s.recapRoundDone);
   const continueRecapRound = useTrainerStore(s => s.continueRecapRound);
   const dismissRecapRound = useTrainerStore(s => s.dismissRecapRound);
-  const recapRoundPrompt = useTrainerStore(s => s.recapRoundPrompt);
-  const setRecapRoundPrompt = useTrainerStore(s => s.setRecapRoundPrompt);
   const getTimerReady = useTrainerStore(s => s.getTimerReady);
   const startTimer = useTrainerStore(s => s.startTimer);
   const stopTimer = useTrainerStore(s => s.stopTimer);
@@ -335,7 +333,7 @@ export default function TrainerRunClient() {
   const multiRef = useRef(false);
   multiRef.current = multiScramble && !timing;
   // 「换到下一题」= 这题做完了:还没打过任何标记的,默认落成「已掌握」。只动「未学」——
-  // 手动标过的(含「搁置」)一律不覆盖,做炸了由 SRS 的自动降级打回「不熟」。
+  // 手动标过的一律不覆盖,做炸了由 SRS 的自动降级打回「不熟」。
   // 挂在前进这一个出口上(← 回看、进页首次出题都不经过这里,所以不会误标)。
   const autoMasterRef = useRef(false);
   autoMasterRef.current = autoMasterOnAdvance && mode !== 'memo';
@@ -401,10 +399,10 @@ export default function TrainerRunClient() {
       }
       if (e.code === 'ArrowLeft') { e.preventDefault(); prevScramble(); return; }
       if (e.code === 'ArrowRight') { e.preventDefault(); advanceScramble(); return; }
-      // 1-4:直接给卡片当前 case 打标记(1 不熟 / 2 已掌握 / 3 搁置 / 4 星标);再按同键取消。
+      // 1、2、4:直接给卡片当前 case 打标记(1 不熟 / 2 已掌握 / 4 星标);再按同键取消。
       // 「过了就算掌握」开着时卡片上不摆「已掌握」按钮(见 CaseMarkBar),但 2 仍然有效 ——
       // 那是把已标「不熟」的 case 提前提成「已掌握」的快捷路径。
-      if (!e.repeat && (e.code === 'Digit1' || e.code === 'Digit2' || e.code === 'Digit3' || e.code === 'Digit4')) {
+      if (!e.repeat && (e.code === 'Digit1' || e.code === 'Digit2' || e.code === 'Digit4')) {
         const st = useTrainerStore.getState();
         if (st.timerState !== TimerState.NOT_RUNNING && st.timerState !== TimerState.STOPPING) return;
         const k = pillKeyRef.current;
@@ -414,7 +412,7 @@ export default function TrainerRunClient() {
         if (e.code === 'Digit4') {
           mk.applyMarks([k], { f: !markStarred(mk.marks, k) });
         } else {
-          const target: CaseMarkStatus = e.code === 'Digit1' ? 'learning' : e.code === 'Digit2' ? 'mastered' : 'paused';
+          const target: CaseMarkStatus = e.code === 'Digit1' ? 'learning' : 'mastered';
           mk.applyMarks([k], { s: markStatus(mk.marks, k) === target ? null : target });
         }
         return;
@@ -661,7 +659,6 @@ export default function TrainerRunClient() {
       }
       return;
     }
-    if (st === 'paused') return;
     const last5 = attempts.slice(-5);
     if (last5.length < 5 || !last5.every(s => s.penalty === 'ok')) return;
     const allOk = solves.filter(s => s.penalty === 'ok');
@@ -933,13 +930,6 @@ export default function TrainerRunClient() {
                         ariaLabel={tr({ zh: '复习顺序', en: 'Recap order' })}
                         disabled={!!room}
                       />
-                      {/* 刷完一轮停一下 —— 关掉 = 出完直接重洗接着刷(池子只有三五个 case 时别弹) */}
-                      <BoolToggle
-                        value={recapRoundPrompt}
-                        onChange={setRecapRoundPrompt}
-                        label={tr({ zh: '刷完一轮提示', en: 'Pause at round end' })}
-                        disabled={!!room}
-                      />
                       {/* 刷到一半想重来:清掉「7/472」这个本轮进度,重洗后从第 1 个再走一遍 */}
                       <button
                         type="button"
@@ -950,7 +940,7 @@ export default function TrainerRunClient() {
                           ? tr({ zh: '房间轮次由全队共享,离开房间才能重开', en: 'Room rounds are shared by the team — leave the room to restart' })
                           : tr({ zh: '清空本轮进度,重新从第 1 个开始', en: 'Clear this round’s progress and start over from the first case' })}
                       >
-                        <RotateCcw size={13} /> {tr({ zh: '重开一轮', en: 'Restart round' })}
+                        <RotateCcw size={13} /> {tr({ zh: '重置', en: 'Reset' })}
                       </button>
                     </>
                   )}
@@ -959,8 +949,8 @@ export default function TrainerRunClient() {
               {!isMemo && (
                 <div className="trainer-opts-hint">
                   {tr({
-                    zh: '过了就算掌握 = 换到下一题时,把刚做完那个 case 标成「已掌握」。只标还没标过的 —— 手动标的「不熟 / 搁置」不动;标错了在「上一个」卡片上再点一下「已掌握」就取消',
-                    en: 'Passing = mastered: moving on marks the case you just finished as Mastered. Only untouched cases get marked — your own Shaky / Paused marks stay put. Click Mastered again on the Previous card to undo one',
+                    zh: '过了就算掌握 = 换到下一题时,把刚做完那个 case 标成「已掌握」。只标还没标过的 —— 手动标的「不熟」不动;标错了在「上一个」卡片上再点一下「已掌握」就取消',
+                    en: 'Passing = mastered: moving on marks the case you just finished as Mastered. Only untouched cases get marked — your own Shaky marks stay put. Click Mastered again on the Previous card to undo one',
                   })}
                 </div>
               )}
@@ -1020,8 +1010,8 @@ export default function TrainerRunClient() {
                   </div>
                   <div className="trainer-opts-hint">
                     {tr({
-                      zh: '加练 = 到期卡与新卡都用完后,继续按「最容易忘的」补满本场;自动标记 = 第一次记住升「不熟」,间隔过 21 天升「已掌握」,忘了打回「不熟」(「搁置」永不自动改)',
-                      en: 'Extra drill tops the session up with your shakiest cards once due + new run out. Auto marks promote to Shaky on first recall, to Mastered once the interval passes 21 days, and back to Shaky on a lapse (Paused is never touched automatically)',
+                      zh: '加练 = 到期卡与新卡都用完后,继续按「最容易忘的」补满本场;自动标记 = 第一次记住升「不熟」,间隔过 21 天升「已掌握」,忘了打回「不熟」',
+                      en: 'Extra drill tops the session up with your shakiest cards once due + new run out. Auto marks promote to Shaky on first recall, to Mastered once the interval passes 21 days, and back to Shaky on a lapse',
                     })}
                   </div>
                 </>
@@ -1227,12 +1217,12 @@ export default function TrainerRunClient() {
               <div className="trainer-opts-help">
                 {multi
                   ? tr({
-                      zh: '数字键 1 不熟、2 已掌握、3 搁置、4 星标,标在「上三个」最后一条;其余两条点卡片上的标记条',
-                      en: 'Keys 1 shaky, 2 mastered, 3 paused, 4 star — mark the last of “Previous 3”; use each card’s mark bar for the other two',
+                      zh: '数字键 1 不熟、2 已掌握、4 星标,标在「上三个」最后一条;其余两条点卡片上的标记条',
+                      en: 'Keys 1 shaky, 2 mastered, 4 star — mark the last of “Previous 3”; use each card’s mark bar for the other two',
                     })
                   : tr({
-                      zh: '数字键 1 不熟、2 已掌握、3 搁置、4 星标,标在「上一个」case',
-                      en: 'Keys 1 shaky, 2 mastered, 3 paused, 4 star — mark the “Previous” case',
+                      zh: '数字键 1 不熟、2 已掌握、4 星标,标在「上一个」case',
+                      en: 'Keys 1 shaky, 2 mastered, 4 star — mark the “Previous” case',
                     })}
               </div>
             </div>
