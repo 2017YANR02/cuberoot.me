@@ -105,6 +105,15 @@ export interface Section {
   cards: CardConfig[];
 }
 
+// 主入口 — 标语正下方的整行直达卡,从 train / tool 分组里提上来,分组里不再重复出现。
+export const PRIMARY_CARDS: CardConfig[] = [
+  { id: 'timer',    href: '/timer',    internal: true, tier: 'medium', Icon: TimerIcon,  nameKey: 'timer' },
+  { id: 'algdb',    href: '/alg',      internal: true, tier: 'medium', Icon: Blocks,     nameKey: 'algdb' },
+  { id: 'sim',      href: '/sim',      internal: true, tier: 'medium', Icon: Box,        nameKey: 'sim' },
+  { id: 'recon',    href: '/recon',    internal: true, tier: 'medium', Icon: ScanSearch, nameKey: 'recon' },
+  { id: 'scramble', href: '/scramble', internal: true, tier: 'medium', Icon: Shuffle,    nameKey: 'scramble' },
+];
+
 export const SECTIONS: Section[] = [
   {
     id: 'train',
@@ -115,8 +124,6 @@ export const SECTIONS: Section[] = [
     sub:     { en: 'Drill algorithms, race the clock, battle head-to-head, recall image pairs.', zh: '背公式、计时、对战、记忆 — 把每一步打磨到肌肉记忆。'
     },
     cards: [
-      { id: 'algdb',    href: '/alg',          internal: true, tier: 'standard', Icon: Blocks,    nameKey: 'algdb' },
-      { id: 'timer',    href: '/timer',        internal: true, tier: 'standard', Icon: TimerIcon, nameKey: 'timer' },
       { id: 'memo',     href: '/memo',         internal: true, tier: 'standard', Icon: Brain,     nameKey: 'memo' },
       { id: 'predict',  href: '/predict',      internal: true, tier: 'standard', Icon: Eye,       nameKey: 'predict' },
       { id: 'trainer',  href: '/alg-trainers', internal: true, tier: 'standard', iconImg: '/icons/upstream/algtrainer.png', nameKey: 'algTrainer' },
@@ -131,9 +138,6 @@ export const SECTIONS: Section[] = [
     sub:     { en: 'Recon, frame-count, visualizers, solvers — a tool for every step of the solve.', zh: '复盘、数帧、可视化、求解 — 每个解法环节都有专门工具。'
     },
     cards: [
-      { id: 'sim',         href: '/sim',         internal: true, tier: 'medium', Icon: Box,        nameKey: 'sim' },
-      { id: 'scramble',    href: '/scramble',    internal: true, tier: 'medium', Icon: Shuffle,    nameKey: 'scramble' },
-      { id: 'recon',       href: '/recon',       internal: true, tier: 'medium', Icon: ScanSearch, nameKey: 'recon' },
       { id: 'frame-count', href: '/frame-count', internal: true, tier: 'medium', Icon: Film,       nameKey: 'frameCount' },
       { id: 'visualcube',  href: '/visualcube',  internal: true, tier: 'medium', Icon: ImagePlus,  nameKey: 'visualcubeEditor' },
       { id: 'solver',      href: '/solver',      internal: true, tier: 'medium', iconImg: '/icons/upstream/solver.png', nameKey: 'solver' },
@@ -178,6 +182,16 @@ export const SECTIONS: Section[] = [
 // All cards (incl. WCA hero, sans coming-soon) flattened for LandingSearch.
 export const SEARCH_CARDS: LandingSearchCard[] = [
   { id: 'stats', href: '/wca', internal: true, nameEn: 'WCA', nameZh: 'WCA', sectionTitleEn: 'WCA', sectionTitleZh: 'WCA' },
+  // 主入口卡不在 SECTIONS 里,单列于此,否则全站搜索会漏掉它们
+  ...PRIMARY_CARDS.map(c => ({
+    id: c.id,
+    href: c.href,
+    internal: c.internal,
+    nameEn: TEXTS[c.nameKey].en,
+    nameZh: TEXTS[c.nameKey].zh,
+    sectionTitleEn: 'MAIN',
+    sectionTitleZh: 'MAIN · 主要',
+  })),
   ...SECTIONS.flatMap(sec =>
     sec.cards
       .filter(c => !c.comingSoon)
