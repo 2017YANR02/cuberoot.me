@@ -154,6 +154,8 @@ interface TrainerPrefs {
   srsShowPlayer: boolean;
   /** 计时/复习模式里做完一把也计入记忆调度(同一 case 每到期一次只计一把)。 */
   srsFromSolves: boolean;
+  /** 换到下一题时,把刚做完那个 case 默认标成「已掌握」(只动还没标过的,不覆盖手动标记)。 */
+  autoMasterOnAdvance: boolean;
 }
 const DEFAULT_PREFS: TrainerPrefs = {
   preAuf: true, postAuf: true, timing: false, mode: 'recap', probMode: 'uniform',
@@ -161,7 +163,7 @@ const DEFAULT_PREFS: TrainerPrefs = {
   showPrevCard: true, showNextCard: true, showStats: true, showStageThumb: true,
   pureScramble: true, multiScramble: false,
   srsNewLimit: 10, srsSessionLimit: 60, srsFillExtra: true, srsAutoMark: true, srsShowPlayer: false,
-  srsFromSolves: true,
+  srsFromSolves: true, autoMasterOnAdvance: true,
 };
 const PREFS_KEY = 'trainer:prefs';
 
@@ -189,7 +191,7 @@ const prefsOf = (st: TrainerPrefs): TrainerPrefs => ({
   multiScramble: st.multiScramble,
   srsNewLimit: st.srsNewLimit, srsSessionLimit: st.srsSessionLimit,
   srsFillExtra: st.srsFillExtra, srsAutoMark: st.srsAutoMark, srsShowPlayer: st.srsShowPlayer,
-  srsFromSolves: st.srsFromSolves,
+  srsFromSolves: st.srsFromSolves, autoMasterOnAdvance: st.autoMasterOnAdvance,
 });
 
 const shuffle = <T,>(arr: T[]): T[] => {
@@ -281,6 +283,7 @@ interface TrainerState {
   srsAutoMark: boolean;
   srsShowPlayer: boolean;
   srsFromSolves: boolean;
+  autoMasterOnAdvance: boolean;
 
   /** recap 模式的洗牌队列:pool 变了(recapSig 失配)重洗。 */
   recapQueue: string[];
@@ -319,6 +322,7 @@ interface TrainerState {
   setSrsAutoMark: (v: boolean) => void;
   setSrsShowPlayer: (v: boolean) => void;
   setSrsFromSolves: (v: boolean) => void;
+  setAutoMasterOnAdvance: (v: boolean) => void;
 
   /** 下一个打乱:历史中段先前进,到队尾才出新题(train 随机 / recap 逐个)。 */
   nextScramble: () => void;
@@ -912,6 +916,10 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     },
     setSrsFromSolves: (v) => {
       set({ srsFromSolves: v });
+      persistPrefs(prefsOf(get()));
+    },
+    setAutoMasterOnAdvance: (v) => {
+      set({ autoMasterOnAdvance: v });
       persistPrefs(prefsOf(get()));
     },
     setTimerFont: (f) => {
