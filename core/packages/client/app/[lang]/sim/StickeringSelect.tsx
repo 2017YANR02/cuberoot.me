@@ -5,7 +5,10 @@
 import { useMemo } from 'react';
 import { useT } from '@/hooks/useT';
 import { CROSS_COLORS, stickeringGroupsFor, type StickeringGroup } from './engine/nxn/stickering';
+import { CUSTOM_STICKERING, countSids, type PickGrain } from './engine/nxn/customStickering';
 import { visualcubeStageGroups, VC_MASK_LABEL } from './engine/nxn/vcStageMask';
+import PillToggle from '@/components/PillToggle/PillToggle';
+import BoolToggle from '@/components/BoolToggle';
 import type { SimPuzzle } from './PlayerControls';
 
 // 十字(底面)颜色标签(标准配色 U=白 D=黄 F=绿 B=蓝 R=红 L=橙)。
@@ -37,6 +40,7 @@ const FTO_GROUPS: StickeringGroup[] = [
 /** 选项显示文本:阶段名本身是通用缩写原样展示,少数长名 / 前缀名换短标签。 */
 function itemLabel(name: string, t: (zh: string, en: string) => string): string {
   if (name === 'full') return t('完整', 'full');
+  if (name === CUSTOM_STICKERING) return t('自定义', 'custom');
   if (name === 'centers-only') return t('仅中心', 'centers only');
   if (name === 'opposite-centers') return t('对面中心', 'opposite centers');
   if (name.startsWith('experimental-fto-')) return name.slice('experimental-fto-'.length).toUpperCase();
@@ -62,7 +66,10 @@ function groupLabel(group: string, t: (zh: string, en: string) => string): strin
   }
 }
 
-export default function StickeringSelect({ puzzleKind, value, onChange, color, onColorChange }: {
+export default function StickeringSelect({
+  puzzleKind, value, onChange, color, onColorChange,
+  mask = '', onMaskClear, editing = true, onEditingChange, grain = 'sticker', onGrainChange,
+}: {
   puzzleKind: SimPuzzle;
   value: string;
   onChange: (v: string) => void;
@@ -70,6 +77,13 @@ export default function StickeringSelect({ puzzleKind, value, onChange, color, o
    *  megaminx / fto 走 cubing.js 原生 stickering,无重定向参数,不显示。 */
   color?: string;
   onColorChange?: (v: string) => void;
+  /** 自定义阶段:选中的贴纸清单 + 作图开关(仅 value==='custom' 时显示)。 */
+  mask?: string;
+  onMaskClear?: () => void;
+  editing?: boolean;
+  onEditingChange?: (v: boolean) => void;
+  grain?: PickGrain;
+  onGrainChange?: (v: PickGrain) => void;
 }) {
   const t = useT();
   const groups = useMemo<StickeringGroup[]>(() => {
@@ -83,8 +97,11 @@ export default function StickeringSelect({ puzzleKind, value, onChange, color, o
   // URL 带了本拼图清单外的阶段名(换拼图残留):补一项占位让 select 不显示成空白;
   // 引擎遮罩对未知名回退 full(不变暗),cubing.js 端由 player 自行兜底。
   const known = groups.some((g) => g.items.includes(value));
-  const showColor = typeof puzzleKind === 'number' && value !== 'full' && !!onColorChange;
+  const isCustom = value === CUSTOM_STICKERING;
+  // 自定义阶段的清单是绝对的(用户点的就是这几枚),没有「整套旋转到某底色」可言。
+  const showColor = typeof puzzleKind === 'number' && value !== 'full' && !isCustom && !!onColorChange;
   const colorValue = color ?? 'yellow';
+  const picked = isCustom ? countSids(mask) : 0;
   return (
     <>
       <select
@@ -118,6 +135,37 @@ export default function StickeringSelect({ puzzleKind, value, onChange, color, o
             <option value={colorValue}>{colorValue}</option>
           )}
         </select>
+      )}
+      {isCustom && (
+        <span className="sim-stickering-custom">
+          <BoolToggle
+            value={editing}
+            onChange={(v) => onEditingChange?.(v)}
+            label={t('点选', 'Pick')}
+            ariaLabel={t('点选贴纸(开着时点魔方 = 选贴纸,不拧层)', 'Pick stickers (while on, clicking the cube selects instead of turning)')}
+          />
+          <PillToggle
+            value={grain === 'sticker'}
+            onChange={(v) => onGrainChange?.(v ? 'sticker' : 'piece')}
+            onLabel={t('贴纸', 'Sticker')}
+            offLabel={t('整块', 'Piece')}
+            ariaLabel={t('选取粒度', 'Pick granularity')}
+          />
+          <span className="sim-stickering-count" aria-live="polite">
+            {picked > 0
+              ? t(`已选 ${picked}`, `${picked} picked`)
+              : t('点魔方选贴纸', 'Click a sticker')}
+          </span>
+          {picked > 0 && (
+            <button
+              type="button"
+              className="sim-stickering-clear"
+              onClick={() => onMaskClear?.()}
+            >
+              {t('清空', 'Clear')}
+            </button>
+          )}
+        </span>
       )}
     </>
   );

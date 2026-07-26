@@ -177,6 +177,36 @@
   margin-left: 0;
 }
 
+/* 自定义阶段的作图控件:紧跟阶段下拉,窄屏允许整组换行(播放条本来就会换行) */
+.sim-stickering-custom {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.sim-stickering-count {
+  color: var(--muted-foreground);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.sim-stickering-clear {
+  padding: 2px 6px;
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.sim-stickering-clear:hover {
+  border-color: var(--destructive);
+  color: var(--destructive);
+}
+
 .sim-player-tools {
   display: flex;
   flex-wrap: wrap;

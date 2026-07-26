@@ -219,7 +219,7 @@ const LS_GROUP = ["LS", "LSOLL", "LSOCLL", "ELS", "CLS", "ZBLS", "VLS", "WVLS"];
 export function stickeringGroupsFor(order: number): StickeringGroup[] {
   if (order === 2) {
     return [
-      { group: "Stickering", items: ["full"] },
+      { group: "Stickering", items: ["full", "custom"] },
       { group: "General", items: ["OBL"] },
       { group: "Ortega", items: ["PBL"] },
       { group: "Last Layer", items: ["OLL", "PLL", "CLL"] },
@@ -227,7 +227,7 @@ export function stickeringGroupsFor(order: number): StickeringGroup[] {
   }
   if (order === 3) {
     return [
-      { group: "Stickering", items: ["full"] },
+      { group: "Stickering", items: ["full", "custom"] },
       { group: "Last Layer", items: LL_GROUP },
       { group: "Last Slot", items: LS_GROUP },
       { group: "CFOP", items: ["F2L", "Daisy", "Cross"] },
@@ -243,7 +243,7 @@ export function stickeringGroupsFor(order: number): StickeringGroup[] {
     // twizzle 对 4 阶+ 只给 full;这里保留能按层直接推广的常用阶段(与 visualcube
     // 的高阶 stage mask 同精神),外加 cubing.js 的降阶两项。
     return [
-      { group: "Stickering", items: ["full"] },
+      { group: "Stickering", items: ["full", "custom"] },
       { group: "Reduction", items: ["L2C", "opposite-centers"] },
       { group: "CFOP", items: ["Cross", "F2L"] },
       { group: "Last Layer", items: ["OLL", "PLL", "LL"] },

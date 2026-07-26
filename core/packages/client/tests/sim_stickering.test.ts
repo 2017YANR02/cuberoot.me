@@ -254,18 +254,25 @@ describe('stickeringGroupsFor', () => {
     const g5 = stickeringGroupsFor(5).flatMap((g) => g.items);
     expect(g5).toContain('L2C');
     expect(g5).toContain('Cross');
-    // 3 阶清单里每个非 full 阶段都必须有 mask 实现
+    // 规则驱动的阶段都必须有 mask 实现。两个例外不走 rulesFor:
+    // full = 不遮罩;custom = 用户点出来的清单,遮罩由 customStickering.customMaskFn 出
+    // (清单为空时也故意返回 null = 不遮罩,好让人看着真配色去点第一枚)。
+    const DATA_DRIVEN = ['full', 'custom'];
     for (const name of g3) {
-      if (name === 'full') continue;
+      if (DATA_DRIVEN.includes(name)) continue;
       expect(stickeringMaskFn(3, name), `mask for ${name}`).not.toBeNull();
     }
     for (const name of stickeringGroupsFor(2).flatMap((g) => g.items)) {
-      if (name === 'full') continue;
+      if (DATA_DRIVEN.includes(name)) continue;
       expect(stickeringMaskFn(2, name), `mask for 2x2 ${name}`).not.toBeNull();
     }
     for (const name of g5) {
-      if (name === 'full') continue;
+      if (DATA_DRIVEN.includes(name)) continue;
       expect(stickeringMaskFn(5, name), `mask for 5x5 ${name}`).not.toBeNull();
+    }
+    // 「自定义」必须真出现在每个阶数的清单里(否则入口没了)
+    for (const n of [2, 3, 5]) {
+      expect(stickeringGroupsFor(n).flatMap((g) => g.items), `custom in ${n}x${n}`).toContain('custom');
     }
   });
 });
