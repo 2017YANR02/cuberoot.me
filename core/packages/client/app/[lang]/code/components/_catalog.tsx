@@ -1018,8 +1018,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'FaceletsCube',
     import: "import { FaceletsCube } from '@/components/FaceletsCube';",
     category: 'display',
-    zh: '54 位 fd 贴纸串 → 3x3 状态图,纯前端本地渲染(visualcube 引擎,无后端)。状态没有对应 alg 时用它(如 LSLL 的 58 万 case 缩略图);有 alg/setup 时仍走 <VisualCube>。',
-    en: 'A 54-char fd sticker string → 3x3 state image, rendered locally (visualcube engine, no backend). Use when a state has no generating alg (e.g. the 583k LSLL case thumbs); with an alg/setup prefer <VisualCube>.',
+    zh: '54 位 fd 贴纸串 → 3x3 状态图,纯前端本地渲染(visualcube 引擎,无后端)。状态没有对应 alg 时用它(如 LSLL 的 58 万 case 缩略图);有 alg/setup 时仍走 <VisualCube>。`view="plan"` 出顶视 + 四周顶排(通行的 OLL/PLL/ZBLL 图)。',
+    en: 'A 54-char fd sticker string → 3x3 state image, rendered locally (visualcube engine, no backend). Use when a state has no generating alg (e.g. the 583k LSLL case thumbs); with an alg/setup prefer <VisualCube>. Pass view="plan" for the top-down OLL/PLL/ZBLL diagram.',
     usage: "<FaceletsCube fd={caseFacelets(state)} size={88} />",
   },
   {
