@@ -497,6 +497,41 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     cstimerize();
   };
 
+  /**
+   * 退房时把「房间里已经刷过的」接回本机这一轮:本机队列 = 已翻过去的排在最前(记为完成)
+   * + 当前这题 + 剩下的按本机顺序模式排,recapPos 指到当前这题。于是退房后停在同一题、
+   * 进度接着显示,刷过的不用再刷一遍(房间的队列在服务端,本机只知道自己领到过哪些)。
+   * 非 recap 模式(train / memo)没有「一轮」可言,返 null 走原来的整轮重来。
+   */
+  const resumeRoundFromHist = (
+    st: TrainerState,
+  ): { recapQueue: string[]; recapPos: number; recapSig: string } | null => {
+    if (st.mode !== 'recap') return null;
+    const pool = trainerPool(st.selected, st.scope);
+    if (pool.length === 0) return null;
+    const inPool = new Set(pool);
+    const taken = new Set<string>();
+    const done: string[] = [];
+    // 只有「已经翻过去的」算刷完;当前这题还没做完,留作退房后的第一题
+    for (let i = 0; i < st.hist.idx; i++) {
+      const k = st.hist.list[i]?.key;
+      if (k && inPool.has(k) && !taken.has(k)) { taken.add(k); done.push(k); }
+    }
+    const curKey = st.hist.idx >= 0 ? st.hist.list[st.hist.idx]?.key : undefined;
+    const head = curKey && inPool.has(curKey) && !taken.has(curKey) ? [curKey] : [];
+    for (const k of head) taken.add(k);
+    if (done.length === 0 && head.length === 0) return null; // 一题没领到过 ⟹ 没什么可接的
+    const restSet = new Set(pool.filter(k => !taken.has(k)));
+    const rest = st.recapOrder === 'seq'
+      ? st.cases.map(caseKey).filter(k => restSet.has(k))
+      : shuffle([...restSet]);
+    return {
+      recapQueue: [...done, ...head, ...rest],
+      recapPos: done.length,                       // 下一抽正好抽到 head(当前这题)
+      recapSig: [...pool].sort().join('|'),        // 与 draw 里的 sig 同源,不触发重洗
+    };
+  };
+
   /** 房间是否维护本地预抽(仅三条一屏:第 2、3 条来自 peek/peek2,需提前领取)。 */
   const roomWantsPreviews = (st: TrainerState): boolean => st.multiScramble && !st.timing;
 
@@ -1012,10 +1047,14 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     },
 
     leaveRoom: () => {
+      const st = get();
+      // 房间里刷过的不该白刷:退房后接着本机这一轮走(见 resumeRoundFromHist)。
+      // 不在房间里时(测试 / UI 复位调它)照旧整轮重来。
+      const resume = st.room ? resumeRoundFromHist(st) : null;
       set({
         room: null, roomBusy: false, roomClaimed: 0, roomError: null, recapRoundDone: false,
         hist: EMPTY_HIST, currentKey: null, currentName: null, currentScramble: null, peek: null, peek2: null,
-        recapSig: '',
+        ...(resume ?? { recapQueue: [], recapPos: 0, recapSig: '' }),
       });
       // 回本机模式:按当前选择重新出题
       if (trainerPool(get().selected, get().scope).length > 0 && get().timerState === TimerState.NOT_RUNNING) {
