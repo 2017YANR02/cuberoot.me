@@ -95,6 +95,35 @@ describe('generateChallenge', () => {
     expect(c.startFacelets[c.targets[0].startFacelet]).toBe(FACE_LETTERS[c.targets[0].colorFace]);
   });
 
+  it('答案盘面:同一批块整块画在落点上,且题面问的那格就是 answerFacelet', () => {
+    for (let seed = 1; seed <= 30; seed++) {
+      for (const kind of ['edge', 'corner', 'pair'] as PieceKind[]) {
+        const c = generateChallenge(opts({ kind, random: seeded(seed) }));
+        // 中心不动
+        for (const [i, face] of [4, 13, 22, 31, 40, 49].entries()) {
+          expect(c.endFacelets[face]).toBe(FACE_LETTERS[i]);
+        }
+        // 转的是同一批块,所以上色贴纸的颜色多重集必须与起点完全相同
+        const bag = (s: string) => [...s].filter((ch) => ch !== '.').sort().join('');
+        expect(bag(c.endFacelets)).toBe(bag(c.startFacelets));
+        // 每个目标:答案那格的颜色 = 题面点名的颜色
+        for (const t of c.targets) {
+          expect(c.endFacelets[t.answerFacelet]).toBe(FACE_LETTERS[t.colorFace]);
+        }
+      }
+    }
+  });
+
+  it('答案盘面里,追踪色只在唯一一格出现 —— 否则「点这一格」就有歧义', () => {
+    for (let seed = 1; seed <= 30; seed++) {
+      const c = generateChallenge(opts({ kind: 'edge', random: seeded(seed) }));
+      const t = c.targets[0];
+      const letter = FACE_LETTERS[t.colorFace];
+      const hits = [...c.endFacelets].filter((ch, i) => ch === letter && i !== 4 + 9 * FACE_LETTERS.indexOf(letter));
+      expect(hits.length).toBe(1);
+    }
+  });
+
   it('一对:一角一棱,追踪色不重复', () => {
     for (let seed = 1; seed <= 40; seed++) {
       const c = generateChallenge(opts({ random: seeded(seed), kind: 'pair' }));

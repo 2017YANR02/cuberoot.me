@@ -188,6 +188,34 @@
   font-weight: 700;
 }
 
+/* ---- 显示答案 ---- */
+
+.predict-answer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.75rem;
+  margin-top: 0.55rem;
+}
+
+.predict-answer-tag {
+  color: var(--signal-warning);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.predict-answer-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.predict-answer-item svg {
+  color: var(--muted-foreground);
+}
+
 .predict-actions {
   display: flex;
   align-items: center;
@@ -213,6 +241,30 @@
   background: color-mix(in srgb, var(--primary) 88%, black);
 }
 
+.predict-reveal {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 0.12s ease, color 0.12s ease;
+}
+
+.predict-reveal:hover:not(:disabled) {
+  border-color: var(--signal-warning);
+  color: var(--signal-warning);
+}
+
+.predict-reveal:disabled {
+  color: var(--faint-foreground);
+  cursor: default;
+}
+
 .predict-progress {
   display: flex;
   flex-wrap: wrap;
@@ -234,6 +286,13 @@
 .predict-chip.is-found {
   border-color: var(--signal-success);
   color: var(--signal-success);
+}
+
+/* 看了答案:这一题不算答对,别染成绿的 */
+.predict-chip.is-revealed,
+.predict-chip.is-found.is-revealed {
+  border-color: var(--signal-warning);
+  color: var(--signal-warning);
 }
 
 .predict-chip-count {
@@ -302,10 +361,51 @@
   font-size: 0.78rem;
 }
 
+/* ---- 原站 ---- */
+
+.predict-origin {
+  margin-top: 2.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border-default);
+}
+
+.predict-origin h2 {
+  margin: 0 0 0.4rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+
+.predict-origin p {
+  margin: 0 0 0.75rem;
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.predict-origin a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.predict-origin-frame {
+  display: block;
+  width: 100%;
+  /* 够高才装得下原站「控件 + 题板」的整段布局,免得读者在嵌套框里再滚一次 */
+  height: 60rem;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  background: var(--card);
+}
+
 @media (max-width: 480px) {
   .predict-page { padding: 0.5rem 0.75rem 2.5rem; }
   .predict-header h1 { font-size: 1.25rem; }
   .predict-controls { gap: 0.6rem 0.9rem; }
   .predict-clock { font-size: 1.1rem; }
   .predict-move-list li { font-size: 1rem; min-width: 2.2rem; }
+  .predict-origin-frame { height: 44rem; }
 }

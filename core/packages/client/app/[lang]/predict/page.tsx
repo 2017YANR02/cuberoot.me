@@ -20,7 +20,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useQueryState, parseAsStringEnum, parseAsInteger } from 'nuqs';
-import { RefreshCw, Check, X } from 'lucide-react';
+import { RefreshCw, Check, X, Eye, ArrowRight, ExternalLink } from 'lucide-react';
 import BackHome from '@/components/BackHome';
 import HeaderToggles from '@/components/HeaderToggles';
 import LiquidGlassChips from '@/components/LiquidGlassChips';
@@ -29,7 +29,7 @@ import { tr } from '@/i18n/tr';
 import { CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '@/lib/cube-colors';
 import { CUBE_ORIENTATIONS, orientedFaceColors } from '@/lib/cube-orientation';
 import {
-  generateChallenge, FACE_LETTERS,
+  generateChallenge, FACE_LETTERS, faceletFace,
   MOVE_COUNT_MIN, MOVE_COUNT_MAX, CROSS_EDGES_MIN, CROSS_EDGES_MAX,
   type PredictChallenge, type PredictMode, type PieceKind, type ScrambleSource,
 } from './_lib/challenge';
@@ -82,6 +82,9 @@ const FACE_NAMES: Record<CubeFace, { zh: string; en: string }> = {
 
 const LEGEND_FACES: CubeFace[] = ['U', 'D', 'F', 'B', 'L', 'R'];
 
+/** 被复刻的原站(见 /about 致谢),嵌在页面底部可以直接对着玩。 */
+const ORIGIN_URL = 'https://app--cube-lookahead-24bc12e4.base44.app/';
+
 const clock = (seconds: number): string => {
   const m = Math.floor(seconds / 60).toString().padStart(2, '0');
   const s = Math.floor(seconds % 60).toString().padStart(2, '0');
@@ -107,30 +110,46 @@ function PredictPageInner() {
   const [challenge, setChallenge] = useState<PredictChallenge | null>(null);
   const [found, setFound] = useState<boolean[]>([]);
   const [wrong, setWrong] = useState(false);
+  const [revealed, setRevealed] = useState(false);
+  const [focus, setFocus] = useState<{ faces: CubeFace[]; nonce: number } | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const startedAt = useRef(0);
 
   const shown = useMemo(() => orientedFaceColors(orientation), [orientation]);
   const solved = challenge != null && found.length > 0 && found.every(Boolean);
 
+  /** 把视角转到能看见这些 facelet 的角度 —— 目标块常常就在背面,不转的话玩家面前是一片灰。 */
+  const focusOn = useCallback((facelets: readonly number[]) => {
+    const faces = [...new Set(facelets.map((f) => FACE_LETTERS[faceletFace(f)]))];
+    setFocus((f) => ({ faces, nonce: (f?.nonce ?? 0) + 1 }));
+  }, []);
+
   const deal = useCallback(() => {
-    setChallenge(generateChallenge({
-      mode, kind, source, moveCount, crossEdges, orientation,
-    }));
+    const next = generateChallenge({ mode, kind, source, moveCount, crossEdges, orientation });
+    setChallenge(next);
+    focusOn(next.targets.map((t) => t.startFacelet));
     setWrong(false);
+    setRevealed(false);
     setElapsed(0);
     startedAt.current = Date.now();
-  }, [mode, kind, source, moveCount, crossEdges, orientation]);
+  }, [mode, kind, source, moveCount, crossEdges, orientation, focusOn]);
+
+  /** 认输:切到「答案盘面」(目标块整块画在落点上),并把落点转到镜头前。 */
+  const reveal = useCallback(() => {
+    if (!challenge) return;
+    focusOn(challenge.targets.map((t) => t.answerFacelet));
+    setRevealed(true);
+  }, [challenge, focusOn]);
 
   useEffect(() => { deal(); }, [deal]);
   useEffect(() => { setFound(challenge ? challenge.targets.map(() => false) : []); }, [challenge]);
 
-  // 计时到答完为止;只按秒刷新,免得每帧重渲染整页。
+  // 计时到答完(或认输看答案)为止;只按秒刷新,免得每帧重渲染整页。
   useEffect(() => {
-    if (!challenge || solved) return;
+    if (!challenge || solved || revealed) return;
     const id = setInterval(() => setElapsed(Math.floor((Date.now() - startedAt.current) / 1000)), 250);
     return () => clearInterval(id);
-  }, [challenge, solved]);
+  }, [challenge, solved, revealed]);
 
   useEffect(() => {
     if (!wrong) return;
@@ -141,21 +160,25 @@ function PredictPageInner() {
   // 题板通过 ref 拿最新的这个闭包,所以直接读 state 就行 —— 别把 setWrong 塞进
   // setFound 的 updater 里,那是 reducer 里做副作用,StrictMode 双调用会把它吞掉。
   const onSticker = useCallback((facelet: number) => {
-    if (!challenge || found.length === 0 || found.every(Boolean)) return;
+    if (!challenge || revealed || found.length === 0 || found.every(Boolean)) return;
     const hit = challenge.targets.findIndex((t, i) => !found[i] && t.answerFacelet === facelet);
     if (hit < 0) { setWrong(true); return; }
     setFound(found.map((v, i) => (i === hit ? true : v)));
-  }, [challenge, found]);
+  }, [challenge, revealed, found]);
 
-  /** 54 个引擎色标签:灰底 + 目标块起点上色 + 已答对的落点补上色。 */
+  /** 54 个引擎色标签:灰底 + 目标块起点上色 + 已答对的落点补上色。
+   *  看了答案就整盘切到 endFacelets —— 目标块整块出现在落点上,朝向也一眼看得出。 */
   const labels = useMemo(() => {
     if (!challenge) return Array<string>(54).fill('Gray');
-    const out = [...challenge.startFacelets].map((ch) => (ch === '.' ? 'Gray' : shown[ch as CubeFace]));
-    challenge.targets.forEach((t, i) => {
-      if (found[i]) out[t.answerFacelet] = shown[FACE_LETTERS[t.colorFace]];
-    });
+    const base = revealed ? challenge.endFacelets : challenge.startFacelets;
+    const out = [...base].map((ch) => (ch === '.' ? 'Gray' : shown[ch as CubeFace]));
+    if (!revealed) {
+      challenge.targets.forEach((t, i) => {
+        if (found[i]) out[t.answerFacelet] = shown[FACE_LETTERS[t.colorFace]];
+      });
+    }
     return out;
-  }, [challenge, found, shown]);
+  }, [challenge, found, revealed, shown]);
 
   // 十字模式恒为「找棱」,追踪选择器换成「找几条」。
   const kindDisabled = mode === 'cross';
@@ -262,7 +285,12 @@ function PredictPageInner() {
       </div>
 
       <div className="predict-stage">
-        <PredictBoard labels={labels} onSticker={onSticker} />
+        <PredictBoard
+          labels={labels}
+          onSticker={onSticker}
+          focusFaces={focus?.faces}
+          focusNonce={focus?.nonce ?? 0}
+        />
         <div className="predict-clock" aria-live="off">{clock(elapsed)}</div>
         {wrong && (
           <div className="predict-wrong" role="alert">
@@ -301,6 +329,33 @@ function PredictPageInner() {
             {tr({ zh: `全对!用时 ${clock(elapsed)}`, en: `Solved in ${clock(elapsed)}` })}
           </p>
         )}
+        {revealed && challenge && (
+          <div className="predict-answer">
+            <span className="predict-answer-tag">{tr({ zh: '答案', en: 'Answer' })}</span>
+            {challenge.targets.map((t) => {
+              const color = shown[FACE_LETTERS[t.colorFace]];
+              const face = FACE_LETTERS[faceletFace(t.answerFacelet)];
+              return (
+                <span key={`${t.kind}-${t.piece}-${t.sticker}`} className="predict-answer-item">
+                  <b className="predict-color" style={{ background: CUBE_FILL[color], color: CUBE_ON_FILL[color] }}>
+                    {tr(COLOR_NAMES[color])}
+                  </b>
+                  <ArrowRight size={13} aria-hidden="true" />
+                  {face} {tr(FACE_NAMES[face])}
+                  {tr({ zh: '面', en: ' face' })}
+                </span>
+              );
+            })}
+          </div>
+        )}
+        {revealed && (
+          <p className="predict-hint">
+            {tr({
+              zh: '目标块已整块画在它的落点上,题面问的那个颜色就是要点的那一格。',
+              en: 'The tracked pieces are now painted in full at where they landed — the asked colour marks the square.',
+            })}
+          </p>
+        )}
       </div>
 
       <div className="predict-actions">
@@ -308,10 +363,22 @@ function PredictPageInner() {
           <RefreshCw size={16} aria-hidden="true" />
           {tr({ zh: '换一题', en: 'New challenge' })}
         </button>
+        <button
+          type="button"
+          className="predict-reveal"
+          onClick={reveal}
+          disabled={!challenge || solved || revealed}
+        >
+          <Eye size={15} aria-hidden="true" />
+          {tr({ zh: '显示答案', en: 'Show answer' })}
+        </button>
         <div className="predict-progress">
           {promptGroups.map((g) => (
-            <span key={`${g.key}-chip`} className={`predict-chip${g.done === g.total ? ' is-found' : ''}`}>
-              {g.done === g.total && <Check size={13} aria-hidden="true" />}
+            <span
+              key={`${g.key}-chip`}
+              className={`predict-chip${g.done === g.total ? ' is-found' : ''}${revealed ? ' is-revealed' : ''}`}
+            >
+              {g.done === g.total && !revealed && <Check size={13} aria-hidden="true" />}
               {tr(KIND_LABELS[g.kind])}
               {g.total > 1 && <span className="predict-chip-count">{g.done}/{g.total}</span>}
             </span>
@@ -344,6 +411,29 @@ function PredictPageInner() {
             en: 'Drag to spin the cube — the answer can land on a face you cannot see yet.',
           })}
         </p>
+      </section>
+
+      <section className="predict-origin">
+        <h2>{tr({ zh: '玩法原型', en: 'The original' })}</h2>
+        <p>
+          {tr({
+            zh: '本页复刻自 Dan Boharon 的 Cube Lookahead Challenge。原站嵌在下面,可以直接对着玩。',
+            en: "This page is a port of Dan Boharon's Cube Lookahead Challenge. The original is embedded below.",
+          })}
+          {' '}
+          <a href={ORIGIN_URL} target="_blank" rel="noreferrer">
+            {tr({ zh: '新标签打开', en: 'Open in a new tab' })}
+            <ExternalLink size={12} aria-hidden="true" />
+          </a>
+        </p>
+        {/* loading=lazy:它是个完整的 React 应用,滚到这儿才让它加载,别拖累本页首屏。 */}
+        <iframe
+          className="predict-origin-frame"
+          src={ORIGIN_URL}
+          title="Cube Lookahead Challenge — Dan Boharon"
+          loading="lazy"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+        />
       </section>
     </div>
   );
