@@ -68,25 +68,38 @@ describe('parseMoveInput — 自己输入的那条公式', () => {
   it('六个面转照收,写法归一到 X / X\' / X2', () => {
     expect(parseMoveInput("R U R' U'").moves).toEqual(['R', 'U', "R'", "U'"]);
     expect(parseMoveInput("R2' F3 D2").moves).toEqual(['R2', "F'", 'D2']);
-    // 弯引号(从网页/中文输入法粘出来的)当撇号,分组括号当空格
-    expect(parseMoveInput('(R U R’ U’)').moves).toEqual(['R', 'U', "R'", "U'"]);
+    // 弯引号(从网页/中文输入法粘出来的)当撇号
+    expect(parseMoveInput('R U R’ U’').moves).toEqual(['R', 'U', "R'", "U'"]);
     // 换行 / 多空格都只是分隔符
     expect(parseMoveInput('R\n\nU   F').moves).toEqual(['R', 'U', 'F']);
+    // 转满一圈 = 没动过(tokenizer 照写不折 mod 4,这块板子只问落点)
+    expect(parseMoveInput('R4 U').moves).toEqual(['U']);
+  });
+
+  it('文法白吃站内那份记号真源的红利:连写 / 分组重复 / 注释 / 换握记号', () => {
+    expect(parseMoveInput("RUR'U'").moves).toEqual(['R', 'U', "R'", "U'"]);
+    expect(parseMoveInput('(R U)2').moves).toEqual(['R', 'U', 'R', 'U']);
+    expect(parseMoveInput("(R U R' U')' ").moves).toEqual(['U', 'R', "U'", "R'"]);
+    expect(parseMoveInput('R U // 插入').moves).toEqual(['R', 'U']);
+    expect(parseMoveInput("R·U'").moves).toEqual(['R', "U'"]);
   });
 
   it('追不了的记号一律当场拒,并把那个词原样退回来', () => {
     // 小写在魔方记号里是宽转,不是 R —— 悄悄按 R 解释,出的题答案就是错的
-    for (const bad of ['r', 'Rw', 'M', "S2", 'x', "y'", 'z2', 'U*', '3']) {
+    for (const bad of ['r', 'Rw', '2R', 'M', 'S2', 'x', "y'", 'z2', '3', '?']) {
       const res = parseMoveInput(`R ${bad} U`);
       expect(res.moves).toBeNull();
       expect(res.error).toEqual({ kind: 'token', token: bad });
     }
   });
 
-  it('要展开的记号也拒:悄悄展开错了没人看得出来', () => {
-    expect(parseMoveInput('[R, U]').error).toEqual({ kind: 'token', token: '[R,' });
-    // 括号换空格而不是删掉 —— 删掉会变成合法的 `R U3`(= U'),意思全变了
-    expect(parseMoveInput('(R U)3').error).toEqual({ kind: 'token', token: '3' });
+  it('换位子当场拒:`[…]` 在站内是注解块,不拦就会被整块剥成空公式', () => {
+    expect(parseMoveInput('[R, U]').error).toEqual({ kind: 'token', token: '[R, U]' });
+  });
+
+  it('括号没配对当场拒 —— 宽容那档会把「(R U)2 F」悄悄变成「R U F」', () => {
+    expect(parseMoveInput('(R U)2 F)').error).toEqual({ kind: 'parens' });
+    expect(parseMoveInput('(R U2 F').error).toEqual({ kind: 'parens' });
   });
 
   it('空 / 超长各有各的说法', () => {
