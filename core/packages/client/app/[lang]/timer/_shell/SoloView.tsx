@@ -36,7 +36,8 @@ import { syncLangToUrl } from '@/i18n/i18n-client';
 import { generateScramble, registerScramble } from '../_lib/scramble';
 import { peekWca, nextWca, prefetchWca, hasWcaSource, isWcaSourceEmpty, isWcaCompUnindexed, probeCompCoverage, getCompCoverage, wcaEventId, wcaMetaFor, wcaPoolProgress, type WcaSourceSpec } from '../_lib/scramble/wca_pool';
 import { takeScramble } from '../_lib/scramble/scramble_pool';
-import { applyPreScramble, preScrambleFor } from '../_lib/scramble/pre_scramble';
+import { preScrambleFor } from '../_lib/scramble/pre_scramble';
+import { applyOrientationPrefix } from '@/lib/cube-orientation';
 import { use222Mode } from '@/lib/scramble-222-mode';
 import { genByStepsScramble, genByStepsSig, wcaStepFilter } from '../_lib/scramble/gen-by-steps';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
@@ -440,7 +441,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   }, []);
   const scramble = scrambleHist.list[scrambleHist.idx] ?? '';
   // 「预打乱朝向」只进打乱图,不改打乱正文(同 csTimer:正文保持官方口径,图按你手持的朝向画)。
-  const previewScramble = applyPreScramble(
+  const previewScramble = applyOrientationPrefix(
     scramble,
     preScrambleFor(event, settings.preScr, settings.preScrT),
   );

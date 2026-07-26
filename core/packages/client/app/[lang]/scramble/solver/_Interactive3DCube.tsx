@@ -94,24 +94,9 @@ import {
 } from './_paint-shared';
 import { PaintPalette, PaintActions } from './_PaintToolbar';
 
-// cuber FACE enum: L0 R1 D2 U3 B4 F5
-const FACE = { L: 0, R: 1, D: 2, U: 3, B: 4, F: 5 } as const;
-
-// facelet idx (URFDLB) → (cubelet position index, local face) for a never-twisted
-// order-N cube. Mirrors Cube.serialize()'s loops exactly (verified U/R against
-// the Kociemba CORNER_FACELET table in facelet.ts).
-function buildFaceletMap(N: number): { cube: number; face: number }[] {
-  const out: { cube: number; face: number }[] = [];
-  const idx = (x: number, y: number, z: number) => z * N * N + y * N + x;
-  let x: number, y: number, z: number;
-  y = N - 1; for (z = 0; z < N; z++) for (x = 0; x < N; x++) out.push({ cube: idx(x, y, z), face: FACE.U });
-  x = N - 1; for (y = N - 1; y >= 0; y--) for (z = N - 1; z >= 0; z--) out.push({ cube: idx(x, y, z), face: FACE.R });
-  z = N - 1; for (y = N - 1; y >= 0; y--) for (x = 0; x < N; x++) out.push({ cube: idx(x, y, z), face: FACE.F });
-  y = 0; for (z = N - 1; z >= 0; z--) for (x = 0; x < N; x++) out.push({ cube: idx(x, y, z), face: FACE.D });
-  x = 0; for (y = N - 1; y >= 0; y--) for (z = 0; z < N; z++) out.push({ cube: idx(x, y, z), face: FACE.L });
-  z = 0; for (y = N - 1; y >= 0; y--) for (x = N - 1; x >= 0; x--) out.push({ cube: idx(x, y, z), face: FACE.B });
-  return out;
-}
+// facelet idx (URFDLB) → (cubelet position index, local face). Shared with
+// /predict's board — see components/sim-embed/faceletMap.
+import { buildFaceletMap, buildReverseFaceletMap } from '@/components/sim-embed/faceletMap';
 
 // Default view (the cuber engine's own initial scene.rotation — U top, F front, R right).
 const DEFAULT_ROT_X = Math.PI / 6;
@@ -156,11 +141,7 @@ export default function Interactive3DCube({
   // Order-dependent sticker maps. The mount effect runs once, so it reads them
   // through a ref (a component instance never changes cube order in practice).
   const faceletMap = useMemo(() => buildFaceletMap(spec.n), [spec.n]);
-  const reverseMap = useMemo(() => {
-    const m = new Map<string, number>();
-    faceletMap.forEach((e, i) => m.set(`${e.cube}_${e.face}`, i));
-    return m;
-  }, [faceletMap]);
+  const reverseMap = useMemo(() => buildReverseFaceletMap(faceletMap), [faceletMap]);
   const mapsRef = useRef({ faceletMap, reverseMap, spec });
   useEffect(() => { mapsRef.current = { faceletMap, reverseMap, spec }; }, [faceletMap, reverseMap, spec]);
 

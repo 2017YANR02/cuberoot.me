@@ -20,7 +20,7 @@ import { useAuthStore } from '@/lib/auth-store';
 import { reanalyzeAll } from '../_lib/storage/reanalyze';
 import { eventInfo, type EventId } from '../_lib/types';
 import { wcaEventId, WCA_OPTIMAL_EVENTS } from '../_lib/scramble/wca_pool';
-import { PRE_SCRAMBLES } from '../_lib/scramble/pre_scramble';
+import { CUBE_ORIENTATIONS } from '@/lib/cube-orientation';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { CountryInput } from '@/components/CountryInput';
 import PillToggle from '@/components/PillToggle/PillToggle';
@@ -734,7 +734,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
               value={s.preScr}
               onChange={(e) => updateSettings({ preScr: e.target.value })}
             >
-              {PRE_SCRAMBLES.map((o) => <option key={o.label} value={o.value}>{o.label}</option>)}
+              {CUBE_ORIENTATIONS.map((o) => <option key={o.label} value={o.value}>{o.label}</option>)}
             </select>
           </Row>
           <Row label={tr({ zh: '训练预打乱朝向', en: 'Training pre-scramble'
@@ -744,7 +744,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
               value={s.preScrT}
               onChange={(e) => updateSettings({ preScrT: e.target.value })}
             >
-              {PRE_SCRAMBLES.map((o) => <option key={o.label} value={o.value}>{o.label}</option>)}
+              {CUBE_ORIENTATIONS.map((o) => <option key={o.label} value={o.value}>{o.label}</option>)}
             </select>
           </Row>
           <Row label={tr({ zh: '颜色中立', en: 'Color neutral'
