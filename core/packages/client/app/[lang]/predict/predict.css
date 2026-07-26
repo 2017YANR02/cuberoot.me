@@ -157,6 +157,12 @@
   white-space: nowrap;
 }
 
+/* 复盘条:跟题板同宽,别横贯整页 */
+.predict-replay {
+  width: min(100%, 62vh);
+  margin: 0.4rem auto 0;
+}
+
 /* ---- 题面 ---- */
 
 .predict-prompt {
@@ -328,6 +334,17 @@
   font-size: 1.15rem;
   font-weight: 700;
   text-align: center;
+}
+
+/* 复盘进度:转过的压暗,下一步描一圈 */
+/* 播完时整排都是 done,压太狠会整排读不出来 */
+.predict-move-list li.is-done {
+  opacity: 0.5;
+}
+
+.predict-move-list li.is-next {
+  outline: 2px solid var(--foreground);
+  outline-offset: 1px;
 }
 
 .predict-legend {

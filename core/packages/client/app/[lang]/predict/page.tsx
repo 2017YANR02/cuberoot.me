@@ -24,6 +24,7 @@ import { RefreshCw, Check, X, Eye, ArrowRight, ExternalLink } from 'lucide-react
 import BackHome from '@/components/BackHome';
 import HeaderToggles from '@/components/HeaderToggles';
 import LiquidGlassChips from '@/components/LiquidGlassChips';
+import PlaybackBar from '@/components/PlaybackBar';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
 import { CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '@/lib/cube-colors';
@@ -85,6 +86,9 @@ const LEGEND_FACES: CubeFace[] = ['U', 'D', 'F', 'B', 'L', 'R'];
 /** 被复刻的原站(见 /about 致谢),嵌在页面底部可以直接对着玩。 */
 const ORIGIN_URL = 'https://app--cube-lookahead-24bc12e4.base44.app/';
 
+/** 复盘时两步之间的间隔;留一点余量,别在上一步的转动还没落地就催下一步。 */
+const PLAY_STEP_MS = 340;
+
 const clock = (seconds: number): string => {
   const m = Math.floor(seconds / 60).toString().padStart(2, '0');
   const s = Math.floor(seconds % 60).toString().padStart(2, '0');
@@ -113,10 +117,15 @@ function PredictPageInner() {
   const [revealed, setRevealed] = useState(false);
   const [focus, setFocus] = useState<{ faces: CubeFace[]; nonce: number } | null>(null);
   const [elapsed, setElapsed] = useState(0);
+  const [step, setStep] = useState(0);
+  const [playing, setPlaying] = useState(false);
   const startedAt = useRef(0);
 
   const shown = useMemo(() => orientedFaceColors(orientation), [orientation]);
   const solved = challenge != null && found.length > 0 && found.every(Boolean);
+  /** 这题结束了(答完 or 认输)—— 复盘只在结束后开放,否则等于随时可以偷看答案。 */
+  const over = challenge != null && (solved || revealed);
+  const totalSteps = challenge?.moves.length ?? 0;
 
   /** 把视角转到能看见这些 facelet 的角度 —— 目标块常常就在背面,不转的话玩家面前是一片灰。 */
   const focusOn = useCallback((facelets: readonly number[]) => {
@@ -130,6 +139,8 @@ function PredictPageInner() {
     focusOn(next.targets.map((t) => t.startFacelet));
     setWrong(false);
     setRevealed(false);
+    setStep(0);
+    setPlaying(false);
     setElapsed(0);
     startedAt.current = Date.now();
   }, [mode, kind, source, moveCount, crossEdges, orientation, focusOn]);
@@ -157,6 +168,17 @@ function PredictPageInner() {
     return () => clearTimeout(id);
   }, [wrong]);
 
+  // 这题一结束就自动复盘一遍 —— 看着目标块被转过去,比看一张静态答案图有用得多。
+  useEffect(() => { if (over) setPlaying(true); }, [over]);
+
+  // 一步一格往前推;题板收到「比上一步多 1」就放一步动画,推到头就停。
+  useEffect(() => {
+    if (!playing) return;
+    if (step >= totalSteps) { setPlaying(false); return; }
+    const id = setTimeout(() => setStep((s) => s + 1), PLAY_STEP_MS);
+    return () => clearTimeout(id);
+  }, [playing, step, totalSteps]);
+
   // 题板通过 ref 拿最新的这个闭包,所以直接读 state 就行 —— 别把 setWrong 塞进
   // setFound 的 updater 里,那是 reducer 里做副作用,StrictMode 双调用会把它吞掉。
   const onSticker = useCallback((facelet: number) => {
@@ -166,19 +188,24 @@ function PredictPageInner() {
     setFound(found.map((v, i) => (i === hit ? true : v)));
   }, [challenge, revealed, found]);
 
-  /** 54 个引擎色标签:灰底 + 目标块起点上色 + 已答对的落点补上色。
-   *  看了答案就整盘切到 endFacelets —— 目标块整块出现在落点上,朝向也一眼看得出。 */
+  /**
+   * 54 个引擎色标签:灰底 + 目标块起点上色。
+   *
+   * 只画**起点**:落点是靠题板真转招式转过去的(复盘动画),自己再算一套落点盘面
+   * 就成了第二个真源。答对的落点先补一枚色当标记,这题一结束就撤掉 —— 那只是个记号
+   * 不是真贴纸,跟着转会变成一枚乱飞的色块;而且 labels 一变题板就得整盘重贴,
+   * 播到一半改它会把那一步的动画吃掉。
+   */
   const labels = useMemo(() => {
     if (!challenge) return Array<string>(54).fill('Gray');
-    const base = revealed ? challenge.endFacelets : challenge.startFacelets;
-    const out = [...base].map((ch) => (ch === '.' ? 'Gray' : shown[ch as CubeFace]));
-    if (!revealed) {
+    const out = [...challenge.startFacelets].map((ch) => (ch === '.' ? 'Gray' : shown[ch as CubeFace]));
+    if (!over) {
       challenge.targets.forEach((t, i) => {
         if (found[i]) out[t.answerFacelet] = shown[FACE_LETTERS[t.colorFace]];
       });
     }
     return out;
-  }, [challenge, found, revealed, shown]);
+  }, [challenge, found, over, shown]);
 
   // 十字模式恒为「找棱」,追踪选择器换成「找几条」。
   const kindDisabled = mode === 'cross';
@@ -290,6 +317,8 @@ function PredictPageInner() {
           onSticker={onSticker}
           focusFaces={focus?.faces}
           focusNonce={focus?.nonce ?? 0}
+          moves={challenge?.moves}
+          step={step}
         />
         <div className="predict-clock" aria-live="off">{clock(elapsed)}</div>
         {wrong && (
@@ -299,6 +328,35 @@ function PredictPageInner() {
           </div>
         )}
       </div>
+
+      {over && (
+        <div className="predict-replay">
+          <PlaybackBar
+            step={step}
+            total={totalSteps}
+            playing={playing}
+            onScrub={(n) => { setPlaying(false); setStep(Math.max(0, Math.min(n, totalSteps))); }}
+            onSkipStart={() => { setPlaying(false); setStep(0); }}
+            onStepBack={() => { setPlaying(false); setStep((s) => Math.max(0, s - 1)); }}
+            onTogglePlay={() => {
+              if (playing) { setPlaying(false); return; }
+              if (step >= totalSteps) setStep(0); // 播完了再按 = 重播
+              setPlaying(true);
+            }}
+            onStepForward={() => { setPlaying(false); setStep((s) => Math.min(totalSteps, s + 1)); }}
+            onSkipEnd={() => { setPlaying(false); setStep(totalSteps); }}
+            labels={{
+              skipStart: tr({ zh: '回到起点', en: 'Skip to start' }),
+              stepBack: tr({ zh: '退一步', en: 'Step back' }),
+              play: tr({ zh: '播放复盘', en: 'Play' }),
+              pause: tr({ zh: '暂停', en: 'Pause' }),
+              stepForward: tr({ zh: '进一步', en: 'Step forward' }),
+              skipEnd: tr({ zh: '跳到落点', en: 'Skip to end' }),
+              scrub: tr({ zh: '拖动到第几步', en: 'Scrub' }),
+            }}
+          />
+        </div>
+      )}
 
       <div className="predict-prompt">
         {promptGroups.map((g) => {
@@ -391,8 +449,16 @@ function PredictPageInner() {
         <ol className="predict-move-list">
           {challenge?.moves.map((m, i) => {
             const face = shown[m[0] as CubeFace];
+            // 复盘时把已经转过的那几步压暗,当前这一步描一圈。
+            const state = over && i < step ? ' is-done' : over && i === step ? ' is-next' : '';
             return (
-              <li key={`${i}-${m}`} style={{ background: CUBE_FILL[face], color: CUBE_ON_FILL[face] }}>{m}</li>
+              <li
+                key={`${i}-${m}`}
+                className={state.trim() || undefined}
+                style={{ background: CUBE_FILL[face], color: CUBE_ON_FILL[face] }}
+              >
+                {m}
+              </li>
             );
           })}
         </ol>

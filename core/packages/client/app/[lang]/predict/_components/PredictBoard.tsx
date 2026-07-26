@@ -10,6 +10,9 @@
  *   - 不开 /sim 那套方位字母:这里六个中心是上了色的,颜色比字母更快读出方位,而
  *     字母浮在面正上方会正好压住贴纸。
  *   - 颜色逐贴纸给:`labels[i]` 是 facelet i 的引擎色标签('Gray' = 灰底)。
+ *   - 复盘动画不另算盘面:题板一律「起点上色 + 真转招式」,让引擎自己把贴纸转过去
+ *     (`twister.push` 逐步动画 / `setup` 瞬时跳转)。`cube.stick` 按**原始位置**寻址,
+ *     所以每次改色必须先 `setup('')` 复位几何,再按当前步重放回去。
  *
  * three + 引擎走动态 import,不进首包(和 /scramble/solver 的立体画板同一条路)。
  */
@@ -22,6 +25,7 @@ import type Toucher from '@/app/[lang]/sim/Toucher';
 import type { SimMount } from '@/components/sim-embed/mountSimWorld';
 import { buildFaceletMap, buildReverseFaceletMap } from '@/components/sim-embed/faceletMap';
 import { yawSign } from '@/app/[lang]/sim/engine/viewControls';
+import { timing } from '@/app/[lang]/sim/engine/tweenTiming';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { tr } from '@/i18n/tr';
 
@@ -30,6 +34,10 @@ const DEFAULT_ROT_X = Math.PI / 6;
 const DEFAULT_ROT_Y = -Math.PI / 4 + Math.PI / 16;
 /** 每拖 1px 转多少弧度,与 /sim 灵敏度默认值一致。 */
 const ORBIT_K = 0.01;
+/** 复盘动画每 90° 的帧数(引擎默认 30,这里快一档);挂载时设,卸载时还回去。 */
+const PLAY_FRAMES = 16;
+
+const NO_MOVES: readonly string[] = [];
 
 /**
  * 「转到看得见某一面」的视角(pitch, yaw)。
@@ -110,9 +118,15 @@ export interface PredictBoardProps {
   /** 要露给玩家看的面(U/D/L/R/F/B),视角会转到尽量同时看见它们;`focusNonce` 变一次转一次。 */
   focusFaces?: readonly string[];
   focusNonce?: number;
+  /** 复盘用的题面招式。 */
+  moves?: readonly string[];
+  /** 已经走到第几步:比上一次多 1 = 放一步动画,其余情况瞬时跳过去。 */
+  step?: number;
 }
 
-export default function PredictBoard({ labels, onSticker, focusFaces, focusNonce = 0 }: PredictBoardProps) {
+export default function PredictBoard({
+  labels, onSticker, focusFaces, focusNonce = 0, moves = NO_MOVES, step = 0,
+}: PredictBoardProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mountRef = useRef<SimMount | null>(null);
   const toucherRef = useRef<Toucher | null>(null);
@@ -125,6 +139,9 @@ export default function PredictBoard({ labels, onSticker, focusFaces, focusNonce
   // taps 从引擎闭包里回调,拿 ref 读最新的 onSticker。
   const onStickerRef = useRef(onSticker);
   useEffect(() => { onStickerRef.current = onSticker; }, [onSticker]);
+
+  /** 上一次同步到引擎的 (labels, step),用来判断这次是「走了一步」还是「整个换了」。 */
+  const lastSyncRef = useRef<{ labels: readonly string[]; step: number } | null>(null);
 
   useEffect(() => {
     if (ready) return;
@@ -173,9 +190,14 @@ export default function PredictBoard({ labels, onSticker, focusFaces, focusNonce
       const onContextMenu = (e: MouseEvent) => e.preventDefault();
       mount.renderer.domElement.addEventListener('contextmenu', onContextMenu);
 
+      // 转速是引擎的模块级全局(/sim 的约定是用完还回去)。
+      const prevFrames = timing.frames;
+      timing.frames = PLAY_FRAMES;
+
       setReady(true); // 触发下面的贴纸同步 effect
 
       cleanup = () => {
+        timing.frames = prevFrames;
         mount.renderer.domElement.removeEventListener('contextmenu', onContextMenu);
         toucher.destroy();
         mount.dispose();
@@ -188,16 +210,33 @@ export default function PredictBoard({ labels, onSticker, focusFaces, focusNonce
     return () => { cancelled = true; cleanup?.(); };
   }, [reverseMap]);
 
-  // labels(唯一真源)→ 引擎贴纸。
+  /**
+   * 颜色 + 复盘进度只能有一个同步口。
+   *
+   * 分成两个 effect 试过,结果是同一步被走了两遍(改色那边要「按当前步重放」把位置
+   * 补回来,走步那边又推了同一招,`F2` 的题转完回到原地、`R'` 变成 `R2`)。所以合成
+   * 一个:只有「labels 没变 + 步数正好 +1」才放动画,其余一律整盘重来一次。
+   */
   useEffect(() => {
     const mount = mountRef.current;
     if (!mount || !ready) return;
     const cube = mount.world.cube as Cube;
-    for (let i = 0; i < faceletMap.length; i++) {
-      cube.stick(faceletMap[i].cube, faceletMap[i].face, labels[i] ?? 'Gray');
+    const last = lastSyncRef.current;
+    lastSyncRef.current = { labels, step };
+
+    if (last && last.labels === labels && step === last.step + 1 && step > 0) {
+      cube.twister.push(moves[step - 1]); // push 自己排队,不会因为还在转而丢招
+    } else {
+      // stick 按原始位置寻址,转过之后再上色会贴到别的块上 —— 先复位再上色。
+      cube.twister.setup('');
+      for (let i = 0; i < faceletMap.length; i++) {
+        cube.stick(faceletMap[i].cube, faceletMap[i].face, labels[i] ?? 'Gray');
+      }
+      const done = moves.slice(0, step).join(' ');
+      if (done) cube.twister.setup(done);
     }
     mount.invalidate();
-  }, [labels, ready, faceletMap]);
+  }, [labels, step, moves, ready, faceletMap]);
 
   const setView = (pitch: number, yaw: number) => {
     const world = mountRef.current?.world;
