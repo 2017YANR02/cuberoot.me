@@ -93,7 +93,9 @@ app.onError((err, c) => {
   else if (msg.includes('Admin access required') || msg.includes('Cannot edit') || msg.includes('Cannot delete') || msg.includes('suspended')) status = 403;
   else if (msg.includes('Rate limit')) status = 429;
   else if (msg.includes('Validation') || msg.includes('No valid')) status = 400;
-  console.error(`[${status}] ${msg}`);
+  console.error(`[${status}] ${msg} ${c.req.method} ${c.req.path}`);
+  // 限流窗口是 60s 滑动窗口 —— 明确告诉客户端多久后重试,别让它当成业务失败
+  if (status === 429) c.header('Retry-After', '5');
   return c.json({ error: msg }, status);
 });
 
