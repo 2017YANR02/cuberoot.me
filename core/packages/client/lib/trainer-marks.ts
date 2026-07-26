@@ -1,6 +1,6 @@
 'use client';
 
-// 公式训练器 per-case 学习标记(学习中/已掌握/搁置 + 难点星标)。
+// 公式训练器 per-case 学习标记(不熟/已掌握/搁置 + 难点星标)。
 // 未登录:localStorage 本地存;登录:本地 + 云端(/v1/alg/marks)双写,
 // 进页时拉云端做单条 last-write-wins 合并(本地较新的差异回传),之后写操作
 // 乐观更新本地 + 防抖批量 PUT。清除标记留 { t } 墓碑,否则合并会从云端复活。
@@ -15,7 +15,7 @@ import { tr } from '@/i18n/tr';
 export type CaseMarkStatus = 'learning' | 'mastered' | 'paused';
 
 export const MARK_STATUS_LABEL: Record<CaseMarkStatus, () => string> = {
-  learning: () => tr({ zh: '学习中', en: 'Learning' }),
+  learning: () => tr({ zh: '不熟', en: 'Shaky' }),
   mastered: () => tr({ zh: '已掌握', en: 'Mastered' }),
   paused: () => tr({ zh: '搁置', en: 'Paused' }),
 };
