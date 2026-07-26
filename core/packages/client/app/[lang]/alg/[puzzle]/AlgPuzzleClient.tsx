@@ -10,12 +10,16 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Eye, Blocks, ScanSearch, Box, type LucideIcon } from 'lucide-react';
+import { ArrowLeft, Eye, Blocks, ScanSearch, Box, X, type LucideIcon } from 'lucide-react';
 import { ALG_CATALOG, ALG_PUZZLES, loadAlg, type AlgCase, type AlgPuzzle } from '@cuberoot/shared';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
 import { CaseThumb } from '@/components/CaseThumb';
 import AlgCard from '@/components/AlgCard';
+import BoolToggle from '@/components/BoolToggle';
+import { ClearButton } from '@/components/ClearButton';
+import { MIX_MIN_SETS, mixHref, mixTitle } from '@/lib/alg-mix';
+import { useSavedMixes } from '@/lib/alg-mix-saved';
 import AlgAdminValidate from '@/components/AlgAdminValidate';
 import { FaceletsCube } from '@/components/FaceletsCube';
 import { TOTAL_CASES as LSLL_TOTAL, categoryCardFacelets } from '@/lib/lsll/model';
@@ -55,6 +59,20 @@ export default function AlgPuzzleClient() {
   useDocumentTitle(algPuzzleTitle, algPuzzleTitle);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [firstCases, setFirstCases] = useState<Record<string, AlgCase | null>>({});
+
+  // 合练:开着的时候卡片从「点了进去」变成「点了勾选」,选够两套底部出条开始
+  const [picking, setPicking] = useState(false);
+  const [picked, setPicked] = useState<string[]>([]);
+  const [mixName, setMixName] = useState('');
+  const savedMixes = useSavedMixes(s => s.list);
+  const hydrateMixes = useSavedMixes(s => s.hydrate);
+  const saveMix = useSavedMixes(s => s.saveMix);
+  const removeMix = useSavedMixes(s => s.remove);
+  useEffect(() => { hydrateMixes(); }, [hydrateMixes]);
+  const togglePick = (slug: string) =>
+    setPicked(prev => (prev.includes(slug) ? prev.filter(s => s !== slug) : [...prev, slug]));
+  const pickedCount = picked.reduce((n, slug) => n + Math.max(0, counts[slug] ?? 0), 0);
+  const canMix = picked.length >= MIX_MIN_SETS;
 
   const valid = isPuzzle(puzzle);
   const sets = useMemo(() => (valid ? ALG_CATALOG[puzzle] : []), [puzzle, valid]);
@@ -109,6 +127,12 @@ export default function AlgPuzzleClient() {
           <EventIcon event={puzzle} className="alg-cat-title-icon" />
           <span>{eventDisplayName(puzzle, isZh)} {tr({ zh: '公式', en: 'Algorithms' })}</span>
         </h1>
+        {/* 合练:多套混成一场练(PLL + ZBLL 一起过)。开着时卡片改成勾选。 */}
+        <BoolToggle
+          value={picking}
+          onChange={v => { setPicking(v); if (!v) setPicked([]); }}
+          label={tr({ zh: '合练', en: 'Mix' })}
+        />
         {/* 这一层就是「这个魔方的所有公式集」,校验粒度跟着它 —— 一次扫完本页列出的每套 */}
         <AlgAdminValidate
           scope={{ kind: 'puzzle', puzzle }}
@@ -124,7 +148,9 @@ export default function AlgPuzzleClient() {
           return (
             <AlgCard
               key={s.slug}
-              href={`/alg/${puzzle}/${s.slug}`}
+              href={picking ? undefined : `/alg/${puzzle}/${s.slug}`}
+              onClick={picking ? () => togglePick(s.slug) : undefined}
+              className={picking && picked.includes(s.slug) ? 'is-picked' : undefined}
               thumb={first && (
                 <CaseThumb puzzle={puzzle} set={s.slug} sticker={first.sticker} alg={firstAlg} setup={first.setup} size={96} />
               )}
@@ -133,7 +159,7 @@ export default function AlgPuzzleClient() {
             />
           );
         })}
-        {puzzle === '3x3' && (
+        {puzzle === '3x3' && !picking && (
           <AlgCard
             href="/alg/lsll"
             prefetch={false}
@@ -143,6 +169,74 @@ export default function AlgPuzzleClient() {
           />
         )}
       </div>
+
+      {/* 存下来的合练组合:一行一条,点进去直接开练。纯本地快捷方式,进度不在这里。 */}
+      {!picking && savedMixes.filter(m => m.puzzle === puzzle).length > 0 && (
+        <div className="alg-mix-saved">
+          <span className="alg-train-modules-label">{tr({ zh: '我的合集', en: 'My mixes' })}</span>
+          {savedMixes.filter(m => m.puzzle === puzzle).map(m => (
+            <span key={m.id} className="alg-mix-saved-item">
+              <Link href={mixHref(puzzle, m.sets, 'run')} className="alg-mix-saved-link" prefetch={false}>
+                {m.name}
+                <span>{m.sets.length}</span>
+              </Link>
+              <ClearButton
+                onClick={() => removeMix(m.id)}
+                ariaLabel={tr({ zh: `删除合集 ${m.name}`, en: `Delete mix ${m.name}` })}
+              />
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* 选够两套才出现的操作条:直接开练,或先起个名存成合集 */}
+      {picking && picked.length > 0 && (
+        <div className="alg-mix-bar" role="region" aria-label={tr({ zh: '合练', en: 'Mix' })}>
+          <span className="alg-mix-bar-sets">
+            {picked.map(slug => (
+              <span key={slug} className="alg-mix-bar-chip">
+                {tr(sets.find(x => x.slug === slug) ?? { zh: slug, en: slug })}
+                <button
+                  type="button"
+                  className="alg-mix-bar-x"
+                  onClick={() => togglePick(slug)}
+                  aria-label={tr({ zh: `不选 ${slug}`, en: `Unpick ${slug}` })}
+                >
+                  <X size={12} />
+                </button>
+              </span>
+            ))}
+          </span>
+          <span className="alg-mix-bar-count">
+            {pickedCount > 0 ? pickedCount : '…'} {tr({ zh: '个 case', en: 'cases' })}
+          </span>
+          {canMix && (
+            <>
+              <input
+                className="alg-mix-bar-name"
+                value={mixName}
+                onChange={e => setMixName(e.target.value)}
+                placeholder={mixTitle(puzzle, picked)}
+                aria-label={tr({ zh: '合集名', en: 'Mix name' })}
+                maxLength={40}
+              />
+              <button
+                type="button"
+                className="alg-mix-bar-save"
+                onClick={() => { saveMix(puzzle, picked, mixName); setMixName(''); }}
+              >
+                {tr({ zh: '存为合集', en: 'Save mix' })}
+              </button>
+              <Link href={mixHref(puzzle, picked, 'run')} className="alg-mix-bar-go" prefetch={false}>
+                {tr({ zh: '开始合练', en: 'Start mix' })}
+              </Link>
+            </>
+          )}
+          {!canMix && (
+            <span className="alg-mix-bar-hint">{tr({ zh: '再选一套就能一起练', en: 'Pick one more set to drill them together' })}</span>
+          )}
+        </div>
+      )}
 
       {TRAINER_MODULES[puzzle] && (
         <div className="alg-train-modules">

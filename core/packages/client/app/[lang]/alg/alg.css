@@ -1521,3 +1521,107 @@ a.alg-community-author:hover {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
 }
+
+/* ─── 合练(多套混成一场练) ─────────────────────────────────────── */
+
+/* 我的合集:存下来的组合,点进去直接开练 */
+.alg-mix-saved {
+  max-width: 1200px;
+  margin: 4px auto 0;
+  padding: 0 24px 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.alg-mix-saved-item { display: inline-flex; align-items: center; gap: 2px; }
+.alg-mix-saved-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border-default);
+  color: var(--foreground);
+  font-size: 13px;
+  text-decoration: none !important;
+}
+.alg-mix-saved-link:hover { background: color-mix(in srgb, var(--foreground) 8%, transparent); }
+.alg-mix-saved-link span { color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
+
+/* 选中的公式集卡片 */
+.alg-card.is-picked {
+  outline: 2px solid var(--toggle-on);
+  outline-offset: -2px;
+}
+
+/* 选够了才有意义的操作条:贴底居中,不占正文版面 */
+.alg-mix-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  z-index: 40;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  max-width: min(94vw, 900px);
+  padding: 10px 14px;
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  background: var(--card);
+  box-shadow: 0 6px 24px rgb(0 0 0 / 18%);
+  font-size: 13px;
+}
+.alg-mix-bar-sets { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.alg-mix-bar-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 5px 3px 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  white-space: nowrap;
+}
+.alg-mix-bar-x {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.alg-mix-bar-x:hover { color: var(--foreground); background: color-mix(in srgb, var(--foreground) 14%, transparent); }
+.alg-mix-bar-count, .alg-mix-bar-hint { color: var(--muted-foreground); white-space: nowrap; }
+.alg-mix-bar-name {
+  width: 10em;
+  padding: 5px 8px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 13px;
+}
+.alg-mix-bar-save {
+  padding: 5px 12px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: none;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  cursor: pointer;
+}
+.alg-mix-bar-save:hover { background: color-mix(in srgb, var(--foreground) 8%, transparent); color: var(--foreground); }
+.alg-mix-bar-go {
+  padding: 6px 16px;
+  border-radius: 8px;
+  /* 「有文字的绿」:纯亮绿配白字发糊,压暗一档(同 PillToggle 带文字轨道) */
+  background: color-mix(in srgb, var(--toggle-on) 72%, black);
+  color: #fff !important;
+  font-weight: 600;
+  text-decoration: none !important;
+}
+.alg-mix-bar-go:hover { background: color-mix(in srgb, var(--toggle-on) 64%, black); }
