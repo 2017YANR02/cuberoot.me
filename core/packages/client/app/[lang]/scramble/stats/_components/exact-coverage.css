@@ -1,0 +1,167 @@
+/* 精确穷举分布的覆盖矩阵。三态靠语义色区分:
+   完整分布 = success / 仅 0 步 = warning / 不适用 = faint。
+   双主题页,全部走 :root token + color-mix,不硬码灰阶。 */
+
+.exact-cov {
+  margin-top: 28px;
+}
+
+.exact-cov-head h3 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.exact-cov-head p {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+
+/* 宽表在自己的容器里横滚 —— 页面 body 不允许横向滚动 */
+.exact-cov-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.exact-cov-table {
+  border-collapse: collapse;
+  font-size: 12px;
+  /* CJK 列头单行不折:留足余量,不钉「刚好贴合」的定宽 */
+  min-width: 660px;
+}
+
+.exact-cov-table th,
+.exact-cov-table td {
+  border: 1px solid var(--border-default);
+  padding: 0;
+}
+
+.exact-cov-table thead th {
+  padding: 6px 10px;
+  background: var(--muted);
+  font-weight: 500;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
+.exact-cov-colmain {
+  display: block;
+  color: var(--muted-foreground);
+}
+
+.exact-cov-colsub {
+  display: block;
+  margin-top: 2px;
+  font-size: 10.5px;
+  font-weight: 400;
+  color: var(--faint-foreground);
+}
+
+.exact-cov-rowhead {
+  padding: 6px 10px;
+  text-align: left;
+  white-space: nowrap;
+  background: var(--muted);
+  font-weight: 500;
+  color: var(--muted-foreground);
+}
+
+/* ── 格子 ─────────────────────────────────────────────── */
+
+.exact-cov-cell {
+  display: block;
+  width: 100%;
+  padding: 7px 9px;
+  min-width: 116px;
+  line-height: 1.35;
+  text-align: left;
+  background: none;
+  border: 0;
+  font: inherit;
+  color: inherit;
+}
+
+.exact-cov-state {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.2px;
+}
+
+.exact-cov-val {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+
+.exact-cov-blocked {
+  display: block;
+  margin-top: 3px;
+  font-size: 10.5px;
+  color: var(--faint-foreground);
+}
+
+/* 完整分布:可点 */
+.exact-cov-cell.is-full {
+  cursor: pointer;
+}
+
+.exact-cov-cell.is-full .exact-cov-state {
+  color: var(--signal-success);
+  font-weight: 600;
+}
+
+.exact-cov-cell.is-full:hover {
+  background: color-mix(in srgb, var(--signal-success) 10%, transparent);
+}
+
+.exact-cov-cell.is-full:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+
+/* 仅 0 步:有数但画不出图 */
+.exact-cov-cell.is-zero .exact-cov-state {
+  color: var(--signal-warning);
+}
+
+/* 不适用:该阶段没有这个槽位概念 */
+.exact-cov-cell.is-na {
+  background: color-mix(in srgb, var(--foreground) 3%, transparent);
+}
+
+.exact-cov-cell.is-na .exact-cov-state {
+  color: var(--faint-foreground);
+}
+
+/* 当前图表选中的格 */
+.exact-cov-cell.is-selected {
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+/* ── 图例 ─────────────────────────────────────────────── */
+
+.exact-cov-legend {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 11.5px;
+  color: var(--muted-foreground);
+}
+
+.exact-cov-legend li + li {
+  margin-top: 3px;
+}
+
+.exact-cov-legend b {
+  margin-right: 6px;
+  font-weight: 600;
+}
+
+.exact-cov-legend b.is-full { color: var(--signal-success); }
+.exact-cov-legend b.is-zero { color: var(--signal-warning); }
+.exact-cov-legend b.is-na { color: var(--faint-foreground); }
