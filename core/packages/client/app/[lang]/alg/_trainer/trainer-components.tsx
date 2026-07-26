@@ -7,7 +7,7 @@ import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import { CaseThumb } from '@/components/CaseThumb';
 import { VisualCube } from '@/components/VisualCube';
 import { SegmentTime } from '@/components/SegmentTime';
-import { TimerState } from '@/lib/trainer-store';
+import { TimerState, useTrainerStore } from '@/lib/trainer-store';
 import type { TrainerSolve, TrainerPenalty, TrainerHistEntry } from '@/lib/trainer-store';
 import type { ScrambleHist } from '@/lib/scramble-history';
 import {
@@ -240,9 +240,13 @@ function TriCheckbox({ checked, indeterminate }: { checked: boolean; indetermina
   return <span className={`trainer-checkbox${cls}`} aria-hidden />;
 }
 
-/** run 页卡片头的学习标记直选条:4 个可直接点的按钮(学习中 / 已掌握 / 搁置 / 星标),
- *  每行 2 个;再点同一个 = 取消该标记。数字键 1-4 仍是快捷键(绑定在 TrainerRunClient 的
- *  keydown 里,title 里带提示),但不再渲染可见的数字小标。data-no-timer:按压不触发计时。 */
+/** run 页卡片头的学习标记直选条:可直接点的按钮(学习中 / 已掌握 / 搁置 / 星标),
+ *  再点同一个 = 取消该标记。数字键 1-4 仍是快捷键(绑定在 TrainerRunClient 的
+ *  keydown 里,title 里带提示),但不再渲染可见的数字小标。data-no-timer:按压不触发计时。
+ *
+ *  「过了就算掌握」开着时(默认)不摆「已掌握」—— 练完不点这几个就是已掌握,
+ *  留着它等于要用户手点一遍默认值。关掉那个开关它就回来(那时没有别的路径能标掌握);
+ *  键盘 2 任何时候都还在,当作把「学习中」直接提成「已掌握」的快捷键。 */
 const MARK_ACTIONS: { digit: string; s?: CaseMarkStatus; star?: boolean }[] = [
   { digit: '1', s: 'learning' },
   { digit: '2', s: 'mastered' },
@@ -253,11 +257,13 @@ const MARK_ACTIONS: { digit: string; s?: CaseMarkStatus; star?: boolean }[] = [
 export function CaseMarkBar({ k }: { k: string }) {
   const marks = useTrainerMarks(s => s.marks);
   const applyMarks = useTrainerMarks(s => s.applyMarks);
+  const autoMaster = useTrainerStore(s => s.autoMasterOnAdvance);
   const st = markStatus(marks, k);
   const starred = markStarred(marks, k);
+  const actions = autoMaster ? MARK_ACTIONS.filter(a => a.s !== 'mastered') : MARK_ACTIONS;
   return (
     <span className="trainer-mark-bar" data-no-timer>
-      {MARK_ACTIONS.map((a) => {
+      {actions.map((a) => {
         const active = a.star ? starred : st === a.s;
         const label = a.star ? tr({ zh: '星标', en: 'Star' }) : MARK_STATUS_LABEL[a.s!]();
         return (

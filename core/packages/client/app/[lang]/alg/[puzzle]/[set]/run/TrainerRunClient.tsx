@@ -401,7 +401,9 @@ export default function TrainerRunClient() {
       }
       if (e.code === 'ArrowLeft') { e.preventDefault(); prevScramble(); return; }
       if (e.code === 'ArrowRight') { e.preventDefault(); advanceScramble(); return; }
-      // 1-4:直接给卡片当前 case 打标记(1 学习中 / 2 已掌握 / 3 搁置 / 4 星标);再按同键取消
+      // 1-4:直接给卡片当前 case 打标记(1 学习中 / 2 已掌握 / 3 搁置 / 4 星标);再按同键取消。
+      // 「过了就算掌握」开着时卡片上不摆「已掌握」按钮(见 CaseMarkBar),但 2 仍然有效 ——
+      // 那是把已标「学习中」的 case 提前提成「已掌握」的快捷路径。
       if (!e.repeat && (e.code === 'Digit1' || e.code === 'Digit2' || e.code === 'Digit3' || e.code === 'Digit4')) {
         const st = useTrainerStore.getState();
         if (st.timerState !== TimerState.NOT_RUNNING && st.timerState !== TimerState.STOPPING) return;
