@@ -4,7 +4,7 @@
  */
 import { Alg, Move } from 'cubing/alg';
 import type { KPattern, KPuzzle } from 'cubing/kpuzzle';
-import { ROTATE_Y, mirrorFamily, mirrorKeepsAmount, type MirrorAxis } from '@cuberoot/shared/alg-notation';
+import { mirrorFamily, mirrorKeepsAmount, type MirrorAxis } from '@cuberoot/shared/alg-notation';
 
 let _kpuzzle: Promise<KPuzzle> | null = null;
 
@@ -87,39 +87,6 @@ export function mirrorAlg(alg: string, axis: MirrorAxis): string {
       // away, which silently rewrote `2R` as `L'` and `3Rw` as `Lw'` — /sim's mirror
       // buttons are live on 4x4 and 5x5.
       out.push(m.modified({ family, amount }).toString());
-    }
-    return out.join(' ');
-  } catch {
-    return alg;
-  }
-}
-
-/**
- * 把公式按 `y^k` **重贴面标**:`pattern(relabelY(A, k)) === pattern(y^-k · A · y^k)`。
- *
- * 与 {@link mirrorAlg} 成对 —— 一个翻手性,一个只转朝向。规则同样只有 shared 那一份
- * (`ROTATE_Y`,含小写内层切 `m`/`s`/`e`)。
- *
- * 注意它**不加任何前缀** —— 要的是「同一个动作换个朝向描述」,不是「先转体再做」。
- * 要带可见 `y` 前缀的那种,用 `lib/rotate-solution.ts` 的 `rotateSolutionY`。
- */
-export function relabelY(alg: string, k: number): string {
-  const n = ((Math.trunc(k) % 4) + 4) % 4;
-  if (!alg || n === 0) return alg;
-  try {
-    const out: string[] = [];
-    for (const move of new Alg(alg).experimentalLeafMoves()) {
-      let family = move.family;
-      let amount = move.amount;
-      for (let i = 0; i < n; i++) {
-        const hit = ROTATE_Y[family];
-        // 表里没有 = 出现了没见过的 family,原样放过比悄悄改掉安全
-        if (!hit) break;
-        family = hit[0];
-        amount = hit[1] === -1 ? -amount : amount;
-      }
-      // `.modified()` 保留层前缀(`2R` / `3Rw`);`new Move(f, a)` 会把它扔掉
-      out.push(move.modified({ family, amount }).toString());
     }
     return out.join(' ');
   } catch {

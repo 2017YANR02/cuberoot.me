@@ -8,6 +8,7 @@
  */
 
 import { invert as invertSkewb } from './skewb_notation';
+import type { MirrorGen } from './alg_mirror';
 
 /** 公式标签。转写自站长 1LLL 表里的 `[oh]` / `[ft]` / `[fmc]` / `[big]` / `[key]`。 */
 export type AlgTag = 'oh' | 'ft' | 'fmc' | 'big' | 'key';
@@ -31,6 +32,14 @@ export interface AlgEntry {
   /** 这条公式**照写**的步数(`R4` = 1 STM / 4 SQTM —— 它是个真实的物理动作,见 alg_notation)。 */
   stm?: number;
   sqtm?: number;
+  /**
+   * 这条是**自动镜像生成**的,不是人写的(issue #40 T5)。值 = 用了哪种重写
+   * (`lr` 左右镜 / `fb` 前后镜 / `y2` 掉头)。人工原创条**没有**这个字段 —— 全站一律靠
+   * 「有没有 `gen`」区分原创与生成,别再引第二个判据。
+   */
+  gen?: MirrorGen;
+  /** 生成条的源头:源 case 的 `alg_cases.id` + 第几个视角 + 视角内第几条(都从 0 起)。 */
+  src?: { id: number; ori: number; i: number };
 }
 
 /**
@@ -105,7 +114,7 @@ export interface AlgCase {
   meta?: AlgCaseMeta;
   /**
    * 镜像伙伴的 `alg_cases.id`(issue #40 T5)—— 左右镜 + 把最后一槽转回 FR 得到的那张 case。
-   * 互指;自镜像指自己;不适用的 set 恒 undefined。只有 {@link MIRROR_SYNC_SETS} 里的 set 有。
+   * 互指;自镜像指自己;不适用的 set 恒 undefined。只有 {@link MIRROR_SETS} 里的 set 有。
    */
   mirrorCaseId?: number | null;
   /**
@@ -127,25 +136,8 @@ export interface AlgFile {
 
 export type AlgPuzzle = '2x2' | '3x3' | '4x4' | '5x5' | 'sq1' | 'megaminx' | 'pyraminx' | 'skewb';
 
-/**
- * 吃镜像系统(issue #40 T5)的 set —— **`puzzle/set` 全名**,client 与 server 共用这一份。
- *
- * 门槛:每个 case 有且仅有一个 F2L 槽、槽已归一到 FR、镜像伙伴**就在同一个 set 里**。
- * 八个候选逐一核过(`scripts/mirror-link-plan.mts`,结果见 docs/issue-40-alg-mirror-plan.md §5.7),
- * 只有这三个够格:
- *
- *   f2l   41 案:38 配对 + 3 自镜像,一个不缺;± 命名与状态判据 38/38 全对
- *   zbls  305 案:296 配对 + 9 自镜像,一个不缺(但 ± 命名只有 32/284 对得上 —— 别信名字)
- *   cls   97 案:93 配对 + 3 自镜像 + 1 缺(那 1 个槽在 BL,归一后补上)
- *
- * 落选的原因各不相同,想加回来先看 §5.7:
- *   wv / sv / vls —— 各自只覆盖**一种** F2L 构型(全 A+ / 全 B+ / 全 A+),镜像伙伴那一族
- *                    库里压根没收录,开了就等于凭空造 243 个 case;
- *   adv-f2l       —— 54 个 case **每个破两个槽**,按设计就不是单槽 set;
- *   sbls          —— Roux 二块,补 y² 之后 σ 仍成立,但 65 个伙伴全不在库,
- *                    且 40/65 的 setup 带 x 转体,颜色框架都不统一。
- */
-export const MIRROR_SYNC_SETS: ReadonlySet<string> = new Set(['3x3/f2l', '3x3/zbls', '3x3/cls']);
+// 两张镜像 set 名单的定义在 `./alg_mirror`(那儿是镜像域的家),这里转出去让 barrel 保持原样。
+export { MIRROR_SETS, MIRROR_ALG_SYNC_SETS } from './alg_mirror';
 
 /** 3x3 set slug — matches `slug` in {@link ALG_CATALOG['3x3']}. */
 export type Alg3x3Set =

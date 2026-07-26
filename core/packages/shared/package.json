@@ -28,6 +28,10 @@
       "node": "./dist/alg_notation.js",
       "default": "./src/alg_notation.ts"
     },
+    "./alg-mirror": {
+      "node": "./dist/alg_mirror.js",
+      "default": "./src/alg_mirror.ts"
+    },
     "./skewb-pyramid-svg": {
       "node": "./dist/skewb_pyramid_svg.js",
       "default": "./src/skewb_pyramid_svg.ts"
