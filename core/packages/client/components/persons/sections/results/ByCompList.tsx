@@ -218,6 +218,9 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                       ? mbldAvgRecords?.get(mbldAvgRecordKey(wcaId, comp.id, r.event_id, r.round_type_id)) ?? null
                       : null;
                     const averageRecord = r.regional_average_record || mbldAvgRec || (liveRank?.averageTag || null);
+                    // 「日掩」只在直播/未公示阶段有意义 —— 官方值一出就以官方为准(Reg 9i2 已在其中生效)。
+                    const singleKeatoned = r.regional_single_record ? null : (liveRank?.singleKeatoned ?? null);
+                    const averageKeatoned = r.regional_average_record ? null : (liveRank?.averageKeatoned ?? null);
                     const showEvent = r.event_id !== lastEvent;
                     lastEvent = r.event_id;
                     // 拆 status:approved 进有效值;pending 仅作「待审核」标记。
@@ -284,11 +287,13 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                           <span className="record-num-cell">
                             <ResultChangeChain oldValues={oldBest} eventId={r.event_id} kind="single" note={chain?.[chain.length - 1]?.note} />
                             {formatWcaResult(effBest, r.event_id, 'single')}
-                            {singleRecord
-                              ? <RecordBadge record={singleRecord} variant="inline" />
-                              : singleRank
-                                ? <RecordBadge record={singleRank === 1 ? 'PR' : `PR${singleRank}`} variant="inline" />
-                                : null}
+                            {singleKeatoned
+                              ? <RecordBadge record={singleRecord} keatoned={singleKeatoned} keatonedEventId={r.event_id} variant="inline" />
+                              : singleRecord
+                                ? <RecordBadge record={singleRecord} variant="inline" />
+                                : singleRank
+                                  ? <RecordBadge record={singleRank === 1 ? 'PR' : `PR${singleRank}`} variant="inline" />
+                                  : null}
                           </span>
                         </td>
                         <td className={`wp-cell-result ${oldAvg.length > 0 ? 'wp-cell-changed' : ''}`}>
@@ -299,6 +304,7 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                                 attempts={effAttempts}
                                 eventId={r.event_id}
                                 averageRecord={averageRecord}
+                                averageKeatoned={averageKeatoned}
                                 averageRank={averageRank}
                                 oldValues={oldAvg}
                                 note={chain?.[chain.length - 1]?.note}
@@ -313,6 +319,7 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                               attempts={effAttempts}
                               eventId={r.event_id}
                               averageRecord={averageRecord}
+                              averageKeatoned={averageKeatoned}
                               averageRank={averageRank}
                               oldValues={oldAvg}
                               note={chain?.[chain.length - 1]?.note}

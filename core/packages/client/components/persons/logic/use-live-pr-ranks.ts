@@ -9,10 +9,13 @@
 import { useEffect, useState } from 'react';
 import { fetchCubingLiveResultInfo } from '@/lib/wca-results-api';
 import type { WcaResultRow } from '@/lib/wca-person-api';
+import type { KeatonedInfo } from '@/lib/record-tag';
 
 export interface LivePrRank {
   pS: number | null; pA: number | null;
   singleTag: string; averageTag: string;  // WR / CR / NR / '' — 与 /wca/comp 结果表同口径
+  // 「日掩」:够到了该级纪录但同日别处更快(Reg 9i2),同口径见 lib/record-tag。
+  singleKeatoned: KeatonedInfo | null; averageKeatoned: KeatonedInfo | null;
 }
 
 export function useLivePrRanks(rows: WcaResultRow[] | null, personId: string): Map<number, LivePrRank> {
@@ -36,6 +39,7 @@ export function useLivePrRanks(rows: WcaResultRow[] | null, personId: string): M
         return [r.id, {
           pS: info?.pS ?? null, pA: info?.pA ?? null,
           singleTag: info?.singleTag ?? '', averageTag: info?.averageTag ?? '',
+          singleKeatoned: info?.singleKeatoned ?? null, averageKeatoned: info?.averageKeatoned ?? null,
         }] as const;
       }));
       if (!cancelled) setMap(new Map(entries));

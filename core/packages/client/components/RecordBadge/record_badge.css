@@ -50,6 +50,65 @@
 .record-wcr { background: #f97316; color: #fff; }
 .record-other { background: #6b7280; color: #fff; }
 
+/* 「日掩」合并 badge — 成绩够到了某级地区纪录,但同一日历日已有更快的,
+   按 WCA Reg 9i2 只认当日最好,这一级不予认定。
+   左段 = 实际生效的级别(实色);右段 = 被掩掉的级别(降饱和 + 对角划线)。
+   生效级别为空时(Keaton Ellis 2015 的 5.09 那种,连 NR 都被同胞抢走)只剩右段。
+   划线用 currentColor + filter,不引入任何硬码色值 —— /wca 是暗锁页,暗配色要能跟。 */
+.record-keatoned {
+    display: inline-flex;
+    align-items: stretch;
+    border-radius: 3px;
+    overflow: hidden;
+    font-family: var(--font-sans);
+    font-size: 0.6rem;
+    font-weight: 600;
+    line-height: 1.3;
+    white-space: nowrap;
+    cursor: help;
+}
+
+.record-keatoned__live,
+.record-keatoned__struck {
+    padding: 0 3px;
+}
+
+/* 两段之间一道极细分隔,避免同色系时糊成一块 */
+.record-keatoned__live + .record-keatoned__struck {
+    box-shadow: inset 1px 0 0 color-mix(in srgb, var(--background) 55%, transparent);
+}
+
+.record-keatoned__struck {
+    position: relative;
+    filter: grayscale(0.45);
+    opacity: 0.8;
+}
+
+.record-keatoned__struck::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to top right,
+        transparent calc(50% - 0.5px),
+        currentColor calc(50% - 0.5px),
+        currentColor calc(50% + 0.5px),
+        transparent calc(50% + 0.5px)
+    );
+    pointer-events: none;
+}
+
+/* .record-num-cell 里 badge 是绝对定位、左缘跨行对齐的;合并 badge 更宽,
+   向右溢出到列间隙,压住相邻内容而不是被压。 */
+.record-num-cell .record-keatoned {
+    position: absolute;
+    left: calc(100% - 18px);
+    top: -2px;
+    margin-left: 0;
+    vertical-align: baseline;
+    z-index: 1;
+}
+
 .record-cancelled {
     background: #9333ea;
     position: relative;
