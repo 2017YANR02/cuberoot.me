@@ -7,7 +7,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
-import { applySession, getSessionToken } from '@/lib/auth-store';
+import { applySession, getSessionToken, markWcaLinkPrompt } from '@/lib/auth-store';
 import { loginSocial, linkSocial, SOCIAL_PROVIDERS, type SocialProvider } from '@/lib/account-api';
 import { SOCIAL_RETURN_KEY } from '@/lib/social-auth';
 import { tr } from '@/i18n/tr';
@@ -61,6 +61,9 @@ export default function SocialCallbackPage() {
       } else {
         const r = await loginSocial(provider, code, state);
         applySession(r.token, r.user);
+        // 刚注册出来的新账号,回到 /account 时补上「你有 WCA ID 吗」那步(表单那条路是在
+        // onDone 里直接切过去的,这条路整页跳走过,只能留个标记)。
+        if (r.isNew && !r.user.wcaId) markWcaLinkPrompt();
       }
     } catch (e) {
       setErrorMsg(e instanceof Error ? e.message : tr({ zh: '登录失败,请重试', en: 'Login failed, please retry' }));

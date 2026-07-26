@@ -84,7 +84,7 @@ authRoutes.get('/auth/callback', async (c) => {
   );
 
   // 建/取内部账号 + wca 身份,签发会话 JWT（365 天）
-  const account = await loginWithIdentity('wca', wcaId, {
+  const { user: account } = await loginWithIdentity('wca', wcaId, {
     name: user.name,
     avatar: user.avatar?.url ?? null,
     wcaId,
@@ -154,7 +154,7 @@ authRoutes.post('/auth/exchange', async (c) => {
     );
 
     // 建/取内部账号 + wca 身份,签发会话 JWT（365 天）
-    const account = await loginWithIdentity('wca', user.wca_id, {
+    const { user: account } = await loginWithIdentity('wca', user.wca_id, {
       name: user.name,
       avatar: user.avatar?.url ?? null,
       wcaId: user.wca_id,

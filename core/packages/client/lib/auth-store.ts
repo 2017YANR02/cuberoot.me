@@ -30,8 +30,10 @@ interface AuthState {
 interface AuthActions {
   /** 去登录页 /account —— 全站 20 余处「需要登录」入口都走这里。没有弹层形态。 */
   login: () => void;
-  /** 直接跳 WCA OAuth(登录页「用 WCA 登录」按钮用)。 */
-  loginWithWca: () => void;
+  /** 直接跳 WCA OAuth(登录页「用 WCA 登录」按钮用)。
+   *  returnTo:授权完成后要落到的站内地址,省略则回当前页。新人引导里绑完 WCA 要直接把人
+   *  送回 ?next= 的来处,而不是在账号页再停一站。 */
+  loginWithWca: (returnTo?: string) => void;
   logout: () => void;
   refresh: () => void;
 }
@@ -108,11 +110,11 @@ export const useAuthStore = create<AuthState & AuthActions>()((set) => ({
     else window.location.assign(href);
   },
 
-  loginWithWca: () => {
+  loginWithWca: (returnTo?: string) => {
     if (typeof window === 'undefined') return;
     const state = Math.random().toString(36).substring(2) + Date.now().toString(36);
     sessionStorage.setItem(STATE_KEY, state);
-    sessionStorage.setItem(RETURN_URL_KEY, window.location.href);
+    sessionStorage.setItem(RETURN_URL_KEY, returnTo || window.location.href);
 
     const redirectUri = window.location.origin + '/auth/callback';
     const params = [
@@ -158,6 +160,32 @@ export function applySession(
   };
   persistAuthItem(SESSION_KEY, JSON.stringify(wu));
   useAuthStore.getState().refresh();
+}
+
+// ── 新人「绑定 WCA」引导的待办标记 ──
+// 注册成功那一刻打标,进 /account 时消费掉(只引导一次)。存在的理由是三方登录那条路:
+// 微信/QQ/支付宝的授权是整页跳走再回来的,回来时人已不在登录表单里,只能靠这个标记把引导接上。
+// sessionStorage:关标签页即失效;手机唤起支付宝 App 时可能跨浏览器上下文而丢 —— 丢了就不
+// 引导,账号页的「绑定 WCA」入口一直在,这一步从来不是必经环节。
+const WCA_PROMPT_KEY = 'wca_link_prompt_at';
+const WCA_PROMPT_TTL_MS = 10 * 60 * 1000; // 注册完先去逛了十分钟,再回账号页就别突然发问了
+
+/** 记下「这个账号是刚注册的,还没绑 WCA」。 */
+export function markWcaLinkPrompt(): void {
+  if (typeof window === 'undefined') return;
+  try { sessionStorage.setItem(WCA_PROMPT_KEY, String(Date.now())); } catch { /* 隐私模式忽略 */ }
+}
+
+/** 读一次并清除:是否该给这个新账号做 WCA 绑定引导。 */
+export function takeWcaLinkPrompt(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    const raw = sessionStorage.getItem(WCA_PROMPT_KEY);
+    sessionStorage.removeItem(WCA_PROMPT_KEY);
+    return !!raw && Date.now() - Number(raw) < WCA_PROMPT_TTL_MS;
+  } catch {
+    return false;
+  }
 }
 
 /** 当前会话的 cuberoot_jwt(账号 API 的 Bearer)。 */
