@@ -194,7 +194,7 @@ function processSolvedPair(rows) {
     const algs = algTds[col] ? extractAlgsFromCell($(algTds[col])) : [];
     if (!setupTds[col] && algs.length === 0) continue;
     allCases.push({
-      subgroup: 'Solved Pair',
+      subgroup: 'O',
       name: labelTds[col] || `case${col+1}`,
       col,
       setup: setupTds[col] || '',
@@ -228,7 +228,7 @@ function processTable($t) {
       // Solved Pair detector
       if (/^Solved\s*Pair/i.test(text)) {
         flush(i);
-        curHeader = { letter: 'Solved Pair', isSolvedPair: true };
+        curHeader = { letter: 'O', isSolvedPair: true };   // docx 标题写「Solved Pair」,站内子组名为 O
         curStartIdx = i + 1;
         continue;
       }

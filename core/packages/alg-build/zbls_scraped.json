@@ -1,6 +1,6 @@
 [
   {
-    "subgroup": "Solved Pair",
+    "subgroup": "O",
     "name": "I",
     "col": 0,
     "setup": "F U R U' R' F'",
@@ -11,7 +11,7 @@
     ]
   },
   {
-    "subgroup": "Solved Pair",
+    "subgroup": "O",
     "name": "V",
     "col": 1,
     "setup": "F R U R' U' F'",
@@ -25,7 +25,7 @@
     ]
   },
   {
-    "subgroup": "Solved Pair",
+    "subgroup": "O",
     "name": "D",
     "col": 2,
     "setup": "F R' F' R U S' R U' R' S",

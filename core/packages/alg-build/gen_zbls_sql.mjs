@@ -13,10 +13,10 @@ import { alignCase } from './zbls_align_lib.mjs';
 
 const SCRAPED = JSON.parse(readFileSync(new URL('./zbls_scraped.json', import.meta.url), 'utf-8'));
 const APOSTROPHE_LETTERS = ['C','D','E','G','H','I','J','K','L','M','P','Q','R','U','V','W','X'];
-const NEW_LETTERS_FROM_DOCX = ['Solved Pair','A','B'];
+const NEW_LETTERS_FROM_DOCX = ['O','A','B'];
 
 const newRows = SCRAPED.filter(c => {
-  if (c.subgroup === 'Solved Pair') return true;
+  if (c.subgroup === 'O') return true;
   return c.subgroup.startsWith('A') || c.subgroup.startsWith('B');
 });
 

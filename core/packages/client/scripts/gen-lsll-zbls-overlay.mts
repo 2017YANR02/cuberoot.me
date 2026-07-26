@@ -9,7 +9,8 @@
  * 记号(连写 MR、[..]、↑↓、=、*)先过 @cuberoot/shared 的 toMoveString,再喂 cubing.js。
  * − 组案例(槽在 FL/BL/BR)按 y 共轭(重着色)归 FR 框架,与 zbls_docx 审计同一套 PRE/POST。
  *
- * Run: pnpm --filter @cuberoot/client exec tsx scripts/gen-lsll-zbls-overlay.mts
+ * Run: NODE_OPTIONS=--no-experimental-strip-types pnpm --filter @cuberoot/client exec tsx scripts/gen-lsll-zbls-overlay.mts
+ *      (Node ≥23 的原生 .ts 剥离会抢在 tsx 的 loader 前面,导致 extensionless import 解析失败。)
  */
 import fs from 'node:fs';
 import path from 'node:path';
