@@ -1013,13 +1013,14 @@ a.scramble-timeline-scramble:hover {
   font-weight: 600;
   color: var(--foreground);
 }
-/* 叠加开关里的虚线示意 —— 与图中 WCA 真题那条轮廓同款,免得用户猜哪条是哪条。 */
+/* 叠加开关里的虚线示意 —— 与图中 WCA 真题那条轮廓同款,免得用户猜哪条是哪条。
+   必须画成**竖着的柱形**:早先是 18×9 的扁方块,夹在中文标签中间被读成一个空框 / 缺字,
+   而图里那条对照本来就是套在柱子外面的虚线柱轮廓,照着柱子的长宽比画才自解释。 */
 .scramble-stats-overlay-swatch {
   display: inline-block;
-  width: 18px;
-  height: 9px;
-  margin: 0 0.35em;
-  vertical-align: -1px;
+  width: 10px;
+  height: 15px;
+  margin: 0 0.4em;
+  vertical-align: -3px;
   border: 1.5px dashed var(--muted-foreground);
-  border-radius: 1px;
 }
