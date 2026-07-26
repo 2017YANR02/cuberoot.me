@@ -148,8 +148,6 @@ export default function TrainerRunClient() {
   const setSrsShowPlayer = useTrainerStore(s => s.setSrsShowPlayer);
   const srsFromSolves = useTrainerStore(s => s.srsFromSolves);
   const setSrsFromSolves = useTrainerStore(s => s.setSrsFromSolves);
-  const autoMasterOnAdvance = useTrainerStore(s => s.autoMasterOnAdvance);
-  const setAutoMasterOnAdvance = useTrainerStore(s => s.setAutoMasterOnAdvance);
   const room = useTrainerStore(s => s.room);
   const roomBusy = useTrainerStore(s => s.roomBusy);
   const roomClaimed = useTrainerStore(s => s.roomClaimed);
@@ -336,7 +334,7 @@ export default function TrainerRunClient() {
   // 手动标过的一律不覆盖,做炸了由 SRS 的自动降级打回「不熟」。
   // 挂在前进这一个出口上(← 回看、进页首次出题都不经过这里,所以不会误标)。
   const autoMasterRef = useRef(false);
-  autoMasterRef.current = autoMasterOnAdvance && mode !== 'memo';
+  autoMasterRef.current = mode !== 'memo';
   const markPassedAsMastered = useCallback((keys: Array<string | null | undefined>) => {
     if (!autoMasterRef.current) return;
     const mk = useTrainerMarks.getState();
@@ -400,8 +398,8 @@ export default function TrainerRunClient() {
       if (e.code === 'ArrowLeft') { e.preventDefault(); prevScramble(); return; }
       if (e.code === 'ArrowRight') { e.preventDefault(); advanceScramble(); return; }
       // 1、2、4:直接给卡片当前 case 打标记(1 不熟 / 2 已掌握 / 4 星标);再按同键取消。
-      // 「过了就算掌握」开着时卡片上不摆「已掌握」按钮(见 CaseMarkBar),但 2 仍然有效 ——
-      // 那是把已标「不熟」的 case 提前提成「已掌握」的快捷路径。
+      // 卡片上不摆「已掌握」按钮(过了就自动算,见 CaseMarkBar),但 2 仍然有效 ——
+      // 那是把已标「不熟」的 case 直接提成「已掌握」的快捷路径。
       if (!e.repeat && (e.code === 'Digit1' || e.code === 'Digit2' || e.code === 'Digit4')) {
         const st = useTrainerStore.getState();
         if (st.timerState !== TimerState.NOT_RUNNING && st.timerState !== TimerState.STOPPING) return;
@@ -915,11 +913,6 @@ export default function TrainerRunClient() {
                     onChange={setTiming}
                     label={tr({ zh: '计时', en: 'Timing' })}
                   />
-                  <BoolToggle
-                    value={autoMasterOnAdvance}
-                    onChange={setAutoMasterOnAdvance}
-                    label={tr({ zh: '过了就算掌握', en: 'Passing = mastered' })}
-                  />
                   {mode === 'recap' && (
                     <>
                       <PillToggle
@@ -949,8 +942,8 @@ export default function TrainerRunClient() {
               {!isMemo && (
                 <div className="trainer-opts-hint">
                   {tr({
-                    zh: '过了就算掌握 = 换到下一题时,把刚做完那个 case 标成「已掌握」。只标还没标过的 —— 手动标的「不熟」不动;标错了在「上一个」卡片上再点一下「已掌握」就取消',
-                    en: 'Passing = mastered: moving on marks the case you just finished as Mastered. Only untouched cases get marked — your own Shaky marks stay put. Click Mastered again on the Previous card to undo one',
+                    zh: '换到下一题 = 这题过了:还没标过的 case 自动记成「已掌握」,手动标的「不熟」不动;没过的话在「上一个」卡片上点「不熟」',
+                    en: 'Moving on counts as a pass: an unmarked case is recorded as Mastered, while your own Shaky marks stay put. Didn’t get it? Hit Shaky on the Previous card',
                   })}
                 </div>
               )}
