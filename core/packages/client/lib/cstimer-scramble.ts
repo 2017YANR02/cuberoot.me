@@ -27,6 +27,16 @@ function getWorker(): Worker {
   worker.onerror = (e) => {
     for (const slot of pending.values()) slot.reject(new Error(e.message || 'worker error'));
     pending.clear();
+    // Drop the handle so the next call builds a fresh worker. An `onerror` from a
+    // classic worker usually means one of its importScripts didn't load, which
+    // leaves the worker alive but with no `onmessage` installed — keeping the
+    // handle would make every later postMessage vanish and its promise hang
+    // forever (observed on the sq1 solver page after a cache clear: the panel
+    // sat on "求解中…" with no error, because the prewarm call had already
+    // consumed the single onerror).
+    const dead = worker;
+    worker = null;
+    dead?.terminate();
   };
   return worker;
 }
@@ -224,10 +234,21 @@ export async function cstimerScramble(id: string): Promise<string> {
 export async function cstimerSolve(id: string, scramble: string): Promise<string> {
   const e = BY_ID.get(id);
   if (!e) throw new Error('unknown cstimer event: ' + id);
+  return cstimerSolveByKey(e.key, scramble);
+}
+
+/**
+ * Same worker call, addressed by cstimer's own scramble key instead of one of
+ * our CstimerEvent ids. WCA puzzles need this: Square-1 (`sqrs`) has a real
+ * cstimer solver but its scrambles come from cubing.js, so it isn't — and
+ * shouldn't be — an entry in CSTIMER_EVENTS (that list is the non-WCA fleet,
+ * and CI locks CSTIMER_SOLVABLE_IDS to it).
+ */
+export async function cstimerSolveByKey(key: string, scramble: string): Promise<string> {
   const w = getWorker();
   const reqId = nextId++;
   return new Promise<string>((resolve, reject) => {
     pending.set(reqId, { resolve, reject });
-    w.postMessage({ id: reqId, op: 'solve', key: e.key, scramble });
+    w.postMessage({ id: reqId, op: 'solve', key, scramble });
   });
 }
