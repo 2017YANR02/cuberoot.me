@@ -24,6 +24,9 @@ g.localStorage = makeLocalStorage();
 
 // 内存房间模拟:createRoom 记下 keys,claimRoomBatch 顺序出队(最多 count 格),nextRoundRoom 重置游标 + 轮次。
 const sim = { code: 'ROOM1', order: 'shuffle' as 'seq' | 'shuffle', round: 1, total: 0, keys: [] as string[], idx: 0 };
+/** >0 时接下来这么多次 claim 抛 429(模拟限流);vi.mock 提升到顶层,用 var 让工厂能读到。 */
+// eslint-disable-next-line no-var
+var claimFail = 0;
 vi.mock('@/lib/trainer-room-api', () => ({
   createRoom: vi.fn(async (puzzle: string, set: string, order: 'seq' | 'shuffle', keys: string[], start = 0) => {
     sim.order = order; sim.round = 1; sim.total = keys.length; sim.keys = keys; sim.idx = start;
@@ -34,6 +37,7 @@ vi.mock('@/lib/trainer-room-api', () => ({
     claimed: sim.idx, done: sim.idx >= sim.total,
   })),
   claimRoomBatch: vi.fn(async (_code: string, round: number, count: number) => {
+    if (claimFail > 0) { claimFail--; throw new Error('Rate limit exceeded'); }
     if (round < sim.round) return { kind: 'advanced', round: sim.round, total: sim.total };
     if (sim.idx >= sim.total) return { kind: 'done', round: sim.round, total: sim.total };
     const cases: { caseKey: string; index: number }[] = [];
@@ -59,6 +63,18 @@ const mkCase = (name: string): AlgCase => ({
 
 const flush = async () => { await new Promise(r => setTimeout(r, 0)); await new Promise(r => setTimeout(r, 0)); };
 
+/** 跑一个会踩到「限流退避重试」的动作:假时钟推过退避窗口,免得测试真等几秒。 */
+const runPastBackoff = async (action: () => void) => {
+  vi.useFakeTimers();
+  try {
+    action();
+    await vi.advanceTimersByTimeAsync(5000);
+  } finally {
+    vi.useRealTimers();
+  }
+  await flush();
+};
+
 function boot(names: string[]) {
   const cases = names.map(mkCase);
   const st = useTrainerStore.getState();
@@ -72,7 +88,7 @@ const curRecap = () => {
 };
 
 describe('trainer-store online room', () => {
-  beforeEach(() => { g.localStorage = makeLocalStorage(); sim.round = 1; sim.idx = 0; });
+  beforeEach(() => { g.localStorage = makeLocalStorage(); sim.round = 1; sim.idx = 0; claimFail = 0; });
 
   it('建房 → 领题 → 领完弹本轮结束 → 继续下一轮 → 离开', async () => {
     boot(['A', 'B', 'C']);
@@ -177,6 +193,46 @@ describe('trainer-store online room', () => {
     expect(s.currentKey).toBe(K[2]);              // 从第 3 个(index 2)继续 = 单机当前题 C
     expect(curRecap()).toEqual({ pos: 3, total: 5 }); // 进度接着显示 3/5,不重置到 1
 
+    useTrainerStore.getState().leaveRoom();
+  });
+
+  // 生产事故回归(2026-07-26):claim 被限流 429,客户端把「领取失败」当成「本轮领完」,
+  // 弹「全队已刷完全部 472 个 case」;用户点「继续下一轮」→ 真的重洗并把全队进度清零,
+  // 再 claim 再 429 再弹窗,30 秒内房间空转到第 6 轮(DB next_index 一直是 0)。
+  it('领取失败(限流/断网)只报错,绝不冒充本轮结束', async () => {
+    useTrainerStore.getState().leaveRoom();
+    boot(['A', 'B', 'C']);
+    await useTrainerStore.getState().createRoom();
+    await flush();
+    const before = useTrainerStore.getState().currentKey;
+
+    claimFail = 99;                                  // 持续 429(含内部退避重试)
+    await runPastBackoff(() => useTrainerStore.getState().nextScramble());
+    const s = useTrainerStore.getState();
+    expect(s.recapRoundDone).toBe(false);            // ← 事故点:曾误置 true 弹窗
+    expect(s.roomError).toMatch(/Rate limit/);
+    expect(s.currentKey).toBe(before);               // 题面原地不动
+    expect(sim.round).toBe(1);                       // 房间轮次没被误推进
+
+    claimFail = 0;                                   // 恢复后照常领题
+    useTrainerStore.getState().nextScramble();
+    await flush();
+    expect(useTrainerStore.getState().currentKey).not.toBe(before);
+    useTrainerStore.getState().leaveRoom();
+  });
+
+  it('限流一次后退避重试成功,用户无感', async () => {
+    useTrainerStore.getState().leaveRoom();
+    boot(['A', 'B', 'C']);
+    await useTrainerStore.getState().createRoom();
+    await flush();
+    const before = useTrainerStore.getState().currentKey;
+
+    claimFail = 1;                                   // 只失败一次 → 内部重试应该救回来
+    await runPastBackoff(() => useTrainerStore.getState().nextScramble());
+    const s = useTrainerStore.getState();
+    expect(s.recapRoundDone).toBe(false);
+    expect(s.currentKey).not.toBe(before);
     useTrainerStore.getState().leaveRoom();
   });
 
