@@ -1482,10 +1482,27 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
               })}</p>
             ) : exactCell?.kind === 'zero' ? (
               <>
-                <p className="scramble-stats-exact-zero">
-                  {tr({ zh: '0 步状态数', en: '0-move states' })}
-                  <b>{groupDigits(exactCell.zero)}</b>
-                </p>
+                {/* 中间各档跑不动,但两个端点常常是知道的 —— 有 top 就并排摆出来,
+                    「最深一档只剩这么几个态」本身就是这批数据里最有信息量的一条。 */}
+                <div className="scramble-stats-exact-ends">
+                  <p className="scramble-stats-exact-zero">
+                    {tr({ zh: '0 步状态数', en: '0-move states' })}
+                    <b>{groupDigits(exactCell.zero)}</b>
+                  </p>
+                  {exactCell.top && (
+                    <p className="scramble-stats-exact-zero">
+                      {tr({ zh: `${exactCell.top.depth} 步状态数`, en: `${exactCell.top.depth}-move states` })}
+                      {exactCell.top.href ? (
+                        <Link href={exactCell.top.href} className="scramble-stats-exact-top-link">
+                          <b>{groupDigits(exactCell.top.count)}</b>
+                        </Link>
+                      ) : (
+                        <b>{groupDigits(exactCell.top.count)}</b>
+                      )}
+                    </p>
+                  )}
+                </div>
+                {exactCell.top && <p>{tr(exactCell.top.label)}</p>}
                 <p>{tr(exactCell.blocked)}</p>
               </>
             ) : (

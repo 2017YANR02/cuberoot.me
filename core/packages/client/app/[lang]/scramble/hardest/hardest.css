@@ -1,0 +1,274 @@
+/* /scramble/hardest —— 六色底 XCross 的上确界。层级靠 margin/gap,不套卡片框。 */
+
+.hardest-page {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 24px 16px 72px;
+}
+
+.hardest-page h1 {
+  margin: 0 0 8px;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.hardest-lede {
+  margin: 0;
+  max-width: 62ch;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--muted-foreground);
+}
+
+/* ── 关键数字 ───────────────────────────────────────── */
+
+.hardest-figures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 32px;
+  margin: 24px 0 0;
+}
+
+.hardest-figure b {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--foreground);
+}
+
+.hardest-figure span {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+
+/* ── 章节 ───────────────────────────────────────────── */
+
+.hardest-section {
+  margin-top: 36px;
+}
+
+.hardest-section h2 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.hardest-section p {
+  margin: 0 0 8px;
+  max-width: 68ch;
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: var(--muted-foreground);
+}
+
+.hardest-section p:last-child {
+  margin-bottom: 0;
+}
+
+.hardest-section code {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--foreground);
+}
+
+/* ── 证明分层 ───────────────────────────────────────── */
+
+.hardest-proof {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hardest-proof li {
+  margin-top: 12px;
+}
+
+.hardest-proof-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.hardest-proof-head b {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.hardest-tag {
+  font-size: 11px;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+.hardest-tag.is-proved { color: var(--signal-success); }
+.hardest-tag.is-local { color: var(--signal-warning); }
+.hardest-tag.is-upstream { color: var(--faint-foreground); }
+
+.hardest-proof p {
+  margin: 3px 0 0;
+}
+
+/* ── 23 类代表 ──────────────────────────────────────── */
+
+.hardest-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(214px, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.hardest-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 6px 9px;
+  border-radius: 6px;
+  color: inherit;
+  text-decoration: none;
+  /* 23 个 SVG 一次性挂上,离屏的先不排版 */
+  content-visibility: auto;
+  contain-intrinsic-size: 214px 190px;
+}
+
+.hardest-cell:hover {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
+.hardest-cell-no {
+  align-self: flex-start;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--faint-foreground);
+}
+
+.hardest-cell-alg {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.45;
+  text-align: center;
+  color: var(--muted-foreground);
+  word-spacing: 1px;
+}
+
+/* 指标行:「轨道 6」「H* 20」这样的成对小标签,自适应换行 */
+.hardest-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px 10px;
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+
+.hardest-metrics span {
+  white-space: nowrap;
+}
+
+.hardest-metrics b {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: var(--foreground);
+}
+
+/* ── 著名极难打乱 ───────────────────────────────────── */
+
+.hardest-famous {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  margin-top: 14px;
+}
+
+.hardest-famous-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.hardest-famous-body {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.hardest-famous-src {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.hardest-famous-scramble {
+  display: block;
+  margin-top: 3px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+  word-break: break-word;
+}
+
+.hardest-famous-note {
+  margin: 5px 0 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+}
+
+.hardest-stage-table {
+  margin-top: 7px;
+  border-collapse: collapse;
+  font-size: 11.5px;
+}
+
+.hardest-stage-table th,
+.hardest-stage-table td {
+  padding: 2px 12px 2px 0;
+  text-align: left;
+  vertical-align: baseline;
+  font-weight: 400;
+}
+
+.hardest-stage-table th {
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+
+.hardest-stage-n {
+  font-family: var(--font-mono);
+  color: var(--foreground);
+}
+
+.hardest-stage-sol {
+  font-family: var(--font-mono);
+  color: var(--muted-foreground);
+  word-break: break-word;
+}
+
+/* ── 尾注 ───────────────────────────────────────────── */
+
+.hardest-source {
+  margin-top: 36px;
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: var(--faint-foreground);
+}
+
+.hardest-source a {
+  color: inherit;
+}
+
+@media (max-width: 480px) {
+  .hardest-figures { gap: 12px 22px; }
+  .hardest-figure b { font-size: 21px; }
+  .hardest-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+}

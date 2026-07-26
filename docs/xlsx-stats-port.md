@@ -1,0 +1,141 @@
+# 表格统计移植 追踪
+
+两份自建表格搬上站,顺带把能便宜证明的都证掉。源文件在 `.tmp/xlsx/`(gitignored,不进仓库):
+
+- `3x3.xlsx` — cross / xcross 分布 + 极难打乱语料
+- `Cube Odds.xlsx` — 全项目「情况概率」速查表(<https://bit.ly/cubeodds>)
+
+## 0 铁律
+
+- **不重造轮**:每条数据先查站内有没有,有就并进现成页面/数据层,别新开重复入口。
+- **来源分级**:每个数字必须标明是①站内代码现算 ②穷举 BFS 金标 ③表格搬运(未证)。不许把搬运伪装成证明。
+- **能证就证**:凡是浏览器/CI 里几秒内能枚举出来的,写成 `toBe()` 锁死的测试,页面标「现场自证」。
+- 大数一律十进制字符串 + BigInt,禁 `number`(见 `exact_dist.ts` 的教训)。
+
+## 1 主线:六色底 XCross = 10 的 438 个状态 ✅
+
+### 事实
+
+| | |
+|---|---|
+| 全空间 | 43,252,003,274,489,856,000 |
+| 六色底(CN)XCross = 10 的状态数 | **438**(ground truth) |
+| 对称去重后 | **23** 类(轨道 6/12/24/48) |
+| 概率 | 1 / 9.87489e16 |
+
+来源:`3x3.xlsx` 的 `10f CN xcross uniq 23` 表(23 条代表 + `All [438]` 全表);`Cube Odds.xlsx`
+的 `3x3!10 Move CN xcross = 9.87489e+16`,与 4.3252e19 / 438 一致。
+
+CN XCross = 10 即「六个底色 × 四个槽位共 24 种口径全部要 10 步」,是 XCross 的上确界
+(单色底 4 槽 XCross 的最大深度就是 10,`dist_xcross_1col` 金标 d=10 = 4,998,960)。
+
+### 证明分层(页面上逐条标注,不许混)
+
+1. **闭包证明 — CI 现场自证**。438 = 23 条代表在 48 元对称群(24 转体 × 镜像)下的轨道并集。
+   `tests/cn_xcross_10.test.ts` 每次跑都重算 23×48 去重,断言逐个状态命中表格那 438 条(不多不少,
+   不是只比个数),且 23 条两两不对称等价。
+2. **性质证明 — 本机 solver 实证**。`std_analyzer`(`CUBE_RUN_FULL_STD=1`)跑完 438 条,
+   438×6 = 2,628 个 xcross 值全部为 10;副产物:cross 值 `{8: 2604, 6: 24}` —— 有一条轨道的部分底色
+   只要 6 步十字。结论归档 `tests/fixtures/cn_xcross_10_golden.json`。
+3. **整方最优步数 — 本机 cubeopt 复核**。h48 15G 剪枝表对 23 条代表逐条复算,与表格 `optimal` 列
+   **零不一致**(直方图 18×4 / 19×17 / 20×2);对 5 条名场面打乱同样复算,发现表格 `f*` 列在
+   `Kliria the Kirlia` 那行其实是**打乱长度 22**,真实最优是 19 —— 已按复核值落库。
+4. **穷尽性 — 做不到,如实标注**。「不存在第 439 个」需要在 4.3e19 全空间穷举。已知最紧可枚举上界是
+   双色底 WY XCross d=10 的 20,230,604 个状态(`dist_xcross_2col` 金标),但那一档走对称折叠 + 聚合,
+   不落地单个状态。→ 站上写「上游穷举搜索给出的 ground truth」,不写「已证明」。
+
+### 落地
+
+- [x] 从 xlsx 抽 23 + 438 → `scramble/hardest/_data/cn_xcross_10.ts` + `tests/fixtures/cn_xcross_10_golden.json`
+- [x] 闭包 + 性质测试 `tests/cn_xcross_10.test.ts`(7 项)
+- [x] 写进 `exact_dist.ts`:六色底 XCross 那格补 `top` 端点(d=10 = 438),覆盖矩阵改「只知道两端」
+- [x] `scramble/hardest/page.tsx` —— 23 代表画廊 + 证明分层 + 5 条名场面打乱;`exact_dist.ts` 的
+      `href: '/scramble/hardest'` 死链随之修好
+- [x] `hard_scrambles.ts` + `tests/hard_scrambles.test.ts`:每条阶段解法现场验「确实解开了该阶段」
+      且长度相符(证到 ≤ count;最优性仍是表格口径)
+
+## 2 站内覆盖勘察(移植前必读)
+
+四个只读 agent 扫过 `/scramble` `/math` `/alg` 及其余路由,合并结论如下。
+口径:`covered` = 站内已有等价或更强;`partial` = 数据层或视图缺一半;`absent` = 全新。
+
+### A 组 分布 / 语料(`3x3.xlsx`)
+
+| # | 表格条目 | 站内现状 | 动作 |
+|---|---|---|---|
+| A1 | 3×3 整解 0..20 深度分布 | covered(理论)/ partial(并排)。0..20 全表**硬编码 4 份**:`math/god`、`math/group`(2 处)、`why-cube`、`wca/prediction/lucky_data.ts`。经验档在 `/scramble/stats` 方法「整体」(12..19,n=1,317,565) | 并入 `/scramble/stats`,`DiscreteHistogram` 虚线叠理论柱。**前置 C1 收敛单一源** |
+| A2 | 对称态 164,604,041,664 | covered。`scramble/symmetry/_sym_core.ts` 33 型全表 + `tests/symmetry_core.test.ts` 现场重算 | 并入 `/math/group`,import `_sym_core.ts`,禁重造 |
+| A3 | Cross 190,080 / 5,109,350,400 / 980,995,276,800 | covered。`exact_dist.ts` 三档逐位落地 + `toBe` 锁死 | 不搬;`/code/algorithms/cfop-std-solver` 加一条链过去 |
+| A4 | Cross 四色底 avg 5.019 | partial。经验档有;`exactColorsOf()` 对 4 字符 key 显式 `return null` | 只补数字:新增第四档 `ExactColors` |
+| A5 | 伪十字精确 49,848 / avg 5.386 | partial。只有真题经验档,无 `dist_pscross*` | 只补数字:`exact_dist.ts` 新增 `pscross` 阶段 |
+| A6 | EOCross 212,889,530 / fixed 24,330,240 | partial。有 analyzer 无精确档 | 只补数字。**先核 C5** |
+| A7 | XCross 各口径 | partial,但站内比表格强(dual 是精确不是采样) | 只补六色底那一格 |
+| A8 | 白底 XXCross 采样 1,097,307 | covered(站内 n 更大,且有 adj/diag 各 21,459,271,680 精确全表) | 不搬;标注样本来源差异(C11) |
+| A9 | Roux FB/SB/223 + 1LLL 3,916 | partial。1LLL 数据层 100% 就绪(PG `alg_cases.meta.optimal`)但**无聚合视图**;Roux SB 1,088,640 真缺 | 1LLL 新建加权步数分布视图;Roux 只补数字 |
+| A10 | 5c / 5e 部分还原 1152 / 3272 | absent | 只补数字 |
+| A11 | 5 条名场面打乱 | **done**(见 §1) | — |
+| A12 | 20f 语料 32,625 / 1000 / 1,130,184 | absent,但范式已跑通(`distribution.json` 的 `xcross_2_col_10f` set) | 照抄范式生成新 set,不新建页面 |
+| A13 | no bar / disconnected / no headlight 计数 | absent(只有 2×2 侧的) | 新建 `stats/scramble/threex_recognition.json`,套 essential-2x2 契约 |
+| A14 | EO 三轴坏棱联合表(分母 70,963,200 = 2¹¹ × 12!/(4!4!4!)) | absent | 套 `2x2_essential.json` 的 joint grid,`Essential2x2View` 现成 |
+| A15 | 10f eocross 语料 140 条 | absent | 同 A12 范式 |
+| A16 | 438 / 23 | **done**(见 §1) | — |
+
+### B 组 概率(`Cube Odds.xlsx`)
+
+| # | 表格条目 | 站内现状 | 动作 |
+|---|---|---|---|
+| B1 | LL 跳步速查(OLL 1/216、PLL 1/72、LL 1/15552、COLL 1/162、EO 1/8、LSLL、F2L) | partial。单 case 概率成熟且**现算**(`lib/alg_probability.ts`);跳步概率已散落三处(`method_dna.ts` / `glossary.json` / 长文) | 新建速查表挂 `/math/probability`,并**收敛**那三处(C12) |
+| B2 | CFOP 各阶段逐步概率 / skip | partial。`ExactDistTable` 已有占比列;缺的正是覆盖矩阵的黄格 | 只补数字(依赖 solver 补 `dist_*`) |
+| B3 | CN 2×2×2 block 各步概率 | partial。有经验档无精确档;NISS 全站无实现 | 只补数字;NISS 单独立项 |
+| B4 | FMC 0..20 各步概率 | covered(三种呈现,含 500k 真采样) | 不搬;与 A1 一起做理论×经验并排 |
+| B5 | 三阶 no bar / disconnected / no headlight 概率 | absent | 与 A13 同批 |
+| B6 | 2×2 各 skip / CLL / EG | partial。`lib/essential-2x2.ts` 全 3,674,160 态精确 | 只补数字;CLL/EG 需先给 case 补 `meta.sym.cn` |
+| B7 | 4×4 中心跳 1/1771、双中心 1/8,580,495 | absent | 新建 `*_444.json` + 接 `PUZZLE_EVENT_MAP` |
+| B8 | Megaminx 各 skip | absent | 新建;注意别与 `lucky_data.D_MINX` 的 approx 曲线混 |
+| B9 | Pyraminx bar 口径 | partial。CN 各步 covered(`essential-pyram.ts` 933,120 全枚举) | 只补 strong/weak bar 两个 stat 组 |
+| B10 | Skewb U perm 1/131,220 / no bar / 0c..5c | partial。整解深度已精确(3,149,280) | 新建 `skewb_essential.json`,复用现成视图 |
+| B11 | SQ1 各 skip + 11 face turns | partial。CS 已覆盖;站内并存 5 套口径 | **先写口径映射表**(C10) |
+| B12 | Roux LSE/F2B/CMLL/EO skip | partial(有步数分布,无 skip 概率) | 与 B1 同一张速查表 |
+| B13 | 一轮五把里 ≥n 把跳步(二项) | absent | `/math/probability` 新增二项小节,复用 `pHitLeqK` 的数值稳定写法 |
+
+### 冲突 / 待核(动手前先解决)
+
+| # | 冲突 | 处置 |
+|---|---|---|
+| C1 | 四份 0..20 表 d=16..19 **互相打架**,`math/god` 那份 Σ ≠ \|G\| | 抽单一源(按 Rokicki 2010 官方表),四处 import;配 `Σ = 43,252,003,274,489,856,000` 的 `toBe` 测试 |
+| C2 | `math/group/.../Patterns.tsx` 写「只有**三个**状态需要满 20 步」,与同书 §23 的 d=20 = 490,000,000 矛盾 | 硬伤,顺手修 |
+| C3 | `exact_dist.ts` href `/scramble/hardest` 死链 | **已修**(§1) |
+| C4 | A4 的分母与 A3 六色档同为 980,995,276,800 | 不是冲突(= 12!·2¹¹,共用同一棱商空间);落表后用 `exactMean` 复核「四色 avg > 六色 avg」 |
+| C5 | A6 的 212,889,530 疑笔误:190,080 × 1120 = 212,889,**600** | 落表前 solver 复算,或确认它是 sym-unique 计数。别直接抄 |
+| C8 | `/code/solvers` 的 222 块 = 253,440 态(固定角口径),表格是 CN 口径 | 差 ×8/×24,写表时显式标注口径 |
+| C10 | SQ1 五套口径并存(WCA 12c4 / slash / twist / face / cubeshape) | 先写口径映射表,否则 `metric` 切换器静默串档 |
+| C11 | A8 样本来源不同:站内 WCA 真题 1,317,565 vs 表格随机态 1,097,307 | 逐档必有系统差,别当回归失败;可同图叠加 |
+| C12 | OLL 1/216 等三条已存在于 `method_dna.ts` / `glossary.json` | 速查表必须收敛,别做成第五份硬编码 |
+| C13 | A5 pseudo 精确 avg 5.386 vs 站内经验 4.308 | 底色/固定槽口径不同,搬前对齐 |
+
+### 可复用清单(节选,别重造)
+
+- 精确分布数据层 `scramble/stats/_data/exact_dist.ts`(字符串 + BigInt);上游真源 `solver/src/bin/dist_*.rs` 的 `GOLDEN` 注释
+- 新语料集范式 `stats/scramble/distribution.json` 的 `xcross_2_col_10f` set + `downloads/<set>/<variant>/<stage>/<subset>_<bin>.txt`
+- 全枚举契约 `lib/essential-2x2.ts` / `essential-pyram.ts`(边缘 + joint grid + 多组 stat),视图 `Essential2x2View` / `PyraminxEssentialView`
+- 直方图单一源 `DiscreteHistogram`(超 Number ratios / outline 虚线叠加 / 对数 y 轴);逐档表 `ExactDistTable`;覆盖矩阵 `ExactCoverageMatrix`
+- 概率:`lib/alg_probability.ts`(`ALG_SET_UNIVERSE` / `caseOrbit` = 16/cn / `probabilityFraction`)、`math/probability/_components/ll_math.ts`
+- 对称群引擎 `scramble/symmetry/_sym_core.ts`(48 元 + 33 型);现场复核 `lib/cross-solver.ts`、`components/StageSolver`
+- 千分位 `lib/group-digits.ts`(全站单一实现,收字符串)
+
+## 3 落地顺序(依赖最短)
+
+1. ~~C3 死链 → `scramble/hardest/page.tsx` + 测试~~ ✅
+2. C1 单一源 → 收敛 0..20 表 → 才能做 A1/B4 的理论×经验并排
+3. 纯数据层补丁(无新页面):A4 四色档 → A5 pscross → A10 → B3 → B2 黄格
+4. B1 速查表(收敛 `method_dna` + glossary 三条)→ 顺带 B12
+5. 新 essential JSON:B10 skewb → A14 EO 联合 → A13/B5 三阶识别口径
+6. 新语料集(照 `xcross_2_col_10f`):A12 → A15
+7. 待核后再动:A6(C5)、B11(C10)、B7/B8(全新分母)
+
+## 4 进度
+
+- [x] 清点两份表格
+- [x] 站内覆盖勘察(§2)
+- [x] §1 438 主线 + `/scramble/hardest`
+- [ ] §3 第 2 步起的其余移植

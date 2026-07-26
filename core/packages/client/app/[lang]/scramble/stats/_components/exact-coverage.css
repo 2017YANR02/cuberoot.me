@@ -97,6 +97,12 @@
   color: var(--muted-foreground);
 }
 
+/* 最深一档的状态数:这格里最稀有的那个数(六色底 XCross 全空间只有 438 个 10 步态),
+   比 0 步那行更值得看,给足对比度。 */
+.exact-cov-val.is-top {
+  color: var(--foreground);
+}
+
 .exact-cov-blocked {
   display: block;
   margin-top: 3px;

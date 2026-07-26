@@ -1,0 +1,12 @@
+{
+ "note": "同一套 cubeopt 对 hard_scrambles.ts 里 5 条(+1 条 superflip 伴侣)的整方最优 HTM。",
+ "optimal": [
+  19,
+  20,
+  20,
+  19,
+  20,
+  20
+ ],
+ "crossXcross": "id,cross_z0,cross_z2,cross_z3,cross_z1,cross_x3,cross_x1,xcross_z0,xcross_z2,xcross_z3,xcross_z1,xcross_x3,xcross_x1,xxcross_z0,xxcross_z2,xxcross_z3,xxcross_z1,xxcross_x3,xxcross_x1,xxxcross_z0,xxxcross_z2,xxxcross_z3,xxxcross_z1,xxxcross_x3,xxxcross_x1,xxxxcross_z0,xxxxcross_z2,xxxxcross_z3,xxxxcross_z1,xxxxcross_x3,xxxxcross_x1\n1,8,8,8,8,8,8,9,9,9,9,9,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0\n2,8,8,8,8,8,8,10,10,10,10,10,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0\n3,6,6,8,8,7,7,9,9,9,9,9,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0\n4,8,8,8,8,8,8,9,9,9,9,9,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0\n5,1,1,5,5,5,5,8,8,8,8,8,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0\n6,6,6,7,7,7,7,8,8,8,8,8,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
+}
