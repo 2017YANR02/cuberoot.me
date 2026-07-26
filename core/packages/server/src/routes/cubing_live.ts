@@ -394,7 +394,9 @@ function ttlFor(source: SourceId): number {
 //     跨比赛裁决实际没生效)—— 必须让 v4 期间存下的错误裁决整体失效.
 // v6: 池按「距今天多远」淘汰(v5 只留最新 4 个日期,被 prewarm 扫到的未来比赛挤掉当天的桶);
 //     ymd() 补上 pg 的 Date 形态.
-const SCHEMA_VERSION = 6;
+// v7: compOver 不再把「昨天结束」的比赛锁进 1h TTL —— 之前 enrich 只在重启后跑过一次,
+//     同日裁决永远停在第一次(池里只有自己)的结果上.
+const SCHEMA_VERSION = 7;
 
 const startDateCache = new Map<string, { d: string | null; end: string | null; at: number }>();
 const START_DATE_CACHE_TTL = 60 * 60_000;
@@ -422,8 +424,10 @@ async function getCompDates(wcaId: string): Promise<{ start: string | null; end:
         [wcaId],
       );
     }
-    const d = rows[0]?.start_date || null;
-    const end = rows[0]?.end_date || null;
+    // 规范成 YYYY-MM-DD:pg 对 DATE 列给的是 Date 对象,原样传下去会让 Date.parse(sd)
+    // (pickL2TtlMs 的 TTL 分档)和日期串比较都走进 "Sat Jul 25 2026 …" 的坑.
+    const d = ymd(rows[0]?.start_date);
+    const end = ymd(rows[0]?.end_date);
     startDateCache.set(wcaId, { d, end, at: Date.now() });
     return { start: d, end };
   } catch {
@@ -705,6 +709,11 @@ const dayPool = new Map<string, Map<string, DayBest>>();
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
+}
+
+/** n 天前的 UTC 日期(ISO).与 listOngoingComps 的 ±2d 窗口对齐. */
+function isoDaysAgo(n: number): string {
+  return new Date(Date.now() - n * 86400_000).toISOString().slice(0, 10);
 }
 
 /** 距今天 ≤ DAY_POOL_WINDOW_DAYS 天.9i2 裁决只在「直播中 → WCA 公示前」这段窗口有意义:
@@ -1787,13 +1796,16 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
       if (known.length > 0) {
         const fastKey = `${wcaId}:wca`;
         // 上次 fallback 到 cubing / wca_live 的决策还在缓存窗内 → 秒返回,跳过 WCA + probe.
-        // 只有真正结束(end_date < 今天 UTC)的比赛成绩才不再变,放宽到 wca TTL(1h);
-        // 进行中 / 当天的比赛必须走短 TTL(60s)实时刷新.
+        // 真正结束的比赛成绩才不再变,放宽到 wca TTL(1h);进行中 / 刚结束的走短 TTL(60s).
         // ⚠️ 别用 rd.s===1 判 "全部 finished":wca_live 加载器对每个 round 恒设 s=1
         //    (它的 meta GraphQL 不返回 round 状态),会把直播中的国外比赛误判成全部完成
         //    → 缓存 1h 不刷新,连带 fastPrewarmOngoing(65s)也只拿到旧缓存空转、永不回源.
-        const endDate = known[0].end_date;
-        const compOver = !!endDate && endDate < new Date().toISOString().slice(0, 10);
+        // ⚠️ 同理,"结束" 不能judge 成 end_date < 今天 UTC:昨天刚打完的比赛会立刻被锁进 1h,
+        //    而 fastPrewarmOngoing 扫的是比赛日 ±2d,照样每 65s 来一次却只拿到旧缓存,enrich
+        //    根本不跑 —— Reg 9i2 同日裁决要靠这几轮刷新收敛(某场首次入池时可能还没见到同日
+        //    别的赛场),被锁住就永远停在第一次算错的那份上。改成"末日已过去 ±2d 窗口"。
+        const endDate = ymd(known[0].end_date);
+        const compOver = !!endDate && endDate < isoDaysAgo(ONGOING_WINDOW_DAYS);
         const cubingCacheKey = `${wcaId}:cubing`;
         const cubingCached = cache.get(cubingCacheKey);
         if (cubingCached && Object.values(cubingCached.resultsByRound).some(arr => arr.length > 0)) {
@@ -2026,6 +2038,9 @@ export async function prewarmHotComps(): Promise<void> {
 // 这些比赛 L1/L2 TTL 只有 60s,10min 的整体 prewarm 兜不住中间的冷窗.单独每 65s
 // (略大于 60s TTL,确保每轮都真正回源刷新) 刷这十来场,让边缘 SWR 后台重验 /
 // 首个用户回源时命中 ~1.5s 的热上游,而非 3-20s 冷拉.
+// 「进行中」窗口:比赛日 ±2d.fastPrewarmOngoing 扫这批,loadComp 的 compOver 判定也用它 ——
+// 两处必须一致,否则扫得到却因缓存被判 "已结束" 而拿不到新数据(65s 空转).
+const ONGOING_WINDOW_DAYS = 2;
 const FAST_PREWARM_INTERVAL_MS = 65_000;
 const FAST_PREWARM_DELAY_MS = 400;
 let fastPrewarming = false;
@@ -2034,7 +2049,8 @@ async function listOngoingComps(): Promise<string[]> {
   try {
     const rows = await query<{ id: string }>(
       `SELECT id FROM wca_competitions
-        WHERE start_date BETWEEN CURRENT_DATE - INTERVAL '2 days' AND CURRENT_DATE + INTERVAL '2 days'`,
+        WHERE start_date BETWEEN CURRENT_DATE - INTERVAL '${ONGOING_WINDOW_DAYS} days'
+                             AND CURRENT_DATE + INTERVAL '${ONGOING_WINDOW_DAYS} days'`,
     );
     return rows.map(r => r.id);
   } catch (e) {
