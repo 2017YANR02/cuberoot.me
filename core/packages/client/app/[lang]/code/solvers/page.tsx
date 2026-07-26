@@ -819,6 +819,47 @@ export default function SolversPage() {
           </div>
         </section>
 
+        {/* 魔表不进 NONWCA_TS(那张表的 event 集被 CI 锁死 == CSTIMER_SOLVABLE_IDS,且 A/B/C/D
+            四档说的是非 WCA 小魔方的状态空间打法,套不上);它是**唯一一个**用纯 TS 在浏览器里
+            现算、可证最优的 WCA 项目,故单列一节。 */}
+        <section className="solv-section">
+          <header className="solv-sec-head">
+            <Boxes size={15} strokeWidth={2} />
+            <h2>{zh ? '纯 TS WCA 项目最优(魔表)' : 'Pure-TS WCA-event optimal (Clock)'}</h2>
+            <span className="solv-sec-note">{zh ? '可证最优 · 浏览器现算 · 零下载表' : 'provably optimal · in-browser · no downloaded tables'}</span>
+          </header>
+          <div className="solv-mx-wrap">
+            <table className="solv-mx">
+              <tbody>
+                <tr>
+                  <th scope="row" className="solv-mx-name">
+                    <span className="solv-mx-nm">{zh ? '魔表' : "Rubik's Clock"}</span>
+                    <span className="solv-mx-sub">{zh ? '一步 = 针脚组合 × 一次转动' : 'one move = pin pattern × one turn'}</span>
+                  </th>
+                  <td className="solv-mx-cell"><span className="solv-mx-val solv-tone-dim">{zh ? '双侧枚举 + 迭代加深' : 'two-side enumeration + IDA'}</span></td>
+                  <td className="solv-mx-cell"><span className="solv-badge solv-q-optimal solv-mx-pad">{zh ? '可证最优' : 'provably optimal'}</span></td>
+                  <td className="solv-mx-cell"><span className="solv-mx-val">1,283,918,464,548,864</span></td>
+                  <td className="solv-mx-cell"><span className="solv-mx-val solv-tone-dim">12</span></td>
+                  <td className="solv-mx-cell">
+                    <button type="button" className="solv-mx-btn" onClick={() => setModal({
+                      title: zh ? '魔表 · 方法' : "Rubik's Clock · method",
+                      body: <>
+                        <div className="solv-tbl-item"><span className="solv-tbl-name">{zh ? '态' : 'states'}</span><span className="solv-tbl-sz">12¹⁴ = 1,283,918,464,548,864 {zh ? '(阿贝尔群 (Z₁₂)¹⁴)' : '(abelian, (Z₁₂)¹⁴)'}</span></div>
+                        <div className="solv-tbl-item"><span className="solv-tbl-name">{zh ? '上帝之数' : "God's number"}</span><span className="solv-tbl-sz">12 {zh ? '(Kogler 2014;全空间分布已知)' : '(Kogler 2014; full distribution known)'}</span></div>
+                        <p className="solv-modal-p">{zh
+                          ? '魔表群是阿贝尔群,且正面招式碰不到背面自有盘、反之亦然,两侧只通过 4 个角盘耦合。于是每侧建一张 Z₁₂⁴ → 最少步数的表(20,736 项,现场建、无落盘),答案 = min_α (F[α] + B[α − 角目标]);两侧按步数上限迭代加深,收敛判据保证漏掉的解不可能更短 —— 可证最优,不是近似。约 10ms/态,纯 TS、零 worker、零下载表。全空间分布(Rokicki 陪集法)与全部 39,248 个 12 步状态用作精确对账集。lib/clock-solver.ts。'
+                          : 'The clock group is abelian, and front moves never touch the back-only dials (and vice versa) — the two sides couple only through the 4 corner dials. So each side gets a Z₁₂⁴ → fewest-moves table (20,736 entries, built on the fly, nothing downloaded) and the answer is min_α (F[α] + B[α − corner target]); both sides iterative-deepen with a convergence test proving no shorter solution was skipped — provably optimal, not approximate. ~10ms per state, pure TS, no worker, no tables. Rokicki\'s full-space distribution and all 39,248 distance-12 states serve as exact regression oracles. lib/clock-solver.ts.'}</p>
+                      </>,
+                    })}>
+                      <span className="solv-mx-val solv-tone-accent">{zh ? '查看' : 'view'}</span><span className="solv-mx-more">▸</span>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
         <footer className="solv-foot">
           <span>{zh
             ? `进度与日期实时取自 distribution.json (每次手动跑管道才刷新, 无定时); 吞吐/内存为 2026-05-30 实测常量。`
