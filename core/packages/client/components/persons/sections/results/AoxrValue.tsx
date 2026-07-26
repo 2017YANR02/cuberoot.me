@@ -34,6 +34,6 @@ export function AoxrValue({ cell, eventId }: { cell: AoxrCell | null | undefined
 
 /** 列头提示:一次讲清 AoXR 是什么 + 为什么某些场次没有值 */
 export const aoxrHint = () => tr({
-  zh: 'AoXR = 一场比赛里某项目「恰好 X 个轮次」的平均值再取平均,衡量整场发挥。某轮平均 DNF 会让该场降一档(4 轮变 Ao3R)。PR 名次同档比同档(Ao3R 只和 Ao3R 比)。',
-  en: 'AoXR = the mean of a competitor\'s round averages at one competition where they completed exactly X rounds — a measure of whole-competition consistency. A DNF average drops that competition one tier (4 rounds → Ao3R). PR ranks compare like with like (Ao3R only against Ao3R).',
+  zh: 'AoXR = 一场比赛里某项目各轮平均值再取平均,衡量整场发挥。前提是打满该项目的全部轮次(即打进决赛):四轮的项目只打了两轮就被淘汰不计。某轮平均 DNF 会让该场降一档(4 轮变 Ao3R)。PR 名次同档比同档(Ao3R 只和 Ao3R 比)。',
+  en: 'AoXR = the mean of a competitor\'s round averages at one competition — a measure of whole-competition consistency. It only counts when they competed in every round of that event (i.e. made the final): getting knocked out after 2 of 4 rounds does not become an Ao2R. A DNF average drops that competition one tier (4 rounds → Ao3R). PR ranks compare like with like (Ao3R only against Ao3R).',
 });
