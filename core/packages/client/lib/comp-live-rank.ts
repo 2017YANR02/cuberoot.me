@@ -63,19 +63,27 @@ export function adjustRankWithLiveComp(
  * 只在成绩被日掩时调用是安全的:能掩掉它的成绩同样破了该级赛前基线,持有者赛前 PB 必然
  * 慢于基线(否则基线就不是那个数),官方名次里必然还没算上它,不存在重复加。够不到基线的
  * 普通成绩不走这条 —— 那时同日更快的人官方 PB 多半已经排在前面,加了才是错的。
+ *
+ * self 排除本人:掩掉一条成绩的往往就是他自己同日更靠后的一轮(陈震初赛 7.99 被自己决赛的
+ * 6.99 掩掉)。名次一人只占一格,自己不能把自己挤下去 —— 同 adjustRankWithLiveComp 的 selfNumber。
+ * 一天只可能参加一场比赛,所以「同名 + 同场」就是本人。
  */
 export function applyDayRankDelta(
   base: RankResult,
-  keatonedBy: { personIso2: string }[],
+  keatonedBy: { personIso2: string; person: string; comp: string }[],
   countryIso2: string,
+  self?: { person: string; comp: string },
 ): RankResult {
-  if (keatonedBy.length === 0) return base;
+  const others = self?.person
+    ? keatonedBy.filter(e => !(e.person === self.person && e.comp === self.comp))
+    : keatonedBy;
+  if (others.length === 0) return base;
   const dNat = countryIso2
-    ? keatonedBy.filter(e => (e.personIso2 || '').toUpperCase() === countryIso2.toUpperCase()).length
+    ? others.filter(e => (e.personIso2 || '').toUpperCase() === countryIso2.toUpperCase()).length
     : 0;
   return {
     ...base,
-    world: { ...base.world, rank: base.world.rank + keatonedBy.length },
+    world: { ...base.world, rank: base.world.rank + others.length },
     national: base.national && dNat ? { ...base.national, rank: base.national.rank + dNat } : base.national,
   };
 }
