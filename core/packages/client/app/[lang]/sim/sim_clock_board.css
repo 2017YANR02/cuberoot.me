@@ -1,0 +1,24 @@
+/* /sim 的魔表画面层 —— 盖在 3D 画布容器上(那儿是空的:魔表没有立体形态)。
+   与「平面图」(.sim-net)同族,居中铺满、留一点呼吸。 */
+.sim-clock {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px;
+  /* 指针拖动要吃住手势,别让画布的视角拖抢走。 */
+  touch-action: none;
+}
+
+.sim-clock-svg {
+  width: 100%;
+}
+
+.sim-clock-locked {
+  margin: 0;
+  font-size: 12px;
+  color: var(--faint-foreground);
+}

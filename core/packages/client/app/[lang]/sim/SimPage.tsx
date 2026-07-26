@@ -116,6 +116,7 @@ import { stickeringMaskFn } from './engine/nxn/stickering';
 import { resolveStageMaskFn } from './engine/nxn/vcStageMask';
 import { resolveEngineArrows } from './engine/nxn/vcArrowBridge';
 import SimCubeNet from './_SimCubeNet';
+import SimClockBoard from './_SimClockBoard';
 import {
   loadKeymap, saveKeymap, resetKeymap as resetKeymapStorage, type KeyMove,
 } from './keymap';
@@ -306,6 +307,7 @@ export default function SimPage() {
     if (raw === 'fto') return 'fto';
     if (raw === 'custom') return 'custom';
     if (raw === 'mirror' || raw === 'mirror2') return raw;
+    if (raw === 'clock') return 'clock';
     if (isPgPuzzleId(raw)) return raw as SimPuzzle;
     const n = parseInt(raw, 10);
     if (!Number.isFinite(n) || n < 1 || n > 400) return 3;
@@ -2017,10 +2019,15 @@ export default function SimPage() {
 
   // 2D flat-net view mode — NxN only (number puzzle), driven by the same live cube.
   const netMode = settings.viewMode === 'net' && typeof puzzleParam === 'number';
+  // 魔表:唯一没有立体形态的拼图 —— 画面恒走 DOM 层的 SVG 板,3D 画布是空的。判据与
+  // netMode 同族(都是"画布上盖一层平面图"),所以下面凡是 `!netMode` 的角落控件
+  // (背面小窗 / 交换主图 …)也一并要避开它,统一用 flatMode。
+  const clockMode = puzzleParam === 'clock';
+  const flatMode = netMode || clockMode;
 
   // 主图 ↔ 伴图交换态生效条件(与画布 wrap 的 --imgswap class 同一判据):把它写进
   // resize 闭包读的 ref,再触发一次重排,渲染器在全幅 ↔ 左上小框之间切换。
-  const imgSwapActive = imageOpen && imgSwap && !netMode;
+  const imgSwapActive = imageOpen && imgSwap && !flatMode;
   useEffect(() => {
     imgSwapRef.current = imgSwapActive;
     resizeMainViewRef.current?.();
@@ -2048,7 +2055,7 @@ export default function SimPage() {
       <div className="sim-body">
         <div className="sim-stage">
         <div
-          className={`sim-canvas-wrap${netMode ? ' sim-canvas-wrap--net' : ''}${imgSwapActive ? ' sim-canvas-wrap--imgswap' : ''}`}
+          className={`sim-canvas-wrap${flatMode ? ' sim-canvas-wrap--net' : ''}${imgSwapActive ? ' sim-canvas-wrap--imgswap' : ''}`}
           ref={containerRef}
         >
           {netMode && (
@@ -2058,6 +2065,14 @@ export default function SimPage() {
               order={order}
               userMoveRef={userMoveRef}
               faceColors={settings.faceColors}
+              pointerTurns={settings.pointerTurns !== false}
+            />
+          )}
+          {clockMode && (
+            <SimClockBoard
+              getWorld={getWorld}
+              worldTick={worldTick}
+              userMoveRef={userMoveRef}
               pointerTurns={settings.pointerTurns !== false}
             />
           )}
@@ -2121,7 +2136,7 @@ export default function SimPage() {
                 {imgSource === 'vc' ? 'VC' : t('引擎', 'ENG')}
               </button>
             )}
-            {!netMode && (
+            {!flatMode && (
               <button
                 type="button"
                 className="sim-backview-swap sim-image-swap"
@@ -2142,14 +2157,14 @@ export default function SimPage() {
             <div
               ref={backFrameRef}
               className="sim-backview"
-              style={{ display: settings.backView && !netMode ? 'block' : 'none' }}
+              style={{ display: settings.backView && !flatMode ? 'block' : 'none' }}
               aria-hidden
             />
           )}
           {/* Swap main view ↔ back-view mini window. Only while the cuber engine
               back-view is on (NxN / SQ1); twisty puzzles use cubing.js native
               back-view and aren't covered here. */}
-          {!twisty && !netMode && settings.backView && (
+          {!twisty && !flatMode && settings.backView && (
             <button
               ref={swapButtonRef}
               type="button"
@@ -2163,7 +2178,7 @@ export default function SimPage() {
           )}
           {/* 背面小窗的关闭钮 —— 与图像浮层那个同款,钉在小窗右上内角。小窗自身
               pointer-events:none,按钮在 .sim-float-close 里自带 auto。 */}
-          {!twisty && !netMode && settings.backView && (
+          {!twisty && !flatMode && settings.backView && (
             <button
               type="button"
               className="sim-float-close sim-float-close--backview"
@@ -2252,7 +2267,7 @@ export default function SimPage() {
                - cubing.js:小窗是 player 原生画的,我们钉不上 ×(那块区域归它管),
                  所以这里必须常驻并且是真开关,否则 settings.backView 在这条路径上
                  一个入口都没有 —— 侧栏那个「小窗」toggle 已经删掉了。 */
-            backViewButton={!netMode && (twisty || !settings.backView) ? (
+            backViewButton={!flatMode && (twisty || !settings.backView) ? (
               <button
                 type="button"
                 className="playback-bar-btn"

@@ -321,6 +321,11 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
   const hintBg = typeof window !== 'undefined'
     ? getComputedStyle(document.documentElement).getPropertyValue('--background').trim()
     : '';
+  // 平面拼图(魔表)在这里到头:它没有 3D 场景,下面每一条都是对着 mesh 说话的。别让它
+  // 掉进"不在 ENGINE_BODY_PUZZLES 里就是 NxN"那条否定式分流 —— 那会去摸 instancedRenderer
+  // 而它根本没有。判据取 simCaps 单一源,不在这儿另列拼图名。
+  if (puzzleCaps(world.puzzleKind).flat) return;
+
   if (!ENGINE_BODY_PUZZLES.has(world.puzzleKind as string)) {
     // NxN: sticker thickness / hollow / hint / face colors live on the InstancedRenderer.
     const cube = world.cube as import('./engine/nxn/cube').default;

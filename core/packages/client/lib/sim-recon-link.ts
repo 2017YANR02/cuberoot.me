@@ -9,8 +9,8 @@
 
 import { encodeUrlAlg } from './cubedb-url';
 
-/** sim puzzleKind (cuber engine) — number for NxN, else a named twisty/sq1/ivy/dino/redi/rex/heli/gear. */
-type SimPuzzle = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'pyraminx' | 'skewb' | 'megaminx' | 'fto';
+/** sim puzzleKind (cuber engine) — number for NxN, else a named twisty/sq1/ivy/dino/redi/rex/heli/gear/clock. */
+type SimPuzzle = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'pyraminx' | 'skewb' | 'megaminx' | 'fto' | 'clock';
 
 /** sim puzzle → recon event id, or null when recon has no matching event.
  *  Accepts PuzzleGeometry explore ids (string) too — they have no recon event. */
@@ -20,6 +20,8 @@ export function reconEventForSim(p: SimPuzzle | string): string | null {
   if (p === 'pyraminx') return 'pyra';
   if (p === 'skewb') return 'skewb';
   if (p === 'megaminx') return 'mega';
+  // 魔表两边同一套 WCA 记号(针脚 token + y2),原样递过去就行。
+  if (p === 'clock') return 'clock';
   if (typeof p === 'number' && p >= 2 && p <= 7) return `${p}x${p}`;
   return null; // 1x1, 8x8+, dino, redi, rex, heli, gear — no recon event
 }
@@ -37,7 +39,8 @@ export function simPuzzleForReconEvent(ev: string): string | null {
     case 'pyra': return 'pyraminx';
     case 'mega': return 'megaminx';
     case 'skewb': return 'skewb';
-    default: return null; // clock + unknown — no sim equivalent
+    case 'clock': return 'clock';
+    default: return null; // unknown event — no sim equivalent
   }
 }
 

@@ -18,6 +18,7 @@ import SkewbCube from "./skewb/SkewbCube";
 import PyraCube from "./pyra/PyraCube";
 import MegaminxCube from "./mega/MegaminxCube";
 import FtoCube from "./fto/FtoCube";
+import ClockBoard from "./clock/clockBoard";
 import { APEX_UP_QUAT } from "./pyra/pyraGeometry";
 import FaceHints, { IVY_CORNER_HINTS, DINO_CORNER_HINTS, REDI_CORNER_HINTS, REX_CORNER_HINTS, HELI_EDGE_HINTS, SKEWB_CORNER_HINTS, PYRA_VERTEX_HINTS, MEGA_FACE_HINTS, FTO_FACE_HINTS } from "./face_hints";
 import type HandsRig from "./hands/handsRig";
@@ -29,8 +30,14 @@ export interface SmplxBodyAsset { geometry: THREE.BufferGeometry; heightM: numbe
 /** Puzzle slot — NxN cube (order >= 1), SQ1, Ivy, Dino, Redi, Rex (corner-turning),
  *  Heli (edge-turning Helicopter Cube), Skewb (deep-cut corner-turning), or Pyraminx
  *  (vertex-turning tetrahedron). Skewb + Pyraminx are the in-house engine alternatives
- *  to the cubing.js TwistyPlayer renders (chosen via the `renderer` toggle). */
-export type PuzzleKind = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'skewb' | 'pyraminx' | 'megaminx' | 'fto' | 'mirror' | 'mirror2';
+ *  to the cubing.js TwistyPlayer renders (chosen via the `renderer` toggle).
+ *
+ *  `clock` is the odd one out: it has **no 3D form at all** (Rubik's Clock is a flat
+ *  two-sided board — cubing.js and twizzle both hard-code it to 2D). Its ClockBoard is a
+ *  mesh-less Group; the picture comes from the DOM overlay `_SimClockBoard`. It still
+ *  lives here so `world.cube` / the twister contract hold and the player controls drive
+ *  it unchanged. */
+export type PuzzleKind = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'skewb' | 'pyraminx' | 'megaminx' | 'fto' | 'mirror' | 'mirror2' | 'clock';
 
 export default class World {
   public width = 1;
@@ -42,7 +49,7 @@ export default class World {
   /** Polymorphic cube. NxN puzzles use Cube; SQ1 uses Sq1Cube; Ivy uses IvyCube;
    *  Dino uses DinoCube. Consumers that reach into NxN-specific fields
    *  (instancedRenderer, table, locks) must first check `world.puzzleKind` is a number. */
-  public cube!: Cube | Sq1Cube | IvyCube | DinoCube | RediCube | RexCube | HeliCube | GearCube | SkewbCube | PyraCube | MegaminxCube | FtoCube;
+  public cube!: Cube | Sq1Cube | IvyCube | DinoCube | RediCube | RexCube | HeliCube | GearCube | SkewbCube | PyraCube | MegaminxCube | FtoCube | ClockBoard;
 
   public ambient: THREE.AmbientLight;
   public directional: THREE.DirectionalLight;
@@ -62,6 +69,8 @@ export default class World {
   private pyraCube: PyraCube | null = null;
   private megaCube: MegaminxCube | null = null;
   private ftoCube: FtoCube | null = null;
+  /** 魔表:mesh-less「引擎」,只为撑住 world.cube / twister 契约(画面在 DOM 层)。 */
+  private clockBoard: ClockBoard | null = null;
   /** Mirror Cube (Bump Cube) — a Cube with non-uniform geometry, keyed by order
    *  (3 = 'mirror', 2 = 'mirror2'); separate cache so it never collides with the
    *  plain cube of the same order in cubes[order]. */
@@ -309,6 +318,16 @@ export default class World {
       // the SQ1 rim-light rig (51 solid wedge cells, many oblique facets).
       if (this.controller) this.controller.disable = true;
       this._ensureSq1Lights();
+    } else if (kind === 'clock') {
+      if (this.clockBoard == null) {
+        this.clockBoard = new ClockBoard();
+        this.clockBoard.callbacks.push(this.callback);
+      }
+      this.cube = this.clockBoard;
+      // 魔表没有 3D:这个 Group 里没有 mesh,画面由 DOM 层的 _SimClockBoard 出。NxN
+      // Controller 的空白拖转视角对一张平面板毫无意义 → 关掉;灯光也不必装(没东西可照)。
+      if (this.controller) this.controller.disable = true;
+      this._removeSq1Lights();
     } else if (kind === 'mirror' || kind === 'mirror2') {
       const n = kind === 'mirror2' ? 2 : 3;
       if (this.mirrorCubes[n] == null) {

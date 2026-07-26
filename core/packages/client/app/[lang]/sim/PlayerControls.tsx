@@ -74,6 +74,10 @@ import {
 import {
   parseFtoMoves, ftoMovesToString, invertFtoMoves, reduceFtoAlg, randomFtoScramble, type FtoMove,
 } from './engine/fto/ftoState';
+import {
+  parseClockSteps, clockStepsToString, invertClockSteps, type ClockStep,
+} from './engine/clock/clockBoard';
+import { reduceClockAlg, randomClockScramble } from '@/lib/clock-solver';
 
 /** Random Ivy scramble: ~9 R/L/D/B turns, no immediate axis repeat. */
 function randomIvyScramble(): string {
@@ -284,6 +288,7 @@ const PUZZLE_TYPE_OPTIONS = [
   { value: 'pyraminx', iconClass: 'event-pyram', labelZh: eventDisplayName('pyram', true), labelEn: eventDisplayName('pyram', false) },
   { value: 'skewb',    iconClass: 'event-skewb', labelZh: eventDisplayName('skewb', true), labelEn: eventDisplayName('skewb', false) },
   { value: 'megaminx', iconClass: 'event-minx',  labelZh: eventDisplayName('minx', true), labelEn: eventDisplayName('minx', false) },
+  { value: 'clock',    iconClass: 'event-clock', labelZh: eventDisplayName('clock', true), labelEn: eventDisplayName('clock', false) },
   { value: 'fto',      iconClass: 'unofficial-fto', labelZh: eventDisplayName('fto', true), labelEn: eventDisplayName('fto', false) },
   { value: 'dino',     iconClass: 'unofficial-dino', labelZh: '恐龙', labelEn: 'Dino' },
   { value: 'redi',     iconClass: 'unofficial-redi', labelZh: 'Redi', labelEn: 'Redi' },
@@ -386,7 +391,7 @@ function randomMoveScrambleNxN(N: number): string {
 }
 
 /** SimPage puzzle kind. */
-export type SimPuzzle = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'pyraminx' | 'skewb' | 'megaminx' | 'fto' | 'mirror' | 'mirror2' | 'custom' | PgPuzzleId;
+export type SimPuzzle = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'pyraminx' | 'skewb' | 'megaminx' | 'fto' | 'mirror' | 'mirror2' | 'clock' | 'custom' | PgPuzzleId;
 
 function isTwistyPuzzle(p: SimPuzzle): p is 'pyraminx' | 'skewb' | 'megaminx' | 'fto' {
   return p === 'pyraminx' || p === 'skewb' || p === 'megaminx' || p === 'fto';
@@ -531,7 +536,9 @@ function reduceSkewbAlg(s: string): string {
 // per puzzle in one descriptor collapses what used to be ~13 parallel `isDino||isRedi
 // ||…` branches into a single `corner` lookup. Adding a corner-turn puzzle = one entry
 // here + one line in `cornerKind` below (mirrors the engine/cornerTurnGesture adapters).
-type CornerKind = 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'skewb' | 'pyraminx' | 'megaminx' | 'fto';
+// 「corner」是历史名字,准确说是"离散整步、逐招重放"的引擎拼图 —— 魔表(转的是表盘,一步
+// 30° 的倍数)与它们形状完全一致,所以也走这张表,而不是再开一条 isClock 分支链。
+type CornerKind = 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'skewb' | 'pyraminx' | 'megaminx' | 'fto' | 'clock';
 
 interface CornerSpec {
   /** Parse alg / scramble text → the puzzle's move list. */
@@ -622,6 +629,15 @@ const CORNER_SPECS: Record<CornerKind, CornerSpec> = {
     invert: (m) => invertFtoMoves(m as FtoMove[]),
     reduce: reduceFtoAlg,
     scramble: () => ftoMovesToString(randomFtoScramble(30)),
+  },
+  // 魔表:一"步" = 一次拧 或 一次 y2 翻面(y2 在记号里是独立 token,得能单独跨过去)。
+  // 消步吃阿贝尔性可跨位置合并;打乱是均匀随机态反推,与官方打乱同分布同格式。
+  clock: {
+    parse: parseClockSteps,
+    toString: (m) => clockStepsToString(m as ClockStep[]),
+    invert: (m) => invertClockSteps(m as ClockStep[]),
+    reduce: reduceClockAlg,
+    scramble: () => randomClockScramble(),
   },
 };
 
@@ -946,7 +962,8 @@ export default function PlayerControls({
               : isPyraEngine ? 'pyraminx'
                 : isMegaEngine ? 'megaminx'
                   : isFtoEngine ? 'fto'
-                    : null;
+                    : puzzleKind === 'clock' ? 'clock'
+                      : null;
   // For the engine skewb in Sarah mode, translate typed input Sarah → WCA before the
   // engine (WCA-only) parser sees it, so a Sarah alg plays on the engine just like it
   // does on the cubing.js renderer. Output (scramble / 消步 / 取逆) stays WCA — the
@@ -1196,10 +1213,12 @@ export default function PlayerControls({
     || (!ivySetupSpans!.some((s) => s.bad) && !ivyAlgSpans!.some((s) => s.bad));
 
   // One move list for whichever corner-turn engine puzzle is active (empty otherwise).
-  const cornerActions = useMemo<unknown[]>(
-    () => (corner ? corner.parse(algDraft) : []),
-    [corner, algDraft],
-  );
+  // algDraft 是**正在打字**的文本 → 随时可能停在半个 token 上,解析器严格会抛;兜住当空
+  // (与 ivyActions 同款),让页面继续跑、等用户把这一招打完。
+  const cornerActions = useMemo<unknown[]>(() => {
+    if (!corner) return [];
+    try { return corner.parse(algDraft); } catch { return []; }
+  }, [corner, algDraft]);
 
   // Char range of every play-item (move token / grip mark), in play order — the
   // single source both the highlight (index → range) and caret sync (caret →
@@ -1208,7 +1227,12 @@ export default function PlayerControls({
   const itemPositions = useMemo<TokenPosition[]>(() => {
     if (isSq1 || isTwistyMode) return [];
     if (isIvy) return ivyCanPlay ? findWhitespaceTokenPositions(algDraft) : [];
-    if (corner) return findWhitespaceTokenPositions(algDraft).filter((tk) => corner.parse(tk.text).length === 1);
+    // 半个 token(还在打)解析不了 → 不算一项,别让它抛出去炸掉整页。
+    if (corner) {
+      return findWhitespaceTokenPositions(algDraft).filter((tk) => {
+        try { return corner.parse(tk.text).length === 1; } catch { return false; }
+      });
+    }
     // NxN: WCA move tokens + grip marks (↑↓·), merged back into text order.
     const moves = findTokenPositions(algDraft);
     const grips = findGripMarkPositions(algDraft).map((p) => ({ start: p, end: p + 1, text: algDraft[p] }));
@@ -1312,7 +1336,9 @@ export default function PlayerControls({
       const effSetup = settings.playbackMode === 'algorithm'
         ? (toEngineText(setupDraft) + ' ' + corner.toString(corner.invert(cornerActions))).trim()
         : toEngineText(setupDraft);
-      cube.twister.setup(effSetup);
+      // 打乱框同样是逐键触发的:半个 token 会让 twister.setup 的解析抛。兜住 = 保持上一次
+      // 的合法基座不动,等这一招打完(比整页崩掉或悄悄跳回还原态都合理)。
+      try { cube.twister.setup(effSetup); } catch { return; }
       const target = Math.max(0, Math.min(n, cornerActions.length));
       for (let i = 0; i < target; i++) cube.applyMoveInstant(cornerActions[i]);
       setStep(target);
@@ -1436,7 +1462,12 @@ export default function PlayerControls({
     if (isIvy) {
       try { return parseIvyMoves(algBefore).length; } catch { return null; }
     }
-    if (corner) return corner.parse(algBefore).length;
+    // 光标前的文本天然可能停在半个 token 上("ALL3+" 打到 "AL"),各引擎的解析器都是严格的
+    // → 必须像上面 Ivy / NxN 两条一样兜住,否则打字打到一半整页崩。单字母记号的拼图(dino /
+    // pyraminx …)前缀恰好总是合法,所以一直没暴露;魔表的 token 有 3–6 字符,一打就中。
+    if (corner) {
+      try { return corner.parse(algBefore).length; } catch { return null; }
+    }
     return null;
   }, [isSq1, isIvy, corner]);
 
@@ -1634,7 +1665,10 @@ export default function PlayerControls({
   const simplifyForPuzzle = useCallback((s: string): string => {
     if (isSq1) return simplifySq1Alg(s, sq1Format);
     if (isIvy) return s; // ivy R R = R' (not R2) — NxN fold doesn't apply
-    if (corner) return corner.reduce(s);
+    // 文本可能还没打完 / 有错字 → 原样返回,别抛(按钮点在半截文本上不该炸页)。
+    if (corner) {
+      try { return corner.reduce(s); } catch { return s; }
+    }
     if (isTwistyMode) return simplifyTwistyAlg(s);
     // 逐层向量法同轴消步:吃掉一切等价写法并抽出整体转体(M' R → r、L' r → x、
     // L' 3r → x、R 2R L' 2L' → x …)。再跨轴最短化转体串(整 24 朝向),最后回炉一遍
@@ -1656,7 +1690,9 @@ export default function PlayerControls({
   }, [isSq1, isIvy, corner, isTwistyMode, sq1Format, order]);
 
   const invertForPuzzle = useCallback((s: string): string => {
-    if (corner) return corner.toString(corner.invert(corner.parse(s)));
+    if (corner) {
+      try { return corner.toString(corner.invert(corner.parse(s))); } catch { return s; }
+    }
     if (!isSq1) return invertAlg(stripHandMarks(s)); // 倒序后换握/推法位点失义,直接剥
     const inv = invertSq1Alg(s);
     return sq1Format === 'wca' ? canonicalSq1Alg(inv) : compactSq1Alg(inv);
@@ -2794,7 +2830,7 @@ function PuzzleSettings({
                 value={typeof puzzleKind === 'number' ? 'nxn' : String(puzzleKind)}
                 isZh={isZh}
                 onChange={(v) => {
-                  if (v === 'sq1' || v === 'ivy' || v === 'dino' || v === 'redi' || v === 'rex' || v === 'heli' || v === 'gear' || v === 'pyraminx' || v === 'skewb' || v === 'megaminx' || v === 'fto' || v === 'mirror' || v === 'mirror2' || v === 'custom') onPuzzleChange(v);
+                  if (v === 'sq1' || v === 'ivy' || v === 'dino' || v === 'redi' || v === 'rex' || v === 'heli' || v === 'gear' || v === 'pyraminx' || v === 'skewb' || v === 'megaminx' || v === 'fto' || v === 'mirror' || v === 'mirror2' || v === 'clock' || v === 'custom') onPuzzleChange(v);
                   else if (isPgPuzzleId(v)) onPuzzleChange(v as PgPuzzleId);
                   else onPuzzleChange(order || 3);
                 }}
@@ -2872,7 +2908,7 @@ function PuzzleSettings({
                 // 手拧关 → 拖层/SQ1 两条路径不再产生 move,只剩转视角,单位含义随之收窄(仍然可调)。
                 ? t('跟手倍率(相对默认):手拧已关,当前只作用于拖动转视角', 'Responsiveness relative to the default — with drag-turn off it only scales view rotation')
                 : t('跟手倍率(相对默认):同时作用于拖层转动、拖空白转视角、SQ1 拖拽', 'Responsiveness relative to the default — scales layer drags, view drags and SQ1 drags alike'))} />
-            <Slider label={t('缩放', 'Scale')} value={settings.scale} onChange={(v) => set('scale', v)} unit={UNIT_SCALE} title={t('缩放倍率', 'Zoom factor')} />
+            <Slider label={t('缩放', 'Scale')} value={settings.scale} onChange={(v) => set('scale', v)} disabled={!caps.supports.scale} unit={UNIT_SCALE} title={hint(caps.supports.scale) ?? t('缩放倍率', 'Zoom factor')} />
             <Slider label={t('透视', 'Perspective')} value={settings.perspective} onChange={(v) => set('perspective', v)} disabled={!caps.supports.perspective} unit={UNIT_FOCAL} title={hint(caps.supports.perspective) ?? t('35mm 等效焦距(小 = 广角畸变强,大 = 接近正交)', '35mm-equivalent focal length (low = wide-angle distortion, high = near-orthographic)')} />
             <Slider label={t('转动速度', 'Turn speed')} value={settings.speed} onChange={(v) => set('speed', v)} unit={UNIT_TPS} title={t('每秒转动步数', 'Turns per second')} />
           </div>
@@ -2901,10 +2937,11 @@ function PuzzleSettings({
               title={t('关闭后鼠标 / 手势只能转视角,不能拧动拼图(键盘和播放不受影响)', 'Off: mouse / touch only rotates the view — it cannot turn the puzzle (keyboard and playback still work)')}
             />
             {/* 「消步」开关已移到播放器工具行(逆 旁),此处不再重复。 */}
-            <label className="sim-toggle">
+            <label className={`sim-toggle${caps.supports.dragEmpty ? '' : ' sim-toggle--disabled'}`} title={hint(caps.supports.dragEmpty)}>
               <span>{t('拖空白', 'Drag empty')}</span>
               <select
                 value={settings.dragEmpty}
+                disabled={!caps.supports.dragEmpty}
                 onChange={(e) => set('dragEmpty', e.target.value as 'orbit' | 'rotate' | 'view')}
               >
                 <option value="rotate">{t('整步转体', 'Snap rotate')}</option>
@@ -2952,7 +2989,7 @@ function PuzzleSettings({
             <Toggle label={t('立体贴片', 'Sticker thickness')} value={settings.thickness} onChange={(v) => set('thickness', v)} disabled={!caps.supports.thickness} title={hint(caps.supports.thickness)} />
             <Toggle label={t('镂空', 'Hollow')} value={settings.hollow} onChange={(v) => set('hollow', v)} disabled={!caps.supports.hollow} title={hint(caps.supports.hollow)} />
             {/* 提示贴片(hint)两条路径都支持(引擎 hint / cubing.js hintFacelets)→ 不灰。 */}
-            <Toggle label={t('提示贴片', 'Hint facelets')} value={settings.hint} onChange={(v) => set('hint', v)} />
+            <Toggle label={t('提示贴片', 'Hint facelets')} value={settings.hint} onChange={(v) => set('hint', v)} disabled={!caps.supports.hint} title={hint(caps.supports.hint)} />
             {/* 手指(指法演示):双手握持,转层时腕转/弹指跟动画。仅 3x3(simCaps.hands)。 */}
             <Toggle label={t('手指', 'Hands')} value={settings.hands === true} onChange={(v) => set('hands', v)} disabled={!caps.supports.hands} title={hint(caps.supports.hands)} />
             {/* 全身人物:SMPL-X 完整人随手出场(躯干静态 + 双臂 IK 追手;拉远 Scale 看全身)。
@@ -2978,8 +3015,9 @@ function PuzzleSettings({
               {/* 指甲:立体甲片显隐(mesh.visible,不拆几何),门控同骨架线条(手指相关调试)。 */}
               <Toggle label={t('指甲', 'Nails')} value={settings.showNails} onChange={(v) => set('showNails', v)} disabled={!caps.supports.handsSkeleton} title={hint(caps.supports.handsSkeleton)} />
               {/* SMPL-X 全身:藏拼图与手,只看原版 SMPL-X neutral T-pose 人体(手/臂比例上游真值)。
-                  资产逐机转换(convert-mano.py),缺失时开了也无效果 —— 不灰,调试自担。 */}
-              <Toggle label={t('SMPL-X 全身', 'SMPL-X body')} value={settings.showSmplxBody === true} onChange={(v) => set('showSmplxBody', v)} />
+                  资产逐机转换(convert-mano.py),缺失时开了也无效果 —— 不灰,调试自担。
+                  平面拼图是唯一的例外:它根本没有 3D 场景可以站人,那不是"资产可能缺",是没地方放。 */}
+              <Toggle label={t('SMPL-X 全身', 'SMPL-X body')} value={settings.showSmplxBody === true} onChange={(v) => set('showSmplxBody', v)} disabled={caps.flat} title={hint(!caps.flat)} />
               {/* 挖块:仅当该拼图有「原生转动元素」(角/面/棱)可掀起时可选;NxN/SQ1 无单一会动块组,
                   cubing.js 拼图引擎未驱动 → 灰掉。 */}
               <label className={'sim-toggle' + (caps.supports.carve ? '' : ' sim-toggle--disabled')} title={hint(caps.supports.carve)}>

@@ -33,6 +33,11 @@ export interface SimPuzzleCaps {
    *                 (skewb / pyraminx / megaminx — these get the renderer dropdown)
    *  - `never`      cubing.js TwistyPlayer only (PG explore puzzles) */
   engine: 'always' | 'engineMode' | 'never';
+  /** 平面拼图:自有渲染,但画面是 DOM/SVG,**没有 3D 场景**(目前只有魔表 —— 它根本没有
+   *  立体形态)。`engine:'always'` 说的是"谁来画",这条说的是"画的是不是 3D";凡是依赖三维
+   *  场景的设置(视角 / 透视 / 立体贴片 / 镂空 / 内核色 / 挖块 / 半转停住 …)对它一律无效,
+   *  由 `resolveCaps` 统一压成 false,不要在控件处单点判断拼图名。 */
+  flat?: boolean;
   /** The debug "carve" toggle hides one move's moving group to reveal the core; which
    *  element the puzzle turns sets the label:
    *  - `corner` 挖角 — corner-turn puzzles + ivy (Ivy / Dino / Redi / Rex / Skewb / Pyraminx)
@@ -82,6 +87,10 @@ const CAPS: Record<string, SimPuzzleCaps> = {
   // as a cube of the matching order.
   mirror: { engine: 'always' },
   mirror2: { engine: 'always' },
+  // Rubik's Clock —— 唯一的平面拼图。自有 2D 板(拖指针改状态 / 点针脚真拧),没有 3D 场景,
+  // 所以整排三维设置都不适用。cubing.js 其实自带一份 clock(kpuzzle + SVG),但它**只能播放**
+  // ——拖不动指针、点不了针脚,做不成模拟器,故未接成备选渲染器。
+  clock: { engine: 'always', flat: true },
 };
 
 /** Static capabilities for a puzzle kind (independent of the active renderer). */
@@ -109,6 +118,13 @@ export function puzzleCaps(kind: SimPuzzle): SimPuzzleCaps {
 export interface ControlSupport {
   sensitivity: boolean;
   perspective: boolean;
+  /** 缩放 / 提示贴片:两条渲染路径(自有引擎 + cubing.js)都认,所以对**所有立体拼图**恒真
+   *  —— 唯独平面拼图(魔表)两样都没有:一张按容器铺满的 SVG 没有相机可推拉,也没有可以在
+   *  背面透出淡色影子的贴片。 */
+  scale: boolean;
+  hint: boolean;
+  /** 拖空白(转视角 / 整步转体):平面板没有视角可转。 */
+  dragEmpty: boolean;
   faceLabels: boolean;
   lockView: boolean;
   thickness: boolean;
@@ -139,6 +155,9 @@ export interface ResolvedCaps {
   /** Rendered by the in-house engine right now → engine-only toggles apply
    *  (立体贴片 / 镂空 / 调试:半转停住 / 调试:结构着色). */
   engineActive: boolean;
+  /** 平面拼图(魔表):画面是 DOM/SVG,无 3D 场景 —— 三维相关的控件全灭,画布也不该
+   *  挂背面小窗 / 交换主图之类依赖 3D 主视图的角落控件。 */
+  flat: boolean;
   /** The carve element to show a 挖角 / 挖面 / 挖棱 toggle for, or null (no carve). */
   carve: CarveElement | null;
   /** The isolate-able kinds (+ counts) the 隔离 dropdown offers (empty = unsupported
@@ -156,7 +175,11 @@ export interface ResolvedCaps {
 /** Capabilities resolved against the active renderer. */
 export function resolveCaps(kind: SimPuzzle, renderer: SimRenderer): ResolvedCaps {
   const c = puzzleCaps(kind);
-  const engineActive = c.engine === 'always' || (c.engine === 'engineMode' && renderer !== 'cubing');
+  const flat = c.flat === true;
+  // 平面拼图没有 3D 场景 → 一切"引擎三维特性"就地为假(挖块 / 立体贴片 / 内核色 …),
+  // 但它仍由自有代码渲染,所以别把它归到 cubing.js 那一档。
+  const engineActive = !flat
+    && (c.engine === 'always' || (c.engine === 'engineMode' && renderer !== 'cubing'));
   const carve = engineActive ? (c.carve ?? null) : null;
   const isolate = engineActive ? (c.isolate ?? []) : [];
   const isNxN = typeof kind === 'number';
@@ -168,17 +191,24 @@ export function resolveCaps(kind: SimPuzzle, renderer: SimRenderer): ResolvedCap
   const overlayLabels = kind === 'skewb' || kind === 'pyraminx' || kind === 'megaminx';
   return {
     engineActive,
+    flat,
     carve,
     isolate,
-    hasRendererChoice: true,
+    // 平面拼图只有一种画法(自有 SVG),渲染器下拉无意义 → 不给。
+    hasRendererChoice: !flat,
     supports: {
       sensitivity: engineActive,
       perspective: engineActive,
+      // 立体拼图两条路径都认;平面板没有相机 / 没有贴片背面 / 没有视角可转。
+      scale: !flat,
+      hint: !flat,
+      dragEmpty: !flat,
       // 方位字母:engine 路径走自有 faceHints;cubing.js 路径仅 skewb/pyraminx/megaminx 有 FaceOverlay。
       faceLabels: engineActive || overlayLabels,
       // 锁定大小位置:两条路径都接了 —— 引擎走 SimPage onWheel/pan/pinch 的 lockView 提前 return,
       // cubing.js 走 TwistySection wheel/pinch effect 的 lockViewRef 守卫。每个拼图都有缩放可锁 → 恒真。
-      lockView: true,
+      // 平面板没有可缩放的三维视图 → 唯一的例外。
+      lockView: !flat,
       thickness: engineActive,
       hollow: engineActive,
       holdPartialTurn: engineActive,
