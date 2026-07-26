@@ -14,6 +14,8 @@
  * 会静默丢精度且不报错。一切算术走 BigInt(见本文件底部的 exactPct / exactMean)。
  */
 
+import { groupDigits } from '@/lib/group-digits';
+
 /** 阶段键 —— 与 lib/scramble-variants.ts 的 VARIANT_STAGES.std 逐字相同,可与经验分布直接对照。 */
 export type ExactStage = 'cross' | 'xcross' | 'xxcross' | 'xxxcross' | 'xxxxcross';
 export const EXACT_STAGES: ExactStage[] = ['cross', 'xcross', 'xxcross', 'xxxcross', 'xxxxcross'];
@@ -69,6 +71,17 @@ export interface ExactFull {
 interface ExactZeroOnly {
   kind: 'zero';
   zero: string;
+  /**
+   * 最深一档:全表跑不动,但这一档的状态数是已知的。目前只有六色底 XCross ——
+   * 上游穷举搜索出的 438 个 10 步态(见 _data/cn_xcross_10.ts,站内有 23 条对称代表
+   * 展开成 438 的现场证明)。`href` 指向可以细看的地方。
+   */
+  top?: {
+    depth: number;
+    count: string;
+    label: { zh: string; en: string };
+    href?: string;
+  };
   blocked: { zh: string; en: string };
 }
 export type ExactCell = ExactFull | ExactZeroOnly;
@@ -126,6 +139,16 @@ export const EXACT_DIST: Record<ExactStage, StageTable> = {
       BGORWY: {
         kind: 'zero',
         zero: '14066967166411',
+        // 中间各档未知,但两个端点都知道:0 步走容斥,10 步是上游穷举搜出来的 438 个态。
+        top: {
+          depth: 10,
+          count: '438',
+          label: {
+            zh: '换哪个面当底、解哪个槽都要 10 步 —— XCross 的上确界',
+            en: 'Ten moves from every colour and every slot — the supremum of XCross',
+          },
+          href: '/scramble/hardest',
+        },
         blocked: {
           zh: '完整分布无可信金标 —— C++ 端 v1..v4 都有 bug',
           en: 'No trusted ground truth for the full distribution — the C++ v1..v4 all had bugs',
@@ -308,10 +331,8 @@ export function exactMean(cell: ExactFull): number {
   return Number((num * 1000000n) / BigInt(cell.total)) / 1e6;
 }
 
-/** 千分位。数值是字符串(可能超 Number 安全区),故按字符串切,不走 toLocaleString。 */
-export function groupDigits(s: string): string {
-  return s.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-}
+/** 千分位在 `lib/group-digits.ts`(全站单一实现),这里转出去,老的 import 路径不动。 */
+export { groupDigits };
 
 /**
  * 占比显示。这批分布跨 10 个数量级(51% ↔ 4.7e-9%),定宽小数位在小档全显示成 0.0000%,
