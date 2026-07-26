@@ -46,9 +46,10 @@ function AlgLine({ label, alg, len }: { label: string; alg: string; len?: number
   );
 }
 
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
+/** 一条「键 + 值」。`wide`:值挂了一串 chip,在三列网格里独占一行。 */
+function Row({ label, wide, children }: { label: string; wide?: boolean; children: React.ReactNode }) {
   return (
-    <div className="alg-meta-row">
+    <div className={`alg-meta-row${wide ? ' is-wide' : ''}`}>
       <span className="alg-meta-key">{label}</span>
       <span className="alg-meta-val">{children}</span>
     </div>
@@ -100,6 +101,9 @@ export default function AlgCaseMetaContent({
    *               按编号排就得到同一个顺序,所以点来点去图不换位。
    *   `selfNotes` 该关联项就是当前 case 自己(自镜像 / 自逆),只标一句话。
    *   `missing`   编号在本 set 里查不到对应 case(数据缺口),只报编号。
+   *
+   * 两个关系指到同一个编号是常事(PLL-L 的镜像和镜像逆都是 J):它们是**同一个 case**,
+   * 贴两张一模一样的图只会让人以为有两个目标。合成一张,标签并列写(「镜像, 镜像逆」)。
    */
   const { family, selfNotes, missing } = useMemo(() => {
     const rels = [
@@ -108,21 +112,33 @@ export default function AlgCaseMetaContent({
       { key: 'im', label: tr({ zh: '镜像逆', en: 'Inv. mirror' }), self: tr({ zh: '自镜像逆', en: 'self-inv-mirror' }), no: m.im },
     ].filter(r => r.no != null);
 
-    const fam: Array<{ key: string; label: string; case: AlgCase; no: number; current: boolean }> = [{
+    const fam: Array<{ key: string; labels: string[]; case: AlgCase; no: number; current: boolean }> = [{
       key: 'self',
-      label: tr({ zh: '原始', en: 'Origin' }),
+      labels: [tr({ zh: '原始', en: 'Origin' })],
       case: caseObj,
       no: m.no ?? -1,
       current: true,
     }];
     const notes: Array<{ key: string; text: string }> = [];
-    const gone: Array<{ key: string; label: string; no: number }> = [];
+    const gone: Array<{ key: string; labels: string[]; no: number }> = [];
+    /** 编号 → 已经贴出去的那一格,用来把指向同一编号的关系并进去。 */
+    const famAt = new Map<number, number>();
+    const goneAt = new Map<number, number>();
 
     for (const r of rels) {
       if (r.no === m.no) { notes.push({ key: r.key, text: r.self }); continue; }
       const target = byNo.get(r.no!);
-      if (!target) { gone.push({ key: r.key, label: r.label, no: r.no! }); continue; }
-      fam.push({ key: r.key, label: r.label, case: target, no: r.no!, current: false });
+      if (!target) {
+        const i = goneAt.get(r.no!);
+        if (i != null) { gone[i].labels.push(r.label); continue; }
+        goneAt.set(r.no!, gone.length);
+        gone.push({ key: r.key, labels: [r.label], no: r.no! });
+        continue;
+      }
+      const i = famAt.get(r.no!);
+      if (i != null) { fam[i].labels.push(r.label); continue; }
+      famAt.set(r.no!, fam.length);
+      fam.push({ key: r.key, labels: [r.label], case: target, no: r.no!, current: false });
     }
     fam.sort((a, b) => a.no - b.no);
     return { family: fam, selfNotes: notes, missing: gone };
@@ -143,11 +159,12 @@ export default function AlgCaseMetaContent({
       {/* 顶部一排缩略图:这一族(自己 + 镜像 / 逆 / 镜像逆)并排对比。
           点其中一张:弹窗里切成那个 case,详情页里跳到那个 case 的详情页。
 
-          位置按 `meta.no` 排,**不按与当前 case 的关系排** —— 这一族四个 case 无论从哪一张
-          进来都是同一批,按编号排就是同一个顺序,点来点去图不会互相换位。标签仍是相对当前
-          case 说的(在镜像那张上,当前这张就标「镜像」),当前那张恒定加框。 */}
+          位置按 `meta.no` 排,**不按与当前 case 的关系排** —— 这一族无论从哪一张进来都是同一批,
+          按编号排就是同一个顺序,点来点去图不会互相换位。标签仍是相对当前 case 说的(在镜像
+          那张上,当前这张就标「镜像」),当前那张恒定加框。 */}
       <div className="alg-meta-related-grid alg-meta-top-grid">
         {family.map(f => {
+          const labelText = f.labels.join(', ');
           const inner = (
             <>
               <CaseThumb
@@ -158,7 +175,7 @@ export default function AlgCaseMetaContent({
                 setup={f.case.setup}
                 size={76}
               />
-              <span className="alg-meta-related-label">{f.label}</span>
+              <span className="alg-meta-related-label">{labelText}</span>
               <span className="alg-meta-related-name">{primaryCaseName(puzzle, set, f.case)}</span>
             </>
           );
@@ -168,7 +185,7 @@ export default function AlgCaseMetaContent({
               <div key={f.key} className="alg-meta-related-card is-self is-current">{inner}</div>
             );
           }
-          const title = tr({ zh: `跳到${f.label}`, en: `Go to ${f.label.toLowerCase()}` });
+          const title = tr({ zh: `跳到${labelText}`, en: `Go to ${labelText.toLowerCase()}` });
           if (jump.kind === 'link') {
             return (
               <Link key={f.key} href={jump.href(f.case)} className="alg-meta-related-card" prefetch={false} title={title}>
@@ -194,11 +211,20 @@ export default function AlgCaseMetaContent({
         {missing.map(x => (
           <div key={x.key} className="alg-meta-related-card is-plain">
             <span className="alg-meta-related-thumb-gap" aria-hidden="true" />
-            <span className="alg-meta-related-label">{x.label}</span>
+            <span className="alg-meta-related-label">{x.labels.join(', ')}</span>
             <span className="alg-meta-related-name">#{x.no}</span>
           </div>
         ))}
       </div>
+
+      {/* 打乱紧跟着图 —— 图画的就是打乱之后的样子,两者一起看才对得上;公式是「怎么解开它」,
+          排在后面。 */}
+      {m.scramble && (
+        <div className="alg-meta-section">
+          <h3>{tr({ zh: '打乱', en: 'Scramble' })}</h3>
+          <AlgLine label={tr({ zh: '逆 case', en: 'Inv case' })} alg={m.scramble} />
+        </div>
+      )}
 
       <div className="alg-meta-case">
         <div className="alg-meta-case-algs">
@@ -214,62 +240,59 @@ export default function AlgCaseMetaContent({
         </div>
       </div>
 
-      <Row label={tr({ zh: '编号', en: 'No.' })}>{m.no}</Row>
-      <Row label={tr({ zh: '子集', en: 'Subset' })}>{m.subset}</Row>
-      <Row label="OLL">{m.oll}</Row>
-      {m.cp && <Row label={tr({ zh: '角换', en: 'CP' })}>{m.cp}</Row>}
-      {m.type && <Row label={tr({ zh: '叠加类型', en: 'Type' })}>{m.type}</Row>}
-      {m.gen && <Row label={tr({ zh: '生成元', en: 'Generators' })}><code>{m.gen}</code></Row>}
+      {/* 编号 / 子集 / OLL … 每条都只有几个字符,一行一条右边全是空的 —— 三列铺开(窄了自动退档)。 */}
+      <div className="alg-meta-facts">
+        <Row label={tr({ zh: '编号', en: 'No.' })}>{m.no}</Row>
+        <Row label={tr({ zh: '子集', en: 'Subset' })}>{m.subset}</Row>
+        <Row label="OLL">{m.oll}</Row>
+        {m.cp && <Row label={tr({ zh: '角换', en: 'CP' })}>{m.cp}</Row>}
+        {m.type && <Row label={tr({ zh: '叠加类型', en: 'Type' })}>{m.type}</Row>}
+        {m.gen && <Row label={tr({ zh: '生成元', en: 'Generators' })}><code>{m.gen}</code></Row>}
 
-      {(sym.cn || symFlags.length > 0) && (
-        <Row label={tr({ zh: '对称性', en: 'Symmetry' })}>
-          {sym.cn && <span className="alg-meta-chip">C{sym.cn}</span>}
-          {symFlags.map(f => <span key={f} className="alg-meta-chip">{f}</span>)}
-        </Row>
-      )}
+        {(sym.cn || symFlags.length > 0) && (
+          <Row label={tr({ zh: '对称性', en: 'Symmetry' })}>
+            {sym.cn && <span className="alg-meta-chip">C{sym.cn}</span>}
+            {symFlags.map(f => <span key={f} className="alg-meta-chip">{f}</span>)}
+          </Row>
+        )}
 
-      {/* 出现概率:轨道大小(16/cn)÷ 全集状态数。非 1LLL set 同时给 1LLL 全集下的概率 ——
-          练 ZBLL 的人想知道「ZZ 到了顶层抽到它多大概率」,练 1LLL 的人想知道全局概率。
-          数学原理(轨道-稳定子)见 /math/probability。 */}
-      {(() => {
-        const orbit = caseOrbit(caseObj);
-        const uni = ALG_SET_UNIVERSE[set];
-        if (orbit == null || !uni) return null;
-        return (
-          <Row label={tr({ zh: '出现概率', en: 'Probability' })}>
-            <span
-              className="alg-meta-chip"
-              title={tr({
-                zh: `${uni.label} 全集 ${uni.total} 个状态中占 ${orbit} 个`,
-                en: `${orbit} of ${uni.total} states in the ${uni.label} universe`,
-              })}
-            >
-              {uni.label} {probabilityFraction(orbit, uni.total)}
-            </span>
-            {set !== '1lll' && (
+        {/* 出现概率:轨道大小(16/cn)÷ 全集状态数。非 1LLL set 同时给 1LLL 全集下的概率 ——
+            练 ZBLL 的人想知道「ZZ 到了顶层抽到它多大概率」,练 1LLL 的人想知道全局概率。
+            数学原理(轨道-稳定子)见 /math/probability。
+            两个 chip + 「原理」挤不进三分之一列,这一条独占一行。 */}
+        {(() => {
+          const orbit = caseOrbit(caseObj);
+          const uni = ALG_SET_UNIVERSE[set];
+          if (orbit == null || !uni) return null;
+          return (
+            <Row label={tr({ zh: '出现概率', en: 'Probability' })} wide>
               <span
                 className="alg-meta-chip"
                 title={tr({
-                  zh: `1LLL 全集 ${LL_UNIVERSE_TOTAL} 个状态中占 ${orbit} 个`,
-                  en: `${orbit} of ${LL_UNIVERSE_TOTAL} states in the 1LLL universe`,
+                  zh: `${uni.label} 全集 ${uni.total} 个状态中占 ${orbit} 个`,
+                  en: `${orbit} of ${uni.total} states in the ${uni.label} universe`,
                 })}
               >
-                1LLL {probabilityFraction(orbit, LL_UNIVERSE_TOTAL)}
+                {uni.label} {probabilityFraction(orbit, uni.total)}
               </span>
-            )}
-            <Link href="/math/probability" className="alg-meta-prob-why" prefetch={false}>
-              {tr({ zh: '原理', en: 'Why?' })}
-            </Link>
-          </Row>
-        );
-      })()}
-
-      {m.scramble && (
-        <div className="alg-meta-section">
-          <h3>{tr({ zh: '打乱', en: 'Scramble' })}</h3>
-          <AlgLine label={tr({ zh: '逆 case', en: 'Inv case' })} alg={m.scramble} />
-        </div>
-      )}
+              {set !== '1lll' && (
+                <span
+                  className="alg-meta-chip"
+                  title={tr({
+                    zh: `1LLL 全集 ${LL_UNIVERSE_TOTAL} 个状态中占 ${orbit} 个`,
+                    en: `${orbit} of ${LL_UNIVERSE_TOTAL} states in the 1LLL universe`,
+                  })}
+                >
+                  1LLL {probabilityFraction(orbit, LL_UNIVERSE_TOTAL)}
+                </span>
+              )}
+              <Link href="/math/probability" className="alg-meta-prob-why" prefetch={false}>
+                {tr({ zh: '原理', en: 'Why?' })}
+              </Link>
+            </Row>
+          );
+        })()}
+      </div>
 
       {optimal.length > 0 && (
         <div className="alg-meta-section">
