@@ -339,6 +339,39 @@
 .alg-prog-stat.is-lapse { color: var(--destructive); }
 .alg-prog-stat-star { fill: var(--signal-warning); }
 
+/* 每套的「重置」:同一行里最不起眼的一个,悬停才现危险色 */
+button.alg-prog-stat {
+  border: 0;
+  background: none;
+  font-family: inherit;
+  color: var(--faint-foreground);
+  cursor: pointer;
+}
+button.alg-prog-stat:disabled { cursor: default; opacity: 0.6; }
+@media (hover: hover) {
+  button.alg-prog-stat:not(:disabled):hover { color: var(--destructive); }
+}
+
+/* ── 重置全部 ───────────────────────────────────────────────── */
+
+.alg-prog-reset-all {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-default);
+  background: transparent;
+  color: var(--muted-foreground);
+  font-family: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.alg-prog-reset-all:disabled { cursor: default; opacity: 0.6; }
+@media (hover: hover) {
+  .alg-prog-reset-all:not(:disabled):hover {
+    border-color: var(--destructive);
+    color: var(--destructive);
+  }
+}
+
 /* ── 空态 ───────────────────────────────────────────────────── */
 
 .alg-prog-empty { margin: 40px 0; max-width: 520px; }

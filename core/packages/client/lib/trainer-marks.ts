@@ -33,6 +33,9 @@ export type CaseMarks = Record<string, CaseMark>;
 
 const marksKey = (p: string, s: string) => `trainer:marks:${p}/${s}`;
 
+/** 一次 PUT 最多带几条(服务端上限 2000,留余量)。 */
+const MAX_ITEMS_PER_PUT = 1000;
+
 const loadLocal = (p: string, s: string): CaseMarks => {
   if (typeof window === 'undefined') return {};
   try {
@@ -131,6 +134,11 @@ function queueUpload(puzzle: string, set: string, items: PutItem[]) {
 export async function flushMarks(): Promise<void> {
   if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
   await flushPending();
+}
+
+/** 丢掉某一套还没发出的防抖条目(重置前调:否则队列里的旧标记会在删完之后又飞上去)。 */
+function dropPending(puzzle: string, setSlug: string): void {
+  for (const [key, v] of [...pending]) if (v.p === puzzle && v.s === setSlug) pending.delete(key);
 }
 
 /**
@@ -270,6 +278,41 @@ export const useTrainerMarks = create<TrainerMarksState>((set, get) => ({
     if (changed) set({ marks: merged });
   },
 }));
+
+/**
+ * 清空一套 set 的全部标记(/alg/progress 的「重置」)。
+ *
+ * 走的是已有的「清除」语义,不需要新端点:PUT 一条 `s=null, f=false` 服务端就删行(带 LWW)。
+ * 顺序是**先云后本地** —— 云端没删掉就整个失败,免得本地清了、下次进页又被云端合并回来。
+ * 本地留墓碑而不是整张扔掉,理由同 applyMarks:光删本地,合并时会从别处复活。
+ */
+export async function resetSetMarks(puzzle: string, setSlug: string): Promise<void> {
+  dropPending(puzzle, setSlug);
+  const local = loadLocal(puzzle, setSlug);
+  const t = Date.now();
+
+  if (!getSessionToken()) {
+    if (typeof window !== 'undefined') localStorage.removeItem(marksKey(puzzle, setSlug));
+  } else {
+    const cloud = await fetchSetMarks(puzzle, setSlug);
+    const keys = [...new Set([...Object.keys(local), ...Object.keys(cloud ?? {})])];
+    // 已经是墓碑、云端也没有的键不用再发一次
+    const live = keys.filter(k => local[k]?.s || local[k]?.f === 1 || cloud?.[k]);
+    for (let i = 0; i < live.length; i += MAX_ITEMS_PER_PUT) {
+      const items = live.slice(i, i + MAX_ITEMS_PER_PUT).map(k => ({ k, s: null, f: false, t }));
+      await putItems(puzzle, setSlug, items);
+    }
+    const tombs: CaseMarks = {};
+    for (const k of keys) tombs[k] = { t };
+    persistLocal(puzzle, setSlug, tombs);
+  }
+
+  // store 里正好装着这一套(用户从训练页跳过来的)→ 同步内存态,免得返回时看到旧标记
+  const st = useTrainerMarks.getState();
+  if (st.puzzle === puzzle && st.set === setSlug && !st.sets) {
+    useTrainerMarks.setState({ marks: loadLocal(puzzle, setSlug) });
+  }
+}
 
 /** 展示态便捷读取:未标记与墓碑都归一为 undefined / false。 */
 export const markStatus = (marks: CaseMarks, key: string): CaseMarkStatus | undefined => marks[key]?.s;

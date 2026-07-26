@@ -344,6 +344,71 @@ export function scanLocalSrsOverview(now: number): { overview: SrsOverview; recs
   return { overview, recs: all };
 }
 
+// ── 重置(/alg/progress 的「重置进度」)────────────────────────────────
+
+/** 一次 PUT 最多带几条(服务端上限 2000,留余量)。 */
+const MAX_ITEMS_PER_PUT = 1000;
+
+/** 丢掉某一套还没发出的防抖条目(重置前调:否则队列里的旧排期会在清空之后又飞上去)。 */
+function dropPendingSrs(puzzle: string, setSlug: string): void {
+  for (const [key, v] of [...pending]) if (v.p === puzzle && v.s === setSlug) pending.delete(key);
+}
+
+/**
+ * 重置一套 set 的记忆排期:每张卡回到「没练过」。
+ *
+ * 云端不删行,而是写一条空白记录(`n=0`,`t=now`)—— 与单卡 `reset()` 同一套表达:
+ * LWW 下它比任何旧记录新,别的设备下次合并就跟着清干净;`n=0` 在统计/队列里一律当新卡。
+ * 先云后本地:云端没写成功就整个失败,免得本地清了、下次进页又被合并回来。
+ */
+export async function resetSetSrs(puzzle: string, setSlug: string): Promise<void> {
+  dropPendingSrs(puzzle, setSlug);
+  const local = loadLocalRecs(puzzle, setSlug);
+  let keys = Object.keys(local);
+
+  if (cloudEnabled()) {
+    const data = await cloudGet<{ recs: SrsRecs }>(`/v1/alg/srs/${puzzle}/${setSlug}`);
+    if (data?.recs) keys = [...new Set([...keys, ...Object.keys(data.recs)])];
+    const t = Date.now();
+    const blanks = keys.map(k => ({ k, ...blankRec(), t }));
+    for (let i = 0; i < blanks.length; i += MAX_ITEMS_PER_PUT) {
+      const ok = await cloudPut(`/v1/alg/srs/${puzzle}/${setSlug}`, {
+        items: blanks.slice(i, i + MAX_ITEMS_PER_PUT),
+      });
+      if (!ok) throw new Error('srs reset: cloud write failed');
+    }
+  }
+
+  if (typeof window !== 'undefined') localStorage.removeItem(recsKey(puzzle, setSlug));
+  const st = useAlgSrs.getState();
+  if (st.puzzle === puzzle && st.set === setSlug && !st.sets) useAlgSrs.setState({ recs: {} });
+}
+
+/**
+ * 清空复习日历 / 连续天数(每日日志)。只有「重置全部」才动它 —— 单套重置不碰,
+ * 那是跨 set 的活动流水。云端合并语义是同日取较大值,归零写不掉,只能真删。
+ *
+ * 返回云端那一份是否也清掉了。删不掉不阻断本地清空(与本模块「云端是可选的」一致),
+ * 但要如实告诉调用方 —— 下次同步日历会从云端合并回来。不置 cloudDown:
+ * DELETE 端点没上线不代表读写也挂了。
+ */
+export async function resetSrsDaily(): Promise<{ cloudCleared: boolean }> {
+  let cloudCleared = true;
+  if (cloudEnabled()) {
+    try {
+      await handleApi(await fetch(apiUrl('/v1/alg/srs/daily'), {
+        method: 'DELETE', headers: authHeaders(),
+      }));
+    } catch (e) {
+      console.warn('[alg-srs] daily delete failed, cleared locally only', e);
+      cloudCleared = false;
+    }
+  }
+  if (typeof window !== 'undefined') localStorage.removeItem(DAILY_KEY);
+  useAlgSrs.setState({ daily: {}, sessionCount: 0 });
+  return { cloudCleared };
+}
+
 export interface SrsDashboardData {
   overview: SrsOverview;
   /** 每套 set 的完整记录(算到期预测 / 薄弱卡用)。 */
