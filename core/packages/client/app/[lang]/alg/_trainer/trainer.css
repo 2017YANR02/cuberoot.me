@@ -267,39 +267,29 @@
   .trainer-quick-btn:hover { background: color-mix(in srgb, var(--foreground) 9%, transparent); }
 }
 
-/* run 页当前 case 的标记 pill + 弹出菜单 */
-/* 学习标记直选条:4 个直接可点的按钮 + 数字快捷键提示(取代旧下拉菜单) */
-/* 标记条自成一行、整体居中(卡片标题下方) */
-.trainer-mark-row { display: flex; justify-content: center; margin-bottom: 10px; }
-/* 每行 2 个(圆点+文字),2 列网格 */
-/* 按钮数量随「过了就算掌握」变(3 或 4),用 flex 自然折行 —— 定死 2 列会在 3 个时留个空洞 */
+/* 学习标记直选条:纯图标,跟卡片标题同一行(文字在 title / aria-label 里) */
 .trainer-mark-bar {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 6px 16px;
+  gap: 2px;
 }
-/* 无外框:圆点 + 文字,靠颜色区分选中,不用 border/background 包成胶囊 */
+/* 无外框:只有图标,靠颜色区分选中。padding 撑出手指点得到的热区(≈24px) */
 .trainer-mark-btn {
   appearance: none; -webkit-appearance: none;
-  display: inline-flex; align-items: center; gap: 5px;
-  font: inherit; font-size: 0.78rem; font-weight: 500; line-height: 1;
+  display: inline-flex; align-items: center;
   color: var(--muted-foreground);
   background: none;
   border: none;
-  padding: 3px 0;
+  padding: 5px;
+  line-height: 0;
   cursor: pointer;
 }
 @media (hover: hover) {
   .trainer-mark-btn:hover { color: var(--foreground); }
 }
 .trainer-mark-btn.is-active.is-learning { color: var(--signal-warning); }
-.trainer-mark-btn.is-active.is-mastered { color: var(--signal-success); }
 .trainer-mark-btn.is-active.is-star      { color: var(--signal-warning); }
 .trainer-mark-btn-star { fill: currentColor; }
-.trainer-mark-dot { width: 9px; height: 9px; border-radius: 50%; }
-.trainer-mark-dot.is-learning { background: var(--signal-warning); }
-.trainer-mark-dot.is-mastered { background: var(--signal-success); }
 
 /* 成绩驱动的升降级建议条(stage 内,data-no-timer) */
 .trainer-mark-suggest {

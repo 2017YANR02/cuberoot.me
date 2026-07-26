@@ -2,12 +2,12 @@
 
 // Ported from packages/client-vite/src/pages/trainer/components.tsx
 import { useMemo, useState, type ReactNode } from 'react';
-import { Trash2, ChevronDown, ChevronRight, Check, Star } from 'lucide-react';
+import { Trash2, ChevronDown, ChevronRight, Check, Star, TriangleAlert } from 'lucide-react';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import { CaseThumb } from '@/components/CaseThumb';
 import { VisualCube } from '@/components/VisualCube';
 import { SegmentTime } from '@/components/SegmentTime';
-import { TimerState, useTrainerStore } from '@/lib/trainer-store';
+import { TimerState } from '@/lib/trainer-store';
 import type { TrainerSolve, TrainerPenalty, TrainerHistEntry } from '@/lib/trainer-store';
 import type { ScrambleHist } from '@/lib/scramble-history';
 import {
@@ -92,8 +92,8 @@ export function SolveCard({
         <>
           <div className="trainer-card-header">
             <span>{header}</span>
+            {markSlot}
           </div>
-          {markSlot && <div className="trainer-mark-row">{markSlot}</div>}
           <hr className="trainer-card-divider" />
         </>
       )}
@@ -240,29 +240,27 @@ function TriCheckbox({ checked, indeterminate }: { checked: boolean; indetermina
   return <span className={`trainer-checkbox${cls}`} aria-hidden />;
 }
 
-/** run 页卡片头的学习标记直选条:可直接点的按钮(不熟 / 已掌握 / 星标),
- *  再点同一个 = 取消该标记。数字键 1-4 仍是快捷键(绑定在 TrainerRunClient 的
+/** run 页卡片标题行右侧的学习标记直选条:两个图标按钮(不熟 / 星标),
+ *  再点同一个 = 取消该标记。数字键 1、2、4 仍是快捷键(绑定在 TrainerRunClient 的
  *  keydown 里,title 里带提示),但不再渲染可见的数字小标。data-no-timer:按压不触发计时。
  *
- *  「过了就算掌握」开着时(默认)不摆「已掌握」—— 练完不点这几个就是已掌握,
- *  留着它等于要用户手点一遍默认值。关掉那个开关它就回来(那时没有别的路径能标掌握);
- *  键盘 2 任何时候都还在,当作把「不熟」直接提成「已掌握」的快捷键。 */
+ *  不摆「已掌握」—— 换到下一题就自动算掌握(见 TrainerRunClient 的 markPassedAsMastered),
+ *  摆出来等于要用户手点一遍默认值。键盘 2 仍然在,当作把「不熟」直接提成「已掌握」的快捷键。
+ *  只出图标、跟卡片标题挤同一行:卡片本体是图 + 打乱,标记是顺手一点的事,不该占两行文字。
+ *  文字进 title / aria-label,不靠视觉也读得到。 */
 const MARK_ACTIONS: { digit: string; s?: CaseMarkStatus; star?: boolean }[] = [
   { digit: '1', s: 'learning' },
-  { digit: '2', s: 'mastered' },
   { digit: '4', star: true },
 ];
 
 export function CaseMarkBar({ k }: { k: string }) {
   const marks = useTrainerMarks(s => s.marks);
   const applyMarks = useTrainerMarks(s => s.applyMarks);
-  const autoMaster = useTrainerStore(s => s.autoMasterOnAdvance);
   const st = markStatus(marks, k);
   const starred = markStarred(marks, k);
-  const actions = autoMaster ? MARK_ACTIONS.filter(a => a.s !== 'mastered') : MARK_ACTIONS;
   return (
     <span className="trainer-mark-bar" data-no-timer>
-      {actions.map((a) => {
+      {MARK_ACTIONS.map((a) => {
         const active = a.star ? starred : st === a.s;
         const label = a.star ? tr({ zh: '星标', en: 'Star' }) : MARK_STATUS_LABEL[a.s!]();
         return (
@@ -271,15 +269,15 @@ export function CaseMarkBar({ k }: { k: string }) {
             type="button"
             className={`trainer-mark-btn ${a.star ? 'is-star' : `is-${a.s}`}${active ? ' is-active' : ''}`}
             aria-pressed={active}
+            aria-label={label}
             title={`${label} (${a.digit})`}
             onClick={() => (a.star
               ? applyMarks([k], { f: !starred })
               : applyMarks([k], { s: st === a.s ? null : a.s }))}
           >
             {a.star
-              ? <Star size={12} className="trainer-mark-btn-star" aria-hidden />
-              : <span className={`trainer-mark-dot is-${a.s}`} aria-hidden />}
-            <span className="trainer-mark-btn-label">{label}</span>
+              ? <Star size={14} className="trainer-mark-btn-star" aria-hidden />
+              : <TriangleAlert size={14} aria-hidden />}
           </button>
         );
       })}
