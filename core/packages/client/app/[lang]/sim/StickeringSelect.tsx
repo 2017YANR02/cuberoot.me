@@ -5,7 +5,7 @@
 import { useMemo } from 'react';
 import { useT } from '@/hooks/useT';
 import { CROSS_COLORS, stickeringGroupsFor, type StickeringGroup } from './engine/nxn/stickering';
-import { CUSTOM_STICKERING, countSids, type PickGrain } from './engine/nxn/customStickering';
+import { CUSTOM_STICKERING, countSids, type PickGrain, type CustomTreatment } from './engine/nxn/customStickering';
 import { visualcubeStageGroups, VC_MASK_LABEL } from './engine/nxn/vcStageMask';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import BoolToggle from '@/components/BoolToggle';
@@ -35,6 +35,19 @@ const FTO_GROUPS: StickeringGroup[] = [
     items: ['experimental-fto-fc', 'experimental-fto-f2t', 'experimental-fto-sc',
       'experimental-fto-l2c', 'experimental-fto-lbt', 'experimental-fto-l3t'],
   },
+];
+
+// 自定义阶段的画法。选项文字自带主语(选中 / 其余),两只下拉并排也不会看混,
+// 省掉一条前缀标签。默认值排第一位。
+const PICK_OPTIONS: { v: CustomTreatment; zh: string; en: string }[] = [
+  { v: 'regular', zh: '选中 原色', en: 'Picked: color' },
+  { v: 'dim', zh: '选中 压暗', en: 'Picked: dim' },
+  { v: 'ignored', zh: '选中 变灰', en: 'Picked: gray' },
+];
+const REST_OPTIONS: { v: CustomTreatment; zh: string; en: string }[] = [
+  { v: 'ignored', zh: '其余 变灰', en: 'Rest: gray' },
+  { v: 'dim', zh: '其余 压暗', en: 'Rest: dim' },
+  { v: 'regular', zh: '其余 原色', en: 'Rest: color' },
 ];
 
 /** 选项显示文本:阶段名本身是通用缩写原样展示,少数长名 / 前缀名换短标签。 */
@@ -69,6 +82,7 @@ function groupLabel(group: string, t: (zh: string, en: string) => string): strin
 export default function StickeringSelect({
   puzzleKind, value, onChange, color, onColorChange,
   mask = '', onMaskClear, editing = true, onEditingChange, grain = 'sticker', onGrainChange,
+  pick = 'regular', onPickChange, rest = 'ignored', onRestChange,
 }: {
   puzzleKind: SimPuzzle;
   value: string;
@@ -84,6 +98,11 @@ export default function StickeringSelect({
   onEditingChange?: (v: boolean) => void;
   grain?: PickGrain;
   onGrainChange?: (v: PickGrain) => void;
+  /** 画法:选中的贴纸 / 其余贴纸各自保原色、压暗还是置灰(预设阶段也是这三档在混用)。 */
+  pick?: CustomTreatment;
+  onPickChange?: (v: CustomTreatment) => void;
+  rest?: CustomTreatment;
+  onRestChange?: (v: CustomTreatment) => void;
 }) {
   const t = useT();
   const groups = useMemo<StickeringGroup[]>(() => {
@@ -151,6 +170,28 @@ export default function StickeringSelect({
             offLabel={t('整块', 'Piece')}
             ariaLabel={t('选取粒度', 'Pick granularity')}
           />
+          {picked > 0 && (
+            <>
+              <select
+                className="sim-player-mode sim-player-stickering"
+                value={pick}
+                onChange={(e) => onPickChange?.(e.target.value as CustomTreatment)}
+                title={t('选中的贴纸怎么显示', 'How the picked stickers are drawn')}
+                aria-label={t('选中的贴纸怎么显示', 'How the picked stickers are drawn')}
+              >
+                {PICK_OPTIONS.map((o) => <option key={o.v} value={o.v}>{t(o.zh, o.en)}</option>)}
+              </select>
+              <select
+                className="sim-player-mode sim-player-stickering"
+                value={rest}
+                onChange={(e) => onRestChange?.(e.target.value as CustomTreatment)}
+                title={t('其余贴纸怎么显示(压暗 = CLL 那类预设的画法)', 'How the rest are drawn (dim = what presets like CLL do)')}
+                aria-label={t('其余贴纸怎么显示', 'How the rest are drawn')}
+              >
+                {REST_OPTIONS.map((o) => <option key={o.v} value={o.v}>{t(o.zh, o.en)}</option>)}
+              </select>
+            </>
+          )}
           <span className="sim-stickering-count" aria-live="polite">
             {picked > 0
               ? t(`已选 ${picked}`, `${picked} picked`)
