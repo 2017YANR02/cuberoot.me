@@ -16,18 +16,21 @@ import { compFlagIso2, compCountryId, countryToIso2, loadFlagData, flagDataVersi
 import { countryName } from '@/lib/country-name';
 import { compSourceLine } from '@/lib/comp-schedule';
 import {
-  fetchPuzzleDistribution, type PuzzleDistributionJson, type PuzzleHistEntry,
+  fetchPuzzleDistribution, type PuzzleDistEntry, type PuzzleDistributionJson, type PuzzleHistEntry,
 } from '@/lib/puzzle-distribution';
 import {
   fetchPuzzleExamples, type PuzzleExamplesEntry,
 } from '@/lib/puzzle-examples';
 import { stepMetricsFor } from '@/app/[lang]/timer/_lib/scramble/step-metrics';
+import {
+  CLOCK_GODS_NUMBER, CLOCK_LENGTH_DISTRIBUTION, CLOCK_MEAN_LENGTH, CLOCK_STATE_COUNT,
+} from '@/lib/clock-solver';
 import { tr } from '@/i18n/tr';
 
 // puzzle key → 在线求解器 event slug(/scramble/solver?event=;sq1 不在表里 → 示例卡不可点)。
-const PUZZLE_ROUTE: Record<string, string> = { '222': '222', pyraminx: 'pyram', skewb: 'skewb' };
+const PUZZLE_ROUTE: Record<string, string> = { '222': '222', pyraminx: 'pyram', skewb: 'skewb', clock: 'clock' };
 // 2D 预览用的 WCA event_id。
-const PUZZLE_EVENT: Record<string, string> = { '222': '222', pyraminx: 'pyram', skewb: 'skewb', sq1: 'sq1' };
+const PUZZLE_EVENT: Record<string, string> = { '222': '222', pyraminx: 'pyram', skewb: 'skewb', sq1: 'sq1', clock: 'clock' };
 // 「按步数」多口径的 puzzle → step-metrics.ts 的 event(度量下拉选项从那取,与计时器同源)。
 const STEP_EVENT: Record<string, string> = { '222': '222', pyraminx: 'pyra' };
 
@@ -50,6 +53,27 @@ const PUZZLE_COLOR: Record<string, string> = {
   pyraminx: '#2ec27e', // 绿
   skewb: '#3d7bf0',    // 蓝
   sq1: '#9b6ef0',      // 紫
+  clock: '#e08a2e',    // 橙(魔表)
+};
+/** 魔表理论精确曲线的颜色(与真题语料那条区分开)。 */
+const CLOCK_THEORY_COLOR = '#7a8896';
+
+// ── 魔表:唯一一个「全空间分布已知」的 WCA 项目 ────────────────────────────────
+// 12^14 个状态全被算穿(Rokicki 陪集法,God 12),所以除了真题语料直方图,还能叠一条**理论
+// 精确曲线**。因为 WCA 打乱是均匀随机态,这条曲线就是真题的极限分布 —— 语料越多两条越贴合,
+// 差距即抽样噪声。数据 + 三层核验见 lib/clock-solver 的 CLOCK_LENGTH_DISTRIBUTION 注释。
+const CLOCK_THEORY_COUNTS: Record<string, number> = Object.fromEntries(
+  CLOCK_LENGTH_DISTRIBUTION.map((n, d) => [String(d), n]),
+);
+
+/** 语料还没生成时的兜底 entry:先只画理论曲线(不显示「数据生成中」空页)。 */
+const CLOCK_THEORY_ENTRY: PuzzleDistEntry = {
+  event: 'clock',
+  label: "Rubik's Clock",
+  label_zh: '魔表',
+  metric: 'clock',
+  sample_count: 0,
+  dist: { min: 0, max: CLOCK_GODS_NUMBER, counts: CLOCK_THEORY_COUNTS },
 };
 
 // sq1 口径说明(单 toggle:WCA 12c4 步数 / slash 最优 / 数)。
@@ -68,6 +92,32 @@ function sq1Note(unit: 'wca' | 'slash', provisional: boolean, residual: number):
       };
 }
 
+/**
+ * 魔表底部说明。`theoryOnly` = 真题语料还没灌进来(图上只有理论那一条)—— 两种情形的措辞
+ * 不同,别写「灰色那条」却根本没有灰色那条。
+ */
+function clockNote(theoryOnly: boolean): { zh: string; en: string } {
+  const n = (v: number) => v.toLocaleString('en-US');
+  const hardest = n(CLOCK_LENGTH_DISTRIBUTION[CLOCK_GODS_NUMBER]);
+  const which = theoryOnly
+    ? { zh: '图上这条就是它(全空间精确计数,不是抽样);真题语料还在生成中,灌进来后会另叠一条对照。',
+        en: 'the series above is exactly that (full-space exact counts, not sampled); the real-scramble corpus is still being generated and will be overlaid as a second series.' }
+    : { zh: '灰色那条即它,真题语料与它的差距只是抽样噪声。',
+        en: 'it is the grey series here, and any gap to the real-scramble histogram is just sampling noise.' };
+  return {
+    zh: `魔表是唯一一个全空间分布已知的 WCA 项目:12¹⁴ = ${n(CLOCK_STATE_COUNT)} 个状态全部被算穿`
+      + `(Tomas Rokicki 的陪集分解,分布表见 Jaap Scherphuis 的 Rubik's Clock 页;God's number = 12 由 Jakob Kogler 2014 年首证)。`
+      + `因为 WCA 打乱就是均匀随机状态,那张精确表同时就是比赛打乱难度的极限分布 —— ${which.zh}`
+      + `理论均值 ${CLOCK_MEAN_LENGTH.toFixed(4)} 步,需要满 12 步的状态全世界只有 ${hardest} 个(占 3×10⁻¹¹,真题里几乎不可能出现)。`
+      + `本站不是照抄这张表就用:表格逐档求和自洽、d ≤ 4 各档用自己的招式模型精确重算、全部 ${hardest} 个 12 步状态逐个解出确为 12 步,三层核验都过。`,
+    en: `The clock is the only WCA event whose full-space distribution is known: all 12^14 = ${n(CLOCK_STATE_COUNT)} states have been solved optimally `
+      + `(Tomas Rokicki's coset decomposition; the table is published on Jaap Scherphuis' Rubik's Clock page, and God's number 12 was first proven by Jakob Kogler in 2014). `
+      + `Since a WCA scramble is a uniform random state, that exact table is also the limiting difficulty distribution of competition scrambles — ${which.en} `
+      + `The theoretical mean is ${CLOCK_MEAN_LENGTH.toFixed(4)} moves, and only ${hardest} states in the world need the full 12 (3×10⁻¹¹ — you will essentially never see one in competition). `
+      + `We do not just copy the table: it is checked three ways — the bins sum to 12^14, d ≤ 4 is recomputed exactly from our own move model, and all ${hardest} distance-12 states are solved and confirmed to need 12.`,
+  };
+}
+
 // sq1 复形(cubeshape)口径说明:把顶底两层还原成正方形(立方体形状)的最少 slash 数,中层不计。
 function cubeshapeNote(): { zh: string; en: string } {
   return {
@@ -80,6 +130,14 @@ function cubeshapeNote(): { zh: string; en: string } {
 function metricNote(key: string, metric: string): { zh: string; en: string; } {
   if (key === 'pyraminx') {
     return { zh: 'HTM,含顶点(tips)', en: 'HTM, tips included' };
+  }
+  if (key === 'clock') {
+    // 魔表的一「步」= 一次针脚组合 + 一次转动(拨几格不影响步数),与 WCA 打乱那 14 步的
+    // 唯一分解不是一回事 —— 那是固定格式、通常不最优。
+    return {
+      zh: '一步 = 一次针脚组合 + 一次转动(拨几格都算一步);上限 12(God 数)',
+      en: 'one move = one pin pattern turned once (any amount); max 12 (God\'s number)',
+    };
   }
   if (key === 'sq1') {
     if (metric === 'slash') {
@@ -153,7 +211,10 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
     return () => { alive = false; };
   }, []);
 
-  const entry = json?.puzzles[puzzleKey];
+  const isClock = puzzleKey === 'clock';
+  // 魔表:语料还没灌进来也有东西可看 —— 退到理论精确曲线(全空间 12^14,非抽样)。
+  const theoryOnly = isClock && !json?.puzzles[puzzleKey];
+  const entry = json?.puzzles[puzzleKey] ?? (isClock ? CLOCK_THEORY_ENTRY : undefined);
   const exEntry = examples?.[puzzleKey];
 
   // 「按步数」多口径(2×2 / 金字塔):entry.metrics 在即启用度量下拉,选项/标签取自 step-metrics.ts。
@@ -187,8 +248,20 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
   const series = useMemo<HistSeries[]>(() => {
     if (!entry || !activeDist) return [];
     const label = (isZh && entry.label_zh) ? entry.label_zh : entry.label;
-    return [{ name: label, fillColors: [PUZZLE_COLOR[puzzleKey] ?? '#888888'], counts: activeDist.counts }];
-  }, [entry, activeDist, puzzleKey, isZh]);
+    const out: HistSeries[] = [
+      { name: label, fillColors: [PUZZLE_COLOR[puzzleKey] ?? '#888888'], counts: activeDist.counts },
+    ];
+    // 魔表:语料直方图之外再叠理论精确曲线(百分比模式下各系列各自归一,两条可直接比)。
+    // 兜底 entry 本身就是理论曲线 → 那种情况不重复叠。
+    if (isClock && activeDist.counts !== CLOCK_THEORY_COUNTS) {
+      out.push({
+        name: tr({ zh: '理论精确分布', en: 'Exact theoretical' }),
+        fillColors: [CLOCK_THEORY_COLOR],
+        counts: CLOCK_THEORY_COUNTS,
+      });
+    }
+    return out;
+  }, [entry, activeDist, puzzleKey, isZh, isClock]);
 
   const st = useMemo(() => (activeDist ? stats(activeDist.counts) : null), [activeDist]);
 
@@ -307,6 +380,7 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
           onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
           meanValue={st?.mean}
           medianValue={st?.median}
+          totalUnit={theoryOnly ? { zh: '个状态(全空间,非抽样)', en: 'states (full space, not sampled)' } : undefined}
         />
       </div>
 
@@ -326,9 +400,12 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
       )}
 
       <div className="scramble-stats-meta">
-        <span>
-          {tr({ zh: '生成时间', en: 'Generated' })}: {json.meta.generated_at}
-        </span>
+        {/* 理论曲线是定理不是跑出来的数据 —— 语料还没灌进来时不该挂管道的生成时间。 */}
+        {!theoryOnly && (
+          <span>
+            {tr({ zh: '生成时间', en: 'Generated' })}: {json.meta.generated_at}
+          </span>
+        )}
         {!hasMetrics && (
         <span>
           {isCube
@@ -344,6 +421,8 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
               zh: `两种度量:WCA 12c4 步数((X,Y) 计 1、/ 计 1,官方计步)与 slash 最优解的 / 数(twist 度量,God 13)。为什么不分「WCA 最优解 / slash 最优解」:SQ1 的 WCA 最优解恰好也用最少刀(t = s,全 125,605 真题已证、无一条能再省刀),两个目标从不冲突 —— 同一个解同时是 WCA 最优与 slash 最优。可证依据:95.71% 由省算定理(W=2s 或 2s+1 ⇒ t=s)免搜索直接证明,余 4.29%(${slashAmbiguous.toLocaleString()} 条)歧义态(W=2s−1)精确求解判定。`,
               en: `Two metrics: WCA 12c4 length ((X,Y)=1, /=1, official) and the slash count of the slash-optimal solution (twist, God's number 13). Why there's no "WCA-optimal vs slash-optimal" choice: an SQ1 WCA-optimal solution already uses the fewest slashes (t = s, proven for all 125,605 scrambles — not one can save a slash), so the two objectives never conflict: a single solution is simultaneously WCA- and slash-optimal. Proof: 95.71% from the parity theorem (W=2s or 2s+1 ⇒ t=s), the remaining 4.29% (${slashAmbiguous.toLocaleString()}) ambiguous (W=2s−1) decided by exact solving.`,
             })
+            : isClock
+            ? tr(clockNote(theoryOnly))
             : tr({ zh: '度量:整个打乱的最优解步数', en: 'Metric: optimal solution length per scramble' })}
         </span>
         )}

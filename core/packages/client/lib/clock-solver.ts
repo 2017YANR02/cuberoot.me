@@ -628,6 +628,52 @@ export function randomClockScramble(rand: () => number = Math.random): string {
   return clockScrambleForState(randomClockState(rand));
 }
 
+// ─── 全空间距离分布 ─────────────────────────────────────────────────────────
+
+/** 状态总数 = 12^14(精确,double 可无损表示:1.28e15 < 2^53)。 */
+export const CLOCK_STATE_COUNT = 1_283_918_464_548_864;
+
+/** God's number = 12(Kogler 2014 首证,Rokicki 陪集法独立复核)。 */
+export const CLOCK_GODS_NUMBER = 12;
+
+/**
+ * `CLOCK_LENGTH_DISTRIBUTION[d]` = 最优步数**恰为** d 的状态数,d = 0..12,逐档精确。
+ *
+ * 这是**别人算出来的**:全空间 12^14 的 God's algorithm 由 Tomas Rokicki 用陪集分解跑穿
+ * (12^5 = 248,832 个陪集压到 9,906 个代表元,约 3 天),表格取自 Jaap Scherphuis 的页面
+ * <https://www.jaapsch.net/puzzles/clock.htm>。本机重算不可能,所以本仓库做的是**核验**,
+ * 三层证据在 `scripts/clock/verify_distribution.mts`(用本仓库自己的招式模型,不引用求解器):
+ *
+ *   1) 逐档求和 === 12^14 —— 抓誊抄错(实测抓到过 d=4 / d=11 各错一位)
+ *   2) d ≤ 4 各档由 30 种 move type 全组合枚举 + 去重**精确重算**,逐档 `===` 对账
+ *   3) 均匀随机态抽样直方图对理论占比(卡方 + 逐档 σ),并核对均值 9.4337 与上限 12
+ *
+ * d = 12 那一档另有硬对账:Rokicki 公布了全部 39,248 个 12 步状态(`solver/reference/clock/
+ * dist12.txt`),本站求解器把它们逐个解出恰为 12 步 —— 全 39,248 条已跑通(`clock_solver.test.ts`,
+ * `CLOCK_DIST12_FULL=1`)。
+ *
+ * 因为 WCA 打乱是**均匀随机态**,这张表同时就是比赛打乱难度的真实分布(不需要真题语料)。
+ */
+export const CLOCK_LENGTH_DISTRIBUTION: readonly number[] = [
+  1,
+  330,
+  51_651,
+  4_947_912,
+  317_141_342,
+  14_054_473_232,
+  428_862_722_294,
+  8_621_633_953_202,
+  101_600_180_118_726,
+  528_107_928_328_516,
+  613_251_601_892_918,
+  31_893_880_879_492,
+  39_248,
+];
+
+/** 均匀随机态的最优步数均值(由上表精确算得;Jaap 页面写 9.4337)。 */
+export const CLOCK_MEAN_LENGTH =
+  CLOCK_LENGTH_DISTRIBUTION.reduce((a, c, d) => a + c * d, 0) / CLOCK_STATE_COUNT;
+
 /** 随机状态(均匀分布在 12^14 上),= WCA 打乱的分布。 */
 export function randomClockState(rand: () => number = Math.random): ClockState {
   const posit = new Array<number>(18).fill(0);

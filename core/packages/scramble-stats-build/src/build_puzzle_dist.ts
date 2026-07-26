@@ -59,6 +59,11 @@ const PUZZLES: PuzzleSpec[] = [
   // sq1 主口径 = 可证 WCA 12c4 最优(Sq1WcaSolver,sq1_wca_exact.csv + 未 ingest 块),备选 slash。
   // 近最优(twophase 上界)2026-06-18 退役:不再产 near 分布(代码仍在 solver/src/sq1_twophase.rs 作对照)。
   { key: 'sq1', event: 'sq1', label: 'Square-1', label_zh: 'SQ1', metric: 'wca', exactPrimary: { csv: 'sq1_wca_exact.csv', wcaCol: 'wca_exact', altMetric: 'slash', slashCsv: 'sq1_slash_exact.csv' } },
+  // 魔表:唯一一个**全空间分布已知**的 WCA 项目(12^14 全算穿,God 12)。这里聚合的仍是真题语料
+  // 直方图(与其它 puzzle 同口径,给出比赛归属示例);理论精确曲线在前端另叠一条,数据是
+  // client/lib/clock-solver 的 CLOCK_LENGTH_DISTRIBUTION,不经本管道。analyzer 是 TS
+  // (src/clock_analyzer.mts,魔表求解器本就是纯 TS),不是 Rust exe。
+  { key: 'clock', event: 'clock', label: "Rubik's Clock", label_zh: '魔表', metric: 'clock' },
 ];
 
 interface Hist { min: number; max: number; counts: Map<number, number> }
