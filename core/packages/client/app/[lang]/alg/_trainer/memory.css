@@ -256,7 +256,7 @@ a.trainer-strip-num, button.trainer-strip-num { cursor: pointer; }
   font-weight: 620;
   color: var(--foreground);
 }
-.srs-case-star { fill: var(--signal-warning); color: var(--signal-warning); }
+.srs-case-star { fill: var(--destructive); color: var(--destructive); }
 .srs-mini-btn {
   display: inline-flex;
   align-items: center;
@@ -271,7 +271,7 @@ a.trainer-strip-num, button.trainer-strip-num { cursor: pointer; }
 @media (hover: hover) {
   .srs-mini-btn:hover { color: var(--accent); background: color-mix(in srgb, var(--foreground) 7%, transparent); }
 }
-.srs-mini-btn[aria-pressed='true'] { color: var(--signal-warning); }
+.srs-mini-btn[aria-pressed='true'] { color: var(--destructive); }
 
 .srs-thumb { line-height: 0; }
 .srs-thumb :is(img, svg) { max-width: 100%; height: auto; }

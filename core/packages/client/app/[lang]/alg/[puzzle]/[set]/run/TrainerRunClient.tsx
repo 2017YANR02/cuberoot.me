@@ -798,7 +798,9 @@ export default function TrainerRunClient() {
   // 两者用同一 showStats 偏好,互补出现;都开着侧栏才铺。
   const statsVisible = timing && showStats;
   const historyVisible = !timing && showStats;
-  const sidebarShown = showPrevCard || (showNextCard && !multi) || statsVisible || historyVisible;
+  // 三块各自成列:上一个在左、下一个(+统计)在右、历史铺满底部。哪块空了哪列就不占宽。
+  const leftShown = showPrevCard;
+  const rightShown = (showNextCard && !multi) || statsVisible;
 
   // pre-AUF 只对「顶层 case + U 可作 AUF」的场景有意义(F2L 类打乱前加 U 会换 case)
   // 合练:任一成员是 F2L 类就整场关掉(给 F2L 打乱前加 U 会换成另一个 case)
@@ -1258,8 +1260,12 @@ export default function TrainerRunClient() {
           onExit={() => setMode('recap')}
         />
       ) : (
-      <div className={`trainer-run${sidebarShown ? '' : ' trainer-run--solo'}`}>
+      <div className={`trainer-run${leftShown ? ' has-left' : ''}${rightShown ? ' has-right' : ''}`}>
         <div className="trainer-stage" ref={stageRef}>
+          {/* head = 图以上的一切(打乱 / 按钮 / 计时数字),body = 图及其以下。
+              两段配合 .trainer-run 的 subgrid:主屏与左右两张卡片共用同一套行,
+              三张图的顶边落在同一条线上,不靠数魔法像素。 */}
+          <div className="trainer-stage-head">
           {/* 三条一屏:当前 + 屏上第 2、3 条(队尾时 = 预抽的 peek / peek2,回看过则是历史里
               后两条),拧完三条再点一次切下一屏。打乱与图交错成六行,每条紧跟自己那张图。
               图走 local 渲染:三张与三条文字在同一次 commit 出现,不再各自等自己的网络往返。 */}
@@ -1299,9 +1305,9 @@ export default function TrainerRunClient() {
               font={scrambleFont}
             />
           )}
-          <div className="trainer-stage-actions">
-            {/* 不计时模式下点哪都是「下一个」,按钮多余不显示 */}
-            {timing && (
+          {/* 不计时模式下点哪都是「下一个」,按钮多余,整行都不出(空 div 也会占竖向余量) */}
+          {timing && (
+            <div className="trainer-stage-actions">
               <button
                 className="trainer-stage-btn"
                 onClick={onNextCase}
@@ -1310,8 +1316,8 @@ export default function TrainerRunClient() {
                 {tr({ zh: '下一个', en: 'Next'
               })}
               </button>
-            )}
-          </div>
+            </div>
+          )}
 
           {timing && (
             <TimerDisplay
@@ -1321,8 +1327,10 @@ export default function TrainerRunClient() {
               font={timerFont}
             />
           )}
+          </div>
 
-          {/* 当前这道题的 case 图(左栏下方):看得见正在练的这一把。
+          <div className="trainer-stage-body">
+          {/* 当前这道题的 case 图:看得见正在练的这一把。
               图从「实际打乱」渲染(含 pre/post-AUF),与上方打乱公式朝向一致。
               三条一屏时图已经跟在各自那条打乱下面(见上),这里不再重复出。 */}
           {!multi && showStageThumb && currentCase && (
@@ -1387,13 +1395,14 @@ export default function TrainerRunClient() {
               </button>
             </div>
           )}
+          </div>
         </div>
 
-        {sidebarShown && (
-          <aside className="trainer-sidebar">
+        {leftShown && (
+          <aside className="trainer-sidebar is-left">
             {/* 上一个:刚做完那把(图+名+打乱)+ 标记条,标记打在这把上。第一把之前无成绩,不出。
-                三条一屏 → 上三个:上一屏那三条各一张卡片,每张自带标记条(键盘 1-4 仍打最近那条)。 */}
-            {showPrevCard && multi && prevTrio.map((e, i) => {
+                三条一屏 → 上三个:上一屏那三条各一张卡片,每张自带标记条(键盘 1、2、4 仍打最近那条)。 */}
+            {multi && prevTrio.map((e, i) => {
               const c = findCaseByKey(cases, e.key) ?? null;
               if (!c) return null;
               return (
@@ -1411,7 +1420,7 @@ export default function TrainerRunClient() {
                 />
               );
             })}
-            {showPrevCard && !multi && prevCase && (
+            {!multi && prevCase && (
               <SolveCard
                 puzzle={puzzle}
                 set={setSlug}
@@ -1424,6 +1433,11 @@ export default function TrainerRunClient() {
                 markSlot={<CaseMarkBar k={caseKey(prevCase)} />}
               />
             )}
+          </aside>
+        )}
+
+        {rightShown && (
+          <aside className="trainer-sidebar is-right">
             {/* 下一个:预览待做那把(图+名+打乱),不带标记。
                 三条一屏时它已经在主屏第 2 条里,不再重复出一张卡片。 */}
             {showNextCard && !multi && (
@@ -1451,16 +1465,20 @@ export default function TrainerRunClient() {
                 }}
               />
             )}
-            {/* 不计时:打乱历史列表(点某条 = 跳回看那条打乱),方便回看以前的打乱。 */}
-            {historyVisible && (
-              <HistoryList
-                hist={hist}
-                cases={cases}
-                puzzle={puzzle}
-                set={setSlug}
-                onPick={jumpToHist}
-              />
-            )}
+          </aside>
+        )}
+
+        {/* 不计时:打乱历史列表(点某条 = 跳回看那条打乱)。铺在底部整行 —— 它是一排横向药丸,
+            挤在右栏里只能竖着堆。 */}
+        {historyVisible && (
+          <aside className="trainer-sidebar is-bottom">
+            <HistoryList
+              hist={hist}
+              cases={cases}
+              puzzle={puzzle}
+              set={setSlug}
+              onPick={jumpToHist}
+            />
           </aside>
         )}
       </div>
