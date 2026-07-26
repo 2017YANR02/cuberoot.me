@@ -251,7 +251,7 @@ function changed(p: Plan): boolean {
  * 这类 case 无从对齐(U 也转不动已归位的对子),是预期跳过,不是失败。除它以外任何排不出
  * 计划的都算失败并卡住整批。
  */
-const NO_F2L_COUNTERPART = new Set(['Solved Pair']);
+const NO_F2L_COUNTERPART = new Set(['O']);
 
 function planCase(c: AlgCase, ctx: Ctx): Plan {
   const setup = (c.setup || '').trim();

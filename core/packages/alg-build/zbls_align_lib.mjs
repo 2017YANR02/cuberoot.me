@@ -56,11 +56,11 @@ export function simplifyAlgStart(algStr) {
  * Align one case for canonical FR display.
  *  algs is either a flat array of {alg,algHtml?} entries (typical for fresh scrape),
  *  or 2D `[[entries]]` (typical for DB rows where there's 1 orientation today).
- * Returns null on parse failure or if subgroup is Solved Pair (no alignment needed).
+ * Returns null on parse failure or if subgroup is O / solved pair (no alignment needed).
  */
 export function alignCase({ subgroup, setup, algs, name = '?', id = '?' }) {
   if (!setup || !algs || !algs.length) return null;
-  if (subgroup === 'Solved Pair') return null;
+  if (subgroup === 'O') return null;
 
   // Normalize algs to flat array of entries
   const flatAlgs = Array.isArray(algs[0]) ? algs[0] : algs;

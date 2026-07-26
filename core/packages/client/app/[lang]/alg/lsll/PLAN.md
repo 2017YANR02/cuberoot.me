@@ -7,7 +7,7 @@
 
 ## 分类学(已定)
 
-- 42 大类 = 槽对构型,命名沿用站内 zbls 公式集字母(A+…X-,F/S/T 自镜像,Solved Pair)。
+- 42 大类 = 槽对构型,命名沿用站内 zbls 公式集字母(A+…X-,F/S/T 自镜像,O = 对子已归位)。
 - 字母 ↔ 构型映射由 zbls 集 289 条 setup 逆向实证(cubing.js 提取状态 + y 共轭归 FR 框架),
   已硬编码进 `lib/lsll/model.ts` 的 `CATEGORIES`。
 - 大类粒度 = 构型(c=槽角扭、e=槽棱翻、TT 的 d=角棱顶位相对差);
@@ -22,7 +22,7 @@
 - 已走 alg admin API 落库:38 行改名归位(镜像案挂 + 组/公式当名字 → `X T'` 式)、
   4 行重建(`E± IV` 去重、`E± D` 修 setup)、16 案新建(E VF、U Lb/VZb、V Tb–Td/Ib–Id 及镜像)、
   全 set 按 docx 顺序 reorder。docx 内 5 条坏公式已剔(EIV/EIV'/ED/ED' 首条、ULb 第 5 条)。
-- 终态:**305 行 | 305 唯一 case | 0 解析失败**,每组 8+8(C 2+2、D 4+4、F 2、S 8、T 8、SP 3)。
+- 终态:**305 行 | 305 唯一 case | 0 解析失败**,每组 8+8(C 2+2、D 4+4、F 2、S 8、T 8、O 3)。
   逐条公式已验 setup+alg → F2L+EO 目标(含 AUF 对齐)。脚本:`.tmp/zbls_docx_audit.mjs`
   (审计/计划)、`.tmp/zbls_docx_apply.mjs`(写库+复审)、`.tmp/zbls_reorder.mjs`。
 

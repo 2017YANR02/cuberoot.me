@@ -12,7 +12,7 @@
  * Pieces convention (cubing.js 3x3x3 KPattern):
  *   0=UFR, 1=UBR, 2=UBL, 3=UFL, 4=DFR, 5=DFL, 6=DBL, 7=DRB
  *
- * Solved Pair: skipped (pair already solved, no alignment needed).
+ * O (pair already solved): skipped, no alignment needed.
  * Geng: treated as + subgroup (assume FR slot, UFR pair corner home).
  *
  * Output: C:/tmp/zbls_align.sql ready for `scp + psql -f`.
@@ -82,7 +82,7 @@ async function fetchZblsCases() {
 function processCase(c) {
   const { id, subgroup, setup, algs } = c;
   if (!setup || !algs || !algs.length) return null;
-  if (subgroup === 'Solved Pair') return null;
+  if (subgroup === 'O') return null;
 
   const isMinus = subgroup.endsWith('-');
   const pairCornerHome = isMinus ? 3 : 0;  // UFL for -, UFR for everything else
