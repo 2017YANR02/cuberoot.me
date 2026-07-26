@@ -86,56 +86,53 @@ export function SolveCard({
   /** 打乱图开关(「打乱图」关时整卡不出 CaseThumb)。默认 true。 */
   showThumb?: boolean;
 }) {
+  // 标题行三格:左「上一个」/ 正中 case 名 / 右标记图标 —— 名字在图正上方,不再单占一行
+  const name = c ? primaryCaseName(puzzle, set, c) : null;
   return (
     <div className="trainer-solve-card">
-      {(header != null || markSlot != null) && (
-        <>
-          <div className="trainer-card-header">
-            <span>{header}</span>
-            {markSlot}
+      {/* 打乱排在图上方 —— 与主屏同序(先读公式再看图)。head / body 两段是给 .trainer-run
+          的 subgrid 用的:三列共用同一套行,三张图的顶边自然齐平。 */}
+      <div className="trainer-card-head">
+        {(header != null || markSlot != null || name != null) && (
+          <div className="trainer-card-header is-solve">
+            <span className="trainer-card-slot">{header}</span>
+            <span className="trainer-card-name">
+              {name != null && (onShowCase && c ? (
+                <button
+                  type="button"
+                  className="trainer-case-link"
+                  onClick={() => onShowCase(c)}
+                  title={tr({ zh: '查看该情况', en: 'View this case' })}
+                >
+                  {name}
+                </button>
+              ) : name)}
+            </span>
+            <span className="trainer-card-slot is-end">{markSlot}</span>
           </div>
-          <hr className="trainer-card-divider" />
-        </>
-      )}
-      {!scramble || !c ? (
-        <div className="trainer-stats-empty">{tr({ zh: '暂无成绩', en: 'No solves yet'
-        })}</div>
-      ) : (
-        <>
-          {showThumb && (
-            <div className="trainer-solve-thumb">
-              <CaseThumb
-                puzzle={puzzle}
-                set={set}
-                sticker={c.sticker}
-                alg={c.algs.flat()[0]?.alg ?? c.standard ?? ''}
-                // 图从「实际打乱」渲染(含 pre/post-AUF),而非 case 规范 setup —— 否则
-                // 图与卡片上的打乱公式朝向对不上(3x3/2x2 才有 AUF;其余打乱==规范 setup)。
-                setup={scramble ?? c.setup}
-                // 与左栏大图 / 离屏预取同 size=140:同一 URL 共用浏览器缓存,换题时秒出不再重取。
-                size={140}
-              />
-            </div>
-          )}
-          <div className="trainer-solve-row">
-            {onShowCase ? (
-              <button
-                type="button"
-                className="trainer-case-link"
-                onClick={() => onShowCase(c)}
-                title={tr({ zh: '查看该情况', en: 'View this case' })}
-              >
-                {primaryCaseName(puzzle, set, c)}
-              </button>
-            ) : (
-              primaryCaseName(puzzle, set, c)
-            )}
+        )}
+        {scramble && c && <div className="trainer-solve-scramble">{scramble}</div>}
+      </div>
+      <div className="trainer-card-body">
+        {!scramble || !c ? (
+          <div className="trainer-stats-empty">{tr({ zh: '暂无成绩', en: 'No solves yet'
+          })}</div>
+        ) : showThumb && (
+          <div className="trainer-solve-thumb">
+            <CaseThumb
+              puzzle={puzzle}
+              set={set}
+              sticker={c.sticker}
+              alg={c.algs.flat()[0]?.alg ?? c.standard ?? ''}
+              // 图从「实际打乱」渲染(含 pre/post-AUF),而非 case 规范 setup —— 否则
+              // 图与卡片上的打乱公式朝向对不上(3x3/2x2 才有 AUF;其余打乱==规范 setup)。
+              setup={scramble ?? c.setup}
+              // 与左栏大图 / 离屏预取同 size=140:同一 URL 共用浏览器缓存,换题时秒出不再重取。
+              size={140}
+            />
           </div>
-          <div className="trainer-solve-row">
-            <div className="trainer-solve-scramble">{scramble}</div>
-          </div>
-        </>
-      )}
+        )}
+      </div>
     </div>
   );
 }

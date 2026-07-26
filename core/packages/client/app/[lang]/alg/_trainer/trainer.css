@@ -240,8 +240,8 @@
 .trainer-mark-badge.is-learning { background: var(--signal-warning); width: 12px; height: 12px; top: -3px; right: -3px; }
 .trainer-mark-star {
   position: absolute; top: -6px; left: -6px;
-  color: var(--signal-warning);
-  fill: var(--signal-warning);
+  color: var(--destructive);
+  fill: var(--destructive);
   filter: drop-shadow(0 0 1px var(--background));
 }
 /* 画笔模式:格子光标提示「点了是涂不是选」 */
@@ -288,7 +288,7 @@
   .trainer-mark-btn:hover { color: var(--foreground); }
 }
 .trainer-mark-btn.is-active.is-learning { color: var(--signal-warning); }
-.trainer-mark-btn.is-active.is-star      { color: var(--signal-warning); }
+.trainer-mark-btn.is-active.is-star      { color: var(--destructive); }
 .trainer-mark-btn-star { fill: currentColor; }
 
 /* 成绩驱动的升降级建议条(stage 内,data-no-timer) */
@@ -300,16 +300,54 @@
 }
 
 /* ─── run page (timer) ─── */
+/* 三列 + 一条底通栏:上一个在左、下一个(+统计)在右、打乱历史铺满底部。
+   窄屏(≤900)全部落成一列,顺序 = 主屏 → 上一个 → 下一个 → 历史。
+   列宽由 has-left / has-right 决定 —— 哪块没开就不排那一列,免得空一格 320px。 */
 .trainer-run {
   display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 28px;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "stage" "prev" "next" "history";
+  /* 每列内部再分 head(图以上)/ body(图及以下)两行,见下方 subgrid。
+     行间距要能被 subgrid 复用(子网格若自带 gap 会错位),所以走变量,两处同一个值。 */
+  --tr-row-gap: 16px;
+  column-gap: 28px;
+  row-gap: var(--tr-row-gap);
   align-items: start;
 }
-/* 极简模式:侧栏两块都被隐藏时不留空列 */
-.trainer-run--solo { grid-template-columns: 1fr; }
-@media (max-width: 900px) {
-  .trainer-run { grid-template-columns: 1fr; }
+.trainer-stage { grid-area: stage; }
+.trainer-sidebar.is-left { grid-area: prev; }
+.trainer-sidebar.is-right { grid-area: next; }
+.trainer-sidebar.is-bottom { grid-area: history; }
+@media (min-width: 901px) {
+  .trainer-run.has-left.has-right {
+    grid-template-columns: 300px minmax(0, 1fr) 300px;
+    grid-template-areas: "prev stage next" "prev stage next" "history history history";
+  }
+  .trainer-run.has-left:not(.has-right) {
+    grid-template-columns: 300px minmax(0, 1fr);
+    grid-template-areas: "prev stage" "prev stage" "history history";
+  }
+  .trainer-run.has-right:not(.has-left) {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    grid-template-areas: "stage next" "stage next" "history history";
+  }
+  .trainer-run:not(.has-left):not(.has-right) {
+    grid-template-areas: "stage" "stage" "history";
+  }
+  /* 主屏与两侧卡片共用同一套行:第 1 行 = 图以上,第 2 行 = 图及以下。行高取三列的最大值,
+     所以三张图的顶边天然在同一条线上 —— 不用估行数、不用钉像素。
+     侧栏放着不止一张卡片时(三条一屏的「上三个」/ 计时的成绩表)对不齐也无意义,不接。 */
+  .trainer-run .trainer-stage,
+  .trainer-run .trainer-sidebar.is-left:has(> .trainer-solve-card:only-child),
+  .trainer-run .trainer-sidebar.is-right:has(> .trainer-solve-card:only-child),
+  .trainer-run .trainer-sidebar > .trainer-solve-card:only-child {
+    display: grid;
+    grid-template-rows: subgrid;
+    row-gap: var(--tr-row-gap);
+    align-self: stretch;
+  }
+  /* 卡片自己再套一层 subgrid:卡片的内边距只推两端,中间那条行线仍是父网格的 → 图对得齐 */
+  .trainer-run .trainer-sidebar > .trainer-solve-card:only-child { grid-row: 1 / -1; }
 }
 
 .trainer-stage {
@@ -332,7 +370,7 @@
      600 会触发假加粗合成,笔画发糊。 */
   font-weight: 400;
   letter-spacing: 0.05em;
-  margin-bottom: 24px;
+  margin-bottom: 14px;
   color: var(--foreground);
 }
 /* 打乱字体档位(sf-sans = 默认继承站字体) */
@@ -369,7 +407,7 @@
 /* 当前题的 case 图 —— 左栏计时数字下方居中,看得见正在练的这一把 */
 .trainer-stage-thumb {
   display: flex; justify-content: center;
-  margin: 20px 0 4px;
+  margin: 0 0 4px;
 }
 /* 「下一个」图的离屏预取:渲染但移出视口(仍会加载 → 进浏览器缓存),换题秒出 */
 .trainer-thumb-prefetch {
@@ -528,6 +566,18 @@
   font-size: 0.95rem; font-weight: 600;
   margin-bottom: 10px;
 }
+/* solve 卡片的标题行:三格网格,case 名永远落在正中(右侧没有标记时也不偏) */
+.trainer-card-header.is-solve {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 4px 8px;
+  align-items: center;
+  /* 横线去掉了,靠图自己那 8px 上边距分隔 —— 不用再空出一行的量 */
+  margin-bottom: 2px;
+}
+.trainer-card-slot { min-width: 0; }
+.trainer-card-slot.is-end { justify-self: end; display: inline-flex; }
+.trainer-card-name { min-width: 0; text-align: center; }
 .trainer-card-header .trainer-icon-btn {
   background: transparent; border: none; color: var(--muted-foreground); cursor: pointer;
   padding: 4px;
@@ -539,8 +589,12 @@
 }
 .trainer-solve-thumb {
   display: flex; justify-content: center;
-  margin: 8px 0 12px;
+  margin: 0;
 }
+/* 卡片上半:标题行 + 打乱;下半:图。两段是 subgrid 的两行(见 .trainer-run) */
+.trainer-card-head { display: flex; flex-direction: column; gap: 6px; }
+.trainer-card-head .trainer-solve-scramble { text-align: center; }
+.trainer-card-body { display: flex; flex-direction: column; justify-content: flex-start; }
 .trainer-solve-row {
   font-size: 0.85rem;
   margin: 4px 0;
