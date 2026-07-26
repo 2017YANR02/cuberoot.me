@@ -46,20 +46,13 @@ import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { displayAlgCaseName, primaryCaseName, displayZbllToken } from '@/lib/alg_case_display';
 import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
 import { ALG_TAG_LABEL, ALG_TAGS } from '@/lib/alg_tags';
-import { displayAlg, oriAdjustSetup } from '@/lib/alg_display';
+import { displayAlg, oriAdjustSetup, shortOriName } from '@/lib/alg_display';
 import { sanitizeAlgHtml } from '@/lib/alg_html';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useHashHighlight } from '@/hooks/useHashHighlight';
 import { tr } from '@/i18n/tr';
 
-// oriAdjustSetup 已提到 lib/alg_display 与 case 详情页共用(详情页原先漏了它,见那里的注释)。
-
-function shortOriName(name: string): string {
-  const map: Record<string, string> = {
-    'Front Right': 'FR', 'Front Left': 'FL', 'Back Left': 'BL', 'Back Right': 'BR',
-  };
-  return map[name] ?? name;
-}
+// oriAdjustSetup / shortOriName 已提到 lib/alg_display 与 case 详情页共用(详情页原先漏了它们,见那里的注释)。
 
 function isPuzzle(s: string): s is AlgPuzzle {
   return (ALG_PUZZLES as readonly string[]).includes(s);
@@ -85,11 +78,13 @@ function SetupLine({ puzzle, setup }: { puzzle: string; setup: string }) {
   );
 }
 
-function AlgRow({ entry, expanded, onToggle, animatable, puzzle, set, setup, invalid, mirror }: {
+function AlgRow({ entry, expanded, onToggle, animatable, puzzle, set, setup, invalid, mirror, ori = 0 }: {
   entry: AlgEntry; expanded: boolean; onToggle: () => void; animatable: boolean;
   puzzle: AlgPuzzle; set: string; setup?: string; invalid?: string;
   /** 有值 = 这个 set 吃镜像系统,行尾出翻转图标;`partner` 是伙伴 case 名(没建链时为 null) */
   mirror?: { partner: string | null; self: string };
+  /** 这条公式在第几个视角(0=FR),镜像面板要拿它算落点 */
+  ori?: number;
 }) {
   const { alg, algHtml } = entry;
   const { copied, copy } = useCopy();
@@ -144,7 +139,7 @@ function AlgRow({ entry, expanded, onToggle, animatable, puzzle, set, setup, inv
         </button>
       </div>
       {mirror && mirrorOpen && (
-        <AlgMirrorPanel alg={alg} puzzle={puzzle} mirrorName={mirror.partner} selfName={mirror.self} />
+        <AlgMirrorPanel alg={alg} puzzle={puzzle} mirrorName={mirror.partner} selfName={mirror.self} ori={ori} />
       )}
       {expanded && animatable && <AlgPlayer alg={alg} puzzle={puzzle} set={set} setup={setup} />}
     </>
@@ -247,8 +242,10 @@ function SubgroupIndex({
             <AlgCard
               key={topLabel || '_root_'}
               href={`/alg/${puzzle}/${set}/${slug}`}
+              // zbls 的顶层组分的是 F2L 对(A+ / A− …),顶层朝向留给组内的 case 分 ——
+              // 组封面画上黄色只会让 A+ 那 8 张看着都一样,所以这里就画 F2L(顶层灰)。
               thumb={useF2lThumb
-                ? <CaseThumb puzzle={puzzle} set={set} sticker={sample.sticker} alg={firstAlg} setup={sample.setup} size={110} />
+                ? <VisualCube setup={sample.setup} algorithm={firstAlg} view="f2l" size={110} />
                 : <VisualCube setup={sample.setup} algorithm={firstAlg} view="oll" size={110} />}
               title={ollName ?? (useF2lThumb ? (dispTop || tr({ zh: '其他', en: 'Other' })) : `${set.toUpperCase()} ${dispTop || tr({ zh: '其他', en: 'Other' })}`)}
               count={total}
@@ -904,8 +901,8 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                                 set={set}
                                 setup={oriAdjustSetup(c.setup, oriIdx)}
                                 invalid={c.id != null ? invalidAlgs.get(`${c.id}:${oriIdx}:${trueIdx}`) : undefined}
-                                // 镜像只挂第 0 视角:别的视角本身就是它的 y 重贴,再镜一遍是同一批公式换个说法
-                                mirror={oriIdx === 0 ? mirrorFor(c) : undefined}
+                                ori={oriIdx}
+                                mirror={mirrorFor(c)}
                               />
                             );
                             const key = `${entry.altId ?? ''}::${trueIdx}`;

@@ -40,3 +40,16 @@ export function oriAdjustSetup(setup: string, oriIdx: number): string {
   if (!setup || oriIdx === 0) return setup;
   return `${setup} ${ORI_SUFFIX[oriIdx % 4]}`;
 }
+
+/**
+ * 槽名的缩写:`Front Right` → `FR`。库里 `ori_names` 存的是全称,而站上到处都拿槽名
+ * 当标签(视角切换器、case 卡上的当前朝向、详情页每组公式的小标题),全称一律太长。
+ * 认不出来的名字原样返回 —— 别的 set 可能存了别的朝向名。
+ */
+const ORI_SHORT: Record<string, string> = {
+  'Front Right': 'FR', 'Front Left': 'FL', 'Back Left': 'BL', 'Back Right': 'BR',
+};
+
+export function shortOriName(name: string): string {
+  return ORI_SHORT[name] ?? name;
+}

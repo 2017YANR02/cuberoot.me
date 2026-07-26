@@ -13,6 +13,8 @@
 import { useEffect, useRef, useImperativeHandle, forwardRef, type CSSProperties } from 'react';
 import type { AlgPuzzle } from '@cuberoot/shared';
 import { normalizeAlgForTwisty } from '@/lib/alg_normalize';
+import { pickStickering } from './stickering';
+import AlgSimPlayer from './AlgSimPlayer';
 
 export interface AlgPlayerHandle {
   /** 拿到底层 cubing.js TwistyPlayer 实例,给光标 sync 等高级用法用 */
@@ -35,27 +37,8 @@ export const TWISTY_PUZZLE: Record<AlgPuzzle, string> = {
 /** 归一化搬去了 `lib/alg_normalize.ts`(校验器要用同一份)。这里转出去,老 import 不用改。 */
 export { normalizeAlgForTwisty };
 
-/** Map our (puzzle, set) to a cubing.js experimentalStickering value (LL/LS grayed out). */
-export function pickStickering(puzzle: AlgPuzzle, set: string): string | undefined {
-  if (puzzle !== '3x3') return undefined;
-  switch (set) {
-    case 'f2l': case 'adv-f2l':                   return 'F2L';
-    case 'oll': case 'ollcp':                     return 'OLL';
-    case 'pll': case 'anti-pll':                  return 'PLL';
-    case 'coll':                                  return 'COLL';
-    case 'cmll':                                  return 'CMLL';
-    case 'ell':                                   return 'ELL';
-    case 'cls':                                   return 'CLS';
-    case 'zbls':                                  return 'ZBLS';
-    case 'vls':                                   return 'VLS';
-    case 'wv':                                    return 'WVLS';
-    case 'zbll':                                  return 'ZBLL';
-    case '1lll':                                  return 'LL';
-    case 'eo4a':                                  return 'EO';
-    case 'sv': case 'sbls': case 'fruf':          return 'LS';
-    default:                                      return undefined;
-  }
-}
+/** 遮罩名表搬去了 `./stickering`(sim 那版播放器也要用,不该经过这个文件把 cubing.js 拖进去)。 */
+export { pickStickering };
 
 interface Props {
   alg: string;
@@ -66,9 +49,33 @@ interface Props {
   size?: number;
   /** 撑满父容器(用 ResizeObserver 把像素尺寸直接写入 player),否则用 size 固定方形 */
   fillPane?: boolean;
+  /**
+   * 用哪个引擎画。默认:NxN 走站内 `/sim` 引擎,其余(sq1 / 五魔 / 金字塔 / 斜转)走 TwistyPlayer。
+   *
+   * 显式传 `'twisty'` 的只有一处 —— admin 编辑器要 `getPlayer()` 拿 cubing.js 实例做光标同步,
+   * sim 那版没有对应物。
+   */
+  engine?: 'sim' | 'twisty';
 }
 
-const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer({ alg, puzzle, set, setup, size = 260, fillPane = false }, ref) {
+/** NxN 才有 sim 版;其余记号各是一套文法,`/sim` 的解析器与公式库存法不一一对应。 */
+const SIM_CAPABLE = new Set<AlgPuzzle>(['2x2', '3x3', '4x4', '5x5']);
+
+const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, ref) {
+  const useSim = (props.engine ?? (SIM_CAPABLE.has(props.puzzle) ? 'sim' : 'twisty')) === 'sim'
+    && SIM_CAPABLE.has(props.puzzle);
+  if (useSim) {
+    return (
+      <AlgSimPlayer
+        alg={props.alg} puzzle={props.puzzle} set={props.set} setup={props.setup}
+        size={props.size ?? 260} fillPane={props.fillPane}
+      />
+    );
+  }
+  return <TwistyAlgPlayer {...props} ref={ref} />;
+});
+
+const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPlayer({ alg, puzzle, set, setup, size = 260, fillPane = false }, ref) {
   const hostRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const playerRef = useRef<any>(null);
