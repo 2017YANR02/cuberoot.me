@@ -65,6 +65,45 @@
   outline-offset: 1px;
 }
 
+/* 自己输入的那条公式:独占一行(输入框比 chip 宽得多,挤在一行里两边都难看) */
+.predict-control--alg {
+  flex: 1 1 100%;
+}
+
+.predict-alg-input {
+  width: min(100%, 24rem);
+  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--input);
+  border-radius: 7px;
+  background: var(--card);
+  color: var(--foreground);
+  font-family: var(--font-mono), monospace;
+  font-size: 1rem;
+  line-height: 1.45;
+  resize: none;
+  overflow: hidden; /* 高度交给 autoResize,别再出一根滚动条 */
+}
+
+.predict-alg-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+.predict-alg-input::placeholder {
+  color: var(--faint-foreground);
+}
+
+.predict-alg-error {
+  margin: 0;
+  color: var(--destructive);
+  font-size: 0.78rem;
+}
+
+/* 列内已经有 gap,提示行不用再顶一段 margin */
+.predict-control--alg .predict-hint {
+  margin: 0;
+}
+
 /* ---- 题板 ---- */
 
 .predict-stage {
