@@ -148,6 +148,8 @@ export default function TrainerRunClient() {
   const setSrsShowPlayer = useTrainerStore(s => s.setSrsShowPlayer);
   const srsFromSolves = useTrainerStore(s => s.srsFromSolves);
   const setSrsFromSolves = useTrainerStore(s => s.setSrsFromSolves);
+  const autoMasterOnAdvance = useTrainerStore(s => s.autoMasterOnAdvance);
+  const setAutoMasterOnAdvance = useTrainerStore(s => s.setAutoMasterOnAdvance);
   const room = useTrainerStore(s => s.room);
   const roomBusy = useTrainerStore(s => s.roomBusy);
   const roomClaimed = useTrainerStore(s => s.roomClaimed);
@@ -329,8 +331,27 @@ export default function TrainerRunClient() {
   // 监听器常驻不重订阅,用 ref 读当次最新值。
   const multiRef = useRef(false);
   multiRef.current = multiScramble && !timing;
+  // 「换到下一题」= 这题做完了:还没打过任何标记的,默认落成「已掌握」。只动「未学」——
+  // 手动标过的(含「搁置」)一律不覆盖,做炸了由 SRS 的自动降级打回「学习中」。
+  // 挂在前进这一个出口上(← 回看、进页首次出题都不经过这里,所以不会误标)。
+  const autoMasterRef = useRef(false);
+  autoMasterRef.current = autoMasterOnAdvance && mode !== 'memo';
+  const markPassedAsMastered = useCallback((keys: Array<string | null | undefined>) => {
+    if (!autoMasterRef.current) return;
+    const mk = useTrainerMarks.getState();
+    const fresh = [...new Set(keys.filter((k): k is string => !!k))]
+      .filter(k => !markStatus(mk.marks, k));
+    if (fresh.length > 0) mk.applyMarks(fresh, { s: 'mastered' });
+  }, []);
   const advanceScramble = useCallback(() => {
     const n = multiRef.current ? 3 : 1;
+    {
+      // 三条一屏:走掉的是屏上那三条(当前 + 预抽的 peek / peek2),三条一起标。
+      const cur = useTrainerStore.getState();
+      markPassedAsMastered(multiRef.current
+        ? [cur.currentKey, cur.peek?.key, cur.peek2?.key]
+        : [cur.currentKey]);
+    }
     // 房间协同:领取是异步网络往返,连调 nextScramble 会被 roomBusy 串行化吞掉后两次 ——
     // 交给单一 roomAdvance(n) 内部按序 await 领 n 步(三条一屏 = 切下一屏三条)。
     const st = useTrainerStore.getState();
@@ -888,6 +909,11 @@ export default function TrainerRunClient() {
                     onChange={setTiming}
                     label={tr({ zh: '计时', en: 'Timing' })}
                   />
+                  <BoolToggle
+                    value={autoMasterOnAdvance}
+                    onChange={setAutoMasterOnAdvance}
+                    label={tr({ zh: '过了就算掌握', en: 'Passing = mastered' })}
+                  />
                   {mode === 'recap' && (
                     <>
                       <PillToggle
@@ -912,6 +938,14 @@ export default function TrainerRunClient() {
                       </button>
                     </>
                   )}
+                </div>
+              )}
+              {!isMemo && (
+                <div className="trainer-opts-hint">
+                  {tr({
+                    zh: '过了就算掌握 = 换到下一题时,把刚做完那个 case 标成「已掌握」。只标还没标过的 —— 手动标的「学习中 / 搁置」不动;标错了在「上一个」卡片上再点一下「已掌握」就取消',
+                    en: 'Passing = mastered: moving on marks the case you just finished as Mastered. Only untouched cases get marked — your own Learning / Paused marks stay put. Click Mastered again on the Previous card to undo one',
+                  })}
                 </div>
               )}
               <div className="trainer-opts-hint">
