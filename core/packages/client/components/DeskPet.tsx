@@ -18,6 +18,7 @@ import { useAlgSubmissionUnread, refreshAlgSubmissionUnread } from '@/lib/alg-su
 import { useNotificationsUnread, refreshNotificationsUnread } from '@/lib/notifications-unread';
 import AppLink from '@/components/AppLink';
 import { persistItem } from '@/lib/safe-storage';
+import { subscribeBeat, setMetronome } from '@/lib/metronome';
 // SSR-safe layout effect (DeskPet is rendered in the root layout).
 const useIsoLayout = typeof document !== 'undefined' ? useLayoutEffect : useEffect;
 
@@ -27,6 +28,8 @@ const DeskPetSearch = dynamic(() => import('@/components/DeskPetSearch'), { ssr:
 const PllPerformerOverlay = dynamic(() => import('@/components/PllPerformerOverlay'), { ssr: false });
 // Lazy: admin-only new-submission dropdown, only loads when an admin opens it.
 const AdminSubmissionsPanel = dynamic(() => import('@/components/AdminSubmissionsPanel'), { ssr: false });
+// Lazy: the floating metronome, only loads once the user opens it from the toolbar.
+const FloatingMetronome = dynamic(() => import('@/components/FloatingMetronome'), { ssr: false });
 
 type ThemeId = 'clawd' | 'calico' | 'cloudling';
 
@@ -293,6 +296,9 @@ export default function DeskPet() {
   const [performCase, setPerformCase] = useState<string | undefined>(undefined);
   const [lang, setLang] = useState<'zh' | 'en'>('en');
   const [randomMode, setRandomMode] = useState(false);
+  // Floating metronome panel — opened from the toolbar, lives here (root layout)
+  // so it survives client-side navigation and keeps ticking across pages.
+  const [metronomeOpen, setMetronomeOpen] = useState(false);
   const pathname = usePathname();
   const user = useAuthStore((s) => s.user);
   const fbUnread = useFeedbackUnread();
@@ -358,6 +364,27 @@ export default function DeskPet() {
     const close = () => setSearchOpen(false);
     i18n.on('languageChanged', close);
     return () => { i18n.off('languageChanged', close); };
+  }, []);
+
+  // Beat pulse: while the metronome is sounding the pet bounces on every tick,
+  // so it doubles as the visual beat (usable muted, or when the panel is
+  // scrolled out of view). Animates the standalone `scale` property, not
+  // `transform` — mini-left flips the art with transform:scaleX(-1).
+  useEffect(() => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    let live: Animation[] = [];
+    return subscribeBeat(({ accent }) => {
+      for (const a of live) a.cancel();
+      live = [];
+      const peak = accent ? 1.1 : 1.05;
+      for (const el of [svgRef.current, imgRef.current]) {
+        if (!el || el.style.visibility === 'hidden') continue;
+        live.push(el.animate(
+          [{ scale: '1' }, { scale: `${peak}` }, { scale: '1' }],
+          { duration: 130, easing: 'ease-out' },
+        ));
+      }
+    });
   }, []);
 
   // 反馈未读:登录用户挂载时 + 标签可见时 + 每 90s 拉一次,数字挂到桌宠身上(每页可见)。
@@ -1008,6 +1035,22 @@ export default function DeskPet() {
           onHide={() => { setHidden(true); setSearchOpen(false); }}
           randomMode={randomMode}
           onToggleRandom={toggleRandom}
+          metronomeOpen={metronomeOpen}
+          onToggleMetronome={() => {
+            const next = !metronomeOpen;
+            setMetronomeOpen(next);
+            // Opening from the toolbar means "start ticking" — and this runs
+            // inside the tap, which is what unlocks audio on iOS.
+            setMetronome({ on: next });
+            if (next) setSearchOpen(false);
+          }}
+        />
+      )}
+
+      {metronomeOpen && (
+        <FloatingMetronome
+          lang={curLang}
+          onClose={() => setMetronomeOpen(false)}
         />
       )}
 

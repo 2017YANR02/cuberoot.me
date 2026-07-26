@@ -6,7 +6,7 @@
 // the site-search data layer only loads when the user actually opens search.
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Maximize2, Coffee, EyeOff, Heart, Home, Sparkles, Shuffle, Boxes, MessageSquarePlus } from 'lucide-react';
+import { Maximize2, Coffee, EyeOff, Heart, Home, Sparkles, Shuffle, Boxes, MessageSquarePlus, Music } from 'lucide-react';
 import HomeLink from '@/components/HomeLink';
 import LandingSearch from '@/components/LandingSearch';
 import HeaderToggles from '@/components/HeaderToggles';
@@ -94,6 +94,8 @@ export default function DeskPetSearch({
   onHide,
   randomMode,
   onToggleRandom,
+  metronomeOpen,
+  onToggleMetronome,
 }: {
   lang: 'zh' | 'en';
   origin?: { x: number; y: number } | null;
@@ -109,6 +111,8 @@ export default function DeskPetSearch({
   onHide: () => void;
   randomMode: boolean;
   onToggleRandom: () => void;
+  metronomeOpen: boolean;
+  onToggleMetronome: () => void;
 }) {
   const backdropRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
@@ -226,6 +230,11 @@ export default function DeskPetSearch({
               background: 'var(--accent)', boxShadow: '0 0 0 2px var(--card, var(--background))',
             }} />
           )}
+        </button>
+        <button type="button" className={`icon-only${metronomeOpen ? ' is-active' : ''}`}
+          onClick={onToggleMetronome}
+          title={t('节拍器,练匀速转动', 'Metronome — train an even turn rate')}>
+          <Music size={16} />
         </button>
         <span className="sep" />
         <button type="button" className="icon-only char-btn" onClick={onCycleChar}
