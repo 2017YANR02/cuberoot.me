@@ -6,7 +6,8 @@
  *                        需 SharedArrayBuffer)
  *   event=222 → 2×2 最优解(_Cube2Solver = PuzzleOptimalSolver + 画状态画板;打乱走 Rust WASM,
  *               画出来的状态走纯 TS 本地精确表 lib/pocket-facelet)
- *   event=pyram/skewb → PuzzleOptimalSolver(Rust WASM 全空间精确表,无 COEP)
+ *   event=skewb → PuzzleOptimalSolver + 画状态求解(_SkewbSolver,纯 TS 全空间 3,149,280 态精确表)
+ *   event=pyram → PuzzleOptimalSolver + 画状态求解(_PyraSolver,纯 TS 核心 933,120 态精确表 + 尖块 DP)
  *   event=sq1 → SQ1 两阶段近最优解(_Sq1Solver,纯 TS,无 worker)
  *   event=clock → 魔表可证最优解(_ClockSolver,纯 TS,前后各一张 Z12^4 表,无 worker)
  *   event=ivy → 枫叶魔方整解最优(_IvySolver,纯 TS,29,160 态全图 BFS,无 worker)
@@ -63,6 +64,8 @@ const Sq2Solver = dynamic(() => import('./_Sq2Solver'), { ssr: false, loading: L
 const Ssq1Solver = dynamic(() => import('./_Ssq1Solver'), { ssr: false, loading: Loading });
 const BsqSolver = dynamic(() => import('./_BsqSolver'), { ssr: false, loading: Loading });
 const ClockSolver = dynamic(() => import('./_ClockSolver'), { ssr: false, loading: Loading });
+const SkewbSolver = dynamic(() => import('./_SkewbSolver'), { ssr: false, loading: Loading });
+const PyraSolver = dynamic(() => import('./_PyraSolver'), { ssr: false, loading: Loading });
 const IvySolver = dynamic(() => import('./_IvySolver'), { ssr: false, loading: Loading });
 const FloppySolver = dynamic(() => import('./_FloppySolver'), { ssr: false, loading: Loading });
 const Cuboid223Solver = dynamic(() => import('./_Cuboid223Solver'), { ssr: false, loading: Loading });
@@ -101,6 +104,8 @@ function SolverDispatch() {
   if (event === 'ssq1') return <Ssq1Solver />;
   if (event === 'bsq') return <BsqSolver />;
   if (event === 'clock') return <ClockSolver />;
+  if (event === 'skewb') return <SkewbSolver />;
+  if (event === 'pyram') return <PyraSolver />;
   if (event === 'ivy') return <IvySolver />;
   if (event === '133') return <FloppySolver />;
   if (event === '223') return <Cuboid223Solver />;

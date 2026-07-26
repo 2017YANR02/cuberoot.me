@@ -26,20 +26,26 @@ const PALETTE_ORDER: FaceLetter[] = ['U', 'D', 'F', 'B', 'R', 'L'];
 export interface PaintPaletteProps {
   activeColor: PaintColor;
   onActiveColorChange: (c: PaintColor) => void;
+  /** 每面色值;缺省 = 三阶那套 WCA 配色。斜转 / 金字塔走 tnoodle 自己的配色(与预览图一致)。 */
+  colors?: Readonly<Record<FaceLetter, string>>;
+  /** 哪几个面上色板;缺省 = 立方体 6 面。金字塔只有 F D L R 四面。 */
+  faces?: readonly FaceLetter[];
 }
 
-export function PaintPalette({ activeColor, onActiveColorChange }: PaintPaletteProps) {
+export function PaintPalette({
+  activeColor, onActiveColorChange, colors = COLOR_HEX, faces = PALETTE_ORDER,
+}: PaintPaletteProps) {
   const t = useT();
 
   return (
     <div className="vc-paint-palette">
       <style>{PALETTE_CSS}</style>
-      {PALETTE_ORDER.map((f) => (
+      {faces.map((f) => (
         <button
           key={f}
           type="button"
           className={`vc-paint-swatch${activeColor === f ? ' is-active' : ''}`}
-          style={{ background: COLOR_HEX[f] }}
+          style={{ background: colors[f] }}
           onClick={() => onActiveColorChange(f)}
           title={f}
           aria-label={`color ${f}`}
@@ -183,7 +189,7 @@ const PALETTE_CSS = `
 .vc-paint-swatch-empty { margin-left: 0.35rem; }
 .vc-paint-swatch {
   width: 30px; height: 30px;
-  border: 2px solid rgba(255,255,255,0.2);
+  border: 2px solid color-mix(in srgb, var(--foreground) 25%, transparent);
   border-radius: 5px; padding: 0;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
@@ -191,11 +197,11 @@ const PALETTE_CSS = `
 }
 .vc-paint-swatch:hover { transform: scale(1.08); }
 .vc-paint-swatch.is-active {
-  border-color: var(--accent, #ff8800);
-  box-shadow: 0 0 0 2px rgba(255,136,0,0.3);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent);
 }
 .vc-paint-empty-hint {
-  font-size: 0.72rem; color: var(--text-muted, #888);
+  font-size: 0.72rem; color: var(--muted-foreground);
   white-space: nowrap; margin-left: 0.2rem;
 }
 `;
@@ -208,34 +214,35 @@ const ACTIONS_CSS = `
 .vc-paint-actions {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.4rem;
 }
+/* 色值全走 globals.css 的 token(原来写的 --panel-sub / --border / --text 是不存在的 legacy
+   token,浅色主题下落到深色 fallback、配上浅色 --text ≈ 黑字压深灰底,几乎看不见)。 */
 .vc-paint-btn {
   display: inline-flex; align-items: center; gap: 0.3rem;
-  background: var(--panel-sub, #2a2a2a);
-  border: 1px solid var(--border, #444);
-  color: var(--text); padding: 0.35rem 0.6rem;
+  background: var(--muted);
+  border: 1px solid var(--border-default);
+  color: var(--foreground); padding: 0.35rem 0.6rem;
   border-radius: 5px; font-size: 0.8rem; cursor: pointer;
 }
-.vc-paint-btn:hover:not(:disabled) { border-color: var(--accent, #ff8800); }
+.vc-paint-btn:hover:not(:disabled) { border-color: var(--accent); }
 .vc-paint-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .vc-paint-btn-primary {
-  background: var(--accent, #ff8800); color: #000;
-  border-color: var(--accent, #ff8800); font-weight: 600;
+  background: var(--accent); color: var(--accent-foreground);
+  border-color: var(--accent); font-weight: 600;
 }
 .vc-paint-err {
-  font-size: 0.85rem; color: #ff8866;
+  font-size: 0.85rem; color: var(--destructive);
   text-align: center; max-width: 28rem; line-height: 1.4;
 }
 .vc-paint-err-flash {
-  background: rgba(255,80,80,0.12);
-  border: 1px solid rgba(255,120,80,0.45);
-  color: #ffb38a;
+  background: color-mix(in srgb, var(--destructive) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--destructive) 45%, transparent);
   padding: 0.35rem 0.7rem;
   border-radius: 5px;
   animation: vcPaintFlash 0.18s ease-out;
 }
 .vc-paint-actions .bool-toggle-label {
   font-size: 0.8rem;
-  color: var(--text);
+  color: var(--foreground);
 }
 @keyframes vcPaintFlash {
   from { transform: scale(0.96); opacity: 0; }
