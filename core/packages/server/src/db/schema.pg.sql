@@ -289,10 +289,14 @@ CREATE TABLE alg_cases (
   -- 富元数据(AlgCaseMeta):OLLCP 名 / 数字号 / 6 套打乱 / 步数 / 四套最优 / 镜像·逆·镜像逆
   -- 编号 / 叠加类型 / 对称性 / 生成元。只有从站长那张 1LLL 表导入的 case 才有,其余 NULL。
   meta        JSONB,
+  -- 镜像伙伴(issue #40 T5):左右镜 + 把最后一槽转回 FR 得到的那个 case。互指;自镜像指自己。
+  -- 纯 LL 集(oll/pll/zbll…)不适用,恒 NULL。LSLL 那 58 万 case 不进库,走前端 σ 现算。
+  mirror_case_id BIGINT REFERENCES alg_cases(id) ON DELETE SET NULL,
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   FOREIGN KEY (puzzle, set_slug) REFERENCES alg_sets(puzzle, set_slug) ON DELETE CASCADE
 );
 CREATE INDEX idx_alg_cases_set ON alg_cases(puzzle, set_slug, position);
+CREATE INDEX idx_alg_cases_mirror ON alg_cases(mirror_case_id) WHERE mirror_case_id IS NOT NULL;
 CREATE TRIGGER alg_cases_updated_at BEFORE UPDATE ON alg_cases
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
 

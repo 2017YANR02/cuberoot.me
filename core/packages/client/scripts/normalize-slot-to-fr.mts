@@ -50,10 +50,12 @@
  */
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { Alg, Move, QuantumMove } from 'cubing/alg';
+import { Alg, Move } from 'cubing/alg';
 import { cube3x3x3 } from 'cubing/puzzles';
 import type { KPattern } from 'cubing/kpuzzle';
 import type { AlgCase, AlgEntry, AlgSticker } from '@cuberoot/shared';
+// 面标重贴表(y 重贴 + 左右镜)与 T5 的 mirror-link-plan 共用一份,别在这儿再抄。
+import { YPOW, YPOW_INV, relabel, relabelMove, relabelPreserving, selfTestRelabel } from './_relabel.mts';
 
 // tsx 的 CJS interop 下本地 .ts 的命名 ESM 导入会失败(见 gen-lsll-zbls-overlay.mts 头注)。
 // `lib/alg_goals.ts` 只有 type-only import,能直接 require —— **判据取的是站上那一份真源**。
@@ -62,93 +64,6 @@ import type { AlgCase, AlgEntry, AlgSticker } from '@cuberoot/shared';
 const require = createRequire(import.meta.url);
 const { toMoveString } = require('@cuberoot/shared/alg-notation') as typeof import('@cuberoot/shared/alg-notation');
 const { goalOf, reachesGoal } = require('../lib/alg_goals.ts') as typeof import('../lib/alg_goals.ts');
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 面标重贴表:R_k,k = 1/2/3 对应 y / y2 / y'
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** `[family, 是否反向]`;缺项 = 不变。 */
-type Mapped = readonly [string, boolean];
-type FaceMap = Record<string, Mapped>;
-
-/**
- * `R_1` = `y' X y`:面按 **R→F→L→B→R** 走(即 y 的转动方向)。
- * 中层/转体跟着它们「跟随的面」走:M 跟 L、S 跟 F、E 跟 D;x 跟 R、y 跟 U、z 跟 F。
- *   M(跟 L) → 跟 B 的中层 = S'    S(跟 F) → 跟 L 的中层 = M
- *   x(跟 R) → 跟 F 的转体 = z     z(跟 F) → 跟 L 的转体 = x'
- */
-const MAP_Y1: FaceMap = {
-  R: ['F', false], F: ['L', false], L: ['B', false], B: ['R', false],
-  r: ['f', false], f: ['l', false], l: ['b', false], b: ['r', false],
-  Rw: ['Fw', false], Fw: ['Lw', false], Lw: ['Bw', false], Bw: ['Rw', false],
-  M: ['S', true], S: ['M', false], E: ['E', false],
-  x: ['z', false], z: ['x', true], y: ['y', false],
-  U: ['U', false], D: ['D', false], u: ['u', false], d: ['d', false],
-  Uw: ['Uw', false], Dw: ['Dw', false],
-};
-
-/** `R_2` = `y2 X y2`:对面互换。 */
-const MAP_Y2: FaceMap = {
-  R: ['L', false], L: ['R', false], F: ['B', false], B: ['F', false],
-  r: ['l', false], l: ['r', false], f: ['b', false], b: ['f', false],
-  Rw: ['Lw', false], Lw: ['Rw', false], Fw: ['Bw', false], Bw: ['Fw', false],
-  M: ['M', true], S: ['S', true], E: ['E', false],
-  x: ['x', true], z: ['z', true], y: ['y', false],
-  U: ['U', false], D: ['D', false], u: ['u', false], d: ['d', false],
-  Uw: ['Uw', false], Dw: ['Dw', false],
-};
-
-/** `R_3` = `y X y'`:面按 R→B→L→F→R 走。 */
-const MAP_Y3: FaceMap = {
-  R: ['B', false], B: ['L', false], L: ['F', false], F: ['R', false],
-  r: ['b', false], b: ['l', false], l: ['f', false], f: ['r', false],
-  Rw: ['Bw', false], Bw: ['Lw', false], Lw: ['Fw', false], Fw: ['Rw', false],
-  M: ['S', false], S: ['M', true], E: ['E', false],
-  x: ['z', true], z: ['x', false], y: ['y', false],
-  U: ['U', false], D: ['D', false], u: ['u', false], d: ['d', false],
-  Uw: ['Uw', false], Dw: ['Dw', false],
-};
-
-const FACE_MAP: FaceMap[] = [{}, MAP_Y1, MAP_Y2, MAP_Y3];
-
-const YPOW = ['', 'y', 'y2', "y'"];
-const YPOW_INV = ['', "y'", 'y2', 'y'];
-
-/** 单个招式按 `R_k` 重贴面标。不认识的 family 抛错(数据里出现了就必须先看清楚)。 */
-function relabelMove(m: Move, k: number): Move {
-  if (k % 4 === 0) return m;
-  const hit = FACE_MAP[k % 4][m.family];
-  if (!hit) throw new Error(`unknown move family for y-relabel: ${m.family}`);
-  const [fam, flip] = hit;
-  const q = m.quantum as unknown as { innerLayer: number | null; outerLayer: number | null };
-  return new Move(
-    new QuantumMove(fam, q.innerLayer ?? undefined, q.outerLayer ?? undefined),
-    flip ? -m.amount : m.amount,
-  );
-}
-
-/** 整条公式按 `R_k` 重贴面标。**输入必须是干净招式串**(先过 toMoveString)。 */
-function relabel(algStr: string, k: number): string {
-  if (k % 4 === 0) return algStr;
-  const out = [...new Alg(algStr).experimentalLeafMoves()].map(m => relabelMove(m, k).toString());
-  return out.join(' ');
-}
-
-/**
- * 保留上游记号的重贴面标 —— **只把面字母换掉**,`=`、`*`、`(…)2'` 分组、`↑↓·` 换握标
- * 原样留在原位。zbls 438 条公式里 353 条带这些记号,拿 `relabel()` 走一遍 leaf move 会
- * 全部抹平(手指分组没了,魔友看到的就是另一条公式)。
- *
- * 只有 M/S/x/z 换标时要反向,那几个才重新序列化模数;其余连模数文本都不碰
- * (`U2'` 不会被悄悄改成 `U2`)。正确性不靠这段自己保证 —— `planCase()` 里
- * 逐条断言 `toMoveString(保留版) === relabel(toMoveString(原文))`。
- */
-const MOVE_TOKEN = /(\d+(?:-\d+)?)?([UDRLFBMESudrlfbxyz])(w?)((?:\d+)?'*(?:\d+)?'*)/g;
-
-function amountOf(mod: string): number {
-  const n = Number(mod.replace(/[^\d]/g, '') || '1');
-  return (mod.match(/'/g)?.length ?? 0) % 2 ? -n : n;
-}
 
 /**
  * 公式开头**恰好**是 `y^j` 时剥掉它,返回剩余部分;不匹配返回 null。
@@ -163,18 +78,6 @@ function stripLeadRot(alg: string, j: number): string | null {
   const AMT: Record<string, number> = { y: 1, y2: 2, "y2'": 2, "y'": 3 };
   if (AMT[mt[2]] !== j) return null;
   return (mt[1].trim() + mt[3]).trim() || null;
-}
-
-function relabelPreserving(raw: string, k: number): string {
-  if (k % 4 === 0) return raw;
-  return raw.replace(MOVE_TOKEN, (_full, layers: string | undefined, letter: string, w: string, mod: string) => {
-    const fam = letter + w;
-    const hit = FACE_MAP[k % 4][fam];
-    if (!hit) throw new Error(`unknown family in raw relabel: ${fam} (${raw})`);
-    const [nf, flip] = hit;
-    if (!flip) return `${layers ?? ''}${nf}${mod}`;
-    return `${layers ?? ''}${new Move(nf, -amountOf(mod)).toString()}`;
-  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -402,30 +305,6 @@ function planCase(c: AlgCase): CasePlan {
   if (orphans) notes.push(`剥掉 ${orphans} 条公式的孤儿前导转体`);
 
   return { c, before, stripped, ypow, m, t, setupNew, after, algsNew, algsFour, standardNew, orphans, notes };
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 启动自检:整张面标表拿 KPuzzle 逐招验一遍
-// ─────────────────────────────────────────────────────────────────────────────
-
-function selfTest(): void {
-  const families = Object.keys(MAP_Y1);
-  const amounts = [1, -1, 2];
-  let n = 0;
-  for (let k = 1; k <= 3; k++) {
-    for (const fam of families) {
-      for (const amt of amounts) {
-        const m = new Move(fam, amt);
-        const lhs = apply(relabelMove(m, k).toString());
-        const rhs = apply(`${YPOW_INV[k]} ${m.toString()} ${YPOW[k]}`);
-        if (!eqPattern(lhs, rhs)) {
-          throw new Error(`FACE_MAP 错:R_${k}(${m}) = ${relabelMove(m, k)},与 y^-${k} ${m} y^${k} 不等`);
-        }
-        n++;
-      }
-    }
-  }
-  console.log(`[selfTest] 面标表 OK —— ${n} 个 (招式 × y 次数) 组合与 KPuzzle 共轭逐一相等`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -812,5 +691,5 @@ async function run(set: string): Promise<void> {
   console.log(`[time] ${set}: ${((Date.now() - t0) / 1000).toFixed(1)}s`);
 }
 
-selfTest();
+selfTestRelabel(kpuzzle);
 for (const s of SETS) await run(s);
