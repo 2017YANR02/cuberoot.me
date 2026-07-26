@@ -352,7 +352,7 @@
 
 .trainer-stage {
   text-align: center;
-  padding: 40px 20px;
+  padding: 12px 20px 40px;
   /* iOS Safari 长按会触发文本选择 / 放大镜,影响计时手感;
      stage(打乱+按钮+大计时数字)整块禁掉。sidebar 不动以便复制成绩 scramble。
      touch-action:none 让按住拖动走 pointermove(径向轮盘),不被滚动吞掉。 */
@@ -592,7 +592,7 @@
   margin: 0;
 }
 /* 卡片上半:标题行 + 打乱;下半:图。两段是 subgrid 的两行(见 .trainer-run) */
-.trainer-card-head { display: flex; flex-direction: column; gap: 6px; }
+.trainer-card-head { display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; }
 .trainer-card-head .trainer-solve-scramble { text-align: center; }
 .trainer-card-body { display: flex; flex-direction: column; justify-content: flex-start; }
 .trainer-solve-row {
