@@ -104,6 +104,11 @@ export interface AlgCase {
   /** 1lll / zbll / pll / ell only — see {@link AlgCaseMeta}. */
   meta?: AlgCaseMeta;
   /**
+   * 镜像伙伴的 `alg_cases.id`(issue #40 T5)—— 左右镜 + 把最后一槽转回 FR 得到的那张 case。
+   * 互指;自镜像指自己;不适用的 set 恒 undefined。只有 {@link MIRROR_SYNC_SETS} 里的 set 有。
+   */
+  mirrorCaseId?: number | null;
+  /**
    * 合练会话(多个 set 混在一起练)专用:标明该 case 来自哪个 set。
    * 单集会话不设 —— `caseKey()` 据此保持原样,历史进度不失效。
    */
@@ -121,6 +126,26 @@ export interface AlgFile {
 }
 
 export type AlgPuzzle = '2x2' | '3x3' | '4x4' | '5x5' | 'sq1' | 'megaminx' | 'pyraminx' | 'skewb';
+
+/**
+ * 吃镜像系统(issue #40 T5)的 set —— **`puzzle/set` 全名**,client 与 server 共用这一份。
+ *
+ * 门槛:每个 case 有且仅有一个 F2L 槽、槽已归一到 FR、镜像伙伴**就在同一个 set 里**。
+ * 八个候选逐一核过(`scripts/mirror-link-plan.mts`,结果见 docs/issue-40-alg-mirror-plan.md §5.7),
+ * 只有这三个够格:
+ *
+ *   f2l   41 案:38 配对 + 3 自镜像,一个不缺;± 命名与状态判据 38/38 全对
+ *   zbls  305 案:296 配对 + 9 自镜像,一个不缺(但 ± 命名只有 32/284 对得上 —— 别信名字)
+ *   cls   97 案:93 配对 + 3 自镜像 + 1 缺(那 1 个槽在 BL,归一后补上)
+ *
+ * 落选的原因各不相同,想加回来先看 §5.7:
+ *   wv / sv / vls —— 各自只覆盖**一种** F2L 构型(全 A+ / 全 B+ / 全 A+),镜像伙伴那一族
+ *                    库里压根没收录,开了就等于凭空造 243 个 case;
+ *   adv-f2l       —— 54 个 case **每个破两个槽**,按设计就不是单槽 set;
+ *   sbls          —— Roux 二块,补 y² 之后 σ 仍成立,但 65 个伙伴全不在库,
+ *                    且 40/65 的 setup 带 x 转体,颜色框架都不统一。
+ */
+export const MIRROR_SYNC_SETS: ReadonlySet<string> = new Set(['3x3/f2l', '3x3/zbls', '3x3/cls']);
 
 /** 3x3 set slug — matches `slug` in {@link ALG_CATALOG['3x3']}. */
 export type Alg3x3Set =
