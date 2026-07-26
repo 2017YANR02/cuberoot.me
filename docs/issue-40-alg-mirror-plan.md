@@ -91,7 +91,7 @@ T4 (zbls setup 清洗 + FR 归一)
 对 297 个**自由**构型,pre 被完全吸收,fiber 内只剩 mid+post,贡献恒为 494 —— 与公式选择无关。对 9 个有 pre-AUF 对称的构型,stabilizer 会在 fiber 上多诱导一个「右乘 V = Z⁻¹UᵏZ」,而 V 直接依赖 Z。实测(同一构型、同样合法的公式,只在尾部接一条 ZBLL 群元素):
 
 ```
-Solved Pair/I  Z = F R U R' U' F'                      → 轨道 19
+O/I  Z = F R U R' U' F'                      → 轨道 19
                Z = F R U R' U' F' + Sune               → 轨道 62
                Z = F R U R' U' F' + T-perm             → 轨道 89
 D+/D L         Z = U F' (L' U2 L U')2 F                → 轨道 127
@@ -220,7 +220,7 @@ JSON 内容与落库前逐字节相同 —— 正好证明四向没污染这条�
 
 ### 现状(落库前的核实记录)
 
-- zbls 305 case:A− 等负号子组 setup 带 `y'` 尾巴(即 FL 位展示),oriNames 全空(无多向);subgroups = A±…X± + F/S/T/Solved Pair(不成对的即自镜像族)。
+- zbls 305 case:A− 等负号子组 setup 带 `y'` 尾巴(即 FL 位展示),oriNames 全空(无多向);subgroups = A±…X± + F/S/T/O(不成对的即自镜像族)。
 - wv 27 case:单向、无 subgroup,slot 在 FR(setup 如 `L' U2' R U' R' U2' L U'`)。
 - f2l 是范本:`oriNames: ["Front Right","Front Left","Back Left","Back Right"]`,`algs` 为按向二维数组,`AlgCategoryView` 已有 y-chip 切换(`oriAdjustSetup` 给 setup 追加 `ORI_SUFFIX[oriIdx]`)、`AlgCaseView` 已支持多向 —— **全部复用,零新轮子**。
 
@@ -265,7 +265,7 @@ JSON 内容与落库前逐字节相同 —— 正好证明四向没污染这条�
 | S(前后镜) | c* 的 BR-view(FR↔BR、FL↔BL) | F↔B 反向,U/D/R/L 反向 —— **F ⇒ B** |
 | y²(左右+前后) | **c 自己**的 BL-view(纯旋转,非镜像) | F↔B、R↔L 同向 —— **F ⇒ B** |
 
-锚定检验:`U R U' R'` → M:`U' L' U L`(FL-view)✓ 标准 F2L 镜像;S:`U' R' U R`(BR-view)✓;这与用户"含 F 前后镜像会出 B"完全吻合。F2L 的 A+/A− 命名恰是 {c, c*} 配对;ZBLS 的 ±号子组、自镜像的 F/S/T/Solved Pair 同构地对上。
+锚定检验:`U R U' R'` → M:`U' L' U L`(FL-view)✓ 标准 F2L 镜像;S:`U' R' U R`(BR-view)✓;这与用户"含 F 前后镜像会出 B"完全吻合。F2L 的 A+/A− 命名恰是 {c, c*} 配对;ZBLS 的 ±号子组、自镜像的 F/S/T/O 同构地对上。
 
 ### 5.2 F/B 规则(形式化)
 

@@ -5,7 +5,7 @@
  * 共 (5!·5!/2)·3⁴·2⁴ = 9,331,200 原始态;case = 前 AUF(识别转顶)×
  * 后 AUF(结尾容差)Z4×Z4 商 → 583,284 个(Burnside:仅槽块归位构型有不动点)。
  *
- * 大类 = 槽对构型 42 种,命名沿用站内 zbls 公式集的字母(A+…X-,Solved Pair);
+ * 大类 = 槽对构型 42 种,命名沿用站内 zbls 公式集的字母(A+…X-,O = 对子已归位);
  * 字母 ↔ 构型映射由 zbls 集 289 条 setup 逆向实证(见 lsll/PLAN.md)。
  */
 import {
@@ -127,7 +127,7 @@ export const CATEGORIES: LsllCategory[] = [
   CAT('um', 'U-', 'ES', 1, 0), CAT('vm', 'V-', 'ES', 1, 1),
   CAT('up', 'U+', 'ES', 2, 0), CAT('vp', 'V+', 'ES', 2, 1),
   // SS:角棱都在槽
-  CAT('solved', 'Solved Pair', 'SS', 0, 0), CAT('f', 'F', 'SS', 0, 1),
+  CAT('o', 'O', 'SS', 0, 0), CAT('f', 'F', 'SS', 0, 1),
   CAT('dp', 'D+', 'SS', 1, 0), CAT('cp', 'C+', 'SS', 1, 1),
   CAT('dm', 'D-', 'SS', 2, 0), CAT('cm', 'C-', 'SS', 2, 1),
 ];

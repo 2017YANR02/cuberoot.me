@@ -271,7 +271,7 @@ export default function LsllMathPage() {
                 </tr>
               </thead>
               <tbody>
-                <tr><td>Solved Pair / I:<code>F R U R&apos; U&apos; F&apos;</code></td><td className="is-num">19</td></tr>
+                <tr><td>O / I:<code>F R U R&apos; U&apos; F&apos;</code></td><td className="is-num">19</td></tr>
                 <tr><td>{t('同上 + Sune', 'same + Sune')}</td><td className="is-num">62</td></tr>
                 <tr><td>{t('同上 + T-perm', 'same + T-perm')}</td><td className="is-num">89</td></tr>
                 <tr><td>D+ / D L:<code>U F&apos; (L&apos; U2 L U&apos;)2 F</code></td><td className="is-num">127</td></tr>
@@ -401,9 +401,9 @@ export default function LsllMathPage() {
           <Block src={R`e=0:\ \frac{62{,}208+4\cdot 16+384}{16}=\frac{62{,}656}{16}=3916,\qquad e=1:\ \frac{62{,}208}{16}=3888 .`} />
           <div className="lmath-note">
             <T
-              zh={<><strong><TeX src={R`c=0,\,e=0`} /> 的「Solved Pair」类 = 纯末层模两侧 AUF = 1LLL 数 3916</strong> —— 天然自洽。
+              zh={<><strong><TeX src={R`c=0,\,e=0`} /> 的「O」类(对子已归位)= 纯末层模两侧 AUF = 1LLL 数 3916</strong> —— 天然自洽。
                 <TeX src={R`e=1`} /> 类无不动点,干净地 <TeX src={R`62{,}208/16=3888`} />。三个 <TeX src={R`e=0`} /> + 三个 <TeX src={R`e=1`} />:<TeX src={R`(3916+3888)\times 3=23{,}412`} />。</>}
-              en={<><strong>The “Solved Pair” class <TeX src={R`(c{=}0,e{=}0)`} /> = pure last layer mod both AUF = the 1LLL count 3916</strong> — a built-in check.
+              en={<><strong>The “O” class <TeX src={R`(c{=}0,e{=}0)`} /> (pair already solved) = pure last layer mod both AUF = the 1LLL count 3916</strong> — a built-in check.
                 The <TeX src={R`e=1`} /> classes are free: <TeX src={R`62{,}208/16=3888`} />. Three <TeX src={R`e=0`} /> + three <TeX src={R`e=1`} />: <TeX src={R`(3916+3888)\times 3=23{,}412`} />.</>}
             />
           </div>

@@ -12,7 +12,8 @@
  *   pre-AUF 的 stabilizer 若非平凡,还会在 fiber 上多诱导一个「右乘 V = Z⁻¹UᵏZ」。
  *   ⇒ N₃ = 297·493 + Σ(9 个对称 φ 的轨道数)。
  *
- * 跑:pnpm --filter @cuberoot/client exec tsx scripts/lsll-class3.mts
+ * 跑:NODE_OPTIONS=--no-experimental-strip-types pnpm --filter @cuberoot/client exec tsx scripts/lsll-class3.mts
+ *    (Node ≥23 的原生 .ts 剥离会抢在 tsx 的 loader 前面,不加这个 flag 会报「没有 applyMove 导出」。)
  */
 import { readFileSync } from 'node:fs';
 import {
