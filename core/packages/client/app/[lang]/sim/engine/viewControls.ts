@@ -3,8 +3,8 @@
  * space / miss the cube → rotate the whole view" fallback applies the same screen-
  * delta-to-scene-rotation math; centralizing it keeps the per-puzzle pointer code to
  * its own pick/resolve logic. NxN feeds its Controller's `onOrbit` in here too — its
- * 「自动转体」档 = `orbitSceneAutoRotate` (fold the view's ±90° excess into real
- * whole-cube y/x twists); see SimPage onOrbit and the solver's 3D painter.
+ * 「自动转体」档 = `orbitSceneAutoRotate` (fold the view's excess into real
+ * whole-puzzle turns); see SimPage onOrbit and the solver's 3D painters.
  */
 import type World from './world';
 
@@ -26,12 +26,18 @@ export function resetSceneView(world: World): void {
   world.dirty = true;
 }
 
+/** 俯仰钳位:视角永远正着看(±90° 就是正俯视 / 正仰视,两极的面照样点得到)。 */
+function clampPitch(world: World): void {
+  world.scene.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, world.scene.rotation.x));
+}
+
 /** Orbit the scene by a screen drag delta (dx, dy in px, scaled by `k`). Pitch (x) is
  *  clamped to ±90° so the cube never flips past vertical; yaw (y) is unbounded. Marks
  *  the world dirty so the next frame re-renders. */
 export function orbitScene(world: World, dx: number, dy: number, k: number): void {
   world.scene.rotation.y += dx * k;
-  world.scene.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, world.scene.rotation.x + dy * k));
+  world.scene.rotation.x += dy * k;
+  clampPitch(world);
   world.scene.updateMatrix();
   world.dirty = true;
 }
@@ -49,29 +55,52 @@ export function orbitSceneFree(world: World, dx: number, dy: number, k: number):
 }
 
 /**
- * 把视角里超出 ±90° 的那部分**折成整体转体**:每折一个 90° 就回调一次 `commit`,并把
- * `scene.rotation` 相应回退,所以画面连续、视角永远在 ±90° 内(不会倒着看),而拼图本体
- * 真的转了 —— 灯光挂在 scene 上不跟着块走,于是转起来像实物在手里翻,而不是相机绕着飞。
+ * 「自动转体」折进拼图本体的那一步。
  *
- * `commit(axis, reverse)` 由调用方落成引擎的整体转体(NxN = `TwistAction('y'|'x', reverse)`,
- * 瞬时 + force)。`safety` 是防御:一次拖动最多折 8 个 90°。
+ * `quantum` = 每积累多少视角折一次,必须是该拼图**真有**的整体转体角:立方体系(NxN /
+ * 斜转)绕竖直轴 90°,正四面体绕顶点轴 120°(金字塔的 `y` = Uv)。给错角度折完拼图就歪
+ * 在一个它本来到不了的姿态上。
+ * `commit(positive)` 把它落到引擎:绕该轴的**世界正方向**转 `+quantum`(positive)或
+ * `−quantum`。方向别猜 —— 折叠总是把视角往回退 `quantum`,补的本体转动就得是 `+quantum`。
  */
-export function foldViewIntoTwists(
-  world: World,
-  commit: (axis: 'x' | 'y', reverse: boolean) => void,
-  axes: readonly ('x' | 'y')[] = ['y', 'x'],
-): void {
-  const Q = Math.PI / 2;
-  for (const axis of axes) {
+export interface BodyTurn {
+  quantum: number;
+  commit: (positive: boolean) => void;
+}
+
+/**
+ * 自动转体折哪几根轴。偏航(`y`)恒折;俯仰(`x`)可选,给了就不钳俯仰。
+ *
+ * **偏航折得精确,俯仰折不精确。** 视角矩阵是 `Rx(pitch)·Ry(yaw)`:折偏航要补的本体转动
+ * 正好绕 `Ry` 那根轴、与它可交换 → 复合姿态一丝不差;折俯仰要补的却是绕 `Ry(−yaw)·x̂` 的
+ * 转动,只有 yaw 落在象限上时才等于世界 `x̂`,否则画面会跳一下(实测垂直拖过 90° 那一帧的
+ * 像素差是邻帧的 3.6 倍)。所以纯视觉的画板只折偏航、俯仰钳住;`x` 档只留给 /sim ——
+ * 它那档要把俯仰也**记成一步 x**,宁可跳也不能不记。
+ */
+export interface ViewTurns {
+  y: BodyTurn;
+  x?: BodyTurn;
+}
+
+/**
+ * 把视角里超出 ±quantum 的那部分**折成整体转体**:每折一次就回调一次 `commit`,并把
+ * `scene.rotation` 相应回退,所以画面连续、视角永远在 ±quantum 内(不会倒着看),而拼图
+ * 本体真的转了 —— 灯光挂在 scene 上不跟着块走,于是转起来像实物在手里翻,而不是相机绕着
+ * 飞。`safety` 是防御:一次拖动每轴最多折 8 次。
+ */
+export function foldViewIntoTurns(world: World, turns: ViewTurns): void {
+  for (const axis of ['y', 'x'] as const) {
+    const turn = turns[axis];
+    if (!turn) continue;
     let safety = 8;
-    while (world.scene.rotation[axis] > Q && safety-- > 0) {
-      commit(axis, true);
-      world.scene.rotation[axis] -= Q;
+    while (world.scene.rotation[axis] > turn.quantum && safety-- > 0) {
+      turn.commit(true);
+      world.scene.rotation[axis] -= turn.quantum;
     }
     safety = 8;
-    while (world.scene.rotation[axis] < -Q && safety-- > 0) {
-      commit(axis, false);
-      world.scene.rotation[axis] += Q;
+    while (world.scene.rotation[axis] < -turn.quantum && safety-- > 0) {
+      turn.commit(false);
+      world.scene.rotation[axis] += turn.quantum;
     }
   }
   world.scene.updateMatrix();
@@ -79,20 +108,21 @@ export function foldViewIntoTwists(
 }
 
 /**
- * 「自动转体」= orbit + `foldViewIntoTwists`:/sim 设置里 `dragEmpty='orbit'` 的那档,
- * 也是求解器立体画板的拖拽档。整体转体吃不下的拼图(角转 / 棱转 / SQ1 引擎没有整体转体
- * 这一步)用 `orbitScene` —— /sim 对它们本来也就是那条路径。
+ * 「自动转体」= orbit + `foldViewIntoTurns`:/sim 设置里 `dragEmpty='orbit'` 的那档,
+ * 也是求解器立体画板的拖拽档。没给 `turns.x` 就钳住俯仰(见 `ViewTurns`)。整体转体吃不下
+ * 的拼图(SQ1 引擎没有这一步)用 `orbitScene` —— /sim 对它本来也就是那条路径。
  */
 export function orbitSceneAutoRotate(
   world: World,
   dx: number,
   dy: number,
   k: number,
-  commit: (axis: 'x' | 'y', reverse: boolean) => void,
+  turns: ViewTurns,
 ): void {
   world.scene.rotation.y += dx * k * yawSign(world.scene.rotation.x);
   world.scene.rotation.x += dy * k;
-  foldViewIntoTwists(world, commit);
+  if (!turns.x) clampPitch(world);
+  foldViewIntoTurns(world, turns);
 }
 
 /** Sign to apply to a horizontal drag delta before it lands in `scene.rotation.y`.

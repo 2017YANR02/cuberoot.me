@@ -1987,11 +1987,11 @@ export const CATALOG: ComponentEntry[] = [
     name: 'attachOrbitTap',
     import: "import { attachOrbitTap } from '@/components/sim-embed/orbitTapGesture';",
     category: 'more',
-    zh: `嵌入式 3D 画布的指针手势:超过阈值(默认 6px)算拖 → 转视角(orbitScene,pitch 钳 ±90°,与 /sim 对角转/棱转/SQ1 引擎的「自动转体」同一条路径),否则算点一下 → onTap(x, y, button)。拼图要自己吃掉这次拖动(SQ1 层转)就用 onDragBegin 返回 true 接管,再走 onDragMove / onDragEnd。返回卸载函数。`,
-    en: `The pointer gesture for an embedded 3D canvas: past the threshold (6px by default) a drag orbits the view (orbitScene, pitch clamped to ±90° — the same path /sim's「自动转体」takes for corner/edge-turning and Square-1 engines), otherwise it is a tap → onTap(x, y, button). A puzzle that wants the drag for itself (Square-1 layer turns) returns true from onDragBegin to take over, then gets onDragMove/onDragEnd. Returns a teardown function.`,
+    zh: `嵌入式 3D 画布的指针手势:超过阈值(默认 6px)算拖 → 转视角,否则算点一下 → onTap(x, y, button)。给 autoRotate({ y: { quantum, commit } })就升级成 /sim 的「自动转体」:偏航每积累一个量子折成拼图真正的整体转体(金字塔 120°、斜转 90°),灯不跟着转、手感像实物;不给就是纯 orbitScene。拼图要自己吃掉这次拖动(SQ1 层转)就用 onDragBegin 返回 true 接管,再走 onDragMove / onDragEnd。返回卸载函数。`,
+    en: `The pointer gesture for an embedded 3D canvas: past the threshold (6px by default) a drag orbits the view, otherwise it is a tap → onTap(x, y, button). Pass autoRotate ({ y: { quantum, commit } }) to upgrade it to /sim's「自动转体」: every quantum of yaw folds into a real whole-puzzle turn (120° on a Pyraminx, 90° on a Skewb), so the lights stay put and it feels like turning a physical puzzle; omit it for a plain orbitScene. A puzzle that wants the drag for itself (Square-1 layer turns) returns true from onDragBegin to take over, then gets onDragMove/onDragEnd. Returns a teardown function.`,
     note: {
-      zh: `NxN 不走这里:它的「自动转体」在 controller 的 onOrbit → viewControls 的 orbitSceneAutoRotate,视角每超出 90° 就折成一次真正的整体转体(灯光不跟着转,手感像实物)。`,
-      en: `NxN does not use this: its「自动转体」lives on the controller's onOrbit → orbitSceneAutoRotate in viewControls, folding every 90° of view excess into a real whole-cube twist (the lights stay put, so it feels like turning a physical puzzle).`,
+      zh: `NxN 不走这里:它的「自动转体」在 controller 的 onOrbit → 同一个 orbitSceneAutoRotate。俯仰一律钳 ±90°:折俯仰只有在偏航正好落象限时才连续,否则会跳一帧(/sim 那档要把上下拖记成一步 x,才带 x 折叠)。`,
+      en: `NxN does not use this: its「自动转体」lives on the controller's onOrbit → the same orbitSceneAutoRotate. Pitch is always clamped to ±90°: folding pitch is only seamless when the yaw sits on a quadrant, otherwise it jumps a frame (/sim keeps the x fold anyway because that mode records the drag as an x move).`,
     },
   },
 ];
