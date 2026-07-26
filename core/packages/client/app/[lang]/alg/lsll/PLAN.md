@@ -36,6 +36,12 @@
 - [x] 页面:`/alg/lsll`(42 大类 + 定位)、`/alg/lsll/[group]`(EO 筛选 + 分页)、
       `/alg/lsll/case?k=`(状态图/打乱/自测/占位区)。`/alg/3x3` 入口卡。
 - [x] `tests/lsll_model.test.ts`(计数锁定 + cubing.js 交叉校验 + facelets 字节比对)。
+- [x] **一步 / 两步开关**(2026-07-25,`?cls=2|3`)。两步 = 三类 = 两步路线 (ZBLS case, ZBLL case),
+      306 × 494 = **151,164**,与公式表无关(口径见 `/math/lsll` §3 与 `scripts/lsll-class3.mts`)。
+      `lib/lsll/class3.ts` 前端枚举两半 + 出图;`[group]?cls=3` 先挑 ZBLS case 再看 494 个 ZBLL 后继;
+      `/alg/lsll/route?z=&l=` 单条路线。后半段接库靠 `lib/lsll/zbll_algs.json`
+      (`scripts/gen-lsll-zbll-overlay.mts`,zbll 472 + pll 21 = 493/494,差的是跳过)。
+      回归 `tests/lsll_class3_model.test.ts`。**没有「代表元」这回事** —— 三类不是二类的商。
 - [x] **MVP:ZBLS 交叉链接**(2026-07-23)。305 个 zbls 案例 → LSLL canonicalKey 映射
       (`scripts/gen-lsll-zbls-overlay.mts` 用真实 model 算 key 零漂移,产 `lib/lsll/zbls_algs.json`,
       305/305 无碰撞);case 页"人类公式"区对覆盖 case 一键直达 zbls 库(精选公式 + 训练器,

@@ -395,6 +395,57 @@
   color: var(--destructive);
 }
 
+/* ---- 两步路线(三类,?cls=3) ---- */
+/* 选中的 ZBLS case 抬头(第一眼),下面接它的 494 个 ZBLL case。 */
+.lsll-route-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 2px 0 12px;
+}
+.lsll-route-head-name {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--foreground);
+  margin-bottom: 2px;
+}
+.lsll-route-liblink {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--accent);
+}
+
+/* 路线详情页:两眼并排,窄屏叠成上下(箭头跟着转 90°)。 */
+.lsll-route-panels {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin: 6px 0 4px;
+}
+.lsll-route-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+}
+.lsll-route-panel-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.lsll-route-sep {
+  align-self: center;
+  color: var(--faint-foreground);
+  flex: 0 0 auto;
+}
+@media (max-width: 520px) {
+  .lsll-route-sep { transform: rotate(90deg); }
+}
+
 /* 视口收紧:与 alg.css 的 .alg-bento / .alg-cat-header 同一容器约定。
    放末尾,水平 margin/padding 覆盖上面各自的 shorthand。 */
 .lsll-intro,
@@ -407,6 +458,8 @@
 .lsll-case-grid,
 .lsll-pager,
 .lsll-case-head,
+.lsll-route-head,
+.lsll-route-panels,
 .lsll-section {
   max-width: 1200px;
   margin-left: auto;

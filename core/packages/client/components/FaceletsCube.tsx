@@ -8,14 +8,19 @@
 import { useMemo } from 'react';
 import { renderCubeSVG } from '@cuberoot/visualcube';
 
-export function FaceletsCube({ fd, size = 88, alt = 'Cube state' }: {
+export function FaceletsCube({ fd, size = 88, alt = 'Cube state', view }: {
   fd: string;
   size?: number;
   alt?: string;
+  /** 'plan' = 顶视 + 四周顶排(通行的 OLL/PLL/ZBLL 图);省略 = 立体图。 */
+  view?: 'iso' | 'plan';
 }) {
   const svg = useMemo(
-    () => renderCubeSVG({ width: size, height: size, cubeSize: 3, facelets: fd.split('') }),
-    [fd, size],
+    () => renderCubeSVG({
+      width: size, height: size, cubeSize: 3, facelets: fd.split(''),
+      ...(view === 'plan' ? { view: 'plan' } : {}),
+    }),
+    [fd, size, view],
   );
   return (
     <span
