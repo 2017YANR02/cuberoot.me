@@ -697,6 +697,44 @@
 .trainer-room-badge-label { font-weight: 500; color: var(--muted-foreground); }
 .trainer-room-badge-code { letter-spacing: 0.08em; }
 .trainer-room-badge-copy { color: var(--muted-foreground); }
+/* 合练选 case 页:一套一块,避免两套里同名的组视觉上并成一组 */
+.trainer-mix-section { margin-top: 18px; }
+.trainer-mix-section-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.trainer-mix-section-title span {
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 「一起练」的成员 chip(合练本场在练哪几套) */
+.trainer-mix-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px 3px 9px;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+.trainer-mix-chip-x {
+  display: inline-flex;
+  align-items: center;
+  color: var(--muted-foreground);
+  border-radius: 999px;
+  padding: 1px;
+}
+.trainer-mix-chip-x:hover { color: var(--foreground); background: color-mix(in srgb, var(--foreground) 12%, transparent); }
+
 /* 设置面板里的通用小按钮(建房/加入/离开/重开一轮共用;is-ghost = 次要动作) */
 .trainer-opts-btn {
   display: inline-flex;

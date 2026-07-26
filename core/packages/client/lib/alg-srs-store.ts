@@ -16,6 +16,7 @@ import { authHeaders, handleApi } from './admin-api';
 import { getSessionToken } from './auth-store';
 import { persistItem } from './safe-storage';
 import { useTrainerMarks, markStatus } from './trainer-marks';
+import { splitCaseKey } from './trainer-case-key';
 import {
   scheduleNext, bumpDaily, mergeSrs, mergeDaily, summarizeSrs, dayKey, MASTER_DAYS,
   type SrsRecs, type SrsRec, type SrsGrade, type SrsDaily, type SrsPutItem, type SrsSetStat,
@@ -143,12 +144,19 @@ export async function flushSrs(): Promise<void> {
 interface AlgSrsState {
   puzzle: string | null;
   set: string | null;
+  /**
+   * 合练会话的成员 set(单集为 null)。非空时 `recs` 的键带 set 前缀,
+   * 但排期仍落各自 set 的命名空间 —— 合练里复习过的卡,单独进那一套也算复习过。
+   */
+  sets: string[] | null;
   recs: SrsRecs;
   daily: SrsDaily;
   /** 本场已评分次数(用于「今天练了多少」的即时反馈)。 */
   sessionCount: number;
   /** 进 run 页调用:装本地,登录则拉云端合并。 */
   loadSrs: (puzzle: string, set: string) => void;
+  /** 合练版:一次装 N 个 set,合并成一张带前缀的表。 */
+  loadSrsMulti: (puzzle: string, sets: string[]) => void;
   /** 打一次分,返回新的记录(供 UI 显示「下次 N 天后」)。 */
   grade: (key: string, g: SrsGrade) => SrsRec;
   /** 撤销:把记录还原成传入的旧值(评错分时用)。 */
@@ -162,13 +170,14 @@ let loadToken = 0;
 export const useAlgSrs = create<AlgSrsState>((set, get) => ({
   puzzle: null,
   set: null,
+  sets: null,
   recs: {},
   daily: {},
   sessionCount: 0,
 
   loadSrs: (puzzle, setSlug) => {
     const token = ++loadToken;
-    set({ puzzle, set: setSlug, recs: loadLocalRecs(puzzle, setSlug), daily: loadDaily() });
+    set({ puzzle, set: setSlug, sets: null, recs: loadLocalRecs(puzzle, setSlug), daily: loadDaily() });
     if (!cloudEnabled()) return;
     void (async () => {
       const data = await cloudGet<{ recs: SrsRecs; daily?: Array<[string, number, number]> }>(
@@ -191,45 +200,98 @@ export const useAlgSrs = create<AlgSrsState>((set, get) => ({
     })();
   },
 
+  loadSrsMulti: (puzzle, sets) => {
+    const token = ++loadToken;
+    const prefixed = (slug: string, r: SrsRecs): SrsRecs => {
+      const out: SrsRecs = {};
+      for (const k in r) out[`${slug}:${k}`] = r[k];
+      return out;
+    };
+    const local: SrsRecs = {};
+    for (const slug of sets) Object.assign(local, prefixed(slug, loadLocalRecs(puzzle, slug)));
+    set({ puzzle, set: sets.join('+'), sets: [...sets], recs: local, daily: loadDaily() });
+    if (!cloudEnabled()) return;
+    void (async () => {
+      // 每个成员 set 各自合并回自己那张表 —— 云端结构不变,合练不引入新表
+      const results = await Promise.all(sets.map(async slug => ({
+        slug,
+        data: await cloudGet<{ recs: SrsRecs; daily?: Array<[string, number, number]> }>(
+          `/v1/alg/srs/${puzzle}/${slug}`,
+        ),
+      })));
+      if (token !== loadToken) return;
+      const merged: SrsRecs = { ...get().recs };
+      let daily = get().daily;
+      for (const { slug, data } of results) {
+        if (!data) continue;
+        const r = mergeSrs(loadLocalRecs(puzzle, slug), data.recs ?? {});
+        persistLocalRecs(puzzle, slug, r.merged);
+        Object.assign(merged, prefixed(slug, r.merged));
+        if (r.toUpload.length > 0) queueUpload(puzzle, slug, r.toUpload);
+        if (data.daily) {
+          const cloudDaily: SrsDaily = {};
+          for (const [d, n, again] of data.daily) cloudDaily[d] = [n, again];
+          daily = mergeDaily(daily, cloudDaily);
+        }
+      }
+      persistDaily(daily);
+      if (token === loadToken) set({ recs: merged, daily });
+    })();
+  },
+
   grade: (key, g) => {
-    const { puzzle, set: setSlug, recs, daily } = get();
+    const { recs, daily } = get();
     const now = Date.now();
     const rec = scheduleNext(recs[key], g, now, Math.random() * 2 - 1);
     const nextRecs = { ...recs, [key]: rec };
     const nextDaily = bumpDaily(daily, now, g);
-    if (puzzle && setSlug) {
-      persistLocalRecs(puzzle, setSlug, nextRecs);
-      queueUpload(puzzle, setSlug, [{ k: key, ...rec }]);
-    }
+    writeRec(get(), key, rec, nextRecs);
     persistDaily(nextDaily);
     set({ recs: nextRecs, daily: nextDaily, sessionCount: get().sessionCount + 1 });
     return rec;
   },
 
   restore: (key, prev) => {
-    const { puzzle, set: setSlug, recs } = get();
+    const { recs } = get();
     const nextRecs = { ...recs };
     if (prev) nextRecs[key] = prev;
     else delete nextRecs[key];
-    if (puzzle && setSlug) {
-      persistLocalRecs(puzzle, setSlug, nextRecs);
-      // 撤销也要上云,否则别的设备还留着那一次误评
-      queueUpload(puzzle, setSlug, [{ k: key, ...(prev ?? { d: 0, iv: 0, ef: 2.4, n: 0, l: 0, st: 0, t: Date.now(), h: 0 }) }]);
-    }
+    // 撤销也要上云,否则别的设备还留着那一次误评
+    writeRec(get(), key, prev ?? blankRec(), nextRecs);
     set({ recs: nextRecs, sessionCount: Math.max(0, get().sessionCount - 1) });
   },
 
   reset: (key) => {
-    const { puzzle, set: setSlug, recs } = get();
-    const blank: SrsRec = { d: 0, iv: 0, ef: 2.4, n: 0, l: 0, st: 0, t: Date.now(), h: 0 };
+    const { recs } = get();
+    const blank = blankRec();
     const nextRecs = { ...recs, [key]: blank };
-    if (puzzle && setSlug) {
-      persistLocalRecs(puzzle, setSlug, nextRecs);
-      queueUpload(puzzle, setSlug, [{ k: key, ...blank }]);
-    }
+    writeRec(get(), key, blank, nextRecs);
     set({ recs: nextRecs });
   },
 }));
+
+const blankRec = (): SrsRec => ({ d: 0, iv: 0, ef: 2.4, n: 0, l: 0, st: 0, t: Date.now(), h: 0 });
+
+/**
+ * 落一条记录 + 排队上云。
+ * 单集:整张表照旧落当前 set。合练:按 key 前缀落到那个成员 set 自己的命名空间,
+ * 存的是去掉前缀的原始 key —— 单独进那一套时读到的就是同一条排期。
+ */
+function writeRec(st: AlgSrsState, key: string, rec: SrsRec, nextRecs: SrsRecs): void {
+  const { puzzle, set: setSlug, sets } = st;
+  if (!puzzle || !setSlug) return;
+  if (!sets) {
+    persistLocalRecs(puzzle, setSlug, nextRecs);
+    queueUpload(puzzle, setSlug, [{ k: key, ...rec }]);
+    return;
+  }
+  const { set: slug, raw } = splitCaseKey(key, sets);
+  if (!slug) return; // 合练里的无前缀 key = 脏数据,不猜它属于谁
+  const cur = loadLocalRecs(puzzle, slug);
+  cur[raw] = rec;
+  persistLocalRecs(puzzle, slug, cur);
+  queueUpload(puzzle, slug, [{ k: raw, ...rec }]);
+}
 
 // ── 记忆进展 → 学习标记的自动升降 ───────────────────────────────────
 

@@ -3,12 +3,12 @@
 // Ported from packages/client-vite/src/pages/trainer/TrainerRunPage.tsx
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from '@/components/AppLink';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useQueryState } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Settings, Copy, Check, QrCode, RotateCcw } from 'lucide-react';
-import { getAlgSetMeta, loadAlg, type AlgCase } from '@cuberoot/shared';
-import { useTrainerStore, TimerState, trainerPool } from '@/lib/trainer-store';
+import { ArrowLeft, Settings, Copy, Check, QrCode, RotateCcw, X } from 'lucide-react';
+import { ALG_CATALOG, getAlgSetMeta, loadAlg, type AlgCase } from '@cuberoot/shared';
+import { useTrainerStore, TimerState, trainerPool, mixSessionId } from '@/lib/trainer-store';
 import TimerFontPicker from '@/components/TimerFontPicker';
 import { useSpaceHoldTimer } from '@/hooks/useSpaceHoldTimer';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
@@ -24,6 +24,7 @@ import { caseKey, findCaseByKey } from '@/lib/trainer-case-key';
 import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
 import { displayZbllToken } from '@/lib/alg_case_display';
 import { availableKinds, purifyScramble, SCRAMBLE_KINDS, type ScrambleKind } from '@/lib/trainer-scramble';
+import { MIX_SLUG, MIX_MIN_SETS, parseMixSets, mixTitle, mixHref, loadMixCases, setLabel } from '@/lib/alg-mix';
 import { useTrainerMarks, markStatus, markStarred, type CaseMarkStatus } from '@/lib/trainer-marks';
 import { ALG_SET_UNIVERSE } from '@/lib/alg_probability';
 import {
@@ -56,12 +57,16 @@ export default function TrainerRunClient() {
   const setSlug = (Array.isArray(params?.set) ? params.set[0] : params?.set) ?? '';
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
+  const router = useRouter();
   useDocumentTitle('训练中', 'Training');
 
   // 训练范围:subgroup 页的训练按钮带 ?scope=<组slug> 进来,只练该组(筛选/默认 replace)
   const [scopeParam] = useQueryState('scope');
   // 旧数字制子组 slug(u1 / pi 1 / as1 …)→ 新方向制(ur / pif / asf …),老 ?scope= 链接 / 书签不失效(migration 0081)
-  const scopeSlug = canonicalZbllSubgroupSlug(setSlug, scopeParam?.trim().toLowerCase() || null);
+  // 合练没有子组范围可言(?scope= 是某一套内部的分组),一律忽略
+  const scopeSlug = setSlug === MIX_SLUG
+    ? null
+    : canonicalZbllSubgroupSlug(setSlug, scopeParam?.trim().toLowerCase() || null);
 
   // 房间邀请码:创建/加入房间后写进 ?room=CODE,地址栏本身即分享链接;别人打开该链接
   // → session 载好后自动加入(见下方 effect)。离开房间清空。
@@ -75,7 +80,20 @@ export default function TrainerRunClient() {
   const modeApplied = useRef(false);
 
   const puzzle = resolveAlgPuzzle(puzzleParam);   // 接受 event code(333)或 legacy puzzle 名(3x3)
-  const meta = puzzle ? getAlgSetMeta(puzzle, setSlug) : undefined;
+
+  // 合练:`/alg/<puzzle>/mix/run?sets=pll,zbll` —— mix 是哨兵段,成员集合在 query 里
+  const [setsParam] = useQueryState('sets');
+  const isMix = setSlug === MIX_SLUG;
+  const mixSets = useMemo(
+    () => (isMix ? parseMixSets(puzzle ?? null, setsParam) : []),
+    [isMix, puzzle, setsParam],
+  );
+  const mixReady = isMix && mixSets.length >= MIX_MIN_SETS;
+  const meta = puzzle
+    ? (isMix
+        ? (mixReady ? { zh: mixTitle(puzzle, mixSets), en: mixTitle(puzzle, mixSets) } : undefined)
+        : getAlgSetMeta(puzzle, setSlug))
+    : undefined;
 
   const cases = useTrainerStore(s => s.cases);
   const selected = useTrainerStore(s => s.selected);
@@ -97,6 +115,7 @@ export default function TrainerRunClient() {
   const storePuzzle = useTrainerStore(s => s.puzzle);
   const storeSet = useTrainerStore(s => s.set);
   const loadSession = useTrainerStore(s => s.loadSession);
+  const loadMixSession = useTrainerStore(s => s.loadMixSession);
   const setScope = useTrainerStore(s => s.setScope);
   const hydratePrefs = useTrainerStore(s => s.hydratePrefs);
   const preAuf = useTrainerStore(s => s.preAuf);
@@ -178,30 +197,53 @@ export default function TrainerRunClient() {
   // 偏好(pre-AUF / 计时 / 模式 / 字体)只在挂载后补水 —— SSG 壳渲染默认值,避免水合不一致
   useEffect(() => { hydratePrefs(); }, [hydratePrefs]);
 
-  // per-case 学习标记(pill / 轮盘掌握位 / M 键):本地 + 登录后云端合并
+  // SSG 壳里读不到 `?sets=`(静态 HTML 没有 query),挂载前别急着说「至少要选两套」
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
+  // per-case 学习标记(pill / 轮盘掌握位 / M 键):本地 + 登录后云端合并。
+  // 合练一次装齐全部成员集 —— 标记/记忆仍分别落各自 set,合练与单练是同一份进度。
   const loadMarks = useTrainerMarks(s => s.loadMarks);
+  const loadMarksMulti = useTrainerMarks(s => s.loadMarksMulti);
   const loadSrs = useAlgSrs(s => s.loadSrs);
+  const loadSrsMulti = useAlgSrs(s => s.loadSrsMulti);
+  const mixKey = mixSets.join(',');   // effect 依赖用字符串,免得数组身份每次都变
   useEffect(() => {
     if (!puzzle || !meta) return;
+    if (isMix) {
+      const sets = mixKey.split(',').filter(Boolean);
+      loadMarksMulti(puzzle, sets);
+      loadSrsMulti(puzzle, sets);
+      return;
+    }
     loadMarks(puzzle, setSlug);
     // 记忆调度(间隔重复)与标记同源同步 —— 顶部进度条要显示「待复习」,不进记忆模式也得装
     loadSrs(puzzle, setSlug);
-  }, [puzzle, setSlug, meta, loadMarks, loadSrs]);
+  }, [puzzle, setSlug, meta, isMix, mixKey, loadMarks, loadSrs, loadMarksMulti, loadSrsMulti]);
 
   useEffect(() => {
     if (!puzzle || !meta) return;
-    if (storePuzzle === puzzle && storeSet === setSlug && cases.length > 0) return;
+    const sessionId = isMix ? mixSessionId(mixKey.split(',').filter(Boolean)) : setSlug;
+    if (storePuzzle === puzzle && storeSet === sessionId && cases.length > 0) return;
+    if (isMix) {
+      const sets = mixKey.split(',').filter(Boolean);
+      loadMixCases(puzzle, sets)
+        .then(all => loadMixSession(puzzle, sets, all))
+        .catch(e => console.error('[trainer] loadMixCases failed', e));
+      return;
+    }
     loadAlg(puzzle, setSlug)
       .then(d => loadSession(puzzle, setSlug, d.cases))
       .catch(e => console.error('[trainer] loadAlg failed', e));
-  }, [puzzle, setSlug, meta, storePuzzle, storeSet, cases.length, loadSession]);
+  }, [puzzle, setSlug, meta, isMix, mixKey, storePuzzle, storeSet, cases.length, loadSession, loadMixSession]);
 
   // 分享链接 ?room=CODE:本集 session 载好后自动加入该房间(仅一次;已在房间/正忙/无码则跳过)。
   // joinRoom 要求 store 已 loadSession 到对应 puzzle/set,故等 cases 到位再试;失败(房间不存在/
   // 过期/集不匹配)则清掉 URL 里的码并由 roomError 提示。
   useEffect(() => {
     if (!roomParam || room || roomBusy || autoJoinRef.current) return;
-    if (storePuzzle !== puzzle || storeSet !== setSlug || cases.length === 0) return;
+    const sessionId = isMix ? mixSessionId(mixKey.split(',').filter(Boolean)) : setSlug;
+    if (storePuzzle !== puzzle || storeSet !== sessionId || cases.length === 0) return;
     autoJoinRef.current = true;
     // 失败(房间不存在/过期/集不匹配)不清 ?room —— 保留链接,由下方 landing 显示 roomError 并给出「去选择」出口。
     void joinRoom(roomParam);
@@ -603,13 +645,30 @@ export default function TrainerRunClient() {
     return (
       <div className="trainer-root">
         <div className="trainer-landing-empty">
-          {tr({ zh: '未知公式集', en: 'Unknown set' })}: {puzzleParam}/{setSlug}
+          {isMix
+            ? (mounted
+                ? tr({ zh: '合练至少要选两套公式集', en: 'A combined drill needs at least two sets' })
+                : tr({ zh: '加载中…', en: 'Loading…' }))
+            : `${tr({ zh: '未知公式集', en: 'Unknown set' })}: ${puzzleParam}/${setSlug}`}
         </div>
       </div>
     );
   }
 
-  const selectHref = `/alg/${puzzleParam}/${setSlug}/select${scopeSlug ? `?scope=${encodeURIComponent(scopeSlug)}` : ''}`;
+  const selectHref = isMix
+    ? mixHref(puzzleParam, mixSets, 'select')
+    : `/alg/${puzzleParam}/${setSlug}/select${scopeSlug ? `?scope=${encodeURIComponent(scopeSlug)}` : ''}`;
+
+  // 本场在练哪几套(单集 = 就那一套);面板里的「一起练」按它增删
+  const sessionSets = isMix ? mixSets : [setSlug];
+  /** 换一组成员 = 换个 URL:剩一套回单集页,多套走合练页。 */
+  const sessionHref = (next: string[]) => {
+    const uniq = [...new Set(next)].sort();
+    return uniq.length <= 1
+      ? `/alg/${puzzleParam}/${uniq[0] ?? setSlug}/run`
+      : mixHref(puzzleParam, uniq, 'run');
+  };
+  const addableSets = (ALG_CATALOG[puzzle] ?? []).filter(s => !sessionSets.includes(s.slug));
 
   // 记忆模式按「整套(或该组)」排期 —— 用户从来没进过 select 页也该能直接开练,
   // 所以没勾选时回落到本页范围内的全部 case,而不是把人赶去选择页。
@@ -706,9 +765,12 @@ export default function TrainerRunClient() {
   const sidebarShown = showPrevCard || (showNextCard && !multi) || statsVisible || historyVisible;
 
   // pre-AUF 只对「顶层 case + U 可作 AUF」的场景有意义(F2L 类打乱前加 U 会换 case)
-  const preAufSupported = (puzzle === '3x3' || puzzle === '2x2') && cases[0]?.sticker.kind !== 'f2l';
+  // 合练:任一成员是 F2L 类就整场关掉(给 F2L 打乱前加 U 会换成另一个 case)
+  const preAufSupported = (puzzle === '3x3' || puzzle === '2x2')
+    && !cases.some(c => c.sticker.kind === 'f2l');
   // 真实概率只有带 meta 的 LL set(zbll / pll / ell / 1lll)有数学定义
-  const probSupported = puzzle === '3x3' && !!ALG_SET_UNIVERSE[setSlug];
+  // 真实概率按「一套 LL set 内部的 AUF 轨道」定义,跨集混起来没有公认的相对权重 —— 合练不给
+  const probSupported = puzzle === '3x3' && !isMix && !!ALG_SET_UNIVERSE[setSlug];
   // recap 进度:进度随「当前题」走(store 的 recapPos 因预抽下一题已领先一格),
   // 直接读当前历史条目上记的 pos/total。
   const recapCur = hist.idx >= 0 ? hist.list[hist.idx]?.recap : undefined;
@@ -749,6 +811,51 @@ export default function TrainerRunClient() {
           )}
           {optsOpen && (
             <div className="trainer-opts-panel" ref={optsPanelRef}>
+              {/* 一起练:本场的公式集成员。单集会话里加一套就地变合练,少到只剩一套自动退回单集。
+                  成员用可点的链接删(中键能新开),加走下拉(可选项十几套,不适合摊成 chip)。 */}
+              {addableSets.length > 0 && (
+                <>
+                  <div className="trainer-opts-row">
+                    <span className="trainer-opts-label">{tr({ zh: '一起练', en: 'Drill together' })}</span>
+                    {sessionSets.map(slug => (
+                      <span key={slug} className="trainer-mix-chip">
+                        {setLabel(puzzle, slug)}
+                        {sessionSets.length > 1 && (
+                          <Link
+                            href={sessionHref(sessionSets.filter(s => s !== slug))}
+                            className="trainer-mix-chip-x"
+                            aria-label={tr({ zh: `不练 ${setLabel(puzzle, slug)}`, en: `Drop ${setLabel(puzzle, slug)}` })}
+                            title={tr({ zh: '从本场移除', en: 'Remove from this drill' })}
+                            prefetch={false}
+                          >
+                            <X size={12} />
+                          </Link>
+                        )}
+                      </span>
+                    ))}
+                    <select
+                      className="trainer-scramble-kind"
+                      value=""
+                      onChange={e => {
+                        const slug = e.target.value;
+                        if (slug) router.push(sessionHref([...sessionSets, slug]));
+                      }}
+                      aria-label={tr({ zh: '加一套公式集', en: 'Add a set' })}
+                    >
+                      <option value="">{tr({ zh: '+ 加一套', en: '+ Add a set' })}</option>
+                      {addableSets.map(s => <option key={s.slug} value={s.slug}>{tr(s)}</option>)}
+                    </select>
+                  </div>
+                  {sessionSets.length > 1 && (
+                    <div className="trainer-opts-hint">
+                      {tr({
+                        zh: '多套混在一起出题,进度仍分别记在各自那一套里 —— 这里标的「已掌握」,单独进那一套也看得到',
+                        en: 'Cases from every set are drawn together, but progress still lands in each set on its own — a case you master here shows up mastered in that set too',
+                      })}
+                    </div>
+                  )}
+                </>
+              )}
               {kinds.length > 1 && (
                 <div className="trainer-opts-row">
                   <span className="trainer-opts-label">{tr({ zh: '打乱', en: 'Scramble' })}</span>

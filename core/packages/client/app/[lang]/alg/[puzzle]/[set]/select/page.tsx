@@ -15,6 +15,8 @@ export function generateStaticParams() {
     for (const s of (ALG_CATALOG as Record<string, { slug: string }[]>)[puzzle]) {
       out.push({ puzzle, set: s.slug });
     }
+    // 合练(多套混练)的哨兵段:成员集合走 ?sets=,前端读 —— 不为每种组合生成静态页
+    out.push({ puzzle, set: 'mix' });
   }
   return out;
 }

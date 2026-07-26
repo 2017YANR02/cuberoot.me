@@ -103,6 +103,11 @@ export interface AlgCase {
   trainerKey?: string;
   /** 1lll / zbll / pll / ell only — see {@link AlgCaseMeta}. */
   meta?: AlgCaseMeta;
+  /**
+   * 合练会话(多个 set 混在一起练)专用:标明该 case 来自哪个 set。
+   * 单集会话不设 —— `caseKey()` 据此保持原样,历史进度不失效。
+   */
+  srcSet?: string;
 }
 
 export interface AlgFile {

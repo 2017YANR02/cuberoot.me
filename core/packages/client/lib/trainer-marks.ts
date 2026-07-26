@@ -9,6 +9,7 @@ import { apiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 import { getSessionToken } from './auth-store';
 import { persistItem } from './safe-storage';
+import { groupKeysBySet } from './trainer-case-key';
 import { tr } from '@/i18n/tr';
 
 export type CaseMarkStatus = 'learning' | 'mastered' | 'paused';
@@ -132,64 +133,141 @@ export async function flushMarks(): Promise<void> {
   await flushPending();
 }
 
+/**
+ * 在一张标记表上套 patch(纯函数,单集与合练共用)。
+ * 返回新表 + 需要上云的条目;没有实际变化的 key 一律跳过,免得把 t 推新触发无谓同步。
+ */
+function applyPatchTo(
+  marks: CaseMarks, keys: readonly string[],
+  patch: { s?: CaseMarkStatus | null; f?: boolean }, t: number,
+): { next: CaseMarks; items: PutItem[] } {
+  const next = { ...marks };
+  const items: PutItem[] = [];
+  for (const k of keys) {
+    const cur = next[k];
+    const m: CaseMark = { t };
+    const s = patch.s === undefined ? cur?.s : (patch.s ?? undefined);
+    const f = patch.f === undefined ? cur?.f === 1 : patch.f;
+    if (s) m.s = s;
+    if (f) m.f = 1;
+    if ((cur?.s ?? undefined) === m.s && (cur?.f === 1) === (m.f === 1)) continue;
+    next[k] = m; // s/f 全空也保留 —— 墓碑,防云端复活
+    items.push(toPutItem(k, m));
+  }
+  return { next, items };
+}
+
 interface TrainerMarksState {
   puzzle: string | null;
   set: string | null;
+  /**
+   * 合练会话的成员 set(单集为 null)。非空时 `marks` 的键带 set 前缀(`zbll:U|Ua`),
+   * 但落地与上云仍按各自 set 的原始键 —— 合练里标的「已掌握」,单独进 ZBLL 也看得到。
+   */
+  sets: string[] | null;
   marks: CaseMarks;
   /** 进 select/run 页调用:装本地,登录则再拉云端合并(带竞态 token)。 */
   loadMarks: (puzzle: string, set: string) => void;
+  /** 合练版:一次装 N 个 set,合并成一张带前缀的表。 */
+  loadMarksMulti: (puzzle: string, sets: string[]) => void;
   /** 单个/批量写标记:patch.s = null 清状态,f = false 清星标;两者全空 → 墓碑。 */
   applyMarks: (keys: string[], patch: { s?: CaseMarkStatus | null; f?: boolean }) => void;
 }
 
 let loadToken = 0;
 
+/** 拉一个 set 的云端标记(失败返回 null,调用方退化成纯本地)。 */
+async function fetchSetMarks(puzzle: string, setSlug: string): Promise<CaseMarks | null> {
+  try {
+    const data = await handleApi<{ marks: CaseMarks }>(
+      await fetch(apiUrl(`/v1/alg/marks/${puzzle}/${setSlug}`), { headers: authHeaders(false) }),
+    );
+    return data.marks;
+  } catch (e) {
+    console.warn('[trainer-marks] cloud load failed, local only', e);
+    return null;
+  }
+}
+
 export const useTrainerMarks = create<TrainerMarksState>((set, get) => ({
   puzzle: null,
   set: null,
+  sets: null,
   marks: {},
 
   loadMarks: (puzzle, setSlug) => {
     const token = ++loadToken;
-    set({ puzzle, set: setSlug, marks: loadLocal(puzzle, setSlug) });
+    set({ puzzle, set: setSlug, sets: null, marks: loadLocal(puzzle, setSlug) });
     if (!getSessionToken()) return;
-    (async () => {
-      const data = await handleApi<{ marks: CaseMarks }>(
-        await fetch(apiUrl(`/v1/alg/marks/${puzzle}/${setSlug}`), { headers: authHeaders(false) }),
-      );
-      if (token !== loadToken) return; // 已切到别的 set
+    void (async () => {
+      const cloud = await fetchSetMarks(puzzle, setSlug);
+      if (!cloud || token !== loadToken) return; // 已切到别的 set
       // 合并基准用「此刻」的本地(拉取期间用户可能已经涂了几个)
       const st = get();
       if (st.puzzle !== puzzle || st.set !== setSlug) return;
-      const { merged, toUpload } = mergeMarks(st.marks, data.marks);
+      const { merged, toUpload } = mergeMarks(st.marks, cloud);
       persistLocal(puzzle, setSlug, merged);
       set({ marks: merged });
       if (toUpload.length > 0) queueUpload(puzzle, setSlug, toUpload);
-    })().catch((e) => console.warn('[trainer-marks] cloud load failed, local only', e));
+    })();
+  },
+
+  loadMarksMulti: (puzzle, sets) => {
+    const token = ++loadToken;
+    const prefixed = (slug: string, m: CaseMarks): CaseMarks => {
+      const out: CaseMarks = {};
+      for (const k in m) out[`${slug}:${k}`] = m[k];
+      return out;
+    };
+    const local: CaseMarks = {};
+    for (const slug of sets) Object.assign(local, prefixed(slug, loadLocal(puzzle, slug)));
+    set({ puzzle, set: sets.join('+'), sets: [...sets], marks: local });
+    if (!getSessionToken()) return;
+    void (async () => {
+      // 每个成员 set 各自合并、各自回传 —— 云端仍是「一套 set 一张表」,合练不引入新表
+      const results = await Promise.all(sets.map(async slug => ({ slug, cloud: await fetchSetMarks(puzzle, slug) })));
+      if (token !== loadToken) return;
+      const merged: CaseMarks = { ...get().marks };
+      for (const { slug, cloud } of results) {
+        if (!cloud) continue;
+        const cur = loadLocal(puzzle, slug);
+        const r = mergeMarks(cur, cloud);
+        persistLocal(puzzle, slug, r.merged);
+        Object.assign(merged, prefixed(slug, r.merged));
+        if (r.toUpload.length > 0) queueUpload(puzzle, slug, r.toUpload);
+      }
+      if (token === loadToken) set({ marks: merged });
+    })();
   },
 
   applyMarks: (keys, patch) => {
-    const { puzzle, set: setSlug, marks } = get();
+    const { puzzle, set: setSlug, sets, marks } = get();
     if (!puzzle || !setSlug || keys.length === 0) return;
     const t = Date.now();
-    const next = { ...marks };
-    const items: PutItem[] = [];
-    for (const k of keys) {
-      const cur = next[k];
-      const m: CaseMark = { t };
-      const s = patch.s === undefined ? cur?.s : (patch.s ?? undefined);
-      const f = patch.f === undefined ? cur?.f === 1 : patch.f;
-      if (s) m.s = s;
-      if (f) m.f = 1;
-      // 无变化不写(避免把 t 推新触发无谓上云)
-      if ((cur?.s ?? undefined) === m.s && (cur?.f === 1) === (m.f === 1)) continue;
-      next[k] = m; // s/f 全空也保留 —— 墓碑,防云端复活
-      items.push(toPutItem(k, m));
+
+    if (!sets) {
+      const { next, items } = applyPatchTo(marks, keys, patch, t);
+      if (items.length === 0) return;
+      persistLocal(puzzle, setSlug, next);
+      set({ marks: next });
+      queueUpload(puzzle, setSlug, items);
+      return;
     }
-    if (items.length === 0) return;
-    persistLocal(puzzle, setSlug, next);
-    set({ marks: next });
-    queueUpload(puzzle, setSlug, items);
+
+    // 合练:按成员 set 拆开,各自落各自的命名空间(store 里那张带前缀的表同步更新)
+    const merged = { ...marks };
+    let changed = false;
+    for (const [slug, group] of groupKeysBySet(keys, sets)) {
+      if (!slug) continue; // 合练里出现无前缀 key = 脏数据,不猜它属于谁
+      const cur = loadLocal(puzzle, slug);
+      const { next, items } = applyPatchTo(cur, group.map(g => g.raw), patch, t);
+      if (items.length === 0) continue;
+      persistLocal(puzzle, slug, next);
+      queueUpload(puzzle, slug, items);
+      for (const { key, raw } of group) if (next[raw]) merged[key] = next[raw];
+      changed = true;
+    }
+    if (changed) set({ marks: merged });
   },
 }));
 
