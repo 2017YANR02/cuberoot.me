@@ -18,6 +18,7 @@ import {
   caseFacelets, verifyCaseAlg,
 } from '@/lib/lsll/model';
 import { zblsForKey } from '@/lib/lsll/zbls_overlay';
+import { mirrorKey, mirrorAlgForCase } from '@/lib/lsll/mirror';
 import { algSpeed, getSTM } from '@/lib/mcc';
 import '../../alg.css';
 import '../lsll.css';
@@ -36,6 +37,14 @@ export default function LsllCaseClient() {
 
   const info = useMemo(() => (decoded ? classify(decoded.state) : null), [decoded]);
   const zbls = useMemo(() => (decoded ? zblsForKey(keyToString(decoded.key)) : null), [decoded]);
+  // 镜像 case:纯前端现算(σ 作用在 canonical key 上),不进库、不占体积。
+  const mirror = useMemo(() => {
+    if (!decoded) return null;
+    const mk = mirrorKey(decoded.key);
+    const st = decodeKey(mk);
+    if (!st) return null;
+    return { key: mk, state: st, self: mk === decoded.key, cat: classify(st).category };
+  }, [decoded]);
   useDocumentTitle(
     info ? `LSLL ${info.category.letter} #${keyToString(decoded!.key)}` : 'LSLL case',
     info ? `LSLL ${info.category.letter} #${keyToString(decoded!.key)}` : 'LSLL case',
@@ -66,6 +75,10 @@ export default function LsllCaseClient() {
     const v = algSpeed(tryAlg, false, true);
     return typeof v === 'number' ? v : null;
   }, [verdict, tryAlg]);
+  const tryMirrored = useMemo(() => {
+    if (!verdict || !verdict.ok || !decoded) return null;
+    return mirrorAlgForCase(decoded.state, tryAlg);
+  }, [verdict, tryAlg, decoded]);
 
   if (!decoded || !info) {
     return (
@@ -102,6 +115,33 @@ export default function LsllCaseClient() {
           <dd><code>{ks}</code></dd>
         </dl>
       </div>
+
+      {mirror && (
+        <section className="lsll-section">
+          <h2>{tr({ zh: '镜像', en: 'Mirror' })}</h2>
+          {mirror.self ? (
+            <div className="lsll-note">
+              <T zh="自镜像 case —— 镜过去还是它自己(全库 432 个之一)。"
+                 en="Self-mirror case — reflecting it gives itself back (one of 432 in the whole set)." />
+            </div>
+          ) : (
+            <div className="lsll-mirror-row">
+              <Link href={`/alg/lsll/case?k=${keyToString(mirror.key)}`} className="lsll-mirror-link">
+                <FaceletsCube fd={caseFacelets(mirror.state)} size={96} alt={`mirror ${keyToString(mirror.key)}`} />
+                <span className="lsll-mirror-name">
+                  {mirror.cat.letter} <code>#{keyToString(mirror.key)}</code>
+                </span>
+              </Link>
+              <p className="lsll-note">
+                <T zh={<>沿过 FR 与 BL 两条棱的对角面镜过去的 case。它与本 case 步数相同,
+                  会的公式逐招式重写(<code>U↔U&apos;</code>、<code>R↔F&apos;</code>、<code>L↔B&apos;</code>)就能直接用。</>}
+                   en={<>The case across the diagonal plane through the FR and BL edges. Same move count as this one —
+                  rewrite any alg you know move by move (<code>U↔U&apos;</code>, <code>R↔F&apos;</code>, <code>L↔B&apos;</code>) and it applies.</>} />
+              </p>
+            </div>
+          )}
+        </section>
+      )}
 
       <section className="lsll-section">
         <h2>{tr({ zh: '打乱', en: 'Scramble' })}</h2>
@@ -162,11 +202,19 @@ export default function LsllCaseClient() {
           {tryAlg && <ClearButton onClick={() => setTryAlg('')} />}
         </span>
         {verdict && verdict.ok && (
-          <div className="lsll-verify-ok">
-            ✓ {tr({ zh: '解掉了', en: 'Solved' })}
-            {' · '}{getSTM(tryAlg, true)} STM
-            {tryMcc !== null && <> · MCC {tryMcc}</>}
-          </div>
+          <>
+            <div className="lsll-verify-ok">
+              ✓ {tr({ zh: '解掉了', en: 'Solved' })}
+              {' · '}{getSTM(tryAlg, true)} STM
+              {tryMcc !== null && <> · MCC {tryMcc}</>}
+            </div>
+            {tryMirrored && mirror && !mirror.self && (
+              <div className="lsll-note">
+                {tr({ zh: '镜像公式(解镜像 case):', en: 'Mirrored alg (solves the mirror case): ' })}
+                <code>{tryMirrored}</code>
+              </div>
+            )}
+          </>
         )}
         {verdict && !verdict.ok && (
           <div className="lsll-verify-bad">

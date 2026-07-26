@@ -446,6 +446,36 @@
   .lsll-route-sep { transform: rotate(90deg); }
 }
 
+/* 镜像 case(σ 现算,无数据源) */
+.lsll-mirror-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.lsll-mirror-link {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+}
+.lsll-mirror-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+}
+.lsll-mirror-name code {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  color: var(--muted-foreground);
+}
+.lsll-mirror-row .lsll-note {
+  flex: 1 1 260px;
+  max-width: 560px;
+  margin: 0;
+}
+
 /* 视口收紧:与 alg.css 的 .alg-bento / .alg-cat-header 同一容器约定。
    放末尾,水平 margin/padding 覆盖上面各自的 shorthand。 */
 .lsll-intro,

@@ -42,6 +42,13 @@
       `/alg/lsll/route?z=&l=` 单条路线。后半段接库靠 `lib/lsll/zbll_algs.json`
       (`scripts/gen-lsll-zbll-overlay.mts`,zbll 472 + pll 21 = 493/494,差的是跳过)。
       回归 `tests/lsll_class3_model.test.ts`。**没有「代表元」这回事** —— 三类不是二类的商。
+- [x] **镜像 case**(2026-07-26,issue #40 T5 的 LSLL 那半)。`lib/lsll/mirror.ts`:σ = 过 FR/BL
+      两棱的对角镜面(**不是**左右镜 —— 那会把槽送出 FR),`co' = -co`、
+      `eo' = eo + [位置在 E 层] + [块是 E 层块]`(EO 记法在 F↔R 下不对称,`R` 的镜像 `F'` 翻四棱)。
+      case 页出镜像缩略卡 + 链接;自镜像 case 直接说明。公式自测过关时给出镜像公式,
+      `mirrorAlgForCase()` 会补前置 AUF(两边页面各显示各自的 canonical 代表元,裸镜像解不开)。
+      不动点 F = **432**(S 96 / O 192 / F 144 / T 0),镜像对 291,858 —— T6 求解量的减半依据。
+      `tests/lsll_mirror.test.ts` 14 条,判据是整方层面的独立实现 + 500 条随机公式对撞。
 - [x] **MVP:ZBLS 交叉链接**(2026-07-23)。305 个 zbls 案例 → LSLL canonicalKey 映射
       (`scripts/gen-lsll-zbls-overlay.mts` 用真实 model 算 key 零漂移,产 `lib/lsll/zbls_algs.json`,
       305/305 无碰撞);case 页"人类公式"区对覆盖 case 一键直达 zbls 库(精选公式 + 训练器,
