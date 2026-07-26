@@ -22,6 +22,7 @@ import { eventInfo, type EventId } from '../_lib/types';
 import { wcaEventId, WCA_OPTIMAL_EVENTS } from '../_lib/scramble/wca_pool';
 import { CUBE_ORIENTATIONS } from '@/lib/cube-orientation';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { useMetronome, setMetronome, tapTempo, bpmToTps, BPM_MIN, BPM_MAX } from '@/lib/metronome';
 import { CountryInput } from '@/components/CountryInput';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { tr } from '@/i18n/tr';
@@ -142,6 +143,7 @@ function AccordionSection({ id, title, defaultExpanded, useMobile, expanded, set
 
 export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: Props) {
   const s = useSettings();
+  const metro = useMetronome();
   const isMobile = useIsMobile();
   const [expandedSections, setExpandedSections] = useState<Set<string>>(() => new Set(['timing']));
   const [seedTick, setSeedTick] = useState(0);
@@ -222,32 +224,21 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
     setBeepAtInput(out.join(','));
   }
 
-  // Tap-to-BPM: rolling window of timestamps; reset after 3s of inactivity.
-  const tapTimesRef = useRef<number[]>([]);
+  // Tap-to-tempo — the rolling-window math lives in lib/metronome so this row
+  // and the floating panel stay one implementation.
   const tapResetTimerRef = useRef<number | null>(null);
   const [tapBpmHint, setTapBpmHint] = useState<number | null>(null);
 
   function tapBpm(): void {
-    const now = performance.now();
-    const arr = tapTimesRef.current;
-    arr.push(now);
-    // Keep at most 4 taps for the rolling window.
-    if (arr.length > 4) arr.shift();
-    if (arr.length >= 2) {
-      const span = arr[arr.length - 1] - arr[0];
-      const avgIntervalMs = span / (arr.length - 1);
-      if (avgIntervalMs > 0) {
-        const bpm = Math.round(60000 / avgIntervalMs);
-        const clamped = Math.max(30, Math.min(300, bpm));
-        updateSettings({ metronomeBpm: clamped });
-        setTapBpmHint(clamped);
-      }
+    const bpm = tapTempo();
+    if (bpm != null) {
+      setMetronome({ bpm });
+      setTapBpmHint(bpm);
     }
     if (tapResetTimerRef.current !== null) {
       window.clearTimeout(tapResetTimerRef.current);
     }
     tapResetTimerRef.current = window.setTimeout(() => {
-      tapTimesRef.current = [];
       tapResetTimerRef.current = null;
       setTapBpmHint(null);
     }, 3000);
@@ -838,13 +829,16 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
             <span className="hint">{tr({ zh: '观察 / 计时阶段播放', en: 'ticks during inspection / solve'
             })}</span>
           </Row>
-          <Row label={tr({ zh: '速度（BPM）', en: 'Tempo (BPM)' })}>
+          <Row label={tr({ zh: '速度', en: 'Tempo' })}>
             <input
-              type="range" min={30} max={300} step={1}
-              value={s.metronomeBpm}
-              onChange={(e) => updateSettings({ metronomeBpm: Math.max(30, Math.min(300, Number(e.target.value) || 120)) })}
+              type="range" min={BPM_MIN} max={BPM_MAX} step={1}
+              value={metro.bpm}
+              onChange={(e) => setMetronome({ bpm: Number(e.target.value) })}
             />
-            <span className="hint" style={{ fontVariantNumeric: 'tabular-nums', minWidth: '3ch', display: 'inline-block' }}>{s.metronomeBpm}</span>
+            <span className="hint" style={{ fontVariantNumeric: 'tabular-nums', minWidth: '9ch', display: 'inline-block' }}>
+              {bpmToTps(metro.bpm).toFixed(2)} TPS
+            </span>
+            <span className="hint" style={{ fontVariantNumeric: 'tabular-nums' }}>{metro.bpm} BPM</span>
             <button
               className="hint-btn"
               onClick={tapBpm}
@@ -857,7 +851,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
             {tapBpmHint !== null && (
               <span className="hint" style={{ fontVariantNumeric: 'tabular-nums' }}>→ {tapBpmHint}</span>
             )}
-            <span className="hint">{tr({ zh: '离开本页时自动停止', en: 'auto-stops on page leave'
+            <span className="hint">{tr({ zh: '与桌宠里的悬浮节拍器共用一档速度', en: 'shared with the floating metronome in the desk pet'
             })}</span>
           </Row>
           <Row label={tr({ zh: '观察提示音（秒）', en: 'Beep at (sec)'
