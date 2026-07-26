@@ -59,6 +59,7 @@ import { ResultChangeChain } from '@/components/persons/sections/results/Changed
 import type { ResultChangeTarget } from '@/components/persons/sections/results/ResultChangeEditor';
 import type { ResultChange } from '@/lib/result-watch-api';
 import { judgeRecordTag, type KeatonedInfo, type RecordsSnapshot } from '@/lib/record-tag';
+import { expandContinentRecord } from '@/lib/recon-utils';
 import '../comp.css';
 import { tr } from '@/i18n/tr';
 import i18n from '@/i18n/i18n-client';
@@ -3486,15 +3487,16 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
   // 「badge 已标明当天有人更快,名次却还是 WR1」。
   const singleKeatonedBy = judgeRecordTag(result.b, result.e, false, u, data.currentRecords).keatonedBy;
   const avgKeatonedBy = judgeRecordTag(effectiveAvg(result), result.e, true, u, data.currentRecords).keatonedBy;
+  const self = { person: u.name, comp: data.slug };
   const singleRankInfo = singleRankBase
     ? applyDayRankDelta(
         adjustRankWithLiveComp(singleRankBase, buildLiveCompEntries(data, pbMap, result.e, 'single'), result.b, number, country),
-        singleKeatonedBy, country)
+        singleKeatonedBy, country, self)
     : singleRankBase;
   const avgRankInfo = avgRankBase
     ? applyDayRankDelta(
         adjustRankWithLiveComp(avgRankBase, buildLiveCompEntries(data, pbMap, result.e, 'average'), effectiveAvg(result), number, country),
-        avgKeatonedBy, country)
+        avgKeatonedBy, country, self)
     : avgRankBase;
 
   // 破 PR:把 PR 框 + NR/WR 名次拼成一个右上角标组「PR/NR3/WR3」(只 PR 带框,名次纯文本,/ 分割).
@@ -3508,6 +3510,7 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
 
   // 地区纪录标签(NR/CR/AsR…)+ 世界名次拼成右上角标组「AsR/WR3」(与 PR mark 同款整体上标,
   // 内部 badge 归 baseline,名次纯文本紧随其后);WR 本身=世界第一不附 /WRn。
+  // 拿到 tag 时全国名次必然是 1,不重复写;只有全被日掩、什么级别都没落地时才补 /NRn。
   const renderRecordMark = (tag: string, info: RankResult | null | undefined, k?: KeatonedInfo | null, isAvg = false) => (
     <span className="comp-pr-mark">
       <RecordBadge
@@ -3518,20 +3521,34 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
         variant="inline"
         iso2={iso2}
       />
+      {!tag && info?.national && <span className="comp-pr-mark-rank">/NR{info.national.rank}</span>}
       {info?.world && tag.toUpperCase() !== 'WR' && <span className="comp-pr-mark-rank">/WR{info.world.rank}</span>}
     </span>
   );
 
   // 弹窗里给「日掩」一句完整交代:被谁、在哪场、多快 —— badge 只是记号,来龙去脉在这.
+  // 级别跟 badge 同一套写法(CR 按选手所在洲展开成 AsR/ER/…),否则两处对不上。
+  // 压过它的常常就是本人同日更靠后的一轮(一天只可能在一场比赛),这时链去本场没意义,直接点破。
   const renderKeatonedNote = (k: KeatonedInfo, isAvg: boolean) => {
     const who = displayCuberName(k.byPerson, tr({ zh: true, en: false }));
     const v = formatLive(k.byValue, result.e, isAvg);
+    const level = (iso2 ? expandContinentRecord(k.level, iso2) : k.level) || k.level;
+    const prefix = tr({
+      zh: `按规则 9i2「同日只认最好」,这条 ${level} 不予认定 —— `,
+      en: `Under Regulation 9i2 only the best result of the day counts, so this ${level} is not recognized — `,
+    });
+    if (k.byPerson && k.byPerson === u.name && k.byComp === data.slug) {
+      return (
+        <div className="comp-keatoned-note">
+          {prefix}
+          {tr({ zh: `同一天本人打出了更快的 ${v}。`, en: `the same person went faster (${v}) that same day.` })}
+        </div>
+      );
+    }
     return (
       <div className="comp-keatoned-note">
-        {tr({
-          zh: `按规则 9i2「同日只认最好」,这条 ${k.level} 不予认定 —— 同一天 `,
-          en: `Under Regulation 9i2 only the best result of the day counts, so this ${k.level} is not recognized — `,
-        })}
+        {prefix}
+        {tr({ zh: '同一天 ', en: '' })}
         <Link href={`/wca/comp/${k.byComp}?view=result&event=${result.e}`}>{k.byCompName}</Link>
         {tr({ zh: ` 的 ${who} 打出了 ${v}。`, en: ` saw ${who} get ${v} that same day.` })}
       </div>
@@ -3667,7 +3684,7 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
             </div>
             <div className="comp-round-modal-value">
               {showAvgSection && effectiveAvg(result) !== 0 ? (
-                (!result.ar && averageBadge === 'PR') ? (
+                (!result.ar && !result.ak && averageBadge === 'PR') ? (
                   <span className="comp-pr-value">
                     {formatLive(effectiveAvg(result), result.e, true)}
                     {renderPrMark(avgRankInfo)}
@@ -3692,7 +3709,7 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
             })}</div>
             <div className="comp-round-modal-value">
               {result.b !== 0 ? (
-                (!result.sr && singleBadge === 'PR') ? (
+                (!result.sr && !result.sk && singleBadge === 'PR') ? (
                   <span className="comp-pr-value">
                     {formatLive(result.b, result.e, false)}
                     {renderPrMark(singleRankInfo)}
