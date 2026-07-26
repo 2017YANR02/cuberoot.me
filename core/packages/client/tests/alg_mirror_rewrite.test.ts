@@ -230,15 +230,29 @@ describe('视角置换表是克莱因四元群', () => {
   });
 });
 
-describe('§5.2:含 F 不含 B 的只补左右镜', () => {
-  it('不含 F 也不含 B → 三份', () => expect(mirrorGensFor("U R U' R'")).toEqual(['lr', 'fb', 'y2']));
-  it('含 F 不含 B → 只有左右镜', () => expect(mirrorGensFor("R' F R F'")).toEqual(['lr']));
-  it('含小写 f 也算 F 族(f = F + S,前后镜会变 b)', () => expect(mirrorGensFor("L' f U f'")).toEqual(['lr']));
+describe('§5.2:生成的公式里不许有 B 族', () => {
+  it('不含 F 也不含 B → 三份都不会冒出 B', () => expect(mirrorGensFor("U R U' R'")).toEqual(['lr', 'fb', 'y2']));
+  it('含 F 不含 B → 只有左右镜(前后镜和 y² 都把 F 变成 B)', () => expect(mirrorGensFor("R' F R F'")).toEqual(['lr']));
+  it('小写 f 同理(f = F + S,前后镜会变 b)', () => expect(mirrorGensFor("L' f U f'")).toEqual(['lr']));
   it('Fw 与 f 同一件事', () => expect(mirrorGensFor('Fw U Fw2')).toEqual(['lr']));
-  it('含 B → 这个 case 下转 B 顺手,三份都给', () => expect(mirrorGensFor("U' r U B' U' B r'")).toEqual(['lr', 'fb', 'y2']));
-  it('S / z 不算 F 族 —— 前后镜下它俩不产生 B', () => {
+  it('含 B 不含 F → 反过来,左右镜保 B 出局,另两份把 B 变回 F', () => {
+    expect(mirrorGensFor("U' r U B' U' B r'")).toEqual(['fb', 'y2']);
+  });
+  it('F 和 B 都有 → 一份都生成不出来', () => {
+    expect(mirrorGensFor("F R B' R' F' R B R'")).toEqual([]);
+  });
+  it('S / z 的轴与镜面法向平行,冒不出 B', () => {
     expect(mirrorGensFor("S R U R' S'")).toEqual(['lr', 'fb', 'y2']);
     expect(mirrorMoveString("S R U R' S'", 'S')).not.toMatch(/\bB/);
+  });
+
+  /** 上面逐条钉的是判据,这条钉的是**意图**:凡是生成出来的,一律不含 B 族。 */
+  it('线上那批真公式,生成出来的一条都不带 B', () => {
+    for (const alg of CORPUS) {
+      for (const gen of mirrorGensFor(alg)) {
+        expect(applyMirrorGen(alg, gen)).not.toMatch(/(?:^|\s)(?:B|b|Bw)(?:[2']|w)*(?=\s|$)/);
+      }
+    }
   });
 });
 

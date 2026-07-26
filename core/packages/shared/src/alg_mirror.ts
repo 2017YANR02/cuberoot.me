@@ -144,23 +144,28 @@ export function applyMirrorGen(alg: string, gen: MirrorGen): string {
 }
 
 /** F 族 / B 族 —— `Fw` 与 `f` 是同一件事的两种写法,都要认。 */
-const F_FAMILIES = new Set(['F', 'f', 'Fw']);
 const B_FAMILIES = new Set(['B', 'b', 'Bw']);
 
 /**
  * 这条公式该生成哪几份(方案 §5.2)。
  *
- * 前后镜和 y² 都把 `F` 变成 `B`,而 B 面在魔友手里是背面,盲拧才转它 —— 所以**含 F 不含 B 的
- * 公式只补左右镜**。反过来公式里本来就有 B,说明这个 case 下转 B 顺手,三份都给。
+ * 判据只有一条:**生成出来的那条里不许有 B 族**(`B` / `b` / `Bw`)。B 面在魔友手里是背面,
+ * 盲拧才转它 —— 自动塞给人一条要转背面的公式,不如不给。
  *
- * `S` / `z` 不算 F 族:前后镜的镜面法向与它们的轴平行,轴自己那次翻转和手性那次抵消
- * (`S → S`、`z → z'`),镜像结果里冒不出 B。`f` = `F` + `S`,会变 `b`,算 F 族。
+ * 所以直接把三份都算出来,谁带 B 谁出局。曾经是按**源公式**的族来判(「含 F 不含 B → 只补
+ * 左右镜;本来就含 B → 三份都给」),那条规则漏了一格:左右镜保 B 不变,源里带 B 时它原样
+ * 带过去,照样生成出要转背面的公式(实测 zbls A+/VP 就中了)。按结果判既堵上这格,也不必再
+ * 论证「哪个族经哪次镜像会变成什么」——
+ *   `S` / `z` 的轴与前后镜的镜面法向平行,轴自己那次翻转和手性那次抵消(`S → S`),冒不出 B;
+ *   `f` = `F` + `S`,会变 `b`。
+ * 这些以前都得写在注释里提醒,现在算一遍就知道了。
  */
 export function mirrorGensFor(alg: string): MirrorGen[] {
-  const { moves } = tokenizeMoves(flattenAlg(alg));
-  if (moves.some(m => B_FAMILIES.has(m.family))) return [...MIRROR_GENS];
-  if (moves.some(m => F_FAMILIES.has(m.family))) return ['lr'];
-  return [...MIRROR_GENS];
+  return MIRROR_GENS.filter(gen => {
+    let out: string;
+    try { out = applyMirrorGen(alg, gen); } catch { return false; }
+    return !tokenizeMoves(out).moves.some(m => B_FAMILIES.has(m.family));
+  });
 }
 
 /**
