@@ -12,7 +12,7 @@
  *     `show()` 只设目标透明度、`tick` 每帧淡入,没人 `hide()` 就一直亮着。
  *   - 颜色逐贴纸给:`labels[i]` 是 facelet i 的引擎色标签(整盘真实颜色)。
  *   - 「只亮目标块」不靠改色,靠 /sim 那套阶段遮罩:`setStickering` 把 `bright` 之外
- *     的贴纸压成 FM_DIM(各自颜色减半),遮罩定义在还原帧上 → 复盘转动时高亮跟着块走。
+ *     的贴纸压成 FM_IGNORED(整片灰),遮罩定义在还原帧上 → 复盘转动时高亮跟着块走。
  *   - 复盘动画不另算盘面:题板一律「起点上色 + 真转招式」,让引擎自己把贴纸转过去
  *     (`twister.push` 逐步动画 / `setup` 瞬时跳转)。`cube.stick` 按**原始位置**寻址,
  *     所以每次改色必须先 `setup('')` 复位几何,再按当前步重放回去。
@@ -256,17 +256,16 @@ export default function PredictBoard({
    * 贴纸上,复盘转动时高亮自己跟着块跑;上色那条路(`stick`)照旧给整盘真实颜色,
    * 两者正交,所以这个 effect 不碰几何、也不会吃掉动画。
    *
-   * `dimWhite = null`:/sim 把压暗的白特判成 #dddddd(免得跟 ignored 灰撞),这里没有
-   * ignored 灰,却有满色白贴纸要跳出来 —— #dddddd 跟 #ffffff 根本分不出,必须老实减半。
+   * 其余贴纸走 `ignored`(整片 #666 灰)而不是 `dim`(各自颜色减半):这块板子问的是
+   * 「这一枚落在哪」,一整盘半亮的彩色格子照样是一盘花花的干扰;上游那版也是灰底。
    */
   useEffect(() => {
     const mount = mountRef.current;
     if (!mount || !ready) return;
     const cube = mount.world.cube as Cube;
-    cube.instancedRenderer.dimWhite = null;
     const sids = bright.map((f) => engineHomeSid(faceletMap[f].cube, faceletMap[f].face, 3) as StickerId);
     cube.instancedRenderer.setStickering(
-      sids.length === 0 ? null : customMaskFn(3, formatMask(new Set(sids)), 'regular', 'dim'),
+      sids.length === 0 ? null : customMaskFn(3, formatMask(new Set(sids)), 'regular', 'ignored'),
     );
     mount.invalidate();
   }, [bright, ready, faceletMap]);
