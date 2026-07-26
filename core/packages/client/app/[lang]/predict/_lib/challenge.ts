@@ -18,6 +18,7 @@ import {
   solvedCube, applyAlg, toFacelets, cornerFaceletIdx, edgeFaceletIdx,
   CORNER_COLORS, EDGE_COLORS, type Cube333,
 } from '@/lib/lsll/cube333';
+import { cubeOnly, expandGroups, tokenizeMoves } from '@cuberoot/shared/alg-notation';
 import type { CubeFace } from '@/lib/cube-colors';
 import { orientedFaceColors, faceShowingColor } from '@/lib/cube-orientation';
 import { F2L_ALGS } from './f2l_algs';
@@ -153,47 +154,60 @@ export function randomMoves(count: number, rnd: () => number): string[] {
   return out;
 }
 
-/**
- * 玩家自己输入的公式 → 题面那串。
- *
- * 判定层(`applyAlg`)只有六个外层面转,所以这里也只收这六个:宽转 `Rw`/`r`、中层
- * `M E S`、转体 `x y z` 一律**当场拒**并把那个词原样退回去 —— 悄悄按别的意思解释,
- * 出的题答案就是错的。同理不吃换位子 `[R, U]` / 重复 `(R U)3`:那两种记号要展开,
- * 展开错了没人看得出来,不如让人自己写平。
- *
- * 收下的:大小写严格(小写在魔方记号里是宽转,不是同一个转动)、`’`/`′` 当 `'`、
- * 分组括号当空格。输出统一成 `R` / `R'` / `R2` 三种写法。
- */
-const CUSTOM_TOKEN = /^([URFDLB])(2'?|'|3)?$/;
-
 export type MoveInputError =
   | { kind: 'empty' }
   | { kind: 'token'; token: string }
+  | { kind: 'parens' }
   | { kind: 'tooLong'; count: number };
 
 export type MoveInputResult =
   | { moves: string[]; error: null }
   | { moves: null; error: MoveInputError };
 
+/**
+ * 玩家自己输入的公式 → 题面那串。
+ *
+ * **文法不在这里** —— 切词、剥注释/换握记号、展开 `(...)N` 全走站内那份唯一的 3x3 记号真源
+ * `@cuberoot/shared/alg-notation`(recon 计步、镜像、alg 库校验用的同一份)。这里只做这块
+ * 板子自己的那一道闸:**判定层 `applyAlg` 只有六个外层面转**,所以 tokenizer 标成 wide /
+ * slice / rotation 的一律当场拒、把那个词原样退回去 —— 悄悄按别的意思解释(比如把宽转 `r`
+ * 当 `R`),出的题答案就是错的,盘面上还看不出来。
+ *
+ * 于是收下的比自己写文法时还多:连写 `RUR'U'`、`(R U)2`、`// 注释`、`·` 换握记号都能吃。
+ * 换位子 `[R, U]` 例外 —— `[...]` 在站内是 FTN 注解块,`cubeOnly` 会整块剥掉,不拦的话
+ * 它会静悄悄变成空公式,所以先点名拦下。输出统一成 `R` / `R'` / `R2`。
+ *
+ * 括号走 `expandGroups` 的**严格**档(不是宽容的 `flattenAlg`):括号没配对时后者会把括号
+ * 连重复次数一起丢掉 —— `(R U)2 F` 少一个括号就变成 `R U F`,少转一整遍还没人报。而输入框
+ * 打 `(` 会自动补 `)`,自己再打一个右括号就多出来了,这条路很好走。
+ */
 export function parseMoveInput(text: string): MoveInputResult {
-  const tokens = text
-    .replace(/[’‘`´′]/g, "'")
-    // 括号换成空格而不是删掉:`(R U)3` 删掉括号会变成合法的 `R U3`(= U'),
-    // 换空格则剩下一个孤立的 `3`,老实报错。
-    .replace(/[()]/g, ' ')
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
-  if (tokens.length === 0) return { moves: null, error: { kind: 'empty' } };
-  if (tokens.length > CUSTOM_MOVES_MAX) return { moves: null, error: { kind: 'tooLong', count: tokens.length } };
-  const moves: string[] = [];
-  for (const tok of tokens) {
-    const m = CUSTOM_TOKEN.exec(tok);
-    if (!m) return { moves: null, error: { kind: 'token', token: tok } };
-    const suffix = m[2] === "2'" ? '2' : m[2] === '3' ? "'" : (m[2] ?? '');
-    moves.push(m[1] + suffix);
+  // 弯引号(网页 / 中文输入法粘出来的)→ ASCII:记号文法只认 '
+  const src = text.replace(/[’‘`´′]/g, "'");
+  const bracket = /\[[^\]]*\]?/.exec(src);
+  if (bracket) return { moves: null, error: { kind: 'token', token: bracket[0] } };
+
+  let flat: string;
+  try {
+    flat = expandGroups(cubeOnly(src));
+  } catch {
+    return { moves: null, error: { kind: 'parens' } };
   }
-  return { moves, error: null };
+  const { moves: parsed, junk } = tokenizeMoves(flat);
+  if (junk.length) return { moves: null, error: { kind: 'token', token: junk[0] } };
+  if (parsed.length === 0) return { moves: null, error: { kind: 'empty' } };
+  if (parsed.length > CUSTOM_MOVES_MAX) return { moves: null, error: { kind: 'tooLong', count: parsed.length } };
+
+  const moves: string[] = [];
+  for (const m of parsed) {
+    if (m.kind !== 'face') return { moves: null, error: { kind: 'token', token: m.raw } };
+    // tokenizer 照写不折 mod 4(`R4` 对指法/动画算数),但这块板子只问贴纸落在哪,
+    // 转满一圈 = 没动过。
+    const amount = ((m.amount % 4) + 4) % 4;
+    if (amount === 0) continue;
+    moves.push(m.family + (amount === 2 ? '2' : amount === 3 ? "'" : ''));
+  }
+  return moves.length ? { moves, error: null } : { moves: null, error: { kind: 'empty' } };
 }
 
 interface PiecePools {
