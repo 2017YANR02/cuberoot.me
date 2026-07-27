@@ -12,7 +12,7 @@
 import { useMemo, useState } from 'react';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
-import { ArrowLeft, Dumbbell } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr, T } from '@/i18n/tr';
 import { ClearButton } from '@/components/ClearButton';
@@ -85,9 +85,10 @@ export default function LsllHubPage() {
           onLabel={tr({ zh: '两步', en: 'Two-look' })}
           ariaLabel={tr({ zh: '一步 / 两步', en: 'One-look / two-look' })}
         />
-        {/* 训练走全站同一个训练器(与 /alg/3x3/zbll/run 同一个页面);不带范围 = 已收录公式那批 */}
-        <Link href="/alg/3x3/lsll/run" className="lsll-train-btn" prefetch={false}>
-          <Dumbbell size={15} /> {tr({ zh: '训练', en: 'Train' })}
+        {/* 训练走全站同一个训练器(与 /alg/3x3/zbll/run 同一个页面);不带范围 = 已收录公式那批。
+            按钮样式共用 alg.css 的 `.alg-train-cta` —— 站内「训练」入口只此一款,别再自造 */}
+        <Link href="/alg/3x3/lsll/run" className="alg-train-cta" prefetch={false}>
+          {tr({ zh: '训练', en: 'Train' })}
         </Link>
       </div>
 
