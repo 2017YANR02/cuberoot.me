@@ -813,9 +813,9 @@ export default function CayleyTheorem() {
   return (
     <GTSec id="cayley-theorem" className="gt-sec">
       <div className="gt-sec-num">§57</div>
-      <h2 className="gt-sec-title">
+      <h1 className="gt-sec-title">
         <L zh="Cayley 定理" en="Cayley's theorem" />
-      </h2>
+      </h1>
 
       <p className="gt-lede">
         <L

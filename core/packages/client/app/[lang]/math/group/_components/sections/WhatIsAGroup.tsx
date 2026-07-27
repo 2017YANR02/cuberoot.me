@@ -143,9 +143,9 @@ export default function WhatIsAGroup() {
   return (
       <GTSec id="what-is-a-group" className="gt-sec">
         <div className="gt-sec-num">§1</div>
-        <h2 className="gt-sec-title">
+        <h1 className="gt-sec-title">
           <L zh="什么是群" en="What is a group?" />
-        </h2>
+        </h1>
         <p className="gt-lede">
           <L
             zh={<>当我们说魔方是「一个群」时,我们不是在打比方。<strong>群</strong> 在现代代数里是有精确定义的数学对象。它的定义只有 <strong>四条公理</strong> —— 而魔方所有 6 个面的全部转法,跟「先做 a 再做 b」这个复合运算放一起,正好满足这四条。</>}

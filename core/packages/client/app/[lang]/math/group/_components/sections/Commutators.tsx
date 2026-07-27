@@ -207,9 +207,9 @@ export default function Commutators() {
   return (
       <GTSec id="commutators" className="gt-sec">
         <div className="gt-sec-num">§9</div>
-        <h2 className="gt-sec-title">
+        <h1 className="gt-sec-title">
           <L zh="换位子 [A, B] — 高级解法的灵魂" en="Commutators [A, B] — the soul of advanced solving" />
-        </h2>
+        </h1>
         <p>
           <L
             zh={<>对两个操作 <TeX src={`A, B`} />,我们定义它们的 <strong>换位子</strong> 为:</>}

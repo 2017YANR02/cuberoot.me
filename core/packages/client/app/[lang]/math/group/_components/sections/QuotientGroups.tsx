@@ -101,9 +101,9 @@ export default function QuotientGroups() {
   return (
       <GTSec id="quotient" className="gt-sec">
         <div className="gt-sec-num">§20</div>
-        <h2 className="gt-sec-title">
+        <h1 className="gt-sec-title">
           <L zh="正规子群与商群" en="Normal subgroups & quotient groups" />
-        </h2>
+        </h1>
         <p className="gt-lede">
           <L
             zh={<>拉格朗日告诉我们 G 怎么被一个子群 <em>切片</em>;但一般 <strong>陪集本身不是群</strong>。 只有当子群是 <em>正规子群</em> 时,陪集的集合才能继承群的结构,我们得到 <strong>商群</strong> <TeX src={`G/N`} />。 这是整个抽象代数最深的几个想法之一。</>}

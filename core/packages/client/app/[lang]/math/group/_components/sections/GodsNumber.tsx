@@ -49,9 +49,9 @@ export default function GodsNumber() {
   return (
       <GTSec id="gods-number" className="gt-sec">
         <div className="gt-sec-num">§11</div>
-        <h2 className="gt-sec-title">
+        <h1 className="gt-sec-title">
           <L zh="上帝之数 = 20" en="God's number = 20" />
-        </h2>
+        </h1>
         <p>
           <L
             zh={<>G 是一个有 <TeX src={`4.3 \\times 10^{19}`} /> 个元素的有限群。 把 <TeX src={`G`} /> 看成图(顶点 = 状态,边 = 一次面转),它的 <strong>直径</strong> 是多少?</>}

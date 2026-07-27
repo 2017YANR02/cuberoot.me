@@ -805,9 +805,9 @@ export default function TwoFacePGL() {
   return (
       <GTSec id="two-face-pgl" className="gt-sec">
         <div className="gt-sec-num">§30</div>
-        <h2 className="gt-sec-title">
+        <h1 className="gt-sec-title">
           <L zh="两面 6 角子群 — PGL₂(𝔽₅) ≅ S₅ 在 6 点上的奇迹" en="The two-face corner group — PGL₂(𝔽₅) ≅ S₅, the miracle on six points" />
-        </h2>
+        </h1>
         <p className="gt-lede">
           <L
             zh={<>只考虑魔方两个相邻面 (比如 R、 U) 转出的子群,只看 <strong>角块的置换</strong> (忽略朝向)。 这两个面共享 6 个角块 (4 + 4 − 2)。 朴素估计置换数 6! = 720,但实际只达到 <strong>120 = 5!</strong>。 这个 120 阶群恰是 <TeX src="\mathrm{PGL}_2(\mathbb{F}_5) \cong S_5" />,在 6 点上做 <em>尖锐 3-传递</em> 作用; 同时它给出 <TeX src="S_5 \hookrightarrow S_6" /> 的一个 <em>异常</em> 嵌入 (传递的),从而是 <TeX src="S_6" /> 那唯一非平凡 <em>外自同构</em> 的源泉。 这是有限对称群里最浓缩的一段巧合。</>}

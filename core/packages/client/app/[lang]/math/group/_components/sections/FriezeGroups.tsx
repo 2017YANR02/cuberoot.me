@@ -708,9 +708,9 @@ export default function FriezeGroups() {
   return (
     <GTSec id="frieze-groups" className="gt-sec">
       <div className="gt-sec-num">§43</div>
-      <h2 className="gt-sec-title">
+      <h1 className="gt-sec-title">
         <L zh="七种带饰群" en="The 7 frieze groups" />
-      </h2>
+      </h1>
 
       <p className="gt-lede">
         <L

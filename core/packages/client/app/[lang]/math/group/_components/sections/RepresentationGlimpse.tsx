@@ -67,9 +67,9 @@ export default function RepresentationGlimpse() {
   return (
       <GTSec id="representations" className="gt-sec">
         <div className="gt-sec-num">§26</div>
-        <h2 className="gt-sec-title">
+        <h1 className="gt-sec-title">
           <L zh="表示论一瞥" en="A glimpse of representation theory" />
-        </h2>
+        </h1>
         <p className="gt-lede">
           <L
             zh={<>把一个有限群 G 「线性化」 —— 找一个忠实的群同态 <TeX src={`\\rho : G \\to GL_n(\\mathbb{C})`} /> —— 是表示论的入门。 把群论问题翻译成 <strong>线性代数问题</strong> 是 19 世纪以来代数学的核心发明之一 (Frobenius, Schur)。</>}

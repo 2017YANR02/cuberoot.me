@@ -136,9 +136,9 @@ export default function StateVector() {
   return (
       <GTSec id="state-vector" className="gt-sec">
         <div className="gt-sec-num">§3</div>
-        <h2 className="gt-sec-title">
+        <h1 className="gt-sec-title">
           <L zh="状态向量 (cp, co, ep, eo)" en="State vector: (cp, co, ep, eo)" />
-        </h2>
+        </h1>
         <p>
           <L
             zh={<>一个 3×3×3 魔方有 <strong>8 个角块</strong> 和 <strong>12 个棱块</strong>。中心块固定 (它们决定颜色对应)。状态完全由下面四个量描述:</>}

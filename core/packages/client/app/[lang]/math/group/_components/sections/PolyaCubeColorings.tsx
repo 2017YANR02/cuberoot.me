@@ -172,9 +172,9 @@ export default function PolyaCubeColorings() {
   return (
     <GTSec id="polya-cube-colorings" className="gt-sec">
       <div className="gt-sec-num">§48</div>
-      <h2 className="gt-sec-title">
+      <h1 className="gt-sec-title">
         <L zh="Burnside–Pólya 数立方体染色" en="Counting cube colourings (Burnside-Polya)" />
-      </h2>
+      </h1>
 
       <p className="gt-lede">
         <L

@@ -221,9 +221,9 @@ export default function AbelianClassification() {
   return (
     <GTSec id="abelian-classification" className="gt-sec">
       <div className="gt-sec-num">§38</div>
-      <h2 className="gt-sec-title">
+      <h1 className="gt-sec-title">
         <L zh="有限阿贝尔群基本定理" en="Finite Abelian Groups" />
-      </h2>
+      </h1>
 
       <p className="gt-lede">
         <L

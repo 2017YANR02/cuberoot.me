@@ -78,9 +78,9 @@ export default function DistanceDistribution() {
   return (
       <GTSec id="distance" className="gt-sec">
         <div className="gt-sec-num">§23</div>
-        <h2 className="gt-sec-title">
+        <h1 className="gt-sec-title">
           <L zh="距离分布与 20 步证明" en="Distance distribution & the 20-move proof" />
-        </h2>
+        </h1>
         <p className="gt-lede">
           <L
             zh={<>魔方 Cayley 图的 <strong>距离分布</strong> 是一个让人难忘的图表: 几乎所有 4.3 × 10¹⁹ 个状态都落在 d = 18 或 19 上,而 d = 20 的状态只有 4.9 × 10⁸ 个 (相对很少)。 这跟「上帝之数 = 20」 的证明直接相关。</>}

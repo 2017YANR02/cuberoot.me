@@ -3,6 +3,9 @@
 调查日期 2026-07-27。全部结论基于线上实测（curl 抓 server HTML、nginx 访问日志、源码核对），
 标注「推断」的地方是没能实证的部分。
 
+> **执行状态**：§4 的第一至第四批已于同日全部落地，见 §6「已执行」。
+> §1–§3 保留调查当时的原始现状，作为改动前的基线 —— 不要当成当前状态回读。
+
 ---
 
 ## 0. 一句话结论
@@ -276,4 +279,89 @@ GET /recon/2523
    锁在 Observability Plus 付费墙后（Hobby 返 402），拿不到。所以 0.04% 这个数字
    **是源站的实测值，对 Vercel 线是推断**。不过考虑到它们正被 robots 拦着，
    放开后的量级仍属可控，且阀门（只挡两棵高基数树）随时可收。
-4. **server `layout.tsx` 给 client `page.tsx` 发 metadata 这条没有实证**，见 §2.2 的警告。
+4. ~~**server `layout.tsx` 给 client `page.tsx` 发 metadata 这条没有实证**，见 §2.2 的警告。~~
+   **已实证**（见 §6.1）。§2.2 的警告作为当时的判断留在原处。
+
+---
+
+## 6. 已执行
+
+同日落地。每一项都在本地 dev 上抓 server HTML 验过，非「改完即认为生效」。
+
+### 6.1 先验掉那个地基假设
+
+§2.2 整套方案压在一个未验证的假设上：server `layout.tsx` 能不能给 `'use client'` 的
+`page.tsx` 提供 metadata。**先建了一个 throwaway 路由验它**，验完删除：
+
+| 检查 | 结果 |
+|---|---|
+| `<title>` 进 server HTML | ✅ `<title>Probe English Title \| CubeRoot</title>` |
+| `generateMetadata` 拿得到 `lang` | ✅ `/zh/seoprobe` → `探针中文标题` |
+| client 组件照常工作 | ✅ `useState` 正常 |
+
+结论成立 → **180 个 `'use client'` 页面一个都不用拆**。这是整轮改造能便宜下来的原因。
+
+### 6.2 改了什么
+
+| # | 改动 | 关键文件 |
+|---|---|---|
+| 1 | robots 从「封爬虫」改成「封贵的 URL 空间」 | `app/robots.ts` |
+| 2 | 全站 per-route title / description | `lib/page-meta.ts` + 199 个 `layout.tsx` |
+| 3 | `/math/group` 63 节正文进 server HTML | `math/group/page.tsx` |
+| 4 | 63 节各自的 title / description / h1 | `math/group/[slug]/layout.tsx` + 63 个 section |
+| 5 | recon 双 canonical 冲突 | `proxy.ts` |
+| 6 | sitemap 收 63 节、去掉假 lastmod | `app/sitemap.ts` |
+| 7 | llms.txt | `app/llms.txt/route.ts` |
+| 8 | JSON-LD | `components/JsonLd.tsx` 等 |
+
+**robots** — 引用型（`OAI-SearchBot` / `ChatGPT-User` / `PerplexityBot` / `Amazonbot` /
+`YouBot` / `FacebookBot`）放开；训练型维持封禁（立场问题，与流量无关，故按现状保留）；
+整站 `Disallow: /` 收窄为 `/wca/persons/` + `/wca/comp/`；Sogou 加 `Crawl-delay: 5`。
+**自己挖出的坑**：`/wca/comp/stats` 和 `/wca/comp/sources` 是真内容页且在 sitemap 里，
+被 `/wca/comp/` 前缀误伤 → 补 `Allow` 例外，否则 robots 与 sitemap 自相矛盾。
+
+**title / description** — 标题从现有 `useDocumentTitle(zh, en)` 调用里机械抽取 162 条
+（所以 tab 标题不变），手写补 26 条；26 个高价值页手写描述，其余继承站级默认。
+regulation 16 章的标题与描述**从 `REG_ARTICLES` 派生而非复制**，章节改名不会漂移
+（`_data/reg-metadata.ts`）。首页是唯一拿不到 sibling layout 的路由（那一层就是包住全站的
+`[lang]/layout.tsx`，在那里设标题会漏给所有无 layout 的 `[param]` 哨兵页），故单独拆成
+server wrapper + `LandingClient.tsx`。
+
+**`/math/group`** — 去掉 63 处 `ssr: false`。实测风险远低于预期：63 个 section 只有 1 个
+直接碰浏览器 API，8 个用 `TwistyMini` 而它已把 `import('cubing/twisty')` 放进 effect。
+同时把 63 个 `<h2 class="gt-sec-title">` 提成 `<h1>`（CSS 是纯 class 选择器，视觉零变化）——
+此前这 63 页一个 h1 都没有。TOC 抽到 `_data/toc.ts`（无 import 的纯数据），
+让 sitemap 与 `[slug]/layout.tsx` 都能读，避免把 client 页拖进 build 期服务端模块。
+
+**sitemap** — `lastModified` 直接删掉而非改进：原来是 `new Date()`，一次部署就把全部 URL
+标成「今天改过」。Google 明说 lastmod 不可靠时整个字段作废,所以统一时间戳比没有更糟；
+而真实日期在此拿不到（CI 里 git 不保留 mtime，本文件又必须无 I/O）。recon sitemap 有真
+日期，继续发。
+
+**JSON-LD** — 首页 `WebSite` + `Organization`，math 63 节与 regulation 16 章各一个
+`Article`。**刻意不加 `SearchAction`**：站内没有全局搜索端点，声明了就是站点兑现不了的承诺。
+
+### 6.3 效果（本地 dev 实测）
+
+| 指标 | 改前 | 改后 |
+|---|---:|---:|
+| 有 `<title>` 的路由 | 0 | 抽查 30/30 |
+| 唯一 description | 1 条全站共用 | 26 条手写 + 16 章派生 |
+| `/math/group/lagrange` 正文 | 155 字符 | 5,471 |
+| `/math/group/cayley` 正文 | — | 26,985 |
+| sitemap URL | 202 | 264 |
+| JSON-LD 页面 | 仅 recon | + 首页 / 63 节 / 16 章 |
+
+`typecheck` 干净；`pnpm test` 3,130 通过 / 3 跳过，含 i18n 棘轮、catalog、url-state 等守卫。
+
+### 6.4 留下的
+
+- **`/alg/[puzzle]` 等动态路由继承父级标题**（`/alg/3x3` 显示 "Algorithms"）。不算错但不够
+  具体；要修就照 `math/group/[slug]` 给一个动态 layout。这些页多数不在 sitemap 里，优先级低。
+- **`/math/group/[slug]` 仍是 `force-static` + 空 `generateStaticParams`**，没改成 build 时
+  预渲染 63 条。预渲染更抗部署（Vercel 每次部署清 ISR 缓存），但改动会影响 build 形态，
+  而本地跑不了 `next build`（dev 在跑，hook 硬拦），未经验证的 build 改动不上。
+- **`/tutorial/[slug]` 与 alg 套装仍未进 sitemap**：枚举它们需要调 API，而 `app/sitemap.ts`
+  必须保持无 I/O。要收就得照 recon 的做法另开一个运行时 sitemap。
+- **`useDocumentTitle` 仍在 195 个文件里**。值与 metadata 一致故无害，长期可退役。
+  只在两处冲突点摘掉了：首页（原本强制 tab 回落到裸品牌名）与 `RegArticleLayout`（旧标题格式）。

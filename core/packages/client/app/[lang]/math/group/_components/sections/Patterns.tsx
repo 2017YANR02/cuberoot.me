@@ -76,9 +76,9 @@ export default function Patterns() {
   return (
       <GTSec id="patterns" className="gt-sec">
         <div className="gt-sec-num">§13</div>
-        <h2 className="gt-sec-title">
+        <h1 className="gt-sec-title">
           <L zh="著名图案 — 群元素的具体面孔" en="Famous patterns — concrete faces of group elements" />
-        </h2>
+        </h1>
         <p className="gt-lede">
           <L
             zh={<>群元素是抽象对象, 但每一个魔方状态 (= 群元素) 都可以 <em>看见</em>。 下面这组家喻户晓的图案, 每一个都是 G 的一个具体元素 —— 配有它的阶、 定义公式、 循环结构、 以及它在群结构里的位置。 注意 「图案的视觉对称」 通常对应于 「群元素的代数对称」 —— 这是 §13 的主题。</>}

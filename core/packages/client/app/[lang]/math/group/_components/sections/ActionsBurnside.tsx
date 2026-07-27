@@ -375,9 +375,9 @@ export default function ActionsBurnside() {
   return (
       <GTSec id="actions-burnside" className="gt-sec">
         <div className="gt-sec-num">§18</div>
-        <h2 className="gt-sec-title">
+        <h1 className="gt-sec-title">
           <L zh="群作用与 Burnside — 计数对称等价" en="Group actions & Burnside — counting up to symmetry" />
-        </h2>
+        </h1>
         <p>
           <L
             zh={<>到目前为止, 我们把 G 看作「自身」 — 元素的集合和乘法。但群的真正力量在于 <strong>作用</strong> 在别的集合上。魔方群作用于 26 个小块的位置和方向; 魔方的 48 个外部对称群作用于整个 G 自身。</>}

@@ -9,9 +9,9 @@ export default function StructureTheorem() {
   return (
       <GTSec id="structure" className="gt-sec">
         <div className="gt-sec-num">§6</div>
-        <h2 className="gt-sec-title">
+        <h1 className="gt-sec-title">
           <L zh="结构定理 — G 的代数解剖" en="Structure theorem — anatomy of G" />
-        </h2>
+        </h1>
         <p>
           <L
             zh={<>把上述守恒律翻译成代数语言,G 就是「自由组合空间」的一个 <em>指数 12 子群</em>:</>}

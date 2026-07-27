@@ -143,9 +143,9 @@ export default function SylowTheorems() {
   return (
     <GTSec id="sylow" className="gt-sec">
       <div className="gt-sec-num">§35</div>
-      <h2 className="gt-sec-title">
+      <h1 className="gt-sec-title">
         <L zh="Sylow 定理" en="Sylow theorems" />
-      </h2>
+      </h1>
 
       <p className="gt-lede">
         <L

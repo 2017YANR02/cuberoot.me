@@ -48,9 +48,9 @@ export default function OtherPuzzles() {
   return (
       <GTSec id="other-puzzles" className="gt-sec">
         <div className="gt-sec-num">§15</div>
-        <h2 className="gt-sec-title">
+        <h1 className="gt-sec-title">
           <L zh="其它拼图 — 同一框架, 不同舞台" en="Other puzzles — same framework, different stages" />
-        </h2>
+        </h1>
         <p className="gt-lede">
           <L
             zh={<>魔方的成功让群论成为研究 <em>所有</em> 扭转拼图的标准工具。 每一个拼图都有它自己的群、 自己的生成集、 自己的直径、 自己的开放问题。 拿同一套语言 (生成元、 共轭类、 子群链、 Cayley 图) 走过去, 你就能比较他们的「难度」、 「结构」、 「对称」。</>}

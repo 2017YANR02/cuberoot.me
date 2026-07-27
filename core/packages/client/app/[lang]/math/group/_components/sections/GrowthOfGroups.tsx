@@ -68,9 +68,9 @@ export default function GrowthOfGroups() {
   return (
     <GTSec id="growth-of-groups" className="gt-sec">
       <div className="gt-sec-num">§61</div>
-      <h2 className="gt-sec-title">
+      <h1 className="gt-sec-title">
         <L zh="群的增长" en="Growth of groups" />
-      </h2>
+      </h1>
 
       <p className="gt-lede">
         <L

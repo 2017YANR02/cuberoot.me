@@ -951,9 +951,9 @@ export default function WallpaperGroups() {
   return (
     <GTSec id="wallpaper-groups" className="gt-sec">
       <div className="gt-sec-num">§44</div>
-      <h2 className="gt-sec-title">
+      <h1 className="gt-sec-title">
         <L zh="十七种墙纸群" en="The 17 wallpaper groups" />
-      </h2>
+      </h1>
 
       <p className="gt-lede">
         <L

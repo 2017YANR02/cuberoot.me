@@ -215,9 +215,9 @@ export default function CharacterTable() {
   return (
     <GTSec id="character-table" className="gt-sec">
       <div className="gt-sec-num">§51</div>
-      <h2 className="gt-sec-title">
+      <h1 className="gt-sec-title">
         <L zh="特征标表" en="Character tables" />
-      </h2>
+      </h1>
 
       <p className="gt-lede">
         <L

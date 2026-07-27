@@ -48,9 +48,9 @@ export default function ScaleComparisonSection() {
   return (
       <GTSec id="order" className="gt-sec">
         <div className="gt-sec-num">§4</div>
-        <h2 className="gt-sec-title">
+        <h1 className="gt-sec-title">
           <L zh="G 的阶 — 多少种状态?" en="The order |G| — how many states?" />
-        </h2>
+        </h1>
         <p>
           <L
             zh={<>如果魔方完全自由 (拆开重组、想拧就拧),状态数会是:</>}

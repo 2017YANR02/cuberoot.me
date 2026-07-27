@@ -133,9 +133,9 @@ export default function SolvingAlgorithms() {
   return (
       <GTSec id="algorithms" className="gt-sec">
         <div className="gt-sec-num">§22</div>
-        <h2 className="gt-sec-title">
+        <h1 className="gt-sec-title">
           <L zh="解魔方的算法" en="Solving algorithms" />
-        </h2>
+        </h1>
         <p className="gt-lede">
           <L
             zh={<>从 §10 的 Thistlethwaite 子群链开始,到 Kociemba 两阶段、 Korf 最优 IDA*、 Rokicki 对称压缩枚举 —— 每一个 solver 都把不同的群论概念翻译成具体算法。 这是「群论的工程化」最干净的例子之一。</>}
