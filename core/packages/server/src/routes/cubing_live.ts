@@ -13,7 +13,7 @@ import WebSocket from 'ws';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import type { CompPersonalRecordSlot } from '@cuberoot/shared';
 import { query } from '../db/connection.js';
-import { enrichComp, resolvePersonIso2, emptyDayBest, foldCompIntoDayBest, type CompRecordsSnapshot, type DayBest, type KeatonedInfo } from '../utils/current_records.js';
+import { enrichComp, resolvePersonIso2, emptyDayBest, foldCompIntoDayBest, judgeExternalRecord, type CompRecordsSnapshot, type DayBest, type KeatonedInfo } from '../utils/current_records.js';
 import { getCnCompZh } from '../utils/cn_comp_zh_cache.js';
 import { trimToRounds, resolveOnlyKeys } from '../utils/comp_trim.js';
 import { getUpcomingComps } from '../utils/upcoming_comps_cache.js';
@@ -724,14 +724,20 @@ function inPoolWindow(date: string): boolean {
   return Math.abs(d - Date.parse(`${todayIso()}T00:00:00Z`)) / 86400_000 <= DAY_POOL_WINDOW_DAYS;
 }
 
+// 合并结果按「池版本」memo:一轮 recent-records 复判要对 ~70 条 feed 记录问同一天,
+// 每条都重新 merge 全天所有比赛纯属白烧.任何一场写池就 +1,memo 自然失效.
+let dayPoolVersion = 0;
+const dayBestMemo = new Map<string, { v: number; day: DayBest | null }>();
+
 function rememberCompDay(date: string, data: CompData): void {
   const per = emptyDayBest();
   foldCompIntoDayBest(per, data);
   let byComp = dayPool.get(date);
   if (!byComp) { byComp = new Map(); dayPool.set(date, byComp); }
   byComp.set(data.slug, per);
+  dayPoolVersion++;
   for (const key of dayPool.keys()) {
-    if (!inPoolWindow(key)) dayPool.delete(key);
+    if (!inPoolWindow(key)) { dayPool.delete(key); dayBestMemo.delete(key); }
   }
 }
 
@@ -758,11 +764,41 @@ async function buildDayBest(data: CompData): Promise<DayBest | null> {
   if (!inPoolWindow(date)) return null;
 
   rememberCompDay(date, data);
+  return dayBestFor(date);
+}
+
+/** 某日历日的跨比赛同日成绩池.池里没这天返 null. */
+function dayBestFor(date: string): DayBest | null {
+  const hit = dayBestMemo.get(date);
+  if (hit && hit.v === dayPoolVersion) return hit.day;
   const byComp = dayPool.get(date);
-  if (!byComp || byComp.size === 0) return null;
-  const day = emptyDayBest();
-  for (const per of byComp.values()) mergeDayBest(day, per);
+  let day: DayBest | null = null;
+  if (byComp && byComp.size > 0) {
+    day = emptyDayBest();
+    for (const per of byComp.values()) mergeDayBest(day, per);
+  }
+  dayBestMemo.set(date, { v: dayPoolVersion, day });
   return day;
+}
+
+/** 对「不由本站加载」的单条纪录(WCA Live recentRecords feed)做 Reg 9i2 同日复判.
+ *  feed 只看自家平台 + 已公示纪录,看不到同日 cubing.com 上的中国比赛 —— 2026-07-26
+ *  芜湖陈震 6.99 单手平均把 Tarlac 的 7.72 压到 NR,feed 仍标 WR,首页与比赛页因此对不上.
+ *  返 null = 判不了(多日赛 / 不在池窗 / 池空 / 基线未 warm),调用方保留 feed 原 tag. */
+export async function adjudicateExternalRecord(
+  compId: string,
+  eventId: string,
+  isAvg: boolean,
+  value: number,
+  personIso2: string,
+): Promise<{ tag: string; keatoned: KeatonedInfo | null } | null> {
+  if (!compId) return null;
+  const dates = await getCompDates(compId);
+  const date = ymd(dates.start);
+  if (!date || date !== ymd(dates.end) || !inPoolWindow(date)) return null;
+  const day = dayBestFor(date);
+  if (!day) return null;
+  return judgeExternalRecord(value, eventId, isAvg, personIso2, day);
 }
 
 /** 给 cubing / wca / wca_live 源的 data 补 Psych Sheet 用的 personalRecords + per-result pS/pA dense rank:
@@ -1758,7 +1794,20 @@ function refreshWcaDb(wcaId: string, cacheKey: string, onProgress?: ProgressFn):
   return pending;
 }
 
+/** loadComp 对外入口:加载完统一把推断纪录写进 inferredPool(首页「纪录」列表的数据源).
+ *  挂在这一层是因为 loadCompInner 有十几条 return 路径(L1 / L2 / inflight / 各源 / 各 fallback),
+ *  挂里面必漏;而首页纪录一漏就是"比赛页有、首页没有". */
 async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress?: ProgressFn): Promise<CompData> {
+  const data = await loadCompInner(wcaId, choice, onProgress);
+  try {
+    await rememberInferred(data);
+  } catch (e) {
+    console.warn(`[cubing-live] rememberInferred failed for ${wcaId}:`, (e as Error).message);
+  }
+  return data;
+}
+
+async function loadCompInner(wcaId: string, choice: SourceChoice = 'auto', onProgress?: ProgressFn): Promise<CompData> {
   // wca_db fast-path: 命中即独占,不发外部 probe.单次 PG 查直接出全部数据.
   if (choice === 'auto' || choice === 'wca_db') {
     const cacheKey = `${wcaId}:wca_db`;
@@ -2114,46 +2163,83 @@ export interface InferredRecord {
   startDate: string | null;
 }
 
+// 推断纪录池:比赛 slug → 该场抽出的纪录行.
+// 不能拿 L1 当数据源(dayPool 已踩过同一个坑):L1 上限 150 条而 prewarm 每轮扫 ~700 场,
+// 刚破纪录的比赛随时被挤出去 —— 首页「纪录」列表就会时有时无(2026-07-26 芜湖陈震 6.99
+// 单手平均 WR 从首页消失,而比赛页照样正确,因为那是按需 loadComp 现算的).
+// 按比赛整条覆盖,窗口外才清,不受 L1 淘汰影响.
+const inferredPool = new Map<string, { fetchedAt: number; date: string | null; records: InferredRecord[] }>();
+
+/** 比赛开始日落在 [今天-10d, 今天+2d] —— 10 天窗与 WCA Live recentRecords 默认窗口对齐. */
+function inInferredWindow(startDate: string | null): boolean {
+  if (!startDate) return true;   // 未入 dump 的新比赛不因缺日期被丢
+  const days = (Date.now() - Date.parse(startDate)) / 86400_000;
+  return days <= INFERRED_RECENT_WINDOW_DAYS && days >= -2;
+}
+
+function collectInferred(data: CompData, startDate: string | null): InferredRecord[] {
+  const out: InferredRecord[] = [];
+  const compNameEn = decodeHtmlEntities(data.name);
+  for (const [key, list] of Object.entries(data.resultsByRound)) {
+    const roundId = key.slice(key.indexOf(':') + 1);
+    for (const r of list) {
+      const sr = typeof r.sr === 'string' ? r.sr : '';
+      const ar = typeof r.ar === 'string' ? r.ar : '';
+      const wantS = r.b > 0 && RECORD_TAGS.has(sr);
+      const wantA = r.a > 0 && RECORD_TAGS.has(ar);
+      if (!wantS && !wantA) continue;
+      const u = data.users[String(r.n)];
+      if (!u) continue;
+      const personIso2 = resolvePersonIso2(u.region, u.countryId).toUpperCase();
+      if (wantS) out.push({
+        id: `inferred|${data.slug}|${r.e}|${roundId}|single|${r.n}|${sr}|${r.b}`,
+        compId: data.slug, compNameEn, eventId: r.e, roundId, type: 'single',
+        tag: sr, attemptResult: r.b, personName: u.name, personIso2, startDate,
+      });
+      if (wantA) out.push({
+        id: `inferred|${data.slug}|${r.e}|${roundId}|average|${r.n}|${ar}|${r.a}`,
+        compId: data.slug, compNameEn, eventId: r.e, roundId, type: 'average',
+        tag: ar, attemptResult: r.a, personName: u.name, personIso2, startDate,
+      });
+    }
+  }
+  return out;
+}
+
+/** 把一场比赛的推断纪录整条写进池.loadComp 每次返回都调 —— fetchedAt 没变直接跳过.
+ *  纳入 cubing(中国比赛跑在 cubing.com,WCA Live 根本没这场)+ wca(WCA REST 已录但
+ *  record 未 ratify)+ wca_db(同一场 CN 比赛成绩进 WCA 中央库 → 本地 dump 后,loadComp
+ *    不再走 cubing 源而判成 wca_db;但 CN 比赛永远不进 WCA Live recentRecords feed,旧逻辑
+ *    排除 wca_db 就把这类纪录漏没了 —— 不是 dump 比 feed 快,是 feed 压根不收 cubing.com 比赛)。
+ *  排除 wca_live(本就是 feed 上游,会重复)。record_tag 是"达成时即纪录"的历史 marker
+ *  (被超越后仍保留),靠 10 天窗 + 与 feed dedup 收敛成"近期纪录"。 */
+async function rememberInferred(data: CompData): Promise<void> {
+  if (data.source !== 'cubing' && data.source !== 'wca' && data.source !== 'wca_db') return;
+  const sd = await getCompStartDate(data.slug);
+  if (!inInferredWindow(sd)) {
+    inferredPool.delete(data.slug);
+    return;
+  }
+  const prev = inferredPool.get(data.slug);
+  if (!prev || prev.fetchedAt !== data.fetchedAt) {
+    inferredPool.set(data.slug, { fetchedAt: data.fetchedAt, date: sd, records: collectInferred(data, sd) });
+  }
+  for (const [slug, e] of inferredPool) {
+    if (!inInferredWindow(e.date)) inferredPool.delete(slug);
+  }
+}
+
+/** 池 ∪ L1:池是主源(不受淘汰),L1 兜底捞池里还没有的比赛(pm2 刚重启、或某场只被
+ *  loadCompInner 的旁路填过 L1).同一场以池为准 —— 池每次 loadComp 都刷,至少一样新. */
 export async function extractInferredRecords(): Promise<InferredRecord[]> {
   const out: InferredRecord[] = [];
-  const now = Date.now();
+  for (const e of inferredPool.values()) out.push(...e.records);
   for (const data of cache.values()) {
-    // 纳入 cubing(中国比赛跑在 cubing.com,WCA Live 根本没这场)+ wca(WCA REST 已录但
-    // record 未 ratify)+ wca_db(同一场 CN 比赛成绩进 WCA 中央库 → 本地 dump 后,loadComp
-    //   不再走 cubing 源而判成 wca_db;但 CN 比赛永远不进 WCA Live recentRecords feed,旧逻辑
-    //   排除 wca_db 就把这类纪录漏没了 —— 不是 dump 比 feed 快,是 feed 压根不收 cubing.com 比赛)。
-    // 排除 wca_live(本就是 feed 上游,会重复)。record_tag 是"达成时即纪录"的历史 marker
-    // (被超越后仍保留),靠下面 10 天窗 + 与 feed dedup 收敛成"近期纪录"。
+    if (inferredPool.has(data.slug)) continue;
     if (data.source !== 'cubing' && data.source !== 'wca' && data.source !== 'wca_db') continue;
     const sd = await getCompStartDate(data.slug);
-    if (sd) {
-      const days = (now - Date.parse(sd)) / 86400_000;
-      if (days > INFERRED_RECENT_WINDOW_DAYS || days < -2) continue;
-    }
-    const compNameEn = decodeHtmlEntities(data.name);
-    for (const [key, list] of Object.entries(data.resultsByRound)) {
-      const roundId = key.slice(key.indexOf(':') + 1);
-      for (const r of list) {
-        const sr = typeof r.sr === 'string' ? r.sr : '';
-        const ar = typeof r.ar === 'string' ? r.ar : '';
-        const wantS = r.b > 0 && RECORD_TAGS.has(sr);
-        const wantA = r.a > 0 && RECORD_TAGS.has(ar);
-        if (!wantS && !wantA) continue;
-        const u = data.users[String(r.n)];
-        if (!u) continue;
-        const personIso2 = resolvePersonIso2(u.region, u.countryId).toUpperCase();
-        if (wantS) out.push({
-          id: `inferred|${data.slug}|${r.e}|${roundId}|single|${r.n}|${sr}|${r.b}`,
-          compId: data.slug, compNameEn, eventId: r.e, roundId, type: 'single',
-          tag: sr, attemptResult: r.b, personName: u.name, personIso2, startDate: sd,
-        });
-        if (wantA) out.push({
-          id: `inferred|${data.slug}|${r.e}|${roundId}|average|${r.n}|${ar}|${r.a}`,
-          compId: data.slug, compNameEn, eventId: r.e, roundId, type: 'average',
-          tag: ar, attemptResult: r.a, personName: u.name, personIso2, startDate: sd,
-        });
-      }
-    }
+    if (!inInferredWindow(sd)) continue;
+    out.push(...collectInferred(data, sd));
   }
   return out;
 }

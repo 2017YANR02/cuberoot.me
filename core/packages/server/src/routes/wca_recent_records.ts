@@ -14,19 +14,14 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { formatRecords } from './wca_format.js';
 import type { RecordEvent } from '../utils/record_format.js';
-import { extractInferredRecords, type InferredRecord } from './cubing_live.js';
+import { extractInferredRecords, adjudicateExternalRecord, type InferredRecord } from './cubing_live.js';
 import { query } from '../db/connection.js';
+import { recordLevelRank, resolveFeedTag } from '../utils/current_records.js';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 
 // WCA Live 展示顺序(scoretaking.ex list_recent_records):
 //   ① tag 优先级 WR > CR(含洲际) > NR  ② WCA 官方项目顺序  ③ 成绩值升序
-const TAG_RANK: Record<string, number> = { WR: 0, CR: 1, NR: 2 };
-function recordTagRank(tag: string): number {
-  const r = TAG_RANK[tag];
-  if (r !== undefined) return r;
-  // 洲际记录(AsR/ER/NAR/SAR/AfR/OcR)与 CR 同级
-  return tag.endsWith('R') ? 1 : 3;
-}
+// 级别序与 Reg 9i2 降级判定同一份(utils/current_records.recordLevelRank)。
 function recordEventRank(eventId: string): number {
   const i = (WCA_EVENT_ORDER as readonly string[]).indexOf(eventId);
   return i < 0 ? 999 : i;
@@ -158,6 +153,27 @@ async function getCompMeta(compId: string, compNameEn: string, personIso2: strin
   return meta;
 }
 
+/** WCA Live feed 的 tag 按 Reg 9i2 复判后的有效 tag;null = 当日已被更快的抹掉,不是纪录.
+ *
+ *  feed 只看 WCA Live 自家平台 + 已公示纪录,看不到同日跑在 cubing.com 上的中国比赛 ——
+ *  2026-07-26 芜湖陈震 6.99 单手平均把 Tarlac 的 7.72 压成 NR,feed 仍标 WR,首页因此与
+ *  比赛页(enrichComp 走同一个 judgeByDay)对不上。 */
+async function effectiveTag(r: RawRecord): Promise<string | null> {
+  try {
+    const judged = await adjudicateExternalRecord(
+      r.result.round.competitionEvent.competition.wcaId,
+      r.result.round.competitionEvent.event.id,
+      r.type === 'average',
+      r.attemptResult,
+      r.result.person.country.iso2 || '',
+    );
+    return resolveFeedTag(r.tag, judged);
+  } catch (e) {
+    console.warn('[recent-records] adjudicate failed for', r.id, ':', (e as Error).message);
+    return r.tag;
+  }
+}
+
 /** 本地渲染 cn/en(无 spawn / 无联网,见 wca_format.formatRecords),带 id 缓存 + 仅缓存非空结果。
  *  无熔断:本地查 PG + 内存二分,不会卡;偶发异常返空,client 已能降级渲染,下轮重试。 */
 async function renderCached(id: string, event: RecordEvent): Promise<{ cn: string; en: string }> {
@@ -174,13 +190,14 @@ async function renderCached(id: string, event: RecordEvent): Promise<{ cn: strin
   }
 }
 
-async function formatRecord(r: RawRecord): Promise<{ cn: string; en: string }> {
+/** tag 进缓存键:同一条 feed 记录被 Reg 9i2 改判后(WR→NR)文案必须重渲,不能吃旧的。 */
+async function formatRecord(r: RawRecord, tag: string): Promise<{ cn: string; en: string }> {
   const compId = r.result.round.competitionEvent.competition.wcaId;
   const compNameEn = r.result.round.competitionEvent.competition.name;
   const personIso2 = (r.result.person.country.iso2 || '').toUpperCase();
   const meta = await getCompMeta(compId, compNameEn, personIso2);
-  return renderCached(r.id, {
-    tag: r.tag,
+  return renderCached(`${r.id}|${tag}`, {
+    tag,
     rec_type: r.type,
     attempt_result: r.attemptResult,
     event_id: r.result.round.competitionEvent.event.id,
@@ -219,9 +236,8 @@ async function formatInferred(rec: InferredRecord): Promise<{ cn: string; en: st
 /** 取 cubing.com 中国比赛缓存里的推断纪录,排序 + 截断 + 格式化成 RecentRecord. */
 async function buildInferredRecords(): Promise<RecentRecord[]> {
   const raw = await extractInferredRecords();
-  const tagRank = (t: string) => (t === 'WR' ? 0 : t === 'CR' ? 1 : 2);
   raw.sort((a, b) =>
-    tagRank(a.tag) - tagRank(b.tag) ||
+    recordLevelRank(a.tag) - recordLevelRank(b.tag) ||
     (b.startDate ?? '').localeCompare(a.startDate ?? '') ||
     a.attemptResult - b.attemptResult,
   );
@@ -268,10 +284,12 @@ async function fetchOnce(): Promise<void> {
   // 串行 format — 单条 ~100ms,72 条 ~7s 首次冷启;后续 polls 全 cache 命中近 0 成本
   const records: RecentRecord[] = [];
   for (const r of raw) {
-    const formatted = await formatRecord(r);
+    const tag = await effectiveTag(r);
+    if (tag === null) continue;   // 同日已被更快的抹掉(Reg 9i2),根本不是纪录
+    const formatted = await formatRecord(r, tag);
     records.push({
       id: r.id,
-      tag: r.tag,
+      tag,
       type: r.type,
       attemptResult: r.attemptResult,
       eventId: r.result.round.competitionEvent.event.id,
@@ -307,7 +325,7 @@ async function fetchOnce(): Promise<void> {
   }
   // 跟 WCA Live 一致:tag(WR>CR>NR)→ 项目官方序 → 成绩升序.
   merged.sort((a, b) =>
-    recordTagRank(a.tag) - recordTagRank(b.tag) ||
+    recordLevelRank(a.tag) - recordLevelRank(b.tag) ||
     recordEventRank(a.eventId) - recordEventRank(b.eventId) ||
     a.attemptResult - b.attemptResult,
   );
