@@ -1,6 +1,11 @@
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
-  AUF, BLOCK122_ALL, BOTTOM_FACES, LL_CO, LL_EO, LL_PERM, LL_UNIVERSE, SKIP_ENTRIES,
+  AUF, BLOCK122_ALL, BOTTOM_FACES, CUBE2_STATES, CUBE2_WCA_LEGAL, CUBE4_CENTRE_STATES,
+  CUBE4_ONE_CENTRE, CUBE4_TWO_CENTRES, LL_CO, LL_EO, LL_PERM, LL_UNIVERSE, MINX_EP, MINX_LL,
+  MINX_LL_CO, MINX_LL_EO, MINX_LL_PERM_RAW, MINX_PLL, SKIP_ENTRIES,
   atLeastKInRound, blockEdges, cornersOnFace, crossEdges, entryById, exactlyKInRound,
   fbBlocksOnFace, oneOver, oneOverRelative, probability, statesWithAnyCrossSolved,
   statesWithAnyXCrossSolved, statesWithSolved,
@@ -412,5 +417,101 @@ describe('一轮五把里的跳步(二项)', () => {
     for (let k = 1; k < 5; k++) {
       expect(atLeastKInRound(p, k)).toBeGreaterThan(atLeastKInRound(p, k + 1));
     }
+  });
+});
+
+// ── 非三阶项目 ──────────────────────────────────────────────────────
+// 这几族的分母不在三阶那套容斥里,所以判据只能是:①与站内已有的全枚举结果对账,
+// ②闭式两条独立路径互推。两样都做。
+
+const essential2x2 = JSON.parse(readFileSync(
+  path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../../stats/scramble/2x2_essential.json'),
+  'utf8',
+));
+const numOf = (id: string) => entryById(id).num;
+const denOf = (id: string) => entryById(id).den;
+
+describe('二阶:与站内 3,674,160 态全枚举对账', () => {
+  it('分母与 WCA 可用态数同源', () => {
+    expect(essential2x2.meta.total_positions).toBe(CUBE2_STATES);
+    expect(essential2x2.meta.wca_legal_min4h).toBe(CUBE2_WCA_LEGAL);
+    // ≤3 HTM 的态正是被 WCA 排除的那些
+    const shallow = [0, 1, 2, 3].reduce((a, d) => a + essential2x2.htm.counts[String(d)], 0);
+    expect(CUBE2_STATES - CUBE2_WCA_LEGAL).toBe(shallow);
+  });
+
+  it('首面 / 首层 / 无棒三格 = 那份枚举里对应数据集的档位', () => {
+    const group = (key: string) => essential2x2.stat.groups.find((g: { key: string }) => g.key === key)!;
+    const zeroMove = (key: string) => group(key).rows.find((r: { m: number }) => r.m === 0).cases;
+    expect(numOf('222-ff')).toBe(String(zeroMove('CN FF')));
+    expect(numOf('222-fl')).toBe(String(zeroMove('CN FL')));
+    expect(numOf('222-nobar')).toBe(String(group('(No Bar) CN FF').total));
+    for (const id of ['222-ff', '222-fl', '222-nobar']) expect(denOf(id)).toBe(String(CUBE2_STATES));
+  });
+
+  it('「比赛里 4 步」是 QTM 档,不是 HTM 档', () => {
+    expect(numOf('222-4q')).toBe(String(essential2x2.qtm.counts['4']));
+    expect(denOf('222-4q')).toBe(String(CUBE2_WCA_LEGAL));
+    // HTM 的 4 步档是另一个数量级(1/1989),两者别混
+    expect(CUBE2_WCA_LEGAL / essential2x2.qtm.counts['4']).toBeCloseTo(6879.73, 1);
+    expect(CUBE2_WCA_LEGAL / essential2x2.htm.counts['4']).toBeCloseTo(1989.05, 1);
+  });
+
+  it('顶层连跳 = 朝向 × 排列', () => {
+    expect(oneOver(entryById('222-ll'))).toBe(
+      oneOver(entryById('222-oll')) * oneOver(entryById('222-pll')),
+    );
+    expect(oneOver(entryById('222-ll'))).toBe(162);
+  });
+});
+
+describe('四阶中心:两条独立路径推同一个数', () => {
+  it('可分辨排布 24!/(4!)⁶', () => {
+    expect(CUBE4_CENTRE_STATES).toBe(3_246_670_537_110_000n);
+  });
+
+  it('一种颜色成面 = 精确的 1/1771(不是近似)', () => {
+    // 路径一:占位计数 6·20!/(4!)⁵ 除以全集
+    expect(CUBE4_CENTRE_STATES).toBe(CUBE4_ONE_CENTRE * 1771n);
+    // 路径二:抓住其中一块,另外三块要落进同一面剩下的三个槽
+    // 3/23 · 2/22 · 1/21 = 6/10626 = 1/1771
+    expect(23n * 22n * 21n).toBe(6n * 1771n);
+  });
+
+  it('一对相对色都成面 = 精确的 1/8,580,495', () => {
+    expect(CUBE4_CENTRE_STATES).toBe(CUBE4_TWO_CENTRES * 8_580_495n);
+    expect(CUBE4_TWO_CENTRES).toBeLessThan(CUBE4_ONE_CENTRE);
+  });
+});
+
+describe('五魔顶层:排列必为偶,这条不是可选项', () => {
+  it('朝向两档与 OLL', () => {
+    expect(MINX_LL_EO).toBe(16);
+    expect(MINX_LL_CO).toBe(81);
+    expect(oneOver(entryById('minx-oll'))).toBe(1296);
+  });
+
+  it('A5 × A5 模 AUF = 720,顶层连跳 933,120', () => {
+    expect(MINX_LL_PERM_RAW).toBe(3600);
+    expect(MINX_PLL).toBe(720);
+    expect(MINX_LL).toBe(933_120);
+    // EP 好了之后 AUF 就被用掉了,角只剩 60 种 —— 相乘才回到 720,不是 12 × 12
+    expect(MINX_EP * 60).toBe(MINX_PLL);
+    expect(MINX_EP).toBe(12);
+  });
+
+  it('「各自必为偶」与站内 god_data 写的 2²⁷ 是同一件事', () => {
+    const f = (n: bigint): bigint => (n <= 1n ? 1n : n * f(n - 1n));
+    const both = f(20n) * f(30n) * 3n ** 19n * 2n ** 27n;   // 角、棱排列各取偶
+    const onlyJoint = f(20n) * f(30n) * 3n ** 19n * 2n ** 29n / 4n;
+    expect(both).toBe(onlyJoint);
+    expect(String(both).length).toBe(69);                    // ≈ 1.01 × 10⁶⁸
+    expect(String(both).slice(0, 3)).toBe('100');
+  });
+
+  it('表格把 720 拆成 24 × 30 —— 乘积对,两个因子都不对', () => {
+    expect(24 * 30).toBe(MINX_PLL);        // 5!·5!/(5·4) 与 A5·A5/5 数值相等
+    expect(24).not.toBe(MINX_EP);          // 真正的 EP 档是 12
+    expect(30).not.toBe(MINX_EP);
   });
 });
