@@ -523,7 +523,7 @@ html[data-theme='dark'] .stsv {
   position: sticky;
   top: 12px;
 }
-.stsv-player twisty-player { width: 100%; max-width: 100%; }
+.stsv-player .alg-sim-player { width: 100%; }
 .stsv-compact .stsv-player { flex-basis: 240px; }
 
 /* ── 窄屏 ── */

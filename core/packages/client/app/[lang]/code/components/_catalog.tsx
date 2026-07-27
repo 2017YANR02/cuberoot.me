@@ -1697,7 +1697,7 @@ export const CATALOG: ComponentEntry[] = [
     category: 'more',
     zh: `逐阶段最优解浏览器,6 视角对比步数 + 可执行多解列表 + 共享 3D 播放,覆盖 cross / EO / DR / HTR 等方法,用在 analyzer 与 gen 行内。`,
     en: `Per-stage optimal-solve explorer: 6-view move counts + executable solution list + shared 3D player across cross/EO/DR/HTR methods; used in analyzer and gen.`,
-    note: { zh: `需站内共享 Rust / WASM 求解器池,首次拉数 MB 级表。`, en: `Requires the shared Rust/WASM solver pool and downloads MB-scale tables on first use.` },
+    note: { zh: `需站内共享 Rust / WASM 求解器池,首次拉数 MB 级表。3D 播放走站内 /sim 引擎(AlgSimPlayer),与公式库同一份。`, en: `Requires the shared Rust/WASM solver pool and downloads MB-scale tables on first use. The 3D playback runs the in-house /sim engine (AlgSimPlayer), the same one the alg library uses.` },
   },
   {
     name: 'PllPerformerOverlay',
@@ -1984,8 +1984,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'SimStage',
     import: "import SimStage from '@/components/sim-embed/SimStage';",
     category: 'more',
-    zh: `嵌入式 3D 画布的「壳」:等第一帧画完再跑 mount(three 的解析不撞首屏)、方形 host、只有慢过 250ms 才出现的转圈、右上角「重置视角」按钮。mount(host) 里 await import 引擎、返回卸载函数;只跑一次(要读最新 props 走 ref)。size 不传就由 CSS 定尺寸。`,
-    en: `The shell around an embedded 3D canvas: defers mount until after the first paint (so parsing three never lands mid-first-paint), a square host, a spinner that only appears if loading takes over 250ms, and a "reset view" button in the corner. Its mount(host) awaits the engine import and returns a teardown; it runs exactly once (read fresh props through refs). Omit size to let CSS size the canvas.`,
+    zh: `嵌入式 3D 画布的「壳」:等第一帧画完再跑 mount(three 的解析不撞首屏)、方形 host、只有慢过 250ms 才出现的转圈、右上角「重置视角」按钮。mount(host) 里 await import 引擎、返回卸载函数;只跑一次(要读最新 props 走 ref)。size 定方形边长;宽度该跟布局走时加 fluid,size 就变成宽度上限(高度按 1:1)。`,
+    en: `The shell around an embedded 3D canvas: defers mount until after the first paint (so parsing three never lands mid-first-paint), a square host, a spinner that only appears if loading takes over 250ms, and a "reset view" button in the corner. Its mount(host) awaits the engine import and returns a teardown; it runs exactly once (read fresh props through refs). size sets the square edge; pass fluid when the layout owns the width and size becomes the max width (height follows 1:1).`,
     note: {
       zh: `二阶/三阶涂色板、金字塔/斜转涂色板、SQ1 转盘共用;视角复位走 engine/viewControls 的 HOME_SCENE_ROT(别再各抄一份 π/6)。`,
       en: `Shared by the 2×2/3×3 painter, the Pyraminx/Skewb painter and the Square-1 board; reset goes through HOME_SCENE_ROT in engine/viewControls instead of re-typing π/6 per file.`,
