@@ -76,8 +76,9 @@ export function CaseThumb({
   if (maskOverride) {
     return <VisualCube algorithm={alg} setup={setup} view="pll" mask={maskOverride} size={size} local={local} />;
   }
-  const isZbls = puzzle === '3x3' && set === 'zbls';
-  if (isZbls) {
+  // 最后一槽 + 顶层:等距视角 + vh 遮罩(十字与另三槽压灰)。zbls 与 lsll 是同一个观察域。
+  const isSlotAndLL = puzzle === '3x3' && (set === 'zbls' || set === 'lsll');
+  if (isSlotAndLL) {
     return <VisualCube algorithm={alg} setup={setup} view="iso" mask="vh" size={size} local={local} />;
   }
   const cornerMask = puzzle === '3x3' ? CORNER_LL_MASK[set] : undefined;

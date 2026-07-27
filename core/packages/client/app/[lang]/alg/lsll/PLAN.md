@@ -49,6 +49,18 @@
       `mirrorAlgForCase()` 会补前置 AUF(两边页面各显示各自的 canonical 代表元,裸镜像解不开)。
       不动点 F = **432**(S 96 / O 192 / F 144 / T 0),镜像对 291,858 —— T6 求解量的减半依据。
       `tests/lsll_mirror.test.ts` 14 条,判据是整方层面的独立实现 + 500 条随机公式对撞。
+- [x] **训练并入公用训练器**(2026-07-27)。原 `/alg/lsll/train`(自造的「抽一个 → 揭示」小页)
+      删掉,改走 `/alg/3x3/lsll/run` —— 与 `/alg/3x3/zbll/run` **同一个组件**,训练 / 复习 / 记忆
+      三模式、计时、轮盘、标记、间隔重复、房间全部照旧。
+      机制:`lib/alg-virtual-sets.ts` 定义「虚拟集」(case 不在 PG、前端现算的集),
+      `lib/lsll/trainer-set.ts` 供 LSLL 那份 —— 范围(`?scope=zbls` 已收录 305 / `ap` 大类 /
+      `ap-eo2` 大类+翻棱数)、case 生成、打乱现算(`setup` 进来是空的,store 抽到哪条解哪条,
+      解出来原地写回 case,顺带把逆当作该 case 的公式喂给记忆模式的「揭示」)。
+      `trainer-store` 加 `caseResolver` / `resolveCase`;`trainer-case-key` 的 `findCaseByKey`
+      改 WeakMap 索引(一场 15,552 个 case,线性 find 顶不住)。
+      **不支持「全部 583,284」**:42 个大类全枚举 ≈ 2.6M 次 canonical 化 + 58 万个对象,
+      浏览器扛不住 —— 一场只练一个范围。回归 `tests/lsll_trainer_set.test.ts`
+      (含训练器随机首尾 AUF 的 16 种接法逐个回放,证明不会换成别的 case)。
 - [x] **MVP:ZBLS 交叉链接**(2026-07-23)。305 个 zbls 案例 → LSLL canonicalKey 映射
       (`scripts/gen-lsll-zbls-overlay.mts` 用真实 model 算 key 零漂移,产 `lib/lsll/zbls_algs.json`,
       305/305 无碰撞);case 页"人类公式"区对覆盖 case 一键直达 zbls 库(精选公式 + 训练器,

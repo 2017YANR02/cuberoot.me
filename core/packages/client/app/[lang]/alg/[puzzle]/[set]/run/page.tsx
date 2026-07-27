@@ -4,6 +4,7 @@
 // in the browser. Import from the alg subpath, NOT the '@cuberoot/shared' barrel: the
 // barrel re-exports client-only hooks/components a Server Component can't pull in.
 import { ALG_CATALOG } from '@cuberoot/shared/alg';
+import { VIRTUAL_ALG_SET_PARAMS } from '@/lib/alg-virtual-sets';
 import TrainerRunClient from './TrainerRunClient';
 
 export const dynamic = 'force-static';
@@ -17,6 +18,8 @@ export function generateStaticParams() {
     // 合练(多套混练)的哨兵段:成员集合走 ?sets=,前端读 —— 不为每种组合生成静态页
     out.push({ puzzle, set: 'mix' });
   }
+  // 虚拟集(LSLL 等):case 前端现算,不在 ALG_CATALOG 里,但 run 页照样预渲染
+  out.push(...VIRTUAL_ALG_SET_PARAMS.map(p => ({ ...p })));
   return out;
 }
 

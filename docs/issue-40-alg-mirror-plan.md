@@ -198,7 +198,7 @@ ollcp / OLLCP27 2    "U R2' D' R U' R' D R' U R' U' z'"   ← 底两层没解干
 | 页面 | 处理 |
 |---|---|
 | `/alg/lsll/[group]`(LsllGroupClient) | 接入 toggle(图模式=现状网格,公式模式=内联展示反演解法/收录公式) |
-| `/alg/lsll/train` | 不适用(训练流,非列表) |
+| LSLL 训练(已并入 `/alg/3x3/lsll/run`) | 不适用(训练流,非列表) |
 | `/alg/roux` | 盘点后接入(实现期核对现状) |
 | `/alg/3bld/*`、`/alg/skewb-trainer` | 盘点后逐页接入;确无"case 列表"形态的页豁免 |
 | `/alg/commutator`、`/alg/progress` | 预计豁免(非 case 列表),盘点确认 |

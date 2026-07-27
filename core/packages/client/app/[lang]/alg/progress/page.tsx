@@ -14,6 +14,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import Link from '@/components/AppLink';
 import { ArrowLeft, Star, Flame, Loader2 } from 'lucide-react';
 import { ALG_CATALOG, ALG_PUZZLES, loadAlg, type AlgPuzzle, type AlgCase } from '@cuberoot/shared';
+import { virtualAlgSet } from '@/lib/alg-virtual-sets';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { CaseThumb } from '@/components/CaseThumb';
 import { eventDisplayName } from '@/lib/wca-events';
@@ -76,11 +77,13 @@ function buildRows(
       });
     };
     for (const meta of ALG_CATALOG[p]) push(meta.slug, tr({ zh: meta.zh, en: meta.en }));
-    // catalog 里没有、但有记录的孤儿 set(set 被下线)也带上
+    // catalog 里没有、但有记录的孤儿 set:虚拟集(LSLL)用它自己的名字,真孤儿(set 下线)用 slug
     for (const key of allKeys) {
       const [kp, ...rest] = key.split('/');
       if (kp !== p) continue;
-      push(rest.join('/'), rest.join('/'));
+      const slug = rest.join('/');
+      const virtual = virtualAlgSet(p, slug);
+      push(slug, virtual ? tr(virtual.meta) : slug);
     }
     if (rows.length) byPuzzle.set(p, rows);
   }
@@ -230,7 +233,9 @@ function SetProgressRow({ row, onReset, busy }: {
   onReset: (row: SetRow) => void;
   busy: boolean;
 }) {
-  const base = `/alg/${row.puzzle}/${row.slug}/select`;
+  // 虚拟集(LSLL)没有 select 页 —— 「挑 case」回它自己的浏览页(?mark= 那层筛选它不支持)
+  const base = virtualAlgSet(row.puzzle, row.slug)?.selectHref(null)
+    ?? `/alg/${row.puzzle}/${row.slug}/select`;
   const { marks, srs } = row;
   const denom = row.total && row.total > 0
     ? row.total
@@ -338,7 +343,10 @@ function WeakCards({ recs }: { recs: Record<string, SrsRecs> }) {
     setLoading(true);
     Promise.all(sets.map(ps => {
       const [p, ...rest] = ps.split('/');
-      return loadAlg(p as AlgPuzzle, rest.join('/'))
+      const slug = rest.join('/');
+      // 虚拟集(LSLL)库里没有这张表 —— 别去拉一个注定 404 的 JSON,下面按「查不到 case」渲染
+      if (virtualAlgSet(p as AlgPuzzle, slug)) return Promise.resolve([ps, [] as AlgCase[]] as const);
+      return loadAlg(p as AlgPuzzle, slug)
         .then(f => [ps, f.cases] as const)
         .catch(() => [ps, [] as AlgCase[]] as const);
     })).then(pairs => {

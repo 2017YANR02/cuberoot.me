@@ -13,8 +13,20 @@ export function caseKey(c: { subgroup: string; name: string; srcSet?: string }):
   return c.srcSet ? `${c.srcSet}:${raw}` : raw;
 }
 
+/**
+ * 按数组身份缓存 key → case 的索引。虚拟集(LSLL)一场能有 15,552 个 case,而每次渲染
+ * 都要查当前 / 上一个 / 下一个 / 历史里每一条 —— 线性 find 会把一次渲染变成几十万次比较。
+ * 换了 cases 数组(换会话)自然换索引;store 现算打乱时**原地**改 case 正是为了不换数组。
+ */
+const INDEX = new WeakMap<AlgCase[], Map<string, AlgCase>>();
+
 export function findCaseByKey(cases: AlgCase[], key: string): AlgCase | undefined {
-  return cases.find(c => caseKey(c) === key);
+  let idx = INDEX.get(cases);
+  if (!idx) {
+    idx = new Map(cases.map(c => [caseKey(c), c]));
+    INDEX.set(cases, idx);
+  }
+  return idx.get(key);
 }
 
 /**
