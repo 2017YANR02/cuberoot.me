@@ -5,7 +5,7 @@
 // 自选组合计算器在 PR 表(PersonPRTable 行多选 → Σ 块「自选」行),不在本卡.
 
 import { useEffect, useState } from 'react';
-import { apiUrl } from '@/lib/api-base';
+import { fetchPlayerBest } from '@/lib/wca-person-api';
 import { BestComboBody, type PlayerBest } from '@/components/wca-stats/BestComboBody';
 import { tr } from '@/i18n/tr';
 
@@ -19,17 +19,10 @@ export default function PersonBestCombos({ wcaId, isZh, inclCancelled }: {
   useEffect(() => {
     if (!wcaId) return;
     let done = false;
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 15000);
-    // v=5: 2026-06-10 响应加 eventCounts/listedCount(剖析行),bump 甩掉浏览器 HTTP 缓存里的旧 shape
-    const qs = new URLSearchParams({ wcaId, v: '5' });
-    if (includeCancelled) qs.set('cancelled', '1');
-    fetch(apiUrl(`/v1/wca/sum-of-ranks/player-best?${qs.toString()}`), { signal: ctrl.signal })
-      .then(r => (r.ok ? r.json() : null))
-      .then(d => { if (!done && d) setPb(d); })       // 失败 / 无数据:保留旧值(切废止项时不闪),首加载无数据则整块不渲染
-      .catch(() => { /* 静默 */ })
-      .finally(() => { clearTimeout(timer); });
-    return () => { done = true; clearTimeout(timer); ctrl.abort(); };
+    // 与 PR 表(同 URL,预选最优组合行)合流,只发一个请求
+    fetchPlayerBest<PlayerBest>(wcaId, includeCancelled)
+      .then(d => { if (!done && d) setPb(d); });      // 失败 / 无数据:保留旧值(切废止项时不闪),首加载无数据则整块不渲染
+    return () => { done = true; };
   }, [wcaId, includeCancelled]);
 
   // 该选手不在 sor_player_best(极新选手 / 无有效成绩):整块隐藏,不破坏页面

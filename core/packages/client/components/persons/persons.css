@@ -72,6 +72,13 @@ html[data-theme=dark] .wp-page {
     color: var(--wp-text-sub);
 }
 .wp-error { color: #B71234; }
+.wp-error-hint { color: var(--wp-text-sub); margin-top: 6px; }
+.wp-error-retry {
+    margin-top: 12px; padding: 6px 16px; font: inherit; cursor: pointer;
+    color: var(--wp-text); background: var(--wp-surface);
+    border: 1px solid var(--wp-border); border-radius: 8px;
+}
+.wp-error-retry:hover { background: var(--wp-bg); border-color: var(--wp-border-strong); }
 .wp-loading-inline { padding: 16px; color: var(--wp-text-sub); font-size: 0.85rem; }
 .wp-error-inline { padding: 8px 16px; color: #B71234; font-size: 0.85rem; }
 .wp-text-mute { color: var(--wp-text-mute); }

@@ -8,9 +8,8 @@ import PillToggle from '@/components/PillToggle/PillToggle';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { formatWcaResult } from '@/lib/wca-format-result';
-import { fetchPersonBestRanks, fetchPersonSor, fetchPersonSubset, type WcaPersonProfile, type WcaResultRow, type PersonBestRanksResponse, type PersonSorResponse, type SorMetricCell, type SorMetricBest } from '@/lib/wca-person-api';
+import { fetchPersonBestRanks, fetchPersonSor, fetchPersonSubset, fetchPlayerBest, type WcaPersonProfile, type WcaResultRow, type PersonBestRanksResponse, type PersonSorResponse, type SorMetricCell, type SorMetricBest } from '@/lib/wca-person-api';
 import { ClearButton } from '@/components/ClearButton';
-import { apiUrl } from '@/lib/api-base';
 import { countryName } from '@/lib/country-name';
 import { countPodiumByEvent } from '../logic/podium';
 import { isMbldEvent, computeMbfMo3 } from '@/lib/mbf-average';
@@ -63,18 +62,17 @@ export default function PersonPRTable({ profile, results, isZh, inclCancelled, o
   const selTouched = useRef(false);
   useEffect(() => { setSelEvents(new Set()); selTouched.current = false; }, [profile.person.wca_id]);
   useEffect(() => {
-    const ctrl = new AbortController();
-    fetch(apiUrl(`/v1/wca/sum-of-ranks/player-best?wcaId=${encodeURIComponent(profile.person.wca_id)}&v=5`), { signal: ctrl.signal })
-      .then(r => (r.ok ? r.json() : null))
+    let done = false;
+    type PbCombos = { best?: { single?: { combos?: string[][] }; average?: { combos?: string[][] } } };
+    fetchPlayerBest<PbCombos>(profile.person.wca_id)
       .then((d) => {
-        if (!d || selTouched.current) return;
+        if (done || !d || selTouched.current) return;
         // 只取 ≥2 项的组合(单项最优 = 该项自身名次,自选行不显示,预选只剩一行孤绿没意义)
         const pick = (b?: { combos?: string[][] }) => b?.combos?.find(cb => cb.length >= 2);
         const combo = pick(d.best?.single) ?? pick(d.best?.average);
         if (combo) setSelEvents(new Set(combo));
-      })
-      .catch(() => { /* 不在 sor_player_best:保持空选 */ });
-    return () => ctrl.abort();
+      });                                             // 不在 sor_player_best → null:保持空选
+    return () => { done = true; };
   }, [profile.person.wca_id]);
   const toggleEvent = (eid: string) => {
     selTouched.current = true;
