@@ -61,6 +61,21 @@
       **不支持「全部 583,284」**:42 个大类全枚举 ≈ 2.6M 次 canonical 化 + 58 万个对象,
       浏览器扛不住 —— 一场只练一个范围。回归 `tests/lsll_trainer_set.test.ts`
       (含训练器随机首尾 AUF 的 16 种接法逐个回放,证明不会换成别的 case)。
+- [x] **展示相位 + 组名排序**(2026-07-27)。两件全站口径,各只留一份实现:
+      1. `model.pairDisplayTurn` / `displayState` —— 最后一槽的对子摆在哪一格:角块在顶层就转到
+         槽的正上方(URF);只有棱块在顶层,棱侧面那枚贴纸要对上该侧中心色(朝向 0 落 UR、
+         朝向 1 落 UF);对子都在槽里则无约束。判据是站内 zbls 库 305 条 setup 里能纯面转回放的
+         208 条,42 个子组各自的对子位置 / 朝向完全一致(`tests/lsll_display_phase.test.ts`
+         把那张实测表钉死)。大类卡、case 图、大类页现算公式、镜像图、两步的 ZBLS 卡、
+         训练器现算打乱全部走它;`setup.ts` 的失安全同步收紧成**逐位相等**(原来只比 canonical key,
+         差一个 AUF 也放行)。顺带修好三张一直摆错的大类卡(E- / J- / L-,棱本该在 UF)。
+         训练器那边再把打乱**尾部**的随机 AUF 关掉(`trainer-scramble.pairPhaseLocked`)——
+         尾部 AUF 会把对子转跑;头部 AUF 不动对子(U 碰不到 DFR / FR),照常随机,
+         变的是收尾 AUF。齿轮面板同步不再显示 post-AUF 这个死开关。
+      2. `lib/alg_group_order.compareAlgGroupLabel` —— 组名排序:同字母 `+` 在 `-` 前
+         (`localeCompare` 默认反着来,LSLL 首页 42 大类原先就排成了 A- A+)。口径取自 zbls 库
+         的入库顺序;`/alg` 下凡是在代码里排组名的都用它。训练器里 LSLL 的组名也从 slug(`ap`)
+         换成库里那套字母(`A+`),已收录那批按组名序 + case 编号排。
 - [x] **MVP:ZBLS 交叉链接**(2026-07-23)。305 个 zbls 案例 → LSLL canonicalKey 映射
       (`scripts/gen-lsll-zbls-overlay.mts` 用真实 model 算 key 零漂移,产 `lib/lsll/zbls_algs.json`,
       305/305 无碰撞);case 页"人类公式"区对覆盖 case 一键直达 zbls 库(精选公式 + 训练器,

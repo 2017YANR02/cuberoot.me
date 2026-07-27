@@ -24,6 +24,7 @@ import {
   type CategoryKind, type LocateResult,
 } from '@/lib/lsll/model';
 import { TOTAL_CASES_CLASS3, class3CountForFamily, phiOfState } from '@/lib/lsll/class3';
+import { compareAlgGroupLabel } from '@/lib/alg_group_order';
 import '../alg.css';
 import './lsll.css';
 
@@ -49,7 +50,8 @@ export default function LsllHubPage() {
   const groups = useMemo(() => {
     const m = new Map<CategoryKind, typeof CATEGORIES>();
     for (const kind of KIND_ORDER) {
-      m.set(kind, CATEGORIES.filter((c) => c.kind === kind).sort((a, b) => a.letter.localeCompare(b.letter)));
+      m.set(kind, CATEGORIES.filter((c) => c.kind === kind)
+        .sort((a, b) => compareAlgGroupLabel(a.letter, b.letter)));
     }
     return m;
   }, []);

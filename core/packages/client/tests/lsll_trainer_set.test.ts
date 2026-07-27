@@ -12,9 +12,10 @@
  * 枚举 16 种接法逐个回放判定,比论证可靠。
  */
 import { describe, it, expect } from 'vitest';
-import { generateScramble } from '@/lib/trainer-scramble';
+import { generateScramble, pairPhaseLocked } from '@/lib/trainer-scramble';
 import { caseKey } from '@/lib/trainer-case-key';
-import { canonicalKey, categoryBySlug, keyFromString, locateFromScramble, unpackState } from '@/lib/lsll/model';
+import { CATEGORIES, canonicalKey, classify, keyFromString, locateFromScramble, unpackState } from '@/lib/lsll/model';
+import { compareAlgGroupLabel } from '@/lib/alg_group_order';
 import {
   LSLL_SCOPE_COVERED, loadLsllCases, lsllCaseKeyString, lsllScopeParam,
   lsllSelectHref, parseLsllScope,
@@ -51,22 +52,30 @@ describe('装出来的 case', () => {
     const cases = await loadLsllCases(LSLL_SCOPE_COVERED);
     expect(cases).toHaveLength(305);
     expect(new Set(cases.map(caseKey)).size).toBe(305);  // 训练进度按 caseKey 存,不能撞
-    expect(new Set(cases.map(c => c.subgroup)).size).toBeGreaterThan(1);
-    // 名字 = `大类字母 base36key`:字母要对上 subgroup 那个大类,key 要解得回来且已 canonical
+    expect(new Set(cases.map(c => c.subgroup)).size).toBe(42);
+    // 名字 = `大类字母 base36key`:组名就是那个字母(与 zbls 库同一套),key 要解得回来且已 canonical
     for (const c of cases) {
-      const letter = categoryBySlug(c.subgroup)?.letter;
-      expect(letter, c.subgroup).toBeTruthy();
-      expect(c.name).toBe(`${letter} ${lsllCaseKeyString(c)}`);
+      const cat = CATEGORIES.find(x => x.letter === c.subgroup);
+      expect(cat, c.subgroup).toBeTruthy();
+      expect(c.name).toBe(`${c.subgroup} ${lsllCaseKeyString(c)}`);
       const key = keyFromString(lsllCaseKeyString(c));
       expect(key, c.name).not.toBeNull();
       expect(canonicalKey(unpackState(key!))).toBe(key);
+      expect(classify(unpackState(key!)).category.letter).toBe(c.subgroup);
     }
+  });
+
+  it('已收录那批按全站组名序排:同字母 + 在 - 前', async () => {
+    const cases = await loadLsllCases(LSLL_SCOPE_COVERED);
+    const groups = [...new Set(cases.map(c => c.subgroup))];
+    expect(groups).toEqual([...groups].sort(compareAlgGroupLabel));
+    expect(groups.slice(0, 4)).toEqual(['A+', 'A-', 'B+', 'B-']);
   });
 
   it('大类范围 = 该大类全体;加翻棱数筛出真子集', async () => {
     const all = await loadLsllCases('ap');
     expect(all).toHaveLength(15552);
-    expect(all.every(c => c.subgroup === 'ap')).toBe(true);
+    expect(all.every(c => c.subgroup === 'A+')).toBe(true);
     expect(all.every(c => c.name.startsWith('A+ '))).toBe(true);
 
     const eo2 = await loadLsllCases('ap-eo2');
@@ -82,6 +91,47 @@ describe('装出来的 case', () => {
     // 打乱还没现算出来时是空的(store 抽到哪条解哪条),不是拿别的东西凑一条
     expect(c.setup).toBe('');
     expect(generateScramble(c, '3x3', 'inv', { preAuf: true, postAuf: true })).toBe('');
+  });
+});
+
+describe('出题时对子相位锁死', () => {
+  /**
+   * 打乱是按展示相位算出来的(`model.pairDisplayTurn`:角在槽正上方 / 棱侧色对齐中心),
+   * 尾部再接一个随机 U 就把对子转跑了 —— case 没变,但不是库里那张图。
+   * 首部 AUF 不动对子(U 碰不到 DFR / FR),变的是收尾 AUF,照常随机。
+   */
+  const SETUP = "R U R' U' R U R' U'";   // 槽也拆了的一条,对子有块在顶层
+
+  it('LSLL case 归 pairPhaseLocked 管(f2l 类同理)', async () => {
+    const [c] = await loadLsllCases(LSLL_SCOPE_COVERED);
+    expect(pairPhaseLocked(c)).toBe(true);
+    expect(pairPhaseLocked({ ...c, sticker: { kind: 'f2l', fl: '' } })).toBe(true);
+    expect(pairPhaseLocked({ ...c, sticker: { kind: 'raw', tag: 'zbll', attrs: {} } })).toBe(false);
+  });
+
+  it('60 次出题:对子恒在同一格,打乱本身仍在变', async () => {
+    const [base] = await loadLsllCases(LSLL_SCOPE_COVERED);
+    const c = { ...base, setup: SETUP };
+    const phases = new Set<string>(), scrambles = new Set<string>();
+    for (let i = 0; i < 60; i++) {
+      const s = generateScramble(c, '3x3', 'inv', { preAuf: true, postAuf: true });
+      const got = extractLsll(applyAlg(solvedCube(), s));
+      expect('broken' in got, `${s} 不再是 LSLL 局面`).toBe(false);
+      if ('broken' in got) continue;
+      const cpos = got.state.cp.indexOf(4), epos = got.state.ep.indexOf(4);
+      phases.add(`${cpos}/${got.state.co[cpos]}/${epos}/${got.state.eo[epos]}`);
+      scrambles.add(s);
+    }
+    expect([...phases]).toHaveLength(1);
+    expect(scrambles.size, '首部 AUF 没在随机').toBeGreaterThan(1);
+  });
+
+  it('关掉首部 AUF 就是打乱原文,一个字符不加', async () => {
+    const [base] = await loadLsllCases(LSLL_SCOPE_COVERED);
+    const c = { ...base, setup: SETUP };
+    for (let i = 0; i < 20; i++) {
+      expect(generateScramble(c, '3x3', 'inv', { preAuf: false, postAuf: true })).toBe(SETUP);
+    }
   });
 });
 

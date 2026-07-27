@@ -364,6 +364,15 @@ export const CATALOG: UtilEntry[] = [
 
   // ── cube ──────────────────────────────────
   {
+    name: 'compareAlgGroupLabel',
+    sig: 'compareAlgGroupLabel(a: string, b: string): number',
+    imp: "import { compareAlgGroupLabel } from '@/lib/alg_group_order';",
+    usage: "['A-','A+','F'].sort(compareAlgGroupLabel) // ['A+','A-','F']",
+    category: 'cube',
+    zh: '公式集组名排序:同字母 + 在 - 前(zbls 库入库序),底名带数字按数值。/alg 下排组名一律用它。',
+    en: 'Alg-set group ordering: within a letter, + before − (the zbls library order); numeric bases sort numerically.',
+  },
+  {
     name: 'CUBE_FILL / CUBE_ON_FILL',
     sig: 'CUBE_FILL: Record<CubeFace, string>   // U D L R F B',
     imp: "import { CUBE_FILL, CUBE_ON_FILL } from '@/lib/cube-colors';",

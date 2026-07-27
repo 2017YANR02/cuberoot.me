@@ -45,6 +45,11 @@ export function canonicalKey(s: LsllState): number {
 
 export function packState(s: LsllState): number { return transformedPack(s, 0, 0); }
 
+/** 顶层转 a 个 90°(U^a):顶层位 p 上的东西挪到位 (p+a)&3,块的身份与朝向都不变。 */
+export function rotateU(s: LsllState, a: number): LsllState {
+  return unpackState(transformedPack(s, ((a % 4) + 4) % 4, 0));
+}
+
 export function unpackState(key: number): LsllState {
   const e0 = key % C_BASE;
   const c0 = (key - e0) / C_BASE;
@@ -155,11 +160,44 @@ export function classify(s: LsllState): { category: LsllCategory; eoBad: number;
   return { category, eoBad, coTwisted };
 }
 
+// ---- 展示相位(pre-AUF 约定) ----
+/**
+ * 最后一槽的对子要摆在哪一格,才是站内认的那张图。**全站唯一一份**:大类卡、case 图、
+ * 现算打乱、训练器出题都调它,别在别处再定一套。
+ *
+ *  - 角块在顶层 → 角块转到槽的正上方(URF);
+ *  - 只有棱块在顶层 → 棱块侧面那枚贴纸要对上该侧的中心色 —— 朝向 0 落 UR、朝向 1 落 UF
+ *    (槽棱 = FR 块,两枚贴纸 F/R;朝向 0 时侧面露的是 R 色,朝向 1 时是 F 色);
+ *  - 对子都在槽里 → 顶层怎么转都是它,保持原相位。
+ *
+ * 判据不是推理:站内 zbls 库 305 条 setup 里能纯面转回放的 208 条,42 个子组各自的对子
+ * 位置 / 朝向完全一致,且逐条符合上面三条(`tests/lsll_display_phase.test.ts` 锁死该表)。
+ *
+ * @returns 要转的 U 步数 a(位置 p 会挪到 (p+a)&3),配 {@link rotateU} 用。
+ */
+export function pairDisplayTurn(cpos: number, epos: number, slotEdgeOri: number): number {
+  if (cpos < 4) return (4 - cpos) & 3;
+  if (epos < 4) return (slotEdgeOri - epos + 4) & 3;
+  return 0;
+}
+
+/** case 的展示代表元:canonical 代表元再按 {@link pairDisplayTurn} 摆正对子。 */
+export function displayState(s: LsllState): LsllState {
+  const c = canonicalState(s);
+  const epos = c.ep.indexOf(4);
+  return rotateU(c, pairDisplayTurn(c.cp.indexOf(4), epos, c.eo[epos]));
+}
+
 // ---- 大类内枚举 ----
-/** 构型代表位:角/棱各自的(位置, 朝向)。TT 角固定顶位 0,棱在顶位 d。 */
+/**
+ * 构型代表位:槽角 / 槽棱各自摆在哪一位。展示(大类卡)与枚举共用 —— 枚举只要求
+ * 「把对子钉死在某一格,再枚举顶层的其余部分」,钉在哪一格不影响 canonical 化后的集合。
+ */
 function repConfig(cat: LsllCategory): { cpos: number; epos: number } {
   const cpos = cat.kind === 'CS' || cat.kind === 'SS' ? 4 : 0;
-  const epos = cat.kind === 'ES' || cat.kind === 'SS' ? 4 : cat.kind === 'TT' ? cat.d! : 0;
+  const epos = cat.kind === 'ES' || cat.kind === 'SS' ? 4
+    : cat.kind === 'TT' ? cat.d!
+      : pairDisplayTurn(4, 0, cat.e); // CS:只有棱在顶层,按侧色对齐落 UR / UF
   return { cpos, epos };
 }
 
@@ -252,8 +290,8 @@ export function locateFromScramble(scramble: string): LocateResult {
   return { ok: true, key, keyStr: keyToString(key), category: classify(got.state).category };
 }
 
-/** 状态的 canonical 代表(与 canonicalKey 一致的那一个像)。 */
-export function canonicalState(s: LsllState): LsllState {
+/** 状态的 canonical 代表(与 canonicalKey 一致的那一个像)。对外一律走 {@link displayState}。 */
+function canonicalState(s: LsllState): LsllState {
   return unpackState(canonicalKey(s));
 }
 

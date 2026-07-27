@@ -10,7 +10,7 @@ import {
   type Cube333, solvedCube, applyAlg, applyMove, embedLsll, extractLsll,
 } from '@/lib/lsll/cube333';
 import {
-  canonicalKey, canonicalState, unpackState, enumerateCategory, classify,
+  canonicalKey, displayState, unpackState, enumerateCategory, classify,
   verifyCaseAlg, CATEGORIES, TOTAL_CASES,
 } from '@/lib/lsll/model';
 import { mirrorAlg, mirrorState, mirrorKey, isSelfMirror, mirrorAlgForCase } from '@/lib/lsll/mirror';
@@ -200,9 +200,10 @@ describe('LSLL 镜像 —— 具体锚点', () => {
 /**
  * 页面上「镜像公式」那一行的契约:给出的公式必须**真的解开镜像 case 页显示的那个状态**。
  *
- * 光 `mirrorAlg` 做不到 —— 两个 case 页各自显示自己等价类的 canonical 代表元,
- * 而 σ(U^a s U^b) = U^-a σ(s) U^-b,两个代表元的 AUF 一般对不上。实测踩过:
- * `U2 R U' R'` 的裸镜像 `U2 F' U F` 在镜像 case 页上判「没有解掉」。
+ * 光 `mirrorAlg` 不保证做到 —— σ(U^a s U^b) = U^-a σ(s) U^-b,两个 case 页各自显示自己
+ * 那一份展示代表元,AUF 不一定对得上。自从代表元按 `displayState` 摆正对子,顶层有对子块的
+ * 那三类(TT / CS / ES)自动对齐了(σ 把 URF 映到 URF、把 UR 映到 UF 并翻棱,正好是
+ * 展示规则的另一半);**对子整个在槽里的 SS 类仍会错位** —— 下面拿实测到的一条 O case 钉住。
  */
 describe('mirrorAlgForCase:镜像公式必须真能解开镜像 case', () => {
   /**
@@ -232,7 +233,7 @@ describe('mirrorAlgForCase:镜像公式必须真能解开镜像 case', () => {
       const mAlg = mirrorAlgForCase(src, inv);
       expect(mAlg, `${inv}`).not.toBeNull();
       // 关键断言:这条公式必须解开「镜像 case 页显示的那个状态」
-      const target = canonicalState(mirrorState(src));
+      const target = displayState(mirrorState(src));
       expect(verifyCaseAlg(target, mAlg!).ok, `${inv} → ${mAlg}`).toBe(true);
       // 除 AUF 外步数不变(σ 保步数,这是 T6 减半的前提)
       const body = (s: string) => s.split(/\s+/).filter((t) => !/^U2?'?$/.test(t)).length;
@@ -242,18 +243,39 @@ describe('mirrorAlgForCase:镜像公式必须真能解开镜像 case', () => {
     expect(checked, '样本太少,测了个寂寞').toBeGreaterThan(300);
   });
 
-  it('实测踩过的那条:U2 R U′ R′ 的镜像要补 AUF 才解得开', () => {
-    const st = extractLsll(applyAlg(solvedCube(), "R U R'"));
+  it('实测踩过的那条 O case:裸镜像不行,补 AUF 才解得开', () => {
+    const SCR = "R U R' F' U2 F U R U2 R' U";
+    const ALG = "U' R U2 R' U' F' U2 F R U' R'";
+    const st = extractLsll(applyAlg(solvedCube(), SCR));
     expect('state' in st).toBe(true);
     if (!('state' in st)) return;
-    const shown = canonicalState(st.state);            // 页面显示的代表元
-    expect(verifyCaseAlg(shown, "U2 R U' R'").ok).toBe(true);
-    const target = canonicalState(mirrorState(shown));
-    expect(verifyCaseAlg(target, mirrorAlg("U2 R U' R'")).ok).toBe(false); // 裸镜像不行
-    const fixed = mirrorAlgForCase(shown, "U2 R U' R'");
+    const shown = displayState(st.state);              // 页面显示的代表元
+    expect(classify(shown).category.letter).toBe('O');  // 对子在槽里 → 展示相位没有锚点
+    expect(verifyCaseAlg(shown, ALG).ok).toBe(true);
+    const target = displayState(mirrorState(shown));
+    expect(verifyCaseAlg(target, mirrorAlg(ALG)).ok).toBe(false);          // 裸镜像不行
+    const fixed = mirrorAlgForCase(shown, ALG);
     expect(fixed).not.toBeNull();
     expect(verifyCaseAlg(target, fixed!).ok).toBe(true);                   // 补齐 AUF 后行
-    expect(fixed).toBe("U F' U F");                                        // 首 U 合并,不留 `U' U2`
+    // 补的是 U^3,正好把裸镜像开头那个 U 抵掉 —— 不留 `U' U` 这种脏尾巴
+    expect(mirrorAlg(ALG).startsWith('U ')).toBe(true);
+    expect(fixed).toBe("F' U2 F U R U2 R' F' U F");
+  });
+
+  it('顶层有对子块的三类:摆正相位后裸镜像已经对齐,不必再补 AUF', () => {
+    let checked = 0;
+    for (const cat of CATEGORIES) {
+      if (cat.kind === 'SS') continue;                 // 对子全在槽里的那六类不在此列
+      for (const k of enumerateCategory(cat.slug).slice(0, 20)) {
+        const shown = displayState(unpackState(k));
+        // σ(展示代表元) 本身就是镜像 case 的展示代表元 —— 只差一个收尾 AUF(verifyCaseAlg 允许)
+        const m = mirrorState(shown);
+        expect(displayState(m).cp.indexOf(4), `${cat.letter} ${k}`).toBe(m.cp.indexOf(4));
+        expect(displayState(m).ep.indexOf(4), `${cat.letter} ${k}`).toBe(m.ep.indexOf(4));
+        checked++;
+      }
+    }
+    expect(checked).toBe(36 * 20);
   });
 
   it('补的 AUF 与原有首 U 合并,开头不出现两个连着的 U', () => {
