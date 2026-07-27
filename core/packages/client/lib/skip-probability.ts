@@ -72,17 +72,53 @@ export const statesWithBlocksSolved = (corners: string[]): bigint =>
  * 容斥:这批目标里**至少一个**已经完成的状态数。
  *
  * 目标之间会共享块(相邻两个 2×2×2 块共用 1 条棱、相邻两个十字共用 1 条棱),
- * 所以不能简单相加 —— 每一项都得逐个子集算。2⁸ = 256 项,BigInt 直接跑。
+ * 所以不能简单相加 —— `|∪Aᵢ| = Σ_{S≠∅} (−1)^{|S|+1}·N(∪S)`,每一项都得算。
+ *
+ * 但**不能**按 2ⁿ 个子集逐个枚举:六色底 XXCross 是 6 面 × C(4,2) = 36 个目标,
+ * 2³⁶ = 690 亿项,跑不完。关键观察是 `N(∪S)` 只看并出来的块集合,而不同子集并出的
+ * 块集合远少于子集本身(8 角 + 12 棱 = 20 位,上限 2²⁰,实际几千)。
+ * 所以按并集聚合系数:逐个吞掉目标,`{S} → {S ∪ {g}}` 时符号翻转。
+ * 规模从「子集个数」降到「不同并集个数」,36 个目标也是毫秒级。
  */
 export function statesWithAnySolved(goals: Array<{ corners: string[]; edges: string[] }>): bigint {
+  const cIx = new Map(CORNER_NAMES.map((c, i) => [c, i]));
+  const eIx = new Map(EDGE_NAMES.map((e, i) => [e, i]));
+  // 键 = 角位图 × 2¹² + 棱位图,合起来 20 位,能进 Map 的整数键
+  const maskOf = (g: { corners: string[]; edges: string[] }): number =>
+    g.corners.reduce((m, c) => m | (1 << (cIx.get(c)! + 12)), 0)
+    | g.edges.reduce((m, e) => m | (1 << eIx.get(e)!), 0);
+
+  const coeff = new Map<number, bigint>();
+  for (const g of goals) {
+    const mg = maskOf(g);
+    const delta = new Map<number, bigint>([[mg, 1n]]);
+    for (const [m, c] of coeff) {
+      const u = m | mg;
+      delta.set(u, (delta.get(u) ?? 0n) - c);
+    }
+    for (const [m, d] of delta) {
+      const v = (coeff.get(m) ?? 0n) + d;
+      if (v === 0n) coeff.delete(m); else coeff.set(m, v);
+    }
+  }
+
+  // N(mask) 只取决于两个位数,按 (角数, 棱数) 记忆化
+  const memo = new Map<number, bigint>();
+  const popcount = (x: number): number => {
+    let n = 0;
+    for (let v = x; v; v &= v - 1) n++;
+    return n;
+  };
   let total = 0n;
-  for (let m = 1; m < (1 << goals.length); m++) {
-    const S = goals.filter((_, i) => (m >> i) & 1);
-    const t = statesWithSolved(
-      [...new Set(S.flatMap((g) => g.corners))],
-      S.flatMap((g) => g.edges),
-    );
-    total += (S.length % 2 === 1) ? t : -t;
+  for (const [m, c] of coeff) {
+    const s = popcount(m >> 12), e = popcount(m & 0xfff);
+    const key = s * 16 + e;
+    let n = memo.get(key);
+    if (n === undefined) {
+      n = statesWithSolved(CORNER_NAMES.slice(0, s), EDGE_NAMES.slice(0, e));
+      memo.set(key, n);
+    }
+    total += c * n;
   }
   return total;
 }
@@ -121,6 +157,19 @@ const chooseSets = <T,>(arr: T[], k: number): T[][] => (k === 0 ? [[]]
  * 容斥:这批底色里,至少有一个底色的十字 + **至少 k 个** F2L 槽已完成的状态数。
  * k=1 就是 XCross,k=2 XXCross,依此到 k=4(整个 F2L)。
  */
+/**
+ * 底色档 → 参与取 min 的面集合,与精确集(`scramble/stats/_data/exact_dist.ts`)的
+ * 四个底色键一一对应。同档内换哪几个面不影响计数,也不影响分布 —— 后者是
+ * `dist_cross_6col --faces` 把 LRFB / UDFB / UDLR 各跑一遍验出来的。
+ * (键写在这里而不是 import 精确集:lib 不反向依赖 app/。)
+ */
+export const BOTTOM_FACES: Record<'W' | 'WY' | 'BGOR' | 'BGORWY', string[]> = {
+  W: ['U'],
+  WY: ['U', 'D'],
+  BGOR: ['L', 'R', 'F', 'B'],
+  BGORWY: ['U', 'D', 'L', 'R', 'F', 'B'],
+};
+
 export const statesWithAnyXCrossSolved = (faces: string[], k = 1): bigint =>
   statesWithAnySolved(faces.flatMap((f) =>
     chooseSets(f2lSlots(f), k).map((slots) => ({
@@ -265,6 +314,28 @@ export const SKIP_ENTRIES: SkipEntry[] = [
     den: CUBE3_STATES,
     why: { zh: whyZh, en: whyEn },
     relativeTo: 'cross-fixed',
+  })),
+
+  // CN 档:6 个底色 × C(4,k) 个槽组合一起取并集(k=2 就是 36 个目标)。
+  // 这四条与精确集覆盖矩阵的「六色底 0 步」同数,那一列的 0 步金标出自 solver 的
+  // dist_*_0f,与本文件的容斥逐位一致(tests/skip_probability.test.ts)。
+  ...([
+    [1, 'XCross(CN)', 'XCross (colour neutral)'],
+    [2, 'XXCross(CN)', 'XXCross (colour neutral)'],
+    [3, 'XXXCross(CN)', 'XXXCross (colour neutral)'],
+    [4, 'F2L 直接完成(CN)', 'Whole F2L already done (colour neutral)'],
+  ] as const).map(([k, zh, en]): SkipEntry => ({
+    id: `xcross${k}-cn`,
+    group: 'cross',
+    name: { zh, en },
+    kind: 'exact',
+    num: statesWithAnyXCrossSolved(BOTTOM_FACES.BGORWY, k).toString(),
+    den: CUBE3_STATES,
+    why: {
+      zh: `6 个底色 × ${k === 1 ? '4 个槽' : `C(4,${k}) 种槽组合`} 一起取并集,与精确集的六色底 0 步同数`,
+      en: `Union over six bottom colours × ${k === 1 ? 'four slots' : `C(4,${k}) slot choices`}; same number as the CN 0-move count in the exhaustive dataset`,
+    },
+    relativeTo: 'cross-cn',
   })),
 
   block('block222-fixed', '固定 2×2×2 块', 'A fixed 2×2×2 block',
