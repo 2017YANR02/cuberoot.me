@@ -244,8 +244,8 @@ export const DEEP: Record<string, DeepBlurb> = {
         en: "Humans don't find optimal. Current FMC WR is 16 (single attempt, exceptionally structured scramble). Average WR (mean-of-3) is ~21-22. Typical competitors single 25-30 / average 28-32."
     },
       {
-        zh: '把"随机 3×3 状态的最优解长度分布"称为最少步分布:据 Rokicki 团队公布,17-19 步状态占绝对多数(>99%),恰好 20 步的 antipode 状态非常稀有(占比 ~10⁻¹¹ 量级)。详见下方"3×3 距离分布"。',
-        en: 'The distribution of optimal lengths over random 3×3 states is the "FMC distribution": per Rokicki, 17-19 dominates (>99%), and exact-20 antipodes are extremely rare (~10⁻¹¹). See "3×3 distance distribution" below.'
+        zh: '把"随机 3×3 状态的最优解长度分布"称为最少步分布:据 Rokicki 团队公布,17-19 步状态占绝对多数(约 97%,连上 16 步接近 99.8%),恰好 20 步的 antipode 状态非常稀有(占比 ~10⁻¹¹ 量级)。详见下方"3×3 距离分布"。',
+        en: 'The distribution of optimal lengths over random 3×3 states is the "FMC distribution": per Rokicki, 17-19 dominates (about 97%, close to 99.8% counting 16), and exact-20 antipodes are extremely rare (~10⁻¹¹). See "3×3 distance distribution" below.'
     },
     ],
   },

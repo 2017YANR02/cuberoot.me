@@ -25,8 +25,8 @@ const FAQ: QA[] = [
     q: { zh: 'WCA 比赛打乱的难度接近上帝之数吗?', en: 'Are WCA scrambles near God\'s number?'
     },
     a: {
-      zh: '接近。WCA 三阶打乱是 random-state(2010 后),从 4.3 × 10¹⁹ 状态均匀采样。距离分布表明 99%+ 的随机状态需要 17-19 步最优。普通选手用 CFOP 解 50-60 步,WR (Yiheng Wang 4.86s) 用 ~40 步;这与"最优 18 步"差距巨大,因为人类不寻找最优解。',
-      en: 'Close. WCA 3×3 scrambles are random-state (post-2010), uniformly sampled from 4.3 × 10¹⁹ states. The distribution shows 99%+ need 17-19 moves optimally. Typical CFOP solutions are 50-60 moves; WR (Yiheng Wang 4.86 s) is ~40 moves — far from optimal because humans don\'t search.'
+      zh: '接近。WCA 三阶打乱是 random-state(2010 后),从 4.3 × 10¹⁹ 状态均匀采样。距离分布表明约 97% 的随机状态需要 17-19 步最优,算上 16 步则接近 99.8%。普通选手用 CFOP 解 50-60 步,WR (Yiheng Wang 4.86s) 用 ~40 步;这与"最优 18 步"差距巨大,因为人类不寻找最优解。',
+      en: 'Close. WCA 3×3 scrambles are random-state (post-2010), uniformly sampled from 4.3 × 10¹⁹ states. The distribution shows about 97% need 17-19 moves optimally, and close to 99.8% once 16 is included. Typical CFOP solutions are 50-60 moves; WR (Yiheng Wang 4.86 s) is ~40 moves — far from optimal because humans don\'t search.'
     },
   },
   {

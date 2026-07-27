@@ -23,6 +23,10 @@ import {
   type HighlightCard, type RefItem, type StatItem,
 } from './_shared';
 
+import {
+  GOD_SHARE_16_19_PCT as SHARE_16_19, GOD_SHARE_17_19_PCT as SHARE_17_19,
+} from '@/lib/god-distance-333';
+
 const SuperflipShowcase = lazy(() => import('../SuperflipShowcase'));
 const DistanceDistribution = lazy(() => import('../DistanceDistribution'));
 
@@ -357,8 +361,8 @@ export default function Cube333({ isZh }: { isZh: boolean; eventId?: string }) {
       <EvSection
         title={t('最少步分布', 'The minimum-solution distribution')}
         lead={t(
-          '随机抽一个三阶打乱,它的最优解长度服从一个极其偏斜的分布:超过 99% 落在 17–19 步,恰好 20 步的 antipode 稀有到约 10⁻¹¹。这就是为什么 FMC 选手即便有一小时也几乎凑不出 20 步、更别提 16 步纪录。',
-          'Pick a random 3×3 scramble and its optimal length follows a sharply skewed distribution: over 99% lands in 17–19 moves, and exact-20 antipodes are as rare as about 10⁻¹¹. That is why FMC competitors, even with an hour, can barely contrive a 20-move solution — let alone the 16-move record.',
+          `随机抽一个三阶打乱,它的最优解长度服从一个极其偏斜的分布:约 ${SHARE_17_19} 落在 17–19 步,连上 16 步则是 ${SHARE_16_19},恰好 20 步的 antipode 稀有到约 10⁻¹¹。这就是为什么 FMC 选手即便有一小时也几乎凑不出 20 步、更别提 16 步纪录。`,
+          `Pick a random 3×3 scramble and its optimal length follows a sharply skewed distribution: about ${SHARE_17_19} lands in 17–19 moves (${SHARE_16_19} counting 16), and exact-20 antipodes are as rare as about 10⁻¹¹. That is why FMC competitors, even with an hour, can barely contrive a 20-move solution — let alone the 16-move record.`,
         )}
       >
         <Suspense fallback={<Loading />}>

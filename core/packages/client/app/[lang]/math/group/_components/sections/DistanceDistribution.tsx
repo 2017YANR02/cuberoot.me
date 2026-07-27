@@ -3,30 +3,17 @@
 import { useState, useMemo } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
 import { tr } from '@/i18n/tr';
+import { GOD_DIST_333, GOD_DIST_333_NORMALIZED, GOD_MEAN_HTM } from '@/lib/god-distance-333';
 
-const DIST_DATA_HTM = [
-  { d: 0,  count: 1n },
-  { d: 1,  count: 18n },
-  { d: 2,  count: 243n },
-  { d: 3,  count: 3240n },
-  { d: 4,  count: 43239n },
-  { d: 5,  count: 574908n },
-  { d: 6,  count: 7618438n },
-  { d: 7,  count: 100803036n },
-  { d: 8,  count: 1332343288n },
-  { d: 9,  count: 17596479795n },
-  { d: 10, count: 232248063316n },
-  { d: 11, count: 3063288809012n },
-  { d: 12, count: 40374425656248n },
-  { d: 13, count: 531653418284628n },
-  { d: 14, count: 6989320578825358n },
-  { d: 15, count: 91365146187124313n },
-  { d: 16, count: 1100000000000000000n }, // approximate from cube20.org
-  { d: 17, count: 12000000000000000000n },
-  { d: 18, count: 29000000000000000000n },
-  { d: 19, count: 1500000000000000000n },
-  { d: 20, count: 490000000n },
-];
+/** E[d] 从单一源现算,页面上不再手写数字(以前写的 17.97 与本表对不上)。 */
+const MEAN = GOD_MEAN_HTM.toFixed(1);
+
+// 全站单一源 lib/god-distance-333.ts —— d ≤ 15 精确,d = 16..19 是 cube20.org 的两位有效数字
+// 估计(这里取归一化档,Σ 恰为 |G|),d = 20 是「已找到 490,000,000 个」的下界。
+const DIST_DATA_HTM = GOD_DIST_333.map((b, i) => ({
+  d: b.d,
+  count: BigInt(GOD_DIST_333_NORMALIZED[i]),
+}));
 
 function DistanceDistributionChart() {
   const [hover, setHover] = useState<number | null>(null);
@@ -190,8 +177,8 @@ export default function DistanceDistribution() {
         </h3>
         <p>
           <L
-            zh={<>下表给出距离 d = 0 ~ 15 的<em>精确</em>计数 (穷举枚举,Kociemba 2013) 和 d = 16 ~ 20 的<em>已知</em>计数 (Rokicki 等 2014 后的对称归约证明)。 各行求和正好 = |G| = 43,252,003,274,489,856,000。</>}
-            en={<>The table below gives <em>exact</em> counts for d = 0…15 (full enumeration, Kociemba 2013) and the <em>established</em> counts for d = 16…20 (symmetry-reduced proofs after Rokicki et al. 2014). The column totals to |G| = 43,252,003,274,489,856,000.</>}
+            zh={<>下表给出距离 d = 0 ~ 15 的<em>精确</em>计数 (穷举枚举)。 d ≥ 16 至今没有逐档精确值 —— cube20.org 只给到两位有效数字, 这里把它们等比缩到尾部真值 |G| − Σ<sub>d ≤ 15</sub>, 所以整列求和仍恰为 |G| = 43,252,003,274,489,856,000, 但 d = 16 ~ 19 各行只该当估计读。 d = 20 的 490,000,000 是「已经找到这么多个」的下界。</>}
+            en={<>The table gives <em>exact</em> counts for d = 0…15 (full enumeration). No per-depth exact values are known for d ≥ 16 — cube20.org publishes only two significant digits, and those four are rescaled here to the true tail |G| − Σ<sub>d ≤ 15</sub>, so the column still totals exactly |G| = 43,252,003,274,489,856,000 while each of d = 16…19 should be read as an estimate. The 490,000,000 at d = 20 is a lower bound: that many have been found.</>}
           />
         </p>
         <table className="gt-distance-tbl gt-distance-exact">
@@ -243,8 +230,8 @@ export default function DistanceDistribution() {
         })}</div>
           <div className="gt-thm-body">
             <L
-              zh={<><TeXBlock src={`\\mathbb{E}[d] \\;=\\; \\frac{1}{|G|} \\sum_{d=0}^{20} d \\cdot N_d \\;\\approx\\; 17.97`} />其中 <TeX src={`N_d`} /> 是距离 d 处的状态数。 一个均匀随机的 scramble,期望最优解长度大约 <strong>17.97 HTM</strong>。 (QTM 下约为 22.) 注意:这跟「<em>3-style 选手实际解出 60 步</em>」差异很大 —— 那只反映人类启发式跟最优解之间的差距 (gap ≈ 40 步)。</>}
-              en={<><TeXBlock src={`\\mathbb{E}[d] \\;=\\; \\frac{1}{|G|} \\sum_{d=0}^{20} d \\cdot N_d \\;\\approx\\; 17.97`} />where <TeX src={`N_d`} /> is the state count at distance d. A uniformly random scramble has expected optimal length <strong>~17.97 HTM</strong> (~22 in QTM). The gap from human solvers (~50–60 HTM) reflects the cost of using heuristic strategies rather than optimal search — about a 40-move gap.</>}
+              zh={<><TeXBlock src={`\\mathbb{E}[d] \\;=\\; \\frac{1}{|G|} \\sum_{d=0}^{20} d \\cdot N_d \\;\\approx\\; ${MEAN}`} />其中 <TeX src={`N_d`} /> 是距离 d 处的状态数。 一个均匀随机的 scramble,期望最优解长度大约 <strong>{MEAN} HTM</strong> (QTM 下约为 22)。 小数点后那位继承了 d ≥ 16 估计值的不确定度,别当精确值用。 注意:这跟「<em>选手实际解出 50 ~ 60 步</em>」差异很大 —— 那只反映人类启发式跟最优解之间的差距 (gap ≈ 40 步)。</>}
+              en={<><TeXBlock src={`\\mathbb{E}[d] \\;=\\; \\frac{1}{|G|} \\sum_{d=0}^{20} d \\cdot N_d \\;\\approx\\; ${MEAN}`} />where <TeX src={`N_d`} /> is the state count at distance d. A uniformly random scramble has expected optimal length <strong>~{MEAN} HTM</strong> (~22 in QTM); the last digit inherits the uncertainty of the d ≥ 16 estimates. The gap from human solvers (~50–60 HTM) reflects the cost of using heuristic strategies rather than optimal search — about a 40-move gap.</>}
             />
           </div>
         </div>

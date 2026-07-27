@@ -33,7 +33,7 @@ function PatternGallery() {
       order: 2, descZh: '简短 6 步即得',         descEn: 'a 6-move classic'
     },
     { name: 'Pons Asinorum (6X)', nameZh: '驴桥定理 (6X)', alg: "R2 L2 F2 B2 U2 D2",
-      order: 2, descZh: '所有 6 面 ×3 半圈; 直径距离 20 候选反点', descEn: 'all six faces half-turned; one of three antipode candidates'
+      order: 2, descZh: '所有 6 面各一个半圈', descEn: 'a half turn on each of the six faces'
     },
     { name: 'Six H-bars',       nameZh: '六 H 条', alg: "U2 B2 R2 D2 U2 R2 F2 U2",
       order: 2, descZh: '三对正交 H 条棱', descEn: 'three orthogonal H-bars on the equators'
@@ -223,8 +223,8 @@ export default function Patterns() {
           </li>
           <li>
             <L
-              zh={<><strong>HTM 距离恰好 20</strong> —— 是 2010 年 Rokicki 等证明 「上帝之数 = 20」 时第一个被锁死的下界。 全 4.3 × 10¹⁹ 状态里只有 <strong>三个</strong> 状态需要满 20 步: superflip、 superflip ∘ (4-spot 一族), 以及 Reid 的对偶。</>}
-              en={<><strong>HTM distance exactly 20</strong> — the first lower bound nailed down in Rokicki et al.'s 2010 proof that God's number = 20. Of 4.3 × 10¹⁹ states, only <strong>three</strong> require the full 20 moves: superflip, the superflip ∘ 4-spot family, and Reid's dual.</>}
+              zh={<><strong>HTM 距离恰好 20</strong> —— superflip 是<em>第一个</em>被证明需要满 20 步的状态 (Reid 1995), 也是 2010 年 Rokicki 等证明 「上帝之数 = 20」 的下界来源。 需要满 20 步的状态并不只有它: 目前已找到约 <strong>4.9 亿</strong> 个 (见 §23 的距离分布), 只是在 4.3 × 10¹⁹ 里仍只占 10⁻¹¹。</>}
+              en={<><strong>HTM distance exactly 20</strong> — superflip was the <em>first</em> position proved to need all 20 moves (Reid 1995), and it supplied the lower bound in Rokicki et al.'s 2010 proof that God's number = 20. It is far from the only one: about <strong>490 million</strong> distance-20 positions have been found so far (see the distribution in §23) — still only 10⁻¹¹ of the 4.3 × 10¹⁹ total.</>}
             />
           </li>
           <li>
