@@ -12,9 +12,17 @@ use std::time::Instant;
 use cube_solver::cube_common::{Move, State};
 use cube_solver::lsll_solver::{random_lsll_state, LsllSolver};
 
+/// 管道实际要跑的量:两步可达路线 302 × 494 去重后的 canonical key 数
+/// (149,188 条路线 → 148,384 个不同局面,见 client 的 lsll/PLAN.md)。
+const PIPELINE_CASES: u64 = 148_384;
+/// 全量 LSLL case 数(对照用,管道不做)。
 const TOTAL_LSLL_CASES: u64 = 583_284;
-/// 单 case 超时哨兵默认值(可用第 2 个命令行参数覆盖)。
+/// 单 case 节点预算默认值(可用第 2 个命令行参数覆盖)。
 const NODE_CAP: u64 = 20_000_000;
+/// 枚举到 opt+2 的树约是最优搜索的 13.34² ≈ 178 倍,预算按 200 倍给。
+const ENUM_BUDGET_FACTOR: u64 = 200;
+/// 候选池上限。顶到就是截断,下面会单独计数 —— 截断样本不进 min/max/中位。
+const CAND_CAP: usize = 4096;
 
 fn pct(sorted_ms: &[f64], p: f64) -> f64 {
     if sorted_ms.is_empty() {
@@ -55,9 +63,15 @@ fn main() {
     let mut times_ms: Vec<f64> = Vec::new();
     let mut lens: Vec<u32> = Vec::new();
     let mut opt_counts: Vec<usize> = Vec::new();
-    let mut cand2: Vec<usize> = Vec::new(); // 最优+2 候选数
+    let mut cand2: Vec<usize> = Vec::new(); // 最优+2 候选数(**仅完整样本**)
     let mut timeouts = 0usize;
     let mut verify_fail = 0usize;
+    let mut opt_truncated = 0usize; // extra=0 就被 cap 截断(最优解多于 CAND_CAP)
+    let mut c2_cap = 0usize; // 最优+2 顶到 cap
+    let mut c2_budget = 0usize; // 最优+2 撞节点预算
+    let mut c2_timeout = 0usize; // 最优+2 连最优步数都没算出来
+
+    let enum_budget = node_cap.saturating_mul(ENUM_BUDGET_FACTOR);
 
     for seed in 0..n as u64 {
         let st = random_lsll_state(seed * 2_654_435_761 + 12345);
@@ -65,7 +79,7 @@ fn main() {
         print!("  seed {:>3}: ", seed);
         let _ = std::io::stdout().flush();
         let t = Instant::now();
-        let res = s.enumerate(&st, 0, 4096, node_cap);
+        let res = s.enumerate(&st, 0, CAND_CAP, node_cap);
         let ms = t.elapsed().as_secs_f64() * 1000.0;
 
         match res {
@@ -73,10 +87,10 @@ fn main() {
                 timeouts += 1;
                 println!("TIMEOUT (>{} 节点)", node_cap);
             }
-            Some((best, sols, _nodes)) => {
+            Some(r) => {
                 // 校验:每个最优解回放整方还原。
                 let mut ok = true;
-                for sol in &sols {
+                for sol in &r.sols {
                     let mut c = st;
                     for &m in sol {
                         c.apply(Move::from_index(m as usize));
@@ -88,21 +102,42 @@ fn main() {
                 if !ok {
                     verify_fail += 1;
                 }
-                // 最优+2 候选数(不计时,量候选池规模)。
-                let c2 = s
-                    .enumerate(&st, 2, 4096, node_cap)
-                    .map(|(_, v, _)| v.len())
-                    .unwrap_or(0);
+                if !r.complete() {
+                    opt_truncated += 1;
+                }
+                // 最优+2 候选池规模(不计时)。截断的样本只计数,不进分布统计 ——
+                // 顶到 cap 的「4096」不是候选数,是天花板。
+                let c2 = s.enumerate(&st, 2, CAND_CAP, enum_budget);
+                let c2_txt = match &c2 {
+                    None => {
+                        c2_timeout += 1;
+                        "  --".to_string()
+                    }
+                    Some(e) => {
+                        if e.hit_cap {
+                            c2_cap += 1;
+                        }
+                        if e.hit_node_cap {
+                            c2_budget += 1;
+                        }
+                        if e.complete() {
+                            cand2.push(e.sols.len());
+                            format!("{:>4}", e.sols.len())
+                        } else {
+                            format!("≥{:>3}", e.sols.len())
+                        }
+                    }
+                };
 
                 times_ms.push(ms);
-                lens.push(best);
-                opt_counts.push(sols.len());
-                cand2.push(c2);
+                lens.push(r.best);
+                opt_counts.push(r.sols.len());
                 println!(
-                    "最优 {:>2} 步 | {:>4} 条最优 | 最优+2 {:>4} 条 | {:>8.1} ms{}",
-                    best,
-                    sols.len(),
-                    c2,
+                    "最优 {:>2} 步 | {:>4} 条最优{} | 最优+2 {} 条 | {:>8.1} ms{}",
+                    r.best,
+                    r.sols.len(),
+                    if r.complete() { " " } else { "*" },
+                    c2_txt,
                     ms,
                     if ok { "" } else { "  ⚠ 校验失败" }
                 );
@@ -144,20 +179,41 @@ fn main() {
     }
     println!();
 
-    let cand2_min = cand2.iter().min().copied().unwrap_or(0);
-    let cand2_med = {
+    print!(
+        "候选池:最优解 {}~{} 条",
+        opt_counts.iter().min().unwrap(),
+        opt_counts.iter().max().unwrap()
+    );
+    if opt_truncated > 0 {
+        print!("(其中 {} 个顶到 cap={},实际更多)", opt_truncated, CAND_CAP);
+    }
+    if cand2.is_empty() {
+        println!(";最优+2 无完整样本(cap {} / 预算 {} / 超时 {})", c2_cap, c2_budget, c2_timeout);
+    } else {
         let mut v = cand2.clone();
         v.sort_unstable();
-        v[v.len() / 2]
-    };
-    println!(
-        "候选池:最优解 {}~{} 条;最优+2 {}~{} 条(中位 {})",
-        opt_counts.iter().min().unwrap(),
-        opt_counts.iter().max().unwrap(),
-        cand2_min,
-        cand2.iter().max().unwrap(),
-        cand2_med
-    );
+        println!(
+            ";最优+2 {}~{} 条(中位 {};{} 个完整样本)",
+            v[0],
+            v[v.len() - 1],
+            v[v.len() / 2],
+            v.len()
+        );
+    }
+    // 截断的样本一律单列 —— 不报的话,上面那串 min/max 会被当成「候选就这么多」。
+    if c2_cap + c2_budget + c2_timeout > 0 {
+        println!(
+            "  ⚠ 最优+2 有 {}/{} 个样本不完整:顶到 cap={} 的 {} 个、撞节点预算({})的 {} 个、算不出最优的 {} 个",
+            c2_cap + c2_budget + c2_timeout,
+            solved,
+            CAND_CAP,
+            c2_cap,
+            enum_budget,
+            c2_budget,
+            c2_timeout
+        );
+        println!("     (不完整样本未计入上面的 min/max/中位。cap 截断是按 move 序的偏样本,不能直接喂 MCC。)");
+    }
 
     println!(
         "\n单 case 耗时(找全部最优):均值 {:.1} ms | 中位 {:.1} | p90 {:.1} | p99 {:.1} | max {:.1}",
@@ -168,21 +224,23 @@ fn main() {
         pct(&sorted, 1.0),
     );
 
-    // ---- 外推 583,284 ----
-    let total_1t_s = mean / 1000.0 * TOTAL_LSLL_CASES as f64;
-    println!("\n== 外推 {} case(按均值)==", TOTAL_LSLL_CASES);
+    // ---- 外推 ----
+    // 均值只来自「找全部最优」那一次;生产每 case 还要加深到 ≥100 条候选,比这贵。
+    println!("\n== 外推(按上面的均值,只含找全部最优那一步)==");
+    for (label, cases) in [("管道范围", PIPELINE_CASES), ("全量(不做)", TOTAL_LSLL_CASES)] {
+        let s1 = mean / 1000.0 * cases as f64;
+        println!(
+            "{} {} case:单线程 {:.0}s = {:.2}h | 14 线程 {:.0}s = {:.2}h",
+            label,
+            cases,
+            s1,
+            s1 / 3600.0,
+            s1 / 14.0,
+            s1 / 14.0 / 3600.0
+        );
+    }
     println!(
-        "单线程:{:.0}s = {:.2}h",
-        total_1t_s,
-        total_1t_s / 3600.0
-    );
-    println!(
-        "14 线程:{:.0}s = {:.2}h",
-        total_1t_s / 14.0,
-        total_1t_s / 14.0 / 3600.0
-    );
-    println!(
-        "\n(样本 N={},node_cap={};生产还要 MCC 排序 + 存表,量级参考。)",
-        n, node_cap
+        "\n(样本 N={},node_cap={}(枚举 ×{});生产还要加深到 ≥100 候选 + MCC 排序 + 存表,量级参考。)",
+        n, node_cap, ENUM_BUDGET_FACTOR
     );
 }
