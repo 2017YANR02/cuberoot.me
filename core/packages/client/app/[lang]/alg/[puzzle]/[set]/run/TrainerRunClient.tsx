@@ -25,6 +25,7 @@ import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
 import { displayZbllToken } from '@/lib/alg_case_display';
 import { availableKinds, purifyScramble, SCRAMBLE_KINDS, type ScrambleKind } from '@/lib/trainer-scramble';
 import { MIX_SLUG, MIX_MIN_SETS, parseMixSets, mixTitle, mixHref, loadMixCases, setLabel } from '@/lib/alg-mix';
+import { virtualAlgSet } from '@/lib/alg-virtual-sets';
 import { useTrainerMarks, markStatus, markStarred, type CaseMarkStatus } from '@/lib/trainer-marks';
 import { ALG_SET_UNIVERSE } from '@/lib/alg_probability';
 import {
@@ -82,6 +83,13 @@ export default function TrainerRunClient() {
 
   const puzzle = resolveAlgPuzzle(puzzleParam);   // 接受 event code(333)或 legacy puzzle 名(3x3)
 
+  /**
+   * 虚拟集(LSLL):case 不在 alg 库里、由前端现算,但练法与库内集完全一致 —— 只把
+   * 「case 从哪来 / 选 case 去哪 / 打乱怎么算」三处换成它自己的(见 lib/alg-virtual-sets)。
+   */
+  const virtual = useMemo(() => (puzzle ? virtualAlgSet(puzzle, setSlug) : undefined), [puzzle, setSlug]);
+  const virtualScope = virtual ? (scopeParam?.trim().toLowerCase() || null) : null;
+
   // 合练:`/alg/<puzzle>/mix/run?sets=pll,zbll` —— mix 是哨兵段,成员集合在 query 里
   const [setsParam] = useQueryState('sets');
   const isMix = setSlug === MIX_SLUG;
@@ -96,9 +104,9 @@ export default function TrainerRunClient() {
     puzzle
       ? (isMix
           ? (mixReady ? { zh: mixTitle(puzzle, mixSets), en: mixTitle(puzzle, mixSets) } : undefined)
-          : getAlgSetMeta(puzzle, setSlug))
+          : (getAlgSetMeta(puzzle, setSlug) ?? virtual?.meta))
       : undefined
-  ), [puzzle, isMix, mixReady, mixSets, setSlug]);
+  ), [puzzle, isMix, mixReady, mixSets, setSlug, virtual]);
 
   const cases = useTrainerStore(s => s.cases);
   const selected = useTrainerStore(s => s.selected);
@@ -227,9 +235,12 @@ export default function TrainerRunClient() {
     loadSrs(puzzle, setSlug);
   }, [puzzle, setSlug, meta, isMix, mixKey, loadMarks, loadSrs, loadMarksMulti, loadSrsMulti]);
 
+  // 虚拟集换范围(?scope=)= 换一整批 case,所以范围要进会话 id,否则装完一次就再也不重装
+  const sessionId = isMix
+    ? mixSessionId(mixKey.split(',').filter(Boolean))
+    : (virtual && virtualScope ? `${setSlug}:${virtualScope}` : setSlug);
   useEffect(() => {
     if (!puzzle || !meta) return;
-    const sessionId = isMix ? mixSessionId(mixKey.split(',').filter(Boolean)) : setSlug;
     if (storePuzzle === puzzle && storeSet === sessionId && cases.length > 0) return;
     if (isMix) {
       const sets = mixKey.split(',').filter(Boolean);
@@ -238,22 +249,29 @@ export default function TrainerRunClient() {
         .catch(e => console.error('[trainer] loadMixCases failed', e));
       return;
     }
+    if (virtual) {
+      // 虚拟集没有 select 页可勾 —— 装进来的这一批就是本场
+      virtual.loadCases(virtualScope)
+        .then(cs => loadSession(puzzle, sessionId, cs, { defaultAll: true, caseResolver: virtual.resolveCase }))
+        .catch(e => console.error('[trainer] virtual loadCases failed', e));
+      return;
+    }
     loadAlg(puzzle, setSlug)
       .then(d => loadSession(puzzle, setSlug, d.cases))
       .catch(e => console.error('[trainer] loadAlg failed', e));
-  }, [puzzle, setSlug, meta, isMix, mixKey, storePuzzle, storeSet, cases.length, loadSession, loadMixSession]);
+  }, [puzzle, setSlug, sessionId, meta, isMix, mixKey, virtual, virtualScope,
+      storePuzzle, storeSet, cases.length, loadSession, loadMixSession]);
 
   // 分享链接 ?room=CODE:本集 session 载好后自动加入该房间(仅一次;已在房间/正忙/无码则跳过)。
   // joinRoom 要求 store 已 loadSession 到对应 puzzle/set,故等 cases 到位再试;失败(房间不存在/
   // 过期/集不匹配)则清掉 URL 里的码并由 roomError 提示。
   useEffect(() => {
     if (!roomParam || room || roomBusy || autoJoinRef.current) return;
-    const sessionId = isMix ? mixSessionId(mixKey.split(',').filter(Boolean)) : setSlug;
     if (storePuzzle !== puzzle || storeSet !== sessionId || cases.length === 0) return;
     autoJoinRef.current = true;
     // 失败(房间不存在/过期/集不匹配)不清 ?room —— 保留链接,由下方 landing 显示 roomError 并给出「去选择」出口。
     void joinRoom(roomParam);
-  }, [roomParam, room, roomBusy, storePuzzle, storeSet, puzzle, setSlug, cases.length, joinRoom]);
+  }, [roomParam, room, roomBusy, storePuzzle, storeSet, puzzle, sessionId, cases.length, joinRoom]);
 
   // 邀请链接的 ?multi=1:套用创建者的「三条一屏」视图(依赖不计时,一并关计时)。gate 在 roomParam
   // 而非已建立的 room —— 必须在自动 join 的 roomAdvance 领题之前就把视图就绪,否则会先按单条领题、
@@ -274,12 +292,13 @@ export default function TrainerRunClient() {
 
   // scope slug → 该组全部 case key(与 AlgCategoryView 的 top/sub 两级匹配同一套约定)
   const scopedKeys = useMemo(() => {
-    if (!scopeSlug || cases.length === 0) return null;
+    // 虚拟集的 ?scope= 决定的是「装哪一批 case」,装进来的整批就是范围,不用再筛一次
+    if (virtual || !scopeSlug || cases.length === 0) return null;
     const parts = (c: AlgCase) => (c.subgroup || '').toLowerCase().split('/');
     const isTop = cases.some(c => parts(c)[0] === scopeSlug);
     const hit = cases.filter(c => (isTop ? parts(c)[0] : parts(c)[1]) === scopeSlug);
     return hit.length > 0 ? hit.map(caseKey) : null;
-  }, [cases, scopeSlug]);
+  }, [cases, scopeSlug, virtual]);
 
   useEffect(() => {
     setScope(scopedKeys);
@@ -303,10 +322,11 @@ export default function TrainerRunClient() {
       const c = findCaseByKey(cases, k);
       if (c) for (const kind of availableKinds(c)) seen.add(kind);
     }
-    // cstimer 风格 = 求解器现算随机态打乱,不依赖表 meta,3x3 一律可用(issue #30)
-    if (puzzle === '3x3') seen.add('cstimer');
+    // cstimer 风格 = 求解器现算随机态打乱,不依赖表 meta,3x3 一律可用(issue #30)。
+    // 虚拟集的打乱本来就是求解器现算的随机态序列,再求一次解只是换个等价写法 —— 不给这个选项。
+    if (puzzle === '3x3' && !virtual) seen.add('cstimer');
     return SCRAMBLE_KINDS.filter(k => seen.has(k.id));
-  }, [pool, cases, puzzle]);
+  }, [pool, cases, puzzle, virtual]);
 
   // 改了选中的 case 之后,原先选的那种打乱可能一个 case 都不再支持 —— 此时 <select> 的
   // value 落空、显示成一片空白。退回 `inv`(它永远支持)。
@@ -693,7 +713,16 @@ export default function TrainerRunClient() {
 
   const selectHref = isMix
     ? mixHref(puzzleParam, mixSets, 'select')
+    : virtual
+    ? virtual.selectHref(virtualScope)
     : `/alg/${puzzleParam}/${setSlug}/select${scopeSlug ? `?scope=${encodeURIComponent(scopeSlug)}` : ''}`;
+
+  // 顶栏范围后缀:库内集是子组名,虚拟集是它自己那套范围命名(LSLL:大类 / 已收录)
+  const scopeSuffix = virtual
+    ? tr(virtual.scopeLabel(virtualScope))
+    : scopeSlug
+    ? (setSlug === 'zbll' ? displayZbllToken(scopeSlug) : scopeSlug.toUpperCase())
+    : '';
 
   // 本场在练哪几套(单集 = 就那一套);面板里的「一起练」按它增删
   const sessionSets = isMix ? mixSets : [setSlug];
@@ -704,7 +733,8 @@ export default function TrainerRunClient() {
       ? `/alg/${puzzleParam}/${uniq[0] ?? setSlug}/run`
       : mixHref(puzzleParam, uniq, 'run');
   };
-  const addableSets = (ALG_CATALOG[puzzle] ?? []).filter(s => !sessionSets.includes(s.slug));
+  // 虚拟集不进 ALG_CATALOG,也就没法跟库内集混练(合练走 loadAlg 拉库表)—— 不给「一起练」
+  const addableSets = virtual ? [] : (ALG_CATALOG[puzzle] ?? []).filter(s => !sessionSets.includes(s.slug));
 
   // 记忆模式按「整套(或该组)」排期 —— 用户从来没进过 select 页也该能直接开练,
   // 所以没勾选时回落到本页范围内的全部 case,而不是把人赶去选择页。
@@ -822,7 +852,7 @@ export default function TrainerRunClient() {
         })}
         </Link>
         <span style={{ fontSize: '1rem', color: 'var(--muted-foreground)' }}>
-          {puzzle} · {tr(meta)}{scopeSlug ? ` · ${setSlug === 'zbll' ? displayZbllToken(scopeSlug) : scopeSlug.toUpperCase()}` : ''}
+          {puzzle} · {tr(meta)}{scopeSuffix ? ` · ${scopeSuffix}` : ''}
         </span>
         {/* 训练选项全收进齿轮弹出面板,齿轮居中吸在页面正上方
             (data-no-timer:面板空白不触发按压计时) */}
@@ -849,6 +879,8 @@ export default function TrainerRunClient() {
           )}
           {optsOpen && (
             <div className="trainer-opts-panel" ref={optsPanelRef}>
+              {/* 虚拟集的打乱 / 公式是现算的 —— 这话得摆在设置面板最上面,别让人以为是收录的公式 */}
+              {virtual && <div className="trainer-opts-hint">{tr(virtual.note)}</div>}
               {/* 一起练:本场的公式集成员。单集会话里加一套就地变合练,少到只剩一套自动退回单集。
                   成员用可点的链接删(中键能新开),加走下拉(可选项十几套,不适合摊成 chip)。 */}
               {addableSets.length > 0 && (
@@ -1303,6 +1335,7 @@ export default function TrainerRunClient() {
               scramble={shownScramble(currentScramble)}
               label={copied ? tr({ zh: '已复制', en: 'Copied' }) : undefined}
               font={scrambleFont}
+              placeholder={virtual ? tr({ zh: '打乱生成中…', en: 'Generating scramble…' }) : undefined}
             />
           )}
           {/* 不计时模式下点哪都是「下一个」,按钮多余,整行都不出(空 div 也会占竖向余量) */}
@@ -1333,14 +1366,15 @@ export default function TrainerRunClient() {
           {/* 当前这道题的 case 图:看得见正在练的这一把。
               图从「实际打乱」渲染(含 pre/post-AUF),与上方打乱公式朝向一致。
               三条一屏时图已经跟在各自那条打乱下面(见上),这里不再重复出。 */}
-          {!multi && showStageThumb && currentCase && (
+          {/* 打乱还没算出来时(虚拟集)不出图 —— 空 setup 会渲染成一个已还原的方块,那是假的 */}
+          {!multi && showStageThumb && currentCase && currentScramble && (
             <div className="trainer-stage-thumb">
               <CaseThumb
                 puzzle={puzzle}
                 set={setSlug}
                 sticker={currentCase.sticker}
                 alg={currentCase.algs.flat()[0]?.alg ?? currentCase.standard ?? ''}
-                setup={currentScramble ?? currentCase.setup}
+                setup={currentScramble}
                 size={140}
               />
             </div>
@@ -1415,6 +1449,7 @@ export default function TrainerRunClient() {
                   isZh={isZh}
                   showThumb={showStageThumb}
                   onShowCase={c.meta ? (cc) => setMetaCase(cc) : undefined}
+                  caseHref={virtual?.caseHref}
                   header={i === 0 ? tr({ zh: '上三个', en: 'Previous 3' }) : undefined}
                   markSlot={<CaseMarkBar k={caseKey(c)} />}
                 />
@@ -1429,6 +1464,7 @@ export default function TrainerRunClient() {
                 isZh={isZh}
                 showThumb={showStageThumb}
                 onShowCase={prevCase.meta ? (c) => setMetaCase(c) : undefined}
+                caseHref={virtual?.caseHref}
                 header={prevHeader}
                 markSlot={<CaseMarkBar k={caseKey(prevCase)} />}
               />
@@ -1449,6 +1485,7 @@ export default function TrainerRunClient() {
                 isZh={isZh}
                 showThumb={showStageThumb}
                 onShowCase={nextCase?.meta ? (c) => setMetaCase(c) : undefined}
+                caseHref={virtual?.caseHref}
                 header={tr({ zh: '下一个', en: 'Next up' })}
               />
             )}

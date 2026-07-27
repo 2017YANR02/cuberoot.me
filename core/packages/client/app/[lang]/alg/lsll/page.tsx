@@ -83,7 +83,8 @@ export default function LsllHubPage() {
           onLabel={tr({ zh: '两步', en: 'Two-look' })}
           ariaLabel={tr({ zh: '一步 / 两步', en: 'One-look / two-look' })}
         />
-        <Link href="/alg/lsll/train" className="lsll-train-btn" prefetch={false}>
+        {/* 训练走全站同一个训练器(与 /alg/3x3/zbll/run 同一个页面);不带范围 = 已收录公式那批 */}
+        <Link href="/alg/3x3/lsll/run" className="lsll-train-btn" prefetch={false}>
           <Dumbbell size={15} /> {tr({ zh: '训练', en: 'Train' })}
         </Link>
       </div>

@@ -8,14 +8,14 @@
  *
  * 「图 / 公式」开关同全站(AlgViewModeToggle),只对一步模式有意义。本页没有公式库,
  * 公式**现算**:setupForCase 出打乱(cubing.js 两阶段解取逆),再取一次逆就是一条有效解法 ——
- * 与 /alg/lsll/train 的揭示同一条路子,不新造数据源。一页 48 个,逐个串行算,
+ * 与训练器现算打乱同一条路子(lib/lsll/trainer-set),不新造数据源。一页 48 个,逐个串行算,
  * 算好一个贴一个;算过的进模块级缓存,翻回来不重算。
  */
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useQueryState, parseAsInteger, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Dumbbell } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
 import { FaceletsCube } from '@/components/FaceletsCube';
@@ -26,6 +26,7 @@ import {
 } from '@/lib/lsll/model';
 import { class3CountForFamily } from '@/lib/lsll/class3';
 import { setupForCase, solutionForSetup } from '@/lib/lsll/setup';
+import { lsllScopeParam } from '@/lib/lsll/trainer-set';
 import LsllRouteBrowser from './LsllRouteBrowser';
 import '../../alg.css';
 import '../lsll.css';
@@ -132,6 +133,16 @@ export default function LsllGroupClient() {
           ariaLabel={tr({ zh: '一步 / 两步', en: 'One-look / two-look' })}
         />
         {!twoLook && <AlgViewModeToggle value={view} onChange={changeView} className="alg-view-toggle" />}
+        {/* 练这一大类:全站同一个训练器,当前的翻棱筛选一并带过去 */}
+        {!twoLook && (
+          <Link
+            href={`/alg/3x3/lsll/run?scope=${lsllScopeParam(cat.slug, eoBad)}`}
+            className="lsll-train-btn"
+            prefetch={false}
+          >
+            <Dumbbell size={15} /> {tr({ zh: '训练', en: 'Train' })}
+          </Link>
+        )}
       </div>
 
       {twoLook && <LsllRouteBrowser family={cat.slug} />}

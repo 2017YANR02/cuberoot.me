@@ -4,6 +4,7 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { Trash2, ChevronDown, ChevronRight, Check, Star, TriangleAlert } from 'lucide-react';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
+import Link from '@/components/AppLink';
 import { CaseThumb } from '@/components/CaseThumb';
 import { VisualCube } from '@/components/VisualCube';
 import { SegmentTime } from '@/components/SegmentTime';
@@ -59,17 +60,23 @@ export function TimerDisplay({
 }
 
 /** 打乱正文。label(如「已复制」反馈)可选 —— 没有就只渲染打乱本身。 */
-export function ScrambleHeader({ scramble, label, font = 'sans' }: { scramble: string; label?: string; font?: string }) {
+export function ScrambleHeader({ scramble, label, font = 'sans', placeholder }: {
+  scramble: string;
+  label?: string;
+  font?: string;
+  /** 打乱还没有时摆什么(虚拟集的打乱是现算的,要等上一两秒 —— 空着一条杠像坏了)。 */
+  placeholder?: string;
+}) {
   return (
     <div>
       {label && <div className="trainer-scramble-label">{label}</div>}
-      <div className={`trainer-scramble-text sf-${font}`}>{scramble || '—'}</div>
+      <div className={`trainer-scramble-text sf-${font}`}>{scramble || placeholder || '—'}</div>
     </div>
   );
 }
 
 export function SolveCard({
-  puzzle, set, scramble, c, header, markSlot, onShowCase, showThumb = true,
+  puzzle, set, scramble, c, header, markSlot, onShowCase, caseHref, showThumb = true,
 }: {
   puzzle: AlgPuzzle;
   set: string;
@@ -83,6 +90,11 @@ export function SolveCard({
   markSlot?: ReactNode;
   /** 点 case 名弹出该情况的详情弹窗(元数据 / 公式)。 */
   onShowCase?: (c: AlgCase) => void;
+  /**
+   * case 名做成链接指向详情页(没有弹窗可弹的集用这条,如 LSLL)。
+   * 真 `<a>`,中键 / Ctrl 点能新开;与 `onShowCase` 二选一,两个都给时链接优先。
+   */
+  caseHref?: (c: AlgCase) => string;
   /** 打乱图开关(「打乱图」关时整卡不出 CaseThumb)。默认 true。 */
   showThumb?: boolean;
 }) {
@@ -97,7 +109,16 @@ export function SolveCard({
           <div className="trainer-card-header is-solve">
             <span className="trainer-card-slot">{header}</span>
             <span className="trainer-card-name">
-              {name != null && (onShowCase && c ? (
+              {name != null && (caseHref && c ? (
+                <Link
+                  href={caseHref(c)}
+                  className="trainer-case-link"
+                  title={tr({ zh: '查看该情况', en: 'View this case' })}
+                  prefetch={false}
+                >
+                  {name}
+                </Link>
+              ) : onShowCase && c ? (
                 <button
                   type="button"
                   className="trainer-case-link"
