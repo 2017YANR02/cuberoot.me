@@ -99,9 +99,11 @@ export default function ExactCoverageMatrix({ stage, slot, colors, onPick }: Pro
 
                   const cell = EXACT_DIST[st][sl]?.[c];
                   if (!cell) {
+                    // 「未实现」≠「不适用」:这一格说得通,只是还没跑。样式必须能分开,
+                    // 否则四色底那一列的四个空格会被读成「四色底 XCross 没有意义」。
                     return (
                       <td key={key}>
-                        <div className="exact-cov-cell is-na">
+                        <div className="exact-cov-cell is-todo">
                           <span className="exact-cov-state">{tr({ zh: '未实现', en: 'Not built' })}</span>
                         </div>
                       </td>
@@ -178,6 +180,13 @@ export default function ExactCoverageMatrix({ stage, slot, colors, onPick }: Pro
           })}
         </li>
         <li>
+          <b className="is-todo">{tr({ zh: '未实现', en: 'Not built' })}</b>
+          {tr({
+            zh: `${countMissing()} 项 —— 这个组合说得通,只是还没跑;不是「不适用」`,
+            en: `${countMissing()} of them — the combination makes sense, it just has not been computed; not the same as N/A`,
+          })}
+        </li>
+        <li>
           <b className="is-na">{tr({ zh: '不适用', en: 'N/A' })}</b>
           {tr({
             zh: '该阶段没有这个槽位概念,槽位下拉里也不会出现这一档',
@@ -197,6 +206,18 @@ function countKind(kind: 'full' | 'zero'): number {
       for (const c of EXACT_COLOR_KEYS) {
         if (EXACT_DIST[st][sl]?.[c]?.kind === kind) n++;
       }
+    }
+  }
+  return n;
+}
+
+/** 说得通但还没跑的格子数。只数矩阵真正画出来的那些列(COLUMNS),别把没画的算进去。 */
+function countMissing(): number {
+  let n = 0;
+  for (const st of EXACT_STAGES) {
+    for (const { slot, colors } of COLUMNS) {
+      if (!SLOT_OK[st].includes(slot)) continue;
+      if (!EXACT_DIST[st][slot]?.[colors]) n++;
     }
   }
   return n;

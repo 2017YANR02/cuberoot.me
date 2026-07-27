@@ -25,12 +25,12 @@ describe('exact_dist 数据完整性', () => {
   // 18 格 ≠ solver 那边的 19 个 dist_* bin:dist_xcross_{1col,2col}_0f 算出的
   // 0 步数已经是各自完整分布的 d=0 行(37,908,599 / 4,716,424,212,835),不另占格子;
   // 反过来 xxxxcross 单色底没有对应 bin,0 步平凡为 1,这里补上。
-  it('矩阵 18 格:8 个完整分布 + 10 个仅 0 步', () => {
+  it('矩阵 19 格:9 个完整分布 + 10 个仅 0 步', () => {
     let full = 0, zero = 0;
     eachCell((_s, _sl, _c, cell) => {
       if ((cell as ExactFull).kind === 'full') full++; else zero++;
     });
-    expect(full).toBe(8);
+    expect(full).toBe(9);
     expect(zero).toBe(10);
   });
 
@@ -72,6 +72,44 @@ describe('对齐 C++ 金标的关键数值', () => {
     const c = EXACT_DIST.cross.unfixed!.WY as ExactFull;
     expect(c.total).toBe('5109350400');
     expect(exactMean(c).toFixed(4)).toBe('5.3872');
+  });
+
+  // dist_cross_6col --faces LRFB:980,995,276,800 / Avg Depth 5.0194
+  // 表格给的四色底 avg 是 5.019,这里是本机穷举复算出来的整条分布。
+  it('四色底 Cross', () => {
+    const c = EXACT_DIST.cross.unfixed!.BGOR as ExactFull;
+    expect(c.total).toBe('980995276800');
+    expect(c.counts).toEqual(['20635791', '309065792', '3241839115', '27981105637',
+      '175574881766', '514537441534', '256994694935', '2335611639', '591']);
+    expect(exactMean(c).toFixed(4)).toBe('5.0194');
+  });
+
+  // 色数越多,取 min 的选择越多,平均步数必须单调下降。四档一起验,
+  // 免得哪天某一档被改错了还看不出来。
+  it('单 > 双 > 四 > 六:平均步数随可选底色数单调下降', () => {
+    const mean = (k: 'W' | 'WY' | 'BGOR' | 'BGORWY') =>
+      exactMean(EXACT_DIST.cross.unfixed![k] as ExactFull);
+    expect(mean('W').toFixed(4)).toBe('5.8121');
+    expect(mean('WY').toFixed(4)).toBe('5.3872');
+    expect(mean('BGOR').toFixed(4)).toBe('5.0194');
+    expect(mean('BGORWY').toFixed(4)).toBe('4.8095');
+    expect(mean('W') > mean('WY')).toBe(true);
+    expect(mean('WY') > mean('BGOR')).toBe(true);
+    expect(mean('BGOR') > mean('BGORWY')).toBe(true);
+  });
+
+  // 四色底与六色底共用整个 12 棱商空间(12!·2¹¹),分母同数不是抄错。
+  it('四色底与六色底同分母,四色底逐档不优于六色底', () => {
+    const q = EXACT_DIST.cross.unfixed!.BGOR as ExactFull;
+    const s = EXACT_DIST.cross.unfixed!.BGORWY as ExactFull;
+    expect(q.total).toBe(s.total);
+    // 累积分布:六色底在每个深度都至少解出四色底那么多状态
+    let cq = 0n, cs = 0n;
+    for (let d = 0; d < q.counts.length; d++) {
+      cq += BigInt(q.counts[d]);
+      cs += BigInt(s.counts[d]);
+      expect(`d=${d} ${cs >= cq}`).toBe(`d=${d} true`);
+    }
   });
 
   // .done/cross_6_col/:980,995,276,800 / Avg Depth 4.80946
@@ -154,10 +192,12 @@ describe('底色折叠与槽位适用性', () => {
   it('同档内各配色折到同一份数据(颜色对称性)', () => {
     for (const k of ['W', 'Y', 'B', 'G', 'O', 'R']) expect(exactColorsOf(k)).toBe('W');
     for (const k of ['WY', 'BG', 'OR']) expect(exactColorsOf(k)).toBe('WY');
+    // 四色底 = 去掉一对相对色,三种取法折到同一份(见下面那条对称性回归)
+    for (const k of ['BGOR', 'ORWY', 'BGWY']) expect(exactColorsOf(k)).toBe('BGOR');
     expect(exactColorsOf('BGORWY')).toBe('BGORWY');
-    // 四色底在精确集无对应口径
-    expect(exactColorsOf('BGOR')).toBe(null);
-    expect(getExactCell('cross', 'unfixed', 'BGOR')).toBe(null);
+    // 长度不是 1/2/4/6 的键没有对应口径
+    expect(exactColorsOf('BGO')).toBe(null);
+    expect(getExactCell('cross', 'unfixed', 'BGO')).toBe(null);
   });
 
   it('单色底 6 个键取到的是同一份分布', () => {
