@@ -8,8 +8,9 @@ pub mod prune_tables;
 
 pub mod block222_solver;
 pub mod block223_solver;
-// lsll:最后一槽 + 顶层 HTM 最优(PoC)。整方目标 + 多张投影 PDB 启发式 IDA*;自包含。
-pub mod lsll_solver;
+// lsll:手写的 PoC(4 张投影 PDB + IDA*,22.8MB 表)2026-07-27 退役 —— 实测 11 步 T-perm
+// 求最优要 1.68s、枚举到 opt+2 要 233s,LSLL 峰值 12–14 步外推每 case 小时级,跑不动
+// 148,384 个的管道。改走 cubeopt/h48 opt9(见 333opt/README.md)。代码在 git b2e21a52b9。
 // chain:mallard 式链式 EO→DR→HTR→[FR]→Finish 编排(全自包含,native+wasm 双轨)。
 pub mod chain_solver;
 pub mod cross_solver;
