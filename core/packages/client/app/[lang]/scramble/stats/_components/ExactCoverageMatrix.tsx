@@ -184,13 +184,17 @@ export default function ExactCoverageMatrix({ stage, slot, colors, onPick }: Pro
               + 'XCross additionally has its deepest bin (438 states at 10 moves) from an upstream exhaustive search',
           })}
         </li>
-        <li>
-          <b className="is-todo">{tr({ zh: '未实现', en: 'Not built' })}</b>
-          {tr({
-            zh: `${countMissing()} 项 —— 这个组合说得通,只是还没跑;不是「不适用」`,
-            en: `${countMissing()} of them — the combination makes sense, it just has not been computed; not the same as N/A`,
-          })}
-        </li>
+        {/* 一格未实现都没有时不列这一条 —— 「未实现 0 项」比不写还费解。
+            样式与 countMissing() 留着:以后加新阶段/新槽位又会空出格子。 */}
+        {countMissing() > 0 && (
+          <li>
+            <b className="is-todo">{tr({ zh: '未实现', en: 'Not built' })}</b>
+            {tr({
+              zh: `${countMissing()} 项 —— 这个组合说得通,只是还没跑;不是「不适用」`,
+              en: `${countMissing()} of them — the combination makes sense, it just has not been computed; not the same as N/A`,
+            })}
+          </li>
+        )}
         <li>
           <b className="is-na">{tr({ zh: '不适用', en: 'N/A' })}</b>
           {tr({
