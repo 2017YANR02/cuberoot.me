@@ -5,6 +5,7 @@ import {
   groupDigits, isSlotApplicable,
   type ExactFull, type ExactStage,
 } from '@/app/[lang]/scramble/stats/_data/exact_dist';
+import { CUBE3_STATES, GOD_DIST_333, GOD_DIST_333_NORMALIZED } from '@/lib/god-distance-333';
 
 /**
  * 精确穷举分布的回归锁。数值来自 solver/src/bin/dist_*.rs 的 GOLDEN 注释
@@ -248,6 +249,18 @@ describe('BigInt 占比:小档不能被整除成 0', () => {
     const r = exactRatio(c.counts[0], c.total);
     expect(r).toBeGreaterThan(0);
     expect(formatExactPct(r)).toBe('4.66e-9%');
+  });
+
+  it('整解那张理论表:1 / 4.3e19 也不能归零(定标到 1e14 会直接整除成 0)', () => {
+    // /scramble/stats 的整解视图拿 cube20.org 的分布当理论对照,最小一档是 d=0 的单个态。
+    const r = exactRatio('1', CUBE3_STATES);
+    expect(r).toBeGreaterThan(0);
+    expect(formatExactPct(r)).toBe('2.31e-18%');
+    // 每一档都得画得出来,d=20 的 4.9 亿也不例外
+    for (const b of GOD_DIST_333) expect(exactRatio(b.count, CUBE3_STATES)).toBeGreaterThan(0);
+    // 归一化那份是完整分布的形状:各档占比加起来正好 1
+    const sum = GOD_DIST_333_NORMALIZED.reduce((a, c) => a + exactRatio(c, CUBE3_STATES), 0);
+    expect(sum).toBeCloseTo(1, 12);
   });
 
   it('整条分布每一档都是正数,且归一化后和约等于 1', () => {

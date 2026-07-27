@@ -457,7 +457,10 @@ const SCALE_N = 1e14;
 
 /** 单档占比,返回 0..1 的归一化值(不是百分数)。 */
 export function exactRatio(count: string, total: string): number {
-  return Number((BigInt(count) * SCALE) / BigInt(total)) / SCALE_N;
+  const scaled = Number((BigInt(count) * SCALE) / BigInt(total)) / SCALE_N;
+  // 比 1e-14 还小的档定标后直接归零(整解那张理论表:d ≤ 9 对 4.3e19 的分母,
+  // 最小一档 2.3e-20)。这种量级只用于显示,退回浮点相除 —— 双精度还有 16 位有效数字。
+  return scaled > 0 ? scaled : Number(count) / Number(total);
 }
 
 /** 整条分布的归一化值表,键为深度字符串 —— 直接喂给 DiscreteHistogram 的 pct 字段。 */

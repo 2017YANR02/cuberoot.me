@@ -28,6 +28,9 @@ import {
   compactExact, exactColorsOf, exactMean, exactRatios, getExactCell, groupDigits,
   type ExactColors, type ExactFull, type ExactSlot, type ExactStage,
 } from './_data/exact_dist';
+import {
+  CUBE3_STATES, GOD_DIST_333, GOD_DIST_333_NORMALIZED, GOD_KIND_MARK, GOD_MEAN_HTM,
+} from '@/lib/god-distance-333';
 import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
 import { CSTIMER_SOLVABLE_IDS } from '@/lib/cstimer-scramble';
 import PillToggle from '@/components/PillToggle/PillToggle';
@@ -192,6 +195,20 @@ const EXACT_SET_META: SetData = {
     eo: { sample_count: 0, stages: EXACT_EO_STAGES, data: {} },
   },
 };
+
+// ── 整解:cube20.org 的理论分布 ────────────────────────────────────────────
+// 真题那条(整解最优步数,n=1,317,565)是从均匀随机态里抽的样,理论分布就是它的母体。
+// 包成 ExactFull 的形状,直接复用精确集那套 BigInt 占比/紧凑写法 —— 不另写一套数值代码。
+// d=16..19 走归一化值(cube20.org 只给两位有效数字,原值相加比真实尾部大 1.03%)。
+const GOD_CELL: ExactFull = {
+  kind: 'full',
+  total: CUBE3_STATES,
+  counts: GOD_DIST_333_NORMALIZED,
+};
+// 柱高/对数轴用的近似值(超 Number 安全区,只定形状);占比与柱顶数字走 ratios / exactLabel。
+const GOD_COUNTS_APPROX: Record<string, number> = Object.fromEntries(
+  GOD_DIST_333_NORMALIZED.map((c, d) => [String(d), Number(c)]),
+);
 
 // 长度 tab「合并/分开」只对属于某 MERGE_GROUP 的项目有意义(333↔单手、三盲↔多盲);
 // 其余项目(4x4/5x5/魔表 等)无可合并对象,不显示该钮。
@@ -653,6 +670,10 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     return data.sets.wca?.variants[variant]?.data[stage]?.[subsetKey]?.counts ?? null;
   }, [isExact, overlayOn, slot, exactFull, data, variant, stage, subsetKey]);
 
+  // 整解 HTM 才有理论对照(QTM 那档的真题分布还没生成,cube20.org 的 QTM 表也没搬)。
+  const godOverlayAvailable = !isExact && is333 && optMetric === 'htm';
+  const godOverlayOn = godOverlayAvailable && overlayOn;
+
   const series = useMemo<HistSeries[]>(() => {
     if (Object.keys(activeCounts).length === 0) return [];
     // 精确穷举:精确值全部预先算好传进去(见 HistSeries 的 ratios/exactLabel/exactTotal)。
@@ -679,20 +700,39 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
       }
       return [theory];
     }
-    return [{
+    const empirical: HistSeries = {
       // 整解:中性暖色单色;其余按所选配色子集渐变。
       name: is333 ? (optMetric === 'qtm' ? 'QTM' : 'HTM') : modeLabel,
       fillColors: is333 ? ['#8B7D72'] : fillColorsForSubset(selectedColors),
       counts: activeCounts,
-    }];
-  }, [activeCounts, isExact, exactFull, overlayCounts, is333, optMetric, selectedColors, modeLabel]);
+    };
+    // 整解 HTM:把 cube20.org 的 0..20 理论分布套在真题柱外面。WCA 打乱本就是随机态,
+    // 这条虚线就是那 132 万条的母体 —— 重合得越好,越说明打乱池没偏。
+    if (godOverlayOn) {
+      const label: Record<string, string> = {};
+      GOD_DIST_333_NORMALIZED.forEach((c, d) => { label[String(d)] = compactExact(c); });
+      return [empirical, {
+        name: tr({ zh: '理论', en: 'Theory' }),
+        fillColors: [],
+        stroke: 'var(--muted-foreground)',
+        counts: GOD_COUNTS_APPROX,
+        ratios: exactRatios(GOD_CELL),
+        exactLabel: label,
+        exactTotal: groupDigits(CUBE3_STATES),
+        outline: true,
+      }];
+    }
+    return [empirical];
+  }, [activeCounts, isExact, exactFull, overlayCounts, is333, optMetric, selectedColors, modeLabel, godOverlayOn]);
 
   const extendedStats = useMemo(() => {
     // 精确集的均值必须用 BigInt 直算 Σd·count/total —— computeStats 走 Number 累加,
     // 在 4.3e19 这种量级上会偏掉(单色底 Cross 会算出 5.8120 而非金标的 5.8121)。
     if (isExact) return exactFull ? { mean: exactMean(exactFull), median: NaN } : null;
-    if (series.length !== 1) return null;
-    return computeStats(series[0].counts);
+    // 叠了理论虚线时仍按实心那条(真题)报均值/中位数 —— 描边不是样本。
+    const solid = series.filter((s) => !s.outline);
+    if (solid.length !== 1) return null;
+    return computeStats(solid[0].counts);
   }, [isExact, exactFull, series]);
 
   // 组平均(难度 tab):从 avgData 取当前 (set,variant,stage,subset) 的 ne/we 直方图。
@@ -1380,6 +1420,20 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
                 ? tr({ zh: 'QTM 计步即将加入', en: 'QTM coming soon' })
                 : tr({ zh: '整解最优步数(HTM)', en: 'Optimal solution length (HTM)' })}
             </span>
+            {godOverlayAvailable && (
+              <BoolToggle
+                value={godOverlayOn}
+                onChange={setOverlayOn}
+                ariaLabel={tr({ zh: '叠加 cube20.org 理论分布', en: 'Overlay the cube20.org distribution' })}
+                label={(
+                  <>
+                    {tr({ zh: '叠加', en: 'Overlay' })}
+                    <i className="scramble-stats-overlay-swatch" aria-hidden />
+                    {tr({ zh: '理论分布', en: 'theory' })}
+                  </>
+                )}
+              />
+            )}
           </div>
         )}
         {/* 均值 / 中位数不再在这里另起一行 —— 复用 DiscreteHistogram 的图内标注(竖虚线 + 底部文字),见下方图表调用。 */}
@@ -1557,6 +1611,33 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
 
       {/* 完整精确值:图上柱顶是紧凑写法,逐位数字在这张表里看。 */}
       {isExact && exactFull && <ExactDistTable cell={exactFull} overlay={overlayCounts} />}
+
+      {/* A1/B4:整解的理论 × 经验并排。数字列走 cube20.org 原值(带 ≈ / ≥),占比列走归一化值。 */}
+      {godOverlayOn && extendedStats && (
+        <p className="scramble-stats-exact-note">
+          {tr({
+            zh: `理论均值 ${GOD_MEAN_HTM.toFixed(2)} HTM(d ≥ 16 那几档继承 cube20.org 的估计精度),`
+              + `这批真题的样本均值 ${extendedStats.mean.toFixed(2)}。`,
+            en: `Theoretical mean ${GOD_MEAN_HTM.toFixed(2)} HTM (the d ≥ 16 bins inherit cube20.org's precision); `
+              + `the sample mean over these scrambles is ${extendedStats.mean.toFixed(2)}.`,
+          })}
+        </p>
+      )}
+      {godOverlayOn && (
+        <ExactDistTable
+          cell={GOD_CELL}
+          overlay={activeCounts}
+          countText={(d) => `${GOD_KIND_MARK[GOD_DIST_333[d].kind]}${groupDigits(GOD_DIST_333[d].count)}`}
+          noteFor={(pct, at) => tr({
+            zh: `最大逐档偏差 ${pct.toFixed(3)} 个百分点(深度 ${at})。d ≤ 15 是逐位精确的穷举结果,`
+              + `真题与它的差就是采样误差;d = 16..19 cube20.org 只给两位有效数字,那几档的差里`
+              + `还混着它自己的取整,别全算到打乱池头上。`,
+            en: `Largest per-bin gap is ${pct.toFixed(3)} percentage points (depth ${at}). Through d = 15 the `
+              + 'theory is an exact enumeration, so the gap there is sampling error; for d = 16..19 cube20.org '
+              + 'publishes only two significant digits, so part of that gap is its own rounding, not the scramble pool.',
+          })}
+        />
+      )}
 
       {isExact && (
         <ExactCoverageMatrix
