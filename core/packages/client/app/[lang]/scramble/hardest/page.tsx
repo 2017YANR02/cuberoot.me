@@ -21,6 +21,7 @@ import {
 } from './_data/cn_xcross_10';
 import { EOCROSS_10F, EOCROSS_10F_BOTH_AXES, EOCROSS_10F_TOTAL } from './_data/eocross_10f';
 import { HARD_SCRAMBLES, type HardStageKey } from './_data/hard_scrambles';
+import { KNOWN_24Q_CENSUS, KNOWN_24Q_DEEPEST, KNOWN_24Q_TOTAL, KNOWN_24Q_UPSTREAM } from './_data/known_24q';
 import { NO_BAR_CORPORA, NO_BAR_SAMPLE, NO_BAR_UPSTREAM } from './_data/no_bar';
 import {
   TWENTY_F_BASELINE, TWENTY_F_CORPUS, TWENTY_F_EASY_CROSS, TWENTY_F_RANDOM_CN_CROSS, TWENTY_F_RANDOM_CROSS,
@@ -428,6 +429,87 @@ export default function HardestPage() {
           <a href="https://kociemba.org/math/optman/20moves.zip" target="_blank" rel="noreferrer">20moves.zip</a>
           {' · '}
           <a href="https://cube20.org/distance20s/random1000.txt" target="_blank" rel="noreferrer">random1000.txt</a>
+        </p>
+      </section>
+
+      <section className="hardest-section">
+        <h2>{tr({ zh: '换成四分之一转:24 步以上的那一撮', en: 'Quarter turns instead: the 24-and-beyond corner' })}</h2>
+        <p>
+          {tr({
+            zh: '上一节的 20 步是半转口径(HTM,180° 也算一步)。改成四分之一转口径(QTM,180° 算两步)之后,'
+              + `已知最深的位置在 24 步以上 —— 上游那份语料共 ${groupDigits(String(KNOWN_24Q_TOTAL))} 条打乱。`
+              + '这一节的分寸得说清楚:「≥ 24 步」这个下界要 QTM 最优求解器才能独立复核,站内只有 HTM 的管道,'
+              + '所以那一半是上游的结论。能验的这半本站全验了 —— 每条打乱自身的 QTM 长度确实等于它标的那个数'
+              + '(也就是「≤」那半的见证),以及下面全部的对称性清点。',
+            en: 'The 20 above is the half-turn metric, where a 180° turn costs one. Switch to quarter turns, where '
+              + `it costs two, and the deepest known positions sit at 24 and beyond — ${groupDigits(String(KNOWN_24Q_TOTAL))} `
+              + 'scrambles upstream. Be clear about the split: the lower bound "at least 24" needs a QTM optimal '
+              + 'solver to check independently, and this site only has an HTM pipeline, so that half stays '
+              + 'upstream’s claim. Everything else is verified here — each scramble really is that long in quarter '
+              + 'turns (the witness for the "at most" half), plus all of the symmetry accounting below.',
+          })}
+        </p>
+        <p>
+          {tr({
+            zh: `逐条数稳定子后:带非平凡对称性的 ${groupDigits(String(KNOWN_24Q_CENSUS.symmetricScrambles))} 条 24q 打乱代表 `
+              + `${groupDigits(String(KNOWN_24Q_CENSUS.symmetricPositions))} 个位置 —— 与上游页面上那两个数逐位相同,`
+              + '而这边是拿对称分析页那套 48 元群自己数出来的。另有 '
+              + `${KNOWN_24Q_CENSUS.antisymmetricOnly} 条只有反对称(各 48 个)、`
+              + `${KNOWN_24Q_CENSUS.plain} 条什么对称都没有(各 96 个)——`
+              + `上游说最后这类最难找,现在他们已经找到 262 + 31 条(共 ${groupDigits(String(KNOWN_24Q_UPSTREAM.plainPositions))} 个位置),`
+              + `本站这份快照里还只有 ${KNOWN_24Q_CENSUS.antisymmetricOnly + KNOWN_24Q_CENSUS.plain} 条:长出来的全在这一类,`
+              + '带对称的那批一条没变。',
+            en: `Counting stabilisers one by one: the ${groupDigits(String(KNOWN_24Q_CENSUS.symmetricScrambles))} symmetric `
+              + `24q scrambles stand for ${groupDigits(String(KNOWN_24Q_CENSUS.symmetricPositions))} positions — the same `
+              + 'two numbers upstream prints, derived here with the 48-element group behind our symmetry page. Another '
+              + `${KNOWN_24Q_CENSUS.antisymmetricOnly} have antisymmetry only (48 positions each) and `
+              + `${KNOWN_24Q_CENSUS.plain} have neither (96 each). Upstream calls that last kind the hardest to find; `
+              + `they are now up to 262 + 31 of them (${groupDigits(String(KNOWN_24Q_UPSTREAM.plainPositions))} positions) `
+              + `while this snapshot holds ${KNOWN_24Q_CENSUS.antisymmetricOnly + KNOWN_24Q_CENSUS.plain}. All the growth `
+              + 'is in that class — the symmetric half has not moved.',
+          })}
+        </p>
+        <table className="hardest-stage-table hardest-census">
+          <thead>
+            <tr>
+              <th scope="col">{tr({ zh: 'QTM', en: 'QTM' })}</th>
+              <th scope="col">{tr({ zh: '对称型', en: 'Type' })}</th>
+              <th scope="col">{tr({ zh: '代表位置数', en: 'Positions' })}</th>
+              <th scope="col">{tr({ zh: '打乱', en: 'Scramble' })}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {KNOWN_24Q_DEEPEST.map((d) => (
+              <tr key={d.scramble}>
+                <th scope="row">{d.q}</th>
+                <td>{d.type}</td>
+                <td className="hardest-stage-n">{d.positions}</td>
+                <td className="hardest-stage-sol">
+                  <Link href={symmetryHref(d.scramble)} prefetch={false}>{d.scramble}</Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p>
+          {tr({
+            zh: `比 24 还深的全语料就这三条:一个 26q(superflip + fourspot,自身与自身的逆同构)和它的两个近邻。`
+              + '那个 26q 的稳定子有 32 个元素,所以它只代表 3 个位置 —— 上游写的「三个朝向」正是这么来的,'
+              + `本机数出来也是 3。三档位置数相加:${groupDigits(String(KNOWN_24Q_CENSUS.positions24))} + `
+              + `${KNOWN_24Q_CENSUS.positions25} + ${KNOWN_24Q_CENSUS.positions26} = `
+              + `${groupDigits(String(KNOWN_24Q_CENSUS.positions))}。`,
+            en: 'Those three are the entire deeper-than-24 corpus: one 26q position (superflip plus fourspot, '
+              + 'self-inverse) and its two neighbours. The 26q one has a 32-element stabiliser, so it stands for just '
+              + 'three positions — which is exactly upstream’s "three orientations", and three is what our own count '
+              + `gives. The three depths add up: ${groupDigits(String(KNOWN_24Q_CENSUS.positions24))} + `
+              + `${KNOWN_24Q_CENSUS.positions25} + ${KNOWN_24Q_CENSUS.positions26} = `
+              + `${groupDigits(String(KNOWN_24Q_CENSUS.positions))}.`,
+          })}
+        </p>
+        <p className="hardest-source">
+          {tr({ zh: '语料来源:', en: 'Corpus: ' })}
+          <a href={KNOWN_24Q_UPSTREAM.url} target="_blank" rel="noreferrer">cube20.org/distance20s</a>
+          {` (qtm.zip, ${KNOWN_24Q_UPSTREAM.asOf})`}
         </p>
       </section>
 
