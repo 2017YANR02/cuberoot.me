@@ -187,6 +187,9 @@ export default function ProbabilityPage() {
                 「OLL 跳步是多少?」这类问题的答案全在下表,而且每一条都是现场从状态空间算出来的整数比,
                 不是抄来的小数。顶层那一族直接在 62,208 里数;十字、2×2×2 块与 Roux 那三族要用容斥 ——
                 同一个底色的几个目标会共用棱块,不能简单相加。
+                表尾换项目:二阶那几格与站内 3,674,160 态全枚举同源,四阶中心是纯组合数,
+                五魔顶层的角排列与棱排列<strong>各自必为偶置换</strong>(每个面转都是 5-轮换),
+                所以那边是 A5 的 60 种而不是 5! 的 120 种。
                 最后一张表把任意一条概率放进二项分布:一轮 N 把里恰好跳几次、至少跳几次。
               </>}
               en={<>
@@ -194,6 +197,10 @@ export default function ProbabilityPage() {
                 integer ratio computed from the state space rather than a transcribed decimal. The last-layer
                 rows are counted directly inside the 62,208-state universe; the cross, 2×2×2 and Roux rows need
                 inclusion-exclusion, because goals of the same family share pieces and cannot simply be added.
+                The last families switch puzzles: the 2×2 rows come from the site’s own enumeration of all
+                3,674,160 states, the 4×4 centre rows are pure combinatorics, and on Megaminx the last-layer
+                corner and edge permutations are <strong>each forced to be even</strong> (every face turn is a
+                5-cycle), so that family lives in A5’s 60, not 5!’s 120.
                 The last table drops any of those probabilities into a binomial: how many skips in a round of N.
               </>}
             />
