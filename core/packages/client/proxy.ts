@@ -87,21 +87,37 @@ function setLangCookie(res: NextResponse, lang: Locale) {
 // `rest` is the locale-stripped path, so en/zh share one sub-path.
 const CANONICAL_HOST = 'https://cuberoot.me';
 
+// Routes that compute their OWN canonical in generateMetadata and therefore must
+// NOT also get one from this header. Two sources naming different URLs is a
+// conflict Google resolves by ignoring BOTH and picking its own — which would
+// silently undo the very consolidation the page is doing.
+//
+// Only recon DETAIL pages qualify: `/recon/2523` and `/recon/2523-<slug>` both
+// canonicalise to the slugged form (recon/[id]/page.tsx → reconCanonical), so on
+// the bare-id URL the header said `/recon/2523` while the HTML said
+// `/recon/2523-zhen-chen-oh-2026wca-f`. Verified live before the fix.
+//
+// Deliberately narrow — `\d[^/]*$` means one segment starting with a digit, so
+// it matches the detail page and nothing else. /recon (list), /recon/submit,
+// /recon/submit-sketch, /recon/person/<wcaId> and /recon/<id>/alt/<n> have no
+// generateMetadata of their own and still need the header's canonical.
+const OWNS_ITS_CANONICAL = /^\/recon\/\d[^/]*$/;
+
 function setSeoLinkHeaders(res: NextResponse, rest: string, locale: Locale) {
   const sub = rest === '/' ? '' : rest;
   const en = `${CANONICAL_HOST}${sub || '/'}`; // bare
   const zh = `${CANONICAL_HOST}/zh${sub}`;
   const self = locale === 'zh' ? zh : en;
+  // hreflang is always safe to emit: on a non-canonical URL Google reads it from
+  // the canonical target instead, and recon's own sitemap declares it too.
+  const links = [
+    `<${en}>; rel="alternate"; hreflang="en"`,
+    `<${zh}>; rel="alternate"; hreflang="zh-Hans"`,
+    `<${en}>; rel="alternate"; hreflang="x-default"`,
+  ];
+  if (!OWNS_ITS_CANONICAL.test(sub)) links.unshift(`<${self}>; rel="canonical"`);
   // append (not set) so we never clobber Next's own preload Link headers.
-  res.headers.append(
-    'Link',
-    [
-      `<${self}>; rel="canonical"`,
-      `<${en}>; rel="alternate"; hreflang="en"`,
-      `<${zh}>; rel="alternate"; hreflang="zh-Hans"`,
-      `<${en}>; rel="alternate"; hreflang="x-default"`,
-    ].join(', '),
-  );
+  res.headers.append('Link', links.join(', '));
 }
 
 export function proxy(req: NextRequest) {
