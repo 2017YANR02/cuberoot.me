@@ -342,6 +342,72 @@
   line-height: 1.75;
   color: var(--prob-text-sub);
 }
+/* ─── 三轴坏棱 ─────────────────────────────────────────────────────── */
+
+.prob-eo-nums {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 34px;
+  margin-bottom: 14px;
+}
+.prob-eo-nums div { display: flex; flex-direction: column; gap: 2px; }
+.prob-eo-nums b {
+  font-size: 1.25rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.prob-eo-nums span { font-size: 0.78rem; color: var(--prob-text-mute); }
+
+.prob-eo-cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+  gap: 22px 40px;
+  align-items: start;
+}
+.prob-eo-cols h4 {
+  margin: 0 0 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.prob-eo-sub {
+  margin-left: 8px;
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--prob-text-mute);
+}
+.prob-eo-table { min-width: 0; font-size: 0.84rem; }
+.prob-eo-table th[scope='row'] { font-variant-numeric: tabular-nums; }
+.prob-eo-bar {
+  position: relative;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.prob-eo-bar i {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  border-radius: 2px;
+}
+.prob-eo-bar span { position: relative; }
+.prob-eo-more {
+  margin-top: 6px;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--accent);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+.prob-eo-note {
+  margin: 14px 0 0;
+  font-size: 0.84rem;
+  line-height: 1.75;
+  color: var(--prob-text-sub);
+}
+
 .prob-round { margin-top: 26px; }
 .prob-round-head {
   display: flex;

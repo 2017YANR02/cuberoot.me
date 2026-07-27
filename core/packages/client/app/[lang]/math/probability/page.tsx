@@ -30,6 +30,7 @@ const OrbitExplorer = dynamic(() => import('./_components/OrbitExplorer'), { ssr
 const BurnsideLab = dynamic(() => import('./_components/BurnsideLab'), { ssr: false, loading: labBox });
 const SetAccounting = dynamic(() => import('./_components/SetAccounting'), { ssr: false, loading: labBox });
 const SkipTable = dynamic(() => import('./_components/SkipTable'), { ssr: false, loading: labBox });
+const EoAxes = dynamic(() => import('./_components/EoAxes'), { ssr: false, loading: labBox });
 
 export default function ProbabilityPage() {
   useTranslation();
@@ -197,6 +198,26 @@ export default function ProbabilityPage() {
             />
           </p>
           <SkipTable />
+        </section>
+
+        <section className="prob-section">
+          <h2 className="prob-h2">{t('六 三个轴的坏棱不是各算各的', '6 Bad edges: the three axes are not independent')}</h2>
+          <p className="prob-body">
+            <T
+              zh={<>
+                一个打乱有三个 EO 轴,每个轴上都有一个「坏棱数」。人人都知道平均是 6 条 ——
+                那是<strong>单个轴</strong>的平均。但 ZZ 选 EO 轴、DR 选方向时,看的是三个轴里最少的那个,
+                而三个轴的联合分布并不是三次独立抽样:坏棱数必为偶数,三个数的极差还不能超过 8。
+              </>}
+              en={<>
+                A scramble has three EO axes, each with its own bad-edge count. Everyone knows the average is
+                six — that is the average for <strong>one axis</strong>. But choosing an EO axis in ZZ, or a
+                direction in DR, means taking the best of the three, and the joint distribution is not three
+                independent draws: every count is even, and the spread between them can never exceed eight.
+              </>}
+            />
+          </p>
+          <EoAxes />
         </section>
 
         <section className="prob-section">
