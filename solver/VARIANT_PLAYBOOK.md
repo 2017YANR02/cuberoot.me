@@ -75,7 +75,10 @@ Petrus 223 两方法 4 阶段 flat stage id 0..3,微表 eager、5.3M 表 RefCell
 3. **worker 是手维护源** `tools/solver/rust-cross/cross-solver-worker.js`(pkg-web 里那份是旧的):
    `init` 加 `need === '<v>'` 分支(只拉自己的表)+ 消息类型 `<v>_stage` / `<v>_moves`。
 4. `lib/rust-cross-client.ts`:**bump `V`**(如 `v=20260610a`);`TABLE_BYTES` 加新表解压字节
-   (= state_count×stride×4+12);`TABLE_SETS` 加 need 清单(**必须与 worker init 分支一致**);
+   (= state_count×stride×4+12);`TABLE_SETS` 加 need 清单(**必须与 worker init 分支一致**;
+   **只列 pt_/opt_ 前缀的表** —— mt_ 移动表一律 `mt_gen::get("<name>")` 现场生成,
+   构造器不收它们的字节,写进清单就是白下载 gz 好几 MB。契约由
+   `client/tests/rust_cross_table_sets.test.ts` 锁);
    `RustCrossPool` 接口 + return 对象加 `solve<V>Stage/Moves`;moves 类消息名加进 onmessage 的
    `job.resolve({...m.data, ms})` 分支。
 5. `lib/rust-cross-pool.ts`:`PoolNeed` 联合加 `'<v>'`。
