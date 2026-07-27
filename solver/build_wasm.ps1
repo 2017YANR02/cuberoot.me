@@ -27,6 +27,8 @@ Write-Host "[2/4] wasm-bindgen (target web)..." -ForegroundColor Cyan
 Remove-Item -Recurse -Force (Join-Path $out "cross_solver*") -ErrorAction SilentlyContinue
 wasm-bindgen $wasm --out-dir $out --target web --out-name cross_solver
 
+# 注:mt_* 自 2026-07-27 起由 WASM 内 mt_gen 现场生成,浏览器不再下载它们(TABLE_SETS 只列
+# pt_/opt_)。这里仍一并 gzip:产物是 native 侧表的镜像,留着可对拍、也是回滚保险。
 Write-Host "[3/4] gzip tables..." -ForegroundColor Cyan
 $tdir = Join-Path $out "tables"
 New-Item -ItemType Directory -Force -Path $tdir | Out-Null
