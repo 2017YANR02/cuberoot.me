@@ -33,6 +33,7 @@ const DistanceDistribution = lazy(() => import('./_components/DistanceDistributi
 const SubgroupChain = lazy(() => import('./_components/SubgroupChain'));
 const SuperflipShowcase = lazy(() => import('./_components/SuperflipShowcase'));
 const OpenProblems = lazy(() => import('./_components/OpenProblems'));
+const PartialSolves = lazy(() => import('./_components/PartialSolves'));
 const FaqSection = lazy(() => import('./_components/FaqSection'));
 const CosetCompression = lazy(() => import('./_components/CosetCompression'));
 const IdaStarTree = lazy(() => import('./_components/IdaStarTree'));
@@ -481,6 +482,15 @@ function dfs(state, max_depth, g):
   return None`}</pre>
             <p className="god-algo-pseudo-cap">{<T zh={<>一次 IDA* 求解一个状态 (毫秒级)。如果对所有 ~5588 万 super-cosets 都跑一次 IDA* 并保证 <TeX src="\le 20" /> 步,直径就被压实 = 20。</>} en={<>One IDA* call solves one state (milliseconds). Run it on all ~55.88M super-cosets with the assertion <TeX src="\le 20" /> holds — and the diameter is nailed at 20.</>} />}</p>
           </div>
+        </section>
+
+        {/* ────────────── PARTIAL SOLVES ────────────── */}
+        <section className="god-section">
+          <h2>{t('部分还原也有上帝之数', "Partial solves have God's numbers too")}</h2>
+          <p className="god-sec-lead">{<T zh={<>把还原目标缩小,直径也跟着缩小。下面两族是最干净的例子:除了 5 个角(或 5 条棱)首尾相接转一圈,整个魔方是好的。这样的状态最多 15 步能解 —— 比整个魔方的 20 少 5 步,但比"只有 5 个块乱了"给人的直觉多得多。</>} en={<>Shrink the goal and the diameter shrinks with it. The two cleanest examples: everything is solved except five corners (or five edges) that cycle among themselves. Such a state still takes up to 15 moves — five below the full cube&apos;s 20, and far more than &quot;only five pieces are off&quot; suggests.</>} />}</p>
+          <Suspense fallback={<div className="god-loading">…</div>}>
+            <PartialSolves />
+          </Suspense>
         </section>
 
         {/* ────────────── OPEN PROBLEMS ────────────── */}
