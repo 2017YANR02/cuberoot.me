@@ -436,3 +436,36 @@ tab 标题（puzzle 在 query 里，服务端看不见）。
 - **19 处非字面量 `useDocumentTitle` 未逐个核对**（forum / recon 详情 / persons / comp /
   globe / 各 trainer 等）。它们所在路由要么是哨兵壳、要么标题真的随运行时状态变，留着是对的；
   但没有一条条验证「服务端 metadata 与它是否冲突」。
+
+## 7. 守卫（2026-07-27 加）
+
+第二轮之后补的一层：`tests/page-metadata-coverage.test.ts`（登记在 `/code/guards`）。
+
+**为什么需要**：漏配标题是**静默失败** —— `app/sitemap.ts` 是扫目录生成的，新页面会自动
+进站点地图（等于主动请爬虫来看），标题却不会自动有。结果不是"没效果"，是"招来爬虫看一个
+没标题的页"。当初全站 0 个 `<title>` 就是这么攒出来的，靠约定文档防它，等于用已经失败过
+一次的机制再防一次（CLAUDE.md「立约束要分层」）。
+
+守卫查四件事，全部硬红（不是棘轮）：
+
+1. 每个含 `page.tsx` 的路由，必须在**它自己的目录**里有 metadata 来源 ——
+   `layout.tsx` 调 `pageMetadata('<route>')`、`layout.tsx`/`page.tsx` 自带
+   `generateMetadata`。**祖先 layout 不算**，否则人人都能"继承"到站级默认，守卫就废了。
+2. `pageMetadata('<key>')` 的 key 必须真在 `PAGE_META` 里 —— 拼错同样静默退回默认标题。
+3. `PAGE_META` 不许留孤儿条目（路由改名/删除后的残留）。
+4. ALLOWLIST 本身不许腐烂：豁免的路由必须还存在，且不许已经有了自己的 metadata。
+
+**实测触发过**：临时建了个无 layout 的 `zzprobe` 路由 → 第 1 条红；再给它一个 key 拼错的
+layout → 第 2 条红。不是只跑一遍看绿。
+
+**加守卫时顺手补齐的路由**（覆盖率 213/228 → 219/228）：
+
+- `/wca/<statId>` 62 个统计页 —— 没有 build 期 id 列表，但 `/stats/index.json` 里有双语名，
+  照教程那套在 `generateMetadata` 里 fetch。
+- `/wca/prediction/333/<sectionId>` 25 节 —— `SECTIONS` 从 client 组件抽到
+  `_data/sections.ts`，服务端与客户端共用一份。
+- `/recon/<id>/alt` 及其 3 个子路由 —— 静态通用标题，好过继承 `/recon` 的"复盘"。
+
+**剩下 9 条豁免**（每条在测试文件里带理由）：7 个哨兵壳（`dynamicParams=false` + 参数
+rewrite 成 `_`，服务端拿不到值；要给标题只能转 dynamic 渲染 = 唯一撞 Vercel 配额的改动）
++ 2 个 dev/poc 页（`app/sitemap.ts` 的 `EXCLUDE` 也排除它们）。
