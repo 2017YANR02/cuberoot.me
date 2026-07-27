@@ -254,6 +254,17 @@
   word-break: break-word;
 }
 
+/* 24 行对称型普查:第三列是整条打乱,窄屏让表自己横滚,别把页面撑宽。 */
+.hardest-census {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.hardest-census td a {
+  color: inherit;
+}
+
 /* ── 尾注 ───────────────────────────────────────────── */
 
 .hardest-source {
