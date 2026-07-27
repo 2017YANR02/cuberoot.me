@@ -106,6 +106,25 @@ cargo test --release -- --ignored     # 8 个 ignored(中表 + e2e XCross + pseu
 | `TESTING.md` | 测试输入/golden 说明 + verify.ps1 用法 + scramble_5/100 实测耗时表 |
 | `PORTING_NOTES.md` | 5 个 phase 的设计决策、C++ 端歧义、表 magic 升级、命名差异。**改代码前必读** |
 | `README.md` | 进度表 + 上手命令 + env 清单 + 路线图 |
+| `333opt/` | **不是 Rust** —— cubeopt/h48 整方最优管道(Node + WASM),详见下节 |
+
+## 整方最优解:走 cubeopt/h48,别自己造(2026-07-27)
+
+**本仓库的 Rust 全是「阶段」求解器(cross / xcross / pair / eo / dr / htr / block / roux …)。
+要「整个三阶的 HTM 最优解」不在这些里,已有成品:**
+
+- 引擎:`core/packages/client/public/cubeopt/cube48opt{1..9}.mjs`(h48 最优解 WASM,memory64)
+- 表:`solver/tables/h48/h48prun31h{5,6,9}.dat`(972M / 1.95G / **15.6G**,gitignored,本机已有)
+- 管道 + 实测成本:**`solver/333opt/README.md`**(断点续跑、崩溃自重启、进度行都在里面)
+- 操作入口:skill **`update-scramble-stats` §C**(`update_cross_stats.ps1 -Jobs 333opt`)
+- 服务端封装:`core/packages/server/src/cubeopt/`(daemon + mem-arbiter,与 cube555 互斥)
+
+实测:opt9 15.6G 表 **~250ms/解**(12 线程,~4 解/s),对象是 18 步随机态 —— 最难的一档。
+opt5 972M 表要 ~43s/解,差 170 倍:**这类问题的成败在表大小,不在代码。**
+
+> 2026-07-27 有过一次教训:LSLL 最优求解写了一套自包含 22.8MB 投影 PDB + IDA*(已退役),
+> 11 步的 T-perm 求最优 1.68s、枚举到 opt+2 要 233s,比 h48 慢 1–2 个数量级。原因就是本节
+> 之前不存在 —— 文件地图只列 Rust,h48 表 gitignored 看不见,于是从零造轮。**动手前先看这节。**
 
 ## 表格式(Rust 自有,不兼容 C++ .bin)
 
