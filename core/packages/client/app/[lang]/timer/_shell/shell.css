@@ -596,12 +596,13 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 /* Solver-hint pills (de-boxed in SolverHints.tsx) brighten on hover. */
 .shell-undersurface .solver-hints .solver-hint-btn:hover { color: var(--foreground); }
 
-/* ── 解法提示 panel (333) — desktop right rail / mobile inline-below-scramble ──
+/* ── 解法提示 panel (333) — desktop right rail / phone full-screen sheet ──
    A persistent, collapsible StageSolver host (replaces the old modal). Lives as
-   the last child of .shell-main: on phones it flows in-place under the scramble
-   chrome; on desktop it's lifted to an absolute right rail and .shell-main is
-   given matching right padding so the centered timer never sits under it. */
-.timer-shell { --solver-rail-w: clamp(380px, 31vw, 520px); --solver-open-surface-h: 62dvh; }
+   the last child of .shell-main: on phones only the pill flows in-place under the
+   scramble chrome and tapping it opens .solver-sheet (below); on desktop the
+   panel is lifted to an absolute right rail and .shell-main is given matching
+   right padding so the centered timer never sits under it. */
+.timer-shell { --solver-rail-w: clamp(380px, 31vw, 520px); }
 .solver-panel {
   width: 100%;
   display: flex;
@@ -626,9 +627,12 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 .solver-panel-head:hover { background: var(--shell-hover); color: var(--foreground); }
 .solver-panel-title { white-space: nowrap; }
 .solver-panel-chevron { opacity: 0.7; transition: transform 160ms ease; }
-/* Phone accordion: collapsed ▾ (down) → expand, open ▴ (up) → collapse. */
+/* Desktop accordion: collapsed ▾ (down) → expand, open ▴ (up) → collapse.
+   Phones show a static ⤢ (.solver-panel-expand) instead — they get a full-screen
+   sheet, not an in-place fold, so a rotating chevron would misdescribe the tap. */
 .solver-panel[data-open='false'] .solver-panel-chevron { transform: rotate(90deg); }
 .solver-panel[data-open='true']  .solver-panel-chevron { transform: rotate(-90deg); }
+.solver-panel-expand { opacity: 0.7; }
 .solver-panel-body { width: 100%; margin-top: 8px; }
 .solver-panel-loading {
   display: flex;
@@ -746,27 +750,56 @@ html[data-theme=dark] { --scramble-fg: #fff; }
    bare panel used to; desktop turns it into the absolute right column below. */
 .shell-rail { display: contents; }
 
-/* Phone: when expanded, let the app grow & the page scroll so the tall solver
-   sits below the scramble instead of being clipped by the shell's overflow. */
-@media (max-width: 1023px) {
-  /* :not(.fullscreen) — the rail is display:none in fullscreen but :has() still
-     matches its hidden panels, so without this the surface would keep the
-     panel-open min-height / scroll reflow with nothing to show. */
-  .timer-shell:not(.fullscreen):has(.shell-rail .solver-panel[data-open='true']) {
-    overflow: visible;
-    height: auto;
-  }
-  .timer-shell:not(.fullscreen):has(.shell-rail .solver-panel[data-open='true']) .shell-main { flex: 0 0 auto; }
-  .timer-shell:not(.fullscreen):has(.shell-rail .solver-panel[data-open='true']) .timing-surface { min-height: var(--solver-open-surface-h); }
-  /* Opening a panel re-flows the page (shell-main grows to fit it below), so the
-     bottom-of-shell-main anchored stat rail would otherwise drop to the very page
-     bottom, under the panel. Re-anchor it to the bottom-left of the timing surface
-     (its min-height above) so the 次数/成功/… readout stays put by the timer. */
-  .timer-shell:not(.fullscreen):has(.shell-rail .solver-panel[data-open='true']) .shell-stat-rail {
-    top: var(--solver-open-surface-h);
-    bottom: auto;
-    transform: translateY(calc(-100% - 8px));
-  }
+/* Phone / tablet (<1024px): the pill opens a full-screen sheet. It used to expand
+   in place, but the pill sits directly above the bottom bar, so everything it
+   revealed landed below the fold and the page didn't scroll to it — the tap read
+   as a dead button (issue #49). Fixed + inset:0 with its own scroll container;
+   ?hints=1 owns the open state so the back gesture closes it. */
+.solver-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 62; /* over the 成绩/图表/工具 bottom sheet (61) and the deskpet (40) */
+  display: flex;
+  flex-direction: column;
+  background: var(--background);
+  color: var(--foreground);
+  animation: solver-sheet-in 180ms ease;
+}
+@keyframes solver-sheet-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) { .solver-sheet { animation: none; } }
+.solver-sheet-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  padding: calc(10px + env(safe-area-inset-top)) 12px 10px;
+  border-bottom: 1px solid var(--shell-divider);
+}
+.solver-sheet-title { font-size: 15px; font-weight: 600; }
+/* Toolbar convention: title left, close right — the one place a spacer is right. */
+.solver-sheet-close {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.solver-sheet-close:hover { background: var(--shell-hover); color: var(--foreground); }
+.solver-sheet-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 10px 12px calc(16px + env(safe-area-inset-bottom));
 }
 
 /* Desktop: the .shell-rail lifts to an absolute column pinned to the right edge
@@ -1464,6 +1497,7 @@ body:has(.timer-shell.is-solving) .clawd-deskpet {
    we never touch the global DeskPet component. Covers Solo (timer-shell sheets/
    menus) AND Battle (battle-container overlays/sheets). */
 body:has(.timer-shell .shell-sheet-backdrop) .clawd-deskpet,
+body:has(.timer-shell .solver-sheet) .clawd-deskpet,
 body:has(.timer-shell .shell-penalty-sheet) .clawd-deskpet,
 body:has(.timer-shell .row-quick-sheet-backdrop) .clawd-deskpet,
 body:has(.timer-shell .row-quick-menu) .clawd-deskpet,
