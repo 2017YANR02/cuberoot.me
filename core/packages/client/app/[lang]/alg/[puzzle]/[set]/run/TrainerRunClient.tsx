@@ -90,6 +90,17 @@ export default function TrainerRunClient() {
   const virtual = useMemo(() => (puzzle ? virtualAlgSet(puzzle, setSlug) : undefined), [puzzle, setSlug]);
   const virtualScope = virtual ? (scopeParam?.trim().toLowerCase() || null) : null;
 
+  // 分轮次的范围(LSLL 已收录:302 条一轮、494 轮):轮次名贴在复习进度前面,
+  // 「本轮结束」的主按钮是**下一轮的 URL** —— 换 scope 就是换一场,那批 case 全换了
+  // 新的收尾 ZBLL,不是重洗同一批。ref 给键盘用(弹窗里回车 = 点主按钮)。
+  const roundLabel = virtual?.roundLabel?.(virtualScope) ?? null;
+  const nextRoundScope = virtual?.nextRoundScope?.(virtualScope) ?? null;
+  const nextRoundHref = nextRoundScope
+    ? `/alg/${puzzleParam}/${setSlug}/run?scope=${encodeURIComponent(nextRoundScope)}`
+    : null;
+  const nextRoundHrefRef = useRef<string | null>(null);
+  nextRoundHrefRef.current = nextRoundHref;
+
   // 合练:`/alg/<puzzle>/mix/run?sets=pll,zbll` —— mix 是哨兵段,成员集合在 query 里
   const [setsParam] = useQueryState('sets');
   const isMix = setSlug === MIX_SLUG;
@@ -407,7 +418,9 @@ export default function TrainerRunClient() {
       if (st0.recapRoundDone) {
         if (e.code === 'Enter' || e.code === 'Space' || e.code === 'ArrowRight') {
           e.preventDefault();
-          st0.continueRecapRound();
+          // 分轮次的范围:「下一轮」是换一批 case(换 URL),不是重洗本轮
+          if (nextRoundHrefRef.current) router.push(nextRoundHrefRef.current);
+          else st0.continueRecapRound();
         } else if (e.code === 'Escape') {
           // 单机:Esc = 「先不了」,停在最后这题;房间没这个选项,仍等同「继续下一轮」
           e.preventDefault();
@@ -872,6 +885,8 @@ export default function TrainerRunClient() {
           {/* 复习进度贴在齿轮右侧(absolute 脱流:齿轮仍精确居中,面板锚点不受影响) */}
           {recapShown && recapCur && (
             <span className="trainer-recap-progress">
+              {/* 分轮次的范围(LSLL 已收录:302 条一轮、494 轮)把「第几轮」摆在进度前面 */}
+              {roundLabel && <span className="trainer-recap-round">{tr(roundLabel)}</span>}
               {recapCur.pos}/{recapCur.total}
               {room && (
                 <span className="trainer-recap-coop">
@@ -1571,6 +1586,11 @@ export default function TrainerRunClient() {
                     zh: `全队已刷完本轮全部 ${room.total} 个 case!点「继续下一轮」大家一起开新一轮${room.order === 'shuffle' ? '(重新洗牌)' : ''}。`,
                     en: `The team finished all ${room.total} cases this round! Hit “Next round” to start a fresh round together${room.order === 'shuffle' ? ' (reshuffled)' : ''}.`,
                   })
+                : nextRoundHref
+                ? tr({
+                    zh: `本轮 ${recapCur?.total ?? 0} 个都过了一遍!下一轮还是这批 case,换下一个 ZBLL 收尾 —— 全部走完就把两步路线遍历完了。`,
+                    en: `All ${recapCur?.total ?? 0} of this round are done! The next round keeps the same cases and swaps in the next ZBLL ending — go through them all and you have covered every two-look route.`,
+                  })
                 : tr({
                     zh: `选中的 ${recapCur?.total ?? 0} 个 case 都过了一遍!点「继续下一轮」${recapOrder === 'shuffle' ? '重新洗牌' : '按原顺序'}再走一遍。`,
                     en: `You’ve been through all ${recapCur?.total ?? 0} selected cases! Hit “Next round” to run them again${recapOrder === 'shuffle' ? ', reshuffled' : ' in the same order'}.`,
@@ -1583,15 +1603,28 @@ export default function TrainerRunClient() {
                   {tr({ zh: '先不了', en: 'Not now' })}
                 </button>
               )}
-              <button
-                type="button"
-                className="trainer-round-modal-btn"
-                onClick={continueRecapRound}
-                disabled={roomBusy}
-                autoFocus
-              >
-                {tr({ zh: '继续下一轮', en: 'Next round' })}
-              </button>
+              {/* 分轮次的范围:「再来一遍」是重洗本轮,「下一轮」是换一批 case —— 两件事,两个按钮。
+                  下一轮是真链接(换 ?scope=),中键 / Ctrl 点能新开。 */}
+              {nextRoundHref && (
+                <button type="button" className="trainer-opts-btn is-ghost" onClick={continueRecapRound}>
+                  {tr({ zh: '再刷一遍本轮', en: 'Repeat this round' })}
+                </button>
+              )}
+              {nextRoundHref ? (
+                <Link className="trainer-round-modal-btn" href={nextRoundHref} prefetch={false} autoFocus>
+                  {tr({ zh: '进入下一轮', en: 'Next round' })}
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  className="trainer-round-modal-btn"
+                  onClick={continueRecapRound}
+                  disabled={roomBusy}
+                  autoFocus
+                >
+                  {tr({ zh: '继续下一轮', en: 'Next round' })}
+                </button>
+              )}
             </div>
           </div>
         </div>

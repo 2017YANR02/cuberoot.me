@@ -13,10 +13,20 @@
 import type { AlgCase, AlgSticker } from '@cuberoot/shared';
 import { compareAlgGroupLabel } from '@/lib/alg_group_order';
 import {
-  categoryBySlug, classify, decodeKey, displayState, enumerateCategory,
+  canonicalKey, categoryBySlug, classify, composeState, decodeKey, displayState, enumerateCategory,
   keyFromString, keyToString, unpackState,
 } from './model';
+import { ZBLL_CASE_COUNT, zbllRoundKeys } from './class3';
 import { ZBLS_COVERED_KEYS } from './zbls_overlay';
+
+/**
+ * 已收录范围一共几轮 = 494 个 ZBLL case。
+ *
+ * 第 1 轮 = 公式库那 302 条本身(收尾的 ZBLL 是「全解」,也就是纯 ZBLS);第 n 轮把同样
+ * 302 条 ZBLS case 各自接上第 n 个 ZBLL case(`model.composeState`)。走完 494 轮 =
+ * 302 × 494 = 149,188 条两步路线,一条不落。
+ */
+export const LSLL_ROUNDS = ZBLL_CASE_COUNT;
 
 /** 全 LSLL case 共用一张贴纸描述 —— 图怎么画由 CaseThumb 按 set 决定(同 zbls:iso + vh 遮罩)。 */
 const LSLL_STICKER: AlgSticker = Object.freeze({ kind: 'raw', tag: 'lsll', attrs: {} });
@@ -33,26 +43,52 @@ export interface LsllScope {
   category: string | null;
   /** 翻棱数筛选(大类页的 EO 过滤带过来);不筛为 null。 */
   eoBad: number | null;
+  /** 已收录范围的第几轮(1..494),见 {@link LSLL_ROUNDS};大类范围恒 1。 */
+  round: number;
 }
 
 /**
- * `?scope=` 的写法:`zbls` = 已收录那批;`ap` = 大类 A+;`ap-eo2` = A+ 里翻 2 棱的。
- * 认不出的一律退回已收录 —— 只可能来自手改 URL,退回比空场好。
+ * `?scope=` 的写法:`zbls` = 已收录那批(第 1 轮);`zbls-r7` = 已收录那批的第 7 轮;
+ * `ap` = 大类 A+;`ap-eo2` = A+ 里翻 2 棱的。
+ * 认不出的一律退回已收录第 1 轮 —— 只可能来自手改 URL,退回比空场好。
  */
 export function parseLsllScope(scope: string | null | undefined): LsllScope {
   const s = (scope ?? '').trim().toLowerCase();
-  if (!s || s === LSLL_SCOPE_COVERED) return { category: null, eoBad: null };
+  const covered = /^zbls(?:-r(\d+))?$/.exec(s);
+  if (!s || covered) {
+    const r = covered?.[1] ? Number(covered[1]) : 1;
+    return { category: null, eoBad: null, round: r >= 1 && r <= LSLL_ROUNDS ? r : 1 };
+  }
   const m = /^([a-z]+)(?:-eo(\d+))?$/.exec(s);
   const cat = m && categoryBySlug(m[1]);
   // `pureLL` 的那一类(O)是纯顶层,LSLL 不练它 —— 直链进来退回已收录那批
-  if (!m || !cat || cat.pureLL) return { category: null, eoBad: null };
-  return { category: m[1], eoBad: m[2] == null ? null : Number(m[2]) };
+  if (!m || !cat || cat.pureLL) return { category: null, eoBad: null, round: 1 };
+  return { category: m[1], eoBad: m[2] == null ? null : Number(m[2]), round: 1 };
 }
 
-/** 反过来:大类(+ 翻棱数)→ `?scope=` 的值。 */
+/** 反过来:大类(+ 翻棱数)→ `?scope=` 的值。已收录范围的第 n 轮走 {@link lsllRoundScope}。 */
 export function lsllScopeParam(category: string | null, eoBad?: number | null): string {
   if (!category) return LSLL_SCOPE_COVERED;
   return eoBad == null || eoBad < 0 ? category : `${category}-eo${eoBad}`;
+}
+
+/** 已收录范围第 n 轮的 `?scope=`(第 1 轮就是裸 `zbls`,链接短一点)。 */
+export function lsllRoundScope(round: number): string {
+  return round <= 1 ? LSLL_SCOPE_COVERED : `${LSLL_SCOPE_COVERED}-r${round}`;
+}
+
+/** 下一轮的 `?scope=`;已经是最后一轮(或不是已收录范围)返回 null。 */
+export function lsllNextRoundScope(scope: string | null): string | null {
+  const { category, round } = parseLsllScope(scope);
+  if (category || round >= LSLL_ROUNDS) return null;
+  return lsllRoundScope(round + 1);
+}
+
+/** 「第 n / 494 轮」—— 训练器进度徽章前面那一截。非已收录范围没有轮次,返回 null。 */
+export function lsllRoundLabel(scope: string | null): { en: string; zh: string } | null {
+  const { category, round } = parseLsllScope(scope);
+  if (category) return null;
+  return { zh: `第 ${round} / ${LSLL_ROUNDS} 轮`, en: `Round ${round}/${LSLL_ROUNDS}` };
 }
 
 /** 范围的人话名字(进训练页顶栏)。 */
@@ -87,19 +123,21 @@ export function lsllCaseKeyString(c: AlgCase): string {
   return c.name.slice(c.name.lastIndexOf(' ') + 1);
 }
 
-/** 本场练哪一批。范围见 {@link parseLsllScope};大类最大 15,552 个,已收录 305 个。 */
+/** 本场练哪一批。范围见 {@link parseLsllScope};大类最大 15,552 个,已收录每轮 302 个。 */
 export async function loadLsllCases(scope: string | null): Promise<AlgCase[]> {
-  const { category, eoBad } = parseLsllScope(scope);
+  const { category, eoBad, round } = parseLsllScope(scope);
   if (!category) {
     // 已收录那批横跨多个大类 —— 各自 classify 一次拿到自己的大类,再按全站组名序排
     // (同字母 `+` 在 `-` 前),组内按 case 编号,免得 case 树是 JSON 的随机顺序。
+    // 第 n 轮:每条都接上第 n 个 ZBLL case(第 1 轮的 ZBLL 是全解,合出来还是它自己)。
+    const zbll = unpackState(zbllRoundKeys()[round - 1]);
     const out: { letter: string; key: number }[] = [];
     for (const s of ZBLS_COVERED_KEYS) {
       const key = keyFromString(s);
       if (key == null) continue;
       const cat = classify(unpackState(key)).category;
       if (cat.pureLL) continue;   // O 组:对子已归位,练的是顶层不是最后一槽
-      out.push({ letter: cat.letter, key });
+      out.push({ letter: cat.letter, key: canonicalKey(composeState(zbll, unpackState(key))) });
     }
     out.sort((a, b) => compareAlgGroupLabel(a.letter, b.letter) || a.key - b.key);
     return out.map(x => lsllCase(x.key, x.letter));

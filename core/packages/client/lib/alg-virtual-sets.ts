@@ -11,8 +11,8 @@
  */
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import {
-  LSLL_TRAINER_NOTE, lsllCaseKeyString, lsllScopeLabel, lsllSelectHref, loadLsllCases,
-  resolveLsllCase,
+  LSLL_TRAINER_NOTE, lsllCaseKeyString, lsllNextRoundScope, lsllRoundLabel, lsllScopeLabel,
+  lsllSelectHref, loadLsllCases, resolveLsllCase,
 } from './lsll/trainer-set';
 
 export interface VirtualAlgSet {
@@ -28,6 +28,12 @@ export interface VirtualAlgSet {
   selectHref: (scope: string | null) => string;
   /** 范围名,接在顶栏集名后面。 */
   scopeLabel: (scope: string | null) => { en: string; zh: string };
+  /**
+   * 这个范围是「一轮一轮往下走」的吗?是就给轮次名(贴在复习进度前面:第 3 / 494 轮 12/302),
+   * 并给出下一轮的 `?scope=`(最后一轮返回 null)。不分轮的范围两个都返 null。
+   */
+  roundLabel?: (scope: string | null) => { en: string; zh: string } | null;
+  nextRoundScope?: (scope: string | null) => string | null;
   /** case 详情页地址(卡片上的 case 名点进去)。 */
   caseHref: (c: AlgCase) => string;
   /**
@@ -46,6 +52,8 @@ const REGISTRY: VirtualAlgSet[] = [
     loadCases: loadLsllCases,
     selectHref: lsllSelectHref,
     scopeLabel: lsllScopeLabel,
+    roundLabel: lsllRoundLabel,
+    nextRoundScope: lsllNextRoundScope,
     caseHref: c => `/alg/lsll/case?k=${lsllCaseKeyString(c)}`,
     resolveCase: resolveLsllCase,
   },

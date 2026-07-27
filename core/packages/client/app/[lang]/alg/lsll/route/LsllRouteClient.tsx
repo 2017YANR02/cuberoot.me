@@ -106,10 +106,10 @@ export default function LsllRouteClient() {
       <section className="lsll-section">
         <p className="lsll-note">
           <T
-            zh={<>151,164 条路线里的一条(306 × 494)。两半各自规范,所以这个数与你用哪本公式表无关 ——
+            zh={<>149,188 条路线里的一条(302 × 494)。两半各自规范,所以这个数与你用哪本公式表无关 ——
               但<strong>整条</strong>解法不规范:换一条 ZBLS 公式,同一个局面会落到不同的 ZBLL case 上,
               所以本页不给「合起来那条公式」。<Link href="/math/lsll">看清楚为什么 →</Link></>}
-            en={<>One of the 151,164 routes (306 × 494). Both halves are canonical, so that count does not
+            en={<>One of the 149,188 routes (302 × 494). Both halves are canonical, so that count does not
               depend on your algorithm table — but the <em>combined</em> solution is not: swap the ZBLS alg
               and the same position lands on a different ZBLL case, which is why no concatenated algorithm
               is shown here. <Link href="/math/lsll">See exactly why →</Link></>}

@@ -87,6 +87,17 @@
       **305 → 302**(zbls 库 O 组那 3 条),`?scope=o` 与直链 `/alg/lsll/o` 都给说明 + 送去
       `/alg/3x3/1lll`。判据挂在 `model.LsllCategory.pureLL` 一个字段上,页面/训练器/枚举都读它。
       两个入口页的开头都写清了扣掉的是什么、为什么。
+- [x] **训练器分 494 轮**(2026-07-27)。已收录范围从「302 条一场」摊成
+      **302 条 × 494 轮 = 149,188 条两步路线**:第 n 轮把同样 302 条 ZBLS case 各自接上
+      第 n 个 ZBLL 收尾。合成律 `model.composeState`(与 `cube333.move` 同一条),
+      ZBLL 局面槽对已归位、顶层棱全正 → 合成只动顶层角/棱的置换与朝向,**第一眼那张 ZBLS 图
+      逐条不变**(φ、大类、翻棱数全等);第 1 轮的收尾是全解顶层,合出来就是公式库那批本身。
+      轮次进 `?scope=`(`zbls` / `zbls-r7`),所以换轮 = 换一场(sessionId 带 scope,进度分开);
+      「本轮复习结束」弹窗多一颗**真链接**「进入下一轮」(中键能新开),旁边留「再刷一遍本轮」;
+      复习进度徽章前面出「第 n / 494 轮」。虚拟集接口加 `roundLabel` / `nextRoundScope` 两个可选口子。
+      **149,188 条路线只落在 148,384 张图上** —— 6 条 ZBLS 构型自带 pre-AUF 对称(稳定子 2 的 2 条、
+      稳定子 4 的 4 条),那个 U 把顶层也转了,不同 ZBLL 收尾会合出同一张图;这正是
+      /math/lsll §3「路线不是局面的商」。数字锁在 `tests/lsll_rounds.test.ts`。
 - [x] **MVP:ZBLS 交叉链接**(2026-07-23)。305 个 zbls 案例 → LSLL canonicalKey 映射
       (`scripts/gen-lsll-zbls-overlay.mts` 用真实 model 算 key 零漂移,产 `lib/lsll/zbls_algs.json`,
       305/305 无碰撞);case 页"人类公式"区对覆盖 case 一键直达 zbls 库(精选公式 + 训练器,
