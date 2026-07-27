@@ -22,7 +22,7 @@ import { FaceletsCube } from '@/components/FaceletsCube';
 import AlgViewModeToggle, { useAlgViewMode } from '@/components/AlgViewModeToggle';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import {
-  categoryBySlug, enumerateCategory, unpackState, classify, caseFacelets, keyToString,
+  categoryBySlug, enumerateCategory, unpackState, classify, caseFacelets, keyToString, displayState,
 } from '@/lib/lsll/model';
 import { class3CountForFamily } from '@/lib/lsll/class3';
 import { setupForCase, solutionForSetup } from '@/lib/lsll/setup';
@@ -92,7 +92,7 @@ export default function LsllGroupClient() {
         if (SOLUTION_CACHE.has(k)) continue;
         let sol = '';
         try {
-          sol = solutionForSetup(await setupForCase(unpackState(k)));
+          sol = solutionForSetup(await setupForCase(displayState(unpackState(k))));
         } catch {
           sol = ''; // setup 生成失败(极少见:桥接自检不过)→ 该卡显示「不可用」
         }
@@ -189,7 +189,7 @@ export default function LsllGroupClient() {
               className={`lsll-case-card${showAlgs ? ' is-algs' : ''}`}
               prefetch={false}
             >
-              <FaceletsCube fd={caseFacelets(unpackState(k))} size={88} alt={`#${ks}`} />
+              <FaceletsCube fd={caseFacelets(displayState(unpackState(k)))} size={88} alt={`#${ks}`} />
               <span className="lsll-case-body">
                 <span className="lsll-case-label">#{(cur - 1) * PAGE_SIZE + i + 1}</span>
                 {showAlgs && (

@@ -128,6 +128,18 @@ export async function cstimerStyleScramble(invScramble: string): Promise<string 
   }
 }
 
+/**
+ * 这个 case 的「最后一槽对子」相位是图的一部分,不能被随机 AUF 转走。
+ *
+ * F2L 类(zbls / f2l 等,`kind: 'f2l'`)历来就不加 AUF。LSLL 同理:它的打乱是按
+ * `lsll/model.pairDisplayTurn` 摆正了对子才算出来的 —— 角在槽正上方、或棱侧色对齐中心 ——
+ * 打乱**尾部**再接一个 U 就把对子转跑了(case 没变,但不是库里那张图)。
+ * 打乱**头部**的 AUF 不动对子(U 碰不到 DFR / FR),变的是收尾 AUF,照常随机。
+ */
+export function pairPhaseLocked(c: AlgCase): boolean {
+  return c.sticker.kind === 'f2l' || (c.sticker.kind === 'raw' && c.sticker.tag === 'lsll');
+}
+
 export function generateScramble(
   c: AlgCase,
   puzzle: AlgPuzzle,
@@ -149,8 +161,8 @@ export function generateScramble(
     }
     // 收尾随机 AUF(post-AUF,默认开):同一个 case 每次呈现的朝向不同,练的是识别不是背图。
     // 对最优打乱也一样加 —— 多一步 U 不影响「它是最短打乱」这件事(长度在元数据弹窗里看),
-    // 但少了它,这个 case 永远长同一个样。
-    const post = opts?.postAuf === false ? '' : pick(AUF);
+    // 但少了它,这个 case 永远长同一个样。对子相位锁死的 case 除外({@link pairPhaseLocked})。
+    const post = opts?.postAuf === false || pairPhaseLocked(c) ? '' : pick(AUF);
     return joinWithAufMerge(pre, base.split(/\s+/).filter(Boolean), post);
   }
 
