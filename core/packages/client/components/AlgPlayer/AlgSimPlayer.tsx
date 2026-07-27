@@ -22,9 +22,7 @@
  * 的 `experimentalStickering` 同名,所以 `pickStickering` 一份两用。
  */
 
-import {
-  forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState,
-} from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Play, Pause, SkipBack, SkipForward, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { AlgPuzzle } from '@cuberoot/shared';
 import SimStage from '@/components/sim-embed/SimStage';
@@ -61,26 +59,17 @@ async function preloadEngine() {
   };
 }
 
-/** 外部控制入口。给「一个播放器跟着一份列表走」的调用方用(StageSolver 的解法行 ▷)。 */
-export interface AlgSimPlayerHandle {
-  /** 回到起点并停下。换公式/换解法时用 —— 不该停在上一条的进度上。 */
-  jumpToStart(): void;
-  /** 从当前位置自动播下去。 */
-  play(): void;
-}
-
-const AlgSimPlayer = forwardRef<AlgSimPlayerHandle, {
+export default function AlgSimPlayer({
+  alg, puzzle, set, setup, size = 260, fillPane = false,
+}: {
   alg: string;
   puzzle: AlgPuzzle;
-  /** 公式集 slug,决定顶层遮罩(F2L 灰顶等)。不吃遮罩的调用方不用传。 */
-  set?: string;
+  set: string;
   setup?: string;
   size?: number;
-  /** 撑满父容器(宽度跟布局走,高度 1:1),`size` 变成宽度上限。 */
+  /** 撑满父容器。给编辑器那种「右半屏放预览」的布局用。 */
   fillPane?: boolean;
-}>(function AlgSimPlayer({
-  alg, puzzle, set = '', setup, size = 260, fillPane = false,
-}, ref) {
+}) {
   const t = useT();
   const order = NXN_ORDER[puzzle] ?? 3;
 
@@ -173,16 +162,10 @@ const AlgSimPlayer = forwardRef<AlgSimPlayerHandle, {
 
   const atEnd = step >= moves.length;
 
-  useImperativeHandle(ref, () => ({
-    jumpToStart() { setPlaying(false); setStep(0); },
-    play() { setPlaying(true); },
-  }), []);
-
   return (
     <div className={`alg-sim-player${fillPane ? ' is-fill' : ''}`}>
       <SimStage
         size={size}
-        fluid={fillPane}
         mount={mount}
         onReady={() => setReady(true)}
         onResetView={() => resetViewRef.current()}
@@ -241,6 +224,4 @@ const AlgSimPlayer = forwardRef<AlgSimPlayerHandle, {
       </div>
     </div>
   );
-});
-
-export default AlgSimPlayer;
+}

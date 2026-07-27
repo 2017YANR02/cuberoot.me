@@ -1,6 +1,6 @@
 /* 公式动画(/sim 引擎那版)的样式。
-   跟组件放一起,不再挂在 app/[lang]/alg/alg.css 里 —— 播放器已经不只公式库在用
-   (/scramble 与计时器的 StageSolver 也嵌它),样式留在页级 CSS 里换个页面就秃了。 */
+   跟组件放一起,不再挂在 app/[lang]/alg/alg.css 里 —— 样式留在页级 CSS 里,
+   组件一旦被别的页面引就秃了。 */
 .alg-sim-player {
   display: flex;
   flex-direction: column;

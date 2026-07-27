@@ -832,7 +832,7 @@ html[data-theme=dark] .alg-root {
 }
 
 /* 公式动画(/sim 引擎那版)的样式搬去了 components/AlgPlayer/alg-sim-player.css
-   —— 播放器已经不只公式库在用,样式不能再挂在页级 CSS 上。 */
+   —— 组件的样式跟组件走,别再挂在页级 CSS 上。 */
 
 /* ── Community-submitted algs ───────────────────────────────────────────── */
 .alg-community {

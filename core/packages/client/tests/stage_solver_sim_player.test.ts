@@ -1,6 +1,6 @@
 /**
- * StageSolver 的解法动画改跑站内 `/sim` 引擎(components/AlgPlayer/AlgSimPlayer)之后,
- * 播放器必须仍然走到「十字解在 D 面」那个态。
+ * StageSolver 的解法动画改用 /recon 那个播放器(components/CuberReconPlayer →
+ * recon/ReconPlayerBase,跑站内 `/sim` 引擎)之后,必须仍然走到「十字解在 D 面」那个态。
  *
  * 换引擎唯一真会出事的是**解法前导的整体转体**:StageSolver 把 `z2 y` 这样的前缀切出来
  * 折进 setup(splitLeadRot),播放器只动画剩下的面转。两套引擎对 `x/y/z` 的手性哪怕差
@@ -58,7 +58,9 @@ function splitLeadRot(a: string): { lead: string; body: string } {
   return { lead: toks.slice(0, p).join(' '), body: toks.slice(p).join(' ') };
 }
 
-/** 从跑着的 StageSolver 上抄下来的真解(打乱取自 WCA 真题池),都带前导整体转体。 */
+/** 从跑着的 StageSolver 上抄下来的真解(打乱取自 WCA 真题池),都带前导整体转体。
+ *  第二组是换用 /recon 播放器后从 /timer 解法提示面板整屏抄的(含 y 预转体那几条),
+ *  所以这里同时覆盖两种前导形状:单转体 `z` / `x'` 与「视角 + 预转体」`z y` / `x' y`。 */
 const FIXTURES: { scramble: string; solutions: string[] }[] = [
   {
     scramble: "F' B' R' L' F' L F2 R2 B' D B2 F2 U L2 F' D L2 B",
@@ -67,6 +69,18 @@ const FIXTURES: { scramble: string; solutions: string[] }[] = [
       "z y2 U D2 R D R F'",
       "z y2 U D2 R D F' R",
       "z y D' L2 F' D' F R'",
+    ],
+  },
+  {
+    scramble: "D2 R F' D F R2 F L D2 U R2 F' U' L' D L' B L2",
+    solutions: [
+      "x' U' L2 U F2 R'",
+      "x' y D' R2 D F L2",
+      "x' y D' R2 D L2 F",
+      "x' y L2 D' R2 D F",
+      "x' L2 F2 U' L2 R'",
+      "x' y R2 D F L2 R2",
+      "x' U' L2 U R F2 R'",
     ],
   },
 ];
@@ -119,7 +133,8 @@ describe('StageSolver 解法动画 — 播放器喂进 /sim 引擎的两段', ()
   for (const { scramble, solutions } of FIXTURES) {
     for (const sol of solutions) {
       it(`「${sol}」跑完十字解在 D 面`, () => {
-        // AlgSimPlayer 实际吃的两段:setup = 打乱 + 前导转体,moves = 动画的面转。
+        // 播放器实际吃的两段(ReconPlayerBase 的 applyPrefix 就是把它们拼起来 setup):
+        // scramble = 打乱 + 前导转体,alg = 动画的面转。
         const { lead, body } = splitLeadRot(sol);
         // 这批 fixture 就是为了覆盖前导转体;lead 空了说明抄错了,测试也就白设。
         expect(lead).not.toBe('');
