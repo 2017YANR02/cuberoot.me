@@ -21,6 +21,12 @@ import { Suspense, lazy, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import { Trophy, Hand, Clock, Target } from 'lucide-react';
 import {
+  CUBE3_STATES, GOD_DIST_333_NORMALIZED, GOD_MEAN_HTM,
+  GOD_SHARE_16_19_PCT as SHARE_16_19, GOD_SHARE_17_19_PCT as SHARE_17_19,
+} from '@/lib/god-distance-333';
+
+const MEAN = GOD_MEAN_HTM.toFixed(1);
+import {
   EvHighlights, EvSection, EvCallout, EvRefs, EvStatStrip,
   TeX, TeXBlock, MathText, type HighlightCard, type RefItem, type StatItem,
 } from './_shared';
@@ -28,39 +34,17 @@ import {
 const DistanceDistribution = lazy(() => import('../DistanceDistribution'));
 
 /* ── ground-truth optimal-length distribution (cube20.org) ────────────
-   d=0..15 exact counts, d=16..19 sum-constrained estimates, d=20 the
-   antipode count. Mirrors DistanceDistribution.ROWS — used here only to
-   compute the cumulative percentile for the slider. */
-const DIST: { d: number; count: number }[] = [
-  { d: 0, count: 1 },
-  { d: 1, count: 18 },
-  { d: 2, count: 243 },
-  { d: 3, count: 3_240 },
-  { d: 4, count: 43_239 },
-  { d: 5, count: 574_908 },
-  { d: 6, count: 7_618_438 },
-  { d: 7, count: 100_803_036 },
-  { d: 8, count: 1_332_343_288 },
-  { d: 9, count: 17_596_479_795 },
-  { d: 10, count: 232_248_063_316 },
-  { d: 11, count: 3_063_288_809_012 },
-  { d: 12, count: 40_374_425_656_248 },
-  { d: 13, count: 531_653_418_284_628 },
-  { d: 14, count: 6_989_320_578_825_358 },
-  { d: 15, count: 9.1365146187124313e16 },
-  { d: 16, count: 1.1e18 },
-  { d: 17, count: 1.2e19 },
-  { d: 18, count: 2.9e19 },
-  { d: 19, count: 1.5e18 },
-  { d: 20, count: 4.9e8 },
-];
-const TOTAL = 4.3252003274489856e19;
+   Single source: lib/god-distance-333. The normalized variant is what we want
+   here — its Σ is exactly |G| by construction, so the cumulative percentile
+   below can never creep past 100%. */
+const DIST = GOD_DIST_333_NORMALIZED.map(BigInt);
+const TOTAL = BigInt(CUBE3_STATES);
 
 /** Cumulative fraction of random states whose optimal length is ≤ d. */
 function cumLeq(d: number): number {
-  let acc = 0;
-  for (const r of DIST) { if (r.d <= d) acc += r.count; }
-  return Math.min(1, acc / TOTAL);
+  let acc = 0n;
+  for (let i = 0; i <= d && i < DIST.length; i++) acc += DIST[i];
+  return Math.min(1, Number((acc * 1_000_000_000n) / TOTAL) / 1e9);
 }
 
 export default function Fmc({ isZh }: { isZh: boolean; eventId?: string }) {
@@ -84,7 +68,7 @@ export default function Fmc({ isZh }: { isZh: boolean; eventId?: string }) {
     },
     {
       num: <TeX src={String.raw`\approx 17\text{–}19`} />,
-      cap: t('随机态最优步数(>99%)', 'Optimal length of a random state (>99%)'),
+      cap: t('随机态最优步数(约 97%)', 'Optimal length of a random state (~97%)'),
       sub: t('真实 FMC 打乱难度', 'The real FMC scramble difficulty'),
       tone: 'warn',
     },
@@ -182,8 +166,8 @@ export default function Fmc({ isZh }: { isZh: boolean; eventId?: string }) {
       >
         <p>
           {t(
-            '下面这张最少步分布把每个最优长度 d 对应的状态数画出来。重点不是“最坏 20 步”,而是“绝大多数题目都贴着上限”:超过 99% 的随机态最优解落在 17、18、19 步,平均约 17.7 步。换句话说,你拿到的几乎每一道 FMC 题,理论最短解都在 17-19 之间。',
-            'The minimum-solution distribution below plots how many states have each optimal length d. The point is not the worst case of 20 — it is that almost every scramble sits right against the ceiling: over 99% of random states are optimal at 17, 18 or 19 moves, averaging about 17.7. In other words, nearly every FMC scramble you are dealt has a theoretical optimum somewhere in 17-19.',
+            `下面这张最少步分布把每个最优长度 d 对应的状态数画出来。重点不是“最坏 20 步”,而是“绝大多数题目都贴着上限”:约 ${SHARE_17_19} 的随机态最优解落在 17、18、19 步,把 16 步也算上就是 ${SHARE_16_19},平均约 ${MEAN} 步。换句话说,你拿到的几乎每一道 FMC 题,理论最短解都在 16-19 之间。`,
+            `The minimum-solution distribution below plots how many states have each optimal length d. The point is not the worst case of 20 — it is that almost every scramble sits right against the ceiling: about ${SHARE_17_19} of random states are optimal at 17, 18 or 19 moves (${SHARE_16_19} once you include 16), averaging about ${MEAN}. In other words, nearly every FMC scramble you are dealt has a theoretical optimum somewhere in 16-19.`,
           )}
         </p>
         <Suspense fallback={<div className="god-loading">{t('加载分布图…', 'Loading distribution…')}</div>}>
@@ -219,14 +203,14 @@ export default function Fmc({ isZh }: { isZh: boolean; eventId?: string }) {
       >
         <p>
           {t(
-            '顶尖 FMC 选手不会去枚举 20 步;他们用 NISS(从正反两个方向逼近)、insertion(在骨架解里插入换位子消角/棱)、以及大量的 EO/DR/HTR 阶段化技巧,把一个 ~17-19 步的最优解“凑”到 21-30 步。当前 FMC 三次平均的世界纪录约 21-22 步,而最优解平均 17.7——这 3-5 步的差距,就是“可计算的最优”和“一小时内人类能想到的最优”之间的鸿沟。',
-            'Top FMC solvers don\'t enumerate 20-move solutions; they use NISS (attacking from both the scramble and its inverse), insertions (splicing commutators into a skeleton to cancel last corners/edges), and staged EO/DR/HTR techniques to land a ~17-19-move optimum somewhere around 21-30. The mean-of-3 world record is about 21-22, while the optimum averages 17.7 — that 3-5-move gap is the chasm between "the computable optimum" and "the best a human can reason out in an hour".',
+            `顶尖 FMC 选手不会去枚举 20 步;他们用 NISS(从正反两个方向逼近)、insertion(在骨架解里插入换位子消角/棱)、以及大量的 EO/DR/HTR 阶段化技巧,把一个 ~17-19 步的最优解“凑”到 21-30 步。当前 FMC 三次平均的世界纪录约 21-22 步,而最优解平均 ${MEAN}——这 3-5 步的差距,就是“可计算的最优”和“一小时内人类能想到的最优”之间的鸿沟。`,
+            `Top FMC solvers don't enumerate 20-move solutions; they use NISS (attacking from both the scramble and its inverse), insertions (splicing commutators into a skeleton to cancel last corners/edges), and staged EO/DR/HTR techniques to land a ~17-19-move optimum somewhere around 21-30. The mean-of-3 world record is about 21-22, while the optimum averages ${MEAN} — that 3-5-move gap is the chasm between "the computable optimum" and "the best a human can reason out in an hour".`,
           )}
         </p>
         <div className="god-algo-grid" style={{ marginTop: '1rem' }}>
           <div className="god-algo-cell">
             <div className="god-algo-name"><Hand size={15} style={{ display: 'inline', verticalAlign: '-2px', marginRight: 6 }} />{t('单次 16 步', 'Single 16')}</div>
-            <div className="god-algo-desc">{t('人类峰值,需要一个最优解本就极短的幸运打乱,几乎贴着 20 步上限以下的稀有低尾。', 'The human peak: needs a lucky scramble whose own optimum is unusually short — the rare low tail well under the 20-move ceiling.')}</div>
+            <div className="god-algo-desc">{t('人类峰值。最优解 ≤16 步的打乱其实有约 2.7%,真正难的是在一小时里把那条最优解找出来。', 'The human peak. Scrambles with an optimum of 16 or fewer are about 2.7% of all states — the hard part is actually finding that optimal solution inside the hour.')}</div>
           </div>
           <div className="god-algo-cell">
             <div className="god-algo-name"><Trophy size={15} style={{ display: 'inline', verticalAlign: '-2px', marginRight: 6 }} />{t('三次平均 ~21-22', 'Mean-of-3 ~21-22')}</div>
@@ -259,9 +243,9 @@ export default function Fmc({ isZh }: { isZh: boolean; eventId?: string }) {
 /* ── §2 stat strip ─────────────────────────────────────────────────── */
 function statRow(t: (zh: string, en: string) => string): StatItem[] {
   return [
-    { label: t('平均最优步数', 'Mean optimal length'), value: <span>17.7 <span style={{ fontSize: '0.6em', color: 'var(--god-text-mute)' }}>HTM</span></span> },
+    { label: t('平均最优步数', 'Mean optimal length'), value: <span>{MEAN} <span style={{ fontSize: '0.6em', color: 'var(--god-text-mute)' }}>HTM</span></span> },
     { label: t('中位数', 'Median'), value: <span>18 <span style={{ fontSize: '0.6em', color: 'var(--god-text-mute)' }}>HTM</span></span> },
-    { label: t('17-19 步占比', 'Share at 17-19'), value: <span>&gt;99%</span> },
+    { label: t('17-19 步占比', 'Share at 17-19'), value: <span>≈{SHARE_17_19}</span> },
     { label: t('满 20 步对径态', '20-move antipodes'), value: <TeX src={String.raw`\approx 4.9 \times 10^{8}`} /> },
   ];
 }
@@ -313,7 +297,7 @@ function MoveGauge({
       <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ maxWidth: W, height: 'auto', display: 'block' }}
            preserveAspectRatio="xMidYMid meet" role="img"
            aria-label={t('FMC 步数标尺', 'FMC move-count scale')}>
-        {/* the proven-optimal band 17..19 (where >99% of scrambles live) */}
+        {/* the proven-optimal band 17..19 (where ~97% of scrambles live) */}
         <rect x={xOf(17)} y={TRACK_Y - 18} width={xOf(19) - xOf(17)} height={36}
               fill="var(--god-accent)" opacity={0.14} rx={5} />
         <text x={(xOf(17) + xOf(19)) / 2} y={TRACK_Y - 24} fontSize="9.5" textAnchor="middle"
@@ -378,8 +362,8 @@ function MoveGauge({
         <MathText>{
           moves <= 16
             ? t(
-                '16 步是 FMC 单次世界纪录——比绝大多数随机态的最优长度(17-19)还短,只有遇到罕见的“低尾”打乱才可能。这不是稳定水平,而是天才加运气的一次性闪光。',
-                '16 is the FMC single world record — shorter than the optimum of almost every random state (17-19), only possible on a rare low-tail scramble. Not a sustainable level, but a one-off flash of insight and luck.',
+                '16 步是 FMC 单次世界纪录——比绝大多数随机态的最优长度(17-19)还短,得先抽到最优解 ≤16 的那约 2.7%,再在一小时里把它找出来。这不是稳定水平,而是天才加运气的一次性闪光。',
+                '16 is the FMC single world record — shorter than the optimum of almost every random state (17-19). It takes drawing one of the ~2.7% of states whose optimum is 16 or fewer, and then actually finding that solution within the hour. Not a sustainable level, but a one-off flash of insight and luck.',
               )
             : moves < 20
             ? t(

@@ -2,6 +2,9 @@
 
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
 import { tr } from '@/i18n/tr';
+import { GOD_MEAN_HTM, GOD_SHARE_16_19_PCT as SHARE_16_19 } from '@/lib/god-distance-333';
+
+const MEAN = GOD_MEAN_HTM.toFixed(1);
 
 // §open-problems — self-contained prose section, lazy-loaded per slug from page.tsx's
 // EXT_COMPONENTS map (see the section-extraction note there).
@@ -106,8 +109,8 @@ export default function OpenProblems() {
         </h3>
         <p>
           <L
-            zh={<>3×3 的 HTM 直径已经 = 20。 但 「<em>平均最优解长度</em>」 是多少? Rokicki 实测全 4.3 × 10¹⁹ 状态的平均 HTM 最优长度为 <TeX src={`\\bar{d} \\approx 17.97`} />。 这意味着 <strong>近 99% 的状态需要 16–20 步</strong>, 距离分布高度集中。 但下面这些子问题仍是开放:</>}
-            en={<>The 3×3 HTM diameter = 20 is settled. But what is the <em>average optimal solve length</em>? Rokicki measured over all 4.3 × 10¹⁹ states an average <TeX src={`\\bar{d} \\approx 17.97`} /> HTM. So <strong>nearly 99% of states need 16–20 moves</strong> — the distance distribution is highly concentrated. The following sub-questions remain open:</>}
+            zh={<>3×3 的 HTM 直径已经 = 20。 但 「<em>平均最优解长度</em>」 是多少? 按 cube20.org 的距离分布算,全 4.3 × 10¹⁹ 状态的平均 HTM 最优长度为 <TeX src={`\\bar{d} \\approx ${MEAN}`} />。 这意味着 <strong>约 {SHARE_16_19} 的状态需要 16–19 步</strong>, 距离分布高度集中。 但下面这些子问题仍是开放:</>}
+            en={<>The 3×3 HTM diameter = 20 is settled. But what is the <em>average optimal solve length</em>? Averaging cube20.org's distance distribution over all 4.3 × 10¹⁹ states gives <TeX src={`\\bar{d} \\approx ${MEAN}`} /> HTM. So <strong>about {SHARE_16_19} of states need 16–19 moves</strong> — the distance distribution is highly concentrated. The following sub-questions remain open:</>}
           />
         </p>
         <ul style={{ paddingLeft: 26, lineHeight: 1.9 }}>

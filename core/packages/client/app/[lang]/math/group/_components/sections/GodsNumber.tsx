@@ -2,39 +2,26 @@
 
 import { GTSec, L, TeX } from '../primitives';
 import { tr } from '@/i18n/tr';
+import { GOD_DIST_333, GOD_DIST_333_NORMALIZED, GOD_KIND_MARK } from '@/lib/god-distance-333';
 
-const GOD_DIST: { d: number; count: bigint }[] = [
-  { d: 0, count: 1n },
-  { d: 1, count: 18n },
-  { d: 2, count: 243n },
-  { d: 3, count: 3_240n },
-  { d: 4, count: 43_239n },
-  { d: 5, count: 574_908n },
-  { d: 6, count: 7_618_438n },
-  { d: 7, count: 100_803_036n },
-  { d: 8, count: 1_332_343_288n },
-  { d: 9, count: 17_596_479_795n },
-  { d: 10, count: 232_248_063_316n },
-  { d: 11, count: 3_063_288_809_012n },
-  { d: 12, count: 40_374_425_656_248n },
-  { d: 13, count: 531_653_418_284_628n },
-  { d: 14, count: 6_989_320_578_825_358n },
-  { d: 15, count: 91_365_146_187_124_313n },
-  { d: 16, count: 1_100_531_606_815_050_000n },  // approx — Rokicki gave only orderof
-  { d: 17, count: 12_217_338_577_780_000_000n }, // approx
-  { d: 18, count: 29_290_000_000_000_000_000n }, // approx
-  { d: 19, count: 1_357_000_000_000_000_000n },  // approx
-  { d: 20, count: 490_000_000n },                  // exactly known: 490,000,000 positions
-];
+// 全站单一源 lib/god-distance-333.ts。这里以前手抄了一份 d=16..19,精确到十几位有效数字,
+// 而 cube20.org 只公布两位 —— 那是伪精度,已删。
+// 标签写公布值(`count`),条高走归一化值(`norm`,Σ 恰为 |G|)。
+const GOD_DIST = GOD_DIST_333.map((b, i) => ({
+  d: b.d,
+  count: BigInt(b.count),
+  norm: BigInt(GOD_DIST_333_NORMALIZED[i]),
+  mark: GOD_KIND_MARK[b.kind],
+}));
 
 function GodsNumberChart() {
   // Use log scale because counts span 20 orders of magnitude.
-  const max = Math.log10(Number(GOD_DIST[18].count));
+  const max = Math.log10(Number(GOD_DIST[18].norm));
   return (
     <>
       <div className="gt-gn-chart">
-        {GOD_DIST.map(({ d, count }, i) => {
-          const log = Math.log10(Number(count));
+        {GOD_DIST.map(({ d, count, norm, mark }, i) => {
+          const log = Math.log10(Number(norm));
           const isPeak = i === 18;
           return (
             <div
@@ -42,14 +29,14 @@ function GodsNumberChart() {
               className={`gt-gn-bar ${isPeak ? 'gt-gn-bar-peak' : ''}`}
               style={{ height: `${Math.max(2, (log / max) * 100)}%` }}
             >
-              <div className="gt-gn-bar-val">{count.toString()}</div>
+              <div className="gt-gn-bar-val">{mark}{count.toString()}</div>
               <div className="gt-gn-bar-label">{d}</div>
             </div>
           );
         })}
       </div>
       <div className="gt-gn-axis-label">
-        {tr({ zh: '横轴:最短解长度 (HTM)。纵轴:对数刻度的状态数。', en: 'x: optimal depth (HTM). y: log-scale count of positions.'
+        {tr({ zh: '横轴:最短解长度 (HTM)。纵轴:对数刻度的状态数。d ≥ 16 只有两位有效数字(≈),d = 20 是已找到的下界(≥)。', en: 'x: optimal depth (HTM). y: log-scale count of positions. d ≥ 16 is known to two significant figures (≈); d = 20 is a lower bound on what has been found (≥).'
         })}
       </div>
     </>

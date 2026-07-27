@@ -3,52 +3,41 @@
 /**
  * 三阶 HTM 距离分布 + 最少步分析 (FMC distribution)。
  *
- * 数据来源:cube20.org 已公布 d=0..15 精确,d=16..20 仅总和约束;d=20 的 antipode 总数已知。
+ * 数据来源:全站单一源 lib/god-distance-333(cube20.org)。d=0..15 穷举精确,d=16..19 只公布
+ * 两位有效数字,d=20 的 4.9 亿是「已找到」的下界。画图与占比用归一化档(Σ 恰为 |G|),
+ * 读数里显示的仍是公布的原值 —— 别把归一化产生的十几位数字当成真精度。
  * 交互:
  *   - 鼠标悬停某个深度看精确数字 + 占比
  *   - 切换 "状态数 / 累积概率" 视图
  *   - 标记 FMC WR (16) + 平均人类 (~28) + 上帝之数 (20) 三条标线
  */
 import { useMemo, useState } from 'react';
+import {
+  CUBE3_STATES, GOD_DIST_333, GOD_DIST_333_NORMALIZED, type GodBinKind,
+} from '@/lib/god-distance-333';
 import { MathText } from './Tex';
 
 interface Row {
   d: number;
-  /** 精确状态数 (-1 表示只有上下界) */
+  /** 画图/占比用的归一化状态数。d ≥ 14 超出 Number.MAX_SAFE_INTEGER,只用于绘制,故转 number。 */
   count: number;
-  /** d=16..20 的近似量级 (只用于绘图) */
-  approxCount?: number;
-  /** 是否精确 */
+  /** cube20.org 的公布值 —— 读数里显示的是它,免得把归一化产生的十几位数字当成真精度。 */
+  raw: number;
+  kind: GodBinKind;
+  /** 是否穷举精确值(false = cube20.org 的估计,或 d=20 的「已找到」下界)。 */
   exact: boolean;
 }
 
-/** Rokicki / cube20.org 公开数据。0..15 精确;16..19 估算;20 由总和约束反推。 */
-const ROWS: Row[] = [
-  { d: 0,  count: 1, exact: true },
-  { d: 1,  count: 18, exact: true },
-  { d: 2,  count: 243, exact: true },
-  { d: 3,  count: 3_240, exact: true },
-  { d: 4,  count: 43_239, exact: true },
-  { d: 5,  count: 574_908, exact: true },
-  { d: 6,  count: 7_618_438, exact: true },
-  { d: 7,  count: 100_803_036, exact: true },
-  { d: 8,  count: 1_332_343_288, exact: true },
-  { d: 9,  count: 17_596_479_795, exact: true },
-  { d: 10, count: 232_248_063_316, exact: true },
-  { d: 11, count: 3_063_288_809_012, exact: true },
-  { d: 12, count: 40_374_425_656_248, exact: true },
-  { d: 13, count: 531_653_418_284_628, exact: true },
-  { d: 14, count: 6_989_320_578_825_358, exact: true },
-  // d=15 实际 = 91,365,146,187,124,313 — 超过 Number.MAX_SAFE_INTEGER (2^53 ≈ 9 × 10^15),用 scientific 近似显示
-  { d: 15, count: 9.1365146187124313e16, exact: true },
-  { d: 16, count: -1, approxCount: 1.10e18, exact: false },
-  { d: 17, count: -1, approxCount: 1.21e19, exact: false },
-  { d: 18, count: -1, approxCount: 2.49e19, exact: false },
-  { d: 19, count: -1, approxCount: 1.50e18, exact: false },
-  { d: 20, count: -1, approxCount: 4.9e8, exact: false },
-];
+/** 全站单一源 lib/god-distance-333.ts。用归一化档,占比与均值才不会加起来超 100%。 */
+const ROWS: Row[] = GOD_DIST_333.map((b, i) => ({
+  d: b.d,
+  count: Number(GOD_DIST_333_NORMALIZED[i]),
+  raw: Number(b.count),
+  kind: b.kind,
+  exact: b.kind === 'exact',
+}));
 
-const TOTAL = 4.3252003274489856e19; // |G(3×3)|, beyond safe-int
+const TOTAL = Number(CUBE3_STATES); // |G(3×3)|, beyond safe-int
 
 /** 把 Number-or-BigInt 安全格式化(科学计数或本地千位)。 */
 function fmt(n: number): string {
@@ -69,7 +58,7 @@ export default function DistanceDistribution({ isZh }: Props) {
     const cum: number[] = [];
     let acc = 0;
     for (const r of ROWS) {
-      const c = r.exact ? r.count : (r.approxCount ?? 0);
+      const c = r.count;
       sum += c;
       weighted += c * r.d;
       acc += c;
@@ -88,7 +77,7 @@ export default function DistanceDistribution({ isZh }: Props) {
   const maxBar = useMemo(() => {
     if (mode === 'count') {
       // log scale on counts;use log of max(count or approx)
-      return Math.log10(Math.max(...ROWS.map((r) => r.exact ? r.count : (r.approxCount ?? 1))));
+      return Math.log10(Math.max(...ROWS.map((r) => r.count)));
     }
     return 1; // cumulative 是 0..1
   }, [mode]);
@@ -144,7 +133,7 @@ export default function DistanceDistribution({ isZh }: Props) {
         })}
         {/* bars */}
         {ROWS.map((r, i) => {
-          const c = r.exact ? r.count : (r.approxCount ?? 0);
+          const c = r.count;
           let h: number;
           if (mode === 'count') {
             h = c > 0 ? (Math.log10(c) / maxBar) * innerH : 0;
@@ -199,24 +188,26 @@ export default function DistanceDistribution({ isZh }: Props) {
       <div className="god-dist-readout">
         {hover != null ? (() => {
           const r = ROWS.find((x) => x.d === hover)!;
-          const c = r.exact ? r.count : (r.approxCount ?? 0);
+          const c = r.count;
           const pct = (c / TOTAL) * 100;
           return (
             <>
               <strong>d = {r.d}:</strong>{' '}
-              {r.exact
-                ? <>{fmt(r.count)} {t('个状态', 'states')}</>
-                : <>≈ {fmt(c)} {t('个状态(估算)', 'states (estimated)')}</>}
+              {r.kind === 'exact' && <>{fmt(r.raw)} {t('个状态', 'states')}</>}
+              {r.kind === 'approx' && <>≈ {fmt(r.raw)} {t('个状态(估算)', 'states (estimated)')}</>}
+              {r.kind === 'atLeast' && <>≥ {fmt(r.raw)} {t('个状态(已找到这么多)', 'states found so far')}</>}
               {' · '}
               {pct < 0.001 ? `< 0.001%` : `${pct.toFixed(3)}%`}
-              {r.exact ? ' (✓ 精确, cube20.org)' : ' (上界已证 ≤ 20)'}
+              {r.kind === 'exact' && t(' (✓ 穷举精确, cube20.org)', ' (✓ exact, cube20.org)')}
+              {r.kind === 'approx' && t(' (cube20.org 只给两位有效数字)', ' (cube20.org gives two significant digits)')}
+              {r.kind === 'atLeast' && t(' (下界,不是计数)', ' (a lower bound, not a count)')}
             </>
           );
         })() : (
           <span className="god-growth-hint">
             <MathText>{t(
-              'hover 某个深度看精确数字。d=0..15 是 Rokicki 团队公开的精确分布;d=16..20 因为总和约束被反推为估算。99% 的随机三阶状态需要 17-19 步最优。',
-              'Hover a depth for exact values. d=0..15 are Rokicki\'s published exact counts; d=16..20 are estimates from the total-sum constraint. 99% of random 3×3 states need 17-19 moves optimally.'
+              'hover 某个深度看数字。d=0..15 是 Rokicki 团队穷举出的精确分布;d=16..19 只公布到两位有效数字;d=20 的 4.9 亿是「已找到这么多」的下界。约 97% 的随机三阶状态最优解落在 17-19 步。',
+              'Hover a depth for the numbers. d=0..15 are Rokicki\'s exhaustive exact counts; d=16..19 are published to two significant figures only; the 490 million at d=20 is a lower bound on what has been found. About 97% of random 3×3 states are optimal at 17-19 moves.'
             )}</MathText>
           </span>
         )}
@@ -224,8 +215,8 @@ export default function DistanceDistribution({ isZh }: Props) {
 
       <p className="god-dist-caption">
         <MathText>{t(
-          '这张表就是"最少步分布":随机抽一个三阶打乱,问它最少几步能解。绝大多数 (>99%) 在 17-19 步。恰好 20 步的"超难"状态约占 ~10⁻¹¹——也就是大约 ~4.9 亿个 antipode 状态,在 4.3 × 10¹⁹ 总状态里几乎找不到。FMC WR 16 步几乎不可能复刻,因为对应的 antipode 集太稀有。',
-          'This is the "minimum-solution-length distribution": pick a random 3×3 state, ask how few moves it needs. Over 99% need 17-19. The exact-20 antipodes are about 10⁻¹¹ of all states (~490 million antipodes out of 4.3 × 10¹⁹). The 16-move FMC WR is essentially unreproducible because that antipode class is so rare.'
+          '这张表就是"最少步分布":随机抽一个三阶打乱,问它最少几步能解。约 97% 落在 17-19 步,16-19 步合起来超过 99.7%。恰好 20 步的"超难"状态约占 10⁻¹¹ —— 大约 4.9 亿个 antipode,在 4.3 × 10¹⁹ 总状态里几乎撞不到。反过来,FMC 世界纪录 16 步难的不是遇上一个 ≤16 步就能解的打乱(那有约 2.7%),而是人要在一小时里真把那条最优解找出来。',
+          'This is the "minimum-solution-length distribution": pick a random 3×3 state, ask how few moves it needs. About 97% land at 17-19; 16-19 together is over 99.7%. The exact-20 antipodes are about 10⁻¹¹ of all states (~490 million out of 4.3 × 10¹⁹) — you will essentially never draw one. Conversely, the hard part of a 16-move FMC world record is not drawing a scramble whose optimal is ≤16 (about 2.7% are), but actually finding that optimal solution within the hour.'
         )}</MathText>
       </p>
     </div>

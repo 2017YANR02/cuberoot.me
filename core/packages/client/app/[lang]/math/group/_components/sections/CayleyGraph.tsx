@@ -6,6 +6,10 @@ import { applyAlg, invariants, isSolved, thistlethwaiteStage, cycleStructure, id
 import { tr } from '@/i18n/tr';
 import { TwistyMini } from '../TwistyMini';
 import { formatCycle, type FaceLetterChar } from '../gt-helpers';
+import {
+  CUBE3_STATES, GOD_DIST_333, GOD_DIST_333_NORMALIZED,
+  GOD_KIND_MARK as KIND_MARK, type GodBinKind,
+} from '@/lib/god-distance-333';
 
 function CayleyWalker() {
   const lang = useLang();
@@ -130,37 +134,22 @@ function CayleyWalker() {
 }
 
 // BFS sphere sizes |S_r| at each HTM radius in the full cube Cayley graph.
-// These are the *exact* known counts (same as GOD_DIST below, repeated here
-// for use in the §14 BFS table to avoid forward references). Source: Rokicki
-// et al. 2010, cube20.org.
-
-// et al. 2010, cube20.org.
-const CAYLEY_SPHERE: { d: number; count: bigint; exact: boolean }[] = [
-  { d: 0, count: 1n, exact: true },
-  { d: 1, count: 18n, exact: true },
-  { d: 2, count: 243n, exact: true },
-  { d: 3, count: 3_240n, exact: true },
-  { d: 4, count: 43_239n, exact: true },
-  { d: 5, count: 574_908n, exact: true },
-  { d: 6, count: 7_618_438n, exact: true },
-  { d: 7, count: 100_803_036n, exact: true },
-  { d: 8, count: 1_332_343_288n, exact: true },
-  { d: 9, count: 17_596_479_795n, exact: true },
-  { d: 10, count: 232_248_063_316n, exact: true },
-  { d: 11, count: 3_063_288_809_012n, exact: true },
-  { d: 12, count: 40_374_425_656_248n, exact: true },
-  { d: 13, count: 531_653_418_284_628n, exact: true },
-  { d: 14, count: 6_989_320_578_825_358n, exact: true },
-  { d: 15, count: 91_365_146_187_124_313n, exact: true },
-  { d: 16, count: 1_100_531_606_815_050_000n, exact: false },
-  { d: 17, count: 12_217_338_577_780_000_000n, exact: false },
-  { d: 18, count: 29_290_000_000_000_000_000n, exact: false },
-  { d: 19, count: 1_357_000_000_000_000_000n, exact: false },
-  { d: 20, count: 490_000_000n, exact: true },
-];
+// Single source: lib/god-distance-333 (Rokicki et al. 2010, cube20.org). d ≤ 15
+// is exact; d = 16..19 are cube20.org's two-significant-digit estimates, taken
+// here in their normalized form so Σ|S_d| is exactly |G|; d = 20 is a lower
+// bound on the antipode count, not a census.
+// `count` 是 cube20.org 的公布值(界面上显示的就是它);`norm` 是等比缩到尾部真值后的版本,
+// 只拿来画条和算占比 —— 否则各档占比加起来是 101%。
+const CAYLEY_SPHERE: { d: number; count: bigint; norm: bigint; kind: GodBinKind }[] =
+  GOD_DIST_333.map((b) => ({
+    d: b.d,
+    count: BigInt(b.count),
+    norm: BigInt(GOD_DIST_333_NORMALIZED[b.d]),
+    kind: b.kind,
+  }));
 
 function CayleyBFSTable() {
-  const maxLog = Math.log10(Number(CAYLEY_SPHERE[18].count));
+  const maxLog = Math.log10(Number(CAYLEY_SPHERE[18].norm));
   return (
     <div className="gt-cayley-bfs">
       <div className="gt-cayley-bfs-row head">
@@ -171,8 +160,8 @@ function CayleyBFSTable() {
         <div>{tr({ zh: '状态数', en: 'count'
         })}</div>
       </div>
-      {CAYLEY_SPHERE.map(({ d, count, exact }) => {
-        const log = Math.log10(Number(count));
+      {CAYLEY_SPHERE.map(({ d, count, norm, kind }) => {
+        const log = Math.log10(Number(norm));
         return (
           <div key={d} className="gt-cayley-bfs-row">
             <div className="gt-cayley-bfs-depth">{d}</div>
@@ -180,7 +169,7 @@ function CayleyBFSTable() {
               <div className="gt-cayley-bfs-bar" style={{ width: `${Math.max(2, (log / maxLog) * 100)}%` }} />
             </div>
             <div className="gt-cayley-bfs-count">
-              {count.toLocaleString()}{!exact && <span style={{ color: 'var(--ink-faint)', marginLeft: 4 }}>≈</span>}
+              {count.toLocaleString()}{KIND_MARK[kind] && <span style={{ color: 'var(--ink-faint)', marginLeft: 4 }}>{KIND_MARK[kind]}</span>}
             </div>
           </div>
         );
@@ -272,12 +261,12 @@ function SphereLogPlot() {
   const yOf = (logV: number) => MT + plotH - (logV / maxLog) * plotH;
   const data = useMemo(() => CAYLEY_SPHERE.map(s => ({
     ...s,
-    log: Math.log10(Math.max(1, Number(s.count))),
-    pct: (Number(s.count) / 4.3252e19) * 100,
+    log: Math.log10(Math.max(1, Number(s.norm))),
+    pct: (Number(s.norm) / Number(CUBE3_STATES)) * 100,
   })), []);
   const branchingAt = (d: number): number | null => {
     if (d === 0) return null;
-    return Number(CAYLEY_SPHERE[d].count) / Number(CAYLEY_SPHERE[d - 1].count);
+    return Number(CAYLEY_SPHERE[d].norm) / Number(CAYLEY_SPHERE[d - 1].norm);
   };
   const yTicks = [0, 4, 8, 12, 16, 19];
   return (
@@ -303,8 +292,8 @@ function SphereLogPlot() {
           return (
             <g key={s.d} onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)}>
               <rect x={xOf(s.d) + 2} y={yOf(s.log)} width={dx - 4} height={barH} className={`gt-sphere-bar ${isPeak ? 'gt-sphere-bar-peak' : ''} ${isHovered ? 'gt-sphere-bar-hover' : ''}`} />
-              {!s.exact && (
-                <text x={xOf(s.d) + dx / 2} y={yOf(s.log) - 4} className="gt-sphere-approx" textAnchor="middle">≈</text>
+              {KIND_MARK[s.kind] && (
+                <text x={xOf(s.d) + dx / 2} y={yOf(s.log) - 4} className="gt-sphere-approx" textAnchor="middle">{KIND_MARK[s.kind]}</text>
               )}
             </g>
           );
@@ -319,7 +308,7 @@ function SphereLogPlot() {
         ) : (
           <>
             <span><strong>d = {data[hover].d}</strong></span>
-            <span>|S<sub>d</sub>| = {CAYLEY_SPHERE[hover].count.toLocaleString()}{!data[hover].exact && ' ≈'}</span>
+            <span>|S<sub>d</sub>| = {CAYLEY_SPHERE[hover].count.toLocaleString()}{KIND_MARK[data[hover].kind] && ` ${KIND_MARK[data[hover].kind]}`}</span>
             <span>{tr({ zh: '占 |G|:', en: '% of |G|:'
             })} {data[hover].pct < 1e-6 ? data[hover].pct.toExponential(2) : data[hover].pct.toFixed(4)}%</span>
             {branchingAt(data[hover].d) !== null && (
@@ -329,7 +318,7 @@ function SphereLogPlot() {
         )}
       </div>
       <div className="gt-aside" style={{ marginTop: 8, marginBottom: 0 }}>
-        {tr({ zh: '前 13 步增长率稳定在 ≈ 17.97× (略低于 18 — 因为 R 后不能立刻走 R\'); d = 18 达到 ≈ 2.93 × 10¹⁹ 的峰值; d = 20 仅剩 ≈ 4.9 亿状态, 其中包含 superflip。 这是「球面填空」在有限图上的几何后果 — 顶端必然收缩。', en: 'Steady growth at ~17.97× for d ≤ 13 (just below 18 because R cannot be immediately undone). Peak at d = 18 ≈ 2.93 × 10¹⁹. By d = 20 only ~490 million states remain (superflip among them). This is the geometric consequence of "sphere packing in a finite graph" — the outer tip must shrink.'
+        {tr({ zh: '前 13 步增长率稳定在 ≈ 17.97× (略低于 18 — 因为 R 后不能立刻走 R\'); d = 18 达到 ≈ 2.87 × 10¹⁹ 的峰值; d = 20 已知的只剩 4.9 亿个 (下界, 其中包含 superflip)。 这是「球面填空」在有限图上的几何后果 — 顶端必然收缩。d ≥ 16 的四档是 cube20.org 两位有效数字的估计, 这里按尾部真值等比归一, 故 Σ|S_d| 恰为 |G|。', en: 'Steady growth at ~17.97× for d ≤ 13 (just below 18 because R cannot be immediately undone). Peak at d = 18 ≈ 2.87 × 10¹⁹. At d = 20 only 490 million states are known (a lower bound; superflip among them). This is the geometric consequence of "sphere packing in a finite graph" — the outer tip must shrink. The four d ≥ 16 bins are cube20.org estimates to two significant figures, rescaled here to the exact tail so that Σ|S_d| is exactly |G|.'
         })}
       </div>
     </div>
