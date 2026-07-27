@@ -2119,3 +2119,138 @@
 }
 
 .god-mono { font-family: 'LiberationMono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+
+/* ─── PARTIAL SOLVES ────────────────────────────────────────────────── */
+
+.god-partial-wrap {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+}
+.god-partial-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.god-partial-head h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+.god-partial-diam {
+  margin-left: auto;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--god-warn);
+  font-variant-numeric: tabular-nums;
+}
+.god-partial-diam-metric {
+  margin-left: 4px;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--god-text-mute);
+}
+.god-partial-what {
+  margin: 6px 0 0;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--god-text-sub);
+}
+.god-partial-formula {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-x: auto;
+}
+.god-partial-formula-parts {
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--god-text-mute);
+}
+
+.god-partial-table {
+  margin-top: 14px;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+.god-partial-table th,
+.god-partial-table td {
+  padding: 4px 10px 4px 0;
+  text-align: right;
+  font-weight: 400;
+}
+.god-partial-table thead th {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--god-text-mute);
+  font-weight: 600;
+  border-bottom: 1px solid var(--god-border);
+}
+.god-partial-table tbody th {
+  text-align: left;
+  color: var(--god-text-sub);
+}
+.god-partial-table td:last-child { padding-right: 0; }
+.god-partial-total th,
+.god-partial-total td {
+  border-top: 1px solid var(--god-border);
+  color: var(--god-text-mute);
+}
+
+/* 状态数列:条在数字底下,条与数字同源 */
+.god-partial-statecell {
+  position: relative;
+  min-width: 92px;
+}
+.god-partial-statecell i {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 14px;
+  background: var(--god-accent-soft);
+  border-radius: 2px;
+}
+.god-partial-statecell span { position: relative; }
+
+.god-partial-means {
+  margin: 14px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 22px;
+}
+.god-partial-means div { display: flex; flex-direction: column; gap: 2px; }
+.god-partial-means dt {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--god-text-mute);
+}
+.god-partial-means dd {
+  margin: 0;
+  font-size: 0.98rem;
+  font-variant-numeric: tabular-nums;
+}
+.god-partial-means dd span { font-size: 0.82rem; color: var(--god-text-sub); }
+/* 类平均是个陷阱值 —— 显示但要看得出它不是答案 */
+.god-partial-means dd.is-trap {
+  color: var(--god-text-mute);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.god-partial-src { margin: 10px 0 0; font-size: 0.75rem; }
+.god-partial-src a { color: var(--god-text-mute); }
+.god-partial-src a:hover { color: var(--god-accent); }
+
+.god-partial-note {
+  margin: 16px 0 0;
+  font-size: 0.86rem;
+  line-height: 1.75;
+  color: var(--god-text-sub);
+}
