@@ -212,9 +212,45 @@ export const BLOCK122_ALL: Array<{ corners: string[]; edges: string[] }> =
 
 export type SkipKind = 'counted' | 'exact' | 'sim';
 
+// ── 非三阶项目的分母 ────────────────────────────────────────────────
+// 三阶那几族靠上面的 `statesWithSolved` 容斥;别的项目各有各的空间,分母单独写在这里,
+// 每一个都在 `tests/skip_probability.test.ts` 里与站内已有的枚举结果或闭式对账。
+
+const fact = (n: number): bigint => {
+  let r = 1n;
+  for (let i = 2n; i <= BigInt(n); i++) r *= i;
+  return r;
+};
+
+/** 2×2 全空间(固定一个角块)= 7!·3⁶。与 `stats/scramble/2x2_essential.json` 的 `total_positions` 同数。 */
+export const CUBE2_STATES = 3_674_160;
+/** WCA 2×2 打乱不给 ≤3 HTM 的态 —— 同一份 JSON 的 `wca_legal_min4h`。 */
+export const CUBE2_WCA_LEGAL = 3_673_775;
+
+/** 4×4 中心块的可分辨排布数 = 24!/(4!)⁶。 */
+export const CUBE4_CENTRE_STATES = fact(24) / fact(4) ** 6n;
+/** 某一种颜色的 4 块中心凑成完整一面(哪一面都行)。 */
+export const CUBE4_ONE_CENTRE = 6n * (fact(20) / fact(4) ** 5n);
+/** 一对相对色的 8 块中心各自凑成完整一面、且落在一对相对面上(3 对面 × 2 种朝向 = 6)。 */
+export const CUBE4_TWO_CENTRES = 6n * (fact(16) / fact(4) ** 4n);
+
+/**
+ * 五魔顶层:5 个角 + 5 条棱。
+ * 朝向各差一个总和约束 → 3⁴ 与 2⁴。排列这一半是关键:五魔的每个面转都把 5 个角、5 条棱各转一个
+ * 5-轮换(偶置换),所以**角排列与棱排列各自必为偶** —— 顶层就各只有 A5 的 60 种,不是 5! 的 120 种。
+ * 这条约束正是站内 `god_data` 把五魔写成 `20!·3¹⁹·30!·2²⁷`(而不是 2²⁹)时折进去的那个 /4。
+ */
+export const MINX_LL_CO = 3 ** 4;                  // 81
+export const MINX_LL_EO = 2 ** 4;                  // 16
+export const MINX_LL_PERM_RAW = 60 * 60;           // A5 × A5
+export const MINX_AUF = 5;
+export const MINX_PLL = MINX_LL_PERM_RAW / MINX_AUF;               // 720
+export const MINX_EP = MINX_PLL / 60;                              // 12
+export const MINX_LL = MINX_LL_CO * MINX_LL_EO * MINX_PLL;         // 933,120
+
 export interface SkipEntry {
   id: string;
-  group: 'll' | 'block' | 'cross' | 'roux';
+  group: 'll' | 'block' | 'cross' | 'roux' | '222' | '444' | 'minx';
   name: { zh: string; en: string };
   kind: SkipKind;
   /** 分子 / 分母,十进制字符串 —— 分母能到 4.3×10¹⁹,不能过 Number。 */
@@ -245,6 +281,14 @@ const block = (id: string, zh: string, en: string, corners: string[], whyZh: str
   num: statesWithAnyBlockSolved(corners).toString(),
   den: CUBE3_STATES,
   why: { zh: whyZh, en: whyEn },
+});
+
+/** 非三阶项目:分子分母都已经是算好的整数(字符串),只负责装进条目。 */
+const other = (
+  id: string, group: SkipEntry['group'], zh: string, en: string, num: string, den: string,
+  whyZh: string, whyEn: string,
+): SkipEntry => ({
+  id, group, name: { zh, en }, kind: 'counted', num, den, why: { zh: whyZh, en: whyEn },
 });
 
 const cross = (id: string, zh: string, en: string, faces: string[], whyZh: string, whyEn: string): SkipEntry => ({
@@ -537,6 +581,62 @@ export const SKIP_ENTRIES: SkipEntry[] = [
       en: 'Union over 8 corners × 3 edge pairs each = 24 squares. Note this is the in-home-slot reading, not "assembled somewhere else"',
     },
   },
+
+  // ── 二阶 ──────────────────────────────────────────────────────────
+  other('222-oll', '222', '二阶 OLL 跳步', '2×2 OLL skip', '1', String(3 ** 3),
+    '顶层 4 个角的朝向,第 4 个由总和定死 → 3³ 种',
+    'Four last-layer corners, the fourth twist forced by the sum → 3³ states'),
+  other('222-pll', '222', '二阶 PLL 跳步', '2×2 PLL skip', '1', '6',
+    '4 个角的排列 4! = 24,其中 4 种只差一次 AUF',
+    'Corner permutation 4! = 24, four of which are one AUF apart'),
+  other('222-ll', '222', '二阶顶层连跳', '2×2 LL skip', '1', String(3 ** 3 * 6),
+    '朝向 27 × 排列 6,两步独立',
+    'Orientation 27 × permutation 6, the two are independent'),
+  other('222-ff', '222', '首面已好(任一色)', 'A face already done (any colour)', '22654', String(CUBE2_STATES),
+    '站内 3,674,160 态全枚举里「CN 首面」的 0 步档',
+    'The 0-move bucket of the site’s CN-first-face enumeration over all 3,674,160 states'),
+  other('222-fl', '222', '首层已好(任一色)', 'A layer already done (any colour)', '3814', String(CUBE2_STATES),
+    '同一份枚举里「CN 首层」的 0 步档',
+    'The 0-move bucket of the CN-first-layer enumeration in the same dataset'),
+  other('222-nobar', '222', '一根棒都没有', 'No bar anywhere', '155414', String(CUBE2_STATES),
+    '同一份枚举的「无棒」子集大小',
+    'The size of the no-bar subset in the same enumeration'),
+  other('222-4q', '222', '比赛里抽到 4 步(QTM)', 'A four-quarter-turn state in competition', '534', String(CUBE2_WCA_LEGAL),
+    'QTM 最优 4 步的态有 534 个;分母是比赛能抽到的 3,673,775 个(WCA 不给 ≤3 HTM)',
+    '534 states are optimal in four quarter turns; the denominator is the 3,673,775 a competition can hand you (the WCA never gives ≤3 HTM)'),
+
+  // ── 四阶 ──────────────────────────────────────────────────────────
+  other('444-centre1', '444', '一种颜色的中心已成面', 'One colour’s centres already form a face',
+    CUBE4_ONE_CENTRE.toString(), CUBE4_CENTRE_STATES.toString(),
+    '24 块中心的可分辨排布 24!/(4!)⁶;某色 4 块凑成一面(6 个面都算)= 6·20!/(4!)⁵,约掉正好 1/1771',
+    'Distinguishable centre arrangements are 24!/(4!)⁶; one colour completing any of the six faces is 6·20!/(4!)⁵, which reduces to exactly 1/1771'),
+  other('444-centre2', '444', '一对相对色的中心都已成面', 'An opposite colour pair already done',
+    CUBE4_TWO_CENTRES.toString(), CUBE4_CENTRE_STATES.toString(),
+    '两色各占一面且互为对面:3 对面 × 2 种朝向 = 6 种落法,剩下 16 块自由',
+    'Both colours complete, on opposite faces: 3 face pairs × 2 orientations = 6 placements, the other 16 pieces free'),
+
+  // ── 五魔 ──────────────────────────────────────────────────────────
+  other('minx-eo', 'minx', '五魔 EO 跳步', 'Megaminx EO skip', '1', String(MINX_LL_EO),
+    '顶层 5 条棱的朝向,第 5 个由总和定死 → 2⁴',
+    'Five last-layer edges, the fifth flip forced by the sum → 2⁴'),
+  other('minx-co', 'minx', '五魔 CO 跳步', 'Megaminx CO skip', '1', String(MINX_LL_CO),
+    '顶层 5 个角的朝向,第 5 个由总和定死 → 3⁴',
+    'Five last-layer corners, the fifth twist forced by the sum → 3⁴'),
+  other('minx-oll', 'minx', '五魔 OLL 跳步', 'Megaminx OLL skip', '1', String(MINX_LL_CO * MINX_LL_EO),
+    '3⁴ × 2⁴ = 1296',
+    '3⁴ × 2⁴ = 1296'),
+  other('minx-ep', 'minx', '五魔 EP 跳步', 'Megaminx EP skip', '1', String(MINX_EP),
+    '每个面转都是棱上的 5-轮换 ⇒ 顶层棱排列必为偶,只有 A5 的 60 种;再模掉 5 个 AUF',
+    'Every face turn is a 5-cycle on edges, so the last-layer edge permutation must be even — only A5’s 60, then modulo the five AUFs'),
+  other('minx-cp', 'minx', '五魔 CP 跳步', 'Megaminx CP skip', '1', String(MINX_EP),
+    '角这边同理:A5 的 60 种,模 AUF 后 12 种',
+    'Corners are the same story: A5’s 60, twelve after the AUF quotient'),
+  other('minx-pll', 'minx', '五魔 PLL 跳步', 'Megaminx PLL skip', '1', String(MINX_PLL),
+    '角 60 × 棱 60 一起模掉 5 个 AUF = 720。注意不是 12 × 12 —— AUF 是两边共用的',
+    'Corners 60 × edges 60, quotiented by the five shared AUFs = 720. Not 12 × 12: the AUF is shared'),
+  other('minx-ll', 'minx', '五魔顶层连跳', 'Megaminx LL skip', '1', String(MINX_LL),
+    '1296 × 720 = 933,120',
+    '1296 × 720 = 933,120'),
 ];
 
 export const entryById = (id: string): SkipEntry => SKIP_ENTRIES.find((e) => e.id === id)!;

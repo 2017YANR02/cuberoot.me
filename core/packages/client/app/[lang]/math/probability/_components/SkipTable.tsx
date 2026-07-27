@@ -17,6 +17,9 @@ const GROUP_LABEL: Record<SkipEntry['group'], { zh: string; en: string }> = {
   cross: { zh: '十字', en: 'Cross' },
   block: { zh: '2×2×2 块', en: '2×2×2 block' },
   roux: { zh: 'Roux', en: 'Roux' },
+  '222': { zh: '二阶', en: '2×2' },
+  '444': { zh: '四阶中心', en: '4×4 centres' },
+  minx: { zh: '五魔顶层', en: 'Megaminx last layer' },
 };
 
 const KIND_LABEL: Record<SkipEntry['kind'], { zh: string; en: string }> = {
@@ -46,7 +49,7 @@ function pct(p: number): string {
 export default function SkipTable() {
   const [roundOf, setRoundOf] = useState(5);
   const [pickId, setPickId] = useState('pll');
-  const groups: SkipEntry['group'][] = ['ll', 'cross', 'block', 'roux'];
+  const groups: SkipEntry['group'][] = ['ll', 'cross', 'block', 'roux', '222', '444', 'minx'];
   const picked = entryById(pickId);
   const pickedP = probability(picked);
 
