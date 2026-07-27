@@ -19,6 +19,7 @@ import { tr } from '@/i18n/tr';
 import {
   CN_XCROSS_10_REPS, CN_XCROSS_10_SYMMETRY_ORDER, CN_XCROSS_10_TOTAL, CUBE_STATES,
 } from './_data/cn_xcross_10';
+import { EOCROSS_10F, EOCROSS_10F_BOTH_AXES, EOCROSS_10F_TOTAL } from './_data/eocross_10f';
 import { HARD_SCRAMBLES, type HardStageKey } from './_data/hard_scrambles';
 import './hardest.css';
 
@@ -26,6 +27,10 @@ const PREVIEW = 46;
 
 /** 本质类数 = 代表条数,不手写。 */
 const ESSENTIAL = CN_XCROSS_10_REPS.length;
+
+/** 两条 EO 轴都要 10 步的那条,序号从列表里查,不手写。 */
+const DOUBLE_10 = EOCROSS_10F_BOTH_AXES;
+const DOUBLE_10_INDEX = EOCROSS_10F.indexOf(EOCROSS_10F_BOTH_AXES) + 1;
 
 const STAGE_LABEL: Record<HardStageKey, string> = {
   cross: 'Cross',
@@ -231,6 +236,53 @@ export default function HardestPage() {
                 {rep.block222 != null && <span>2×2×2 <b>{rep.block222}</b></span>}
                 {rep.eo != null && <span>EO <b>{rep.eo}</b></span>}
               </span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="hardest-section">
+        <h2>
+          {tr({
+            zh: `EOCross 要 10 步的 ${EOCROSS_10F_TOTAL} 个态`,
+            en: `The ${EOCROSS_10F_TOTAL} states whose EOCross takes 10 moves`,
+          })}
+        </h2>
+        <p>
+          {tr({
+            zh: 'EOCross(ZZ 的第一步:12 条棱全部朝向正确 + 底面十字)的全空间是 24,330,240 个态,'
+              + `本站在纯 TS 里把它整个广搜了一遍,最深一档恰好 ${EOCROSS_10F_TOTAL} 个。下面这 ${EOCROSS_10F_TOTAL} 条打乱`
+              + '各 10 步,落到的正是那些态 —— 一一对应,不多不少,每次跑测试都重验一遍。'
+              + '底色固定为黄(D 面),换底色这批就不成立。',
+            en: 'EOCross — the ZZ opening: all twelve edges oriented plus the bottom cross — has a state space '
+              + `of 24,330,240, and a plain-TypeScript breadth-first search over all of it puts exactly `
+              + `${EOCROSS_10F_TOTAL} states at the maximum depth. The ${EOCROSS_10F_TOTAL} ten-move scrambles below land on `
+              + 'precisely those states, one for one, and the test suite re-checks that every run. The bottom '
+              + 'colour is fixed to yellow, so these do not carry over to another colour.',
+          })}
+        </p>
+        <p>
+          {tr({
+            zh: '一个补充口径:底面定死之后,EO 还剩两条轴可选(差一个 y 旋转),两条都是合法的 ZZ 起手,'
+              + '上面这批固定的是其中一条。把同一批打乱按另一条轴读,139 条掉到 6–9 步 —— '
+              + `只有第 ${DOUBLE_10_INDEX} 条 ${DOUBLE_10} 两条轴都要 10 步,那才是黄底 EOCross 真正无处可躲的开局。`,
+            en: 'One caveat on the convention: once the bottom face is fixed, EO still has two possible axes '
+              + '(a y rotation apart) and either is a legal ZZ start; the list above fixes one of them. Read the '
+              + `same scrambles on the other axis and 139 of them drop to 6–9 moves — only #${DOUBLE_10_INDEX}, `
+              + `${DOUBLE_10}, needs 10 either way, which makes it the one yellow-cross EOCross opening with nowhere to hide.`,
+          })}
+        </p>
+        <div className="hardest-corpus">
+          {EOCROSS_10F.map((scramble, i) => (
+            <Link
+              key={scramble}
+              className="hardest-corpus-item"
+              href={solverHref(scramble)}
+              prefetch={false}
+              aria-label={tr({ zh: '在求解器中打开', en: 'Open in the solver' })}
+            >
+              <span className="hardest-corpus-no">{i + 1}</span>
+              <code>{scramble}</code>
             </Link>
           ))}
         </div>

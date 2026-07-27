@@ -264,3 +264,17 @@ export function allCrossLengths(scramble: string): Record<CrossColor, number> | 
   }
   return result;
 }
+
+// ── 12 棱层模型的公用出口 ────────────────────────────────────────────────
+// EOCross 那条路(lib/eocross-dist.ts)与本文件是同一个棱层模型,只是坐标不同:
+// 这里跟 4 条底棱,那里跟 4 条底棱的位置 + 全部 12 个槽的翻转位。表只该有一份 ——
+// 它是对着 40,000 条真题 × 6 底色验过的,再抄一遍就是给自己埋一处不一致。
+//   EDGE_PERM[m][i]  转 m 之后,slot i 上的棱原来在哪个 slot
+//   EDGE_FLIP[m][i]  转 m 之后落到 slot i 的棱要不要翻(U/D 轴 EO 口径:只有 F/B 的 1/4 转翻)
+export const EDGE_MOVE_NAMES: readonly string[] = MOVE_NAMES;
+export const EDGE_PERM: readonly number[][] = PERM;
+export const EDGE_FLIP: readonly number[][] = ORI;
+/** 六个面的 4 条棱(slot 序);EOCross 的目标面从这里取。 */
+export const EDGE_FACE_SLOTS: Record<CrossColor, number[]> = FACE;
+/** 打乱串 → 18 个面转的下标序列(可含 wide / 转体);无法归约时 null。 */
+export const parseHtmMoves = parseScramble;

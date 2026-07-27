@@ -24,7 +24,7 @@ import AvgExamplesPanel, { type AvgGroupCase } from './_components/AvgExamplesPa
 import ExactCoverageMatrix from './_components/ExactCoverageMatrix';
 import ExactDistTable from './_components/ExactDistTable';
 import {
-  EXACT_PSEUDO_STAGES, EXACT_STD_STAGES, SLOT_LABEL, SLOT_OK,
+  EXACT_EO_STAGES, EXACT_PSEUDO_STAGES, EXACT_STD_STAGES, SLOT_LABEL, SLOT_OK,
   compactExact, exactColorsOf, exactMean, exactRatios, getExactCell, groupDigits,
   type ExactColors, type ExactFull, type ExactSlot, type ExactStage,
 } from './_data/exact_dist';
@@ -185,10 +185,11 @@ const EXACT_SET_META: SetData = {
   label_zh: '精确穷举',
   sample_count: 0,
   variants: {
-    // 标准 CFOP 全 5 阶段 + 伪变体的十字有精确数据;stages 供阶段下拉用,
+    // 标准 CFOP 全 5 阶段 + 伪变体的十字 + EO 变体的 EOCross 有精确数据;stages 供阶段下拉用,
     // data 恒空(数值不走这里,走 EXACT_DIST 旁路)。
     std: { sample_count: 0, stages: EXACT_STD_STAGES, data: {} },
     pseudo: { sample_count: 0, stages: EXACT_PSEUDO_STAGES, data: {} },
+    eo: { sample_count: 0, stages: EXACT_EO_STAGES, data: {} },
   },
 };
 
@@ -646,6 +647,9 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   // 变体不能写死 std:伪十字的经验分布在 variants.pseudo 下,阶段键也带 pseudo_ 前缀。
   const overlayCounts = useMemo<Record<string, number> | null>(() => {
     if (!isExact || !overlayOn || slot !== 'unfixed' || !exactFull || !data) return null;
+    // 口径对不上的格(EOCross:固定轴 vs 两轴取 min)有真题数据也不叠 —— 画出来的
+    // 偏差列量的是两套定义的差,不是打乱池的偏差。理由直接显示在图下方。
+    if (exactFull.noOverlay) return null;
     return data.sets.wca?.variants[variant]?.data[stage]?.[subsetKey]?.counts ?? null;
   }, [isExact, overlayOn, slot, exactFull, data, variant, stage, subsetKey]);
 
@@ -1438,9 +1442,9 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
       {isExact && exactFull && (
         <div className="scramble-stats-exact-toggles">
           <BoolToggle
-            value={overlayOn && slot === 'unfixed'}
+            value={overlayOn && slot === 'unfixed' && !exactFull.noOverlay}
             onChange={setOverlayOn}
-            disabled={slot !== 'unfixed'}
+            disabled={slot !== 'unfixed' || !!exactFull.noOverlay}
             ariaLabel={tr({ zh: '叠加 WCA 真题对照', en: 'Overlay WCA scrambles' })}
             label={(
               <>
@@ -1545,6 +1549,11 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
           />
         )}
       </div>
+
+      {/* 有真题分布但口径不同的格:说清为什么不叠,别让用户以为是数据缺失。 */}
+      {isExact && exactFull?.noOverlay && (
+        <p className="scramble-stats-exact-note">{tr(exactFull.noOverlay)}</p>
+      )}
 
       {/* 完整精确值:图上柱顶是紧凑写法,逐位数字在这张表里看。 */}
       {isExact && exactFull && <ExactDistTable cell={exactFull} overlay={overlayCounts} />}

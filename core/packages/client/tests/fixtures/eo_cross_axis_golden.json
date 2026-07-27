@@ -1,0 +1,602 @@
+[
+  {
+    "id": "22001",
+    "scramble": "B2 U' L2 U F2 L2 D2 L2 U F2 L F2 L D U L' D2 F' U2 B",
+    "Yellow": 8,
+    "White": 6
+  },
+  {
+    "id": "23001",
+    "scramble": "D2 U L2 B2 R2 F2 R2 U2 R2 D' R' D B2 U B' R B' D B' L'",
+    "Yellow": 7,
+    "White": 6
+  },
+  {
+    "id": "24001",
+    "scramble": "L2 D F2 D' B2 L2 R2 U2 F2 D L' U2 R2 B' R F R2 D' U F L' F'",
+    "Yellow": 8,
+    "White": 7
+  },
+  {
+    "id": "25001",
+    "scramble": "U' B2 U2 F2 L2 D' F2 L2 B' D2 B' L' F R D L' B2 L2 B2 D' L2 U",
+    "Yellow": 7,
+    "White": 6
+  },
+  {
+    "id": "26001",
+    "scramble": "U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2",
+    "Yellow": 5,
+    "White": 7
+  },
+  {
+    "id": "27001",
+    "scramble": "U2 L2 U' L2 U2 B2 D L R' B D' F L2 D2 F' L D F' U' L B2",
+    "Yellow": 7,
+    "White": 8
+  },
+  {
+    "id": "28001",
+    "scramble": "D U B2 L2 D R2 U' L2 F L R D2 B' D B2 R D2 F L' B' L'",
+    "Yellow": 8,
+    "White": 7
+  },
+  {
+    "id": "29001",
+    "scramble": "R2 F R2 F2 D2 U2 F' U2 F' L2 D' L B2 F2 D F L F L2 R' F2 L'",
+    "Yellow": 7,
+    "White": 7
+  },
+  {
+    "id": "30001",
+    "scramble": "L F2 U2 L D2 R2 B2 D2 B2 R' B F' R' U' F' R F' L' F' U L2 U'",
+    "Yellow": 7,
+    "White": 6
+  },
+  {
+    "id": "31001",
+    "scramble": "U2 B2 R2 F2 U' L2 B2 U R2 U' L D' L2 F R B2 F' R B R'",
+    "Yellow": 8,
+    "White": 5
+  },
+  {
+    "id": "32001",
+    "scramble": "B2 R2 F2 L' U2 R D2 R D' U2 F2 L' R' D L' F L D L",
+    "Yellow": 8,
+    "White": 7
+  },
+  {
+    "id": "33001",
+    "scramble": "R U' D' R2 D' R D B2 L B2 D' F B2 D2 R2 F' D2 F' L2",
+    "Yellow": 7,
+    "White": 7
+  },
+  {
+    "id": "34001",
+    "scramble": "U R' U F2 R U F B2 U R' U2 F' L2 B2 R2 U2 B U2 B U2",
+    "Yellow": 7,
+    "White": 7
+  },
+  {
+    "id": "35001",
+    "scramble": "B D2 F' R2 D2 B U2 B' L' R' D U' L' B R F' R' U R'",
+    "Yellow": 7,
+    "White": 7
+  },
+  {
+    "id": "36001",
+    "scramble": "D2 L2 R F2 D2 F2 R' U2 L B' U F R2 B' D' F2 R U2 L2 R'",
+    "Yellow": 8,
+    "White": 7
+  },
+  {
+    "id": "37001",
+    "scramble": "F2 L' F2 R2 B2 F2 R D2 L' U2 F U2 R D U L D' B2 U2 F",
+    "Yellow": 7,
+    "White": 8
+  },
+  {
+    "id": "38001",
+    "scramble": "B2 D' L2 U' R2 B2 D' B2 F2 L' F D L2 F R' D L' B' D F'",
+    "Yellow": 7,
+    "White": 8
+  },
+  {
+    "id": "39001",
+    "scramble": "F2 D2 B U2 R2 D2 R2 U2 F L' F2 D' B' R' D' U R2 D' L'",
+    "Yellow": 8,
+    "White": 5
+  },
+  {
+    "id": "40001",
+    "scramble": "R2 B2 D' F2 U' L2 F2 D2 L' B2 R U' B' F2 L F2 L2 R2 U2 R'",
+    "Yellow": 7,
+    "White": 7
+  },
+  {
+    "id": "41001",
+    "scramble": "F' B' L' F2 L' U2 L B' L' U' B' D2 R B2 R2 L' D2 L",
+    "Yellow": 7,
+    "White": 7
+  },
+  {
+    "id": "42001",
+    "scramble": "L U L' D F2 L' U2 D' R L' B L' D2 L2 F2 D2 L2",
+    "Yellow": 7,
+    "White": 7
+  },
+  {
+    "id": "43001",
+    "scramble": "D L2 U2 B2 U L2 B2 D L2 U B R2 U' B' L' D' U' F' L' B' R'",
+    "Yellow": 8,
+    "White": 8
+  },
+  {
+    "id": "44001",
+    "scramble": "R U2 R2 F2 R' F2 L D2 F2 D' L' R2 B2 R F U' F2 U2",
+    "Yellow": 8,
+    "White": 7
+  },
+  {
+    "id": "45001",
+    "scramble": "R' D2 R' B2 R2 U2 B2 U2 F2 U' B' R' D' L' B D F' R' D U",
+    "Yellow": 8,
+    "White": 8
+  },
+  {
+    "id": "46001",
+    "scramble": "D R2 D2 L2 D L2 R2 F2 D B2 L B U L2 D2 R B F2 D' R'",
+    "Yellow": 7,
+    "White": 8
+  },
+  {
+    "id": "47001",
+    "scramble": "F2 U2 B2 R2 U2 B' U2 R B D' F' R' U' R F2 D F' D",
+    "Yellow": 8,
+    "White": 8
+  },
+  {
+    "id": "48001",
+    "scramble": "U F' R' F B2 R2 U B' R2 L' B' L F2 R2 L B2 L D2 F2",
+    "Yellow": 8,
+    "White": 8
+  },
+  {
+    "id": "49001",
+    "scramble": "B R2 B2 L' U' L' D R F L' B L D2 B2 L2 B2 L D2 R2 B2",
+    "Yellow": 8,
+    "White": 8
+  },
+  {
+    "id": "50001",
+    "scramble": "U F2 U' D' R B U2 R U2 D B' D F2 R2 U F2 R2 U",
+    "Yellow": 7,
+    "White": 7
+  },
+  {
+    "id": "51001",
+    "scramble": "R' L' B' D' R' F' B' R2 B2 D2 R B2 U F2 U2 L2 B2 D' F2 L2",
+    "Yellow": 7,
+    "White": 8
+  },
+  {
+    "id": "52001",
+    "scramble": "F2 U2 L2 R2 B2 L2 D B2 U2 B' R' F D2 U R' B2 L U L F2",
+    "Yellow": 7,
+    "White": 8
+  },
+  {
+    "id": "53001",
+    "scramble": "B' U' B R2 U' R2 U R D B' D B2 D2 R2 F2 L F2 L2",
+    "Yellow": 7,
+    "White": 7
+  },
+  {
+    "id": "54001",
+    "scramble": "U2 F2 D2 R F2 L B2 U2 F U2 F' R' U B U' B2 L F2 L2",
+    "Yellow": 7,
+    "White": 7
+  },
+  {
+    "id": "55001",
+    "scramble": "L2 U2 R2 B2 F2 D' B2 U2 R2 U L2 R' U' B2 U' L' F2 L F' R",
+    "Yellow": 6,
+    "White": 7
+  },
+  {
+    "id": "56001",
+    "scramble": "D2 U L2 D B2 U2 F2 R2 B D R F' L' B2 U' R2 U2 L",
+    "Yellow": 7,
+    "White": 7
+  },
+  {
+    "id": "57001",
+    "scramble": "B2 U2 B2 U B2 U2 R2 F2 L2 D R F2 U L' B' D' R D2 R F'",
+    "Yellow": 7,
+    "White": 7
+  },
+  {
+    "id": "58001",
+    "scramble": "R2 D' L2 R2 F2 U' L2 U2 B2 F U' F U' L F' U2 L2 D' B2 U2",
+    "Yellow": 6,
+    "White": 7
+  },
+  {
+    "id": "59001",
+    "scramble": "F U2 B2 F' D2 U2 F' R2 F2 L' D R2 D F2 U' R B' F' D' L2",
+    "Yellow": 8,
+    "White": 7
+  },
+  {
+    "id": "60001",
+    "scramble": "F2 R2 B D2 B2 U2 F' U F2 D R B2 L U2 F L F' R'",
+    "Yellow": 7,
+    "White": 7
+  },
+  {
+    "id": "61001",
+    "scramble": "B2 L2 F2 L' F2 R D2 B2 L2 D B' L U R2 F R2 D R B' F",
+    "Yellow": 7,
+    "White": 7
+  },
+  {
+    "id": "62001",
+    "scramble": "D2 L2 D' L2 B2 F2 D B2 D L' U2 R' B2 D F' D2 B U' F' D",
+    "Yellow": 7,
+    "White": 8
+  },
+  {
+    "id": "63001",
+    "scramble": "F2 B U2 R2 F' R' L' F2 D' R2 D2 F' B' D2 L2 F R2 B R2",
+    "Yellow": 6,
+    "White": 8
+  },
+  {
+    "id": "64001",
+    "scramble": "U2 L2 B R2 U2 B2 R2 F L2 U F L' U2 R U F' R2 D' U R",
+    "Yellow": 8,
+    "White": 7
+  },
+  {
+    "id": "65001",
+    "scramble": "F2 U2 L' R U2 L2 R D' R' U F R D2 B D L U' R'",
+    "Yellow": 7,
+    "White": 8
+  },
+  {
+    "id": "66001",
+    "scramble": "U' B' D' L2 U2 R' L D' R F D' B2 L2 D F2 B2 D' L2 F2 U2",
+    "Yellow": 7,
+    "White": 8
+  },
+  {
+    "id": "67001",
+    "scramble": "D2 L' R' B2 F2 R D2 R F L U' L D F' L B' D R' U2",
+    "Yellow": 8,
+    "White": 9
+  },
+  {
+    "id": "68001",
+    "scramble": "R2 B U2 R L B R' U2 D' L F' D2 B2 D2 B2 L F2 R L B2",
+    "Yellow": 7,
+    "White": 7
+  },
+  {
+    "id": "69001",
+    "scramble": "B' D2 F2 R2 F2 L2 F2 D L' B L R' B F2 R U2 F R",
+    "Yellow": 7,
+    "White": 7
+  },
+  {
+    "id": "70001",
+    "scramble": "U' F2 U2 L2 R2 B2 U2 L U2 F' D2 R D' U2 F U' L2 U2 F2",
+    "Yellow": 8,
+    "White": 6
+  },
+  {
+    "id": "71001",
+    "scramble": "L2 B' U2 L2 B F2 L2 D' U' F2 R' B D' L B2 D F L",
+    "Yellow": 7,
+    "White": 7
+  },
+  {
+    "id": "72001",
+    "scramble": "R2 L U' L U2 B R' F2 L F L2 F L2 D2 B D2 R2",
+    "Yellow": 7,
+    "White": 8
+  },
+  {
+    "id": "73001",
+    "scramble": "D F2 U2 R2 U F2 U' F2 U' R' D' U2 B U2 R' F2 D' F2 U F",
+    "Yellow": 8,
+    "White": 7
+  },
+  {
+    "id": "74001",
+    "scramble": "D' B2 R2 U' B2 F2 D B D' L2 U2 B R2 D R D L R' U",
+    "Yellow": 8,
+    "White": 8
+  },
+  {
+    "id": "75001",
+    "scramble": "B2 L2 F' R2 D2 B L2 F D' L R' D L D2 L D R' U R",
+    "Yellow": 6,
+    "White": 7
+  },
+  {
+    "id": "76001",
+    "scramble": "D2 L F L2 B U' D' R F L' U2 R2 U2 F2 L U2 D2 L' U2",
+    "Yellow": 8,
+    "White": 8
+  },
+  {
+    "id": "77001",
+    "scramble": "B R2 B' U2 R2 B' R2 B2 R2 D L' B R B2 D2 L F D L' F",
+    "Yellow": 6,
+    "White": 8
+  },
+  {
+    "id": "78001",
+    "scramble": "U' L2 U' F2 D2 U2 L2 F' U' B' D F2 D R U B2 L D2 U2",
+    "Yellow": 7,
+    "White": 8
+  },
+  {
+    "id": "79001",
+    "scramble": "F2 U L2 U2 B2 D F2 D R D2 B' R F2 L B F2 D L' D F2",
+    "Yellow": 6,
+    "White": 7
+  },
+  {
+    "id": "80001",
+    "scramble": "B F2 L2 F2 U2 L2 F' L2 F' L2 R U F' L' R2 U B2 L D2",
+    "Yellow": 8,
+    "White": 7
+  },
+  {
+    "id": "81001",
+    "scramble": "U L B' R L' F' L2 B2 U' F2 R2 L2 F2 L2 D2 F D2 F",
+    "Yellow": 8,
+    "White": 8
+  },
+  {
+    "id": "82001",
+    "scramble": "B2 L2 U F2 D2 R2 F2 L2 B R' D U2 R' U2 L2 D2 F U'",
+    "Yellow": 7,
+    "White": 7
+  },
+  {
+    "id": "83001",
+    "scramble": "F2 L2 F2 U L2 F2 U2 F2 R2 B D2 R2 F' R2 F2 L' U B' D' B'",
+    "Yellow": 8,
+    "White": 7
+  },
+  {
+    "id": "84001",
+    "scramble": "D2 L D2 R2 D2 R B2 F2 L' D2 U B L2 F D R' D L2 B2",
+    "Yellow": 7,
+    "White": 7
+  },
+  {
+    "id": "85001",
+    "scramble": "L2 U F2 L2 U2 R2 U2 R F2 U F2 U' R B2 R2 F' D2 L2",
+    "Yellow": 7,
+    "White": 5
+  },
+  {
+    "id": "86001",
+    "scramble": "D L2 F R2 B2 R2 L2 B U B R' D2 L D2 L2 D2 B2 R2 F2",
+    "Yellow": 6,
+    "White": 8
+  },
+  {
+    "id": "87001",
+    "scramble": "F2 L2 D2 B' L2 F2 U2 B L2 F R D' L R2 B' L2 D' L2 R2 U",
+    "Yellow": 7,
+    "White": 7
+  },
+  {
+    "id": "240001",
+    "scramble": "U' L B' D2 R2 L' B D' L' B' R' U2 D2 L U2 R2 B2 L' D2",
+    "Yellow": 7,
+    "White": 8
+  },
+  {
+    "id": "241001",
+    "scramble": "R2 B2 L D2 L2 B2 R D2 R2 D B L' U' R B F' D2 L2 B2 D'",
+    "Yellow": 8,
+    "White": 9
+  },
+  {
+    "id": "242001",
+    "scramble": "L' U2 F2 L D2 U2 R D2 U' B' R2 D R' B D F' D' B2 D'",
+    "Yellow": 7,
+    "White": 7
+  },
+  {
+    "id": "243001",
+    "scramble": "U' R L' D' F' U B2 D2 B2 U D2 B' R2 B' R2 L2 B D2",
+    "Yellow": 7,
+    "White": 6
+  },
+  {
+    "id": "244001",
+    "scramble": "F R2 B L2 U2 F2 R2 D' F' D F' R2 B L' D U L D2",
+    "Yellow": 7,
+    "White": 7
+  },
+  {
+    "id": "245001",
+    "scramble": "L2 R' B2 U2 R F2 U2 R' B2 D U2 F' R2 F R' B R2 D2 F'",
+    "Yellow": 6,
+    "White": 8
+  },
+  {
+    "id": "246001",
+    "scramble": "F2 U2 L2 F' R' F2 U D L' U' F' U L2 D2 F2 L2 D R2 D' B2 D'",
+    "Yellow": 7,
+    "White": 7
+  },
+  {
+    "id": "247001",
+    "scramble": "B' F U2 F D2 F L' D U F' U' B U2 L2 D' B' F'",
+    "Yellow": 7,
+    "White": 7
+  },
+  {
+    "id": "248001",
+    "scramble": "L2 D2 R2 L' F R U' F' D B U D L2 F2 D L2 B2 D R2",
+    "Yellow": 8,
+    "White": 8
+  },
+  {
+    "id": "249001",
+    "scramble": "L' D2 B2 L2 R' D2 L' R2 B U' L' B' R2 B R' D B U2 L2",
+    "Yellow": 8,
+    "White": 7
+  },
+  {
+    "id": "250001",
+    "scramble": "D2 L' F2 L' D2 F' R2 B L B2 U L2 D' B2 L2 F2 U L2 U'",
+    "Yellow": 7,
+    "White": 7
+  },
+  {
+    "id": "251001",
+    "scramble": "U' F B' L' B2 L B' U B R' B2 L2 U2 R U2 D2 R' F2 D2",
+    "Yellow": 7,
+    "White": 7
+  },
+  {
+    "id": "252001",
+    "scramble": "B2 L2 D F2 D' B2 L2 D' U' B2 U' B' L' R2 B' D' F' D2 U' R2",
+    "Yellow": 8,
+    "White": 7
+  },
+  {
+    "id": "253001",
+    "scramble": "D2 R F2 R2 U2 B2 D2 U R2 B2 U2 B' R2 D R2 F D' F",
+    "Yellow": 7,
+    "White": 7
+  },
+  {
+    "id": "254001",
+    "scramble": "R2 B L2 B2 U2 F' R2 D2 L R F' D' B2 L2 U L' F2 R F'",
+    "Yellow": 8,
+    "White": 7
+  },
+  {
+    "id": "255001",
+    "scramble": "B2 R2 D U2 B2 D2 L2 F2 L D' R2 U L2 R' D R' F D' L'",
+    "Yellow": 7,
+    "White": 7
+  },
+  {
+    "id": "256001",
+    "scramble": "D' R2 F' L U' R F B U2 L F2 R2 D2 B2 D' L2 U'",
+    "Yellow": 7,
+    "White": 8
+  },
+  {
+    "id": "257001",
+    "scramble": "B' D2 F R' D L2 D L2 F U2 L' U D F2 B2 R2 F2 U R2 L2",
+    "Yellow": 7,
+    "White": 7
+  },
+  {
+    "id": "258001",
+    "scramble": "B' D2 B2 L2 D2 F L2 F D' R' U' R2 D' B' R2 D2 B L2 R2",
+    "Yellow": 6,
+    "White": 6
+  },
+  {
+    "id": "259001",
+    "scramble": "F2 L2 F2 L2 U' F2 D U2 F L' B' U B2 R' D2 R2 F2 D' F2",
+    "Yellow": 8,
+    "White": 8
+  },
+  {
+    "id": "260001",
+    "scramble": "R L2 F U B2 R B' R2 D L' D' R2 F R2 F U2 R2 F2",
+    "Yellow": 7,
+    "White": 7
+  },
+  {
+    "id": "261001",
+    "scramble": "R' F D L2 F' B U R2 B' R F L2 U L2 U' R2 U2 L2",
+    "Yellow": 6,
+    "White": 6
+  },
+  {
+    "id": "262001",
+    "scramble": "R2 U' R2 F2 U2 L2 D B2 L2 F U2 L D U' F2 L2 U2 B' L'",
+    "Yellow": 8,
+    "White": 7
+  },
+  {
+    "id": "263001",
+    "scramble": "R' D2 L' D' F' U B2 L F U B2 R2 D' R2 D' R2 B2 U R2 L2",
+    "Yellow": 7,
+    "White": 7
+  },
+  {
+    "id": "264001",
+    "scramble": "B2 L' R2 F2 U2 B2 F2 L B2 U' L' R B' U' B2 D' F L2 D R2",
+    "Yellow": 7,
+    "White": 8
+  },
+  {
+    "id": "265001",
+    "scramble": "D F2 R2 D' L2 U R2 D2 F D L B' L D R' D2 B' R2 B2 R'",
+    "Yellow": 8,
+    "White": 7
+  },
+  {
+    "id": "266001",
+    "scramble": "D' U' B2 D' U2 B2 R2 U B R2 F' D F R' U L U R F'",
+    "Yellow": 7,
+    "White": 8
+  },
+  {
+    "id": "267001",
+    "scramble": "B2 L F2 L' B2 L D2 F2 R D' B2 R D2 B' U B F R D2 F2",
+    "Yellow": 8,
+    "White": 8
+  },
+  {
+    "id": "268001",
+    "scramble": "U' R L2 B D R' F D2 L' U F' B' U2 D2 L2 F2 L2 B' D2 R2",
+    "Yellow": 8,
+    "White": 8
+  },
+  {
+    "id": "269001",
+    "scramble": "L2 D' R2 B2 D B2 U L2 D' U F D2 R B2 R' B F2 D L' B2",
+    "Yellow": 8,
+    "White": 7
+  },
+  {
+    "id": "270001",
+    "scramble": "D2 R' U2 F2 L U2 L' F2 L D2 U R B' D2 R' D B' F2 D2 R'",
+    "Yellow": 6,
+    "White": 7
+  },
+  {
+    "id": "271001",
+    "scramble": "L' U' F' B2 D' F2 L2 F' R2 L' B' L2 B' R2 F U2 L2 F D2 B'",
+    "Yellow": 7,
+    "White": 7
+  },
+  {
+    "id": "272001",
+    "scramble": "U R' B D2 F' D' B' R2 B2 D' B2 L' U2 B2 L2 F2 L' F2 D2",
+    "Yellow": 6,
+    "White": 8
+  },
+  {
+    "id": "273001",
+    "scramble": "B2 D U F2 D L2 F' D' U2 R2 B F R B R' B' U'",
+    "Yellow": 7,
+    "White": 7
+  }
+]

@@ -33,6 +33,7 @@ const STAGE_LABEL: Record<ExactStage, { zh: string; en: string }> = {
   xxxcross: { zh: 'XXXCross', en: 'XXXCross' },
   xxxxcross: { zh: 'XXXXCross', en: 'XXXXCross' },
   pseudo_cross: { zh: '伪 Cross', en: 'Pseudo cross' },
+  eo_cross: { zh: 'EOCross', en: 'EOCross' },
 };
 
 /**
