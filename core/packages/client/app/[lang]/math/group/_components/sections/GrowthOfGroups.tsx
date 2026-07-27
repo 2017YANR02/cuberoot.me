@@ -4,6 +4,8 @@ import { useState, useMemo } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
 import type { Lang } from '../primitives';
 import { tr } from '@/i18n/tr';
+import { CUBE3_STATES, GOD_DIST_333 } from '@/lib/god-distance-333';
+import { groupDigits } from '@/lib/group-digits';
 
 // ── Growth computation helpers ────────────────────────────────────────────────
 
@@ -20,33 +22,18 @@ function betaF2(r: number): number {
 
 /** Sphere sizes σ(r) for the Rubik's Cube in HTM.
  *  Depths 0–15 are EXACT (Rokicki-Kociemba-Davidson-Dethridge, 2013 / cube20.org).
- *  Depths 16–20 are ESTIMATES — treated as unknown here; we cap β at |G| from r=16. */
-const CUBE_SIGMA_EXACT: readonly number[] = [
-  1,
-  18,
-  243,
-  3240,
-  43239,
-  574908,
-  7618438,
-  100803036,
-  1332343288,
-  17596479795,
-  232248063316,
-  3063288809012,
-  40374425656248,
-  531653418284628,
-  6989320578825358,
-  91365146187124313,
-];
+ *  Depths 16–20 are ESTIMATES — treated as unknown here; we cap β at |G| from r=16.
+ *  Single source: lib/god-distance-333. */
+const CUBE_SIGMA_EXACT: readonly number[] =
+  GOD_DIST_333.filter((b) => b.kind === 'exact').map((b) => Number(b.count));
 
 /** |G| for the 3×3×3 Rubik's Cube = 8! · 3^7 · 12! · 2^11 / 2 (the /2 is the
  *  permutation-parity constraint linking corners and edges). */
-const CUBE_ORDER = 43252003274489856000;
+const CUBE_ORDER = Number(CUBE3_STATES);
 /** Exact decimal string of |G|; the Number above rounds past 2^53, so any
  *  user-facing display of the full value must use this string, not
  *  CUBE_ORDER.toLocaleString() (which yields …489,860,000). */
-const CUBE_ORDER_STR = '43,252,003,274,489,856,000';
+const CUBE_ORDER_STR = groupDigits(CUBE3_STATES);
 
 /** β(r) for the cube group.  r=0..15 exact; r>=16 returns CUBE_ORDER (complete). */
 function betaCube(r: number): number {
@@ -228,16 +215,16 @@ export default function GrowthOfGroups() {
           zh={<>
             <strong style={{ color: COLOR_CUBE }}>魔方群 — 有限群的饱和</strong>。
             3×3×3 魔方群 <TeX src={String.raw`G`} />（阶 <TeX src={String.raw`\approx4.3\times10^{19}`} />）配 18 个 HTM 生成元（6 个面各 3 种转动：90° 顺/逆时针和 180°）。
-            深度 0 到 15 的球面大小（元素个数）已由 Rokicki-Kociemba-Davidson-Dethridge（2013）精确枚举；深度 16–20 仍是估计值。
-            <strong>直径 = 20</strong>（HTM 度量，即「上帝算法」步数）：所有 <TeX src={String.raw`4.3\times10^{19}`} /> 个状态在 20 步内可解，且存在需要整整 20 步的状态（约 4.9 亿个，均为估计值）。
+            深度 0 到 15 的球面大小（元素个数）已由 Rokicki-Kociemba-Davidson-Dethridge（2013）精确枚举；深度 16–19 只公布到两位有效数字。
+            <strong>直径 = 20</strong>（HTM 度量，即「上帝算法」步数）：所有 <TeX src={String.raw`4.3\times10^{19}`} /> 个状态在 20 步内可解，且存在需要整整 20 步的状态（已找到 4.9 亿个，这是下界而非普查结果）。
             <strong>众数距离约为 18</strong>，而非 20——距离 20 的状态极为稀少。
             因为 <TeX src={String.raw`G`} /> 有限，<TeX src={String.raw`\beta_S(r)=|G|`} /> 对所有 <TeX src={String.raw`r\ge20`} /> 成立，对数曲线在此处折平。
           </>}
           en={<>
             <strong style={{ color: COLOR_CUBE }}>The Rubik&apos;s Cube group — saturation of a finite group</strong>.
             The 3×3×3 cube group <TeX src={String.raw`G`} /> (order <TeX src={String.raw`\approx4.3\times10^{19}`} />) uses 18 HTM generators (6 faces × 3 turns each: 90° CW, 90° CCW, 180°).
-            Sphere sizes at depths 0–15 are <em>exact</em>, computed by Rokicki-Kociemba-Davidson-Dethridge (2013); depths 16–20 are <em>estimates</em>.
-            <strong>Diameter = 20</strong> (half-turn metric, i.e. &ldquo;God&apos;s number&rdquo;): every one of the <TeX src={String.raw`4.3\times10^{19}`} /> states is solvable in at most 20 moves, and some require all 20 (roughly 490 million such states, all estimated).
+            Sphere sizes at depths 0–15 are <em>exact</em>, computed by Rokicki-Kociemba-Davidson-Dethridge (2013); depths 16–19 are published to <em>two significant figures</em> only.
+            <strong>Diameter = 20</strong> (half-turn metric, i.e. &ldquo;God&apos;s number&rdquo;): every one of the <TeX src={String.raw`4.3\times10^{19}`} /> states is solvable in at most 20 moves, and some require all 20 (490 million have been found — a lower bound, not a census).
             The <strong>modal distance is about 18</strong>, not 20 — distance-20 states are extremely rare.
             Since <TeX src={String.raw`G`} /> is finite, <TeX src={String.raw`\beta_S(r)=|G|`} /> for all <TeX src={String.raw`r\ge20`} />, so the log plot bends flat at that radius.
           </>}
@@ -650,15 +637,13 @@ function GrowthComparisonPanel({ lang }: { lang: Lang }) {
 // Panel 2: Cube distance distribution bar chart
 // ══════════════════════════════════════════════════════════════════════════════
 
-// Estimates for depths 16–20 (order of magnitude; all labelled as estimated)
-// Source: cube20.org discussion; treat as approximate
-const CUBE_SIGMA_EST: Record<number, number> = {
-  16: 1.1e18,   // order estimate
-  17: 1.2e19,   // order estimate
-  18: 2.9e19,   // modal: order estimate
-  19: 1.5e18,   // order estimate
-  20: 4.9e8,    // ~490 million (estimate)
-};
+// Depths 16–20 (order of magnitude; all labelled as estimated). cube20.org's own
+// published figures — two significant digits for d=16..19, a lower bound at d=20.
+// Single source: lib/god-distance-333. This panel deliberately shows the *raw*
+// published values, not the normalized ones, because it labels them "est.".
+const CUBE_SIGMA_EST: Record<number, number> = Object.fromEntries(
+  GOD_DIST_333.filter((b) => b.kind !== 'exact').map((b) => [b.d, Number(b.count)]),
+);
 
 function CubeDistributionPanel({}: { lang: Lang }) {
   const [logBarScale, setLogBarScale] = useState(true);

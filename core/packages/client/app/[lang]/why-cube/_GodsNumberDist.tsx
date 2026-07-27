@@ -13,38 +13,28 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useInView, useReducedMotion } from './_hooks';
 import { useT } from '../../../hooks/useT';
+import {
+  CUBE3_STATES, GOD_DIST_333, GOD_DIST_333_NORMALIZED, GOD_KIND_MARK,
+} from '@/lib/god-distance-333';
+import { groupDigits as groupWith } from '@/lib/group-digits';
 import './_GodsNumberDist.css';
 
-type Bin = { d: number; count: bigint; exact: boolean };
+type Bin = { d: number; count: bigint; raw: bigint; mark: string; exact: boolean };
 
 // Exact integers (d 0–15) and estimates (d 16–20) from cube20.org. Counts use
 // BigInt — d 14/15 already exceed Number.MAX_SAFE_INTEGER, so plain numbers
 // would corrupt the trailing digits of the EXACT values.
-const BINS: Bin[] = [
-  { d: 0, count: 1n, exact: true },
-  { d: 1, count: 18n, exact: true },
-  { d: 2, count: 243n, exact: true },
-  { d: 3, count: 3240n, exact: true },
-  { d: 4, count: 43239n, exact: true },
-  { d: 5, count: 574908n, exact: true },
-  { d: 6, count: 7618438n, exact: true },
-  { d: 7, count: 100803036n, exact: true },
-  { d: 8, count: 1332343288n, exact: true },
-  { d: 9, count: 17596479795n, exact: true },
-  { d: 10, count: 232248063316n, exact: true },
-  { d: 11, count: 3063288809012n, exact: true },
-  { d: 12, count: 40374425656248n, exact: true },
-  { d: 13, count: 531653418284628n, exact: true },
-  { d: 14, count: 6989320578825358n, exact: true },
-  { d: 15, count: 91365146187124313n, exact: true },
-  { d: 16, count: 1100000000000000000n, exact: false },
-  { d: 17, count: 12000000000000000000n, exact: false },
-  { d: 18, count: 29000000000000000000n, exact: false },
-  { d: 19, count: 1500000000000000000n, exact: false },
-  { d: 20, count: 490000000n, exact: false },
-];
+const BINS: Bin[] = GOD_DIST_333.map((b, i) => ({
+  d: b.d,
+  // 归一化档:d ≥ 16 等比缩到尾部真值,免得各档占比加起来超过 100%。只用于条高。
+  count: BigInt(GOD_DIST_333_NORMALIZED[i]),
+  // 读数里写 cube20.org 的公布值 —— 归一化后的十几位数字不是真精度。
+  raw: BigInt(b.count),
+  mark: GOD_KIND_MARK[b.kind],
+  exact: b.kind === 'exact',
+}));
 
-const TOTAL = 43252003274489856000n;
+const TOTAL = BigInt(CUBE3_STATES);
 
 // log10 of a BigInt via digit-length + leading mantissa (Number can't hold
 // these magnitudes). Plenty of significant figures for a bar height.
@@ -63,9 +53,9 @@ function heightPct(count: bigint): number {
   return (log10Big(count) / MAX_LOG) * 100;
 }
 
-// Full-digit grouping with thin separators.
+// Full-digit grouping with thin separators (lib/group-digits is the single impl).
 function groupDigits(n: bigint): string {
-  return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  return groupWith(n.toString(), ' ');
 }
 
 // Short magnitude for the footnote ("≈ 4.33×10^19").
@@ -103,12 +93,16 @@ export default function GodsNumberDist() {
               {t('距离', 'Distance')}&nbsp;<span className="gnd-num">{sel.d}</span>
             </span>
             <span className="gnd-readout-count">
-              {!sel.exact && <span className="gnd-approx" aria-hidden>≈</span>}
-              <span className="gnd-num">{groupDigits(sel.count)}</span>
+              {sel.mark && <span className="gnd-approx" aria-hidden>{sel.mark}</span>}
+              <span className="gnd-num">{groupDigits(sel.raw)}</span>
               <span className="gnd-readout-unit">{t('种状态', 'states')}</span>
             </span>
             <span className={`gnd-readout-tag${sel.exact ? '' : ' is-est'}`}>
-              {sel.exact ? t('精确值', 'exact count') : t('估计值', 'estimate')}
+              {sel.exact
+                ? t('精确值', 'exact count')
+                : sel.d === 20
+                ? t('已找到这么多(下界)', 'found so far (lower bound)')
+                : t('估计值(两位有效数字)', 'estimate (two significant figures)')}
             </span>
           </>
         ) : (
@@ -146,7 +140,7 @@ export default function GodsNumberDist() {
               onBlur={() => setActive((cur) => (cur === i ? null : cur))}
               onClick={() => setActive((cur) => (cur === i ? null : i))}
               aria-pressed={isActive}
-              aria-label={`${t('距离', 'distance')} ${b.d}: ${b.exact ? '' : '≈'}${groupDigits(b.count)} ${t('种状态', 'states')}${b.exact ? '' : ` (${t('估计值', 'estimate')})`}`}
+              aria-label={`${t('距离', 'distance')} ${b.d}: ${b.mark}${groupDigits(b.raw)} ${t('种状态', 'states')}${b.exact ? '' : ` (${t('估计值', 'estimate')})`}`}
             >
               <span className="gnd-bar-track">
                 <span

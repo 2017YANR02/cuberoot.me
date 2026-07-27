@@ -20,6 +20,8 @@
  *   - WCA 比赛数 / 年 来自 WCA results dump 趋势 (2003-2025).
  */
 
+import { CUBE3_STATES, GOD_DIST_333_NORMALIZED } from '@/lib/god-distance-333';
+
 /** 每个深度 d 上的状态数. 长度 = 1 + God's number. */
 export interface DepthDist {
   /** counts[d] = 步数恰为 d 的状态数, 用 number (科学计数). */
@@ -40,32 +42,10 @@ export interface DepthDist {
  *   d=16..20: cube20.org 估计 (Reid / Kunkle / Rokicki).
  */
 export const D_333: DepthDist = {
-  counts: [
-    1,
-    18,
-    243,
-    3_240,
-    43_239,
-    574_908,
-    7_618_438,
-    100_803_036,
-    1_332_343_288,
-    17_596_479_795,
-    232_248_063_316,
-    3_063_288_809_012,
-    40_374_425_656_248,
-    531_653_418_284_628,
-    6_989_320_578_825_358,
-    // d=15 = 91,365,146,187,124,313 (超过 Number.MAX_SAFE_INTEGER, 用 float 表达)
-    9.136514618712431e16,
-    // d=16..20 估计
-    1.1e18,
-    1.21e19,
-    2.91e19,
-    1.5e18,
-    4.9e8,
-  ],
-  total: 4.3252003274489856e19,
+  // 全站单一源 lib/god-distance-333.ts(归一化档:Σ 恰为 |G|,d=16..19 的估计不会把总数撑爆)。
+  // 这里的 number 化会丢末位精度 —— 本模块只做幸运度拟合,不做精确计数。
+  counts: GOD_DIST_333_NORMALIZED.map(Number),
+  total: Number(CUBE3_STATES),
   k_min_wca: 2,
   diameter: 20,
   source: 'partial',

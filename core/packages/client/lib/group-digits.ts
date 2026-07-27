@@ -5,6 +5,6 @@
  * 4.3e19),`toLocaleString()` 那条路一律先经过 number,会静默丢精度。BigInt 调用方
  * 自己 `String(n)` 进来。
  */
-export function groupDigits(s: string): string {
-  return s.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+export function groupDigits(s: string, sep = ','): string {
+  return s.replace(/\B(?=(\d{3})+(?!\d))/g, sep);
 }

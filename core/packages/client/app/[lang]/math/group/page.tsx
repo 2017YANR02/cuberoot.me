@@ -170,7 +170,7 @@ function IndexFeaturedCube() {
         </div>
         <div className="gt-index-featured-text">
           <h3 className="gt-index-featured-title">
-            {tr({ zh: '所有棱翻面 — 离还原最远的 3 个态之一', en: 'All edges flipped — one of three positions maximally far from solved'
+            {tr({ zh: '所有棱翻面 — 第一个被证明离还原最远的态', en: 'All edges flipped — the first position proved maximally far from solved'
             })}
           </h3>
           <p>
