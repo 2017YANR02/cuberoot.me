@@ -9,7 +9,10 @@
 export class Block222SolverWasm {
     free(): void;
     [Symbol.dispose](): void;
-    constructor(mt_edge3: Uint8Array, mt_corn: Uint8Array);
+    /**
+     * 零下载:mt_edge3 / mt_corn 现场生成(合计 ~745KB,几十 ms)。
+     */
+    constructor();
     /**
      * 6 视角最优步数(每视角 = 4 贴底块最小),顺序对应 ROTS。
      */
@@ -77,13 +80,27 @@ export class CrossRestrictSolverWasm {
     solve_cross_restricted_moves(scramble: string, face: number, allowed_lo: number, allowed_hi: number, max_rot_count: number, extra: number, cap: number): string;
 }
 
+/**
+ * 两段式:纯十字(variant 0)只吃 pt_cross(gz 50KB)+ 现场生成的 mt_edge2;
+ * xcross..xxxxcross(variant 1..4)另需 pt_cross_C4E0(gz 20MB),由 `attach_xcross`
+ * 惰性补上 —— UI 默认停在「十字」阶段,不切过去就永不下载那 20MB。
+ */
 export class CrossSolverWasm {
     free(): void;
     [Symbol.dispose](): void;
     /**
-     * 用 6 张表的 .bin 字节构造(参数名即所需表)。
+     * 补上 xcross 段(pt_cross_C4E0 字节;mt_edge4 / mt_corn / mt_edge 现场生成)。
+     * 重复调用无副作用(已 attach 则直接返回)。
      */
-    constructor(pt_cross: Uint8Array, pt_cross_c4e0: Uint8Array, mt_edge2: Uint8Array, mt_edge4: Uint8Array, mt_corn: Uint8Array, mt_edge: Uint8Array);
+    attach_xcross(pt_cross_c4e0: Uint8Array): void;
+    /**
+     * xcross 段是否就绪(JS 侧据此决定要不要先拉 pt_cross_C4E0)。
+     */
+    has_xcross(): boolean;
+    /**
+     * 只建纯十字求解器。pt_cross = 唯一需要下载的表;mt_edge2 现场生成。
+     */
+    constructor(pt_cross: Uint8Array);
     /**
      * 单个变体的 6 视角最优步数(Uint32Array,长度 6)。
      * variant:0=cross,1=xc,2=xxc,3=xxxc,4=xxxxc。
@@ -184,10 +201,10 @@ export class F2leoSolverWasm {
     free(): void;
     [Symbol.dispose](): void;
     /**
-     * 5 张表:pt_cross(f2leo cross 剪枝)+ mt_edge2/edge4/corn/edge(两变体共用)。
+     * 唯一下载:pt_cross(f2leo cross 剪枝,gz 50KB);mt_edge2/edge4/corn/edge 现场生成。
      * 仅存引用,不建剪枝表(惰性,见 struct 文档)。
      */
-    constructor(pt_cross: Uint8Array, mt_edge2: Uint8Array, mt_edge4: Uint8Array, mt_corn: Uint8Array, mt_edge: Uint8Array);
+    constructor(pt_cross: Uint8Array);
     /**
      * F2LEO 24 值:[cross×6, xcross×6, xxcross×6, xxxcross×6](6 = 已折叠 z0/z2/z3/z1/x3/x1)。
      */
@@ -324,7 +341,10 @@ export class PyraminxSolverWasm {
 export class Roux223SolverWasm {
     free(): void;
     [Symbol.dispose](): void;
-    constructor(mt_edge3: Uint8Array, mt_corn2: Uint8Array, mt_edge2: Uint8Array, mt_corn: Uint8Array);
+    /**
+     * 零下载:4 张 mt 表(edge3 / corn2 / edge2 / corn,合计 ~820KB)现场生成。
+     */
+    constructor();
     /**
      * 单视角多解 JSON(同 Block222SolverWasm::solve_moves 形状)。`m` 前缀 =
      * rot + y^k;`c` = 目标标签(方块 "DBL-L" / 1x2x3 "DL" / 2x2x2 角名 / 2x2x3 棱名 /
@@ -377,11 +397,12 @@ export class VariantSolverWasm {
     free(): void;
     [Symbol.dispose](): void;
     /**
-     * 12 表:pair 用 mt_edge4/corn/edge + pt_cross_ins_C4 + pt_pair_C4E0 + pt_cross_C4E0;
-     * eo 另用 pt_cross + pt_ep4eo12 + mt_edge2 + mt_eo12 + mt_eo12_alt + mt_ep4。
+     * 6 张 pt 表(下载):pair 用 pt_cross_ins_C4 + pt_pair_C4E0 + pt_cross_C4E0;
+     * eo 另用 pt_cross + pt_ep4eo12;pseudo 用 pt_pscross。
+     * 7 张 mt 表(edge4/corn/edge/edge2/eo12/eo12_alt/ep4)现场生成,不再下载。
      * 仅存引用,惰性建 solver。(pseudo / pseudo_pair 接入时再扩。)
      */
-    constructor(pt_cross_c4e0: Uint8Array, pt_cross_ins_c4: Uint8Array, pt_pair_c4e0: Uint8Array, mt_edge4: Uint8Array, mt_corn: Uint8Array, mt_edge: Uint8Array, pt_cross: Uint8Array, pt_ep4eo12: Uint8Array, mt_edge2: Uint8Array, mt_eo12: Uint8Array, mt_eo12_alt: Uint8Array, mt_ep4: Uint8Array, pt_pscross: Uint8Array);
+    constructor(pt_cross_c4e0: Uint8Array, pt_cross_ins_c4: Uint8Array, pt_pair_c4e0: Uint8Array, pt_cross: Uint8Array, pt_ep4eo12: Uint8Array, pt_pscross: Uint8Array);
     /**
      * 整变体 24(pair/pseudo/pseudo_pair,4 阶段)/ 30(eo,5 阶段)值 × 6 视角(物理面序 z0/z2/z3/z1/x3/x1)。
      */
@@ -459,7 +480,7 @@ export interface InitOutput {
     readonly __wbg_skewbsolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_variantsolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_xcrossrestrictsolverwasm_free: (a: number, b: number) => void;
-    readonly block222solverwasm_new: (a: number, b: number, c: number, d: number) => number;
+    readonly block222solverwasm_new: () => number;
     readonly block222solverwasm_solve: (a: number, b: number, c: number) => [number, number];
     readonly block222solverwasm_solve_face: (a: number, b: number, c: number, d: number) => number;
     readonly block222solverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
@@ -468,7 +489,9 @@ export interface InitOutput {
     readonly crossrestrictsolverwasm_new: () => number;
     readonly crossrestrictsolverwasm_solve_cross_restricted: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number];
     readonly crossrestrictsolverwasm_solve_cross_restricted_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number) => [number, number];
-    readonly crosssolverwasm_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number) => number;
+    readonly crosssolverwasm_attach_xcross: (a: number, b: number, c: number) => void;
+    readonly crosssolverwasm_has_xcross: (a: number) => number;
+    readonly crosssolverwasm_new: (a: number, b: number) => number;
     readonly crosssolverwasm_solve: (a: number, b: number, c: number, d: number) => [number, number];
     readonly crosssolverwasm_solve_cumulative: (a: number, b: number, c: number, d: number) => [number, number];
     readonly crosssolverwasm_solve_face: (a: number, b: number, c: number, d: number, e: number) => number;
@@ -482,7 +505,7 @@ export interface InitOutput {
     readonly eodrsolverwasm_new: () => number;
     readonly eodrsolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number];
     readonly eodrsolverwasm_solve_stage: (a: number, b: number, c: number, d: number) => [number, number];
-    readonly f2leosolverwasm_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => number;
+    readonly f2leosolverwasm_new: (a: number, b: number) => number;
     readonly f2leosolverwasm_solve_f2leo: (a: number, b: number, c: number) => [number, number];
     readonly f2leosolverwasm_solve_f2leo_stage: (a: number, b: number, c: number, d: number, e: number) => [number, number];
     readonly f2leosolverwasm_solve_f2leo_stage_masked: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
@@ -502,14 +525,14 @@ export interface InitOutput {
     readonly pyraminxsolverwasm_new: () => number;
     readonly pyraminxsolverwasm_solve: (a: number, b: number, c: number) => [number, number, number];
     readonly pyraminxsolverwasm_solve_moves: (a: number, b: number, c: number) => [number, number, number, number];
-    readonly roux223solverwasm_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => number;
+    readonly roux223solverwasm_new: () => number;
     readonly roux223solverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number];
     readonly roux223solverwasm_solve_stage: (a: number, b: number, c: number, d: number) => [number, number];
     readonly skewbsolverwasm_from_dist: (a: number, b: number) => number;
     readonly skewbsolverwasm_new: () => number;
     readonly skewbsolverwasm_solve: (a: number, b: number, c: number) => [number, number, number];
     readonly skewbsolverwasm_solve_moves: (a: number, b: number, c: number) => [number, number, number, number];
-    readonly variantsolverwasm_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: number, o: number, p: number, q: number, r: number, s: number, t: number, u: number, v: number, w: number, x: number, y: number, z: number) => number;
+    readonly variantsolverwasm_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number) => number;
     readonly variantsolverwasm_solve: (a: number, b: number, c: number, d: number) => [number, number];
     readonly variantsolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number) => [number, number];
     readonly variantsolverwasm_solve_moves_masked: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number) => [number, number];

@@ -30,8 +30,8 @@ use std::sync::{Arc, Mutex, OnceLock};
 use memmap2::Mmap;
 
 use crate::cube_common::{
-    self as cc, create_multi_move_table, create_multi_move_table2, index_to_o, o_to_index,
-    state_space, write_table_le_u32, Move, State, MAGIC,
+    self as cc, create_multi_move_table, create_multi_move_table2, state_space,
+    write_table_le_u32, MAGIC,
 };
 
 // ---------- 路径 ----------
@@ -128,6 +128,21 @@ impl MoveTable {
         for (i, c) in data.chunks_exact(4).enumerate() {
             v[i] = u32::from_le_bytes([c[0], c[1], c[2], c[3]]);
         }
+        MoveTable {
+            data: TableStorage::Owned(v),
+            state_count,
+            stride,
+        }
+    }
+
+    /// 从现场生成的 u32 数组构造(不经 .bin 序列化)。`mt_gen` 走这条路:浏览器端
+    /// mt_* 一律现场建,不再下载。
+    pub fn from_vec(v: Vec<u32>, state_count: u32, stride: u32) -> MoveTable {
+        assert_eq!(
+            v.len() as u64,
+            (state_count as u64) * (stride as u64),
+            "move table vec length mismatch"
+        );
         MoveTable {
             data: TableStorage::Owned(v),
             state_count,
@@ -359,135 +374,10 @@ fn load_table_from_disk(
     }
 }
 
-// ---------- 基础表生成器(单棱 / 单角 / 单棱位置) ----------
-
-/// C++ createMTEdge:为每个 "edge i/2 处于位置 i/2,朝向 i%2" 的"单棱状态",
-/// 枚举 18 个 move,写入"新单棱状态"。
-fn create_mt_edge() -> Vec<u32> {
-    let size = state_space::EDGE; // 24
-    let mut mt = vec![0u32; size * 18];
-    for i in 0..size {
-        let e = (i / 2) as u8; // 目标棱编号
-        let ori_in = (i % 2) as u8;
-        // 构造一个 solved 状态,把目标棱的 orientation 改成 ori_in
-        // (位置已是 e -> e,无需改)
-        let mut s = State::SOLVED;
-        // edges[e] = 2*e + ori_in
-        s.edges[e as usize] = 2 * e + ori_in;
-        for j in 0..18 {
-            let m = Move::from_index(j);
-            let ns = s.applied(m);
-            let (ep, eo) = ns.ep_eo();
-            // 找到 e 现在在哪
-            let mut idx = 0usize;
-            for k in 0..12 {
-                if ep[k] == e {
-                    idx = k;
-                    break;
-                }
-            }
-            mt[18 * i + j] = (2 * idx as u32) + eo[idx] as u32;
-        }
-    }
-    mt
-}
-
-/// C++ createMTCorn:与 createMTEdge 同理,c=3,8 角。
-fn create_mt_corn() -> Vec<u32> {
-    let size = state_space::CORNER; // 24
-    let mut mt = vec![0u32; size * 18];
-    for i in 0..size {
-        let c = (i / 3) as u8;
-        let ori_in = (i % 3) as u8;
-        let mut s = State::SOLVED;
-        s.corners[c as usize] = 3 * c + ori_in;
-        for j in 0..18 {
-            let m = Move::from_index(j);
-            let ns = s.applied(m);
-            let (cp, co) = ns.cp_co();
-            let mut idx = 0usize;
-            for k in 0..8 {
-                if cp[k] == c {
-                    idx = k;
-                    break;
-                }
-            }
-            mt[18 * i + j] = (3 * idx as u32) + co[idx] as u32;
-        }
-    }
-    mt
-}
-
-/// C++ createMTEP:每个棱 i 起始位置 i,枚举 move,记录新位置(忽略 orientation)。
-fn create_mt_ep() -> Vec<u32> {
-    let mut mt = vec![0u32; 12 * 18];
-    for i in 0..12usize {
-        let e = i as u8;
-        let s = State::SOLVED; // edge e 已在位置 e
-        for j in 0..18 {
-            let m = Move::from_index(j);
-            let ns = s.applied(m);
-            let (ep, _eo) = ns.ep_eo();
-            let mut idx = 0usize;
-            for k in 0..12 {
-                if ep[k] == e {
-                    idx = k;
-                    break;
-                }
-            }
-            mt[18 * i + j] = idx as u32;
-        }
-    }
-    mt
-}
-
-/// C++ createMTEO:遍历 2^11=2048 个 EO 编码,装入 state,apply move,
-/// 编码新 EO,写入 mt[18*i + j] = 18 * idx (预乘 18,stride=18)。
-fn create_mt_eo() -> Vec<u32> {
-    let size = state_space::EO12;
-    let mut mt = vec![0u32; size * 18];
-    for i in 0..size {
-        let mut eo_arr = vec![0i32; 12];
-        index_to_o(&mut eo_arr, i as i32, 2, 12);
-        // 构造 state:solved cp/co + solved ep + 指定 eo
-        let mut s = State::SOLVED;
-        for k in 0..12 {
-            s.edges[k] = 2 * (k as u8) + eo_arr[k] as u8;
-        }
-        for j in 0..18 {
-            let m = Move::from_index(j);
-            let ns = s.applied(m);
-            let (_ep, eo_new) = ns.ep_eo();
-            let eo_i32: Vec<i32> = eo_new.iter().map(|&x| x as i32).collect();
-            let idx = o_to_index(&eo_i32, 2, 12);
-            mt[18 * i + j] = 18 * idx as u32;
-        }
-    }
-    mt
-}
-
-/// C++ createMTEOAlt:同上但不预乘 18(table_naming.csv 标 "原始")。
-fn create_mt_eo_alt() -> Vec<u32> {
-    let size = state_space::EO12;
-    let mut mt = vec![0u32; size * 18];
-    for i in 0..size {
-        let mut eo_arr = vec![0i32; 12];
-        index_to_o(&mut eo_arr, i as i32, 2, 12);
-        let mut s = State::SOLVED;
-        for k in 0..12 {
-            s.edges[k] = 2 * (k as u8) + eo_arr[k] as u8;
-        }
-        for j in 0..18 {
-            let m = Move::from_index(j);
-            let ns = s.applied(m);
-            let (_ep, eo_new) = ns.ep_eo();
-            let eo_i32: Vec<i32> = eo_new.iter().map(|&x| x as i32).collect();
-            let idx = o_to_index(&eo_i32, 2, 12);
-            mt[18 * i + j] = idx as u32;
-        }
-    }
-    mt
-}
+// ---------- 基础表生成器 ----------
+// 单棱 / 单角 / 单棱位置 / EO 四个基础生成器搬去 crate::mt_gen(顶层,wasm 也能调),
+// 这里直接复用同一份 —— 浏览器端的 mt_* 现场生成与本管理器落盘的必须逐字节相同。
+use crate::mt_gen::{create_mt_corn, create_mt_edge, create_mt_eo, create_mt_eo_alt, create_mt_ep};
 
 // ---------- 12 张 gen_* 函数:从依赖表派生 ----------
 

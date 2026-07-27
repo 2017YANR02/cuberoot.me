@@ -62,14 +62,21 @@ export async function GET(
   // On Vercel, tools/ isn't bundled — fall back to static.cuberoot.me which
   // serves these via nginx with CORS:* (matches stats route handler pattern).
   if (process.env.VERCEL === '1') {
-    // rust-cross 的数据表(*.bin.gz,~27MB/冷加载)由 worker 内 fetch() 拉取,
-    // 能安全跟随跨域 307(static CORS:*)。直接跳转,bytes 不穿过 Vercel Compute
-    // —— 否则代理转发是 Fast Origin/Data Transfer 的主要消耗(同 /stats 优化)。
+    // rust-cross 的数据表(*.bin.gz)由 worker 内 fetch() 拉取,能安全跟随跨域 307
+    // (static CORS:*)。直接跳转,bytes 不穿过 Vercel Compute —— 否则代理转发是
+    // Fast Origin/Data Transfer 的主要消耗(同 /stats 优化)。
     // worker.js / glue / wasm 体积小且须同源加载,仍走下面的代理。
+    //
+    // 注:client 现在直接把 tablesBase 指向 static(见 rust-cross-client.ts),正常路径
+    // 根本不会走到这条 307;它只兜住老缓存里的 worker 和外部直链。既然是兜底,更要给
+    // **max-age** —— 只发 s-maxage 时浏览器完全不缓存重定向,每张表白付一个 RTT。
     if (rel.startsWith('solver/rust-cross/tables/')) {
       return new Response(null, {
         status: 307,
-        headers: { location: `https://static.cuberoot.me/tools/${rel}`, 'cache-control': 'public, s-maxage=86400' },
+        headers: {
+          location: `https://static.cuberoot.me/tools/${rel}`,
+          'cache-control': 'public, max-age=86400, s-maxage=86400',
+        },
       });
     }
     try {

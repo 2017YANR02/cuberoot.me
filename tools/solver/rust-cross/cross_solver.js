@@ -17,15 +17,10 @@ export class Block222SolverWasm {
         wasm.__wbg_block222solverwasm_free(ptr, 0);
     }
     /**
-     * @param {Uint8Array} mt_edge3
-     * @param {Uint8Array} mt_corn
+     * 零下载:mt_edge3 / mt_corn 现场生成(合计 ~745KB,几十 ms)。
      */
-    constructor(mt_edge3, mt_corn) {
-        const ptr0 = passArray8ToWasm0(mt_edge3, wasm.__wbindgen_malloc);
-        const len0 = WASM_VECTOR_LEN;
-        const ptr1 = passArray8ToWasm0(mt_corn, wasm.__wbindgen_malloc);
-        const len1 = WASM_VECTOR_LEN;
-        const ret = wasm.block222solverwasm_new(ptr0, len0, ptr1, len1);
+    constructor() {
+        const ret = wasm.block222solverwasm_new();
         this.__wbg_ptr = ret;
         Block222SolverWasmFinalization.register(this, this.__wbg_ptr, this);
         return this;
@@ -219,6 +214,11 @@ export class CrossRestrictSolverWasm {
 }
 if (Symbol.dispose) CrossRestrictSolverWasm.prototype[Symbol.dispose] = CrossRestrictSolverWasm.prototype.free;
 
+/**
+ * 两段式:纯十字(variant 0)只吃 pt_cross(gz 50KB)+ 现场生成的 mt_edge2;
+ * xcross..xxxxcross(variant 1..4)另需 pt_cross_C4E0(gz 20MB),由 `attach_xcross`
+ * 惰性补上 —— UI 默认停在「十字」阶段,不切过去就永不下载那 20MB。
+ */
 export class CrossSolverWasm {
     __destroy_into_raw() {
         const ptr = this.__wbg_ptr;
@@ -231,28 +231,31 @@ export class CrossSolverWasm {
         wasm.__wbg_crosssolverwasm_free(ptr, 0);
     }
     /**
-     * 用 6 张表的 .bin 字节构造(参数名即所需表)。
-     * @param {Uint8Array} pt_cross
+     * 补上 xcross 段(pt_cross_C4E0 字节;mt_edge4 / mt_corn / mt_edge 现场生成)。
+     * 重复调用无副作用(已 attach 则直接返回)。
      * @param {Uint8Array} pt_cross_c4e0
-     * @param {Uint8Array} mt_edge2
-     * @param {Uint8Array} mt_edge4
-     * @param {Uint8Array} mt_corn
-     * @param {Uint8Array} mt_edge
      */
-    constructor(pt_cross, pt_cross_c4e0, mt_edge2, mt_edge4, mt_corn, mt_edge) {
+    attach_xcross(pt_cross_c4e0) {
+        const ptr0 = passArray8ToWasm0(pt_cross_c4e0, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.crosssolverwasm_attach_xcross(this.__wbg_ptr, ptr0, len0);
+    }
+    /**
+     * xcross 段是否就绪(JS 侧据此决定要不要先拉 pt_cross_C4E0)。
+     * @returns {boolean}
+     */
+    has_xcross() {
+        const ret = wasm.crosssolverwasm_has_xcross(this.__wbg_ptr);
+        return ret !== 0;
+    }
+    /**
+     * 只建纯十字求解器。pt_cross = 唯一需要下载的表;mt_edge2 现场生成。
+     * @param {Uint8Array} pt_cross
+     */
+    constructor(pt_cross) {
         const ptr0 = passArray8ToWasm0(pt_cross, wasm.__wbindgen_malloc);
         const len0 = WASM_VECTOR_LEN;
-        const ptr1 = passArray8ToWasm0(pt_cross_c4e0, wasm.__wbindgen_malloc);
-        const len1 = WASM_VECTOR_LEN;
-        const ptr2 = passArray8ToWasm0(mt_edge2, wasm.__wbindgen_malloc);
-        const len2 = WASM_VECTOR_LEN;
-        const ptr3 = passArray8ToWasm0(mt_edge4, wasm.__wbindgen_malloc);
-        const len3 = WASM_VECTOR_LEN;
-        const ptr4 = passArray8ToWasm0(mt_corn, wasm.__wbindgen_malloc);
-        const len4 = WASM_VECTOR_LEN;
-        const ptr5 = passArray8ToWasm0(mt_edge, wasm.__wbindgen_malloc);
-        const len5 = WASM_VECTOR_LEN;
-        const ret = wasm.crosssolverwasm_new(ptr0, len0, ptr1, len1, ptr2, len2, ptr3, len3, ptr4, len4, ptr5, len5);
+        const ret = wasm.crosssolverwasm_new(ptr0, len0);
         this.__wbg_ptr = ret;
         CrossSolverWasmFinalization.register(this, this.__wbg_ptr, this);
         return this;
@@ -544,26 +547,14 @@ export class F2leoSolverWasm {
         wasm.__wbg_f2leosolverwasm_free(ptr, 0);
     }
     /**
-     * 5 张表:pt_cross(f2leo cross 剪枝)+ mt_edge2/edge4/corn/edge(两变体共用)。
+     * 唯一下载:pt_cross(f2leo cross 剪枝,gz 50KB);mt_edge2/edge4/corn/edge 现场生成。
      * 仅存引用,不建剪枝表(惰性,见 struct 文档)。
      * @param {Uint8Array} pt_cross
-     * @param {Uint8Array} mt_edge2
-     * @param {Uint8Array} mt_edge4
-     * @param {Uint8Array} mt_corn
-     * @param {Uint8Array} mt_edge
      */
-    constructor(pt_cross, mt_edge2, mt_edge4, mt_corn, mt_edge) {
+    constructor(pt_cross) {
         const ptr0 = passArray8ToWasm0(pt_cross, wasm.__wbindgen_malloc);
         const len0 = WASM_VECTOR_LEN;
-        const ptr1 = passArray8ToWasm0(mt_edge2, wasm.__wbindgen_malloc);
-        const len1 = WASM_VECTOR_LEN;
-        const ptr2 = passArray8ToWasm0(mt_edge4, wasm.__wbindgen_malloc);
-        const len2 = WASM_VECTOR_LEN;
-        const ptr3 = passArray8ToWasm0(mt_corn, wasm.__wbindgen_malloc);
-        const len3 = WASM_VECTOR_LEN;
-        const ptr4 = passArray8ToWasm0(mt_edge, wasm.__wbindgen_malloc);
-        const len4 = WASM_VECTOR_LEN;
-        const ret = wasm.f2leosolverwasm_new(ptr0, len0, ptr1, len1, ptr2, len2, ptr3, len3, ptr4, len4);
+        const ret = wasm.f2leosolverwasm_new(ptr0, len0);
         this.__wbg_ptr = ret;
         F2leoSolverWasmFinalization.register(this, this.__wbg_ptr, this);
         return this;
@@ -983,21 +974,10 @@ export class Roux223SolverWasm {
         wasm.__wbg_roux223solverwasm_free(ptr, 0);
     }
     /**
-     * @param {Uint8Array} mt_edge3
-     * @param {Uint8Array} mt_corn2
-     * @param {Uint8Array} mt_edge2
-     * @param {Uint8Array} mt_corn
+     * 零下载:4 张 mt 表(edge3 / corn2 / edge2 / corn,合计 ~820KB)现场生成。
      */
-    constructor(mt_edge3, mt_corn2, mt_edge2, mt_corn) {
-        const ptr0 = passArray8ToWasm0(mt_edge3, wasm.__wbindgen_malloc);
-        const len0 = WASM_VECTOR_LEN;
-        const ptr1 = passArray8ToWasm0(mt_corn2, wasm.__wbindgen_malloc);
-        const len1 = WASM_VECTOR_LEN;
-        const ptr2 = passArray8ToWasm0(mt_edge2, wasm.__wbindgen_malloc);
-        const len2 = WASM_VECTOR_LEN;
-        const ptr3 = passArray8ToWasm0(mt_corn, wasm.__wbindgen_malloc);
-        const len3 = WASM_VECTOR_LEN;
-        const ret = wasm.roux223solverwasm_new(ptr0, len0, ptr1, len1, ptr2, len2, ptr3, len3);
+    constructor() {
+        const ret = wasm.roux223solverwasm_new();
         this.__wbg_ptr = ret;
         Roux223SolverWasmFinalization.register(this, this.__wbg_ptr, this);
         return this;
@@ -1150,51 +1130,31 @@ export class VariantSolverWasm {
         wasm.__wbg_variantsolverwasm_free(ptr, 0);
     }
     /**
-     * 12 表:pair 用 mt_edge4/corn/edge + pt_cross_ins_C4 + pt_pair_C4E0 + pt_cross_C4E0;
-     * eo 另用 pt_cross + pt_ep4eo12 + mt_edge2 + mt_eo12 + mt_eo12_alt + mt_ep4。
+     * 6 张 pt 表(下载):pair 用 pt_cross_ins_C4 + pt_pair_C4E0 + pt_cross_C4E0;
+     * eo 另用 pt_cross + pt_ep4eo12;pseudo 用 pt_pscross。
+     * 7 张 mt 表(edge4/corn/edge/edge2/eo12/eo12_alt/ep4)现场生成,不再下载。
      * 仅存引用,惰性建 solver。(pseudo / pseudo_pair 接入时再扩。)
      * @param {Uint8Array} pt_cross_c4e0
      * @param {Uint8Array} pt_cross_ins_c4
      * @param {Uint8Array} pt_pair_c4e0
-     * @param {Uint8Array} mt_edge4
-     * @param {Uint8Array} mt_corn
-     * @param {Uint8Array} mt_edge
      * @param {Uint8Array} pt_cross
      * @param {Uint8Array} pt_ep4eo12
-     * @param {Uint8Array} mt_edge2
-     * @param {Uint8Array} mt_eo12
-     * @param {Uint8Array} mt_eo12_alt
-     * @param {Uint8Array} mt_ep4
      * @param {Uint8Array} pt_pscross
      */
-    constructor(pt_cross_c4e0, pt_cross_ins_c4, pt_pair_c4e0, mt_edge4, mt_corn, mt_edge, pt_cross, pt_ep4eo12, mt_edge2, mt_eo12, mt_eo12_alt, mt_ep4, pt_pscross) {
+    constructor(pt_cross_c4e0, pt_cross_ins_c4, pt_pair_c4e0, pt_cross, pt_ep4eo12, pt_pscross) {
         const ptr0 = passArray8ToWasm0(pt_cross_c4e0, wasm.__wbindgen_malloc);
         const len0 = WASM_VECTOR_LEN;
         const ptr1 = passArray8ToWasm0(pt_cross_ins_c4, wasm.__wbindgen_malloc);
         const len1 = WASM_VECTOR_LEN;
         const ptr2 = passArray8ToWasm0(pt_pair_c4e0, wasm.__wbindgen_malloc);
         const len2 = WASM_VECTOR_LEN;
-        const ptr3 = passArray8ToWasm0(mt_edge4, wasm.__wbindgen_malloc);
+        const ptr3 = passArray8ToWasm0(pt_cross, wasm.__wbindgen_malloc);
         const len3 = WASM_VECTOR_LEN;
-        const ptr4 = passArray8ToWasm0(mt_corn, wasm.__wbindgen_malloc);
+        const ptr4 = passArray8ToWasm0(pt_ep4eo12, wasm.__wbindgen_malloc);
         const len4 = WASM_VECTOR_LEN;
-        const ptr5 = passArray8ToWasm0(mt_edge, wasm.__wbindgen_malloc);
+        const ptr5 = passArray8ToWasm0(pt_pscross, wasm.__wbindgen_malloc);
         const len5 = WASM_VECTOR_LEN;
-        const ptr6 = passArray8ToWasm0(pt_cross, wasm.__wbindgen_malloc);
-        const len6 = WASM_VECTOR_LEN;
-        const ptr7 = passArray8ToWasm0(pt_ep4eo12, wasm.__wbindgen_malloc);
-        const len7 = WASM_VECTOR_LEN;
-        const ptr8 = passArray8ToWasm0(mt_edge2, wasm.__wbindgen_malloc);
-        const len8 = WASM_VECTOR_LEN;
-        const ptr9 = passArray8ToWasm0(mt_eo12, wasm.__wbindgen_malloc);
-        const len9 = WASM_VECTOR_LEN;
-        const ptr10 = passArray8ToWasm0(mt_eo12_alt, wasm.__wbindgen_malloc);
-        const len10 = WASM_VECTOR_LEN;
-        const ptr11 = passArray8ToWasm0(mt_ep4, wasm.__wbindgen_malloc);
-        const len11 = WASM_VECTOR_LEN;
-        const ptr12 = passArray8ToWasm0(pt_pscross, wasm.__wbindgen_malloc);
-        const len12 = WASM_VECTOR_LEN;
-        const ret = wasm.variantsolverwasm_new(ptr0, len0, ptr1, len1, ptr2, len2, ptr3, len3, ptr4, len4, ptr5, len5, ptr6, len6, ptr7, len7, ptr8, len8, ptr9, len9, ptr10, len10, ptr11, len11, ptr12, len12);
+        const ret = wasm.variantsolverwasm_new(ptr0, len0, ptr1, len1, ptr2, len2, ptr3, len3, ptr4, len4, ptr5, len5);
         this.__wbg_ptr = ret;
         VariantSolverWasmFinalization.register(this, this.__wbg_ptr, this);
         return this;
