@@ -24,7 +24,8 @@
  */
 import { Hono } from 'hono';
 import { query } from '../db/connection.js';
-import { getOverlayEntries, overlayDeltaPure } from '../utils/wca_live_overlay.js';
+import { getOverlayEntries, overlayDeltaPure, type OverlayEntry } from '../utils/wca_live_overlay.js';
+import { inferredOverlayEntries } from './cubing_live.js';
 
 export const wcaStatsExtraRoutes = new Hono();
 
@@ -704,9 +705,24 @@ interface OverlayBests {
 const overlayBestsCache = new Map<string, OverlayBests>();
 const OVERLAY_BESTS_TTL_MS = 60_000;
 
+/** overlay 候选 = WCA Live 近期纪录 ∪ cubing.com 中国比赛的推断纪录。
+ *  后者压根不在 WCA Live feed 里 —— 2026-07-26 芜湖陈震 6.99 单手平均漏出分母,同日
+ *  Crimson 更慢的 7.72 就被算成 WR1。同一选手在 overlayDeltaPure 里按 wcaId 去重,
+ *  两源重叠不会重复计数;推断侧失败静默退回纯 feed。 */
+async function overlayCandidates(event: string, isAvg: boolean): Promise<OverlayEntry[]> {
+  const [live, inferred] = await Promise.all([
+    getOverlayEntries(event, isAvg),
+    inferredOverlayEntries(event, isAvg).catch((e: Error) => {
+      console.warn('[rank-overlay] inferred entries failed:', e.message);
+      return [] as OverlayEntry[];
+    }),
+  ]);
+  return inferred.length === 0 ? live : live.concat(inferred);
+}
+
 // overlay 涉及选手的快照 PB(全局个人最佳,世界/全国去重共用同一值)。无 overlay 选手 → 空 Map。
 async function overlayPeopleBests(event: string, isAvg: boolean): Promise<Map<string, number>> {
-  const entries = await getOverlayEntries(event, isAvg);
+  const entries = await overlayCandidates(event, isAvg);
   if (entries.length === 0) return new Map();
   const key = `${event}|${isAvg ? 1 : 0}`;
   const cur = overlayBestsCache.get(key);
@@ -743,7 +759,7 @@ async function overlayDelta(
   opts: { excludeComp?: string; countryIso2?: string } = {},
 ): Promise<{ world: number; national: number }> {
   if (!(value > 0)) return { world: 0, national: 0 };
-  const entries = await getOverlayEntries(event, isAvg);
+  const entries = await overlayCandidates(event, isAvg);
   if (entries.length === 0) return { world: 0, national: 0 };
   const bests = await overlayPeopleBests(event, isAvg);
   return overlayDeltaPure(entries, bests, value, opts);
