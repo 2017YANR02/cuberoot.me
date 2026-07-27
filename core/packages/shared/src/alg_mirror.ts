@@ -277,3 +277,79 @@ export function regenerateMirrorAlgs(
   }
   return { algsById, notes };
 }
+
+// ---------------------------------------------------------------- 连带删除预览
+
+/** 一条会被牵连抹掉的**自动生成**公式。 */
+export interface MirrorCascadeEntry {
+  /** 它落在哪张 case 上(可能不是正在编辑的这张) */
+  caseId: number;
+  /** 落在第几个视角,下标同 {@link VIEWS} */
+  view: number;
+  gen: MirrorGen;
+  alg: string;
+}
+
+/**
+ * `before` 里有、`after` 里没了的**生成条**。
+ *
+ * 人写的条不看 —— 「连带」按定义只连带得到生成条,人写的那条(用户自己点删的那条)是主角
+ * 不是连带,混进来只会让清单看不出重点。
+ */
+function droppedGenerated(
+  before: Map<number, AlgEntry[][]>,
+  after: Map<number, AlgEntry[][]>,
+): MirrorCascadeEntry[] {
+  const out: MirrorCascadeEntry[] = [];
+  for (const [caseId, views] of before) {
+    views.forEach((list, view) => {
+      const kept = new Set((after.get(caseId)?.[view] ?? []).map(e => canonicalNnnAlg(e.alg)));
+      for (const e of list) {
+        if (!e.gen || kept.has(canonicalNnnAlg(e.alg))) continue;
+        out.push({ caseId, view, gen: e.gen, alg: e.alg });
+      }
+    });
+  }
+  return out;
+}
+
+/**
+ * 把 `self` 的公式换成 `nextAlgs`(通常是「删掉其中一条」)之后,**哪些生成公式会跟着没**。
+ *
+ * 前后各跑一遍 {@link regenerateMirrorAlgs} 再做差 —— 判据只有那一份,这里不重写一遍规则,
+ * 所以列出来的就是保存后 server 真会抹掉的那些,不是另算的近似。
+ *
+ * 为什么删一条要问一句:生成条是源的函数,而它**落在别的 case 上**(左右镜落伙伴的 FL、
+ * 前后镜落伙伴的 BR),站在眼前这张 case 上根本看不见 —— 不摊开就是静默删。
+ *
+ * `partner` 为 null(没建链)时恒空:没链就一条都不生成,自然也没有连带。
+ */
+export function mirrorCascadeOnEdit(
+  self: MirrorPairCase,
+  partner: MirrorPairCase | null,
+  nextAlgs: AlgEntry[][],
+): MirrorCascadeEntry[] {
+  if (!partner) return [];
+  return droppedGenerated(
+    regenerateMirrorAlgs(self, partner).algsById,
+    regenerateMirrorAlgs({ id: self.id, algs: nextAlgs }, partner).algsById,
+  );
+}
+
+/**
+ * 删掉整张 `self` 之后,**伙伴那边**会被剥掉的生成公式。
+ *
+ * case 一删,`ON DELETE SET NULL` 把伙伴的 `mirror_case_id` 置空,伙伴下一次重算走的是
+ * 「只剥不生成」那条路 —— 所以剥掉的不止源自 `self` 的那几条,**伙伴自己的 y² 那份也一起没**。
+ * 这条反直觉,正是二次确认该摊开给人看的东西。
+ */
+export function mirrorCascadeOnDelete(
+  self: MirrorPairCase,
+  partner: MirrorPairCase | null,
+): MirrorCascadeEntry[] {
+  if (!partner || partner.id === self.id) return [];
+  const before = regenerateMirrorAlgs(partner, self).algsById;
+  // self 整张都要没了,它自己那些公式是「主角」,由调用方单独列,不算连带
+  before.delete(self.id);
+  return droppedGenerated(before, regenerateMirrorAlgs(partner, null).algsById);
+}
