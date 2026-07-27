@@ -17,7 +17,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
+import { useQueryState, parseAsBoolean, parseAsString, parseAsStringEnum } from 'nuqs';
 import {
   Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2,
   Bluetooth, Mic, BarChart3, Plus, Wrench, ListPlus, Printer, FileText,
@@ -99,7 +99,7 @@ import BulkScrambleModal from '../_components/BulkScrambleModal';
 import DrillModal from '../_components/DrillModal';
 import { generateDrillScramble, type DrillType } from '../_lib/scramble/drill';
 import SolverHints from '../_components/SolverHints';
-import SolverHintPanel from '../_components/SolverHintPanel';
+import SolverHintPanel, { HINTS_PARAM } from '../_components/SolverHintPanel';
 import ScrambleSourceBar from '../_components/ScrambleSourceBar';
 import { OLL_CASES } from '../_lib/scramble/algs/oll_cases';
 import { PLL_CASES } from '../_lib/scramble/algs/pll_cases';
@@ -214,6 +214,11 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   const isDesktop = useMediaQuery('(min-width: 1024px)');
   const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
 
+
+  // 解法提示的手机全屏浮层由 SolverHintPanel 经同一个 URL param 开合;这里只读,
+  // 用来把它算进 anyModalOpen(浮层盖住整屏时,空格/Escape 不该穿到后面的计时器)。
+  const [hintsSheetParam] = useQueryState(HINTS_PARAM, parseAsBoolean.withDefault(false));
+  const hintsSheetOpen = hintsSheetParam && !isDesktop;
 
   // ── Side panel (desktop rail / phone bottom sheet) ──────────────
   const [panelTab, setPanelTab] = useState<PanelTab | null>(null);
@@ -1232,7 +1237,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     settingsOpen || shortcutsOpen || bluetoothOpen ||
     trainerSubsetOpen !== null || statsModalOpen ||
     manualEntryOpen || solverOpen || bulkScrambleOpen ||
-    drillModalOpen || bldHelperOpen ||
+    drillModalOpen || bldHelperOpen || hintsSheetOpen ||
     modalSolve !== null || reconstructSolve !== null;
   const anyModalOpenRef = useRef(anyModalOpen);
   useEffect(() => { anyModalOpenRef.current = anyModalOpen; }, [anyModalOpen]);
