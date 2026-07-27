@@ -4,7 +4,6 @@ import { Fragment, useMemo } from 'react';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { SearchInput } from '@/components/SearchInput';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr, useLang } from '@/i18n/tr';
 import './schema.css';
 
@@ -296,7 +295,6 @@ const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
 
 export default function SchemaPage() {
   const lang = useLang();
-  useDocumentTitle('数据库 Schema', 'Database schema');
 
   const [q, setQ] = useQueryState('q', parseAsString.withDefault('').withOptions({ history: 'replace', scroll: false }));
   const [domain, setDomain] = useQueryState(

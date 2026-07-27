@@ -21,7 +21,6 @@ import {
   Radio, ListOrdered,
   type LucideIcon,
 } from 'lucide-react';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useIsAdmin } from '@/lib/auth-store';
 import { statsUrl } from '@/lib/stats-base';
 import { STAT_ICONS } from './wca-stat-icons';
@@ -78,7 +77,6 @@ const LOOKUP_ITEMS: { path: string; zh: string; en: string; Icon: LucideIcon; ex
 export default function WcaStatsIndex() {
   const { i18n } = useTranslation();
   const isAdmin = useIsAdmin();
-  useDocumentTitle('WCA 统计', 'WCA Statistics');
   const [data, setData] = useState<IndexData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);

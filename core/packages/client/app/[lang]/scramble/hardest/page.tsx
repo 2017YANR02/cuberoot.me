@@ -13,7 +13,6 @@
 
 import Link from '@/components/AppLink';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { groupDigits } from '@/lib/group-digits';
 import { tr } from '@/i18n/tr';
 import {
@@ -62,7 +61,6 @@ function symmetryHref(scramble: string): string {
 }
 
 export default function HardestPage() {
-  useDocumentTitle('最难开局', 'Hardest openings');
 
   return (
     <div className="hardest-page">

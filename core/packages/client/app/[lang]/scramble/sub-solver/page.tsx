@@ -10,7 +10,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import BoolToggle from '@/components/BoolToggle';
 import { ParamSliders, type ParamSliderSpec } from '@/components/ParamSliders';
 import AppLink from '@/components/AppLink';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from '@/hooks/useT';
 import { algSpeed, MCC_DEFAULTS } from '@/lib/mcc';
 import { BATCH_PUZZLE_PRESETS, type BatchSolverInput, type BatchSolverMessage } from '@/lib/batch-solver';
@@ -35,7 +34,6 @@ const MAX_ROWS = 200;
 
 export default function SubSolverPage() {
   const t = useT();
-  useDocumentTitle('子群求解器', 'Subsolver');
 
   const [moves, setMoves] = useState<Set<string>>(new Set(['U', 'R', 'F']));
   const [depths, setDepths] = useState<Record<DepthKey, number>>(DEPTH_DEFAULTS);

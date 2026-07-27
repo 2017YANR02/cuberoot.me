@@ -10,7 +10,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Crown, Check, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useQueryState } from 'nuqs';
 import { tr, useLang } from '@/i18n/tr';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAuthStore, isAdmin } from '@/lib/auth-store';
 import { fmtPrice, fmtDate } from '@/lib/membership-format';
 import AppLink from '@/components/AppLink';
@@ -48,7 +47,6 @@ function planUnit(plan: MembershipPlan, isZh: boolean): string {
 export default function MembershipPage() {
   const lang = useLang();
   const isZh = lang !== 'en';
-  useDocumentTitle('会员', 'Membership');
 
   const user = useAuthStore((s) => s.user);
   const login = useAuthStore((s) => s.login);

@@ -7,7 +7,6 @@
 // in its reducer init, so it's loaded client-only via next/dynamic (ssr: false).
 
 import dynamic from 'next/dynamic';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '@/app/[lang]/alg/_trainer/trainer.css';
 
 // loading 占位撑住页面主体的高度 —— 没有它,chunk 到达前整页是 0 高,内容一落地
@@ -18,7 +17,6 @@ const RouxTrainer = dynamic(() => import('../_roux/RouxTrainer'), {
 });
 
 export default function RouxTrainerPage() {
-  useDocumentTitle('桥式训练器', 'Roux Trainer');
   return (
     <div className="trainer-root">
       <RouxTrainer />

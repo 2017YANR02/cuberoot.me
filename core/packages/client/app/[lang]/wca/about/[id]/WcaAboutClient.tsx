@@ -16,7 +16,6 @@ import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { ABOUT_REGISTRY } from './_lib/registry';
 import type { AboutEntry, AboutStep, AboutStat, AboutFormula, AboutCode, AboutRelated, AboutSection } from './_lib/types';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './wca_about.css';
 import { tr } from '@/i18n/tr';
 
@@ -151,10 +150,6 @@ export default function WcaAboutClient() {
     if (!id) return null;
     return ABOUT_REGISTRY[id] ?? null;
   }, [id]);
-
-  const aboutTitle = entry ? ((isZh ? entry.titleZh : entry.titleEn)) : tr({ zh: '统计说明', en: 'About Stat'
-  });
-  useDocumentTitle(aboutTitle, aboutTitle);
 
   if (!entry) {
     return (

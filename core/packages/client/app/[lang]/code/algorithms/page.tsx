@@ -2,7 +2,6 @@
 
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './algorithms_landing.css';
 import { tr } from '@/i18n/tr';
 
@@ -136,8 +135,6 @@ const TOPICS: Topic[] = [
 export default function AlgorithmsLandingPage() {
   const { i18n } = useTranslation();
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-
-  useDocumentTitle('算法导览', 'Algorithms');
 
   return (
     <div className="algos-landing">

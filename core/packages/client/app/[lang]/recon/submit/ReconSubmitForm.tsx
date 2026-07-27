@@ -38,7 +38,6 @@ import ScramblePicker from './ScramblePicker';
 import GroupScramblePicker from './GroupScramblePicker';
 import { useAuthStore } from '@/lib/auth-store';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { compNameZh, loadFlagData, flagDataVersion, personFlagIso2 } from '@/lib/country-flags';
 import { localizeCompName } from '@/lib/comp-localize';
@@ -158,7 +157,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const searchParams = useSearchParams();
   const { t, i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('提交复盘', 'Submit Reconstruction');
 
   const langPrefix = params?.lang === 'zh' || params?.lang === 'en' ? `/${params.lang}` : ((i18n.language.startsWith('zh') ? '/zh' : '/en'));
 

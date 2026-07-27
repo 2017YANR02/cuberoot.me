@@ -15,7 +15,6 @@ import { Search, AlertTriangle, Pencil, Trash2, ArrowUp, ArrowDown, Plus } from 
 import Fuse from 'fuse.js';
 import { GROUPS } from './data/categories';
 import type { GroupId, Site } from './data/types';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { isAdmin } from '@/lib/auth-store';
 import { firstGlyph } from '@/lib/first-glyph';
 import BackHome from '@/components/BackHome';
@@ -180,7 +179,6 @@ function SiteRow({ site, lang, admin, reorderable, canMoveUp, canMoveDown, onEdi
 function SitesPageInner() {
   const { i18n } = useTranslation();
   const lang: 'en' | 'zh' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-  useDocumentTitle('网站导航', 'Sites Directory');
   // admin comes from the client-only auth store; gate on mount so SSR and the
   // first client render agree (both non-admin) and don't trip a hydration mismatch.
   const [mounted, setMounted] = useState(false);

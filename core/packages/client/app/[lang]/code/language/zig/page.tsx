@@ -4,7 +4,6 @@ import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './zig_intro.css';
 
 const ZIG_LOGO_SVG = (
@@ -438,11 +437,6 @@ export default function ZigIntroPage() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const rootRef = useRef<HTMLDivElement>(null);
-
-  useDocumentTitle(
-    'Zig : C — 给系统编程换个零隐藏的地基',
-    'Zig : C — A No-Hidden-Control-Flow Foundation for Systems'
-  );
 
   useEffect(() => {
     const root = rootRef.current;

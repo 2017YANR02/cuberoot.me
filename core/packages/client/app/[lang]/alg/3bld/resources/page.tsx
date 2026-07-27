@@ -25,7 +25,6 @@ import {
   Library,
   ExternalLink,
 } from 'lucide-react';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../3bld.css';
 import { tr } from '@/i18n/tr';
 
@@ -308,7 +307,6 @@ const SECTIONS: ResSection[] = [
 export default function ResourcesPage(): JSX.Element {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('盲拧资源', '3BLD Resources');
 
   return (
     <div className="bld-trainer-root">

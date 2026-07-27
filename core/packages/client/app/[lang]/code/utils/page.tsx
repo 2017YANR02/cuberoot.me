@@ -4,7 +4,6 @@
 // Entries live in ./_catalog.tsx (the single place to register new ones).
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './utils_ref.css';
 import { tr } from '@/i18n/tr';
 import { CATALOG, UCATS, iconFor, type UtilEntry } from './_catalog';
@@ -28,8 +27,6 @@ function Card({ e, lang }: { e: UtilEntry; lang: 'zh' | 'en' }) {
 export default function CodeUtilsPage() {
   const { i18n } = useTranslation();
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-
-  useDocumentTitle('速查', 'Hooks & Utils');
 
   return (
     <div className="ur">

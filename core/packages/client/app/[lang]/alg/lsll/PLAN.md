@@ -128,8 +128,10 @@
       **阶段 1 已落地**(2026-07-27):`solver/lsll/`(runbook 见其 `README.md`)。
       语料 `corpus.txt` 148,384 行由 `scripts/lsll-corpus.mts` 生成 —— 只两阶段解 302+494=796 个
       基件,路线打乱靠 `composeState(zbll, zbls) ⇒ setup(zbll)+setup(zbls)` 拼接,149,188 条逐条回放校验。
-      求解 `node solve_loop.mjs`:opt6 + 1856M 表、12 线程、每条落盘续跑、单行进度、
-      每条解回放验证。实测 **19.5 解/s ⇒ 全量 ~2.1 小时**(600 条抽样,HTM 均 14.04、峰 16)。
+      求解 `node solve_loop.mjs`:默认 **opt9 + 15.6G 表**(与 `solver/333opt` 同一档,要 ~16G 空闲)、
+      12 线程、每条落盘续跑、单行进度、每条解回放验证。opt6 1856M 实测 **19.5 解/s ⇒ 全量 2.1 小时**
+      (600 条抽样,HTM 均 14.04、峰 16);opt9 估 1.5–2 小时。换表只改速度不改答案,按 key 续跑
+      ⇒ 小表先起跑、内存空了再换大表接着跑同一个 `out.csv`。
 
       **⛔ 阻塞项已验(结论:h48 吐不出全部最优解)**,证据:
       - `solve_scramble` 第 3 个 int 是 **n_group =「同时解几条」**,**不是**解数上限 ——

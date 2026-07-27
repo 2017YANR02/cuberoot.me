@@ -22,7 +22,6 @@ import Link from '@/components/AppLink';
 import dynamic from 'next/dynamic';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ExternalLink, FileText, Sparkles } from 'lucide-react';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { TeX, TeXBlock } from '@/components/math/Tex';
 import './unit_distance.css';
 import { useT } from "@/hooks/useT";
@@ -60,7 +59,6 @@ const TIMELINE: ReadonlyArray<{ year: string; lo: string; hi: string; cite: stri
 export default function UnitDistancePage() {
   useTranslation();
   const t = useT();
-  useDocumentTitle('单位距离问题', 'Unit Distance Problem');
 
   return (
     <div className="unit-distance-page">

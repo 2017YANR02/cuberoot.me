@@ -354,14 +354,85 @@ server wrapper + `LandingClient.tsx`。
 
 `typecheck` 干净；`pnpm test` 3,130 通过 / 3 跳过，含 i18n 棘轮、catalog、url-state 等守卫。
 
-### 6.4 留下的
+### 6.4 第二轮（同日）——把 6.4 原本列的遗留项做掉
 
-- **`/alg/[puzzle]` 等动态路由继承父级标题**（`/alg/3x3` 显示 "Algorithms"）。不算错但不够
-  具体；要修就照 `math/group/[slug]` 给一个动态 layout。这些页多数不在 sitemap 里，优先级低。
-- **`/math/group/[slug]` 仍是 `force-static` + 空 `generateStaticParams`**，没改成 build 时
-  预渲染 63 条。预渲染更抗部署（Vercel 每次部署清 ISR 缓存），但改动会影响 build 形态，
-  而本地跑不了 `next build`（dev 在跑，hook 硬拦），未经验证的 build 改动不上。
-- **`/tutorial/[slug]` 与 alg 套装仍未进 sitemap**：枚举它们需要调 API，而 `app/sitemap.ts`
-  必须保持无 I/O。要收就得照 recon 的做法另开一个运行时 sitemap。
-- **`useDocumentTitle` 仍在 195 个文件里**。值与 metadata 一致故无害，长期可退役。
-  只在两处冲突点摘掉了：首页（原本强制 tab 回落到裸品牌名）与 `RegArticleLayout`（旧标题格式）。
+第一轮之后重读遗留清单，发现其中三条的前提是错的，一条是真 bug。
+
+**动态路由并非「多数不在 sitemap 里、优先级低」。** 逐个读 `generateStaticParams` 才看清：
+这些 `[param]` 路由分两类，能做的远比想的多。
+
+- **哨兵壳**（`dynamicParams = false` + 返回 `[{x:'_'}]`，URL 被 rewrite 到 `/_`）：服务端
+  根本拿不到真 param，不转 dynamic 就无解 —— `/wca/persons/` `/wca/comp/` `/forum/f/`
+  `/alg/[puzzle]/[set]/[subgroup]` 属此类，维持现状（前两个本来就被 robots 挡着）。
+- **静态可枚举**：`ALG_CATALOG`（41 套公式）、`CATEGORIES`（LSLL 42 类）、`STACK_TOOLS_META`、
+  `LLM_TOOLS_META`、`ABOUT_REGISTRY` 全是代码里的静态数组，路由已经在 build 时全量预渲染。
+  既然如此，**per-param metadata 是免费的，进 sitemap 也是免费的** —— 原先「alg 套装需要调
+  API 才能枚举」的判断是错的，`generateStaticParams` 本身就证明了它们可枚举。
+
+于是补了 11 个动态 layout：`alg/[puzzle]`、`alg/[puzzle]/[set]`（含 `/run` `/select`）、
+`alg/lsll/[group]`、`code/stack/[slug]`、`code/llm/[slug]`、`wca/about/[id]`、
+`recognize/[algSetId]`、`tutorial/[slug]`、`tutorial/c/[cat]`。
+
+**`/tutorial` 是最大的一个洞**：609 篇教程 + 31 个分类页，全部顶着 "Cubing Tutorials" 一个
+标题，且一条都不在 sitemap 里。catalog 是 static origin 上的 JSON（253KB），所以：
+
+- metadata 走 `lib/tutorial-seo.ts` 在 `generateMetadata` 里 fetch。**不会拖慢 build**：该路由
+  `generateStaticParams` 返回空，build 期不生成任何 slug，fetch 只在首次请求某 slug 时发生。
+- sitemap 另开 `app/tutorial-sitemap.xml/route.ts`（`force-dynamic`，照抄 recon 的失败降级：
+  出错返回空 urlset + 短缓存，绝不 500）。
+- **只有 60/609 是双语**（411 篇仅英文、138 篇仅中文）。客户端会回退到存在的那个语言，所以
+  另一语言的 URL 是「同一篇文章的错语言副本」。因此 sitemap 只列真实存在的语言，hreflang 只
+  在双语篇目上成对出现；缺失语言的那个 URL 由 layout 发 `noindex, follow`。
+- catalog 的 `mtime` 是真实的每篇日期，所以这个 sitemap **发** `lastmod`（与 6.2 里静态
+  sitemap 删掉 lastmod 的理由并不矛盾：那里没有真日期，这里有）。
+
+**`eventProseName`（新增）**：`DISPLAY_EN` 是给 chip / 表头用的紧凑名 —— `minx` → `Mega`、
+`333` → `3×3`。放进标题就成了 "Mega Algorithms"，没人这么搜，`×` 也没人这么打。新增
+`PROSE_EN` 只覆盖写法不同的 id，其余回落 `DISPLAY_EN`，事件命名仍是一处。
+
+**真 bug：7 个标题里有多余反斜杠。** 第一轮生成 `page-meta.ts` 的脚本把撇号写成了三个反斜杠
+加撇号，在单引号串里等于「转义反斜杠 + 转义撇号」，页面上就渲染成 `Hejlsberg\'s third
+language`（多一个反斜杠）。已修，
+7 处全部实测确认（csharp / php / sql / wca-site / cubingchina / mojo / demigod）。
+
+**`useDocumentTitle` 不是「无害」的。** 第一轮把 11 个标题改好了（Sim → Puzzle Simulator、
+Wiki → Cubing Glossary、去掉 `·` 等），但这些页的 hook 还在，hydration 之后 **把服务端标题
+覆盖回旧文案**。真正的重复也是隐患：两个源迟早会漂。所以按 CLAUDE.md 的「一处只留一个标题源」
+清了 167 处：
+
+| 类别 | 数量 | 处理 |
+|---|---:|---|
+| 与 layout metadata 完全一致 | 146 | 删（行为零变化） |
+| layout 标题更好、hook 是旧文案 | 12 | 删（hydration 不再回退） |
+| 动态标题、已被新 layout 接管 | 9 | 删 |
+| 运行时才知道的标题（`?event=` 分发、无自己的 layout） | 5 | **留**，并把路由 metadata 改成通用名 |
+| 非字面量、未逐个核对 | 19 | 留 |
+
+`/scramble/solver` 的 metadata 原本写着「魔表求解器 / Rubik's Clock Solver」—— 那是从兄弟
+组件里seed错的，这个路由按 `?event=` 分发 28 种魔方。已改成通用名，各求解器仍在运行时细化
+tab 标题（puzzle 在 query 里，服务端看不见）。
+
+### 6.5 第二轮效果（本地 dev 实测）
+
+| 指标 | 第一轮后 | 第二轮后 |
+|---|---:|---:|
+| 静态 sitemap URL | 264 | **471** |
+| 教程 sitemap URL | 0 | **640**（609 篇 + 31 分类） |
+| 有独立标题的动态路由 | 63（仅 math/group） | 63 + 41 公式集 + 42 LSLL + 609 教程 + 31 分类 + 67 about + 46 stack/llm |
+| 标题被 hydration 覆盖回旧文案的页 | 12 | 0 |
+| 标题含多余反斜杠 | 7 | 0 |
+
+`typecheck` 干净；`pnpm test` **3,165 通过 / 3 跳过**。Playwright 实测 hydration 之后
+`/zh/sim` = 魔方模拟器、`/zh/alg/megaminx` = 五魔公式、`/zh/tutorial/pll` = PLL公式、
+`/zh/scramble/solver?event=sq1` 仍能细化成 SQ1 求解器。
+
+### 6.6 仍然留下的
+
+- **哨兵壳路由拿不到 param**（`/wca/persons/<id>` `/wca/comp/<slug>` `/forum/f/<slug>`
+  `/alg/[puzzle]/[set]/[subgroup]`）。要给它们真标题只能转 dynamic 渲染，而那正是唯一会撞
+  Vercel 配额的改动，不做。这些页的 tab 标题仍由客户端 hook 提供，用户看得对，爬虫看不到。
+- **`/math/group/[slug]` 仍未改成 build 时预渲染**：理由同上一轮 —— dev 在跑，本地跑不了
+  `next build`，未经验证的 build 形态改动不上。
+- **19 处非字面量 `useDocumentTitle` 未逐个核对**（forum / recon 详情 / persons / comp /
+  globe / 各 trainer 等）。它们所在路由要么是哨兵壳、要么标题真的随运行时状态变，留着是对的；
+  但没有一条条验证「服务端 metadata 与它是否冲突」。

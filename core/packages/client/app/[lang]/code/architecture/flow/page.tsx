@@ -4,7 +4,6 @@ import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { LangCtx, L } from '../../_lib/Lang';
 import type { Lang } from '../../_lib/Lang';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import ArchNav from '../_components/ArchNav';
 import { RequestLifecycleSVG, StatsPipelineSVG } from '../_components/ArchSvgs';
 import RequestTracer from '../_components/RequestTracer';
@@ -14,8 +13,6 @@ import '../architecture.css';
 export default function ArchFlowPage() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-
-  useDocumentTitle('请求流程', 'Request Flow');
 
   return (
     <LangCtx.Provider value={lang}>

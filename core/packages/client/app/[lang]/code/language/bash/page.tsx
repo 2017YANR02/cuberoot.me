@@ -4,7 +4,6 @@ import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './bash_intro.css';
 
 // Inline SVG: terminal window with a $ prompt + blinking caret
@@ -486,11 +485,6 @@ export default function BashIntroPage() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const rootRef = useRef<HTMLDivElement>(null);
-
-  useDocumentTitle(
-    'Bash : 1989 Brian Fox · 装在每台机器上 · DevOps 默认胶水',
-    'Bash : 1989 Brian Fox · pre-installed everywhere · the DevOps default'
-  );
 
   useEffect(() => {
     const root = rootRef.current;

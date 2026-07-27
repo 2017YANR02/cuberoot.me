@@ -4,7 +4,6 @@ import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './swift_intro.css';
 
 const SWIFT_LOGO_SVG = (
@@ -441,8 +440,6 @@ export default function SwiftIntroPage() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const rootRef = useRef<HTMLDivElement>(null);
-
-  useDocumentTitle('Swift : 苹果生态的钦定语言', 'Swift : Apple Ecosystem’s Native Tongue');
 
   useEffect(() => {
     const root = rootRef.current;

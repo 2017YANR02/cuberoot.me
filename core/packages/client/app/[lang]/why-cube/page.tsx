@@ -30,7 +30,6 @@ import Link from '@/components/AppLink';
 import dynamic from 'next/dynamic';
 import { EventIcon } from '@/components/EventIcon';
 import BackHome from '@/components/BackHome';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from '../../../hooks/useT';
 import LiveHero from './_LiveHero';
 import SolveFlow from './_SolveFlow';
@@ -162,7 +161,6 @@ function Fig({ children, cap }: { children: ReactNode; cap?: ReactNode }) {
 export default function WhyCubePage() {
   useTranslation(); // subscribe to language toggle
   const t = useT();
-  useDocumentTitle('玩魔方的好处', 'Why Learn the Cube');
 
   return (
     <div className="wc-page">

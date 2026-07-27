@@ -4,7 +4,6 @@ import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './kotlin_intro.css';
 
 const KOTLIN_LOGO_SVG = (
@@ -445,11 +444,6 @@ export default function KotlinIntroPage() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const rootRef = useRef<HTMLDivElement>(null);
-
-  useDocumentTitle(
-    'Kotlin : Better Java — 从 Android 一等公民到 Multiplatform 时代',
-    'Kotlin : Better Java — from Android first-class to the Multiplatform era'
-  );
 
   useEffect(() => {
     const root = rootRef.current;

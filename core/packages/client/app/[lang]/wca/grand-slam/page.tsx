@@ -18,7 +18,6 @@ import { Flag } from '@/components/Flag';
 import { loadFlagData } from '@/lib/country-flags';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { apiUrl } from '@/lib/api-base';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../_wca_stats_extra.css';
 import { tr } from '@/i18n/tr';
 
@@ -44,7 +43,6 @@ interface GsRow {
 function GrandSlamPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('大满贯', 'Grand Slam');
   const [q, setQ] = useQueryStates(
     {
       event: parseAsString,

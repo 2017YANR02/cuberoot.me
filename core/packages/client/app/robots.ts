@@ -111,6 +111,9 @@ export default function robots(): MetadataRoute.Robots {
       // (app/recon-sitemap.xml/route.ts) so a slow recon API can never break the
       // build — see app/sitemap.ts. Advertise it here so crawlers still find it.
       'https://cuberoot.me/recon-sitemap.xml',
+      // Tutorial posts + category listings, same split for the same reason:
+      // their catalog is a fetch, and app/sitemap.ts must stay network-free.
+      'https://cuberoot.me/tutorial-sitemap.xml',
     ],
   };
 }

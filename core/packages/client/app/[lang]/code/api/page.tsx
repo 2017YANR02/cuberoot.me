@@ -5,7 +5,6 @@ import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import { SearchInput } from '@/components/SearchInput';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
 import './api.css';
 
@@ -426,8 +425,6 @@ function pathParams(p: string): string[] {
 export default function ApiCatalogPage() {
   const { i18n } = useTranslation();
   const lang = (['en', 'zh'] as const)[Number(i18n.language.startsWith('zh'))];
-
-  useDocumentTitle('API 端点目录', 'API reference');
 
   const [q, setQ] = useQueryState('q', parseAsString.withDefault('').withOptions({ history: 'replace', scroll: false }));
   const [domain, setDomain] = useQueryState('domain', parseAsString.withDefault('').withOptions({ history: 'replace', scroll: false }));

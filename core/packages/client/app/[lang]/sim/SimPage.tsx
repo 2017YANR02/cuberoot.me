@@ -94,7 +94,6 @@ import { FACE } from './engine/define';
 import { toWca as toWcaSkewb, type SkewbNotation } from '@cuberoot/shared/skewb-notation';
 import TwistySection from '@/components/TwistySection';
 import CutEditor from './CutEditor';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import {
   loadSettings, saveSettings, applySettings,
   mapOrbitK, mapTurnDragFactor, type SimSettings,
@@ -265,7 +264,6 @@ interface SimCubeMin {
 
 export default function SimPage() {
   const t = useT();
-  useDocumentTitle('模拟器', 'Sim');
 
   // Sim editor state in the URL (replace semantics — not navigation).
   // puzzle ALWAYS appears in the URL (clearOnDefault:false keeps even '3'); a mount

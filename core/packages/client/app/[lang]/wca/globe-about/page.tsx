@@ -5,7 +5,6 @@
  */
 import Link from '@/components/AppLink';
 import { ArrowLeft } from 'lucide-react';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './globe_about.css';
 import { useT } from "@/hooks/useT";
 
@@ -25,7 +24,6 @@ function Arrow() { return <span className="gla-arrow" aria-hidden="true">↓</sp
 
 export default function GlobeAboutPage() {
   const t = useT();
-  useDocumentTitle('地球视图说明', 'Globe Guide');
 
   return (
     <div className="gla-page">

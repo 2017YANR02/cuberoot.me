@@ -14,7 +14,6 @@ import { EventIcon } from '@/components/EventIcon';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { localizeCompName } from '@/lib/comp-localize';
 import { eventDisplayName } from '@/lib/wca-events';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from '@/hooks/useT';
 import { useAuthStore } from '@/lib/auth-store';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
@@ -34,7 +33,6 @@ export default function ResultWatchClient() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const t = useT();
-  useDocumentTitle('成绩变更监控', 'Result Change Monitor');
 
   const [wcaId, setWcaId] = useQueryState(
     'wcaId',

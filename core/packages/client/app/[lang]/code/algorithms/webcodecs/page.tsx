@@ -4,7 +4,6 @@ import { useState } from 'react';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../../_lib/Lang';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './webcodecs.css';
 import { tr } from '@/i18n/tr';
 
@@ -57,8 +56,6 @@ export default function WebCodecsPage() {
   const { i18n } = useTranslation();
   const zhPref = i18n.language.startsWith('zh');
   const lang: Lang = zhPref ? 'zh' : 'en';
-
-  useDocumentTitle('WebCodecs 帧精确解码', 'WebCodecs frame-accurate decoding');
 
   // 选中一帧 → 高亮它依赖的解码区间 (回溯到最近的 I 帧)
   const [sel, setSel] = useState(11);

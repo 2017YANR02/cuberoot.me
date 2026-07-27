@@ -6,7 +6,6 @@
 
 import { useEffect, useState } from 'react';
 import { Check, Play, RotateCcw } from 'lucide-react';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { applyPalette, readPalette } from '@/lib/theme';
 import { PALETTES } from '@/lib/palettes';
 import { tr } from '@/i18n/tr';
@@ -26,7 +25,6 @@ const CARDS: Card[] = [
 ];
 
 export default function AppearancePage() {
-  useDocumentTitle('配色主题', 'Color Themes');
 
   const [current, setCurrent] = useState<string | null>(null);
   useEffect(() => {

@@ -22,7 +22,6 @@ import {
   SplitSquareVertical,
   Gauge,
 } from 'lucide-react';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../3bld.css';
 import { tr, T } from '@/i18n/tr';
 
@@ -39,7 +38,6 @@ interface ModuleDoc {
 export default function BldGuidePage(): JSX.Element {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('盲拧训练说明', '3BLD Guide');
 
   const modules: ModuleDoc[] = [
     {

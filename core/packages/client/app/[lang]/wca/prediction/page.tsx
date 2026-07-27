@@ -27,7 +27,6 @@ import { TheoryDeepDive } from './_components/components/TheoryDeepDive';
 import { MethodCompareSection } from './_components/components/MethodCompare';
 import { CrossSportSection } from './_components/components/CrossSport';
 import { MilestoneTableSection } from './_components/components/MilestoneTable';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useHashHighlight } from '@/hooks/useHashHighlight';
 import '@/components/hash-highlight.css';
 import './_components/prediction.css';
@@ -83,7 +82,6 @@ export default function PredictionPage() {
   const { i18n } = useTranslation();
   const lang: 'en' | 'zh' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const isZh = lang === 'zh';
-  useDocumentTitle('预测', 'Prediction');
 
   const [data, setData] = useState<AllEvents | null>(null);
   const [err, setErr] = useState<string | null>(null);

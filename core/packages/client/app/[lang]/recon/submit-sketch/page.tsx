@@ -6,7 +6,6 @@
  */
 import { useState } from 'react';
 import { ChevronDown, ChevronRight, Keyboard, Eye } from 'lucide-react';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 // ── tiny presentational primitives,inline styled,自洽 ──
 
@@ -82,7 +81,6 @@ function Section({ title, defaultOpen = false, children, badge }: {
 // ── 主体 ──
 
 export default function ReconSubmitSketchPage() {
-  useDocumentTitle('提交草稿', 'Submit Sketch');
   const [showKeyboard, setShowKeyboard] = useState(false);
 
   return (

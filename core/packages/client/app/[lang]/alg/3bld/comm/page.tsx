@@ -29,7 +29,6 @@ import { Search, Lightbulb, Boxes, Square, Pencil, Copy, Check, AlertTriangle } 
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { loadAlg, type AlgCase, type AlgEntry, type AlgFile } from '@cuberoot/shared';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useCopy } from '@/hooks/useCopy';
 import { ClearButton } from '@/components/ClearButton';
 import { Spinner } from '@/components/Spinner/Spinner';
@@ -87,7 +86,6 @@ function CommAlgRow({ entry, invalid }: { entry: AlgEntry; invalid?: string }): 
 export default function CommLibraryPage(): JSX.Element {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('3BLD 公式库', '3BLD Commutator Library');
   const isAdmin = useIsAdmin();
 
   const [kind, setKind] = useState<Kind>('corner');

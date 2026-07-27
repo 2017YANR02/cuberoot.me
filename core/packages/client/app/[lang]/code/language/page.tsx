@@ -2,7 +2,6 @@
 
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './code_landing.css';
 import { tr } from '@/i18n/tr';
 
@@ -507,7 +506,6 @@ function renderTopicCard(t: Topic, lang: 'zh' | 'en') {
 export default function CodeLandingPage() {
   const { i18n } = useTranslation();
   const lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-  useDocumentTitle('编程', 'Code');
 
   return (
     <div className="code-landing">

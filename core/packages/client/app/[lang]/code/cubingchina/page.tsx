@@ -3,7 +3,6 @@
 import { createContext, useContext, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './cubingchina_intro.css';
 
 /* Self-contained bilingual helper — this page is a standalone /code umbrella
@@ -350,11 +349,6 @@ export default function CubingChinaIntroPage() {
   const isZhLang = i18n.language.startsWith('zh');
   const lang: Lang = isZhLang ? 'zh' : 'en';
   const rootRef = useRef<HTMLDivElement>(null);
-
-  useDocumentTitle(
-    '粗饼网 CubingChina : 中国 WCA 赛事平台 — Yii 1.1 上的报名 / 直播 / 成绩镜像',
-    'CubingChina : China\'s WCA competition platform — registration, live results and a WCA mirror on Yii 1.1'
-  );
 
   useEffect(() => {
     const root = rootRef.current;

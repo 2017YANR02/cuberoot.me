@@ -17,7 +17,6 @@ import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import { ListSelect } from '@/components/ListSelect';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import InteractiveClock, { type ClockBoardMode } from '@/components/InteractiveClock';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from '@/hooks/useT';
 import { tr } from '@/i18n/tr';
 import {
@@ -56,7 +55,6 @@ function solveState(state: ClockState): Solved | null {
 
 export default function ClockSolver() {
   const t = useT();
-  useDocumentTitle('魔表求解器', "Rubik's Clock Solver");
 
   const [scramble, setScramble] = useQueryState('scramble', parseAsString.withDefault(''));
   // 带 ?scramble= 进来的链接(SolveTabs / 分享)不该被画板挡住 → 首屏落在打乱视图。

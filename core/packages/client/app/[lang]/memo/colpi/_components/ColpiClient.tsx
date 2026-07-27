@@ -30,7 +30,6 @@ import {
 } from '@/lib/colpi-api';
 import LanguagePicker, { LangPopup } from './LanguagePicker';
 import { LANG_MAP, langDisplay } from '../_lib/langs';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { getAlphabet, defaultPairFor } from '../_lib/data';
 import '../colpi.css';
 import { tr } from '@/i18n/tr';
@@ -104,7 +103,6 @@ function validateWordInput(word: string): string | null {
 export default function ColpiClient() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('Colpi 训练', 'Colpi');
   const user = useAuthStore(s => s.user);
   const isAdmin = !!user && ADMIN_WCA_IDS.includes(user.wcaId);
   // 所有权键(与服务端一致):非 WCA 账号也能认出自己提交的词。admin 判定仍用真实 wcaId。

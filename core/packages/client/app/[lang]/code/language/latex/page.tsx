@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './latex_intro.css';
 import { tr } from '@/i18n/tr';
 
@@ -656,11 +655,6 @@ export default function LatexIntroPage() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const rootRef = useRef<HTMLDivElement>(null);
-
-  useDocumentTitle(
-    'LaTeX : 数学排版的事实标准 — 1978→2026',
-    'LaTeX : the de-facto standard for typesetting math — 1978→2026'
-  );
 
   useEffect(() => {
     const root = rootRef.current;

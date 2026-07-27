@@ -12,7 +12,6 @@ import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { Layers, RotateCcw, Eye, TimerReset, ArrowRight } from 'lucide-react';
 import { ALG_CATALOG, ALG_PUZZLES } from '@cuberoot/shared';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { useSkewbTrainer, type SkewbMode } from './_lib/useSkewbTrainer';
 import { PUZZLE_EVENT, resolveAlgPuzzle } from '@/app/[lang]/alg/_trainer/events';
@@ -36,7 +35,6 @@ export default function SkewbTrainerPage() {
   const isZh = i18n.language.startsWith('zh');
   const lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const router = useRouter();
-  useDocumentTitle('Skewb 技巧训练', 'Skewb Skills');
 
   const t = useSkewbTrainer();
 

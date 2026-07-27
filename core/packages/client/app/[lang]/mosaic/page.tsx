@@ -8,7 +8,6 @@ import { HelpCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useMosaicStore } from './_components/state/store';
 import type { Stage } from './_components/state/types';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './mosaic.css';
 import { tr } from '@/i18n/tr';
 
@@ -43,7 +42,6 @@ function stageComponent(stage: Stage) {
 
 export default function MosaicPage() {
   const { t } = useTranslation();
-  useDocumentTitle('马赛克', 'Mosaic');
   const stage = useMosaicStore(s => s.stage);
   const resetAll = useMosaicStore(s => s.resetAll);
   const goToStage = useMosaicStore(s => s.goToStage);

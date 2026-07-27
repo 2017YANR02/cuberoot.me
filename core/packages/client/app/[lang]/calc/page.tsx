@@ -26,7 +26,6 @@ import { EventSelector } from './_components/components/EventSelector';
 import { SimButtons } from './_components/components/SimButtons';
 import { ProgressSliders } from './_components/components/ProgressSliders';
 import AverageMode from './_components/average_mode/AverageMode';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './calc.css';
 import { tr } from '@/i18n/tr';
 
@@ -50,7 +49,6 @@ async function requestWakeLock(): Promise<void> {
 export function CalcPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('成绩计算器', 'Score Calculator');
   const event = useCalcStore(s => s.event);
   const loadFromUrl = useCalcStore(s => s.loadFromUrl);
   const initDone = useRef(false);

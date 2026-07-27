@@ -4,7 +4,6 @@ import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { LangCtx, L } from '../../_lib/Lang';
 import type { Lang } from '../../_lib/Lang';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import ArchNav from '../_components/ArchNav';
 import { MobilePipelineSVG } from '../_components/ArchSvgs';
 import { DECISIONS, DETAILS } from '../_lib/arch-data';
@@ -14,8 +13,6 @@ import { tr } from '@/i18n/tr';
 export default function ArchDecisionsPage() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-
-  useDocumentTitle('技术决策', 'Technical Decisions');
 
   return (
     <LangCtx.Provider value={lang}>

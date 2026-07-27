@@ -29,7 +29,6 @@ import AppLink from '@/components/AppLink';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { CubingIcon, EventIcon } from '@/components/EventIcon/EventIcon';
 import CubeRootLogo from '@/components/CubeRootLogo';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { petReact } from '@/lib/deskpet';
 import { type MoreMenuItem } from '../_components/MoreMenu';
 import { syncLangToUrl } from '@/i18n/i18n-client';
@@ -209,7 +208,6 @@ interface SoloViewProps {
 export default function SoloView({ playersControl }: SoloViewProps) {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('计时器', 'Timer');
   const settings = useSettings();
   const rankCountry = useRankCountry();
 

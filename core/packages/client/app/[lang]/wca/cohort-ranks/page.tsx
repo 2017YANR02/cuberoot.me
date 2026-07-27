@@ -13,7 +13,6 @@ import { formatWcaResult } from '@/lib/wca-format-result';
 import { apiUrl } from '@/lib/api-base';
 import RegionCountrySelect from '@/components/wca-stats/RegionCountrySelect';
 import { useCountries } from '@/components/wca-stats/useCountries';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../_wca_stats_extra.css';
 import { tr } from '@/i18n/tr';
 
@@ -35,7 +34,6 @@ interface Row {
 function CohortRanksPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('届别排名', 'Cohort Ranks');
   const [q, setQ] = useQueryStates(
     {
       cohort: parseAsString,

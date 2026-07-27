@@ -15,7 +15,6 @@ import BoolToggle from '@/components/BoolToggle';
 import { ExternalLink, HelpCircle, Copy, Check } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { search as cmtSearch, expand as cmtExpand } from './engine';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { persistItem } from '@/lib/safe-storage';
 import './commutator.css';
 import { useT } from "@/hooks/useT";
@@ -91,7 +90,6 @@ function buildExpandOpts(s: Settings, algorithm: string) {
 }
 
 export default function CommutatorPage() {
-    useDocumentTitle('换位子', 'Commutator');
     const t = useT();
 
     const [tab, setTab] = useQueryState(

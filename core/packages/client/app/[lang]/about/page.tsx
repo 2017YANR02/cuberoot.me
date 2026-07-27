@@ -4,13 +4,11 @@
 
 import { ChevronLeft } from 'lucide-react';
 import HomeLink from '@/components/HomeLink';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import CREDITS from './credits_data.json';
 import './about.css';
 import { tr } from '@/i18n/tr';
 
 export default function AboutPage() {
-  useDocumentTitle('关于', 'About');
 
   return (
     <div className="about-page">

@@ -17,7 +17,6 @@ import { useParams } from 'next/navigation';
 import { SlugContext, useLang, TeX, TeXBlock, type Lang } from './_components/primitives';
 import { TwistyMini } from './_components/TwistyMini';
 import HomeLink from '@/components/HomeLink';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './group_theory.css';
 import { tr } from '@/i18n/tr';
 import { TOC, TOC_THEMES } from './_data/toc';
@@ -319,7 +318,6 @@ function IndexThemedTOC() {
 // ── Main page ──────────────────────────────────────────────────────────────
 export default function GroupTheoryPage() {
   const lang = useLang();
-  useDocumentTitle('群论', 'Group Theory');
   const params = useParams<{ slug?: string | string[] }>();
   const rawSlug = params?.slug;
   const slug = Array.isArray(rawSlug) ? rawSlug[0] : rawSlug;

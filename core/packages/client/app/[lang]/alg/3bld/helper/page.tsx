@@ -28,7 +28,6 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Copy, Check, Shuffle, GripVertical, Wand2 } from 'lucide-react';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import dynamic from 'next/dynamic';
 import { ClearButton } from '@/components/ClearButton';
 import { Spinner } from '@/components/Spinner/Spinner';
@@ -257,7 +256,6 @@ const EMPTY_READ: CodeReadResult = { edges: [], corners: [], flips: '', twists: 
 export default function HelperPage(): JSX.Element {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('读码还原助手', 'Read & Restore Helper');
 
   const hydrated = useBldConfigHydrated();
   const config = useBldConfigStore((s) => s.config);

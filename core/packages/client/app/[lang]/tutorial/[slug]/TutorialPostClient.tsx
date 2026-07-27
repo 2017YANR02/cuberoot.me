@@ -10,7 +10,6 @@ import { TutorialArticleView } from '../_components/TutorialArticleView';
 import { CfopTutorialView } from '../_components/CfopTutorialView';
 import { SpeffzSchemeView } from '../_components/speffz/SpeffzSchemeView';
 import { AlgsetView } from '../_components/AlgsetView';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../tutorial.css';
 import { tr } from '@/i18n/tr';
 
@@ -28,11 +27,6 @@ export default function TutorialPostClient() {
     'view',
     parseAsStringEnum(['pretty', 'raw']).withDefault('pretty').withOptions({ history: 'replace' }),
   );
-
-  const postTitle = slug === SPEFFZ_SLUG
-    ? tr({ zh: 'Speffz 字母编码', en: 'Speffz Letter Scheme' })
-    : post ? (post.title[pageLang] ?? post.title[pageLang === 'zh' ? 'en' : 'zh'] ?? post.slug) : tr({ zh: '教程', en: 'Tutorial' });
-  useDocumentTitle(postTitle, postTitle);
 
   if (loading) {
     return (

@@ -10,13 +10,11 @@ import { useParams } from 'next/navigation';
 import Link from '@/components/AppLink';
 import MaskCatalogGrid from '@/components/puzzle-image/MaskCatalogGrid';
 import '@/components/puzzle-image/mask-catalog.css';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
 
 export default function VisualCubeStagesPage() {
   const params = useParams();
   const lang = typeof params?.lang === 'string' ? params.lang : 'en';
-  useDocumentTitle('阶段可视化', 'Visualcube Stages');
 
   return (
     <div className="vcs-page">

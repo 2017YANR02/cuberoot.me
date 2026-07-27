@@ -42,7 +42,6 @@ import PillToggle from '@/components/PillToggle/PillToggle';
 import BoolToggle from '@/components/BoolToggle';
 import { WcaStatView } from '@/components/wca-stats/WcaStatView';
 import { WR_METRICS, RANK_TYPE_IDS, DEFAULT_METRIC_ID } from '@/lib/wr-metrics';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../_wca_stats_extra.css';
 import { tr } from '@/i18n/tr';
 import '@/i18n/i18n-client';
@@ -160,7 +159,6 @@ function AllResultsPageInner() {
   // ---- 顶层视图:排名(本页原功能) / 指标(嵌入退役 wr_metric 的某个派生指标视图) ----
   // 统一在「排名」标题下:单次 / 平均 = 排名表;派生指标 = wr_metric 记录视图。不再出现「指标」字样。
   const view: 'rank' | 'metric' = query.view === 'metric' ? 'metric' : 'rank';
-  useDocumentTitle('排名', 'Rankings');
 
   // ---- 选中项目 → 模式 ----
   const selectedSet: Set<string> = useMemo(() => {
