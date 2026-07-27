@@ -811,6 +811,16 @@ input[type='search']:has(~ .clear-btn)::-webkit-search-cancel-button {
 .timer-colon::before { bottom: 0.48em; } /* 上点 */
 .timer-colon::after  { bottom: 0.20em; } /* 下点 */
 
+/* +2 罚时尾巴(components/SegmentTime)。Segment7 没有 '+' 字形,直接写会画出一个
+   长得像数字的方块 —— 读数凭空多一位小数。改用站内等宽字体画成上标标注。 */
+.timer-plus2 {
+  font-family: var(--font-mono);
+  font-size: 0.42em;
+  font-weight: 600;
+  vertical-align: super;
+  margin-left: 0.08em;
+}
+
 /* ── 裸 <input type=range> 基础皮肤 ─────────────────────────────────────────
    全站单把手滑杆的统一外观(轨道 + 圆把手,走站点 token)。此前各页自搓
    ::-webkit-slider-thumb 或只写 accent-color,把手直径 14–22px 五个值并存;这里立一层
