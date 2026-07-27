@@ -33,7 +33,8 @@ const {
 } = require('../lib/lsll/cube333.ts') as typeof import('../lib/lsll/cube333.ts');
 type LsllState = import('../lib/lsll/cube333.ts').LsllState;
 const {
-  canonicalKey, classify, composeState, keyFromString, keyToString, packState, unpackState,
+  canonicalKey, classify, composeState, decodeKey, displayState, keyFromString, keyToString,
+  packState, unpackState,
 } = require('../lib/lsll/model.ts') as typeof import('../lib/lsll/model.ts');
 const { zbllRoundKeys } = require('../lib/lsll/class3.ts') as typeof import('../lib/lsll/class3.ts');
 const { ZBLS_COVERED_KEYS } = require('../lib/lsll/zbls_overlay.ts') as typeof import('../lib/lsll/zbls_overlay.ts');
@@ -83,6 +84,27 @@ for (const k of [...zblsKeys, ...zbllKeys]) {
 }
 process.stdout.write(`\r  两阶段解 ${setups.size} 个基件,用时 ${((Date.now() - t0) / 1000).toFixed(1)}s\n`);
 
+/**
+ * 把打乱调到**展示相位**上。
+ *
+ * canonical key 认的是 16 个 AUF 像里最小的那个,而 case 页画的、用户看的是 `displayState`
+ * (对子摆正的那个代表元)。拼出来的打乱落在轨道里的哪个像是随机的 —— 差一个 AUF,求出来的
+ * 最优解贴到页面上就解不开。所以在这里就把它钉到展示相位上:16 种首尾 AUF 逐个回放取匹配的。
+ * (U 碰不到 DFR / FR,补 AUF 不会把最后一槽转出去;补完长度最多 +2,对最优解器无影响。)
+ */
+const AUF = ['', 'U', 'U2', "U'"];
+function toDisplayPhase(scramble: string, key: number): string {
+  const target = packState(displayState(decodeKey(key)!));
+  for (const pre of AUF) {
+    for (const post of AUF) {
+      const cand = [pre, scramble, post].filter(Boolean).join(' ');
+      const back = extractLsll(applyAlg(solvedCube(), cand));
+      if (!('broken' in back) && packState(back.state) === target) return cand;
+    }
+  }
+  throw new Error(`${keyToString(key)}:16 种 AUF 都到不了展示相位`);
+}
+
 // ---- 拼 149,188 条路线,逐条回放校验,按 canonical key 去重 ----
 const rows = new Map<number, string>();
 let routes = 0;
@@ -99,7 +121,7 @@ for (const lk of zbllKeys) {
       throw new Error(`route ${keyToString(lk)}×${keyToString(zk)}: 拼接得到 ${keyToString(got)},合成律给的是 ${keyToString(want)} —— 拼接顺序错了`);
     }
     routes++;
-    if (!rows.has(got)) rows.set(got, scramble);
+    if (!rows.has(got)) rows.set(got, toDisplayPhase(scramble, got));
   }
   if (zbllKeys.indexOf(lk) % 20 === 0) process.stdout.write(`\r  拼路线 ${routes}/${zbllKeys.length * zblsKeys.length}…`);
 }

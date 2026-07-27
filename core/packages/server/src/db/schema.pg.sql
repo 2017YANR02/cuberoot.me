@@ -722,3 +722,18 @@ CREATE TABLE pattern_examples (
 CREATE INDEX idx_pattern_examples_position ON pattern_examples(position);
 CREATE TRIGGER pattern_examples_updated_at BEFORE UPDATE ON pattern_examples
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
+
+-- LSLL 每个 case 的整方 HTM 最优解(0094)。主键 = LSLL canonical key 的 base36(= URL 的 ?k=)。
+-- exhaustive=false 表示只拿到一条最优解(h48 吐不出全部),qtm 是那一条的 qtm 而非并列最小。
+-- 148,384 行不进 migration:本地 solver/lsll 跑完 → export_cases.mjs → update_lsll.ps1 增量灌。
+CREATE TABLE lsll_cases (
+  canonical_key VARCHAR(12) PRIMARY KEY,
+  htm           SMALLINT    NOT NULL,
+  qtm           SMALLINT    NOT NULL,
+  exhaustive    BOOLEAN     NOT NULL DEFAULT false,
+  optimal_algs  JSONB       NOT NULL,
+  stm           SMALLINT,
+  mcc_order     JSONB,
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_lsll_cases_htm ON lsll_cases (htm);

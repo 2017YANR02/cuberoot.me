@@ -2,8 +2,11 @@
 
 /**
  * /alg/lsll/case?k=<base36 key> — 单 case 页。
- * 现阶段:状态图 + 构型信息 + 打乱(cubing.js 两阶段现算)+ 公式自测(本地验证 + MCC)。
- * 最优解 / MCC 推荐 / 用户提交等待后端管道与接口(见 ../PLAN.md)。
+ * 现阶段:状态图 + 构型信息 + 打乱(cubing.js 两阶段现算)+ HTM 最优解(后端 lsll_cases)
+ * + 公式自测(本地验证 + MCC)。MCC 推荐 / 用户提交仍待做(见 ../PLAN.md)。
+ *
+ * 最优解来自本地管道 `solver/lsll`,解的是**展示相位**那个代表元(语料生成时就钉死了),
+ * 所以贴到页面上的图直接能用,不用再补 AUF。
  */
 import { useEffect, useMemo, useState } from 'react';
 import { useQueryState, parseAsString } from 'nuqs';
@@ -20,8 +23,18 @@ import {
 import { zblsForKey } from '@/lib/lsll/zbls_overlay';
 import { mirrorKey, mirrorAlgForCase } from '@/lib/lsll/mirror';
 import { algSpeed, getSTM } from '@/lib/mcc';
+import { apiUrl } from '@/lib/api-base';
 import '../../alg.css';
 import '../lsll.css';
+
+/**
+ * `exhaustive=false` = 只拿到一条最优解(cubeopt/h48 的 wasm 吐不出全部最优解),
+ * 此时 `qtm` 是**这一条**的 QTM,不是所有最优解里最小的 —— 页面必须照实说,别显得已经穷尽了。
+ */
+interface OptimalOk { status: 'ok'; htm: number; qtm: number; exhaustive: boolean; algs: string[] }
+type OptimalResponse = OptimalOk | { status: 'pending' };
+type OptimalState =
+  | { kind: 'loading' } | { kind: 'pending' } | { kind: 'error' } | { kind: 'ok'; data: OptimalOk };
 
 export default function LsllCaseClient() {
   const [kRaw] = useQueryState('k', parseAsString.withDefault(''));
@@ -61,6 +74,24 @@ export default function LsllCaseClient() {
       .then((m) => m.setupForCase(decoded.state))
       .then((s) => { if (!cancelled) setSetup(s); })
       .catch(() => { if (!cancelled) setSetupErr(true); });
+    return () => { cancelled = true; };
+  }, [decoded]);
+
+  // HTM 最优解:后端 lsll_cases(本地管道回填)。没回填到的 case 返 { status: 'pending' }。
+  const [opt, setOpt] = useState<OptimalState>({ kind: 'loading' });
+  useEffect(() => {
+    let cancelled = false;
+    setOpt({ kind: 'loading' });
+    if (!decoded) return;
+    fetch(apiUrl(`/v1/alg/lsll/case/${keyToString(decoded.key)}`))
+      // 404 = 端点还没部署到这个环境(本地 dev 的 /v1 是反代线上的)—— 与「这个 case 还没算」
+      // 对用户是同一件事:没数据。别红着脸说「读取失败」。
+      .then((r) => (r.ok ? r.json() : r.status === 404 ? { status: 'pending' } : Promise.reject(new Error(String(r.status)))))
+      .then((d: OptimalResponse) => {
+        if (cancelled) return;
+        setOpt(d.status === 'ok' ? { kind: 'ok', data: d } : { kind: 'pending' });
+      })
+      .catch(() => { if (!cancelled) setOpt({ kind: 'error' }); });
     return () => { cancelled = true; };
   }, [decoded]);
 
@@ -159,9 +190,41 @@ export default function LsllCaseClient() {
 
       <section className="lsll-section">
         <h2>{tr({ zh: 'HTM 最优解', en: 'Optimal (HTM)' })}</h2>
-        <div className="lsll-note">
-          <T zh="待批量求解管道回填(全部最优解 + 次优候选)。" en="Pending the batch solver pipeline (all optimal solutions + near-optimal candidates)." />
-        </div>
+        {opt.kind === 'loading' && <div className="lsll-note">{tr({ zh: '读取中…', en: 'Loading…' })}</div>}
+        {opt.kind === 'error' && <div className="lsll-note">{tr({ zh: '读取失败,刷新重试', en: 'Failed — refresh to retry' })}</div>}
+        {opt.kind === 'pending' && (
+          <div className="lsll-note">
+            <T zh="计算中 —— 批量求解管道还没算到这个 case。" en="Computing — the batch solver pipeline has not reached this case yet." />
+          </div>
+        )}
+        {opt.kind === 'ok' && (
+          <>
+            <div className="lsll-opt-head">
+              {opt.data.htm} HTM · {opt.data.qtm} QTM
+            </div>
+            <div className="lsll-opt-algs">
+              {opt.data.algs.map((a) => (
+                <div className="lsll-alg-line" key={a}>
+                  <span>{a}</span>
+                  <span className="lsll-opt-metric">{getSTM(a, true)} STM</span>
+                  <button type="button" className="lsll-copy-btn" onClick={() => { void navigator.clipboard?.writeText(a); }}>
+                    {tr({ zh: '复制', en: 'Copy' })}
+                  </button>
+                </div>
+              ))}
+            </div>
+            <p className="lsll-note">
+              {opt.data.exhaustive
+                ? <T zh="以上是全部「HTM 最优且其中 QTM 最小」的解。"
+                     en="These are every solution that is HTM-optimal and, among those, QTM-minimal." />
+                : <T zh={<>步数 {opt.data.htm} 是确定的最优值;这里只给出<strong>一条</strong>最优解,
+                          QTM 并列还没穷尽,所以上面那个 QTM 是这一条的,未必是所有最优解里最小的。</>}
+                     en={<>The length {opt.data.htm} is the proven optimum, but only <strong>one</strong> optimal
+                          solution is stored — QTM ties are not exhausted, so the QTM shown is this solution&rsquo;s,
+                          not necessarily the minimum across all optimal solutions.</>} />}
+            </p>
+          </>
+        )}
       </section>
 
       <section className="lsll-section">

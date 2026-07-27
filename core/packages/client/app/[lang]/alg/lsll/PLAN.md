@@ -152,10 +152,17 @@
       (cubeopt in-proc 跑久了必抛 emscripten `unwind`),别裸跑 `solve.mjs`。
 - [ ] **MCC 排序**:并列解**全留**,MCC(`@/lib/mcc` algSpeed,忽略首尾 U)只做**展示排序**,
       不再做 top-3 筛选(口径变了:并列都要)。
-- [ ] **存储**:PG 新表 `lsll_cases`(canonical_key PK, category, eo/co 元数据, setup,
-      `htm_optimal`, `qtm_optimal`, `optimal_algs jsonb` = 全部 (HTM,QTM) 并列解,
-      `exhaustive bool` = 是否已穷尽并列(枚举口没到位时为 false), mcc_order 预留, stm_optimal 预留)。
-      API `/v1/alg/lsll/case/:key`(缓存头照 CI 契约);未回填 case 返回"计算中"。
+- [x] **存储 + API + 页面**(2026-07-27)。表 `lsll_cases`(migration **0094**):
+      `canonical_key`(base36,= URL 的 `?k=`)PK、`htm`、`qtm`、`exhaustive`、
+      `optimal_algs jsonb`、`stm` / `mcc_order` 预留。category / eo / co / setup **不入库** ——
+      前端拿 key 现算(`classify` / `setupForCase`),别存第二份。
+      灌库走 `solver/lsll/update_lsll.ps1`(照 `update_cross_stats.ps1` 的 `Load-*ToPg`:
+      复用 `pg_incremental_diff.mjs` 做行级 sha1 增量,manifest 灌成功才落盘;`-Local` 灌本机 pg13)。
+      API `GET /v1/alg/lsll/case/:key`(`max-age=300, s-maxage=86400`;未回填 `{status:'pending'}` + `no-store`)
+      与 `GET /v1/alg/lsll/dist`(步数直方图)。case 页「HTM 最优解」区已接;`exhaustive=false` 时
+      明写「只有一条最优解,QTM 并列未穷尽」。404 也当 pending —— 端点没部署到本环境时别显示成报错。
+      ⚠️ **语料按展示相位生成**:case 页画的是 `displayState`,canonical key 认的是 16 个 AUF 像里最小的,
+      差一个 AUF 解就贴不上去。`lsll-corpus.mts` 拼完打乱会枚举 16 种首尾 AUF 钉到展示相位,别弄丢。
 - [ ] **用户提交**(用户已确认要):登录 + 提交前端 + 服务端验证(复用 verify 逻辑移植)
       + MCC 评分入库;复用 recon 的 auth 通道。
 - [ ] case 页接 API 显示最优解 / MCC 推荐;大类页步数分布直方图(数据齐后)。
