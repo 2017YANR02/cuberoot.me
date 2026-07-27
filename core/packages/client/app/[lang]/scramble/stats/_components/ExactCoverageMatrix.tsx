@@ -155,6 +155,13 @@ export default function ExactCoverageMatrix({ stage, slot, colors, onPick }: Pro
                             {groupDigits(cell.top.count)}
                           </span>
                         )}
+                        {/* 上游表格给的均值:搬运值,与穷举出来的均值必须看得出区别 */}
+                        {cell.refMean !== undefined && (
+                          <span className="exact-cov-val is-ref">
+                            {tr({ zh: '均值 ≈ ', en: 'mean ≈ ' })}{cell.refMean.toFixed(2)}
+                            <em>{tr({ zh: '未证', en: 'unproven' })}</em>
+                          </span>
+                        )}
                         <span className="exact-cov-blocked">{tr(cell.blocked)}</span>
                       </div>
                     </td>

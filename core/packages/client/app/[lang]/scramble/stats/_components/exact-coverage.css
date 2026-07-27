@@ -103,6 +103,17 @@
   color: var(--foreground);
 }
 
+/* 上游表格搬来的均值:是参考不是结论,压暗一档,并给「未证」一个明显的记号。 */
+.exact-cov-val.is-ref em {
+  margin-left: 4px;
+  padding: 0 3px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--faint-foreground) 14%, transparent);
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-style: normal;
+}
+
 .exact-cov-blocked {
   display: block;
   margin-top: 3px;
