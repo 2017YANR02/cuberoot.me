@@ -22,9 +22,10 @@ import {
   Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2,
   Bluetooth, Mic, BarChart3, Plus, Wrench, ListPlus, Printer, FileText,
   FileSpreadsheet, AlertTriangle, Target, Crosshair, Keyboard, Link2, Globe,
-  ListOrdered, LineChart, Brain, X, Check, CheckCircle2, Footprints, Repeat,
+  Brain, X, Check, CheckCircle2, Footprints, Repeat,
   Timer,
 } from 'lucide-react';
+import AppLink from '@/components/AppLink';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { CubingIcon, EventIcon } from '@/components/EventIcon/EventIcon';
 import CubeRootLogo from '@/components/CubeRootLogo';
@@ -195,7 +196,9 @@ function useMediaQuery(query: string): boolean {
   return matches;
 }
 
-type PanelTab = 'times' | 'chart' | 'tools';
+// 「工具」那一档搬进设置弹窗了(见 SettingsPanel 的 tools 节),侧栏只剩成绩 / 图表两档,
+// 入口是左下角那块统计(点它就弹出来),底部导航条已整条撤掉。
+type PanelTab = 'times' | 'chart';
 type ChartKind = 'histogram' | 'trend' | 'scatter' | 'hour' | 'heatmap';
 
 interface SoloViewProps {
@@ -1584,10 +1587,6 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   // hidden, not animated; the reduced-motion block below drops the transition.
   const hideAllUi = timer.phase === 'running' && settings.hideAllUiWhileRunning;
 
-  const togglePanel = useCallback((tab: PanelTab) => {
-    setPanelTab(prev => (prev === tab ? null : tab));
-  }, []);
-
   // Auto-dismiss the info toast.
   useEffect(() => {
     if (!infoToast) return;
@@ -1663,29 +1662,38 @@ export default function SoloView({ playersControl }: SoloViewProps) {
         </div>
       );
     }
-    // tools
-    return (
-      <div className="shell-tools-list">
-        {moreItems.map((it, i) => (
-          <button
-            key={i}
-            type="button"
-            className={`shell-tools-item${it.danger ? ' danger' : ''}`}
-            disabled={it.disabled}
-            onClick={() => { if (!it.disabled) it.onClick(); }}
-          >
-            {it.icon && <span className="shell-tools-icon">{it.icon}</span>}
-            <span>{it.label}</span>
-          </button>
-        ))}
-        <button type="button" className="shell-tools-item" onClick={() => setSettingsOpen(true)}>
-          <span className="shell-tools-icon"><SettingsIcon size={14} /></span>
-          <span>{tr({ zh: '设置', en: 'Settings'
-        })}</span>
-        </button>
-      </div>
-    );
+    return null;
   };
+
+  // ── 工具清单 ────────────────────────────────────────────────────
+  // 原来是底部导航第三档,现在是设置弹窗里的一节(设置本身不再列在里面 —— 人已经在设置里了)。
+  // 打乱足迹从顶栏图标挪到了这里,仍是真链接(中键 / Ctrl 点能新开标签页)。
+  const toolsList = (
+    <div className="shell-tools-list">
+      <AppLink className="shell-tools-item" href="/timer/marks">
+        <span className="shell-tools-icon"><Footprints size={14} /></span>
+        <span>{tr({ zh: '打乱足迹', en: 'Scramble marks' })}</span>
+      </AppLink>
+      {moreItems.map((it, i) => (
+        <button
+          key={i}
+          type="button"
+          className={`shell-tools-item${it.danger ? ' danger' : ''}`}
+          disabled={it.disabled}
+          onClick={() => { if (!it.disabled) it.onClick(); }}
+        >
+          {it.icon && <span className="shell-tools-icon">{it.icon}</span>}
+          <span>{it.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+
+  // 解法提示(仅 333)。同一个组件在两处挂点里二选一:桌面进右侧 .shell-rail(展开成竖栏),
+  // 手机进顶栏那一组控件的末尾(点开 = 全屏浮层)。写成一个变量,免得两处各写一遍 props。
+  const solverHintPanel = event === '333'
+    ? <SolverHintPanel scramble={scramble} isZh={isZh} />
+    : null;
 
   return (
     <div
@@ -1747,18 +1755,12 @@ export default function SoloView({ playersControl }: SoloViewProps) {
             <option value="random">{tr({ zh: '随机状态', en: 'Random' })}</option>
             <option value="manual">{tr({ zh: '手动输入', en: 'Manual' })}</option>
           </select>
+          {/* 解法提示(手机形态)。桌面同一个组件挂在右侧 .shell-rail 里(见下),
+              这里是二选一 —— 两处同时挂就有两个实例抢同一个 ?hints。 */}
+          {!isDesktop && solverHintPanel}
         </div>
         <div className="shell-topbar-right">
-          <a
-            className="tb-btn"
-            href={`${isZh ? '/zh' : ''}/timer/marks`}
-            title={tr({ zh: '打乱足迹', en: 'Scramble marks'
-            })}
-            aria-label={tr({ zh: '打乱足迹', en: 'Scramble marks'
-            })}
-          >
-            <Footprints size={14} />
-          </a>
+          {/* 打乱足迹搬进了设置里的「工具」一节 —— 顶栏只留蓝牙 + 设置两颗。 */}
           <button
             type="button"
             className={`tb-btn${bluetoothCube.status.connected ? ' connected' : ''}`}
@@ -2052,42 +2054,42 @@ export default function SoloView({ playersControl }: SoloViewProps) {
         )}
 
         {/* 右侧配置栏:解法提示(仅 333,逐阶段最优 + 分步解法)常驻可折叠面板 ——
-            桌面收成主区右侧竖栏,手机落在打乱图下方。打乱来源已移到计时读数上方(见 ScrambleSourceBar)。 */}
+            桌面收成主区右侧竖栏。手机上这颗 pill 挂在顶栏(见上),不再落在打乱图下方。
+            打乱来源已移到计时读数上方(见 ScrambleSourceBar)。 */}
         <div className="shell-rail" data-no-timer>
-          {event === '333' && <SolverHintPanel scramble={scramble} isZh={isZh} />}
+          {isDesktop && solverHintPanel}
         </div>
 
-        {/* Session stats — vertical cstimer-style list, bottom-left of the main
-            area. Only once there's data (no bare dashes at idle). */}
-        {solves.length > 0 && (
-          <div className="shell-stat-rail surface-chrome">
-            {/* 「次数」单独一行去掉了 —— 总次数已含在下面「成功」的分母(solved/count)里,不用重复占一行。 */}
-            <span className="shell-stat"><span className="shell-stat-lbl">{tr({ zh: '成功', en: 'solved' })}</span> <span className="shell-stat-val">{stats.solved}/{stats.count}</span></span>
-            <span className="shell-stat"><span className="shell-stat-lbl">mean</span> <span className="shell-stat-val">{stats.mean}</span></span>
-            <span className="shell-stat"><span className="shell-stat-lbl">{tr({ zh: '最佳', en: 'best' })}</span> <span className="shell-stat-val">{stats.best}</span></span>
-            <span className="shell-stat"><span className="shell-stat-lbl">mo3</span> <span className="shell-stat-val">{stats.mo3}</span></span>
-            <span className="shell-stat"><span className="shell-stat-lbl">ao5</span> <span className="shell-stat-val">{stats.ao5}</span></span>
-            <span className="shell-stat"><span className="shell-stat-lbl">ao12</span> <span className="shell-stat-val">{stats.ao12}</span></span>
-          </div>
-        )}
+        {/* Session stats — vertical cstimer-style list, bottom-left of the main area.
+            也是成绩 / 图表面板的唯一入口(底部导航条撤掉了),所以是真 <button>。
+            还没有成绩时不摆一排破折号,只留「成绩」两个字 —— 面板里有会话切换器,
+            当前会话空着的时候恰恰最需要能点进去换会话。 */}
+        <button
+          type="button"
+          className="shell-stat-rail surface-chrome"
+          onClick={() => setPanelTab(t => (t ? null : 'times'))}
+          aria-expanded={panelTab != null}
+          title={tr({ zh: '打开成绩 / 图表', en: 'Open times / chart' })}
+        >
+          {solves.length > 0 ? (
+            <>
+              {/* 「次数」单独一行去掉了 —— 总次数已含在下面「成功」的分母(solved/count)里,不用重复占一行。 */}
+              <span className="shell-stat"><span className="shell-stat-lbl">{tr({ zh: '成功', en: 'solved' })}</span> <span className="shell-stat-val">{stats.solved}/{stats.count}</span></span>
+              <span className="shell-stat"><span className="shell-stat-lbl">mean</span> <span className="shell-stat-val">{stats.mean}</span></span>
+              <span className="shell-stat"><span className="shell-stat-lbl">{tr({ zh: '最佳', en: 'best' })}</span> <span className="shell-stat-val">{stats.best}</span></span>
+              <span className="shell-stat"><span className="shell-stat-lbl">mo3</span> <span className="shell-stat-val">{stats.mo3}</span></span>
+              <span className="shell-stat"><span className="shell-stat-lbl">ao5</span> <span className="shell-stat-val">{stats.ao5}</span></span>
+              <span className="shell-stat"><span className="shell-stat-lbl">ao12</span> <span className="shell-stat-val">{stats.ao12}</span></span>
+            </>
+          ) : (
+            <span className="shell-stat"><span className="shell-stat-val">{tr({ zh: '成绩', en: 'Times' })}</span></span>
+          )}
+        </button>
 
       </div>
 
-      {/* ── Side panel: desktop dock / phone bottom sheet ────── */}
-      <nav className="shell-bottombar surface-chrome">
-        <button type="button" className={`shell-bottombar-btn${panelTab === 'times' ? ' active' : ''}`} onClick={() => togglePanel('times')}>
-          <ListOrdered size={18} /><span>{tr({ zh: '成绩', en: 'Times'
-        })}</span>
-        </button>
-        <button type="button" className={`shell-bottombar-btn${panelTab === 'chart' ? ' active' : ''}`} onClick={() => togglePanel('chart')}>
-          <LineChart size={18} /><span>{tr({ zh: '图表', en: 'Chart'
-        })}</span>
-        </button>
-        <button type="button" className={`shell-bottombar-btn${panelTab === 'tools' ? ' active' : ''}`} onClick={() => togglePanel('tools')}>
-          <Wrench size={18} /><span>{tr({ zh: '工具', en: 'Tools' })}</span>
-        </button>
-      </nav>
-
+      {/* ── Side panel: desktop dock / phone bottom sheet ──────
+          入口是左下角那块统计(见上);底部导航条已撤掉,「工具」搬进了设置。 */}
       {panelTab && (
         <>
           {!isDesktop && <div className="shell-sheet-backdrop" onClick={() => setPanelTab(null)} />}
@@ -2097,7 +2099,6 @@ export default function SoloView({ playersControl }: SoloViewProps) {
             })}</button>
               <button type="button" className={`shell-panel-tab${panelTab === 'chart' ? ' active' : ''}`} onClick={() => setPanelTab('chart')}>{tr({ zh: '图表', en: 'Chart'
             })}</button>
-              <button type="button" className={`shell-panel-tab${panelTab === 'tools' ? ' active' : ''}`} onClick={() => setPanelTab('tools')}>{tr({ zh: '工具', en: 'Tools' })}</button>
               <button type="button" className="shell-panel-close" onClick={() => setPanelTab(null)} aria-label={tr({ zh: '关闭', en: 'Close'
             })}><X size={16} /></button>
             </div>
@@ -2148,7 +2149,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
         <ReconstructModal key={reconstructSolve.id} solve={reconstructSolve} isZh={isZh} onClose={() => setReconstructSolve(null)} history={byEvent[reconstructSolve.event] ?? []} />
       )}
 
-      {settingsOpen && <SettingsPanel isZh={isZh} event={event} onClose={() => setSettingsOpen(false)} onDataReplaced={() => setByEvent(loadAll())} />}
+      {settingsOpen && <SettingsPanel isZh={isZh} event={event} tools={toolsList} onClose={() => setSettingsOpen(false)} onDataReplaced={() => setByEvent(loadAll())} />}
 
       {infoToast && (
         <div className="shell-info-toast" role="status">

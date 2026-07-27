@@ -70,7 +70,11 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   justify-self: center;
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  /* 允许折行:手机上这一组是 人数 + 项目 + 打乱来源 + 解法提示 四件,窄机身放不下一行。
+     宽屏永远折不了(auto 列先按 max-content 要位置),所以这只是窄屏的安全阀。 */
+  flex-wrap: wrap;
+  gap: 6px 10px;
   min-width: 0;
 }
 .shell-topbar-right {
@@ -107,14 +111,15 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 
 /* Event pill + popover */
 .shell-event-pick { position: relative; }
+/* 项目选择器:不画框(图标本身就是内容),悬停才浮出底色。 */
 .shell-event-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 12px;
-  border: 1px solid var(--shell-divider);
-  border-radius: 999px;
-  background: var(--shell-chip);
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
   color: var(--foreground);
   font-size: 13px;
   font-weight: 500;
@@ -564,10 +569,11 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 }
 .trainer-subset-btn:hover { background: var(--shell-hover); }
 
-/* ── Stat rail (desktop 4-stat) / peek line (phone) ─────── */
+/* ── Stat rail ──────────────────────────────────────────── */
 /* Session stats — vertical cstimer-style list pinned to the main area's
-   bottom-left corner (above the bottom bar). Display-only: pointer-events none
-   so taps fall straight through to the timing surface behind it. */
+   bottom-left corner. It is also the only entry to the 成绩 / 图表 panel now that
+   the bottom nav bar is gone, so it's a real <button> with its UA chrome stripped;
+   the hit box stays tight to the text so most of the screen is still timer. */
 .shell-stat-rail {
   position: absolute;
   left: max(12px, env(safe-area-inset-left));
@@ -577,7 +583,19 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   flex-direction: column;
   align-items: flex-start;
   gap: 1px;
-  pointer-events: none;
+  margin: 0;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background 120ms;
+}
+.shell-stat-rail:hover { background: var(--shell-hover); }
+.shell-stat-rail:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 .shell-stat {
   display: flex;
@@ -597,18 +615,19 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 .shell-undersurface .solver-hints .solver-hint-btn:hover { color: var(--foreground); }
 
 /* ── 解法提示 panel (333) — desktop right rail / phone full-screen sheet ──
-   A persistent, collapsible StageSolver host (replaces the old modal). Lives as
-   the last child of .shell-main: on phones only the pill flows in-place under the
-   scramble chrome and tapping it opens .solver-sheet (below); on desktop the
-   panel is lifted to an absolute right rail and .shell-main is given matching
-   right padding so the centered timer never sits under it. */
+   A persistent, collapsible StageSolver host (replaces the old modal). SoloView
+   mounts it in one of two places: on phones it's the last control in the topbar's
+   centre group (next to 人数 / 项目 / 打乱来源) and tapping it opens .solver-sheet
+   (below); on desktop it goes in .shell-rail, an absolute right column, and
+   .shell-main gains matching right padding so the centered timer never sits under
+   it. Both forms are just a pill until opened, so the base rule below sizes it as
+   an inline control and each mount point takes it from there. */
 .timer-shell { --solver-rail-w: clamp(380px, 31vw, 520px); }
 .solver-panel {
-  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 2px 12px 10px;
+  min-width: 0;
 }
 .solver-panel-head {
   display: inline-flex;
@@ -625,6 +644,15 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   transition: background 120ms, color 120ms;
 }
 .solver-panel-head:hover { background: var(--shell-hover); color: var(--foreground); }
+/* 手机形态:顶栏那排控件里的一员,但不画框 —— 纯文字入口,高度对齐旁边的下拉。
+   (桌面那颗仍是 pill:它在右栏里是唯一的可点物,没有边框就读不出可点。) */
+.shell-topbar-left .solver-panel-head {
+  height: 32px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  border-radius: 6px;
+}
 .solver-panel-title { white-space: nowrap; }
 .solver-panel-chevron { opacity: 0.7; transition: transform 160ms ease; }
 /* Desktop accordion: collapsed ▾ (down) → expand, open ▴ (up) → collapse.
@@ -754,23 +782,29 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 /* Block (not flex) with a centered max-width so the player gets a definite width
    — a width:100% twisty-player inside a justify-content:center flex parent
    collapses to 0. */
-.stepsolve-player { width: 100%; max-width: 300px; margin: 6px auto 0; }
-.stepsolve-player .twisty-section { width: 100%; }
+.stepsolve-player { width: 100%; max-width: 300px; min-width: 0; margin: 6px auto 0; }
+/* 同 .stsv-player:/recon 的播放器默认 height:100% 撑定高父容器,这里高度由内容决定,
+   所以放开高度、改给画布定 1:1(flex:0 0 auto + width:100%,理由见 StageSolver.css)。 */
+.stepsolve-player .recon-player { height: auto; }
+.stepsolve-player .recon-player-canvas { flex: 0 0 auto; width: 100%; aspect-ratio: 1 / 1; }
 
-/* Config rail wrapper (打乱来源 + 解法提示). On phones it's transparent to layout
-   (display:contents) so both panels flow inline under the scramble exactly as a
-   bare panel used to; desktop turns it into the absolute right column below. */
+/* Config rail wrapper (解法提示, desktop only — SoloView puts the phone form in the
+   topbar instead). display:contents keeps it out of the layout on phones, where it
+   is empty; desktop turns it into the absolute right column below. */
 .shell-rail { display: contents; }
 
 /* Phone / tablet (<1024px): the pill opens a full-screen sheet. It used to expand
-   in place, but the pill sits directly above the bottom bar, so everything it
-   revealed landed below the fold and the page didn't scroll to it — the tap read
-   as a dead button (issue #49). Fixed + inset:0 with its own scroll container;
-   ?hints=1 owns the open state so the back gesture closes it. */
+   in place under the scramble, but that put it directly above the bottom bar, so
+   everything it revealed landed below the fold and the page didn't scroll to it —
+   the tap read as a dead button (issue #49). Fixed + inset:0 with its own scroll
+   container; ?hints=1 owns the open state so the back gesture closes it. */
 .solver-sheet {
   position: fixed;
   inset: 0;
-  z-index: 62; /* over the 成绩/图表/工具 bottom sheet (61) and the deskpet (40) */
+  /* over the 成绩/图表/工具 bottom sheet (61) and the deskpet (40). Only comparable
+     with those because the sheet is portalled to <body> — the pill that opens it
+     now lives in the z-index:41 topbar, whose stacking context would otherwise cap it. */
+  z-index: 62;
   display: flex;
   flex-direction: column;
   background: var(--background);
@@ -1003,32 +1037,8 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   .timer-display { transition: none; }
 }
 
-/* ── Bottom bar (Times / Chart / Tools) ─────────────────── */
-.shell-bottombar {
-  display: flex;
-  align-items: stretch;
-  border-top: 1px solid var(--shell-divider);
-  padding-bottom: env(safe-area-inset-bottom);
-  /* Solid surface so the bottom-right deskpet (z-index:40) cannot show
-     through the bar — the bar is lifted to z-index:41 below. */
-  background: var(--background);
-}
-.shell-bottombar-btn {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  padding: 8px 4px;
-  border: 0;
-  background: transparent;
-  color: var(--muted-foreground);
-  font-size: 11px;
-  cursor: pointer;
-  transition: color 120ms, background 120ms;
-}
-.shell-bottombar-btn:hover { background: var(--shell-hover); color: var(--foreground); }
-.shell-bottombar-btn.active { color: var(--accent); }
+/* 底部导航条(成绩 / 图表 / 工具)整条撤掉了:成绩 + 图表的入口改成左下角那块统计
+   (.shell-stat-rail,点它就弹),工具搬进设置弹窗。计时页因此整屏都是计时区。 */
 
 /* ── Side panel: phone sheet / desktop rail ─────────────── */
 .shell-sheet-backdrop {
@@ -1118,6 +1128,8 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   color: var(--foreground);
   font-size: 14px;
   text-align: left;
+  /* 表里混着 <button> 和真链接(打乱足迹),两者要长一样。 */
+  text-decoration: none;
   cursor: pointer;
 }
 .shell-tools-item:hover { background: var(--shell-hover); }
@@ -1358,34 +1370,32 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   .timer-shell {
     display: grid;
     grid-template-columns: 1fr 0;
-    grid-template-rows: auto 1fr auto;
+    grid-template-rows: auto 1fr;
     grid-template-areas:
       "topbar  panel"
-      "main    panel"
-      "bottom  panel";
+      "main    panel";
     transition: grid-template-columns 160ms ease;
   }
   .timer-shell.panel-open { grid-template-columns: 1fr 360px; }
   .shell-topbar { grid-area: topbar; }
   .shell-main { grid-area: main; }
-  .shell-bottombar { grid-area: bottom; }
   .shell-panel--rail {
     grid-area: panel;
     border-left: 1px solid var(--shell-divider);
     background: var(--background);
     overflow: hidden;
   }
-  /* Bottom bar becomes a slim tab strip on desktop. */
-  .shell-bottombar { border-top: 1px solid var(--shell-divider); }
-  .shell-bottombar-btn { flex-direction: row; gap: 6px; padding: 10px; font-size: 13px; }
   .shell-sheet-backdrop { display: none; }
 }
 
 /* ── Phone (<480px) ─────────────────────────────────────── */
 @media (max-width: 480px) {
   .shell-topbar { gap: 6px; padding: 6px 10px; min-height: 44px; }
+  .shell-topbar-left { gap: 4px 6px; }
   .shell-players-select { padding: 0 4px; font-size: 12px; }
   .shell-event-btn { padding: 5px 10px; font-size: 12px; }
+  /* 顶栏这组控件在手机上要挤下四件,解法入口跟着同档收窄。 */
+  .shell-topbar-left .solver-panel-head { height: 30px; padding: 0 3px; font-size: 12px; gap: 4px; }
   /* Anchor the picker to the viewport (not the off-center button) so a wide
      grid never runs off the right edge; full-width with 8px gutters. */
   .shell-event-pop {
@@ -1401,14 +1411,12 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   .shell-stat-rail { bottom: 8px; }
   .shell-stat-val { font-size: 13px; }
   .timing-surface-scramble { top: 8px; }
-  /* Clear the bottom-left global auth avatar so the leftmost nav button
-     (成绩 / Times) isn't under it; symmetric so the 3 flex:1 buttons stay centered. */
-  .timer-shell .shell-bottombar { padding-left: 56px; padding-right: 56px; }
 }
 .shell-info-toast {
   position: fixed;
   left: 50%;
-  bottom: calc(72px + env(safe-area-inset-bottom));
+  /* 底部导航条撤掉后这里没有东西要让,贴近底边即可(仍留出安全区)。 */
+  bottom: calc(20px + env(safe-area-inset-bottom));
   transform: translateX(-50%);
   z-index: 70;
   display: inline-flex;
@@ -1455,7 +1463,6 @@ html[data-theme=dark] { --scramble-fg: #fff; }
    near-invisible UA outline on the dark surface. Token-only, both themes. */
 .shell-event-btn:focus-visible,
 .shell-topbar .tb-btn:focus-visible,
-.shell-bottombar-btn:focus-visible,
 .shell-panel-tab:focus-visible,
 .shell-undersurface .solver-hints .solver-hint-btn:focus-visible {
   outline: 2px solid var(--accent);
@@ -1478,9 +1485,8 @@ html[data-theme=dark] { --scramble-fg: #fff; }
    sheet / penalty sheet already use 60-62; the persistent chrome rows
    default to auto (below 40), so raise them. */
 .timer-shell .shell-topbar { position: relative; z-index: 41; background: var(--background); }
-.timer-shell .shell-bottombar { position: relative; z-index: 41; }
-/* stat-rail is now an absolute bottom-LEFT overlay (see .shell-stat-rail);
-   the bottom-RIGHT deskpet can't overlap it, so it needs no lift/solid bg. */
+/* stat-rail is an absolute bottom-LEFT overlay (see .shell-stat-rail); the
+   bottom-RIGHT deskpet can't overlap it, so it needs no lift/solid bg. */
 @media (min-width: 1024px) {
   /* Docked right rail covers exactly where the deskpet rests. */
   .timer-shell .shell-panel--rail { position: relative; z-index: 42; }
@@ -1509,7 +1515,8 @@ body:has(.timer-shell.is-solving) .clawd-deskpet {
    we never touch the global DeskPet component. Covers Solo (timer-shell sheets/
    menus) AND Battle (battle-container overlays/sheets). */
 body:has(.timer-shell .shell-sheet-backdrop) .clawd-deskpet,
-body:has(.timer-shell .solver-sheet) .clawd-deskpet,
+/* 解法提示浮层 portal 到 body(不在 .timer-shell 里),所以这条不带 .timer-shell 前缀。 */
+body:has(.solver-sheet) .clawd-deskpet,
 body:has(.timer-shell .shell-penalty-sheet) .clawd-deskpet,
 body:has(.timer-shell .row-quick-sheet-backdrop) .clawd-deskpet,
 body:has(.timer-shell .row-quick-menu) .clawd-deskpet,
@@ -1528,7 +1535,6 @@ body:has(.battle-container .penalty-dropdown.open) .clawd-deskpet {
 
 /* Fullscreen: hide chrome rows, keep just the surface. */
 .timer-shell.fullscreen .shell-topbar,
-.timer-shell.fullscreen .shell-bottombar,
 .timer-shell.fullscreen .shell-stat-rail,
 .timer-shell.fullscreen .shell-undersurface,
 .timer-shell.fullscreen .scramble-src-bar,

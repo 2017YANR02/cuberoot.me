@@ -1357,6 +1357,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                     scramble={playerSetup}
                     alg={playerAlg}
                     playerRef={playerRef}
+                    backView={false}
                   />
                 </div>
               )}

@@ -14,10 +14,17 @@
 
 .recon-player-canvas {
   flex: 1;
+  min-width: 0;
   min-height: 0;
   position: relative;
   touch-action: none;
 }
+
+/* renderer.setSize 会把当前尺寸写成画布的行内 px 宽高。那份 px 宽同时是父盒的
+   min-content:容器想变窄时会被自己的画布顶住(min-width:auto 的 flex 行里必现),
+   ResizeObserver 于是永远等不到新尺寸 —— 画布卡在旧宽度上,一路漫出右边。
+   max-width 把这条棘轮断掉:盒子先缩,RO 再把画布量回去。 */
+.recon-player-canvas > canvas { max-width: 100%; }
 
 /* Back-view window — pinned top-right of the canvas. Transparent canvas inside
    shows this var(--card) backdrop where the cube doesn't cover. pointer-events
