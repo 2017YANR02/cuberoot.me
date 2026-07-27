@@ -10,7 +10,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Heart, Plus, Pencil, Trash2, Crown, List, X } from 'lucide-react';
 import { tr, useLang } from '@/i18n/tr';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import AppLink from '@/components/AppLink';
 import DonateModal from '@/components/DonateModal';
 import { displayCuberName } from '@/lib/cuber-name-display';
@@ -165,7 +164,6 @@ function ContributorDetail({ contributor, isZh, onClose }: {
 export default function SupportPage() {
   const lang = useLang();
   const isZh = lang !== 'en';
-  useDocumentTitle('致谢', 'Acknowledgments');
 
   // admin 来自 client-only auth store;mount 后再 gate,避免 SSR/首帧 hydration mismatch。
   const [mounted, setMounted] = useState(false);

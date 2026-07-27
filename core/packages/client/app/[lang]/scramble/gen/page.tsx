@@ -19,7 +19,6 @@ import LiquidGlassChips from '@/components/LiquidGlassChips';
 import { prewarmScramble } from '@/lib/cubing-scramble';
 import { persistItem } from '@/lib/safe-storage';
 import { get333Mode } from '@/lib/scramble-333-mode';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from '@/hooks/useT';
 import QuickMode from './QuickMode';
 import { CUBE_FILL } from '@/lib/cube-colors';
@@ -83,7 +82,6 @@ function GenPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const t = useT();
-  useDocumentTitle('打乱生成器', 'Scramble Generator');
 
   // Prewarm the heaviest random-state scramblers while the user is reading the
   // event selector. 444/555 each pay a ~3s pruning-table build on first call;

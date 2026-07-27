@@ -6,7 +6,6 @@
  */
 import Link from '@/components/AppLink';
 import { ArrowLeft } from 'lucide-react';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './gen_about.css';
 import { useT } from "@/hooks/useT";
 
@@ -33,7 +32,6 @@ function Arrow() {
 
 export default function GenAboutPage() {
   const t = useT();
-  useDocumentTitle('打乱生成器说明', 'Scramble Generator Guide');
 
   return (
     <div className="ga-page">

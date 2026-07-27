@@ -28,7 +28,6 @@ import {
   type RoundMeta,
   type CompRoundMetaMap,
 } from '@cuberoot/shared';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { formatDateRangeIso, toIsoDate } from '@/lib/wca-date';
@@ -1360,7 +1359,6 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
 function CalendarPageInner() {
   const { t, i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('比赛', 'Competitions');
   const router = useRouter();
   // 比赛关注「盯一下」:登录用户跨设备同步的关注集合(server PG)。在页顶调用一次,把状态下发给
   // 模态 / 列表 / 日历条 / day-list,与首页 OngoingComps 共用同一份 server 数据。

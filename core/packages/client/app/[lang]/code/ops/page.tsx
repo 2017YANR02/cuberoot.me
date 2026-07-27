@@ -8,7 +8,6 @@ import { useTranslation } from 'react-i18next';
 import { Check, Copy, Database, Hammer, UploadCloud, Archive, ChevronDown, Terminal, Sparkles, Plus, Pencil, Trash2, X } from 'lucide-react';
 import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
 import { createCommand, updateCommand, deleteCommand, listCommands, type OpsCommandInput } from '@/lib/ops-api';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './ops.css';
 import { tr } from '@/i18n/tr';
 
@@ -182,8 +181,6 @@ export default function OpsPage() {
   const [commands, setCommands] = useState<OpCommand[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [editor, setEditor] = useState<{ mode: 'add' | 'edit'; op?: OpCommand } | null>(null);
-
-  useDocumentTitle('运维', 'Ops');
 
   const refresh = () => {
     setErr(null);

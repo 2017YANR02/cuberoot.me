@@ -9,7 +9,6 @@ import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import WcaAuth from '@/components/WcaAuth';
 import { tr, T, useLang } from '@/i18n/tr';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useIsAdmin } from '@/lib/auth-store';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import {
@@ -22,7 +21,6 @@ import { ThreadRowList } from './_components/ThreadRowList';
 import './forum.css';
 
 export default function ForumIndexPage() {
-  useDocumentTitle('论坛', 'Forum');
   const lang = useLang();
   const zh = lang === 'zh';
   const isAdmin = useIsAdmin();

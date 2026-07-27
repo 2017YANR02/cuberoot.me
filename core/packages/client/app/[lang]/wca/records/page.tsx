@@ -23,7 +23,6 @@ import { RegionPicker } from '@/components/RegionPicker';
 import { ListSelect } from '@/components/ListSelect';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
 import { AttemptHeaderCells, AttemptCells } from '@/components/wca-results/AttemptsGrid';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../_wca_stats_extra.css';
 import '../_records.css';
 import { tr } from '@/i18n/tr';
@@ -56,7 +55,6 @@ type Show = 'current' | 'history' | 'mixed';
 function RecordsPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('纪录', 'Records');
   const [q, setQ] = useQueryStates(
     {
       show: parseAsString,

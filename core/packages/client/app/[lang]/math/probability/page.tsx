@@ -17,7 +17,6 @@ import Link from '@/components/AppLink';
 import dynamic from 'next/dynamic';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { TeX, TeXBlock } from '@/components/math/Tex';
 import './probability.css';
 import { useT } from '@/hooks/useT';
@@ -36,7 +35,6 @@ const SkewbOdds = dynamic(() => import('./_components/SkewbOdds'), { ssr: false,
 export default function ProbabilityPage() {
   useTranslation();
   const t = useT();
-  useDocumentTitle('情况概率与旋转对称', 'Case Probability & Symmetry');
 
   return (
     <div className="prob-page">

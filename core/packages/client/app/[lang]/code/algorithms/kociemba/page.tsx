@@ -3,7 +3,6 @@
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../../_lib/Lang';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './algorithm_intro.css';
 import { tr } from '@/i18n/tr';
 
@@ -12,8 +11,6 @@ const ACCENT = '#7BD389';
 export default function KociembaPage() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-
-  useDocumentTitle('Kociemba 二阶段', 'Kociemba two-phase');
 
   return (
     <LangCtx.Provider value={lang}>

@@ -15,7 +15,6 @@ import AppLink from '@/components/AppLink';
 import { ClearButton } from '@/components/ClearButton';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { Flag } from '@/components/Flag';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAuthStore, isAdmin } from '@/lib/auth-store';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import { displayCuberName } from '@/lib/cuber-name-display';
@@ -36,7 +35,6 @@ function fmtDate(epochSec: number): string {
 function MarksFeed() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('打乱足迹', 'Scramble Marks');
   const user = useAuthStore((st) => st.user);
   // 所有权键(与服务端一致):非 WCA 账号也能筛「只看我的」/ 删自己的标记。展示链接仍用真实 wcaId。
   const myKey = user ? computeOwnerKey(user.uid, user.wcaId) : '';

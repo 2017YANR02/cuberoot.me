@@ -37,7 +37,6 @@ import {
   ArrowRight,
   Clock,
 } from 'lucide-react';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import CubingPreview from '@/components/CubingPreview';
 import BoolToggle from '@/components/BoolToggle';
 import { Spinner } from '@/components/Spinner/Spinner';
@@ -101,7 +100,6 @@ function formatSeconds(ms: number): string {
 export default function MemoRecallPage(): JSX.Element {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('盲拧记忆回想训练', '3BLD Memo Recall Trainer');
 
   const hydrated = useBldConfigHydrated();
   const config = useBldConfigStore((s) => s.config);

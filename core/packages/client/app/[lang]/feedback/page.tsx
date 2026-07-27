@@ -12,7 +12,6 @@ import HomeLink from '@/components/HomeLink';
 import AppLink from '@/components/AppLink';
 import FeedbackModal from '@/components/FeedbackModal';
 import FeedbackConversation from '@/components/FeedbackConversation';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from '@/hooks/useT';
 import { useAuthStore, isAdmin } from '@/lib/auth-store';
 import { feedbackMediaUrl, fetchMyFeedback, type MyFeedbackItem, type FeedbackKind } from '@/lib/feedback-api';
@@ -24,7 +23,6 @@ export default function MyFeedbackPage() {
   const { i18n } = useTranslation();
   const t = useT();
   const lang = (['en', 'zh'] as const)[Number(i18n.language.startsWith('zh'))];
-  useDocumentTitle('我的反馈', 'My feedback');
 
   const user = useAuthStore((s) => s.user);
   const login = useAuthStore((s) => s.login);

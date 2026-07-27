@@ -5,7 +5,6 @@
  */
 import Link from '@/components/AppLink';
 import { ArrowLeft } from 'lucide-react';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './comp_about.css';
 import { useT } from "@/hooks/useT";
 
@@ -25,7 +24,6 @@ function Arrow() { return <span className="ca-arrow" aria-hidden="true">↓</spa
 
 export default function CompAboutPage() {
   const t = useT();
-  useDocumentTitle('加载任意比赛', 'Load any competition');
 
   return (
     <div className="ca-page">

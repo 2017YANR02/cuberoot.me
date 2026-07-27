@@ -4,7 +4,6 @@ import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './csharp_intro.css';
 
 // 256x256 official-purple logo with stylised C# glyph
@@ -480,11 +479,6 @@ export default function CsharpIntroPage() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const rootRef = useRef<HTMLDivElement>(null);
-
-  useDocumentTitle(
-    'C# : Hejlsberg 的第三门语言, .NET 的灵魂 — 26 年长青',
-    'C# : Hejlsberg\'s third language, soul of .NET — 26 years and counting'
-  );
 
   useEffect(() => {
     const root = rootRef.current;

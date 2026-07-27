@@ -4,7 +4,6 @@ import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './php_intro.css';
 
 /* Stylised <?php glyph — official PHP purple square + open-tag wordmark.
@@ -475,11 +474,6 @@ export default function PhpIntroPage() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const rootRef = useRef<HTMLDivElement>(null);
-
-  useDocumentTitle(
-    'PHP : 仍跑着 75% 的网络 — Lerdorf 的简历计数器走过 30 年',
-    'PHP : still running 75% of the web — Lerdorf\'s resume counter, 30 years on'
-  );
 
   useEffect(() => {
     const root = rootRef.current;

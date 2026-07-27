@@ -38,7 +38,6 @@ import MixSetPicker from '@/app/[lang]/alg/_trainer/MixSetPicker';
 import { resolveAlgPuzzle } from '@/app/[lang]/alg/_trainer/events';
 import { useAlgSrs, autoMarkFromSrs } from '@/lib/alg-srs-store';
 import { gradeFromSolve } from '@/lib/alg-srs';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '@/app/[lang]/alg/_trainer/trainer.css';
 import '@/app/[lang]/alg/_trainer/memory.css';
 import '@/app/[lang]/alg/alg.css';
@@ -60,7 +59,6 @@ export default function TrainerRunClient() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const router = useRouter();
-  useDocumentTitle('训练中', 'Training');
 
   // 训练范围:subgroup 页的训练按钮带 ?scope=<组slug> 进来,只练该组(筛选/默认 replace)
   const [scopeParam] = useQueryState('scope');

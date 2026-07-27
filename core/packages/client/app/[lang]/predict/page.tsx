@@ -27,7 +27,6 @@ import BackHome from '@/components/BackHome';
 import HeaderToggles from '@/components/HeaderToggles';
 import LiquidGlassChips from '@/components/LiquidGlassChips';
 import PlaybackBar from '@/components/PlaybackBar';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
 import { CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '@/lib/cube-colors';
 import { CUBE_ORIENTATIONS, orientedFaceColors } from '@/lib/cube-orientation';
@@ -133,7 +132,6 @@ const clock = (seconds: number): string => {
 };
 
 function PredictPageInner() {
-  useDocumentTitle('预判训练', 'Lookahead Challenge');
 
   const [mode, setMode] = useQueryState('mode',
     parseAsStringEnum<PredictMode>(MODES).withDefault('normal').withOptions({ history: 'replace', scroll: false }));

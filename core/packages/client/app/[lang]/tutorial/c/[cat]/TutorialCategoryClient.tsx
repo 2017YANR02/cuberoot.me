@@ -8,7 +8,6 @@ import { Search as SearchIcon } from 'lucide-react';
 import Fuse from 'fuse.js';
 import { useTutorialCatalog, type CatalogEntry, type Lang } from '../../_lib/useTutorialCatalog';
 import { TutorialCard } from '../../_components/TutorialCard';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../../tutorial.css';
 import { tr } from '@/i18n/tr';
 
@@ -25,9 +24,6 @@ function TutorialCategoryPageInner() {
     parseAsStringEnum(['hidden']).withOptions({ history: 'replace' }),
   );
   const showHidden = show === 'hidden';
-
-  const tutorialTitle = category || tr({ zh: '教程', en: 'Tutorial' });
-  useDocumentTitle(tutorialTitle, tutorialTitle);
 
   const [query, setQuery] = useState('');
   const [activeSub, setActiveSub] = useState<string>('all');

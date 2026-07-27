@@ -10,7 +10,6 @@ import { Newspaper, ArrowRight, ScrollText } from 'lucide-react';
 import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import { useT } from '../../../hooks/useT';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { CORE_ARTICLES, EVENT_ARTICLES, type RegArticle } from './_data/articles';
 import { useRegText } from './_components/reg-text';
 import './regulation.css';
@@ -31,7 +30,6 @@ function ChapterCard({ a }: { a: RegArticle }) {
 export default function RegulationHub() {
   useTranslation();
   const t = useT();
-  useDocumentTitle('WCA 竞赛规则 · 图解', 'WCA Regulations · Illustrated');
 
   return (
     <div className="reg-page">

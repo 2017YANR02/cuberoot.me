@@ -4,7 +4,6 @@ import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './lua_intro.css';
 
 const LUA_LOGO_SVG = (
@@ -506,11 +505,6 @@ export default function LuaIntroPage() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const rootRef = useRef<HTMLDivElement>(null);
-
-  useDocumentTitle(
-    'Lua : 200KB 嵌入式脚本 · 30 年活在所有东西里面',
-    'Lua : the 200KB embedded script that lives inside everything'
-  );
 
   useEffect(() => {
     const root = rootRef.current;

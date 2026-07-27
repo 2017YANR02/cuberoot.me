@@ -5,7 +5,6 @@
 import { useState } from 'react';
 import Link from '@/components/AppLink';
 import { Check, Copy, FileX2, PackageX, FunctionSquare, Terminal, ShieldCheck, Layers } from 'lucide-react';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './dead-code.css';
 import { tr, useLang } from '@/i18n/tr';
 
@@ -126,8 +125,6 @@ pnpm exec knip --include files,dependencies,unlisted,binaries`;
 
 export default function DeadCodePage() {
   const lang = useLang();
-
-  useDocumentTitle('死代码守卫', 'Dead Code Guard');
 
   const results = [
     { num: '27', zh: '个死文件清除', en: 'dead files removed' },

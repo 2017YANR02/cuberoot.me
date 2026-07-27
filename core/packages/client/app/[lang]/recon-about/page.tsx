@@ -5,7 +5,6 @@
  */
 import Link from '@/components/AppLink';
 import { ArrowLeft } from 'lucide-react';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './recon_about.css';
 import { useT } from "@/hooks/useT";
 
@@ -25,7 +24,6 @@ function Arrow() { return <span className="rca-arrow" aria-hidden="true">↓</sp
 
 export default function ReconAboutPage() {
   const t = useT();
-  useDocumentTitle('复盘库说明', 'Recon Library Guide');
 
   return (
     <div className="rca-page">

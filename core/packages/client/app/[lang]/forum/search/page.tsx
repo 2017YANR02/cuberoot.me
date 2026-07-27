@@ -7,7 +7,6 @@ import { useQueryState, parseAsString, parseAsInteger } from 'nuqs';
 import Paginator from '@/components/wca-stats/Paginator';
 import { SearchInput } from '@/components/SearchInput';
 import { tr, T, useLang } from '@/i18n/tr';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { searchForum, type SearchData } from '@/lib/forum-api';
 import { ForumBreadcrumbs } from '../_components/ForumBreadcrumbs';
 import { ThreadRowList } from '../_components/ThreadRowList';
@@ -18,7 +17,6 @@ import './forum_search.css';
 const MIN_QUERY_LEN = 2;
 
 export default function ForumSearchPage() {
-  useDocumentTitle('论坛搜索', 'Forum search');
   const lang = useLang();
   const zh = lang === 'zh';
 

@@ -5,7 +5,6 @@
  */
 import Link from '@/components/AppLink';
 import { ArrowLeft } from 'lucide-react';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './prediction_about.css';
 import { useT } from "@/hooks/useT";
 
@@ -25,7 +24,6 @@ function Arrow() { return <span className="pa-arrow" aria-hidden="true">↓</spa
 
 export default function PredictionAboutPage() {
   const t = useT();
-  useDocumentTitle('速拧极限预测说明', 'Speedcubing Prediction Guide');
 
   return (
     <div className="pa-page">

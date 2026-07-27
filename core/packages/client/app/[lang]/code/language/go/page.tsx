@@ -4,7 +4,6 @@ import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './go_intro.css';
 
 const GO_GOPHER_SVG = (
@@ -506,8 +505,6 @@ export default function GoIntroPage() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const rootRef = useRef<HTMLDivElement>(null);
-
-  useDocumentTitle('Go — 简洁与并发', 'Go — Simplicity Meets Concurrency');
 
   useEffect(() => {
     const root = rootRef.current;

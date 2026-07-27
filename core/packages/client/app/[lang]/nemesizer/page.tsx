@@ -5,7 +5,6 @@ import Link from '@/components/AppLink';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { HelpCircle } from 'lucide-react';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import NemesizerBrand from './_components/NemesizerBrand';
 import StandardMode from './_modes/StandardMode';
 import H2HMode from './_modes/H2HMode';
@@ -20,7 +19,6 @@ const MODES: Mode[] = ['standard', 'h2h', 'whatif', 'stats'];
 function NemesizerInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('宿敌', 'Nemesizer');
 
   // mode 是导航态(在 4 个视图间切换)→ push 进历史,后退能返回上一视图
   const [mode, setMode] = useQueryState(

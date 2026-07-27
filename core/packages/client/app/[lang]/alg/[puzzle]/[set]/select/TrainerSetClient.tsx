@@ -22,7 +22,6 @@ import MixSetPicker from '@/app/[lang]/alg/_trainer/MixSetPicker';
 import SetProgressStrip from '@/app/[lang]/alg/_trainer/SetProgressStrip';
 import { resolveAlgPuzzle } from '@/app/[lang]/alg/_trainer/events';
 import { useAlgSrs } from '@/lib/alg-srs-store';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '@/app/[lang]/alg/_trainer/trainer.css';
 import '@/app/[lang]/alg/_trainer/memory.css';
 import { tr } from '@/i18n/tr';
@@ -40,7 +39,6 @@ export default function TrainerSetClient() {
   const isZh = i18n.language.startsWith('zh');
   // Pattern B:en 裸 URL、zh 带 /zh —— 非 Link 导航按路由参数手补前缀(同 AppLink 的判定源)
   const langPrefix = params?.lang === 'zh' ? '/zh' : '';
-  useDocumentTitle('公式训练', 'Algorithm Trainer');
 
   // 从 subgroup 页训练按钮进来带 ?scope=<组slug>:只在该组内选 case(筛选/默认 replace)
   const [scopeParam] = useQueryState('scope');

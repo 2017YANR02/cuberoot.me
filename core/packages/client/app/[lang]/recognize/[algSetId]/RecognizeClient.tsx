@@ -18,7 +18,6 @@ import {
 import pllMap from '@cuberoot/shared/data/pll.json';
 import ollMap from '@cuberoot/shared/data/oll.json';
 import { VisualCube } from '@/components/VisualCube';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
 
 const typedOllMap = ollMap as Record<string, { name: string; alg: string; alg2: string; group: string }>;
@@ -28,7 +27,6 @@ export default function RecognizeClient() {
   const algSetId = (Array.isArray(params?.algSetId) ? params.algSetId[0] : params?.algSetId) ?? '';
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('识别训练', 'Recognition Training');
   const hydrated = useSessionHydrated();
 
   const gameState = useSessionStore((s) => s.gameState);

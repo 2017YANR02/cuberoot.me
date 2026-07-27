@@ -4,7 +4,6 @@
 // Data + live demos live in ./_catalog.tsx (the single place to register new ones).
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './components_gallery.css';
 import { tr } from '@/i18n/tr';
 import { CATALOG, CATEGORIES, EXTRA_DEMOS, iconFor, type ComponentEntry } from './_catalog';
@@ -37,8 +36,6 @@ function Card({ e, lang }: { e: ComponentEntry; lang: 'zh' | 'en' }) {
 export default function CodeComponentsPage() {
   const { i18n } = useTranslation();
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-
-  useDocumentTitle('组件库', 'Components');
 
   return (
     <div className="cg">

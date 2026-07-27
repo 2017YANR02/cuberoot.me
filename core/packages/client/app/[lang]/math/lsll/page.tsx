@@ -11,7 +11,6 @@
  */
 import Link from '@/components/AppLink';
 import { ArrowLeft, Boxes } from 'lucide-react';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { TeX, TeXBlock } from '@/components/math/Tex';
 import { useT } from '@/hooks/useT';
 import { T } from '@/i18n/tr';
@@ -25,7 +24,6 @@ function Block({ src }: { src: string }) {
 
 export default function LsllMathPage() {
   const t = useT();
-  useDocumentTitle('LSLL 情况计数', 'Counting LSLL cases');
 
   return (
     <div className="lmath-page">

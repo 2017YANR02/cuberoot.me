@@ -16,7 +16,6 @@ import { useParams } from 'next/navigation';
 import { useQueryState, parseAsInteger, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { ArrowLeft } from 'lucide-react';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr, T } from '@/i18n/tr';
 import { FaceletsCube } from '@/components/FaceletsCube';
 import AlgViewModeToggle, { useAlgViewMode } from '@/components/AlgViewModeToggle';
@@ -40,7 +39,6 @@ export default function LsllGroupClient() {
   const params = useParams<{ group: string }>();
   const slug = typeof params?.group === 'string' ? params.group : '';
   const cat = categoryBySlug(slug);
-  useDocumentTitle(cat ? `LSLL ${cat.letter}` : 'LSLL', cat ? `LSLL ${cat.letter}` : 'LSLL');
 
   const [cls, setCls] = useQueryState(
     'cls',

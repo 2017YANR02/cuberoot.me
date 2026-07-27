@@ -4,7 +4,6 @@ import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './javascript_intro.css';
 
 const JS_LOGO_SVG = (
@@ -464,11 +463,6 @@ export default function JavaScriptIntroPage() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const rootRef = useRef<HTMLDivElement>(null);
-
-  useDocumentTitle(
-    'JavaScript : TheLanguageOfTheWeb — 30 年的网页语言',
-    'JavaScript : TheLanguageOfTheWeb — Thirty Years of the Web'
-  );
 
   useEffect(() => {
     const root = rootRef.current;

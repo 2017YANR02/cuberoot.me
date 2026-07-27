@@ -17,7 +17,6 @@ import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
 import SortArrow from '@/components/SortArrow';
 import { ClearButton } from '@/components/ClearButton';
 import { ESQ_SLIDERS, MCC_SLIDERS, ParamSliders } from '@/components/ParamSliders';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from '@/hooks/useT';
 import { tr } from '@/i18n/tr';
 import {
@@ -75,7 +74,6 @@ export default function MccPage() {
   const t = useT();
   const params = useParams();
   const isZh = params?.lang === 'zh';
-  useDocumentTitle('MCC (步数系数)', 'Movecount Coefficient');
 
   const [input, setInput] = useState('');
   const [puzzle, setPuzzle] = useQueryState('p', parseAsStringEnum<Puzzle>(['333', '222']).withDefault('333'));

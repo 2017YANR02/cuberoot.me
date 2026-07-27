@@ -10,7 +10,6 @@
  */
 import Link from '@/components/AppLink';
 import { ArrowLeft } from 'lucide-react';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './scramble_555_about.css';
 import { useT } from "@/hooks/useT";
 
@@ -75,7 +74,6 @@ function Stat({ value, label, hint }: StatProps) {
 }
 
 export default function Scramble555AboutPage() {
-  useDocumentTitle('5×5 打乱方法', '5×5 Scramble Methods');
   const t = useT();
 
   return (

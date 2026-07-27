@@ -22,16 +22,21 @@
 // 会抛 emscripten `unwind`,所以全量走 `solve_loop.mjs`(自动重启),别裸跑本文件。
 //
 // Usage: node solve.mjs [THREADS=12]
-//   env MODULE  默认 cube48opt6.mjs          env TABLE  默认 solver/tables/h48/h48prun31h6.dat
+//   env MODULE  默认 cube48opt9.mjs          env TABLE  默认 solver/tables/h48/h48prun31h9.dat
 //   env GROUP   默认 1(见上,需整除 THREADS)  env CORPUS 默认 ./corpus.txt  env OUT 默认 ./out.csv
+//
+// 默认 **opt9 + 15.6G 表**,与 `solver/333opt`(skill `update-scramble-stats` §C)同一档。
+// 要 ~16G 空闲物理内存,别让它换页到磁盘。内存不够时换 opt6 / opt5(见 README),
+// 换表只改速度不改答案,而且按 key 续跑 ⇒ 小表先起跑、空出来再换大表接着跑同一个 out.csv。
+import { freemem } from 'node:os';
 import { readFileSync, appendFileSync, existsSync, openSync, readSync, closeSync, statSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, '..', '..');
-const MJS = resolve(process.env.MODULE || resolve(repoRoot, 'core/packages/client/public/cubeopt/cube48opt6.mjs'));
-const DAT = resolve(process.env.TABLE || resolve(repoRoot, 'solver/tables/h48/h48prun31h6.dat'));
+const MJS = resolve(process.env.MODULE || resolve(repoRoot, 'core/packages/client/public/cubeopt/cube48opt9.mjs'));
+const DAT = resolve(process.env.TABLE || resolve(repoRoot, 'solver/tables/h48/h48prun31h9.dat'));
 const CORPUS = resolve(process.env.CORPUS || resolve(__dirname, 'corpus.txt'));
 const OUT = resolve(process.env.OUT || resolve(__dirname, 'out.csv'));
 const THREADS = Number(process.argv[2] ?? process.env.THREADS ?? 12);
@@ -82,6 +87,13 @@ const todo = corpus.filter(([k]) => !done.has(k));
 // ---- 载表 ----
 const datSize = statSync(DAT).size;
 console.log(`模块 ${MJS.split(/[\\/]/).pop()} · 表 ${DAT.split(/[\\/]/).pop()} (${(datSize / 1048576).toFixed(0)}M) · ${THREADS} 线程 / ${GROUP} 组`);
+// 表必须全程驻留 RAM;换页到磁盘会比换一张小表还惨,先说清楚再开跑。
+const free = freemem();
+if (free < datSize * 1.1) {
+  console.warn(`⚠ 空闲物理内存 ${(free / 1073741824).toFixed(1)}G < 表 ${(datSize / 1073741824).toFixed(1)}G ——`
+    + ` 会换页到磁盘,慢到不如换小表。先腾内存,或 TABLE=../tables/h48/h48prun31h6.dat`
+    + ` MODULE=../../core/packages/client/public/cubeopt/cube48opt6.mjs 起跑(按 key 续跑,之后能换回来)。`);
+}
 console.log(`语料 ${corpus.length} · 已完成 ${done.size} · 待解 ${todo.length}`);
 if (!todo.length) { console.log('全部完成'); process.exit(0); }
 

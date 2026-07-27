@@ -14,7 +14,6 @@ import { ChevronLeft, ArrowUp } from 'lucide-react';
 import Link from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
 import { useT } from '../../../../hooks/useT';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { REG_ARTICLES } from '../_data/articles';
 import doc from '../_data/reg-clauses/_full.json';
 import '../regulation.css';
@@ -101,7 +100,6 @@ function NoteBody({ body }: { body: string }) {
 
 export default function RegulationFull() {
   const t = useT(); // subscribes to language changes so tr() picks the live locale
-  useDocumentTitle('WCA 竞赛规则 · 全文', 'WCA Regulations · Full text');
 
   const version = tr(doc.version);
 

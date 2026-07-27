@@ -24,7 +24,6 @@ import { loadFlagData, flagDataVersion, personFlagIso2 } from '@/lib/country-fla
 import { Flag } from '@/components/Flag';
 import { localizeCompName } from '@/lib/comp-localize';
 import { reconPathSeg } from '@/lib/recon-seo';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { RecordBadge } from '@/components/RecordBadge';
 import { ReconCard } from '@/components/ReconCard/ReconCard';
 import WcaAuth from '@/components/WcaAuth';
@@ -198,7 +197,6 @@ export default function ReconListPage() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('复盘', 'Reconstructions');
 
   // ── 列表 / 卡片视图切换（进 URL，后退可返回）──
   // 显式写视图：grid / list 都挂 ?view=（clearOnDefault:false 关掉默认省略），

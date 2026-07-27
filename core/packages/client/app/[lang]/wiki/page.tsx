@@ -17,7 +17,6 @@ import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Search, Pencil, MessageSquarePlus, Plus, Trash2, Link2 } from 'lucide-react';
 import HomeLink from '@/components/HomeLink';
 import { ClearButton } from '@/components/ClearButton';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import {
@@ -143,7 +142,6 @@ export default function WikiPage() {
   // 关掉则跟随桌宠语言钮(i18n.language)= 仅中文 / 仅英文。
   const [showBoth, setShowBoth] = useQueryState('bi', parseAsBoolean.withDefault(true));
   const singleLang: 'zh' | 'en' = isZh ? 'zh' : 'en';
-  useDocumentTitle('Wiki', 'Wiki');
   const user = useAuthStore(s => s.user);
   const isLoggedIn = !!user;
   const isAdmin = !!user && ADMIN_WCA_IDS.includes(user.wcaId);

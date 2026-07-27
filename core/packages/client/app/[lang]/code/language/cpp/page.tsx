@@ -4,7 +4,6 @@ import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './cpp_intro.css';
 
 const CPP_LOGO_SVG = (
@@ -442,11 +441,6 @@ export default function CppIntroPage() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const rootRef = useRef<HTMLDivElement>(null);
-
-  useDocumentTitle(
-    'C++ : Systems — 46 年仍是性能之王',
-    'C++ : Systems — 46 Years and Still the King of Performance'
-  );
 
   useEffect(() => {
     const root = rootRef.current;

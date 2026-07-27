@@ -21,7 +21,6 @@ import { localizeCompName } from '@/lib/comp-localize';
 import { loadFlagData, flagDataVersion } from '@/lib/country-flags';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { apiUrl } from '@/lib/api-base';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './fun_stats.css';
 import { tr } from '@/i18n/tr';
 import { useT } from "@/hooks/useT";
@@ -138,7 +137,6 @@ function FunStatsInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-  useDocumentTitle('趣味统计', 'Fun Statistics');
   // 榜单选择(左侧导航)持久化到 ?stat=,沿用原 replace 语义(不堆历史)
   const [statParam, setStatParam] = useQueryState(
     'stat',

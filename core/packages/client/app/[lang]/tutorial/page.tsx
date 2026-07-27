@@ -14,75 +14,57 @@ import {
 } from 'lucide-react';
 import Fuse from 'fuse.js';
 import { useTutorialCatalog, type CatalogEntry, type Lang } from './_lib/useTutorialCatalog';
+import { CATEGORY_CARDS, type Tier } from './_data/categories';
 import { TutorialCard } from './_components/TutorialCard';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './tutorial.css';
 import { tr } from '@/i18n/tr';
 
-type Tier = 'hero' | 'hero-side' | 'medium' | 'standard' | 'utility';
+// Icon per category. The order, tier and bilingual label live in
+// _data/categories so the server metadata for /tutorial/c/<cat> can render the
+// same label the card shows; only the lucide component stays here, since a
+// Server Component cannot import one. Keys match CATEGORY_CARDS[].cat.
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  '3x3': Grid3x3,
+  '魔方根': Award,
+  'CHS': Languages,
+  'FMC': Gauge,
+  '3BLD': Eye,
+  '2x2': Square,
+  'Roux': InfinityIcon,
+  'SQ1': Shapes,
+  'Skewb': Diamond,
+  'Non-WCA': Sparkles,
+  '4x4': LayoutGrid,
+  'Pyraminx': Triangle,
+  '5x5': LayoutGrid,
+  'Megaminx': Hexagon,
+  'Big': Boxes,
+  'Big BLD': EyeOff,
+  'Mehta': Workflow,
+  'Stats': BarChart3,
+  'Blogs': FileText,
+  'Misc': MoreHorizontal,
+  'Solves': Play,
+  'Tools': Wrench,
+  'Hardware': Cpu,
+  'Clock': Clock,
+  'Pretty Patterns': Palette,
+  'Theory': BookOpen,
+};
 
-interface CategoryConfig {
-  cat: string;
-  tier: Tier;
-  Icon: LucideIcon;
-  label: { en: string; zh: string
- };
+const ICON_SIZE: Record<Tier, number> = {
+  hero: 40, 'hero-side': 32, medium: 28, standard: 24, utility: 18,
+};
+
+function CategoryIcon({ cat, size }: { cat: string; size: number }) {
+  const Icon = CATEGORY_ICONS[cat] ?? BookOpen;
+  return <Icon size={size} strokeWidth={1.5} />;
 }
-
-// NOTE: Tier 映射 + i18n label。category 名 = catalog.json 里的 category 字段。
-// 不在表里的 category 自动落到 tier-utility 尾部兜底。
-const CATEGORY_CARDS: CategoryConfig[] = [
-  // Tier 1 — 3 张大卡（1 hero + 2 hero-side）
-  { cat: '3x3',       tier: 'hero',      Icon: Grid3x3,   label: { en: '3x3',        zh: '三阶'
-} },
-  { cat: '魔方根',    tier: 'hero-side', Icon: Award,     label: { en: 'CubeRoot Method', zh: '魔方根方法' } },
-  { cat: 'CHS',       tier: 'hero-side', Icon: Languages, label: { en: 'Chinese Resources', zh: '中文资料'
-} },
-  // Tier 2 — medium（3 per row）
-  { cat: 'FMC',       tier: 'medium',    Icon: Gauge,     label: { en: 'FMC',        zh: '最少步' } },
-  { cat: '3BLD',      tier: 'medium',    Icon: Eye,       label: { en: '3BLD',       zh: '盲拧'
-} },
-  { cat: '2x2',       tier: 'medium',    Icon: Square,    label: { en: '2x2',        zh: '二阶'
-} },
-  // Tier 3 — standard（4 per row）
-  { cat: 'Roux',      tier: 'standard',  Icon: InfinityIcon,  label: { en: 'Roux',       zh: '桥式' } },
-  { cat: 'SQ1',       tier: 'standard',  Icon: Shapes,    label: { en: 'SQ1',        zh: 'SQ1' } },
-  { cat: 'Skewb',     tier: 'standard',  Icon: Diamond,   label: { en: 'Skewb',      zh: '斜转'
-} },
-  { cat: 'Non-WCA',   tier: 'standard',  Icon: Sparkles,  label: { en: 'Non-WCA',    zh: '非 WCA' } },
-  { cat: '4x4',       tier: 'standard',  Icon: LayoutGrid, label: { en: '4x4',       zh: '四阶'
-} },
-  { cat: 'Pyraminx',  tier: 'standard',  Icon: Triangle,  label: { en: 'Pyraminx',   zh: '金字塔' } },
-  { cat: '5x5',       tier: 'standard',  Icon: LayoutGrid, label: { en: '5x5',       zh: '五阶'
-} },
-  { cat: 'Megaminx',  tier: 'standard',  Icon: Hexagon,   label: { en: 'Megaminx',   zh: '五魔' } },
-  { cat: 'Big',       tier: 'standard',  Icon: Boxes,     label: { en: 'Big Cubes',  zh: '大魔方' } },
-  { cat: 'Big BLD',   tier: 'standard',  Icon: EyeOff,    label: { en: 'Big BLD',    zh: '大魔方盲拧'
-} },
-  { cat: 'Mehta',     tier: 'standard',  Icon: Workflow,  label: { en: 'Mehta',      zh: 'Mehta' } },
-  // Tier 4 — utility（2 per row，小条）
-  { cat: 'Stats',     tier: 'utility',   Icon: BarChart3, label: { en: 'Stats',      zh: '统计'
-} },
-  { cat: 'Blogs',     tier: 'utility',   Icon: FileText,  label: { en: 'Blogs',      zh: '博客'
-} },
-  { cat: 'Misc',      tier: 'utility',   Icon: MoreHorizontal, label: { en: 'Misc',  zh: '杂项'
-} },
-  { cat: 'Solves',    tier: 'utility',   Icon: Play,      label: { en: 'Solves',     zh: '解法分析' } },
-  { cat: 'Tools',     tier: 'utility',   Icon: Wrench,    label: { en: 'Tools',      zh: '工具' } },
-  { cat: 'Hardware',  tier: 'utility',   Icon: Cpu,       label: { en: 'Hardware',   zh: '硬件'
-} },
-  { cat: 'Clock',     tier: 'utility',   Icon: Clock,     label: { en: 'Clock',      zh: 'Clock' } },
-  { cat: 'Pretty Patterns', tier: 'utility', Icon: Palette, label: { en: 'Pretty Patterns', zh: '花样'
-} },
-  { cat: 'Theory',    tier: 'utility',   Icon: BookOpen,  label: { en: 'Theory',     zh: '理论'
-} },
-];
 
 function TutorialIndexPageInner() {
   const { catalog, loading, error } = useTutorialCatalog();
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('教程', 'Tutorial');
   const pageLang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const [show] = useQueryState(
     'show',
@@ -174,7 +156,7 @@ function TutorialIndexPageInner() {
               className={`tutorial-bento-card tier-${c.tier}`}
             >
               <div className="tutorial-bento-icon">
-                <c.Icon size={c.tier === 'hero' ? 40 : c.tier === 'hero-side' ? 32 : c.tier === 'medium' ? 28 : c.tier === 'utility' ? 18 : 24} strokeWidth={1.5} />
+                <CategoryIcon cat={c.cat} size={ICON_SIZE[c.tier]} />
               </div>
               <div className="tutorial-bento-name">{c.label[pageLang]}</div>
             </Link>

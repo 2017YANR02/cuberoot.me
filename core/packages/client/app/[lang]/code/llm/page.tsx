@@ -5,7 +5,6 @@
 // bespoke Claude Fable 5 page. Reuses the /code index card styling.
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../code_index.css';
 import { tr } from '@/i18n/tr';
 
@@ -91,8 +90,6 @@ const CARDS: Card[] = [
 export default function CodeLlmPage() {
   const { i18n } = useTranslation();
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-
-  useDocumentTitle('大模型', 'Large Language Models');
 
   return (
     <div className="code-index">

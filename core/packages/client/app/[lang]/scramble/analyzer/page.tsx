@@ -47,7 +47,6 @@ import { localizeCompName } from '@/lib/comp-localize';
 import { compSourceLine } from '@/lib/comp-schedule';
 import { loadFlagData, compFlagIso2 } from '@/lib/country-flags';
 import { variantLabel, stageLabel } from '@/lib/scramble-variants';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import SolveTabs from '../_components/SolveTabs';
 import LazyVisible from '../_components/LazyVisible';
 import './analyze.css';
@@ -194,7 +193,6 @@ function FilterChip(props: { active: boolean; title: string; amount: number; onC
 function AnalyzePageInner() {
   const { i18n } = useTranslation();
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-  useDocumentTitle('求解', 'Solve');
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
 
   const [urlState, setUrlState] = useQueryStates(URL_KEYS, { history: 'replace', scroll: false });

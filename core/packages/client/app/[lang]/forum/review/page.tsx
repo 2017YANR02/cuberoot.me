@@ -9,7 +9,6 @@ import Link from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { tr, T, useLang } from '@/i18n/tr';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useIsAdmin } from '@/lib/auth-store';
 import { renderArticleMarkdown } from '@/lib/article-markdown';
 import { ownerDisplayName } from '@/lib/cuber-name-display';
@@ -23,7 +22,6 @@ import '../forum.css';
 import './forum_review.css';
 
 export default function ForumReviewPage() {
-  useDocumentTitle('论坛审核', 'Forum moderation');
   const lang = useLang();
   const zh = lang === 'zh';
   const isAdmin = useIsAdmin();

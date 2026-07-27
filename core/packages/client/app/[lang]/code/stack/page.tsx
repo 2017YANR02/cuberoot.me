@@ -3,7 +3,6 @@
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { STACK_TOOLS_META, type StackToolMeta } from './_lib/stack_meta';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './stack_landing.css';
 import { tr } from '@/i18n/tr';
 
@@ -59,8 +58,6 @@ function ToolCard({ tool, lang }: { tool: StackToolMeta; lang: 'zh' | 'en' }) {
 export default function StackLandingPage() {
   const { i18n } = useTranslation();
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-
-  useDocumentTitle('技术栈', 'Stack');
 
   return (
     <div className="stack-landing">

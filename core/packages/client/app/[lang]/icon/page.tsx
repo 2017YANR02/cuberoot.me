@@ -15,7 +15,6 @@ import { useQueryState, parseAsString } from 'nuqs';
 import { Search, ExternalLink } from 'lucide-react';
 import BackHome from '@/components/BackHome';
 import { SearchInput } from '@/components/SearchInput';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useLang, tr } from '@/i18n/tr';
 import { eventDisplayName } from '@/lib/wca-events';
 import {
@@ -56,7 +55,6 @@ function IconCell({ entry, isZh }: { entry: IconEntry; isZh: boolean }) {
 export default function IconGalleryPage() {
   const lang = useLang();
   const isZh = lang === 'zh';
-  useDocumentTitle('图标', 'Icons');
 
   const [query, setQuery] = useQueryState('q', parseAsString.withDefault(''));
 

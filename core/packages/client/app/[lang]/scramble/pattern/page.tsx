@@ -18,7 +18,6 @@ import WcaEventSelector from '@/components/WcaEventSelector';
 import { VisualCube } from '@/components/VisualCube';
 import { EnginePuzzleSVG, type EnginePuzzleKind } from '@/components/EnginePuzzleSVG';
 import TwistySection from '@/components/TwistySection';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { renderClockScrambleSvg, DEFAULT_CLOCK_COLORS } from '../gen/_svg/clock_svg';
 import {
   PATTERNS, CATEGORY_LABEL, PUZZLE_SIZES, PUZZLE_LABEL,
@@ -94,7 +93,6 @@ export default function PatternsPage() {
   const { i18n } = useTranslation();
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const pick = (o: { en: string; zh: string; }) => (lang === 'zh' ? o.zh : o.en);
-  useDocumentTitle('图案', 'Patterns');
   const t = useT();
 
   const [puzzle, setPuzzle] = useState<PuzzleSize>('3x3x3');

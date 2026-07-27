@@ -8,7 +8,6 @@
 import { Fragment } from 'react';
 import HomeLink from '@/components/HomeLink';
 import AppLink from '@/components/AppLink';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
 import '../wcif/wcif.css';
 import './wca_rest_api.css';
@@ -64,7 +63,6 @@ const EPS: { glyph: string; name: string; path: string; zh: string; en: string }
 ];
 
 export default function WcaRestApiPage() {
-  useDocumentTitle('WCA REST API', 'WCA REST API');
 
   return (
     <div className="wcif-page wcif-page-wide api-accent">

@@ -23,7 +23,6 @@ import { useSavedMixes } from '@/lib/alg-mix-saved';
 import AlgAdminValidate from '@/components/AlgAdminValidate';
 import { FaceletsCube } from '@/components/FaceletsCube';
 import { TOTAL_CASES as LSLL_TOTAL, categoryCardFacelets } from '@/lib/lsll/model';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../alg.css';
 import { tr } from '@/i18n/tr';
 
@@ -52,11 +51,6 @@ export default function AlgPuzzleClient() {
   const router = useRouter();
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const algFallback = tr({ zh: '公式库', en: 'Algorithms'
-});
-  const valid_ = isPuzzle(puzzle);
-  const algPuzzleTitle = valid_ ? eventDisplayName(puzzle, isZh) || puzzle : (puzzle || algFallback);
-  useDocumentTitle(algPuzzleTitle, algPuzzleTitle);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [firstCases, setFirstCases] = useState<Record<string, AlgCase | null>>({});
 
