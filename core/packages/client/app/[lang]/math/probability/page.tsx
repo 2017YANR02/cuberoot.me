@@ -189,7 +189,8 @@ export default function ProbabilityPage() {
                 同一个底色的几个目标会共用棱块,不能简单相加。
                 表尾换项目:二阶那几格与站内 3,674,160 态全枚举同源,四阶中心是纯组合数,
                 五魔顶层的角排列与棱排列<strong>各自必为偶置换</strong>(每个面转都是 5-轮换),
-                所以那边是 A5 的 60 种而不是 5! 的 120 种。
+                所以那边是 A5 的 60 种而不是 5! 的 120 种。金字塔那两条识别概率是全 933,120 态扫出来的:
+                一个面上的核心六格是轴块、棱块交替的六边形环,同色相邻就是一根棒,一对邻居两个面都同色就是一个块。
                 最后一张表把任意一条概率放进二项分布:一轮 N 把里恰好跳几次、至少跳几次。
               </>}
               en={<>
@@ -200,7 +201,9 @@ export default function ProbabilityPage() {
                 The last families switch puzzles: the 2×2 rows come from the site’s own enumeration of all
                 3,674,160 states, the 4×4 centre rows are pure combinatorics, and on Megaminx the last-layer
                 corner and edge permutations are <strong>each forced to be even</strong> (every face turn is a
-                5-cycle), so that family lives in A5’s 60, not 5!’s 120.
+                5-cycle), so that family lives in A5’s 60, not 5!’s 120. The two Pyraminx rows come from a
+                sweep of all 933,120 core states: the six core stickers of a face form an alternating axial/edge
+                hexagon, a matching adjacency is a bar, and a neighbour pair matching on both of its faces is a block.
                 The last table drops any of those probabilities into a binomial: how many skips in a round of N.
               </>}
             />

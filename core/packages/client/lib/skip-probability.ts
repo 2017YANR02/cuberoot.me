@@ -248,9 +248,18 @@ export const MINX_PLL = MINX_LL_PERM_RAW / MINX_AUF;               // 720
 export const MINX_EP = MINX_PLL / 60;                              // 12
 export const MINX_LL = MINX_LL_CO * MINX_LL_EO * MINX_PLL;         // 933,120
 
+// ── 金字塔核心(不含尖块)────────────────────────────────────────────
+// 轴块朝向 3⁴ × 棱块摆法 (6!/2 × 2⁵) —— 与五魔顶层撞了同一个 933,120,两边的因子毫无关系。
+export const PYRA_AXIALS = 3 ** 4;                  // 81
+export const PYRA_EDGES = (720 / 2) * 2 ** 5;       // 11,520
+export const PYRA_CORE = PYRA_AXIALS * PYRA_EDGES;  // 933,120
+/** 下面两个由 `lib/pyraminx-odds.ts` 全空间枚举得到,`tests/pyraminx_odds.test.ts` 逐位对账。 */
+export const PYRA_NO_BAR = 1_897;
+export const PYRA_NO_BLOCK = 348_053;
+
 export interface SkipEntry {
   id: string;
-  group: 'll' | 'block' | 'cross' | 'roux' | '222' | '444' | 'minx';
+  group: 'll' | 'block' | 'cross' | 'roux' | '222' | '444' | 'minx' | 'pyram';
   name: { zh: string; en: string };
   kind: SkipKind;
   /** 分子 / 分母,十进制字符串 —— 分母能到 4.3×10¹⁹,不能过 Number。 */
@@ -637,6 +646,23 @@ export const SKIP_ENTRIES: SkipEntry[] = [
   other('minx-ll', 'minx', '五魔顶层连跳', 'Megaminx LL skip', '1', String(MINX_LL),
     '1296 × 720 = 933,120',
     '1296 × 720 = 933,120'),
+
+  // ── 金字塔(不含尖块)──────────────────────────────────────────────
+  other('pyram-axials', 'pyram', '四个轴块朝向全对', 'All four axial pieces oriented',
+    '1', String(PYRA_AXIALS),
+    '轴块只会自转不会换位,四个各 3 种朝向且互相独立 → 3⁴',
+    'Axial pieces only twist in place, three orientations each and mutually independent → 3⁴'),
+  other('pyram-edges', 'pyram', '六条棱全部归位', 'All six edges home', '1', String(PYRA_EDGES),
+    '排列必为偶 6!/2,翻转第 6 条由前 5 条定死 2⁵;与轴块那 81 种独立,乘起来正是核心的 933,120',
+    'Permutation must be even (6!/2) and the sixth flip is forced by the other five (2⁵); independent of the 81 axial states, and 81 × 11,520 is the 933,120 core'),
+  other('pyram-block', 'pyram', '一个「块」都没有', 'No axial-edge block anywhere',
+    String(PYRA_NO_BLOCK), String(PYRA_CORE),
+    '相邻的轴块与棱块共享两个面,两个面都同色才算拼好了一个块;12 对邻居一个都没成',
+    'A neighbouring axial and edge share two faces; both matching makes a finished block. None of the twelve neighbour pairs is one'),
+  other('pyram-nobar', 'pyram', '一根棒都没有', 'No bar anywhere',
+    String(PYRA_NO_BAR), String(PYRA_CORE),
+    '面上核心六格是轴、棱交替的六边形环,24 条相邻里没有一条两端同色',
+    'The six core stickers of a face form an alternating axial/edge hexagon; none of the 24 adjacencies has matching ends'),
 ];
 
 export const entryById = (id: string): SkipEntry => SKIP_ENTRIES.find((e) => e.id === id)!;
