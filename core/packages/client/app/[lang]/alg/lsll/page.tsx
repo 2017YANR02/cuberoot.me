@@ -20,10 +20,10 @@ import { FaceletsCube } from '@/components/FaceletsCube';
 import AlgCard from '@/components/AlgCard';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import {
-  CATEGORIES, TOTAL_CASES, categoryCardFacelets, locateFromScramble, decodeKey,
+  LISTED_CATEGORIES, LISTED_CASES, categoryCardFacelets, locateFromScramble, decodeKey,
   type CategoryKind, type LocateResult,
 } from '@/lib/lsll/model';
-import { TOTAL_CASES_CLASS3, class3CountForFamily, phiOfState } from '@/lib/lsll/class3';
+import { listedClass3Total, class3CountForFamily, phiOfState } from '@/lib/lsll/class3';
 import { compareAlgGroupLabel } from '@/lib/alg_group_order';
 import '../alg.css';
 import './lsll.css';
@@ -48,9 +48,9 @@ export default function LsllHubPage() {
   const suffix = twoLook ? '?cls=3' : '';
 
   const groups = useMemo(() => {
-    const m = new Map<CategoryKind, typeof CATEGORIES>();
+    const m = new Map<CategoryKind, typeof LISTED_CATEGORIES>();
     for (const kind of KIND_ORDER) {
-      m.set(kind, CATEGORIES.filter((c) => c.kind === kind)
+      m.set(kind, LISTED_CATEGORIES.filter((c) => c.kind === kind)
         .sort((a, b) => compareAlgGroupLabel(a.letter, b.letter)));
     }
     return m;
@@ -73,7 +73,7 @@ export default function LsllHubPage() {
         </Link>
         <h1 className="alg-cat-title">
           <span>LSLL <span className="alg-cat-count">
-            {(twoLook ? TOTAL_CASES_CLASS3 : TOTAL_CASES).toLocaleString()}{' '}
+            {(twoLook ? listedClass3Total() : LISTED_CASES).toLocaleString()}{' '}
             {tr({ zh: twoLook ? '条路线' : '个', en: twoLook ? 'routes' : 'cases' })}
           </span></span>
         </h1>
@@ -97,21 +97,31 @@ export default function LsllHubPage() {
           <T
             zh={<>两步解最后一槽 + 顶层:先认一个 <Link href="/alg/3x3/zbls">ZBLS</Link> case
               做进槽并翻正顶层棱,再认一个 <Link href="/alg/3x3/zbll">ZBLL</Link> case 收尾。
-              路线数 = 306 × 494 = 151,164,与用哪本公式表无关
-              (<Link href="/math/lsll">为什么不能拿 AUF 再商一次 →</Link>)。</>}
+              全部路线 = 306 × 494 = 151,164,与用哪本公式表无关
+              (<Link href="/math/lsll">为什么不能拿 AUF 再商一次 →</Link>);
+              这里列 302 × 494 = 149,188 —— 少的是 O 类那 4 个 ZBLS 构型,对子已经在槽里,
+              第一眼要么不存在(全解构型)要么只剩翻棱,整条路线其实就是一个顶层。</>}
             en={<>Two looks for the last slot and last layer: recognise a{' '}
               <Link href="/alg/3x3/zbls">ZBLS</Link> case to insert the pair and orient the LL edges,
-              then a <Link href="/alg/3x3/zbll">ZBLL</Link> case to finish. Routes = 306 × 494 =
+              then a <Link href="/alg/3x3/zbll">ZBLL</Link> case to finish. All routes = 306 × 494 =
               151,164, whichever algorithm table you use
-              (<Link href="/math/lsll">why a third AUF quotient does not work →</Link>).</>}
+              (<Link href="/math/lsll">why a third AUF quotient does not work →</Link>); listed here
+              are 302 × 494 = 149,188 — the missing four are the O family’s ZBLS configurations,
+              where the pair is already in the slot and the first look is either absent or edge
+              orientation only, leaving nothing but a last layer.</>}
           />
         ) : (
           <T
-            zh={<>最后一槽 + 顶层一步解(Last Slot and Last Layer)。不计首尾 AUF,数量
-              <Link href="/math/lsll">看推导 →</Link>,按槽对构型分 42 个大类,大类命名沿用
-              ZBLS 公式集。最优解与 MCC 推荐公式由后台管道逐步回填。</>}
-            en={<>Solve the last slot and last layer in one look. Ignoring pre/post AUF; for the count{' '}
-              <Link href="/math/lsll">see the derivation →</Link>. Organised into 42 families by pair
+            zh={<>最后一槽 + 顶层一步解(Last Slot and Last Layer)。不计首尾 AUF,全部
+              583,284 个<Link href="/math/lsll">看推导 →</Link>;这里列 579,368 个 ——
+              去掉 O 类,那一类对子已经归位且朝向正确,剩下的纯粹是顶层,3,916 个局面
+              正是 <Link href="/alg/3x3/1lll">1LLL</Link> 那 3,916 个。其余按槽对构型分 41 个大类,
+              大类命名沿用 ZBLS 公式集。最优解与 MCC 推荐公式由后台管道逐步回填。</>}
+            en={<>Solve the last slot and last layer in one look. Ignoring pre/post AUF, there are
+              583,284 cases (<Link href="/math/lsll">derivation →</Link>); 579,368 are listed here —
+              the O family is left out because its pair is already solved and oriented, so nothing
+              but the last layer remains: its 3,916 cases are exactly the 3,916 of{' '}
+              <Link href="/alg/3x3/1lll">1LLL</Link>. The rest form 41 families by pair
               configuration, named after the ZBLS set. Optimal and MCC-ranked algorithms are being
               backfilled by the offline pipeline.</>}
           />
@@ -162,7 +172,7 @@ export default function LsllHubPage() {
             <span className="lsll-kind-count">{groups.get(kind)!.length} {tr({ zh: '类', en: 'families' })}</span>
           </h2>
           <div className="alg-bento">
-            {groups.get(kind)!.map((cat) => (
+            {groups.get(kind)!.map((cat: (typeof LISTED_CATEGORIES)[number]) => (
               <AlgCard
                 key={cat.slug}
                 href={`/alg/lsll/${cat.slug}${suffix}`}
