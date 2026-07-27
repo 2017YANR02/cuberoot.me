@@ -11,7 +11,8 @@ import { describe, expect, it } from 'vitest';
 import { CATEGORIES, keyFromString, keyToString, unpackState, decodeKey, canonicalKey } from '@/lib/lsll/model';
 import {
   ZBLS_CASE_COUNT, ZBLL_CASE_COUNT, TOTAL_CASES_CLASS3,
-  allZblsCases, allZbllCases, zblsCasesForFamily, class3CountForFamily,
+  allZblsCases, allZbllCases, listedZblsCases, listedClass3Total,
+  zblsCasesForFamily, class3CountForFamily,
   phiOfState, zblsCaseByCode, zblsLibRefs, zbllLibRefs,
   zblsCardFacelets, zbllCardFacelets,
 } from '@/lib/lsll/class3';
@@ -141,6 +142,14 @@ describe('lsll class 3 — 计数与出图', () => {
     expect(class3CountForFamily('ap')).toBe(3952);
     expect(class3CountForFamily('o')).toBe(1976);
     expect(class3CountForFamily('f')).toBe(988);
+  });
+
+  it('站上列 302 × 494 = 149,188 —— O 类那 4 个构型对子已在槽里,不算最后一槽', () => {
+    expect(listedZblsCases()).toHaveLength(302);
+    expect(listedZblsCases().some((z) => z.family === 'o')).toBe(false);
+    expect(allZblsCases().length - listedZblsCases().length).toBe(4);
+    expect(listedClass3Total()).toBe(149188);
+    expect(TOTAL_CASES_CLASS3 - listedClass3Total()).toBe(class3CountForFamily('o'));
   });
 
   it('两半的图都是 54 位合法 fd 串', () => {

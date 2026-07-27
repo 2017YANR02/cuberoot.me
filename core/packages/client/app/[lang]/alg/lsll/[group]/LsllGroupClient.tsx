@@ -17,7 +17,7 @@ import { useQueryState, parseAsInteger, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { ArrowLeft } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { tr } from '@/i18n/tr';
+import { tr, T } from '@/i18n/tr';
 import { FaceletsCube } from '@/components/FaceletsCube';
 import AlgViewModeToggle, { useAlgViewMode } from '@/components/AlgViewModeToggle';
 import PillToggle from '@/components/PillToggle/PillToggle';
@@ -108,6 +108,29 @@ export default function LsllGroupClient() {
 
   if (!cat) {
     return <div className="alg-root"><div className="alg-empty">{tr({ zh: '未知大类', en: 'Unknown family' })}</div></div>;
+  }
+  // O 类的对子已经归位且朝向正确,最后一槽没事可做 —— 它那 3,916 个局面就是 1LLL 的全部,
+  // 所以 LSLL 不列不练(首页也不出这张卡);直链进来就说清楚,并把人送到 1LLL。
+  if (cat.pureLL) {
+    return (
+      <div className="alg-root">
+        <div className="alg-cat-header">
+          <Link href="/alg/lsll" className="alg-back"><ArrowLeft size={14} /> LSLL</Link>
+          <h1 className="alg-cat-title"><span>{cat.letter}</span></h1>
+        </div>
+        <p className="lsll-intro">
+          <T
+            zh={<>{cat.letter} 类的对子已经在槽里、朝向也正确,最后一槽没事可做 ——
+              剩下的纯粹是顶层,3,916 个局面正是 <Link href="/alg/3x3/1lll">1LLL</Link> 那 3,916 个。
+              LSLL 不重复收录它。</>}
+            en={<>In family {cat.letter} the pair is already in the slot and correctly oriented, so
+              the last slot needs nothing — only a last layer is left, and its 3,916 cases are
+              exactly the 3,916 of <Link href="/alg/3x3/1lll">1LLL</Link>. LSLL does not list them
+              a second time.</>}
+          />
+        </p>
+      </div>
+    );
   }
 
   const showAlgs = view === 'full';

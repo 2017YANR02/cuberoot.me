@@ -21,7 +21,11 @@ import { ZBLS_COVERED_KEYS } from './zbls_overlay';
 /** 全 LSLL case 共用一张贴纸描述 —— 图怎么画由 CaseThumb 按 set 决定(同 zbls:iso + vh 遮罩)。 */
 const LSLL_STICKER: AlgSticker = Object.freeze({ kind: 'raw', tag: 'lsll', attrs: {} });
 
-/** 默认范围:站内 zbls 公式集覆盖到的那 305 个 —— 唯一一批有人写公式可对照的。 */
+/**
+ * 默认范围:站内 zbls 公式集覆盖到的那批 —— 唯一一批有人写公式可对照的。
+ * 库里 305 条,这里练 302 条:O 组那 3 条对子已经在槽里、只差翻棱,合成出来的局面是纯顶层
+ * (`model.LsllCategory.pureLL`),LSLL 一概不收。
+ */
 export const LSLL_SCOPE_COVERED = 'zbls';
 
 export interface LsllScope {
@@ -39,7 +43,9 @@ export function parseLsllScope(scope: string | null | undefined): LsllScope {
   const s = (scope ?? '').trim().toLowerCase();
   if (!s || s === LSLL_SCOPE_COVERED) return { category: null, eoBad: null };
   const m = /^([a-z]+)(?:-eo(\d+))?$/.exec(s);
-  if (!m || !categoryBySlug(m[1])) return { category: null, eoBad: null };
+  const cat = m && categoryBySlug(m[1]);
+  // `pureLL` 的那一类(O)是纯顶层,LSLL 不练它 —— 直链进来退回已收录那批
+  if (!m || !cat || cat.pureLL) return { category: null, eoBad: null };
   return { category: m[1], eoBad: m[2] == null ? null : Number(m[2]) };
 }
 
@@ -91,7 +97,9 @@ export async function loadLsllCases(scope: string | null): Promise<AlgCase[]> {
     for (const s of ZBLS_COVERED_KEYS) {
       const key = keyFromString(s);
       if (key == null) continue;
-      out.push({ letter: classify(unpackState(key)).category.letter, key });
+      const cat = classify(unpackState(key)).category;
+      if (cat.pureLL) continue;   // O 组:对子已归位,练的是顶层不是最后一槽
+      out.push({ letter: cat.letter, key });
     }
     out.sort((a, b) => compareAlgGroupLabel(a.letter, b.letter) || a.key - b.key);
     return out.map(x => lsllCase(x.key, x.letter));

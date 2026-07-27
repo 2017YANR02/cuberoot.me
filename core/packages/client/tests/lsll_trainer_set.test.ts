@@ -38,6 +38,9 @@ describe('?scope= 的解析与反解', () => {
   it('认不出的范围退回已收录,不留空场', () => {
     expect(parseLsllScope('zzz')).toEqual({ category: null, eoBad: null });
     expect(parseLsllScope(null)).toEqual({ category: null, eoBad: null });
+    // O 是纯顶层(= 1LLL),LSLL 不练它;直链 ?scope=o 也退回已收录
+    expect(parseLsllScope('o')).toEqual({ category: null, eoBad: null });
+    expect(parseLsllScope('o-eo2')).toEqual({ category: null, eoBad: null });
   });
 
   it('「选 case」回各自的浏览页', () => {
@@ -48,11 +51,13 @@ describe('?scope= 的解析与反解', () => {
 });
 
 describe('装出来的 case', () => {
-  it('已收录范围 = zbls 库覆盖到的 305 个,各自挂自己的大类', async () => {
+  it('已收录范围 = zbls 库 305 条去掉 O 组那 3 条 = 302 个,各自挂自己的大类', async () => {
     const cases = await loadLsllCases(LSLL_SCOPE_COVERED);
-    expect(cases).toHaveLength(305);
-    expect(new Set(cases.map(caseKey)).size).toBe(305);  // 训练进度按 caseKey 存,不能撞
-    expect(new Set(cases.map(c => c.subgroup)).size).toBe(42);
+    expect(cases).toHaveLength(302);
+    expect(new Set(cases.map(caseKey)).size).toBe(302);  // 训练进度按 caseKey 存,不能撞
+    // O 组(对子已归位)合成出来是纯顶层 = 1LLL,LSLL 不收 —— 41 组而不是 42
+    expect(new Set(cases.map(c => c.subgroup)).size).toBe(41);
+    expect(cases.some(c => c.subgroup === 'O')).toBe(false);
     // 名字 = `大类字母 base36key`:组名就是那个字母(与 zbls 库同一套),key 要解得回来且已 canonical
     for (const c of cases) {
       const cat = CATEGORIES.find(x => x.letter === c.subgroup);

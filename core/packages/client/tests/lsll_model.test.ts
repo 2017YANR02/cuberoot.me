@@ -13,7 +13,8 @@ import {
   applyAlg, solvedCube, toFacelets, extractLsll, CUBING_CORNER_INDEX, CUBING_EDGE_INDEX,
 } from '@/lib/lsll/cube333';
 import {
-  CATEGORIES, TOTAL_CASES, enumerateCategory, locateFromScramble, canonicalKey,
+  CATEGORIES, LISTED_CATEGORIES, LISTED_CASES, TOTAL_CASES, enumerateCategory,
+  locateFromScramble, canonicalKey,
   decodeKey, keyToString, keyFromString, unpackState, classify, verifyCaseAlg,
 } from '@/lib/lsll/model';
 
@@ -33,6 +34,17 @@ describe('lsll counts', () => {
     expect(total).toBe(TOTAL_CASES);
     expect(TOTAL_CASES).toBe(583284);
   }, 120_000);
+
+  it('列出来的 41 类 = 42 类去掉 O;O 那 3,916 个正是 1LLL 的全集', () => {
+    const pure = CATEGORIES.filter((c) => c.pureLL);
+    expect(pure.map((c) => c.letter)).toEqual(['O']);
+    // O = 对子归位且朝向正确 → 槽里没事可做,剩的就是整个顶层:1LLL 的 3,915 + 全解 = 3,916
+    expect(pure[0].count).toBe(3916);
+    expect(LISTED_CATEGORIES).toHaveLength(CATEGORIES.length - 1);
+    expect(LISTED_CATEGORIES.some((c) => c.slug === 'o')).toBe(false);
+    expect(LISTED_CASES).toBe(583284 - 3916);
+    expect(LISTED_CASES).toBe(579368);
+  });
 });
 
 describe('cubie model vs cubing.js', () => {
