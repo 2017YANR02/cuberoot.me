@@ -11,8 +11,9 @@
  *     顺带把解的逆当作该 case 的一条公式,记忆模式的「揭示」才有东西可揭。
  */
 import type { AlgCase, AlgSticker } from '@cuberoot/shared';
+import { compareAlgGroupLabel } from '@/lib/alg_group_order';
 import {
-  categoryBySlug, classify, decodeKey, enumerateCategory,
+  categoryBySlug, classify, decodeKey, displayState, enumerateCategory,
   keyFromString, keyToString, unpackState,
 } from './model';
 import { ZBLS_COVERED_KEYS } from './zbls_overlay';
@@ -65,10 +66,10 @@ export function lsllSelectHref(scope: string | null): string {
 }
 
 /** case 名 = `大类字母 + base36 canonical key`(`A+ 1x2y`)。键要稳(标记按它存),字母是给人看的。 */
-function lsllCase(key: number, category: string, letter: string): AlgCase {
+function lsllCase(key: number, letter: string): AlgCase {
   return {
     name: `${letter} ${keyToString(key)}`,
-    subgroup: category,
+    subgroup: letter,   // 与 zbls 库同一套组名(A+ / A- …),训练器的 case 树直接显示它
     setup: '',
     sticker: LSLL_STICKER,
     algs: [[]],
@@ -84,22 +85,23 @@ export function lsllCaseKeyString(c: AlgCase): string {
 export async function loadLsllCases(scope: string | null): Promise<AlgCase[]> {
   const { category, eoBad } = parseLsllScope(scope);
   if (!category) {
-    // 已收录那批横跨多个大类 —— 各自 classify 一次,拿到自己的大类当 subgroup。
-    const out: AlgCase[] = [];
+    // 已收录那批横跨多个大类 —— 各自 classify 一次拿到自己的大类,再按全站组名序排
+    // (同字母 `+` 在 `-` 前),组内按 case 编号,免得 case 树是 JSON 的随机顺序。
+    const out: { letter: string; key: number }[] = [];
     for (const s of ZBLS_COVERED_KEYS) {
       const key = keyFromString(s);
       if (key == null) continue;
-      const cat = classify(unpackState(key)).category;
-      out.push(lsllCase(key, cat.slug, cat.letter));
+      out.push({ letter: classify(unpackState(key)).category.letter, key });
     }
-    return out;
+    out.sort((a, b) => compareAlgGroupLabel(a.letter, b.letter) || a.key - b.key);
+    return out.map(x => lsllCase(x.key, x.letter));
   }
   const cat = categoryBySlug(category)!;
   const keys = enumerateCategory(category);
   const picked = eoBad == null
     ? keys
     : keys.filter(k => classify(unpackState(k)).eoBad === eoBad);
-  return picked.map(k => lsllCase(k, cat.slug, cat.letter));
+  return picked.map(k => lsllCase(k, cat.letter));
 }
 
 /** 算过的打乱:一次两阶段解 ≈ 百毫秒,同一 case 换到第二遍不再付。`''` = 算失败,别反复重试。 */
@@ -118,7 +120,8 @@ export async function resolveLsllCase(c: AlgCase): Promise<{ setup: string; alg?
   const state = decodeKey(key);
   if (!state) return null;
   try {
-    const setup = await setupForCase(state);
+    // 摆正相位再解 —— 打乱出来的对子位置必须与 case 图上的一致(model.pairDisplayTurn)
+    const setup = await setupForCase(displayState(state));
     SETUP_CACHE.set(key, setup);
     return { setup, alg: solutionForSetup(setup) };
   } catch {

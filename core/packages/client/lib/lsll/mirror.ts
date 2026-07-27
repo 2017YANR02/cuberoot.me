@@ -34,7 +34,7 @@
  * 两边的末态必须逐块相等 —— tests/lsll_mirror.test.ts 拿 500 条随机公式对撞这条性质。
  */
 import type { LsllState } from './cube333';
-import { canonicalKey, unpackState, canonicalState, verifyCaseAlg } from './model';
+import { canonicalKey, unpackState, displayState, verifyCaseAlg } from './model';
 
 /** 角块位置 / piece 的对合(局部序 URF UFL ULB UBR DFR):UFL ↔ UBR,其余不动。 */
 export const MIRROR_CORNER = [0, 3, 2, 1, 4] as const;
@@ -87,17 +87,17 @@ export function isSelfMirror(key: number): boolean {
  * 把「解 case c 的公式」翻成「解 c 的镜像 case 的公式」,**并对齐首 AUF**。
  *
  * 光 `mirrorAlg` 是不够的:σ(U^a · s · U^b) = U^-a · σ(s) · U^-b,而站上两个 case 页
- * 各自显示的是各自等价类里的 canonical 代表元,两个代表元的 AUF 一般对不上。
+ * 各自显示的是各自等价类里的展示代表元(`model.displayState`),两边 AUF 一般对不上。
  * 所以这里补一个前置 U^a —— 只有 4 种可能,直接拿 `verifyCaseAlg` 试。
  *
  * @param state 本 case 的状态(页面显示的那个代表元)
  * @param alg   解本 case 的公式(只认 U R F D L B)
- * @returns 解镜像 case(其 canonical 代表元)的公式;公式非法或无解时 null
+ * @returns 解镜像 case(其展示代表元)的公式;公式非法或无解时 null
  */
 export function mirrorAlgForCase(state: LsllState, alg: string): string | null {
   let body: string;
   try { body = mirrorAlg(alg); } catch { return null; }
-  const target = canonicalState(mirrorState(state));
+  const target = displayState(mirrorState(state));
   for (let a = 0; a < 4; a++) {
     const cand = withLeadingU(body, a);
     if (cand !== null && verifyCaseAlg(target, cand).ok) return cand;

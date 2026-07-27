@@ -3,7 +3,7 @@
  * 两阶段求解(忽略中心)取逆,≈20 步纯面转。仅浏览器端按需加载。
  */
 import { embedLsll, applyAlg, solvedCube, extractLsll, CUBING_CORNER_INDEX, CUBING_EDGE_INDEX, type LsllState } from './cube333';
-import { canonicalKey } from './model';
+import { packState } from './model';
 import { getCube3 } from '@/lib/cube3';
 import { invertMoveString } from '@cuberoot/shared/alg-notation';
 
@@ -39,9 +39,10 @@ export async function setupForCase(state: LsllState): Promise<string> {
   const solution = await experimentalSolve3x3x3IgnoringCenters(new KPattern(kp, data));
   const setup = solution.invert().toString().replace(/2'/g, '2');
 
-  // 失安全:本地模型回放 setup,确认确实到达该 case(桥接错误直接暴露)。
+  // 失安全:本地模型回放 setup,确认到达的是**这一个相位**(不只是同一个 case)——
+  // 对子摆在哪一格是图的一部分(model.pairDisplayTurn),差一个 AUF 就是另一张图。
   const check = extractLsll(applyAlg(solvedCube(), setup));
-  if ('broken' in check || canonicalKey(check.state) !== canonicalKey(state)) {
+  if ('broken' in check || packState(check.state) !== packState(state)) {
     throw new Error('setup verification failed');
   }
   return setup;

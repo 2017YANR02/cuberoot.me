@@ -14,7 +14,7 @@ import { tr, T } from '@/i18n/tr';
 import { FaceletsCube } from '@/components/FaceletsCube';
 import { ClearButton } from '@/components/ClearButton';
 import {
-  keyFromString, keyToString, decodeKey, canonicalKey, canonicalState, classify,
+  keyFromString, keyToString, decodeKey, canonicalKey, displayState, classify,
   caseFacelets, verifyCaseAlg,
 } from '@/lib/lsll/model';
 import { zblsForKey } from '@/lib/lsll/zbls_overlay';
@@ -31,8 +31,8 @@ export default function LsllCaseClient() {
     if (key === null) return null;
     const state = decodeKey(key);
     if (!state) return null;
-    const canon = canonicalState(state);
-    return { key: canonicalKey(state), state: canon };
+    // 图 / 打乱 / 自测都用展示相位(对子摆正的那一个代表元),编号仍是 canonical key。
+    return { key: canonicalKey(state), state: displayState(state) };
   }, [kRaw]);
 
   const info = useMemo(() => (decoded ? classify(decoded.state) : null), [decoded]);
@@ -43,7 +43,7 @@ export default function LsllCaseClient() {
     const mk = mirrorKey(decoded.key);
     const st = decodeKey(mk);
     if (!st) return null;
-    return { key: mk, state: st, self: mk === decoded.key, cat: classify(st).category };
+    return { key: mk, state: displayState(st), self: mk === decoded.key, cat: classify(st).category };
   }, [decoded]);
   useDocumentTitle(
     info ? `LSLL ${info.category.letter} #${keyToString(decoded!.key)}` : 'LSLL case',

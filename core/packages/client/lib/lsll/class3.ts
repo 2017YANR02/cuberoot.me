@@ -16,6 +16,7 @@
  */
 import {
   type LsllState, CATEGORIES, type LsllCategory, canonicalKey, unpackState, keyFromString,
+  pairDisplayTurn,
 } from './model';
 import {
   LSLL_CORNER_POS, LSLL_EDGE_POS, cornerFaceletIdx, edgeFaceletIdx,
@@ -243,9 +244,15 @@ export function zbllFullLabel(r?: ZbllRef | null): string | null {
 }
 
 // ---- 出图 ----
-/** ZBLS 构型图:槽对画实色,顶层棱只画朝向(黄贴纸在哪面),其余全灰。 */
+/**
+ * ZBLS 构型图:槽对画实色,顶层棱只画朝向(黄贴纸在哪面),其余全灰。
+ * 出图前先摆正对子相位(与 LSLL case 图同一条 `pairDisplayTurn` 规则),编号仍是 canonical φ。
+ */
 export function zblsCardFacelets(id: number): string {
-  const { cpos, cori, epos, eo } = phiParts(id);
+  const c0 = phiParts(id);
+  const { cpos, cori, epos, eo } = phiParts(
+    rotPhi(id, pairDisplayTurn(c0.cpos, c0.epos, (c0.eo >> c0.epos) & 1)),
+  );
   const f = toFacelets(solvedCube()).split('');
   for (const p of LSLL_CORNER_POS) for (const idx of cornerFaceletIdx(p)) f[idx] = 'o';
   for (const p of LSLL_EDGE_POS) for (const idx of edgeFaceletIdx(p)) f[idx] = 'o';
