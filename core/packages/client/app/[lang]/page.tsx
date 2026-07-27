@@ -100,32 +100,36 @@ export default function LandingPage() {
       </div>
       <h1 className="landing-tagline">{t('tagline')}</h1>
 
-      {/* 主入口 — 标语正下方,五张最常用直达卡(计时器 / 公式 / 模拟 / 复盘 / 打乱) */}
-      <div className="primary-hero-grid">
-        {PRIMARY_CARDS.map((c) => (
-          <Link key={c.id} href={c.href} className="hero-card" id={`card-${c.id}`} prefetch={false}>
-            <div className="hero-card-icon">
-              {c.Icon ? <c.Icon size={30} strokeWidth={1.5} /> : null}
-            </div>
-            <div className="hero-card-name">{t(c.nameKey)}</div>
-          </Link>
-        ))}
-      </div>
+      {/* 两行 hero 的共同外壳。桌面是 5 + 4 两个独立网格;手机端外壳自己变成 3 列网格、
+          两个子网格 display:contents,9 张卡直接排成 3 行 3 个(见 landing.css)。 */}
+      <div className="hero-grids">
+        {/* 主入口 — 标语正下方,五张最常用直达卡(计时器 / 公式 / 模拟 / 复盘 / 打乱) */}
+        <div className="primary-hero-grid">
+          {PRIMARY_CARDS.map((c) => (
+            <Link key={c.id} href={c.href} className="hero-card" id={`card-${c.id}`} prefetch={false}>
+              <div className="hero-card-icon">
+                {c.Icon ? <c.Icon size={30} strokeWidth={1.5} /> : null}
+              </div>
+              <div className="hero-card-name">{t(c.nameKey)}</div>
+            </Link>
+          ))}
+        </div>
 
-      {/* WCA 入口 — 紧接主入口,原单张「WCA 统计」hero 拆成四张直达卡:比赛 / 纪录 / 排名 / 统计 */}
-      <div className="wca-hero-grid">
-        {WCA_ENTRIES.map((e) => (
-          <Link key={e.href} href={e.href} className="hero-card" prefetch={false}>
-            <div className="hero-card-icon">
-              {e.img
-                ? <img src={e.img} alt="WCA" className="hero-card-logo" />
-                : e.Icon
-                  ? <e.Icon size={30} strokeWidth={1.5} />
-                  : null}
-            </div>
-            <div className="hero-card-name">{tr({ zh: e.zh, en: e.en })}</div>
-          </Link>
-        ))}
+        {/* WCA 入口 — 紧接主入口,原单张「WCA 统计」hero 拆成四张直达卡:比赛 / 纪录 / 排名 / 统计 */}
+        <div className="wca-hero-grid">
+          {WCA_ENTRIES.map((e) => (
+            <Link key={e.href} href={e.href} className="hero-card" prefetch={false}>
+              <div className="hero-card-icon">
+                {e.img
+                  ? <img src={e.img} alt="WCA" className="hero-card-logo" />
+                  : e.Icon
+                    ? <e.Icon size={30} strokeWidth={1.5} />
+                    : null}
+              </div>
+              <div className="hero-card-name">{tr({ zh: e.zh, en: e.en })}</div>
+            </Link>
+          ))}
+        </div>
       </div>
 
       <RecentScrambles lang={lang} />
