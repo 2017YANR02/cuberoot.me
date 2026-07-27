@@ -6,7 +6,7 @@
  *
  * Loads each set's case count lazily so the page renders before all imports finish.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
@@ -146,28 +146,30 @@ export default function AlgPuzzleClient() {
           const first = firstCases[s.slug];
           const firstAlg = first?.algs.flat()[0]?.alg ?? first?.standard ?? '';
           return (
-            <AlgCard
-              key={s.slug}
-              href={picking ? undefined : `/alg/${puzzle}/${s.slug}`}
-              onClick={picking ? () => togglePick(s.slug) : undefined}
-              className={picking && picked.includes(s.slug) ? 'is-picked' : undefined}
-              thumb={first && (
-                <CaseThumb puzzle={puzzle} set={s.slug} sticker={first.sticker} alg={firstAlg} setup={first.setup} size={96} />
+            /* LSLL 不在 catalog 里(不是一套公式而是整层枚举),但归属上紧跟 ZBLL,所以就地插在它后面 */
+            <Fragment key={s.slug}>
+              <AlgCard
+                href={picking ? undefined : `/alg/${puzzle}/${s.slug}`}
+                onClick={picking ? () => togglePick(s.slug) : undefined}
+                className={picking && picked.includes(s.slug) ? 'is-picked' : undefined}
+                thumb={first && (
+                  <CaseThumb puzzle={puzzle} set={s.slug} sticker={first.sticker} alg={firstAlg} setup={first.setup} size={96} />
+                )}
+                title={tr(s)}
+                count={n == null ? '…' : n < 0 ? '!' : n}
+              />
+              {s.slug === 'zbll' && puzzle === '3x3' && !picking && (
+                <AlgCard
+                  href="/alg/lsll"
+                  prefetch={false}
+                  thumb={<FaceletsCube fd={categoryCardFacelets('ap')} size={96} alt="LSLL" />}
+                  title="LSLL"
+                  count={LSLL_TOTAL.toLocaleString()}
+                />
               )}
-              title={tr(s)}
-              count={n == null ? '…' : n < 0 ? '!' : n}
-            />
+            </Fragment>
           );
         })}
-        {puzzle === '3x3' && !picking && (
-          <AlgCard
-            href="/alg/lsll"
-            prefetch={false}
-            thumb={<FaceletsCube fd={categoryCardFacelets('ap')} size={96} alt="LSLL" />}
-            title="LSLL"
-            count={LSLL_TOTAL.toLocaleString()}
-          />
-        )}
       </div>
 
       {/* 存下来的合练组合:一行一条,点进去直接开练。纯本地快捷方式,进度不在这里。 */}
