@@ -964,7 +964,8 @@ a.alg-community-author:hover {
   .alg-case-list { grid-template-columns: 1fr; }
   /* 只看图时窄屏仍保持两列画廊 —— 一列太空、认图效率低 */
   .alg-case-list.is-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .alg-bento { grid-template-columns: 1fr; }
+  /* 套列表窄屏也走两列 —— 一列一张卡太空,滚动条也拉太长 */
+  .alg-bento { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 }
 
 /* ─── Admin alg case editor (modal) ─── */

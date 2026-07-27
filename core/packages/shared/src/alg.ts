@@ -171,6 +171,9 @@ export const ALG_CATALOG: Record<AlgPuzzle, AlgSetMeta[]> = {
     { slug: 'adv-f2l',   scd: 'AdvancedF2L', en: 'Advanced F2L',         zh: 'F2L (进阶)' },
     { slug: 'oll',       scd: 'OLL',         en: 'OLL',                  zh: 'OLL' },
     { slug: 'pll',       scd: 'PLL',         en: 'PLL',                  zh: 'PLL' },
+    /* ZBLS / ZBLL(以及页面上紧跟其后的 LSLL)是 CFOP 之后最常练的大套,顶到 PLL 后面免得埋在长尾里 */
+    { slug: 'zbls',      scd: 'ZBLS',        en: 'ZBLS',                 zh: 'ZBLS',  umbrella: true },
+    { slug: 'zbll',      scd: 'ZBLL',        en: 'ZBLL',                 zh: 'ZBLL',  umbrella: true },
     { slug: 'coll',      scd: 'COLL',        en: 'COLL',                 zh: 'COLL' },
     { slug: 'wv',        scd: 'WV',          en: 'Winter Variation',     zh: 'Winter Variation' },
     { slug: 'cmll',      scd: 'CMLL',        en: 'CMLL',                 zh: 'CMLL' },
@@ -181,10 +184,8 @@ export const ALG_CATALOG: Record<AlgPuzzle, AlgSetMeta[]> = {
     { slug: 'ell',       scd: 'ELL',         en: 'Edges of the Last Layer (ELL)', zh: 'Edges of the Last Layer (ELL)' },
     { slug: 'fruf',      scd: 'FRUF',        en: "F <R,U> F'",           zh: "F <R,U> F'" },
     { slug: 'cls',       scd: 'CLS',         en: 'Corners Last Slot',    zh: 'Corners Last Slot' },
-    { slug: 'zbls',      scd: 'ZBLS',        en: 'ZBLS',                 zh: 'ZBLS',  umbrella: true },
     { slug: 'vls',       scd: 'VLS',         en: 'VLS',                  zh: 'VLS',   umbrella: true },
     { slug: 'ollcp',     scd: 'OLLCP',       en: 'OLLCP',                zh: 'OLLCP', umbrella: true },
-    { slug: 'zbll',      scd: 'ZBLL',        en: 'ZBLL',                 zh: 'ZBLL',  umbrella: true },
     { slug: '1lll',      scd: '1LLL',        en: '1LLL',                 zh: '1LLL',  umbrella: true },
   ],
   '4x4': [
