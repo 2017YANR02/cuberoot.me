@@ -20,6 +20,12 @@ export const TimerState = {
 } as const;
 export type TimerState = (typeof TimerState)[keyof typeof TimerState];
 
+/**
+ * 虚拟集(LSLL)的打乱现算器:库内集的打乱躺在 `case.setup` 里,虚拟集进来时那格是空的,
+ * 抽到哪条解哪条。返回打乱 + 一条能解开它的公式;算不出返 null。
+ */
+export type CaseResolver = (c: AlgCase) => Promise<{ setup: string; alg?: string } | null>;
+
 export type TrainerPenalty = 'ok' | '+2' | 'DNF';
 /**
  * train = 随机抽取;recap = 打乱顺序后不重复逐个过一遍,过完重新洗牌;
@@ -211,6 +217,11 @@ interface TrainerState {
    */
   sets: string[] | null;
   cases: AlgCase[];
+  /**
+   * 虚拟集的打乱现算器(库内集为 null)。见 {@link CaseResolver}。
+   * 运行时态,由 `loadSession` 传入,不持久化。
+   */
+  caseResolver: CaseResolver | null;
   selected: string[];
   /**
    * 训练范围(case key 列表)。从 subgroup 页的训练按钮进来时是该组的全部 key,
@@ -293,7 +304,20 @@ interface TrainerState {
   recapPos: number;
   recapSig: string;
 
-  loadSession: (p: AlgPuzzle, s: string, cases: AlgCase[]) => void;
+  loadSession: (
+    p: AlgPuzzle, s: string, cases: AlgCase[],
+    opts?: {
+      /** 没有 select 页的集(虚拟集):装进来的就是本场,默认全选。 */
+      defaultAll?: boolean;
+      /** 打乱现算器,见 {@link CaseResolver}。 */
+      caseResolver?: CaseResolver | null;
+    },
+  ) => void;
+  /**
+   * 把这个 case 的打乱现算出来并写回它(虚拟集专用;库内集 / 已算过的直接 resolve)。
+   * 训练器自己会给屏上那三条调,记忆模式另有自己的节奏,所以对外也暴露一个。
+   */
+  resolveCase: (c: AlgCase) => Promise<void>;
   /**
    * 合练:一次装 N 个 set。`cases` 必须已按成员顺序拼好且每个带 `srcSet`
    * (调用方 loadAlg 完各自 stamp,store 不管数据从哪来)。
@@ -393,6 +417,71 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
   };
 
   /**
+   * 虚拟集(LSLL)的打乱现算:case 进来时 `setup` 是空的,`generateScramble` 只给得出空串。
+   * 解出来后**原地**写回那个 case —— 不换 `cases` 数组,一场一万多个 case 的 key 索引
+   * 才不用跟着重建(见 trainer-case-key)。同一个 case 并发抽到也只解一次。
+   */
+  const resolving = new Map<string, Promise<void>>();
+  const fillCase = (c: AlgCase): Promise<void> => {
+    const resolver = get().caseResolver;
+    if (!resolver || c.setup.trim()) return Promise.resolve();
+    const k = caseKey(c);
+    const hit = resolving.get(k);
+    if (hit) return hit;
+    const p = resolver(c)
+      .then(r => {
+        if (!r) return;
+        c.setup = r.setup;
+        // 打乱取逆就是一条能解开它的公式 —— 记忆模式的「揭示」、卡片上的演示都靠它
+        if (r.alg) c.algs = [[{ alg: r.alg }]];
+      })
+      .catch(() => { /* 算不出就一直留空:UI 摆空打乱,而不是编一条假的 */ })
+      .finally(() => { resolving.delete(k); });
+    resolving.set(k, p);
+    return p;
+  };
+
+  /** 某个 case 的 setup 到位后,把当时留空的打乱补上(当前 / 预抽两条 / 历史里同一 case)。 */
+  const patchScramble = (key: string) => {
+    const st = get();
+    if (!st.puzzle) return;
+    const c = findCaseByKey(st.cases, key);
+    if (!c || !c.setup.trim()) return;
+    const gen = () => generateScramble(c, st.puzzle!, st.scrambleKind, { preAuf: st.preAuf, postAuf: st.postAuf });
+    const fix = <T extends TrainerHistEntry | null>(e: T): T =>
+      (e && e.key === key && !e.scramble ? { ...e, scramble: gen() } as T : e);
+    const list = st.hist.list.map(fix);
+    const peek = fix(st.peek);
+    const peek2 = fix(st.peek2);
+    const histChanged = list.some((e, i) => e !== st.hist.list[i]);
+    if (!histChanged && peek === st.peek && peek2 === st.peek2) return;
+    set({
+      hist: histChanged ? { list, idx: st.hist.idx } : st.hist,
+      // current 就是历史里 idx 那条,用同一份补上 —— 各自 gen 一次会得到两个不同的 AUF
+      currentScramble: st.currentKey === key && !st.currentScramble
+        ? (list[st.hist.idx]?.scramble ?? null)
+        : st.currentScramble,
+      peek,
+      peek2,
+    });
+  };
+
+  /** 屏上这三条(当前 + 预抽两条)里打乱还空着的,解出来补上。 */
+  const fillPending = () => {
+    if (!get().caseResolver) return;
+    const st = get();
+    const keys = [st.currentKey, st.peek?.key, st.peek2?.key].filter((k): k is string => !!k);
+    for (const key of new Set(keys)) {
+      const c = findCaseByKey(st.cases, key);
+      if (!c) continue;
+      void fillCase(c).then(() => { patchScramble(key); cstimerize(); });
+    }
+  };
+
+  /** 出完题的收尾:cstimer 风格打乱异步换,虚拟集空着的打乱异步补。 */
+  const afterDraw = () => { cstimerize(); fillPending(); };
+
+  /**
    * 纯抽题:按当前模式选一个 case、生成打乱,返回条目 + 推进后的 recap 队列状态。
    * 不落 current —— 供 current 与 peek(下一题预览)在一次操作里连抽两次复用。
    * pool 空 / 找不到 case 时返 null。
@@ -478,7 +567,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       recapRoundDone: false,
       recapRoundAcked: false,
     });
-    cstimerize();
+    afterDraw();
   };
 
   /**
@@ -505,7 +594,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       // 已经翻进新一轮 ⟹ 上一轮的「先不了」失效,下一轮刷完照弹
       recapRoundAcked: false,
     });
-    cstimerize();
+    afterDraw();
   };
 
   /**
@@ -638,7 +727,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
         if (!fwd) break;
         const cur = fwd.list[fwd.idx];
         set({ hist: fwd, currentKey: cur.key, currentName: cur.name, currentScramble: cur.scramble, observingPinned: false });
-        cstimerize();
+        afterDraw();
         need--;
       }
       if (need <= 0) return;
@@ -671,7 +760,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
           peek2: multi ? (queue[k + 1] ?? null) : null,
           observingPinned: false, recapRoundDone: false,
         });
-        cstimerize();
+        afterDraw();
         return;
       }
     } finally {
@@ -738,13 +827,13 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       return pc ? { ...pk, scramble: generateScramble(pc, puzzle, scrambleKind, { preAuf, postAuf }) } : pk;
     };
     set({ currentScramble: scramble, hist: { list, idx: hist.idx }, peek: regenPeek(peek), peek2: regenPeek(peek2) });
-    cstimerize();
+    afterDraw();
   };
 
   /** 起一场会话(单集 / 合练共用):清干净运行时态,按持久化的勾选出第一题。 */
   const startSession = (
     puzzle: AlgPuzzle, sessionId: string, sets: string[] | null, cases: AlgCase[],
-    opts?: { defaultAll?: boolean },
+    opts?: { defaultAll?: boolean; caseResolver?: CaseResolver | null },
   ) => {
     const persisted = loadPersisted(puzzle, sessionId);
     const valid = new Set(cases.map(caseKey));
@@ -759,6 +848,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       set: sessionId,
       sets,
       cases,
+      caseResolver: opts?.caseResolver ?? null,
       selected,
       solves: persisted.solves,
       currentKey: null,
@@ -785,6 +875,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     set: null,
     sets: null,
     cases: [],
+    caseResolver: null,
     selected: [],
     scope: null,
     solves: [],
@@ -811,7 +902,9 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     recapPos: 0,
     recapSig: '',
 
-    loadSession: (puzzle, setSlug, cases) => startSession(puzzle, setSlug, null, cases),
+    loadSession: (puzzle, setSlug, cases, opts) => startSession(puzzle, setSlug, null, cases, opts),
+
+    resolveCase: (c) => fillCase(c).then(() => { patchScramble(caseKey(c)); }),
 
     loadMixSession: (puzzle, sets, cases) => {
       const members = [...sets].sort();
@@ -968,7 +1061,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
         // 历史中段(← 回看过)向前翻:current 前进一格,peek 不动(它仍是队尾之后的预览)
         const cur = fwd.list[fwd.idx];
         set({ hist: fwd, currentKey: cur.key, currentName: cur.name, currentScramble: cur.scramble, observingPinned: false });
-        cstimerize();
+        afterDraw();
         return;
       }
       // 在线房间:队尾向服务器领取下一题(异步,不预抽)
@@ -1002,6 +1095,8 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       if (!back) return;
       const cur = back.list[back.idx];
       set({ hist: back, currentKey: cur.key, currentName: cur.name, currentScramble: cur.scramble, observingPinned: false, recapRoundDone: false });
+      // 回看到一条当初没算出打乱的(虚拟集解失败)—— 补一次,不走 cstimerize(打乱已存在的不重解)
+      fillPending();
     },
 
     // 「历史」列表点选:直接把光标落到第 i 条(打乱已存在历史里,不重出 —— 不走 cstimerize,
@@ -1016,6 +1111,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
         currentKey: cur.key, currentName: cur.name, currentScramble: cur.scramble,
         observingPinned: false, recapRoundDone: false,
       });
+      fillPending();   // 同上:只补当初没算出来的那些,已有打乱一概不动
     },
 
     createRoom: async () => {

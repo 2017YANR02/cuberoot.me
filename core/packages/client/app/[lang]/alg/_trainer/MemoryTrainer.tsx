@@ -93,6 +93,7 @@ export default function MemoryTrainer({
   const postAuf = useTrainerStore(s => s.postAuf);
   const pureScramble = useTrainerStore(s => s.pureScramble);
   const showThumb = useTrainerStore(s => s.showStageThumb);
+  const resolveCase = useTrainerStore(s => s.resolveCase);
 
   const [queue, setQueue] = useState<SrsQueueItem[]>([]);
   const [pos, setPos] = useState(0);
@@ -131,12 +132,19 @@ export default function MemoryTrainer({
   // 打乱只在换卡时生成一次(每次 render 重算会让画面上的打乱抖动)
   const [scramble, setScramble] = useState('');
   useEffect(() => {
-    if (!c) { setScramble(''); return; }
-    setScramble(generateScramble(c, puzzle, scrambleKind, { preAuf, postAuf }));
     setRevealed(false);
     setShowAlts(false);
     setPlaying(false);
-  }, [c, puzzle, scrambleKind, preAuf, postAuf]);
+    if (!c) { setScramble(''); return; }
+    const gen = () => generateScramble(c, puzzle, scrambleKind, { preAuf, postAuf });
+    const s = gen();
+    setScramble(s);
+    if (s) return;
+    // 虚拟集(LSLL):打乱是现算的,这张卡还没解出来 —— 解完(setup / 公式已写回 case)再补上
+    let stale = false;
+    void resolveCase(c).then(() => { if (!stale) setScramble(gen()); });
+    return () => { stale = true; };
+  }, [c, puzzle, scrambleKind, preAuf, postAuf, resolveCase]);
 
   const shownScramble = pureScramble ? purifyScramble(puzzle, scramble) : scramble;
   const previews = useMemo(() => previewIntervals(rec, Date.now()), [rec]);
