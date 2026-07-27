@@ -30,9 +30,7 @@ export interface TimerSettings {
   /** Show the cube net preview alongside the scramble. */
   showCubePreview: boolean;
 
-  /** Final-result precision: 2 = centiseconds (x.xx), 3 = milliseconds (x.xxx).
-   *  Default 2 — WCA results are adjudicated to the centisecond, so the third
-   *  digit is noise no ranking will ever see. */
+  /** Final-result precision: 2 = centiseconds (x.xx), 3 = milliseconds (x.xxx). */
   precision: 2 | 3;
 
   /** Running (live) display precision: 0 = whole seconds (cstimer style),
@@ -155,10 +153,6 @@ export interface TimerSettings {
   /** One-shot marker: the scramble-click default flipped to 'copy' (migrate legacy 'next'). */
   scrambleClickMigrated?: boolean;
 
-  /** One-shot marker: both precisions defaulted to 3 (x.xxx) and now default to
-   *  2 (x.xx, WCA). Existing blobs carry the old 3, so flip it once. */
-  precisionMigrated?: boolean;
-
   /** Hide entire UI (topbar / scramble / charts) while timer is running. */
   hideAllUiWhileRunning: boolean;
 
@@ -268,8 +262,8 @@ export const DEFAULTS: TimerSettings = {
   volume: 0.5,
   hideTime: false,
   showCubePreview: true,
-  precision: 2,
-  runningPrecision: 2,
+  precision: 3,
+  runningPrecision: 3,
   timerFontScale: 1,
   timerFont: 'lcd',
   scrambleFontScale: 1,
@@ -396,15 +390,6 @@ function load(): TimerSettings {
     if (!merged.scrambleClickMigrated) {
       if (merged.scrambleClickAction === 'next') merged.scrambleClickAction = 'copy';
       merged.scrambleClickMigrated = true;
-      save(merged);
-    }
-    // One-shot migration: the readout now defaults to WCA centiseconds (x.xx).
-    // Only the old default (3) flips — anyone who deliberately picked something
-    // else (0/1/2 live) keeps it, and re-picking 3 sticks (the marker is already set).
-    if (!merged.precisionMigrated) {
-      if (merged.precision === 3) merged.precision = 2;
-      if (merged.runningPrecision === 3) merged.runningPrecision = 2;
-      merged.precisionMigrated = true;
       save(merged);
     }
     // Cap legacy selections at MAX_AO_WINDOWS (the stats/history ao columns).
