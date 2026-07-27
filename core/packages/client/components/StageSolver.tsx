@@ -9,8 +9,9 @@
  * 与旧 RustCrossSection 的关键差异:
  *   1. 7 个方法(新增 F2LEO / Pseudo F2LEO 的解法枚举,引擎 solve_moves 已支持)。
  *   2. 解法列表 + 单个共享 3D 播放器:点任意解法行 → 同一个播放器换 alg 播放
- *      (修「只有第一条能看动画」;避免 N 个 WebGL 上下文爆显存)。播放器跑站内
- *      `/sim` 引擎(components/AlgPlayer/AlgSimPlayer,与公式库同一份)。
+ *      (修「只有第一条能看动画」;避免 N 个 WebGL 上下文爆显存)。播放器就是 /recon
+ *      详情页那一个(CuberReconPlayer → ReconPlayerBase,跑站内 `/sim` 引擎):
+ *      同样的方位字母、右上角背面小窗、共享 <PlaybackBar>。
  *   3. 算完自动选最优视角 → 立刻出解 + 动画,无需先点格子。
  *   4. 池走站内共享单例(getRustCrossPool),gen 多行 / analyzer 复用,27MB 表只拉一次。
  */
@@ -19,7 +20,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties }
 import { createPortal } from 'react-dom';
 import { Check, Info, X, ChevronRight, ChevronDown } from 'lucide-react';
 import { Spinner } from '@/components/Spinner/Spinner';
-import AlgSimPlayer, { type AlgSimPlayerHandle } from '@/components/AlgPlayer/AlgSimPlayer';
+import CuberReconPlayer from '@/components/CuberReconPlayer';
+import type { ReconPlayerHandle } from '@/components/recon/ReconPlayerBase';
 import { SubsetColorPicker, useSubsetSelection, COLOR_NAME, type ColorLetter } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import { CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '@/lib/cube-colors';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
@@ -529,8 +531,8 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   }, []);
 
   const poolRef = useRef<RustCrossPool | null>(null);
-  // 共享 3D 播放器句柄(AlgSimPlayer 回填),供解法行 ▷ 跳到开头并播放。
-  const playerRef = useRef<AlgSimPlayerHandle | null>(null);
+  // 共享 3D 播放器句柄(CuberReconPlayer 回填),供解法行 ▷ 跳到开头并播放。
+  const playerRef = useRef<ReconPlayerHandle | null>(null);
   const normScramble = useMemo(() => normalizeScramble(scramble) ?? scramble, [scramble]);
   const scrambleRef = useRef(normScramble);
   scrambleRef.current = normScramble;
@@ -773,7 +775,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
         setCounts((prev) => { const next = prev.slice(); next[f] = res.len; return next; });
         // 新算出的解法载入后,把动画重置到开头(否则可能停在上一条的进度)。
         requestAnimationFrame(() => requestAnimationFrame(() => {
-          try { playerRef.current?.jumpToStart(); } catch { /* */ }
+          try { playerRef.current?.jumpToMoveCount(0); } catch { /* */ }
         }));
       }
     } catch (e) {
@@ -909,7 +911,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     setRowRot((prev) => ({ ...prev, [i]: (((prev[i] ?? 0) + 1) % 4) }));
     setSelSol(i);
     requestAnimationFrame(() => requestAnimationFrame(() => {
-      try { playerRef.current?.jumpToStart(); } catch { /* */ }
+      try { playerRef.current?.jumpToMoveCount(0); } catch { /* */ }
     }));
   }, []);
 
@@ -926,7 +928,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     setSelSol(i);
     requestAnimationFrame(() => requestAnimationFrame(() => {
       const p = playerRef.current;
-      try { p?.jumpToStart(); } catch { /* */ }
+      try { p?.jumpToMoveCount(0); } catch { /* */ }
       if (play) { try { p?.play(); } catch { /* */ } }
     }));
   }, []);
@@ -1345,17 +1347,16 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                 )}
               </div>
 
-              {/* 单个共享 3D 播放器:跟随选中解法行。跑站内 /sim 引擎(与公式库同一份
-                  AlgSimPlayer),不再是 cubing.js 的 TwistyPlayer。 */}
+              {/* 单个共享 3D 播放器:跟随选中解法行。就是 /recon 详情页那一个
+                  (CuberReconPlayer,跑站内 /sim 引擎)—— 「打乱 + 一串解法」正是它
+                  本来的输入形状:scramble 收前导整体转体,alg 只留要动画的面转。 */}
               {selSolAlg && playerAlg != null && (
                 <div className="stsv-player">
-                  <AlgSimPlayer
-                    ref={playerRef}
-                    puzzle="3x3"
+                  <CuberReconPlayer
+                    order={3}
+                    scramble={playerSetup}
                     alg={playerAlg}
-                    setup={playerSetup}
-                    size={300}
-                    fillPane
+                    playerRef={playerRef}
                   />
                 </div>
               )}
