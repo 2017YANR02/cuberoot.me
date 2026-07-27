@@ -76,9 +76,14 @@ export function CaseThumb({
   if (maskOverride) {
     return <VisualCube algorithm={alg} setup={setup} view="pll" mask={maskOverride} size={size} local={local} />;
   }
-  // 最后一槽 + 顶层:等距视角 + vh 遮罩(十字与另三槽压灰)。zbls 与 lsll 是同一个观察域。
-  const isSlotAndLL = puzzle === '3x3' && (set === 'zbls' || set === 'lsll');
-  if (isSlotAndLL) {
+  // 最后一槽 + 顶层:等距视角。两个集观察域相同,但遮罩不能共用 ——
+  //  zbls 只到「末槽 + 翻棱」,顶层角块不看,vh 遮罩(压灰十字、另三槽、顶层角与四周顶排)正合适;
+  //  lsll 整层一步解完,顶层角块与四周顶排恰恰是要认的信息,压灰等于把题遮了。全彩不加遮罩,
+  //  与 /alg/lsll 库里那批本地渲染的图(lsll/model.caseFacelets)一致。
+  if (puzzle === '3x3' && set === 'lsll') {
+    return <VisualCube algorithm={alg} setup={setup} view="iso" size={size} local={local} />;
+  }
+  if (puzzle === '3x3' && set === 'zbls') {
     return <VisualCube algorithm={alg} setup={setup} view="iso" mask="vh" size={size} local={local} />;
   }
   const cornerMask = puzzle === '3x3' ? CORNER_LL_MASK[set] : undefined;
