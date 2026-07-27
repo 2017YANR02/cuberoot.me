@@ -21,6 +21,7 @@ import {
 } from './_data/cn_xcross_10';
 import { EOCROSS_10F, EOCROSS_10F_BOTH_AXES, EOCROSS_10F_TOTAL } from './_data/eocross_10f';
 import { HARD_SCRAMBLES, type HardStageKey } from './_data/hard_scrambles';
+import { NO_BAR_CORPORA, NO_BAR_SAMPLE, NO_BAR_UPSTREAM } from './_data/no_bar';
 import {
   TWENTY_F_BASELINE, TWENTY_F_EASY_CROSS, TWENTY_F_RANDOM_CN_CROSS, TWENTY_F_RANDOM_CROSS,
   TWENTY_F_RANDOM_EOCROSS, TWENTY_F_RANDOM_TOTAL, TWENTY_F_SYM_CENSUS, TWENTY_F_SYM_SELF_INVERSE,
@@ -406,6 +407,66 @@ export default function HardestPage() {
           <a href="https://kociemba.org/math/optman/20moves.zip" target="_blank" rel="noreferrer">20moves.zip</a>
           {' · '}
           <a href="https://cube20.org/distance20s/random1000.txt" target="_blank" rel="noreferrer">random1000.txt</a>
+        </p>
+      </section>
+
+      <section className="hardest-section">
+        <h2>{tr({ zh: '另一种极端:没有两块同色挨着', en: 'A different extreme: no two like colours touching' })}</h2>
+        <p>
+          {tr({
+            zh: '这一节不是难,是稀有。三档口径由松到严 —— 每一档的语料都逐条验过确实满足自己那档,'
+              + '而且更严的那档必然也满足更松的。跨面不用管:跨过一条棱贴在一起的两块贴纸必属同一个块,'
+              + '同块贴纸天生不同色。',
+            en: 'This section is not about difficulty but about rarity. Three tiers, loosest first; every corpus '
+              + 'is checked sticker by sticker against its own tier, and each stricter tier implies the looser '
+              + 'ones. Cross-face pairs need no rule: two stickers meeting across an edge always belong to the '
+              + 'same piece, and a piece never repeats a colour.',
+          })}
+        </p>
+        <table className="hardest-stage-table hardest-census">
+          <thead>
+            <tr>
+              <th scope="col">{tr({ zh: '口径', en: 'Tier' })}</th>
+              <th scope="col">{tr({ zh: '语料条数', en: 'States' })}</th>
+              <th scope="col">{tr({ zh: '一条例子', en: 'One example' })}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {NO_BAR_CORPORA.map((c) => (
+              <tr key={c.key}>
+                <th scope="row">{tr({ zh: c.zh, en: c.en })}</th>
+                <td className="hardest-stage-n">{c.total.toLocaleString()}</td>
+                <td className="hardest-stage-sol">
+                  <Link href={solverHref(c.example)} prefetch={false}>{c.example}</Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p>
+          {tr({
+            zh: `有多罕见,本站自己采样:${NO_BAR_SAMPLE.n.toLocaleString()} 个均匀随机合法态里,`
+              + `「无棒」的有 ${NO_BAR_SAMPLE.noBar} 个 —— 约 1 / ${Math.round(NO_BAR_SAMPLE.n / NO_BAR_SAMPLE.noBar).toLocaleString()};`
+              + '「无接触」一个都没撞上,所以那一档比 3 × 10⁻⁷ 还稀有。'
+              + '采样器过了三项均匀性自检(角朝向全正、棱朝向全正、角排列复原),种子固定,测试里重跑。',
+            en: `Rarity is measured here rather than quoted: out of ${NO_BAR_SAMPLE.n.toLocaleString()} uniformly `
+              + `random legal states, ${NO_BAR_SAMPLE.noBar} have no bar — about 1 in `
+              + `${Math.round(NO_BAR_SAMPLE.n / NO_BAR_SAMPLE.noBar).toLocaleString()} — while the no-contact tier `
+              + 'never came up at all, putting it below 3 × 10⁻⁷. The sampler passes three known-probability '
+              + 'checks (corner orientation, edge orientation, corner permutation), runs from a fixed seed, and '
+              + 'is re-run by the test suite.',
+          })}
+        </p>
+        <p>
+          {tr({
+            zh: `上游那页写的是「10¹⁰ 里找到 ${NO_BAR_UPSTREAM.found.toLocaleString()} 条」,`
+              + '折合 5.35 × 10⁻⁷,比本机测到的低 11 倍。那 5,350 条本身逐条验过确实无棒,'
+              + '所以分歧不在口径,在它那个分母的来历 —— 站上报本机的数,上游那句只作记录。',
+            en: `Upstream reports ${NO_BAR_UPSTREAM.found.toLocaleString()} finds in 10¹⁰ tries, i.e. 5.35 × 10⁻⁷, `
+              + 'eleven times below what is measured here. Those 5,350 do satisfy the no-bar rule when checked one '
+              + 'by one, so the disagreement is not about the definition but about where that denominator comes '
+              + 'from. The figure shown above is the locally measured one; the upstream line is kept on record.',
+          })}
         </p>
       </section>
 
