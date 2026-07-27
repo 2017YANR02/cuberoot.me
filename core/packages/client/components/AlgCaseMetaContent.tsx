@@ -96,55 +96,71 @@ export default function AlgCaseMetaContent({
   }), [caseObj.algs, puzzle]);
 
   /**
-   * 这一族:当前 case + 镜像 / 逆 / 镜像逆,拆成三堆。
-   *   `family`    有图可贴的(含当前那张)。当前这张恒定排头,其余按 `meta.no` 排 ——
-   *               「我在看哪张」得有个固定落点,眼睛不用每次先找框。
-   *   `selfNotes` 该关联项就是当前 case 自己(自镜像 / 自逆),只标一句话。
+   * 这一族:镜像 / 逆 / 镜像逆 连起来的那一小撮 case(含当前这张),拆成三堆。
+   *   `family`    有图可贴的。基准那张排头标「原始」,其余按 `meta.no` 排。
+   *   `selfNotes` 基准的某条关系指回它自己(自镜像 / 自逆),只标一句话。
    *   `missing`   编号在本 set 里查不到对应 case(数据缺口),只报编号。
+   *
+   * **基准不是「你正在看的那张」,是全族编号最小的那张。** 三条关系是一个交换群
+   * ({镜像, 逆, 镜像逆} 两两复合还在族内)在这一小撮 case 上的作用,所以从族里任何一张
+   * 算出来的成员集合完全相同 —— 「编号最小」于是是全族公认的同一张。基准固定,这排图的
+   * 位置和标签就都固定了:点来点去图一张不动,只有「你在看这张」的那个框在移动。
+   * 代价是当前这张的标签不一定是「原始」,可能是「逆」—— 那正是它相对基准的关系。
    *
    * 两个关系指到同一个编号是常事(PLL-L 的镜像和镜像逆都是 J):它们是**同一个 case**,
    * 贴两张一模一样的图只会让人以为有两个目标。合成一张,标签并列写(「镜像, 镜像逆」)。
    */
   const { family, selfNotes, missing } = useMemo(() => {
-    const rels = [
-      { key: 'mirror', label: tr({ zh: '镜像', en: 'Mirror' }), self: tr({ zh: '自镜像', en: 'self-mirror' }), no: m.mirror },
-      { key: 'inv', label: tr({ zh: '逆', en: 'Inverse' }), self: tr({ zh: '自逆', en: 'self-inverse' }), no: m.inv },
-      { key: 'im', label: tr({ zh: '镜像逆', en: 'Inv. mirror' }), self: tr({ zh: '自镜像逆', en: 'self-inv-mirror' }), no: m.im },
-    ].filter(r => r.no != null);
+    /** 一个 case 的三条关系,相对它自己说的。 */
+    const relsOf = (x: AlgCaseMeta) => ([
+      { key: 'mirror', label: tr({ zh: '镜像', en: 'Mirror' }), self: tr({ zh: '自镜像', en: 'self-mirror' }), no: x.mirror },
+      { key: 'inv', label: tr({ zh: '逆', en: 'Inverse' }), self: tr({ zh: '自逆', en: 'self-inverse' }), no: x.inv },
+      { key: 'im', label: tr({ zh: '镜像逆', en: 'Inv. mirror' }), self: tr({ zh: '自镜像逆', en: 'self-inv-mirror' }), no: x.im },
+    ].filter(r => r.no != null) as Array<{ key: string; label: string; self: string; no: number }>);
 
-    const fam: Array<{ key: string; labels: string[]; case: AlgCase; no: number; current: boolean }> = [{
-      key: 'self',
-      labels: [tr({ zh: '原始', en: 'Origin' })],
-      case: caseObj,
-      no: m.no ?? -1,
-      current: true,
-    }];
+    const selfNo = m.no ?? -1;
+    /** 编号 → case。先按当前这张的关系凑出成员,再用基准的关系补齐。 */
+    const members = new Map<number, AlgCase>([[selfNo, caseObj]]);
+    for (const r of relsOf(m)) {
+      const t = byNo.get(r.no);
+      if (t) members.set(r.no, t);
+    }
+
+    const originNo = Math.min(...members.keys());
+    const origin = members.get(originNo)!;
+
+    const labels = new Map<number, string[]>();
     const notes: Array<{ key: string; text: string }> = [];
-    const gone: Array<{ key: string; labels: string[]; no: number }> = [];
-    /** 编号 → 已经贴出去的那一格,用来把指向同一编号的关系并进去。 */
-    const famAt = new Map<number, number>();
-    const goneAt = new Map<number, number>();
-
-    for (const r of rels) {
-      if (r.no === m.no) { notes.push({ key: r.key, text: r.self }); continue; }
-      const target = byNo.get(r.no!);
-      if (!target) {
-        const i = goneAt.get(r.no!);
-        if (i != null) { gone[i].labels.push(r.label); continue; }
-        goneAt.set(r.no!, gone.length);
-        gone.push({ key: r.key, labels: [r.label], no: r.no! });
+    const gone = new Map<number, { key: string; labels: string[]; no: number }>();
+    for (const r of relsOf(origin.meta as AlgCaseMeta)) {
+      if (r.no === originNo) { notes.push({ key: r.key, text: r.self }); continue; }
+      const t = byNo.get(r.no);
+      if (!t) {
+        const g = gone.get(r.no);
+        if (g) g.labels.push(r.label);
+        else gone.set(r.no, { key: r.key, labels: [r.label], no: r.no });
         continue;
       }
-      const i = famAt.get(r.no!);
-      if (i != null) { fam[i].labels.push(r.label); continue; }
-      famAt.set(r.no!, fam.length);
-      fam.push({ key: r.key, labels: [r.label], case: target, no: r.no!, current: false });
+      members.set(r.no, t);
+      const l = labels.get(r.no);
+      if (l) l.push(r.label);
+      else labels.set(r.no, [r.label]);
     }
-    // 排头那张(当前 case)不参与排序,后面的按编号排,顺序才和从哪张进来无关。
-    const [self, ...rest] = fam;
-    rest.sort((a, b) => a.no - b.no);
-    return { family: [self, ...rest], selfNotes: notes, missing: gone };
-  }, [m.mirror, m.inv, m.im, m.no, byNo, caseObj]);
+
+    const fam = [...members]
+      .filter(([no]) => no !== originNo)
+      .sort((a, b) => a[0] - b[0])
+      // 拿不到标签只可能是数据两头对不上(A 说 B 是它的镜像,B 不认),退回报编号。
+      .map(([no, c]) => ({ key: `no${no}`, labels: labels.get(no) ?? [`#${no}`], case: c, no, current: no === selfNo }));
+    fam.unshift({
+      key: `no${originNo}`,
+      labels: [tr({ zh: '原始', en: 'Origin' })],
+      case: origin,
+      no: originNo,
+      current: originNo === selfNo,
+    });
+    return { family: fam, selfNotes: notes, missing: [...gone.values()] };
+  }, [m, byNo, caseObj]);
 
   const sym = m.sym ?? {};
   const symFlags = [
@@ -158,11 +174,11 @@ export default function AlgCaseMetaContent({
 
   return (
     <>
-      {/* 顶部一排缩略图:这一族(自己 + 镜像 / 逆 / 镜像逆)并排对比。
+      {/* 顶部一排缩略图:这一族(镜像 / 逆 / 镜像逆 连起来的那几张)并排对比。
           点其中一张:弹窗里切成那个 case,详情页里跳到那个 case 的详情页。
 
-          当前这张(标「原始」、恒定加框)钉最左,剩下的按 `meta.no` 排 —— 关系是相对当前 case
-          说的(跳到镜像那张之后,原来那张就标「镜像」),所以基准点摆在最左边读起来才顺。 */}
+          排头恒定是全族基准(标「原始」),其余按 `meta.no` 排 —— 全族共用同一份排布,
+          所以点来点去图一张不动。加框的那张是「你正在看的」,它的标签未必是「原始」。 */}
       <div className="alg-meta-related-grid alg-meta-top-grid">
         {family.map(f => {
           const labelText = f.labels.join(', ');
