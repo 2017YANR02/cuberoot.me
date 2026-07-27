@@ -1,22 +1,27 @@
-// cross-solver 模块 worker:在后台线程加载 Rust WASM + 6 张表,跑 cross 系列
+// cross-solver 模块 worker:在后台线程加载 Rust WASM + 表,跑 cross 系列
 // (cross/xc/xxc/xxxc/xxxxc)求解,不阻塞 UI 线程。
 //
+// 表来路(2026-07-27 重划):mt_*(移动表)一律 WASM 内现场生成(mt_gen,几十毫秒),
+// 只有 pt_*/opt_*(BFS 产物)还需 fetch。std 池再拆两段 —— init 只拉 pt_cross(gz 50KB)
+// 即可算纯十字,xcross+ 的 pt_cross_C4E0(gz 20MB)靠 ensure_xcross 惰性补。
+//
 // 消息协议(main → worker):
-//   { type:'init', glueUrl, wasmUrl, tablesBase }
+//   { type:'init', glueUrl, wasmUrl, tablesBase, tableQuery, need, xcross }
+//   { type:'ensure_xcross', id }
 //   { type:'solve', id, scramble, variant, cumulative }
 //   { type:'moves', id, scramble, variant, face, extra, cap }
 // (worker → main):
-//   { type:'ready' } | { type:'error', error }
+//   { type:'ready' } | { type:'xcross_ready', id } | { type:'error', error }
 //   | { type:'result', id, values } | { type:'moves', id, data }
 //
 // variant:0=cross,1=xc,2=xxc,3=xxxc,4=xxxxc。values 是普通 number[]。
 // moves.data = { len, combo, sols:string[] }(单格多解步骤,sols 带视角前缀)。
 
-let solver = null;       // CrossSolverWasm(std cross/xc..xxxxc),需 52MB pt_cross_C4E0
-let f2leoSolver = null;  // F2leoSolverWasm(f2leo / pseudo),只需小表子集
+let solver = null;       // CrossSolverWasm(std cross/xc..xxxxc);xcross 段惰性 attach
+let f2leoSolver = null;  // F2leoSolverWasm(f2leo / pseudo),只需 pt_cross
 let variantSolver = null;// VariantSolverWasm(pair / eo / pseudo / pseudo_pair),小表显式逐槽追踪
-let block222Solver = null;// Block222SolverWasm(2x2x2 块),仅 mt_edge3+mt_corn(~745KB),距离表现场 BFS
-let roux223Solver = null; // Roux223SolverWasm(FB 方块/1x2x3/双1x2x3 + Petrus 2x2x2/2x2x3),4 张小表 ~820KB
+let block222Solver = null;// Block222SolverWasm(2x2x2 块),零下载,距离表现场 BFS
+let roux223Solver = null; // Roux223SolverWasm(FB 方块/1x2x3/双1x2x3 + Petrus 2x2x2/2x2x3),零下载
 let eoDrSolver = null;    // EoDrSolverWasm(EO/EOLine/DR),零表下载,微表现场建
 let htrSolver = null;     // HtrSolverWasm(DR→HTR),零表下载,2.8MB 距离表首查惰性现场 BFS
 let htr2Solver = null;    // HtrPhase2SolverWasm(G3→solved),零表下载,648KB 距离表首查惰性现场 BFS
@@ -28,11 +33,20 @@ let cube222Solver = null;  // Cube222SolverWasm(2x2x2 口袋魔方整解最优),
 let pyraminxSolver = null; // PyraminxSolverWasm(金字塔整解最优,含 tips),拉 opt_pyraminx(0.9MB)直接 from_dist
 let skewbSolver = null;   // SkewbSolverWasm(斜转整解最优),拉 opt_skewb(3.0MB)直接 from_dist
 
+// 表 URL:主线程给 base(prod 直指 static.cuberoot.me,省掉主域 307 一跳)+ 一个长缓存
+// 版本 query(表内容不变,配 nginx immutable → 一次下完永久命中)。
+let tableQuery = '';
+function tableUrl(base, name) {
+  return `${base}/${name}.bin.gz${tableQuery ? `?${tableQuery}` : ''}`;
+}
+
 async function fetchTable(url) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`fetch ${url}: ${res.status}`);
   const buf = await res.arrayBuffer();
-  if (url.endsWith('.gz')) {
+  // 判 .gz 要看**路径**:URL 带 ?tv= 版本 query 时 url.endsWith('.gz') 是 false,
+  // 会把 gzip 原字节直接喂给 WASM → magic 校验失败 panic('unreachable')。
+  if (new URL(url, self.location.href).pathname.endsWith('.gz')) {
     const stream = new Response(buf).body.pipeThrough(new DecompressionStream('gzip'));
     return new Uint8Array(await new Response(stream).arrayBuffer());
   }
@@ -44,7 +58,7 @@ async function fetchTable(url) {
 // (首查 ~1s),保证始终可用。
 async function buildOpt(tablesBase, name, Ctor) {
   try {
-    const dist = await fetchTable(`${tablesBase}/${name}.bin.gz`);
+    const dist = await fetchTable(tableUrl(tablesBase, name));
     return Ctor.from_dist(dist);
   } catch {
     return new Ctor();
@@ -53,34 +67,35 @@ async function buildOpt(tablesBase, name, Ctor) {
 
 // init 即按 `need` 拉所需表 + 建求解器,**然后**才发 ready —— 池子串行预热(同一时刻只
 // 一个 worker 在 init),靠这点避免 N 个 worker 同时 fetch 同批表把 dev server 打到
-// "Failed to fetch"。`need='f2leo'` 只拉 5 张小表(跳过 52MB pt_cross_C4E0),f2leo 池更快。
-async function init(glueUrl, wasmUrl, tablesBase, need) {
+// "Failed to fetch"。
+//
+// 2026-07-27:mt_*(移动表)全部改为 WASM 内现场生成(mt_gen),不再下载 —— 只有 pt_*
+// (BFS 剪枝表)还得 fetch。`need='cross'` 因此只拉 pt_cross(gz 50KB)就能算纯十字;
+// xcross 及以上要的 pt_cross_C4E0(gz 20MB)走 ensureXCross 惰性补(见下)。
+async function init(glueUrl, wasmUrl, tablesBase, need, wantXCross) {
   const mod = await import(glueUrl);
   await mod.default(wasmUrl);
-  const get = (n) => fetchTable(`${tablesBase}/${n}.bin.gz`);
+  const get = (n) => fetchTable(tableUrl(tablesBase, n));
   if (need === 'f2leo') {
-    // f2leo / pseudo 复用 5 张小表;pseudo 在首次求解时再现场建剪枝表。
-    const [a, c, d, e, f] = await Promise.all(['pt_cross', 'mt_edge2', 'mt_edge4', 'mt_corn', 'mt_edge'].map(get));
-    f2leoSolver = new mod.F2leoSolverWasm(a, c, d, e, f);
+    // f2leo / pseudo:唯一下载 pt_cross;4 张 mt 现场生成。pseudo 首次求解再现场建剪枝表。
+    f2leoSolver = new mod.F2leoSolverWasm(await get('pt_cross'));
   } else if (need === 'variant') {
-    // pair / eo / pseudo / pseudo_pair 小表显式逐槽追踪。pair:前 6 表;eo 另用后 6 表。
-    const [c4e0, insc4, pair, e4, c, e, cross, ep4eo12, e2, eo12, eo12alt, ep4, pscross] = await Promise.all(
-      ['pt_cross_C4E0', 'pt_cross_ins_C4', 'pt_pair_C4E0', 'mt_edge4', 'mt_corn', 'mt_edge',
-       'pt_cross', 'pt_ep4eo12', 'mt_edge2', 'mt_eo12', 'mt_eo12_alt', 'mt_ep4', 'pt_pscross'].map(get),
+    // pair / eo / pseudo / pseudo_pair 小表显式逐槽追踪:6 张 pt 下载,7 张 mt 现场生成。
+    const [c4e0, insc4, pair, cross, ep4eo12, pscross] = await Promise.all(
+      ['pt_cross_C4E0', 'pt_cross_ins_C4', 'pt_pair_C4E0',
+       'pt_cross', 'pt_ep4eo12', 'pt_pscross'].map(get),
     );
-    variantSolver = new mod.VariantSolverWasm(c4e0, insc4, pair, e4, c, e, cross, ep4eo12, e2, eo12, eo12alt, ep4, pscross);
+    variantSolver = new mod.VariantSolverWasm(c4e0, insc4, pair, cross, ep4eo12, pscross);
   } else if (need === 'block222') {
-    // 2x2x2 块:全站最轻(2 张表 ~745KB),距离表构造时现场 BFS(毫秒级)。
-    const [e3, c] = await Promise.all(['mt_edge3', 'mt_corn'].map(get));
-    block222Solver = new mod.Block222SolverWasm(e3, c);
+    // 2x2x2 块:零下载(mt_edge3 + mt_corn 现场生成),距离表构造时现场 BFS(毫秒级)。
+    block222Solver = new mod.Block222SolverWasm();
   } else if (need === 'roux223') {
-    // FB(方块/1x2x3/双1x2x3)+ Petrus(2x2x2/2x2x3):4 张小表;方块与 2x2x2 即建,
-    // 1x2x3 全表(5.3M 态)与 2x2x3 启发式表首次查询时惰性 BFS(~秒级);f2b 复用 1x2x3 表。
-    // 表是 block222 所需(mt_edge3+mt_corn)的超集 → 顺手把 Block222 求解器也建上,
-    // UI「砖」方法内切阶段(含 2x2x2)同一个池服务,不用换池重载。
-    const [e3, c2, e2, c] = await Promise.all(['mt_edge3', 'mt_corn2', 'mt_edge2', 'mt_corn'].map(get));
-    roux223Solver = new mod.Roux223SolverWasm(e3, c2, e2, c);
-    block222Solver = new mod.Block222SolverWasm(e3, c);
+    // FB(方块/1x2x3/双1x2x3)+ Petrus(2x2x2/2x2x3):零下载,4 张 mt 现场生成;方块与
+    // 2x2x2 即建,1x2x3 全表(5.3M 态)与 2x2x3 启发式表首次查询时惰性 BFS(~秒级)。
+    // 表是 block222 所需的超集 → 顺手把 Block222 求解器也建上,UI「砖」方法内切阶段
+    // (含 2x2x2)同一个池服务,不用换池重载。
+    roux223Solver = new mod.Roux223SolverWasm();
+    block222Solver = new mod.Block222SolverWasm();
   } else if (need === 'eodr') {
     // EO/EOLine/DR:零表下载,全部微表现场从内置运动学建(EOLine 即建,DR 首查惰性)。
     eoDrSolver = new mod.EoDrSolverWasm();
@@ -115,19 +130,44 @@ async function init(glueUrl, wasmUrl, tablesBase, need) {
     // 斜转整解最优:拉 opt_skewb(3.0MB 全空间 3,149,280 态距离表)直接 from_dist,秒算。
     skewbSolver = await buildOpt(tablesBase, 'opt_skewb', mod.SkewbSolverWasm);
   } else {
-    const [a, b, c, d, e, f] = await Promise.all(
-      ['pt_cross', 'pt_cross_C4E0', 'mt_edge2', 'mt_edge4', 'mt_corn', 'mt_edge'].map(get)
-    );
-    solver = new mod.CrossSolverWasm(a, b, c, d, e, f);
+    // std(cross/xc/xxc/xxxc/xxxxc):默认只拉 pt_cross(gz 50KB)建纯十字段;
+    // 若池已知本会话要算 xcross+(wantXCross),顺手把 20MB 的 pt_cross_C4E0 一并拉上,
+    // 免得刚 ready 又立刻补一次。
+    solver = new mod.CrossSolverWasm(await get('pt_cross'));
+    crossTablesBase = tablesBase;
+    if (wantXCross) await attachXCross();
   }
+}
+
+// std 池的 xcross 段惰性补表。init 完成前调用会先等 init(worker 的 onmessage 是 async,
+// 多条消息会并发进入,不串行化就可能在 solver 还是 null 时 attach)。
+let crossTablesBase = '';
+let initDone = null;      // init 的 Promise,供后续消息 await
+let xcrossPending = null; // 进行中的 attach,合并重复请求
+function attachXCross() {
+  if (!solver) throw new Error('cross solver not initialized');
+  if (solver.has_xcross()) return Promise.resolve();
+  if (!xcrossPending) {
+    xcrossPending = fetchTable(tableUrl(crossTablesBase, 'pt_cross_C4E0'))
+      .then((bytes) => { solver.attach_xcross(bytes); })
+      .finally(() => { xcrossPending = null; });
+  }
+  return xcrossPending;
 }
 
 self.onmessage = async (e) => {
   const msg = e.data;
   try {
     if (msg.type === 'init') {
-      await init(msg.glueUrl, msg.wasmUrl, msg.tablesBase, msg.need);
+      tableQuery = msg.tableQuery || '';
+      initDone = init(msg.glueUrl, msg.wasmUrl, msg.tablesBase, msg.need, msg.xcross);
+      await initDone;
       self.postMessage({ type: 'ready' });
+    } else if (msg.type === 'ensure_xcross') {
+      // 池在用户切到 xcross+ 阶段时广播;init 未完成先等它(见 attachXCross 注释)。
+      await initDone;
+      await attachXCross();
+      self.postMessage({ type: 'xcross_ready', id: msg.id });
     } else if (msg.type === 'solve') {
       if (!solver) throw new Error('cross solver not initialized');
       const out = msg.cumulative

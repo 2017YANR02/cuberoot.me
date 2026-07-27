@@ -1,9 +1,15 @@
 //! WASM 入口(wasm-bindgen):浏览器内三阶 cross 系列求解
 //! (cross / xc / xxc / xxxc / xxxxc),小表可采纳启发式,返回最优步数。
 //!
-//! 表(.bin 字节)由 JS fetch 后传入构造器,WASM 用 `from_bin` 装进线性内存,
-//! 绕过 native 的 mmap / 磁盘 / manager。需要 6 张表:
-//!   pt_cross(140KB)、pt_cross_C4E0(52MB)、mt_edge2、mt_edge4、mt_corn、mt_edge。
+//! 表的两条来路(2026-07-27 起):
+//!   · **pt_*(剪枝表)**:BFS 深搜产物,生成要几十秒 ⇒ 只能由 JS fetch 后传入构造器,
+//!     `PackedPruneTable::from_bin` 装进线性内存。
+//!   · **mt_*(移动表)**:纯运动学枚举产物 ⇒ 构造器内 `mt_gen::get()` **现场生成**,
+//!     不再经 JS 传入。浏览器因此少下 8.3MB(mt_edge4)~9MB(全套),见 `mt_gen` 模块文档。
+//!
+//! 另:`CrossSolverWasm` 分两段 —— 构造只吃 pt_cross(gz 50KB)即可算纯十字;
+//! xcross 及以上要的 pt_cross_C4E0(gz 20MB)由 `attach_xcross` 惰性补,用户不切到
+//! 那些阶段就永远不下载。
 
 use std::cell::RefCell;
 use std::sync::Arc;
@@ -26,6 +32,7 @@ use crate::fr_solver::FrSolver;
 use crate::htr_phase2_solver::HtrPhase2Solver;
 use crate::htr_solver::HtrSolver;
 use crate::move_tables::MoveTable;
+use crate::mt_gen;
 use crate::pair_solver::PairSolver;
 use crate::cube222_solver::Cube222Solver;
 use crate::prune_tables::PackedPruneTable;
@@ -104,12 +111,12 @@ pub struct Block222SolverWasm {
 
 #[wasm_bindgen]
 impl Block222SolverWasm {
+    /// 零下载:mt_edge3 / mt_corn 现场生成(合计 ~745KB,几十 ms)。
     #[wasm_bindgen(constructor)]
-    pub fn new(mt_edge3: &[u8], mt_corn: &[u8]) -> Block222SolverWasm {
-        let mt_e3 = Arc::new(MoveTable::from_bin(mt_edge3, state_space::EDGE3 as u32, 18));
-        let mt_c = Arc::new(MoveTable::from_bin(mt_corn, state_space::CORNER as u32, 18));
+    #[allow(clippy::new_without_default)]
+    pub fn new() -> Block222SolverWasm {
         Block222SolverWasm {
-            solver: Block222Solver::from_tables(mt_e3, mt_c),
+            solver: Block222Solver::from_tables(mt_gen::get("mt_edge3"), mt_gen::get("mt_corn")),
         }
     }
 
@@ -170,17 +177,14 @@ pub struct Roux223SolverWasm {
 
 #[wasm_bindgen]
 impl Roux223SolverWasm {
+    /// 零下载:4 张 mt 表(edge3 / corn2 / edge2 / corn,合计 ~820KB)现场生成。
     #[wasm_bindgen(constructor)]
-    pub fn new(
-        mt_edge3: &[u8],
-        mt_corn2: &[u8],
-        mt_edge2: &[u8],
-        mt_corn: &[u8],
-    ) -> Roux223SolverWasm {
-        let mt_e3 = Arc::new(MoveTable::from_bin(mt_edge3, state_space::EDGE3 as u32, 18));
-        let mt_c2 = Arc::new(MoveTable::from_bin(mt_corn2, state_space::CORNER2 as u32, 18));
-        let mt_e2 = Arc::new(MoveTable::from_bin(mt_edge2, state_space::EDGE2 as u32, 18));
-        let mt_c = Arc::new(MoveTable::from_bin(mt_corn, state_space::CORNER as u32, 18));
+    #[allow(clippy::new_without_default)]
+    pub fn new() -> Roux223SolverWasm {
+        let mt_e3 = mt_gen::get("mt_edge3");
+        let mt_c2 = mt_gen::get("mt_corn2");
+        let mt_e2 = mt_gen::get("mt_edge2");
+        let mt_c = mt_gen::get("mt_corn");
         Roux223SolverWasm {
             fbsq: FbSquareSolver::from_tables(mt_c.clone(), mt_e2.clone()),
             b222: Block222Solver::from_tables(mt_e3.clone(), mt_c),
@@ -819,35 +823,56 @@ fn variant_mask_depth(mask: u32) -> u32 {
     }
 }
 
+/// 两段式:纯十字(variant 0)只吃 pt_cross(gz 50KB)+ 现场生成的 mt_edge2;
+/// xcross..xxxxcross(variant 1..4)另需 pt_cross_C4E0(gz 20MB),由 `attach_xcross`
+/// 惰性补上 —— UI 默认停在「十字」阶段,不切过去就永不下载那 20MB。
 #[wasm_bindgen]
 pub struct CrossSolverWasm {
     cross: CrossSolver,
-    xcross: XCrossSolver,
+    xcross: RefCell<Option<XCrossSolver>>,
+}
+
+impl CrossSolverWasm {
+    /// variant≥1 的入口统一走这里取 xcross;未 attach 时 panic(JS 侧由池保证先 attach,
+    /// 见 rust-cross-client.ts 的 need='cross_x')。
+    fn xcross(&self) -> std::cell::Ref<'_, XCrossSolver> {
+        std::cell::Ref::map(self.xcross.borrow(), |o| {
+            o.as_ref()
+                .expect("xcross tables not attached: call attach_xcross(pt_cross_C4E0) first")
+        })
+    }
 }
 
 #[wasm_bindgen]
 impl CrossSolverWasm {
-    /// 用 6 张表的 .bin 字节构造(参数名即所需表)。
+    /// 只建纯十字求解器。pt_cross = 唯一需要下载的表;mt_edge2 现场生成。
     #[wasm_bindgen(constructor)]
-    pub fn new(
-        pt_cross: &[u8],
-        pt_cross_c4e0: &[u8],
-        mt_edge2: &[u8],
-        mt_edge4: &[u8],
-        mt_corn: &[u8],
-        mt_edge: &[u8],
-    ) -> CrossSolverWasm {
+    pub fn new(pt_cross: &[u8]) -> CrossSolverWasm {
         let pt_cross = Arc::new(PackedPruneTable::from_bin(pt_cross));
-        let pt_c4e0 = Arc::new(PackedPruneTable::from_bin(pt_cross_c4e0));
-        let mt_e2 = Arc::new(MoveTable::from_bin(mt_edge2, state_space::EDGE2 as u32, 18));
-        let mt_e4 = Arc::new(MoveTable::from_bin(mt_edge4, state_space::CROSS as u32, 24));
-        let mt_c = Arc::new(MoveTable::from_bin(mt_corn, state_space::CORNER as u32, 18));
-        let mt_e = Arc::new(MoveTable::from_bin(mt_edge, state_space::EDGE as u32, 18));
-
         CrossSolverWasm {
-            cross: CrossSolver::from_tables(mt_e2, pt_cross),
-            xcross: XCrossSolver::from_small_tables(mt_e4, mt_c, mt_e, pt_c4e0),
+            cross: CrossSolver::from_tables(mt_gen::get("mt_edge2"), pt_cross),
+            xcross: RefCell::new(None),
         }
+    }
+
+    /// 补上 xcross 段(pt_cross_C4E0 字节;mt_edge4 / mt_corn / mt_edge 现场生成)。
+    /// 重复调用无副作用(已 attach 则直接返回)。
+    pub fn attach_xcross(&self, pt_cross_c4e0: &[u8]) {
+        if self.xcross.borrow().is_some() {
+            return;
+        }
+        let pt_c4e0 = Arc::new(PackedPruneTable::from_bin(pt_cross_c4e0));
+        *self.xcross.borrow_mut() = Some(XCrossSolver::from_small_tables(
+            mt_gen::get("mt_edge4"),
+            mt_gen::get("mt_corn"),
+            mt_gen::get("mt_edge"),
+            pt_c4e0,
+        ));
+    }
+
+    /// xcross 段是否就绪(JS 侧据此决定要不要先拉 pt_cross_C4E0)。
+    pub fn has_xcross(&self) -> bool {
+        self.xcross.borrow().is_some()
     }
 
     /// 单个变体的 6 视角最优步数(Uint32Array,长度 6)。
@@ -859,7 +884,7 @@ impl CrossSolverWasm {
             return self.cross.get_stats(&alg, &ROTS);
         }
         let max_v = (variant.min(4) - 1) as usize; // 1→0(xc) .. 4→3(xxxxc)
-        let all = self.xcross.get_stats_small(&alg, &ROTS, max_v);
+        let all = self.xcross().get_stats_small(&alg, &ROTS, max_v);
         let off = max_v * 6;
         all[off..off + 6].to_vec()
     }
@@ -873,7 +898,7 @@ impl CrossSolverWasm {
             return self.cross.get_stats(&alg, &rot)[0];
         }
         let max_v = (variant.min(4) - 1) as usize;
-        let all = self.xcross.get_stats_small(&alg, &rot, max_v);
+        let all = self.xcross().get_stats_small(&alg, &rot, max_v);
         all[max_v] // 单 face 时每阶段各 1 值,第 max_v 段即所选变体
     }
 
@@ -884,7 +909,7 @@ impl CrossSolverWasm {
         let mut out = self.cross.get_stats(&alg, &ROTS);
         if variant >= 1 {
             let max_v = (variant.min(4) - 1) as usize;
-            let mut xs = self.xcross.get_stats_small(&alg, &ROTS, max_v);
+            let mut xs = self.xcross().get_stats_small(&alg, &ROTS, max_v);
             xs.truncate((max_v + 1) * 6);
             out.extend(xs);
         }
@@ -932,9 +957,9 @@ impl CrossSolverWasm {
         // combo 非空 = 用户指定槽位(只枚举该 combo);空 = 自动挑最优槽。
         let slots = parse_combo(combo);
         let (len, sols) = if slots.is_empty() {
-            self.xcross.enumerate_best(&alg, rot, k, extra, cap, &mut emit)
+            self.xcross().enumerate_best(&alg, rot, k, extra, cap, &mut emit)
         } else {
-            self.xcross.enumerate_combo(&alg, rot, &slots, extra, cap, &mut emit)
+            self.xcross().enumerate_combo(&alg, rot, &slots, extra, cap, &mut emit)
         };
         let items: Vec<(String, String)> =
             sols.iter().map(|(combo, p)| (fmt_moves(rot, p), label(combo))).collect();
@@ -953,7 +978,7 @@ impl CrossSolverWasm {
                 .unwrap_or(u32::MAX);
         }
         let max_v = (variant.min(4) - 1) as usize; // 1→0(xc) .. 4→3(xxxxc)
-        self.xcross
+        self.xcross()
             .get_stats_small_masked(&alg, &rot, max_v, mask, XCROSS_MASK_DEPTH)[0]
             .unwrap_or(u32::MAX)
     }
@@ -1002,10 +1027,10 @@ impl CrossSolverWasm {
         let mut emit = |combo: &[usize], p: &[u8]| emit_sol(on_sol, &fmt_moves(rot, p), &label(combo), p.len());
         let slots = parse_combo(combo);
         let (len, sols) = if slots.is_empty() {
-            self.xcross
+            self.xcross()
                 .enumerate_best_masked(&alg, rot, k, extra, cap, mask, XCROSS_MASK_DEPTH, &mut emit)
         } else {
-            self.xcross
+            self.xcross()
                 .enumerate_combo_masked(&alg, rot, &slots, extra, cap, mask, XCROSS_MASK_DEPTH, &mut emit)
         };
         // best_len==99 = 限制下(或超界)无解 → u32::MAX 哨兵 + 空解集(同 cross None 分支语义)。
@@ -1038,22 +1063,16 @@ pub struct F2leoSolverWasm {
 
 #[wasm_bindgen]
 impl F2leoSolverWasm {
-    /// 5 张表:pt_cross(f2leo cross 剪枝)+ mt_edge2/edge4/corn/edge(两变体共用)。
+    /// 唯一下载:pt_cross(f2leo cross 剪枝,gz 50KB);mt_edge2/edge4/corn/edge 现场生成。
     /// 仅存引用,不建剪枝表(惰性,见 struct 文档)。
     #[wasm_bindgen(constructor)]
-    pub fn new(
-        pt_cross: &[u8],
-        mt_edge2: &[u8],
-        mt_edge4: &[u8],
-        mt_corn: &[u8],
-        mt_edge: &[u8],
-    ) -> F2leoSolverWasm {
+    pub fn new(pt_cross: &[u8]) -> F2leoSolverWasm {
         F2leoSolverWasm {
             pt_cross: Arc::new(PackedPruneTable::from_bin(pt_cross)),
-            mt_e2: Arc::new(MoveTable::from_bin(mt_edge2, state_space::EDGE2 as u32, 18)),
-            mt_e4: Arc::new(MoveTable::from_bin(mt_edge4, state_space::CROSS as u32, 24)),
-            mt_c: Arc::new(MoveTable::from_bin(mt_corn, state_space::CORNER as u32, 18)),
-            mt_e: Arc::new(MoveTable::from_bin(mt_edge, state_space::EDGE as u32, 18)),
+            mt_e2: mt_gen::get("mt_edge2"),
+            mt_e4: mt_gen::get("mt_edge4"),
+            mt_c: mt_gen::get("mt_corn"),
+            mt_e: mt_gen::get("mt_edge"),
             f2leo: RefCell::new(None),
             pseudo: RefCell::new(None),
         }
@@ -1241,8 +1260,9 @@ pub struct VariantSolverWasm {
 
 #[wasm_bindgen]
 impl VariantSolverWasm {
-    /// 12 表:pair 用 mt_edge4/corn/edge + pt_cross_ins_C4 + pt_pair_C4E0 + pt_cross_C4E0;
-    /// eo 另用 pt_cross + pt_ep4eo12 + mt_edge2 + mt_eo12 + mt_eo12_alt + mt_ep4。
+    /// 6 张 pt 表(下载):pair 用 pt_cross_ins_C4 + pt_pair_C4E0 + pt_cross_C4E0;
+    /// eo 另用 pt_cross + pt_ep4eo12;pseudo 用 pt_pscross。
+    /// 7 张 mt 表(edge4/corn/edge/edge2/eo12/eo12_alt/ep4)现场生成,不再下载。
     /// 仅存引用,惰性建 solver。(pseudo / pseudo_pair 接入时再扩。)
     #[wasm_bindgen(constructor)]
     #[allow(clippy::too_many_arguments)]
@@ -1250,30 +1270,23 @@ impl VariantSolverWasm {
         pt_cross_c4e0: &[u8],
         pt_cross_ins_c4: &[u8],
         pt_pair_c4e0: &[u8],
-        mt_edge4: &[u8],
-        mt_corn: &[u8],
-        mt_edge: &[u8],
         pt_cross: &[u8],
         pt_ep4eo12: &[u8],
-        mt_edge2: &[u8],
-        mt_eo12: &[u8],
-        mt_eo12_alt: &[u8],
-        mt_ep4: &[u8],
         pt_pscross: &[u8],
     ) -> VariantSolverWasm {
         VariantSolverWasm {
             pt_cross_c4e0: Arc::new(PackedPruneTable::from_bin(pt_cross_c4e0)),
             pt_cross_ins_c4: Arc::new(PackedPruneTable::from_bin(pt_cross_ins_c4)),
             pt_pair_c4e0: Arc::new(PackedPruneTable::from_bin(pt_pair_c4e0)),
-            mt_e4: Arc::new(MoveTable::from_bin(mt_edge4, state_space::CROSS as u32, 24)),
-            mt_c: Arc::new(MoveTable::from_bin(mt_corn, state_space::CORNER as u32, 18)),
-            mt_e: Arc::new(MoveTable::from_bin(mt_edge, state_space::EDGE as u32, 18)),
+            mt_e4: mt_gen::get("mt_edge4"),
+            mt_c: mt_gen::get("mt_corn"),
+            mt_e: mt_gen::get("mt_edge"),
             pt_cross: Arc::new(PackedPruneTable::from_bin(pt_cross)),
             pt_ep4eo12: Arc::new(PackedPruneTable::from_bin(pt_ep4eo12)),
-            mt_e2: Arc::new(MoveTable::from_bin(mt_edge2, state_space::EDGE2 as u32, 18)),
-            mt_eo12: Arc::new(MoveTable::from_bin(mt_eo12, state_space::EO12 as u32, 18)),
-            mt_eo12_alt: Arc::new(MoveTable::from_bin(mt_eo12_alt, state_space::EO12 as u32, 18)),
-            mt_ep4: Arc::new(MoveTable::from_bin(mt_ep4, state_space::EP4 as u32, 18)),
+            mt_e2: mt_gen::get("mt_edge2"),
+            mt_eo12: mt_gen::get("mt_eo12"),
+            mt_eo12_alt: mt_gen::get("mt_eo12_alt"),
+            mt_ep4: mt_gen::get("mt_ep4"),
             pt_pscross: Arc::new(PackedPruneTable::from_bin(pt_pscross)),
             pair: RefCell::new(None),
             eo: RefCell::new(None),
