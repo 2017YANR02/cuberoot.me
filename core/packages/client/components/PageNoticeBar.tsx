@@ -8,7 +8,7 @@ import { useEffect, useRef, useState, type ReactNode, type CSSProperties } from 
 import { usePathname } from 'next/navigation';
 import {
   Info, AlertTriangle, Wrench, X, Pencil, Plus, Trash2, Laptop, Globe,
-  Hammer, Bug, RefreshCw, FlaskConical, Eye, Sparkles, Rocket, Megaphone, Gift, Bell, Zap,
+  Hammer, Bug, RefreshCw, FlaskConical, Eye, Sparkles, Rocket, Megaphone, Gift, Bell, Zap, Archive,
 } from 'lucide-react';
 import { useIsAdmin } from '@/lib/auth-store';
 import { useLiveUrlSuffix } from '@/hooks/useLiveUrlSuffix';
@@ -32,7 +32,7 @@ const LEVEL_ICON: Record<NoticeLevel, typeof Info> = {
 const ICONS: Record<string, typeof Info> = {
   info: Info, warning: AlertTriangle, wrench: Wrench, hammer: Hammer, bug: Bug,
   refresh: RefreshCw, flask: FlaskConical, eye: Eye, sparkles: Sparkles, rocket: Rocket,
-  megaphone: Megaphone, gift: Gift, bell: Bell, zap: Zap,
+  megaphone: Megaphone, gift: Gift, bell: Bell, zap: Zap, archive: Archive,
 };
 const ICON_KEYS = Object.keys(ICONS);
 
@@ -84,7 +84,7 @@ function EnvSwitch() {
 }
 
 // 常用模板:点一下填 级别 + 图标 + 颜色 + 中英文,填完仍可自由改。
-// 颜色刻意七个各不相同(红/蓝/琥珀/青/紫/赤陶/绿),让通知一眼能按语义区分,不再清一色蓝。
+// 颜色刻意八个各不相同(红/蓝/琥珀/青/紫/赤陶/绿/粉),让通知一眼能按语义区分,不再清一色蓝。
 const PRESETS: { label: { en: string; zh: string }; level: NoticeLevel; icon: string; color: string; bodyZh: string; bodyEn: string }[] = [
   { label: { en: 'Maintenance', zh: '维护中' }, level: 'maintenance', icon: 'wrench', color: 'red',
     bodyZh: '本页正在维护,稍后恢复,给你带来不便敬请谅解。',
@@ -107,6 +107,9 @@ const PRESETS: { label: { en: string; zh: string }; level: NoticeLevel; icon: st
   { label: { en: 'New feature', zh: '新功能' }, level: 'info', icon: 'sparkles', color: 'green',
     bodyZh: '本页上线了新功能,欢迎体验。',
     bodyEn: 'A new feature just landed on this page — give it a try.' },
+  { label: { en: 'Retiring soon', zh: '即将退役' }, level: 'warning', icon: 'archive', color: 'pink',
+    bodyZh: '本页即将退役,后续将不再维护,请尽早迁移到新页面。',
+    bodyEn: 'This page is retiring soon and will no longer be maintained. Please migrate to its replacement.' },
 ];
 
 // 通知正文里的裸 http/https URL 自动变成可点链接(正文由管理员撰写,可信;只认 http/https,

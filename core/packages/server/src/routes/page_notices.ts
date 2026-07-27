@@ -20,7 +20,7 @@ type Level = (typeof LEVELS)[number];
 // 可选图标 key 白名单,与 client PageNoticeBar.tsx 的 ICONS 保持一致('' = 按 level 回退)。
 const ICON_KEYS = new Set([
   'info', 'warning', 'wrench', 'hammer', 'bug', 'refresh', 'flask', 'eye',
-  'sparkles', 'rocket', 'megaphone', 'gift', 'bell', 'zap',
+  'sparkles', 'rocket', 'megaphone', 'gift', 'bell', 'zap', 'archive',
 ]);
 // 可选横幅颜色 key 白名单,与 client PageNoticeBar.tsx 的 COLORS 保持一致('' = 按 level 回退)。
 const COLOR_KEYS = new Set([
