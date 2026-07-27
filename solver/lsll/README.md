@@ -139,7 +139,32 @@ Solution found!: B' R2 D  F' L2 B  L2 F  B' D  U' R' L2 U  R  U2 B  L2 R  D2 B  
 每条解都用本地 cubie 模型回放 `打乱 + 解 = 复原`,不过关立刻停下报错(不写坏数据)。
 那张 move 表与 `client/lib/lsll/cube333.ts` 同源;它要是错了,第一条就会失败,不会静默。
 
-## 下游(待接)
+## 灌库(→ 页面)
 
-PG 新表 `lsll_cases` + API `/v1/alg/lsll/case/:key`,schema 见 PLAN.md「存储」。
-`exhaustive` 列在阶段 2 之前一律 false。
+跑完(或跑到一半想先看看)走 `update_lsll.ps1`,照 `update_cross_stats.ps1` 的 `Load-*ToPg` 那套
+行级增量:本地照常导出**全量** CSV,灌库时只 UPSERT 内容真变的行 + DELETE 已消失的键
+(复用同一个 `pg_incremental_diff.mjs`,自然键 = 第 1 个逗号字段)。
+
+```powershell
+pwsh update_lsll.ps1              # 导出 + 增量灌【线上】PG
+pwsh update_lsll.ps1 -Local       # 导出 + 灌【本地 pg13】(docker,5433)—— 配 dev:local 预览
+pwsh update_lsll.ps1 -ExportOnly  # 只出 lsll_cases.csv,不碰任何库
+pwsh update_lsll.ps1 -Solve       # 先把没跑完的解跑完,再导出 + 灌
+```
+
+- 表 `lsll_cases`(migration **0094**),主键 = canonical key 的 base36(= URL 的 `?k=`)。
+- manifest 落 `incremental/pg_lsll_manifest.tsv`,**仅灌库成功后**才落盘;想强制全量重灌就删它。
+- **没跑完也能灌**:缺的 case 端点返 `{status:'pending'}`,页面显示「计算中」。
+- 线上灌库的密码由服务器端自己从 `/root/core-api/.env` 读,脚本里没有凭据。
+- `-Local` 走容器内 psql(本机没装客户端),会顺手把 migration 0094 灌进 pg13(幂等)。
+
+## 下游(已接)
+
+- API `GET /v1/alg/lsll/case/:key` → `{ htm, qtm, exhaustive, algs }`;未回填返 `{status:'pending'}`。
+  另有 `GET /v1/alg/lsll/dist` 给步数直方图。
+- 页面 `/alg/lsll/case?k=` 的「HTM 最优解」区显示它,`exhaustive=false` 时明写
+  「只有一条最优解,QTM 并列未穷尽」。
+
+**语料是按展示相位生成的**:case 页画的是 `displayState`(对子摆正那个代表元),而 canonical key
+认的是 16 个 AUF 像里最小的那个 —— 差一个 AUF,解贴上去就解不开。所以 `lsll-corpus.mts` 拼完
+打乱后会枚举 16 种首尾 AUF、钉到展示相位再写出。**改语料生成时别把这一步弄丢。**

@@ -54,7 +54,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   equals the set mounted via app.route('/v1', …) in packages/server/src/index.ts.
 //   CI red here = a newly-mounted route is undocumented: add its endpoints below,
 //   then add the file stem to this list.
-//   account_auth alg alg_marks alg_srs alg_sets analytics announced_comps article auth battle_rooms cn_comp_names colpi
+//   account_auth alg alg_lsll alg_marks alg_srs alg_sets analytics announced_comps article auth battle_rooms cn_comp_names colpi
 //   comp_follows cube cubeopt_solve cubing_live feedback forum health historical_ranks
 //   membership nav_sites nemesizer notifications ops page_notices paint pattern_examples progress recon scramble_555
 //   scramble_marks sponsors timer_backups trainer_rooms wca_format wca_fun_stats wca_proxy
@@ -221,6 +221,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'alg', m: 'PUT', p: '/v1/alg/sets/:puzzle/:set/cases/:id', g: 'admin', zh: '编辑 case', en: 'Edit case' },
   { d: 'alg', m: 'PUT', p: '/v1/alg/sets/:puzzle/:set/reorder', g: 'admin', zh: '重排 case', en: 'Reorder cases' },
   { d: 'alg', m: 'DELETE', p: '/v1/alg/sets/:puzzle/:set/cases/:id', g: 'admin', zh: '删除 case', en: 'Delete case' },
+  { d: 'alg', m: 'GET', p: '/v1/alg/lsll/case/:key', g: 'public', c: 'cdn', zh: 'LSLL case 的整方 HTM 最优解;未回填返 pending', en: 'Whole-cube HTM-optimal solution for an LSLL case; pending until backfilled' },
+  { d: 'alg', m: 'GET', p: '/v1/alg/lsll/dist', g: 'public', c: 'cdn', zh: 'LSLL 最优步数直方图 + 覆盖数', en: 'LSLL optimal-length histogram and coverage' },
   { d: 'alg', m: 'GET', p: '/v1/alg/:puzzle/:set/submissions', g: 'public', zh: '用户投稿的公式', en: 'User-submitted algs' },
   { d: 'alg', m: 'POST', p: '/v1/alg/:puzzle/:set/:case/submit', g: 'login', zh: '提交公式投稿', en: 'Submit an alg' },
   { d: 'alg', m: 'PUT', p: '/v1/alg/submissions/:id', g: 'admin', zh: '编辑投稿', en: 'Edit submission' },
