@@ -107,6 +107,7 @@ cargo test --release -- --ignored     # 8 个 ignored(中表 + e2e XCross + pseu
 | `PORTING_NOTES.md` | 5 个 phase 的设计决策、C++ 端歧义、表 magic 升级、命名差异。**改代码前必读** |
 | `README.md` | 进度表 + 上手命令 + env 清单 + 路线图 |
 | `333opt/` | **不是 Rust** —— cubeopt/h48 整方最优管道(Node + WASM),详见下节 |
+| `lsll/` | 同上,LSLL 148,384 case 的最优解管道(`node solve_loop.mjs`,~2.1h),详见其 README |
 
 ## 整方最优解:走 cubeopt/h48,别自己造(2026-07-27)
 
@@ -132,6 +133,16 @@ h5 928MB、h6 1.81GB、h9 14.5GB(h9 要 ~16GB 空闲,换页到磁盘比小表更
 各表都快得多、差距明显收窄,别照搬随机态的比例。表只影响速度不影响答案(都是可采纳剪枝表),
 而 `solve.mjs` 按 id 续跑 ⇒ **小表先起跑、内存空了再换大表接着跑同一个 csv,零重做**
 (前提是解集穷尽;若只取前 N 条,不同表的搜索顺序可能给出不同子集,那就不能混)。
+
+**`solve_scramble(scr, n_threads, n_group, debug)` 的第 3 个参数是「同时解几条」,不是解数上限**
+(多条打乱 `\n` 分隔;只喂 1 条却传 8 会空转返回)。所以 **h48 吐不出「全部最优解」**:
+embind 只导出 `get_mem_ptr/init/get_table_size/get_table_name/solve_scramble`,`get_prun_idx()` 与
+`std::vector<sol_t>` 都没导出。要枚举并列最优只能自建定深枚举或重编 wasm(见 `lsll/README.md`)。
+批量(n_group>1)还有个坑:debug 输出是多线程裸 printf,**行内互相插队**,解文本会串味
+(见过两条解首尾相接、中间出现 `B B`),**默认走 n_group=1**。
+
+**浅局面实测(LSLL 12–16 步,12 线程,1 条/次)**:opt5 928M 58ms/解、opt6 1856M **51ms/解**。
+和 18 步随机态那张表(43s vs 250ms)完全不是一个量级 —— 印证「先拿真实工作量量一遍」。
 
 > 2026-07-27 有过一次教训:LSLL 最优求解写了一套自包含 22.8MB 投影 PDB + IDA*(已退役),
 > 11 步的 T-perm 求最优 1.68s、枚举到 opt+2 要 233s,比 h48 慢 1–2 个数量级。原因就是本节

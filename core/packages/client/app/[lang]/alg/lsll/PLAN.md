@@ -125,24 +125,29 @@
       - 并列全留 ⇒ **必须拿到全部 HTM 最优解**。少一条,QTM 筛选就可能挑错 —— 这正是刚修的
         截断 bug 的管道版:**截断的解集不能当全集用**。
 
-      **⛔ 开工前必须先验(阻塞项)**:h48 WASM 能不能吐「全部最优解」?
-      - 现有证据:wasm 符号表只有 `solve_scramble(std::string,int,int,int)` 和
-        `solve_optimal(search_context&, cubie&, sol_t&, int,int,int)` —— `sol_t&` **单数**,
-        像是只回一条。调用点 `solver/333opt/solve.mjs:77` 是 `m.solve_scramble(scr, nt, 1, true)`,
-        第三个 int **疑似解数上限**(假设,未验)。
-      - 验法(等放行):`solve_scramble(scr, K, 8, true)`,数 debug 输出里 `Solution found!:`
-        出现几行、是否互不相同。>1 且不同 ⇒ 有枚举口,把 8 换成足够大即可。
-      - 若没有,三条备选:①取上游 h48 源重编 WASM 开枚举口;②拿 15.6G h48 表当剪枝表自写
-        「定深枚举」(要吃透表格式/坐标);③退化口径:只存一条最优解 + 明确标注「QTM 并列未穷尽」。
+      **阶段 1 已落地**(2026-07-27):`solver/lsll/`(runbook 见其 `README.md`)。
+      语料 `corpus.txt` 148,384 行由 `scripts/lsll-corpus.mts` 生成 —— 只两阶段解 302+494=796 个
+      基件,路线打乱靠 `composeState(zbll, zbls) ⇒ setup(zbll)+setup(zbls)` 拼接,149,188 条逐条回放校验。
+      求解 `node solve_loop.mjs`:opt6 + 1856M 表、12 线程、每条落盘续跑、单行进度、
+      每条解回放验证。实测 **19.5 解/s ⇒ 全量 ~2.1 小时**(600 条抽样,HTM 均 14.04、峰 16)。
 
-      **进度显示**(用户要求:可密集,别刷屏):`solve.mjs` 已有
-      `[n/total] id -> htm (Xms) · 4.00/s · ETA 3.2h` 的形状,照它扩(加 QTM、并列条数、
-      截断计数),**单行 `\r` 原地刷新**(~200ms 一次);里程碑(每 1% / 每批)才打换行的持久行;
-      禁每 case 一行。非 TTY(重定向进日志)判掉 `\r` 退化成周期性单行。多 worker 走单一 reporter,
-      别各印各的交错。
-      **必须复用 333opt 的长跑机制**:每解 `appendFileSync` 落盘、按 id 续跑、
-      opt9 in-proc ~5000 解后必抛 emscripten `unwind` ⇒ 照 `solve_loop.mjs` 做自动重启 wrapper,
-      别裸跑(崩了零损失,但没 wrapper 就停在半路)。
+      **⛔ 阻塞项已验(结论:h48 吐不出全部最优解)**,证据:
+      - `solve_scramble` 第 3 个 int 是 **n_group =「同时解几条」**,**不是**解数上限 ——
+        只喂 1 条打乱却传 8,函数空转返回、一行不打;前端 `/scramble/solver` 的「同时求解」
+        下拉就是它(`wasm-worker.js:76`)。
+      - embind 只导出 `get_mem_ptr / init / get_table_size / get_table_name / solve_scramble`;
+        内部的 `get_prun_idx()` 与 `std::vector<sol_t>` 都没导出。
+      - 拿 h48 当距离神谕自己 DFS 也不成立:每节点要对 18 个子局面求最优,其中绝大多数深度 L+1,
+        **比父局面还贵一个分支因子**。
+      ⇒ 阶段 1 的产物是 `htm`(确定的最优步数)+ **一条**最优解,`exhaustive=false`。
+      阶段 2(并列全留)三条路按推荐序:①**自建定深枚举** —— L 已由阶段 1 钉死,只需固定深度
+      枚举不必迭代加深,配像样的角块 PDB + 两张 6 棱 PDB,`prune_create.rs` 基建都在;
+      ②取上游源重编 wasm 开枚举口;③维持退化口径。
+
+      **进度显示**(用户要求:可密集,别刷屏)已按此实现:单行 `\r` 原地刷新(~200ms),
+      每 1% 落一条持久行,非 TTY 只留持久行。
+      **长跑机制复用 333opt**:每条 `appendFileSync`、按 key 续跑、`solve_loop.mjs` 自动重启
+      (cubeopt in-proc 跑久了必抛 emscripten `unwind`),别裸跑 `solve.mjs`。
 - [ ] **MCC 排序**:并列解**全留**,MCC(`@/lib/mcc` algSpeed,忽略首尾 U)只做**展示排序**,
       不再做 top-3 筛选(口径变了:并列都要)。
 - [ ] **存储**:PG 新表 `lsll_cases`(canonical_key PK, category, eo/co 元数据, setup,
