@@ -37,8 +37,8 @@ export default function EoAxes() {
   const minTotal = Object.values(minDist).reduce((a, b) => a + b, 0);
 
   return (
-    <div className="prob-eo">
-      <div className="prob-eo-nums">
+    <div>
+      <div className="prob-nums">
         <div>
           <b>{groupDigits(String(EO_AXIS_UNIVERSE))}</b>
           <span>{tr({ zh: '全集 = 12!/(4!·4!·4!) × 2¹¹', en: 'universe = 12!/(4!·4!·4!) × 2¹¹' })}</span>
@@ -53,7 +53,7 @@ export default function EoAxes() {
         </div>
       </div>
 
-      <p className="prob-eo-note">
+      <p className="prob-note">
         <T
           zh={<>
             「平均 6 条坏棱」说的是<strong>每个轴各自</strong>。但选轴时你看的是三个轴里最少的那个,
@@ -69,10 +69,10 @@ export default function EoAxes() {
         />
       </p>
 
-      <div className="prob-eo-cols">
+      <div className="prob-cols">
         <div>
           <h4>{tr({ zh: '最少的那个轴有几条坏棱', en: 'Bad edges on the best axis' })}</h4>
-          <table className="prob-skip-table prob-eo-table">
+          <table className="prob-skip-table prob-mini-table">
             <thead>
               <tr>
                 <th scope="col">{tr({ zh: '坏棱', en: 'Bad' })}</th>
@@ -95,9 +95,9 @@ export default function EoAxes() {
         <div>
           <h4>
             {tr({ zh: '三轴组合', en: 'The three-axis combination' })}
-            <span className="prob-eo-sub">{tr({ zh: '共 65 种', en: '65 of them' })}</span>
+            <span className="prob-h4-sub">{tr({ zh: '共 65 种', en: '65 of them' })}</span>
           </h4>
-          <table className="prob-skip-table prob-eo-table">
+          <table className="prob-skip-table prob-mini-table">
             <thead>
               <tr>
                 <th scope="col">{tr({ zh: '组合', en: 'Combination' })}</th>
@@ -110,7 +110,7 @@ export default function EoAxes() {
                 <tr key={triple.join(',')}>
                   <th scope="row">({triple.join(', ')})</th>
                   <td className="prob-skip-num">{pct(count / EO_AXIS_UNIVERSE)}</td>
-                  <td className="prob-eo-bar">
+                  <td className="prob-cell-bar">
                     <i style={{ width: `${(count / maxCount) * 100}%` }} />
                     <span>{groupDigits(String(count))}</span>
                   </td>
@@ -119,7 +119,7 @@ export default function EoAxes() {
             </tbody>
           </table>
           {joint.length > TOP_N && (
-            <button type="button" className="prob-eo-more" onClick={() => setAll((v) => !v)}>
+            <button type="button" className="prob-more" onClick={() => setAll((v) => !v)}>
               {all
                 ? tr({ zh: '只看最常见的', en: 'Show the common ones only' })
                 : tr({ zh: `展开全部 ${joint.length} 种`, en: `Show all ${joint.length}` })}
@@ -128,7 +128,7 @@ export default function EoAxes() {
         </div>
       </div>
 
-      <p className="prob-eo-note">
+      <p className="prob-note">
         <T
           zh={<>
             组合里的三个数一定都是偶数,而且极差不超过 8 —— 满足这两条的三元组恰好 65 个,
