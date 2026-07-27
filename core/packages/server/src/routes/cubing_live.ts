@@ -14,6 +14,7 @@ import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import type { CompPersonalRecordSlot } from '@cuberoot/shared';
 import { query } from '../db/connection.js';
 import { enrichComp, resolvePersonIso2, emptyDayBest, foldCompIntoDayBest, judgeExternalRecord, type CompRecordsSnapshot, type DayBest, type KeatonedInfo } from '../utils/current_records.js';
+import type { OverlayEntry } from '../utils/wca_live_overlay.js';
 import { getCnCompZh } from '../utils/cn_comp_zh_cache.js';
 import { trimToRounds, resolveOnlyKeys } from '../utils/comp_trim.js';
 import { getUpcomingComps } from '../utils/upcoming_comps_cache.js';
@@ -2159,6 +2160,7 @@ export interface InferredRecord {
   tag: string;           // WR | CR | NR(format_cli 按 personIso2 把 CR 渲成 AsR/ER/...)
   attemptResult: number; // centiseconds
   personName: string;    // 原始(可能 "English (中文)")
+  personWcaId: string;   // 可能为空(新人);排名 overlay 按它去重
   personIso2: string;    // 大写
   startDate: string | null;
 }
@@ -2194,12 +2196,12 @@ function collectInferred(data: CompData, startDate: string | null): InferredReco
       if (wantS) out.push({
         id: `inferred|${data.slug}|${r.e}|${roundId}|single|${r.n}|${sr}|${r.b}`,
         compId: data.slug, compNameEn, eventId: r.e, roundId, type: 'single',
-        tag: sr, attemptResult: r.b, personName: u.name, personIso2, startDate,
+        tag: sr, attemptResult: r.b, personName: u.name, personWcaId: u.wcaid ?? '', personIso2, startDate,
       });
       if (wantA) out.push({
         id: `inferred|${data.slug}|${r.e}|${roundId}|average|${r.n}|${ar}|${r.a}`,
         compId: data.slug, compNameEn, eventId: r.e, roundId, type: 'average',
-        tag: ar, attemptResult: r.a, personName: u.name, personIso2, startDate,
+        tag: ar, attemptResult: r.a, personName: u.name, personWcaId: u.wcaid ?? '', personIso2, startDate,
       });
     }
   }
@@ -2242,6 +2244,28 @@ export async function extractInferredRecords(): Promise<InferredRecord[]> {
     out.push(...collectInferred(data, sd));
   }
   return out;
+}
+
+// 推断纪录喂给排名 overlay(/WRn 后缀、rank-for)的形态.
+// wca_live_overlay 的候选只来自 WCA Live feed,而 cubing.com 上的中国比赛压根不在那个 feed 里 ——
+// 陈震 6.99 单手平均没进分母,同日 Crimson 的 7.72 就被算成 WR1(它自己那行还写着"菲律宾纪录").
+// 无 wcaId 的(新人)跳过:去重要按 wcaId 查快照 PB,没有 id 就无从判断快照是否已计入.
+const INFERRED_OVERLAY_TTL_MS = 60_000;
+let inferredOverlayCache: { at: number; map: Map<string, OverlayEntry[]> } | null = null;
+
+export async function inferredOverlayEntries(eventId: string, isAvg: boolean): Promise<OverlayEntry[]> {
+  if (!inferredOverlayCache || Date.now() - inferredOverlayCache.at >= INFERRED_OVERLAY_TTL_MS) {
+    const map = new Map<string, OverlayEntry[]>();
+    for (const rec of await extractInferredRecords()) {
+      if (!rec.personWcaId || !(rec.attemptResult > 0)) continue;
+      const key = `${rec.eventId.toLowerCase()}|${rec.type === 'average' ? 1 : 0}`;
+      let list = map.get(key);
+      if (!list) { list = []; map.set(key, list); }
+      list.push({ wcaId: rec.personWcaId, iso2: rec.personIso2, compId: rec.compId, value: rec.attemptResult });
+    }
+    inferredOverlayCache = { at: Date.now(), map };
+  }
+  return inferredOverlayCache.map.get(`${eventId.toLowerCase()}|${isAvg ? 1 : 0}`) ?? [];
 }
 
 // ─── Routes ────────────────────────────────────────────────────────────────
