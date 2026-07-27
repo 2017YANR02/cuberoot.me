@@ -49,6 +49,33 @@ export const TWENTY_F_SYM_CENSUS: { type: string; count: number; example: string
 ];
 
 /**
+ * 上游那份完整语料的清点(cube20.org「Known Distance-20 Positions in HTM」页,2025-07-25 版)。
+ *
+ * 它发布的是**打乱**,不是位置:一条打乱代表 96/|稳定子| 个不同的位置(96 = 48 个旋转反射 × 是否取逆)。
+ * 三类分开数,加起来就是那页的两个大数 —— `tests/twenty_f.test.ts` 拿本站对称引擎逐条复算第三类,
+ * 把 102,772,698 这个头条数字接上。
+ *
+ * 表格里写的 1,130,184 是同一个文件的旧快照(那页会不定期更新);两次的对称子集都是 32,625 条。
+ */
+export const TWENTY_F_CORPUS = {
+  /** 打乱总条数。 */
+  scrambles: 1_130_279,
+  /** 既无对称也无反对称:每条代表 96 个位置。 */
+  asymmetric: 1_020_694,
+  /** 只有反对称:每条代表 48 个。 */
+  antisymmetricOnly: 76_960,
+  /** 上一类里自身即自身的逆的条数(上游单列)。 */
+  antisymmetricSelfInverse: 8_326,
+  /** 带非平凡对称性的:就是本站逐条复算的那 32,625 条。 */
+  symmetric: TWENTY_F_SYM_TOTAL,
+  /** 这 32,625 条代表的位置数,本机按 96/|稳定子| 逐条加出来。 */
+  symmetricPositions: 1_091_994,
+  /** 已知 20 步位置总数(上游头条数字)。 */
+  positions: 102_772_698,
+  asOf: '2025-07-25',
+};
+
+/**
  * 对称型最高的那一条就是 superflip:角块全归位、12 条棱全部原地翻转。
  * 测试里逐位验(cp/co/ep/eo),不是靠名气。
  */
