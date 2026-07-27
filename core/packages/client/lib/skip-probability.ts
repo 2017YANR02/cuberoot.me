@@ -177,13 +177,44 @@ export const statesWithAnyXCrossSolved = (faces: string[], k = 1): bigint =>
       edges: [...crossEdges(f), ...slots.map((s) => s.edge)],
     }))));
 
+// ── Roux 的块 ───────────────────────────────────────────────────────
+// 1×2×3(FB)= 2 角 + 3 棱;1×2×2 = **1 角 + 2 棱**(第四个格子是中心块,三阶上不动)。
+// 下面这两族都是「块已经在自己的家位上」的口径 —— 与「块在别处拼好了」是两回事,
+// 后者是相对位置条件,不能用固定块计数,页面上写清楚了。
+
+/**
+ * 某个面上、绕该面一圈的 4 个 1×2×3 块(D 面 → DL / DF / DR / DB)。
+ * 每块 = 该面上相邻的两个角 + 它们共用的那条面上棱 + 各自那条竖着的侧棱。
+ */
+export function fbBlocksOnFace(face: string): Array<{ corners: string[]; edges: string[] }> {
+  const corners = cornersOnFace(face);
+  const out: Array<{ corners: string[]; edges: string[] }> = [];
+  for (const c of corners) {
+    for (const d of corners) {
+      if (c >= d) continue;
+      const shared = blockEdges(c).filter((e) => blockEdges(d).includes(e));
+      if (shared.length !== 1) continue; // 面对角不相邻,没有共用棱
+      const upright = (x: string) => blockEdges(x).filter((e) => !EDGE_FACES[e].includes(face));
+      out.push({ corners: [c, d], edges: [...shared, ...upright(c), ...upright(d)] });
+    }
+  }
+  return out;
+}
+
+/** 全部 24 个「在家位上」的 1×2×2:每个角配它 3 条棱里的 2 条。 */
+export const BLOCK122_ALL: Array<{ corners: string[]; edges: string[] }> =
+  CORNER_NAMES.flatMap((c) => {
+    const es = blockEdges(c);
+    return es.map((_, i) => ({ corners: [c], edges: es.filter((__, j) => j !== i) }));
+  });
+
 // ── 概率条目 ────────────────────────────────────────────────────────
 
 export type SkipKind = 'counted' | 'exact' | 'sim';
 
 export interface SkipEntry {
   id: string;
-  group: 'll' | 'block' | 'cross';
+  group: 'll' | 'block' | 'cross' | 'roux';
   name: { zh: string; en: string };
   kind: SkipKind;
   /** 分子 / 分母,十进制字符串 —— 分母能到 4.3×10¹⁹,不能过 Number。 */
@@ -245,6 +276,25 @@ export const SKIP_ENTRIES: SkipEntry[] = [
   ll('lll1', '单个 1LLL case(无对称)', 'One 1LLL case (asymmetric)', 16, LL_UNIVERSE,
     'case = 16 元 AUF 双边作用的轨道;无对称时轨道满 16 个状态',
     'A case is an orbit of the 16-element two-sided AUF action; with no symmetry the orbit has all 16'),
+
+  // ZZ / ZBLS 视角:到顶层时棱已经定向,OLL 只剩角朝向
+  ll('oll-given-eo', '棱已定向时的 OLL 跳步', 'OLL skip when edges are already oriented', 1, 27,
+    '条件概率:棱朝向已解决,只剩角朝向 3³ = 27 种',
+    'Conditional: edge orientation is already solved, leaving corner orientation 3³ = 27'),
+  // 「至少跳了 O 或 P」—— 两个事件的并,不是相加(两个都跳就是 LL 连跳,要减掉)
+  {
+    id: 'oll-or-pll',
+    group: 'll',
+    name: { zh: 'OLL 或 PLL 至少跳一个', en: 'OLL or PLL skips (at least one)' },
+    kind: 'counted',
+    // 1/216 + 1/72 − 1/15552 = (72 + 216 − 1)/15552
+    num: String(72 + 216 - 1),
+    den: String(LL_UNIVERSE / 4),
+    why: {
+      zh: '容斥:1/216 + 1/72 − 1/15,552,减掉的那项就是两个一起跳(LL 连跳)',
+      en: 'Inclusion-exclusion: 1/216 + 1/72 − 1/15,552; the subtracted term is both skipping at once',
+    },
+  },
 
   cross('cross-fixed', '固定底十字', 'A fixed cross', ['U'],
     '4 条棱同时归位:12·11·10·9 × 2⁴ = 190,080 分之一',
@@ -350,6 +400,143 @@ export const SKIP_ENTRIES: SkipEntry[] = [
     CORNER_NAMES,
     '8 个角全取并集。注意「双色底」已经等于 CN —— 一对相对面的 8 个角就是全部 8 个角',
     'Union over all eight corners. Note that "dual colour" already equals CN here: a pair of opposite faces covers all eight corners'),
+
+  // ── Roux ──────────────────────────────────────────────────────────
+  // LSE 那一族活在自己的全集(11,520)里,不是 |G| 的比 —— 但 Roux 每把都会走到 LSE,
+  // 所以「每把出现一次的概率」仍然就是这个数,和上面几族可以并排看。
+  {
+    id: 'roux-cmll',
+    group: 'roux',
+    name: { zh: 'CMLL 跳步', en: 'CMLL skip' },
+    kind: 'counted',
+    num: '1',
+    den: String(LL_CO * 3 * 2),
+    why: {
+      zh: '角朝向 3³ × 角排列 4!,其中 4 种差一次 AUF —— 与 COLL 同一个数',
+      en: 'Corner orientation 3³ × corner permutation 4!, four of which are an AUF away — the same number as COLL',
+    },
+  },
+  {
+    id: 'roux-lse-eo',
+    group: 'roux',
+    name: { zh: 'LSE 的 EO 跳步', en: 'LSE edge-orientation skip' },
+    kind: 'counted',
+    num: '1',
+    den: '32',
+    why: {
+      zh: '最后 6 条棱的朝向,第 6 个由总和定死 → 2⁵ = 32 种,其中 1 种全对',
+      en: 'Orientation of the last six edges, the sixth fixed by the parity sum → 2⁵ = 32, one of which is all-good',
+    },
+  },
+  {
+    id: 'roux-lse-ep',
+    group: 'roux',
+    name: { zh: 'EO 之后排列也跳', en: 'Permutation skip after EO' },
+    kind: 'counted',
+    num: '1',
+    den: '360',
+    why: {
+      zh: '角已还原 → 这 6 条棱只能是偶排列,6!/2 = 360 种',
+      en: 'With the corners solved the six edges can only be an even permutation: 6!/2 = 360',
+    },
+  },
+  {
+    id: 'roux-lse',
+    group: 'roux',
+    name: { zh: 'LSE 全跳', en: 'Whole LSE skip' },
+    kind: 'exact',
+    num: '1',
+    // 8 角 + 非 M 层 6 棱都好 → 只剩 6 条棱的合法状态数。恰为 EO 32 × EP 360。
+    den: statesWithSolved(CORNER_NAMES, ['DL', 'BL', 'FL', 'DR', 'FR', 'BR']).toString(),
+    why: {
+      zh: 'F2B + CMLL 做完后整个魔方就活在 ⟨M, U⟩ 里,合法状态恰 11,520 = EO 32 × 排列 360',
+      en: 'After F2B and CMLL the cube lives in ⟨M, U⟩: exactly 11,520 legal states = 32 orientations × 360 permutations',
+    },
+  },
+  {
+    id: 'roux-cmll-lse',
+    group: 'roux',
+    name: { zh: 'CMLL + LSE 连跳', en: 'CMLL and LSE both skip' },
+    kind: 'exact',
+    num: '1',
+    den: String(162 * 11520),
+    why: {
+      zh: '两步互相独立,分母直接相乘:162 × 11,520',
+      en: 'The two steps are independent, so the denominators multiply: 162 × 11,520',
+    },
+  },
+  {
+    id: 'roux-f2l-given-f2b',
+    group: 'roux',
+    name: { zh: 'F2B 做完时 F2L 也好了', en: 'F2L already done when F2B is' },
+    kind: 'counted',
+    num: '1',
+    den: '120',
+    why: {
+      zh: '条件概率:剩下 6 条棱里 DF/DB 恰好归位且朝向对 —— (4!·2⁴)/(6!·2⁶) = 1/120',
+      en: 'Conditional: DF and DB happen to be placed and oriented among the six remaining edges — (4!·2⁴)/(6!·2⁶) = 1/120',
+    },
+  },
+  {
+    id: 'roux-fb-fixed',
+    group: 'roux',
+    name: { zh: '指定的 1×2×3 首块', en: 'One specific 1×2×3 first block' },
+    kind: 'exact',
+    num: statesWithSolved(fbBlocksOnFace('D')[0].corners, fbBlocksOnFace('D')[0].edges).toString(),
+    den: CUBE3_STATES,
+    why: {
+      zh: '2 角 + 3 棱都归位:8·7·3² × 12·11·10·2³ = 5,322,240 分之一',
+      en: 'Two corners and three edges in place: one state in 8·7·3² × 12·11·10·2³ = 5,322,240',
+    },
+  },
+  {
+    id: 'roux-fb-y',
+    group: 'roux',
+    name: { zh: '首块(允许 y 转体)', en: 'First block, free to y-rotate' },
+    kind: 'exact',
+    num: statesWithAnySolved(fbBlocksOnFace('D')).toString(),
+    den: CUBE3_STATES,
+    why: {
+      zh: '底面一圈 4 个首块取并集 —— 相邻两块共用 1 角 1 棱,所以不是直接除以 4',
+      en: 'Union over the four first blocks around the bottom face — adjacent ones share a corner and an edge, so this is not the single value over four',
+    },
+  },
+  {
+    id: 'roux-fb-xy',
+    group: 'roux',
+    name: { zh: '首块(允许 x2 y 转体)', en: 'First block, free to x2 and y-rotate' },
+    kind: 'exact',
+    num: statesWithAnySolved([...fbBlocksOnFace('D'), ...fbBlocksOnFace('U')]).toString(),
+    den: CUBE3_STATES,
+    why: {
+      zh: '上下两圈共 8 个首块取并集;8 个已经是这个颜色方案下的全部,再多就没有了',
+      en: 'Union over all eight first blocks, top ring and bottom ring — eight is all there is for one colour scheme',
+    },
+  },
+  {
+    id: 'roux-122-fixed',
+    group: 'roux',
+    name: { zh: '指定的 1×2×2 方块', en: 'One specific 1×2×2 square' },
+    kind: 'exact',
+    num: statesWithSolved(['URF'], ['UR', 'UF']).toString(),
+    den: CUBE3_STATES,
+    why: {
+      zh: '1 角 + 2 棱都归位(第四格是中心块):8·3 × 12·11·2² = 12,672 分之一',
+      en: 'One corner and two edges in place (the fourth cell is a centre): one in 8·3 × 12·11·2² = 12,672',
+    },
+  },
+  {
+    id: 'roux-122-any',
+    group: 'roux',
+    name: { zh: '任一 1×2×2(在家位上)', en: 'Any 1×2×2, in its home slot' },
+    kind: 'exact',
+    num: statesWithAnySolved(BLOCK122_ALL).toString(),
+    den: CUBE3_STATES,
+    why: {
+      zh: '8 个角 × 每角 3 种配棱 = 24 个方块取并集。注意这是「在家位」口径,不是「在别处拼好」',
+      en: 'Union over 8 corners × 3 edge pairs each = 24 squares. Note this is the in-home-slot reading, not "assembled somewhere else"',
+    },
+  },
 ];
 
 export const entryById = (id: string): SkipEntry => SKIP_ENTRIES.find((e) => e.id === id)!;
@@ -391,10 +578,14 @@ export function oneOverRelative(e: SkipEntry): number | null {
 export function atLeastKInRound(p: number, k: number, rounds = 5): number {
   if (k <= 0) return 1;
   let acc = 0;
-  for (let i = k; i <= rounds; i++) {
-    let c = 1;
-    for (let j = 0; j < i; j++) c = (c * (rounds - j)) / (j + 1);
-    acc += c * p ** i * (1 - p) ** (rounds - i);
-  }
+  for (let i = k; i <= rounds; i++) acc += exactlyKInRound(p, i, rounds);
   return acc;
+}
+
+/** 一轮里**恰好** k 把跳步。C(n,k)·pᵏ·(1−p)ⁿ⁻ᵏ,组合数逐项乘除,不先算阶乘。 */
+export function exactlyKInRound(p: number, k: number, rounds = 5): number {
+  if (k < 0 || k > rounds) return 0;
+  let c = 1;
+  for (let j = 0; j < k; j++) c = (c * (rounds - j)) / (j + 1);
+  return c * p ** k * (1 - p) ** (rounds - k);
 }
