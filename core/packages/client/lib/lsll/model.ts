@@ -101,6 +101,13 @@ export interface LsllCategory {
   c: number;              // 槽角朝向
   e: number;              // 槽棱朝向
   count: number;
+  /**
+   * 这一类的「最后一槽」已经没事可做 —— 对子归位且朝向正确,剩下的纯粹是顶层。
+   * 只有 O 一类是这样,它的 3,916 个局面**就是** 1LLL 那 3,916 个,一个不多一个不少。
+   * 所以 LSLL 不列它、不练它({@link LISTED_CATEGORIES}),练顶层去 `/alg/3x3/1lll`。
+   * 分类本身留着:`classify()` 仍要认得这个构型(定位功能会撞上它)。
+   */
+  pureLL?: true;
 }
 
 const CAT = (slug: string, letter: string, kind: CategoryKind, c: number, e: number, d?: number): LsllCategory => ({
@@ -132,12 +139,17 @@ export const CATEGORIES: LsllCategory[] = [
   CAT('um', 'U-', 'ES', 1, 0), CAT('vm', 'V-', 'ES', 1, 1),
   CAT('up', 'U+', 'ES', 2, 0), CAT('vp', 'V+', 'ES', 2, 1),
   // SS:角棱都在槽
-  CAT('o', 'O', 'SS', 0, 0), CAT('f', 'F', 'SS', 0, 1),
+  { ...CAT('o', 'O', 'SS', 0, 0), pureLL: true }, CAT('f', 'F', 'SS', 0, 1),
   CAT('dp', 'D+', 'SS', 1, 0), CAT('cp', 'C+', 'SS', 1, 1),
   CAT('dm', 'D-', 'SS', 2, 0), CAT('cm', 'C-', 'SS', 2, 1),
 ];
 
 export const CATEGORY_SLUGS = CATEGORIES.map((c) => c.slug);
+
+/** 站上真正列出 / 可训练的 41 类 —— 去掉退化成纯顶层的 O(见 {@link LsllCategory.pureLL})。 */
+export const LISTED_CATEGORIES = CATEGORIES.filter((c) => !c.pureLL);
+/** 去掉 O 之后的局面数:583,284 − 3,916 = 579,368。 */
+export const LISTED_CASES = TOTAL_CASES - CATEGORIES.reduce((n, c) => n + (c.pureLL ? c.count : 0), 0);
 
 const bySlug = new Map(CATEGORIES.map((c) => [c.slug, c]));
 export function categoryBySlug(slug: string): LsllCategory | undefined { return bySlug.get(slug); }

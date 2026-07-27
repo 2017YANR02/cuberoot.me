@@ -15,8 +15,8 @@
  * 各自出图,并挂上站内公式库(zbls_algs.json / zbll_algs.json)。
  */
 import {
-  type LsllState, CATEGORIES, type LsllCategory, canonicalKey, unpackState, keyFromString,
-  pairDisplayTurn,
+  type LsllState, CATEGORIES, type LsllCategory, canonicalKey, categoryBySlug, unpackState,
+  keyFromString, pairDisplayTurn,
 } from './model';
 import {
   LSLL_CORNER_POS, LSLL_EDGE_POS, cornerFaceletIdx, edgeFaceletIdx,
@@ -137,6 +137,18 @@ let zblsCasesCache: ZblsCase[] | null = null;
 /** 306 个 ZBLS case。 */
 export function allZblsCases(): ZblsCase[] {
   return (zblsCasesCache ??= buildZblsCases());
+}
+
+/**
+ * 站上列出 / 可训练的 302 个 —— 去掉 O 类那 4 个:1 个全解构型(第一眼根本不存在),
+ * 3 个对子已在槽里、只差翻棱(整条路线剩的就是顶层,见 `model.LsllCategory.pureLL`)。
+ */
+export function listedZblsCases(): ZblsCase[] {
+  return allZblsCases().filter((z) => !categoryBySlug(z.family)?.pureLL);
+}
+/** 去掉 O 类之后的两步路线数:302 × 494 = 149,188。 */
+export function listedClass3Total(): number {
+  return listedZblsCases().length * ZBLL_CASE_COUNT;
 }
 
 const byCodeCache = new Map<string, ZblsCase>();
