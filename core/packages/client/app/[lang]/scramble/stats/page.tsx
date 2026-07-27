@@ -1479,9 +1479,10 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
           // 该格没有完整分布可画。别显示空图 —— 直接说明有什么、缺什么、卡在哪。
           <div className="scramble-stats-exact-empty">
             {!exactColors ? (
+              // 走到这里只剩三色底 / 五色底 —— 四色底自 dist_cross_6col --faces 起就有了
               <p>{tr({
-                zh: '四色底在这批数据里没有对应口径 —— 精确穷举只算了单色底、双色底与六色底三档。',
-                en: 'There is no four-color counterpart in this dataset — the exhaustive computation covers single, dual and color-neutral bottoms only.',
+                zh: '三色底与五色底在这批数据里没有对应口径 —— 精确穷举按可选底色数分档,只有单色、双色、四色、六色四档。',
+                en: 'Three- and five-color bottoms have no counterpart in this dataset — the exhaustive computation is tiered by the number of allowed bottom colors: one, two, four and six.',
               })}</p>
             ) : exactCell?.kind === 'zero' ? (
               <>

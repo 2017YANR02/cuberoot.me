@@ -7,7 +7,10 @@
  *
  * 数据来源:solver/src/bin/dist_*.rs 头注释里的 GOLDEN 常量。每个数据集都是
  * 「C++ 先出金标 → Rust 独立复算 → 逐位一致」,两端耗时对照见 solver/CLAUDE.md。
- * 全部 23 个数据集加起来不到 6KB,故走 TS 常量而非 stats/*.json 的 rsync 管道。
+ * 例外是四色底那 4 个「仅 0 步」格:solver 没有对应 bin,由 lib/skip-probability 的
+ * 容斥现算 —— 同一套代码把其余 12 个 0 步金标(分别出自 5 个不同的 bin)逐位复现,
+ * 见 tests/skip_probability.test.ts。
+ * 全部 27 个数据集加起来不到 7KB,故走 TS 常量而非 stats/*.json 的 rsync 管道。
  *
  * ⚠ counts / total 一律是**字符串**,不是 number。双色底 XCross 的 d=7 是
  * 25,284,688,565,714,070,184,比 Number.MAX_SAFE_INTEGER 大三个数量级 —— 存成 number
@@ -102,8 +105,8 @@ export type ExactCell = ExactFull | ExactZeroOnly;
 type StageTable = Partial<Record<ExactSlot, Partial<Record<ExactColors, ExactCell>>>>;
 
 /**
- * 23 个数据集。数值逐位抄自 solver/src/bin/dist_*.rs 的 GOLDEN 注释,
- * 每组的和必须等于 total —— tests/scramble_exact_dist.test.ts 用 toBe 锁死。
+ * 27 个数据集。数值逐位抄自 solver/src/bin/dist_*.rs 的 GOLDEN 注释(四色底那 4 格除外,
+ * 见文件头),每组的和必须等于 total —— tests/scramble_exact_dist.test.ts 用 toBe 锁死。
  */
 export const EXACT_DIST: Record<ExactStage, StageTable> = {
   // ── Cross ─────────────────────────────────────────────────────────────
@@ -157,6 +160,14 @@ export const EXACT_DIST: Record<ExactStage, StageTable> = {
           '100275129028335625', '988415943046745864', '7571709355823781261',
           '25284688565714070184', '9286904784514949171', '9959546054057915', '20230604'],
       },
+      BGOR: {
+        kind: 'zero',
+        zero: '9405280010083',
+        blocked: {
+          zh: '完整分布未算 —— 与六色底同因:多色底 XCross 的全分布没有可信金标',
+          en: 'Full distribution not computed — same reason as CN: no trusted ground truth for multi-colour XCross',
+        },
+      },
       BGORWY: {
         kind: 'zero',
         zero: '14066967166411',
@@ -206,6 +217,14 @@ export const EXACT_DIST: Record<ExactStage, StageTable> = {
           en: 'Full distribution not computed — needs 2×21GB pruning tables, beyond a 32GB machine',
         },
       },
+      BGOR: {
+        kind: 'zero',
+        zero: '47399792819',
+        blocked: {
+          zh: '完整分布未算 —— 剪枝表同上量级,跑不动',
+          en: 'Full distribution not computed — pruning tables of the same scale, out of reach',
+        },
+      },
       BGORWY: {
         kind: 'zero',
         zero: '70090706379',
@@ -253,6 +272,14 @@ export const EXACT_DIST: Record<ExactStage, StageTable> = {
           en: 'Full distribution not computed — same scale as above',
         },
       },
+      BGOR: {
+        kind: 'zero',
+        zero: '148429829',
+        blocked: {
+          zh: '完整分布未算 —— 同上量级',
+          en: 'Full distribution not computed — same scale as above',
+        },
+      },
       BGORWY: {
         kind: 'zero',
         zero: '222523171',
@@ -279,6 +306,14 @@ export const EXACT_DIST: Record<ExactStage, StageTable> = {
       WY: {
         kind: 'zero',
         zero: '124415',
+        blocked: {
+          zh: '完整分布未算 —— 350TB visited',
+          en: 'Full distribution not computed — 350TB of visited state',
+        },
+      },
+      BGOR: {
+        kind: 'zero',
+        zero: '248821',
         blocked: {
           zh: '完整分布未算 —— 350TB visited',
           en: 'Full distribution not computed — 350TB of visited state',

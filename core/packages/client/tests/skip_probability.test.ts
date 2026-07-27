@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  AUF, LL_CO, LL_EO, LL_PERM, LL_UNIVERSE, SKIP_ENTRIES,
+  AUF, BOTTOM_FACES, LL_CO, LL_EO, LL_PERM, LL_UNIVERSE, SKIP_ENTRIES,
   atLeastKInRound, blockEdges, cornersOnFace, crossEdges, entryById,
   oneOver, oneOverRelative, probability, statesWithAnyCrossSolved,
   statesWithAnyXCrossSolved, statesWithSolved,
@@ -80,6 +80,61 @@ describe('拿十字金标验容斥', () => {
     const cell = EXACT_DIST.cross.unfixed![key] as ExactFull;
     // exact_dist 的计数活在它自己的分母上,换算成全群要交叉相乘
     expect(mine * BigInt(cell.total)).toBe(BigInt(cell.counts[0]) * G);
+  });
+});
+
+/**
+ * 同一套容斥再往前推一步:精确集里**每一个** 0 步计数都由它复算一遍。
+ *
+ * 那 12 个金标分别出自 5 个不同的 Rust bin(dist_cross_{1,2,6}col、dist_xcross_{1,2}col、
+ * dist_xcross_6col_0f、dist_xxcross_{1,2,6}col_0f、dist_xxxcross_*_0f、dist_xxxxcross_*_0f),
+ * 算法各不相同。全部逐位复现之后,才敢让同一套代码去补四色底那 4 格 —— 那 4 格没有 bin。
+ */
+describe('拿精确集的 0 步金标验容斥(全 16 格)', () => {
+  // 「仅 0 步」格不带 total,分母按底色档定:单色底固定了底面,只有 4 十字棱 + 4 中层棱
+  // + 4 个该面角有意义,商掉整个顶层 → |G|/62,208;多色底哪个块都可能参与,分母就是 |G|。
+  const denOf = (colors: string): bigint => (colors === 'W' ? G / 62208n : G);
+
+  it.each([
+    ['xcross', 1], ['xxcross', 2], ['xxxcross', 3], ['xxxxcross', 4],
+  ] as const)('%s 四档底色', (stage, k) => {
+    for (const colors of ['W', 'WY', 'BGOR', 'BGORWY'] as const) {
+      const cell = EXACT_DIST[stage].unfixed![colors]!;
+      const golden = cell.kind === 'full' ? cell.counts[0] : cell.zero;
+      const den = cell.kind === 'full' ? BigInt(cell.total) : denOf(colors);
+      const mine = statesWithAnyXCrossSolved(BOTTOM_FACES[colors], k);
+      // 交叉相乘比分数,不比浮点
+      expect(`${stage}/${colors}=${mine * den}`).toBe(`${stage}/${colors}=${BigInt(golden) * G}`);
+    }
+  });
+
+  // 速查表的 CN 四条与覆盖矩阵的六色底 0 步必须是同一个数,否则同一件事站上有两种说法
+  it('速查表的 CN 四条 = 覆盖矩阵的六色底 0 步', () => {
+    for (const [k, stage] of [[1, 'xcross'], [2, 'xxcross'], [3, 'xxxcross'], [4, 'xxxxcross']] as const) {
+      const cell = EXACT_DIST[stage].unfixed!.BGORWY!;
+      const golden = cell.kind === 'full' ? cell.counts[0] : cell.zero;
+      expect(`${stage}=${entryById(`xcross${k}-cn`).num}`).toBe(`${stage}=${golden}`);
+    }
+  });
+
+  it('四色底那 4 格夹在双色底与六色底之间', () => {
+    for (const stage of ['xcross', 'xxcross', 'xxxcross', 'xxxxcross'] as const) {
+      const z = (c: 'WY' | 'BGOR' | 'BGORWY') => {
+        const cell = EXACT_DIST[stage].unfixed![c]!;
+        return BigInt(cell.kind === 'full' ? cell.counts[0] : cell.zero);
+      };
+      // 同一个分母(多色底都是 |G|),可以直接比大小
+      expect(`${stage}: ${z('WY') < z('BGOR')} ${z('BGOR') < z('BGORWY')}`).toBe(`${stage}: true true`);
+    }
+  });
+
+  // 容斥不是「面数 × 单色底」:目标之间共用块,重叠会把总数压下来一点点。
+  // 越深的阶段重叠越小(四槽全好的两个底色几乎不可能同时发生),比值就越贴近整数倍。
+  it('六色底 ≠ 3 × 双色底,但差得很少 —— 重叠项的量级看得见', () => {
+    const zero = (stage: 'xxxxcross', c: 'WY' | 'BGORWY') =>
+      BigInt((EXACT_DIST[stage].unfixed![c] as { zero: string }).zero);
+    expect(zero('xxxxcross', 'WY') * 3n).toBe(373245n);
+    expect(zero('xxxxcross', 'BGORWY')).toBe(373219n); // 少 26 = 重叠
   });
 });
 
