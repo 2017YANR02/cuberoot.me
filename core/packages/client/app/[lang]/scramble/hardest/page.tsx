@@ -21,6 +21,11 @@ import {
 } from './_data/cn_xcross_10';
 import { EOCROSS_10F, EOCROSS_10F_BOTH_AXES, EOCROSS_10F_TOTAL } from './_data/eocross_10f';
 import { HARD_SCRAMBLES, type HardStageKey } from './_data/hard_scrambles';
+import {
+  TWENTY_F_BASELINE, TWENTY_F_EASY_CROSS, TWENTY_F_RANDOM_CN_CROSS, TWENTY_F_RANDOM_CROSS,
+  TWENTY_F_RANDOM_EOCROSS, TWENTY_F_RANDOM_TOTAL, TWENTY_F_SYM_CENSUS, TWENTY_F_SYM_SELF_INVERSE,
+  TWENTY_F_SYM_TOTAL, twentyFMean,
+} from './_data/twenty_f';
 import './hardest.css';
 
 const PREVIEW = 46;
@@ -47,6 +52,11 @@ function span(min: number | null, max: number | null): string {
 
 function solverHref(scramble: string): string {
   return `/scramble/solver?event=333&scramble=${encodeURIComponent(scramble)}`;
+}
+
+/** 对称型那张表点过去 = 对称分析页(analyze 视图)现场重算这条打乱的对称群。 */
+function symmetryHref(scramble: string): string {
+  return `/scramble/symmetry?view=analyze&q=${encodeURIComponent(scramble)}`;
 }
 
 export default function HardestPage() {
@@ -286,6 +296,117 @@ export default function HardestPage() {
             </Link>
           ))}
         </div>
+      </section>
+
+      <section className="hardest-section">
+        <h2>{tr({ zh: '20 步态:整方最难的那一撮', en: 'Twenty-move states: the hardest of all' })}</h2>
+        <p>
+          {tr({
+            zh: '上面几节量的都是「开局」。换一个口径 —— 整个魔方的最优解 —— 上限是 20 步(上帝之数),'
+              + '而 20 步的状态在 4.3 × 10¹⁹ 里只占约 1.1 × 10⁻¹¹。上游有两份这样的语料,本站把它们各算了一遍。',
+            en: 'The sections above all measure the opening. Switch to the other notion — the optimal solution '
+              + 'for the whole cube — and the ceiling is 20 moves, God’s number, reached by about 1.1 × 10⁻¹¹ '
+              + 'of the 4.3 × 10¹⁹ states. Two such corpora exist upstream; both are recomputed here.',
+          })}
+        </p>
+        <p>
+          {tr({
+            zh: `第一份是 kociemba.org 的 ${groupDigits(String(TWENTY_F_SYM_TOTAL))} 个带非平凡对称性的 20 步态,`
+              + '每条都标了对称型。本站用对称分析页那套 48 元群独立复算了一遍 —— '
+              + `${groupDigits(String(TWENTY_F_SYM_TOTAL))} 条逐条相同,一个不差。`
+              + `33 个对称型里只有 ${TWENTY_F_SYM_CENSUS.length} 个出现过;`
+              + `其中 ${TWENTY_F_SYM_SELF_INVERSE.toLocaleString()} 条与自身的逆同构。`,
+            en: `The first is kociemba.org’s ${groupDigits(String(TWENTY_F_SYM_TOTAL))} twenty-move states that `
+              + 'carry a nontrivial symmetry, each tagged with its point group. Recomputing every tag with the '
+              + `48-element group behind our symmetry page reproduces all ${groupDigits(String(TWENTY_F_SYM_TOTAL))} `
+              + `of them. Only ${TWENTY_F_SYM_CENSUS.length} of the 33 types occur at all, and `
+              + `${TWENTY_F_SYM_SELF_INVERSE.toLocaleString()} of the states are isomorphic to their own inverse.`,
+          })}
+        </p>
+        <table className="hardest-stage-table hardest-census">
+          <thead>
+            <tr>
+              <th scope="col">{tr({ zh: '对称型', en: 'Type' })}</th>
+              <th scope="col">{tr({ zh: '条数', en: 'States' })}</th>
+              <th scope="col">{tr({ zh: '第一条', en: 'First one' })}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {TWENTY_F_SYM_CENSUS.map((c) => (
+              <tr key={c.type}>
+                <th scope="row">{c.type}</th>
+                <td className="hardest-stage-n">{c.count.toLocaleString()}</td>
+                <td className="hardest-stage-sol">
+                  <Link href={symmetryHref(c.example)} prefetch={false}>{c.example}</Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p>
+          {tr({
+            zh: '表头那条 Oh(48 个元素全在)全语料只有一个,就是 superflip:角块全归位、12 条棱全部原地翻转。'
+              + '测试里是逐位验的 —— 角排列、角朝向、棱排列、棱朝向四项,不是靠它有名。',
+            en: 'The single Oh entry — all 48 elements — is the superflip: corners home, all twelve edges flipped '
+              + 'in place. The test checks that piece by piece (corner permutation, corner orientation, edge '
+              + 'permutation, edge orientation) rather than taking its reputation for granted.',
+          })}
+        </p>
+        <p>
+          {tr({
+            zh: `第二份是 cube20.org 的 ${TWENTY_F_RANDOM_TOTAL} 个随机 20 步态。拿站内纯 TS 求解器量它们的开局,`
+              + '三个口径全部比全空间难 —— 整方最难的状态,开局也确实更难开,而且差距远大于采样误差。',
+            en: `The second is cube20.org’s ${TWENTY_F_RANDOM_TOTAL} random twenty-move states. Measuring their `
+              + 'openings with the in-repo TypeScript solvers puts all three metrics above the whole-space '
+              + 'figures: states that are hardest overall really do open harder, by far more than sampling error.',
+          })}
+        </p>
+        <table className="hardest-stage-table">
+          <thead>
+            <tr>
+              <th scope="col">{tr({ zh: '口径', en: 'Metric' })}</th>
+              <th scope="col">{tr({ zh: '这 1000 条', en: 'These 1000' })}</th>
+              <th scope="col">{tr({ zh: '全空间', en: 'Whole space' })}</th>
+              <th scope="col">{tr({ zh: '差', en: 'Gap' })}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {([
+              [tr({ zh: '单色底十字', en: 'Single-colour cross' }), TWENTY_F_RANDOM_CROSS, TWENTY_F_BASELINE.cross],
+              [tr({ zh: '六色底十字', en: 'Colour-neutral cross' }), TWENTY_F_RANDOM_CN_CROSS, TWENTY_F_BASELINE.cnCross],
+              [tr({ zh: 'EOCross', en: 'EOCross' }), TWENTY_F_RANDOM_EOCROSS, TWENTY_F_BASELINE.eoCross],
+            ] as [string, Record<number, number>, number][]).map(([label, hist, base]) => (
+              <tr key={label}>
+                <th scope="row">{label}</th>
+                <td className="hardest-stage-n">{twentyFMean(hist).toFixed(2)}</td>
+                <td className="hardest-stage-n">{base.toFixed(2)}</td>
+                <td className="hardest-stage-n">{`+${(twentyFMean(hist) - base).toFixed(2)}`}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p>
+          {tr({
+            zh: '前两行的「全空间」是穷举金标,EOCross 那行是 132 万条 WCA 真题的样本均值(与这 1000 条同口径:'
+              + '两条 EO 轴取更短的那条)。反过来也有意思:这 1000 条里有一条 ',
+            en: 'The whole-space figures on the first two rows are exhaustive gold values; the EOCross row is the '
+              + 'sample mean over 1.32M WCA scrambles, measured the same way as these 1000 (the shorter of the '
+              + 'two EO axes). The converse is worth a look too — one of the 1000 has ',
+          })}
+          <Link href={solverHref(TWENTY_F_EASY_CROSS.scramble)} prefetch={false}>
+            <code>{TWENTY_F_EASY_CROSS.scramble}</code>
+          </Link>
+          {tr({
+            zh: `,绿底十字一步(${TWENTY_F_EASY_CROSS.moves})就好,整解照样要 20 步。`,
+            en: `, whose green cross is one move away (${TWENTY_F_EASY_CROSS.moves}) and which still needs 20 moves overall.`,
+          })}
+        </p>
+        <p className="hardest-source">
+          {tr({ zh: '语料来源:', en: 'Corpora: ' })}
+          <a href="https://kociemba.org/math/optman/20moves.zip" target="_blank" rel="noreferrer">20moves.zip</a>
+          {' · '}
+          <a href="https://cube20.org/distance20s/random1000.txt" target="_blank" rel="noreferrer">random1000.txt</a>
+        </p>
       </section>
 
       <section className="hardest-section">
