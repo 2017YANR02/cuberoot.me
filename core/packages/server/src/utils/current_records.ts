@@ -314,6 +314,49 @@ function judgeByDay(
   return { tag: '', keatoned };
 }
 
+/** 单条「外部源」纪录(WCA Live recentRecords feed)的 Reg 9i2 同日复判.
+ *  与 enrichComp 共用 judgeByDay —— 首页纪录列表与比赛页必须同一口径.
+ *  拿不到基线快照(current_records 还没 warm)返 null,调用方保留上游 tag. */
+export function judgeExternalRecord(
+  value: number,
+  eventId: string,
+  isAvg: boolean,
+  iso2: string,
+  day: DayBest,
+): { tag: string; keatoned: KeatonedInfo | null } | null {
+  const recs = peekCurrentRecords();
+  if (!recs) return null;
+  const countryId = recs.iso2ToCountryId.get((iso2 || '').toLowerCase());
+  const u: MinimalUser | undefined = countryId
+    ? { region: '', countryId, continentId: recs.countryIdToContinent.get(countryId) }
+    : undefined;
+  return judgeByDay(value, eventId, isAvg, u, recs, day);
+}
+
+/** 纪录级别序:WR > 洲际(CR 及 AsR/ER/NAR/SAR/AfR/OcR)> NR.数字越大级别越低.
+ *  首页纪录列表排序与下面的降级判定共用这一份. */
+export function recordLevelRank(tag: string): number {
+  if (tag === 'WR') return 0;
+  if (tag === 'CR') return 1;
+  if (tag === 'NR') return 2;
+  return tag.endsWith('R') ? 1 : 3;
+}
+
+/** 上游 feed 的 tag + 本站同日复判结果 → 有效 tag;null = 当日已被更快的抹掉,
+ *  按 Reg 9i2 根本不是纪录,不该出现在纪录列表里.
+ *
+ *  只降级不升级:升级要信 wca_results_flat 基线,而那是周更 dump —— 比 feed 更松的基线
+ *  会把已被超越的成绩误升成 WR.降级只依赖「同日有更快的」这个本地事实,安全. */
+export function resolveFeedTag(
+  feedTag: string,
+  judged: { tag: string; keatoned: KeatonedInfo | null } | null,
+): string | null {
+  if (!judged) return feedTag;
+  if (judged.tag) return recordLevelRank(judged.tag) > recordLevelRank(feedTag) ? judged.tag : feedTag;
+  // 一级都够不着:确实被同日更快的抹掉才丢;单纯没基线(keatoned 为空)不动 feed.
+  return judged.keatoned ? null : feedTag;
+}
+
 /** 把一场比赛的成绩并入同日最好池.同一 scope 取更小值;并列(同值)保留先入者. */
 export function foldCompIntoDayBest(
   day: DayBest,
