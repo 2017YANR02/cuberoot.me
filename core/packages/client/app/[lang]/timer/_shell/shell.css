@@ -634,6 +634,18 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 .solver-panel[data-open='true']  .solver-panel-chevron { transform: rotate(-90deg); }
 .solver-panel-expand { opacity: 0.7; }
 .solver-panel-body { width: 100%; margin-top: 8px; }
+/* 打乱原文 — 面板/浮层里解法讲的是哪条打乱。同 .scramble-strip 的记号字体,但只做正文
+   大小:这里是对照用的参考行,不是要人隔着房间读的主视觉。窄栏放不下就折行。 */
+.solver-panel-scramble {
+  margin: 0 0 10px;
+  font-family: 'LiberationMono', var(--font-mono);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--foreground);
+  overflow-wrap: anywhere;
+  -webkit-user-select: text;
+  user-select: text;
+}
 .solver-panel-loading {
   display: flex;
   align-items: center;

@@ -50,6 +50,10 @@ interface Props {
 function SolverBody({ scramble, isZh, compact }: Props & { compact: boolean }) {
   return (
     <>
+      {/* 打乱原文。手机上这块是全屏浮层,盖住了计时器自己的打乱条;桌面右栏也够窄,
+          转头去主区对照同样麻烦 —— 解法讲的是哪条打乱,就摆在解法旁边。
+          尚未生成打乱(首帧 / 换项目那一刻)时整块不渲染,不留空行。 */}
+      {scramble.trim() && <p className="solver-panel-scramble">{scramble}</p>}
       <StageSolver scramble={scramble} lang={isZh ? 'zh' : 'en'} compact={compact} />
       <StepSolve scramble={scramble} isZh={isZh} />
     </>

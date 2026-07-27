@@ -30,14 +30,8 @@ export const afterFirstPaint = (): Promise<void> => new Promise<void>((resolve) 
 });
 
 export interface SimStageProps {
-  /** 画布边长(px,正方形)。传 `fluid` 时它退化成宽度上限。 */
+  /** 画布边长(px,正方形)。 */
   size: number;
-  /**
-   * 宽度交给父容器(高度按 1:1 跟着走),`size` 变成 max-width。
-   * 给「宽度由布局定」的嵌入点用:钉死 px 在窄栏里只会被 CSS 压成非正方形 ——
-   * host 的 client box 就是渲染尺寸(mountSimWorld 的 ResizeObserver),压扁了画面也跟着扁。
-   */
-  fluid?: boolean;
   /**
    * 引擎挂载。调用时 host 已在 DOM 里、尺寸已定;返回卸载函数(同 useEffect 的清理)。
    * 组件已经等过第一帧,里面直接 `await import(...)` 即可。
@@ -56,7 +50,7 @@ export interface SimStageProps {
 }
 
 export default function SimStage({
-  size, fluid = false, mount, onReady, onResetView, className, busyLabel, children,
+  size, mount, onReady, onResetView, className, busyLabel, children,
 }: SimStageProps) {
   const t = useT();
   const hostRef = useRef<HTMLDivElement>(null);
@@ -94,13 +88,7 @@ export default function SimStage({
   return (
     <div className={`sim-stage${className ? ` ${className}` : ''}`}>
       <style>{INLINE_CSS}</style>
-      <div
-        ref={hostRef}
-        className="sim-stage-canvas"
-        style={fluid
-          ? { width: '100%', maxWidth: size, aspectRatio: '1 / 1' }
-          : { width: size, height: size }}
-      />
+      <div ref={hostRef} className="sim-stage-canvas" style={{ width: size, height: size }} />
       {children}
       {!ready && showBusy && (
         <span className="sim-stage-busy">

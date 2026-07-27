@@ -4,7 +4,8 @@
  * ReconPlayerBase — the shared read-only WebGL preview for recon flows. It owns
  * the entire cuber-engine lifecycle (lazy three + World import, renderer, resize,
  * drag-to-orbit, RAF render loop, optional back-view window, cleanup) plus the
- * play / step / scrub controls and the caret-scrub imperative handle.
+ * play / step / scrub controls and the imperative handle (ReconPlayerHandle) that
+ * lets a caller drive it — recon's caret sync, StageSolver's solution list.
  *
  * Puzzle-specific behavior is supplied by a ReconPlayerAdapter<M>: how to parse
  * the solution into moves, how to build the puzzle, how to snap a prefix instantly,
@@ -26,6 +27,16 @@ import PlaybackBar from '@/components/PlaybackBar';
 import './recon-player.css';
 
 const PLAY_INTERVAL_MS = 520;
+
+/** 播放器的外部控制入口(回填到调用方的 `playerRef`)。
+ *  `__kind` 是拼图标签,卸载时用它确认「这个 ref 还是我放的」再清空。 */
+export interface ReconPlayerHandle {
+  __kind: string;
+  /** 跳到「已走 n 步」的那一帧并停下(复盘表单的光标同步、换解法时回到开头)。 */
+  jumpToMoveCount(n: number): void;
+  /** 从当前位置自动播下去;已在结尾则先回开头(与画面里那颗播放键同一套语义)。 */
+  play(): void;
+}
 
 export interface ReconPlayerAdapter<M> {
   /** Stable tag exposed on the imperative handle's `__kind`. */
@@ -240,14 +251,19 @@ export default function ReconPlayerBase<M>({
     return () => window.clearInterval(timer);
   }, [playing, setStep]);
 
-  // ── Expose imperative handle for caret-driven scrubbing ──
+  // ── Expose imperative handle for caret-driven scrubbing / list-driven playback ──
   useEffect(() => {
     if (!playerRef) return;
     const { kind } = adapterRef.current;
-    playerRef.current = {
+    const handle: ReconPlayerHandle = {
       __kind: kind,
       jumpToMoveCount: (n: number) => jumpToStep(n),
+      play: () => {
+        if (stepRef.current >= movesRef.current.length) jumpToStep(0);
+        setPlaying(true);
+      },
     };
+    playerRef.current = handle;
     return () => { if (playerRef.current?.__kind === kind) playerRef.current = null; };
   }, [playerRef, jumpToStep]);
 

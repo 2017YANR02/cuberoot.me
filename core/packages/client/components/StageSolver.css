@@ -523,7 +523,10 @@ html[data-theme='dark'] .stsv {
   position: sticky;
   top: 12px;
 }
-.stsv-player .alg-sim-player { width: 100%; }
+/* 播放器复用 /recon 那一个(.recon-player)。它默认 height:100% 撑满父容器(详情页给的是
+   定高左栏);这里高度由内容决定 → 放开高度,改给画布定 1:1,控制条自然接在下面。 */
+.stsv-player .recon-player { height: auto; }
+.stsv-player .recon-player-canvas { aspect-ratio: 1 / 1; }
 .stsv-compact .stsv-player { flex-basis: 240px; }
 
 /* ── 窄屏 ── */
