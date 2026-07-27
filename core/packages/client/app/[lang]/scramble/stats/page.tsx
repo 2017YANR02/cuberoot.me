@@ -1508,6 +1508,18 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
                 </div>
                 {exactCell.top && <p>{tr(exactCell.top.label)}</p>}
                 <p>{tr(exactCell.blocked)}</p>
+                {exactCell.refMean !== undefined && (
+                  <p>
+                    {tr({
+                      zh: `上游表格给这一格的平均步数是 ${exactCell.refMean.toFixed(2)} —— 搬运值,不是本站算的。`,
+                      en: `The upstream sheet puts the mean for this cell at ${exactCell.refMean.toFixed(2)} — transcribed, not computed here.`,
+                    })}
+                    {tr({
+                      zh: '同一张表与本站精确集有八格重叠,七格逐位对上(只有固定槽 XCross 那格它少进了一位)。',
+                      en: 'That sheet overlaps our exact data in eight cells and seven match to the digits given — only its fixed-slot XCross figure is a rounding short.',
+                    })}
+                  </p>
+                )}
               </>
             ) : (
               <p>{tr({ zh: '该组合未计算', en: 'This combination has not been computed' })}</p>

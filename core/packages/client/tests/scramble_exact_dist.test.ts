@@ -345,3 +345,80 @@ describe('格式化', () => {
     });
   });
 });
+
+/**
+ * 上游 `3x3.xlsx` 的 `stat` 页是一张 4 档底色 × 5 个阶段的**平均步数**表。
+ * 它与本站精确集有五格重叠 —— 那五格必须逐位对上(对上了才有资格把剩下几格的均值
+ * 当参考值搬进来,见 `ExactZeroOnly.refMean`)。
+ */
+describe('对上游 stat 页的平均步数', () => {
+  const meanOf = (stage: ExactStage, slot: string, colors: string): number => {
+    const cell = (EXACT_DIST[stage] as Record<string, Record<string, unknown>>)[slot][colors];
+    return exactMean(cell as ExactFull);
+  };
+
+  // `exactMean` 只到 6 位小数(BigInt 定点截断),表格十字那三档给到 9 位 ——
+  // 允许的偏差就是截断本身,1e-6。其余格子表格只给两位,允许半个末位 0.005。
+  it.each([
+    ['cross', 'unfixed', 'W', 5.812058081, 1e-6],
+    ['cross', 'unfixed', 'WY', 5.387206484, 1e-6],
+    ['cross', 'unfixed', 'BGORWY', 4.809458647, 1e-6],
+    ['xcross', 'unfixed', 'W', 7.35, 0.005],
+    ['xcross', 'unfixed', 'WY', 6.99, 0.005],
+    ['xxcross', 'adj', 'W', 9.96, 0.005],
+    ['xxcross', 'diag', 'W', 9.95, 0.005],
+  ])('%s/%s/%s 的均值与表格一致', (stage, slot, colors, sheet, tol) => {
+    const ours = meanOf(stage as ExactStage, slot as string, colors as string);
+    expect(Math.abs(ours - (sheet as number))).toBeLessThan(tol as number);
+  });
+
+  // 唯一对不上的一格:固定 BL 槽的 XCross。精确均值 7.975721,四舍五入应是 7.98,
+  // 表格写 7.97。同一张表其余七格都在半个末位以内,所以这一格是它自己少进了一位,
+  // 不是我们算错 —— 分布本身与 C++ 金标逐位一致(见上面的「对齐 C++ 金标」)。
+  it('固定槽 XCross:表格的 7.97 比正确的舍入低一个末位', () => {
+    const ours = meanOf('xcross', 'fixed1', 'W');
+    expect(ours).toBeCloseTo(7.975721, 6);
+    expect(Number(ours.toFixed(2))).toBe(7.98);
+    expect(Math.abs(ours - 7.97)).toBeGreaterThan(0.005);
+  });
+
+  it('搬来的参考均值只挂在算不动的格子上,而且方向必须对', () => {
+    const refs: Array<[ExactStage, string, number]> = [];
+    eachCell((stage, slot, colors, cell) => {
+      const c = cell as { kind: string; refMean?: number };
+      if (c.refMean === undefined) return;
+      expect(c.kind).toBe('zero');            // 自己能算的格子不许再挂搬运值
+      expect(slot).toBe('unfixed');
+      refs.push([stage, colors, c.refMean]);
+    });
+    expect(refs.length).toBe(7);
+
+    // 底色越多越好解:单色 > 双色 > 六色。前两档能算的就用算的,算不动的用参考值。
+    for (const stage of ['xcross', 'xxcross', 'xxxcross'] as ExactStage[]) {
+      const at = (colors: string): number => {
+        const cell = (EXACT_DIST[stage] as Record<string, Record<string, unknown>>)
+          .unfixed[colors] as { kind: string; refMean?: number };
+        return cell.kind === 'full' ? exactMean(cell as unknown as ExactFull) : cell.refMean!;
+      };
+      expect(at('W')).toBeGreaterThan(at('WY'));
+      expect(at('WY')).toBeGreaterThan(at('BGORWY'));
+    }
+
+    // 阶段越靠后越难:同一档底色下 XCross < XXCross < XXXCross
+    for (const colors of ['W', 'WY', 'BGORWY']) {
+      const at = (stage: ExactStage): number => {
+        const cell = (EXACT_DIST[stage] as Record<string, Record<string, unknown>>)
+          .unfixed[colors] as { kind: string; refMean?: number };
+        return cell.kind === 'full' ? exactMean(cell as unknown as ExactFull) : cell.refMean!;
+      };
+      expect(at('xcross')).toBeLessThan(at('xxcross'));
+      expect(at('xxcross')).toBeLessThan(at('xxxcross'));
+    }
+
+    // 固定槽只会更难:同为单色底,固定 BL 槽的 XCross 比四槽取 min 慢
+    expect(meanOf('xcross', 'fixed1', 'W')).toBeGreaterThan(meanOf('xcross', 'unfixed', 'W'));
+    expect(meanOf('xxcross', 'adj', 'W')).toBeGreaterThan(
+      (EXACT_DIST.xxcross.unfixed!.W as { refMean?: number }).refMean!,
+    );
+  });
+});

@@ -98,6 +98,16 @@ interface ExactZeroOnly {
     label: { zh: string; en: string };
     href?: string;
   };
+  /**
+   * 上游表格(`3x3.xlsx` 的 `stat` 页)给的平均步数,两位小数。**这是搬运值,不是证明** ——
+   * 页面上必须与穷举出来的均值区分开。
+   *
+   * 之所以敢摆上来:同一张表与本站精确集有八格重叠,**七格逐位对上**(三档十字给到 9 位小数的
+   * 5.812058081 / 5.387206484 / 4.809458647,加 XCross 单色 7.35、双色 6.99,XXCross
+   * 固定双槽 9.96 adj / 9.95 diag)。唯一的例外是固定 BL 槽的 XCross:精确值 7.975721,
+   * 表格写 7.97 —— 少进了一位。剩下这几格我们算不动,同一个来源同一套口径,当参考值比留空强。
+   */
+  refMean?: number;
   blocked: { zh: string; en: string };
 }
 export type ExactCell = ExactFull | ExactZeroOnly;
@@ -171,6 +181,7 @@ export const EXACT_DIST: Record<ExactStage, StageTable> = {
       BGORWY: {
         kind: 'zero',
         zero: '14066967166411',
+        refMean: 6.53,
         // 中间各档未知,但两个端点都知道:0 步走容斥,10 步是上游穷举搜出来的 438 个态。
         top: {
           depth: 10,
@@ -204,6 +215,7 @@ export const EXACT_DIST: Record<ExactStage, StageTable> = {
       W: {
         kind: 'zero',
         zero: '193203',
+        refMean: 9.23,
         blocked: {
           zh: '完整分布未算 —— 695T 全空间,C++ 端自己也没解出来',
           en: 'Full distribution not computed — 695T state space, unsolved on the C++ side too',
@@ -212,6 +224,7 @@ export const EXACT_DIST: Record<ExactStage, StageTable> = {
       WY: {
         kind: 'zero',
         zero: '24037529283',
+        refMean: 8.88,
         blocked: {
           zh: '完整分布未算 —— 剪枝表 2×21GB,32GB 机器跑不动',
           en: 'Full distribution not computed — needs 2×21GB pruning tables, beyond a 32GB machine',
@@ -228,6 +241,7 @@ export const EXACT_DIST: Record<ExactStage, StageTable> = {
       BGORWY: {
         kind: 'zero',
         zero: '70090706379',
+        refMean: 8.49,
         blocked: {
           zh: '完整分布未算 —— 剪枝表同上量级,跑不动',
           en: 'Full distribution not computed — pruning tables of the same scale, out of reach',
@@ -259,6 +273,7 @@ export const EXACT_DIST: Record<ExactStage, StageTable> = {
       W: {
         kind: 'zero',
         zero: '597',
+        refMean: 11.31,
         blocked: {
           zh: '完整分布未算 —— 固定三槽版 2.2TB visited,32GB 机器跑不动',
           en: 'Full distribution not computed — the fixed-3-slot version needs 2.2TB of visited state',
@@ -267,6 +282,7 @@ export const EXACT_DIST: Record<ExactStage, StageTable> = {
       WY: {
         kind: 'zero',
         zero: '74276319',
+        refMean: 10.98,
         blocked: {
           zh: '完整分布未算 —— 同上量级',
           en: 'Full distribution not computed — same scale as above',
@@ -283,6 +299,7 @@ export const EXACT_DIST: Record<ExactStage, StageTable> = {
       BGORWY: {
         kind: 'zero',
         zero: '222523171',
+        refMean: 10.57,
         blocked: {
           zh: '完整分布未算 —— 同上量级',
           en: 'Full distribution not computed — same scale as above',
