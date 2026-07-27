@@ -47,16 +47,17 @@ export const SLOT_LABEL: Record<ExactSlot, { zh: string; en: string }> = {
 };
 
 /**
- * 底色档。精确集只有单 / 双 / 六色底三档 —— 且**同档内各配色的分布完全相同**
- * (魔方的颜色对称性:任选一个面当底,穷举出的分布逐位一样),故只存三份,
- * 查表时把 single 的 6 个键、dual 的 3 个键分别折到 'W' / 'WY'。
- * 四色底(quad)在精确集无对应数据 —— 那是经验分布为了「任选四色中最好的那个底」才有的口径。
+ * 底色档。**同档内各配色的分布完全相同**(魔方的颜色对称性:任选一个面当底,穷举出的分布
+ * 逐位一样),故每档只存一份,查表时把 single 的 6 个键、dual 的 3 个键、quad 的 3 个键
+ * 分别折到 'W' / 'WY' / 'BGOR'。四色底那条对称性不是假设 —— `dist_cross_6col --faces`
+ * 把 LRFB / UDFB / UDLR 三种取法各跑了一遍,九档逐位相同。
  */
-export type ExactColors = 'W' | 'WY' | 'BGORWY';
-export const EXACT_COLOR_KEYS: ExactColors[] = ['W', 'WY', 'BGORWY'];
+export type ExactColors = 'W' | 'WY' | 'BGOR' | 'BGORWY';
+export const EXACT_COLOR_KEYS: ExactColors[] = ['W', 'WY', 'BGOR', 'BGORWY'];
 export const COLORS_LABEL: Record<ExactColors, { zh: string; en: string }> = {
   W: { zh: '单色底', en: 'Single color' },
   WY: { zh: '双色底', en: 'Dual color' },
+  BGOR: { zh: '四色底', en: 'Four colors' },
   BGORWY: { zh: '六色底', en: 'Color neutral' },
 };
 
@@ -94,7 +95,7 @@ type StageTable = Partial<Record<ExactSlot, Partial<Record<ExactColors, ExactCel
  */
 export const EXACT_DIST: Record<ExactStage, StageTable> = {
   // ── Cross ─────────────────────────────────────────────────────────────
-  // dist_cross_1col / _2col / _6col
+  // dist_cross_1col / _2col / _6col(四色底走 `dist_cross_6col --faces LRFB`)
   cross: {
     unfixed: {
       W: {
@@ -107,6 +108,14 @@ export const EXACT_DIST: Record<ExactStage, StageTable> = {
         total: '5109350400',
         counts: ['53759', '806253', '8484602', '74437062', '506855983',
           '2031420585', '2311536662', '175751822', '3672'],
+      },
+      // 四色底 = 去掉一对相对色。分母与六色底同为 12!·2¹¹ —— 两者共用整个 12 棱商空间,
+      // 只是取 min 的色集不同(单/双色底那两档是各自的子空间,分母才更小)。
+      BGOR: {
+        kind: 'full',
+        total: '980995276800',
+        counts: ['20635791', '309065792', '3241839115', '27981105637', '175574881766',
+          '514537441534', '256994694935', '2335611639', '591'],
       },
       BGORWY: {
         kind: 'full',
@@ -277,15 +286,16 @@ export const EXACT_DIST: Record<ExactStage, StageTable> = {
 
 /**
  * 页面的 subsetKey(SubsetColorPicker 产出,如 'W' / 'Y' / 'BG' / 'BGOR' / 'BGORWY')
- * → 精确集的三个底色键。同档内各配色分布完全相同(颜色对称性),故 6 个单色键折到 'W'、
- * 3 个双色键折到 'WY'。四色底在精确集无数据 → null(调用方显示"不适用")。
+ * → 精确集的四个底色键。同档内各配色分布完全相同(颜色对称性),故 6 个单色键折到 'W'、
+ * 3 个双色键折到 'WY'、3 个四色键折到 'BGOR'。长度就是色数,不看具体是哪几个色。
  */
 export function exactColorsOf(subsetKey: string): ExactColors | null {
   const n = subsetKey.length;
   if (n === 1) return 'W';
   if (n === 2) return 'WY';
+  if (n === 4) return 'BGOR';
   if (n === 6) return 'BGORWY';
-  return null; // 四色底(quad)
+  return null;
 }
 
 export function getExactCell(stage: string, slot: string, subsetKey: string): ExactCell | null {
