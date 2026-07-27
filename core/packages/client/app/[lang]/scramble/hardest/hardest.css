@@ -272,3 +272,41 @@
   .hardest-figure b { font-size: 21px; }
   .hardest-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
 }
+
+/* ── 140 条 10 步 EOCross:纯清单,靠等宽字和窄行距压密度 ── */
+
+.hardest-corpus {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 2px 14px;
+  margin-top: 12px;
+}
+
+.hardest-corpus-item {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.hardest-corpus-item:hover {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
+.hardest-corpus-no {
+  min-width: 2.2em;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--faint-foreground);
+}
+
+.hardest-corpus-item code {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
