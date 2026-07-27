@@ -61,3 +61,67 @@ function gcd(a: number, b: number): number {
   while (b) [a, b] = [b, a % b];
   return a;
 }
+
+/** 顶层还原态自己也是一条轨道:0 步、16/4 = 4 个状态(它的对称阶是 4)。 */
+export const LL_SOLVED_ORBIT = { len: 0, states: 4, cases: 1 };
+
+export type OptimalMetric = 'htm' | 'qtm' | 'stm' | 'sqtm';
+
+export interface LlLengthBins {
+  /** 步数 → 该步数的状态数(每个 case 记 16/cn 个) */
+  byState: Record<number, number>;
+  /** 步数 → 该步数的 case 数 */
+  byCase: Record<number, number>;
+  /** 计入的状态总数 / case 总数 */
+  states: number;
+  cases: number;
+  /** 有 meta 但该度量下没有最优步数的 case —— 有一个就说明数据层缺口 */
+  missing: number;
+}
+
+/**
+ * 顶层最优步数分布:把四个 set 的 case 按轨道大小加权,得到「按状态计」的分布。
+ *
+ * 为什么要加权:对称 case(cn = 2 / 4)只覆盖 8 / 4 个状态,按 case 数画出来的直方图
+ * 会把它们与普通 case 等同看待。日常遇到的概率是按状态算的,两条曲线因此并不一样。
+ *
+ * 还原态那条轨道不在任何公式集里,`includeSolved` 打开时补上(4 个状态、0 步),
+ * 补上后总数正好 62,208 —— 这也是这个函数最强的自检。
+ */
+export function llOptimalBins(
+  caseLists: AlgCase[][],
+  metric: OptimalMetric = 'htm',
+  includeSolved = true,
+): LlLengthBins {
+  const byState: Record<number, number> = {};
+  const byCase: Record<number, number> = {};
+  let states = 0;
+  let cases = 0;
+  let missing = 0;
+  for (const list of caseLists) {
+    for (const c of list) {
+      const orbit = caseOrbit(c);
+      if (orbit === null) continue;
+      const len = c.meta?.optimal?.[metric]?.len;
+      if (typeof len !== 'number') { missing++; continue; }
+      byState[len] = (byState[len] ?? 0) + orbit;
+      byCase[len] = (byCase[len] ?? 0) + 1;
+      states += orbit;
+      cases += 1;
+    }
+  }
+  if (includeSolved) {
+    const { len, states: s, cases: n } = LL_SOLVED_ORBIT;
+    byState[len] = (byState[len] ?? 0) + s;
+    byCase[len] = (byCase[len] ?? 0) + n;
+    states += s;
+    cases += n;
+  }
+  return { byState, byCase, states, cases, missing };
+}
+
+/** 按状态加权的平均步数。 */
+export function llMeanLength(bins: LlLengthBins): number {
+  const sum = Object.entries(bins.byState).reduce((acc, [len, n]) => acc + Number(len) * n, 0);
+  return bins.states ? sum / bins.states : 0;
+}
