@@ -24,12 +24,18 @@ jobs:
       # 否则 bic/cm3/heli/helicv/ctico/sia222 的 "≥200 real cstimer scrambles" 全 0 条变红.
       # 例外:.claude/hooks(项目级 PreToolUse 钩子)—— code-guards-drift.test.ts 断言
       # block-raw-checkbox.ps1 / block-handwritten-trad.ps1 在仓库根存在,不拉进来会误判缺失.
+      # 例外:stats/scramble 下那两个小 JSON —— skip_probability / skewb_odds 拿它们跟站上
+      # 已发布的数据对表;整个 stats/scramble 是 235MB(downloads/ 占大头),所以只点名到文件.
+      # 点名到文件就必须关 cone 模式(cone 只认目录),模式改成 gitignore 风格、前导 / 锚定仓库根.
       - uses: actions/checkout@v6
         with:
+          sparse-checkout-cone-mode: false
           sparse-checkout: |
-            core
-            tools/cstimer-scramble
-            .claude/hooks
+            /core/
+            /tools/cstimer-scramble/
+            /.claude/hooks/
+            /stats/scramble/2x2_essential.json
+            /stats/scramble/puzzle_distribution.json
           filter: blob:none
 
       - uses: pnpm/action-setup@v6
