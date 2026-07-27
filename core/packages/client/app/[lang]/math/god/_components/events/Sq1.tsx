@@ -56,6 +56,55 @@ const REFS: { url: string; zh: string; en: string }[] = [
     en: 'ben1996123 — 2-generator subgroup diameter 43 / 44 (turn metric). NOT the full-puzzle God\'s number.' },
 ];
 
+/**
+ * 站内 SQ1 口径对照(C10):同一套口径在不同模块里的叫法,以及两个混在里面、
+ * 其实不是计步口径的名字。改任何一处 metric 切换器前先看这张表。
+ */
+const NAME_ROWS: {
+  key: string; zh: string; en: string; whereZh: string; whereEn: string; god: string;
+}[] = [
+  {
+    key: 'wca / 12c4',
+    zh: '(X,Y) 计 1、/ 计 1',
+    en: '(X,Y) = 1, / = 1',
+    whereZh: '打乱长度、计时器、打乱难度页默认口径;Rust Sq1WcaSolver',
+    whereEn: 'scramble length, the timer, the difficulty page default; Rust Sq1WcaSolver',
+    god: '26–27',
+  },
+  {
+    key: 'slash = twist',
+    zh: '只数 /,层转免费 —— 一套口径两个名字',
+    en: 'slashes only, layer turns free — one metric, two names',
+    whereZh: '难度页第二口径写 slash,sq1MoveCounts() 里写 twist;Rust Sq1Solver',
+    whereEn: 'the difficulty page says slash, sq1MoveCounts() says twist; Rust Sq1Solver',
+    god: '13',
+  },
+  {
+    key: 'face',
+    zh: '单层 1、双层 2、/ 1',
+    en: 'single layer 1, both layers 2, / 1',
+    whereZh: '本页的 31 步分布;sq1MoveCounts().face',
+    whereEn: 'the depth-31 distribution on this page; sq1MoveCounts().face',
+    god: '31',
+  },
+  {
+    key: 'cubeshape',
+    zh: '不是口径,是求解目标:解到上下层都成正方形,步数仍按 slash 数',
+    en: 'not a metric but a target: stop once both layers are square, still counted in slashes',
+    whereZh: '难度页的「求解目标」下拉',
+    whereEn: 'the difficulty page’s solve-target dropdown',
+    god: '7',
+  },
+  {
+    key: '2-gen 43/44',
+    zh: '不是整体上帝之数,是 2-生成子群的直径',
+    en: 'not a whole-puzzle God’s number — the diameter of a 2-generator subgroup',
+    whereZh: '本页参考资料',
+    whereEn: 'the references on this page',
+    god: '—',
+  },
+];
+
 export default function Sq1({ isZh }: { isZh: boolean; eventId?: string }) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
 
@@ -175,7 +224,48 @@ export default function Sq1({ isZh }: { isZh: boolean; eventId?: string }) {
             'Naming note: "12c4" is just the WCA regulation number (clause 12c4) for the "(X,Y)=1, /=1" metric — not an algorithm. The famous "43/44" is a 2-generator subgroup diameter, also not the full God\'s number.',
           )}
         </div>
+
+        <h3>{t('站内的五个名字,其实只有三套口径', 'Five names on this site, only three metrics')}</h3>
+        <p>
+          {t(
+            '同一套口径在站内不同地方叫法不同,还有两个根本不是计步口径的名字混在一起 —— 换切换器时最容易串档,所以逐个列清楚。',
+            'The same metric goes by different names in different corners of this site, and two names that are not metrics at all get mixed in. Since that is exactly what a switcher can silently confuse, here is each one.',
+          )}
+        </p>
+        <div className="sq1-table-wrap">
+          <table className="sq1-table">
+            <thead>
+              <tr>
+                <th>{t('站内名字', 'Name in the code')}</th>
+                <th>{t('数什么', 'What it counts')}</th>
+                <th>{t('出现在哪', 'Where it shows up')}</th>
+                <th>{t('上帝之数', "God's #")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {NAME_ROWS.map((r) => (
+                <tr key={r.key}>
+                  <td className="sq1-td-strong">{r.key}</td>
+                  <td>{t(r.zh, r.en)}</td>
+                  <td>{t(r.whereZh, r.whereEn)}</td>
+                  <td className="sq1-td-strong">{r.god}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="sq1-callout">
+          {t(
+            '两条底线:一、slash 与 twist 是同一套口径的两个名字,别当成两条曲线并排比;二、cubeshape 是求解目标不是口径 —— 它数的仍是 slash,只不过解到「上下层都成正方形」就停。',
+            'Two rules of thumb: slash and twist are two names for one metric, so never plot them as two curves; and cubeshape is a target, not a metric — it still counts slashes, it just stops once both layers are square.',
+          )}
+        </div>
         <Suspense fallback={<Loading />}><MoveCountCalculator isZh={isZh} /></Suspense>
+        <p className="sq1-hint">
+          {t('各阶段「跳步」的概率(立方体形状 1/919.5、PBL 1/20,736 等)在 ', 'The stage-skip odds (cube shape 1/919.5, PBL 1/20,736, …) live in ')}
+          <Link href="/math/probability">{t('概率速查表', 'the probability lookup table')}</Link>
+          {t(',与本页同一套形状枚举。', ', off the same shape enumeration as this page.')}
+        </p>
       </section>
 
       {/* ── §3 the two proven diameters ────────────────────────── */}

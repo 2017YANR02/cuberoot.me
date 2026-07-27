@@ -12,6 +12,7 @@
  */
 
 import { CUBE3_STATES } from './god-distance-333';
+import { SQ1_CUBE_SHAPES, SQ1_ODDS, SQ1_SHAPES, type Sq1Odds } from './sq1-odds';
 
 // ── 顶层(LL)全集 ─────────────────────────────────────────────────────
 // F2L 做完后剩四个自由度:角朝向 3³(第 4 个由和定死)、棱朝向 2³、角排列 4!、棱排列 4!,
@@ -285,7 +286,7 @@ export const PYRA_NO_BLOCK = 348_053;
 
 export interface SkipEntry {
   id: string;
-  group: 'll' | 'block' | 'cross' | 'roux' | '222' | '444' | 'minx' | 'pyram';
+  group: 'll' | 'block' | 'cross' | 'roux' | '222' | '444' | 'minx' | 'pyram' | 'sq1';
   name: { zh: string; en: string };
   kind: SkipKind;
   /** 分子 / 分母,十进制字符串 —— 分母能到 4.3×10¹⁹,不能过 Number。 */
@@ -324,6 +325,12 @@ const other = (
   whyZh: string, whyEn: string,
 ): SkipEntry => ({
   id, group, name: { zh, en }, kind: 'counted', num, den, why: { zh: whyZh, en: whyEn },
+});
+
+/** Square-1:整数比已由 `lib/sq1-odds.ts` 现算好,这里只负责装进条目。 */
+const sq1 = (id: string, zh: string, en: string, odds: Sq1Odds, whyZh: string, whyEn: string): SkipEntry => ({
+  id, group: 'sq1', name: { zh, en }, kind: 'counted',
+  num: String(odds.num), den: String(odds.den), why: { zh: whyZh, en: whyEn },
 });
 
 const cross = (id: string, zh: string, en: string, faces: string[], whyZh: string, whyEn: string): SkipEntry => ({
@@ -726,6 +733,35 @@ export const SKIP_ENTRIES: SkipEntry[] = [
     String(PYRA_NO_BAR), String(PYRA_CORE),
     '面上核心六格是轴、棱交替的六边形环,24 条相邻里没有一条两端同色',
     'The six core stickers of a face form an alternating axial/edge hexagon; none of the 24 adjacencies has matching ends'),
+
+  // ── Square-1(形状与各阶段全集见 lib/sq1-odds.ts,那里逐个现算)────────────
+  sq1('sq1-cs', '打乱就是立方体形状', 'Scramble is already cube-shaped', SQ1_ODDS.cs,
+    `可切形状共 ${SQ1_SHAPES} 种、每种配的块排法一样多,其中立方体形状只有 ${SQ1_CUBE_SHAPES} 种(上下层各 2 个可切摆位)`,
+    `All ${SQ1_SHAPES} twistable shapes carry the same number of piece fillings, and only ${SQ1_CUBE_SHAPES} of them are cube-shaped (2 twistable square placements per layer)`),
+  sq1('sq1-csp', '立方体形状且无 parity', 'Cube shape with no parity', SQ1_ODDS.csp,
+    '块的排列奇偶各占一半,且与形状独立 —— 在立方体形状的基础上再折半',
+    'Piece-permutation parity is an even split and independent of shape, so it halves the cube-shape odds'),
+  sq1('sq1-co', '角块已分对层(CO)', 'Corners already in the right layers (CO)', SQ1_ODDS.co,
+    '8 个角块里哪 4 个在上层 = C(8,4) = 70 种,其中 1 种是对的',
+    'Which four of the eight corners sit on top: C(8,4) = 70, one of them right'),
+  sq1('sq1-eo', '棱块已分对层(EO)', 'Edges already in the right layers (EO)', SQ1_ODDS.eo,
+    '棱块同理 70 种;与角块那一组独立',
+    'Same 70 for the edges, independent of the corner split'),
+  sq1('sq1-obl', '角棱都分对层(OBL)', 'Both layers already oriented (OBL)', SQ1_ODDS.obl,
+    '70 × 70 = 4,900。上游表格这格写 1/2450 —— 它把「整只上下翻过来」也算成功,但同口径下 CO/EO 就该是 2/70',
+    '70 × 70 = 4,900. The workbook says 1/2450, counting the upside-down solve as a second success — but then CO and EO would have to be 2/70 as well'),
+  sq1('sq1-cp', '角块排列已好(CP)', 'Corner permutation already done (CP)', SQ1_ODDS.cp,
+    '上下各 4 个角共 4!·4! = 576 种,整层转位组成 16 元群且作用自由 → 36 个情形',
+    'Four corners per layer, 4!·4! = 576 arrangements; the 16 layer rotations act freely → 36 cases'),
+  sq1('sq1-ep', '棱块排列已好(EP)', 'Edge permutation already done (EP)', SQ1_ODDS.ep,
+    '角块归位时已经把整层转位用掉了,棱这边不再商掉 → 4!·4! = 576',
+    'Solving the corners already consumed the layer rotations, so the edges keep all 4!·4! = 576'),
+  sq1('sq1-pbl', 'PBL 整个跳过', 'PBL skip', SQ1_ODDS.pbl,
+    '36 × 576 = 20,736,角与棱互相独立',
+    '36 × 576 = 20,736; corners and edges are independent'),
+  sq1('sq1-adj', '棱是上下各一对相邻互换', 'Edges are adjacent-adjacent swaps', SQ1_ODDS.adjAdjEp,
+    '一层 4 条棱围成一圈、相邻对换有 4 个,两层相乘 = 16',
+    'Four edges per layer form a ring with four adjacent transpositions; both layers gives 16'),
 ];
 
 export const entryById = (id: string): SkipEntry => SKIP_ENTRIES.find((e) => e.id === id)!;
