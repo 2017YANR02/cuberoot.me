@@ -57,13 +57,19 @@ export default function PersonDetailClient() {
   const [error, setError] = useState<string | null>(null);
   // 「废止项」口径开关:Σ 名次和行(PR 表底部)与「最优项目组合」共用一份状态
   const [inclCancelled, setInclCancelled] = useState(false);
+  // 首屏三源直连 WCA 官网,官网抽风时只能重试 —— bump 它重跑整个加载 effect
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     if (!wcaId) return; // wait until the id is resolved from the URL
     setProfile(null); setResults(null); setComps(null); setError(null);
     setLiveResults(null); setLiveComps(null); setFormer([]);
     let cancelled = false;
-    loadFlagData().catch(() => { /* fallback to en */ });
+    // persons: false —— person_countries.json 是全站最大的一张表(gzip 1.3MB / 解开 5.3MB /
+    // 29 万 key,实测跨洋 3.1s + 手机上几百 ms 主线程),而它只喂 personFlagIso2,本页整棵
+    // 组件树(hero / PR 表 / 组合卡 / 7 个 tab)一处都不用 —— 魔友表的国旗走 person-misc 自带的
+    // iso2,比赛国旗走 compFlagIso2。只拉 comp_countries + comp_names_zh(~170KB)。
+    loadFlagData({ persons: false }).catch(() => { /* fallback to en */ });
     // 三个官方源都传后台重验回调:localStorage 缓存 24h,但成绩公示当天必须自愈 ——
     // 直播行在官方收录后被服务端删掉,旧缓存会让那场比赛整场消失(见 wca-person-api 注释)。
     fetchWcaPerson(wcaId, (p) => { if (!cancelled) setProfile(p); })
@@ -85,7 +91,7 @@ export default function PersonDetailClient() {
       .then((f) => { if (!cancelled) setFormer(f); })
       .catch(() => { /* 曾用名缺失不影响主信息 */ });
     return () => { cancelled = true; };
-  }, [wcaId]);
+  }, [wcaId, reloadKey]);
 
   const personName = profile?.person?.name ?? '';
   useDocumentTitle(personName ? `${personName} · WCA` : '', personName ? `${personName} · WCA` : '');
@@ -94,7 +100,16 @@ export default function PersonDetailClient() {
     return (
       <div className="wp-page">
         <main className="wp-main">
-          <div className="wp-error">{t('加载失败', 'Failed to load')}: {error}</div>
+          <div className="wp-error">
+          <p>{t('加载失败', 'Failed to load')}: {error}</p>
+          <p className="wp-error-hint">{t(
+            '选手资料取自 WCA 官网,官网不通时本页也拿不到数据。',
+            'Person data comes from the WCA website; this page can\'t load while that is unreachable.',
+          )}</p>
+          <button type="button" className="wp-error-retry" onClick={() => setReloadKey(k => k + 1)}>
+            {t('重试', 'Retry')}
+          </button>
+        </div>
         </main>
       </div>
     );

@@ -6,6 +6,10 @@ import { persistItem } from './safe-storage';
 
 const BASE = 'https://www.worldcubeassociation.org/api/v0';
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+// 首屏三个源(profile / results / competitions)都直连 WCA 官网,页面在 profile 到达前
+// 只有「加载中…」。官网慢/不通时 fetch 默认永不超时 → 整页永久卡住,所以自己钉一个上界:
+// 超时即当失败,交给 cachedFetch 的过期缓存兜底,再不行才报错(错误态有重试按钮)。
+const WCA_TIMEOUT_MS = 12 * 1000;
 // 缓存命中但年龄超过这个值时,后台静默回源重验一次(stale-while-revalidate)。
 // 成绩公示当天必须能自愈:比赛期间显示的「直播·非官方」行在官方收录后会被服务端删掉
 // (wca_live_person_results 按 comp 清行),若官方成绩这边只认 24h 硬缓存,昨天来过的
@@ -32,9 +36,25 @@ function cacheSet<T>(key: string, value: T): void {
   persistItem(key, JSON.stringify({ t: Date.now(), v: value }));
 }
 
+/** WCA 官网 API GET,带超时。超时/网络错都抛,由 cachedFetch 决定怎么兜。 */
+async function wcaJson<T>(path: string): Promise<T> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), WCA_TIMEOUT_MS);
+  try {
+    const res = await fetch(`${BASE}${path}`, { signal: ctrl.signal });
+    if (!res.ok) throw new Error(`WCA API ${res.status}`);
+    return (await res.json()) as T;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /**
  * 24h 缓存 + stale-while-revalidate:命中即返(重复访问仍然瞬开),旧值在后台回源,
  * 数据真变了才回调 onFresh 让调用方更新。不传 onFresh = 保持纯缓存语义。
+ *
+ * 回源失败时降级到过期缓存(任意年龄):数据源是第三方(WCA 官网),官网抽风时
+ * 「拿去年的数据渲染」远好过整页卡在「加载中…」。真一点缓存都没有才把错误抛上去。
  */
 async function cachedFetch<T>(key: string, load: () => Promise<T>, onFresh?: (v: T) => void): Promise<T> {
   const hit = cacheRead<T>(key);
@@ -49,9 +69,14 @@ async function cachedFetch<T>(key: string, load: () => Promise<T>, onFresh?: (v:
     }
     return hit.v;
   }
-  const fresh = await load();
-  cacheSet(key, fresh);
-  return fresh;
+  try {
+    const fresh = await load();
+    cacheSet(key, fresh);
+    return fresh;
+  } catch (e) {
+    if (hit) return hit.v; // 过期兜底
+    throw e;
+  }
 }
 
 export interface WcaPersonRecord {
@@ -82,11 +107,11 @@ export async function fetchWcaPerson(
   wcaId: string,
   onFresh?: (p: WcaPersonProfile) => void,
 ): Promise<WcaPersonProfile> {
-  return cachedFetch(`wca:person:${wcaId}`, async () => {
-    const res = await fetch(`${BASE}/persons/${encodeURIComponent(wcaId)}`);
-    if (!res.ok) throw new Error(`WCA API ${res.status}`);
-    return (await res.json()) as WcaPersonProfile;
-  }, onFresh);
+  return cachedFetch(
+    `wca:person:${wcaId}`,
+    () => wcaJson<WcaPersonProfile>(`/persons/${encodeURIComponent(wcaId)}`),
+    onFresh,
+  );
 }
 
 export interface WcaResultRow {
@@ -114,9 +139,7 @@ export async function fetchWcaPersonResults(
 ): Promise<WcaResultRow[]> {
   // v2: 加了 regional_single_record / regional_average_record 字段,需让旧缓存 miss
   return cachedFetch(`wca:results:v2:${wcaId}`, async () => {
-    const res = await fetch(`${BASE}/persons/${encodeURIComponent(wcaId)}/results`);
-    if (!res.ok) throw new Error(`WCA API ${res.status}`);
-    const arr = (await res.json()) as any[];
+    const arr = await wcaJson<any[]>(`/persons/${encodeURIComponent(wcaId)}/results`);
     return arr.map((r) => ({
       id: r.id,
       competition_id: r.competition_id,
@@ -301,6 +324,32 @@ export async function fetchPersonSubset(wcaId: string, events: string[], isAvg: 
   return (await res.json()) as PersonSubsetResponse;
 }
 
+// 「最优项目组合」原始响应。选手页有两个消费者(PR 表拿它预选行 + 组合卡渲染整块),
+// 两者同时挂载 → 同一个 URL 会被打两遍(浏览器 HTTP 缓存对并发中的请求不起作用)。
+// 按 URL 合流:同一 URL 的并发调用共用一个 Promise,settle 后清掉(重复访问交给 HTTP 缓存)。
+// 返回 null = 该选手不在 sor_player_best(极新选手 / 无有效成绩),调用方各自降级。
+// 泛型:两个消费者只读各自需要的字段,形状定义留在 BestComboBody(PlayerBest)。
+const _playerBestInflight = new Map<string, Promise<unknown>>();
+
+export function fetchPlayerBest<T>(wcaId: string, includeCancelled = false): Promise<T | null> {
+  // v=5: 2026-06-10 响应加 eventCounts/listedCount(剖析行),bump 甩掉浏览器 HTTP 缓存里的旧 shape
+  const qs = new URLSearchParams({ wcaId, v: '5' });
+  if (includeCancelled) qs.set('cancelled', '1');
+  const url = apiUrl(`/v1/wca/sum-of-ranks/player-best?${qs.toString()}`);
+  const inflight = _playerBestInflight.get(url);
+  if (inflight) return inflight as Promise<T | null>;
+  // 合流的 Promise 不接受调用方的 signal —— 一个消费者卸载不能顺手掐掉另一个的请求;
+  // 各调用方用自己的 done 标志忽略结果即可。超时上界靠这里的 AbortController。
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 15000);
+  const p = fetch(url, { signal: ctrl.signal })
+    .then(r => (r.ok ? r.json() : null))
+    .catch(() => null)
+    .finally(() => { clearTimeout(timer); _playerBestInflight.delete(url); });
+  _playerBestInflight.set(url, p);
+  return p as Promise<T | null>;
+}
+
 export interface PersonRankHistoryRow {
   year: number;
   /** 月级数据有 month (1..12),年级数据没有 */
@@ -362,9 +411,7 @@ export async function fetchWcaPersonCompetitions(
   onFresh?: (comps: WcaCompetition[]) => void,
 ): Promise<WcaCompetition[]> {
   return cachedFetch(`wca:comps:${wcaId}`, async () => {
-    const res = await fetch(`${BASE}/persons/${encodeURIComponent(wcaId)}/competitions`);
-    if (!res.ok) throw new Error(`WCA API ${res.status}`);
-    const arr = (await res.json()) as any[];
+    const arr = await wcaJson<any[]>(`/persons/${encodeURIComponent(wcaId)}/competitions`);
     return arr.map((c) => ({
       id: c.id,
       name: c.name,
