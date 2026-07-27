@@ -30,9 +30,13 @@ jobs:
       - uses: actions/checkout@v6
         with:
           sparse-checkout-cone-mode: false
+          # 注:cross-solver-worker.js 是 rust_cross_table_sets.test.ts 的比对对象(手维护
+          # worker ↔ TABLE_SETS 契约)。**只列这一个文件** —— 同目录 tables/ 是 30MB+ 的
+          # .bin.gz,整目录拉进来会拖垮 checkout。
           sparse-checkout: |
             /core/
             /tools/cstimer-scramble/
+            /tools/solver/rust-cross/cross-solver-worker.js
             /.claude/hooks/
             /stats/scramble/2x2_essential.json
             /stats/scramble/puzzle_distribution.json
