@@ -2677,6 +2677,7 @@ export const PLACE_CITY_ZH: Record<string, string> = {
   "SV:santaana": "圣安娜",
   "SV:santatecla": "圣特克拉",
   "SV:santotomas": "圣托马斯",
+  "TH:ayutthaya": "大城",
   "TH:bangkok": "曼谷",
   "TH:chiangmai": "清迈",
   "TH:chonburi": "春武里",
