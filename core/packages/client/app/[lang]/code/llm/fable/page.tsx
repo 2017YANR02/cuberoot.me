@@ -12,7 +12,6 @@ import {
   Factory, Orbit, Sparkles,
 } from 'lucide-react';
 import Link from '@/components/AppLink';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
 import './fable.css';
 
@@ -173,7 +172,6 @@ function BenchCard({ name, desc, rows, min = 0, max, fmt }: {
 
 export default function FablePage() {
   useTranslation(); // subscribe to language changes for tr()
-  useDocumentTitle('Claude Fable 5', 'Claude Fable 5');
 
   return (
     <div className="fable-page">

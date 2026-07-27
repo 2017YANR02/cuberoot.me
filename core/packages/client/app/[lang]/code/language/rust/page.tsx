@@ -4,7 +4,6 @@ import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './rust_intro.css';
 
 const RUST_LOGO_SVG = (
@@ -488,8 +487,6 @@ export default function RustIntroPage() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const rootRef = useRef<HTMLDivElement>(null);
-
-  useDocumentTitle('Rust — 系统编程的现代答卷', 'Rust — A Modern Answer to Systems Programming');
 
   useEffect(() => {
     const root = rootRef.current;

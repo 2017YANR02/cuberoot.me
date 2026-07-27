@@ -18,7 +18,6 @@ import { virtualAlgSet } from '@/lib/alg-virtual-sets';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { CaseThumb } from '@/components/CaseThumb';
 import { eventDisplayName } from '@/lib/wca-events';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { getSessionToken } from '@/lib/auth-store';
 import { API_ORIGIN } from '@/lib/api-base';
@@ -411,7 +410,6 @@ function WeakCards({ recs }: { recs: Record<string, SrsRecs> }) {
 export default function AlgProgressPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('学习进度', 'Progress');
   const [marks, setMarks] = useState<MarkOverview | null>(null);
   const [srsOv, setSrsOv] = useState<SrsOverview>({});
   const [recs, setRecs] = useState<Record<string, SrsRecs>>({});

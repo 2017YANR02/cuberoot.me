@@ -6,7 +6,6 @@ import { useState } from 'react';
 import type { ReactNode } from 'react';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
 import './tokens.css';
 import { GROUPS, type Kind, type Swatch, type Token } from './_tokens';
@@ -68,8 +67,6 @@ function TokenCard({ t, lang }: { t: Token; lang: 'zh' | 'en' }) {
 export default function CodeTokensPage() {
   const { i18n } = useTranslation();
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-
-  useDocumentTitle('设计令牌', 'Design Tokens');
 
   return (
     <div className="tk">

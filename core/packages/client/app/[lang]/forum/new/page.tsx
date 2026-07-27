@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import { useQueryState, parseAsString } from 'nuqs';
 import { Key } from 'lucide-react';
 import { tr, T, useLang } from '@/i18n/tr';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAuthStore, useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import { fetchForumIndex, createThread, type ForumIndexData } from '@/lib/forum-api';
 import { ForumBreadcrumbs } from '../_components/ForumBreadcrumbs';
@@ -19,7 +18,6 @@ const MAX_TITLE_LEN = 200;
 const MAX_CONTENT_LEN = 50000;
 
 export default function ForumNewThreadPage() {
-  useDocumentTitle('发帖', 'New thread');
   const router = useRouter();
   const lang = useLang();
   const zh = lang === 'zh';

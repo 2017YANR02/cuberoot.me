@@ -12,7 +12,6 @@ import { useEffect, useState, useCallback, type JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Play, FileText } from 'lucide-react';
 import BoolToggle from '@/components/BoolToggle';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { BldConfigBar } from '../_components/BldConfigBar';
 import { ScrambleOutput } from '../_components/ScrambleOutput';
 import { CodeInputModal } from '../_components/CodeInputModal';
@@ -43,7 +42,6 @@ const SAMPLE_CORNER = 'ADGJ';
 export default function ParityTrainerPage(): JSX.Element {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('奇偶训练', 'Parity Trainer');
 
   const hydrated = useBldConfigHydrated();
   const config = useBldConfigStore((s) => s.config);

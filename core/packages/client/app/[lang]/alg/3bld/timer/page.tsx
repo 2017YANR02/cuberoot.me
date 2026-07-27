@@ -20,7 +20,6 @@ import {
 } from 'react';
 import Link from '@/components/AppLink';
 import { RotateCcw, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useSpaceHoldTimer } from '@/hooks/useSpaceHoldTimer';
 import { formatMs } from '@/app/[lang]/alg/_trainer/trainer-components';
 import { BLD_TIMER_SCRAMBLES_KEY } from '../_components/FloatTrainer';
@@ -42,7 +41,6 @@ interface Solve {
 }
 
 export default function BldTimerPage(): JSX.Element {
-  useDocumentTitle('盲拧练习计时', 'BLD Practice Timer');
 
   const [scrambles, setScrambles] = useState<string[]>([]);
   const [idx, setIdx] = useState(0);

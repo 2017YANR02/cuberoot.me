@@ -95,6 +95,31 @@ export function eventDisplayName(input: string, isZh: boolean): string {
   return id;
 }
 
+// DISPLAY_EN is deliberately compact — it has to fit in chips, table headers and
+// event selectors, so 'minx' is 'Mega' and '333' is '3×3'. Those abbreviations
+// are wrong in prose and worse in a page title: nobody searches for "Mega
+// algorithms", and '×' is not the character anyone types. This table overrides
+// ONLY the ids whose written-out name differs; everything else falls through to
+// DISPLAY_EN, so there is still one place that knows how events are named.
+// Chinese needs no equivalent — DISPLAY_ZH already carries the words people use.
+const PROSE_EN: Record<string, string> = {
+  '333': '3x3', '222': '2x2', '444': '4x4', '555': '5x5', '666': '6x6', '777': '7x7',
+  '333bf': '3x3 Blindfolded', '444bf': '4x4 Blindfolded', '555bf': '5x5 Blindfolded',
+  '333mbf': '3x3 Multi-Blind', '333oh': '3x3 One-Handed', '333fm': '3x3 Fewest Moves',
+  '333ft': '3x3 With Feet',
+  'minx': 'Megaminx', 'pyram': 'Pyraminx', 'clock': "Rubik's Clock", 'sq1': 'Square-1',
+  'master_tetraminx': 'Master Tetraminx',
+};
+
+/** Event name for prose: page titles, descriptions, sentences. Same lookup
+ *  chain as {@link eventDisplayName}, but prefers the written-out English name.
+ *  Use eventDisplayName for anything that has to fit in a chip or a column. */
+export function eventProseName(input: string, isZh: boolean): string {
+  if (isZh) return eventDisplayName(input, true);
+  const id = toWcaEventId(input);
+  return PROSE_EN[id] ?? eventDisplayName(input, false);
+}
+
 /** WCA 标准 21 个项目 id（用于过滤数据库里的非 WCA 项目，如 Gear / Mirror / Smart cube 等） */
 export const WCA_EVENT_IDS: ReadonlySet<string> = new Set(Object.keys(DISPLAY_EN));
 

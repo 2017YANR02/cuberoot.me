@@ -3,7 +3,6 @@
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import HomeLink from '@/components/HomeLink';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './code_index.css';
 import { tr } from '@/i18n/tr';
 
@@ -378,8 +377,6 @@ const CARDS: Card[] = [
 export default function CodeIndexPage() {
   const { i18n } = useTranslation();
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-
-  useDocumentTitle('代码', 'Code');
 
   return (
     <div className="code-index">

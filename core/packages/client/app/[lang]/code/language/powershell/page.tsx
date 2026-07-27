@@ -4,7 +4,6 @@ import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './powershell_intro.css';
 
 // Inline SVG: PowerShell-blue terminal with ">_" prompt
@@ -469,11 +468,6 @@ export default function PowershellIntroPage() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const rootRef = useRef<HTMLDivElement>(null);
-
-  useDocumentTitle(
-    'PowerShell : 2006 Jeffrey Snover · 对象管道 · Windows 自动化默认',
-    'PowerShell : 2006 Jeffrey Snover · object pipeline · Windows automation default'
-  );
 
   useEffect(() => {
     const root = rootRef.current;

@@ -11,7 +11,6 @@ import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Trash2, Lightbulb, Bug, MessageSquare, ExternalLink, ChevronDown } from 'lucide-react';
 import HomeLink from '@/components/HomeLink';
 import FeedbackConversation from '@/components/FeedbackConversation';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAuthStore } from '@/lib/auth-store';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { displayCuberName } from '@/lib/cuber-name-display';
@@ -45,7 +44,6 @@ export default function FeedbackAdminPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const t = (zh: string, en: string) => (isZh ? zh : en);
-  useDocumentTitle('反馈审核', 'Feedback');
 
   const user = useAuthStore((s) => s.user);
   const [mounted, setMounted] = useState(false);

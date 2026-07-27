@@ -10,7 +10,6 @@ import { ArrowLeft, Newspaper, ExternalLink } from 'lucide-react';
 import Link from '@/components/AppLink';
 import { CubingIcon } from '@/components/EventIcon';
 import { useT } from '../../../../hooks/useT';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { Callout, RegList } from '../_components/primitives';
 import '../regulation.css';
 import './news.css';
@@ -31,7 +30,6 @@ function SourceLink({ href, label }: { href: string; label: string }) {
 export default function RegulationNews() {
   useTranslation();
   const t = useT();
-  useDocumentTitle('最新动态 · WCA 规则', 'Updates · WCA Regulations');
 
   const yes = t('可', 'Yes');
   const no = t('不可', 'No');

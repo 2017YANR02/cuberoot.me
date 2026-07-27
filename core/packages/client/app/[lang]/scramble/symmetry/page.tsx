@@ -21,7 +21,6 @@ import Link from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { ClearButton } from '@/components/ClearButton';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from '@/hooks/useT';
 import { cubieToFacelet, normalizeFacelet, validateFacelet, faceletToCubie } from '../solver/facelet';
 import {
@@ -826,7 +825,6 @@ function CatalogView({ t, onPick }: {
 const VIEWS = ['search', 'analyze', 'catalog'] as const;
 
 export default function SymmetryPage() {
-  useDocumentTitle('对称型', 'Symmetry');
   const t = useT();
   const [view, setView] = useQueryState(
     'view',

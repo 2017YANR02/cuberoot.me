@@ -5,7 +5,6 @@
  */
 import Link from '@/components/AppLink';
 import { ArrowLeft } from 'lucide-react';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './frame_count_about.css';
 import { useT } from "@/hooks/useT";
 
@@ -25,7 +24,6 @@ function Arrow() { return <span className="fca-arrow" aria-hidden="true">↓</sp
 
 export default function FrameCountAboutPage() {
   const t = useT();
-  useDocumentTitle('数帧工具说明', 'Frame Count Guide');
 
   return (
     <div className="fca-page">

@@ -6,15 +6,12 @@
 
 import Link from '@/components/AppLink';
 import { ShieldAlert, Hand, FlaskConical, Terminal, GitCompare } from 'lucide-react';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './guards.css';
 import { tr, useLang } from '@/i18n/tr';
 import { PAIRED_GUARDS, CI_GUARDS_UI, CI_GUARDS_DRIFT, CI_GUARDS_API, PROCESS_GUARDS } from './_guards';
 
 export default function GuardsPage() {
   const lang = useLang();
-
-  useDocumentTitle('约束守卫', 'Guards');
 
   const ciTotal = CI_GUARDS_UI.length + CI_GUARDS_DRIFT.length + CI_GUARDS_API.length;
 

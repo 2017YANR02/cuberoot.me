@@ -13,7 +13,6 @@
  */
 import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from "@/hooks/useT";
 import { tr } from '@/i18n/tr';
 
@@ -36,7 +35,6 @@ const CARDS: Card[] = [
 
 export default function ScrambleHubPage() {
   const t = useT();
-  useDocumentTitle('打乱', 'Scramble');
 
   return (
     <div className="scramble-hub-page">

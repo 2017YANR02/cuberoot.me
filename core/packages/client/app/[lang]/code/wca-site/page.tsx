@@ -3,7 +3,6 @@
 import { createContext, useContext, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './wca-site_intro.css';
 
 /* Self-contained bilingual helper — this page is a standalone /code umbrella
@@ -388,11 +387,6 @@ export default function WcaSiteIntroPage() {
   const isZhLang = i18n.language.startsWith('zh');
   const lang: Lang = isZhLang ? 'zh' : 'en';
   const rootRef = useRef<HTMLDivElement>(null);
-
-  useDocumentTitle(
-    'WorldCubeAssociation.org : WCA 官网源码 — 2008 年起的 Rails 单体, 正迁往 Next.js',
-    'WorldCubeAssociation.org : the WCA\'s codebase — a Rails monolith since 2008, migrating to Next.js'
-  );
 
   useEffect(() => {
     const root = rootRef.current;

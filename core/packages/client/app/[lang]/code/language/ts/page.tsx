@@ -4,7 +4,6 @@ import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './ts_intro.css';
 
 const TS_LOGO_SVG = (
@@ -436,11 +435,6 @@ export default function TsIntroPage() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const rootRef = useRef<HTMLDivElement>(null);
-
-  useDocumentTitle(
-    'TypeScript : JavaScript — AI 时代的事实标准',
-    'TypeScript : JavaScript — De Facto Language of the AI Era'
-  );
 
   useEffect(() => {
     const root = rootRef.current;

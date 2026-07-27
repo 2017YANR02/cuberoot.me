@@ -4,7 +4,6 @@ import type { ReactNode } from 'react';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../../_lib/Lang';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './algorithm_intro.css';
 import { tr } from '@/i18n/tr';
 
@@ -571,8 +570,6 @@ function setPacked(idx: number, val: number): void {
 export default function IdaStarPage() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-
-  useDocumentTitle('IDA* + 剪枝表', 'IDA* + prune tables');
 
   return (
     <LangCtx.Provider value={lang}>

@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './katex_intro.css';
 import { tr } from '@/i18n/tr';
 
@@ -576,11 +575,6 @@ export default function KatexIntroPage() {
     { label: 'Integral', src: '\\int_{-\\infty}^{\\infty} e^{-x^2}\\,dx = \\sqrt{\\pi}' },
     { label: 'Chemistry', src: '\\ce{CO2 + C ->T[\\Delta] 2 CO}' },
   ];
-
-  useDocumentTitle(
-    'KaTeX : 浏览器里 100× 速度的 LaTeX 数学渲染 — 2013→2026',
-    'KaTeX : LaTeX math in the browser at 100× MathJax speed — 2013→2026'
-  );
 
   useEffect(() => {
     const root = rootRef.current;

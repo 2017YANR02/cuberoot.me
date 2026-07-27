@@ -19,11 +19,9 @@ import BackHome from '@/components/BackHome';
 import PuzzleImageStudio from '@/components/puzzle-image/PuzzleImageStudio';
 import { useImageSpec } from '@/components/puzzle-image/useImageSpec';
 import '@/components/puzzle-image/puzzle-image.css';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from '@/hooks/useT';
 
 function VisualCubeEditorPageInner() {
-  useDocumentTitle('魔方可视化', 'VisualCube');
   const t = useT();
   const [spec, setSpec] = useImageSpec('');
 

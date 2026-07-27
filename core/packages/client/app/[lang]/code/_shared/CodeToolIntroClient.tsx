@@ -12,7 +12,6 @@ import type { StackTool } from '../stack/_lib/stack_tool_types';
 import { LangCtx, L, type Lang } from '../stack/_lib/Lang';
 import { LLM_TOOLS_META } from '../llm/_lib/llm_meta';
 import { loadLlmTool } from '../llm/_lib/llm_data';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../stack/ts_intro.css';
 import '../stack/stack_intro.css';
 import { tr } from '@/i18n/tr';
@@ -47,8 +46,6 @@ export default function CodeToolIntroClient({ section = 'stack' }: { section?: T
     load(slug).then((d) => { if (!cancelled) setDetail(d); });
     return () => { cancelled = true; };
   }, [slug, meta]);
-
-  useDocumentTitle(meta?.name ?? '', meta?.name ?? '');
 
   useEffect(() => {
     if (!meta) router.replace(base);

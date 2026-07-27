@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './css_intro.css';
 
 /* CSS3 shield logo — pentagon similar to HTML5 but blue + "3" */
@@ -459,11 +458,6 @@ export default function CssIntroPage() {
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const rootRef = useRef<HTMLDivElement>(null);
   const [baTab, setBaTab] = useState<'clearfix' | 'cols' | 'cq' | 'centre'>('clearfix');
-
-  useDocumentTitle(
-    'CSS : 30 年声明式样式语言 — 1994 CERN 提案到 2026 平台追上来',
-    "CSS : 30 years of declarative styling — from CERN 1994 to 'the platform caught up'"
-  );
 
   useEffect(() => {
     const root = rootRef.current;

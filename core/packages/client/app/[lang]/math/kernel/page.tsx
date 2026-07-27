@@ -16,7 +16,6 @@ import { Fragment, useState } from 'react';
 import Link from '@/components/AppLink';
 import { ArrowLeft, Boxes, Cpu, Eye, ShieldCheck, Sparkles, Wand2, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { TeX } from '@/components/math/Tex';
 import { useT } from '@/hooks/useT';
 import { tr } from '@/i18n/tr';
@@ -85,7 +84,6 @@ const PUZZLES: Puz[] = [
 export default function KernelPage() {
   useTranslation();
   const t = useT();
-  useDocumentTitle('群论内核', 'Group-theory kernel');
   const [openKey, setOpenKey] = useState<string | null>('ivy');
 
   const rex = PRECOMPUTED_PG_FACTS['rex'];

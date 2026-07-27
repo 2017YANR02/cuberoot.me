@@ -14,7 +14,6 @@ import {
   Check, Minus, Scale, Sparkles, Rocket, Briefcase, Gauge,
 } from 'lucide-react';
 import Link from '@/components/AppLink';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
 import './sonnet-5.css';
 
@@ -121,7 +120,6 @@ function BenchCard({ name, desc, rows, min = 0, max, fmt }: {
 
 export default function Sonnet5Page() {
   useTranslation(); // subscribe to language changes for tr()
-  useDocumentTitle('Claude Sonnet 5', 'Claude Sonnet 5');
 
   return (
     <div className="s5-page">

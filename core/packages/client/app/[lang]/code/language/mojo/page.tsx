@@ -4,7 +4,6 @@ import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './mojo_intro.css';
 
 const MOJO_LOGO_SVG = (
@@ -412,11 +411,6 @@ export default function MojoIntroPage() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
   const rootRef = useRef<HTMLDivElement>(null);
-
-  useDocumentTitle(
-    'Mojo : Python 语法 · C 速度 · MLIR IR — Lattner 的第三门语言',
-    'Mojo : Python syntax, C-class speed, MLIR IR — Lattner\'s third language'
-  );
 
   useEffect(() => {
     const root = rootRef.current;

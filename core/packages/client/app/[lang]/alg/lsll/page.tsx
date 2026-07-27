@@ -13,7 +13,6 @@ import { useMemo, useState } from 'react';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { ArrowLeft } from 'lucide-react';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr, T } from '@/i18n/tr';
 import { ClearButton } from '@/components/ClearButton';
 import { FaceletsCube } from '@/components/FaceletsCube';
@@ -37,7 +36,6 @@ const KIND_LABELS: Record<CategoryKind, { zh: string; en: string }> = {
 const KIND_ORDER: CategoryKind[] = ['TT', 'CS', 'ES', 'SS'];
 
 export default function LsllHubPage() {
-  useDocumentTitle('LSLL 公式集', 'LSLL Algorithms');
   const [query, setQuery] = useState('');
   const [result, setResult] = useState<LocateResult | null>(null);
   const [cls, setCls] = useQueryState(

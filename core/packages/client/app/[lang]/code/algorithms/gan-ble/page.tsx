@@ -4,7 +4,6 @@ import { useState } from 'react';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../../_lib/Lang';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './gan-ble.css';
 
 const ACCENT = '#4C6EF5';
@@ -195,8 +194,6 @@ export default function GanBlePage() {
   const { i18n } = useTranslation();
   const lang: Lang = (['en', 'zh'] as const)[Number(i18n.language.startsWith('zh'))];
   const [stage, setStage] = useState(1); // default-highlight the "derive key" step
-
-  useDocumentTitle('GAN 蓝牙协议与 AES 解密', 'GAN BLE protocol & AES');
 
   const active = STAGES[stage];
   const at = active[lang];

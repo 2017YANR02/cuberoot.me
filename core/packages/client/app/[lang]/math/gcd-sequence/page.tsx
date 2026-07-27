@@ -14,7 +14,6 @@ import 'katex/dist/katex.min.css';
 import Link from '@/components/AppLink';
 import { ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from '@/hooks/useT';
 
 function TeX({ src }: { src: string }) {
@@ -36,7 +35,6 @@ function TeXBlock({ src }: { src: string }) {
 export default function GcdSequencePage() {
   useTranslation();
   const t = useT();
-  useDocumentTitle('公因子数列', 'Common-factor sequence');
 
   return (
     <div className="cs-page">

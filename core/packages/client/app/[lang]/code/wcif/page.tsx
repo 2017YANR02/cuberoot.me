@@ -5,7 +5,6 @@
 
 import HomeLink from '@/components/HomeLink';
 import AppLink from '@/components/AppLink';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
 import './wcif.css';
 
@@ -40,7 +39,6 @@ function Table({ children }: { children: React.ReactNode }) {
 }
 
 export default function WcifPage() {
-  useDocumentTitle('WCIF', 'WCIF');
 
   return (
     <div className="wcif-page">

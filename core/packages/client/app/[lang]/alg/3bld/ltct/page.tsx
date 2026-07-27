@@ -30,7 +30,6 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Play, FileText } from 'lucide-react';
 import BoolToggle from '@/components/BoolToggle';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { BldConfigBar } from '../_components/BldConfigBar';
 import { ScrambleOutput } from '../_components/ScrambleOutput';
 import { CodeInputModal } from '../_components/CodeInputModal';
@@ -64,7 +63,6 @@ function stripBrackets(code: string): string {
 export default function LtctTrainerPage(): JSX.Element {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('奇偶带翻训练', 'LTCT Parity-Twist Trainer');
 
   const hydrated = useBldConfigHydrated();
   const config = useBldConfigStore((s) => s.config);

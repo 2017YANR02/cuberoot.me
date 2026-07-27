@@ -12,7 +12,6 @@ import { Flag } from '@/components/Flag';
 import { apiUrl } from '@/lib/api-base';
 import RegionCountrySelect from '@/components/wca-stats/RegionCountrySelect';
 import { useCountries } from '@/components/wca-stats/useCountries';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../_wca_stats_extra.css';
 import { tr } from '@/i18n/tr';
 
@@ -34,7 +33,6 @@ interface Row {
 function SuccessRatePageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('完成率', 'Success Rate');
   const [q, setQ] = useQueryStates(
     {
       event: parseAsString,

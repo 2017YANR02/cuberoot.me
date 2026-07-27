@@ -8,7 +8,6 @@
 import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import { Brain, type LucideIcon } from 'lucide-react';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../../landing.css';
 import { tr } from '@/i18n/tr';
 
@@ -26,7 +25,6 @@ const CARDS: MemoCard[] = [
 ];
 
 export default function MemoLandingPage() {
-  useDocumentTitle('记忆', 'Memo');
 
   return (
     <div className="landing-page">

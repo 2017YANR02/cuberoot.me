@@ -1,7 +1,12 @@
 import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { MetadataRoute } from 'next';
+import { ALG_CATALOG, ALG_PUZZLES } from '@cuberoot/shared/alg';
 import { TOC_SLUGS } from './[lang]/math/group/_data/toc';
+import { LISTED_CATEGORIES } from '@/lib/lsll/model';
+import { STACK_TOOLS_META } from './[lang]/code/stack/_lib/stack_meta';
+import { LLM_TOOLS_META } from './[lang]/code/llm/_lib/llm_meta';
+import { ABOUT_REGISTRY } from './[lang]/wca/about/[id]/_lib/registry';
 
 // Static-routes sitemap. The fs scan below runs during `next build` (where app/
 // source exists) and the result is baked into the static /sitemap.xml served by
@@ -32,13 +37,31 @@ const EXCLUDE = new Set(['ffmpeg-poc', 'jsonEditor']);
 // Deliberately still ABSENT: /wca/persons/<id> (~200k) and /wca/comp/<slug>
 // (~17k). Those render from a single sentinel shell with client-fetched content,
 // so listing them would spend crawl budget to deliver empty pages — robots.txt
-// disallows them for the same reason. /tutorial/<slug> and the alg sets need a
-// live API call to enumerate and this file must stay I/O-free (see above); they
-// belong in a runtime sitemap like recon's if they are ever added.
+// disallows them for the same reason.
+//
+// /tutorial/<slug> and its category listings ARE indexed, but from
+// app/tutorial-sitemap.xml/route.ts: enumerating them needs a catalog fetch
+// this file must not make.
+//
+// Everything below, by contrast, comes from a static array that the matching
+// route already feeds to generateStaticParams — the pages are prerendered at
+// build, so listing them costs no I/O and cannot go stale relative to what
+// actually exists. Deliberately NOT listed: the /run and /select trainer leaves
+// under each alg set (interactive tools, not content, and near-duplicates of
+// the set page) and LSLL's degenerate O group (LISTED_CATEGORIES drops it
+// because the site itself does not link it — see LsllCategory.pureLL).
 const EXTRA = [
-  'recognize/pll',
-  'alg/3x3',
+  ...(ALG_PUZZLES as readonly string[]).map((puzzle) => `alg/${puzzle}`),
+  ...Object.entries(ALG_CATALOG).flatMap(([puzzle, sets]) =>
+    sets.map((s) => `alg/${puzzle}/${s.slug}`),
+  ),
+  ...LISTED_CATEGORIES.map((c) => `alg/lsll/${c.slug}`),
   ...TOC_SLUGS.map((slug) => `math/group/${slug}`),
+  ...STACK_TOOLS_META.map((t) => `code/stack/${t.slug}`),
+  ...LLM_TOOLS_META.map((t) => `code/llm/${t.slug}`),
+  ...Object.keys(ABOUT_REGISTRY).map((id) => `wca/about/${id}`),
+  'recognize/pll',
+  'recognize/oll',
 ];
 
 // Walk app/[lang]/** collecting static routes (dirs containing page.tsx),

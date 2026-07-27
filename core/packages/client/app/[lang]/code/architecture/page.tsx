@@ -4,7 +4,6 @@ import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { LangCtx, L } from '../_lib/Lang';
 import type { Lang } from '../_lib/Lang';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import ArchNav from './_components/ArchNav';
 import { SystemTopoSVG, PackageDepsSVG } from './_components/ArchSvgs';
 import { LAYERS, PACKAGES, MODULES } from './_lib/arch-data';
@@ -14,8 +13,6 @@ import { tr } from '@/i18n/tr';
 export default function ArchitecturePage() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-
-  useDocumentTitle('站点架构', 'Site Architecture');
 
   const ownN = MODULES.filter((m) => m.origin === 'own').length;
   const portN = MODULES.filter((m) => m.origin === 'port').length;

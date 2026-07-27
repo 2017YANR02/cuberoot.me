@@ -30,7 +30,6 @@ import { useQueryState, parseAsInteger } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import Link from '@/components/AppLink';
 import { ArrowLeft } from 'lucide-react';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { persistItem } from '@/lib/safe-storage';
 import { EVENTS, formatVal } from '../_components/events';
 import {
@@ -102,7 +101,6 @@ function nToApproxYear(N: number): number {
 function LuckyLimitPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('幸运极限', 'Lucky Limit');
 
   // ?year= 走 nuqs(replace,不堆历史)。原 raw history.replaceState 已替换。
   const [yearParam, setYearParam] = useQueryState(

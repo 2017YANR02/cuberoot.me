@@ -12,7 +12,6 @@ import BoolToggle from '@/components/BoolToggle';
 import { ListSelect } from '@/components/ListSelect';
 import NumberCommitInput from '@/components/NumberCommitInput';
 import { MCC_SLIDERS, ParamSliders } from '@/components/ParamSliders';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from '@/hooks/useT';
 import { tr } from '@/i18n/tr';
 import { algSpeed, MCC_DEFAULTS, type MccParams } from '@/lib/mcc';
@@ -162,7 +161,6 @@ const fmtMetric = (n: number) => (Number.isFinite(n) ? String(Math.round(n * 100
 
 export default function BatchSolverPage() {
   const t = useT();
-  useDocumentTitle('批量求解器', 'Batch Solver');
 
   // ---- 表单 ----
   const [puzzle, setPuzzle] = useState('3x3x3');

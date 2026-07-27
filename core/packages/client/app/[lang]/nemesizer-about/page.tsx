@@ -5,7 +5,6 @@
  */
 import Link from '@/components/AppLink';
 import { ArrowLeft } from 'lucide-react';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './nemesizer_about.css';
 import { useT } from "@/hooks/useT";
 
@@ -25,7 +24,6 @@ function Arrow() { return <span className="nema-arrow" aria-hidden="true">↓</s
 
 export default function NemesizerAboutPage() {
   const t = useT();
-  useDocumentTitle('Nemesizer 说明', 'Nemesizer Guide');
 
   return (
     <div className="nema-page">

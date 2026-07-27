@@ -23,7 +23,6 @@ import { Suspense, lazy, useState } from 'react';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ExternalLink, FileText } from 'lucide-react';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { TeX, TeXBlock } from '../god/_components/Tex';
 import { PAPER_MEAN, PAPER_TOTAL } from './_components/DistanceHistogram';
 import './demigod.css';
@@ -66,7 +65,6 @@ export default function DemigodPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const t = useT();
-  useDocumentTitle('半神之数 (Demigod\'s Number)', "Demigod's Number");
 
   // Hoeffding explorer state (lifted so Theorem 1 readout stays in sync)
   const [hSampleSize, setHSampleSize] = useState(500_000);

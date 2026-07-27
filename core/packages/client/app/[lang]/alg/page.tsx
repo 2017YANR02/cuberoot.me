@@ -9,7 +9,6 @@
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ALG_PUZZLES } from '@cuberoot/shared';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import AlgAdminValidate from '@/components/AlgAdminValidate';
 import BackHome from '@/components/BackHome';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
@@ -30,7 +29,6 @@ const LANDING_TRAINERS: { href: string; zh: string; en: string; Icon: LucideIcon
 export default function AlgIndexPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('公式库', 'Algorithms');
 
   return (
     <div className="alg-root">

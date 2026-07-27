@@ -11,7 +11,6 @@ import { useEffect, useState, type ReactNode } from 'react';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { Cpu, Database, Gauge, HardDrive, Globe, Layers, Boxes, CircleCheck, CircleDashed, CircleDot, X } from 'lucide-react';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { statsUrl } from '@/lib/stats-base';
 import { fetchPuzzleDistribution } from '@/lib/puzzle-distribution';
 // 纯 TS 非 WCA 求解器舰队数据 (CI 守卫 tests/code-solvers-fleet-sync.test.ts 锁
@@ -292,7 +291,6 @@ type ModalState = { title: string; sub?: string; body: ReactNode } | null;
 export default function SolversPage() {
   const { i18n } = useTranslation();
   const zh = i18n.language.startsWith('zh');
-  useDocumentTitle('求解器', 'Solvers');
 
   const [cov, setCov] = useState<Coverage | null>(null);
   // 非 3x3 puzzle 覆盖率走独立 puzzle_distribution.json(语料/目标都与 3x3 不同)。key 与 NATIVE.key 同名。

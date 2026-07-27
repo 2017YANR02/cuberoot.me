@@ -20,7 +20,6 @@ import { compHref } from '@/lib/comp-link';
 import { formatDateRangeIso } from '@/lib/wca-date';
 import { eventDisplayName, toWcaEventId } from '@/lib/wca-events';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './calendar_stats.css';
 import { tr } from '@/i18n/tr';
 
@@ -41,7 +40,6 @@ function bucketColor(count: number, max: number): string {
 export default function CalendarStatsPage() {
   const { t, i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('日历统计', 'Calendar Stats');
   const router = useRouter();
   const navigate = (to: string) => router.push(to);
   const [comps, setComps] = useState<Comp[] | null>(null);

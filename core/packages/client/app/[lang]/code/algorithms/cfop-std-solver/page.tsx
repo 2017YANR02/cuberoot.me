@@ -3,7 +3,6 @@
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../../_lib/Lang';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './algorithm_intro.css';
 import './cfop_solver.css';
 
@@ -14,8 +13,6 @@ const FIG_BASE = '/images/algorithms/cfop';
 export default function CfopStdSolverPage() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-
-  useDocumentTitle('CFOP 多阶段求解器', 'CFOP multi-stage solver');
 
   return (
     <LangCtx.Provider value={lang}>

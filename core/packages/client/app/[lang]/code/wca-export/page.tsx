@@ -5,7 +5,6 @@
 
 import HomeLink from '@/components/HomeLink';
 import AppLink from '@/components/AppLink';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
 import '../wcif/wcif.css';
 
@@ -39,7 +38,6 @@ function Table({ head, children }: { head?: [string, string]; children: React.Re
 }
 
 export default function WcaExportPage() {
-  useDocumentTitle('WST 数据导出', 'WST Export');
 
   return (
     <div className="wcif-page wcif-page-wide">

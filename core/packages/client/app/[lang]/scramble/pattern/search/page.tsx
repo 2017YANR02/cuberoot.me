@@ -19,7 +19,6 @@ import {
 } from 'lucide-react';
 import { renderCubeSVG } from '@cuberoot/visualcube';
 import BoolToggle from '@/components/BoolToggle';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from '@/hooks/useT';
 import { FACE_COLORS } from '@/lib/recon-utils';
 import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
@@ -95,7 +94,6 @@ const ResultCard = memo(function ResultCard({ item, index, t }: {
 //──────────────────────── 页面 ────────────────────────
 
 export default function PatternSearchPage() {
-  useDocumentTitle('图案搜索', 'Pattern Search');
   const t = useT();
 
   const [q, setQ] = useQueryState('q');

@@ -16,7 +16,6 @@ import { Flag } from '@/components/Flag';
 import { countryName } from '@/lib/country-name';
 import { useAuthStore } from '@/lib/auth-store';
 import { apiUrl } from '@/lib/api-base';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './traffic.css';
 import { useT } from "@/hooks/useT";
 
@@ -68,7 +67,6 @@ function fmtDwell(ms: number | null): string {
 export default function TrafficPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  useDocumentTitle('流量', 'Traffic');
   const T = useT();
   const user = useAuthStore(s => s.user);
   const login = useAuthStore(s => s.login);

@@ -68,20 +68,29 @@ cubeopt / h48 —— 与 `/scramble/solver`、`solver/333opt` 同一套:
 - 模块 `core/packages/client/public/cubeopt/cube48opt{1..9}.mjs`(memory64 build)
 - 表 `solver/tables/h48/h48prun31h{5,6,9}.dat` = 928M / 1856M / 15.6G(gitignored)
 
-默认 **opt6 + 1856M 表**:一份表常驻,内存占用 ≈ 2G。实测(本机 12 线程,真实 LSLL 语料):
+默认 **opt9 + 15.6G 表** —— 与 `solver/333opt`(skill `update-scramble-stats` §C)**同一档**。
+一份表常驻 in-proc,要 ~16G 空闲物理内存;不够会换页到磁盘,比换小表还惨,启动时会警告。
+
+实测(本机 12 线程,真实 LSLL 语料 600 条抽样):
 
 | 表 | 每解 | 全量 148,384 |
 |---|---|---|
 | opt5 928M | 58ms | 2.4h |
-| **opt6 1856M(默认)** | **51ms** | **2.1h** |
-| opt9 15.6G | 未测(要 ~16G 空闲内存) | — |
+| opt6 1856M | 51ms | 2.1h |
+| **opt9 15.6G(默认)** | **未实测**(要 16G 空闲) | **估 1.5–2h** |
 
-`solver/333opt/README.md` 那张「opt5 43s / opt9 250ms」的表说的是 **18 步随机态**,
-和 LSLL 的 12–16 步完全不是一个量级,别拿来外推。表越大越快的趋势仍在,只是差距小得多。
+opt9 那行是**估计**,按 opt5→opt6 的斜率外推。`solver/333opt/README.md` 那张
+「opt5 43s / opt9 250ms」是 **18 步随机态**,和 LSLL 的 12–16 步差着量级,别照搬那个 170 倍。
 
-换表:`TABLE=../tables/h48/h48prun31h5.dat MODULE=.../cube48opt5.mjs node solve_loop.mjs`。
-换表**不改答案**(最优就是最优),只改速度,所以小表先起跑、内存空了再换大表接着跑同一个
-`out.csv`,零重做。
+内存不够就换小表:
+
+```bash
+TABLE=../tables/h48/h48prun31h6.dat \
+MODULE=../../core/packages/client/public/cubeopt/cube48opt6.mjs node solve_loop.mjs
+```
+
+换表**不改答案**(最优就是最优),只改速度,而且按 key 续跑 ⇒ 小表先起跑、内存空出来再换
+大表接着跑同一个 `out.csv`,零重做。
 
 ## 已知边界:h48 吐不出「全部最优解」
 

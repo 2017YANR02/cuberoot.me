@@ -9,7 +9,6 @@ import { useEffect, useState, useCallback, type JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Wand2 } from 'lucide-react';
 import BoolToggle from '@/components/BoolToggle';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { BldConfigBar } from '../_components/BldConfigBar';
 import { ScrambleOutput } from '../_components/ScrambleOutput';
 import {
@@ -55,7 +54,6 @@ const DEFAULT_OPTIONS: TwistOptions = {
 export default function TwistTrainerPage(): JSX.Element {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  useDocumentTitle('翻角公式训练', 'Corner Twist Trainer');
 
   const hydrated = useBldConfigHydrated();
   const config = useBldConfigStore((s) => s.config);

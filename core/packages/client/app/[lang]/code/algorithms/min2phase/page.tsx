@@ -3,7 +3,6 @@
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../../_lib/Lang';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './algorithm_intro.css';
 
 const ACCENT = '#F0A04B';
@@ -11,8 +10,6 @@ const ACCENT = '#F0A04B';
 export default function Min2PhasePage() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-
-  useDocumentTitle('min2phase', 'min2phase');
 
   return (
     <LangCtx.Provider value={lang}>

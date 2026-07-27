@@ -1,25 +1,13 @@
 import { useEffect, useState } from 'react';
 import { statsUrl } from '@/lib/stats-base';
+import { CATALOG_URL } from '@/lib/tutorial-seo';
 
-export type Lang = 'en' | 'zh';
-export type PostView = 'article' | 'algset';
-
-export interface CatalogEntry {
-  slug: string;
-  view: PostView;
-  title: Partial<Record<Lang, string>>;
-  category: string;
-  subcategory: string | null;
-  topDir: string;
-  thumb: string | null;
-  mtime: number;
-  hasEn: boolean;
-  hasZh: boolean;
-  order: number;
-  hidden: boolean;
-  quality: 'ok' | 'degraded';
-  algCount: number;
-}
+// The catalog shape and URL are declared in lib/tutorial-seo.ts, which the
+// server metadata/sitemap code also reads. The dependency points that way round
+// on purpose: that module is hook-free and therefore safe for a Server
+// Component, while this one is not.
+export type { TutorialLang as Lang, TutorialView as PostView, CatalogEntry } from '@/lib/tutorial-seo';
+import type { TutorialLang as Lang, CatalogEntry } from '@/lib/tutorial-seo';
 
 export interface CaseAlg {
   alg: string;
@@ -75,8 +63,6 @@ export interface AlgsetPostContent {
 }
 
 export type PostContent = ArticlePostContent | AlgsetPostContent;
-
-const CATALOG_URL = '/stats/tutorial/catalog.json';
 
 // Media/thumb/case-image paths in catalog + post JSON are stored as '/stats/…'.
 // Serve them via statsUrl so prod goes straight to static.cuberoot.me instead

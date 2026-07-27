@@ -3,7 +3,6 @@
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './compare.css';
 
 interface Snippet {
@@ -389,8 +388,6 @@ function highlightComments(code: string, token: string) {
 export default function CompareAo5Page() {
   const { i18n } = useTranslation();
   const lang: Lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-
-  useDocumentTitle('17 种语言, 一个 Ao5', 'One Ao5, Seventeen Languages');
 
   return (
     <LangCtx.Provider value={lang}>

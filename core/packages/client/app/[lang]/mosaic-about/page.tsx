@@ -5,7 +5,6 @@
  */
 import Link from '@/components/AppLink';
 import { ArrowLeft } from 'lucide-react';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './mosaic_about.css';
 import { useT } from "@/hooks/useT";
 
@@ -25,7 +24,6 @@ function Arrow() { return <span className="moa-arrow" aria-hidden="true">↓</sp
 
 export default function MosaicAboutPage() {
   const t = useT();
-  useDocumentTitle('魔方马赛克说明', 'Mosaic Guide');
 
   return (
     <div className="moa-page">

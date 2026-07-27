@@ -13,7 +13,6 @@ import {
 import HomeLink from '@/components/HomeLink';
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from '@/hooks/useT';
 import { useAuthStore } from '@/lib/auth-store';
 import {
@@ -46,7 +45,6 @@ function formatWhen(iso: string): string {
 
 export default function NotificationsPage() {
   const t = useT();
-  useDocumentTitle('消息', 'Notifications');
 
   const user = useAuthStore((s) => s.user);
   const login = useAuthStore((s) => s.login);

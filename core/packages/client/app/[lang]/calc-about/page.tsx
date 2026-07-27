@@ -5,7 +5,6 @@
  */
 import Link from '@/components/AppLink';
 import { ArrowLeft } from 'lucide-react';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './calc_about.css';
 import { useT } from "@/hooks/useT";
 
@@ -25,7 +24,6 @@ function Arrow() { return <span className="calca-arrow" aria-hidden="true">↓</
 
 export default function CalcAboutPage() {
   const t = useT();
-  useDocumentTitle('成绩计算器说明', 'Score Calculator Guide');
 
   return (
     <div className="calca-page">
