@@ -22,15 +22,16 @@ function eachCell(fn: (stage: ExactStage, slot: string, colors: string, cell: un
 }
 
 describe('exact_dist 数据完整性', () => {
-  // 18 格 ≠ solver 那边的 19 个 dist_* bin:dist_xcross_{1col,2col}_0f 算出的
+  // 格数 ≠ solver 那边的 dist_* bin 数:dist_xcross_{1col,2col}_0f 算出的
   // 0 步数已经是各自完整分布的 d=0 行(37,908,599 / 4,716,424,212,835),不另占格子;
   // 反过来 xxxxcross 单色底没有对应 bin,0 步平凡为 1,这里补上。
-  it('矩阵 19 格:9 个完整分布 + 10 个仅 0 步', () => {
+  // 13 个完整分布 = 9 个标准阶段 + 4 档伪十字(dist_cross_6col --pseudo × 四个色集)。
+  it('矩阵 23 格:13 个完整分布 + 10 个仅 0 步', () => {
     let full = 0, zero = 0;
     eachCell((_s, _sl, _c, cell) => {
       if ((cell as ExactFull).kind === 'full') full++; else zero++;
     });
-    expect(full).toBe(9);
+    expect(full).toBe(13);
     expect(zero).toBe(10);
   });
 
@@ -161,6 +162,80 @@ describe('对齐 C++ 金标的关键数值', () => {
     expect((EXACT_DIST.xxxxcross.unfixed!.BGORWY as { zero: string }).zero).toBe('373219');
     // 单色底 XCross 的 0 步数 = 完整分布的 d=0 行,两份数据必须自洽
     expect((EXACT_DIST.xcross.unfixed!.W as ExactFull).counts[0]).toBe('37908599');
+  });
+});
+
+/**
+ * 伪十字(pseudo cross)—— dist_cross_6col --pseudo。目标集从「还原」放宽成
+ * 「还原 / D / D' / D2」,其余(状态空间、编码、分母)与标准 Cross 逐字相同。
+ *
+ * 这四档没有 C++ 金标,可信度由三层证据撑:
+ *   1. `--faces U --pseudo` = 5,160,960 × 一份独立 JS BFS(见 lib/cross-solver.ts 的
+ *      PERM/ORI,190,080 态上跑出 4 48 440 3576 21492 74660 81780 8064 16);
+ *   2. 与同分母的标准 Cross 逐档对比,必须严格更近(放宽目标集只会变近);
+ *   3. 与站内 1,317,565 条 WCA 真题的经验分布逐档吻合(最大偏差 0.077 个百分点)。
+ * 表格 https://bit.ly/3x3odds 给的 1 12 110 896 5399 19070 21913 2442 5 / avg 5.385933
+ * 过不了第 3 层(最大偏差 0.98 个百分点),不采用。
+ */
+describe('伪十字精确分布', () => {
+  const ps = (k: 'W' | 'WY' | 'BGOR' | 'BGORWY') =>
+    EXACT_DIST.pseudo_cross.unfixed![k] as ExactFull;
+
+  it('单色底 = 5,160,960 × 独立 JS BFS 的 190,080 态分布', () => {
+    const c = ps('W');
+    expect(c.total).toBe('980995276800');
+    const JS_BFS = [4, 48, 440, 3576, 21492, 74660, 81780, 8064, 16];
+    expect(JS_BFS.reduce((a, b) => a + b, 0)).toBe(190080);
+    expect(c.counts).toEqual(JS_BFS.map((n) => String(BigInt(n) * 5160960n)));
+    expect(exactMean(c).toFixed(5)).toBe('5.35659');
+  });
+
+  it('双色底 / 四色底 / 六色底', () => {
+    expect(ps('WY').counts).toEqual(['41284608', '495194112', '4528035840', '36302346240',
+      '203316470784', '514595773440', '220007574528', '1708548096', '49152']);
+    expect(exactMean(ps('WY')).toFixed(5)).toBe('4.93041');
+
+    expect(ps('BGOR').counts).toEqual(['82561551', '989639320', '9016537732', '70527627394',
+      '342939567939', '501802189777', '55631618351', '5534736']);
+    expect(exactMean(ps('BGOR')).toFixed(5)).toBe('4.53132');
+
+    expect(ps('BGORWY').counts).toEqual(['123831014', '1483362354', '13467931869', '102912176921',
+      '439912207732', '409964837408', '13130901687', '27815']);
+    expect(exactMean(ps('BGORWY')).toFixed(5)).toBe('4.30727');
+  });
+
+  // 四色/六色底最深只到 7 步:8 步档恰好空。counts 末尾不补 0 —— 补了会让
+  // 覆盖矩阵的「深度 ≤ N」多报一档。
+  it('四色底与六色底 8 步档为空(最深 7 步)', () => {
+    expect(ps('BGOR').counts.length).toBe(8);
+    expect(ps('BGORWY').counts.length).toBe(8);
+    expect(ps('W').counts.length).toBe(9);
+    expect(ps('WY').counts.length).toBe(9);
+  });
+
+  it('与标准 Cross 同分母,且逐档严格更近(放宽目标集只会变近)', () => {
+    for (const k of ['W', 'WY', 'BGOR', 'BGORWY'] as const) {
+      const strict = EXACT_DIST.cross.unfixed![k] as ExactFull;
+      const loose = ps(k);
+      // 单/双色底的标准 Cross 走各自的子空间(分母 190,080 / 5,109,350,400),
+      // 伪十字这四档一律落在 12!·2¹¹ 全空间上 —— 故按占比比,不按计数比。
+      let cs = 0n, cl = 0n;
+      const S = 10n ** 18n;
+      for (let d = 0; d < Math.max(strict.counts.length, loose.counts.length); d++) {
+        cs += BigInt(strict.counts[d] ?? '0');
+        cl += BigInt(loose.counts[d] ?? '0');
+        const rs = (cs * S) / BigInt(strict.total);
+        const rl = (cl * S) / BigInt(loose.total);
+        expect(`${k} d=${d} ${rl >= rs}`).toBe(`${k} d=${d} true`);
+      }
+      expect(`${k} ${exactMean(loose) < exactMean(strict)}`).toBe(`${k} true`);
+    }
+  });
+
+  it('色数越多平均步数越低(与标准 Cross 同向)', () => {
+    expect(exactMean(ps('W')) > exactMean(ps('WY'))).toBe(true);
+    expect(exactMean(ps('WY')) > exactMean(ps('BGOR'))).toBe(true);
+    expect(exactMean(ps('BGOR')) > exactMean(ps('BGORWY'))).toBe(true);
   });
 });
 

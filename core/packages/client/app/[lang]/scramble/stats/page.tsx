@@ -24,7 +24,7 @@ import AvgExamplesPanel, { type AvgGroupCase } from './_components/AvgExamplesPa
 import ExactCoverageMatrix from './_components/ExactCoverageMatrix';
 import ExactDistTable from './_components/ExactDistTable';
 import {
-  EXACT_STAGES, SLOT_LABEL, SLOT_OK,
+  EXACT_PSEUDO_STAGES, EXACT_STD_STAGES, SLOT_LABEL, SLOT_OK,
   compactExact, exactColorsOf, exactMean, exactRatios, getExactCell, groupDigits,
   type ExactColors, type ExactFull, type ExactSlot, type ExactStage,
 } from './_data/exact_dist';
@@ -185,8 +185,10 @@ const EXACT_SET_META: SetData = {
   label_zh: '精确穷举',
   sample_count: 0,
   variants: {
-    // 只有标准 CFOP 阶段序有精确数据;stages 供阶段下拉用,data 恒空(数值不走这里)。
-    std: { sample_count: 0, stages: EXACT_STAGES, data: {} },
+    // 标准 CFOP 全 5 阶段 + 伪变体的十字有精确数据;stages 供阶段下拉用,
+    // data 恒空(数值不走这里,走 EXACT_DIST 旁路)。
+    std: { sample_count: 0, stages: EXACT_STD_STAGES, data: {} },
+    pseudo: { sample_count: 0, stages: EXACT_PSEUDO_STAGES, data: {} },
   },
 };
 
@@ -639,12 +641,13 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   // 换 set/变体/阶段/底色/步数/度量 → 清国家筛选(避免筛着一个国家切走后列表空/口径错位)。
   useEffect(() => { setFilterCountry(null); }, [scrambleSet, variant, stage, effectiveSubset, selectedBin, optMetric]);
 
-  // 同 (阶段, 底色) 的 WCA 真题经验分布 —— 精确集下用作叠加对照。
+  // 同 (变体, 阶段, 底色) 的 WCA 真题经验分布 —— 精确集下用作叠加对照。
   // 只有「不固定槽」可比:真题分析器恒对 4 个 F2L 槽取 min,与固定槽是两回事。
+  // 变体不能写死 std:伪十字的经验分布在 variants.pseudo 下,阶段键也带 pseudo_ 前缀。
   const overlayCounts = useMemo<Record<string, number> | null>(() => {
     if (!isExact || !overlayOn || slot !== 'unfixed' || !exactFull || !data) return null;
-    return data.sets.wca?.variants.std?.data[stage]?.[subsetKey]?.counts ?? null;
-  }, [isExact, overlayOn, slot, exactFull, data, stage, subsetKey]);
+    return data.sets.wca?.variants[variant]?.data[stage]?.[subsetKey]?.counts ?? null;
+  }, [isExact, overlayOn, slot, exactFull, data, variant, stage, subsetKey]);
 
   const series = useMemo<HistSeries[]>(() => {
     if (Object.keys(activeCounts).length === 0) return [];
