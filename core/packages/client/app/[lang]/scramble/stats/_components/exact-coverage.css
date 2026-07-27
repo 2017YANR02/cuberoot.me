@@ -143,6 +143,12 @@
   color: var(--faint-foreground);
 }
 
+/* 未实现:说得通、也跑得动,只是还没跑。与「不适用」必须能一眼分开 */
+.exact-cov-cell.is-todo .exact-cov-state {
+  color: var(--muted-foreground);
+  border-bottom: 1px dashed color-mix(in srgb, var(--muted-foreground) 55%, transparent);
+}
+
 /* 当前图表选中的格 */
 .exact-cov-cell.is-selected {
   background: var(--accent-soft);
@@ -171,3 +177,4 @@
 .exact-cov-legend b.is-full { color: var(--signal-success); }
 .exact-cov-legend b.is-zero { color: var(--signal-warning); }
 .exact-cov-legend b.is-na { color: var(--faint-foreground); }
+.exact-cov-legend b.is-todo { color: var(--muted-foreground); }

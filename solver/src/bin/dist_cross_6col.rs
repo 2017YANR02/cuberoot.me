@@ -1,11 +1,33 @@
-//! dist_cross_6col: 六色底中性 Cross 深度分布
+//! dist_cross_6col: 底色中性 Cross 深度分布(默认六色,`--faces` 可取任意子集)
 //!
 //! 算法 (cpp cross_6_col.cpp 直译):
 //! 1. 每面 (U/D/L/R/F/B) 建一张 190,080 字节的 BFS 表 (该面 cross solved 起点)
 //!    编码 = quad_rank * 16 + ori_bits (quad_rank 是 4 个棱位的 Lehmer rank)
 //! 2. 全空间 = 12! × 2^11 = 980,995,276,800 (棱排列 × 11-bit EO 自由度,parity 固定)
 //! 3. 主循环 12 × 11 个 chunk(p0,p1 选定)→ 10! perms × 2048 oris
-//!    AVX2 内层:32 oris 一批,6 面 lookup + 取 min + 直方图
+//!    AVX2 内层:32 oris 一批,活跃面 lookup + 取 min + 直方图
+//!
+//! `--faces <UDLRFB 子集>` 只改第 3 步取 min 的面集合,全空间与编码都不变 ——
+//! 所以任意色数出来的分布都躺在同一个 980,995,276,800 分母上,可直接互相比较。
+//!
+//! GOLDEN(RAYON_NUM_THREADS=14,各约 35s):
+//!
+//! `--faces U`(单色底)= 5,160,960 × cross_1_col 金标,逐档验过:
+//!   5160960 77414400 815431680 7194378240 50623856640 239370485760 501924003840
+//!   180458127360 526417920                                   Avg 5.8121
+//!
+//! `--faces UD`(双色底)= 192 × cross_2_col 金标,逐档验过:
+//!   10321728 154800576 1629043584 14291915904 97316348736 390032752320 443815039104
+//!   33744349824 705024                                      Avg 5.3872
+//!
+//! `--faces LRFB`(四色底 = 去掉一对相对色)—— 新数据,无 cpp 金标。
+//!   UDFB / UDLR 两种取法跑出来逐位相同(颜色对称性的现场证明):
+//!   20635791 309065792 3241839115 27981105637 175574881766 514537441534
+//!   256994694935 2335611639 591                             Avg 5.0194
+//!
+//! `--faces UDLRFB`(六色底,默认)= cross_6_col 金标,bit-exact:
+//!   30942374 462820266 4839379314 41131207644 239671237081 543580917185
+//!   151019930400 258842496 40                               Avg 4.80946
 
 use std::time::Instant;
 
@@ -180,6 +202,7 @@ unsafe fn process_chunk(
     face_slots: &[[u8; 4]; 6],
     tables: &[Vec<i8>; 6],
     simd_indices: &[[u8; 2048]; 6],
+    active: &[usize],
 ) -> [u64; 10] {
     let mut local_hist = [0u64; 10];
     let mut p = [0u8; 12];
@@ -201,9 +224,9 @@ unsafe fn process_chunk(
             inv_p[p[i] as usize] = i as u8;
         }
 
-        // pre-load 6 rows
+        // pre-load the active faces' rows(非活跃面不读、也不参与 min)
         let mut row_vecs: [__m256i; 6] = [v_zero; 6];
-        for f in 0..6 {
+        for &f in active {
             let t = &face_slots[f];
             let base = quad_rank[inv_p[t[0] as usize] as usize]
                                 [inv_p[t[1] as usize] as usize]
@@ -217,7 +240,7 @@ unsafe fn process_chunk(
         let mut i = 0;
         while i < 2048 {
             let mut min_d = _mm256_set1_epi8(-1i8);
-            for f in 0..6 {
+            for &f in active {
                 let idx = _mm256_loadu_si256(simd_indices[f].as_ptr().add(i) as *const __m256i);
                 let val = _mm256_shuffle_epi8(row_vecs[f], idx);
                 min_d = _mm256_min_epu8(min_d, val);
@@ -250,8 +273,33 @@ fn next_permutation(a: &mut [u8]) -> bool {
     true
 }
 
+/// `--faces UDLRFB` / `--faces LRFB` —— 参与取 min 的底色集合,默认六色全开。
+/// 面序与 `detect_face_slots` 一致(f = move/3),相对面成对:(U,D) (L,R) (F,B)。
+fn parse_faces() -> (Vec<usize>, String) {
+    const NAMES: [char; 6] = ['U', 'D', 'L', 'R', 'F', 'B'];
+    let args: Vec<String> = std::env::args().collect();
+    let spec = args.windows(2)
+        .find(|w| w[0] == "--faces")
+        .map(|w| w[1].to_uppercase())
+        .unwrap_or_else(|| NAMES.iter().collect());
+
+    let mut active: Vec<usize> = Vec::new();
+    for ch in spec.chars() {
+        match NAMES.iter().position(|&n| n == ch) {
+            Some(f) if !active.contains(&f) => active.push(f),
+            Some(_) => panic!("--faces 里 {} 重复了", ch),
+            None => panic!("--faces 只认 UDLRFB,收到 {}", ch),
+        }
+    }
+    assert!(!active.is_empty(), "--faces 不能为空");
+    active.sort();
+    let label: String = active.iter().map(|&f| NAMES[f]).collect();
+    (active, label)
+}
+
 fn main() {
     let t0 = Instant::now();
+    let (active, faces_label) = parse_faces();
     let mgr = move_tables::instance();
     let mt_edge: Vec<u32> = mgr.ensure_edge().as_u32().to_vec();
 
@@ -267,7 +315,7 @@ fn main() {
     });
     eprintln!("      done @ {:.2}s", t0.elapsed().as_secs_f64());
 
-    eprintln!("[3/3] main scan 12! × 2048 with AVX2...");
+    eprintln!("[3/3] main scan 12! × 2048 with AVX2 over faces {}...", faces_label);
     let chunks: Vec<(u8, u8)> = (0u8..12)
         .flat_map(|p0| (0u8..12).filter(move |&p1| p1 != p0).map(move |p1| (p0, p1)))
         .collect();
@@ -275,7 +323,7 @@ fn main() {
     let hist: [u64; 10] = chunks
         .par_iter()
         .map(|&(p0, p1)| unsafe {
-            process_chunk(p0, p1, &quad_rank, &face_slots, &tables, &simd_indices)
+            process_chunk(p0, p1, &quad_rank, &face_slots, &tables, &simd_indices, &active)
         })
         .reduce(|| [0u64; 10], |mut a, b| {
             for k in 0..10 { a[k] += b[k]; }
@@ -283,7 +331,8 @@ fn main() {
         });
 
     println!();
-    println!("=== Six-Color Neutral Cross Exact Distribution ===");
+    println!("=== Cross Exact Distribution over faces {} ({} colors) ===",
+             faces_label, active.len());
     println!("Depth     Count               Pct        Cumul");
     println!("------------------------------------------------------------");
     let mut cumul: u64 = 0;
@@ -307,7 +356,8 @@ fn main() {
     assert_eq!(total, THEORETICAL_TOTAL, "total mismatch");
     eprintln!("[OK] total matches theoretical");
 
-    // 若 .tmp/cross_6_col_golden.txt 存在,逐深度对齐
+    // 若 .tmp/cross_6_col_golden.txt 存在,逐深度对齐(金标只覆盖六色全开这一种)
+    if active.len() == 6 {
     if let Ok(text) = std::fs::read_to_string(GOLDEN_FILE) {
         let mut golden = Vec::new();
         for line in text.lines() {
@@ -335,5 +385,6 @@ fn main() {
                 eprintln!("[OK] bit-exact vs cpp golden");
             }
         }
+    }
     }
 }
