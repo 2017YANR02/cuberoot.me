@@ -1,17 +1,32 @@
-// 有上界的 Rust→WASM cross-step worker 池。每个 worker 在自己的 WASM 线性内存
-// 装一份表(pt_cross_C4E0 52MB + mt_edge4 18MB ≈ 70MB),所以 N 路并行 = N×70MB:
-// 手机默认 2、桌面 4(按需懒生成),既能多视角同时算又不至于 OOM。
+// 有上界的 Rust→WASM cross-step worker 池。每个 worker 在自己的 WASM 线性内存装一份表,
+// 所以 N 路并行 = N×表内存:手机默认 2、桌面 4(按需懒生成),既能多视角同时算又不至于 OOM。
 // 零拷贝共享表需要 SharedArrayBuffer + COOP/COEP,本页没发这些头,故不共享。
 //
-// 产物自包含在 /tools/solver/rust-cross/(dev 经 Next catch-all,prod 回退 static),
-// 27MB 表只在本组件首次展开时拉(每个 worker 各拉一次,HTTP 缓存命中后很快)。
+// 下载量(2026-07-27 重划):
+//   · mt_*(移动表)全部由 WASM 现场生成(见 solver/src/mt_gen.rs),**不再下载** ——
+//     它们是纯运动学产物,生成只要几十毫秒,却曾占去 gz 8.8MB(mt_edge4 一张就 8.3MB)。
+//   · pt_*(BFS 剪枝表)仍须下载,是唯一的网络成本。
+//   · std 池再拆两段:建池只拉 pt_cross(gz 50KB)就能算纯十字;xcross+ 要的
+//     pt_cross_C4E0(gz 20MB)由 `ensureXCross()` 在用户真的切到那些阶段时才补。
+// 结果:计时器/analyzer 默认视图(标准 · 十字)的冷启动从 ~30MB 降到 ~50KB。
+//
+// 产物自包含在 /tools/solver/rust-cross/(dev 经 Next catch-all,prod 直取 static)。
 
 import { normalizeScramble } from './cross-solver';
 
 const BASE = '/tools/solver/rust-cross';
-// 代码产物(worker/glue/wasm)固定文件名 + 1 天 CDN 缓存,重建后靠版本 query 失效;
-// 表(27MB)不变,不加版本以走缓存。每次重建 wasm/worker 必须 bump。
-const V = 'v=20260625a';
+// 代码产物(worker/glue/wasm)固定文件名 + 1 天 CDN 缓存,重建后靠版本 query 失效。
+// 每次重建 wasm/worker 必须 bump。
+const V = 'v=20260727a';
+// 表直接从 static 取:prod 下主域的 /tools/* 是一条 307 跳到 static(见
+// app/tools/[...slug]/route.ts),每张表白付一个 RTT,而表本来就带 CORS:*。
+// dev 仍走本地 Next catch-all(直接读仓库根 tools/)。
+const TABLES_BASE = process.env.NODE_ENV === 'development'
+  ? `${BASE}/tables`
+  : 'https://static.cuberoot.me/tools/solver/rust-cross/tables';
+// 表内容不变(重算表要改名或 bump 这里),故 URL 带一个长缓存版本号,配合 nginx 的
+// immutable 头 → 一次下完永久命中,不再受启发式缓存窗口摆布。
+const TV = 'tv=1';
 
 // 各表解压后(= 装进 WASM 线性内存的)字节数。实测自 tools/solver/rust-cross/tables/*.bin.gz
 // (`gzip -dc | wc -c`)。**表重建后尺寸若变需同步更新**(见 memory「WASM 重建仪式」)。
@@ -38,22 +53,24 @@ export const TABLE_BYTES: Record<string, number> = {
 };
 
 // 各 need 首次加载的表清单 —— 必须与 cross-solver-worker.js 的 init 分支严格一致。
+// **只列 pt_*/opt_*(必须下载的 BFS 产物)**;mt_* 一律 WASM 现场生成,不在此列。
 // eodr / htr / htr2 / fr / chain 零表下载(微表/距离表现场从内置运动学建)。
 // pocket / pyraminx / skewb 拉预算好的全空间距离表 opt_*(秒算,from_dist 直载,
 // 表缺失时 worker 回退现场 BFS)。
 export const TABLE_SETS: Record<'cross' | 'cross_restrict' | 'xcross_restrict' | 'f2leo' | 'variant' | 'block222' | 'roux223' | 'eodr' | 'htr' | 'htr2' | 'fr' | 'chain' | '222' | 'pyraminx' | 'skewb', string[]> = {
-  cross: ['pt_cross', 'pt_cross_C4E0', 'mt_edge2', 'mt_edge4', 'mt_corn', 'mt_edge'],
+  // 纯十字段;xcross+ 的 pt_cross_C4E0 见 XCROSS_TABLES(ensureXCross 时才拉)。
+  cross: ['pt_cross'],
   // or18 式受限最优十字:零表下载,worker 构造时现场建 coord/center transition。
   cross_restrict: [],
   // 受限最优 xcross:零表下载,worker 构造现场建 54-move transition + 双 PDB(用到才建)。
   xcross_restrict: [],
-  f2leo: ['pt_cross', 'mt_edge2', 'mt_edge4', 'mt_corn', 'mt_edge'],
+  f2leo: ['pt_cross'],
   variant: [
-    'pt_cross_C4E0', 'pt_cross_ins_C4', 'pt_pair_C4E0', 'mt_edge4', 'mt_corn', 'mt_edge',
-    'pt_cross', 'pt_ep4eo12', 'mt_edge2', 'mt_eo12', 'mt_eo12_alt', 'mt_ep4', 'pt_pscross',
+    'pt_cross_C4E0', 'pt_cross_ins_C4', 'pt_pair_C4E0',
+    'pt_cross', 'pt_ep4eo12', 'pt_pscross',
   ],
-  block222: ['mt_edge3', 'mt_corn'],
-  roux223: ['mt_edge3', 'mt_corn2', 'mt_edge2', 'mt_corn'],
+  block222: [],
+  roux223: [],
   eodr: [],
   htr: [],
   htr2: [],
@@ -63,6 +80,9 @@ export const TABLE_SETS: Record<'cross' | 'cross_restrict' | 'xcross_restrict' |
   pyraminx: ['opt_pyraminx'],
   skewb: ['opt_skewb'],
 };
+
+/** std 池切到 xcross+ 阶段时才补的表(`pool.ensureXCross()`)。UI 据此显示第二段加载提示。 */
+export const XCROSS_TABLES = ['pt_cross_C4E0'];
 
 /** HTR(条件式阶段)非 DR 视角的哨兵值(u32::MAX):该视角未处于 DR,无 HTR 步数。 */
 export const HTR_NOT_DR = 0xffffffff;
@@ -239,6 +259,12 @@ export interface RustCrossPool {
   solveSkewbLen(scramble: string): Promise<number[]>;
   /** 斜转整解一条最优解。`m` = 最优解序列（无整体旋转前缀），`c` 恒空串。 */
   solveSkewbMoves(scramble: string): Promise<MovesTimed>;
+  /** std 池专用:补上 xcross+ 段的 pt_cross_C4E0(gz 20MB)。切到 xcross/F2L 阶段前必须
+   *  先 await 它(否则 WASM 端 variant≥1 会因未 attach 而抛错);已就绪时立即 resolve。
+   *  非 std 池(need!=='cross')是 no-op。 */
+  ensureXCross(): Promise<void>;
+  /** 该池是否已具备 xcross+ 能力(UI 据此决定要不要显示第二段加载提示)。 */
+  hasXCross(): boolean;
   /** 丢弃所有「排队未派发」的任务(已在 worker 里跑的 ≤size 个无法中断)。切变体/打乱集时调,
    *  避免新请求(如快 cross)排在旧变体一堆慢任务后面干等。被丢的任务 reject('cancelled')。 */
   clearQueue(): void;
@@ -264,6 +290,10 @@ interface PoolWorker {
   job: Job | null;
   ready: boolean;
   dead: boolean;
+  /** 该 worker 的 xcross 段:null=未补;Promise=补表中/已补(resolve 即可用)。 */
+  xcross: Promise<void> | null;
+  /** 补表中的 resolve 句柄:worker 死掉时要手动结算,否则 ensureXCross 永远等下去。 */
+  xcrossResolve: (() => void) | null;
 }
 
 export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_restrict' | 'xcross_restrict' | 'f2leo' | 'variant' | 'block222' | 'roux223' | 'eodr' | 'htr' | 'htr2' | 'fr' | 'chain' | '222' | 'pyraminx' | 'skewb' = 'cross'): RustCrossPool {
@@ -278,13 +308,23 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
   let rejectReady!: (e: Error) => void;
   const ready = new Promise<void>((res, rej) => { resolveReady = res; rejectReady = rej; });
 
+  // std 池:本会话是否已升级到 xcross+(切阶段后新 spawn 的 worker 直接带上大表 init,
+  // 免得刚 ready 又补一次)。
+  let wantXCross = false;
+  let xcrossSeq = 1;
+  const xcrossWaiters = new Map<number, () => void>();
+
   const origin = typeof location !== 'undefined' ? location.origin : '';
+  // 表 URL:dev 走同源 catch-all,prod 直取 static(见 TABLES_BASE)。
+  const tablesBase = TABLES_BASE.startsWith('http') ? TABLES_BASE : `${origin}${TABLES_BASE}`;
   const initMsg = {
     type: 'init',
     glueUrl: `${origin}${BASE}/cross_solver.js?${V}`,
     wasmUrl: `${origin}${BASE}/cross_solver_bg.wasm?${V}`,
-    tablesBase: `${origin}${BASE}/tables`,
-    need, // 'cross'(std,含 52MB C4E0)或 'f2leo'(只 5 张小表)
+    tablesBase,
+    tableQuery: TV, // worker 拼成 <base>/<name>.bin.gz?<tableQuery>
+    need,
+    xcross: false, // spawn 时按 wantXCross 覆盖
   };
 
   function dispatch(pw: PoolWorker, job: Job) {
@@ -298,6 +338,9 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
     if (pw.dead) return;
     pw.dead = true;
     loading = false;
+    // 死掉的 worker 不再服务任何 job,等它补表没有意义 —— 结算掉,免得 ensureXCross 悬着。
+    pw.xcrossResolve?.();
+    pw.xcrossResolve = null;
     if (terminate) { try { pw.w.terminate(); } catch { /* */ } }
     const job = pw.job;
     pw.job = null;
@@ -330,10 +373,22 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
     spawned++;
     loading = true;
     const w = new Worker(`${BASE}/cross-solver-worker.js?${V}`, { type: 'module' });
-    const pw: PoolWorker = { w, job: null, ready: false, dead: false };
+    // 已升级过的池:新 worker 直接带大表 init,ready 即具备 xcross 能力。
+    const bornWithXCross = wantXCross;
+    const pw: PoolWorker = {
+      w, job: null, ready: false, dead: false,
+      xcross: bornWithXCross ? Promise.resolve() : null,
+      xcrossResolve: null,
+    };
     all.push(pw);
     w.onmessage = (e: MessageEvent) => {
       const m = e.data;
+      // xcross 补表回执:只结算等待者,不动 job(该 worker 可能正忙着别的任务)。
+      if (m.type === 'xcross_ready') {
+        xcrossWaiters.get(m.id)?.();
+        xcrossWaiters.delete(m.id);
+        return;
+      }
       if (m.type === 'ready') {
         pw.ready = true;
         loading = false;
@@ -369,10 +424,48 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
         || 'worker crashed (可能内存不足 / out of memory)';
       fail(pw, new Error(detail), true);
     };
-    w.postMessage(initMsg);
+    w.postMessage({ ...initMsg, xcross: bornWithXCross });
+  }
+
+  // 给某个 worker 补 xcross 段(幂等:pw.xcross 一旦建立就复用同一个 Promise)。
+  // worker 侧 ensure_xcross 会先 await 自己的 init,故 init 未完成时发也安全。
+  function ensureWorkerXCross(pw: PoolWorker): Promise<void> {
+    if (pw.dead) return Promise.resolve();
+    if (pw.xcross) return pw.xcross;
+    const id = xcrossSeq++;
+    pw.xcross = new Promise<void>((res) => {
+      pw.xcrossResolve = res;
+      xcrossWaiters.set(id, () => { pw.xcrossResolve = null; res(); });
+    });
+    pw.w.postMessage({ type: 'ensure_xcross', id });
+    return pw.xcross;
+  }
+
+  // std 池:variant≥1(xcross..xxxxcross)需要 pt_cross_C4E0。调用方不必记得先 ensureXCross ——
+  // 这里统一拦一道,漏调只是慢一点(先补表再派发),不会让 WASM 端因未 attach 抛错。
+  function jobNeedsXCross(msg: Record<string, unknown>): boolean {
+    if (need !== 'cross') return false;
+    const v = msg.variant;
+    return typeof v === 'number' && v >= 1;
+  }
+
+  async function ensureAllXCross(): Promise<void> {
+    wantXCross = true;
+    await Promise.all(all.filter((p) => !p.dead).map(ensureWorkerXCross));
   }
 
   function submit(msg: Record<string, unknown>, onPartial?: Job['onPartial']): Promise<unknown> {
+    // 门必须是「等表真的到位」,不能只看 wantXCross 标志:补表期间后来的 job 若被放行,
+    // 会打到尚未 attach 的 worker 上,WASM 端 panic('unreachable')——而 panic 过的实例
+    // 连后续 attach 都做不了,那个 worker 就此报废(曾表现为 UI 永远停在「加载 XCross 数据表」)。
+    // ensureAllXCross 幂等,已就绪时只是 await 一批已 resolve 的 Promise。
+    if (jobNeedsXCross(msg)) {
+      return ensureAllXCross().then(() => submitReady(msg, onPartial));
+    }
+    return submitReady(msg, onPartial);
+  }
+
+  function submitReady(msg: Record<string, unknown>, onPartial?: Job['onPartial']): Promise<unknown> {
     // 含 Rw/Fw/旋转的打乱(如 3BLD 朝向尾缀)会让魔方偏离白顶绿前;Rust 端 string_to_alg
     // 直接跳过无法识别 token 会静默算错,故先归正到白顶绿前的纯 HTM 再喂 worker。
     // pyraminx / skewb 例外:记号非 3x3 语义(pyram 小写 tips;skewb 角转 120°,X2=240°),
@@ -527,6 +620,14 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
     solveSkewbMoves(scramble) {
       return submit({ type: 'skewb_moves', id: nextId++, scramble }) as Promise<MovesTimed>;
     },
+    async ensureXCross() {
+      // 池是懒生成的:此刻可能只有 1 个 worker(spawn() 在建池时已起第一个)。
+      // 之后 spawn 的 worker 走 bornWithXCross,init 时直接带上大表。
+      if (need === 'cross') await ensureAllXCross();
+    },
+    hasXCross() {
+      return need !== 'cross' || wantXCross;
+    },
     clearQueue() { while (queue.length) queue.shift()!.reject(new Error('cancelled')); },
     abort() {
       // 只终止在跑的 worker(有 job 的);空闲 ready worker 保留,避免无谓重载表。
@@ -536,6 +637,8 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
         pw.job = null;
         try { pw.w.terminate(); } catch { /* */ }
         pw.dead = true;
+        pw.xcrossResolve?.(); // 同 fail():别让 ensureXCross 等一个已被杀掉的 worker
+        pw.xcrossResolve = null;
       }
       for (let i = all.length - 1; i >= 0; i--) if (all[i].dead) { all.splice(i, 1); spawned--; }
       for (let i = idle.length - 1; i >= 0; i--) if (idle[i].dead) idle.splice(i, 1);

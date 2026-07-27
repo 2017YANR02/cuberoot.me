@@ -13,7 +13,9 @@
  *      详情页那一个(CuberReconPlayer → ReconPlayerBase,跑站内 `/sim` 引擎):
  *      同样的方位字母、右上角背面小窗、共享 <PlaybackBar>。
  *   3. 算完自动选最优视角 → 立刻出解 + 动画,无需先点格子。
- *   4. 池走站内共享单例(getRustCrossPool),gen 多行 / analyzer 复用,27MB 表只拉一次。
+ *   4. 池走站内共享单例(getRustCrossPool),gen 多行 / analyzer 复用,表只拉一次。
+ *      表下载已按需分层:mt_* 全部 WASM 现场生成(零下载),纯十字只要 pt_cross(gz 50KB),
+ *      XCross 及以上才补 pt_cross_C4E0(gz 20MB,见 ensureXCrossTables)。
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
@@ -26,7 +28,7 @@ import { SubsetColorPicker, useSubsetSelection, COLOR_NAME, type ColorLetter } f
 import { CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '@/lib/cube-colors';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { tr } from '@/i18n/tr';
-import { createRustCrossPool, FR_NOT_HTR, HTR_NOT_DR, HTR2_NOT_HTR, type MovesTimed, type RustCrossPool, type SolItem, TABLE_BYTES, TABLE_SETS } from '@/lib/rust-cross-client';
+import { createRustCrossPool, FR_NOT_HTR, HTR_NOT_DR, HTR2_NOT_HTR, type MovesTimed, type RustCrossPool, type SolItem, TABLE_BYTES, TABLE_SETS, XCROSS_TABLES } from '@/lib/rust-cross-client';
 import { getRustCrossPool, dropRustCrossPool, poolSizeForDevice, type PoolNeed } from '@/lib/rust-cross-pool';
 import { normalizeScramble } from '@/lib/cross-solver';
 import { rotateSolutionY, Y_ROT_LABEL } from '@/lib/rotate-solution';
@@ -554,13 +556,22 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   // 会渲染出 4,移动端客户端是 2 → hydration mismatch。挂载后再取,水合期两端都渲染占位值。
   const [poolSize, setPoolSize] = useState<number | null>(null);
   useEffect(() => { setPoolSize(poolSizeForDevice()); }, []);
-  // 当前 need 首次要加载的表(按内存降序)+ 合计,用于 loading 提示。
+  // std 池的第二段加载:纯十字只要 pt_cross(50KB),切到 XCross/F2L 阶段才补
+  // pt_cross_C4E0(20MB)。为 true 时复用同一套 loading UI,只是表清单换成那张大表。
+  const [xLoading, setXLoading] = useState(false);
+  // 当前正在加载的表(按内存降序)+ 合计,用于 loading 提示。
   const tableInfo = useMemo(() => {
-    const rows = TABLE_SETS[need]
+    const rows = (xLoading ? XCROSS_TABLES : TABLE_SETS[need])
       .map((name) => ({ name, bytes: TABLE_BYTES[name] ?? 0 }))
       .sort((a, b) => b.bytes - a.bytes);
     return { rows, total: rows.reduce((s, r) => s + r.bytes, 0) };
-  }, [need]);
+  }, [need, xLoading]);
+  /** std 且 stage≥1(XCross 及以上)时确保大表就位;其余情形零成本。 */
+  const ensureXCrossTables = useCallback(async (pool: RustCrossPool, kind: Kind, st: number) => {
+    if (kind !== 'std' || st < 1 || pool.hasXCross()) return;
+    setXLoading(true);
+    try { await pool.ensureXCross(); } finally { setXLoading(false); }
+  }, []);
 
   // 共享池:need(cross/variant/f2leo)变化时取/建对应池,等首个 worker 就绪。
   // poolSize 挂载后才可知(null=未挂载),到位前不建池(只 null→值 一次,不会重建)。
@@ -586,11 +597,11 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   // loading 经过秒数(给用户进度感;≥15s 提示网络较慢并出重试按钮)。
   const [elapsed, setElapsed] = useState(0);
   useEffect(() => {
-    if (status !== 'loading') return;
+    if (status !== 'loading' && !xLoading) return;
     setElapsed(0);
     const id = setInterval(() => setElapsed((s) => s + 1), 1000);
     return () => clearInterval(id);
-  }, [status, need, retryTick]);
+  }, [status, xLoading, need, retryTick]);
 
   // 方法切换后把 stage 收进合法范围。
   useEffect(() => {
@@ -622,6 +633,9 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
         }
       } else if (kind === 'std') {
         // 未受限 / 仅 6 面子集:走老快引擎(masked 精确剪枝、零建表,零回归)。
+        // XCross 及以上先确保 20MB 剪枝表就位(纯十字永不触发)。
+        await ensureXCrossTables(pool, kind, stage);
+        if (computeReq.current !== my) return result;
         await Promise.all(FACES.map(async (_f, f) => {
           try {
             const r = await pool.solveFace(scr, stage, f, activeMaskRef.current);
@@ -746,6 +760,9 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
       // 搜索深度 = 最优 + slack(默认 +2;用户可在「最大步数」下拉调到 +0..6);cap=用户选的展示条数,
       // 引擎按长度升序收集、够数即停。条数填不满时(短解不够)如实返回更少。
       const movesMask = activeMaskRef.current;
+      // 解法枚举同样要 XCross 大表(computeAll 一般已补过,直连深链/换阶段竞态时兜底)。
+      await ensureXCrossTables(pool, kind, stage);
+      if (movesReq.current !== my) return;
       const res = kind === 'std'
         ? (useCrRef.current
           ? await getXcrPool().solveXCrossRestrictMoves(scr, f, crMaskRef.current.lo, crMaskRef.current.hi, crMaxRotRef.current, slack, cap, stage, combo, onPartial)
@@ -1209,11 +1226,13 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
         </div>
       ) : null}
 
-      {status === 'loading' && (
+      {(status === 'loading' || xLoading) && (
         <div className="stsv-loading">
           <div className="stsv-status">
             <Spinner size={14} />
-            {t('加载求解器与数据表(仅首次)…', 'Loading solver + tables (first time only)…')}
+            {xLoading
+              ? t('加载 XCross 数据表(仅首次)…', 'Loading XCross table (first time only)…')
+              : t('加载求解器与数据表(仅首次)…', 'Loading solver + tables (first time only)…')}
             {elapsed >= 3 && <span className="stsv-elapsed">{elapsed}s</span>}
           </div>
           <ul className="stsv-tables">
@@ -1250,7 +1269,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
         </div>
       )}
 
-      {status === 'ready' && (
+      {status === 'ready' && !xLoading && (
         <>
           {method === 'htr' && (
             <div className="stsv-hint">

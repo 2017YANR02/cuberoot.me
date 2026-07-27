@@ -64,15 +64,15 @@ interface BrowserSolver { key: string; zhEngine: string; enEngine: string; zhLat
 
 // 浏览器端 WASM (gen 页现算). 定性, 非精确遥测.
 const BROWSER: BrowserSolver[] = [
-  { key: 'std cross-step', zhEngine: 'pt_cross_C4E0 (52MB/worker)', enEngine: 'pt_cross_C4E0 (52MB/worker)', zhLatency: 'cross 秒出', enLatency: 'cross instant' },
+  { key: 'std cross-step', zhEngine: '纯十字只下 pt_cross (gz 50KB); XCross+ 再补 pt_cross_C4E0 (gz 20MB); mt_* 现场生成', enEngine: 'cross-only downloads just pt_cross (50KB gz); XCross+ adds pt_cross_C4E0 (20MB gz); mt_* generated in-WASM', zhLatency: 'cross 秒出', enLatency: 'cross instant' },
   { key: 'pair', zhEngine: 'VariantSolverWasm', enEngine: 'VariantSolverWasm', zhLatency: '全 4 阶段 ~0.04s', enLatency: 'all 4 stages ~0.04s' },
   { key: 'eo', zhEngine: 'VariantSolverWasm', enEngine: 'VariantSolverWasm', zhLatency: '深阶段 数十秒', enLatency: 'deep stages tens of seconds' },
   { key: 'pseudo', zhEngine: 'VariantSolverWasm', enEngine: 'VariantSolverWasm', zhLatency: '~5s', enLatency: '~5s' },
   { key: 'pseudo_pair', zhEngine: 'VariantSolverWasm', enEngine: 'VariantSolverWasm', zhLatency: '深阶段 数十秒', enLatency: 'deep stages tens of seconds' },
-  { key: 'f2leo / pseudo_f2leo', zhEngine: '小表 ~40MB/worker', enEngine: 'small tables ~40MB/worker', zhLatency: 'cross ~2.8s', enLatency: 'cross ~2.8s' },
+  { key: 'f2leo / pseudo_f2leo', zhEngine: '只下 pt_cross (gz 50KB), mt_* 现场生成', enEngine: 'downloads only pt_cross (50KB gz), mt_* generated in-WASM', zhLatency: 'cross ~2.8s', enLatency: 'cross ~2.8s' },
   { key: '333 整解最优 (h48)', zhEngine: 'cube48opt[1-9] WASM (/scramble/solver, .dat 表用户自备)', enEngine: 'cube48opt[1-9] WASM (/scramble/solver, user-supplied .dat)', zhLatency: '默认桌面 opt3 243M / 手机 opt1 30M; 表越大搜得越快; 整解 God 数最优', enLatency: 'default desktop opt3 243M / mobile opt1 30M; bigger table = faster search; whole-cube God\'s-number optimal' },
-  { key: '2x2x2 block', zhEngine: 'Block222SolverWasm (~0.7MB/worker)', enEngine: 'Block222SolverWasm (~0.7MB/worker)', zhLatency: '全 6 视角即时', enLatency: 'all 6 views instant' },
-  { key: '1x2x3 / 2x2x3', zhEngine: 'Roux223SolverWasm (~0.8MB/worker)', enEngine: 'Roux223SolverWasm (~0.8MB/worker)', zhLatency: '方块/2x2x2 即时; 1x2x3 与 2x2x3 首算建表 ~秒级', enLatency: 'square/2x2x2 instant; 1x2x3 & 2x2x3 build tables on first solve (~seconds)' },
+  { key: '2x2x2 block', zhEngine: 'Block222SolverWasm (零下载, ~0.7MB 现场生成)', enEngine: 'Block222SolverWasm (zero download, ~0.7MB generated in-WASM)', zhLatency: '全 6 视角即时', enLatency: 'all 6 views instant' },
+  { key: '1x2x3 / 2x2x3', zhEngine: 'Roux223SolverWasm (零下载, ~0.8MB 现场生成)', enEngine: 'Roux223SolverWasm (zero download, ~0.8MB generated in-WASM)', zhLatency: '方块/2x2x2 即时; 1x2x3 与 2x2x3 首算建表 ~秒级', enLatency: 'square/2x2x2 instant; 1x2x3 & 2x2x3 build tables on first solve (~seconds)' },
   { key: '1x2x3 ×2', zhEngine: 'Roux223SolverWasm 轻档 (免 2.68G 大表)', enEngine: 'Roux223SolverWasm light tier (no 2.68G table)', zhLatency: '单格 毫秒~秒级; 解法枚举 数秒~数十秒', enLatency: 'per-cell ms–seconds; solution enumeration seconds to tens of seconds' },
   { key: 'EO / EOLine / DR', zhEngine: 'EoDrSolverWasm (零表下载, 微表现场建)', enEngine: 'EoDrSolverWasm (zero downloads, micro-tables built in-browser)', zhLatency: 'EO/EOLine 即时; DR 首算建表 ~1s 后毫秒级', enLatency: 'EO/EOLine instant; DR builds tables on first solve (~1s), then ms' },
   { key: 'HTR (DR→HTR)', zhEngine: 'HtrSolverWasm (零表下载, 全空间精确表现场建)', enEngine: 'HtrSolverWasm (zero downloads, exact full-space table built in-browser)', zhLatency: '首算建表 ~335ms 后即时; 非 DR 出哨兵', enLatency: 'first solve builds the table (~335ms), then instant; non-DR yields a sentinel' },

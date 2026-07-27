@@ -1,9 +1,12 @@
 // 站内共享的 Rust→WASM 求解器池单例。
 //
 // StageSolver 可能在同一页多处挂载(analyzer 主面板 + gen 多行行内展开),若每个实例各建
-// 一个池,每次都要重拉/重解压 27MB 表 + 重建 wasm(~1-2s)。这里做「单活跃池」:同一 need
-// 复用,need 变了(std↔变体↔f2leo,装不同表集)才终止旧池建新池。一页同一时刻只用一种方法,
-// 故单活跃池足够;跨页导航模块常驻,池随之常驻(内存有界:一个池)。
+// 一个池,每次都要重拉表 + 重建 wasm。这里做「单活跃池」:同一 need 复用,need 变了
+// (std↔变体↔f2leo,装不同表集)才终止旧池建新池。一页同一时刻只用一种方法,故单活跃池
+// 足够;跨页导航模块常驻,池随之常驻(内存有界:一个池)。
+//
+// 注:std 池内部还有第二段(xcross 的 20MB 剪枝表),由 pool.ensureXCross() 惰性补 ——
+// 那是池**内**升级,不换池,故这里不需要为它开一个新 need。
 
 import { createRustCrossPool, type RustCrossPool } from './rust-cross-client';
 
