@@ -40,9 +40,9 @@ export default function CubeGroup() {
   return (
       <GTSec id="cube-group" className="gt-sec">
         <div className="gt-sec-num">§2</div>
-        <h2 className="gt-sec-title">
+        <h1 className="gt-sec-title">
           <L zh="魔方群 G" en="The cube group G" />
-        </h2>
+        </h1>
         <p>
           <L
             zh={<>把还原状态记作 <TeX src={`e`} />。 把每一次「转一个面 90° 或 180°」记作一个置换,作用在 26 个小块的位置和朝向上。所有可由这些转面组合得到的置换 (state) 构成集合 <strong>G</strong>。</>}

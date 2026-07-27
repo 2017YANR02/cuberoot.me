@@ -149,9 +149,9 @@ export default function YoungTableaux() {
   return (
     <GTSec id="young-tableaux" className="gt-sec">
       <div className="gt-sec-num">§52</div>
-      <h2 className="gt-sec-title">
+      <h1 className="gt-sec-title">
         <L zh="Young 图与 S_n 表示" en="Young tableaux & representations of S_n" />
-      </h2>
+      </h1>
 
       <p className="gt-lede">
         <L

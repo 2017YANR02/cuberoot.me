@@ -176,9 +176,9 @@ export default function SolvableNilpotent() {
   return (
     <GTSec id="solvable-nilpotent" className="gt-sec">
       <div className="gt-sec-num">§37</div>
-      <h2 className="gt-sec-title">
+      <h1 className="gt-sec-title">
         <L zh="可解群与幂零群" en="Solvable & nilpotent groups" />
-      </h2>
+      </h1>
 
       <p className="gt-lede">
         <L

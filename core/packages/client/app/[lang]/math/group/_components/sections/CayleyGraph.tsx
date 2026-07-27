@@ -1224,9 +1224,9 @@ export default function CayleyGraph() {
   return (
       <GTSec id="cayley" className="gt-sec">
         <div className="gt-sec-num">§14</div>
-        <h2 className="gt-sec-title">
+        <h1 className="gt-sec-title">
           <L zh="Cayley 图 — 群的几何" en="The Cayley graph — geometry of a group" />
-        </h2>
+        </h1>
         <p>
           <L
             zh={<>群本身是抽象代数对象, 但我们可以给它一副 「面孔」 —— 把每个元素画成一个点, 每个 「生成元 s」 画成一条边。 这就是 <strong>Cayley 图</strong>: 它把抽象群变成具体的几何对象, 让群论里的 「直径」 「测地线」 「球壳」 「邻域」 等词有了字面意义。 凯莱图是 1878 年由 Arthur Cayley 提出的, 比魔方早了一个世纪, 但它最自然的可视化就是魔方。</>}

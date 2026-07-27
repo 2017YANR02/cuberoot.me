@@ -16,9 +16,9 @@ export default function SemidirectProduct() {
   return (
     <GTSec id="semidirect-product" className="gt-sec">
       <div className="gt-sec-num">§34</div>
-      <h2 className="gt-sec-title">
+      <h1 className="gt-sec-title">
         <L zh="半直积 Semidirect product" en="Semidirect products" />
-      </h2>
+      </h1>
 
       <p className="gt-lede">
         <L

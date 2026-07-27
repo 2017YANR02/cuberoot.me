@@ -13,9 +13,9 @@ export default function OpenProblems() {
   return (
       <GTSec id="open-problems" className="gt-sec">
         <div className="gt-sec-num">§16</div>
-        <h2 className="gt-sec-title">
+        <h1 className="gt-sec-title">
           <L zh="未解问题 — 群论的开放前线" en="Open problems — frontiers of group theory" />
-        </h2>
+        </h1>
         <p className="gt-lede">
           <L
             zh={<>魔方群本身的 「基本不变量」 (阶、 直径、 结构定理) 都 <em>完全确定</em>。 但 「拓宽一步」 立即就出现了几个数学社区目前还回答不上来的问题。 这些问题横跨组合、 几何、 计算复杂度、 量子算法 —— 都是经过 50 年研究仍然敞开的。</>}

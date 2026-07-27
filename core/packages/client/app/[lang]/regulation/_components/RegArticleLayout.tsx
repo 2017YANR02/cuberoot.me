@@ -13,7 +13,8 @@ import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ArrowRight, LibraryBig, ScrollText } from 'lucide-react';
 import Link from '@/components/AppLink';
 import { useT } from '../../../../hooks/useT';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useLang, tr } from '@/i18n/tr';
+import JsonLd, { articleJsonLd, SITE_URL } from '@/components/JsonLd';
 import { articleBySlug, regNav, type RegArticle } from '../_data/articles';
 import { useRegText } from './reg-text';
 import '../regulation.css';
@@ -43,18 +44,31 @@ export default function RegArticleLayout({ slug, children }: { slug: string; chi
   const { badge, title, tagline } = useRegText();
   const a = articleBySlug(slug);
   const { prev, next } = regNav(slug);
+  const lang = useLang();
 
-  // Hooks must run unconditionally — compute title strings with a fallback.
-  useDocumentTitle(
-    a ? `${a.title.zh} · WCA 规则` : 'WCA 规则',
-    a ? `${a.title.en} · WCA Regulations` : 'WCA Regulations',
-  );
+  // Title is owned by each chapter's layout.tsx (regulationMetadata, derived
+  // from this same REG_ARTICLES entry), so it is in the server HTML now. Setting
+  // it again here would only overwrite it after hydration with the older
+  // "<name> · WCA Regulations" wording.
 
   if (!a) return null;
   const Icon = a.Icon;
 
   return (
     <div className="reg-page reg-article">
+      {/* One Article node covers all 16 chapters — headline and description come
+          from this chapter's REG_ARTICLES entry, the same source as the heading
+          rendered below, so the two cannot disagree. */}
+      <JsonLd
+        data={articleJsonLd({
+          headline: `${tr({ zh: 'WCA 规则:', en: 'WCA Regulations: ' })}${title(a)}`,
+          description: tagline(a),
+          url: `${SITE_URL}${tr({ zh: '/zh', en: '' })}/regulation/${a.slug}`,
+          lang,
+          partOfName: tr({ zh: 'WCA 规则图解', en: 'The WCA Regulations, illustrated' }),
+          partOfUrl: `${SITE_URL}${tr({ zh: '/zh', en: '' })}/regulation`,
+        })}
+      />
       <div className="reg-wrap">
         <div className="reg-crumb">
           <Link href="/regulation" className="reg-crumb-link">

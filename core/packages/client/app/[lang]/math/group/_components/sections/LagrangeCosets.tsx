@@ -115,9 +115,9 @@ export default function LagrangeCosets() {
   return (
       <GTSec id="lagrange" className="gt-sec">
         <div className="gt-sec-num">§19</div>
-        <h2 className="gt-sec-title">
+        <h1 className="gt-sec-title">
           <L zh="拉格朗日定理与陪集" en="Lagrange's theorem & cosets" />
-        </h2>
+        </h1>
         <p className="gt-lede">
           <L
             zh={<>「子群有多大」是描述 G 内部结构最基础的问题之一。拉格朗日定理把这件事完全钉死:<strong>每个子群的阶 必须整除整个群的阶</strong>。这一条把 G 内可能的子群限制得非常严格。</>}

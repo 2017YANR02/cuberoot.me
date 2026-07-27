@@ -850,9 +850,9 @@ export default function LightsOut() {
   return (
       <GTSec id="lights-out" className="gt-sec">
         <div className="gt-sec-num">§27</div>
-        <h2 className="gt-sec-title">
+        <h1 className="gt-sec-title">
           <L zh="Lights Out — GF(2) 线性代数" en="Lights Out — Linear algebra over GF(2)" />
-        </h2>
+        </h1>
         <p className="gt-lede">
           <L
             zh={<>1995 年 Tiger Electronics 推出的电子玩具 <em>Lights Out</em>: 5×5 方阵的按钮,按一下会同时翻转 <strong>该按钮 + 上下左右</strong> 共 5 个灯的状态。 从一个随机点亮的图案出发,目标是让所有灯熄灭。 看似童玩,背后是一道干净漂亮的 <strong>𝔽₂ 上的线性代数</strong> 题: 每个图案 p 对应一个向量 <TeX src="p \in \mathbb{F}_2^{25}" />, 按钮 i 对应一个固定向量 <TeX src="A_i \in \mathbb{F}_2^{25}" />, 而按钮可交换、 且按两次抵消 (<TeX src="2 \equiv 0 \pmod 2" />), 所以 「按哪些按钮」 也是一个向量 <TeX src="x \in \mathbb{F}_2^{25}" />, 目标方程就是</>}

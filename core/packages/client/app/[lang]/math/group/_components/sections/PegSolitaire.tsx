@@ -772,9 +772,9 @@ export default function PegSolitaire() {
   return (
       <GTSec id="peg-solitaire" className="gt-sec">
         <div className="gt-sec-num">§28</div>
-        <h2 className="gt-sec-title">
+        <h1 className="gt-sec-title">
           <L zh="孔明棋的代数 — 染色不变量、 pagoda 函数与 GF(4)" en="Peg Solitaire — colouring invariants, pagoda functions, GF(4)" />
-        </h2>
+        </h1>
         <p className="gt-lede">
           <L
             zh={<>33 格英式十字盘的孔明棋,中央留一个洞,目标是跳到只剩一颗棋子在中央。 这个看似自由的小游戏被 Reiss (1857)、 Conway、 Beasley (1962–85) 用代数钉得很死: 从中央起手, 唯一的合法终点位置就是中央自身或十字四端, 一共 <strong>5 个格子</strong>。 我们一步步把这件事拆开 — 从最直接的 3-染色, 到 Conway 的 GF(4) 框架, 到 pagoda 函数家族, 再到欧式 37 格盘的 Zantema 加强论证。</>}

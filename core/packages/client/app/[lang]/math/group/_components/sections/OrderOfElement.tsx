@@ -201,9 +201,9 @@ export default function OrderOfElement() {
   return (
       <GTSec id="order-of-element" className="gt-sec">
         <div className="gt-sec-num">§7</div>
-        <h2 className="gt-sec-title">
+        <h1 className="gt-sec-title">
           <L zh="元素的阶" en="Order of an element" />
-        </h2>
+        </h1>
         <p>
           <L
             zh={<>对任何 <TeX src={`g \\in G`} />, 存在最小正整数 <TeX src={`n`} /> 使 <TeX src={`g^n = e`} />。 这个 <TeX src={`n`} /> 称为 <strong>g 的阶 (order)</strong>。 换句话说:不停重复同一公式, 多久回到原点?</>}

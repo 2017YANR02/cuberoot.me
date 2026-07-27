@@ -11,9 +11,9 @@ export default function BeyondTheCube() {
   return (
       <GTSec id="beyond" className="gt-sec">
         <div className="gt-sec-num">§12</div>
-        <h2 className="gt-sec-title">
+        <h1 className="gt-sec-title">
           <L zh="走得更远 — 魔方群在数学版图上的位置" en="Beyond the cube — locating G on the mathematical map" />
-        </h2>
+        </h1>
         <p className="gt-lede">
           <L
             zh={<>把魔方放在「<strong>有限群分类</strong>」的全景图里看一眼,你会发现它不是一个孤立的代数玩具,而是一个 <em>具体得能摸到</em> 的样本,被 19–21 世纪的几条主线同时穿过 —— 置换群、 Cayley 几何、 解的复杂度、 随机游走、 表示论、 量子算法。 每一条线都从这里出发能走很远。</>}

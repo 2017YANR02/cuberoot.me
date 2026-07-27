@@ -732,9 +732,9 @@ export default function ExpanderRamanujan() {
   return (
     <GTSec id="expander-ramanujan" className="gt-sec">
       <div className="gt-sec-num">§62</div>
-      <h2 className="gt-sec-title">
+      <h1 className="gt-sec-title">
         <L zh="扩张图与 Ramanujan 图" en="Expander &amp; Ramanujan graphs" />
-      </h2>
+      </h1>
 
       <p className="gt-lede">
         <L

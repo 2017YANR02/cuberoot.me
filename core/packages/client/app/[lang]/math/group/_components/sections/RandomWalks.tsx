@@ -105,9 +105,9 @@ export default function RandomWalks() {
   return (
       <GTSec id="random-walks" className="gt-sec">
         <div className="gt-sec-num">§24</div>
-        <h2 className="gt-sec-title">
+        <h1 className="gt-sec-title">
           <L zh="群上的随机游走" en="Random walks on G" />
-        </h2>
+        </h1>
         <p className="gt-lede">
           <L
             zh={<>「随机打乱」其实是 G 上的一个 <strong>马尔可夫链</strong>:每一步从 18 个 HTM 生成元中均匀随机选一个。 经典的问题是: <em>多少步之后, 状态分布 「足够接近」 G 上的均匀分布</em>? 答案叫 <strong>混合时间</strong>, 它跟随机游走理论里的 cutoff 现象密切相关 (Diaconis–Shahshahani 1981 风格)。</>}

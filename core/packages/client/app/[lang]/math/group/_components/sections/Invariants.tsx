@@ -90,9 +90,9 @@ export default function Invariants() {
   return (
       <GTSec id="invariants" className="gt-sec">
         <div className="gt-sec-num">§5</div>
-        <h2 className="gt-sec-title">
+        <h1 className="gt-sec-title">
           <L zh="三个守恒律 (可达性条件)" en="Three invariants (reachability conditions)" />
-        </h2>
+        </h1>
         <p>
           <L
             zh={<>哪些状态可以仅靠 6 个面转得到?恰好三条:</>}

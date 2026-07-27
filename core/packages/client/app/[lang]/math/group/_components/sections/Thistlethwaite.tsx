@@ -120,9 +120,9 @@ export default function Thistlethwaite() {
   return (
       <GTSec id="thistlethwaite" className="gt-sec">
         <div className="gt-sec-num">§10</div>
-        <h2 className="gt-sec-title">
+        <h1 className="gt-sec-title">
           <L zh="子群链 — Thistlethwaite 的解法" en="Subgroup chain — Thistlethwaite's solver" />
-        </h2>
+        </h1>
         <p>
           <L
             zh={<>1981 年,数学家 Morwen Thistlethwaite 发现:与其试图直接还原 G,不如把它拆成 <strong>4 个嵌套子群</strong>,每一步只解决一个「难题」:</>}

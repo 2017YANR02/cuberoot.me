@@ -265,9 +265,9 @@ export default function RepresentationBasics() {
   return (
     <GTSec id="representation-basics" className="gt-sec">
       <div className="gt-sec-num">§53</div>
-      <h2 className="gt-sec-title">
+      <h1 className="gt-sec-title">
         <L zh="表示与不可约分解" en="Representations & irreducible decomposition" />
-      </h2>
+      </h1>
 
       <p className="gt-lede">
         <L

@@ -932,9 +932,9 @@ export default function PlatonicSymmetry() {
   return (
     <GTSec id="platonic-symmetry" className="gt-sec">
       <div className="gt-sec-num">§42</div>
-      <h2 className="gt-sec-title">
+      <h1 className="gt-sec-title">
         <L zh="柏拉图立体的对称群" en="Symmetry of the Platonic solids" />
-      </h2>
+      </h1>
 
       <p className="gt-lede">
         <L
