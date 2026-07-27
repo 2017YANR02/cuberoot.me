@@ -7,19 +7,22 @@
  *  · 桌面 (≥1024px):收成主区右侧的常驻可折叠竖栏。展开态记进 localStorage
  *    (默认展开;只有用户手动收起过 '0' 才保持收起。展开会 next/dynamic 拉
  *    StageSolver + ~27MB cross 表,故收起态显式记住以尊重用户选择)。
- *  · 手机 / 平板 (<1024px):pill 常驻在打乱图案下方,点开 = 全屏浮层。原先是
- *    就地展开,但 pill 本就贴在底栏上方,展开出来的内容整块落在首屏之外、
- *    页面又不跟着滚,点下去屏幕毫无变化 —— 看上去就是「没反应」(issue #49)。
+ *  · 手机 / 平板 (<1024px):pill 是顶栏那组控件的最后一件(人数 / 项目 / 打乱来源之后),
+ *    点开 = 全屏浮层。原先是就地展开,但 pill 本就贴在底栏上方,展开出来的内容整块落在
+ *    首屏之外、页面又不跟着滚,点下去屏幕毫无变化 —— 看上去就是「没反应」(issue #49)。
  *    浮层开合走 URL(?hints=1,history push),所以安卓返回键 / 手势返回能关掉它。
+ *    浮层 portal 到 body:顶栏是 z-index:41 的层叠上下文,留在里面它的 z-index:62 只在
+ *    那一层内部有效,会被外面 z-index:61 的底部抽屉盖住。
  *
  * 引擎/动画仍复用 components/StageSolver(analyzer 主面板同款),首次展开才 next/dynamic
  * 拉表;收起后再展开复用站内共享池(getRustCrossPool 单例),不重拉。
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import dynamic from 'next/dynamic';
 import { useQueryState, parseAsBoolean } from 'nuqs';
-import { ChevronRight, Maximize2, X } from 'lucide-react';
+import { ChevronRight, X } from 'lucide-react';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
@@ -41,6 +44,9 @@ const LS_KEY = 'timer.solverHints.panelOpen';
 /** URL param owning the phone full-screen sheet. Shared by SoloView (which folds
  *  it into `anyModalOpen` so Space/Escape don't reach the timer behind it). */
 export const HINTS_PARAM = 'hints';
+
+/** 一个词就够 —— pill 挤在顶栏那排控件里,「解法提示」四个字白占宽度。 */
+const PANEL_TITLE = { zh: '解法', en: 'Solve' };
 
 interface Props {
   scramble: string;
@@ -64,7 +70,7 @@ function SolverBody({ scramble, isZh, compact }: Props & { compact: boolean }) {
  *  + body-scroll-lock mount and unmount with the sheet itself. */
 function SolverSheet({ scramble, isZh, compact, onClose }: Props & { compact: boolean; onClose: () => void }) {
   useModalDismiss(onClose);
-  const title = tr({ zh: '解法提示', en: 'Solver hints' });
+  const title = tr(PANEL_TITLE);
   return (
     <div className="solver-sheet" data-no-timer role="dialog" aria-modal="true" aria-label={title}>
       <div className="solver-sheet-head">
@@ -99,6 +105,10 @@ export default function SolverHintPanel({ scramble, isZh }: Props) {
       if (localStorage.getItem(LS_KEY) !== '0') setRailOpen(true);
     } catch { setRailOpen(true); }
   }, []);
+
+  // 浮层要 portal 到 document.body(见文件头注),预渲染时没有 body → 挂载后才画。
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   // 手机全屏浮层态 —— 归 URL 管,返回键即关闭。桌面用不到它。
   const [sheetOpen, setSheetOpen] = useQueryState(
@@ -137,7 +147,7 @@ export default function SolverHintPanel({ scramble, isZh }: Props) {
     });
   };
 
-  const title = tr({ zh: '解法提示', en: 'Solver hints' });
+  const title = tr(PANEL_TITLE);
 
   return (
     <>
@@ -149,10 +159,9 @@ export default function SolverHintPanel({ scramble, isZh }: Props) {
           aria-expanded={open}
         >
           <span className="solver-panel-title">{title}</span>
-          {/* 手机上点开的是全屏浮层,用「放大」图标示意;桌面才是就地折叠的 chevron。 */}
-          {isDesktopRail
-            ? <ChevronRight size={14} className="solver-panel-chevron" />
-            : <Maximize2 size={13} className="solver-panel-expand" />}
+          {/* 桌面的 chevron 描述的是就地折叠,留着。手机上点开的是全屏浮层,原来配了个
+              「放大」图标 —— 顶栏那排控件里只剩文字更干净,去掉。 */}
+          {isDesktopRail && <ChevronRight size={14} className="solver-panel-chevron" />}
         </button>
         {isDesktopRail && open && (
           <div className="solver-panel-body">
@@ -160,8 +169,9 @@ export default function SolverHintPanel({ scramble, isZh }: Props) {
           </div>
         )}
       </aside>
-      {!isDesktopRail && open && (
-        <SolverSheet scramble={scramble} isZh={isZh} compact={compact} onClose={closeSheet} />
+      {!isDesktopRail && open && mounted && createPortal(
+        <SolverSheet scramble={scramble} isZh={isZh} compact={compact} onClose={closeSheet} />,
+        document.body,
       )}
     </>
   );

@@ -5,7 +5,8 @@
  * local cuber WebGL engine (the same one /sim uses for NxN). It's the NxN
  * counterpart to Sq1ReconPlayer, offered as an alternative to the cubing.js
  * TwistySection so recon previews can match /sim exactly. The back-view mini
- * window is always on here (the recon flow forces it, no toggle).
+ * window is on by default (the recon flow wants it); `backView={false}` drops it
+ * for players too narrow to spare the corner, keeping the orientation letters.
  *
  * Thin adapter over ReconPlayerBase — see there for the shared player lifecycle.
  * Cursor sync: exposes `{ __kind: 'nxn-cuber', jumpToMoveCount(n) }` on playerRef
@@ -25,11 +26,15 @@ function tokenize(alg: string): string[] {
 
 export default function CuberReconPlayer({
   scramble, alg, order, fillPane = false, playerRef, hideControls = false, fullscreenButton,
+  backView = true,
 }: {
   scramble: string;
   alg: string;
   /** NxN order (2..7). */
   order: number;
+  /** 右上角背面小窗。默认开(复盘流程要它);嵌在窄栏里的小播放器可关掉 —— 小窗按主画布
+   *  边长的三成走,300px 见方的画布上它会盖掉小半个魔方。方位字母不受影响,照常画。 */
+  backView?: boolean;
   fillPane?: boolean;
   /** 隐藏底部完整控制条,改用画面内居中播放/暂停浮层(嵌成绩弹窗预览时用)。 */
   hideControls?: boolean;
@@ -39,7 +44,8 @@ export default function CuberReconPlayer({
 }) {
   const adapter: ReconPlayerAdapter<string> = {
     kind: 'nxn-cuber',
-    backView: true,
+    backView,
+    faceHints: true,
     deps: [order],
     parseMoves: tokenize,
     setupPuzzle: (world: World) => {

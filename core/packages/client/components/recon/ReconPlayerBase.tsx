@@ -41,9 +41,13 @@ export interface ReconPlayerHandle {
 export interface ReconPlayerAdapter<M> {
   /** Stable tag exposed on the imperative handle's `__kind`. */
   kind: string;
-  /** Whether an always-on back-view mini window is shown (also drives whether the
-   *  orientation-letter face hints are visible). */
+  /** Whether an always-on back-view mini window is shown. */
   backView: boolean;
+  /** Whether the orientation-letter face hints (U/D/L/R/F/B) are drawn. Defaults to
+   *  `backView` — the letters are NxN-shaped, and the puzzles that skip the mini
+   *  window (skewb / pyraminx) are exactly the ones they'd misdescribe. Set it
+   *  explicitly to keep the letters on a player that has no room for the window. */
+  faceHints?: boolean;
   /** Extra reactive values that require rebuilding the puzzle + re-applying the
    *  current step when they change (e.g. NxN order). Length must stay constant. */
   deps?: unknown[];
@@ -132,13 +136,13 @@ export default function ReconPlayerBase<M>({
       const host = hostRef.current;
       if (!host) return;
 
-      // Orientation letters (U/D/L/R/F/B) — shown iff the back view is on (recon
-      // submit forces both), hidden on the detail / SolutionView surfaces.
+      // Orientation letters (U/D/L/R/F/B) — default to following the back view
+      // (recon submit forces both), overridable for players too small for the window.
       const wantBackView = adapterRef.current.backView;
       const mount = embed.mountSimWorld({
         host,
         interactive: true,
-        faceHints: wantBackView,
+        faceHints: adapterRef.current.faceHints ?? wantBackView,
         // 看图页要满像素比(贴纸边界 / 方位字母都要清楚),不吃默认的 2× 上限。
         pixelRatioCap: Number.POSITIVE_INFINITY,
         // 右下角小窗跟着主视图一起画(只在真渲染了那一帧)。

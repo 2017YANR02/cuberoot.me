@@ -16,7 +16,8 @@ import {
   type SolveResult,
 } from '../_lib/solver/methods';
 import SolverCompareModal from './SolverCompareModal';
-import TwistySection from '@/components/TwistySection';
+import CuberReconPlayer from '@/components/CuberReconPlayer';
+import type { ReconPlayerHandle } from '@/components/recon/ReconPlayerBase';
 import { persistItem } from '@/lib/safe-storage';
 import { tr } from '@/i18n/tr';
 
@@ -48,8 +49,8 @@ export default function StepSolve({ scramble, isZh }: Props) {
   const [computing, setComputing] = useState(false);
   const [compareOpen, setCompareOpen] = useState(false);
   const [selStage, setSelStage] = useState(-1); // -1 = 完整解法,否则单阶段索引
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const playerRef = useRef<any>(null);
+  // 共享 3D 播放器句柄(CuberReconPlayer 回填),供阶段行 ▷ 跳到开头并播放。
+  const playerRef = useRef<ReconPlayerHandle | null>(null);
 
   useEffect(() => {
     persistItem(METHOD_LS_KEY, methodId);
@@ -97,8 +98,9 @@ export default function StepSolve({ scramble, isZh }: Props) {
     setSelStage(i);
     // 双 rAF 等新 alg/setup 流到播放器后再回到起点并自动播放(同 StageSolver 写法)。
     requestAnimationFrame(() => requestAnimationFrame(() => {
-      try { playerRef.current?.jumpToStart?.(); } catch { /* */ }
-      try { playerRef.current?.play?.(); } catch { /* */ }
+      const p = playerRef.current;
+      try { p?.jumpToMoveCount(0); } catch { /* */ }
+      try { p?.play(); } catch { /* */ }
     }));
   };
 
@@ -171,7 +173,16 @@ export default function StepSolve({ scramble, isZh }: Props) {
 
               {playerAlg && (
                 <div className="stepsolve-player">
-                  <TwistySection puzzle="3x3x3" scramble={playerSetup} alg={playerAlg} playerRef={playerRef} />
+                  {/* 与上面 StageSolver 同一个播放器(/recon 那份,跑站内 /sim 引擎):
+                      「打乱 + 一串步骤」正是它的输入形状,选中阶段的起手位就是 setup。
+                      背面小窗关掉 —— 这里只有 300px 见方。 */}
+                  <CuberReconPlayer
+                    order={3}
+                    scramble={playerSetup}
+                    alg={playerAlg}
+                    playerRef={playerRef}
+                    backView={false}
+                  />
                 </div>
               )}
             </>
