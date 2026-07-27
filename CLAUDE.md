@@ -113,6 +113,15 @@ pnpm --filter @cuberoot/client lint
 - UI 验证走项目内 Playwright MCP;fixtures 全集别采样。
 - 新路由先 grep 防撞名;路由改名/合并不为旧路径加 redirect。
 
+## 页面标题 / SEO metadata
+
+- 新路由必做两步:`lib/page-meta.ts` 加一条双语 `title`(内容页顺带 `description`)+ 该路由建 3 行 server `layout.tsx` 调 `pageMetadata('<route>')`。漏了只是继承站级默认,不报错但没 SEO。
+- `page.tsx` 保持 `'use client'` 不用拆 —— client page 不能 export metadata,但同目录 server `layout.tsx` 可以,metadata 向下合并。
+- 禁在 `[lang]/layout.tsx` 或 metadata 里用 `headers()` 判路径(全站转 dynamic,直接撞 Vercel CPU 上限);语言一律取 `params.lang`,`tr()`/`useT()` 是 client-only 用不了。
+- 一处只留一个标题源:页面已有 layout metadata 就删掉它的 `useDocumentTitle`,否则 hydration 后被客户端覆盖回旧文案。
+- 长文页(math/regulation 等)配 `<h1>` + `components/JsonLd` 的 `Article`;禁编造 `SearchAction`/日期/评分。
+- 背景与实测数据见 `docs/seo-geo-plan.md`。
+
 ## URL 状态(全站统一 nuqs)
 
 - 页内状态进 URL 一律 `useQueryState`,禁裸 `history.pushState/replaceState` + 手写 `popstate`(maplibre/canvas/video 重组件例外加注释豁免)。CI `tests/url-state-no-raw-history.test.ts`(豁免加 ALLOWLIST + eslint-disable + 理由)。
