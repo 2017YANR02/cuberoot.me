@@ -1793,7 +1793,15 @@ export const CATALOG: ComponentEntry[] = [
     category: 'more',
     zh: `管理员编辑 / 新增 / 删除单个公式 case 的全屏弹窗,含实时动画预览、公式编辑器、虚拟键盘和高级 JSON 区,保存前校验公式。`,
     en: `Full-screen admin modal to edit/add/delete a single alg case, with live animation preview, alg editor, virtual keyboard and an advanced JSON section, validating algs before save.`,
-    note: { zh: `需传 puzzle / setSlug / state / onClose / onSaved。`, en: `Takes puzzle/setSlug/state/onClose/onSaved props.` },
+    note: { zh: `需传 puzzle / setSlug / state / onClose / onSaved。删除走 AlgDeleteConfirm 二次确认;吃镜像同步的 set(f2l / zbls)开弹层时会拉一次伙伴 case,用来算连带。`, en: `Takes puzzle/setSlug/state/onClose/onSaved. Deletion goes through AlgDeleteConfirm; for mirror-synced sets (f2l / zbls) it loads the partner case on open to compute the cascade.` },
+  },
+  {
+    name: 'AlgDeleteConfirm',
+    import: "import AlgDeleteConfirm from '@/components/AlgDeleteConfirm';",
+    category: 'more',
+    zh: `删公式 / 删 case 的二次确认弹层。重点不是「再问一遍」,是**摊开连带**:镜像系统里一条人写的公式会自动生成落在**伙伴 case** 上的复制品(左右镜落它的 FL、前后镜落它的 BR、y² 落自己的 BL),源一删就跟着没,而站在眼前这张 case 上一条都看不见 —— 不列出来,删就是静默的。`,
+    en: `Second-confirmation layer for deleting an alg or a whole case. The point is not asking twice but showing the collateral: in the mirror system a hand-written alg spawns copies on the partner case (left-right lands on its FL, front-back on its BR, y² on this case's own BL) which vanish with the source and are invisible from the case you are looking at.`,
+    note: { zh: `本组件只负责摆:target 是直接删的,cascade 是连带,两者都是 {where, algs} 分组。清单由 \`@cuberoot/shared/alg-mirror\` 的 mirrorCascadeOnEdit / mirrorCascadeOnDelete 算 —— 内部跑的就是 server 入库同步那份 regenerateMirrorAlgs,显示的即保存后真会消失的那些。伙伴还没拉回来传 cascadePending(期间禁用删除按钮),拉失败传 cascadeError(明说算不出来,别假装没有连带)。`, en: `The component only lays things out: target = deleted directly, cascade = collateral, both as {where, algs} groups. The lists come from mirrorCascadeOnEdit / mirrorCascadeOnDelete in \`@cuberoot/shared/alg-mirror\`, which run the same regenerateMirrorAlgs the server syncs with. Pass cascadePending while the partner case is still loading (the delete button stays disabled) and cascadeError when it failed — never silently show an empty cascade.` },
   },
   {
     name: 'AdminSubmissionsPanel',

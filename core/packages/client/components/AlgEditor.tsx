@@ -14,12 +14,28 @@ import { Fragment, useState, useRef, useImperativeHandle, useMemo, forwardRef, u
 import { useTranslation } from 'react-i18next';
 import { X, Plus, AlertTriangle } from 'lucide-react';
 import type { AlgEntry } from '@cuberoot/shared';
+import { mirrorCascadeOnEdit, VIEWS, type MirrorCascadeEntry } from '@cuberoot/shared/alg-mirror';
 import CubeKeyboardSection from '@/components/CubeKeyboardSection';
 import AlgInput, { type AlgInputHandle } from '@/components/AlgInput';
+import AlgDeleteConfirm, { type AlgDeleteGroup } from '@/components/AlgDeleteConfirm';
+import { displayAlg, shortOriName } from '@/lib/alg_display';
 import { tr } from '@/i18n/tr';
 
 /** 一条「这行没过校验」的标记。`ai` 是**编辑器里的行号**(含空行),不是入库数组的下标。 */
 export interface AlgInvalidMark { oi: number; ai: number; reason: string }
+
+/**
+ * 镜像上下文 —— 给了就能在删一条之前算出「这一删会连带抹掉哪几条生成公式」。
+ *
+ * 由 {@link AdminCaseEditor} 备好(它负责把伙伴 case 拉回来);没建链 / 不吃镜像同步的 set
+ * 不传,那时删除仍然二次确认,只是没有连带这一段。
+ */
+export interface AlgEditorMirror {
+  selfId: number;
+  selfName: string;
+  /** 伙伴 case。自镜像时 `id === selfId`(三份镜像都落回自己身上)。 */
+  partner: { id: number; name: string; algs: AlgEntry[][] };
+}
 
 export interface AlgEditorHandle {
   getValue(): AlgEntry[][];
@@ -36,6 +52,12 @@ interface Props {
   /** 开局就标红的行(页面那轮全库校验已经知道谁挂了,不必等用户按一次保存才告诉他)。 */
   initialInvalid?: AlgInvalidMark[];
   oriNames?: string[] | null;
+  /** 见 {@link AlgEditorMirror}。有值时删一条会把连带的生成公式列进确认弹层。 */
+  mirror?: AlgEditorMirror | null;
+  /** 伙伴 case 还在路上 —— 这期间弹层不让点删,免得在连带算清楚之前就下手。 */
+  mirrorPending?: boolean;
+  /** 伙伴 case 拉不回来的说明。有值就在弹层里明说,不假装「没有连带」。 */
+  mirrorError?: string | null;
   /** 当前聚焦行的纯文本(无聚焦则空)—— 父组件用来驱动左侧 AlgPlayer */
   onCurrentAlgChange?: (alg: string) => void;
   /** 聚焦行内 caret 之前的 token 数(光标 sync 用) */
@@ -56,7 +78,17 @@ function newUid(): string {
   return `r${Date.now().toString(36)}_${_uidCounter}`;
 }
 
-const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, initialInvalid, oriNames, onCurrentAlgChange, onCursorMoveCount }, ref) => {
+/** 正在等确认的那次删除 —— 连带清单开弹层时算一次就定住,不跟着后续输入抖。 */
+interface PendingRemoval {
+  oi: number;
+  uid: string;
+  alg: string;
+  /** 被删的这条本身是不是生成的(是的话删了会重新长出来,要提醒) */
+  generated: boolean;
+  cascade: MirrorCascadeEntry[];
+}
+
+const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, initialInvalid, oriNames, mirror, mirrorPending, mirrorError, onCurrentAlgChange, onCursorMoveCount }, ref) => {
   useTranslation(); // subscribe to language changes; text via tr()
   const [layout, setLayout] = useState<Row[][]>(() => {
     const src = initialValue.length === 0
@@ -146,6 +178,53 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, initialInv
     if (focusedUid === uid) setFocusedUid(null);
   };
 
+  /**
+   * 编辑器此刻的内容,形状与保存时入库的一致(空行剥掉)—— 算连带要拿它当「现状」,
+   * 不能拿 `initialValue`:用户可能刚改过别的行,那些改动也参与生成。
+   */
+  const snapshot = (skipUid?: string): AlgEntry[][] =>
+    layout.map(ori => ori.flatMap(row => {
+      if (row.uid === skipUid) return [];
+      const text = (handles.current.get(row.uid)?.getText() ?? row.alg ?? '').trim();
+      if (!text) return [];
+      const { uid: _uid, alg: _alg, ...rest } = row;
+      return [{ ...rest, alg: text }];
+    }));
+
+  const [pending, setPending] = useState<PendingRemoval | null>(null);
+
+  /** 点 × 走这里:空行直接删(没什么可确认的),有内容的先算连带再问一句。 */
+  const requestRemove = (oi: number, uid: string) => {
+    const row = layout[oi]?.find(r => r.uid === uid);
+    const alg = (handles.current.get(uid)?.getText() ?? row?.alg ?? '').trim();
+    if (!alg) { removeAlg(oi, uid); return; }
+
+    let cascade: MirrorCascadeEntry[] = [];
+    if (mirror) {
+      const self = { id: mirror.selfId, algs: snapshot() };
+      // 自镜像时伙伴就是自己 —— 传现场那份,别传拉回来的旧副本
+      const partner = mirror.partner.id === mirror.selfId
+        ? self
+        : { id: mirror.partner.id, algs: mirror.partner.algs };
+      cascade = mirrorCascadeOnEdit(self, partner, snapshot(uid));
+    }
+    setPending({ oi, uid, alg, generated: !!row?.gen, cascade });
+  };
+
+  /** 连带清单按「落在谁的哪个视角」归堆,一堆一行标题。 */
+  const cascadeGroups = useMemo<AlgDeleteGroup[]>(() => {
+    if (!pending || !mirror) return [];
+    const byWhere = new Map<string, string[]>();
+    for (const e of pending.cascade) {
+      const name = e.caseId === mirror.selfId ? mirror.selfName : mirror.partner.name;
+      const where = `${name} ${VIEWS[e.view]}`;
+      const list = byWhere.get(where);
+      if (list) list.push(displayAlg(e.alg));
+      else byWhere.set(where, [displayAlg(e.alg)]);
+    }
+    return [...byWhere].map(([where, algs]) => ({ where, algs }));
+  }, [pending, mirror]);
+
   return (
     <div className="alg-editor">
       {layout.map((ori, oi) => (
@@ -209,7 +288,7 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, initialInv
                   <button
                     type="button"
                     className="alg-editor-del"
-                    onClick={() => removeAlg(oi, row.uid)}
+                    onClick={() => requestRemove(oi, row.uid)}
                     title={tr({ zh: '删此条', en: 'Remove' })}
                     tabIndex={-1}
                   >
@@ -234,6 +313,27 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, initialInv
           </button>
         </div>
       ))}
+
+      {pending && (
+        <AlgDeleteConfirm
+          title={tr({ zh: '删掉这条公式?', en: 'Delete this alg?' })}
+          target={[{
+            where: oriNames?.[pending.oi] ? shortOriName(oriNames[pending.oi]) : undefined,
+            algs: [displayAlg(pending.alg)],
+          }]}
+          cascade={cascadeGroups}
+          cascadePending={mirrorPending}
+          cascadeError={mirrorError}
+          note={pending.generated
+            ? tr({
+                zh: '这条是镜像自动生成的 —— 删掉保存后会按源公式重新长出来。要真去掉,得去删它的源。',
+                en: 'This one is mirror-generated — it will come back on save. Delete its source instead.',
+              })
+            : tr({ zh: '删除在保存后才生效。', en: 'Takes effect when you save.' })}
+          onCancel={() => setPending(null)}
+          onConfirm={() => { removeAlg(pending.oi, pending.uid); setPending(null); }}
+        />
+      )}
     </div>
   );
 });

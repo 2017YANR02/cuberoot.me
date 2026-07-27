@@ -1167,6 +1167,34 @@ a.alg-community-author:hover {
   color: var(--destructive) !important;
 }
 
+/* 删除二次确认(AlgDeleteConfirm)—— 常嵌在 case 编辑器上方,z-index 要压过 -backdrop-top 的 1100 */
+.alg-del-backdrop { z-index: 1200; }
+.alg-del-modal { width: min(520px, 95vw); }
+.alg-del-modal .alg-admin-modal-head h2 { font-size: 0.95rem; line-height: 1.4; }
+.alg-del-list {
+  display: flex; flex-direction: column; gap: 8px;
+}
+/* 正文那份自己滚 —— 连带警告在它下面,不能被几十条公式顶出视野 */
+.alg-del-list.is-scroll { max-height: 34vh; overflow-y: auto; }
+.alg-del-group {
+  display: flex; flex-direction: column; gap: 2px;
+}
+.alg-del-where {
+  font-size: 0.72rem; color: var(--muted-foreground);
+}
+.alg-del-alg {
+  font-family: var(--font-mono); font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+.alg-del-cascade-head {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 0.8rem; color: var(--signal-warning);
+  margin-top: 2px;
+}
+.alg-del-note {
+  font-size: 0.78rem; color: var(--muted-foreground);
+}
+
 .alg-admin-algs-text {
   font-family: ui-monospace, "Consolas", monospace !important;
   font-size: 0.88rem !important;
