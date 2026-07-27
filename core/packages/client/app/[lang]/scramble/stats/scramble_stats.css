@@ -1002,6 +1002,14 @@ a.scramble-timeline-scramble:hover {
   margin-top: 0.5rem;
   color: var(--faint-foreground);
 }
+/* 有真题分布、但与本格口径不同(EOCross 的固定轴 vs 两轴取 min)时的说明位。 */
+.scramble-stats-exact-note {
+  margin: 0.75rem 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+  line-height: 1.7;
+}
+
 .scramble-stats-exact-zero {
   color: var(--muted-foreground);
 }

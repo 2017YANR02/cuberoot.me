@@ -28,12 +28,12 @@ describe('exact_dist 数据完整性', () => {
   // 13 个完整分布 = 9 个标准阶段 + 4 档伪十字(dist_cross_6col --pseudo × 四个色集)。
   // 四色底那 4 格没有对应 bin,0 步由 lib/skip-probability 的容斥现算 ——
   // 同一套代码把其余 12 个 0 步金标逐位复现,证明见 tests/skip_probability.test.ts。
-  it('矩阵 27 格:13 个完整分布 + 14 个仅 0 步', () => {
+  it('矩阵 28 格:14 个完整分布 + 14 个仅 0 步', () => {
     let full = 0, zero = 0;
     eachCell((_s, _sl, _c, cell) => {
       if ((cell as ExactFull).kind === 'full') full++; else zero++;
     });
-    expect(full).toBe(13);
+    expect(full).toBe(14);
     expect(zero).toBe(14);
   });
 

@@ -10,7 +10,9 @@
  * 例外是四色底那 4 个「仅 0 步」格:solver 没有对应 bin,由 lib/skip-probability 的
  * 容斥现算 —— 同一套代码把其余 12 个 0 步金标(分别出自 5 个不同的 bin)逐位复现,
  * 见 tests/skip_probability.test.ts。
- * 全部 27 个数据集加起来不到 7KB,故走 TS 常量而非 stats/*.json 的 rsync 管道。
+ * 全部 28 个数据集加起来不到 8KB,故走 TS 常量而非 stats/*.json 的 rsync 管道。
+ * 例外之二是 EOCross:它没有 Rust bin,由 lib/eocross-dist.ts 在纯 TS 里 BFS 全部
+ * 24,330,240 个态得到(约 7 秒,只在测试里跑)。
  *
  * ⚠ counts / total 一律是**字符串**,不是 number。双色底 XCross 的 d=7 是
  * 25,284,688,565,714,070,184,比 Number.MAX_SAFE_INTEGER 大三个数量级 —— 存成 number
@@ -25,13 +27,17 @@ import { groupDigits } from '@/lib/group-digits';
  */
 export type ExactStage =
   | 'cross' | 'xcross' | 'xxcross' | 'xxxcross' | 'xxxxcross'
-  | 'pseudo_cross';
+  | 'pseudo_cross' | 'eo_cross';
 /** 精确集里 std 变体的阶段序(= VARIANT_STAGES.std)。 */
 export const EXACT_STD_STAGES: ExactStage[] = ['cross', 'xcross', 'xxcross', 'xxxcross', 'xxxxcross'];
 /** 精确集里 pseudo 变体的阶段序(VARIANT_STAGES.pseudo 的前缀,后三档还没算)。 */
 export const EXACT_PSEUDO_STAGES: ExactStage[] = ['pseudo_cross'];
+/** 精确集里 EO 变体的阶段序(VARIANT_STAGES.eo 的前缀,后四档还没算)。 */
+export const EXACT_EO_STAGES: ExactStage[] = ['eo_cross'];
 /** 全部有精确数据的阶段,覆盖矩阵与守卫测试按这个枚举。 */
-export const EXACT_STAGES: ExactStage[] = [...EXACT_STD_STAGES, ...EXACT_PSEUDO_STAGES];
+export const EXACT_STAGES: ExactStage[] = [
+  ...EXACT_STD_STAGES, ...EXACT_PSEUDO_STAGES, ...EXACT_EO_STAGES,
+];
 
 /**
  * 槽位档。经验分布只有「不固定槽」这一种语义(分析器对 4 个 F2L 槽取 min),
@@ -52,6 +58,8 @@ export const SLOT_OK: Record<ExactStage, ExactSlot[]> = {
   xxxxcross: ['unfixed'],
   // 伪十字只解底面 4 棱,同样没有 F2L 槽的概念。
   pseudo_cross: ['unfixed'],
+  // EOCross 同理:只有 12 条棱参与,没有 F2L 槽。
+  eo_cross: ['unfixed'],
 };
 
 export const SLOT_LABEL: Record<ExactSlot, { zh: string; en: string }> = {
@@ -81,6 +89,12 @@ export interface ExactFull {
   kind: 'full';
   total: string;
   counts: string[];
+  /**
+   * 有真题分布、但**与本格不是同一个口径**,故不叠加。文案直接摆给用户看。
+   * 目前只有 EOCross:本格固定一条 EO 轴,真题那列两条轴取 min(见 lib/eocross-dist.ts)。
+   * 留空 = 可以叠加(绝大多数格)。
+   */
+  noOverlay?: { zh: string; en: string };
 }
 /** 只算出了 0 步状态数(完整分布跑不动或无可信金标)。blocked = 卡在哪,直接显示给用户。
  *  不单独导出 —— 消费方一律经 ExactCell 收窄(cell.kind === 'zero')。 */
@@ -115,7 +129,7 @@ export type ExactCell = ExactFull | ExactZeroOnly;
 type StageTable = Partial<Record<ExactSlot, Partial<Record<ExactColors, ExactCell>>>>;
 
 /**
- * 27 个数据集。数值逐位抄自 solver/src/bin/dist_*.rs 的 GOLDEN 注释(四色底那 4 格除外,
+ * 28 个数据集。数值逐位抄自 solver/src/bin/dist_*.rs 的 GOLDEN 注释(四色底那 4 格与 EOCross 除外,
  * 见文件头),每组的和必须等于 total —— tests/scramble_exact_dist.test.ts 用 toBe 锁死。
  */
 export const EXACT_DIST: Record<ExactStage, StageTable> = {
@@ -347,6 +361,29 @@ export const EXACT_DIST: Record<ExactStage, StageTable> = {
     },
   },
 
+
+  // ── EOCross ───────────────────────────────────────────────────────────
+  // lib/eocross-dist.ts 现场 BFS(11,880 × 2,048 = 24,330,240),与 3x3.xlsx 的
+  // `fixed eocross` 表逐档相同;d=10 的 140 个态在 /scramble/hardest 列全了。
+  // 唯一一格不叠真题:口径不同(固定轴 vs 两轴取 min),见 noOverlay。
+  eo_cross: {
+    unfixed: {
+      W: {
+        kind: 'full',
+        total: '24330240',
+        counts: ['1', '15', '178', '1982', '21041', '204732', '1645039',
+          '8477633', '12917628', '1061851', '140'],
+        noOverlay: {
+          zh: '这一格不叠真题对照:底面定死后 EO 还剩两条轴可选(差一个 y 旋转),本格固定一条轴,'
+            + '而真题那列出自 Rust eo_cross_analyzer —— 它对两条轴取更短的那条。'
+            + '差距是系统性的:固定轴均值 7.531,真题那列 7.219。',
+          en: 'No WCA overlay here: with the bottom face fixed, EO still has two possible axes (a y rotation apart). '
+            + 'This cell fixes one axis, while the empirical column comes from the Rust eo_cross_analyzer, which takes '
+            + 'the shorter of the two. The gap is systematic: 7.531 moves fixed-axis vs 7.219 for that column.',
+        },
+      },
+    },
+  },
   // ── 伪十字(pseudo cross)────────────────────────────────────────────────
   // dist_cross_6col --pseudo --faces {U,UD,LRFB,UDLRFB}。
   // 与上面的 Cross 是同一份 12!·2¹¹ 商空间、同一个分母,只把目标集从「还原」放宽成
