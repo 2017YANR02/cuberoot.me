@@ -246,27 +246,11 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
         display: contents;
     }
     .landing-page .hero-card {
-        gap: 0.5rem;
-        padding: 0.9rem 0.35rem;
-        border-radius: 12px;
-        min-width: 0;
+        padding: 1.25rem 0.4rem;
     }
-    /* 图标跟着变窄的格子缩一档,卡片高度收到跟下方 section 卡同量级 */
-    .landing-page .hero-card-icon svg {
-        width: 24px;
-        height: 24px;
-    }
-    .landing-page .hero-card-logo {
-        width: 26px;
-        height: 26px;
-        border-radius: 7px;
-    }
-    /* 每格只剩 ~100px:字号跟视口走;英文长单词(Competitions / Algorithms)
-       断不开,overflow-wrap 兜底保证任何窄屏都不撑破格子。 */
+    /* 每格只剩 ~100px:字号跟视口走,英文长单词(Competitions)才不撑破格子 */
     .landing-page .hero-card-name {
         font-size: clamp(0.72rem, 3.4vw, 1.05rem);
-        text-align: center;
-        overflow-wrap: anywhere;
     }
 }
 
