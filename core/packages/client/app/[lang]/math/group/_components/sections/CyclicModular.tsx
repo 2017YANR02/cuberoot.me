@@ -480,9 +480,9 @@ export default function CyclicModular() {
   return (
     <GTSec id="cyclic-modular" className="gt-sec">
       <div className="gt-sec-num">§40</div>
-      <h2 className="gt-sec-title">
+      <h1 className="gt-sec-title">
         <L zh="循环群与模算术" en="Cyclic groups & modular arithmetic" />
-      </h2>
+      </h1>
 
       <p className="gt-lede">
         <L

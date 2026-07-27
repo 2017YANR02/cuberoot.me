@@ -131,9 +131,9 @@ export default function QuaternionGroup() {
   return (
     <GTSec id="quaternion-group" className="gt-sec">
       <div className="gt-sec-num">§55</div>
-      <h2 className="gt-sec-title">
+      <h1 className="gt-sec-title">
         <L zh="四元数群 Q₈" en="The quaternion group Q₈" />
-      </h2>
+      </h1>
 
       <p className="gt-lede">
         <L

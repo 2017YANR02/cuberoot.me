@@ -801,9 +801,9 @@ export default function UsefulMath() {
   return (
             <GTSec id="useful-math" className="gt-sec">
               <div className="gt-sec-num">§32</div>
-              <h2 className="gt-sec-title">
+              <h1 className="gt-sec-title">
                 <L zh="有用数学 — 立方爱好者的工具箱" en="Useful mathematics — the cuber's toolbox" />
-              </h2>
+              </h1>
               <p className="gt-lede">
                 <L
                   zh={<>jaapsch.net 那份 <em>Useful Mathematics</em> 短文里, Jaap Scherphuis 主张:魔方爱好者真正用到的不是抽象群论, 而是一两个 <strong>可视化技巧</strong> —— 两行记号、 循环分解、 交叉数判奇偶、 lcm 算阶。 整本数学小册都用这几招过来。 本节把这些「日常工具」全部集成进互动控件: 任意输入排列, 实时看到全部信息; 任意写 A、 B, 实时算 σ A σ⁻¹、 [A, B]、 σ<sup>k</sup>、 ⟨A, B⟩ 阶数。 它是整篇文章的实用速查手册。</>}

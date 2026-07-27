@@ -695,9 +695,9 @@ export default function PointGroupsCrystal() {
   return (
     <GTSec id="point-groups-crystal" className="gt-sec">
       <div className="gt-sec-num">§45</div>
-      <h2 className="gt-sec-title">
+      <h1 className="gt-sec-title">
         <L zh="点群与晶体学" en="Point groups & crystallography" />
-      </h2>
+      </h1>
 
       <p className="gt-lede">
         <L

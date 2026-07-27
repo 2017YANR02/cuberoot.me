@@ -303,9 +303,9 @@ export default function GaloisConnection() {
   return (
     <GTSec id="galois-connection" className="gt-sec">
       <div className="gt-sec-num">§60</div>
-      <h2 className="gt-sec-title">
+      <h1 className="gt-sec-title">
         <L zh="伽罗瓦理论与可解性" en="Galois theory & solvability" />
-      </h2>
+      </h1>
 
       <p className="gt-lede">
         <L

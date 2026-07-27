@@ -58,9 +58,9 @@ export default function Computational() {
   return (
       <GTSec id="computational" className="gt-sec">
         <div className="gt-sec-num">§25</div>
-        <h2 className="gt-sec-title">
+        <h1 className="gt-sec-title">
           <L zh="计算群论:BSGS 与 Schreier–Sims" en="Computational group theory: BSGS & Schreier–Sims" />
-        </h2>
+        </h1>
         <p className="gt-lede">
           <L
             zh={<>「精确算出 |G| = 43,252,003,274,489,856,000」 用的是什么算法? 不是公式 ——是一个叫 <strong>Schreier–Sims</strong> 的递归算法。 它建立 G 的 <strong>BSGS</strong> (基 + 强生成集), 这是 GAP、 Magma、 SageMath 等计算代数系统对所有有限置换群的标准内部表示。</>}

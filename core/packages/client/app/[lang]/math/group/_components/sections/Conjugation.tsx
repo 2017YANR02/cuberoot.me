@@ -195,9 +195,9 @@ export default function Conjugation() {
   return (
       <GTSec id="conjugation" className="gt-sec">
         <div className="gt-sec-num">§8</div>
-        <h2 className="gt-sec-title">
+        <h1 className="gt-sec-title">
           <L zh="共轭 — 把操作搬到别的位置" en="Conjugation — relocating operations" />
-        </h2>
+        </h1>
         <p>
           <L
             zh={<>已知一招 <TeX src={`B`} /> 能搞定 <em>某一块</em>,但你想让它作用在 <em>别的位置</em>。 最优雅的办法是 <strong>共轭</strong>:</>}

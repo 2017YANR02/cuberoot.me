@@ -1,6 +1,7 @@
 import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { MetadataRoute } from 'next';
+import { TOC_SLUGS } from './[lang]/math/group/_data/toc';
 
 // Static-routes sitemap. The fs scan below runs during `next build` (where app/
 // source exists) and the result is baked into the static /sitemap.xml served by
@@ -22,7 +23,23 @@ const EXCLUDE = new Set(['ffmpeg-poc', 'jsonEditor']);
 
 // Dynamic-segment pages worth indexing at a specific value (the scan skips
 // [param] dirs since it can't know which values are valid).
-const EXTRA = ['recognize/pll', 'alg/3x3'];
+//
+// /math/group/<slug> is the big one: 63 sections of original long-form writing,
+// one URL each, all invisible to search because the scan below skips [slug].
+// The slug list is a static array in the page's own data module, so listing them
+// costs no I/O and cannot go stale relative to the page.
+//
+// Deliberately still ABSENT: /wca/persons/<id> (~200k) and /wca/comp/<slug>
+// (~17k). Those render from a single sentinel shell with client-fetched content,
+// so listing them would spend crawl budget to deliver empty pages — robots.txt
+// disallows them for the same reason. /tutorial/<slug> and the alg sets need a
+// live API call to enumerate and this file must stay I/O-free (see above); they
+// belong in a runtime sitemap like recon's if they are ever added.
+const EXTRA = [
+  'recognize/pll',
+  'alg/3x3',
+  ...TOC_SLUGS.map((slug) => `math/group/${slug}`),
+];
 
 // Walk app/[lang]/** collecting static routes (dirs containing page.tsx),
 // skipping dynamic [param], private _folders and (route groups).
@@ -55,10 +72,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // Pattern B: English is the BARE URL (no /en prefix); Chinese is /zh/….
   const en = (path: string) => (path ? `${BASE}/${path}` : `${BASE}/`);
   const zh = (path: string) => (path ? `${BASE}/zh/${path}` : `${BASE}/zh`);
-  const now = new Date();
+  // No lastModified. It used to be `new Date()`, which stamped every one of
+  // these URLs with the build time — so a deploy that changed one page told
+  // crawlers all 265 had changed. Google states it uses lastmod only when the
+  // value is consistently accurate and ignores the field outright when it is
+  // not, so a uniform build timestamp is worse than nothing. A real per-page
+  // date is not available here either: file mtimes are the checkout time in CI
+  // (git does not preserve them), and this file must stay I/O-free, which rules
+  // out shelling out to git log. Omitting the field is the honest option; the
+  // recon sitemap, which has genuine per-item dates, still emits it.
   return routes.map((path) => ({
     url: en(path),
-    lastModified: now,
     alternates: {
       languages: { en: en(path), zh: zh(path), 'x-default': en(path) },
     },

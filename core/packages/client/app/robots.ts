@@ -37,6 +37,19 @@ const EXPENSIVE_PATHS = [
   '/wca/comp/',
 ];
 
+// Real content pages that happen to sit inside a disallowed prefix.
+// `/wca/comp/` is meant to exclude the ~17k per-competition slugs, but the same
+// prefix also covers these two hand-written pages — both are in the sitemap, so
+// without an exception robots.txt and sitemap.xml would contradict each other.
+// Allow wins over Disallow on the longer match in both Google's and Bing's
+// implementations, which is exactly what these are.
+const ALLOW_EXCEPTIONS = [
+  '/wca/comp/stats',
+  '/wca/comp/sources',
+];
+
+const ALLOW = ['/', ...ALLOW_EXCEPTIONS];
+
 // Tier 3 — third-party SEO-audit crawlers. Pure load, zero search visibility,
 // nobody reads their index but their own paying customers. Still fully banned.
 // (Verified effective: 0 hits from all three in the 29h origin sample.)
@@ -79,7 +92,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       // Everyone (real search engines + citation bots) — full site minus the
       // expensive trees.
-      { userAgent: '*', allow: '/', disallow: EXPENSIVE_PATHS },
+      { userAgent: '*', allow: ALLOW, disallow: EXPENSIVE_PATHS },
 
       // Sogou renders JS but caches NOTHING: 1,228 pages crawled cost 38,713
       // requests (~32 per page, every shared chunk re-downloaded at 200, never
@@ -87,7 +100,7 @@ export default function robots(): MetadataRoute.Robots {
       // self-hosted origin (China DNS route), so it burns no Vercel quota — but
       // there is no reason to serve the same bundle 749 times. Crawl-delay is
       // the one knob Sogou documents.
-      { userAgent: 'Sogou web spider', allow: '/', disallow: EXPENSIVE_PATHS, crawlDelay: 5 },
+      { userAgent: 'Sogou web spider', allow: ALLOW, disallow: EXPENSIVE_PATHS, crawlDelay: 5 },
 
       { userAgent: AI_TRAINING_BOTS, disallow: '/' },
       { userAgent: SEO_AUDIT_BOTS, disallow: '/' },

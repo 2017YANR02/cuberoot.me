@@ -731,9 +731,9 @@ export default function HamiltonianPaths() {
   return (
       <GTSec id="hamiltonian" className="gt-sec">
         <div className="gt-sec-num">§29</div>
-        <h2 className="gt-sec-title">
+        <h1 className="gt-sec-title">
           <L zh="Hamilton 路径与 Cayley 图" en="Hamiltonian paths on Cayley graphs" />
-        </h2>
+        </h1>
         <p className="gt-lede">
           <L
             zh={<>给一个图 <TeX src="\Gamma" />, 一条 <strong>Hamilton 路径</strong> 是把所有顶点恰好走一次的路径; <strong>Hamilton 圈</strong> 是再首尾相连。 把 Cayley 图 (§14) 装上 Hamilton 路径有什么意义? <em>每个状态都恰好被路过一次, 一个不重不漏的 <strong>遍历公式</strong></em>。 这就是 「魔方所有 <TeX src="4.3 \times 10^{19}" /> 个状态能否用一条公式走遍?」 — 一个仍然 <strong>悬而未决</strong> 的问题, 已经挂在那里超过半个世纪。</>}

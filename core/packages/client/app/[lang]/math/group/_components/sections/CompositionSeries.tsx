@@ -168,9 +168,9 @@ export default function CompositionSeries() {
   return (
     <GTSec id="composition-series" className="gt-sec">
       <div className="gt-sec-num">§36</div>
-      <h2 className="gt-sec-title">
+      <h1 className="gt-sec-title">
         <L zh="合成列与 Jordan–Hölder" en="Composition series & Jordan–Hölder" />
-      </h2>
+      </h1>
 
       <p className="gt-lede">
         <L

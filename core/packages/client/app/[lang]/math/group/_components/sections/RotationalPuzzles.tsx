@@ -609,9 +609,9 @@ export default function RotationalPuzzles() {
   return (
       <GTSec id="rotational-puzzles" className="gt-sec">
         <div className="gt-sec-num">§31</div>
-        <h2 className="gt-sec-title">
+        <h1 className="gt-sec-title">
           <L zh="图上的旋转拼图 — Jaap 的 (x, y, z) 分类" en="Rotational puzzles on graphs — Jaap's (x, y, z) classification" />
-        </h2>
+        </h1>
         <p className="gt-lede">
           <L
             zh={<>把魔方这种「面旋转」抽象到任意图:给一张连通图,标出若干 <em>面</em> (有向循环),每个面对应一个把面上棋子循环移位的生成元。 整体群 <TeX src="\Gamma" /> 是 <TeX src="S_n" /> 的子群 (<TeX src="n" /> 是棋子总数)。 自然问:哪些图的旋转拼图 <em>状态空间</em> = <TeX src="S_n" />,哪些 <em>= <TeX src="A_n" /></em>,哪些是其它?</>}

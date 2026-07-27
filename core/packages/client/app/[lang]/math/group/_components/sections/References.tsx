@@ -9,9 +9,9 @@ export default function References() {
   return (
     <GTSec id="refs" className="gt-sec">
       <div className="gt-sec-num">REF</div>
-      <h2 className="gt-sec-title">
+      <h1 className="gt-sec-title">
         <L zh="参考文献" en="References" />
-      </h2>
+      </h1>
       <div className="gt-refs">
         <ol>
           <li id="ref-singmaster" className="gt-ref-cite">

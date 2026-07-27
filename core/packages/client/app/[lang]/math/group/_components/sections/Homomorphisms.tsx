@@ -85,9 +85,9 @@ export default function Homomorphisms() {
   return (
       <GTSec id="homomorphisms" className="gt-sec">
         <div className="gt-sec-num">§17</div>
-        <h2 className="gt-sec-title">
+        <h1 className="gt-sec-title">
           <L zh="同态 — 把群压扁到更简单的群里" en="Homomorphisms — projecting onto simpler groups" />
-        </h2>
+        </h1>
         <p>
           <L
             zh={<>群与群之间有「保乘法的映射」 — 它是研究群的标准工具。在魔方上, 同态把 4.3 × 10¹⁹ 个状态压扁到只有 2 个 (奇偶) 或 12 个 (拆装-平行宇宙), 让我们能 「只关心一部分信息」。</>}

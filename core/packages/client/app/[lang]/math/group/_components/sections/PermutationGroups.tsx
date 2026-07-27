@@ -83,9 +83,9 @@ export default function PermutationGroups() {
   return (
       <GTSec id="permutation-groups" className="gt-sec">
         <div className="gt-sec-num">§21</div>
-        <h2 className="gt-sec-title">
+        <h1 className="gt-sec-title">
           <L zh="置换群 Sₙ 与交错群 Aₙ" en="Symmetric & alternating groups" />
-        </h2>
+        </h1>
         <p className="gt-lede">
           <L
             zh={<>置换群是群论里最古老、最具体、也最丰富的家族。 19 世纪 Cauchy、 Cayley、 Galois 创立群论时,「群」几乎就是「置换的集合」 的同义词。 魔方群本质上是两个置换群的乘积:<TeX src={`G \\subset S_8 \\times S_{12}`} />。 理解 <TeX src={`S_n`} /> 和 <TeX src={`A_n`} /> 就理解了魔方一半的代数。</>}
