@@ -520,13 +520,18 @@ html[data-theme='dark'] .stsv {
 /* 共享播放器:右侧固定,跟随页面滚动黏顶 */
 .stsv-player {
   flex: 0 0 300px;
+  /* 行向 flex 里 min-width:auto = min-content,而画布带着行内 px 宽(见 recon-player.css),
+     不显式清零的话这一栏只会变宽不会变窄。 */
+  min-width: 0;
   position: sticky;
   top: 12px;
 }
 /* 播放器复用 /recon 那一个(.recon-player)。它默认 height:100% 撑满父容器(详情页给的是
-   定高左栏);这里高度由内容决定 → 放开高度,改给画布定 1:1,控制条自然接在下面。 */
+   定高左栏);这里高度由内容决定 → 放开高度,改给画布定 1:1,控制条自然接在下面。
+   画布盒写成 flex:0 0 auto + width:100%:高度只由宽度和 aspect-ratio 定,不去碰
+   「列向 flex + 容器高 auto + flex-basis:0」那个各引擎解法不一的角落。 */
 .stsv-player .recon-player { height: auto; }
-.stsv-player .recon-player-canvas { aspect-ratio: 1 / 1; }
+.stsv-player .recon-player-canvas { flex: 0 0 auto; width: 100%; aspect-ratio: 1 / 1; }
 .stsv-compact .stsv-player { flex-basis: 240px; }
 
 /* ── 窄屏 ── */

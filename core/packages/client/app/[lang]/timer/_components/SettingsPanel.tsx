@@ -52,6 +52,10 @@ interface Props {
   event: EventId;
   /** Called after the local DB is wholesale-replaced (cloud restore) so the host can refresh. */
   onDataReplaced?: () => void;
+  /** 「工具」清单(导入导出 / 蓝牙 / 打印 / 打乱足迹…)。原来是底部导航的第三档,那条
+   *  导航撤掉后它落在这里,作为第一节。清单本身仍由 SoloView 组装 —— 每一项都闭包在它的
+   *  状态上(弹窗开关、Stackmat、全屏…),搬过来只会把那堆状态一起拖进设置面板。 */
+  tools?: React.ReactNode;
 }
 
 interface AccordionSectionProps {
@@ -141,7 +145,7 @@ function AccordionSection({ id, title, defaultExpanded, useMobile, expanded, set
   );
 }
 
-export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: Props) {
+export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, tools }: Props) {
   const s = useSettings();
   const metro = useMetronome();
   const isMobile = useIsMobile();
@@ -553,6 +557,19 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
           {tr({ zh: '按住并拖动呼出轮盘', en: 'Press & drag to open the wheel'
         })}
         </p>
+
+        {tools && (
+          <AccordionSection
+            id="tools"
+            title={tr({ zh: '工具', en: 'Tools' })}
+            defaultExpanded={false}
+            useMobile={isMobile}
+            expanded={expandedSections}
+            setExpanded={setExpandedSections}
+          >
+            {tools}
+          </AccordionSection>
+        )}
 
         <AccordionSection
           id="timing"
