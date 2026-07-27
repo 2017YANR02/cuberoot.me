@@ -31,6 +31,7 @@ const BurnsideLab = dynamic(() => import('./_components/BurnsideLab'), { ssr: fa
 const SetAccounting = dynamic(() => import('./_components/SetAccounting'), { ssr: false, loading: labBox });
 const SkipTable = dynamic(() => import('./_components/SkipTable'), { ssr: false, loading: labBox });
 const EoAxes = dynamic(() => import('./_components/EoAxes'), { ssr: false, loading: labBox });
+const SkewbOdds = dynamic(() => import('./_components/SkewbOdds'), { ssr: false, loading: labBox });
 
 export default function ProbabilityPage() {
   useTranslation();
@@ -218,6 +219,30 @@ export default function ProbabilityPage() {
             />
           </p>
           <EoAxes />
+        </section>
+
+        <section className="prob-section">
+          <h2 className="prob-h2">{t('七 斜转:棒、灯与首层', '7 Skewb: bars, lights and the first layer')}</h2>
+          <p className="prob-body">
+            <T
+              zh={<>
+                斜转只有 314 万个状态,所以这一节里没有一个数是估的 —— 全空间数一遍就完事。
+                两个识别口径按术语表的原义:<strong>棒</strong>是两格连在一起同色(斜转上就是中心与同面的角块),
+                <strong>灯</strong>是一条线去掉中间那个点(一条棱两端的两个角块)。
+                另外一条值得记住:角块全好、只剩中心的那 359 个非还原态,最少也要 <strong>8 步</strong> ——
+                「七步纯中心」并不存在。
+              </>}
+              en={<>
+                A Skewb has only 3.1 million states, so nothing here is estimated — the whole space is simply
+                counted. The two recognition terms follow the glossary: a <strong>bar</strong> is two connected
+                stickers of one colour (on a Skewb, a centre and a corner on the same face), and
+                a <strong>light</strong> is a line minus its middle dot (the two corners at the ends of one edge).
+                One more thing worth remembering: of the 359 unsolved states whose corners are all done, the
+                easiest still needs <strong>8 moves</strong> — a seven-move pure-centre case does not exist.
+              </>}
+            />
+          </p>
+          <SkewbOdds />
         </section>
 
         <section className="prob-section">

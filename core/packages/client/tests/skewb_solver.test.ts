@@ -60,6 +60,11 @@ describe('斜转:全空间精确表', () => {
     expect(stats.total).toBe(SKEWB_STATE_COUNT);
   });
 
+  it('两个坐标各自的大小:角 4·3⁷、中心 6!/2(中心只能做偶置换)', () => {
+    expect(stats.corners).toBe(4 * 3 ** 7);
+    expect(stats.centers).toBe(720 / 2);
+  });
+
   it('乘积坐标恰好全可达(完美索引的前提)', () => {
     const sum = stats.histogram.reduce((a, b) => a + b, 0);
     expect(sum).toBe(SKEWB_STATE_COUNT);

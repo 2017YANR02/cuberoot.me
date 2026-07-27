@@ -344,45 +344,45 @@
 }
 /* ─── 三轴坏棱 ─────────────────────────────────────────────────────── */
 
-.prob-eo-nums {
+.prob-nums {
   display: flex;
   flex-wrap: wrap;
   gap: 12px 34px;
   margin-bottom: 14px;
 }
-.prob-eo-nums div { display: flex; flex-direction: column; gap: 2px; }
-.prob-eo-nums b {
+.prob-nums div { display: flex; flex-direction: column; gap: 2px; }
+.prob-nums b {
   font-size: 1.25rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
-.prob-eo-nums span { font-size: 0.78rem; color: var(--prob-text-mute); }
+.prob-nums span { font-size: 0.78rem; color: var(--prob-text-mute); }
 
-.prob-eo-cols {
+.prob-cols {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
   gap: 22px 40px;
   align-items: start;
 }
-.prob-eo-cols h4 {
+.prob-cols h4 {
   margin: 0 0 6px;
   font-size: 0.9rem;
   font-weight: 600;
 }
-.prob-eo-sub {
+.prob-h4-sub {
   margin-left: 8px;
   font-size: 0.72rem;
   font-weight: 400;
   color: var(--prob-text-mute);
 }
-.prob-eo-table { min-width: 0; font-size: 0.84rem; }
-.prob-eo-table th[scope='row'] { font-variant-numeric: tabular-nums; }
-.prob-eo-bar {
+.prob-mini-table { min-width: 0; font-size: 0.84rem; }
+.prob-mini-table th[scope='row'] { font-variant-numeric: tabular-nums; }
+.prob-cell-bar {
   position: relative;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-.prob-eo-bar i {
+.prob-cell-bar i {
   position: absolute;
   left: 0;
   top: 4px;
@@ -390,8 +390,8 @@
   background: color-mix(in srgb, var(--accent) 16%, transparent);
   border-radius: 2px;
 }
-.prob-eo-bar span { position: relative; }
-.prob-eo-more {
+.prob-cell-bar span { position: relative; }
+.prob-more {
   margin-top: 6px;
   font: inherit;
   font-size: 0.8rem;
@@ -401,7 +401,7 @@
   padding: 0;
   cursor: pointer;
 }
-.prob-eo-note {
+.prob-note {
   margin: 14px 0 0;
   font-size: 0.84rem;
   line-height: 1.75;
@@ -444,3 +444,12 @@
   color: var(--prob-text-mute);
 }
 .prob-skip-rel b { color: var(--foreground); font-variant-numeric: tabular-nums; }
+
+.prob-steps-h {
+  margin: 26px 0 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* 行首是整句说明而不是短标签时必须允许折行:CJK 长句碰上 th[scope=row] 的 nowrap 会把表撑出视口 */
+.prob-rowtext tbody th[scope='row'] { white-space: normal; }
