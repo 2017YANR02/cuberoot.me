@@ -29,6 +29,7 @@ const UniverseBuilder = dynamic(() => import('./_components/UniverseBuilder'), {
 const OrbitExplorer = dynamic(() => import('./_components/OrbitExplorer'), { ssr: false, loading: labBox });
 const BurnsideLab = dynamic(() => import('./_components/BurnsideLab'), { ssr: false, loading: labBox });
 const SetAccounting = dynamic(() => import('./_components/SetAccounting'), { ssr: false, loading: labBox });
+const SkipTable = dynamic(() => import('./_components/SkipTable'), { ssr: false, loading: labBox });
 
 export default function ProbabilityPage() {
   useTranslation();
@@ -174,6 +175,26 @@ export default function ProbabilityPage() {
             />
           </p>
           <SetAccounting />
+        </section>
+
+        <section className="prob-section">
+          <h2 className="prob-h2">{t('五 跳步速查表', '5 The skip lookup table')}</h2>
+          <p className="prob-body">
+            <T
+              zh={<>
+                「OLL 跳步是多少?」这类问题的答案全在下表,而且每一条都是现场从状态空间算出来的整数比,
+                不是抄来的小数。顶层那一族直接在 62,208 里数;十字与 2×2×2 块那两族要用容斥 ——
+                同一个底色的几个目标会共用棱块,不能简单相加。
+              </>}
+              en={<>
+                &quot;What are the odds of an OLL skip?&quot; — the whole family is below, and every row is an
+                integer ratio computed from the state space rather than a transcribed decimal. The last-layer
+                rows are counted directly inside the 62,208-state universe; the cross and 2×2×2 rows need
+                inclusion-exclusion, because goals of the same family share pieces and cannot simply be added.
+              </>}
+            />
+          </p>
+          <SkipTable />
         </section>
 
         <section className="prob-section">

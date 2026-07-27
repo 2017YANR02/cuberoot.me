@@ -1,6 +1,9 @@
 // 333 方法 DNA — 每个阶段的算法数 / STM 期望 / 识别时间
 // 配合 VisualCube 在页面上展示样本
 
+import { atLeastKInRound, entryById, oneOverRelative, probability } from '@/lib/skip-probability';
+import { godShare } from '@/lib/god-distance-333';
+
 // ──────────────────────────────────────────────────────────
 // CFOP 步骤分解 (Cross → F2L → OLL → PLL)
 // ──────────────────────────────────────────────────────────
@@ -144,20 +147,67 @@ export const ZBLL_GROUPS: Array<{ coll: string; count: number; avg_stm: number; 
 // ──────────────────────────────────────────────────────────
 // Skip probabilities
 // ──────────────────────────────────────────────────────────
+//
+// 这里**不再写死小数**。整张表由 lib/skip-probability.ts 现算 —— 那边每条都是
+// 「合法状态数 / 全集大小」的整数比,并拿 solver 独立算出的十字 / XCross 金标验过。
+//
+// 换掉的旧值(都不是小数点后的差别,是量级错):
+//   自然 X-cross      1/16      → 1/96.49   旧值把「相对十字」的条件概率算小了 6 倍
+//   幸运 XX-cross     1/600     → 1/18933
+//   极幸运 XXX-cross  1/12000   → 1/6127019
+//   OLL 备注「3³ × 2⁴ / 4 对称」→ 3³ × 2³,旧式子算出来是 108,不是 216
+//   总步数 sub-30     p = 0.02 且注「最优 HTM ≤ 14 → ~1.5%」→ 真值 0.0175%(差 ~100 倍)
 
-export const SKIP_PROBABILITIES = [
-  { event_en: 'X-cross (natural)',              event_zh: '自然 X-cross',           p: 1 / 16,    p_pct: 6.25,    note_en: 'F2L pair pre-solved during cross', note_zh: 'cross 阶段顺手 1 对 F2L'
-},
-  { event_en: 'XX-cross (lucky)',               event_zh: '幸运 XX-cross',          p: 1 / 600,   p_pct: 0.17,    note_en: 'rare double pair', note_zh: '罕见双 pair'
-},
-  { event_en: 'XXX-cross (extreme luck)',       event_zh: '极幸运 XXX-cross',       p: 1 / 12000, p_pct: 0.0083,  note_en: 'Zajder 2.76 / theoretical', note_zh: 'Zajder 2.76 即靠此'
-},
-  { event_en: 'OLL skip (3-cycle naturally oriented)', event_zh: 'OLL skip',         p: 1 / 216,   p_pct: 0.463,   note_en: '3^3 corner orientations × 2^4 edge orientations / 4 symmetries', note_zh: '3^3 角朝向 × 2^4 棱朝向 / 4 对称'
-},
-  { event_en: 'PLL skip',                       event_zh: 'PLL skip',                p: 1 / 72,    p_pct: 1.389,   note_en: '1 of 72 perm+AUF states', note_zh: '72 perm+AUF 中的 1'
-},
-  { event_en: 'LL skip (OLL+PLL both)',         event_zh: 'LL skip',                 p: 1 / 15552, p_pct: 0.0064,  note_en: '~1 in 15.6k — career event for top cubers', note_zh: '约 1.5 万分之一 — 顶级 cuber 整个生涯几次'
-},
-  { event_en: 'Sub-30-STM total (lucky scramble)', event_zh: '总步数 sub-30',        p: 0.02,      p_pct: 2.0,     note_en: 'optimal HTM ≤ 14 → ~1.5% of scrambles', note_zh: 'Optimal HTM ≤ 14 → ~1.5%'
-},
+export interface SkipProbability {
+  event_en: string;
+  event_zh: string;
+  p: number;
+  p_pct: number;
+  note_en: string;
+  note_zh: string;
+}
+
+const fromEntry = (
+  id: string, event_zh: string, event_en: string, note_zh: string, note_en: string,
+  relative = false,
+): SkipProbability => {
+  const e = entryById(id);
+  const p = relative ? 1 / oneOverRelative(e)! : probability(e);
+  return { event_en, event_zh, p, p_pct: p * 100, note_en, note_zh };
+};
+
+/** 最优 HTM ≤ 14 的占比 —— 由 god-distance-333 的分布现算,不写死。 */
+const SUB30_P = godShare(0, 14);
+
+export const SKIP_PROBABILITIES: SkipProbability[] = [
+  fromEntry('xcross-fixed', '自然 X-cross', 'X-cross (natural)',
+    '解出十字时顺手带出一对 F2L —— 这是相对十字的条件概率',
+    'a pair falling out along with the cross — conditional on the cross, not absolute', true),
+  fromEntry('xcross2-fixed', '幸运 XX-cross', 'XX-cross (lucky)',
+    '十字加两对,同样相对十字',
+    'cross plus two pairs, also conditional on the cross', true),
+  fromEntry('xcross3-fixed', '极幸运 XXX-cross', 'XXX-cross (extreme luck)',
+    '十字加三对;Zajder 2.76 靠的是 XX-cross,不是这个',
+    'cross plus three pairs; Zajder 2.76 rode an XX-cross, not this', true),
+  fromEntry('oll', 'OLL 跳步', 'OLL skip',
+    '角朝向 3³ × 棱朝向 2³ = 216,其中 1 种全对',
+    'corner orientation 3³ × edge orientation 2³ = 216, one of them all-good'),
+  fromEntry('pll', 'PLL 跳步', 'PLL skip',
+    '排列同奇偶 4!·4!/2 = 288,其中 4 种是「还原 + 一次 AUF」',
+    'permutations share parity: 4!·4!/2 = 288, four of them solved up to AUF'),
+  fromEntry('ll', 'LL 连跳', 'LL skip (OLL and PLL)',
+    '顶层全集 62,208 分之 4 —— 约 1.5 万分之一',
+    'four states out of the 62,208-state last-layer universe — about one in 15.6k'),
+  {
+    event_en: 'Optimal HTM ≤ 14 (lucky scramble)',
+    event_zh: '最优 HTM ≤ 14(幸运打乱)',
+    p: SUB30_P,
+    p_pct: SUB30_P * 100,
+    note_en: 'from the published 3×3 distance distribution — far rarer than the "~1.5%" often quoted',
+    note_zh: '由公布的三阶距离分布算出 —— 比常被引用的「~1.5%」稀有得多',
+  },
 ];
+
+/** 一轮 5 把里至少中一次 —— 表格右侧那一列。 */
+export const skipInRound = (p: number, rounds = 5): number => atLeastKInRound(p, 1, rounds);
+
