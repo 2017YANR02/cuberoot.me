@@ -26,9 +26,10 @@ const AUF = ['', 'U', 'U2', "U'"];
 
 describe('?scope= 的解析与反解', () => {
   it('大类 / 大类+翻棱数 / 已收录 三种写法往返', () => {
-    expect(parseLsllScope('ap')).toEqual({ category: 'ap', eoBad: null });
-    expect(parseLsllScope('ap-eo2')).toEqual({ category: 'ap', eoBad: 2 });
-    expect(parseLsllScope(LSLL_SCOPE_COVERED)).toEqual({ category: null, eoBad: null });
+    // round 见 tests/lsll_rounds.test.ts —— 大类范围不分轮,恒 1
+    expect(parseLsllScope('ap')).toEqual({ category: 'ap', eoBad: null, round: 1 });
+    expect(parseLsllScope('ap-eo2')).toEqual({ category: 'ap', eoBad: 2, round: 1 });
+    expect(parseLsllScope(LSLL_SCOPE_COVERED)).toEqual({ category: null, eoBad: null, round: 1 });
     expect(lsllScopeParam('ap', null)).toBe('ap');
     expect(lsllScopeParam('ap', -1)).toBe('ap');       // 大类页「全部」用 -1 表示不筛
     expect(lsllScopeParam('ap', 2)).toBe('ap-eo2');
@@ -36,11 +37,11 @@ describe('?scope= 的解析与反解', () => {
   });
 
   it('认不出的范围退回已收录,不留空场', () => {
-    expect(parseLsllScope('zzz')).toEqual({ category: null, eoBad: null });
-    expect(parseLsllScope(null)).toEqual({ category: null, eoBad: null });
+    expect(parseLsllScope('zzz')).toEqual({ category: null, eoBad: null, round: 1 });
+    expect(parseLsllScope(null)).toEqual({ category: null, eoBad: null, round: 1 });
     // O 是纯顶层(= 1LLL),LSLL 不练它;直链 ?scope=o 也退回已收录
-    expect(parseLsllScope('o')).toEqual({ category: null, eoBad: null });
-    expect(parseLsllScope('o-eo2')).toEqual({ category: null, eoBad: null });
+    expect(parseLsllScope('o')).toEqual({ category: null, eoBad: null, round: 1 });
+    expect(parseLsllScope('o-eo2')).toEqual({ category: null, eoBad: null, round: 1 });
   });
 
   it('「选 case」回各自的浏览页', () => {
