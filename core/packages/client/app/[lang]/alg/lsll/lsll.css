@@ -13,23 +13,7 @@
   color: var(--foreground);
 }
 
-/* 右上角训练入口(推到 header 行尾) */
-.lsll-train-btn {
-  margin-left: auto;
-  align-self: center;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
-  border-radius: 8px;
-  background: var(--accent);
-  color: var(--accent-foreground);
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none !important;
-  white-space: nowrap;
-}
-.lsll-train-btn:hover { background: color-mix(in srgb, var(--accent) 88%, black); }
+/* 右上角训练入口用 alg.css 的 `.alg-train-cta`(与 /alg/3x3/zbll 同一颗按钮),这里不另立一份 */
 
 /* 小节标签(两步路线页的「第一眼 / 第二眼」) */
 .lsll-train-label {

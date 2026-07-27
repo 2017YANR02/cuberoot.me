@@ -1297,14 +1297,15 @@ export default function TrainerRunClient() {
       ) : (
       <div className={`trainer-run${leftShown ? ' has-left' : ''}${rightShown ? ' has-right' : ''}`}>
         <div className="trainer-stage" ref={stageRef}>
-          {/* head = 图以上的一切(打乱 / 按钮 / 计时数字),body = 图及其以下。
+          {/* head = 图以上的一切(按钮 / 计时数字),body = 图及其以下(图、打乱公式)。
               两段配合 .trainer-run 的 subgrid:主屏与左右两张卡片共用同一套行,
-              三张图的顶边落在同一条线上,不靠数魔法像素。 */}
+              三张图的顶边落在同一条线上,不靠数魔法像素。
+              打乱公式一律排在图**下方** —— 主屏、两侧卡片、三条一屏、记忆模式同一个次序。 */}
           <div className="trainer-stage-head">
           {/* 三条一屏:当前 + 屏上第 2、3 条(队尾时 = 预抽的 peek / peek2,回看过则是历史里
-              后两条),拧完三条再点一次切下一屏。打乱与图交错成六行,每条紧跟自己那张图。
+              后两条),拧完三条再点一次切下一屏。图与打乱交错成六行,每条打乱紧跟自己那张图。
               图走 local 渲染:三张与三条文字在同一次 commit 出现,不再各自等自己的网络往返。 */}
-          {multi ? (
+          {multi && (
             <div className="trainer-scramble-multi">
               {[
                 { s: currentScramble, c: currentCase },
@@ -1314,11 +1315,6 @@ export default function TrainerRunClient() {
                 .filter(row => !!row.s)
                 .map((row, i) => (
                   <div className="trainer-scramble-row" key={i}>
-                    <ScrambleHeader
-                      scramble={shownScramble(row.s)}
-                      label={i === 0 && copied ? tr({ zh: '已复制', en: 'Copied' }) : undefined}
-                      font={scrambleFont}
-                    />
                     {showStageThumb && row.c && (
                       <CaseThumb
                         puzzle={puzzle}
@@ -1330,16 +1326,14 @@ export default function TrainerRunClient() {
                         local
                       />
                     )}
+                    <ScrambleHeader
+                      scramble={shownScramble(row.s)}
+                      label={i === 0 && copied ? tr({ zh: '已复制', en: 'Copied' }) : undefined}
+                      font={scrambleFont}
+                    />
                   </div>
                 ))}
             </div>
-          ) : (
-            <ScrambleHeader
-              scramble={shownScramble(currentScramble)}
-              label={copied ? tr({ zh: '已复制', en: 'Copied' }) : undefined}
-              font={scrambleFont}
-              placeholder={virtual ? tr({ zh: '打乱生成中…', en: 'Generating scramble…' }) : undefined}
-            />
           )}
           {/* 不计时模式下点哪都是「下一个」,按钮多余,整行都不出(空 div 也会占竖向余量) */}
           {timing && (
@@ -1367,8 +1361,8 @@ export default function TrainerRunClient() {
 
           <div className="trainer-stage-body">
           {/* 当前这道题的 case 图:看得见正在练的这一把。
-              图从「实际打乱」渲染(含 pre/post-AUF),与上方打乱公式朝向一致。
-              三条一屏时图已经跟在各自那条打乱下面(见上),这里不再重复出。 */}
+              图从「实际打乱」渲染(含 pre/post-AUF),与下方打乱公式朝向一致。
+              三条一屏时图已经跟在各自那条打乱上面(见上),这里不再重复出。 */}
           {/* 打乱还没算出来时(虚拟集)不出图 —— 空 setup 会渲染成一个已还原的方块,那是假的 */}
           {!multi && showStageThumb && currentCase && currentScramble && (
             <div className="trainer-stage-thumb">
@@ -1381,6 +1375,15 @@ export default function TrainerRunClient() {
                 size={140}
               />
             </div>
+          )}
+          {/* 打乱公式紧跟在图下方(图关掉时它就是这一段的头一行) */}
+          {!multi && (
+            <ScrambleHeader
+              scramble={shownScramble(currentScramble)}
+              label={copied ? tr({ zh: '已复制', en: 'Copied' }) : undefined}
+              font={scrambleFont}
+              placeholder={virtual ? tr({ zh: '打乱生成中…', en: 'Generating scramble…' }) : undefined}
+            />
           )}
           {/* 离屏预取即将要显示的图(全部 size=140,与左栏/卡片同一 URL → 共用浏览器缓存):
               ① next(换题后 = 左栏当前图 / 也是「上一个」卡片的图);② next2(换题后 =「下一个」

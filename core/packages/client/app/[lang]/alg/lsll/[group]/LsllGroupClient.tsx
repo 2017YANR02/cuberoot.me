@@ -15,7 +15,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useQueryState, parseAsInteger, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
-import { ArrowLeft, Dumbbell } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
 import { FaceletsCube } from '@/components/FaceletsCube';
@@ -133,14 +133,14 @@ export default function LsllGroupClient() {
           ariaLabel={tr({ zh: '一步 / 两步', en: 'One-look / two-look' })}
         />
         {!twoLook && <AlgViewModeToggle value={view} onChange={changeView} className="alg-view-toggle" />}
-        {/* 练这一大类:全站同一个训练器,当前的翻棱筛选一并带过去 */}
+        {/* 练这一大类:全站同一个训练器,当前的翻棱筛选一并带过去。样式共用 `.alg-train-cta` */}
         {!twoLook && (
           <Link
             href={`/alg/3x3/lsll/run?scope=${lsllScopeParam(cat.slug, eoBad)}`}
-            className="lsll-train-btn"
+            className="alg-train-cta"
             prefetch={false}
           >
-            <Dumbbell size={15} /> {tr({ zh: '训练', en: 'Train' })}
+            {tr({ zh: '训练', en: 'Train' })}
           </Link>
         )}
       </div>

@@ -370,7 +370,8 @@
      600 会触发假加粗合成,笔画发糊。 */
   font-weight: 400;
   letter-spacing: 0.05em;
-  margin-bottom: 14px;
+  /* 打乱公式排在图下方(全站训练器同一次序),外边距跟着翻到上侧 */
+  margin: 8px 0 0;
   color: var(--foreground);
 }
 /* 打乱字体档位(sf-sans = 默认继承站字体) */
@@ -393,7 +394,7 @@
 }
 .trainer-stage-btn:hover { background: color-mix(in srgb, var(--foreground) 6%, transparent); }
 
-/* 三条一屏(不计时模式):打乱与图交错成六行,每条打乱紧跟自己那张图 */
+/* 三条一屏(不计时模式):图与打乱交错成六行,每条打乱紧跟自己那张图 */
 .trainer-scramble-multi {
   display: flex; flex-direction: column; align-items: center;
   gap: 18px;
@@ -402,7 +403,8 @@
   display: flex; flex-direction: column; align-items: center;
   gap: 6px;
 }
-.trainer-scramble-multi .trainer-scramble-text { margin-bottom: 0; }
+/* 行内已有 6px gap,不再叠外边距 */
+.trainer-scramble-multi .trainer-scramble-text { margin: 0; }
 
 /* 当前题的 case 图 —— 左栏计时数字下方居中,看得见正在练的这一把 */
 .trainer-stage-thumb {
@@ -606,9 +608,9 @@
 .trainer-solve-thumb.is-clickable:focus-visible {
   outline: 2px solid var(--ring); outline-offset: 3px; border-radius: 6px;
 }
-/* 卡片上半:标题行 + 打乱;下半:图。两段是 subgrid 的两行(见 .trainer-run) */
+/* 卡片上半:标题行;下半:图 + 打乱。两段是 subgrid 的两行(见 .trainer-run) */
 .trainer-card-head { display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; }
-.trainer-card-head .trainer-solve-scramble { text-align: center; }
+.trainer-card-body .trainer-solve-scramble { text-align: center; margin-top: 6px; }
 .trainer-card-body { display: flex; flex-direction: column; justify-content: flex-start; }
 .trainer-solve-row {
   font-size: 0.85rem;
