@@ -7,7 +7,7 @@
  *
  * 数据来源:solver/src/bin/dist_*.rs 头注释里的 GOLDEN 常量。每个数据集都是
  * 「C++ 先出金标 → Rust 独立复算 → 逐位一致」,两端耗时对照见 solver/CLAUDE.md。
- * 全部 19 个数据集加起来不到 5KB,故走 TS 常量而非 stats/*.json 的 rsync 管道。
+ * 全部 23 个数据集加起来不到 6KB,故走 TS 常量而非 stats/*.json 的 rsync 管道。
  *
  * ⚠ counts / total 一律是**字符串**,不是 number。双色底 XCross 的 d=7 是
  * 25,284,688,565,714,070,184,比 Number.MAX_SAFE_INTEGER 大三个数量级 —— 存成 number
@@ -16,9 +16,19 @@
 
 import { groupDigits } from '@/lib/group-digits';
 
-/** 阶段键 —— 与 lib/scramble-variants.ts 的 VARIANT_STAGES.std 逐字相同,可与经验分布直接对照。 */
-export type ExactStage = 'cross' | 'xcross' | 'xxcross' | 'xxxcross' | 'xxxxcross';
-export const EXACT_STAGES: ExactStage[] = ['cross', 'xcross', 'xxcross', 'xxxcross', 'xxxxcross'];
+/**
+ * 阶段键 —— 与 lib/scramble-variants.ts 的 VARIANT_STAGES 逐字相同,可与经验分布直接对照。
+ * 精确集目前覆盖两个变体:标准 CFOP 的 5 个阶段 + 伪(pseudo)变体的十字。
+ */
+export type ExactStage =
+  | 'cross' | 'xcross' | 'xxcross' | 'xxxcross' | 'xxxxcross'
+  | 'pseudo_cross';
+/** 精确集里 std 变体的阶段序(= VARIANT_STAGES.std)。 */
+export const EXACT_STD_STAGES: ExactStage[] = ['cross', 'xcross', 'xxcross', 'xxxcross', 'xxxxcross'];
+/** 精确集里 pseudo 变体的阶段序(VARIANT_STAGES.pseudo 的前缀,后三档还没算)。 */
+export const EXACT_PSEUDO_STAGES: ExactStage[] = ['pseudo_cross'];
+/** 全部有精确数据的阶段,覆盖矩阵与守卫测试按这个枚举。 */
+export const EXACT_STAGES: ExactStage[] = [...EXACT_STD_STAGES, ...EXACT_PSEUDO_STAGES];
 
 /**
  * 槽位档。经验分布只有「不固定槽」这一种语义(分析器对 4 个 F2L 槽取 min),
@@ -37,6 +47,8 @@ export const SLOT_OK: Record<ExactStage, ExactSlot[]> = {
   xxcross: ['unfixed', 'adj', 'diag'],
   xxxcross: ['unfixed'],
   xxxxcross: ['unfixed'],
+  // 伪十字只解底面 4 棱,同样没有 F2L 槽的概念。
+  pseudo_cross: ['unfixed'],
 };
 
 export const SLOT_LABEL: Record<ExactSlot, { zh: string; en: string }> = {
@@ -90,7 +102,7 @@ export type ExactCell = ExactFull | ExactZeroOnly;
 type StageTable = Partial<Record<ExactSlot, Partial<Record<ExactColors, ExactCell>>>>;
 
 /**
- * 19 个数据集。数值逐位抄自 solver/src/bin/dist_*.rs 的 GOLDEN 注释,
+ * 23 个数据集。数值逐位抄自 solver/src/bin/dist_*.rs 的 GOLDEN 注释,
  * 每组的和必须等于 total —— tests/scramble_exact_dist.test.ts 用 toBe 锁死。
  */
 export const EXACT_DIST: Record<ExactStage, StageTable> = {
@@ -279,6 +291,41 @@ export const EXACT_DIST: Record<ExactStage, StageTable> = {
           zh: '完整分布未算 —— 350TB visited',
           en: 'Full distribution not computed — 350TB of visited state',
         },
+      },
+    },
+  },
+
+  // ── 伪十字(pseudo cross)────────────────────────────────────────────────
+  // dist_cross_6col --pseudo --faces {U,UD,LRFB,UDLRFB}。
+  // 与上面的 Cross 是同一份 12!·2¹¹ 商空间、同一个分母,只把目标集从「还原」放宽成
+  // 「还原 / D / D' / D2」—— 底十字拼好即可,整体绕 D 轴偏一格不算错(F2L 阶段用
+  // AUF 补回)。四档均值单调下降 5.3566 → 4.9304 → 4.5313 → 4.3073,且每一档都
+  // 严格低于同底色的标准 Cross(放宽目标集只会变近)。
+  pseudo_cross: {
+    unfixed: {
+      W: {
+        kind: 'full',
+        total: '980995276800',
+        counts: ['20643840', '247726080', '2270822400', '18455592960', '110919352320',
+          '385317273600', '422063308800', '41617981440', '82575360'],
+      },
+      WY: {
+        kind: 'full',
+        total: '980995276800',
+        counts: ['41284608', '495194112', '4528035840', '36302346240', '203316470784',
+          '514595773440', '220007574528', '1708548096', '49152'],
+      },
+      BGOR: {
+        kind: 'full',
+        total: '980995276800',
+        counts: ['82561551', '989639320', '9016537732', '70527627394', '342939567939',
+          '501802189777', '55631618351', '5534736'],
+      },
+      BGORWY: {
+        kind: 'full',
+        total: '980995276800',
+        counts: ['123831014', '1483362354', '13467931869', '102912176921', '439912207732',
+          '409964837408', '13130901687', '27815'],
       },
     },
   },
