@@ -102,7 +102,7 @@ export function SolveCard({
   const name = c ? primaryCaseName(puzzle, set, c) : null;
   return (
     <div className="trainer-solve-card">
-      {/* 打乱排在图上方 —— 与主屏同序(先读公式再看图)。head / body 两段是给 .trainer-run
+      {/* 打乱排在图下方 —— 与主屏 / 记忆模式同序。head / body 两段是给 .trainer-run
           的 subgrid 用的:三列共用同一套行,三张图的顶边自然齐平。 */}
       <div className="trainer-card-head">
         {(header != null || markSlot != null || name != null) && (
@@ -132,42 +132,46 @@ export function SolveCard({
             <span className="trainer-card-slot is-end">{markSlot}</span>
           </div>
         )}
-        {scramble && c && <div className="trainer-solve-scramble">{scramble}</div>}
       </div>
       <div className="trainer-card-body">
         {!scramble || !c ? (
           <div className="trainer-stats-empty">{tr({ zh: '暂无成绩', en: 'No solves yet'
           })}</div>
-        ) : showThumb && (() => {
-          const thumb = (
-            <CaseThumb
-              puzzle={puzzle}
-              set={set}
-              sticker={c.sticker}
-              alg={c.algs.flat()[0]?.alg ?? c.standard ?? ''}
-              // 图从「实际打乱」渲染(含 pre/post-AUF),而非 case 规范 setup —— 否则
-              // 图与卡片上的打乱公式朝向对不上(3x3/2x2 才有 AUF;其余打乱==规范 setup)。
-              setup={scramble ?? c.setup}
-              // 与左栏大图 / 离屏预取同 size=140:同一 URL 共用浏览器缓存,换题时秒出不再重取。
-              size={140}
-            />
-          );
-          // 图和名字指的是同一个 case,点哪个都该开详情 —— 图还是更大更好点的那个目标。
-          // 真 <button>(剥 UA 样式),不用 div onClick:iOS Safari 的 tap 只在原生可交互元素上可靠。
-          return onShowCase ? (
-            <button
-              type="button"
-              className="trainer-solve-thumb is-clickable"
-              onClick={() => onShowCase(c)}
-              title={tr({ zh: '查看该情况', en: 'View this case' })}
-              aria-label={`${primaryCaseName(puzzle, set, c)} — ${tr({ zh: '查看该情况', en: 'View this case' })}`}
-            >
-              {thumb}
-            </button>
-          ) : (
-            <div className="trainer-solve-thumb">{thumb}</div>
-          );
-        })()}
+        ) : (
+          <>
+            {showThumb && (() => {
+              const thumb = (
+                <CaseThumb
+                  puzzle={puzzle}
+                  set={set}
+                  sticker={c.sticker}
+                  alg={c.algs.flat()[0]?.alg ?? c.standard ?? ''}
+                  // 图从「实际打乱」渲染(含 pre/post-AUF),而非 case 规范 setup —— 否则
+                  // 图与卡片上的打乱公式朝向对不上(3x3/2x2 才有 AUF;其余打乱==规范 setup)。
+                  setup={scramble ?? c.setup}
+                  // 与左栏大图 / 离屏预取同 size=140:同一 URL 共用浏览器缓存,换题时秒出不再重取。
+                  size={140}
+                />
+              );
+              // 图和名字指的是同一个 case,点哪个都该开详情 —— 图还是更大更好点的那个目标。
+              // 真 <button>(剥 UA 样式),不用 div onClick:iOS Safari 的 tap 只在原生可交互元素上可靠。
+              return onShowCase ? (
+                <button
+                  type="button"
+                  className="trainer-solve-thumb is-clickable"
+                  onClick={() => onShowCase(c)}
+                  title={tr({ zh: '查看该情况', en: 'View this case' })}
+                  aria-label={`${primaryCaseName(puzzle, set, c)} — ${tr({ zh: '查看该情况', en: 'View this case' })}`}
+                >
+                  {thumb}
+                </button>
+              ) : (
+                <div className="trainer-solve-thumb">{thumb}</div>
+              );
+            })()}
+            <div className="trainer-solve-scramble">{scramble}</div>
+          </>
+        )}
       </div>
     </div>
   );
