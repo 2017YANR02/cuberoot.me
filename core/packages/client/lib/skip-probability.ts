@@ -201,6 +201,32 @@ export function fbBlocksOnFace(face: string): Array<{ corners: string[]; edges: 
   return out;
 }
 
+/**
+ * 2×2×3 块 = 共用一条棱的两个角 + 这两个角的全部 5 条棱(第三维由中心块补齐,不计)。
+ * 数一遍就知道为什么是 5 而不是 6:两个角各 3 条棱,中间那条是共用的。
+ */
+export const block223 = (a: string, b: string): { corners: string[]; edges: string[] } => ({
+  corners: [a, b],
+  edges: [...new Set([...blockEdges(a), ...blockEdges(b)])],
+});
+
+/** 12 个 2×2×3 —— 立方体有 12 条棱,每条棱两端那对角就定一个块。 */
+export const BLOCK223_ALL: Array<{ corners: string[]; edges: string[] }> = CORNER_NAMES
+  .flatMap((a, i) => CORNER_NAMES.slice(i + 1)
+    .filter((b) => blockEdges(a).filter((e) => blockEdges(b).includes(e)).length === 1)
+    .map((b) => block223(a, b)));
+
+/** Roux 的 F2B:同一底面上互不共角的两个 1×2×3。 */
+export function f2bOnFace(face: string): { corners: string[]; edges: string[] } {
+  const blocks = fbBlocksOnFace(face);
+  const first = blocks[0];
+  const second = blocks.find((b) => b.corners.every((c) => !first.corners.includes(c)))!;
+  return {
+    corners: [...first.corners, ...second.corners],
+    edges: [...first.edges, ...second.edges],
+  };
+}
+
 /** 全部 24 个「在家位上」的 1×2×2:每个角配它 3 条棱里的 2 条。 */
 export const BLOCK122_ALL: Array<{ corners: string[]; edges: string[] }> =
   CORNER_NAMES.flatMap((c) => {
@@ -453,6 +479,30 @@ export const SKIP_ENTRIES: SkipEntry[] = [
     CORNER_NAMES,
     '8 个角全取并集。注意「双色底」已经等于 CN —— 一对相对面的 8 个角就是全部 8 个角',
     'Union over all eight corners. Note that "dual colour" already equals CN here: a pair of opposite faces covers all eight corners'),
+  {
+    id: 'block223-fixed',
+    group: 'block',
+    name: { zh: '指定的 2×2×3 块', en: 'One specific 2×2×3 block' },
+    kind: 'exact',
+    num: statesWithSolved(BLOCK223_ALL[0].corners, BLOCK223_ALL[0].edges).toString(),
+    den: CUBE3_STATES,
+    why: {
+      zh: '2 角 + 5 棱(两个角各 3 条棱、中间那条共用):8·7·3² × 12·11·10·9·8·2⁵ = 1,532,805,120 分之一',
+      en: 'Two corners and five edges — three per corner with the middle one shared: one state in 8·7·3² × 12·11·10·9·8·2⁵ = 1,532,805,120',
+    },
+  },
+  {
+    id: 'block223-any',
+    group: 'block',
+    name: { zh: '任一 2×2×3 块', en: 'Any 2×2×3 block' },
+    kind: 'exact',
+    num: statesWithAnySolved(BLOCK223_ALL).toString(),
+    den: CUBE3_STATES,
+    why: {
+      zh: '立方体 12 条棱各定一个块,取并集;相邻两块共用角与棱,所以不是直接乘 12',
+      en: 'One block per cube edge, twelve in all, unioned — neighbouring blocks share a corner and edges, so this is not twelve times the single value',
+    },
+  },
 
   // ── Roux ──────────────────────────────────────────────────────────
   // LSE 那一族活在自己的全集(11,520)里,不是 |G| 的比 —— 但 Roux 每把都会走到 LSE,
@@ -565,6 +615,19 @@ export const SKIP_ENTRIES: SkipEntry[] = [
       zh: '上下两圈共 8 个首块取并集;8 个已经是这个颜色方案下的全部,再多就没有了',
       en: 'Union over all eight first blocks, top ring and bottom ring — eight is all there is for one colour scheme',
     },
+  },
+  {
+    id: 'roux-f2b-fixed',
+    group: 'roux',
+    name: { zh: '指定的 F2B(两块都好)', en: 'A specific F2B, both blocks' },
+    kind: 'exact',
+    num: statesWithSolved(f2bOnFace('D').corners, f2bOnFace('D').edges).toString(),
+    den: CUBE3_STATES,
+    why: {
+      zh: '4 角 + 6 棱都归位。首块已好之后第二块自己跳出来的概率是右边那个条件值 —— 剩 6 个角 9 条棱可摆,6·5·3² × 9·8·7·2³ = 1,088,640 分之一',
+      en: 'Four corners and six edges home. Given the first block, the odds the second one is already there is the conditional value on the right: six corners and nine edges are still loose, so 6·5·3² × 9·8·7·2³ = one in 1,088,640',
+    },
+    relativeTo: 'roux-fb-fixed',
   },
   {
     id: 'roux-122-fixed',

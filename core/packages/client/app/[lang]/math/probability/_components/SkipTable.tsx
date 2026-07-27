@@ -15,7 +15,7 @@ import {
 const GROUP_LABEL: Record<SkipEntry['group'], { zh: string; en: string }> = {
   ll: { zh: '顶层', en: 'Last layer' },
   cross: { zh: '十字', en: 'Cross' },
-  block: { zh: '2×2×2 块', en: '2×2×2 block' },
+  block: { zh: '2×2×2 与 2×2×3 块', en: '2×2×2 and 2×2×3 blocks' },
   roux: { zh: 'Roux', en: 'Roux' },
   '222': { zh: '二阶', en: '2×2' },
   '444': { zh: '四阶中心', en: '4×4 centres' },

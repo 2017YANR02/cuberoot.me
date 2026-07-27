@@ -3,11 +3,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
-  AUF, BLOCK122_ALL, BOTTOM_FACES, CUBE2_STATES, CUBE2_WCA_LEGAL, CUBE4_CENTRE_STATES,
+  AUF, BLOCK122_ALL, BLOCK223_ALL, BOTTOM_FACES, CUBE2_STATES, CUBE2_WCA_LEGAL, CUBE4_CENTRE_STATES,
   CUBE4_ONE_CENTRE, CUBE4_TWO_CENTRES, LL_CO, LL_EO, LL_PERM, LL_UNIVERSE, MINX_EP, MINX_LL,
   MINX_LL_CO, MINX_LL_EO, MINX_LL_PERM_RAW, MINX_PLL, SKIP_ENTRIES,
   atLeastKInRound, blockEdges, cornersOnFace, crossEdges, entryById, exactlyKInRound,
-  fbBlocksOnFace, oneOver, oneOverRelative, probability, statesWithAnyCrossSolved,
+  f2bOnFace, fbBlocksOnFace, oneOver, oneOverRelative, probability, statesWithAnyCrossSolved,
   statesWithAnyXCrossSolved, statesWithSolved,
 } from '@/lib/skip-probability';
 import { CUBE3_STATES } from '@/lib/god-distance-333';
@@ -318,6 +318,33 @@ describe('Roux', () => {
     const many = oneOver(entryById(id));
     expect(many).toBeGreaterThan(one / n);
     expect(many).toBeLessThan(one);
+  });
+
+  it('SB = 给定首块之后第二块也好:6·5·3² × 9·8·7·2³ = 1,088,640', () => {
+    const f2b = f2bOnFace('D');
+    expect(f2b.corners.length).toBe(4);                 // 两块互不共角
+    expect(new Set(f2b.edges).size).toBe(6);
+    const sb = oneOverRelative(entryById('roux-f2b-fixed'))!;
+    expect(sb).toBe(6 * 5 * 3 ** 2 * (9 * 8 * 7 * 2 ** 3));
+    expect(sb).toBe(1088640);
+    // 条件概率就是两个绝对值之比 —— 表格把 FB 与 SB 并排列,靠的正是这条
+    // (5.8×10¹² 量级,比的是相对误差,不是绝对差)
+    expect(oneOver(entryById('roux-f2b-fixed')) / (oneOver(entryById('roux-fb-fixed')) * sb))
+      .toBeCloseTo(1, 12);
+  });
+
+  it('2×2×3 = 2 角 5 棱(中间那条棱两个角共用),1/1,532,805,120', () => {
+    expect(BLOCK223_ALL.length).toBe(12);               // 立方体 12 条棱
+    for (const b of BLOCK223_ALL) {
+      expect(b.corners.length).toBe(2);
+      expect(new Set(b.edges).size).toBe(5);            // 3 + 3 − 1
+    }
+    expect(oneOver(entryById('block223-fixed'))).toBe(8 * 7 * 3 ** 2 * (12 * 11 * 10 * 9 * 8 * 2 ** 5));
+    expect(oneOver(entryById('block223-fixed'))).toBe(1532805120);
+    // 12 个块的并集:夹在「除以 12」与单个之间
+    const any = oneOver(entryById('block223-any'));
+    expect(any).toBeGreaterThan(1532805120 / 12);
+    expect(any).toBeLessThan(1532805120);
   });
 
   // 表格给 FB(x2 y)= 1/333,333。8 个首块就算完全不重叠也只能到 1/665,280,
