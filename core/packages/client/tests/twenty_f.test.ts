@@ -17,7 +17,7 @@ import {
 import { allCrossLengths, crossLength, solveCross } from '@/lib/cross-solver';
 import { computeEoCrossDist, eoCrossAltAxisIndex, eoCrossIndex } from '@/lib/eocross-dist';
 import {
-  TWENTY_F_BASELINE, TWENTY_F_EASY_CROSS, TWENTY_F_RANDOM_CN_CROSS, TWENTY_F_RANDOM_CROSS,
+  TWENTY_F_BASELINE, TWENTY_F_CORPUS, TWENTY_F_EASY_CROSS, TWENTY_F_RANDOM_CN_CROSS, TWENTY_F_RANDOM_CROSS,
   TWENTY_F_RANDOM_EOCROSS, TWENTY_F_RANDOM_TOTAL, TWENTY_F_SUPERFLIP, TWENTY_F_SYM_CENSUS,
   TWENTY_F_SYM_SELF_INVERSE, TWENTY_F_SYM_TOTAL, twentyFMean,
 } from '@/app/[lang]/scramble/hardest/_data/twenty_f';
@@ -59,6 +59,25 @@ describe('20 步态:32,625 个对称态', () => {
       expect(symMask(applyAlgExtended(row.s).cube), row.s).not.toBe(1n);
     }
   });
+
+  it('这 32,625 条代表 1,091,994 个位置,把上游 102,772,698 那个头条数字接上', () => {
+    // 一条打乱代表 96/|稳定子| 个位置:96 = 48 个旋转反射 × 是否取逆,
+    // 稳定子 = 保持它的对称元 + 反对称元(后者把它映到自己的逆)。
+    let positions = 0;
+    for (const row of SYM_ROWS) {
+      const cube = applyAlgExtended(row.s).cube;
+      const stab = maskToList(symMask(cube)).length + maskToList(antisymMask(cube)).length;
+      expect(96 % stab, row.s).toBe(0);
+      positions += 96 / stab;
+    }
+    expect(positions).toBe(TWENTY_F_CORPUS.symmetricPositions);
+    // 三类打乱数相加 = 语料总条数;三类位置数相加 = 已知 20 步位置总数
+    expect(TWENTY_F_CORPUS.asymmetric + TWENTY_F_CORPUS.antisymmetricOnly + TWENTY_F_CORPUS.symmetric)
+      .toBe(TWENTY_F_CORPUS.scrambles);
+    expect(TWENTY_F_CORPUS.asymmetric * 96 + TWENTY_F_CORPUS.antisymmetricOnly * 48 + positions)
+      .toBe(TWENTY_F_CORPUS.positions);
+    expect(TWENTY_F_CORPUS.antisymmetricSelfInverse).toBeLessThan(TWENTY_F_CORPUS.antisymmetricOnly);
+  }, 120_000);
 
   it('普查表与复算结果逐格相同,且按站内对称型顺序排列', () => {
     const hist = new Map<string, number>();
