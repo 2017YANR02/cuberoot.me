@@ -9,11 +9,14 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Save, Trash2, ChevronRight, ChevronDown } from 'lucide-react';
-import type { AlgCase, AlgEntry, AlgPuzzle, AlgSticker } from '@cuberoot/shared';
+import { loadAlg, MIRROR_ALG_SYNC_SETS, type AlgCase, type AlgEntry, type AlgPuzzle, type AlgSticker } from '@cuberoot/shared';
+import { mirrorCascadeOnDelete, VIEWS } from '@cuberoot/shared/alg-mirror';
 import { createCase, updateCase, deleteCase, type AlgCaseInput } from '@/lib/alg_sets_api';
 import { validateAlgCase, setupForCase } from '@/lib/alg_validation';
-import { displayAlg } from '@/lib/alg_display';
-import AlgEditor, { type AlgEditorHandle, type AlgInvalidMark } from '@/components/AlgEditor';
+import { displayAlg, shortOriName } from '@/lib/alg_display';
+import { primaryCaseName } from '@/lib/alg_case_display';
+import AlgEditor, { type AlgEditorHandle, type AlgEditorMirror, type AlgInvalidMark } from '@/components/AlgEditor';
+import AlgDeleteConfirm, { type AlgDeleteGroup } from '@/components/AlgDeleteConfirm';
 import AlgInput from '@/components/AlgInput';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer';
 import CubeKeyboardSection from '@/components/CubeKeyboardSection';
@@ -113,6 +116,62 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
     );
     return () => tries.forEach(clearTimeout);
   }, [debouncedPreviewAlg, setup]);
+
+  /**
+   * 镜像伙伴(issue #40 T5)—— 删一条公式 / 删整张 case 之前要算「会连带抹掉哪些生成公式」,
+   * 而那些公式落在**伙伴那张 case** 上,本组件手上只有自己这张,所以得去拉一次。
+   *
+   * 在这儿拉不在调用方传:AdminCaseEditor 有四处宿主(case 详情页 / case 列表页 /
+   * 校验报告 ×2),其中两处手上根本没有整个 set 的数据 —— 靠传参就会在那两处静默少一段
+   * 连带清单,而这个弹层存在的意义正是不静默。只对真会写回公式的 set 拉(`MIRROR_ALG_SYNC_SETS`),
+   * 且必须已建链:没链就一条都不生成,自然没有连带。
+   */
+  const selfId = state.mode === 'edit' ? state.existing.id ?? null : null;
+  const linkedId = state.mode === 'edit' ? state.existing.mirrorCaseId ?? null : null;
+  const mirrorWanted = selfId != null && linkedId != null && MIRROR_ALG_SYNC_SETS.has(`${puzzle}/${setSlug}`);
+  const [mirrorCtx, setMirrorCtx] = useState<AlgEditorMirror | null>(null);
+  const [mirrorError, setMirrorError] = useState<string | null>(null);
+  useEffect(() => {
+    if (!mirrorWanted) { setMirrorCtx(null); setMirrorError(null); return; }
+    const self = (state as { existing: AlgCase }).existing;
+    let live = true;
+    setMirrorCtx(null);
+    setMirrorError(null);
+    loadAlg(puzzle, setSlug, { fresh: true })
+      .then(d => {
+        if (!live) return;
+        const p = d.cases.find(c => c.id === linkedId);
+        if (!p || p.id == null) {
+          setMirrorError(tr({
+            zh: `镜像伙伴 case ${linkedId} 不在这个 set 里 —— 连带清单算不出来,请自行确认。`,
+            en: `Mirror partner case ${linkedId} is not in this set — cannot compute the cascade.`,
+          }));
+          return;
+        }
+        // zbls 里伙伴常常**同名**(A+ 的 VM ↔ A- 的 VM)—— 光写 case 名分不出连带落在哪边,
+        // 同名时补上子分组。不同名就别加,免得把「A+ / A-」这种本来就清楚的写长。
+        const selfLabel = primaryCaseName(puzzle, setSlug, self);
+        const partnerLabel = primaryCaseName(puzzle, setSlug, p);
+        const tag = (label: string, c: AlgCase) =>
+          selfLabel === partnerLabel && c.subgroup ? `${label} ${c.subgroup}` : label;
+        setMirrorCtx({
+          selfId: selfId!,
+          selfName: tag(selfLabel, self),
+          partner: { id: p.id, name: tag(partnerLabel, p), algs: p.algs },
+        });
+      })
+      .catch((e: Error) => {
+        if (!live) return;
+        setMirrorError(tr({
+          zh: `拉镜像伙伴失败(${e.message})—— 连带清单算不出来,请自行确认。`,
+          en: `Failed to load the mirror partner (${e.message}) — cannot compute the cascade.`,
+        }));
+      });
+    return () => { live = false; };
+    // `state` 只在开弹层时定下来,用 id 当依赖就够,免得对象换引用触发重拉
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [puzzle, setSlug, mirrorWanted, selfId, linkedId]);
+  const mirrorPending = mirrorWanted && !mirrorCtx && !mirrorError;
 
   const advancedDirty = useMemo(() => {
     if (algsJson.trim() && algsJson !== JSON.stringify(initial.algs, null, 2)) return true;
@@ -243,9 +302,42 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
     }
   };
 
+  // ── 删整张 case:先摊开「这张自己的全部公式」+「伙伴那边会被剥掉的生成公式」再问一句。
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+
+  /** 这张 case 自己的公式,按视角分组 —— 删掉就是这些全没。 */
+  const ownAlgGroups = useMemo<AlgDeleteGroup[]>(() =>
+    initial.algs.flatMap((view, vi) => {
+      const algs = view.filter(e => e.alg.trim()).map(e => displayAlg(e.alg));
+      if (!algs.length) return [];
+      const name = initial.oriNames?.[vi];
+      return [{ where: name ? shortOriName(name) : undefined, algs }];
+    }),
+    [initial],
+  );
+
+  /**
+   * 伙伴那边的连带。链一断伙伴整批生成条都不再生成 —— 连它**自己的 y² 那份**也一起没,
+   * 理由在 `mirrorCascadeOnDelete` 的注释里,这里只负责把结果摆出来。
+   */
+  const deleteCascade = useMemo<AlgDeleteGroup[]>(() => {
+    if (!mirrorCtx) return [];
+    const gone = mirrorCascadeOnDelete(
+      { id: mirrorCtx.selfId, algs: initial.algs },
+      { id: mirrorCtx.partner.id, algs: mirrorCtx.partner.algs },
+    );
+    const byWhere = new Map<string, string[]>();
+    for (const e of gone) {
+      const where = `${mirrorCtx.partner.name} ${VIEWS[e.view]}`;
+      const list = byWhere.get(where);
+      if (list) list.push(displayAlg(e.alg));
+      else byWhere.set(where, [displayAlg(e.alg)]);
+    }
+    return [...byWhere].map(([where, algs]) => ({ where, algs }));
+  }, [mirrorCtx, initial]);
+
   const handleDelete = async () => {
     if (state.mode !== 'edit') return;
-    if (!confirm(tr({ zh: `确定删除 "${state.existing.name}"?`, en: `Delete "${state.existing.name}"?` }))) return;
     setBusy(true);
     setError(null);
     try {
@@ -254,6 +346,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
       onClose();
     } catch (e) {
       setError((e as Error).message);
+      setConfirmingDelete(false);
     } finally {
       setBusy(false);
     }
@@ -326,6 +419,9 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
               initialValue={initial.algs}
               initialInvalid={initialInvalid}
               oriNames={initial.oriNames}
+              mirror={mirrorCtx}
+              mirrorPending={mirrorPending}
+              mirrorError={mirrorError}
               onCurrentAlgChange={handlePreviewAlg}
               onCursorMoveCount={handleCursorMoveCount}
             />
@@ -375,8 +471,9 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
         </div>
 
         <div className="alg-admin-modal-foot">
+          {/* 开删除弹层时顺手清掉上一次保存留下的报错 —— 它和「要不要删」无关,顶在弹层里只会误导 */}
           {state.mode === 'edit' && (
-            <button type="button" className="alg-admin-modal-delete alg-admin-modal-foot-btn" disabled={busy} onClick={handleDelete}>
+            <button type="button" className="alg-admin-modal-delete alg-admin-modal-foot-btn" disabled={busy} onClick={() => { setError(null); setConfirmingDelete(true); }}>
               <Trash2 size={14} /> {tr({ zh: '删除', en: 'Delete' })}
             </button>
           )}
@@ -387,6 +484,25 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
           </button>
         </div>
       </div>
+
+      {confirmingDelete && state.mode === 'edit' && (
+        <AlgDeleteConfirm
+          title={tr({
+            zh: `删掉整张 case「${primaryCaseName(puzzle, setSlug, state.existing)}」?`,
+            en: `Delete the whole case “${primaryCaseName(puzzle, setSlug, state.existing)}”?`,
+          })}
+          target={ownAlgGroups}
+          cascade={deleteCascade}
+          cascadePending={mirrorPending}
+          cascadeError={mirrorError}
+          note={tr({ zh: '这一步立刻生效,不可撤销。', en: 'This takes effect immediately and cannot be undone.' })}
+          confirmLabel={tr({ zh: '删除 case', en: 'Delete case' })}
+          busy={busy}
+          error={error}
+          onCancel={() => setConfirmingDelete(false)}
+          onConfirm={handleDelete}
+        />
+      )}
     </div>
   );
 }
