@@ -177,6 +177,12 @@ export const CI_GUARDS_DRIFT: CiGuard[] = [
     en: { title: 'Unbounded client-shell [param] page sentinel', desc: 'An unbounded pure client-shell [param] page (all data fetched in the browser) can’t use the old on-demand model (dynamicParams=true) — it must ship as ONE prerendered sentinel shell (dynamicParams=false + generateStaticParams -> [\'_\'] + a next.config rewrite), or a crawler / post-deploy sweep renders a Function per id (comp[slug] caused a real Function Invocations spike on 2026-07-10). The allowlist holds only real-SEO and bounded-id pages.' },
   },
   {
+    id: 'page-metadata-coverage',
+    test: 'page-metadata-coverage.test.ts',
+    zh: { title: '路由缺页面标题', desc: '每个含 page.tsx 的路由必须在**自己目录**里有 metadata 来源(layout 调 pageMetadata、layout/page 自带 generateMetadata),祖先的不算;pageMetadata 的 key 必须真在 PAGE_META 里,PAGE_META 也不许留孤儿条目。漏配是静默的 —— 新页面会被 sitemap 自动扫进去(等于请爬虫来看),标题却不会自动有,当初全站 0 个 <title> 就是这么攒的。真拿不到 param 的哨兵壳走 ALLOWLIST(每条带理由)。' },
+    en: { title: 'Route without a page title', desc: 'Every route with a page.tsx must declare metadata in its OWN directory (a layout calling pageMetadata, or generateMetadata in its layout/page) — inheriting from an ancestor does not count; a pageMetadata key must exist in PAGE_META, and PAGE_META may not keep orphan entries. Missing one fails silently: app/sitemap.ts auto-discovers the new route (inviting crawlers) while the title does not appear on its own — which is exactly how the site ended up with 0 titles site-wide. Sentinel shells that genuinely cannot see their param are exempted via an ALLOWLIST with reasons.' },
+  },
+  {
     id: 'guards-drift',
     test: 'code-guards-drift.test.ts',
     zh: { title: '/code/guards 自身漂移', desc: '这页也是一份手工快照,所以也有自己的漂移守卫:每个带 guard-registry 标记注释的 CI 测试必须在这页列出,这页列出的每个测试必须真的存在且带标记。新增一对守卫忘了登记 → 直接红。' },
