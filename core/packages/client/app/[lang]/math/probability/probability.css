@@ -342,6 +342,36 @@
   line-height: 1.75;
   color: var(--prob-text-sub);
 }
+.prob-round { margin-top: 26px; }
+.prob-round-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 18px;
+  margin-bottom: 10px;
+}
+.prob-round-head h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.prob-round-head label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--prob-text-sub);
+}
+.prob-round-pick {
+  font: inherit;
+  color: var(--foreground);
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  padding: 3px 6px;
+  max-width: min(22rem, 70vw);
+}
+
 .prob-skip-rel {
   display: block;
   margin-top: 3px;

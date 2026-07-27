@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { T, tr } from '@/i18n/tr';
 import { groupDigits } from '@/lib/group-digits';
 import {
-  SKIP_ENTRIES, atLeastKInRound, entryById, oneOver, oneOverRelative, probability,
+  SKIP_ENTRIES, atLeastKInRound, entryById, exactlyKInRound, oneOver, oneOverRelative, probability,
   type SkipEntry,
 } from '@/lib/skip-probability';
 
@@ -16,6 +16,7 @@ const GROUP_LABEL: Record<SkipEntry['group'], { zh: string; en: string }> = {
   ll: { zh: '顶层', en: 'Last layer' },
   cross: { zh: '十字', en: 'Cross' },
   block: { zh: '2×2×2 块', en: '2×2×2 block' },
+  roux: { zh: 'Roux', en: 'Roux' },
 };
 
 const KIND_LABEL: Record<SkipEntry['kind'], { zh: string; en: string }> = {
@@ -44,7 +45,10 @@ function pct(p: number): string {
 
 export default function SkipTable() {
   const [roundOf, setRoundOf] = useState(5);
-  const groups: SkipEntry['group'][] = ['ll', 'cross', 'block'];
+  const [pickId, setPickId] = useState('pll');
+  const groups: SkipEntry['group'][] = ['ll', 'cross', 'block', 'roux'];
+  const picked = entryById(pickId);
+  const pickedP = probability(picked);
 
   return (
     <div className="prob-skip">
@@ -110,6 +114,47 @@ export default function SkipTable() {
           onChange={(ev) => setRoundOf(Number(ev.target.value))}
         />
         <span className="prob-skip-round-val">{roundOf}</span>
+      </div>
+
+      {/* 一轮里跳几次 —— 二项分布。表格那张「PLL skip in a round」把 p 写死成 1/36,
+          与它自己 3x3 页的 1/72 打架;这里 p 直接从上表选,不留第二个来源。 */}
+      <div className="prob-round">
+        <div className="prob-round-head">
+          <h3>{tr({ zh: `一轮 ${roundOf} 把里跳几次`, en: `How many skips in a ${roundOf}-solve round` })}</h3>
+          <label>
+            <span>{tr({ zh: '看哪种跳步', en: 'Which skip' })}</span>
+            <select value={pickId} onChange={(e) => setPickId(e.target.value)} className="prob-round-pick">
+              {SKIP_ENTRIES.map((e) => (
+                <option key={e.id} value={e.id}>{`${tr(e.name)} (1/${formatOneOver(oneOver(e))})`}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <div className="prob-skip-scroll">
+          <table className="prob-skip-table">
+            <thead>
+              <tr>
+                <th scope="col">{tr({ zh: '次数', en: 'Times' })}</th>
+                <th scope="col">{tr({ zh: '恰好', en: 'Exactly' })}</th>
+                <th scope="col">{tr({ zh: '至少', en: 'At least' })}</th>
+                <th scope="col">{tr({ zh: '至少的 1/p', en: '1/p for at least' })}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: roundOf }, (_, i) => i + 1).map((n) => {
+                const atLeast = atLeastKInRound(pickedP, n, roundOf);
+                return (
+                  <tr key={n}>
+                    <th scope="row">{n}</th>
+                    <td className="prob-skip-num">{pct(exactlyKInRound(pickedP, n, roundOf))}</td>
+                    <td className="prob-skip-num">{pct(atLeast)}</td>
+                    <td className="prob-skip-num">{atLeast > 0 ? formatOneOver(1 / atLeast) : '—'}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <p className="prob-skip-note">

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
-  AUF, BOTTOM_FACES, LL_CO, LL_EO, LL_PERM, LL_UNIVERSE, SKIP_ENTRIES,
-  atLeastKInRound, blockEdges, cornersOnFace, crossEdges, entryById,
-  oneOver, oneOverRelative, probability, statesWithAnyCrossSolved,
+  AUF, BLOCK122_ALL, BOTTOM_FACES, LL_CO, LL_EO, LL_PERM, LL_UNIVERSE, SKIP_ENTRIES,
+  atLeastKInRound, blockEdges, cornersOnFace, crossEdges, entryById, exactlyKInRound,
+  fbBlocksOnFace, oneOver, oneOverRelative, probability, statesWithAnyCrossSolved,
   statesWithAnyXCrossSolved, statesWithSolved,
 } from '@/lib/skip-probability';
 import { CUBE3_STATES } from '@/lib/god-distance-333';
@@ -233,6 +233,97 @@ describe('十字与 2×2×2 块', () => {
   });
 });
 
+/**
+ * Roux 那一族。LSE 的全集(11,520)有两条独立算路:
+ *   ① 固定块计数:8 角 + 非 M 层 6 棱都好,剩下的合法状态数;
+ *   ② 直接在 ⟨M, U⟩ 上广搜。
+ * ② 数出来的是 92,160 —— 正好 8 倍,差的那 8 = M 层带着中心块转出来的坐标系自由度
+ * (标准三阶状态计数里中心块是参照系,不算独立坐标)。两条路对上,11,520 才算证到。
+ */
+describe('Roux', () => {
+  // ⟨M, U⟩ 上的广搜:6 条棱(UF UB UL UR DF DB)+ 朝向 + M 环上 4 个中心的位置
+  function enumerateMU() {
+    type St = { p: number[]; o: number[]; c: number };
+    const key = (s: St) => `${s.p.join('')}|${s.o.join('')}|${s.c}`;
+    const uCycle = [[1, 3], [3, 0], [0, 2], [2, 1]]; // U:UB→UR→UF→UL→UB,不翻
+    const mCycle = [[0, 4], [4, 5], [5, 1], [1, 0]]; // M:UF→DF→DB→UB→UF,四条都翻
+    const apply = (s: St, cyc: number[][], flip: boolean, centre: boolean): St => {
+      const p = s.p.slice(), o = s.o.slice();
+      for (const [from, to] of cyc) { p[to] = s.p[from]; o[to] = flip ? s.o[from] ^ 1 : s.o[from]; }
+      return { p, o, c: centre ? (s.c + 1) % 4 : s.c };
+    };
+    const start: St = { p: [0, 1, 2, 3, 4, 5], o: [0, 0, 0, 0, 0, 0], c: 0 };
+    const seen = new Set([key(start)]);
+    let frontier = [start];
+    while (frontier.length) {
+      const next: St[] = [];
+      for (const s of frontier) {
+        for (const m of [apply(s, uCycle, false, false), apply(s, mCycle, true, true)]) {
+          const k = key(m);
+          if (!seen.has(k)) { seen.add(k); next.push(m); }
+        }
+      }
+      frontier = next;
+    }
+    return seen;
+  }
+
+  it('⟨M, U⟩ 广搜 = 92,160 = 11,520 × 8(中心块坐标系)', () => {
+    const all = enumerateMU();
+    expect(all.size).toBe(92160);
+    // 把中心那一位丢掉还剩 23,040 = 全部 6! 排列 × 32 组朝向;
+    // 标准状态计数里只有偶排列合法(角已还原),故 11,520
+    const noCentre = new Set([...all].map((k) => k.split('|').slice(0, 2).join('|')));
+    expect(noCentre.size).toBe(23040);
+    expect(oneOver(entryById('roux-lse'))).toBe(11520);
+    expect(11520 * 8).toBe(all.size);
+  });
+
+  it('LSE = EO × 排列,两步分母相乘正好是全跳', () => {
+    expect(oneOver(entryById('roux-lse-eo'))).toBe(32);
+    expect(oneOver(entryById('roux-lse-ep'))).toBe(360);
+    expect(32 * 360).toBe(oneOver(entryById('roux-lse')));
+  });
+
+  it('CMLL 与 COLL 同一个数;CMLL + LSE 是两者相乘', () => {
+    expect(oneOver(entryById('roux-cmll'))).toBe(oneOver(entryById('coll')));
+    expect(oneOver(entryById('roux-cmll-lse')))
+      .toBe(oneOver(entryById('roux-cmll')) * oneOver(entryById('roux-lse')));
+  });
+
+  it('1×2×3 = 2 角 3 棱,1×2×2 = 1 角 2 棱(第四格是中心)', () => {
+    const fb = fbBlocksOnFace('D');
+    expect(fb.length).toBe(4);
+    for (const b of fb) {
+      expect(b.corners.length).toBe(2);
+      expect(new Set(b.edges).size).toBe(3);
+    }
+    expect(oneOver(entryById('roux-fb-fixed'))).toBe(5322240);
+    expect(BLOCK122_ALL.length).toBe(24);
+    expect(oneOver(entryById('roux-122-fixed'))).toBe(12672);
+  });
+
+  // 并集必须落在 (单个/个数, 单个) 之间:重叠只会让它比「直接除以个数」更难
+  it.each([
+    ['roux-fb-y', 'roux-fb-fixed', 4],
+    ['roux-fb-xy', 'roux-fb-fixed', 8],
+    ['roux-122-any', 'roux-122-fixed', 24],
+  ])('%s 的并集夹在「除以个数」与单个之间', (id, baseId, n) => {
+    const one = oneOver(entryById(baseId));
+    const many = oneOver(entryById(id));
+    expect(many).toBeGreaterThan(one / n);
+    expect(many).toBeLessThan(one);
+  });
+
+  // 表格给 FB(x2 y)= 1/333,333。8 个首块就算完全不重叠也只能到 1/665,280,
+  // 所以那一格不可能对;本机精确并集是 1/665,485.85。
+  it('表格的 FB(x2 y)低于任何可能值', () => {
+    expect(oneOver(entryById('roux-fb-xy'))).toBeCloseTo(665485.847685, 4);
+    expect(oneOver(entryById('roux-fb-xy'))).toBeGreaterThan(333333.34);
+    expect(5322240 / 8).toBe(665280); // 不重叠的下限
+  });
+});
+
 describe('条目自洽', () => {
   it('id 唯一,分子分母都是十进制串且分子 ≥ 1', () => {
     expect(new Set(SKIP_ENTRIES.map((e) => e.id)).size).toBe(SKIP_ENTRIES.length);
@@ -283,6 +374,37 @@ describe('一轮五把里的跳步(二项)', () => {
   // 表格给「一轮三次 PLL 跳步 = 1/38114」;二项算出来一致
   it('一轮五把里至少 3 次 PLL 跳步 ≈ 1/38114', () => {
     expect(1 / atLeastKInRound(1 / 72, 3)).toBeCloseTo(38114, 0);
+  });
+
+  // 表格另有一页「PLL skip in a round」,那页把 p 写死成 0.027777…= 1/36,
+  // 与它自己 3x3 页的 72 打架。1/72 才对(288 个排列里 4 个是「还原 + 一次 AUF」),
+  // 而且只有 1/72 能对上同一份表格给的「一轮三次 = 1/38,114」。
+  it('表格那页的 p = 1/36 与它自己的 1/72 打架,38,114 站在 1/72 这边', () => {
+    expect(1 / atLeastKInRound(1 / 72, 3)).toBeCloseTo(38114, 0);
+    expect(1 / atLeastKInRound(1 / 36, 3)).toBeCloseTo(4866, 0);
+    expect(oneOver(entryById('pll'))).toBe(72);
+  });
+
+  it('恰好 k 逐项加起来 = 至少 k;全部 k 加起来 = 1', () => {
+    const p = 1 / 216;
+    for (let k = 0; k <= 5; k++) {
+      let sum = 0;
+      for (let i = k; i <= 5; i++) sum += exactlyKInRound(p, i, 5);
+      expect(sum).toBeCloseTo(atLeastKInRound(p, k, 5), 15);
+    }
+    let all = 0;
+    for (let k = 0; k <= 5; k++) all += exactlyKInRound(p, k, 5);
+    expect(all).toBeCloseTo(1, 15);
+  });
+
+  // 表格那页 D 列(恰好 n 次)的五个数,用它自己的 p = 1/36 复算,逐位对上 ——
+  // 说明它的二项算得没错,错的只是喂进去的 p。
+  it.each([
+    [1, 0.1240879694], [2, 0.007090741111], [3, 0.0002025926032],
+    [4, 0.000002894180045], [5, 0.00000001653817169],
+  ])('表格 D 列 n=%i 复算得上', (n, want) => {
+    // 表格只写到 10 位有效数字,跨 7 个数量级 → 比相对误差
+    expect(Math.abs(exactlyKInRound(1 / 36, n, 5) / want - 1)).toBeLessThan(1e-9);
   });
 
   it('单调:要求越多越难', () => {

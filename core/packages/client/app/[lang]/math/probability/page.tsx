@@ -183,14 +183,16 @@ export default function ProbabilityPage() {
             <T
               zh={<>
                 「OLL 跳步是多少?」这类问题的答案全在下表,而且每一条都是现场从状态空间算出来的整数比,
-                不是抄来的小数。顶层那一族直接在 62,208 里数;十字与 2×2×2 块那两族要用容斥 ——
+                不是抄来的小数。顶层那一族直接在 62,208 里数;十字、2×2×2 块与 Roux 那三族要用容斥 ——
                 同一个底色的几个目标会共用棱块,不能简单相加。
+                最后一张表把任意一条概率放进二项分布:一轮 N 把里恰好跳几次、至少跳几次。
               </>}
               en={<>
                 &quot;What are the odds of an OLL skip?&quot; — the whole family is below, and every row is an
                 integer ratio computed from the state space rather than a transcribed decimal. The last-layer
-                rows are counted directly inside the 62,208-state universe; the cross and 2×2×2 rows need
+                rows are counted directly inside the 62,208-state universe; the cross, 2×2×2 and Roux rows need
                 inclusion-exclusion, because goals of the same family share pieces and cannot simply be added.
+                The last table drops any of those probabilities into a binomial: how many skips in a round of N.
               </>}
             />
           </p>
