@@ -23,7 +23,7 @@ import { EOCROSS_10F, EOCROSS_10F_BOTH_AXES, EOCROSS_10F_TOTAL } from './_data/e
 import { HARD_SCRAMBLES, type HardStageKey } from './_data/hard_scrambles';
 import { NO_BAR_CORPORA, NO_BAR_SAMPLE, NO_BAR_UPSTREAM } from './_data/no_bar';
 import {
-  TWENTY_F_BASELINE, TWENTY_F_EASY_CROSS, TWENTY_F_RANDOM_CN_CROSS, TWENTY_F_RANDOM_CROSS,
+  TWENTY_F_BASELINE, TWENTY_F_CORPUS, TWENTY_F_EASY_CROSS, TWENTY_F_RANDOM_CN_CROSS, TWENTY_F_RANDOM_CROSS,
   TWENTY_F_RANDOM_EOCROSS, TWENTY_F_RANDOM_TOTAL, TWENTY_F_SYM_CENSUS, TWENTY_F_SYM_SELF_INVERSE,
   TWENTY_F_SYM_TOTAL, twentyFMean,
 } from './_data/twenty_f';
@@ -344,6 +344,27 @@ export default function HardestPage() {
             ))}
           </tbody>
         </table>
+        <p>
+          {tr({
+            zh: `这 ${groupDigits(String(TWENTY_F_SYM_TOTAL))} 条只是上游那份完整语料的一角。`
+              + `整份共 ${groupDigits(String(TWENTY_F_CORPUS.scrambles))} 条打乱,但发布的是打乱不是位置:`
+              + '一条打乱代表 96 / |稳定子| 个位置(96 = 48 个旋转反射 × 是否取逆)。'
+              + `既无对称也无反对称的 ${groupDigits(String(TWENTY_F_CORPUS.asymmetric))} 条各代表 96 个,`
+              + `只有反对称的 ${groupDigits(String(TWENTY_F_CORPUS.antisymmetricOnly))} 条各代表 48 个,`
+              + `而这 ${groupDigits(String(TWENTY_F_SYM_TOTAL))} 条本机逐条按稳定子加起来是 `
+              + `${groupDigits(String(TWENTY_F_CORPUS.symmetricPositions))} 个 —— 三项相加正好是上游那个 `
+              + `${groupDigits(String(TWENTY_F_CORPUS.positions))}(截至 ${TWENTY_F_CORPUS.asOf} 的已知 20 步位置总数)。`,
+            en: `These ${groupDigits(String(TWENTY_F_SYM_TOTAL))} are one corner of the full upstream corpus. `
+              + `It holds ${groupDigits(String(TWENTY_F_CORPUS.scrambles))} scrambles, and a scramble is not a `
+              + 'position: each stands for 96 / |stabiliser| of them (96 = 48 rotations and reflections, times '
+              + `whether you invert). The ${groupDigits(String(TWENTY_F_CORPUS.asymmetric))} with neither symmetry `
+              + `nor antisymmetry stand for 96 each, the ${groupDigits(String(TWENTY_F_CORPUS.antisymmetricOnly))} `
+              + `with antisymmetry alone for 48 each, and summing stabilisers over these `
+              + `${groupDigits(String(TWENTY_F_SYM_TOTAL))} here gives `
+              + `${groupDigits(String(TWENTY_F_CORPUS.symmetricPositions))}. The three add up to upstream’s `
+              + `${groupDigits(String(TWENTY_F_CORPUS.positions))} known distance-20 positions as of ${TWENTY_F_CORPUS.asOf}.`,
+          })}
+        </p>
         <p>
           {tr({
             zh: '表头那条 Oh(48 个元素全在)全语料只有一个,就是 superflip:角块全归位、12 条棱全部原地翻转。'
