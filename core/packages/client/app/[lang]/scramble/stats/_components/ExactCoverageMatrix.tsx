@@ -21,13 +21,18 @@ import {
 } from '../_data/exact_dist';
 import './exact-coverage.css';
 
-/** 阶段显示名与 lib/scramble-variants.ts 的 stageLabel 一致,这里只列本组件用到的 5 个。 */
-const STAGE_LABEL: Record<ExactStage, string> = {
-  cross: 'Cross',
-  xcross: 'XCross',
-  xxcross: 'XXCross',
-  xxxcross: 'XXXCross',
-  xxxxcross: 'XXXXCross',
+/**
+ * 阶段显示名。前 5 个与 lib/scramble-variants.ts 的 stageLabel 一致;伪十字不能直接走
+ * stageLabel —— 那个函数按设计会剥掉 `pseudo_` 前缀(变体名由方法下拉承担),在这张
+ * 跨变体的矩阵里会和标准 Cross 撞成同一行名。
+ */
+const STAGE_LABEL: Record<ExactStage, { zh: string; en: string }> = {
+  cross: { zh: 'Cross', en: 'Cross' },
+  xcross: { zh: 'XCross', en: 'XCross' },
+  xxcross: { zh: 'XXCross', en: 'XXCross' },
+  xxxcross: { zh: 'XXXCross', en: 'XXXCross' },
+  xxxxcross: { zh: 'XXXXCross', en: 'XXXXCross' },
+  pseudo_cross: { zh: '伪 Cross', en: 'Pseudo cross' },
 };
 
 /**
@@ -82,7 +87,7 @@ export default function ExactCoverageMatrix({ stage, slot, colors, onPick }: Pro
           <tbody>
             {EXACT_STAGES.map((st) => (
               <tr key={st}>
-                <th scope="row" className="exact-cov-rowhead">{STAGE_LABEL[st]}</th>
+                <th scope="row" className="exact-cov-rowhead">{tr(STAGE_LABEL[st])}</th>
                 {COLUMNS.map(({ slot: sl, colors: c }) => {
                   const key = `${st}-${sl}-${c}`;
                   const selected = st === stage && sl === slot && c === colors;

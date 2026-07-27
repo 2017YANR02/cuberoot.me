@@ -10,6 +10,9 @@
 //! `--faces <UDLRFB 子集>` 只改第 3 步取 min 的面集合,全空间与编码都不变 ——
 //! 所以任意色数出来的分布都躺在同一个 980,995,276,800 分母上,可直接互相比较。
 //!
+//! `--pseudo` 只改第 1 步每张 BFS 表的**起点集**:从 1 个 solved 变成 4 个
+//! (solved + 该面自身的三个转),即底十字允许整体 D 层偏移。两个开关正交。
+//!
 //! GOLDEN(RAYON_NUM_THREADS=14,各约 35s):
 //!
 //! `--faces U`(单色底)= 5,160,960 × cross_1_col 金标,逐档验过:
@@ -28,6 +31,27 @@
 //! `--faces UDLRFB`(六色底,默认)= cross_6_col 金标,bit-exact:
 //!   30942374 462820266 4839379314 41131207644 239671237081 543580917185
 //!   151019930400 258842496 40                               Avg 4.80946
+//!
+//! GOLDEN(`--pseudo`,伪十字 = 底十字允许整体 D 层偏移)——全为新数据,无 cpp 金标。
+//! 正确性:`--faces U --pseudo` = 5,160,960 × 独立 JS BFS(190,080 态上的
+//! 4 48 440 3576 21492 74660 81780 8064 16),逐档验过;四档又都与站内 1,317,565 条
+//! WCA 真题的经验分布逐档吻合(最大偏差 0.077 个百分点)。
+//!
+//! `--faces U --pseudo`(单色底):
+//!   20643840 247726080 2270822400 18455592960 110919352320 385317273600
+//!   422063308800 41617981440 82575360                       Avg 5.35659
+//!
+//! `--faces UD --pseudo`(双色底):
+//!   41284608 495194112 4528035840 36302346240 203316470784 514595773440
+//!   220007574528 1708548096 49152                           Avg 4.93041
+//!
+//! `--faces LRFB --pseudo`(四色底):
+//!   82561551 989639320 9016537732 70527627394 342939567939 501802189777
+//!   55631618351 5534736 0                                   Avg 4.53132
+//!
+//! `--faces UDLRFB --pseudo`(六色底):
+//!   123831014 1483362354 13467931869 102912176921 439912207732 409964837408
+//!   13130901687 27815 0                                     Avg 4.30727
 
 use std::time::Instant;
 
@@ -130,10 +154,15 @@ fn detect_face_slots(mt_edge: &[u32]) -> [[u8; 4]; 6] {
 /// BFS 表 (190,080 字节)。
 /// 编码 = quad_rank[p[0]][p[1]][p[2]][p[3]] + ori_bits (0..15)
 /// 起点 = solved (p = face_slots[f], o = 0..0),depth=0
+///
+/// `pseudo = true` 时改成 4 个起点:solved 再加该面自身的三个转 —— 即「伪十字」
+/// (底十字整体允许有一个 D 层偏移,见 DEFINITIONS.md)。除起点集外算法一字不改。
 fn build_bfs_table(
     face_slots: &[u8; 4],
     quad_rank: &[[[[u32; 12]; 12]; 12]; 12],
     mt_edge: &[u32],
+    face: usize,
+    pseudo: bool,
 ) -> Vec<i8> {
     let mut tab = vec![-1i8; TABLE_SIZE];
 
@@ -143,12 +172,32 @@ fn build_bfs_table(
         base + oid
     };
 
-    let mut p = *face_slots;
+    let p = *face_slots;
     let o = [0u8; 4];
-    let start = encode(&p, &o);
-    tab[start] = 0;
 
-    let mut frontier: Vec<([u8; 4], [u8; 4])> = vec![(p, o)];
+    let mut frontier: Vec<([u8; 4], [u8; 4])> = Vec::new();
+    let mut seed = |np: [u8; 4], no: [u8; 4], tab: &mut Vec<i8>, fr: &mut Vec<([u8; 4], [u8; 4])>| {
+        let key = encode(&np, &no);
+        if tab[key] == -1 {
+            tab[key] = 0;
+            fr.push((np, no));
+        }
+    };
+    seed(p, o, &mut tab, &mut frontier);
+    if pseudo {
+        // 该面的三个转(90° / 180° / 270°)—— move 索引就是 face*3 .. face*3+2
+        for m in (face * 3)..(face * 3 + 3) {
+            let mut np = [0u8; 4];
+            let mut no = [0u8; 4];
+            for i in 0..4 {
+                let val = mt_edge[((2 * p[i] as u32 + o[i] as u32) * 18 + m as u32) as usize];
+                np[i] = (val / 2) as u8;
+                no[i] = (val % 2) as u8;
+            }
+            seed(np, no, &mut tab, &mut frontier);
+        }
+    }
+
     let mut depth: i8 = 0;
 
     while !frontier.is_empty() && depth < MAX_DEPTH as i8 {
@@ -300,6 +349,7 @@ fn parse_faces() -> (Vec<usize>, String) {
 fn main() {
     let t0 = Instant::now();
     let (active, faces_label) = parse_faces();
+    let pseudo = std::env::args().any(|a| a == "--pseudo");
     let mgr = move_tables::instance();
     let mt_edge: Vec<u32> = mgr.ensure_edge().as_u32().to_vec();
 
@@ -309,9 +359,9 @@ fn main() {
     eprintln!("      face_slots = {:?}", face_slots);
     let simd_indices = build_simd_indices(&face_slots);
 
-    eprintln!("[2/3] build 6 BFS tables...");
+    eprintln!("[2/3] build 6 BFS tables{}...", if pseudo { " (pseudo: 4 goals per face)" } else { "" });
     let tables: [Vec<i8>; 6] = std::array::from_fn(|f| {
-        build_bfs_table(&face_slots[f], &quad_rank, &mt_edge)
+        build_bfs_table(&face_slots[f], &quad_rank, &mt_edge, f, pseudo)
     });
     eprintln!("      done @ {:.2}s", t0.elapsed().as_secs_f64());
 
@@ -331,8 +381,8 @@ fn main() {
         });
 
     println!();
-    println!("=== Cross Exact Distribution over faces {} ({} colors) ===",
-             faces_label, active.len());
+    println!("=== {}Cross Exact Distribution over faces {} ({} colors) ===",
+             if pseudo { "Pseudo " } else { "" }, faces_label, active.len());
     println!("Depth     Count               Pct        Cumul");
     println!("------------------------------------------------------------");
     let mut cumul: u64 = 0;
@@ -357,7 +407,7 @@ fn main() {
     eprintln!("[OK] total matches theoretical");
 
     // 若 .tmp/cross_6_col_golden.txt 存在,逐深度对齐(金标只覆盖六色全开这一种)
-    if active.len() == 6 {
+    if active.len() == 6 && !pseudo {
     if let Ok(text) = std::fs::read_to_string(GOLDEN_FILE) {
         let mut golden = Vec::new();
         for line in text.lines() {
