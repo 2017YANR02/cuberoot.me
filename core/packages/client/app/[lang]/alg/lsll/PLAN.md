@@ -61,7 +61,7 @@
       **不支持「全部 583,284」**:42 个大类全枚举 ≈ 2.6M 次 canonical 化 + 58 万个对象,
       浏览器扛不住 —— 一场只练一个范围。回归 `tests/lsll_trainer_set.test.ts`
       (含训练器随机首尾 AUF 的 16 种接法逐个回放,证明不会换成别的 case)。
-- [x] **展示相位 + 组名排序**(2026-07-27)。两件全站口径,各只留一份实现:
+- [x] **展示相位 + 打乱图 + 组名排序**(2026-07-27)。三件全站口径,各只留一份实现:
       1. `model.pairDisplayTurn` / `displayState` —— 最后一槽的对子摆在哪一格:角块在顶层就转到
          槽的正上方(URF);只有棱块在顶层,棱侧面那枚贴纸要对上该侧中心色(朝向 0 落 UR、
          朝向 1 落 UF);对子都在槽里则无约束。判据是站内 zbls 库 305 条 setup 里能纯面转回放的
@@ -72,7 +72,11 @@
          训练器那边再把打乱**尾部**的随机 AUF 关掉(`trainer-scramble.pairPhaseLocked`)——
          尾部 AUF 会把对子转跑;头部 AUF 不动对子(U 碰不到 DFR / FR),照常随机,
          变的是收尾 AUF。齿轮面板同步不再显示 post-AUF 这个死开关。
-      2. `lib/alg_group_order.compareAlgGroupLabel` —— 组名排序:同字母 `+` 在 `-` 前
+      2. **打乱图全彩**:`CaseThumb` 原来把 lsll 与 zbls 归成一类,都套 `vh` 遮罩 ——
+         而 `vh` 压灰的正是顶层四角与四周顶排,那是 LSLL 要认的一半信息(zbls 只管末槽 + 翻棱,
+         顶层角块本就不看,遮罩没错)。lsll 拆出来不加遮罩,与 `/alg/lsll` 库里那批本地渲染的图
+         (`caseFacelets`,一向全彩)一致。训练 / 复习 / 记忆 / 进度总览的图都走 `CaseThumb`,一改全改。
+      3. `lib/alg_group_order.compareAlgGroupLabel` —— 组名排序:同字母 `+` 在 `-` 前
          (`localeCompare` 默认反着来,LSLL 首页 42 大类原先就排成了 A- A+)。口径取自 zbls 库
          的入库顺序;`/alg` 下凡是在代码里排组名的都用它。训练器里 LSLL 的组名也从 slug(`ap`)
          换成库里那套字母(`A+`),已收录那批按组名序 + case 编号排。
