@@ -1,0 +1,4 @@
+# 生成物:语料由 client 的 scripts/lsll-corpus.mts 重建(几秒),结果由 solve_loop.mjs 续跑重建
+corpus.txt
+out.csv
+*.log
