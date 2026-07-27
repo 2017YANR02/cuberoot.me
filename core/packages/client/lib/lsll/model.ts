@@ -50,6 +50,26 @@ export function rotateU(s: LsllState, a: number): LsllState {
   return unpackState(transformedPack(s, ((a % 4) + 4) % 4, 0));
 }
 
+/**
+ * 先摆成 `base`,再施加「从全解走到 `xform` 的那串转动」。与 `cube333.move` 同一条合成律
+ * (`cp[i] = A.cp[B.cp[i]]`),所以 `composeState(solved, x) === x`。
+ *
+ * 训练器的「第 n 轮」靠它:base 取一个 ZBLL 局面、xform 取一条 ZBLS case 的打乱,合出来的
+ * 局面**槽对构型与顶层翻棱和 xform 一模一样**(ZBLL 局面的槽对已归位、顶层棱全正,合成时
+ * 只贡献顶层角与棱的置换/朝向)—— 也就是说第一眼认的还是那条 ZBLS case,做完之后落在
+ * base 这个 ZBLL case 上。302 × 494 条两步路线就是这么摊开的。
+ */
+export function composeState(base: LsllState, xform: LsllState): LsllState {
+  const cp: number[] = [], co: number[] = [], ep: number[] = [], eo: number[] = [];
+  for (let p = 0; p < 5; p++) {
+    cp[p] = base.cp[xform.cp[p]];
+    co[p] = (base.co[xform.cp[p]] + xform.co[p]) % 3;
+    ep[p] = base.ep[xform.ep[p]];
+    eo[p] = (base.eo[xform.ep[p]] + xform.eo[p]) % 2;
+  }
+  return { cp, co, ep, eo };
+}
+
 export function unpackState(key: number): LsllState {
   const e0 = key % C_BASE;
   const c0 = (key - e0) / C_BASE;

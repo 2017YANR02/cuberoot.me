@@ -236,6 +236,22 @@ export function allZbllCases(): number[] {
   return (zbllCache ??= buildZbllCases());
 }
 
+/** 全解顶层的 canonical key —— 494 个里的那一个「什么都不用做」。 */
+export function solvedZbllKey(): number {
+  return canonicalKey({ cp: [0, 1, 2, 3, 4], co: [0, 0, 0, 0, 0], ep: [0, 1, 2, 3, 4], eo: [0, 0, 0, 0, 0] });
+}
+
+let roundCache: number[] | null = null;
+/**
+ * 训练器「第 n 轮」用哪个 ZBLL 收尾:第 1 轮是全解顶层(= 纯 ZBLS,和公式库那批一模一样),
+ * 之后按 canonical key 升序。494 轮走完 = 每条 ZBLS case 都配过全部 494 个 ZBLL case。
+ */
+export function zbllRoundKeys(): number[] {
+  if (roundCache) return roundCache;
+  const solved = solvedZbllKey();
+  return (roundCache = [solved, ...allZbllCases().filter((k) => k !== solved)]);
+}
+
 export interface ZbllRef { set: string; name: string; subgroup: string; slug: string; algCount: number }
 const ZBLL_MAP = zbllRaw as Record<string, ZbllRef[]>;
 /** ZBLL case(base36 canonical key)对应的站内库案例:472 在 zbll 集、21 个在 pll 集。 */

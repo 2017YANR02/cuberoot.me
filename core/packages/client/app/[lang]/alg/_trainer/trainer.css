@@ -735,6 +735,11 @@
   margin-left: 8px;
   color: var(--faint-foreground);
 }
+/* 「第 3 / 494 轮」—— 分轮次的范围(LSLL 已收录)贴在本轮进度前面 */
+.trainer-recap-round {
+  margin-right: 6px;
+  color: var(--faint-foreground);
+}
 
 /* ─── 在线协同房间控件 ─── */
 .trainer-room-row { flex-wrap: wrap; gap: 8px 10px; }
