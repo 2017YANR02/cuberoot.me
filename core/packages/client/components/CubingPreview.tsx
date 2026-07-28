@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Shared scramble preview component used by /timer and /battle.
+ * Shared scramble preview component used by /timer.
  *
  * Renders a 2D scramble preview using cubing.js TwistyPlayer for most events.
  * Square-1 and Megaminx use our tnoodle-port SVG renderers (cubing.js 2D for

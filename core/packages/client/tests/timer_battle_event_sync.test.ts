@@ -5,7 +5,7 @@
  * `fto` / `kilominx` that solo could not practise, and its BLD ids are spelled
  * `333bf` where solo says `333bld`. They are now reconciled by ONE table in
  * `timer/_lib/types.ts` (`BATTLE_EVENT_IDS` + `toWcaSpelling`), which
- * `battle/_components/engine/constants.ts` derives `PUZZLES` from.
+ * `_battle/engine/constants.ts` derives `PUZZLES` from.
  *
  * These assertions are what makes "added to one side only" a CI failure rather
  * than a silently half-shipped puzzle.
@@ -21,7 +21,7 @@ import {
   eventInfo,
   type EventId,
 } from '@/app/[lang]/timer/_lib/types';
-import { PUZZLES, EVENT_TO_CSTIMER } from '@/app/[lang]/battle/_components/engine/constants';
+import { PUZZLES, EVENT_TO_CSTIMER } from '@/app/[lang]/timer/_battle/engine/constants';
 import { NON_WCA_EVENT_IDS, cstimerKeyForEvent, isNonWcaEvent } from '@/app/[lang]/timer/_lib/scramble/nonwca';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
 

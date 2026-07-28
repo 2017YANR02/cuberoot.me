@@ -14,7 +14,7 @@
  *     readout never rounds up), zero -> "0.000"/"0". formatTimeHtml wraps the
  *     minutes colon in <span class="colon">…</span> for styled display.
  *
- * Behavior here is a 1:1 port of battle/_components/engine/format_time.ts so
+ * Behavior here is a 1:1 port of _battle's original engine/format_time.ts so
  * battle can switch its imports to this module with zero visual diff.
  */
 

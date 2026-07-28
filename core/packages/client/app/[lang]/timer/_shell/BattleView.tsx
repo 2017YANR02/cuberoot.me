@@ -3,12 +3,11 @@
 /**
  * BattleView — the 对战 (1v1 Battle) mode hosted inside /timer.
  *
- * This is the battle experience moved out of app/[lang]/battle/page.tsx. The
+ * This is the battle experience that used to be its own /battle route. The
  * engine (battle_store.ts) + the RAF DOM-write display hooks are kept
  * BEHAVIORALLY UNTOUCHED — they still write timeRef.innerHTML and the per-player
  * opponent-N span directly with ZERO per-tick React render. Components + engine
- * are imported from their original folder (app/[lang]/battle/_components/...) to
- * avoid a risky Windows directory git-mv while the dev watcher holds files.
+ * now live in ../_battle, since /timer is their only consumer.
  *
  * Changes vs the old standalone page:
  *   - accepts the shell `playersControl` (人数 select) and renders it into the
@@ -31,15 +30,15 @@ import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsString } from 'nuqs';
 import { Settings as SettingsIcon, ClipboardList, Trophy, RotateCcw, Eye, EyeOff, Swords, Timer as TimerIcon } from 'lucide-react';
-import { useBattleStore, battleToTimerEvent, timerToBattleEvent, keyToPlayer, prefetchBattleScrambles } from '@/app/[lang]/battle/_components/engine/battle_store';
-import { PUZZLES, PENALTY, I18N_TEXT, BG_MAX_BYTES } from '@/app/[lang]/battle/_components/engine/constants';
+import { useBattleStore, battleToTimerEvent, timerToBattleEvent, keyToPlayer, prefetchBattleScrambles } from '@/app/[lang]/timer/_battle/engine/battle_store';
+import { PUZZLES, PENALTY, I18N_TEXT, BG_MAX_BYTES } from '@/app/[lang]/timer/_battle/engine/constants';
 import { formatTimeHtml as formatTime } from '@/app/[lang]/timer/_shared/format';
 import { computeAo5 } from '@/app/[lang]/timer/_shared/stats-core';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
-import type { PenaltyType } from '@/app/[lang]/battle/_components/engine/constants';
-import HistoryPanel from '@/app/[lang]/battle/_components/HistoryPanel';
-import VsHistoryPanel from '@/app/[lang]/battle/_components/VsHistoryPanel';
-import { MilestoneToast } from '@/app/[lang]/battle/_components/AdvancedFeatures';
+import type { PenaltyType } from '@/app/[lang]/timer/_battle/engine/constants';
+import HistoryPanel from '@/app/[lang]/timer/_battle/HistoryPanel';
+import VsHistoryPanel from '@/app/[lang]/timer/_battle/VsHistoryPanel';
+import { MilestoneToast } from '@/app/[lang]/timer/_battle/AdvancedFeatures';
 import CubeRootLogo from '@/components/CubeRootLogo';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import CubingPreview from '@/components/CubingPreview';
@@ -58,7 +57,7 @@ import { compFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags
 import { localizeCompName } from '@/lib/comp-localize';
 import { compSourceLine } from '@/lib/comp-schedule';
 
-import '@/app/[lang]/battle/battle.css';
+import '@/app/[lang]/timer/_battle/battle.css';
 import './shell.css';
 import { tr } from '@/i18n/tr';
 import BoolToggle from '@/components/BoolToggle';

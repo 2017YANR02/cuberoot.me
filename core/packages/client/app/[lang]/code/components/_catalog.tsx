@@ -38,6 +38,7 @@ import StackedBar, { type StackedSeg } from '@/components/StackedBar/StackedBar'
 import CountryShareBar from '@/components/CountryShareBar/CountryShareBar';
 import { VARIANT_ORDER } from '@/lib/scramble-variants';
 import NumberCommitInput from '@/components/NumberCommitInput';
+import CubeOrientationSelect from '@/components/CubeOrientationSelect';
 import TimerFontPicker from '@/components/TimerFontPicker';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
 import MembershipBadge from '@/components/MembershipBadge';
@@ -364,6 +365,11 @@ function VariantSelectDemo() {
   const isZh = useIsZh();
   const [v, setV] = useState('std');
   return <VariantSelect value={v} options={VARIANT_ORDER} onChange={setV} isZh={isZh} />;
+}
+
+function CubeOrientationSelectDemo() {
+  const [rot, setRot] = useState('');
+  return <div className="cg-row"><CubeOrientationSelect value={rot} onChange={setRot} /></div>;
 }
 
 function EventSelectorDemo() {
@@ -817,6 +823,16 @@ export const CATALOG: ComponentEntry[] = [
     usage: '<VariantSelect value={v} options={opts} onChange={setV} isZh={isZh} label={stageLabel} />',
     Demo: VariantSelectDemo,
     note: { zh: '两页的方法 / 阶段下拉都走它,别再各写一份 <select>。', en: 'Both pages’ method / stage dropdowns route through it — don’t hand-roll another <select>.' },
+  },
+  {
+    name: 'CubeOrientationSelect',
+    import: "import CubeOrientationSelect from '@/components/CubeOrientationSelect';",
+    category: 'input',
+    zh: '拿方朝向下拉:24 档整体转(csTimer 顺序,标签「(上前) 转体」)。/timer 预打乱朝向、/predict 出题朝向、/sim 阶段遮罩朝向共用一张表。',
+    en: 'Holding-orientation dropdown: the 24 whole-cube rotations in csTimer order, labelled "(up front) rotation". Shared by /timer pre-scramble, /predict and /sim stage stickering.',
+    usage: '<CubeOrientationSelect value={rot} onChange={setRot} />',
+    Demo: CubeOrientationSelectDemo,
+    note: { zh: '选项表单一源 lib/cube-orientation.ts,别再各页 map 一遍。', en: 'The table lives in lib/cube-orientation.ts — don’t map it again per page.' },
   },
   {
     name: 'NumberCommitInput',
@@ -1376,7 +1392,7 @@ export const CATALOG: ComponentEntry[] = [
     import: "import CubingPreview from '@/components/CubingPreview';",
     category: 'display',
     zh: `按事件 id 渲染打乱预览图,NxN / pyra / skewb / clock 走 cubing.js TwistyPlayer,SQ1 / megaminx 走自有 SVG,用在计时器 / 对战展示当前打乱。`,
-    en: `Renders a scramble preview by event id (TwistyPlayer for NxN/pyra/skewb/clock, in-house SVG for SQ1/megaminx); use in timer/battle to show the current scramble.`,
+    en: `Renders a scramble preview by event id (TwistyPlayer for NxN/pyra/skewb/clock, in-house SVG for SQ1/megaminx); use in /timer to show the current scramble.`,
     note: { zh: `未知事件渲染为空;cubing.js 按需懒加载。`, en: `Unknown events render nothing; cubing.js is lazy-loaded.` },
   },
   {
@@ -1384,7 +1400,7 @@ export const CATALOG: ComponentEntry[] = [
     import: "import CubeRootLogo from '@/components/CubeRootLogo';",
     category: 'display',
     zh: `品牌 logo + 主页链接,随明暗主题切换深浅版本,用在 timer / battle 等顶栏。`,
-    en: `Brand logo wrapped in a home link that swaps light/dark variants with the theme; use in top bars like timer/battle.`,
+    en: `Brand logo wrapped in a home link that swaps light/dark variants with the theme; use in top bars like /timer.`,
   },
   {
     name: 'SolutionView',

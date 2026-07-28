@@ -217,7 +217,7 @@ export function eventInfo(id: EventId): EventInfo {
 // Two other surfaces key on the WCA / cubing.js spelling of an event rather
 // than on our EventId:
 //
-//   1. the 1v1 Battle engine (app/[lang]/battle/_components/engine/*) — ported
+//   1. the 1v1 Battle engine (app/[lang]/timer/_battle/engine/*) — ported
 //      code whose puzzle ids double as the key of its own csTimer scrambler
 //      table (EVENT_TO_CSTIMER). Renaming them there would break that table,
 //      so we map instead.
@@ -251,7 +251,7 @@ export function fromWcaSpelling(id: string): EventId {
 
 /**
  * The events 1v1 Battle offers, in the order its picker lists them — the single
- * source of truth for the battle puzzle list. `battle/_components/engine/
+ * source of truth for the battle puzzle list. `_battle/engine/
  * constants.ts` builds its `PUZZLES` array from this, so an event can never be
  * added to one side only.
  *
