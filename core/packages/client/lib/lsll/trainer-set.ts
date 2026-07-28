@@ -150,24 +150,32 @@ export async function loadLsllCases(scope: string | null): Promise<AlgCase[]> {
   return picked.map(k => lsllCase(k, cat.letter));
 }
 
-/** 算过的打乱:一次两阶段解 ≈ 百毫秒,同一 case 换到第二遍不再付。`''` = 算失败,别反复重试。 */
+/** 现算过的打乱:一次两阶段解 ≈ 百毫秒,同一 case 换到第二遍不再付。`''` = 算失败,别反复重试。 */
 const SETUP_CACHE = new Map<number, string>();
 
 /**
- * 现算这个 case 的打乱,外加一条能解开它的公式(打乱取逆 —— 打乱本身就是两阶段解取的逆)。
- * 机器解:能解开,但没优化步数和指法,所以 {@link LSLL_TRAINER_NOTE} 要跟着一起说。
+ * 这个 case 的打乱,外加一条能解开它的公式。两条路,按这个顺序:
+ *  1. 后台管道算好的**整方 HTM 最优解**(`./optimal`),取逆当打乱 —— ≈14 步,揭示出来的也是最优解;
+ *  2. 还没回填到的 case 退回现算两阶段解(`./setup`)—— ≈20 步,能解开但没优化步数和指法。
+ *
+ * 两条都摆正相位再算:打乱出来的对子位置必须与 case 图上的一致(model.pairDisplayTurn)。
  */
 export async function resolveLsllCase(c: AlgCase): Promise<{ setup: string; alg?: string } | null> {
   const key = keyFromString(lsllCaseKeyString(c));
   if (key == null) return null;
+  const state = decodeKey(key);
+  if (!state) return null;
+  const want = displayState(state);
+
+  const { lsllOptimal } = await import('./optimal');
+  const opt = await lsllOptimal(key, want);
+  if (opt) return { setup: opt.setup, alg: opt.alg };
+
   const { setupForCase, solutionForSetup } = await import('./setup');
   const hit = SETUP_CACHE.get(key);
   if (hit !== undefined) return hit ? { setup: hit, alg: solutionForSetup(hit) } : null;
-  const state = decodeKey(key);
-  if (!state) return null;
   try {
-    // 摆正相位再解 —— 打乱出来的对子位置必须与 case 图上的一致(model.pairDisplayTurn)
-    const setup = await setupForCase(displayState(state));
+    const setup = await setupForCase(want);
     SETUP_CACHE.set(key, setup);
     return { setup, alg: solutionForSetup(setup) };
   } catch {
@@ -177,6 +185,6 @@ export async function resolveLsllCase(c: AlgCase): Promise<{ setup: string; alg?
 }
 
 export const LSLL_TRAINER_NOTE = {
-  zh: '打乱与公式都是现算的:两阶段机器解,能解开但没优化步数和指法。最优解与 MCC 推荐公式由后台管道逐步回填',
-  en: 'Scrambles and algs are computed on the fly by a two-phase solver — valid, but not move- or fingertrick-optimised. Optimal / MCC algs are being backfilled',
+  zh: '打乱与公式取自后台算好的整方 HTM 最优解;还没算到的 case 退回现算两阶段解 —— 能解开,但步数和指法都没优化',
+  en: 'Scrambles and algs come from the backfilled whole-cube HTM optimum; cases not yet computed fall back to an on-the-fly two-phase solve — valid, but not move- or fingertrick-optimised',
 };

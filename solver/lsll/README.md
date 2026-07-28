@@ -202,7 +202,10 @@ pwsh update_lsll.ps1 -Solve -Rest # 跑第二批(corpus_rest.txt),再导出 + �
 - 表 `lsll_cases`(migration **0094**),主键 = canonical key 的 base36(= URL 的 `?k=`)。
 - **导出的分母永远是两批的并集 583,284**,与这次求解哪一批无关(`export_cases.mjs` 默认读
   `corpus.txt` + `corpus_rest.txt`,`CORPUS` 可给逗号分隔清单覆盖)。
-- manifest 落 `incremental/pg_lsll_manifest.tsv`,**仅灌库成功后**才落盘;想强制全量重灌就删它。
+- manifest 落 `incremental/`,**仅灌库成功后**才落盘;想强制全量重灌就删它。**按目标库分开存**
+  (线上 `pg_lsll_manifest.tsv` / 本地 `pg_lsll_manifest_local.tsv`)—— 一份 manifest 复用到两个库,
+  会让先灌过本地的那批在灌线上时被判「无变化」跳过,线上永远缺那几行(2026-07-28 踩过,缺 400 行)。
+- CSV 与 manifest 都是生成物,**不进 git**(全量 ~10 MB + ~7 MB,每跑一次全变);要重建就重跑导出。
 - **没跑完也能灌**:缺的 case 端点返 `{status:'pending'}`,页面显示「计算中」。
 - 线上灌库的密码由服务器端自己从 `/root/core-api/.env` 读,脚本里没有凭据。
 - `-Local` 走容器内 psql(本机没装客户端),会顺手把 migration 0094 灌进 pg13(幂等)。

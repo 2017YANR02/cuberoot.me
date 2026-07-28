@@ -20,6 +20,7 @@ import {
   keyFromString, keyToString, decodeKey, canonicalKey, displayState, classify,
   caseFacelets, verifyCaseAlg,
 } from '@/lib/lsll/model';
+import { setupFromOptimalAlg } from '@/lib/lsll/optimal';
 import { zblsForKey } from '@/lib/lsll/zbls_overlay';
 import { mirrorKey, mirrorAlgForCase } from '@/lib/lsll/mirror';
 import { algSpeed, getSTM } from '@/lib/mcc';
@@ -63,20 +64,6 @@ export default function LsllCaseClient() {
     info ? `LSLL ${info.category.letter} #${keyToString(decoded!.key)}` : 'LSLL case',
   );
 
-  // 打乱:进入页面即后台现算(两阶段,≈20 步)。
-  const [setup, setSetup] = useState<string | null>(null);
-  const [setupErr, setSetupErr] = useState(false);
-  useEffect(() => {
-    let cancelled = false;
-    setSetup(null); setSetupErr(false);
-    if (!decoded) return;
-    import('@/lib/lsll/setup')
-      .then((m) => m.setupForCase(decoded.state))
-      .then((s) => { if (!cancelled) setSetup(s); })
-      .catch(() => { if (!cancelled) setSetupErr(true); });
-    return () => { cancelled = true; };
-  }, [decoded]);
-
   // HTM 最优解:后端 lsll_cases(本地管道回填)。没回填到的 case 返 { status: 'pending' }。
   const [opt, setOpt] = useState<OptimalState>({ kind: 'loading' });
   useEffect(() => {
@@ -94,6 +81,26 @@ export default function LsllCaseClient() {
       .catch(() => { if (!cancelled) setOpt({ kind: 'error' }); });
     return () => { cancelled = true; };
   }, [decoded]);
+
+  // 打乱 = 最优解取逆(≈14 步,与下面那条最优解是同一条转法,只是反着做)。所以先等最优解那一发:
+  // 已回填就不必现算,没回填(或验不过)才退回两阶段机器解(≈20 步)。
+  const [setup, setSetup] = useState<string | null>(null);
+  const [setupErr, setSetupErr] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    setSetup(null); setSetupErr(false);
+    if (!decoded || opt.kind === 'loading') return;
+    const state = decoded.state;
+    if (opt.kind === 'ok') {
+      const fromOpt = setupFromOptimalAlg(opt.data.algs[0] ?? '', state);
+      if (fromOpt) { setSetup(fromOpt); return; }
+    }
+    import('@/lib/lsll/setup')
+      .then((m) => m.setupForCase(state))
+      .then((s) => { if (!cancelled) setSetup(s); })
+      .catch(() => { if (!cancelled) setSetupErr(true); });
+    return () => { cancelled = true; };
+  }, [decoded, opt]);
 
   // 公式自测
   const [tryAlg, setTryAlg] = useState('');
@@ -165,7 +172,7 @@ export default function LsllCaseClient() {
               </Link>
               <p className="lsll-note">
                 <T zh={<>沿过 FR 与 BL 两条棱的对角面镜过去的 case。它与本 case 步数相同,
-                  会的公式逐招式重写(<code>U↔U&apos;</code>、<code>R↔F&apos;</code>、<code>L↔B&apos;</code>)就能直接用。</>}
+                  会的公式逐步重写(<code>U↔U&apos;</code>、<code>R↔F&apos;</code>、<code>L↔B&apos;</code>)就能直接用。</>}
                    en={<>The case across the diagonal plane through the FR and BL edges. Same move count as this one —
                   rewrite any alg you know move by move (<code>U↔U&apos;</code>, <code>R↔F&apos;</code>, <code>L↔B&apos;</code>) and it applies.</>} />
               </p>
