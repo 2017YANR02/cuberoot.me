@@ -14,7 +14,9 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import Link from '@/components/AppLink';
 import { ArrowLeft, Star, Flame, Loader2 } from 'lucide-react';
 import { ALG_CATALOG, ALG_PUZZLES, loadAlg, type AlgPuzzle, type AlgCase } from '@cuberoot/shared';
-import { virtualAlgSet } from '@/lib/alg-virtual-sets';
+import { virtualAlgSet, VIRTUAL_ALG_SET_PARAMS } from '@/lib/alg-virtual-sets';
+import { flushSweep, readSweep } from '@/lib/alg-sweep-store';
+import { sweptScopes } from '@/lib/alg-sweep';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { CaseThumb } from '@/components/CaseThumb';
 import { eventDisplayName } from '@/lib/wca-events';
@@ -49,6 +51,13 @@ interface SetRow {
   key: string;             // `${puzzle}/${slug}`
   name: string;
   total: number | null;    // null = 分母未知(缓存过期/离线)
+  /**
+   * 枚举出来的虚拟集(LSLL 57 万个)。自己那一行照常显示分母,但**不进跨集合计** ——
+   * 一套顶掉其余全部套的两个数量级,顶部「已掌握 / 总数」和记忆强度条会被它一个人写死。
+   */
+  virtual: boolean;
+  /** 分轮的集:过完几轮 / 一共几轮。57 万个的进度条永远是细线,轮次才看得见。 */
+  rounds: { done: number; total: number } | null;
   marks: SetMarkSummary;
   srs: SrsSetStat;
 }
@@ -58,6 +67,7 @@ const emptyMarks = (): SetMarkSummary => ({ learning: 0, mastered: 0, starred: 0
 /** 两张表的 key 并集 → 按 puzzle 分组的行,保持 ALG_CATALOG 里的 set 顺序。 */
 function buildRows(
   marks: MarkOverview, srs: SrsOverview, counts: Record<string, number>,
+  sweptRounds: Record<string, number>,
 ): Map<AlgPuzzle, SetRow[]> {
   const byPuzzle = new Map<AlgPuzzle, SetRow[]>();
   const allKeys = new Set([...Object.keys(marks), ...Object.keys(srs)]);
@@ -68,15 +78,19 @@ function buildRows(
       const key = `${p}/${slug}`;
       if (seen.has(key) || !allKeys.has(key)) return;
       seen.add(key);
+      // 虚拟集(LSLL)库里没有行,`/v1/alg/sets` 的 count 数不到它 —— 分母由它自己报
+      const v = virtualAlgSet(p, slug);
       rows.push({
         puzzle: p, slug, key, name,
-        total: counts[key] ?? null,
+        total: v?.totalCases ?? counts[key] ?? null,
+        virtual: !!v,
+        rounds: v?.totalRounds ? { done: sweptRounds[key] ?? 0, total: v.totalRounds } : null,
         marks: marks[key] ?? emptyMarks(),
         srs: srs[key] ?? emptySrsStat(),
       });
     };
     for (const meta of ALG_CATALOG[p]) push(meta.slug, tr({ zh: meta.zh, en: meta.en }));
-    // catalog 里没有、但有记录的孤儿 set:虚拟集(LSLL)用它自己的名字,真孤儿(set 下线)用 slug
+    // catalog 里没有、但有记录的孤儿 set:虚拟集用它自己的名字,真孤儿(set 下线)用 slug
     for (const key of allKeys) {
       const [kp, ...rest] = key.split('/');
       if (kp !== p) continue;
@@ -256,7 +270,7 @@ function SetProgressRow({ row, onReset, busy }: {
         )}
         <span className="alg-prog-frac">
           <b>{marks.mastered}</b>
-          {row.total != null ? ` / ${row.total}` : ''}
+          {row.total != null ? ` / ${row.total.toLocaleString()}` : ''}
           <span className="alg-prog-frac-label">{tr({ zh: '已掌握', en: 'mastered' })}</span>
         </span>
       </div>
@@ -266,6 +280,14 @@ function SetProgressRow({ row, onReset, busy }: {
         <span className="is-learning" style={{ width: pct(marks.learning) }} />
       </div>
       <div className="alg-prog-stats">
+        {row.rounds && (
+          <span className="alg-prog-stat">
+            {tr({
+              zh: `过完 ${row.rounds.done} / ${row.rounds.total} 轮`,
+              en: `${row.rounds.done}/${row.rounds.total} rounds done`,
+            })}
+          </span>
+        )}
         {marks.starred > 0 && (
           <Link href={`${base}?mark=star`} className="alg-prog-stat is-star" prefetch={false}>
             <Star size={12} className="alg-prog-stat-star" /> {marks.starred}
@@ -276,11 +298,16 @@ function SetProgressRow({ row, onReset, busy }: {
             {MARK_STATUS_LABEL.learning()} {marks.learning}
           </Link>
         )}
-        {untouched > 0 && (
+        {/* 虚拟集(LSLL)的浏览页不认 `?mark=` 这层筛选 —— 数字照报,但不做成点了没反应的链接 */}
+        {untouched > 0 && (row.virtual ? (
+          <span className="alg-prog-stat">
+            {tr({ zh: '未学', en: 'New' })} {untouched.toLocaleString()}
+          </span>
+        ) : (
           <Link href={`${base}?mark=none`} className="alg-prog-stat" prefetch={false}>
             {tr({ zh: '未学', en: 'New' })} {untouched}
           </Link>
-        )}
+        ))}
         {srs.mature > 0 && (
           <span className="alg-prog-stat is-mature">
             {tr({ zh: '长期记住', en: 'Long-term' })} {srs.mature}
@@ -415,18 +442,30 @@ export default function AlgProgressPage() {
   const [recs, setRecs] = useState<Record<string, SrsRecs>>({});
   const [daily, setDaily] = useState<SrsDaily>({});
   const [counts, setCounts] = useState<Record<string, number>>({});
+  /** `puzzle/slug` → 过完了几个范围(LSLL:494 轮里走完几轮)。 */
+  const [sweptRounds, setSweptRounds] = useState<Record<string, number>>({});
   /** 正在重置的对象:set 的 `puzzle/slug`,或 'all'。 */
   const [resetting, setResetting] = useState<string | null>(null);
   const loggedIn = typeof window !== 'undefined' && !!getSessionToken();
 
   const refresh = useCallback(async () => {
     const now = Date.now();
-    const [mk, srs, ct] = await Promise.all([
+    await flushSweep();   // 刚从训练页过来:防抖队列里那一笔还没上去
+    const [mk, srs, ct, sw] = await Promise.all([
       loadMarkOverview(),
       loadSrsDashboard(now),
       fetchSetCounts().catch(() => ({})),
+      // 「过完几轮」只有虚拟集用得上,而虚拟集统共一个 —— 直接按注册表逐个读
+      Promise.all(VIRTUAL_ALG_SET_PARAMS.map(async v => {
+        const vs = virtualAlgSet(v.puzzle as AlgPuzzle, v.set);
+        const s = await readSweep(v.puzzle, v.set).catch(() => null);
+        // 大类范围(`ap` / `ap-eo2`)也会记 sweep,但它们不是轮 —— `roundLabel` 认得出来
+        const done = s ? sweptScopes(s, k => vs?.roundLabel?.(k) != null) : 0;
+        return [`${v.puzzle}/${v.set}`, done] as const;
+      })).then(Object.fromEntries),
     ]);
     setCounts(ct);
+    setSweptRounds(sw);
     setSrsOv(srs.overview);
     setRecs(srs.recs);
     setDaily(srs.daily);
@@ -436,8 +475,8 @@ export default function AlgProgressPage() {
   useEffect(() => { void refresh(); }, [refresh]);
 
   const byPuzzle = useMemo<Map<AlgPuzzle, SetRow[]>>(
-    () => (marks ? buildRows(marks, srsOv, counts) : new Map()),
-    [marks, srsOv, counts],
+    () => (marks ? buildRows(marks, srsOv, counts, sweptRounds) : new Map()),
+    [marks, srsOv, counts, sweptRounds],
   );
 
   const totals = useMemo(() => {
@@ -462,7 +501,7 @@ export default function AlgProgressPage() {
         t.mature += r.srs.mature;
         t.reviews += r.srs.reviews;
         t.lapses += r.srs.lapses;
-        if (r.total) t.known += r.total;
+        if (r.total && !r.virtual) t.known += r.total;
       }
     }
     return t;
