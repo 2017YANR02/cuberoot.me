@@ -54,7 +54,15 @@ export default function TimerShell() {
   const isNet = playersParam === 'net' || (!!roomParam && typeof playersParam === 'number' && playersParam === 1);
   const playerCount = typeof playersParam === 'number' ? Math.max(1, Math.min(4, playersParam)) : 1;
 
+  // 联机模式下 ?event= 没有意义(项目属于房间,各人在房里各自切)—— 清掉 Solo / Battle
+  // 留下的残值。Battle 写的是「按玩家顺序逗号分隔」,4 人切过来会在地址栏留下
+  // event=333,333,333,333;那串再切回单人还会被 Solo 当成已有 event 不再纠正。
+  const [, setEventParam] = useQueryState('event');
+
   useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    if (isNet) void setEventParam(null, { history: 'replace' });
+  }, [isNet, setEventParam]);
   // 裸 /timer 强制写显式 ?players=1(默认人数也进 URL,不再省略)。
   useEffect(() => {
     if (typeof window !== 'undefined' && !new URLSearchParams(window.location.search).has('players')) {

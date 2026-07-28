@@ -127,15 +127,17 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
   const offsetRef = useRef<number | null>(null);
 
   // ── 大厅表单 ────────────────────────────────────────────────
-  const [name, setName] = useState('');                         // 访客自由昵称(未选 WCA 选手时用)
+  // 访客自由昵称(未选 WCA 选手时用)。同步读 localStorage 而不是挂 effect 补:扫码进来
+  // 的自动加入在首个 effect pass 就要拿到昵称,effect 补的值那时还没写进 identity。
+  // NetBattleView 只在 TimerShell 的 mounted 门控后渲染(服务端永远是 SoloView),
+  // 这里读 localStorage 不会造成 hydration 错配;window 判空只是防守。
+  const [name, setName] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    try { return localStorage.getItem(LS_NAME) || ''; } catch { return ''; }
+  });
   const [picked, setPicked] = useState<WcaPersonLite | null>(null); // 访客选中的 WCA 选手
   const [joinCode, setJoinCode] = useState('');
   const [lobbyEvent, setLobbyEvent] = useState('333');
-  /** 邀请链接进来时预读的房间信息(项目 + 在场者),让加入者先确认进的是哪个房。 */
-  const [peek, setPeek] = useState<{ event: string; names: string[] } | null>(null);
-  useEffect(() => {
-    try { setName(localStorage.getItem(LS_NAME) || ''); } catch { /* ignore */ }
-  }, []);
   // 身份:登录用户直接用 WCA 姓名+ID(不填昵称);访客选了 WCA 选手用其姓名+ID,否则用自由昵称。
   // 访客什么都不填也能开房/加入 —— 回落默认名(与服务端 sanitizeName 同一个 'Cuber',
   // 重名由服务端加 (2)(3) 后缀)。身份永不为 null:否则未登录用户会撞上「按钮灰着、
@@ -403,11 +405,11 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [joinCode, busy, doJoin]);
 
-  // 邀请链接 ?room=CODE 自动进房:先试 sessionStorage 同码恢复身份(刷新不重复加入),
-  // 只有「刷新同一房间」(sessionStorage 有本房身份)才自动恢复、不重复加入;
-  // 其余情况(别人点邀请链接首次进来)一律落加入页,把房间码预填好,昵称也从
-  // localStorage 预填(可改),用户点「加入」才真进房 —— 不静默替对方加入,避免
-  // 共享存储/别人的昵称把人稀里糊涂拉进房(如同一浏览器多窗口共享 localStorage)。
+  // 邀请链接 / 扫码 ?room=CODE:直接进房,不停确认页 —— 扫码的人要的就是「进这个房」,
+  // 中间再插一屏点「加入」纯属挡路。身份取现成的(登录用户 = WCA 姓名,访客 =
+  // localStorage 记的昵称,都没有就回落 Cuber,重名由服务端加 (2)(3))。
+  // 先试 sessionStorage 同码恢复:刷新页面原地回到同一个 pid,不在玩家条里多一个自己。
+  // 自动加入前把码记进 autoJoinedRef,否则下面「填满 5 位即加入」的 effect 会再加入一次。
   const autoJoinRef = useRef(false);
   useEffect(() => {
     if (!roomParam || room || busy || autoJoinRef.current) return;
@@ -420,23 +422,12 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
           const st = await getNetRoom(codeUp, saved.pid);
           if (st.players[saved.pid]) { setPid(saved.pid); applyState(st); return; }
         }
-        // 非本房刷新 → 停在加入页:预读房间(项目 + 在场者)供确认,房间码预填。
-        // 预填要顺手记进 autoJoinedRef:否则填满 5 位的自动加入会立刻抢跑,把人
-        // 静默拉进房(违背上面的「用户点加入才真进房」)。手打的码不受影响。
-        const st = await getNetRoom(codeUp);
-        setPeek({
-          event: st.event,
-          names: sortedNetPlayers(st.players).filter(p => isNetOnline(p, st.now)).map(p => p.name),
-        });
-        autoJoinedRef.current = codeUp;
-        setJoinCode(codeUp);
-      } catch {
-        setErr(tr({ zh: '房间不存在或已过期', en: 'Room not found or expired' }));
-        autoJoinedRef.current = codeUp;
-        setJoinCode(codeUp);
-      }
+      } catch { /* 读不到就当新人,照常加入 */ }
+      autoJoinedRef.current = codeUp;
+      doJoin(codeUp);
     })();
-  }, [roomParam, room, busy, applyState]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomParam, room, busy, applyState, doJoin]);
 
   // ── 房主操作(授权在服务端;这里只管发请求 + 同步状态)────────────
   const setSyncStart = useCallback((v: boolean) => {
@@ -866,7 +857,8 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
   );
 
   if (!room) {
-    // 邀请链接进来(URL 带 room=)→ 加入模式:聚焦「加入这个房」,不喧宾夺主放创建。
+    // 邀请链接 / 扫码进来(URL 带 room=)→ 已在上面直接加入,这里只剩两种过场:
+    // 正在进房、以及房间不在了(给明确出口)。
     const inviteCode = roomParam ? roomParam.trim().toUpperCase() : null;
     return (
       <div className="timer-shell net-shell">
@@ -876,7 +868,7 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
         <div className="shell-main">
         <div className="net-lobby">
           {inviteCode ? (
-            err && !peek ? (
+            err ? (
               /* ───── 房间不存在 / 已过期:给明确出口 ───── */
               <>
                 <h2 className="net-lobby-title">
@@ -888,7 +880,7 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
                 <button
                   type="button"
                   className="net-btn net-btn-primary net-btn-lg"
-                  onClick={() => { setPeek(null); setErr(null); void setRoomParam(null); }}
+                  onClick={() => { setErr(null); void setRoomParam(null); }}
                 >
                   {tr({ zh: '创建自己的房间', en: 'Create my own room' })}
                 </button>
@@ -901,65 +893,11 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
                 </button>
               </>
             ) : (
-            /* ───── 加入模式(有人邀请你)───── */
-            <>
-              <h2 className="net-lobby-title">
-                <Swords size={20} />
-                {tr({ zh: '加入房间', en: 'Join room' })}
-                <span className="net-lobby-code">{inviteCode}</span>
-              </h2>
-              {peek ? (
-                <p className="net-lobby-hint">
-                  {peek.names.length > 0
-                    ? tr({
-                        zh: `${eventDisplayName(netEventToSelectorId(peek.event), true)} · 房内:${peek.names.join('、')}`,
-                        en: `${eventDisplayName(netEventToSelectorId(peek.event), false)} · in room: ${peek.names.join(', ')}`,
-                      })
-                    : tr({
-                        zh: `${eventDisplayName(netEventToSelectorId(peek.event), true)} · 暂时只有你`,
-                        en: `${eventDisplayName(netEventToSelectorId(peek.event), false)} · you're the first here`,
-                      })}
-                </p>
-              ) : !err ? (
-                <p className="net-lobby-hint">{tr({ zh: '正在读取房间…', en: 'Loading room…' })}</p>
-              ) : null}
-
-              {identityField}
-
-              <button
-                type="button"
-                className="net-btn net-btn-primary net-btn-lg"
-                onClick={() => doJoin(inviteCode)}
-                disabled={busy || !peek}
-              >
-                {tr({ zh: '加入房间', en: 'Join room' })}
-              </button>
-
-              <button
-                type="button"
-                className="net-btn is-ghost net-lobby-switch"
-                onClick={() => { setPeek(null); setErr(null); void setRoomParam(null); }}
-              >
-                {tr({ zh: '创建自己的房间', en: 'Create my own room instead' })}
-              </button>
-
-              {err && <div className="net-err">{err}</div>}
-            </>
+              <p className="net-lobby-hint">{tr({ zh: '正在进入房间…', en: 'Joining room…' })}</p>
             )
           ) : (
             /* ───── 创建模式(直接进来)───── */
             <>
-              <h2 className="net-lobby-title">
-                <Swords size={20} />
-                {tr({ zh: '联机对战', en: 'Online battle' })}
-              </h2>
-              <p className="net-lobby-hint">
-                {tr({
-                  zh: '创建房间,把邀请链接发给朋友;每人用自己的设备计时,同一条打乱实时比拼,任何人都能开下一轮。',
-                  en: 'Create a room and share the invite link. Everyone times on their own device with the same scramble, results sync live, and anyone can start the next round.',
-                })}
-              </p>
-
               {identityField}
 
               <div className="net-field">
