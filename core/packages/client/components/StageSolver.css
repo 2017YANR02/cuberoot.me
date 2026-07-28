@@ -375,6 +375,14 @@ html[data-theme='dark'] .stsv {
 }
 .stsv-modal-tables li span { color: var(--faint-foreground, var(--muted-foreground)); }
 
+/* 表的来源脚注(pt_* 下载 / mt_* 现场生成)—— 次要说明,压到最小号弱色。 */
+.stsv-modal-note {
+  margin: 10px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+}
+
 @media (max-width: 480px) {
   .stsv-modal-tables { grid-template-columns: 1fr; }
 }
