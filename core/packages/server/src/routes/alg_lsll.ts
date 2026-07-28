@@ -38,7 +38,7 @@ algLsllRoutes.get('/alg/lsll/case/:key', async (c) => {
   );
   const r = rows[0];
   if (!r) {
-    // 还没回填(管道在跑 / 不在这一轮的 148,384 个里)。**别缓存** —— 跑完就该立刻能看到。
+    // 还没回填(管道在跑;两批语料合起来覆盖全部 583,284 个)。**别缓存** —— 跑完就该立刻能看到。
     c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
     return c.json({ key, status: 'pending' });
   }

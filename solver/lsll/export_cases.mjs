@@ -10,19 +10,30 @@
 //   2. 输出覆盖率与 HTM 直方图,好知道跑到哪了(没跑完也能先灌,页面对没回填的 case 显示「计算中」)。
 //
 // Usage: node export_cases.mjs [--out lsll_cases.csv]
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const IN = resolve(process.env.OUT_CSV || resolve(__dirname, 'out.csv'));
-const CORPUS = resolve(process.env.CORPUS || resolve(__dirname, 'corpus.txt'));
 const argOut = process.argv.indexOf('--out');
 const OUT = resolve(argOut > 0 ? process.argv[argOut + 1] : resolve(__dirname, 'lsll_cases.csv'));
 
-const corpusKeys = new Set(
-  readFileSync(CORPUS, 'utf8').split('\n').filter((l) => l.includes(',')).map((l) => l.slice(0, l.indexOf(','))),
-);
+// 语料是两个文件(见 corpus 生成脚本):corpus.txt 148,384 个两步路线 + corpus_rest.txt 其余
+// 434,900 个。两批共用一个 out.csv,所以覆盖率的分母是**两个文件的并集**;第二批还没生成时
+// 就只有第一批。`CORPUS` 可给逗号分隔的清单覆盖默认。
+const CORPORA = (process.env.CORPUS
+  ? process.env.CORPUS.split(',')
+  : ['corpus.txt', 'corpus_rest.txt']
+).map((p) => resolve(__dirname, p.trim())).filter((p) => existsSync(p));
+if (!CORPORA.length) throw new Error('一个语料文件都没有 —— 先跑 lsll-corpus.mts');
+
+const corpusKeys = new Set();
+for (const file of CORPORA) {
+  for (const line of readFileSync(file, 'utf8').split('\n')) {
+    if (line.includes(',')) corpusKeys.add(line.slice(0, line.indexOf(',')));
+  }
+}
 
 const rows = [];
 const seen = new Set();
@@ -32,7 +43,7 @@ for (const line of readFileSync(IN, 'utf8').split('\n')) {
   const [key, htm, qtm, ...rest] = line.split(',');
   const sol = rest.join(',').trim();
   if (!key || !htm || !qtm || !sol) throw new Error(`out.csv 行格式不对:${line}`);
-  if (!corpusKeys.has(key)) throw new Error(`out.csv 里的 ${key} 不在 corpus.txt —— 语料对不上,别灌`);
+  if (!corpusKeys.has(key)) throw new Error(`out.csv 里的 ${key} 不在语料里 —— 语料对不上,别灌`);
   if (seen.has(key)) throw new Error(`out.csv 里 ${key} 重复`);
   seen.add(key);
   hist.set(Number(htm), (hist.get(Number(htm)) ?? 0) + 1);
