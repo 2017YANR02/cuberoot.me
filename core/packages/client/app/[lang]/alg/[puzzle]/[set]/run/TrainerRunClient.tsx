@@ -728,13 +728,32 @@ export default function TrainerRunClient() {
   }, [isMix, sweepPos, sweepTotal, sweepScope, moveSweepCursor]);
 
   // 整轮过完:记一笔,并折叠这一轮里没手动标过的记忆排期(水位之下不折,小集行为不变)。
+  //
+  // 「过完」两种模式各有各的判据:
+  //  - 复习(recap):队列走到尾,store 直接给出 recapRoundDone。
+  //  - 记忆(memo):没有队列尾可言 —— 判据换成「本轮每个 case 都已经有排期」,
+  //    也就是每一个都至少过了一遍。缺了这条,拿记忆模式练 LSLL 就永远不会折叠,
+  //    20,000 条上限照样在第 66 天撞上。
+  // 训练(train)不在此列:随机抽,永远抽不全。
+  const srsRecs = useAlgSrs(s => s.recs);
+  const memoAllRated = mode === 'memo' && pool.length > 0 && pool.every(k => k in srsRecs);
+  // 进场时就已经全有排期 ⟹ 那是上一场留下的,不是这一场过完的。只认「本场从缺到全」那一次
+  // 跳变,否则每开一次记忆模式就白记一遍(小集不折叠,排期一直在,次次都满足)。
+  const memoBaseline = useRef<boolean | null>(null);
+  useEffect(() => { memoBaseline.current = null; }, [storePuzzle, storeSet, sweepScope]);
   const sweepRecorded = useRef(false);
   useEffect(() => {
-    if (!recapRoundDone) { sweepRecorded.current = false; return; }
-    if (isMix || mode !== 'recap' || sweepRecorded.current) return;
-    sweepRecorded.current = true;   // 弹窗期间的重渲染别记成好几轮
+    if (mode === 'memo' && memoBaseline.current === null && pool.length > 0) {
+      memoBaseline.current = memoAllRated;
+    }
+    const done = mode === 'recap' ? recapRoundDone
+      : mode === 'memo' ? (memoAllRated && memoBaseline.current === false)
+      : false;
+    if (!done) { sweepRecorded.current = false; return; }
+    if (isMix || sweepRecorded.current) return;
+    sweepRecorded.current = true;   // 弹窗期间 / 每次评分后的重渲染别记成好几轮
     recordSweep(sweepScope, pool);
-  }, [recapRoundDone, isMix, mode, sweepScope, pool, recordSweep]);
+  }, [recapRoundDone, memoAllRated, isMix, mode, sweepScope, pool, recordSweep]);
 
   if (!puzzle || !meta) {
     // 合练成员不够:直接给选集器(SSG 壳读不到 query,挂载前先「加载中」免闪)
