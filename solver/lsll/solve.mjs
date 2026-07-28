@@ -37,7 +37,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, '..', '..');
 const MJS = resolve(process.env.MODULE || resolve(repoRoot, 'core/packages/client/public/cubeopt/cube48opt9.mjs'));
 const DAT = resolve(process.env.TABLE || resolve(repoRoot, 'solver/tables/h48/h48prun31h9.dat'));
-const CORPUS = resolve(process.env.CORPUS || resolve(__dirname, 'corpus.txt'));
+// 相对路径按**脚本所在目录**算,不按 cwd —— 从别处调时 CORPUS=corpus_rest.txt 才不会指空
+const CORPUS = resolve(__dirname, process.env.CORPUS || 'corpus.txt');
 const OUT = resolve(process.env.OUT || resolve(__dirname, 'out.csv'));
 const THREADS = Number(process.argv[2] ?? process.env.THREADS ?? 12);
 const GROUP = Number(process.env.GROUP ?? 1);
@@ -83,6 +84,9 @@ const done = existsSync(OUT)
   ? new Set(readFileSync(OUT, 'utf8').split('\n').filter(Boolean).map((l) => l.slice(0, l.indexOf(','))))
   : new Set();
 const todo = corpus.filter(([k]) => !done.has(k));
+// out.csv 是两批语料共用的(corpus.txt 148,384 + corpus_rest.txt 434,900),所以进度只能按
+// **本批**已完成数算 —— 拿 out.csv 的总行数当分子会把另一批的成果算进来,百分比和 ETA 全歪。
+const doneHere = corpus.length - todo.length;
 
 // ---- 载表 ----
 const datSize = statSync(DAT).size;
@@ -94,7 +98,7 @@ if (free < datSize * 1.1) {
     + ` 会换页到磁盘,慢到不如换小表。先腾内存,或 TABLE=../tables/h48/h48prun31h6.dat`
     + ` MODULE=../../core/packages/client/public/cubeopt/cube48opt6.mjs 起跑(按 key 续跑,之后能换回来)。`);
 }
-console.log(`语料 ${corpus.length} · 已完成 ${done.size} · 待解 ${todo.length}`);
+console.log(`语料 ${corpus.length} · 已完成 ${doneHere} · 待解 ${todo.length}`);
 if (!todo.length) { console.log('全部完成'); process.exit(0); }
 
 const printed = [];
@@ -156,13 +160,13 @@ let n = 0, regrouped = 0, htmSum = 0;
 const start = Date.now();
 const tty = process.stdout.isTTY;
 const MILESTONE = Math.max(1, Math.round(corpus.length / 100)); // 每 1% 一条持久行
-let lastPaint = 0, lastMilestone = Math.floor(done.size / MILESTONE);
+let lastPaint = 0, lastMilestone = Math.floor(doneHere / MILESTONE);
 
 function paint(force) {
   const now = Date.now();
   if (!force && now - lastPaint < 200) return;
   lastPaint = now;
-  const total = corpus.length, cur = done.size + n;
+  const total = corpus.length, cur = doneHere + n;
   const rate = n / ((now - start) / 1000);
   const eta = rate > 0 ? (total - cur) / rate : 0;
   const etaTxt = eta > 3600 ? `${(eta / 3600).toFixed(1)}h` : `${Math.round(eta / 60)}m`;

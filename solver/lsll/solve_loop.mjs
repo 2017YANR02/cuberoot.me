@@ -13,15 +13,24 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT = resolve(__dirname, 'out.csv');
-const CORPUS = resolve(process.env.CORPUS || resolve(__dirname, 'corpus.txt'));
+// 相对路径按**脚本所在目录**算,不按 cwd —— 从别处调时 CORPUS=corpus_rest.txt 才不会指空
+const CORPUS = resolve(__dirname, process.env.CORPUS || 'corpus.txt');
 if (!existsSync(CORPUS)) {
   console.error(`语料不存在:${CORPUS}`);
   console.error('先生成:cd core && NODE_OPTIONS=--no-experimental-strip-types pnpm --filter @cuberoot/client exec tsx scripts/lsll-corpus.mts');
   process.exit(2);
 }
-const TOTAL = readFileSync(CORPUS, 'utf8').split('\n').filter((l) => l.includes(',')).length;
+const corpusKeys = new Set(
+  readFileSync(CORPUS, 'utf8').split('\n').filter((l) => l.includes(',')).map((l) => l.slice(0, l.indexOf(','))),
+);
+const TOTAL = corpusKeys.size;
 const THREADS = String(process.env.THREADS || '12');
-const lines = () => (existsSync(OUT) ? readFileSync(OUT, 'utf8').split('\n').filter(Boolean).length : 0);
+// out.csv 由两批语料共用(corpus.txt + corpus_rest.txt),所以只数**本批**的行。
+// 数总行数会在第二批跑到 43 万总行时误判「全部完成」,把后面十几万条静默丢掉。
+const lines = () => (existsSync(OUT)
+  ? readFileSync(OUT, 'utf8').split('\n').filter(Boolean)
+    .filter((l) => corpusKeys.has(l.slice(0, l.indexOf(',')))).length
+  : 0);
 
 let stuck = 0, run = 0;
 const t0 = Date.now();
