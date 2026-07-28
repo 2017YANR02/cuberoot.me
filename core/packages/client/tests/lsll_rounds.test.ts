@@ -1,18 +1,25 @@
 /**
  * LSLL 训练器的「第 n 轮」—— 302 条 ZBLS case × 494 个 ZBLL 收尾 = 149,188 条两步路线,
- * 一轮 302 条摊开走。这里锁的是那条合成律 (`model.composeState`) 的三个性质:
+ * 一轮 302 条摊开走。这里锁的是那条合成律 (`model.composeState`) 的四个性质:
  *
- *  1. 第 1 轮就是公式库那批本身(收尾 ZBLL = 全解,合出来原地不动);
- *  2. 每一轮的第一眼都没变 —— 合成只动顶层角与棱的置换/朝向,槽对构型 φ 与顶层翻棱照旧,
+ *  1. 接全解顶层 = 原地不动(合成律本身);
+ *  2. **一轮之内 302 个 ZBLL 收尾互不相同**(错位对角 `roundZbllIndex`)—— 旧排法是「第 n 轮
+ *     全体接第 n 个 ZBLL」,第 1 轮于是整轮都是纯 ZBLS(均值 9.28 步,其余 493 轮 13.0~14.4);
+ *  3. 每一轮的第一眼都没变 —— 合成只动顶层角与棱的置换/朝向,槽对构型 φ 与顶层翻棱照旧,
  *     所以同一条 ZBLS case 在 494 轮里认的是同一张 ZBLS 图;
- *  3. 轮内 302 张图互不相同;跨轮会撞 804 格 —— 那是 ZBLS 构型自带 pre-AUF 对称的必然,
+ *  4. 轮内 302 张图互不相同;跨轮会撞 804 格 —— 那是 ZBLS 构型自带 pre-AUF 对称的必然,
  *     不是 bug(路线不是局面的商,见 /math/lsll §3),数字锁在下面那条里。
+ *
+ * 性质 2 与 4 合起来才是「换了排法但一条路线都没丢」:错位对角是笛卡尔积上的重排,
+ * 494 轮的并集仍是同一批 148,384 张图(求解语料因此不用重跑)。
  */
 import { describe, it, expect } from 'vitest';
 import type { AlgCase } from '@cuberoot/shared';
 import {
-  classify, composeState, keyFromString, packState, unpackState,
+  canonicalKey, classify, composeState, keyFromString, packState, unpackState,
 } from '@/lib/lsll/model';
+import type { LsllState } from '@/lib/lsll/cube333';
+import { ZBLS_COVERED_KEYS } from '@/lib/lsll/zbls_overlay';
 import { allZbllCases, phiOfState, solvedZbllKey, zbllRoundKeys, ZBLL_CASE_COUNT } from '@/lib/lsll/class3';
 import {
   LSLL_ROUNDS, LSLL_SCOPE_COVERED, loadLsllCases, lsllCaseKeyString, lsllNextRoundScope,
@@ -63,12 +70,54 @@ describe('合成律', () => {
     }
   });
 
-  it('第 1 轮 = 公式库那 302 条本身', async () => {
+  it('裸 zbls 与 zbls-r1 是同一轮', async () => {
     const r1 = await loadLsllCases(LSLL_SCOPE_COVERED);
     const same = await loadLsllCases('zbls-r1');
     expect(r1).toHaveLength(302);
     expect(same.map(c => c.name)).toEqual(r1.map(c => c.name));
   });
+
+  /**
+   * 一轮之内 302 个收尾互不相同。不照 `roundZbllIndex` 的公式重算一遍(那只是把实现抄两遍),
+   * 而是**反查**:每张图的第一眼 φ 认出它是哪条 ZBLS,再拿 494 个 ZBLL 逐个合成去撞它的编号,
+   * 撞上的那个就是这一格真正的收尾。撞不上 = 这张图根本不是这条 ZBLS 合出来的,当场红。
+   */
+  it('轮内 302 个 ZBLL 收尾互不相同', async () => {
+    // 干净的 ZBLS 构型取自公式库那批原始 key —— 它们本身就是纯 ZBLS 局面(顶层已解)。
+    const zblsByPhi = new Map<number, LsllState>();
+    for (const s of ZBLS_COVERED_KEYS) {
+      const k = keyFromString(s);
+      if (k == null) continue;
+      const st = unpackState(k);
+      if (classify(st).category.pureLL) continue;
+      zblsByPhi.set(phiOfState(st), st);
+    }
+    expect(zblsByPhi.size).toBe(302);
+
+    /**
+     * 反查数出来的收尾个数。**不是 302**:6 条 ZBLS 自带 pre-AUF 稳定子(轨道 < 4),它们身上
+     * 两个不同的 ZBLL 会合出同一张图(就是那 804 格重复的来源),反查只认得出等价类里的头一个,
+     * 于是每撞一次少一个。差多少取决于这一轮撞到谁,所以逐轮锁死 —— 改了配对法这几个数必变。
+     * 旧排法(全轮同一个 ZBLL)在这里会是 {1:1, 2:1, …},一眼红。
+     */
+    const EXPECT: Record<number, number> = { 1: 302, 2: 300, 3: 301, 200: 302, [LSLL_ROUNDS]: 301 };
+    const got: Record<number, number> = {};
+    const rounds = zbllRoundKeys().map(unpackState);
+    for (const round of [1, 2, 3, 200, LSLL_ROUNDS]) {
+      const cs = await loadLsllCases(lsllRoundScope(round));
+      const used = new Set<number>();
+      for (const c of cs) {
+        const key = caseKey(c);
+        const zbls = zblsByPhi.get(phiOfState(unpackState(key)));
+        expect(zbls, `${c.name} @ round ${round}`).toBeDefined();
+        const z = rounds.findIndex(zbll => canonicalKey(composeState(zbll, zbls!)) === key);
+        expect(z, `${c.name} @ round ${round}`).toBeGreaterThanOrEqual(0);
+        used.add(z);
+      }
+      got[round] = used.size;
+    }
+    expect(got).toEqual(EXPECT);
+  }, 120_000);
 
   it('每一轮的第一眼不变:φ、大类、顶层翻棱数逐条相同', async () => {
     const r1 = await loadLsllCases(LSLL_SCOPE_COVERED);
