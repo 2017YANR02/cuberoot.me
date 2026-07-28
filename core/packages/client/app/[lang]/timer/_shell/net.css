@@ -222,6 +222,20 @@
   white-space: nowrap;
 }
 .net-player.is-me .net-p-name { font-weight: 700; }
+/* 访客点自己的名字改名 —— 剥掉 UA 按钮样式,看上去仍是玩家条里的一个名字,
+   只有下划虚线提示「这个能点」。 */
+.net-p-name-btn {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline dotted color-mix(in srgb, var(--foreground) 35%, transparent);
+  text-underline-offset: 3px;
+}
+.net-p-name-btn:hover { text-decoration-color: var(--accent); }
 .net-p-me { color: var(--faint-foreground); font-weight: 400; }
 .net-p-score {
   display: inline-flex;
@@ -339,6 +353,11 @@
   color: var(--foreground);
 }
 .net-stats-title svg { color: var(--signal-warning); }
+
+/* ── 改名弹层 ──────────────────────────────────────────────────
+   就一个身份字段 + 保存,别撑到战绩面板那么宽;保存按钮贴合内容靠左。 */
+.net-rename-panel { width: min(96vw, 360px); }
+.net-rename-panel .net-btn { align-self: flex-start; }
 
 /* ── 房间管理面板(房设 + 转让房主 + 踢人)────────────────────── */
 .net-admin-setting {

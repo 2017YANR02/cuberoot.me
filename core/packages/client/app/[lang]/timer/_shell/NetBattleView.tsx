@@ -49,7 +49,7 @@ import { RoomQrModal } from '@/components/RoomQrModal';
 import { EventIcon } from '@/components/EventIcon';
 import { WcaPersonPicker } from '@/components/WcaPersonPicker';
 import { Flag } from '@/components/Flag';
-import type { WcaPersonLite } from '@/lib/wca-api';
+import { getPerson, type WcaPersonLite } from '@/lib/wca-api';
 import { shouldIgnoreTimerTarget } from '@/lib/timer-ignore-target';
 import { useAuthStore } from '@/lib/auth-store';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -62,7 +62,7 @@ import { useTranslation } from 'react-i18next';
 import {
   createNetRoom, joinNetRoom, getNetRoom, postNetStatus, postNetResult,
   nextNetRound, leaveNetRoom, postNetEvent, ensureNetScramble,
-  postNetSyncStart, postNetAdmin, postNetKick,
+  postNetSyncStart, postNetAdmin, postNetKick, renameNetPlayer,
   type NetRoomState, type NetPenalty, type NetResult, type NetIdentity,
 } from '@/lib/battle-room-api';
 import {
@@ -121,6 +121,7 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
   const [err, setErr] = useState<string | null>(null);
   const [showStats, setShowStats] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
   const roomRef = useRef(room); roomRef.current = room;
   const pidRef = useRef(pid); pidRef.current = pid;
   /** 服务器时钟 - 本机时钟(EMA;对手滚动读数换算用)。 */
@@ -138,15 +139,31 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
   const [picked, setPicked] = useState<WcaPersonLite | null>(null); // 访客选中的 WCA 选手
   const [joinCode, setJoinCode] = useState('');
   const [lobbyEvent, setLobbyEvent] = useState('333');
-  // 身份:登录用户直接用 WCA 姓名+ID(不填昵称);访客选了 WCA 选手用其姓名+ID,否则用自由昵称。
+  // 登录用户名下 WCA ID 在名册上的那条记录。账号的 display_name 未必等于 WCA 姓名
+  // (邮箱/手机注册、之后才绑 WCA 的账号,display_name 是自己起的),而房里该显示的是
+  // WCA 名册上的名字 —— 对手照着它就能去 /person 查到人。取不到就退回账号名。
+  const [wcaSelf, setWcaSelf] = useState<WcaPersonLite | null>(null);
+  const selfWcaId = authUser?.wcaId || '';
+  useEffect(() => {
+    if (!selfWcaId) { setWcaSelf(null); return; }
+    let dead = false;
+    void getPerson(selfWcaId).then((p) => { if (!dead && p) setWcaSelf(p); }).catch(() => {});
+    return () => { dead = true; };
+  }, [selfWcaId]);
+
+  // 身份:登录用户用 WCA 姓名+ID(不填昵称);访客选了 WCA 选手用其姓名+ID,否则用自由昵称。
   // 访客什么都不填也能开房/加入 —— 回落默认名(与服务端 sanitizeName 同一个 'Cuber',
   // 重名由服务端加 (2)(3) 后缀)。身份永不为 null:否则未登录用户会撞上「按钮灰着、
   // 房间码填满也毫无反应」的死路。
   const identity: NetIdentity = useMemo(() => {
-    if (authUser) return { name: authUser.name, wcaId: authUser.wcaId || undefined, iso2: authUser.country || undefined };
+    if (authUser) return {
+      name: wcaSelf?.name || authUser.name,
+      wcaId: authUser.wcaId || undefined,
+      iso2: wcaSelf?.country_iso2 || authUser.country || undefined,
+    };
     if (picked) return { name: picked.name, wcaId: picked.id, iso2: picked.country_iso2 || undefined };
     return { name: name.trim() || GUEST_NAME };
-  }, [authUser, picked, name]);
+  }, [authUser, wcaSelf, picked, name]);
   const identityRef = useRef(identity); identityRef.current = identity;
 
   const applyState = useCallback((st: NetRoomState) => {
@@ -450,6 +467,37 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
     void postNetKick(r.code, id, target).then(applyState).catch((e: Error) => setErr(tr(netErrorMessage(e))));
   }, [applyState]);
 
+  // ── 房内改名 ────────────────────────────────────────────────
+  /** 剥掉服务端为去重加的「 (2)」尾巴,拿到基名。判「名字是不是已经对了」用它。 */
+  const baseName = (n: string) => n.replace(/ \(\d+\)$/, '');
+
+  const doRename = useCallback((next: NetIdentity) => {
+    const r = roomRef.current, id = pidRef.current;
+    if (!r || !id) return;
+    void renameNetPlayer(r.code, id, next)
+      .then(applyState)
+      .catch((e: Error) => setErr(tr(netErrorMessage(e))));
+    // 记的是「我要的名字」而不是服务端去重后的结果:存下 'Cuber (2)' 的话,
+    // 下次进别的房就成了 'Cuber (2) (2)'。
+    if (!authUser && next.name) persistItem(LS_NAME, next.name);
+  }, [applyState, authUser]);
+
+  // 登录用户的房内名字跟着账号走(所以不给他们改名入口)。建房/加入时已经用的是账号名,
+  // 但 WCA 官方姓名是异步查回来的,晚到就在这儿补一次。
+  // 比的是**基名**:房里已有同名时服务端会加 (2) 后缀,拿带后缀的名字去比会次次判「不等」,
+  // 变成每秒一次的改名风暴(轮询每秒换一个 room 对象)。
+  const nameSyncRef = useRef('');
+  useEffect(() => {
+    if (!authUser || !room || !pid) return;
+    const want = identity.name;
+    const cur = room.players[pid]?.name;
+    if (!want || !cur || baseName(cur) === want) return;
+    const key = `${room.code}:${want}`;
+    if (nameSyncRef.current === key) return;
+    nameSyncRef.current = key;
+    doRename(identity);
+  }, [authUser, room, pid, identity, doRename]);
+
   const doLeave = useCallback(() => {
     const r = roomRef.current, id = pidRef.current;
     setRoom(null); setPid(null); setErr(null);
@@ -608,7 +656,7 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
   // 弹层打开时全局空格不进计时(同 Solo 的 anyModalOpen)。蓝牙弹窗里有 MAC 输入框,
   // 战绩 / 管理面板可以点到背景 —— 焦点一旦不在 button/input 上,空格就会穿透去
   // 「准备」或起表。
-  const overlayOpen = showStats || showAdmin || bluetoothOpen;
+  const overlayOpen = showStats || showAdmin || bluetoothOpen || renameOpen;
   const overlayOpenRef = useRef(overlayOpen); overlayOpenRef.current = overlayOpen;
   useEffect(() => {
     if (!inRoom) return;
@@ -839,7 +887,9 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
           {authUser.avatar
             ? <img src={authUser.avatar} alt="" className="net-identity-avatar" width={24} height={24} />
             : null}
-          <span className="net-identity-name">{authUser.name}</span>
+          {/* 显示 identity.name 而非 authUser.name:房里挂出去的是 WCA 名册上的名字,
+              这里照着账号的 display_name 写就成了「预览的名字和房里的名字对不上」。 */}
+          <span className="net-identity-name">{identity.name}</span>
           {authUser.wcaId ? <span className="net-identity-wcaid">{authUser.wcaId}</span> : null}
         </div>
       ) : (
@@ -849,6 +899,9 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
           // 不清则 name 留着半截旧文字,清掉选手后会拿它当昵称)。
           onChange={(p) => { setPicked(p); setName(''); }}
           onQueryChange={setName}
+          // 框里先摆着上次用的名字:localStorage 里记着它、加入时也真会用它,
+          // 却给人看一个空框,等于让人以为自己还没名字。
+          defaultQuery={name}
           isZh={isZh}
           placeholder={tr({ zh: '昵称,或搜姓名 / WCA ID(可留空)', en: 'Nickname, or search name / WCA ID (optional)' })}
         />
@@ -999,10 +1052,23 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
               {p.id === room.admin && (
                 <Crown size={12} className="net-p-crown" aria-label={tr({ zh: '房主', en: 'Host' })} />
               )}
-              <span className="net-p-name" title={p.wcaId ? `${p.name} · ${p.wcaId}` : p.name}>
-                {p.name}
-                {mine && <span className="net-p-me">{tr({ zh: '(我)', en: ' (me)' })}</span>}
-              </span>
+              {/* 自己的名字可点开改(登录用户除外:他们的名字就是账号 / WCA 名册上的名字)。 */}
+              {mine && !authUser ? (
+                <button
+                  type="button"
+                  className="net-p-name net-p-name-btn"
+                  onClick={() => { setName(baseName(p.name)); setRenameOpen(true); }}
+                  title={tr({ zh: '改名', en: 'Change name' })}
+                >
+                  {p.name}
+                  <span className="net-p-me">{tr({ zh: '(我)', en: ' (me)' })}</span>
+                </button>
+              ) : (
+                <span className="net-p-name" title={p.wcaId ? `${p.name} · ${p.wcaId}` : p.name}>
+                  {p.name}
+                  {mine && <span className="net-p-me">{tr({ zh: '(我)', en: ' (me)' })}</span>}
+                </span>
+              )}
               <span className="net-p-score">
                 {isWinner && <Trophy size={12} className="net-p-trophy" />}
                 {room.scores[p.id] ?? 0}
@@ -1161,6 +1227,34 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
         const url = roomInviteUrl();
         return url ? <RoomQrModal url={url} code={room.code} onClose={() => setQrOpen(false)} /> : null;
       })()}
+
+      {/* 改名:复用大厅那个身份字段(纯昵称 or 认领 WCA 选手,认了就带上国旗和 WCA ID)。 */}
+      {renameOpen && (
+        <div className="net-stats-overlay" onClick={() => setRenameOpen(false)} role="presentation">
+          <div className="net-stats-panel net-rename-panel" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+            <header className="net-stats-head">
+              <h2 className="net-stats-title">{tr({ zh: '改名', en: 'Change name' })}</h2>
+              <button
+                type="button"
+                className="tb-btn"
+                onClick={() => setRenameOpen(false)}
+                title={tr({ zh: '关闭', en: 'Close' })}
+                aria-label={tr({ zh: '关闭', en: 'Close' })}
+              >
+                <X size={16} />
+              </button>
+            </header>
+            {identityField}
+            <button
+              type="button"
+              className="net-btn net-btn-primary"
+              onClick={() => { doRename(identityRef.current); setRenameOpen(false); }}
+            >
+              {tr({ zh: '保存', en: 'Save' })}
+            </button>
+          </div>
+        </div>
+      )}
 
       {showStats && (
         <NetStatsPanel
