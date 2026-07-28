@@ -61,9 +61,12 @@ export const sweptTimes = (sw: SetSweep, scope: string | null | undefined): numb
 export const isSwept = (sw: SetSweep, scope: string | null | undefined): boolean =>
   sweptTimes(sw, scope) > 0;
 
-/** 至少过完一遍的范围有几个(LSLL:「494 轮里走完了 66 轮」)。 */
-export const sweptScopes = (sw: SetSweep): number =>
-  Object.values(sw.counts).filter(n => n > 0).length;
+/**
+ * 至少过完一遍的范围有几个(LSLL:「494 轮里走完了 66 轮」)。
+ * `accept` 用来只数某一类范围 —— LSLL 的大类范围(`ap` / `ap-eo2`)不是轮,不能算进轮数。
+ */
+export const sweptScopes = (sw: SetSweep, accept?: (scope: string) => boolean): number =>
+  Object.keys(sw.counts).filter(k => sw.counts[k] > 0 && (!accept || accept(k))).length;
 
 /** 记一次「这个范围整轮过完了」。同一范围再过一遍就 +1。 */
 export function markSwept(sw: SetSweep, scope: string | null | undefined, now: number): SetSweep {

@@ -10,8 +10,9 @@
  * 「加一套」就会去 `loadAlg` 拉一个不存在的库表。只有 run 路由认它。
  */
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
+import { LISTED_CASES } from './lsll/model';
 import {
-  LSLL_TRAINER_NOTE, lsllCaseKeyString, lsllNextRoundScope, lsllRoundLabel, lsllScopeLabel,
+  LSLL_ROUNDS, LSLL_TRAINER_NOTE, lsllCaseKeyString, lsllNextRoundScope, lsllRoundLabel, lsllScopeLabel,
   lsllSelectHref, loadLsllCases, resolveLsllCase,
 } from './lsll/trainer-set';
 
@@ -22,6 +23,15 @@ export interface VirtualAlgSet {
   meta: { en: string; zh: string };
   /** 关于这批公式的实话(如「机器解,没优化步数」),进设置面板。 */
   note: { en: string; zh: string };
+  /**
+   * 这一套一共几个 case —— 进度页那条进度条的分母。
+   *
+   * 库内集的分母来自 `/v1/alg/sets` 的 `count`(数 `alg_cases` 的行);虚拟集在库里
+   * 没有行,所以必须自己报,否则进度页只剩一个孤零零的分子。数的是**标记 / 排期
+   * 落在哪个 key 空间**:LSLL 的 case key 是一步局面,所以是 579,368,不是两步路线
+   * 那个 149,188(同一个局面走两步路线到达,key 仍是同一个)。
+   */
+  totalCases: number;
   /** 本场练哪一批。scope 取自 `?scope=`,认不出由各集自己兜底。 */
   loadCases: (scope: string | null) => Promise<AlgCase[]>;
   /** 「选 case」按钮的去处(虚拟集没有 select 页)。 */
@@ -34,6 +44,11 @@ export interface VirtualAlgSet {
    */
   roundLabel?: (scope: string | null) => { en: string; zh: string } | null;
   nextRoundScope?: (scope: string | null) => string | null;
+  /**
+   * 一共几轮。进度页拿它当「过完 N / 494 轮」的分母 —— 57 万个 case 的进度条永远是一条
+   * 细线,轮次才是这套集里唯一看得见的进度。不分轮的虚拟集不填。
+   */
+  totalRounds?: number;
   /** case 详情页地址(卡片上的 case 名点进去)。 */
   caseHref: (c: AlgCase) => string;
   /**
@@ -49,11 +64,13 @@ const REGISTRY: VirtualAlgSet[] = [
     slug: 'lsll',
     meta: { en: 'LSLL', zh: 'LSLL' },
     note: LSLL_TRAINER_NOTE,
+    totalCases: LISTED_CASES,
     loadCases: loadLsllCases,
     selectHref: lsllSelectHref,
     scopeLabel: lsllScopeLabel,
     roundLabel: lsllRoundLabel,
     nextRoundScope: lsllNextRoundScope,
+    totalRounds: LSLL_ROUNDS,
     caseHref: c => `/alg/lsll/case?k=${lsllCaseKeyString(c)}`,
     resolveCase: resolveLsllCase,
   },
