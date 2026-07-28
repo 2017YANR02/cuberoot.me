@@ -22,7 +22,8 @@
  *   - the ⚔️ emoji opponent prefix + icon_timer.png nav icon are replaced with
  *     lucide Swords / Timer (no-emoji rule); the RAF path writes ONLY the time
  *     string into a child span, the icon is rendered once in JSX
- *   - per-player RankBadge after a round ends; hidden while solving
+ *   - no RankBadge here: the WR/NR badge is a Solo-only affordance (SoloView),
+ *     多人对战比的是同一条打乱下谁更快,叠一层世界排名只是噪音
  *   - imports re-pointed to timer/_shared (stats-core / format)
  */
 
@@ -30,7 +31,7 @@ import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsString } from 'nuqs';
 import { Settings as SettingsIcon, ClipboardList, Trophy, RotateCcw, Eye, EyeOff, Swords, Timer as TimerIcon } from 'lucide-react';
-import { useBattleStore, battleToTimerEvent, timerToBattleEvent, keyToPlayer, prefetchBattleScrambles } from '@/app/[lang]/timer/_battle/engine/battle_store';
+import { useBattleStore, battleToTimerEvent, timerToBattleEvent, keyToPlayer, prefetchBattleScrambles, isScrambleHidden } from '@/app/[lang]/timer/_battle/engine/battle_store';
 import { PUZZLES, PENALTY, I18N_TEXT, BG_MAX_BYTES } from '@/app/[lang]/timer/_battle/engine/constants';
 import { loadScrambleEngine } from '@/app/[lang]/timer/_battle/engine/engine_loader';
 import { formatTimeHtml as formatTime } from '@/app/[lang]/timer/_shared/format';
@@ -48,8 +49,6 @@ import { EventIcon } from '@/components/EventIcon';
 import { isWcaEvent } from '@/lib/wca-events';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
 import { eventInfo, fromWcaSpelling } from '@/app/[lang]/timer/_lib/types';
-import RankBadge from './RankBadge';
-import { useRankCountry } from '@/app/[lang]/timer/_shared/use-rank-country';
 import { useSettings, updateSettings } from '@/app/[lang]/timer/_lib/settings';
 import WcaSourceConfig from '@/components/WcaSourceConfig';
 import { wcaMetaFor } from '@/app/[lang]/timer/_lib/scramble/wca_pool';
@@ -84,14 +83,6 @@ const BATTLE_APPEND_EVENTS: ReadonlyArray<{ id: string; iconClass: string; textL
     textLabel: p.name.en,
   }));
 const BATTLE_AVAILABLE_EVENTS = new Set<string>(PUZZLES.map(p => p.id));
-
-// NOTE: 有效成绩 ms → RankBadge 厘秒(DNF/未完成 → null)
-function effectiveCentis(time: number, penalty: PenaltyType): number | null {
-  if (penalty === PENALTY.DNF) return null;
-  if (time <= 0) return null;
-  const ms = penalty === PENALTY.PLUS2 ? time + 2000 : time;
-  return Math.round(ms / 10);
-}
 
 // NOTE: 键盘控制 hook — 1:1 翻译自 battle.js handleKeyDown/handleKeyUp（行 755~783）
 // 输入控件聚焦时跳过(设置面板里有比赛搜索输入框,空格/字母不能被计时器吃掉)
@@ -349,7 +340,8 @@ function ScramblePanel({ ids, imgHeight }: { ids: number[]; imgHeight?: string }
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const rep = ids[0];
-  const anyTiming = ids.some((id) => store.players[id].isTiming);
+  // 藏打乱的判据在引擎里(各自开始时要等最后一个人也起表,见 isScrambleHidden)
+  const anyTiming = isScrambleHidden(store.players, ids);
   const scrambleRef = useRef<HTMLDivElement>(null);
   const [scrambleCopied, setScrambleCopied] = useState(false);
   const copiedTimerRef = useRef<number | null>(null);
@@ -459,10 +451,6 @@ function TimerArea({ playerId, rotated, hideScramble, cellClass, controlsCorner 
   const areaRef = useRef<HTMLDivElement>(null);
   const timeRef = useRef<HTMLDivElement>(null);
   const oppIconRef = useRef<HTMLSpanElement>(null);
-  const { i18n } = useTranslation();
-  const isZh = i18n.language === 'zh';
-  const rankCountry = useRankCountry();
-  const showRankBadge = useSettings().showRankBadge !== false;
 
   // NOTE: 高频计时器动画（不走 React re-render）
   useTimerAnimation(playerId, timeRef);
@@ -563,8 +551,6 @@ function TimerArea({ playerId, rotated, hideScramble, cellClass, controlsCorner 
   const ao5 = computeAo5(player.solveHistory);
   const ao5Text = ao5 === null ? '' : (ao5 === Infinity ? 'ao5: DNF' : 'ao5: ' + formatTime(ao5, store.timerPrecision));
 
-  const myPuzzle = store.puzzleIds[playerId];
-
   const bgColor = store.bgColors[playerId];
   const bgImage = store.bgImages[playerId];
   const bgStyle: React.CSSProperties = {
@@ -573,9 +559,6 @@ function TimerArea({ playerId, rotated, hideScramble, cellClass, controlsCorner 
     '--bg-opacity': String(store.bgOpacity),
   } as React.CSSProperties;
 
-  // NOTE: 回合结束(本方完成且未计时)显示 RankBadge
-  const showRank = player.hasFinished && !player.isTiming && player.time > 0;
-  const rankCentis = showRank ? effectiveCentis(player.time, player.penalty) : null;
   // 对手已完成才显示对手区(图标默认隐藏,subscribe 控制显隐);仅 2 人模式有镜像区
   const opp = store.playerCount === 2 ? store.players[1 - playerId] : null;
   const oppShown = !!opp && opp.hasFinished && !opp.isTiming;
@@ -592,13 +575,6 @@ function TimerArea({ playerId, rotated, hideScramble, cellClass, controlsCorner 
         ref={timeRef}
         dangerouslySetInnerHTML={{ __html: renderTimeContent() }}
       />
-
-      {/* 排名徽章(回合结束后,本方有效成绩;设置里可整体关闭) */}
-      {showRankBadge && showRank && !player.isInspecting && (
-        <div className="battle-rank-slot" data-no-timer>
-          <RankBadge eventId={myPuzzle} centis={rankCentis} type="single" country={rankCountry} isZh={isZh} />
-        </div>
-      )}
 
       {/* Ao5 统计 */}
       <div
@@ -1084,6 +1060,20 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
             />
           </div>
         </div>
+
+        {/* 起表方式 — 仅多人对战:默认关(各自开始,谁准备好谁起表);开启则回到全员按住
+            一起绿灯、同一时刻起表。无论哪种,都要等全员停表才结算这一轮。 */}
+        {store.mode !== 'solo' && (
+          <div className="settings-group">
+            <div className="setting-item">
+              <BoolToggle
+                value={store.syncStart}
+                onChange={store.setSyncStart}
+                label={tr({ zh: '同时开始', en: 'Start together' })}
+              />
+            </div>
+          </div>
+        )}
 
         {/* 上排翻转 — 仅多人对战:围坐一桌上排面向对面(默认开);同向观看时关掉,上排正立 */}
         {store.mode !== 'solo' && (
