@@ -300,6 +300,37 @@ export function gen(alg: string): string {
 }
 
 /**
+ * 合并相邻的同面转动:`U2 U` → `U'`,`U' U` → 整对消掉,`y' y2` → `y`。
+ *
+ * 为什么需要:上游抓来的公式里,收尾 AUF 是**接**上去的而不是**并**进去的 —— 库里 3,642 条
+ * 因此长着 `… U2 U` / `… U' U` / `… U2 U2` 这种尾巴(后两种整对就是废动作)。
+ * 人不会这么拧,`stm` 也跟着虚高。issue #54 就是记忆模式把这条尾巴原样揭示出来。
+ *
+ * 只合并 **family 与 layer 都相同**的相邻两步 —— `M` 与 `m` 是两个不同的转动(5x5 上一片
+ * 对三片),`2R` 与 `R` 更是,一律不碰。转量按 4 取模;整对抵消就一起丢,并**继续往回合**
+ * (`U U U'` → `U2 U'` → `U`),直到不动点。
+ *
+ * 输入必须是纯转动串(已 `flattenAlg` 展开、已剥净)。认不出的片段 → 抛,绝不静默丢。
+ */
+export function mergeAdjacentMoves(s: string): string {
+  const { moves, junk } = tokenizeMoves(s);
+  if (junk.length) throw new Error(`认不出来的记号:${junk.join(' ')}`);
+  const out: ParsedMove[] = [];
+  for (const m of moves) {
+    const prev = out[out.length - 1];
+    if (prev && prev.family === m.family && (prev.layer ?? '') === (m.layer ?? '')) {
+      const amount = ((prev.amount + m.amount) % 4 + 4) % 4;
+      out.pop();
+      // 0 = 整对抵消,连前一步都不留;留下的那步可能又和更前面一步同面,循环自然接着合
+      if (amount !== 0) out.push({ ...prev, amount: amount === 3 ? -1 : amount, raw: '' });
+      continue;
+    }
+    out.push(m);
+  }
+  return out.map(m => renderMove(m)).join(' ');
+}
+
+/**
  * 剥掉起手 AUF。**token 感知**,不是正则 —— 表里的 `^U2'?|^U'|^U` 会把 `U3 …` 咬成 `3 …`,
  * 也会把 `Uw …` 咬成 `w …`。其余字符**一个不动**(换握记号周边的空格有语义)。
  */
