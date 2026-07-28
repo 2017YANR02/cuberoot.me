@@ -11,18 +11,156 @@
  * (回放一遍对不上就抛),但训练器还会在它首尾各接一个随机 U —— 那一步没人验过。
  * 枚举 16 种接法逐个回放判定,比论证可靠。
  */
-import { describe, it, expect } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
+import type { AlgCase } from '@cuberoot/shared';
 import { generateScramble } from '@/lib/trainer-scramble';
 import { caseKey } from '@/lib/trainer-case-key';
-import { CATEGORIES, canonicalKey, classify, keyFromString, locateFromScramble, unpackState } from '@/lib/lsll/model';
+import {
+  CATEGORIES, canonicalKey, classify, composeState, keyFromString, keyToString,
+  locateFromScramble, unpackState,
+} from '@/lib/lsll/model';
 import { compareAlgGroupLabel } from '@/lib/alg_group_order';
 import {
   LSLL_SCOPE_COVERED, loadLsllCases, lsllCaseKeyString, lsllScopeParam,
-  lsllSelectHref, parseLsllScope,
+  lsllSelectHref, parseLsllScope, routeVariants,
 } from '@/lib/lsll/trainer-set';
+import { allZbllCases, solvedZbllKey } from '@/lib/lsll/class3';
+import { ZBLS_COVERED_KEYS } from '@/lib/lsll/zbls_overlay';
 import { applyAlg, extractLsll, solvedCube } from '@/lib/lsll/cube333';
 
 const AUF = ['', 'U', 'U2', "U'"];
+
+/**
+ * 已收录范围装 case 时会问一次 `/v1/alg/lsll/htm`(挑 mid-AUF)。测试里一律拦下来:
+ * 放它出去就是拿线上数据当断言依据,断网 / CI 无出网都会红。
+ *
+ * `htmFor` 返回 undefined = 这个 key 还没回填。默认全都没回填 —— 于是每条路线取
+ * `variants[0]`(不插 AUF),正是 2026-07-28 之前的老口径,下面那批老断言原样成立。
+ */
+function stubHtm(htmFor: (key: number) => number | undefined = () => undefined): () => number[] {
+  const asked: number[] = [];
+  vi.stubGlobal('fetch', async (input: string) => {
+    const keys = new URL(input, 'https://x').searchParams.get('keys')!.split(',');
+    const htm: Record<string, number> = {};
+    for (const s of keys) {
+      const k = keyFromString(s)!;
+      asked.push(k);
+      const v = htmFor(k);
+      if (v !== undefined) htm[s] = v;
+    }
+    return { ok: true, json: async () => ({ htm }) };
+  });
+  return () => asked;
+}
+
+beforeEach(() => { stubHtm(); });
+afterEach(() => vi.unstubAllGlobals());
+
+/**
+ * mid-AUF —— 做完 ZBLS、开始 ZBLL 之前插的那下 `U^n`。它不是解法的一部分(识别顶层本来就要
+ * 转到位),所以一条两步路线有 ≤4 种走法,落在 ≤4 个**不同的** LSLL case 上,最优步数可以差
+ * 好几步。训练器要练最短的那个。
+ *
+ * 这里钉两层:变体本身的代数性质(与后端无关,纯算),以及「问不到步数时退回哪一个」。
+ */
+describe('两步路线的 mid-AUF 变体', () => {
+  const zbls = (i: number) => unpackState(keyFromString(ZBLS_COVERED_KEYS[i])!);
+
+  it('变体数只由 ZBLL 决定:480 个满 4、10 个塌成 2、4 个塌成 1', () => {
+    // 「只由 ZBLL 决定」是条实打实的断言 —— 换几条完全不同的 ZBLS 打乱,直方图必须一模一样
+    for (const i of [0, 37, 150, 301]) {
+      const hist: Record<number, number> = {};
+      for (const z of allZbllCases()) {
+        const n = routeVariants(unpackState(z), zbls(i)).length;
+        hist[n] = (hist[n] ?? 0) + 1;
+      }
+      expect(hist, ZBLS_COVERED_KEYS[i]).toEqual({ 1: 4, 2: 10, 4: 480 });
+    }
+  });
+
+  it('全解顶层那条塌成 1 个 —— 纯 ZBLS,插 AUF 只是换个收尾相位', () => {
+    expect(routeVariants(unpackState(solvedZbllKey()), zbls(0))).toHaveLength(1);
+  });
+
+  it('下标 0 恒为「不插 AUF」那个', () => {
+    for (const z of allZbllCases().slice(0, 40)) {
+      const s = unpackState(z);
+      expect(routeVariants(s, zbls(7))[0]).toBe(canonicalKey(composeState(s, zbls(7))));
+    }
+  });
+
+  it('同一条路线的变体第一眼完全一样 —— 换的只是收尾,不是这条路线本身', () => {
+    for (const z of allZbllCases().slice(0, 60)) {
+      const vs = routeVariants(unpackState(z), zbls(11));
+      const look = vs.map((k) => {
+        const c = classify(unpackState(k));
+        return `${c.category.letter}/${c.eoBad}`;
+      });
+      expect(new Set(look).size, keyToString(z)).toBe(1);
+    }
+  });
+});
+
+describe('训练器在变体里挑最短的那个', () => {
+  /** 每个 case 都换一份新模块 —— `lsllHtmBatch` 的缓存是模块级的,不隔离就串味。 */
+  const freshLoad = async () => (await import('@/lib/lsll/trainer-set')).loadLsllCases;
+
+  const keysOf = (cs: AlgCase[]) => cs.map(c => keyFromString(lsllCaseKeyString(c))!);
+  const groupsOf = (cs: AlgCase[]) => cs.map(c => c.subgroup).sort();
+
+  it('一个都没回填 = 全走不插 AUF,和接这套逻辑之前一模一样', async () => {
+    vi.resetModules();
+    const asked = stubHtm();
+    const cases = await (await freshLoad())(LSLL_SCOPE_COVERED);
+    expect(cases).toHaveLength(302);
+    // 问过的 key 里含全部 302 条路线的全部变体,选出来的必是其中之一
+    const askedSet = new Set(asked());
+    expect(keysOf(cases).every(k => askedSet.has(k))).toBe(true);
+  });
+
+  it('步数并列时仍取不插 AUF 那个 —— 定序,免得同一轮每次刷出不同的 case', async () => {
+    vi.resetModules();
+    stubHtm();
+    const base = await (await freshLoad())(LSLL_SCOPE_COVERED);
+
+    vi.unstubAllGlobals();
+    vi.resetModules();
+    stubHtm(() => 12);
+    const tied = await (await freshLoad())(LSLL_SCOPE_COVERED);
+    expect(tied.map(c => c.name)).toEqual(base.map(c => c.name));
+  });
+
+  it('别的变体更短就换过去,而且换完还是同一批大类', async () => {
+    vi.resetModules();
+    stubHtm();
+    const base = await (await freshLoad())(LSLL_SCOPE_COVERED);
+    const baseKeys = new Set(keysOf(base));
+
+    // 把「不插 AUF」那个判成 20 步、其余变体判成 10 步 ⇒ 只要有第二个变体就必须挪窝
+    vi.unstubAllGlobals();
+    vi.resetModules();
+    stubHtm(k => (baseKeys.has(k) ? 20 : 10));
+    const best = await (await freshLoad())(LSLL_SCOPE_COVERED);
+
+    expect(best).toHaveLength(302);
+    expect(new Set(keysOf(best)).size).toBe(302);          // 进度按 caseKey 存,不能撞
+    // 第 1 轮 302 条路线里 4 条只有一个变体(收尾 ZBLL 是那 4 个塌成 1 的),挪不了;其余 298 条全挪
+    expect(keysOf(best).filter(k => !baseKeys.has(k))).toHaveLength(298);
+    expect(groupsOf(best)).toEqual(groupsOf(base));        // 第一眼没变 ⇒ 大类分布分毫不动
+  });
+
+  it('后端不在也照常开场 —— 退回不插 AUF,不是空场', async () => {
+    vi.resetModules();
+    stubHtm();
+    const base = await (await freshLoad())(LSLL_SCOPE_COVERED);
+
+    vi.unstubAllGlobals();
+    vi.resetModules();
+    vi.stubGlobal('fetch', async () => { throw new Error('offline'); });
+    const offline = await (await freshLoad())(LSLL_SCOPE_COVERED);
+    expect(offline.map(c => c.name)).toEqual(base.map(c => c.name));
+  });
+});
 
 describe('?scope= 的解析与反解', () => {
   it('大类 / 大类+翻棱数 / 已收录 三种写法往返', () => {
