@@ -32,6 +32,7 @@ import { useQueryState, parseAsString } from 'nuqs';
 import { Settings as SettingsIcon, ClipboardList, Trophy, RotateCcw, Eye, EyeOff, Swords, Timer as TimerIcon } from 'lucide-react';
 import { useBattleStore, battleToTimerEvent, timerToBattleEvent, keyToPlayer, prefetchBattleScrambles } from '@/app/[lang]/timer/_battle/engine/battle_store';
 import { PUZZLES, PENALTY, I18N_TEXT, BG_MAX_BYTES } from '@/app/[lang]/timer/_battle/engine/constants';
+import { loadScrambleEngine } from '@/app/[lang]/timer/_battle/engine/engine_loader';
 import { formatTimeHtml as formatTime } from '@/app/[lang]/timer/_shared/format';
 import { computeAo5 } from '@/app/[lang]/timer/_shared/stats-core';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
@@ -90,62 +91,6 @@ function effectiveCentis(time: number, penalty: PenaltyType): number | null {
   if (time <= 0) return null;
   const ms = penalty === PENALTY.PLUS2 ? time + 2000 : time;
   return Math.round(ms / 10);
-}
-
-// NOTE: 加载 scramble_module.js 全局脚本（打乱引擎）
-// scramble_module.js 是 csTimer 打包代码，依赖 jQuery 子集 + kernel 配色
-function useScrambleScript() {
-  useEffect(() => {
-    if (typeof window.scrMgr !== 'undefined') return;
-
-    // NOTE: 1:1 翻译自 battle/index.html 行 308~328
-    // scramble_module.js 内部使用 jQuery 的 $.isArray / $.now / $.noop / $.map / $.fn 等
-    // 提供最小 shim 而非引入完整 jQuery（原版方案）
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const w = window as any;
-    if (!w.$) {
-      const jqShim: Record<string, unknown> = {
-        isArray: Array.isArray,
-        now: Date.now,
-        noop: () => {},
-        map: (arr: unknown[], fn: (item: unknown, i: number) => unknown) =>
-          Array.prototype.map.call(arr, fn),
-        fn: {},
-      };
-      w.$ = jqShim;
-    }
-    // NOTE: kernel.getProp 为 image.js 提供 WCA 标准配色（默认值），不读取 localStorage
-    if (!w.kernel) {
-      w.kernel = {
-        getProp: (key: string): string | null => {
-          const defaults: Record<string, string> = {
-            'colcube': '#ff0#fa0#00f#fff#f00#0d0',
-            'colclk': '#f00#37b#5cf#ff0#850',
-            'colsq1': '#ff0#f80#0f0#fff#f00#00f',
-            'colpyr': '#0f0#f00#00f#ff0',
-            'colskb': '#ff0#fa0#00f#fff#f00#0d0',
-            'colmgm': '#fff#d00#060#81f#fc0#00b#ffb#8df#f83#7e0#f9f#999',
-            'colfto': '#fff#808#0d0#f00#00f#bbb#ff0#fa0',
-            'colico': '#fff#084#b36#a85#088#811#e71#b9b#05a#ed1#888#6a3#e8b#a52#6cb#c10#fa0#536#49c#ec9',
-            'col15p': '#f00#fa0#ff0#0d0#00f#fff#888#000',
-            'col-font': '#fff',
-            'col-board': '#000',
-          };
-          return defaults[key] !== undefined ? defaults[key] : null;
-        },
-      };
-    }
-
-    const script = document.createElement('script');
-    script.src = '/' +'scramble_module.js';
-    script.async = true;
-    document.head.appendChild(script);
-
-
-    return () => {
-      // NOTE: 不移除 script — 加载后全局持久化
-    };
-  }, []);
 }
 
 // NOTE: 键盘控制 hook — 1:1 翻译自 battle.js handleKeyDown/handleKeyUp（行 755~783）
@@ -1262,7 +1207,6 @@ interface BattleViewProps {
 }
 
 export default function BattleView({ playerCount, playersControl }: BattleViewProps) {
-  useScrambleScript();
   useKeyboardControls();
 
   const { i18n } = useTranslation();
@@ -1344,16 +1288,10 @@ export default function BattleView({ playerCount, playersControl }: BattleViewPr
     return () => window.removeEventListener('battle-milestone', handler);
   }, []);
 
-  // NOTE: 初始化 store — 加载历史 + 生成第一个打乱
+  // NOTE: 初始化 store — 加载历史 + 生成第一个打乱。等打乱引擎就位再 init,
+  // 否则首个打乱会撞上还没注入的 scrMgr。
   useEffect(() => {
-    const checkAndInit = () => {
-      if (typeof window.scrMgr !== 'undefined') {
-        useBattleStore.getState().init();
-      } else {
-        setTimeout(checkAndInit, 100);
-      }
-    };
-    checkAndInit();
+    void loadScrambleEngine().then(() => useBattleStore.getState().init());
   }, []);
 
   // NOTE: 应用 solo class 到 body（1:1 翻译自 applyMode）
