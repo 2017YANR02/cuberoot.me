@@ -31,7 +31,7 @@ import { ALG_SET_UNIVERSE } from '@/lib/alg_probability';
 import {
   TimerDisplay, ScrambleHeader, SolveCard, StatsList, HistoryList, CaseMarkBar,
 } from '@/app/[lang]/alg/_trainer/trainer-components';
-import { RoomQrModal } from '@/app/[lang]/alg/_trainer/RoomQrModal';
+import { RoomQrModal } from '@/components/RoomQrModal';
 import MemoryTrainer from '@/app/[lang]/alg/_trainer/MemoryTrainer';
 import SetProgressStrip from '@/app/[lang]/alg/_trainer/SetProgressStrip';
 import MixSetPicker from '@/app/[lang]/alg/_trainer/MixSetPicker';
@@ -606,7 +606,7 @@ export default function TrainerRunClient() {
     const isBlank = (t: EventTarget | null): boolean => {
       if (shouldIgnoreTimerTarget(t)) return false;
       if (!(t instanceof Element)) return false;
-      return t.closest('.trainer-stage, .trainer-sidebar, .alg-admin-modal-backdrop, .gesture-wheel, .trainer-qr-backdrop, .trainer-round-modal-backdrop') === null;
+      return t.closest('.trainer-stage, .trainer-sidebar, .alg-admin-modal-backdrop, .gesture-wheel, .room-qr-backdrop, .trainer-round-modal-backdrop') === null;
     };
     let pressed = false;
     const down = (e: PointerEvent) => {
