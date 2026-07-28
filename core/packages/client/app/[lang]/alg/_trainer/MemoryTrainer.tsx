@@ -89,8 +89,6 @@ export default function MemoryTrainer({
   const fillExtra = useTrainerStore(s => s.srsFillExtra);
   const autoMark = useTrainerStore(s => s.srsAutoMark);
   const showPlayer = useTrainerStore(s => s.srsShowPlayer);
-  const preAuf = useTrainerStore(s => s.preAuf);
-  const postAuf = useTrainerStore(s => s.postAuf);
   const pureScramble = useTrainerStore(s => s.pureScramble);
   const showThumb = useTrainerStore(s => s.showStageThumb);
   const resolveCase = useTrainerStore(s => s.resolveCase);
@@ -136,7 +134,10 @@ export default function MemoryTrainer({
     setShowAlts(false);
     setPlaying(false);
     if (!c) { setScramble(''); return; }
-    const gen = () => generateScramble(c, puzzle, scrambleKind, { preAuf, postAuf });
+    // 记忆模式一律不加首尾 AUF —— 与 store 的 `aufOpts` 同一条规矩:这里是「看着图把公式
+    // 回忆出来」,题面必须与揭示的那条公式逐字对得上。随机 U 不改 case,却会让揭示出来的公式
+    // 对不上眼前这张图(LSLL 尤其明显:给的是机器算的最优解,差一个 AUF 就照着做不出来)。
+    const gen = () => generateScramble(c, puzzle, scrambleKind, { preAuf: false, postAuf: false });
     const s = gen();
     setScramble(s);
     if (s) return;
@@ -144,7 +145,7 @@ export default function MemoryTrainer({
     let stale = false;
     void resolveCase(c).then(() => { if (!stale) setScramble(gen()); });
     return () => { stale = true; };
-  }, [c, puzzle, scrambleKind, preAuf, postAuf, resolveCase]);
+  }, [c, puzzle, scrambleKind, resolveCase]);
 
   const shownScramble = pureScramble ? purifyScramble(puzzle, scramble) : scramble;
   const previews = useMemo(() => previewIntervals(rec, Date.now()), [rec]);
