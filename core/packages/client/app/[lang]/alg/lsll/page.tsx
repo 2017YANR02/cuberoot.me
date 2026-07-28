@@ -9,7 +9,7 @@
  *  - 两步(三类)= 151,164 条**路线** = 306 个 ZBLS case × 494 个 ZBLL case。
  * 三类不是二类的商(mid-AUF 不作用在局面上),推导见 /math/lsll §3、lib/lsll/class3.ts。
  */
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { ArrowLeft } from 'lucide-react';
@@ -23,6 +23,11 @@ import {
   type CategoryKind, type LocateResult,
 } from '@/lib/lsll/model';
 import { listedClass3Total, class3CountForFamily, phiOfState } from '@/lib/lsll/class3';
+import {
+  LSLL_ROUNDS, lsllRoundScope, parseLsllScope,
+} from '@/lib/lsll/trainer-set';
+import { readSweep, readLocalSweep } from '@/lib/alg-sweep-store';
+import { sweptTimes } from '@/lib/alg-sweep';
 import { compareAlgGroupLabel } from '@/lib/alg_group_order';
 import '../alg.css';
 import './lsll.css';
@@ -44,6 +49,26 @@ export default function LsllHubPage() {
   );
   const twoLook = cls === '3';
   const suffix = twoLook ? '?cls=3' : '';
+
+  // 「继续第 67 轮」—— 已收录那批分 494 轮,轮次只活在 `?scope=` 里,不接进度就等于每天
+  // 从第 1 轮重来(issue #52)。先画 localStorage 那份(同步,首屏就有),登录了再拉云端覆盖。
+  const [resume, setResume] = useState<{ round: number; scope: string } | null>(null);
+  useEffect(() => {
+    let alive = true;
+    const pick = (sw: ReturnType<typeof readLocalSweep>) => {
+      const cur = sw.cursor;
+      if (!cur) return null;
+      const { category, round } = parseLsllScope(cur.scope);
+      if (category) return null;   // 大类范围不分轮,没有「下一轮」可续
+      // 那一轮已经过完 ⟹ 续到下一轮;还没过完 ⟹ 停在原地接着刷
+      const next = sweptTimes(sw, cur.scope) > 0 ? round + 1 : round;
+      if (next > LSLL_ROUNDS) return null;   // 494 轮全通了,回到普通「训练」
+      return next <= 1 ? null : { round: next, scope: lsllRoundScope(next) };
+    };
+    setResume(pick(readLocalSweep('3x3', 'lsll')));
+    void readSweep('3x3', 'lsll').then(sw => { if (alive) setResume(pick(sw)); });
+    return () => { alive = false; };
+  }, []);
 
   const groups = useMemo(() => {
     const m = new Map<CategoryKind, typeof LISTED_CATEGORIES>();
@@ -85,8 +110,14 @@ export default function LsllHubPage() {
         />
         {/* 训练走全站同一个训练器(与 /alg/3x3/zbll/run 同一个页面);不带范围 = 已收录公式那批。
             按钮样式共用 alg.css 的 `.alg-train-cta` —— 站内「训练」入口只此一款,别再自造 */}
-        <Link href="/alg/3x3/lsll/run" className="alg-train-cta" prefetch={false}>
-          {tr({ zh: '训练', en: 'Train' })}
+        <Link
+          href={resume ? `/alg/3x3/lsll/run?scope=${resume.scope}` : '/alg/3x3/lsll/run'}
+          className="alg-train-cta"
+          prefetch={false}
+        >
+          {resume
+            ? tr({ zh: `继续第 ${resume.round} 轮`, en: `Resume round ${resume.round}` })
+            : tr({ zh: '训练', en: 'Train' })}
         </Link>
       </div>
 
