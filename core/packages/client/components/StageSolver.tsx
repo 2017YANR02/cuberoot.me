@@ -541,6 +541,12 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   const computeReq = useRef(0);
   const movesReq = useRef(0);
   const wantAuto = useRef(false); // 算完是否自动选最优视角
+  // computing 的同步镜像。换阶段/方法那一帧里 compute() 已经同步把 selFace/counts 排队清空、
+  // 把 wantAuto 立起来,但这些 setState 要下一次提交才生效;而「自动选最优」的 effect 在**同一次**
+  // 提交里就会重跑(fetchMoves 身份随 method/stage 变),读到的还是上一阶段的 selFace ——
+  // 它据此认定「用户已选好视角」并把 wantAuto 撤掉,这一轮算完便再没人去选:换个阶段就只剩
+  // 六个数字,解法列表和动画都不出来(issue #53)。ref 让「正在算」与 compute() 同步生效。
+  const computingRef = useRef(false);
   const statusRef = useRef(status);
   statusRef.current = status;
   const firstScrambleRun = useRef(true);
@@ -559,18 +565,30 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   // std 池的第二段加载:纯十字只要 pt_cross(50KB),切到 XCross/F2L 阶段才补
   // pt_cross_C4E0(20MB)。为 true 时复用同一套 loading UI,只是表清单换成那张大表。
   const [xLoading, setXLoading] = useState(false);
-  // 当前正在加载的表(按内存降序)+ 合计,用于 loading 提示。
-  const tableInfo = useMemo(() => {
-    const rows = (xLoading ? XCROSS_TABLES : TABLE_SETS[need])
-      .map((name) => ({ name, bytes: TABLE_BYTES[name] ?? 0 }))
-      .sort((a, b) => b.bytes - a.bytes);
+  // std 池的大表是否已在 worker 里(第二段补过 / 建池时就带着)。求解器信息里要如实报出常驻的表,
+  // 光看 TABLE_SETS.cross 只会看到 pt_cross 一张 136 KB —— 而 XCross 及以上真正吃的是那张
+  // 52 MB 的 pt_cross_C4E0(issue #53)。
+  const [xReady, setXReady] = useState(false);
+  const tableRows = useCallback((names: readonly string[]) => {
+    const rows = names.map((name) => ({ name, bytes: TABLE_BYTES[name] ?? 0 })).sort((a, b) => b.bytes - a.bytes);
     return { rows, total: rows.reduce((s, r) => s + r.bytes, 0) };
-  }, [need, xLoading]);
+  }, []);
+  // 正在下载的表(按内存降序)+ 合计,用于 loading 提示 —— 只列这一段在拉的。
+  const tableInfo = useMemo(
+    () => tableRows(xLoading ? XCROSS_TABLES : TABLE_SETS[need]),
+    [need, xLoading, tableRows],
+  );
+  // 已常驻 worker 的表,用于「求解器信息」弹窗 —— std 池补过大表后要把它算进去。
+  const residentInfo = useMemo(
+    () => tableRows([...TABLE_SETS[need], ...(need === 'cross' && xReady ? XCROSS_TABLES : [])]),
+    [need, xReady, tableRows],
+  );
   /** std 且 stage≥1(XCross 及以上)时确保大表就位;其余情形零成本。 */
   const ensureXCrossTables = useCallback(async (pool: RustCrossPool, kind: Kind, st: number) => {
-    if (kind !== 'std' || st < 1 || pool.hasXCross()) return;
+    if (kind !== 'std' || st < 1) return;
+    if (pool.hasXCross()) { setXReady(true); return; }
     setXLoading(true);
-    try { await pool.ensureXCross(); } finally { setXLoading(false); }
+    try { await pool.ensureXCross(); setXReady(true); } finally { setXLoading(false); }
   }, []);
 
   // 共享池:need(cross/variant/f2leo)变化时取/建对应池,等首个 worker 就绪。
@@ -585,6 +603,8 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     setErrMsg('');
     const pool = getRustCrossPool(need, poolSize);
     poolRef.current = pool;
+    // 换池(或重建)后大表状态跟着这个池走:std 池可能是先前用过、已带大表的那一个。
+    setXReady(need === 'cross' && pool.hasXCross());
     pool.ready
       .then(() => { if (!cancelled) setStatus('ready'); })
       .catch((e) => { if (!cancelled) { setStatus('error'); setErrMsg(e?.message || String(e)); } });
@@ -615,7 +635,8 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     if (!pool) return result;
     const my = ++computeReq.current;
     const scr = scrambleRef.current.trim();
-    if (!scr) return result;
+    if (!scr) { computingRef.current = false; return result; }
+    computingRef.current = true;
     setComputing(true);
     setTotalMs(null);
     const wall = performance.now();
@@ -669,6 +690,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
       }
     } finally {
       if (computeReq.current === my) {
+        computingRef.current = false;
         setTotalMs(performance.now() - wall);
         setComputing(false);
       }
@@ -816,6 +838,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     ++computeReq.current;
     try { poolRef.current?.abort(); } catch { /* */ }
     setMovesLoading(false);
+    computingRef.current = false;
     setComputing(false);
     wantAuto.current = false;
   }, []);
@@ -859,8 +882,11 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
 
   // 算完(computing→false)且要求自动选 → 选最优(min count)视角并出解(仅可见底色的面)。
   useEffect(() => {
-    if (computing || !wantAuto.current) return;
-    if (selFace !== null) { wantAuto.current = false; return; }
+    // computingRef 先于 computing 落地(见其声明处):这一帧还在算 = counts/selFace 都是上一轮的,
+    // 什么都别做,更别把 wantAuto 撤掉。
+    if (computing || computingRef.current || !wantAuto.current) return;
+    // 已有选中视角:让它保持(该选中它的入口 —— 点击 / 深链 —— 自己会撤 wantAuto)。
+    if (selFace !== null) return;
     let best = -1, bestV = Infinity;
     counts.forEach((v, i) => { if (faceVisible(i) && v != null && !isSentinel(v) && v < bestV) { bestV = v; best = i; } });
     if (best >= 0) { wantAuto.current = false; setSelFace(best); void fetchMoves(best); }
@@ -1413,18 +1439,24 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
               )}
             </dl>
             <div className="stsv-modal-tablehead">
-              {t(`剪枝表 ${tableInfo.rows.length} 张 ≈ ${fmtBytes(tableInfo.total)}`,
-                `Pruning tables: ${tableInfo.rows.length} ≈ ${fmtBytes(tableInfo.total)}`)}
+              {t(`剪枝表 ${residentInfo.rows.length} 张 ≈ ${fmtBytes(residentInfo.total)}`,
+                `Pruning tables: ${residentInfo.rows.length} ≈ ${fmtBytes(residentInfo.total)}`)}
               <span>{t('每路 worker 各装一份', 'one copy per worker')}</span>
             </div>
             <ul className="stsv-modal-tables">
-              {tableInfo.rows.map((r) => (
+              {residentInfo.rows.map((r) => (
                 <li key={r.name}>
                   <code>{r.name}</code>
                   <span>{fmtBytes(r.bytes)}</span>
                 </li>
               ))}
             </ul>
+            {/* 表从哪来:pt_* 是预跑好的 BFS 产物(几十分钟起,现场建不出来),压缩后下载;
+                移动表 mt_* 才是 WASM 现场生成的。用户看到 136 KB 时的第一个疑问就是这个。 */}
+            <p className="stsv-modal-note">
+              {t('pt_* 为预计算 BFS 剪枝表,压缩下载后解压进 WASM 内存;移动表 mt_* 一律现场生成,不下载。',
+                'pt_* are precomputed BFS pruning tables — downloaded compressed, expanded into WASM memory. Move tables (mt_*) are always generated on the fly, never downloaded.')}
+            </p>
           </div>
         </div>,
         document.body,
