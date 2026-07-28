@@ -24,6 +24,7 @@ export const PURGE_TABLES: readonly (readonly [string, string])[] = [
   ['comp_follows', 'wca_id'],            // 关注的比赛
   ['alg_case_marks', 'wca_id'],          // 公式掌握标记
   ['alg_case_srs', 'wca_id'],            // 公式记忆调度
+  ['alg_set_progress', 'wca_id'],        // 「过遍」进度(轮次 + 游标 + 折叠时刻)
   ['alg_srs_daily', 'wca_id'],           // 每日复习计数
   ['alg_submission_reads', 'wca_id'],    // 公式提交的已读位置
   ['scramble_marks', 'wca_id'],          // 打乱标记
