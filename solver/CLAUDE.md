@@ -107,7 +107,7 @@ cargo test --release -- --ignored     # 8 个 ignored(中表 + e2e XCross + pseu
 | `PORTING_NOTES.md` | 5 个 phase 的设计决策、C++ 端歧义、表 magic 升级、命名差异。**改代码前必读** |
 | `README.md` | 进度表 + 上手命令 + env 清单 + 路线图 |
 | `333opt/` | **不是 Rust** —— cubeopt/h48 整方最优管道(Node + WASM),详见下节 |
-| `lsll/` | 同上,LSLL 最优解管道,**两批**:`corpus.txt` 148,384(`node solve_loop.mjs`,2.1h)+ `corpus_rest.txt` 434,900(`CORPUS=corpus_rest.txt` 同一入口,5.5h),合 583,284 = 整个空间。详见其 README |
+| `lsll/` | 同上,LSLL 最优解管道。`corpus.txt` **579,368 个 case**(`node solve_loop.mjs`),每个展开 16 个首尾 AUF 像取最短 ⇒ 9,268,992 次求解。**算的是 case 的最优不是代表元的最优**,判据 = 解的首末招不是 U 系。详见其 README |
 
 ## 整方最优解:走 cubeopt/h48,别自己造(2026-07-27)
 
