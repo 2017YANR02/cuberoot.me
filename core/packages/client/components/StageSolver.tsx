@@ -28,7 +28,7 @@ import { SubsetColorPicker, useSubsetSelection, COLOR_NAME, type ColorLetter } f
 import { CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '@/lib/cube-colors';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { tr } from '@/i18n/tr';
-import { createRustCrossPool, FR_NOT_HTR, HTR_NOT_DR, HTR2_NOT_HTR, type MovesTimed, type RustCrossPool, type SolItem, TABLE_BYTES, TABLE_SETS, XCROSS_TABLES } from '@/lib/rust-cross-client';
+import { createRustCrossPool, FR_NOT_HTR, HTR_NOT_DR, HTR2_NOT_HTR, type MovesTimed, type RustCrossPool, type SolItem, TABLE_BYTES, TABLE_SETS, XCROSS_TABLES, type XCrossProgress } from '@/lib/rust-cross-client';
 import { getRustCrossPool, dropRustCrossPool, poolSizeForDevice, type PoolNeed } from '@/lib/rust-cross-pool';
 import { normalizeScramble } from '@/lib/cross-solver';
 import { rotateSolutionY, Y_ROT_LABEL } from '@/lib/rotate-solution';
@@ -583,12 +583,15 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     () => tableRows([...TABLE_SETS[need], ...(need === 'cross' && xReady ? XCROSS_TABLES : [])]),
     [need, xReady, tableRows],
   );
+  // 大表下载进度(21MB / 几秒)。null = 还没有字节数可报(刚发出请求 / 已下完)。
+  const [xProg, setXProg] = useState<XCrossProgress | null>(null);
   /** std 且 stage≥1(XCross 及以上)时确保大表就位;其余情形零成本。 */
   const ensureXCrossTables = useCallback(async (pool: RustCrossPool, kind: Kind, st: number) => {
     if (kind !== 'std' || st < 1) return;
     if (pool.hasXCross()) { setXReady(true); return; }
     setXLoading(true);
-    try { await pool.ensureXCross(); setXReady(true); } finally { setXLoading(false); }
+    const off = pool.onXCrossProgress(setXProg);
+    try { await pool.ensureXCross(); setXReady(true); } finally { off(); setXProg(null); setXLoading(false); }
   }, []);
 
   // 共享池:need(cross/variant/f2leo)变化时取/建对应池,等首个 worker 就绪。
@@ -614,6 +617,25 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     dropRustCrossPool();
     setRetryTick((n) => n + 1);
   }, []);
+
+  // 空闲预取大表:std 池默认只带 pt_cross(50KB),切到 XCross 那一刻才去拉 21MB,
+  // 于是那几秒完整落在交互路径上。求解器一就绪就在浏览器空闲时先把它下进 HTTP 缓存
+  // (immutable,一年),真切过去时通常已是缓存命中。只焐缓存,不进 JS 堆(见 prefetchXCross)。
+  // 慢网 / 省流量模式下不预取 —— 那 21MB 对没打算用 XCross 的人是纯浪费。
+  useEffect(() => {
+    if (status !== 'ready' || need !== 'cross' || xReady) return;
+    const conn = (navigator as Navigator & {
+      connection?: { saveData?: boolean; effectiveType?: string };
+    }).connection;
+    if (conn?.saveData) return;
+    if (conn?.effectiveType && conn.effectiveType !== '4g') return;
+    const pool = poolRef.current;
+    if (!pool) return;
+    const ric = window.requestIdleCallback;
+    if (!ric) { const t = setTimeout(() => pool.prefetchXCross(), 2000); return () => clearTimeout(t); }
+    const id = ric(() => pool.prefetchXCross(), { timeout: 10000 });
+    return () => window.cancelIdleCallback?.(id);
+  }, [status, need, xReady]);
   // loading 经过秒数(给用户进度感;≥15s 提示网络较慢并出重试按钮)。
   const [elapsed, setElapsed] = useState(0);
   useEffect(() => {
@@ -1261,6 +1283,28 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
               : t('加载求解器与数据表(仅首次)…', 'Loading solver + tables (first time only)…')}
             {elapsed >= 3 && <span className="stsv-elapsed">{elapsed}s</span>}
           </div>
+          {/* 大表那一段有真进度可报(21MB 走好几秒,只给转圈太难熬)。Content-Length 被代理
+              剥掉时 total=0 → 只报已下多少,不画那条会骗人的进度条。 */}
+          {xProg && (
+            <div className="stsv-prog">
+              {xProg.total > 0 && (
+                <div
+                  className="stsv-prog-bar"
+                  role="progressbar"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={Math.min(100, Math.round((xProg.loaded / xProg.total) * 100))}
+                >
+                  <i style={{ width: `${Math.min(100, (xProg.loaded / xProg.total) * 100)}%` }} />
+                </div>
+              )}
+              <span className="stsv-prog-text">
+                {xProg.total > 0
+                  ? `${(xProg.loaded / 1048576).toFixed(1)} / ${fmtBytes(xProg.total)} (${Math.min(100, Math.round((xProg.loaded / xProg.total) * 100))}%)`
+                  : fmtBytes(xProg.loaded)}
+              </span>
+            </div>
+          )}
           <ul className="stsv-tables">
             {tableInfo.rows.map((r) => (
               <li key={r.name}>

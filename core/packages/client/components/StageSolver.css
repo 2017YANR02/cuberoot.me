@@ -74,6 +74,33 @@ html[data-theme='dark'] .stsv {
 .stsv-tables li span { color: var(--sv-text-mute); font-variant-numeric: tabular-nums; }
 .stsv-tables-total { margin-top: 6px; font-size: 12px; color: var(--sv-text-sub); }
 .stsv-elapsed { color: var(--sv-text-mute); font-variant-numeric: tabular-nums; }
+/* 大表(21MB)下载进度。窄栏里也要放得下 → 条自适应宽,字号压到与表清单同级。 */
+.stsv-prog {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  max-width: 520px;
+}
+.stsv-prog-bar {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--sv-border);
+  overflow: hidden;
+}
+.stsv-prog-bar i {
+  display: block;
+  height: 100%;
+  background: var(--sv-accent);
+  transition: width 0.15s linear;
+}
+.stsv-prog-text {
+  font-size: 12px;
+  color: var(--sv-text-mute);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
 .stsv-slow {
   display: flex;
   align-items: center;
