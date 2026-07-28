@@ -263,7 +263,8 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
     max-width: 600px;
 }
 .landing-page .section-eyebrow {
-    font-size: 0.72rem;
+    /* 中文 eyebrow 只有两个字,比全大写英文更需要字号 */
+    font-size: 0.78rem;
     font-weight: 500;
     color: var(--accent);
     letter-spacing: 0.15em;
