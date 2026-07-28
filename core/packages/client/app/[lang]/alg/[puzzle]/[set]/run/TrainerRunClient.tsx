@@ -23,7 +23,7 @@ import { CaseThumb } from '@/components/CaseThumb';
 import { caseKey, findCaseByKey } from '@/lib/trainer-case-key';
 import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
 import { displayZbllToken } from '@/lib/alg_case_display';
-import { availableKinds, pairPhaseLocked, purifyScramble, SCRAMBLE_KINDS, type ScrambleKind } from '@/lib/trainer-scramble';
+import { availableKinds, purifyScramble, SCRAMBLE_KINDS, type ScrambleKind } from '@/lib/trainer-scramble';
 import { MIX_SLUG, MIX_MIN_SETS, parseMixSets, mixTitle, mixHref, loadMixCases, setLabel } from '@/lib/alg-mix';
 import { virtualAlgSet } from '@/lib/alg-virtual-sets';
 import { useTrainerMarks, markStatus, markStarred, type CaseMarkStatus } from '@/lib/trainer-marks';
@@ -896,15 +896,14 @@ export default function TrainerRunClient() {
   const leftShown = showPrevCard;
   const rightShown = (showNextCard && !multi) || statsVisible;
 
-  // pre-AUF 只对「顶层 case + U 可作 AUF」的场景有意义(F2L 类打乱前加 U 会换 case)
+  // AUF 开关只对「顶层 case + U 可作 AUF」的场景有意义(F2L 类打乱前加 U 会换 case)
   // 合练:任一成员是 F2L 类就整场关掉(给 F2L 打乱前加 U 会换成另一个 case)
-  // post-AUF 再要求对子相位没被锁死(LSLL:锁了就是死开关,别摆出来)
-  // 这里在若干处提前 return 之后,不能用 hook —— 保持裸算(`.some` 只在开关要显示时才跑第二遍)
   // 记忆模式整对开关都不摆:那边一律不加 AUF(题面要与 case 图逐字一致,见 store 的
   // `aufOpts`),开关留着就是个拨了不动的死开关。
-  const preAufSupported = (puzzle === '3x3' || puzzle === '2x2') && !isMemo
+  // LSLL 曾单独关掉 post-AUF(怕对子转离展示相位),2026-07-28 放开:图从实际打乱渲染、
+  // 跟着一起转,而收尾 AUF 恰恰是 LSLL 真解里要先补的那一下。
+  const aufSupported = (puzzle === '3x3' || puzzle === '2x2') && !isMemo
     && !cases.some(c => c.sticker.kind === 'f2l');
-  const postAufSupported = preAufSupported && !cases.some(pairPhaseLocked);
   // 真实概率只有带 meta 的 LL set(zbll / pll / ell / 1lll)有数学定义
   // 真实概率按「一套 LL set 内部的 AUF 轨道」定义,跨集混起来没有公认的相对权重 —— 合练不给
   const probSupported = puzzle === '3x3' && !isMix && !!ALG_SET_UNIVERSE[setSlug];
@@ -1222,10 +1221,10 @@ export default function TrainerRunClient() {
                   </div>
                 </>
               )}
-              {preAufSupported && (
+              {aufSupported && (
                 <div className="trainer-opts-row">
                   <BoolToggle value={preAuf} onChange={setPreAuf} label="pre-AUF" />
-                  {postAufSupported && <BoolToggle value={postAuf} onChange={setPostAuf} label="post-AUF" />}
+                  <BoolToggle value={postAuf} onChange={setPostAuf} label="post-AUF" />
                 </div>
               )}
               {/* 极简:侧栏两块各自可隐藏(issue #30)。统计=成绩用时列表,不计时根本
