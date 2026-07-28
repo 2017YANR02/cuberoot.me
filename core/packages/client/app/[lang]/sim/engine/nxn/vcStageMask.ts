@@ -10,13 +10,13 @@
 // 公式(row*N+col;引擎 FACE=L0 R1 D2 U3 B4 F5,x=initial%N y=⌊/N⌋%N z=⌊/N²⌋)已对
 // 真实 visualcube 位串核验(2x2x2 的 DFR 块、XCROSS_BR/FL 的侧块朝向)。逐面二值
 // (masked→FM_IGNORED 灰 / colored→FM_REGULAR)—— 比引擎自带的逐块规则更细,天然
-// 支持 EO_ORBIT 这类逐贴纸遮罩。crossColor 复用引擎同一共轭旋转,阶段随底色重定向。
+// 支持 EO_ORBIT 这类逐贴纸遮罩。orientation 复用引擎同一共轭旋转,阶段随拿方朝向重定向。
 //
 // 分层:本文件是 client-only 增强(engine core stickering.ts 保持 visualcube-free);
 // Phase 1 headless 抽包时随 visualcube 消费方一并处理。
 import { makeMasking, type FaceValues, type Masking } from '@cuberoot/visualcube';
 import {
-  FM_REGULAR, FM_IGNORED, crossXform, stickeringGroupsFor,
+  FM_REGULAR, FM_IGNORED, orientationXform, stickeringGroupsFor,
   type StickeringMaskFn, type StickeringGroup,
 } from './stickering';
 // 纯坐标(netIndexOf + 面映射)独立成 netIndex.ts(零依赖),这里 re-export 保 API;
@@ -32,7 +32,7 @@ export { netIndexOf };
 
 /** visualcube Masking 名 → 引擎 stickering 遮罩函数(逐小面二值)。该阶数无此遮罩
  *  (makeMasking 抛错)→ null,调用方回退 full。 */
-export function visualcubeStageMaskFn(order: number, name: string, crossColor?: string): StickeringMaskFn | null {
+export function visualcubeStageMaskFn(order: number, name: string, orientation?: string): StickeringMaskFn | null {
   let fv: FaceValues;
   try {
     fv = makeMasking(name as Masking, order);
@@ -42,7 +42,7 @@ export function visualcubeStageMaskFn(order: number, name: string, crossColor?: 
   const max = order - 1;
   const N = order;
   const N2 = order * order;
-  const xf = crossXform(crossColor);
+  const xf = orientationXform(orientation);
   return (initial, face) => {
     const [x, y, z] = xf.map(initial % N, ((initial / N) | 0) % N, (initial / N2) | 0, max);
     const mf = xf.facePerm[face] ?? face;           // 遮罩坐标系下的面
@@ -51,12 +51,12 @@ export function visualcubeStageMaskFn(order: number, name: string, crossColor?: 
   };
 }
 
-/** 引擎自带阶段优先(更丰富:dim 层次 + crossColor);未知名再落到 visualcube 遮罩。 */
-export function resolveStageMaskFn(order: number, name: string, crossColor?: string): StickeringMaskFn | null {
+/** 引擎自带阶段优先(更丰富:dim 层次 + 朝向);未知名再落到 visualcube 遮罩。 */
+export function resolveStageMaskFn(order: number, name: string, orientation?: string): StickeringMaskFn | null {
   // engine-native 分支在 stickeringMaskFn 里;这里只在它返回 null 且非 full 时兜 vc。
   // 直接调用方(SimPage)已先试 stickeringMaskFn,故本函数只做 vc 分支。
   if (!name || name === 'full') return null;
-  return visualcubeStageMaskFn(order, name, crossColor);
+  return visualcubeStageMaskFn(order, name, orientation);
 }
 
 // ── 下拉清单(把 visualcube MASK 清单并进 stickering,按语义去重)──────────────

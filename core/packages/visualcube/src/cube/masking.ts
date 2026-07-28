@@ -25,20 +25,18 @@ const stringMasksBySize: { [cubeSize: number]: { [masking: string]: string } } =
     [Masking.TWO_BY_TWO_BY_TWO]: '000000000000110110000011011011011000000000000000000000',
     [Masking.TWO_BY_TWO_BY_THREE]: '000000000000110110000111111111111000000011011000000000',
     [Masking.CROSS_PARTIAL]: '000000000000000010000000010010111010000000010000000010',
-    [Masking.CROSS_FR]: '000000000000000010000000010010011000000000000000000000',
-    [Masking.CROSS_BR]: '000000000000000010000000000000011010000000000000000010',
-    [Masking.CROSS_FB]: '000000000000000000000000010010010010000000000000000010',
-    [Masking.CROSS_LR]: '000000000000000010000000000000111000000000010000000000',
-    [Masking.XCROSS_FR]: '000000000000110110000011011011111010000010010000010010',
-    [Masking.XCROSS_BR]: '000000000000011011000010010010111011000010010000110110',
-    [Masking.XCROSS_FL]: '000000000000010010000110110110111010000011011000010010',
-    [Masking.XCROSS_BL]: '000000000000010010000010010010111110000110110000011011',
-    [Masking.XXCROSS]: '000000000000011011000010010010111111000110110000111111',
-    [Masking.DEC]: '000000000000110110000011011011111110000110110000011011',
-    [Masking.TEC_FR]: '000000000000011011000110110110111111000111111000111111',
-    [Masking.TEC_FL]: '000000000000111111000011011011111111000110110000111111',
-    [Masking.TEC_BL]: '000000000000111111000111111111111011000011011000110110',
-    [Masking.TEC_BR]: '000000000000110110000111111111111110000111111000011011',
+    // CROSS_FULL = CROSS_PARTIAL ∪ 全部 6 个中心(含 U 中心)。PHP 的 "cross" 少了 U 中心,
+    // 想「十字 + 全中心」看朝向时得用这条。
+    [Masking.CROSS_FULL]: '000010000000010010000010010010111010000010010000010010',
+    [Masking.CROSS_HALF]: '000000000000000010000000010010011000000000000000000000',      // PHP cross_fr
+    [Masking.CROSS_HALF_OPP]: '000000000000000000000000010010010010000000000000000010',  // PHP cross_fb
+    [Masking.XCROSS]: '000000000000110110000011011011111010000010010000010010',           // PHP xcross_fr
+    // XX-Cross: cross + two pairs. Diagonal is PHP "DEC" verbatim; the adjacent one is
+    // built the same way (cross ∪ the FL and FR XCross slot deltas) so the two solved
+    // pairs face the viewer by default — PHP's own "xxcross" put them at the back.
+    [Masking.XXCROSS]: '000000000000110110000111111111111010000011011000010010',
+    [Masking.XXCROSS_DIAG]: '000000000000110110000011011011111110000110110000011011',
+    [Masking.XXXCROSS]: '000000000000011011000110110110111111000111111000111111',           // PHP tec_fr
     [Masking.PAIR]: '000000000000110110000011011011111010000010010000010010',
     [Masking.EO_ORBIT]: '010101010000000000000101000010101010000000000000101000',
     [Masking.EO_OUTER_ORBIT]: '000000000010101010010000010000000000010101010010000010',
@@ -59,9 +57,6 @@ const stringMasksBySize: { [cubeSize: number]: { [masking: string]: string } } =
     [Masking.SB2]: '000000000000011011000000000000001001000000000000100100',
     [Masking.ONE_ONE_TWO]: '000000000000000000000100100100000000000001001000000000',
     [Masking.ONE_TWO_TWO]: '000000000000100100000011011011000000000000000000000000',
-    [Masking.TWO_TWO_TWO_FL]: '000000000000000000000110110110110000000011011000000000',
-    [Masking.TWO_TWO_TWO_BL]: '000000000000000000000000000000110110000110110000011011',
-    [Masking.TWO_TWO_TWO_BR]: '000000000000011011000000000000011011000000000000110110',
     [Masking.SQ_RDF]: '000000000000110110000011001001011000000000000000000000',
     [Masking.SQ_FDR]: '000000000000110100000011011011010000000000000000000000',
     [Masking.SQ_DFR]: '000000000000010110000010011011011000000000000000000000',
@@ -274,42 +269,6 @@ const maskingFunctions: MaskingFunctions = {
     [Face.L]: (row, col, cubeSize) => row > 0 && col > 0 && col < cubeSize - 1,
     [Face.F]: (row, col, cubeSize) => row > 0 && col > 0 && col < cubeSize - 1,
     [Face.B]: (row, col, cubeSize) => row > 0 && col > 0 && col < cubeSize - 1,
-  },
-  [Masking.F2L3]: {
-    [Face.U]: (row, col, cubeSize) => false,
-    [Face.D]: (row, col, cubeSize) =>
-      (row == 0 && col == cubeSize - 1) || !((row == 0 || row == cubeSize - 1) && (col == 0 || col == cubeSize - 1)),
-    [Face.R]: (row, col, cubeSize) => row > 0 && col < cubeSize - 1,
-    [Face.L]: (row, col, cubeSize) => row > 0 && col > 0 && col < cubeSize - 1,
-    [Face.F]: (row, col, cubeSize) => row > 0 && col > 0,
-    [Face.B]: (row, col, cubeSize) => row > 0 && col > 0 && col < cubeSize - 1,
-  },
-  [Masking.F2L2]: {
-    [Face.U]: (row, col, cubeSize) => false,
-    [Face.D]: (row, col, cubeSize) => row > 0 || (col > 0 && col < cubeSize - 1),
-    [Face.R]: (row, col, cubeSize) => row > 0 && col > 0,
-    [Face.L]: (row, col, cubeSize) => row > 0 && col < cubeSize - 1,
-    [Face.F]: (row, col, cubeSize) => row > 0 && col > 0 && col < cubeSize - 1,
-    [Face.B]: (row, col, cubeSize) => row > 0,
-  },
-  [Masking.F2LSM]: {
-    [Face.U]: (row, col, cubeSize) => false,
-    [Face.D]: (row, col, cubeSize) =>
-      !((row == 0 || row == cubeSize - 1) && (col == 0 || col == cubeSize - 1)) ||
-      (col == 0 && row == cubeSize - 1) ||
-      (row == 0 && col == cubeSize - 1),
-    [Face.R]: (row, col, cubeSize) => row > 0 && col < cubeSize - 1,
-    [Face.L]: (row, col, cubeSize) => row > 0 && col < cubeSize - 1,
-    [Face.F]: (row, col, cubeSize) => row > 0 && col > 0,
-    [Face.B]: (row, col, cubeSize) => row > 0 && col > 0,
-  },
-  [Masking.F2L1]: {
-    [Face.U]: (row, col, cubeSize) => false,
-    [Face.D]: (row, col, cubeSize) => row !== 0 || col !== cubeSize - 1,
-    [Face.R]: (row, col, cubeSize) => row > 0 && col > 0,
-    [Face.L]: (row, col, cubeSize) => row > 0,
-    [Face.F]: (row, col, cubeSize) => row > 0 && col < cubeSize - 1,
-    [Face.B]: (row, col, cubeSize) => row > 0,
   },
   [Masking.F2B]: {
     [Face.U]: (row, col, cubeSize) => false,

@@ -1,0 +1,182 @@
+/* 遮罩清单管理抽屉(仅管理员)。列表可能有几十条 → 自己滚,别把页面撑长。
+   窄屏:key 那列藏掉、双语输入框各占一行(网格换成两行布局)。 */
+.sim-mask-admin-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 101;   /* 压过设置抽屉(50/51)与键位表(100),它是从播放条里弹出的模态 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: color-mix(in srgb, var(--foreground) 45%, transparent);
+}
+
+.sim-mask-admin {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(920px, 100%);
+  max-height: min(80vh, 720px);
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: var(--popover);
+  color: var(--foreground);
+  border: 1px solid var(--border-default);
+}
+
+.sim-mask-admin-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sim-mask-admin-note,
+.sim-mask-admin-hint {
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+
+.sim-mask-admin-x {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px;
+  border: none;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.sim-mask-admin-x:hover {
+  color: var(--foreground);
+}
+
+.sim-mask-admin-new {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.sim-mask-admin-new-label {
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.sim-mask-admin-list {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sim-mask-admin-group-title {
+  font-size: 12px;
+  color: var(--muted-foreground);
+  margin-bottom: 4px;
+}
+
+.sim-mask-admin-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+}
+
+.sim-mask-admin-row.is-hidden .sim-mask-admin-key,
+.sim-mask-admin-row.is-hidden .sim-mask-admin-input {
+  color: var(--faint-foreground);
+}
+
+.sim-mask-admin-key {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted-foreground);
+  width: 15ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sim-mask-admin-input {
+  font: inherit;
+  font-size: 12px;
+  width: 14ch;
+  padding: 2px 6px;
+  border: 1px solid var(--input);
+  border-radius: 4px;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.sim-mask-admin-input::placeholder {
+  color: var(--faint-foreground);
+}
+
+.sim-mask-admin-btn {
+  font: inherit;
+  font-size: 12px;
+  padding: 2px 8px;
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+.sim-mask-admin-btn:disabled,
+.sim-mask-admin-icon:disabled {
+  color: var(--faint-foreground);
+  cursor: default;
+}
+
+.sim-mask-admin-icon {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.sim-mask-admin-icon:hover:not(:disabled) {
+  border-color: var(--border-default);
+  color: var(--foreground);
+}
+
+.sim-mask-admin-err {
+  font-size: 12px;
+  color: var(--destructive);
+}
+
+/* 播放条上的齿轮(管理员) */
+.sim-stickering-admin {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.sim-stickering-admin:hover {
+  border-color: var(--border-default);
+  color: var(--foreground);
+}
+
+@media (max-width: 480px) {
+  .sim-mask-admin-key {
+    display: none;
+  }
+
+  .sim-mask-admin-input {
+    width: 10ch;
+    flex: 1 1 10ch;
+  }
+}

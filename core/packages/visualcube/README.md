@@ -118,12 +118,10 @@ sr-visualizer (the TS source we forked) ports most of PHP visualcube but is miss
 - [x] Custom colour scheme (`colorScheme`, PHP `sch`) — abbreviation + comma-separated list + 3/6-digit hex
 - [x] Facelet Definition (`facelets` string, PHP `fd`) — `parseFaceletDefinitions` is wired up in `index.ts`; upstream README's "still to implement" note is stale
 - [x] Facelet Colours (`stickerColors`, PHP `fc`) via `parseFaceletColors`
-- [x] 22 stage masks (`mask`, PHP `stage`): fl, f2l, ll, cll, ell, oll, ocll, oell, coll, ocell, wv, vh, els, cls, cmll, cross, f2l_3, f2l_2, f2l_sm, f2l_1, f2b, line
+- [x] 18 stage masks (`mask`, PHP `stage`): fl, f2l, ll, cll, ell, oll, ocll, oell, coll, ocell, wv, vh, els, cls, cmll, cross, f2b, line (PHP's `f2l_3` / `f2l_2` / `f2l_sm` / `f2l_1` are bit-identical to the extended `xcross` / `xxcross` / `xxcross_diag` / `xxxcross` up to a y rotation, so they were dropped)
 - [x] Extended 3x3 stage masks (Yan/Kira PHP additions, `cubeSize=3` only) — data-driven via PHP-format 54-char strings:
-  - Block-building: `2x2x2`, `2x2x3`, `112`, `122`, `222_fl`, `222_bl`, `222_br`
-  - Cross variants: `cross_partial` (PHP "Cross"), `cross_fr`, `cross_br`, `cross_fb`, `cross_lr`
-  - X-Cross variants: `xcross_fr`, `xcross_br`, `xcross_fl`, `xcross_bl`, `xxcross`
-  - F2L progress: `dec`, `tec_fr`, `tec_fl`, `tec_bl`, `tec_br`, `pair`
+  - Block-building, all in the D layer — `2x2x2` at DFR, `2x2x3` the DF slab, `122` the DFR-front 1x2x2, `112` the FL edge pair (PHP's `222_fl` / `222_bl` / `222_br` were the DFR block rotated to the other three D corners, so they were dropped): `2x2x2`, `2x2x3`, `112`, `122`
+  - Cross progress, one mask per *shape* (PHP's per-slot variants — `cross_br/fb/lr`, `xcross_br/fl/bl`, `dec`, `tec_fl/bl/br` — are whole-cube rotations of these, so consumers re-anchor with a rotation instead): `cross_partial` (PHP "Cross" — no side/U centers), `cross_full` (same + all 6 centers), `cross_half`, `cross_half_opp`, `xcross`, `xxcross`, `xxcross_diag`, `xxxcross`, `pair`
   - EO/orbit: `eo_orbit`, `eo_outer_orbit`
   - EOLR/EOLS/L5EF: `eolrb_r`, `eolrb_l`, `eolrb_f`, `eolrb_b`, `eols`, `l5ef`
   - Roux: `fb`, `sb`, `fb1`, `fb2`, `sb1`, `sb2`, `roux_co`, `roux_dr`, `roux_dronly`
