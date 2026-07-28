@@ -915,9 +915,9 @@ interface Props {
    *  这里只渲染播放条最左的下拉。支持与否走 simCaps.supports.stickering(不支持隐藏)。 */
   stickering?: string;
   onStickeringChange?: (v: string) => void;
-  /** 十字(底面)颜色(cubedb Cross Color),仅 NxN 引擎遮罩;默认黄(=D,恒等)。 */
-  stickeringColor?: string;
-  onStickeringColorChange?: (v: string) => void;
+  /** 阶段遮罩的拿方朝向(整体转前缀,24 档),仅 NxN 引擎遮罩;默认 ''(UF,恒等)。 */
+  stickeringRot?: string;
+  onStickeringRotChange?: (v: string) => void;
   /** 自定义阶段:选中的贴纸清单(mask-core DSL)+ 作图开关。状态归 SimPage。 */
   stickeringMask?: string;
   onStickeringMaskClear?: () => void;
@@ -942,7 +942,7 @@ export default function PlayerControls({
   renderer = 'cubing', onRendererChange,
   playbackSlot, bgSlot, fullscreenButton, imageButton, backViewButton,
   stickering = 'full', onStickeringChange,
-  stickeringColor = 'yellow', onStickeringColorChange,
+  stickeringRot = '', onStickeringRotChange,
   stickeringMask = '', onStickeringMaskClear,
   customEditing = true, onCustomEditingChange,
   customGrain = 'sticker', onCustomGrainChange,
@@ -2120,7 +2120,7 @@ export default function PlayerControls({
     ? (
       <StickeringSelect
         puzzleKind={puzzleKind} value={stickering} onChange={onStickeringChange}
-        color={stickeringColor} onColorChange={onStickeringColorChange}
+        orientation={stickeringRot} onOrientationChange={onStickeringRotChange}
         mask={stickeringMask} onMaskClear={onStickeringMaskClear}
         pick={customPick} onPickChange={onCustomPickChange}
         rest={customRest} onRestChange={onCustomRestChange}

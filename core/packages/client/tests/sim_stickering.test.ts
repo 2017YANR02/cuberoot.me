@@ -132,13 +132,29 @@ describe('stickeringMaskFn 3x3', () => {
     expect(m(P3.FL, FACE.F)).toBe(FM_DIM);
   });
 
-  it('2x2x2(Petrus):DBL 2x2x2 块原色,U/F/R 三层忽略(其中中心暗)', () => {
+  // 站内锚点是 DFR(不是 cubing.js 原式的 DBL):整套阶段都以 D 层 FR 侧为准,
+  // 换角落靠拿方朝向。与 visualcube '2x2x2' 位串同形。
+  it('2x2x2(Petrus):DFR 2x2x2 块原色,U/L/B 三层忽略(其中中心暗)', () => {
     const m = stickeringMaskFn(3, '2x2x2')!;
-    expect(m(P3.DBL, FACE.D)).toBe(FM_REGULAR);
-    expect(m(P3.Lc, FACE.L)).toBe(FM_REGULAR);   // L 中心不在 U/F/R 层
-    expect(m(P3.Fc, FACE.F)).toBe(FM_DIM);       // F 中心在 F 层 → 中心改暗
+    expect(m(P3.DFR, FACE.D)).toBe(FM_REGULAR);
+    expect(m(P3.FR, FACE.F)).toBe(FM_REGULAR);
+    expect(m(P3.Rc, FACE.R)).toBe(FM_REGULAR);   // R 中心不在 U/L/B 层
+    expect(m(P3.Fc, FACE.F)).toBe(FM_REGULAR);   // F 中心同理
+    expect(m(P3.Bc, FACE.B)).toBe(FM_DIM);       // B 中心在 B 层 → 中心改暗
     expect(m(P3.UF, FACE.U)).toBe(FM_IGNORED);
-    expect(m(P3.FR, FACE.F)).toBe(FM_IGNORED);
+    expect(m(P3.FL, FACE.F)).toBe(FM_IGNORED);
+    expect(m(P3.DBL, FACE.D)).toBe(FM_IGNORED);
+  });
+
+  // 223 = 上面那个 222 往 L 侧延一格:D 层前两排整条 + F 面下两排,新增的 L 面 2x2 原色。
+  it('2x2x3(Petrus):DF 板暗 + L 面新增段原色,U/B 两层忽略', () => {
+    const m = stickeringMaskFn(3, '2x2x3')!;
+    expect(m(P3.FL, FACE.L)).toBe(FM_REGULAR);   // 新增段(x=0,不在 U/B 层)
+    expect(m(P3.DFR, FACE.D)).toBe(FM_DIM);      // 原 222 部分:暗
+    expect(m(P3.FR, FACE.F)).toBe(FM_DIM);
+    expect(m(P3.UF, FACE.U)).toBe(FM_IGNORED);
+    expect(m(P3.BR, FACE.B)).toBe(FM_IGNORED);
+    expect(m(P3.Bc, FACE.B)).toBe(FM_DIM);       // B 中心:忽略后又被中心规则改暗
   });
 });
 
@@ -187,9 +203,9 @@ describe('stickeringMaskFn 2x2 / 4x4', () => {
   });
 });
 
-describe('stickeringMaskFn 十字颜色重定向(crossColor)', () => {
-  it('Cross + white:十字落在 U 面(白),D 面变忽略', () => {
-    const m = stickeringMaskFn(3, 'Cross', 'white')!;
+describe('stickeringMaskFn 拿方朝向重定向(整体转前缀)', () => {
+  it("Cross + x2(翻个个儿):十字落在 U 面,D 面变忽略", () => {
+    const m = stickeringMaskFn(3, 'Cross', 'x2')!;
     expect(m(P3.UF, FACE.U)).toBe(FM_REGULAR);   // U 棱 = 十字棱
     expect(m(P3.UF, FACE.F)).toBe(FM_REGULAR);
     expect(m(P3.Uc, FACE.U)).toBe(FM_REGULAR);
@@ -198,8 +214,8 @@ describe('stickeringMaskFn 十字颜色重定向(crossColor)', () => {
     expect(m(P3.UFR, FACE.U)).toBe(FM_IGNORED);  // 顶角不属于十字
   });
 
-  it('Cross + green:十字落在 F 面(绿)', () => {
-    const m = stickeringMaskFn(3, 'Cross', 'green')!;
+  it("Cross + x:十字落在 F 面", () => {
+    const m = stickeringMaskFn(3, 'Cross', 'x')!;
     expect(m(P3.UF, FACE.F)).toBe(FM_REGULAR);   // F 面棱 = 十字棱,主贴纸在 F
     expect(m(P3.UF, FACE.U)).toBe(FM_REGULAR);
     expect(m(P3.Fc, FACE.F)).toBe(FM_REGULAR);
@@ -209,8 +225,8 @@ describe('stickeringMaskFn 十字颜色重定向(crossColor)', () => {
     expect(m(P3.UFR, FACE.F)).toBe(FM_IGNORED);
   });
 
-  it('OLL + white:白十字 → 顶层阶段落在 D 面(黄)', () => {
-    const m = stickeringMaskFn(3, 'OLL', 'white')!;
+  it("OLL + x2:顶层阶段翻到 D 面", () => {
+    const m = stickeringMaskFn(3, 'OLL', 'x2')!;
     expect(m(P3.DF, FACE.D)).toBe(FM_REGULAR);   // D 棱 = LL 棱,主贴纸 D
     expect(m(P3.DF, FACE.F)).toBe(FM_IGNORED);
     expect(m(P3.DFR, FACE.D)).toBe(FM_REGULAR);
@@ -220,8 +236,8 @@ describe('stickeringMaskFn 十字颜色重定向(crossColor)', () => {
     expect(m(P3.Fc, FACE.F)).toBe(FM_DIM);
   });
 
-  it('FirstBlock + red:整套 Roux 随 z 旋转重定向(物理 L→遮罩 U,D→遮罩 L)', () => {
-    const m = stickeringMaskFn(3, 'FirstBlock', 'red')!;
+  it("FirstBlock + z':整套 Roux 随旋转重定向(物理 L→遮罩 U,D→遮罩 L)", () => {
+    const m = stickeringMaskFn(3, 'FirstBlock', "z'")!;
     expect(m(P3.Lc, FACE.L)).toBe(FM_IGNORED);   // 物理 L 中心 → 遮罩 LL 中心,忽略
     expect(m(P3.UBL, FACE.U)).toBe(FM_IGNORED);  // 物理 L 层块同理
     expect(m(P3.Uc, FACE.U)).toBe(FM_DIM);       // 物理 U 中心 → 遮罩 R 中心(暗)
@@ -229,9 +245,9 @@ describe('stickeringMaskFn 十字颜色重定向(crossColor)', () => {
     expect(m(P3.Dc, FACE.D)).toBe(FM_REGULAR);
   });
 
-  it('默认 / 未知颜色 = yellow 恒等', () => {
+  it("默认 / 非法前缀 = (UF) 恒等", () => {
     const base = stickeringMaskFn(3, 'Cross')!;
-    const yellow = stickeringMaskFn(3, 'Cross', 'yellow')!;
+    const yellow = stickeringMaskFn(3, 'Cross', '')!;
     const bogus = stickeringMaskFn(3, 'Cross', 'purple')!;
     for (const [piece, face] of [
       [P3.DF, FACE.D], [P3.DF, FACE.F], [P3.Uc, FACE.U], [P3.UFR, FACE.R],

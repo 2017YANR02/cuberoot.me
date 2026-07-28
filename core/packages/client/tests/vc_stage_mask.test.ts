@@ -7,7 +7,8 @@
  */
 import { describe, expect, it } from 'vitest';
 import { makeMasking, Masking } from '@cuberoot/visualcube';
-import { FM_REGULAR, FM_IGNORED } from '@/app/[lang]/sim/engine/nxn/stickering';
+import { CUBE_ORIENTATIONS } from '@/lib/cube-orientation';
+import { FM_REGULAR, FM_IGNORED, stickeringMaskFn } from '@/app/[lang]/sim/engine/nxn/stickering';
 import {
   netIndexOf, visualcubeStageMaskFn, resolveStageMaskFn,
   visualcubeStageGroups, VC_MASK_LABEL,
@@ -91,7 +92,7 @@ describe('vcStageMask — 几何 oracle 钉朝向', () => {
   });
 
   it('灰化数 = makeMasking 的 masked 数(逐面双射的必然推论,兜底核对)', () => {
-    for (const name of [Masking.FL, Masking.DR, Masking.XCROSS_FR, Masking.MEHTA_BELT2, Masking.EO_ORBIT]) {
+    for (const name of [Masking.FL, Masking.DR, Masking.XCROSS, Masking.MEHTA_BELT2, Masking.EO_ORBIT]) {
       const N = 3;
       const fn = visualcubeStageMaskFn(N, name)!;
       const grayEngine = allSlots(N).filter((s) => fn(s.initial, s.face) === FM_IGNORED).length;
@@ -103,22 +104,122 @@ describe('vcStageMask — 几何 oracle 钉朝向', () => {
   });
 });
 
-describe('vcStageMask — crossColor 重定向', () => {
-  it('FL + white(U 当底)→ 顶(U)层着色', () => {
+describe('十字系遮罩:同形状只留一个,换槽靠转体', () => {
+  // 遮罩清单里 XCross 只有一条(PHP 的 xcross_fr),另外三个槽由拿方朝向的 y / y2 / y'
+  // 转出来。这里钉死这条等价:转 4 次回到原样、四档互不相同、且四档的并集正好是
+  // 「十字 + 四个槽」= XXXCross 再加上第四个槽(= 满 F2L 的贴纸集合)。
+  const N = 3;
+  const colored = (name: string, rot: string): Set<string> => {
+    const fn = visualcubeStageMaskFn(N, name, rot)!;
+    return new Set(allSlots(N).filter((s) => fn(s.initial, s.face) === FM_REGULAR)
+      .map((s) => `${s.initial}:${s.face}`));
+  };
+  const Y = ['', 'y', 'y2', "y'"];
+
+  it('XCross 四档 y 互不相同,y⁴ 回到原样', () => {
+    const sets = Y.map((r) => colored('xcross', r));
+    expect(new Set(sets.map((s) => [...s].sort().join('|'))).size).toBe(4);
+    for (const s of sets) expect(s.size).toBe(18); // 十字 13 + 一个槽 5
+    expect([...colored('xcross', "y y y y")].sort()).toEqual([...sets[0]].sort());
+  });
+
+  it('XCross 四档的并 = F2L(十字 + 四个槽);XXXCross 只差一个槽', () => {
+    const union = new Set(Y.flatMap((r) => [...colored('xcross', r)]));
+    expect(union.size).toBe(13 + 4 * 5);
+    const xxx = colored('xxxcross', '');
+    expect(xxx.size).toBe(13 + 3 * 5);
+    for (const k of xxx) expect(union.has(k), k).toBe(true);
+  });
+
+  it('XXCross:邻角 = 两个相邻槽,对角 = 隔开的两个槽', () => {
+    const adj = colored('xxcross', ''), diag = colored('xxcross_diag', '');
+    expect(adj.size).toBe(23);
+    expect(diag.size).toBe(23);
+    // 邻角转 y2 得到另一对相邻槽(≠ 自己);对角转 y2 是自身(对角对 y2 不变)
+    expect([...colored('xxcross', 'y2')].sort()).not.toEqual([...adj].sort());
+    expect([...colored('xxcross_diag', 'y2')].sort()).toEqual([...diag].sort());
+  });
+
+  it('cross_full = cross_partial + 全部 6 个中心(cross_partial 只有 D 中心)', () => {
+    const partial = colored('cross_partial', ''), full = colored('cross_full', '');
+    const CENTERS = [
+      [1, 2, 1, F.U], [1, 0, 1, F.D], [1, 1, 2, F.F],
+      [1, 1, 0, F.B], [0, 1, 1, F.L], [2, 1, 1, F.R],
+    ].map(([x, y, z, f]) => `${x + y * N + z * N * N}:${f}`);
+    expect(partial.size).toBe(9);          // 4 条十字棱 ×2 枚 + D 中心
+    expect(full.size).toBe(14);            // 再加 U / F / B / L / R 五个中心
+    for (const k of partial) expect(full.has(k), `partial ⊂ full: ${k}`).toBe(true);
+    for (const c of CENTERS) expect(full.has(c), `center ${c}`).toBe(true);
+    expect([...full].filter((k) => !partial.has(k)).length).toBe(5);  // 补上的 5 个中心
+  });
+
+  it('清单里只留这几条十字系遮罩', () => {
+    const items = new Set(visualcubeStageGroups(3).flatMap((g) => g.items));
+    for (const keep of ['cross_half', 'cross_half_opp', 'cross_partial', 'xcross', 'xxcross', 'xxcross_diag', 'xxxcross']) {
+      expect(items.has(keep), `should keep ${keep}`).toBe(true);
+    }
+    for (const drop of ['cross_fr', 'cross_br', 'cross_fb', 'cross_lr', 'xcross_fr', 'xcross_bl', 'dec', 'tec_fr', 'tec_bl']) {
+      expect(items.has(drop), `should drop ${drop}`).toBe(false);
+    }
+  });
+
+  it('PHP 的 f2l_1/2/3/sm 与 222_fl/bl/br 已删(前者与十字系逐枚同形,后者是 222 的转体)', () => {
+    const items = new Set(visualcubeStageGroups(3).flatMap((g) => g.items));
+    for (const drop of ['f2l_1', 'f2l_2', 'f2l_3', 'f2l_sm', '222_fl', '222_bl', '222_br']) {
+      expect(items.has(drop), `should drop ${drop}`).toBe(false);
+      expect(() => makeMasking(drop as Masking, 3)).toThrow();
+    }
+  });
+
+  it('引擎自带 2x2x2(去重后留下的那条)与 visualcube 位串同形 —— 块都在 DFR', () => {
+    const N = 3;
+    const vc = visualcubeStageMaskFn(N, Masking.TWO_BY_TWO_BY_TWO)!;
+    const eng = stickeringMaskFn(N, '2x2x2')!;
+    for (const { initial, face } of allSlots(N)) {
+      expect(eng(initial, face) === FM_REGULAR, `initial=${initial} face=${face}`)
+        .toBe(vc(initial, face) === FM_REGULAR);
+    }
+  });
+});
+
+describe('vcStageMask — 拿方朝向重定向', () => {
+  it("FL + z2(翻个个儿)→ 顶(U)层着色", () => {
     const N = 3, max = N - 1;
-    const fn = visualcubeStageMaskFn(N, Masking.FL, 'white')!;
+    const fn = visualcubeStageMaskFn(N, Masking.FL, 'z2')!;
     for (const { initial, face } of allSlots(N)) {
       const y = ((initial / N) | 0) % N;
       const want = (face === F.U || (face !== F.D && y === max)) ? FM_REGULAR : FM_IGNORED;
       expect(fn(initial, face)).toBe(want);
     }
   });
+
+  it('24 档朝向两两不同(拿无对称的 XCross 试:底面选完还剩绕底 4 档)', () => {
+    const N = 3;
+    const seen = new Set(CUBE_ORIENTATIONS.map((o) => {
+      const fn = visualcubeStageMaskFn(N, Masking.XCROSS, o.value)!;
+      return allSlots(N).map((s) => fn(s.initial, s.face)).join('');
+    }));
+    expect(seen.size).toBe(24);
+  });
+
+  it("y 是 R→F:XCross 的 FR 槽转一次落到 FL(等价于 y' 的镜像轨道)", () => {
+    const N = 3, max = N - 1;
+    // 独立 oracle:y 把物理坐标 (x,y,z) 上的贴纸搬到 (max-z, y, x),面按 R→F→L→B→R。
+    const fnBase = visualcubeStageMaskFn(N, 'xcross', '')!;
+    const fnY = visualcubeStageMaskFn(N, 'xcross', 'y')!;
+    const FACE_AFTER_Y: Record<number, number> = { [F.R]: F.F, [F.F]: F.L, [F.L]: F.B, [F.B]: F.R, [F.U]: F.U, [F.D]: F.D };
+    for (const { initial, face } of allSlots(N)) {
+      const x = initial % N, y = ((initial / N) | 0) % N, z = (initial / (N * N)) | 0;
+      const moved = (max - z) + y * N + x * N * N;
+      expect(fnY(moved, FACE_AFTER_Y[face]), `initial=${initial} face=${face}`).toBe(fnBase(initial, face));
+    }
+  });
 });
 
 describe('vcStageMask — 下拉清单去重 + 标签', () => {
-  it('order 3:含 visualcube 独有(fl/dr/xcross_fr),去掉与引擎重名(oll/ll/cross/f2l/2x2x2)', () => {
+  it('order 3:含 visualcube 独有(fl/dr/xcross),去掉与引擎重名(oll/ll/cross/f2l/2x2x2)', () => {
     const items = new Set(visualcubeStageGroups(3).flatMap((g) => g.items));
-    for (const keep of ['fl', 'wv', 'vh', 'dr', 'xcross_fr', 'mehta_belt2', 'roux_co', 'line', 'oell']) {
+    for (const keep of ['fl', 'wv', 'vh', 'dr', 'xcross', 'mehta_belt2', 'roux_co', 'line', 'oell']) {
       expect(items.has(keep), `should keep ${keep}`).toBe(true);
     }
     for (const drop of ['oll', 'll', 'cll', 'coll', 'ell', 'ocll', 'cross', 'f2l', '2x2x2', '2x2x3', 'cmll', '']) {

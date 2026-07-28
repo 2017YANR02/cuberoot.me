@@ -57,7 +57,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   account_auth alg alg_lsll alg_marks alg_srs alg_sets analytics announced_comps article auth battle_rooms cn_comp_names colpi
 //   comp_follows cube cubeopt_solve cubing_live feedback forum health historical_ranks
 //   membership nav_sites nemesizer notifications ops page_notices paint pattern_examples progress recon scramble_555
-//   scramble_marks sponsors timer_backups trainer_rooms wca_format wca_fun_stats wca_proxy
+//   scramble_marks sim_masks sponsors timer_backups trainer_rooms wca_format wca_fun_stats wca_proxy
 //   wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wechat_jssdk wiki
 // ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
@@ -360,6 +360,10 @@ const ENDPOINTS: Ep[] = [
   { d: 'content', m: 'PUT', p: '/v1/pattern-examples/reorder', g: 'admin', zh: '示例重排', en: 'Reorder examples' },
   { d: 'content', m: 'PUT', p: '/v1/pattern-examples/:id', g: 'admin', zh: '编辑示例预设', en: 'Edit example preset' },
   { d: 'content', m: 'DELETE', p: '/v1/pattern-examples/:id', g: 'admin', zh: '删示例预设', en: 'Delete example preset' },
+  { d: 'content', m: 'GET', p: '/v1/sim-masks', g: 'public', zh: '/sim 遮罩清单的管理员覆盖层 + 自建遮罩', en: '/sim mask-list overrides and admin-built masks' },
+  { d: 'content', m: 'PUT', p: '/v1/sim-masks', g: 'admin', zh: '按 maskKey upsert(改名 / 显隐 / 存自建遮罩)', en: 'Upsert by maskKey (label, visibility, custom mask)' },
+  { d: 'content', m: 'PUT', p: '/v1/sim-masks/reorder', g: 'admin', zh: '遮罩重排(该阶全量 keys)', en: 'Reorder masks (all keys of that cube size)' },
+  { d: 'content', m: 'DELETE', p: '/v1/sim-masks/:key', g: 'admin', zh: '删覆盖行:内置=恢复默认,自建=删遮罩', en: 'Delete a row: builtin = reset to default, custom = delete mask' },
   { d: 'content', m: 'GET', p: '/v1/paint/drawings', g: 'login', zh: '我的矢量画作', en: 'My paint drawings' },
   { d: 'content', m: 'GET', p: '/v1/paint/drawings/:id', g: 'public', zh: '单个画作', en: 'Single drawing' },
   { d: 'content', m: 'POST', p: '/v1/paint/drawings', g: 'login', zh: '保存画作', en: 'Save drawing' },

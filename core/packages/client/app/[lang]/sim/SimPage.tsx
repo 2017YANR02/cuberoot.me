@@ -119,6 +119,8 @@ import {
   CUSTOM_STICKERING, CUSTOM_TREATMENTS, customMaskFn, pickedSids, toggleSids, type PickGrain,
 } from './engine/nxn/customStickering';
 import { resolveStageMaskFn } from './engine/nxn/vcStageMask';
+import { isPresetMask, presetMaskFn } from './engine/nxn/maskConfig';
+import { useSimMasks } from './useSimMasks';
 import { resolveEngineArrows } from './engine/nxn/vcArrowBridge';
 import SimCubeNet from './_SimCubeNet';
 import SimClockBoard from './_SimClockBoard';
@@ -264,6 +266,8 @@ interface SimCubeMin {
 
 export default function SimPage() {
   const t = useT();
+  // 管理员自建遮罩(DB)。首屏为空 → 按代码清单渲染;拉到后 stickering effect 重跑。
+  const { rows: simMaskRows } = useSimMasks();
 
   // Sim editor state in the URL (replace semantics — not navigation).
   // puzzle ALWAYS appears in the URL (clearOnDefault:false keeps even '3'); a mount
@@ -287,9 +291,10 @@ export default function SimPage() {
       // 值 = cubing.js 阶段名(OLL/Cross/CMLL…),NxN 走引擎遮罩,megaminx/fto 走
       // cubing.js 原生。不支持的拼图忽略(下拉也隐藏)。
       stickering: parseAsString.withDefault('full'),
-      // 十字(底面)颜色(cubedb 的 Cross Color):整套阶段遮罩旋转到所选颜色的面。
-      // 默认 yellow(=D,恒等)省略;仅 NxN 引擎遮罩消费,megaminx/fto 无此参数。
-      stickeringColor: parseAsString.withDefault('yellow'),
+      // 阶段遮罩的拿方朝向(整体转前缀,lib/cube-orientation 的 24 档):遮罩整套随之
+      // 重定向 —— 换底面颜色、换阶段落在哪个槽,都是转体。默认 ''(UF,恒等)省略;
+      // 仅 NxN 引擎遮罩消费,megaminx/fto 无此参数。
+      stickeringRot: parseAsString.withDefault(''),
       // 自定义阶段(stickering=custom)选中的贴纸清单,mask-core 的 `U:0,2;F:3-5`
       // DSL,写在还原帧 → 可分享。选取粒度/编辑开关是临时的作图状态,不进 URL。
       stickeringMask: parseAsString.withDefault(''),
@@ -1523,11 +1528,14 @@ export default function SimPage() {
       typeof puzzleParam !== 'number' ? null
         : query.stickering === CUSTOM_STICKERING
           ? customMaskFn(cube.order, query.stickeringMask, query.stickeringPick, query.stickeringRest)
-          : (stickeringMaskFn(cube.order, query.stickering, query.stickeringColor)
-            ?? resolveStageMaskFn(cube.order, query.stickering, query.stickeringColor)),
+          // 管理员自建遮罩(?stickering=preset:…):清单存在 DB,画法同自定义阶段
+          : isPresetMask(query.stickering)
+            ? presetMaskFn(cube.order, query.stickering, simMaskRows)
+            : (stickeringMaskFn(cube.order, query.stickering, query.stickeringRot)
+              ?? resolveStageMaskFn(cube.order, query.stickering, query.stickeringRot)),
     );
-  }, [twisty, worldTick, puzzleParam, query.stickering, query.stickeringColor, query.stickeringMask,
-    query.stickeringPick, query.stickeringRest]);
+  }, [twisty, worldTick, puzzleParam, query.stickering, query.stickeringRot, query.stickeringMask,
+    query.stickeringPick, query.stickeringRest, simMaskRows]);
 
   // 自定义阶段编辑态:点击 = 选贴纸,且拖拽一律转视角(paintMode)——不然点歪一点
   // 就当成拖层把魔方拧了。关掉编辑后立刻还原成正常的点击转层。
@@ -2029,7 +2037,7 @@ export default function SimPage() {
       imgSpec.dist, imgSpec.rotateAxis1, imgSpec.rotateAxis2,
       imgSpec.rotateAngle1, imgSpec.rotateAngle2, imgSpec.backgroundColor,
       imgSpec.arrows, imgSpec.defaultArrowColor, imgSpec.cubeView, puzzleParam,
-      settings.faceColors, query.stickering, query.stickeringColor]);
+      settings.faceColors, query.stickering, query.stickeringRot]);
 
   // 伴图当前是否示意版(有示意小面)—— 决定黑边滑块是否可用。平面视图(net/wca/plan)
   // 走各自的平面导出器,缝宽由 visualcube 本体定死,滑块对它们无效 → 不给。
@@ -2309,8 +2317,8 @@ export default function SimPage() {
             ) : null}
             stickering={query.stickering}
             onStickeringChange={(v) => setQuery({ stickering: v === 'full' ? null : v })}
-            stickeringColor={query.stickeringColor}
-            onStickeringColorChange={(v) => setQuery({ stickeringColor: v === 'yellow' ? null : v })}
+            stickeringRot={query.stickeringRot}
+            onStickeringRotChange={(v) => setQuery({ stickeringRot: v === '' ? null : v })}
             stickeringMask={query.stickeringMask}
             onStickeringMaskClear={() => setQuery({ stickeringMask: null })}
             customEditing={customEditing}
