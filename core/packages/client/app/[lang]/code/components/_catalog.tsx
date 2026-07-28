@@ -1748,6 +1748,14 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: `受控浮层,靠一组回调驱动桌宠状态;处理移动端键盘视口贴合。`, en: `Controlled overlay driven by callbacks into the pet; handles mobile keyboard viewport fitting.` },
   },
   {
+    name: 'RoomQrModal',
+    import: "import { RoomQrModal } from '@/components/RoomQrModal';",
+    category: 'more',
+    zh: `房间邀请二维码弹窗:把邀请链接用 uqr 本地编成 SVG 二维码,配大字房间码和一键复制链接;队友扫码即进房。`,
+    en: `Room invite QR modal: encodes the invite link into an SVG QR locally via uqr, with the room code in large type and one-tap link copy; teammates scan to join.`,
+    note: { zh: `需传 url / code / onClose。/alg 训练器房间与 /timer 联机对战共用;二维码固定深码白底(不随主题反色),保证扫得出。`, en: `Takes url / code / onClose. Shared by /alg trainer rooms and /timer online battle; the QR stays dark-on-white regardless of theme so it always scans.` },
+  },
+  {
     name: 'DonateModal',
     import: "import DonateModal from '@/components/DonateModal';",
     category: 'more',
