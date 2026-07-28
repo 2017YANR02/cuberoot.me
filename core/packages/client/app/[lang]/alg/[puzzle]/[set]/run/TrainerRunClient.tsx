@@ -900,7 +900,9 @@ export default function TrainerRunClient() {
   // 合练:任一成员是 F2L 类就整场关掉(给 F2L 打乱前加 U 会换成另一个 case)
   // post-AUF 再要求对子相位没被锁死(LSLL:锁了就是死开关,别摆出来)
   // 这里在若干处提前 return 之后,不能用 hook —— 保持裸算(`.some` 只在开关要显示时才跑第二遍)
-  const preAufSupported = (puzzle === '3x3' || puzzle === '2x2')
+  // 记忆模式整对开关都不摆:那边一律不加 AUF(题面要与 case 图逐字一致,见 store 的
+  // `aufOpts`),开关留着就是个拨了不动的死开关。
+  const preAufSupported = (puzzle === '3x3' || puzzle === '2x2') && !isMemo
     && !cases.some(c => c.sticker.kind === 'f2l');
   const postAufSupported = preAufSupported && !cases.some(pairPhaseLocked);
   // 真实概率只有带 meta 的 LL set(zbll / pll / ell / 1lll)有数学定义

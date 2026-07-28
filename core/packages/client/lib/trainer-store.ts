@@ -441,13 +441,23 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     return p;
   };
 
+  /**
+   * 出题时实际用哪套 AUF。
+   *
+   * 记忆模式一律不加 —— 它是「看着图把公式回忆出来」,题面必须与库里那张 case 图逐字对得上。
+   * 首尾随机 U 虽然不改 case,但会把揭示出来的那条公式变成对不上眼前这张图的公式,
+   * 背的人只会以为自己记错了。训练 / 复习照旧随机(练的正是识别,不是背图)。
+   */
+  const aufOpts = (st: { mode: TrainerMode; preAuf: boolean; postAuf: boolean }) =>
+    st.mode === 'memo' ? { preAuf: false, postAuf: false } : { preAuf: st.preAuf, postAuf: st.postAuf };
+
   /** 某个 case 的 setup 到位后,把当时留空的打乱补上(当前 / 预抽两条 / 历史里同一 case)。 */
   const patchScramble = (key: string) => {
     const st = get();
     if (!st.puzzle) return;
     const c = findCaseByKey(st.cases, key);
     if (!c || !c.setup.trim()) return;
-    const gen = () => generateScramble(c, st.puzzle!, st.scrambleKind, { preAuf: st.preAuf, postAuf: st.postAuf });
+    const gen = () => generateScramble(c, st.puzzle!, st.scrambleKind, aufOpts(st));
     const fix = <T extends TrainerHistEntry | null>(e: T): T =>
       (e && e.key === key && !e.scramble ? { ...e, scramble: gen() } as T : e);
     const list = st.hist.list.map(fix);
@@ -537,7 +547,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
 
     const c = findCaseByKey(st.cases, key);
     if (!c) return null;
-    const scramble = generateScramble(c, st.puzzle, st.scrambleKind, { preAuf: st.preAuf, postAuf: st.postAuf });
+    const scramble = generateScramble(c, st.puzzle, st.scrambleKind, aufOpts(st));
     return { entry: { key, name: c.name, scramble, recap: entryRecap }, recapQueue, recapPos, recapSig };
   };
 
@@ -693,7 +703,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     for (const { caseKey: k, index } of res.cases) {
       const c = findCaseByKey(st2.cases, k);
       if (!c) continue;
-      const scramble = generateScramble(c, st2.puzzle, st2.scrambleKind, { preAuf: st2.preAuf, postAuf: st2.postAuf });
+      const scramble = generateScramble(c, st2.puzzle, st2.scrambleKind, aufOpts(st2));
       cases.push({ key: k, name: c.name, scramble, recap: { pos: index + 1, total: res.total } });
       maxClaimed = Math.max(maxClaimed, index + 1);
     }
