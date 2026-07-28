@@ -3,3 +3,6 @@ corpus.txt
 corpus_rest.txt
 out.csv
 *.log
+# 灌库的生成物:全量 ~10 MB + ~7 MB,每跑一次整份都变 —— 别拿它们刷仓库
+lsll_cases.csv
+incremental/

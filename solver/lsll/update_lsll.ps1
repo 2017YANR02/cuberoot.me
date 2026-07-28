@@ -29,7 +29,10 @@ $Root      = $PSScriptRoot
 $RepoRoot  = Resolve-Path (Join-Path $Root '..' '..')
 $IncrDir   = Join-Path $Root 'incremental'
 $Csv       = Join-Path $Root 'lsll_cases.csv'
-$Manifest  = Join-Path $IncrDir 'pg_lsll_manifest.tsv'
+# manifest 记的是「**这个库**已经有哪些行」,所以必须按目标库分开存:同一份 manifest 复用到
+# 两个库,会让先灌过本地的那批在灌线上时被当成「无变化」跳过,线上永远缺那几行(踩过)。
+$ManifestName = if($Local){ 'pg_lsll_manifest_local.tsv' } else { 'pg_lsll_manifest.tsv' }
+$Manifest  = Join-Path $IncrDir $ManifestName
 $DiffTool  = Join-Path $RepoRoot 'core/packages/scramble-stats-build/pg_incremental_diff.mjs'
 $RemoteHost = 'cuberoot'
 New-Item -ItemType Directory -Force $IncrDir | Out-Null
