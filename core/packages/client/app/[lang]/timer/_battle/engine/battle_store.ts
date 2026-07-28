@@ -10,6 +10,7 @@ import type { PlayerState, SolveEntry, Session, BattleMode, BattleLayout, TabNam
 import { PENALTY, LS_PREFIX, MIN_SOLVE_TIME, DEFAULT_PLAYER_KEYS } from './constants';
 import type { PenaltyType } from './constants';
 import { generateScramble, generateScrambleImageUrl } from './scramble_engine';
+import { isScrambleEngineReady, loadScrambleEngine } from './engine_loader';
 import { getEffectiveTimeFromEntry, computeAo5, computeAverage } from '@/app/[lang]/timer/_shared/stats-core';
 import { getSettings } from '@/app/[lang]/timer/_lib/settings';
 import { peekWca, nextWca, prefetchWca, hasWcaSource, type WcaSourceSpec } from '@/app/[lang]/timer/_lib/scramble/wca_pool';
@@ -379,6 +380,12 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   // NOTE: 不变量——1v1 模式下同 puzzle 的玩家 scrambles 必须相等。
   //   即使只针对单侧调用,影响范围也扩展到该玩家所在的整个同 puzzle 组。
   loadNewScramble: (playerId?: number) => {
+    // 引擎(scrMgr)是异步 <script>,任何早于它的调用都会抛 ReferenceError。所有重生打乱的
+    // 路径都汇到这里,所以只在这一处等待,调用方不必各自判空。
+    if (!isScrambleEngineReady()) {
+      void loadScrambleEngine().then(() => get().loadNewScramble(playerId));
+      return;
+    }
     const s = get();
     const n = s.mode === 'solo' ? 1 : s.playerCount;
     const targets = playerId === undefined
@@ -995,10 +1002,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       };
     }
     set({ layout, winners: [], players: newPlayers });
-    // NOTE: scrMgr 可能还没加载（自动横屏检测比脚本加载快）
-    if (typeof window.scrMgr !== 'undefined') {
-      get().loadNewScramble();
-    }
+    get().loadNewScramble();
   },
 
   // NOTE: 参战人数(2~4)。切换 = 开新一局:重置回合/比分,按槽位重新加载各自历史
@@ -1015,10 +1019,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       eventPickerOpen: Array.from({ length: MAX_PLAYERS }, () => false),
     });
     get().loadSolveHistory();
-    // NOTE: scrMgr 可能还没加载(URL 同步比脚本加载快,init 稍后会统一生成)
-    if (typeof window.scrMgr !== 'undefined') {
-      get().loadNewScramble();
-    }
+    get().loadNewScramble();
   },
 
   setInspectionTime: (time: number) => {

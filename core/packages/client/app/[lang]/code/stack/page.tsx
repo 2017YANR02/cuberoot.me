@@ -74,7 +74,8 @@ export default function StackLandingPage() {
           <span className="stack-landing-cursor">_</span>
         </h1>
         <p className="stack-landing-sub">
-          {tr({ zh: '不是"流行清单",是 cuberoot.me 真正用过的 (加上即将用上的、以及认真评估后没选的) 41 件软件 —— 在生产 VM 上跑的、写它的工具链、以及个人接下来要接入的工具。一件一篇,讲来历、讲长处、讲它在这套架构里干什么活。', en: 'Not a "trending list" — 41 pieces of software cuberoot.me actually leans on (plus the ones I am about to adopt, and a few I evaluated and passed on): what runs on the production VM, the authoring chain that writes it, and personal tooling about to enter the loop. One page each: history, strengths, and the exact job it does in this architecture.'
+          {/* 件数从 STACK_TOOLS_META 现算,写死过一次(41)就再没跟上新增的工具 */}
+          {tr({ zh: `不是"流行清单",是 cuberoot.me 真正用过的 (加上即将用上的、以及认真评估后没选的) ${STACK_TOOLS_META.length} 件软件 —— 在生产 VM 上跑的、写它的工具链、以及个人接下来要接入的工具。一件一篇,讲来历、讲长处、讲它在这套架构里干什么活。`, en: `Not a "trending list" — ${STACK_TOOLS_META.length} pieces of software cuberoot.me actually leans on (plus the ones I am about to adopt, and a few I evaluated and passed on): what runs on the production VM, the authoring chain that writes it, and personal tooling about to enter the loop. One page each: history, strengths, and the exact job it does in this architecture.`
         })}
         </p>
         <div className="stack-landing-meta">

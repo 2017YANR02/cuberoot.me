@@ -15,7 +15,7 @@ export const I18NEXT: StackTool = {
   floats: ['t(\'key\')', 'useTranslation', '<Trans>', 'i18n.changeLanguage', 'keys', 'interpolation', 'pluralization', 'namespace', 'fallback', 'LangToggle', 'zh.json', 'en.json'],
   zh: {
     tagline: 'JavaScript 世界的国际化事实标准',
-    role: '整站中英双语主框架。两种 pattern 并存:大段文案走 t(\'key\') + en.json / zh.json, 组件内零散文案走 isZh ? \'X\' : \'Y\' 三元。LangToggle 每页右上角, 默认跟系统语言。',
+    role: '整站中英双语主框架。长文走 t(\'key\') + en.json / zh.json, 组件内零散文案走 tr({en,zh}) / <T>(内联 isZh 三元已被 CI 禁掉)。语言写在路径里:英文裸 URL、中文 /zh 前缀。',
     heroSub: <>把 UI 文案按 key 抽出来, 不同语言一份 JSON, <code>t(&apos;greet.hello&apos;)</code> 在 render 里直接取。Jan Mühlemann 2011 年起手, 14 年里 API 几乎没大变, 现在跨 React / Vue / Svelte / Node 都用得上。</>,
     whatDesc: <>i18next 是一个<strong>独立于框架的 i18n 内核</strong>, react-i18next 是它的 React 绑定。两者一起提供 <code>useTranslation</code> hook、<code>&lt;Trans&gt;</code> 组件、interpolation / plural / namespace / fallback / 懒加载 / SSR 兼容这一整套。够无聊, 因此够稳。</>,
     historyDesc: <>2011 年起手, 当时 JavaScript 国际化几乎是空白, 大家用各种 hack 拼字符串。i18next 走"key + namespace + interpolation + plural"全套, 一站式覆盖, 然后慢慢把 React / Vue / Angular 绑定全部补齐。Hooks API (2018) + Suspense 懒加载 (2020) + TypeScript 类型化 keys (2022) + React 19 兼容 (2024) 是几次主要跳跃。</>,
@@ -29,7 +29,7 @@ export const I18NEXT: StackTool = {
   },
   en: {
     tagline: 'The de-facto i18n stack of JavaScript',
-    role: 'The whole site\'s zh / en bilingual backbone. Two patterns coexist: long-form copy via t(\'key\') + en.json / zh.json, scattered in-component snippets via the inline isZh ? \'X\' : \'Y\' ternary. LangToggle sits top-right on every page, defaults to system language.',
+    role: 'The whole site\'s zh / en bilingual backbone. Long-form copy goes through t(\'key\') + en.json / zh.json; scattered in-component strings use tr({en,zh}) / <T> (the inline isZh ternary is now blocked in CI). Language lives in the path — bare URLs for English, a /zh prefix for Chinese.',
     heroSub: <>Pull UI strings out by key, ship one JSON per language, fetch with <code>t(&apos;greet.hello&apos;)</code> at render time. Jan Mühlemann started it in 2011; fourteen years later the API has barely changed, and it ships across React / Vue / Svelte / Node.</>,
     whatDesc: <>i18next is a <strong>framework-agnostic i18n core</strong>, with react-i18next as its React binding. Together they provide the <code>useTranslation</code> hook, the <code>&lt;Trans&gt;</code> component, interpolation, pluralization, namespaces, fallbacks, lazy-loading, and SSR — the whole package. Boring on purpose, therefore stable.</>,
     historyDesc: <>2011: JS i18n was essentially empty, everyone hand-rolled string concat hacks. i18next shipped the full "key + namespace + interpolation + plural" stack at once, then filled in the React / Vue / Angular bindings. The hooks API (2018), Suspense lazy-loading (2020), type-safe keys (2022), and React 19 compat (2024) are the main paradigm jumps.</>,
