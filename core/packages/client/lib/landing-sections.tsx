@@ -6,7 +6,7 @@ import {
   Film, ScanSearch, BookOpen, Shuffle, Library, BookA,
   Compass, Grid2x2, Trophy, Timer as TimerIcon, ImagePlus, Code as CodeIcon,
   Brain, Box, Sigma, Scale, Sprout, Brush, MessagesSquare, Shapes, Blocks, Eye,
-  Swords, type LucideIcon,
+  type LucideIcon,
 } from 'lucide-react';
 import { type LandingSearchCard } from '@/components/LandingSearch';
 
@@ -23,8 +23,6 @@ export const TEXTS: Record<string, { en: string; zh: string
   algTrainer:      { en: 'mihlefeld Trainer', zh: 'mihlefeld 训练器'
 },
   hthGrapher:      { en: 'Calculator', zh: '计算器'
-},
-  battle:          { en: 'Battle', zh: '对战'
 },
   viz:             { en: 'Distribution', zh: '分布'
 },
@@ -119,14 +117,13 @@ export const SECTIONS: Section[] = [
   {
     id: 'train',
     eyebrow: { en: 'TRAIN', zh: '训练' },
-    title:   { en: 'Recall, look ahead, race.', zh: '记忆、预判、对战。'
+    title:   { en: 'Recall, look ahead, drill.', zh: '记忆、预判、背公式。'
     },
-    sub:     { en: 'Memory drills, lookahead practice, head-to-head races, plus two classic trainers.', zh: '盲拧记忆、预判练习、双人对战,外加两套经典训练器。'
+    sub:     { en: 'Memory drills and lookahead practice, plus two classic algorithm trainers. Head-to-head battles live inside the timer.', zh: '盲拧记忆、预判练习,外加两套经典公式训练器;双人对战在计时器里。'
     },
     cards: [
       { id: 'memo',     href: '/memo',         internal: true, tier: 'standard', Icon: Brain,     nameKey: 'memo' },
       { id: 'predict',  href: '/predict',      internal: true, tier: 'standard', Icon: Eye,       nameKey: 'predict' },
-      { id: 'battle',   href: '/battle',       internal: true, tier: 'standard', Icon: Swords,    nameKey: 'battle' },
       { id: 'trainer',  href: '/alg-trainers', internal: true, tier: 'standard', iconImg: '/icons/upstream/algtrainer.png', nameKey: 'algTrainer' },
       { id: 'cstimer',  href: '/cstimer',      internal: true, tier: 'standard', nameKey: 'cstimer', iconImg: '/cstimer_logo.png' },
     ],
