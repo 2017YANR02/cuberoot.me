@@ -30,6 +30,7 @@ import PlaybackBar from '@/components/PlaybackBar';
 import { tr } from '@/i18n/tr';
 import { CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '@/lib/cube-colors';
 import { CUBE_ORIENTATIONS, orientedFaceColors } from '@/lib/cube-orientation';
+import CubeOrientationSelect from '@/components/CubeOrientationSelect';
 import {
   generateChallenge, parseMoveInput, FACE_LETTERS, faceletFace,
   MOVE_COUNT_MIN, MOVE_COUNT_MAX, CROSS_EDGES_MIN, CROSS_EDGES_MAX, CUSTOM_MOVES_MAX,
@@ -408,13 +409,11 @@ function PredictPageInner() {
 
         <label className="predict-control">
           <span>{tr({ zh: '拿方朝向', en: 'Holding' })}</span>
-          <select
+          <CubeOrientationSelect
             className="predict-select"
             value={orientation}
-            onChange={(e) => void setOrientation(e.target.value)}
-          >
-            {CUBE_ORIENTATIONS.map((o) => <option key={o.label} value={o.value}>{o.label}</option>)}
-          </select>
+            onChange={(v) => void setOrientation(v)}
+          />
         </label>
       </div>
 
