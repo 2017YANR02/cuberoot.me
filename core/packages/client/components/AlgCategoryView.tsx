@@ -244,9 +244,11 @@ function SubgroupIndex({
               href={`/alg/${puzzle}/${set}/${slug}`}
               // zbls 的顶层组分的是 F2L 对(A+ / A− …),顶层朝向留给组内的 case 分 ——
               // 组封面画上黄色只会让 A+ 那 8 张看着都一样,所以这里就画 F2L(顶层灰)。
+              /* 组封面一页几十张,窄屏整页能到 10000px 以上(实测 1lll / ollcp)。懒加载在桌面
+                 是 no-op(整页都落在 Chrome 的预加载阈值内),手机首屏请求实测能砍掉三到五成。 */
               thumb={useF2lThumb
-                ? <VisualCube setup={sample.setup} algorithm={firstAlg} view="f2l" size={110} />
-                : <VisualCube setup={sample.setup} algorithm={firstAlg} view="oll" size={110} />}
+                ? <VisualCube setup={sample.setup} algorithm={firstAlg} view="f2l" size={110} loading="lazy" />
+                : <VisualCube setup={sample.setup} algorithm={firstAlg} view="oll" size={110} loading="lazy" />}
               title={ollName ?? (useF2lThumb ? (dispTop || tr({ zh: '其他', en: 'Other' })) : `${set.toUpperCase()} ${dispTop || tr({ zh: '其他', en: 'Other' })}`)}
               count={total}
               sub={ollName ? `${set.toUpperCase()} ${dispTop}` : undefined}
@@ -284,7 +286,7 @@ function SubgroupIndex({
                 <AlgCard
                   key={subLabel}
                   href={`/alg/${puzzle}/${set}/${subSlug}`}
-                  thumb={<CaseThumb puzzle={puzzle} set={set} sticker={sample.sticker} alg={subFirstAlg} setup={sample.setup} size={110} mask={pickerMask} />}
+                  thumb={<CaseThumb puzzle={puzzle} set={set} sticker={sample.sticker} alg={subFirstAlg} setup={sample.setup} size={110} mask={pickerMask} loading="lazy" />}
                   title={set === 'zbll' ? displayZbllToken(subLabel) : subLabel}
                   count={count}
                 />
@@ -774,7 +776,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                 <AlgCard
                   key={subLabel}
                   href={`/alg/${puzzleParam}/${set}/${sub2Slug}`}
-                  thumb={<CaseThumb puzzle={puzzleParam as AlgPuzzle} set={set} sticker={sample.sticker} alg={firstAlg} setup={sample.setup} size={110} mask={pickerMask} />}
+                  /* 子组卡片一页几十张,窄屏下整页能到 10000px 以上(实测 1lll / ollcp)。
+                     懒加载在桌面是 no-op(整页都在 Chrome 阈值内),但手机首屏请求实测能砍掉三到五成。 */
+                  thumb={<CaseThumb puzzle={puzzleParam as AlgPuzzle} set={set} sticker={sample.sticker} alg={firstAlg} setup={sample.setup} size={110} mask={pickerMask} loading="lazy" />}
                   title={set === 'zbll' ? displayZbllToken(subLabel) : subLabel}
                   count={count}
                 />
@@ -851,6 +855,10 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                             sticker={c.sticker}
                             alg={firstAlg || c.setup || ''}
                             setup={oriAdjustSetup(c.setup, oriIdx)}
+                            /* case 网格不分页,大集一次铺满(1lll 3397 张 / zbll 472 张)。
+                               懒加载让视口外的图根本不发请求 —— 这是长网格的常规做法,
+                               也别改成 local 本地渲染:那会把几千次渲染压进主线程,比发请求更糟。 */
+                            loading="lazy"
                           />
                         </div>
                         <div className="alg-case-info">

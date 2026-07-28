@@ -12,6 +12,12 @@ const STATIC_ORIGIN = (() => {
   return process.env.NODE_ENV === 'development' ? '' : 'https://static.cuberoot.me';
 })();
 
+// Browser-facing counterpart of STATIC_ORIGIN, for <link rel="dns-prefetch">.
+// See BROWSER_API_ORIGIN in lib/api-base for why the private const won't do.
+export const BROWSER_STATIC_ORIGIN =
+  process.env.NEXT_PUBLIC_STATIC_ORIGIN
+  || (process.env.NODE_ENV === 'development' ? '' : 'https://static.cuberoot.me');
+
 // Accepts a full '/stats/...' path (or a bare 'foo.json'); returns the origin-
 // qualified URL. Prod → https://static.cuberoot.me/stats/...; dev → /stats/...
 export function statsUrl(path: string): string {
