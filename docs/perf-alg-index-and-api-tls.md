@@ -1,21 +1,125 @@
-# /alg/[puzzle] 首屏缩略图慢
+# 全站首屏取数审计
 
-起因:`https://cuberoot.me/zh/alg/3x3` 的 19 张魔方缩略图不是瞬间出现,肉眼可见地一张张往外蹦,
-旁边那张 LSLL 卡片却永远第一个到位。
+起因:`https://cuberoot.me/zh/alg/3x3` 的 19 张魔方图不是瞬间出现,一张张往外蹦。
+查下去发现这不是单页问题,是一套模式在全站复制。本文档:
 
-结论:**是前端的数据形状 + 双段瀑布问题(§1)**。
-调查途中一度以为 API 源站有 15–33s 的 TLS 握手抖动,后证实是**本机代理造成的测量假象**(§2),
-源站本身健康。另有两个顺手发现的独立 bug 记在 §3。
-
-状态:§1 待动工;§2 已结案(非站点问题);§3 未开工。
+- §0 判据(五条业界标准)
+- §1 全站扫描结果 + 线上日志实证
+- §2 逐条整改项与优先级
+- §3 `/alg/[puzzle]` 详案(最初的那页)
+- §4 已结案:所谓"API 握手 15–33s"是本机代理造成的测量假象
+- §5 顺手发现的独立 bug
 
 ---
 
-## §1 /alg/[puzzle] 首屏
+## §0 判据
 
-### 1.1 现状链路
+索引页 / 列表页的通用标准,按优先级:
 
-`core/packages/client/app/[lang]/alg/[puzzle]/AlgPuzzleClient.tsx:79-98`
+1. **列表接口 ≠ 详情接口** —— 列表只取 `id / 标题 / 数量 / 封面`,详情数据留到详情页。
+   拿详情接口渲染列表叫 over-fetching,是教科书级反模式。列表接口必须有分页。
+2. **首屏内容不在 `useEffect` 里取** —— 构建期或服务端就填好。
+   `useEffect` 取数 = HTML 到 → JS 下载 → JS 执行 → 发请求 → 等响应 → 才渲染,五个串行环节。
+3. **缩略图是静态资源,不是接口调用** —— 预生成 / 内联,长缓存,首屏之外才 `loading="lazy"`,
+   写死宽高防布局跳动。绝不在请求时让应用服务器现算一张图。
+4. **不许有"全到齐才显示"的屏障** —— 服务端流式,或客户端逐个到逐个显示。
+5. **关键资源尽量同源** —— 跨域要多付 DNS + TCP + TLS。避不开就 `preconnect`。
+
+共同内核:**把工作从用户等待的那一刻往前挪。**
+
+---
+
+## §1 扫描结果
+
+范围 `core/packages/client`:230 个 `page.tsx`,其中 **186 个是 `'use client'`**。
+
+### 1.1 线上访问日志实证(`api.cuberoot.me`,2026-07-26 03:14 → 07-28 17:28,共 2.6 天)
+
+总请求 363,077 条。按**请求数**排:
+
+| 端点 | 请求数 | 占比 |
+|---|---:|---:|
+| **`/v1/visualcube.svg`** | **70,035** | **19.3%** |
+| `/v1/feedback/mine/unread` | 42,331 | 11.7% |
+| `/v1/notifications/unread` | 37,152 | 10.2% |
+| `/v1/recon/list` | 16,850 | 4.6% |
+| `/v1/alg/sets/:p/:s` | 11,326 | 3.1% |
+
+**整个 API 每五个请求就有一个是在现场画一张魔方缩略图。** 单客户端峰值 **1,111 次/分钟**
+(一次打开大公式集页面)。这些图浏览器本地画只要 ~1.4 ms/张。
+
+按**流量**排:
+
+| 端点 | 流量 | 请求数 | 均值 |
+|---|---:|---:|---:|
+| `/v1/recon/list` | **614.2 MB** | 16,850 | 36 KB |
+| `/v1/alg/sets/:p/:s` | **484.4 MB** | 11,326 | 43 KB |
+| `/v1/visualcube.svg` | 106.5 MB | 70,035 | 1.5 KB |
+| `/v1/recon/wca-results` | 46.3 MB | 3,953 | 12 KB |
+
+前两名合计 **1.1 GB / 2.6 天**,占 API 出口流量约七成 —— **两个都是"列表页拉了详情数据"**。
+
+> 注:`visualcube.svg` 已正确 gzip(单张 4,961 B → 867 B),压缩不是问题;问题是这 7 万次请求
+> 本来一次都不该发。
+
+### 1.2 五条标准的违规面
+
+| 标准 | 违规点 | 证据 |
+|---|---|---|
+| **1 列表≠详情** | `/alg/[puzzle]` 发 19 次详情请求(928 KB)只为拿 19 个封面 + 数量;现成索引接口 `GET /v1/alg/sets` 只要 **1,311 B** —— **700 倍差距** | 直连实测 |
+| | `/v1/recon/list` **无分页**,`SELECT ... ORDER BY id DESC` 全量返回,183 KB/次,且 `no-store` 不可缓存 | `routes/recon.ts:78-110` |
+| | `/wca/comp` 日历列表拉 `all_past_comps.json` **1.92 MB(gzip 后)** | `use_calendar_data.ts:29` |
+| **2 首屏不 useEffect** | 32 个组件在 `useEffect` 里取首屏数据 | 全仓 grep |
+| | 其中内容静态、可构建期就绪的:`/alg/*` 系列、`/wca/comp`、`/tutorial`、`/scramble/stats`、`/wca` hub | |
+| | 另一类(`/wca/results`、`/grand-slam`、`/success-rate`、`/cohort-ranks`、`/all-events-done`、`/fun-stats`)是筛选驱动,客户端取数**合理**,但默认视图可以服务端渲染 | |
+| **3 缩略图静态化** | 17 处 `<CaseThumb>` 调用点,**只有 2 处**传了 `local`(TrainerRunClient、MemoryTrainer),其余全走接口 | 全仓 grep |
+| | 网格页**无分页、无虚拟化**:`/alg/3x3/oll` 57 张、`zbll` 472、`comm-edge` 440、`ollcp` 342、`1lll` 3,397 | `AlgCategoryView.tsx` |
+| | 全站 58 个 `<img>`,只有 15 个带 `loading="lazy"` | 全仓 grep |
+| **4 无屏障** | 28 个文件用 `Promise.all`;确证的首屏屏障:`AlgPuzzleClient.tsx:82` | 需逐个甄别 |
+| **5 同源/preconnect** | `api.` 与 `static.` 均为独立域,root layout 只 `preload` 了字体,**全站零 `preconnect`** | `app/layout.tsx:61-67` |
+
+---
+
+## §2 整改项与优先级
+
+按 **(收益 ÷ 成本)** 排,不是按改动量排。
+
+### P0 — 一行到几十行,立竿见影
+
+1. **加 `preconnect`**(`app/layout.tsx`)—— 指向 `api.` 与 `static.`。所有取数页面省一轮
+   DNS+TCP+TLS。成本:2 行。
+2. **`CaseThumb` 默认 `local`** —— 干掉 `/v1/visualcube.svg` 的绝大部分调用,
+   预期砍掉全 API **约 19% 的请求量**。需给"真要走接口"的少数场景留 `local={false}` 出口。
+3. **拆 `AlgPuzzleClient` 的 `Promise.all` 屏障** —— 逐个 resolve 逐个显示。
+
+### P1 — 结构性,收益最大
+
+4. **`/alg/[puzzle]` 改走索引接口或构建期常量** —— 928 KB → 几 KB。详见 §3。
+5. **`/v1/recon/list` 加分页(keyset/cursor)** —— API 带宽第一名,614 MB / 2.6 天。
+   `no-store` 是因为可见性随查看者变,合理;正因如此更需要分页。
+6. **大公式集网格分页或虚拟化** —— `1lll` 3,397 张、`zbll` 472 张一次性铺开,
+   即使改成本地渲染也是 3,397 × 1.4 ms ≈ 4.8 s 主线程。**本地渲染不能代替分页,两件事都要做。**
+
+### P2 — 收益明确但工程量大
+
+7. **`/wca/comp` 的 1.92 MB** —— 日历首屏只需要当前月份 + 筛选器选项。
+   拆成"按年/按月分片"或服务端预聚合。
+8. **静态内容页转 SSG/服务端渲染** —— `/tutorial` 目录、`/scramble/stats`、`/wca` hub。
+9. **筛选驱动页的默认视图服务端化** —— `/wca/results` 等,首屏默认参数在服务端渲染好,
+   用户改筛选才走客户端。
+
+### P3 — 检查项,未必有问题
+
+10. `feedback/mine/unread` + `notifications/unread` 合计 **79,483 次 / 2.6 天 = 21.9%** 的请求量。
+    两个轮询端点。确认轮询间隔是否合理、能否合并成一个端点或改推送。
+
+---
+
+## §3 `/alg/[puzzle]` 详案
+
+### 3.1 现状链路
+
+`app/[lang]/alg/[puzzle]/AlgPuzzleClient.tsx:79-98`
 
 ```
 SSG 壳渲染(无图)
@@ -24,26 +128,11 @@ SSG 壳渲染(无图)
   → setState → 19 个 <img src=api.cuberoot.me/v1/visualcube.svg>   ← 第二段瀑布
 ```
 
-代码只用到 `d.cases.length` 和 `d.cases[0]`,却把整套公式都拉了下来。
+只用到 `d.cases.length` 和 `d.cases[0]`,却把整套公式都拉了下来。
 
-### 1.2 实测(2026-07-28,gzip 后,**直连**)
+### 3.2 实测(2026-07-28,gzip,**直连**)
 
-19 套合计 **950,474 B ≈ 928 KB**,换来 19 个数字 + 19 张缩略图:
-
-| 套 | 大小 | | 套 | 大小 |
-|---|---|---|---|---|
-| `1lll` | **660,617 B** | | `ell` | 6,481 B |
-| `zbll` | 138,928 B | | `wv` | 5,854 B |
-| `ollcp` | 31,487 B | | `cls` | 5,643 B |
-| `zbls` | 28,547 B | | `sbls` | 4,322 B |
-| `vls` | 14,600 B | | `coll` | 4,127 B |
-| `f2l` | 12,379 B | | `cmll` | 4,105 B |
-| `adv-f2l` | 9,621 B | | `fruf` | 2,708 B |
-| `pll` | 8,586 B | | `anti-pll` | 2,654 B |
-| `oll` | 7,172 B | | `sv` | 1,774 B |
-| | | | `eo4a` | 869 B |
-
-单 `1lll` 一套就占了全部流量的 **70%**。
+19 套合计 **950,474 B ≈ 928 KB**,其中 `1lll` 单套 **660,617 B**,占 70%。
 
 墙钟(直连 + 复用连接并发,3 次):
 
@@ -51,109 +140,67 @@ SSG 壳渲染(无图)
 JSON 阶段 569–672 ms   →   SVG 阶段 344–361 ms   →   串行合计 913–1033 ms
 ```
 
-本地渲染成本对照(`renderFromSimpleQuery`,Node 冷跑含 JIT):
+本地渲染对照(`renderFromSimpleQuery`,Node 冷跑含 JIT):**19 张 96px = 25.7 ms**。
 
-```
-19 张 96px 立方体:25.7 ms      平均 SVG 6,713 bytes
-```
-
-即:**当前这一秒的等待,可以换成 26 毫秒的主线程工作**。而且以上是理想网络下的数字
-(源站 RTT ≈ 15ms),换成慢网 / 移动网 / 远距离用户会成比例放大。
-
-### 1.3 四个可分别修的缺陷
-
-1. **数据形状错** —— 为 count + 封面拉全库(§1.2)。
-2. **`Promise.all` 屏障** —— 最慢一套没回来,19 张图一张都不显示。
-3. **第二段瀑布** —— JSON 全到齐后才开始发 19 个 `visualcube.svg` 请求,又多一轮 RTT。
-   `components/VisualCube.tsx:39-57` 早就有 `local` 模式(同一个渲染函数,画面完全一致),这页没传。
-4. **对照组** —— 旁边 LSLL 卡走 `FaceletsCube` + 本地算的 facelets,零网络,所以它永远先到。
-   这就是截图里"一张先出、其余后到"的观感来源。
-
-### 1.4 候选方案
+### 3.3 方案
 
 | | 做法 | 效果 | 代价 |
 |---|---|---|---|
-| **A** | thumb 传 `local` + 拆掉 `Promise.all` 改逐个 setState | 砍掉整个 SVG 阶段(−350ms);图逐张出而非齐步走 | 最小改动;图仍等各自 JSON |
-| **B** | 扩已有 `GET /v1/alg/sets`(`packages/server/src/routes/alg_sets.ts:87`),用 `DISTINCT ON` 带上每套首个 case 的 `sticker/setup/alg` | 19 请求 → 1 请求,928 KB → 几 KB,图与数字同帧 | 改 server + 需 push |
-| **C** | 把封面 case + count 烤进构建期常量,配 `local` 渲染 | **首帧就有图,零网络** | 引入需守卫的快照(照搬 `icons-drift` 的 CI 漂移检查) |
+| **A** | `local` 渲染 + 拆屏障 | 砍掉 SVG 阶段(−350ms),图逐张出 | 最小 |
+| **B** | 扩 `GET /v1/alg/sets`(`routes/alg_sets.ts:87`),`DISTINCT ON` 带上每套首个 case | 19 请求 → 1 请求,928 KB → ~2 KB | 改 server + push |
+| **C** | 封面 + count 烤进构建期常量,配 `local` | **首帧就有图,零网络** | 需 CI 漂移守卫(照搬 `icons-drift`) |
 
-倾向:**C + A 的屏障修复**;B 留给 `/alg/progress` 那类真需要 count 的地方。
-
-顺带:`1lll` 单套 660 KB,凡是真要进 `/alg/3x3/1lll` 的页面都得吞一次,值得单独看看能不能分页 / 瘦身。
+倾向 **C + A**。与"公式数据单一源在 PG"不冲突:标准做法是构建时从库里拉、内容变了触发重建、
+CI 加漂移检查 —— 烤进构建不是复制真相,只是把读取时机往前挪。
 
 ---
 
-## §2 已结案:所谓"API 源站握手 15–33s"是本机代理造成的假象
+## §4 已结案:所谓"API 源站握手 15–33s"是本机代理造成的假象
 
-### 2.1 曾经的观测
+早期采样里 `api.cuberoot.me` 的 TLS 握手出现 `1.02 / 31.65 / 32.94 / 14.72` 秒,
+且数值精确落在 TCP RTO 指数退避的和上(1+2+4+8=15,1+2+4+8+16=31)。
 
-早期采样里,`api.cuberoot.me` 的 TLS 握手(`time_appconnect`)出现:
+**逐个证伪**:自身负载压垮(19 并发肥请求下握手 1.01–1.06s,与空闲无差异)、
+PG 连接池(卡点在 TLS 层还没到应用)、恒定路径劣化(70 次采样全 1.02s)、
+PMTU 黑洞(`ping -f` 1472 B 全通;证书链 3 张 / DER ≈ 4.2 KB / RSA-2048)、OOM(`dmesg` 无记录)。
 
-```
-1.02  31.65  32.94  14.72  1.02  1.03 ...
-```
-
-且 14.72 / 31.65 / 32.94 精确落在 TCP RTO 指数退避的和上(1+2+4+8=15,1+2+4+8+16=31),
-一度看起来像握手报文被丢弃后走重传退避。
-
-### 2.2 逐个证伪
-
-| 假设 | 检验 | 结论 |
-|---|---|---|
-| 源站被自己的页面压垮 | 空闲 8 次 vs 19 并发肥请求下 10 次握手对照 | **证伪**。burst 期间 1.01–1.06s,与空闲无差异 |
-| PG 连接池耗尽 | 卡在 `appconnect` 而非 `starttransfer` | **不成立**,卡点在 TLS 层,还没到应用 |
-| 恒定的跨境路径劣化 | 14 轮 × 5 目标 = 70 次采样 | **证伪**,全部 1.02s 稳定 |
-| PMTU 黑洞(证书 flight 是握手里唯一的多满包段) | `ping -f` 到 1472 B payload 全通;证书链 3 张 / DER ≈ 4.2 KB / RSA-2048 | **证伪** |
-| 源站 OOM kill | `dmesg` 无 `oom-kill` | 无证据 |
-
-### 2.3 真因
-
-`time_connect` 恒为 **2 ms** 而 `time_appconnect` 要 **1 s** —— TCP 三次握手 2ms 意味着 RTT ≈ 2ms,
-那 TLS 不可能要一秒。顺着这个矛盾查到本机:
-
-```
-HTTP_PROXY / HTTPS_PROXY / ALL_PROXY = http://127.0.0.1:10808   (xray)
-Windows 系统代理 ProxyEnable=1, ProxyServer=127.0.0.1:10808
-```
-
-**全部测量都走了本机 xray 隧道**,`time_connect` 量的是到 127.0.0.1 的距离。同一个 API 直连对比:
+**真因**:`time_connect` 恒为 2 ms 而 `time_appconnect` 要 1 s —— TCP 握手 2ms 意味着 RTT≈2ms,
+TLS 不可能要一秒。查到本机 `HTTP_PROXY/HTTPS_PROXY/ALL_PROXY` 与 Windows 系统代理
+全部指向 `http://127.0.0.1:10808`(xray),**所有测量都走了隧道**。
 
 | | DNS | TCP | TLS | TTFB |
 |---|---|---|---|---|
 | **直连** | 10–15 ms | ~15 ms | +28 ms | **68–80 ms** |
 | **走 xray** | — | 1.7 ms(到本机) | 1.02 s | **1.36–1.41 s** |
 
-源站侧回环握手(`--resolve api.cuberoot.me:443:127.0.0.1`,排除一切网络路径):**9–24 ms**。
+源站侧回环握手(`--resolve` 到 127.0.0.1,排除一切网络路径):**9–24 ms**。源站健康。
 
-结论:**源站健康**,15–33s 卡顿是 xray 隧道抖动。已放弃的行动项:开 `ssl_stapling`
-(反而会让证书 flight 变大,且现代浏览器基本不做 OCSP 查询)、给 api 加边缘缓存层。
+**长期影响**:本机浏览器同样走系统代理,所以在这台机器上观察到的站点延迟自带
++1.3s/连接的税,外加偶发 15–33s 卡顿(8 次新握手中 3 次)。
+→ 规矩:本机测站点性能一律 `curl --noproxy '*'`;Playwright 量加载速度要显式绕过代理。
 
-### 2.4 但对本机测量的影响是长期的
-
-用户浏览器同样走系统代理,所以**在这台机器上用浏览器观察到的任何站点延迟,都自带
-+1.3s/连接的税,外加偶发 15–33s 卡顿**(观测到约 8 次新握手里 3 次)。
-
-→ 规矩:本机测站点性能一律 `curl --noproxy '*'`;Playwright 量加载速度要显式绕过代理,
-否则量的是隧道不是站点。
+已放弃的行动项:开 `ssl_stapling`(反而增大证书 flight,现代浏览器基本不查 OCSP)、
+给 api 加边缘缓存层。
 
 ---
 
-## §3 顺手发现的两个独立 bug(未开工)
+## §5 顺手发现的独立 bug(未开工)
 
 1. **`[cubing-live] L2 write failed <comp>/wca_db: interval field value out of range: "2592000000 milliseconds"`**
-   —— `core-api` 错误日志里持续刷屏。30 天被当成毫秒数塞进 PG `interval`,
-   导致**这层 L2 缓存写入全部失败**,等于一直形同虚设。
+   —— `core-api` 错误日志持续刷屏。30 天被当成毫秒数塞进 PG `interval`,
+   导致**这层 L2 缓存写入全部失败**,一直形同虚设。
 2. **`[cubing-record] previous cycle still running, skip this tick`** —— 后台轮询周期跑不完,持续跳票。
 
-另记两条基建事实:
+两条基建事实:
 
-- api vhost 实际住在源站的 `vhost.d/www.cuberoot.me.conf` 里,**不在 repo 的 `ops/nginx/`**
-  → 改 api 的 nginx 没有 `deploy_nginx.yml` 覆盖,属于配置漂移,值得补进仓库。
+- api vhost 实际住在源站的 `vhost.d/www.cuberoot.me.conf`,**不在 repo 的 `ops/nginx/`**
+  → 改 api 的 nginx 没有 `deploy_nginx.yml` 覆盖,属于配置漂移。
 - `pm2` 显示 `core-api` 累计重启 **244** 次(`unstable restarts 0`,无 OOM kill),
-  大概率是每次 deploy 触发,但值得确认没混入静默崩溃。
+  大概率每次 deploy 触发,值得确认没混入静默崩溃。
 
 ---
 
 ## 变更记录
 
-- 2026-07-28 立档。§1 完成测量与方案对比(待动工);§2 结案(测量假象);§3 记录待开工。
+- 2026-07-28 立档。原为单页(`/alg/[puzzle]`)性能记录,扩为全站审计。
+  §1 完成扫描 + 线上日志实证;§2 列出 P0–P3;§4 结案。全部待动工。
