@@ -37,6 +37,7 @@ import SetProgressStrip from '@/app/[lang]/alg/_trainer/SetProgressStrip';
 import MixSetPicker from '@/app/[lang]/alg/_trainer/MixSetPicker';
 import { resolveAlgPuzzle } from '@/app/[lang]/alg/_trainer/events';
 import { useAlgSrs, autoMarkFromSrs } from '@/lib/alg-srs-store';
+import { useAlgSweep } from '@/lib/alg-sweep-store';
 import { gradeFromSolve } from '@/lib/alg-srs';
 import '@/app/[lang]/alg/_trainer/trainer.css';
 import '@/app/[lang]/alg/_trainer/memory.css';
@@ -648,19 +649,24 @@ export default function TrainerRunClient() {
   const lastGradedSolve = useRef(-1);
   useEffect(() => {
     if (!srsFromSolves || solves.length === 0) return;
+    // 训练模式(随机抽)不产生任何持久进度:LSLL 一套 149,188 个 case,随机刷出来的
+    // 排期既过不完一轮、也永远抽不全,只会把每用户 20,000 条的记录额度白白吃掉。
+    // 指针照常前进 —— 否则中途切到复习模式会把之前随机刷的那一串补记一遍。
+    const skip = mode === 'train';
     const okMs = solves.filter(s => s.penalty === 'ok').map(s => s.ms).sort((a, b) => a - b);
     const median = okMs.length >= 3 ? okMs[Math.floor(okMs.length / 2)] : null;
     const now = Date.now();
     for (let i = Math.max(0, lastGradedSolve.current + 1); i < solves.length; i++) {
       const sv = solves[i];
       lastGradedSolve.current = i;
+      if (skip) continue;
       const rec = useAlgSrs.getState().recs[sv.caseKey];
       if (rec && rec.n > 0 && rec.d > now) continue;   // 这张卡今天已经排过期了
       const g = gradeFromSolve(sv.ms, sv.penalty, median);
       const next = gradeSrs(sv.caseKey, g);
       if (useTrainerStore.getState().srsAutoMark) autoMarkFromSrs(sv.caseKey, next, g);
     }
-  }, [solves, srsFromSolves, gradeSrs]);
+  }, [solves, srsFromSolves, gradeSrs, mode]);
   // 换 set 重新计数(成绩列表是 per-set 的)
   useEffect(() => { lastGradedSolve.current = solves.length - 1; }, [storePuzzle, storeSet]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -701,6 +707,34 @@ export default function TrainerRunClient() {
     suggestDismissed.current.add(`${suggest.k}|${suggest.kind}`);
     setSuggest(null);
   };
+
+  // ── 过遍进度(口径见 lib/alg-sweep.ts)────────────────────────────
+  // 合练不记:`?scope=` 是某一套内部的分组,跨集合练没有「范围」这回事。
+  const sweepScope = isMix ? null : (virtual ? virtualScope : scopeSlug);
+  const loadSweep = useAlgSweep(s => s.loadSweep);
+  const recordSweep = useAlgSweep(s => s.recordSweep);
+  const moveSweepCursor = useAlgSweep(s => s.moveCursor);
+  useEffect(() => {
+    if (!puzzle || !meta || isMix) return;
+    loadSweep(puzzle, setSlug);
+  }, [puzzle, meta, isMix, setSlug, loadSweep]);
+
+  // 游标只在复习模式下走 —— 训练模式是随机抽,「过到第几个」根本没有定义。
+  const sweepAt = mode === 'recap' && hist.idx >= 0 ? hist.list[hist.idx]?.recap : undefined;
+  const sweepPos = sweepAt?.pos, sweepTotal = sweepAt?.total;
+  useEffect(() => {
+    if (isMix || sweepPos == null || sweepTotal == null) return;
+    moveSweepCursor(sweepScope, sweepPos, sweepTotal);
+  }, [isMix, sweepPos, sweepTotal, sweepScope, moveSweepCursor]);
+
+  // 整轮过完:记一笔,并折叠这一轮里没手动标过的记忆排期(水位之下不折,小集行为不变)。
+  const sweepRecorded = useRef(false);
+  useEffect(() => {
+    if (!recapRoundDone) { sweepRecorded.current = false; return; }
+    if (isMix || mode !== 'recap' || sweepRecorded.current) return;
+    sweepRecorded.current = true;   // 弹窗期间的重渲染别记成好几轮
+    recordSweep(sweepScope, pool);
+  }, [recapRoundDone, isMix, mode, sweepScope, pool, recordSweep]);
 
   if (!puzzle || !meta) {
     // 合练成员不够:直接给选集器(SSG 壳读不到 query,挂载前先「加载中」免闪)

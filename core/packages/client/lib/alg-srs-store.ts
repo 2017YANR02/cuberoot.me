@@ -386,6 +386,58 @@ export async function resetSetSrs(puzzle: string, setSlug: string): Promise<void
   if (st.puzzle === puzzle && st.set === setSlug && !st.sets) useAlgSrs.setState({ recs: {} });
 }
 
+// ── 折叠(整轮过完后丢掉那一轮的排期,见 `alg-sweep.ts` 文件头)────────────
+
+/**
+ * 本地丢掉这批 case 的记忆记录。**只动本地** —— 云端那一半由
+ * `POST /v1/alg/sweep/:p/:s/fold` 真删行(它会再查一次标记做保险)。
+ *
+ * 顺手把这批 key 从防抖队列里摘掉:否则刚删完,队列里那几条又飞上去把行建回来。
+ */
+export function foldLocalSrs(puzzle: string, setSlug: string, keys: readonly string[]): number {
+  if (keys.length === 0) return 0;
+  const drop = new Set(keys);
+  for (const [pk, v] of [...pending]) {
+    if (v.p === puzzle && v.s === setSlug && drop.has(v.item.k)) pending.delete(pk);
+  }
+  const local = loadLocalRecs(puzzle, setSlug);
+  let n = 0;
+  for (const k of drop) if (k in local) { delete local[k]; n++; }
+  if (n === 0) return 0;
+  persistLocalRecs(puzzle, setSlug, local);
+  const st = useAlgSrs.getState();
+  if (st.puzzle === puzzle && st.set === setSlug && !st.sets) {
+    const next = { ...st.recs };
+    for (const k of drop) delete next[k];
+    useAlgSrs.setState({ recs: next });
+  }
+  return n;
+}
+
+/**
+ * 多设备收敛:折叠是**真删行**,而另一台设备本地还留着那 302 条 —— 下次合并它会把这些
+ * 「本地独有」的记录原样传回云端,折叠就白做了。
+ *
+ * 所以拿服务器记的「最后一次折叠时刻」当界:上次复习早于它、且**没有手动标记**的本地
+ * 记录,判定为属于已折叠的轮,直接丢弃、不回传。返回丢了几条。
+ *
+ * 已知边界:两台设备同时在练不同轮时,A 完成第 7 轮触发折叠,B 在那之前打的第 8 轮的分
+ * 也会被这条规则误伤(t < foldedAt)。代价是那一轮的排期,「过完了」本身不丢;
+ * 换掉它要给每条记录加 4-8 字节的轮次标签,不值。
+ */
+export function pruneFoldedSrs(
+  puzzle: string, setSlug: string, foldedAt: number, marked: ReadonlySet<string>,
+): number {
+  if (foldedAt <= 0) return 0;
+  const local = loadLocalRecs(puzzle, setSlug);
+  const gone: string[] = [];
+  for (const k in local) {
+    if (marked.has(k)) continue;
+    if (local[k].t < foldedAt) gone.push(k);
+  }
+  return foldLocalSrs(puzzle, setSlug, gone);
+}
+
 /**
  * 清空复习日历 / 连续天数(每日日志)。只有「重置全部」才动它 —— 单套重置不碰,
  * 那是跨 set 的活动流水。云端合并语义是同日取较大值,归零写不掉,只能真删。

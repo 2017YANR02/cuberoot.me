@@ -579,6 +579,27 @@ CREATE TABLE alg_case_marks (
 );
 CREATE INDEX idx_alg_case_marks_user_set ON alg_case_marks(wca_id, puzzle, set_slug);
 
+-- ── 26c-2. alg_set_progress (「过遍」进度:哪些范围整轮过完了 + 停在哪) ──
+-- migration 0096_alg_set_progress.sql。每用户每 set 一行。
+-- 上面两张 per-case 表(标记 / 记忆)是一 case 一行:1LLL 3915 个怎么存都行,LSLL 149,188 个
+-- 练满 29.8 万行 ~52 MB 一个人,20,000 条上限按 302 个/天第 66 天就撞。但「这一轮 302 个
+-- 过完了」一整轮只要一个数 —— 记在这里之后,那一轮里没有手动标记的记忆记录就能折叠掉
+-- (POST /v1/alg/sweep/:p/:s/fold),存量掉到几千行。口径见 client `lib/alg-sweep.ts` 文件头。
+-- sweeps = { "<scope>": 过完几遍 }(scope 即 `?scope=`,整集为 "");合并逐 scope 取 max。
+-- cursor = { scope, pos, total },按 updated_at 做 last-write-wins。
+-- folded_at = 最后一次折叠的时刻。折叠是真删行,另一台设备本地还留着那批记录,不加这个
+--   时刻它下次合并就把它们当「本地独有」原样传回云端 —— 客户端据此丢弃早于它且无标记的本地记录。
+CREATE TABLE alg_set_progress (
+  wca_id     VARCHAR(20) NOT NULL,
+  puzzle     VARCHAR(16) NOT NULL,
+  set_slug   VARCHAR(32) NOT NULL,
+  sweeps     JSONB       NOT NULL DEFAULT '{}'::jsonb,
+  cursor     JSONB,
+  folded_at  BIGINT      NOT NULL DEFAULT 0,
+  updated_at BIGINT      NOT NULL,
+  PRIMARY KEY (wca_id, puzzle, set_slug)
+);
+
 -- ── 26d. trainer_rooms (公式训练器协同房间:多设备在线复习分工) ──
 -- migration 0077_trainer_rooms.sql。房间持有共享 case 队列 + 领取游标,多台设备各自「领取
 -- 下一题」原子出队 → 不重不漏、动态均衡、支持乱序(队列服务端洗)。无需登录,房间码即身份。
