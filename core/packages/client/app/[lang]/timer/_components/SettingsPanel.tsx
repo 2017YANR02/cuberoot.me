@@ -20,7 +20,7 @@ import { useAuthStore } from '@/lib/auth-store';
 import { reanalyzeAll } from '../_lib/storage/reanalyze';
 import { eventInfo, type EventId } from '../_lib/types';
 import { wcaEventId, WCA_OPTIMAL_EVENTS } from '../_lib/scramble/wca_pool';
-import { CUBE_ORIENTATIONS } from '@/lib/cube-orientation';
+import CubeOrientationSelect from '@/components/CubeOrientationSelect';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useMetronome, setMetronome, tapTempo, bpmToTps, BPM_MIN, BPM_MAX } from '@/lib/metronome';
 import { CountryInput } from '@/components/CountryInput';
@@ -737,23 +737,19 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
           </Row>
           <Row label={tr({ zh: '预打乱朝向', en: 'Pre-scramble'
         })}>
-            <select
+            <CubeOrientationSelect
               className="settings-row-control-select"
               value={s.preScr}
-              onChange={(e) => updateSettings({ preScr: e.target.value })}
-            >
-              {CUBE_ORIENTATIONS.map((o) => <option key={o.label} value={o.value}>{o.label}</option>)}
-            </select>
+              onChange={(v) => updateSettings({ preScr: v })}
+            />
           </Row>
           <Row label={tr({ zh: '训练预打乱朝向', en: 'Training pre-scramble'
         })}>
-            <select
+            <CubeOrientationSelect
               className="settings-row-control-select"
               value={s.preScrT}
-              onChange={(e) => updateSettings({ preScrT: e.target.value })}
-            >
-              {CUBE_ORIENTATIONS.map((o) => <option key={o.label} value={o.value}>{o.label}</option>)}
-            </select>
+              onChange={(v) => updateSettings({ preScrT: v })}
+            />
           </Row>
           <Row label={tr({ zh: '颜色中立', en: 'Color neutral'
         })}>
