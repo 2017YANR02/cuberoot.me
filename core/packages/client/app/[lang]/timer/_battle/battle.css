@@ -1923,14 +1923,6 @@ body.solo .scramble-img {
     min-width: 1em;
 }
 
-/* 回合结束排名徽章 — 计时数字下方,不计时显示;不要在按住区域内触发计时 */
-.battle-rank-slot {
-    margin-top: 2px;
-    display: flex;
-    justify-content: center;
-    min-height: 1.4em;
-}
-
 /* Solo 底部导航里的模式 pill(solo 无 middle-bar,pill 塞这里) */
 .bottom-nav-mode {
     display: flex;
