@@ -23,9 +23,21 @@
   white-space: nowrap;
 }
 .net-admin-btn svg { color: var(--signal-warning); }
-/* 顶栏「我的项目」选择器:紧凑,不占额外框 */
+/* 顶栏「我的项目」+ 大厅「项目」都用共享的 <EventSelect> 下拉(不另造选择器)。
+   宽度一律贴合内容(不钉 min-width);弹层取 max-content,免得跟着窄触发按钮把
+   项目名挤成省略号。
+   anchored-panel: safe (锚在顶栏左组 / 大厅左沿,弹层 max-content 约 ≤150px,
+   窄屏 375px 下右边界也够不着) */
 .net-my-event { display: inline-flex; align-items: center; }
 .net-my-event :is(button, [role='button']) { font-size: 13px; }
+.net-my-event .event-select,
+.net-field .event-select { width: fit-content; }
+.net-field .event-select { align-self: flex-start; }
+.net-my-event .event-select-trigger,
+.net-field .event-select-trigger { width: auto; }
+.net-my-event .event-select-trigger { padding: 4px 8px; gap: 5px; }
+.net-my-event .event-select-popup,
+.net-field .event-select-popup { width: max-content; min-width: 100%; }
 /* 玩家条内每人项目小图标(仅房内多项目时显示) */
 .net-p-event { width: 15px; height: 15px; flex: none; opacity: 0.85; }
 .net-code-badge {
@@ -102,10 +114,11 @@
   font-size: 12px;
   color: var(--muted-foreground);
 }
-.net-input {
-  align-self: flex-start;
-  width: 220px;
-  max-width: 100%;
+/* WcaPersonPicker 的输入框外观由宿主页提供(.search-box 只在 /wca/comp 定义过),
+   联机大厅得自己套上,否则「选手」那栏渲染成一条没边框没内边距的裸文字,根本不像
+   输入框 —— 直接套 .net-input 的同一套外观,不另起风格。 */
+.net-input,
+.net-field .cuber-search-input {
   padding: 7px 10px;
   font-size: 14px;
   color: var(--foreground);
@@ -114,7 +127,14 @@
   border-radius: 7px;
   outline: none;
 }
-.net-input:focus { border-color: var(--ring); }
+.net-input {
+  align-self: flex-start;
+  width: 220px;
+  max-width: 100%;
+}
+.net-field .cuber-search { align-self: flex-start; width: 260px; max-width: 100%; }
+.net-input:focus,
+.net-field .cuber-search-input:focus { border-color: var(--ring); }
 /* 登录用户身份行(不填昵称,直接显示 WCA 姓名+ID) */
 .net-identity-me {
   display: inline-flex;
