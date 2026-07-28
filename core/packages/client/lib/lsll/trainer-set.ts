@@ -22,11 +22,27 @@ import { ZBLS_COVERED_KEYS } from './zbls_overlay';
 /**
  * 已收录范围一共几轮 = 494 个 ZBLL case。
  *
- * 第 1 轮 = 公式库那 302 条本身(收尾的 ZBLL 是「全解」,也就是纯 ZBLS);第 n 轮把同样
- * 302 条 ZBLS case 各自接上第 n 个 ZBLL case(`model.composeState`)。走完 494 轮 =
- * 302 × 494 = 149,188 条两步路线,一条不落。
+ * 每一轮都是那 302 条 ZBLS case,各自接上一个 ZBLL 收尾(`model.composeState`);
+ * 走完 494 轮 = 302 × 494 = 149,188 条两步路线,一条不落。
+ *
+ * **一轮之内 302 个收尾各不相同**(见 {@link roundZbllIndex}):早先是「第 n 轮全体接第 n 个
+ * ZBLL」,于是第 1 轮全体接的是「全解」顶层 —— 整轮都是纯 ZBLS,均值 9.28 步,而其余 493 轮
+ * 全在 13.0 ~ 14.4 之间,第 1 轮成了唯一的异类,练起来也单调(一轮里翻来覆去只有一个顶层)。
+ * 那 302 个纯 ZBLS 局面并没有丢:它们本来就是 zbls 公式集,`/alg/3x3/zbls/run` 有自己的入口。
  */
 export const LSLL_ROUNDS = ZBLL_CASE_COUNT;
+
+/**
+ * 第 `round` 轮里,第 `i` 个 ZBLS case 配哪个 ZBLL(下标,0 起)。
+ *
+ * 错位对角:`(round - 1 + i) mod 494`。两条性质都要成立,缺一不可 ——
+ *  - **轮内不重样**:i 走 0..301,302 < 494,同一轮里没有两个 ZBLS 撞到同一个 ZBLL;
+ *  - **总量不漏**:固定 i,round 走 1..494 恰好把 494 个 ZBLL 各配一次 ⇒ 494 轮合起来仍是
+ *    完整的 302 × 494 笛卡尔积,与旧排法覆盖同一批 canonical key(求解语料因此不受影响)。
+ */
+function roundZbllIndex(round: number, i: number): number {
+  return (round - 1 + i) % LSLL_ROUNDS;
+}
 
 /** 全 LSLL case 共用一张贴纸描述 —— 图怎么画由 CaseThumb 按 set 决定(同 zbls:iso + vh 遮罩)。 */
 const LSLL_STICKER: AlgSticker = Object.freeze({ kind: 'raw', tag: 'lsll', attrs: {} });
@@ -129,14 +145,17 @@ export async function loadLsllCases(scope: string | null): Promise<AlgCase[]> {
   if (!category) {
     // 已收录那批横跨多个大类 —— 各自 classify 一次拿到自己的大类,再按全站组名序排
     // (同字母 `+` 在 `-` 前),组内按 case 编号,免得 case 树是 JSON 的随机顺序。
-    // 第 n 轮:每条都接上第 n 个 ZBLL case(第 1 轮的 ZBLL 是全解,合出来还是它自己)。
-    const zbll = unpackState(zbllRoundKeys()[round - 1]);
+    // 收尾按 roundZbllIndex 错位分配:一轮之内 302 个 ZBLL 各不相同。下标 `i` 数的是
+    // **过滤后**的名次(0..301),不是 ZBLS_COVERED_KEYS 里的原位置 —— 跳过的那 3 个不占号。
+    const rounds = zbllRoundKeys();
     const out: { letter: string; key: number }[] = [];
+    let i = 0;
     for (const s of ZBLS_COVERED_KEYS) {
       const key = keyFromString(s);
       if (key == null) continue;
       const cat = classify(unpackState(key)).category;
       if (cat.pureLL) continue;   // O 组:对子已归位,练的是顶层不是最后一槽
+      const zbll = unpackState(rounds[roundZbllIndex(round, i++)]);
       out.push({ letter: cat.letter, key: canonicalKey(composeState(zbll, unpackState(key))) });
     }
     out.sort((a, b) => compareAlgGroupLabel(a.letter, b.letter) || a.key - b.key);
