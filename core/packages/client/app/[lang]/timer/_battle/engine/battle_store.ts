@@ -111,6 +111,19 @@ function isBLD(puzzleId: string): boolean {
   return ['333bf', '444bf', '555bf'].includes(puzzleId);
 }
 
+/**
+ * 共用同一条打乱的一组玩家(ids)当前该不该把打乱藏起来。
+ *
+ * 条件是「组里已经有人在计时,且没人还没起表」:
+ *   - 同时开始 —— 全员同一刻起表,等价于「有人在计时」这个老判据;
+ *   - 各自开始 —— 先起表的人不能把打乱从还没起表的队友眼前抽走,得等最后一个人也起表。
+ * 全员停表后 isTiming 全假 → 重新显示(下一轮的新打乱由 checkBothFinished 换上)。
+ */
+export function isScrambleHidden(players: PlayerState[], ids: number[]): boolean {
+  if (!ids.some(i => players[i].isTiming)) return false;
+  return !ids.some(i => !players[i].isTiming && !players[i].hasFinished);
+}
+
 // NOTE: 引擎固定承载 4 个玩家槽位;实际参战人数由 playerCount (2~4) 决定,
 //   多余槽位保持空闲,不参与状态机/渲染。
 export const MAX_PLAYERS = 4;
@@ -196,6 +209,11 @@ export interface BattleState {
   // NOTE: 多人对战时是否把上排(3/4 人田字格)/ versus 上方玩家旋转 180°。
   //   默认 true(围坐一桌、上排面向对面玩家);同向观看(如都站一侧)时可关。
   flipTopRow: boolean;
+  // NOTE: 多人对战起表方式。默认 false = 各自开始:每人自己按住 → 自己的红灯延时 →
+  //   自己松手起表,谁都不用等别人。true = 同时开始(旧行为):全员按住才进红灯延时,
+  //   第一个松手的人带着全员一起起表(共用同一 startTime)。
+  //   两种模式下一轮的结算口径不变 —— 仍是全员停表后才记历史 / 判胜负 / 换打乱。
+  syncStart: boolean;
   // WCA 观察倒计时时长（秒）：0=OFF, 8, 15(WCA), 9999=∞
   inspectionTime: number;
   // 观察语音提示（8s/12s）
@@ -228,8 +246,9 @@ export interface BattleState {
   scrambleLoadings: boolean[];
   // 赢家标识
   winners: number[];
-  // NOTE: 红灯→绿灯的延时计时器 ID
-  readyTimer: ReturnType<typeof setTimeout> | null;
+  // NOTE: 红灯→绿灯的延时计时器 ID,按玩家槽位存(各自开始模式下每人一条独立延时)。
+  //   同时开始模式只有一条延时,写进全部参战槽位(同一 handle,clearTimeout 幂等)。
+  readyTimers: (ReturnType<typeof setTimeout> | null)[];
   // 两个玩家状态
   players: PlayerState[];
   // NOTE: 撤销栈
@@ -270,6 +289,7 @@ export interface BattleState {
   setPhases: (phases: number) => void;
   setShowImage: (show: boolean) => void;
   setFlipTopRow: (flip: boolean) => void;
+  setSyncStart: (sync: boolean) => void;
   setScrambleScale: (scale: number) => void;
   setBgOpacity: (opacity: number) => void;
   // NOTE: 单侧背景色;传空串清除
@@ -309,9 +329,11 @@ export interface BattleState {
   clearInspection: (playerId: number) => void;
   // NOTE: 内部辅助方法（状态机内部调用）
   resetForNextRound: () => void;
-  checkBothReady: () => void;
+  // 刚按住的那位玩家;各自开始模式下只为他起红灯延时,同时开始模式忽略此参数看全员
+  checkBothReady: (playerId: number) => void;
   checkBothFinished: () => void;
-  cancelReadyTimer: () => void;
+  // 不传 playerId = 清掉全部槽位的红灯延时
+  cancelReadyTimer: (playerId?: number) => void;
   computeWinner: () => void;
   removeLastWinner: () => void;
 }
@@ -331,6 +353,8 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   showTime: localStorage.getItem(LS_PREFIX + 'showTime') !== 'false',
   showImage: localStorage.getItem(LS_PREFIX + 'showImage') !== 'false',
   flipTopRow: localStorage.getItem(LS_PREFIX + 'flipTopRow') !== 'false',
+  // 默认各自开始(=== 'true' 而非 !== 'false':没存过时取 false)
+  syncStart: localStorage.getItem(LS_PREFIX + 'syncStart') === 'true',
   inspectionTime: parseInt(localStorage.getItem(LS_PREFIX + 'inspectionTime') || '0') || 0,
   voice: localStorage.getItem(LS_PREFIX + 'voice') !== 'false',
   phases: parseInt(localStorage.getItem(LS_PREFIX + 'phases') || '1') || 1,
@@ -349,7 +373,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   scrambleImageUrls: Array.from({ length: MAX_PLAYERS }, () => null),
   scrambleLoadings: Array.from({ length: MAX_PLAYERS }, () => false),
   winners: [],
-  readyTimer: null,
+  readyTimers: Array.from({ length: MAX_PLAYERS }, () => null),
   players: freshPlayers(),
   undoStack: [],
   sessionId: localStorage.getItem(LS_PREFIX + 'sessionId') || '1',
@@ -477,7 +501,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
         const newPlayers = [...s.players];
         newPlayers[playerId] = { ...p, isReady: true };
         set({ players: newPlayers });
-        get().checkBothReady();
+        get().checkBothReady(playerId);
         return true;
       }
       if (p.isTiming) {
@@ -522,7 +546,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
         const newPlayers = [...s.players];
         newPlayers[playerId] = { ...p, isReady: true };
         set({ players: newPlayers });
-        get().checkBothReady();
+        get().checkBothReady(playerId);
         return true;
       }
       return false;
@@ -556,7 +580,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       const newPlayers = [...get().players];
       newPlayers[playerId] = { ...ps, isReady: true };
       set({ players: newPlayers });
-      get().checkBothReady();
+      get().checkBothReady(playerId);
       return true;
     }
     return false;
@@ -601,7 +625,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
         return;
       }
       if (p.isReady && !p.isTiming && !p.hasFinished) {
-        get().cancelReadyTimer();
+        get().cancelReadyTimer(0);
         const newPlayers = [...s.players];
         newPlayers[playerId] = { ...p, isReady: false };
         set({ players: newPlayers });
@@ -611,27 +635,41 @@ export const useBattleStore = create<BattleState>((set, get) => ({
 
     // === 1v1 模式原有逻辑 ===
     if (p.canStart) {
-      // --- 第一名玩家松手触发，强制全员同时开始计时 ---
       const startTime = performance.now();
       const newPlayers = [...s.players];
-      for (let i = 0; i < s.playerCount; i++) {
-        const player = s.players[i];
-        if (player.canStart) {
-          newPlayers[i] = {
-            ...player,
-            canStart: false,
-            isTiming: true,
-            isReady: false,
-            startTime: startTime,
-            time: 0,
-            penalty: PENALTY.OK,
-          };
+      if (s.syncStart) {
+        // --- 同时开始:第一名玩家松手触发,带着全部已绿灯的玩家共用同一 startTime ---
+        for (let i = 0; i < s.playerCount; i++) {
+          const player = s.players[i];
+          if (player.canStart) {
+            newPlayers[i] = {
+              ...player,
+              canStart: false,
+              isTiming: true,
+              isReady: false,
+              startTime,
+              time: 0,
+              penalty: PENALTY.OK,
+            };
+          }
         }
+      } else {
+        // --- 各自开始:只起自己这一路,别人还在看打乱 / 还在拧都不受影响 ---
+        newPlayers[playerId] = {
+          ...p,
+          canStart: false,
+          isTiming: true,
+          isReady: false,
+          startTime,
+          time: 0,
+          penalty: PENALTY.OK,
+        };
       }
       set({ players: newPlayers });
     } else if (p.isReady && !p.isTiming && !p.hasFinished) {
-      // NOTE: 对方未就绪时松手 → 恢复 idle（黑色），取消红灯延时
-      get().cancelReadyTimer();
+      // NOTE: 红灯期间松手 → 恢复 idle（黑色），取消红灯延时。
+      //   同时开始:延时是全员共有的,整条作废;各自开始:只作废自己那条。
+      get().cancelReadyTimer(s.syncStart ? undefined : playerId);
       const newPlayers = [...s.players];
       newPlayers[playerId] = { ...p, isReady: false };
       set({ players: newPlayers });
@@ -641,48 +679,69 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   // ===== 内部辅助方法（挂在 action 上但不对外暴露接口） =====
 
   // 1:1 翻译自 battle.js checkBothReady()（行 785~815）
-  checkBothReady: () => {
+  // 红灯 → 绿灯的延时。谁进绿灯取决于起表方式:
+  //   solo / 各自开始 → 只看刚按住的这位,延时到点只点亮他自己;
+  //   同时开始       → 全员按住才起延时,到点一起点亮(旧行为)。
+  checkBothReady: (playerId: number) => {
     const s = get();
-    const isSolo = s.mode === 'solo';
+    const solo = s.mode === 'solo';
 
-    if (isSolo) {
-      const p0 = s.players[0];
-      if (p0.isReady && !p0.canStart) {
-        const timer = setTimeout(() => {
-          const curr = get();
-          if (curr.players[0].isReady) {
-            const newPlayers = [...curr.players];
-            newPlayers[0] = { ...curr.players[0], canStart: true };
-            set({ players: newPlayers, readyTimer: null });
-          }
-        }, s.startDelay);
-        set({ readyTimer: timer });
-      }
+    // 单人点亮:solo 与「各自开始」共用同一条路径
+    if (solo || !s.syncStart) {
+      const target = solo ? 0 : playerId;
+      const p = s.players[target];
+      if (!p.isReady || p.canStart) return;
+      const timer = setTimeout(() => {
+        const curr = get();
+        if (curr.players[target].isReady) {
+          const newPlayers = [...curr.players];
+          newPlayers[target] = { ...curr.players[target], canStart: true };
+          const timers = [...curr.readyTimers];
+          timers[target] = null;
+          set({ players: newPlayers, readyTimers: timers });
+        }
+      }, s.startDelay);
+      const timers = [...s.readyTimers];
+      timers[target] = timer;
+      set({ readyTimers: timers });
       return;
     }
-    // === 1v1 原有逻辑(推广到 N 人:全员按住才进入红灯延时) ===
+
+    // === 同时开始(推广到 N 人:全员按住才进入红灯延时) ===
     const active = s.players.slice(0, s.playerCount);
     if (active.every(pl => pl.isReady && !pl.canStart)) {
       const timer = setTimeout(() => {
         const curr = get();
         if (curr.players.slice(0, curr.playerCount).every(pl => pl.isReady)) {
           const newPlayers = [...curr.players];
+          const timers = [...curr.readyTimers];
           for (let i = 0; i < curr.playerCount; i++) {
             newPlayers[i] = { ...curr.players[i], canStart: true };
+            timers[i] = null;
           }
-          set({ players: newPlayers, readyTimer: null });
+          set({ players: newPlayers, readyTimers: timers });
         }
       }, s.startDelay);
-      set({ readyTimer: timer });
+      // 同一 handle 写进全部参战槽位 —— 任一槽位被取消即整条作废
+      const timers = [...s.readyTimers];
+      for (let i = 0; i < s.playerCount; i++) timers[i] = timer;
+      set({ readyTimers: timers });
     }
   },
 
-  cancelReadyTimer: () => {
+  // playerId 省略 = 清掉全部槽位(换人数 / 同时开始模式下任一人松手)
+  cancelReadyTimer: (playerId?: number) => {
     const s = get();
-    if (s.readyTimer) {
-      clearTimeout(s.readyTimer);
-      set({ readyTimer: null });
+    const targets = playerId === undefined
+      ? s.readyTimers.map((_, i) => i)
+      : [playerId];
+    if (!targets.some(i => s.readyTimers[i])) return;
+    const timers = [...s.readyTimers];
+    for (const i of targets) {
+      if (timers[i]) clearTimeout(timers[i]);
+      timers[i] = null;
     }
+    set({ readyTimers: timers });
   },
 
   // 1:1 翻译自 battle.js checkBothFinished()（行 835~880）
@@ -1059,6 +1118,17 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   setFlipTopRow: (flip: boolean) => {
     persistItem(LS_PREFIX + 'flipTopRow', String(flip));
     set({ flipTopRow: flip });
+  },
+
+  // NOTE: 切换起表方式时把在途的红灯 / 绿灯全部作废 —— 两种模式对「谁该亮绿灯」的判定
+  //   不同,留着半截状态会出现按住的人永远等不到绿灯。已在计时 / 已完成的不动。
+  setSyncStart: (sync: boolean) => {
+    persistItem(LS_PREFIX + 'syncStart', String(sync));
+    get().cancelReadyTimer();
+    const s = get();
+    const newPlayers = s.players.map(p =>
+      (p.isReady || p.canStart) ? { ...p, isReady: false, canStart: false } : p);
+    set({ syncStart: sync, players: newPlayers });
   },
 
   setScrambleScale: (scale: number) => {
