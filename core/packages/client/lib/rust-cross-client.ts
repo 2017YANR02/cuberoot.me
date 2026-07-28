@@ -17,7 +17,7 @@ import { normalizeScramble } from './cross-solver';
 const BASE = '/tools/solver/rust-cross';
 // 代码产物(worker/glue/wasm)固定文件名 + 1 天 CDN 缓存,重建后靠版本 query 失效。
 // 每次重建 wasm/worker 必须 bump。
-const V = 'v=20260727a';
+const V = 'v=20260728b';
 // 表直接从 static 取:prod 下主域的 /tools/* 是一条 307 跳到 static(见
 // app/tools/[...slug]/route.ts),每张表白付一个 RTT,而表本来就带 CORS:*。
 // dev 仍走本地 Next catch-all(直接读仓库根 tools/)。
@@ -424,7 +424,41 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
         || 'worker crashed (可能内存不足 / out of memory)';
       fail(pw, new Error(detail), true);
     };
-    w.postMessage({ ...initMsg, xcross: bornWithXCross });
+    // 池已升级过:这个 worker 一 init 就要带上大表(ready 即具备 xcross 能力,不能等 ready 之后
+    // 再补 —— 中间派进来的 job 会打在没 attach 的 WASM 上直接 panic)。字节仍走整池那一份,
+    // 拿不到(已撒手 / 取表失败)才让它自己去取。gz 早已下好,这里的 await 只是一个微任务。
+    if (bornWithXCross) {
+      void fetchXCrossGz().then(
+        (gz) => { w.postMessage({ ...initMsg, xcross: true, gz }); dropXCrossGzIfDone(); },
+        () => w.postMessage({ ...initMsg, xcross: true }),
+      );
+    } else {
+      w.postMessage({ ...initMsg, xcross: false });
+    }
+  }
+
+  // 大表(pt_cross_C4E0,gz 21MB)整池只下一次。
+  //
+  // 原先是每个 worker 自己 fetch:ensureAllXCross 向已起的 N 路一起广播,N 个 fetch 同一 URL
+  // 同时出发,而浏览器**不会**把并发的同 URL 请求合成一次下载 —— 实测(计时器面板,手机宽度
+  // 2 路)真的是两条 21MB 的流并行抢带宽,42MB 过线,首次切到 XCross 要等 7~15 秒。
+  // 主线程取一次 gz,再把这份字节分发给每个 worker(各自解压进自己的 WASM 内存,那部分本来
+  // 就得一人一份)。发完就撒手,不长期占着这 21MB。
+  let xcrossGz: Promise<ArrayBuffer> | null = null;
+  /** 池里每一路都拿到过大表(= 不会再有新 worker 来要)后松手,别让这 21MB 常驻主线程 ——
+   *  手机上还压着两份 52MB 的解压表。此后万一还有人要,退回自己 fetch(缓存已热)。 */
+  function dropXCrossGzIfDone(): void {
+    if (spawned >= size && all.every((p) => p.dead || p.xcross)) xcrossGz = null;
+  }
+  function fetchXCrossGz(): Promise<ArrayBuffer> {
+    if (!xcrossGz) {
+      const url = `${tablesBase}/pt_cross_C4E0.bin.gz?${TV}`;
+      xcrossGz = fetch(url).then((r) => {
+        if (!r.ok) throw new Error(`fetch ${url}: ${r.status}`);
+        return r.arrayBuffer();
+      }).catch((e) => { xcrossGz = null; throw e; });
+    }
+    return xcrossGz;
   }
 
   // 给某个 worker 补 xcross 段(幂等:pw.xcross 一旦建立就复用同一个 Promise)。
@@ -433,11 +467,23 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
     if (pw.dead) return Promise.resolve();
     if (pw.xcross) return pw.xcross;
     const id = xcrossSeq++;
-    pw.xcross = new Promise<void>((res) => {
-      pw.xcrossResolve = res;
-      xcrossWaiters.set(id, () => { pw.xcrossResolve = null; res(); });
+    // resolve 句柄同步挂上:worker 中途死掉时 fail() 要能结算它(此刻表可能还没下完)。
+    let settle!: () => void;
+    const done = new Promise<void>((res) => { settle = res; });
+    pw.xcrossResolve = settle;
+    xcrossWaiters.set(id, () => { pw.xcrossResolve = null; settle(); });
+    pw.xcross = fetchXCrossGz().then((gz) => {
+      if (pw.dead) { settle(); return done; }
+      // 不进 transfer list:每个 worker 要自己那一份,postMessage 的结构化克隆正是拷贝。
+      pw.w.postMessage({ type: 'ensure_xcross', id, gz });
+      dropXCrossGzIfDone();
+      return done;
+    }, (e) => {
+      xcrossWaiters.delete(id);
+      pw.xcross = null;
+      pw.xcrossResolve = null;
+      throw e;
     });
-    pw.w.postMessage({ type: 'ensure_xcross', id });
     return pw.xcross;
   }
 
@@ -645,6 +691,6 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
       while (queue.length) queue.shift()!.reject(new Error('aborted'));
       loading = false;
     },
-    terminate() { for (const pw of all) pw.w.terminate(); },
+    terminate() { xcrossGz = null; for (const pw of all) pw.w.terminate(); },
   };
 }
