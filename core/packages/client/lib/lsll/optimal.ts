@@ -131,6 +131,49 @@ async function load(key: number): Promise<LsllOptimal | null> {
 }
 
 /**
+ * 一批 case 的最优步数,**只要 htm 不要解**(端点 `/v1/alg/lsll/htm`)。
+ *
+ * 用途只有一个:训练器在一条两步路线的 ≤4 个 mid-AUF 变体里挑最短的那个 case
+ * (`./trainer-set` 的 `loadLsllCases`)。挑完才需要那一个 case 的解,那时走
+ * {@link lsllOptimal} 逐条拉 —— 所以这里不带 alg,一轮 1,208 个 key 也就几 KB。
+ *
+ * **没回填到的 key 不会出现在返回的 Map 里**,调用方自己决定怎么退(训练器退回 mid-AUF = 0)。
+ * 整批请求失败时同样什么都不返回,而且**不写进缓存** —— 网络抖一下不该让这一整场都降级。
+ */
+const HTM_CACHE = new Map<number, number | null>();
+const HTM_CHUNK = 256;   // 与 server 的 HTM_MAX_KEYS 对齐;256 × ≤9 字符 ≈ 2KB URL,离头部上限很远
+
+export async function lsllHtmBatch(keys: number[]): Promise<Map<number, number>> {
+  const out = new Map<number, number>();
+  const want: number[] = [];
+  for (const k of new Set(keys)) {
+    const hit = HTM_CACHE.get(k);
+    if (hit === undefined) want.push(k);
+    else if (hit !== null) out.set(k, hit);
+  }
+  want.sort((a, b) => a - b);   // 切批稳定 ⇒ 同一轮每次生成同样的 URL,共享层缓存才命中
+  const chunks: number[][] = [];
+  for (let i = 0; i < want.length; i += HTM_CHUNK) chunks.push(want.slice(i, i + HTM_CHUNK));
+  await Promise.all(chunks.map(async (chunk) => {
+    let got: Record<string, unknown> | null = null;
+    try {
+      const r = await fetch(apiUrl(`/v1/alg/lsll/htm?keys=${chunk.map(keyToString).join(',')}`));
+      if (r.ok) got = ((await r.json()) as { htm?: Record<string, unknown> }).htm ?? {};
+    } catch {
+      got = null;
+    }
+    if (!got) return;
+    for (const k of chunk) {
+      const v = got[keyToString(k)];
+      const n = typeof v === 'number' ? v : null;
+      HTM_CACHE.set(k, n);
+      if (n !== null) out.set(k, n);
+    }
+  }));
+  return out;
+}
+
+/**
  * 这个 case 的最优解 + 最短打乱。还没回填 / 拿不到 / 验不过都返 `null`,
  * 调用方退回 `./setup` 现算。
  */

@@ -14,7 +14,7 @@ import type { AlgCase, AlgSticker } from '@cuberoot/shared';
 import { compareAlgGroupLabel } from '@/lib/alg_group_order';
 import {
   canonicalKey, categoryBySlug, classify, composeState, decodeKey, displayState, enumerateCategory,
-  keyFromString, keyToString, unpackState,
+  keyFromString, keyToString, rotateU, unpackState, type LsllState,
 } from './model';
 import { ZBLL_CASE_COUNT, zbllRoundKeys } from './class3';
 import { ZBLS_COVERED_KEYS } from './zbls_overlay';
@@ -24,6 +24,9 @@ import { ZBLS_COVERED_KEYS } from './zbls_overlay';
  *
  * 每一轮都是那 302 条 ZBLS case,各自接上一个 ZBLL 收尾(`model.composeState`);
  * 走完 494 轮 = 302 × 494 = 149,188 条两步路线,一条不落。
+ *
+ * 路线定了还差一步:两半之间那个 mid-AUF 插几下,决定整条落在哪个 LSLL case 上 ——
+ * 由 {@link routeVariants} 摊开 ≤4 种,{@link shortestVariant} 取整方最优最短的那个。
  *
  * **一轮之内 302 个收尾各不相同**(见 {@link roundZbllIndex}):早先是「第 n 轮全体接第 n 个
  * ZBLL」,于是第 1 轮全体接的是「全解」顶层 —— 整轮都是纯 ZBLS,均值 9.28 步,而其余 493 轮
@@ -42,6 +45,54 @@ export const LSLL_ROUNDS = ZBLL_CASE_COUNT;
  */
 function roundZbllIndex(round: number, i: number): number {
   return (round - 1 + i) % LSLL_ROUNDS;
+}
+
+/**
+ * 一条两步路线 (ZBLS φ, ZBLL ζ) 的 mid-AUF 变体 —— 做完 ZBLS、开始 ZBLL 之前插 `U^n`。
+ *
+ * 那一下 AUF 是**免费的**(不是解法的一部分,识别顶层本来就要转到位),所以 n 取 0..3 得到的
+ * 4 个局面是同一条路线的 4 种走法,而**不是** 4 条路线。它们:
+ *  - 第一眼完全一样 —— 槽对构型、槽角朝向、顶层翻棱都只由 φ 决定,`U^n` 只动 ZBLL 那半;
+ *  - 收尾的 ZBLL case 也完全一样 —— `rotateU` 走的是 canonicalKey 里的 `a` 分量,ζ 不变;
+ *  - 但**整条**落在不同的 LSLL case 上,最优步数可以差好几步。
+ *
+ * 返回按 n = 0,1,2,3 去重后的 canonical key,所以下标 0 恒为「不插 AUF」那个 ——
+ * 挑最短时并列取它,口径与 2026-07-28 之前一致。变体数只由 ζ 决定:480 个 ZBLL 满 4 个、
+ * 10 个塌成 2 个、4 个(含全解顶层)塌成 1 个,普查见 `/alg/lsll/PLAN.md`。
+ */
+export function routeVariants(zbll: LsllState, zbls: LsllState): number[] {
+  const out: number[] = [];
+  for (let n = 0; n < 4; n++) {
+    const k = canonicalKey(composeState(rotateU(zbll, n), zbls));
+    if (!out.includes(k)) out.push(k);
+  }
+  return out;
+}
+
+/**
+ * 这一轮全部路线的全部变体,一次问完最优步数(`./optimal` 的批量口子,内部按 256 切并发)。
+ *
+ * 拿不到就返空表 —— 调用方退回「不插 AUF」,与 2026-07-28 之前的口径一模一样,
+ * 训练器照常开场。这一层**绝不能**因为后端不在就把整场打掉。
+ */
+async function routeHtm(routes: { variants: number[] }[]): Promise<Map<number, number>> {
+  try {
+    const { lsllHtmBatch } = await import('./optimal');
+    return await lsllHtmBatch(routes.flatMap(r => r.variants));
+  } catch {
+    return new Map();
+  }
+}
+
+/**
+ * ≤4 个 mid-AUF 变体里练哪一个:**最优步数最短**的那个。
+ *
+ * 并列、以及一个都没回填时取 `variants[0]`(= 不插 AUF)——「谁都没查到」和「本来就该走 0」
+ * 走同一条路,所以后端不在时这一整层是恒等变换。
+ */
+function shortestVariant(variants: number[], htm: Map<number, number>): number {
+  return variants.reduce((best, k) =>
+    (htm.get(k) ?? Infinity) < (htm.get(best) ?? Infinity) ? k : best);
 }
 
 /** 全 LSLL case 共用一张贴纸描述 —— 图怎么画由 CaseThumb 按 set 决定(同 zbls:iso + vh 遮罩)。 */
@@ -148,7 +199,7 @@ export async function loadLsllCases(scope: string | null): Promise<AlgCase[]> {
     // 收尾按 roundZbllIndex 错位分配:一轮之内 302 个 ZBLL 各不相同。下标 `i` 数的是
     // **过滤后**的名次(0..301),不是 ZBLS_COVERED_KEYS 里的原位置 —— 跳过的那 3 个不占号。
     const rounds = zbllRoundKeys();
-    const out: { letter: string; key: number }[] = [];
+    const routes: { letter: string; variants: number[] }[] = [];
     let i = 0;
     for (const s of ZBLS_COVERED_KEYS) {
       const key = keyFromString(s);
@@ -156,8 +207,10 @@ export async function loadLsllCases(scope: string | null): Promise<AlgCase[]> {
       const cat = classify(unpackState(key)).category;
       if (cat.pureLL) continue;   // O 组:对子已归位,练的是顶层不是最后一槽
       const zbll = unpackState(rounds[roundZbllIndex(round, i++)]);
-      out.push({ letter: cat.letter, key: canonicalKey(composeState(zbll, unpackState(key))) });
+      routes.push({ letter: cat.letter, variants: routeVariants(zbll, unpackState(key)) });
     }
+    const htm = await routeHtm(routes);
+    const out = routes.map(r => ({ letter: r.letter, key: shortestVariant(r.variants, htm) }));
     out.sort((a, b) => compareAlgGroupLabel(a.letter, b.letter) || a.key - b.key);
     return out.map(x => lsllCase(x.key, x.letter));
   }
@@ -207,6 +260,9 @@ export async function resolveLsllCase(c: AlgCase): Promise<{ setup: string; alg?
 }
 
 export const LSLL_TRAINER_NOTE = {
-  zh: '打乱与公式取自后台算好的整方 HTM 最优解;还没算到的 case 退回现算两阶段解 —— 能解开,但步数和指法都没优化',
-  en: 'Scrambles and algs come from the backfilled whole-cube HTM optimum; cases not yet computed fall back to an on-the-fly two-phase solve — valid, but not move- or fingertrick-optimised',
+  zh: '打乱与公式取自后台算好的整方 HTM 最优解;还没算到的 case 退回现算两阶段解 —— 能解开,但步数和指法都没优化。'
+    + '已收录范围按两步路线出题,ZBLS 与 ZBLL 之间那下 AUF 取让整条最短的那个',
+  en: 'Scrambles and algs come from the backfilled whole-cube HTM optimum; cases not yet computed fall back to an '
+    + 'on-the-fly two-phase solve — valid, but not move- or fingertrick-optimised. The "with algs" scope drills '
+    + 'two-look routes, with the AUF between ZBLS and ZBLL chosen to make the whole route as short as possible',
 };
