@@ -1,79 +1,68 @@
 <div align="center">
 
-# 🧩 CubeRoot
+# CubeRoot
 
 ### Solve · Train · Analyze
 
-**Solvers, trainers, analytics, and stats for the Rubik's Cube — all in your browser.**
+Solvers, trainers, analytics, and statistics for the Rubik's Cube — all in the browser.
 
-[**🌐 Open the site →**](https://cuberoot.me/)
-
+[cuberoot.me](https://cuberoot.me/)
 
 </div>
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 cuberoot.me/
-├── core/                          # pnpm + Turbo monorepo (all new work lives here)
+├── core/                  pnpm + Turbo monorepo — all application code
 │   └── packages/
-│       ├── client/           # React 19 + Next.js 16 (App Router) ← primary workspace
-│       ├── client/                # React 19 + Vite 8 SPA (retired, local fallback only)
-│       ├── server/                # Hono + PostgreSQL 13 (WCA OAuth + user data + alg DB)
-│       ├── shared/                # Shared types
-│       ├── stats-build/           # WCA statistics pipeline (weekly CI)
-│       ├── visualcube/            # In-house NxN cube SVG renderer
-│       └── ...                    # alg-build, scramble-stats-build, wb-build, vendor-sr-puzzlegen
-├── stats/                         # Generated stats JSON (committed)
-├── cstimer/                       # Integrated csTimer (upstream)
-└── *.html                         # Legacy static pages (upstream forks)
+│       ├── client/        React 19 + Next.js 16 (App Router) — the site itself
+│       ├── server/        Hono + PostgreSQL 13 — WCA OAuth, reconstructions, algorithm library
+│       ├── shared/        Types shared between client and server
+│       ├── visualcube/    In-house NxN cube SVG renderer
+│       ├── stats-build/   WCA statistics pipeline, refreshed daily by CI
+│       └── ...            alg-build, scramble-stats-build, wb-build, stack-kernel
+├── solver/                Rust solving engines — native analyzers and WebAssembly builds
+├── reconer/               Automated reconstruction from speedsolving video
+├── tools/                 Upstream forks, served from static.cuberoot.me
+├── stats/                 Generated statistics JSON (committed)
+├── ops/                   nginx vhosts, systemd units, deployment scripts
+└── docs/                  Design notes and runbooks
 ```
 
-- **Frontend**: React 19 + Next.js 16 (App Router, Turbopack), TypeScript, react-i18next (EN/ZH). Legacy Vite 8 SPA kept only as a local fallback.
-- **Backend**: Hono + PostgreSQL 13, fronted by nginx
-- **Pipeline**: TypeScript + MySQL (WCA dump) via GitHub Actions, weekly refresh
-- **Hosting**: self-hosted nginx + Vercel edge (DNS split-routing)
+**Frontend** React 19, Next.js 16 with Turbopack, TypeScript.
+**Backend** Hono on PostgreSQL 13, behind nginx.
+**Pipelines** TypeScript jobs over the WCA MySQL export, run by GitHub Actions.
+**Solving** Rust engines, compiled natively for the statistics pipelines and to WebAssembly for the browser.
+**Hosting** A self-hosted server and Vercel, split by DNS.
 
 ---
 
-## 🚀 Local development
+## Local development
 
-Requires **pnpm 11** and **Node 20+**.
+Requires pnpm 11 and Node 20 or newer.
 
 ```bash
 pnpm install
 
-# Dev server at http://127.0.0.1:3000/
-pnpm --filter @cuberoot/client dev
-
-# Type check (fast, daily — tsgo native)
-pnpm --filter @cuberoot/client typecheck
-
-# Type check (tsc -b incremental, when in doubt)
-pnpm --filter @cuberoot/client typecheck:tsc
-
-# Production build
+pnpm --filter @cuberoot/client dev         # http://127.0.0.1:3000/
+pnpm --filter @cuberoot/client typecheck   # tsgo, the fast daily check
+pnpm --filter @cuberoot/client test
 pnpm --filter @cuberoot/client build
 ```
 
-The backend API is proxied to production via Next.js rewrites, so you can develop the full app without running the backend locally.
+API calls are proxied to production through Next.js rewrites, so the full site
+runs without a local backend.
 
 ---
 
-## 🌏 Internationalization
+## Credits
 
-Every user-facing tool ships in **English** and **简体中文**, switchable from the toggle in the top-right corner of every page. Cubing notation (R, U, F2, y'…) stays in English by convention.
+This project builds on a great deal of open-source work. The full list is at
+[cuberoot.me/support](https://cuberoot.me/support).
 
----
+## License
 
-## 🙏 Credits
-
-This project stands on the shoulders of excellent open-source work. See the full list at [**cuberoot.me/about**](https://cuberoot.me/about).
-
----
-
-## 📄 License
-
-See [LICENSE](./LICENSE). Individual upstream modules retain their original licenses.
+See [LICENSE](./LICENSE). Vendored upstream modules keep their original licenses.

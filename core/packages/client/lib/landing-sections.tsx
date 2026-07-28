@@ -5,7 +5,8 @@
 import {
   Film, ScanSearch, BookOpen, Shuffle, Library, BookA,
   Compass, Grid2x2, Trophy, Timer as TimerIcon, ImagePlus, Code as CodeIcon,
-  Brain, Box, Sigma, Scale, Sprout, Brush, MessagesSquare, Shapes, Blocks, Eye, type LucideIcon,
+  Brain, Box, Sigma, Scale, Sprout, Brush, MessagesSquare, Shapes, Blocks, Eye,
+  Swords, type LucideIcon,
 } from 'lucide-react';
 import { type LandingSearchCard } from '@/components/LandingSearch';
 
@@ -117,30 +118,40 @@ export const PRIMARY_CARDS: CardConfig[] = [
 export const SECTIONS: Section[] = [
   {
     id: 'train',
-    eyebrow: { en: 'TRAIN · 训练', zh: 'TRAIN · 训练'
+    eyebrow: { en: 'TRAIN', zh: '训练' },
+    title:   { en: 'Recall, look ahead, race.', zh: '记忆、预判、对战。'
     },
-    title:   { en: 'Drill, time, refine.', zh: '练习、计时、复盘。'
-    },
-    sub:     { en: 'Drill algorithms, race the clock, battle head-to-head, recall image pairs.', zh: '背公式、计时、对战、记忆 — 把每一步打磨到肌肉记忆。'
+    sub:     { en: 'Memory drills, lookahead practice, head-to-head races, plus two classic trainers.', zh: '盲拧记忆、预判练习、双人对战,外加两套经典训练器。'
     },
     cards: [
       { id: 'memo',     href: '/memo',         internal: true, tier: 'standard', Icon: Brain,     nameKey: 'memo' },
       { id: 'predict',  href: '/predict',      internal: true, tier: 'standard', Icon: Eye,       nameKey: 'predict' },
+      { id: 'battle',   href: '/battle',       internal: true, tier: 'standard', Icon: Swords,    nameKey: 'battle' },
       { id: 'trainer',  href: '/alg-trainers', internal: true, tier: 'standard', iconImg: '/icons/upstream/algtrainer.png', nameKey: 'algTrainer' },
       { id: 'cstimer',  href: '/cstimer',      internal: true, tier: 'standard', nameKey: 'cstimer', iconImg: '/cstimer_logo.png' },
     ],
   },
   {
     id: 'tool',
-    eyebrow: { en: 'TOOL · 工具', zh: 'TOOL · 工具' },
-    title:   { en: 'From scramble to solution.', zh: '从打乱到解法。'
+    eyebrow: { en: 'TOOL', zh: '工具' },
+    title:   { en: 'Solve it, time it, render it.', zh: '求解、数帧、出图。'
     },
-    sub:     { en: 'Recon, frame-count, visualizers, solvers — a tool for every step of the solve.', zh: '复盘、数帧、可视化、求解 — 每个解法环节都有专门工具。'
+    sub:     { en: 'Frame-accurate timing, cube renders, and a solver for any scramble.', zh: '逐帧核对成绩、生成魔方图,把任意打乱交给求解器。'
     },
     cards: [
       { id: 'frame-count', href: '/frame-count', internal: true, tier: 'medium', Icon: Film,       nameKey: 'frameCount' },
       { id: 'visualcube',  href: '/visualcube',  internal: true, tier: 'medium', Icon: ImagePlus,  nameKey: 'visualcubeEditor' },
       { id: 'solver',      href: '/solver',      internal: true, tier: 'medium', iconImg: '/icons/upstream/solver.png', nameKey: 'solver' },
+    ],
+  },
+  {
+    id: 'make',
+    eyebrow: { en: 'MAKE', zh: '创作' },
+    title:   { en: 'Mosaics, drawings, icons.', zh: '拼图、绘制、图标。'
+    },
+    sub:     { en: 'Turn photos into cube mosaics, draw vector diagrams, generate event icons.', zh: '把照片拼成魔方马赛克,画矢量图,生成项目图标。'
+    },
+    cards: [
       { id: 'mosaic',      href: '/mosaic',      internal: true, tier: 'medium', Icon: Grid2x2,    nameKey: 'mosaic' },
       { id: 'paint',       href: '/paint',       internal: true, tier: 'medium', Icon: Brush,      nameKey: 'paint' },
       { id: 'icon',        href: '/icon',        internal: true, tier: 'medium', Icon: Shapes,     nameKey: 'icon' },
@@ -148,14 +159,13 @@ export const SECTIONS: Section[] = [
   },
   {
     id: 'learn',
-    eyebrow: { en: 'LEARN · 学习', zh: 'LEARN · 学习'
+    eyebrow: { en: 'LEARN', zh: '学习' },
+    title:   { en: 'Tutorials, terms, rules.', zh: '教程、术语、规则。'
     },
-    title:   { en: 'Methods and algorithms.', zh: '方法与公式。'
-    },
-    sub:     { en: 'CFOP tutorials and the full algorithm library — beginner method to ZBLL.', zh: 'CFOP 教程 + 多阶公式库 — 从入门法到 ZBLL 全套查阅。'
+    sub:     { en: 'Illustrated tutorials, a bilingual glossary, the full WCA regulations, and the group theory underneath.', zh: '图文教程、双语术语表、WCA 规则全文,以及魔方背后的群论。'
     },
     cards: [
-      { id: 'alg',      href: '/tutorial', internal: true, tier: 'medium', Icon: Library,    nameKey: 'alg', comingSoon: true },
+      { id: 'alg',      href: '/tutorial', internal: true, tier: 'medium', Icon: Library,    nameKey: 'alg' },
       { id: 'wiki',     href: '/wiki',     internal: true, tier: 'medium', Icon: BookA,      nameKey: 'wiki' },
       { id: 'regulation', href: '/regulation', internal: true, tier: 'medium', Icon: Scale, nameKey: 'regulation' },
       { id: 'math-hub', href: '/math', internal: true, tier: 'medium', Icon: Sigma, nameKey: 'theoryGroup' },
@@ -164,10 +174,10 @@ export const SECTIONS: Section[] = [
   },
   {
     id: 'other',
-    eyebrow: { en: 'OTHER · 其他', zh: 'OTHER · 其他' },
+    eyebrow: { en: 'OTHER', zh: '其他' },
     title:   { en: 'Read, code, explore.', zh: '阅读、编程、探索。'
     },
-    sub:     { en: 'Code notes, blog, link directory, unofficial world records.', zh: '代码笔记、博客、链接导航、非官方纪录。'
+    sub:     { en: 'Forum, code notes, blog, link directory, unofficial world records.', zh: '论坛、代码笔记、博客、站点导航与非官方纪录。'
     },
     cards: [
       { id: 'forum', href: '/forum', internal: true, tier: 'medium', Icon: MessagesSquare, nameKey: 'forum' },
