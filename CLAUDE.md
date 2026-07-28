@@ -25,7 +25,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | csTimer | `/cstimer` | iframe → `/tools/cstimer/` | cs0x7f/cstimer | ❌ |
 | WCA Stats | `/wca` | `packages/stats-build` | jonatanklosko/wca_statistics TS 重写 | ⚠️ 管道重写,UI 自有 |
 | Score Calculator | `/calc` | client `app/[lang]/calc/` | ported from carykh/hthgrapher | ✅ |
-| 1v1 Battle | `/battle` | client | ported from MatteoColombo/cube_challenge_timer | ✅ |
+| 1v1 Battle | `/timer` 双人模式(旧 `/battle` 已退役,引擎在 `timer/_battle/`) | client | ported from MatteoColombo/cube_challenge_timer | ✅ |
 | Recon | `/recon` | client | 自有 | ✅ |
 | Trainer | `/alg`(公式库内,`/alg/:p/:s/select` + `/alg/{3bld,roux,skewb-trainer}`) | client | 自有 | ✅ |
 | Recognize | `/recognize/pll` | client | 自有 | ✅ |

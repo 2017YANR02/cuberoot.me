@@ -17,7 +17,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const CLIENT = join(__dirname, '..');
-const BATTLE_CSS = join(CLIENT, 'app/[lang]/battle/battle.css');
+const BATTLE_CSS = join(CLIENT, 'app/[lang]/timer/_battle/battle.css');
 const SOLO_DIRS = [
   join(CLIENT, 'app/[lang]/timer/_components'),
   join(CLIENT, 'app/[lang]/timer/_shell'),

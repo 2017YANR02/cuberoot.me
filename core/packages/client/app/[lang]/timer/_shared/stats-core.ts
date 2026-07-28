@@ -13,7 +13,7 @@
  *
  * 2) Battle-named adapters below. Battle operates on SolveEntry[] (lowercase
  *    'dnf', Math.round rounding, slightly different DNF tolerance) — these are
- *    a faithful port of battle/_components/engine/stats.ts so battle can
+ *    a faithful port of _battle's original engine/stats.ts so battle can
  *    re-point imports here with zero behavior change. They are NOT aliases of
  *    the timer functions above (different input type + rounding).
  *
@@ -22,7 +22,7 @@
 
 export * from '../_lib/stats';
 
-import type { SolveEntry } from '@/app/[lang]/battle/_components/engine/types';
+import type { SolveEntry } from '@/app/[lang]/timer/_battle/engine/types';
 
 /**
  * Effective time (ms, Infinity for DNF) from a battle history entry.

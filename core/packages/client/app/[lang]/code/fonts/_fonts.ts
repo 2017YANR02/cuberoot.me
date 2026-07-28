@@ -148,8 +148,8 @@ export const FONT_GROUPS: FontGroup[] = [
         license: 'SIL OFL',
         roleZh: '七段数码管',
         roleEn: 'Seven-segment LCD',
-        usageZh: '/timer 与 /battle 的计时器读数,模拟实体计时器 LCD。',
-        usageEn: 'Timer readout on /timer and /battle — mimics a physical stackmat LCD.',
+        usageZh: '/timer 的计时器读数,模拟实体计时器 LCD。',
+        usageEn: 'Timer readout on /timer — mimics a physical stackmat LCD.',
       },
     ],
   },
@@ -157,8 +157,8 @@ export const FONT_GROUPS: FontGroup[] = [
     id: 'pdf',
     zh: '打乱 / PDF 还原',
     en: 'Scramble / PDF parity',
-    noteZh: '/scramble/gen 要把打乱表渲染得与 TNoodle 官方 PDF 像素级一致,三款字体合用:拉丁等宽走 LiberationMono,拉丁无衬线走 NotoSans,CJK 表头走文泉驿微米黑。/battle 与 /wca/about 的打乱记号也复用 LiberationMono。',
-    noteEn: 'For pixel-parity with TNoodle’s official PDF, /scramble/gen uses three fonts together: LiberationMono for Latin mono, NotoSans for Latin sans, and WenQuanYi Micro Hei for CJK headers. /battle and /wca/about reuse LiberationMono for scramble notation.',
+    noteZh: '/scramble/gen 要把打乱表渲染得与 TNoodle 官方 PDF 像素级一致,三款字体合用:拉丁等宽走 LiberationMono,拉丁无衬线走 NotoSans,CJK 表头走文泉驿微米黑。/timer 与 /wca/about 的打乱记号也复用 LiberationMono。',
+    noteEn: 'For pixel-parity with TNoodle’s official PDF, /scramble/gen uses three fonts together: LiberationMono for Latin mono, NotoSans for Latin sans, and WenQuanYi Micro Hei for CJK headers. /timer and /wca/about reuse LiberationMono for scramble notation.',
     fonts: [
       {
         family: 'LiberationMono',
@@ -175,8 +175,8 @@ export const FONT_GROUPS: FontGroup[] = [
         license: 'SIL OFL 1.1',
         roleZh: '打乱记号等宽',
         roleEn: 'Scramble notation mono',
-        usageZh: '/scramble/gen 表格、/battle 打乱行、/wca/about 复盘 —— 度量与 TNoodle PDF 一致。',
-        usageEn: '/scramble/gen tables, /battle scramble rows, /wca/about reconstructions — metrics match the TNoodle PDF.',
+        usageZh: '/scramble/gen 表格、/timer 打乱行、/wca/about 复盘 —— 度量与 TNoodle PDF 一致。',
+        usageEn: '/scramble/gen tables, /timer scramble rows, /wca/about reconstructions — metrics match the TNoodle PDF.',
       },
       {
         family: 'NotoSans',
