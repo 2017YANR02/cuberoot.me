@@ -1,14 +1,18 @@
 /*
- * lsll-corpus — 生成批量求解管道的语料,两个文件、两个阶段:
+ * lsll-corpus — 生成批量求解管道的语料。**一个文件 `corpus.txt`,579,368 行**,分两段拼出来:
  *
- *   corpus.txt       148,384 行 —— 站上「两步路线」那批(先跑这个)
- *   corpus_rest.txt  434,900 行 —— 其余全部,凑满 583,284 = 整个 LSLL 空间(后跑)
+ *   前 148,384 行 —— 站上「两步路线」那批(先跑,早点让训练器默认范围可用)
+ *   后 430,984 行 —— 其余全部,凑满 579,368 = 整个可训练 LSLL 空间
  *
- * 分两个文件而不是一个,是为了让求解能**分两趟**跑:`node solve_loop.mjs` 只啃第一批,
- * 完了再 `CORPUS=corpus_rest.txt node solve_loop.mjs` 啃第二批(同一个 out.csv,按 key 续跑)。
- * 进度条各自有自己的分母,不会把 6 小时的第二批混进第一批的 ETA 里。
+ * 579,368 = 583,284 − 3,916:**O 类不进语料**。它对子已归位且朝向正确,剩下的纯粹是顶层,
+ * 那 3,916 个局面就是 1LLL 的 3,916 个(`model.LsllCategory.pureLL`)—— LSLL 不列不练,
+ * 也就不必花 6 万次求解去算它。
  *
- * ── 阶段 A(corpus.txt):两步路线 ────────────────────────────────
+ * ⚠ 语料的一行 = **一个 case**,不是一个局面。求解阶段会把每行展开成 16 个首尾 AUF 像
+ * (`U^a 打乱 U^b`)各解一次再取最短 —— 所以这里给的基准相位是什么无所谓(仍钉在展示相位,
+ * 便于校验)。实际求解量 = 9,268,992 个局面,详见 `solver/lsll/solve.mjs`。
+ *
+ * ── 第一段:两步路线 ────────────────────────────────────────────
  * 302 条已收录 ZBLS case × 494 个 ZBLL 收尾 = 149,188 条路线,去重后 **148,384 个 canonical
  * key**(804 条撞在一起 —— 6 个 ZBLS 构型自带 pre-AUF 稳定子,见 /math/lsll §3)。
  *
@@ -23,16 +27,16 @@
  *
  * 打乱长度不重要(~40 步):最优解器只关心它到达的**局面**,输入多长都一样。
  *
- * ── 阶段 B(corpus_rest.txt):其余 434,900 个 ─────────────────────
+ * ── 第二段:其余 430,984 个 ─────────────────────────────────────
  * 剩下的局面不是两条已收录 case 拼出来的,拼接那招用不上;但也**不需要**逐个跑两阶段
  * (43 万 × ~100ms ≈ 12 小时)。走 `lsll-scramble-bfs.mts`:9 个保槽生成元对整个 9,331,200
  * 原始态做一次 BFS(~5s),之后每个局面回溯即得打乱。同样逐条回放校验。
  *
- * 42 个大类枚举出来的 canonical key 合起来 = 583,284(含 O 类那 3,916 个纯顶层局面 —— LSLL
- * 页面不列它们,但「粘打乱定位 case」会撞上,顺手算掉);减去阶段 A 的 148,384 = 434,900。
+ * 41 个可训练大类(去掉 O)枚举出来的 canonical key 合起来 = 579,368;减去第一段的 148,384
+ * = 430,984。
  *
  * Run: NODE_OPTIONS=--no-experimental-strip-types pnpm --filter @cuberoot/client exec tsx scripts/lsll-corpus.mts
- *      加 --routes-only 只出阶段 A(想省两分钟时用)
+ *      加 --routes-only 只出第一段(想省两分钟时用)
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -50,7 +54,7 @@ const {
 } = require('../lib/lsll/cube333.ts') as typeof import('../lib/lsll/cube333.ts');
 type LsllState = import('../lib/lsll/cube333.ts').LsllState;
 const {
-  CATEGORIES, TOTAL_CASES, canonicalKey, classify, composeState, decodeKey, displayState,
+  LISTED_CATEGORIES, LISTED_CASES, canonicalKey, classify, composeState, decodeKey, displayState,
   enumerateCategory, keyFromString, keyToString, packState, unpackState,
 } = require('../lib/lsll/model.ts') as typeof import('../lib/lsll/model.ts');
 const { zbllRoundKeys } = require('../lib/lsll/class3.ts') as typeof import('../lib/lsll/class3.ts');
@@ -58,7 +62,6 @@ const { ZBLS_COVERED_KEYS } = require('../lib/lsll/zbls_overlay.ts') as typeof i
 
 const solverDir = fileURLToPath(new URL('../../../../solver/lsll/', import.meta.url));
 const OUT = path.resolve(solverDir, 'corpus.txt');
-const OUT_REST = path.resolve(solverDir, 'corpus_rest.txt');
 const ROUTES_ONLY = process.argv.includes('--routes-only');
 
 /** 局面 → 一条到达它的纯面转打乱(cubing.js 两阶段解取逆),带回放失安全。 */
@@ -157,23 +160,22 @@ const lengths = (ss: Iterable<string>) => {
   for (const s of ss) { const k = s.split(' ').length; if (k < lo) lo = k; if (k > hi) hi = k; sum += k; n++; }
   return `${lo}–${hi} 步(均 ${(sum / Math.max(1, n)).toFixed(1)})`;
 };
-console.log(`写出 ${OUT}`);
-console.log(`  ${rows.size} 行,打乱 ${lengths(rows.values())}`);
+console.log(`第一段写出 ${rows.size} 行,打乱 ${lengths(rows.values())}`);
 
 if (ROUTES_ONLY) {
-  console.log('\n--routes-only:阶段 B 跳过。');
+  console.log('\n--routes-only:第二段跳过(corpus.txt 只有路线那批)。');
   process.exit(0);
 }
 
-// ════ 阶段 B:其余 434,900 个 ════════════════════════════════════════
-console.log('\n阶段 B:其余局面');
+// ════ 第二段:其余 430,984 个 ════════════════════════════════════════
+console.log('\n第二段:其余局面');
 
-// 42 个大类枚举 → 整个空间的 canonical key。O 类(纯顶层)也算进来:页面不列它,
-// 但「粘打乱定位 case」会撞上,3,916 个的成本可以忽略。
+// 41 个可训练大类枚举 → 整个可训练空间的 canonical key。**O 类不枚举** —— 它是纯顶层
+// (= 1LLL 那 3,916 个),LSLL 不列不练,也就不该占 6 万次求解。
 const t1 = Date.now();
 const allKeys: number[] = [];
 const seenKey = new Set<number>();
-for (const cat of CATEGORIES) {
+for (const cat of LISTED_CATEGORIES) {
   for (const k of enumerateCategory(cat.slug)) {
     if (seenKey.has(k)) throw new Error(`${keyToString(k)} 同时属于两个大类 —— classify 有歧义`);
     seenKey.add(k);
@@ -181,14 +183,15 @@ for (const cat of CATEGORIES) {
   }
 }
 console.log(`  枚举 ${allKeys.length} 个 case,用时 ${((Date.now() - t1) / 1000).toFixed(1)}s`);
-if (allKeys.length !== TOTAL_CASES) throw new Error(`expected ${TOTAL_CASES} cases, got ${allKeys.length}`);
+if (allKeys.length !== LISTED_CASES) throw new Error(`expected ${LISTED_CASES} cases, got ${allKeys.length}`);
 
 const restKeys = allKeys.filter((k) => !rows.has(k));
-if (restKeys.length !== TOTAL_CASES - rows.size) {
-  // 阶段 A 的 key 必须全在枚举里 —— 不在说明两条路对 canonical 的口径不一致
-  throw new Error(`阶段 A 有 ${rows.size - (TOTAL_CASES - restKeys.length)} 个 key 不在大类枚举里`);
+if (restKeys.length !== LISTED_CASES - rows.size) {
+  // 第一段的 key 必须全在枚举里 —— 不在说明两条路对 canonical 的口径不一致,
+  // 或者路线里混进了 O 类(那样它就不在 LISTED_CATEGORIES 的枚举中)
+  throw new Error(`第一段有 ${rows.size - (LISTED_CASES - restKeys.length)} 个 key 不在可训练大类枚举里`);
 }
-console.log(`  其余 ${restKeys.length} 个(= ${TOTAL_CASES} − ${rows.size})`);
+console.log(`  其余 ${restKeys.length} 个(= ${LISTED_CASES} − ${rows.size})`);
 
 const scrambler = buildLsllScrambler((m) => process.stdout.write(`${m}\r`));
 process.stdout.write(`  BFS 覆盖 ${scrambler.coverage} 个原始态,最深 ${scrambler.depthHistogram.length - 1} 层,`
@@ -198,7 +201,6 @@ process.stdout.write(`  BFS 覆盖 ${scrambler.coverage} 个原始态,最深 ${s
 const CHUNK = 20_000;
 let buf: string[] = [];
 let lo = Infinity, hi = 0, sum = 0;
-fs.writeFileSync(OUT_REST, '');
 const t2 = Date.now();
 for (let i = 0; i < restKeys.length; i++) {
   const key = restKeys[i];
@@ -214,14 +216,20 @@ for (let i = 0; i < restKeys.length; i++) {
   if (n < lo) lo = n; if (n > hi) hi = n; sum += n;
   buf.push(`${keyToString(key)},${scramble}`);
   if (buf.length >= CHUNK) {
-    fs.appendFileSync(OUT_REST, buf.join('\n') + '\n');
+    fs.appendFileSync(OUT, buf.join('\n') + '\n');
     buf = [];
     const rate = (i + 1) / ((Date.now() - t2) / 1000);
     process.stdout.write(`\r  校验 ${i + 1}/${restKeys.length} · ${Math.round(rate)}/s…`);
   }
 }
-if (buf.length) fs.appendFileSync(OUT_REST, buf.join('\n') + '\n');
+if (buf.length) fs.appendFileSync(OUT, buf.join('\n') + '\n');
 process.stdout.write(`\r  校验 ${restKeys.length} 条全部命中,用时 ${((Date.now() - t2) / 1000).toFixed(1)}s\n`);
-console.log(`写出 ${OUT_REST}`);
-console.log(`  ${restKeys.length} 行,打乱 ${lo}–${hi} 步(均 ${(sum / restKeys.length).toFixed(1)})`);
-console.log(`\n两个文件合计 ${rows.size + restKeys.length} 个 case = 整个 LSLL 空间。`);
+console.log(`  第二段写出 ${restKeys.length} 行,打乱 ${lo}–${hi} 步(均 ${(sum / restKeys.length).toFixed(1)})`);
+const stale = path.resolve(solverDir, 'corpus_rest.txt');
+if (fs.existsSync(stale)) {
+  console.log(`\n⚠ 旁边还留着旧的两批制语料 ${stale} —— 现在只用 corpus.txt,那个挪走。`);
+}
+
+console.log(`\n写出 ${OUT}`);
+console.log(`  ${rows.size + restKeys.length} 行 = 整个可训练 LSLL 空间(路线那批在前)。`);
+console.log(`  求解阶段每行展开 16 个首尾 AUF 像 ⇒ 上限 ${(rows.size + restKeys.length) * 16} 次求解。`);
