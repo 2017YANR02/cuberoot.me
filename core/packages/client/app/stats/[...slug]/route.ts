@@ -67,12 +67,19 @@ export async function GET(
     // (static nginx doesn't set it). Both live ONLY on static (not committed).
     if (rel.startsWith('scramble/downloads/')) {
       try {
-        const upstream = await fetch(upstreamUrl);
+        // 跨境回源不通时会把 undici 默认 10s connect timeout 打满,6s 判死。
+        const upstream = await fetch(upstreamUrl, { signal: AbortSignal.timeout(6000) });
         if (!upstream.ok) return new Response('not found', { status: upstream.status });
         const buf = await upstream.arrayBuffer();
         return new Response(buf, { headers });
-      } catch {
-        return new Response('upstream error', { status: 502 });
+      } catch (err) {
+        // 同 /tools:回源挂了改 307 直连 static(浏览器那条路是通的),别 502。
+        // 代价是丢 content-disposition(static 不发),文件名退化 —— 但能下到东西。
+        console.error(`[stats] upstream fetch failed: ${upstreamUrl}`, err);
+        return new Response(null, {
+          status: 307,
+          headers: { location: upstreamUrl, 'cache-control': 'no-store' },
+        });
       }
     }
     // Full bundles (~30MB gz) + all other stats on miss: redirect to static so the

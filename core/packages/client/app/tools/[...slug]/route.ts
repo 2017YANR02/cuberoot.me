@@ -79,8 +79,12 @@ export async function GET(
         },
       });
     }
+    const upstreamUrl = `https://static.cuberoot.me/tools/${rel}`;
     try {
-      const upstream = await fetch(`https://static.cuberoot.me/tools/${rel}`);
+      // Vercel 函数 → 自有 static 源是一跳跨境 server-to-server 请求,会整段不通
+      // (实测 undici 默认 10s connect timeout 全部打满)。正常命中在 1s 级,所以
+      // 卡 6s 就判死、别把整个函数吊在那儿。
+      const upstream = await fetch(upstreamUrl, { signal: AbortSignal.timeout(6000) });
       if (!upstream.ok) return new Response('not found', { status: upstream.status });
       // 已知扩展名优先用我们的映射(尤其 .wasm),纠正 upstream 可能给错的 MIME。
       const ext = path.extname(rel).toLowerCase();
@@ -89,8 +93,23 @@ export async function GET(
       return new Response(buf, {
         headers: { 'content-type': ct, 'cache-control': 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=86400' },
       });
-    } catch {
-      return new Response('upstream error', { status: 502 });
+    } catch (err) {
+      // 回源挂了不要 502(整个 /solver iframe、/cstimer 直接白屏)—— 307 给浏览器,
+      // 让它自己直连 static:浏览器这条路一直是通的(客户端本来就直接从 static 拉表),
+      // 挂的只有服务端这一跳。代价是该资源变跨域(必须同源的 worker 脚本仍会失败),
+      // 但那种情况原本也是 502,不算回退。
+      // no-store:这是瞬时故障兜底,绝不能让边缘把降级态缓存住。
+      console.error(`[tools] upstream fetch failed: ${upstreamUrl}`, err);
+      // 例外 cstimer:它把全部成绩存在 localStorage,换 origin = 用户看到"记录空了",
+      // 且故障期间新记的成绩留在 static 那个 origin 上再也找不回来。宁可白屏也不能
+      // 让数据分叉 —— 这条保持原来的 502。
+      if (rel === 'cstimer' || rel.startsWith('cstimer/')) {
+        return new Response('upstream error', { status: 502 });
+      }
+      return new Response(null, {
+        status: 307,
+        headers: { location: upstreamUrl, 'cache-control': 'no-store' },
+      });
     }
   }
   return new Response('not found', { status: 404 });
