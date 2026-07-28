@@ -127,6 +127,14 @@ export function postNetKick(code: string, pid: string, target: string): Promise<
   return postJson(`/v1/battle/rooms/${code}/kick`, { pid, target });
 }
 
+/**
+ * 改自己在房里的名字/身份(整体替换 name+wcaId+iso2)。重名与加入时同样加 (2)(3) 后缀,
+ * 所以回来的名字未必等于传出去的那个 —— 一律以返回的房间状态为准。
+ */
+export function renameNetPlayer(code: string, pid: string, id: NetIdentity): Promise<NetRoomState> {
+  return postJson(`/v1/battle/rooms/${code}/name`, { pid, name: id.name, wcaId: id.wcaId, iso2: id.iso2 });
+}
+
 /** 改自己所选项目 + 顺带 lazy 填该项目当前轮打乱(已有则沿用)。返回新房间状态。 */
 export function postNetEvent(code: string, pid: string, event: string, scramble: string): Promise<NetRoomState> {
   return postJson(`/v1/battle/rooms/${code}/event`, { pid, event, scramble });

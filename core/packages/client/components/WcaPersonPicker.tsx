@@ -23,6 +23,9 @@ interface Props {
   /** Fires with the live query text as the user types (and '' on clear).
    *  Lets callers treat the typed text as free-text input when no person is picked. */
   onQueryChange?: (q: string) => void;
+  /** 输入框的初始文字。改名 / 回填场景用:框里先摆着当前用的名字,不用让人重打一遍。
+   *  只取挂载那一次(之后归输入框自己管),换初值请给组件换 key。 */
+  defaultQuery?: string;
 }
 
 const DEBOUNCE_MS = 300;
@@ -44,9 +47,9 @@ function localScore(p: WcaPersonLite, ql: string): number {
 }
 
 export function WcaPersonPicker({
-  value, onChange, staticCubers = [], matchCount, placeholder, isZh, className, onQueryChange,
+  value, onChange, staticCubers = [], matchCount, placeholder, isZh, className, onQueryChange, defaultQuery,
 }: Props) {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(defaultQuery ?? '');
   const [open, setOpen] = useState(false);
   const [apiResults, setApiResults] = useState<WcaPersonLite[]>([]);
   const [loading, setLoading] = useState(false);

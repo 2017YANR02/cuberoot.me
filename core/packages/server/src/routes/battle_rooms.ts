@@ -14,6 +14,7 @@ import { checkRateLimit } from '../utils/recon_helpers.js';
  *   POST /battle/rooms/:code/join         — 加入:{name} → {playerId, ...state}(默认项目=房间项目)
  *   GET  /battle/rooms/:code?pid=X        — 房间状态(轮询;带 pid 时顺手刷新在线心跳)
  *   POST /battle/rooms/:code/status       — 实时状态:{pid,ph}(idle|ready|inspecting|solving)
+ *   POST /battle/rooms/:code/name         — 改自己的名字/身份:{pid,name,wcaId?,iso2?}(重名同样加后缀)
  *   POST /battle/rooms/:code/event        — 改自己项目:{pid,event,scramble}(顺带 lazy 填该项目打乱)
  *   POST /battle/rooms/:code/scramble     — lazy 填某项目当前轮打乱:{event,scramble}(set-if-absent)
  *   POST /battle/rooms/:code/result       — 交成绩:{pid,round,t,p};轮次落后 → {advanced,...state}
@@ -387,6 +388,59 @@ battleRoomsRoutes.post('/battle/rooms/:code/status', async (c) => {
     if (upd[0]) room = upd[0];
   }
   return c.json(stateJson(room));
+});
+
+// POST /battle/rooms/:code/name — 玩家改自己的名字(顺带可换 WCA 身份:国旗 / WCA ID)
+// 只改自己:pid 就是身份凭据,改不到别人。不限流,理由同 /status(同一 WiFi 共享出口 IP)。
+battleRoomsRoutes.post('/battle/rooms/:code/name', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const code = parseCode(c.req.param('code'));
+  if (!code) return c.json({ error: 'invalid code' }, 400);
+
+  let body: { pid?: unknown; name?: unknown; wcaId?: unknown; iso2?: unknown };
+  try { body = await c.req.json(); } catch { body = {}; }
+  const pid = typeof body.pid === 'string' && PID_RE.test(body.pid) ? body.pid : null;
+  if (!pid) return c.json({ error: 'invalid pid' }, 400);
+  const name = sanitizeName(body.name);
+  const wcaId = parseWcaId(body.wcaId);
+  const iso2 = parseIso2(body.iso2);
+
+  const now = Date.now();
+  // 与 join 同一套抢名循环:算唯一名(**排除自己**,否则改成自己现在的名字会被自己挡成
+  // 「名 (2)」)→ NOT EXISTS 原子写 → 抢输就重读重算。
+  for (let attempt = 0; attempt < MAX_PLAYERS + 4; attempt++) {
+    const cur = await getRoomRow(code);
+    if (!cur) return c.json({ error: 'room not found' }, 404);
+    const me = cur.players[pid];
+    if (!me) return c.json({ error: 'player not in room' }, 404);
+
+    const takenLower = new Set(
+      Object.entries(cur.players)
+        .filter(([id]) => id !== pid)
+        .map(([, p]) => (p.name || '').toLowerCase()),
+    );
+    const finalName = uniqueName(name, takenLower);
+    // 身份三件套整体替换:访客把选中的 WCA 选手清掉后,国旗 / WCA ID 也要跟着消失,
+    // 留着上一次的就成了「名字是甲、国旗还是乙」。
+    const entry: PlayerEntry = { ...me, name: finalName, seen: now };
+    if (wcaId) entry.wcaId = wcaId; else delete entry.wcaId;
+    if (iso2) entry.iso2 = iso2; else delete entry.iso2;
+
+    const rows = await query<RoomRow>(
+      `UPDATE battle_rooms b
+       SET players = players || jsonb_build_object(?::text, ?::jsonb), updated_at = ?
+       WHERE code = ?
+         AND jsonb_exists(b.players, ?)
+         AND NOT EXISTS (
+           SELECT 1 FROM jsonb_each(b.players) AS e(k, v)
+           WHERE e.k <> ?::text AND lower(v ->> 'name') = lower(?)
+         )
+       RETURNING ${ROOM_COLS}`,
+      [pid, entry, now, code, pid, pid, finalName],
+    );
+    if (rows[0]) return c.json(stateJson(rows[0]));
+  }
+  return c.json({ error: 'name taken' }, 409);
 });
 
 // POST /battle/rooms/:code/event — 玩家改自己项目 + lazy 填该项目当前轮打乱
