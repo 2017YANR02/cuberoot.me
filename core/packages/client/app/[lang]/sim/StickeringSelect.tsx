@@ -2,24 +2,22 @@
 // 住在魔方下方播放条最左侧;显隐由 simCaps.supports.stickering 决定(隐藏而非置灰)。
 // NxN 清单来自 engine/nxn/stickering.ts(引擎遮罩);megaminx / fto(cubing.js 渲染)
 // 用 cubing.js 原生 experimentalStickering,清单与 cubing.js puzzle-stickerings.ts 对齐。
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Settings } from 'lucide-react';
 import { useT } from '@/hooks/useT';
-import { CROSS_COLORS, stickeringGroupsFor, type StickeringGroup } from './engine/nxn/stickering';
+import { useIsAdmin } from '@/lib/auth-store';
+import CubeOrientationSelect from '@/components/CubeOrientationSelect';
+import { stickeringGroupsFor, type StickeringGroup } from './engine/nxn/stickering';
 import { CUSTOM_STICKERING, countSids, type PickGrain, type CustomTreatment } from './engine/nxn/customStickering';
 import { visualcubeStageGroups, VC_MASK_LABEL } from './engine/nxn/vcStageMask';
+import { applyMaskConfig, maskLabelOverride, maskRowsForOrder, PRESET_GROUP } from './engine/nxn/maskConfig';
+import { PRESET_PREFIX } from '@/lib/sim-masks-api';
+import { useSimMasks } from './useSimMasks';
+import SimMaskAdmin from './SimMaskAdmin';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import BoolToggle from '@/components/BoolToggle';
 import type { SimPuzzle } from './PlayerControls';
-
-// 十字(底面)颜色标签(标准配色 U=白 D=黄 F=绿 B=蓝 R=红 L=橙)。
-const CROSS_COLOR_LABEL: Record<string, { zh: string; en: string }> = {
-  white: { zh: '白', en: 'White' },
-  yellow: { zh: '黄', en: 'Yellow' },
-  green: { zh: '绿', en: 'Green' },
-  blue: { zh: '蓝', en: 'Blue' },
-  red: { zh: '红', en: 'Red' },
-  orange: { zh: '橙', en: 'Orange' },
-};
 
 // cubing.js megaminx 注册的 stickering(cubeLikeStickeringList("megaminx")):full + LL/LS 组。
 const MEGAMINX_GROUPS: StickeringGroup[] = [
@@ -54,6 +52,7 @@ const REST_OPTIONS: { v: CustomTreatment; zh: string; en: string }[] = [
 /** 选项显示文本:阶段名本身是通用缩写原样展示,少数长名 / 前缀名换短标签。 */
 function itemLabel(name: string, t: (zh: string, en: string) => string): string {
   if (name === 'full') return t('完整', 'full');
+  if (name.startsWith(PRESET_PREFIX)) return name.slice(PRESET_PREFIX.length);  // 自建遮罩没填标签时的兜底
   if (name === CUSTOM_STICKERING) return t('自定义', 'custom');
   if (name === 'centers-only') return t('仅中心', 'centers only');
   if (name === 'opposite-centers') return t('对面中心', 'opposite centers');
@@ -75,23 +74,26 @@ function groupLabel(group: string, t: (zh: string, en: string) => string): strin
     case 'VCMasks': return t('遮罩', 'Masks');
     case 'VCMasksExt': return t('遮罩(进阶)', 'Masks (extended)');
     case 'VCMasksSize': return t('遮罩(阶专属)', 'Masks (this size)');
+    // 管理员自己点选存出来的遮罩(DB,见 SimMaskAdmin)
+    case PRESET_GROUP: return t('自建', 'Custom masks');
     // CFOP / ZZ / Petrus / Nautilus / FMC / Ortega / Bencisco:通用名,双语同形
     default: return group;
   }
 }
 
 export default function StickeringSelect({
-  puzzleKind, value, onChange, color, onColorChange,
+  puzzleKind, value, onChange, orientation = '', onOrientationChange,
   mask = '', onMaskClear, editing = true, onEditingChange, grain = 'sticker', onGrainChange,
   pick = 'regular', onPickChange, rest = 'ignored', onRestChange,
 }: {
   puzzleKind: SimPuzzle;
   value: string;
   onChange: (v: string) => void;
-  /** 十字(底面)颜色(cubedb 的 Cross Color)。仅 NxN 引擎遮罩支持;
-   *  megaminx / fto 走 cubing.js 原生 stickering,无重定向参数,不显示。 */
-  color?: string;
-  onColorChange?: (v: string) => void;
+  /** 拿方朝向(整体转前缀,lib/cube-orientation 的 24 档):阶段遮罩随它重定向 ——
+   *  既选底面颜色,也选阶段落在哪个槽。仅 NxN 引擎遮罩支持;megaminx / fto 走
+   *  cubing.js 原生 stickering,无重定向参数,不显示。 */
+  orientation?: string;
+  onOrientationChange?: (v: string) => void;
   /** 自定义阶段:选中的贴纸清单 + 作图开关(仅 value==='custom' 时显示)。 */
   mask?: string;
   onMaskClear?: () => void;
@@ -106,21 +108,35 @@ export default function StickeringSelect({
   onRestChange?: (v: CustomTreatment) => void;
 }) {
   const t = useT();
-  const groups = useMemo<StickeringGroup[]>(() => {
+  const { i18n } = useTranslation();
+  const isZh = i18n.language.startsWith('zh');   // 仅作 maskLabelOverride 的取值参数
+  const isAdmin = useIsAdmin();
+  const { rows, reload } = useSimMasks();
+  const [adminOpen, setAdminOpen] = useState(false);
+  // 代码里的默认清单(单一源);管理员的覆盖层再叠上去。
+  const baseGroups = useMemo<StickeringGroup[]>(() => {
     // NxN:引擎自带阶段(方法学 CFOP/ZZ/Roux/…)+ visualcube 整套 MASK 清单(去重)。
     if (typeof puzzleKind === 'number') return [...stickeringGroupsFor(puzzleKind), ...visualcubeStageGroups(puzzleKind)];
     if (puzzleKind === 'megaminx') return MEGAMINX_GROUPS;
     if (puzzleKind === 'fto') return FTO_GROUPS;
     return [];
   }, [puzzleKind]);
+  // 覆盖层只管 NxN(megaminx / fto 的清单由 cubing.js 注册,遮罩函数也不在我们手里);
+  // -1 是「本拼图没有覆盖层」的哨兵阶数,查出来必然是空 Map。
+  const order = typeof puzzleKind === 'number' ? puzzleKind : -1;
+  const groups = useMemo<StickeringGroup[]>(
+    () => (order > 0 ? applyMaskConfig(baseGroups, rows, order) : baseGroups),
+    [baseGroups, rows, order],
+  );
+  const cfg = useMemo(() => maskRowsForOrder(rows, order), [rows, order]);
+  const label = (name: string): string => maskLabelOverride(cfg, name, isZh) || itemLabel(name, t);
   if (groups.length === 0) return null;
   // URL 带了本拼图清单外的阶段名(换拼图残留):补一项占位让 select 不显示成空白;
   // 引擎遮罩对未知名回退 full(不变暗),cubing.js 端由 player 自行兜底。
   const known = groups.some((g) => g.items.includes(value));
   const isCustom = value === CUSTOM_STICKERING;
-  // 自定义阶段的清单是绝对的(用户点的就是这几枚),没有「整套旋转到某底色」可言。
-  const showColor = typeof puzzleKind === 'number' && value !== 'full' && !isCustom && !!onColorChange;
-  const colorValue = color ?? 'yellow';
+  // 自定义阶段的清单是绝对的(用户点的就是这几枚),没有「整套转到某朝向」可言。
+  const showOrientation = typeof puzzleKind === 'number' && value !== 'full' && !isCustom && !!onOrientationChange;
   const picked = isCustom ? countSids(mask) : 0;
   return (
     <>
@@ -134,27 +150,47 @@ export default function StickeringSelect({
         {groups.map((g) => (
           <optgroup key={g.group} label={groupLabel(g.group, t)}>
             {g.items.map((name) => (
-              <option key={name} value={name}>{itemLabel(name, t)}</option>
+              <option key={name} value={name}>{label(name)}</option>
             ))}
           </optgroup>
         ))}
         {!known && <option value={value}>{value}</option>}
       </select>
-      {showColor && (
-        <select
+      {showOrientation && (
+        <CubeOrientationSelect
           className="sim-player-mode sim-player-stickering"
-          value={colorValue}
-          onChange={(e) => onColorChange(e.target.value)}
-          title={t('十字(底面)颜色:整套阶段旋转到所选颜色的面,顶层阶段落在对面', 'Cross (bottom) color: re-anchor the stage to the chosen face; last-layer stages land on the opposite face')}
-          aria-label={t('十字颜色', 'Cross color')}
+          value={orientation}
+          onChange={(v) => onOrientationChange?.(v)}
+          title={t('拿方朝向:整套阶段随这个整体转重定向 —— 换底色和换槽位都在这里选',
+            'Holding orientation: the whole stage is re-anchored by this cube rotation — it picks both the bottom face and which slot')}
+          ariaLabel={t('拿方朝向', 'Holding orientation')}
+        />
+      )}
+      {isAdmin && order > 0 && (
+        <button
+          type="button"
+          className="sim-stickering-admin"
+          onClick={() => setAdminOpen(true)}
+          title={t('遮罩清单管理(管理员):改名 / 排序 / 隐藏 / 把点选存成遮罩',
+            'Manage mask list (admin): rename, reorder, hide, save a pick as a mask')}
+          aria-label={t('遮罩清单管理', 'Manage mask list')}
         >
-          {CROSS_COLORS.map((c) => (
-            <option key={c} value={c}>{t(CROSS_COLOR_LABEL[c].zh, CROSS_COLOR_LABEL[c].en)}</option>
-          ))}
-          {!CROSS_COLORS.includes(colorValue as (typeof CROSS_COLORS)[number]) && (
-            <option value={colorValue}>{colorValue}</option>
-          )}
-        </select>
+          <Settings size={14} />
+        </button>
+      )}
+      {adminOpen && order > 0 && (
+        <SimMaskAdmin
+          order={order}
+          groups={applyMaskConfig(baseGroups, rows, order, { includeHidden: true })}
+          rows={rows}
+          onReload={reload}
+          onClose={() => setAdminOpen(false)}
+          groupLabel={(g) => groupLabel(g, t)}
+          defaultLabel={(name) => itemLabel(name, t)}
+          pickedSids={isCustom ? mask : ''}
+          pick={pick}
+          rest={rest}
+        />
       )}
       {isCustom && (
         <span className="sim-stickering-custom">

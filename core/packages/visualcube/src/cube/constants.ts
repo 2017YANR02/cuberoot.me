@@ -104,10 +104,9 @@ export enum Masking {
   CLS = 'cls',
   CMLL = 'cmll',
   CROSS = 'cross',
-  F2L3 = 'f2l_3',
-  F2L2 = 'f2l_2',
-  F2LSM = 'f2l_sm',
-  F2L1 = 'f2l_1',
+  // PHP's f2l_3 / f2l_2 / f2l_sm / f2l_1 ("F2L with N slots left") were bit-identical to
+  // xcross / xxcross / xxcross_diag / xxxcross (up to a y rotation), so they're gone —
+  // pick the cross-progress mask and re-anchor it with the whole-cube rotation instead.
   F2B = 'f2b',
   LINE = 'line',
 
@@ -115,24 +114,17 @@ export enum Masking {
   // Block-building blocks
   TWO_BY_TWO_BY_TWO = '2x2x2',
   TWO_BY_TWO_BY_THREE = '2x2x3',
-  // Cross variants (one cross edge missing -> partial cross subsets)
-  CROSS_FR = 'cross_fr',
-  CROSS_BR = 'cross_br',
-  CROSS_FB = 'cross_fb',
-  CROSS_LR = 'cross_lr',
-  CROSS_PARTIAL = 'cross_partial', // PHP "Cross" — D-edge UF only
-  // X-Cross (cross + one F2L pair)
-  XCROSS_FR = 'xcross_fr',
-  XCROSS_BR = 'xcross_br',
-  XCROSS_FL = 'xcross_fl',
-  XCROSS_BL = 'xcross_bl',
-  XXCROSS = 'xxcross',
-  // F2L progress (DE/TE/etc edge / corner subsets)
-  DEC = 'dec',
-  TEC_FR = 'tec_fr',
-  TEC_FL = 'tec_fl',
-  TEC_BL = 'tec_bl',
-  TEC_BR = 'tec_br',
+  // Cross progress. PHP shipped one mask per slot (cross_fr/br/fb/lr, xcross_fr/br/fl/bl,
+  // xxcross, dec, tec_fr/fl/bl/br); consumers now re-anchor with a whole-cube rotation,
+  // so only one representative per *shape* is kept — the rest were rotations of these.
+  CROSS_HALF = 'cross_half',          // 2 adjacent cross edges (PHP cross_fr)
+  CROSS_HALF_OPP = 'cross_half_opp',  // 2 opposite cross edges (PHP cross_fb)
+  CROSS_PARTIAL = 'cross_partial',    // PHP "Cross" — 4 cross edges, no side/U centers
+  CROSS_FULL = 'cross_full',          // cross_partial + all 6 centers (PHP "cross" lacks U)
+  XCROSS = 'xcross',                  // cross + 1 pair (PHP xcross_fr)
+  XXCROSS = 'xxcross',                // cross + 2 adjacent pairs (FL+FR)
+  XXCROSS_DIAG = 'xxcross_diag',      // cross + 2 diagonal pairs (PHP "DEC" = FR+BL)
+  XXXCROSS = 'xxxcross',              // cross + 3 pairs, FR slot open (PHP tec_fr)
   PAIR = 'pair',
   // EO / orbit
   EO_ORBIT = 'eo_orbit',
@@ -154,12 +146,10 @@ export enum Masking {
   FB2 = 'fb2',
   SB1 = 'sb1',
   SB2 = 'sb2',
-  // 1x1x2 / 1x2x2 / 2x2x2 partials
+  // 1x1x2 / 1x2x2 partials (PHP's 222_fl/bl/br were the DFR 2x2x2 block rotated to the
+  // other three D corners — one mask + a whole-cube rotation covers all four)
   ONE_ONE_TWO = '112',
   ONE_TWO_TWO = '122',
-  TWO_TWO_TWO_FL = '222_fl',
-  TWO_TWO_TWO_BL = '222_bl',
-  TWO_TWO_TWO_BR = '222_br',
   // Square-1 first-block variants (kept as 3x3 mask shapes)
   SQ_RDF = 'sq_rdf',
   SQ_FDR = 'sq_fdr',
