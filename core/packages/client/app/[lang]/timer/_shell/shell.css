@@ -1391,6 +1391,17 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 /* ── Phone (<480px) ─────────────────────────────────────── */
 @media (max-width: 480px) {
   .shell-topbar { gap: 6px; padding: 6px 10px; min-height: 44px; }
+  /* 窄屏放不下三列:两侧的 1fr 被挤成 0,logo 只剩两三像素(等于看不见)却仍占着
+     一格,把中列顶得既不居中也不贴边,控件还被迫多折一行。索性收起 logo,改成
+     [左组 auto][右组 1fr]:左组贴左紧凑排,右组贴右,不再有幽灵格。 */
+  .shell-topbar { grid-template-columns: auto 1fr; }
+  .shell-topbar-brand { display: none; }
+  .shell-topbar-left {
+    grid-column: 1;
+    justify-self: start;
+    justify-content: flex-start;
+  }
+  .shell-topbar-right { grid-column: 2; justify-self: end; }
   .shell-topbar-left { gap: 4px 6px; }
   .shell-players-select { padding: 0 4px; font-size: 12px; }
   .shell-event-btn { padding: 5px 10px; font-size: 12px; }

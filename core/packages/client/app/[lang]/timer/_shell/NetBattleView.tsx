@@ -30,7 +30,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useQueryState } from 'nuqs';
-import { Copy, Check, LogOut, Swords, Trophy, RotateCcw, BarChart3, X, Crown, UserMinus, Bluetooth } from 'lucide-react';
+import { Copy, Check, LogOut, Swords, Trophy, RotateCcw, BarChart3, X, Crown, UserMinus, Bluetooth, QrCode } from 'lucide-react';
 
 import TimingSurface from './TimingSurface';
 import BluetoothModal from '../_components/BluetoothModal';
@@ -44,7 +44,8 @@ import type { EventId } from '../_lib/types';
 import { CubePreview } from '../_lib/cube';
 import { SegmentTime } from '@/components/SegmentTime';
 import CubeRootLogo from '@/components/CubeRootLogo';
-import WcaEventSelector from '@/components/WcaEventSelector';
+import { EventSelect } from '@/components/EventSelect';
+import { RoomQrModal } from '@/components/RoomQrModal';
 import { EventIcon } from '@/components/EventIcon';
 import { WcaPersonPicker } from '@/components/WcaPersonPicker';
 import { Flag } from '@/components/Flag';
@@ -79,6 +80,8 @@ import './net.css';
 
 const LS_NAME = 'net_battle_name';
 const SS_KEY = 'net_battle_session';
+/** 访客不填昵称时的回落名(与服务端 sanitizeName 的默认值一致)。 */
+const GUEST_NAME = 'Cuber';
 /** 生成的房间码固定 5 位;填满即自动加入。 */
 const JOIN_CODE_LEN = 5;
 
@@ -93,8 +96,8 @@ function readSession(): SavedSession | null {
   } catch { return null; }
 }
 
-/** 联机房间项目选择器的可选集(WCA id 形式)。 */
-const NET_SELECTOR_EVENTS = new Set(NET_EVENTS.map(netEventToSelectorId));
+/** 联机房间项目选择器的可选项(WCA id 形式,顺序即 NET_EVENTS)。 */
+const NET_SELECTOR_EVENTS = NET_EVENTS.map(netEventToSelectorId);
 
 interface NetBattleViewProps {
   /** 人数下拉(TimerShell 构建),注入到顶栏 */
@@ -134,11 +137,13 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
     try { setName(localStorage.getItem(LS_NAME) || ''); } catch { /* ignore */ }
   }, []);
   // 身份:登录用户直接用 WCA 姓名+ID(不填昵称);访客选了 WCA 选手用其姓名+ID,否则用自由昵称。
-  const identity: NetIdentity | null = useMemo(() => {
+  // 访客什么都不填也能开房/加入 —— 回落默认名(与服务端 sanitizeName 同一个 'Cuber',
+  // 重名由服务端加 (2)(3) 后缀)。身份永不为 null:否则未登录用户会撞上「按钮灰着、
+  // 房间码填满也毫无反应」的死路。
+  const identity: NetIdentity = useMemo(() => {
     if (authUser) return { name: authUser.name, wcaId: authUser.wcaId || undefined, iso2: authUser.country || undefined };
     if (picked) return { name: picked.name, wcaId: picked.id, iso2: picked.country_iso2 || undefined };
-    const t = name.trim();
-    return t ? { name: t } : null;
+    return { name: name.trim() || GUEST_NAME };
   }, [authUser, picked, name]);
   const identityRef = useRef(identity); identityRef.current = identity;
 
@@ -160,9 +165,15 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
   const myEvent = room && pid ? playerEventOf(room, pid) : (room?.event ?? '333');
   const canSolve = !!room && !!pid && !myResult;
   const complete = room ? isRoundComplete(room) : false;
+  /** 还没交本轮成绩的在线玩家数。 */
+  const waiting = room ? pendingCount(room) : 0;
+  /** 本轮已无人可等(全交卷,或房里只剩我)。isRoundComplete 在「在线不足 2 人」时
+      恒 false(那是同时起表门控的口径),单独用它会让一个人开好房等朋友时既看到
+      「还差 0 人」,又按不动空格开下一轮。 */
+  const roundSettled = !!room && (complete || waiting === 0);
   const canAdvance = !!room && !!pid && !!myResult;
   const canSolveRef = useRef(canSolve); canSolveRef.current = canSolve;
-  const canAdvanceRef = useRef(canAdvance && complete); canAdvanceRef.current = canAdvance && complete;
+  const canAdvanceRef = useRef(canAdvance && roundSettled); canAdvanceRef.current = canAdvance && roundSettled;
 
   // ── 房主 / 同时开始 ─────────────────────────────────────────
   const iAmAdmin = !!room && isNetAdmin(room, pid);
@@ -358,7 +369,7 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
   // ── 建房 / 加入 / 恢复 / 离开 ───────────────────────────────
   const doCreate = useCallback(() => {
     const id = identityRef.current;
-    if (busy || !id) return;
+    if (busy) return;
     setBusy(true); setErr(null);
     const ev = lobbyEvent;
     const scr = generateScramble(ev as EventId);
@@ -371,7 +382,7 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
   const doJoin = useCallback((rawCode: string) => {
     const codeUp = rawCode.trim().toUpperCase();
     const id = identityRef.current;
-    if (!codeUp || busy || !id) return;
+    if (!codeUp || busy) return;
     setBusy(true); setErr(null);
     void joinNetRoom(codeUp, id)
       .then((st) => { adopt(st, id.name); setJoinCode(''); void setRoomParam(st.code); })
@@ -381,11 +392,11 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
 
   // 房间码填满(5 位)即自动加入,无需按钮;同一码只试一次(改码 / 失败后可再试)。
   // 只在「房间码」变化时触发(身份走 ref,不进依赖),避免访客还在逐字打名字时就
-  // 拿半截昵称抢先加入;身份未就绪(访客没填名)时不自动加,回车可兜底。
+  // 拿半截昵称抢先加入。
   const autoJoinedRef = useRef('');
   useEffect(() => {
     const c = joinCode.trim().toUpperCase();
-    if (c.length !== JOIN_CODE_LEN || busy || !identityRef.current) return;
+    if (c.length !== JOIN_CODE_LEN || busy) return;
     if (autoJoinedRef.current === c) return;
     autoJoinedRef.current = c;
     doJoin(c);
@@ -410,14 +421,18 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
           if (st.players[saved.pid]) { setPid(saved.pid); applyState(st); return; }
         }
         // 非本房刷新 → 停在加入页:预读房间(项目 + 在场者)供确认,房间码预填。
+        // 预填要顺手记进 autoJoinedRef:否则填满 5 位的自动加入会立刻抢跑,把人
+        // 静默拉进房(违背上面的「用户点加入才真进房」)。手打的码不受影响。
         const st = await getNetRoom(codeUp);
         setPeek({
           event: st.event,
           names: sortedNetPlayers(st.players).filter(p => isNetOnline(p, st.now)).map(p => p.name),
         });
+        autoJoinedRef.current = codeUp;
         setJoinCode(codeUp);
       } catch {
         setErr(tr({ zh: '房间不存在或已过期', en: 'Room not found or expired' }));
+        autoJoinedRef.current = codeUp;
         setJoinCode(codeUp);
       }
     })();
@@ -638,17 +653,26 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
   const [linkCopied, setLinkCopied] = useState(false);
   const copyTimerRef = useRef<number | null>(null);
   useEffect(() => () => { if (copyTimerRef.current) window.clearTimeout(copyTimerRef.current); }, []);
-  const copyLink = useCallback(() => {
+  // 邀请链接 = 当前页 URL + ?players=net&room=CODE(队友粘进浏览器 / 扫码打开即落加入页)。
+  // 复制按钮与二维码共用这一份,别各拼各的。
+  const roomInviteUrl = useCallback((): string | null => {
     const r = roomRef.current;
-    if (!r) return;
+    if (typeof window === 'undefined' || !r) return null;
     const u = new URL(window.location.href);
     u.searchParams.set('players', 'net');
     u.searchParams.set('room', r.code);
-    try { void navigator.clipboard.writeText(u.toString()); } catch { /* ignore */ }
+    return u.toString();
+  }, []);
+  const copyLink = useCallback(() => {
+    const url = roomInviteUrl();
+    if (!url) return;
+    try { void navigator.clipboard.writeText(url); } catch { /* ignore */ }
     setLinkCopied(true);
     if (copyTimerRef.current) window.clearTimeout(copyTimerRef.current);
     copyTimerRef.current = window.setTimeout(() => setLinkCopied(false), 1200);
-  }, []);
+  }, [roomInviteUrl]);
+  /** 邀请二维码弹窗(队友扫码直接落加入页)。 */
+  const [qrOpen, setQrOpen] = useState(false);
 
   const [scrambleCopied, setScrambleCopied] = useState(false);
   const copyScramble = useCallback(() => {
@@ -719,12 +743,10 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
           // 我的项目:本轮未交卷时可改(每人独立选,默认房间项目);已交卷则显示为静态芯片。
           !myResult ? (
             <span className="net-my-event" title={tr({ zh: '选择你的项目', en: 'Choose your event' })}>
-              <WcaEventSelector
-                availableEvents={NET_SELECTOR_EVENTS}
-                isZh={isZh}
-                selectedEvent={netEventToSelectorId(myEvent)}
-                onSelect={changeEvent}
-                onlyAvailable
+              <EventSelect
+                events={NET_SELECTOR_EVENTS}
+                value={netEventToSelectorId(myEvent)}
+                onChange={changeEvent}
               />
             </span>
           ) : (
@@ -795,6 +817,15 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
             <button
               type="button"
               className="tb-btn"
+              onClick={() => setQrOpen(true)}
+              title={tr({ zh: '二维码(队友扫码加入)', en: 'QR code (teammates scan to join)' })}
+              aria-label={tr({ zh: '房间二维码', en: 'Room QR code' })}
+            >
+              <QrCode size={14} />
+            </button>
+            <button
+              type="button"
+              className="tb-btn"
               onClick={doLeave}
               title={tr({ zh: '离开房间', en: 'Leave room' })}
               aria-label={tr({ zh: '离开房间', en: 'Leave room' })}
@@ -823,9 +854,12 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
       ) : (
         <WcaPersonPicker
           value={picked}
-          onChange={setPicked}
+          // 选中/清空选手都把自由昵称一并清掉(选手栏内的输入已被 picker 清空,
+          // 不清则 name 留着半截旧文字,清掉选手后会拿它当昵称)。
+          onChange={(p) => { setPicked(p); setName(''); }}
           onQueryChange={setName}
           isZh={isZh}
+          placeholder={tr({ zh: '昵称,或搜姓名 / WCA ID(可留空)', en: 'Nickname, or search name / WCA ID (optional)' })}
         />
       )}
     </div>
@@ -896,7 +930,7 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
                 type="button"
                 className="net-btn net-btn-primary net-btn-lg"
                 onClick={() => doJoin(inviteCode)}
-                disabled={busy || !peek || !identity}
+                disabled={busy || !peek}
               >
                 {tr({ zh: '加入房间', en: 'Join room' })}
               </button>
@@ -930,16 +964,14 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
 
               <div className="net-field">
                 <span className="net-field-label">{tr({ zh: '项目', en: 'Event' })}</span>
-                <WcaEventSelector
-                  availableEvents={NET_SELECTOR_EVENTS}
-                  isZh={isZh}
-                  selectedEvent={netEventToSelectorId(lobbyEvent)}
-                  onSelect={(id) => setLobbyEvent(selectorIdToNetEvent(id))}
-                  onlyAvailable
+                <EventSelect
+                  events={NET_SELECTOR_EVENTS}
+                  value={netEventToSelectorId(lobbyEvent)}
+                  onChange={(id) => setLobbyEvent(selectorIdToNetEvent(id))}
                 />
               </div>
 
-              <button type="button" className="net-btn net-btn-primary net-btn-lg" onClick={doCreate} disabled={busy || !identity}>
+              <button type="button" className="net-btn net-btn-primary net-btn-lg" onClick={doCreate} disabled={busy}>
                 {tr({ zh: '创建房间', en: 'Create room' })}
               </button>
 
@@ -970,8 +1002,7 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
 
   const players = sortedNetPlayers(room.players);
   const curResults = room.results[String(room.round)] ?? {};
-  const winners = complete ? roundWinners(curResults, room.players) : [];
-  const waiting = pendingCount(room);
+  const winners = roundSettled ? roundWinners(curResults, room.players) : [];
   const serverNowEst = Date.now() + (offsetRef.current ?? 0);
   const myScr = pid ? myScramble(room, pid) : (room.scrambles[room.event] ?? null);
   const displayScramble = myScr ? formatScrambleForEvent(myEvent, myScr) : '';
@@ -1094,7 +1125,10 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
                   </button>
                 ))}
               </div>
-              {complete ? (
+              {/* 没人可等(complete,或房里暂时只有我)→ 直接给「下一轮」。
+                  isRoundComplete 在「在线不足 2 人」时恒 false(那是同时起表门控的
+                  口径),照它渲染的话,一个人开好房等朋友时会看到「还差 0 人」。 */}
+              {roundSettled ? (
                 <>
                   <div className="net-round-result">
                     {winners.length > 0
@@ -1184,6 +1218,11 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
           onClose={() => setShowAdmin(false)}
         />
       )}
+
+      {qrOpen && (() => {
+        const url = roomInviteUrl();
+        return url ? <RoomQrModal url={url} code={room.code} onClose={() => setQrOpen(false)} /> : null;
+      })()}
 
       {showStats && (
         <NetStatsPanel
