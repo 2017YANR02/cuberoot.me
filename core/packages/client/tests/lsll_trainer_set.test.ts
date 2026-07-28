@@ -12,7 +12,7 @@
  * 枚举 16 种接法逐个回放判定,比论证可靠。
  */
 import { describe, it, expect } from 'vitest';
-import { generateScramble, pairPhaseLocked } from '@/lib/trainer-scramble';
+import { generateScramble } from '@/lib/trainer-scramble';
 import { caseKey } from '@/lib/trainer-case-key';
 import { CATEGORIES, canonicalKey, classify, keyFromString, locateFromScramble, unpackState } from '@/lib/lsll/model';
 import { compareAlgGroupLabel } from '@/lib/alg_group_order';
@@ -100,43 +100,52 @@ describe('装出来的 case', () => {
   });
 });
 
-describe('出题时对子相位锁死', () => {
+describe('对子相位由 post-AUF 开关决定', () => {
   /**
-   * 打乱是按展示相位算出来的(`model.pairDisplayTurn`:角在槽正上方 / 棱侧色对齐中心),
-   * 尾部再接一个随机 U 就把对子转跑了 —— case 没变,但不是库里那张图。
-   * 首部 AUF 不动对子(U 碰不到 DFR / FR),变的是收尾 AUF,照常随机。
+   * 打乱是按展示相位算出来的(`model.pairDisplayTurn`:角在槽正上方 / 棱侧色对齐中心)。
+   * 收尾接一个随机 U 会把对子转离那一格 —— case 不变(同一条 Z4×Z4 轨道,下面那组 16 接法
+   * 的测试逐个验过),变的只是呈现相位,而训练器各处的图都是从**实际打乱**渲染的,跟着一起转。
+   *
+   * 所以两种都是对的,交给开关:开 = 每次朝向不同(要先补 AUF 才能开搞,贴近真解);
+   * 关 = 恒定在库里那张图的相位。首部 AUF 不动对子(U 碰不到 DFR / FR),两种情形下都随机。
    */
   const SETUP = "R U R' U' R U R' U'";   // 槽也拆了的一条,对子有块在顶层
 
-  it('LSLL case 归 pairPhaseLocked 管(f2l 类同理)', async () => {
-    const [c] = await loadLsllCases(LSLL_SCOPE_COVERED);
-    expect(pairPhaseLocked(c)).toBe(true);
-    expect(pairPhaseLocked({ ...c, sticker: { kind: 'f2l', fl: '' } })).toBe(true);
-    expect(pairPhaseLocked({ ...c, sticker: { kind: 'raw', tag: 'zbll', attrs: {} } })).toBe(false);
+  const pairPhase = (s: string): string => {
+    const got = extractLsll(applyAlg(solvedCube(), s));
+    expect('broken' in got, `${s} 不再是 LSLL 局面`).toBe(false);
+    if ('broken' in got) return 'broken';
+    const cpos = got.state.cp.indexOf(4), epos = got.state.ep.indexOf(4);
+    return `${cpos}/${got.state.co[cpos]}/${epos}/${got.state.eo[epos]}`;
+  };
+
+  it('post-AUF 开:60 次出题把对子摆过 4 种相位', async () => {
+    const [base] = await loadLsllCases(LSLL_SCOPE_COVERED);
+    const c = { ...base, setup: SETUP };
+    const phases = new Set<string>();
+    for (let i = 0; i < 60; i++) phases.add(pairPhase(generateScramble(c, '3x3', 'inv', { preAuf: true, postAuf: true })));
+    // U^0..U^3 各把对子送到一格 —— 60 抽还凑不齐 4 种的概率 ≈ 4·(3/4)^60 ≈ 1e-7
+    expect(phases.size).toBe(4);
   });
 
-  it('60 次出题:对子恒在同一格,打乱本身仍在变', async () => {
+  it('post-AUF 关:60 次出题对子恒在同一格,打乱本身仍在变', async () => {
     const [base] = await loadLsllCases(LSLL_SCOPE_COVERED);
     const c = { ...base, setup: SETUP };
     const phases = new Set<string>(), scrambles = new Set<string>();
     for (let i = 0; i < 60; i++) {
-      const s = generateScramble(c, '3x3', 'inv', { preAuf: true, postAuf: true });
-      const got = extractLsll(applyAlg(solvedCube(), s));
-      expect('broken' in got, `${s} 不再是 LSLL 局面`).toBe(false);
-      if ('broken' in got) continue;
-      const cpos = got.state.cp.indexOf(4), epos = got.state.ep.indexOf(4);
-      phases.add(`${cpos}/${got.state.co[cpos]}/${epos}/${got.state.eo[epos]}`);
+      const s = generateScramble(c, '3x3', 'inv', { preAuf: true, postAuf: false });
+      phases.add(pairPhase(s));
       scrambles.add(s);
     }
     expect([...phases]).toHaveLength(1);
     expect(scrambles.size, '首部 AUF 没在随机').toBeGreaterThan(1);
   });
 
-  it('关掉首部 AUF 就是打乱原文,一个字符不加', async () => {
+  it('两个开关都关就是打乱原文,一个字符不加', async () => {
     const [base] = await loadLsllCases(LSLL_SCOPE_COVERED);
     const c = { ...base, setup: SETUP };
     for (let i = 0; i < 20; i++) {
-      expect(generateScramble(c, '3x3', 'inv', { preAuf: false, postAuf: true })).toBe(SETUP);
+      expect(generateScramble(c, '3x3', 'inv', { preAuf: false, postAuf: false })).toBe(SETUP);
     }
   });
 });
