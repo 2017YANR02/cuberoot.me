@@ -73,8 +73,13 @@
 | | 其中内容静态、可构建期就绪的:`/alg/*` 系列、`/wca/comp`、`/tutorial`、`/scramble/stats`、`/wca` hub | |
 | | 另一类(`/wca/results`、`/grand-slam`、`/success-rate`、`/cohort-ranks`、`/all-events-done`、`/fun-stats`)是筛选驱动,客户端取数**合理**,但默认视图可以服务端渲染 | |
 | **3 缩略图静态化** | 17 处 `<CaseThumb>` 调用点,**只有 2 处**传了 `local`(TrainerRunClient、MemoryTrainer),其余全走接口 | 全仓 grep |
-| | 网格页**无分页、无虚拟化**:`/alg/3x3/oll` 57 张、`zbll` 472、`comm-edge` 440、`ollcp` 342、`1lll` 3,397 | `AlgCategoryView.tsx` |
+| | 网格页无懒加载,一次全拉。**单页真实张数(Playwright 实测,非按 case 数推算)**:`cls` 97、`oll` 57、`ollcp` 57、`adv-f2l` 54、`1lll` 50、`zbll` 47、`zbls` 42 | `AlgCategoryView.tsx` |
 | | 全站 58 个 `<img>`,只有 15 个带 `loading="lazy"` | 全仓 grep |
+
+> **更正**:本文档初版按 case 总数推算,写成"`1lll` 一次铺 3,397 张"。实测是 **50 张** ——
+> umbrella 集顶层渲染的是**子组封面卡**,不是全部 case。`sq1` / `skewb` 更是 0 张 `<img>`
+> (走 `PuzzleSVG` 本地内联)。真实的单页上限在 **97 张**(`/alg/3x3/cls`),不是几千。
+> 这个更正把下面 P1 的"网格分页"从必做降级为待观察。
 | **4 无屏障** | 28 个文件用 `Promise.all`;确证的首屏屏障:`AlgPuzzleClient.tsx:82` | 需逐个甄别 |
 | **5 同源/preconnect** | `api.` 与 `static.` 均为独立域,root layout 只 `preload` 了字体,**全站零 `preconnect`** | `app/layout.tsx:61-67` |
 
@@ -84,21 +89,46 @@
 
 按 **(收益 ÷ 成本)** 排,不是按改动量排。
 
-### P0 — 一行到几十行,立竿见影
+### P0 — 已完成(2026-07-28)
 
-1. **加 `preconnect`**(`app/layout.tsx`)—— 指向 `api.` 与 `static.`。所有取数页面省一轮
-   DNS+TCP+TLS。成本:2 行。
-2. **`CaseThumb` 默认 `local`** —— 干掉 `/v1/visualcube.svg` 的绝大部分调用,
-   预期砍掉全 API **约 19% 的请求量**。需给"真要走接口"的少数场景留 `local={false}` 出口。
-3. **拆 `AlgPuzzleClient` 的 `Promise.all` 屏障** —— 逐个 resolve 逐个显示。
+1. **`preconnect` / `dns-prefetch`**(`app/layout.tsx`)—— `api` 每页都被全站 chrome
+   (`PageNoticeBar` 等)打,给 `preconnect` 直接建连;`static` 只有统计 / 教程 / 比赛几类页面
+   用,给更便宜的 `dns-prefetch` —— 对用不到它的页面 `preconnect` 只是白占一条 socket。
+   origin 从 `lib/api-base` / `lib/stats-base` 新增的 `BROWSER_*_ORIGIN` 取(禁硬编码),
+   dev 下两者同源故不发。
+2. **`/alg/[puzzle]` 的封面改本地渲染** —— 19 张卡改 `local`。
+   **不是全局默认**:长网格照抄这条会把几千次渲染压进主线程,比发请求更糟。
+3. **长网格改 `loading="lazy"`** —— `AlgCategoryView` 的三处网格(case 网格 + 两处子组封面),
+   其中第三处直接用 `<VisualCube>` 不经 `CaseThumb`,靠 Playwright 实测才发现漏改。
+4. **拆 `AlgPuzzleClient` 的 `Promise.all` 屏障** —— 改为逐套 resolve 逐套 `setState`。
+   增量更新要求换阶时先清空(sq1 与 megaminx 共用 `co/eo/cp/ep` slug,不清会读到上一阶的封面)。
+
+**实测结果**(Playwright,本地 dev):
+
+| 页面 | 改前 | 改后 |
+|---|---|---|
+| `/zh/alg/3x3` | 19 次 `visualcube.svg` 请求 | **0 次**,20 张内联 SVG |
+| `/alg/3x3/cls`(手机 390px) | 97 次 | **43 次**(首屏) |
+| `/alg/3x3/1lll`(手机 390px) | 50 次 | **18 次**(首屏) |
+| `/alg/3x3/ollcp`(手机 390px) | 57 次 | **21 次**(首屏) |
+| 同上三页(桌面 1280px) | — | 无变化 |
+
+两点如实记录:
+
+- **懒加载在桌面端是 no-op**。这些页面桌面高度 1981–3956px,整页都落在 Chrome 的预加载阈值内,
+  97 张照样全拉。收益全部来自窄屏(整页 5732–10661px)。别对外宣称"砍掉桌面请求"。
+- **本地渲染与接口渲染逐字节一致**:19 套封面各自两路渲染对比,**19/19 完全相同**
+  (`view`/`mask` 分支覆盖 f2l / oll / pll / iso+vh / pll+coll / pll+cmll)。
+  两边调的是同一个 `renderFromSimpleQuery`,画面不会变。
 
 ### P1 — 结构性,收益最大
 
 4. **`/alg/[puzzle]` 改走索引接口或构建期常量** —— 928 KB → 几 KB。详见 §3。
 5. **`/v1/recon/list` 加分页(keyset/cursor)** —— API 带宽第一名,614 MB / 2.6 天。
    `no-store` 是因为可见性随查看者变,合理;正因如此更需要分页。
-6. **大公式集网格分页或虚拟化** —— `1lll` 3,397 张、`zbll` 472 张一次性铺开,
-   即使改成本地渲染也是 3,397 × 1.4 ms ≈ 4.8 s 主线程。**本地渲染不能代替分页,两件事都要做。**
+6. ~~大公式集网格分页或虚拟化~~ —— **降级为待观察**。实测单页上限 97 张(`/alg/3x3/cls`),
+   不是原先按 case 数推算的几千张;懒加载落地后窄屏首屏只剩 43 张。
+   97 个 DOM 节点谈不上要虚拟化,现在做属于过度优化。等真出现单页 300+ 张的集再说。
 
 ### P2 — 收益明确但工程量大
 
@@ -203,4 +233,6 @@ TLS 不可能要一秒。查到本机 `HTTP_PROXY/HTTPS_PROXY/ALL_PROXY` 与 Win
 ## 变更记录
 
 - 2026-07-28 立档。原为单页(`/alg/[puzzle]`)性能记录,扩为全站审计。
-  §1 完成扫描 + 线上日志实证;§2 列出 P0–P3;§4 结案。全部待动工。
+  §1 完成扫描 + 线上日志实证;§2 列出 P0–P3;§4 结案。
+- 2026-07-28 P0 四项完成并实测;更正初版按 case 数推算得出的"1lll 3,397 张"(实为 50 张),
+  据此把 P1 的网格分页降级为待观察。P1–P3 待动工。

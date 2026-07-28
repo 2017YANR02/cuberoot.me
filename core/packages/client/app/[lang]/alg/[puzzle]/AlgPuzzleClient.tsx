@@ -79,21 +79,21 @@ export default function AlgPuzzleClient() {
   useEffect(() => {
     if (!valid) return;
     let cancelled = false;
-    Promise.all(sets.map(s =>
+    // 换魔方阶要先清空:slug 在不同阶之间会重名(2x2 与 megaminx 都有 eo/co/cp/ep),
+    // 留着上一阶的条目会让新页面读到别人的封面和数量。
+    setCounts({});
+    setFirstCases({});
+    // 一套一落地,不等最慢的那一套 —— 一张卡片的封面不该被另一套的请求挡着。
+    for (const s of sets) {
       loadAlg(puzzle, s.slug)
-        .then(d => ({ slug: s.slug, count: d.cases.length, first: d.cases[0] ?? null }))
-        .catch(() => ({ slug: s.slug, count: -1, first: null }))
-    )).then(rows => {
-      if (cancelled) return;
-      const nextCounts: Record<string, number> = {};
-      const nextFirst: Record<string, AlgCase | null> = {};
-      for (const { slug, count, first } of rows) {
-        nextCounts[slug] = count;
-        nextFirst[slug] = first;
-      }
-      setCounts(nextCounts);
-      setFirstCases(nextFirst);
-    });
+        .then(d => ({ count: d.cases.length, first: d.cases[0] ?? null as AlgCase | null }))
+        .catch(() => ({ count: -1, first: null as AlgCase | null }))
+        .then(({ count, first }) => {
+          if (cancelled) return;
+          setCounts(prev => ({ ...prev, [s.slug]: count }));
+          setFirstCases(prev => ({ ...prev, [s.slug]: first }));
+        });
+    }
     return () => { cancelled = true; };
   }, [puzzle, valid, sets]);
 
@@ -147,7 +147,10 @@ export default function AlgPuzzleClient() {
                 onClick={picking ? () => togglePick(s.slug) : undefined}
                 className={picking && picked.includes(s.slug) ? 'is-picked' : undefined}
                 thumb={first && (
-                  <CaseThumb puzzle={puzzle} set={s.slug} sticker={first.sticker} alg={firstAlg} setup={first.setup} size={96} />
+                  /* 每阶最多二十来张、全在首屏附近,本地渲染实测 19 张 26ms —— 图与数量同帧出现,
+                     不再各自等一次跨域请求。渲染器本来就静态 import 进了 bundle,不额外增体积。
+                     长 case 网格不能照抄这条,那边走 loading="lazy",见 AlgCategoryView。 */
+                  <CaseThumb puzzle={puzzle} set={s.slug} sticker={first.sticker} alg={firstAlg} setup={first.setup} size={96} local />
                 )}
                 title={tr(s)}
                 count={n == null ? '…' : n < 0 ? '!' : n}
