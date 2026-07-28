@@ -15,7 +15,7 @@ export const GITHUB_ACTIONS: StackTool = {
   floats: ['workflow', 'job', 'step', 'runner', 'matrix', 'uses:', 'with:', 'env:', 'secrets', 'OIDC', 'reusable', 'composite'],
   zh: {
     tagline: 'YAML 驱动的 CI/CD + 通用编排',
-    role: '本仓库 9 条 workflow 的执行引擎。每个 PR 跑测试,每次 push main 触发 build 和 deploy。',
+    role: '本仓库 19 条 workflow 的执行引擎。每个 PR 跑测试,每次 push main 触发 build 和 deploy。',
     heroSub: <>2018 年 10 月 GitHub Universe 上首次亮相, 2019 年 11 月 13 日 GA。把 "CI/CD" 从一个独立产品 (Travis / CircleCI / Jenkins) 拉回 git 仓库内 —— workflow 是 <code>.github/workflows/*.yml</code> 一个普通文件, 跟代码一起 review、一起 commit、一起回滚。八年下来已成 OSS 项目的默认 CI。</>,
     whatDesc: <>GitHub Actions 是一个 <strong>事件驱动的工作流编排平台</strong>, 跑在 GitHub 自家托管的 runner 上 (也支持 self-hosted)。它把仓库事件 (push / PR / issue / schedule / release) 映射成 YAML 描述的 workflow, workflow 拆成 job, job 拆成 step。它不只做 CI/CD —— 抓数据、跑 cron、发通知、自动 label / triage 全在它的射程内。</>,
     historyDesc: <>从 2018-10 在 Universe 上以 HCL 语法 beta 亮相, 到 2019-11 切到 YAML 并 GA, 再到 2021 的 OIDC + reusable workflows、2024 的 arm64 公测、2026 年初 arm64 私库 GA 和定价下调,八年间它从一个 "GitHub 内部把 LGTM 自动化" 的边路实验, 变成 OSS 默认 CI。Marketplace 上 25k+ public action 是这条护城河最深的地方。</>,

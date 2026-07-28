@@ -15,7 +15,7 @@ export const ZUSTAND: StackTool = {
   floats: ['create', 'useStore', 'set', 'get', 'subscribe', 'persist', 'devtools', 'immer', 'selector', 'shallow', 'useShallow', 'slices'],
   zh: {
     tagline: '简到极致的 React 状态管理',
-    role: '客户端跨页持久状态:auth / settings / sessions / trainer / battle / calc / mosaic / viz / recon 共 11 个 store。',
+    role: '客户端状态层:auth / session / trainer / recon / 公式记忆等 7 个站点级 store, 加 battle / calc / mosaic / paint / viz 等 7 个页面级 store。',
     heroSub: <>Redux 上的样板代码厌倦了, Context 一旦树深就 re-render 全屋, MobX 不熟魔法不敢用 —— Daishi Kato 2019 年在 Poimandres 集体写了 Zustand:<strong><code>create()</code> 返回一个 hook, 没有 Provider, 没有 reducer, 没有 action type 字符串</strong>。六年后, 它在 npm 上每周下载千万, 在新建 React 项目里超过 Redux Toolkit, 成为事实上的首选。</>,
     whatDesc: <>Zustand 是一个 <strong>体积约 1.16 KB 的 React 状态管理库</strong>, 内核是一个发布订阅 store + React 18+ 的 <code>useSyncExternalStore</code> 适配。API 一只手数得过来:<code>create</code> / <code>set</code> / <code>get</code> / <code>subscribe</code>, 加几个可选 middleware (persist / devtools / immer)。"够用 + 没噪声" 是它最锋利的部分。</>,
     historyDesc: <>2019 年 Daishi Kato 在 Poimandres (react-three-fiber 那个集体) 顺手做的库, 起点是给 r3f 的内部状态找一个比 Redux 更轻的方案。Jotai / Valtio / Zustand 三兄弟同期出生, Zustand 走的是"vanilla store + selector hook" 这条最朴素的路, 反而后来跑得最远。</>,
@@ -23,13 +23,13 @@ export const ZUSTAND: StackTool = {
     conceptsDesc: <>可观察 API 极小:<code>create()</code> 返回一个 hook、组件里调 hook 传 selector 拿想要的切片、需要时套 middleware (<code>persist</code> / <code>devtools</code> / <code>immer</code> / <code>subscribeWithSelector</code>)。再往下是 <code>useShallow</code> 让多字段选择不无谓 re-render。</>,
     whyDesc: <>2026 年新项目继续选 Zustand 而不是 Redux Toolkit / Jotai / Context, 不是性能差异 (基本拉平), 而是<strong>没有 Provider</strong>、<strong>没有 reducer 仪式</strong>、<strong>能在 React 外用</strong>、<strong>AI 写得最对</strong>这四件事其它方案不全。</>,
     adoptersTitle: '谁在用',
-    adoptersDesc: <>Pmndrs 全家桶 (react-three-fiber / drei / leva) 起家就是它, Vercel / Cursor / Bluesky web / Excalidraw / Linear 内部都有 Zustand store。AI 一代工具生成 React 状态时几乎默认这套。本站 11 个 store 也全跑在它上面。</>,
+    adoptersDesc: <>Pmndrs 全家桶 (react-three-fiber / drei / leva) 起家就是它, Vercel / Cursor / Bluesky web / Excalidraw / Linear 内部都有 Zustand store。AI 一代工具生成 React 状态时几乎默认这套。本站 14 个 store 也全跑在它上面。</>,
     outlookTitle: '当下与前景',
     outlookDesc: <>5.0 (2024-11) 砍 React 17, 强制 18+, 内部清理一轮包大小再降。同期 React Compiler + <code>useShallow</code> 让 selector 写起来更准, RSC 时代 client-side store 边界更清晰。Zustand 没有"下一个大版本要重做" 的剧本, 这本身就是稳定的承诺。</>,
   },
   en: {
     tagline: 'Bear-minimum React state management',
-    role: 'Client-side cross-page state — 11 stores: auth / settings / sessions / trainer / battle / calc / mosaic / viz / recon.',
+    role: 'The client state layer — 7 site-wide stores (auth / session / trainer / recon / algorithm memory) plus 7 page-level ones (battle / calc / mosaic / paint / viz).',
     heroSub: <>Tired of Redux boilerplate, scared of Context re-rendering the whole tree, and not fluent enough in MobX to dare use the magic — in 2019 Daishi Kato wrote Zustand inside Poimandres: <strong><code>create()</code> returns a hook. No Provider, no reducers, no action-type strings.</strong> Six years later it sees tens of millions of weekly npm downloads and has overtaken Redux Toolkit as the de-facto pick for new React projects.</>,
     whatDesc: <>Zustand is a <strong>~1.16 KB React state library</strong>. The kernel is a pub-sub store + a React 18 <code>useSyncExternalStore</code> adapter. The whole API fits on one hand: <code>create</code> / <code>set</code> / <code>get</code> / <code>subscribe</code>, plus a few optional middlewares (persist / devtools / immer). "Just enough, zero noise" is its sharpest edge.</>,
     historyDesc: <>Built by Daishi Kato in 2019 inside Poimandres (the react-three-fiber collective). The seed was a Redux-lighter solution for r3f's internal state. Jotai / Valtio / Zustand are siblings born around the same time; Zustand took the most boring path — vanilla store + selector hook — and ended up traveling the furthest.</>,
@@ -37,7 +37,7 @@ export const ZUSTAND: StackTool = {
     conceptsDesc: <>The observable API is tiny: <code>create()</code> returns a hook, components call the hook with a selector to pick a slice, and middlewares (<code>persist</code> / <code>devtools</code> / <code>immer</code> / <code>subscribeWithSelector</code>) wrap as needed. <code>useShallow</code> sits on top, keeping multi-field reads from re-rendering for free.</>,
     whyDesc: <>Picking Zustand in 2026 over Redux Toolkit / Jotai / Context isn't about perf (basically equal). It's the combination: <strong>no Provider</strong>, <strong>no reducer ceremony</strong>, <strong>usable outside React</strong>, <strong>LLMs get it right</strong> — none of the alternatives ticks all four boxes.</>,
     adoptersTitle: 'Who uses it',
-    adoptersDesc: <>Pmndrs (react-three-fiber / drei / leva) was the original home. Vercel / Cursor / Bluesky web / Excalidraw / Linear all have Zustand stores in production. The AI-tool generation defaults to it when emitting React state. This site's 11 stores ride it too.</>,
+    adoptersDesc: <>Pmndrs (react-three-fiber / drei / leva) was the original home. Vercel / Cursor / Bluesky web / Excalidraw / Linear all have Zustand stores in production. The AI-tool generation defaults to it when emitting React state. This site's 14 stores ride it too.</>,
     outlookTitle: 'Now and next',
     outlookDesc: <>5.0 (2024-11) drops React 17, requires 18+, and trims the bundle further. React Compiler + <code>useShallow</code> tighten selectors; the RSC era sharpens the client-side store boundary. There's no "next big rewrite" looming — that absence is itself the stability promise.</>,
   },
@@ -46,7 +46,7 @@ export const ZUSTAND: StackTool = {
     },
     { num: '~1', unit: '.16 KB', zh: <>min+gzip 包大小 <em>bundlephobia</em></>, en: <>min+gzip bundle size <em>bundlephobia</em></> },
     { num: '~50', unit: 'k+', zh: <>GitHub stars <em>pmndrs/zustand</em></>, en: <>GitHub stars <em>pmndrs/zustand</em></> },
-    { num: '11', zh: <>本站 store 数量 <em>6 全局 + 5 页面级</em></>, en: <>stores on this site <em>6 global + 5 page-local</em></>
+    { num: '14', zh: <>本站 store 数量 <em>7 站点级 + 7 页面级</em></>, en: <>stores on this site <em>7 site-wide + 7 page-level</em></>
     },
   ],
   intro: {
@@ -108,7 +108,7 @@ export const ZUSTAND: StackTool = {
     { name: 'Lobe Chat', href: 'https://lobehub.com', zhNote: 'LLM 客户端, 全量 Zustand + persist', enNote: 'LLM client — Zustand throughout, with persist' },
     { name: 'Vinxi / TanStack Start', href: 'https://tanstack.com', zhNote: '示例和模板里 Zustand 是默认', enNote: 'Examples and starters default to Zustand' },
     { name: 'Mui Toolpad', href: 'https://mui.com/toolpad', zhNote: '低代码平台的 page-local state', enNote: 'Page-local state in the low-code platform' },
-    { name: 'cuberoot.me', highlight: true, zhNote: '本站 11 个 store, 全部 Zustand 5', enNote: 'This site — 11 stores, all on Zustand 5' },
+    { name: 'cuberoot.me', highlight: true, zhNote: '本站 14 个 store, 全部 Zustand 5', enNote: 'This site — 14 stores, all on Zustand 5' },
   ],
   outlook: [
     { tag: <>HOT · 2024-11</>, hot: true, big: true, zh: { title: <>5.0 — React 18+ 时代</>, body: <><p>5.0 砍 React 17 支持, 强制 18+, 内部全面切到 <code>useSyncExternalStore</code>。concurrent rendering 下的 tearing 风险关掉, types 重排, <code>createStore</code> (vanilla) 跟 <code>create</code> (React) 拆开。</p><p>外部接口几乎没动 —— 用户代码从 4.x 升 5.x 的迁移工作基本是改 React 依赖号。这是 Zustand 维护团队的一贯风格:版本号往上跳, 用户感知尽可能小。</p></> }, en: { title: <>5.0 — the React 18+ era</>, body: <><p>5.0 drops React 17, mandates 18+, and moves the internals fully onto <code>useSyncExternalStore</code>. Concurrent-rendering tearing is closed off, types are reshuffled, and <code>createStore</code> (vanilla) is split from <code>create</code> (React).</p><p>The external API barely moves — migrating user code from 4.x to 5.x is mostly bumping the React peer dep. That's the maintainer style: bump the version, keep user-facing churn near zero.</p></> } },
@@ -120,18 +120,20 @@ export const ZUSTAND: StackTool = {
   cuberoot: {
     zh: (
       <>
-        <p>本站客户端的全局状态都跑在 Zustand 5 上, 一共 11 个 store, 分两层:</p>
-        <p><strong>6 个全局 store</strong> 在 <code>src/stores/</code>:<code>auth_store</code> (WCA OAuth 用户信息, 监听 <code>window 'storage'</code> 事件做跨 tab 同步)、<code>settingsStore</code> (主题 / 语言 / trainer 配置, 套 <code>persist</code> 中间件落 localStorage key <code>trainer-settings</code>)、<code>sessionStore</code> (当前 solve session)、<code>statsStore</code> (WCA 查询参数, 跨 wca 子页共享)、<code>trainerStore</code> (训练 session, 自带 timer state machine)、<code>recon_store</code> (recon 缓存)。</p>
-        <p><strong>5 个 page-local store</strong> 跟着各自页面落地:<code>timer/_battle/engine/battle_store</code>、<code>pages/calc/stores/calc_store</code>、<code>pages/mosaic/state/store</code>、<code>pages/viz/stores/viz_store</code> 以及 viz canvas 内部还有一组小 store。这类 store 跨 page 不共享, 用 page-local 是因为单页内部 state 树深度足够大、组件间需要 selector 控粒度。</p>
-        <p>没有 Provider —— React 树顶层就是 <code>&lt;BrowserRouter&gt;</code> 包 <code>&lt;Routes&gt;</code>, 没有任何 store provider 在中间。每个组件直接 <code>import {'{ useAuthStore }'} from '../stores/auth_store'</code> 然后调 selector, 就完事。<code>useShallow</code> 在多字段读取的地方 (PlayerControls / SimPage 等) 兜底, 避免无意义 re-render。整个客户端的 strict mode 类型推导没有任何一行被 Zustand 卡住。</p>
+        <p>本站客户端跑着 14 个 Zustand 5 store, 分两层:</p>
+        <p><strong>7 个站点级 store</strong> 在 <code>lib/</code>:<code>auth-store</code> (WCA OAuth 用户信息, 监听 <code>window &apos;storage&apos;</code> 事件做跨 tab 同步)、<code>session-store</code> (当前 solve session, 套 <code>persist</code> 中间件落 localStorage key <code>cuberoot-session-store</code>)、<code>trainer-store</code> (公式训练 session, 自带 timer state machine)、<code>recon-store</code> (复盘列表的筛选 / 排序 / 搜索)、<code>alg-srs-store</code> (公式记忆的间隔重复队列, 本地 + 登录后云同步)、<code>alg-mix-saved</code> (存下来的合练组合)、<code>trainer-marks</code> (逐个公式的学习标记)。</p>
+        <p><strong>7 个页面级 store</strong> 跟着各自页面落地:<code>timer/_battle/engine/battle_store</code>、<code>calc/_components/stores/calc_store</code>、<code>mosaic/_components/state/store</code>、<code>paint/_lib/store</code> 与 <code>paint/_lib/cloud-store</code>、<code>alg/3bld/_store/bld-config-store</code>、<code>components/distribution-viz/_stores/viz_store</code>。这类 store 跨页面不共享, 用页面级是因为单页内部 state 树深度足够大、组件间需要 selector 控粒度。</p>
+        <p>没有 Provider —— App Router 下 store 就是普通模块, 在 <code>&apos;use client&apos;</code> 边界内 <code>import {'{ useAuthStore }'} from &apos;@/lib/auth-store&apos;</code> 然后调 selector, 没有任何 provider 夹在中间。<code>persist</code> 中间件只用在上面那两处; 其余需要落盘的 store 直接写 <code>lib/safe-storage</code> 的 <code>persistItem</code>, 因为它们要控制写入时机而不是每次 set 都写。</p>
+        <p>反过来也有刻意不用 Zustand 的地方:计时器设置层 (<code>timer/_lib/settings</code>) 和几个模块级单值 (未读计数、节拍器) 走 <code>useSyncExternalStore</code> 加一个手写 subscribe —— 它们只有一份可变值、没有 action 树, 引入 store 反而是负担。</p>
       </>
     ),
     en: (
       <>
-        <p>The client's global state runs on Zustand 5 — 11 stores in two layers:</p>
-        <p><strong>Six global stores</strong> live in <code>src/stores/</code>: <code>auth_store</code> (WCA OAuth user, with a <code>window 'storage'</code> listener for cross-tab sync), <code>settingsStore</code> (theme / language / trainer config, wrapped in <code>persist</code> writing to localStorage key <code>trainer-settings</code>), <code>sessionStore</code> (current solve session), <code>statsStore</code> (WCA query params shared across the /wca sub-pages), <code>trainerStore</code> (training session, with its own timer state machine), and <code>recon_store</code> (recon cache).</p>
-        <p><strong>Five page-local stores</strong> ship with their pages: <code>timer/_battle/engine/battle_store</code>, <code>pages/calc/stores/calc_store</code>, <code>pages/mosaic/state/store</code>, <code>pages/viz/stores/viz_store</code>, plus a small one inside the viz canvas. These never cross page boundaries — they live page-local because the state tree inside a single page is deep enough that selector-controlled granularity is worth it.</p>
-        <p>No Provider in the tree — the root is just <code>&lt;BrowserRouter&gt;</code> wrapping <code>&lt;Routes&gt;</code>, no store provider in between. Components <code>import {'{ useAuthStore }'} from '../stores/auth_store'</code> and call a selector — that's it. <code>useShallow</code> is used where multi-field reads happen (PlayerControls / SimPage, etc.) to avoid pointless re-renders. The whole strict-mode TS inference never trips on Zustand.</p>
+        <p>The client runs 14 Zustand 5 stores in two layers:</p>
+        <p><strong>Seven site-wide stores</strong> live in <code>lib/</code>: <code>auth-store</code> (WCA OAuth user, with a <code>window &apos;storage&apos;</code> listener for cross-tab sync), <code>session-store</code> (current solve session, wrapped in <code>persist</code> writing to localStorage key <code>cuberoot-session-store</code>), <code>trainer-store</code> (algorithm training session, with its own timer state machine), <code>recon-store</code> (filtering / sorting / search for the reconstruction list), <code>alg-srs-store</code> (the spaced-repetition queue, local plus cloud sync once signed in), <code>alg-mix-saved</code> (saved practice mixes), and <code>trainer-marks</code> (per-case learning marks).</p>
+        <p><strong>Seven page-level stores</strong> ship with their pages: <code>timer/_battle/engine/battle_store</code>, <code>calc/_components/stores/calc_store</code>, <code>mosaic/_components/state/store</code>, <code>paint/_lib/store</code> and <code>paint/_lib/cloud-store</code>, <code>alg/3bld/_store/bld-config-store</code>, and <code>components/distribution-viz/_stores/viz_store</code>. These never cross page boundaries — they live page-level because the state tree inside a single page is deep enough that selector-controlled granularity is worth it.</p>
+        <p>No Provider in the tree — under the App Router a store is just a module. Inside a <code>&apos;use client&apos;</code> boundary a component does <code>import {'{ useAuthStore }'} from &apos;@/lib/auth-store&apos;</code> and calls a selector; nothing sits in between. The <code>persist</code> middleware is used only in the two places above; other stores that need to survive a reload call <code>persistItem</code> from <code>lib/safe-storage</code> directly, because they want to choose when a write happens rather than write on every set.</p>
+        <p>There are deliberate non-users too: the timer settings layer (<code>timer/_lib/settings</code>) and a few module-level singletons (unread counts, the metronome) run on <code>useSyncExternalStore</code> plus a hand-written subscribe — one mutable value and no action tree, so a store would be pure overhead.</p>
       </>
     ),
   },
