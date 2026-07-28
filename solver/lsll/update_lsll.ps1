@@ -12,14 +12,13 @@
 #   pwsh update_lsll.ps1              # 导出 + 增量灌 **线上** PG
 #   pwsh update_lsll.ps1 -Local       # 导出 + 灌**本地** pg13(docker,5433)—— 配 dev:local 预览用
 #   pwsh update_lsll.ps1 -ExportOnly  # 只出 CSV,不碰任何库
-#   pwsh update_lsll.ps1 -Solve       # 先把第一批(corpus.txt,148,384 个两步路线)跑完,再导出 + 灌
-#   pwsh update_lsll.ps1 -Solve -Rest # 跑第二批(corpus_rest.txt,其余 434,900 个),再导出 + 灌
+#   pwsh update_lsll.ps1 -Solve       # 先把 corpus.txt(579,368 个 case)跑完,再导出 + 灌
 #
-# 导出永远按**两批语料的并集**算覆盖率(583,284),与这次求解哪一批无关。
+# 覆盖率分母恒为 corpus.txt 的 579,368。求解中途也能随时单跑导出 + 灌,
+# 没算到的 case 页面显示「计算中」。
 [CmdletBinding()]
 param(
   [switch]$Solve,
-  [switch]$Rest,
   [switch]$Local,
   [switch]$ExportOnly
 )
@@ -40,16 +39,12 @@ New-Item -ItemType Directory -Force $IncrDir | Out-Null
 function Step($m){ Write-Host "`n=== $m ===" -ForegroundColor Cyan }
 
 if($Solve){
-  $corpus = if($Rest){ 'corpus_rest.txt' } else { 'corpus.txt' }
-  if(-not (Test-Path (Join-Path $Root $corpus))){
-    throw "$corpus 不存在 —— 先生成语料:cd core; NODE_OPTIONS=--no-experimental-strip-types pnpm --filter @cuberoot/client exec tsx scripts/lsll-corpus.mts"
+  if(-not (Test-Path (Join-Path $Root 'corpus.txt'))){
+    throw "corpus.txt 不存在 —— 先生成语料:cd core; NODE_OPTIONS=--no-experimental-strip-types pnpm --filter @cuberoot/client exec tsx scripts/lsll-corpus.mts"
   }
-  Step "求解 $corpus(solve_loop.mjs,按 key 续跑)"
-  $env:CORPUS = $corpus
-  try { & node (Join-Path $Root 'solve_loop.mjs') } finally { Remove-Item Env:CORPUS -EA SilentlyContinue }
+  Step '求解 corpus.txt(solve_loop.mjs,按 key 续跑)'
+  & node (Join-Path $Root 'solve_loop.mjs')
   if($LASTEXITCODE -ne 0){ throw "solve_loop.mjs 退出 $LASTEXITCODE" }
-} elseif($Rest){
-  throw '-Rest 只跟 -Solve 一起用(它选的是求解哪一批语料);导出/灌库永远是两批的并集。'
 }
 
 Step '导出 CSV'

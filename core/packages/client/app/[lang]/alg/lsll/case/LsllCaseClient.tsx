@@ -20,7 +20,7 @@ import {
   keyFromString, keyToString, decodeKey, canonicalKey, displayState, classify,
   caseFacelets, verifyCaseAlg,
 } from '@/lib/lsll/model';
-import { setupFromOptimalAlg } from '@/lib/lsll/optimal';
+import { orbitMinimal, setupForPhase } from '@/lib/lsll/optimal';
 import { zblsForKey } from '@/lib/lsll/zbls_overlay';
 import { mirrorKey, mirrorAlgForCase } from '@/lib/lsll/mirror';
 import { algSpeed, getSTM } from '@/lib/mcc';
@@ -82,7 +82,8 @@ export default function LsllCaseClient() {
     return () => { cancelled = true; };
   }, [decoded]);
 
-  // 打乱 = 最优解取逆(≈14 步,与下面那条最优解是同一条转法,只是反着做)。所以先等最优解那一发:
+  // 打乱 = 最优解取逆,再补首尾 AUF 摆回上面那张图的相位(所以比最优解长 0~2 步 —— 库里那条解
+  // 是这个 case 16 个 AUF 像里最短的那个像的,不一定正好是展示相位)。先等最优解那一发:
   // 已回填就不必现算,没回填(或验不过)才退回两阶段机器解(≈20 步)。
   const [setup, setSetup] = useState<string | null>(null);
   const [setupErr, setSetupErr] = useState(false);
@@ -92,7 +93,7 @@ export default function LsllCaseClient() {
     if (!decoded || opt.kind === 'loading') return;
     const state = decoded.state;
     if (opt.kind === 'ok') {
-      const fromOpt = setupFromOptimalAlg(opt.data.algs[0] ?? '', state);
+      const fromOpt = setupForPhase(opt.data.algs[0] ?? '', state);
       if (fromOpt) { setSetup(fromOpt); return; }
     }
     import('@/lib/lsll/setup')
@@ -193,6 +194,15 @@ export default function LsllCaseClient() {
         )}
         {!setup && !setupErr && <div className="lsll-note">{tr({ zh: '生成中…', en: 'Generating…' })}</div>}
         {setupErr && <div className="lsll-note">{tr({ zh: '生成失败,刷新重试', en: 'Failed — refresh to retry' })}</div>}
+        {setup && opt.kind === 'ok' && setup.split(' ').filter(Boolean).length > opt.data.htm && (
+          <p className="lsll-note">
+            <T zh={<>比最优解长 {setup.split(' ').filter(Boolean).length - opt.data.htm} 步:多的是把对子摆回上图相位的
+              AUF。想要最短的那条,把最优解取逆就是。</>}
+               en={<>{setup.split(' ').filter(Boolean).length - opt.data.htm} move(s) longer than the optimum — the extra
+              is the AUF that puts the pair back into the orientation pictured above. For the shortest setup, invert
+              the optimal solution.</>} />
+          </p>
+        )}
       </section>
 
       <section className="lsll-section">
@@ -220,6 +230,17 @@ export default function LsllCaseClient() {
                 </div>
               ))}
             </div>
+            {orbitMinimal(opt.data.algs[0] ?? '') && (
+              <p className="lsll-note">
+                <T zh={<>口径是<strong>这个 case 的最优</strong>:起手对准顶层那个 AUF、公式尾部那个 AUF 都是随便选的,
+                  所以 16 种首尾 AUF 摆法算的是同一个 case,取其中最短的一种。
+                  因此这条解的首招和末招都不会是 U 系转动 —— 是的话剥掉就更短了。</>}
+                   en={<>This is the optimum <strong>of the case</strong>: the AUF you make before executing and the AUF an
+                   alg carries at its end are both free, so all 16 pre/post-AUF placements are the same case and the
+                   shortest of them is taken. That is why this solution neither begins nor ends with a U-family move —
+                   if it did, dropping that move would be shorter.</>} />
+              </p>
+            )}
             <p className="lsll-note">
               {opt.data.exhaustive
                 ? <T zh="以上是全部「HTM 最优且其中 QTM 最小」的解。"

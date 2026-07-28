@@ -174,22 +174,25 @@ const SETUP_CACHE = new Map<number, string>();
 
 /**
  * 这个 case 的打乱,外加一条能解开它的公式。两条路,按这个顺序:
- *  1. 后台管道算好的**整方 HTM 最优解**(`./optimal`),取逆当打乱 —— ≈14 步,揭示出来的也是最优解;
+ *  1. 后台管道算好的**整方 HTM 最优解**(`./optimal`),取逆当打乱 —— ≈13 步,揭示出来的也是最优解;
  *  2. 还没回填到的 case 退回现算两阶段解(`./setup`)—— ≈20 步,能解开但没优化步数和指法。
  *
- * 两条都摆正相位再算:打乱出来的对子位置必须与 case 图上的一致(model.pairDisplayTurn)。
+ * **训练器这边不摆相位**:第 1 条走 `optimalSetup`,拿的是最短的那个 AUF 像,落在哪个相位随缘;
+ * case 是同一个(canonical key 逐条验过),而训练器各处的图都从实际打乱渲染,跟着一起转 ——
+ * 何况出题本来就带随机 post-AUF,相位早就是随机的。要钉相位的是 case 页,走 `setupForPhase`。
+ * 第 2 条现算没有最优解可用,仍照展示相位算(`setupForCase` 的既有约定)。
  */
 export async function resolveLsllCase(c: AlgCase): Promise<{ setup: string; alg?: string } | null> {
   const key = keyFromString(lsllCaseKeyString(c));
   if (key == null) return null;
   const state = decodeKey(key);
   if (!state) return null;
-  const want = displayState(state);
 
   const { lsllOptimal } = await import('./optimal');
-  const opt = await lsllOptimal(key, want);
+  const opt = await lsllOptimal(key);
   if (opt) return { setup: opt.setup, alg: opt.alg };
 
+  const want = displayState(state);
   const { setupForCase, solutionForSetup } = await import('./setup');
   const hit = SETUP_CACHE.get(key);
   if (hit !== undefined) return hit ? { setup: hit, alg: solutionForSetup(hit) } : null;
