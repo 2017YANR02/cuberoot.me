@@ -13,20 +13,12 @@
 // 产物自包含在 /tools/solver/rust-cross/(dev 经 Next catch-all,prod 直取 static)。
 
 import { normalizeScramble } from './cross-solver';
+// 表的住址 + 那张 21MB 大表的下载单例(跨池共享,页面级也能先行预取)。
+import { BASE, TV, claimXCrossGz, releaseXCrossGz, tablesBaseUrl } from './rust-cross-tables';
 
-const BASE = '/tools/solver/rust-cross';
 // 代码产物(worker/glue/wasm)固定文件名 + 1 天 CDN 缓存,重建后靠版本 query 失效。
 // 每次重建 wasm/worker 必须 bump。
 const V = 'v=20260728b';
-// 表直接从 static 取:prod 下主域的 /tools/* 是一条 307 跳到 static(见
-// app/tools/[...slug]/route.ts),每张表白付一个 RTT,而表本来就带 CORS:*。
-// dev 仍走本地 Next catch-all(直接读仓库根 tools/)。
-const TABLES_BASE = process.env.NODE_ENV === 'development'
-  ? `${BASE}/tables`
-  : 'https://static.cuberoot.me/tools/solver/rust-cross/tables';
-// 表内容不变(重算表要改名或 bump 这里),故 URL 带一个长缓存版本号,配合 nginx 的
-// immutable 头 → 一次下完永久命中,不再受启发式缓存窗口摆布。
-const TV = 'tv=1';
 
 // 各表解压后(= 装进 WASM 线性内存的)字节数。实测自 tools/solver/rust-cross/tables/*.bin.gz
 // (`gzip -dc | wc -c`)。**表重建后尺寸若变需同步更新**(见 memory「WASM 重建仪式」)。
@@ -129,11 +121,6 @@ export interface FaceResult {
   ms: number; // worker 内纯计算耗时
 }
 
-/** 大表下载进度。total = Content-Length;个别代理会剥掉它,此时为 0(UI 应退回不确定态)。 */
-export interface XCrossProgress {
-  loaded: number;
-  total: number;
-}
 export interface MovesTimed extends MovesResult {
   ms: number;
 }
@@ -271,12 +258,6 @@ export interface RustCrossPool {
   ensureXCross(): Promise<void>;
   /** 该池是否已具备 xcross+ 能力(UI 据此决定要不要显示第二段加载提示)。 */
   hasXCross(): boolean;
-  /** 订阅大表下载进度(21MB 要走好几秒,只给转圈没有进度感)。返回退订函数;
-   *  订阅时若已有进度会立刻回放一次当前值。仅 std 池会触发。 */
-  onXCrossProgress(fn: (p: XCrossProgress) => void): () => void;
-  /** 空闲预取大表:只把字节下进 HTTP 缓存(immutable,一年),不 attach、不占 JS 堆,
-   *  把那几秒从「用户点到 XCross 之后」挪到点之前。已在下 / 已用上时是 no-op。 */
-  prefetchXCross(): void;
   /** 丢弃所有「排队未派发」的任务(已在 worker 里跑的 ≤size 个无法中断)。切变体/打乱集时调,
    *  避免新请求(如快 cross)排在旧变体一堆慢任务后面干等。被丢的任务 reject('cancelled')。 */
   clearQueue(): void;
@@ -327,8 +308,8 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
   const xcrossWaiters = new Map<number, () => void>();
 
   const origin = typeof location !== 'undefined' ? location.origin : '';
-  // 表 URL:dev 走同源 catch-all,prod 直取 static(见 TABLES_BASE)。
-  const tablesBase = TABLES_BASE.startsWith('http') ? TABLES_BASE : `${origin}${TABLES_BASE}`;
+  // 表 URL:dev 走同源 catch-all,prod 直取 static(见 rust-cross-tables)。
+  const tablesBase = tablesBaseUrl();
   const initMsg = {
     type: 'init',
     glueUrl: `${origin}${BASE}/cross_solver.js?${V}`,
@@ -440,7 +421,7 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
     // 再补 —— 中间派进来的 job 会打在没 attach 的 WASM 上直接 panic)。字节仍走整池那一份,
     // 拿不到(已撒手 / 取表失败)才让它自己去取。gz 早已下好,这里的 await 只是一个微任务。
     if (bornWithXCross) {
-      void fetchXCrossGz().then(
+      void claimXCrossGz().then(
         (gz) => { w.postMessage({ ...initMsg, xcross: true, gz }); dropXCrossGzIfDone(); },
         () => w.postMessage({ ...initMsg, xcross: true }),
       );
@@ -449,68 +430,17 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
     }
   }
 
-  // 大表(pt_cross_C4E0,gz 21MB)整池只下一次。
+  // 大表(pt_cross_C4E0,gz 21MB)只下一次,字节从 rust-cross-tables 那个跨池单例取。
   //
   // 原先是每个 worker 自己 fetch:ensureAllXCross 向已起的 N 路一起广播,N 个 fetch 同一 URL
   // 同时出发,而浏览器**不会**把并发的同 URL 请求合成一次下载 —— 实测(计时器面板,手机宽度
   // 2 路)真的是两条 21MB 的流并行抢带宽,42MB 过线,首次切到 XCross 要等 7~15 秒。
   // 主线程取一次 gz,再把这份字节分发给每个 worker(各自解压进自己的 WASM 内存,那部分本来
   // 就得一人一份)。发完就撒手,不长期占着这 21MB。
-  let xcrossGz: Promise<ArrayBuffer> | null = null;
   /** 池里每一路都拿到过大表(= 不会再有新 worker 来要)后松手,别让这 21MB 常驻主线程 ——
-   *  手机上还压着两份 52MB 的解压表。此后万一还有人要,退回自己 fetch(缓存已热)。 */
+   *  手机上还压着两份 52MB 的解压表。此后万一还有人要,退回重新 fetch(缓存已热)。 */
   function dropXCrossGzIfDone(): void {
-    if (spawned >= size && all.every((p) => p.dead || p.xcross)) xcrossGz = null;
-  }
-
-  /** 空闲预取下完后,字节在主线程留多久(见 prefetchXCross)。 */
-  const PREFETCH_HOLD_MS = 120000;
-  let prefetchHold: ReturnType<typeof setTimeout> | undefined;
-
-  const progressFns = new Set<(p: XCrossProgress) => void>();
-  let progress: XCrossProgress | null = null;
-  function emitProgress(p: XCrossProgress): void {
-    progress = p;
-    for (const fn of progressFns) fn(p);
-  }
-
-  // 边下边报。整表要几秒,一次性 arrayBuffer() 期间 UI 只有一个转圈;读流才拿得到已下字节数。
-  // 注:表是**预压好的 .bin.gz 文件**、不带 Content-Encoding,所以 Content-Length 与这里读到的
-  // 字节同尺度(若哪天服务器再套一层编码,total 会偏小 → UI 侧钳到 100%)。
-  async function downloadXCrossGz(url: string): Promise<ArrayBuffer> {
-    const r = await fetch(url);
-    if (!r.ok) throw new Error(`fetch ${url}: ${r.status}`);
-    const total = Number(r.headers.get('content-length')) || 0;
-    if (!r.body) { // 无可读流(老浏览器 / 某些代理):退回一次性读,只报首尾
-      emitProgress({ loaded: 0, total });
-      const buf = await r.arrayBuffer();
-      emitProgress({ loaded: buf.byteLength, total: total || buf.byteLength });
-      return buf;
-    }
-    emitProgress({ loaded: 0, total });
-    const reader = r.body.getReader();
-    const chunks: Uint8Array[] = [];
-    let loaded = 0;
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      chunks.push(value);
-      loaded += value.byteLength;
-      emitProgress({ loaded, total });
-    }
-    const out = new Uint8Array(loaded);
-    let off = 0;
-    for (const c of chunks) { out.set(c, off); off += c.byteLength; }
-    emitProgress({ loaded, total: total || loaded });
-    return out.buffer;
-  }
-
-  function fetchXCrossGz(): Promise<ArrayBuffer> {
-    if (!xcrossGz) {
-      const url = `${tablesBase}/pt_cross_C4E0.bin.gz?${TV}`;
-      xcrossGz = downloadXCrossGz(url).catch((e) => { xcrossGz = null; progress = null; throw e; });
-    }
-    return xcrossGz;
+    if (spawned >= size && all.every((p) => p.dead || p.xcross)) releaseXCrossGz();
   }
 
   // 给某个 worker 补 xcross 段(幂等:pw.xcross 一旦建立就复用同一个 Promise)。
@@ -524,7 +454,7 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
     const done = new Promise<void>((res) => { settle = res; });
     pw.xcrossResolve = settle;
     xcrossWaiters.set(id, () => { pw.xcrossResolve = null; settle(); });
-    pw.xcross = fetchXCrossGz().then((gz) => {
+    pw.xcross = claimXCrossGz().then((gz) => {
       if (pw.dead) { settle(); return done; }
       // 不进 transfer list:每个 worker 要自己那一份,postMessage 的结构化克隆正是拷贝。
       pw.w.postMessage({ type: 'ensure_xcross', id, gz });
@@ -726,30 +656,6 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
     hasXCross() {
       return need !== 'cross' || wantXCross;
     },
-    onXCrossProgress(fn) {
-      progressFns.add(fn);
-      if (progress) fn(progress); // 中途订阅(切到 XCross 时预取已在跑)也能立刻看到进度
-      return () => { progressFns.delete(fn); };
-    },
-    prefetchXCross() {
-      // 已在下 / 已用上就别再插一手。
-      if (need !== 'cross' || wantXCross || xcrossGz) return;
-      void fetchXCrossGz().then(
-        () => {
-          // 下完先攥一会儿再松手。松手只留 HTTP 缓存(prod:immutable 一年)本来也够,但那是
-          // 「假设缓存留得住」—— 实测 dev 下第二次取又整整走了一遍 21MB(dev 是 chunked、
-          // 无 Content-Length,浏览器没存)。真要用这张表的人几乎都在打开面板后不久就切过去,
-          // 这段窗口内直接命中内存里的字节,零额外流量;过了窗口没人要就放掉,不让「顺手预取」
-          // 变成常驻 21MB —— 大多数人根本不会切到 XCross。
-          if (wantXCross) return;
-          clearTimeout(prefetchHold);
-          prefetchHold = setTimeout(() => {
-            if (!wantXCross) { xcrossGz = null; progress = null; }
-          }, PREFETCH_HOLD_MS);
-        },
-        () => { progress = null; }, // 预取失败无所谓:真要用时再取,那时才报错给用户
-      );
-    },
     clearQueue() { while (queue.length) queue.shift()!.reject(new Error('cancelled')); },
     abort() {
       // 只终止在跑的 worker(有 job 的);空闲 ready worker 保留,避免无谓重载表。
@@ -768,10 +674,7 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
       loading = false;
     },
     terminate() {
-      clearTimeout(prefetchHold);
-      xcrossGz = null;
-      progress = null;
-      progressFns.clear();
+      releaseXCrossGz();
       for (const pw of all) pw.w.terminate();
     },
   };

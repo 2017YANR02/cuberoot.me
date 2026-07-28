@@ -28,7 +28,8 @@ import { SubsetColorPicker, useSubsetSelection, COLOR_NAME, type ColorLetter } f
 import { CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '@/lib/cube-colors';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { tr } from '@/i18n/tr';
-import { createRustCrossPool, FR_NOT_HTR, HTR_NOT_DR, HTR2_NOT_HTR, type MovesTimed, type RustCrossPool, type SolItem, TABLE_BYTES, TABLE_SETS, XCROSS_TABLES, type XCrossProgress } from '@/lib/rust-cross-client';
+import { createRustCrossPool, FR_NOT_HTR, HTR_NOT_DR, HTR2_NOT_HTR, type MovesTimed, type RustCrossPool, type SolItem, TABLE_BYTES, TABLE_SETS, XCROSS_TABLES } from '@/lib/rust-cross-client';
+import { onXCrossProgress, prefetchXCrossTableWhenIdle, type XCrossProgress } from '@/lib/rust-cross-tables';
 import { getRustCrossPool, dropRustCrossPool, poolSizeForDevice, type PoolNeed } from '@/lib/rust-cross-pool';
 import { normalizeScramble } from '@/lib/cross-solver';
 import { rotateSolutionY, Y_ROT_LABEL } from '@/lib/rotate-solution';
@@ -590,7 +591,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     if (kind !== 'std' || st < 1) return;
     if (pool.hasXCross()) { setXReady(true); return; }
     setXLoading(true);
-    const off = pool.onXCrossProgress(setXProg);
+    const off = onXCrossProgress(setXProg);
     try { await pool.ensureXCross(); setXReady(true); } finally { off(); setXProg(null); setXLoading(false); }
   }, []);
 
@@ -619,22 +620,12 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   }, []);
 
   // 空闲预取大表:std 池默认只带 pt_cross(50KB),切到 XCross 那一刻才去拉 21MB,
-  // 于是那几秒完整落在交互路径上。求解器一就绪就在浏览器空闲时先把它下进 HTTP 缓存
-  // (immutable,一年),真切过去时通常已是缓存命中。只焐缓存,不进 JS 堆(见 prefetchXCross)。
-  // 慢网 / 省流量模式下不预取 —— 那 21MB 对没打算用 XCross 的人是纯浪费。
+  // 于是那几秒完整落在交互路径上。求解器一就绪就在浏览器空闲时先把它拿到手。
+  // (/timer 更早一步 —— SolverHintPanel 一挂载就预取,不等面板展开;这里管 analyzer
+  // 等直接挂 StageSolver 的入口。两边同一个幂等单例,重复调用无害。)
   useEffect(() => {
     if (status !== 'ready' || need !== 'cross' || xReady) return;
-    const conn = (navigator as Navigator & {
-      connection?: { saveData?: boolean; effectiveType?: string };
-    }).connection;
-    if (conn?.saveData) return;
-    if (conn?.effectiveType && conn.effectiveType !== '4g') return;
-    const pool = poolRef.current;
-    if (!pool) return;
-    const ric = window.requestIdleCallback;
-    if (!ric) { const t = setTimeout(() => pool.prefetchXCross(), 2000); return () => clearTimeout(t); }
-    const id = ric(() => pool.prefetchXCross(), { timeout: 10000 });
-    return () => window.cancelIdleCallback?.(id);
+    return prefetchXCrossTableWhenIdle();
   }, [status, need, xReady]);
   // loading 经过秒数(给用户进度感;≥15s 提示网络较慢并出重试按钮)。
   const [elapsed, setElapsed] = useState(0);
