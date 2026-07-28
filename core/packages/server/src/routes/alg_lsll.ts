@@ -1,6 +1,7 @@
 /**
  * /v1/alg/lsll — LSLL(最后一槽 + 顶层)case 的整方 HTM 最优解。
  *   - GET /v1/alg/lsll/case/:key   — 单 case;未回填返 { status: 'pending' }
+ *   - GET /v1/alg/lsll/htm?keys=   — 一批 case 只要步数(训练器挑 mid-AUF 用,见下)
  *   - GET /v1/alg/lsll/dist        — HTM 步数直方图 + 覆盖数(大类页 / case 页顶栏用)
  *
  * 数据来自本地管道 `solver/lsll`(cubeopt/h48 求解 → export_cases.mjs → update_lsll.ps1 增量灌),
@@ -52,6 +53,37 @@ algLsllRoutes.get('/alg/lsll/case/:key', async (c) => {
     exhaustive: r.exhaustive,
     algs: r.optimal_algs,
   });
+});
+
+/**
+ * 一批 case 的 HTM,**只要步数不要解**。
+ *
+ * 训练器的两步路线要在一条路线的 ≤4 个 mid-AUF 变体里挑最短的那个 case(`lib/lsll/trainer-set`),
+ * 一轮 302 条路线 ⇒ 最多 1,208 个 key。逐个打 `/case/:key` 是 1,208 个往返、还把用不上的
+ * 那 3/4 条解一起拖下来 —— 所以单开这个口子:只回 `{ key: htm }`,客户端按 256 个一批切。
+ *
+ * 没回填到的 key **直接不出现在结果里**(不是 0、不是 null),调用方自己决定怎么退。
+ */
+const HTM_MAX_KEYS = 256;
+
+algLsllRoutes.get('/alg/lsll/htm', async (c) => {
+  const keys = (c.req.query('keys') ?? '').split(',').filter(Boolean);
+  if (!keys.length || keys.length > HTM_MAX_KEYS || keys.some((k) => !KEY_RE.test(k))) {
+    c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+    return c.json({ error: 'bad keys' }, 400);
+  }
+  const rows = await query<{ canonical_key: string; htm: number }>(
+    // `::text[]` 不能省:sql.unsafe 不带类型提示,PG 推不出 $1 的元素类型会直接报错(同 cubing_live 那处)
+    'SELECT canonical_key, htm FROM lsll_cases WHERE canonical_key = ANY($1::text[])',
+    [[...new Set(keys)]],
+  );
+  const htm: Record<string, number> = {};
+  for (const r of rows) htm[r.canonical_key] = r.htm;
+  // 全查到 = 确定性结果,可长缓存;缺了谁说明管道还没跑到那儿,别把暂态钉进缓存。
+  // 三元写一行:`tests/server-cache-headers.test.ts` 只扫含 Cache-Control 的那一行,拆行它就看不见 max-age。
+  const complete = rows.length === new Set(keys).size;
+  c.header('Cache-Control', complete ? 'public, max-age=300, s-maxage=86400' : 'no-cache, no-store, must-revalidate');
+  return c.json({ htm });
 });
 
 algLsllRoutes.get('/alg/lsll/dist', async (c) => {
