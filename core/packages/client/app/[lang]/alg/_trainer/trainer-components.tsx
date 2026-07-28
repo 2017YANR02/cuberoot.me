@@ -206,7 +206,9 @@ export function StatsList({
         </div>
       ) : (
         <div className="trainer-stats-list">
-          {solves.map(s => (
+          {/* 最新一条在最前 —— 刚练完那条才是要看的,不该滚到列表末尾去找。
+              `s.i` 是这条在会话里的原始序号(高亮 / 点击回看都按它),倒序只换呈现。 */}
+          {solves.slice().reverse().map(s => (
             <span
               key={s.i}
               className={`trainer-stat-time${observingIdx === s.i ? ' is-active' : ''}${s.penalty === 'DNF' ? ' is-dnf' : ''}`}
@@ -249,7 +251,9 @@ export function HistoryList({
         })}</div>
       ) : (
         <div className="trainer-stats-list">
-          {hist.list.map((e, i) => {
+          {/* 同 StatsList:最新在最前。`i` 必须是原始下标(onPick / 高亮都按它),
+              所以先带上下标再倒序,别 reverse 完拿新下标。 */}
+          {hist.list.map((e, i) => [e, i] as const).reverse().map(([e, i]) => {
             const c = findCaseByKey(cases, e.key);
             const name = (c ? primaryCaseName(puzzle, set, c) : e.name).replace(setPrefix, '');
             return (
@@ -313,8 +317,8 @@ export function CaseMarkBar({ k }: { k: string }) {
               : applyMarks([k], { s: st === a.s ? null : a.s }))}
           >
             {a.star
-              ? <Star size={14} className="trainer-mark-btn-star" aria-hidden />
-              : <TriangleAlert size={14} aria-hidden />}
+              ? <Star size={22} className="trainer-mark-btn-star" aria-hidden />
+              : <TriangleAlert size={22} aria-hidden />}
           </button>
         );
       })}

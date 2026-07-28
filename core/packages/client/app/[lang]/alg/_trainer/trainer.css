@@ -271,16 +271,17 @@
 .trainer-mark-bar {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 12px;
 }
-/* 无外框:只有图标,靠颜色区分选中。padding 撑出手指点得到的热区(≈24px) */
+/* 无外框:只有图标,靠颜色区分选中。padding 撑出手指点得到的热区(≈36px),
+   两个图标之间再留 gap —— 手机上挨着点容易把「不熟」误点成「星标」 */
 .trainer-mark-btn {
   appearance: none; -webkit-appearance: none;
-  display: inline-flex; align-items: center;
+  display: inline-flex; align-items: center; justify-content: center;
   color: var(--muted-foreground);
   background: none;
   border: none;
-  padding: 5px;
+  padding: 7px;
   line-height: 0;
   cursor: pointer;
 }
