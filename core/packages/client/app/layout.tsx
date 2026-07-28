@@ -7,6 +7,8 @@ import AuthTokenRefresher from "@/components/AuthTokenRefresher";
 import MembershipReminder from "@/components/MembershipReminder";
 import StickyScrollGuard from "@/components/StickyScrollGuard";
 import AppNuqsAdapter from "@/components/AppNuqsAdapter";
+import { BROWSER_API_ORIGIN } from "@/lib/api-base";
+import { BROWSER_STATIC_ORIGIN } from "@/lib/stats-base";
 import "./fonts.css";
 import "./globals.css";
 // 统计表「列头吸顶」共用工具(.sticky-scroll + .sticky-thead),全站可用,免各页重复 import。
@@ -62,6 +64,17 @@ export default function RootLayout({
         {/* iOS Safari chrome (top/bottom toolbar) tint. Bootstrap sets a pre-paint
             guess; ThemeColorSync refines it to the live page bg. */}
         <meta id="app-theme-color" name="theme-color" content="#fafafa" />
+        {/* 跨域取数的连接热身 —— 把 DNS + TCP + TLS 挪到首屏请求发出之前。
+            api 由全站 chrome(PageNoticeBar 等)每页都打,值得 preconnect 直接建连;
+            static 只有统计 / 教程 / 比赛几类页面用,给更便宜的 dns-prefetch —— 对用不到它
+            的页面 preconnect 只是白占一条 socket。dev 下两者都同源(Next 代理),不发。
+            crossOrigin 要跟实际请求对齐:这两个源都是 fetch() 无凭据取的,即 anonymous。 */}
+        {BROWSER_API_ORIGIN && (
+          <link rel="preconnect" href={BROWSER_API_ORIGIN} crossOrigin="anonymous" />
+        )}
+        {BROWSER_STATIC_ORIGIN && (
+          <link rel="dns-prefetch" href={BROWSER_STATIC_ORIGIN} />
+        )}
         {/* 关键字体预加载 — 正文 Inter 400 / 500 加快首屏 */}
         <link rel="preload" href="/fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         <link rel="preload" href="/fonts/inter-latin-500-normal.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />

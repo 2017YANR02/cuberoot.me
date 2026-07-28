@@ -38,7 +38,7 @@ const CORNER_LL_MASK: Partial<Record<string, string>> = {
 };
 
 export function CaseThumb({
-  puzzle, set, sticker, alg, setup, size = 88, mask: maskOverride, local,
+  puzzle, set, sticker, alg, setup, size = 88, mask: maskOverride, local, loading,
 }: {
   puzzle: AlgPuzzle;
   set: string;
@@ -49,6 +49,11 @@ export function CaseThumb({
   mask?: string;
   /** NxN 走本地渲染(瞬时、与同屏其它图同帧出现)。见 `VisualCube` 的 `local`。 */
   local?: boolean;
+  /**
+   * `<img>` 路径的原生加载提示。首屏之外的长网格传 'lazy' —— 视口外的图根本不发请求。
+   * 首屏可见的图别传(懒加载会推迟它)。`local` 渲染时无意义(没有请求可省)。
+   */
+  loading?: 'lazy' | 'eager';
 }) {
   if (puzzle === 'sq1') {
     const params = new URLSearchParams({ pzl: 'sq1', variant: 'net' });
@@ -58,6 +63,7 @@ export function CaseThumb({
       <img
         src={apiUrl(`/v1/visualcube.svg?${params}`)}
         alt="Square-1 case"
+        loading={loading}
         style={{ width: size, height: size, objectFit: 'contain' }}
       />
     );
@@ -74,21 +80,21 @@ export function CaseThumb({
     return <PuzzleSVG kind={kind} {...driver} size={size} />;
   }
   if (maskOverride) {
-    return <VisualCube algorithm={alg} setup={setup} view="pll" mask={maskOverride} size={size} local={local} />;
+    return <VisualCube algorithm={alg} setup={setup} view="pll" mask={maskOverride} size={size} local={local} loading={loading} />;
   }
   // 最后一槽 + 顶层:等距视角。两个集观察域相同,但遮罩不能共用 ——
   //  zbls 只到「末槽 + 翻棱」,顶层角块不看,vh 遮罩(压灰十字、另三槽、顶层角与四周顶排)正合适;
   //  lsll 整层一步解完,顶层角块与四周顶排恰恰是要认的信息,压灰等于把题遮了。全彩不加遮罩,
   //  与 /alg/lsll 库里那批本地渲染的图(lsll/model.caseFacelets)一致。
   if (puzzle === '3x3' && set === 'lsll') {
-    return <VisualCube algorithm={alg} setup={setup} view="iso" size={size} local={local} />;
+    return <VisualCube algorithm={alg} setup={setup} view="iso" size={size} local={local} loading={loading} />;
   }
   if (puzzle === '3x3' && set === 'zbls') {
-    return <VisualCube algorithm={alg} setup={setup} view="iso" mask="vh" size={size} local={local} />;
+    return <VisualCube algorithm={alg} setup={setup} view="iso" mask="vh" size={size} local={local} loading={loading} />;
   }
   const cornerMask = puzzle === '3x3' ? CORNER_LL_MASK[set] : undefined;
   if (cornerMask) {
-    return <VisualCube algorithm={alg} setup={setup} view="pll" mask={cornerMask} size={size} local={local} />;
+    return <VisualCube algorithm={alg} setup={setup} view="pll" mask={cornerMask} size={size} local={local} loading={loading} />;
   }
   return (
     <VisualCube
@@ -98,6 +104,7 @@ export function CaseThumb({
       size={size}
       puzzleSize={PUZZLE_SIZE[puzzle]}
       local={local}
+      loading={loading}
     />
   );
 }

@@ -21,6 +21,15 @@ export function apiUrl(path: string): string {
   return API_ORIGIN + path;
 }
 
+// Origin the BROWSER will open a socket to, or '' when requests stay same-origin
+// (dev proxies /v1 through the Next server). Only for <link rel="preconnect"> in
+// the root layout — API_ORIGIN itself can't be used there because a Server
+// Component evaluates it with `typeof window === 'undefined'` and so always gets
+// the absolute origin, even in dev.
+export const BROWSER_API_ORIGIN =
+  process.env.NEXT_PUBLIC_API_ORIGIN
+  || (process.env.NODE_ENV === 'development' ? '' : 'https://api.cuberoot.me');
+
 // For a URL the user COPIES OUT (an <img src>, a Markdown image, a hotlink to
 // paste into an external blog/README), always emit the public API origin — a
 // dev-relative '' or a 127.0.0.1 origin is useless once pasted elsewhere. Same
