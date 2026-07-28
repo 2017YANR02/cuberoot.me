@@ -54,7 +54,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   equals the set mounted via app.route('/v1', …) in packages/server/src/index.ts.
 //   CI red here = a newly-mounted route is undocumented: add its endpoints below,
 //   then add the file stem to this list.
-//   account_auth alg alg_lsll alg_marks alg_srs alg_sets analytics announced_comps article auth battle_rooms cn_comp_names colpi
+//   account_auth alg alg_lsll alg_marks alg_srs alg_sets alg_sweep analytics announced_comps article auth battle_rooms cn_comp_names colpi
 //   comp_follows cube cubeopt_solve cubing_live feedback forum health historical_ranks
 //   membership nav_sites nemesizer notifications ops page_notices paint pattern_examples progress recon scramble_555
 //   scramble_marks sim_masks sponsors timer_backups trainer_rooms wca_format wca_fun_stats wca_proxy
@@ -238,6 +238,10 @@ const ENDPOINTS: Ep[] = [
   { d: 'alg', m: 'PUT', p: '/v1/alg/srs/:puzzle/:set', g: 'login', zh: '批量写记忆调度状态', en: 'Bulk-write memory schedule' },
   { d: 'alg', m: 'PUT', p: '/v1/alg/srs/daily', g: 'login', zh: '合并每日复习量(同日取较大值)', en: 'Merge daily review counts (per-day max)' },
   { d: 'alg', m: 'DELETE', p: '/v1/alg/srs/daily', g: 'login', zh: '清空复习日历(重置全部进度)', en: 'Clear the review calendar (full progress reset)' },
+  { d: 'alg', m: 'GET', p: '/v1/alg/sweep', g: 'login', zh: '跨 set 的「过遍」进度(哪些范围整轮过完了 + 停在哪)', en: 'Cross-set sweep progress (which scopes are done, and where you stopped)' },
+  { d: 'alg', m: 'GET', p: '/v1/alg/sweep/:puzzle/:set', g: 'login', zh: '这一套的过遍进度 + 游标', en: 'This set’s sweep progress and cursor' },
+  { d: 'alg', m: 'PUT', p: '/v1/alg/sweep/:puzzle/:set', g: 'login', zh: '写过遍进度:遍数逐范围取 max,游标按时间戳 LWW', en: 'Write sweep progress: counts merge per scope by max, cursor by last-write-wins' },
+  { d: 'alg', m: 'POST', p: '/v1/alg/sweep/:puzzle/:set/fold', g: 'login', zh: '整轮过完后折叠:删这批 case 的记忆排期,有手动标记的一律留着', en: 'Fold a finished round: drop those cases’ memory schedules, always keeping anything marked by hand' },
   { d: 'alg', m: 'GET', p: '/v1/progress/:algSetId', g: 'login', zh: '读取训练进度', en: 'Read training progress' },
   { d: 'alg', m: 'POST', p: '/v1/progress/:algSetId', g: 'login', zh: '保存训练进度', en: 'Save training progress' },
   { d: 'alg', m: 'POST', p: '/v1/trainer/rooms', g: 'public', zh: '建协同房间(多设备复习分工),返回房间码', en: 'Create a coop room (multi-device recap split); returns a room code' },
