@@ -128,6 +128,12 @@ export interface FaceResult {
   value: number;
   ms: number; // worker 内纯计算耗时
 }
+
+/** 大表下载进度。total = Content-Length;个别代理会剥掉它,此时为 0(UI 应退回不确定态)。 */
+export interface XCrossProgress {
+  loaded: number;
+  total: number;
+}
 export interface MovesTimed extends MovesResult {
   ms: number;
 }
@@ -265,6 +271,12 @@ export interface RustCrossPool {
   ensureXCross(): Promise<void>;
   /** 该池是否已具备 xcross+ 能力(UI 据此决定要不要显示第二段加载提示)。 */
   hasXCross(): boolean;
+  /** 订阅大表下载进度(21MB 要走好几秒,只给转圈没有进度感)。返回退订函数;
+   *  订阅时若已有进度会立刻回放一次当前值。仅 std 池会触发。 */
+  onXCrossProgress(fn: (p: XCrossProgress) => void): () => void;
+  /** 空闲预取大表:只把字节下进 HTTP 缓存(immutable,一年),不 attach、不占 JS 堆,
+   *  把那几秒从「用户点到 XCross 之后」挪到点之前。已在下 / 已用上时是 no-op。 */
+  prefetchXCross(): void;
   /** 丢弃所有「排队未派发」的任务(已在 worker 里跑的 ≤size 个无法中断)。切变体/打乱集时调,
    *  避免新请求(如快 cross)排在旧变体一堆慢任务后面干等。被丢的任务 reject('cancelled')。 */
   clearQueue(): void;
@@ -450,13 +462,53 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
   function dropXCrossGzIfDone(): void {
     if (spawned >= size && all.every((p) => p.dead || p.xcross)) xcrossGz = null;
   }
+
+  /** 空闲预取下完后,字节在主线程留多久(见 prefetchXCross)。 */
+  const PREFETCH_HOLD_MS = 120000;
+  let prefetchHold: ReturnType<typeof setTimeout> | undefined;
+
+  const progressFns = new Set<(p: XCrossProgress) => void>();
+  let progress: XCrossProgress | null = null;
+  function emitProgress(p: XCrossProgress): void {
+    progress = p;
+    for (const fn of progressFns) fn(p);
+  }
+
+  // 边下边报。整表要几秒,一次性 arrayBuffer() 期间 UI 只有一个转圈;读流才拿得到已下字节数。
+  // 注:表是**预压好的 .bin.gz 文件**、不带 Content-Encoding,所以 Content-Length 与这里读到的
+  // 字节同尺度(若哪天服务器再套一层编码,total 会偏小 → UI 侧钳到 100%)。
+  async function downloadXCrossGz(url: string): Promise<ArrayBuffer> {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(`fetch ${url}: ${r.status}`);
+    const total = Number(r.headers.get('content-length')) || 0;
+    if (!r.body) { // 无可读流(老浏览器 / 某些代理):退回一次性读,只报首尾
+      emitProgress({ loaded: 0, total });
+      const buf = await r.arrayBuffer();
+      emitProgress({ loaded: buf.byteLength, total: total || buf.byteLength });
+      return buf;
+    }
+    emitProgress({ loaded: 0, total });
+    const reader = r.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let loaded = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      loaded += value.byteLength;
+      emitProgress({ loaded, total });
+    }
+    const out = new Uint8Array(loaded);
+    let off = 0;
+    for (const c of chunks) { out.set(c, off); off += c.byteLength; }
+    emitProgress({ loaded, total: total || loaded });
+    return out.buffer;
+  }
+
   function fetchXCrossGz(): Promise<ArrayBuffer> {
     if (!xcrossGz) {
       const url = `${tablesBase}/pt_cross_C4E0.bin.gz?${TV}`;
-      xcrossGz = fetch(url).then((r) => {
-        if (!r.ok) throw new Error(`fetch ${url}: ${r.status}`);
-        return r.arrayBuffer();
-      }).catch((e) => { xcrossGz = null; throw e; });
+      xcrossGz = downloadXCrossGz(url).catch((e) => { xcrossGz = null; progress = null; throw e; });
     }
     return xcrossGz;
   }
@@ -674,6 +726,30 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
     hasXCross() {
       return need !== 'cross' || wantXCross;
     },
+    onXCrossProgress(fn) {
+      progressFns.add(fn);
+      if (progress) fn(progress); // 中途订阅(切到 XCross 时预取已在跑)也能立刻看到进度
+      return () => { progressFns.delete(fn); };
+    },
+    prefetchXCross() {
+      // 已在下 / 已用上就别再插一手。
+      if (need !== 'cross' || wantXCross || xcrossGz) return;
+      void fetchXCrossGz().then(
+        () => {
+          // 下完先攥一会儿再松手。松手只留 HTTP 缓存(prod:immutable 一年)本来也够,但那是
+          // 「假设缓存留得住」—— 实测 dev 下第二次取又整整走了一遍 21MB(dev 是 chunked、
+          // 无 Content-Length,浏览器没存)。真要用这张表的人几乎都在打开面板后不久就切过去,
+          // 这段窗口内直接命中内存里的字节,零额外流量;过了窗口没人要就放掉,不让「顺手预取」
+          // 变成常驻 21MB —— 大多数人根本不会切到 XCross。
+          if (wantXCross) return;
+          clearTimeout(prefetchHold);
+          prefetchHold = setTimeout(() => {
+            if (!wantXCross) { xcrossGz = null; progress = null; }
+          }, PREFETCH_HOLD_MS);
+        },
+        () => { progress = null; }, // 预取失败无所谓:真要用时再取,那时才报错给用户
+      );
+    },
     clearQueue() { while (queue.length) queue.shift()!.reject(new Error('cancelled')); },
     abort() {
       // 只终止在跑的 worker(有 job 的);空闲 ready worker 保留,避免无谓重载表。
@@ -691,6 +767,12 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
       while (queue.length) queue.shift()!.reject(new Error('aborted'));
       loading = false;
     },
-    terminate() { xcrossGz = null; for (const pw of all) pw.w.terminate(); },
+    terminate() {
+      clearTimeout(prefetchHold);
+      xcrossGz = null;
+      progress = null;
+      progressFns.clear();
+      for (const pw of all) pw.w.terminate();
+    },
   };
 }
