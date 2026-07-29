@@ -460,3 +460,30 @@ export async function loadMarkOverview(): Promise<MarkOverview> {
     return local;
   }
 }
+
+/**
+ * 跨 set 的标记**明细**(`/alg/progress/cases` 用):总览只回计数,要知道「那 23 个是谁」
+ * 只能逐套拉 per-set 明细。有记录的套通常是个位数,所以并发拉整批,不做分页。
+ *
+ * 每套都本地云端合一次(与进单套页时同一套 LWW 规则),某套云端失败就退回它的本地那份 ——
+ * 一套挂掉不该让整张清单空着。
+ */
+export async function loadMarkDetails(
+  sets: ReadonlyArray<{ puzzle: string; set: string }>,
+): Promise<Record<string, CaseMarks>> {
+  const loggedIn = !!getSessionToken();
+  if (loggedIn) await flushMarks();
+  const pairs = await Promise.all(sets.map(async ({ puzzle, set }) => {
+    const local = loadLocalClean(puzzle, set);
+    const ps = `${puzzle}/${set}`;
+    if (!loggedIn) return [ps, local] as const;
+    const cloud = await fetchSetMarks(puzzle, set);
+    if (!cloud) return [ps, local] as const;   // 这一套云端挂了,退回本地那份,别让整张清单空着
+    const { merged, toUpload } = mergeMarks(local, cloud);
+    // 本地比云端新的那几条顺手回传 —— 与进单套页时同一行为,不让清单页成为只读分叉
+    if (toUpload.length > 0) queueUpload(puzzle, set, toUpload);
+    persistLocal(puzzle, set, merged);
+    return [ps, merged] as const;
+  }));
+  return Object.fromEntries(pairs);
+}

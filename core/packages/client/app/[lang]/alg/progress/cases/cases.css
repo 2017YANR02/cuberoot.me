@@ -1,0 +1,186 @@
+/**
+ * /alg/progress/cases —— 跨套公式清单。
+ *
+ * 每行是「图 + 名字 + 公式 + 记忆状态」四栏,窄屏折成两行(图仍在左,元信息掉到公式下面)。
+ * 公式用等宽字体且允许换行 —— ZBLL 里有 20 步以上的,截断会让这页失去意义。
+ * 双主题页,颜色全走 token(见 skill theme-tokens 的 8 页策略表:/alg 属双主题那档)。
+ */
+
+.alg-cases-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin-bottom: 20px;
+}
+.alg-cases-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--muted-foreground);
+}
+.alg-cases-select {
+  width: fit-content;
+  font-size: 0.78rem;
+  padding: 4px 6px;
+  border-radius: 5px;
+  border: 1px solid var(--input);
+  background: var(--card);
+  color: var(--foreground);
+}
+
+/* 「只看 OLL ×」——从某一套点进来时的范围指示,点掉回全部 */
+.alg-cases-scope {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--border-default);
+  background: var(--muted);
+  color: var(--foreground);
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .alg-cases-scope:hover { border-color: var(--border-strong); }
+}
+
+.alg-cases-group-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.alg-cases-count {
+  font-style: normal;
+  font-size: 0.76rem;
+  font-weight: 400;
+  color: var(--faint-foreground);
+  font-variant-numeric: tabular-nums;
+}
+.alg-cases-drill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.76rem;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 999px;
+  text-decoration: none;
+  color: var(--accent-foreground);
+  background: var(--accent);
+}
+@media (hover: hover) {
+  .alg-cases-drill:hover { background: color-mix(in srgb, var(--accent) 88%, black); }
+}
+
+/* ── 清单 ───────────────────────────────────────────────────── */
+
+.alg-cases-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.alg-case-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 4px;
+  text-decoration: none;
+  color: inherit;
+  border-bottom: 1px solid color-mix(in srgb, var(--foreground) 7%, transparent);
+}
+@media (hover: hover) {
+  .alg-case-row:hover { background: color-mix(in srgb, var(--foreground) 4%, transparent); }
+  .alg-case-row:hover .alg-case-name { color: var(--accent); }
+}
+.alg-case-blank {
+  display: block;
+  width: 54px;
+  height: 54px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--foreground) 7%, transparent);
+}
+
+.alg-case-main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.alg-case-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: var(--foreground);
+}
+.alg-case-star { color: var(--signal-warning); flex: none; }
+.alg-case-set {
+  font-style: normal;
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--faint-foreground);
+}
+/* 公式是这页的主角:不截断,长公式照常折行 */
+.alg-case-alg {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+  overflow-wrap: anywhere;
+}
+
+.alg-case-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  flex: none;
+  font-size: 0.7rem;
+  color: var(--faint-foreground);
+  font-variant-numeric: tabular-nums;
+}
+.alg-case-meta i { font-style: normal; }
+.alg-case-tag {
+  font-weight: 500;
+  font-size: 0.68rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.alg-case-tag.is-learning {
+  color: var(--signal-warning);
+  background: color-mix(in srgb, var(--signal-warning) 14%, transparent);
+}
+.alg-case-tag.is-mastered {
+  color: var(--signal-success);
+  background: color-mix(in srgb, var(--signal-success) 14%, transparent);
+}
+.alg-case-tag.is-lapse {
+  color: var(--destructive);
+  background: color-mix(in srgb, var(--destructive) 12%, transparent);
+}
+.alg-case-mature { color: var(--signal-success); }
+
+/* 窄屏:元信息掉到公式下面,别把公式挤成一列单词 */
+@media (max-width: 560px) {
+  .alg-case-row {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 10px;
+  }
+  .alg-case-meta {
+    grid-column: 2;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px 8px;
+  }
+}
