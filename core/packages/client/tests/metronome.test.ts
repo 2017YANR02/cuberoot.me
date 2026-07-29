@@ -43,9 +43,26 @@ class FakeAudioContext {
   state = 'running';
   destination = {};
   starts: number[] = [];
+  resumes = 0;
   createOscillator() { return new FakeOsc(); }
   createGain() { return new FakeGain(); }
-  resume() { this.state = 'running'; }
+  addEventListener() { /* statechange — not exercised here */ }
+  resume() { this.resumes += 1; this.state = 'running'; return Promise.resolve(); }
+}
+
+// Lifecycle listeners (visibilitychange / pageshow / pagehide / freeze / resume)
+// are the whole recovery path after an app switch, so the harness records them
+// and `fire()` replays one.
+const listeners = new Map<string, Set<() => void>>();
+
+function record(type: string, fn: () => void): void {
+  let set = listeners.get(type);
+  if (!set) { set = new Set(); listeners.set(type, set); }
+  set.add(fn);
+}
+
+function fire(type: string): void {
+  for (const fn of [...(listeners.get(type) ?? [])]) fn();
 }
 
 let ctx: FakeAudioContext;
@@ -68,11 +85,12 @@ g.requestAnimationFrame = () => 0;
 g.cancelAnimationFrame = () => { /* no-op */ };
 g.document = {
   visibilityState: 'visible',
-  addEventListener() { /* no-op */ },
+  addEventListener: record,
 };
 g.window = {
   AudioContext: FakeAudioContext,
-  addEventListener() { /* no-op */ },
+  addEventListener: record,
+  removeEventListener(type: string, fn: () => void) { listeners.get(type)?.delete(fn); },
   setInterval(fn: () => void) { const id = nextTimerId++; timers.set(id, fn); return id; },
   clearInterval(id: number) { timers.delete(id); },
   setTimeout(fn: () => void) { const id = nextTimerId++; void fn; return id; },
@@ -166,6 +184,53 @@ describe('metronome scheduling', () => {
     // The already-queued slow beat may still be in flight, but nothing should
     // remain spaced at the old 2s interval once the new tempo takes hold.
     expect(gaps[gaps.length - 1]).toBeCloseTo(0.25, 6);
+  });
+});
+
+describe('metronome survives leaving and returning to the page', () => {
+  beforeEach(reset);
+
+  it('rebuilds the transport after a pagehide/pageshow round trip', () => {
+    m.setMetronome({ bpm: 120, on: true });
+    advance(1);
+    expect(ctx.starts.length).toBeGreaterThan(0);
+
+    fire('pagehide');           // bfcache / app switch tears the scheduler down
+    ctx.starts.length = 0;
+    advance(2);
+    expect(ctx.starts.length).toBe(0);
+
+    fire('pageshow');           // coming back must bring the ticks back
+    advance(2);
+    expect(ctx.starts.length).toBeGreaterThan(0);
+  });
+
+  it('recovers the same way after a freeze/resume round trip', () => {
+    m.setMetronome({ bpm: 120, on: true });
+    advance(1);
+    fire('freeze');
+    ctx.starts.length = 0;
+    advance(2);
+    expect(ctx.starts.length).toBe(0);
+    fire('resume');
+    advance(2);
+    expect(ctx.starts.length).toBeGreaterThan(0);
+  });
+
+  it('resumes a context the browser parked while the tab was away', () => {
+    m.setMetronome({ bpm: 120, on: true });
+    advance(1);
+    ctx.state = 'suspended';    // OS/browser suspended the audio clock
+    ctx.resumes = 0;
+    fire('visibilitychange');
+    expect(ctx.resumes).toBeGreaterThan(0);
+    expect(ctx.state).toBe('running');
+  });
+
+  it('stays off when the page comes back and nothing was sounding', () => {
+    fire('pageshow');
+    advance(2);
+    expect(ctx.starts.length).toBe(0);
   });
 });
 

@@ -18,7 +18,7 @@ import { useAlgSubmissionUnread, refreshAlgSubmissionUnread } from '@/lib/alg-su
 import { useNotificationsUnread, refreshNotificationsUnread } from '@/lib/notifications-unread';
 import AppLink from '@/components/AppLink';
 import { persistItem } from '@/lib/safe-storage';
-import { subscribeBeat, setMetronome } from '@/lib/metronome';
+import { subscribeBeat, setMetronome, getMetronomeState } from '@/lib/metronome';
 // SSR-safe layout effect (DeskPet is rendered in the root layout).
 const useIsoLayout = typeof document !== 'undefined' ? useLayoutEffect : useEffect;
 
@@ -381,11 +381,15 @@ export default function DeskPet() {
       for (const a of live) a.cancel();
       live = [];
       const peak = accent ? 1.1 : 1.05;
+      // Each beat cancels the previous bounce, so the bounce has to fit inside
+      // the beat interval — at the top of the tempo range a fixed 130ms would be
+      // cancelled mid-swell every time and leave the pet stuck enlarged.
+      const duration = Math.max(24, Math.min(130, (60000 / getMetronomeState().bpm) * 0.8));
       for (const el of [svgRef.current, imgRef.current]) {
         if (!el || el.style.visibility === 'hidden') continue;
         live.push(el.animate(
           [{ scale: '1' }, { scale: `${peak}` }, { scale: '1' }],
-          { duration: 130, easing: 'ease-out' },
+          { duration, easing: 'ease-out' },
         ));
       }
     });
