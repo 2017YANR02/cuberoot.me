@@ -53,9 +53,13 @@ LIMIT=200 node solve.mjs      # 只啃 200 个 case,给出 case/s 与 解/s
 想让它占低优先级在后台跑:
 
 ```powershell
-Start-Process node -ArgumentList 'solve_loop.mjs' -WorkingDirectory D:\cube\cuberoot.me\solver\lsll `
-  -PriorityClass BelowNormal -RedirectStandardOutput solve.log -NoNewWindow
+# Start-Process 没有 -PriorityClass(那是 Process 对象的属性),要 -PassThru 拿到进程再设
+$p = Start-Process node -ArgumentList 'solve_loop.mjs' -WorkingDirectory D:\cube\cuberoot.me\solver\lsll `
+  -RedirectStandardOutput solve.log -RedirectStandardError solve.err.log -NoNewWindow -PassThru
+$p.PriorityClass = 'BelowNormal'
 ```
+
+重定向之后就不是 TTY 了,进度从"原地覆盖一行"退化成每 1% 落一条(全程约 100 行)。
 
 ## 中断与续跑
 
