@@ -193,8 +193,15 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   min-height: 0;
   padding: 16px;
   touch-action: none;            /* kill 300ms delay + double-fire */
+  /* 长按在这块面板上只有一个含义:按住准备计时。华为 / UC / 夸克这些国产 Chromium 壳
+     光看 user-select:none 是不够的 —— 长按仍会弹出「全选 / 复制」并把成绩数字整段选中,
+     手指一抬计时器没起来、屏幕上多了一层选择菜单。touch-callout 才是关掉那套长按手势的
+     开关;tap-highlight 顺手去掉按下时的灰色方块。数字本身再声明一次(见 .timer-display),
+     因为部分壳只认最近的那条声明,不跟着祖先继承。 */
   -webkit-user-select: none;
   user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
   cursor: pointer;
 }
 .timing-surface-core {
@@ -231,6 +238,10 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   color: var(--timer-idle);
   font-variant-numeric: tabular-nums;
   transition: color 120ms;
+  /* 成绩数字是最容易被长按选中的那块文本 —— 就地再声明一次,别指望壳浏览器继承祖先的。 */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 /* 计时字体档位(tf-lcd = 默认 Segment7;其余为站内自托管字体,与 /alg 训练器同四档)。 */
 .timing-surface .timer-display.tf-mono { font-family: var(--font-mono); font-weight: 600; }
