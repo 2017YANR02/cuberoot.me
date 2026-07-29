@@ -37,13 +37,12 @@ export function setRawStickerScale(k: number): void {
 export function getRawStickerScale(): number { return rawStickerScale; }
 
 /** 内核不透明度:原核材质(Phong / Basic 两个单例,建过才设)跟着 frame 一起变半透。
- *  op = 1 → 恢复完全不透明(并让回 depthWrite,否则半透那次关掉的写深度会留在材质上)。 */
+ *  深度照写,理由同 Cubelet.CORE 那边(见 SettingDrawer;停写深度 = 内层块身层层相叠糊成黑)。 */
 export function setRawMaterialOpacity(op: number): void {
   for (const m of [_rawMaterial, _rawMaterialBasic]) {
     if (!m || m.opacity === op) continue;
     m.opacity = op;
     m.transparent = op < 1;
-    m.depthWrite = op >= 1;
     m.needsUpdate = true;
   }
 }
