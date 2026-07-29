@@ -61,7 +61,9 @@ a:hover {
 
 
 body {
-    font-family: "Titilium Web", sans-serif;
+    /* upstream typo'd this as "Titilium Web" (one l), so the webfont it loads on
+       every page never actually applied — see fonts.css / fonts/README.md */
+    font-family: "Titillium Web", sans-serif;
     font-weight: 400;
     font-size: 1.3em;
     --background: #222222;
