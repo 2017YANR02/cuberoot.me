@@ -1,4 +1,4 @@
-// NOTE: /wca/globe「轨迹」模式导出视频(WebCodecs 确定性逐帧编码,固定 60fps)。
+// NOTE: 地球视图(/wca/comp?view=globe)「轨迹」模式导出视频(WebCodecs 确定性逐帧编码,固定 60fps)。
 //   globe 是 MapLibre WebGL 画布,无法纯 Canvas2D 重画;改为:每帧由调用方 setupFrame()
 //   布置地图(arc source + 相机)→ settle() 等渲染稳定 → drawImage(GL 画布) + 烧入字幕/logo
 //   → VideoFrame(按 fps 时间戳)→ VideoEncoder(H.264)→ mp4-muxer。

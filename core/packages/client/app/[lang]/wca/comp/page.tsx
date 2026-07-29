@@ -71,9 +71,10 @@ import './calendar_page.css';
 import './comp.css';
 import { tr } from '@/i18n/tr';
 
-// view=globe 视图:复用 /wca/globe 的 MapLibre 地球,dynamic + ssr:false 懒加载,
-// ~550KB maplibre 仅在切到地球视图时下载,不进日历首屏 bundle。
-const GlobeMapClient = dynamic(() => import('../globe/GlobeMapClient'), {
+// view=globe 视图:地球是本页的一个视图,不是自己的路由 —— 实现放在 wca/_globe/,
+// 下划线前缀让 Next 不当它是路由段(同 alg/_roux、alg/_trainer)。
+// dynamic + ssr:false 懒加载,~550KB maplibre 仅在切到地球视图时下载,不进日历首屏 bundle。
+const GlobeMapClient = dynamic(() => import('../_globe/GlobeMapClient'), {
   ssr: false,
   loading: () => <div className="comp-globe-loading">Loading globe…</div>,
 });

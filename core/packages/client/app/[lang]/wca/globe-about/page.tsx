@@ -38,8 +38,8 @@ export default function GlobeAboutPage() {
         <h1 className="gla-title">{t('WCA 地球视图是怎么工作的', 'How the WCA Globe works')}</h1>
         <p className="gla-intro">
           {t(
-            '/wca/globe 是 WCA 比赛的交互式 3D 地球。基于 MapLibre GL JS + 矢量瓦片构建,顶部一个搜索框即可搜比赛 / 选手 / 城市 / 地点;支持近期比赛分布、选手生涯足迹动画、各国世界纪录等视图。',
-            '/wca/globe is an interactive 3D globe of WCA competitions, built on MapLibre GL JS with vector tiles. A single top search box finds competitions, cubers, cities and places; views include upcoming-comp clusters, animated cuber career trajectories, and world-records-by-country.'
+            '地球视图是 WCA 比赛的交互式 3D 地球。基于 MapLibre GL JS + 矢量瓦片构建,顶部一个搜索框即可搜比赛 / 选手 / 城市 / 地点;支持近期比赛分布、选手生涯足迹动画、各国世界纪录等视图。',
+            'The Globe is an interactive 3D view of WCA competitions, built on MapLibre GL JS with vector tiles. A single top search box finds competitions, cubers, cities and places; views include upcoming-comp clusters, animated cuber career trajectories, and world-records-by-country.'
           )}
         </p>
 
