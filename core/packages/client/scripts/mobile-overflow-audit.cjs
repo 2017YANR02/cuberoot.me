@@ -74,7 +74,9 @@ const cliRoutes = process.argv.slice(2).filter((a) => a.startsWith('/') && !flag
 const DEFAULT_ROUTES = [
   '/zh',
   '/zh/wca/results?show=persons', '/zh/wca/records', '/zh/wca/fun-stats', '/zh/wca/comp',
-  '/zh/wca/viz', '/zh/wca/globe', '/zh/wca/prediction', '/zh/wca/sor',
+  // 地球视图是 /wca/comp 的一个 view,没有 /wca/globe 路由 —— 那个路径会落进
+  // /wca/[statId] 拉不存在的 globe.json,审的是错误页。
+  '/zh/wca/viz', '/zh/wca/comp?view=globe', '/zh/wca/prediction', '/zh/wca/sor',
   '/zh/scramble/gen', '/zh/scramble/stats', '/zh/scramble/solver', '/zh/scramble/analyzer',
   '/zh/timer', '/zh/battle', '/zh/calc', '/zh/recon', '/zh/alg',
   '/zh/membership', '/zh/support', '/zh/mosaic', '/zh/frame-count', '/zh/paint', '/zh/sim',
