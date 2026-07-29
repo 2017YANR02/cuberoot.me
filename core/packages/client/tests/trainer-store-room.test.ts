@@ -2,10 +2,13 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // 回归:训练器「在线协同房间」的客户端状态机(mock 掉 trainer-room-api,只验 store 逻辑)。
 //  1) 建房 → 领第一题落 current,recap.pos = 全局领取序号(合并进度);
-//  2) nextScramble 逐题领取,推进 roomClaimed;
+//  2) nextScramble 换题:手上有预取就同步扶正(不等网络),补领丢后台,推进 roomClaimed;
 //  3) 队列领完 → recapRoundDone(真·全队同时结束);
 //  4) continueRecapRound → 开下一轮再领第一题;
 //  5) leaveRoom → 回本机模式。
+//
+// 领取数(roomClaimed / sim.idx)一律比「屏上摆着的」多一屏:单条多 1 条、三条一屏多 3 条 ——
+// 那就是预取,别当成漏领或重复领。
 
 function makeLocalStorage() {
   const map = new Map<string, string>();
@@ -102,8 +105,8 @@ describe('trainer-store online room', () => {
     expect(s.mode).toBe('recap');                 // 建房强制复习模式
     expect(s.currentKey).toBe(keys[0]);           // 领到第一题
     expect(curRecap()).toEqual({ pos: 1, total: 3 }); // pos = 全局领取序号
-    expect(s.roomClaimed).toBe(1);
-    expect(s.peek).toBeNull();                    // 房间模式不预抽
+    expect(s.roomClaimed).toBe(2);                // 领了 2 格:屏上这条 + 揣手里的预取
+    expect(s.peek?.key).toBe(keys[1]);            // 房间模式也预取一条 —— 下一次换题不等网络
 
     useTrainerStore.getState().nextScramble();    // 领第 2 题
     await flush();
@@ -151,7 +154,7 @@ describe('trainer-store online room', () => {
     expect(s.currentKey).toBe(K[0]);
     expect(s.peek?.key).toBe(K[1]);       // 预抽第 2 条
     expect(s.peek2?.key).toBe(K[2]);      // 预抽第 3 条
-    expect(s.roomClaimed).toBe(3);        // 一次占了三格(用户确实一次做三条)
+    expect(s.roomClaimed).toBe(6);        // 屏上三格 + 预备好的下一屏三格
     expect(s.hist.list.length).toBe(1);   // 仅 current 进历史,peek/peek2 是队尾预抽
 
     // 切下一屏 = 连推 3 格,领全新三条
@@ -161,7 +164,7 @@ describe('trainer-store online room', () => {
     expect(s.currentKey).toBe(K[3]);
     expect(s.peek?.key).toBe(K[4]);
     expect(s.peek2?.key).toBe(K[5]);
-    expect(s.roomClaimed).toBe(6);
+    expect(s.roomClaimed).toBe(9);        // 又备好了再下一屏(K6/K7/K8)
     // 上一屏三条(K0/K1/K2)已进历史,current(K3)在队尾 → 「上三个」正好取 idx-3..idx-1
     const h = s.hist;
     expect(h.list[h.idx].key).toBe(K[3]);
@@ -194,7 +197,7 @@ describe('trainer-store online room', () => {
     const s = useTrainerStore.getState();
     expect(sim.keys).toEqual(K);                  // 全集都入(total 不变 = 5)
     expect(s.room?.total).toBe(5);
-    expect(sim.idx).toBe(3);                       // 起始游标 = start+1(前 2 格已跳过,首题领了第 3 格)
+    expect(sim.idx).toBe(4);                       // 起始游标 = start+2(跳过前 2 格,领了第 3 格 + 1 条预取)
     expect(s.currentKey).toBe(K[2]);              // 从第 3 个(index 2)继续 = 单机当前题 C
     expect(curRecap()).toEqual({ pos: 3, total: 5 }); // 进度接着显示 3/5,不重置到 1
 
@@ -219,7 +222,7 @@ describe('trainer-store online room', () => {
 
     await useTrainerStore.getState().createRoom();
     await flush();
-    expect(sim.idx).toBe(1);                       // 首题领的是第 1 格(曾是第 3 格)
+    expect(sim.idx).toBe(2);                       // 首题领的是第 1 格(曾是第 3 格),第 2 格进预取
     expect(curRecap()).toEqual({ pos: 1, total: 5 }); // ← 事故点:曾显示 3/5
     expect(sim.order).toBe('shuffle');             // 用户选的顺序照旧(曾被钉死成 seq)
 
@@ -282,9 +285,15 @@ describe('trainer-store online room', () => {
     boot(['A', 'B', 'C']);
     await useTrainerStore.getState().createRoom();
     await flush();
-    const before = useTrainerStore.getState().currentKey;
 
     claimFail = 99;                                  // 持续 429(含内部退避重试)
+    // 先把手上的预取吃掉:这一下是同步换题,后台补领失败也不该打扰用户
+    await runPastBackoff(() => useTrainerStore.getState().nextScramble());
+    const before = useTrainerStore.getState().currentKey;
+    expect(useTrainerStore.getState().roomError).toBeNull(); // 后台的错咽回去
+    expect(useTrainerStore.getState().peek).toBeNull();      // 手空了
+
+    // 手空再点:这一下真的等网络,失败必须如实报错
     await runPastBackoff(() => useTrainerStore.getState().nextScramble());
     const s = useTrainerStore.getState();
     expect(s.recapRoundDone).toBe(false);            // ← 事故点:曾误置 true 弹窗
@@ -311,12 +320,17 @@ describe('trainer-store online room', () => {
     const s = useTrainerStore.getState();
     expect(s.recapRoundDone).toBe(false);
     expect(s.currentKey).not.toBe(before);
+    expect(s.peek).not.toBeNull();                   // 预取补上了 ⟹ 那次退避重试确实成功了
     useTrainerStore.getState().leaveRoom();
   });
 
   it('本机落后(别人已开新一轮)→ claim 返回 advanced → 自动重同步再领', async () => {
+    useTrainerStore.getState().leaveRoom();
     boot(['A', 'B']);
     await useTrainerStore.getState().createRoom();
+    await flush();
+    // 先吃掉手上的预取,下一次点击才会真去领(否则同步扶正就走完了,压根不发请求)
+    useTrainerStore.getState().nextScramble();
     await flush();
     // 模拟别人开了下一轮:sim.round 前进,本机 room.round 仍是 1
     sim.round = 2; sim.idx = 0;
@@ -325,5 +339,31 @@ describe('trainer-store online room', () => {
     const s = useTrainerStore.getState();
     expect(s.room?.round).toBe(2);
     expect(s.currentKey).not.toBeNull();       // 重同步后成功领到题
+  });
+  // 核心契约(issue #62「协同模式换题延迟大」):点一下就换题,不等 claim 回包 —— 手上永远
+  // 揣着一条预取,网络往返只发生在后台补领。这里把 claim 悬住不回包,题面照样立刻前进。
+  it('换题不等网络:claim 悬着不回包,题面也已经换过去', async () => {
+    useTrainerStore.getState().leaveRoom();
+    boot(['A', 'B', 'C', 'D']);
+    const K = ['A', 'B', 'C', 'D'].map(n => caseKey(mkCase(n)));
+    await useTrainerStore.getState().createRoom();
+    await flush();
+    expect(useTrainerStore.getState().peek?.key).toBe(K[1]);  // 建房就多领一条揣手里
+
+    const api = await import('@/lib/trainer-room-api');
+    const deferred: { resolve?: (r: unknown) => void } = {};
+    const pending = new Promise<never>(r => { deferred.resolve = r as unknown as (v: unknown) => void; });
+    vi.mocked(api.claimRoomBatch).mockImplementationOnce(() => pending);
+
+    useTrainerStore.getState().nextScramble();                // 故意不 await
+    expect(useTrainerStore.getState().currentKey).toBe(K[1]); // ← 契约:回包之前题面就换好了
+    expect(useTrainerStore.getState().peek).toBeNull();       // 预取用掉了,补领在途
+
+    deferred.resolve!({ kind: 'cases', cases: [{ caseKey: K[2], index: 2 }], round: 1, total: 4 });
+    await flush();
+    const s = useTrainerStore.getState();
+    expect(s.peek?.key).toBe(K[2]);                           // 补领回来只落进预取
+    expect(s.currentKey).toBe(K[1]);                          // 题面不被回包再动一次
+    useTrainerStore.getState().leaveRoom();
   });
 });
