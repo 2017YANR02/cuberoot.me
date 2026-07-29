@@ -39,6 +39,19 @@ export interface BufferedMove {
   cnt: number;
   /** WCA face notation, single quarter turn (`R`, `R'`). */
   mv: string;
+  /**
+   * The cube's own clock reading for this move (ms), when the frame carried
+   * one. Absent for moves recovered from history — those frames report the
+   * turn but not when it happened, so the host falls back to arrival time
+   * rather than inventing a number. See `move_clock.ts`.
+   */
+  ts?: number;
+}
+
+/** A move on its way to the host, with the cube's timestamp if there was one. */
+export interface TimedMove {
+  mv: string;
+  ts?: number;
 }
 
 export interface GanMoveSyncHooks {
@@ -110,11 +123,11 @@ export class GanMoveSync {
    * A move event arrived. Returns the moves that are now safe to apply, in
    * chronological order — empty while a hole is being filled.
    */
-  push(moveCnt: number, mv: string): string[] {
+  push(moveCnt: number, mv: string, ts?: number): TimedMove[] {
     this.lastSeenCnt = moveCnt;
     if (this.prevMoveCnt === -1) return [];
     if (moveCnt === this.prevMoveCnt) return [];
-    this.buffer.push({ cnt: moveCnt, mv });
+    this.buffer.push({ cnt: moveCnt, mv, ts });
     return this.evict(true);
   }
 
@@ -123,7 +136,7 @@ export class GanMoveSync {
    * (NEWEST first); each is injected only if it fits the missing window.
    * Returns whatever that unblocks.
    */
-  injectHistory(moves: BufferedMove[]): string[] {
+  injectHistory(moves: BufferedMove[]): TimedMove[] {
     if (this.prevMoveCnt === -1) return [];
     for (const m of moves) this.injectLost(m);
     return this.evict(false);
@@ -152,8 +165,8 @@ export class GanMoveSync {
    * `reqLostMoves` gates the history request so a history REPLY can't trigger
    * another request from inside itself.
    */
-  private evict(reqLostMoves: boolean): string[] {
-    const out: string[] = [];
+  private evict(reqLostMoves: boolean): TimedMove[] {
+    const out: TimedMove[] = [];
     while (this.buffer.length > 0) {
       const diff = (this.buffer[0].cnt - this.prevMoveCnt) & 0xff;
       if (diff > 1) {
@@ -161,7 +174,7 @@ export class GanMoveSync {
         break;
       }
       const move = this.buffer.shift()!;
-      out.push(move.mv);
+      out.push({ mv: move.mv, ts: move.ts });
       this.prevMoveCnt = move.cnt;
     }
     if (this.buffer.length > MAX_PENDING) {
