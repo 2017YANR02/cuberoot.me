@@ -1,10 +1,9 @@
 /**
  * Stroop 成绩本地存档 + 干扰量计算(纯函数,方便测)。
  *
- * 成绩按「每格用时」比,不按总时长 —— 换词数就不可比了。干扰量是本页唯一
- * 有意义的指标:同一套颜色下,干扰卡每格 − 色块卡每格,单位 ms;色块卡是这
- * 个人自己的命名基线,减掉之后剩下的才是被字面意思拖慢的那部分。
- * 颜色数不同(4 / 6)难度不同,所以只在同一颜色数内相减。
+ * 成绩按「每格用时」比,不按总时长 —— 换格数就不可比了。干扰量是本页唯一
+ * 有意义的指标:干扰卡每格 − 色块卡每格,单位 ms;色块卡是这个人自己的命名
+ * 基线,减掉之后剩下的才是被字面意思拖慢的那部分。
  */
 
 import { persistItem } from '@/lib/safe-storage';
@@ -14,14 +13,14 @@ export interface StroopRun {
   kind: CardKind;
   /** 这次卡有几格。 */
   count: number;
-  colorCount: number;
   /** 总用时 ms。 */
   ms: number;
   /** 完成时刻(Date.now)。 */
   ts: number;
 }
 
-const KEY = 'cuberoot-stroop.v1';
+// v2:墨色从 4/6 可选改成固定魔方六色,旧存档的成绩不再可比,换 key 弃掉。
+const KEY = 'cuberoot-stroop.v2';
 /** 存档上限 —— 只用来算最好成绩和最近几条,不做长期统计。 */
 export const MAX_RUNS = 50;
 
@@ -34,15 +33,11 @@ export function addRun(runs: readonly StroopRun[], run: StroopRun): StroopRun[] 
   return [run, ...runs].slice(0, MAX_RUNS);
 }
 
-/** 同类型同颜色数里最快的每格用时;没有记录返回 null。 */
-export function bestPerCell(
-  runs: readonly StroopRun[],
-  kind: CardKind,
-  colorCount: number,
-): number | null {
+/** 同类型卡里最快的每格用时;没有记录返回 null。 */
+export function bestPerCell(runs: readonly StroopRun[], kind: CardKind): number | null {
   let best: number | null = null;
   for (const r of runs) {
-    if (r.kind !== kind || r.colorCount !== colorCount || r.count <= 0) continue;
+    if (r.kind !== kind || r.count <= 0) continue;
     const per = perCellMs(r);
     if (best === null || per < best) best = per;
   }
@@ -53,9 +48,9 @@ export function bestPerCell(
  * 干扰量 ms/格 = 干扰卡最好 − 色块卡最好。两种卡都得跑过才有值。
  * 可能是负数(基线那次手抖 / 干扰卡蒙对节奏),照实返回,不夹到 0。
  */
-export function interferenceMs(runs: readonly StroopRun[], colorCount: number): number | null {
-  const hard = bestPerCell(runs, 'incongruent', colorCount);
-  const base = bestPerCell(runs, 'patch', colorCount);
+export function interferenceMs(runs: readonly StroopRun[]): number | null {
+  const hard = bestPerCell(runs, 'incongruent');
+  const base = bestPerCell(runs, 'patch');
   if (hard === null || base === null) return null;
   return hard - base;
 }
@@ -65,7 +60,6 @@ function isRun(v: unknown): v is StroopRun {
   const r = v as Record<string, unknown>;
   return (r.kind === 'patch' || r.kind === 'congruent' || r.kind === 'incongruent')
     && typeof r.count === 'number' && Number.isFinite(r.count)
-    && typeof r.colorCount === 'number' && Number.isFinite(r.colorCount)
     && typeof r.ms === 'number' && Number.isFinite(r.ms)
     && typeof r.ts === 'number' && Number.isFinite(r.ts);
 }
