@@ -1,12 +1,17 @@
 // /icon gallery data — grouped view over the SINGLE source of truth for every
-// cube icon on the site: components/EventIcon/svg-map.ts (SVG_BY_KEY). That map
-// is generated from components/EventIcon/svg/{event,unofficial,penalty}/*.svg,
+// cube icon on the site: components/EventIcon/svg-map*.ts. Those maps are
+// generated from components/EventIcon/svg/{event,unofficial,penalty}/*.svg,
 // a verbatim vendored copy of https://github.com/cubing/icons (src/svg). The
 // same keys drive <CubingIcon> / <EventIcon> and the /sim puzzle picker, so
 // adding/removing an icon there updates /sim, EventIcon AND this gallery at once
 // — this page is just the browsable management view of that shared set.
+//
+// The penalty illustrations live in their own map (168KB, 20-27KB apiece) and
+// nothing renders them through CubingIcon — this gallery is their only consumer,
+// so it is also the only place that pays for them. See gen-svg-map.mjs.
 
 import { SVG_BY_KEY } from '@/components/EventIcon/svg-map';
+import { PENALTY_SVG_BY_KEY } from '@/components/EventIcon/svg-map-penalty';
 import { SITE_ICONS } from './_site-icons';
 
 export type IconCategory = 'event' | 'unofficial' | 'penalty';
@@ -41,7 +46,7 @@ function parseKey(key: string): { category: IconCategory; slug: string } | null 
 
 export const ICON_GROUPS: IconGroup[] = (() => {
   const byCat: Record<IconCategory, IconEntry[]> = { event: [], unofficial: [], penalty: [] };
-  for (const [key, svg] of Object.entries(SVG_BY_KEY)) {
+  for (const [key, svg] of [...Object.entries(SVG_BY_KEY), ...Object.entries(PENALTY_SVG_BY_KEY)]) {
     const parsed = parseKey(key);
     if (!parsed) continue;
     byCat[parsed.category].push({ key, category: parsed.category, slug: parsed.slug, svg });
