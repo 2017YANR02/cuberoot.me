@@ -127,6 +127,17 @@ const persist = (p: string, s: string, data: PersistedSession) => {
   persistItem(sessionKey(p, s), JSON.stringify(data));
 };
 
+/**
+ * 从**页面外**给一场会话预置勾选(`/alg/progress/cases` 的「专练不熟」:先算好队列,
+ * 再跳进 run 页)。成绩保留 —— 换的是练哪些 case,不是重开一场。
+ *
+ * 存在的意义是让 storage key 只有一处 —— 调用方不该知道 `trainer:<puzzle>/<sessionId>` 这个格式。
+ */
+export function presetSessionSelection(puzzle: string, sessionId: string, keys: readonly string[]): void {
+  const prev = loadPersisted(puzzle, sessionId);
+  persist(puzzle, sessionId, { ...prev, selected: [...keys] });
+}
+
 /** 跨 set 的训练偏好(pre/post-AUF / 计时 / 模式 / 概率 / 字体),全局一份。 */
 interface TrainerPrefs {
   preAuf: boolean;

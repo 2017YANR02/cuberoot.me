@@ -38,6 +38,52 @@
 .alg-prog-tile.is-due b { color: var(--accent); }
 .alg-prog-streak { display: inline-flex; align-items: center; gap: 3px; }
 
+/* 可点的统计块(点进公式清单)。下划线只在标签上,别把大号数字画花 */
+a.alg-prog-tile { text-decoration: none; }
+a.alg-prog-tile span { text-decoration: underline dotted; text-underline-offset: 3px; }
+@media (hover: hover) {
+  a.alg-prog-tile:hover span { color: var(--accent); text-decoration-style: solid; }
+}
+
+/* ── 间隔阶梯(排期怎么算的)──────────────────────────────── */
+
+.alg-prog-ladder {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.alg-prog-ladder-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+.alg-prog-ladder-label {
+  font-size: 0.76rem;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+.alg-prog-ladder-steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+.alg-prog-ladder-steps b {
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted-foreground);
+  background: color-mix(in srgb, var(--foreground) 7%, transparent);
+}
+.alg-prog-ladder-steps b.is-mature {
+  color: var(--signal-success);
+  background: color-mix(in srgb, var(--signal-success) 13%, transparent);
+}
+
 .alg-prog-note {
   margin: 4px 0 8px;
   font-size: 0.8rem;
