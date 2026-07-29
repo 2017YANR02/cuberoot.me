@@ -4,8 +4,10 @@
 
 const MIME_TYPE_JAVASCRIPT = "text/javascript";
 const MIME_TYPE_WASM = "application/wasm";
-const CORE_VERSION = "0.12.9";
-const CORE_URL = `https://unpkg.com/@ffmpeg/core@${CORE_VERSION}/dist/umd/ffmpeg-core.js`;
+// Same-origin default (public/ffmpeg/, @ffmpeg/core@0.12.9 umd) — upstream points
+// this at unpkg.com; we never fetch the core off a CDN. Callers pass coreURL
+// explicitly anyway; this is only the no-arg fallback.
+const CORE_URL = "/ffmpeg/ffmpeg-core.js";
 const FFMessageType = {
   LOAD: "LOAD",
   EXEC: "EXEC",
@@ -37,7 +39,9 @@ const load = async ({ coreURL: _coreURL, wasmURL: _wasmURL, workerURL: _workerUR
     if (!_coreURL) _coreURL = CORE_URL;
     importScripts(_coreURL);
   } catch {
-    if (!_coreURL || _coreURL === CORE_URL) _coreURL = CORE_URL.replace("/umd/", "/esm/");
+    // importScripts is unavailable in a module worker — retry as an ES import.
+    // (Upstream also swapped the CDN's /umd/ path for /esm/ here; our core is
+    // same-origin umd, so there is nothing to rewrite.)
     self.createFFmpegCore = (await import(_coreURL)).default;
     if (!self.createFFmpegCore) throw ERROR_IMPORT_FAILURE;
   }
