@@ -1567,6 +1567,9 @@ export default function TrainerRunClient() {
                   caseHref={virtual?.caseHref}
                   header={i === 0 ? tr({ zh: '上三个', en: 'Previous 3' }) : undefined}
                   markSlot={<CaseMarkBar k={caseKey(c)} />}
+                  // 三张一起换,一起出:走本地渲染。三个 <img> 各等各的往返,
+                  // 落地有先有后 —— 而且这三张刚在主屏上就是本地渲染的,浏览器缓存里没有它们。
+                  localThumb
                 />
               );
             })}
