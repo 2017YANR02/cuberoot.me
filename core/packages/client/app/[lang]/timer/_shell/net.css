@@ -76,14 +76,28 @@
 /* 大厅一栏到底居中。按钮 / 输入框 / 身份 chip 各自带着 align-self:flex-start ——
    那是房内那些左对齐场景要的,只在大厅这一处压过去。 */
 .net-lobby .net-field { align-items: center; }
-/* 身份 + 项目并排一行;窄屏 / 访客那个 260px 搜索框放不下就折行 */
+/* 身份 + 项目并排,永远一行:窄到放不下就让两边一起收(名字收到头才省略号),
+   不折行 —— 折了就成了「谁」「练什么」各占一行,回到没并排之前。 */
 .net-lobby-row {
   align-self: stretch;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 10px;
+}
+.net-lobby-row > .net-field,
+.net-lobby-row .net-identity-me,
+.net-lobby-row .net-input { min-width: 0; }
+/* 「或输入」是连接词,别被挤成两行 */
+.net-lobby-row .net-lobby-or { white-space: nowrap; }
+.net-lobby-row .net-btn { white-space: nowrap; }
+/* 收窄时名字省略而不是折成两行(微信内置浏览器 CJK 偏宽,更容易撞到) */
+.net-lobby-row .net-identity-name {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .net-lobby .net-btn,
 .net-lobby .net-input,
@@ -202,11 +216,6 @@
 .net-lobby-or {
   font-size: 12px;
   color: var(--faint-foreground);
-}
-.net-join-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 .net-err {
   font-size: 13px;

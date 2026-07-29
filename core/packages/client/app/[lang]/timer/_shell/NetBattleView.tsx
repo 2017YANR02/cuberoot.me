@@ -981,13 +981,12 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
                 </div>
               </div>
 
-              <button type="button" className="net-btn net-btn-primary net-btn-lg" onClick={doCreate} disabled={busy}>
-                {tr({ zh: '创建房间', en: 'Create room' })}
-              </button>
-
-              <div className="net-lobby-or">{tr({ zh: '有房间码?', en: 'Have a code?' })}</div>
-
-              <div className="net-join-row">
+              {/* 开一间 or 进一间 —— 同一个决定的两个岔路,摆一行才看得出是二选一 */}
+              <div className="net-lobby-row">
+                <button type="button" className="net-btn net-btn-primary net-btn-lg" onClick={doCreate} disabled={busy}>
+                  {tr({ zh: '创建房间', en: 'Create room' })}
+                </button>
+                <span className="net-lobby-or">{tr({ zh: '或输入', en: 'or enter' })}</span>
                 {/* 填满 5 位即自动加入,无「加入」按钮 */}
                 <input
                   className="net-input net-input-code"
