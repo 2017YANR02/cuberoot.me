@@ -111,6 +111,8 @@ interface Rig {
   crypto: GanCrypto;
   notify: FakeCharacteristic;
   ourMoves: string[];
+  /** Device-clock timestamps our driver reported, aligned with ourMoves. */
+  ourStamps: (number | undefined)[];
   ourWrites: FakeWrite[];
   /** Feed one PLAINTEXT frame to both sides (encrypted with csTimer's crypto). */
   feed(plain: number[]): void;
@@ -135,12 +137,17 @@ async function makeRig(v: Variant, mac = 'AB:CD:EF:01:23:45'): Promise<Rig> {
 
   const gatt = makeFakeGatt(v.deviceName, { [v.service]: [v.read, v.write] });
   const ourMoves: string[] = [];
-  await v.driver.start(gatt.asServer, (m) => ourMoves.push(m), { mac });
+  const ourStamps: (number | undefined)[] = [];
+  await v.driver.start(
+    gatt.asServer,
+    (m, ts) => { ourMoves.push(m); ourStamps.push(ts); },
+    { mac },
+  );
   const notify = gatt.char(v.service, v.read);
 
   const HELLO = 3;
   return {
-    sb, crypto, notify, ourMoves,
+    sb, crypto, notify, ourMoves, ourStamps,
     ourWrites: gatt.writes,
     feed(plain) {
       const cipher = crypto.encrypt(plain.slice());
@@ -197,6 +204,46 @@ for (const v of [V3, V4]) {
       rig.feed(v.moveFrame(41, 0, 0)); // U
       expectSameMoves(rig.ourMoves, rig.cstimerMoves(), `${v.name} first-turn`);
       expect(rig.ourMoves).toEqual(['U']);
+    });
+
+    it('reports the cube\'s own clock reading, not the arrival time', async () => {
+      const rig = await makeRig(v);
+      const st = realState(rig.sb, []);
+      rig.feed(v.faceletFrame(0, st.ca, st.ea));
+
+      // Timestamps a real cube would send: ~55 ms apart, i.e. a fast but
+      // ordinary turn rate. Arrival order here is instantaneous, which is the
+      // whole point — without the device clock these gaps are unrecoverable.
+      const stamps = [1_000_000, 1_000_055, 1_000_110, 1_000_165];
+      stamps.forEach((ts, i) => rig.feed(v.moveFrame(i + 1, i % 6, 0, ts)));
+
+      expect(rig.ourMoves).toHaveLength(4);
+      expect(rig.ourStamps).toEqual(stamps);
+    });
+
+    it('leaves history-recovered moves unstamped rather than inventing a time', async () => {
+      const rig = await makeRig(v);
+      const st = realState(rig.sb, []);
+      rig.feed(v.faceletFrame(0, st.ca, st.ea));
+      rig.feed(v.moveFrame(1, 0, 0, 500_000));       // U, timed
+      rig.feed(v.moveFrame(3, 2, 0, 500_120));       // F, counter 2 went missing
+
+      // Nothing is applied while the hole is open.
+      expect(rig.ourMoves).toEqual(['U']);
+      // The cube answers with the missing window, NEWEST first. History frames
+      // index "DUBFLR" (not "URFDLB"): 3 = F for the move we already have,
+      // 5 = R for the one that went missing.
+      rig.feed(v.historyFrame(3, [{ axis: 3, pow: 0 }, { axis: 5, pow: 0 }]));
+      expect(rig.ourMoves).toEqual(['U', 'R', 'F']);
+
+      // The recovered move carries no clock — the history frame reports the
+      // turn but not when it happened, and guessing would put a fabricated
+      // interval into every metric computed from it.
+      expect(rig.ourStamps[0]).toBe(500_000);
+      expect(rig.ourStamps[1]).toBeUndefined();
+      // The move that was merely HELD in the buffer keeps the timestamp its
+      // own live frame carried; it was never missing, just early.
+      expect(rig.ourStamps[2]).toBe(500_120);
     });
 
     it('a full 18-move scramble arrives move-for-move', async () => {

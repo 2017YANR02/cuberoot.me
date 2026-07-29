@@ -56,6 +56,8 @@ const IV_BASE = new Uint8Array([
 
 /** How many past moves the cube remembers, for history replies. */
 const HISTORY_DEPTH = 64;
+/** Where the fake cube's own clock starts, so it is visibly not local time. */
+const DEVICE_CLOCK_EPOCH = 1_234_567;
 
 /* ------------------------------------------------------------------ */
 /*  Bit packing (mirrors the frame layouts in gan_v4.ts)              */
@@ -143,6 +145,8 @@ interface FakeSession {
 class FakeCube {
   armed = false;
   private state: CubieState = solvedCubie();
+  /** Local time at power-on, the reference the device clock advances from. */
+  private readonly bootLocal = Date.now();
   private moveCnt = 0;
   private history: { cnt: number; mv: string }[] = [];
   private dropCount = 0;
@@ -263,9 +267,16 @@ class FakeCube {
 
     const face = 'URFDLB'.indexOf(mv[0]);
     const pow = mv.endsWith("'") ? 1 : 0;
+    // The cube's own clock. Deliberately NOT local time: a real cube counts
+    // from its own power-on, so the host has to reconcile the two rather than
+    // read device time as if it were ours. Advancing it with wall time is what
+    // makes the fake cube able to exercise `MoveClock` at all — a constant
+    // here would hand every move the same timestamp.
+    const deviceTs = (DEVICE_CLOCK_EPOCH + (Date.now() - this.bootLocal)) >>> 0;
     this.send(packBits(20, [
       [0, 8, 0x01], [8, 8, 0x08],
-      [16, 8, 0], [24, 8, 0], [32, 8, 0], [40, 8, 0],
+      [16, 8, deviceTs & 0xff], [24, 8, (deviceTs >>> 8) & 0xff],
+      [32, 8, (deviceTs >>> 16) & 0xff], [40, 8, (deviceTs >>> 24) & 0xff],
       [48, 8, this.moveCnt & 0xff], [56, 8, (this.moveCnt >>> 8) & 0xff],
       [64, 2, pow], [66, 6, AXIS_ONEHOT[face]],
     ]));

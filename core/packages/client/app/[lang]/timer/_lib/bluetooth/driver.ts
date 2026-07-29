@@ -232,10 +232,17 @@ export interface CubeDriver {
    * Connect to characteristics on an already-opened GATT server, subscribe to
    * notifications, and call `onMove` for every detected move (face notation).
    * `ctx` carries the resolved MAC for MAC-keyed drivers.
+   *
+   * `deviceTs` is the cube's OWN clock reading for that move, in milliseconds,
+   * for the protocols that carry one (GAN v3/v4). Pass it whenever the frame
+   * has it and omit it otherwise — including for moves recovered from a
+   * history reply, which report the turn but not when it happened. The host
+   * reconciles it against the local clock; see `move_clock.ts` for why
+   * notification arrival time is not a good enough substitute.
    */
   start(
     server: BluetoothRemoteGATTServer,
-    onMove: (move: string) => void,
+    onMove: (move: string, deviceTs?: number) => void,
     ctx?: CubeDriverContext,
   ): Promise<CubeDriverStartResult>;
 }
