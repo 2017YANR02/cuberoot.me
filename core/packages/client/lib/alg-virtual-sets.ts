@@ -49,6 +49,14 @@ export interface VirtualAlgSet {
    * 细线,轮次才是这套集里唯一看得见的进度。不分轮的虚拟集不填。
    */
   totalRounds?: number;
+  /**
+   * 这套集**默认不开**首尾随机 AUF(开关照旧在,想开随时开)。
+   *
+   * LSLL 打的就是「这个 case 的最短打乱」—— 库里那条是整方 HTM 最优解,取逆得到的打乱
+   * 长度恰好等于最优步数,没有更短的。再随机接首尾 AUF 会让它凭空长 0~2 步,而这条管道
+   * 五天的算力买的就是那几步。
+   */
+  noAufDefault?: boolean;
   /** case 详情页地址(卡片上的 case 名点进去)。 */
   caseHref: (c: AlgCase) => string;
   /**
@@ -71,6 +79,7 @@ const REGISTRY: VirtualAlgSet[] = [
     roundLabel: lsllRoundLabel,
     nextRoundScope: lsllNextRoundScope,
     totalRounds: LSLL_ROUNDS,
+    noAufDefault: true,
     caseHref: c => `/alg/lsll/case?k=${lsllCaseKeyString(c)}`,
     resolveCase: resolveLsllCase,
   },
