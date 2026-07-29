@@ -395,10 +395,17 @@ export default function TrainerRunClient() {
     for (let i = 0; i < n; i++) nextScramble();
   }, [nextScramble]);
 
-  /** 邀请二维码弹窗(建房后自动弹一次)。声明在计时/键盘之前 —— 它俩要读它来让位。 */
+  /** 邀请二维码弹窗(建房后自动弹一次)。 */
   const [qrOpen, setQrOpen] = useState(false);
-  const qrOpenRef = useRef(false);
-  qrOpenRef.current = qrOpen;
+  /** case 详情弹窗(卡片的图 / 名字 / 历史条目点开)。 */
+  const [metaCase, setMetaCase] = useState<AlgCase | null>(null);
+  /**
+   * 有弹层盖着:计时和全局按键一律让位 —— 空格别在背后起表,←/→ 别在背后翻题。
+   * 声明在计时 / 键盘之前,它俩要读它。
+   */
+  const overlayOpen = qrOpen || metaCase != null;
+  const overlayOpenRef = useRef(false);
+  overlayOpenRef.current = overlayOpen;
 
   // Space-bar timing (keyboard). Touch/mouse press-to-time is handled by the
   // gesture-wheel hook below so a press can also drive the radial dial.
@@ -410,8 +417,8 @@ export default function TrainerRunClient() {
   useSpaceHoldTimer({
     state: timerState,
     delayMs: TIMER_DELAY_MS,
-    // 「本轮结束」/ 邀请二维码弹窗开着时别让空格误起表
-    enabled: timing && !recapRoundDone && !isMemo && !qrOpen,
+    // 「本轮结束」/ 二维码 / case 详情弹窗开着时别让空格误起表
+    enabled: timing && !recapRoundDone && !isMemo && !overlayOpen,
     getTimerReady,
     startTimer,
     stopTimer,
@@ -422,7 +429,7 @@ export default function TrainerRunClient() {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (isMemoRef.current) return;   // 记忆模式的键盘在 MemoryTrainer 里
-      if (qrOpenRef.current) return;   // 二维码弹窗盖着,空格/方向键别在背后翻题(Esc 归弹窗)
+      if (overlayOpenRef.current) return;   // 弹窗盖着,空格/方向键别在背后翻题(Esc 归弹窗)
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA'
         || target.tagName === 'SELECT' || target.isContentEditable)) return;
@@ -473,7 +480,6 @@ export default function TrainerRunClient() {
   // ── Radial gesture wheel (shared with /timer) ───────────────────
   const stageRef = useRef<HTMLDivElement | null>(null);
   const [copied, setCopied] = useState(false);
-  const [metaCase, setMetaCase] = useState<AlgCase | null>(null);
   const [joinCode, setJoinCode] = useState('');
 
   // 邀请链接 = 当前页 URL + ?room=CODE(队友粘到浏览器 / 扫码打开即自动加入本房间)。
@@ -1608,6 +1614,7 @@ export default function TrainerRunClient() {
               puzzle={puzzle}
               set={setSlug}
               onPick={jumpToHist}
+              onShowCase={(c) => setMetaCase(c)}
             />
           </aside>
         )}
