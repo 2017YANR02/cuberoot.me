@@ -231,6 +231,10 @@ const CSS = `
 .clawd-deskpet>svg,.clawd-deskpet>img{position:absolute;inset:0;width:100%;height:100%;
   image-rendering:pixelated;-webkit-user-drag:none;pointer-events:none;}
 .clawd-deskpet>img{display:none;object-fit:contain;}
+/* The inline SVG is clawd's art only — it doubles as the frame shown while an
+   <img> pose is still decoding, so the other characters must never fall back to
+   it (the engine also sets display:none on swap). */
+.clawd-deskpet:not([data-char=clawd])>svg{display:none;}
 .clawd-deskpet-hit{position:absolute;pointer-events:auto;cursor:grab;touch-action:none;
   -webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;}
 .clawd-deskpet[data-char=clawd] .clawd-deskpet-hit{left:31%;top:66%;width:38%;height:28%;}
@@ -510,6 +514,54 @@ export default function DeskPet() {
       shadow?.setAttribute('transform', `translate(${shift},0) scale(${sx},1)`);
     };
 
+    // Paint an <img> frame. Decode first, swap after: assigning img.src directly
+    // blanks the box for the whole round-trip — and forever if the request fails
+    // — which is why the pet used to vanish into an empty square on a flaky or
+    // slow network. On failure we keep whatever is already painted (falling back
+    // to the inline idle art when nothing has been painted yet), so the pet is
+    // never an empty box. `replay` restarts a one-shot animation from the memory
+    // cache instead of re-downloading it.
+    let frameSeq = 0;
+    const paintFrame = (url: string, replay: boolean) => {
+      const seq = ++frameSeq;
+      const show = () => {
+        if (seq !== frameSeq) return;
+        if (replay && img.getAttribute('src') === url) img.removeAttribute('src');
+        img.src = url;
+        img.style.display = 'block';
+        img.style.visibility = '';
+        svg.style.display = 'none';
+      };
+      const pre = new Image();
+      pre.onload = show;
+      pre.onerror = () => {
+        if (seq !== frameSeq) return;
+        if (img.getAttribute('src')) {
+          img.style.visibility = ''; // keep the last good frame (may be hidden by a char switch)
+          return;
+        }
+        if (theme.inlineIdle) {
+          img.style.display = 'none';
+          svg.style.display = 'block';
+          svg.style.visibility = '';
+          applyEye(0, 0);
+        }
+      };
+      pre.src = url;
+      if (pre.complete && pre.naturalWidth) show(); // already in cache → paint synchronously
+    };
+
+    // Prewarm the poses the pet reaches on its own (idle → yawn → doze → sleep,
+    // plus the two most common reactions) so the first swap paints from cache.
+    const prewarm = () => {
+      for (const k of ['working', 'happy', 'yawning', 'dozing', 'sleeping', 'idle']) {
+        const f = theme.files[k];
+        if (f) new Image().src = theme.base + f;
+      }
+    };
+    if (typeof requestIdleCallback === 'function') requestIdleCallback(prewarm);
+    else setTimeout(prewarm, 2000);
+
     const setState = (s: string, force = false) => {
       if (s === state && !force) return;
       clearTimeout(autoTimer);
@@ -522,7 +574,6 @@ export default function DeskPet() {
         svg.style.visibility = ''; // clear any hide from a character switch
         applyEye(0, 0);
       } else {
-        svg.style.display = 'none';
         let file: string;
         if (isMini) {
           // calico lacks mini-working / mini-enter-sleep → fall back to idle / sleep.
@@ -530,12 +581,10 @@ export default function DeskPet() {
         } else {
           file = theme.files[s] || theme.files.working;
         }
-        // Reveal only once the new frame is decoded, so a character switch never
-        // flashes the previous art at the new box scale.
-        img.onload = () => { img.style.visibility = ''; };
-        img.src = theme.base + file + '?_t=' + Date.now();
-        img.style.display = 'block';
-        if (img.complete) img.style.visibility = '';
+        // No cache-buster: the assets ship immutable, so a repeated state must hit
+        // the browser cache instead of a fresh round-trip. `force` (a re-triggered
+        // one-shot) still restarts the animation, from cache.
+        paintFrame(theme.base + file, force);
       }
       const back = isMini ? MINI_AUTO[s] : AUTO[s];
       if (back) autoTimer = setTimeout(() => {
