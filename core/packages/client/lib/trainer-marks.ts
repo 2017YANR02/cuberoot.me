@@ -32,6 +32,33 @@ export type CaseMarks = Record<string, CaseMark>;
 
 const marksKey = (p: string, s: string) => `trainer:marks:${p}/${s}`;
 
+/**
+ * 一次性重置:LSLL 的 per-case 进度整批作废(migration 0097 删云端那半)。
+ *
+ * 2026-07-28 起,已收录范围出题的是一条两步路线 ≤4 个 mid-AUF 变体里整方最优最短的那个
+ * (`lib/lsll/trainer-set` 的 `shortestVariant`)。路线一条没变,但同一条路线换了 canonical key
+ * ⇒ 旧的标记 / 记忆 / 勾选全指向不再出题的 case,迁不过去也没意义,按「现在还没什么人练」直接删。
+ *
+ * **必须先于任何一次云端合并跑**,否则本地这份会在 last-write-wins 里原样飞回云端 ——
+ * 所以放在模块初始化,而不是某个 store 的 load 里(记忆 / 过遍 / 会话都在别的模块,
+ * 而它们全都 import 本模块)。「过遍」进度不删:它按 scope 计数,302 条路线本身没变。
+ */
+const LSLL_RESET_FLAG = 'trainer:reset:lsll-midauf';
+
+function resetLsllProgressOnce(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    if (localStorage.getItem(LSLL_RESET_FLAG)) return;
+    localStorage.removeItem(marksKey('3x3', 'lsll'));   // 标记
+    localStorage.removeItem('srs:recs:3x3/lsll');       // 记忆排期(lib/alg-srs-store)
+    localStorage.removeItem('trainer:3x3/lsll');        // 会话:勾选的 case + 成绩(lib/trainer-store)
+  } catch { return; /* 存储不可用(隐私模式):这次不重置,下次进站再说 */ }
+  // 旗标写失败(配额)= 下次进站再重置一遍。删都删了,重复一次没有副作用。
+  persistItem(LSLL_RESET_FLAG, '1');
+}
+
+resetLsllProgressOnce();
+
 /** 一次 PUT 最多带几条(服务端上限 2000,留余量)。 */
 const MAX_ITEMS_PER_PUT = 1000;
 
