@@ -11,6 +11,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { CompPicker } from '@/components/CompPicker';
 import { ClearButton } from '@/components/ClearButton';
 import PillToggle from '@/components/PillToggle/PillToggle';
+import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
+import { HelpCircle } from 'lucide-react';
 import { Flag } from '@/components/Flag';
 import { localizeCompName } from '@/lib/comp-localize';
 import type { Comp } from '@/lib/comp-search';
@@ -432,7 +434,17 @@ export default function WcaSourceConfig({
             故跟着它显示;多盲不在 steps 表里(见 MERGE_EVENTS),对它不给这个开关。 */}
         {canMerge && settings.wcaDifficultyOn && !diffLocked && (
           <span className="settings-row-tight-group">
-            <span className="settings-row-label">{tr({ zh: '合并', en: 'Merge' })}</span>
+            <span className="settings-row-label">
+              {tr({ zh: '合并', en: 'Merge' })}
+              <InfoTooltip
+                icon={HelpCircle}
+                iconSize={12}
+                content={tr({
+                  zh: '开:难度筛选从整个 3×3 族(三阶、单手、盲拧、最少步、脚拧)的真题里取题,题库更大。\n关:只取当前项目的真题。',
+                  en: 'On: the difficulty filter draws from the whole 3×3 family (3×3, OH, BLD, FMC, Feet) — a much bigger pool.\nOff: only this event’s scrambles.',
+                })}
+              />
+            </span>
             <PillToggle
               value={settings.wcaDiffMerged}
               onChange={(v) => updateSettings({ wcaDiffMerged: v })}
@@ -467,7 +479,7 @@ export default function WcaSourceConfig({
       {canDifficulty && settings.wcaDifficultyOn && !diffLocked && (
         <div className="wca-src-diff">
           <div className="wca-src-diff-row">
-            {/* 整解按整颗魔方的最优步数、「打乱」按招式数,都没有「底色」这一维 → 不给选择器。 */}
+            {/* 整解按整颗魔方的最优步数、「打乱」按公式长度,都没有「底色」这一维 → 不给选择器。 */}
             {!isWhole && !isLength && <SubsetColorPicker sel={diffSel} isZh={isZh} />}
             <VariantSelect
               className="settings-row-control-select"
@@ -477,7 +489,7 @@ export default function WcaSourceConfig({
               isZh={isZh}
               ariaLabel={tr({ zh: '方法', en: 'Method' })}
             />
-            {/* 「打乱」筛的是招式数,没有阶段可选 → 阶段下拉整个不给(占位键与方法同名)。 */}
+            {/* 「打乱」筛的是公式长度,没有阶段可选 → 阶段下拉整个不给(占位键与方法同名)。 */}
             {!isLength && (
               <VariantSelect
                 className="settings-row-control-select"
