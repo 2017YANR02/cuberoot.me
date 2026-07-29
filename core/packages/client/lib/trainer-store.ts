@@ -291,6 +291,11 @@ interface TrainerState {
   room: TrainerRoom | null;
   /** 领取请求在途(串行化,防连点重复领)。 */
   roomBusy: boolean;
+  /**
+   * 队尾已领、还没上屏的预取(排在 peek / peek2 之后)。房间模式专用:
+   * 换题先吃手上这几条 ⟹ 点一下 0 网络往返,补领丢后台。深度见 `roomAheadTarget`。
+   */
+  roomBuf: TrainerHistEntry[];
   /** 全队已领取数(= 最近一次领取的全局序号),房间模式下作合并进度分子。 */
   roomClaimed: number;
   /** 最近一次房间操作的错误(网络/房间不存在),UI 展示后自愈。 */
@@ -388,7 +393,10 @@ interface TrainerState {
   joinRoom: (code: string) => Promise<{ ok: boolean; error?: string }>;
   /** 离开房间,回到本机模式。 */
   leaveRoom: () => void;
-  /** 房间推进 steps 步(单条=1,三条一屏切下一屏=3),串行领取避免撞车。 */
+  /**
+   * 房间推进 steps 步(单条=1,三条一屏切下一屏=3)。手上有预取就同步换题、补领丢后台;
+   * 手空才等一次网络(那次的多余点击也不会丢,回包后接着走)。
+   */
   roomAdvance: (steps: number) => Promise<void>;
 
   getTimerReady: (delayMs: number) => void;
@@ -484,9 +492,12 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     const list = st.hist.list.map(fix);
     const peek = fix(st.peek);
     const peek2 = fix(st.peek2);
+    const roomBuf = st.roomBuf.map(fix);
     const histChanged = list.some((e, i) => e !== st.hist.list[i]);
-    if (!histChanged && peek === st.peek && peek2 === st.peek2) return;
+    const bufChanged = roomBuf.some((e, i) => e !== st.roomBuf[i]);
+    if (!histChanged && !bufChanged && peek === st.peek && peek2 === st.peek2) return;
     set({
+      roomBuf: bufChanged ? roomBuf : st.roomBuf,
       hist: histChanged ? { list, idx: st.hist.idx } : st.hist,
       // current 就是历史里 idx 那条,用同一份补上 —— 各自 gen 一次会得到两个不同的 AUF
       currentScramble: st.currentKey === key && !st.currentScramble
@@ -683,6 +694,11 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
 
   const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 
+  /** 后台补领在途(闭包态:不进 state,免得为它多渲一次)。 */
+  let roomRefilling = false;
+  /** 阻塞领取在途时又点了几下 —— 回包后接着走,别把点击吞掉。 */
+  let roomPendingSteps = 0;
+
   /**
    * 一次原子领取最多 count 题,转成条目数组;只更新 roomClaimed / room 元信息,不落
    * current/peek/history。三条一屏一次占三格 = 一次网络往返 + 一次限流额度(旧后端只回单格,
@@ -738,85 +754,133 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
   };
 
   /**
-   * 房间推进 steps 步(单条=1,三条一屏切下一屏=3)。串行化 + 批量领取:
-   *   ① 历史中段(←回看后)先向前翻,不领题(不发请求);
-   *   ② 到队尾把剩下的 need 步一次性批量领取 —— 已有的 peek/peek2 预抽先用上,只补差额。
-   * 三条一屏每切一屏 = 一次领取请求(与单条模式同频),不会撞 30 次/分的领取限流。
+   * 队尾要在手里揣多少条(current 之外):屏上要用的 + 再备一屏。
+   * 单条 1 条,三条一屏 2(屏上第 2、3 条)+ 3(下一屏)= 5。
+   *
+   * 一条 = 一次 solve(线上相邻两次领取的中位间隔 5s),后台补领远快于想题时间,备一屏就够。
+   * 再深只会把「已领未做」的格占死更多 —— 用户中途关页面,那些格这一轮就没人做了。
    */
-  const roomAdvance = async (steps: number): Promise<void> => {
-    const st0 = get();
-    if (!st0.room || st0.roomBusy) return;
-    if (st0.timerState !== TimerState.NOT_RUNNING && st0.timerState !== TimerState.STOPPING) return;
-    set({ roomBusy: true, roomError: null });
+  const roomAheadTarget = (st: TrainerState): number => (screenShowsThree(st) ? 5 : 1);
+
+  /** 队尾手上已领、还没扶正的条目(顺序 = 将来的出题顺序)。 */
+  const roomAheadList = (st: TrainerState): TrainerHistEntry[] =>
+    [st.peek, st.peek2, ...st.roomBuf].filter(Boolean) as TrainerHistEntry[];
+
+  /** 把队尾预取重新摊回 peek / peek2 / roomBuf 三格(顺序不变)。 */
+  const spreadAhead = (list: TrainerHistEntry[]) =>
+    ({ peek: list[0] ?? null, peek2: list[1] ?? null, roomBuf: list.slice(2) });
+
+  /**
+   * 用手上已领的条目走 need 步(不足就走到底 —— 一轮最后一屏可能不满)。**纯同步,不发请求**。
+   * 手上一条都没有 ⟹ false,由调用方决定是等网络领还是判本轮结束。
+   */
+  const roomTake = (need: number, from?: TrainerHistEntry[]): boolean => {
+    const st = get();
+    const ahead = from ?? roomAheadList(st);
+    if (ahead.length === 0) return false;
+    const k = Math.min(need, ahead.length);
+    let hist = st.hist;
+    for (let i = 0; i < k; i++) hist = histPush(hist, ahead[i]);
+    const current = ahead[k - 1];
+    set({
+      hist,
+      currentKey: current.key, currentName: current.name, currentScramble: current.scramble,
+      ...spreadAhead(ahead.slice(k)),
+      observingPinned: false, recapRoundDone: false,
+    });
+    afterDraw();
+    return true;
+  };
+
+  /**
+   * 后台把队尾预取补到目标深度。不置 roomBusy(补领期间点击照常走同步路径)、失败也不打扰用户 ——
+   * 真出了问题,下一次手空时的阻塞领取会把错误摆出来。
+   * setMultiScramble 开三条一屏后也调它:当前这屏立刻凑满,不必先切一次。
+   */
+  const roomRefill = async (): Promise<void> => {
+    if (roomRefilling) return;
+    const st = get();
+    if (!st.room || st.roomBusy || st.currentKey == null) return;
+    if (histForward(st.hist)) return;   // 回看历史中段:peek 恒代表队尾之后,不动
+    const gap = roomAheadTarget(st) - roomAheadList(st).length;
+    if (gap <= 0) return;
+    const code = st.room.code;
+    const prevError = st.roomError;
+    roomRefilling = true;
     try {
-      let need = steps;
-      // ① 历史中段:向前翻,不领题
-      while (need > 0) {
-        const st = get();
-        if (st.recapRoundDone) { need = 0; break; }
-        const fwd = histForward(st.hist);
-        if (!fwd) break;
-        const cur = fwd.list[fwd.idx];
-        set({ hist: fwd, currentKey: cur.key, currentName: cur.name, currentScramble: cur.scramble, observingPinned: false });
-        afterDraw();
-        need--;
-      }
-      if (need <= 0) return;
-
-      // ② 队尾:凑一屏所需 = 前移 need 步 + (三条一屏再留 2 条预抽)。已有预抽先算进去,只领差额。
-      //    advanced(本机落后,别人已开新一轮)⟹ roomClaimBatch 已同步轮次,旧预抽作废,再领一次。
-      for (let attempt = 0; attempt < 2; attempt++) {
-        const st = get();
-        const multi = screenShowsThree(st);
-        const wantAhead = need + (multi ? 2 : 0);           // current 之后需要多少条
-        const have = [st.peek, st.peek2].filter(Boolean) as TrainerHistEntry[];
-        const toClaim = Math.max(0, wantAhead - have.length);
-        const { cases: fresh, terminal } = toClaim > 0 ? await roomClaimBatch(toClaim) : { cases: [], terminal: undefined };
-        if (terminal === 'advanced') { set({ peek: null, peek2: null }); continue; } // 重同步后再领新一轮
-        // 领取失败(限流 / 断网 / 后端出错)绝不能冒充「本轮结束」—— 那个弹窗会骗用户点「继续
-        // 下一轮」,而下一轮是真的会把全队进度重置的。只报错,题面原地不动,用户重试即可。
-        if (terminal === 'error') return;
-
-        const queue = [...have, ...fresh];                  // current 之后的虚拟队列
-        if (queue.length === 0) { set({ recapRoundDone: true }); return; }
-        // current 落在第 need 条(不足则落最后一条);其后两条作预抽
-        const k = Math.min(need, queue.length);
-        let hist = get().hist;
-        for (let i = 0; i < k; i++) hist = histPush(hist, queue[i]);
-        const current = queue[k - 1];
-        set({
-          hist,
-          currentKey: current.key, currentName: current.name, currentScramble: current.scramble,
-          peek: multi ? (queue[k] ?? null) : null,
-          peek2: multi ? (queue[k + 1] ?? null) : null,
-          observingPinned: false, recapRoundDone: false,
-        });
-        afterDraw();
-        return;
-      }
+      const { cases, terminal } = await roomClaimBatch(gap);
+      const now = get();
+      if (!now.room || now.room.code !== code) return;   // 期间退了房 / 换了房
+      // 别人已开新一轮 ⟹ 手上这些是上一轮的,作废;下次点击照常领新一轮的
+      if (terminal === 'advanced') { set({ peek: null, peek2: null, roomBuf: [] }); return; }
+      // 本轮领完 / 领取失败:后台不动声色(错误也咽回去 —— 用户这一下点击根本没等它)
+      if (terminal) { set({ roomError: prevError }); return; }
+      set(spreadAhead([...roomAheadList(now), ...cases]));
     } finally {
-      set({ roomBusy: false });
+      roomRefilling = false;
     }
   };
 
   /**
-   * 三条一屏在房间里开启时补齐 peek/peek2(仅队尾;历史中段的 peek 恒代表队尾之后,不动)。
-   * setMultiScramble 打开三条一屏后调用,让当前这一屏立刻凑满三条,不必先切一次。一次批量领取。
+   * 房间推进 steps 步(单条=1,三条一屏切下一屏=3)。
+   *   ① 历史中段(←回看后)先向前翻,不领题(不发请求);
+   *   ② 到队尾:手上预取够走就**同步**换题(点一下 0 网络往返),补领丢后台;
+   *   ③ 手空(刚进房 / 断过网 / 连点快过补领)才等一次网络,顺手把预取补到目标深度。
    */
-  const roomFillPreviews = async (): Promise<void> => {
-    const st = get();
-    if (!st.room || st.roomBusy || st.currentKey == null) return;
-    if (!screenShowsThree(st)) return;
-    const have = [st.peek, st.peek2].filter(Boolean).length;
-    if (have >= 2) return;
-    if (histForward(st.hist)) return; // 回看历史中段:peek 代表队尾之后,不动
-    set({ roomBusy: true });
+  const roomAdvance = async (steps: number): Promise<void> => {
+    const st0 = get();
+    if (!st0.room) return;
+    if (st0.timerState !== TimerState.NOT_RUNNING && st0.timerState !== TimerState.STOPPING) return;
+
+    let need = steps;
+    // ① 历史中段:向前翻,不领题
+    while (need > 0) {
+      const st = get();
+      if (st.recapRoundDone) return;
+      const fwd = histForward(st.hist);
+      if (!fwd) break;
+      const cur = fwd.list[fwd.idx];
+      set({ hist: fwd, currentKey: cur.key, currentName: cur.name, currentScramble: cur.scramble, observingPinned: false });
+      afterDraw();
+      need--;
+    }
+    if (need <= 0) return;
+
+    // ② 队尾:手上够走这一屏就立刻换,网络往返留给后台
+    if (roomAheadList(get()).length >= need) { roomTake(need); void roomRefill(); return; }
+
+    // ③ 手空:这一下只能等网络。已有阻塞领取在途就把点击记下来(别吞掉),回包后接着走。
+    if (get().roomBusy) { roomPendingSteps += need; return; }
+    set({ roomBusy: true, roomError: null });
     try {
-      const { cases } = await roomClaimBatch(2 - have);
-      const queue = [st.peek, st.peek2, ...cases].filter(Boolean) as TrainerHistEntry[];
-      set({ peek: queue[0] ?? null, peek2: queue[1] ?? null });
+      // advanced(本机落后,别人已开新一轮)⟹ roomClaimBatch 已同步轮次,旧预取作废,再领一次
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const st = get();
+        // 一次领够:走掉的 need 条 + 留在手里的目标深度。后台补领可能正好也在途,
+        // 于是这次会多领几条 —— 只是预取变深一点,下次 refill 自然不再补,不会失控。
+        const toClaim = need + roomAheadTarget(st) - roomAheadList(st).length;
+        const { cases: fresh, terminal } = await roomClaimBatch(Math.max(1, toClaim));
+        if (terminal === 'advanced') { set({ peek: null, peek2: null, roomBuf: [] }); continue; }
+        // 领取失败(限流 / 断网 / 后端出错)绝不能冒充「本轮结束」—— 那个弹窗会骗用户点「继续
+        // 下一轮」,而下一轮是真的会把全队进度重置的。只报错,题面原地不动,用户重试即可。
+        if (terminal === 'error') return;
+
+        const st2 = get();
+        const ahead = [...roomAheadList(st2), ...fresh];
+        // 等网络这会儿用户已经按下起表了(只有慢网才来得及):领到的收进预取,题面不动 ——
+        // 计时中途把打乱换掉,比晚一步换题糟得多。停表后的下一次换题直接吃这些预取。
+        if (st2.timerState !== TimerState.NOT_RUNNING && st2.timerState !== TimerState.STOPPING) {
+          set(spreadAhead(ahead));
+          return;
+        }
+        if (!roomTake(need, ahead)) set({ recapRoundDone: true });
+        return;
+      }
     } finally {
       set({ roomBusy: false });
+      const pending = roomPendingSteps;
+      roomPendingSteps = 0;
+      if (pending > 0) void roomAdvance(pending);
     }
   };
 
@@ -834,7 +898,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
         recapRoundDone: false,
         roomClaimed: 0,
         hist: EMPTY_HIST,
-        currentKey: null, currentName: null, currentScramble: null, peek: null, peek2: null,
+        currentKey: null, currentName: null, currentScramble: null, peek: null, peek2: null, roomBuf: [],
         roomBusy: false,
       });
       void roomAdvance(1);
@@ -843,21 +907,24 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     }
   };
 
-  /** 当前题的打乱重出一条(换打乱类型 / 切 pre-AUF 时),历史当前条 + 预览的下两题同步替换。 */
+  /** 当前题的打乱重出一条(换打乱类型 / 切 pre-AUF 时),历史当前条 + 手上预取的全部同步替换。 */
   const regenCurrent = () => {
-    const { currentKey, cases, puzzle, timerState, scrambleKind, preAuf, postAuf, hist, peek, peek2 } = get();
+    const { currentKey, cases, puzzle, timerState, scrambleKind, preAuf, postAuf, hist, peek, peek2, roomBuf } = get();
     if (!currentKey || !puzzle || timerState !== TimerState.NOT_RUNNING) return;
     const c = findCaseByKey(cases, currentKey);
     if (!c) return;
     const scramble = generateScramble(c, puzzle, scrambleKind, { preAuf, postAuf });
     const list = hist.list.map((e, i) => (i === hist.idx ? { ...e, scramble } : e));
-    // 预览的下两题也用新打乱类型重出,保证预览 == 将来实际要做的
-    const regenPeek = (pk: TrainerHistEntry | null): TrainerHistEntry | null => {
+    // 预览的下两题、房间里手上揣着的预取也一起用新打乱类型重出,保证看到的 == 将来实际要做的
+    const regenPeek = <T extends TrainerHistEntry | null>(pk: T): T => {
       if (!pk) return pk;
       const pc = findCaseByKey(cases, pk.key);
-      return pc ? { ...pk, scramble: generateScramble(pc, puzzle, scrambleKind, { preAuf, postAuf }) } : pk;
+      return (pc ? { ...pk, scramble: generateScramble(pc, puzzle, scrambleKind, { preAuf, postAuf }) } : pk) as T;
     };
-    set({ currentScramble: scramble, hist: { list, idx: hist.idx }, peek: regenPeek(peek), peek2: regenPeek(peek2) });
+    set({
+      currentScramble: scramble, hist: { list, idx: hist.idx },
+      peek: regenPeek(peek), peek2: regenPeek(peek2), roomBuf: roomBuf.map(regenPeek),
+    });
     afterDraw();
   };
 
@@ -902,7 +969,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       observingPinned: false,
       recapRoundDone: false,
       recapRoundAcked: false,
-      room: null, roomBusy: false, roomClaimed: 0, roomError: null,
+      room: null, roomBusy: false, roomClaimed: 0, roomError: null, roomBuf: [],
     });
     if (trainerPool(selected, get().scope).length > 0) pickFresh();
   };
@@ -933,6 +1000,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     recapRoundAcked: false,
     room: null,
     roomBusy: false,
+    roomBuf: [],
     roomClaimed: 0,
     roomError: null,
     ...DEFAULT_PREFS,
@@ -1051,8 +1119,9 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     setMultiScramble: (v) => {
       set({ multiScramble: v });
       persistPrefs(prefsOf(get()));
-      // 房间里现开三条一屏:立刻补齐 peek/peek2,当前这屏马上凑满三条(否则要先切一次才补上)
-      if (v) void roomFillPreviews();
+      // 房间里现开三条一屏:预取目标从 1 涨到 5,立刻补上 —— 当前这屏马上凑满三条
+      // (否则要先切一次才补上),下一屏也一并备好。
+      if (v) void roomRefill();
     },
     // 记忆模式的四个额度/开关:改了只影响「下一场」怎么组队列,当前这场不重排
     // (刷到一半突然把卡片抽掉最劝退)。MemoryTrainer 里有显式的「重开一场」。
@@ -1184,7 +1253,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
           mode: 'recap',
           room: { code: info.code, order: info.order, round: info.round, total: info.total },
           roomClaimed: start, recapRoundDone: false, roomBusy: false,
-          hist: EMPTY_HIST, currentKey: null, currentName: null, currentScramble: null, peek: null, peek2: null,
+          hist: EMPTY_HIST, currentKey: null, currentName: null, currentScramble: null, peek: null, peek2: null, roomBuf: [],
         });
         persistPrefs(prefsOf(get()));
         void roomAdvance(1);
@@ -1213,7 +1282,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
           mode: 'recap',
           room: { code: info.code, order: info.order, round: info.round, total: info.total },
           roomClaimed: info.claimed, recapRoundDone: false, roomBusy: false,
-          hist: EMPTY_HIST, currentKey: null, currentName: null, currentScramble: null, peek: null, peek2: null,
+          hist: EMPTY_HIST, currentKey: null, currentName: null, currentScramble: null, peek: null, peek2: null, roomBuf: [],
         });
         persistPrefs(prefsOf(get()));
         void roomAdvance(1);
@@ -1230,7 +1299,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       // 不在房间里时(测试 / UI 复位调它)照旧整轮重来。
       const resume = st.room ? resumeRoundFromHist(st) : null;
       set({
-        room: null, roomBusy: false, roomClaimed: 0, roomError: null, recapRoundDone: false,
+        room: null, roomBusy: false, roomClaimed: 0, roomError: null, recapRoundDone: false, roomBuf: [],
         hist: EMPTY_HIST, currentKey: null, currentName: null, currentScramble: null, peek: null, peek2: null,
         ...(resume ?? { recapQueue: [], recapPos: 0, recapSig: '' }),
       });
