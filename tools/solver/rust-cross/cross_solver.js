@@ -606,6 +606,24 @@ export class F2leoSolverWasm {
         return v2;
     }
     /**
+     * 带逐视角进度的 solve_f2leo_stage:每定下一个视角就 `on_face(face, value)`
+     * (face 0..5 = D/U/L/R/F/B)。返回值与 solve_f2leo_stage 完全一致 —— 回调只是把
+     * 「已经算出来的那几格」提前交给 UI,不改搜索本身。
+     * @param {string} scramble
+     * @param {boolean} pseudo
+     * @param {number} stage
+     * @param {Function} on_face
+     * @returns {Uint32Array}
+     */
+    solve_f2leo_stage_progress(scramble, pseudo, stage, on_face) {
+        const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.f2leosolverwasm_solve_f2leo_stage_progress(this.__wbg_ptr, ptr0, len0, pseudo, stage, on_face);
+        var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v2;
+    }
+    /**
      * 单格(F2LEO/Pseudo F2LEO × stage × face)多解步骤,返回 JSON {"len","combo","sols"}。
      * pseudo=false → F2LEO,true → Pseudo F2LEO;两者破坏 y 对称(同 eo),最优可能只在 rot·y
      * 帧达成,故步骤前缀用 enumerate_small 返回的真实帧(可能含尾 y,如 "x' y")。
@@ -1268,6 +1286,24 @@ export class VariantSolverWasm {
         wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
         return v2;
     }
+    /**
+     * 带逐视角进度的 solve_stage:每定下一个视角就 `on_face(face, value)`
+     * (face 0..5 = D/U/L/R/F/B)。返回值与 solve_stage 完全一致 —— 回调只是把
+     * 「已经算出来的那几格」提前交给 UI,不改搜索本身。
+     * @param {string} scramble
+     * @param {number} variant
+     * @param {number} stage
+     * @param {Function} on_face
+     * @returns {Uint32Array}
+     */
+    solve_stage_progress(scramble, variant, stage, on_face) {
+        const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.variantsolverwasm_solve_stage_progress(this.__wbg_ptr, ptr0, len0, variant, stage, on_face);
+        var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v2;
+    }
 }
 if (Symbol.dispose) VariantSolverWasm.prototype[Symbol.dispose] = VariantSolverWasm.prototype.free;
 
@@ -1368,6 +1404,10 @@ function __wbg_get_imports() {
         __wbg___wbindgen_throw_1506f2235d1bdba0: function(arg0, arg1) {
             throw new Error(getStringFromWasm0(arg0, arg1));
         },
+        __wbg_call_40e4174f169eaca7: function() { return handleError(function (arg0, arg1, arg2, arg3) {
+            const ret = arg0.call(arg1, arg2, arg3);
+            return ret;
+        }, arguments); },
         __wbg_call_6e37a87ff352da3d: function() { return handleError(function (arg0, arg1, arg2, arg3, arg4) {
             const ret = arg0.call(arg1, arg2, arg3, arg4);
             return ret;

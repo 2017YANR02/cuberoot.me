@@ -131,6 +131,18 @@ html[data-theme='dark'] .stsv {
   border: 1px solid var(--sv-accent);
 }
 .stsv-stop:hover { background: var(--sv-accent-soft); }
+/* 求解进度组:已定视角数 + 已用时 + 终止,同排紧凑靠左(工具栏本身已 flex-wrap,窄屏整组换行) */
+.stsv-solving {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.stsv-solving-n {
+  font-size: 12px;
+  color: var(--sv-text-sub);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
 
 /* ── controls ── */
 .stsv-controls {

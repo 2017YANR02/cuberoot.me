@@ -41,6 +41,12 @@ function fmtMs(ms: number): string {
   return ms >= 1000 ? `${(ms / 1000).toFixed(2)}s` : `${Math.round(ms)}ms`;
 }
 
+// 求解已用时。深阶段能跑到几分钟,纯秒数(「214s」)读起来要心算 → 过分钟改 m:ss。
+function fmtElapsed(sec: number): string {
+  if (sec < 60) return `${sec}s`;
+  return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+}
+
 function fmtBytes(b: number): string {
   if (b >= 1048576) return `${(b / 1048576).toFixed(1)} MB`;
   if (b >= 1024) return `${Math.round(b / 1024)} KB`;
@@ -627,6 +633,19 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     if (status !== 'ready' || need !== 'cross' || xReady) return;
     return prefetchXCrossTableWhenIdle();
   }, [status, need, xReady]);
+  // 求解经过秒数。深阶段(eo xxxxcross 实测几十秒到几分钟)光给转圈看不出还活着不活着,
+  // 用户只能猜是不是卡死了(issue #60)。计时 + 下面的「已定视角数」就是进度。
+  const [solveSec, setSolveSec] = useState(0);
+  const solving = computing || movesLoading;
+  useEffect(() => {
+    if (!solving) return;
+    setSolveSec(0);
+    const id = setInterval(() => setSolveSec((s) => s + 1), 1000);
+    return () => clearInterval(id);
+  }, [solving]);
+  // 已定下的视角数(引擎逐格回报,见 computeAll 的 onFace)。批算 6 视角时才有意义。
+  const doneFaces = useMemo(() => counts.filter((v) => v != null).length, [counts]);
+
   // loading 经过秒数(给用户进度感;≥15s 提示网络较慢并出重试按钮)。
   const [elapsed, setElapsed] = useState(0);
   useEffect(() => {
@@ -680,8 +699,16 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
         }));
       } else {
         const stageMask = activeMaskRef.current;
+        // 逐视角进度:variant/f2leo 的 6 视角网格是 worker 里一次同步 WASM 调用跑完的
+        // (eo xxxxcross 实测几十秒到几分钟),引擎每定下一格就回报一次 → 这里立刻填进
+        // counts,格子一个个出数,而不是六个转圈一起转到最后(issue #60)。
+        const onFace = (f: number, v: number) => {
+          if (computeReq.current !== my) return;
+          result[f] = v;
+          setCounts((prev) => { const n = prev.slice(); n[f] = v; return n; });
+        };
         const vals = kind === 'f2leo'
-          ? await pool.solveF2leoStage(scr, method === 'pseudo_f2leo', stage, stageMask)
+          ? await pool.solveF2leoStage(scr, method === 'pseudo_f2leo', stage, stageMask, onFace)
           : kind === 'block222'
             ? await pool.solveBlock222Stage(scr)
             : kind === 'roux223'
@@ -694,7 +721,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                     ? await pool.solveHtr2Stage(scr)
                     : kind === 'fr'
                       ? await pool.solveFrStage(scr)
-                      : await pool.solveVariantStage(scr, VARIANT_ID[method as 'pair' | 'eo' | 'pseudo' | 'pseudo_pair'], stage, stageMask);
+                      : await pool.solveVariantStage(scr, VARIANT_ID[method as 'pair' | 'eo' | 'pseudo' | 'pseudo_pair'], stage, stageMask, onFace);
         if (computeReq.current === my) {
           // 受限下无解的视角 = u32::MAX(0xFFFFFFFF)哨兵 → null('-')。
           for (let i = 0; i < 6; i++) { const v = vals[i]; result[i] = (v == null || v === 0xffffffff) ? null : v; }
@@ -989,6 +1016,14 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     }));
   }, []);
 
+  // 可见视角是否都已出数。「最优」标记只在整格算齐后才成立 —— 引擎现在逐格回报
+  // (深阶段几十秒里陆续填),半格状态下的 min 只是「已算出的里最小」;中途按「终止」
+  // 同样停在半格。用它把标记压到算齐为止,免得标记在格子间来回跳。
+  const gridComplete = useMemo(
+    () => FACES.every((_, i) => !faceVisible(i) || counts[i] != null),
+    [counts, faceVisible],
+  );
+
   // 最优步数(min),用于「best」标记 —— 所有并列最少的视角都算最优;htr/htr2 哨兵不参与。
   // 仅在当前「底色」可见的视角中取最优(被过滤掉的面不参与)。
   const bestVal = useMemo(() => {
@@ -1119,8 +1154,11 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
           <div className="stsv-angles">
             {FACES.map((f, i) => {
               if (!faceVisible(i)) return null; // 被「底色」过滤掉的面不显示
-              const loading = computing || (selFace === i && movesLoading);
-              const isBest = counts[i] != null && counts[i] === bestVal;
+              // 该格还没出数才转圈 —— 批算期间引擎逐格回报,已定的格子直接显示步数。
+              const loading = counts[i] == null && (computing || (selFace === i && movesLoading));
+              // 「最优」只在整格算齐后才标:半格状态下 bestVal 只是「已算出的里最小」,
+              // 第一个出数的格子必然暂时顶着最优标,后面来的更小值再把它抢走。
+              const isBest = gridComplete && counts[i] != null && counts[i] === bestVal;
               return (
                 <button
                   key={f.face}
@@ -1143,9 +1181,19 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
             })}
           </div>
         )}
-        {/* 终止:求解进行中(批算 / 枚举)显示在「最大数量」右侧,停掉跑飞的搜索(尤其无上限)。 */}
-        {(computing || movesLoading) && (
-          <button type="button" className="stsv-stop" onClick={stopMoves}>{t('终止', 'Stop')}</button>
+        {/* 求解进度 + 终止:显示在「最大数量」右侧。深阶段动辄几十秒到几分钟,进度 = 已定视角数
+            (引擎逐格回报)+ 已用时;单视角枚举没有格子可数,只报用时。 */}
+        {solving && (
+          <span className="stsv-solving">
+            {/* 播报只挂在「已定视角数」上 —— 秒数每秒都变,挂上去会让读屏器一秒念一次。 */}
+            {computing && (
+              <span className="stsv-solving-n" aria-live="polite">
+                {doneFaces}/6 {t('视角', 'faces')}
+              </span>
+            )}
+            <span className="stsv-elapsed">{fmtElapsed(solveSec)}</span>
+            <button type="button" className="stsv-stop" onClick={stopMoves}>{t('终止', 'Stop')}</button>
+          </span>
         )}
         <button
           type="button"
