@@ -258,6 +258,25 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
   // overlapping disconnect events.
   const reconnectInFlightRef = useRef<boolean>(false);
 
+  /**
+   * Publish a solved/unsolved transition. Both the move path and the
+   * cube-reported-state path funnel through here so that "the cube is now
+   * solved" fires `onSolved` — which is what stops the timer — no matter
+   * which of the two established it. A brand whose protocol reports state on
+   * every frame (QiYi) would otherwise flip `wasSolved` silently and swallow
+   * the very edge the timer is waiting for.
+   */
+  const publishSolved = useCallback((isSolved: boolean) => {
+    if (isSolved && !wasSolvedRef.current) {
+      wasSolvedRef.current = true;
+      setSolved(true);
+      onSolvedRef.current?.();
+    } else if (!isSolved && wasSolvedRef.current) {
+      wasSolvedRef.current = false;
+      setSolved(false);
+    }
+  }, []);
+
   const handleMove = useCallback((move: string) => {
     // First successfully-decoded move proves the MAC: persist it now. We
     // deliberately don't save before a move lands, to avoid caching a wrong
@@ -277,31 +296,28 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     setFacelets(toFaceletString(trackerRef.current.getFaces()));
     setLastMove(move);
     onMoveRef.current?.(move, ts);
-    if (isSolved && !wasSolvedRef.current) {
-      wasSolvedRef.current = true;
-      setSolved(true);
-      onSolvedRef.current?.();
-    } else if (!isSolved && wasSolvedRef.current) {
-      wasSolvedRef.current = false;
-      setSolved(false);
-    }
-  }, []);
+    publishSolved(isSolved);
+  }, [publishSolved]);
 
   /**
    * The cube told us where it actually is. Adopt it wholesale — this reading
    * beats anything we inferred from the move stream, which is exactly why the
-   * drivers only fire it for states that passed a solvability check.
+   * drivers only fire it for states that passed a validity check.
    *
-   * Emitted at connect (and after a resync request), i.e. while the cube is
-   * sitting still, so overwriting the model here cannot race a live turn.
+   * GAN emits this at connect and after a resync request, i.e. while the cube
+   * is sitting still. QiYi emits it on every state frame, right after the
+   * moves in that frame, so a dropped move heals on the next turn instead of
+   * poisoning the rest of the session.
+   *
+   * The solved edge goes through the same publisher as the move path: if the
+   * cube's own report is what establishes that it is solved, that still has to
+   * stop the timer.
    */
   const handleCubeState = useCallback((facelets: string) => {
     if (!trackerRef.current.adoptFacelets(facelets)) return;
-    const isSolved = trackerRef.current.isSolved();
-    wasSolvedRef.current = isSolved;
-    setSolved(isSolved);
     setFacelets(facelets);
-  }, []);
+    publishSolved(trackerRef.current.isSolved());
+  }, [publishSolved]);
 
   const cancelPendingReconnect = useCallback(() => {
     if (reconnectTimerRef.current != null) {
