@@ -19,11 +19,14 @@
   **换表不改答案** —— h5/h6/h9 都是可采纳剪枝表,htm 是同一个最优值;变的只是并列最优解里
   吐出哪一条(out.csv 的 solution 列),灌库时 sha 行清单会多几行 diff,仅此而已。
 
+  开跑之后**自动进监控**(就是 `-Watch` 那一行),Ctrl-C 只关显示、不停求解。
+  无人值守 / 计划任务用 `-NoWatch`,起完就退。
+
 .EXAMPLE
-  pwsh run_lsll.ps1                      # 默认:1 进程 × 12 线程 + h9 大表
+  pwsh run_lsll.ps1                      # 默认:1 进程 × 12 线程 + h9 大表,起完直接看进度
   pwsh run_lsll.ps1 -Procs 7 -Threads 2 -Table h6   # 5.2× 那套
+  pwsh run_lsll.ps1 -Watch               # 回来接着看,Ctrl-C 退出(求解照跑)
   pwsh run_lsll.ps1 -Status              # 到哪儿了(一次性快照,打完就退)
-  pwsh run_lsll.ps1 -Watch               # 常驻刷新那一行,Ctrl-C 退出(求解照跑)
   pwsh run_lsll.ps1 -Stop                # 停(每个 case 即落盘,随停随续)
   pwsh run_lsll.ps1 -Merge               # 分片结果并进 out.csv(灌库前跑一次)
 #>
@@ -32,6 +35,7 @@ param(
   [Parameter(ParameterSetName = 'Run')][int]$Procs = 1,
   [Parameter(ParameterSetName = 'Run')][int]$Threads = 12,
   [Parameter(ParameterSetName = 'Run')][ValidateSet('h5', 'h6', 'h9')][string]$Table = 'h9',
+  [Parameter(ParameterSetName = 'Run')][switch]$NoWatch,
   [Parameter(ParameterSetName = 'Status')][switch]$Status,
   [Parameter(ParameterSetName = 'Status')][switch]$Watch,
   [Parameter(ParameterSetName = 'Stop')][switch]$Stop,
@@ -53,10 +57,21 @@ function Get-Key([string]$line) {
 }
 
 # 大文件不走 Get-Content(579,368 行会慢到没法看),一律 StreamReader。
+#
+# 必须显式 FileShare.ReadWrite:`[StreamReader]::new($path)` 默认是 FileShare.Read,
+# 意思是「我读的时候别人不许写」—— 而分片的 node 正拿着写句柄往 out_i.csv 追加,
+# 于是 -Watch 采样到某一次就抛「being used by another process」。共享标志放开即可,
+# 追加写的行是原子的,读到半行也只是这一轮少数一个,下一轮就补回来了。
+function New-LineReader([string]$path) {
+  $fs = [System.IO.FileStream]::new(
+    $path, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
+  return [System.IO.StreamReader]::new($fs)
+}
+
 function Read-Keys([string]$path, [System.Collections.Generic.HashSet[string]]$into) {
   if (-not (Test-Path $path)) { return 0 }
   $n = 0
-  $r = [System.IO.StreamReader]::new($path)
+  $r = New-LineReader $path
   try {
     while ($null -ne ($l = $r.ReadLine())) {
       $k = Get-Key $l
@@ -88,23 +103,24 @@ if ($Stop) {
   return
 }
 
-# ── -Status ──────────────────────────────────────────────────────────────────
-if ($Status -or $Watch) {
+# ── 进度显示(-Status 一次性 / -Watch 常驻;开跑之后也直接接上这个)──────────────
+#
+# 已完成数。out.csv 与各分片的 key 天然不交(分片语料开跑时就剔掉了已完成的),
+# 但 -Merge 之后 out.csv 会包含分片那批 —— 所以照样按 key 去重,别数重了。
+function Get-Done {
+  $s = [System.Collections.Generic.HashSet[string]]::new()
+  [void](Read-Keys $Out $s)
+  $inMain = $s.Count
+  foreach ($f in Get-ShardOuts) { [void](Read-Keys $f.FullName $s) }
+  return @{ n = $s.Count; main = $inMain }
+}
+
+function Show-Progress([switch]$Loop) {
   $total = 0
-  $r = [System.IO.StreamReader]::new($Corpus)
+  $r = New-LineReader $Corpus
   try { while ($null -ne $r.ReadLine()) { $total++ } } finally { $r.Dispose() }
 
-  # 已完成数。out.csv 与各分片的 key 天然不交(分片语料开跑时就剔掉了已完成的),
-  # 但 -Merge 之后 out.csv 会包含分片那批 —— 所以照样按 key 去重,别数重了。
-  function Get-Done {
-    $s = [System.Collections.Generic.HashSet[string]]::new()
-    [void](Read-Keys $Out $s)
-    $inMain = $s.Count
-    foreach ($f in Get-ShardOuts) { [void](Read-Keys $f.FullName $s) }
-    return @{ n = $s.Count; main = $inMain }
-  }
-
-  $SAMPLE = if ($Watch) { 15 } else { 20 }   # 一次性快照多采几秒,数字稳一点
+  $SAMPLE = if ($Loop) { 15 } else { 20 }   # 一次性快照多采几秒,数字稳一点
   $a = Get-Done
   $live = @(Get-Running)
   if (-not $live) {
@@ -113,14 +129,15 @@ if ($Status -or $Watch) {
     if ($a.n -ge $total) { Write-Host '全部算完了 —— 跑 -Merge 合并,然后 update_lsll.ps1 -Ingest 灌库。' }
     return
   }
-  if (-not $Watch) { Write-Host ("{0} / {1} = {2:P2}   (out.csv {3} · 分片 {4})" -f $a.n, $total, ($a.n / $total), $a.main, ($a.n - $a.main)) }
-  else { Write-Host "Ctrl-C 退出(退出只是关掉这个显示,求解照跑)" }
+  if (-not $Loop) { Write-Host ("{0} / {1} = {2:P2}   (out.csv {3} · 分片 {4})" -f $a.n, $total, ($a.n / $total), $a.main, ($a.n - $a.main)) }
+  else { Write-Host 'Ctrl-C 退出(退出只是关掉这个显示,求解照跑)' }
 
   # 采样两次算真实速率 —— 日志里那个 1% 一行的里程碑要一个多小时才落一次,等不起。
   for (;;) {
     $t0 = Get-Date
     Start-Sleep -Seconds $SAMPLE
-    $b = Get-Done
+    # 读盘偶发失败(杀毒扫描、句柄瞬时冲突)不该把守了几小时的显示掀掉:跳过这一轮就是了
+    try { $b = Get-Done } catch { if (-not $Loop) { throw }; continue }
     $rate = ($b.n - $a.n) / ((Get-Date) - $t0).TotalSeconds
     $live = @(Get-Running)
     if ($rate -gt 0) {
@@ -130,13 +147,15 @@ if ($Status -or $Watch) {
       # 全在载表(h9 约 30s,h6 约 4s)时会短暂为 0,不是卡死
       $line = "{0} / {1} = {2:P2} · {3} 分片 · 本次采样没有新行(多半在载表)" -f $b.n, $total, ($b.n / $total), $live.Count
     }
-    if (-not $Watch) { Write-Host $line; return }
+    if (-not $Loop) { Write-Host $line; return }
     Write-Host ("`r" + $line.PadRight(90)) -NoNewline
     if (-not $live) { Write-Host "`n分片都退出了。" ; return }
     if ($b.n -ge $total) { Write-Host "`n全部算完了 —— 跑 -Merge 合并,然后 update_lsll.ps1 -Ingest 灌库。"; return }
     $a = $b
   }
 }
+
+if ($Status -or $Watch) { Show-Progress -Loop:$Watch; return }
 
 # ── -Merge ───────────────────────────────────────────────────────────────────
 # 幂等:按 key 去重,out.csv 里已有的优先。分片文件不删,再跑一次还是同样的结果。
@@ -236,6 +255,14 @@ Remove-Item Env:CORPUS, Env:OUT, Env:MODULE, Env:TABLE, Env:THREADS
 
 Write-Host ""
 Write-Host "$Procs 个分片已启动($Threads 线程/个,BelowNormal)。"
-Write-Host "  看进度   pwsh $PSCommandPath -Status"
 Write-Host "  停下来   pwsh $PSCommandPath -Stop"
 Write-Host "  算完之后 pwsh $PSCommandPath -Merge   然后  pwsh update_lsll.ps1 -Ingest"
+Write-Host ""
+
+# 开跑就直接接上监控 —— 起完不给个数看着心里没底。关掉它不影响求解(分片是独立进程),
+# 想回来再看跑 -Watch。-NoWatch 留给无人值守 / 计划任务:起完就退,别占着终端。
+if ($NoWatch) {
+  Write-Host "  看进度   pwsh $PSCommandPath -Watch"
+  return
+}
+Show-Progress -Loop
