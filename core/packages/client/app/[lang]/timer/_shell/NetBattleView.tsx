@@ -36,7 +36,7 @@ import TimingSurface from './TimingSurface';
 import BluetoothModal from '../_components/BluetoothModal';
 import { useBluetoothCube } from '../_lib/bluetooth';
 import { useAutoReady } from '../_lib/bluetooth/auto_ready';
-import { useTimer, type SolveResult } from '../_lib/useTimer';
+import { useTimer, type SolveResult } from '../_shared/useTimer';
 import { useSettings } from '../_lib/settings';
 import { formatMs } from '../_lib/stats';
 import { generateScramble } from '../_lib/scramble';

@@ -332,6 +332,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   },
   'site': { title: { zh: '网站导航', en: 'Sites Directory' } },
   'solver': { title: { zh: '求解器', en: 'Solver' } },
+  'stroop': {
+    title: { zh: 'Stroop 色词干扰测试', en: 'Stroop Colour Test' },
+    description: {
+      zh: 'Stroop 测试:报出每个格子的墨色而不是写的字,计时对比色块卡与干扰卡,量出自己的干扰量。',
+      en: 'Stroop test — name the ink colour instead of reading the word, and time the patch card against the conflict card to measure your own interference.',
+    },
+  },
   'support': { title: { zh: '致谢', en: 'Acknowledgments' } },
   'timer': {
     title: { zh: '计时器', en: 'Timer' },

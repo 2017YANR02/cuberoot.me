@@ -22,7 +22,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { detectCfopStage, stageRank } from './cube/cfop_detect';
 import type { CfopStage } from './cube/cfop_detect';
 import type { CubeFaces } from './cube/state';
-import type { TimerPhase } from './useTimer';
+import type { TimerPhase } from '../_shared/useTimer';
 
 export type ManualStage = 'cross' | 'f2l' | 'oll';
 
