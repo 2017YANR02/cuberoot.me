@@ -379,6 +379,9 @@
 .trainer-scramble-text.sf-mono { font-family: var(--font-mono); }
 .trainer-scramble-text.sf-liberation { font-family: 'LiberationMono', var(--font-mono);
 }
+/* 当前这题的标记条:主屏右上角。stage-head 是 subgrid 第一行,所以它和两侧卡片
+   标题行里那条标记条自然落在同一条线上 */
+.trainer-stage-marks { display: flex; justify-content: flex-end; }
 .trainer-stage-actions {
   display: flex; justify-content: center; gap: 12px;
   margin: 16px 0 24px;
@@ -396,14 +399,16 @@
 .trainer-stage-btn:hover { background: color-mix(in srgb, var(--foreground) 6%, transparent); }
 
 /* 三条一屏(不计时模式):图与打乱交错成六行,每条打乱紧跟自己那张图 */
+/* 行占满整列(stretch),这样三条的标记条落在同一条右边线上;图与打乱仍由行自己居中 */
 .trainer-scramble-multi {
-  display: flex; flex-direction: column; align-items: center;
+  display: flex; flex-direction: column; align-items: stretch;
   gap: 18px;
 }
 .trainer-scramble-row {
   display: flex; flex-direction: column; align-items: center;
   gap: 6px;
 }
+.trainer-scramble-row > .trainer-stage-marks { align-self: stretch; }
 /* 行内已有 6px gap,不再叠外边距 */
 .trainer-scramble-multi .trainer-scramble-text { margin: 0; }
 

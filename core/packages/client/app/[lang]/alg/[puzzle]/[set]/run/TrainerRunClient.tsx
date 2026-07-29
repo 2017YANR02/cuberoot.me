@@ -1395,6 +1395,15 @@ export default function TrainerRunClient() {
               三张图的顶边落在同一条线上,不靠数魔法像素。
               打乱公式一律排在图**下方** —— 主屏、两侧卡片、三条一屏、记忆模式同一个次序。 */}
           <div className="trainer-stage-head">
+          {/* 正在做这题的标记条,贴主屏右上角 —— 与左卡片标题行那条落在同一行(共用 subgrid)。
+              只出两个图标,不带 case 名:训练模式下答案还不能露。数字键 1、2、4 打的仍是
+              「上一个」那把(pillCase),这里是手点当前这把,两个目标各归各的。
+              三条一屏时屏上有三题,一条标记条指谁都不对 —— 不出。 */}
+          {!multi && currentCase && (
+            <div className="trainer-stage-marks">
+              <CaseMarkBar k={caseKey(currentCase)} />
+            </div>
+          )}
           {/* 三条一屏:当前 + 屏上第 2、3 条(队尾时 = 预抽的 peek / peek2,回看过则是历史里
               后两条),拧完三条再点一次切下一屏。图与打乱交错成六行,每条打乱紧跟自己那张图。
               图走 local 渲染:三张与三条文字在同一次 commit 出现,不再各自等自己的网络往返。 */}
@@ -1408,6 +1417,13 @@ export default function TrainerRunClient() {
                 .filter(row => !!row.s)
                 .map((row, i) => (
                   <div className="trainer-scramble-row" key={i}>
+                    {/* 每条自带标记条(与左边「上三个」那三张卡片一一对应):
+                        屏上三题各是各的,一条公共标记条指谁都不对。 */}
+                    {row.c && (
+                      <div className="trainer-stage-marks">
+                        <CaseMarkBar k={caseKey(row.c)} />
+                      </div>
+                    )}
                     {showStageThumb && row.c && (
                       <CaseThumb
                         puzzle={puzzle}
