@@ -1167,9 +1167,6 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
                     <RotateCcw size={14} />
                     {tr({ zh: '下一轮', en: 'Next round' })}
                   </button>
-                  <div className="net-substate-hint">
-                    {tr({ zh: '按空格 / 点击也可直接开下一轮', en: 'Space / tap also starts the next round' })}
-                  </div>
                 </>
               ) : (
                 <>
