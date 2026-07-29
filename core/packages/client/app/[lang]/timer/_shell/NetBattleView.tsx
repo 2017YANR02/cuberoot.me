@@ -1224,11 +1224,6 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
               {tr({ zh: '一起起表,准备!', en: 'Starting together — get ready!' })}
             </div>
           )}
-          {!myResult && !gate.gated && !showCountdown && timer.phase === 'idle' && players.length < 2 && (
-            <div className="net-substate net-substate-hint">
-              {tr({ zh: '把房间码或邀请链接发给朋友,等 TA 加入', en: 'Share the room code or invite link and wait for others' })}
-            </div>
-          )}
           {err && <div className="net-err" data-no-timer>{err}</div>}
         </TimingSurface>
       </div>
