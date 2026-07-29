@@ -53,11 +53,17 @@ LIMIT=200 node solve.mjs      # 只啃 200 个 case,给出 case/s 与 解/s
 ## 一键:`run_lsll.ps1`
 
 ```powershell
-pwsh run_lsll.ps1                                # 开跑(1 进程 × 12 线程 + h9,压低优先级)
-pwsh run_lsll.ps1 -Status                        # 到哪儿了 + 实测速率 + 剩几小时
+pwsh run_lsll.ps1                                # 开跑(1 进程 × 12 线程 + h9,压低优先级)+ 自动进监控
+pwsh run_lsll.ps1 -Watch                         # 回来接着看那一行(Ctrl-C 只关显示,求解照跑)
+pwsh run_lsll.ps1 -Status                        # 一次性快照:到哪儿了 + 实测速率 + 剩几小时
 pwsh run_lsll.ps1 -Stop                          # 停(随停随续)
 pwsh run_lsll.ps1 -Merge                         # 分片结果并进 out.csv(灌库前跑一次)
 ```
+
+开跑之后直接接上监控,不用另开一个窗口;无人值守 / 计划任务加 `-NoWatch` 起完就退。
+读进度用的是 `FileShare.ReadWrite`:分片的 node 每算完一个 case 就 append 一次,
+默认的 `[StreamReader]::new($path)`(FileShare.Read)会在撞上那个窗口时抛
+「being used by another process」—— 求解没事,炸的只是显示。别改回去。
 
 `-Procs N` 开 N 个进程分片并跑,各写各的 out。**单进程吃不满 CPU** —— LSLL 局面只有 12~14 步,
 一次求解 44ms 就结束,12 个线程来不及铺开,实测系统总 CPU 只到 30%。把核分给几个互相独立的
