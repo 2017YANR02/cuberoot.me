@@ -969,7 +969,7 @@ export default function TrainerRunClient() {
               {addableSets.length > 0 && (
                 <>
                   <div className="trainer-opts-row">
-                    <span className="trainer-opts-label">{tr({ zh: '一起练', en: 'Drill together' })}</span>
+                    {/* 不挂标题:一行里摆着本场的集名 chip 和「+ 加一套」,这行是干什么的一看就知道。 */}
                     {sessionSets.map(slug => (
                       <span key={slug} className="trainer-mix-chip">
                         {setLabel(puzzle, slug)}
@@ -1264,7 +1264,7 @@ export default function TrainerRunClient() {
                   <BoolToggle
                     value={multiScramble}
                     onChange={setMultiScramble}
-                    label={tr({ zh: '三条一屏', en: 'Three at once' })}
+                    label={tr({ zh: '三条', en: 'Three at once' })}
                   />
                 )}
                 {/* 计时 = 成绩统计;不计时 = 打乱历史(查看以前的打乱)。同一开关,标签随模式变。 */}
@@ -1325,11 +1325,12 @@ export default function TrainerRunClient() {
                   previewWeight={400}
                 />
               </div>
-              <div className="trainer-opts-help">
-                {timing
-                  ? tr({ zh: '空格开始/停止，按住拖动呼出轮盘', en: 'Space to start/stop, hold & drag for the wheel' })
-                  : tr({ zh: '单击、空格或 → 键切下一个打乱', en: 'Click, Space or → for the next scramble' })}
-              </div>
+              {/* 不计时那句「单击 / 空格 / → 切下一个」不出:那是点哪都能试出来的事。 */}
+              {timing && (
+                <div className="trainer-opts-help">
+                  {tr({ zh: '空格开始/停止，按住拖动呼出轮盘', en: 'Space to start/stop, hold & drag for the wheel' })}
+                </div>
+              )}
               <div className="trainer-opts-help">
                 {multi
                   ? tr({
