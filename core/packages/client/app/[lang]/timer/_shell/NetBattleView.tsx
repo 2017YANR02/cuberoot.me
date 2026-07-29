@@ -54,6 +54,7 @@ import { shouldIgnoreTimerTarget } from '@/lib/timer-ignore-target';
 import { useAuthStore } from '@/lib/auth-store';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { eventDisplayName } from '@/lib/wca-events';
+import { displayCuberName } from '@/lib/cuber-name-display';
 import { persistItem } from '@/lib/safe-storage';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { tr } from '@/i18n/tr';
@@ -86,6 +87,23 @@ const GUEST_NAME = 'Cuber';
 const JOIN_CODE_LEN = 5;
 
 interface SavedSession { code: string; pid: string; name: string }
+
+/** 服务端给重名加的「 (2)」尾巴。 */
+const DEDUP_SUFFIX_RE = / \(\d+\)$/;
+/** 剥掉去重后缀,拿到基名。判「名字是不是已经对了」用它。 */
+const baseName = (n: string) => n.replace(DEDUP_SUFFIX_RE, '');
+
+/**
+ * 房里挂出去的名字是 WCA 名册原名(`Ruimin Yan (颜瑞民)`),渲染按站内规范去括号 ——
+ * 中文界面只留中文名,和 /wca 各页(displayCuberName)一个样。
+ * 自由昵称原样输出:那不是 WCA 名,里头的括号是用户自己写的。
+ * 去重后缀留在末尾,否则两个同名的人在名单上又长得一模一样。
+ */
+function netPlayerName(p: { name: string; wcaId?: string }, isZh: boolean): string {
+  if (!p.wcaId) return p.name;
+  const base = baseName(p.name);
+  return displayCuberName(base, isZh) + p.name.slice(base.length);
+}
 
 function readSession(): SavedSession | null {
   try {
@@ -122,6 +140,8 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
   const [showStats, setShowStats] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
+  /** 邀请二维码弹窗(队友扫码直接落加入页)。建房时自动弹一次,所以要声明在 doCreate 之前。 */
+  const [qrOpen, setQrOpen] = useState(false);
   const roomRef = useRef(room); roomRef.current = room;
   const pidRef = useRef(pid); pidRef.current = pid;
   /** 服务器时钟 - 本机时钟(EMA;对手滚动读数换算用)。 */
@@ -393,7 +413,9 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
     const ev = lobbyEvent;
     const scr = generateScramble(ev as EventId);
     void createNetRoom(ev, scr, id)
-      .then((st) => { adopt(st, id.name); void setRoomParam(st.code); })
+      // 建完就把二维码摆出来:开房的下一步必然是喊人进来,不该还要自己去找那个按钮。
+      // (加入房间不弹 —— 那边人已经在房里了。)
+      .then((st) => { adopt(st, id.name); void setRoomParam(st.code); setQrOpen(true); })
       .catch((e: Error) => setErr(tr(netErrorMessage(e))))
       .finally(() => setBusy(false));
   }, [busy, lobbyEvent, adopt, setRoomParam]);
@@ -468,9 +490,6 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
   }, [applyState]);
 
   // ── 房内改名 ────────────────────────────────────────────────
-  /** 剥掉服务端为去重加的「 (2)」尾巴,拿到基名。判「名字是不是已经对了」用它。 */
-  const baseName = (n: string) => n.replace(/ \(\d+\)$/, '');
-
   const doRename = useCallback((next: NetIdentity) => {
     const r = roomRef.current, id = pidRef.current;
     if (!r || !id) return;
@@ -656,7 +675,7 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
   // 弹层打开时全局空格不进计时(同 Solo 的 anyModalOpen)。蓝牙弹窗里有 MAC 输入框,
   // 战绩 / 管理面板可以点到背景 —— 焦点一旦不在 button/input 上,空格就会穿透去
   // 「准备」或起表。
-  const overlayOpen = showStats || showAdmin || bluetoothOpen || renameOpen;
+  const overlayOpen = showStats || showAdmin || bluetoothOpen || renameOpen || qrOpen;
   const overlayOpenRef = useRef(overlayOpen); overlayOpenRef.current = overlayOpen;
   useEffect(() => {
     if (!inRoom) return;
@@ -710,8 +729,6 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
     if (copyTimerRef.current) window.clearTimeout(copyTimerRef.current);
     copyTimerRef.current = window.setTimeout(() => setLinkCopied(false), 1200);
   }, [roomInviteUrl]);
-  /** 邀请二维码弹窗(队友扫码直接落加入页)。 */
-  const [qrOpen, setQrOpen] = useState(false);
 
   const [scrambleCopied, setScrambleCopied] = useState(false);
   const copyScramble = useCallback(() => {
@@ -889,7 +906,7 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
             : null}
           {/* 显示 identity.name 而非 authUser.name:房里挂出去的是 WCA 名册上的名字,
               这里照着账号的 display_name 写就成了「预览的名字和房里的名字对不上」。 */}
-          <span className="net-identity-name">{identity.name}</span>
+          <span className="net-identity-name">{netPlayerName(identity, isZh)}</span>
           {authUser.wcaId ? <span className="net-identity-wcaid">{authUser.wcaId}</span> : null}
         </div>
       ) : (
@@ -994,6 +1011,9 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
   const players = sortedNetPlayers(room.players);
   const curResults = room.results[String(room.round)] ?? {};
   const winners = roundSettled ? roundWinners(curResults, room.players) : [];
+  const winnerNames = winners
+    .map((w) => { const p = room.players[w]; return p ? netPlayerName(p, isZh) : '?'; })
+    .join(' / ');
   const serverNowEst = Date.now() + (offsetRef.current ?? 0);
   const myScr = pid ? myScramble(room, pid) : (room.scrambles[room.event] ?? null);
   const displayScramble = myScr ? formatScrambleForEvent(myEvent, myScr) : '';
@@ -1060,12 +1080,12 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
                   onClick={() => { setName(baseName(p.name)); setRenameOpen(true); }}
                   title={tr({ zh: '改名', en: 'Change name' })}
                 >
-                  {p.name}
+                  {netPlayerName(p, isZh)}
                   <span className="net-p-me">{tr({ zh: '(我)', en: ' (me)' })}</span>
                 </button>
               ) : (
                 <span className="net-p-name" title={p.wcaId ? `${p.name} · ${p.wcaId}` : p.name}>
-                  {p.name}
+                  {netPlayerName(p, isZh)}
                   {mine && <span className="net-p-me">{tr({ zh: '(我)', en: ' (me)' })}</span>}
                 </span>
               )}
@@ -1137,8 +1157,8 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
                   <div className="net-round-result">
                     {winners.length > 0
                       ? tr({
-                          zh: `本轮最快:${winners.map(w => room.players[w]?.name ?? '?').join(' / ')}`,
-                          en: `Round winner: ${winners.map(w => room.players[w]?.name ?? '?').join(' / ')}`,
+                          zh: `本轮最快:${winnerNames}`,
+                          en: `Round winner: ${winnerNames}`,
                         })
                       : tr({ zh: '本轮无有效成绩', en: 'No valid result this round' })}
                   </div>
@@ -1216,6 +1236,7 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
         <NetAdminPanel
           room={room}
           pid={pid}
+          isZh={isZh}
           onSyncStart={setSyncStart}
           onTransfer={transferAdmin}
           onKick={kickPlayer}
@@ -1294,13 +1315,14 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
 interface NetAdminPanelProps {
   room: NetRoomState;
   pid: string | null;
+  isZh: boolean;
   onSyncStart: (v: boolean) => void;
   onTransfer: (target: string) => void;
   onKick: (target: string) => void;
   onClose: () => void;
 }
 
-function NetAdminPanel({ room, pid, onSyncStart, onTransfer, onKick, onClose }: NetAdminPanelProps) {
+function NetAdminPanel({ room, pid, isZh, onSyncStart, onTransfer, onKick, onClose }: NetAdminPanelProps) {
   const players = sortedNetPlayers(room.players);
   // 踢人两步确认:误点一下不会直接把人踢出去(对战中很恼人)。
   const [confirmKick, setConfirmKick] = useState<string | null>(null);
@@ -1346,7 +1368,7 @@ function NetAdminPanel({ room, pid, onSyncStart, onTransfer, onKick, onClose }: 
               <div key={p.id} className="net-admin-row">
                 {p.iso2 && <Flag iso2={p.iso2} className="net-st-flag" />}
                 {isAdminRow && <Crown size={12} className="net-p-crown" />}
-                <span className="net-admin-name" title={p.wcaId ? `${p.name} · ${p.wcaId}` : p.name}>{p.name}</span>
+                <span className="net-admin-name" title={p.wcaId ? `${p.name} · ${p.wcaId}` : p.name}>{netPlayerName(p, isZh)}</span>
                 {mine ? (
                   <span className="net-admin-metext">{tr({ zh: '(我)', en: '(me)' })}</span>
                 ) : (
@@ -1451,7 +1473,7 @@ function NetStatsPanel({ room, pid, isZh, precision, onClose }: NetStatsPanelPro
                         title={eventDisplayName(netEventToSelectorId(pEvent), isZh)}
                       />
                       {p.iso2 && <Flag iso2={p.iso2} className="net-st-flag" />}
-                      <span className="net-st-nametext" title={p.wcaId ? `${p.name} · ${p.wcaId}` : p.name}>{p.name}</span>
+                      <span className="net-st-nametext" title={p.wcaId ? `${p.name} · ${p.wcaId}` : p.name}>{netPlayerName(p, isZh)}</span>
                     </td>
                     <td className="net-st-wins">{room.scores[p.id] ?? 0}</td>
                     <td>{fmtStat(stats.single, precision)}</td>
@@ -1509,11 +1531,12 @@ function NetStatsPanel({ room, pid, isZh, precision, onClose }: NetStatsPanelPro
                           {ordered.map((id) => {
                             const won = rv.winners.includes(id);
                             const dnf = rv.results[id]?.p === 'dnf';
+                            const rp = room.players[id];
                             return (
                               <div key={id} className={`net-round-row${won ? ' is-winner' : ''}`}>
-                                <span className="net-round-pname" title={room.players[id]?.name ?? '?'}>
+                                <span className="net-round-pname" title={rp?.name ?? '?'}>
                                   {won && <Trophy size={11} className="net-p-trophy" />}
-                                  {room.players[id]?.name ?? '?'}
+                                  {rp ? netPlayerName(rp, isZh) : '?'}
                                 </span>
                                 <span className={`net-round-ptime${dnf ? ' is-dnf' : ''}`}>
                                   {fmtNetResult(rv.results[id], precision)}
