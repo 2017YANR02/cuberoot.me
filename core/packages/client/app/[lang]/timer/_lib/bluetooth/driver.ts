@@ -160,6 +160,20 @@ export interface CubeDriverContext {
    */
   onKeyError?: () => void;
   /**
+   * Called when the cube reports its OWN state as a 54-character facelet
+   * string (`URFDLB` face order). Only the brands whose protocol carries a
+   * state snapshot fire this — GAN v3/v4 at connect and on request.
+   *
+   * This is the only authoritative reading of a smart cube there is; the
+   * move-stream model is dead reckoning on top of it. A host that ignores it
+   * has to assume the cube starts solved, which is wrong whenever it doesn't
+   * (mid-scramble reconnect, pairing a cube that is already turned).
+   *
+   * Drivers must only call this with a state that passed a solvability check
+   * — a wrong AES key decodes to garbage that would otherwise be adopted.
+   */
+  onState?: (facelets: string) => void;
+  /**
    * Called for every orientation sample a gyro-capable driver decodes.
    * Optional on purpose: passing it is what asks a brand with a firmware
    * gyro switch (MoYu32) to turn its stream on, and drivers that can't

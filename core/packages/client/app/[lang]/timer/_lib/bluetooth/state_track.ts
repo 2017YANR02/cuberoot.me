@@ -12,7 +12,7 @@
  * complete scramble→solve trajectory.
  */
 
-import { applyMoves, facesEqual, solved } from '../cube/state';
+import { applyMoves, facesEqual, fromFaceletString, solved } from '../cube/state';
 import type { CubeFaces } from '../cube/state';
 import { parseScramble } from '../cube/moves';
 
@@ -30,6 +30,23 @@ export class CubeStateTracker {
   /** Re-initialize the tracked state to a solved cube. */
   reset(): void {
     this.state = solved(N);
+  }
+
+  /**
+   * Adopt a state the CUBE reported about itself (54-char facelet string, see
+   * `CubeDriverContext.onState`). Returns false — leaving our state untouched —
+   * if the string is malformed.
+   *
+   * This is what makes "assume the cube starts solved" unnecessary: pairing a
+   * cube that is already scrambled, or reconnecting after a drop the user
+   * turned through, both land here instead of silently starting from a wrong
+   * baseline.
+   */
+  adoptFacelets(facelets: string): boolean {
+    const faces = fromFaceletString(facelets);
+    if (!faces) return false;
+    this.state = faces;
+    return true;
   }
 
   /**

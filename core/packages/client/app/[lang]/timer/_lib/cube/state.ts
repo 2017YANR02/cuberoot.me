@@ -629,6 +629,52 @@ export function isSolvedFaces(f: CubeFaces): boolean {
   return true;
 }
 
+/**
+ * Face order of the standard 54-character facelet string (Kociemba's, and the
+ * one every smart-cube protocol speaks): U, then R, F, D, L, B, nine stickers
+ * each, read row-major in exactly the per-face orientation this module already
+ * stores. Our `CubeFaces` layout is that convention, so serialising is a
+ * concatenation — no re-indexing.
+ */
+const FACELET_ORDER: Face[] = ['U', 'R', 'F', 'D', 'L', 'B'];
+
+/**
+ * `CubeFaces` -> the 54-char facelet string (3x3 only).
+ *
+ * This is the lingua franca between the smart-cube drivers (which decode the
+ * cube's self-reported state) and our own model, and it is what csTimer's
+ * `CubieCube.toFaceCube()` produces — so the two can be compared directly.
+ */
+export function toFaceletString(f: CubeFaces): string {
+  let out = '';
+  for (const face of FACELET_ORDER) out += f[face].join('');
+  return out;
+}
+
+/**
+ * The 54-char facelet string -> `CubeFaces`. Returns null for anything that is
+ * not 54 characters of `URFDLB` with nine of each: a driver handing us a state
+ * we can't trust must not silently become a wrong cube.
+ *
+ * Note this validates the STRING, not the cube: an unreachable arrangement
+ * (flipped edge, twisted corner) still parses. Drivers verify solvability on
+ * their side, where the piece-level model lives.
+ */
+export function fromFaceletString(s: string): CubeFaces | null {
+  if (s.length !== 54) return null;
+  const counts: Record<string, number> = {};
+  for (const ch of s) {
+    if (!'URFDLB'.includes(ch)) return null;
+    counts[ch] = (counts[ch] ?? 0) + 1;
+  }
+  for (const face of FACELET_ORDER) if (counts[face] !== 9) return null;
+  const out = solved(3);
+  FACELET_ORDER.forEach((face, i) => {
+    out[face] = s.slice(i * 9, i * 9 + 9).split('') as FaceArr;
+  });
+  return out;
+}
+
 /** Compare two states for equality (used in tests). */
 export function facesEqual(a: CubeFaces, b: CubeFaces): boolean {
   for (const f of ['U', 'D', 'F', 'B', 'L', 'R'] as Face[]) {

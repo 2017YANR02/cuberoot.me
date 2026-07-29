@@ -849,14 +849,28 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   }, []);
 
   // ── Live cube-state mirror ──────────────────────────────────────
+  // The 2D corner view reads `bluetoothCube.facelets` (the cube's own state)
+  // directly. This log exists only for the 3D view, which is alg-driven: it
+  // is anchored at the last moment the cube was SOLVED, so replaying it from
+  // a solved cube reproduces the current state exactly. `algAnchored` says
+  // whether that anchor exists at all — without it the 3D view would be
+  // drawing a state nobody verified, so we stay on the flat one.
   const [liveMoves, setLiveMoves] = useState<string[]>([]);
-  useEffect(() => { setLiveMoves([]); }, [scramble]);
+  const [algAnchored, setAlgAnchored] = useState(false);
   useEffect(() => {
     const subs = bluetoothSubscribersRef.current;
     const mirror = (m: string) => { setLiveMoves(prev => [...prev, m]); };
     subs.add(mirror);
     return () => { subs.delete(mirror); };
   }, []);
+  const cubeConnected = bluetoothCube.status.connected;
+  const cubeSolved = bluetoothCube.solved;
+  useEffect(() => {
+    if (!cubeConnected) { setLiveMoves([]); setAlgAnchored(false); return; }
+    // Runs after the move that solved the cube has already been appended
+    // above, so clearing here leaves the log correctly empty.
+    if (cubeSolved) { setLiveMoves([]); setAlgAnchored(true); }
+  }, [cubeConnected, cubeSolved]);
 
   // ── Scramble verification ───────────────────────────────────────
   // A smart cube knows its own state, so it can answer the one question the
@@ -2222,9 +2236,9 @@ export default function SoloView({ playersControl }: SoloViewProps) {
         <div className="timer-live-cube" title={tr({ zh: '智能魔方实时状态（每次拧动同步）', en: 'Live smart-cube state (updates per move)'
         })}>
           <LiveCubeState
-            event={event}
-            scramble={scramble}
+            facelets={bluetoothCube.facelets}
             moves={liveMoves}
+            algAnchored={algAnchored}
             mode={want3dLiveCube && bluetoothCube.status.hasGyro ? '3d' : '2d'}
             quatRef={gyroQuatRef}
             calibrateToken={calibrateNonce}

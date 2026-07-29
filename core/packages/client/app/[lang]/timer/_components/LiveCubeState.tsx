@@ -3,19 +3,26 @@
 /**
  * LiveCubeState — corner mirror of the user's smart cube.
  *
- * Composes the active scramble with the moves that have streamed in from BLE
- * since the scramble was set, then renders it one of two ways:
+ * Renders the state the cube ITSELF reports, one of two ways:
  *
- *   mode '2d' (default) — the flat net via CubePreview. Works for every event
- *     and needs nothing but the move stream.
+ *   mode '2d' (default) — the tracked facelets, drawn directly. Exact for any
+ *     state the cube can be in.
  *   mode '3d'           — a live 3D cube whose orientation follows the cube's
- *     gyroscope (LiveCubeGyroView). 3x3 only, and only once a real orientation
- *     sample has arrived.
+ *     gyroscope (LiveCubeGyroView). 3x3 only, only once a real orientation
+ *     sample has arrived, and only while the state is expressible as an alg
+ *     (see `moves` below).
  *
  * The 2D fallback is not a nicety, it is the contract: a 3D cube that is not
  * being told which way it is pointing is worse than no 3D cube at all, because
- * it looks alive while being wrong. So we stay on the net until the first
- * quaternion lands, and the caller can drop `mode` back to '2d' at any time.
+ * it looks alive while being wrong. So we stay flat until the first quaternion
+ * lands, and the caller can drop `mode` back to '2d' at any time.
+ *
+ * HISTORY — what this component used to do, and why it was wrong: it rendered
+ * `scramble + movesSinceTheScrambleChanged`. That is not the cube's state. With
+ * a solved cube and no turns it drew the SCRAMBLED cube; once the user actually
+ * applied the scramble it drew the scramble twice over. The badge above it read
+ * the real tracked facelets, so the two disagreed on screen. Drive this from
+ * facelets, never from an alg you reconstructed.
  *
  * The next/dynamic boundary lives HERE rather than in SoloView on purpose:
  * three.js + the /sim engine is a heavy chunk, and this is the single place
@@ -28,8 +35,7 @@ import { useEffect, useState, type JSX } from 'react';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
-import type { EventId } from '../_lib/types';
-import CubePreview from '../_lib/cube/CubePreview';
+import { FaceletsCube } from '@/components/FaceletsCube';
 import { readDevQuatSource, type Quat, type SensorBasisName } from '../_lib/bluetooth/orientation';
 
 /** three + the /sim engine only load when a 3D view is actually mounted. */
@@ -82,10 +88,25 @@ function useSyntheticQuat(enabled: boolean): Quat | null {
 }
 
 export interface LiveCubeStateProps {
-  event: EventId;
-  scramble: string;
+  /**
+   * The cube's tracked state as a 54-character facelet string, or null when
+   * nothing is being tracked yet. This is the source of truth for the 2D view.
+   */
+  facelets: string | null;
+  /**
+   * Moves since the cube was last known to be SOLVED. The 3D view is alg-driven
+   * (the /sim engine has no facelet setter), so it can only be shown when the
+   * state is reachable from solved by replaying these — which is why the caller
+   * anchors the log there rather than at connect time. Empty is fine (solved).
+   */
   moves: string[];
-  /** 2D only: CubePreview's base unit (final net is `size * facelets`). */
+  /**
+   * False when the state is NOT expressible as `moves` from solved — i.e. the
+   * cube was already turned when we started tracking it. The 3D view is
+   * suppressed while this holds rather than drawing a state we made up.
+   */
+  algAnchored: boolean;
+  /** 2D only: rendered edge in px. */
   size?: number;
   /** '3d' renders the gyro-driven cube; anything else keeps the flat net. */
   mode?: '2d' | '3d';
@@ -109,10 +130,10 @@ export interface LiveCubeStateProps {
 
 export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
   const {
-    event,
-    scramble,
+    facelets,
     moves,
-    size = 10,
+    algAnchored,
+    size = 96,
     mode = '2d',
     size3d = 140,
     quat = null,
@@ -152,13 +173,13 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
     return () => clearInterval(id);
   }, [wants3d, everOriented, quatRef]);
 
-  const composed = moves.length > 0 ? `${scramble} ${moves.join(' ')}` : scramble;
-
-  if (wants3d && everOriented) {
+  // 3D is alg-driven, so it can only run while the state is reachable from
+  // solved by replaying `moves`. When it isn't, the flat view takes over — it
+  // reads facelets and is always exact.
+  if (wants3d && everOriented && algAnchored) {
     return (
       <div style={{ width: size3d, height: size3d, lineHeight: 0 }}>
         <LiveCubeGyroView
-          scramble={scramble}
           moves={moves}
           quat={liveQuat}
           quatRef={quatRef}
@@ -171,5 +192,6 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
     );
   }
 
-  return <CubePreview event={event} scramble={composed} size={size} />;
+  if (!facelets) return <span style={{ display: 'inline-block', width: size, height: size }} />;
+  return <FaceletsCube fd={facelets.toLowerCase()} size={size} alt={tr({ zh: '智能魔方当前状态', en: 'Current smart-cube state' })} />;
 }
