@@ -76,7 +76,7 @@ export function ScrambleHeader({ scramble, label, font = 'sans', placeholder }: 
 }
 
 export function SolveCard({
-  puzzle, set, scramble, c, header, markSlot, onShowCase, caseHref, showThumb = true,
+  puzzle, set, scramble, c, header, markSlot, onShowCase, caseHref, showThumb = true, localThumb,
 }: {
   puzzle: AlgPuzzle;
   set: string;
@@ -97,6 +97,11 @@ export function SolveCard({
   caseHref?: (c: AlgCase) => string;
   /** 打乱图开关(「打乱图」关时整卡不出 CaseThumb)。默认 true。 */
   showThumb?: boolean;
+  /**
+   * 图走本地渲染,不发请求。三张卡片同时换(三条一屏的「上三个」)时必须给:
+   * 三个 `<img>` 各走各的网络往返,会一张一张地陆续落地。见 `VisualCube` 的 `local`。
+   */
+  localThumb?: boolean;
 }) {
   // 标题行三格:左「上一个」/ 正中 case 名 / 右标记图标 —— 名字在图正上方,不再单占一行
   const name = c ? primaryCaseName(puzzle, set, c) : null;
@@ -151,6 +156,7 @@ export function SolveCard({
                   setup={scramble ?? c.setup}
                   // 与左栏大图 / 离屏预取同 size=140:同一 URL 共用浏览器缓存,换题时秒出不再重取。
                   size={140}
+                  local={localThumb}
                 />
               );
               // 图和名字指的是同一个 case,点哪个都该开详情 —— 图还是更大更好点的那个目标。
