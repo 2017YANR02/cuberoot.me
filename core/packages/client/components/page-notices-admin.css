@@ -1,0 +1,112 @@
+/* 个人页的页面通知总览(admin only)—— 见 PageNoticesAdmin.tsx。
+   调色板变量 --pn-c-* 来自 PageNoticeBar.css 的 :root(全站常驻),这里只消费。 */
+
+.pna-section {
+  margin-top: 28px;
+}
+
+.pna-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.pna-icon { color: var(--accent); }
+
+.pna-count {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--muted-foreground);
+}
+
+.pna-refresh {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.pna-refresh:hover:not(:disabled) { color: var(--accent); }
+.pna-refresh:disabled { cursor: default; opacity: 0.6; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .pna-spin { animation: pna-spin 0.9s linear infinite; }
+}
+@keyframes pna-spin { to { transform: rotate(360deg); } }
+
+.pna-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* 左侧那道色条 = 该通知在目标页横幅上的实际颜色,列表里也能按语义一眼分辨 */
+.pna-item {
+  border-left: 3px solid var(--pna-c, var(--signal-info));
+}
+.pna-item + .pna-item { margin-top: 2px; }
+
+.pna-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, auto) minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  color: var(--foreground);
+  text-decoration: none;
+}
+.pna-row:not(.is-static):hover { background: color-mix(in srgb, var(--foreground) 6%, transparent); }
+
+.pna-row-icon { color: var(--pna-c, var(--signal-info)); }
+
+.pna-row-path {
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pna-row-body {
+  overflow: hidden;
+  font-size: 0.76rem;
+  color: var(--muted-foreground);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pna-tag {
+  padding: 0 5px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  color: var(--muted-foreground);
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+
+.pna-row-chev { color: var(--faint-foreground); }
+
+.pna-hint {
+  margin: 8px 0 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+}
+
+/* 窄屏:正文另起一行,路径与标签留在首行(CLAUDE.md「移动端 / 桌面端都要适配」) */
+@media (max-width: 640px) {
+  .pna-row {
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+  }
+  .pna-row-body {
+    grid-column: 1 / -1;
+    white-space: normal;
+  }
+}
