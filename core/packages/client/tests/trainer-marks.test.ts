@@ -1,7 +1,7 @@
 // 训练器学习标记的本地/云端合并(单条 last-write-wins)。
 // mergeMarks 是纯函数:每个 key 取 t 大的一边;本地较新的差异回传;
 // 本地墓碑(s/f 全空)在云端无对应行时不回传。
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import {
   mergeMarks, summarizeMarks, scanLocalOverview, combineOverviews,
   type CaseMarks, type MarkOverview,
@@ -136,5 +136,53 @@ describe('scanLocalOverview', () => {
 
   it('no window → empty', () => {
     expect(scanLocalOverview()).toEqual({});
+  });
+});
+
+// 一次性重置(migration 0097 的本机那半)。跑在模块初始化里,所以每条都得换个新模块实例。
+describe('LSLL 进度一次性重置', () => {
+  const g = globalThis as unknown as { window?: unknown; localStorage?: unknown };
+  const install = (data: Record<string, string>) => {
+    g.window = { addEventListener: () => {} };   // auth-store 在模块初始化里挂 storage 监听
+    g.localStorage = {
+      get length() { return Object.keys(data).length; },
+      key: (i: number) => Object.keys(data)[i] ?? null,
+      getItem: (k: string) => (k in data ? data[k] : null),
+      setItem: (k: string, v: string) => { data[k] = v; },
+      removeItem: (k: string) => { delete data[k]; },
+    };
+    return data;
+  };
+  afterEach(() => { delete g.window; delete g.localStorage; });
+
+  /** 重新 import 一次 = 重跑一次模块初始化。 */
+  const boot = async () => { vi.resetModules(); await import('@/lib/trainer-marks'); };
+
+  it('删掉 3x3/lsll 的标记 / 记忆 / 会话,别的 set 一个不碰', async () => {
+    const data = install({
+      'trainer:marks:3x3/lsll': '{"A+ 1x2y":{"s":"mastered","t":1}}',
+      'srs:recs:3x3/lsll': '{"A+ 1x2y":{"d":1}}',
+      'trainer:3x3/lsll': '{"selected":["A+ 1x2y"]}',
+      'trainer:marks:3x3/zbll': '{"U|Ua":{"s":"mastered","t":1}}',
+      'srs:recs:3x3/zbls': '{"A+|1":{"d":1}}',
+      'sweep:3x3/lsll': '{"sweeps":{"zbls":1}}',   // 过遍按 scope 记,路线没变 ⇒ 留着
+    });
+    await boot();
+    expect(Object.keys(data).sort()).toEqual([
+      'srs:recs:3x3/zbls', 'sweep:3x3/lsll', 'trainer:marks:3x3/zbll', 'trainer:reset:lsll-midauf',
+    ]);
+  });
+
+  it('旗标在 = 不再动手,用户重置之后新练的标记不会被第二次抹掉', async () => {
+    const data = install({
+      'trainer:reset:lsll-midauf': '1',
+      'trainer:marks:3x3/lsll': '{"A+ zzz":{"s":"learning","t":9}}',
+    });
+    await boot();
+    expect(data['trainer:marks:3x3/lsll']).toBe('{"A+ zzz":{"s":"learning","t":9}}');
+  });
+
+  it('没有 window(SSR)时什么都不做', async () => {
+    await expect(boot()).resolves.toBeUndefined();
   });
 });
