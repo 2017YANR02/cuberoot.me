@@ -106,6 +106,9 @@ const COLOR_NAMES: Record<CubeFace, { zh: string; en: string }> = {
   R: { zh: '红', en: 'red' },
 };
 
+/** 色块标签:中文「黄格」这样一个词说完(不写「黄色贴纸」),英文仍是颜色词,后面的句子接 sticker。 */
+const colorChipLabel = (c: CubeFace): string => tr({ zh: `${COLOR_NAMES[c].zh}格`, en: COLOR_NAMES[c].en });
+
 const FACE_NAMES: Record<CubeFace, { zh: string; en: string }> = {
   U: { zh: '顶', en: 'Up' },
   D: { zh: '底', en: 'Down' },
@@ -425,7 +428,7 @@ function PredictPageInner() {
         )}
 
         <label className="predict-control">
-          <span>{tr({ zh: '拿方朝向', en: 'Holding' })}</span>
+          <span>{tr({ zh: '朝向', en: 'Holding' })}</span>
           <CubeOrientationSelect
             className="predict-select"
             value={orientation}
@@ -496,10 +499,11 @@ function PredictPageInner() {
                 en: g.total > 1 ? `Where do the ${g.total} highlighted ${piece.en.toLowerCase()}s' ` : 'Where does the ',
               })}
               <b className="predict-color" style={{ background: CUBE_FILL[color], color: CUBE_ON_FILL[color] }}>
-                {tr(COLOR_NAMES[color])}
+                {colorChipLabel(color)}
               </b>
               {tr({
-                zh: g.total > 1 ? '色贴纸,分别落在哪一格?(顺序不限)' : '色贴纸,最终落在哪一格?',
+                // 逗号紧跟在色块徽章后面会浮在半空(徽章自带内边距),中文这里不要它也读得通。
+                zh: g.total > 1 ? '分别落在哪一格?(顺序不限)' : '最终落在哪一格?',
                 en: g.total > 1
                   ? ' stickers end up? (any order)'
                   : ` sticker of the highlighted ${piece.en.toLowerCase()} end up?`,
@@ -521,7 +525,7 @@ function PredictPageInner() {
               return (
                 <span key={`${t.kind}-${t.piece}-${t.sticker}`} className="predict-answer-item">
                   <b className="predict-color" style={{ background: CUBE_FILL[color], color: CUBE_ON_FILL[color] }}>
-                    {tr(COLOR_NAMES[color])}
+                    {colorChipLabel(color)}
                   </b>
                   <ArrowRight size={13} aria-hidden="true" />
                   {face} {tr(FACE_NAMES[face])}
@@ -601,12 +605,6 @@ function PredictPageInner() {
             </li>
           ))}
         </ul>
-        <p className="predict-hint">
-          {tr({
-            zh: '拖动可以把魔方转到任意角度,答案有可能落在背面;点某一招,盘面就同步到做完那一招的样子。',
-            en: 'Drag to spin the cube — the answer can land on a face you cannot see yet. Click a move to jump the cube to the state right after it.',
-          })}
-        </p>
       </section>
 
       <p className="predict-origin">
