@@ -56,6 +56,13 @@ const LONG_PRESS_VARIANTS: Record<string, string[]> = {
 };
 
 // NOTE: 可双击的按键集合
+// NOTE: 退格连删的节奏,对齐 iOS 系统键盘:按下即删一个 → 按住 ~0.5s 开始连删 →
+// 连删一阵之后升格成「整词删」。iOS 那档删的是词,我们这儿对应的整体是一步(`R2'`)。
+const BACKSPACE_HOLD_DELAY = 500;
+const BACKSPACE_REPEAT_MS = 90;
+/** 连删到第几个字符后改成整步删(≈ 再按住 1s) */
+const BACKSPACE_TOKEN_AFTER = 12;
+
 const DOUBLE_TAP_KEYS: Record<string, boolean> = {
   U: true, D: true, F: true, B: true, R: true, L: true,
   x: true, y: true, z: true, M: true, E: true, S: true, '/': true,
@@ -292,6 +299,11 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
   const [activeMark, setActiveMark] = useState<string | null>(null);
   const activeBtnRef = useRef<HTMLButtonElement | null>(null);
   const startYRef = useRef(0);
+  // NOTE: 退格连删(见 BACKSPACE_* 常量)
+  const backspaceHoldRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const backspaceRepeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  /** pointerdown 已经删过一次 → 配对的 pointerup 不要再删第二次 */
+  const backspaceFiredRef = useRef(false);
   // NOTE: 双击检测
   const lastKeyRef = useRef('');
   const lastKeyTimeRef = useRef(0);
@@ -358,6 +370,49 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
     const line = before.split('\n').pop() || '';
     setSuggestions(getSuggestions(line));
   }, [target]);
+
+  /** 退格删一次。`whole` = 连同 caret 前那一整步(含它和 caret 之间的空格)一起删,
+   *  对应 iOS 长按到后段的整词删。返回是否真的删掉了东西(没得删就该停下连删)。 */
+  const backspaceOnce = useCallback((whole: boolean) => {
+    const el = target.current;
+    if (!el) return false;
+    const before = getTextBeforeCaret(el);
+    if (before.length === 0) return false;
+    // caret 前的空格是自动补的,不算用户打的字 —— 连它一起删掉,否则「删一下」有一半
+    // 时候只吃掉一个看不见的空格,长按连删就成了一顿一顿的。
+    const trailingWs = before.length - before.replace(/\s+$/, '').length;
+    let n = Math.min(before.length, trailingWs + 1);
+    if (whole) {
+      const info = findPrevTokenInfo(el);
+      if (info) n = info.token.length + info.offsetFromCaret;
+    }
+    deleteBack(el, n);
+    normAndNotify();
+    updateModifierState();
+    refreshSuggestions();
+    return true;
+  }, [target, normAndNotify, updateModifierState, refreshSuggestions]);
+
+  const stopBackspaceRepeat = useCallback(() => {
+    if (backspaceHoldRef.current) { clearTimeout(backspaceHoldRef.current); backspaceHoldRef.current = null; }
+    if (backspaceRepeatRef.current) { clearInterval(backspaceRepeatRef.current); backspaceRepeatRef.current = null; }
+  }, []);
+
+  /** 按住退格:等 HOLD_DELAY 后开始按 REPEAT_MS 连删,删够 TOKEN_AFTER 个字符改成整步删。
+   *  删空了自动停,免得空转。 */
+  const startBackspaceRepeat = useCallback(() => {
+    stopBackspaceRepeat();
+    backspaceHoldRef.current = setTimeout(() => {
+      let fired = 0;
+      backspaceRepeatRef.current = setInterval(() => {
+        fired += 1;
+        if (!backspaceOnce(fired > BACKSPACE_TOKEN_AFTER)) stopBackspaceRepeat();
+      }, BACKSPACE_REPEAT_MS);
+    }, BACKSPACE_HOLD_DELAY);
+  }, [backspaceOnce, stopBackspaceRepeat]);
+
+  // 组件卸载 / 键盘收起时把连删计时器收掉,否则它会对着已经没了的 target 空转
+  useEffect(() => stopBackspaceRepeat, [stopBackspaceRepeat]);
 
   // NOTE: 监听目标事件更新修饰键和建议
   useEffect(() => {
@@ -470,6 +525,17 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
     startYRef.current = e.clientY;
     const key = btn.dataset.key ?? '';
 
+    // NOTE: 退格是唯一在 pointerdown 就动手的键 —— iOS 上手指一落字就没了,
+    // 放到 pointerup 会慢半拍;连删也从这一刻开始计时。
+    if (key === 'backspace') {
+      if (!btn.classList.contains('vkb-disabled')) {
+        backspaceFiredRef.current = true;
+        backspaceOnce(false);
+        startBackspaceRepeat();
+      }
+      return;
+    }
+
     if (key === 'marks-trigger') {
       longPressTimerRef.current = setTimeout(() => {
         isLongPressRef.current = true;
@@ -486,7 +552,7 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
         isLongPressRef.current = true;
       }, 250);
     }
-  }, [showPopup, showMarksPopup]);
+  }, [showPopup, showMarksPopup, backspaceOnce, startBackspaceRepeat]);
 
   // NOTE: pointermove
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
@@ -501,6 +567,7 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
   // NOTE: pointerup
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
     if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+    stopBackspaceRepeat();
     const btn = activeBtnRef.current;
     activeBtnRef.current = null;
     if (!btn) return;
@@ -603,15 +670,9 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
     if (btn.classList.contains('vkb-disabled')) return;
 
     if (key === 'backspace') {
-      const el = target.current;
-      if (!el) return;
-      const before = getTextBeforeCaret(el);
-      if (before.length > 0) {
-        deleteBack(el, 1);
-        normAndNotify();
-        updateModifierState();
-        refreshSuggestions();
-      }
+      // pointerdown 那边已经删过一次(并起了连删),这里只负责收尾
+      if (backspaceFiredRef.current) { backspaceFiredRef.current = false; return; }
+      backspaceOnce(false);
       return;
     }
 
@@ -741,11 +802,17 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
     }
+    // 这里**不能**停退格连删:每删一下解法框都会重排(textarea 自适应高度),
+    // 键盘在光标底下挪一下就白白吃到一发 pointerleave,连删刚起步就被掐掉。
+    // 有 setPointerCapture 兜着,松手必然走到 pointerup / pointercancel,那边停就够了。
   }, []);
 
-  // NOTE: 全局 pointerup——popup 外松开时关闭
+  // NOTE: 全局 pointerup / pointercancel——popup 外松开时关闭;连删也在这里兜底停住
+  //(setPointerCapture 理论上保证 pointerup 回到键盘,但来电、切后台之类会直接 cancel)
   useEffect(() => {
     const handler = () => {
+      stopBackspaceRepeat();
+      backspaceFiredRef.current = false;
       if (isLongPressRef.current) {
         if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
         if (marksLongPressRef.current) {
@@ -761,8 +828,12 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
       }
     };
     document.addEventListener('pointerup', handler);
-    return () => document.removeEventListener('pointerup', handler);
-  }, [activeVariant, activeMark, hidePopup, hideMarksPopup, vkbInsert, handleMarkItem]);
+    document.addEventListener('pointercancel', handler);
+    return () => {
+      document.removeEventListener('pointerup', handler);
+      document.removeEventListener('pointercancel', handler);
+    };
+  }, [activeVariant, activeMark, hidePopup, hideMarksPopup, vkbInsert, handleMarkItem, stopBackspaceRepeat]);
 
   // NOTE: 全局 pointermove——支持手指从按键滑到 popup 区域
   useEffect(() => {
