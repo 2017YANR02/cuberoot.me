@@ -15,6 +15,13 @@ interface Props {
   view: 'iso' | 'plan' | 'f2l' | 'oll' | 'pll' | 'pll-iso' | 'trans';
   /** Explicit Masking enum value (e.g. 'vh', 'wv', 'els'). Overrides the view-implied mask. */
   mask?: string;
+  /**
+   * Plan views (`plan` / `oll` / `pll`) only — drop the grey (masked) side-rim stickers
+   * instead of drawing them, so an OLL thumbnail is just the yellow bars. The 9 U-face
+   * stickers are byte-identical either way. No-op on the iso views and on `pll`, whose
+   * rim carries real colours.
+   */
+  hideGreySides?: boolean;
   size?: number;
   puzzleSize?: number;
   alt?: string;
@@ -36,15 +43,16 @@ interface Props {
 
 // Ported from packages/client-vite/src/components/VisualCube.tsx — minus the SW interception note
 // (Next.js bundles a fresh SW; for now this hits the api.cuberoot.me endpoint directly in prod).
-export function VisualCube({ algorithm = '', setup, view, mask, size = 88, puzzleSize = 3, alt = 'Cube state', loading, local }: Props) {
+export function VisualCube({ algorithm = '', setup, view, mask, size = 88, puzzleSize = 3, alt = 'Cube state', loading, local, hideGreySides }: Props) {
   // 同一组参数喂两条路:本地渲染直接调 server 端点用的那个函数,URL 版把它们拼成 query。
   const svg = useMemo(() => {
     if (!local) return null;
     return renderFromSimpleQuery({
       ...(setup ? { setup } : { case: algorithm }),
       view, size, pzl: puzzleSize, ...(mask ? { mask } : {}),
+      ...(hideGreySides ? { ngs: '1' } : {}),
     });
-  }, [local, algorithm, setup, view, mask, size, puzzleSize]);
+  }, [local, algorithm, setup, view, mask, size, puzzleSize, hideGreySides]);
 
   const src = useMemo(() => {
     if (local) return '';
@@ -53,8 +61,10 @@ export function VisualCube({ algorithm = '', setup, view, mask, size = 88, puzzl
     else params.set('case', algorithm);
     if (mask) params.set('mask', mask);
     if (puzzleSize !== 3) params.set('pzl', String(puzzleSize));
+    // 新 query key = 新缓存键,老链接的 24h CDN 缓存不受影响,无需 bump v=。
+    if (hideGreySides) params.set('ngs', '1');
     return apiUrl(`/v1/visualcube.svg?${params}`);
-  }, [local, algorithm, setup, view, mask, size, puzzleSize]);
+  }, [local, algorithm, setup, view, mask, size, puzzleSize, hideGreySides]);
 
   if (svg) {
     return (

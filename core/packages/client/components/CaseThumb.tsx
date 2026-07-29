@@ -96,11 +96,16 @@ export function CaseThumb({
   if (cornerMask) {
     return <VisualCube algorithm={alg} setup={setup} view="pll" mask={cornerMask} size={size} local={local} loading={loading} />;
   }
+  const view = pickView(puzzle, set, sticker);
   return (
     <VisualCube
       algorithm={alg}
       setup={setup}
-      view={pickView(puzzle, set, sticker)}
+      view={view}
+      // OLL 图侧面那一圈灰格是「这里不是黄」的占位,信息全在黄条上 —— 删掉灰格就是通行的
+      // OLL 识别图。顶面 9 格一格不动(侧环由渲染器另一个 pass 画)。pll 不加:那圈是真配色;
+      // coll / cmll 更不能加(上面已单独 return),那里的灰恰恰是「这条棱不用看」的题面。
+      hideGreySides={view === 'oll'}
       size={size}
       puzzleSize={PUZZLE_SIZE[puzzle]}
       local={local}

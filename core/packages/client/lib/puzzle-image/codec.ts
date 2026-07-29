@@ -9,16 +9,23 @@
 
 import { DEFAULTS, FACE_DEFAULTS, rotationDefaultsFor, rotationsMatchDefault } from './defaults';
 import { MASK_ROTATIONS } from './masks';
-import type { ImageSpec, PuzzleType, SpecialView, PuzzleVariant } from './types';
+import type {
+  ImageSpec, PuzzleType, SpecialView, PuzzleVariant, PlanSideRule, PlanUpRule,
+} from './types';
 import { parseViewRotations } from '@cuberoot/shared/sr-rotations';
 
 /** Keys specToParams can emit, in emission order. The three mask/paint keys
  *  (`msk` sticker-mask DSL, `mkc` mask colour, `fc` painted facelet) sit LAST so
- *  every pre-mask URL — including the 28 golden fixtures — emits byte-identically. */
+ *  every pre-mask URL — including the 28 golden fixtures — emits byte-identically.
+ *  `ngs` (plan-view "no grey sides") lands after them for the same reason. */
 const WRITE_KEYS = [
   'pzl', 'size', 'alg', 'case', 'arw', 'ac', 'view', 'stage',
   'sch', 'r', 'bg', 'cc', 'co', 'fo', 'dist', 'msk', 'mkc', 'fc',
+  'ngs', 'psr', 'pur', 'psy', 'pfs', 'pfh',
 ] as const;
+
+const SIDE_RULES: readonly PlanSideRule[] = ['all', 'bar', 'oppline', 'cece', 'light', 'oppbar', 'ecec'];
+const UP_RULES: readonly PlanUpRule[] = ['all', 'bar', 'baroppbar'];
 
 /** `fc` must be a full painted-net facelet string: 54 stickers over U R F D L B
  *  plus X (= unpainted), the alphabet of `PaintColor`. Anything else is dropped. */
@@ -205,6 +212,17 @@ export function readSpecFromParams(params: ParamsInput, prefix: string, opts?: C
   if (get('mkc')) s.maskColor = get('mkc') as string;
   const fc = get('fc');
   if (fc != null && FC_RE.test(fc)) s.paintedFacelet = fc;
+  const ngs = get('ngs');
+  if (ngs != null) s.hideGreySides = ngs !== '0' && ngs !== '';
+  // 俯视识别简化。规则名不认识就当没写(URL 是手可改的)。
+  const psr = get('psr');
+  if (psr && (SIDE_RULES as readonly string[]).includes(psr)) s.planSideRule = psr as PlanSideRule;
+  const pur = get('pur');
+  if (pur && (UP_RULES as readonly string[]).includes(pur)) s.planUpRule = pur as PlanUpRule;
+  const psy = get('psy');
+  if (psy != null) s.planShowYellow = psy !== '0' && psy !== '';
+  if (get('pfs') != null) s.planForceShow = get('pfs') ?? '';
+  if (get('pfh') != null) s.planForceHide = get('pfh') ?? '';
 
   // Panel mode: the host owns the alg + colour scheme — inject LAST so it wins over
   // any stray `alg`/`case`/`sch` still in the URL (same clobber-proofing as `puzzle`).
@@ -261,6 +279,15 @@ export function specToParams(s: ImageSpec, prefix: string, opts?: CodecOptions):
   if (s.stickerMask && s.maskColor !== DEFAULTS.maskColor) set('mkc', s.maskColor);
   if (s.paintedFacelet !== DEFAULTS.paintedFacelet && FC_RE.test(s.paintedFacelet)) {
     set('fc', s.paintedFacelet);
+  }
+  // Plan-view only knobs — a stray `ngs`/`psr` on an iso/net URL would render nothing.
+  if (s.puzzleType === 'cube' && s.cubeView === 'plan') {
+    if (s.hideGreySides) set('ngs', '1');
+    if (s.planSideRule !== DEFAULTS.planSideRule) set('psr', s.planSideRule);
+    if (s.planUpRule !== DEFAULTS.planUpRule) set('pur', s.planUpRule);
+    if (s.planShowYellow !== DEFAULTS.planShowYellow) set('psy', s.planShowYellow ? '1' : '0');
+    if (s.planForceShow) set('pfs', s.planForceShow);
+    if (s.planForceHide) set('pfh', s.planForceHide);
   }
   return p;
 }
