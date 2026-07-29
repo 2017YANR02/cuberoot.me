@@ -69,6 +69,7 @@ import { setMetronomeHold } from '@/lib/metronome';
 import { useBluetoothCube } from '../_lib/bluetooth';
 import { mirrorForBrand, sensorBasisForBrand, type Quat } from '../_lib/bluetooth/orientation';
 import { applyScramble, facesEqual, type CubeFaces } from '../_lib/cube/state';
+import { installFakeCube } from '../_lib/bluetooth/fake_cube';
 import { nxnSizeForEvent } from '../_lib/cube/colors';
 import { DIGIT_OPENS_SOLVE, bindingForEvent, resolveKeymap } from '../_lib/keymap';
 import { useAutoReady } from '../_lib/bluetooth/auto_ready';
@@ -847,6 +848,13 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     subs.add(recorder);
     return () => { subs.delete(recorder); };
   }, []);
+
+  // Dev-only: publish the fake-smart-cube console API. Gives the whole
+  // smart-cube flow (connect → scramble check → auto-stop → live view) a way
+  // to be exercised without hardware. No-op in production builds.
+  const scrambleForFakeRef = useRef(scramble);
+  scrambleForFakeRef.current = scramble;
+  useEffect(() => { installFakeCube(() => scrambleForFakeRef.current); }, []);
 
   // ── Live cube-state mirror ──────────────────────────────────────
   // The 2D corner view reads `bluetoothCube.facelets` (the cube's own state)
