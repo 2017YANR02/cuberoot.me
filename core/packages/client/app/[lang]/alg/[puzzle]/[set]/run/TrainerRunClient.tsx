@@ -262,7 +262,9 @@ export default function TrainerRunClient() {
     if (virtual) {
       // 虚拟集没有 select 页可勾 —— 装进来的这一批就是本场
       virtual.loadCases(virtualScope)
-        .then(cs => loadSession(puzzle, sessionId, cs, { defaultAll: true, caseResolver: virtual.resolveCase }))
+        .then(cs => loadSession(puzzle, sessionId, cs, {
+          defaultAll: true, caseResolver: virtual.resolveCase, noAufDefault: virtual.noAufDefault,
+        }))
         .catch(e => console.error('[trainer] virtual loadCases failed', e));
       return;
     }

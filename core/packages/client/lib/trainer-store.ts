@@ -222,6 +222,14 @@ interface TrainerState {
    * 运行时态,由 `loadSession` 传入,不持久化。
    */
   caseResolver: CaseResolver | null;
+  /**
+   * 本场的 AUF 默认是关的(虚拟集声明,见 `lib/alg-virtual-sets` 的 `noAufDefault`)。
+   *
+   * 两件事:进场时 preAuf/postAuf 一律置 false(不管全局偏好是什么);这场里再开关它,
+   * **只改本场不写全局偏好** —— 否则在 LSLL 里临时开一下,回头练 PLL 也跟着开了。
+   * 同 caseResolver:运行时态,不持久化,换一套集自然复位。
+   */
+  noAufDefault: boolean;
   selected: string[];
   /**
    * 训练范围(case key 列表)。从 subgroup 页的训练按钮进来时是该组的全部 key,
@@ -311,6 +319,8 @@ interface TrainerState {
       defaultAll?: boolean;
       /** 打乱现算器,见 {@link CaseResolver}。 */
       caseResolver?: CaseResolver | null;
+      /** 本场 AUF 默认关(见 {@link TrainerState.noAufDefault})。 */
+      noAufDefault?: boolean;
     },
   ) => void;
   /**
@@ -843,9 +853,10 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
   /** 起一场会话(单集 / 合练共用):清干净运行时态,按持久化的勾选出第一题。 */
   const startSession = (
     puzzle: AlgPuzzle, sessionId: string, sets: string[] | null, cases: AlgCase[],
-    opts?: { defaultAll?: boolean; caseResolver?: CaseResolver | null },
+    opts?: { defaultAll?: boolean; caseResolver?: CaseResolver | null; noAufDefault?: boolean },
   ) => {
     const persisted = loadPersisted(puzzle, sessionId);
+    const prefs = loadPrefs();
     const valid = new Set(cases.map(caseKey));
     let selected = persisted.selected.filter(k => valid.has(k));
     // 头一次开这场合练:用户点的就是「这几套一起练」,默认全选,免得进来先撞一句「尚未选 case」。
@@ -859,6 +870,11 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       sets,
       cases,
       caseResolver: opts?.caseResolver ?? null,
+      noAufDefault: !!opts?.noAufDefault,
+      // 声明了默认关就压成关;普通集从落盘的偏好取回来 —— 从 LSLL 切回 PLL 得能恢复,
+      // 光靠一次性的 hydratePrefs 是回不来的。
+      preAuf: opts?.noAufDefault ? false : prefs.preAuf,
+      postAuf: opts?.noAufDefault ? false : prefs.postAuf,
       selected,
       solves: persisted.solves,
       currentKey: null,
@@ -886,6 +902,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     sets: null,
     cases: [],
     caseResolver: null,
+    noAufDefault: false,
     selected: [],
     scope: null,
     solves: [],
@@ -952,12 +969,13 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     hydratePrefs: () => set(loadPrefs()),
     setPreAuf: (v) => {
       set({ preAuf: v });
-      persistPrefs(prefsOf(get()));
+      // 默认关的那种集里,开关只作用于本场(见 noAufDefault),不污染全局偏好
+      if (!get().noAufDefault) persistPrefs(prefsOf(get()));
       regenCurrent(); // 立刻在当前题上生效,同 setScrambleKind
     },
     setPostAuf: (v) => {
       set({ postAuf: v });
-      persistPrefs(prefsOf(get()));
+      if (!get().noAufDefault) persistPrefs(prefsOf(get()));
       regenCurrent();
     },
     setTiming: (v) => {
