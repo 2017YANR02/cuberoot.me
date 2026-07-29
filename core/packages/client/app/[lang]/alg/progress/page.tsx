@@ -26,8 +26,9 @@ import { API_ORIGIN } from '@/lib/api-base';
 import { loadMarkOverview, resetSetMarks, MARK_STATUS_LABEL, type MarkOverview, type SetMarkSummary } from '@/lib/trainer-marks';
 import { loadSrsDashboard, resetSetSrs, resetSrsDaily, type SrsOverview } from '@/lib/alg-srs-store';
 import {
-  dueForecast, heatmapGrid, streakDays, dayKey, retention, weakness,
-  emptySrsStat, MASTER_DAYS, type SrsDaily, type SrsRecs, type SrsSetStat,
+  dueForecast, heatmapGrid, streakDays, dayKey, retention, weakness, scheduleNext,
+  emptySrsStat, MASTER_DAYS,
+  type SrsDaily, type SrsRecs, type SrsSetStat, type SrsRec, type SrsGrade,
 } from '@/lib/alg-srs';
 import { primaryCaseName } from '@/lib/alg_case_display';
 import { caseKey } from '@/lib/trainer-case-key';
@@ -105,14 +106,24 @@ function buildRows(
 
 // ── 小组件 ─────────────────────────────────────────────────────
 
-function StatTile({ n, label, sub, tone }: { n: ReactNode; label: string; sub?: string; tone?: string }) {
-  return (
-    <div className={`alg-prog-tile${tone ? ` is-${tone}` : ''}`}>
+/**
+ * 统计块。给了 `href` 就是链接 —— 「不熟 23」点下去要看得见那 23 个是谁,
+ * 光报个数字等于把人晾在这儿。用真链接而非 onClick,中键能新开。
+ */
+function StatTile({ n, label, sub, tone, href }: {
+  n: ReactNode; label: string; sub?: string; tone?: string; href?: string;
+}) {
+  const cls = `alg-prog-tile${tone ? ` is-${tone}` : ''}${href ? ' is-link' : ''}`;
+  const body = (
+    <>
       <b>{n}</b>
       <span>{label}</span>
       {sub && <i>{sub}</i>}
-    </div>
+    </>
   );
+  return href
+    ? <Link href={href} className={cls} prefetch={false}>{body}</Link>
+    : <div className={cls}>{body}</div>;
 }
 
 /**
@@ -241,14 +252,60 @@ function MaturityBar({ neverStudied, relearn, young, mature }: {
   );
 }
 
+/**
+ * 间隔阶梯:一张新卡连续答对时,下次复习分别在几天后。
+ *
+ * 数字是**跑真引擎**算出来的(`scheduleNext` 逐步推),不是手写的示意 ——
+ * 调了 SM-2 的参数,这张图跟着变;写死的话它迟早变成谎话。
+ */
+function IntervalLadder() {
+  const rows = useMemo(() => {
+    const climb = (g: SrsGrade) => {
+      let rec: SrsRec | undefined;
+      const out: number[] = [];
+      for (let i = 0; i < 7; i++) {
+        rec = scheduleNext(rec, g, 0);   // fuzz 默认 0 ⟹ 确定性,这里要的是规律不是抖动
+        // 撞到间隔上限就收 —— 「365 天」连报三格只是噪声,不是阶梯
+        if (out.length > 0 && rec.iv === out[out.length - 1]) break;
+        out.push(rec.iv);
+      }
+      return out;
+    };
+    return [
+      { key: 'ok', label: tr({ zh: '每次「记得」', en: 'Recalled each time' }), ivs: climb(2) },
+      { key: 'easy', label: tr({ zh: '每次「秒答」', en: 'Instant each time' }), ivs: climb(3) },
+    ];
+  }, []);
+
+  return (
+    <div className="alg-prog-ladder">
+      {rows.map(r => (
+        <div key={r.key} className="alg-prog-ladder-row">
+          <span className="alg-prog-ladder-label">{r.label}</span>
+          <span className="alg-prog-ladder-steps">
+            {r.ivs.map((iv, i) => (
+              <b key={i} className={iv >= MASTER_DAYS ? 'is-mature' : undefined}>
+                {tr({ zh: `${iv} 天`, en: `${iv}d` })}
+              </b>
+            ))}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function SetProgressRow({ row, onReset, busy }: {
   row: SetRow;
   onReset: (row: SetRow) => void;
   busy: boolean;
 }) {
-  // 虚拟集(LSLL)没有 select 页 —— 「挑 case」回它自己的浏览页(?mark= 那层筛选它不支持)
+  // 虚拟集(LSLL)没有 select 页 —— 「挑 case」回它自己的浏览页
   const base = virtualAlgSet(row.puzzle, row.slug)?.selectHref(null)
     ?? `/alg/${row.puzzle}/${row.slug}/select`;
+  /** 数字点下去进公式清单(带图和公式),范围钉死在这一套。 */
+  const listHref = (mark: string) =>
+    `/alg/progress/cases?mark=${mark}&set=${encodeURIComponent(row.key)}`;
   const { marks, srs } = row;
   const denom = row.total && row.total > 0
     ? row.total
@@ -289,22 +346,22 @@ function SetProgressRow({ row, onReset, busy }: {
           </span>
         )}
         {marks.starred > 0 && (
-          <Link href={`${base}?mark=star`} className="alg-prog-stat is-star" prefetch={false}>
+          <Link href={listHref('star')} className="alg-prog-stat is-star" prefetch={false}>
             <Star size={12} className="alg-prog-stat-star" /> {marks.starred}
           </Link>
         )}
         {marks.learning > 0 && (
-          <Link href={`${base}?mark=learning`} className="alg-prog-stat is-learning" prefetch={false}>
+          <Link href={listHref('learning')} className="alg-prog-stat is-learning" prefetch={false}>
             {MARK_STATUS_LABEL.learning()} {marks.learning}
           </Link>
         )}
-        {/* 虚拟集(LSLL)的浏览页不认 `?mark=` 这层筛选 —— 数字照报,但不做成点了没反应的链接 */}
+        {/* 虚拟集(LSLL)的未学列不出来:57 万个 case 没有一张固定全表可以拿来相减 */}
         {untouched > 0 && (row.virtual ? (
           <span className="alg-prog-stat">
             {tr({ zh: '未学', en: 'New' })} {untouched.toLocaleString()}
           </span>
         ) : (
-          <Link href={`${base}?mark=none`} className="alg-prog-stat" prefetch={false}>
+          <Link href={`${listHref('none')}&sort=set`} className="alg-prog-stat" prefetch={false}>
             {tr({ zh: '未学', en: 'New' })} {untouched}
           </Link>
         ))}
@@ -483,7 +540,8 @@ export default function AlgProgressPage() {
     const t = {
       sets: 0, marked: 0, mastered: 0, starred: 0, learning: 0,
       due: 0, tracked: 0, relearn: 0, young: 0, mature: 0, reviews: 0, lapses: 0,
-      known: 0,   // 分母已知的 set 里一共多少 case
+      known: 0,        // 分母已知的 set 里一共多少 case
+      knownMarked: 0,  // 其中标过状态的。必须与 known 同口径 —— 拿含虚拟集的 marked 去减会把未学减没
     };
     for (const rows of byPuzzle.values()) {
       for (const r of rows) {
@@ -501,12 +559,14 @@ export default function AlgProgressPage() {
         t.mature += r.srs.mature;
         t.reviews += r.srs.reviews;
         t.lapses += r.srs.lapses;
-        if (r.total && !r.virtual) t.known += r.total;
+        if (r.total && !r.virtual) { t.known += r.total; t.knownMarked += n; }
       }
     }
     return t;
   }, [byPuzzle]);
 
+  // 未学 = 分母已知的套里,一个状态都没标过的。虚拟集(LSLL)不进分母,否则 57 万把这个数写死
+  const untouched = Math.max(0, totals.known - totals.knownMarked);
   const streak = useMemo(() => streakDays(daily, Date.now()), [daily]);
   const today = daily[dayKey(Date.now())]?.[0] ?? 0;
   const ret = useMemo(() => {
@@ -609,9 +669,16 @@ export default function AlgProgressPage() {
           <>
             <div className="alg-prog-tiles">
               <StatTile n={totals.mastered} label={tr({ zh: '已掌握', en: 'Mastered' })} tone="ok"
-                sub={totals.known > 0 ? `/ ${totals.known}` : undefined} />
+                sub={totals.known > 0 ? `/ ${totals.known}` : undefined}
+                href={totals.mastered > 0 ? '/alg/progress/cases?mark=mastered' : undefined} />
+              {/* 「待复习」不做成清单链接:到期的该去练,不是该去看 —— 动作在每套那行的「复习 N」 */}
               <StatTile n={totals.due} label={tr({ zh: '待复习', en: 'Due now' })} tone={totals.due > 0 ? 'due' : undefined} />
-              <StatTile n={totals.learning} label={MARK_STATUS_LABEL.learning()} tone="warn" />
+              <StatTile n={totals.learning} label={MARK_STATUS_LABEL.learning()} tone="warn"
+                href={totals.learning > 0 ? '/alg/progress/cases?mark=learning' : undefined} />
+              {untouched > 0 && (
+                <StatTile n={untouched} label={tr({ zh: '未学', en: 'New' })}
+                  href="/alg/progress/cases?mark=none&sort=set" />
+              )}
               <StatTile n={today} label={tr({ zh: '今日复习', en: 'Reviewed today' })} />
               <StatTile
                 n={<span className="alg-prog-streak"><Flame size={17} />{streak}</span>}
@@ -622,7 +689,8 @@ export default function AlgProgressPage() {
                 <StatTile n={`${Math.round(ret.rate * 100)}%`} label={tr({ zh: '记忆保持率', en: 'Retention' })}
                   sub={tr({ zh: `${ret.samples} 次复习`, en: `${ret.samples} reviews` })} />
               )}
-              <StatTile n={totals.starred} label={tr({ zh: '星标', en: 'Starred' })} />
+              <StatTile n={totals.starred} label={tr({ zh: '星标', en: 'Starred' })}
+                href={totals.starred > 0 ? '/alg/progress/cases?mark=star' : undefined} />
               <StatTile n={totals.sets} label={tr({ zh: '套', en: 'Sets' })} />
             </div>
 
@@ -656,6 +724,18 @@ export default function AlgProgressPage() {
             <section className="alg-prog-section">
               <h2 className="alg-prog-h2">{tr({ zh: '复习日历', en: 'Review calendar' })}</h2>
               <Heatmap daily={daily} />
+            </section>
+
+            {/* 遗忘曲线怎么被抵消的 —— 这套排期一直在跑,但除非说出来,没人会知道它存在 */}
+            <section className="alg-prog-section">
+              <h2 className="alg-prog-h2">{tr({ zh: '排期怎么算的', en: 'How scheduling works' })}</h2>
+              <IntervalLadder />
+              <p className="alg-prog-sub">
+                {tr({
+                  zh: `每次自评「忘了 / 犹豫 / 记得 / 秒答」决定下次隔多久:记得越牢,间隔涨得越快,复习频率随之贴着你的遗忘曲线往下掉。忘了就把间隔清零、当场重来。间隔涨过 ${MASTER_DAYS} 天算长期记住。`,
+                  en: `Each self-grade — forgot / hesitated / recalled / instant — sets the next gap. The stronger the recall, the faster the interval grows, so reviews thin out along your own forgetting curve. A lapse zeroes the interval and repeats the card on the spot. Past ${MASTER_DAYS} days it counts as long-term.`,
+                })}
+              </p>
             </section>
 
             {totals.tracked > 0 && (

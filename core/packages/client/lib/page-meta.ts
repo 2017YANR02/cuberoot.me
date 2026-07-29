@@ -94,6 +94,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'alg/lsll/case': { title: { zh: 'LSLL 情况详情', en: 'LSLL Case Detail' } },
   'alg/lsll/route': { title: { zh: 'LSLL 路线详情', en: 'LSLL Route Detail' } },
   'alg/progress': { title: { zh: '学习进度', en: 'Progress' } },
+  'alg/progress/cases': { title: { zh: '公式清单', en: 'Algorithm List' } },
   'alg/roux': { title: { zh: '桥式训练器', en: 'Roux Trainer' } },
   'alg/skewb-trainer': { title: { zh: 'Skewb 技巧训练', en: 'Skewb Skills' } },
   'algTrainer': { title: { zh: '公式训练器', en: 'Alg Trainer' } },
