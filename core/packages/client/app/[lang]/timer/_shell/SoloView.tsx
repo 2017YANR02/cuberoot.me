@@ -222,10 +222,11 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
 
 
-  // 解法提示的手机全屏浮层由 SolverHintPanel 经同一个 URL param 开合;这里只读,
-  // 用来把它算进 anyModalOpen(浮层盖住整屏时,空格/Escape 不该穿到后面的计时器)。
+  // 解法提示的全屏浮层由 SolverHintPanel 经同一个 URL param 开合(手机点 pill、桌面把头部的
+  // 形态开关拨到「全屏」都进这一个);这里只读,用来把它算进 anyModalOpen(浮层盖住整屏时,
+  // 空格/Escape 不该穿到后面的计时器)。
   const [hintsSheetParam] = useQueryState(HINTS_PARAM, parseAsBoolean.withDefault(false));
-  const hintsSheetOpen = hintsSheetParam && !isDesktop;
+  const hintsSheetOpen = hintsSheetParam;
 
   // ── Side panel (desktop rail / phone bottom sheet) ──────────────
   const [panelTab, setPanelTab] = useState<PanelTab | null>(null);

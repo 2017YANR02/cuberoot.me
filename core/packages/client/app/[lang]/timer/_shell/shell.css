@@ -277,7 +277,8 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 .battle-container {
   --timer-scramble-fs: clamp(26px, 4.4vw, 36px);
   --timer-cube-h: min(30vw, 26dvh, 260px);
-  --timer-scramble-src-fs: 24px;
+  /* 来源行(国旗 + 比赛名 + 项目 + 轮次)是背景信息,不该跟打乱公式抢视线 —— 取原先 24px 的一半。 */
+  --timer-scramble-src-fs: 12px;
 }
 
 .timing-surface-scramble {
@@ -655,6 +656,10 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   transition: background 120ms, color 120ms;
 }
 .solver-panel-head:hover { background: var(--shell-hover); color: var(--foreground); }
+/* 头部一行 = 折叠按钮 (+ 桌面右栏展开后的形态开关)。默认 display:contents —— 手机顶栏、
+   桌面收起态的 pill 形态里当它不存在,原有布局一字不改;只有右栏展开态(见 ≥1024 段)
+   才把它变成真的 flex 行,好把开关摆到标题那条分隔线上。 */
+.solver-panel-headrow { display: contents; }
 /* 手机形态:顶栏那排控件里的一员,但不画框 —— 纯文字入口,高度对齐旁边的下拉。
    (桌面那颗仍是 pill:它在右栏里是唯一的可点物,没有边框就读不出可点。) */
 .shell-topbar-left .solver-panel-head {
@@ -672,6 +677,15 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 .solver-panel[data-open='false'] .solver-panel-chevron { transform: rotate(90deg); }
 .solver-panel[data-open='true']  .solver-panel-chevron { transform: rotate(-90deg); }
 .solver-panel-expand { opacity: 0.7; }
+/* 形态开关(右栏 ↔ 全屏,仅桌面渲染):右栏头部和全屏浮层头部各一个,两边都能切回去。
+   全屏 = 同一份内容摊到 .solver-sheet(与手机同一个浮层、同一个 ?hints),窄栏里被迫
+   上下叠的 3D 魔方与解法列表在那儿才排得开。 */
+.solver-mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  padding: 0 10px;
+}
 .solver-panel-body { width: 100%; margin-top: 8px; }
 /* 打乱原文 — 面板/浮层里解法讲的是哪条打乱。同 .scramble-strip 的记号字体,但只做正文
    大小:这里是对照用的参考行,不是要人隔着房间读的主视觉。窄栏放不下就折行。 */
@@ -915,12 +929,18 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   .shell-rail .solver-panel[data-open='true'] { flex: 1 1 auto; min-height: 0; }
   .shell-rail .solver-panel[data-open='false'] { flex: 0 0 auto; }
 
-  /* Header, rail expanded: full-width bar + bottom divider. */
+  /* Header, rail expanded: full-width bar + bottom divider. 分隔线挂在 headrow 上,
+     好让标题按钮与形态开关共用同一条底边。 */
+  .timer-shell:has(.shell-rail .solver-panel[data-open='true']) .shell-rail .solver-panel-headrow {
+    display: flex;
+    align-items: stretch;
+    border-bottom: 1px solid var(--shell-divider);
+  }
   .timer-shell:has(.shell-rail .solver-panel[data-open='true']) .shell-rail .solver-panel-head {
+    flex: 1;
     justify-content: space-between;
     padding: 12px 14px;
     border: 0;
-    border-bottom: 1px solid var(--shell-divider);
     border-radius: 0;
     background: transparent;
   }
