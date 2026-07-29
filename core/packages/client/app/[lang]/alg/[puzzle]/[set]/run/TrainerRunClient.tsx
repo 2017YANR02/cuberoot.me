@@ -352,7 +352,12 @@ export default function TrainerRunClient() {
   useEffect(() => {
     // 读 live 状态而不是闭包值:setScope 的 effect 可能在同一个 commit 里已经出过题了,
     // 闭包里的 currentName 还是 null —— 直接再出一题会在历史开头塞进一条幽灵记录。
-    if (cases.length > 0 && pool.length > 0 && useTrainerStore.getState().currentName === null) {
+    const st = useTrainerStore.getState();
+    // 房间模式的出题由 store 自己驱动(建房 / 加入 / 开下一轮各自领题),而领取是异步的:
+    // 建房那一刻 current 被清空、claim 还在飞,这里若插一脚就会白领一格 —— 那一格谁也不做,
+    // 全队这一轮凭空少一题。(旧代码靠 roomBusy 把这次误触吞掉,现在连点不再丢,得从源头拦。)
+    if (st.room) return;
+    if (cases.length > 0 && pool.length > 0 && st.currentName === null) {
       nextScramble();
     }
   }, [cases.length, pool.length, currentName, nextScramble]);
