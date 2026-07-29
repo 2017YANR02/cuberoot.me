@@ -12,7 +12,6 @@ import { loadCachedSolves, saveCachedSolves } from '@/lib/recon-cache';
 import { compNameZh, loadFlagData } from '@/lib/country-flags';
 import { formatTime, formatAvg, expandContinentRecord } from '@/lib/recon-utils';
 import { API_ORIGIN } from '@/lib/api-base';
-import { ABOUT_REGISTRY } from '@/app/[lang]/wca/about/[id]/_lib/registry';
 import { STACK_TOOLS_META, type StackToolMeta } from '@/app/[lang]/code/stack/_lib/stack_meta';
 import GLOSSARY_DATA from '@/app/[lang]/wiki/glossary.json';
 import { WR_METRICS, resultsQueryForMetric } from '@/lib/wr-metrics';
@@ -151,12 +150,29 @@ const GLOSSARY_ENTRIES: GlossaryRecord[] = ((): GlossaryRecord[] => {
 
 interface AboutRecord { id: string; titleZh: string; titleEn: string; hay: string
  }
-const ABOUT_ENTRIES: AboutRecord[] = Object.values(ABOUT_REGISTRY).map(e => ({
-  id: e.id,
-  titleZh: e.titleZh,
-  titleEn: e.titleEn,
-  hay: `${e.id}\n${e.titleZh}\n${e.titleEn}\n${e.badgeZh ?? ''}\n${e.badgeEn ?? ''}`.toLowerCase(),
-}));
+
+// ABOUT_REGISTRY 是 /wca/about 那七个 entry 文件的静态汇总 —— 460KB 的双语长文 + SQL
+// 源码,而这里只要标题和 badge。桌宠会在空闲时预热搜索面板(DeskPet 的 requestIdleCallback),
+// 于是那 460KB 曾经跟着 site-search 落到全站每一页(实测 /timer 和 /support 都有一个
+// 394KB 的 chunk)。改成「用户真敲了字才 import」:注册表仍是唯一数据源(不另存一份索引,
+// 不需要同步守卫),代价只是首次输入时 about 那一组结果晚一帧出现。
+let aboutEntriesCache: AboutRecord[] | null = null;
+let aboutEntriesPending: Promise<AboutRecord[]> | null = null;
+function loadAboutEntries(): Promise<AboutRecord[]> {
+  if (aboutEntriesCache) return Promise.resolve(aboutEntriesCache);
+  aboutEntriesPending ??= import('@/app/[lang]/wca/about/[id]/_lib/registry')
+    .then(({ ABOUT_REGISTRY }) => {
+      aboutEntriesCache = Object.values(ABOUT_REGISTRY).map(e => ({
+        id: e.id,
+        titleZh: e.titleZh,
+        titleEn: e.titleEn,
+        hay: `${e.id}\n${e.titleZh}\n${e.titleEn}\n${e.badgeZh ?? ''}\n${e.badgeEn ?? ''}`.toLowerCase(),
+      }));
+      return aboutEntriesCache;
+    })
+    .catch(() => { aboutEntriesPending = null; return [] as AboutRecord[]; });
+  return aboutEntriesPending;
+}
 
 interface StackRecord { meta: StackToolMeta; hay: string }
 const STACK_ENTRIES: StackRecord[] = STACK_TOOLS_META.map(m => ({
@@ -302,6 +318,8 @@ export function useSiteSearch(
   const algSetsRef = useRef<AlgSetRecord[] | null>(null);
   const [xLoaded, setXLoaded] = useState(false);
 
+  const [aboutEntries, setAboutEntries] = useState<AboutRecord[]>(() => aboutEntriesCache ?? []);
+
   useEffect(() => {
     loadStatIndex().then(j => { if (j) setStatIndex(j); });
   }, []);
@@ -311,6 +329,14 @@ export function useSiteSearch(
   const qRaw = deferredRawQuery.trim();
   const xSearchEnabled = qRaw.length >= (hasNonLatin(qRaw) ? 1 : MIN_LEN_LATIN);
   const tokens = useMemo(() => tokenize(q), [q]);
+
+  // 敲下第一个字才把 about 注册表拉进来(见 loadAboutEntries)。
+  useEffect(() => {
+    if (q === '' || aboutEntries.length > 0) return;
+    let cancelled = false;
+    void loadAboutEntries().then(list => { if (!cancelled) setAboutEntries(list); });
+    return () => { cancelled = true; };
+  }, [q, aboutEntries.length]);
 
   useEffect(() => {
     if (xLoaded) return;
@@ -436,7 +462,7 @@ export function useSiteSearch(
   const aboutMatches = useMemo(() => {
     if (q === '' || tokens.length === 0) return [] as AboutHit[];
     const out: AboutHit[] = [];
-    for (const e of ABOUT_ENTRIES) {
+    for (const e of aboutEntries) {
       if (allTokensIn(e.hay, tokens)) {
         out.push({ id: e.id, titleZh: e.titleZh, titleEn: e.titleEn });
         if (out.length >= MATCH_HARD_CAP) break;
