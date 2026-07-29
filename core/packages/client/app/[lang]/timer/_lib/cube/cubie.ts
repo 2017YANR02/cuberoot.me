@@ -170,3 +170,86 @@ export function decodeCubieFacelets(corners: number[], edges: number[]): string 
   if (!isValidCubieState(st)) return null;
   return cubieToFacelets(st);
 }
+
+/* ------------------------------------------------------------------ */
+/*  Moves                                                             */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The piece-level move model. `_lib/cube/state.ts` already turns cubes at the
+ * FACELET level and is what the app uses; this exists because the smart-cube
+ * protocols speak cubies, so anything that has to produce a wire-format state
+ * (the dev fake cube) needs to turn one. The two models are independent
+ * implementations of the same group and `tests/smart_cube_state_parity.test.ts`
+ * holds them to the same answer.
+ */
+export function solvedCubie(): CubieState {
+  return {
+    ca: [0, 1, 2, 3, 4, 5, 6, 7],
+    ea: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22],
+  };
+}
+
+/** Group operation: apply `b` to `a` (csTimer's `CubeMult`). */
+export function cubieMultiply(a: CubieState, b: CubieState): CubieState {
+  const ca = new Array<number>(8);
+  for (let c = 0; c < 8; c++) {
+    const src = a.ca[b.ca[c] & 7];
+    ca[c] = (src & 7) | ((((src >> 3) + (b.ca[c] >> 3)) % 3) << 3);
+  }
+  const ea = new Array<number>(12);
+  for (let e = 0; e < 12; e++) ea[e] = a.ea[b.ea[e] >> 1] ^ (b.ea[e] & 1);
+  return { ca, ea };
+}
+
+/**
+ * The 18 face turns, indexed `face * 3 + power` over `URFDLB` with power
+ * 0 = CW, 1 = 180, 2 = CCW. The six quarter turns are csTimer's tables
+ * verbatim; the rest are composed, which is also how csTimer builds them.
+ */
+const MOVE_CUBIES: CubieState[] = (() => {
+  const base: Record<number, CubieState> = {
+    0: { ca: [3, 0, 1, 2, 4, 5, 6, 7], ea: [6, 0, 2, 4, 8, 10, 12, 14, 16, 18, 20, 22] },
+    3: { ca: [20, 1, 2, 8, 15, 5, 6, 19], ea: [16, 2, 4, 6, 22, 10, 12, 14, 8, 18, 20, 0] },
+    6: { ca: [9, 21, 2, 3, 16, 12, 6, 7], ea: [0, 19, 4, 6, 8, 17, 12, 14, 3, 11, 20, 22] },
+    9: { ca: [0, 1, 2, 3, 5, 6, 7, 4], ea: [0, 2, 4, 6, 10, 12, 14, 8, 16, 18, 20, 22] },
+    12: { ca: [0, 10, 22, 3, 4, 17, 13, 7], ea: [0, 2, 20, 6, 8, 10, 18, 14, 16, 4, 12, 22] },
+    15: { ca: [0, 1, 11, 23, 4, 5, 18, 14], ea: [0, 2, 4, 23, 8, 10, 12, 21, 16, 18, 7, 15] },
+  };
+  const out: CubieState[] = [];
+  for (let axis = 0; axis < 18; axis += 3) {
+    out[axis] = base[axis];
+    out[axis + 1] = cubieMultiply(out[axis], base[axis]);
+    out[axis + 2] = cubieMultiply(out[axis + 1], base[axis]);
+  }
+  return out;
+})();
+
+/**
+ * Apply WCA face notation (`R`, `R'`, `R2`, space separated) to a cubie state.
+ * Quarter and half turns of the six outer faces only — that is the whole of
+ * what a smart cube can report. Unknown tokens throw rather than being
+ * skipped: a fake cube that silently ignored a move would be worse than no
+ * fake cube at all.
+ */
+export function applyCubieAlg(state: CubieState, alg: string): CubieState {
+  let cur = state;
+  for (const token of alg.trim().split(/\s+/)) {
+    if (!token) continue;
+    const face = 'URFDLB'.indexOf(token[0]);
+    if (face < 0) throw new Error(`applyCubieAlg: unsupported move "${token}"`);
+    const suffix = token.slice(1);
+    const power = suffix === '' ? 0 : suffix === '2' ? 1 : suffix === "'" ? 2 : -1;
+    if (power < 0) throw new Error(`applyCubieAlg: unsupported move "${token}"`);
+    cur = cubieMultiply(cur, MOVE_CUBIES[face * 3 + power]);
+  }
+  return cur;
+}
+
+/**
+ * Split a cubie state back into the 7 corners + 11 edges the wire carries.
+ * Inverse of `completeCubieState`, for building protocol frames.
+ */
+export function cubieStateToWire(st: CubieState): { corners: number[]; edges: number[] } {
+  return { corners: st.ca.slice(0, 7), edges: st.ea.slice(0, 11) };
+}

@@ -24,6 +24,10 @@
 
 import { describe, it, expect } from 'vitest';
 import { applyScramble, toFaceletString, fromFaceletString } from '@/app/[lang]/timer/_lib/cube/state';
+import {
+  applyCubieAlg, cubieStateToWire, cubieToFacelets, decodeCubieFacelets,
+  isValidCubieState, solvedCubie,
+} from '@/app/[lang]/timer/_lib/cube/cubie';
 import { parseScramble } from '@/app/[lang]/timer/_lib/cube/moves';
 import { CubeStateTracker } from '@/app/[lang]/timer/_lib/bluetooth/state_track';
 import { ganV4Driver } from '@/app/[lang]/timer/_lib/bluetooth/gan_v4';
@@ -215,6 +219,53 @@ describe('source contract: the tracker advances before subscribers are told', ()
     expect(apply, 'applyMove call not found — did handleMove get renamed?').toBeGreaterThan(-1);
     expect(notify, 'onMove notification not found').toBeGreaterThan(-1);
     expect(apply).toBeLessThan(notify);
+  });
+});
+
+describe('the cubie move model matches the facelet move model', () => {
+  /**
+   * `_lib/cube/cubie.ts` turns cubes at the PIECE level; `_lib/cube/state.ts`
+   * turns them at the FACELET level. They are independent implementations of
+   * the same group, and the dev fake cube uses the piece-level one to produce
+   * the wire-format states it broadcasts — so if it drifted, every
+   * fake-cube-based verification would be measuring a lie.
+   */
+  const cubieFacelets = (alg: string): string => cubieToFacelets(applyCubieAlg(solvedCubie(), alg));
+
+  it('agrees with the facelet model on every scramble', () => {
+    for (const alg of ['', 'R', "U'", 'F2', 'R U R\' U\'', ...SCRAMBLES]) {
+      expect(`${alg || '(solved)'}: ${cubieFacelets(alg)}`)
+        .toBe(`${alg || '(solved)'}: ${virtualFacelets(alg)}`);
+    }
+  });
+
+  it('respects the order of the moves it models', () => {
+    expect(cubieFacelets('R R R R')).toBe(SOLVED_FACELET);
+    expect(cubieFacelets('R2 R2')).toBe(SOLVED_FACELET);
+    expect(cubieFacelets("R' R")).toBe(SOLVED_FACELET);
+    // A sune has order 6; five of them must NOT be solved, six must be.
+    const sune = "R U R' U R U2 R'";
+    expect(cubieFacelets(Array(5).fill(sune).join(' '))).not.toBe(SOLVED_FACELET);
+    expect(cubieFacelets(Array(6).fill(sune).join(' '))).toBe(SOLVED_FACELET);
+  });
+
+  it('survives the wire round trip the protocols use (7 corners + 11 edges)', () => {
+    for (const alg of ['', 'R', ...SCRAMBLES]) {
+      const st = applyCubieAlg(solvedCubie(), alg);
+      expect(isValidCubieState(st), alg).toBe(true);
+      const { corners, edges } = cubieStateToWire(st);
+      expect(corners, alg).toHaveLength(7);
+      expect(edges, alg).toHaveLength(11);
+      // The 8th corner and 12th edge come back from the checksum alone.
+      expect(decodeCubieFacelets(corners, edges), alg).toBe(virtualFacelets(alg));
+    }
+  });
+
+  it('throws on notation a smart cube cannot report rather than skipping it', () => {
+    expect(() => applyCubieAlg(solvedCubie(), 'x')).toThrow();
+    expect(() => applyCubieAlg(solvedCubie(), 'Rw')).toThrow();
+    expect(() => applyCubieAlg(solvedCubie(), 'M')).toThrow();
+    expect(() => applyCubieAlg(solvedCubie(), 'R3')).toThrow();
   });
 });
 

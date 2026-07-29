@@ -54,6 +54,7 @@ import { moyuDriver } from './moyu';
 import { moyu32Driver } from './moyu32';
 import { qiyiDriver } from './qiyi';
 import { CubeStateTracker } from './state_track';
+import { armedFakeCube } from './fake_cube';
 import { toFaceletString } from '../cube/state';
 import { watchAdvertisementsMac, savedMac, saveMac, clearMac, parseMacFromName, normalizeMac } from './mac';
 import type { BluetoothCubeStatus } from './types';
@@ -482,65 +483,18 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     setFacelets(toFaceletString(trackerRef.current.getFaces()));
   }, []);
 
-  const connect = useCallback(async (): Promise<void> => {
-    if (typeof navigator === 'undefined' || !navigator.bluetooth) {
-      // Tagged error: TimerPage swaps in env-specific advice modal.
-      const err = new Error('NO_WEB_BLUETOOTH') as Error & { kind?: string };
-      err.kind = 'no-web-bluetooth';
-      throw err;
-    }
-
-    // Fresh user-initiated connect: clear the intentional-disconnect flag
-    // so a future drop will trigger auto-reconnect.
-    intentionalDisconnectRef.current = false;
-    cancelPendingReconnect();
-
-    // requestDevice: match by known service UUIDs OR GAN-family name prefixes
-    // (some firmwares don't advertise the data service in the scan record),
-    // expose every driver service for post-connect probing, and request GAN
-    // manufacturer data so we can recover the MAC from advertisements.
-    const filters: BluetoothLEScanFilter[] = [
-      ...DRIVERS.map(d => ({ services: [d.service] })),
-      { namePrefix: 'GAN' },
-      { namePrefix: 'MG' },
-      { namePrefix: 'AiCube' },
-      { namePrefix: 'Gi' },
-      // MoYu32 (WeiLong V10 Ai and later) advertise as `WCU_MY32_XXYY`.
-      { namePrefix: 'WCU' },
-    ];
-    const optional = new Set<string | number>();
-    for (const d of DRIVERS) {
-      optional.add(d.service);
-      for (const s of d.optionalServices ?? []) optional.add(s);
-    }
-
-    let device: BluetoothDevice;
-    try {
-      device = await navigator.bluetooth.requestDevice({
-        filters,
-        optionalServices: Array.from(optional),
-        // Every brand's CICs, not just GAN's — see ALL_CICS.
-        optionalManufacturerData: ALL_CICS,
-      });
-    } catch (err) {
-      // User cancelled the picker, denied permission, or no device found.
-      // We don't throw — the caller asked us to connect; we just return
-      // without changing state. Re-throw on truly unexpected errors.
-      if (err instanceof DOMException && (err.name === 'NotFoundError' || err.name === 'NotAllowedError')) {
-        return;
-      }
-      throw err;
-    }
-
+  /**
+   * Everything after "we have a device": open GATT, pick the driver from the
+   * services it actually exposes, settle the MAC, run the handshake. Shared by
+   * the picker path and the dev fake cube so neither can drift from the other.
+   */
+  const attachToDevice = useCallback(async (
+    device: BluetoothDevice,
+    advMac: string | null,
+  ): Promise<void> => {
     if (!device.gatt) {
       throw new Error('Selected device does not expose a GATT server.');
     }
-
-    // Recover the MAC from a BLE advertisement BEFORE connecting (matches
-    // cstimer's order; GAN / MoYu / QiYi need it for AES key derivation).
-    // Best-effort: resolves null when unsupported or no manufacturer data.
-    const advMac = await watchAdvertisementsMac(device);
-
     const server = await device.gatt.connect();
 
     // Pick the driver by which GATT service the cube actually exposes (GAN
@@ -682,6 +636,76 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       throw err;
     }
   }, [handleMove, handleCubeState, cancelPendingReconnect, internalDisconnect]);
+
+  const connect = useCallback(async (): Promise<void> => {
+    // Dev escape hatch: `__cuberootFakeCube.arm()` in the console stands up a
+    // fake GAN v4 peripheral so the whole smart-cube experience can be driven
+    // without hardware. It joins the normal path below at the same point a real
+    // device does — driver selection, MAC handling and the handshake all run
+    // for real. Compiled out of production; see ./fake_cube.ts.
+    const fake = armedFakeCube();
+    if (fake) {
+      intentionalDisconnectRef.current = false;
+      cancelPendingReconnect();
+      await attachToDevice(fake.device, fake.mac);
+      return;
+    }
+
+    if (typeof navigator === 'undefined' || !navigator.bluetooth) {
+      // Tagged error: TimerPage swaps in env-specific advice modal.
+      const err = new Error('NO_WEB_BLUETOOTH') as Error & { kind?: string };
+      err.kind = 'no-web-bluetooth';
+      throw err;
+    }
+
+    // Fresh user-initiated connect: clear the intentional-disconnect flag
+    // so a future drop will trigger auto-reconnect.
+    intentionalDisconnectRef.current = false;
+    cancelPendingReconnect();
+
+    // requestDevice: match by known service UUIDs OR GAN-family name prefixes
+    // (some firmwares don't advertise the data service in the scan record),
+    // expose every driver service for post-connect probing, and request GAN
+    // manufacturer data so we can recover the MAC from advertisements.
+    const filters: BluetoothLEScanFilter[] = [
+      ...DRIVERS.map(d => ({ services: [d.service] })),
+      { namePrefix: 'GAN' },
+      { namePrefix: 'MG' },
+      { namePrefix: 'AiCube' },
+      { namePrefix: 'Gi' },
+      // MoYu32 (WeiLong V10 Ai and later) advertise as `WCU_MY32_XXYY`.
+      { namePrefix: 'WCU' },
+    ];
+    const optional = new Set<string | number>();
+    for (const d of DRIVERS) {
+      optional.add(d.service);
+      for (const s of d.optionalServices ?? []) optional.add(s);
+    }
+
+    let device: BluetoothDevice;
+    try {
+      device = await navigator.bluetooth.requestDevice({
+        filters,
+        optionalServices: Array.from(optional),
+        // Every brand's CICs, not just GAN's — see ALL_CICS.
+        optionalManufacturerData: ALL_CICS,
+      });
+    } catch (err) {
+      // User cancelled the picker, denied permission, or no device found.
+      // We don't throw — the caller asked us to connect; we just return
+      // without changing state. Re-throw on truly unexpected errors.
+      if (err instanceof DOMException && (err.name === 'NotFoundError' || err.name === 'NotAllowedError')) {
+        return;
+      }
+      throw err;
+    }
+
+    // Recover the MAC from a BLE advertisement BEFORE connecting (matches
+    // cstimer's order; GAN / MoYu / QiYi need it for AES key derivation).
+    // Best-effort: resolves null when unsupported or no manufacturer data.
+    const advMac = await watchAdvertisementsMac(device);
+    await attachToDevice(device, advMac);
+  }, [attachToDevice, cancelPendingReconnect]);
 
   // Tear down on unmount so we don't leak GATT subscriptions.
   useEffect(() => {
