@@ -997,6 +997,9 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   flex: 1 1 100%;
   box-sizing: border-box;
 }
+/* 上面那条按后代匹配,会连难度子区里的滑块一起钉成整行(→ 配色/方法/阶段 与滑块被迫分两行)。
+   难度子区内的滑块只占同行剩余宽度,与选择器并成一行。 */
+.scramble-src-bar .wca-src-diff .wca-src-steps-range { flex: 1 1 150px; }
 /* 手动输入队列:整行让位给全宽文本域(不走 label+control 两列)。 */
 .scramble-src-bar .scramble-src-manual { display: block; flex: 1 1 100%; }
 .scramble-src-manual-input {
