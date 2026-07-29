@@ -363,7 +363,9 @@
   list-style: none;
 }
 
-.predict-move-list li {
+/* 每一招都是按钮:点它 = 把盘面同步到做完这一招的样子(/recon 详情页点解法同款) */
+.predict-move-list button {
+  display: block;
   min-width: 2.6rem;
   padding: 0.35rem 0.55rem;
   /* 白/黄贴纸色在浅色背景上没边界,统一描一圈中性描边 */
@@ -372,16 +374,24 @@
   font-family: var(--font-mono), monospace;
   font-size: 1.15rem;
   font-weight: 700;
+  line-height: 1.2;
   text-align: center;
+  cursor: pointer;
 }
 
-/* 复盘进度:转过的压暗,下一步描一圈 */
+/* 可点的提示:描一圈浅色(比 is-current 淡,底下那条规则在后面,当前这一招悬停时仍是实色) */
+.predict-move-list button:hover {
+  outline: 2px solid color-mix(in srgb, var(--foreground) 40%, transparent);
+  outline-offset: 1px;
+}
+
+/* 复盘进度:转过的压暗,当前这一招(step - 1)描一圈 */
 /* 播完时整排都是 done,压太狠会整排读不出来 */
-.predict-move-list li.is-done {
+.predict-move-list button.is-done {
   opacity: 0.5;
 }
 
-.predict-move-list li.is-next {
+.predict-move-list button.is-current {
   outline: 2px solid var(--foreground);
   outline-offset: 1px;
 }
@@ -440,5 +450,6 @@
   .predict-header h1 { font-size: 1.25rem; }
   .predict-controls { gap: 0.6rem 0.9rem; }
   .predict-clock { font-size: 1.1rem; }
-  .predict-move-list li { font-size: 1rem; min-width: 2.2rem; }
+  /* 每一招现在可点(跳到那一步),手机上给足指头落点 */
+  .predict-move-list button { font-size: 1rem; min-width: 2.4rem; padding: 0.5rem 0.6rem; }
 }
