@@ -2033,6 +2033,11 @@ export default function SimPage() {
       imgSpec.dist, imgSpec.rotateAxis1, imgSpec.rotateAxis2,
       imgSpec.rotateAngle1, imgSpec.rotateAngle2, imgSpec.backgroundColor,
       imgSpec.arrows, imgSpec.defaultArrowColor, imgSpec.cubeView, puzzleParam,
+      // plan 的「隐去侧面灰格」+ 阶段遮罩:都只改 stickerColors,不改 serialize(),
+      // 所以 exportedSig 认不出来 —— 不列进来切开关整个伴图不会重画。
+      imgSpec.hideGreySides, imgSpec.stageMask, imgSpec.maskAlg,
+      imgSpec.planSideRule, imgSpec.planUpRule, imgSpec.planShowYellow,
+      imgSpec.planForceShow, imgSpec.planForceHide,
       settings.faceColors, query.stickering, query.stickeringRot]);
 
   // 2D flat-net view mode — NxN only (number puzzle), driven by the same live cube.

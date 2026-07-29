@@ -18,6 +18,7 @@ import { createPortal } from 'react-dom';
 import { Copy, Check, Download, MousePointerClick, RotateCcw, Plus, Trash2 } from 'lucide-react';
 import SimCaptureGroup, { type SimBridge } from '@/components/puzzle-image/SimCaptureGroup';
 import PillToggle from '@/components/PillToggle/PillToggle';
+import BoolToggle from '@/components/BoolToggle';
 import CubeVirtualKeyboard from '@/components/CubeVirtualKeyboard';
 import PuzzleImage from '@/components/puzzle-image/PuzzleImage';
 import { publicApiUrl } from '@/lib/api-base';
@@ -38,7 +39,7 @@ import {
 } from '@/lib/puzzle-image/masks';
 import { renderPaintedNetSvg } from '@/lib/puzzle-image/painted-net';
 import { domRenderKindOf, renderSpecSvg } from '@/lib/puzzle-image/render';
-import { FACE_LIST, type FaceKey, type ImageSpec, type PuzzleType, type PuzzleVariant, type SpecialView } from '@/lib/puzzle-image/types';
+import { FACE_LIST, type FaceKey, type ImageSpec, type PuzzleType, type PuzzleVariant, type SpecialView, type PlanSideRule, type PlanUpRule } from '@/lib/puzzle-image/types';
 import { useT } from '@/hooks/useT';
 import { tr } from '@/i18n/tr';
 import './puzzle-image.css';
@@ -337,6 +338,14 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
       }
     }
     if (s.stageMask) p.set('mask', s.stageMask);
+    if (s.puzzleType === 'cube' && s.cubeView === 'plan') {
+      if (s.hideGreySides) p.set('ngs', '1');
+      if (s.planSideRule !== DEFAULTS.planSideRule) p.set('psr', s.planSideRule);
+      if (s.planUpRule !== DEFAULTS.planUpRule) p.set('pur', s.planUpRule);
+      if (s.planShowYellow !== DEFAULTS.planShowYellow) p.set('psy', s.planShowYellow ? '1' : '0');
+      if (s.planForceShow) p.set('pfs', s.planForceShow);
+      if (s.planForceHide) p.set('pfh', s.planForceHide);
+    }
     if (s.imageSize !== DEFAULTS.imageSize) p.set('size', String(s.imageSize));
     if (s.backgroundColor) p.set('bg', s.backgroundColor);
     if (s.cubeColor !== DEFAULTS.cubeColor) p.set('cc', s.cubeColor);
@@ -561,8 +570,81 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
                 </button>
               ))
             )}
+            {/* 俯视图独有:侧面一圈灰格是「不关心」的占位,删掉只留彩条 = OLL 识别图。
+                顶面 9 格不受影响(侧环由渲染器的独立 pass 画)。 */}
+            {isCube && activeCubeView === 'plan' && (
+              <BoolToggle
+                value={s.hideGreySides}
+                onChange={(v) => set('hideGreySides', v)}
+                label={t('隐去侧面灰格', 'Hide grey sides')}
+              />
+            )}
           </div>
         </div>
+        )}
+
+        {/* 识别简化:只留「认图真正要看的」那几格。规则是阈值 —— 选中档位以下的图案全留,
+            以上的抹掉;真要全抹光时会自动放宽一档,不会给出一张空图。侧面/顶面两条规则的
+            判据是「角-棱-角」三格窗口,只对三阶成立,别的阶数不显示入口。 */}
+        {!engineOnly && isCube && activeCubeView === 'plan' && (
+          <div className="vc-row">
+            <label className="vc-label">{t('识别简化', 'Simplify')}</label>
+            <div className="vc-row-controls">
+              {s.cubeSize === 3 && (
+                <>
+                  <select
+                    className="vc-select" value={s.planSideRule}
+                    aria-label={t('侧面简化规则', 'Side rule')}
+                    title={t('保留到哪一类图案为止 —— 越往下留得越多',
+                      'Keep patterns up to this class — further down keeps more')}
+                    onChange={(e) => set('planSideRule', e.target.value as PlanSideRule)}
+                  >
+                    <option value="all">{t('侧面:全留', 'Side: all')}</option>
+                    <option value="bar">{t('侧面:色条', 'Side: Bar')}</option>
+                    <option value="oppline">{t('侧面:+对色线', 'Side: OppLine')}</option>
+                    <option value="cece">{t('侧面:+交替色', 'Side: CECE')}</option>
+                    <option value="light">{t('侧面:+车灯', 'Side: Light')}</option>
+                    <option value="oppbar">{t('侧面:+对色对', 'Side: OppBar')}</option>
+                    <option value="ecec">{t('侧面:+棱角交替', 'Side: ECEC')}</option>
+                  </select>
+                  <select
+                    className="vc-select" value={s.planUpRule}
+                    aria-label={t('顶面简化规则', 'Up rule')}
+                    onChange={(e) => set('planUpRule', e.target.value as PlanUpRule)}
+                  >
+                    <option value="all">{t('顶面:全留', 'Up: all')}</option>
+                    <option value="bar">{t('顶面:色条', 'Up: Bar')}</option>
+                    <option value="baroppbar">{t('顶面:+对色条', 'Up: Bar&OppBar')}</option>
+                  </select>
+                </>
+              )}
+              <BoolToggle
+                value={s.planShowYellow}
+                onChange={(v) => set('planShowYellow', v)}
+                label={t('保留顶层色', 'Keep top colour')}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* 强制显示 / 强制隐藏:规则跑完之后的手动补丁,序号 1 起数 ——
+            侧面沿环顺时针(左上角起),顶面按图上行序。语法与 MeiCubeTool 同:side=1,2&up=5 */}
+        {!engineOnly && isCube && activeCubeView === 'plan' && (
+          <div className="vc-row">
+            <label className="vc-label vc-label-secondary">{t('强制显隐', 'Force')}</label>
+            <div className="vc-row-controls">
+              <input
+                className="vc-text" value={s.planForceShow} placeholder="side=&up=1,3,7,9"
+                aria-label={t('强制显示', 'Force show')}
+                onChange={(e) => set('planForceShow', e.target.value)}
+              />
+              <input
+                className="vc-text" value={s.planForceHide} placeholder="side=&up="
+                aria-label={t('强制隐藏', 'Force hide')}
+                onChange={(e) => set('planForceHide', e.target.value)}
+              />
+            </div>
+          </div>
         )}
 
         <div className="vc-row">

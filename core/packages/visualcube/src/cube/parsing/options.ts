@@ -1,5 +1,6 @@
 import { ICubeOptions } from '../options.js'
 import { Masking } from '../constants.js'
+import type { PlanSideRule, PlanUpRule } from '../plan-simplify.js'
 import { parseRotationSequence } from './rotation.js'
 import { parseFaceletColors } from './faceletColors.js'
 import { parseColorScheme } from './colorScheme.js'
@@ -30,6 +31,30 @@ export function parseOptions(rawOptions: string): ICubeOptions {
         break
       case 'stage':
         options.mask = paramValue as Masking
+        break
+      case 'ngs':
+        // "no grey sides" — plan view drops the masked side-rim stickers. Not a PHP
+        // param; ours. `ngs=0` stays off so an explicit falsy value reads naturally.
+        options.hideGreySides = paramValue !== '0' && paramValue !== ''
+        break
+      // Plan-view recognition simplification (cube/plan-simplify.ts). All ours.
+      case 'psr':
+        options.planSimplify = { ...options.planSimplify, side: paramValue as PlanSideRule }
+        break
+      case 'pur':
+        options.planSimplify = { ...options.planSimplify, up: paramValue as PlanUpRule }
+        break
+      case 'psy':
+        options.planSimplify = {
+          ...options.planSimplify,
+          showYellow: paramValue !== '0' && paramValue !== '',
+        }
+        break
+      case 'pfs':
+        options.planSimplify = { ...options.planSimplify, forceShow: paramValue }
+        break
+      case 'pfh':
+        options.planSimplify = { ...options.planSimplify, forceHide: paramValue }
         break
       case 'r':
         options.viewportRotations = parseRotationSequence(paramValue)

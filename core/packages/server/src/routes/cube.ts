@@ -21,6 +21,13 @@
  *                            (cube | sq1 | mega | pyra | skewb); legacy `puzzle=`
  *                            with old `megaminx`/`pyraminx` long forms still accepted
  *   bg / cc / co             background / plastic / opacity (cube renderer only)
+ *   ngs                      plan views only: 1 = drop the grey (masked) side-rim
+ *                            stickers, leaving just the coloured bars. U face unchanged.
+ *   psr / pur                plan-view recognition simplification: side rule
+ *                            (all|bar|oppline|cece|light|oppbar|ecec) / up rule
+ *                            (all|bar|baroppbar). 3x3 only.
+ *   psy                      keep every last-layer-coloured sticker (default 1)
+ *   pfs / pfh                force-show / force-hide `side=<csv>&up=<csv>` index lists
  *
  * Cached 24h since responses are deterministic from inputs.
  */
@@ -144,6 +151,12 @@ cubeRoutes.get('/visualcube.svg', async (c) => {
     bg: q('bg'),
     cc: q('cc'),
     co: q('co'),
+    ngs: q('ngs'),
+    psr: q('psr'),
+    pur: q('pur'),
+    psy: q('psy'),
+    pfs: q('pfs'),
+    pfh: q('pfh'),
   });
   c.header('Content-Type', 'image/svg+xml; charset=utf-8');
   c.header('Cache-Control', 'public, max-age=86400');

@@ -4,6 +4,12 @@ import { CubeGeometry, FaceStickers, FaceRotations, rotateFaces } from './geomet
 import { Vec3, transScale, scale, translate, radians2Degrees } from '../math.js'
 import { Face, AllFaces } from './constants.js'
 import { ResolvedCubeOptions } from './options.js'
+import {
+  planSimplifyActive,
+  resolvePlanVisibility,
+  type PlanSimplifyOptions,
+  type PlanVisibility,
+} from './plan-simplify.js'
 import { Arrow } from './models/arrow.js'
 import { parseArrows } from './parsing/arrow.js'
 
@@ -47,6 +53,10 @@ export function renderCubeSVG(geometry: CubeGeometry, options: ResolvedCubeOptio
   const hiddenFaces = renderOrder.filter(face => !faceVisible(face, faceRotations))
   const visibleFaces = renderOrder.filter(face => faceVisible(face, faceRotations))
 
+  // Plan-view simplification. `null` unless a knob asked for it → untouched renders
+  // stay byte-identical to the pre-feature output.
+  const planVisibility = planVisibilityOf(options)
+
   const parts: string[] = []
   parts.push(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${attr(options.width)}" height="${attr(options.height)}" ` +
@@ -69,7 +79,9 @@ export function renderCubeSVG(geometry: CubeGeometry, options: ResolvedCubeOptio
   const visibleStickers: string[] = []
   visibleFaces.forEach(face => {
     visibleOutlines.push(renderCubeOutline(geometry[face], options))
-    visibleStickers.push(renderFaceStickers(face, geometry[face], options))
+    // Only the U face has a plan-view "up" rule; every other face renders normally.
+    const upMask = planVisibility && face === Face.U ? planVisibility.up : undefined
+    visibleStickers.push(renderFaceStickers(face, geometry[face], options, upMask))
   })
   // svg.js originally created the outline group lazily, then appended
   // outlines and stickers in interleaved order per visible face. The
@@ -81,7 +93,7 @@ export function renderCubeSVG(geometry: CubeGeometry, options: ResolvedCubeOptio
   if (options.view === 'plan') {
     const ollPieces: string[] = []
     ;[Face.R, Face.F, Face.L, Face.B].forEach(face => {
-      ollPieces.push(renderOLLStickers(face, geometry[face], faceRotations, options))
+      ollPieces.push(renderOLLStickers(face, geometry[face], faceRotations, options, planVisibility))
     })
     parts.push(wrapOllLayerGroup(ollPieces.join(''), options))
   }
@@ -179,12 +191,19 @@ function renderCubeOutline(face: FaceStickers, options: ResolvedCubeOptions): st
   return `<polygon points="${pointsAttr(outlinePoints)}" fill="${attr(options.cubeColor)}" stroke="${attr(options.cubeColor)}"/>`
 }
 
-function renderFaceStickers(face: Face, stickers: FaceStickers, options: ResolvedCubeOptions): string {
+function renderFaceStickers(
+  face: Face,
+  stickers: FaceStickers,
+  options: ResolvedCubeOptions,
+  /** Plan-view U-face rule: per row-major position, false = omit the polygon. */
+  visible?: boolean[]
+): string {
   const cubeSize = stickers.length - 1
   const inner: string[] = []
 
   for (let i = 0; i < cubeSize; i++) {
     for (let j = 0; j < cubeSize; j++) {
+      if (visible && !visible[i * cubeSize + j]) continue
       const centerPoint: Vec3 = [
         (stickers[j][i][0] + stickers[j + 1][i + 1][0]) / 2,
         (stickers[j][i][1] + stickers[j + 1][i + 1][1]) / 2,
@@ -269,12 +288,51 @@ function getStickerColor(face: Face, row: number, col: number, options: Resolved
   }
 }
 
+/**
+ * The plan-view simplify knobs, as one option object. `hideGreySides` is the
+ * shorthand for the common case, so both spellings run the SAME pipeline — there is
+ * no second implementation to drift.
+ */
+function planSimplifyOf(options: ResolvedCubeOptions): PlanSimplifyOptions | undefined {
+  const explicit = options.planSimplify
+  if (!options.hideGreySides) return planSimplifyActive(explicit) ? explicit : undefined
+  return { ...(explicit ?? {}), hideGrey: true }
+}
+
+/**
+ * Which plan stickers survive, or `null` when nothing is asked for (in which case the
+ * renderer takes its original path and emits byte-identical output).
+ */
+function planVisibilityOf(options: ResolvedCubeOptions): PlanVisibility | null {
+  if (options.view !== 'plan') return null
+  const simplify = planSimplifyOf(options)
+  if (!simplify) return null
+  // `makeStickerColors` already ran, so options.stickerColors is the final painted
+  // state — masks applied, algorithm applied. That is what the rules must read.
+  const colors = Array.isArray(options.stickerColors) ? options.stickerColors : null
+  if (!colors) return null
+  return resolvePlanVisibility({
+    stickerColors: colors,
+    cubeSize: options.cubeSize,
+    colorScheme: options.colorScheme,
+    maskColor: typeof options.maskColor === 'string' ? options.maskColor : ColorCode.DarkGray,
+    options: simplify,
+  })
+}
+
+/** rim draw position (face, column) → 1-based ring index. Inverse of ringStickerIndex. */
+function ringIndexOf(face: Face, col: number, cubeSize: number): number {
+  const strip = [Face.B, Face.R, Face.F, Face.L].indexOf(face)
+  return strip * cubeSize + (cubeSize - 1 - col) + 1
+}
+
 // Renders the top rim of the R U L and B faces out from side of cube
 export function renderOLLStickers(
   face: Face,
   stickers: FaceStickers,
   rotations: FaceRotations,
-  options: ResolvedCubeOptions
+  options: ResolvedCubeOptions,
+  visibility?: PlanVisibility | null
 ): string {
   // Translation vector, to move faces out
   const v1 = scale(rotations[face], 0)
@@ -294,9 +352,13 @@ export function renderOLLStickers(
 
     const stickerColor = getStickerColor(face, 0, i, options)
 
-    if (stickerColor !== ColorName.Transparent) {
-      inner.push(renderSticker(p1, p2, p3, p4, stickerColor, options.cubeColor))
-    }
+    if (stickerColor === ColorName.Transparent) continue
+    // Simplification omits a rim sticker ENTIRELY — no polygon at all, not a
+    // transparent one. `visibility` is null unless a knob asked for it, so the
+    // untouched path stays byte-identical.
+    if (visibility && !visibility.side[ringIndexOf(face, i, options.cubeSize) - 1]) continue
+
+    inner.push(renderSticker(p1, p2, p3, p4, stickerColor, options.cubeColor))
   }
   return inner.join('')
 }
