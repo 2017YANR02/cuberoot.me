@@ -395,6 +395,11 @@ export default function TrainerRunClient() {
     for (let i = 0; i < n; i++) nextScramble();
   }, [nextScramble]);
 
+  /** 邀请二维码弹窗(建房后自动弹一次)。声明在计时/键盘之前 —— 它俩要读它来让位。 */
+  const [qrOpen, setQrOpen] = useState(false);
+  const qrOpenRef = useRef(false);
+  qrOpenRef.current = qrOpen;
+
   // Space-bar timing (keyboard). Touch/mouse press-to-time is handled by the
   // gesture-wheel hook below so a press can also drive the radial dial.
   // 记忆模式自己接管全部键盘/指针(空格 = 揭示公式,1-4 = 评分),这里的计时与手势一律让位。
@@ -405,7 +410,8 @@ export default function TrainerRunClient() {
   useSpaceHoldTimer({
     state: timerState,
     delayMs: TIMER_DELAY_MS,
-    enabled: timing && !recapRoundDone && !isMemo, // 「本轮结束」弹窗开着时别让空格误起表
+    // 「本轮结束」/ 邀请二维码弹窗开着时别让空格误起表
+    enabled: timing && !recapRoundDone && !isMemo && !qrOpen,
     getTimerReady,
     startTimer,
     stopTimer,
@@ -416,6 +422,7 @@ export default function TrainerRunClient() {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (isMemoRef.current) return;   // 记忆模式的键盘在 MemoryTrainer 里
+      if (qrOpenRef.current) return;   // 二维码弹窗盖着,空格/方向键别在背后翻题(Esc 归弹窗)
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA'
         || target.tagName === 'SELECT' || target.isContentEditable)) return;
@@ -468,7 +475,6 @@ export default function TrainerRunClient() {
   const [copied, setCopied] = useState(false);
   const [metaCase, setMetaCase] = useState<AlgCase | null>(null);
   const [joinCode, setJoinCode] = useState('');
-  const [qrOpen, setQrOpen] = useState(false);
 
   // 邀请链接 = 当前页 URL + ?room=CODE(队友粘到浏览器 / 扫码打开即自动加入本房间)。
   // 当前在用三条一屏(不计时)时带上 ?multi=1,让队友打开也套用同一视图。复制与二维码同一份。
@@ -1161,7 +1167,13 @@ export default function TrainerRunClient() {
                         <button
                           type="button"
                           className="trainer-opts-btn"
-                          onClick={() => void createRoom().then(r => { if (r.ok && r.code) void setRoomParam(r.code); })}
+                          // 建完就把二维码摆出来:开房的下一步必然是喊人进来,
+                          // 不该还要自己去点上头那个「房间」徽章。
+                          onClick={() => void createRoom().then(r => {
+                            if (!r.ok || !r.code) return;
+                            void setRoomParam(r.code);
+                            setQrOpen(true);
+                          })}
                           disabled={roomBusy}
                         >
                           {tr({ zh: '创建房间', en: 'Create room' })}
