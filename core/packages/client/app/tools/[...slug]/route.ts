@@ -24,6 +24,8 @@ const CONTENT_TYPE: Record<string, string> = {
   // WebAssembly 必须以 application/wasm 返回,否则浏览器的 instantiateStreaming
   // 拒绝编译、退回更慢的 instantiate(rust-cross glue 的 cross_solver_bg.wasm)。
   '.wasm': 'application/wasm',
+  // MapLibre 标注字形(map-glyphs/**);任意二进制也能解析,给对 MIME 只是别让代理猜
+  '.pbf': 'application/x-protobuf',
   '.html': 'text/html; charset=utf-8',
   '.txt': 'text/plain; charset=utf-8',
 };
