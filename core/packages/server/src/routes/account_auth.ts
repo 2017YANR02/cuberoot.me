@@ -140,7 +140,8 @@ accountAuthRoutes.post('/auth/email/send', async (c) => {
   if ('error' in issued) return c.json({ error: 'too frequent' }, 429);
   try {
     await sendEmailCode(norm, issued.code, langOf(c));
-  } catch {
+  } catch (e) {
+    console.error('[auth] email send failed:', e instanceof Error ? e.message : e);
     return c.json({ error: 'send failed' }, 502);
   }
   return c.json({ ok: true });
@@ -171,7 +172,10 @@ accountAuthRoutes.post('/auth/phone/send', async (c) => {
   if ('error' in issued) return c.json({ error: 'too frequent' }, 429);
   try {
     await sendSmsCode(norm, issued.code);
-  } catch {
+  } catch (e) {
+    // 服务商的拒绝理由(余额不足 / 签名未报备 / 模板停用)只有这一处能看到,吞掉就只剩前端一句
+    // 「发送失败」,线上无从定位。只打 message —— 里面是阿里云的 Code+Message,不含验证码。
+    console.error('[auth] sms send failed:', e instanceof Error ? e.message : e);
     return c.json({ error: 'send failed' }, 502);
   }
   return c.json({ ok: true });
@@ -253,7 +257,8 @@ accountAuthRoutes.post('/auth/link/email/send', async (c) => {
   if ('error' in issued) return c.json({ error: 'too frequent' }, 429);
   try {
     await sendEmailCode(norm, issued.code, langOf(c));
-  } catch {
+  } catch (e) {
+    console.error('[auth] email send failed:', e instanceof Error ? e.message : e);
     return c.json({ error: 'send failed' }, 502);
   }
   return c.json({ ok: true });
@@ -306,7 +311,10 @@ accountAuthRoutes.post('/auth/link/phone/send', async (c) => {
   if ('error' in issued) return c.json({ error: 'too frequent' }, 429);
   try {
     await sendSmsCode(norm, issued.code);
-  } catch {
+  } catch (e) {
+    // 服务商的拒绝理由(余额不足 / 签名未报备 / 模板停用)只有这一处能看到,吞掉就只剩前端一句
+    // 「发送失败」,线上无从定位。只打 message —— 里面是阿里云的 Code+Message,不含验证码。
+    console.error('[auth] sms send failed:', e instanceof Error ? e.message : e);
     return c.json({ error: 'send failed' }, 502);
   }
   return c.json({ ok: true });
