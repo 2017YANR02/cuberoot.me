@@ -6,10 +6,7 @@
 // 数据走 /v1/page-notices(公开读 + admin 写),鉴权 authHeaders(WCA OAuth / X-Admin-Key)。
 import { useEffect, useRef, useState, type ReactNode, type CSSProperties } from 'react';
 import { usePathname } from 'next/navigation';
-import {
-  Info, AlertTriangle, Wrench, X, Pencil, Plus, Trash2, Laptop, Globe,
-  Hammer, Bug, RefreshCw, FlaskConical, Eye, Sparkles, Rocket, Megaphone, Gift, Bell, Zap, Archive,
-} from 'lucide-react';
+import { X, Pencil, Plus, Trash2, Laptop, Globe } from 'lucide-react';
 import { useIsAdmin } from '@/lib/auth-store';
 import { useLiveUrlSuffix } from '@/hooks/useLiveUrlSuffix';
 import { tr, T, useLang } from '@/i18n/tr';
@@ -20,33 +17,10 @@ import {
   fetchPageNotices, fetchAllPageNotices, savePageNotice, deletePageNotice,
   pageKeyFromPathname, matchNotices,
 } from '@/lib/page-notices-api';
+import {
+  ICONS, ICON_KEYS, LEVEL_ICON, COLOR_KEYS, isColorKey as isColor, colorVar, iconFor,
+} from '@/lib/page-notice-visuals';
 import './PageNoticeBar.css';
-
-const LEVEL_ICON: Record<NoticeLevel, typeof Info> = {
-  info: Info,
-  warning: AlertTriangle,
-  maintenance: Wrench,
-};
-
-// 可选图标库(存 key 到 notice.icon;空 = 按 level 回退)。key 列表与 server 校验白名单保持一致。
-const ICONS: Record<string, typeof Info> = {
-  info: Info, warning: AlertTriangle, wrench: Wrench, hammer: Hammer, bug: Bug,
-  refresh: RefreshCw, flask: FlaskConical, eye: Eye, sparkles: Sparkles, rocket: Rocket,
-  megaphone: Megaphone, gift: Gift, bell: Bell, zap: Zap, archive: Archive,
-};
-const ICON_KEYS = Object.keys(ICONS);
-
-// 渲染用图标:优先 notice 自带 icon,无效 / 未设则回退到 level 默认图标。
-function iconFor(n: { icon?: string; level: NoticeLevel }): typeof Info {
-  return (n.icon && ICONS[n.icon]) || LEVEL_ICON[n.level];
-}
-
-// 可选横幅调色板(存 key 到 notice.color;空 = 按 level 回退)。每个 key 对应 CSS 变量
-// --pn-c-<key>(定义在 PageNoticeBar.css,theme-aware),渲染时 data-color 选中即改 --pn-color。
-// key 列表与 server 校验白名单保持一致。
-const COLOR_KEYS = ['blue', 'green', 'amber', 'red', 'terracotta', 'purple', 'cyan', 'pink'];
-const isColor = (c: string | undefined): c is string => !!c && COLOR_KEYS.includes(c);
-const colorVar = (key: string) => `var(--pn-c-${key})`;
 
 const DISMISS_KEY = 'pn-dismissed';
 

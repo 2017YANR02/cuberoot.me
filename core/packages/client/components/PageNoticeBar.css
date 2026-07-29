@@ -1,12 +1,11 @@
 /* PageNoticeBar — 每页顶部管理员通知条(维护中 / WIP / 已知 bug)。
    颜色一律走 theme token,自动 light/dark + 配色主题跟随。 */
 
-/* 通知条内容约束到内容宽度并居中,超宽屏不再从最左边缘一路铺到最右 */
 /* 横幅调色板:能对上语义 token 的直接引用(自动跟随 light/dark + 配色主题);
-   token 没覆盖的三个色相(紫/青/粉)才落 hex,并在 dark 下换一档更亮的值。 */
-.page-notice-wrap {
-  width: 100%;
-  --pn-max-w: 1100px;
+   token 没覆盖的三个色相(紫/青/粉)才落 hex,并在 dark 下换一档更亮的值。
+   挂 :root 而非 .page-notice-wrap —— 个人页的全站通知总览(PageNoticesAdmin)不在横幅
+   DOM 里,也要用同一套色;本文件由 layout 常驻注入,任何页都拿得到。 */
+:root {
   --pn-c-blue: var(--signal-info);
   --pn-c-green: var(--signal-success);
   --pn-c-amber: var(--signal-warning);
@@ -17,16 +16,22 @@
   --pn-c-pink: #db2777;
 }
 @media (prefers-color-scheme: dark) {
-  html:not([data-theme=light]) .page-notice-wrap {
+  html:not([data-theme=light]) {
     --pn-c-purple: #a78bfa;
     --pn-c-cyan: #34d0e0;
     --pn-c-pink: #f472b6;
   }
 }
-html[data-theme=dark] .page-notice-wrap {
+html[data-theme=dark] {
   --pn-c-purple: #a78bfa;
   --pn-c-cyan: #34d0e0;
   --pn-c-pink: #f472b6;
+}
+
+/* 通知条内容约束到内容宽度并居中,超宽屏不再从最左边缘一路铺到最右 */
+.page-notice-wrap {
+  width: 100%;
+  --pn-max-w: 1100px;
 }
 
 .page-notice {

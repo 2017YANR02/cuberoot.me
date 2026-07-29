@@ -14,6 +14,7 @@ import AppLink from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
 import FollowedComps from '@/components/FollowedComps';
 import AlgValidationAlert from '@/components/AlgValidationAlert';
+import PageNoticesAdmin from '@/components/PageNoticesAdmin';
 import { AccountPanel, LoginForm, WcaLinkPrompt, DeleteAccountPanel, type SignedIn } from '@/components/AuthPanel';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from '@/hooks/useT';
@@ -198,6 +199,9 @@ export default function AccountPage() {
 
               {/* 公式库校验汇总 —— 组件自己判 admin,非管理员什么都不渲染、也不扫 */}
               <AlgValidationAlert />
+
+              {/* 全站页面通知总览(哪些页挂着维护中 / WIP 条)—— 同样自己判 admin */}
+              <PageNoticesAdmin />
 
               <FollowedComps isZh={uiLang === 'zh'} lang={uiLang} />
             </>
