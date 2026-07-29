@@ -63,15 +63,25 @@
 
 /* ── 大厅 ─────────────────────────────────────────────────── */
 .net-lobby {
-  /* 定宽居中卡片:两种模式(创建/加入)宽度一致,内部一律左对齐,不因有无项目
-     图标栏而忽宽忽窄。项目图标网格在此宽度内自动折行。 */
+  /* 定宽居中卡片:两种模式(创建/加入)宽度一致,不因有无项目图标栏而忽宽忽窄。
+     项目图标网格在此宽度内自动折行。 */
   width: min(92vw, 460px);
   margin: 40px auto 0;
   padding: 0 16px 40px;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 18px;
 }
+/* 大厅一栏到底居中。按钮 / 输入框 / 身份 chip 各自带着 align-self:flex-start ——
+   那是房内那些左对齐场景要的,只在大厅这一处压过去。 */
+.net-lobby .net-field { align-items: center; }
+.net-lobby .net-btn,
+.net-lobby .net-input,
+.net-lobby .net-lobby-switch,
+.net-lobby .net-identity-me,
+.net-lobby .net-field .cuber-search,
+.net-lobby .net-field .event-select { align-self: center; }
 .net-lobby-title {
   display: flex;
   align-items: center;
@@ -148,7 +158,6 @@
 }
 .net-identity-avatar { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; flex: none; }
 .net-identity-name { font-size: 14px; font-weight: 600; color: var(--foreground); }
-.net-identity-wcaid { font-family: var(--font-mono); font-size: 11px; color: var(--muted-foreground); letter-spacing: 0.02em; }
 /* 玩家条 / 榜里的国旗 */
 .net-p-flag { width: 18px; height: 12px; flex: none; border-radius: 2px; }
 .net-st-flag { width: 18px; height: 12px; flex: none; border-radius: 2px; }

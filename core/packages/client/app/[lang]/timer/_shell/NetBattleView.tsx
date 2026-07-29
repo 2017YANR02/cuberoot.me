@@ -906,8 +906,9 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
             : null}
           {/* 显示 identity.name 而非 authUser.name:房里挂出去的是 WCA 名册上的名字,
               这里照着账号的 display_name 写就成了「预览的名字和房里的名字对不上」。 */}
+          {/* 不挂 WCA ID:这是给自己看的「我是谁」,一串编号在这儿没有任何用处
+              (要认人是对手的事,名单那边的 tooltip 里有)。 */}
           <span className="net-identity-name">{netPlayerName(identity, isZh)}</span>
-          {authUser.wcaId ? <span className="net-identity-wcaid">{authUser.wcaId}</span> : null}
         </div>
       ) : (
         <WcaPersonPicker
