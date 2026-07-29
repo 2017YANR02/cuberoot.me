@@ -462,3 +462,193 @@ export function giikerStateFrame(opts: {
 export function giikerMoveToString(m: GiikerMove): string {
   return 'BDLURF'.charAt(m.face - 1) + ' 2\''.charAt((m.dir - 1) % 7);
 }
+
+/* ================================================================== */
+/*  GAN v3 / v4                                                        */
+/* ================================================================== */
+
+/**
+ * v3 and v4 are the same protocol wearing two headers, and they share GAN v2's
+ * crypto (`v2initKey(true, false, 0)` — `gancube.js:279` and `:338`), so
+ * `installGanCrypto(sb, mac, 0)` builds their ciphertext too.
+ *
+ * Every layout below is the INVERSE of csTimer's own parser, read off
+ * `parseV3Data` (gancube.js:749) / `parseV4Data` (gancube.js:868). Nothing here
+ * is copied from our TypeScript port.
+ */
+
+export const GAN_V3_SERVICE = '8653000a-43e6-47b7-9cb0-5fc21d4ae340';
+export const GAN_V3_READ = '8653000b-43e6-47b7-9cb0-5fc21d4ae340';
+export const GAN_V3_WRITE = '8653000c-43e6-47b7-9cb0-5fc21d4ae340';
+
+export const GAN_V4_SERVICE = '00000010-0000-fff7-fff6-fff5fff4fff0';
+export const GAN_V4_READ = '0000fff6-0000-1000-8000-00805f9b34fb';
+export const GAN_V4_WRITE = '0000fff5-0000-1000-8000-00805f9b34fb';
+
+/** Move-event axis one-hot, indexed by position in "URFDLB". */
+const GAN_AXIS_ONEHOT = [2, 32, 8, 1, 16, 4];
+
+/** `URFDLB[axis] + (pow ? "'" : "")` — csTimer's `"URFDLB".charAt(axis) + " '".charAt(pow)`. */
+export function ganAxisPowToMove(axis: number, pow: number): string {
+  return 'URFDLB'.charAt(axis) + (pow === 1 ? "'" : '');
+}
+
+/** History events use a different axis order — csTimer's `"DUBFLR".charAt(axis)`. */
+export function ganHistoryAxisPowToMove(axis: number, pow: number): string {
+  return 'DUBFLR'.charAt(axis) + (pow === 1 ? "'" : '');
+}
+
+/**
+ * Pack the shared corner/edge state bit-field used by both facelets events.
+ * `cBase` / `eBase` are the first bit of each of the four runs.
+ *
+ * Corner 7 and edge 11 are omitted on the wire — csTimer reconstructs them by
+ * checksum — so `ca` / `ea` must come from a REAL cube state (`cubieStateAfter`)
+ * or `CubieCube.verify()` rejects the frame.
+ */
+function packCubieState(
+  ca: number[], ea: number[],
+  cPermBase: number, cOriBase: number, ePermBase: number, eOriBase: number,
+): BitWrite[] {
+  const w: BitWrite[] = [];
+  for (let i = 0; i < 7; i++) w.push([cPermBase + i * 3, 3, ca[i] & 7]);
+  for (let i = 0; i < 7; i++) w.push([cOriBase + i * 2, 2, (ca[i] >> 3) & 3]);
+  for (let i = 0; i < 11; i++) w.push([ePermBase + i * 4, 4, (ea[i] >> 1) & 0xf]);
+  for (let i = 0; i < 11; i++) w.push([eOriBase + i, 1, ea[i] & 1]);
+  return w;
+}
+
+/* ---------------------------- v4 ---------------------------------- */
+
+/**
+ * v4 mode-0x01 (move), 20 bytes — from `parseV4Data`:
+ *   bit  0..7    mode = 0x01
+ *   bit  8..15   payload length
+ *   bit 16..47   32-bit timestamp, per-byte LE (`slice(40,48)+…+slice(16,24)`)
+ *   bit 48..63   16-bit move counter, LOW byte at 48..55, HIGH byte at 56..63
+ *   bit 64..65   direction (0 = CW, 1 = CCW)
+ *   bit 66..71   axis one-hot -> index into "URFDLB"
+ */
+export function ganV4MoveFrame(moveCnt: number, axis: number, pow: number, ts = 1000): number[] {
+  return packBits(20, [
+    [0, 8, 0x01],
+    [8, 8, 0x08],
+    [16, 8, ts & 0xff], [24, 8, (ts >>> 8) & 0xff],
+    [32, 8, (ts >>> 16) & 0xff], [40, 8, (ts >>> 24) & 0xff],
+    [48, 8, moveCnt & 0xff], [56, 8, (moveCnt >>> 8) & 0xff],
+    [64, 2, pow & 3],
+    [66, 6, GAN_AXIS_ONEHOT[axis]],
+  ]);
+}
+
+/**
+ * v4 mode-0xED (facelets / cube state), 20 bytes:
+ *   bit  0..7    mode = 0xED
+ *   bit  8..15   payload length
+ *   bit 16..31   16-bit move counter, LOW byte at 16..23, HIGH byte at 24..31
+ *   bit 32+3i    corner permutation, i = 0..6
+ *   bit 53+2i    corner orientation, i = 0..6
+ *   bit 69+4i    edge permutation,   i = 0..10
+ *   bit 113+i    edge orientation,   i = 0..10
+ */
+export function ganV4FaceletFrame(moveCnt: number, ca: number[], ea: number[]): number[] {
+  return packBits(20, [
+    [0, 8, 0xed],
+    [8, 8, 0x10],
+    [16, 8, moveCnt & 0xff], [24, 8, (moveCnt >>> 8) & 0xff],
+    ...packCubieState(ca, ea, 32, 53, 69, 113),
+  ]);
+}
+
+/**
+ * v4 mode-0xD1 (move history), 20 bytes:
+ *   bit 16..23   startMoveCnt (newest move in the window)
+ *   bit 24+4i    3-bit axis into "DUBFLR", then 1 bit direction
+ *   count        = (len - 1) * 2, walking NEWEST -> OLDEST
+ */
+export function ganV4HistoryFrame(
+  startMoveCnt: number,
+  moves: Array<{ axis: number; pow: number }>,
+): number[] {
+  const len = Math.ceil(moves.length / 2) + 1;
+  const w: BitWrite[] = [[0, 8, 0xd1], [8, 8, len], [16, 8, startMoveCnt & 0xff]];
+  for (let i = 0; i < moves.length; i++) {
+    w.push([24 + 4 * i, 3, moves[i].axis & 7]);
+    w.push([27 + 4 * i, 1, moves[i].pow & 1]);
+  }
+  return packBits(20, w);
+}
+
+/** v4 mode-0xEF (battery): percentage at bits `8 + len*8`, i.e. byte 2 for len = 1. */
+export function ganV4BatteryFrame(pct: number): number[] {
+  return packBits(20, [[0, 8, 0xef], [8, 8, 1], [16, 8, pct & 0xff]]);
+}
+
+/** v4 mode-0xEC (gyro) — both sides must treat it as move-free. */
+export function ganV4GyroFrame(filler = 0x33): number[] {
+  const w: BitWrite[] = [[0, 8, 0xec], [8, 8, 0x10]];
+  for (let i = 0; i < 8; i++) w.push([16 + i * 16, 16, (filler * (i + 1)) & 0xffff]);
+  return packBits(20, w);
+}
+
+/** v4 mode-0xFD (software version) — hardware-info family, ignored by both. */
+export function ganV4HardwareFrame(): number[] {
+  return packBits(20, [[0, 8, 0xfd], [8, 8, 3], [24, 4, 1], [28, 4, 2]]);
+}
+
+/* ---------------------------- v3 ---------------------------------- */
+
+/**
+ * v3 frames carry a 3-byte header — magic 0x55, mode, length — then the same
+ * payloads as v4 shifted by one byte. From `parseV3Data`:
+ *   bit  0..7    magic = 0x55  (csTimer drops the frame on any other value)
+ *   bit  8..15   mode
+ *   bit 16..23   payload length (must be > 0)
+ */
+export function ganV3MoveFrame(moveCnt: number, axis: number, pow: number, ts = 1000): number[] {
+  return packBits(20, [
+    [0, 8, 0x55], [8, 8, 1], [16, 8, 0x08],
+    [24, 8, ts & 0xff], [32, 8, (ts >>> 8) & 0xff],
+    [40, 8, (ts >>> 16) & 0xff], [48, 8, (ts >>> 24) & 0xff],
+    [56, 8, moveCnt & 0xff], [64, 8, (moveCnt >>> 8) & 0xff],
+    [72, 2, pow & 3],
+    [74, 6, GAN_AXIS_ONEHOT[axis]],
+  ]);
+}
+
+/** v3 mode-2 (facelets): counter at bits 24..39, state runs at 40 / 61 / 77 / 121. */
+export function ganV3FaceletFrame(moveCnt: number, ca: number[], ea: number[]): number[] {
+  return packBits(20, [
+    [0, 8, 0x55], [8, 8, 2], [16, 8, 0x10],
+    [24, 8, moveCnt & 0xff], [32, 8, (moveCnt >>> 8) & 0xff],
+    ...packCubieState(ca, ea, 40, 61, 77, 121),
+  ]);
+}
+
+/** v3 mode-6 (move history): startMoveCnt at bits 24..31, 4 bits per move from 32. */
+export function ganV3HistoryFrame(
+  startMoveCnt: number,
+  moves: Array<{ axis: number; pow: number }>,
+): number[] {
+  const len = Math.ceil(moves.length / 2) + 1;
+  const w: BitWrite[] = [[0, 8, 0x55], [8, 8, 6], [16, 8, len], [24, 8, startMoveCnt & 0xff]];
+  for (let i = 0; i < moves.length; i++) {
+    w.push([32 + 4 * i, 3, moves[i].axis & 7]);
+    w.push([35 + 4 * i, 1, moves[i].pow & 1]);
+  }
+  return packBits(20, w);
+}
+
+/** v3 mode-16 (battery): percentage at bits 24..31. */
+export function ganV3BatteryFrame(pct: number): number[] {
+  return packBits(20, [[0, 8, 0x55], [8, 8, 16], [16, 8, 2], [24, 8, pct & 0xff]]);
+}
+
+/** v3 mode-7 (hardware info) — ignored by both sides. */
+export function ganV3HardwareFrame(): number[] {
+  const w: BitWrite[] = [[0, 8, 0x55], [8, 8, 7], [16, 8, 0x0c]];
+  const name = 'GAN13';
+  for (let i = 0; i < 5; i++) w.push([32 + i * 8, 8, name.charCodeAt(i)]);
+  w.push([72, 4, 1], [76, 4, 0], [80, 4, 1], [84, 4, 2]);
+  return packBits(20, w);
+}

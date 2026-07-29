@@ -26,7 +26,9 @@
 
 import { describe, it, expect } from 'vitest';
 import { decodeGanV2Frame, type MoveDecodeState as GanV2State } from '@/app/[lang]/timer/_lib/bluetooth/gan_v2';
-import { decodeGanV4Frame, type MoveDecodeState as GanV4State } from '@/app/[lang]/timer/_lib/bluetooth/gan_v4';
+import {
+  decodeGanV4Frame, createGanV4DecodeState, type MoveDecodeState as GanV4State,
+} from '@/app/[lang]/timer/_lib/bluetooth/gan_v4';
 import { parseGoCubeQuaternion } from '@/app/[lang]/timer/_lib/bluetooth/gocube';
 import {
   createMoyu32State,
@@ -196,7 +198,9 @@ function ganV4GyroFrame(
 }
 
 function freshV4State(): GanV4State {
-  return { prevMoveCnt: -1, battery: null, badFrames: 0 };
+  // The decoder state owns a move FIFO with identity, so it has a factory —
+  // hand-rolling the object literal would silently disable lost-move recovery.
+  return createGanV4DecodeState();
 }
 
 describe('GAN gen4 gyro (0xEC)', () => {
@@ -253,7 +257,7 @@ describe('GAN gen4 gyro (0xEC)', () => {
     dec.badFrames = 3;
     decodeGanV4Frame(ganV4GyroFrame({ w: 0x7fff, x: 0, y: 0, z: 0 }), dec);
     expect(dec.badFrames).toBe(0);
-    expect(dec.prevMoveCnt).toBe(-1);
+    expect(dec.sync.seeded).toBe(false);
   });
 });
 
