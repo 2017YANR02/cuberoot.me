@@ -73,15 +73,16 @@ function Get-Running {
 
 # ── -Stop ────────────────────────────────────────────────────────────────────
 if ($Stop) {
-  $procs = @(Get-Running)
-  if (-not $procs) { Write-Host '没有在跑的求解进程。'; return }
+  # 变量名别叫 $procs —— PowerShell 不区分大小写,会撞上 [int]$Procs 参数的类型约束
+  $shells = @(Get-Running)
+  if (-not $shells) { Write-Host '没有在跑的求解进程。'; return }
   # 先杀外壳再杀子进程,否则外壳会立刻把子进程重新拉起来
-  foreach ($p in $procs) { Stop-Process -Id $p.ProcessId -Force -ErrorAction SilentlyContinue }
+  foreach ($p in $shells) { Stop-Process -Id $p.ProcessId -Force -ErrorAction SilentlyContinue }
   Start-Sleep -Milliseconds 300
   Get-CimInstance Win32_Process -Filter "Name = 'node.exe'" |
     Where-Object { $_.CommandLine -and $_.CommandLine -match 'solve\.mjs' } |
     ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
-  Write-Host "已停 $($procs.Count) 个分片。每个 case 都已落盘,重跑同一条命令按 key 续上。"
+  Write-Host "已停 $($shells.Count) 个分片。每个 case 都已落盘,重跑同一条命令按 key 续上。"
   return
 }
 
