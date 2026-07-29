@@ -232,9 +232,10 @@ export function StatsList({
  * 等于回看历史全靠盲点。
  *
  * 当前所在那条不印公式:历史里包含「正在做的这题」,在训练模式下把答案摆出来就没得练了。
+ * (点开详情弹窗是另一回事 —— 那是明着要看答案。)
  */
 export function HistoryList({
-  hist, cases, puzzle, set, onPick,
+  hist, cases, puzzle, set, onPick, onShowCase,
 }: {
   hist: ScrambleHist<TrainerHistEntry>;
   cases: AlgCase[];
@@ -242,6 +243,11 @@ export function HistoryList({
   set: string;
   /** 点第 i 条:跳到该历史条目。 */
   onPick: (i: number) => void;
+  /**
+   * 同一下点击顺带弹出该 case 的详情(元数据 / 全部公式),与 SolveCard 的图和名字一个待遇。
+   * 没有 meta 的集不传 —— 那时点一下就只是回看。
+   */
+  onShowCase?: (c: AlgCase) => void;
 }) {
   // set 名当页首已给(topbar「3×3 · ZBLL …」),卡片里再顶个 "ZBLL " 冗余 —— 剥掉只留组号。
   const setPrefix = new RegExp('^' + set.toUpperCase() + '\\s+', 'i');
@@ -269,7 +275,9 @@ export function HistoryList({
                 key={i}
                 type="button"
                 className={`trainer-hist-item${active ? ' is-active' : ''}`}
-                onClick={() => onPick(i)}
+                // 回看那条打乱 + 摊开这个 case:一次点击两件事,因为它们是同一个意图
+                // (「这题我看看」)。有详情可看的集才弹,其余仍旧只是回看。
+                onClick={() => { onPick(i); if (c?.meta) onShowCase?.(c); }}
                 title={e.scramble}
                 aria-current={active ? 'true' : undefined}
               >
