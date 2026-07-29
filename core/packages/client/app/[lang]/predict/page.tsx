@@ -166,9 +166,25 @@ function PredictPageInner() {
 
   const shown = useMemo(() => orientedFaceColors(orientation), [orientation]);
   const solved = challenge != null && found.length > 0 && found.every(Boolean);
-  /** 这题结束了(答完 or 认输)—— 复盘只在结束后开放,否则等于随时可以偷看答案。 */
+  /** 这题结束了(答完 or 认输)—— 结束就自动复盘一遍。 */
   const over = challenge != null && (solved || revealed);
   const totalSteps = challenge?.moves.length ?? 0;
+
+  /**
+   * 跳到第 n 步(= 已做 n 招后的盘面)。口径和 /recon 详情页点解法、/sim 播放条一致:
+   * `step` 是已做步数,`step - 1` 是「当前这一招」。题板自己判断这是「往前一步」
+   * (放动画)还是「跳过去」(瞬时重放),这里只管改数。
+   *
+   * 答题中也能跳:答案本来就有「显示答案」一键可看,把复盘锁死只是让想核对某一步的人
+   * 没处下手。跳过去不算认输,计时照走。
+   */
+  const seek = useCallback((n: number) => {
+    setPlaying(false);
+    setStep(Math.max(0, Math.min(n, totalSteps)));
+  }, [totalSteps]);
+
+  /** 播放条:默认不占地方,一旦复盘开始(自动或手点某一招)就出来 —— 否则跳到第 3 步后没法回起点。 */
+  const showPlayback = over || step > 0;
 
   /** 把视角转到能看见这些 facelet 的角度 —— 目标块常常就在背面,不转的话玩家面前是一片灰。 */
   const focusOn = useCallback((facelets: readonly number[]) => {
@@ -226,7 +242,8 @@ function PredictPageInner() {
   }, [wrong]);
 
   // 这题一结束就自动复盘一遍 —— 看着目标块被转过去,比看一张静态答案图有用得多。
-  useEffect(() => { if (over) setPlaying(true); }, [over]);
+  // 从头播:答题中可能已经手点到某一招了,不回零就会从半截接着往下播。
+  useEffect(() => { if (over) { setStep(0); setPlaying(true); } }, [over]);
 
   // 一步一格往前推;题板收到「比上一步多 1」就放一步动画,推到头就停。
   useEffect(() => {
@@ -437,13 +454,13 @@ function PredictPageInner() {
         )}
       </div>
 
-      {over && (
+      {showPlayback && (
         <div className="predict-replay">
           <PlaybackBar
             step={step}
             total={totalSteps}
             playing={playing}
-            onScrub={(n) => { setPlaying(false); setStep(Math.max(0, Math.min(n, totalSteps))); }}
+            onScrub={seek}
             onSkipStart={() => { setPlaying(false); setStep(0); }}
             onStepBack={() => { setPlaying(false); setStep((s) => Math.max(0, s - 1)); }}
             onTogglePlay={() => {
@@ -557,15 +574,20 @@ function PredictPageInner() {
         <ol className="predict-move-list">
           {challenge?.moves.map((m, i) => {
             const face = shown[m[0] as CubeFace];
-            // 复盘时把已经转过的那几步压暗,当前这一步描一圈。
-            const state = over && i < step ? ' is-done' : over && i === step ? ' is-next' : '';
+            // 已经转过的压暗,刚做完的那一招描一圈(= step - 1,与 /recon、/sim 同一口径)。
+            const state = step === 0 ? '' : i === step - 1 ? 'is-current' : i < step ? 'is-done' : '';
             return (
-              <li
-                key={`${i}-${m}`}
-                className={state.trim() || undefined}
-                style={{ background: CUBE_FILL[face], color: CUBE_ON_FILL[face] }}
-              >
-                {m}
+              <li key={`${i}-${m}`}>
+                <button
+                  type="button"
+                  className={state || undefined}
+                  style={{ background: CUBE_FILL[face], color: CUBE_ON_FILL[face] }}
+                  aria-current={i === step - 1 ? 'step' : undefined}
+                  title={tr({ zh: `同步到第 ${i + 1} 步`, en: `Jump to move ${i + 1}` })}
+                  onClick={() => seek(i + 1)}
+                >
+                  {m}
+                </button>
               </li>
             );
           })}
@@ -581,8 +603,8 @@ function PredictPageInner() {
         </ul>
         <p className="predict-hint">
           {tr({
-            zh: '拖动可以把魔方转到任意角度,答案有可能落在背面。',
-            en: 'Drag to spin the cube — the answer can land on a face you cannot see yet.',
+            zh: '拖动可以把魔方转到任意角度,答案有可能落在背面;点某一招,盘面就同步到做完那一招的样子。',
+            en: 'Drag to spin the cube — the answer can land on a face you cannot see yet. Click a move to jump the cube to the state right after it.',
           })}
         </p>
       </section>
