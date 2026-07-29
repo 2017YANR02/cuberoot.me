@@ -135,20 +135,22 @@ export default function FloatingMetronome({ lang, onClose }: { lang: 'zh' | 'en'
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // Visual pulse — flip a short-lived class per beat. Cleared on a timeout
-  // short enough to re-arm before the next beat even at 600 BPM (100ms).
+  // Visual pulse — flip a short-lived class per beat, cleared well before the
+  // next one lands. A fixed hold would leave the dot permanently lit at the top
+  // of the range, where beats are only 33ms apart.
+  const holdMs = Math.max(16, Math.min(70, (60000 / s.bpm) * 0.5));
   useEffect(() => {
     let clear: number | null = null;
     const off = subscribeBeat((e) => {
       setBeat(e);
       if (clear != null) window.clearTimeout(clear);
-      clear = window.setTimeout(() => setBeat(null), 70);
+      clear = window.setTimeout(() => setBeat(null), holdMs);
     });
     return () => {
       off();
       if (clear != null) window.clearTimeout(clear);
     };
-  }, []);
+  }, [holdMs]);
 
   const onPointerDown = useCallback((e: React.PointerEvent) => {
     const card = cardRef.current;

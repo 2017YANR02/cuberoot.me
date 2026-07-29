@@ -8,8 +8,9 @@
  * metronome drifts and drops beats whenever the main thread is busy rendering,
  * which is plainly audible at training tempos (2–6 turns per second).
  *
- * One beat = one turn, so TPS = BPM / 60. That is why the ceiling is 600 BPM
- * (10 TPS) rather than a musical 300 — fast solvers turn well past 5 TPS.
+ * One beat = one turn, so TPS = BPM / 60. That is why the ceiling is 1800 BPM
+ * (30 TPS) rather than a musical 300 — WR-grade solves already sustain 14+ TPS,
+ * and burst drills run past that.
  */
 
 import { useSyncExternalStore } from 'react';
@@ -18,7 +19,7 @@ import { persistItem } from '@/lib/safe-storage';
 const KEY = 'cuberoot.metronome.v1';
 
 export const BPM_MIN = 30;
-export const BPM_MAX = 600;
+export const BPM_MAX = 1800;
 
 /** Accent every N beats; 0 = every beat identical. 8 ≈ one F2L pair. */
 export const ACCENT_CHOICES = [0, 2, 4, 8] as const;
@@ -171,23 +172,35 @@ function ctx(): AudioContext | null {
     const Ctor = window.AudioContext ?? W.webkitAudioContext;
     if (!Ctor) return null;
     _ctx = new Ctor();
+    // The browser can park the context on its own (app switch, audio-device
+    // change, iOS interruption); recover as soon as it says so.
+    _ctx.addEventListener?.('statechange', () => {
+      if (_ctx && _ctx.state !== 'running' && isMetronomeSounding()) resumeContext(_ctx);
+    });
     return _ctx;
   } catch {
     return null;
   }
 }
 
-function tick(c: AudioContext, at: number, accent: boolean): void {
+/**
+ * One click. The envelope is capped to a fraction of the beat interval: at the
+ * top of the range beats are only 33ms apart, and a fixed 60ms blip would smear
+ * consecutive turns into one continuous tone instead of a countable pulse.
+ */
+function tick(c: AudioContext, at: number, accent: boolean, interval: number): void {
+  const body = Math.min(0.05, interval * 0.55);
+  const attack = Math.min(0.003, body * 0.2);
   const osc = c.createOscillator();
   const gain = c.createGain();
   osc.type = 'sine';
   osc.frequency.setValueAtTime(accent ? 1800 : 1200, at);
   gain.gain.setValueAtTime(0, at);
-  gain.gain.linearRampToValueAtTime(accent ? 0.5 : 0.32, at + 0.003);
-  gain.gain.linearRampToValueAtTime(0, at + 0.05);
+  gain.gain.linearRampToValueAtTime(accent ? 0.5 : 0.32, at + attack);
+  gain.gain.linearRampToValueAtTime(0, at + body);
   osc.connect(gain).connect(c.destination);
   osc.start(at);
-  osc.stop(at + 0.06);
+  osc.stop(at + body + 0.01);
 }
 
 function scheduleAhead(): number {
@@ -200,11 +213,12 @@ function pump(): void {
   const c = _ctx;
   if (!c) return;
   const horizon = c.currentTime + scheduleAhead();
+  const interval = 60 / _state.bpm;
   while (_nextBeatTime < horizon) {
     const accent = _state.accent > 0 && _beatIndex % _state.accent === 0;
-    tick(c, _nextBeatTime, accent);
+    tick(c, _nextBeatTime, accent, interval);
     _queue.push({ time: _nextBeatTime, index: _beatIndex, accent });
-    _nextBeatTime += 60 / _state.bpm;
+    _nextBeatTime += interval;
     _beatIndex += 1;
   }
 }
@@ -222,13 +236,68 @@ function retune(): void {
   if (_nextBeatTime - c.currentTime > interval) _nextBeatTime = c.currentTime + interval;
 }
 
+/**
+ * Ask a parked context to run again. Coming back from another app (or another
+ * tab) the OS/browser may have suspended — or on iOS *interrupted* — the audio
+ * context out from under a still-running scheduler: the beats keep being queued
+ * onto a clock that never advances, so the metronome looks on and is silent.
+ * A resume needs a user gesture if the page has lost its autoplay grant, so a
+ * failed one arms the next tap/keypress rather than giving up.
+ */
+function resumeContext(c: AudioContext): void {
+  c.resume().then(() => {
+    if (c.state === 'running') realign(c);
+    else armGestureResume();
+  }).catch(armGestureResume);
+}
+
+let _gestureArmed = false;
+
+function armGestureResume(): void {
+  if (_gestureArmed || typeof window === 'undefined') return;
+  _gestureArmed = true;
+  const go = () => {
+    _gestureArmed = false;
+    window.removeEventListener('pointerdown', go, true);
+    window.removeEventListener('keydown', go, true);
+    const c = _ctx;
+    if (!c || !isMetronomeSounding()) return;
+    void c.resume().then(() => realign(c)).catch(() => { /* nothing else to try */ });
+  };
+  window.addEventListener('pointerdown', go, true);
+  window.addEventListener('keydown', go, true);
+}
+
+/** Pull the queue back onto the clock after it stalled (suspend / throttling). */
+function realign(c: AudioContext): void {
+  if (_timer == null) return;
+  if (_nextBeatTime < c.currentTime) _nextBeatTime = c.currentTime + 0.06;
+  pump();
+  startBeatPump();
+}
+
+/**
+ * Re-arm after the tab/app came back. `pagehide` (bfcache, and switching apps on
+ * mobile) tears the transport down, and nothing used to build it back up — the
+ * panel still read "on" while the scheduler was gone, which is exactly what a
+ * dead metronome after an app switch looks like.
+ */
+function revive(): void {
+  if (!isMetronomeSounding()) return;
+  if (_timer == null) { start(); return; }
+  const c = _ctx;
+  if (!c) return;
+  if (c.state !== 'running') resumeContext(c);
+  else realign(c);
+}
+
 function start(): void {
   if (_timer != null) return;
   const c = ctx();
   if (!c) return;
   // Autoplay policy parks the context until a gesture; every entry point here
   // (panel switch, timer start) runs inside one.
-  if (c.state === 'suspended') void c.resume();
+  if (c.state !== 'running') resumeContext(c);
   _beatIndex = 0;
   _queue.length = 0;
   _nextBeatTime = c.currentTime + 0.06;
@@ -317,14 +386,15 @@ export function resetTapTempo(): void {
 }
 
 if (typeof window !== 'undefined') {
-  // Re-arm the queue on tab return: the scheduler was throttled while hidden,
-  // and the context may have been suspended out from under it.
+  // Re-arm on every way back in: the scheduler was throttled while hidden, the
+  // context may have been suspended under it, and a bfcache/freeze round trip
+  // tears the transport down entirely.
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState !== 'visible' || _timer == null) return;
-    const c = _ctx;
-    if (!c) return;
-    if (c.state === 'suspended') void c.resume();
-    if (_nextBeatTime < c.currentTime) _nextBeatTime = c.currentTime + 0.06;
+    if (document.visibilityState === 'visible') revive();
   });
+  window.addEventListener('focus', revive);
+  window.addEventListener('pageshow', revive);
+  document.addEventListener('resume', revive);   // Page Lifecycle: unfrozen
+  document.addEventListener('freeze', stop);     // Page Lifecycle: frozen
   window.addEventListener('pagehide', stop);
 }
