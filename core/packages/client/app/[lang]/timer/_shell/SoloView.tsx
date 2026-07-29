@@ -16,6 +16,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import dynamic from 'next/dynamic';
 import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsBoolean, parseAsString, parseAsStringEnum } from 'nuqs';
 import {
@@ -80,23 +81,12 @@ import StatsPanel from '../_components/StatsPanel';
 import CrossSessionStats from '../_components/CrossSessionStats';
 import CaseStatsPanel from '../_components/CaseStatsPanel';
 import HistoryPanel from '../_components/HistoryPanel';
-import BldHelperModal from '../_components/BldHelperModal';
-import SolveModal from '../_components/SolveModal';
-import ReconstructModal from '../_components/ReconstructModal';
 import { decodeReplayParam } from '../_lib/share/decode';
 import { extractReplayParam } from '../_lib/share/paste_import';
 import SettingsPanel from '../_components/SettingsPanel';
 import GoalProgress from '../_components/GoalProgress';
 import RoundPanel from '../_components/RoundPanel';
 import { roundAttempts } from '../_lib/round';
-import ShortcutsModal from '../_components/ShortcutsModal';
-import BluetoothModal from '../_components/BluetoothModal';
-import TrainerSubsetModal from '../_components/TrainerSubsetModal';
-import StatsModal from '../_components/StatsModal';
-import ManualEntryModal from '../_components/ManualEntryModal';
-import SolverModal from '../_components/SolverModal';
-import BulkScrambleModal from '../_components/BulkScrambleModal';
-import DrillModal from '../_components/DrillModal';
 import { generateDrillScramble, type DrillType } from '../_lib/scramble/drill';
 import SolverHints from '../_components/SolverHints';
 import SolverHintPanel, { HINTS_PARAM } from '../_components/SolverHintPanel';
@@ -126,6 +116,22 @@ import { Spinner } from '@/components/Spinner/Spinner';
 import '../timer.css';
 import '../_components/charts/charts.css';
 import '../_components/charts/practice_heatmap.css';
+
+// 弹层一律 next/dynamic。每一个的渲染都写成 `{xxxOpen && <Modal/>}`,首屏一个都不挂;
+// 静态 import 会把这 11 个弹层连同各自的 CSS 一起焊进计时器首屏那个 chunk,而绝大多数
+// 用户一次也不会打开它们。ssr:false —— 本文件已经在一个 ssr:false 的动态边界里(page.tsx
+// 只在客户端拉 TimerShell),弹层再声明一次只是显式表态,不新增行为。
+const BldHelperModal = dynamic(() => import('../_components/BldHelperModal'), { ssr: false });
+const SolveModal = dynamic(() => import('../_components/SolveModal'), { ssr: false });
+const ReconstructModal = dynamic(() => import('../_components/ReconstructModal'), { ssr: false });
+const ShortcutsModal = dynamic(() => import('../_components/ShortcutsModal'), { ssr: false });
+const BluetoothModal = dynamic(() => import('../_components/BluetoothModal'), { ssr: false });
+const TrainerSubsetModal = dynamic(() => import('../_components/TrainerSubsetModal'), { ssr: false });
+const StatsModal = dynamic(() => import('../_components/StatsModal'), { ssr: false });
+const ManualEntryModal = dynamic(() => import('../_components/ManualEntryModal'), { ssr: false });
+const SolverModal = dynamic(() => import('../_components/SolverModal'), { ssr: false });
+const BulkScrambleModal = dynamic(() => import('../_components/BulkScrambleModal'), { ssr: false });
+const DrillModal = dynamic(() => import('../_components/DrillModal'), { ssr: false });
 import './shell.css';
 import { tr } from '@/i18n/tr';
 

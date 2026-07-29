@@ -25,11 +25,15 @@
  */
 
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useQueryState, createParser } from 'nuqs';
 import SoloView from './SoloView';
-import BattleView from './BattleView';
-import NetBattleView from './NetBattleView';
 import { tr } from '@/i18n/tr';
+
+// 首帧恒 Solo(见下面的 mounted gate),对战两个视图连同 _battle 引擎和 battle.css
+// 只在真的切到 players>=2 / net 时才下载 —— 静态 import 会把它们焊进首屏那个 chunk。
+const BattleView = dynamic(() => import('./BattleView'), { ssr: false });
+const NetBattleView = dynamic(() => import('./NetBattleView'), { ssr: false });
 
 type PlayersMode = number | 'net';
 
