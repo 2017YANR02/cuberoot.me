@@ -248,7 +248,7 @@ function SubgroupIndex({
                  是 no-op(整页都落在 Chrome 的预加载阈值内),手机首屏请求实测能砍掉三到五成。 */
               thumb={useF2lThumb
                 ? <VisualCube setup={sample.setup} algorithm={firstAlg} view="f2l" size={110} loading="lazy" />
-                : <VisualCube setup={sample.setup} algorithm={firstAlg} view="oll" size={110} loading="lazy" />}
+                : <VisualCube setup={sample.setup} algorithm={firstAlg} view="oll" size={110} loading="lazy" hideGreySides />}
               title={ollName ?? (useF2lThumb ? (dispTop || tr({ zh: '其他', en: 'Other' })) : `${set.toUpperCase()} ${dispTop || tr({ zh: '其他', en: 'Other' })}`)}
               count={total}
               sub={ollName ? `${set.toUpperCase()} ${dispTop}` : undefined}
@@ -275,7 +275,7 @@ function SubgroupIndex({
               expand={isCollapsed ? 'closed' : 'open'}
               onClick={() => toggle(topLabel)}
               tooltip={isCollapsed ? tr({ zh: '展开', en: 'Expand' }) : tr({ zh: '收起', en: 'Collapse' })}
-              thumb={<VisualCube setup={e.sample.setup} algorithm={firstAlg} view="oll" size={110} />}
+              thumb={<VisualCube setup={e.sample.setup} algorithm={firstAlg} view="oll" size={110} hideGreySides />}
               title={title}
               count={e.total}
             />

@@ -72,6 +72,25 @@ export interface SimpleVisualCubeQuery {
   bg?: string;
   cc?: string;
   co?: string | number;
+  /** "no grey sides" — in a plan view (`plan`/`oll`/`pll`), drop the side-rim stickers
+   *  that came out masked-grey instead of drawing them. The 9 U-face stickers are
+   *  untouched. `ngs=0` / absent = off. */
+  ngs?: string | number | boolean;
+  /** Plan-view recognition simplification (cube/plan-simplify.ts).
+   *  `psr` side rule · `pur` up rule · `psy` keep last-layer colour (default on)
+   *  · `pfs` / `pfh` force-show / force-hide `side=..&up=..` index lists. */
+  psr?: string;
+  pur?: string;
+  psy?: string | number | boolean;
+  pfs?: string;
+  pfh?: string;
+}
+
+const SIDE_RULES = ['all', 'bar', 'oppline', 'cece', 'light', 'oppbar', 'ecec'];
+const UP_RULES = ['all', 'bar', 'baroppbar'];
+
+function truthy(v: string | number | boolean | undefined): boolean {
+  return v !== undefined && v !== '' && v !== '0' && v !== 0 && v !== false;
 }
 
 function intParam(raw: string | number | undefined): number | undefined {
@@ -120,6 +139,18 @@ export function buildSimpleOptions(q: SimpleVisualCubeQuery): ICubeOptions {
   else if (view === 'pll-iso') opts.mask = Masking.LL;
 
   if (view === 'plan' || view === 'oll' || view === 'pll') opts.view = 'plan';
+
+  // Plan-view only knobs; harmless (unread) on the iso views.
+  if (truthy(q.ngs)) opts.hideGreySides = true;
+  const simplify: NonNullable<ICubeOptions['planSimplify']> = {};
+  // Unknown rule names are dropped rather than passed through — this is public,
+  // unauthenticated input and the renderer would silently fall back to 'all' anyway.
+  if (q.psr && SIDE_RULES.includes(q.psr)) simplify.side = q.psr as typeof simplify.side;
+  if (q.pur && UP_RULES.includes(q.pur)) simplify.up = q.pur as typeof simplify.up;
+  if (q.psy !== undefined) simplify.showYellow = truthy(q.psy);
+  if (q.pfs) simplify.forceShow = q.pfs;
+  if (q.pfh) simplify.forceHide = q.pfh;
+  if (Object.keys(simplify).length > 0) opts.planSimplify = simplify;
 
   // OLL view defaults to the orientation-only color scheme (unless the caller supplied an explicit mask).
   if (view === 'oll' && !explicitMask) opts.colorScheme = OLL_STAGE_SCHEME;

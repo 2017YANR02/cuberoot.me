@@ -55,6 +55,12 @@ export const DEFAULTS: ImageSpec = {
   netActiveColor: 'U',
   stickerMask: '',
   maskColor: '#404040',
+  hideGreySides: false,
+  planSideRule: 'all',
+  planUpRule: 'all',
+  planShowYellow: true,
+  planForceShow: '',
+  planForceHide: '',
 };
 
 export interface RotationDefaults {

@@ -24,6 +24,8 @@ export { Arrow } from './cube/models/arrow.js'
 // lifecycle as makeMasking above.
 export { parseArrows, parseArrow } from './cube/parsing/arrow.js'
 export type { ICubeOptions } from './cube/options.js'
+export { resolvePlanVisibility, planSimplifyActive, ringStickerIndex, parseIndexList } from './cube/plan-simplify.js'
+export type { PlanSimplifyOptions, PlanSideRule, PlanUpRule, PlanVisibility } from './cube/plan-simplify.js'
 export { renderFromSimpleQuery, buildSimpleOptions } from './preset.js'
 export type { SimpleVisualCubeQuery } from './preset.js'
 export { CubeData } from './cube/simulation.js'

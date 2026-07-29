@@ -107,7 +107,11 @@ export default function RecognizeGame() {
               settings={{ scale: 54, viewAngle: 50, viewGradient: 30, speed: 58, hint: false }}
             />
           ) : (
-            <VisualCube algorithm={c.alg} view={c.view} size={132} alt={`${c.label} case`} loading="lazy" />
+            <VisualCube
+              algorithm={c.alg} view={c.view} size={132} alt={`${c.label} case`} loading="lazy"
+              // OLL 才删侧面灰格(那圈是占位);PLL 的侧面是真配色,正是要认的东西。
+              hideGreySides={c.view === 'oll'}
+            />
           )}
         </div>
 

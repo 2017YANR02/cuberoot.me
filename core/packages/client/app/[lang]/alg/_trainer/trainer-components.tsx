@@ -473,7 +473,7 @@ export function CaseTreePicker({
     if (hasSubLevel && puzzle === '3x3') {
       const firstAlg = g.sample.algs.flat()[0]?.alg ?? g.sample.standard ?? '';
       // setup 优先:公式带起手转体 / 收尾 AUF 时,inverse(alg) 会把图整体转一格。
-      return <VisualCube setup={g.sample.setup} algorithm={firstAlg} view="oll" size={44} />;
+      return <VisualCube setup={g.sample.setup} algorithm={firstAlg} view="oll" size={44} hideGreySides />;
     }
     return (
       <CaseThumb

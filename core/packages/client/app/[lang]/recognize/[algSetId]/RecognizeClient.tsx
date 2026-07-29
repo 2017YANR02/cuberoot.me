@@ -251,6 +251,9 @@ export default function RecognizeClient() {
               view="oll"
               size={200}
               alt={currentCase?.name}
+              // 与 /alg 库里的 OLL 图同一观感:侧面的灰格只是「这里不是黄」的占位,
+              // 信息全在黄条上,删掉不减题面。
+              hideGreySides
             />
           </div>
         ) : (

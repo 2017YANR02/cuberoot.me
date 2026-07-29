@@ -6,6 +6,9 @@
  */
 
 import type { PaintColor } from '@/app/[lang]/scramble/solver/_paint-shared';
+import type { PlanSideRule, PlanUpRule } from '@cuberoot/visualcube';
+
+export type { PlanSideRule, PlanUpRule };
 
 export const FACE_LIST = ['U', 'R', 'F', 'D', 'L', 'B'] as const;
 export type FaceKey = (typeof FACE_LIST)[number];
@@ -58,4 +61,22 @@ export interface ImageSpec {
   stickerMask: string;
   /** Fill for masked stickers. Puzzle sticker data, not a theme token. URL key `mkc`. */
   maskColor: string;
+  /**
+   * `cubeView: 'plan'` only — drop the greyed side-rim stickers instead of drawing
+   * them, leaving a plan image with just the coloured bars (the classic OLL-recognition
+   * look). The 9 U-face stickers are never affected. URL key `ngs`.
+   */
+  hideGreySides: boolean;
+  /**
+   * `cubeView: 'plan'` 识别简化(移植自 MeiCubeTool 的 view=plan simplify)。规则按
+   * 「阈值」理解:选中的档位以下的图案全留,以上的抹掉。侧面/顶面两条规则只对三阶成立
+   * (判据是「角-棱-角」三格窗口),其余尺寸自动失效。URL: psr / pur / psy / pfs / pfh。
+   */
+  planSideRule: PlanSideRule;
+  planUpRule: PlanUpRule;
+  /** 顶层色(U 面配色)的贴纸永远保留 —— 规则再狠也不会把题面本身抹掉。默认开。 */
+  planShowYellow: boolean;
+  /** `side=<csv>&up=<csv>`,1 起数;在规则之后强制显示 / 强制隐藏。 */
+  planForceShow: string;
+  planForceHide: string;
 }

@@ -110,6 +110,25 @@ export function specToCubeOptions(s: ImageSpec): ICubeOptions {
   if (s.defaultArrowColor) opts.defaultArrowColor = s.defaultArrowColor;
 
   if (s.cubeView === 'plan') opts.view = 'plan';
+  // Plan-only: drop the greyed side rim. The renderer decides "grey" by comparing the
+  // rim fill against `maskColor`, so hand it the spec's own grey — otherwise a custom
+  // `mkc` would be greyed by us and then not recognised as grey there. Only set on
+  // opt-in, so no existing URL changes shape.
+  if (s.hideGreySides && s.cubeView === 'plan') {
+    opts.hideGreySides = true;
+    opts.maskColor = s.maskColor || DEFAULTS.maskColor;
+  }
+  // 识别简化(MeiCubeTool view=plan simplify 的移植)。同样只在俯视下挂,且只在真的
+  // 有旋钮被拨动时才写 —— 不写就走渲染器原路径,输出逐字节不变。
+  if (s.cubeView === 'plan') {
+    const simplify: NonNullable<ICubeOptions['planSimplify']> = {};
+    if (s.planSideRule !== DEFAULTS.planSideRule) simplify.side = s.planSideRule;
+    if (s.planUpRule !== DEFAULTS.planUpRule) simplify.up = s.planUpRule;
+    if (s.planShowYellow !== DEFAULTS.planShowYellow) simplify.showYellow = s.planShowYellow;
+    if (s.planForceShow) simplify.forceShow = s.planForceShow;
+    if (s.planForceHide) simplify.forceHide = s.planForceHide;
+    if (Object.keys(simplify).length > 0) opts.planSimplify = simplify;
+  }
   // `trans` is a pseudo-preset, not a renderer view: it silently swaps the shell
   // to silver/50% (only when the user has not touched them) and turns masked
   // stickers transparent.
