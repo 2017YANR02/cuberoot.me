@@ -22,7 +22,8 @@
 .EXAMPLE
   pwsh run_lsll.ps1                      # 默认:1 进程 × 12 线程 + h9 大表
   pwsh run_lsll.ps1 -Procs 7 -Threads 2 -Table h6   # 5.2× 那套
-  pwsh run_lsll.ps1 -Status              # 到哪儿了(随时可跑,不打扰求解)
+  pwsh run_lsll.ps1 -Status              # 到哪儿了(一次性快照,打完就退)
+  pwsh run_lsll.ps1 -Watch               # 常驻刷新那一行,Ctrl-C 退出(求解照跑)
   pwsh run_lsll.ps1 -Stop                # 停(每个 case 即落盘,随停随续)
   pwsh run_lsll.ps1 -Merge               # 分片结果并进 out.csv(灌库前跑一次)
 #>
@@ -32,6 +33,7 @@ param(
   [Parameter(ParameterSetName = 'Run')][int]$Threads = 12,
   [Parameter(ParameterSetName = 'Run')][ValidateSet('h5', 'h6', 'h9')][string]$Table = 'h9',
   [Parameter(ParameterSetName = 'Status')][switch]$Status,
+  [Parameter(ParameterSetName = 'Status')][switch]$Watch,
   [Parameter(ParameterSetName = 'Stop')][switch]$Stop,
   [Parameter(ParameterSetName = 'Merge')][switch]$Merge
 )
@@ -87,38 +89,53 @@ if ($Stop) {
 }
 
 # ── -Status ──────────────────────────────────────────────────────────────────
-if ($Status) {
+if ($Status -or $Watch) {
   $total = 0
   $r = [System.IO.StreamReader]::new($Corpus)
   try { while ($null -ne $r.ReadLine()) { $total++ } } finally { $r.Dispose() }
 
-  $done = [System.Collections.Generic.HashSet[string]]::new()
-  [void](Read-Keys $Out $done)
-  $inMain = $done.Count
-  foreach ($f in Get-ShardOuts) { [void](Read-Keys $f.FullName $done) }
-  $n = $done.Count
-
-  $live = @(Get-Running)
-  Write-Host ("{0} / {1} = {2:P2}   (out.csv {3} · 分片 {4})" -f $n, $total, ($n / $total), $inMain, ($n - $inMain))
-  if ($live) {
-    # 采样 20 秒算真实速率 —— 比日志里那个 1% 一行的里程碑及时得多
-    $t0 = Get-Date
-    Start-Sleep -Seconds 20
-    $d2 = [System.Collections.Generic.HashSet[string]]::new()
-    [void](Read-Keys $Out $d2)
-    foreach ($f in Get-ShardOuts) { [void](Read-Keys $f.FullName $d2) }
-    $rate = ($d2.Count - $n) / ((Get-Date) - $t0).TotalSeconds
-    if ($rate -gt 0) {
-      $eta = ($total - $d2.Count) / $rate
-      Write-Host ("{0} 个分片在跑 · {1:N2} case/s · 剩 {2:N1} 小时" -f $live.Count, $rate, ($eta / 3600))
-    } else {
-      Write-Host "$($live.Count) 个分片在跑,但 20 秒内没有新行 —— 多半正在载表(h9 约 30s)。"
-    }
-  } else {
-    Write-Host '没有在跑的分片。'
-    if ($n -ge $total) { Write-Host '全部算完了 —— 跑 -Merge 合并,然后 update_lsll.ps1 -Ingest 灌库。' }
+  # 已完成数。out.csv 与各分片的 key 天然不交(分片语料开跑时就剔掉了已完成的),
+  # 但 -Merge 之后 out.csv 会包含分片那批 —— 所以照样按 key 去重,别数重了。
+  function Get-Done {
+    $s = [System.Collections.Generic.HashSet[string]]::new()
+    [void](Read-Keys $Out $s)
+    $inMain = $s.Count
+    foreach ($f in Get-ShardOuts) { [void](Read-Keys $f.FullName $s) }
+    return @{ n = $s.Count; main = $inMain }
   }
-  return
+
+  $SAMPLE = if ($Watch) { 15 } else { 20 }   # 一次性快照多采几秒,数字稳一点
+  $a = Get-Done
+  $live = @(Get-Running)
+  if (-not $live) {
+    Write-Host ("{0} / {1} = {2:P2}   (out.csv {3} · 分片 {4})" -f $a.n, $total, ($a.n / $total), $a.main, ($a.n - $a.main))
+    Write-Host '没有在跑的分片。'
+    if ($a.n -ge $total) { Write-Host '全部算完了 —— 跑 -Merge 合并,然后 update_lsll.ps1 -Ingest 灌库。' }
+    return
+  }
+  if (-not $Watch) { Write-Host ("{0} / {1} = {2:P2}   (out.csv {3} · 分片 {4})" -f $a.n, $total, ($a.n / $total), $a.main, ($a.n - $a.main)) }
+  else { Write-Host "Ctrl-C 退出(退出只是关掉这个显示,求解照跑)" }
+
+  # 采样两次算真实速率 —— 日志里那个 1% 一行的里程碑要一个多小时才落一次,等不起。
+  for (;;) {
+    $t0 = Get-Date
+    Start-Sleep -Seconds $SAMPLE
+    $b = Get-Done
+    $rate = ($b.n - $a.n) / ((Get-Date) - $t0).TotalSeconds
+    $live = @(Get-Running)
+    if ($rate -gt 0) {
+      $line = "{0} / {1} = {2:P2} · {3} 分片 · {4:N2} case/s · 剩 {5:N1} 小时" -f `
+        $b.n, $total, ($b.n / $total), $live.Count, $rate, (($total - $b.n) / $rate / 3600)
+    } else {
+      # 全在载表(h9 约 30s,h6 约 4s)时会短暂为 0,不是卡死
+      $line = "{0} / {1} = {2:P2} · {3} 分片 · 本次采样没有新行(多半在载表)" -f $b.n, $total, ($b.n / $total), $live.Count
+    }
+    if (-not $Watch) { Write-Host $line; return }
+    Write-Host ("`r" + $line.PadRight(90)) -NoNewline
+    if (-not $live) { Write-Host "`n分片都退出了。" ; return }
+    if ($b.n -ge $total) { Write-Host "`n全部算完了 —— 跑 -Merge 合并,然后 update_lsll.ps1 -Ingest 灌库。"; return }
+    $a = $b
+  }
 }
 
 # ── -Merge ───────────────────────────────────────────────────────────────────
