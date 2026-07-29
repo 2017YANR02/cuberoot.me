@@ -13,28 +13,29 @@
  *   2. 每种颜色出现次数尽量均匀(相差 ≤1),不然抽到的卡有难有易。
  * 均匀 + 不相邻用贪心实现:每一步在「不等于上一格」的颜色里挑剩余份额最多的
  * (并列随机),这是最优排布,只要没有哪种颜色超过 ⌈n/2⌉ 就一定排得下 ——
- * 均分后 colorCount ≥ 2 恒成立。
+ * 六色均分后恒成立。
  */
 
-export type StroopColor = 'red' | 'orange' | 'yellow' | 'green' | 'blue' | 'purple';
+/**
+ * 墨色就是魔方那六个面色 —— 站内配色单一源在 lib/cube-colors(U 白 D 黄 R 红
+ * L 橙 B 蓝 F 绿),这里只借面名,色值由页面从那份表取,不在本文件复制一遍。
+ */
+export type StroopColor = 'white' | 'yellow' | 'red' | 'orange' | 'blue' | 'green';
 
-/** 6 色全集。前 4 个同时是「4 色」档的取值,顺序即 UI 图例顺序。 */
-export const STROOP_COLORS: readonly StroopColor[] = ['red', 'yellow', 'green', 'blue', 'orange', 'purple'];
+/** 六色全集,顺序即 UI 图例顺序。 */
+export const STROOP_COLORS: readonly StroopColor[] = ['white', 'yellow', 'red', 'orange', 'blue', 'green'];
 
 export const COLOR_NAMES: Record<StroopColor, { zh: string; en: string }> = {
-  red:    { zh: '红', en: 'red' },
+  white:  { zh: '白', en: 'white' },
   yellow: { zh: '黄', en: 'yellow' },
-  green:  { zh: '绿', en: 'green' },
-  blue:   { zh: '蓝', en: 'blue' },
+  red:    { zh: '红', en: 'red' },
   orange: { zh: '橙', en: 'orange' },
-  purple: { zh: '紫', en: 'purple' },
+  blue:   { zh: '蓝', en: 'blue' },
+  green:  { zh: '绿', en: 'green' },
 };
 
 export type CardKind = 'patch' | 'congruent' | 'incongruent';
 export const CARD_KINDS: readonly CardKind[] = ['patch', 'congruent', 'incongruent'];
-
-export const COLOR_COUNTS = [4, 6] as const;
-export type ColorCount = (typeof COLOR_COUNTS)[number];
 
 export const CELL_COUNTS = [10, 20, 30, 40] as const;
 export type CellCount = (typeof CELL_COUNTS)[number];
@@ -47,12 +48,6 @@ export interface StroopCell {
 }
 
 export type Rand = () => number;
-
-/** 取前 n 种颜色。n 超出全集就退回全集,少于 2 无法保证「相邻不同」,钳到 2。 */
-export function paletteOf(colorCount: number): StroopColor[] {
-  const n = Math.max(2, Math.min(STROOP_COLORS.length, Math.floor(colorCount)));
-  return STROOP_COLORS.slice(0, n);
-}
 
 /** 把 count 个格子均分给 colors:前 count % k 种各多拿 1 个。 */
 function quotas(colors: readonly StroopColor[], count: number): Map<StroopColor, number> {
@@ -126,12 +121,11 @@ function wordSequence(inks: readonly StroopColor[], colors: readonly StroopColor
 export function generateCard(
   kind: CardKind,
   count: number,
-  colorCount: number,
   rand: Rand = Math.random,
 ): StroopCell[] {
   const n = Math.max(0, Math.floor(count));
   if (n === 0) return [];
-  const colors = paletteOf(colorCount);
+  const colors = STROOP_COLORS;
   const inks = inkSequence(colors, n, rand);
   if (kind === 'patch') return inks.map(ink => ({ ink, word: null }));
   if (kind === 'congruent') return inks.map(ink => ({ ink, word: ink }));

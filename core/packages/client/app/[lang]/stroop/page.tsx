@@ -23,15 +23,30 @@ import LiquidGlassChips from '@/components/LiquidGlassChips';
 import { tr } from '@/i18n/tr';
 import { useTimer } from '@/app/[lang]/timer/_shared/useTimer';
 import { formatTimePlain } from '@/app/[lang]/timer/_shared/format';
+import { CUBE_FILL } from '@/lib/cube-colors';
 import {
-  generateCard, paletteOf, COLOR_NAMES, CARD_KINDS, CARD_COLUMNS, CELL_COUNTS, COLOR_COUNTS,
-  type CardKind, type CellCount, type ColorCount, type StroopCell,
+  generateCard, COLOR_NAMES, STROOP_COLORS, CARD_KINDS, CARD_COLUMNS, CELL_COUNTS,
+  type CardKind, type CellCount, type StroopColor, type StroopCell,
 } from './_lib/card';
 import {
   addRun, bestPerCell, clearRuns, interferenceMs, loadRuns, perCellMs, saveRuns,
   type StroopRun,
 } from './_lib/history';
 import './stroop.css';
+
+/**
+ * 墨色 = 魔方六面色,值从站内单一源 lib/cube-colors 取,不在本页重抄一份。
+ * 唯一的改动是蓝:CUBE_FILL.B 是纯蓝 #0000F2,印在恒暗的舞台上对比度不到 2:1
+ * 根本读不出来,兑进白提亮一档(仍是一眼可辨的蓝)。其余五色原样够亮。
+ */
+const INK_CSS_VARS: Record<`--stroop-${StroopColor}`, string> = {
+  '--stroop-white':  CUBE_FILL.U,
+  '--stroop-yellow': CUBE_FILL.D,
+  '--stroop-red':    CUBE_FILL.R,
+  '--stroop-orange': CUBE_FILL.L,
+  '--stroop-blue':   `color-mix(in srgb, ${CUBE_FILL.B} 62%, white)`,
+  '--stroop-green':  CUBE_FILL.F,
+};
 
 const KIND_LABELS: Record<CardKind, { zh: string; en: string }> = {
   patch:       { zh: '色块', en: 'Patches' },
@@ -62,12 +77,9 @@ function StroopPage() {
     'card', parseAsStringEnum<CardKind>([...CARD_KINDS]).withDefault('incongruent'),
   );
   const [rawCount, setCount] = useQueryState('n', parseAsInteger.withDefault(20));
-  const [rawColors, setColors] = useQueryState('colors', parseAsInteger.withDefault(6));
-  // URL 是用户能手改的,越界值一律钳回选项集,免得算出一张 0 格或 9 色的卡。
+  // URL 是用户能手改的,越界值钳回选项集,免得算出一张 0 格的卡。
   const count: CellCount = (CELL_COUNTS as readonly number[]).includes(rawCount)
     ? rawCount as CellCount : 20;
-  const colorCount: ColorCount = (COLOR_COUNTS as readonly number[]).includes(rawColors)
-    ? rawColors as ColorCount : 6;
 
   // 卡片只在客户端生成(随机),SSR 首帧留空格子,避免 hydration 不一致。
   const [card, setCard] = useState<StroopCell[]>([]);
@@ -75,7 +87,7 @@ function StroopPage() {
   const [lastRun, setLastRun] = useState<StroopRun | null>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   // 停表回调里要知道这一局用的是哪张卡的参数(而不是回调触发后 state 的新值)。
-  const runningCfgRef = useRef({ kind, count, colorCount });
+  const runningCfgRef = useRef({ kind, count });
 
   useEffect(() => { setRuns(loadRuns()); }, []);
 
@@ -95,16 +107,16 @@ function StroopPage() {
   const running = phase === 'running';
 
   const deal = useCallback(() => {
-    setCard(generateCard(kind, count, colorCount));
-  }, [kind, count, colorCount]);
+    setCard(generateCard(kind, count));
+  }, [kind, count]);
 
   // 换设置(或首次挂载)就重发一张;计时中不动,免得手一抖把正在读的卡换掉。
   useEffect(() => {
     if (phase === 'running') return;
-    setCard(generateCard(kind, count, colorCount));
+    setCard(generateCard(kind, count));
     // phase 只作守卫,不该因为 stopped→idle 之类的翻转再洗一次牌。
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [kind, count, colorCount]);
+  }, [kind, count]);
 
   /** 空格 / 点屏:running 时停表,否则换一张新卡并立刻起表(不走观察和长按)。 */
   const toggle = useCallback(() => {
@@ -112,11 +124,11 @@ function StroopPage() {
       onPressDown();
       return;
     }
-    runningCfgRef.current = { kind, count, colorCount };
+    runningCfgRef.current = { kind, count };
     setLastRun(null);
-    setCard(generateCard(kind, count, colorCount));
+    setCard(generateCard(kind, count));
     startNow();
-  }, [phase, onPressDown, startNow, kind, count, colorCount]);
+  }, [phase, onPressDown, startNow, kind, count]);
 
   // 全局空格 —— 不用先点一下页面。焦点在舞台上时交给舞台自己的 onKeyDown 处理,
   // 否则会起表 + 停表连着触发两次。
@@ -134,13 +146,15 @@ function StroopPage() {
   }, [toggle]);
 
   const columns = Math.min(CARD_COLUMNS, Math.max(1, count));
-  const palette = paletteOf(colorCount);
-  const best = bestPerCell(runs, kind, colorCount);
-  const interference = interferenceMs(runs, colorCount);
+  const best = bestPerCell(runs, kind);
+  const interference = interferenceMs(runs);
   const recent = runs.slice(0, 5);
 
   return (
-    <div className={`stroop-page${running ? ' is-running' : ''}`}>
+    <div
+      className={`stroop-page${running ? ' is-running' : ''}`}
+      style={INK_CSS_VARS as React.CSSProperties}
+    >
       <div className="stroop-topbar">
         <BackHome />
         <HeaderToggles />
@@ -169,14 +183,6 @@ function StroopPage() {
             items={CELL_COUNTS} value={count} onChange={(v) => void setCount(v)}
             getLabel={(n) => String(n)}
             ariaLabel={tr({ zh: '格数', en: 'Cells' })}
-          />
-        </div>
-        <div className="stroop-control">
-          <span>{tr({ zh: '颜色', en: 'Colours' })}</span>
-          <LiquidGlassChips<number>
-            items={COLOR_COUNTS} value={colorCount} onChange={(v) => void setColors(v)}
-            getLabel={(n) => tr({ zh: `${n} 色`, en: `${n}` })}
-            ariaLabel={tr({ zh: '颜色数', en: 'Number of colours' })}
           />
         </div>
         <button type="button" className="stroop-deal" onClick={deal}>
@@ -272,8 +278,8 @@ function StroopPage() {
                 <li key={r.ts}>
                   <span className="stroop-history-kind">{tr(KIND_LABELS[r.kind])}</span>
                   <span className="stroop-history-cfg">{tr({
-                    zh: `${r.count} 格 / ${r.colorCount} 色`,
-                    en: `${r.count} cells / ${r.colorCount} colours`,
+                    zh: `${r.count} 格`,
+                    en: `${r.count} cells`,
                   })}</span>
                   <span className="stroop-history-ms">{fmt(r.ms)}</span>
                   <span className="stroop-history-per">{Math.round(perCellMs(r))} ms</span>
@@ -284,7 +290,7 @@ function StroopPage() {
         )}
 
         <div className="stroop-legend">
-          {palette.map(c => (
+          {STROOP_COLORS.map(c => (
             <span key={c} className="stroop-legend-item">
               <i style={{ background: `var(--stroop-${c})` }} aria-hidden />
               {tr(COLOR_NAMES[c])}
