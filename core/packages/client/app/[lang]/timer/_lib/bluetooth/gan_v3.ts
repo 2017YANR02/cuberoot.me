@@ -48,6 +48,8 @@ import {
   readBits,
 } from './gan_crypto';
 import { GAN_MAC_ADV, macStringToBytes } from './mac';
+import { GanMoveSync } from './gan_move_sync';
+import { decodeCubieFacelets } from '../cube/cubie';
 
 // GAN v3 GATT identifiers — match cstimer's V3DATA / V3READ / V3WRITE.
 const GAN_V3_SERVICE = '8653000a-43e6-47b7-9cb0-5fc21d4ae340';
@@ -109,16 +111,50 @@ function tryParseMacFromName(name: string | undefined): Uint8Array | null {
 
 interface MoveDecodeState {
   /**
-   * Last seen 16-bit move counter from the cube. -1 means we haven't seen
-   * any moves yet, in which case the very first event is treated as a
-   * baseline (no move emitted) — same as cstimer's `prevMoveCnt == -1`
-   * guard in `parseV3Data`.
+   * Serial-number FIFO. Until it is seeded by a facelets snapshot, move events
+   * are observed but not applied — we do not know where the cube started.
    */
-  prevMoveCnt: number;
+  sync: GanMoveSync;
   /** Most recent battery percentage from a mode-16 event (0..100). */
   battery: number | null;
   /** Consecutive frames with a bad magic byte (≠ 0x55) — wrong key/MAC. */
   badFrames: number;
+  /** The cube's self-reported facelet state — see `CubeDriverContext.onState`. */
+  onState?: (facelets: string) => void;
+  /** Host-clock time of the last move event, for the facelets debounce. */
+  prevMoveLocTime: number | null;
+  /** Injectable clock so tests don't depend on wall time. */
+  now: () => number;
+}
+
+/** See the identical constant in `gan_v4.ts`. */
+const FACELET_RESYNC_QUIET_MS = 500;
+
+/**
+ * Decode the cube-state payload of a mode-2 frame into a facelet string, or
+ * null when it is not a physically valid cube (i.e. wrong AES key).
+ *
+ * Bit layout, read off cstimer's `parseV3Data` mode-2 branch — the same
+ * payload as v4's 0xED, shifted one byte later by the v3 magic header:
+ *   bit 40 + 3i  corner permutation, i = 0..6
+ *   bit 61 + 2i  corner orientation, i = 0..6
+ *   bit 77 + 4i  edge permutation,   i = 0..10
+ *   bit 121 + i  edge orientation,   i = 0..10
+ */
+function decodeV3Facelets(frame: Uint8Array): string | null {
+  const ca: number[] = [];
+  for (let i = 0; i < 7; i++) {
+    const perm = readBits(frame, 40 + i * 3, 3);
+    const ori = readBits(frame, 61 + i * 2, 2);
+    ca.push((ori << 3) | perm);
+  }
+  const ea: number[] = [];
+  for (let i = 0; i < 11; i++) {
+    const perm = readBits(frame, 77 + i * 4, 4);
+    const ori = readBits(frame, 121 + i, 1);
+    ea.push((perm << 1) | ori);
+  }
+  return decodeCubieFacelets(ca, ea);
 }
 
 /**
@@ -158,6 +194,32 @@ function decodeFrame(frame: Uint8Array, dec: MoveDecodeState): string[] {
   const len = frame[2];
   if (len <= 0) return [];
 
+  if (mode === 2) {
+    // Cube state — the frame that says where the cube actually is. See the
+    // long note on the 0xED branch in `gan_v4.ts`: leaving the counter
+    // unseeded here is what made the user's first turn after connecting
+    // vanish, and with it every scramble check and every auto-stop.
+    const moveCnt = (frame[4] << 8) | frame[3];
+
+    if (dec.sync.seeded) {
+      dec.sync.observe(moveCnt);
+      if (dec.prevMoveLocTime !== null
+        && dec.now() - dec.prevMoveLocTime > FACELET_RESYNC_QUIET_MS) {
+        dec.sync.requestResync(moveCnt);
+      }
+      return [];
+    }
+
+    const facelets = decodeV3Facelets(frame);
+    if (facelets === null) {
+      dec.badFrames++;
+      return [];
+    }
+    dec.sync.seed(moveCnt);
+    dec.onState?.(facelets);
+    return [];
+  }
+
   if (mode === 1) {
     // 16-bit moveCnt — high byte at bits 64..72, low byte at bits 56..64.
     // Mirrors cstimer's `value.slice(64,72) + value.slice(56,64)`.
@@ -165,37 +227,22 @@ function decodeFrame(frame: Uint8Array, dec: MoveDecodeState): string[] {
     const moveCntLo = frame[7];
     const moveCnt = (moveCntHi << 8) | moveCntLo;
 
-    if (dec.prevMoveCnt === -1) {
-      // First event after connect: align without replaying history.
-      dec.prevMoveCnt = moveCnt;
-      return [];
-    }
-    if (moveCnt === dec.prevMoveCnt) return [];
+    dec.prevMoveLocTime = dec.now();
 
     const pow = readBits(frame, 72, 2);
     const axisCode = readBits(frame, 74, 6);
     const axis = GAN_V3_AXIS_LOOKUP.indexOf(axisCode);
+    if (axis === -1 || pow >= 2) return [];
 
-    const out: string[] = [];
-    if (axis !== -1 && pow < 2) {
-      // If we missed events between prevMoveCnt and moveCnt, cstimer would
-      // write a history request to FFFC. We don't have a write hook into
-      // that path here — we just emit the latest move; the host's
-      // CubeStateTracker resyncs on the next solved snapshot. (Same
-      // behaviour as the v4 driver's mode-1 path.)
-      const f = GAN_V3_FACE_ORDER[axis];
-      out.push(pow === 1 ? `${f}'` : f);
-    }
-
-    dec.prevMoveCnt = moveCnt;
-    return out;
+    const f = GAN_V3_FACE_ORDER[axis];
+    return dec.sync.push(moveCnt, pow === 1 ? `${f}'` : f);
   }
 
   if (mode === 6) {
-    // History replay. Bit layout per cstimer:
+    // History replay — the answer to our own request after a dropped frame.
     //   startMoveCnt at bits 24..32, then 4 bits per move starting at 32.
     //   numberOfMoves = (len - 1) * 2. Axis is 3 bits indexing "DUBFLR",
-    //   pow is 1 bit (0 = CW, 1 = CCW).
+    //   pow is 1 bit (0 = CW, 1 = CCW). Newest first.
     const startMoveCnt = frame[3];
     const numberOfMoves = Math.max(0, (len - 1) * 2);
     const replay: { cnt: number; mv: string }[] = [];
@@ -204,23 +251,10 @@ function decodeFrame(frame: Uint8Array, dec: MoveDecodeState): string[] {
       const pow = readBits(frame, 35 + 4 * i, 1);
       if (axis < 6) {
         const f = GAN_V3_HISTORY_FACE_ORDER[axis];
-        const mv = pow ? `${f}'` : f;
-        const cnt = (startMoveCnt - i) & 0xff;
-        replay.push({ cnt, mv });
+        replay.push({ cnt: (startMoveCnt - i) & 0xff, mv: pow ? `${f}'` : f });
       }
     }
-    // Filter out moves we've already seen and emit the rest in chronological
-    // order (oldest first). cstimer walks newest → oldest; our caller wants
-    // them oldest-first so it can apply them to its tracker in order.
-    replay.sort((a, b) => ((a.cnt - dec.prevMoveCnt) & 0xff) - ((b.cnt - dec.prevMoveCnt) & 0xff));
-    const out: string[] = [];
-    for (const r of replay) {
-      const diff = (r.cnt - dec.prevMoveCnt) & 0xff;
-      if (diff === 0 || diff > 64) continue; // already-seen (0) or wrap (huge diff)
-      out.push(r.mv);
-      dec.prevMoveCnt = r.cnt;
-    }
-    return out;
+    return dec.sync.injectHistory(replay);
   }
 
   if (mode === 16) {
@@ -230,8 +264,7 @@ function decodeFrame(frame: Uint8Array, dec: MoveDecodeState): string[] {
     return [];
   }
 
-  // mode 2 (facelets snapshot) and mode 7 (hardware info) are intentionally
-  // ignored — the higher-level CubeStateTracker re-models state from moves.
+  // mode 7 (hardware info) carries nothing we act on.
   return [];
 }
 
@@ -270,7 +303,39 @@ export const ganV3Driver: CubeDriver = {
     const aesIv = deriveKeyFromMac(GAN_V3_IV_BASE, mac);
     const expandedKey = expandKey(aesKey);
 
-    const decState: MoveDecodeState = { prevMoveCnt: -1, battery: null, badFrames: 0 };
+    // Bound late: the command characteristic is resolved after we subscribe,
+    // and the decoder only reaches for this from a notification.
+    let sendCmd: (req: Uint8Array) => Promise<void> = async () => {};
+
+    const requestFaceletsFrame = (): Uint8Array => {
+      const req = new Uint8Array(16);
+      req[0] = 0x68; req[1] = 0x01;
+      return req;
+    };
+
+    const decState: MoveDecodeState = {
+      sync: new GanMoveSync({
+        // cstimer's requestMoveHistory, v3 opcode: 0x68 / 0x03.
+        requestHistory: (startMoveCnt, numberOfMoves) => {
+          const req = new Uint8Array(16);
+          req[0] = 0x68; req[1] = 0x03;
+          req[2] = startMoveCnt & 0xff;
+          req[4] = numberOfMoves & 0xff;
+          void sendCmd(req);
+        },
+        // Same deliberate divergence as v4: re-seed from the cube instead of
+        // dropping the connection.
+        onWedged: () => {
+          decState.sync.reset();
+          void sendCmd(requestFaceletsFrame());
+        },
+      }),
+      battery: null,
+      badFrames: 0,
+      onState: (facelets) => ctx?.onState?.(facelets),
+      prevMoveLocTime: null,
+      now: () => Date.now(),
+    };
     let keyErrorFired = false;
 
     const onChar = (ev: Event): void => {
@@ -310,7 +375,7 @@ export const ganV3Driver: CubeDriver = {
       // No write characteristic — older firmware variant; just listen.
     }
 
-    const sendCmd = async (req: Uint8Array): Promise<void> => {
+    sendCmd = async (req: Uint8Array): Promise<void> => {
       if (!cmdChar) return;
       const enc = encryptFrame(req, expandedKey, aesIv);
       // Detach into a fresh ArrayBuffer-backed Uint8Array — the strict TS
@@ -332,8 +397,7 @@ export const ganV3Driver: CubeDriver = {
     if (cmdChar) {
       const hwInfo = new Uint8Array(16);
       hwInfo[0] = 0x68; hwInfo[1] = 0x04;
-      const facelets = new Uint8Array(16);
-      facelets[0] = 0x68; facelets[1] = 0x01;
+      const facelets = requestFaceletsFrame();
       const battery = new Uint8Array(16);
       battery[0] = 0x68; battery[1] = 0x07;
       await sendCmd(hwInfo);

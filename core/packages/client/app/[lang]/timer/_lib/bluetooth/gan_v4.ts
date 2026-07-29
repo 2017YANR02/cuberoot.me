@@ -52,6 +52,8 @@ import {
   type GyroSink,
 } from './gan_crypto';
 import { GAN_MAC_ADV, macStringToBytes } from './mac';
+import { GanMoveSync } from './gan_move_sync';
+import { decodeCubieFacelets } from '../cube/cubie';
 
 // GAN v4 GATT identifiers — match cstimer's V4DATA / V4READ / V4WRITE.
 const GAN_V4_SERVICE = '00000010-0000-fff7-fff6-fff5fff4fff0';
@@ -111,16 +113,77 @@ function tryParseMacFromName(name: string | undefined): Uint8Array | null {
 
 export interface MoveDecodeState {
   /**
-   * Last seen 16-bit move counter from the cube. -1 means we haven't seen
-   * any moves yet, in which case the very first event is treated as a
-   * baseline (no move emitted) — same as cstimer's `prevMoveCnt == -1`
-   * guard in `parseV4Data`.
+   * Serial-number FIFO. Until it is seeded by a facelets snapshot, move events
+   * are observed but not applied — we do not know where the cube started.
    */
-  prevMoveCnt: number;
+  sync: GanMoveSync;
   /** Most recent battery percentage from a mode-0xEF event (0..100). */
   battery: number | null;
   /** Consecutive frames with an unrecognised mode byte — wrong key/MAC. */
   badFrames: number;
+  /**
+   * Called with the cube's self-reported 54-character facelet state whenever
+   * it announces one (at connect, and after `v4requestFacelets`). This is the
+   * only authoritative reading of the cube there is; everything else is
+   * dead reckoning from the move stream.
+   */
+  onState?: (facelets: string) => void;
+  /** Host-clock time of the last move event, for the facelets debounce. */
+  prevMoveLocTime: number | null;
+  /** Injectable clock so tests don't depend on wall time. */
+  now: () => number;
+}
+
+/**
+ * csTimer debounces the facelets-driven resync: a snapshot that lands while
+ * the user is mid-turn is behind the move stream by construction, and asking
+ * for history then just fights the live events.
+ */
+const FACELET_RESYNC_QUIET_MS = 500;
+
+/** Fresh decoder state. Use this rather than an object literal — the FIFO has
+ *  identity, and a half-built state silently disables lost-move recovery. */
+export function createGanV4DecodeState(opts: {
+  requestHistory?: (startMoveCnt: number, numberOfMoves: number) => void;
+  onWedged?: () => void;
+  onState?: (facelets: string) => void;
+  now?: () => number;
+} = {}): MoveDecodeState {
+  return {
+    sync: new GanMoveSync({ requestHistory: opts.requestHistory, onWedged: opts.onWedged }),
+    battery: null,
+    badFrames: 0,
+    onState: opts.onState,
+    prevMoveLocTime: null,
+    now: opts.now ?? (() => Date.now()),
+  };
+}
+
+/**
+ * Decode the cube-state payload of a mode-0xED frame into a facelet string,
+ * or null when it is not a physically valid cube (i.e. wrong AES key).
+ *
+ * Bit layout, read off cstimer's `parseV4Data` 0xED branch:
+ *   bit 32 + 3i  corner permutation, i = 0..6
+ *   bit 53 + 2i  corner orientation, i = 0..6
+ *   bit 69 + 4i  edge permutation,   i = 0..10
+ *   bit 113 + i  edge orientation,   i = 0..10
+ * The 8th corner and 12th edge are recovered by checksum in `cubie.ts`.
+ */
+function decodeV4Facelets(frame: Uint8Array): string | null {
+  const ca: number[] = [];
+  for (let i = 0; i < 7; i++) {
+    const perm = readBits(frame, 32 + i * 3, 3);
+    const ori = readBits(frame, 53 + i * 2, 2);
+    ca.push((ori << 3) | perm);
+  }
+  const ea: number[] = [];
+  for (let i = 0; i < 11; i++) {
+    const perm = readBits(frame, 69 + i * 4, 4);
+    const ori = readBits(frame, 113 + i, 1);
+    ea.push((perm << 1) | ori);
+  }
+  return decodeCubieFacelets(ca, ea);
 }
 
 // Every mode byte a correctly-keyed v4 cube emits. A wrong key randomises
@@ -188,6 +251,41 @@ export function decodeGanV4Frame(
     return [];
   }
 
+  if (mode === 0xed) {
+    // Cube state. This is the ONLY frame that says where the cube actually is,
+    // and csTimer's whole model hangs off it (`initCubeState`): the first one
+    // after connecting sets both the baseline state and the move counter.
+    //
+    // Ignoring it — which this driver used to do — leaves the counter unseeded,
+    // so the mode-0x01 branch below consumes the user's first physical turn as
+    // a baseline and drops it. The tracked cube is then permanently off by that
+    // one move: the scramble check never matches and auto-stop never fires.
+    const moveCnt = (frame[3] << 8) | frame[2];
+
+    if (dec.sync.seeded) {
+      // Already tracking. A snapshot that arrives mid-solve is stale by
+      // construction, so only use it as a resync trigger once the move stream
+      // has gone quiet — and only to ask for the moves we are behind by.
+      dec.sync.observe(moveCnt);
+      if (dec.prevMoveLocTime !== null
+        && dec.now() - dec.prevMoveLocTime > FACELET_RESYNC_QUIET_MS) {
+        dec.sync.requestResync(moveCnt);
+      }
+      return [];
+    }
+
+    const facelets = decodeV4Facelets(frame);
+    if (facelets === null) {
+      // Not a physically valid cube ⇒ wrong key. Count it like any other
+      // garbage frame instead of adopting a nonsense state.
+      dec.badFrames++;
+      return [];
+    }
+    dec.sync.seed(moveCnt);
+    dec.onState?.(facelets);
+    return [];
+  }
+
   if (mode === 0x01) {
     // 16-bit moveCnt, little-endian (high byte at bits 56..63, low byte
     // at bits 48..55). Match cstimer's `value.slice(56,64) + value.slice(48,56)`.
@@ -195,12 +293,7 @@ export function decodeGanV4Frame(
     const moveCntLo = frame[6];
     const moveCnt = (moveCntHi << 8) | moveCntLo;
 
-    if (dec.prevMoveCnt === -1) {
-      // Cube was just connected: align without replaying history.
-      dec.prevMoveCnt = moveCnt;
-      return [];
-    }
-    if (moveCnt === dec.prevMoveCnt) return [];
+    dec.prevMoveLocTime = dec.now();
 
     const pow = readBits(frame, 64, 2);     // 0 = CW, 1 = CCW (any value
                                             // >= 2 is unexpected — cstimer
@@ -209,56 +302,40 @@ export function decodeGanV4Frame(
                                             // We drop those.)
     const axisCode = readBits(frame, 66, 6);
     const axis = GAN_V4_AXIS_LOOKUP.indexOf(axisCode);
-
-    const out: string[] = [];
-    if (axis !== -1 && pow < 2) {
-      // If we missed events between prevMoveCnt and moveCnt, cstimer would
-      // request a history dump. We don't have a write hook into that path
-      // here, so we just emit the latest move; the host's CubeStateTracker
-      // will resync on the next solved snapshot. This is a (rare) corner
-      // case that benign-degrades.
-      const f = GAN_V4_FACE_ORDER[axis];
-      out.push(pow === 1 ? `${f}'` : f);
+    if (axis === -1 || pow >= 2) {
+      // Unparseable move: csTimer bails before touching the counter, so the
+      // next real event still reads as a gap and gets recovered.
+      return [];
     }
 
-    dec.prevMoveCnt = moveCnt;
-    return out;
+    const f = GAN_V4_FACE_ORDER[axis];
+    // Straight into the FIFO: it decides whether this move is contiguous with
+    // what the host already has, or whether a dropped notification has to be
+    // recovered from the cube's history first.
+    return dec.sync.push(moveCnt, pow === 1 ? `${f}'` : f);
   }
 
   if (mode === 0xd1) {
-    // Move history. Layout per cstimer:
+    // Move history — the reply to our own request, sent when a counter gap
+    // showed a notification had been dropped. Layout per cstimer:
     //   bits 16..23 : startMoveCnt (most recent move's counter)
     //   from bits 24 onward, 4 bits per move: 3-bit axis (DUBFLR), 1-bit pow.
-    //   numberOfMoves = (len - 1) * 2.
+    //   numberOfMoves = (len - 1) * 2, walking NEWEST -> OLDEST.
     const len = frame[1];
     const startMoveCnt = frame[2];
     const numberOfMoves = Math.max(0, (len - 1) * 2);
-    const out: string[] = [];
-    // Walk newest → oldest like cstimer, but the resulting array is in the
-    // order the cube reports (newest first). Since we only fall through to
-    // here when the host has already processed moves, we replay oldest →
-    // newest by reversing once filled.
     const replay: { cnt: number; mv: string }[] = [];
     for (let i = 0; i < numberOfMoves; i++) {
       const axis = readBits(frame, 24 + 4 * i, 3);
       const pow = readBits(frame, 27 + 4 * i, 1);
       if (axis < 6) {
         const f = GAN_V4_HISTORY_FACE_ORDER[axis];
-        const mv = pow ? `${f}'` : f;
-        const cnt = (startMoveCnt - i) & 0xff;
-        replay.push({ cnt, mv });
+        replay.push({ cnt: (startMoveCnt - i) & 0xff, mv: pow ? `${f}'` : f });
       }
     }
-    // Filter out moves we've already seen and emit the rest in chronological
-    // order (oldest first).
-    replay.sort((a, b) => ((a.cnt - dec.prevMoveCnt) & 0xff) - ((b.cnt - dec.prevMoveCnt) & 0xff));
-    for (const r of replay) {
-      const diff = (r.cnt - dec.prevMoveCnt) & 0xff;
-      if (diff === 0 || diff > 64) continue; // already-seen (0) or wrap (huge diff)
-      out.push(r.mv);
-      dec.prevMoveCnt = r.cnt;
-    }
-    return out;
+    // Hand them over newest-first, exactly as the cube sent them: the FIFO
+    // head-inserts and only accepts the ones that fill the actual hole.
+    return dec.sync.injectHistory(replay);
   }
 
   return [];
@@ -295,7 +372,37 @@ export const ganV4Driver: CubeDriver = {
     const aesIv = deriveKeyFromMac(GAN_V4_IV_BASE, mac);
     const expandedKey = expandKey(aesKey);
 
-    const decState: MoveDecodeState = { prevMoveCnt: -1, battery: null, badFrames: 0 };
+    // `sendCmd` is defined below (it needs the command characteristic, which
+    // is resolved after we subscribe). The decoder only ever calls these from
+    // a notification, long after start() has finished, so a late binding is
+    // safe — and it keeps the handshake order identical to cstimer's.
+    let sendCmd: (req: Uint8Array) => Promise<void> = async () => {};
+
+    const requestFaceletsFrame = (): Uint8Array => {
+      const req = new Uint8Array(20);
+      req[0] = 0xdd; req[1] = 0x04; req[3] = 0xed;
+      return req;
+    };
+
+    const decState: MoveDecodeState = createGanV4DecodeState({
+      // cstimer's requestMoveHistory: opcode 0xD1 / 0x04, window at [2] / [4].
+      requestHistory: (startMoveCnt, numberOfMoves) => {
+        const req = new Uint8Array(20);
+        req[0] = 0xd1; req[1] = 0x04;
+        req[2] = startMoveCnt & 0xff;
+        req[4] = numberOfMoves & 0xff;
+        void sendCmd(req);
+      },
+      // DIVERGENCE from cstimer, deliberate: it force-disconnects when the
+      // buffer wedges. We ask the cube for a fresh state snapshot instead —
+      // that re-seeds from the source and keeps the session alive, which is
+      // strictly better than dropping a connection mid-solve.
+      onWedged: () => {
+        decState.sync.reset();
+        void sendCmd(requestFaceletsFrame());
+      },
+      onState: (facelets) => ctx?.onState?.(facelets),
+    });
     let keyErrorFired = false;
 
     const onChar = (ev: Event): void => {
@@ -334,7 +441,7 @@ export const ganV4Driver: CubeDriver = {
       // No write characteristic — older firmware variant; just listen.
     }
 
-    const sendCmd = async (req: Uint8Array): Promise<void> => {
+    sendCmd = async (req: Uint8Array): Promise<void> => {
       if (!cmdChar) return;
       const enc = encryptFrame(req, expandedKey, aesIv);
       // Detach into a fresh ArrayBuffer-backed Uint8Array — the strict TS
@@ -356,8 +463,7 @@ export const ganV4Driver: CubeDriver = {
     if (cmdChar) {
       const hwInfo = new Uint8Array(20);
       hwInfo[0] = 0xdf; hwInfo[1] = 0x03;
-      const facelets = new Uint8Array(20);
-      facelets[0] = 0xdd; facelets[1] = 0x04; facelets[3] = 0xed;
+      const facelets = requestFaceletsFrame();
       const battery = new Uint8Array(20);
       battery[0] = 0xdd; battery[1] = 0x04; battery[3] = 0xef;
       // Sequenced — cstimer awaits each in turn.

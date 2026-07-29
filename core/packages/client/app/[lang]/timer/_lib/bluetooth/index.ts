@@ -54,6 +54,7 @@ import { moyuDriver } from './moyu';
 import { moyu32Driver } from './moyu32';
 import { qiyiDriver } from './qiyi';
 import { CubeStateTracker } from './state_track';
+import { toFaceletString } from '../cube/state';
 import { watchAdvertisementsMac, savedMac, saveMac, clearMac, parseMacFromName, normalizeMac } from './mac';
 import type { BluetoothCubeStatus } from './types';
 
@@ -116,6 +117,13 @@ export interface BluetoothCubeHandle {
   lastMove: string | null;
   /** Current solved state (true = solved). */
   solved: boolean;
+  /**
+   * Tracked cube state as a 54-character facelet string (`URFDLB` order), or
+   * null when no cube is connected. Prefer this over `getFaces()` in render
+   * paths: it is state, so it re-renders, and it is always the state AFTER the
+   * move being reported.
+   */
+  facelets: string | null;
   /** Open the picker + connect. */
   connect(): Promise<void>;
   /** Disconnect + cleanup. */
@@ -200,6 +208,13 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
   const [status, setStatus] = useState<BluetoothCubeStatus>(INITIAL_STATUS);
   const [lastMove, setLastMove] = useState<string | null>(null);
   const [solved, setSolved] = useState<boolean>(true);
+  /**
+   * The tracked state as a facelet string, pushed rather than pulled.
+   * `getFaces()` reads a ref, so a consumer calling it from its own onMove
+   * handler used to depend on our internal ordering; this is a plain value
+   * that is always the state after the move that triggered the render.
+   */
+  const [facelets, setFacelets] = useState<string | null>(null);
 
   // Refs so the GATT-event closure doesn't capture stale callback refs.
   const onMoveRef = useRef(opts.onMove);
@@ -252,9 +267,15 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     // Drivers call this synchronously from their notification handler, so
     // this is the freshest reading the JS event loop affords us.
     const ts = performance.now();
+    // Advance the model BEFORE telling anyone. Subscribers routinely read the
+    // cube state from inside their onMove handler (the scramble check does),
+    // and notifying first hands them the state as it was one move ago — which
+    // is exactly one move short at the instant a scramble is completed, so the
+    // check fires "doesn't match the scramble" on a cube that does.
+    const isSolved = trackerRef.current.applyMove(move);
+    setFacelets(toFaceletString(trackerRef.current.getFaces()));
     setLastMove(move);
     onMoveRef.current?.(move, ts);
-    const isSolved = trackerRef.current.applyMove(move);
     if (isSolved && !wasSolvedRef.current) {
       wasSolvedRef.current = true;
       setSolved(true);
@@ -263,6 +284,22 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       wasSolvedRef.current = false;
       setSolved(false);
     }
+  }, []);
+
+  /**
+   * The cube told us where it actually is. Adopt it wholesale — this reading
+   * beats anything we inferred from the move stream, which is exactly why the
+   * drivers only fire it for states that passed a solvability check.
+   *
+   * Emitted at connect (and after a resync request), i.e. while the cube is
+   * sitting still, so overwriting the model here cannot race a live turn.
+   */
+  const handleCubeState = useCallback((facelets: string) => {
+    if (!trackerRef.current.adoptFacelets(facelets)) return;
+    const isSolved = trackerRef.current.isSolved();
+    wasSolvedRef.current = isSolved;
+    setSolved(isSolved);
+    setFacelets(facelets);
   }, []);
 
   const cancelPendingReconnect = useCallback(() => {
@@ -303,6 +340,8 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       cleanupRef.current = null;
       disconnectListenerRef.current = null;
       setStatus(INITIAL_STATUS);
+      setFacelets(null);
+    setFacelets(null);
       return;
     }
 
@@ -326,16 +365,20 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       // gyro sink too, or orientation would silently die after any drop.
       const started = await driver.start(server, handleMove, {
         mac: macRef.current,
+        onState: handleCubeState,
         onGyro: onGyroRef.current ? gyroSink : undefined,
       });
       cleanupRef.current = started.cleanup;
       setGyroRef.current = started.setGyro ?? null;
 
-      // Reset solved-tracker baseline (cube may have been turned during
-      // the outage; we can't trust the in-memory state).
+      // The cube may have been turned during the outage, so the in-memory
+      // state is worthless. Brands that report their own state re-seed us via
+      // `handleCubeState` as part of the handshake; for the rest, solved is
+      // the only baseline we have.
       trackerRef.current.reset();
       wasSolvedRef.current = true;
       setSolved(true);
+      setFacelets(toFaceletString(trackerRef.current.getFaces()));
       setLastMove(null);
 
       setStatus({
@@ -372,11 +415,14 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
         }
         disconnectListenerRef.current = null;
         setStatus(INITIAL_STATUS);
+        setFacelets(null);
+      setFacelets(null);
+    setFacelets(null);
         return;
       }
       scheduleReconnectRef.current?.(next);
     }
-  }, [handleMove]);
+  }, [handleMove, handleCubeState]);
 
   const scheduleReconnect = useCallback((attempt: number) => {
     if (intentionalDisconnectRef.current) return;
@@ -420,6 +466,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     driverRef.current = null;
     disconnectListenerRef.current = null;
     setStatus(INITIAL_STATUS);
+    setFacelets(null);
     onConnectionEventRef.current?.({ kind: 'disconnected', reason });
   }, [cancelPendingReconnect]);
 
@@ -432,6 +479,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     trackerRef.current.reset();
     wasSolvedRef.current = true;
     setSolved(true);
+    setFacelets(toFaceletString(trackerRef.current.getFaces()));
   }, []);
 
   const connect = useCallback(async (): Promise<void> => {
@@ -568,16 +616,20 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       const started = await driver!.start(server, handleMove, {
         mac: macToUse,
         onKeyError: handleKeyError,
+        onState: handleCubeState,
         // Only hand the sink over when a consumer asked for orientation —
         // that's the signal MoYu32 uses to turn its 0xAB stream on.
         onGyro: onGyroRef.current ? gyroSink : undefined,
       });
       cleanupRef.current = started.cleanup;
       setGyroRef.current = started.setGyro ?? null;
-      // Initialize tracker to solved (the user starts each session solved).
+      // Provisional baseline. Brands that report their own state (GAN v3/v4)
+      // overwrite this within a frame or two via `handleCubeState`; the rest
+      // have no way to tell us, so solved is the documented starting contract.
       trackerRef.current.reset();
       wasSolvedRef.current = true;
       setSolved(true);
+      setFacelets(toFaceletString(trackerRef.current.getFaces()));
       setLastMove(null);
       setStatus({
         connected: true,
@@ -629,7 +681,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       try { server.disconnect(); } catch { /* ignore */ }
       throw err;
     }
-  }, [handleMove, cancelPendingReconnect, internalDisconnect]);
+  }, [handleMove, handleCubeState, cancelPendingReconnect, internalDisconnect]);
 
   // Tear down on unmount so we don't leak GATT subscriptions.
   useEffect(() => {
@@ -674,6 +726,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     status,
     lastMove,
     solved,
+    facelets,
     connect,
     disconnect,
     resetState,

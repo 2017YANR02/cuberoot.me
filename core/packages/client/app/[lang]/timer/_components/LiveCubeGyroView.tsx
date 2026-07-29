@@ -4,12 +4,17 @@
  * LiveCubeGyroView — the live smart-cube mirror as a real 3D cube whose
  * orientation follows the cube's gyroscope.
  *
- * State comes from the same (scramble + streamed moves) contract LiveCubeState
- * has always used; orientation comes from the BLE quaternion feed. The two are
- * independent channels and they stay independent here:
+ * Stickers come from the move log LiveCubeState maintains; orientation comes
+ * from the BLE quaternion feed. The two are independent channels and they stay
+ * independent here:
  *
- *   - STICKERS  → `twister.setup(scramble + moves)` — layer twists, applied by
+ *   - STICKERS  → `twister.setup(moves)` — layer twists, applied by
  *     the engine to child CubeGroups and per-instance matrices.
+ *
+ * The engine is alg-driven — it has no facelet setter — so the move log MUST
+ * be anchored at a solved cube for this to be truthful. LiveCubeState owns
+ * that rule (`algAnchored`) and falls back to the flat facelet view when the
+ * anchor is missing; do not paper over it with a synthetic setup alg here.
  *   - POSE      → `world.cube.quaternion` — the cube group's own transform,
  *     which the engine never writes, so it is ours to own outright.
  *
@@ -51,9 +56,7 @@ import {
 const STILL_EPS_RAD = 1e-4;
 
 export interface LiveCubeGyroViewProps {
-  /** Scramble the solve started from. */
-  scramble: string;
-  /** Moves streamed from the cube since the scramble was set. */
+  /** Moves since the cube was last known SOLVED — see the note above. */
   moves: string[];
   /** Latest orientation sample, or null when none has arrived. */
   quat: Quat | null;
@@ -81,7 +84,6 @@ export interface LiveCubeGyroViewProps {
 
 export default function LiveCubeGyroView(props: LiveCubeGyroViewProps): JSX.Element {
   const {
-    scramble,
     moves,
     quat,
     quatRef,
@@ -201,9 +203,9 @@ export default function LiveCubeGyroView(props: LiveCubeGyroViewProps): JSX.Elem
     };
   }, []);
 
-  // ── Sticker state: scramble + streamed moves, snapped (not animated) so the
+  // ── Sticker state: replay from solved, snapped (not animated) so the
   //    mirror can never lag behind the physical cube. ──
-  const composed = moves.length > 0 ? `${scramble} ${moves.join(' ')}`.trim() : scramble.trim();
+  const composed = moves.join(' ');
   useEffect(() => {
     const world = mountRef.current?.world;
     if (!ready || !world) return;
