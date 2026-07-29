@@ -291,6 +291,15 @@ function solveAll(scrambles, label) {
   return out;
 }
 
+// ── 别再试图「吞掉 unwind 接着跑」(2026-07-28 实测过两轮,结论:不行)────────────────
+// 动机是省掉重启时那 20~34s 的表重载(崩得勤时是 30%+ 的税)。两种写法都试了:
+//  1. `try/catch` 包住 solve_scramble —— **抓不到**。unwind 不在我们这条调用栈上,
+//     是 worker 的 mailbox 回调异步投递到进程级的(`--trace-uncaught` 指到 run_main)。
+//  2. `process.on('uncaughtException')` 里吞掉 —— 确实**能**接着跑(61 个 case 变 291 个),
+//     然后 wasm 自己炸了:`RuntimeError: memory access out of bounds`(worker 线程的
+//     ida_search 里)。也就是说 unwind 之后 pthread / 堆状态已经坏了,继续跑是在坏状态上算。
+// 最怕的不是崩,是**不崩**:搜索被打断后返回一条更长但仍能解开的解,回放校验照样过,
+// htm 就静默虚高 —— 而这条管道的全部意义就是「最优」。所以宁可重载表。
 for (const [key, baseScramble] of todo) {
   const best = bestOf(solveAll(aufImages(baseScramble), key));
   // 取到轨道最短之后,首末招都不可能是 U 系 —— 是的话剥掉就得到同轨道更短的成员,与最短矛盾。
