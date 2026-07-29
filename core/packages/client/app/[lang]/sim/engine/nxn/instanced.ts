@@ -18,12 +18,13 @@ import * as THREE from "three";
 import Cubelet from "./cubelet";
 import Cube from "./cube";
 import CubeGroup from "./group";
-import { FACE, COLORS } from "../define";
-import { rawMaterial, rawMaterialBasic, buildRawAttributes, attachRawAttributes, setRawCoreBorder, type RawAttrs } from "./rawCore";
+import { FACE, COLORS, STICKER_GAP_DEFAULT } from "../define";
+import { rawMaterial, rawMaterialBasic, buildRawAttributes, attachRawAttributes, setRawCoreBorder, setRawStickerScale, type RawAttrs } from "./rawCore";
 import { mirrorTables } from "../mirror/mirrorGeometry";
 import { FM_DIM, FM_IGNORED, FM_ORIENTED, FM_ORIENTED2, FM_OUTLINE, type StickeringMaskFn } from "./stickering";
-import { injectStickerOutline, type OutlineUniform } from "./stickerOutline";
+import { injectStickerOutline, setStickerOutlineScale, type OutlineUniform } from "./stickerOutline";
 import { engineHomeSid } from "./netIndex";
+import { setPanelFanGap } from "./panelFan";
 
 const HALF = Cubelet.SIZE / 2;
 const HIDE_MAT = new THREE.Matrix4().makeScale(0, 0, 0);
@@ -127,6 +128,11 @@ export default class InstancedRenderer extends THREE.Group {
   /** 贴纸几何的自用克隆:`aOutline` 是 per-instance 属性,而 Cubelet._STICKER / _ARROW
    *  是全站共享的静态几何,直接挂上去会串到同页别的 renderer(/sim 与嵌入板同时活着)。 */
   private stickerGeos = new Map<THREE.BufferGeometry, THREE.BufferGeometry>();
+  /** 提示贴片的缩放克隆(黑边非出厂值时才建;出厂值直接用共享静态几何,零克隆)。
+   *  与 stickerGeos 分开是因为 hint 材质没注入描边 → 不该挂 `aOutline`。 */
+  private hintGeos = new Map<THREE.BufferGeometry, THREE.BufferGeometry>();
+  /** 黑边滑块折算出的贴纸几何缩放(1 = 出厂缝宽 STICKER_GAP_DEFAULT)。 */
+  private _stickerScale = 1;
 
   // toggles
   private _thickness = true;
@@ -415,15 +421,71 @@ export default class InstancedRenderer extends THREE.Group {
     return m;
   }
 
-  /** 共享静态几何 → 本 renderer 的克隆(挂着 `aOutline`),每种基础几何只克隆一次。 */
+  /** 共享静态几何 → 本 renderer 的克隆(挂着 `aOutline`),每种基础几何只克隆一次。
+   *  黑边非出厂值时克隆再按 k 缩 XY —— 只缩面内尺寸,z 不动(贴片厚度 / _STICKER_LOW 的
+   *  0.05 pop-out 是防 z-fight 的,与缝宽无关)。 */
   private stickerGeometry(base: THREE.BufferGeometry): THREE.BufferGeometry {
     let geo = this.stickerGeos.get(base);
     if (!geo) {
       geo = base.clone();
+      if (this._stickerScale !== 1) geo.scale(this._stickerScale, this._stickerScale, 1);
       geo.setAttribute('aOutline', this.outlineFlags);
       this.stickerGeos.set(base, geo);
     }
     return geo;
+  }
+
+  /** 提示贴片几何:出厂缝宽直接用共享静态几何,改过黑边才克隆缩放(hint 是单面
+   *  ShapeGeometry,没有 `aOutline`)。 */
+  private hintGeometry(base: THREE.BufferGeometry): THREE.BufferGeometry {
+    if (this._stickerScale === 1) return base;
+    let geo = this.hintGeos.get(base);
+    if (!geo) {
+      geo = base.clone();
+      geo.scale(this._stickerScale, this._stickerScale, 1);
+      this.hintGeos.set(base, geo);
+    }
+    return geo;
+  }
+
+  /** 黑边 = 相邻两枚贴纸之间深色带宽占小面的比例(与示意伴图导出器 `inset` 同一量纲,
+   *  见 define.STICKER_GAP_DEFAULT)。贴纸几何整体缩 k = (1−gap)/(1−出厂 gap),露出更多
+   *  frame 即更宽的缝;描边 / 原核缝的 SDF 同倍缩,免得两套缝宽 desync。
+   *  几何每种只有一份(与阶数无关),所以拖滑块的代价是几个 clone,不随 N 涨。 */
+  set stickerGap(gap: number) {
+    const k = (1 - gap) / (1 - STICKER_GAP_DEFAULT);
+    if (!Number.isFinite(k) || k <= 0 || Math.abs(k - this._stickerScale) < 1e-6) return;
+    this._stickerScale = k;
+    setStickerOutlineScale(k);
+    setRawStickerScale(k);
+    setPanelFanGap(gap);
+    for (const g of this.stickerGeos.values()) g.dispose();
+    for (const g of this.hintGeos.values()) g.dispose();
+    this.stickerGeos.clear();
+    this.hintGeos.clear();
+    const isSuperOrder = this.cube.order >= __PERF_FLAGS.superOrderThreshold;
+    const base = this._arrow ? Cubelet._ARROW : (isSuperOrder ? Cubelet._STICKER_LOW : Cubelet._STICKER);
+    const geo = this.stickerGeometry(base);
+    this.staticSticker.geometry = geo;
+    this.movingSticker.geometry = geo;
+    const hintGeo = this.hintGeometry(this._arrow ? Cubelet._HINT_ARROW : Cubelet._HINT);
+    this.staticHint.geometry = hintGeo;
+    this.movingHint.geometry = hintGeo;
+    this.cube.dirty = true;
+  }
+  get stickerGap(): number { return 1 - this._stickerScale * (1 - STICKER_GAP_DEFAULT); }
+
+  /** 贴纸不透明度(0~1)。<1 时贴纸转半透明并停写深度 —— 否则半透贴纸会把它后面的
+   *  块身 / 背面贴纸挡在深度缓冲里,看着还是不透。 */
+  set stickerOpacity(op: number) {
+    for (const m of [this.stickerMaterial, this.movingStickerMaterial]) {
+      if (m.opacity === op) continue;
+      m.opacity = op;
+      m.transparent = op < 1;
+      m.depthWrite = op >= 1;
+      m.needsUpdate = true;
+    }
+    this.cube.dirty = true;
   }
 
   private makeStickerMesh(count: number, moving: boolean): THREE.InstancedMesh {
@@ -956,8 +1018,9 @@ export default class InstancedRenderer extends THREE.Group {
     const geo = this.stickerGeometry(value ? Cubelet._ARROW : Cubelet._STICKER);
     this.staticSticker.geometry = geo;
     this.movingSticker.geometry = geo;
-    this.staticHint.geometry = value ? Cubelet._HINT_ARROW : Cubelet._HINT;
-    this.movingHint.geometry = value ? Cubelet._HINT_ARROW : Cubelet._HINT;
+    const hintGeo = this.hintGeometry(value ? Cubelet._HINT_ARROW : Cubelet._HINT);
+    this.staticHint.geometry = hintGeo;
+    this.movingHint.geometry = hintGeo;
     this.cube.dirty = true;
   }
   get arrow(): boolean { return this._arrow; }
@@ -1183,7 +1246,10 @@ export default class InstancedRenderer extends THREE.Group {
     this._rawFrameGeo?.dispose();
     this._rawInnerGeo?.dispose();
     // 贴纸几何是自用克隆(挂 aOutline),共享的那份不能碰,这份必须自己收。
+    // hint 克隆只在改过黑边时才有,同理。
     for (const geo of this.stickerGeos.values()) geo.dispose();
     this.stickerGeos.clear();
+    for (const geo of this.hintGeos.values()) geo.dispose();
+    this.hintGeos.clear();
   }
 }

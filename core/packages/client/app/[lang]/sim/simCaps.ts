@@ -132,6 +132,10 @@ export interface ControlSupport {
   holdPartialTurn: boolean;
   structureColor: boolean;
   coreColor: boolean;
+  /** 内核不透明度 / 贴纸不透明度 / 黑边(缝宽)—— 都是 NxN InstancedRenderer 上的活:
+   *  半透走共享的 frame/贴纸材质,黑边改的是贴纸几何。其余引擎拼图贴片几何构造期烘死、
+   *  块身材质各自建,暂不支持 → 置灰。 */
+  coreFinish: boolean;
   faceColors: boolean;
   logo: boolean;
   carve: boolean;
@@ -216,6 +220,9 @@ export function resolveCaps(kind: SimPuzzle, renderer: SimRenderer): ResolvedCap
       // 内核色 / 原核: NxN sets frame材质, engine-body puzzles paint raw bodies — both need
       // the in-house engine; cubing.js has no equivalent. Mirror (engine='always') 走 grooves.
       coreColor: engineActive,
+      // 内核不透明度 / 贴纸不透明度 / 黑边: NxN InstancedRenderer 独有(含镜面 —— 它就是
+      // order-3/2 的 NxN 引擎),判据同 faceColors。
+      coreFinish: isNxN || isMirror,
       // 面色: only the NxN InstancedRenderer (and Mirror, which IS the NxN engine) re-applies
       // face colors live; other engine-body puzzles bake their sticker colors at construction.
       faceColors: isNxN || isMirror,

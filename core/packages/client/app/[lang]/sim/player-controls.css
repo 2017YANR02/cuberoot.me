@@ -597,6 +597,12 @@
 }
 /* 该拼图暂不支持此配色 → 整行灰化 + 屏蔽所有色块按钮交互(pointer-events 兜住弹层触发) */
 .sim-color-row--disabled { opacity: 0.5; cursor: not-allowed; }
+/* 内核不透明度 / 贴纸不透明度 / 黑边:标签 + 滑条 + 右侧等宽读数,读数定宽免拖动时抖行 */
+.sim-percent-row input[type="range"] { width: 140px; max-width: 100%; height: 22px; }
+.sim-percent-val {
+  min-width: 3.5ch; text-align: right;
+  font-size: 11px; color: var(--muted-foreground); font-variant-numeric: tabular-nums;
+}
 .sim-color-row--disabled .sim-swatch-list,
 .sim-color-row--disabled .sim-face-color-reset { pointer-events: none; }
 /* 色块下拉(镜面配色 / 内核色 / 面色:当前色 / 特殊项图标 + caret,点开展开特殊项 + 预设色板) */
