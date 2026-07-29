@@ -25,7 +25,7 @@ import { localizeCity } from '@/lib/city-localize';
 import { stripWcaPrefix } from '@/lib/comp-localize';
 import { compNameZh } from '@/lib/country-flags';
 import { countryName } from '@/lib/country-name';
-import { statsUrl } from '@/lib/stats-base';
+import { statsUrl, staticUrl } from '@/lib/stats-base';
 import { persistItem } from '@/lib/safe-storage';
 import { VectorTile } from '@mapbox/vector-tile';
 import Protobuf from 'pbf';
@@ -85,6 +85,15 @@ const hasWebGL2 = (() => {
 
 // NOTE: OpenFreeMap 风格（基于 OpenMapTiles schema，和 MapTiler streets-v2 结构兼容）
 // 全球 Cloudflare CDN，中国大陆可直连，无需 API key；如需回退改回 MapTiler，commit 一行即可
+// 标注字形(SDF PBF)自托管:镜像在 tools/map-glyphs/,不从第三方主机取字体数据。
+// 只镜像 MapLibre 不本地光栅化的区段(拉丁/西里尔/希腊/阿拉伯/天城文…);汉字、假名、
+// 谚文由 localIdeographFontFamily(默认 'sans-serif')用系统字体现场光栅化,永远不走
+// 这条 URL —— 否则单是 CJK 就要 29MB/字重。补区段的办法见 tools/map-glyphs/README.md。
+// 缺 range 不需要兜底:实测 MapLibre 5 对取不到的 range 只 warn,然后拿系统字体本地
+// 光栅化那些字符(Unable to load glyph range … Rendering codepoint … locally instead),
+// 标注不会消失 —— 所以镜像同步落后于 Next 部署也只是标注字形临时换成系统字体。
+const GLYPHS_URL = () => staticUrl('/tools/map-glyphs/{fontstack}/{range}.pbf');
+
 type Theme = 'dark' | 'light' | 'satellite';
 const mapStyleUrl = (theme: Theme) => {
   if (theme === 'satellite') return null; // 卫星模式走自构造 style，下面单独处理
@@ -95,7 +104,7 @@ const mapStyleUrl = (theme: Theme) => {
 function buildSatelliteStyle(): maplibregl.StyleSpecification {
   return {
     version: 8,
-    glyphs: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
+    glyphs: GLYPHS_URL(),
     sources: {
       bluemarble: {
         type: 'raster',
@@ -464,6 +473,9 @@ function ensureZhTileProtocol() {
 
 async function buildSimplifiedStyle(styleUrl: string, theme: Theme): Promise<maplibregl.StyleSpecification> {
   const style = await fetch(styleUrl).then(r => r.json()) as maplibregl.StyleSpecification;
+  // 上游 style 的 glyphs 指向 tiles.openfreemap.org/fonts/**;改指自托管镜像。
+  // (本函数 reject 时调用方回退到裸 styleUrl,那条降级路径仍用上游字形。)
+  style.glyphs = GLYPHS_URL();
   const sources = style.sources as Record<string, Record<string, unknown>>;
   await Promise.all(Object.keys(sources).map(async (id) => {
     const src = sources[id];
