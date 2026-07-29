@@ -2685,6 +2685,38 @@ function ColorRow({
   );
 }
 
+/** 外观区的百分比滑条(内核不透明度 / 贴纸不透明度 / 黑边)。行式与 ColorRow 一致
+ *  —— 标签、控件、右侧读数,不支持该拼图时整行灰化 + 滑条 disabled。 */
+function PercentRow({
+  label, value, onChange, min = 0, max = 100, step = 1, disabled, title,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  min?: number;
+  max?: number;
+  step?: number;
+  disabled?: boolean;
+  title?: string;
+}) {
+  return (
+    <div className={'sim-color-row sim-percent-row' + (disabled ? ' sim-color-row--disabled' : '')} aria-disabled={disabled || undefined} title={title}>
+      <span className="sim-color-row-label">{label}</span>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        disabled={disabled}
+        aria-label={label}
+        onChange={(e) => onChange(Number(e.target.value))}
+      />
+      <span className="sim-percent-val">{value}%</span>
+    </div>
+  );
+}
+
 /** 滑条数字框的真实单位(内部仍存 0..100,见 SliderUnit):
  *  - 缩放 → 倍率:引擎 world.scale = 0.5 + v/100;cubing.js 用 cameraDistance [9,3] 逼近同档感受。
  *  - 左右/上下 → 旋转角度(度):引擎 scene.rotation ±90°;cubing.js 经度全程 ±180°(纬度同 ±90°),
@@ -3130,6 +3162,34 @@ function PuzzleSettings({
               t={t}
             />
           </ColorRow>
+          {/* 内核色的三个同族旋钮 —— 都作用在「贴纸之外那层」上,3D 与示意伴图共用同一份值
+              (伴图导出器的 bodyOpacity / stickerOpacity / inset)。原来只挂在图像面板里、
+              只改图不改动画,现在并到内核色下面一起管。 */}
+          <PercentRow
+            label={t('内核不透明度', 'Core opacity')}
+            value={settings.coreOpacity}
+            onChange={(v) => set('coreOpacity', v)}
+            disabled={!caps.supports.coreFinish}
+            title={hint(caps.supports.coreFinish)}
+          />
+          <PercentRow
+            label={t('贴纸不透明度', 'Sticker opacity')}
+            value={settings.stickerOpacity}
+            onChange={(v) => set('stickerOpacity', v)}
+            disabled={!caps.supports.coreFinish}
+            title={hint(caps.supports.coreFinish)}
+          />
+          <PercentRow
+            label={t('黑边', 'Gap')}
+            value={settings.stickerGap}
+            min={0}
+            max={30}
+            step={0.5}
+            onChange={(v) => set('stickerGap', v)}
+            disabled={!caps.supports.coreFinish}
+            title={hint(caps.supports.coreFinish)
+              ?? t('贴纸之间那条缝有多宽(占小面的百分比)', 'Width of the gap between stickers, as a % of one facelet')}
+          />
           <ColorRow
             label={t('面色', 'Face colors')}
             disabled={!caps.supports.faceColors}

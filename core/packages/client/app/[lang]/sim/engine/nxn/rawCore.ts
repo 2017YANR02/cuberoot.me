@@ -25,6 +25,29 @@ export function setRawCoreBorder(on: boolean): void { rawCoreBorder.value = on ?
 /** 当前缝门控状态(SVG 导出器 CPU 复算 shader 的 SDF 缝需要读它)。 */
 export function getRawCoreBorder(): boolean { return rawCoreBorder.value > 0.5; }
 
+/** 缝 SDF 的圆角矩形尺寸(x = 半宽−圆角,y = 圆角),随「黑边」滑块缩放 —— 六色贴片
+ *  几何缩多少,这条缝就得缩多少,否则原核黑缝会与六色贴片缝宽 desync(见 define 头注)。 */
+const rawSdf = { value: new THREE.Vector2(STICKER_HALF - STICKER_CORNER_RADIUS, STICKER_CORNER_RADIUS) };
+let rawStickerScale = 1;
+export function setRawStickerScale(k: number): void {
+  rawStickerScale = k;
+  rawSdf.value.set((STICKER_HALF - STICKER_CORNER_RADIUS) * k, STICKER_CORNER_RADIUS * k);
+}
+/** 当前贴片缩放(SVG 导出器 CPU 复算这条缝时要按同一倍数缩,否则伴图的镜面缝跟 3D 对不上)。 */
+export function getRawStickerScale(): number { return rawStickerScale; }
+
+/** 内核不透明度:原核材质(Phong / Basic 两个单例,建过才设)跟着 frame 一起变半透。
+ *  op = 1 → 恢复完全不透明(并让回 depthWrite,否则半透那次关掉的写深度会留在材质上)。 */
+export function setRawMaterialOpacity(op: number): void {
+  for (const m of [_rawMaterial, _rawMaterialBasic]) {
+    if (!m || m.opacity === op) continue;
+    m.opacity = op;
+    m.transparent = op < 1;
+    m.depthWrite = op >= 1;
+    m.needsUpdate = true;
+  }
+}
+
 /** 每个面在 cubelet 本地坐标系的外法向(与 makeStickerLocalMatrix 一致)。 */
 const FACE_NORMAL: Record<number, [number, number, number]> = {
   [FACE.L]: [-1, 0, 0],
@@ -107,6 +130,7 @@ function injectRawShader(shader: {
   uniforms: { [k: string]: { value: unknown } };
 }): void {
   shader.uniforms.uCoreBorder = rawCoreBorder;
+  shader.uniforms.uRawSdf = rawSdf;
   shader.vertexShader = shader.vertexShader
     .replace(
       '#include <common>',
@@ -129,6 +153,7 @@ function injectRawShader(shader: {
       '#include <common>',
       `#include <common>
       uniform float uCoreBorder;
+      uniform vec2 uRawSdf;
       varying vec3 vRawPos;
       varying vec3 vRawN0; varying vec3 vRawN1; varying vec3 vRawN2;
       varying vec3 vRawC0; varying vec3 vRawC1; varying vec3 vRawC2;`,
@@ -147,8 +172,8 @@ function injectRawShader(shader: {
         // 普通原核(=0):整片连续面色、无黑线。SDF:面内点到圆角矩形(半宽/圆角同源 _STICKER)。
         if (uCoreBorder > 0.5 && dot(bestN, bestN) > 0.5) {
           vec3 ip = vRawPos - bestN * dot(vRawPos, bestN);
-          vec3 q = abs(ip) - vec3(${(STICKER_HALF - STICKER_CORNER_RADIUS).toFixed(1)});
-          float sdf = min(max(q.x, max(q.y, q.z)), 0.0) + length(max(q, vec3(0.0))) - ${STICKER_CORNER_RADIUS.toFixed(1)};
+          vec3 q = abs(ip) - vec3(uRawSdf.x);
+          float sdf = min(max(q.x, max(q.y, q.z)), 0.0) + length(max(q, vec3(0.0))) - uRawSdf.y;
           if (sdf > 0.0) rawCol = diffuse;
         }
         diffuseColor.rgb = rawCol;

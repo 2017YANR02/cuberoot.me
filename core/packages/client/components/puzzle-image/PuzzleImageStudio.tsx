@@ -182,10 +182,6 @@ export interface PuzzleImageStudioProps {
    *  engineSvg,隐藏所有 spec 控件与 API 链接(服务端渲染不了这些拼图),导出栏只剩
    *  截图组 + SVG/PNG(下载的就是预览这份引擎矢量)。 */
   engineOnly?: boolean;
-  /** 示意伴图黑边 = 网格缝宽占小面的百分比(visualcube inset 模型)。仅当伴图为
-   *  示意版(有严格版孪生)时由 host 传值,undefined = 不适用 → 不渲染滑块。 */
-  outlineWidth?: number;
-  onOutlineWidthChange?: (n: number) => void;
   /** 对照模式:预览并排显示「引擎镜像」与「spec 渲染器」(cube 即 visualcube 本体)
    *  两份图,同一个 spec、同一个状态,用来肉眼比两条渲染路线的差异。
    *  /sim 由 `?img_engine=both` 打开;engineOnly 拼图没有 spec 渲染器可比,忽略。 */
@@ -195,7 +191,7 @@ export interface PuzzleImageStudioProps {
   preferSpecRender?: boolean;
 }
 
-export default function PuzzleImageStudio({ spec, onSpecChange, mode, className, simBridge, previewHost, engineSvg, engineOnly = false, outlineWidth, onOutlineWidthChange, compare = false, preferSpecRender = false }: PuzzleImageStudioProps) {
+export default function PuzzleImageStudio({ spec, onSpecChange, mode, className, simBridge, previewHost, engineSvg, engineOnly = false, compare = false, preferSpecRender = false }: PuzzleImageStudioProps) {
   const t = useT();
   const s = spec;
   const set = useCallback(<K extends keyof ImageSpec>(key: K, value: ImageSpec[K]) => {
@@ -517,24 +513,6 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
       </section>
 
       <section className="vc-controls">
-        {outlineWidth !== undefined && onOutlineWidthChange && (
-          <div className="vc-row">
-            <label className="vc-label" htmlFor="vc-outline">{t('黑边', 'Outline')}</label>
-            <div className="vc-row-controls vc-outline-row">
-              <input
-                id="vc-outline"
-                type="range"
-                min={0}
-                max={30}
-                step={1}
-                value={outlineWidth}
-                onChange={(e) => onOutlineWidthChange(Number(e.target.value))}
-                aria-label={t('示意伴图网格缝宽(占小面 %)', 'Schematic grid gap (% of facelet)')}
-              />
-              <span className="vc-outline-val">{outlineWidth}%</span>
-            </div>
-          </div>
-        )}
         {showPuzzleControls && (
           <div className="vc-row">
             <label className="vc-label">{t('魔方', 'Puzzle')}</label>
@@ -948,7 +926,10 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
             allowEmpty
           />
         )}
-        {isCube && projected && (
+        {/* 壳体色 / 壳体不透明度 / 贴纸不透明度 与 sim 外观区的「内核色」是同一个概念
+            (贴纸之外那层的颜色与通透度),/sim 里由外观区那组统一管、3D 与伴图共用一份值,
+            所以 panel 模式不再重复出这三行 —— 同 公式 / 六面配色 / 背景色 的处理。 */}
+        {isCube && projected && showInheritedControls && (
           <>
             <ColorRow
               label={t('壳体色', 'Cube Color')}
@@ -970,16 +951,15 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
             />
             {/* 投影距离:/sim panel 里 dist 由 sim 的「透视」滑块单向驱动(SimPage 相机
                 镜像 effect:透视→dist,imgSpec 变即重算),面板再放独立滑块会被立刻拍回。
-                与 视角旋转 / 背景色 同属「sim 拥有的相机概念」→ 只在 page 模式露出;
-                panel 里改投影距离走 sim 自己的透视滑块(一个概念一个控件)。 */}
-            {showInheritedControls && (
-              <NumberRow
-                label={t('投影距离', 'Projection Distance')}
-                value={s.dist} min={1} max={100}
-                onChange={(v) => set('dist', v)}
-                onReset={() => set('dist', DEFAULTS.dist)}
-              />
-            )}
+                与 视角旋转 / 背景色 同属「sim 拥有的相机概念」→ 只在 page 模式露出
+                (整块已由 showInheritedControls 门控);panel 里改投影距离走 sim 自己的
+                透视滑块(一个概念一个控件)。 */}
+            <NumberRow
+              label={t('投影距离', 'Projection Distance')}
+              value={s.dist} min={1} max={100}
+              onChange={(v) => set('dist', v)}
+              onReset={() => set('dist', DEFAULTS.dist)}
+            />
           </>
         )}
         </>)}

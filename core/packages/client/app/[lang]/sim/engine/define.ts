@@ -23,6 +23,14 @@ export const STICKER_INNER = SIZE - 2 * STICKER_BORDER_WIDTH - STICKER_EDGE_WIDT
  *  唯一源:`Cubelet` 贴片几何与原核黑缝 SDF 都用它,保证原核贴片圆角 == 六色贴片圆角。 */
 export const STICKER_CORNER_RADIUS = STICKER_INNER / 8;
 
+/** 「黑边」的量纲 —— 相邻两枚贴纸之间那条深色带宽 ÷ 小面边长。上面的几何常量换算过来
+ *  = (SIZE − STICKER_INNER)/SIZE = 0.125,即引擎自出厂起的缝宽。
+ *
+ *  它同时是示意伴图导出器 `inset` 的量纲(格内向心缩 1−inset,缩掉的那圈就是缝的一半,
+ *  两枚相邻贴纸各让一半 → 合起来正好 inset × 小面),所以**同一个数喂 3D 与伴图画出同一条缝**。
+ *  滑块默认取这里,3D 出厂观感不变,伴图跟着 3D 走。 */
+export const STICKER_GAP_DEFAULT = (SIZE - STICKER_INNER) / SIZE;
+
 // 标准 WCA 6 面色取自全站单一来源 lib/cube-colors;Core/Gray/High 是 sim 专属。
 import { CUBE_FILL } from "@/lib/cube-colors";
 export const COLORS: { [key: string]: string } = {

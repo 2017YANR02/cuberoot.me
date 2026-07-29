@@ -66,7 +66,8 @@ async function renderEngineSvg(kind: EnginePuzzleKind, forward: string, size: nu
   if (!hasFacelets(w.scene)) return null;
   const svg = exportSchematic({
     world: w,
-    inset: 0.15,          // /sim 面板「黑边」默认
+    inset: 0.15,          // 导出器自带默认(= visualcube transScale 0.85);站内静态配图
+                          // 走这条,与 /sim 那个跟着 3D 走的「黑边」滑块无关
     bodyColor: '#000000',
     bodyOpacity: 100,
     stickerOpacity: 100,
