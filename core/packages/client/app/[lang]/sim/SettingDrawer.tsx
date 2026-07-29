@@ -370,21 +370,22 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
     Cubelet.CORE.color.set(s.coreColor);
     Cubelet.CORE_BASIC.color.set(s.coreColor);
     Cubelet._PANEL_MAT.color.set(s.coreColor);
-    // 内核不透明度:块身(frame + inner + 占位板 + 原核材质)一起变半透 = X 光,背面贴纸
-    // 透出来(three 先画不透明的贴纸再画半透块身,块身停写深度就挡不住后面那些)。
+    // 内核不透明度:块身(frame + inner + 占位板 + 原核材质)变半透。**深度照写** —— 停写
+    // 深度就没人拦得住内层的块身,一条视线穿过 N 层各混一次,0.7^N 直接糊成黑坨(issue #56)。
+    // 「看到背面贴纸」交给 instancedRenderer.xray 的独立道次,那条路是排过序的。
     // 镂空(TRANS)是另一档,开着时块身材质被它接管,这里的值不再可见。
     const coreOp = Math.min(1, Math.max(0, s.coreOpacity / 100));
     for (const m of [Cubelet.CORE, Cubelet.CORE_BASIC, Cubelet._PANEL_MAT]) {
       if (m.opacity === coreOp) continue;   // applySettings 每次改设置都跑,别每次都触发重编译
       m.opacity = coreOp;
       m.transparent = coreOp < 1;
-      m.depthWrite = coreOp >= 1;
       m.needsUpdate = true;
     }
     setRawMaterialOpacity(coreOp);
     // 贴纸不透明度 + 黑边(缝宽):InstancedRenderer 特性,仅 NxN。
     cube.instancedRenderer.stickerOpacity = Math.min(1, Math.max(0, s.stickerOpacity / 100));
     cube.instancedRenderer.stickerGap = Math.min(0.9, Math.max(0, s.stickerGap / 100));
+    cube.instancedRenderer.xray = coreOp < 1;
     // Mirror Cube colours: 'single' = one raw-body colour (solve by shape), 'six' =
     // standard sticker scheme. Kept separate from the NxN coreStyle/faceColors so
     // switching back to a normal cube restores the user's NxN scheme.

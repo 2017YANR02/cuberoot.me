@@ -92,6 +92,14 @@ export default class InstancedRenderer extends THREE.Group {
   private stickerMaterial: THREE.MeshLambertMaterial | THREE.MeshBasicMaterial;
   private movingStickerMaterial: THREE.MeshLambertMaterial | THREE.MeshBasicMaterial;
 
+  /** X 光(内核不透明度 < 100)下的「背面贴纸」道次 —— 详见 setXray 的注释。挂在
+   *  static/movingSticker 底下当子节点(共用 matrixWorld + instanceMatrix + instanceColor),
+   *  所以贴纸怎么动它就怎么动,不用在每个写矩阵的地方再同步一遍。 */
+  private backSticker!: THREE.InstancedMesh;
+  private movingBackSticker!: THREE.InstancedMesh;
+  private backStickerMaterial: THREE.MeshBasicMaterial;
+  private _xray = false;
+
   /** hint stickers (alg.cubing.net "hint facelets"): 每个 sticker 沿 face normal
    * 推到 cube 外侧 (order+1) 倍位置, BasicMaterial 半透明全亮。提示背面颜色。
    * 抄自 huazhechen/cuber `cubelet.ts` 的 `mirror` 字段, 但走 instanced 渲染。 */
@@ -382,6 +390,12 @@ export default class InstancedRenderer extends THREE.Group {
     // (hint 输出走 staticHint.visible=false,在 visible 之前 GPU 不读其 instance buffer,延后无副作用)
     this.hintNeedsPopulate = true;
 
+    // 背面贴纸道次(默认关,X 光才亮)。unlit Basic:这些面背对着灯,Lambert 会把它们
+    // 打成一片黑;示意伴图那边也是平涂,一致。
+    this.backStickerMaterial = new THREE.MeshBasicMaterial({ side: THREE.BackSide, transparent: true, depthWrite: false });
+    this.backSticker = this.makeBackStickerMesh(this.staticSticker);
+    this.movingBackSticker = this.makeBackStickerMesh(this.movingSticker);
+
     this.add(this.staticFrame);
     this.add(this.movingFrame);
     this.add(this.staticInner);
@@ -448,6 +462,28 @@ export default class InstancedRenderer extends THREE.Group {
     return geo;
   }
 
+  /** 背面贴纸网格:几何用单面平面(HintSticker,与贴纸同形同大)+ BackSide,所以只画
+   *  「法向背离相机」那 3 个面的贴纸 —— 正面那 3 个面被背面剔除挡掉。这 3 张在屏幕上互不
+   *  重叠,一次 draw call 里的混合天然就是对的,不需要逐实例深度排序(InstancedMesh 也排不了)。
+   *
+   *  挂成源网格的子节点 + 单位局部矩阵 ⇒ matrixWorld 直接继承(转层时 movingSticker 的
+   *  四元数照样跟);instanceMatrix / instanceColor 直接复用同一份 attribute 对象,所以
+   *  rebuildAll / beginSlice / setStickering 写的每一笔它都吃得到,不用逐处同步。 */
+  private makeBackStickerMesh(src: THREE.InstancedMesh): THREE.InstancedMesh {
+    const m = new THREE.InstancedMesh(this.hintGeometry(Cubelet._HINT), this.backStickerMaterial, src.count);
+    m.instanceMatrix = src.instanceMatrix;
+    if (src.instanceColor) m.instanceColor = src.instanceColor;
+    m.frustumCulled = false;
+    m.matrixAutoUpdate = false;
+    m.matrix.identity();
+    m.visible = false;
+    // count 是唯一同步不了的量(beginSlice / endSlice 到处在改 src.count),画之前抄一次。
+    // onBeforeRender 早于 three 取 object.count 的时刻,这一帧就生效。
+    m.onBeforeRender = () => { m.count = src.count; };
+    src.add(m);
+    return m;
+  }
+
   /** 黑边 = 相邻两枚贴纸之间深色带宽占小面的比例(与示意伴图导出器 `inset` 同一量纲,
    *  见 define.STICKER_GAP_DEFAULT)。贴纸几何整体缩 k = (1−gap)/(1−出厂 gap),露出更多
    *  frame 即更宽的缝;描边 / 原核缝的 SDF 同倍缩,免得两套缝宽 desync。
@@ -471,22 +507,60 @@ export default class InstancedRenderer extends THREE.Group {
     const hintGeo = this.hintGeometry(this._arrow ? Cubelet._HINT_ARROW : Cubelet._HINT);
     this.staticHint.geometry = hintGeo;
     this.movingHint.geometry = hintGeo;
+    this.backSticker.geometry = hintGeo;
+    this.movingBackSticker.geometry = hintGeo;
     this.cube.dirty = true;
   }
   get stickerGap(): number { return 1 - this._stickerScale * (1 - STICKER_GAP_DEFAULT); }
 
-  /** 贴纸不透明度(0~1)。<1 时贴纸转半透明并停写深度 —— 否则半透贴纸会把它后面的
-   *  块身 / 背面贴纸挡在深度缓冲里,看着还是不透。 */
+  /** 贴纸不透明度(0~1)。**深度照写**:半透的东西一旦停写深度,同一个 InstancedMesh 里
+   *  几十上百枚贴纸就按提交顺序(而非远近)互相叠,前后贴纸、贴片挤出体的正反面全糊在一起
+   *  —— issue #56 那一片三角形就是这么来的。写深度 = 每个像素只留最近那一层,干净。
+   *  「透过块身看到背面贴纸」由 setXray 的独立道次负责,不靠关深度硬凑。 */
   set stickerOpacity(op: number) {
-    for (const m of [this.stickerMaterial, this.movingStickerMaterial]) {
+    for (const m of [this.stickerMaterial, this.movingStickerMaterial, this.backStickerMaterial]) {
       if (m.opacity === op) continue;
       m.opacity = op;
-      m.transparent = op < 1;
-      m.depthWrite = op >= 1;
+      // 背面道次恒半透(它就是靠混合叠在块身下面的),只有正面那两份跟着 op 切
+      m.transparent = op < 1 || m === this.backStickerMaterial;
       m.needsUpdate = true;
     }
     this.cube.dirty = true;
   }
+
+  /** X 光合成(内核不透明度 < 100 时开)。
+   *
+   *  three 的透明排序只到「对象」这一级,不排三角形也不排 instance,而我们整只魔方
+   *  统共就 4 组 InstancedMesh —— 靠它自动排等于没排。所以这里手动钉死示意伴图那套
+   *  far → near 的画家顺序,并让块身照常写深度把层数卡在一层:
+   *
+   *    ① 背面贴纸(backSticker,BackSide 平面,不写深度)
+   *    ② 块身 frame / inner(半透但**写深度** → 每像素只留最外那层,不然 N 层块身
+   *       叠下来 0.7^N 直接黑成一坨,贴纸全被埋掉)
+   *    ③ 正面贴纸(写深度,比块身外表面近,深度测试自然过)
+   *    ④ 提示贴片(本来就在魔方外面)
+   *
+   *  关掉时 renderOrder 全部归零 —— 不透明道次让 three 自己按前后排(early-z),
+   *  高阶那边靠这个省 fragment。 */
+  set xray(on: boolean) {
+    if (on === this._xray) return;
+    this._xray = on;
+    this.backSticker.visible = on;
+    this.movingBackSticker.visible = on;
+    const order = (o: number) => (on ? o : 0);
+    this.backSticker.renderOrder = order(1);
+    this.movingBackSticker.renderOrder = order(1);
+    this.staticFrame.renderOrder = order(2);
+    this.movingFrame.renderOrder = order(2);
+    this.staticInner.renderOrder = order(2);
+    this.movingInner.renderOrder = order(2);
+    this.staticSticker.renderOrder = order(3);
+    this.movingSticker.renderOrder = order(3);
+    this.staticHint.renderOrder = order(4);
+    this.movingHint.renderOrder = order(4);
+    this.cube.dirty = true;
+  }
+  get xray(): boolean { return this._xray; }
 
   private makeStickerMesh(count: number, moving: boolean): THREE.InstancedMesh {
     // 排除法测试: 仅 sticker geometry 改 PlaneGeometry,其它(material/frame)不动
@@ -1021,6 +1095,8 @@ export default class InstancedRenderer extends THREE.Group {
     const hintGeo = this.hintGeometry(value ? Cubelet._HINT_ARROW : Cubelet._HINT);
     this.staticHint.geometry = hintGeo;
     this.movingHint.geometry = hintGeo;
+    this.backSticker.geometry = hintGeo;
+    this.movingBackSticker.geometry = hintGeo;
     this.cube.dirty = true;
   }
   get arrow(): boolean { return this._arrow; }
@@ -1241,6 +1317,9 @@ export default class InstancedRenderer extends THREE.Group {
     this.movingHint.dispose();
     this.stickerMaterial.dispose();
     this.movingStickerMaterial.dispose();
+    // 背面道次只收材质:它的 instanceMatrix / instanceColor 是贴纸网格那一份,
+    // 对它调 dispose() 会顺手把共用的 buffer 也释放掉。
+    this.backStickerMaterial.dispose();
     this.hintMaterial.dispose();
     this.movingHintMaterial.dispose();
     this._rawFrameGeo?.dispose();
