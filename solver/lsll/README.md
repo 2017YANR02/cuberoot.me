@@ -50,7 +50,29 @@ emscripten `unwind` 把进程带走,每个 case 即落盘所以重启零损失)�
 LIMIT=200 node solve.mjs      # 只啃 200 个 case,给出 case/s 与 解/s
 ```
 
-想让它占低优先级在后台跑:
+## 一键:`run_lsll.ps1`
+
+```powershell
+pwsh run_lsll.ps1                                # 开跑(1 进程 × 12 线程 + h9,压低优先级)
+pwsh run_lsll.ps1 -Status                        # 到哪儿了 + 实测速率 + 剩几小时
+pwsh run_lsll.ps1 -Stop                          # 停(随停随续)
+pwsh run_lsll.ps1 -Merge                         # 分片结果并进 out.csv(灌库前跑一次)
+```
+
+`-Procs N` 开 N 个进程分片并跑,各写各的 out。**单进程吃不满 CPU** —— LSLL 局面只有 12~14 步,
+一次求解 44ms 就结束,12 个线程来不及铺开,实测系统总 CPU 只到 30%。把核分给几个互相独立的
+搜索,利用率才上得来。2026-07-28 实测(16 逻辑核 / 31.8G):
+
+| 配法 | 内存 | 吞吐 | 全量 |
+|---|---|---|---|
+| 1 进程 × 12 线程 · **h9** | 15.0G | 1.35 case/s | ~119h |
+| 4 进程 × 3 线程 · h6 | 7.8G | 4.90 case/s | ~33h |
+| 7 进程 × 2 线程 · h6 | 13.6G | **7.04 case/s** | **~23h** |
+
+小表多进程快 5.2 倍,内存还更省。**换表不改答案**(都是可采纳剪枝表,htm 是同一个最优值);
+变的只是并列最优解里吐出哪一条,即 out.csv 的 solution 列 —— 灌库时行级 sha 清单会多几行 diff。
+
+想让它占低优先级在后台跑(`run_lsll.ps1` 已经这么做了,这是手跑的写法):
 
 ```powershell
 # Start-Process 没有 -PriorityClass(那是 Process 对象的属性),要 -PassThru 拿到进程再设
