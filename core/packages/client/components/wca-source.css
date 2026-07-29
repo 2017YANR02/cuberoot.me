@@ -107,11 +107,12 @@
   color: var(--foreground);
 }
 
-/* 按难度出题:配色 + 方法 + 阶段选择器 + 步数滑块能并一行就并一行,窄了才折行。 */
+/* 按难度出题:配色 + 方法 + 阶段选择器 + 步数滑块并成一行(基准宽压小,~570px 的来源条也不折行);
+   再窄才让滑块折到下一行。 */
 .wca-src-diff { margin: 4px 0 2px; display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; }
-.wca-src-diff-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex: 0 0 auto; }
+.wca-src-diff-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex: 0 1 auto; }
 /* 步数范围:双圆点滑块(拖动区间即所选步数,不再单独文字读数);占同行剩余宽度。 */
-.wca-src-steps-range { display: flex; flex-direction: column; gap: 2px; padding: 0 9px 18px; flex: 1 1 200px; min-width: 160px; }
+.wca-src-steps-range { display: flex; flex-direction: column; gap: 2px; padding: 0 9px 18px; flex: 1 1 150px; min-width: 120px; }
 
 /* 难度开关灰锁(该场未入库):整体压暗读作「不可用」,但仍可点(点击展开原因,故用 help 光标)。 */
 .pill-toggle--locked { opacity: 0.4; cursor: help; }
