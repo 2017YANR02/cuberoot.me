@@ -16,7 +16,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { TimerPhase } from './useTimer';
+import type { TimerPhase } from '../_shared/useTimer';
 
 export interface BldMemoHandle {
   /** Memo split if taken, undefined otherwise. */

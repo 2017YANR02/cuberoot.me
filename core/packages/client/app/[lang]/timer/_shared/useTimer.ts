@@ -2,6 +2,12 @@
  * useTimer — WCA-style spacebar / touch timer state machine, with optional
  * inspection.
  *
+ * Lives in _shared (not _lib) because it is the site's single timing engine:
+ * /timer's Solo + Battle shells drive it through the full hold/inspection
+ * cycle, and /stroop drives the same machine through `startNow` + `onPressDown`
+ * for a plain press-to-start stopwatch. Anything that needs a running clock
+ * should come here rather than growing another performance.now() loop.
+ *
  * Phases:
  *   idle        — waiting for input
  *   inspecting  — countdown running (only when settings.inspection > 0); a
@@ -27,8 +33,8 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { getSettings } from './settings';
-import { play, playInspectionBeep } from './sound';
+import { getSettings } from '../_lib/settings';
+import { play, playInspectionBeep } from '../_lib/sound';
 
 export type TimerPhase = 'idle' | 'inspecting' | 'holding' | 'ready' | 'running' | 'stopped';
 

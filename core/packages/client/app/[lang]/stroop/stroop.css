@@ -1,0 +1,299 @@
+/* /stroop —— 页面外壳走 :root token(light/dark 自动翻);只有中间那块舞台恒暗。
+
+   舞台钉死暗底是 art-directed,不是偷懒:6 种墨色要在同一底色上一眼分得开,
+   浅底下黄必须压暗才看得清,压暗后就和橙糊在一起 —— 测试本身就废了。值取站内
+   dark 主题的 --background / --foreground,并在 .stroop-stage 上重定义这两个
+   token,所以配色主题也渗不进来(和 .calc-page 钉 light 同一套路)。 */
+
+.stroop-page {
+  /* 墨色 —— 只在暗底上用作文字,故一律取高亮档;色块图例在浅底上也是实心块,同样成立。 */
+  --stroop-red: #ff4d4d;
+  --stroop-yellow: #ffe14a;
+  --stroop-green: #3ddc63;
+  --stroop-blue: #5a9dff;
+  --stroop-orange: #ff9a2e;
+  --stroop-purple: #c77dff;
+
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 0.75rem 1rem 3rem;
+  color: var(--foreground);
+}
+
+/* 工具栏:左返回右开关,这是明确要两端对齐的那一类 */
+.stroop-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.stroop-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.stroop-header p {
+  margin: 0.25rem 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.stroop-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem 1.25rem;
+  margin: 1rem 0;
+  transition: opacity 0.2s ease;
+}
+
+.stroop-control {
+  display: flex;
+  flex-direction: column;
+  align-self: flex-start;
+  gap: 0.3rem;
+}
+
+.stroop-control > span {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.stroop-deal {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  align-self: center;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.stroop-deal:hover {
+  color: var(--foreground);
+  border-color: var(--border-strong);
+}
+
+/* ── 舞台(恒暗) ─────────────────────────────────────────────── */
+
+.stroop-stage {
+  --background: #1c1917;
+  --foreground: #f0ebe3;
+
+  display: block;
+  width: 100%;
+  padding: 1.25rem 1rem 1.5rem;
+  border-radius: 14px;
+  background: var(--background);
+  color: var(--foreground);
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.stroop-stage:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.stroop-timer {
+  font-family: var(--font-mono);
+  font-size: clamp(2.6rem, 13vw, 4.2rem);
+  font-weight: 500;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.stroop-hint {
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  color: color-mix(in srgb, var(--foreground) 55%, transparent);
+}
+
+.stroop-grid {
+  display: grid;
+  gap: 0.45rem 0.6rem;
+  margin-top: 1.4rem;
+}
+
+.stroop-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.2em;
+  font-size: clamp(1.05rem, 4.6vw, 1.7rem);
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+/* 鼠标扫到哪一格给个圈,读长卡时不容易串行 */
+.stroop-cell:hover {
+  box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--foreground) 45%, transparent);
+}
+
+.stroop-patch {
+  display: block;
+  width: 72%;
+  height: 1.15em;
+  border-radius: 5px;
+}
+
+/* 计时中只留舞台,其余淡出(位置保留,免得停表时页面跳一下) */
+.stroop-page.is-running .stroop-controls,
+.stroop-page.is-running .stroop-below {
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+/* ── 舞台下方 ────────────────────────────────────────────────── */
+
+.stroop-below {
+  margin-top: 1.25rem;
+  transition: opacity 0.2s ease;
+}
+
+.stroop-kind-hint {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+}
+
+.stroop-scores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 2rem;
+  margin-top: 1rem;
+}
+
+.stroop-score {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.stroop-score > span {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.stroop-score > strong {
+  font-family: var(--font-mono);
+  font-size: 1.35rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.stroop-score > em {
+  font-style: normal;
+  font-size: 0.75rem;
+  color: var(--faint-foreground);
+}
+
+.stroop-score--todo > strong {
+  color: var(--faint-foreground);
+}
+
+.stroop-history {
+  margin-top: 1.5rem;
+}
+
+.stroop-history-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.stroop-clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.4rem;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.stroop-clear:hover { color: var(--destructive); }
+
+.stroop-history ul {
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0;
+}
+
+.stroop-history li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
+  font-size: 0.85rem;
+}
+
+.stroop-history-kind { min-width: 2.6em; }
+
+.stroop-history-cfg {
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+}
+
+.stroop-history-ms {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.stroop-history-per {
+  min-width: 4.5em;
+  text-align: right;
+  color: var(--faint-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.stroop-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  margin-top: 1.5rem;
+  font-size: 0.78rem;
+  color: var(--muted-foreground);
+}
+
+.stroop-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  white-space: nowrap;
+}
+
+.stroop-legend-item > i {
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 3px;
+}
+
+@media (max-width: 480px) {
+  .stroop-stage { padding: 1rem 0.6rem 1.2rem; }
+  .stroop-grid { gap: 0.35rem 0.3rem; }
+  .stroop-scores { gap: 0.5rem 1.25rem; }
+}
