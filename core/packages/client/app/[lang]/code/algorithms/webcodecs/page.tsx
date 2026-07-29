@@ -301,7 +301,7 @@ await encoder.flush();`}</code></pre>
               </div>
               <div className="wc-use">
                 <div className="wc-use-h"><L zh="地球轨迹导出" en="Globe trail export" /></div>
-                <p><L zh={<><code>/wca/globe</code> 把 MapLibre 的 WebGL 画布逐帧烧进 <code>VideoEncoder</code>,固定 60fps 导出选手的世界巡回轨迹。</>} en={<><code>/wca/globe</code> burns the MapLibre WebGL canvas frame by frame into a <code>VideoEncoder</code>, exporting a cuber's world tour at a locked 60fps.</>} /></p>
+                <p><L zh={<><code>/wca/comp?view=globe</code> 把 MapLibre 的 WebGL 画布逐帧烧进 <code>VideoEncoder</code>,固定 60fps 导出选手的世界巡回轨迹。</>} en={<><code>/wca/comp?view=globe</code> burns the MapLibre WebGL canvas frame by frame into a <code>VideoEncoder</code>, exporting a cuber's world tour at a locked 60fps.</>} /></p>
               </div>
               <div className="wc-use">
                 <div className="wc-use-h"><L zh="榜单 / 模拟器导出" en="Top10 / sim export" /></div>
