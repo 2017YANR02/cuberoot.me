@@ -16,7 +16,8 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const OUT = resolve(__dirname, 'out.csv');
+// OUT 也认 env —— 多分片并行时每个分片写自己那份(run_lsll.ps1),否则几个进程抢同一个文件
+const OUT = resolve(process.env.OUT || resolve(__dirname, 'out.csv'));
 // 相对路径按**脚本所在目录**算,不按 cwd —— 从别处调时 CORPUS=corpus_rest.txt 才不会指空
 const CORPUS = resolve(__dirname, process.env.CORPUS || 'corpus.txt');
 if (!existsSync(CORPUS)) {
