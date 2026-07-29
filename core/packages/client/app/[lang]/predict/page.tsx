@@ -584,7 +584,7 @@ function PredictPageInner() {
               <li key={`${i}-${m}`}>
                 <button
                   type="button"
-                  className={state || undefined}
+                  className={`predict-move${state ? ` ${state}` : ''}`}
                   style={{ background: CUBE_FILL[face], color: CUBE_ON_FILL[face] }}
                   aria-current={i === step - 1 ? 'step' : undefined}
                   title={tr({ zh: `同步到第 ${i + 1} 步`, en: `Jump to move ${i + 1}` })}
