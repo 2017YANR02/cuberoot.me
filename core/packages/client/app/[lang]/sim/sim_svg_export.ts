@@ -21,7 +21,7 @@
  */
 import * as THREE from 'three';
 import type World from './engine/world';
-import { getRawCoreBorder } from './engine/nxn/rawCore';
+import { getRawCoreBorder, getRawStickerScale } from './engine/nxn/rawCore';
 import { STICKER_INNER, STICKER_CORNER_RADIUS } from './engine/define';
 
 export interface SimSvgExportOptions {
@@ -246,14 +246,19 @@ function splitByRawSlots(tri: THREE.Vector3[], slots: RawSlot[]): { pts: THREE.V
 
 /** 镜面缝(uCoreBorder=1)CPU 复算参数:与 rawCore shader 的 SDF 同源(半宽 =
  *  STICKER_INNER/2,圆角 = STICKER_CORNER_RADIUS)。圆角用 45° 切角平面近似
- *  (弦切误差 ≈ 0.08r,亚像素)。 */
-const RAW_SH = STICKER_INNER / 2;
-const RAW_CHAMFER = 2 * RAW_SH - STICKER_CORNER_RADIUS * (2 - Math.SQRT2);
+ *  (弦切误差 ≈ 0.08r,亚像素)。「黑边」滑块缩贴片时两者同倍缩 —— shader 那边缩的是
+ *  uniform,这边缩的是这两个数,拿的是同一个 getRawStickerScale()。 */
+function rawBorderParams(): { sh: number; chamfer: number } {
+  const k = getRawStickerScale();
+  const sh = (STICKER_INNER / 2) * k;
+  return { sh, chamfer: 2 * sh - STICKER_CORNER_RADIUS * k * (2 - Math.SQRT2) };
+}
 
 /** 把多边形按「贴片圆角矩形棱柱」(沿 slot 法向)分成内(贴片色)/ 外(内核色)。
  *  轴向法向 ⇒ 面内轴 = 其余两坐标轴;侧壁点的面内坐标必超半宽,自动落外侧,
  *  与 shader 对 vRawPos 去法向分量后做 SDF 的语义一致。 */
 function splitByStickerBorder(poly: THREE.Vector3[], n: THREE.Vector3): { inside: THREE.Vector3[] | null; outside: THREE.Vector3[][] } {
+  const { sh: RAW_SH, chamfer: RAW_CHAMFER } = rawBorderParams();
   const ax = Math.abs(n.x), ay = Math.abs(n.y), az = Math.abs(n.z);
   let eu: [number, number, number], ev: [number, number, number];
   if (ax >= ay && ax >= az) { eu = [0, 1, 0]; ev = [0, 0, 1]; }

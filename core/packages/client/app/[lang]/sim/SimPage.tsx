@@ -95,7 +95,7 @@ import { toWca as toWcaSkewb, type SkewbNotation } from '@cuberoot/shared/skewb-
 import TwistySection from '@/components/TwistySection';
 import CutEditor from './CutEditor';
 import {
-  loadSettings, saveSettings, applySettings,
+  loadSettings, saveSettings, applySettings, DEFAULT_SETTINGS,
   mapOrbitK, mapTurnDragFactor, type SimSettings,
 } from './SettingDrawer';
 import PlayerControls, { stripHandMarks, type SimPuzzle } from './PlayerControls';
@@ -491,24 +491,6 @@ export default function SimPage() {
     if (typeof window === 'undefined') return;
     persistItem('sim.panel.image', imageOpen ? '1' : '0');
   }, [imageOpen]);
-
-  // 示意伴图黑边 = 网格缝宽占小面的百分比(visualcube inset 模型:贴纸向心缩,
-  // 露出壳色衬底当网格;绝对 px 描边在高阶 NxN 会吞掉贴纸整图发黑)。
-  // 默认 15 = visualcube 的 transScale 0.85。
-  // 只影响示意伴图,niche 外观,走 localStorage(同 sim.panel.image,非 URL)。
-  const [imgOutline, setImgOutline] = useState<number>(() => {
-    if (typeof window === 'undefined') return 15;
-    try {
-      const raw = localStorage.getItem('sim.img.outline');
-      if (raw === null) return 15;
-      const v = Number(raw);
-      return Number.isFinite(v) && v >= 0 ? v : 15;
-    } catch { return 15; }
-  });
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    persistItem('sim.img.outline', String(imgOutline));
-  }, [imgOutline]);
 
   // 伴图渲染器:'engine' = 我们的引擎镜像(默认),'vc' = 落回 spec 渲染器(cube 即
   // visualcube 本体)。浮层左上角的小钮切换,两条路线都留着,随时对着看。
@@ -1937,7 +1919,19 @@ export default function SimPage() {
               setEngineSvg(cv === 'plan'
                 // plan 透视投影随 spec 的 dist/opacity/旋转变 → 传 imgSpec,渲染旋钮
                 // 复用 specToCubeOptions,与 VC 路逐字节同(net 是 2D emitter,无关 spec)。
-                ? exportSimPlanSvg({ serialized, order: nxn.order, faceColors: fc, spec: imgSpec })
+                // 壳体色/两个不透明度改由外观区的内核色那组管(spec 里那三行只留给 /visualcube
+                // 页),所以喂进去之前先按当前设置覆盖,plan 伴图才跟 3D 一致。
+                ? exportSimPlanSvg({
+                  serialized,
+                  order: nxn.order,
+                  faceColors: fc,
+                  spec: {
+                    ...imgSpec,
+                    cubeColor: settings.coreColor,
+                    cubeOpacity: settings.coreOpacity,
+                    stickerOpacity: settings.stickerOpacity,
+                  },
+                })
                 : exportSimNetSvg({ serialized, order: nxn.order, faceColors: fc }));
             } catch (err) {
               console.warn('[sim] flat companion export failed', err);
@@ -1956,24 +1950,25 @@ export default function SimPage() {
           // 拼图带示意小面(userData.schematicPoly)→ SR 范式示意导出器:每个小面
           // 独立多边形 + 黑描边,共享棱逐比特重合;其余拼图走实模 BSP 投影。
           if (hasSchematicFacelets(world.scene)) {
-            // trans(X 光)视图:visualcube view=trans 预设 —— 银壳 50% 透明(未显式改
-            // 壳色/不透明度时),画背面小面,透过前壳看到背贴纸(退役对照表 §2b「视图
-            // trans」)。cube 专属;壳色/不透明度默认(#000000/100)才套预设,用户显式
+            // 伴图是引擎镜像 → 外观取的就是 3D 那份设置(内核色 / 内核不透明度 /
+            // 贴纸不透明度 / 黑边),不再走 img_* spec 的壳体色三件套:同一个概念一份值,
+            // 左边 3D 什么样右边就什么样(退役对照表 §2b:inset 模型衬底=壳体,贴纸=sticker)。
+            // trans(X 光)视图:visualcube view=trans 预设 —— 银壳 50% 透明,画背面小面,
+            // 透过前壳看到背贴纸。cube 专属;内核色/不透明度还停在默认才套预设,用户显式
             // 调过则尊重其值。
             const isTrans = typeof puzzleParam === 'number' && imgSpec.cubeView === 'trans';
-            const transBody = isTrans && imgSpec.cubeColor === '#000000' ? '#BFBFBF' : imgSpec.cubeColor;
-            const transOpacity = isTrans && imgSpec.cubeOpacity === 100 ? 50 : imgSpec.cubeOpacity;
-            // 黑边滑块 = 网格缝宽占小面的百分比(inset 模型):比例量纲天然与
-            // 视口尺寸、阶数无关 —— 交换态小框视口、40 阶小贴纸下观感都恒定。
+            const transBody = isTrans && settings.coreColor === DEFAULT_SETTINGS.coreColor
+              ? '#BFBFBF' : settings.coreColor;
+            const transOpacity = isTrans && settings.coreOpacity === 100 ? 50 : settings.coreOpacity;
             setEngineSvg(exportSimSvgSchematic({
               world,
-              inset: imgOutline / 100,
-              // visualcube 壳体色/壳体不透明度/贴纸不透明度 三控件的引擎路等价
-              // (退役对照表 §2b:inset 模型衬底=壳体,贴纸=sticker)。默认
-              // #000000/100/100 与导出器默认同 → 不改的话逐比特不变。
+              // 黑边 = 网格缝宽占小面的百分比(inset 模型):比例量纲天然与视口尺寸、
+              // 阶数无关 —— 交换态小框视口、40 阶小贴纸下观感都恒定,也正因如此才能
+              // 和 3D 贴纸几何共用同一个数(见 define.STICKER_GAP_DEFAULT)。
+              inset: settings.stickerGap / 100,
               bodyColor: transBody,
               bodyOpacity: transOpacity,
-              stickerOpacity: imgSpec.stickerOpacity,
+              stickerOpacity: settings.stickerOpacity,
               // 背面 = 只要壳透明就画,判据同 visualcube drawing.ts(`cubeOpacity<100`
               // 即渲 hiddenFaces),不是"仅 trans 视图"。normal 视图把壳不透明度调低
               // (X 光)时 VC 会透出 B/L/D 背贴纸,引擎也必须跟。transOpacity 是引擎侧
@@ -2029,27 +2024,16 @@ export default function SimPage() {
     };
     raf = requestAnimationFrame(tick);
     return () => { disposed = true; cancelAnimationFrame(raf); };
-  }, [imageOpen, srCompanionForced, imageStudioEngineOnly, imgOutline,
+  }, [imageOpen, srCompanionForced, imageStudioEngineOnly,
       imgSpec.stickerMask, imgPuzzle.puzzleType,
-      imgSpec.cubeColor, imgSpec.cubeOpacity, imgSpec.stickerOpacity,
+      // 伴图外观跟 3D 走同一份设置(见上面 exportSimSvgSchematic 的注释)
+      settings.coreColor, settings.coreOpacity, settings.stickerOpacity, settings.stickerGap,
       // plan companion 透视投影随这些旋钮变(specToCubeOptions 单一源):dist(透视)、
       // 旋转、背景。net/BSP 不用,但一并列入无害(只多一次同结果重算)。
       imgSpec.dist, imgSpec.rotateAxis1, imgSpec.rotateAxis2,
       imgSpec.rotateAngle1, imgSpec.rotateAngle2, imgSpec.backgroundColor,
       imgSpec.arrows, imgSpec.defaultArrowColor, imgSpec.cubeView, puzzleParam,
       settings.faceColors, query.stickering, query.stickeringRot]);
-
-  // 伴图当前是否示意版(有示意小面)—— 决定黑边滑块是否可用。平面视图(net/wca/plan)
-  // 走各自的平面导出器,缝宽由 visualcube 本体定死,滑块对它们无效 → 不给。
-  const [engineSchematic, setEngineSchematic] = useState(false);
-  useEffect(() => {
-    if (!(imageOpen && !srCompanionForced)) { setEngineSchematic(false); return; }
-    const world = worldRef.current;
-    const cv = imgSpec.cubeView;
-    const flat = !!world && typeof world.puzzleKind === 'number'
-      && (cv === 'net' || cv === 'wca' || cv === 'plan');
-    setEngineSchematic(!flat && !!world && hasSchematicFacelets(world.scene));
-  }, [imageOpen, srCompanionForced, imgPuzzle.puzzleType, imgSpec.cubeView, engineSvg]);
 
   // 2D flat-net view mode — NxN only (number puzzle), driven by the same live cube.
   const netMode = settings.viewMode === 'net' && typeof puzzleParam === 'number';
@@ -2341,8 +2325,6 @@ export default function SimPage() {
             previewHost={imageHost}
             engineSvg={engineSvg}
             engineOnly={imageStudioEngineOnly}
-            outlineWidth={engineSchematic ? imgOutline : undefined}
-            onOutlineWidthChange={setImgOutline}
             compare={imgEngineMode === 'both'}
             preferSpecRender={imgSource === 'vc'}
           />

@@ -13,6 +13,8 @@ import World from './engine/world';
 import { puzzleCaps, type IsolateKind } from './simCaps';
 import { timing } from './engine/tweenTiming';
 import Cubelet from './engine/nxn/cubelet';
+import { STICKER_GAP_DEFAULT } from './engine/define';
+import { setRawMaterialOpacity } from './engine/nxn/rawCore';
 import { applyDebugStructureColors, applyEngineBodyOverlay } from './engine/debugColors';
 import { applyStickerThickness } from './engine/stickerThickness';
 import { applyHintFacelets } from './engine/hintFacelets';
@@ -94,8 +96,18 @@ export interface SimSettings {
   /** 隔离时看第几个:−1 = 全部(该类块整组),0…count−1 = 只看该类中的某一个(用户要单独看
    *  一个块)。切换 debugIsolate 类别时复位为 −1;超出当前类数量时 apply 端兜回 −1。 */
   debugIsolateIndex: number;
-  /** 内核色 (frame + 内层 slice 填充板的颜色) */
+  /** 内核色 (frame + 内层 slice 填充板的颜色)。它同时是示意伴图的衬底 / 网格色
+   *  (导出器 bodyColor)—— 3D 里贴纸缝隙露出的就是这层,伴图里 inset 露出的也是它,
+   *  同一个概念只留一份设置(旧「壳体色」已并入)。 */
   coreColor: string;
+  /** 内核不透明度 0~100(伴图导出器 bodyOpacity 的引擎侧等价)。<100 = X 光:块身半透,
+   *  背面贴纸透出来。与「镂空」正交 —— 镂空开着时块身走 TRANS,这个值不再可见。 */
+  coreOpacity: number;
+  /** 贴纸不透明度 0~100(伴图导出器 stickerOpacity 的引擎侧等价)。 */
+  stickerOpacity: number;
+  /** 黑边:相邻两枚贴纸间深色带宽占小面的比例(%),3D 与示意伴图共用同一个数。
+   *  默认 = 引擎出厂缝宽 STICKER_GAP_DEFAULT×100 = 12.5。仅 NxN。 */
+  stickerGap: number;
   /** 6 面色 (WCA 默认) */
   faceColors: { U: string; D: string; L: string; R: string; F: string; B: string };
   /** 原核 (raw / stickerless body):
@@ -192,6 +204,9 @@ export const DEFAULT_SETTINGS: SimSettings = {
   debugIsolate: 'off',
   debugIsolateIndex: -1,
   coreColor: '#202020',
+  coreOpacity: 100,
+  stickerOpacity: 100,
+  stickerGap: STICKER_GAP_DEFAULT * 100,
   faceColors: { ...DEFAULT_FACE_COLORS },
   coreStyle: 'normal',
   mirrorColorMode: 'single',
@@ -239,6 +254,19 @@ export function loadSettings(): SimSettings {
     if (typeof merged.nailColor !== 'string') merged.nailColor = '';
     if (typeof merged.nailColorTip !== 'string') merged.nailColorTip = '';
     if (typeof merged.nailShade !== 'number' || !Number.isFinite(merged.nailShade)) merged.nailShade = 50;
+    // 内核不透明度 / 贴纸不透明度 / 黑边:旧版本无此键 → spread 已给默认;非法值兜回默认。
+    if (typeof merged.coreOpacity !== 'number' || !Number.isFinite(merged.coreOpacity)) merged.coreOpacity = 100;
+    if (typeof merged.stickerOpacity !== 'number' || !Number.isFinite(merged.stickerOpacity)) merged.stickerOpacity = 100;
+    if (!Number.isFinite(merged.stickerGap)) merged.stickerGap = STICKER_GAP_DEFAULT * 100;
+    if (!('stickerGap' in parsed)) {
+      // 黑边旧住在图像面板、单独一把 localStorage 键(只作用于伴图)。并进外观设置时把
+      // 用户调过的值搬过来 —— 否则改版后滑块无声地跳回默认。判据必须看**原始 parsed**
+      // 有没有这个键:merged 已经被 DEFAULT_SETTINGS 补过,永远是个合法数。
+      // 这里只读不删:StrictMode 下 useState 初始化跑两遍,删了旧键第二遍就读不到、
+      // 迁移结果被第一遍的默认值顶掉。旧键交给 saveSettings 收(那时新值已经落地)。
+      const legacy = Number(window.localStorage.getItem('sim.img.outline'));
+      if (Number.isFinite(legacy) && legacy > 0) merged.stickerGap = legacy;
+    }
     return merged;
   } catch {
     return DEFAULT_SETTINGS;
@@ -248,6 +276,8 @@ export function loadSettings(): SimSettings {
 export function saveSettings(s: SimSettings): void {
   if (typeof window === 'undefined') return;
   persistItem(STORAGE_KEY, JSON.stringify(s));
+  // 黑边的旧单独键已经被 loadSettings 迁进 stickerGap 了(见那边注释),这一刻新值刚落盘 → 收掉。
+  try { window.localStorage.removeItem('sim.img.outline'); } catch { /* 无痕模式等,忽略 */ }
 }
 
 // 把 0~100 → 实际数值。scale 50 = 1.0 (upstream 默认), 范围 0.5 ~ 1.5。
@@ -340,6 +370,21 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
     Cubelet.CORE.color.set(s.coreColor);
     Cubelet.CORE_BASIC.color.set(s.coreColor);
     Cubelet._PANEL_MAT.color.set(s.coreColor);
+    // 内核不透明度:块身(frame + inner + 占位板 + 原核材质)一起变半透 = X 光,背面贴纸
+    // 透出来(three 先画不透明的贴纸再画半透块身,块身停写深度就挡不住后面那些)。
+    // 镂空(TRANS)是另一档,开着时块身材质被它接管,这里的值不再可见。
+    const coreOp = Math.min(1, Math.max(0, s.coreOpacity / 100));
+    for (const m of [Cubelet.CORE, Cubelet.CORE_BASIC, Cubelet._PANEL_MAT]) {
+      if (m.opacity === coreOp) continue;   // applySettings 每次改设置都跑,别每次都触发重编译
+      m.opacity = coreOp;
+      m.transparent = coreOp < 1;
+      m.depthWrite = coreOp >= 1;
+      m.needsUpdate = true;
+    }
+    setRawMaterialOpacity(coreOp);
+    // 贴纸不透明度 + 黑边(缝宽):InstancedRenderer 特性,仅 NxN。
+    cube.instancedRenderer.stickerOpacity = Math.min(1, Math.max(0, s.stickerOpacity / 100));
+    cube.instancedRenderer.stickerGap = Math.min(0.9, Math.max(0, s.stickerGap / 100));
     // Mirror Cube colours: 'single' = one raw-body colour (solve by shape), 'six' =
     // standard sticker scheme. Kept separate from the NxN coreStyle/faceColors so
     // switching back to a normal cube restores the user's NxN scheme.
