@@ -13,7 +13,7 @@
  * 性质 2 与 4 合起来才是「换了排法但一条路线都没丢」:错位对角是笛卡尔积上的重排,
  * 494 轮的并集仍是同一批 148,384 张图(求解语料因此不用重跑)。
  */
-import { describe, it, expect } from 'vitest';
+import { afterAll, beforeAll, describe, it, expect, vi } from 'vitest';
 import type { AlgCase } from '@cuberoot/shared';
 import {
   canonicalKey, classify, composeState, keyFromString, packState, unpackState,
@@ -27,6 +27,23 @@ import {
 } from '@/lib/lsll/trainer-set';
 
 const caseKey = (c: AlgCase) => keyFromString(lsllCaseKeyString(c))!;
+
+/**
+ * 全程断网。本文件锁的是**合成律**(`composeState` + 错位对角)的代数性质,下面那些
+ * 数字都是由它推出来的常量 —— 148,384 = 296×494 + 2×487 + (274+276+288+348)。
+ *
+ * 不断网的话 `loadLsllCases` 会去问 `/v1/alg/lsll/htm`(vitest 里 API_ORIGIN 解析成
+ * https://api.cuberoot.me,是真的打线上),于是 mid-AUF「取最短变体」那层生效,一条路线
+ * 落到哪个 case 上就取决于**语料回填到哪儿了** —— 回填还在跑,这些数字会一路漂,
+ * 今天锁成什么明天都会红。断网时 `shortestVariant` 恒取 `variants[0]`(不插 AUF),
+ * 合成律的不变量才露出来。
+ *
+ * mid-AUF 那一层本身不在这里测 —— tests/lsll_trainer_set.test.ts 用受控的假 htm
+ * 覆盖了变体普查、挑最短、以及后端不在时的退化。
+ */
+const realFetch = globalThis.fetch;
+beforeAll(() => { vi.stubGlobal('fetch', async () => { throw new Error('offline'); }); });
+afterAll(() => { vi.unstubAllGlobals(); globalThis.fetch = realFetch; });
 
 describe('轮次的 ?scope=', () => {
   it('zbls / zbls-r7 往返,越界与非法退回第 1 轮', () => {
