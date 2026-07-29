@@ -61,8 +61,6 @@
 .auth-sso-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .auth-sso-error { text-align: center; margin-top: 4px; }
 
-/* 邮箱/手机 切换链接 */
-.auth-cred-switch { margin-top: 2px; }
 
 /* 密码输入 + 眼睛切换 */
 .auth-pwfield { position: relative; display: flex; align-items: center; }
@@ -231,6 +229,14 @@
   text-decoration: none;   /* 同款样式也用在 <a> 上(注销屏的「取消」/「返回首页」) */
 }
 .auth-textbtn:hover { color: var(--foreground); }
+
+/* 邮箱/手机 切换链接:直挂宿主容器(非 flex),.auth-textbtn 的 align-self 无处生效。
+   必须排在 .auth-textbtn 之后 —— 要覆盖它的 inline-flex,否则 margin auto 不居中。 */
+.auth-cred-switch {
+  display: flex;
+  width: fit-content;
+  margin: 2px auto 0;
+}
 
 .auth-hint {
   margin: 2px 0 0;
