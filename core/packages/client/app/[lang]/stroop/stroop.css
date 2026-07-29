@@ -6,14 +6,8 @@
    token,所以配色主题也渗不进来(和 .calc-page 钉 light 同一套路)。 */
 
 .stroop-page {
-  /* 墨色 —— 只在暗底上用作文字,故一律取高亮档;色块图例在浅底上也是实心块,同样成立。 */
-  --stroop-red: #ff4d4d;
-  --stroop-yellow: #ffe14a;
-  --stroop-green: #3ddc63;
-  --stroop-blue: #5a9dff;
-  --stroop-orange: #ff9a2e;
-  --stroop-purple: #c77dff;
-
+  /* 墨色 --stroop-<面色> 由 page.tsx 从 lib/cube-colors 内联注入(魔方六面色),
+     不在这里抄一份,免得两处漂移。 */
   max-width: 46rem;
   margin: 0 auto;
   padding: 0.75rem 1rem 3rem;
@@ -290,6 +284,8 @@
   width: 0.8rem;
   height: 0.8rem;
   border-radius: 3px;
+  /* 图例在跟主题的浅底上,白色块不描边就消失了 */
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--foreground) 22%, transparent);
 }
 
 @media (max-width: 480px) {
