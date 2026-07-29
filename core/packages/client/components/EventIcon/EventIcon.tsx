@@ -14,7 +14,9 @@ const UNOFFICIAL_ICON_CLASS: Record<string, string> = Object.fromEntries(
 );
 
 interface CubingIconProps {
-  /** cubing-icons class key, e.g. 'event-333' / 'unofficial-fto' / 'penalty-A6c' */
+  /** cubing-icons class key, e.g. 'event-333' / 'unofficial-fto'. The `penalty-*`
+   *  illustrations are NOT in this map (see gen-svg-map.mjs) — an unknown key
+   *  renders the bare class-only span, same as it always has. */
   icon: string;
   className?: string;
   title?: string;
