@@ -101,6 +101,17 @@ fn emit_sol(on_sol: &js_sys::Function, m: &str, c: &str, len: usize) {
     );
 }
 
+/// 逐视角进度回调:某个视角的最终步数刚算出来即 call 进 JS(worker 端 postMessage 给 UI)。
+/// 深阶段的 6 视角网格是一次同步调用跑完的(EO xxxxcross 实测数十秒到数分钟),不逐格报的话
+/// 前端只有六个转圈可看。call 失败静默忽略 —— 进度掉了不该拖垮求解本身。
+fn emit_face(on_face: &js_sys::Function, face: usize, value: u32) {
+    let _ = on_face.call2(
+        &JsValue::NULL,
+        &JsValue::from_f64(face as f64),
+        &JsValue::from_f64(value as f64),
+    );
+}
+
 /// 2x2x2 块求解(1 角 + 3 棱)。表最小:mt_edge3 (~743KB) + mt_corn (~1.7KB),
 /// 全空间精确距离表构造时现场 BFS(253,440 态,毫秒级)——查长度 O(1),枚举首达即最优。
 /// 每视角 = 该底色 4 个贴底块;解前缀 = rot + y^k,`c` = 块标签(URF..DRB)。
@@ -1118,14 +1129,39 @@ impl F2leoSolverWasm {
     /// 单阶段 6 值(stage 0=cross/1=xc/2=xxc/3=xxxc)。cross 极快 → UI 先单算 cross 秒出,
     /// 深阶段后台补。pseudo=true 走伪变体。
     pub fn solve_f2leo_stage(&self, scramble: &str, pseudo: bool, stage: u32) -> Vec<u32> {
+        self.f2leo_stage(scramble, pseudo, stage, None)
+    }
+
+    /// 带逐视角进度的 solve_f2leo_stage:每定下一个视角就 `on_face(face, value)`
+    /// (face 0..5 = D/U/L/R/F/B)。返回值与 solve_f2leo_stage 完全一致 —— 回调只是把
+    /// 「已经算出来的那几格」提前交给 UI,不改搜索本身。
+    pub fn solve_f2leo_stage_progress(
+        &self,
+        scramble: &str,
+        pseudo: bool,
+        stage: u32,
+        on_face: &js_sys::Function,
+    ) -> Vec<u32> {
+        self.f2leo_stage(scramble, pseudo, stage, Some(on_face))
+    }
+
+    fn f2leo_stage(
+        &self,
+        scramble: &str,
+        pseudo: bool,
+        stage: u32,
+        on_face: Option<&js_sys::Function>,
+    ) -> Vec<u32> {
         let alg = string_to_alg(scramble);
         let st = stage.min(3) as usize;
+        let cb = on_face.map(|f| move |face: usize, value: u32| emit_face(f, face, value));
+        let prog = cb.as_ref().map(|f| f as &dyn Fn(usize, u32));
         if pseudo {
             self.ensure_pseudo();
-            self.pseudo.borrow().as_ref().unwrap().get_stage(&alg, st)
+            self.pseudo.borrow().as_ref().unwrap().get_stage(&alg, st, prog)
         } else {
             self.ensure_f2leo();
-            self.f2leo.borrow().as_ref().unwrap().get_stage(&alg, st)
+            self.f2leo.borrow().as_ref().unwrap().get_stage(&alg, st, prog)
         }
     }
 
@@ -1377,7 +1413,32 @@ impl VariantSolverWasm {
 
     /// 单阶段 6 值。两遍 UI:先 cross(stage 0)秒出,深阶段后台补。
     pub fn solve_stage(&self, scramble: &str, variant: u32, stage: u32) -> Vec<u32> {
+        self.stage(scramble, variant, stage, None)
+    }
+
+    /// 带逐视角进度的 solve_stage:每定下一个视角就 `on_face(face, value)`
+    /// (face 0..5 = D/U/L/R/F/B)。返回值与 solve_stage 完全一致 —— 回调只是把
+    /// 「已经算出来的那几格」提前交给 UI,不改搜索本身。
+    pub fn solve_stage_progress(
+        &self,
+        scramble: &str,
+        variant: u32,
+        stage: u32,
+        on_face: &js_sys::Function,
+    ) -> Vec<u32> {
+        self.stage(scramble, variant, stage, Some(on_face))
+    }
+
+    fn stage(
+        &self,
+        scramble: &str,
+        variant: u32,
+        stage: u32,
+        on_face: Option<&js_sys::Function>,
+    ) -> Vec<u32> {
         let alg = string_to_alg(scramble);
+        let cb = on_face.map(|f| move |face: usize, value: u32| emit_face(f, face, value));
+        let prog = cb.as_ref().map(|f| f as &dyn Fn(usize, u32));
         match variant {
             0 => {
                 self.ensure_pair();
@@ -1385,11 +1446,11 @@ impl VariantSolverWasm {
                     .borrow()
                     .as_ref()
                     .unwrap()
-                    .get_stage_small(&alg, &ROTS, stage as usize)
+                    .get_stage_small(&alg, &ROTS, stage as usize, prog)
             }
             1 => {
                 self.ensure_eo();
-                self.eo.borrow().as_ref().unwrap().eo_get_stage_small(&alg, stage as usize)
+                self.eo.borrow().as_ref().unwrap().eo_get_stage_small(&alg, stage as usize, prog)
             }
             2 => {
                 self.ensure_pseudo();
@@ -1397,7 +1458,7 @@ impl VariantSolverWasm {
                     .borrow()
                     .as_ref()
                     .unwrap()
-                    .pseudo_get_stage_small(&alg, stage as usize)
+                    .pseudo_get_stage_small(&alg, stage as usize, prog)
             }
             3 => {
                 self.ensure_pseudo_pair();
@@ -1405,7 +1466,7 @@ impl VariantSolverWasm {
                     .borrow()
                     .as_ref()
                     .unwrap()
-                    .pseudo_pair_get_stage_small(&alg, stage as usize)
+                    .pseudo_pair_get_stage_small(&alg, stage as usize, prog)
             }
             _ => vec![0; 6],
         }

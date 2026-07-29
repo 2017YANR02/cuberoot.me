@@ -18,7 +18,7 @@ import { BASE, TV, claimXCrossGz, releaseXCrossGz, tablesBaseUrl } from './rust-
 
 // 代码产物(worker/glue/wasm)固定文件名 + 1 天 CDN 缓存,重建后靠版本 query 失效。
 // 每次重建 wasm/worker 必须 bump。
-const V = 'v=20260728b';
+const V = 'v=20260729a';
 
 // 各表解压后(= 装进 WASM 线性内存的)字节数。实测自 tools/solver/rust-cross/tables/*.bin.gz
 // (`gzip -dc | wc -c`)。**表重建后尺寸若变需同步更新**(见 memory「WASM 重建仪式」)。
@@ -84,6 +84,12 @@ export const HTR2_NOT_HTR = 0xffffffff;
 
 /** FR(Floppy 还原,条件式阶段)非 HTR/G3 视角的哨兵值(u32::MAX):该视角未处于 HTR 子群。 */
 export const FR_NOT_HTR = 0xffffffff;
+
+/** 逐视角进度:某个视角(0..5 = D/U/L/R/F/B,同 solve*Stage 的返回序)的最终步数刚算出来。
+ *  6 视角网格在 worker 里是一次同步 WASM 调用跑完的,深阶段(eo xxxxcross 尤甚)要几十秒到
+ *  几分钟 —— 靠它把已定的格子提前交给 UI,而不是整段时间毫无音讯。最终 Promise 仍 resolve
+ *  完整的 6 值权威结果。 */
+export type FaceProgressFn = (face: number, value: number) => void;
 
 /** 单条解法:m = 带视角前缀的步骤串;c = 该解的 F2L 槽位标签(如 "BL FR"),无槽阶段为空串。
  *  并列最优时不同条可能是不同槽。 */
@@ -158,8 +164,9 @@ export interface RustCrossPool {
   /** F2LEO(pseudo=false)/ Pseudo F2LEO(pseudo=true)整变体 24 值:[cross,xc,xxc,xxxc]×6 朝向(已折叠 z0/z2/z3/z1/x3/x1)。 */
   solveF2leo(scramble: string, pseudo: boolean): Promise<number[]>;
   /** 单阶段 6 值(stage 0=cross/1=xc/2=xxc/3=xxxc)。cross 极快 → 先单算 cross 秒出,深阶段后台补。
-   *  mask:18 个 move 的 bitmask(省略=不限步法);受限下无解视角返 0xFFFFFFFF 哨兵。 */
-  solveF2leoStage(scramble: string, pseudo: boolean, stage: number, mask?: number): Promise<number[]>;
+   *  mask:18 个 move 的 bitmask(省略=不限步法);受限下无解视角返 0xFFFFFFFF 哨兵。
+   *  onFace:逐视角进度,同 solveVariantStage。 */
+  solveF2leoStage(scramble: string, pseudo: boolean, stage: number, mask?: number, onFace?: FaceProgressFn): Promise<number[]>;
   /** F2LEO(pseudo=false)/ Pseudo F2LEO(pseudo=true)单格(× stage × face)多解步骤 + 计算耗时。前缀可能含尾随 y(破 y 对称)。
    *  opts.mask 同 solveF2leoStage(省略=不限);受限下无解 len=0xFFFFFFFF。 */
   solveF2leoMoves(
@@ -172,8 +179,9 @@ export interface RustCrossPool {
   /** 其余变体(0=pair/1=eo/2=pseudo/3=pseudo_pair)整变体 24/30 值 × 6 朝向(物理面序 z0/z2/z3/z1/x3/x1)。 */
   solveVariant(scramble: string, variant: number): Promise<number[]>;
   /** 变体单阶段 6 值(stage 0=cross.. ),cross 先出深阶段后台补。
-   *  mask:18 个 move 的 bitmask(省略=不限步法);受限下无解视角返 0xFFFFFFFF 哨兵。 */
-  solveVariantStage(scramble: string, variant: number, stage: number, mask?: number): Promise<number[]>;
+   *  mask:18 个 move 的 bitmask(省略=不限步法);受限下无解视角返 0xFFFFFFFF 哨兵。
+   *  onFace:逐视角进度,每定下一个视角即触发(未受限时才有;深阶段整格要几十秒)。 */
+  solveVariantStage(scramble: string, variant: number, stage: number, mask?: number, onFace?: FaceProgressFn): Promise<number[]>;
   /** 变体单格(variant × stage × face)多解步骤 + 计算耗时。eo 的步骤前缀可能含尾随 y(破 y 对称)。
    *  combo = 固定已解 xcross 槽集(or18「槽位」);base = 自由对槽(or18「基态」,仅 pair/pseudo_pair,-1=auto)。
    *  opts.mask 同 solveVariantStage(省略=不限);受限下无解 len=0xFFFFFFFF。 */
@@ -276,6 +284,8 @@ interface Job {
   // 流式:worker 每枚举到一条解发 *_partial,这里回调给调用方做渐进显示;
   // 不清 job、不派下一个,直到最终 moves/xcr_moves 消息才结算 resolve。
   onPartial?: (sol: SolItem, len: number) => void;
+  // 同上,但报的是 6 视角网格里「哪一格已经定了」(face_progress);同样不结算 job。
+  onFace?: FaceProgressFn;
 }
 
 interface PoolWorker {
@@ -402,6 +412,11 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
         pw.job?.onPartial?.({ m: m.m, c: m.c }, m.len);
         return;
       }
+      // 逐视角进度:同样只回调、不结算(最终 variant/f2leo 消息才是权威 6 值)。
+      if (m.type === 'face_progress') {
+        pw.job?.onFace?.(m.face, m.value);
+        return;
+      }
       const job = pw.job;
       pw.job = null;
       if (job) {
@@ -482,18 +497,18 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
     await Promise.all(all.filter((p) => !p.dead).map(ensureWorkerXCross));
   }
 
-  function submit(msg: Record<string, unknown>, onPartial?: Job['onPartial']): Promise<unknown> {
+  function submit(msg: Record<string, unknown>, onPartial?: Job['onPartial'], onFace?: Job['onFace']): Promise<unknown> {
     // 门必须是「等表真的到位」,不能只看 wantXCross 标志:补表期间后来的 job 若被放行,
     // 会打到尚未 attach 的 worker 上,WASM 端 panic('unreachable')——而 panic 过的实例
     // 连后续 attach 都做不了,那个 worker 就此报废(曾表现为 UI 永远停在「加载 XCross 数据表」)。
     // ensureAllXCross 幂等,已就绪时只是 await 一批已 resolve 的 Promise。
     if (jobNeedsXCross(msg)) {
-      return ensureAllXCross().then(() => submitReady(msg, onPartial));
+      return ensureAllXCross().then(() => submitReady(msg, onPartial, onFace));
     }
-    return submitReady(msg, onPartial);
+    return submitReady(msg, onPartial, onFace);
   }
 
-  function submitReady(msg: Record<string, unknown>, onPartial?: Job['onPartial']): Promise<unknown> {
+  function submitReady(msg: Record<string, unknown>, onPartial?: Job['onPartial'], onFace?: Job['onFace']): Promise<unknown> {
     // 含 Rw/Fw/旋转的打乱(如 3BLD 朝向尾缀)会让魔方偏离白顶绿前;Rust 端 string_to_alg
     // 直接跳过无法识别 token 会静默算错,故先归正到白顶绿前的纯 HTM 再喂 worker。
     // pyraminx / skewb 例外:记号非 3x3 语义(pyram 小写 tips;skewb 角转 120°,X2=240°),
@@ -502,7 +517,7 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
       && (msg.type.startsWith('pyraminx_') || msg.type.startsWith('skewb_'));
     if (typeof msg.scramble === 'string' && !isNon333) msg.scramble = normalizeScramble(msg.scramble) ?? msg.scramble;
     return new Promise((resolve, reject) => {
-      const job: Job = { msg, resolve, reject, onPartial };
+      const job: Job = { msg, resolve, reject, onPartial, onFace };
       const free = idle.pop();
       if (free && free.ready && !free.dead) dispatch(free, job);
       else { queue.push(job); maybeSpawn(); }
@@ -544,11 +559,11 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
     solveF2leo(scramble, pseudo) {
       return submit({ type: 'f2leo', id: nextId++, scramble, pseudo }) as Promise<number[]>;
     },
-    solveF2leoStage(scramble, pseudo, stage, mask) {
+    solveF2leoStage(scramble, pseudo, stage, mask, onFace) {
       return submit({
         type: 'f2leo_stage', id: nextId++, scramble, pseudo, stage,
         ...(mask != null ? { mask } : {}),
-      }) as Promise<number[]>;
+      }, undefined, onFace) as Promise<number[]>;
     },
     solveF2leoMoves(scramble, pseudo, face, stage, opts = {}) {
       return submit({
@@ -560,11 +575,11 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
     solveVariant(scramble, variant) {
       return submit({ type: 'variant', id: nextId++, scramble, variant }) as Promise<number[]>;
     },
-    solveVariantStage(scramble, variant, stage, mask) {
+    solveVariantStage(scramble, variant, stage, mask, onFace) {
       return submit({
         type: 'variant_stage', id: nextId++, scramble, variant, stage,
         ...(mask != null ? { mask } : {}),
-      }) as Promise<number[]>;
+      }, undefined, onFace) as Promise<number[]>;
     },
     solveVariantMoves(scramble, variant, face, stage, opts = {}) {
       return submit({

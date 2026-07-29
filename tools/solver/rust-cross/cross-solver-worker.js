@@ -13,6 +13,7 @@
 // (worker → main):
 //   { type:'ready' } | { type:'xcross_ready', id } | { type:'error', error }
 //   | { type:'result', id, values } | { type:'moves', id, data }
+//   | { type:'face_progress', id, face, value }   逐视角进度,见下
 //
 // variant:0=cross,1=xc,2=xxc,3=xxxc,4=xxxxc。values 是普通 number[]。
 // moves.data = { len, combo, sols:string[] }(单格多解步骤,sols 带视角前缀)。
@@ -38,6 +39,14 @@ let skewbSolver = null;   // SkewbSolverWasm(斜转整解最优),拉 opt_skewb(3
 let tableQuery = '';
 function tableUrl(base, name) {
   return `${base}/${name}.bin.gz${tableQuery ? `?${tableQuery}` : ''}`;
+}
+
+// 逐视角进度回调工厂(variant_stage / f2leo_stage 用)。WASM 每定下一个视角就 call 进来,
+// 立刻 postMessage 给主线程 —— 这些 6 视角网格是**一次同步调用**跑完的(eo xxxxcross 实测
+// 几十秒到几分钟),不逐格回报的话主线程在整段时间里收不到任何消息,UI 只有六个转圈。
+// 最终那条 { type:'variant'|'f2leo', values } 仍是权威结果,进度只是提前把已定的格子交出去。
+function onFace(id) {
+  return (face, value) => self.postMessage({ type: 'face_progress', id, face, value });
 }
 
 async function gunzip(buf) {
@@ -251,9 +260,11 @@ self.onmessage = async (e) => {
       const t0 = performance.now();
       // 单阶段 6 值(stage 0=cross/1=xc/2=xxc/3=xxxc),cross 极快 → UI 先单算 cross 秒出。
       // mask 存在 = 受限步法(f2leo/pseudo_f2leo),无解视角返 u32::MAX 哨兵。
+      // 未受限时走 *_progress:每定下一个视角就回调 → 立刻 postMessage(深阶段整格几十秒,
+      // UI 靠它逐格填数)。受限搜索有深度封顶、本来就秒回,不必加这层。
       const out = (msg.mask != null)
         ? f2leoSolver.solve_f2leo_stage_masked(msg.scramble, !!msg.pseudo, msg.stage | 0, msg.mask >>> 0)
-        : f2leoSolver.solve_f2leo_stage(msg.scramble, !!msg.pseudo, msg.stage | 0);
+        : f2leoSolver.solve_f2leo_stage_progress(msg.scramble, !!msg.pseudo, msg.stage | 0, onFace(msg.id));
       self.postMessage({ type: 'f2leo', id: msg.id, values: Array.from(out), ms: performance.now() - t0 });
     } else if (msg.type === 'f2leo_moves') {
       if (!f2leoSolver) throw new Error('f2leo solver not initialized');
@@ -278,9 +289,11 @@ self.onmessage = async (e) => {
       const t0 = performance.now();
       // 单阶段 6 值。cross(stage 0)先出,深阶段后台补。
       // mask 存在 = 受限步法(pair/eo/pseudo/pseudo_pair),无解视角返 u32::MAX 哨兵。
+      // 未受限时走 solve_stage_progress —— eo xxxxcross 这类整格实测几十秒到几分钟,
+      // 逐格回报才不至于让 UI 六个转圈干等(issue #60)。受限搜索有深度封顶,不必加。
       const out = (msg.mask != null)
         ? variantSolver.solve_stage_masked(msg.scramble, msg.variant | 0, msg.stage | 0, msg.mask >>> 0)
-        : variantSolver.solve_stage(msg.scramble, msg.variant | 0, msg.stage | 0);
+        : variantSolver.solve_stage_progress(msg.scramble, msg.variant | 0, msg.stage | 0, onFace(msg.id));
       self.postMessage({ type: 'variant', id: msg.id, values: Array.from(out), ms: performance.now() - t0 });
     } else if (msg.type === 'block222_stage') {
       if (!block222Solver) throw new Error('block222 solver not initialized');

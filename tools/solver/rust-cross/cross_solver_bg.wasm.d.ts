@@ -45,6 +45,7 @@ export const f2leosolverwasm_new: (a: number, b: number) => number;
 export const f2leosolverwasm_solve_f2leo: (a: number, b: number, c: number) => [number, number];
 export const f2leosolverwasm_solve_f2leo_stage: (a: number, b: number, c: number, d: number, e: number) => [number, number];
 export const f2leosolverwasm_solve_f2leo_stage_masked: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
+export const f2leosolverwasm_solve_f2leo_stage_progress: (a: number, b: number, c: number, d: number, e: number, f: any) => [number, number];
 export const f2leosolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => [number, number];
 export const f2leosolverwasm_solve_moves_masked: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number) => [number, number];
 export const f2leosolverwasm_solve_pseudo_f2leo: (a: number, b: number, c: number) => [number, number];
@@ -74,6 +75,7 @@ export const variantsolverwasm_solve_moves: (a: number, b: number, c: number, d:
 export const variantsolverwasm_solve_moves_masked: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number) => [number, number];
 export const variantsolverwasm_solve_stage: (a: number, b: number, c: number, d: number, e: number) => [number, number];
 export const variantsolverwasm_solve_stage_masked: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
+export const variantsolverwasm_solve_stage_progress: (a: number, b: number, c: number, d: number, e: number, f: any) => [number, number];
 export const xcrossrestrictsolverwasm_new: () => number;
 export const xcrossrestrictsolverwasm_solve_xcross_restricted_grid: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number];
 export const xcrossrestrictsolverwasm_solve_xcross_restricted_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: any) => [number, number];

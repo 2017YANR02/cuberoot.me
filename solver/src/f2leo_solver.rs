@@ -20,7 +20,8 @@
 use std::sync::{Arc, OnceLock};
 
 use crate::cube_common::{
-    alg_rotation, state_space, valid_moves, valid_moves_masked, Move, MoveMask, ValidMovesTable,
+    alg_rotation, report_face, state_space, valid_moves, valid_moves_masked, FaceProgress, Move,
+    MoveMask, ValidMovesTable,
 };
 use crate::move_tables::{self, MoveTable};
 use crate::prune_tables::{self, PackedPruneTable};
@@ -413,7 +414,9 @@ impl F2leoSolver {
     /// 单个阶段(0=cross,1=xc,2=xxc,3=xxxc)的 12 朝向解,折叠成 6 值
     /// (D/U/L/R/F/B = z0/z2/z3/z1/x3/x1)。cross 用精确 pt_cross 故极快;
     /// xc/xxc/xxxc 用弱剪枝故慢。UI 默认只看 cross → 先单算 cross 秒出。
-    pub fn get_stage(&self, alg: &[Move], stage: usize) -> Vec<u32> {
+    /// `on_face`:每定下一个视角就报出去。视角 k = min(朝向 2k, 2k+1),故朝向 2k+1 一算完
+    /// 该视角即成定局(深阶段整格要几十秒,前端靠它逐格填数)。
+    pub fn get_stage(&self, alg: &[Move], stage: usize, on_face: FaceProgress<'_>) -> Vec<u32> {
         const ROTS12: [&str; 12] =
             ["", "y", "z2", "z2 y", "z'", "z' y", "z", "z y", "x'", "x' y", "x", "x y"];
         let base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
@@ -428,6 +431,9 @@ impl F2leoSolver {
                 2 => self.solve_stage(e4_24, &corn, &edg, &XXC, CAP_XXC),
                 _ => self.solve_stage(e4_24, &corn, &edg, &XXXC, CAP_XXXC),
             };
+            if (r & 1) != 0 {
+                report_face(on_face, r / 2, v[r].min(v[r - 1]));
+            }
         }
         (0..6).map(|k| v[2 * k].min(v[2 * k + 1])).collect()
     }
@@ -2064,7 +2070,7 @@ mod enum_tests {
         for scr in scrambles {
             let alg = string_to_alg(scr);
             for stage in 0..3usize {
-                let counts = solver.get_stage(&alg, stage);
+                let counts = solver.get_stage(&alg, stage, None);
                 for face in 0..6usize {
                     let (len, sols) =
                         solver.enumerate_small(&alg, ROTS[face], stage, 0, 100, &[]);

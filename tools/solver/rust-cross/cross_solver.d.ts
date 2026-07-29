@@ -220,6 +220,12 @@ export class F2leoSolverWasm {
      */
     solve_f2leo_stage_masked(scramble: string, pseudo: boolean, stage: number, mask: number): Uint32Array;
     /**
+     * 带逐视角进度的 solve_f2leo_stage:每定下一个视角就 `on_face(face, value)`
+     * (face 0..5 = D/U/L/R/F/B)。返回值与 solve_f2leo_stage 完全一致 —— 回调只是把
+     * 「已经算出来的那几格」提前交给 UI,不改搜索本身。
+     */
+    solve_f2leo_stage_progress(scramble: string, pseudo: boolean, stage: number, on_face: Function): Uint32Array;
+    /**
      * 单格(F2LEO/Pseudo F2LEO × stage × face)多解步骤,返回 JSON {"len","combo","sols"}。
      * pseudo=false → F2LEO,true → Pseudo F2LEO;两者破坏 y 对称(同 eo),最优可能只在 rot·y
      * 帧达成,故步骤前缀用 enumerate_small 返回的真实帧(可能含尾 y,如 "x' y")。
@@ -430,6 +436,12 @@ export class VariantSolverWasm {
      * 视角返回 u32::MAX 哨兵(client 显示 '-')。variant_mask_depth(mask) 封顶。
      */
     solve_stage_masked(scramble: string, variant: number, stage: number, mask: number): Uint32Array;
+    /**
+     * 带逐视角进度的 solve_stage:每定下一个视角就 `on_face(face, value)`
+     * (face 0..5 = D/U/L/R/F/B)。返回值与 solve_stage 完全一致 —— 回调只是把
+     * 「已经算出来的那几格」提前交给 UI,不改搜索本身。
+     */
+    solve_stage_progress(scramble: string, variant: number, stage: number, on_face: Function): Uint32Array;
 }
 
 /**
@@ -509,6 +521,7 @@ export interface InitOutput {
     readonly f2leosolverwasm_solve_f2leo: (a: number, b: number, c: number) => [number, number];
     readonly f2leosolverwasm_solve_f2leo_stage: (a: number, b: number, c: number, d: number, e: number) => [number, number];
     readonly f2leosolverwasm_solve_f2leo_stage_masked: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
+    readonly f2leosolverwasm_solve_f2leo_stage_progress: (a: number, b: number, c: number, d: number, e: number, f: any) => [number, number];
     readonly f2leosolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => [number, number];
     readonly f2leosolverwasm_solve_moves_masked: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number) => [number, number];
     readonly f2leosolverwasm_solve_pseudo_f2leo: (a: number, b: number, c: number) => [number, number];
@@ -538,6 +551,7 @@ export interface InitOutput {
     readonly variantsolverwasm_solve_moves_masked: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number) => [number, number];
     readonly variantsolverwasm_solve_stage: (a: number, b: number, c: number, d: number, e: number) => [number, number];
     readonly variantsolverwasm_solve_stage_masked: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
+    readonly variantsolverwasm_solve_stage_progress: (a: number, b: number, c: number, d: number, e: number, f: any) => [number, number];
     readonly xcrossrestrictsolverwasm_new: () => number;
     readonly xcrossrestrictsolverwasm_solve_xcross_restricted_grid: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number];
     readonly xcrossrestrictsolverwasm_solve_xcross_restricted_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: any) => [number, number];
