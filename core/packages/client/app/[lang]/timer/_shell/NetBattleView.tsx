@@ -896,9 +896,9 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
 
   // 身份字段:登录用户直接显示其 WCA 姓名+ID(不填昵称);访客用 WcaPersonPicker
   // (搜姓名/WCA ID,复用 recon 的选手选择器),选不到就把输入当自由昵称。
+  // 不挂「选手」标题:摆出来的就是一个人名(或一个搜人的框),没有第二种读法。
   const identityField = (
     <div className="net-field">
-      <span className="net-field-label">{tr({ zh: '选手', en: 'Player' })}</span>
       {authUser ? (
         <div className="net-identity-me">
           {authUser.avatar
@@ -969,15 +969,16 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
           ) : (
             /* ───── 创建模式(直接进来)───── */
             <>
-              {identityField}
-
-              <div className="net-field">
-                <span className="net-field-label">{tr({ zh: '项目', en: 'Event' })}</span>
-                <EventSelect
-                  events={NET_SELECTOR_EVENTS}
-                  value={netEventToSelectorId(lobbyEvent)}
-                  onChange={(id) => setLobbyEvent(selectorIdToNetEvent(id))}
-                />
+              {/* 谁 + 练什么并排一行:两个都是一眼认得出的控件,各占一行只是把大厅拉长。 */}
+              <div className="net-lobby-row">
+                {identityField}
+                <div className="net-field">
+                  <EventSelect
+                    events={NET_SELECTOR_EVENTS}
+                    value={netEventToSelectorId(lobbyEvent)}
+                    onChange={(id) => setLobbyEvent(selectorIdToNetEvent(id))}
+                  />
+                </div>
               </div>
 
               <button type="button" className="net-btn net-btn-primary net-btn-lg" onClick={doCreate} disabled={busy}>
