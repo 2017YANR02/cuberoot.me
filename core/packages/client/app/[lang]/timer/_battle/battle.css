@@ -13,7 +13,9 @@
    守卫:tests/battle-css-no-solo-leak.test.ts
    ========================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+/* NOTE: JetBrains Mono 的 @import 已删 —— 1:1 迁移时抄过来的,全站没有一条 font-family
+   引用它,却让每次 /timer 加载(单人也算)多发一条 render-blocking 的 fonts.googleapis.com
+   跨域请求。字体一律自托管,见 app/fonts.css。 */
 
 /* NOTE: Segment7 Standard — 等宽七段 LCD 字体（SIL OFL 开源，自托管）。
    多处用 font-weight:700 请求这张脸 — 声明脸本身就是 700(而非 normal),让浏览器
