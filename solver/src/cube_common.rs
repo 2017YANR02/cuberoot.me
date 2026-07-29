@@ -11,6 +11,24 @@ use std::sync::OnceLock;
 
 pub const TABLE_DIR: &str = "tables/";
 
+// ---------- 逐视角进度回调 ----------
+
+/// 「某个视角的最终步数刚算出来」回调:`(face, value)`,face 0..5 = D/U/L/R/F/B
+/// (物理面序 z0/z2/z3/z1/x3/x1,与各 `*_get_stage_small` 的返回序一致)。
+///
+/// 深阶段的 6 视角网格是一次调用里跑完的,而 EO xxxxcross 这类实测要几十秒到几分钟
+/// (WASM 同步搜索,期间浏览器只能干等)。求解器每定下一个视角就回调一次,前端据此
+/// 逐格填数,而不是六个转圈一起转到结束。`None` = 不关心进度(native 分析器 / 批处理)。
+pub type FaceProgress<'a> = Option<&'a dyn Fn(usize, u32)>;
+
+/// 报一个视角的结果(`on_face` 为 `None` 时无操作)。
+#[inline]
+pub fn report_face(on_face: FaceProgress<'_>, face: usize, value: u32) {
+    if let Some(f) = on_face {
+        f(face, value);
+    }
+}
+
 // ---------- StateSpace 维度常量 ----------
 
 pub mod state_space {

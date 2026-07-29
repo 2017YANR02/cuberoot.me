@@ -28,8 +28,8 @@ use std::sync::Arc;
 
 use crate::cube_common::{
     alg_rotation, array_to_index, conj_moves_flat, get_diagonal_view, get_neighbor_view,
-    get_plus_table_idx, state_space, sym_moves_flat, valid_moves, valid_moves_masked, Move,
-    MoveMask, ValidMovesTable,
+    get_plus_table_idx, report_face, state_space, sym_moves_flat, valid_moves, valid_moves_masked,
+    FaceProgress, Move, MoveMask, ValidMovesTable,
 };
 use crate::executor::bump_node_count;
 use crate::move_tables::{self, MoveTable};
@@ -1621,17 +1621,33 @@ impl EOSmallSolver {
     /// 单阶段 6 视角(stage 0=eo_cross / 1=eo_xcross / 2=eo_xxcross / 3=eo_xxxcross /
     /// 4=eo_xxxxcross)。UI 两遍用:先单算 eo_cross 秒出,深阶段后台补。
     /// 单阶段不串 cascade 下界(lower=0),仍正确(IDA* 首达即最优)。
-    pub fn eo_get_stage_small(&self, alg: &[Move], stage: usize) -> Vec<u32> {
+    ///
+    /// `on_face`:每定下一个视角就回调 `(face, value)`。视角 c 的值 = min(sym 2c, sym 2c+1)
+    /// (见 fold_cross_sym_to_rot),故 sym 2c+1 一算完该视角即成定局,可以立刻报出去 ——
+    /// eo_xxxxcross 整格实测数十秒到数分钟,不逐格报的话前端只能六个转圈干等到底。
+    pub fn eo_get_stage_small(
+        &self,
+        alg: &[Move],
+        stage: usize,
+        on_face: FaceProgress<'_>,
+    ) -> Vec<u32> {
         let alg_idx: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
         if stage == 0 {
             let cr12 = self.cross_stats_sym(&alg_idx);
-            return fold_cross_sym_to_rot(&cr12);
+            let out = fold_cross_sym_to_rot(&cr12);
+            for (c, &v) in out.iter().enumerate() {
+                report_face(on_face, c, v);
+            }
+            return out;
         }
         let mut sym12 = vec![99u32; 12];
         for sym in 0..12 {
             let st: [EoSlotSmall; 4] = std::array::from_fn(|s| self.slot_virt(&alg_idx, sym, s));
             let bound = if (sym & 1) != 0 { sym12[sym - 1] } else { 99 };
             sym12[sym] = self.stage_for_sym(&st, stage, 0, bound);
+            if (sym & 1) != 0 {
+                report_face(on_face, sym / 2, sym12[sym].min(sym12[sym - 1]));
+            }
         }
         fold_cross_sym_to_rot(&sym12)
     }

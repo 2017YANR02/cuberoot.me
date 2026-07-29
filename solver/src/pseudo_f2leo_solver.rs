@@ -18,7 +18,8 @@
 use std::sync::{Arc, OnceLock};
 
 use crate::cube_common::{
-    alg_rotation, state_space, valid_moves, valid_moves_masked, Move, MoveMask, ValidMovesTable,
+    alg_rotation, report_face, state_space, valid_moves, valid_moves_masked, FaceProgress, Move,
+    MoveMask, ValidMovesTable,
 };
 use crate::move_tables::{self, MoveTable};
 
@@ -463,7 +464,8 @@ impl PseudoF2leoSolver {
     }
 
     /// 单个阶段(0=cross,1=xc,2=xxc,3=xxxc)的 12 朝向解,折叠成 6 值。
-    pub fn get_stage(&self, alg: &[Move], stage: usize) -> Vec<u32> {
+    /// `on_face`:每定下一个视角就报出去(同 f2leo:视角 k 在朝向 2k+1 算完即成定局)。
+    pub fn get_stage(&self, alg: &[Move], stage: usize, on_face: FaceProgress<'_>) -> Vec<u32> {
         const ROTS12: [&str; 12] =
             ["", "y", "z2", "z2 y", "z'", "z' y", "z", "z y", "x'", "x' y", "x", "x y"];
         let base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
@@ -479,6 +481,9 @@ impl PseudoF2leoSolver {
                 2 => self.solve_stage(e4_24, &corn, &edg, &cb.xxc, CAP_XXC),
                 _ => self.solve_stage(e4_24, &corn, &edg, &cb.xxxc, CAP_XXXC),
             };
+            if (r & 1) != 0 {
+                report_face(on_face, r / 2, v[r].min(v[r - 1]));
+            }
         }
         (0..6).map(|k| v[2 * k].min(v[2 * k + 1])).collect()
     }
@@ -2219,7 +2224,7 @@ mod enum_tests {
         for scr in scrambles {
             let alg = string_to_alg(scr);
             for stage in 0..3usize {
-                let counts = solver.get_stage(&alg, stage);
+                let counts = solver.get_stage(&alg, stage, None);
                 for face in 0..6usize {
                     let (len, items) =
                         solver.enumerate_small(&alg, ROTS[face], stage, 0, 100, &[]);

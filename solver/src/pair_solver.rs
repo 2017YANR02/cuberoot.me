@@ -18,7 +18,8 @@ use std::sync::Arc;
 
 use crate::cube_common::{
     alg_rotation, array_to_index, conj_moves_flat, get_diagonal_view, get_neighbor_view,
-    state_space, valid_moves, valid_moves_masked, Move, MoveMask, ValidMovesTable,
+    report_face, state_space, valid_moves, valid_moves_masked, FaceProgress, Move, MoveMask,
+    ValidMovesTable,
 };
 use crate::executor::bump_node_count;
 use crate::move_tables::{self, MoveTable};
@@ -1046,18 +1047,28 @@ impl PairSolver {
 
     /// 单阶段 6 视角(stage 0=cross_pair / 1=xcross_pair / 2=xxcross_pair / 3=xxxcross_pair)。
     /// 两遍 UI 用:先单算 cross_pair 秒出,深阶段后台补。lower=0(单阶段不串 cascade 下界,仍正确)。
-    pub fn get_stage_small(&self, alg: &[Move], rots: &[&str], stage: usize) -> Vec<u32> {
+    /// `on_face`:每个视角一算完就报出去(深阶段整格要几十秒,前端靠它逐格填数)。
+    pub fn get_stage_small(
+        &self,
+        alg: &[Move],
+        rots: &[&str],
+        stage: usize,
+        on_face: FaceProgress<'_>,
+    ) -> Vec<u32> {
         let base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
         rots.iter()
-            .map(|r| {
+            .enumerate()
+            .map(|(c, r)| {
                 let mut a = base.clone();
                 alg_rotation(&mut a, r);
-                match stage {
+                let v = match stage {
                     0 => self.solve_1_group(&a, 99),
                     1 => self.solve_2_group(&a, 99, 0),
                     2 => self.solve_3_small(&a, 99, 0),
                     _ => self.solve_4_small(&a, 99, 0),
-                }
+                };
+                report_face(on_face, c, v);
+                v
             })
             .collect()
     }
