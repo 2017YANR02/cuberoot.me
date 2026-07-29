@@ -48,7 +48,7 @@ import {
   readBits,
 } from './gan_crypto';
 import { GAN_MAC_ADV, macStringToBytes } from './mac';
-import { GanMoveSync } from './gan_move_sync';
+import { GanMoveSync, type TimedMove } from './gan_move_sync';
 import { decodeCubieFacelets } from '../cube/cubie';
 
 // GAN v3 GATT identifiers — match cstimer's V3DATA / V3READ / V3WRITE.
@@ -184,7 +184,7 @@ function decodeV3Facelets(frame: Uint8Array): string | null {
  * Mode 2 (facelets snapshot) — ignored; the host re-models from moves.
  * Mode 7 (hardware info) — ignored.
  */
-function decodeFrame(frame: Uint8Array, dec: MoveDecodeState): string[] {
+function decodeFrame(frame: Uint8Array, dec: MoveDecodeState): TimedMove[] {
   if (frame.length < 16) return [];
   // cstimer validates magic == 0x55 and bails on any other value. A wrong key
   // decrypts to a non-0x55 byte on every frame, so this also flags bad MACs.
@@ -235,7 +235,10 @@ function decodeFrame(frame: Uint8Array, dec: MoveDecodeState): string[] {
     if (axis === -1 || pow >= 2) return [];
 
     const f = GAN_V3_FACE_ORDER[axis];
-    return dec.sync.push(moveCnt, pow === 1 ? `${f}'` : f);
+    // The cube's own clock: bits 24..55, low byte first (cstimer reads it as
+    // `value.slice(48,56) + ... + value.slice(24,32)`, i.e. byte order 6,5,4,3).
+    const deviceTs = (frame[3] | (frame[4] << 8) | (frame[5] << 16) | (frame[6] << 24)) >>> 0;
+    return dec.sync.push(moveCnt, pow === 1 ? `${f}'` : f, deviceTs);
   }
 
   if (mode === 6) {
@@ -350,7 +353,7 @@ export const ganV3Driver: CubeDriver = {
         return;
       }
       const moves = decodeFrame(pt, decState);
-      for (const mv of moves) onMove(mv);
+      for (const mv of moves) onMove(mv.mv, mv.ts);
       // Several bad-magic frames in a row ⇒ wrong MAC. Tell the hook once.
       if (!keyErrorFired && decState.badFrames >= 6) {
         keyErrorFired = true;

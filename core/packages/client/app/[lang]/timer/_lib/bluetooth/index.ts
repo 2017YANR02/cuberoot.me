@@ -54,6 +54,7 @@ import { moyuDriver } from './moyu';
 import { moyu32Driver } from './moyu32';
 import { qiyiDriver } from './qiyi';
 import { CubeStateTracker } from './state_track';
+import { MoveClock } from './move_clock';
 import { armedFakeCube } from './fake_cube';
 import { toFaceletString } from '../cube/state';
 import { watchAdvertisementsMac, savedMac, saveMac, clearMac, parseMacFromName, normalizeMac } from './mac';
@@ -257,6 +258,8 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
   // Set while a reconnect attempt is in flight, so we don't double-fire from
   // overlapping disconnect events.
   const reconnectInFlightRef = useRef<boolean>(false);
+  /** Reconciles the cube's clock with ours. Reset on every (re)connect. */
+  const moveClockRef = useRef<MoveClock>(new MoveClock());
 
   /**
    * Publish a solved/unsolved transition. Both the move path and the
@@ -277,16 +280,19 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     }
   }, []);
 
-  const handleMove = useCallback((move: string) => {
+  const handleMove = useCallback((move: string, deviceTs?: number) => {
     // First successfully-decoded move proves the MAC: persist it now. We
     // deliberately don't save before a move lands, to avoid caching a wrong
     // MAC the user typed (which would silently poison every reconnect).
     const ps = pendingSaveMacRef.current;
     if (ps) { saveMac(ps.name, ps.mac); pendingSaveMacRef.current = null; }
-    // Capture timestamp as close to characteristic-value-changed as possible.
-    // Drivers call this synchronously from their notification handler, so
-    // this is the freshest reading the JS event loop affords us.
-    const ts = performance.now();
+    // Arrival time, as close to characteristic-value-changed as possible —
+    // drivers call this synchronously from their notification handler. When
+    // the cube sent its own clock reading, `MoveClock` uses that instead: BLE
+    // batches notifications per connection interval, so arrival times cluster
+    // and cannot resolve the gaps between fast consecutive turns. Everything
+    // downstream (TPS, pauses, per-phase splits) is built on those gaps.
+    const ts = moveClockRef.current.stamp(deviceTs, performance.now());
     // Advance the model BEFORE telling anyone. Subscribers routinely read the
     // cube state from inside their onMove handler (the scramble check does),
     // and notifying first hands them the state as it was one move ago — which
@@ -597,6 +603,9 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       // overwrite this within a frame or two via `handleCubeState`; the rest
       // have no way to tell us, so solved is the documented starting contract.
       trackerRef.current.reset();
+      // A reconnect means a different clock anchor (and possibly a firmware
+      // that restarted its counter), so never carry the old one across.
+      moveClockRef.current.reset();
       wasSolvedRef.current = true;
       setSolved(true);
       setFacelets(toFaceletString(trackerRef.current.getFaces()));

@@ -52,7 +52,7 @@ import {
   type GyroSink,
 } from './gan_crypto';
 import { GAN_MAC_ADV, macStringToBytes } from './mac';
-import { GanMoveSync } from './gan_move_sync';
+import { GanMoveSync, type TimedMove } from './gan_move_sync';
 import { decodeCubieFacelets } from '../cube/cubie';
 
 // GAN v4 GATT identifiers — match cstimer's V4DATA / V4READ / V4WRITE.
@@ -208,8 +208,9 @@ const V4_KNOWN_MODES = new Set([0x01, 0xed, 0xef, 0xd1, 0xec, 0xf5, 0xf6, 0xfa, 
  * Move event layout (mode = 0x01):
  *   bits 0..7   : mode = 0x01
  *   bits 8..15  : payload length (in bytes? cstimer does not validate it)
- *   bits 16..47 : 32-bit timestamp (little-endian byte order) — unused here
- *                 because we re-stamp on the host clock.
+ *   bits 16..47 : 32-bit millisecond timestamp from the CUBE's own clock,
+ *                 little-endian byte order. Reported alongside the move —
+ *                 see `move_clock.ts` for why arrival time is not good enough.
  *   bits 48..63 : 16-bit moveCnt (little-endian byte order) — used to detect
  *                 duplicates and dropped frames.
  *   bits 64..65 : direction (0 = CW, 1 = CCW)
@@ -221,7 +222,7 @@ export function decodeGanV4Frame(
   frame: Uint8Array,
   dec: MoveDecodeState,
   onGyro?: GyroSink,
-): string[] {
+): TimedMove[] {
   if (frame.length < 16) return [];
   const mode = frame[0];
   // Unrecognised mode byte ⇒ likely a wrong-key decrypt; count it for the
@@ -309,10 +310,14 @@ export function decodeGanV4Frame(
     }
 
     const f = GAN_V4_FACE_ORDER[axis];
+    // The cube's own clock, bits 16..47 little-endian. Carried alongside the
+    // move because BLE arrival times are batched and cannot resolve the gaps
+    // between consecutive turns (`move_clock.ts`).
+    const deviceTs = (frame[2] | (frame[3] << 8) | (frame[4] << 16) | (frame[5] << 24)) >>> 0;
     // Straight into the FIFO: it decides whether this move is contiguous with
     // what the host already has, or whether a dropped notification has to be
     // recovered from the cube's history first.
-    return dec.sync.push(moveCnt, pow === 1 ? `${f}'` : f);
+    return dec.sync.push(moveCnt, pow === 1 ? `${f}'` : f, deviceTs);
   }
 
   if (mode === 0xd1) {
@@ -417,7 +422,7 @@ export const ganV4Driver: CubeDriver = {
         return;
       }
       const moves = decodeGanV4Frame(pt, decState, ctx?.onGyro);
-      for (const mv of moves) onMove(mv);
+      for (const mv of moves) onMove(mv.mv, mv.ts);
       // Several unrecognised frames in a row ⇒ wrong MAC. Tell the hook once.
       if (!keyErrorFired && decState.badFrames >= 6) {
         keyErrorFired = true;
