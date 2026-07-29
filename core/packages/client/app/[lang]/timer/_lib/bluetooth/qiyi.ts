@@ -32,11 +32,12 @@
  *   power = [0, 2][mv & 1]              -> 0 = CW, 2 = CCW (no doubles)
  */
 
-import type { CubeDriver, CubeDriverStartResult } from './driver';
+import type { CubeDriver, CubeDriverContext, CubeDriverStartResult } from './driver';
 import type { CubeBrand } from './types';
 import { crc16Modbus } from './crc';
 import { aesEcbDecrypt, aesEcbEncrypt, expandKey } from './gan_crypto';
 import { QIYI_MAC_ADV } from './mac';
+import { fromFaceletString } from '../cube/state';
 
 const QIYI_SERVICE = '0000fff0-0000-1000-8000-00805f9b34fb';
 /** fff6 is full-duplex: notifications come in, hello/ack go out on the same. */
@@ -109,6 +110,33 @@ interface DecodeState {
   battery: number | null;
 }
 
+/**
+ * Decode the 27 facelet bytes (msg[7..33]) into a 54-character facelet string.
+ *
+ * Two stickers per byte, low nibble first, each nibble indexing the alphabet
+ * `LRDUFB` — cstimer's `parseFacelet` (`qiyicube.js:234-241`), verbatim. The
+ * resulting string is in the usual `URFDLB` Kociemba position order, so it
+ * drops straight into `CubeStateTracker.adoptFacelets`.
+ *
+ * Returns null when the payload doesn't describe a real cube, which is the
+ * signal that the frame was decrypted with the wrong key — the `onState`
+ * contract requires drivers to validate before reporting.
+ */
+function parseQiyiFacelets(msg: Uint8Array): string | null {
+  if (msg.length < 34) return null;
+  let out = '';
+  for (let i = 0; i < 54; i++) {
+    const byte = msg[7 + (i >> 1)];
+    const nibble = (byte >> ((i % 2) << 2)) & 0xf;
+    if (nibble > 5) return null;
+    out += 'LRDUFB'.charAt(nibble);
+  }
+  // Nine of each letter, i.e. a facelet count a cube could actually have.
+  // (This does NOT prove solvability — QiYi reports stickers, not pieces, so
+  // there is no permutation parity to check the way there is for GAN.)
+  return fromFaceletString(out) ? out : null;
+}
+
 /** Format a (axis, power) pair into WCA notation. power in {0=CW, 2=CCW}. */
 function formatMove(axis: number, power: number): string | null {
   if (axis < 0 || axis >= URFDLB.length) return null;
@@ -122,17 +150,23 @@ function formatMove(axis: number, power: number): string | null {
  * Returns moves in chronological order (oldest first) plus the new lastTs.
  */
 function parseStateMoves(msg: Uint8Array, prevLastTs: number):
-    { moves: string[]; lastTs: number; battery: number | null } {
+    { moves: string[]; lastTs: number; battery: number | null; facelets: string | null } {
   const opcode = msg[2];
   const ts = ((msg[3] << 24) | (msg[4] << 16) | (msg[5] << 8) | msg[6]) >>> 0;
   if (opcode === OP_HELLO) {
-    // Hello carries a facelet snapshot and battery. We can't replay the
-    // pre-connect history, so just absorb the timestamp + battery.
+    // Hello carries the cube's own facelets — the state it is in right now,
+    // which is very often NOT solved (the user scrambled before connecting).
+    // Reporting it is what stops the host from assuming a solved cube.
     const battery = msg.length > 35 ? msg[35] : null;
-    return { moves: [], lastTs: ts, battery: battery !== null && battery <= 100 ? battery : null };
+    return {
+      moves: [],
+      lastTs: ts,
+      battery: battery !== null && battery <= 100 ? battery : null,
+      facelets: parseQiyiFacelets(msg),
+    };
   }
   if (opcode !== OP_STATE) {
-    return { moves: [], lastTs: prevLastTs, battery: null };
+    return { moves: [], lastTs: prevLastTs, battery: null, facelets: null };
   }
 
   // todoMoves: newest first. Index 0 is the just-happened move.
@@ -163,7 +197,16 @@ function parseStateMoves(msg: Uint8Array, prevLastTs: number):
   }
 
   const battery = msg.length > 35 ? msg[35] : null;
-  return { moves, lastTs: ts, battery: battery !== null && battery <= 100 ? battery : null };
+  return {
+    moves,
+    lastTs: ts,
+    battery: battery !== null && battery <= 100 ? battery : null,
+    // Every state frame carries the cube's own facelets, taken AFTER the move
+    // it reports. cstimer treats this as authoritative whenever it disagrees
+    // with the replayed state (`qiyicube.js:210-218`); so do we — reporting it
+    // on every frame is what makes a dropped move self-heal on the next turn.
+    facelets: parseQiyiFacelets(msg),
+  };
 }
 
 /* ================================================================== */
@@ -188,7 +231,7 @@ export const qiyiDriver: CubeDriver = {
     return /^(QY-QYSC|XMD-TornadoV4-i)/i.test(n);
   },
 
-  async start(server, onMove): Promise<CubeDriverStartResult> {
+  async start(server, onMove, ctx?: CubeDriverContext): Promise<CubeDriverStartResult> {
     const service = await server.getPrimaryService(QIYI_SERVICE);
     const cubeChar = await service.getCharacteristic(QIYI_CUBE_CHAR);
 
@@ -232,7 +275,11 @@ export const qiyiDriver: CubeDriver = {
       const parsed = parseStateMoves(msg, decState.lastTs);
       decState.lastTs = parsed.lastTs;
       if (parsed.battery !== null) decState.battery = parsed.battery;
+      // Moves first, state second. The host fires "the cube is solved" off the
+      // move that solved it; handing it the finished state first would make
+      // that edge look like it had already happened and swallow the auto-stop.
       for (const mv of parsed.moves) onMove(mv);
+      if (parsed.facelets) ctx?.onState?.(parsed.facelets);
     };
 
     cubeChar.addEventListener('characteristicvaluechanged', onChar);
