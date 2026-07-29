@@ -652,6 +652,48 @@
   color: var(--foreground);
 }
 .trainer-stats-list .trainer-stat-time.is-dnf { color: var(--faint-foreground); }
+
+/* ─── 历史面板:每条 = 打乱图 + case 名 + 公式 ─── */
+.trainer-hist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+.trainer-hist-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 6px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+  cursor: pointer;
+  text-align: center;
+  /* 剥 UA 按钮样式:字体不继承会在 Safari 里缩成 13px system-ui */
+  font: inherit;
+  color: inherit;
+}
+.trainer-hist-item.is-active {
+  background: color-mix(in srgb, var(--tr-sel) 15%, transparent);
+  border-color: color-mix(in srgb, var(--tr-sel) 50%, transparent);
+}
+@media (hover: hover) {
+  .trainer-hist-item:hover { border-color: color-mix(in srgb, var(--foreground) 24%, transparent); }
+}
+.trainer-hist-name {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--foreground);
+}
+/* 公式是回看时最想看的那行:不截断,长公式照常折行 */
+.trainer-hist-alg {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  line-height: 1.45;
+  color: var(--muted-foreground);
+  overflow-wrap: anywhere;
+}
 .trainer-stats-empty {
   color: var(--faint-foreground); font-size: 0.85rem;
 }

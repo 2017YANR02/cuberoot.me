@@ -225,8 +225,13 @@ export function StatsList({
 
 /**
  * 不计时模式的「历史」面板:列出打乱历史(hist.list),点某条 = 跳回查看那条打乱(主屏 +
- * 上/下卡片一起切过去)。不计时没有用时可统计 —— 列的是 case 名(而非成绩),当前所在条高亮。
- * 与计时模式的 StatsList 复用同一套卡片 / 药丸样式。
+ * 上/下卡片一起切过去)。不计时没有用时可统计 —— 列的是 case 本身,当前所在条高亮。
+ *
+ * 每条给足三样:**打乱图**(按该条**实际打乱**渲染,含 AUF —— 与主屏那张同源,不是 case 规范
+ * setup)、case 名、**公式**。以前只有一个名字药丸,打乱塞在 `title` 里 —— 触屏没有 hover,
+ * 等于回看历史全靠盲点。
+ *
+ * 当前所在那条不印公式:历史里包含「正在做的这题」,在训练模式下把答案摆出来就没得练了。
  */
 export function HistoryList({
   hist, cases, puzzle, set, onPick,
@@ -238,7 +243,7 @@ export function HistoryList({
   /** 点第 i 条:跳到该历史条目。 */
   onPick: (i: number) => void;
 }) {
-  // set 名当页首已给(topbar「3×3 · ZBLL …」),chip 里再顶个 "ZBLL " 冗余 —— 剥掉只留组号。
+  // set 名当页首已给(topbar「3×3 · ZBLL …」),卡片里再顶个 "ZBLL " 冗余 —— 剥掉只留组号。
   const setPrefix = new RegExp('^' + set.toUpperCase() + '\\s+', 'i');
   return (
     <div className="trainer-stats-card">
@@ -250,21 +255,38 @@ export function HistoryList({
         <div className="trainer-stats-empty">{tr({ zh: '暂无打乱历史', en: 'No scrambles yet'
         })}</div>
       ) : (
-        <div className="trainer-stats-list">
+        <div className="trainer-hist-grid">
           {/* 同 StatsList:最新在最前。`i` 必须是原始下标(onPick / 高亮都按它),
               所以先带上下标再倒序,别 reverse 完拿新下标。 */}
           {hist.list.map((e, i) => [e, i] as const).reverse().map(([e, i]) => {
             const c = findCaseByKey(cases, e.key);
             const name = (c ? primaryCaseName(puzzle, set, c) : e.name).replace(setPrefix, '');
+            const active = hist.idx === i;
+            const alg = c ? (c.algs.flat()[0]?.alg ?? c.standard ?? '') : '';
             return (
-              <span
+              // 真 <button>:iOS Safari 的 tap 只在原生可交互元素上可靠(与 solve 卡同一理由)
+              <button
                 key={i}
-                className={`trainer-stat-time${hist.idx === i ? ' is-active' : ''}`}
+                type="button"
+                className={`trainer-hist-item${active ? ' is-active' : ''}`}
                 onClick={() => onPick(i)}
                 title={e.scramble}
+                aria-current={active ? 'true' : undefined}
               >
-                {name}
-              </span>
+                {c && (
+                  <CaseThumb
+                    puzzle={puzzle}
+                    set={set}
+                    sticker={c.sticker}
+                    alg={alg}
+                    // 图从该条的实际打乱渲染(含 pre/post-AUF),否则与回看时主屏那张对不上
+                    setup={e.scramble || c.setup}
+                    size={56}
+                  />
+                )}
+                <span className="trainer-hist-name">{name}</span>
+                {alg && !active && <code className="trainer-hist-alg">{alg}</code>}
+              </button>
             );
           })}
         </div>
