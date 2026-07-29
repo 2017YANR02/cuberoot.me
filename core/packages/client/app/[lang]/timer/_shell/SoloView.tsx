@@ -12,7 +12,7 @@
  * bottom sheet (phone), with a distraction-free fade while running, pointer
  * input, and swipe shortcuts.
  *
- * The engine itself (_lib/useTimer + _lib/scramble + _lib/storage) is untouched.
+ * The engine itself (_shared/useTimer + _lib/scramble + _lib/storage) is untouched.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
@@ -53,7 +53,7 @@ import { displayCuberName } from '@/lib/cuber-name-display';
 import { fetchMarks, addMark, markKey, type ScrambleMark } from '../_lib/marks';
 import { getLastPickedCase, type TrainerKind } from '../_lib/scramble/training';
 import { warmup333, randomState333Sync } from '../_lib/scramble/kociemba/random_state';
-import { useTimer, type TimerPhase } from '../_lib/useTimer';
+import { useTimer, type TimerPhase } from '../_shared/useTimer';
 import { formatMs, bestSingle, bestAverageOfN, bestMbldSolve, compareMbld, summarize } from '../_lib/stats';
 import type { EventId, Penalty, Solve } from '../_lib/types';
 import { EVENTS, isBldEvent, toWcaSpelling, fromWcaSpelling } from '../_lib/types';
