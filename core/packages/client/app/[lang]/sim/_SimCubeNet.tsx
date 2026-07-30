@@ -23,13 +23,13 @@ import type World from './engine/world';
 import type CubeType from './engine/nxn/cube';
 import { TwistAction } from './engine/nxn/twister';
 import { useT } from '@/hooks/useT';
-// 布局单一源:与静态导出器 sim_net_export 共用(退役对照表 §2b「视图 net」),平面图
+// 布局单一源:与静态导出器 lib/cube-net-svg 共用(退役对照表 §2b「视图 net」),平面图
 // 与导出件逐格对齐、免两份漂移。
 import {
   NET_GAP as GAP, NET_STROKE_W as STROKE_W,
   NET_FACE_ORDER as FACE_ORDER, netFaceOffsets as faceOffsets,
   type NetFaceLetter,
-} from './sim_net_export';
+} from '@/lib/cube-net-svg';
 
 type FaceLetter = NetFaceLetter;
 type Axis = 'x' | 'y' | 'z';

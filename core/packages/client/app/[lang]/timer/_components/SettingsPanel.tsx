@@ -635,16 +635,19 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
           </Row>
           <Row label={tr({ zh: '实况魔方小窗', en: 'Live cube window'
         })}>
-            <PillToggle
-              value={s.liveCubeView === '3d'}
-              onChange={(v) => updateSettings({ liveCubeView: v ? '3d' : '2d' })}
-              onLabel={tr({ zh: '三维', en: '3D' })}
-              offLabel={tr({ zh: '展开图', en: 'Net' })}
-              ariaLabel={tr({ zh: '实况魔方小窗渲染方式', en: 'Live cube window rendering' })}
-            />
+            <select
+              className="settings-row-control-select"
+              value={s.liveCubeView}
+              onChange={(e) => updateSettings({ liveCubeView: e.target.value as '2d' | 'net' | '3d' })}
+              aria-label={tr({ zh: '实况魔方小窗渲染方式', en: 'Live cube window rendering' })}
+            >
+              <option value="net">{tr({ zh: '展开图', en: 'Net' })}</option>
+              <option value="2d">{tr({ zh: '立体图', en: 'Isometric' })}</option>
+              <option value="3d">{tr({ zh: '三维', en: '3D' })}</option>
+            </select>
             <span className="hint">{tr({
-              zh: '连上智能魔方后右下角的小窗。三维模式跟随魔方陀螺仪转动，仅三阶、且魔方本身推送姿态时生效，否则自动退回展开图',
-              en: 'The corner window shown once a cube is connected. 3D follows the cube’s gyroscope — 3x3 only, and only when the cube actually reports orientation; otherwise it falls back to the net',
+              zh: '连上智能魔方后右下角的小窗。展开图六个面都看得见,能逐面和手里的魔方对；立体图只画三个面；三维跟随魔方陀螺仪转动,仅三阶、且魔方本身推送姿态时生效,否则自动退回',
+              en: 'The corner window shown once a cube is connected. The net shows all six faces, so you can check it face by face against the cube in your hands; the isometric still draws only three. 3D follows the cube’s gyroscope — 3x3 only, and only when the cube actually reports orientation, otherwise it falls back',
             })}</span>
           </Row>
           <Row label={tr({ zh: '隐藏运行中的时间', en: 'Hide time while running'

@@ -1093,6 +1093,19 @@
   pointer-events: none;
 }
 
+/* The unfolded-net view. The SVG carries only a viewBox, so sizing one axis lets
+   the other follow the aspect ratio — the component sets the height (matching the
+   isometric view it replaces) and the width comes out of the cross's own shape. */
+.timer-live-net {
+  display: block;
+  line-height: 0;
+}
+.timer-live-net svg {
+  display: block;
+  height: 100%;
+  width: auto;
+}
+
 /* 3D (gyro) mode drops the tinted plate: the WebGL canvas is alpha and renders
    a perspective solid, so a flat translucent rectangle behind it reads as a
    stray box rather than as a backing. Selected via :has() on the canvas host so

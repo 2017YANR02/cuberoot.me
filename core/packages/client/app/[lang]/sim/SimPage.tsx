@@ -36,7 +36,7 @@ import { loadSmplxFullBody } from './engine/hands/handModelMano';
 import { bspSceneAudit, exportSimSvgBsp } from './sim_svg_export_bsp';
 import { exportSimSvg } from './sim_svg_export';
 import { exportSimSvgSchematic, hasSchematicFacelets } from './sim_svg_export_schematic';
-import { exportSimNetSvg } from './sim_net_export';
+import { renderCubeNetSvg } from '@/lib/cube-net-svg';
 import { exportSimPlanSvg } from './sim_plan_export';
 import type Cube from './engine/nxn/cube';
 import { SIZE } from './engine/define';
@@ -1901,7 +1901,7 @@ export default function SimPage() {
         // 投影的静止采样(逻辑态即时、无相机)。签名 = 视图 + 序列化串,复原帧作标的
         // 遮罩天然随打乱携带。视图/配色变由 effect 重跑(重置 exportedSig)。
         //  net:展开十字;wca(记分表)= tnoodle 平面,cube 侧与 net 同一展开图
-        //  (render.ts 两者同出 renderUnfoldedSvg)→ 复用 exportSimNetSvg;
+        //  (render.ts 两者同出 renderUnfoldedSvg)→ 复用 renderCubeNetSvg;
         //  plan:俯视 OLL 图 → exportSimPlanSvg,内部直接调 visualcube 本体渲染
         //  (引擎只喂 stickerColors),SVG 与 studio 的 plan 输出逐字节同款。
         {
@@ -1932,7 +1932,7 @@ export default function SimPage() {
                     stickerOpacity: settings.stickerOpacity,
                   },
                 })
-                : exportSimNetSvg({ serialized, order: nxn.order, faceColors: fc }));
+                : renderCubeNetSvg({ serialized, order: nxn.order, faceColors: fc }));
             } catch (err) {
               console.warn('[sim] flat companion export failed', err);
               setEngineSvg(null);

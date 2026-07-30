@@ -15,7 +15,7 @@ import { readSpecFromParams, specToParams } from '@/lib/puzzle-image/codec';
 import { DEFAULTS } from '@/lib/puzzle-image/defaults';
 import type { ImageSpec } from '@/lib/puzzle-image/types';
 import { exportSimPlanSvg } from '@/app/[lang]/sim/sim_plan_export';
-import { NET_FACE_ORDER } from '@/app/[lang]/sim/sim_net_export';
+import { NET_FACE_ORDER } from '@/lib/cube-net-svg';
 
 /** OLL 1(点组),侧面 8 黄 4 灰 —— 灰格删得掉又不会删光,正好当判据。 */
 const OLL_DOT = "f U R U' R' f' F U R U' R' F'";

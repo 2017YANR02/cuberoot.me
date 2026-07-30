@@ -2430,7 +2430,12 @@ export default function SoloView({ playersControl }: SoloViewProps) {
             facelets={bluetoothCube.facelets}
             moves={liveMoves}
             algAnchored={algAnchored}
-            mode={want3dLiveCube && bluetoothCube.status.hasGyro ? '3d' : '2d'}
+            mode={want3dLiveCube && bluetoothCube.status.hasGyro
+              ? '3d'
+              // A cube with no gyro can't do 3D, so that request falls back to
+              // the net — the same place the '3d' branch inside the component
+              // lands when no orientation sample ever arrives.
+              : (settings.liveCubeView === '2d' ? '2d' : 'net')}
             quatRef={gyroQuatRef}
             calibrateToken={calibrateNonce}
             sensorBasis={sensorBasisForBrand(bluetoothCube.status.brand)}

@@ -253,7 +253,7 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
   // 去重合并),且实时 3D + 引擎伴图都跟它走;panel 里这行是只喂 spec 渲染的重复入口。
   const showStageMask = mode === 'page';
   // net 与 wca 对 cube 输出的是同一张 tnoodle 展开十字:render.ts 两者同落
-  // renderUnfoldedSvg,/sim 伴图更是都走 exportSimNetSvg 逐字节相等。唯一非冗余处 =
+  // renderUnfoldedSvg,/sim 伴图更是都走 renderCubeNetSvg 逐字节相等。唯一非冗余处 =
   // 独立 /visualcube 页的 3×3——net 换成可涂色编辑器(net-paint-3x3 → 复用 solver 的
   // InteractiveCubeNet)。故 net chip 只在「page 模式 + 3×3」露出;其余(panel、N≠3)
   // 只留 wca 单一入口,不再让两个 chip 出一模一样的图。

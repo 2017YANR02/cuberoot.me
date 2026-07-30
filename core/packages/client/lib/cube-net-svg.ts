@@ -1,10 +1,13 @@
-// 引擎驱动的 NxN 展开图(net / wca)导出器 —— 退役对照表 §2b「视图 net / wca」的落点。
+// 状态驱动的 NxN 展开图(net / wca)渲染器 —— 输入 URFDLB 面字母串,输出纯字符串 SVG。
 //
 // **不再平行自绘**(plan 视图同款教训):SVG 装配直调 tnoodle 参照实现
 // cube_unfolded_svg 的共享 emitter(renderUnfoldedStateSvg),布局(GAP 0.2 /
 // stroke 0.1 / viewBox 4N+5G × 3N+4G)、属性顺序、字节格式与 studio 的 spec 渲染
-// (renderSpecSvg → renderUnfoldedSvg)按构造完全一致,引擎只负责喂色:状态取
-// `cube.serialize()`(URFDLB 六个 N² 块,已是 net 朝向)→ 逐格引擎面色。
+// (renderSpecSvg → renderUnfoldedSvg)按构造完全一致,这里只负责喂色。
+//
+// 原在 `app/[lang]/sim/sim_net_export.ts`:/sim 的引擎伴图(状态取 `cube.serialize()`)
+// 与 /timer 的智能魔方实况展开图(状态取蓝牙跟踪器的 facelets)是同一件事 —— 都是
+// 「URFDLB 串 → 展开图」,所以提到 lib/ 共用,而不是在 /timer 再画一遍。
 //
 // 交互式 `_SimCubeNet` 仍从这里取布局常量(单一源,与导出件逐格对齐)。
 
@@ -33,7 +36,7 @@ export function netFaceOffsets(N: number): Record<NetFaceLetter, [number, number
   };
 }
 
-export interface SimNetExportOptions {
+export interface CubeNetSvgOptions {
   /** cube.serialize():URFDLB 六个 N² 块的面字母串(net 朝向)。 */
   serialized: string;
   order: number;
@@ -55,7 +58,7 @@ function colorOf(ch: string, faceColors: Record<NetFaceLetter, string>): string 
  * NxN 展开图 → 纯字符串 SVG(伴图显示 + SVG/PNG 下载同一份;调用方经 sizeEngineSvg
  * 钉图片尺寸)。字节格式 = renderUnfoldedSvg 参照(共享 emitter)。
  */
-export function exportSimNetSvg(opts: SimNetExportOptions): string {
+export function renderCubeNetSvg(opts: CubeNetSvgOptions): string {
   const N = Math.max(1, Math.round(opts.order));
   const facelets = opts.serialized;
   const maskKeys = opts.mask?.keys;
