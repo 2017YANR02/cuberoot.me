@@ -219,4 +219,9 @@ csTimer 拿到后做两件事（`gancube.js:461-488`、`bluetoothutil.js:407-475
   CSV 导出对刚拧完的那把一律是空的。判定收进 `stageSegmentsFor()`,录入路径与
   迁移共用同一份事件白名单。历史成绩仍需用户点一次「重新分析」。
 
+- 2026-07-30（Sprint 17）：步数口径修正为 HTM。各家协议只报 90 度
+  （`face << 1 | direction`）,所以真机流里的双层转是两条通知;此前「一个记号一步」
+  让 HTM 格子退化成 QTM,并且拿用户的 90 度数去比求解器的 HTM —— 一把照着参考线
+  拧的还原效率只有 65。新增 `_lib/reconstruct/htm.ts` 合并相邻同面,原始流不动。
+
 > 状态一律看 `SMART_CUBE_PROGRESS.md` 的「状态总表」,本表只描述该做什么。
