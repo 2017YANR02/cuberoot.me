@@ -14,11 +14,41 @@
 
 -- ── wca_competitions: 比赛元数据 (~10k 行 ~3MB) ──
 CREATE TABLE IF NOT EXISTS wca_competitions (
-  id          VARCHAR(50) PRIMARY KEY,
-  name        VARCHAR(200) NOT NULL,
-  country_id  VARCHAR(50) NOT NULL,
-  start_date  DATE,
-  end_date    DATE
+  id            VARCHAR(50) PRIMARY KEY,
+  name          VARCHAR(200) NOT NULL,
+  country_id    VARCHAR(50) NOT NULL,
+  start_date    DATE,
+  end_date      DATE,
+  city          VARCHAR(120) NOT NULL DEFAULT '',  -- 0098:选手页「点亮城市」/「去过的省份」
+  country_iso2  VARCHAR(2)   NOT NULL DEFAULT ''   -- 0098:比赛国旗
+);
+
+-- ── wca_person_results: 选手页专用全量成绩(一条成绩一行,含 DNF/DNS 轮次 + pos) ──
+-- 与 wca_results_flat 分工见 migration 0098 头注:那张是排行榜口径(value>0、拆单次/平均、无 pos),
+-- 负值混进去会污染全站 ORDER BY value 排行,故另开一张供选手页。
+CREATE TABLE IF NOT EXISTS wca_person_results (
+  wca_id         VARCHAR(20) NOT NULL,
+  comp_id        VARCHAR(50) NOT NULL,
+  comp_date      DATE        NOT NULL,
+  event_id       VARCHAR(20) NOT NULL,
+  round_type_id  VARCHAR(2)  NOT NULL DEFAULT '',
+  format_id      VARCHAR(2)  NOT NULL DEFAULT '',
+  pos            SMALLINT    NOT NULL DEFAULT 0,
+  best           INTEGER     NOT NULL,
+  average        INTEGER     NOT NULL DEFAULT 0,
+  attempts       INTEGER[],
+  single_record  VARCHAR(3)  NOT NULL DEFAULT '',
+  average_record VARCHAR(3)  NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS wpr_person ON wca_person_results (wca_id);
+CREATE INDEX IF NOT EXISTS wpr_comp   ON wca_person_results (comp_id);
+
+-- ── wca_person_avatar: 头像 URL 懒缓存(dump 里没有,按访问回源一次) ──
+CREATE TABLE IF NOT EXISTS wca_person_avatar (
+  wca_id     VARCHAR(20) PRIMARY KEY,
+  url        TEXT,
+  thumb_url  TEXT,
+  checked_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- ── wca_grand_slam: 大满贯 ──

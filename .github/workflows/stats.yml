@@ -14,6 +14,11 @@ on:
         description: 'Comma-separated stat IDs to compute (empty = all). Example: wr_metric,wr_aoxr'
         required: false
         default: ''
+      person_results_full:
+        description: 'Rebuild wca_person_results in full (bootstrap / after changing its row rules)'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   # 推送代码时只做语法检查（~30秒），快速发现错误
@@ -253,6 +258,8 @@ jobs:
           NODE_OPTIONS: '--expose-gc --max-old-space-size=12288'
           # builder 清空 output/ 目录,故旧指纹放在 package 根而非 output 内.缺此文件 → 全量模式.
           PREV_FINGERPRINTS: ${{ github.workspace }}/core/packages/stats-build/prev_fp.tsv
+          # 选手页全量成绩表:平时跟 flat 一样只灌 delta;首次上线 / 改行规则后手动跑一次全量.
+          WPR_FULL: ${{ inputs.person_results_full && '1' || '' }}
         run: npx tsx src/bin/wca_stats_extra_build.ts
 
       - name: Upload WCA stats extra TSVs to server
