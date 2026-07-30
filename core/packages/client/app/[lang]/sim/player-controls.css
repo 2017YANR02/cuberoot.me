@@ -597,12 +597,13 @@
 }
 /* 该拼图暂不支持此配色 → 整行灰化 + 屏蔽所有色块按钮交互(pointer-events 兜住弹层触发) */
 .sim-color-row--disabled { opacity: 0.5; cursor: not-allowed; }
-/* 内核不透明度 / 贴纸不透明度 / 黑边:标签 + 滑条 + 右侧等宽读数,读数定宽免拖动时抖行 */
+/* 内核不透明度 / 贴纸不透明度 / 黑边:标签 + 滑条 + 右侧等宽读数,读数定宽免拖动时抖行。
+   读数是可打字的数字框(SettingDrawer 的 ValueField,与上方滑条同一份):外观沿用
+   .sim-slider-val(hover 才显边框),字号压回本行的 11px —— 那边 font: inherit,所以
+   在 valwrap 上设一次就够,数字与 % 后缀一起跟着变。 */
 .sim-percent-row input[type="range"] { width: 140px; max-width: 100%; height: 22px; }
-.sim-percent-val {
-  min-width: 3.5ch; text-align: right;
-  font-size: 11px; color: var(--muted-foreground); font-variant-numeric: tabular-nums;
-}
+.sim-percent-row .sim-slider-valwrap { font-size: 11px; align-self: flex-end; line-height: 22px; }
+.sim-percent-row .sim-slider-val { width: 3.4em; padding: 0; }
 .sim-color-row--disabled .sim-swatch-list,
 .sim-color-row--disabled .sim-face-color-reset { pointer-events: none; }
 /* 色块下拉(镜面配色 / 内核色 / 面色:当前色 / 特殊项图标 + caret,点开展开特殊项 + 预设色板) */

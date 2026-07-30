@@ -110,7 +110,7 @@ import {
 import { toWca as toWcaSkewb, type SkewbNotation } from '@cuberoot/shared/skewb-notation';
 import SkewbNotationGuide from './SkewbNotationGuide';
 import {
-  Slider, OrbitPad, Toggle, KeymapModal, resetWorldView, mapFrames,
+  Slider, ValueField, OrbitPad, Toggle, KeymapModal, resetWorldView, mapFrames,
   DEFAULT_SETTINGS, DEFAULT_FACE_COLORS, MIRROR_DEFAULT_COLOR,
   type SimSettings, type SimBoardBg, type SliderUnit,
 } from './SettingDrawer';
@@ -880,6 +880,10 @@ interface Props {
   onPuzzleChange: (kind: SimPuzzle) => void;
   settings: SimSettings;
   onSettingsChange: (s: SimSettings) => void;
+  /** 图像面板选中 trans(X 光)视图时的内核预设值(SettingDrawer 的 TRANS_CORE),否则 null。
+   *  非 null = 内核色 / 内核不透明度由预设接管(3D 与伴图同吃这一份,见 SimPage 的
+   *  withTransCore):外观区那两行显示预设值、锁死不可改,hover 说明原因。 */
+  transCore?: { coreColor: string; coreOpacity: number } | null;
   keymap: Record<string, KeyMove>;
   onKeymapChange: (km: Record<string, KeyMove>) => void;
   onResetKeymap: () => void;
@@ -935,7 +939,7 @@ interface Props {
 export default function PlayerControls({
   world, alg, setup, onAlgChange: onAlgChangeProp, onSetupChange: onSetupChangeProp,
   order, onOrderChange, puzzleKind, onPuzzleChange,
-  settings, onSettingsChange,
+  settings, onSettingsChange, transCore = null,
   keymap, onKeymapChange, onResetKeymap,
   userMoveRef, twistyPlayerRef,
   skewbNotation, onSkewbNotationChange,
@@ -2426,6 +2430,7 @@ export default function PlayerControls({
         onRendererChange={onRendererChange}
         settings={settings}
         onSettingsChange={onSettingsChange}
+        transCore={transCore}
         bgSlot={bgSlot}
         t={t}
       />
@@ -2686,7 +2691,8 @@ function ColorRow({
 }
 
 /** 外观区的百分比滑条(内核不透明度 / 贴纸不透明度 / 黑边)。行式与 ColorRow 一致
- *  —— 标签、控件、右侧读数,不支持该拼图时整行灰化 + 滑条 disabled。 */
+ *  —— 标签、控件、右侧读数,不支持该拼图时整行灰化 + 滑条 disabled。
+ *  读数是可打字的数字框(与上方 Slider 同一个 ValueField):拖不准的值直接输入。 */
 function PercentRow({
   label, value, onChange, min = 0, max = 100, step = 1, disabled, title,
 }: {
@@ -2712,7 +2718,21 @@ function PercentRow({
         aria-label={label}
         onChange={(e) => onChange(Number(e.target.value))}
       />
-      <span className="sim-percent-val">{value}%</span>
+      <ValueField
+        display={value}
+        // 显示位数跟着步长走:整步 → 整数(100),半步 → 一位小数(黑边 12.5)。
+        decimals={Number.isInteger(step) ? 0 : 1}
+        min={min}
+        max={max}
+        step={step}
+        suffix="%"
+        disabled={disabled}
+        commit={(n) => {
+          const q = Math.min(max, Math.max(min, Math.round(n / step) * step));
+          if (q !== value) onChange(q);
+          return q;
+        }}
+      />
     </div>
   );
 }
@@ -2745,7 +2765,7 @@ const UNIT_TPS: SliderUnit = { to: (v) => 60 / mapFrames(v), from: (tps) => (120
 function PuzzleSettings({
   order, onOrderChange, puzzleKind, onPuzzleChange,
   renderer, onRendererChange,
-  settings, onSettingsChange, bgSlot, t,
+  settings, onSettingsChange, transCore, bgSlot, t,
 }: {
   order: number;
   onOrderChange: (n: number) => void;
@@ -2755,6 +2775,8 @@ function PuzzleSettings({
   onRendererChange?: (r: 'cubing' | 'engine' | 'group') => void;
   settings: SimSettings;
   onSettingsChange: (s: SimSettings) => void;
+  /** 非 null = trans 视图接管了内核色 / 内核不透明度(见 Props.transCore)。 */
+  transCore?: { coreColor: string; coreOpacity: number } | null;
   /** 画布左下角浮层槽(SimPage 的 .sim-bg-overlay);背景选择器 portal 到这里,
    *  贴在大图上而非埋在设置面板的开关行里。 */
   bgSlot?: HTMLElement | null;
@@ -2779,6 +2801,12 @@ function PuzzleSettings({
     ? t('该拼图暂不支持此功能(切到「群论内核」渲染可启用)', 'Not available for this puzzle (switch the renderer to "Group theory" to enable)')
     : t('该拼图暂不支持此功能', 'Not available for this puzzle');
   const hint = (ok: boolean) => (ok ? undefined : naHint);
+  // trans(X 光)是接管内核外观的预设,不是单纯换张伴图:选中时内核色 / 内核不透明度
+  // 由它定值(3D 与伴图同吃),这两行随之锁死 —— hover 说明是谁锁的、怎么解锁。
+  const transHint = transCore
+    ? t(`已被图像面板的 trans(X 光)视图接管:银色内核 + ${transCore.coreOpacity}% 不透明。换成别的视图即可解锁`,
+      `Taken over by the image panel's trans (x-ray) view: silver core at ${transCore.coreOpacity}% opacity. Switch to another view to unlock`)
+    : undefined;
 
   const renderOrderSlot = useCallback((v: number) => (v >= 1 && v <= 400 ? String(v) : ''), []);
   const [orderDraft, setOrderDraft] = useState<string>(String(order));
@@ -3149,10 +3177,14 @@ function PuzzleSettings({
               />
             </ColorRow>
           )}
-          <ColorRow label={t('内核色', 'Core color')} disabled={!caps.supports.coreColor} title={hint(caps.supports.coreColor)}>
+          <ColorRow
+            label={t('内核色', 'Core color')}
+            disabled={!caps.supports.coreColor || !!transCore}
+            title={transHint ?? hint(caps.supports.coreColor)}
+          >
             <ModeColorSelect
-              special={settings.coreStyle === 'raw'}
-              color={settings.coreColor}
+              special={!transCore && settings.coreStyle === 'raw'}
+              color={transCore ? transCore.coreColor : settings.coreColor}
               presets={CORE_COLOR_PRESETS}
               specialTitle={t('原核', 'Raw body')}
               specialSwatchClass="sim-swatch-raw-box"
@@ -3167,10 +3199,10 @@ function PuzzleSettings({
               只改图不改动画,现在并到内核色下面一起管。 */}
           <PercentRow
             label={t('内核不透明度', 'Core opacity')}
-            value={settings.coreOpacity}
+            value={transCore ? transCore.coreOpacity : settings.coreOpacity}
             onChange={(v) => set('coreOpacity', v)}
-            disabled={!caps.supports.coreFinish}
-            title={hint(caps.supports.coreFinish)}
+            disabled={!caps.supports.coreFinish || !!transCore}
+            title={transHint ?? hint(caps.supports.coreFinish)}
           />
           <PercentRow
             label={t('贴纸不透明度', 'Sticker opacity')}
