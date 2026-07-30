@@ -30,12 +30,14 @@
  */
 
 import dynamic from 'next/dynamic';
-import { useEffect, useState, type JSX } from 'react';
+import { useEffect, useMemo, useState, type JSX } from 'react';
 
 import { Spinner } from '@/components/Spinner/Spinner';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
 import { FaceletsCube } from '@/components/FaceletsCube';
+import { CUBE_FILL } from '@/lib/cube-colors';
+import { renderCubeNetSvg } from '@/lib/cube-net-svg';
 import { readDevQuatSource, type Quat, type SensorBasisName } from '../_lib/bluetooth/orientation';
 
 /** three + the /sim engine only load when a 3D view is actually mounted. */
@@ -108,8 +110,13 @@ export interface LiveCubeStateProps {
   algAnchored: boolean;
   /** 2D only: rendered edge in px. */
   size?: number;
-  /** '3d' renders the gyro-driven cube; anything else keeps the flat net. */
-  mode?: '2d' | '3d';
+  /**
+   * '3d'  gyro-driven cube;
+   * 'net' the unfolded WCA net — six faces flat, which is what you compare
+   *       face-by-face against the cube in your hands (csTimer only has this one);
+   * '2d'  the isometric still, where three faces are visible and three are not.
+   */
+  mode?: '2d' | 'net' | '3d';
   /** 3D only: rendered edge in px. */
   size3d?: number;
   /** Latest orientation sample from the cube, or null when none has arrived. */
@@ -193,5 +200,36 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
   }
 
   if (!facelets) return <span style={{ display: 'inline-block', width: size, height: size }} />;
-  return <FaceletsCube fd={facelets.toLowerCase()} size={size} alt={tr({ zh: '智能魔方当前状态', en: 'Current smart-cube state' })} />;
+  const alt = tr({ zh: '智能魔方当前状态', en: 'Current smart-cube state' });
+  // Only an explicit '2d' asks for the isometric still. A '3d' request that got
+  // this far had no orientation to draw with, and the flat view it falls back to
+  // is the net — the one that shows all six faces.
+  if (mode === '2d') return <FaceletsCube fd={facelets.toLowerCase()} size={size} alt={alt} />;
+  return <CubeNet facelets={facelets} size={size} alt={alt} />;
+}
+
+/**
+ * The unfolded net, drawn from the same renderer /sim exports and the scramble
+ * previews use (`lib/cube-net-svg`), so a face here is byte-for-byte the face
+ * the rest of the site draws.
+ *
+ * `size` is the HEIGHT, not the width: the net is a wide cross, and matching the
+ * height of the isometric view it replaces keeps the corner plate the same size
+ * on screen while making each sticker bigger — which is the entire reason to
+ * show a net. Width follows from the viewBox (`.timer-live-net` in timer.css).
+ */
+function CubeNet({ facelets, size, alt }: { facelets: string; size: number; alt: string }) {
+  const svg = useMemo(
+    () => renderCubeNetSvg({ serialized: facelets.toUpperCase(), order: 3, faceColors: CUBE_FILL }),
+    [facelets],
+  );
+  return (
+    <span
+      role="img"
+      aria-label={alt}
+      className="timer-live-net"
+      style={{ height: size }}
+      dangerouslySetInnerHTML={{ __html: svg }}
+    />
+  );
 }

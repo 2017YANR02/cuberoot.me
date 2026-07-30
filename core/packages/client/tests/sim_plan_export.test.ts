@@ -5,7 +5,7 @@
 import { describe, it, expect } from 'vitest';
 import { renderCubeSVG } from '@cuberoot/visualcube';
 import { exportSimPlanSvg } from '@/app/[lang]/sim/sim_plan_export';
-import { NET_FACE_ORDER } from '@/app/[lang]/sim/sim_net_export';
+import { NET_FACE_ORDER } from '@/lib/cube-net-svg';
 
 const COLORS = {
   U: '#ffffff', R: '#ff0000', F: '#00ff00', D: '#ffff00', L: '#ff9900', B: '#0000ff',

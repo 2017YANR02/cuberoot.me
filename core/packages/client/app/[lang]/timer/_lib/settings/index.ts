@@ -198,14 +198,18 @@ export interface TimerSettings {
   /**
    * How the live smart-cube mirror (the corner window that appears once a cube
    * is connected) renders.
-   *   '2d' — the flat net. Works for every event and needs only the move stream.
-   *   '3d' — a three.js cube whose orientation follows the cube's gyroscope.
-   *          Only some protocols carry orientation at all, so this is a request,
-   *          not a guarantee: with no gyro samples the view stays on the net
-   *          rather than showing a frozen 3D cube. Also forces the gyro stream
-   *          on, which costs battery — hence opt-in.
+   *   'net' — the unfolded WCA net (default). All six faces flat, which is the
+   *           view you can actually check against the cube in your hands; it is
+   *           also the only one csTimer has.
+   *   '2d'  — the isometric still. Legacy value name, kept so a stored setting
+   *           keeps meaning what it meant: three faces visible, three hidden.
+   *   '3d'  — a three.js cube whose orientation follows the cube's gyroscope.
+   *           Only some protocols carry orientation at all, so this is a request,
+   *           not a guarantee: with no gyro samples the view falls back rather
+   *           than showing a frozen 3D cube. Also forces the gyro stream on,
+   *           which costs battery — hence opt-in.
    */
-  liveCubeView: '2d' | '3d';
+  liveCubeView: '2d' | 'net' | '3d';
 
   /**
    * Keyboard-binding OVERRIDES for the rebindable timer actions — not the
@@ -312,7 +316,7 @@ export const DEFAULTS: TimerSettings = {
   syncSeedCounter: 0,
   autoBackupEvery: 10,
   bluetoothAutoReady: 'scrambled',
-  liveCubeView: '2d',
+  liveCubeView: 'net',
   keymap: {},
   round: DEFAULT_ROUND_CONFIG,
   inspectionTrigger: 'down',
