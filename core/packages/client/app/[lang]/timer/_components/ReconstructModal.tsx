@@ -18,6 +18,8 @@ import { formatMs } from '../_lib/stats';
 import { sliceReconstruction, detectMemoPause } from '../_lib/reconstruct/slice';
 import { computeStageAverages, computeStageSegments } from '../_lib/reconstruct/stage_segments';
 import type { StageAverages } from '../_lib/reconstruct/stage_segments';
+import { computeStepMetrics } from '../_lib/reconstruct/step_metrics';
+import type { StepMetricsResult } from '../_lib/reconstruct/step_metrics';
 import { encodeReplayUrl } from '../_lib/share/encode';
 import { nxnSizeForEvent } from '../_lib/cube';
 import { toReconEventId } from '../_shared/event-bridge';
@@ -118,6 +120,12 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
     () => computeStageSegments(solve.scramble, moves, solve.timeMs),
     [solve.scramble, moves, solve.timeMs],
   );
+  // Recognition/execution split (Cubeast definitions — see step_metrics.ts).
+  // 3x3-shaped events only: the stage walker underneath models a 3x3.
+  const stepMx = useMemo(
+    () => (stageSegs ? computeStepMetrics(solve.scramble, moves, solve.timeMs) : null),
+    [stageSegs, solve.scramble, moves, solve.timeMs],
+  );
 
   // Personal stage averages computed from the caller-provided history.
   // We exclude the current solve so a fresh solve isn't compared against
@@ -217,6 +225,9 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
           {tr({ zh: '复盘', en: 'Reconstruct'
         })} · {formatMs(eff)}
           <span className="reconstruct-date"> · {dt.toLocaleString()}</span>
+          {solve.device && (
+            <span className="reconstruct-date"> · {solve.device.name}</span>
+          )}
         </h2>
 
         {autoMemoMs !== null && (
@@ -357,6 +368,8 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
             isZh={isZh}
             ao12={stageAvgs?.ao12 ?? null}
             ao100={stageAvgs?.ao100 ?? null}
+            stepMetrics={stepMx}
+            inspectionMs={solve.inspectionMs ?? null}
             collapsible={isMobile}
             expanded={stagesExpanded}
             onToggle={() => setStagesExpanded(v => !v)}
@@ -486,6 +499,12 @@ interface StagePanelProps {
    *  When non-null, each stage cell shows ±% vs avg below the time. */
   ao12: StageAverages | null;
   ao100: StageAverages | null;
+  /** Recognition/execution split. When present, each cell gains a rec/exec
+   *  line and its TPS becomes turns/EXECUTION (hand speed) instead of
+   *  turns/stage-time (thinking-diluted). */
+  stepMetrics: StepMetricsResult | null;
+  /** Inspection actually used, from the solve record; null when unknown. */
+  inspectionMs: number | null;
   collapsible: boolean;
   expanded: boolean;
   onToggle: () => void;
@@ -504,7 +523,7 @@ function pickAvg(avgs: StageAverages | null, key: StageKey): number | null {
 }
 
 function StageSegmentsPanel({
-  segs, totalMs, isZh, ao12, ao100, collapsible, expanded, onToggle,
+  segs, totalMs, isZh, ao12, ao100, stepMetrics, inspectionMs, collapsible, expanded, onToggle,
 }: StagePanelProps) {
   const stages: Array<{
     key: StageKey;
@@ -534,6 +553,27 @@ function StageSegmentsPanel({
     if (ms === null || htm === null || ms <= 0) return '—';
     return (htm / (ms / 1000)).toFixed(1);
   };
+
+  // Solve-level recognition/execution summary, in solve order. Only segments
+  // with something to say are rendered — a solve without inspection or with
+  // an auto-stop (put-down 0) shouldn't print noise.
+  const metaParts: string[] = [];
+  if (stepMetrics) {
+    if (inspectionMs !== null && inspectionMs > 0) {
+      metaParts.push(`${tr({ zh: '观察', en: 'inspect' })} ${formatStageTime(inspectionMs)}`);
+    }
+    if (stepMetrics.pickupMs > 0) {
+      metaParts.push(`${tr({ zh: '拿起', en: 'pickup' })} ${formatStageTime(stepMetrics.pickupMs)}`);
+    }
+    metaParts.push(`${tr({ zh: '识别', en: 'rec' })} ${formatStageTime(stepMetrics.totalRecognitionMs)}`);
+    metaParts.push(`${tr({ zh: '执行', en: 'exec' })} ${formatStageTime(stepMetrics.totalExecutionMs)}`);
+    if (stepMetrics.putDownMs !== null && stepMetrics.putDownMs > 0) {
+      metaParts.push(`${tr({ zh: '放下', en: 'put-down' })} ${formatStageTime(stepMetrics.putDownMs)}`);
+    }
+    if (stepMetrics.execTps !== null) {
+      metaParts.push(`${stepMetrics.execTps.toFixed(1)} ${tr({ zh: '步/秒(执行)', en: 'tps (exec)' })}`);
+    }
+  }
 
   return (
     <AccordionSection
@@ -572,6 +612,10 @@ function StageSegmentsPanel({
         )}
       </div>
 
+      {metaParts.length > 0 && (
+        <div className="reconstruct-stage-meta">{metaParts.join(' · ')}</div>
+      )}
+
       <div className="reconstruct-stage-grid">
         {stages.map(s => {
           const ao12Avg = pickAvg(ao12, s.key);
@@ -587,6 +631,12 @@ function StageSegmentsPanel({
               </span>
             );
           };
+          // Matching step metric (same key set, in solve order). Its TPS is
+          // turns/execution — prefer it over the thinking-diluted stage TPS.
+          const m = stepMetrics?.steps.find(x => x.step === s.key) ?? null;
+          const tpsStr = m && m.tps !== null
+            ? m.tps.toFixed(1)
+            : formatStageTps(s.ms, s.htm);
           return (
             <div key={s.key} className="reconstruct-stage-cell">
               <div className={`reconstruct-stage-dot stage-${s.key}`} />
@@ -598,8 +648,20 @@ function StageSegmentsPanel({
               <div className="reconstruct-stage-tps">
                 {s.htm !== null ? `${s.htm} ${tr({ zh: '步', en: 'htm' })}` : '—'}
                 {' · '}
-                {formatStageTps(s.ms, s.htm)} {tr({ zh: '步/秒', en: 'tps' })}
+                {tpsStr} {tr({ zh: '步/秒', en: 'tps' })}
               </div>
+              {m && !m.skipped && m.recognitionMs !== null && m.executionMs !== null && (
+                <div className="reconstruct-stage-recexec">
+                  {tr({ zh: '识别', en: 'rec' })} {formatStageTime(m.recognitionMs)}
+                  {' · '}
+                  {tr({ zh: '执行', en: 'exec' })} {formatStageTime(m.executionMs)}
+                </div>
+              )}
+              {m?.skipped && (
+                <div className="reconstruct-stage-recexec">
+                  {tr({ zh: '跳过', en: 'skipped' })}
+                </div>
+              )}
               {(ao12Avg !== null || ao100Avg !== null) && s.ms !== null && (
                 <div className="reconstruct-stage-deltas">
                   {renderDelta(ao12Avg, 'ao12')}

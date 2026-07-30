@@ -989,3 +989,80 @@ tnoodle 参照 emitter，所以布局、描边、字节格式天然一致。
 - [x] 实况小窗展开图 + 设为默认，标签与实现对齐
 - [x] 展开图渲染器提到 `lib/` 共用,不平行自绘
 - [x] 打乱态逐字节对照 tnoodle 参照网
+
+## Sprint 13 — 谁在什么状态下解的（P0-1）+ 识别/执行拆分（P0-2）（已完成）
+
+研究文档 P0 表的头两项。方向：先把**数据落对**（P0-1），再把**行业里只有一家有
+的指标算出来**（P0-2）。两者都不做迁移 —— P0-1 是纯可选字段，P0-2 完全按需
+从 `(scramble, moves, timeMs)` 推导，定义修一次，历史成绩的报告跟着全对。
+
+### P0-1 `Solve` 数据模型扩展
+
+- `inspectionMs?: number`：起表前实际用掉的观察时间。`useTimer` 本来就把它递给
+  `onSolve`（罚时判定用的同一个数），`recordSolve` 原样落盘（>0 才写）。
+- `device?: { model, name }`：这把是哪颗魔方解的。在 attempt **开始**时随
+  `scrambleAtStartRef` 一起快照（`deviceAtStartRef`）—— 解到一半断连不该抹掉
+  「是它解的」这个事实；只有真的带动作流的 solve 才写。model 是协议族
+  （CubeBrand：`gan-v4` / `qiyi` / …），name 是 BLE 广播名。
+- 研究文档里的 `pickupMs` / `putDownMs` **决定不落盘**：两者由 `moves` + `timeMs`
+  可完全推导（P0-2 的模块现算），单一来源，不会漂移。
+- 「观察阶段的转动也落盘」**按设计不存在**：Sprint 11 之后预备状态下第一下转动
+  就是起表信号,没有「观察期转了但没起表」这个窗口可记录。
+- 复盘 modal 标题栏显示设备名；分阶段面板下新增一行
+  `观察 X · 拿起 X · 识别 X · 执行 X · 放下 X · N 步/秒(执行)`。
+
+### P0-2 识别 / 执行拆分（`_lib/reconstruct/step_metrics.ts`）
+
+Cubeast 定义逐字采用（见 SMART_CUBE_RESEARCH.md「step 级五个时间字段」）：
+
+- 识别 = 上一阶段最后一转落定 → 本阶段第一个**非 AUF** 转动（AUF 计入识别）；
+- 执行 = 该转动 → 本阶段最后一转；`step_time = 识别 + 执行`，精确二分；
+- TPS = STM 步数 / **执行**时间 —— 手速，不被思考稀释。同一把 fixture 里
+  整解 TPS 4.87、执行 TPS 11.2,这个差就是这个指标存在的理由;
+- 拿起 = 起表 → 第一转（第一阶段的钟从第一转起走，拿起自成一段，
+  与 Cubeast 堆叠柱状图的 Pickup 段一致）；放下 = 最后一转 → 停表。
+
+公开材料没写死的三个边界,自己定并测死:全 AUF 阶段(PLL 只有一个 U)识别走到
+第一转、AUF 本身当执行;单转阶段执行 0ms 时 TPS 为 null 不是 Infinity;
+rotation(x/y/z)计 0 步且不结束识别(regrip 不是公式开始)。
+步数天然「停顿感知」:智能魔方报的就是 90° 转,从不合并成 U2。
+
+阶段边界不重走一遍:`computeStageSegments` 增补 `*EndIdx` 动作下标
+(可选字段,旧存档没有就现算),step_metrics 在它上面纯函数推导。
+
+### 顺手修的一个真 bug(根因,不是打补丁)
+
+从成绩详情打开复盘时,控制台报 React duplicate key。根因:`SolveModal` 与
+`ReconstructModal` 是**兄弟节点**,都拿 `solve.id` 当 key —— 同一把从详情打开
+复盘,两个兄弟同 key,React 会把一个组件的身份复用给另一个。fixture 场景下
+100% 复现(先开详情再开复盘必报)。修法:key 加命名空间前缀
+(`detail-` / `recon-`),换 solve 重挂载的语义不变。浏览器按原复现路径验证
+0 error。
+
+### 测试
+
+- `tests/step_metrics.test.ts`(14 例):fixture 按阶段写好**解法**、打乱取逆,
+  边界由真实 CFOP 检测器算出来再断言(边界错一步整组数字全错):
+  AUF 计入识别(F2L/OLL/PLL 三处)、TPS 只除执行、每步 识别+执行=step_time、
+  拿起+四段+放下=总时长、OLL skip 零步零时、全 AUF PLL、DNF 中途 null 化、
+  rotation 不结束识别不计步、无动作返回 null、token 分类表。
+- 浏览器(fake GAN v4 全链路):观察 1.2s → 第一转起表 → 复原自动停,落盘
+  `inspectionMs: 1212` + `device: { model: 'gan-v4', name: 'GAN14-FAKE00' }`;
+  复盘 modal 标题带设备名,meta 行 `观察 1.21s · 识别 … · 执行 …`;
+  en / zh 两侧都验过。
+
+### 未测到的部分
+
+- 真机的 device 快照(fake 的 brand 恒为 gan-v4;GAN 16 UI 回来后看一眼
+  详情页设备名即可)。
+- 识别/执行的数值只在 fixture 时间戳上验证过;真人解一把后应 sanity check
+  一眼(识别应该在几百 ms 量级,不该是 0 或十几秒)。
+
+### 状态
+
+- [x] `inspectionMs` / `device` 落盘 + 复盘展示
+- [x] pickup / put-down 决定推导不落盘,理由写下来
+- [x] step_metrics 纯函数模块,Cubeast 定义逐字采用
+- [x] 三个未定义边界自己定死并各有测试
+- [x] duplicate-key 根因修复(命名空间 key)
+- [ ] 真机 sanity check(等用户回来)

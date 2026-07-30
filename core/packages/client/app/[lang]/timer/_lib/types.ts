@@ -84,8 +84,20 @@ export interface Solve {
   /** Bluetooth-recorded move stream for solve reconstruction.
    * Each entry is { m: face notation move, ts: ms since solve start
    * (i.e. since timer phase became 'running'). Inspection-time moves are
-   * NOT recorded — only moves received during the running phase. */
+   * NOT recorded — with a smart cube the first turn of an armed attempt
+   * IS the start signal, so there is no window in which an inspection
+   * turn could exist without starting the clock. */
   moves?: Array<{ m: string; ts: number }>;
+  /** Inspection time actually used before the start, ms. Recorded only when
+   *  inspection ran (settings.inspection > 0 and the countdown was entered);
+   *  absent on old solves and on attempts started without inspection. */
+  inspectionMs?: number;
+  /** The smart cube this attempt was solved on. Snapshotted when the attempt
+   *  STARTS (not when it's recorded — a mid-solve disconnect must not erase
+   *  it), and only persisted when the solve actually has a move stream.
+   *  `model` is the protocol family (CubeBrand: 'gan-v4', 'qiyi', …);
+   *  `name` is the advertised BLE name ("GAN 356 i3 (AB:CD)"). */
+  device?: { model: string; name: string };
   /** Result of running `computeStageSegments(scramble, moves, timeMs)`.
    *  Populated lazily — either at solve-finish time, when ReconstructModal
    *  is opened, or by the SettingsPanel "Reanalyze stage data" migration.
