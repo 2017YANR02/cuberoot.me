@@ -934,7 +934,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   useEffect(() => { installFakeCube(() => scrambleForFakeRef.current); }, []);
 
   // ── Live cube-state mirror ──────────────────────────────────────
-  // The 2D corner view reads `bluetoothCube.facelets` (the cube's own state)
+  // The flat views read `bluetoothCube.facelets` (the cube's own state)
   // directly. This log exists only for the 3D view, which is alg-driven: it
   // is anchored at the last moment the cube was SOLVED, so replaying it from
   // a solved cube reproduces the current state exactly. `algAnchored` says
@@ -956,6 +956,69 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     // above, so clearing here leaves the log correctly empty.
     if (cubeSolved) { setLiveMoves([]); setAlgAnchored(true); }
   }, [cubeConnected, cubeSolved]);
+
+  // ── The cube picture under the digits ───────────────────────────
+  // One box, two tenants. Without a smart cube it shows the scramble — the
+  // state you are trying to REACH. With one connected it shows the cube itself
+  // — the state you are actually IN — because that strictly dominates: the app
+  // already tells you whether the two agree ("matches the scramble") and hands
+  // you the moves back when they don't, so a static target picture beside a
+  // live one is the same fact twice.
+  //
+  // Both tenants render into `.shell-corner-net-imgbox`, whose height is the
+  // `--cube-h` token. Connecting a cube therefore swaps the picture without
+  // moving anything below it.
+  const centerCubeSlot = cubeConnected ? (
+    <div className="shell-corner-net">
+      <div className="shell-corner-net-imgbox">
+        <div
+          className="timer-live-cube"
+          title={tr({ zh: '智能魔方实时状态（每次拧动同步）', en: 'Live smart-cube state (updates per move)' })}
+        >
+          <LiveCubeState
+            facelets={bluetoothCube.facelets}
+            moves={liveMoves}
+            algAnchored={algAnchored}
+            mode={want3dLiveCube && bluetoothCube.status.hasGyro
+              ? '3d'
+              // A cube with no gyro can't do 3D, so that request falls back to
+              // the net — the same place the '3d' branch inside the component
+              // lands when no orientation sample ever arrives.
+              : (settings.liveCubeView === '2d' ? '2d' : 'net')}
+            quatRef={gyroQuatRef}
+            calibrateToken={calibrateNonce}
+            sensorBasis={sensorBasisForBrand(bluetoothCube.status.brand)}
+            mirror={mirrorForBrand(bluetoothCube.status.brand)}
+          />
+        </div>
+      </div>
+      {/* Which way the sensor thinks is "up" is unverified for every brand, so
+          the fix is manual: hold the cube upright, tap, and that pose becomes
+          the reference. A real <button> — shouldIgnoreTimerTarget already lets
+          presses on one through without arming the timer. */}
+      {want3dLiveCube && bluetoothCube.status.hasGyro && (
+        <button
+          type="button"
+          className="live-cube-calibrate"
+          onClick={() => setCalibrateNonce(n => n + 1)}
+          title={tr({
+            zh: '把魔方当前朝向设为正面朝上的基准',
+            en: 'Set the cube’s current orientation as the upright reference',
+          })}
+        >
+          {tr({ zh: '校准朝向', en: 'Calibrate' })}
+        </button>
+      )}
+    </div>
+  ) : settings.showCubePreview ? (
+    <div className="shell-corner-net">
+      <div className="shell-corner-net-imgbox">
+        <div className="shell-corner-net-img">
+          <CubePreview event={event} scramble={previewScramble} height="var(--cube-h)" visualization={settings.prefer3D ? '3D' : '2D'} />
+        </div>
+      </div>
+    </div>
+  ) : undefined;
 
   // ── Scramble verification ───────────────────────────────────────
   // A smart cube knows its own state, so it can answer the one question the
@@ -2176,15 +2239,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
               )}
             </div>
           }
-          cornerSlot={settings.showCubePreview ? (
-            <div className="shell-corner-net">
-              <div className="shell-corner-net-imgbox">
-                <div className="shell-corner-net-img">
-                  <CubePreview event={event} scramble={previewScramble} height="var(--cube-h)" visualization={settings.prefer3D ? '3D' : '2D'} />
-                </div>
-              </div>
-            </div>
-          ) : undefined}
+          cornerSlot={centerCubeSlot}
           digitsCorner={settings.showRankBadge !== false && timer.phase === 'stopped' && solves.length > 0 ? (
             <RankBadge eventId={event} centis={stoppedCentis} type="single" country={rankCountry} isZh={isZh} />
           ) : undefined}
@@ -2449,44 +2504,6 @@ export default function SoloView({ playersControl }: SoloViewProps) {
         />
       )}
 
-      {bluetoothCube.status.connected && (
-        <div className="timer-live-cube" title={tr({ zh: '智能魔方实时状态（每次拧动同步）', en: 'Live smart-cube state (updates per move)'
-        })}>
-          <LiveCubeState
-            facelets={bluetoothCube.facelets}
-            moves={liveMoves}
-            algAnchored={algAnchored}
-            mode={want3dLiveCube && bluetoothCube.status.hasGyro
-              ? '3d'
-              // A cube with no gyro can't do 3D, so that request falls back to
-              // the net — the same place the '3d' branch inside the component
-              // lands when no orientation sample ever arrives.
-              : (settings.liveCubeView === '2d' ? '2d' : 'net')}
-            quatRef={gyroQuatRef}
-            calibrateToken={calibrateNonce}
-            sensorBasis={sensorBasisForBrand(bluetoothCube.status.brand)}
-            mirror={mirrorForBrand(bluetoothCube.status.brand)}
-            size3d={140}
-          />
-          {/* Which way the sensor thinks is "up" is unverified for every brand
-              (we own no smart cube), so the fix is manual: hold the cube
-              upright, tap, and that pose becomes the reference. pointer-events
-              are off on the wrapper — re-enable them just for the button. */}
-          {want3dLiveCube && bluetoothCube.status.hasGyro && (
-            <button
-              type="button"
-              className="live-cube-calibrate"
-              onClick={() => setCalibrateNonce(n => n + 1)}
-              title={tr({
-                zh: '把魔方当前朝向设为正面朝上的基准',
-                en: 'Set the cube’s current orientation as the upright reference',
-              })}
-            >
-              {tr({ zh: '校准朝向', en: 'Calibrate' })}
-            </button>
-          )}
-        </div>
-      )}
     </div>
   );
 }

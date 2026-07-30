@@ -1079,49 +1079,50 @@
   border-color: var(--border-strong);
 }
 
-/* --- Live cube state mirror (smart cube): default desktop placement.
-   Fixed to the bottom-right corner. Pointer-events disabled so it never
-   blocks the timer surface beneath. */
+/* --- Live cube state mirror (smart cube).
+   Sits directly under the digits, in the same box the scramble preview uses
+   (SoloView's cornerSlot → .shell-corner-net-imgbox, height = --cube-h). It
+   takes that box over while a cube is connected, so it must fill the height
+   exactly: any disagreement shows up as the column jumping the moment the
+   Bluetooth handshake completes. Height here, width from each view's own
+   aspect — never the other way round. */
 .timer-live-cube {
-  position: fixed;
-  right: 12px;
-  bottom: 12px;
-  z-index: 50;
-  padding: 4px;
-  background: color-mix(in srgb, var(--foreground) 35%, transparent);
-  border-radius: 6px;
-  pointer-events: none;
-}
-
-/* The unfolded-net view. The SVG carries only a viewBox, so sizing one axis lets
-   the other follow the aspect ratio — the component sets the height (matching the
-   isometric view it replaces) and the width comes out of the cross's own shape. */
-.timer-live-net {
-  display: block;
+  /* flex, not block: the views inside are sized from their height and have to
+     shrink to their own width, or a block box would stretch them to the full
+     column and the cube would come out oblong. */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
   line-height: 0;
 }
-.timer-live-net svg {
+
+/* Both flat views (unfolded net, isometric still) are SVGs carrying a viewBox,
+   so pinning one axis lets the other follow the drawing's own proportions. */
+.timer-live-cube svg {
   display: block;
   height: 100%;
   width: auto;
 }
-
-/* 3D (gyro) mode drops the tinted plate: the WebGL canvas is alpha and renders
-   a perspective solid, so a flat translucent rectangle behind it reads as a
-   stray box rather than as a backing. Selected via :has() on the canvas host so
-   the wrapper's owner (SoloView) doesn't have to know which mode is live.
-   The 2D net keeps its plate — it needs the contrast against the timer. */
-.timer-live-cube:has(.timer-live-cube-3d) {
-  padding: 0;
-  background: none;
+.timer-live-net {
+  display: block;
+  height: 100%;
   line-height: 0;
 }
 
-/* Calibrate button. The wrapper is pointer-events:none so the overlay never
-   steals a tap meant for the timer surface — this one control opts back in. */
+/* 3D (gyro) mode. Both axes are pinned to the token rather than to the parent,
+   because the size here has to be decided WITHOUT looking at the content:
+   mountSimWorld measures this box and then writes the result back as an inline
+   px size on the canvas (three's setSize updates the style), so "as wide as the
+   content" would just echo whatever it measured first and lock in the net's
+   wider box. Two explicit sides, no feedback loop, always square. */
+.timer-live-cube-3d {
+  width: var(--cube-h, 200px);
+  height: var(--cube-h, 200px);
+}
+
+/* Calibrate button, under the cube. */
 .live-cube-calibrate {
-  display: block;
-  margin: 4px 0 0 auto;
   padding: 2px 8px;
   font: inherit;
   font-size: 11px;
@@ -1131,22 +1132,8 @@
   border: 1px solid color-mix(in srgb, var(--foreground) 20%, transparent);
   border-radius: 4px;
   cursor: pointer;
-  pointer-events: auto;
 }
 .live-cube-calibrate:hover { color: var(--foreground); }
-
-/* --- Tablet (≤768px): shrink secondary overlays.
-   Drops live-cube to ~80px and tightens corner padding so it doesn't crowd
-   the bottom panel. Toolbar / goal / target stay full size. */
-@media (max-width: 768px) {
-  .timer-live-cube {
-    right: 8px;
-    bottom: 8px;
-    padding: 2px;
-    transform: scale(0.667);
-    transform-origin: bottom right;
-  }
-}
 
 /* --- Mobile (touch + narrow) --- */
 @media (max-width: 540px) {
@@ -1168,14 +1155,11 @@
 }
 
 @media (max-width: 480px) {
-  /* Live smart-cube state: hide entirely on phones — both the 2D net and the
-     3D gyro view (the 3D one especially: a WebGL context running beside a
-     running timer on a phone is not worth a 140px corner thumbnail). The user
-     can still see cube state via the main scramble-driven CubePreview above
-     the timer. LiveCubeState mirrors this exact 480px breakpoint in JS so the
-     3D branch is never even mounted here — display:none would otherwise leave a
-     live WebGL context rendering into a zero-size box. Keep the two in sync. */
-  .timer-live-cube { display: none; }
+  /* Live smart-cube state stays VISIBLE on phones — it owns the box the
+     scramble preview would otherwise be in, so hiding it would leave a hole.
+     What phones don't get is WebGL: LiveCubeState checks this same 480px
+     breakpoint in JS and serves the flat net instead of mounting a three.js
+     context next to a running timer. Keep the two numbers in sync. */
   /* Target indicator: shrink padding/font so it doesn't push into the
      timer display. Stay visible — it's the whole point of the running phase
      when a target is set. */

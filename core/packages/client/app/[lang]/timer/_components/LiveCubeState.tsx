@@ -1,21 +1,29 @@
 'use client';
 
 /**
- * LiveCubeState — corner mirror of the user's smart cube.
+ * LiveCubeState — the on-screen mirror of the user's smart cube.
  *
- * Renders the state the cube ITSELF reports, one of two ways:
+ * Renders the state the cube ITSELF reports, one of three ways:
  *
- *   mode '2d' (default) — the tracked facelets, drawn directly. Exact for any
- *     state the cube can be in.
- *   mode '3d'           — a live 3D cube whose orientation follows the cube's
+ *   mode 'net' (default) — the unfolded WCA net. Exact for any state the cube
+ *     can be in, and the one you can check face-by-face against your hands.
+ *   mode '2d'            — the isometric still: three faces visible, three not.
+ *   mode '3d'            — a live 3D cube whose orientation follows the cube's
  *     gyroscope (LiveCubeGyroView). 3x3 only, only once a real orientation
  *     sample has arrived, and only while the state is expressible as an alg
  *     (see `moves` below).
  *
- * The 2D fallback is not a nicety, it is the contract: a 3D cube that is not
+ * The flat fallback is not a nicety, it is the contract: a 3D cube that is not
  * being told which way it is pointing is worse than no 3D cube at all, because
  * it looks alive while being wrong. So we stay flat until the first quaternion
- * lands, and the caller can drop `mode` back to '2d' at any time.
+ * lands, and the caller can drop `mode` back at any time.
+ *
+ * SIZE IS THE HOST'S. Every branch fills its container rather than carrying a
+ * px number, because this now lives in the timing surface's centre slot — the
+ * same box the scramble preview uses, sized by the `--cube-h` token. Two views
+ * that swap in one box MUST agree on height or the content below them jumps
+ * every time a cube connects. Giving the box one owner is how that is
+ * guaranteed; see `.timer-live-cube` in timer.css for the rules this expects.
  *
  * HISTORY — what this component used to do, and why it was wrong: it rendered
  * `scramble + movesSinceTheScrambleChanged`. That is not the cube's state. With
@@ -108,8 +116,6 @@ export interface LiveCubeStateProps {
    * suppressed while this holds rather than drawing a state we made up.
    */
   algAnchored: boolean;
-  /** 2D only: rendered edge in px. */
-  size?: number;
   /**
    * '3d'  gyro-driven cube;
    * 'net' the unfolded WCA net — six faces flat, which is what you compare
@@ -117,8 +123,6 @@ export interface LiveCubeStateProps {
    * '2d'  the isometric still, where three faces are visible and three are not.
    */
   mode?: '2d' | 'net' | '3d';
-  /** 3D only: rendered edge in px. */
-  size3d?: number;
   /** Latest orientation sample from the cube, or null when none has arrived. */
   quat?: Quat | null;
   /**
@@ -140,9 +144,7 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
     facelets,
     moves,
     algAnchored,
-    size = 96,
-    mode = '2d',
-    size3d = 140,
+    mode = 'net',
     quat = null,
     quatRef,
     calibrateToken = 0,
@@ -150,12 +152,14 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
     mirror = false,
   } = props;
 
-  // timer.css hides .timer-live-cube outright below 480px. Mirror that here so
-  // the 3D branch is never mounted at all — a display:none host has a zero
-  // client box, which would leave a live WebGL context rendering into nothing.
-  // Keep this breakpoint in sync with the @media rule in timer.css.
-  const hiddenByViewport = useIsMobile(480);
-  const wants3d = mode === '3d' && !hiddenByViewport;
+  // No WebGL on phones. A three.js context rendering a cube that turns on every
+  // notification, alongside a running timer, is a real cost on a phone GPU and
+  // the timer is the thing that must not stutter. The flat net is exact, costs a
+  // string of SVG, and is legible at this size — so phones get that instead.
+  // This is a downgrade, never a hide: the view owns the centre slot now, so
+  // returning nothing here would leave a hole where the scramble preview was.
+  const phone = useIsMobile(480);
+  const wants3d = mode === '3d' && !phone;
   const devQuat = useSyntheticQuat(wants3d);
   const liveQuat = quat ?? devQuat;
 
@@ -185,27 +189,26 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
   // reads facelets and is always exact.
   if (wants3d && everOriented && algAnchored) {
     return (
-      <div style={{ width: size3d, height: size3d, lineHeight: 0 }}>
-        <LiveCubeGyroView
-          moves={moves}
-          quat={liveQuat}
-          quatRef={quatRef}
-          size={size3d}
-          calibrateToken={calibrateToken}
-          sensorBasis={sensorBasis}
-          mirror={mirror}
-        />
-      </div>
+      <LiveCubeGyroView
+        moves={moves}
+        quat={liveQuat}
+        quatRef={quatRef}
+        calibrateToken={calibrateToken}
+        sensorBasis={sensorBasis}
+        mirror={mirror}
+      />
     );
   }
 
-  if (!facelets) return <span style={{ display: 'inline-block', width: size, height: size }} />;
+  // Nothing tracked yet: hold the box open rather than collapsing it, so the
+  // first facelet snapshot doesn't shove the rest of the column down.
+  if (!facelets) return <span style={{ display: 'block', height: '100%' }} />;
   const alt = tr({ zh: '智能魔方当前状态', en: 'Current smart-cube state' });
   // Only an explicit '2d' asks for the isometric still. A '3d' request that got
   // this far had no orientation to draw with, and the flat view it falls back to
   // is the net — the one that shows all six faces.
-  if (mode === '2d') return <FaceletsCube fd={facelets.toLowerCase()} size={size} alt={alt} />;
-  return <CubeNet facelets={facelets} size={size} alt={alt} />;
+  if (mode === '2d') return <FaceletsCube fd={facelets.toLowerCase()} alt={alt} fill />;
+  return <CubeNet facelets={facelets} alt={alt} />;
 }
 
 /**
@@ -213,12 +216,11 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
  * previews use (`lib/cube-net-svg`), so a face here is byte-for-byte the face
  * the rest of the site draws.
  *
- * `size` is the HEIGHT, not the width: the net is a wide cross, and matching the
- * height of the isometric view it replaces keeps the corner plate the same size
- * on screen while making each sticker bigger — which is the entire reason to
- * show a net. Width follows from the viewBox (`.timer-live-net` in timer.css).
+ * Height comes from the host box and the width follows from the viewBox — the
+ * net is a wide cross, so matching HEIGHT with the views it swaps against is
+ * what keeps the column steady (`.timer-live-cube` in timer.css).
  */
-function CubeNet({ facelets, size, alt }: { facelets: string; size: number; alt: string }) {
+function CubeNet({ facelets, alt }: { facelets: string; alt: string }) {
   const svg = useMemo(
     () => renderCubeNetSvg({ serialized: facelets.toUpperCase(), order: 3, faceColors: CUBE_FILL }),
     [facelets],
@@ -228,7 +230,6 @@ function CubeNet({ facelets, size, alt }: { facelets: string; size: number; alt:
       role="img"
       aria-label={alt}
       className="timer-live-net"
-      style={{ height: size }}
       dangerouslySetInnerHTML={{ __html: svg }}
     />
   );
