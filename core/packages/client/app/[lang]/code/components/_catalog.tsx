@@ -33,6 +33,7 @@ import { VariantSelect } from '@/components/VariantSelect';
 import { RangeSlider } from '@/components/RangeSlider/RangeSlider';
 import { ParamSliders, type ParamSliderSpec } from '@/components/ParamSliders';
 import { Spinner } from '@/components/Spinner/Spinner';
+import ResetDefaultsButton from '@/components/ResetDefaultsButton';
 import PlaybackBar from '@/components/PlaybackBar';
 import StackedBar, { type StackedSeg } from '@/components/StackedBar/StackedBar';
 import CountryShareBar from '@/components/CountryShareBar/CountryShareBar';
@@ -259,6 +260,10 @@ function SpinnerDemo() {
       <span style={{ color: 'var(--accent)', display: 'inline-flex' }}><Spinner size={30} /></span>
     </div>
   );
+}
+
+function ResetDefaultsButtonDemo() {
+  return <ResetDefaultsButton onReset={() => {}} title="全部设置与视角恢复默认" />;
 }
 
 function RangeSliderDemo() {
@@ -862,6 +867,16 @@ export const CATALOG: ComponentEntry[] = [
     usage: '<Spinner size={16} />',
     Demo: SpinnerDemo,
     note: { zh: '别再给 lucide 的 Loader2 手写 @keyframes 转 —— 那份重复过 22 遍。动作图标(如刷新时转的 RefreshCw)不算加载转圈,不要换成它。', en: 'Don’t hand-roll another @keyframes rotation on lucide’s Loader2 — that was duplicated 22 times. Action icons (a RefreshCw spinning while refreshing) are not loading spinners; leave those alone.' },
+  },
+  {
+    name: 'ResetDefaultsButton',
+    import: "import ResetDefaultsButton from '@/components/ResetDefaultsButton';",
+    category: 'input',
+    zh: '「恢复默认」按钮:把一页的设置(+视角)一键推回出厂值。/sim 播放器控制行与 /predict 共用,恢复什么由 onReset 决定,title 写清这一页的「默认」含哪些。',
+    en: 'The “Reset defaults” button — puts a page’s settings (and view) back to factory values in one click. Shared by /sim’s player control row and /predict; onReset decides what gets restored, title spells out what this page’s defaults cover.',
+    usage: '<ResetDefaultsButton onReset={restoreDefaults} title="全部设置与视角恢复默认" />',
+    Demo: ResetDefaultsButtonDemo,
+    note: { zh: '文案固定「恢复默认」,别再各页写「恢复默认设置 / 重置」等变体。', en: 'The label is fixed — don’t re-word it per page.' },
   },
   {
     name: 'RangeSlider',
