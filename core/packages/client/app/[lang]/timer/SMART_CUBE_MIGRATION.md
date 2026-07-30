@@ -197,3 +197,10 @@ csTimer 拿到后做两件事（`gancube.js:461-488`、`bluetoothutil.js:407-475
 - 2026-07-30（Sprint 11）：B/C 节补齐 —— 「预备后第一下转动即起表」原先**整条缺失**
   （自动预备因此是死路，实测会一路跑到 DNF），观察超时判罚、「打乱正确即预备」并设为默认。
   断连一条有意不照抄上游，理由记在表里。
+- 2026-07-30（Sprint 12）：GAN 历史补齐动作按区间插值时间戳（原先空戳会让
+  MoveClock 掉锚，伪造一次停顿）；实况小窗默认展开图（上游唯一形态），渲染器
+  提到 `lib/cube-net-svg.ts` 与打乱预览共用一份 emitter。
+- 2026-07-30（Sprint 13）：进入研究文档 P0（超出 csTimer 的部分）——
+  `Solve` 落盘 `inspectionMs` + `device{model,name}`；识别/执行拆分按 Cubeast
+  定义落地（`step_metrics.ts`，AUF 计入识别、TPS 只除执行时间），复盘 modal
+  展示。顺手根因修复详情/复盘两个兄弟 modal 同 key 的 React duplicate-key bug。
