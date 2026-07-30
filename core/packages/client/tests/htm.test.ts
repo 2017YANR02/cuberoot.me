@@ -75,6 +75,12 @@ describe('htmMoves', () => {
     expect(countHtm(stream(raw))).toBe(50);
   });
 
+  it('大魔方的层数前缀也是转动,不能被悄悄丢掉', () => {
+    expect(countHtm(stream('3R U'))).toBe(2);
+    expect(htmMoves(stream('3R 3R')).map(h => h.m)).toEqual(['3R2']);
+    expect(countHtm(stream('3R R'))).toBe(2);         // 层数不同就不是同一面
+  });
+
   it('边界:空流、单步、垃圾记号', () => {
     expect(htmMoves([])).toEqual([]);
     expect(countHtm(stream('R'))).toBe(1);
