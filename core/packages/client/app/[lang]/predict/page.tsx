@@ -10,7 +10,8 @@
  * 本站版本的差异:
  *   - 配色走站内单一源(白上绿前红右),另给 24 个拿方朝向可切 —— 与 /timer 的
  *     「预打乱朝向」共用 lib/cube-orientation 那张表;
- *   - 视角可自由旋转到背面(原站锁死正面),否则落在背面的答案点不到;
+ *   - 视角可自由旋转到背面(原站锁死正面),否则落在背面的答案点不到;背面本身靠
+ *     /sim 的「提示贴片」读得到,所以起手朝向恒为 /sim 的默认视角,不随题目乱转;
  *   - 六面浮 U/D/L/R/F/B 字母作参照,而不是把字母印在中心贴纸上;
  *   - 公式除了随机 / 随机 F2L,还可以自己输入(原站只有前两档),练自己那条。
  *
@@ -27,6 +28,7 @@ import BackHome from '@/components/BackHome';
 import HeaderToggles from '@/components/HeaderToggles';
 import LiquidGlassChips from '@/components/LiquidGlassChips';
 import PlaybackBar from '@/components/PlaybackBar';
+import ResetDefaultsButton from '@/components/ResetDefaultsButton';
 import { tr } from '@/i18n/tr';
 import { CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '@/lib/cube-colors';
 import { CUBE_ORIENTATIONS, orientedFaceColors } from '@/lib/cube-orientation';
@@ -157,7 +159,8 @@ function PredictPageInner() {
   const [found, setFound] = useState<boolean[]>([]);
   const [wrong, setWrong] = useState(false);
   const [revealed, setRevealed] = useState(false);
-  const [focus, setFocus] = useState<{ faces: CubeFace[]; nonce: number } | null>(null);
+  /** 「恢复默认」按一次 +1,题板收到就把视角推回 /sim 的默认姿势。 */
+  const [viewResetNonce, setViewResetNonce] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -189,12 +192,6 @@ function PredictPageInner() {
   /** 播放条:默认不占地方,一旦复盘开始(自动或手点某一招)就出来 —— 否则跳到第 3 步后没法回起点。 */
   const showPlayback = over || step > 0;
 
-  /** 把视角转到能看见这些 facelet 的角度 —— 目标块常常就在背面,不转的话玩家面前是一片灰。 */
-  const focusOn = useCallback((facelets: readonly number[]) => {
-    const faces = [...new Set(facelets.map((f) => FACE_LETTERS[faceletFace(f)]))];
-    setFocus((f) => ({ faces, nonce: (f?.nonce ?? 0) + 1 }));
-  }, []);
-
   /**
    * 出一题。`algText` 给「自己输入」那档用:回车时直接把输入框里的原文递进来,
    * 不经过 state 一轮,免得刚敲完的那个字还没落到 ref 上。
@@ -212,21 +209,33 @@ function PredictPageInner() {
     }
     const next = generateChallenge({ mode, kind, source, moveCount, crossEdges, orientation, customMoves });
     setChallenge(next);
-    focusOn(next.targets.map((t) => t.startFacelet));
     setWrong(false);
     setRevealed(false);
     setStep(0);
     setPlaying(false);
     setElapsed(0);
     startedAt.current = Date.now();
-  }, [mode, kind, source, moveCount, crossEdges, orientation, focusOn]);
+  }, [mode, kind, source, moveCount, crossEdges, orientation]);
 
-  /** 认输:切到「答案盘面」(目标块整块画在落点上),并把落点转到镜头前。 */
+  /** 认输:切到「答案盘面」(目标块整块画在落点上)。落点在背面也读得到 —— 提示贴片
+   *  会把那三面的贴纸浮在方块外侧,所以这里不再替玩家转视角。 */
   const reveal = useCallback(() => {
     if (!challenge) return;
-    focusOn(challenge.targets.map((t) => t.answerFacelet));
     setRevealed(true);
-  }, [challenge, focusOn]);
+  }, [challenge]);
+
+  /** 恢复默认:出题参数全回出厂值(= 清掉 URL 上那几个参数),视角推回 /sim 的默认姿势。
+   *  参数一变上面的 effect 就自动换一题;本来就在默认值时只复位视角,不打断当前这题。 */
+  const restoreDefaults = useCallback(() => {
+    void setMode(null);
+    void setKind(null);
+    void setSource(null);
+    void setMoveCount(null);
+    void setCrossEdges(null);
+    void setOrientation(null);
+    void setAlg(null);
+    setViewResetNonce((n) => n + 1);
+  }, [setMode, setKind, setSource, setMoveCount, setCrossEdges, setOrientation, setAlg]);
 
   useEffect(() => { deal(); }, [deal]);
   useEffect(() => { setFound(challenge ? challenge.targets.map(() => false) : []); }, [challenge]);
@@ -332,6 +341,9 @@ function PredictPageInner() {
         <HeaderToggles />
       </div>
 
+      {/* 桌面端两栏(左题板右其余)靠 .predict-page 的 grid-template-areas 摆位:题板 + 复盘条
+          裹成 .predict-boardcol 占满左列,右边每一块自己就是一个格子。窄屏这层包裹不参与
+          布局(纯块级),孩子按 DOM 顺序照旧竖着排,和改成两栏之前一模一样。 */}
       <header className="predict-header">
         <h1>{tr({ zh: '预判训练', en: 'Lookahead Challenge' })}</h1>
         <p>{tr({
@@ -437,54 +449,55 @@ function PredictPageInner() {
         </label>
       </div>
 
-      <div className="predict-stage">
-        <PredictBoard
-          labels={labels}
-          bright={bright}
-          dim={dim}
-          onSticker={onSticker}
-          focusFaces={focus?.faces}
-          focusNonce={focus?.nonce ?? 0}
-          moves={challenge?.moves}
-          step={step}
-        />
-        <div className="predict-clock" aria-live="off">{clock(elapsed)}</div>
-        {wrong && (
-          <div className="predict-wrong" role="alert">
-            <X size={120} strokeWidth={3} aria-hidden="true" />
-            <span className="predict-sr">{tr({ zh: '点错了', en: 'Wrong square' })}</span>
+      <div className="predict-boardcol">
+        <div className="predict-stage">
+          <PredictBoard
+            labels={labels}
+            bright={bright}
+            dim={dim}
+            onSticker={onSticker}
+            viewResetNonce={viewResetNonce}
+            moves={challenge?.moves}
+            step={step}
+          />
+          <div className="predict-clock" aria-live="off">{clock(elapsed)}</div>
+          {wrong && (
+            <div className="predict-wrong" role="alert">
+              <X size={120} strokeWidth={3} aria-hidden="true" />
+              <span className="predict-sr">{tr({ zh: '点错了', en: 'Wrong square' })}</span>
+            </div>
+          )}
+        </div>
+
+        {showPlayback && (
+          <div className="predict-replay">
+            <PlaybackBar
+              step={step}
+              total={totalSteps}
+              playing={playing}
+              onScrub={seek}
+              onSkipStart={() => { setPlaying(false); setStep(0); }}
+              onStepBack={() => { setPlaying(false); setStep((s) => Math.max(0, s - 1)); }}
+              onTogglePlay={() => {
+                if (playing) { setPlaying(false); return; }
+                if (step >= totalSteps) setStep(0); // 播完了再按 = 重播
+                setPlaying(true);
+              }}
+              onStepForward={() => { setPlaying(false); setStep((s) => Math.min(totalSteps, s + 1)); }}
+              onSkipEnd={() => { setPlaying(false); setStep(totalSteps); }}
+              labels={{
+                skipStart: tr({ zh: '回到起点', en: 'Skip to start' }),
+                stepBack: tr({ zh: '退一步', en: 'Step back' }),
+                play: tr({ zh: '播放复盘', en: 'Play' }),
+                pause: tr({ zh: '暂停', en: 'Pause' }),
+                stepForward: tr({ zh: '进一步', en: 'Step forward' }),
+                skipEnd: tr({ zh: '跳到落点', en: 'Skip to end' }),
+                scrub: tr({ zh: '拖动到第几步', en: 'Scrub' }),
+              }}
+            />
           </div>
         )}
       </div>
-
-      {showPlayback && (
-        <div className="predict-replay">
-          <PlaybackBar
-            step={step}
-            total={totalSteps}
-            playing={playing}
-            onScrub={seek}
-            onSkipStart={() => { setPlaying(false); setStep(0); }}
-            onStepBack={() => { setPlaying(false); setStep((s) => Math.max(0, s - 1)); }}
-            onTogglePlay={() => {
-              if (playing) { setPlaying(false); return; }
-              if (step >= totalSteps) setStep(0); // 播完了再按 = 重播
-              setPlaying(true);
-            }}
-            onStepForward={() => { setPlaying(false); setStep((s) => Math.min(totalSteps, s + 1)); }}
-            onSkipEnd={() => { setPlaying(false); setStep(totalSteps); }}
-            labels={{
-              skipStart: tr({ zh: '回到起点', en: 'Skip to start' }),
-              stepBack: tr({ zh: '退一步', en: 'Step back' }),
-              play: tr({ zh: '播放复盘', en: 'Play' }),
-              pause: tr({ zh: '暂停', en: 'Pause' }),
-              stepForward: tr({ zh: '进一步', en: 'Step forward' }),
-              skipEnd: tr({ zh: '跳到落点', en: 'Skip to end' }),
-              scrub: tr({ zh: '拖动到第几步', en: 'Scrub' }),
-            }}
-          />
-        </div>
-      )}
 
       <div className="predict-prompt">
         {promptGroups.map((g) => {
@@ -559,6 +572,13 @@ function PredictPageInner() {
           <Eye size={15} aria-hidden="true" />
           {tr({ zh: '显示答案', en: 'Show answer' })}
         </button>
+        <ResetDefaultsButton
+          onReset={restoreDefaults}
+          title={tr({
+            zh: '出题参数(模式 / 追踪 / 公式 / 步数 / 朝向)与视角恢复默认',
+            en: 'Reset the challenge settings (mode / track / moves / length / holding) and the view',
+          })}
+        />
         <div className="predict-progress">
           {promptGroups.map((g) => (
             <span

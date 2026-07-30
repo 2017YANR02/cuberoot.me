@@ -8,6 +8,44 @@
   color: var(--foreground);
 }
 
+/* 宽屏两栏(/sim 同款:左边只有魔方,右边全是字与控件)。
+   窄屏什么都不做 —— .predict-page 仍是普通块流,.predict-boardcol 只是个透明的壳,
+   顺序照旧「标题 → 参数 → 题板 → 复盘条 → 题面 → 按钮 → 公式」。
+   宽屏改用 grid-template-areas 摆位:题板整列贴住视口顶(sticky),右列跟页面一起滚,
+   于是滚到底看公式清单时魔方还在。 */
+@media (min-width: 900px) {
+  .predict-page {
+    max-width: 84rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(20rem, 30rem);
+    grid-template-areas:
+      "topbar topbar"
+      "board  header"
+      "board  controls"
+      "board  prompt"
+      "board  actions"
+      "board  moves"
+      "board  origin";
+    align-items: start;
+    column-gap: 1.75rem;
+  }
+
+  .predict-topbar { grid-area: topbar; }
+  .predict-header { grid-area: header; }
+  .predict-controls { grid-area: controls; margin-top: 0.75rem; }
+  .predict-boardcol { grid-area: board; position: sticky; top: 0.75rem; }
+  .predict-prompt { grid-area: prompt; }
+  .predict-actions { grid-area: actions; }
+  .predict-moves { grid-area: moves; }
+  .predict-origin { grid-area: origin; }
+
+  /* 左列自己就有一整列的宽度,别再被 46rem 正文宽的那条 62vh 卡住。宽度收在整列上,
+     题板 / 复盘条撑满它 —— 计时器是钉在 .predict-stage 右上角的,列比题板宽它就飘出去了。 */
+  .predict-boardcol { width: min(100%, 76vh); margin-inline: auto; }
+  .predict-board,
+  .predict-replay { width: 100%; }
+}
+
 /* 工具栏:左返回右开关,这是明确要两端对齐的那一类 */
 .predict-topbar {
   display: flex;
@@ -263,6 +301,7 @@
 
 .predict-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.6rem;
   margin: 0.9rem 0;

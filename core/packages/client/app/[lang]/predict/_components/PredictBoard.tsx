@@ -7,9 +7,16 @@
  *   - `paintMode` + `dragEmpty='view'`:任何拖拽都只转视角,绝不拧层;单击照旧派
  *     `taps`,于是「点某枚贴纸」就有了。答案可能落在背面,所以视角必须能转到底
  *     (两轴无界累加,不钳 pitch),再给一个复位按钮。
+ *   - 起始视角恒为 `HOME_SCENE_ROT`(= /sim 打开时那个 U 上 F 前 R 右)。以前是「按题目
+ *     所在的面自动挑一个角度」,结果每出一题朝向都不一样,连自己在看哪一面都得先认;
+ *     现在朝向钉死,背面靠提示贴片读(下条),要转自己拖。
  *   - 方位字母常驻(`faceHints: true`,= /sim 设置里「字母」开着的状态,本页不给开关):
  *     题面大半格子是压暗的,只靠颜色认方位不够,U/D/L/R/F/B 得一直看得见。引擎里
  *     `show()` 只设目标透明度、`tick` 每帧淡入,没人 `hide()` 就一直亮着。
+ *   - 提示贴片常驻(`instancedRenderer.hint`,= /sim 设置里「提示贴片」开着的状态,本页
+ *     同样不给开关):背对镜头那三面的贴纸会在方块外侧浮一层影子,所以朝向钉死也读得到
+ *     背面。影子色走同一套阶段遮罩(`computeHintColor` 内部就是 `resolveStickerColor`),
+ *     于是灰掉的格子影子也是灰的 —— 只有目标那枚的影子亮着。
  *   - 颜色逐贴纸给:`labels[i]` 是 facelet i 的引擎色标签(整盘真实颜色)。
  *   - 「只亮该找的那一枚」不靠改色,靠 /sim 那套阶段遮罩:`setStickering` 把 `bright`
  *     留满色、`dim` 压半、其余压成 FM_IGNORED 灰;遮罩定义在还原帧上 → 复盘转动时
@@ -28,7 +35,7 @@ import type Cube from '@/app/[lang]/sim/engine/nxn/cube';
 import type Toucher from '@/app/[lang]/sim/Toucher';
 import type { SimMount } from '@/components/sim-embed/mountSimWorld';
 import { buildFaceletMap, buildReverseFaceletMap } from '@/components/sim-embed/faceletMap';
-import { HOME_SCENE_ROT, ORBIT_K, orbitSceneFree } from '@/app/[lang]/sim/engine/viewControls';
+import { ORBIT_K, orbitSceneFree, resetSceneView } from '@/app/[lang]/sim/engine/viewControls';
 import { afterFirstPaint } from '@/components/sim-embed/SimStage';
 import { timing } from '@/app/[lang]/sim/engine/tweenTiming';
 import { Spinner } from '@/components/Spinner/Spinner';
@@ -42,52 +49,9 @@ const PLAY_FRAMES = 16;
 const NO_MOVES: readonly string[] = [];
 const NO_FACELETS: readonly number[] = [];
 
-/**
- * 「转到看得见某一面」的视角(pitch, yaw)。
- *
- * `scene.rotation` 是 z=0 的 XYZ 欧拉角,即 M = Rx(pitch)·Ry(yaw):yaw 先在方块自身
- * 坐标里转,Rx 再整体后仰。于是把某面转到镜头前只需让 Ry 把它的法向送到 +z:侧面靠
- * yaw(F=0 / R=-90° / B=180° / L=+90°),顶底靠 pitch(±90°)。都留 22.5° 余量,
- * 免得正对镜头变成一张没有立体感的平面图。
- */
-const Q = Math.PI / 8;
-const LOOK_AT: Record<string, readonly [number, number]> = {
-  // 顶/底必须 yaw=0:正对 U/D 时 yaw 变成面内自转,给个 45° 就成了一个转 45° 的菱形,方向全乱。
-  U: [Math.PI / 2 - Q, 0],
-  D: [-Math.PI / 2 + Q, 0],
-  F: [Q, -Q],
-  B: [Q, Math.PI - Q],
-  R: [Q, -Math.PI / 2 + Q],
-  L: [Q, Math.PI / 2 - Q],
-};
-
-const FACE_NORMALS: Record<string, readonly [number, number, number]> = {
-  U: [0, 1, 0], D: [0, -1, 0], F: [0, 0, 1], B: [0, 0, -1], R: [1, 0, 0], L: [-1, 0, 0],
-};
-
-/** 某个面在这个姿态下有多正对镜头 —— 法向经 Rx(pitch)·Ry(yaw) 后的 z 分量,>0 = 看得见。 */
-function towardCamera(face: string, pitch: number, yaw: number): number {
-  const [x, y, z] = FACE_NORMALS[face];
-  const zy = -x * Math.sin(yaw) + z * Math.cos(yaw); // Ry 之后的 z
-  return y * Math.sin(pitch) + zy * Math.cos(pitch); // 再过 Rx
-}
-
-/**
- * 挑一个尽量把这几个面同时露出来的视角:先比露出几个,再比露出来的那些正不正对。
- *
- * 平手时比「看得见的部分之和」而不是最差的那一个 —— 目标面正好互为对面(F 与 B)时,
- * 后者会挑一个两面都只擦到边的折中角度,结果哪一面都看不清。
- */
-function poseShowing(faces: readonly string[]): readonly [number, number] {
-  let best: readonly [number, number] = [HOME_SCENE_ROT.x, HOME_SCENE_ROT.y];
-  if (faces.length === 0) return best;
-  let bestScore = -Infinity;
-  for (const pose of Object.values(LOOK_AT)) {
-    const seen = faces.map((f) => towardCamera(f, pose[0], pose[1])).filter((z) => z > 0.15);
-    const score = seen.length * 10 + seen.reduce((a, z) => a + z, 0);
-    if (score > bestScore) { bestScore = score; best = pose; }
-  }
-  return best;
+/** 提示贴片的底色 = 页面背景(影子按它预混,免得棋盘/深浅背景透过来);跟着主题翻。 */
+function pageBackdrop(): string {
+  return getComputedStyle(document.documentElement).getPropertyValue('--background').trim();
 }
 
 type BoardEngine = {
@@ -118,9 +82,8 @@ export interface PredictBoardProps {
   /** 压暗(各自颜色减半)的 facelet:目标块剩下的那几枚 —— 看得出是同一块,又不抢那枚。 */
   dim?: readonly number[];
   onSticker: (faceletIndex: number) => void;
-  /** 要露给玩家看的面(U/D/L/R/F/B),视角会转到尽量同时看见它们;`focusNonce` 变一次转一次。 */
-  focusFaces?: readonly string[];
-  focusNonce?: number;
+  /** 变一次就把视角复位回 `HOME_SCENE_ROT`(页面上的「恢复默认」按的就是它)。 */
+  viewResetNonce?: number;
   /** 复盘用的题面招式。 */
   moves?: readonly string[];
   /** 已经走到第几步:比上一次多 1 = 放一步动画,其余情况瞬时跳过去。 */
@@ -129,7 +92,7 @@ export interface PredictBoardProps {
 
 export default function PredictBoard({
   labels, bright = NO_FACELETS, dim = NO_FACELETS, onSticker,
-  focusFaces, focusNonce = 0, moves = NO_MOVES, step = 0,
+  viewResetNonce = 0, moves = NO_MOVES, step = 0,
 }: PredictBoardProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mountRef = useRef<SimMount | null>(null);
@@ -189,6 +152,20 @@ export default function PredictBoard({
         if (fi !== undefined) onStickerRef.current(fi);
       });
 
+      // 提示贴片强制常驻(本页不给 toggle):朝向钉死在 home,背对镜头那三面只能靠它读。
+      // 影子色 = 贴纸色与页面背景预混,所以主题一翻要重新注入一次底色。
+      const cube = world.cube as Cube;
+      cube.instancedRenderer.setHintBackdrop(pageBackdrop());
+      cube.instancedRenderer.hint = true;
+      const syncBackdrop = () => {
+        cube.instancedRenderer.setHintBackdrop(pageBackdrop());
+        mount.invalidate();
+      };
+      const themeObserver = new MutationObserver(syncBackdrop);
+      themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+      const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      darkQuery.addEventListener('change', syncBackdrop);
+
       const onContextMenu = (e: MouseEvent) => e.preventDefault();
       mount.renderer.domElement.addEventListener('contextmenu', onContextMenu);
 
@@ -200,6 +177,8 @@ export default function PredictBoard({
 
       cleanup = () => {
         timing.frames = prevFrames;
+        themeObserver.disconnect();
+        darkQuery.removeEventListener('change', syncBackdrop);
         mount.renderer.domElement.removeEventListener('contextmenu', onContextMenu);
         toucher.destroy();
         mount.dispose();
@@ -272,30 +251,19 @@ export default function PredictBoard({
     mount.invalidate();
   }, [bright, dim, ready, faceletMap]);
 
-  const setView = (pitch: number, yaw: number) => {
-    const world = mountRef.current?.world;
-    if (!world) return;
-    world.scene.rotation.x = pitch;
-    world.scene.rotation.y = yaw;
-    world.scene.rotation.z = 0;
-    world.scene.updateMatrix();
-    world.dirty = true;
-  };
-
-  /** 复位 = 回到「看得见这题」的角度(没给焦点面就回引擎默认视角)。 */
+  /** 复位 = 回到 /sim 打开时那个姿势(U 上 F 前 R 右),`HOME_SCENE_ROT` 单一源。 */
   const resetView = () => {
-    const pose = poseShowing(focusFaces ?? []);
-    setView(pose[0], pose[1]);
+    const world = mountRef.current?.world;
+    if (world) resetSceneView(world);
   };
 
-  // 出题和「显示答案」都得把相关的面转到镜头前 —— 目标块很可能就在背面,不转等于没显示。
+  // 页面上的「恢复默认」也复位视角(拖歪了不用再去找题板角上那颗按钮)。
   useEffect(() => {
-    if (!ready || !focusFaces?.length) return;
-    const pose = poseShowing(focusFaces);
-    setView(pose[0], pose[1]);
-    // setView 只读 ref,不进依赖;nonce 变一次就转一次(同一批面也要能再转回去)。
+    if (!ready || viewResetNonce === 0) return;
+    resetView();
+    // resetView 只读 ref,不进依赖;nonce 变一次复位一次。
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, focusNonce]);
+  }, [ready, viewResetNonce]);
 
   return (
     <div className="predict-board">
