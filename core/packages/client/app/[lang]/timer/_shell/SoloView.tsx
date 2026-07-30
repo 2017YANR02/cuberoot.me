@@ -1861,6 +1861,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
             onQuickPenalty={(id, p) => updateSolve(id, { penalty: p })}
             onQuickDelete={(id) => deleteSolve(id)}
             onQuickComment={(s, idx) => setModalSolve({ s, idx })}
+            onQuickReconstruct={(s) => setReconstructSolve(s)}
           />
           <div className="shell-times-actions">
             <button type="button" className="stats-expand-toggle" onClick={() => setStatsModalOpen(true)}>
