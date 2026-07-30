@@ -305,17 +305,23 @@
   color: color-mix(in srgb, var(--destructive) 68%, var(--muted-foreground));
 }
 
+/* 每条信息都短(日期/上限/城市/地址/详情),一行一条会在右侧留下大片空白:
+   改成 label+value 成对打包横排、放不下才折行,宽屏 5 行压到 2 行 */
 .comp-info-panel {
-  display: grid;
-  grid-template-columns: max-content 1fr;
-  column-gap: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 22px;
   row-gap: 4px;
   margin: 8px 0 16px;
   font-size: 0.88rem;
 }
 .comp-info-row {
-  display: contents;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
 }
+.comp-info-row .comp-info-label { white-space: nowrap; }
 .comp-info-label {
   color: var(--muted-foreground);
   font-weight: 500;
@@ -385,10 +391,12 @@
 }
 .comp-info-past-item dd { margin: 0; }
 @media (max-width: 480px) {
+  /* 窄屏放不下两条并排:退回一条一行,标签列对齐 */
   .comp-info-panel {
-    grid-template-columns: 1fr;
+    flex-direction: column;
     column-gap: 0;
     row-gap: 6px;
+    align-items: stretch;
   }
   .comp-info-row {
     display: grid;
@@ -996,6 +1004,13 @@ td.is-pr {
   align-items: center;
   gap: 6px;
   min-width: 0;
+}
+.comp-round-modal-subtitle-flag {
+  margin-right: 6px;
+}
+.comp-round-modal-subtitle-date {
+  white-space: nowrap;
+  flex: none;
 }
 .comp-round-modal-subtitle-icon {
   width: 16px;
