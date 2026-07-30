@@ -1369,7 +1369,10 @@ stage_segments`），所以 bundle 和模块初始化成本都是 **0**，不需
 - `tests/stage_segments_attach.test.ts`（5 例）：真打乱 + 真解法算出 `OLL 44` /
   `PLL T` / `D-cross` 且四段 HTM 锁死 7/31/8/18、没有动作流不算、非三阶系不算
   （`333oh` 要算）、垃圾输入只返回 null 不抛、打乱不匹配时不假装认出阶段
-- 全集 **3705 通过**（本轮 +5），typecheck / lint 干净
+- `tests/reanalyze_stage_data.test.ts`（6 例，**这条迁移此前完全没有测试**）：
+  补旧账补出来的分段与录入路径当场算的**逐字段相等**、点第二次 0 更新（幂等）、
+  陈 case 名会被重写、非三阶系与无动作流既不扫也不写、进度分母只数真要算的
+- 全集 **3711 通过**（本轮 +11），typecheck / lint 干净
 
 ### 状态
 

@@ -8,11 +8,15 @@
  * Triggered manually from SettingsPanel — running it twice in a row is a
  * no-op on the second pass because the comparison is structural (same input
  * + same algorithm => same output => `segsEqual` returns true).
+ *
+ * Since the recorder attaches segments as each solve lands, this is now a
+ * BACKFILL for solves recorded before it did (and a re-run after the
+ * recognizer changes), not the only way the field ever gets written.
  */
 
 import type { EventId, Solve } from '../types';
-import type { StageSegments, SolveMove } from '../reconstruct/stage_segments';
-import { STAGE_SEGMENT_EVENTS, computeStageSegments } from '../reconstruct/stage_segments';
+import type { StageSegments } from '../reconstruct/stage_segments';
+import { STAGE_SEGMENT_EVENTS, stageSegmentsFor } from '../reconstruct/stage_segments';
 import { loadAll, updateSolves } from './db';
 
 function segsEqual(a: StageSegments | undefined, b: StageSegments | null): boolean {
@@ -85,14 +89,11 @@ export async function reanalyzeAll(
       if (!s.moves || s.moves.length === 0) continue;
       scanned += 1;
 
-      let next: StageSegments | null = null;
-      try {
-        next = computeStageSegments(s.scramble, s.moves as SolveMove[], s.timeMs);
-      } catch {
-        // Defensive: a broken scramble or move stream should skip, not crash
-        // the whole migration.
-        next = null;
-      }
+      // Same function the recorder uses, so a backfilled solve and a freshly
+      // recorded one can never disagree — including on which inputs get no
+      // segments at all (a broken scramble or stream skips, it doesn't crash
+      // the migration).
+      const next = stageSegmentsFor(s);
 
       if (segsEqual(s.stageSegments, next)) continue;
 
