@@ -500,6 +500,9 @@ function ExternalLinks({ event, scramble, alg, solveId, caption, copyText }: {
   event: string; scramble: string; alg: string; solveId: number; caption: string; copyText: string;
 }) {
   const { t } = useTranslation();
+  // 外站出链(alg.cubing.net / cubedb.net)只给管理员——普通读者用不上,且
+  // 参数是给上游站排查复盘数据用的。useIsAdmin 是 hydration-safe 版,不能裸读 store。
+  const isAdminUser = useIsAdmin();
   const { algUrl, algSiteName, cubedbUrl } = buildExternalLinks(event, scramble, alg);
   const shareUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/recon/${solveId}`
@@ -526,8 +529,12 @@ function ExternalLinks({ event, scramble, alg, solveId, caption, copyText }: {
 
   return (
     <div className="recon-external-links">
-      <a href={algUrl} target="_blank" rel="noopener noreferrer">{algSiteName}</a>
-      <a href={cubedbUrl} target="_blank" rel="noopener noreferrer">cubedb.net</a>
+      {isAdminUser && (
+        <>
+          <a href={algUrl} target="_blank" rel="noopener noreferrer">{algSiteName}</a>
+          <a href={cubedbUrl} target="_blank" rel="noopener noreferrer">cubedb.net</a>
+        </>
+      )}
       <a href="#" onClick={copyTo(shareUrl)}>{t('recon.link')}</a>
       {caption && <a href="#" onClick={copyTo(caption)}>{t('recon.caption')}</a>}
       {copyText && (
