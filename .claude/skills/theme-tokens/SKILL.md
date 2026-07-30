@@ -58,7 +58,7 @@ background: color-mix(in srgb, var(--accent) 12%, transparent); /* tag 弱化 */
 
 | 页 | 模式 | 处理 |
 |---|---|---|
-| `/wca/calendar` `/wb` `/memo/colpi` `/alg` `/trainer` (含 `/trainer/3bld/*`) `/battle` `/recon` `/sim/batch` `/mosaic` `/site` | 双主题 | 走 :root token,自动 light/dark 翻 |
+| `/wca/calendar` `/wb` `/memo/colpi` `/alg` `/trainer` (含 `/trainer/3bld/*`) `/battle` `/recon` `/mosaic` `/site` | 双主题 | 走 :root token,自动 light/dark 翻 |
 | `/wca/*` (含 records/wse/t10h) | **dark-locked + 暗配色放行** | globals.css `html:root:not([data-palette-scheme=dark]):has(.xxx-page)` 压 dark;无配色 / 浅色配色保持经典暗,暗色配色(寒潭/乌金)放行整套上色。**仍不要给它们加 light/dark 反盖**;内容里硬码色一律走 token 否则暗配色不跟 |
 | `/calc` | **palette-inert light** | `html:root:has(.calc-page)`(0,2,1 outrank 配色块)钉 light + `--background/--foreground`,所有配色都不渗入(art-directed 奶油纸) |
 

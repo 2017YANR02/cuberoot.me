@@ -5,7 +5,7 @@
  *
  * PAGE-LEVEL HOSTS ONLY. Project rule: `useQueryState(s)` never runs inside a
  * shared component, so <PuzzleImageStudio> is fully controlled and the host
- * (/sim's image panel, /sim/batch) owns the URL.
+ * (/sim's image panel) owns the URL.
  *
  * Contract, unchanged from the pre-extraction page:
  *   - the URL SEEDS the spec once, then the URL is a derived view of the spec;

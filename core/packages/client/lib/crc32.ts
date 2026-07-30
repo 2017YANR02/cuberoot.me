@@ -1,9 +1,8 @@
 /**
  * CRC-32 (IEEE 802.3, reflected polynomial 0xEDB88320).
  *
- * PNG chunk CRCs and ZIP local/central-directory headers specify this exact
- * variant, so one table serves both — see lib/puzzle-image/physical-size.ts
- * (pHYs chunk) and lib/zip.ts.
+ * PNG chunk CRCs specify this exact variant — see lib/puzzle-image/physical-size.ts
+ * (pHYs chunk).
  */
 
 let TABLE: Uint32Array | null = null;

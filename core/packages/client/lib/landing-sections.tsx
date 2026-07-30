@@ -4,7 +4,7 @@
 
 import {
   Film, ScanSearch, BookOpen, Shuffle, Library, BookA,
-  Compass, Grid2x2, Trophy, Timer as TimerIcon, ImagePlus, Code as CodeIcon,
+  Compass, Grid2x2, Trophy, Timer as TimerIcon, Code as CodeIcon,
   Brain, Box, Sigma, Scale, Sprout, Brush, MessagesSquare, Shapes, Blocks, Eye, Palette,
   type LucideIcon,
 } from 'lucide-react';
@@ -52,8 +52,6 @@ export const TEXTS: Record<string, { en: string; zh: string
   blog:            { en: 'Blog', zh: '博客'
 },
   prediction:      { en: 'Prediction', zh: '预测'
-},
-  batchImages:     { en: 'Batch Images', zh: '批量出图'
 },
   paint:           { en: 'Paint', zh: '绘制'
 },
@@ -140,7 +138,6 @@ export const SECTIONS: Section[] = [
     },
     cards: [
       { id: 'frame-count', href: '/frame-count', internal: true, tier: 'medium', Icon: Film,       nameKey: 'frameCount' },
-      { id: 'batch-images', href: '/sim/batch', internal: true, tier: 'medium', Icon: ImagePlus,  nameKey: 'batchImages' },
       { id: 'solver',      href: '/solver',      internal: true, tier: 'medium', iconImg: '/icons/upstream/solver.png', nameKey: 'solver' },
     ],
   },
