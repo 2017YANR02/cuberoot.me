@@ -79,6 +79,8 @@ export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
   wca_championship_podiums: 'WCA 官方领奖台',
   wca_live_person_results: 'WCA 直播成绩镜像',
   wca_person_aka: 'WCA 选手改名对照',
+  wca_person_results: 'WCA 官方成绩镜像(选手页首屏数据源)',
+  wca_person_avatar: 'WCA 官网头像 URL 缓存(公开资料,非站内账号资产)',
   wca_person_results_snapshot: 'WCA 成绩快照',
   wca_result_changes: 'WCA 成绩变更记录',
 };
