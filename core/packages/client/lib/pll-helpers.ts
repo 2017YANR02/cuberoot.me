@@ -84,9 +84,10 @@ export const caseToKey = (pllCase: PllCaseInstance): string =>
   `${pllCase.name}/${pllCase.rotation}`;
 
 export const keysToCases = (
-  keys: string[], allowedCrossColors: string[], includeNoAuf = true
+  keys: string[], allowedCrossColors: string[], includeNoAuf = true,
+  turnOptions: string[] = D_TURN_OPTIONS,
 ): PllCaseInstance[] => {
-  const dTurns = includeNoAuf ? D_TURN_OPTIONS : D_TURN_OPTIONS.slice(1);
+  const dTurns = includeNoAuf ? turnOptions : turnOptions.slice(1);
   return keys.map((k) =>
     keyToCase(k, randomElement(dTurns), randomElement(COLOR_SHIFTS), randomCrossColor(allowedCrossColors))
   );
@@ -122,13 +123,14 @@ export const resultsToEvalResults = (results: RecognitionResult[]): RecognitionR
 export const evalResultsToNewQueue = (
   resultsSorted: RecognitionResult[],
   allowedCrossColors: string[],
-  pllMap: Record<string, unknown>
+  allKeys: string[],
+  turnOptions: string[] = D_TURN_OPTIONS,
 ): PllCaseInstance[] => {
   const queue: PllCaseInstance[] = [];
 
   const addCases = (key: string, numResults: number) => {
     const dTurns = shuffle(
-      numResults === 4 ? [...D_TURN_OPTIONS] : [...D_TURN_OPTIONS.slice(1)]
+      numResults === 4 ? [...turnOptions] : [...turnOptions.slice(1)]
     ).slice(0, numResults);
     const colorShifts = shuffle([...COLOR_SHIFTS]).slice(0, numResults);
     for (let i = 0; i < numResults; i++) {
@@ -138,7 +140,7 @@ export const evalResultsToNewQueue = (
 
   const resultKey = (r: RecognitionResult) => `${r.pllCase.name}/${r.pllCase.rotation}`;
 
-  const remainingKeysSet = new Set(allPllKeys(pllMap));
+  const remainingKeysSet = new Set(allKeys);
   resultsSorted.forEach((r) => remainingKeysSet.delete(resultKey(r)));
 
   const top15 = Math.ceil(resultsSorted.length * 0.15);

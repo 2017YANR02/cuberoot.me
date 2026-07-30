@@ -4,11 +4,9 @@
 import { useEffect, useState } from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import pllMap from '@cuberoot/shared/data/pll.json';
 import type { PllCaseInstance } from './scramble-generator';
 import { petReact } from './deskpet';
 import {
-  allPllKeys,
   keysToCases,
   shuffle,
   resultsToEvalResults,
@@ -17,6 +15,7 @@ import {
   randomCrossColor,
   type RecognitionResult,
 } from './pll-helpers';
+import { OLL_SET, PLL_SET, type RecognizeSet } from './recognize-sets';
 
 export type GameState = 'paused' | 'playing' | 'evaluationDone';
 export type TrainMode = 'recognition' | 'timer';
@@ -37,7 +36,8 @@ interface SessionActions {
   setInitial: () => void;
   pausePlay: () => void;
   resumePlay: () => void;
-  submitAnswer: (answer: string, fullNameMode?: boolean) => 'correct' | 'wrong' | null;
+  /** `answer` 是 case 的 DB 名(`Aa` / `OLL 27`),按钮和键盘输入都归一到它。 */
+  submitAnswer: (answer: string) => 'correct' | 'wrong' | null;
   giveUpOnCase: () => void;
   restartEvaluation: () => void;
   startPersonalized: () => void;
@@ -52,12 +52,20 @@ interface SessionActions {
   totalCases: () => number;
 }
 
-const INCLUDE_NO_AUF_IN_INITIAL_QUEUE = false;
+const generateEvaluationQueue = (
+  recog: RecognizeSet, allowedCrossColors: string[],
+): PllCaseInstance[] =>
+  shuffle(keysToCases(
+    recog.allKeys(), allowedCrossColors, recog.includeNoAuf, recog.turnOptions,
+  ));
 
-const generateEvaluationQueue = (allowedCrossColors: string[]): PllCaseInstance[] =>
-  shuffle(keysToCases(allPllKeys(pllMap), allowedCrossColors, INCLUDE_NO_AUF_IN_INITIAL_QUEUE));
-
-export const useSessionStore = create<SessionState & SessionActions>()(
+/**
+ * 一个识别训练器 = 一个独立的持久化 store。PLL 和 OLL 各存各的 localStorage key,
+ * 在两个页面之间来回切不会把对方的评估结果冲掉 —— 合成一个 store 再加个 `set` 字段的话,
+ * 切页要么清空要么就得替旧数据写迁移,两条都不如各存各的干净。
+ */
+function createSessionStore(recog: RecognizeSet) {
+  return create<SessionState & SessionActions>()(
   persist(
     (set, get) => ({
       gameState: 'paused',
@@ -92,7 +100,7 @@ export const useSessionStore = create<SessionState & SessionActions>()(
         const updatedQueue = s.mistake !== '' ? s.queue.slice(1) : s.queue;
         if (updatedQueue.length === 0 && s.results.length === 0) {
           set({
-            queue: generateEvaluationQueue(DEFAULT_ALLOWED_CROSS_COLORS),
+            queue: generateEvaluationQueue(recog, DEFAULT_ALLOWED_CROSS_COLORS),
             gameState: 'paused',
           });
         } else {
@@ -129,14 +137,12 @@ export const useSessionStore = create<SessionState & SessionActions>()(
         });
       },
 
-      submitAnswer: (answer: string, fullNameMode = false) => {
+      submitAnswer: (answer: string) => {
         const s = get();
         if (s.gameState !== 'playing' || s.queue.length === 0) return null;
         const current = s.queue[0];
 
-        const isCorrect = fullNameMode
-          ? current.name === answer
-          : current.name[0] === answer;
+        const isCorrect = current.name === answer;
 
         if (!s.mistake) {
           const currentMistake = isCorrect ? '' : answer;
@@ -184,7 +190,7 @@ export const useSessionStore = create<SessionState & SessionActions>()(
 
       restartEvaluation: () => {
         set({
-          queue: generateEvaluationQueue(get().allowedCrossColors),
+          queue: generateEvaluationQueue(recog, get().allowedCrossColors),
           results: [],
           mistake: '',
           gameState: 'paused',
@@ -197,7 +203,8 @@ export const useSessionStore = create<SessionState & SessionActions>()(
           queue: evalResultsToNewQueue(
             resultsToEvalResults(s.results),
             s.allowedCrossColors,
-            pllMap
+            recog.allKeys(),
+            recog.turnOptions,
           ),
           results: [],
           mistake: '',
@@ -265,7 +272,7 @@ export const useSessionStore = create<SessionState & SessionActions>()(
       },
     }),
     {
-      name: 'cuberoot-session-store',
+      name: recog.storageKey,
       // Skip auto-hydration so SSR and first client render both see defaults
       // (no React hydration mismatch). Components call useSessionHydrated()
       // and gate render on it; the hook rehydrates from localStorage in effect.
@@ -281,13 +288,30 @@ export const useSessionStore = create<SessionState & SessionActions>()(
       }),
     }
   )
-);
+  );
+}
 
-export function useSessionHydrated(): boolean {
+export type SessionStore = ReturnType<typeof createSessionStore>;
+
+export const useSessionStore = createSessionStore(PLL_SET);
+export const useOllSessionStore = createSessionStore(OLL_SET);
+
+const STORE_BY_SET: Record<string, SessionStore> = {
+  pll: useSessionStore,
+  oll: useOllSessionStore,
+};
+
+/** 路由段 → 该集合的 store。不认识的段落回 PLL,和 {@link recognizeSetFor} 一致。 */
+export function sessionStoreFor(setId: string): SessionStore {
+  return STORE_BY_SET[setId] ?? useSessionStore;
+}
+
+export function useSessionHydrated(store: SessionStore = useSessionStore): boolean {
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
-    useSessionStore.persist.rehydrate();
+    setHydrated(false);
+    store.persist.rehydrate();
     setHydrated(true);
-  }, []);
+  }, [store]);
   return hydrated;
 }

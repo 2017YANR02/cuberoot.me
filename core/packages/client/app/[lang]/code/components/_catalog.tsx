@@ -1322,9 +1322,9 @@ export const CATALOG: ComponentEntry[] = [
     name: 'OnScreenKeyboard',
     import: "import OnScreenKeyboard from '@/components/OnScreenKeyboard';",
     category: 'input',
-    zh: `PLL 识别训练的字母答题键盘(字母态 / 全称态两套),点击提交答案并给绿 / 红正误反馈。`,
-    en: `PLL recognition answer keyboard (letter / full-name rows); tap submits an answer with green/red correctness feedback.`,
-    note: { zh: `耦合 session-store(submitAnswer / gameState),非 playing 状态不渲染。`, en: `Coupled to session-store (submitAnswer/gameState); renders nothing unless playing.` },
+    zh: `识别训练的答题键盘:按钮列表由调用方给(PLL 21 个名字 / OLL 57 个编号),点击提交并给绿 / 红正误反馈,列数随宽度自适应。`,
+    en: `Recognition answer keyboard: the caller supplies the buttons (21 PLL names / 57 OLL numbers); tapping submits and flashes green/red, column count adapts to width.`,
+    note: { zh: `按钮取自 lib/recognize-sets;显隐由调用方决定,组件本身不读 store。`, en: `Buttons come from lib/recognize-sets; the caller decides visibility — the component reads no store.` },
   },
   {
     name: 'ReconAutofill',

@@ -34,6 +34,7 @@ const TRAINER_MODULES: Record<string, { href: string; zh: string; en: string; Ic
   '3x3': [
     { href: '/alg/3bld', zh: '3BLD 盲拧训练', en: '3BLD Trainer', Icon: Eye },
     { href: '/alg/roux', zh: 'Roux 桥式训练', en: 'Roux Trainer', Icon: Blocks },
+    { href: '/recognize/oll', zh: 'OLL 识别训练', en: 'OLL Recognition', Icon: ScanSearch },
     { href: '/recognize/pll', zh: 'PLL 识别训练', en: 'PLL Recognition', Icon: ScanSearch },
   ],
   'skewb': [
