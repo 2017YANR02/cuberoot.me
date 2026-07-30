@@ -1178,7 +1178,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
               className="hint-btn"
               onClick={() => { void onReanalyze(); }}
               disabled={reanalyzeBusy}
-              title={tr({ zh: '基于当前精确识别器，重新计算所有有移动记录的成绩的分阶段拆分', en: 'Rerun the current exact recognizer over every solve that has recorded moves'
+              title={tr({ zh: '给旧成绩补上分阶段拆分。新拧的会自动带上，这里用当前识别器重算所有有动作记录的成绩', en: 'Backfill stage splits for older solves. New solves carry them automatically; this reruns the current recognizer over every solve that has recorded moves'
             })}
             >
               <RefreshCw size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
