@@ -87,7 +87,7 @@ const STICKER_TO_MY_INDEX: Record<string, readonly [number, number]> = {
 };
 
 /** WCA Regulations 3h1 official color hexes — matches the 3x3 cube renderer
- *  used in /visualcube. Indexed by my face index (0=U, 1=R, 2=F, 3=D, 4=L, 5=B). */
+ *  behind /v1/visualcube.svg. Indexed by my face index (0=U, 1=R, 2=F, 3=D, 4=L, 5=B). */
 const COLORS: readonly string[] = [
   '#FFFFFF', // U white
   '#EE0000', // R red
