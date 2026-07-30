@@ -184,13 +184,16 @@ export interface TimerSettings {
   autoBackupEvery: number;
 
   /**
-   * Bluetooth auto-ready: trigger the hold cycle automatically when the cube
-   * indicates the user is ready to start.
-   *   'off'          — manual (default)
-   *   'still'        — solved + 2s without any move
+   * Bluetooth auto-ready: arm the attempt automatically when the cube says the
+   * user is ready. Arming is passive — the clock only starts on the first turn —
+   * which is why 'scrambled' can be the default without ever surprising anyone
+   * with a running timer.
+   *   'scrambled'    — the cube matches the scramble (default; csTimer's `giiSD='s'`)
+   *   'off'          — manual: press space
+   *   'still'        — 2s without any move
    *   'double-flick' — confirm via U U' U U' (any quarter-turn pair pattern)
    */
-  bluetoothAutoReady: 'off' | 'still' | 'double-flick';
+  bluetoothAutoReady: 'off' | 'still' | 'double-flick' | 'scrambled';
 
   /**
    * How the live smart-cube mirror (the corner window that appears once a cube
@@ -308,7 +311,7 @@ export const DEFAULTS: TimerSettings = {
   syncSeed: null,
   syncSeedCounter: 0,
   autoBackupEvery: 10,
-  bluetoothAutoReady: 'off',
+  bluetoothAutoReady: 'scrambled',
   liveCubeView: '2d',
   keymap: {},
   round: DEFAULT_ROUND_CONFIG,

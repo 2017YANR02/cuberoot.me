@@ -30,15 +30,32 @@
  *   - At t = inspection + 2 seconds: subsequent stop will apply DNF.
  *   - Inspection elapsed ms is reported via `onSolve(ms, inspectionMs)` so
  *     callers can apply the penalty.
+ *
+ * A smart cube starts the clock through `startFromCube` instead of a press:
+ * once the attempt is armed, the first turn IS the start signal (csTimer does
+ * the same, `timer/giiker.js:166`). It backdates the start to the cube's own
+ * timestamp and leaves inspection state alone, so the +2/DNF verdict lands on
+ * the instant the hands actually moved rather than on when BLE got around to
+ * telling us.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getSettings } from '../_lib/settings';
 import { play, playInspectionBeep } from '../_lib/sound';
+import { inspectionPenalty, type AutoPenalty } from './inspection';
 
 export type TimerPhase = 'idle' | 'inspecting' | 'holding' | 'ready' | 'running' | 'stopped';
 
 const TICK_MS = 30;
+
+/**
+ * How far back `startFromCube` will move the start instant. A smart cube's
+ * timestamps are reconciled against `performance.now()` by `MoveClock`, which
+ * re-anchors as soon as the two disagree by more than 2 s — so anything older
+ * than that is not a late notification, it is a clock we shouldn't trust with
+ * someone's time.
+ */
+const MAX_CUBE_BACKDATE_MS = 2000;
 
 export interface SolveResult {
   /** Final timer ms (raw, before penalty). */
@@ -46,7 +63,7 @@ export interface SolveResult {
   /** How long inspection ran, in ms (0 if inspection wasn't used). */
   inspectionMs: number;
   /** Auto-applied inspection penalty (+2 if exceeded, DNF if 2s overrun). */
-  autoPenalty: 'ok' | '+2' | 'DNF';
+  autoPenalty: AutoPenalty;
 }
 
 export interface TimerHandle {
@@ -67,6 +84,20 @@ export interface TimerHandle {
    * the go-signal a little late still shows the true elapsed time.
    */
   startNow: (elapsedMs?: number) => void;
+  /**
+   * Start the timer because the cube was turned — the smart-cube equivalent of
+   * releasing the space bar. Only an ARMED attempt can be started this way
+   * (`inspecting` / `holding` / `ready`); from idle it does nothing, so idly
+   * playing with a connected cube never starts a solve. Returns whether it
+   * started, because the caller has solve bookkeeping to do in that case.
+   *
+   * `atMs` is when the cube says the turn happened, on the `performance.now()`
+   * scale. The clock is backdated to it: BLE delivers on connection intervals,
+   * so by the time we hear about the turn the solve is already tens of ms old.
+   * Inspection state is deliberately kept — the +2/DNF verdict is computed from
+   * the instant the attempt started, which is exactly this one.
+   */
+  startFromCube: (atMs?: number) => boolean;
   /** Soft-cancel an in-progress hold/inspection arm WITHOUT clearing the last
    *  result or the displayed time — used when a press turns into a gesture. */
   cancelArm: () => void;
@@ -157,6 +188,26 @@ export function useTimer(onSolve?: (result: SolveResult) => void): TimerHandle {
     }, 100);
   }, [setPhaseSafe, stopInspectionTick]);
 
+  /**
+   * Put the clock into `running`, measuring from `startTs`. The three ways a
+   * solve can begin (space release, synchronized countdown, first turn of a
+   * smart cube) differ only in what they clear beforehand and where the start
+   * instant comes from — everything after that has to be identical, or the
+   * three paths drift apart in what they display and what they record.
+   */
+  const beginRunning = useCallback((startTs: number) => {
+    stopHoldTimer();
+    stopInspectionTick();
+    stopTick();
+    startTsRef.current = startTs;
+    setDisplayMs(Math.max(0, performance.now() - startTs));
+    setPhaseSafe('running');
+    play('start');
+    tickRef.current = window.setInterval(() => {
+      setDisplayMs(performance.now() - startTsRef.current);
+    }, TICK_MS);
+  }, [setPhaseSafe, stopHoldTimer, stopInspectionTick, stopTick]);
+
   const startHoldCycle = useCallback(() => {
     const holdMs = getSettings().holdMs;
     setPhaseSafe('holding');
@@ -187,11 +238,7 @@ export function useTimer(onSolve?: (result: SolveResult) => void): TimerHandle {
       const inspectionAtStart = inspectionStartRef.current === 0
         ? 0
         : Math.max(0, startTsRef.current - inspectionStartRef.current);
-      let autoPenalty: 'ok' | '+2' | 'DNF' = 'ok';
-      if (settings.inspection > 0) {
-        if (inspectionAtStart > (settings.inspection + 2) * 1000) autoPenalty = 'DNF';
-        else if (inspectionAtStart > settings.inspection * 1000) autoPenalty = '+2';
-      }
+      const autoPenalty = inspectionPenalty(inspectionAtStart, settings.inspection);
       // Reset inspection after recording.
       inspectionStartRef.current = 0;
       setInspectionDisplayMs(0);
@@ -238,17 +285,8 @@ export function useTimer(onSolve?: (result: SolveResult) => void): TimerHandle {
       }
     }
     if (cur === 'ready') {
-      stopHoldTimer();
-      stopInspectionTick();
-      setDisplayMs(0);
       setLastMsSafe(null);
-      startTsRef.current = performance.now();
-      setPhaseSafe('running');
-      play('start');
-      stopTick();
-      tickRef.current = window.setInterval(() => {
-        setDisplayMs(performance.now() - startTsRef.current);
-      }, TICK_MS);
+      beginRunning(performance.now());
       return;
     }
     if (cur === 'holding') {
@@ -261,28 +299,35 @@ export function useTimer(onSolve?: (result: SolveResult) => void): TimerHandle {
         setPhaseSafe(lastMsRef.current !== null ? 'stopped' : 'idle');
       }
     }
-  }, [setLastMsSafe, setPhaseSafe, stopHoldTimer, stopInspectionTick, stopTick]);
+  }, [beginRunning, setLastMsSafe, setPhaseSafe, stopHoldTimer]);
 
   // Synchronized start (online battle): no hold cycle, no inspection — the
   // countdown already served as inspection, so any pending inspection state is
   // cleared to keep the +2/DNF logic from firing on a solve that never inspected.
   const startNow = useCallback((elapsedMs = 0) => {
-    stopHoldTimer();
-    stopInspectionTick();
-    stopTick();
     pendingInspectionStartRef.current = false;
     inspectionStartRef.current = 0;
     setInspectionDisplayMs(0);
     setLastMsSafe(null);
-    const late = Math.max(0, elapsedMs);
-    startTsRef.current = performance.now() - late;
-    setDisplayMs(late);
-    setPhaseSafe('running');
-    play('start');
-    tickRef.current = window.setInterval(() => {
-      setDisplayMs(performance.now() - startTsRef.current);
-    }, TICK_MS);
-  }, [setLastMsSafe, setPhaseSafe, stopHoldTimer, stopInspectionTick, stopTick]);
+    beginRunning(performance.now() - Math.max(0, elapsedMs));
+  }, [beginRunning, setLastMsSafe]);
+
+  const startFromCube = useCallback((atMs?: number): boolean => {
+    const cur = phaseRef.current;
+    // Armed only. From idle/stopped a turn means the user is fiddling with the
+    // cube between attempts, and from running the clock is already going.
+    if (cur !== 'inspecting' && cur !== 'holding' && cur !== 'ready') return false;
+    // A hold that never reached `ready` still counts as armed: with a cube
+    // there is no key to hold, so `holding` is just the arming animation.
+    pendingInspectionStartRef.current = false;
+    setLastMsSafe(null);
+    const now = performance.now();
+    const at = atMs === undefined || !Number.isFinite(atMs)
+      ? now
+      : Math.min(now, Math.max(now - MAX_CUBE_BACKDATE_MS, atMs));
+    beginRunning(at);
+    return true;
+  }, [beginRunning, setLastMsSafe]);
 
   const reset = useCallback(() => {
     stopTick();
@@ -328,6 +373,7 @@ export function useTimer(onSolve?: (result: SolveResult) => void): TimerHandle {
     onPressUp,
     reset,
     startNow,
+    startFromCube,
     cancelArm,
   };
 }

@@ -559,8 +559,21 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
   // bluetoothSubscribersRef 同构 —— 以后要加实时魔方/TPS 直接往里加订阅即可。
   const btSubscribersRef = useRef<Set<(m: string, ts: number) => void>>(new Set());
 
+  /**
+   * 预备之后第一下转动即起表(与 Solo 同一条规则,时间取魔方自己的时钟)。
+   * 这里额外挡三种房间态:门控期 / 倒计时期 / 已交卷 —— 那三种情况下起表权不在
+   * 自己手上(见下面 autoReadyEnabled 那段注释),魔方不该替全房发车。
+   */
+  const startFromCubeRef = useRef<(ts: number) => void>(() => {});
+  startFromCubeRef.current = (ts: number) => {
+    if (gateRef.current || startAtRef.current !== null || !canSolveRef.current) return;
+    if (!timer.startFromCube(ts)) return;
+    phaseRef.current = 'running';
+  };
+
   const bluetoothCube = useBluetoothCube({
     onMove: (move, ts) => {
+      startFromCubeRef.current(ts);
       for (const sub of btSubscribersRef.current) {
         try { sub(move, ts); } catch (e) { console.error('[bt-broadcast]', e); }
       }
@@ -608,8 +621,11 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
    * 顺带一个好处:enabled 随轮次翻转(交卷→关,新一轮→开),等于每轮自动重新布防,
    * useAutoReady 的「一次性 fire」正好按轮复位。
    */
+  // 'scrambled'(全站默认)在这里等于关:这个 shell 不做打乱校验,没有那个信号可读。
+  // 退回 'still' 更糟 —— 用户选的是「打乱对了再预备」,给他「停手两秒就预备」是另一条
+  // 规则,在多人房里会把没就位的人拖进起表。
   const autoReadyEnabled =
-    settings.bluetoothAutoReady !== 'off'
+    (settings.bluetoothAutoReady === 'still' || settings.bluetoothAutoReady === 'double-flick')
     && bluetoothCube.status.connected
     && canSolve
     && !gate.gated
@@ -1206,7 +1222,8 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
               </div>
               {/* 连了魔方且开了自动预备的人,这里要明说自动预备被停用了 —— 否则会
                   站着等魔方替自己准备,把全房卡住。 */}
-              {bluetoothCube.status.connected && settings.bluetoothAutoReady !== 'off' && (
+              {bluetoothCube.status.connected
+                && (settings.bluetoothAutoReady === 'still' || settings.bluetoothAutoReady === 'double-flick') && (
                 <div className="net-substate-hint">
                   {tr({
                     zh: '同时起表期间不自动预备:请自己点「准备」,魔方只负责还原时停表',
