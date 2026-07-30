@@ -34,7 +34,19 @@ import type { Face } from '../cube/moves';
 import { parseScramble } from '../cube/moves';
 import { recognizeOllExact, recognizePllExact } from '../components/cfop_recognize';
 import ollData from '@cuberoot/shared/data/oll.json';
-import type { Solve } from '../types';
+import type { EventId, Solve } from '../types';
+
+/**
+ * Events where a CFOP segmentation means anything. Single source for everyone
+ * who decides whether to run the walk: the solve recorder (attaches segments
+ * as the solve lands) and the re-analysis migration (backfills old solves).
+ * Keep them in agreement or history and fresh solves disagree about which
+ * events carry stage data.
+ */
+export const STAGE_SEGMENT_EVENTS: ReadonlySet<EventId> = new Set<EventId>([
+  '333', '333oh', '333fm', '333mr', 'cross', 'f2l', 'll', 'oll', 'pll',
+  'coll', 'cmll', 'zbll', 'eg1', 'eg2', 'custom',
+]);
 
 export interface SolveMove {
   /** Move token (e.g. "R", "U'", "F2"). */
@@ -374,6 +386,25 @@ export function computeStageSegments(
     ollCase,
     pllCase,
   };
+}
+
+/**
+ * The segmentation a solve should carry, or null when it should carry none.
+ *
+ * Owns the whole decision — event class, presence of a move stream, and a
+ * scramble or stream the walker chokes on — so the solve recorder and anything
+ * else attaching segments cannot drift apart on the rules. A throw here must
+ * never cost the caller its solve, so a failed walk reads as "no segments"
+ * and leaves the solve for the re-analysis pass to pick up later.
+ */
+export function stageSegmentsFor(solve: Solve): StageSegments | null {
+  if (!solve.moves || solve.moves.length === 0) return null;
+  if (!STAGE_SEGMENT_EVENTS.has(solve.event)) return null;
+  try {
+    return computeStageSegments(solve.scramble, solve.moves as SolveMove[], solve.timeMs);
+  } catch {
+    return null;
+  }
 }
 
 /**

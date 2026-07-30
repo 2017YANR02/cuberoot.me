@@ -214,4 +214,9 @@ csTimer 拿到后做两件事（`gancube.js:461-488`、`bluetoothutil.js:407-475
   所以一直没露头。现在穷举测试锁住 288/288 与 216/216。
   也修了 `packages/shared/data/oll.json` 里 OLL 29 `alg2` 的少空格 typo。
 
+- 2026-07-30（Sprint 16）：阶段分段改成**录入即落盘**。此前 `Solve.stageSegments`
+  只有设置里那个手动「重新分析」写过,所以公式统计 / OLL·PLL 筛选 / 自动标签 /
+  CSV 导出对刚拧完的那把一律是空的。判定收进 `stageSegmentsFor()`,录入路径与
+  迁移共用同一份事件白名单。历史成绩仍需用户点一次「重新分析」。
+
 > 状态一律看 `SMART_CUBE_PROGRESS.md` 的「状态总表」,本表只描述该做什么。

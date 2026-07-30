@@ -12,14 +12,8 @@
 
 import type { EventId, Solve } from '../types';
 import type { StageSegments, SolveMove } from '../reconstruct/stage_segments';
-import { computeStageSegments } from '../reconstruct/stage_segments';
+import { STAGE_SEGMENT_EVENTS, computeStageSegments } from '../reconstruct/stage_segments';
 import { loadAll, updateSolves } from './db';
-
-/** Events where stageSegments is meaningful (CFOP-style 3x3 solves). */
-const RECOGNIZED_EVENTS: ReadonlySet<EventId> = new Set<EventId>([
-  '333', '333oh', '333fm', '333mr', 'cross', 'f2l', 'll', 'oll', 'pll',
-  'coll', 'cmll', 'zbll', 'eg1', 'eg2', 'custom',
-]);
 
 function segsEqual(a: StageSegments | undefined, b: StageSegments | null): boolean {
   if (!a && !b) return true;
@@ -70,7 +64,7 @@ export async function reanalyzeAll(
   // on a 3x3-class event). Used for the progress denominator.
   let total = 0;
   for (const ev of eventIds) {
-    if (!RECOGNIZED_EVENTS.has(ev)) continue;
+    if (!STAGE_SEGMENT_EVENTS.has(ev)) continue;
     const list = byEvent[ev] ?? [];
     for (const s of list) {
       if (s.moves && s.moves.length > 0) total += 1;
@@ -82,7 +76,7 @@ export async function reanalyzeAll(
   const eventsTouched: string[] = [];
 
   for (const ev of eventIds) {
-    if (!RECOGNIZED_EVENTS.has(ev)) continue;
+    if (!STAGE_SEGMENT_EVENTS.has(ev)) continue;
     const list = byEvent[ev] ?? [];
     if (list.length === 0) continue;
 
