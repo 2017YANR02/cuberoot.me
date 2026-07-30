@@ -60,7 +60,10 @@ function turnOf(raw: string): { key: string; quarters: number } | null {
   const m = /^([^'2]+)(2?)('?)(2?)$/.exec(t);
   if (!m) return null;
   const [, key, two, prime, twoAfterPrime] = m;
-  if (!/^[A-Za-z]/.test(key)) return null;
+  // A layer count may lead the family letter ("3R" on big cubes). Anything
+  // that isn't shaped like a move at all is not a turn: it breaks the run and
+  // counts nothing, rather than being folded into a neighbour's move.
+  if (!/^\d?[A-Za-z]/.test(key)) return null;
   const half = two === '2' || twoAfterPrime === '2';
   const quarters = half ? 2 : prime === "'" ? 3 : 1;
   return { key, quarters };
