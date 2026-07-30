@@ -408,14 +408,53 @@ function buildOllTable(): void {
 }
 
 function buildPllTable(): void {
-  // Each PLL case (all 21 in pll.json, including Z and H) is registered by
-  // the unique sticker signature produced by applying the inverse of its
-  // noAuf algorithm to a solved cube. Z and H share a cycle *shape* but
-  // their actual sticker permutations differ, so signatures differ and
-  // exact lookup distinguishes them. (Any same-family fallback elsewhere in
-  // the codebase is only ever hit when this exact lookup fails.)
+  // Each PLL case (all 21 in pll.json, including Z and H) is registered by the
+  // sticker signature produced by applying the inverse of its noAuf algorithm
+  // to a solved cube. Z and H share a cycle *shape* but their actual sticker
+  // permutations differ, so signatures differ and exact lookup distinguishes
+  // them. (Any same-family fallback elsewhere in the codebase is only ever hit
+  // when this exact lookup fails.)
+  //
+  // FOUR entries per case, not one. A cuber may AUF both BEFORE and AFTER the
+  // alg, so the same case shows up in 16 sticker arrangements — and the two
+  // AUFs are not interchangeable: turning U on the cube walks the four
+  // "after" arrangements, but the four "before" ones are a different coset and
+  // no amount of U turning reaches them. Registering only the alg's own
+  // arrangement therefore covered 85 of the 288 legal PLL positions and
+  // returned null for the other 203 (measured, then pinned in
+  // cfop_recognize_coverage.test.ts). Registering the four pre-AUF setups,
+  // times the recognizer's own four U turns, covers all 16.
+  //
+  // The four rotations of the solved state go in as `skip` for the same
+  // reason: "PLL skip, one AUF to go" is a common and previously unrecognized
+  // position.
   const pllMap = pllData as Record<string, { noAuf: string }>;
   const keys = Object.keys(pllMap);
+  const uTurn = parseScramble('U');
+
+  const register = (st: CubeFaces, key: string): void => {
+    const sig = pllSignature(st);
+    if (sig < 0) {
+      PLL_BUILD_ERRORS.push(`${key}: invalid signature (non-side color on side-top)`);
+      return;
+    }
+    const prev = PLL_TABLE.get(sig);
+    if (prev === undefined) {
+      PLL_TABLE.set(sig, { case: key, auf: 0 });
+    } else if (prev.case !== key) {
+      // Two cases claiming one position would mean the case classes overlap,
+      // which they cannot: a position belongs to exactly one PLL.
+      PLL_BUILD_ERRORS.push(`${key}: signature collision with ${prev.case}`);
+    }
+  };
+
+  // Solved, and its three U rotations → skip.
+  let solvedSt = solvedCube(3);
+  for (let pre = 0; pre < 4; pre++) {
+    register(solvedSt, 'skip');
+    solvedSt = applyMoves(solvedSt, 3, uTurn);
+  }
+
   for (const key of keys) {
     const entry = pllMap[key];
     if (!entry || !entry.noAuf) {
@@ -429,23 +468,17 @@ function buildPllTable(): void {
       PLL_BUILD_ERRORS.push(`${key}: parse failed (${(e as Error).message})`);
       continue;
     }
-    let st: CubeFaces;
-    try {
-      st = applyMoves(solvedCube(3), 3, setupMoves);
-    } catch (e) {
-      PLL_BUILD_ERRORS.push(`${key}: apply failed (${(e as Error).message})`);
-      continue;
-    }
-    const sig = pllSignature(st);
-    if (sig < 0) {
-      PLL_BUILD_ERRORS.push(`${key}: invalid signature (non-side color on side-top)`);
-      continue;
-    }
-    if (!PLL_TABLE.has(sig)) {
-      PLL_TABLE.set(sig, { case: key, auf: 0 });
-    } else {
-      const prev = PLL_TABLE.get(sig)!;
-      PLL_BUILD_ERRORS.push(`${key}: signature collision with ${prev.case}`);
+    for (let pre = 0; pre < 4; pre++) {
+      let st: CubeFaces;
+      try {
+        st = solvedCube(3);
+        for (let i = 0; i < pre; i++) st = applyMoves(st, 3, uTurn);
+        st = applyMoves(st, 3, setupMoves);
+      } catch (e) {
+        PLL_BUILD_ERRORS.push(`${key}: apply failed (${(e as Error).message})`);
+        break;
+      }
+      register(st, key);
     }
   }
 }
@@ -483,7 +516,15 @@ export function recognizeOllExact(faces: CubeFaces): { case: string; auf: 0 | 1 
 
 /**
  * Exact PLL recognition. Requires the U face to already be oriented (OLL
- * solved); otherwise returns null. Tries 4 AUFs of the input state.
+ * solved); otherwise returns null. Tries 4 AUFs of the input state, against a
+ * table that holds all four pre-AUF arrangements of every case — together that
+ * is every one of the 288 legal PLL positions (see `buildPllTable`).
+ *
+ * `auf` is the number of U turns applied before the signature matched. That is
+ * the AUF-to-canonical only for a position needing no pre-AUF; for the others
+ * it aligns to the matched arrangement instead. Treat it as a hint: code that
+ * needs an alg which really solves the position should verify the alg against
+ * the state (reconstruct/reference.ts does).
  */
 export function recognizePllExact(faces: CubeFaces): { case: string; auf: 0 | 1 | 2 | 3 } | null {
   const cU = faces.U[4];
