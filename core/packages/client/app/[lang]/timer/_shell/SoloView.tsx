@@ -657,6 +657,15 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     applyScrambleHist(histForward(cur) ?? histPush(cur, genScramble()));
   }, [genScramble, applyScrambleHist]);
 
+  /** Load a past solve's scramble. Pushed onto the history rather than
+   *  replacing the current one, so the arrows still walk back to where the
+   *  user was. */
+  const useScramble = useCallback((text: string) => {
+    const t = (text ?? '').trim();
+    if (!t) return;
+    applyScrambleHist(histPush(scrambleHistRef.current, t));
+  }, [applyScrambleHist]);
+
   const prevScramble = useCallback(() => {
     const back = histBack(scrambleHistRef.current);
     if (back) applyScrambleHist(back);
@@ -2447,7 +2456,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       })()}
 
       {reconstructSolve && (
-        <ReconstructModal key={`recon-${reconstructSolve.id}`} solve={reconstructSolve} isZh={isZh} onClose={() => setReconstructSolve(null)} history={byEvent[reconstructSolve.event] ?? []} />
+        <ReconstructModal key={`recon-${reconstructSolve.id}`} solve={reconstructSolve} isZh={isZh} onClose={() => setReconstructSolve(null)} history={byEvent[reconstructSolve.event] ?? []} onUseScramble={useScramble} />
       )}
 
       {settingsOpen && <SettingsPanel isZh={isZh} event={event} tools={toolsList} onClose={() => setSettingsOpen(false)} onDataReplaced={() => setByEvent(loadAll())} />}

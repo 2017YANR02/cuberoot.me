@@ -640,6 +640,34 @@
 .sa-delta.slower { color: var(--signal-warning); }
 .sa-delta.faster { color: var(--signal-success); }
 
+/* 列名是个真按钮:点开看这一步拧了什么。剥掉 UA 样式,继承表头的排版,
+   只有 hover / 展开时才显形 —— 表格默认还是表格,不是一排按钮。 */
+.sa-col-btn {
+  appearance: none; background: none; border: 0; padding: 0; margin: 0;
+  font: inherit; color: inherit; text-align: inherit;
+  cursor: pointer; border-radius: 4px;
+}
+.sa-col-btn:disabled { cursor: default; }
+.sa-col-btn:not(:disabled):hover .sa-col-name { color: var(--accent); }
+.sa-col-btn:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+/* 展开的那一列整列点亮,免得横滚之后忘了在看哪一列。 */
+.sa-table th[data-open], .sa-table td[data-open] {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+.sa-table th[data-open] .sa-col-name { color: var(--accent); }
+
+/* 这一步的动作。等宽,和站里其它记号一致。 */
+.sa-seq {
+  display: flex; align-items: baseline; gap: 10px;
+  margin-top: 10px; flex-wrap: wrap;
+}
+.sa-seq-label { font-size: 12px; font-weight: 600; color: var(--muted-foreground); flex: none; }
+.sa-seq-moves {
+  font-family: var(--font-mono); font-size: 13px; line-height: 1.7;
+  color: var(--foreground); word-break: break-word;
+}
+
 @media (max-width: 480px) {
   .sa-table th, .sa-table td { padding: 5px 8px; font-size: 12px; }
 }
@@ -647,6 +675,18 @@
 /* ── 顶部六个数 ────────────────────────────────────────────────────────
    时间 / TPS / 步数 / 流畅 / 日期 / 魔方。以前散在标题和各个面板里,要自己拼;
    报告应该一开口就说完。分隔靠竖线不靠卡片框。 */
+/* 复盘看完的那个动作。靠左紧凑,不撑成一整行的条。 */
+.rc-actions { display: flex; gap: 8px; margin: -6px 0 14px; }
+.rc-action {
+  appearance: none; cursor: pointer;
+  padding: 5px 12px; border-radius: 6px;
+  font-size: 13px; font-weight: 500;
+  color: var(--accent-foreground); background: var(--accent);
+  border: 1px solid transparent;
+}
+.rc-action:hover { background: color-mix(in srgb, var(--accent) 88%, black); }
+.rc-action:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
 .rc-summary {
   display: flex; flex-wrap: wrap; margin: 10px 0 14px; padding: 0;
   border: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);

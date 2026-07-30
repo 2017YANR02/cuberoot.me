@@ -23,12 +23,15 @@
  * table nobody can read.
  */
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { tr } from '@/i18n/tr';
 import type { StageAverages } from '../_lib/reconstruct/stage_segments';
 import type { StageSegments } from '../_lib/reconstruct/stage_segments';
 import type { StepMetricsResult } from '../_lib/reconstruct/step_metrics';
+import { tokensForRange } from '../_lib/reconstruct/step_metrics';
+import { htmMoves } from '../_lib/reconstruct/htm';
+import type { SolveMove } from '../_lib/reconstruct/stage_segments';
 import type { ReferenceResult } from '../_lib/reconstruct/reference';
 import type { F2lSlotsResult, F2lStart } from '../_lib/reconstruct/f2l_slots';
 import type { MethodWalkResult } from '../_lib/reconstruct/method_walk';
@@ -50,6 +53,8 @@ export interface StepAnalysisProps {
   ao12: StageAverages | null;
   /** Any method: the generic walk. Used directly when the method isn't CFOP. */
   walk: MethodWalkResult | null;
+  /** The raw turn stream, for the per-step sequences. */
+  moves: SolveMove[];
   isZh: boolean;
 }
 
@@ -70,6 +75,10 @@ interface Col {
   /** Personal average for this stage, when there is one. */
   avgMs: number | null;
   skipped: boolean;
+  /** Move that finished this step. Null for a step never reached — and for a
+   *  free F2L pair, which is what makes its range empty rather than stealing
+   *  the previous pair's moves. */
+  endIdx: number | null;
 }
 
 const sec = (ms: number | null | undefined): string =>
@@ -128,6 +137,7 @@ function buildCfopColumns(
     refDelta: crossRef?.delta ?? null,
     avgMs: ao12?.crossMs ?? null,
     skipped: cross?.skipped ?? false,
+    endIdx: segs.crossEndIdx ?? null,
   });
 
   if (slots && slots.slots.length > 0) {
@@ -147,6 +157,7 @@ function buildCfopColumns(
         refDelta: null,
         avgMs: null,
         skipped: s.free,
+        endIdx: s.endIdx,
       });
     });
   } else {
@@ -166,6 +177,7 @@ function buildCfopColumns(
       refDelta: f2lRef?.delta ?? null,
       avgMs: ao12?.f2lMs ?? null,
       skipped: f2l?.skipped ?? false,
+      endIdx: segs.f2lEndIdx ?? null,
     });
   }
 
@@ -186,6 +198,7 @@ function buildCfopColumns(
       refDelta: r?.delta ?? null,
       avgMs: k === 'oll' ? (ao12?.ollMs ?? null) : (ao12?.pllMs ?? null),
       skipped: st?.skipped ?? false,
+      endIdx: (k === 'oll' ? segs.ollEndIdx : segs.solvedEndIdx) ?? null,
     });
   }
   return cols;
@@ -206,11 +219,15 @@ function buildWalkColumns(walk: MethodWalkResult, isZh: boolean): Col[] {
     refDelta: null,
     avgMs: null,
     skipped: s.skipped,
+    endIdx: s.endIdx,
   }));
 }
 
 export default function StepAnalysis(props: StepAnalysisProps) {
-  const { method, onMethodChange, segs, stepMetrics, slots, reference, ao12, walk, isZh } = props;
+  const { method, onMethodChange, segs, stepMetrics, slots, reference, ao12, walk, moves, isZh } = props;
+  // Which column is open. One at a time: the sequences are long enough that
+  // four of them at once is the wall of text the table exists to avoid.
+  const [openKey, setOpenKey] = useState<string | null>(null);
 
   const cols = useMemo<Col[]>(() => {
     if (method === 'cfop' && segs) return buildCfopColumns(segs, stepMetrics, slots, reference, ao12);
@@ -243,6 +260,25 @@ export default function StepAnalysis(props: StepAnalysisProps) {
       execPct: span > 0 ? Math.round((exec / span) * 100) : null,
     };
   }, [cols]);
+
+  // Per-step sequences, cut at the same boundaries the numbers use: a step owns
+  // `(previous step's last move, its own last move]`. A column with no boundary
+  // (never reached, or a free pair) owns nothing, and does not move the cursor
+  // on — so the step after it still starts where the last real one ended.
+  const sequences = useMemo(() => {
+    const out = new Map<string, string[]>();
+    if (moves.length === 0) return out;
+    const counted = htmMoves(moves);
+    let prev = -1;
+    for (const c of cols) {
+      if (c.endIdx === null) { out.set(c.key, []); continue; }
+      out.set(c.key, tokensForRange(moves, counted, prev + 1, c.endIdx));
+      prev = c.endIdx;
+    }
+    return out;
+  }, [cols, moves]);
+
+  const openCol = cols.find(c => c.key === openKey) ?? null;
 
   if (cols.length === 0) return null;
 
@@ -291,19 +327,34 @@ export default function StepAnalysis(props: StepAnalysisProps) {
           <thead>
             <tr>
               <th scope="col" className="sa-rowhead" />
-              {cols.map(c => (
-                <th key={c.key} scope="col" data-tone={c.tone}>
-                  <span className="sa-col-name">{c.label}</span>
-                  {c.chip && <span className="sa-chip">{c.chip}</span>}
-                </th>
-              ))}
+              {cols.map(c => {
+                const seq = sequences.get(c.key) ?? [];
+                const open = openKey === c.key;
+                return (
+                  <th key={c.key} scope="col" data-tone={c.tone} data-open={open ? '' : undefined}>
+                    <button
+                      type="button"
+                      className="sa-col-btn"
+                      aria-expanded={open}
+                      disabled={seq.length === 0}
+                      onClick={() => setOpenKey(open ? null : c.key)}
+                      title={seq.length === 0
+                        ? undefined
+                        : tr({ zh: '看这一步拧了什么', en: 'Show this step’s turns' })}
+                    >
+                      <span className="sa-col-name">{c.label}</span>
+                      {c.chip && <span className="sa-chip">{c.chip}</span>}
+                    </button>
+                  </th>
+                );
+              })}
               <th scope="col" className="sa-total-col">{tr({ zh: '合计', en: 'Total' })}</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <th scope="row" className="sa-rowhead">{tr({ zh: '识别', en: 'Recognition' })}</th>
-              {cols.map(c => <td key={c.key}>{sec(c.recognitionMs)}</td>)}
+              {cols.map(c => <td key={c.key} data-open={openKey === c.key ? '' : undefined}>{sec(c.recognitionMs)}</td>)}
               <td className="sa-total-col">
                 {sec(totals.rec)}
                 {totals.recPct !== null && <span className="sa-pct">{totals.recPct}%</span>}
@@ -311,7 +362,7 @@ export default function StepAnalysis(props: StepAnalysisProps) {
             </tr>
             <tr>
               <th scope="row" className="sa-rowhead">{tr({ zh: '执行', en: 'Execution' })}</th>
-              {cols.map(c => <td key={c.key}>{sec(c.executionMs)}</td>)}
+              {cols.map(c => <td key={c.key} data-open={openKey === c.key ? '' : undefined}>{sec(c.executionMs)}</td>)}
               <td className="sa-total-col">
                 {sec(totals.exec)}
                 {totals.execPct !== null && <span className="sa-pct">{totals.execPct}%</span>}
@@ -319,17 +370,21 @@ export default function StepAnalysis(props: StepAnalysisProps) {
             </tr>
             <tr className="sa-row-strong">
               <th scope="row" className="sa-rowhead">{tr({ zh: '本步', en: 'Step time' })}</th>
-              {cols.map(c => <td key={c.key}>{c.skipped ? tr({ zh: '跳过', en: 'skip' }) : sec(c.stepMs)}</td>)}
+              {cols.map(c => (
+                <td key={c.key} data-open={openKey === c.key ? '' : undefined}>
+                  {c.skipped ? tr({ zh: '跳过', en: 'skip' }) : sec(c.stepMs)}
+                </td>
+              ))}
               <td className="sa-total-col">{sec(totals.step)}</td>
             </tr>
             <tr>
               <th scope="row" className="sa-rowhead">{tr({ zh: '累计', en: 'Total time' })}</th>
-              {cols.map(c => <td key={c.key}>{sec(c.cumulativeMs)}</td>)}
+              {cols.map(c => <td key={c.key} data-open={openKey === c.key ? '' : undefined}>{sec(c.cumulativeMs)}</td>)}
               <td className="sa-total-col">{sec(totals.last)}</td>
             </tr>
             <tr>
               <th scope="row" className="sa-rowhead">{tr({ zh: '步数', en: 'Turns' })}</th>
-              {cols.map(c => <td key={c.key}>{num(c.turns)}</td>)}
+              {cols.map(c => <td key={c.key} data-open={openKey === c.key ? '' : undefined}>{num(c.turns)}</td>)}
               <td className="sa-total-col">{num(totals.turns)}</td>
             </tr>
             {hasRef && (
@@ -378,6 +433,13 @@ export default function StepAnalysis(props: StepAnalysisProps) {
           </tbody>
         </table>
       </div>
+
+      {openCol && (
+        <div className="sa-seq">
+          <span className="sa-seq-label">{openCol.label}</span>
+          <span className="sa-seq-moves">{(sequences.get(openCol.key) ?? []).join(' ')}</span>
+        </div>
+      )}
     </section>
   );
 }
