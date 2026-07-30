@@ -9,7 +9,10 @@
  * driver without re-deriving the masks.
  */
 
-import { cubeMove, applyScramble, MOVES_FULL, MOVES_NO_D, MOVES_ROUX_SB, MOVES_ZZ_F2L } from './cube3x3';
+import {
+  cubeMove, applyScramble, parsedToCstimer,
+  MOVES_FULL, MOVES_NO_D, MOVES_ROUX_SB, MOVES_ZZ_F2L,
+} from './cube3x3';
 import { GSolver, solveParallel, matches, type ParallelTarget } from './gsolver';
 import { parseScramble } from '../cube/moves';
 import { solveThistle, type ThistleResult } from './thistle';
@@ -216,12 +219,8 @@ function compile(method: StepDef[]): CompiledStep[] {
 function scrambleToTokens(scramble: string): string[] {
   const out: string[] = [];
   for (const mv of parseScramble(scramble)) {
-    if (mv.isRotation || mv.layers !== 1) continue;
-    const f = mv.face;
-    if (f !== 'U' && f !== 'R' && f !== 'F' && f !== 'D' && f !== 'L' && f !== 'B') continue;
-    if (mv.amount === 1) out.push(f + ' ');
-    else if (mv.amount === 2 || mv.amount === -2) out.push(f + '2');
-    else out.push(f + "'");
+    const tok = parsedToCstimer(mv);
+    if (tok !== null) out.push(tok);
   }
   return out;
 }
@@ -246,8 +245,36 @@ export interface SolveResult {
  * within its depth bound.
  */
 export function solveMethod(scramble: string, method: StepDef[]): SolveResult {
-  const compiled = compile(method);
-  const prefix = scrambleToTokens(scramble); // accumulates: scramble + sol1 + sol2 + ...
+  return solveMethodFrom(scrambleToTokens(scramble), method, 0);
+}
+
+/**
+ * Same driver, but starting from an arbitrary move prefix and an arbitrary
+ * step index — "given the position this prefix leaves the cube in, what does
+ * the rest of the method cost?".
+ *
+ * The prefix must be cstimer two-char tokens (see `faceTurnToken`); it is
+ * consumed exactly like a scramble, because to this engine that is what it
+ * is. Steps before `fromIdx` are not reported at all, and the running mask
+ * starts empty — so a step whose goal the prefix already achieved comes back
+ * as a legitimate 0-move solution rather than being skipped.
+ *
+ * `stepCount` stops after that many steps ("just the cross, please"). Pass
+ * the SAME `method` array every time rather than a `.slice()` of it: the
+ * compiled solvers (and their pruning tables) are cached per array identity.
+ */
+export function solveMethodFrom(
+  prefixTokens: string[],
+  method: StepDef[],
+  fromIdx = 0,
+  stepCount?: number,
+): SolveResult {
+  const all = compile(method);
+  const compiled = all.slice(
+    fromIdx,
+    stepCount === undefined ? undefined : fromIdx + stepCount,
+  );
+  const prefix = prefixTokens.slice(); // accumulates: prefix + sol1 + sol2 + ...
   const stages: SolveStage[] = [];
   let total = 0;
   let mask = 0;

@@ -170,7 +170,7 @@
   "OLL 29": {
     "name": "Spotted Chameleon",
     "alg": "y R U R' U' R U' R' F' U' F R U R'",
-    "alg2": "M U R U R' U'R' F R F' M'",
+    "alg2": "M U R U R' U' R' F R F' M'",
     "group": "Awkward Shapes"
   },
   "OLL 30": {

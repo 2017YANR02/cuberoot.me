@@ -79,7 +79,7 @@ export function cubeMove(state: string, move: string): string {
  * Wide / slice / rotation / non-3x3 moves are skipped (scrambles only use
  * face turns in normal use).
  */
-function parsedToCstimer(mv: ParsedMove): string | null {
+export function parsedToCstimer(mv: ParsedMove): string | null {
   if (mv.isRotation) return null;
   if (mv.layers !== 1) return null;
   const f = mv.face;
@@ -87,6 +87,28 @@ function parsedToCstimer(mv: ParsedMove): string | null {
   if (mv.amount === 1) return f + ' ';
   if (mv.amount === 2 || mv.amount === -2) return f + '2';
   return f + "'";
+}
+
+/**
+ * One raw token (as recorded by a smart cube, or written in an alg) → the
+ * cstimer two-char form; null for anything this move alphabet cannot express:
+ * a rotation, a wide/slice move, several moves in one token, or garbage.
+ *
+ * Callers feeding the mask engine use this to REFUSE rather than silently drop
+ * a turn: the engine's state is the target mask permuted by the move prefix,
+ * so one dropped turn shifts that state and every number derived from it.
+ */
+export function faceTurnToken(raw: string): string | null {
+  const t = raw.trim();
+  if (!t) return null;
+  let parsed: ParsedMove[];
+  try {
+    parsed = parseScramble(t);
+  } catch {
+    return null;
+  }
+  if (parsed.length !== 1) return null;
+  return parsedToCstimer(parsed[0]);
 }
 
 /** Apply a scramble string to the solved 3x3 state and return the result. */
