@@ -224,6 +224,22 @@ export const DEFAULT_SETTINGS: SimSettings = {
   showSmplxBody: false,
 };
 
+/** 图像面板 trans(X 光)视图的内核预设:银壳 + 50% 不透明。色值/不透明度沿用 visualcube
+ *  的 `view=trans`(silver / co=50),所以引擎伴图、复制出去的 API 图两条路观感一致。 */
+export const TRANS_CORE = { coreColor: '#BFBFBF', coreOpacity: 50 } as const;
+
+/** trans 生效时把 TRANS_CORE 盖在设置上 —— 它接管的是「贴纸之外那层壳」的整体外观,
+ *  所以原核(coreStyle:'raw')也一并退回普通内核。
+ *
+ *  只盖不写:持久化的 settings 一个字节不动,切回别的视图立刻恢复用户自己的值;面板里
+ *  内核色 / 内核不透明度那两行同步锁死(PlayerControls 的 coreLock),避免出现「滑块写着
+ *  100% 而魔方是半透明」这种两处不一致。值已经相等时原样返回,保持引用稳定(它进 effect 依赖)。 */
+export function withTransCore(s: SimSettings, on: boolean): SimSettings {
+  if (!on) return s;
+  if (s.coreStyle === 'normal' && s.coreColor === TRANS_CORE.coreColor && s.coreOpacity === TRANS_CORE.coreOpacity) return s;
+  return { ...s, coreStyle: 'normal', coreColor: TRANS_CORE.coreColor, coreOpacity: TRANS_CORE.coreOpacity };
+}
+
 const STORAGE_KEY = 'sim.settings';
 
 export function loadSettings(): SimSettings {
@@ -485,42 +501,74 @@ export interface SliderUnit {
   suffix?: string;
 }
 
-export function Slider({ label, value, onChange, disabled, title, unit }: { label: string; value: number; onChange: (v: number) => void; disabled?: boolean; title?: string; unit?: SliderUnit }) {
-  const fmt = (v: number): string => (unit ? unit.to(v).toFixed(unit.decimals) : String(v));
-  const [draft, setDraft] = useState<string>(() => fmt(value));
-  useEffect(() => { setDraft(unit ? unit.to(value).toFixed(unit.decimals) : String(value)); }, [value, unit]);
-  const commit = () => {
+/** 滑条右侧那个可打字的数字框 —— 编辑期存 draft 字符串,失焦 / Enter 提交,Escape 还原。
+ *  Slider、视角盘度数框、外观区的百分比行(PlayerControls PercentRow)共用这一份。
+ *
+ *  `display` 与 `commit(n)` 都在**显示单位**下(°/×/mm/%),内部值(0..100 等)的换算
+ *  归调用方;commit 返回回显值,round / 往返归一在那里做 —— 提交后若内部值没变(父组件
+ *  不重渲染),回显仍能归位。 */
+export function ValueField({ display, decimals, min, max, step, suffix, disabled, commit }: {
+  display: number;
+  decimals: number;
+  min: number;
+  max: number;
+  step: number;
+  suffix?: string;
+  disabled?: boolean;
+  commit: (n: number) => number;
+}) {
+  const fmt = useCallback((v: number): string => v.toFixed(decimals), [decimals]);
+  const [draft, setDraft] = useState<string>(() => fmt(display));
+  useEffect(() => { setDraft(fmt(display)); }, [display, fmt]);
+  const submit = () => {
     const n = Number(draft);
-    if (!Number.isFinite(n)) { setDraft(fmt(value)); return; }
-    const raw = unit ? unit.from(Math.max(unit.min, Math.min(unit.max, n))) : n;
-    // 有 unit 时内部值保留小数(仅 clamp,不 round):每 1 内部格 = 1.8°(角度)等 > 1 显示单位,
-    // 若量化成整数 0..100,输入 30° 会存成 33 再回显 31°。保留小数让 to(from(n)) 精确往返。
-    const clamped = unit ? Math.max(0, Math.min(100, raw)) : Math.max(0, Math.min(100, Math.round(raw)));
-    setDraft(fmt(clamped));
-    if (clamped !== value) onChange(clamped);
+    if (!Number.isFinite(n)) { setDraft(fmt(display)); return; }
+    setDraft(fmt(commit(Math.max(min, Math.min(max, n)))));
   };
+  return (
+    <span className="sim-slider-valwrap">
+      <input
+        type="number"
+        className="sim-slider-val"
+        min={min}
+        max={max}
+        step={step}
+        value={draft}
+        disabled={disabled}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={submit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+          else if (e.key === 'Escape') { setDraft(fmt(display)); (e.target as HTMLInputElement).blur(); }
+        }}
+      />
+      {suffix ? <span className="sim-slider-unit">{suffix}</span> : null}
+    </span>
+  );
+}
+
+export function Slider({ label, value, onChange, disabled, title, unit }: { label: string; value: number; onChange: (v: number) => void; disabled?: boolean; title?: string; unit?: SliderUnit }) {
   return (
     <label className={'sim-slider' + (disabled ? ' sim-slider--disabled' : '')} aria-disabled={disabled || undefined} title={title}>
       <div className="sim-slider-row">
         <span>{label}</span>
-        <span className="sim-slider-valwrap">
-          <input
-            type="number"
-            className="sim-slider-val"
-            min={unit ? unit.min : 0}
-            max={unit ? unit.max : 100}
-            step={unit ? unit.step : 1}
-            value={draft}
-            disabled={disabled}
-            onChange={(e) => setDraft(e.target.value)}
-            onBlur={commit}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-              else if (e.key === 'Escape') { setDraft(fmt(value)); (e.target as HTMLInputElement).blur(); }
-            }}
-          />
-          {unit?.suffix ? <span className="sim-slider-unit">{unit.suffix}</span> : null}
-        </span>
+        <ValueField
+          display={unit ? unit.to(value) : value}
+          decimals={unit ? unit.decimals : 0}
+          min={unit ? unit.min : 0}
+          max={unit ? unit.max : 100}
+          step={unit ? unit.step : 1}
+          suffix={unit?.suffix}
+          disabled={disabled}
+          commit={(n) => {
+            const raw = unit ? unit.from(n) : n;
+            // 有 unit 时内部值保留小数(仅 clamp,不 round):每 1 内部格 = 1.8°(角度)等 > 1 显示单位,
+            // 若量化成整数 0..100,输入 30° 会存成 33 再回显 31°。保留小数让 to(from(n)) 精确往返。
+            const clamped = unit ? Math.max(0, Math.min(100, raw)) : Math.max(0, Math.min(100, Math.round(raw)));
+            if (clamped !== value) onChange(clamped);
+            return unit ? unit.to(clamped) : clamped;
+          }}
+        />
       </div>
       <input
         type="range"
@@ -539,36 +587,22 @@ export function Slider({ label, value, onChange, disabled, title, unit }: { labe
 function PadNumberField({ label, value, onChange, unit, title }: {
   label: string; value: number; onChange: (v: number) => void; unit: SliderUnit; title?: string;
 }) {
-  const fmt = (v: number): string => unit.to(v).toFixed(unit.decimals);
-  const [draft, setDraft] = useState<string>(() => fmt(value));
-  useEffect(() => { setDraft(unit.to(value).toFixed(unit.decimals)); }, [value, unit]);
-  const commit = () => {
-    const n = Number(draft);
-    if (!Number.isFinite(n)) { setDraft(fmt(value)); return; }
-    const clamped = Math.max(0, Math.min(100, unit.from(Math.max(unit.min, Math.min(unit.max, n)))));
-    setDraft(fmt(clamped));
-    if (clamped !== value) onChange(clamped);
-  };
   return (
     <label className="sim-orbit-field" title={title}>
       <span>{label}</span>
-      <span className="sim-slider-valwrap">
-        <input
-          type="number"
-          className="sim-slider-val"
-          min={unit.min}
-          max={unit.max}
-          step={unit.step}
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onBlur={commit}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-            else if (e.key === 'Escape') { setDraft(fmt(value)); (e.target as HTMLInputElement).blur(); }
-          }}
-        />
-        {unit.suffix ? <span className="sim-slider-unit">{unit.suffix}</span> : null}
-      </span>
+      <ValueField
+        display={unit.to(value)}
+        decimals={unit.decimals}
+        min={unit.min}
+        max={unit.max}
+        step={unit.step}
+        suffix={unit.suffix}
+        commit={(n) => {
+          const clamped = Math.max(0, Math.min(100, unit.from(n)));
+          if (clamped !== value) onChange(clamped);
+          return unit.to(clamped);
+        }}
+      />
     </label>
   );
 }
