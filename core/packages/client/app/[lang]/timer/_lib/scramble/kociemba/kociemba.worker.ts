@@ -19,12 +19,11 @@
 
 import {
   formatMoves,
-  invertSequence,
   type CubieCube,
 } from './cube';
 import { buildMoveTables, type MoveTables } from './movetables';
 import { buildPruneTables, type PruneTables } from './prune';
-import { solveCube } from './search';
+import { scrambleFromState } from './search';
 import { randomCubie } from './randomstate';
 
 let mt: MoveTables | null = null;
@@ -66,8 +65,9 @@ ctx.addEventListener('message', async (ev: MessageEvent<Req>) => {
     if (req.op === 'solve') {
       await ensureInit();
       if (!mt || !pt) throw new Error('tables not initialized');
-      const sol = solveCube(req.state, mt, pt);
-      const scramble = formatMoves(invertSequence(sol));
+      // Note the semantics: this returns a sequence that BUILDS `req.state`
+      // from solved, not one that solves it. `scramble_fixup.ts` relies on that.
+      const scramble = formatMoves(scrambleFromState(req.state, mt, pt));
       const res: Res = { id: req.id, ok: true, sol: scramble };
       ctx.postMessage(res);
       return;
@@ -76,8 +76,7 @@ ctx.addEventListener('message', async (ev: MessageEvent<Req>) => {
       await ensureInit();
       if (!mt || !pt) throw new Error('tables not initialized');
       const state = randomCubie();
-      const sol = solveCube(state, mt, pt);
-      const scramble = formatMoves(invertSequence(sol));
+      const scramble = formatMoves(scrambleFromState(state, mt, pt));
       const res: Res = { id: req.id, ok: true, sol: scramble };
       ctx.postMessage(res);
       return;
