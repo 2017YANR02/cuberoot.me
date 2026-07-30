@@ -4,11 +4,11 @@
   font-family: 'Roboto Mono', monospace;
   font-size: 0.95rem;
   line-height: 1.7;
-  color: #d4d4d4;
-  background: rgba(255, 255, 255, 0.04);
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
   padding: 12px 14px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
   white-space: pre-wrap;
   word-break: break-word;
   overflow-x: auto;
@@ -17,7 +17,7 @@
 
 /* 阶段注释行高亮 (// xxx) */
 .recon-step-label {
-  color: #e8a27a;
+  color: var(--accent);
   font-weight: 500;
 }
 
@@ -26,7 +26,7 @@
   display: inline-block;
   width: 1.5px;
   height: 1.1em;
-  background: #e8a27a;
+  background: var(--accent);
   vertical-align: text-bottom;
   animation: detail-cursor-blink 0.8s step-end infinite;
   margin: 0 -0.5px;
@@ -60,20 +60,20 @@
   justify-content: center;
   vertical-align: middle;
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
   border-radius: 4px;
-  color: #a3a3a3;
+  color: var(--faint-foreground);
   cursor: pointer;
   padding: 1px 4px;
   margin-left: 6px;
   user-select: none;
 }
 .recon-cross-toggle:hover {
-  color: #e8a27a;
-  border-color: rgba(232, 162, 122, 0.4);
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
 }
 .recon-cross-toggle.active {
-  color: #e8a27a;
-  border-color: rgba(232, 162, 122, 0.55);
-  background: rgba(232, 162, 122, 0.08);
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
 }
