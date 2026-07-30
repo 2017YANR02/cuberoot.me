@@ -26,10 +26,17 @@
  *   - Rotations (x/y/z) count 0 turns (STM) and, like AUF, do not end
  *     recognition — a regrip is not the alg starting.
  *
- * Turn counts are STM and are pause-aware BY CONSTRUCTION: smart cubes report
- * quarter turns and we never merge two of them into a U2, so a U2 with a
- * think in the middle is already 2 turns — the behaviour Cubeast documents
- * as "will treat them as separate turns".
+ * Turn counts are HTM: a cube reports quarter turns only, so a double turn
+ * arrives as two notifications and `htm.ts` merges each run of same-face turns
+ * back into one move. Without that, these counts can't be compared with a
+ * solver's — which is the whole job of reference.ts — and every double turn
+ * reads as a wasted move.
+ *
+ * This is a DELIBERATE divergence from Cubeast, which documents that it "will
+ * treat them as separate turns" when you pause mid-double-turn. Their rule
+ * makes a move count depend on hesitation; ours doesn't, because HTM is a
+ * property of the sequence and the pause is already charged — by the flow axis
+ * in quality.ts, which exists to see exactly that.
  *
  * Everything here is derived from (scramble, moves, timeMs) on demand —
  * nothing new is persisted, so no stored solve needs migrating and a
@@ -37,6 +44,8 @@
  */
 
 import { computeStageSegments } from './stage_segments';
+import { htmMoves } from './htm';
+import type { HtmMove } from './htm';
 import type { SolveMove, StageSegments } from './stage_segments';
 
 export type StepKey = 'cross' | 'f2l' | 'oll' | 'pll';
@@ -55,7 +64,7 @@ export interface StepMetric {
   stepMs: number | null;
   /** Timer start → this step completed (= ts of the completing move). */
   cumulativeMs: number | null;
-  /** STM turn count of the step (rotations 0, everything else 1). */
+  /** HTM turn count of the step: same-face quarter turns merged, rotations 0. */
   turns: number | null;
   /** Turns from the execution start onwards — i.e. `turns` minus the leading
    *  AUF/regrip. This is the alg the hands actually ran, which is what a
@@ -75,7 +84,7 @@ export interface StepMetricsResult {
   solvingMs: number;
   totalRecognitionMs: number;
   totalExecutionMs: number;
-  /** STM turns across all steps. */
+  /** HTM turns across all steps. */
   totalTurns: number;
   /** totalTurns / totalExecutionMs — hand speed, not diluted by thinking. */
   execTps: number | null;
@@ -103,6 +112,16 @@ function endsRecognition(raw: string): boolean {
   return stmWeight(raw) > 0 && !isAufToken(raw);
 }
 
+/** Counted moves whose first quarter turn falls in [from, to], rotations
+ *  excluded (they are 0 turns in every metric here). */
+function countRange(counted: HtmMove[], from: number, to: number): number {
+  let n = 0;
+  for (const h of counted) {
+    if (h.startIdx >= from && h.startIdx <= to && stmWeight(h.m) > 0) n += 1;
+  }
+  return n;
+}
+
 export function computeStepMetrics(
   scramble: string,
   moves: SolveMove[],
@@ -111,6 +130,9 @@ export function computeStepMetrics(
   if (!moves || moves.length === 0) return null;
   const segments = computeStageSegments(scramble, moves, totalMs);
   if (!segments) return null;
+
+  // Merged once for the whole stream; every per-step count is a slice of this.
+  const counted = htmMoves(moves);
 
   const ends: Array<{ step: StepKey; endIdx: number | null }> = [
     { step: 'cross', endIdx: segments.crossEndIdx ?? null },
@@ -151,10 +173,18 @@ export function computeStepMetrics(
 
     const recognitionMs = Math.max(0, execStartTs - prevEndTs);
     const executionMs = Math.max(0, endTs - execStartTs);
-    const turns = stepMoves.reduce((acc, mv) => acc + stmWeight(mv.m), 0);
-    const execTurns = stepMoves
-      .slice(execStartAt >= 0 ? execStartAt : 0)
-      .reduce((acc, mv) => acc + stmWeight(mv.m), 0);
+    // Counted in HTM, so a double turn the cube reported as two quarter turns
+    // is one move — otherwise these numbers can't be compared with a solver's
+    // (reference.ts does exactly that). Attribution is by where each move
+    // STARTED, which is why the merge runs over the whole stream once rather
+    // than per step: a run straddling a step boundary belongs to the step the
+    // cuber was still in when they began turning.
+    const turns = countRange(counted, prevEndIdx + 1, endIdx);
+    const execTurns = countRange(
+      counted,
+      prevEndIdx + 1 + (execStartAt >= 0 ? execStartAt : 0),
+      endIdx,
+    );
 
     steps.push({
       step,

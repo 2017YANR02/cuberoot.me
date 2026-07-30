@@ -7,6 +7,8 @@
  * Three axes, each 0-100, deliberately measuring different things:
  *
  *   效率 efficiency — your turns vs the per-stage reference (see reference.ts).
+ *     Both sides are HTM: a cube reports quarter turns, so the stream is merged
+ *     (htm.ts) before counting or a double turn would read as two moves.
  *     100 at parity or better; 130 points lost per whole unit of ratio, so
  *     ratio 1.0 → 100, 1.2 → 74, 1.5 → 35, ≥1.77 → 0. Null when no stage had
  *     a reference (then the total is renormalised over what's left).
@@ -21,10 +23,11 @@
  *     recognition is only the four gaps between steps.
  *
  *   无废步 waste-free — wasted time (error_detect.ts) as a share of solving
- *     time, 150 points per whole share. Waste already inflates the turn count
- *     and therefore already hurts efficiency; charging it again here is
- *     deliberate, because undoing your own work is the one mistake worth being
- *     loud about.
+ *     time, 150 points per whole share. A wasted DETOUR also inflates the turn
+ *     count and so is charged twice, deliberately: undoing your own work is the
+ *     one mistake worth being loud about. A turn undone immediately (R then R')
+ *     is the exception — HTM cancels it, so efficiency never sees it and this
+ *     axis is the only one that charges it.
  *
  * Weights 0.40 / 0.40 / 0.20. Calibration target from the research doc was
  * "typical values land 50-95"; the anchors pinned in quality.test.ts put a
@@ -36,6 +39,7 @@
  */
 
 import type { ErrorDetectResult } from './error_detect';
+import { htmMoves } from './htm';
 import type { ReferenceResult } from './reference';
 import type { SolveMove } from './stage_segments';
 import type { StepMetricsResult } from './step_metrics';
@@ -113,7 +117,10 @@ export function computeSolveQuality(
   const solvingMs = metrics.solvingMs;
   if (solvingMs <= 0) return null;
 
-  const peakTps = peakTurnRate(moves);
+  // Measured on MERGED moves, because metrics.totalTurns is HTM: mixing the
+  // two units here would understate idealMs and quietly drag flow down for
+  // anyone who turns double turns (i.e. everyone).
+  const peakTps = peakTurnRate(htmMoves(moves));
   const idealMs = peakTps !== null && peakTps > 0
     ? (metrics.totalTurns / peakTps) * 1000
     : null;
