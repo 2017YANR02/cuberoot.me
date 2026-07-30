@@ -24,8 +24,10 @@
  *          axis index is `(b >> 1)` in the cube's native order
  *          (B U F D R L), remapped to URFDLB via `axisPerm`.
  *          direction bit (b & 1): 0 = CW, 1 = CCW.
- *   0x02 — full state dump (54 stickers). We don't track facelets here, the
- *          shared CubeStateTracker does.
+ *   0x02 — full state dump: 6 faces x 9 bytes, centre first then the 8-sticker
+ *          ring. Reported through `ctx.onState`; see `parseGoCubeFacelets`.
+ *          The cube sends one whenever we write CMD_STATE, which is at connect
+ *          and every 20 moves, so it doubles as a periodic resync.
  *   0x03 — orientation quaternion. UNLIKE every other brand here this is
  *          PLAINTEXT ASCII, not packed binary: the payload is the four
  *          components as base-10 signed decimal strings joined by '#'
@@ -47,6 +49,7 @@
 
 import type { CubeDriver, CubeDriverStartResult, GyroQuaternion } from './driver';
 import type { CubeBrand } from './types';
+import { fromFaceletString } from '../cube/state';
 
 const UUID_SUFFIX = '-b5a3-f393-e0a9-e50e24dcca9e';
 const GOCUBE_SERVICE = '6e400001' + UUID_SUFFIX;
@@ -60,6 +63,48 @@ const CMD_STATE = 0x33; // 51
 // The cube emits axes in BUFDRL order; we want URFDLB.
 const AXIS_PERM = [5, 2, 0, 3, 1, 4] as const;
 const URFDLB = 'URFDLB';
+
+/**
+ * Ring order of the 8 non-centre stickers within a face, and each face's
+ * starting offset into that ring — cstimer's `facePerm` / `faceOffset`
+ * (`gocube.js:53-54`). The cube walks its own face clockwise from its own
+ * corner; these two tables are what turn that walk into Kociemba indices.
+ */
+const FACE_PERM = [0, 1, 2, 5, 8, 7, 6, 3] as const;
+const FACE_OFFSET = [0, 0, 6, 2, 0, 0] as const;
+
+/** Colour alphabet of the state payload — NOT the same order as the axes. */
+const GOCUBE_COLOURS = 'BFUDRL';
+
+/**
+ * Decode an opcode-0x02 state dump (6 faces x 9 bytes) into the 54-character
+ * facelet string, per cstimer's `parseData` msgType 2 branch
+ * (`gocube.js:94-108`).
+ *
+ * Per face `a`: byte 0 is the CENTRE, bytes 1..8 are the ring starting at
+ * `FACE_OFFSET[a]`. Each byte is a colour index into `GOCUBE_COLOURS`.
+ *
+ * Returns null unless every byte is a real colour and the result has nine of
+ * each — a partial notification must not be adopted as the cube's state.
+ */
+export function parseGoCubeFacelets(dv: DataView, payloadLen: number): string | null {
+  if (payloadLen < 54) return null;
+  const facelet = new Array<string>(54);
+  for (let a = 0; a < 6; a++) {
+    const axis = AXIS_PERM[a] * 9;
+    const aoff = FACE_OFFSET[a];
+    const centre = dv.getUint8(3 + a * 9);
+    if (centre > 5) return null;
+    facelet[axis + 4] = GOCUBE_COLOURS.charAt(centre);
+    for (let i = 0; i < 8; i++) {
+      const colour = dv.getUint8(3 + a * 9 + i + 1);
+      if (colour > 5) return null;
+      facelet[axis + FACE_PERM[(i + aoff) % 8]] = GOCUBE_COLOURS.charAt(colour);
+    }
+  }
+  const out = facelet.join('');
+  return out.length === 54 && fromFaceletString(out) ? out : null;
+}
 
 // Re-ack interval: every 20 moves cstimer issues another CMD_STATE so the
 // firmware does not stop pushing notifications.
@@ -166,6 +211,14 @@ export const gocubeDriver: CubeDriver = {
         if (movesSinceAck > REACK_EVERY) {
           movesSinceAck = 0;
           void writeCmd(CMD_STATE).catch(() => {});
+        }
+      } else if (opcode === 0x02) {
+        // Full state dump. The cube sends one on connect (we ask for it) and
+        // one after every re-ack, so this is both the initial truth and a
+        // periodic correction for anything the move stream lost.
+        if (ctx?.onState) {
+          const facelets = parseGoCubeFacelets(dv, payloadLen);
+          if (facelets) ctx.onState(facelets);
         }
       } else if (opcode === 0x03) {
         // Orientation. GoCube pushes these ~15x/s once connected, so only

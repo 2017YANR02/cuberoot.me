@@ -29,11 +29,11 @@
  *   0xA3 state     48 facelets at 3 bits each (bits 8..152, face order
  *                  FBUDLR, colour alphabet FBUDLR), then an 8-bit move
  *                  counter at bits 152..160. Consumed ONLY while
- *                  `prevMoveCnt === -1`, purely to seed the counter —
- *                  cstimer's `if (prevMoveCnt == -1)` guard. We drop the
- *                  facelets themselves; the host's CubeStateTracker re-models
- *                  state from the move stream, same as every other driver
- *                  here.
+ *                  `prevMoveCnt === -1`, matching cstimer's
+ *                  `if (prevMoveCnt == -1)` guard. Both the counter AND the
+ *                  facelets are consumed: the facelets are the only reading of
+ *                  where the cube actually is, and assuming solved instead is
+ *                  wrong for any cube that was turned before it connected.
  *   0xA4 battery   percentage at bits 8..16.
  *   0xA5 move      see `decodeMoyu32Frame`.
  *   0xAB gyro      orientation quaternion, see below.
@@ -42,12 +42,15 @@
  *
  * Move event (0xA5) layout:
  *   bits   8..88   five u16 inter-move time offsets in ms, `timeOffs[i]` at
- *                  bits `8 + i*16 .. 24 + i*16`. DECODED BY cstimer, DROPPED
- *                  HERE: our `onMove` contract stamps each move with
- *                  `performance.now()` at notification time (see index.ts
- *                  `handleMove`), so a device-clock offset has no consumer
- *                  and would be dead code. The offsets are documented here so
- *                  the layout survives if we ever want device timestamps.
+ *                  bits `8 + i*16 .. 24 + i*16`, where index 0 is the NEWEST
+ *                  move and each value is the gap BEFORE that move. cstimer
+ *                  accumulates them into a running device clock
+ *                  (`updateMoveTimes`, moyu32cube.js:309). NOT YET READ HERE:
+ *                  `onMove` now takes an optional device timestamp (the GAN
+ *                  v3/v4 drivers supply one), so these offsets do have a
+ *                  consumer — wiring them up is a separate unit, because the
+ *                  accumulator has to live in the decode state and the offsets
+ *                  are deltas rather than absolute readings.
  *   bits  88..96   u8 move counter.
  *   bits  96..121  five 5-bit move codes from bit 96. `m` decodes as
  *                  `"FBUDLR"[m >> 1] + " '"[m & 1]`; any `m >= 12` means the
@@ -77,6 +80,7 @@ import {
   type GyroSink,
 } from './gan_crypto';
 import type { CubeDriver, CubeDriverContext, CubeDriverStartResult } from './driver';
+import { fromFaceletString } from '../cube/state';
 import { MOYU32_MAC_ADV, macStringToBytes, normalizeMac } from './mac';
 import type { CubeBrand } from './types';
 
@@ -143,11 +147,46 @@ export interface Moyu32DecodeState {
   battery: number | null;
   /** Consecutive garbage frames (unknown type / out-of-range move code). */
   badFrames: number;
+  /**
+   * Called with the cube's self-reported 54-character facelet state, once, from
+   * the 0xA3 snapshot that seeds the counter. See `CubeDriverContext.onState`.
+   */
+  onState?: (facelets: string) => void;
+}
+
+/**
+ * Decode the 0xA3 facelet payload (bits 8..152) into a 54-character facelet
+ * string in `URFDLB` order.
+ *
+ * MoYu stores 48 stickers — the six centres are omitted, being fixed — at
+ * three bits each, with faces in `FBUDLR` order and the colour alphabet also
+ * `FBUDLR`. csTimer's `parseFacelet` (`moyu32cube.js`) walks the faces in the
+ * order `[2,5,0,3,4,1]` to emit `URFDLB`, and splices each face's centre back
+ * in after the fourth sticker. This is that, verbatim.
+ *
+ * Returns null when the payload isn't nine of each colour, which is what a
+ * wrong AES key decodes to.
+ */
+function decodeMoyu32Facelets(bit: (from: number, to: number) => number): string | null {
+  /** Read faces in this order so the output comes out URFDLB. */
+  const FACE_READ_ORDER = [2, 5, 0, 3, 4, 1];
+  let out = '';
+  for (const face of FACE_READ_ORDER) {
+    const base = 8 + face * 24;
+    for (let j = 0; j < 8; j++) {
+      const colour = bit(base + j * 3, base + j * 3 + 3);
+      if (colour > 5) return null;
+      out += MOYU32_FACE_ORDER.charAt(colour);
+      // The centre is not on the wire: it is this face, by definition.
+      if (j === 3) out += MOYU32_FACE_ORDER.charAt(face);
+    }
+  }
+  return fromFaceletString(out) ? out : null;
 }
 
 /** Fresh decode state. */
-export function createMoyu32State(): Moyu32DecodeState {
-  return { prevMoveCnt: -1, battery: null, badFrames: 0 };
+export function createMoyu32State(onState?: (facelets: string) => void): Moyu32DecodeState {
+  return { prevMoveCnt: -1, battery: null, badFrames: 0, onState };
 }
 
 /**
@@ -183,10 +222,16 @@ export function decodeMoyu32Frame(
 
   if (msgType === MSG_STATE) {
     dec.badFrames = 0;
-    // Facelet snapshot. cstimer consumes it only while the counter is unseeded
-    // and uses the facelets to prime its own cube model; we track state from
-    // the move stream instead, so we take just the counter.
-    if (dec.prevMoveCnt === -1) dec.prevMoveCnt = bit(152, 160);
+    // Facelet snapshot — where the cube actually is. cstimer consumes it only
+    // while the counter is unseeded (`moyu32cube.js` msgType 163) and primes
+    // its cube model from it; so do we. Without this a cube that was already
+    // scrambled when it connected is taken to be solved, and every scramble
+    // check and auto-stop after that is wrong.
+    if (dec.prevMoveCnt === -1) {
+      dec.prevMoveCnt = bit(152, 160);
+      const facelets = decodeMoyu32Facelets(bit);
+      if (facelets) dec.onState?.(facelets);
+    }
     return [];
   }
 
@@ -309,7 +354,7 @@ export const moyu32Driver: CubeDriver = {
     const aesIv = deriveKeyFromMac(MOYU32_IV_BASE, macBytes);
     const expandedKey = expandKey(aesKey);
 
-    const decState = createMoyu32State();
+    const decState = createMoyu32State(ctx?.onState);
     const onGyro = ctx?.onGyro;
     let keyErrorFired = false;
     let batteryWaiters: Array<(v: number | null) => void> = [];
