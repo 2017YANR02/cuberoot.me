@@ -43,7 +43,7 @@ csTimer 是这块的**正确基线**：它的智能魔方链路被上万人用�
 |---|---|---|---|---|
 | 打乱正确性校验 | ✅ `checkScramble()` | ✅ 「打乱已就绪 / 与打乱不符」 | — | — |
 | **逐步打乱提示**（已完成的变暗、当前步高亮、✓） | ✅ `scrHinter.checkState` + `scrambleToHtml`（`bluetoothutil.js:74/108`） | ✅ `_lib/bluetooth/scramble_hint.ts`（Sprint 6） | — | 已完成；半步未拧完时显示**剩余**转量，比上游更准（上游只在第一步这么做） |
-| 拧错时动态换一条等价打乱 | ✅ `genState`/`genScr` → `scramble_333.genFacelet` | ❌ | 拧歪只能重来（此时退回二元「与打乱不符」） | P0：`hintScramble` 返回 null 就是这个入口，接 `solve333` 即可 |
+| 拧错时给一条回到同一打乱的路径 | ✅ `genState`/`genScr` → `scramble_333.genFacelet` | ✅ `_lib/bluetooth/scramble_fixup.ts`（Sprint 7） | — | 已完成；求解期间又转动会从新状态重解（上游求解器同步，没这个问题） |
 | 自由打乱：完成时按实际状态反推打乱记入成绩 | ✅ `markScrambled` 内 `genFacelet` + 替换打乱 | ❌ | 必须精确照拧 | P1 |
 | 静止 N 秒自动预备 | ✅ `giiSD` 2/3/4/5s | ✅ `bluetoothAutoReady: 'still'` | 秒数不可调 | P2：把 2/3/4/5s 做成可选 |
 | 「打乱正确即预备」 | ✅ `giiSD='s'`（默认） | ❌ | — | P1：默认应当是这个 |
@@ -142,8 +142,9 @@ csTimer 拿到后做两件事（`gancube.js:461-488`、`bluetoothutil.js:407-475
 
 **P0（做智能魔方训练平台的前提）**
 1. ~~设备时间戳~~ ✅ Sprint 3 / 5（GAN v3/v4 + QiYi + MoYu32）
-2. ~~逐步打乱提示（变暗/高亮/✓）~~ ✅ Sprint 6 ｜ **剩**：拧歪时换等价打乱
+2. ~~逐步打乱提示（变暗/高亮/✓）+ 拧歪时给回到同一打乱的路径~~ ✅ Sprint 6 / 7
 3. 训练模式：子步自动停表 + 状态劫持 + 连续训练循环，并接上已有的 `/alg` 公式库和 SRS
+   —— **P0 只剩这一条**
 
 **P1**
 4. 观察超时自动 +2 / DNF

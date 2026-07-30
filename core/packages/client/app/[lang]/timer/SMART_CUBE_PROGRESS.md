@@ -510,5 +510,74 @@ WCA 打乱不含对消，只有手工粘贴的打乱会碰到，此时「你还�
 
 - [x] 提示引擎 + csTimer 对照测试
 - [x] 打乱条 UI + pill 语义
-- [ ] 拧歪时动态换一条等价打乱（`hintScramble` 返回 null 即入口，接 `solve333`）
+- [x] 拧歪时给一条回到同一打乱的路径 → Sprint 7
+- [ ] 实体复验
+
+---
+
+## Sprint 7 — 拧歪之后（已完成，假魔方已实测）
+
+Sprint 6 的提示只在魔方还**在**打乱路径上时有话说。拧歪一步就只剩二元判定，
+而这正是 csTimer 比「重来一遍」做得好的地方：问求解器要一条**从魔方现在的状态
+到同一个打乱状态**的路径，然后在这条路径上提示（`bluetoothutil.js:71` 的
+`genState`/`genScr` 分支）。
+
+**成绩记的打乱不变** —— 修正路径终点就是原打乱状态，所以那还是同一条打乱，
+只有「要拧什么」变了。
+
+### 方向（唯一容易搞反的地方）
+
+要的是 `from · M = target`，所以 `M = from⁻¹ · target`，与上游
+`invFrom` + `CubeMult(stateInv, scrState)` 同序。落地时踩的坑是 worker 那一侧：
+`solve` op 返回的是 `invertSequence(solveCube(state))`，即**生成**该状态的序列，
+不是解开它的序列 —— 名字叫 `solve333` 但语义是生成器。现在 worker 直接调
+`scrambleFromState`（同一个函数名，同一份语义），测试也调它，所以测的就是线上跑的。
+
+方向不靠推理保证：测试把返回的动作应用到起始 facelet 上，检查是否**落在**目标状态，
+facelet 层和 cubie 层各查一遍（免得两层的 bug 互相抵消）。
+
+### 落地
+
+| 文件 | 作用 |
+|---|---|
+| `lib/cube-facelet.ts` | facelet ↔ cubie。原来在 `/scramble/solver` 页面下，四个页面都要用，提到 `lib/` |
+| `kociemba/cube.ts` | 新增 `inverseCubie` |
+| `_lib/bluetooth/scramble_fixup.ts` | `fixupState`（纯代数，可测）+ `fixupScramble`（走 worker）+ `createFixupRequester`（状态机） |
+| `scramble_hint.ts` | `hintScramble` 加 `from` 参数（上游 `checkInSeq` 的 `gen`）：修正路径的起点不是还原态 |
+
+`hintScramble` 的 `from` 是必需的：没有它，走查从还原态开始，修正路径根本不在那条路上
+→ 功能静默失效。有一条测试专门钉这个。
+
+### 一个真 bug：求解比一次转动还慢
+
+第一版在浏览器里**每隔一次**才出修正路径。原因是求解要 100-200ms，比一次转动还长：
+答案回来时魔方已经又转了一步，那条从「刚才」出发的路径对不上当前状态，
+而我当时的写法是直接放弃。改成**从新状态再解一次**（最多三次），
+并把这段状态机从组件里抽到 `createFixupRequester` —— 有分支的逻辑不该躺在 view 里。
+
+### 测试
+
+`tests/scramble_fixup.test.ts`（22 例）：
+- 代数层：`from · fix === target`、`inverseCubie` 双向、已在打乱态返回 null、
+  单角扭转等物理不可达状态直接拒（否则两阶段搜索会去找一个不存在的解）；
+- 端到端（在进程内跑 `scrambleFromState`，与 worker 同一函数）：多拧一步 / 少拧一步 /
+  拧到别处 / 刚开始 / 一步没拧，五种偏离都落在打乱态；长度 ≤ 23；cubie 层复查；
+- 提示层：从生成点走查、逐步前进、走完即 complete、**从还原态走查必须找不到**；
+- 状态机：不动就给路径 / 求解中又转了就换新状态重解 / 求解中已到打乱态就什么都不给 /
+  一直转满三次放弃且不卡住 / 求解中不排队第二次 / 打乱被换掉就放弃 / 无魔方 / 求解器无解。
+
+### 假魔方实测（浏览器）
+
+拧对 8 步 → 提示到第 9 步；拧一个打乱没要求的 `B'` → 出现 20 步修正路径 + `拧回原打乱` 标签；
+照着修正路径拧 → 每步推进 → 最后一步落地即「打乱已就绪」，打乱条恢复成**原来那条打乱**。
+连续偏离（`R` → `R'` → `R U'` → `U R'`）以及**求解中再转一步**（`F` 后 60ms 再 `D` → `D' F'`）
+都正确。390px 窄屏：21 步路径折 4 行、标签独占一行、无横向溢出。
+截图 `.tmp/png/scramble-fixup-live.png`、`.tmp/png/scramble-fixup-mobile.png`。
+
+### 状态
+
+- [x] 代数 + 方向（测试钉死）
+- [x] worker 语义统一到 `scrambleFromState`
+- [x] 状态机（含求解期间又转动的重解）
+- [x] UI：修正路径 + `拧回原打乱` 标签（accent 色，不是红色 —— 这不是错误态）
 - [ ] 实体复验

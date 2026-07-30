@@ -367,6 +367,12 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   background: color-mix(in srgb, var(--signal-warning) 16%, transparent);
   color: var(--signal-warning);
 }
+/* A correction path is not an error state — the strip is already showing the
+   way out, so this label only has to explain what those moves are. */
+.scramble-verify[data-ok='fix'] {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+}
 
 .scramble-nonopt {
   flex: none;

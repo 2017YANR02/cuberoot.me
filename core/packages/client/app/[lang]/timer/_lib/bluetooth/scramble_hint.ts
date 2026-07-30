@@ -103,19 +103,28 @@ export function parseHintableScramble(scramble: string): FaceTurn[] | null {
 /**
  * Where in `scramble` the cube currently is.
  *
- * Returns null when the state is not on the scramble's path, which is the
- * signal that the user turned something the scramble never asked for.
+ * `from` is the state the sequence starts from, defaulting to solved — which is
+ * right for a scramble. A correction path (see `scramble_fixup.ts`) starts from
+ * wherever the cube was when it was generated, and csTimer passes that same
+ * thing as `checkInSeq`'s `gen` argument (`bluetoothutil.js:29`).
+ *
+ * Returns null when the state is not on the sequence's path, which is the
+ * signal that the user turned something it never asked for.
  */
-export function hintScramble(scramble: string, faces: CubeFaces): ScrambleHint | null {
+export function hintScramble(
+  scramble: string,
+  faces: CubeFaces,
+  from?: CubeFaces,
+): ScrambleHint | null {
   const seq = parseHintableScramble(scramble);
   if (!seq) return null;
-  return hintFromSequence(seq, faces);
+  return hintFromSequence(seq, faces, from);
 }
 
-function hintFromSequence(seq: FaceTurn[], faces: CubeFaces): ScrambleHint | null {
+function hintFromSequence(seq: FaceTurn[], faces: CubeFaces, from?: CubeFaces): ScrambleHint | null {
   /** -1 = the state is not anywhere on this path. */
   const NOT_FOUND = -1;
-  let cur = solved(N);
+  let cur = from ?? solved(N);
   /** Index of the move the user owes. `seq.length` means "scramble finished". */
   let next = NOT_FOUND;
   /** Quarters actually applied to the move at `next`, when it is partly done. */
