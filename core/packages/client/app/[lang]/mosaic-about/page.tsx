@@ -102,7 +102,7 @@ export default function MosaicAboutPage() {
         <h2 className="moa-section-title">{t('相关页面', 'See also')}</h2>
         <ul className="moa-refs">
           <li>
-            <Link href="/visualcube">{t('VisualCube 编辑器', 'VisualCube Editor')}</Link>
+            <Link href="/sim">{t('魔方模拟器', 'Puzzle Simulator')}</Link>
             {t(' — 单个魔方状态可视化,可以快速验证 mosaic 导出的某一格是否正确。', ' — single-cube state visualizer; handy for sanity-checking individual cells from a mosaic plan.')}
           </li>
           <li>

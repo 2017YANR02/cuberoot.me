@@ -4,7 +4,7 @@
  * PuzzleImage — the headless preview half of the puzzle-image studio.
  *
  * Owns every render-dispatch DOM branch that used to live inline in
- * app/[lang]/visualcube/page.tsx:
+ * the retired app/[lang]/visualcube/page.tsx:
  *
  *   pure          renderSpecSvg()  → visualcube iso/plan/trans + all tnoodle nets
  *   sr-puzzlegen  <PuzzleSVG>      → non-cube iso/top
@@ -16,7 +16,7 @@
  * renderer is one row, not a sixth `if`.
  *
  * The root keeps the class `vc-preview`: app/globals.css and puzzle-image.css
- * key off it, and scripts/verify_puzzle_image_golden.cjs scrapes its innerHTML
+ * key off it, and the studio's export path serializes its <svg> as a last resort
  * as the zero-loss oracle. Do not rename it.
  */
 

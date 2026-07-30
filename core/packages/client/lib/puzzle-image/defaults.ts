@@ -6,7 +6,7 @@ import type { FaceKey, ImageSpec, PuzzleType, PuzzleVariant } from './types';
 // CUBE_FILL — same source as the /sim engine and the net/wca emitters), NOT the
 // visualcube package default (legacy yellow-top, kept for the alg-case ecosystem:
 // view=oll/pll/f2l thumbnails). specToCubeOptions passes it explicitly whenever it
-// differs from the package default, so /visualcube renders WCA by default and its
+// differs from the package default, so the studio renders WCA by default and its
 // normal/plan/trans output matches the /sim companion byte-for-byte.
 export const FACE_DEFAULTS: Record<FaceKey, string> = {
   U: CUBE_FILL.U,

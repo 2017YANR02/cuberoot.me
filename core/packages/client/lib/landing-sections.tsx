@@ -53,7 +53,7 @@ export const TEXTS: Record<string, { en: string; zh: string
 },
   prediction:      { en: 'Prediction', zh: '预测'
 },
-  visualcubeEditor:{ en: 'VisualCube', zh: '魔方可视化'
+  batchImages:     { en: 'Batch Images', zh: '批量出图'
 },
   paint:           { en: 'Paint', zh: '绘制'
 },
@@ -140,7 +140,7 @@ export const SECTIONS: Section[] = [
     },
     cards: [
       { id: 'frame-count', href: '/frame-count', internal: true, tier: 'medium', Icon: Film,       nameKey: 'frameCount' },
-      { id: 'visualcube',  href: '/visualcube',  internal: true, tier: 'medium', Icon: ImagePlus,  nameKey: 'visualcubeEditor' },
+      { id: 'batch-images', href: '/sim/batch', internal: true, tier: 'medium', Icon: ImagePlus,  nameKey: 'batchImages' },
       { id: 'solver',      href: '/solver',      internal: true, tier: 'medium', iconImg: '/icons/upstream/solver.png', nameKey: 'solver' },
     ],
   },

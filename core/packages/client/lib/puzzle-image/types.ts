@@ -1,8 +1,8 @@
 /**
- * Pure state model for the puzzle-image generator (/visualcube, and later /sim's
+ * Pure state model for the puzzle-image generator (/sim's
  * image panel). No React / DOM — importable from node.
  *
- * `ImageSpec` was `EditorState` in app/[lang]/visualcube/page.tsx.
+ * `ImageSpec` was `EditorState` in the retired app/[lang]/visualcube/page.tsx.
  */
 
 import type { PaintColor } from '@/app/[lang]/scramble/solver/_paint-shared';

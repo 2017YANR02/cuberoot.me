@@ -1,11 +1,10 @@
 /**
  * Node-level lock for lib/puzzle-image/{render,arrows}.ts.
  *
- * The browser gate (scripts/verify_puzzle_image_golden.cjs, 28/28) still drives
- * /visualcube, which runs its OWN private copy of this logic — so it proves
- * nothing about the lib until the shell lands. This file closes that gap now:
- * the same query strings go through `readSpecFromParams` → `renderSpecSvg`, and
- * the output is locked byte-for-byte.
+ * These fixtures were recorded in the browser off the old /visualcube page, which
+ * ran its OWN private copy of this logic. That page is retired and its verifier
+ * with it, so this file IS the lock now: the same query strings go through
+ * `readSpecFromParams` → `renderSpecSvg`, and the output is compared byte-for-byte.
  *
  * Two locks, on purpose:
  *   1. toBe() against tests/fixtures/puzzle-image-lib/*.svg — the regression lock.

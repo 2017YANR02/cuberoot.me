@@ -68,6 +68,28 @@ const VC_DUP: Record<string, string> = {
   '2x2x2': '2x2x2', '2x2x3': '2x2x3',
 };
 
+/** 遮罩名 → 该阶数下 stickering 下拉真正列出的那个值。与引擎自带阶段同义的 vc 名
+ *  (`oll` ↔ `OLL`)在下拉里只留引擎那个,直接传 vc 名画得对但选不中。 */
+export function stickeringValueForVcMask(order: number, mask: string): string {
+  const dup = VC_DUP[mask];
+  if (!dup) return mask;
+  return stickeringGroupsFor(order).some((g) => g.items.includes(dup)) ? dup : mask;
+}
+
+/** 反向:sim 的 stickering 值 → visualcube 遮罩名(= ImageSpec.stageMask)。/sim/batch
+ *  走 spec 渲染,认的是 vc 那套名字;引擎独有的阶段(EOLine / F2B…)vc 画不出来,返回
+ *  '' 让批量页出不带遮罩的图,而不是编一个名字喂进去。 */
+export function vcMaskForStickering(order: number, stickering: string): string {
+  if (!stickering || stickering === 'full') return '';
+  for (const [vc, engine] of Object.entries(VC_DUP)) if (engine === stickering) return vc;
+  try {
+    makeMasking(stickering as Masking, order);
+    return stickering;
+  } catch {
+    return '';
+  }
+}
+
 /** value → 展示标签(取自 masks.ts,免在 UI 层重列)。跨 size 数组同 value 标签一致。 */
 export const VC_MASK_LABEL: Record<string, string> = Object.fromEntries(
   [
