@@ -9,6 +9,7 @@ import Twister, { TwistAction } from "./twister";
 import History from "./history";
 import tweener from "../tweener";
 import InstancedRenderer from "./instanced";
+import { FM_REGULAR, type StickeringMaskFn } from "./stickering";
 
 const ONE = new THREE.Vector3(1, 1, 1);
 const HALF = 32; // Cubelet.SIZE / 2
@@ -347,57 +348,52 @@ export default class Cube extends THREE.Group {
     this.dirty = true;
   }
 
-  serialize(): string {
-    const result: string[] = [];
+  /** 展开面序上的每一格走一遍:块序 U R F D L B,块内 row-major。`visit` 收到该格
+   *  所在的 cubelet(可能不存在 → undefined)和这一格朝的世界面。序列化和阶段遮罩
+   *  必须逐格对齐,所以只留这一份遍历。 */
+  private walkFacelets(visit: (cubelet: Cubelet | undefined, face: FACE) => void): void {
+    const N = this.order;
+    const at = (x: number, y: number, z: number) => this.cubelets.get(z * N * N + y * N + x);
     let x, y, z;
 
-    y = this.order - 1;
-    for (z = 0; z < this.order; z++) {
-      for (x = 0; x < this.order; x++) {
-        const idx = z * this.order * this.order + y * this.order + x;
-        result.push(this.cubelets.get(idx)?.getColor(FACE.U) ?? "?");
-      }
-    }
+    y = N - 1;
+    for (z = 0; z < N; z++) for (x = 0; x < N; x++) visit(at(x, y, z), FACE.U);
 
-    x = this.order - 1;
-    for (y = this.order - 1; y >= 0; y--) {
-      for (z = this.order - 1; z >= 0; z--) {
-        const idx = z * this.order * this.order + y * this.order + x;
-        result.push(this.cubelets.get(idx)?.getColor(FACE.R) ?? "?");
-      }
-    }
+    x = N - 1;
+    for (y = N - 1; y >= 0; y--) for (z = N - 1; z >= 0; z--) visit(at(x, y, z), FACE.R);
 
-    z = this.order - 1;
-    for (y = this.order - 1; y >= 0; y--) {
-      for (x = 0; x < this.order; x++) {
-        const idx = z * this.order * this.order + y * this.order + x;
-        result.push(this.cubelets.get(idx)?.getColor(FACE.F) ?? "?");
-      }
-    }
+    z = N - 1;
+    for (y = N - 1; y >= 0; y--) for (x = 0; x < N; x++) visit(at(x, y, z), FACE.F);
 
     y = 0;
-    for (z = this.order - 1; z >= 0; z--) {
-      for (x = 0; x < this.order; x++) {
-        const idx = z * this.order * this.order + y * this.order + x;
-        result.push(this.cubelets.get(idx)?.getColor(FACE.D) ?? "?");
-      }
-    }
+    for (z = N - 1; z >= 0; z--) for (x = 0; x < N; x++) visit(at(x, y, z), FACE.D);
 
     x = 0;
-    for (y = this.order - 1; y >= 0; y--) {
-      for (z = 0; z < this.order; z++) {
-        const idx = z * this.order * this.order + y * this.order + x;
-        result.push(this.cubelets.get(idx)?.getColor(FACE.L) ?? "?");
-      }
-    }
+    for (y = N - 1; y >= 0; y--) for (z = 0; z < N; z++) visit(at(x, y, z), FACE.L);
 
     z = 0;
-    for (y = this.order - 1; y >= 0; y--) {
-      for (x = this.order - 1; x >= 0; x--) {
-        const idx = z * this.order * this.order + y * this.order + x;
-        result.push(this.cubelets.get(idx)?.getColor(FACE.B) ?? "?");
-      }
-    }
+    for (y = N - 1; y >= 0; y--) for (x = N - 1; x >= 0; x--) visit(at(x, y, z), FACE.B);
+  }
+
+  serialize(): string {
+    const result: string[] = [];
+    this.walkFacelets((cubelet, face) => result.push(cubelet?.getColor(face) ?? "?"));
     return result.join("");
+  }
+
+  /**
+   * 每一格的阶段遮罩码,下标与 serialize() 逐格对应。
+   *
+   * 遮罩定义在 SOLVED 帧的 (cubelet 身份, 该块自己的面) 上 —— 与 3D 渲染器
+   * (InstancedRenderer.setStickering)问的是同一对键,所以打乱后标注跟着块走,
+   * 两张图不会各标各的。
+   */
+  serializeStickering(maskFn: StickeringMaskFn): Uint8Array {
+    const codes = new Uint8Array(6 * this.order * this.order);
+    let i = 0;
+    this.walkFacelets((cubelet, face) => {
+      codes[i++] = cubelet ? maskFn(cubelet.initial, cubelet.getFace(face)) : FM_REGULAR;
+    });
+    return codes;
   }
 }
