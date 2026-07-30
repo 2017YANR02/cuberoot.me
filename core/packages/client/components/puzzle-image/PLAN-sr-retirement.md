@@ -1,5 +1,7 @@
 # sr-puzzlegen + visualcube 退役计划 — 引擎解析矢量导出统一路线
 
+> **2026-07-30 再追加(用户指令,已执行)**:`/sim/batch` 用户判定「没啥必要」,整页删除(不加 redirect)。连带删掉只服务它的 `lib/puzzle-image/batch.ts`、`lib/zip.ts`(ZIP 打包只有批量下载用)、`tests/zip-and-batch.test.ts`、`vcStageMask` 的 `vcMaskForStickering`(sim → 批量页的阶段翻译),以及 `.vc-editor-page` / `.vc-header*` / `.vc-textarea` 这几条只有整页宿主才用得上的样式。`/sim` 图像面板底下只剩「阶段遮罩速查」一个去处。
+
 > **2026-07-30 追加(用户指令,已执行)**:standalone `/visualcube` 页整个退役 —— 编辑器页直接删(不加 redirect,按项目规矩),两个子页搬进模拟器:`/visualcube/batch` → **`/sim/batch`**(URL key 从裸前缀换成 `img_`,与 /sim 图像面板同一套;拼图 / 公式 / 阶段三个 key 两边各自翻译)、`/visualcube/stages` → **`/sim/stages`**(卡片改成「打开模拟器并选中该阶段」`?puzzle=N&stickering=…`,与引擎自带阶段同义的名字走 `stickeringValueForVcMask` 去重)。
 >
 > 连带:`PuzzleImageStudio` 的 `mode` prop 删除(page 模式没宿主了),page 专属的那几组控件(魔方 / 阶数 / 公式 / 六面配色 / 视角旋转 / 壳体与贴纸不透明度 / 投影距离 / stage mask 下拉)一并删 —— 它们在 /sim 各有一个入口,本来就是重复;「背景色」是导出件底色、sim 没有对应控件,改成面板常驻。「分享链接」按钮删(面板状态就在地址栏的 `img_*` 里)。**已知损失**:3×3 net 涂色编辑器(`?fc=`)随 page 模式一起没了入口 —— 画任意面色出图这件事现在只有 `/scramble/solver` 的涂色板能做,它不出图。

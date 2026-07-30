@@ -430,7 +430,7 @@ export const CATALOG: UtilEntry[] = [
     name: 'useImageSpec',
     sig: 'useImageSpec(prefix: string): [ImageSpec, (patch: Partial<ImageSpec>) => void]',
     imp: "import { useImageSpec } from '@/components/puzzle-image/useImageSpec';",
-    usage: "const [spec, setSpec] = useImageSpec('img_');  // /sim 与 /sim/batch 共用同一套 key",
+    usage: "const [spec, setSpec] = useImageSpec('img_');  // /sim 图像面板的 key 前缀",
     category: 'cube',
     zh: 'ImageSpec 的 nuqs 绑定(history: \'replace\')。只给页级宿主用 —— PuzzleImageStudio 是受控件,URL 归页面。URL 只做一次种子,之后 URL 是 spec 的派生视图。',
     en: "The nuqs binding for an ImageSpec (history: 'replace'). PAGE-LEVEL HOSTS ONLY — PuzzleImageStudio is controlled and the page owns the URL. The URL seeds the spec once; afterwards the URL is a derived view of the spec.",

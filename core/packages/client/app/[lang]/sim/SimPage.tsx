@@ -108,7 +108,7 @@ import PuzzleImageStudio, { type SimBridge } from '@/components/puzzle-image/Puz
 import type { TwistyPlayerLike } from '@/components/puzzle-image/SimCaptureGroup';
 import { useImageSpec } from '@/components/puzzle-image/useImageSpec';
 import { rotationDefaultsFor } from '@/lib/puzzle-image/defaults';
-import { specToParams, type InheritedFields } from '@/lib/puzzle-image/codec';
+import { type InheritedFields } from '@/lib/puzzle-image/codec';
 import type { ImageSpec, PuzzleType } from '@/lib/puzzle-image/types';
 import { parseMask, MASK_COLOR } from '@/lib/puzzle-image/mask-core';
 import { toEngineMask } from '@/lib/puzzle-image/puzzle-mask';
@@ -118,7 +118,7 @@ import { stickeringMaskFn } from './engine/nxn/stickering';
 import {
   CUSTOM_STICKERING, CUSTOM_TREATMENTS, customMaskFn, pickedSids, toggleSids, type PickGrain,
 } from './engine/nxn/customStickering';
-import { resolveStageMaskFn, vcMaskForStickering } from './engine/nxn/vcStageMask';
+import { resolveStageMaskFn } from './engine/nxn/vcStageMask';
 import { isPresetMask, presetMaskFn } from './engine/nxn/maskConfig';
 import { useSimMasks } from './useSimMasks';
 import { resolveEngineArrows } from './engine/nxn/vcArrowBridge';
@@ -554,20 +554,6 @@ export default function SimPage() {
     };
   }, [settings.faceColors, setupParam, algParam, puzzleParam, skewbNotation]);
   const [imgSpec, setImgSpec] = useImageSpec('img_', { puzzle: imgPuzzle, inherit: imgInherit });
-
-  // /sim/batch 是独立宿主,自己拥有整份 spec —— 面板模式省掉的那几个 key(拼图 `pzl`、
-  // 公式、六面配色)本页是从 sim 自己的状态继承的,链接里得补齐,否则批量页只拿到默认值。
-  // 阶段遮罩同理:sim 这边是引擎的 `stickering=`,批量页走 spec 渲染只认 vc 的 `stage=`,
-  // 两边能对上的名字翻过去(引擎独有的阶段翻不了,那就不带遮罩,见 vcMaskForStickering)。
-  const batchHref = useMemo(() => {
-    const full = {
-      ...imgSpec, ...imgInherit, ...imgPuzzle,
-      stageMask: imgPuzzle.puzzleType === 'cube'
-        ? vcMaskForStickering(imgPuzzle.cubeSize, query.stickering)
-        : imgSpec.stageMask,
-    };
-    return `/sim/batch?${specToParams(full, 'img_').toString()}`;
-  }, [imgSpec, imgInherit, imgPuzzle, query.stickering]);
 
   // Lay out the back-view mini window: size it ~30% of the smaller container
   // dimension (clamped). Single source of truth for the square pixel size
@@ -2319,20 +2305,12 @@ export default function SimPage() {
             engineOnly={imageStudioEngineOnly}
             compare={imgEngineMode === 'both'}
           />
-          {/* 图像面板的两个去处(原 /visualcube 的两个子页)。设置整套在 URL 里,
-              批量页原样带过去 —— 它不重造一份控件。
-              批量页走 spec 渲染,engine-only 拼图(fto / 枫叶…)它画不出来 → 不给链接,
-              免得点进去看到一张 3x3;阶段速查整本都是 NxN,只对 cube 露出。 */}
-          {!imageStudioEngineOnly && (
+          {/* 阶段速查整本都是 NxN,只对 cube 露出。 */}
+          {imgPuzzle.puzzleType === 'cube' && (
             <div className="sim-image-links">
-              <AppLink href={batchHref} prefetch={false}>
-                {t('批量出图', 'Batch images')}
+              <AppLink href="/sim/stages" prefetch={false}>
+                {t('阶段遮罩速查', 'Stage masks')}
               </AppLink>
-              {imgPuzzle.puzzleType === 'cube' && (
-                <AppLink href="/sim/stages" prefetch={false}>
-                  {t('阶段遮罩速查', 'Stage masks')}
-                </AppLink>
-              )}
             </div>
           )}
           {/* Group-theory panel = the visible half of the non-cubing.js view. Shows for any
