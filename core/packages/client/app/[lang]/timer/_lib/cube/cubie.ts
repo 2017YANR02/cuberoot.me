@@ -21,17 +21,36 @@
  * Bluetooth path for what amounts to two lookup tables.
  */
 
-/** Facelet indices of each corner's three stickers, in orientation order. */
-const CORNER_FACELET: readonly (readonly [number, number, number])[] = [
-  [8, 9, 20], [6, 18, 38], [0, 36, 47], [2, 45, 11],
-  [29, 26, 15], [27, 44, 24], [33, 53, 42], [35, 17, 51],
-];
+/**
+ * Which facelets belong to which piece, and in what orientation order.
+ *
+ * A protocol that sends cubies has to agree with us on how its piece indices
+ * and orientation zero map onto stickers, and not all of them use csTimer's
+ * default numbering — the Giiker frames index the same cube with the corners
+ * permuted and each triple rotated. csTimer handles that by letting
+ * `toFaceCube(cFacelet, eFacelet)` take the tables as arguments
+ * (`mathlib.js:495`), so we do the same rather than hard-coding one brand's
+ * view of the cube.
+ */
+export interface FaceletTables {
+  /** Facelet indices of each corner's three stickers, in orientation order. */
+  readonly corners: readonly (readonly [number, number, number])[];
+  /** Facelet indices of each edge's two stickers, in orientation order. */
+  readonly edges: readonly (readonly [number, number])[];
+}
 
-/** Facelet indices of each edge's two stickers, in orientation order. */
-const EDGE_FACELET: readonly (readonly [number, number])[] = [
-  [5, 10], [7, 19], [3, 37], [1, 46], [32, 16], [28, 25],
-  [30, 43], [34, 52], [23, 12], [21, 41], [50, 39], [48, 14],
-];
+/** csTimer's `CubieCube.cFacelet` / `eFacelet` — the default for every brand
+ *  that speaks Kociemba numbering. */
+export const DEFAULT_FACELET_TABLES: FaceletTables = {
+  corners: [
+    [8, 9, 20], [6, 18, 38], [0, 36, 47], [2, 45, 11],
+    [29, 26, 15], [27, 44, 24], [33, 53, 42], [35, 17, 51],
+  ],
+  edges: [
+    [5, 10], [7, 19], [3, 37], [1, 46], [32, 16], [28, 25],
+    [30, 43], [34, 52], [23, 12], [21, 41], [50, 39], [48, 14],
+  ],
+};
 
 export interface CubieState {
   /** 8 corners, `ori << 3 | perm`. */
@@ -137,20 +156,25 @@ export function isValidCubieState(st: CubieState): boolean {
 /**
  * Cubie state -> the 54-character facelet string in `URFDLB` face order
  * (csTimer's `toFaceCube()`).
+ *
+ * `tables` is the sticker numbering the *source* of the state uses; pass the
+ * brand's tables when decoding a frame, and nothing at all when the state came
+ * from our own model.
  */
-export function cubieToFacelets(st: CubieState): string {
+export function cubieToFacelets(st: CubieState, tables: FaceletTables = DEFAULT_FACELET_TABLES): string {
+  const { corners, edges } = tables;
   const perm = new Array<number>(54);
   for (let i = 0; i < 54; i++) perm[i] = i;
 
   for (let c = 0; c < 8; c++) {
     const j = st.ca[c] & 0x7;
     const ori = st.ca[c] >> 3;
-    for (let n = 0; n < 3; n++) perm[CORNER_FACELET[c][(n + ori) % 3]] = CORNER_FACELET[j][n];
+    for (let n = 0; n < 3; n++) perm[corners[c][(n + ori) % 3]] = corners[j][n];
   }
   for (let e = 0; e < 12; e++) {
     const j = st.ea[e] >> 1;
     const ori = st.ea[e] & 1;
-    for (let n = 0; n < 2; n++) perm[EDGE_FACELET[e][(n + ori) % 2]] = EDGE_FACELET[j][n];
+    for (let n = 0; n < 2; n++) perm[edges[e][(n + ori) % 2]] = edges[j][n];
   }
 
   let out = '';
