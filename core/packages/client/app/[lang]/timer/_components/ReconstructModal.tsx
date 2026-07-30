@@ -65,6 +65,9 @@ interface Props {
    *  that calls back with that ms value. Caller is responsible for writing
    *  the value into solve.bld.memoMs. When omitted, the hint is read-only. */
   onMemoApply?: (ms: number) => void;
+  /** Load this solve's scramble into the timer. Omitted where there is no timer
+   *  to load it into (the modal is also opened from places that only read). */
+  onUseScramble?: (scramble: string) => void;
 }
 
 const BLD_AUTO_DETECT_EVENTS = new Set<EventId>(['333bld', '444bld', '555bld', '333mbld']);
@@ -127,7 +130,7 @@ function AccordionSection({
   );
 }
 
-export default function ReconstructModal({ solve, isZh, onClose, history, onMemoApply }: Props) {
+export default function ReconstructModal({ solve, isZh, onClose, history, onMemoApply, onUseScramble }: Props) {
   const titleId = useId();
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
 
@@ -347,6 +350,20 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
           )}
         </dl>
 
+        {/* 「再来一次这条」 —— 复盘看完最想做的就是把这把重打一遍。放在数字下面,
+            因为它是读完那六个数之后的动作,不是先于它们的选项。 */}
+        {onUseScramble && (solve.scramble ?? '').trim() !== '' && (
+          <div className="rc-actions">
+            <button
+              type="button"
+              className="rc-action"
+              onClick={() => { onUseScramble(solve.scramble); onClose(); }}
+            >
+              {tr({ zh: '用这条打乱', en: 'Use this scramble' })}
+            </button>
+          </div>
+        )}
+
         {autoMemoMs !== null && (
           <div
             className="reconstruct-auto-memo-hint"
@@ -463,6 +480,7 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
             reference={analysis?.reference ?? null}
             ao12={stageAvgs?.ao12 ?? null}
             walk={walk}
+            moves={moves}
             isZh={isZh}
           />
         )}
