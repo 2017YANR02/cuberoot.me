@@ -53,10 +53,20 @@ beforeAll(() => {
 }, 60_000);
 
 /** What the worker does with `fixupState`'s answer. */
+/**
+ * `solveCube`'s budget is 200 ms of WALL CLOCK and it throws when that expires
+ * before the first solution lands — fine in a browser worker on an idle thread,
+ * but this suite runs alongside 250 other test files and lost that race under
+ * load, taking a whole describe block down from its `beforeAll`. Tests get a
+ * real budget; the production default is untouched, because there the caller
+ * wants an answer inside a turn or not at all.
+ */
+const TEST_SOLVE = { timeoutMs: 10_000 };
+
 function solveFixup(from: CubeFaces, target: CubeFaces): string {
   const st = fixupState(from, target);
   expect(st).not.toBeNull();
-  return formatMoves(scrambleFromState(st!, mt, pt));
+  return formatMoves(scrambleFromState(st!, mt, pt, TEST_SOLVE));
 }
 
 const SCRAMBLE = "R U R' F2 D B2 L' U2 R D' F R2 B2 U' L2 D2 F2 R2 B2";

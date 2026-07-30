@@ -32,7 +32,10 @@ describe('kociemba hardTimeout', () => {
   it('leaves no deadline behind for the next solve', () => {
     // 上一条用例已经把模块级 aborted/deadline 置过位;这次不开 hardTimeout,
     // 必须照常搜到解,否则说明状态漏了。
-    const sol = solveCube(state(), mt, pt);
+    // 显式给足预算:`timeoutMs` 默认 200ms 是墙上时钟,全量跑 250 个测试文件时
+    // 抢不到 CPU 就会在出解前到点、直接抛"no solution found"—— 与本例要验的
+    // "有没有漏状态"无关的偶发红。不开 hardTimeout,验的东西一点没变。
+    const sol = solveCube(state(), mt, pt, { timeoutMs: 10_000 });
     expect(sol.length).toBeGreaterThan(0);
     expect(sol.length).toBeLessThanOrEqual(23);
   });
