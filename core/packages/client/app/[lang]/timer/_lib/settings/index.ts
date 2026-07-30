@@ -196,18 +196,20 @@ export interface TimerSettings {
   bluetoothAutoReady: 'off' | 'still' | 'double-flick' | 'scrambled';
 
   /**
-   * How the live smart-cube mirror (the corner window that appears once a cube
-   * is connected) renders.
-   *   'net' — the unfolded WCA net (default). All six faces flat, which is the
-   *           view you can actually check against the cube in your hands; it is
-   *           also the only one csTimer has.
+   * How the live smart-cube mirror (which takes over the picture under the
+   * digits once a cube is connected) renders.
+   *   '3d'  — the /sim engine's cube, turning with your own, its orientation
+   *           following the cube's gyroscope (default). Only some protocols
+   *           carry orientation at all, so this is a request, not a guarantee:
+   *           with no gyro samples, on a phone, or before the state has been
+   *           anchored at a solved cube, it falls back to the net rather than
+   *           showing a 3D cube that is lying about something. It also turns the
+   *           gyro stream on, which costs the cube some battery.
+   *   'net' — the unfolded WCA net. All six faces flat, which is the view you
+   *           can check face-by-face against the cube in your hands, and the
+   *           only one csTimer has. This is also what every fallback lands on.
    *   '2d'  — the isometric still. Legacy value name, kept so a stored setting
    *           keeps meaning what it meant: three faces visible, three hidden.
-   *   '3d'  — a three.js cube whose orientation follows the cube's gyroscope.
-   *           Only some protocols carry orientation at all, so this is a request,
-   *           not a guarantee: with no gyro samples the view falls back rather
-   *           than showing a frozen 3D cube. Also forces the gyro stream on,
-   *           which costs battery — hence opt-in.
    */
   liveCubeView: '2d' | 'net' | '3d';
 
@@ -316,7 +318,7 @@ export const DEFAULTS: TimerSettings = {
   syncSeedCounter: 0,
   autoBackupEvery: 10,
   bluetoothAutoReady: 'scrambled',
-  liveCubeView: 'net',
+  liveCubeView: '3d',
   keymap: {},
   round: DEFAULT_ROUND_CONFIG,
   inspectionTrigger: 'down',

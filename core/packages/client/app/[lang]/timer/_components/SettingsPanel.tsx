@@ -633,21 +633,21 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
               en: "Once armed, your first turn starts the clock — no space bar. When scrambled = the cube matches the scramble; still 2s = no move for 2s; double-flick = perform U U' U U' to confirm",
             })}</span>
           </Row>
-          <Row label={tr({ zh: '实况魔方小窗', en: 'Live cube window'
+          <Row label={tr({ zh: '实况魔方', en: 'Live cube'
         })}>
             <select
               className="settings-row-control-select"
               value={s.liveCubeView}
               onChange={(e) => updateSettings({ liveCubeView: e.target.value as '2d' | 'net' | '3d' })}
-              aria-label={tr({ zh: '实况魔方小窗渲染方式', en: 'Live cube window rendering' })}
+              aria-label={tr({ zh: '实况魔方渲染方式', en: 'Live cube rendering' })}
             >
+              <option value="3d">{tr({ zh: '三维', en: '3D' })}</option>
               <option value="net">{tr({ zh: '展开图', en: 'Net' })}</option>
               <option value="2d">{tr({ zh: '立体图', en: 'Isometric' })}</option>
-              <option value="3d">{tr({ zh: '三维', en: '3D' })}</option>
             </select>
             <span className="hint">{tr({
-              zh: '连上智能魔方后右下角的小窗。展开图六个面都看得见,能逐面和手里的魔方对；立体图只画三个面；三维跟随魔方陀螺仪转动,仅三阶、且魔方本身推送姿态时生效,否则自动退回',
-              en: 'The corner window shown once a cube is connected. The net shows all six faces, so you can check it face by face against the cube in your hands; the isometric still draws only three. 3D follows the cube’s gyroscope — 3x3 only, and only when the cube actually reports orientation, otherwise it falls back',
+              zh: '连上智能魔方后,时间下方那张图会从打乱预览换成你手里这颗魔方。三维会跟着魔方陀螺仪一起转,仅三阶,且需要魔方推送姿态、状态已从复原态起算;手机、拿不到姿态时自动退回展开图。展开图六个面都看得见,能逐面和手里的魔方对;立体图只画三个面',
+              en: 'Once a cube is connected, the picture under the time switches from the scramble preview to the cube in your hands. 3D turns with the cube via its gyroscope — 3x3 only, and only while the cube reports orientation and its state is anchored at solved; phones and cubes with no orientation fall back to the net. The net shows all six faces so you can check them one by one; the isometric draws only three',
             })}</span>
           </Row>
           <Row label={tr({ zh: '隐藏运行中的时间', en: 'Hide time while running'

@@ -27,10 +27,13 @@
  *     rotation readable. `scene.rotation` keeps the engine's fixed iso viewer
  *     tilt; the lights stay put; only the cube turns.
  *
- * Frame budget: this renders in a corner overlay while the user is timing, so
+ * Frame budget: this renders on the timing surface while the user is timing, so
  * a cube sitting still on the table must not burn 60 fps of GPU. The frame hook
  * marks the world dirty only when the smoothed quaternion actually moved past
  * ~1e-4 rad; a resting cube settles and the loop goes quiet within a few frames.
+ *
+ * Size comes from the host box, which `mountSimWorld` measures with a
+ * ResizeObserver — see `.timer-live-cube-3d` in timer.css.
  *
  * The orientation math (calibration / sensor basis / mirror / smoothing) is
  * pure and lives in ../_lib/bluetooth/orientation.ts — read its header before
@@ -68,8 +71,6 @@ export interface LiveCubeGyroViewProps {
    * and for tests, where the re-render cost is irrelevant.
    */
   quatRef?: { current: Quat | null };
-  /** Rendered edge, px. */
-  size?: number;
   /** Bump to capture the current sample as the upright reference. */
   calibrateToken?: number;
   /** Per-brand sensor axis remap. See orientation.ts — all brands currently
@@ -87,7 +88,6 @@ export default function LiveCubeGyroView(props: LiveCubeGyroViewProps): JSX.Elem
     moves,
     quat,
     quatRef,
-    size = 140,
     calibrateToken = 0,
     sensorBasis = 'identity',
     mirror = false,
@@ -217,7 +217,6 @@ export default function LiveCubeGyroView(props: LiveCubeGyroViewProps): JSX.Elem
     <div
       ref={hostRef}
       className="timer-live-cube-3d"
-      style={{ width: size, height: size, lineHeight: 0 }}
       role="img"
       aria-label={tr({
         zh: '智能魔方实时三维状态（跟随陀螺仪朝向）',
