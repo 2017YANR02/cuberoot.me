@@ -33,7 +33,7 @@ description: "Use when user wants to fill in /code/architecture 第 11 节的日
 5. 写日历 entry: 中文 1 行 + 英文 1 行, ` + ` 串多主题, 写组件名 (`/recon`, `GlobePage` 等), 中文标点, 无 emoji, 无句号收尾, 厂商身份 → "自有云服务器"。**禁子编号** (`(1)..(8)`) 和嵌套括号细节 (行数 / commit hash / 子组件清单) — 那些进 TIMELINE expand。日历一句话只列**主题词**, 哪怕一天 8 件也保持"+串"扁平。看到 entry 长得像段落 = 改
 6. 审 TIMELINE: 凡新 LandingPage 卡片 / 新顶层路由 / 新重要 sub-route / 框架换栈 / 整片基础设施变更 → 都加一条。新加前先 `grep -nE "id:|href:" LandingPage.tsx` + `grep -nE "path=" App.tsx` 防漏
 7. 已有 entry 太单薄 (placeholder 揭出隐藏改动) → **改写**而非追加
-8. 给用户**预览** (日历 entry 三列表格 + TIMELINE 候选条目单独一段), 同意再写
+8. **直接写入两个文件, 不发预览等用户点头**
 9. 不主动 commit / push, 等用户
 
 ## TIMELINE schema

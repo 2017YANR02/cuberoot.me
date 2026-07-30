@@ -240,6 +240,258 @@ export interface TLEntry {
 }
 export const TIMELINE: TLEntry[] = [
   {
+    date: '2026-07-29',
+    tag: 'feature',
+    zh: {
+      title: '/stroop 色词干扰测试上线',
+      body: '新增 /stroop：屏幕给出一个颜色词，要求按它实际的墨色而非词义作答，用来练识别与反应的抗干扰能力。',
+      expand: '卡片只用魔方的六种配色，计时与判定复用速拧计时器的引擎。',
+    },
+    en: {
+      title: 'A /stroop interference test launches',
+      body: 'The new /stroop page shows a colour word and asks you to answer by the ink it is printed in rather than the word itself, training recognition under interference.',
+      expand: 'Cards are inked only in the six cube colours, and timing and judging reuse the speedcubing timer engine.',
+    }
+},
+  {
+    date: '2026-07-26 ~ 07-28',
+    tag: 'feature',
+    zh: {
+      title: '/predict 预判训练器上线',
+      body: '新增 /predict：给出打乱和一段公式，问你执行后某个位置会是什么颜色，训练盲拧和 F2L 的预判能力。可以自己输入公式，答完能在三维魔方上回放，点任一步骤即可跳到那一步。',
+      expand: '未提问的格子会按阶段遮罩调暗，只留下问题涉及的贴纸保持原色。',
+    },
+    en: {
+      title: 'The /predict lookahead trainer launches',
+      body: 'The new /predict page gives you a scramble and an algorithm and asks what colour a given spot ends up, training the lookahead used in blindfolded solving and F2L. You can type your own algorithm, replay the answer on a 3D cube, and click any move to scrub to that step.',
+      expand: 'Facelets the question does not name are dimmed by the stage mask, leaving only the relevant stickers at full colour.',
+    }
+},
+  {
+    date: '2026-07-26',
+    tag: 'feature',
+    zh: {
+      title: '全站悬浮节拍器，桌宠一键唤出',
+      body: '节拍器从计时器内部搬出来，成为全站悬浮工具，任何页面都能从桌宠打开，切走再切回来也不会静音。',
+      expand: '上限提到每秒 30 拍，够练最快的手法节奏。',
+    },
+    en: {
+      title: 'A site-wide floating metronome, opened from the desk pet',
+      body: 'The metronome moved out of the timer into a floating site-wide tool that any page can open from the desk pet, and it keeps ticking after you switch away and back.',
+      expand: 'Its ceiling was raised to 30 ticks per second, fast enough for the quickest fingertrick drills.',
+    }
+},
+  {
+    date: '2026-07-26 ~ 07-27',
+    tag: 'feature',
+    zh: {
+      title: '十字与 XCross 精确穷举分布上线',
+      body: '打乱难度库补上十字与 XCross 的精确步数分布：不再抽样估计，而是穷举全部状态算出来，并单列出最难的一批状态供练习。',
+      expand: '与流传的表格逐格核对后，纠正了伪十字一栏的几个错误数字。',
+    },
+    en: {
+      title: 'Exhaustive Cross and XCross distributions launch',
+      body: 'The scramble-difficulty library gained exact move-count distributions for Cross and XCross — computed by exhausting every state rather than sampled — plus a listing of the hardest states to practise on.',
+      expand: 'Checking them cell by cell against the circulated spreadsheet corrected several wrong numbers in its pseudo-cross column.',
+    }
+},
+  {
+    date: '2026-07-24 ~ 07-26',
+    tag: 'feature',
+    zh: {
+      title: '涂色求解扩展到二阶、斜转、金字塔与 SQ1',
+      body: '求解器的“照着实物涂色”入口从三阶推广到二阶、斜转、金字塔与 SQ1，并默认换成可拖动的三维模型，比平面展开图更好对照手里的魔方。',
+      expand: '四种三维板共用同一套外壳与手势，转动惯性和自动旋转与 /sim 一致。',
+    },
+    en: {
+      title: 'Paint-a-state solving extends to 2x2, Skewb, Pyraminx and Square-1',
+      body: 'The solver’s "paint what you are holding" entry expanded from 3x3 to 2x2, Skewb, Pyraminx and Square-1, and now defaults to a draggable 3D model that is easier to match against the puzzle in your hands than a flat net.',
+      expand: 'All four 3D boards share one shell and one gesture layer, with the same inertia and auto-rotate as /sim.',
+    }
+},
+  {
+    date: '2026-07-27 ~ 07-28',
+    tag: 'infra',
+    zh: {
+      title: '全站加载优化与页面标题补齐',
+      body: '一轮加载审计：字体与第三方脚本改为自托管，对战视图和弹窗改按需加载，公式库缩略图不再逐张请求而由页面本地绘制；同时给每个路由补上标题与描述，并由测试卡住新增路由。',
+      expand: '求解器的十字提示表从一次性 30MB 改为按需下载并在空闲时预取，进度可见。',
+    },
+    en: {
+      title: 'A site-wide load pass, and a title for every page',
+      body: 'A load audit: fonts and vendor scripts became self-hosted, battle views and modals load on demand, and algorithm-library thumbnails are drawn by the page instead of fetched one by one. Every route also gained a title and description, enforced by a test that fails on any new route without one.',
+      expand: 'The solver’s cross-hint tables dropped from a 30MB upfront payload to an on-demand download with visible progress, prefetched while idle.',
+    }
+},
+  {
+    date: '2026-07-23 ~ 07-28',
+    tag: 'feature',
+    zh: {
+      title: 'LSLL 公式库上线，全部 583,284 个状态附最优解',
+      body: '新增 LSLL（最后一个角块槽 + 顶层一起解）公式库与配套数学页，可按一步解和两步解两种路线浏览；批量求解管线跑完全部 583,284 个状态，每个案例页都给出最优解长度与解法。',
+      expand: '训练器按“轮”推进，一轮 302 个案例、共 494 轮，进度按范围分别记录，才能真正把这个量级刷完。',
+    },
+    en: {
+      title: 'An LSLL library launches, with optimal solutions for all 583,284 states',
+      body: 'A new library for LSLL (last slot and last layer together) launched with a companion maths page, browsable as one-look or two-look routes; a batch pipeline solved all 583,284 states, so every case page shows its optimal length and solution.',
+      expand: 'The trainer works in rounds — 302 cases each, 494 rounds in all — recording progress per scope so a set this size can actually be finished.',
+    }
+},
+  {
+    date: '2026-07-25',
+    tag: 'feature',
+    zh: {
+      title: '魔表最优求解器与交互式表盘上线',
+      body: '新增魔表求解页：可在二维表盘上直接拨出手里的状态，求解器用纯 TypeScript 实现，给出的是可证明最优的解法，不是启发式近似。',
+      expand: '同期接入 WCA 真题语料，算出魔表打乱的难度分布。',
+    },
+    en: {
+      title: 'An optimal Rubik’s Clock solver and board launch',
+      body: 'A new Clock page lets you dial in the state you are holding on an interactive 2D board; the solver is written in pure TypeScript and returns a provably optimal solution rather than a heuristic approximation.',
+      expand: 'The same work fed the WCA scramble corpus through it to produce a difficulty distribution for Clock.',
+    }
+},
+  {
+    date: '2026-07-25',
+    tag: 'feature',
+    zh: {
+      title: '日掩纪录榜上线，纪录按规则 9i2 判定',
+      body: '新增日掩纪录榜：收录那些当天成绩本可成纪录、却被同日更快成绩掩过而未被认定的项目。比赛结果、首页快讯与纪录浮层统一按规则 9i2 判定同日成绩。',
+      expand: '被掩的成绩单列出选手、成绩与所在比赛三列，同一天内顺序稳定。',
+    },
+    en: {
+      title: 'A keatoned-records board launches, adjudicated by Regulation 9i2',
+      body: 'A new leaderboard collects results that would have been records but were beaten by a faster same-day result and so never counted. Competition results, the homepage feed and the rank overlay all apply Regulation 9i2 to same-day results.',
+      expand: 'The occulting result is broken out into its own person, result and competition columns, with a stable order within a single date.',
+    }
+},
+  {
+    date: '2026-07-24',
+    tag: 'feature',
+    zh: {
+      title: '计时器接入蓝牙智能魔方与智能计时器',
+      body: '速拧计时器可以连蓝牙智能魔方与 MoYu32 智能计时器，还能用手机陀螺仪把魔方姿态映射到三维视图；同时补上 DNS、多盲与最少步成绩录入、模拟一整轮比赛和按键自定义。',
+      expand: '蓝牙驱动逐字节对照 csTimer 做了一致性测试，保证同一颗魔方两边解出的状态相同。',
+    },
+    en: {
+      title: 'The timer connects Bluetooth smart cubes and smart timers',
+      body: 'The speedcubing timer can pair with Bluetooth smart cubes and MoYu32 smart timers, and can map a phone’s gyroscope onto a 3D view of the cube. It also gained DNS / multi-blind / fewest-moves result entry, whole-round simulation and rebindable keys.',
+      expand: 'The Bluetooth drivers are checked byte for byte against csTimer, so the same cube decodes to the same state on both.',
+    }
+},
+  {
+    date: '2026-07-24',
+    tag: 'feature',
+    zh: {
+      title: '公式训练器加间隔重复记忆系统',
+      body: '训练器按记忆强度安排复习：练熟的公式间隔拉长，生疏的优先回来，进度可按公式集或整体重置，也能跨设备同步。',
+      expand: '通过一次即默认记为已掌握，标记只保留“已掌握”和“生疏”两档。',
+    },
+    en: {
+      title: 'The algorithm trainer gains spaced repetition',
+      body: 'The trainer now schedules review by memory strength: algorithms you know come back less often, shaky ones come back first, and progress can be reset per set or entirely and syncs across devices.',
+      expand: 'Passing a case marks it mastered by default, leaving just two marks — mastered and shaky.',
+    }
+},
+  {
+    date: '2026-07-24',
+    tag: 'feature',
+    zh: {
+      title: '图案搜索与对称类型浏览上线',
+      body: '新增 /scramble/pattern/search：按 Cube Explorer 的图案编辑器复刻，指定想要的花样即可求出到达它的打乱；同时新增 /scramble/symmetry，按对称类型浏览状态。',
+      expand: '图案范例可由管理员在页面上直接增删，不必改代码。',
+    },
+    en: {
+      title: 'Pattern search and a symmetry explorer launch',
+      body: '/scramble/pattern/search ports Cube Explorer’s pattern editor: describe the picture you want and it finds a scramble that reaches it. /scramble/symmetry launched alongside it to browse states by symmetry type.',
+      expand: 'The pattern examples are editable in-page by an admin, with no code change needed.',
+    }
+},
+  {
+    date: '2026-07-23',
+    tag: 'feature',
+    zh: {
+      title: '跨设备在线对战房间上线',
+      body: '计时器对战从同机双人扩展为在线房间：不同设备各自加入，房主统一开始，每人可选自己的项目，玩家条始终可见。后续支持邀请链接直接进房和房内改名。',
+      expand: '房间用 WCA 身份显示玩家，重名会被拒绝，未登录也能加入。',
+    },
+    en: {
+      title: 'Cross-device online battle rooms launch',
+      body: 'Timer battles grew from two players on one machine into online rooms: devices join separately, the host starts everyone together, each player picks their own event, and the player bar stays visible. Joining straight from an invite link and renaming in the room followed.',
+      expand: 'Rooms show players by WCA identity and reject duplicate names, while logged-out players can still join.',
+    }
+},
+  {
+    date: '2026-07-23',
+    tag: 'feature',
+    zh: {
+      title: '全站社交分享卡片上线',
+      body: '复盘、比赛、选手等页面分享到社交平台时会带上标题、说明和预览图，不再是一条光秃秃的链接。',
+      expand: '同期给复盘加了公开、不公开、私密三档可见性。',
+    },
+    en: {
+      title: 'Site-wide social share cards launch',
+      body: 'Sharing a recon, competition or person page now carries a title, description and preview image instead of a bare link.',
+      expand: 'Recons gained public, unlisted and private visibility in the same pass.',
+    }
+},
+  {
+    date: '2026-07-21 ~ 07-22',
+    tag: 'migration',
+    zh: {
+      title: '/sim 伴图改由自有引擎矢量导出',
+      body: '虚拟魔方旁边的示意图不再交给外部渲染库，改由本站三维引擎直接导出矢量图，展开图、俯视图、半透明图、贴纸遮罩与箭头都在同一套几何里生成，和屏幕上转到的角度完全一致。',
+      expand: '导出走解析式消隐，画面顺序精确、无锯齿；SQ1 的贴纸遮罩是旧渲染库本来做不到的。',
+    },
+    en: {
+      title: '/sim companion images move onto our own vector export',
+      body: 'The diagram beside the virtual cube is no longer handed to an outside rendering library — our 3D engine exports the vector image directly, generating nets, plan views, translucent views, sticker masks and arrows from one geometry that matches the angle on screen exactly.',
+      expand: 'The export uses analytic hidden-surface removal, so ordering is exact and edges are clean; masking Square-1 stickers is something the old library could never do.',
+    }
+},
+  {
+    date: '2026-07-20',
+    tag: 'feature',
+    zh: {
+      title: '步数系数计算器与批量求解器上线',
+      body: '新增 /scramble/mcc，按步数系数衡量一条公式的执行难度，页内说明评分模型；同时新增批量求解与子步求解两页，可一次跑一批打乱。',
+      expand: '账户管理同期合并为独立的 /account 页，登录与账号设置不再是弹窗。',
+    },
+    en: {
+      title: 'A movecount-coefficient calculator and batch solvers launch',
+      body: '/scramble/mcc scores how hard an algorithm is to execute by movecount coefficient and explains the model in-page; a batch solver and a subsolver launched alongside it to run a whole set of scrambles at once.',
+      expand: 'Account management consolidated into a standalone /account page in the same pass, so signing in and account settings are no longer modals.',
+    }
+},
+  {
+    date: '2026-07-19',
+    tag: 'feature',
+    zh: {
+      title: '公式训练器加在线协作房间',
+      body: '训练器复习模式支持多人同房：一条复习队列在房间内共享，谁做完哪个案例其他人就不会重复，一轮结束统一提示。可用房间码或二维码邀请。',
+      expand: '队列由服务端原子分发，同时点同一个案例也不会重复发题。',
+    },
+    en: {
+      title: 'The algorithm trainer gains online co-op rooms',
+      body: 'Recap mode can now be shared by several people in one room: they work through a single review queue, cases claimed by one person are not repeated for the others, and the round ends for everyone together. Rooms are joined by code or QR.',
+      expand: 'The queue is handed out atomically by the server, so simultaneous taps cannot serve the same case twice.',
+    }
+},
+  {
+    date: '2026-07-17',
+    tag: 'feature',
+    zh: {
+      title: '跨公式集学习进度总览上线',
+      body: '新增 /alg/progress，把各公式集的已掌握、生疏与未学数量汇总在一页，也会显示在自己的主页上；同期新增 /math/gcd-sequence 与 /code 里 WCA 官网、CubingChina 两篇项目介绍。',
+      expand: '总览可以下钻到具体是哪些公式，并直接开始针对生疏项的训练。',
+    },
+    en: {
+      title: 'A cross-set learning-progress overview launches',
+      body: 'The new /alg/progress page gathers mastered, shaky and unlearned counts across every algorithm set into one view, also surfaced on your own hub. /math/gcd-sequence launched alongside it, as did profiles of the WCA website and CubingChina under /code.',
+      expand: 'The overview drills down to the individual algorithms behind each count and starts a session on the shaky ones.',
+    }
+},
+  {
     date: '2026-07-16',
     tag: 'feature',
     zh: {

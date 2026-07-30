@@ -748,5 +748,70 @@
     "date": "2026-07-16",
     "zh": "/sim 加阶段染色遮罩与齿轮魔方模拟器 + /icon 图标画廊上线 + 计时器数字字体可选 + /math/probability 概率页上线",
     "en": "/sim gains stage-stickering masks and a Gear Cube simulator + /icon icon gallery launches + timer gains selectable big-digit fonts + /math/probability page launches"
+  },
+  {
+    "date": "2026-07-17",
+    "zh": "/alg/progress 跨公式集学习进度总览上线 + /code 新增 WCA 官网与 CubingChina 项目介绍 + /math/gcd-sequence 上线 + /sim 齿轮魔方按真实齿轮啮合重建 + 计时器加地区排名徽章开关",
+    "en": "A cross-set learning-progress overview launches at /alg/progress + /code adds profiles for the WCA website and CubingChina + /math/gcd-sequence launches + /sim rebuilds the Gear Cube around real tooth meshing + the timer gains a toggle for the regional-rank badge"
+  },
+  {
+    "date": "2026-07-18",
+    "zh": "世界与国家排名叠加 WCA Live 实时纪录，修正过期名次 + 轮次名与含转义字符的赛名中文化 + 术语表支持链接直达词条 + 首页右上角加语言切换",
+    "en": "Recent WCA Live records overlay onto world and national rank so stale placings are corrected + round names and entity-escaped competition names are translated + the glossary supports deep-linking to a term + the landing page gains a language toggle beside the account chip"
+  },
+  {
+    "date": "2026-07-19",
+    "zh": "公式训练器加在线协作房间，多人共享一条复习队列 + 复盘支持斜转与金字塔 + 播放条统一为可拖动进度条与全屏 + 计时器打乱来源移入顶栏并显示稀有度余量 + 阶段求解器改用贴纸颜色标注 F2L 槽位",
+    "en": "The algorithm trainer gains online co-op rooms sharing one recap queue + recon plays Skewb and Pyraminx solves + one Twizzle-style playback bar with scrubber and fullscreen is shared site-wide + the timer moves its scramble source into the topbar and shows how many rare scrambles remain + the stage solver labels F2L slots by sticker colour"
+  },
+  {
+    "date": "2026-07-20",
+    "zh": "/scramble/mcc 步数系数计算器与批量求解、子步求解上线 + 账户合并为独立 /account 页 + 二阶打乱改用 WCA 官方生成器 + /sim 加视角控制盘 + 全站滑块与加载动画统一",
+    "en": "A movecount-coefficient calculator lands at /scramble/mcc alongside a batch solver and a subsolver + account management consolidates into a standalone /account page + 2x2 scrambling switches to the official WCA generator + /sim gains a view-angle orbit pad + sliders and spinners are unified site-wide"
+  },
+  {
+    "date": "2026-07-21",
+    "zh": "/sim 伴图改由本站引擎矢量导出，展开图、俯视图、半透明图与遮罩箭头不再依赖外部渲染器 + 术语表支持双语与单语切换 + 公式案例详情页上线",
+    "en": "/sim companion images are now vector-exported by our own engine — nets, plan views, translucent views, masks and arrows no longer depend on an outside renderer + the glossary offers bilingual and single-language display modes + per-case algorithm detail pages launch"
+  },
+  {
+    "date": "2026-07-22",
+    "zh": "/sim 伴图与 visualcube 并排对照，逐项对齐圆角、描边、透明壳与曲线箭头 + 近期打乱加按十字自由度的稀有度视图 + 消歧同拼音异地中国城市",
+    "en": "The /sim companion sits side by side with visualcube and matches it item by item on corner rounding, strokes, translucent shells and curved arrows + recent scrambles gain a rarity view per cross neutrality + Chinese cities sharing a pinyin spelling are disambiguated"
+  },
+  {
+    "date": "2026-07-23",
+    "zh": "计时器加跨设备在线对战房间，含房主、同步开始与 WCA 身份 + 全站社交分享卡片上线 + 复盘加公开、不公开、私密三档可见性 + /alg/lsll 与 /math/lsll 上线",
+    "en": "The timer gains cross-device online battle rooms with a host, synchronized starts and WCA identity + site-wide social share cards launch + recons gain public, unlisted and private visibility + /alg/lsll and /math/lsll launch"
+  },
+  {
+    "date": "2026-07-24",
+    "zh": "计时器接入 MoYu32 智能计时器、蓝牙智能魔方与陀螺仪 3D + 训练器加间隔重复记忆系统 + /scramble/pattern/search 图案搜索与 /scramble/symmetry 对称类型浏览上线 + 二阶涂色求解上线",
+    "en": "The timer connects MoYu32 smart timers, Bluetooth smart cubes and gyroscope 3D + the trainer gains a spaced-repetition memory system + /scramble/pattern/search and /scramble/symmetry launch + paint-a-state solving arrives for 2x2"
+  },
+  {
+    "date": "2026-07-25",
+    "zh": "魔表最优求解器与交互式二维表盘上线 + 日掩纪录榜上线 + 选手页加全轮次平均 AoXR 列 + 支持自助注销账号 + 比赛纪录按规则 9i2 判定同日成绩",
+    "en": "A provably optimal Rubik's Clock solver and an interactive 2D board launch + a keatoned-records leaderboard launches + person pages gain an AoXR column averaging every round + users can delete their own account + competition records apply Regulation 9i2 to same-day results"
+  },
+  {
+    "date": "2026-07-26",
+    "zh": "/predict 预判训练器上线 + 桌宠可唤出全站悬浮节拍器 + 十字与 XCross 精确穷举分布上线 + 斜转、金字塔、SQ1 三维涂色板上线 + 魔表加入 /sim + 公式库镜像公式互通",
+    "en": "The /predict lookahead trainer launches + a site-wide floating metronome opens from the desk pet + exhaustive Cross and XCross depth distributions launch + 3D paint boards arrive for Skewb, Pyraminx and Square-1 + the Rubik's Clock joins /sim + the algorithm library links mirrored cases to each other"
+  },
+  {
+    "date": "2026-07-27",
+    "zh": "LSLL 最优解管线覆盖全部 583,284 个状态并落到案例页 + /math 补上 Roux、SQ1 形状与跳过概率推导 + 打乱统计接入 cube20.org 二十步语料 + 十字提示表由 30MB 改为按需下载 + 全站页面标题补齐",
+    "en": "The LSLL optimal-solve pipeline covers all 583,284 states and carries the solutions onto the case pages + /math adds derivations for Roux, Square-1 shapes and skip probabilities + scramble statistics absorb the cube20.org twenty-move corpus + cross hints drop from a 30MB table to an on-demand download + every page gets a title"
+  },
+  {
+    "date": "2026-07-28",
+    "zh": "全站加载优化：自托管字体与脚本、对战视图与弹窗按需加载、公式库缩略图改本地绘制 + 在线对战支持邀请链接直接加入与房内改名 + /predict 支持点步骤回看",
+    "en": "Site-wide load work: fonts and vendor scripts are self-hosted, battle views and modals load on demand, and algorithm-library thumbnails are drawn locally instead of fetched + online battle supports joining straight from an invite link and renaming in the room + /predict lets you click a move to scrub the board"
+  },
+  {
+    "date": "2026-07-29",
+    "zh": "/stroop 色词干扰测试上线 + 训练器历史面板加案例图与公式，可标记当前案例 + 协作房间点击不再等待网络往返 + 节拍器上限提到 30 TPS",
+    "en": "A /stroop colour-word interference test launches + the trainer history panel shows a case picture and its algorithm and lets you mark the case you are on + co-op room taps no longer wait on a network round trip + the metronome ceiling rises to 30 TPS"
   }
 ]
