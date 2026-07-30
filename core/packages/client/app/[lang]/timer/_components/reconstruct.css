@@ -195,6 +195,14 @@
   );
 }
 
+/* Solve-level 观察/拿起/识别/执行/放下 summary under the stage bar. */
+.reconstruct-stage-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted-foreground);
+  margin: -2px 0 8px;
+}
+
 .reconstruct-stage-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -239,6 +247,13 @@
   font-size: 10px;
   color: var(--muted-foreground);
   margin-top: 2px;
+  font-family: var(--font-mono);
+}
+/* Per-stage 识别/执行 split (or「跳过」for a skipped stage). */
+.reconstruct-stage-recexec {
+  font-size: 10px;
+  color: var(--muted-foreground);
+  margin-top: 1px;
   font-family: var(--font-mono);
 }
 .reconstruct-stage-deltas {

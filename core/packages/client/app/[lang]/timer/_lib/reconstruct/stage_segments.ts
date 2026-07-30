@@ -49,6 +49,16 @@ export interface StageSegments {
   f2lDoneMs: number | null;
   ollDoneMs: number | null;
   solvedMs: number | null;
+  /** Index into `moves` of the move that FIRST completed each stage.
+   *  Two stages sharing an index means the later one was skipped (an
+   *  XCross jumps scrambled → f2l in one move; an OLL skip lands f2l and
+   *  oll together). Optional because solves persisted before these fields
+   *  existed carry a StageSegments without them — recompute via
+   *  `computeStageSegments` when you need indices (step_metrics does). */
+  crossEndIdx?: number | null;
+  f2lEndIdx?: number | null;
+  ollEndIdx?: number | null;
+  solvedEndIdx?: number | null;
   /** Per-stage durations (ms); null when the stage was not reached. */
   crossMs: number | null;
   f2lMs: number | null;
@@ -248,6 +258,10 @@ export function computeStageSegments(
   let f2lDoneMs: number | null = null;
   let ollDoneMs: number | null = null;
   let solvedMs: number | null = null;
+  let crossEndIdx: number | null = null;
+  let f2lEndIdx: number | null = null;
+  let ollEndIdx: number | null = null;
+  let solvedEndIdx: number | null = null;
 
   // HTM counts per stage. We accumulate into the *current* stage at the time
   // the move is executed (the move that *completes* a stage counts toward the
@@ -265,7 +279,8 @@ export function computeStageSegments(
   let f2lDoneState: CubeFaces | null = null;
   let ollDoneState: CubeFaces | null = null;
 
-  for (const mv of moves) {
+  for (let i = 0; i < moves.length; i++) {
+    const mv = moves[i];
     const wasFace = isFaceTurnToken(mv.m);
     state = applyOneToken(state, mv.m);
     const stage = detectCfopStage(state);
@@ -286,17 +301,23 @@ export function computeStageSegments(
     const newRank = stageRank(stage);
     if (newRank >= stageRank('cross') && crossDoneMs === null) {
       crossDoneMs = mv.ts;
+      crossEndIdx = i;
       crossDoneState = cloneFaces(state);
     }
     if (newRank >= stageRank('f2l')   && f2lDoneMs   === null) {
       f2lDoneMs   = mv.ts;
+      f2lEndIdx   = i;
       f2lDoneState = cloneFaces(state);
     }
     if (newRank >= stageRank('oll')   && ollDoneMs   === null) {
       ollDoneMs   = mv.ts;
+      ollEndIdx   = i;
       ollDoneState = cloneFaces(state);
     }
-    if (newRank >= stageRank('pll')   && solvedMs    === null) solvedMs    = mv.ts;
+    if (newRank >= stageRank('pll')   && solvedMs    === null) {
+      solvedMs     = mv.ts;
+      solvedEndIdx = i;
+    }
 
     if (newRank > stageRank(lastReached)) {
       lastReached = stage;
@@ -335,6 +356,10 @@ export function computeStageSegments(
     f2lDoneMs,
     ollDoneMs,
     solvedMs,
+    crossEndIdx,
+    f2lEndIdx,
+    ollEndIdx,
+    solvedEndIdx,
     crossMs,
     f2lMs,
     ollMs,

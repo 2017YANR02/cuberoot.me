@@ -681,6 +681,9 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   const caseIdAtStartRef = useRef<string | null>(null);
   const movesRef = useRef<Array<{ m: string; ts: number }>>([]);
   const solveStartTsRef = useRef<number>(0);
+  /** The smart cube connected when the attempt STARTED. Snapshotted with the
+   *  other at-start refs so a mid-solve disconnect can't erase who solved it. */
+  const deviceAtStartRef = useRef<{ model: string; name: string } | null>(null);
 
   const isNxNEvent = ['222','333','444','555','666','777','333oh','333fm'].includes(event);
   const multiStageActive = settings.multiStage && isNxNEvent;
@@ -708,6 +711,10 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     if (bld) solve.bld = bld;
     if (caseIdAtStartRef.current) solve.caseId = caseIdAtStartRef.current;
     if (movesRef.current.length > 0) solve.moves = movesRef.current.slice();
+    // Inspection actually used (0 when inspection was off / never entered).
+    if (res.inspectionMs > 0) solve.inspectionMs = Math.round(res.inspectionMs);
+    // Which cube solved it — only meaningful when the solve has a move stream.
+    if (solve.moves && deviceAtStartRef.current) solve.device = deviceAtStartRef.current;
     setLastPenalty(res.autoPenalty);
 
     // 破纪录(单次/Ao5/Ao12)时桌宠开心一下;不再弹横幅,纪录改在统计面板用 PR 标体现。
@@ -758,6 +765,10 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       eventAtStartRef.current = event;
       caseIdAtStartRef.current = TRAINER_KINDS.has(event)
         ? getLastPickedCase(event as TrainerKind)
+        : null;
+      const bt = bluetoothCubeRef.current?.status;
+      deviceAtStartRef.current = bt?.connected
+        ? { model: bt.brand, name: bt.deviceName }
         : null;
     } else if (!cubeStartedRef.current) {
       movesRef.current = [];
@@ -2327,7 +2338,11 @@ export default function SoloView({ playersControl }: SoloViewProps) {
         const isLatest = liveIdx >= 0 && liveIdx === solves.length - 1;
         return (
           <SolveModal
-            key={modalSolve.s.id}
+            /* Keyed to remount when switching solves — but NAMESPACED, because
+               the ReconstructModal below is a sibling keyed by the same solve
+               id, and opening it from this modal would otherwise give two
+               siblings the same key (React then reuses one for the other). */
+            key={`detail-${modalSolve.s.id}`}
             solve={modalSolve.s}
             index={displayIdx}
             isZh={isZh}
@@ -2356,7 +2371,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       })()}
 
       {reconstructSolve && (
-        <ReconstructModal key={reconstructSolve.id} solve={reconstructSolve} isZh={isZh} onClose={() => setReconstructSolve(null)} history={byEvent[reconstructSolve.event] ?? []} />
+        <ReconstructModal key={`recon-${reconstructSolve.id}`} solve={reconstructSolve} isZh={isZh} onClose={() => setReconstructSolve(null)} history={byEvent[reconstructSolve.event] ?? []} />
       )}
 
       {settingsOpen && <SettingsPanel isZh={isZh} event={event} tools={toolsList} onClose={() => setSettingsOpen(false)} onDataReplaced={() => setByEvent(loadAll())} />}
