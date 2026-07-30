@@ -15,7 +15,7 @@
  * 过滤光 —— 页面全空。
  */
 import { type AlgCase } from '@cuberoot/shared';
-import { primaryCaseName } from '@/lib/alg_case_display';
+import { ollCommentName, primaryCaseName } from '@/lib/alg_case_display';
 
 type CaseRef = { id?: number | null; name?: string; subgroup?: string };
 
@@ -26,8 +26,21 @@ type CaseRef = { id?: number | null; name?: string; subgroup?: string };
  *
  * `+` / `-` **保留**(实测本站 nginx+Vercel 全链路不会把 path 里的 `+` 转成空格),这样
  * 短链和社区记号一致、最好认。空格→`-`,其余非 `[a-z0-9+-]` 也→`-`。
+ *
+ * 首尾的 `-` 只在**它是替换出来的**时候才削掉。`L-` 和 `L` 是两张不同的 OLL,一律削尾就
+ * 撞成同一个 `l`;而 `C T'` 里那个 `-` 是撇号变来的分隔符,留着没意义。看原串的首尾字符
+ * 就能分辨这两种。老链接靠 {@link buildCaseSlugMap} 的别名兜底,不会因此断。
  */
 export function slugifyCasePart(s: string): string {
+  const src = s.trim().toLowerCase();
+  let out = src.replace(/\s+/g, '-').replace(/[^a-z0-9+-]+/g, '-');
+  if (!src.startsWith('-')) out = out.replace(/^-+/, '');
+  if (!src.endsWith('-')) out = out.replace(/-+$/, '');
+  return out;
+}
+
+/** 削掉首尾 `-` 的老规则。只用来给改名前发出去的链接留别名。 */
+function legacySlugifyCasePart(s: string): string {
   return s.trim().toLowerCase()
     .replace(/\s+/g, '-')
     .replace(/[^a-z0-9+-]+/g, '-')
@@ -37,9 +50,14 @@ export function slugifyCasePart(s: string): string {
 /** mark 的原始素材(剥 `SET-` 前缀);非 meta case 用 case 名。 */
 function caseSlugSource(set: string, c: AlgCase): string {
   const mark = c.meta?.ollcp;
-  if (!mark) return c.name;
-  const prefix = `${set.toUpperCase()}-`;
-  return mark.startsWith(prefix) ? mark.slice(prefix.length) : mark;
+  if (mark) {
+    const prefix = `${set.toUpperCase()}-`;
+    return mark.startsWith(prefix) ? mark.slice(prefix.length) : mark;
+  }
+  // OLL 的 DB 名是纯编号(`OLL 1`),但社区、卡面、这套页面自己写的都是 `DH (1)`。
+  // 拿 `DH` 做短链才认得出是哪张;`oll-1` 这种老链接由 findCaseByHash 按 case 名兜住。
+  if (set === 'oll') return ollCommentName(c.name);
+  return c.name;
 }
 
 /** 一张 case 的**基础** slug(未去重)。见 {@link buildCaseSlugMap} 做全集内唯一化。 */
@@ -63,6 +81,10 @@ export interface CaseSlugMap {
  *
  * 生成端(列表卡片)和落地端(详情页)都从**同一份 set 数据**(同一 API、同序)算这张表,
  * 所以两边得到完全一致的 slug —— 是个确定性双射,不用把 slug 存进 DB。
+ *
+ * 规范 slug 全部落定后再补一轮**老 slug 别名**({@link legacySlugifyCasePart}):`F2L A-`
+ * 现在是 `a-`,以前是 `a`,发出去的 `a` 得继续落到同一张卡。别名只在那个 key 还空着时才占,
+ * 抢不到规范 slug;`byId` 只给规范 slug,所以新链接不会再生成老形式。
  */
 export function buildCaseSlugMap(cases: AlgCase[], set: string): CaseSlugMap {
   const bases = cases.map(c => caseSlugBase(set, c));
@@ -88,6 +110,11 @@ export function buildCaseSlugMap(cases: AlgCase[], set: string): CaseSlugMap {
     used.add(slug);
     bySlug.set(slug, c);
     if (c.id != null) byId.set(c.id, slug);
+  });
+
+  cases.forEach((c) => {
+    const legacy = legacySlugifyCasePart(caseSlugSource(set, c));
+    if (legacy && !bySlug.has(legacy)) bySlug.set(legacy, c);
   });
 
   return { byId, bySlug };
