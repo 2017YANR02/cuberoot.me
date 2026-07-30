@@ -1,23 +1,9 @@
 /**
- * 一张图从 SVG 字符串到「用户手里」的那几步:栅格化、写物理尺寸、下载、复制到剪贴板。
+ * 一张图从 SVG 字符串到「用户手里」的那几步:栅格化、下载、复制到剪贴板。
  * 唯一宿主是 /sim 的图像面板。
  *
- * 浏览器相关,勿在 node/测试里直接调(纯逻辑在 physical-size.ts,那个可测)。
+ * 浏览器相关,勿在 node/测试里直接调。
  */
-
-import { applySvgPhysicalSize, printSizeMm, withPngPhysicalSize, type PrintUnit } from './physical-size';
-
-export interface PhysicalSize {
-  size: number;
-  unit: PrintUnit;
-}
-
-/** 导出用的 SVG 文本:要物理尺寸就套上,不要就原样。 */
-export function exportSvgText(svg: string, physical?: PhysicalSize | null): string {
-  return physical && physical.size > 0
-    ? applySvgPhysicalSize(svg, physical.size, physical.unit)
-    : svg;
-}
 
 export function svgBlob(svg: string): Blob {
   return new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
@@ -25,13 +11,9 @@ export function svgBlob(svg: string): Blob {
 
 /**
  * SVG → PNG。`size` 是输出的方形像素边长;非方 viewBox 的引擎矢量按 contain 居中
- * (拉成方形会变形)。有物理尺寸就写进 pHYs,粘进文档时按厘米落地。
+ * (拉成方形会变形)。
  */
-export async function svgToPngBlob(
-  svg: string,
-  size: number,
-  physical?: PhysicalSize | null,
-): Promise<Blob> {
+export async function svgToPngBlob(svg: string, size: number): Promise<Blob> {
   const url = URL.createObjectURL(svgBlob(svg));
   try {
     const img = new Image();
@@ -51,17 +33,9 @@ export async function svgToPngBlob(
     const k = Math.min(size / iw, size / ih);
     ctx.drawImage(img, (size - iw * k) / 2, (size - ih * k) / 2, iw * k, ih * k);
 
-    const raw = await new Promise<Blob>((resolve, reject) => {
+    return await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('toBlob failed'))), 'image/png');
     });
-    if (!physical || !(physical.size > 0)) return raw;
-    // 显式标注:tsgo 不认 withPngPhysicalSize 声明的 Uint8Array<ArrayBuffer> 返回类型,
-    // 会退回 ArrayBufferLike 而 Blob 只收 ArrayBuffer 那一支(tsc 无此问题)。
-    const stamped: Uint8Array<ArrayBuffer> = withPngPhysicalSize(
-      new Uint8Array(await raw.arrayBuffer()),
-      printSizeMm(physical.size, physical.unit),
-    );
-    return new Blob([stamped], { type: 'image/png' });
   } finally {
     URL.revokeObjectURL(url);
   }

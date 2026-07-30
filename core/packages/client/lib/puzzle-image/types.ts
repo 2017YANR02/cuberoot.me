@@ -7,9 +7,8 @@
 
 import type { PaintColor } from '@/app/[lang]/scramble/solver/_paint-shared';
 import type { PlanSideRule, PlanUpRule } from '@cuberoot/visualcube';
-import type { PrintUnit } from './physical-size';
 
-export type { PlanSideRule, PlanUpRule, PrintUnit };
+export type { PlanSideRule, PlanUpRule };
 
 export const FACE_LIST = ['U', 'R', 'F', 'D', 'L', 'B'] as const;
 export type FaceKey = (typeof FACE_LIST)[number];
@@ -80,11 +79,4 @@ export interface ImageSpec {
   /** `side=<csv>&up=<csv>`,1 起数;在规则之后强制显示 / 强制隐藏。 */
   planForceShow: string;
   planForceHide: string;
-  /**
-   * 导出件的物理尺寸(0 = 不写,只按 `imageSize` 的像素走)。写上之后 SVG 根节点带
-   * `width="2.4cm"`、PNG 带 pHYs,拖进 / 粘进文档就是这个大小,不用再手动拉。
-   * 只影响导出的文件,不影响预览和 API 链接。URL: psz / pun。
-   */
-  printSize: number;
-  printUnit: PrintUnit;
 }

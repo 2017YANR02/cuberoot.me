@@ -61,8 +61,6 @@ export const DEFAULTS: ImageSpec = {
   planShowYellow: true,
   planForceShow: '',
   planForceHide: '',
-  printSize: 0,
-  printUnit: 'cm',
 };
 
 export interface RotationDefaults {
