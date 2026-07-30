@@ -50,9 +50,12 @@ describe('stageSegmentsFor', () => {
     expect(segs!.ollCase).toBe('OLL 44 (P-Shape)');
     expect(segs!.pllCase).toBe('PLL T');
     expect(segs!.crossSide).toBe('D-cross');
-    // 每一步的 HTM 就是上面那几段的长度,加起来是整条流。
-    expect([segs!.crossHtm, segs!.f2lHtm, segs!.ollHtm, segs!.pllHtm]).toEqual([7, 31, 8, 18]);
-    expect(segs!.crossHtm! + segs!.f2lHtm! + segs!.ollHtm! + segs!.pllHtm!).toBe(SOLUTION.length);
+    // 每一步的 HTM 就是上面那几段公式的**记号数**(6 / 25 / 7 / 12),不是通知数。
+    // 上面那条流是按真魔方的口径写的:双层转拆成两个 90 度,所以 64 个通知
+    // 对应 50 步 HTM —— 合并对了才数得出这四个数(见 _lib/reconstruct/htm.ts)。
+    expect([segs!.crossHtm, segs!.f2lHtm, segs!.ollHtm, segs!.pllHtm]).toEqual([6, 25, 7, 12]);
+    expect(segs!.crossHtm! + segs!.f2lHtm! + segs!.ollHtm! + segs!.pllHtm!).toBe(50);
+    expect(SOLUTION.length).toBe(64);
     // 四个阶段都到过,而且时间是递增的。
     expect(segs!.crossDoneMs).not.toBeNull();
     expect(segs!.solvedMs).not.toBeNull();

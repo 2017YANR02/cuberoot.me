@@ -24,9 +24,18 @@ import type { ErrorDetectResult } from '@/app/[lang]/timer/_lib/reconstruct/erro
 import type { SolveMove, StageSegments } from '@/app/[lang]/timer/_lib/reconstruct/stage_segments';
 
 /** Turns at a constant rate — the only thing quality() reads a move stream
- *  for is the peak turn rate, so an even stream pins it exactly. */
+ *  for is the peak turn rate, so an even stream pins it exactly.
+ *
+ *  The faces cycle on purpose: quality() measures the peak rate on MERGED moves
+ *  (htm.ts), so a stream of one repeated face would collapse to a single move
+ *  and the fixture would be measuring nothing. Cycling keeps one notification
+ *  == one move, which is what these anchors are about. */
+const FIXTURE_FACES = ['R', 'U', 'F', 'L', 'D', 'B'];
 function evenMoves(count: number, gapMs: number): SolveMove[] {
-  return Array.from({ length: count }, (_, i) => ({ m: 'R', ts: 1000 + i * gapMs }));
+  return Array.from({ length: count }, (_, i) => ({
+    m: FIXTURE_FACES[i % FIXTURE_FACES.length],
+    ts: 1000 + i * gapMs,
+  }));
 }
 
 const EMPTY_SEGMENTS: StageSegments = {

@@ -50,6 +50,8 @@ export interface ReconstructSlices {
   pauseCount: number;
 }
 
+import { htmMoves } from './htm';
+
 interface ParsedMove {
   /** Family character: 'F' / 'R' / 'U' / 'B' / 'L' / 'D' / 'M' / 'E' / 'S' / 'x' / 'y' / 'z' (case preserved for slice/rotation classification). */
   family: string;
@@ -144,11 +146,22 @@ export function sliceReconstruction(
     firstMoveLatencyMs = Math.max(0, execMoves[0].ts - execStart);
   }
 
+  // QTM counts the physical quarter turns; HTM counts MOVES, so a double turn
+  // the cube reported as two same-face notifications is one. Merging over the
+  // whole window (not per token) is what makes the two numbers differ at all
+  // on a smart-cube solve — the hardware never sends an "R2".
+  const countedFaceStarts = new Set<number>();
+  htmMoves(execMoves).forEach(h => {
+    const p = parseMove(h.m);
+    if (p && !p.isRotation && !p.isSlice) countedFaceStarts.add(h.startIdx);
+  });
+
   let prevTs: number | null = null;
-  for (const { m, ts } of execMoves) {
+  for (let i = 0; i < execMoves.length; i++) {
+    const { m, ts } = execMoves[i];
     const p = parseMove(m);
     if (p && !p.isRotation && !p.isSlice) {
-      htmCount += 1;
+      if (countedFaceStarts.has(i)) htmCount += 1;
       qtmCount += p.suffix === '2' ? 2 : 1;
     }
     if (prevTs !== null) {

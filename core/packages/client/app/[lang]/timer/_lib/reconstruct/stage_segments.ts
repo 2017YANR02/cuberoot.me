@@ -33,6 +33,7 @@ import { applyMoves, applyScramble, solved } from '../cube/state';
 import type { Face } from '../cube/moves';
 import { parseScramble } from '../cube/moves';
 import { recognizeOllExact, recognizePllExact } from '../components/cfop_recognize';
+import { htmMoves } from './htm';
 import ollData from '@cuberoot/shared/data/oll.json';
 import type { EventId, Solve } from '../types';
 
@@ -293,9 +294,17 @@ export function computeStageSegments(
   let f2lDoneState: CubeFaces | null = null;
   let ollDoneState: CubeFaces | null = null;
 
+  // A real cube reports quarter turns only, so a double turn arrives as two
+  // notifications; HTM has to count it once. `htmMoves` merges each run of
+  // same-face turns, and a move is accounted where its FIRST quarter turn was
+  // made — the stage the cuber was still working on when they started it.
+  // A run that cancels starts no counted move at all (see htm.ts).
+  const startsCountedMove = new Array<boolean>(moves.length).fill(false);
+  for (const h of htmMoves(moves)) startsCountedMove[h.startIdx] = true;
+
   for (let i = 0; i < moves.length; i++) {
     const mv = moves[i];
-    const wasFace = isFaceTurnToken(mv.m);
+    const wasFace = isFaceTurnToken(mv.m) && startsCountedMove[i];
     state = applyOneToken(state, mv.m);
     const stage = detectCfopStage(state);
 
