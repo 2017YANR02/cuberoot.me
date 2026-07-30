@@ -219,13 +219,14 @@ export default function StepAnalysis(props: StepAnalysisProps) {
   }, [method, segs, stepMetrics, slots, reference, ao12, walk, isZh]);
 
   const totals = useMemo(() => {
-    let rec = 0, exec = 0, turns = 0;
-    let anyRec = false, anyTurns = false;
+    let rec = 0, exec = 0, turns = 0, step = 0;
+    let anyRec = false, anyTurns = false, anyStep = false;
     let last: number | null = null;
     for (const c of cols) {
       if (c.recognitionMs !== null) { rec += c.recognitionMs; anyRec = true; }
       if (c.executionMs !== null) { exec += c.executionMs; anyRec = true; }
       if (c.turns !== null) { turns += c.turns; anyTurns = true; }
+      if (c.stepMs !== null) { step += c.stepMs; anyStep = true; }
       if (c.cumulativeMs !== null) last = c.cumulativeMs;
     }
     const span = rec + exec;
@@ -233,6 +234,10 @@ export default function StepAnalysis(props: StepAnalysisProps) {
       rec: anyRec ? rec : null,
       exec: anyRec ? exec : null,
       turns: anyTurns ? turns : null,
+      // The step row sums; the cumulative row is a clock reading, not a sum.
+      // They differ by the pick-up before the first turn, which is why this is
+      // two numbers rather than one printed twice.
+      step: anyStep ? step : null,
       last,
       recPct: span > 0 ? Math.round((rec / span) * 100) : null,
       execPct: span > 0 ? Math.round((exec / span) * 100) : null,
@@ -315,7 +320,7 @@ export default function StepAnalysis(props: StepAnalysisProps) {
             <tr className="sa-row-strong">
               <th scope="row" className="sa-rowhead">{tr({ zh: '本步', en: 'Step time' })}</th>
               {cols.map(c => <td key={c.key}>{c.skipped ? tr({ zh: '跳过', en: 'skip' }) : sec(c.stepMs)}</td>)}
-              <td className="sa-total-col">{sec(totals.last)}</td>
+              <td className="sa-total-col">{sec(totals.step)}</td>
             </tr>
             <tr>
               <th scope="row" className="sa-rowhead">{tr({ zh: '累计', en: 'Total time' })}</th>
@@ -344,7 +349,11 @@ export default function StepAnalysis(props: StepAnalysisProps) {
                     )}
                   </td>
                 ))}
-                <td className="sa-total-col">–</td>
+                {/* Opening F2L into pairs costs the F2L column, and with it the
+                    place its reference used to print. The whole-solve figure
+                    still lands here, and the per-stage lines are still under
+                    「参考解法」 below — so the number is moved, not lost. */}
+                <td className="sa-total-col">{reference?.refTurns ?? '–'}</td>
               </tr>
             )}
             {hasAvg && (
