@@ -160,6 +160,20 @@
 .reconstruct-move-row.slow .reconstruct-move-gap {
   color: var(--signal-warning);
 }
+/* A run of turns that returned to a prior state (error_detect): net no-op.
+ * Left bar, not a background — it must stay readable when combined with
+ * .slow, which already owns the row background. */
+.reconstruct-move-row.wasted {
+  box-shadow: inset 3px 0 0 var(--signal-warning);
+}
+
+/* Solve-level wasted-work line, above the stage panel. */
+.reconstruct-waste-line {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--signal-warning);
+  margin: 0 0 10px;
+}
 
 .reconstruct-stages-section {
   margin-bottom: 16px;

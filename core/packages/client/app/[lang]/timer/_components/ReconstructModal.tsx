@@ -20,6 +20,7 @@ import { computeStageAverages, computeStageSegments } from '../_lib/reconstruct/
 import type { StageAverages } from '../_lib/reconstruct/stage_segments';
 import { computeStepMetrics } from '../_lib/reconstruct/step_metrics';
 import type { StepMetricsResult } from '../_lib/reconstruct/step_metrics';
+import { detectWastedWork } from '../_lib/reconstruct/error_detect';
 import { encodeReplayUrl } from '../_lib/share/encode';
 import { nxnSizeForEvent } from '../_lib/cube';
 import { toReconEventId } from '../_shared/event-bridge';
@@ -126,6 +127,19 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
     () => (stageSegs ? computeStepMetrics(solve.scramble, moves, solve.timeMs) : null),
     [stageSegs, solve.scramble, moves, solve.timeMs],
   );
+  // Wasted-work detection (state revisits — see error_detect.ts). Gated the
+  // same way: the walker models a 3x3.
+  const waste = useMemo(
+    () => (stageSegs ? detectWastedWork(solve.scramble, moves) : null),
+    [stageSegs, solve.scramble, moves],
+  );
+  const wastedIdx = useMemo(() => {
+    const set = new Set<number>();
+    for (const sp of waste?.spans ?? []) {
+      for (let i = sp.fromIdx; i <= sp.toIdx; i++) set.add(i);
+    }
+    return set;
+  }, [waste]);
 
   // Personal stage averages computed from the caller-provided history.
   // We exclude the current solve so a fresh solve isn't compared against
@@ -361,6 +375,18 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
           </div>
         </div>
 
+        {waste && waste.spans.length > 0 && (
+          <div className="reconstruct-waste-line">
+            {tr({ zh: '废步', en: 'Wasted' })} {waste.totalWastedMoves} {tr({ zh: '步', en: 'turns' })}
+            {' · '}
+            {tr({ zh: '多花', en: 'lost' })} {formatSec(waste.totalWastedMs)}
+            {tr({
+              zh: `（${waste.spans.length} 处,动作表中已标出）`,
+              en: ` (${waste.spans.length} ${waste.spans.length === 1 ? 'loop' : 'loops'}, marked in the move stream)`,
+            })}
+          </div>
+        )}
+
         {stageSegs && memoMs === undefined && (
           <StageSegmentsPanel
             segs={stageSegs}
@@ -423,8 +449,15 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
                 const prev = i > 0 ? moves[i - 1].ts : null;
                 const gap = prev !== null ? mv.ts - prev : null;
                 const slow = gap !== null && gap > 500;
+                const wasted = wastedIdx.has(i);
                 return (
-                  <li key={i} className={`reconstruct-move-row ${slow ? 'slow' : ''}`}>
+                  <li
+                    key={i}
+                    className={`reconstruct-move-row ${slow ? 'slow' : ''}${wasted ? ' wasted' : ''}`}
+                    title={wasted
+                      ? tr({ zh: '废步:这一段转完回到了之前的状态', en: 'wasted: this run returns to a prior state' })
+                      : undefined}
+                  >
                     <span className="reconstruct-move-idx">{i + 1}</span>
                     <span className="reconstruct-move-token">{mv.m}</span>
                     <span className="reconstruct-move-ts">t={formatSec(mv.ts)}</span>
