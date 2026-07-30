@@ -1,10 +1,23 @@
 /**
- * ReconstructModal — display Bluetooth-recorded move stream for a solve.
+ * ReconstructModal — the post-solve report for a Bluetooth-recorded solve.
  *
- * Shows the four headline metrics (HTM, QTM, first-move latency, longest
- * pause) in a 2x2 grid, then a scrollable list of every move with its
- * absolute time and gap from the previous move. BLD splits the move list
- * implicitly via `firstMoveLatencyMs` (rebased to memo end).
+ * Layered, because the metric count outgrew one scroll (research doc P0-3):
+ *
+ *   first screen — Solve Quality (one 0-100 number and the three it is made
+ *     of), the stage bar, and the stage × metric grid. Everything a cuber
+ *     wants at a glance, nothing they have to hunt for.
+ *   depth        — collapsed sections: the reference lines per stage, 3D
+ *     playback, and the raw move stream. Sections rather than the tab strip
+ *     the research doc sketched: a tab hides content behind both a click AND
+ *     a choice, and two of these are often wanted side by side.
+ *
+ * The reference lines and the score need an IDA* search (~80-110ms cold on a
+ * desktop, more on a phone), so they are computed AFTER the modal paints and
+ * the quality row holds its place with dashes meanwhile — opening the report
+ * stays instant.
+ *
+ * BLD solves keep their own shape: memo/execution split, letter pairs, and no
+ * CFOP staging (the walker models a 3x3 speedsolve).
  */
 
 'use client';
@@ -21,6 +34,10 @@ import type { StageAverages } from '../_lib/reconstruct/stage_segments';
 import { computeStepMetrics } from '../_lib/reconstruct/step_metrics';
 import type { StepMetricsResult } from '../_lib/reconstruct/step_metrics';
 import { detectWastedWork } from '../_lib/reconstruct/error_detect';
+import { computeStageReferences } from '../_lib/reconstruct/reference';
+import type { ReferenceResult, StageReference } from '../_lib/reconstruct/reference';
+import { computeSolveQuality } from '../_lib/reconstruct/quality';
+import type { SolveQuality } from '../_lib/reconstruct/quality';
 import { encodeReplayUrl } from '../_lib/share/encode';
 import { nxnSizeForEvent } from '../_lib/cube';
 import { toReconEventId } from '../_shared/event-bridge';
@@ -141,6 +158,39 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
     return set;
   }, [waste]);
 
+  // Per-stage reference lines + the quality score. Deferred to after the first
+  // paint: the cross/F2L references are IDA* searches, and a modal that takes
+  // 100ms to appear feels broken in a way a number that lands 100ms late does
+  // not. Recomputed whenever the solve changes; nothing is persisted.
+  const [analysis, setAnalysis] = useState<{
+    reference: ReferenceResult | null;
+    quality: SolveQuality | null;
+  } | null>(null);
+  // Scoreable = the 3x3 model actually reached solved (putDownMs is null
+  // otherwise), and the solve counts. That one test covers all the ways there
+  // is nothing to score: a non-3x3 event whose stream the walker can't follow,
+  // a mid-solve abort, a DNF.
+  const scoreable = stepMx !== null && stepMx.putDownMs !== null && solve.penalty !== 'DNF';
+  useEffect(() => {
+    setAnalysis(null);
+    if (!scoreable || !stepMx) return;
+    let alive = true;
+    const timer = setTimeout(() => {
+      if (!alive) return;
+      let reference: ReferenceResult | null = null;
+      try {
+        reference = computeStageReferences(solve.scramble, moves, stepMx);
+      } catch (err) {
+        console.warn('[reconstruct] stage reference failed:', err);
+      }
+      setAnalysis({
+        reference,
+        quality: computeSolveQuality(moves, stepMx, reference, waste),
+      });
+    }, 0);
+    return () => { alive = false; clearTimeout(timer); };
+  }, [scoreable, stepMx, solve.scramble, moves, waste]);
+
   // Personal stage averages computed from the caller-provided history.
   // We exclude the current solve so a fresh solve isn't compared against
   // itself. Both windows require at least 5 eligible samples to render
@@ -162,15 +212,20 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  useEffect(() => { closeBtnRef.current?.focus(); }, []);
+  // Focus lands in the dialog for the keyboard, but WITHOUT scrolling to it:
+  // the close button is the last thing in a report that is now taller than the
+  // modal, and a plain focus() scrolls the first screen straight out of view.
+  useEffect(() => { closeBtnRef.current?.focus({ preventScroll: true }); }, []);
 
   const isMobile = useIsMobile();
   const [copied, setCopied] = useState(false);
   const [playbackExpanded, setPlaybackExpanded] = useState(false);
-  // Mobile-only accordion state. On desktop these flags are ignored —
-  // AccordionSection renders open when `collapsible=false`.
+  // The stage panel is the first screen, so it is only collapsible on mobile
+  // (AccordionSection renders open when `collapsible=false`). The depth
+  // sections are collapsed everywhere — that is the layering.
   const [stagesExpanded, setStagesExpanded] = useState(true);
   const [moveListExpanded, setMoveListExpanded] = useState(false);
+  const [referenceExpanded, setReferenceExpanded] = useState(false);
   const playbackAvailable = moves.length > 0 && nxnSizeForEvent(solve.event) !== null;
   const canShare = moves.length > 0;
 
@@ -346,6 +401,38 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
           </div>
         )}
 
+        {scoreable && (
+          <QualityRow quality={analysis?.quality ?? null} pending={analysis === null} />
+        )}
+
+        {stageSegs && memoMs === undefined && (
+          <StageSegmentsPanel
+            segs={stageSegs}
+            totalMs={solve.timeMs}
+            isZh={isZh}
+            ao12={stageAvgs?.ao12 ?? null}
+            ao100={stageAvgs?.ao100 ?? null}
+            stepMetrics={stepMx}
+            inspectionMs={solve.inspectionMs ?? null}
+            reference={analysis?.reference ?? null}
+            collapsible={isMobile}
+            expanded={stagesExpanded}
+            onToggle={() => setStagesExpanded(v => !v)}
+          />
+        )}
+
+        {waste && waste.spans.length > 0 && (
+          <div className="reconstruct-waste-line">
+            {tr({ zh: '废步', en: 'Wasted' })} {waste.totalWastedMoves} {tr({ zh: '步', en: 'turns' })}
+            {' · '}
+            {tr({ zh: '多花', en: 'lost' })} {formatSec(waste.totalWastedMs)}
+            {tr({
+              zh: `（${waste.spans.length} 处,动作表中已标出）`,
+              en: ` (${waste.spans.length} ${waste.spans.length === 1 ? 'loop' : 'loops'}, marked in the move stream)`,
+            })}
+          </div>
+        )}
+
         <div className="reconstruct-stats">
           <div className="reconstruct-stat">
             <div className="reconstruct-stat-num">{slices.htmCount}</div>
@@ -375,31 +462,15 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
           </div>
         </div>
 
-        {waste && waste.spans.length > 0 && (
-          <div className="reconstruct-waste-line">
-            {tr({ zh: '废步', en: 'Wasted' })} {waste.totalWastedMoves} {tr({ zh: '步', en: 'turns' })}
-            {' · '}
-            {tr({ zh: '多花', en: 'lost' })} {formatSec(waste.totalWastedMs)}
-            {tr({
-              zh: `（${waste.spans.length} 处,动作表中已标出）`,
-              en: ` (${waste.spans.length} ${waste.spans.length === 1 ? 'loop' : 'loops'}, marked in the move stream)`,
-            })}
-          </div>
-        )}
-
-        {stageSegs && memoMs === undefined && (
-          <StageSegmentsPanel
-            segs={stageSegs}
-            totalMs={solve.timeMs}
-            isZh={isZh}
-            ao12={stageAvgs?.ao12 ?? null}
-            ao100={stageAvgs?.ao100 ?? null}
-            stepMetrics={stepMx}
-            inspectionMs={solve.inspectionMs ?? null}
-            collapsible={isMobile}
-            expanded={stagesExpanded}
-            onToggle={() => setStagesExpanded(v => !v)}
-          />
+        {analysis?.reference && (
+          <AccordionSection
+            title={tr({ zh: '参考解法', en: 'Reference lines' })}
+            collapsible
+            expanded={referenceExpanded}
+            onToggle={() => setReferenceExpanded(v => !v)}
+          >
+            <ReferenceList reference={analysis.reference} />
+          </AccordionSection>
         )}
 
         {playbackAvailable && (
@@ -433,8 +504,8 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
         )}
 
         <AccordionSection
-          title={(isZh ? `动作序列 (${moves.length})` : `Move stream (${moves.length})`)}
-          collapsible={isMobile}
+          title={tr({ zh: `动作序列 (${moves.length})`, en: `Move stream (${moves.length})` })}
+          collapsible
           expanded={moveListExpanded}
           onToggle={() => setMoveListExpanded(v => !v)}
         >
@@ -524,6 +595,139 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
   );
 }
 
+/** 0-100 with its three components. Pending renders the same row with dashes
+ *  so the report doesn't jump when the search lands. */
+function QualityRow({ quality, pending }: { quality: SolveQuality | null; pending: boolean }) {
+  if (!pending && !quality) return null;
+  const dash = '—';
+  const parts: Array<{ label: string; value: number | null; hint: string }> = quality ? [
+    {
+      label: tr({ zh: '效率', en: 'Efficiency' }),
+      value: quality.efficiency,
+      hint: quality.turnRatio !== null
+        ? tr({
+          zh: `比参考多 ${Math.round((quality.turnRatio - 1) * 100)}%`,
+          en: `${Math.round((quality.turnRatio - 1) * 100)}% over reference`,
+        })
+        : tr({ zh: '无参考', en: 'no reference' }),
+    },
+    {
+      label: tr({ zh: '流畅', en: 'Flow' }),
+      value: quality.flow,
+      hint: quality.idealMs !== null
+        ? tr({
+          zh: `手速可 ${formatSec(quality.idealMs, 1)} / 实际 ${formatSec(quality.solvingMs, 1)}`,
+          en: `hands alone ${formatSec(quality.idealMs, 1)} / spent ${formatSec(quality.solvingMs, 1)}`,
+        })
+        : tr({ zh: '无手速数据', en: 'no turn rate' }),
+    },
+    {
+      label: tr({ zh: '无废步', en: 'Waste-free' }),
+      value: quality.wasteFree,
+      hint: quality.wastedMs > 0
+        ? tr({ zh: `废步 ${formatSec(quality.wastedMs, 1)}`, en: `${formatSec(quality.wastedMs, 1)} undone` })
+        : tr({ zh: '没有回退', en: 'nothing undone' }),
+    },
+  ] : [];
+
+  return (
+    <div className="reconstruct-quality">
+      <div className="reconstruct-quality-total">
+        <span className="reconstruct-quality-num">{quality ? quality.total : dash}</span>
+        <span className="reconstruct-quality-cap">{tr({ zh: '质量', en: 'Quality' })}</span>
+      </div>
+      <div className="reconstruct-quality-parts">
+        {parts.length === 0 ? (
+          <span className="reconstruct-quality-pending">
+            {tr({ zh: '正在算参考解法…', en: 'solving the reference lines…' })}
+          </span>
+        ) : parts.map(p => (
+          <div key={p.label} className="reconstruct-quality-part">
+            <span className="reconstruct-quality-part-label">{p.label}</span>
+            <span className="reconstruct-quality-part-num">
+              {p.value === null ? dash : Math.round(p.value)}
+            </span>
+            <span className="reconstruct-quality-part-hint">{p.hint}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Where a stage's reference came from — the honesty label. */
+function refKindLabel(kind: NonNullable<StageReference['kind']>): string {
+  switch (kind) {
+    case 'optimal':      return tr({ zh: '最优', en: 'optimal' });
+    case 'step-optimal': return tr({ zh: '步进最优', en: 'step-optimal' });
+    case 'library-alg':  return tr({ zh: '库内最短', en: 'shortest in library' });
+  }
+}
+
+function stageLabel(step: StageKey): string {
+  switch (step) {
+    case 'cross': return tr({ zh: '十字', en: 'Cross' });
+    case 'f2l':   return 'F2L';
+    case 'oll':   return 'OLL';
+    case 'pll':   return 'PLL';
+  }
+}
+
+/** The reference line for each stage, with the move sequence — the depth layer
+ *  where "6 turns were available" becomes "and here they are". */
+function ReferenceList({ reference }: { reference: ReferenceResult }) {
+  const rows = reference.stages.filter(s => s.refSolution || s.refTurns !== null);
+  if (rows.length === 0) return null;
+  return (
+    <div className="reconstruct-ref-list">
+      {rows.map(s => (
+        <div key={s.step} className="reconstruct-ref-row">
+          <span className="reconstruct-ref-stage">{stageLabel(s.step)}</span>
+          <span className="reconstruct-ref-count">
+            {s.userTurns ?? '—'} / {s.refTurns ?? '—'}
+            {s.kind && (
+              <span className="reconstruct-ref-kind">{refKindLabel(s.kind)}</span>
+            )}
+          </span>
+          <span className="reconstruct-ref-alg">
+            {s.refSolution || (s.note === 'skipped' ? tr({ zh: '跳过', en: 'skipped' }) : '—')}
+          </span>
+        </div>
+      ))}
+      {reference.refTurns !== null && reference.userTurns !== null && (
+        <div className="reconstruct-ref-total">
+          {tr({ zh: '合计', en: 'Total' })} {reference.userTurns} / {reference.refTurns}
+          {' '}{tr({ zh: '步', en: 'turns' })}
+          {reference.delta !== null && reference.delta !== 0 && (
+            <span className={`reconstruct-stage-delta ${reference.delta > 0 ? 'slower' : 'faster'}`}>
+              {reference.delta > 0 ? '+' : ''}{reference.delta}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** "ref 6 htm +2" under a stage cell. Silent until the search lands, and for
+ *  stages that have no reference (skipped, unreached, engine refused). */
+function StageReferenceLine(
+  { reference, step }: { reference: ReferenceResult | null; step: StageKey },
+) {
+  const r = reference?.stages.find(x => x.step === step);
+  if (!r || r.kind === null || r.refTurns === null || r.delta === null) return null;
+  return (
+    <div className="reconstruct-stage-recexec" title={refKindLabel(r.kind)}>
+      {tr({ zh: '参考', en: 'ref' })} {r.refTurns} {tr({ zh: '步', en: 'htm' })}
+      {r.delta !== 0 && (
+        <span className={`reconstruct-stage-delta ${r.delta > 0 ? 'slower' : 'faster'}`}>
+          {r.delta > 0 ? '+' : ''}{r.delta}
+        </span>
+      )}
+    </div>
+  );
+}
+
 interface StagePanelProps {
   segs: NonNullable<ReturnType<typeof computeStageSegments>>;
   totalMs: number;
@@ -538,6 +742,8 @@ interface StagePanelProps {
   stepMetrics: StepMetricsResult | null;
   /** Inspection actually used, from the solve record; null when unknown. */
   inspectionMs: number | null;
+  /** Per-stage reference turn counts; null until the deferred search lands. */
+  reference: ReferenceResult | null;
   collapsible: boolean;
   expanded: boolean;
   onToggle: () => void;
@@ -556,7 +762,8 @@ function pickAvg(avgs: StageAverages | null, key: StageKey): number | null {
 }
 
 function StageSegmentsPanel({
-  segs, totalMs, isZh, ao12, ao100, stepMetrics, inspectionMs, collapsible, expanded, onToggle,
+  segs, totalMs, isZh, ao12, ao100, stepMetrics, inspectionMs, reference,
+  collapsible, expanded, onToggle,
 }: StagePanelProps) {
   const stages: Array<{
     key: StageKey;
@@ -695,6 +902,7 @@ function StageSegmentsPanel({
                   {tr({ zh: '跳过', en: 'skipped' })}
                 </div>
               )}
+              <StageReferenceLine reference={reference} step={s.key} />
               {(ao12Avg !== null || ao100Avg !== null) && s.ms !== null && (
                 <div className="reconstruct-stage-deltas">
                   {renderDelta(ao12Avg, 'ao12')}

@@ -57,6 +57,10 @@ export interface StepMetric {
   cumulativeMs: number | null;
   /** STM turn count of the step (rotations 0, everything else 1). */
   turns: number | null;
+  /** Turns from the execution start onwards — i.e. `turns` minus the leading
+   *  AUF/regrip. This is the alg the hands actually ran, which is what a
+   *  last-layer alg reference is comparable with (an alg carries no AUF). */
+  execTurns: number | null;
   /** turns / executionMs. null when executionMs is 0 or the step has none. */
   tps: number | null;
 }
@@ -126,13 +130,13 @@ export function computeStepMetrics(
       // Never reached (DNF / mid-solve abort). Everything after is null too,
       // but keep emitting rows so the caller sees all four steps.
       steps.push({ step, skipped: false, recognitionMs: null, executionMs: null,
-        stepMs: null, cumulativeMs: null, turns: null, tps: null });
+        stepMs: null, cumulativeMs: null, turns: null, execTurns: null, tps: null });
       continue;
     }
     if (endIdx === prevEndIdx) {
       // Completed by the same move as the previous step — skipped.
       steps.push({ step, skipped: true, recognitionMs: null, executionMs: null,
-        stepMs: 0, cumulativeMs: moves[endIdx].ts, turns: 0, tps: null });
+        stepMs: 0, cumulativeMs: moves[endIdx].ts, turns: 0, execTurns: 0, tps: null });
       continue;
     }
 
@@ -141,12 +145,16 @@ export function computeStepMetrics(
     const endTs = moves[endIdx].ts;
     // First turn that isn't an adjustment — where execution begins. A step
     // that is all AUF/rotations falls back to its literal first turn.
-    const execStart = stepMoves.find(mv => endsRecognition(mv.m));
+    const execStartAt = stepMoves.findIndex(mv => endsRecognition(mv.m));
+    const execStart = execStartAt >= 0 ? stepMoves[execStartAt] : undefined;
     const execStartTs = execStart ? execStart.ts : firstTs;
 
     const recognitionMs = Math.max(0, execStartTs - prevEndTs);
     const executionMs = Math.max(0, endTs - execStartTs);
     const turns = stepMoves.reduce((acc, mv) => acc + stmWeight(mv.m), 0);
+    const execTurns = stepMoves
+      .slice(execStartAt >= 0 ? execStartAt : 0)
+      .reduce((acc, mv) => acc + stmWeight(mv.m), 0);
 
     steps.push({
       step,
@@ -156,6 +164,7 @@ export function computeStepMetrics(
       stepMs: recognitionMs + executionMs,
       cumulativeMs: endTs,
       turns,
+      execTurns,
       tps: executionMs > 0 && turns > 0 ? turns / (executionMs / 1000) : null,
     });
     prevEndIdx = endIdx;

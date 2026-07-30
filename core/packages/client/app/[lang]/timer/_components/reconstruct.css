@@ -167,6 +167,104 @@
   box-shadow: inset 3px 0 0 var(--signal-warning);
 }
 
+/* Solve Quality — the first thing in the report. One number, the three it is
+ * made of, and a plain-language hint under each so it is never a black box.
+ * No box or border: the size difference carries the hierarchy. */
+.reconstruct-quality {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin: 4px 0 12px;
+}
+.reconstruct-quality-total {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.reconstruct-quality-num {
+  font-family: var(--font-mono);
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 600;
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+}
+.reconstruct-quality-cap {
+  font-size: 12px;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.reconstruct-quality-parts {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+}
+.reconstruct-quality-part {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.reconstruct-quality-part-label {
+  color: var(--muted-foreground);
+}
+.reconstruct-quality-part-num {
+  font-size: 14px;
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+}
+.reconstruct-quality-part-hint,
+.reconstruct-quality-pending {
+  color: var(--faint-foreground);
+}
+.reconstruct-quality-pending {
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+/* Reference lines per stage (the depth section). */
+.reconstruct-ref-list {
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.reconstruct-ref-row {
+  display: grid;
+  grid-template-columns: 44px minmax(96px, auto) 1fr;
+  gap: 10px;
+  padding: 3px 0;
+  align-items: baseline;
+}
+.reconstruct-ref-stage {
+  color: var(--muted-foreground);
+}
+.reconstruct-ref-count {
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.reconstruct-ref-kind {
+  margin-left: 6px;
+  color: var(--faint-foreground);
+}
+.reconstruct-ref-alg {
+  color: var(--muted-foreground);
+  overflow-wrap: anywhere;
+}
+.reconstruct-ref-total {
+  margin-top: 4px;
+  padding-top: 5px;
+  border-top: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+}
+.reconstruct-ref-total .reconstruct-stage-delta {
+  margin-left: 6px;
+}
+
 /* Solve-level wasted-work line, above the stage panel. */
 .reconstruct-waste-line {
   font-family: var(--font-mono);
@@ -282,6 +380,10 @@
 .reconstruct-stage-delta.faster  { color: var(--signal-success); }
 .reconstruct-stage-delta.slower  { color: var(--destructive); }
 .reconstruct-stage-delta.neutral { color: var(--muted-foreground); }
+/* A turn delta sits inline after the reference count, not on its own line. */
+.reconstruct-stage-recexec .reconstruct-stage-delta {
+  margin-left: 5px;
+}
 
 .reconstruct-playback-toggle {
   display: inline-flex;
