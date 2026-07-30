@@ -137,6 +137,15 @@ export interface LiveCubeStateProps {
   sensorBasis?: SensorBasisName;
   /** Reverse the sense of rotation (handedness fix; calibration cannot do it). */
   mirror?: boolean;
+  /**
+   * Which view actually rendered. A '3d' REQUEST is not a promise: phones, a
+   * cube whose gyro has not spoken yet and a state that isn't reachable from
+   * solved all fall back to a flat view. The owner needs the answer because it
+   * draws the calibrate button, which is meaningless over a flat net — asking
+   * for the request instead of the outcome is how that button ended up showing
+   * where it does nothing.
+   */
+  onViewChange?: (view: '2d' | 'net' | '3d') => void;
 }
 
 export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
@@ -150,6 +159,7 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
     calibrateToken = 0,
     sensorBasis = 'identity',
     mirror = false,
+    onViewChange,
   } = props;
 
   // No WebGL on phones. A three.js context rendering a cube that turns on every
@@ -184,10 +194,18 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
     return () => clearInterval(id);
   }, [wants3d, everOriented, quatRef]);
 
+  // The single decision, taken once and reported, so the owner draws the
+  // calibrate button against what is on screen rather than what was asked for.
+  const view: '2d' | 'net' | '3d' =
+    wants3d && everOriented && algAnchored ? '3d' : mode === '2d' ? '2d' : 'net';
+  useEffect(() => {
+    onViewChange?.(view);
+  }, [view, onViewChange]);
+
   // 3D is alg-driven, so it can only run while the state is reachable from
   // solved by replaying `moves`. When it isn't, the flat view takes over — it
   // reads facelets and is always exact.
-  if (wants3d && everOriented && algAnchored) {
+  if (view === '3d') {
     return (
       <LiveCubeGyroView
         moves={moves}
@@ -207,7 +225,7 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
   // Only an explicit '2d' asks for the isometric still. A '3d' request that got
   // this far had no orientation to draw with, and the flat view it falls back to
   // is the net — the one that shows all six faces.
-  if (mode === '2d') return <FaceletsCube fd={facelets.toLowerCase()} alt={alt} fill />;
+  if (view === '2d') return <FaceletsCube fd={facelets.toLowerCase()} alt={alt} fill />;
   return <CubeNet facelets={facelets} alt={alt} />;
 }
 

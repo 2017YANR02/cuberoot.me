@@ -31,6 +31,12 @@ import {
   readDevQuatSource,
   sensorBasisForBrand,
   slerpTowards,
+  CUBE_ORIENTATIONS,
+  SNAP_AFTER_MS,
+  SNAP_MAX_RAD,
+  advanceStillMs,
+  nearestCubeOrientation,
+  snapWhenSettled,
   type Quat,
   type SensorBasisName,
 } from '@/app/[lang]/timer/_lib/bluetooth/orientation';
@@ -360,3 +366,107 @@ describe('dev synthetic source', () => {
     }
   });
 });
+
+// ── Settling onto a whole orientation ────────────────────────────────────
+//
+// This is the fix for "the cube on screen is permanently crooked and
+// calibrating does not help". Calibration only zeroes the pose AT THE TAP; the
+// grip error it captured then shows up in every pose after it. These lock the
+// two halves of the rule: what counts as still, and what a still pose is
+// allowed to be rounded to.
+
+describe('cube orientation set', () => {
+  it('is exactly the 24 rotations of a cube, and closed under quarter turns', () => {
+    expect(CUBE_ORIENTATIONS).toHaveLength(24);
+    // Closure: every generator applied to every element lands back in the set.
+    for (const o of CUBE_ORIENTATIONS) {
+      for (const g of [SENSOR_BASES.rotX90, SENSOR_BASES.rotY90, SENSOR_BASES.rotZ90]) {
+        const moved = quatMul(g, o);
+        expect(CUBE_ORIENTATIONS.some((c) => sameRotation(c, moved))).toBe(true);
+      }
+    }
+    // No duplicates — the double cover would hide them from a naive compare.
+    for (let i = 0; i < CUBE_ORIENTATIONS.length; i++) {
+      for (let j = i + 1; j < CUBE_ORIENTATIONS.length; j++) {
+        expect(sameRotation(CUBE_ORIENTATIONS[i], CUBE_ORIENTATIONS[j])).toBe(false);
+      }
+    }
+  });
+
+  it('rounds a slightly-off pose to the whole one, and reports how far it was', () => {
+    const off = quatMul(fromAxisAngle(X, 0.06), fromAxisAngle(Y, Math.PI / 2));
+    const near = nearestCubeOrientation(off);
+    expectSameRotation(near.quat, fromAxisAngle(Y, Math.PI / 2));
+    expect(near.angleRad).toBeCloseTo(0.06, 6);
+    // A whole orientation is its own nearest, at zero distance.
+    for (const o of CUBE_ORIENTATIONS) {
+      expect(nearestCubeOrientation(o).angleRad).toBeLessThan(1e-9);
+    }
+  });
+
+  it('is spaced a quarter turn apart, which is what makes the snap unambiguous', () => {
+    // The closest two distinct cube orientations ever get is 90°, so anything
+    // within 45° of one is nearer to it than to any other. SNAP_MAX_RAD sits at
+    // half of that, i.e. the snap can never round to the WRONG orientation —
+    // which is the property the view relies on and the reason the threshold is
+    // not a free knob.
+    //
+    // (The set does not COVER SO(3) that tightly: measured over 2e6 uniform
+    // samples the furthest any pose sits from all 24 is ~62.7°. That is fine —
+    // poses that far out are never snapped at all.)
+    let closest = Infinity;
+    for (let i = 0; i < CUBE_ORIENTATIONS.length; i++) {
+      for (let j = i + 1; j < CUBE_ORIENTATIONS.length; j++) {
+        closest = Math.min(closest, quatAngleTo(CUBE_ORIENTATIONS[i], CUBE_ORIENTATIONS[j]));
+      }
+    }
+    expect(closest).toBeCloseTo(Math.PI / 2, 9);
+    expect(SNAP_MAX_RAD).toBeLessThan(closest / 2);
+  });
+});
+
+describe('snapWhenSettled', () => {
+  const tilt = (rad: number) => fromAxisAngle(X, rad);
+
+  it('leaves a moving cube exactly as measured', () => {
+    const q = tilt(0.1);
+    expectSameRotation(snapWhenSettled(q, 0), q);
+    expectSameRotation(snapWhenSettled(q, SNAP_AFTER_MS - 1), q);
+  });
+
+  it('rounds a settled cube onto the whole orientation', () => {
+    expectSameRotation(snapWhenSettled(tilt(0.1), SNAP_AFTER_MS), QUAT_IDENTITY);
+    // The reported symptom: a few degrees of grip error, held, forever.
+    expectSameRotation(snapWhenSettled(tilt(SNAP_MAX_RAD - 0.01), SNAP_AFTER_MS + 500), QUAT_IDENTITY);
+  });
+
+  it('leaves a cube genuinely held at an angle alone', () => {
+    const held = tilt(SNAP_MAX_RAD + 0.01);
+    expectSameRotation(snapWhenSettled(held, 10_000), held);
+    // 45° is the classic "resting on an edge" pose — it must keep reading 45°.
+    const edge = tilt(Math.PI / 4);
+    expectSameRotation(snapWhenSettled(edge, 10_000), edge);
+  });
+});
+
+describe('advanceStillMs', () => {
+  it('accumulates while the pose barely moves and resets the moment it does', () => {
+    const a = tiltY(0);
+    expect(advanceStillMs(null, a, 999, 16)).toBe(0); // nothing to compare against
+    expect(advanceStillMs(a, a, 0, 16)).toBe(16);
+    expect(advanceStillMs(a, a, 16, 16)).toBe(32);
+    // Sensor noise well under a degree does not break the streak.
+    expect(advanceStillMs(a, tiltY(0.005), 100, 16)).toBe(116);
+    // A real turn does.
+    expect(advanceStillMs(a, tiltY(Math.PI / 2), 5000, 16)).toBe(0);
+  });
+
+  it('never runs backwards on a bad dt', () => {
+    const a = tiltY(0);
+    expect(advanceStillMs(a, a, 100, -50)).toBe(100);
+  });
+});
+
+function tiltY(rad: number): Quat {
+  return fromAxisAngle(Y, rad);
+}

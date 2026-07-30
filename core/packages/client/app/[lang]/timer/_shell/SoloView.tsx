@@ -813,6 +813,10 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   const gyroQuatRef = useRef<Quat | null>(null);
   const [calibrateNonce, setCalibrateNonce] = useState(0);
   const want3dLiveCube = settings.liveCubeView === '3d';
+  // What the live view actually rendered. LiveCubeState decides — it owns the
+  // phone / no-sample / not-anchored fallbacks — and reports back, because the
+  // calibrate button below must follow the outcome, not the request.
+  const [liveCubeView, setLiveCubeView] = useState<'2d' | 'net' | '3d'>('net');
 
   /**
    * The first turn of an armed attempt starts the clock — csTimer's behaviour
@@ -989,14 +993,19 @@ export default function SoloView({ playersControl }: SoloViewProps) {
             calibrateToken={calibrateNonce}
             sensorBasis={sensorBasisForBrand(bluetoothCube.status.brand)}
             mirror={mirrorForBrand(bluetoothCube.status.brand)}
+            onViewChange={setLiveCubeView}
           />
         </div>
       </div>
       {/* Which way the sensor thinks is "up" is unverified for every brand, so
           the fix is manual: hold the cube upright, tap, and that pose becomes
           the reference. A real <button> — shouldIgnoreTimerTarget already lets
-          presses on one through without arming the timer. */}
-      {want3dLiveCube && bluetoothCube.status.hasGyro && (
+          presses on one through without arming the timer.
+
+          Gated on the view that actually rendered, not on the one requested:
+          phones, a silent gyro and a state not reachable from solved all fall
+          back to the flat net, and there is nothing there to calibrate. */}
+      {liveCubeView === '3d' && (
         <button
           type="button"
           className="live-cube-calibrate"
