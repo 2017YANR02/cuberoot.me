@@ -1,16 +1,13 @@
 /* Puzzle-image chrome. Was the INLINE_CSS blob in the retired
  * app/[lang]/visualcube/page.tsx; the vc-* class names are kept verbatim so the
- * existing look (and app/globals.css's rule for .vc-editor-page) still applies.
+ * existing look still applies.
  *
- * Two roots declare the token aliases:
- *   .vc-editor-page — a full-page host (max-width + page background); /sim/batch
- *   .vc-studio      — <PuzzleImageStudio> itself, which mounts in the /sim
- *                     sidebar, i.e. WITHOUT a page host around it
+ * One root declares the token aliases: .vc-studio — <PuzzleImageStudio> itself,
+ * which mounts in the /sim sidebar, i.e. without a page host around it.
  *
  * Colors are theme tokens. Puzzle sticker colors are DATA and live in the
  * renderers, never here. */
 
-.vc-editor-page,
 .vc-studio {
   --vc-bg: var(--background);
   --vc-panel: var(--card);
@@ -22,29 +19,9 @@
   --vc-divider: var(--border-default);
 }
 
-.vc-editor-page {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 16px;
-  background: var(--vc-bg);
-  color: var(--vc-text);
-}
-
 .vc-studio {
   color: var(--vc-text);
 }
-
-.vc-header {
-  padding: 4px 0 14px; margin-bottom: 12px;
-  display: flex; justify-content: space-between; align-items: center; gap: 12px;
-}
-.vc-header h1 { margin: 0; font-size: 18px; font-weight: 500; color: var(--vc-text); letter-spacing: 0.3px; }
-.vc-header-right { display: flex; align-items: center; gap: 12px; }
-.vc-header-link {
-  color: var(--signal-info); text-decoration: none; font-size: 13px;
-  padding: 4px 10px; border: 1px solid var(--vc-divider); border-radius: 6px;
-}
-.vc-header-link:hover { background: var(--vc-hover); }
 
 .vc-preview-wrap {
   position: sticky; top: 0; z-index: 5;
@@ -116,7 +93,6 @@
 .vc-num { width: 72px; }
 .vc-num-sm { width: 56px; padding: 4px 7px; font-size: 12px; }
 .vc-text { flex: 1; min-width: 0; font-family: var(--font-mono, monospace); }
-.vc-textarea { resize: vertical; min-height: 36px; }
 .vc-color-text { width: 96px; font-size: 12px; font-family: var(--font-mono, monospace); }
 .vc-num:focus, .vc-text:focus, .vc-num-sm:focus, .vc-color-text:focus,
 .vc-select:focus {
@@ -216,7 +192,6 @@
 }
 
 @media (max-width: 480px) {
-  .vc-editor-page { padding: 12px; }
   .vc-arrow-builder { gap: 6px; padding: 8px; }
   .vc-num, .vc-select { max-width: 100%; }
 }
