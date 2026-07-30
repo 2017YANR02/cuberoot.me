@@ -13,15 +13,19 @@ import type {
   ImageSpec, PuzzleType, SpecialView, PuzzleVariant, PlanSideRule, PlanUpRule,
 } from './types';
 import { parseViewRotations } from '@cuberoot/shared/sr-rotations';
+import { isPrintUnit } from './physical-size';
 
 /** Keys specToParams can emit, in emission order. The three mask/paint keys
  *  (`msk` sticker-mask DSL, `mkc` mask colour, `fc` painted facelet) sit LAST so
  *  every pre-mask URL — including the 28 golden fixtures — emits byte-identically.
- *  `ngs` (plan-view "no grey sides") lands after them for the same reason. */
+ *  `ngs` (plan-view "no grey sides") lands after them for the same reason, and
+ *  `psz`/`pun` (export physical size) after those. Append-only: a new key goes at
+ *  the END, never in the middle. */
 const WRITE_KEYS = [
   'pzl', 'size', 'alg', 'case', 'arw', 'ac', 'view', 'stage',
   'sch', 'r', 'bg', 'cc', 'co', 'fo', 'dist', 'msk', 'mkc', 'fc',
   'ngs', 'psr', 'pur', 'psy', 'pfs', 'pfh',
+  'psz', 'pun',
 ] as const;
 
 const SIDE_RULES: readonly PlanSideRule[] = ['all', 'bar', 'oppline', 'cece', 'light', 'oppbar', 'ecec'];
@@ -118,6 +122,14 @@ export function readSpecFromParams(params: ParamsInput, prefix: string, opts?: C
     if (min !== undefined && n < min) return min;
     if (max !== undefined && n > max) return max;
     return n;
+  };
+  // 物理尺寸是小数(2.4cm),不能走上面那个 parseInt。
+  const float = (k: string, fallback: number, min: number, max: number) => {
+    const v = get(k);
+    if (v == null) return fallback;
+    const n = parseFloat(v);
+    if (!Number.isFinite(n)) return fallback;
+    return Math.min(max, Math.max(min, n));
   };
   const s: ImageSpec = { ...DEFAULTS };
 
@@ -223,6 +235,10 @@ export function readSpecFromParams(params: ParamsInput, prefix: string, opts?: C
   if (psy != null) s.planShowYellow = psy !== '0' && psy !== '';
   if (get('pfs') != null) s.planForceShow = get('pfs') ?? '';
   if (get('pfh') != null) s.planForceHide = get('pfh') ?? '';
+  // 导出物理尺寸。与 size(像素)是两码事,只在下载 / 复制时落到文件上。
+  s.printSize = float('psz', DEFAULTS.printSize, 0, 100);
+  const pun = get('pun');
+  if (isPrintUnit(pun)) s.printUnit = pun;
 
   // Panel mode: the host owns the alg + colour scheme — inject LAST so it wins over
   // any stray `alg`/`case`/`sch` still in the URL (same clobber-proofing as `puzzle`).
@@ -288,6 +304,11 @@ export function specToParams(s: ImageSpec, prefix: string, opts?: CodecOptions):
     if (s.planShowYellow !== DEFAULTS.planShowYellow) set('psy', s.planShowYellow ? '1' : '0');
     if (s.planForceShow) set('pfs', s.planForceShow);
     if (s.planForceHide) set('pfh', s.planForceHide);
+  }
+  // 物理尺寸与拼图 / 视图无关(任何图都能按厘米导出),故不进上面那个 plan-only 块。
+  if (s.printSize > 0) {
+    set('psz', String(s.printSize));
+    if (s.printUnit !== DEFAULTS.printUnit) set('pun', s.printUnit);
   }
   return p;
 }

@@ -13,9 +13,9 @@
  * it drops no control.
  */
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Copy, Check, Download, MousePointerClick, RotateCcw, Plus, Trash2 } from 'lucide-react';
+import { Copy, Check, Download, ImageDown, MousePointerClick, RotateCcw, Plus, Trash2 } from 'lucide-react';
 import SimCaptureGroup, { type SimBridge } from '@/components/puzzle-image/SimCaptureGroup';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import BoolToggle from '@/components/BoolToggle';
@@ -24,6 +24,11 @@ import PuzzleImage from '@/components/puzzle-image/PuzzleImage';
 import { publicApiUrl } from '@/lib/api-base';
 import { appendArrow, buildArrowEntry, removeArrowByPoints } from '@/lib/puzzle-image/arrows';
 import { sizeEngineSvg } from '@/lib/puzzle-image/engine-svg';
+import {
+  clipboardImageSupported, copyPngToClipboard, exportSvgText,
+  saveBlob, svgBlob, svgToPngBlob, type PhysicalSize,
+} from '@/lib/puzzle-image/image-export';
+import { PRINT_UNITS } from '@/lib/puzzle-image/physical-size';
 import { pzlShort, specToParams } from '@/lib/puzzle-image/codec';
 import { formatMask, parseMask, type StickerId } from '@/lib/puzzle-image/mask-core';
 import { maskSupported, pieceOf } from '@/lib/puzzle-image/puzzle-mask';
@@ -153,6 +158,40 @@ function CopyButton({ getValue, label }: { getValue: () => string; label: string
   );
 }
 
+/**
+ * 复制图片本身(PNG)到剪贴板 —— 直接 Ctrl+V 进 Word / 微信 / 聊天框,不用先存文件。
+ *
+ * `getPng()` 必须**同步**调用:Safari 只认手势那一刻就构造好的 ClipboardItem,
+ * 先 await 拿到 Blob 再构造就已经过期了。所以这里把 Promise 原样交给剪贴板 API。
+ */
+function CopyImageButton({ getPng, label }: { getPng: () => Promise<Blob>; label: string }) {
+  const [state, setState] = useState<'idle' | 'done' | 'fail'>('idle');
+  // 能力探测只能在客户端做,但首帧必须与服务端 HTML 一致,否则 hydration 报不匹配。
+  // 所以先当作支持,挂载后再按真实结果收起来。
+  const [supported, setSupported] = useState(true);
+  useEffect(() => { setSupported(clipboardImageSupported()); }, []);
+  return (
+    <button
+      type="button"
+      className="vc-btn"
+      disabled={!supported}
+      title={supported ? undefined : tr({
+        zh: '此浏览器不支持复制图片,请用下载',
+        en: 'This browser cannot copy images — use download instead',
+      })}
+      onClick={() => {
+        copyPngToClipboard(getPng())
+          .then(() => setState('done'))
+          .catch(() => setState('fail'));
+        setTimeout(() => setState('idle'), 1600);
+      }}
+    >
+      {state === 'done' ? <Check size={14} /> : <ImageDown size={14} />}{' '}
+      {state === 'fail' ? tr({ zh: '复制失败', en: 'Copy failed' }) : label}
+    </button>
+  );
+}
+
 // ── studio ──────────────────────────────────────────────────────────────────
 
 /**
@@ -259,56 +298,21 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
     return node ? new XMLSerializer().serializeToString(node) : '';
   }, [s, engineShown, shownEngineSvg]);
 
+  // 「物理尺寸」旋钮:0 = 不写,导出件只有像素。栅格化 / 下载 / 复制三条路共用同一份。
+  const physical: PhysicalSize | null = s.printSize > 0
+    ? { size: s.printSize, unit: s.printUnit }
+    : null;
+
   const downloadSvg = () => {
     const out = getCurrentSvg();
     if (!out) return;
-    const blob = new Blob([out], { type: 'image/svg+xml;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${s.puzzleType}-${Date.now()}.svg`;
-    a.click();
-    URL.revokeObjectURL(url);
+    saveBlob(svgBlob(exportSvgText(out, physical)), `${s.puzzleType}-${Date.now()}.svg`);
   };
 
   const downloadPng = async () => {
     const out = getCurrentSvg();
     if (!out) return;
-    const svgBlob = new Blob([out], { type: 'image/svg+xml;charset=utf-8' });
-    const svgUrl = URL.createObjectURL(svgBlob);
-    try {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => resolve();
-        img.onerror = () => reject(new Error('SVG decode failed'));
-        img.src = svgUrl;
-      });
-      const canvas = document.createElement('canvas');
-      canvas.width = s.imageSize;
-      canvas.height = s.imageSize;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      // 引擎矢量镜像是贴拼图裁剪的非方形 viewBox,硬拉成方形会变形 → contain-fit
-      // 居中(spec 渲染本来就是方形,fit 后不变)。
-      const iw = img.naturalWidth || s.imageSize;
-      const ih = img.naturalHeight || s.imageSize;
-      const k = Math.min(s.imageSize / iw, s.imageSize / ih);
-      const dw = iw * k;
-      const dh = ih * k;
-      ctx.drawImage(img, (s.imageSize - dw) / 2, (s.imageSize - dh) / 2, dw, dh);
-      canvas.toBlob((pngBlob) => {
-        if (!pngBlob) return;
-        const pngUrl = URL.createObjectURL(pngBlob);
-        const a = document.createElement('a');
-        a.href = pngUrl;
-        a.download = `${s.puzzleType}-${Date.now()}.png`;
-        a.click();
-        URL.revokeObjectURL(pngUrl);
-      }, 'image/png');
-    } finally {
-      URL.revokeObjectURL(svgUrl);
-    }
+    saveBlob(await svgToPngBlob(out, s.imageSize, physical), `${s.puzzleType}-${Date.now()}.png`);
   };
 
   const shareUrl = useMemo(() => {
@@ -506,6 +510,15 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
             engine-only 拼图服务端画不了 → 只留 SVG/PNG(下载预览那份引擎矢量)。 */}
         {!engineOnly && <CopyButton label={t('分享链接', 'Share URL')} getValue={() => shareUrl} />}
         {!engineOnly && <CopyButton label={t('API 链接', 'API URL')} getValue={() => apiSvgUrl} />}
+        {/* 复制图片本身,而不是链接 —— 贴进文档 / 聊天最短的一条路。 */}
+        <CopyImageButton
+          label={t('复制图片', 'Copy image')}
+          getPng={() => svgToPngBlob(getCurrentSvg(), s.imageSize, physical)}
+        />
+        <CopyButton
+          label={t('复制 SVG', 'Copy SVG')}
+          getValue={() => exportSvgText(getCurrentSvg(), physical)}
+        />
         <button type="button" className="vc-btn" onClick={downloadSvg}>
           <Download size={14} /> SVG
         </button>
@@ -674,6 +687,30 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
               if (!isNaN(n)) set('imageSize', Math.max(1, Math.min(1000, n)));
             }}
           />
+          {/* 物理尺寸:只写进导出的文件(SVG 的 width/height、PNG 的 pHYs),预览和
+              API 链接都不受影响。0 = 不写,拖进文档时按软件的默认换算。 */}
+          <label className="vc-label vc-label-secondary">
+            {t('物理尺寸', 'Physical size')}
+          </label>
+          <input
+            type="number" className="vc-num" value={s.printSize} min={0} max={100} step={0.1}
+            aria-label={t('导出物理尺寸,0 为不写', 'Export physical size, 0 = none')}
+            title={t(
+              '导出的图自带这个大小,拖进 / 粘进文档就不用再拉。0 = 不写。',
+              'The exported file carries this size, so it lands at scale in a document. 0 = off.',
+            )}
+            onChange={(e) => {
+              const n = parseFloat(e.target.value);
+              set('printSize', Number.isFinite(n) ? Math.max(0, Math.min(100, n)) : 0);
+            }}
+          />
+          <select
+            className="vc-select" value={s.printUnit} disabled={!(s.printSize > 0)}
+            aria-label={t('物理尺寸单位', 'Physical size unit')}
+            onChange={(e) => set('printUnit', e.target.value as ImageSpec['printUnit'])}
+          >
+            {PRINT_UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
+          </select>
         </div>
 
         {!engineOnly && (<>
