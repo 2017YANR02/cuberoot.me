@@ -353,16 +353,28 @@ export function useSiteSearch(
       ]).then(() => { if (!cancelled) setXLoaded(true); });
     };
 
-    if (prefetch === 'eager') {
+    // Eager, but not during the caller's entrance animation: the desk-pet overlay
+    // grows in over ~260ms, and the first idle slot lands inside it — so the 4MB
+    // persons index used to download and parse right there (measured: 79/159/90ms
+    // long tasks while the panel was still animating). Hold the kick until the
+    // animation is done. Once the user actually types, xSearchEnabled flips, this
+    // effect re-runs and falls through to the immediate kick below — so nobody
+    // waits on the delay for results they asked for.
+    if (prefetch === 'eager' && !xSearchEnabled) {
       type RIC = (cb: () => void, opts?: { timeout?: number }) => number;
       type CIC = (id: number) => void;
       const w = window as Window & { requestIdleCallback?: RIC; cancelIdleCallback?: CIC };
-      if (w.requestIdleCallback) {
-        const id = w.requestIdleCallback(kick, { timeout: 2000 });
-        return () => { cancelled = true; w.cancelIdleCallback?.(id); };
-      }
-      const id = setTimeout(kick, 200);
-      return () => { cancelled = true; clearTimeout(id); };
+      const ENTRANCE_MS = 320;
+      let ricId: number | undefined;
+      const id = setTimeout(() => {
+        if (w.requestIdleCallback) ricId = w.requestIdleCallback(kick, { timeout: 2000 });
+        else kick();
+      }, ENTRANCE_MS);
+      return () => {
+        cancelled = true;
+        clearTimeout(id);
+        if (ricId !== undefined) w.cancelIdleCallback?.(ricId);
+      };
     }
     kick();
     return () => { cancelled = true; };

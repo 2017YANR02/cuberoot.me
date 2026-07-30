@@ -8,10 +8,15 @@
 
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-import type { ReactNode, AnchorHTMLAttributes } from 'react';
+import type { ReactNode, AnchorHTMLAttributes, ComponentProps } from 'react';
 
 type Props = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & {
   children?: ReactNode;
+  // Pass `false` where the link is chrome the user rarely takes (a desk-pet
+  // toolbar icon, a footer): prefetching the landing RSC payload every time
+  // that chrome mounts is a wasted edge request, most often for the page the
+  // user is already on.
+  prefetch?: ComponentProps<typeof Link>['prefetch'];
 };
 
 export default function HomeLink({ children, ...rest }: Props) {
