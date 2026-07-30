@@ -618,8 +618,9 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
             <select
               className="settings-row-control-select"
               value={s.bluetoothAutoReady}
-              onChange={(e) => updateSettings({ bluetoothAutoReady: e.target.value as 'off' | 'still' | 'double-flick' })}
+              onChange={(e) => updateSettings({ bluetoothAutoReady: e.target.value as 'off' | 'still' | 'double-flick' | 'scrambled' })}
             >
+              <option value="scrambled">{tr({ zh: '打乱正确即预备', en: 'When scrambled' })}</option>
               <option value="off">{tr({ zh: '关闭', en: 'Off'
             })}</option>
               <option value="still">{tr({ zh: '静止 2 秒', en: 'Still 2s'
@@ -627,7 +628,9 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
               <option value="double-flick">{tr({ zh: "双反扭 (U U')²", en: "Double-flick (U U')²"
             })}</option>
             </select>
-            <span className="hint">{tr({ zh: "still = 解完后保持 2 秒不动；double-flick = 解完后做 U U' U U' 确认", en: "still = solved + 2s no move; double-flick = perform U U' U U' to confirm"
+            <span className="hint">{tr({
+              zh: "预备后第一下转动即起表(不用按空格)。打乱正确即预备 = 魔方拧到与打乱一致就预备;静止 2 秒 = 停手 2 秒;双反扭 = 做 U U' U U' 确认",
+              en: "Once armed, your first turn starts the clock — no space bar. When scrambled = the cube matches the scramble; still 2s = no move for 2s; double-flick = perform U U' U U' to confirm",
             })}</span>
           </Row>
           <Row label={tr({ zh: '实况魔方小窗', en: 'Live cube window'

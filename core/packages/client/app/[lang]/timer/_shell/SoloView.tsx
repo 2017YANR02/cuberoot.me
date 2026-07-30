@@ -746,14 +746,20 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   const bldMemo = useBldMemo({ phase: timer.phase, displayMs: timer.displayMs, enabled: bldMemoActive });
   useEffect(() => { bldMemoRef.current = bldMemo; }, [bldMemo]);
 
+  // Set when the smart cube started this attempt. That path has already done
+  // the bookkeeping below — at the true start instant, with the turn that
+  // started the clock already in `movesRef` — so redoing it here would throw
+  // away the solve's first move.
+  const cubeStartedRef = useRef(false);
   useEffect(() => {
     if (timer.phase !== 'running') {
+      cubeStartedRef.current = false;
       scrambleAtStartRef.current = scramble;
       eventAtStartRef.current = event;
       caseIdAtStartRef.current = TRAINER_KINDS.has(event)
         ? getLastPickedCase(event as TrainerKind)
         : null;
-    } else {
+    } else if (!cubeStartedRef.current) {
       movesRef.current = [];
       solveStartTsRef.current = performance.now();
     }
@@ -786,11 +792,39 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   const [calibrateNonce, setCalibrateNonce] = useState(0);
   const want3dLiveCube = settings.liveCubeView === '3d';
 
+  /**
+   * The first turn of an armed attempt starts the clock — csTimer's behaviour
+   * (`timer/giiker.js:166`), and the missing half of auto-ready: arming used to
+   * leave the timer waiting for a space bar the user's hands had already left,
+   * so the inspection countdown just ran on to DNF while they solved.
+   *
+   * Assigned every render rather than memoised because it closes over `timer`,
+   * and the BLE handler reads it through the ref — same shape as
+   * `consumeFacesRef` / `externalTimeRecordRef` above.
+   */
+  const startFromCubeRef = useRef<(ts: number) => void>(() => {});
+  startFromCubeRef.current = (ts: number) => {
+    if (!getSettings().timingEnabled) return; // 练习模式:换题不计时
+    // The phase check lives inside startFromCube, against the timer's own
+    // synchronous phase — two turns from one BLE batch must not start twice.
+    if (!timer.startFromCube(ts)) return;
+    phaseSnapshotRef.current = 'running';
+    cubeStartedRef.current = true;
+    movesRef.current = [];
+    solveStartTsRef.current = ts;
+  };
+
   const bluetoothCube = useBluetoothCube({
     // Passing onGyro is what turns the stream on at all (MoYu32 has an explicit
     // enable opcode), so only ask for it when the 3D view could use it.
     onGyro: want3dLiveCube ? (q) => { gyroQuatRef.current = q; } : undefined,
     onMove: (move: string, ts: number) => {
+      // Before the broadcast, deliberately: if this turn starts the clock, the
+      // subscribers below have to see it as the solve's first move. They read
+      // the phase from `phaseSnapshotRef`, which this sets synchronously —
+      // waiting for React to re-render would lose the move, and BLE can hand us
+      // two turns of the same batch inside one call stack.
+      startFromCubeRef.current(ts);
       const faces = bluetoothCubeRef.current?.getFaces();
       if (faces) consumeFacesRef.current(faces);
       for (const sub of bluetoothSubscribersRef.current) {
@@ -804,6 +838,22 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     // The hook has always emitted these; nothing consumed them, so a cube that
     // dropped mid-session went quiet with no explanation. Surface them.
     onConnectionEvent: (ev) => {
+      // A solve in progress just lost the thing that stops the clock. csTimer
+      // interrupts the attempt here (`timer.js:715` synthesises ESC, which
+      // records a DNF); we tell the user instead. Two reasons: the reconnect
+      // ladder we have and it doesn't often rescues the attempt outright, and
+      // throwing one away cannot be undone — a five-minute BLD attempt killed
+      // by a radio glitch is a worse outcome than any wording. The space bar
+      // still stops the clock, so saying so is a complete answer.
+      if (ev.kind === 'disconnected' && phaseSnapshotRef.current === 'running') {
+        setInfoToast({
+          msg: tr({
+            zh: '智能魔方断开,这一把不会自动停表 —— 按空格自己停',
+            en: 'Smart cube disconnected — this attempt won’t auto-stop; press space to stop it',
+          }),
+        });
+        return;
+      }
       if (ev.kind === 'disconnected' && ev.reason === 'manual') return; // user asked for it
       setInfoToast({
         msg:
@@ -822,7 +872,10 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   });
 
   useAutoReady({
-    enabled: settings.bluetoothAutoReady !== 'off' && bluetoothCube.status.connected,
+    // 'scrambled' is not a move-stream gesture, so it is handled by the effect
+    // below instead — this hook only knows about turns.
+    enabled: (settings.bluetoothAutoReady === 'still' || settings.bluetoothAutoReady === 'double-flick')
+      && bluetoothCube.status.connected,
     mode: settings.bluetoothAutoReady === 'double-flick' ? 'double-flick' : 'still',
     onReady: () => {
       if (!getSettings().timingEnabled) return; // 练习模式不自动预备计时
@@ -925,6 +978,23 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     setScrambleHint(null);
     clearFixup();
   }, [scrambleTarget, scramble, clearFixup]);
+  /**
+   * 「打乱正确即预备」 —— csTimer's default (`giiSD='s'`, `giiker.js:143`). Once the
+   * scramble is on the cube there is nothing left for the user to signal: the
+   * cube can see it matches, so a keypress on top of that exists only because
+   * software used not to be able to tell. Arming is passive — the clock still
+   * waits for the first turn — which is what makes this safe as a default.
+   */
+  const armFromScrambleRef = useRef<() => void>(() => {});
+  armFromScrambleRef.current = () => {
+    const s = getSettings();
+    if (s.bluetoothAutoReady !== 'scrambled' || !s.timingEnabled) return;
+    const ph = phaseSnapshotRef.current;
+    if (ph !== 'idle' && ph !== 'stopped') return;
+    warmupSound();
+    timer.onPressDown();
+  };
+
   /** Ask the solver for a path from where the cube is to `target`, then hint. */
   const fixupRequester = useMemo(() => createFixupRequester({
     faces: () => bluetoothCubeRef.current?.getFaces() ?? null,
@@ -948,7 +1018,15 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       if (ph === 'running') return;
       const faces = bluetoothCubeRef.current?.getFaces();
       if (!faces) return;
-      setScrambleMatch(facesEqual(faces, target));
+      const match = facesEqual(faces, target);
+      setScrambleMatch(match);
+      // 「打乱正确即预备」 belongs here and not in an effect over `scrambleMatch`:
+      // it is the EVENT of a turn completing the scramble, not the state of
+      // matching. As state it also fires on the commit where a solve ends —
+      // `scrambleMatch` is still the `true` from before the solve there (the
+      // check skips while running), so every solve armed the next attempt and
+      // the next scramble's own turns started the clock.
+      if (match) armFromScrambleRef.current();
       const text = scrambleTextRef.current;
       if (!text) { setScrambleHint(null); clearFixup(); return; }
       // Order matters, and it is csTimer's (`bluetoothutil.js:71`): a live
@@ -976,6 +1054,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   useEffect(() => {
     if (timer.phase === 'running') { setScrambleHint(null); clearFixup(); }
   }, [timer.phase, clearFixup]);
+
 
   // ── Round simulation ────────────────────────────────────────────
   // The round is a VIEW over the solve history, not a second store: it is the
