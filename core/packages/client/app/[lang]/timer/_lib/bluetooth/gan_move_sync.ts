@@ -22,9 +22,22 @@
  *   - If the buffer grows past 16 the link is beyond repair; the caller is
  *     told to drop the connection rather than keep a wrong model alive.
  *
- * Serial numbers are compared modulo 256 throughout, exactly as csTimer does:
- * move events carry a 16-bit counter but history replies carry 8 bits, and the
- * `& 0xFF` comparison is what lets the two be mixed.
+ * Serial numbers live in an 8-BIT space here, and are masked on the way in.
+ * That is not cosmetic. Move events carry a 16-bit counter while history
+ * replies carry 8 bits, and every comparison below is modulo 256 — but a serial
+ * also gets STORED, in `prevMoveCnt`. Store the raw values and the two widths
+ * end up in the same variable, at which point the duplicate check
+ *
+ *     if (moveCnt === this.prevMoveCnt) return [];
+ *
+ * stops working: after a history recovery leaves `prevMoveCnt` holding an 8-bit
+ * serial, a re-delivered live event (say 302 against 46) is not equal to it, so
+ * it lands in the buffer, `evict` computes `(302 - 46) & 0xFF = 0`, and the same
+ * physical turn is applied a SECOND time. One quarter turn becomes a half turn
+ * and the tracked cube is wrong from that moment on — every later scramble
+ * check, auto-stop and live view included. Masking at the boundary is the fix;
+ * `evict` additionally refuses `diff === 0`, which in an 8-bit space can only
+ * mean "the serial we last applied".
  *
  * Shared by `gan_v3.ts` and `gan_v4.ts`, whose move/history frames differ only
  * in bit offsets. GAN v2 does not need this — it sends a 7-move sliding window
@@ -33,6 +46,9 @@
 
 /** How far the buffer may run ahead before we call the link unrecoverable. */
 const MAX_PENDING = 16;
+
+/** Into the 8-bit serial space every comparison in this file assumes. */
+const serial = (n: number): number => n & 0xff;
 
 export interface BufferedMove {
   /** The cube's serial number for this move. */
@@ -107,15 +123,15 @@ export class GanMoveSync {
    * accompanying facelet state is the truth.
    */
   seed(moveCnt: number): void {
-    this.prevMoveCnt = moveCnt;
-    this.lastSeenCnt = moveCnt;
+    this.prevMoveCnt = serial(moveCnt);
+    this.lastSeenCnt = serial(moveCnt);
     this.lastEmittedTs = null;
     this.buffer.length = 0;
   }
 
   /** Note a serial seen on the wire without applying anything. */
   observe(moveCnt: number): void {
-    this.lastSeenCnt = moveCnt;
+    this.lastSeenCnt = serial(moveCnt);
   }
 
   /** Forget everything (disconnect / re-handshake). */
@@ -131,10 +147,11 @@ export class GanMoveSync {
    * chronological order — empty while a hole is being filled.
    */
   push(moveCnt: number, mv: string, ts?: number): TimedMove[] {
-    this.lastSeenCnt = moveCnt;
+    const cnt = serial(moveCnt);
+    this.lastSeenCnt = cnt;
     if (this.prevMoveCnt === -1) return [];
-    if (moveCnt === this.prevMoveCnt) return [];
-    this.buffer.push({ cnt: moveCnt, mv, ts });
+    if (cnt === this.prevMoveCnt) return [];
+    this.buffer.push({ cnt, mv, ts });
     return this.evict(true);
   }
 
@@ -145,7 +162,7 @@ export class GanMoveSync {
    */
   injectHistory(moves: BufferedMove[]): TimedMove[] {
     if (this.prevMoveCnt === -1) return [];
-    for (const m of moves) this.injectLost(m);
+    for (const m of moves) this.injectLost({ ...m, cnt: serial(m.cnt) });
     return this.evict(false);
   }
 
@@ -155,12 +172,13 @@ export class GanMoveSync {
    * event, so the caller owns that decision; this just issues the request.
    */
   requestResync(cubeMoveCnt: number): void {
-    const diff = (cubeMoveCnt - this.prevMoveCnt) & 0xff;
+    const diff = (serial(cubeMoveCnt) - this.prevMoveCnt) & 0xff;
     if (diff <= 0) return;
-    // Firmware bug guard, verbatim from csTimer: a facelets event reporting
-    // counter 0 cannot be trusted to mean "move 0 completed", and asking would
-    // restore a stale move from the previous counter cycle.
-    if (cubeMoveCnt === 0) return;
+    // Firmware bug guard, from csTimer: a facelets event reporting counter 0
+    // cannot be trusted to mean "move 0 completed", and asking would restore a
+    // stale move from the previous counter cycle. Applied to the masked serial
+    // so it fires on every wrap, not just the first one.
+    if (serial(cubeMoveCnt) === 0) return;
     const start = this.buffer.length > 0 ? this.buffer[0].cnt : (cubeMoveCnt + 1) & 0xff;
     this.requestHistory(start, diff + 1);
   }
@@ -179,6 +197,15 @@ export class GanMoveSync {
       if (diff > 1) {
         if (reqLostMoves) this.requestHistory(this.buffer[0].cnt, diff);
         break;
+      }
+      if (diff === 0) {
+        // Same serial as the move we last applied — a re-delivery, not a turn.
+        // `push` already rejects the common case; this catches the one that
+        // reaches the buffer another way (a history reply that overlaps what we
+        // have). Dropping it is the only safe reading: applying it would turn
+        // one physical quarter into two and put the model permanently out.
+        this.buffer.shift();
+        continue;
       }
       const move = this.buffer.shift()!;
       out.push({ mv: move.mv, ts: move.ts });
