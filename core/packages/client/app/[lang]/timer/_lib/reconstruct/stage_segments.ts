@@ -95,9 +95,11 @@ function isFaceTurnToken(raw: string): boolean {
 
 /**
  * Apply a single move token to faces in place (returns new state, or the same
- * reference on failure). Defensive: never throws.
+ * reference on failure). Defensive: never throws. Exported for the other
+ * move-stream walkers (error_detect) so there is exactly one tolerant
+ * token-application in the reconstruct layer.
  */
-function applyOneToken(prev: CubeFaces, token: string): CubeFaces {
+export function applyOneToken(prev: CubeFaces, token: string): CubeFaces {
   const trimmed = token.trim();
   if (!trimmed) return prev;
   try {
