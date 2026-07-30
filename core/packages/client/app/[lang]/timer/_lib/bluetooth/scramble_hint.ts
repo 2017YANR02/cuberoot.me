@@ -40,10 +40,11 @@ export interface ScrambleHint {
   /**
    * The move the user owes next, or null when the scramble is complete.
    *
-   * Rewritten to the REMAINING amount when the move is partly applied: a
-   * scramble asking for `R2` when the cube has had one `R` reads as `R`, not
-   * `R2`. That is the whole point of hinting — the string is what to do now,
-   * not what the scramble said.
+   * Always the scramble's own notation, including while the move is only partly
+   * applied: an `L2` with one quarter turned still reads `L2`. The strip IS the
+   * scramble, and a token that rewrites itself halfway through a turn — `L2`
+   * flickering to `L` and back — reads as the app editing the scramble under
+   * you. How far through the turn you are is already in your hands.
    */
   current: string | null;
   /** Moves after `current`, in scramble order. */
@@ -127,22 +128,16 @@ function hintFromSequence(seq: FaceTurn[], faces: CubeFaces, from?: CubeFaces): 
   let cur = from ?? solved(N);
   /** Index of the move the user owes. `seq.length` means "scramble finished". */
   let next = NOT_FOUND;
-  /** Quarters actually applied to the move at `next`, when it is partly done. */
-  let partial: 1 | 2 | 3 | null = null;
 
   if (facesEqual(cur, faces)) next = 0;
 
   for (let i = 0; i < seq.length; i++) {
-    // Only the iteration that stops the walk gets to declare a partial turn.
-    partial = null;
     for (const q of [1, 2, 3] as const) {
       if (!facesEqual(applyMoves(cur, N, asMoves(seq[i].face, q)), faces)) continue;
-      if (q === seq[i].quarters) {
-        next = i + 1;           // this move is finished; keep walking forward
-      } else {
-        next = i;               // half done, with `q` of it applied
-        partial = q;
-      }
+      // The expected power finishes move i and the walk goes on. Any other
+      // power of the same face means it is only partly applied, so the user
+      // still owes it — we stop at i and the strip keeps printing it as-is.
+      next = q === seq[i].quarters ? i + 1 : i;
       break;
     }
     // `next === i` means this iteration did not get us past move i — either
@@ -157,25 +152,13 @@ function hintFromSequence(seq: FaceTurn[], faces: CubeFaces, from?: CubeFaces): 
 
   if (next === NOT_FOUND) return null;
 
-  const done = seq.slice(0, next).map(turnToString);
-  const pending = seq.slice(next + 1).map(turnToString);
-  let current: string | null = null;
-  if (next < seq.length) {
-    const t = seq[next];
-    if (partial === null) {
-      current = turnToString(t);
-    } else {
-      // Remaining quarters. csTimer's `(m[2] - pow + 7) % 4`, where its `pow`
-      // is `partial - 1`. It only applies this rewrite at position 0
-      // (`next == 0 && i == 0`, bluetoothutil.js:62); we apply it wherever the
-      // partial move is, because a user who has done one R of an R2 in the
-      // middle of the scramble needs to be told "R" there just as much.
-      const remaining = ((t.quarters - (partial - 1) + 7) % 4) as 0 | 1 | 2 | 3;
-      // remaining === 0 cannot happen: a power that completes the move would
-      // have matched the expected-power branch above.
-      current = remaining === 0 ? turnToString(t) : turnToString({ face: t.face, quarters: remaining as 1 | 2 | 3 });
-    }
-  }
-
-  return { done, current, pending, complete: next >= seq.length };
+  return {
+    done: seq.slice(0, next).map(turnToString),
+    // csTimer rewrites a partly-done move to the remaining amount, but only
+    // when it is the first move of the scramble (`(m[2] - pow + 7) % 4` under
+    // `next == 0 && i == 0`, bluetoothutil.js:62). We never do: see `current`.
+    current: next < seq.length ? turnToString(seq[next]) : null,
+    pending: seq.slice(next + 1).map(turnToString),
+    complete: next >= seq.length,
+  };
 }
