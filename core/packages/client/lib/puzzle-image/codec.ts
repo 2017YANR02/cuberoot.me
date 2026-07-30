@@ -3,7 +3,7 @@
  * that already owns `puzzle` / `alg` / `setup` / `cuts` / `renderer` (e.g. /sim)
  * can mount the image state under `img_*` without collision.
  *
- * prefix '' reproduces /visualcube's historical query byte-for-byte (same keys,
+ * prefix '' is the bare key set /v1/visualcube.svg speaks (same keys,
  * same emission order, same "only when != default" discipline).
  */
 

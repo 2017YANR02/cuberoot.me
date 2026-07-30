@@ -1,6 +1,6 @@
 /**
  * 一张图从 SVG 字符串到「用户手里」的那几步:栅格化、写物理尺寸、下载、复制到剪贴板。
- * /visualcube 编辑器和 /visualcube/batch 批量页共用同一份,免两处漂移。
+ * /sim 图像面板和 /sim/batch 批量页共用同一份,免两处漂移。
  *
  * 浏览器相关,勿在 node/测试里直接调(纯逻辑在 physical-size.ts / zip.ts,那两个可测)。
  */

@@ -1,5 +1,13 @@
 # sr-puzzlegen + visualcube 退役计划 — 引擎解析矢量导出统一路线
 
+> **2026-07-30 追加(用户指令,已执行)**:standalone `/visualcube` 页整个退役 —— 编辑器页直接删(不加 redirect,按项目规矩),两个子页搬进模拟器:`/visualcube/batch` → **`/sim/batch`**(URL key 从裸前缀换成 `img_`,与 /sim 图像面板同一套;拼图 / 公式 / 阶段三个 key 两边各自翻译)、`/visualcube/stages` → **`/sim/stages`**(卡片改成「打开模拟器并选中该阶段」`?puzzle=N&stickering=…`,与引擎自带阶段同义的名字走 `stickeringValueForVcMask` 去重)。
+>
+> 连带:`PuzzleImageStudio` 的 `mode` prop 删除(page 模式没宿主了),page 专属的那几组控件(魔方 / 阶数 / 公式 / 六面配色 / 视角旋转 / 壳体与贴纸不透明度 / 投影距离 / stage mask 下拉)一并删 —— 它们在 /sim 各有一个入口,本来就是重复;「背景色」是导出件底色、sim 没有对应控件,改成面板常驻。「分享链接」按钮删(面板状态就在地址栏的 `img_*` 里)。**已知损失**:3×3 net 涂色编辑器(`?fc=`)随 page 模式一起没了入口 —— 画任意面色出图这件事现在只有 `/scramble/solver` 的涂色板能做,它不出图。
+>
+> `/sim` 伴图侧只删了浮层左上那个 **VC/ENG 渲染器切换钮**(`preferSpecRender` + `sim.img.source`)。引擎画不出时静默回落 visualcube 的兜底、以及 plan 俯视图直调 `renderCubeSVG` 出图,**都按用户决定保留**。
+>
+> `scripts/verify_puzzle_image_golden.cjs` 删除:它唯一能跑的 arm 就是 /visualcube 页。等价覆盖已在 `tests/puzzle-image-render.test.ts`(同一批 golden fixture,Node 侧逐字节)。
+
 状态:**本工作线收官(2026-07-22):Phase 0-4 全部完成并 push 上线(commit 67e5526938,CI 全绿 + 线上实证),观察期起跑。** 剩余 = 两个显式排期的后续单独会话工作包:①Phase 1 物理搬移(动机已在原地达成,纯代码组织);②Phase 5 sr 删除(日历门控 ≥2026-08-05)—— 均非开放待办,见各节队列。决策(2026-07-21):给自有 /sim 引擎做**解析隐面消除(BSP)矢量导出**,伴图 + 服务端缩略图全走它;`@cuberoot/vendor-sr-puzzlegen` 整包**先不删,当后悔药**,切换稳定后最终删除。追加决策(2026-07-21):**NxN 伴图同路退役 visualcube**(cube:normal 走 BSP 镜像;visualcube 包同样先不删当后悔药)—— §5 原「NxN 不在本方案内」作废,收窄为「visualcube 的无 live-sim 消费方(/visualcube studio 任意 spec、CaseThumb、服务端)仍走 visualcube,随 Phase 1 抽包 + Phase 4 一并评估」。
 
 **最终目标定稿(2026-07-21 用户指令)**:**完全退役 visualcube 和 sr 两个渲染后端**(代码都先留着当后悔药,以后单独会话再删)。退役硬前提:**visualcube studio 现有功能一个都不能少**,能抄的全抄进引擎路线,见 §2b 对照表;别重复造轮 —— UI / DSL / 解析层照搬,只换渲染后端。网格观感抄 visualcube 的 **inset 模型**(贴纸向心缩、壳色衬底,缝宽 = 小面固定比例),弃绝对 px 描边 —— 固定 px 在高阶 NxN 会吞掉贴纸整图发黑(40 阶用户实测)。

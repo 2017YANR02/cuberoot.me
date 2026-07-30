@@ -150,7 +150,7 @@ export const SIZE9_MASKS: MaskOption[] = [
 
 export const MASK_ROTATIONS = ['', 'x', "x'", 'x2', 'y', "y'", 'y2', 'z', "z'", 'z2'];
 
-// ── Stage cheat-sheet (/visualcube/stages) ──────────────────────────────────
+// ── Stage cheat-sheet (/sim/stages) ─────────────────────────────────────────
 
 export interface StageEntry {
   label: string;

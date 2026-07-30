@@ -1,4 +1,4 @@
-// /visualcube studio(spec 渲染)↔ /sim 伴图(引擎导出)同视图逐字节 parity。
+// studio spec 渲染 ↔ /sim 伴图(引擎导出)同视图逐字节 parity。
 //
 // 用户红线:「vc 和引擎的魔方图不许有任何差别」。几何早已按构造同款(plan 直调
 // renderCubeSVG,net/wca 共享 emitter);这里锁的是曾经翻过车的另一半 —— 配色:

@@ -221,7 +221,7 @@ describe('renderer masking', () => {
 
   it('no-mask output is byte-identical to the pre-mask golden', () => {
     // fixtures/puzzle-image-golden/* are byte-exact snapshots of what /visualcube
-    // rendered BEFORE this change (see scripts/verify_puzzle_image_golden.cjs).
+    // rendered BEFORE this change (recorded off the retired /visualcube page).
     // They were captured as DOM innerHTML, which expands `<path/>` to `<path></path>`
     // — the only difference from the raw renderer string. Normalise that, and the
     // bytes must match exactly: proof the state-model swap (color index → sticker
