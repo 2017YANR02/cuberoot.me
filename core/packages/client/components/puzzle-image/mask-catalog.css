@@ -1,5 +1,6 @@
 /* Stage-mask catalog grid + its page chrome. Was the INLINE_CSS blob in
- * app/[lang]/visualcube/stages/page.tsx; vcs-* class names kept verbatim. */
+ * the retired app/[lang]/visualcube/stages/page.tsx (now /sim/stages);
+ * vcs-* class names kept verbatim. */
 
 .vcs-page {
   max-width: 1280px;

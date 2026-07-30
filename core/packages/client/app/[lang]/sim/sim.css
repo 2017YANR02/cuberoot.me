@@ -119,13 +119,13 @@
 }
 /* 图像面板:studio 自带内边距,只需给一点四周留白与其它面板一致。已脱离折叠区
    (标题栏去掉后直接挂 .sim-side),两种挂法都覆盖。 */
-.sim-section-body > .vc-studio-panel,
-.sim-side > .vc-studio-panel {
+.sim-section-body > .vc-studio,
+.sim-side > .vc-studio {
   padding: 8px 12px 12px;
 }
 
 /* 图像预览浮层 — 画布左上角,与右上角背面小窗(.sim-backview)对称的一对。
-   pointer-events:none 让拖动穿透到主画布,预览在面板模式本就是被动镜像,不接手势。
+   pointer-events:none 让拖动穿透到主画布,预览本就是被动镜像,不接手势。
    尺寸不自己定:与背面小窗同取 --sim-float-size(JS layoutBackView 出的唯一尺寸),
    两个窗必须一样大。 */
 .sim-image-overlay {
@@ -137,8 +137,8 @@
 }
 /* portal 的目标节点(React 不能同时管容器 children 和 portal 内容 → 关闭钮挂外层) */
 .sim-image-overlay-host { display: contents; }
-/* portal 出来的预览不再落在 .vc-studio-panel 里,吃的是 studio 页版基样式 —— 那套
-   sticky / 45vh / 输入框底色是给整页主视觉写的,这里逐条中和。
+/* portal 出来的预览挂在画布浮层里,不在 .vc-studio 之下 → 吃的是 puzzle-image.css
+   的基样式(sticky / 45vh / 输入框底色),这里逐条中和。
    图像是方的、窗也是方的,铺满即精确贴合(svg 自带 viewBox,meet 缩放不变形)。 */
 .sim-image-overlay .vc-preview-wrap {
   position: static;
@@ -283,7 +283,7 @@
   flex-wrap: nowrap;
 }
 
-/* 图像面板 export 行里的实时截图子组(仅 /sim 面板模式渲染):排在静态导出按钮
+/* 图像面板 export 行里的实时截图子组(有画布可截时才渲染):排在静态导出按钮
    之上,整组换行独占一行,用一条 hairline 与下方分隔。按钮复用 studio 的 .vc-btn。 */
 .sim-side .vc-capture-group {
   flex-basis: 100%;
