@@ -48,11 +48,11 @@ export interface BufferedMove {
   ts?: number;
 }
 
-/** A move on its way to the host, with the cube's timestamp if there was one. */
-export interface TimedMove {
-  mv: string;
-  ts?: number;
-}
+// `TimedMove` is the shared driver-to-host vocabulary and lives in driver.ts;
+// re-exported here because this module's whole surface returns them.
+import type { TimedMove } from './driver';
+
+export type { TimedMove };
 
 export interface GanMoveSyncHooks {
   /**

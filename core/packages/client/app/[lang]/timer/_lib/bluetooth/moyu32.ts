@@ -43,14 +43,11 @@
  * Move event (0xA5) layout:
  *   bits   8..88   five u16 inter-move time offsets in ms, `timeOffs[i]` at
  *                  bits `8 + i*16 .. 24 + i*16`, where index 0 is the NEWEST
- *                  move and each value is the gap BEFORE that move. cstimer
- *                  accumulates them into a running device clock
- *                  (`updateMoveTimes`, moyu32cube.js:309). NOT YET READ HERE:
- *                  `onMove` now takes an optional device timestamp (the GAN
- *                  v3/v4 drivers supply one), so these offsets do have a
- *                  consumer — wiring them up is a separate unit, because the
- *                  accumulator has to live in the decode state and the offsets
- *                  are deltas rather than absolute readings.
+ *                  move and each value is the gap BEFORE that move. Unlike
+ *                  every other brand this is a DELTA, not a clock reading, so
+ *                  `Moyu32DecodeState.deviceTime` accumulates them exactly as
+ *                  cstimer's `updateMoveTimes` does (moyu32cube.js:317) and
+ *                  each emitted move carries the running total.
  *   bits  88..96   u8 move counter.
  *   bits  96..121  five 5-bit move codes from bit 96. `m` decodes as
  *                  `"FBUDLR"[m >> 1] + " '"[m & 1]`; any `m >= 12` means the
@@ -79,7 +76,9 @@ import {
   toBitReader,
   type GyroSink,
 } from './gan_crypto';
-import type { CubeDriver, CubeDriverContext, CubeDriverStartResult } from './driver';
+import type {
+  CubeDriver, CubeDriverContext, CubeDriverStartResult, TimedMove,
+} from './driver';
 import { fromFaceletString } from '../cube/state';
 import { MOYU32_MAC_ADV, macStringToBytes, normalizeMac } from './mac';
 import type { CubeBrand } from './types';
@@ -148,6 +147,16 @@ export interface Moyu32DecodeState {
   /** Consecutive garbage frames (unknown type / out-of-range move code). */
   badFrames: number;
   /**
+   * Running device clock in ms, accumulated from the 0xA5 inter-move offsets.
+   *
+   * MoYu is the only brand here that sends DELTAS rather than a counter
+   * reading, so the absolute value only means anything relative to itself —
+   * which is exactly what `move_clock.ts` needs. It starts at 0 for a freshly
+   * seeded cube, so the first move's timestamp is "the gap since the snapshot",
+   * and every later one is a real interval away from it.
+   */
+  deviceTime: number;
+  /**
    * Called with the cube's self-reported 54-character facelet state, once, from
    * the 0xA3 snapshot that seeds the counter. See `CubeDriverContext.onState`.
    */
@@ -186,7 +195,7 @@ function decodeMoyu32Facelets(bit: (from: number, to: number) => number): string
 
 /** Fresh decode state. */
 export function createMoyu32State(onState?: (facelets: string) => void): Moyu32DecodeState {
-  return { prevMoveCnt: -1, battery: null, badFrames: 0, onState };
+  return { prevMoveCnt: -1, battery: null, badFrames: 0, deviceTime: 0, onState };
 }
 
 /**
@@ -201,7 +210,7 @@ export function decodeMoyu32Frame(
   frame: Uint8Array,
   dec: Moyu32DecodeState,
   onGyro?: GyroSink,
-): string[] {
+): TimedMove[] {
   // Anything shorter than a full frame can't carry a move window; bail before
   // the bit reader can walk off the end.
   if (frame.length < 20) return [];
@@ -248,11 +257,16 @@ export function decodeMoyu32Frame(
     if (moveCnt === dec.prevMoveCnt || dec.prevMoveCnt === -1) return [];
 
     const moveWindow: string[] = [];
+    // timeOffs[i] is the gap BEFORE window slot i, in ms. Slot 0 is the newest
+    // move, so accumulating from the oldest emitted slot downwards reproduces
+    // the cube's own clock (cstimer's `updateMoveTimes`, moyu32cube.js:317).
+    const timeOffs: number[] = [];
     let garbage = false;
     for (let i = 0; i < MOVE_WINDOW; i++) {
       const m = bit(96 + i * 5, 101 + i * 5);
       if (m >= 12) { garbage = true; break; }
       moveWindow[i] = MOYU32_FACE_ORDER[m >> 1] + ((m & 1) ? "'" : '');
+      timeOffs[i] = bit(8 + i * 16, 24 + i * 16);
     }
     if (garbage) {
       // Wrong key: the 5-bit codes are nonsense. cstimer counts this into its
@@ -268,8 +282,11 @@ export function decodeMoyu32Frame(
     if (moveDiff > MOVE_WINDOW) moveDiff = MOVE_WINDOW;
     dec.prevMoveCnt = moveCnt;
     // moveWindow[0] is the NEWEST move, so walk down to emit oldest-first.
-    const out: string[] = [];
-    for (let i = moveDiff - 1; i >= 0; i--) out.push(moveWindow[i]);
+    const out: TimedMove[] = [];
+    for (let i = moveDiff - 1; i >= 0; i--) {
+      dec.deviceTime += timeOffs[i];
+      out.push({ mv: moveWindow[i], ts: dec.deviceTime });
+    }
     return out;
   }
 
@@ -372,7 +389,7 @@ export const moyu32Driver: CubeDriver = {
       }
       const before = decState.battery;
       const moves = decodeMoyu32Frame(pt, decState, onGyro);
-      for (const mv of moves) onMove(mv);
+      for (const mv of moves) onMove(mv.mv, mv.ts);
       if (decState.battery !== null && decState.battery !== before && batteryWaiters.length) {
         const waiters = batteryWaiters;
         batteryWaiters = [];
