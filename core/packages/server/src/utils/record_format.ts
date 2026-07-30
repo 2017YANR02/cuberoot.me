@@ -563,6 +563,14 @@ function reduceSegmentCn(ev: RecordEvent, getRank: RankFn, includeFlag: boolean)
     const flag = includeFlag ? countryFlag(personIso2) : '';
     return `${t}${typeCn}${countryCn}纪录${flag}NR${suffix}`;
   }
+  if (tag === 'PR') {
+    // PR 必须自己一支:落到下面的 CR 分支会被 ISO2_TO_CR 按选手国籍编成洲际纪录
+    // (美国选手的 PR 变成「北美洲纪录NAR」),而这条成绩根本不是纪录。
+    const prRank = ev.pr_rank;
+    if (prRank && prRank > 1) return `${t}${typeCn}PR${prRank}`;
+    const rank = getRank(eventId, ev.rec_type, ev.attempt_result);
+    return `${t}${typeCn}个人纪录PR${ev.tied ? '(平)' : ''}${rank ? `/WR${rank}` : ''}`;
+  }
   const crAbbr = resolveCrAbbr(tag, personIso2);
   const rank = getRank(eventId, ev.rec_type, ev.attempt_result);
   const suffix = rank ? `/WR${rank}` : '';
@@ -582,6 +590,12 @@ function reduceSegmentEn(ev: RecordEvent, getRank: RankFn, includeFlag: boolean)
     const suffix = rank ? `/WR${rank}` : '';
     const flag = includeFlag ? countryFlag(personIso2) : '';
     return `${t}${flag}NR${suffix} ${tEn}`;
+  }
+  if (tag === 'PR') {
+    const prRank = ev.pr_rank;
+    if (prRank && prRank > 1) return `${t} PR${prRank} ${tEn}`;
+    const rank = getRank(eventId, ev.rec_type, ev.attempt_result);
+    return `${t} PR${ev.tied ? '(Tied)' : ''}${rank ? `/WR${rank}` : ''} ${tEn}`;
   }
   const crAbbr = resolveCrAbbr(tag, personIso2);
   const rank = getRank(eventId, ev.rec_type, ev.attempt_result);
