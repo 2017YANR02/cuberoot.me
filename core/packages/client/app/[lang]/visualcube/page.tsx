@@ -13,17 +13,22 @@
  * read-only legacy `puzzle=` alias.
  */
 
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, useMemo } from 'react';
 import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import PuzzleImageStudio from '@/components/puzzle-image/PuzzleImageStudio';
 import { useImageSpec } from '@/components/puzzle-image/useImageSpec';
+import { specToParams } from '@/lib/puzzle-image/codec';
 import '@/components/puzzle-image/puzzle-image.css';
 import { useT } from '@/hooks/useT';
 
 function VisualCubeEditorPageInner() {
   const t = useT();
   const [spec, setSpec] = useImageSpec('');
+  const batchQuery = useMemo(() => {
+    const qs = specToParams(spec, '').toString();
+    return qs ? `?${qs}` : '';
+  }, [spec]);
 
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
@@ -33,6 +38,10 @@ function VisualCubeEditorPageInner() {
       <header className="vc-header">
         <h1>{t('VisualCube 编辑器', 'VisualCube Editor')}</h1>
         <div className="vc-header-right">
+          {/* 设置整套在 URL 里,原样带过去 —— 批量页不重造一份控件。 */}
+          <Link className="vc-header-link" href={`/visualcube/batch${batchQuery}`}>
+            {t('批量出图', 'Batch')}
+          </Link>
           <Link className="vc-header-link" href="/visualcube/stages">
             {t('Stage 速查', 'Stages')}
           </Link>
