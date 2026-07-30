@@ -32,7 +32,9 @@
  *   power = [0, 2][mv & 1]              -> 0 = CW, 2 = CCW (no doubles)
  */
 
-import type { CubeDriver, CubeDriverContext, CubeDriverStartResult } from './driver';
+import type {
+  CubeDriver, CubeDriverContext, CubeDriverStartResult, TimedMove,
+} from './driver';
 import type { CubeBrand } from './types';
 import { crc16Modbus } from './crc';
 import { aesEcbDecrypt, aesEcbEncrypt, expandKey } from './gan_crypto';
@@ -146,11 +148,23 @@ function formatMove(axis: number, power: number): string | null {
 }
 
 /**
+ * Ticks per millisecond on the QiYi cube clock. cstimer converts with
+ * `Math.trunc(ts / 1.6)` (`qiyicube.js:171`), i.e. 0.625 ms per tick.
+ */
+const QIYI_TICKS_PER_MS = 1.6;
+
+/**
  * Parse a fully-decrypted, length-trimmed, CRC-validated frame.
  * Returns moves in chronological order (oldest first) plus the new lastTs.
+ *
+ * Every move carries its OWN device timestamp — the live one at msg[3..6] and
+ * each history slot at `off..off+3`. That makes QiYi the best-instrumented
+ * brand we support: unlike GAN, whose history replies report the turn but not
+ * when it happened, a QiYi move recovered from history still knows its own
+ * time, so a dropped notification costs us nothing in timing accuracy.
  */
 function parseStateMoves(msg: Uint8Array, prevLastTs: number):
-    { moves: string[]; lastTs: number; battery: number | null; facelets: string | null } {
+    { moves: TimedMove[]; lastTs: number; battery: number | null; facelets: string | null } {
   const opcode = msg[2];
   const ts = ((msg[3] << 24) | (msg[4] << 16) | (msg[5] << 8) | msg[6]) >>> 0;
   if (opcode === OP_HELLO) {
@@ -186,14 +200,14 @@ function parseStateMoves(msg: Uint8Array, prevLastTs: number):
   }
 
   // Replay oldest -> newest so the timer sees moves in real order.
-  const moves: string[] = [];
+  const moves: TimedMove[] = [];
   for (let i = todo.length - 1; i >= 0; i--) {
     const mv = todo[i].mv;
     if (mv < 1 || mv > 12) continue;
     const axis = QIYI_AXIS_LUT[(mv - 1) >> 1];
     const power = (mv & 1) !== 0 ? 2 : 0; // cstimer: [0, 2][mv & 1]
     const formatted = formatMove(axis, power);
-    if (formatted) moves.push(formatted);
+    if (formatted) moves.push({ mv: formatted, ts: Math.trunc(todo[i].ts / QIYI_TICKS_PER_MS) });
   }
 
   const battery = msg.length > 35 ? msg[35] : null;
@@ -278,7 +292,7 @@ export const qiyiDriver: CubeDriver = {
       // Moves first, state second. The host fires "the cube is solved" off the
       // move that solved it; handing it the finished state first would make
       // that edge look like it had already happened and swallow the auto-stop.
-      for (const mv of parsed.moves) onMove(mv);
+      for (const mv of parsed.moves) onMove(mv.mv, mv.ts);
       if (parsed.facelets) ctx?.onState?.(parsed.facelets);
     };
 
