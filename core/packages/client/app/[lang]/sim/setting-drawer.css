@@ -194,19 +194,8 @@
 .sim-slider--disabled { opacity: 0.5; cursor: not-allowed; }
 .sim-slider--disabled input { cursor: not-allowed; }
 
-.sim-drawer-reset {
-  margin-top: 8px;
-  padding: 8px 12px;
-  border: 1px solid var(--border-default);
-  border-radius: 6px;
-  background: transparent;
-  color: var(--foreground);
-  font-size: 13px;
-  cursor: pointer;
-}
-.sim-drawer-reset:hover {
-  background: color-mix(in srgb, var(--foreground) 6%, transparent);
-}
+/* 「恢复默认」按钮的配色/边框在 components/reset-defaults-button.css(与 /predict 共用),
+   这里只留紧凑覆写,见 player-controls.css 的 .sim-keyboard-switcher 那条。 */
 
 .sim-keymap {
   font-size: 12px;
