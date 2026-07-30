@@ -70,6 +70,7 @@ import { useBluetoothCube } from '../_lib/bluetooth';
 import { mirrorForBrand, sensorBasisForBrand, type Quat } from '../_lib/bluetooth/orientation';
 import { applyScramble, facesEqual, type CubeFaces } from '../_lib/cube/state';
 import { hintScramble, type ScrambleHint } from '../_lib/bluetooth/scramble_hint';
+import { createFixupRequester } from '../_lib/bluetooth/scramble_fixup';
 import { installFakeCube } from '../_lib/bluetooth/fake_cube';
 import { nxnSizeForEvent } from '../_lib/cube/colors';
 import { DIGIT_OPENS_SOLVE, bindingForEvent, resolveKeymap } from '../_lib/keymap';
@@ -903,8 +904,18 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   // nothing to say: no cube, no comparable scramble, or the cube is off the
   // scramble's path entirely (in which case the binary verdict is all we have).
   const [scrambleHint, setScrambleHint] = useState<ScrambleHint | null>(null);
+  // A correction path: when the cube leaves the scramble's path, the solver
+  // gives us a way from where it IS to the same scrambled state, and the strip
+  // hints on that instead of just saying "wrong". `from` is the state it was
+  // computed at — the walk has to start there, not at solved.
+  const fixupRef = useRef<{ from: CubeFaces; seq: string } | null>(null);
+  const [fixupActive, setFixupActive] = useState(false);
   const scrambleTargetRef = useRef<CubeFaces | null>(null);
   const scrambleTextRef = useRef<string>('');
+  const clearFixup = useCallback(() => {
+    fixupRef.current = null;
+    setFixupActive(false);
+  }, []);
   useEffect(() => {
     scrambleTargetRef.current = scrambleTarget;
     // The hint is computed against the same string the strip renders, so keep
@@ -912,7 +923,20 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     scrambleTextRef.current = scrambleTarget ? scramble : '';
     setScrambleMatch(null);
     setScrambleHint(null);
-  }, [scrambleTarget, scramble]);
+    clearFixup();
+  }, [scrambleTarget, scramble, clearFixup]);
+  /** Ask the solver for a path from where the cube is to `target`, then hint. */
+  const fixupRequester = useMemo(() => createFixupRequester({
+    faces: () => bluetoothCubeRef.current?.getFaces() ?? null,
+    valid: (target) => scrambleTargetRef.current === target && phaseSnapshotRef.current !== 'running',
+  }), []);
+  const requestFixup = useCallback(async (target: CubeFaces) => {
+    const res = await fixupRequester.request(target);
+    if (!res) return;
+    fixupRef.current = { from: res.from, seq: res.seq };
+    setFixupActive(true);
+    setScrambleHint(res.hint);
+  }, [fixupRequester]);
   useEffect(() => {
     const subs = bluetoothSubscribersRef.current;
     const verify = () => {
@@ -926,16 +950,32 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       if (!faces) return;
       setScrambleMatch(facesEqual(faces, target));
       const text = scrambleTextRef.current;
-      setScrambleHint(text ? hintScramble(text, faces) : null);
+      if (!text) { setScrambleHint(null); clearFixup(); return; }
+      // Order matters, and it is csTimer's (`bluetoothutil.js:71`): a live
+      // correction path wins, because that is what the user is following.
+      const fx = fixupRef.current;
+      if (fx) {
+        const h = hintScramble(fx.seq, faces, fx.from);
+        if (h && !h.complete) { setScrambleHint(h); return; }
+        // Finished it (so we are at the scramble) or left it too — either way
+        // the correction is spent, fall through to the scramble itself.
+        clearFixup();
+      }
+      const raw = hintScramble(text, faces);
+      if (raw) { setScrambleHint(raw); return; }
+      // Off the scramble's path entirely. Until the solver answers, the binary
+      // verdict is all we have.
+      setScrambleHint(null);
+      void requestFixup(target);
     };
     subs.add(verify);
     return () => { subs.delete(verify); };
-  }, []);
+  }, [clearFixup, requestFixup]);
   // Mid-solve the strip goes back to plain text: the cube has left the
   // scrambled state on purpose, so "you still owe R" would be nonsense.
   useEffect(() => {
-    if (timer.phase === 'running') setScrambleHint(null);
-  }, [timer.phase]);
+    if (timer.phase === 'running') { setScrambleHint(null); clearFixup(); }
+  }, [timer.phase, clearFixup]);
 
   // ── Round simulation ────────────────────────────────────────────
   // The round is a VIEW over the solve history, not a second store: it is the
@@ -1939,14 +1979,30 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                   "不符" halfway through applying a scramble is progress, not an
                   error, and a red pill there reads as one. The pill comes back
                   for the two states the hint cannot express: done, and off the
-                  scramble's path entirely. */}
-              {scrambleMatch !== null && !(scrambleHint && !scrambleHint.complete) && (
-                <span className="scramble-verify" data-ok={scrambleMatch ? 'true' : 'false'}>
-                  {scrambleMatch
-                    ? tr({ zh: '打乱已就绪', en: 'Scrambled' })
-                    : tr({ zh: '与打乱不符', en: 'Doesn’t match' })}
-                </span>
-              )}
+                  scramble's path entirely.
+
+                  The exception is a correction path: those moves are NOT the
+                  printed scramble, and the user has to be told that, or the
+                  strip looks like it silently rewrote itself. It ends at the
+                  same state, so the solve still records the original scramble. */}
+              {scrambleHint && !scrambleHint.complete
+                ? fixupActive && (
+                    <span
+                      className="scramble-verify"
+                      data-ok="fix"
+                      title={tr({
+                        zh: '拧歪了。这些不是上面那条打乱,而是从魔方现在的状态回到同一个打乱状态的步骤,拧完成绩记的还是原打乱。',
+                        en: 'Off the scramble path. These moves are not the printed scramble — they lead from where the cube is now to the same scrambled state, and the solve still records the original scramble.',
+                      })}
+                    >{tr({ zh: '拧回原打乱', en: 'Back to scramble' })}</span>
+                  )
+                : scrambleMatch !== null && (
+                    <span className="scramble-verify" data-ok={scrambleMatch ? 'true' : 'false'}>
+                      {scrambleMatch
+                        ? tr({ zh: '打乱已就绪', en: 'Scrambled' })
+                        : tr({ zh: '与打乱不符', en: 'Doesn’t match' })}
+                    </span>
+                  )}
               {wcaSrcDisplay && (
                 <div className="scramble-src-row">
                 <a
