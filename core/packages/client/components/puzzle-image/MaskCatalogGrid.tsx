@@ -4,13 +4,12 @@
  * MaskCatalogGrid — the stage-mask cheat sheet (~147 cards), driven by
  * STAGE_SECTIONS in lib/puzzle-image/masks.ts.
  *
- * `basePath` is the editor a card opens: '/visualcube' today, '/sim' once the
- * image panel lands there. The href is lang-prefixed (avoids the proxy.ts
- * bare-path 308 on click) and prefetch is off — Next's viewport prefetch would
+ * `hrefFor` is the caller's business: what a card opens, and in whose query-key
+ * vocabulary. The href it returns must be lang-prefixed (avoids the proxy.ts
+ * bare-path 308 on click); prefetch is off here — Next's viewport prefetch would
  * otherwise fire ~147 RSC requests per page view.
  */
 
-import { useParams } from 'next/navigation';
 import Link from '@/components/AppLink';
 import { VisualCube } from '@/components/VisualCube';
 import { STAGE_SECTIONS } from '@/lib/puzzle-image/masks';
@@ -40,15 +39,12 @@ function StageCard({
 }
 
 export interface MaskCatalogGridProps {
-  /** Editor route a card opens, e.g. '/visualcube'. */
-  basePath: string;
+  /** Where a card goes. Must be lang-prefixed — see the file header. */
+  hrefFor: (cubeSize: number, mask: string) => string;
   className?: string;
 }
 
-export default function MaskCatalogGrid({ basePath, className }: MaskCatalogGridProps) {
-  const params = useParams();
-  const lang = typeof params?.lang === 'string' ? params.lang : 'en';
-
+export default function MaskCatalogGrid({ hrefFor, className }: MaskCatalogGridProps) {
   return (
     <div className={className}>
       {STAGE_SECTIONS.map((section) => (
@@ -61,7 +57,7 @@ export default function MaskCatalogGrid({ basePath, className }: MaskCatalogGrid
             {section.items.map((item) => (
               <StageCard
                 key={`${section.title.en}-${item.label}`}
-                href={`/${lang}${basePath}?pzl=${section.cubeSize}&stage=${encodeURIComponent(item.mask)}&view=trans`}
+                href={hrefFor(section.cubeSize, item.mask)}
                 cubeSize={section.cubeSize}
                 label={item.label}
                 mask={item.mask}

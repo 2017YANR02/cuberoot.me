@@ -1,16 +1,16 @@
 'use client';
 
 /**
- * PuzzleImageStudio — the whole puzzle-image control surface: preview + export
- * row + every control, extracted verbatim from app/[lang]/visualcube/page.tsx.
+ * PuzzleImageStudio — the puzzle-image control surface: preview + export row +
+ * the controls that belong to the IMAGE rather than to the simulator.
  *
  * FULLY CONTROLLED. It holds no URL state (project rule: `useQueryState` only in
  * page-level hosts — see useImageSpec.ts) and no spec state; the host passes
- * `spec` and receives patches. That is what lets the same component be the
- * /visualcube page and a panel inside /sim without forking.
+ * `spec` and receives patches.
  *
- * mode='panel' only reflows the layout (puzzle-image.css, .vc-studio-panel);
- * it drops no control.
+ * 唯一宿主 = /sim 的图像面板(standalone /visualcube 页已退役)。凡是 sim 自己已经有
+ * 一个入口的概念(拼图 / 阶数 / 公式 / 六面配色 / 视角旋转 / 壳体与贴纸不透明度 /
+ * 投影距离 / 阶段遮罩)都不在这里重复出控件 —— SimPage 经 codec 把它们注进 spec。
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -19,7 +19,6 @@ import { Copy, Check, Download, ImageDown, MousePointerClick, RotateCcw, Plus, T
 import SimCaptureGroup, { type SimBridge } from '@/components/puzzle-image/SimCaptureGroup';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import BoolToggle from '@/components/BoolToggle';
-import CubeVirtualKeyboard from '@/components/CubeVirtualKeyboard';
 import PuzzleImage from '@/components/puzzle-image/PuzzleImage';
 import { publicApiUrl } from '@/lib/api-base';
 import { appendArrow, buildArrowEntry, removeArrowByPoints } from '@/lib/puzzle-image/arrows';
@@ -29,40 +28,16 @@ import {
   saveBlob, svgBlob, svgToPngBlob, type PhysicalSize,
 } from '@/lib/puzzle-image/image-export';
 import { PRINT_UNITS } from '@/lib/puzzle-image/physical-size';
-import { pzlShort, specToParams } from '@/lib/puzzle-image/codec';
+import { pzlShort } from '@/lib/puzzle-image/codec';
 import { formatMask, parseMask, type StickerId } from '@/lib/puzzle-image/mask-core';
 import { maskSupported, pieceOf } from '@/lib/puzzle-image/puzzle-mask';
-import {
-  DEFAULTS, FACE_DEFAULTS,
-  resetRotationsForPuzzle, rotationDefaultsFor,
-  snapRotationOnVariantBoundary,
-} from '@/lib/puzzle-image/defaults';
-import {
-  CORE_MASKS, EXTENDED_MASKS, MASK_ROTATIONS,
-  SIZE2_MASKS, SIZE4_MASKS, SIZE5_MASKS, SIZE6_MASKS, SIZE7_MASKS, SIZE9_MASKS,
-  type MaskOption,
-} from '@/lib/puzzle-image/masks';
+import { DEFAULTS, snapRotationOnVariantBoundary } from '@/lib/puzzle-image/defaults';
 import { renderPaintedNetSvg } from '@/lib/puzzle-image/painted-net';
 import { domRenderKindOf, renderSpecSvg } from '@/lib/puzzle-image/render';
 import { FACE_LIST, type FaceKey, type ImageSpec, type PuzzleType, type PuzzleVariant, type SpecialView, type PlanSideRule, type PlanUpRule } from '@/lib/puzzle-image/types';
 import { useT } from '@/hooks/useT';
 import { tr } from '@/i18n/tr';
 import './puzzle-image.css';
-
-/** Size-specific mask groups, keyed by cube size. */
-const SIZE_MASKS: Record<number, { label: string; items: MaskOption[] }> = {
-  2: { label: '2x2', items: SIZE2_MASKS },
-  3: { label: 'Extended (3x3)', items: EXTENDED_MASKS },
-  4: { label: '4x4', items: SIZE4_MASKS },
-  5: { label: '5x5', items: SIZE5_MASKS },
-  6: { label: '6x6', items: SIZE6_MASKS },
-  7: { label: '7x7', items: SIZE7_MASKS },
-  9: { label: '9x9', items: SIZE9_MASKS },
-};
-
-const PUZZLE_LABELS: Record<PuzzleType, string> = {
-  cube: 'NxN', sq1: 'Sq1', megaminx: 'Mega', pyraminx: 'Pyra', skewb: 'Skewb',
-};
 
 /** Which variants a non-cube puzzle offers. Skewb alone has a separate cubing.js
  *  Net on top of the WCA-coloured one; the others' Net was renamed to WCA. */
@@ -80,37 +55,6 @@ function isProjected(s: ImageSpec): boolean {
 }
 
 // ── small primitives ────────────────────────────────────────────────────────
-
-function NumberRow({
-  label, value, min, max, step = 1, onChange, onReset,
-}: {
-  label: string; value: number; min: number; max: number; step?: number;
-  onChange: (n: number) => void; onReset?: () => void;
-}) {
-  return (
-    <div className="vc-row">
-      <label className="vc-label">{label}</label>
-      <div className="vc-row-controls">
-        <input
-          type="number" className="vc-num" value={value} min={min} max={max} step={step}
-          onChange={(e) => {
-            const n = parseInt(e.target.value, 10);
-            if (!isNaN(n)) onChange(Math.max(min, Math.min(max, n)));
-          }}
-        />
-        <input
-          type="range" className="vc-range" value={value} min={min} max={max} step={step}
-          onChange={(e) => onChange(parseInt(e.target.value, 10))}
-        />
-        {onReset && (
-          <button type="button" className="vc-btn-icon" onClick={onReset} title="Reset">
-            <RotateCcw size={14} />
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
 
 function ColorRow({
   label, value, onChange, onReset, allowEmpty,
@@ -207,7 +151,6 @@ export type { SimBridge };
 export interface PuzzleImageStudioProps {
   spec: ImageSpec;
   onSpecChange: (patch: Partial<ImageSpec>) => void;
-  mode: 'page' | 'panel';
   className?: string;
   /** Present only in /sim panel mode → shows the live capture subgroup + 从模拟器取. */
   simBridge?: SimBridge;
@@ -226,12 +169,9 @@ export interface PuzzleImageStudioProps {
    *  两份图,同一个 spec、同一个状态,用来肉眼比两条渲染路线的差异。
    *  /sim 由 `?img_engine=both` 打开;engineOnly 拼图没有 spec 渲染器可比,忽略。 */
   compare?: boolean;
-  /** 无视 engineSvg,强制走 spec 渲染器(cube 即 visualcube 本体)。/sim 浮层左上角
-   *  那个渲染器切换钮驱动;导出跟着显示走。对照模式下无效(那边两份都要画)。 */
-  preferSpecRender?: boolean;
 }
 
-export default function PuzzleImageStudio({ spec, onSpecChange, mode, className, simBridge, previewHost, engineSvg, engineOnly = false, compare = false, preferSpecRender = false }: PuzzleImageStudioProps) {
+export default function PuzzleImageStudio({ spec, onSpecChange, className, simBridge, previewHost, engineSvg, engineOnly = false, compare = false }: PuzzleImageStudioProps) {
   const t = useT();
   const s = spec;
   const set = useCallback(<K extends keyof ImageSpec>(key: K, value: ImageSpec[K]) => {
@@ -240,37 +180,17 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
 
   const projected = isProjected(s);
   const isCube = s.puzzleType === 'cube';
-  // In /sim panel mode the sim's own puzzle dropdown is the single puzzle selector:
-  // the panel renders whatever puzzle the sim shows (SimPage mirrors it into the spec),
-  // so the studio drops its own puzzle-type + NxN-size controls. Every render/view/mask
-  // control below stays.
-  const showPuzzleControls = mode === 'page';
-  // Panel mode also drops the controls the sim already owns — 公式 / 六面配色 come
-  // straight from the sim (SimPage injects them via the codec), 背景色 defaults to
-  // transparent, and 视角旋转 to the puzzle's clean iso. One control per concept.
-  const showInheritedControls = mode === 'page';
-  // 阶段遮罩同理:sim 工具栏的 stickering 下拉已并入整个 vc MASK 清单(vcStageMask.ts
-  // 去重合并),且实时 3D + 引擎伴图都跟它走;panel 里这行是只喂 spec 渲染的重复入口。
-  const showStageMask = mode === 'page';
   // net 与 wca 对 cube 输出的是同一张 tnoodle 展开十字:render.ts 两者同落
-  // renderUnfoldedSvg,/sim 伴图更是都走 renderCubeNetSvg 逐字节相等。唯一非冗余处 =
-  // 独立 /visualcube 页的 3×3——net 换成可涂色编辑器(net-paint-3x3 → 复用 solver 的
-  // InteractiveCubeNet)。故 net chip 只在「page 模式 + 3×3」露出;其余(panel、N≠3)
-  // 只留 wca 单一入口,不再让两个 chip 出一模一样的图。
-  const showNetView = mode === 'page' && s.cubeSize === 3;
-  // net chip 收起时,若 spec 仍持有 net(旧 URL / 持久化)按 wca 高亮——该场合两者渲染
-  // 逐字节相等,不动底层 spec(回到 page+3×3 时 net 记忆仍在)。
-  const activeCubeView = isCube && s.cubeView === 'net' && !showNetView ? 'wca' : s.cubeView;
+  // renderUnfoldedSvg,/sim 伴图更是都走 renderCubeNetSvg 逐字节相等 —— 两个 chip 出
+  // 一模一样的图没有意义,只留 wca 这一个入口。spec 仍持有 net(旧 URL)时按 wca 高亮,
+  // 不动底层 spec。
+  const activeCubeView = isCube && s.cubeView === 'net' ? 'wca' : s.cubeView;
 
   const previewRef = useRef<HTMLDivElement | null>(null);
 
-  // 渲染器切换钮选了 visualcube → 当作没有引擎镜像,预览与导出一起落回 spec 渲染器。
-  // engine-only 拼图没有可落的 spec 渲染器,忽略该偏好。
-  const shownEngineSvg = preferSpecRender && !engineOnly ? null : engineSvg;
-
   // 预览当前显示的是否引擎矢量镜像(与 PuzzleImage 的 engineMirrors 同一条件):
   // 是 → SVG/PNG 导出的必须就是它(所见即所得),而不是 spec 重渲染的近似版。
-  const engineShown = !!shownEngineSvg && (engineOnly
+  const engineShown = !!engineSvg && (engineOnly
     || (s.puzzleType === 'cube'
       ? (s.cubeView === 'normal' || s.cubeView === 'net' || s.cubeView === 'wca'
         || s.cubeView === 'plan' || s.cubeView === 'trans')
@@ -284,7 +204,7 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
   const getCurrentSvg = useCallback((): string => {
     // 引擎镜像:所见即所得 —— 下载件也套图片尺寸(PX),否则导出的是导出器紧凑
     // 非方 viewBox 的原生像素尺寸,忽略了尺寸控件(退役对照表 §2b「图片尺寸」)。
-    if (engineShown && shownEngineSvg) return sizeEngineSvg(shownEngineSvg, s.imageSize);
+    if (engineShown && engineSvg) return sizeEngineSvg(engineSvg, s.imageSize);
     try {
       const pure = renderSpecSvg(s);
       if (pure) return pure;
@@ -296,7 +216,7 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
     // layout, so a tnoodle-net fallback would export a picture unlike the preview.
     const node = previewRef.current?.querySelector('svg');
     return node ? new XMLSerializer().serializeToString(node) : '';
-  }, [s, engineShown, shownEngineSvg]);
+  }, [s, engineShown, engineSvg]);
 
   // 「物理尺寸」旋钮:0 = 不写,导出件只有像素。栅格化 / 下载 / 复制三条路共用同一份。
   const physical: PhysicalSize | null = s.printSize > 0
@@ -314,12 +234,6 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
     if (!out) return;
     saveBlob(await svgToPngBlob(out, s.imageSize, physical), `${s.puzzleType}-${Date.now()}.png`);
   };
-
-  const shareUrl = useMemo(() => {
-    const qs = specToParams(s, '').toString();
-    if (typeof window === 'undefined') return `/visualcube${qs ? '?' + qs : ''}`;
-    return `${window.location.origin}/visualcube${qs ? '?' + qs : ''}`;
-  }, [s]);
 
   // The API endpoint's own (simplified) param set — not specToParams.
   const apiSvgUrl = useMemo(() => {
@@ -425,12 +339,6 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
     : t(`起 ${arrowPending[0]} 止 ${arrowPending[1]} — 再点「过」点定曲线;点回上点撤销`,
         `From ${arrowPending[0]} to ${arrowPending[1]} — click the waypoint; click last to undo`);
 
-  // ── algorithm textarea (uncontrolled, keyboard writes straight to the DOM) ──
-  const algRef = useRef<HTMLTextAreaElement | null>(null);
-  const syncAlgFromDom = useCallback(() => {
-    if (algRef.current) set('algorithm', algRef.current.value);
-  }, [set]);
-
   // ── sticker-mask authoring (click-to-gray) ─────────────────────────────
   // Only where a derived piece table exists (cube 2..7, pyra, skewb, mega — sq1
   // never; see puzzle-mask.ts). Clicks land on a SOLVED unfolded render, where
@@ -464,8 +372,8 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
   // engine/twisty vector mirror instead.
   const preview = (
     <section className="vc-preview-wrap" ref={previewRef}>
-      {/* Page mode: interactive (drag-to-rotate, paint editor). Panel mode: a passive
-          mirror — the sim's own 左右 / 上下 (and 透视 for the cube) drive the spec. */}
+      {/* 预览是被动镜像:朝向由 sim 自己的 左右 / 上下(cube 还有 透视)驱动,
+          预览上不再拖 —— 拖左边那个真 3D 就是。 */}
       {engineOnly ? (
         // engine-only 拼图无 spec 渲染器可回退:有引擎矢量就显示(尺寸同 PuzzleImage
         // 的 engineMirrors 分支:钉成方形显示框,viewBox + meet 保比例),没有就等静止帧。
@@ -492,13 +400,13 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
           </figure>
         </div>
       ) : (
-        <PuzzleImage spec={s} onSpecChange={onSpecChange} interactive={mode === 'page'} engineSvg={shownEngineSvg} />
+        <PuzzleImage spec={s} onSpecChange={onSpecChange} interactive={false} engineSvg={engineSvg} />
       )}
     </section>
   );
 
   return (
-    <div className={`vc-studio vc-studio-${mode}${className ? ` ${className}` : ''}`}>
+    <div className={`vc-studio vc-studio-panel${className ? ` ${className}` : ''}`}>
       {previewHost ? createPortal(preview, previewHost) : preview}
 
       <section className="vc-exports">
@@ -506,9 +414,9 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
             看到的是同一个东西,离图更近;下面那排导出的是 spec 重渲染的结果。 */}
         {simBridge && <SimCaptureGroup simBridge={simBridge} />}
 
-        {/* 链接类按钮都指向服务端 spec 渲染(/visualcube 页 + /v1/visualcube.svg),
-            engine-only 拼图服务端画不了 → 只留 SVG/PNG(下载预览那份引擎矢量)。 */}
-        {!engineOnly && <CopyButton label={t('分享链接', 'Share URL')} getValue={() => shareUrl} />}
+        {/* 链接类按钮指向服务端 spec 渲染(/v1/visualcube.svg),engine-only 拼图服务端
+            画不了 → 只留 SVG/PNG(下载预览那份引擎矢量)。「分享链接」随 /visualcube
+            退役一并删:面板的状态本来就写在地址栏的 img_* 里,复制地址即分享。 */}
         {!engineOnly && <CopyButton label={t('API 链接', 'API URL')} getValue={() => apiSvgUrl} />}
         {/* 复制图片本身,而不是链接 —— 贴进文档 / 聊天最短的一条路。 */}
         <CopyImageButton
@@ -535,30 +443,12 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
       </section>
 
       <section className="vc-controls">
-        {showPuzzleControls && (
-          <div className="vc-row">
-            <label className="vc-label">{t('魔方', 'Puzzle')}</label>
-            <div className="vc-row-controls">
-              {(['cube', 'sq1', 'megaminx', 'pyraminx', 'skewb'] as PuzzleType[]).map((pt) => (
-                <button
-                  key={pt}
-                  type="button"
-                  className={`vc-btn vc-btn-sm${s.puzzleType === pt ? ' vc-btn-active' : ''}`}
-                  onClick={() => onSpecChange(resetRotationsForPuzzle(s, { puzzleType: pt }))}
-                >
-                  {PUZZLE_LABELS[pt]}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
         {!engineOnly && (
         <div className="vc-row">
           <label className="vc-label">{t('视图', 'View')}</label>
           <div className="vc-row-controls">
             {isCube ? (
-              (['normal', 'plan', 'trans', ...(showNetView ? ['net'] : []), 'wca'] as SpecialView[]).map((v) => (
+              (['normal', 'plan', 'trans', 'wca'] as SpecialView[]).map((v) => (
                 <button
                   key={v}
                   type="button"
@@ -661,19 +551,7 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
         )}
 
         <div className="vc-row">
-          {isCube && showPuzzleControls && (
-            <>
-              <label className="vc-label">{t('阶数', 'NxN Size')}</label>
-              <input
-                type="number" className="vc-num" value={s.cubeSize} min={1} max={50}
-                onChange={(e) => {
-                  const n = parseInt(e.target.value, 10);
-                  if (!isNaN(n)) set('cubeSize', Math.max(1, Math.min(50, n)));
-                }}
-              />
-            </>
-          )}
-          <label className={`vc-label${isCube && showPuzzleControls ? ' vc-label-secondary' : ''}`}>
+          <label className="vc-label">
             {t('图片尺寸 (px)', 'Image Size (px)')}
           </label>
           {/* 只留自由输入。以前预设下拉 + 数字框并排,两个控件绑同一个 imageSize,
@@ -714,42 +592,6 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
         </div>
 
         {!engineOnly && (<>
-        {showInheritedControls && (
-          <div className="vc-row vc-row-block">
-            <label className="vc-label">{t('公式', 'Algorithm')}</label>
-            <div className="vc-row-controls vc-col">
-              <div className="vc-algtype">
-                <PillToggle
-                  value={s.algType === 'alg'}
-                  onChange={(v) => set('algType', v ? 'alg' : 'case')}
-                  onLabel={t('应用公式', 'Apply alg')}
-                  offLabel={t('Case (反向)', 'Case (inverse)')}
-                  ariaLabel={t('公式模式', 'Algorithm mode')}
-                />
-              </div>
-              <div className="vc-row-controls">
-                <textarea
-                  ref={algRef}
-                  className="vc-text vc-textarea"
-                  rows={2}
-                  defaultValue={s.algorithm}
-                  onInput={syncAlgFromDom}
-                />
-                <button
-                  type="button" className="vc-btn-icon" title="Clear"
-                  onClick={() => {
-                    if (algRef.current) algRef.current.value = '';
-                    set('algorithm', '');
-                  }}
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-              <CubeVirtualKeyboard target={algRef} onInput={syncAlgFromDom} />
-            </div>
-          </div>
-        )}
-
         {isCube && projected && (
           <div className="vc-row vc-row-block">
             <label className="vc-label">{t('箭头', 'Arrow Definition')}</label>
@@ -855,39 +697,6 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
           </div>
         )}
 
-        {showStageMask && isCube && projected && (
-          <div className="vc-row">
-            <label className="vc-label">{t('Mask', 'Stage Mask')}</label>
-            <div className="vc-row-controls">
-              <select
-                className="vc-select" value={s.stageMask}
-                onChange={(e) => set('stageMask', e.target.value)}
-              >
-                <optgroup label="Core">
-                  {CORE_MASKS.map((m) => (
-                    <option key={m.value || 'none'} value={m.value}>{m.label}</option>
-                  ))}
-                </optgroup>
-                {SIZE_MASKS[s.cubeSize] && (
-                  <optgroup label={SIZE_MASKS[s.cubeSize].label}>
-                    {SIZE_MASKS[s.cubeSize].items.map((m) => (
-                      <option key={m.value} value={m.value}>{m.label}</option>
-                    ))}
-                  </optgroup>
-                )}
-              </select>
-              <select
-                className="vc-select" value={s.maskAlg}
-                onChange={(e) => set('maskAlg', e.target.value)}
-              >
-                {MASK_ROTATIONS.map((r) => (
-                  <option key={r || 'none'} value={r}>{r || '— rot —'}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-        )}
-
         {maskable && (
           <div className="vc-row vc-row-block">
             <label className="vc-label">{t('贴纸遮罩', 'Sticker Mask')}</label>
@@ -953,134 +762,17 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
           </div>
         )}
 
-        {isCube && projected && showInheritedControls && (
-          <div className="vc-row vc-row-block">
-            <label className="vc-label">{t('六面配色', 'Color Schemes')}</label>
-            <div className="vc-row-controls vc-col">
-              <div className="vc-keyrow">
-                <button type="button" className="vc-btn-sm" onClick={() => onSpecChange({
-                  faceU: s.faceB, faceF: s.faceU, faceD: s.faceF, faceB: s.faceD,
-                })}>x</button>
-                <button type="button" className="vc-btn-sm" onClick={() => onSpecChange({
-                  faceF: s.faceR, faceR: s.faceB, faceB: s.faceL, faceL: s.faceF,
-                })}>y</button>
-                <button type="button" className="vc-btn-sm" onClick={() => onSpecChange({
-                  faceU: s.faceR, faceR: s.faceD, faceD: s.faceL, faceL: s.faceU,
-                })}>z</button>
-                <button type="button" className="vc-btn-sm" onClick={() => onSpecChange({
-                  faceU: FACE_DEFAULTS.U, faceR: FACE_DEFAULTS.R, faceF: FACE_DEFAULTS.F,
-                  faceD: FACE_DEFAULTS.D, faceL: FACE_DEFAULTS.L, faceB: FACE_DEFAULTS.B,
-                })}>{t('重置', 'Reset')}</button>
-              </div>
-              <div className="vc-face-grid">
-                {FACE_LIST.map((f) => {
-                  const key = `face${f}` as 'faceU' | 'faceR' | 'faceF' | 'faceD' | 'faceL' | 'faceB';
-                  return (
-                    <div key={f} className="vc-face-cell">
-                      <span>{f}</span>
-                      <input
-                        type="color" value={s[key]}
-                        aria-label={`face ${f}`}
-                        onChange={(e) => set(key, e.target.value)}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {projected && showInheritedControls && (
-          <div className="vc-row vc-row-block">
-            <label className="vc-label">{t('视角旋转', 'Rotation Sequence')}</label>
-            <div className="vc-row-controls vc-col">
-              {([1, 2] as const).map((i) => {
-                const axisKey = `rotateAxis${i}` as 'rotateAxis1' | 'rotateAxis2';
-                const angleKey = `rotateAngle${i}` as 'rotateAngle1' | 'rotateAngle2';
-                return (
-                  <div key={i} className="vc-row-controls">
-                    <select
-                      className="vc-select-sm" value={s[axisKey]}
-                      aria-label={t('旋转轴', 'Rotation axis')}
-                      onChange={(e) => set(axisKey, e.target.value)}
-                    >
-                      {['x', 'y'].map((a) => <option key={a} value={a}>{a}</option>)}
-                    </select>
-                    <input
-                      type="number" className="vc-num" value={s[angleKey]} min={-180} max={180}
-                      aria-label={t('旋转角度', 'Rotation angle')}
-                      onChange={(e) => set(angleKey, parseInt(e.target.value, 10) || 0)}
-                    />
-                    <input
-                      type="range" className="vc-range" value={s[angleKey]} min={-180} max={180}
-                      aria-label={t('旋转角度', 'Rotation angle')}
-                      onChange={(e) => set(angleKey, parseInt(e.target.value, 10))}
-                    />
-                    <button
-                      type="button" className="vc-btn-icon" title="Reset"
-                      onClick={() => {
-                        const d = rotationDefaultsFor(s);
-                        onSpecChange({
-                          [axisKey]: i === 1 ? d.axis1 : d.axis2,
-                          [angleKey]: i === 1 ? d.angle1 : d.angle2,
-                        } as Partial<ImageSpec>);
-                      }}
-                    >
-                      <RotateCcw size={14} />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {showInheritedControls && (
-          <ColorRow
-            label={t('背景色', 'Background Color')}
-            value={s.backgroundColor}
-            onChange={(v) => set('backgroundColor', v)}
-            onReset={() => set('backgroundColor', '')}
-            allowEmpty
-          />
-        )}
-        {/* 壳体色 / 壳体不透明度 / 贴纸不透明度 与 sim 外观区的「内核色」是同一个概念
-            (贴纸之外那层的颜色与通透度),/sim 里由外观区那组统一管、3D 与伴图共用一份值,
-            所以 panel 模式不再重复出这三行 —— 同 公式 / 六面配色 / 背景色 的处理。 */}
-        {isCube && projected && showInheritedControls && (
-          <>
-            <ColorRow
-              label={t('壳体色', 'Cube Color')}
-              value={s.cubeColor}
-              onChange={(v) => set('cubeColor', v)}
-              onReset={() => set('cubeColor', DEFAULTS.cubeColor)}
-            />
-            <NumberRow
-              label={t('壳体不透明度', 'Cube Opacity')}
-              value={s.cubeOpacity} min={0} max={100}
-              onChange={(v) => set('cubeOpacity', v)}
-              onReset={() => set('cubeOpacity', DEFAULTS.cubeOpacity)}
-            />
-            <NumberRow
-              label={t('贴纸不透明度', 'Sticker Opacity')}
-              value={s.stickerOpacity} min={0} max={100}
-              onChange={(v) => set('stickerOpacity', v)}
-              onReset={() => set('stickerOpacity', DEFAULTS.stickerOpacity)}
-            />
-            {/* 投影距离:/sim panel 里 dist 由 sim 的「透视」滑块单向驱动(SimPage 相机
-                镜像 effect:透视→dist,imgSpec 变即重算),面板再放独立滑块会被立刻拍回。
-                与 视角旋转 / 背景色 同属「sim 拥有的相机概念」→ 只在 page 模式露出
-                (整块已由 showInheritedControls 门控);panel 里改投影距离走 sim 自己的
-                透视滑块(一个概念一个控件)。 */}
-            <NumberRow
-              label={t('投影距离', 'Projection Distance')}
-              value={s.dist} min={1} max={100}
-              onChange={(v) => set('dist', v)}
-              onReset={() => set('dist', DEFAULTS.dist)}
-            />
-          </>
-        )}
+        {/* 背景色是**导出件**的底色(默认透明),不是画布背景 —— sim 那个 BG 选择器管的是
+            左边 3D 画布看着舒不舒服,两回事,所以这一行留着。其余「sim 已经有一个」的控件
+            (拼图 / 阶数 / 公式 / 六面配色 / 视角旋转 / 壳体与贴纸不透明度 / 投影距离)
+            随 /visualcube 页退役一并删,一个概念只留一个入口。 */}
+        <ColorRow
+          label={t('背景色', 'Background Color')}
+          value={s.backgroundColor}
+          onChange={(v) => set('backgroundColor', v)}
+          onReset={() => set('backgroundColor', '')}
+          allowEmpty
+        />
         </>)}
       </section>
 

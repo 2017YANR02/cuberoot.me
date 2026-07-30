@@ -108,7 +108,7 @@ import PuzzleImageStudio, { type SimBridge } from '@/components/puzzle-image/Puz
 import type { TwistyPlayerLike } from '@/components/puzzle-image/SimCaptureGroup';
 import { useImageSpec } from '@/components/puzzle-image/useImageSpec';
 import { rotationDefaultsFor } from '@/lib/puzzle-image/defaults';
-import type { InheritedFields } from '@/lib/puzzle-image/codec';
+import { specToParams, type InheritedFields } from '@/lib/puzzle-image/codec';
 import type { ImageSpec, PuzzleType } from '@/lib/puzzle-image/types';
 import { parseMask, MASK_COLOR } from '@/lib/puzzle-image/mask-core';
 import { toEngineMask } from '@/lib/puzzle-image/puzzle-mask';
@@ -118,7 +118,7 @@ import { stickeringMaskFn } from './engine/nxn/stickering';
 import {
   CUSTOM_STICKERING, CUSTOM_TREATMENTS, customMaskFn, pickedSids, toggleSids, type PickGrain,
 } from './engine/nxn/customStickering';
-import { resolveStageMaskFn } from './engine/nxn/vcStageMask';
+import { resolveStageMaskFn, vcMaskForStickering } from './engine/nxn/vcStageMask';
 import { isPresetMask, presetMaskFn } from './engine/nxn/maskConfig';
 import { useSimMasks } from './useSimMasks';
 import { resolveEngineArrows } from './engine/nxn/vcArrowBridge';
@@ -492,18 +492,6 @@ export default function SimPage() {
     persistItem('sim.panel.image', imageOpen ? '1' : '0');
   }, [imageOpen]);
 
-  // 伴图渲染器:'engine' = 我们的引擎镜像(默认),'vc' = 落回 spec 渲染器(cube 即
-  // visualcube 本体)。浮层左上角的小钮切换,两条路线都留着,随时对着看。
-  // niche 外观偏好,走 localStorage(同 sim.img.outline,非 URL)。
-  const [imgSource, setImgSource] = useState<'engine' | 'vc'>(() => {
-    if (typeof window === 'undefined') return 'engine';
-    try { return localStorage.getItem('sim.img.source') === 'vc' ? 'vc' : 'engine'; } catch { return 'engine'; }
-  });
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    persistItem('sim.img.source', imgSource);
-  }, [imgSource]);
-
   // 交换主图 ↔ 伴图(伴图铺满画布、实时 3D 缩进左上小框)。观察偏好,走 localStorage。
   // 交换态下渲染器/world 真调到小框尺寸(resize 闭包读 imgSwapRef;CSS 只钉显示位),
   // 否则 Toucher 的像素坐标与射线拾取对不上,小框里没法拖。
@@ -566,6 +554,20 @@ export default function SimPage() {
     };
   }, [settings.faceColors, setupParam, algParam, puzzleParam, skewbNotation]);
   const [imgSpec, setImgSpec] = useImageSpec('img_', { puzzle: imgPuzzle, inherit: imgInherit });
+
+  // /sim/batch 是独立宿主,自己拥有整份 spec —— 面板模式省掉的那几个 key(拼图 `pzl`、
+  // 公式、六面配色)本页是从 sim 自己的状态继承的,链接里得补齐,否则批量页只拿到默认值。
+  // 阶段遮罩同理:sim 这边是引擎的 `stickering=`,批量页走 spec 渲染只认 vc 的 `stage=`,
+  // 两边能对上的名字翻过去(引擎独有的阶段翻不了,那就不带遮罩,见 vcMaskForStickering)。
+  const batchHref = useMemo(() => {
+    const full = {
+      ...imgSpec, ...imgInherit, ...imgPuzzle,
+      stageMask: imgPuzzle.puzzleType === 'cube'
+        ? vcMaskForStickering(imgPuzzle.cubeSize, query.stickering)
+        : imgSpec.stageMask,
+    };
+    return `/sim/batch?${specToParams(full, 'img_').toString()}`;
+  }, [imgSpec, imgInherit, imgPuzzle, query.stickering]);
 
   // Lay out the back-view mini window: size it ~30% of the smaller container
   // dimension (clamped). Single source of truth for the square pixel size
@@ -2145,20 +2147,6 @@ export default function SimPage() {
             {/* 交换主图 ↔ 伴图:与背面小窗右下角的交换钮同款。开着时伴图铺满画布、
                 实时 3D 缩进左上小框(纯 CSS 换位,见 .sim-canvas-wrap--imgswap)。
                 net 视图没有可缩的主 3D → 不给按钮。 */}
-            {/* 伴图渲染器切换 —— 左上内角,与右上关闭钮同族。引擎镜像 ↔ spec 渲染器
-                (cube 即 visualcube 本体);对照模式两份都在画,这钮无意义 → 不给。
-                engine-only 拼图没有 spec 渲染器可落 → 也不给。 */}
-            {!imageStudioEngineOnly && imgEngineMode !== 'both' && (
-              <button
-                type="button"
-                className="sim-float-close sim-image-source"
-                onClick={() => setImgSource((v) => (v === 'vc' ? 'engine' : 'vc'))}
-                aria-pressed={imgSource === 'vc'}
-                title={t('伴图渲染器:引擎 / visualcube', 'Companion renderer: engine / visualcube')}
-              >
-                {imgSource === 'vc' ? 'VC' : t('引擎', 'ENG')}
-              </button>
-            )}
             {!flatMode && (
               <button
                 type="button"
@@ -2323,7 +2311,6 @@ export default function SimPage() {
               一个「图像」标题栏既没东西可折叠也没图可指。显隐归浮层自己的 × 和播放条
               按钮(imageOpen),侧栏常驻。 */}
           <PuzzleImageStudio
-            mode="panel"
             spec={imgSpec}
             onSpecChange={setImgSpec}
             simBridge={simBridge}
@@ -2331,8 +2318,23 @@ export default function SimPage() {
             engineSvg={engineSvg}
             engineOnly={imageStudioEngineOnly}
             compare={imgEngineMode === 'both'}
-            preferSpecRender={imgSource === 'vc'}
           />
+          {/* 图像面板的两个去处(原 /visualcube 的两个子页)。设置整套在 URL 里,
+              批量页原样带过去 —— 它不重造一份控件。
+              批量页走 spec 渲染,engine-only 拼图(fto / 枫叶…)它画不出来 → 不给链接,
+              免得点进去看到一张 3x3;阶段速查整本都是 NxN,只对 cube 露出。 */}
+          {!imageStudioEngineOnly && (
+            <div className="sim-image-links">
+              <AppLink href={batchHref} prefetch={false}>
+                {t('批量出图', 'Batch images')}
+              </AppLink>
+              {imgPuzzle.puzzleType === 'cube' && (
+                <AppLink href="/sim/stages" prefetch={false}>
+                  {t('阶段遮罩速查', 'Stage masks')}
+                </AppLink>
+              )}
+            </div>
+          )}
           {/* Group-theory panel = the visible half of the non-cubing.js view. Shows for any
               PG-bound puzzle that isn't on cubing.js. Pure-engine PG puzzles (dino/heli/NxN)
               have no cubing.js option at all → the panel is always on for them. */}

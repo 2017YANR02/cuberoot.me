@@ -1,15 +1,17 @@
 'use client';
 
 /**
- * /visualcube/batch — 一栏公式,一次出一批图。
+ * /sim/batch — 一栏公式,一次出一批图。
  *
- * 设置不在这页重造:URL 用的是与 /visualcube 编辑器**同一套 key**(codec 的 '' 前缀),
- * 所以 `/visualcube?...` 后面挂个 `/batch` 就把当前配色 / 视图 / 遮罩 / 尺寸整套带过来,
- * 反过来也一样。这页只管「列表 → 多张图」这件编辑器不管的事。
+ * 设置不在这页重造:URL 用的是 /sim 图像面板**同一套 key**(codec 的 `img_` 前缀),
+ * 所以 `/sim?img_…` 后面挂个 `/batch` 就把当前配色 / 视图 / 遮罩 / 尺寸整套带过来,
+ * 反过来也一样。唯一要翻译的是拼图:/sim 用自己的 `puzzle=`(面板模式不发 `pzl`),
+ * 这页是独立宿主、自己拥有整份 spec,所以拼图走 `img_pzl` —— 两处链接各自换一下。
+ * 这页只管「列表 → 多张图」这件模拟器不管的事。
  *
- * 渲染走 renderSpecSvg —— 与编辑器、与 /v1 服务端是同一条纯函数路径,不是近似版。
- * 需要 DOM 的那几种视图(3×3 net 涂色编辑器、sr-puzzlegen 的异形 iso/top)批量出不了,
- * 明说,不给半张假图。
+ * 渲染走 renderSpecSvg —— 与 /sim 面板的 spec 渲染、与 /v1 服务端是同一条纯函数路径,
+ * 不是近似版。需要 DOM 的那几种视图(3×3 net 涂色编辑器、sr-puzzlegen 的异形 iso/top)
+ * 批量出不了,明说,不给半张假图。
  */
 
 import { Suspense, useEffect, useMemo, useState } from 'react';
@@ -23,6 +25,7 @@ import {
   exportSvgText, saveBlob, svgToPngBlob, type PhysicalSize,
 } from '@/lib/puzzle-image/image-export';
 import { domRenderKindOf, renderSpecSvg } from '@/lib/puzzle-image/render';
+import { stickeringValueForVcMask } from '../engine/nxn/vcStageMask';
 import { makeZip, type ZipEntry } from '@/lib/zip';
 import { publicApiUrl } from '@/lib/api-base';
 import { useT } from '@/hooks/useT';
@@ -41,8 +44,8 @@ const SAMPLE = [
 
 function BatchPageInner() {
   const t = useT();
-  // 这页只读 spec —— 设置在编辑器里改,两边共用同一套 URL key。
-  const [spec] = useImageSpec('');
+  // 这页只读 spec —— 设置在 /sim 的图像面板里改,两边共用同一套 URL key。
+  const [spec] = useImageSpec('img_');
   const [text, setText] = useState(SAMPLE);
   const [format, setFormat] = useState<'svg' | 'png'>('png');
   const [template, setTemplate] = useState('{i}-{name}');
@@ -76,10 +79,20 @@ function BatchPageInner() {
   const ok = rendered.filter((r) => r.svg);
   const bad = rendered.filter((r) => !r.svg);
 
-  /** 编辑器链接:把当前整套设置原样带过去。 */
-  const editorHref = useMemo(() => {
-    const qs = specToParams(spec, '').toString();
-    return `/visualcube${qs ? `?${qs}` : ''}`;
+  /** 回 /sim 的链接:整套设置原样带过去,三个 key 要翻译 —— 面板模式下拼图 / 公式 /
+   *  阶段都归 sim 自己管,codec 那三个 img_ key 到了那边没人读(SimPage 会拿 sim 的状态
+   *  盖回去)。翻不过去的阶段(引擎独有的名字这边本来就发不出来)自然就不带。 */
+  const simHref = useMemo(() => {
+    const p = specToParams(spec, 'img_');
+    p.delete('img_pzl');
+    p.set('puzzle', spec.puzzleType === 'cube' ? String(spec.cubeSize) : spec.puzzleType);
+    if (p.has('img_alg')) { p.set('alg', p.get('img_alg')!); p.delete('img_alg'); }
+    if (p.has('img_stage')) {
+      const size = spec.puzzleType === 'cube' ? spec.cubeSize : 3;
+      p.set('stickering', stickeringValueForVcMask(size, p.get('img_stage')!));
+      p.delete('img_stage');
+    }
+    return `/sim?${p.toString()}`;
   }, [spec]);
 
   /** API 链接列表(每行一条),给要在别处引用的人。 */
@@ -122,16 +135,16 @@ function BatchPageInner() {
       <header className="vc-header">
         <h1>{t('批量出图', 'Batch images')}</h1>
         <div className="vc-header-right">
-          <Link className="vc-header-link" href={editorHref}>
-            {t('在编辑器里调设置', 'Adjust in editor')}
+          <Link className="vc-header-link" href={simHref}>
+            {t('在模拟器里调设置', 'Adjust in the simulator')}
           </Link>
         </div>
       </header>
 
       <p className="vcb-intro">
         {t(
-          '一行一条公式,可写成「名字 = 公式」或从表格直接粘(制表符分隔),# 开头的行忽略。配色、视图、遮罩、尺寸这些跟编辑器共用同一条链接 —— 在编辑器调好再点过来即可。',
-          'One algorithm per line — either "name = alg" or tab-separated straight from a spreadsheet; lines starting with # are ignored. Colours, view, mask and size come from the same URL the editor uses, so set them there and come back.',
+          '一行一条公式,可写成「名字 = 公式」或从表格直接粘(制表符分隔),# 开头的行忽略。配色、视图、遮罩、尺寸这些跟模拟器的图像面板共用同一条链接 —— 在那边调好再点过来即可。',
+          'One algorithm per line — either "name = alg" or tab-separated straight from a spreadsheet; lines starting with # are ignored. Colours, view, mask and size come from the same URL the simulator\'s image panel uses, so set them there and come back.',
         )}
       </p>
 
@@ -237,7 +250,7 @@ function BatchPageInner() {
   );
 }
 
-export default function VisualCubeBatchPage() {
+export default function SimBatchPage() {
   return (
     <Suspense fallback={<div style={{ padding: 16 }}>Loading…</div>}>
       <BatchPageInner />

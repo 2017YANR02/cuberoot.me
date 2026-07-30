@@ -331,6 +331,14 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: '3D puzzle simulators for 28 puzzle types — drag to turn, play back solutions.',
     },
   },
+  'sim/batch': {
+    title: { zh: '批量出图', en: 'Batch Cube Images' },
+    description: {
+      zh: '一栏公式一次出一批魔方图,可按厘米定尺寸,打包 ZIP 下载或复制链接列表。',
+      en: 'Turn a list of algorithms into a batch of cube images — size them in centimetres, download as a ZIP or copy the URL list.',
+    },
+  },
+  'sim/stages': { title: { zh: '阶段遮罩速查', en: 'Stage Masks' } },
   'site': { title: { zh: '网站导航', en: 'Sites Directory' } },
   'solver': { title: { zh: '求解器', en: 'Solver' } },
   'stroop': {
@@ -356,15 +364,6 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'Cubing tutorials — from a first solve through CFOP and Roux, organised by topic, with diagrams and animations.',
     },
   },
-  'visualcube': { title: { zh: '魔方可视化', en: 'VisualCube' } },
-  'visualcube/batch': {
-    title: { zh: '批量出图', en: 'Batch Cube Images' },
-    description: {
-      zh: '一栏公式一次出一批魔方图,可按厘米定尺寸,打包 ZIP 下载或复制链接列表。',
-      en: 'Turn a list of algorithms into a batch of cube images — size them in centimetres, download as a ZIP or copy the URL list.',
-    },
-  },
-  'visualcube/stages': { title: { zh: '阶段可视化', en: 'Visualcube Stages' } },
   'wb': { title: { zh: '非官方纪录', en: 'World Bests' } },
   'wca': {
     title: { zh: 'WCA 统计', en: 'WCA Statistics' },
