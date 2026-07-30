@@ -11,7 +11,7 @@ import {
   statesWithAnyXCrossSolved, statesWithSolved,
 } from '@/lib/skip-probability';
 import { CUBE3_STATES } from '@/lib/god-distance-333';
-import { CORNER_FACELET, EDGE_FACELET } from '@/app/[lang]/scramble/solver/facelet';
+import { CORNER_FACELET, EDGE_FACELET } from '@/lib/cube-facelet';
 import { EXACT_DIST, type ExactFull } from '@/app/[lang]/scramble/stats/_data/exact_dist';
 
 /**

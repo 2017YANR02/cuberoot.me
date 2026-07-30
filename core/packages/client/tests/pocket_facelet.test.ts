@@ -14,7 +14,7 @@ import {
   solvePocketFacelet, randomPocketFacelet, rotatePocketState, derivePocketScramble,
   type PocketFace,
 } from '@/lib/pocket-facelet';
-import { CORNER_FACELET } from '@/app/[lang]/scramble/solver/facelet';
+import { CORNER_FACELET } from '@/lib/cube-facelet';
 import { cube222MetricOfScramble, _test as m222 } from '@/lib/cube222-metric';
 import { optimalPocketScramble } from '@/lib/pocket-scramble';
 

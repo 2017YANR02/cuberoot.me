@@ -22,7 +22,7 @@ import BoolToggle from '@/components/BoolToggle';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { ClearButton } from '@/components/ClearButton';
 import { useT } from '@/hooks/useT';
-import { cubieToFacelet, normalizeFacelet, validateFacelet, faceletToCubie } from '../solver/facelet';
+import { cubieToFacelet, normalizeFacelet, validateFacelet, faceletToCubie } from '@/lib/cube-facelet';
 import {
   SYM_TYPES, SYM_ELEMENTS, SYM_CLASS_ORDER, SYM_CLASS_INFO, TYPE_DESC,
   symMask, antisymMask, classifyMask, closure, closureWithAnti, generatorsOf, seedsWithoutElement,

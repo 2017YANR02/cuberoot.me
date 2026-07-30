@@ -5,10 +5,25 @@
  *   U: 0..8   R: 9..17   F: 18..26   D: 27..35   L: 36..44   B: 45..53
  *
  * Port of cstimer min2phase 的 cornerFacelet/edgeFacelet 表 + fromFacelet/toFacelet
- * 算法。CubieCube 形状与 pages/timer/scramble/kociemba/cube.ts 一致。
+ * 算法。
+ *
+ * 住在 `lib/` 而不是某个页面下:`/scramble/solver`、`/scramble/symmetry`、
+ * `/scramble/pattern`、`/timer` 都要用它,而且 `lib/no-bar.ts` 也要用 ——
+ * 页面之间互引、`lib/` 反过来引页面都是不该有的方向。
+ *
+ * `CubieCube` 在这里自己声明,不从任一份 kociemba 拷贝里引:
+ * `app/[lang]/timer/_lib/scramble/kociemba/cube.ts` 与
+ * `app/[lang]/scramble/solver/_kociemba/cube.ts` 的形状逐字段相同,
+ * TS 结构化类型让两边都能直接互传。
  */
 
-import type { CubieCube } from './_kociemba/cube';
+/** 立方块级状态。cp/ep 是排列,co (mod 3) / eo (mod 2) 是朝向。 */
+export interface CubieCube {
+  cp: number[];
+  co: number[];
+  ep: number[];
+  eo: number[];
+}
 
 // 8 个角块,每个对应 [U/D 面 sticker idx, side1, side2] (cstimer 顺序)
 export const CORNER_FACELET: ReadonlyArray<readonly [number, number, number]> = [
@@ -175,7 +190,7 @@ export function cubieToFacelet(c: CubieCube): string {
  * 用户随便涂的状态大概率违反其中之一 → kociemba two-phase 搜不到解会无限
  * 搜下去。在送到 worker 前提前判掉。
  */
-export function validateCubie(c: import('./_kociemba/cube').CubieCube): string | null {
+export function validateCubie(c: CubieCube): string | null {
   const seenC = new Set(c.cp);
   if (seenC.size !== 8) return 'corner permutation not bijective (some piece appears twice)';
   const seenE = new Set(c.ep);

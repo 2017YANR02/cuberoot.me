@@ -2,7 +2,7 @@
  * 三阶魔方 48 元对称群 O_h 的引擎 —— 忠实移植 hkociemba/CubeExplorer 的
  * Symmetries.pas + CubeDefs.pas(CornerCubieSym / EdgeCubieSym / ImageSym)。
  *
- * 约定(与上游、与本仓 solver/facelet.ts 完全一致):
+ * 约定(与上游、与本仓 lib/cube-facelet.ts 完全一致):
  *  - 角 0..7 = URF UFL ULB UBR DFR DLF DBL DRB;棱 0..11 = UR UF UL UB DR DF
  *    DL DB FR FL BL BR。cp[i]=j 表示"位置 i 上放着块 j"。
  *  - 对称元素的角朝向取值 0..5:≥3 表示"先转 (o-3) 再做一次镜射"(上游注释),
@@ -15,7 +15,7 @@
  * 掩码用 bigint(48 位超出 JS 位运算的 32 位)。
  */
 
-import { CORNER_FACELET, EDGE_FACELET } from '../solver/facelet';
+import { CORNER_FACELET, EDGE_FACELET } from '@/lib/cube-facelet';
 import type { CubieCube } from '../solver/_kociemba/cube';
 
 export const N_SYM = 48;

@@ -18,9 +18,9 @@ import {
   type PatternFace,
   type SearchOptions,
 } from '@/app/[lang]/scramble/pattern/search/_pattern_core';
-import { faceletToCubie, SOLVED_FACELET } from '@/app/[lang]/scramble/solver/facelet';
+import { faceletToCubie, SOLVED_FACELET } from '@/lib/cube-facelet';
 import { applySequence, parseMoves, solvedCubie } from '@/app/[lang]/scramble/solver/_kociemba/cube';
-import { cubieToFacelet } from '@/app/[lang]/scramble/solver/facelet';
+import { cubieToFacelet } from '@/lib/cube-facelet';
 
 const ALL_FACES = [true, true, true, true, true, true];
 const NO_FACES = [false, false, false, false, false, false];
