@@ -374,6 +374,34 @@ export function goCubeMoveFrame(records: Array<{ code: number; tick?: number }>)
   return goCubeFrame(1, payload);
 }
 
+/**
+ * GoCube opcode-0x02 state dump, built by INVERTING csTimer's msgType-2 reader
+ * (`gocube.js:94-108`): per face, byte 0 is the centre and bytes 1..8 walk the
+ * `facePerm` ring from `faceOffset[a]`, each byte a colour index into `BFUDRL`.
+ *
+ * Input is a 54-character facelet string in the usual `URFDLB` order.
+ */
+export function goCubeStateFrame(facelet: string): number[] {
+  const axisPerm = [5, 2, 0, 3, 1, 4];
+  const facePerm = [0, 1, 2, 5, 8, 7, 6, 3];
+  const faceOffset = [0, 0, 6, 2, 0, 0];
+  const colour = (ch: string): number => {
+    const i = 'BFUDRL'.indexOf(ch);
+    if (i < 0) throw new Error(`goCubeStateFrame: bad colour "${ch}"`);
+    return i;
+  };
+  const payload = new Array<number>(54).fill(0);
+  for (let a = 0; a < 6; a++) {
+    const axis = axisPerm[a] * 9;
+    const aoff = faceOffset[a];
+    payload[a * 9] = colour(facelet.charAt(axis + 4));
+    for (let i = 0; i < 8; i++) {
+      payload[a * 9 + i + 1] = colour(facelet.charAt(axis + facePerm[(i + aoff) % 8]));
+    }
+  }
+  return goCubeFrame(2, payload);
+}
+
 /** csTimer's GoCube move decode (`parseData`, msgType 1) — the ORACLE. */
 export function goCubeCodeToMove(code: number): string {
   const axis = [5, 2, 0, 3, 1, 4][code >> 1];

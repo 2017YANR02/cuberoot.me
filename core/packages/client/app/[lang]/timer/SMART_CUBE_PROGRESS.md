@@ -329,5 +329,84 @@ TPS / 停顿 / 识别-执行拆分全部指标的原始量。用到达时间算�
 - [x] `SMART_CUBE_MIGRATION.md` 对齐表
 - [x] QiYi 状态采纳
 - [x] 设备时间戳 + 时钟对齐
-- [ ] 其余品牌（MoYu32 / GoCube / Giiker）的状态快照
+- [x] 其余品牌（MoYu32 / GoCube / Giiker）的状态快照 → Sprint 4
 - [ ] QiYi 的设备时间戳（帧里有，单位是 1.6us/tick，未接）
+- [ ] MoYu32 的设备时间戳（0xA5 帧里五个 u16 增量，未接）
+
+---
+
+## Sprint 4 — 把「魔方自报状态」补齐到所有品牌（已完成，待实体复验）
+
+Sprint 1（GAN v3/v4）和 Sprint 3（QiYi）修的是同一类缺陷：协议里带着魔方的真实状态，
+我们没读。这个 Sprint 把剩下三个有状态帧的品牌接完，缺陷类到此清零。
+
+### 4.1 三个品牌
+
+| 品牌 | 帧 | 频率 | 之前 | 现在 |
+|------|-----|------|------|------|
+| MoYu32 | `0xA3` bits 8..152 = 48 贴纸 × 3 bit | 仅连接时（`prevMoveCnt === -1` 时消费，和 csTimer 一致） | 只取 bits 152..160 的计数器 | 同时解 facelets → `onState` |
+| GoCube | `0x02`，6 面 × 9 字节（中心 + 8 环） | 连接时 + 每 20 步重新 ack 时 | 注释写着「不跟踪 facelet」，分支不存在 | 解出 54 贴纸 → `onState`，顺带成了周期性纠偏 |
+| Giiker | 每一帧的 nibble 0..30（角排列/朝向 + 棱排列 + 12 翻转位） | **每一帧** | 只 diff 历史窗口取 move，状态全丢 | 每帧解状态 → `onState`，永不漂移 |
+
+Giiker 是三个里最值得说的：它是唯一**每帧都自报完整状态**的品牌，
+以前我们把最权威的那部分数据整包丢掉，只从历史窗口里 diff 出 move。
+
+### 4.2 Giiker 的贴纸编号不是 Kociemba 的
+
+Giiker 的 `ca` / `ea` 索引与默认编号不同 —— 角的顺序被置换过，每个三元组还整体转了一位
+（`giikercube.js:46-70` 把自己的 `cFacelet` / `eFacelet` 传给 `toFaceCube`）。
+用默认表去解，会得到一个「自洽但错」的状态：颜色计数全对，摆放整体转过。
+
+所以 `_lib/cube/cubie.ts` 的 `cubieToFacelets(st, tables?)` 现在接受贴纸表，
+默认值 `DEFAULT_FACELET_TABLES` 就是原来那两张表 —— 和 csTimer 的
+`toFaceCube(cFacelet, eFacelet)`（`mathlib.js:495`）同一种参数化，不是我们自创的抽象层。
+角朝向还要按 `coMask = [-1,1,-1,1,1,-1,1,-1]` 逐位取反，四个角用的是相反的扭转约定。
+
+有一条测试专门钉这件事：拿同一组 nibble，断言我们上报的串**不等于**用默认表解出来的串。
+否则删掉品牌表以后，只有还原态那一例还能过，测试会假绿。
+
+### 4.3 顺手发现 csTimer 的 GoCube 状态采纳是坏的
+
+`gocube.js:107` 在 `msgType == 2` 里写 `curCubie.fromFacelet(newFacelet)`，
+但 `curCubie` 是它的**暂存**对象：move 分支算的是
+`CubeMult(prevCubie, move, curCubie)` 然后把两个对象互换，
+所以刚采纳的状态会被下一步转动直接覆盖，从来没被读过。
+csTimer 的 GoCube 因此永远从还原态重放 —— 连一个已打乱的 GoCube，它和我们修复前一样错。
+
+后果之一：这条链路不能像 QiYi 那样拿 csTimer 的「采纳后再走一步」当基准。
+所以 GoCube 的解码基准改成从 `gocube.js` 源码里切出它自己的
+`axisPerm` / `facePerm` / `faceOffset` 三张表（容易写错的部分来自上游），循环重写。
+另有一例**故意钉住这个上游 bug**：如果 csTimer 哪天修了，那一例会红 —— 那是复查信号，不是故障。
+
+### 4.4 边界
+
+三个解码器都在入口校验后才上报，不合法一律**什么都不报**（退回自己的 move 重放，可恢复），
+绝不上报垃圾（不可恢复）：
+
+- 颜色 / nibble 越界（错 AES key 解出来的样子）；
+- 贴纸不是九个一色（`fromFaceletString`）；
+- Giiker 还过一遍 `isValidCubieState`：排列重复、单角扭转、翻转奇数、角棱奇偶不符全部拒收。
+
+### 测试
+
+`tests/bluetooth_brand_state.test.ts`（14 例，全部以 csTimer 自己的解码器为基准）：
+
+- GoCube 3 例 — 五个状态逐串往返、连接时的状态被主机采纳（且状态帧不算一步转动）、
+  截断 / 越界 / 单色载荷必须拒收
+- GoCube vs csTimer 2 例 — 与上游三张表逐贴纸一致；钉住上游从不采纳自己的状态帧
+- Giiker 3 例 — 连接前就打乱的魔方在**第一帧**就被读出来、同帧内先 move 后 state 的顺序契约、
+  非法 nibble 拒收
+- Giiker vs csTimer 2 例 — 与 `giikercube.js` 算出的 facelet 逐串一致；必须用 Giiker 自己的贴纸表
+- MoYu32 3 例 — 快照上报且仍然播种计数器、只在计数器未播种时消费（与 csTimer 同）、
+  空白位不上报假魔方但计数器照常播种
+- MoYu32 vs csTimer 1 例 — 与 `moyu32cube.js` 的 `parseFacelet` 逐串一致
+
+蓝牙 + 状态相关 10 个文件 251 passed。`tests/bluetooth_gyro.test.ts` 里原有的
+「全零 0xA3 帧」用例不受影响：全零位读出来是 54 个同色，本来就该被拒。
+
+### 状态
+
+- [x] MoYu32 / GoCube / Giiker 的状态快照
+- [x] `cubieToFacelets` 支持按品牌传贴纸表
+- [ ] 实体复验（GAN 16 UI 在手；其余品牌无实体）
+- [ ] MoYu32 / QiYi 的设备时间戳（各自帧里都有，单位不同，另起一个单元）

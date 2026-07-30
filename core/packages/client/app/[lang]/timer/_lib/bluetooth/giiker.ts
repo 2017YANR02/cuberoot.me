@@ -19,6 +19,12 @@
  * Cube4U / supercube i3s revisions wrap a 0xA7-tagged ciphertext that we
  * decrypt via the published key (cstimer toHexVal logic).
  *
+ * This is the one brand that sends its FULL STATE in every notification, not
+ * just at connect: nibbles 0..30 are corner permutation + orientation, edge
+ * permutation and the 12 edge-flip bits. See `parseGiikerState`. We forward it
+ * through `ctx.onState` on every frame, so a Giiker can never drift — and a
+ * cube that was scrambled before we connected is right from the first packet.
+ *
  * Each notification carries a move history window starting at nibble 32,
  * newest first. Its LENGTH depends on the frame variant, because cstimer's
  * `toHexVal` truncates de-obfuscated frames to 18 bytes (giikercube.js:84):
@@ -35,8 +41,12 @@
  *     1 → CW (no suffix), 2 → 180°, 3 → CCW
  */
 
-import type { CubeDriver, CubeDriverStartResult } from './driver';
+import type { CubeDriver, CubeDriverContext, CubeDriverStartResult } from './driver';
 import type { CubeBrand } from './types';
+import {
+  cubieToFacelets, isValidCubieState, type CubieState, type FaceletTables,
+} from '../cube/cubie';
+import { fromFaceletString } from '../cube/state';
 
 const GIIKER_DATA_SERVICE = '0000aadb-0000-1000-8000-00805f9b34fb';
 const GIIKER_NOTIFY_CHAR = '0000aadc-0000-1000-8000-00805f9b34fb';
@@ -91,6 +101,82 @@ function toHexVal(dv: DataView): number[] {
     valhex[i * 2 + 1] = plain[i] & 0xf;
   }
   return valhex;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Cube state — nibbles 0..30 of EVERY frame                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Giiker's own sticker numbering, from csTimer's `cFacelet` / `eFacelet`
+ * arrays (`giikercube.js:46-70`), which it passes to `toFaceCube` instead of
+ * the Kociemba defaults. Same cube, different labels: the corners are listed in
+ * a different order and each triple starts one sticker further round, so
+ * decoding these frames with the default tables produces a state that is
+ * self-consistent but rotated — i.e. wrong.
+ */
+const GIIKER_FACELET_TABLES: FaceletTables = {
+  corners: [
+    [26, 15, 29], [20, 8, 9], [18, 38, 6], [24, 27, 44],
+    [51, 35, 17], [45, 11, 2], [47, 0, 36], [53, 42, 33],
+  ],
+  edges: [
+    [25, 28], [23, 12], [19, 7], [21, 41], [32, 16], [5, 10],
+    [3, 37], [30, 43], [52, 34], [48, 14], [46, 1], [50, 39],
+  ],
+};
+
+/**
+ * Corner-orientation sign per corner slot (csTimer's `coMask`). Four of the
+ * eight corners are numbered with the opposite twist convention, so their
+ * orientation nibble has to be negated mod 3.
+ */
+const GIIKER_CO_MASK = [-1, 1, -1, 1, 1, -1, 1, -1] as const;
+
+/**
+ * Decode nibbles 0..30 into the 54-facelet string.
+ *
+ * Layout (csTimer's `parseState`, giikercube.js:94-112):
+ *   valhex[0..7]    corner permutation, 1-based
+ *   valhex[8..15]   corner orientation, 0..2 (sign per GIIKER_CO_MASK)
+ *   valhex[16..27]  edge permutation, 1-based
+ *   valhex[28..30]  12 edge-orientation bits, MSB-first within each nibble
+ *
+ * Unlike every other brand here, the Giiker sends this on EVERY notification,
+ * not just at connect — the move history is a bonus, the state is the payload.
+ *
+ * Returns null when the nibbles do not describe a physically reachable cube.
+ * That is the guard against a firmware variant we mis-read or an obfuscated
+ * frame we decrypted with the wrong key pair: reporting nothing leaves the host
+ * on its own move replay, which is recoverable; reporting garbage is not.
+ */
+function parseGiikerState(valhex: ReadonlyArray<number>): string | null {
+  if (valhex.length < 31) return null;
+
+  const ca = new Array<number>(8);
+  for (let i = 0; i < 8; i++) {
+    const perm = valhex[i] - 1;
+    const ori = valhex[i + 8];
+    if (perm < 0 || perm > 7 || ori > 2) return null;
+    ca[i] = perm | (((3 + ori * GIIKER_CO_MASK[i]) % 3) << 3);
+  }
+
+  const eo: number[] = [];
+  for (let i = 0; i < 3; i++) {
+    for (let mask = 8; mask !== 0; mask >>= 1) eo.push(valhex[i + 28] & mask ? 1 : 0);
+  }
+
+  const ea = new Array<number>(12);
+  for (let i = 0; i < 12; i++) {
+    const perm = valhex[i + 16] - 1;
+    if (perm < 0 || perm > 11) return null;
+    ea[i] = (perm << 1) | eo[i];
+  }
+
+  const st: CubieState = { ca, ea };
+  if (!isValidCubieState(st)) return null;
+  const facelets = cubieToFacelets(st, GIIKER_FACELET_TABLES);
+  return fromFaceletString(facelets) ? facelets : null;
 }
 
 /** Format a (face, dir) move pair from the giiker nibbles. */
@@ -167,7 +253,7 @@ export const giikerDriver: CubeDriver = {
     return /^(Gi|Mi Smart Magic Cube|Hi-)/.test(n);
   },
 
-  async start(server, onMove): Promise<CubeDriverStartResult> {
+  async start(server, onMove, ctx?: CubeDriverContext): Promise<CubeDriverStartResult> {
     const service = await server.getPrimaryService(GIIKER_DATA_SERVICE);
     const notifyChar = await service.getCharacteristic(GIIKER_NOTIFY_CHAR);
 
@@ -188,6 +274,13 @@ export const giikerDriver: CubeDriver = {
         const dirNib = code & 0xf;
         const mv = formatMove(faceNib, dirNib);
         if (mv) onMove(mv);
+      }
+      // State second: the nibbles describe the cube AFTER the moves in this
+      // same frame, and the host fires "solved" off the move that solved it —
+      // handing it the finished state first would swallow that edge.
+      if (ctx?.onState) {
+        const facelets = parseGiikerState(valhex);
+        if (facelets) ctx.onState(facelets);
       }
     };
 
