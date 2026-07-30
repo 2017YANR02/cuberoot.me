@@ -12,6 +12,7 @@
 // 交互式 `_SimCubeNet` 仍从这里取布局常量(单一源,与导出件逐格对齐)。
 
 import { GAP, STROKE_W, renderUnfoldedStateSvg } from '@cuberoot/shared/cube-unfolded-svg';
+import { faceletDisplayColor, type FaceletMask } from '@/app/[lang]/sim/engine/nxn/stickering';
 
 export type NetFaceLetter = 'U' | 'R' | 'F' | 'D' | 'L' | 'B';
 
@@ -45,6 +46,9 @@ export interface CubeNetSvgOptions {
   /** 遮罩:net index(face 块内 row*N+col,全局 = 块基址 + 局部)∈ set 的格填 maskColor。
    *  key = `${face}:${localIdx}`(localIdx = row*N+col)。 */
   mask?: { keys: ReadonlySet<string>; color: string };
+  /** 阶段遮罩码,下标同 `serialized`(Cube.serializeStickering)。省略 = 整颗原色。
+   *  灰 / 暗 / 青那几档的色值走 faceletDisplayColor,与 3D 同一份。 */
+  stickering?: ArrayLike<number>;
 }
 
 /** URFDLB 面字母 → 引擎面色;非法字符落灰。 */
@@ -68,7 +72,9 @@ export function renderCubeNetSvg(opts: CubeNetSvgOptions): string {
     const face = CSTIMER_FACES[f];
     const local = row * N + col;
     if (maskKeys?.has(`${face}:${local}`)) return maskColor!;
-    const base = NET_FACE_ORDER.indexOf(face) * N * N;
-    return colorOf(facelets[base + local] ?? '', opts.faceColors);
+    const idx = NET_FACE_ORDER.indexOf(face) * N * N + local;
+    const color = colorOf(facelets[idx] ?? '', opts.faceColors);
+    const code = opts.stickering?.[idx];
+    return code ? faceletDisplayColor(code as FaceletMask, color) : color;
   });
 }

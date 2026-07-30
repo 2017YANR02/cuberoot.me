@@ -17,12 +17,18 @@ import { renderCubeSVG, type ICubeOptions } from '@cuberoot/visualcube';
 import { specToCubeOptions } from '@/lib/puzzle-image/render';
 import type { ImageSpec } from '@/lib/puzzle-image/types';
 import type { NetFaceLetter } from '@/lib/cube-net-svg';
+import {
+  FM_IGNORED, FM_REGULAR, faceletDisplayColor, type FaceletMask,
+} from './engine/nxn/stickering';
 
 export interface SimPlanExportOptions {
   /** 引擎 Cube.serialize():6N² 个面字母,块序 U R F D L B,块内 row-major。 */
   serialized: string;
   order: number;
   faceColors: Record<NetFaceLetter, string>;
+  /** 阶段遮罩码,下标同 `serialized`(Cube.serializeStickering)。省略 = 整颗原色。
+   *  灰 / 暗 / 青那几档的色值走 faceletDisplayColor,与 3D 同一份。 */
+  stickering?: ArrayLike<number>;
   /** studio 渲染旋钮的单一源:dist / opacity / 壳 / 背景 / 旋转全从这里取(经
    *  specToCubeOptions),保证与 VC 路(renderSpecSvg)逐字节同。省略 = 纯默认。 */
   spec?: ImageSpec;
@@ -56,9 +62,17 @@ export function exportSimPlanSvg(opts: SimPlanExportOptions): string {
 
   // serialize() 下标 = stickerColors 下标(恒等,见文件头核验)。
   const stickerColors: string[] = [];
+  /** 这一格是不是「灰掉的」—— 引擎报的非面字符,或阶段遮罩判的 ignored。
+   *  hideGreySides 要按语义判,不能比色值(两种来源的灰不同色)。 */
+  const greyed: boolean[] = [];
   for (let i = 0; i < 6 * N * N; i++) {
     const ch = opts.serialized[i] ?? '';
-    stickerColors.push(FACE_LETTERS.includes(ch) ? fc[ch as NetFaceLetter] : IGNORED_STICKER_FILL);
+    const isFace = FACE_LETTERS.includes(ch);
+    const code = (opts.stickering?.[i] ?? FM_REGULAR) as FaceletMask;
+    stickerColors.push(isFace
+      ? faceletDisplayColor(code, fc[ch as NetFaceLetter])
+      : IGNORED_STICKER_FILL);
+    greyed.push(!isFace || code === FM_IGNORED);
   }
 
   // 旋钮基座:有 spec 走 studio 单一源;无 spec 退纯默认方形。
@@ -72,7 +86,7 @@ export function exportSimPlanSvg(opts: SimPlanExportOptions): string {
   // stage 遮罩灰仍由渲染器按 maskColor 比对,两个来源各走各的、互不干扰。
   if (base.hideGreySides) {
     for (const i of rimIndices(N)) {
-      if (stickerColors[i] === IGNORED_STICKER_FILL) stickerColors[i] = 'transparent';
+      if (greyed[i]) stickerColors[i] = 'transparent';
     }
   }
 

@@ -114,7 +114,7 @@ import { parseMask, MASK_COLOR } from '@/lib/puzzle-image/mask-core';
 import { toEngineMask } from '@/lib/puzzle-image/puzzle-mask';
 import GroupTheoryPanel, { type SimWorldView } from './GroupTheoryPanel';
 import { nxnHasPgKernel } from './engine/nxn/nxnPgBridge';
-import { stickeringMaskFn } from './engine/nxn/stickering';
+import { stickeringMaskFn, type StickeringMaskFn } from './engine/nxn/stickering';
 import {
   CUSTOM_STICKERING, CUSTOM_TREATMENTS, customMaskFn, pickedSids, toggleSids, type PickGrain,
 } from './engine/nxn/customStickering';
@@ -1486,26 +1486,30 @@ export default function SimPage() {
   // TwistySection 的 experimentalStickering prop 接管)。依赖 puzzleParam / worldTick:
   // 换拼图 / 换阶数(world.setPuzzle 造新 Cube = 新 InstancedRenderer)与 world 重建后
   // 都要重挂遮罩。上面的 URL-sync effect 先跑(声明在前),这里读到的已是新 cube。
+  // 当前阶段的遮罩函数。3D 渲染器和平面伴图(net / wca / plan 导出)都问这一份,
+  // 免两处各判一次阶段名 —— 判得不一样,两张图就会标注不同的块。
+  // 自定义阶段是用户点出来的清单,先截住(否则「custom」会被当未知阶段名);
+  // 其余:引擎自带阶段优先,它不认的名字(visualcube 搬来的整套 MASK)落到 vc 遮罩桥。
+  const stickeringMaskFor = useCallback((cube: Cube): StickeringMaskFn | null => {
+    if (typeof puzzleParam !== 'number') return null;
+    return query.stickering === CUSTOM_STICKERING
+      ? customMaskFn(cube.order, query.stickeringMask, query.stickeringPick, query.stickeringRest)
+      // 管理员自建遮罩(?stickering=preset:…):清单存在 DB,画法同自定义阶段
+      : isPresetMask(query.stickering)
+        ? presetMaskFn(cube.order, query.stickering, simMaskRows)
+        : (stickeringMaskFn(cube.order, query.stickering, query.stickeringRot)
+          ?? resolveStageMaskFn(cube.order, query.stickering, query.stickeringRot));
+  }, [puzzleParam, query.stickering, query.stickeringRot, query.stickeringMask,
+    query.stickeringPick, query.stickeringRest, simMaskRows]);
+
   useEffect(() => {
     if (twisty) return;
     const world = worldRef.current;
     if (!world) return;
     const cube = asNxN(world);
     if (!cube) return;
-    // 自定义阶段是用户点出来的清单,先截住(否则「custom」会被当未知阶段名);
-    // 其余:引擎自带阶段优先,它不认的名字(visualcube 搬来的整套 MASK)落到 vc 遮罩桥。
-    cube.instancedRenderer.setStickering(
-      typeof puzzleParam !== 'number' ? null
-        : query.stickering === CUSTOM_STICKERING
-          ? customMaskFn(cube.order, query.stickeringMask, query.stickeringPick, query.stickeringRest)
-          // 管理员自建遮罩(?stickering=preset:…):清单存在 DB,画法同自定义阶段
-          : isPresetMask(query.stickering)
-            ? presetMaskFn(cube.order, query.stickering, simMaskRows)
-            : (stickeringMaskFn(cube.order, query.stickering, query.stickeringRot)
-              ?? resolveStageMaskFn(cube.order, query.stickering, query.stickeringRot)),
-    );
-  }, [twisty, worldTick, puzzleParam, query.stickering, query.stickeringRot, query.stickeringMask,
-    query.stickeringPick, query.stickeringRest, simMaskRows]);
+    cube.instancedRenderer.setStickering(stickeringMaskFor(cube));
+  }, [twisty, worldTick, stickeringMaskFor]);
 
   // 自定义阶段编辑态:点击 = 选贴纸,且拖拽一律转视角(paintMode)——不然点歪一点
   // 就当成拖层把魔方拧了。关掉编辑后立刻还原成正常的点击转层。
@@ -1899,7 +1903,13 @@ export default function SimPage() {
           if (flat) {
             const nxn = world.cube as Cube;
             const serialized = nxn.serialize();
-            const sig = cv + '|' + nxn.order + '|' + serialized;
+            // 阶段遮罩:3D 是渲染器按 slot 改色,平面图从逻辑态直出、看不见那一层,
+            // 所以在这里把同一个 maskFn 沿 serialize() 的格序算一遍喂给导出器 ——
+            // 不然选了 OLL,大魔方灰了侧面而小图还是整颗满色。
+            const maskFn = stickeringMaskFor(nxn);
+            const stickering = maskFn ? nxn.serializeStickering(maskFn) : null;
+            const sig = cv + '|' + nxn.order + '|' + serialized
+              + '|' + (stickering ? stickering.join('') : '');
             if (sig === exportedSig) return;
             exportedSig = sig;
             try {
@@ -1913,6 +1923,7 @@ export default function SimPage() {
                   serialized,
                   order: nxn.order,
                   faceColors: fc,
+                  stickering: stickering ?? undefined,
                   spec: {
                     ...imgSpec,
                     cubeColor: settings.coreColor,
@@ -1920,7 +1931,10 @@ export default function SimPage() {
                     stickerOpacity: settings.stickerOpacity,
                   },
                 })
-                : renderCubeNetSvg({ serialized, order: nxn.order, faceColors: fc }));
+                : renderCubeNetSvg({
+                  serialized, order: nxn.order, faceColors: fc,
+                  stickering: stickering ?? undefined,
+                }));
             } catch (err) {
               console.warn('[sim] flat companion export failed', err);
               setEngineSvg(null);
@@ -2026,7 +2040,7 @@ export default function SimPage() {
       imgSpec.hideGreySides, imgSpec.stageMask, imgSpec.maskAlg,
       imgSpec.planSideRule, imgSpec.planUpRule, imgSpec.planShowYellow,
       imgSpec.planForceShow, imgSpec.planForceHide,
-      settings.faceColors, query.stickering, query.stickeringRot]);
+      settings.faceColors, stickeringMaskFor]);
 
   // 2D flat-net view mode — NxN only (number puzzle), driven by the same live cube.
   const netMode = settings.viewMode === 'net' && typeof puzzleParam === 'number';
