@@ -9,7 +9,7 @@
 
 ---
 
-## 状态总表（唯一状态源，2026-07-30）
+## 状态总表（唯一状态源，2026-07-30，Sprint 16 更新）
 
 下面三张表是「现在做到哪了」的唯一出处。研究 / 迁移文档只描述**该做什么**，
 不再各自记状态；改了状态只改这里。
@@ -28,6 +28,11 @@
 P0-4 的三处**有意不做**（写在 `reference.ts` 头注，不是遗漏）：末层不追求真最优
 （实测 9 步 OLL 要 1.4s、12 步 PLL 跑 220s 还找不到），F2L 是步进最优而非全局最优，
 参考解法只在**验证过能收尾**时才出数。
+
+上面这些指标全部读 `Solve.stageSegments`。Sprint 16 之前**只有设置里那个手动
+「重新分析」写过这个字段**，所以新拧的那把在公式统计 / OLL·PLL 筛选 / 自动标签 /
+CSV 导出里一律是空的 —— 现在录入路径当场算好落盘（`stageSegmentsFor`）。
+历史成绩仍需手点一次「重新分析」补齐（见 Sprint 16）。
 
 ### 迁移文档剩余项（csTimer 对齐，P0 已清空）
 
@@ -1290,3 +1295,85 @@ AUF、**后**也能 AUF，而这两者不是一回事：转 U 只能走遍「公
 - [x] PLL 识别覆盖率 bug 根因修复（85/288 → 288/288）+ 穷举测试防回归
 - [x] `oll.json` OLL 29 `alg2` 空格修复
 - [ ] 真机 20 把看分数分布（等用户回来）
+
+---
+
+## Sprint 16 — 分段落盘：让前面 15 个 Sprint 的指标真的到得了数据层（已完成）
+
+### 现象（自己查出来的，不是用户报的）
+
+Sprint 15 修完 PLL 识别覆盖率之后，顺手确认「这个修复到底能不能到用户的历史成绩里」。
+`grep 'stageSegments\s*[:=]'` 只有一个写入方：`_lib/storage/reanalyze.ts` —— 设置面板里
+那个手动「重新分析」。录入路径 `recordSolve`（`_shell/SoloView.tsx`）写 `stages` /
+`bld` / `caseId` / `moves` / `inspectionMs` / `device`，**唯独不写 `stageSegments`**。
+
+于是所有读这个字段的地方，对刚拧完的那把都是空的：
+
+| 读的地方 | 空了之后是什么样 |
+|---|---|
+| `_components/CfopCaseStatsPanel.tsx` | OLL / PLL CASE 统计表整张空 |
+| `_components/HistoryPanel.tsx` | 按 OLL / PLL case 筛成绩筛不出东西 |
+| `_lib/storage/auto_tag.ts` | 自动标签不打 |
+| `_lib/storage/export_csv.ts` | 导出退回旧列 |
+| `computeStageAverages`（复盘弹窗里的 ±% 对比） | 没有个人均值可比 |
+
+也就是说：从 Sprint 13 起做的那一整层「阶段指标」，只有用户自己想起来去点一次
+迁移按钮才存在。这不是漏了个赋值，是**这个判定当时没有主人**。
+
+### 修法
+
+判定收进 `_lib/reconstruct/stage_segments.ts`，成为纯函数，录入路径和迁移读同一份规则：
+
+```ts
+export const STAGE_SEGMENT_EVENTS: ReadonlySet<EventId> = new Set([...]);  // 单一源
+export function stageSegmentsFor(solve: Solve): StageSegments | null
+```
+
+- 三阶系项目 + 有动作流才算；
+- 走不通（打乱解析不了 / 动作流是垃圾）返回 null，**禁抛** —— 一个分段算不出来
+  不能连带把这把成绩弄丢；
+- `reanalyze.ts` 里那份重复的事件白名单删掉，改 import 同一个常量。
+
+`recordSolve` 里只剩两行。成本实测（`stageSegmentsFor` × 200 次取均值）：
+真实 64 步一把 **0.228 ms**，320 步的极端流 **0.508 ms**；而且此刻表已经停了。
+`stage_segments` 本来就在 SoloView 的静态依赖图里（`SettingsPanel → reanalyze →
+stage_segments`），所以 bundle 和模块初始化成本都是 **0**，不需要动态 import。
+
+### 验证：假魔方跑完整一把，回读 localStorage
+
+`window.__cuberootFakeCube` 走真 UI 全链路（连接 → 打乱 → 逐步拧 → 自动停表）。
+先离线用项目自己的求解器给页面当前那条真题打乱造一条**真** CFOP 解法
+（cstimer 驱动出十字 + F2L，末层用 `shortestLibraryAlg` 取库内公式），再一步一步喂进去：
+
+- 落盘的那把带上了 `stageSegments`，`ollCase: "OLL 44 (P-Shape)"`、`pllCase: "PLL T"`
+  —— 跟离线生成器预测的 case 一致；
+- 同一个 store 里**之前 18 把全都没有分段**（`priorHaveSegments: 0`），正是这个坑；
+- 「完整统计」弹窗里 `OLL CASE 统计 → OLL 44 (P-Shape) 1 次`、
+  `PLL CASE 统计 → PLL T 1 次`，改之前这两张表对新成绩恒空。
+
+顺手确认了两件事（都不是 bug）：
+
+1. 真智能魔方只报单层 90°，所以 `B2` 落盘是 `B B` —— 49 个记号进去、64 步出来，
+   每阶段 HTM 7 / 31 / 8 / 18 与各段公式长度逐一对得上；
+2. 参考公式**不含开头那个 AUF**（那一步算识别，两边都不计），所以拿 `refSolution`
+   直接贴到局面上是不会收尾的，要先扫 AUF。这是 Sprint 15 的设计，不是缺陷；
+   写在这里免得下次又当 bug 查一遍（本轮就查了一遍）。
+
+### 有意不做
+
+- **不自动跑一遍 `reanalyzeAll`**：它会改写用户已存的成绩，属于「改状态先确认」。
+  历史成绩补齐要用户自己在设置里点一次「重新分析」（幂等，点两次第二次无写入）。
+
+### 测试
+
+- `tests/stage_segments_attach.test.ts`（5 例）：真打乱 + 真解法算出 `OLL 44` /
+  `PLL T` / `D-cross` 且四段 HTM 锁死 7/31/8/18、没有动作流不算、非三阶系不算
+  （`333oh` 要算）、垃圾输入只返回 null 不抛、打乱不匹配时不假装认出阶段
+- 全集 **3705 通过**（本轮 +5），typecheck / lint 干净
+
+### 状态
+
+- [x] 录入即落盘，公式统计 / case 筛选 / 自动标签 / CSV 对新成绩当场可用
+- [x] 事件白名单单一源，录入与迁移不会再各自漂
+- [x] 假魔方全链路实测 + 回读 localStorage + UI 见数
+- [ ] 历史成绩补齐：用户点一次设置里的「重新分析」（不代劳）
