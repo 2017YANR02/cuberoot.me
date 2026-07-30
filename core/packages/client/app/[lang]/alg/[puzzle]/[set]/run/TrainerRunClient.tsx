@@ -35,6 +35,9 @@ import { RoomQrModal } from '@/components/RoomQrModal';
 import MemoryTrainer from '@/app/[lang]/alg/_trainer/MemoryTrainer';
 import SetProgressStrip from '@/app/[lang]/alg/_trainer/SetProgressStrip';
 import MixSetPicker from '@/app/[lang]/alg/_trainer/MixSetPicker';
+import SmartCubeRow from '@/app/[lang]/alg/_trainer/SmartCubeRow';
+import { useTrainerCube } from '@/app/[lang]/alg/_trainer/useTrainerCube';
+import { puzzleHasSmartCube } from '@/app/[lang]/alg/_trainer/smartcube';
 import { resolveAlgPuzzle } from '@/app/[lang]/alg/_trainer/events';
 import { useAlgSrs, autoMarkFromSrs } from '@/lib/alg-srs-store';
 import { useAlgSweep } from '@/lib/alg-sweep-store';
@@ -190,6 +193,8 @@ export default function TrainerRunClient() {
   const setPureScramble = useTrainerStore(s => s.setPureScramble);
   const multiScramble = useTrainerStore(s => s.multiScramble);
   const setMultiScramble = useTrainerStore(s => s.setMultiScramble);
+  const smartCube = useTrainerStore(s => s.smartCube);
+  const setSmartCube = useTrainerStore(s => s.setSmartCube);
   const observingPinned = useTrainerStore(s => s.observingPinned);
   const pinObserving = useTrainerStore(s => s.pinObserving);
   const nextScramble = useTrainerStore(s => s.nextScramble);
@@ -774,6 +779,24 @@ export default function TrainerRunClient() {
     recordSweep(sweepScope, pool);
   }, [recapRoundDone, memoAllRated, isMix, mode, sweepScope, pool, recordSweep]);
 
+  /**
+   * 智能魔方出题。必须摆在下面那几个提前 return 之前 —— hook 不能条件调用;
+   * 没连魔方时它什么都不做(连 Web Bluetooth 都不碰)。
+   *
+   * 记忆模式不接:那边是「看图回忆 + 自评」,没有「拧对了」这个判据可用。
+   * 不计时也接 —— 那时魔方仍然替你出题,拧完自动下一题,只是不记成绩。
+   */
+  const cubeCase = currentKey ? findCaseByKey(cases, currentKey) ?? null : null;
+  const trainerCube = useTrainerCube({
+    enabled: smartCube && !isMemo,
+    timing,
+    puzzle: puzzle ?? null,
+    sessionSet: storeSet,
+    currentCase: cubeCase,
+    currentScramble,
+    currentKey,
+  });
+
   if (!puzzle || !meta) {
     // 合练成员不够:直接给选集器(SSG 壳读不到 query,挂载前先「加载中」免闪)
     if (puzzle && isMix) {
@@ -855,7 +878,8 @@ export default function TrainerRunClient() {
     solves.length > 0 ? solves[solves.length - 1].ms : 0;
 
   // 当前题(左栏大打乱 + 下方 case 图)。
-  const currentCase = currentKey ? findCaseByKey(cases, currentKey) ?? null : null;
+  // 与智能魔方那边同一份(它在提前 return 之前就要算),别各算一次免得漂
+  const currentCase = cubeCase;
 
   // 「下一个」卡片(预览):← 回看过就是历史里 idx+1 那条,否则是预抽的 peek。
   const nextEntry = (hist.idx >= 0 && hist.idx < hist.list.length - 1)
@@ -1061,6 +1085,15 @@ export default function TrainerRunClient() {
                     </>
                   )}
                 </div>
+              )}
+              {/* 智能魔方:接上就不用照打乱拧了,魔方本身变成当前 case */}
+              {!isMemo && (
+                <SmartCubeRow
+                  enabled={smartCube}
+                  onEnabledChange={setSmartCube}
+                  state={trainerCube}
+                  supported={puzzleHasSmartCube(puzzle)}
+                />
               )}
               {!isMemo && (
                 <div className="trainer-opts-hint">
