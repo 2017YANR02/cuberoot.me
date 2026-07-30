@@ -158,14 +158,19 @@ export default function DeskPetSearch({
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  // Prefetch the donate QRs (small WebP) once the search panel is open, so the
-  // heart button shows them instantly instead of fetching on click.
-  useEffect(() => {
+  // Prefetch the donate QRs on hover, not on open: fetching them at mount put two
+  // WebPs on the wire during the entrance animation for every user who opens
+  // search, and almost none of them head for the donate button. Pointer-enter
+  // still lands well before the click, so the modal opens with the QRs ready.
+  const donatePrefetched = useRef(false);
+  const prefetchDonate = () => {
+    if (donatePrefetched.current) return;
+    donatePrefetched.current = true;
     ['/donate/alipay.webp', '/donate/wechat.webp'].forEach((href) => {
       const img = new Image();
       img.src = href;
     });
-  }, []);
+  };
 
   // Mobile keyboard: position:fixed tracks the layout viewport, which doesn't
   // shrink when the on-screen keyboard opens — so the bottom-anchored box ends
@@ -212,12 +217,14 @@ export default function DeskPetSearch({
         <LandingSearch cards={SEARCH_CARDS} lang={lang} />
       </div>
       <div className="deskpet-toolbar">
-        <HomeLink className="icon-only" onClick={onClose} title={t('主页', 'Home')} aria-label={t('主页', 'Home')}>
+        <HomeLink className="icon-only" prefetch={false} onClick={onClose}
+          title={t('主页', 'Home')} aria-label={t('主页', 'Home')}>
           <Home size={16} />
         </HomeLink>
         <HeaderToggles />
         <WcaAuth onNavigate={onClose} />
         <button type="button" className="icon-only" onClick={() => setDonateOpen(true)}
+          onPointerEnter={prefetchDonate} onFocus={prefetchDonate}
           title={t('赞助', 'Donate')}>
           <Heart size={16} className="heart-icon" />
         </button>
