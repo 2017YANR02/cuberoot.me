@@ -48,7 +48,7 @@
   ],
   "rows": [
     [
-      "8.50",
+      "8.51",
       9,
       "6x6x6 Cube",
       "Single",
@@ -103,21 +103,21 @@
     ],
     [
       "7.05",
-      11,
-      "5x5x5 Cube",
-      "Average",
-      "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
-      "[Western Championship 2018](https://www.worldcubeassociation.org/competitions/WesternChampionship2018)",
-      "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025)"
-    ],
-    [
-      "7.05",
       7,
       "4x4x4 Blindfolded",
       "Average",
       "[Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04)",
       "[WCA World Championship 2019](https://www.worldcubeassociation.org/competitions/WC2019)",
       "Still active"
+    ],
+    [
+      "7.05",
+      11,
+      "5x5x5 Cube",
+      "Average",
+      "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+      "[Western Championship 2018](https://www.worldcubeassociation.org/competitions/WesternChampionship2018)",
+      "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025)"
     ],
     [
       "6.75",
@@ -714,7 +714,7 @@
       "[Oxford Open 2014](https://www.worldcubeassociation.org/competitions/OxfordOpen2014)"
     ],
     [
-      "1.83",
+      "1.84",
       3,
       "5x5x5 Cube",
       "Single",
@@ -858,7 +858,7 @@
       "[Big Apple Spring 2016](https://www.worldcubeassociation.org/competitions/BigAppleSpring2016)"
     ],
     [
-      "1.54",
+      "1.55",
       2,
       "Square-1",
       "Average",
@@ -1191,7 +1191,7 @@
       "[Canadian Championship 2023](https://www.worldcubeassociation.org/competitions/CanadianChampionship2023)"
     ],
     [
-      "1.07",
+      "1.08",
       2,
       "5x5x5 Cube",
       "Average",
@@ -1967,20 +1967,20 @@
     [
       "0.19",
       2,
-      "Rubik's Cube",
-      "Single",
-      "[Yu Nakajima (中島悠)](https://www.worldcubeassociation.org/persons/2007NAKA03)",
-      "[Kashiwa Open 2008](https://www.worldcubeassociation.org/competitions/KashiwaOpen2008)",
-      "[Czech Open 2008](https://www.worldcubeassociation.org/competitions/CzechOpen2008)"
-    ],
-    [
-      "0.18",
-      2,
       "7x7x7 Cube",
       "Single",
       "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
       "[Western Championship 2026](https://www.worldcubeassociation.org/competitions/WesternChampionship2026)",
       "Still active"
+    ],
+    [
+      "0.19",
+      2,
+      "Rubik's Cube",
+      "Single",
+      "[Yu Nakajima (中島悠)](https://www.worldcubeassociation.org/persons/2007NAKA03)",
+      "[Kashiwa Open 2008](https://www.worldcubeassociation.org/competitions/KashiwaOpen2008)",
+      "[Czech Open 2008](https://www.worldcubeassociation.org/competitions/CzechOpen2008)"
     ],
     [
       "0.18",
