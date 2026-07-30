@@ -57,6 +57,7 @@ import { useTimer, type TimerPhase } from '../_shared/useTimer';
 import { formatMs, bestSingle, bestAverageOfN, bestMbldSolve, compareMbld, summarize } from '../_lib/stats';
 import type { EventId, Penalty, Solve } from '../_lib/types';
 import { EVENTS, isBldEvent, toWcaSpelling, fromWcaSpelling } from '../_lib/types';
+import { stageSegmentsFor } from '../_lib/reconstruct/stage_segments';
 import { isNonWcaEvent, prefetchNonWca, nextNonWcaScramble } from '../_lib/scramble/nonwca';
 import {
   loadAll, saveAll, exportJson, importJson, makeSolve,
@@ -715,6 +716,16 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     if (res.inspectionMs > 0) solve.inspectionMs = Math.round(res.inspectionMs);
     // Which cube solved it — only meaningful when the solve has a move stream.
     if (solve.moves && deviceAtStartRef.current) solve.device = deviceAtStartRef.current;
+    // CFOP segmentation, computed now so the case labels and stage splits are
+    // in storage from the moment the solve lands. Everything downstream reads
+    // the stored segments rather than recomputing (case stats, the OLL/PLL
+    // history filters, auto-tags, CSV export), so a solve without them is
+    // invisible to all of them until the user runs a manual re-analysis.
+    // A walk over the stream plus four recognizer lookups: 0.23ms for a real
+    // 64-turn solve, 0.51ms for a 320-turn one, and the timer has already
+    // stopped by the time we get here.
+    const segs = stageSegmentsFor(solve);
+    if (segs) solve.stageSegments = segs;
     setLastPenalty(res.autoPenalty);
 
     // 破纪录(单次/Ao5/Ao12)时桌宠开心一下;不再弹横幅,纪录改在统计面板用 PR 标体现。
