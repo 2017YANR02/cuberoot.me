@@ -23,7 +23,13 @@ import { subscribeBeat, setMetronome, getMetronomeState } from '@/lib/metronome'
 const useIsoLayout = typeof document !== 'undefined' ? useLayoutEffect : useEffect;
 
 // Lazy: the search data layer (persons/comps indexes) only loads on open.
-const DeskPetSearch = dynamic(() => import('@/components/DeskPetSearch'), { ssr: false });
+// The loader is a shared const, not two separate `import(...)` expressions:
+// Turbopack cuts one chunk group per import call site, so a second copy of the
+// expression emits a byte-identical duplicate chunk under a different hash —
+// the idle prewarm below would warm that copy and dynamic() would still fetch
+// its own 168KB at click time (measured).
+const loadDeskPetSearch = () => import('@/components/DeskPetSearch');
+const DeskPetSearch = dynamic(loadDeskPetSearch, { ssr: false });
 // Lazy: three (~1.2MB) + the cuber engine only load when the PLL performer opens.
 const PllPerformerOverlay = dynamic(() => import('@/components/PllPerformerOverlay'), { ssr: false });
 // Lazy: admin-only new-submission dropdown, only loads when an admin opens it.
@@ -346,7 +352,7 @@ export default function DeskPet() {
     // Warm the search overlay chunk so the first tap mounts it without an async
     // gap — on touch that gap drops focus out of the gesture and the mobile
     // keyboard won't open.
-    const warm = () => { import('@/components/DeskPetSearch').catch(() => {}); };
+    const warm = () => { loadDeskPetSearch().catch(() => {}); };
     if (typeof requestIdleCallback === 'function') requestIdleCallback(warm);
     else setTimeout(warm, 1500);
   }, []);
@@ -804,11 +810,15 @@ export default function DeskPet() {
       // reactions below are mouse-only and would push focus past the gesture).
       if (lastTouch) { openSearch(); return; }
       clicks++;
+      // Open on the very first click — waiting out the multi-click window first
+      // cost 280ms on every single open (measured). The reactions still work:
+      // a 2nd/4th click inside the window takes the overlay back down and plays
+      // the pose instead (the pet sits above the backdrop, so it stays clickable).
+      if (clicks === 1) openSearch();
       clearTimeout(clickTimer);
       clickTimer = setTimeout(() => {
-        if (clicks >= 4) setState('reactAnnoyed', true);
-        else if (clicks === 2) setState('reactDouble', true);
-        else if (clicks === 1) openSearch(); // single tap → search, growing from the pet
+        if (clicks >= 4) { setSearchOpen(false); setState('reactAnnoyed', true); }
+        else if (clicks === 2) { setSearchOpen(false); setState('reactDouble', true); }
         clicks = 0;
       }, 280);
     };
