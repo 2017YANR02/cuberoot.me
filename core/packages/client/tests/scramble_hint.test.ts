@@ -59,20 +59,23 @@ describe('scramble hinting', () => {
     expect(h.pending).toEqual([]);
   });
 
-  it('tells you what is LEFT of a half-finished move, not what the scramble said', () => {
-    // Scramble wants U2; one U has been done. The useful hint is "U".
+  it('keeps a half-finished move printed as the scramble wrote it', () => {
+    // Scramble wants U2 and one U has been done. It still reads U2 — the strip
+    // is the scramble, and rewriting a token mid-turn reads as the app editing
+    // it. The user is holding the cube; they can see how far the turn got.
     const h = hintScramble(SCRAMBLE, after('R U'))!;
-    expect(h.current).toBe('U');
+    expect(h.current).toBe('U2');
     expect(h.done).toEqual(['R']);
     expect(h.pending).toEqual(["F'", 'D', 'L2', 'B']);
 
-    // Overshoot the other way: U' applied where U2 was wanted leaves U'.
-    const over = hintScramble(SCRAMBLE, after("R U'"))!;
-    expect(over.current).toBe("U'");
+    // Half done the other way round — same token.
+    expect(hintScramble(SCRAMBLE, after("R U'"))!.current).toBe('U2');
 
-    // A quarter turn overshot into a half turn: back it off.
+    // Overshot a quarter turn into a half turn. The printed move stands: keep
+    // turning that face and the walk advances within three more quarters, so
+    // there is no state this can strand you in.
     const h2 = hintScramble("R U2 F' D L2 B", after('R U2 F2'))!;
-    expect(h2.current).toBe('F');
+    expect(h2.current).toBe("F'");
   });
 
   it('gives up when the cube is off the scramble path', () => {
@@ -190,6 +193,11 @@ describeIf('scramble hinting vs csTimer scrHinter', () => {
     ["R U2 F' D L2 B", "R U2 F' D L2 B"],
     ["D2 L2 F2 U' B2 U R2 U B2 F2 U' L' R B' F R' D2 L' D' F", "D2 L2 F2 U' B2 U R2"],
     ["R R' U F", "R R'"],
+    // Partly-done moves in the middle: upstream leaves the token alone there
+    // (its rewrite is position-0 only), and so do we — exact parity.
+    ["R U2 F' D L2 B", 'R U'],
+    ["R U2 F' D L2 B", "R U'"],
+    ["R U2 F' D L2 B", 'R U2 F2'],
   ];
 
   it('marks the same position in the scramble as csTimer does', async () => {
@@ -219,24 +227,22 @@ describeIf('scramble hinting vs csTimer scrHinter', () => {
   /**
    * DELIBERATE DEVIATION, pinned here.
    *
-   * csTimer rewrites a partly-done move to the remaining amount only when it is
-   * the FIRST move of the scramble (`next == 0 && i == 0`, bluetoothutil.js:62).
-   * Half-finish a move in the middle and it keeps showing the original, which
-   * tells the user to do a turn they have already partly done. We apply the
-   * rewrite wherever the partial move is.
+   * csTimer rewrites a partly-done move to the remaining amount when it is the
+   * FIRST move of the scramble (`next == 0 && i == 0`, bluetoothutil.js:62):
+   * one U of a `U2 R F` shows as `U`. We never rewrite, anywhere — a token that
+   * changes halfway through a turn reads as the scramble changing, and the
+   * turn's position is already visible in the strip and in your hands.
+   *
+   * Everywhere else the two agree, which is what the CASES table above pins.
    */
-  it('improves on csTimer for a partial move in the middle of the scramble', async () => {
+  it('keeps the printed move at position 0, where csTimer rewrites it', async () => {
     const oracle = await makeOracle();
-    const scr = "R U2 F' D L2 B";
-    const theirs = oracle(scr, 'R U');
-    // Upstream still says U2 ...
-    expect(theirs).toContain(': U2 :');
-    // ... we say what is actually left.
-    expect(hintScramble(scr, after('R U'))!.current).toBe('U');
-
-    // At position 0 the two agree, because that is the case upstream covers.
-    const firstMovePartial = hintScramble('U2 R F', applyMoves(solved(3), 3, parseScramble('U')))!;
-    expect(firstMovePartial.current).toBe('U');
+    // Upstream: one U toward a leading U2 becomes ": U :".
     expect(oracle('U2 R F', 'U')).toContain(': U :');
+    // Ours stays the scramble's own token, and the position is the same.
+    const firstMovePartial = hintScramble('U2 R F', applyMoves(solved(3), 3, parseScramble('U')))!;
+    expect(firstMovePartial.current).toBe('U2');
+    expect(firstMovePartial.done).toEqual([]);
+    expect(firstMovePartial.pending).toEqual(['R', 'F']);
   });
 });

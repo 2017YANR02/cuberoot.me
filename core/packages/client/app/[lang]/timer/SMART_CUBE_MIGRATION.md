@@ -42,7 +42,7 @@ csTimer 是这块的**正确基线**：它的智能魔方链路被上万人用�
 | 功能 | cstimer 已有 | timer 已有 | 缺失 | 计划 |
 |---|---|---|---|---|
 | 打乱正确性校验 | ✅ `checkScramble()` | ✅ 「打乱已就绪 / 与打乱不符」 | — | — |
-| **逐步打乱提示**（已完成的变暗、当前步高亮、✓） | ✅ `scrHinter.checkState` + `scrambleToHtml`（`bluetoothutil.js:74/108`） | ✅ `_lib/bluetooth/scramble_hint.ts`（Sprint 6） | — | 已完成；半步未拧完时显示**剩余**转量，比上游更准（上游只在第一步这么做） |
+| **逐步打乱提示**（已完成的变暗、当前步高亮、✓） | ✅ `scrHinter.checkState` + `scrambleToHtml`（`bluetoothutil.js:74/108`） | ✅ `_lib/bluetooth/scramble_hint.ts`（Sprint 6） | — | 已完成；半步未拧完时**照打乱原样显示**（`L2` 拧到一半仍是 `L2`，不改写成剩余转量），上游只在第一步改写，Sprint 19 起我们一处都不改 |
 | 拧错时给一条回到同一打乱的路径 | ✅ `genState`/`genScr` → `scramble_333.genFacelet` | ✅ `_lib/bluetooth/scramble_fixup.ts`（Sprint 7） | — | 已完成；求解期间又转动会从新状态重解（上游求解器同步，没这个问题） |
 | 自由打乱：完成时按实际状态反推打乱记入成绩 | ✅ `markScrambled` 内 `genFacelet` + 替换打乱 | ❌ | 必须精确照拧 | P1 |
 | 静止 N 秒自动预备 | ✅ `giiSD` 2/3/4/5s | ✅ `bluetoothAutoReady: 'still'` | 秒数不可调 | P2：把 2/3/4/5s 做成可选 |

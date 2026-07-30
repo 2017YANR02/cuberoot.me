@@ -330,18 +330,14 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 /* Smart-cube step-by-step hinting: which move the cube is waiting for.
    Rendered only while a connected cube is partway through the scramble — done
    and complete both fall back to plain text, so the strip never looks "off"
-   when there is nothing to hint. Colour only, no box: dimming the finished
-   moves is what makes the current one findable at a glance. */
+   when there is nothing to hint. Colour only — no box, no underline, no weight
+   change: dimming the finished moves is what makes the current one findable,
+   and it also leaves a cue that survives without colour, since the move you owe
+   is always the first one that ISN'T dim. Decorating it on top of that only
+   draws marks over the scramble. */
 .timing-surface-scramble .scramble-move[data-hint='done'] { color: var(--faint-foreground); }
 .timing-surface-scramble .scramble-move[data-hint='pending'] { color: var(--scramble-fg); }
-.timing-surface-scramble .scramble-move[data-hint='current'] {
-  color: var(--accent);
-  /* The one move you owe. Underline as well as colour so it survives a
-     colourblind reader and a low-contrast palette. */
-  text-decoration: underline;
-  text-decoration-thickness: 0.06em;
-  text-underline-offset: 0.18em;
-}
+.timing-surface-scramble .scramble-move[data-hint='current'] { color: var(--accent); }
 
 /* "non-optimal" hint — shown to the right of the scramble when 最优打乱 is on but
    this difficulty bin had no optimal-equivalent, so the original WCA scramble is
