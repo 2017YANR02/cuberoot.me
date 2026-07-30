@@ -95,7 +95,8 @@ import { toWca as toWcaSkewb, type SkewbNotation } from '@cuberoot/shared/skewb-
 import TwistySection from '@/components/TwistySection';
 import CutEditor from './CutEditor';
 import {
-  loadSettings, saveSettings, applySettings, DEFAULT_SETTINGS,
+  loadSettings, saveSettings, applySettings,
+  TRANS_CORE, withTransCore,
   mapOrbitK, mapTurnDragFactor, type SimSettings,
 } from './SettingDrawer';
 import PlayerControls, { stripHandMarks, type SimPuzzle } from './PlayerControls';
@@ -555,6 +556,15 @@ export default function SimPage() {
   }, [settings.faceColors, setupParam, algParam, puzzleParam, skewbNotation]);
   const [imgSpec, setImgSpec] = useImageSpec('img_', { puzzle: imgPuzzle, inherit: imgInherit });
 
+  // trans(X 光)不是单纯换张伴图,而是接管内核外观的预设:选中时内核色 / 内核不透明度
+  // 由 TRANS_CORE 顶掉,3D 与伴图同吃这一份 —— 否则会出现「大魔方实心、小图半透明」。
+  // 持久化的 settings 一个字节不动(saveSettings 存的仍是 settings),切回别的视图立刻恢复;
+  // 外观区那两行同步锁死(PlayerControls 的 transCore),不给出「滑块 100% 而图是 50%」的假读数。
+  const transCore = typeof puzzleParam === 'number' && imgSpec.cubeView === 'trans';
+  const renderSettings = useMemo(() => withTransCore(settings, transCore), [settings, transCore]);
+  const renderSettingsRef = useRef(renderSettings);
+  useEffect(() => { renderSettingsRef.current = renderSettings; }, [renderSettings]);
+
   // Lay out the back-view mini window: size it ~30% of the smaller container
   // dimension (clamped). Single source of truth for the square pixel size
   // consumed by the back renderer's setSize.
@@ -776,7 +786,7 @@ export default function SimPage() {
     renderer.domElement.addEventListener('contextmenu', onContextMenu);
 
     ensureCubeCallback();
-    applySettings(world, settings);
+    applySettings(world, renderSettingsRef.current);
 
     const resize = () => {
       // float-size 先算(从容器全尺寸出),交换态的小框渲染尺寸取它。
@@ -1453,7 +1463,7 @@ export default function SimPage() {
     world.setPuzzle(wk);
     wasCompleteRef.current = true;
     ensureCubeCallback();
-    applySettings(world, settingsRef.current);
+    applySettings(world, renderSettingsRef.current);
     writeUrl();
   }, [ensureCubeCallback, setQuery]);
 
@@ -1541,14 +1551,15 @@ export default function SimPage() {
 
   const prevSettingsRef = useRef<SimSettings | null>(null);
   useEffect(() => {
+    // 存的是用户自己的设置(settings),喂给引擎的是叠了 trans 预设的那份(renderSettings)。
     saveSettings(settings);
     const world = worldRef.current;
-    if (world) applySettings(world, settings, prevSettingsRef.current ?? undefined);
+    if (world) applySettings(world, renderSettings, prevSettingsRef.current ?? undefined);
     // Turning hold-partial OFF clears any frozen partial turn (SQ1/Ivy snap-back +
     // NxN layer release via controller, done inside clearPartialFreeze).
     if (prevSettingsRef.current?.holdPartialTurn && !settings.holdPartialTurn) clearPartialFreeze();
-    prevSettingsRef.current = settings;
-  }, [settings, clearPartialFreeze]);
+    prevSettingsRef.current = renderSettings;
+  }, [settings, renderSettings, clearPartialFreeze]);
 
   // Re-layout the back-view window (size + fullscreen-button offset) and force a
   // repaint when the toggle flips, the puzzle engine changes, or the world is
@@ -1564,14 +1575,14 @@ export default function SimPage() {
     if (typeof window === 'undefined') return;
     const reapply = () => {
       const w = worldRef.current;
-      if (w) applySettings(w, settings);
+      if (w) applySettings(w, renderSettings);
     };
     const mo = new MutationObserver(reapply);
     mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     mq.addEventListener('change', reapply);
     return () => { mo.disconnect(); mq.removeEventListener('change', reapply); };
-  }, [settings]);
+  }, [renderSettings]);
 
   const handleUndo = useCallback(() => {
     const world = worldRef.current;
@@ -1926,9 +1937,9 @@ export default function SimPage() {
                   stickering: stickering ?? undefined,
                   spec: {
                     ...imgSpec,
-                    cubeColor: settings.coreColor,
-                    cubeOpacity: settings.coreOpacity,
-                    stickerOpacity: settings.stickerOpacity,
+                    cubeColor: renderSettings.coreColor,
+                    cubeOpacity: renderSettings.coreOpacity,
+                    stickerOpacity: renderSettings.stickerOpacity,
                   },
                 })
                 : renderCubeNetSvg({
@@ -1955,27 +1966,21 @@ export default function SimPage() {
             // 伴图是引擎镜像 → 外观取的就是 3D 那份设置(内核色 / 内核不透明度 /
             // 贴纸不透明度 / 黑边),不再走 img_* spec 的壳体色三件套:同一个概念一份值,
             // 左边 3D 什么样右边就什么样(退役对照表 §2b:inset 模型衬底=壳体,贴纸=sticker)。
-            // trans(X 光)视图:visualcube view=trans 预设 —— 银壳 50% 透明,画背面小面,
-            // 透过前壳看到背贴纸。cube 专属;内核色/不透明度还停在默认才套预设,用户显式
-            // 调过则尊重其值。
-            const isTrans = typeof puzzleParam === 'number' && imgSpec.cubeView === 'trans';
-            const transBody = isTrans && settings.coreColor === DEFAULT_SETTINGS.coreColor
-              ? '#BFBFBF' : settings.coreColor;
-            const transOpacity = isTrans && settings.coreOpacity === 100 ? 50 : settings.coreOpacity;
+            // trans(X 光)视图的银壳 50% 已经由 renderSettings 顶在设置里(withTransCore),
+            // 3D 与这里同吃 —— 所以此处不再有第二处 trans 判断。
             setEngineSvg(exportSimSvgSchematic({
               world,
               // 黑边 = 网格缝宽占小面的百分比(inset 模型):比例量纲天然与视口尺寸、
               // 阶数无关 —— 交换态小框视口、40 阶小贴纸下观感都恒定,也正因如此才能
               // 和 3D 贴纸几何共用同一个数(见 define.STICKER_GAP_DEFAULT)。
-              inset: settings.stickerGap / 100,
-              bodyColor: transBody,
-              bodyOpacity: transOpacity,
-              stickerOpacity: settings.stickerOpacity,
+              inset: renderSettings.stickerGap / 100,
+              bodyColor: renderSettings.coreColor,
+              bodyOpacity: renderSettings.coreOpacity,
+              stickerOpacity: renderSettings.stickerOpacity,
               // 背面 = 只要壳透明就画,判据同 visualcube drawing.ts(`cubeOpacity<100`
               // 即渲 hiddenFaces),不是"仅 trans 视图"。normal 视图把壳不透明度调低
-              // (X 光)时 VC 会透出 B/L/D 背贴纸,引擎也必须跟。transOpacity 是引擎侧
-              // 等价 VC cubeOpacity 的量(trans 预设注入 50;其余取用户值)。
-              showHidden: transOpacity < 100,
+              // (X 光)时 VC 会透出 B/L/D 背贴纸,引擎也必须跟。
+              showHidden: renderSettings.coreOpacity < 100,
               mask: maskKeys?.size ? { keys: maskKeys, color: MASK_COLOR } : undefined,
               // 箭头标注(退役对照表 §2b):DSL `U0U2-red` → 引擎贴纸世界中心线段。
               // NxN 专属(resolveEngineArrows 自查 schematicInstancedPoly + N≥2,非
@@ -2028,8 +2033,10 @@ export default function SimPage() {
     return () => { disposed = true; cancelAnimationFrame(raf); };
   }, [imageOpen, srCompanionForced, imageStudioEngineOnly,
       imgSpec.stickerMask, imgPuzzle.puzzleType,
-      // 伴图外观跟 3D 走同一份设置(见上面 exportSimSvgSchematic 的注释)
-      settings.coreColor, settings.coreOpacity, settings.stickerOpacity, settings.stickerGap,
+      // 伴图外观跟 3D 走同一份设置(见上面 exportSimSvgSchematic 的注释);trans 预设
+      // 已经叠在 renderSettings 里,所以这里跟着它走而不是原始 settings。
+      renderSettings.coreColor, renderSettings.coreOpacity,
+      renderSettings.stickerOpacity, renderSettings.stickerGap,
       // plan companion 透视投影随这些旋钮变(specToCubeOptions 单一源):dist(透视)、
       // 旋转、背景。net/BSP 不用,但一并列入无害(只多一次同结果重算)。
       imgSpec.dist, imgSpec.rotateAxis1, imgSpec.rotateAxis2,
@@ -2236,6 +2243,7 @@ export default function SimPage() {
             onPuzzleChange={handlePuzzle}
             settings={settings}
             onSettingsChange={setSettings}
+            transCore={transCore ? TRANS_CORE : null}
             keymap={keymap}
             onKeymapChange={setKeymap}
             onResetKeymap={() => setKeymap(resetKeymapStorage())}
