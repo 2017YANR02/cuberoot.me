@@ -722,14 +722,26 @@ input[type='search']:has(~ .clear-btn)::-webkit-search-cancel-button {
   display: none;
 }
 
-/* 屏幕键盘(components/OnScreenKeyboard.tsx)—— Vite index.css 漏移植,补回。 */
+/* 屏幕键盘(components/OnScreenKeyboard.tsx)—— Vite index.css 漏移植,补回。
+ * 自适应列数:PLL 21 个按钮在宽屏排 7 列,OLL 57 个排满,窄屏自己降列不溢出。 */
 .on-screen-keyboard {
   margin: 0.75rem 0;
   padding: 0 1rem;
+  /* 不给宽度的话,它在 flex 列里按 max-content 撑开,窄屏整片键盘顶出视口。 */
+  width: 100%;
+  min-width: 0;
   max-width: 500px;
+  box-sizing: border-box;
+  display: grid;
+  /* min() 那层是必需的:光写 minmax(3.6rem,1fr),窄到一列都放不下时轨道不肯再缩,
+   * 整片键盘就顶出视口。 */
+  grid-template-columns: repeat(auto-fit, minmax(min(3.6rem, 100%), 1fr));
+  gap: 4px;
 }
 .kbd-btn {
-  padding: 0.5rem 0.75rem;
+  /* 名字 + 角标必须同一行:`DS-` 折成两行,一格就比邻居高一截,整片按钮参差。 */
+  white-space: nowrap;
+  padding: 0.5rem 0.4rem;
   border-radius: 6px;
   border: 1px solid var(--accent);
   background: transparent;
@@ -738,6 +750,25 @@ input[type='search']:has(~ .clear-btn)::-webkit-search-cancel-button {
   font-size: 0.95rem;
   font-weight: 600;
   transition: all 0.15s;
+}
+@media (max-width: 480px) {
+  /* 57 个按钮在手机上一行只排 4 个就是 15 行,收窄轨道换到 5 行以上。 */
+  .on-screen-keyboard {
+    padding: 0 0.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(3.1rem, 100%), 1fr));
+  }
+  .kbd-btn {
+    padding: 0.45rem 0.2rem;
+    font-size: 0.85rem;
+  }
+}
+/* OLL 按钮上写社区名(DH),编号缩在右上角 —— 键入走编号,两边得对得上。 */
+.kbd-btn-sub {
+  margin-left: 0.25em;
+  font-size: 0.7em;
+  font-weight: 500;
+  opacity: 0.65;
+  vertical-align: super;
 }
 .kbd-btn:hover {
   background: color-mix(in srgb, var(--accent) 15%, transparent);

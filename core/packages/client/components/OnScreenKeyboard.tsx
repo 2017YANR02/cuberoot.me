@@ -1,13 +1,12 @@
 'use client';
 
 // Ported from packages/client-vite/src/components/OnScreenKeyboard.tsx
+//
+// 按钮和提交都由调用方给(见 lib/recognize-sets),所以同一份组件既服 PLL 的 21 个名字
+// 也服 OLL 的 57 个编号。原来那个「只按首字母答题」的分支从没有人传过 fullNameMode={false},
+// 已删。
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useSessionStore } from '@/lib/session-store';
-import { PLL_LETTERS } from '@/lib/pll-helpers';
-
-const FULL_NAME_ROW1 = ['Aa', 'Ab', 'E', 'F', 'Ga', 'Gb', 'Gc'];
-const FULL_NAME_ROW2 = ['Gd', 'H', 'Ja', 'Jb', 'Na', 'Nb', 'Ra'];
-const FULL_NAME_ROW3 = ['Rb', 'T', 'Ua', 'Ub', 'V', 'Y', 'Z'];
+import type { RecognizeButton } from '@/lib/recognize-sets';
 
 interface ButtonFeedback {
   key: string | null;
@@ -15,14 +14,14 @@ interface ButtonFeedback {
 }
 
 interface OnScreenKeyboardProps {
-  fullNameMode: boolean;
+  buttons: RecognizeButton[];
+  /** 返回判定结果,用来给按钮闪一下绿/红;返回 null 表示这次点击没被受理。 */
+  onAnswer: (value: string) => 'correct' | 'wrong' | null;
 }
 
-export default function OnScreenKeyboard({ fullNameMode }: OnScreenKeyboardProps) {
+export default function OnScreenKeyboard({ buttons, onAnswer }: OnScreenKeyboardProps) {
   const [feedback, setFeedback] = useState<ButtonFeedback>({ key: null, type: null });
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const submitAnswer = useSessionStore((s) => s.submitAnswer);
-  const gameState = useSessionStore((s) => s.gameState);
 
   useEffect(() => {
     return () => {
@@ -31,20 +30,18 @@ export default function OnScreenKeyboard({ fullNameMode }: OnScreenKeyboardProps
   }, []);
 
   const handleClick = useCallback(
-    (answer: string) => {
-      const result = submitAnswer(answer, fullNameMode);
+    (value: string) => {
+      const result = onAnswer(value);
       if (result) {
-        setFeedback({ key: answer, type: result });
+        setFeedback({ key: value, type: result });
         if (timerRef.current) clearTimeout(timerRef.current);
         timerRef.current = setTimeout(() => {
           setFeedback({ key: null, type: null });
         }, 300);
       }
     },
-    [submitAnswer, fullNameMode]
+    [onAnswer]
   );
-
-  if (gameState !== 'playing') return null;
 
   const getButtonStyle = (key: string): React.CSSProperties => {
     if (feedback.key === key && feedback.type === 'correct') {
@@ -56,45 +53,19 @@ export default function OnScreenKeyboard({ fullNameMode }: OnScreenKeyboardProps
     return {};
   };
 
-  if (fullNameMode) {
-    const renderRow = (names: string[]) => (
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '4px', marginBottom: '4px' }}>
-        {names.map((name) => (
-          <button
-            key={name}
-            className="kbd-btn"
-            style={{ flex: '1 1 0', maxWidth: '4rem', ...getButtonStyle(name) }}
-            onClick={() => handleClick(name)}
-          >
-            {name}
-          </button>
-        ))}
-      </div>
-    );
-
-    return (
-      <div className="on-screen-keyboard">
-        {renderRow(FULL_NAME_ROW1)}
-        {renderRow(FULL_NAME_ROW2)}
-        {renderRow(FULL_NAME_ROW3)}
-      </div>
-    );
-  }
-
   return (
     <div className="on-screen-keyboard">
-      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '6px' }}>
-        {PLL_LETTERS.map((letter) => (
-          <button
-            key={letter}
-            className="kbd-btn"
-            style={{ minWidth: '3rem', ...getButtonStyle(letter) }}
-            onClick={() => handleClick(letter)}
-          >
-            {letter}
-          </button>
-        ))}
-      </div>
+      {buttons.map(({ value, label, sub }) => (
+        <button
+          key={value}
+          className="kbd-btn"
+          style={getButtonStyle(value)}
+          onClick={() => handleClick(value)}
+        >
+          {label}
+          {sub && <span className="kbd-btn-sub">{sub}</span>}
+        </button>
+      ))}
     </div>
   );
 }
