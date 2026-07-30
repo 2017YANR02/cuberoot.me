@@ -15,7 +15,7 @@
  * The engine itself (_shared/useTimer + _lib/scramble + _lib/storage) is untouched.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import dynamic from 'next/dynamic';
 import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsBoolean, parseAsString, parseAsStringEnum } from 'nuqs';
@@ -69,6 +69,7 @@ import { setMetronomeHold } from '@/lib/metronome';
 import { useBluetoothCube } from '../_lib/bluetooth';
 import { mirrorForBrand, sensorBasisForBrand, type Quat } from '../_lib/bluetooth/orientation';
 import { applyScramble, facesEqual, type CubeFaces } from '../_lib/cube/state';
+import { hintScramble, type ScrambleHint } from '../_lib/bluetooth/scramble_hint';
 import { installFakeCube } from '../_lib/bluetooth/fake_cube';
 import { nxnSizeForEvent } from '../_lib/cube/colors';
 import { DIGIT_OPENS_SOLVE, bindingForEvent, resolveKeymap } from '../_lib/keymap';
@@ -898,11 +899,20 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   // null = not applicable / nothing to say yet. The tracker only means anything
   // once the cube has actually been turned, so we stay quiet until then.
   const [scrambleMatch, setScrambleMatch] = useState<boolean | null>(null);
+  // Where in the scramble the cube is, for step-by-step hinting. null = we have
+  // nothing to say: no cube, no comparable scramble, or the cube is off the
+  // scramble's path entirely (in which case the binary verdict is all we have).
+  const [scrambleHint, setScrambleHint] = useState<ScrambleHint | null>(null);
   const scrambleTargetRef = useRef<CubeFaces | null>(null);
+  const scrambleTextRef = useRef<string>('');
   useEffect(() => {
     scrambleTargetRef.current = scrambleTarget;
+    // The hint is computed against the same string the strip renders, so keep
+    // them in lockstep: a stale hint would dim the wrong moves.
+    scrambleTextRef.current = scrambleTarget ? scramble : '';
     setScrambleMatch(null);
-  }, [scrambleTarget]);
+    setScrambleHint(null);
+  }, [scrambleTarget, scramble]);
   useEffect(() => {
     const subs = bluetoothSubscribersRef.current;
     const verify = () => {
@@ -915,10 +925,17 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       const faces = bluetoothCubeRef.current?.getFaces();
       if (!faces) return;
       setScrambleMatch(facesEqual(faces, target));
+      const text = scrambleTextRef.current;
+      setScrambleHint(text ? hintScramble(text, faces) : null);
     };
     subs.add(verify);
     return () => { subs.delete(verify); };
   }, []);
+  // Mid-solve the strip goes back to plain text: the cube has left the
+  // scrambled state on purpose, so "you still owe R" would be nonsense.
+  useEffect(() => {
+    if (timer.phase === 'running') setScrambleHint(null);
+  }, [timer.phase]);
 
   // ── Round simulation ────────────────────────────────────────────
   // The round is a VIEW over the solve history, not a second store: it is the
@@ -1874,13 +1891,39 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                         // 复制成功的绿勾必须绝对不换行(即使不另起、也不能把最后一步挤下去)。
                         // 做法:把最后一步单独包进 .scramble-copied-tail(relative),绿勾在其中
                         // 绝对定位(left:100%),完全脱离文本流 → 既不新增断行点、也不占宽度,永不换行。
+                        const copiedCheck = scrambleCopied && (
+                          <Check className="scramble-copied-check" aria-label={tr({ zh: '已复制', en: 'Copied' })} />
+                        );
+                        // 智能魔方逐步提示:已拧的变暗、当前这步高亮、剩下的正常。
+                        // 打乱拧完(complete)就整条恢复正常 —— 此时右侧「打乱已就绪」已经说明一切,
+                        // 再留一堆暗字反而像出错。拧歪(hint === null)也回到纯文本。
+                        if (scrambleHint && !scrambleHint.complete) {
+                          const h = scrambleHint;
+                          const moves = [
+                            ...h.done.map((m) => ({ m, state: 'done' })),
+                            ...(h.current === null ? [] : [{ m: h.current, state: 'current' }]),
+                            ...h.pending.map((m) => ({ m, state: 'pending' })),
+                          ];
+                          return moves.map(({ m, state }, idx) => {
+                            const isLast = idx === moves.length - 1;
+                            const span = (
+                              <span className="scramble-move" data-hint={state}>{m}</span>
+                            );
+                            return (
+                              <Fragment key={idx}>
+                                {idx > 0 ? ' ' : null}
+                                {isLast
+                                  ? <span className="scramble-copied-tail">{span}{copiedCheck}</span>
+                                  : span}
+                              </Fragment>
+                            );
+                          });
+                        }
                         const i = displayScramble.lastIndexOf(' ');
                         const head = i >= 0 ? displayScramble.slice(0, i + 1) : '';
                         const tail = i >= 0 ? displayScramble.slice(i + 1) : displayScramble;
                         return (
-                          <>{head}<span className="scramble-copied-tail">{tail}{scrambleCopied && (
-                            <Check className="scramble-copied-check" aria-label={tr({ zh: '已复制', en: 'Copied' })} />
-                          )}</span></>
+                          <>{head}<span className="scramble-copied-tail">{tail}{copiedCheck}</span></>
                         );
                       })()}</span>{wcaNonOptimal && (
                         <span
@@ -1892,7 +1935,12 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                     : settings.scrambleSource === 'manual' && manualQueue.length === 0
                       ? <span className="scramble-empty">{tr({ zh: '在上方「打乱来源」粘贴打乱,每行一条', en: 'Paste scrambles above — one per line' })}</span>
                       : <span className="scramble-empty">—</span>}</span>
-              {scrambleMatch !== null && (
+              {/* While the hint is live the strip itself is the status — being
+                  "不符" halfway through applying a scramble is progress, not an
+                  error, and a red pill there reads as one. The pill comes back
+                  for the two states the hint cannot express: done, and off the
+                  scramble's path entirely. */}
+              {scrambleMatch !== null && !(scrambleHint && !scrambleHint.complete) && (
                 <span className="scramble-verify" data-ok={scrambleMatch ? 'true' : 'false'}>
                   {scrambleMatch
                     ? tr({ zh: '打乱已就绪', en: 'Scrambled' })
