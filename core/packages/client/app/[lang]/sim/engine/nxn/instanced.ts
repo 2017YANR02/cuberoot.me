@@ -21,12 +21,19 @@ import CubeGroup from "./group";
 import { FACE, COLORS, STICKER_GAP_DEFAULT } from "../define";
 import { rawMaterial, rawMaterialBasic, buildRawAttributes, attachRawAttributes, setRawCoreBorder, setRawStickerScale, type RawAttrs } from "./rawCore";
 import { mirrorTables } from "../mirror/mirrorGeometry";
-import { FM_DIM, FM_IGNORED, FM_ORIENTED, FM_ORIENTED2, FM_OUTLINE, type StickeringMaskFn } from "./stickering";
+import {
+  FM_DIM, FM_DIM_WHITE, FM_FIXED_COLOR, FM_OUTLINE, type StickeringMaskFn,
+} from "./stickering";
 import { injectStickerOutline, setStickerOutlineScale, type OutlineUniform } from "./stickerOutline";
 import { engineHomeSid } from "./netIndex";
 import { setPanelFanGap } from "./panelFan";
 
 const HALF = Cubelet.SIZE / 2;
+/** FM_FIXED_COLOR 的预解析副本 —— 色值单一源在 stickering.ts,这里只是把它变成
+ *  THREE.Color,免 resolveStickerColor 每次重解析字符串。 */
+const FM_FIXED_3D = new Map<number, THREE.Color>(
+  Object.entries(FM_FIXED_COLOR).map(([code, hex]) => [Number(code), new THREE.Color(hex)]),
+);
 const HIDE_MAT = new THREE.Matrix4().makeScale(0, 0, 0);
 const ONE_SCALE = new THREE.Vector3(1, 1, 1);
 // 内填充 box: 比 cubelet frame 小 1 单位防 z-fight (frame outer face 在 ±SIZE/2)。
@@ -129,7 +136,7 @@ export default class InstancedRenderer extends THREE.Group {
   /** FM_DIM 下纯白压到哪。白色减半 = 灰,会跟 FM_IGNORED 那档灰撞,所以 /sim 压到
    *  `#dddddd`(cubing.js PG3D 同款)。代价是它跟满色白几乎分不出 —— 板子上同时有满色白
    *  贴纸时(/predict)调成更暗的一档,让「压暗的白」一眼是暗的。 */
-  dimWhite = "#dddddd";
+  dimWhite = FM_DIM_WHITE;
   /** 描边(FM_OUTLINE)的 per-instance 开关,static / moving 共享一份(同槽序)。 */
   private outlineFlags!: THREE.InstancedBufferAttribute;
   private outlineColor!: OutlineUniform;
@@ -1119,9 +1126,9 @@ export default class InstancedRenderer extends THREE.Group {
    * ignored 灰 / oriented 青 / oriented2 黄用 cubing.js 的固定常量。 */
   private resolveStickerColor(slotIdx: number, faceLabel: string | undefined): void {
     const code = this.stickeringCodes ? this.stickeringCodes[slotIdx] : 0;
-    if (code === FM_IGNORED) { this.tmpColor.set(0x666666); return; }
-    if (code === FM_ORIENTED) { this.tmpColor.set(0x44ddcc); return; }
-    if (code === FM_ORIENTED2) { this.tmpColor.set(0xfffdaa); return; }
+    // 预解析过(见 FM_FIXED_3D):这里每帧跑 376k 次,不能再走字符串解析。
+    const fixed = FM_FIXED_3D.get(code);
+    if (fixed) { this.tmpColor.copy(fixed); return; }
     this.tmpColor.set(COLORS[faceLabel ?? "Gray"] ?? COLORS.Gray);
     if (code === FM_DIM) {
       if (this.tmpColor.getHex() === 0xffffff) {

@@ -18,6 +18,34 @@ export const FM_OUTLINE = 5 as const;
 
 export type StickeringMaskFn = (initial: number, face: number) => FaceletMask;
 
+/** 与面色无关的那几档遮罩色(常量取自 cubing.js)。3D 渲染器
+ *  (InstancedRenderer.resolveStickerColor)和平面伴图(net / plan 导出器)共用这一份 ——
+ *  否则同一个阶段在魔方上和小图上会是两种灰。 */
+export const FM_FIXED_COLOR: Partial<Record<FaceletMask, string>> = {
+  [FM_IGNORED]: '#666666',
+  [FM_ORIENTED]: '#44ddcc',
+  [FM_ORIENTED2]: '#fffdaa',
+};
+
+/** FM_DIM 下纯白压到哪:白色减半就是灰,会跟 FM_IGNORED 那档灰撞。 */
+export const FM_DIM_WHITE = '#dddddd';
+
+/** FM_DIM = 原色在 **sRGB 分量上**减半(twizzle 的暗度;线性域减半只暗 ~27%,看不出来)。
+ *  3D 侧在 THREE.Color 上做同一件事,这里是平面导出的字符串版。认不出的色值原样退回。 */
+export function dimFaceletColor(hex: string): string {
+  const m = /^#([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return hex;
+  const n = parseInt(m[1], 16);
+  if (n === 0xffffff) return FM_DIM_WHITE;
+  const half = (shift: number) => (((n >> shift) & 0xff) >> 1).toString(16).padStart(2, '0');
+  return `#${half(16)}${half(8)}${half(0)}`;
+}
+
+/** 一格的实际显示色:遮罩码 + 该格本来的颜色 → 画出来的颜色。 */
+export function faceletDisplayColor(code: FaceletMask, base: string): string {
+  return FM_FIXED_COLOR[code] ?? (code === FM_DIM ? dimFaceletColor(base) : base);
+}
+
 /** piece 级语义(cubing.js PieceStickering),展开成 [主贴纸, 次贴纸] 两个 facelet 码。
  *  主贴纸 = kpuzzle facelets[0]:有 U/D 贴纸取 U/D,否则取 F/B(E 层棱),再否则 L/R。 */
 type PieceStickering =
