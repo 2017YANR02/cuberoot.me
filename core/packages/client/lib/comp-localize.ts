@@ -17,6 +17,15 @@ export function stripWcaPrefix(s: string): string {
   return out.trim();
 }
 
+// 名字末尾的年号跟旁边写着的比赛日期是同一个信息 —— 显示层剥掉(数据不动)。
+// 只在年号与比赛年份一致时剥,免得吃掉名字里本身有意义的四位数。
+export function stripCompYear(name: string, isoDate?: string | null): string {
+  const year = isoDate?.slice(0, 4);
+  if (!name || !year || !/^\d{4}$/.test(year)) return name;
+  const out = name.replace(new RegExp(`\\s*${year}\\s*$`), '').trim();
+  return out || name;
+}
+
 export interface LocalizeCompOpts {
   upcomingNameZhById?: Map<string, string> | null;
   explicitNameZh?: string | null;

@@ -17,7 +17,7 @@ import { eventDisplayName, isWcaEvent } from '@/lib/wca-events';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { countryToIso2, loadFlagData, compFlagIso2 } from '@/lib/country-flags';
 import { countryName } from '@/lib/country-name';
-import { localizeCompName, resolveCompName } from '@/lib/comp-localize';
+import { localizeCompName, resolveCompName, stripCompYear } from '@/lib/comp-localize';
 import { nameToCubingSlug, wcaIdToCubingSlug } from '@cuberoot/shared/cubing-slug';
 import { fetchRankForWca, getCachedRankForWca, prefetchRanksForWca, type RankResult } from '@/lib/rank-client';
 import { adjustRankWithLiveComp, applyDayRankDelta, type LiveCompEntry } from '@/lib/comp-live-rank';
@@ -3643,11 +3643,15 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
         <div className="comp-round-modal-body">
           <div className="comp-round-modal-subtitle">
             <span className="comp-round-modal-subtitle-line">
-              {compStartDate && <span>{compStartDate}</span>}
-              {compIso2 && <Flag iso2={compIso2} className="comp-flag" />}
-              <span>{compName}</span>
+              {/* 旗内联在比赛名文本流里(不是 flex 兄弟):名字折行时 flex 的居中会把旗顶到两行中间 */}
+              <span>
+                {compIso2 && <Flag iso2={compIso2} className="comp-flag comp-round-modal-subtitle-flag" />}
+                {stripCompYear(compName, compStartDate)}
+              </span>
             </span>
             <span className="comp-round-modal-subtitle-line">
+              {/* 日期跟轮次同行:比赛名常常长到把「日期 + 旗 + 名」那行挤成折行(2026- / 07-02) */}
+              {compStartDate && <span className="comp-round-modal-subtitle-date">{compStartDate}</span>}
               <EventIcon event={ev.i} className="comp-round-modal-subtitle-icon" />
               <span>{eventDisplayName(ev.i, isZh)}{tr({ zh: '', en: ' ' })}{roundDisplayName(rd.name, isZh)}</span>
             </span>
