@@ -221,7 +221,7 @@ for (const v of [V3, V4]) {
       expect(rig.ourStamps).toEqual(stamps);
     });
 
-    it('leaves history-recovered moves unstamped rather than inventing a time', async () => {
+    it('places a history-recovered move inside the interval it must have happened in', async () => {
       const rig = await makeRig(v);
       const st = realState(rig.sb, []);
       rig.feed(v.faceletFrame(0, st.ca, st.ea));
@@ -236,11 +236,18 @@ for (const v of [V3, V4]) {
       rig.feed(v.historyFrame(3, [{ axis: 3, pow: 0 }, { axis: 5, pow: 0 }]));
       expect(rig.ourMoves).toEqual(['U', 'R', 'F']);
 
-      // The recovered move carries no clock — the history frame reports the
-      // turn but not when it happened, and guessing would put a fabricated
-      // interval into every metric computed from it.
       expect(rig.ourStamps[0]).toBe(500_000);
-      expect(rig.ourStamps[1]).toBeUndefined();
+      // BASELINE CHANGED, deliberately. This used to assert `undefined`, on the
+      // grounds that a history frame reports the turn and not when it happened,
+      // so anything we filled in would be invented. The premise was wrong:
+      // blank does not stay blank downstream, `MoveClock` substitutes ARRIVAL
+      // time — the instant the reply landed, which is after this turn AND after
+      // the later turn that triggered the recovery. That fabricates a pause and
+      // then collapses the next real gap to zero. The turn provably happened
+      // between 500_000 and 500_120, so it is placed there (midpoint for a run
+      // of one), which is csTimer's answer too (`tsLinearFit`, by regression).
+      // See tests/gan_recovered_move_times.test.ts for the rule itself.
+      expect(rig.ourStamps[1]).toBe(500_060);
       // The move that was merely HELD in the buffer keeps the timestamp its
       // own live frame carried; it was never missing, just early.
       expect(rig.ourStamps[2]).toBe(500_120);

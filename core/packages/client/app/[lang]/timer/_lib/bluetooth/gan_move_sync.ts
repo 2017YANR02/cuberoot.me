@@ -41,9 +41,9 @@ export interface BufferedMove {
   mv: string;
   /**
    * The cube's own clock reading for this move (ms), when the frame carried
-   * one. Absent for moves recovered from history — those frames report the
-   * turn but not when it happened, so the host falls back to arrival time
-   * rather than inventing a number. See `move_clock.ts`.
+   * one. History frames report the turn but not when it happened, so a
+   * recovered move arrives here without one and gets an interpolated reading on
+   * the way out — see `fillRecoveredTimes`.
    */
   ts?: number;
 }
@@ -74,6 +74,11 @@ export class GanMoveSync {
   private prevMoveCnt = -1;
   /** Serial from the most recent move / facelets event, seeded or not. */
   private lastSeenCnt = -1;
+  /**
+   * Device-clock reading of the last move handed to the host, when it had one.
+   * The left-hand end of the interval a run of recovered moves is spread over.
+   */
+  private lastEmittedTs: number | null = null;
   private readonly buffer: BufferedMove[] = [];
   private readonly hooks: GanMoveSyncHooks;
 
@@ -104,6 +109,7 @@ export class GanMoveSync {
   seed(moveCnt: number): void {
     this.prevMoveCnt = moveCnt;
     this.lastSeenCnt = moveCnt;
+    this.lastEmittedTs = null;
     this.buffer.length = 0;
   }
 
@@ -116,6 +122,7 @@ export class GanMoveSync {
   reset(): void {
     this.prevMoveCnt = -1;
     this.lastSeenCnt = -1;
+    this.lastEmittedTs = null;
     this.buffer.length = 0;
   }
 
@@ -180,7 +187,53 @@ export class GanMoveSync {
     if (this.buffer.length > MAX_PENDING) {
       this.hooks.onWedged?.();
     }
+    this.fillRecoveredTimes(out);
     return out;
+  }
+
+  /**
+   * Give history-recovered moves a device-clock reading interpolated between
+   * their timed neighbours.
+   *
+   * A history frame reports which turn happened, not when. The instinct is to
+   * leave that blank and call it honest, and this module used to. But blank is
+   * not "no number" downstream: `MoveClock` falls back to ARRIVAL time, which is
+   * the moment the history reply landed — after the turn, and after the live
+   * move that triggered the recovery. One dropped notification then invents a
+   * pause where the recovery happened and collapses the following real gap to
+   * zero, corrupting exactly the intervals every per-move metric is built from
+   * (TPS, pauses, phase splits).
+   *
+   * A recovered move did happen between the last move we timed and the next one
+   * we can time. Spreading the run evenly across that interval keeps the
+   * ordering, keeps the total, and bounds the error by the interval's own
+   * length. It is a guess about the SPACING only, and it is what csTimer does
+   * with `tsLinearFit` (`bluetoothutil.js:407-475`) — by regression rather than
+   * by even spacing, which for the two or three moves a real dropout costs is
+   * the same answer.
+   *
+   * Without both ends the moves stay blank: the arrival-time fallback is wrong
+   * but at least it is not an interval we made up out of nothing.
+   */
+  private fillRecoveredTimes(out: TimedMove[]): void {
+    let prev = this.lastEmittedTs;
+    let i = 0;
+    while (i < out.length) {
+      if (out[i].ts !== undefined) { prev = out[i].ts!; i++; continue; }
+      let j = i;
+      while (j < out.length && out[j].ts === undefined) j++;
+      const next = j < out.length ? out[j].ts : undefined;
+      // `next > prev` also rejects a wrapped or restarted device counter, where
+      // the interval is not an interval at all.
+      if (prev !== null && next !== undefined && next > prev) {
+        const step = (next - prev) / (j - i + 1);
+        for (let k = i; k < j; k++) out[k].ts = Math.round(prev + step * (k - i + 1));
+      }
+      i = j;
+    }
+    for (let k = out.length - 1; k >= 0; k--) {
+      if (out[k].ts !== undefined) { this.lastEmittedTs = out[k].ts!; break; }
+    }
   }
 
   /**

@@ -12,7 +12,7 @@ import { renderSpecSvg } from '@/lib/puzzle-image/render';
 import { DEFAULTS, FACE_DEFAULTS } from '@/lib/puzzle-image/defaults';
 import { CUBE_FILL } from '@/lib/cube-colors';
 import { exportSimPlanSvg } from '@/app/[lang]/sim/sim_plan_export';
-import { exportSimNetSvg } from '@/app/[lang]/sim/sim_net_export';
+import { renderCubeNetSvg } from '@/lib/cube-net-svg';
 import { WCA_COLORS } from '@cuberoot/shared/cube-unfolded-svg';
 
 /** 复原态 serialize:URFDLB 六块,每块 N² 个该面字母。 */
@@ -56,7 +56,7 @@ describe('studio ↔ sim companion parity', () => {
   it('wca:studio 默认 spec ≡ 引擎伴图导出(N=2/3/4 复原态,逐字节)', () => {
     for (const N of [2, 3, 4]) {
       const studio = renderSpecSvg({ ...DEFAULTS, cubeView: 'wca', cubeSize: N })!;
-      const sim = exportSimNetSvg({ serialized: solved(N), order: N, faceColors: CUBE_FILL });
+      const sim = renderCubeNetSvg({ serialized: solved(N), order: N, faceColors: CUBE_FILL });
       expect(sim).toBe(studio);
     }
   });

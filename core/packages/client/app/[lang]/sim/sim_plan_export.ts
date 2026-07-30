@@ -16,7 +16,7 @@
 import { renderCubeSVG, type ICubeOptions } from '@cuberoot/visualcube';
 import { specToCubeOptions } from '@/lib/puzzle-image/render';
 import type { ImageSpec } from '@/lib/puzzle-image/types';
-import type { NetFaceLetter } from './sim_net_export';
+import type { NetFaceLetter } from '@/lib/cube-net-svg';
 
 export interface SimPlanExportOptions {
   /** 引擎 Cube.serialize():6N² 个面字母,块序 U R F D L B,块内 row-major。 */
