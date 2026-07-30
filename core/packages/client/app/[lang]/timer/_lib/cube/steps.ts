@@ -26,10 +26,11 @@
  * about that face. Roux blocks are not (a left block is not a right block), so
  * those get all 24.
  *
- * The masks and the axis counts are upstream's, verbatim. The rotation tables
- * are derived here from sticker geometry rather than copied, and
- * `tests/cube_steps.test.ts` checks both against csTimer's real `cubeutil`
- * running in a VM.
+ * The masks and the axis counts are upstream's, verbatim — with one addition of
+ * our own, `ocll`, marked at its definition. The rotation tables are derived
+ * here from sticker geometry rather than copied, and `tests/cube_steps.test.ts`
+ * checks both against csTimer's real `cubeutil` running in a VM (everything
+ * except `ocll`, which upstream cannot answer).
  */
 
 /* ────────────────────────────────────────────────────────────────────── *
@@ -51,7 +52,7 @@
 export type CubeStep =
   | 'cross'
   | 'f2l'
-  | 'oll' | 'eoll' | 'cpll'
+  | 'oll' | 'ocll' | 'eoll' | 'cpll'
   | 'fb' | 'sb' | 'cmll'
   | 'solved';
 
@@ -68,6 +69,11 @@ const STEPS: Record<CubeStep, StepSpec> = {
   cross: { mask: '----U--------R--R-----F--F--D-DDD-D-----L--L-----B--B-', axes: 6 },
   f2l:   { mask: '----U-------RRRRRR---FFFFFFDDDDDDDDD---LLLLLL---BBBBBB', axes: 6 },
   oll:   { mask: 'UUUUUUUUU---RRRRRR---FFFFFFDDDDDDDDD---LLLLLL---BBBBBB', axes: 6 },
+  // Ours, not upstream's: F2L plus last-layer CORNERS oriented, edges free.
+  // The exact complement of `eoll` on the U face, and the finish line for the
+  // last-slot sets that orient corners only (CLS) — csTimer has no mask for it
+  // because csTimer has no alg library to drill those from.
+  ocll:  { mask: 'U-U-U-U-U---RRRRRR---FFFFFFDDDDDDDDD---LLLLLL---BBBBBB', axes: 6 },
   eoll:  { mask: '-U-UUU-U----RRRRRR---FFFFFFDDDDDDDDD---LLLLLL---BBBBBB', axes: 6 },
   cpll:  { mask: 'UUUUUUUUUr-rRRRRRRf-fFFFFFFDDDDDDDDDl-lLLLLLLb-bBBBBBB', axes: 6 },
   fb:    { mask: '---------------------F--F--D--D--D-----LLLLLL-----B--B', axes: 24 },

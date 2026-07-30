@@ -171,6 +171,12 @@ interface TrainerPrefs {
   srsShowPlayer: boolean;
   /** 计时/复习模式里做完一把也计入记忆调度(同一 case 每到期一次只计一把)。 */
   srsFromSolves: boolean;
+  /**
+   * 智能魔方出题:连上蓝牙魔方后由它「变成」当前 case(不用手动打乱)、第一下转动
+   * 起表、该套的收尾步骤完成即停表。默认开 —— 连魔方本身就是明确的意思表示,
+   * 连上了还要再拨一个开关是白让人找。没连魔方时这个开关不起任何作用。
+   */
+  smartCube: boolean;
 }
 const DEFAULT_PREFS: TrainerPrefs = {
   preAuf: true, postAuf: true, timing: false, mode: 'recap', probMode: 'uniform',
@@ -178,7 +184,7 @@ const DEFAULT_PREFS: TrainerPrefs = {
   showPrevCard: true, showNextCard: true, showStats: true, showStageThumb: true,
   pureScramble: true, multiScramble: false,
   srsNewLimit: 10, srsSessionLimit: 60, srsFillExtra: true, srsAutoMark: true, srsShowPlayer: false,
-  srsFromSolves: true,
+  srsFromSolves: true, smartCube: true,
 };
 const PREFS_KEY = 'trainer:prefs';
 
@@ -206,7 +212,7 @@ const prefsOf = (st: TrainerPrefs): TrainerPrefs => ({
   multiScramble: st.multiScramble,
   srsNewLimit: st.srsNewLimit, srsSessionLimit: st.srsSessionLimit,
   srsFillExtra: st.srsFillExtra, srsAutoMark: st.srsAutoMark, srsShowPlayer: st.srsShowPlayer,
-  srsFromSolves: st.srsFromSolves,
+  srsFromSolves: st.srsFromSolves, smartCube: st.smartCube,
 });
 
 const shuffle = <T,>(arr: T[]): T[] => {
@@ -316,6 +322,7 @@ interface TrainerState {
   showStageThumb: boolean;
   pureScramble: boolean;
   multiScramble: boolean;
+  smartCube: boolean;
   srsNewLimit: number;
   srsSessionLimit: number;
   srsFillExtra: boolean;
@@ -370,6 +377,7 @@ interface TrainerState {
   setShowStats: (v: boolean) => void;
   setShowStageThumb: (v: boolean) => void;
   setPureScramble: (v: boolean) => void;
+  setSmartCube: (v: boolean) => void;
   setMultiScramble: (v: boolean) => void;
   setSrsNewLimit: (v: number) => void;
   setSrsSessionLimit: (v: number) => void;
@@ -400,8 +408,14 @@ interface TrainerState {
   roomAdvance: (steps: number) => Promise<void>;
 
   getTimerReady: (delayMs: number) => void;
-  startTimer: () => void;
-  stopTimer: () => void;
+  /**
+   * `at` overrides "now" (epoch ms). A smart cube stamps its turns with its own
+   * clock, which is what makes a bluetooth rep measure the turning rather than
+   * the turning plus however long the BLE stack sat on the notification.
+   * Keyboard callers omit it.
+   */
+  startTimer: (at?: number) => void;
+  stopTimer: (at?: number) => void;
   setTimerState: (s: TimerState) => void;
 
   setObservingIdx: (i: number) => void;
@@ -1116,6 +1130,10 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       set({ pureScramble: v });
       persistPrefs(prefsOf(get()));
     },
+    setSmartCube: (v) => {
+      set({ smartCube: v });
+      persistPrefs(prefsOf(get()));
+    },
     setMultiScramble: (v) => {
       set({ multiScramble: v });
       persistPrefs(prefsOf(get()));
@@ -1325,14 +1343,16 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       }
     },
 
-    startTimer: () => {
-      set({ timerStarted: Date.now(), timerState: TimerState.RUNNING });
+    startTimer: (at) => {
+      set({ timerStarted: at ?? Date.now(), timerState: TimerState.RUNNING });
     },
 
-    stopTimer: () => {
+    stopTimer: (at) => {
       const { puzzle, set: setSlug, solves, currentKey, currentName, currentScramble, timerStarted } = get();
       if (!puzzle || !setSlug) return;
-      const ms = Date.now() - timerStarted;
+      // Never negative: a device clock that disagrees with ours by more than the
+      // rep took would otherwise store a negative time and poison the averages.
+      const ms = Math.max(0, (at ?? Date.now()) - timerStarted);
       if (currentKey === null || currentName === null) {
         set({ timerState: TimerState.STOPPING });
         return;
