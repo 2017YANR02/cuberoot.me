@@ -13,7 +13,7 @@ import { usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import {
   fetchWcaPerson, fetchWcaPersonResults, fetchWcaPersonCompetitions, fetchWcaPersonLiveResults,
-  fetchWcaPersonFormer,
+  fetchWcaPersonFormer, fetchWcaPersonAvatar,
   type WcaPersonProfile, type WcaResultRow, type WcaCompetition, type WcaFormerIdentity,
 } from '@/lib/wca-person-api';
 import { loadFlagData } from '@/lib/country-flags';
@@ -57,7 +57,7 @@ export default function PersonDetailClient() {
   const [error, setError] = useState<string | null>(null);
   // 「废止项」口径开关:Σ 名次和行(PR 表底部)与「最优项目组合」共用一份状态
   const [inclCancelled, setInclCancelled] = useState(false);
-  // 首屏三源直连 WCA 官网,官网抽风时只能重试 —— bump 它重跑整个加载 effect
+  // 自家库 + 官网两条路都断了才会有 error;重试按钮 bump 它重跑整个加载 effect
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
@@ -70,8 +70,9 @@ export default function PersonDetailClient() {
     // 组件树(hero / PR 表 / 组合卡 / 7 个 tab)一处都不用 —— 魔友表的国旗走 person-misc 自带的
     // iso2,比赛国旗走 compFlagIso2。只拉 comp_countries + comp_names_zh(~170KB)。
     loadFlagData({ persons: false }).catch(() => { /* fallback to en */ });
-    // 三个官方源都传后台重验回调:localStorage 缓存 24h,但成绩公示当天必须自愈 ——
-    // 直播行在官方收录后被服务端删掉,旧缓存会让那场比赛整场消失(见 wca-person-api 注释)。
+    // 三个源现在都是「自家库先出、官网后台补」(见 wca-person-api 头注):
+    // 首屏不再依赖 WCA 官网可达性,而 onFresh 回调保住成绩公示当天的自愈 ——
+    // 直播·非官方行在官方收录后会被服务端删掉,只认库里那份会让那场比赛短暂整场消失。
     fetchWcaPerson(wcaId, (p) => { if (!cancelled) setProfile(p); })
       .then((p) => { if (!cancelled) setProfile(p); })
       .catch((e) => { if (!cancelled) setError(String(e?.message ?? e)); });
@@ -90,6 +91,18 @@ export default function PersonDetailClient() {
     fetchWcaPersonFormer(wcaId)
       .then((f) => { if (!cancelled) setFormer(f); })
       .catch(() => { /* 曾用名缺失不影响主信息 */ });
+    // 头像单独取:官方 dump 里没有头像,库拼出的 profile 也就没有。页面先用首字母占位渲染,
+    // 这个请求(服务器侧缓存)回来再补;官网增强若先到,profile 自带头像,这里就不覆盖了。
+    fetchWcaPersonAvatar(wcaId)
+      .then(({ url, thumbUrl }) => {
+        if (cancelled || (!url && !thumbUrl)) return;
+        setProfile((prev) => (
+          !prev || prev.person.avatar?.url || prev.person.avatar?.thumb_url
+            ? prev
+            : { ...prev, person: { ...prev.person, avatar: { url: url ?? undefined, thumb_url: thumbUrl ?? undefined } } }
+        ));
+      })
+      .catch(() => { /* 没头像就用首字母占位 */ });
     return () => { cancelled = true; };
   }, [wcaId, reloadKey]);
 
@@ -103,8 +116,8 @@ export default function PersonDetailClient() {
           <div className="wp-error">
           <p>{t('加载失败', 'Failed to load')}: {error}</p>
           <p className="wp-error-hint">{t(
-            '选手资料取自 WCA 官网,官网不通时本页也拿不到数据。',
-            'Person data comes from the WCA website; this page can\'t load while that is unreachable.',
+            '本站的成绩库与 WCA 官网都没取到数据。',
+            'Neither our own results database nor the WCA website returned any data.',
           )}</p>
           <button type="button" className="wp-error-retry" onClick={() => setReloadKey(k => k + 1)}>
             {t('重试', 'Retry')}

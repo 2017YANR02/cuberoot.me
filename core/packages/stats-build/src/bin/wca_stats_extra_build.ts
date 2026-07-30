@@ -188,15 +188,18 @@ async function main() {
 
   // ── 2. wca_competitions: 元数据 ──
   console.log('[comp] loading competitions...');
+  // city_name / iso2:选手页「点亮城市」「去过的省份」要城市串,国旗要 iso2 —— 都从这张表出,
+  // 免得前端再拉一份 comp JSON(选手页刻意不加载大表,见 PersonDetailClient 的 loadFlagData 注释).
   const [comps] = await conn.query<mysql.RowDataPacket[]>(
-    `SELECT id, name, country_id, start_date, end_date FROM competitions`,
+    `SELECT id, name, country_id, city_name, start_date, end_date FROM competitions`,
   );
   {
     const f = createWriteStream(resolve(outDir, 'wca_competitions.copy.tsv'));
     for (const c of comps) {
       f.write(
         `${pgEsc(c['id'] as string)}\t${pgEsc(c['name'] as string)}\t${pgEsc(c['country_id'] as string)}\t` +
-        `${dateOrNull(c['start_date'] as string | Date | null)}\t${dateOrNull(c['end_date'] as string | Date | null)}\n`,
+        `${dateOrNull(c['start_date'] as string | Date | null)}\t${dateOrNull(c['end_date'] as string | Date | null)}\t` +
+        `${pgEsc((c['city_name'] as string | null) ?? '')}\t${pgEsc(iso2Of.get(c['country_id'] as string) ?? '')}\n`,
       );
     }
     f.end();
@@ -379,6 +382,15 @@ async function main() {
   const grandSlamStream = createWriteStream(resolve(outDir, 'wca_grand_slam.copy.tsv'));
   let allTopCount = 0, cohortCount = 0, gsCount = 0;
   let fullTopTotal = 0; // 完整表应有行数(增量模式下 != allTopCount=delta 写入数)
+
+  // wca_person_results:选手页专用「一条成绩一行」表(见循环内写入处的注释).
+  // 全量文件只在「无旧指纹」或显式 WPR_FULL=1(首次 bootstrap / 改行规则后重灌)时产出;
+  // 平时跟 wca_results_flat 一样只写指纹变动比赛的 delta.
+  const wprFull = !incremental || process.env.WPR_FULL === '1';
+  const wprFile = wprFull ? 'wca_person_results.copy.tsv' : 'wca_person_results_delta.tsv';
+  const personResultsStream = createWriteStream(resolve(outDir, wprFile));
+  let wprCount = 0;
+  let fullWprTotal = 0; // 完整表应有行数(delta 模式下 != wprCount)
 
   // 每人在所有 WCA 比赛 final round(roundTypeId='f'/'c')里取得过的最佳名次 (MIN pos>0).
   // 跨所有 event 累积. 0 = 从未在任何 final 拿过有效成绩.
@@ -615,6 +627,21 @@ async function main() {
             allTopCount++;
           }
         }
+      }
+
+      // ── wca_person_results:选手页专用,一条官方成绩一行(不拆单次/平均) ──
+      // 与 wca_results_flat 的分工:那张表是排行榜口径 —— 只留 value>0、单次/平均拆两行、无 pos.
+      // 选手页要的恰好是它扔掉的那部分:整轮 DNF 的轮次(此人 736 条里有 7 条)和轮次名次 pos
+      // (里程碑首金/首银、成绩表名次列都要它).负值成绩绝不能混进 flat —— 全站排行榜都是
+      // ORDER BY value ASC,-1 会排到世界第一 —— 所以另开一张,flat 一个字节不动.
+      fullWprTotal++;
+      if (wprFull || changedComps.has(r.compId)) {
+        personResultsStream.write(
+          `${pgEsc(r.pid)}\t${pgEsc(r.compId)}\t${r.compDate}\t${eventId}\t${rt}\t${fm}\t` +
+          `${r.pos}\t${r.best}\t${r.average}\t${intArr(r.attempts)}\t` +
+          `${pgEsc(r.regSingleRecord ?? '')}\t${pgEsc(r.regAvgRecord ?? '')}\n`,
+        );
+        wprCount++;
       }
 
       // best_final_pos: 跨 event 累积每人 final round 最佳名次.
@@ -1227,6 +1254,7 @@ async function main() {
   // ── flush 还在 buffer 的 stream ──
   await Promise.all([
     new Promise<void>(res => allTopStream.end(() => res())),
+    new Promise<void>(res => personResultsStream.end(() => res())),
     new Promise<void>(res => cohortStream.end(() => res())),
     new Promise<void>(res => grandSlamStream.end(() => res())),
     new Promise<void>(res => misserStream.end(() => res())),
@@ -1236,6 +1264,7 @@ async function main() {
 
   // ── 10. del-list (增量) + load.sql ──
   const wrfCols = 'event_id, is_avg, value, wca_id, person_country_id, comp_id, comp_date, attempts, round_type_id, format_id, record_tag';
+  const wprCols = 'wca_id, comp_id, comp_date, event_id, round_type_id, format_id, pos, best, average, attempts, single_record, average_record';
 
   // 防呆:15 张 wca_fs_* 表正常由 migration 0028 建,但若 deploy_core(apply_migrations)尚未跑到、
   // 而 stats.yml 先跑,TRUNCATE 缺表会在单事务 ON_ERROR_STOP 下把整个 wca_stats_extra 刷新一起回滚.
@@ -1257,7 +1286,14 @@ CREATE TABLE IF NOT EXISTS wca_fs_comp_solves (comp_id VARCHAR(50) PRIMARY KEY, 
 CREATE TABLE IF NOT EXISTS wca_fs_person_solves (wca_id VARCHAR(20) PRIMARY KEY, country_id VARCHAR(50) NOT NULL, solve INTEGER NOT NULL, attempt INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS wca_fs_person_year_solves (wca_id VARCHAR(20) NOT NULL, country_id VARCHAR(50) NOT NULL, year SMALLINT NOT NULL, solve INTEGER NOT NULL, attempt INTEGER NOT NULL, PRIMARY KEY (wca_id, year));
 CREATE TABLE IF NOT EXISTS wca_championship_podiums (wca_id VARCHAR(20) NOT NULL, comp_id VARCHAR(50) NOT NULL, event_id VARCHAR(20) NOT NULL, level VARCHAR(30) NOT NULL, place SMALLINT NOT NULL, best INTEGER NOT NULL, average INTEGER NOT NULL DEFAULT 0, attempts INTEGER[], single_record VARCHAR(3) NOT NULL DEFAULT '', average_record VARCHAR(3) NOT NULL DEFAULT '', PRIMARY KEY (wca_id, comp_id, event_id, level));
-CREATE INDEX IF NOT EXISTS wcp_wca ON wca_championship_podiums (wca_id);`;
+CREATE INDEX IF NOT EXISTS wcp_wca ON wca_championship_podiums (wca_id);
+-- 选手页专用全量成绩表(migration 0098 建;这里同样内联幂等 DDL,理由同上).
+CREATE TABLE IF NOT EXISTS wca_person_results (wca_id VARCHAR(20) NOT NULL, comp_id VARCHAR(50) NOT NULL, comp_date DATE NOT NULL, event_id VARCHAR(20) NOT NULL, round_type_id VARCHAR(2) NOT NULL DEFAULT '', format_id VARCHAR(2) NOT NULL DEFAULT '', pos SMALLINT NOT NULL DEFAULT 0, best INTEGER NOT NULL, average INTEGER NOT NULL DEFAULT 0, attempts INTEGER[], single_record VARCHAR(3) NOT NULL DEFAULT '', average_record VARCHAR(3) NOT NULL DEFAULT '');
+CREATE INDEX IF NOT EXISTS wpr_person ON wca_person_results (wca_id);
+CREATE INDEX IF NOT EXISTS wpr_comp ON wca_person_results (comp_id);
+-- wca_competitions 补 city / iso2(表由 schema_wca_stats_extra 建,这里只加列,幂等).
+ALTER TABLE wca_competitions ADD COLUMN IF NOT EXISTS city VARCHAR(120) NOT NULL DEFAULT '';
+ALTER TABLE wca_competitions ADD COLUMN IF NOT EXISTS country_iso2 VARCHAR(2) NOT NULL DEFAULT '';`;
 
   // 6 张全局聚合小表 + 指纹 manifest:两模式都全量 TRUNCATE+重灌(任一成绩变这些排名都会动,无法增量;
   // 但它们小,翻倍无所谓).边 COPY 边删源 TSV(同分区白占空间;\\copy 读完即删,\\! 不受事务影响).
@@ -1285,7 +1321,7 @@ TRUNCATE wca_fs_person_solves;
 TRUNCATE wca_fs_person_year_solves;
 TRUNCATE wca_championship_podiums;
 
-\\copy wca_competitions (id, name, country_id, start_date, end_date) FROM 'wca_competitions.copy.tsv';
+\\copy wca_competitions (id, name, country_id, start_date, end_date, city, country_iso2) FROM 'wca_competitions.copy.tsv';
 \\! rm -f wca_competitions.copy.tsv
 \\copy wca_grand_slam (wca_id, event_id, best_value, avg_value, country_id, has_wr, is_only_first, world_champ_comp_id, world_champ_pos, continental_champ_comp_id, continental_champ_pos, national_champ_comp_id, national_champ_pos) FROM 'wca_grand_slam.copy.tsv';
 \\! rm -f wca_grand_slam.copy.tsv
@@ -1330,6 +1366,44 @@ TRUNCATE wca_championship_podiums;
 \\copy wca_championship_podiums (wca_id, comp_id, event_id, level, place, best, average, attempts, single_record, average_record) FROM 'wca_championship_podiums.copy.tsv';
 \\! rm -f wca_championship_podiums.copy.tsv`;
 
+  // ── wca_person_results 的 load 片段(两模式共用,插在 smallTables 之后) ──
+  // 全量:TRUNCATE + 灌整表.delta:先把新行 COPY 进 temp,再在 DO 块里删旧行 + 插新行 ——
+  // 之所以绕 temp 表,是因为 \copy 是 psql 客户端命令、没法写在条件分支里,而首次上线时
+  // 本表还是空的(未 bootstrap),此时必须整段跳过:直接灌 delta 会留下一张残缺表,
+  // 而 RAISE 会把当晚整个 stats 事务(flat + 20 张小表)一起回滚,代价更大.
+  const personResultsSql = wprFull
+    ? `-- wca_person_results:全量重灌(无旧指纹 / WPR_FULL=1 bootstrap).
+TRUNCATE wca_person_results;
+\\copy wca_person_results (${wprCols}) FROM '${wprFile}';
+\\! rm -f ${wprFile}
+DO $$
+DECLARE n bigint;
+BEGIN
+  SELECT count(*) INTO n FROM wca_person_results;
+  IF n <> ${fullWprTotal} THEN
+    RAISE EXCEPTION 'wca_person_results count % != expected ${fullWprTotal} after full load; aborting', n;
+  END IF;
+END $$;`
+    : `-- wca_person_results:增量(与 wca_results_flat 同一份 del-list:_wrf_del).
+CREATE TEMP TABLE _wpr_delta (LIKE wca_person_results) ON COMMIT DROP;
+\\copy _wpr_delta (${wprCols}) FROM '${wprFile}';
+\\! rm -f ${wprFile}
+DO $$
+DECLARE pre bigint; n bigint;
+BEGIN
+  SELECT count(*) INTO pre FROM wca_person_results;
+  IF pre = 0 THEN
+    RAISE NOTICE 'wca_person_results 为空(尚未 bootstrap):跳过本次 delta;需跑一次 WPR_FULL=1 的全量';
+    RETURN;
+  END IF;
+  DELETE FROM wca_person_results WHERE comp_id IN (SELECT comp_id FROM _wrf_del);
+  INSERT INTO wca_person_results SELECT * FROM _wpr_delta;
+  SELECT count(*) INTO n FROM wca_person_results;
+  IF n <> ${fullWprTotal} THEN
+    RAISE EXCEPTION 'wca_person_results count % != expected ${fullWprTotal} after incremental apply; aborting (若刚改过写入行规则: 需先跑 WPR_FULL=1 全量)', n;
+  END IF;
+END $$;`;
+
   // VACUUM (ANALYZE):wca_results_flat 走 Index Only Scan 跑深分页,必须更新 visibility map.
   // 增量同样需要:DELETE 的 dead tuple 页 + delta 新页都要进 vmap,否则 IOS 退化 heap fetch.
   const vacuumAnalyze = `VACUUM (ANALYZE) wca_results_flat;
@@ -1355,7 +1429,8 @@ ANALYZE wca_fs_person_comp_solves;
 ANALYZE wca_fs_comp_solves;
 ANALYZE wca_fs_person_solves;
 ANALYZE wca_fs_person_year_solves;
-ANALYZE wca_championship_podiums;`;
+ANALYZE wca_championship_podiums;
+VACUUM (ANALYZE) wca_person_results;`;
 
   let loadSql: string;
   if (incremental) {
@@ -1394,6 +1469,8 @@ TRUNCATE wca_comp_updated_at;
 \\! rm -f wca_comp_updated_at.copy.tsv
 
 ${smallTables}
+
+${personResultsSql}
 
 -- 校验:增量后 wca_results_flat 总行数必须 == 全表应有行数,对不上说明 delta 算漏/算重 → abort.
 -- 若刚改过 wca_results_flat 的写入行规则(新增/移除一类行)→ 增量不回填历史比赛,需一次性 backfill
@@ -1464,6 +1541,8 @@ CREATE TABLE wca_comp_updated_at (
 
 ${smallTables}
 
+${personResultsSql}
+
 INSERT INTO meta_historical (key, value, updated_at) VALUES ('wca_stats_extra_imported_at', NOW()::TEXT, NOW())
   ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW();
 
@@ -1483,6 +1562,7 @@ ${vacuumAnalyze}
   console.log(`  competitions      : ${comps.length.toLocaleString()} rows, ${sizeMb('wca_competitions.copy.tsv')} MB`);
   console.log(`  grand_slam        : ${gsCount.toLocaleString()} rows, ${sizeMb('wca_grand_slam.copy.tsv')} MB`);
   console.log(`  results_top       : ${allTopCount.toLocaleString()}${incremental ? `/${fullTopTotal.toLocaleString()}` : ''} rows, ${sizeMb(wrfFile)} MB`);
+  console.log(`  person_results    : ${wprCount.toLocaleString()}${wprFull ? '' : `/${fullWprTotal.toLocaleString()}`} rows, ${sizeMb(wprFile)} MB (${wprFull ? 'full' : 'delta'})`);
   console.log(`  cohort_ranks      : ${cohortCount.toLocaleString()} rows, ${sizeMb('wca_cohort_ranks.copy.tsv')} MB`);
   console.log(`  success_rate      : ${srCount.toLocaleString()} rows, ${sizeMb('wca_success_rate.copy.tsv')} MB`);
   console.log(`  all_events_done   : ${aedCount.toLocaleString()} rows, ${sizeMb('wca_all_events_done.copy.tsv')} MB`);

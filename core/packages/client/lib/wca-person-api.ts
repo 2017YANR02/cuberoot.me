@@ -1,7 +1,15 @@
+// 选手数据客户端(选手页 / 复盘页共用)。
+//
+// 分层(2026-07-30 改):
+//   主源 = 自家库 `/v1/wca/person-page` —— 资料 + 全部成绩 + 参赛比赛一次给全,不依赖 WCA
+//          官网可达性。官网从国内不通时,以前这页只有「加载中…」,因为首屏三个源都直连官网。
+//   增强 = WCA 官网 —— 库是日更的(dump 天更 + 每晚 20:00 UTC 灌库),今天刚公示的成绩要靠
+//          官网补;后台拿到就通过 onFresh 覆盖,拿不到静默作罢。
+//   兜底 = 库里没这个人(表未 bootstrap / 极新选手)→ 退回老路:直连官网 + localStorage 缓存。
+//
 // Thin client for the WCA public API (https://documenter.getpostman.com/view/4584491/SVfWN6KS).
-// CORS-enabled; cached in localStorage 24h to keep repeat visits instant.
 
-import { API_ORIGIN } from './api-base';
+import { API_ORIGIN, apiUrl } from './api-base';
 import { persistItem } from './safe-storage';
 
 const BASE = 'https://www.worldcubeassociation.org/api/v0';
@@ -79,6 +87,49 @@ async function cachedFetch<T>(key: string, load: () => Promise<T>, onFresh?: (v:
   }
 }
 
+// ── 主源:自家库一次给全 ───────────────────────────────────────────────
+// 三个消费者(profile / results / comps)同时挂载 → 按 wcaId 合流,一个页面只打一次。
+// 失败 / 404(库里没这个人)→ null,调用方各自退回官网老路。
+export interface PersonPageBundle {
+  profile: WcaPersonProfile;
+  results: WcaResultRow[];
+  comps: WcaCompetition[];
+}
+const MIRROR_TIMEOUT_MS = 10 * 1000;
+const _mirrorInflight = new Map<string, Promise<PersonPageBundle | null>>();
+
+function mirrorBundle(wcaId: string): Promise<PersonPageBundle | null> {
+  const hit = _mirrorInflight.get(wcaId);
+  if (hit) return hit;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), MIRROR_TIMEOUT_MS);
+  const p = fetch(apiUrl(`/v1/wca/person-page?wcaId=${encodeURIComponent(wcaId)}&v=1`), { signal: ctrl.signal })
+    .then(async (r): Promise<PersonPageBundle | null> => {
+      if (!r.ok) return null;
+      const j = await r.json() as Partial<PersonPageBundle>;
+      if (!j.profile || !Array.isArray(j.results)) return null;
+      return { profile: j.profile, results: j.results, comps: j.comps ?? [] };
+    })
+    .catch(() => null)
+    .finally(() => { clearTimeout(timer); });
+  _mirrorInflight.set(wcaId, p);
+  // 合流只覆盖「同一次开页的并发调用」:软导航到别人主页再回来要重新取,
+  // 否则这个 Map 会把整个会话的数据钉死(直播成绩当天会变)。
+  void p.then(() => { setTimeout(() => _mirrorInflight.delete(wcaId), 30_000); });
+  return p;
+}
+
+/**
+ * 官网增强:库是日更的,今天刚公示的成绩只有官网有。后台打一次,成功就回调覆盖 +
+ * 刷新 localStorage(供兜底路径复用);失败静默 —— 页面已经用库里的数据渲染好了。
+ */
+function enhanceFromOfficial<T>(key: string, load: () => Promise<T>, onFresh?: (v: T) => void): void {
+  if (!onFresh) return;
+  void load()
+    .then((fresh) => { cacheSet(key, fresh); onFresh(fresh); })
+    .catch(() => { /* 官网不通 = 本页正常工作,只是停在昨晚那份 */ });
+}
+
 export interface WcaPersonRecord {
   best: number;                  // centiseconds (or moves * 100 for fmc avg, or move count for fmc single, or MBLD code)
   world_rank: number | null;
@@ -107,12 +158,16 @@ export async function fetchWcaPerson(
   wcaId: string,
   onFresh?: (p: WcaPersonProfile) => void,
 ): Promise<WcaPersonProfile> {
-  return cachedFetch(
-    `wca:person:${wcaId}`,
-    () => wcaJson<WcaPersonProfile>(`/persons/${encodeURIComponent(wcaId)}`),
-    onFresh,
-  );
+  const bundle = await mirrorBundle(wcaId);
+  if (bundle) {
+    enhanceFromOfficial(`wca:person:${wcaId}`, () => officialProfile(wcaId), onFresh);
+    return bundle.profile;
+  }
+  return cachedFetch(`wca:person:${wcaId}`, () => officialProfile(wcaId), onFresh);
 }
+
+const officialProfile = (wcaId: string) =>
+  wcaJson<WcaPersonProfile>(`/persons/${encodeURIComponent(wcaId)}`);
 
 export interface WcaResultRow {
   id: number;
@@ -133,27 +188,34 @@ export interface WcaResultRow {
   source?: string;          // 'cubing' | 'wca_live'(仅 live 行)
 }
 
+async function officialResults(wcaId: string): Promise<WcaResultRow[]> {
+  const arr = await wcaJson<any[]>(`/persons/${encodeURIComponent(wcaId)}/results`);
+  return arr.map((r) => ({
+    id: r.id,
+    competition_id: r.competition_id,
+    event_id: r.event_id,
+    round_type_id: r.round_type_id,
+    format_id: r.format_id,
+    best: r.best,
+    average: r.average,
+    pos: r.pos,
+    attempts: Array.isArray(r.attempts) ? r.attempts : [],
+    regional_single_record: r.regional_single_record ?? null,
+    regional_average_record: r.regional_average_record ?? null,
+  })) as WcaResultRow[];
+}
+
 export async function fetchWcaPersonResults(
   wcaId: string,
   onFresh?: (rows: WcaResultRow[]) => void,
 ): Promise<WcaResultRow[]> {
+  const bundle = await mirrorBundle(wcaId);
+  if (bundle) {
+    enhanceFromOfficial(`wca:results:v2:${wcaId}`, () => officialResults(wcaId), onFresh);
+    return bundle.results;
+  }
   // v2: 加了 regional_single_record / regional_average_record 字段,需让旧缓存 miss
-  return cachedFetch(`wca:results:v2:${wcaId}`, async () => {
-    const arr = await wcaJson<any[]>(`/persons/${encodeURIComponent(wcaId)}/results`);
-    return arr.map((r) => ({
-      id: r.id,
-      competition_id: r.competition_id,
-      event_id: r.event_id,
-      round_type_id: r.round_type_id,
-      format_id: r.format_id,
-      best: r.best,
-      average: r.average,
-      pos: r.pos,
-      attempts: Array.isArray(r.attempts) ? r.attempts : [],
-      regional_single_record: r.regional_single_record ?? null,
-      regional_average_record: r.regional_average_record ?? null,
-    })) as WcaResultRow[];
-  }, onFresh);
+  return cachedFetch(`wca:results:v2:${wcaId}`, () => officialResults(wcaId), onFresh);
 }
 
 // 历史身份(曾用名 / 曾用国籍)。WCA 公开 API 不含此项,走我们后端的 wca_person_aka 小表。
@@ -241,7 +303,6 @@ export interface WcaCompetition {
 // /v1/wca/person-best-ranks 与 /v1/wca/person-rank-history 由本仓库的
 // core/packages/server/src/routes/wca_stats_extra.ts 提供,数据源是
 // historical_ranks_snapshot 表(每天 GH Actions 灌一次,nginx 1d cache).
-import { apiUrl } from './api-base';
 
 export interface PersonBestRankCell {
   rank: number;
@@ -406,19 +467,35 @@ export async function fetchWcaPersonLiveResults(wcaId: string): Promise<PersonLi
   return { wcaId, comps: json.comps ?? [], results };
 }
 
+async function officialComps(wcaId: string): Promise<WcaCompetition[]> {
+  const arr = await wcaJson<any[]>(`/persons/${encodeURIComponent(wcaId)}/competitions`);
+  return arr.map((c) => ({
+    id: c.id,
+    name: c.name,
+    city: c.city,
+    country_iso2: c.country_iso2,
+    start_date: c.start_date,
+    end_date: c.end_date,
+  })) as WcaCompetition[];
+}
+
 export async function fetchWcaPersonCompetitions(
   wcaId: string,
   onFresh?: (comps: WcaCompetition[]) => void,
 ): Promise<WcaCompetition[]> {
-  return cachedFetch(`wca:comps:${wcaId}`, async () => {
-    const arr = await wcaJson<any[]>(`/persons/${encodeURIComponent(wcaId)}/competitions`);
-    return arr.map((c) => ({
-      id: c.id,
-      name: c.name,
-      city: c.city,
-      country_iso2: c.country_iso2,
-      start_date: c.start_date,
-      end_date: c.end_date,
-    })) as WcaCompetition[];
-  }, onFresh);
+  const bundle = await mirrorBundle(wcaId);
+  if (bundle) {
+    enhanceFromOfficial(`wca:comps:${wcaId}`, () => officialComps(wcaId), onFresh);
+    return bundle.comps;
+  }
+  return cachedFetch(`wca:comps:${wcaId}`, () => officialComps(wcaId), onFresh);
+}
+
+// 头像:官方 dump 里没有,由服务器懒回源 + 入库缓存(见 server routes/wca_person.ts)。
+// 整页不为一张图等待 —— 页面先用首字母占位渲染,这个请求回来再补上。
+export async function fetchWcaPersonAvatar(wcaId: string): Promise<{ url: string | null; thumbUrl: string | null }> {
+  const res = await fetch(apiUrl(`/v1/wca/person-avatar?wcaId=${encodeURIComponent(wcaId)}`));
+  if (!res.ok) throw new Error(`person-avatar ${res.status}`);
+  const j = await res.json() as { url?: string | null; thumbUrl?: string | null };
+  return { url: j.url ?? null, thumbUrl: j.thumbUrl ?? null };
 }

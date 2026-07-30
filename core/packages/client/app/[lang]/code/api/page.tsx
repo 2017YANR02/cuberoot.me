@@ -57,7 +57,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   account_auth alg alg_lsll alg_marks alg_srs alg_sets alg_sweep analytics announced_comps article auth battle_rooms cn_comp_names colpi
 //   comp_follows cube cubeopt_solve cubing_live feedback forum health historical_ranks
 //   membership nav_sites nemesizer notifications ops page_notices paint pattern_examples progress recon scramble_555
-//   scramble_marks sim_masks sponsors timer_backups trainer_rooms wca_format wca_fun_stats wca_proxy
+//   scramble_marks sim_masks sponsors timer_backups trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wechat_jssdk wiki
 // ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
@@ -92,6 +92,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'wca-stats', m: 'GET', p: '/v1/wca/all-results', g: 'public', c: 'cdn', zh: '全成绩查询(姓名口径 / 项目筛选)', en: 'All-results query (name form / event filter)' },
   { d: 'wca-stats', m: 'GET', p: '/v1/wca/persons-directory', g: 'public', c: 'cdn', zh: '选手名录', en: 'Persons directory' },
   { d: 'wca-stats', m: 'GET', p: '/v1/wca/person-aka', g: 'public', zh: '曾用名 / 曾属国', en: 'Former names / nationalities' },
+  { d: 'wca-stats', m: 'GET', p: '/v1/wca/person-page', g: 'public', zh: '选手页首屏全量:资料 + 全部成绩 + 参赛比赛(自家库,不经官网)', en: 'Whole person page: profile + every result + competitions, from our mirror' },
+  { d: 'wca-stats', m: 'GET', p: '/v1/wca/person-avatar', g: 'public', zh: '头像 URL(懒回源 + 入库缓存)', en: 'Avatar URL (lazily fetched, cached)' },
   { d: 'wca-stats', m: 'GET', p: '/v1/wca/person-misc', g: 'public', zh: '选手杂项(魔友 / 省份)', en: 'Person misc (peers / provinces)' },
   { d: 'wca-stats', m: 'GET', p: '/v1/wca/person-championship-podiums', g: 'public', zh: '冠军赛领奖台', en: 'Championship podiums' },
   { d: 'wca-stats', m: 'GET', p: '/v1/wca/rank-for', g: 'public', zh: '某成绩在当下的名次', en: 'Live rank for a result' },
