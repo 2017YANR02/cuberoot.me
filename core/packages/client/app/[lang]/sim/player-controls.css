@@ -785,7 +785,7 @@
   flex-direction: column;
   gap: 6px;
 }
-/* 键盘行:左 = 虚拟键盘开关(图标 toggle),竖线,右 = 快捷键 / 恢复默认设置(文字动作按钮)。
+/* 键盘行:左 = 虚拟键盘开关(图标 toggle),竖线,右 = 快捷键 / 恢复默认(文字动作按钮)。
    上方 8px 间距原来自 .vkb-toggle 自带 margin-top,收编到行容器统一管。 */
 .sim-keyboard-switcher {
   display: flex;
@@ -798,8 +798,7 @@
   margin-top: 0;
 }
 .sim-keyboard-switcher .sim-keymap-open-btn,
-.sim-keyboard-switcher .sim-drawer-reset {
-  margin-top: 0;
+.sim-keyboard-switcher .reset-defaults-btn {
   padding: 4px 10px;
   font-size: 12px;
 }

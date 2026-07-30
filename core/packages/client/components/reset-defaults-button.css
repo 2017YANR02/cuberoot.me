@@ -1,0 +1,17 @@
+/* 「恢复默认」按钮 —— /sim 播放器控制行与 /predict 共用一份外观。
+   页面侧只做尺寸/位置覆写(见 sim 的 .sim-keyboard-switcher 那条),别再抄一遍配色。 */
+
+.reset-defaults-btn {
+  padding: 8px 12px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.reset-defaults-btn:hover {
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+}

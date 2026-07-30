@@ -116,6 +116,7 @@ import {
 } from './SettingDrawer';
 import { KEYBOARD_ROWS, keyLabel, displayMove, type KeyMove } from './keymap';
 import CubeVirtualKeyboard from '@/components/CubeVirtualKeyboard';
+import ResetDefaultsButton from '@/components/ResetDefaultsButton';
 import { defaultPlatonicColorSchemes } from '@/lib/puzzle-geometry/colors';
 import { fileToLogoDataUrl } from './engine/nxn/logo';
 import { PG_PUZZLES, isPgPuzzleId, type PgPuzzleId } from './pgCatalog';
@@ -2370,14 +2371,10 @@ export default function PlayerControls({
           >
             {t('快捷键', 'Shortcuts')}
           </button>
-          <button
-            type="button"
-            className="sim-drawer-reset"
-            onClick={() => { onSettingsChange(DEFAULT_SETTINGS); if (world) resetWorldView(world, DEFAULT_SETTINGS); }}
+          <ResetDefaultsButton
+            onReset={() => { onSettingsChange(DEFAULT_SETTINGS); if (world) resetWorldView(world, DEFAULT_SETTINGS); }}
             title={t('全部设置与视角恢复默认(不含快捷键)', 'Reset all settings & view to defaults (shortcuts unaffected)')}
-          >
-            {t('恢复默认设置', 'Reset settings')}
-          </button>
+          />
         </div>
         {!isTwistyMode && kbVariant === 'alg' && (
           <CubeVirtualKeyboard
