@@ -204,3 +204,6 @@ csTimer 拿到后做两件事（`gancube.js:461-488`、`bluetoothutil.js:407-475
   `Solve` 落盘 `inspectionMs` + `device{model,name}`；识别/执行拆分按 Cubeast
   定义落地（`step_metrics.ts`，AUF 计入识别、TPS 只除执行时间），复盘 modal
   展示。顺手根因修复详情/复盘两个兄弟 modal 同 key 的 React duplicate-key bug。
+- 2026-07-30（Sprint 14）：废步检测（P0-5，`error_detect.ts`）—— 状态重现
+  = 净零环,重叠区间合并;复盘 modal 报「废步 N 步 · 多花 Xs」并在动作表
+  标出。全行业没有的指标。
