@@ -56,7 +56,9 @@ import { qiyiDriver } from './qiyi';
 import { CubeStateTracker } from './state_track';
 import { MoveClock } from './move_clock';
 import { armedFakeCube } from './fake_cube';
-import { toFaceletString } from '../cube/state';
+import { applyHijack, makeHijack, type StateHijack } from './state_hijack';
+import { toFaceletString, fromFaceletString } from '../cube/state';
+import { stepSolved, type CubeStep } from '../cube/steps';
 import { watchAdvertisementsMac, savedMac, saveMac, clearMac, parseMacFromName, normalizeMac } from './mac';
 import type { BluetoothCubeStatus } from './types';
 
@@ -144,6 +146,20 @@ export interface BluetoothCubeHandle {
    * connected cube has no such switch.
    */
   setGyro(enabled: boolean): Promise<boolean>;
+  /**
+   * Report the cube's CURRENT state as `target` from now on, so a trainer can
+   * present the next case without the user setting it up by hand. Returns false
+   * when there is nothing to do (already there) or the states are unusable.
+   *
+   * While this is in effect, `facelets` / `getFaces()` describe the training
+   * frame and NOT the cube in the user's hands — anything that cares about the
+   * real cube (a scramble check, a WCA solve) must clear it first.
+   */
+  hijackTo(target: import('../cube/state').CubeFaces | string): boolean;
+  /** Drop the hijack: go back to reporting the physical cube. */
+  clearHijack(): void;
+  /** True while a hijack is in effect. */
+  hijacked: boolean;
 }
 
 interface UseBluetoothCubeOpts {
@@ -180,6 +196,12 @@ interface UseBluetoothCubeOpts {
    * a rAF loop render, never setState per sample.
    */
   onGyro?: GyroSink;
+  /**
+   * Which step has to be finished for `onSolved` to fire. Defaults to a full
+   * solve; a trainer drilling one step sets it to that step, so the timer stops
+   * when OLL is oriented rather than making the user finish the cube.
+   */
+  solvedStep?: CubeStep;
 }
 
 const INITIAL_STATUS: BluetoothCubeStatus = {
@@ -250,6 +272,15 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
   const setGyroRef = useRef<((enabled: boolean) => Promise<void>) | null>(null);
   const disconnectListenerRef = useRef<((ev: Event) => void) | null>(null);
   const wasSolvedRef = useRef<boolean>(true);
+  /**
+   * Training-mode offset: non-null means what we publish is a relabelling of
+   * the physical cube, not the cube itself. See `./state_hijack.ts`.
+   */
+  const hijackRef = useRef<StateHijack | null>(null);
+  const [hijacked, setHijacked] = useState(false);
+  /** Which step counts as done. A full solve unless a caller is drilling one. */
+  const solvedStepRef = useRef<CubeStep>(opts.solvedStep ?? 'solved');
+  useEffect(() => { solvedStepRef.current = opts.solvedStep ?? 'solved'; }, [opts.solvedStep]);
   // True only when the user (or unmount) explicitly tore the connection
   // down. The gattserverdisconnected handler reads this to decide whether
   // to attempt auto-reconnect.
@@ -279,6 +310,21 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       setSolved(false);
     }
   }, []);
+
+  /**
+   * Publish the tracked state, seen through the hijack (if any).
+   *
+   * Both the move path and the state-dump path go through here, and so does
+   * every reset, so there is exactly one place where "what the cube reports"
+   * turns into "what the timer sees". The solved edge is decided from the SAME
+   * string that is published — with a hijack in play, the raw tracker's opinion
+   * of "solved" is about a cube nobody is looking at.
+   */
+  const publishState = useCallback((rawFacelets: string) => {
+    const view = applyHijack(hijackRef.current, rawFacelets);
+    setFacelets(view);
+    publishSolved(stepSolved(solvedStepRef.current, view));
+  }, [publishSolved]);
 
   const handleMove = useCallback((move: string, deviceTs?: number) => {
     // First successfully-decoded move proves the MAC: persist it now. We
@@ -399,9 +445,13 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       // `handleCubeState` as part of the handshake; for the rest, solved is
       // the only baseline we have.
       trackerRef.current.reset();
+      // The cube was out of contact and may have been turned, so an offset
+      // measured before the outage no longer means anything.
+      hijackRef.current = null;
+      setHijacked(false);
       wasSolvedRef.current = true;
       setSolved(true);
-      setFacelets(toFaceletString(trackerRef.current.getFaces()));
+      publishState(toFaceletString(trackerRef.current.getFaces()));
       setLastMove(null);
 
       setStatus({
@@ -500,10 +550,32 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
 
   const resetState = useCallback(() => {
     trackerRef.current.reset();
+    // "The cube in my hands is solved" is a statement about the PHYSICAL cube,
+    // so any pretence about where it is has to go with it.
+    hijackRef.current = null;
+    setHijacked(false);
     wasSolvedRef.current = true;
     setSolved(true);
-    setFacelets(toFaceletString(trackerRef.current.getFaces()));
-  }, []);
+    publishState(toFaceletString(trackerRef.current.getFaces()));
+  }, [publishState]);
+
+  const hijackTo = useCallback((target: import('../cube/state').CubeFaces | string): boolean => {
+    const raw = toFaceletString(trackerRef.current.getFaces());
+    const h = makeHijack(raw, target);
+    if (!h) return false;
+    hijackRef.current = h;
+    setHijacked(true);
+    // Publish at once: the case has to appear without waiting for a turn.
+    publishState(raw);
+    return true;
+  }, [publishState]);
+
+  const clearHijack = useCallback(() => {
+    if (!hijackRef.current) return;
+    hijackRef.current = null;
+    setHijacked(false);
+    publishState(toFaceletString(trackerRef.current.getFaces()));
+  }, [publishState]);
 
   /**
    * Everything after "we have a device": open GATT, pick the driver from the
@@ -606,9 +678,11 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       // A reconnect means a different clock anchor (and possibly a firmware
       // that restarted its counter), so never carry the old one across.
       moveClockRef.current.reset();
+      hijackRef.current = null;
+      setHijacked(false);
       wasSolvedRef.current = true;
       setSolved(true);
-      setFacelets(toFaceletString(trackerRef.current.getFaces()));
+      publishState(toFaceletString(trackerRef.current.getFaces()));
       setLastMove(null);
       setStatus({
         connected: true,
@@ -757,7 +831,14 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
   }, []);
 
   const getFaces = useCallback(() => {
-    return status.connected ? trackerRef.current.getFaces() : null;
+    if (!status.connected) return null;
+    const raw = trackerRef.current.getFaces();
+    const h = hijackRef.current;
+    if (!h) return raw;
+    // Consumers must see the same state `facelets` shows, hijack included —
+    // otherwise the two disagree mid-training and whichever one a caller
+    // happens to read decides its behaviour.
+    return fromFaceletString(applyHijack(h, toFaceletString(raw))) ?? raw;
   }, [status.connected]);
 
   const setGyro = useCallback(async (enabled: boolean): Promise<boolean> => {
@@ -781,5 +862,8 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     resetState,
     getFaces,
     setGyro,
+    hijackTo,
+    clearHijack,
+    hijacked,
   };
 }
