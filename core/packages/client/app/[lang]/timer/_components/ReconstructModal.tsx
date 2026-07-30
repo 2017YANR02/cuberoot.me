@@ -24,13 +24,12 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Link2, Layers, ChevronDown, ChevronRight } from 'lucide-react';
+import { Link2, ChevronDown, ChevronRight } from 'lucide-react';
 import type { Solve, EventId } from '../_lib/types';
 import { effectiveMs } from '../_lib/types';
 import { formatMs } from '../_lib/stats';
 import { sliceReconstruction, detectMemoPause } from '../_lib/reconstruct/slice';
 import { computeStageAverages, computeStageSegments } from '../_lib/reconstruct/stage_segments';
-import type { StageAverages } from '../_lib/reconstruct/stage_segments';
 import { computeStepMetrics } from '../_lib/reconstruct/step_metrics';
 import type { StepMetricsResult } from '../_lib/reconstruct/step_metrics';
 import { detectWastedWork } from '../_lib/reconstruct/error_detect';
@@ -38,13 +37,16 @@ import { computeStageReferences } from '../_lib/reconstruct/reference';
 import type { ReferenceResult, StageReference } from '../_lib/reconstruct/reference';
 import { computeSolveQuality } from '../_lib/reconstruct/quality';
 import type { SolveQuality } from '../_lib/reconstruct/quality';
+import { computeF2lSlots } from '../_lib/reconstruct/f2l_slots';
+import { walkMethod } from '../_lib/reconstruct/method_walk';
+import type { MethodId } from '../_lib/reconstruct/methods';
+import StepAnalysis from './StepAnalysis';
 import { encodeReplayUrl } from '../_lib/share/encode';
 import { nxnSizeForEvent } from '../_lib/cube';
 import { toReconEventId } from '../_shared/event-bridge';
 import { buildExternalLinks } from '@/lib/recon-utils';
 import { memoize3bld } from '../_lib/solver/bld_helper';
 import PlaybackPanel from './PlaybackPanel';
-import { useIsMobile } from '@/hooks/useIsMobile';
 import './reconstruct.css';
 import { tr } from '@/i18n/tr';
 
@@ -217,13 +219,24 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
   // modal, and a plain focus() scrolls the first screen straight out of view.
   useEffect(() => { closeBtnRef.current?.focus({ preventScroll: true }); }, []);
 
-  const isMobile = useIsMobile();
+  // F2L, one pair at a time — the column set the step table opens F2L into.
+  // Derived, never stored: it is a second reading of the same move stream.
+  const slots = useMemo(
+    () => (stageSegs ? computeF2lSlots(solve.scramble, moves, solve.timeMs, stageSegs) : null),
+    [stageSegs, solve.scramble, moves, solve.timeMs],
+  );
+
+  // Which method the report is read as. Not persisted on the solve: it is a
+  // property of the READER, not of the solve, and a Roux solver switching once
+  // should not rewrite what a CFOP solver stored.
+  const [method, setMethod] = useState<MethodId>('cfop');
+  const walk = useMemo(
+    () => (method === 'cfop' ? null : walkMethod(method, solve.scramble, moves, solve.timeMs)),
+    [method, solve.scramble, moves, solve.timeMs],
+  );
+
   const [copied, setCopied] = useState(false);
   const [playbackExpanded, setPlaybackExpanded] = useState(false);
-  // The stage panel is the first screen, so it is only collapsible on mobile
-  // (AccordionSection renders open when `collapsible=false`). The depth
-  // sections are collapsed everywhere — that is the layering.
-  const [stagesExpanded, setStagesExpanded] = useState(true);
   const [moveListExpanded, setMoveListExpanded] = useState(false);
   const [referenceExpanded, setReferenceExpanded] = useState(false);
   const playbackAvailable = moves.length > 0 && nxnSizeForEvent(solve.event) !== null;
@@ -290,14 +303,49 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
         aria-labelledby={titleId}
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 id={titleId}>
-          {tr({ zh: '复盘', en: 'Reconstruct'
-        })} · {formatMs(eff)}
-          <span className="reconstruct-date"> · {dt.toLocaleString()}</span>
+        <h2 id={titleId}>{tr({ zh: '复盘', en: 'Reconstruct' })}</h2>
+
+        {/* The six numbers you want before you want anything else. They were
+            strung along the title and inside the panels below; a solve report
+            should open with them, not make you assemble them. */}
+        <dl className="rc-summary">
+          <div className="rc-summary-cell">
+            <dt>{tr({ zh: '时间', en: 'Time' })}</dt>
+            <dd className="rc-summary-big">
+              {formatMs(eff)}
+              {solve.penalty !== 'ok' && <span className="rc-summary-pen">{solve.penalty}</span>}
+            </dd>
+          </div>
+          <div className="rc-summary-cell">
+            <dt>TPS</dt>
+            <dd className="rc-summary-big">{slices.htps.toFixed(2)}</dd>
+          </div>
+          <div className="rc-summary-cell">
+            <dt>{tr({ zh: '步数', en: 'Turns' })}</dt>
+            <dd className="rc-summary-big">{slices.htmCount}</dd>
+          </div>
+          <div className="rc-summary-cell">
+            <dt title={tr({
+              zh: '手速能达到的最短时间 ÷ 实际用时。100% = 全程没有停顿。',
+              en: 'What your hands alone would have taken ÷ what it took. 100% = never paused.',
+            })}>{tr({ zh: '流畅', en: 'Fluency' })}</dt>
+            <dd className="rc-summary-big">
+              {analysis?.quality?.flow !== null && analysis?.quality?.flow !== undefined
+                ? `${Math.round(analysis.quality.flow)}%`
+                : '–'}
+            </dd>
+          </div>
+          <div className="rc-summary-cell">
+            <dt>{tr({ zh: '日期', en: 'Date' })}</dt>
+            <dd>{dt.toLocaleDateString()}</dd>
+          </div>
           {solve.device && (
-            <span className="reconstruct-date"> · {solve.device.name}</span>
+            <div className="rc-summary-cell">
+              <dt>{tr({ zh: '魔方', en: 'Cube' })}</dt>
+              <dd className="rc-summary-cube" title={solve.device.name}>{solve.device.name}</dd>
+            </div>
           )}
-        </h2>
+        </dl>
 
         {autoMemoMs !== null && (
           <div
@@ -405,19 +453,24 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
           <QualityRow quality={analysis?.quality ?? null} pending={analysis === null} />
         )}
 
-        {stageSegs && memoMs === undefined && (
-          <StageSegmentsPanel
+        {(stageSegs || walk) && memoMs === undefined && (
+          <StepAnalysis
+            method={method}
+            onMethodChange={setMethod}
             segs={stageSegs}
-            totalMs={solve.timeMs}
-            isZh={isZh}
+            stepMetrics={stepMx}
+            slots={slots}
+            reference={analysis?.reference ?? null}
             ao12={stageAvgs?.ao12 ?? null}
-            ao100={stageAvgs?.ao100 ?? null}
+            walk={walk}
+            isZh={isZh}
+          />
+        )}
+        {stageSegs && memoMs === undefined && method === 'cfop' && (
+          <StageMetaLine
+            segs={stageSegs}
             stepMetrics={stepMx}
             inspectionMs={solve.inspectionMs ?? null}
-            reference={analysis?.reference ?? null}
-            collapsible={isMobile}
-            expanded={stagesExpanded}
-            onToggle={() => setStagesExpanded(v => !v)}
           />
         )}
 
@@ -612,16 +665,6 @@ function QualityRow({ quality, pending }: { quality: SolveQuality | null; pendin
         : tr({ zh: '无参考', en: 'no reference' }),
     },
     {
-      label: tr({ zh: '流畅', en: 'Flow' }),
-      value: quality.flow,
-      hint: quality.idealMs !== null
-        ? tr({
-          zh: `手速可 ${formatSec(quality.idealMs, 1)} / 实际 ${formatSec(quality.solvingMs, 1)}`,
-          en: `hands alone ${formatSec(quality.idealMs, 1)} / spent ${formatSec(quality.solvingMs, 1)}`,
-        })
-        : tr({ zh: '无手速数据', en: 'no turn rate' }),
-    },
-    {
       label: tr({ zh: '无废步', en: 'Waste-free' }),
       value: quality.wasteFree,
       hint: quality.wastedMs > 0
@@ -663,6 +706,8 @@ function refKindLabel(kind: NonNullable<StageReference['kind']>): string {
     case 'library-alg':  return tr({ zh: '库内最短', en: 'shortest in library' });
   }
 }
+
+type StageKey = 'cross' | 'f2l' | 'oll' | 'pll';
 
 function stageLabel(step: StageKey): string {
   switch (step) {
@@ -709,210 +754,37 @@ function ReferenceList({ reference }: { reference: ReferenceResult }) {
   );
 }
 
-/** "ref 6 htm +2" under a stage cell. Silent until the search lands, and for
- *  stages that have no reference (skipped, unreached, engine refused). */
-function StageReferenceLine(
-  { reference, step }: { reference: ReferenceResult | null; step: StageKey },
-) {
-  const r = reference?.stages.find(x => x.step === step);
-  if (!r || r.kind === null || r.refTurns === null || r.delta === null) return null;
-  return (
-    <div className="reconstruct-stage-recexec" title={refKindLabel(r.kind)}>
-      {tr({ zh: '参考', en: 'ref' })} {r.refTurns} {tr({ zh: '步', en: 'htm' })}
-      {r.delta !== 0 && (
-        <span className={`reconstruct-stage-delta ${r.delta > 0 ? 'slower' : 'faster'}`}>
-          {r.delta > 0 ? '+' : ''}{r.delta}
-        </span>
-      )}
-    </div>
-  );
-}
 
-interface StagePanelProps {
+
+/**
+ * The solve-level line the step table has no column for: inspection, pickup,
+ * the recognition/execution totals and put-down. Everything here is about the
+ * WHOLE solve rather than one step, which is exactly why it sits outside the
+ * table instead of being squeezed into a TOTAL cell.
+ */
+function StageMetaLine({
+  segs, stepMetrics, inspectionMs,
+}: {
   segs: NonNullable<ReturnType<typeof computeStageSegments>>;
-  totalMs: number;
-  isZh: boolean;
-  /** Personal stage averages over the last 12 / 100 eligible solves.
-   *  When non-null, each stage cell shows ±% vs avg below the time. */
-  ao12: StageAverages | null;
-  ao100: StageAverages | null;
-  /** Recognition/execution split. When present, each cell gains a rec/exec
-   *  line and its TPS becomes turns/EXECUTION (hand speed) instead of
-   *  turns/stage-time (thinking-diluted). */
   stepMetrics: StepMetricsResult | null;
-  /** Inspection actually used, from the solve record; null when unknown. */
   inspectionMs: number | null;
-  /** Per-stage reference turn counts; null until the deferred search lands. */
-  reference: ReferenceResult | null;
-  collapsible: boolean;
-  expanded: boolean;
-  onToggle: () => void;
-}
-
-type StageKey = 'cross' | 'f2l' | 'oll' | 'pll';
-
-function pickAvg(avgs: StageAverages | null, key: StageKey): number | null {
-  if (!avgs) return null;
-  switch (key) {
-    case 'cross': return avgs.crossMs;
-    case 'f2l':   return avgs.f2lMs;
-    case 'oll':   return avgs.ollMs;
-    case 'pll':   return avgs.pllMs;
+}) {
+  if (!stepMetrics) return null;
+  const t = (ms: number | null): string => (ms === null ? '—' : `${(ms / 1000).toFixed(2)}s`);
+  const parts: string[] = [];
+  if (inspectionMs !== null && inspectionMs > 0) {
+    parts.push(`${tr({ zh: '观察', en: 'inspect' })} ${t(inspectionMs)}`);
   }
-}
-
-function StageSegmentsPanel({
-  segs, totalMs, isZh, ao12, ao100, stepMetrics, inspectionMs, reference,
-  collapsible, expanded, onToggle,
-}: StagePanelProps) {
-  const stages: Array<{
-    key: StageKey;
-    labelEn: string;
-    labelZh: string;
-    ms: number | null;
-    htm: number | null;
-    caseLabel: string | null;
-  }> = [
-    { key: 'cross', labelEn: 'Cross', labelZh: '十字', ms: segs.crossMs, htm: segs.crossHtm, caseLabel: segs.crossSide },
-    { key: 'f2l',   labelEn: 'F2L',   labelZh: 'F2L',  ms: segs.f2lMs,   htm: segs.f2lHtm,   caseLabel: null },
-    { key: 'oll',   labelEn: 'OLL',   labelZh: 'OLL',  ms: segs.ollMs,   htm: segs.ollHtm,   caseLabel: segs.ollCase },
-    { key: 'pll',   labelEn: 'PLL',   labelZh: 'PLL',  ms: segs.pllMs,   htm: segs.pllHtm,   caseLabel: segs.pllCase },
-  ];
-
-  // Bar widths: proportional to per-stage ms over solve total. Stages that
-  // weren't reached get 0 width — the unsolved tail (mid-OLL DNF, etc.) shows
-  // as an empty grey "unfinished" remainder so widths still sum to 100%.
-  const reachedTotal = stages.reduce((acc, s) => acc + (s.ms ?? 0), 0);
-  const denom = totalMs > 0 ? totalMs : Math.max(1, reachedTotal);
-  const unfinishedMs = Math.max(0, totalMs - reachedTotal);
-
-  const formatStageTime = (ms: number | null): string =>
-    ms === null ? '—' : `${(ms / 1000).toFixed(2)}s`;
-
-  const formatStageTps = (ms: number | null, htm: number | null): string => {
-    if (ms === null || htm === null || ms <= 0) return '—';
-    return (htm / (ms / 1000)).toFixed(1);
-  };
-
-  // Solve-level recognition/execution summary, in solve order. Only segments
-  // with something to say are rendered — a solve without inspection or with
-  // an auto-stop (put-down 0) shouldn't print noise.
-  const metaParts: string[] = [];
-  if (stepMetrics) {
-    if (inspectionMs !== null && inspectionMs > 0) {
-      metaParts.push(`${tr({ zh: '观察', en: 'inspect' })} ${formatStageTime(inspectionMs)}`);
-    }
-    if (stepMetrics.pickupMs > 0) {
-      metaParts.push(`${tr({ zh: '拿起', en: 'pickup' })} ${formatStageTime(stepMetrics.pickupMs)}`);
-    }
-    metaParts.push(`${tr({ zh: '识别', en: 'rec' })} ${formatStageTime(stepMetrics.totalRecognitionMs)}`);
-    metaParts.push(`${tr({ zh: '执行', en: 'exec' })} ${formatStageTime(stepMetrics.totalExecutionMs)}`);
-    if (stepMetrics.putDownMs !== null && stepMetrics.putDownMs > 0) {
-      metaParts.push(`${tr({ zh: '放下', en: 'put-down' })} ${formatStageTime(stepMetrics.putDownMs)}`);
-    }
-    if (stepMetrics.execTps !== null) {
-      metaParts.push(`${stepMetrics.execTps.toFixed(1)} ${tr({ zh: '步/秒(执行)', en: 'tps (exec)' })}`);
-    }
+  if (stepMetrics.pickupMs > 0) {
+    parts.push(`${tr({ zh: '拿起', en: 'pickup' })} ${t(stepMetrics.pickupMs)}`);
   }
-
-  return (
-    <AccordionSection
-      className="reconstruct-stages-section"
-      title={
-        <>
-          <Layers size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} />
-          {tr({ zh: 'CFOP 分阶段', en: 'CFOP stage breakdown'
-        })}
-        </>
-      }
-      collapsible={collapsible}
-      expanded={expanded}
-      onToggle={onToggle}
-    >
-      <div className="reconstruct-stage-bar" role="img" aria-label={tr({ zh: '阶段时间分布', en: 'stage time distribution'
-    })}>
-        {stages.map(s => {
-          const pct = denom > 0 ? ((s.ms ?? 0) / denom) * 100 : 0;
-          if (pct <= 0) return null;
-          return (
-            <div
-              key={s.key}
-              className={`reconstruct-stage-seg stage-${s.key}`}
-              style={{ width: `${pct}%` }}
-              title={`${(isZh ? s.labelZh : s.labelEn)}: ${formatStageTime(s.ms)}`}
-            />
-          );
-        })}
-        {unfinishedMs > 0 && (
-          <div
-            className="reconstruct-stage-seg stage-unfinished"
-            style={{ width: `${(unfinishedMs / denom) * 100}%` }}
-            title={tr({ zh: '未完成', en: 'unfinished' })}
-          />
-        )}
-      </div>
-
-      {metaParts.length > 0 && (
-        <div className="reconstruct-stage-meta">{metaParts.join(' · ')}</div>
-      )}
-
-      <div className="reconstruct-stage-grid">
-        {stages.map(s => {
-          const ao12Avg = pickAvg(ao12, s.key);
-          const ao100Avg = pickAvg(ao100, s.key);
-          const renderDelta = (avg: number | null, windowLabel: string) => {
-            if (s.ms === null || avg === null || avg <= 0) return null;
-            const pct = ((s.ms - avg) / avg) * 100;
-            const cls = pct < -1 ? 'faster' : pct > 1 ? 'slower' : 'neutral';
-            const sign = pct > 0 ? '+' : '';
-            return (
-              <span className={`reconstruct-stage-delta ${cls}`}>
-                {sign}{pct.toFixed(0)}% {isZh ? `vs ${windowLabel}` : `vs ${windowLabel}`}
-              </span>
-            );
-          };
-          // Matching step metric (same key set, in solve order). Its TPS is
-          // turns/execution — prefer it over the thinking-diluted stage TPS.
-          const m = stepMetrics?.steps.find(x => x.step === s.key) ?? null;
-          const tpsStr = m && m.tps !== null
-            ? m.tps.toFixed(1)
-            : formatStageTps(s.ms, s.htm);
-          return (
-            <div key={s.key} className="reconstruct-stage-cell">
-              <div className={`reconstruct-stage-dot stage-${s.key}`} />
-              <div className="reconstruct-stage-label">{(isZh ? s.labelZh : s.labelEn)}</div>
-              <div className="reconstruct-stage-time">{formatStageTime(s.ms)}</div>
-              {s.caseLabel ? (
-                <div className="reconstruct-stage-case">{s.caseLabel}</div>
-              ) : null}
-              <div className="reconstruct-stage-tps">
-                {s.htm !== null ? `${s.htm} ${tr({ zh: '步', en: 'htm' })}` : '—'}
-                {' · '}
-                {tpsStr} {tr({ zh: '步/秒', en: 'tps' })}
-              </div>
-              {m && !m.skipped && m.recognitionMs !== null && m.executionMs !== null && (
-                <div className="reconstruct-stage-recexec">
-                  {tr({ zh: '识别', en: 'rec' })} {formatStageTime(m.recognitionMs)}
-                  {' · '}
-                  {tr({ zh: '执行', en: 'exec' })} {formatStageTime(m.executionMs)}
-                </div>
-              )}
-              {m?.skipped && (
-                <div className="reconstruct-stage-recexec">
-                  {tr({ zh: '跳过', en: 'skipped' })}
-                </div>
-              )}
-              <StageReferenceLine reference={reference} step={s.key} />
-              {(ao12Avg !== null || ao100Avg !== null) && s.ms !== null && (
-                <div className="reconstruct-stage-deltas">
-                  {renderDelta(ao12Avg, 'ao12')}
-                  {ao100 && ao100.sampleSize >= 12 && renderDelta(ao100Avg, 'ao100')}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </AccordionSection>
-  );
+  if (stepMetrics.putDownMs !== null && stepMetrics.putDownMs > 0) {
+    parts.push(`${tr({ zh: '放下', en: 'put-down' })} ${t(stepMetrics.putDownMs)}`);
+  }
+  if (stepMetrics.execTps !== null) {
+    parts.push(`${stepMetrics.execTps.toFixed(1)} ${tr({ zh: '步/秒(执行)', en: 'tps (exec)' })}`);
+  }
+  if (segs.crossSide) parts.push(segs.crossSide);
+  if (parts.length === 0) return null;
+  return <div className="reconstruct-stage-meta">{parts.join(' · ')}</div>;
 }

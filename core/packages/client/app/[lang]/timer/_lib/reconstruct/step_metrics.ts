@@ -122,6 +122,69 @@ function countRange(counted: HtmMove[], from: number, to: number): number {
   return n;
 }
 
+/** The five numbers a contiguous run of moves produces. */
+export interface RangeMetric {
+  recognitionMs: number;
+  executionMs: number;
+  stepMs: number;
+  cumulativeMs: number;
+  turns: number;
+  execTurns: number;
+  tps: number | null;
+}
+
+/**
+ * Recognition / execution / turns for `moves(prevEndIdx, endIdx]`.
+ *
+ * Extracted so `f2l_slots.ts` can split F2L into four pairs using exactly this
+ * definition instead of a second copy of it. A slot IS a step; the only thing
+ * that differs is where the boundaries come from.
+ *
+ * `prevEndTs` is the previous step's last turn — the moment this step's clock
+ * starts. It is a parameter rather than derived from `prevEndIdx` because the
+ * first step's clock starts at the solve's first turn, not at a previous move.
+ */
+export function metricForRange(
+  moves: SolveMove[],
+  counted: HtmMove[],
+  prevEndIdx: number,
+  prevEndTs: number,
+  endIdx: number,
+): RangeMetric {
+  const stepMoves = moves.slice(prevEndIdx + 1, endIdx + 1);
+  const firstTs = stepMoves.length > 0 ? stepMoves[0].ts : moves[endIdx].ts;
+  const endTs = moves[endIdx].ts;
+  // First turn that isn't an adjustment — where execution begins. A step
+  // that is all AUF/rotations falls back to its literal first turn.
+  const execStartAt = stepMoves.findIndex(mv => endsRecognition(mv.m));
+  const execStartTs = execStartAt >= 0 ? stepMoves[execStartAt].ts : firstTs;
+
+  const recognitionMs = Math.max(0, execStartTs - prevEndTs);
+  const executionMs = Math.max(0, endTs - execStartTs);
+  // Counted in HTM, so a double turn the cube reported as two quarter turns
+  // is one move — otherwise these numbers can't be compared with a solver's
+  // (reference.ts does exactly that). Attribution is by where each move
+  // STARTED, which is why the merge runs over the whole stream once rather
+  // than per step: a run straddling a step boundary belongs to the step the
+  // cuber was still in when they began turning.
+  const turns = countRange(counted, prevEndIdx + 1, endIdx);
+  const execTurns = countRange(
+    counted,
+    prevEndIdx + 1 + (execStartAt >= 0 ? execStartAt : 0),
+    endIdx,
+  );
+
+  return {
+    recognitionMs,
+    executionMs,
+    stepMs: recognitionMs + executionMs,
+    cumulativeMs: endTs,
+    turns,
+    execTurns,
+    tps: executionMs > 0 && turns > 0 ? turns / (executionMs / 1000) : null,
+  };
+}
+
 export function computeStepMetrics(
   scramble: string,
   moves: SolveMove[],
@@ -162,43 +225,10 @@ export function computeStepMetrics(
       continue;
     }
 
-    const stepMoves = moves.slice(prevEndIdx + 1, endIdx + 1);
-    const firstTs = stepMoves[0].ts;
-    const endTs = moves[endIdx].ts;
-    // First turn that isn't an adjustment — where execution begins. A step
-    // that is all AUF/rotations falls back to its literal first turn.
-    const execStartAt = stepMoves.findIndex(mv => endsRecognition(mv.m));
-    const execStart = execStartAt >= 0 ? stepMoves[execStartAt] : undefined;
-    const execStartTs = execStart ? execStart.ts : firstTs;
-
-    const recognitionMs = Math.max(0, execStartTs - prevEndTs);
-    const executionMs = Math.max(0, endTs - execStartTs);
-    // Counted in HTM, so a double turn the cube reported as two quarter turns
-    // is one move — otherwise these numbers can't be compared with a solver's
-    // (reference.ts does exactly that). Attribution is by where each move
-    // STARTED, which is why the merge runs over the whole stream once rather
-    // than per step: a run straddling a step boundary belongs to the step the
-    // cuber was still in when they began turning.
-    const turns = countRange(counted, prevEndIdx + 1, endIdx);
-    const execTurns = countRange(
-      counted,
-      prevEndIdx + 1 + (execStartAt >= 0 ? execStartAt : 0),
-      endIdx,
-    );
-
-    steps.push({
-      step,
-      skipped: false,
-      recognitionMs,
-      executionMs,
-      stepMs: recognitionMs + executionMs,
-      cumulativeMs: endTs,
-      turns,
-      execTurns,
-      tps: executionMs > 0 && turns > 0 ? turns / (executionMs / 1000) : null,
-    });
+    const m = metricForRange(moves, counted, prevEndIdx, prevEndTs, endIdx);
+    steps.push({ step, skipped: false, ...m });
     prevEndIdx = endIdx;
-    prevEndTs = endTs;
+    prevEndTs = m.cumulativeMs;
   }
 
   const pickupMs = Math.max(0, moves[0].ts);

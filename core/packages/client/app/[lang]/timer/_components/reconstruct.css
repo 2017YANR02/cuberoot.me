@@ -1,7 +1,10 @@
 /* ReconstructModal — owned by Round 12B; do not merge into timer.css. */
 
-.reconstruct-modal {
-  max-width: 560px;
+/* 选择器带上 .timer-modal:两者同权重(0,1,0)时 timer.css 的 480px 后到先得,
+   这一行原本写的 560px 从来没生效过。八列的分步分析表要放得下 —— 480px 下
+   OLL / PLL / 合计 全在视线外,一张必须横向拖才能看完的表等于没有。 */
+.timer-modal.reconstruct-modal {
+  max-width: 880px;
 
   /* CFOP 阶段色:领域色板(哪一段是十字/F2L/OLL/PLL),不是状态语义,所以不套 --signal-*。
      阶段条和阶段圆点原本各硬码一份同样的四个色,这里合成单一源。中饱和度,明暗两档都够对比。 */
@@ -540,4 +543,139 @@
   .reconstruct-playback-speed {
     justify-content: center;
   }
+}
+
+/* ── 分步分析(Step analysis)────────────────────────────────────────────
+   一张表把「哪一步慢」和「慢在识别还是执行」放在同一个视线里 —— 四张卡片要
+   记四个数才能比,一行扫过去就完了。列是方法的各步(CFOP 还会把 F2L 摊成四对),
+   行是同一组五个数。
+   横向滚动只发生在表自己身上(.sa-scroll),页面不跟着晃;首列吸在左边,
+   滚到第八列也知道自己在看哪一行。 */
+.sa { margin: 14px 0 10px; }
+
+.sa-head {
+  display: flex; align-items: baseline; gap: 10px;
+  margin-bottom: 8px;
+}
+.sa-title {
+  margin: 0; font-size: 13px; font-weight: 600;
+  color: var(--muted-foreground); letter-spacing: 0.02em;
+}
+.sa-method { margin-left: auto; }
+.sa-method-select {
+  font: inherit; font-size: 12px; padding: 2px 6px;
+  color: var(--foreground); background: var(--card);
+  border: 1px solid var(--border-default); border-radius: 6px;
+}
+
+/* 各步用时占比。段与列同色,所以扫一眼条就知道那一段是哪一列。 */
+.sa-bar {
+  display: flex; height: 6px; border-radius: 3px; overflow: hidden;
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  margin-bottom: 10px;
+}
+.sa-bar-seg { display: block; min-width: 2px; }
+.sa-bar-seg[data-tone='0'] { background: var(--rc-stage-cross); }
+.sa-bar-seg[data-tone='1'] { background: var(--rc-stage-f2l); }
+.sa-bar-seg[data-tone='2'] { background: var(--rc-stage-oll); }
+.sa-bar-seg[data-tone='3'] { background: var(--rc-stage-pll); }
+/* 相邻同色段之间留一道缝,四对 F2L 才数得清。 */
+.sa-bar-seg + .sa-bar-seg { box-shadow: inset 1px 0 0 var(--background); }
+
+.sa-scroll { overflow-x: auto; overscroll-behavior-x: contain; }
+
+.sa-table {
+  border-collapse: collapse; width: max-content; min-width: 100%;
+  font-variant-numeric: tabular-nums;
+}
+.sa-table th, .sa-table td {
+  padding: 5px 10px; text-align: right; white-space: nowrap;
+  font-size: 13px; color: var(--foreground);
+  border-bottom: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+.sa-table thead th {
+  text-align: right; font-weight: 600; font-size: 12px;
+  border-bottom: 1px solid var(--border-default);
+  padding-bottom: 7px;
+}
+.sa-table thead th[data-tone] .sa-col-name {
+  /* 列名带一枚同色圆点,和上面的条对上。 */
+  display: inline-flex; align-items: center; gap: 5px;
+}
+.sa-table thead th[data-tone] .sa-col-name::before {
+  content: ''; width: 7px; height: 7px; border-radius: 50%; flex: none;
+}
+.sa-table thead th[data-tone='0'] .sa-col-name::before { background: var(--rc-stage-cross); }
+.sa-table thead th[data-tone='1'] .sa-col-name::before { background: var(--rc-stage-f2l); }
+.sa-table thead th[data-tone='2'] .sa-col-name::before { background: var(--rc-stage-oll); }
+.sa-table thead th[data-tone='3'] .sa-col-name::before { background: var(--rc-stage-pll); }
+
+/* case / 情况标签。次要信息,压一档,单独一行免得把列撑宽。 */
+.sa-chip {
+  display: block; margin-top: 2px;
+  font-size: 10px; font-weight: 400; color: var(--muted-foreground);
+}
+
+/* 行名列吸在左边,横向滚动时不跟着走。 */
+.sa-rowhead {
+  position: sticky; left: 0; z-index: 1;
+  text-align: left !important; font-weight: 500;
+  color: var(--muted-foreground); font-size: 12px;
+  background: var(--popover);
+}
+.sa-table thead .sa-rowhead { background: var(--popover); }
+
+.sa-row-strong td, .sa-row-strong .sa-rowhead {
+  font-weight: 600; color: var(--foreground);
+}
+.sa-row-ref td, .sa-row-avg td { color: var(--muted-foreground); font-size: 12px; }
+
+.sa-total-col {
+  font-weight: 600;
+  border-left: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+}
+.sa-pct { margin-left: 5px; font-weight: 400; font-size: 11px; color: var(--muted-foreground); }
+
+.sa-delta { margin-left: 4px; font-size: 11px; }
+.sa-delta.slower { color: var(--signal-warning); }
+.sa-delta.faster { color: var(--signal-success); }
+
+@media (max-width: 480px) {
+  .sa-table th, .sa-table td { padding: 5px 8px; font-size: 12px; }
+}
+
+/* ── 顶部六个数 ────────────────────────────────────────────────────────
+   时间 / TPS / 步数 / 流畅 / 日期 / 魔方。以前散在标题和各个面板里,要自己拼;
+   报告应该一开口就说完。分隔靠竖线不靠卡片框。 */
+.rc-summary {
+  display: flex; flex-wrap: wrap; margin: 10px 0 14px; padding: 0;
+  border: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
+  border-radius: 8px; overflow: hidden;
+}
+.rc-summary-cell {
+  flex: 1 1 96px; min-width: 96px; padding: 8px 12px;
+  border-left: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
+}
+.rc-summary-cell:first-child { border-left: 0; }
+.rc-summary dt {
+  font-size: 11px; color: var(--muted-foreground); margin: 0 0 2px;
+  letter-spacing: 0.02em;
+}
+.rc-summary dd {
+  margin: 0; font-size: 13px; color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+}
+.rc-summary-big { font-size: 19px; font-weight: 600; line-height: 1.2; }
+.rc-summary-pen {
+  margin-left: 5px; font-size: 11px; font-weight: 600;
+  color: var(--destructive);
+}
+.rc-summary-cube {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-family: var(--font-mono);
+}
+
+@media (max-width: 480px) {
+  .rc-summary-cell { flex-basis: 33.33%; min-width: 0; }
+  .rc-summary-big { font-size: 16px; }
 }
