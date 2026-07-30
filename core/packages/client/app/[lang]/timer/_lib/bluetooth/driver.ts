@@ -131,6 +131,23 @@ declare global {
 /*  Driver contract                                                   */
 /* ------------------------------------------------------------------ */
 
+/**
+ * One move on its way to the host, with the cube's own clock reading if the
+ * frame carried one.
+ *
+ * `ts` is milliseconds on the CUBE's clock, not ours — whatever epoch the
+ * firmware counts from. `move_clock.ts` anchors it to local time; the only
+ * property that has to hold is that differences between two `ts` values are the
+ * real interval between those two turns. Leave it undefined rather than
+ * substituting an arrival time: the host can tell "we don't know when" apart
+ * from "we know, and it was then", and every per-move metric depends on that
+ * distinction.
+ */
+export interface TimedMove {
+  mv: string;
+  ts?: number;
+}
+
 export interface CubeDriverStartResult {
   /** Read the most recent battery level (0..100) or null if unavailable. */
   battery: () => Promise<number | null>;
@@ -234,11 +251,13 @@ export interface CubeDriver {
    * `ctx` carries the resolved MAC for MAC-keyed drivers.
    *
    * `deviceTs` is the cube's OWN clock reading for that move, in milliseconds,
-   * for the protocols that carry one (GAN v3/v4). Pass it whenever the frame
-   * has it and omit it otherwise — including for moves recovered from a
-   * history reply, which report the turn but not when it happened. The host
-   * reconciles it against the local clock; see `move_clock.ts` for why
-   * notification arrival time is not a good enough substitute.
+   * for the protocols that carry one: GAN v3/v4 (a 32-bit ms counter in the
+   * move frame), QiYi (a 1.6-ticks-per-ms counter, one per move INCLUDING
+   * history replays) and MoYu32 (accumulated inter-move deltas). Pass it
+   * whenever the frame has it and omit it otherwise — GAN's history replies
+   * report the turn but not when it happened, and a made-up number there is
+   * worse than none. The host reconciles it against the local clock; see
+   * `move_clock.ts` for why notification arrival time is not a substitute.
    */
   start(
     server: BluetoothRemoteGATTServer,

@@ -434,7 +434,7 @@ describe('MoYu32 move stream', () => {
     // NEWEST, so emission order is slot 4, 3, 2, 1, 0.
     // codes: 0=F 3=B' 4=U 9=L' 11=R'
     const moves = decodeMoyu32Frame(moyu32MoveFrame(5, [0, 3, 4, 9, 11]), dec);
-    expect(moves).toEqual(["R'", "L'", 'U', "B'", 'F']);
+    expect(moves.map((m) => m.mv)).toEqual(["R'", "L'", 'U', "B'", 'F']);
     expect(dec.prevMoveCnt).toBe(5);
   });
 
@@ -442,7 +442,8 @@ describe('MoYu32 move stream', () => {
     const dec = createMoyu32State();
     decodeMoyu32Frame(moyu32StateFrame(10), dec);
     // +2 → only the two newest window slots are unseen.
-    expect(decodeMoyu32Frame(moyu32MoveFrame(12, [2, 4, 6, 8, 10]), dec)).toEqual(['U', 'B']);
+    const moves = decodeMoyu32Frame(moyu32MoveFrame(12, [2, 4, 6, 8, 10]), dec);
+    expect(moves.map((m) => m.mv)).toEqual(['U', 'B']);
     expect(dec.prevMoveCnt).toBe(12);
   });
 
