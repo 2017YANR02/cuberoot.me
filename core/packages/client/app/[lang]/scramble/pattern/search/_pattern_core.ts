@@ -18,7 +18,7 @@
  * 纯计算、无 DOM —— 供 _search.worker.ts 与 tests/pattern_search_core.test.ts 共用。
  */
 
-import { CORNER_FACELET, EDGE_FACELET } from '../../solver/facelet';
+import { CORNER_FACELET, EDGE_FACELET } from '@/lib/cube-facelet';
 
 /** 色类/实际色:0..5 = U R F D L B;UI 层的"灰"= 5 号类之外单独的 GRAY。 */
 export const GRAY = 5 as const; // UI pattern 色板里灰的类值(任意定,类值本身无语义)

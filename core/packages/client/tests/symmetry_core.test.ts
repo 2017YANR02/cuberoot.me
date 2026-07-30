@@ -16,7 +16,7 @@ import {
   maskToList, generatorsOf,
 } from '@/app/[lang]/scramble/symmetry/_sym_core';
 import { SYM_PERMS } from '@/app/[lang]/scramble/pattern/search/_pattern_core';
-import { cubieToFacelet, faceletToCubie } from '@/app/[lang]/scramble/solver/facelet';
+import { cubieToFacelet, faceletToCubie } from '@/lib/cube-facelet';
 import { solvedCubie, parseMoves, applySequence, multiply } from '@/app/[lang]/scramble/solver/_kociemba/cube';
 
 const cubeOf = (alg: string) => applySequence(solvedCubie(), parseMoves(alg));

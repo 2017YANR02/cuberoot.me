@@ -20,7 +20,7 @@
  * 纯计算、无 DOM —— 供 _sym_search.worker.ts 与 tests/symmetry_search.test.ts 共用。
  */
 
-import { CORNER_FACELET, EDGE_FACELET } from '../solver/facelet';
+import { CORNER_FACELET, EDGE_FACELET } from '@/lib/cube-facelet';
 import { edgeContinuous } from '../pattern/search/_pattern_core';
 import {
   SYMS, SYM_INV, N_SYM, addCOri, CORNER_AXIS, EDGE_AXIS, maskToList, normalizer,

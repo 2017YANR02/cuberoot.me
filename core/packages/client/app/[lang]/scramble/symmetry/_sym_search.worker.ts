@@ -11,7 +11,7 @@
 /// <reference lib="webworker" />
 
 import { searchSymmetric, type PermMode } from './_sym_search';
-import { faceletToCubie } from '../solver/facelet';
+import { faceletToCubie } from '@/lib/cube-facelet';
 import { formatMoves, invertSequence } from '../solver/_kociemba/cube';
 import { buildMoveTables, type MoveTables } from '../solver/_kociemba/movetables';
 import { buildPruneTables, type PruneTables } from '../solver/_kociemba/prune';

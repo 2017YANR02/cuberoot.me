@@ -10,7 +10,7 @@ import { searchSymmetric, type SymSearchOptions } from '@/app/[lang]/scramble/sy
 import {
   SYM_TYPES, classifyCube, symMask, maskOrder, normalizer, conjugateCount, canonicalKey,
 } from '@/app/[lang]/scramble/symmetry/_sym_core';
-import { faceletToCubie, validateFacelet } from '@/app/[lang]/scramble/solver/facelet';
+import { faceletToCubie, validateFacelet } from '@/lib/cube-facelet';
 
 function run(over: Partial<SymSearchOptions>): string[] {
   const out: string[] = [];

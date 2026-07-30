@@ -16,7 +16,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { SOLVED_FACELET, STICKER_SIBLINGS, cubieToFacelet, validateFacelet } from './facelet';
+import { SOLVED_FACELET, STICKER_SIBLINGS, cubieToFacelet, validateFacelet } from '@/lib/cube-facelet';
 import { applySequence, solvedCubie } from './_kociemba/cube';
 
 export type FaceLetter = 'U' | 'R' | 'F' | 'D' | 'L' | 'B';
