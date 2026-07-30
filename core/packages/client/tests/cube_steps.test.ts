@@ -19,10 +19,18 @@ import { loadCstimerCubeutil, cstimerFileExists } from './_cstimer_cubeutil';
 
 const SOLVED = 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB';
 
-const STEPS: CubeStep[] = ['cross', 'f2l', 'oll', 'eoll', 'cpll', 'fb', 'sb', 'cmll', 'solved'];
+const STEPS: CubeStep[] = ['cross', 'f2l', 'oll', 'ocll', 'eoll', 'cpll', 'fb', 'sb', 'cmll', 'solved'];
+
+/**
+ * `ocll` is ours, not upstream's — csTimer has no mask for "last-layer corners
+ * oriented" because it has no alg library to drill CLS from. So it takes part in
+ * every test here EXCEPT the parity ones, where upstream would silently fall
+ * through to its plain solved check and disagree for the wrong reason.
+ */
+const UPSTREAM_STEPS: CubeStep[] = STEPS.filter((s) => s !== 'ocll');
 
 /** The steps we only sweep 6 orientations for — see the invariance test below. */
-const SIX_AXIS_STEPS: CubeStep[] = ['cross', 'f2l', 'oll', 'eoll', 'cpll', 'solved'];
+const SIX_AXIS_STEPS: CubeStep[] = ['cross', 'f2l', 'oll', 'ocll', 'eoll', 'cpll', 'solved'];
 
 /** A spread of real states: scrambles, and partial solves of them. */
 function sampleStates(): string[] {
@@ -116,6 +124,27 @@ describe('geometry model', () => {
     }
   });
 
+  /**
+   * A tempting shortcut that does NOT hold, pinned so nobody takes it.
+   *
+   * It looks as though every mask but `solved` should be blind to the AUF: they
+   * leave the last layer unconstrained, or ask only that its stickers agree with
+   * each other, and a U turn maps corners to corners. But the orientation sweep
+   * may have matched the mask with the U face as the FINISHED side — a cross
+   * built on top is a cross — and then a U turn is not an AUF at all, it takes
+   * the thing apart. Only whole-cube rotations are safe (the test above).
+   */
+  it('lets a U turn change a verdict, because the sweep may be matching the far side', () => {
+    const crossOnTop = rotateFacelets(toFaceletString(applyScramble(3, "R U R' U'")), 'x2');
+    expect(stepSolved('cross', crossOnTop)).toBe(true);
+    expect(stepSolved('cross', rotateFacelets(crossOnTop, 'U'))).toBe(false);
+    // And the plain case, for contrast: with the cross where it belongs, a U turn
+    // leaves it alone.
+    const crossBelow = toFaceletString(applyScramble(3, "R U R' U'"));
+    expect(stepSolved('cross', crossBelow)).toBe(true);
+    expect(stepSolved('cross', rotateFacelets(crossBelow, 'U'))).toBe(true);
+  });
+
   it('keeps every face uniform on a solved cube under all 24', () => {
     for (const t of orientationTables()) {
       const rotated = t.map((src) => SOLVED[src]).join('');
@@ -174,7 +203,7 @@ describe('parity with csTimer cubeutil', () => {
     let agreements = 0;
     const positives = new Map<CubeStep, number>();
     for (const facelets of states) {
-      for (const step of STEPS) {
+      for (const step of UPSTREAM_STEPS) {
         const mine = stepSolved(step, facelets);
         // Upstream has no 'solved' entry in stepParams: it falls through to the
         // plain solved mask with a single axis, which is the same statement.

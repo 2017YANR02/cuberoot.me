@@ -148,14 +148,21 @@ export interface BluetoothCubeHandle {
   setGyro(enabled: boolean): Promise<boolean>;
   /**
    * Report the cube's CURRENT state as `target` from now on, so a trainer can
-   * present the next case without the user setting it up by hand. Returns false
-   * when there is nothing to do (already there) or the states are unusable.
+   * present the next case without the user setting it up by hand. Returns true
+   * once the cube reports `target` — including when it already did and no offset
+   * was needed — and false only when a state was unusable and nothing changed.
    *
    * While this is in effect, `facelets` / `getFaces()` describe the training
    * frame and NOT the cube in the user's hands — anything that cares about the
    * real cube (a scramble check, a WCA solve) must clear it first.
+   *
+   * `step` says what finishing this case means, and is applied in the same
+   * breath as the state rather than by re-rendering with a new `solvedStep`.
+   * Drilling a mixed set changes both at once, and doing it in two steps has a
+   * window in which the old step judges the new case — see `hijackStepRef`.
+   * Omit it to keep judging by `solvedStep`.
    */
-  hijackTo(target: import('../cube/state').CubeFaces | string): boolean;
+  hijackTo(target: import('../cube/state').CubeFaces | string, step?: CubeStep): boolean;
   /** Drop the hijack: go back to reporting the physical cube. */
   clearHijack(): void;
   /** True while a hijack is in effect. */
@@ -278,9 +285,23 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
    */
   const hijackRef = useRef<StateHijack | null>(null);
   const [hijacked, setHijacked] = useState(false);
-  /** Which step counts as done. A full solve unless a caller is drilling one. */
-  const solvedStepRef = useRef<CubeStep>(opts.solvedStep ?? 'solved');
-  useEffect(() => { solvedStepRef.current = opts.solvedStep ?? 'solved'; }, [opts.solvedStep]);
+  /**
+   * Which step counts as done. A full solve unless a caller is drilling one.
+   *
+   * Two sources, and the split matters: the option is a render-time preference
+   * copied in by an effect, while `hijackTo` sets one SYNCHRONOUSLY alongside
+   * the state it installs. A trainer that changed the step by re-rendering
+   * would have a window between the two — the offset in place, the step still
+   * the previous case's — and if the new case happened to satisfy the old step,
+   * `publishSolved` would latch `wasSolved` on a state nobody solved. The real
+   * finish then produces no edge at all and the clock never stops. Mixed
+   * sessions, where consecutive cases genuinely want different steps, hit that
+   * on their first PLL after an OLL.
+   */
+  const optionStepRef = useRef<CubeStep>(opts.solvedStep ?? 'solved');
+  const hijackStepRef = useRef<CubeStep | null>(null);
+  useEffect(() => { optionStepRef.current = opts.solvedStep ?? 'solved'; }, [opts.solvedStep]);
+  const activeStep = () => hijackStepRef.current ?? optionStepRef.current;
   // True only when the user (or unmount) explicitly tore the connection
   // down. The gattserverdisconnected handler reads this to decide whether
   // to attempt auto-reconnect.
@@ -323,7 +344,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
   const publishState = useCallback((rawFacelets: string) => {
     const view = applyHijack(hijackRef.current, rawFacelets);
     setFacelets(view);
-    publishSolved(stepSolved(solvedStepRef.current, view));
+    publishSolved(stepSolved(activeStep(), view));
   }, [publishSolved]);
 
   const handleMove = useCallback((move: string, deviceTs?: number) => {
@@ -344,12 +365,16 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     // and notifying first hands them the state as it was one move ago — which
     // is exactly one move short at the instant a scramble is completed, so the
     // check fires "doesn't match the scramble" on a cube that does.
-    const isSolved = trackerRef.current.applyMove(move);
-    setFacelets(toFaceletString(trackerRef.current.getFaces()));
+    trackerRef.current.applyMove(move);
     setLastMove(move);
     onMoveRef.current?.(move, ts);
-    publishSolved(isSolved);
-  }, [publishSolved]);
+    // Through `publishState`, NOT the tracker's own opinion of "solved": the
+    // tracker knows nothing about a training offset or about stopping on a
+    // sub-step, so publishing its verdict here would leave every drill unable
+    // to finish — the two would only agree in the one case where there is no
+    // offset and the step is a full solve.
+    publishState(toFaceletString(trackerRef.current.getFaces()));
+  }, [publishState]);
 
   /**
    * The cube told us where it actually is. Adopt it wholesale — this reading
@@ -367,9 +392,8 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
    */
   const handleCubeState = useCallback((facelets: string) => {
     if (!trackerRef.current.adoptFacelets(facelets)) return;
-    setFacelets(facelets);
-    publishSolved(trackerRef.current.isSolved());
-  }, [publishSolved]);
+    publishState(facelets);
+  }, [publishState]);
 
   const cancelPendingReconnect = useCallback(() => {
     if (reconnectTimerRef.current != null) {
@@ -448,6 +472,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       // The cube was out of contact and may have been turned, so an offset
       // measured before the outage no longer means anything.
       hijackRef.current = null;
+      hijackStepRef.current = null;
       setHijacked(false);
       wasSolvedRef.current = true;
       setSolved(true);
@@ -553,26 +578,35 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     // "The cube in my hands is solved" is a statement about the PHYSICAL cube,
     // so any pretence about where it is has to go with it.
     hijackRef.current = null;
+    hijackStepRef.current = null;
     setHijacked(false);
     wasSolvedRef.current = true;
     setSolved(true);
     publishState(toFaceletString(trackerRef.current.getFaces()));
   }, [publishState]);
 
-  const hijackTo = useCallback((target: import('../cube/state').CubeFaces | string): boolean => {
+  const hijackTo = useCallback((target: import('../cube/state').CubeFaces | string, step?: CubeStep): boolean => {
     const raw = toFaceletString(trackerRef.current.getFaces());
+    const wanted = typeof target === 'string' ? target : toFaceletString(target);
     const h = makeHijack(raw, target);
-    if (!h) return false;
+    // `makeHijack` returns null for two very different reasons. "The cube is
+    // already there" still has to install the step and publish — otherwise a
+    // case that happens to match the cube's current state would be judged by the
+    // PREVIOUS case's step. "Unusable state" must change nothing at all.
+    if (!h && raw !== wanted) return false;
     hijackRef.current = h;
-    setHijacked(true);
+    // Set before publishing, not by a re-render: see `hijackStepRef`.
+    hijackStepRef.current = step ?? null;
+    setHijacked(h !== null);
     // Publish at once: the case has to appear without waiting for a turn.
     publishState(raw);
     return true;
   }, [publishState]);
 
   const clearHijack = useCallback(() => {
-    if (!hijackRef.current) return;
+    if (!hijackRef.current && hijackStepRef.current === null) return;
     hijackRef.current = null;
+    hijackStepRef.current = null;
     setHijacked(false);
     publishState(toFaceletString(trackerRef.current.getFaces()));
   }, [publishState]);
@@ -679,6 +713,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       // that restarted its counter), so never carry the old one across.
       moveClockRef.current.reset();
       hijackRef.current = null;
+      hijackStepRef.current = null;
       setHijacked(false);
       wasSolvedRef.current = true;
       setSolved(true);

@@ -62,18 +62,26 @@ csTimer 是这块的**正确基线**：它的智能魔方链路被上万人用�
 | 自定义「已还原」基准状态 | ✅ `giiSolved` | ❌ | 贴纸错位的魔方没法用 | P2 |
 | 掉包自愈（几乎还原就当还原） | ✅ `giiAED` | ✅ **更好**：GAN v3/v4 走历史补齐，QiYi 走状态回填 | — | 我们是精确恢复，不是启发式 |
 
-### D. 训练模式（**我们整块没有**）
+### D. 训练模式（Sprint 10 已打通）
 
 | 功能 | cstimer 已有 | timer 已有 | 缺失 | 计划 |
 |---|---|---|---|---|
-| 子步自动停表（只练 OLL 就 OLL 完成即停） | ✅ `giiMode='t'` + `getStepProgress`，覆盖 coll/cmll/oll/eols/wvls/zbls/f2l/lsll2 | ❌ | 全部 | **P0** |
-| **状态劫持**：不用把魔方还原就能重复练同一个 case | ✅ `hackedSolvedCubieInv`（`bluetoothutil.js:663`） | ❌ | 全部 | **P0**，这是智能魔方训练器的核心机关 |
-| 连续训练：练完自动出下一题、自动预备 | ✅ `giiMode='at'` | ❌ | 全部 | P0（同上） |
-| 训练时不记成绩、只推进 | ✅ 零耗时即 `scramble/next` | ❌ | — | P0（同上） |
+| 子步自动停表（只练 OLL 就 OLL 完成即停） | ✅ `giiMode='t'` + `getStepProgress`，覆盖 coll/cmll/oll/eols/wvls/zbls/f2l/lsll2 | ✅ `_trainer/smartcube.ts` 的 `SET_STEP`（Sprint 10），覆盖 17 个 set | — | 已完成；比上游多 `ocll`（CLS 用），且判不了的 set 明确不进表 |
+| **状态劫持**：不用把魔方还原就能重复练同一个 case | ✅ `hackedSolvedCubieInv`（`bluetoothutil.js:663`） | ✅ `hijackTo`（Sprint 9）+ 每题自动重新劫持（Sprint 10） | — | 已完成 |
+| 连续训练：练完自动出下一题、自动预备 | ✅ `giiMode='at'` | ✅ `useTrainerCube`（Sprint 10），带 500ms 收尾窗口 | — | 已完成；收尾窗口是上游没有的（上游不停在子步前一步，撞不到这个问题） |
+| 训练时不记成绩、只推进 | ✅ 零耗时即 `scramble/next` | ✅ 由构造满足：trainer 有自己的 store，不碰 `/timer` 成绩表 | — | — |
+| 训练题目来自公式库 + SRS 排序 | ❌ 上游没有公式库 | ✅ `/alg` 全部 set + 已有 SRS | — | 我们独有 |
 
-> 我们已有 `/alg` 公式库 + SRS 记忆系统 + trainer 页面，但**没有和智能魔方打通**。
-> 打通之后是「拿真魔方练 PLL，拧完自动判定、自动下一题、自动记录识别/执行时间」——
+> `/alg` 公式库 + SRS + trainer 页面与智能魔方已在 Sprint 10 打通：
+> 拿真魔方练 PLL，魔方自己变成那一题，拧完自动判定、自动下一题，全程不用还原。
 > 这是我们相对 csTimer 唯一能明显做得更好的地方（它没有公式库和 SRS）。
+> 还差的是「识别/执行时间分离」——归 `SMART_CUBE_RESEARCH.md` 的 P0，不在本表。
+>
+> 一个数据侧的坑：库里的 scramble 与库里的公式**不按 AUF 配对**
+> （scramble 把 case 摆在任意 AUF，F2L 家族还带任意 `y`；公式带的是某一标准摆法的 AUF）。
+> 产品侧无影响（人本来就自己调 AUF），但要做「AUF 提示」会撞上。
+> 另有 1/302 个 ZBLS case 的部分 scramble **开局就满足停表判据**，
+> `autoStopStep` 已拦下退回手动。
 
 ### E. 可视化
 
@@ -140,11 +148,15 @@ csTimer 拿到后做两件事（`gancube.js:461-488`、`bluetoothutil.js:407-475
 
 ## 优先级汇总
 
-**P0（做智能魔方训练平台的前提）**
+**P0（做智能魔方训练平台的前提）—— 已全部完成**
 1. ~~设备时间戳~~ ✅ Sprint 3 / 5（GAN v3/v4 + QiYi + MoYu32）
 2. ~~逐步打乱提示（变暗/高亮/✓）+ 拧歪时给回到同一打乱的路径~~ ✅ Sprint 6 / 7
-3. 训练模式：子步自动停表 + 状态劫持 + 连续训练循环，并接上已有的 `/alg` 公式库和 SRS
-   —— **P0 只剩这一条**
+3. ~~训练模式：子步自动停表 + 状态劫持 + 连续训练循环，并接上已有的 `/alg` 公式库和 SRS~~
+   ✅ Sprint 8（判定引擎）/ 9（劫持）/ 10（接线 + UI）
+
+> 迁移表的 P0 到此清空。**下一批 P0 在 `SMART_CUBE_RESEARCH.md`** —— 那份是
+> 对标 XC大师 / GAN 魔方星球 / Cubeast 的平台化清单（识别与执行分离、分层复盘、
+> 每阶段与最优解的差距、废动作检测），与「对齐 csTimer」是两件事。
 
 **P1**
 4. 观察超时自动 +2 / DNF
@@ -176,3 +188,6 @@ csTimer 拿到后做两件事（`gancube.js:461-488`、`bluetoothutil.js:407-475
 
 - 2026-07-29：首版。Sprint 1 修好的 GAN v3/v4 状态同步、Sprint 3 修好的
   QiYi 状态采纳，均已反映在表里。
+- 2026-07-30：D 节（训练模式）随 Sprint 8/9/10 全部落地，本表 P0 清空。
+  记下两条数据侧事实：库里 scramble 与公式不按 AUF 配对；1/302 个 ZBLS case
+  的部分 scramble 开局即满足停表判据。
