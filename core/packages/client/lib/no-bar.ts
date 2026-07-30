@@ -13,7 +13,7 @@
  * 同一个种子跑出来的数逐位可复现,`tests/no_bar.test.ts` 锁着。
  */
 
-import { cubieToFacelet } from '@/app/[lang]/scramble/solver/facelet';
+import { cubieToFacelet } from '@/lib/cube-facelet';
 import type { CubieCube } from '@/app/[lang]/scramble/solver/_kociemba/cube';
 
 /** 面内正交相邻的 12 对下标(每面)。 */

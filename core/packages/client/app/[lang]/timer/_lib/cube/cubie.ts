@@ -16,10 +16,14 @@
  *   ca[i] = orientation << 3 | permutation      (corners, ori 0..2)
  *   ea[i] = permutation  << 1 | orientation     (edges,   ori 0..1)
  *
- * Deliberately NOT reusing `scramble/solver/facelet.ts`: that module pulls in
- * the Kociemba move tables, which is a large dependency to drag into the
- * Bluetooth path for what amounts to two lookup tables.
+ * The `cp/co/ep/eo` model the solver speaks lives elsewhere
+ * (`lib/cube-facelet.ts`); this one stays separate because the wire encoding is
+ * the packed `ca`/`ea` above plus the checksum completion, neither of which the
+ * solver has any use for. The sticker numbering IS shared — imported below
+ * rather than copied.
  */
+
+import { CORNER_FACELET, EDGE_FACELET } from '@/lib/cube-facelet';
 
 /**
  * Which facelets belong to which piece, and in what orientation order.
@@ -40,16 +44,11 @@ export interface FaceletTables {
 }
 
 /** csTimer's `CubieCube.cFacelet` / `eFacelet` — the default for every brand
- *  that speaks Kociemba numbering. */
+ *  that speaks Kociemba numbering. Same tables the solver side reads facelets
+ *  with, so they come from one place. */
 export const DEFAULT_FACELET_TABLES: FaceletTables = {
-  corners: [
-    [8, 9, 20], [6, 18, 38], [0, 36, 47], [2, 45, 11],
-    [29, 26, 15], [27, 44, 24], [33, 53, 42], [35, 17, 51],
-  ],
-  edges: [
-    [5, 10], [7, 19], [3, 37], [1, 46], [32, 16], [28, 25],
-    [30, 43], [34, 52], [23, 12], [21, 41], [50, 39], [48, 14],
-  ],
+  corners: CORNER_FACELET,
+  edges: EDGE_FACELET,
 };
 
 export interface CubieState {

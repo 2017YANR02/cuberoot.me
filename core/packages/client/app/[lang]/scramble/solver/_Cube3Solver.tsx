@@ -27,7 +27,7 @@ import { streamApiUrl } from '@/lib/api-base';
 import { persistItem } from '@/lib/safe-storage';
 import { authHeaders } from '@/lib/admin-api';
 import { useAuthStore } from '@/lib/auth-store';
-import { faceletToCubie, validateFacelet, cubieToFacelet } from './facelet';
+import { faceletToCubie, validateFacelet, cubieToFacelet } from '@/lib/cube-facelet';
 import {
   formatMoves,
   invertSequence,

@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { applyAlgExtended } from '@/app/[lang]/scramble/symmetry/_alg';
 import { canonicalKey, cubieKey } from '@/app/[lang]/scramble/symmetry/_sym_core';
-import { cubieToFacelet } from '@/app/[lang]/scramble/solver/facelet';
+import { cubieToFacelet } from '@/lib/cube-facelet';
 import {
   FACE_DIAG_PAIRS, FACE_ORTHO_PAIRS, faceContacts, makeRng, randomCubie, sampleNoBar,
 } from '@/lib/no-bar';

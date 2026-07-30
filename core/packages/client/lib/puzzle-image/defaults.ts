@@ -1,4 +1,4 @@
-import { SOLVED_FACELET } from '@/app/[lang]/scramble/solver/facelet';
+import { SOLVED_FACELET } from '@/lib/cube-facelet';
 import { CUBE_FILL } from '@/lib/cube-colors';
 import type { FaceKey, ImageSpec, PuzzleType, PuzzleVariant } from './types';
 
