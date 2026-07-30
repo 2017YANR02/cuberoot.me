@@ -1,11 +1,11 @@
-/* Puzzle-image studio chrome. Was the INLINE_CSS blob in app/[lang]/visualcube/page.tsx;
- * the vc-* class names are kept verbatim so the existing look (and app/globals.css's
- * rule for .vc-editor-page) still applies to the extracted components.
+/* Puzzle-image chrome. Was the INLINE_CSS blob in the retired
+ * app/[lang]/visualcube/page.tsx; the vc-* class names are kept verbatim so the
+ * existing look (and app/globals.css's rule for .vc-editor-page) still applies.
  *
  * Two roots declare the token aliases:
- *   .vc-editor-page — the /visualcube page host (max-width + page background)
- *   .vc-studio      — <PuzzleImageStudio> itself, so it also works mounted in a
- *                     narrow sidebar (mode="panel") outside the page host.
+ *   .vc-editor-page — a full-page host (max-width + page background); /sim/batch
+ *   .vc-studio      — <PuzzleImageStudio> itself, which mounts in the /sim
+ *                     sidebar, i.e. WITHOUT a page host around it
  *
  * Colors are theme tokens. Puzzle sticker colors are DATA and live in the
  * renderers, never here. */
@@ -63,10 +63,7 @@
   overflow: hidden;
 }
 .vc-preview svg { display: block; max-width: 100%; max-height: calc(45vh - 48px); width: auto; height: auto; }
-.vc-preview-draggable { cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
-.vc-preview-draggable.dragging { cursor: grabbing; }
-.vc-preview-draggable svg { pointer-events: none; }
-/* Sticker-click authoring: the paths must take the click, so re-enable them. */
+/* Sticker-click authoring: the paths must take the click. */
 .vc-preview-pickable svg { pointer-events: auto; }
 .vc-preview-pickable [data-sid] { cursor: crosshair; }
 
@@ -105,9 +102,11 @@
   font-size: 12px; font-weight: 500; color: var(--vc-text-dim);
   text-transform: uppercase; letter-spacing: 0.5px;
 }
-.vc-label-secondary { min-width: 0; padding-left: 16px; }
+/* 次级标签(同一行里的第二个旋钮,如「物理尺寸」)。缩进 16px 是宽页两栏时代的对齐,
+   面板里行是竖排的,缩进只会看着歪 —— 只留 min-width 归零。 */
+.vc-label-secondary { min-width: 0; }
 
-.vc-num, .vc-text, .vc-num-sm, .vc-color-text, .vc-select, .vc-select-sm {
+.vc-num, .vc-text, .vc-num-sm, .vc-color-text, .vc-select {
   background: var(--vc-input); color: var(--vc-text);
   border: 1px solid transparent; border-radius: 3px;
   padding: 6px 9px; font-size: 13px; font-family: inherit;
@@ -119,15 +118,11 @@
 .vc-text { flex: 1; min-width: 0; font-family: var(--font-mono, monospace); }
 .vc-textarea { resize: vertical; min-height: 36px; }
 .vc-color-text { width: 96px; font-size: 12px; font-family: var(--font-mono, monospace); }
-.vc-select-sm { width: 56px; padding: 4px 7px; font-size: 12px; }
 .vc-num:focus, .vc-text:focus, .vc-num-sm:focus, .vc-color-text:focus,
-.vc-select:focus, .vc-select-sm:focus {
+.vc-select:focus {
   border-color: var(--vc-accent);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent);
 }
-
-/* 皮肤走 globals.css 的 input[type=range] 基础皮肤;这里只留布局。 */
-.vc-range { flex: 1; min-width: 120px; }
 
 .vc-color, .vc-color-sm {
   padding: 0; border: none; border-radius: 3px; cursor: pointer; background: transparent;
@@ -159,25 +154,12 @@
 }
 .vc-btn-icon:hover { background: var(--vc-hover); color: var(--vc-text); }
 
-.vc-algtype { display: flex; gap: 10px; align-items: center; font-size: 13px; color: var(--vc-text-dim); }
-
-.vc-keyrow { display: flex; flex-wrap: wrap; gap: 3px; }
-
 .vc-arrow-builder {
   display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 12px;
   background: var(--vc-input); padding: 10px 12px; border-radius: 4px;
   color: var(--vc-text-dim);
 }
 .vc-arrow-builder > span { color: var(--vc-text-dim); margin-right: -2px; }
-
-.vc-face-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
-.vc-face-cell {
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-  font-size: 11px; color: var(--vc-text-dim); padding: 6px; background: var(--vc-input); border-radius: 3px;
-}
-.vc-face-cell input[type=color] { width: 100%; height: 24px; padding: 0; border: none; border-radius: 2px; cursor: pointer; background: transparent; }
-.vc-face-cell input[type=color]::-webkit-color-swatch { border: none; border-radius: 2px; }
-.vc-face-cell input[type=color]::-moz-color-swatch { border: none; border-radius: 2px; }
 
 .vc-api-doc {
   margin-top: 24px; padding: 14px 16px;
@@ -210,24 +192,23 @@
 }
 .vc-api-note { font-size: 12px; opacity: 0.85; margin-top: 12px; }
 
-/* mode="panel": a narrow sidebar mount. Same controls, stacked — nothing dropped. */
-.vc-studio-panel .vc-row { flex-direction: column; align-items: stretch; gap: 6px; }
-.vc-studio-panel .vc-label { min-width: 0; }
-/* 面板模式靠左上:侧栏比图窄不了多少,居中会在图左侧留一条对不齐的空带,而面板里
-   其它行都是左对齐的。独立 studio 页保持居中(那是整页的主视觉,不受此影响)。 */
-.vc-studio-panel .vc-preview-wrap {
+/* The studio is a narrow sidebar mount (there is no wide page host any more):
+   every row stacks. */
+.vc-studio .vc-row { flex-direction: column; align-items: stretch; gap: 6px; }
+.vc-studio .vc-label { min-width: 0; }
+/* 靠左上:侧栏比图窄不了多少,居中会在图左侧留一条对不齐的空带,而面板里其它行
+   都是左对齐的。 */
+.vc-studio .vc-preview-wrap {
   position: static; padding: 12px; max-height: none;
   justify-content: flex-start; align-items: flex-start;
 }
-.vc-studio-panel .vc-face-grid { grid-template-columns: repeat(3, 1fr); }
-.vc-studio-panel .vc-api-doc { margin-top: 16px; padding: 10px 12px; }
-.vc-studio-panel .vc-api-example { white-space: pre-wrap; }
+.vc-studio .vc-api-doc { margin-top: 16px; padding: 10px 12px; }
+.vc-studio .vc-api-example { white-space: pre-wrap; }
 
 @media (max-width: 768px) {
   .vc-row { flex-direction: column; align-items: stretch; gap: 6px; padding: 10px 0; }
   .vc-label { min-width: 0; font-size: 11px; }
   .vc-num, .vc-text, .vc-num-sm { font-size: 12px; }
-  .vc-face-grid { grid-template-columns: repeat(3, 1fr); }
   .vc-preview-wrap { padding: 16px; }
   .vc-api-table { font-size: 11px; }
   .vc-api-table th, .vc-api-table td { padding: 5px 6px; }

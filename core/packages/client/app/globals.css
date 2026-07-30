@@ -148,7 +148,7 @@ body {
    this, max-width pages leak light bg on the sides. These pages don't
    participate in ThemeToggle — always dark, by design.
    NOTE: Battle, Trainer (.trainer-root / .bld-trainer-root), Recon (.recon-page)
-   and VisualCube editor (.vc-editor-page) are NO LONGER dark-locked — they follow
+   and the puzzle-image pages (.vc-editor-page) are NO LONGER dark-locked — they follow
    the user's chosen theme via the :root token set (chrome fully tokenized in
    their own CSS).
    `:not([data-palette-scheme=dark])` 让这些数据密集页只在「暗色」配色主题(寒潭/乌金)

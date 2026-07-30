@@ -11,22 +11,24 @@
  *   net-paint-3x3 <InteractiveCubeNet> → the 3x3 net paint editor
  *   skewb-net     <scramble-display>   → cubing.js custom element
  *
- * plus drag-to-rotate. Dispatch is a REGISTRY keyed on (puzzleType, view) —
- * `view` being cubeView for a cube and puzzleVariant otherwise — so a new
- * renderer is one row, not a sixth `if`.
+ * Dispatch is a REGISTRY keyed on (puzzleType, view) — `view` being cubeView for
+ * a cube and puzzleVariant otherwise — so a new renderer is one row, not a sixth
+ * `if`. The picture is passive: drag-to-rotate lived on the retired page, where
+ * this preview WAS the cube; in the /sim panel it mirrors the sim, whose own
+ * 左右 / 上下 sliders (and the real 3D cube next to it) own the camera.
  *
  * The root keeps the class `vc-preview`: app/globals.css and puzzle-image.css
  * key off it, and the studio's export path serializes its <svg> as a last resort
  * as the zero-loss oracle. Do not rename it.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import InteractiveCubeNet from '@/app/[lang]/scramble/solver/_InteractiveCubeNet';
 import { PuzzleSVG, type SrColor } from '@/components/PuzzleSVG';
 import { CUBE_FILL } from '@/lib/cube-colors';
 import { SQ1_COLORS } from '@/app/[lang]/sim/engine/sq1/sq1Colors';
 import { invertAlg } from '@/lib/cube3';
-import { rotationDefaultsFor, rotationsMatchDefault } from '@/lib/puzzle-image/defaults';
+import { rotationsMatchDefault } from '@/lib/puzzle-image/defaults';
 import { srPromoteAxis } from '@cuberoot/shared/sr-rotations';
 import { renderSpecSvg, srKindOf } from '@/lib/puzzle-image/render';
 import { sizeEngineSvg } from '@/lib/puzzle-image/engine-svg';
@@ -80,12 +82,8 @@ function SkewbNetPreview({ scramble, pixelSize }: { scramble: string; pixelSize:
 
 type RendererId = 'pure' | 'sr-puzzlegen' | 'net-paint-3x3' | 'skewb-net-display';
 
-interface RendererEntry {
-  /** Most rows are a constant; cube `net` alone needs the size to choose. */
-  renderer: RendererId | ((s: ImageSpec) => RendererId);
-  /** Drag-to-rotate: only the projected (non-unfolded) views have a viewport. */
-  draggable: boolean;
-}
+/** Most rows are a constant; cube `net` alone needs the size to choose. */
+type RendererEntry = RendererId | ((s: ImageSpec) => RendererId);
 
 /** Extra `.vc-preview` class, keyed on the RESOLVED renderer — not the row, so a
  *  4x4 `cube:net` (which resolves to the pure tnoodle SVG, not the 3x3 paint
@@ -99,35 +97,33 @@ const RENDERER_CLASS: Partial<Record<RendererId, string>> = {
 /** key = `${puzzleType}:${cubeView | puzzleVariant}`. Every combination the codec
  *  can produce has a row — an unknown key falls back to the pure renderer. */
 const REGISTRY: Record<string, RendererEntry> = {
-  'cube:normal': { renderer: 'pure', draggable: true },
-  'cube:plan':   { renderer: 'pure', draggable: true },
-  'cube:trans':  { renderer: 'pure', draggable: true },
+  'cube:normal': 'pure',
+  'cube:plan':   'pure',
+  'cube:trans':  'pure',
   // 3x3 net is the paint editor; every other size falls through to the tnoodle net.
-  'cube:net':    { renderer: (s) => (s.cubeSize === 3 ? 'net-paint-3x3' : 'pure'), draggable: false },
-  'cube:wca':    { renderer: 'pure', draggable: false },
+  'cube:net':    (s) => (s.cubeSize === 3 ? 'net-paint-3x3' : 'pure'),
+  'cube:wca':    'pure',
 
-  'sq1:iso':      { renderer: 'sr-puzzlegen', draggable: true },
-  'sq1:top':      { renderer: 'sr-puzzlegen', draggable: true },
-  'sq1:net':      { renderer: 'pure', draggable: false },
-  'sq1:wca':      { renderer: 'pure', draggable: false },
+  'sq1:iso':      'sr-puzzlegen',
+  'sq1:top':      'sr-puzzlegen',
+  'sq1:net':      'pure',
+  'sq1:wca':      'pure',
 
-  'megaminx:iso': { renderer: 'sr-puzzlegen', draggable: true },
-  'megaminx:top': { renderer: 'sr-puzzlegen', draggable: true },
-  'megaminx:net': { renderer: 'pure', draggable: false },
-  'megaminx:wca': { renderer: 'pure', draggable: false },
+  'megaminx:iso': 'sr-puzzlegen',
+  'megaminx:top': 'sr-puzzlegen',
+  'megaminx:net': 'pure',
+  'megaminx:wca': 'pure',
 
-  'pyraminx:iso': { renderer: 'sr-puzzlegen', draggable: true },
-  'pyraminx:top': { renderer: 'sr-puzzlegen', draggable: true },
-  'pyraminx:net': { renderer: 'pure', draggable: false },
-  'pyraminx:wca': { renderer: 'pure', draggable: false },
+  'pyraminx:iso': 'sr-puzzlegen',
+  'pyraminx:top': 'sr-puzzlegen',
+  'pyraminx:net': 'pure',
+  'pyraminx:wca': 'pure',
 
-  'skewb:iso': { renderer: 'sr-puzzlegen', draggable: true },
-  'skewb:top': { renderer: 'sr-puzzlegen', draggable: true },
-  'skewb:net': { renderer: 'skewb-net-display', draggable: false },
-  'skewb:wca': { renderer: 'pure', draggable: false },
+  'skewb:iso': 'sr-puzzlegen',
+  'skewb:top': 'sr-puzzlegen',
+  'skewb:net': 'skewb-net-display',
+  'skewb:wca': 'pure',
 };
-
-const FALLBACK: RendererEntry = { renderer: 'pure', draggable: false };
 
 function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (c) => (
@@ -139,10 +135,10 @@ function registryKey(s: ImageSpec): string {
   return `${s.puzzleType}:${s.puzzleType === 'cube' ? s.cubeView : s.puzzleVariant}`;
 }
 
-function entryFor(s: ImageSpec): { renderer: RendererId; draggable: boolean; extraClass?: string } {
-  const e = REGISTRY[registryKey(s)] ?? FALLBACK;
-  const renderer = typeof e.renderer === 'function' ? e.renderer(s) : e.renderer;
-  return { renderer, draggable: e.draggable, extraClass: RENDERER_CLASS[renderer] };
+function entryFor(s: ImageSpec): { renderer: RendererId; extraClass?: string } {
+  const e = REGISTRY[registryKey(s)] ?? 'pure';
+  const renderer = typeof e === 'function' ? e(s) : e;
+  return { renderer, extraClass: RENDERER_CLASS[renderer] };
 }
 
 // Perspective calibration: map the shared visualcube `dist` (透视 slider → 2..10, default 6
@@ -214,10 +210,9 @@ function srSchemeFor(type: PuzzleType): Record<string, SrColor> | undefined {
 export interface PuzzleImageProps {
   spec: ImageSpec;
   className?: string;
-  /** Required for drag-to-rotate and for the 3x3 paint editor to write back. */
+  /** Required for the 3x3 paint editor to write back; every other renderer is a
+   *  read-only picture. */
   onSpecChange?: (patch: Partial<ImageSpec>) => void;
-  /** Default true. false ⇒ a static picture: no drag, no paint write-back. */
-  interactive?: boolean;
   /**
    * Click a sticker → its canonical id (mask authoring). Only the tnoodle
    * unfolded renderers carry a `data-sid` id space, so this fires on the net /
@@ -235,9 +230,9 @@ export interface PuzzleImageProps {
 }
 
 export default function PuzzleImage({
-  spec, className, onSpecChange, interactive = true, onStickerClick, engineSvg,
+  spec, className, onSpecChange, onStickerClick, engineSvg,
 }: PuzzleImageProps) {
-  const { renderer, draggable, extraClass } = entryFor(spec);
+  const { renderer, extraClass } = entryFor(spec);
   const wantIds = !!onStickerClick;
 
   // Pinned pre-existing behaviour: a renderer throw becomes a red div rather than
@@ -254,95 +249,6 @@ export default function PuzzleImage({
     }
   }, [spec, renderer, wantIds]);
 
-  // ── drag-to-rotate ───────────────────────────────────────────────────────
-  const dragRef = useRef<{
-    startX: number; startY: number;
-    startYAngle: number; startXAngle: number;
-    yslot: 1 | 2 | null; xslot: 1 | 2 | null;
-    rafId: number | null; pendingDx: number; pendingDy: number;
-    dxSign: 1 | -1; dySign: 1 | -1; xMin: number; xMax: number;
-  } | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const wrapAngle = (n: number) => {
-    const r = ((Math.round(n) + 180) % 360 + 360) % 360 - 180;
-    return r === -180 ? 180 : r;
-  };
-
-  const onPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (!onSpecChange) return;
-    if (e.button !== 0 && e.pointerType === 'mouse') return;
-    const findSlot = (axis: 'x' | 'y'): 1 | 2 | null => {
-      if (spec.rotateAxis1 === axis) return 1;
-      if (spec.rotateAxis2 === axis) return 2;
-      return null;
-    };
-    const yslot = findSlot('y');
-    const xslot = findSlot('x');
-    if (yslot === null && xslot === null) return;
-    const angleAt = (slot: 1 | 2) => (slot === 1 ? spec.rotateAngle1 : spec.rotateAngle2);
-    const isSrPuzzlegen = spec.puzzleType !== 'cube'
-      && !(spec.puzzleType === 'skewb' && spec.puzzleVariant === 'top');
-    const defs = rotationDefaultsFor(spec);
-    const defaultAt = (slot: 1 | 2) => (slot === 1 ? defs.angle1 : defs.angle2);
-    const xDefault = xslot ? defaultAt(xslot) : 0;
-    e.currentTarget.setPointerCapture(e.pointerId);
-    dragRef.current = {
-      startX: e.clientX, startY: e.clientY,
-      startYAngle: yslot ? angleAt(yslot) : 0,
-      startXAngle: xslot ? angleAt(xslot) : 0,
-      yslot, xslot, rafId: null, pendingDx: 0, pendingDy: 0,
-      dxSign: isSrPuzzlegen ? 1 : -1,
-      dySign: isSrPuzzlegen ? 1 : -1,
-      xMin: xDefault - 45, xMax: xDefault + 45,
-    };
-    setIsDragging(true);
-  }, [spec, onSpecChange]);
-
-  const onPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    const d = dragRef.current;
-    if (!d || !onSpecChange) return;
-    d.pendingDx = e.clientX - d.startX;
-    d.pendingDy = e.clientY - d.startY;
-    if (d.rafId !== null) return;
-    d.rafId = requestAnimationFrame(() => {
-      const cur = dragRef.current;
-      if (!cur) return;
-      cur.rafId = null;
-      const patch: Partial<ImageSpec> = {};
-      if (cur.yslot) {
-        const v = wrapAngle(cur.startYAngle + cur.dxSign * cur.pendingDx * 0.5);
-        if (cur.yslot === 1) patch.rotateAngle1 = v;
-        else patch.rotateAngle2 = v;
-      }
-      if (cur.xslot) {
-        const raw = cur.startXAngle + cur.dySign * cur.pendingDy * 0.5;
-        const v = Math.max(cur.xMin, Math.min(cur.xMax, Math.round(raw)));
-        if (cur.xslot === 1) patch.rotateAngle1 = v;
-        else patch.rotateAngle2 = v;
-      }
-      onSpecChange(patch);
-    });
-  }, [onSpecChange]);
-
-  const onPointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    const d = dragRef.current;
-    if (!d) return;
-    if (d.rafId !== null) cancelAnimationFrame(d.rafId);
-    dragRef.current = null;
-    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
-      e.currentTarget.releasePointerCapture(e.pointerId);
-    }
-    setIsDragging(false);
-  }, []);
-
-  const canDrag = draggable && interactive && !!onSpecChange;
-  const dragHandlers = canDrag ? {
-    onPointerDown,
-    onPointerMove,
-    onPointerUp,
-    onPointerCancel: onPointerUp,
-  } : {};
-
   // ── sticker picking ──────────────────────────────────────────────────────
   const onClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!onStickerClick) return;
@@ -354,7 +260,6 @@ export default function PuzzleImage({
   const cls = [
     'vc-preview',
     extraClass,
-    canDrag ? `vc-preview-draggable${isDragging ? ' dragging' : ''}` : null,
     wantIds ? 'vc-preview-pickable' : null,
     className,
   ].filter(Boolean).join(' ');
@@ -407,7 +312,7 @@ export default function PuzzleImage({
       { [srPromoteAxis(spec.puzzleType, spec.rotateAxis2)]: spec.rotateAngle2 },
     ] as { x?: number; y?: number; z?: number }[] : undefined;
     return (
-      <div className={cls} {...dragHandlers}>
+      <div className={cls}>
         <PuzzleSVG
           kind={kind}
           alg={spec.algType === 'alg' ? spec.algorithm : undefined}
@@ -425,7 +330,6 @@ export default function PuzzleImage({
   return (
     <div
       className={cls}
-      {...dragHandlers}
       {...(onStickerClick ? { onClick } : {})}
       dangerouslySetInnerHTML={{ __html: svg ?? '' }}
     />

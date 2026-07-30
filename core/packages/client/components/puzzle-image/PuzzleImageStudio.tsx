@@ -139,12 +139,12 @@ function CopyImageButton({ getPng, label }: { getPng: () => Promise<Blob>; label
 // ── studio ──────────────────────────────────────────────────────────────────
 
 /**
- * SimBridge — present ONLY when the studio is the /sim 图像 panel. Absent on the
- * /visualcube page (page mode), so the capture subgroup never renders there and
- * the golden fixtures stay byte-identical. The image's puzzle / alg / colours are
- * NOT pulled through here — the sim injects them into the spec via the codec (see
- * SimPage), so the panel always mirrors the sim automatically. Type lives with the
- * capture UI in SimCaptureGroup (re-exported here for existing importers).
+ * SimBridge — the live canvas behind the panel (screenshot / recording source).
+ * Optional: a host without a canvas simply gets no capture subgroup. The image's
+ * puzzle / alg / colours are NOT pulled through here — the sim injects them into
+ * the spec via the codec (see SimPage), so the panel always mirrors the sim
+ * automatically. Type lives with the capture UI in SimCaptureGroup (re-exported
+ * here for existing importers).
  */
 export type { SimBridge };
 
@@ -363,8 +363,7 @@ export default function PuzzleImageStudio({ spec, onSpecChange, className, simBr
     set('stickerMask', formatMask(ids));
   }, [s.stickerMask, s.puzzleType, s.cubeSize, maskWholePiece, set]);
 
-  // Preview cube — the visualcube (2D vector) render of the current state.
-  // On the /visualcube page it's the main image; in the /sim 图像 panel it's the
+  // Preview cube — the visualcube (2D vector) render of the current state: the
   // clean, zoom-crisp vector companion to the live 3D cube on the left (the 3D
   // snapshot bakes its occlusion edges at raster resolution, this one is true
   // vector). Spec-renderable puzzles land in the PuzzleImage branch; everything else
@@ -372,8 +371,8 @@ export default function PuzzleImageStudio({ spec, onSpecChange, className, simBr
   // engine/twisty vector mirror instead.
   const preview = (
     <section className="vc-preview-wrap" ref={previewRef}>
-      {/* 预览是被动镜像:朝向由 sim 自己的 左右 / 上下(cube 还有 透视)驱动,
-          预览上不再拖 —— 拖左边那个真 3D 就是。 */}
+      {/* 预览是被动镜像:朝向由 sim 自己的 左右 / 上下(cube 还有 透视)驱动。
+          图上不能拖 —— 要转就拖左边那个真 3D。 */}
       {engineOnly ? (
         // engine-only 拼图无 spec 渲染器可回退:有引擎矢量就显示(尺寸同 PuzzleImage
         // 的 engineMirrors 分支:钉成方形显示框,viewBox + meet 保比例),没有就等静止帧。
@@ -391,22 +390,22 @@ export default function PuzzleImageStudio({ spec, onSpecChange, className, simBr
         // 两边同源同态,差异就是引擎与原版的真实差异。
         <div className="vc-compare">
           <figure className="vc-compare-cell">
-            <PuzzleImage spec={s} interactive={false} engineSvg={engineSvg} />
+            <PuzzleImage spec={s} engineSvg={engineSvg} />
             <figcaption>{t('引擎', 'Engine')}</figcaption>
           </figure>
           <figure className="vc-compare-cell">
-            <PuzzleImage spec={s} interactive={false} engineSvg={null} />
+            <PuzzleImage spec={s} engineSvg={null} />
             <figcaption>visualcube</figcaption>
           </figure>
         </div>
       ) : (
-        <PuzzleImage spec={s} onSpecChange={onSpecChange} interactive={false} engineSvg={engineSvg} />
+        <PuzzleImage spec={s} onSpecChange={onSpecChange} engineSvg={engineSvg} />
       )}
     </section>
   );
 
   return (
-    <div className={`vc-studio vc-studio-panel${className ? ` ${className}` : ''}`}>
+    <div className={`vc-studio${className ? ` ${className}` : ''}`}>
       {previewHost ? createPortal(preview, previewHost) : preview}
 
       <section className="vc-exports">
@@ -415,8 +414,8 @@ export default function PuzzleImageStudio({ spec, onSpecChange, className, simBr
         {simBridge && <SimCaptureGroup simBridge={simBridge} />}
 
         {/* 链接类按钮指向服务端 spec 渲染(/v1/visualcube.svg),engine-only 拼图服务端
-            画不了 → 只留 SVG/PNG(下载预览那份引擎矢量)。「分享链接」随 /visualcube
-            退役一并删:面板的状态本来就写在地址栏的 img_* 里,复制地址即分享。 */}
+            画不了 → 只留 SVG/PNG(下载预览那份引擎矢量)。没有单独的「分享链接」按钮:
+            面板状态本来就写在地址栏的 img_* 里,复制地址栏即分享。 */}
         {!engineOnly && <CopyButton label={t('API 链接', 'API URL')} getValue={() => apiSvgUrl} />}
         {/* 复制图片本身,而不是链接 —— 贴进文档 / 聊天最短的一条路。 */}
         <CopyImageButton
@@ -680,7 +679,6 @@ export default function PuzzleImageStudio({ spec, onSpecChange, className, simBr
                   </div>
                   <PuzzleImage
                     spec={arrowAuthoringSpec}
-                    interactive={false}
                     onStickerClick={handleArrowClick}
                     className="vc-mask-editor"
                   />
@@ -744,7 +742,6 @@ export default function PuzzleImageStudio({ spec, onSpecChange, className, simBr
                   </div>
                   <PuzzleImage
                     spec={maskAuthoringSpec}
-                    interactive={false}
                     onStickerClick={toggleMaskSticker}
                     className="vc-mask-editor"
                   />
@@ -781,8 +778,8 @@ export default function PuzzleImageStudio({ spec, onSpecChange, className, simBr
         <summary>{t('API 用法（外部嵌入）', 'API usage (embed elsewhere)')}</summary>
         <p>
           {t(
-            '直接通过 GET /v1/visualcube.svg 拿到 SVG 字节流，可放进 <img>、curl、博客 Markdown 等。这是简化端点（7 个参数），完整参数请用本页生成后复制分享链接。',
-            'GET /v1/visualcube.svg returns image/svg+xml directly. Use it in an <img>, curl, blog Markdown, etc. This is a simplified endpoint (7 params); for the full set, use this page and copy the share URL.',
+            '直接通过 GET /v1/visualcube.svg 拿到 SVG 字节流，可放进 <img>、curl、博客 Markdown 等。这是简化端点（7 个参数），端点覆盖不到的设置请在这里调好后复制地址栏。',
+            'GET /v1/visualcube.svg returns image/svg+xml directly. Use it in an <img>, curl, blog Markdown, etc. This is a simplified endpoint (7 params); for anything it does not cover, set it up here and copy the address bar.',
           )}
         </p>
         <pre className="vc-api-example">{`https://api.cuberoot.me/v1/visualcube.svg?alg=R+U+R'+U'+R+U2+R'&view=oll&size=128`}</pre>
@@ -808,8 +805,8 @@ export default function PuzzleImageStudio({ spec, onSpecChange, className, simBr
         </table>
         <p className="vc-api-note">
           {t(
-            '该端点不支持完整 PHP query API（无 arw / ac / sch / fc / fd 等）。需要这些参数请用本页生成 SVG 后下载或复制 <img> 标签。',
-            'Endpoint does not accept the full PHP query API (no arw / ac / sch / fc / fd). For those, generate via this page and download/copy.',
+            '该端点不支持完整 PHP query API（无 arw / ac / sch / fc / fd 等）。需要这些参数就在这里调好，然后下载 SVG / PNG 或复制图片。',
+            'Endpoint does not accept the full PHP query API (no arw / ac / sch / fc / fd). For those, set it up here and download the SVG / PNG or copy the image.',
           )}
         </p>
       </details>

@@ -1079,9 +1079,9 @@ export const CATALOG: ComponentEntry[] = [
     name: 'PuzzleImage',
     import: "import PuzzleImage from '@/components/puzzle-image/PuzzleImage';",
     category: 'more',
-    zh: '任意魔方状态图的统一预览件(/sim 图像面板的画面部分)。按 (魔方, 视图) 查一张注册表分派渲染器:visualcube 立体 / 平面、tnoodle 展开图、sr-puzzlegen 立体 / 顶视、3x3 涂色板、cubing.js 斜转展开;自带拖拽转视角与可选贴纸点选(mask 编写)。渲染器抛错渲染成红字块,不炸整页。',
-    en: 'The single preview surface for any puzzle-state image (the picture half of the /sim image panel). A registry keyed on (puzzle, view) dispatches the renderer: visualcube iso/plan, the tnoodle nets, sr-puzzlegen iso/top, the 3x3 paint editor and the cubing.js skewb net — with drag-to-rotate and optional sticker picking (mask authoring). A renderer throw becomes a red block, never a page crash.',
-    usage: '<PuzzleImage spec={spec} onSpecChange={patch} />',
+    zh: '任意魔方状态图的统一预览件(/sim 图像面板的画面部分)。按 (魔方, 视图) 查一张注册表分派渲染器:visualcube 立体 / 平面、tnoodle 展开图、sr-puzzlegen 立体 / 顶视、3x3 涂色板、cubing.js 斜转展开;可选贴纸点选(mask 编写)。图是被动的:视角归宿主(/sim 的滑杆),这里不接拖拽。渲染器抛错渲染成红字块,不炸整页。',
+    en: 'The single preview surface for any puzzle-state image (the picture half of the /sim image panel). A registry keyed on (puzzle, view) dispatches the renderer: visualcube iso/plan, the tnoodle nets, sr-puzzlegen iso/top, the 3x3 paint editor and the cubing.js skewb net — plus optional sticker picking (mask authoring). The picture is passive: the camera belongs to the host (the /sim sliders), so there is no drag here. A renderer throw becomes a red block, never a page crash.',
+    usage: '<PuzzleImage spec={spec} engineSvg={svg} />',
     note: {
       zh: 'root class 必须保持 vc-preview:/sim 的浮层 CSS 与 studio 的 DOM 序列化兜底都按它选。渲染字节锁在 tests/puzzle-image-render.test.ts(28 条 fixture)。',
       en: 'The root must keep the class vc-preview — the /sim overlay CSS and the studio DOM-serialize fallback both select on it. The byte lock lives in tests/puzzle-image-render.test.ts (28 fixtures).',
