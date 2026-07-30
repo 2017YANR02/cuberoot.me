@@ -47,10 +47,12 @@ import type World from '@/app/[lang]/sim/engine/world';
 import type NxnCube from '@/app/[lang]/sim/engine/nxn/cube';
 import type { SimMount } from '@/components/sim-embed/mountSimWorld';
 import {
+  advanceStillMs,
   applyOrientation,
   calibrate,
   quatAngleTo,
   slerpTowards,
+  snapWhenSettled,
   type Quat,
   type SensorBasisName,
 } from '../_lib/bluetooth/orientation';
@@ -104,6 +106,10 @@ export default function LiveCubeGyroView(props: LiveCubeGyroViewProps): JSX.Elem
   const referenceRef = useRef<Quat | null>(null);
   const smoothedRef = useRef<Quat | null>(null);
   const appliedRef = useRef<Quat | null>(null);
+  // Settling: the last measured (un-smoothed, un-snapped) pose and how long it
+  // has held still. See the snap block in orientation.ts.
+  const measuredRef = useRef<Quat | null>(null);
+  const stillMsRef = useRef(0);
   const pendingCalibrationRef = useRef(false);
   const basisRef = useRef<SensorBasisName>(sensorBasis);
   const mirrorRef = useRef(mirror);
@@ -136,8 +142,11 @@ export default function LiveCubeGyroView(props: LiveCubeGyroViewProps): JSX.Elem
     seenTokenRef.current = calibrateToken;
     pendingCalibrationRef.current = true;
     // Re-derive from the new reference rather than easing out of a pose that no
-    // longer means anything.
+    // longer means anything. The settle timer restarts with it: stillness
+    // measured against the OLD reference says nothing about the new one.
     smoothedRef.current = null;
+    measuredRef.current = null;
+    stillMsRef.current = 0;
   }, [calibrateToken]);
 
   // ── Mount: lazy-load the shared embed lifecycle (which pulls in three + the
@@ -165,10 +174,19 @@ export default function LiveCubeGyroView(props: LiveCubeGyroViewProps): JSX.Elem
             referenceRef.current = calibrate(raw);
             pendingCalibrationRef.current = false;
           }
-          const target = applyOrientation(raw, referenceRef.current, {
+          const measured = applyOrientation(raw, referenceRef.current, {
             basis: basisRef.current,
             mirror: mirrorRef.current,
           });
+          // A cube that has stopped moving near a whole orientation IS at it;
+          // the leftover few degrees are grip and sensor zero, and leaving them
+          // in is what makes the cube on screen read as permanently crooked.
+          // Stillness is measured on the MEASURED pose, never on the smoothed
+          // one — the smoothed pose is still converging on the snap target and
+          // would keep re-arming the timer against itself.
+          stillMsRef.current = advanceStillMs(measuredRef.current, measured, stillMsRef.current, dtMs);
+          measuredRef.current = measured;
+          const target = snapWhenSettled(measured, stillMsRef.current);
           // BLE lands at 20-50 Hz, under the 60 fps loop — ease between samples
           // so the cube glides instead of stepping.
           const next = smoothedRef.current
