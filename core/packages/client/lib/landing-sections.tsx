@@ -132,23 +132,13 @@ export const SECTIONS: Section[] = [
   {
     id: 'tool',
     eyebrow: { en: 'TOOL', zh: '工具' },
-    title:   { en: 'Solve it, time it, render it.', zh: '求解、数帧、出图。'
+    title:   { en: 'Solve, count, make.', zh: '求解、数帧、创作。'
     },
-    sub:     { en: 'Frame-accurate timing, cube renders, and a solver for any scramble.', zh: '逐帧核对成绩、生成魔方图,把任意打乱交给求解器。'
+    sub:     { en: 'A solver for any scramble and frame-accurate timing, plus cube mosaics, vector drawings and event icons.', zh: '把任意打乱交给求解器、逐帧核对成绩,以及拼马赛克、画矢量图、生成项目图标。'
     },
     cards: [
       { id: 'frame-count', href: '/frame-count', internal: true, tier: 'medium', Icon: Film,       nameKey: 'frameCount' },
       { id: 'solver',      href: '/solver',      internal: true, tier: 'medium', iconImg: '/icons/upstream/solver.png', nameKey: 'solver' },
-    ],
-  },
-  {
-    id: 'make',
-    eyebrow: { en: 'MAKE', zh: '创作' },
-    title:   { en: 'Mosaics, drawings, icons.', zh: '拼图、绘制、图标。'
-    },
-    sub:     { en: 'Turn photos into cube mosaics, draw vector diagrams, generate event icons.', zh: '把照片拼成魔方马赛克,画矢量图,生成项目图标。'
-    },
-    cards: [
       { id: 'mosaic',      href: '/mosaic',      internal: true, tier: 'medium', Icon: Grid2x2,    nameKey: 'mosaic' },
       { id: 'paint',       href: '/paint',       internal: true, tier: 'medium', Icon: Brush,      nameKey: 'paint' },
       { id: 'icon',        href: '/icon',        internal: true, tier: 'medium', Icon: Shapes,     nameKey: 'icon' },

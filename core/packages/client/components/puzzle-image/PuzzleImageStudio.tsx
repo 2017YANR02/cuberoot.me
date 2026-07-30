@@ -24,10 +24,8 @@ import { publicApiUrl } from '@/lib/api-base';
 import { appendArrow, buildArrowEntry, removeArrowByPoints } from '@/lib/puzzle-image/arrows';
 import { sizeEngineSvg } from '@/lib/puzzle-image/engine-svg';
 import {
-  clipboardImageSupported, copyPngToClipboard, exportSvgText,
-  saveBlob, svgBlob, svgToPngBlob, type PhysicalSize,
+  clipboardImageSupported, copyPngToClipboard, saveBlob, svgBlob, svgToPngBlob,
 } from '@/lib/puzzle-image/image-export';
-import { PRINT_UNITS } from '@/lib/puzzle-image/physical-size';
 import { pzlShort } from '@/lib/puzzle-image/codec';
 import { formatMask, parseMask, type StickerId } from '@/lib/puzzle-image/mask-core';
 import { maskSupported, pieceOf } from '@/lib/puzzle-image/puzzle-mask';
@@ -218,21 +216,16 @@ export default function PuzzleImageStudio({ spec, onSpecChange, className, simBr
     return node ? new XMLSerializer().serializeToString(node) : '';
   }, [s, engineShown, engineSvg]);
 
-  // 「物理尺寸」旋钮:0 = 不写,导出件只有像素。栅格化 / 下载 / 复制三条路共用同一份。
-  const physical: PhysicalSize | null = s.printSize > 0
-    ? { size: s.printSize, unit: s.printUnit }
-    : null;
-
   const downloadSvg = () => {
     const out = getCurrentSvg();
     if (!out) return;
-    saveBlob(svgBlob(exportSvgText(out, physical)), `${s.puzzleType}-${Date.now()}.svg`);
+    saveBlob(svgBlob(out), `${s.puzzleType}-${Date.now()}.svg`);
   };
 
   const downloadPng = async () => {
     const out = getCurrentSvg();
     if (!out) return;
-    saveBlob(await svgToPngBlob(out, s.imageSize, physical), `${s.puzzleType}-${Date.now()}.png`);
+    saveBlob(await svgToPngBlob(out, s.imageSize), `${s.puzzleType}-${Date.now()}.png`);
   };
 
   // The API endpoint's own (simplified) param set — not specToParams.
@@ -420,11 +413,11 @@ export default function PuzzleImageStudio({ spec, onSpecChange, className, simBr
         {/* 复制图片本身,而不是链接 —— 贴进文档 / 聊天最短的一条路。 */}
         <CopyImageButton
           label={t('复制图片', 'Copy image')}
-          getPng={() => svgToPngBlob(getCurrentSvg(), s.imageSize, physical)}
+          getPng={() => svgToPngBlob(getCurrentSvg(), s.imageSize)}
         />
         <CopyButton
           label={t('复制 SVG', 'Copy SVG')}
-          getValue={() => exportSvgText(getCurrentSvg(), physical)}
+          getValue={() => getCurrentSvg()}
         />
         <button type="button" className="vc-btn" onClick={downloadSvg}>
           <Download size={14} /> SVG
@@ -564,30 +557,6 @@ export default function PuzzleImageStudio({ spec, onSpecChange, className, simBr
               if (!isNaN(n)) set('imageSize', Math.max(1, Math.min(1000, n)));
             }}
           />
-          {/* 物理尺寸:只写进导出的文件(SVG 的 width/height、PNG 的 pHYs),预览和
-              API 链接都不受影响。0 = 不写,拖进文档时按软件的默认换算。 */}
-          <label className="vc-label vc-label-secondary">
-            {t('物理尺寸', 'Physical size')}
-          </label>
-          <input
-            type="number" className="vc-num" value={s.printSize} min={0} max={100} step={0.1}
-            aria-label={t('导出物理尺寸,0 为不写', 'Export physical size, 0 = none')}
-            title={t(
-              '导出的图自带这个大小,拖进 / 粘进文档就不用再拉。0 = 不写。',
-              'The exported file carries this size, so it lands at scale in a document. 0 = off.',
-            )}
-            onChange={(e) => {
-              const n = parseFloat(e.target.value);
-              set('printSize', Number.isFinite(n) ? Math.max(0, Math.min(100, n)) : 0);
-            }}
-          />
-          <select
-            className="vc-select" value={s.printUnit} disabled={!(s.printSize > 0)}
-            aria-label={t('物理尺寸单位', 'Physical size unit')}
-            onChange={(e) => set('printUnit', e.target.value as ImageSpec['printUnit'])}
-          >
-            {PRINT_UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
-          </select>
         </div>
 
         {!engineOnly && (<>
