@@ -476,6 +476,23 @@ html[data-contrast=soft] body {
   --faint-foreground: color-mix(in oklab, var(--base-faint-foreground), var(--base-foreground) var(--soften-muted));
 }
 
+/* 魔方贴纸色(WCA 六面)是身份色,不走 token —— 它们是 JS 常量直接喂给 SVG 属性和
+   Three.js 材质的(lib/cube-colors.ts / visualcube ColorCode),再怎么混 token 也够不到。
+   所以画魔方的组件根统一挂 .puzzle-art,柔和档给它一层 filter:inline SVG / <img> /
+   WebGL canvas 一视同仁,渲染逻辑一行不动,也不会污染导出件(PDF / PNG 走的是 SVG
+   字符串,filter 只在屏幕上)。
+   0.6 / 0.9 是量出来的不是调出来的:六面色两两 CIEDE2000 最小的一对(黄/绿、黄/橙 ——
+   不是直觉里的红/橙)从基线 25.9 只掉到 23.5,远在可分之上;顺带把白贴纸从纯白压到
+   #e6e6e6,那是这些图上最后一块刺眼的地方。贴纸是纯色大色块,同样的百分比看上去比
+   界面色弱,所以这里比 token 那边压得更狠。 */
+html[data-contrast=soft] .puzzle-art {
+  filter: saturate(0.6) brightness(0.9);
+}
+/* 嵌套时只滤一次(sim 的 wrap 里还有伴图),否则 0.7² 会把颜色滤穿。 */
+html[data-contrast=soft] .puzzle-art .puzzle-art {
+  filter: none;
+}
+
 html {
   background: var(--background);
   scrollbar-gutter: stable;
