@@ -75,4 +75,19 @@ describe('displayAlgCaseName 按 set 路由', () => {
   it('3x3 oll 走 OLL 变换', () => expect(displayAlgCaseName('3x3', 'oll', 'OLL 24')).toBe('T (24)'));
   it('3x3 pll 走 PLL 变换', () => expect(displayAlgCaseName('3x3', 'pll', 'Ua')).toBe('U- (Ua)'));
   it('其它 set 原样', () => expect(displayAlgCaseName('3x3', 'f2l', 'F2L 1')).toBe('F2L 1'));
+
+  // COLL 的组名跟 ZBLL 同一套(Sune=S+ / Anti-Sune=S-),编号紧跟不留空格。
+  it('3x3 coll:AS/S 换成 S-/S+,空格去掉', () => {
+    expect(displayAlgCaseName('3x3', 'coll', 'AS 1')).toBe('S-1');
+    expect(displayAlgCaseName('3x3', 'coll', 'S 6')).toBe('S+6');
+    expect(displayAlgCaseName('3x3', 'coll', 'Pi 3')).toBe('Pi3');
+    expect(displayAlgCaseName('3x3', 'coll', 'H 4')).toBe('H4');
+    expect(displayAlgCaseName('3x3', 'coll', '什么 1')).toBe('什么 1');
+  });
+
+  it('3x3 zbll:组名和编号之间也不留空格', () => {
+    expect(displayAlgCaseName('3x3', 'zbll', 'ZBLL AS 13')).toBe('ZBLL S-13');
+    expect(displayAlgCaseName('3x3', 'zbll', 'ZBLL S 13')).toBe('ZBLL S+13');
+    expect(displayAlgCaseName('3x3', 'zbll', 'ZBLL U 13')).toBe('ZBLL U 13');
+  });
 });

@@ -75,8 +75,6 @@ export interface RecognizeSet {
   solution: (name: string) => string;
   /** 函数而非常量:DB 题库的按钮要等 {@link load} 拉完才知道。 */
   buttons: () => RecognizeButton[];
-  /** 按钮文字长(`4 Flip Ua`)→ 屏幕键盘用宽轨道。 */
-  wideKeys?: boolean;
   /** 题库要现拉的集合(DB 集)在这里拉;拉完才有 `allKeys` / `buttons`。 */
   load?: () => Promise<void>;
   prompt: { zh: string; en: string };

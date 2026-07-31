@@ -737,11 +737,6 @@ input[type='search']:has(~ .clear-btn)::-webkit-search-cancel-button {
   grid-template-columns: repeat(auto-fit, minmax(min(3.6rem, 100%), 1fr));
   gap: 4px;
 }
-/* 名字长的集合(ELL 的 `4 Flip Ua`)—— 标签 nowrap,3.6rem 的轨道装不下会溢出格子。 */
-.on-screen-keyboard--wide {
-  max-width: 620px;
-  grid-template-columns: repeat(auto-fit, minmax(min(6.6rem, 100%), 1fr));
-}
 .kbd-btn {
   /* 名字 + 角标必须同一行:`DS-` 折成两行,一格就比邻居高一截,整片按钮参差。 */
   white-space: nowrap;
@@ -760,11 +755,6 @@ input[type='search']:has(~ .clear-btn)::-webkit-search-cancel-button {
   .on-screen-keyboard {
     padding: 0 0.5rem;
     grid-template-columns: repeat(auto-fit, minmax(min(3.1rem, 100%), 1fr));
-  }
-  /* 窄屏也得给长名字留够宽度,否则 `4 Flip Ua` 顶出格子(这条在窄屏必须重申:
-     上面那条同权重且写在后面,不重申就被它盖掉)。 */
-  .on-screen-keyboard--wide {
-    grid-template-columns: repeat(auto-fit, minmax(min(6rem, 100%), 1fr));
   }
   .kbd-btn {
     padding: 0.45rem 0.2rem;
