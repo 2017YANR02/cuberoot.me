@@ -621,11 +621,112 @@ var mpyr = (function() {
 		return sol;
 	}
 
+	// Move index for a face/wide token in move2str. Returns -1 if not a body move.
+	function bodyMoveIdx(tok) {
+		return move2str.indexOf(tok);
+	}
+
+	// Tip tokens are the 4 trivial corner tips: u r l b (lowercase), each with an
+	// optional prime. They are independent of the body and net 0 / ±1 turns mod 3.
+	var TIP_LETTERS = "lrbu";
+	function isTipTok(tok) {
+		if (!tok) return false;
+		var base = tok.replace(/2?'?$/, '');
+		return base.length === 1 && TIP_LETTERS.indexOf(base) >= 0;
+	}
+
+	// Parse a scramble into body move indices (into moveCube/move2str) + per-tip
+	// net rotation (mod 3). Throws on an unknown token.
+	function parseScramble(scr) {
+		var toks = String(scr).trim().split(/\s+/).filter(Boolean);
+		var bodyMoves = [];
+		var tipNet = { l: 0, r: 0, b: 0, u: 0 };
+		for (var i = 0; i < toks.length; i++) {
+			var tok = toks[i];
+			var bi = bodyMoveIdx(tok);
+			if (bi >= 0) { bodyMoves.push(bi); continue; }
+			if (isTipTok(tok)) {
+				var base = tok.charAt(0);
+				// determine signed amount: "" = +1, "'" = -1, "2" = +2, "2'" = -2.
+				var rest = tok.slice(1);
+				var amt = 1;
+				if (rest.indexOf('2') >= 0) amt = 2;
+				if (rest.indexOf("'") >= 0) amt = -amt;
+				tipNet[base] = ((tipNet[base] + amt) % 3 + 3) % 3;
+				continue;
+			}
+			throw new Error('unknown mpyr token: ' + tok);
+		}
+		return { bodyMoves: bodyMoves, tipNet: tipNet };
+	}
+
+	// Solve an arbitrary mpyrso scramble string. Builds the cube from body moves,
+	// runs cstimer's two-phase solveMpyr (near-optimal), then appends the tip
+	// fixes (inverse of each tip's net rotation). Returns a space-separated
+	// solution string. Validity: applying scramble then this solution yields the
+	// solved (single-color-per-face) state — checked in tests.
+	function solveScramble(scr) {
+		var parsed = parseScramble(scr);
+		var mc = applyMoves(new MpyrCubie(), parsed.bodyMoves);
+		var sol = solveMpyr(mc);
+		var bodySol = prettyMoves([].concat(sol[0], sol[1]));
+		var tipSol = [];
+		for (var i = 0; i < TIP_LETTERS.length; i++) {
+			var L = TIP_LETTERS.charAt(i);
+			var net = parsed.tipNet[L];
+			if (net === 0) continue;
+			// net is +1 or +2 (mod 3); inverse rotation un-does it.
+			tipSol.push(net === 1 ? L + "'" : L);
+		}
+		var out = bodySol;
+		if (tipSol.length) out += (out ? ' ' : '') + tipSol.join(' ');
+		return out.trim();
+	}
+
+	// Build an MpyrCubie from a scramble's body moves (tips don't affect the 52
+	// body facelets, so ignored for the face-uniformity check).
+	function cubeFromBodyMoves(scr) {
+		return applyMoves(new MpyrCubie(), parseScramble(scr).bodyMoves);
+	}
+
+	// True iff every one of the 4 faces is a single color (== solved body state).
+	function isFaceUniform(mc) {
+		var f = mc.toFaceCube();
+		for (var i = 0; i < 52; i += 13) {
+			for (var j = i + 1; j < i + 13; j++) {
+				if (f[i] != f[j]) return false;
+			}
+		}
+		return true;
+	}
+
+	// Validity oracle: solve `scr` with solveScramble, then apply the solution's
+	// body moves on top of the scrambled cube and confirm the body is solved
+	// (face-uniform). Tips are independent and inverted exactly in solveScramble,
+	// so a solved body == scramble∘solution = solved. Returns true/false.
+	function roundTripCheck(scr) {
+		var mc = cubeFromBodyMoves(scr);
+		var sol = solveScramble(scr);
+		var bodyMoves = parseScramble(sol).bodyMoves;
+		mc = applyMoves(mc, bodyMoves);
+		return isFaceUniform(mc);
+	}
+
+	// 52-facelet color array (values 0..3) for a scramble's body state — used by
+	// tests to anchor the TS preview port (lib/mpyr-solver mpyrFacelets) against
+	// the real cstimer cubie model, move-for-move.
+	function faceletsOfScramble(scr) {
+		return cubeFromBodyMoves(scr).toFaceCube();
+	}
+
 	scrMgr.reg('mpyrso', getRandomScramble);
 
 	return {
 		getRandomScramble: getRandomScramble,
-		solveTest: solveTest
+		solveTest: solveTest,
+		solveScramble: solveScramble,
+		roundTripCheck: roundTripCheck,
+		faceletsOfScramble: faceletsOfScramble
 	};
 })();
 

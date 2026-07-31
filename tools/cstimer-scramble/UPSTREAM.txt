@@ -3,9 +3,11 @@ Commit:  22a6aed
 Date:    2026-06-25 14:17:39 +0800
 License: GPLv3 (see ./LICENSE)
 
-Files in lib/ and scramble/ are copied verbatim from upstream
-src/js/lib/ and src/js/scramble/. Do not edit; resync via
-_sync_cstimer_scramble.ps1 at repo root.
+Files in lib/ and scramble/ are copied from upstream src/js/lib/ and
+src/js/scramble/. A few of them (scramble_sq1_new.js / pyraminx.js / redi.js)
+carry cuberoot.me additions — the solveScramble exports. Do not hand-edit for
+upstream changes; resync via _sync_cstimer_scramble.ps1 at repo root, which
+three-way merges against the commit recorded above.
 
 Used by:  core/packages/client/lib/cstimer-scramble.ts
           (worker bridge at tools/cstimer-scramble/scrambler.worker.js)
