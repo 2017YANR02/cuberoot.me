@@ -100,7 +100,7 @@ export function algSheetFromCases(o: FromCasesOptions): AlgSheetInput {
   const count = `${n} ${n === 1 ? 'case' : 'cases'}`;
   return {
     title: o.title,
-    subtitle: o.sourcePath ? `${count}  ·  cuberoot.me${o.sourcePath}` : count,
+    subtitle: o.sourcePath ? `${count} — cuberoot.me${o.sourcePath}` : count,
     cases: out,
     filename: o.filename,
   };
