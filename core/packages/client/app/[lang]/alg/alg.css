@@ -282,15 +282,6 @@ html[data-theme=dark] .alg-root {
 }
 
 /* ── puzzle index (top-level /alg) ── */
-/* 落地页「训练器」分区标题(在公式阶网格之后) */
-.alg-index-subheading {
-  max-width: 1200px;
-  margin: 32px auto 12px;
-  padding: 0 24px;
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-}
 .alg-puzzle-grid {
   max-width: 1200px;
   margin: 0 auto;
