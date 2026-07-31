@@ -19,9 +19,14 @@
  * hands — but it still plays each turn, which is the whole reason to be in 3D
  * while timing and something a flat net cannot do at all.
  *
- * The flat fallback stays for the things that ARE contract: no WebGL on phones,
- * and no 3D at all while the state is not reachable from solved, because that
- * one would be a cube drawing a position nobody verified.
+ * Phones get 3D too. They used to fall back to the net on the theory that a
+ * WebGL context alongside a running timer would cost the phone GPU too much;
+ * the cube is a 200px box drawn only on frames where something actually moved,
+ * and current phones are not troubled by that. The one fallback that stays is
+ * contract, not taste: no 3D while the state is not reachable from solved,
+ * because that would be a cube drawing a position nobody verified. `anchor.ts`
+ * is what keeps that case rare — it derives the missing opening from the
+ * cube's own facelets, so even a cube connected mid-scramble gets 3D.
  *
  * SIZE IS THE HOST'S. Every branch fills its container rather than carrying a
  * px number, because this now lives in the timing surface's centre slot — the
@@ -46,7 +51,6 @@ import dynamic from 'next/dynamic';
 import { useEffect, useMemo, useState, type JSX } from 'react';
 
 import { Spinner } from '@/components/Spinner/Spinner';
-import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
 import { FaceletsCube } from '@/components/FaceletsCube';
 import { CUBE_FILL } from '@/lib/cube-colors';
@@ -163,14 +167,7 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
     onViewChange,
   } = props;
 
-  // No WebGL on phones. A three.js context rendering a cube that turns on every
-  // notification, alongside a running timer, is a real cost on a phone GPU and
-  // the timer is the thing that must not stutter. The flat net is exact, costs a
-  // string of SVG, and is legible at this size — so phones get that instead.
-  // This is a downgrade, never a hide: the view owns the centre slot now, so
-  // returning nothing here would leave a hole where the scramble preview was.
-  const phone = useIsMobile(480);
-  const wants3d = mode === '3d' && !phone;
+  const wants3d = mode === '3d';
   const devQuat = useSyntheticQuat(wants3d);
   const liveQuat = quat ?? devQuat;
 
