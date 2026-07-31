@@ -319,9 +319,9 @@ describe('smoothing', () => {
 });
 
 describe('brand tables', () => {
-  it('every brand assumes a Z-up IMU (the reported y-reads-as-z symptom)', () => {
+  it('every brand assumes a Z-up IMU yawed 90° (both reported symptoms)', () => {
     for (const [brand, basis] of Object.entries(BRAND_SENSOR_BASIS)) {
-      expect(basis, `${brand} basis`).toBe('rotX270');
+      expect(basis, `${brand} basis`).toBe('rotY90X270');
     }
   });
 
@@ -373,7 +373,7 @@ describe('Z-up sensor into a Y-up renderer', () => {
   it('is proper — it moves axes and leaves handedness alone', () => {
     // A mirror would be needed on top if the cube also yawed backwards; the
     // basis alone must not introduce that.
-    const b = SENSOR_BASES.rotX270;
+    const b = SENSOR_BASES.rotY90X270;
     const [ax, ay, az] = rotate(b, X);
     const [bx, by, bz] = rotate(b, Y);
     const cross: [number, number, number] = [
@@ -383,6 +383,56 @@ describe('Z-up sensor into a Y-up renderer', () => {
     expect(cross[0]).toBeCloseTo(cx, 12);
     expect(cross[1]).toBeCloseTo(cy, 12);
     expect(cross[2]).toBeCloseTo(cz, 12);
+  });
+});
+
+/**
+ * 第二轮真机报告:「y 现在对了,但实际做 x 屏幕做 z,实际做 z 屏幕做 x'」。
+ *
+ * 三句话把传感器的三条轴全钉死了。第一轮已经定下**传感器 +Z 就是魔方的竖轴**
+ * (它转到屏幕的 +Y 之后 `y` 才对的);这一轮的两个症状再把另外两条定出来:
+ *
+ *   rotX270 把 s_x 送到屏幕 +x、把 s_y 送到 −z。物理 x 出来是 **+z** ⇒ 物理 x = −s_y;
+ *   物理 z 出来是 **−x** ⇒ 物理 z = −s_x。
+ *
+ * 于是「物理三轴 → 屏幕三轴」在两个基下各是什么,就成了可以直接断言的事实。
+ */
+describe('the second round: x and z were still 90° out', () => {
+  /** 魔方自己的三条轴,写在传感器坐标里(推导见上)。 */
+  const PHYS_X: [number, number, number] = [0, -1, 0];
+  const PHYS_Y: [number, number, number] = [0, 0, 1];
+  const PHYS_Z: [number, number, number] = [-1, 0, 0];
+  // `|| 0` 把 −0 折成 0:轴向对不对和它是从哪一边趋近于零无关。
+  const round = (v: [number, number, number]) => v.map(n => Math.round(n) || 0);
+
+  it('rotX270 reproduces exactly what the user saw: x→z, z→x−, y already right', () => {
+    const b = SENSOR_BASES.rotX270;
+    expect(round(rotate(b, PHYS_X))).toEqual([0, 0, 1]);    // 做 x,屏幕做 z
+    expect(round(rotate(b, PHYS_Z))).toEqual([-1, 0, 0]);   // 做 z,屏幕做 x'
+    expect(round(rotate(b, PHYS_Y))).toEqual([0, 1, 0]);    // y 是对的
+  });
+
+  it('rotY90X270 puts all three where they belong', () => {
+    const b = SENSOR_BASES.rotY90X270;
+    expect(round(rotate(b, PHYS_X))).toEqual([1, 0, 0]);
+    expect(round(rotate(b, PHYS_Y))).toEqual([0, 1, 0]);
+    expect(round(rotate(b, PHYS_Z))).toEqual([0, 0, 1]);
+  });
+
+  it('and it really is rotY90 composed onto rotX270, left factor first', () => {
+    const composed = quatMul(SENSOR_BASES.rotY90, SENSOR_BASES.rotX270);
+    expectSameRotation(SENSOR_BASES.rotY90X270, composed);
+  });
+
+  it('chaining the two similarities equals applying the composite once', () => {
+    // `B ⊗ q ⊗ B⁻¹` twice = `(B₂B₁) ⊗ q ⊗ (B₂B₁)⁻¹`. This is why the fix is a
+    // LEFT factor and not a second call somewhere downstream.
+    const sample = fromAxisAngle([0.3, -0.7, 0.5], 37 * DEG);
+    const twice = applyOrientation(
+      applyOrientation(sample, null, { basis: 'rotX270' }), null, { basis: 'rotY90' },
+    );
+    const once = applyOrientation(sample, null, { basis: 'rotY90X270' });
+    expectSameRotation(twice, once);
   });
 });
 

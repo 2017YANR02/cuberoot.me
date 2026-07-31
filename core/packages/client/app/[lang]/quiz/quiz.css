@@ -34,6 +34,25 @@
     line-height: 1.6;
 }
 
+/* 难度开关 + 一句说明。紧凑靠左,说明换行时和开关顶部对齐。 */
+.quiz-level {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+    margin-bottom: 1.5rem;
+}
+
+.quiz-level .pill-toggle {
+    flex: none;
+}
+
+.quiz-level-hint {
+    font-size: 0.84rem;
+    line-height: 1.55;
+    color: var(--muted-foreground);
+    padding-top: 0.3rem;
+}
+
 .quiz-mixed,
 .quiz-cat {
     display: flex;
@@ -127,10 +146,20 @@
     color: var(--foreground);
 }
 
-/* 三项紧凑靠左排,不塞 spacer 把计分推到行尾。 */
+/* 各项紧凑靠左排,不塞 spacer 把计分推到行尾。 */
 .quiz-bar-pos,
 .quiz-bar-score {
     font-variant-numeric: tabular-nums;
+}
+
+/* 进阶档才出现的标记,借 accent 的弱化底色。 */
+.quiz-bar-level {
+    padding: 0.05rem 0.4rem;
+    border-radius: 4px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 0.74rem;
+    font-weight: 600;
 }
 
 .quiz-progress {

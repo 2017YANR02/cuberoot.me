@@ -227,6 +227,8 @@ export default function PlaybackPanel({
               quat={posed ? sampleGyroAt(gyroTrack, elapsedMs) : null}
               sensorBasis={sensorBasisForBrand(deviceModel)}
               mirror={mirrorForBrand(deviceModel)}
+              // 播放 / 下一步是纯追加,那几手会转给你看;拖时间轴、上一步是跳,瞬切。
+              animate
               ariaLabel={tr({
                 zh: '这把的三维回放',
                 en: '3D replay of this solve',

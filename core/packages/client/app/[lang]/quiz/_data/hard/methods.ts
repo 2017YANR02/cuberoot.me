@@ -1,0 +1,160 @@
+import type { Question } from '../types';
+
+// 进阶 解法与公式 —— 公式集规模、各方法的分步命名、盲拧和 FMC 的技术词。
+export const METHODS_HARD: Question[] = [
+  {
+    id: 'met-h01', cat: 'methods', type: 'choice',
+    q: { zh: 'ZBLL 一共有多少种情况?', en: 'How many ZBLL cases are there?' },
+    options: [
+      { zh: '493 种', en: '493' },
+      { zh: '57 种', en: '57' },
+      { zh: '216 种', en: '216' },
+      { zh: '1211 种', en: '1211' },
+    ],
+    answer: 0,
+    why: { zh: '前提是顶层棱已经全部翻正,然后一步解完整个顶层(含 21 条 PLL)。', en: 'It assumes the last-layer edges are already oriented, then finishes the whole layer in one look (PLL included).' },
+  },
+  {
+    id: 'met-h02', cat: 'methods', type: 'choice',
+    q: { zh: '完整的 1LLL(一步解顶层)通常说有多少条公式?', en: 'How many algorithms is full 1LLL usually quoted as?' },
+    options: [
+      { zh: '3915 条', en: '3,915' },
+      { zh: '493 条', en: '493' },
+      { zh: '1212 条', en: '1,212' },
+      { zh: '78 条', en: '78' },
+    ],
+    answer: 0,
+    why: { zh: '因为镜像和逆算作不同情况。PLL、ELL、ZBLL 都是它的子集。', en: 'Mirrors and inverses count as distinct cases. PLL, ELL and ZBLL are all subsets of it.' },
+  },
+  {
+    id: 'met-h03', cat: 'methods', type: 'choice',
+    q: { zh: 'COLL 有多少条公式,解决什么?', en: 'How many COLL algorithms are there, and what do they do?' },
+    options: [
+      { zh: '42 条,在保持顶层棱朝向的前提下解完角块', en: '42 — solve the corners while preserving edge orientation' },
+      { zh: '21 条,解完顶层棱', en: '21 — solve the last-layer edges' },
+      { zh: '57 条,翻正顶面', en: '57 — orient the top face' },
+      { zh: '29 条,解完整个顶层', en: '29 — finish the whole last layer' },
+    ],
+    answer: 0,
+  },
+  {
+    id: 'met-h04', cat: 'methods', type: 'choice',
+    q: { zh: 'ELL 有多少种情况?', en: 'How many ELL cases are there?' },
+    options: [
+      { zh: '29 种', en: '29' },
+      { zh: '21 种', en: '21' },
+      { zh: '42 种', en: '42' },
+      { zh: '13 种', en: '13' },
+    ],
+    answer: 0,
+    why: { zh: 'Edges of Last Layer:角块已经全好,只剩棱的朝向和排列。', en: 'Edges of the Last Layer — corners already done, only edge orientation and permutation left.' },
+  },
+  {
+    id: 'met-h05', cat: 'methods', type: 'choice',
+    q: { zh: 'Roux 的第三步 CMLL 在做什么?', en: 'What does Roux\'s third step, CMLL, do?' },
+    options: [
+      { zh: '一步解完顶层的四个角,不管棱', en: 'Solves the four last-layer corners in one step, ignoring the edges' },
+      { zh: '翻正顶层的棱', en: 'Orients the last-layer edges' },
+      { zh: '做完两个 1×2×3 块', en: 'Builds the two 1×2×3 blocks' },
+      { zh: '把中层的棱滑回去', en: 'Slides the middle-slice edges home' },
+    ],
+    answer: 0,
+    why: { zh: 'Corners of the Last Layer:Roux 走「两块 → CMLL → LSE」,棱留给最后一步用 M 层滑。', en: 'Corners of the Last Layer. Roux goes blocks → CMLL → LSE, leaving the edges to M-slice moves at the end.' },
+  },
+  {
+    id: 'met-h06', cat: 'methods', type: 'choice',
+    q: { zh: 'Roux 的最后一步 LSE 靠什么完成?', en: 'How is Roux\'s last step, LSE, executed?' },
+    options: [
+      { zh: '只用 M 层和 U 层的转动', en: 'Only M-slice and U turns' },
+      { zh: '只用 R 和 L 转动', en: 'Only R and L turns' },
+      { zh: '整体旋转加 F 转动', en: 'Rotations plus F turns' },
+      { zh: '一条 21 步的长公式', en: 'One 21-move algorithm' },
+    ],
+    answer: 0,
+    why: { zh: 'Last Six Edges:六个棱靠 M / U 就能收完,这也是 Roux 步数少的原因。', en: 'Last Six Edges — M and U suffice, which is why Roux move counts are so low.' },
+  },
+  {
+    id: 'met-h07', cat: 'methods', type: 'choice',
+    q: { zh: 'Petrus 方法的第一步是什么?', en: 'How does the Petrus method start?' },
+    options: [
+      { zh: '先搭一个 2×2×2 块,再扩成 2×2×3', en: 'Build a 2×2×2 block, then extend it to 2×2×3' },
+      { zh: '先做十字', en: 'Make a cross' },
+      { zh: '先把所有棱翻正', en: 'Orient all edges' },
+      { zh: '先解顶层', en: 'Solve the last layer first' },
+    ],
+    answer: 0,
+    why: { zh: '块搭法(block building)的鼻祖之一,思路后来被 ZZ、Roux 和 FMC 大量继承。', en: 'One of the original block-building methods; ZZ, Roux and modern FMC all borrow from it.' },
+  },
+  {
+    id: 'met-h08', cat: 'methods', type: 'choice',
+    q: { zh: '「Winter Variation」(WV)是在做什么?', en: 'What does Winter Variation do?' },
+    options: [
+      { zh: '插入最后一对 F2L 时顺手把顶层角块翻正', en: 'Orients the last-layer corners while inserting the final F2L pair' },
+      { zh: '插入最后一对时顺手翻正顶层棱', en: 'Orients the last-layer edges during the final insert' },
+      { zh: '把十字和第一对一起做', en: 'Combines the cross with the first pair' },
+      { zh: '在 PLL 前多加一次 AUF', en: 'Adds an AUF before PLL' },
+    ],
+    answer: 0,
+    why: { zh: '前提是顶层棱已经翻正,做完直接进 PLL,省掉 OLL。', en: 'It assumes the last-layer edges are already oriented, so you skip OLL and go straight to PLL.' },
+  },
+  {
+    id: 'met-h09', cat: 'methods', type: 'choice',
+    q: { zh: '盲拧的「3-style」核心工具是什么?', en: 'What tool is 3-style built on?' },
+    options: [
+      { zh: '换位子:缓冲块加两个目标块,只动这三块', en: 'Commutators — a buffer plus two targets, moving only those three pieces' },
+      { zh: '一条反复使用的固定公式', en: 'One fixed algorithm used over and over' },
+      { zh: '把魔方降阶成二阶', en: 'Reducing the cube to a 2×2' },
+      { zh: '先解角再解棱的层先法', en: 'Layer-by-layer, corners then edges' },
+    ],
+    answer: 0,
+    why: { zh: '相比 Old Pochmann 的「每次经过缓冲」,3-style 一次处理一个三循环,步数少得多。', en: 'Where Old Pochmann shuttles every piece through the buffer, 3-style handles a whole 3-cycle at once.' },
+  },
+  {
+    id: 'met-h10', cat: 'methods', type: 'choice',
+    q: { zh: '盲拧里的 M2 方法用来处理什么?', en: 'What is the M2 method used for?' },
+    options: [
+      { zh: '棱块 —— 靠 M2 这一下把目标送进缓冲位', en: 'Edges — an M2 shuttles each target through the buffer' },
+      { zh: '角块', en: 'Corners' },
+      { zh: '中心块', en: 'Centres' },
+      { zh: '高阶魔方的翼棱', en: 'Wings on big cubes' },
+    ],
+    answer: 0,
+    why: { zh: '比 Old Pochmann 的棱块方案快,又比 3-style 好上手,是很多人的中间站。', en: 'Faster than Old Pochmann edges, gentler than 3-style — a common stepping stone.' },
+  },
+  {
+    id: 'met-h11', cat: 'methods', type: 'choice',
+    q: { zh: 'FMC 里的「NISS」是什么?', en: 'What is NISS in Fewest Moves?' },
+    options: [
+      { zh: '在正打乱和逆打乱之间来回切换找解法', en: 'Switching back and forth between the normal and inverse scramble while searching' },
+      { zh: '一种插入换位子的技巧', en: 'A way of inserting commutators' },
+      { zh: '一套顶层公式集', en: 'A last-layer algorithm set' },
+      { zh: '一种打乱生成方式', en: 'A scramble generator' },
+    ],
+    answer: 0,
+    why: { zh: 'Normal-Inverse Scramble Switch:在逆状态上找到的解法可以翻回正向接着用,等于凭空多一半搜索空间。', en: 'Normal-Inverse Scramble Switch — a solution found on the inverse can be flipped back, effectively doubling your search space.' },
+  },
+  {
+    id: 'met-h12', cat: 'methods', type: 'choice',
+    q: { zh: 'FMC 里的「insertion」(插入)是什么手法?', en: 'What is an insertion in Fewest Moves?' },
+    options: [
+      { zh: '在已有解法中间插进一个换位子,消掉剩下的几块', en: 'Slipping a commutator into an existing solution to clean up the leftover pieces' },
+      { zh: '在解法末尾补几步 AUF', en: 'Adding AUF moves at the end' },
+      { zh: '把打乱的一段抄进解法', en: 'Copying part of the scramble into the solution' },
+      { zh: '把两条解法拼起来', en: 'Concatenating two solutions' },
+    ],
+    answer: 0,
+    why: { zh: '先故意留下三个角或三个棱,再找一个插入点让换位子「抵消」掉最多步数,是 FMC 压步数的主力手段。', en: 'You deliberately leave three corners or edges, then find the insertion point where the commutator cancels the most moves.' },
+  },
+  {
+    id: 'met-h13', cat: 'methods', type: 'choice',
+    q: { zh: '四阶的 OLL parity(棱奇偶)本质上是什么?', en: 'What is 4×4 OLL parity, really?' },
+    options: [
+      { zh: '一对翼棱在自己位置上内部翻转,三阶上根本不存在这种状态', en: 'A pair of wings flipped in place — a state that cannot exist on a 3×3' },
+      { zh: '两个角块交换了', en: 'Two corners swapped' },
+      { zh: '中心块贴错了', en: 'Mis-stickered centres' },
+      { zh: '打乱步数是奇数', en: 'An odd-length scramble' },
+    ],
+    answer: 0,
+    why: { zh: '降阶之后「一个棱」其实是两个翼棱拼的,内部翻转在三阶视角里看不出来,只能用专门公式拆开重拼。', en: 'After reduction an "edge" is really two wings; their internal flip is invisible from the 3×3 view and needs a dedicated algorithm.' },
+  },
+];

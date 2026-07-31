@@ -7,6 +7,13 @@
 
 export interface Msg { zh: string; en: string }
 
+/**
+ * 难度档。easy = 常识题(_data/*.ts),hard = 进阶题(_data/hard/*.ts)。
+ * 两档是两套独立题目,不是同一批题标不同难度。
+ */
+export const LEVELS = ['easy', 'hard'] as const;
+export type Level = typeof LEVELS[number];
+
 /** 分类 id。新增分类要同时在 index.ts 的 CATEGORIES 里登记,否则 tests/quiz_bank 会红。 */
 export type QuizCat =
   | 'history'

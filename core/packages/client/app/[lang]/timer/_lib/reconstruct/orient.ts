@@ -85,14 +85,16 @@ const IDENTITY_PERM: FacePerm = Object.freeze({
 });
 
 /**
- * 旋转记号 → 面置换。
+ * 旋转记号 → 面置换。一串也行(`humanize.ts` 会累积好几个转体),空串 = 恒等。
  *
  * 不手写表:把旋转作用在复原态上,读六个中心块现在是什么颜色 —— 颜色就是它原来
  * 所在的面。手写六张表是给 typo 留位置。
  */
 export function facePermFor(rotation: string): FacePerm {
-  if (!rotation) return IDENTITY_PERM;
-  const st = applyOneToken(solved(3), rotation);
+  const tokens = rotation.trim().split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return IDENTITY_PERM;
+  let st = solved(3);
+  for (const tok of tokens) st = applyOneToken(st, tok);
   const out: Record<string, CubeFace> = {};
   for (const f of CUBE_FACES) {
     // st[f][4] 是转完之后 f 面的中心色 = 原来在那个色所属面的东西。

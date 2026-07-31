@@ -13,7 +13,7 @@ import { Check, X, RotateCcw, ArrowRight } from 'lucide-react';
 import Link from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
 import { persistItem } from '@/lib/safe-storage';
-import type { Question, QuizCat, QuizCategory } from '../_data';
+import type { Level, Question, QuizCat, QuizCategory } from '../_data';
 import { buildDeck, gradeChoice, gradeOpen, rebuildDeck, type DeckItem } from '../_lib/deck';
 
 const BEST_KEY = 'cuberoot-quiz.best.v1';
@@ -40,12 +40,13 @@ function saveBest(key: string, pct: number): void {
 interface Verdict { q: Question; correct: boolean }
 
 interface Props {
+  level: Level;
   /** null = 混合模式。 */
   cat: QuizCat | null;
   category: QuizCategory | undefined;
 }
 
-export default function QuizRunner({ cat, category }: Props) {
+export default function QuizRunner({ level, cat, category }: Props) {
   // 出题要用 Math.random,SSR 首帧不能有牌 —— 挂载后再发,避免 hydration 错配。
   const [deck, setDeck] = useState<DeckItem[] | null>(null);
   const [idx, setIdx] = useState(0);
@@ -66,7 +67,7 @@ export default function QuizRunner({ cat, category }: Props) {
     setCorrect(false);
   }, []);
 
-  useEffect(() => { start(buildDeck(cat)); }, [cat, start]);
+  useEffect(() => { start(buildDeck(level, cat)); }, [level, cat, start]);
 
   const item = deck && idx < deck.length ? deck[idx] : null;
   const finished = deck !== null && idx >= deck.length;
@@ -128,11 +129,11 @@ export default function QuizRunner({ cat, category }: Props) {
   const wrong = useMemo(() => verdicts.filter((v) => !v.correct).map((v) => v.q), [verdicts]);
   const total = deck?.length ?? 0;
 
-  // 结算时记一次最好成绩。
+  // 结算时记一次最好成绩,两个难度档各记一份。
   useEffect(() => {
     if (!finished || total === 0) return;
-    saveBest(cat ?? 'mixed', Math.round((score / total) * 100));
-  }, [cat, finished, score, total]);
+    saveBest(`${level}:${cat ?? 'mixed'}`, Math.round((score / total) * 100));
+  }, [cat, finished, level, score, total]);
 
   const heading = category
     ? tr(category.name)
@@ -176,7 +177,7 @@ export default function QuizRunner({ cat, category }: Props) {
           )}
 
           <div className="quiz-actions">
-            <button type="button" className="quiz-btn is-primary" onClick={() => start(buildDeck(cat))}>
+            <button type="button" className="quiz-btn is-primary" onClick={() => start(buildDeck(level, cat))}>
               <RotateCcw size={15} aria-hidden />
               {tr({ zh: '再来一局', en: 'Play again' })}
             </button>
@@ -185,7 +186,7 @@ export default function QuizRunner({ cat, category }: Props) {
                 {tr({ zh: '只做错题', en: 'Just the misses' })}
               </button>
             )}
-            <Link href="/quiz" className="quiz-btn">
+            <Link href={`/quiz?level=${level}`} className="quiz-btn">
               {tr({ zh: '换一类', en: 'Pick another topic' })}
             </Link>
           </div>
@@ -202,6 +203,9 @@ export default function QuizRunner({ cat, category }: Props) {
     <div className="quiz-stage">
       <div className="quiz-bar">
         <span className="quiz-bar-cat">{heading}</span>
+        {level === 'hard' && (
+          <span className="quiz-bar-level">{tr({ zh: '进阶', en: 'Advanced' })}</span>
+        )}
         <span className="quiz-bar-pos">{idx + 1} / {total}</span>
         <span className="quiz-bar-score">
           {tr({ zh: `答对 ${score}`, en: `${score} right` })}
