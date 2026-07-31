@@ -541,10 +541,23 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     const p = st.players[playerId];
     if (p.isTiming || p.hasFinished) return false;
     if (!st.scrambles[playerId]) return false;
-    // 直接绿灯,不走红灯延时:那 300ms 防的是「手放上去还没准备好」,而把魔方
-    // 拧回打乱状态本身就是准备好了 —— 再让人干等 300ms 只是噪声。
     get().cancelReadyTimer(playerId);
     const players = [...st.players];
+    /**
+     * 「同时开始」下,预备是一次**集合**:全员到齐才一起绿灯(checkBothReady 的判据
+     * 是 `every(isReady && !canStart)`)。魔方这一路要是自己先绿了,那条判据就永远
+     * 凑不齐 —— 谁都起不了表,而且这一轮连结算都走不到(全员 hasFinished 才收尾),
+     * 只能靠关掉「同时开始」或刷新页面脱身。所以这里按「他已经准备好了」入列,
+     * 绿灯仍旧由集合那条统一给。
+     */
+    if (st.syncStart && st.mode !== 'solo') {
+      players[playerId] = { ...p, isReady: true, canStart: false };
+      set({ players });
+      get().checkBothReady(playerId);
+      return true;
+    }
+    // 各自开始:直接绿灯,不走红灯延时 —— 那 300ms 防的是「手放上去还没准备好」,
+    // 而把魔方拧回打乱状态本身就是准备好了,再让人干等 300ms 只是噪声。
     players[playerId] = { ...p, isReady: false, canStart: true };
     set({ players });
     return true;
@@ -591,9 +604,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     players[playerId] = { ...p, time: elapsed, isTiming: false, hasFinished: true, penalty };
     if (p.rafId !== null) cancelAnimationFrame(p.rafId);
     set({ players });
-    // 一颗魔方轮流拧:这位停表了,魔方就该到下一位手里。
-    if (s.cubeMode === 'shared' && s.mode !== 'solo') get().advanceCubeHolder();
-    get().checkBothFinished();
+    get().checkBothFinished();      // 传魔方也在里面 —— 见 advanceCubeHolder 的注释
     return true;
   },
 
@@ -608,9 +619,22 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     set({ cubeHolder: playerId });
   },
 
+  /**
+   * 维持一条不变量:**魔方不停在已经拧完的人手里**。
+   *
+   * 原先这一步只挂在 `cubeStop` 上,可是「拧完」不止魔方那一条路 —— 队友用按键停表、
+   * 观察超时自动 DNF,都会让持有者变成一个已经拧完的人。而 `checkArm` 对已完成的人
+   * 恒拒(`cubeArm` 的 `p.hasFinished` 那道),于是下一位怎么拧都预备不了,整颗魔方
+   * 这一轮就废了,只能手点「轮到」那排按钮救回来。所以改挂在 `checkBothFinished` 上
+   * —— 四个「拧完」的落点全都会走到那里。
+   *
+   * 因此这里必须**幂等**:持有者还没拧完就原地不动,不能见谁拧完都往下推一格。
+   */
   advanceCubeHolder: () => {
     const s = get();
-    const n = s.mode === 'solo' ? 1 : s.playerCount;
+    if (s.cubeMode !== 'shared' || s.mode === 'solo') return;
+    if (!s.players[s.cubeHolder]?.hasFinished) return;
+    const n = s.playerCount;
     for (let step = 1; step <= n; step++) {
       const cand = (s.cubeHolder + step) % n;
       if (!s.players[cand].hasFinished) { set({ cubeHolder: cand }); return; }
@@ -885,6 +909,8 @@ export const useBattleStore = create<BattleState>((set, get) => ({
 
   // 1:1 翻译自 battle.js checkBothFinished()（行 835~880）
   checkBothFinished: () => {
+    // 有人拧完了 = 该重新看一眼魔方在谁手里(四条「拧完」的路都汇到这儿)。
+    get().advanceCubeHolder();
     const s = get();
     const isSolo = s.mode === 'solo';
 
@@ -1179,6 +1205,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       winners: [],
       players: newPlayers,
       activeTab: 'timer',
+      cubeHolder: 0,       // 同 setPlayerCount:solo 只有 0 号在场,别留个越界的持有者
     });
     get().loadSolveHistory();
   },
@@ -1215,6 +1242,10 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       winners: [],
       players: freshPlayers(),
       eventPickerOpen: Array.from({ length: MAX_PLAYERS }, () => false),
+      // 人数缩了要把魔方交回 0 号:`cubeHolder` 是指进玩家数组的下标,4→2 之后
+      // 停在 3 号手里就指到了不参战的槽,`inPlay` 一路 false —— arm/start/stop 全
+      // 拒掉,魔方彻底哑掉且没有自愈路径(3 号的传递 chip 压根不渲染)。
+      cubeHolder: 0,
     });
     get().loadSolveHistory();
     get().loadNewScramble();

@@ -40,6 +40,8 @@ import type { SolveQuality } from '../_lib/reconstruct/quality';
 import { computeF2lSlots } from '../_lib/reconstruct/f2l_slots';
 import { walkMethod } from '../_lib/reconstruct/method_walk';
 import type { MethodId } from '../_lib/reconstruct/methods';
+import { decodeGyroTrack } from '../_lib/bluetooth/gyro_track';
+import { detectRotations } from '../_lib/reconstruct/rotation_detect';
 import { buildReconText } from '../_lib/reconstruct/recon_text';
 import type { ReconTextResult } from '../_lib/reconstruct/recon_text';
 import StepAnalysis from './StepAnalysis';
@@ -227,6 +229,18 @@ export default function ReconstructModal({
   // 文字复盘。识别那一层是 cubing.js 的活(每一行两次 detectStage + 末层查表),
   // 所以和参考解法一样推到首帧之后 —— 报告该立刻出现,标注可以晚一拍。
   const [reconText, setReconText] = useState<ReconTextResult | null>(null);
+  /**
+   * 转体。魔方不报,只能从姿态流里推(Sprint 28)—— 所以只有**录了姿态**的那些把
+   * 有;没录的把 `solve.gyro` 不存在,这里是空数组,谱子和以前逐字一样。
+   * 纯几何、不联网,几十个样本的活,不必推到下一帧。
+   */
+  const rotations = useMemo(
+    // 牌子决定记号里的轴向(`BRAND_SENSOR_BASIS`);个数和角度与它无关。
+    () => (solve.gyro
+      ? detectRotations(decodeGyroTrack(solve.gyro), { brand: solve.device?.model })
+      : []),
+    [solve.gyro, solve.device?.model],
+  );
   useEffect(() => {
     setReconText(null);
     if (!stageSegs || moves.length === 0) return;
@@ -234,13 +248,13 @@ export default function ReconstructModal({
     const timer = setTimeout(() => {
       buildReconText({
         scramble: solve.scramble, moves, totalMs: solve.timeMs,
-        segs: stageSegs, metrics: stepMx, slots,
+        segs: stageSegs, metrics: stepMx, slots, rotations,
       })
         .then(r => { if (alive) setReconText(r); })
         .catch(err => console.warn('[reconstruct] recon text failed:', err));
     }, 0);
     return () => { alive = false; clearTimeout(timer); };
-  }, [stageSegs, stepMx, slots, solve.scramble, solve.timeMs, moves]);
+  }, [stageSegs, stepMx, slots, solve.scramble, solve.timeMs, moves, rotations]);
 
   // Personal stage averages computed from the caller-provided history.
   // We exclude the current solve so a fresh solve isn't compared against
