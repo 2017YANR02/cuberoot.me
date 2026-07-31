@@ -43,7 +43,7 @@ Association. WCA competition data is derived from the WCA's public export.
   the combinatorics behind common speedcubing odds.
 - [Last slot / last layer counts](${BASE}/math/lsll): how the LSLL case space
   decomposes and how large each family is.
-- [Kernels and quotients](${BASE}/math/kernel), [GCD sequences](${BASE}/math/gcd-sequence),
+- [Kernels and quotients](${BASE}/math/kernel),
   [unit distance](${BASE}/math/unit-distance): shorter standalone topics.
 
 ## WCA regulations, illustrated
