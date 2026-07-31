@@ -24,6 +24,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Alg Trainer | `/alg-trainers` | 同上 | fork of mihlefeld/Alg-Trainers | ❌ |
 | csTimer | `/cstimer` | iframe → `/tools/cstimer/` | cs0x7f/cstimer | ❌ |
 | BLDDB | `/blddb` | iframe → `/tools/blddb/`(next build 静态导出,`_sync_blddb.ps1`) | nbwzx/blddb v2 | ❌ |
+| 三循环查询 | `/alg/3bld/3style` | client,吃 `tools/blddb/data/*Manmade.json` | 自有 UI + blddb 数据 | ✅ |
 | WCA Stats | `/wca` | `packages/stats-build` | jonatanklosko/wca_statistics TS 重写 | ⚠️ 管道重写,UI 自有 |
 | Score Calculator | `/calc` | client `app/[lang]/calc/` | ported from carykh/hthgrapher | ✅ |
 | 1v1 Battle | `/timer` 双人模式(旧 `/battle` 已退役,引擎在 `timer/_battle/`) | client | ported from MatteoColombo/cube_challenge_timer | ✅ |

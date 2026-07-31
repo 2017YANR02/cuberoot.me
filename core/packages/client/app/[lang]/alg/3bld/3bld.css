@@ -1444,3 +1444,128 @@
   .bld-hub-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
   .bld-hub-intro { margin-top: 0; }
 }
+
+/* ─── 三循环公式查询 (/alg/3bld/3style) ─── */
+.bld-3s-input {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  padding-left: 12px;
+}
+.bld-3s-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--muted-foreground);
+  margin: 8px 0 0;
+}
+
+/* case 头:缩略图 + 编码。故意不加边框 —— 层级靠间距。 */
+.bld-3s-case {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 4px 0 18px;
+}
+.bld-3s-case-cube { flex: 0 0 auto; }
+.bld-3s-case-code {
+  font-family: var(--font-mono, monospace);
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+.bld-3s-case-sub {
+  font-size: 0.82rem;
+  color: var(--faint-foreground);
+  margin-top: 2px;
+}
+
+.bld-3s-rows {
+  display: flex;
+  flex-direction: column;
+}
+/* 三列按最长内容对齐后紧凑靠左 —— 不用 1fr 把换位子和人数推到行尾留大片空白。 */
+.bld-3s-row {
+  display: grid;
+  grid-template-columns: minmax(0, max-content) minmax(0, max-content) auto;
+  align-items: start;
+  gap: 8px 28px;
+  padding: 10px 0;
+}
+.bld-3s-row + .bld-3s-row {
+  border-top: 1px solid color-mix(in srgb, var(--border-default) 60%, transparent);
+}
+
+.bld-3s-alg {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.9rem;
+  color: var(--muted-foreground);
+}
+/* 头一条是这组里最通用的写法,其余是换手 / 转体的等价写法。 */
+.bld-3s-alg.is-primary { color: var(--foreground); }
+.bld-3s-alg-text { word-break: break-word; }
+
+.bld-3s-comm {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.85rem;
+  color: color-mix(in srgb, var(--accent) 78%, var(--foreground));
+}
+
+.bld-3s-users { position: relative; }
+.bld-3s-users-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: none;
+  color: var(--faint-foreground);
+  font-size: 0.82rem;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+.bld-3s-users-btn:hover { color: var(--foreground); }
+.bld-3s-users-list {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+}
+.bld-3s-users-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;
+  padding: 1px 0;
+}
+.bld-3s-users-list a {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: inherit;
+  text-decoration: none;
+}
+.bld-3s-users-list a:hover { color: var(--foreground); }
+.bld-3s-users-list em {
+  font-style: normal;
+  font-family: var(--font-mono, monospace);
+  color: var(--faint-foreground);
+}
+
+@media (max-width: 640px) {
+  /* 窄屏三列挤不下:换位子挪到公式下面,人数单独一行右对齐。 */
+  .bld-3s-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .bld-3s-comm { grid-column: 1 / -1; }
+  .bld-3s-users { grid-row: 1; grid-column: 2; }
+  .bld-3s-case-code { font-size: 1.3rem; }
+}
