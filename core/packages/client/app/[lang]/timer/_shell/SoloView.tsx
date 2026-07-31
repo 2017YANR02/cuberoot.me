@@ -1039,12 +1039,10 @@ export default function SoloView({ playersControl }: SoloViewProps) {
             facelets={bluetoothCube.facelets}
             moves={liveMoves}
             algAnchored={algAnchored}
-            mode={want3dLiveCube && bluetoothCube.status.hasGyro
-              ? '3d'
-              // A cube with no gyro can't do 3D, so that request falls back to
-              // the net — the same place the '3d' branch inside the component
-              // lands when no orientation sample ever arrives.
-              : (settings.liveCubeView === '2d' ? '2d' : 'net')}
+            // 陀螺仪只决定这颗魔方**朝哪儿**,不决定它是什么状态 —— 没有姿态流
+            // 的魔方照样该用 3D:贴纸一模一样准,而且每拧一手能把那一层转给你看,
+            // 展开图做不到。没姿态就用引擎自己的等轴视角,不假装在跟手。
+            mode={want3dLiveCube ? '3d' : (settings.liveCubeView === '2d' ? '2d' : 'net')}
             quatRef={gyroQuatRef}
             calibrateToken={calibrateNonce}
             sensorBasis={sensorBasisForBrand(bluetoothCube.status.brand)}
@@ -1059,9 +1057,12 @@ export default function SoloView({ playersControl }: SoloViewProps) {
           presses on one through without arming the timer.
 
           Gated on the view that actually rendered, not on the one requested:
-          phones, a silent gyro and a state not reachable from solved all fall
-          back to the flat net, and there is nothing there to calibrate. */}
-      {liveCubeView === '3d' && (
+          phones and a state not reachable from solved fall back to the flat
+          net, and there is nothing there to calibrate. Also gated on the cube
+          actually having a gyro — the 3D view no longer needs one, so "3D is
+          on screen" stopped implying "there is an orientation to calibrate",
+          and a button that does nothing is worse than no button. */}
+      {liveCubeView === '3d' && bluetoothCube.status.hasGyro && (
         <button
           type="button"
           className="live-cube-calibrate"

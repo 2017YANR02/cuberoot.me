@@ -21,8 +21,9 @@
  * 它自己还在说「这把慢在哪」。右栏的 `side` 由调用方给(渲染 prop,因为它要读
  * 游标),这样面板不需要知道分步列表是什么。
  *
- * 中间状态靠重算打乱得到:`打乱 + 前 idx 手` 每次整条重新应用 —— 状态一定对,
- * 代价是没有逐手动画。
+ * 中间状态就是 `打乱 + 前 idx 手`,状态一定对。往下一手走是**追加**,引擎在当前
+ * 状态上把那一手转给你看;拖时间轴 / 上一步是跳,整条重放瞬切 —— 没人真的倒着拧过
+ * 那些手,给它配动画是编的。判据和共轭在 `_lib/cube/sim_log.ts`。
  *
  * 魔方本身走 `SimCubeView`(/sim 引擎),和计时页上那颗实时魔方是同一个组件:
  * 同一个站里不该有两种三维魔方长相。非 NxN 的项目没有 sim 魔方,退回打乱预览。
@@ -30,7 +31,8 @@
  * ## 朝向:转整颗魔方,不换记号
  *
  * `scramble`/`moves` 是魔方自己配色系里的原始那对,`viewRotation` 是把十字转到
- * 下面的那个整体旋转(见 `orient.ts`),**接在动作末尾**喂给引擎。
+ * 下面的那个整体旋转(见 `orient.ts`),作为 `pose` 单独给引擎 —— 它接在动作末尾
+ * 生效,但**不混进动作数组**(理由见 `_lib/cube/sim_log.ts`)。
  *
  * 为什么是接一个旋转而不是喂换过名的记号:换名会把颜色也换掉 —— 白面被叫成 D,
  * 而 D 在标准配色里是黄,屏幕上就成了「黄十字朝下」。接一个真旋转是把整颗魔方转
@@ -166,16 +168,17 @@ export default function PlaybackPanel({
   };
 
   // SimCubeView 是 alg 驱动的,必须从**复原态**起算 —— 喂给它的是「打乱 + 已播
-  // 的这几手」,末尾按需接一个整体旋转(见头注)。
+  // 的这几手」。视角旋转**不进这个数组**:它是姿态不是动作,混进来的话每多播一手
+  // 都插在它前面 = 不是追加 = 逐手动画全没了(见 _lib/cube/sim_log.ts)。
   const posed = gyroOn && hasGyro;
   const simMoves = useMemo(
     () => [
       ...scramble.trim().split(/\s+/).filter(Boolean),
       ...moves.slice(0, idx).map(m => m.m),
-      ...(!posed && viewRotation ? [viewRotation] : []),
     ],
-    [scramble, moves, idx, posed, viewRotation],
+    [scramble, moves, idx],
   );
+  const simPose = !posed && viewRotation ? viewRotation : '';
 
   const playLabel = playing
     ? tr({ zh: '暂停', en: 'Pause' })
@@ -224,6 +227,7 @@ export default function PlaybackPanel({
           {isNxn3 ? (
             <SimCubeView
               moves={simMoves}
+              pose={simPose}
               quat={posed ? sampleGyroAt(gyroTrack, elapsedMs) : null}
               sensorBasis={sensorBasisForBrand(deviceModel)}
               mirror={mirrorForBrand(deviceModel)}

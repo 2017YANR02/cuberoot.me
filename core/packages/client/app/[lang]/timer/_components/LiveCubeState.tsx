@@ -8,15 +8,20 @@
  *   mode 'net' (default) — the unfolded WCA net. Exact for any state the cube
  *     can be in, and the one you can check face-by-face against your hands.
  *   mode '2d'            — the isometric still: three faces visible, three not.
- *   mode '3d'            — a live 3D cube whose orientation follows the cube's
- *     gyroscope (SimCubeView). 3x3 only, only once a real orientation
- *     sample has arrived, and only while the state is expressible as an alg
- *     (see `moves` below).
+ *   mode '3d'            — a live 3D cube that turns as you turn (SimCubeView),
+ *     posed by the cube's gyroscope when there is one. 3x3 only, and only
+ *     while the state is expressible as an alg (see `moves` below).
  *
- * The flat fallback is not a nicety, it is the contract: a 3D cube that is not
- * being told which way it is pointing is worse than no 3D cube at all, because
- * it looks alive while being wrong. So we stay flat until the first quaternion
- * lands, and the caller can drop `mode` back at any time.
+ * A gyro is NOT required for 3D, and used to be. The two are separate things:
+ * the gyro says which way the cube is POINTING, the move log says what STATE it
+ * is in, and only the second one is a claim about the cube. Without a pose the
+ * view sits in the engine's own iso angle and does not pretend to follow the
+ * hands — but it still plays each turn, which is the whole reason to be in 3D
+ * while timing and something a flat net cannot do at all.
+ *
+ * The flat fallback stays for the things that ARE contract: no WebGL on phones,
+ * and no 3D at all while the state is not reachable from solved, because that
+ * one would be a cube drawing a position nobody verified.
  *
  * SIZE IS THE HOST'S. Every branch fills its container rather than carrying a
  * px number, because this now lives in the timing surface's centre slot — the
@@ -70,10 +75,6 @@ const SimCubeView = dynamic(() => import('./SimCubeView'), {
  *  real BLE gyro delivers, so the dev path exercises the same "samples arrive
  *  slower than frames" behaviour the smoothing exists for. */
 const DEV_SAMPLE_MS = 33;
-
-/** How often to check whether the first `quatRef` sample has landed. Only ever
- *  runs before the 2D→3D switch, so it can afford to be lazy. */
-const LATCH_POLL_MS = 250;
 
 /**
  * Dev-only synthetic orientation source.
@@ -173,31 +174,10 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
   const devQuat = useSyntheticQuat(wants3d);
   const liveQuat = quat ?? devQuat;
 
-  // Latch: once any sample has landed we stay in 3D even across momentary
-  // gaps in the feed (the view holds its last pose rather than flickering
-  // between renderers).
-  const [everOriented, setEverOriented] = useState(false);
-  useEffect(() => {
-    if (liveQuat && !everOriented) setEverOriented(true);
-  }, [liveQuat, everOriented]);
-
-  // `quatRef` deliberately does not re-render on each sample, so nothing would
-  // ever trip the latch above. Poll it — slowly, and only until the first
-  // sample lands. A cube with no gyro simply never satisfies this and we stay
-  // on the net, which is the intended outcome rather than a failure mode.
-  useEffect(() => {
-    if (!wants3d || everOriented || !quatRef) return;
-    if (quatRef.current) { setEverOriented(true); return; }
-    const id = setInterval(() => {
-      if (quatRef.current) setEverOriented(true);
-    }, LATCH_POLL_MS);
-    return () => clearInterval(id);
-  }, [wants3d, everOriented, quatRef]);
-
   // The single decision, taken once and reported, so the owner draws the
   // calibrate button against what is on screen rather than what was asked for.
   const view: '2d' | 'net' | '3d' =
-    wants3d && everOriented && algAnchored ? '3d' : mode === '2d' ? '2d' : 'net';
+    wants3d && algAnchored ? '3d' : mode === '2d' ? '2d' : 'net';
   useEffect(() => {
     onViewChange?.(view);
   }, [view, onViewChange]);
@@ -226,8 +206,8 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
   if (!facelets) return <span style={{ display: 'block', height: '100%' }} />;
   const alt = tr({ zh: '智能魔方当前状态', en: 'Current smart-cube state' });
   // Only an explicit '2d' asks for the isometric still. A '3d' request that got
-  // this far had no orientation to draw with, and the flat view it falls back to
-  // is the net — the one that shows all six faces.
+  // this far is a phone or an un-anchored state, and the flat view it falls back
+  // to is the net — the one that shows all six faces.
   if (view === '2d') return <FaceletsCube fd={facelets.toLowerCase()} alt={alt} fill />;
   return <CubeNet facelets={facelets} alt={alt} />;
 }

@@ -19,8 +19,9 @@
  *
  *   - STICKERS  → the engine's twister — layer twists applied to child
  *     CubeGroups and per-instance matrices. `setup()` snaps the whole log;
- *     `push()` plays the new turns. See the `animate` prop for which is used
- *     when and why the default is to snap.
+ *     `push()` plays the new turns. Which one, and what exactly gets pushed,
+ *     is decided by `planSimUpdate` (_lib/cube/sim_log.ts) — read its header
+ *     before touching the effect at the bottom of this file.
  *
  * The engine is alg-driven — it has no facelet setter — so the move log MUST
  * be anchored at a solved cube for this to be truthful. LiveCubeState owns
@@ -57,6 +58,7 @@ import { tr } from '@/i18n/tr';
 import type World from '@/app/[lang]/sim/engine/world';
 import type NxnCube from '@/app/[lang]/sim/engine/nxn/cube';
 import type { SimMount } from '@/components/sim-embed/mountSimWorld';
+import { planSimUpdate } from '../_lib/cube/sim_log';
 import {
   advanceStillMs,
   applyOrientation,
@@ -79,6 +81,14 @@ const MAX_ANIM_QUEUE = 2;
 export interface SimCubeViewProps {
   /** Moves since the cube was last known SOLVED — see the note above. */
   moves: string[];
+  /**
+   * A whole-cube rotation appended to the log for VIEWING only — the replay
+   * uses it to put the cross face down without renaming (and recolouring) the
+   * moves. It is a pose, not a turn, so it is passed separately: fold it into
+   * `moves` and every new move lands BEFORE it, which is not an append and
+   * costs you the animation. See _lib/cube/sim_log.ts.
+   */
+  pose?: string;
   /** Latest orientation sample, or null when none has arrived. */
   quat: Quat | null;
   /**
@@ -100,9 +110,9 @@ export interface SimCubeViewProps {
   /**
    * Play the turns instead of snapping to the new state.
    *
-   * Only ever applies to a pure APPEND — the new log starting with the old one.
-   * Anything else (a seek, a rewind, a re-anchor) still snaps, because there is
-   * no honest animation for "the state jumped". And an append longer than
+   * Only ever applies to a pure APPEND on the TURN log — anything else (a seek,
+   * a rewind, a re-anchor, a changed `pose`) still snaps, because there is no
+   * honest animation for "the state jumped". And an append longer than
    * `MAX_ANIM_QUEUE` finishes what is playing first: the point of the animation
    * is to make one turn readable, not to let the screen fall behind the hands.
    */
@@ -117,6 +127,7 @@ export interface SimCubeViewProps {
 export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
   const {
     moves,
+    pose = '',
     quat,
     quatRef,
     calibrateToken = 0,
@@ -254,35 +265,29 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
 
   // ── Sticker state. ──
   //
-  // `setup()` snaps: it drops the play queue, resets and re-applies the whole
-  // log. That is the only honest answer to a state that JUMPED (a seek, a
-  // rewind, a re-anchored live log), and it stays the default.
+  // Which engine entry point, and what exactly to hand it, is `planSimUpdate`'s
+  // call — turns and pose are two axes and the plan is pure algebra over them.
+  // Read _lib/cube/sim_log.ts; there is nothing to decide here.
   //
-  // `push()` plays the turn. It is used only when the new log literally starts
-  // with the old one — the one case where "what changed" is a sequence of
-  // turns and animating them is showing what happened rather than inventing it.
   // The queue is capped: fall more than MAX_ANIM_QUEUE behind and the pending
   // turns are finished instantly before the new one is pushed, so the screen
   // can drift a couple of turns behind the hands and no further.
-  const composed = moves.join(' ');
-  const shownRef = useRef('');
+  const turns = moves.join(' ');
+  const shownRef = useRef({ turns: '', pose: '' });
   useEffect(() => {
     const world = mountRef.current?.world;
     if (!ready || !world) return;
     const twister = (world.cube as NxnCube).twister;
-    const prev = shownRef.current;
-    shownRef.current = composed;
-    // An empty `prev` is the first mount, where the whole scramble would
-    // otherwise "play" — that is a state jump too, not a sequence of turns.
-    const appended = animate && prev !== '' && composed.startsWith(`${prev} `);
-    if (appended) {
+    const plan = planSimUpdate(shownRef.current, { turns, pose }, animate);
+    shownRef.current = { turns, pose };
+    if (plan.mode === 'push') {
       if (twister.length > MAX_ANIM_QUEUE) twister.finish();
-      twister.push(composed.slice(prev.length).trim());
+      twister.push(plan.exp);
     } else {
-      twister.setup(composed);
+      twister.setup(plan.exp);
     }
     mountRef.current?.invalidate();
-  }, [ready, composed, animate]);
+  }, [ready, turns, pose, animate]);
 
   return (
     <div
