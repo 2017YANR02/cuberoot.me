@@ -238,22 +238,37 @@ if ($homeHtml -match '(?<!blddb)"/images/')
     throw "index.html 里还有裸 /images/ —— basePath 补丁漏了，logo 会 404。"
 }
 
-# NOTE: public/data/ 的 49MB JSON 是**编译期** import 进 chunk 的（见 CLAUDE.md），
-#       运行时没人再去 /data/ 拉，导出里那份纯属死重量，删掉省一半仓库体积。
-#       上游哪天改成运行时 fetch，这里的断言会先红，别静默留 404。
-$srcFiles = Get-ChildItem "$BlddbDir\src" -Recurse -File -Include *.ts, *.tsx
-$runtimeDataRef = $srcFiles | Select-String -Pattern '["`''](\.\.?)?/data/' | Where-Object { $_ }
-if ($runtimeDataRef)
-{
-    $runtimeDataRef | ForEach-Object { Write-Host "  $($_.Path):$($_.LineNumber) $($_.Line.Trim())" -ForegroundColor Yellow }
-    throw "上游开始在运行时引用 /data/ 了 —— 不能再删 out/data/，去掉本段裁剪。"
-}
+# NOTE: public/data/ 的 49MB JSON 上游是**编译期** import 进 chunk 的（见 CLAUDE.md），
+#       导出里 out/data/ 那份对 iframe 版的 /blddb 是纯死重量。但我们自己的
+#       /alg/3bld/3style 是运行时 fetch 它的（见 lib/blddb-data.ts），所以留下人工整理的
+#       manmade 那批，砍掉 Nightmare（穷举生成的，37MB，只有 /blddb 里用得到，
+#       而那边是编译期内联的，删了不影响）。
 $dataDir = Join-Path $out 'data'
 if (Test-Path $dataDir)
 {
-    $dataMB = [math]::Round((Get-ChildItem $dataDir -Recurse -File | Measure-Object Length -Sum).Sum / 1MB, 1)
-    Invoke-WithFileRetry { Remove-Item $dataDir -Recurse -Force }
-    Write-Host "  裁掉 out/data/（${dataMB}MB，编译期已内联）" -ForegroundColor Gray
+    $before = (Get-ChildItem $dataDir -Recurse -File | Measure-Object Length -Sum).Sum
+    Get-ChildItem $dataDir -Recurse -File | Where-Object { $_.Name -like '*Nightmare*' } |
+        ForEach-Object { Invoke-WithFileRetry { Remove-Item -LiteralPath $_.FullName -Force } }
+    # nightmare/*.ts 是 ArrayTable 的表源，同样编译期内联
+    $nmDir = Join-Path $dataDir 'nightmare'
+    if (Test-Path $nmDir) { Invoke-WithFileRetry { Remove-Item -LiteralPath $nmDir -Recurse -Force } }
+    $after = (Get-ChildItem $dataDir -Recurse -File | Measure-Object Length -Sum).Sum
+    Write-Host ("  data/：砍 Nightmare {0}MB，留 {1}MB" -f
+        [math]::Round(($before - $after) / 1MB, 1), [math]::Round($after / 1MB, 1)) -ForegroundColor Gray
+
+    # 我们自己的页面靠这几个文件，缺了就是空表
+    $dataMust = @(
+        'cornerManmade.json'
+        'edgeManmade.json'
+        'sourceToUrl.json'
+        'sourceToResult.json'
+        'algToUrl.json'
+    )
+    $dataMissing = $dataMust | Where-Object { -not (Test-Path (Join-Path $dataDir $_)) }
+    if ($dataMissing)
+    {
+        throw "data/ 少了 $($dataMissing -join ', ') —— /alg/3bld/3style 会空表。"
+    }
 }
 
 # ===== Step 6: 落到 tools/blddb/ =====
@@ -275,8 +290,11 @@ Static export of the upstream Next.js app, built by _sync_blddb.ps1 at repo root
 Do NOT hand-edit anything here — it is generated. Patches (static-export config +
 i18n cookies() removal) live in that script; upstream notes in D:\cube\blddb\CLAUDE.md.
 
-out/data/ (the ~49MB algorithm JSON) is dropped on purpose: upstream imports it at
-build time, so it is already inside the _next chunks and nothing fetches it at runtime.
+data/ keeps only the hand-curated "manmade" JSON. Upstream imports all of it at build
+time (so the iframe app already has it inside the _next chunks); this copy exists for
+OUR native page at /alg/3bld/3style, which fetches it at runtime via lib/blddb-data.ts.
+The Nightmare sets (~37MB of exhaustively generated cases) are dropped — only the
+iframe app uses those, and it has them inlined.
 
 Served at: /tools/blddb/  (basePath baked into the bundle — moving the path needs a rebuild)
 Wrapped by: core/packages/client/app/[lang]/blddb/page.tsx

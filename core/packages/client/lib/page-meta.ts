@@ -74,6 +74,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'alg-trainers': { title: { zh: '公式训练器', en: 'Alg Trainers' } },
   'alg/3bld': { title: { zh: '盲拧训练', en: '3BLD Trainer' } },
   'alg/3bld/2c2c': { title: { zh: '双角双角训练', en: '2-Corner / 2-Corner Trainer' } },
+  'alg/3bld/3style': {
+    title: { zh: '三循环公式查询', en: '3-Style Lookup' },
+    description: {
+      zh: '按缓冲和两个目标查三阶盲拧三循环公式:每个 case 列出常用写法、换位子与使用者。',
+      en: 'Look up 3BLD 3-style algorithms by buffer and two targets — every common writing of the case, its commutator and who uses it.',
+    },
+  },
   'alg/3bld/2e2e': { title: { zh: '双棱双棱训练', en: '2-Edge / 2-Edge Trainer' } },
   'alg/3bld/comm': { title: { zh: '3BLD 公式库', en: '3BLD Commutator Library' } },
   'alg/3bld/corner': { title: { zh: '角块公式训练', en: 'Corner Algorithm Trainer' } },

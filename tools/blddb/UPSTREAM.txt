@@ -7,8 +7,11 @@ Static export of the upstream Next.js app, built by _sync_blddb.ps1 at repo root
 Do NOT hand-edit anything here — it is generated. Patches (static-export config +
 i18n cookies() removal) live in that script; upstream notes in D:\cube\blddb\CLAUDE.md.
 
-out/data/ (the ~49MB algorithm JSON) is dropped on purpose: upstream imports it at
-build time, so it is already inside the _next chunks and nothing fetches it at runtime.
+data/ keeps only the hand-curated "manmade" JSON. Upstream imports all of it at build
+time (so the iframe app already has it inside the _next chunks); this copy exists for
+OUR native page at /alg/3bld/3style, which fetches it at runtime via lib/blddb-data.ts.
+The Nightmare sets (~37MB of exhaustively generated cases) are dropped — only the
+iframe app uses those, and it has them inlined.
 
 Served at: /tools/blddb/  (basePath baked into the bundle — moving the path needs a rebuild)
 Wrapped by: core/packages/client/app/[lang]/blddb/page.tsx
