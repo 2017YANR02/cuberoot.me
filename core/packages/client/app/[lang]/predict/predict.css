@@ -352,30 +352,27 @@
 .predict-progress {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: 0.4rem 0.7rem;
 }
 
+/* 答题进度,**不是按钮**(点它没有任何事发生)。所以不许长得像旁边那两颗真按钮:
+   不描边、不加底、不做胶囊,就是一行会变色的小字。 */
 .predict-chip {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.3rem 0.65rem;
-  border: 1px solid var(--border-default);
-  border-radius: 8px;
   color: var(--muted-foreground);
   font-size: 0.8rem;
   white-space: nowrap;
 }
 
 .predict-chip.is-found {
-  border-color: var(--signal-success);
   color: var(--signal-success);
 }
 
 /* 看了答案:这一题不算答对,别染成绿的 */
 .predict-chip.is-revealed,
 .predict-chip.is-found.is-revealed {
-  border-color: var(--signal-warning);
   color: var(--signal-warning);
 }
 
@@ -384,7 +381,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ---- 招式 ---- */
+/* ---- 要做的公式 ---- */
 
 /* 排在题面上方(先看要做什么,再看问什么),自己带开题板 / 复盘条的间距 */
 .predict-moves {
@@ -407,7 +404,7 @@
   list-style: none;
 }
 
-/* 每一招都是按钮:点它 = 把盘面同步到做完这一招的样子(/recon 详情页点解法同款) */
+/* 每一步都是按钮:点它 = 把盘面同步到做完这一步的样子(/recon 详情页点解法同款) */
 .predict-move {
   display: block;
   min-width: 2.6rem;
@@ -435,7 +432,7 @@
   outline-offset: 1px;
 }
 
-/* 复盘进度:转过的压暗,当前这一招(step - 1)描一圈 */
+/* 复盘进度:转过的压暗,当前这一步(step - 1)描一圈 */
 /* 播完时整排都是 done,压太狠会整排读不出来 */
 .predict-move.is-done {
   opacity: 0.5;
@@ -444,31 +441,6 @@
 .predict-move.is-current {
   outline: 2px solid var(--foreground);
   outline-offset: 1px;
-}
-
-.predict-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem 0.9rem;
-  margin: 0.75rem 0 0;
-  padding: 0;
-  list-style: none;
-  color: var(--muted-foreground);
-  font-size: 0.78rem;
-}
-
-.predict-legend li {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  white-space: nowrap;
-}
-
-.predict-legend i {
-  width: 0.6rem;
-  height: 0.6rem;
-  border: 1px solid color-mix(in srgb, var(--foreground) 25%, transparent);
-  border-radius: 50%;
 }
 
 .predict-hint {
@@ -500,6 +472,6 @@
   .predict-header h1 { font-size: 1.25rem; }
   .predict-controls { gap: 0.6rem 0.9rem; }
   .predict-clock { font-size: 1.1rem; }
-  /* 每一招现在可点(跳到那一步),手机上给足指头落点 */
+  /* 每一步现在可点(跳到那一步),手机上给足指头落点 */
   .predict-move { font-size: 1rem; min-width: 2.4rem; padding: 0.5rem 0.6rem; }
 }
