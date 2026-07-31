@@ -263,6 +263,32 @@ export function detectRotations(
 }
 
 /**
+ * 把「每一步最后一手的**下标**」翻译成 `rotationsByStep` 要的**时刻**界。
+ *
+ * 两条规矩,两处调用方(文字复盘和分步分析表)都得一样,所以只写一遍:
+ *
+ *   - **最后一步管到 `Infinity`**。拧完最后一手之后往往还要把魔方摆正,那一次转体
+ *     的时刻比任何一手都晚 —— 按最后一手的时刻切就把它丢了。
+ *   - **`endIdx` 是 null 的一步沿用上一界**(零宽,分不到东西)。那是「白给的那一对」
+ *     或者压根没走到的一步:它没发生过,不该从邻居那儿偷转体。
+ */
+export function stepTimeBounds(
+  endIdxs: readonly (number | null)[],
+  moves: readonly { ts: number }[],
+): number[] {
+  let prev = 0;
+  return endIdxs.map((endIdx, i) => {
+    if (i === endIdxs.length - 1) return Infinity;
+    if (endIdx === null) return prev;                       // 没发生过的一步:零宽
+    if (endIdx >= moves.length - 1) return Infinity;         // 收尾在最后一手上
+    const t = moves[endIdx]?.ts;
+    if (t === undefined) return prev;
+    prev = t;
+    return t;
+  });
+}
+
+/**
  * 把转体按时刻分配到各步。`bounds[i]` 是第 i 步的结束时刻;落在
  * `(bounds[i-1], bounds[i]]` 里的转体算第 i 步的。
  *

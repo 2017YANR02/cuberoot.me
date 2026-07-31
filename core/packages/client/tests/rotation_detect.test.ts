@@ -15,7 +15,7 @@
 import { describe, it, expect } from 'vitest';
 
 import {
-  detectRotations, rotationsByStep, tokenForRelative, HOLD_MS,
+  detectRotations, rotationsByStep, stepTimeBounds, tokenForRelative, HOLD_MS,
 } from '@/app/[lang]/timer/_lib/reconstruct/rotation_detect';
 import { GyroRecorder, type GyroSample } from '@/app/[lang]/timer/_lib/bluetooth/gyro_track';
 import {
@@ -338,6 +338,44 @@ describe('未知的传感器姿态:消掉的和消不掉的', () => {
     // 验过的值,这条会红 —— 那正是该重新看一眼记号的时候。
     expect(detectRotations(base, { brand: 'gan-v4' }).map(e => e.token))
       .toEqual(want.map(e => e.token));
+  });
+});
+
+/**
+ * 文字复盘和分步分析表都要把「每步最后一手的下标」翻成时刻界。以前各写一遍,现在
+ * 共用这个 —— 分叉的表现会是「同一把,文字里有那次转体、表里没有」,不好查。
+ */
+describe('stepTimeBounds', () => {
+  const moves = [{ ts: 0 }, { ts: 100 }, { ts: 200 }, { ts: 300 }];
+
+  it('界取那一步最后一手的时刻', () => {
+    expect(stepTimeBounds([0, 1, 3], moves)).toEqual([0, 100, Infinity]);
+  });
+
+  it('最后一步管到无穷 —— 拧完再把魔方摆正那次转体归它', () => {
+    // 末步的 endIdx 就算不是最后一手,也照样开口
+    expect(stepTimeBounds([1, 2], moves)[1]).toBe(Infinity);
+  });
+
+  it('收尾在最后一手上的那步同样开口', () => {
+    expect(stepTimeBounds([3, 3, 3], moves)).toEqual([Infinity, Infinity, Infinity]);
+  });
+
+  it('endIdx 是 null 的一步零宽,不从邻居那儿偷转体', () => {
+    // 第 1 步没发生过(白给的那一对):它的界 = 上一界,窗口宽度为 0
+    const b = stepTimeBounds([1, null, 2, 3], moves);
+    expect(b[0]).toBe(100);
+    expect(b[1]).toBe(100);
+    expect(b[2]).toBe(200);
+    expect(b[3]).toBe(Infinity);
+  });
+
+  it('第一步就是 null 时不炸,界回落到 0', () => {
+    expect(stepTimeBounds([null, 2], moves)).toEqual([0, Infinity]);
+  });
+
+  it('空列表给空数组', () => {
+    expect(stepTimeBounds([], moves)).toEqual([]);
   });
 });
 
