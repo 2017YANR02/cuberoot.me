@@ -1,0 +1,172 @@
+{
+  "3×3": [
+    {
+      "name": "PLL",
+      "location": "3x3-PLL-Trainer"
+    },
+    {
+      "name": "OLL",
+      "location": "3x3-OLL-Trainer"
+    },
+    {
+      "name": "ZBLL",
+      "location": "3x3-ZBLL-Trainer"
+    },
+    {
+      "name": "ZBLS",
+      "location": "3x3-ZBLS-Trainer"
+    },
+    {
+      "name": "CMLL",
+      "location": "3x3-CMLL-Trainer"
+    }
+  ],
+  "3×3 OH": [
+    {
+      "name": "PLL",
+      "location": "3x3-OH-PLL-Trainer"
+    },
+    {
+      "name": "OLL",
+      "location": "3x3-OH-OLL-Trainer"
+    },
+    {
+      "name": "ZBLL",
+      "location": "3x3-OH-ZBLL-Trainer"
+    },
+    {
+      "name": "CMLL",
+      "location": "3x3-OH-CMLL-Trainer"
+    }
+  ],
+  "3×3 BLD": [
+    {
+      "name": "UFR+",
+      "location": "3x3-BLD-UFR-Trainer"
+    },
+    {
+      "name": "UF+",
+      "location": "3x3-BLD-UF-Trainer"
+    }
+  ],
+  "2×2": [
+    {
+      "name": "EG",
+      "location": "2x2-EG-Trainer"
+    },
+    {
+      "name": "TCLL",
+      "location": "2x2-TCLL-Trainer"
+    },
+    {
+      "name": "TEG",
+      "location": "2x2-TEG-Trainer"
+    },
+    {
+      "name": "LS",
+      "location": "2x2-LS-Trainer"
+    },
+    {
+      "name": "FH",
+      "location": "2x2-FH-Trainer"
+    }
+  ],
+  "5×5": [
+    {
+      "name": "L2E",
+      "location": "5x5-L2E-Trainer"
+    },
+    {
+      "name": "LCE",
+      "location": "5x5-LCE-Trainer"
+    }
+  ],
+  "Megaminx": [
+    {
+      "name": "PLL",
+      "location": "Megaminx-PLL-Trainer"
+    },
+    {
+      "name": "OLL",
+      "location": "Megaminx-OLL-Trainer"
+    },
+    {
+      "name": "WV",
+      "location": "Megaminx-WV-Trainer"
+    },
+    {
+      "name": "ZBLS",
+      "location": "Megaminx-ZBLS-Trainer"
+    }
+  ],
+  "Pyraminx": [
+    {
+      "name": "L4E",
+      "location": "Pyraminx-L4E-Trainer"
+    }
+  ],
+  "Skewb": [
+    {
+      "name": "NS+EG",
+      "location": "Skewb-NS2-Trainer"
+    },
+    {
+      "name": "TCLL",
+      "location": "Skewb-TCLL-Trainer"
+    },
+    {
+      "name": "L6C",
+      "location": "Skewb-L6C-Trainer"
+    }
+  ],
+  "FTO Bencisco": [
+    {
+      "name": "LBT",
+      "location": "FTO-LBT-Trainer"
+    },
+    {
+      "name": "TCP",
+      "location": "FTO-TCP-Trainer"
+    },
+    {
+      "name": "L3T",
+      "location": "FTO-L3T-Trainer"
+    }
+  ],
+  "FTO Nautilus": [
+    {
+      "name": "FTLT",
+      "location": "FTO-FTLT-Trainer"
+    },
+    {
+      "name": "L6X",
+      "location": "FTO-L6X-Trainer"
+    },
+    {
+      "name": "L3C",
+      "location": "FTO-L3C-Trainer"
+    },
+    {
+      "name": "BTLT",
+      "location": "FTO-BTLT-Trainer"
+    },
+    {
+      "name": "LT",
+      "location": "FTO-LT-Trainer"
+    }
+  ],
+  "Square-1": [
+    {
+      "name": "CPEP",
+      "location": "Sq1-CPEP-Trainer"
+    },
+    {
+      "name": "OBL",
+      "location": "Sq1-OBL-Trainer"
+    },
+    {
+      "name": "PBL",
+      "location": "Sq1-PBL-Trainer"
+    }
+  ]
+}

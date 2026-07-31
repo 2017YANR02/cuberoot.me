@@ -35,6 +35,27 @@ function main() {
     timer = document.getElementById('timer');
     timer.innerHTML = "ready";
     document.getElementById("trainerTitle").innerHTML = trainerTitle + ' | <a href="../index.html">Back</a>';
+    if (trainerTitle == "FTO LBT Trainer") {
+        const trainerNotes = document.getElementById("trainerNotes")
+        trainerNotes.innerText = "Hint: use F BL' R D' R' D R' B R B' BL F' to hide extra triangles."
+        trainerNotes.style.display = "flex";
+    }
+    if (trainerTitle == "FTO FTLT Trainer" || trainerTitle == "FTO LT Trainer") {
+        const trainerNotes = document.getElementById("trainerNotes")
+        trainerNotes.innerText = "Hint: use U' r R' U' R BR r2' F' r R' F r R BR' r' U' to hide extra triangles."
+        trainerNotes.style.display = "flex";
+    }
+    if (trainerTitle == "FTO LT Trainer") {
+        const trainerNotes = document.getElementById("trainerNotes")
+        const warning = document.createElement("div");
+        warning.innerText = "Not fully genned yet, do not rely on recommended algs."
+        warning.style.display = "flex";
+        warning.style.paddingTop = "1em";
+        warning.style.fontSize = "0.8em";
+        warning.style.color = "var(--accent)";
+        trainerNotes.parentElement.insertBefore(warning, trainerNotes);
+        
+    }
     var splitUrl = window.location.href.split('?');
     baseUrl = splitUrl[0];
     var startState = splitUrl.length > 1 ? splitUrl[1] : 'select';
@@ -46,6 +67,11 @@ function main() {
     /// handles keypup and keydown events. Starts timer etc.
     document.getElementById("bodyid").addEventListener("keydown", function (event) {
         if (dialogOpen) {
+            if ( this !== event.target && 
+                ( /textarea|select/i.test( event.target.nodeName ) ||
+                event.target.type === "text") ) {
+                return;
+            }
             if (event.code == "Escape") {
                 dialogOpen = false;
                 window.allowStartingTimer = true;
@@ -107,8 +133,13 @@ function main() {
             allowed = false;
 
         if (running) {
-            // stop timer on any button
-            timerStop();
+            if (event.code == "Escape") {
+                timerAbort();
+            }
+            else {
+                // stop timer on any button other than escape
+                timerStop();
+            }
             return;
         }
         else if (event.code == "Space") {
@@ -202,7 +233,8 @@ fetchAll("selected_algsets.json", "groups_info.json", "algsets_info.json", "algs
         .then((bodyHTML) => {
             applySettings();
             document.body.outerHTML = bodyHTML;
-            window.requestAnimationFrame(() => {window.requestAnimationFrame(main)})
+            window.requestAnimationFrame(() => {window.requestAnimationFrame(main)});
+            document.getElementById("versionLabel").textContent = `v${APP_VERSION}`;
         });
     }
 )

@@ -360,10 +360,15 @@ export const ganV4Driver: CubeDriver = {
 
   matches(device: BluetoothDevice): boolean {
     const n = device.name ?? '';
-    // GAN 12 / 13 / 14 / Mini Pro / MG / AiCube. The `(?!356)` lookahead is
-    // intentional: GAN 356 (i / i3 / etc.) is the v3 family and is matched
-    // by the v3 driver in the registry.
-    return /^(GAN-?(?!356)(12|13|14|Mini)|MG-|AiCube)/i.test(n);
+    // GAN 12 及以后的两位数编号(12 / 13 / 14 / 15 / 16 …)+ Mini Pro / MG /
+    // AiCube。`(?!356)` 是有意的:GAN 356(i / i3 等)是 v3 家族,由注册表里的
+    // v3 驱动认。
+    //
+    // 编号写成 `1[2-9]` 而不是逐个列出:这条**只是名字兜底** —— 正常路径是连上
+    // 之后按 GATT service UUID 选驱动(见 index.ts 的 connect),GAN 出一款新
+    // 型号只要还说 gen4 协议就自动认得。逐个列型号会让兜底路径凭空落后于硬件,
+    // 而这条兜底恰恰是在 getPrimaryServices 失败时才用得上的救命绳。
+    return /^(GAN-?(?!356)(1[2-9]|Mini)|MG-|AiCube)/i.test(n);
   },
 
   async start(server, onMove, ctx): Promise<CubeDriverStartResult> {

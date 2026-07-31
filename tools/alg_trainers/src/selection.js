@@ -224,10 +224,10 @@ function makeDivNormal(groupname) {
         allSelected &= sel;
 
         var alg_name = getAlgName(i);
-        if (trainerTitle == "Square-1 PBL Trainer" || trainerTitle.includes("BLD")) {
+        if (trainerTitle == "Square-1 PBL Trainer" || trainerTitle.includes("BLD") ) {
             var content = `<span class='caseSpan'>${alg_name}</span>`;
         } 
-        else if (trainerTitle.includes("Square-1")) {
+        else if (trainerTitle.includes("Square-1") || trainerTitle == "FTO L3T Trainer") {
             var caseSpan = `<span class='caseSpan'>${alg_name}</span>`
             if (trainerTitle.includes('OBL')) {
                 var nameParts = alg_name.split("|");
@@ -375,22 +375,74 @@ function removePresetFromSelection(name) {
 }
 
 
+function createPresetActionButton(label, handler, name, limit_width) {
+    var button = document.createElement('span');
+    button.className = 'abutton';
+    button.textContent = label;
+    if (limit_width) {
+        button.style.width = '1em';
+    }
+    button.addEventListener('click', function () {
+        handler(name);
+    });
+    return button;
+}
+
 function renderPresets() {
     var previousText = '';
+    var presetInput = null;
     try {
-        previousText = document.getElementById('newPresetInput').value;
-    } catch(e) {}
-    var s = "";
-    for (const [name, preset] of Object.entries(selectionPresets)) {
-        s += `<div class='settingsEntry'><span>${name}</span><div class='plusMinus'>\
-        <span onclick='addPresetToSelection("${name}")' style='width: 1em' class='abutton'>+</span>\
-        <span onclick='removePresetFromSelection("${name}")' style='width: 1em' class='abutton'>-</span>\
-        <span onclick='deletePreset("${name}")' class='abutton'>Del</span>\
-        <span onclick='updatePreset("${name}")' class='abutton'>Set</span>\
-        <span onclick='usePreset("${name}")' class='abutton'>Use</span></span></div></div>`;
+        presetInput = document.getElementById('newPresetInput');
+        previousText = presetInput.value;
+    } catch (e) {}
+
+    var presetsContainer = document.getElementById('presetsSettings');
+    if (!presetsContainer) {
+        return;
     }
-    s += `<div class='settingsEntry'><input type='text' id='newPresetInput' value='${previousText}' style='width: 100%' placeholder='New Preset'/><span class='abutton' onclick='addPreset(null)'>Add</span></div>`;
-    document.getElementById('presetsSettings').innerHTML = s;
+
+    presetsContainer.replaceChildren();
+
+    for (const [name] of Object.entries(selectionPresets)) {
+        var row = document.createElement('div');
+        row.className = 'settingsEntry';
+
+        var label = document.createElement('span');
+        label.textContent = name;
+        row.appendChild(label);
+
+        var buttonGroup = document.createElement('div');
+        buttonGroup.className = 'plusMinus';
+        buttonGroup.appendChild(createPresetActionButton('+', addPresetToSelection, name, true));
+        buttonGroup.appendChild(createPresetActionButton('-', removePresetFromSelection, name, true));
+        buttonGroup.appendChild(createPresetActionButton('Del', deletePreset, name));
+        buttonGroup.appendChild(createPresetActionButton('Set', updatePreset, name));
+        buttonGroup.appendChild(createPresetActionButton('Use', usePreset, name));
+        row.appendChild(buttonGroup);
+
+        presetsContainer.appendChild(row);
+    }
+
+    var inputRow = document.createElement('div');
+    inputRow.className = 'settingsEntry';
+
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.id = 'newPresetInput';
+    input.value = previousText;
+    input.style.width = '100%';
+    input.placeholder = 'New Preset';
+    inputRow.appendChild(input);
+
+    var addButton = document.createElement('span');
+    addButton.className = 'abutton';
+    addButton.textContent = 'Add';
+    addButton.addEventListener('click', function () {
+        addPreset(null);
+    });
+    inputRow.appendChild(addButton);
+
+    presetsContainer.appendChild(inputRow);
 }
 
 

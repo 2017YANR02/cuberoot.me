@@ -62,9 +62,10 @@
 		</div>
 		<div class="borderedContainer colFlex pad center" style="background-color: var(--backgroundDarker);">
 			<div id="presetsSettings" class="colFlex" style="width: fit-content; max-width: 100%;"></div>
+			<div id="trainerNotes" style="display: none; padding-top: 1em; padding-bottom: 1em; font-size: 0.8em;"></div>
 			<div style="width: 100%; display: flex; justify-content: space-between; align-items: end;">
 				<a onclick="openDialog('hotkeysDialog')">Hotkeys</a>
-				<span class="version">v1.6.11</span>
+				<span class="version" id="versionLabel"></span>
 				<a onclick="openDialog('aboutDialog')">Credits</a>
 			</div>
 		</div>
@@ -103,6 +104,9 @@
 					<span onclick="editAlg()" id="editAlgButton" class="material-symbols-outlined abutton grow" >
 						edit
 					</span>
+					<span onclick="resetAlg()" id="resetAlgButton" class="material-symbols-outlined abutton grow" >
+						refresh
+					</span>
 				</div>
 			</div>
 
@@ -132,6 +136,14 @@
 		<div class="dialogDiv colFlex borderedContainer">
 			<span onclick="closeDialog('settings')" class="material-symbols-outlined abutton closeButton">Close</span>
 			<div class="settingsEntry">
+				<div>Hold down delay</div>
+				<!-- Rounded switch -->
+				<label class="switch">
+					<input onclick="toggleSetting(this, 'enableHoldDelay');" type="checkbox" id="hold_delay_on_off" value="using">
+					<span class="slider round"></span>
+				</label>
+			</div>
+			<div class="settingsEntry">
 				<div>Weighted choice (# of Solves)</div>
 				<!-- Rounded switch -->
 				<label class="switch">
@@ -157,153 +169,180 @@
 				</div>
 			</div>
 			<div class="settingsEntry">
-				<div>Base size</div>
+				<div>Algs</div>
 				<div class="plusMinus">
-					<button onclick="adjustSize('body', 0.1);" type="button" class="abutton">+</button>
-					<button onclick="adjustSize('body', -0.1);" type="button" class="abutton">-</button>
-				</div>
-			</div>
-			<div class="settingsEntry">
-				<div>Timer size</div>
-				<div class="plusMinus">
-					<button onclick="adjustSize('timer', 0.1);" type="button" class="abutton">+</button>
-					<button onclick="adjustSize('timer', -0.1);" type="button" class="abutton">-</button>
-				</div>
-			</div>
-			<div class="settingsEntry">
-				<div>Scramble size</div>
-				<div class="plusMinus">
-					<button onclick="adjustSize('scramble', 0.1);" type="button" class="abutton">+</button>
-					<button onclick="adjustSize('scramble', -0.1);" type="button" class="abutton">-</button>
-				</div>
-			</div>
-			<div class="settingsEntry">
-				<div>Theme</div>
-				<div class="plusMinus">
-					<span onclick="resetStyle('light')" class="material-symbols-outlined abutton">
-						light_mode
-					</span>
-					<span onclick="resetStyle('dark')" class="material-symbols-outlined abutton">
-						dark_mode
-					</span>
-				</div>
-			</div>
-			<div class="settingsEntry">
-				<div>Background</div><input type='text' value='#222222' class='settinginput' id='--background'
-					onchange="changeColor(event);" placeholder='#222222' />
-			</div>
-			<div class="settingsEntry">
-				<div>Text</div>
-				<div style="background-color: var(--text);"></div><input type='text' value='#ffffff' class='settinginput'
-					id='--text' onchange="changeColor(event);" placeholder='oklch(1 0 360)'
-					style="background-color: var(--text); color: var(--background);" />
-			</div>
-			<div class="settingsEntry">
-				<div>Primary</div> <input type='text' value='#ffd700' class='settinginput' id='--primary'
-					onchange="changeColor(event);" placeholder='lch(0.87 86 88)'
-					style="background-color: var(--primary); color: var(--primaryText)" />
-			</div>
-			<div class="settingsEntry">
-				<div>Secondary</div> <input type='text' value='#ffd700' class='settinginput' id='--secondary'
-					onchange="changeColor(event);" placeholder='rgb(1 0.5 1)'
-					style="background-color: var(--secondary); color: var(--secondaryText);" />
-			</div>
-			<div class="settingsEntry">
-				<div>Accent</div> <input type='text' value='#ffd700' class='settinginput' id='--accent'
-					onchange="changeColor(event);" placeholder='#ffd700'
-					style="background-color: var(--accent); color: var(--accentText)" />
-			</div>			
-			<div class="settingsEntry">
-				<div> Corner Letterscheme</div><input type="text" value="abcdefghijklmnopqrstuvwx" class="settinginput" id="cornerSchemeInput" onchange="changeSettingsKey(event, 'letterSchemeCorners')">
-			</div>
-			<div class="settingsEntry">
-				<div> Edges Letterscheme</div><input type="text" value="abcdefghijklmnopqrstuvwx" class="settinginput" id="edgeSchemeInput" onchange="changeSettingsKey(event, 'letterSchemeEdges')">
-			</div>
-			<div class="settingsEntry">
-				<div>Change Letter Pairs</div>
-				<div class="plusMinus">
-					<label for="uploadLP" id="uploadLPLabel" class="material-symbols-outlined abutton" >
+					<label for="settingsUploadCustomAlgs" id="settingsUploadCustomAlgsLabel" class="material-symbols-outlined abutton" >
 						upload
-					</label><input type="file" id="uploadLP" style="display: none;" onchange="uploadLetterPairs()">
-					<button onclick="" type="button" class="material-symbols-outlined abutton">download</button>
+					</label><input type="file" id="settingsUploadCustomAlgs" style="display: none;" onchange="uploadCustomAlgs()">
+					<button onclick="downloadCustomAlgs()" type="button" class="material-symbols-outlined abutton">download</button>
+					<button onclick="resetAllAlgs()" type="button" class="material-symbols-outlined abutton">refresh</button>
 				</div>
 			</div>
-			<div class="settingsEntry">
-				<div>Corner Letter Pair Words</div>
-				<!-- Rounded switch -->
-				<label class="switch">
-					<input onclick="toggleSetting(this, 'useCornersLetterPairs');" type="checkbox" id="corners_letter_pairs_on_off" value="using">
-					<span class="slider round"></span>
-				</label>
-			</div>
-			<div class="settingsEntry">
-				<div>Edges Letter Pair Words</div>
-				<!-- Rounded switch -->
-				<label class="switch">
-					<input onclick="toggleSetting(this, 'useEdgesLetterPairs');" type="checkbox" id="edges_letter_pairs_on_off" value="using">
-					<span class="slider round"></span>
-				</label>
-			</div>
-			<div class="settingsEntry">
-				<div>Cube Colors</div>
-				<div id="cubeColorPresets">
-					<button onclick="resetCubeColors('default')" class="abutton">Default</button>
-					<button onclick="resetCubeColors('redgreen')" class="abutton">Red-Green</button>
-					<button onclick="resetCubeColors('blueyellow')" class="abutton">Blue-Yellow</button>
+			<details class="settingsDetails" name="mainSettings">
+				<summary class="settingsSummary">Styling</summary>
+				<div class="colFlex">
+
+					<div class="settingsEntry">
+						<div>Base size</div>
+						<div class="plusMinus">
+							<button onclick="adjustSize('body', 0.1);" type="button" class="abutton">+</button>
+							<button onclick="adjustSize('body', -0.1);" type="button" class="abutton">-</button>
+						</div>
+					</div>
+					<div class="settingsEntry">
+						<div>Timer size</div>
+						<div class="plusMinus">
+							<button onclick="adjustSize('timer', 0.1);" type="button" class="abutton">+</button>
+							<button onclick="adjustSize('timer', -0.1);" type="button" class="abutton">-</button>
+						</div>
+					</div>
+					<div class="settingsEntry">
+						<div>Scramble size</div>
+						<div class="plusMinus">
+							<button onclick="adjustSize('scramble', 0.1);" type="button" class="abutton">+</button>
+							<button onclick="adjustSize('scramble', -0.1);" type="button" class="abutton">-</button>
+						</div>
+					</div>
+					<div class="settingsEntry">
+						<div>Theme</div>
+						<div class="plusMinus">
+							<span onclick="resetStyle('light')" class="material-symbols-outlined abutton">
+								light_mode
+							</span>
+							<span onclick="resetStyle('dark')" class="material-symbols-outlined abutton">
+								dark_mode
+							</span>
+						</div>
+					</div>
+					<div class="settingsEntry">
+						<div>Background</div><input type='text' value='#222222' class='settinginput' id='--background'
+							onchange="changeColor(event);" placeholder='#222222' />
+					</div>
+					<div class="settingsEntry">
+						<div>Text</div>
+						<div style="background-color: var(--text);"></div><input type='text' value='#ffffff' class='settinginput'
+							id='--text' onchange="changeColor(event);" placeholder='oklch(1 0 360)'
+							style="background-color: var(--text); color: var(--background);" />
+					</div>
+					<div class="settingsEntry">
+						<div>Primary</div> <input type='text' value='#ffd700' class='settinginput' id='--primary'
+							onchange="changeColor(event);" placeholder='lch(0.87 86 88)'
+							style="background-color: var(--primary); color: var(--primaryText)" />
+					</div>
+					<div class="settingsEntry">
+						<div>Secondary</div> <input type='text' value='#ffd700' class='settinginput' id='--secondary'
+							onchange="changeColor(event);" placeholder='rgb(1 0.5 1)'
+							style="background-color: var(--secondary); color: var(--secondaryText);" />
+					</div>
+					<div class="settingsEntry">
+						<div>Accent</div> <input type='text' value='#ffd700' class='settinginput' id='--accent'
+							onchange="changeColor(event);" placeholder='#ffd700'
+							style="background-color: var(--accent); color: var(--accentText)" />
+					</div>			
 				</div>
-			</div>
-			<div class="settingsEntry">
-				<div>White</div> <input type='text' value='#FAFAFA' class='settinginput' id='cc-white'
-					onchange="changeCubeColor(event, 'white');" placeholder='#FAFAFA'/>
-			</div>
-			<div class="settingsEntry">
-				<div>Grey</div> <input type='text' value='#777777' class='settinginput' id='cc-ignore'
-					onchange="changeCubeColor(event, 'ignore');" placeholder='#777777'/>
-			</div>
-			<div class="settingsEntry">
-				<div>Black</div> <input type='text' value='#222222' class='settinginput' id='cc-black'
-					onchange="changeCubeColor(event, 'black');" placeholder='#222222'/>
-			</div>
-			<div class="settingsEntry">
-				<div>Ligtblue</div> <input type='text' value='#A0CBE8' class='settinginput' id='cc-lightblue'
-					onchange="changeCubeColor(event, 'lightblue');" placeholder='#A0CBE8'/>
-			</div>
-			<div class="settingsEntry">
-				<div>Blue</div> <input type='text' value='#4E79A7' class='settinginput' id='cc-blue'
-					onchange="changeCubeColor(event, 'blue');" placeholder='#4E79A7'/>
-			</div>
-			<div class="settingsEntry">
-				<div>Red</div> <input type='text' value='#E15759' class='settinginput' id='cc-red'
-					onchange="changeCubeColor(event, 'red');" placeholder='#E15759'/>
-			</div>
-			<div class="settingsEntry">
-				<div>Pink</div> <input type='text' value='#FF9D9A' class='settinginput' id='cc-pink'
-					onchange="changeCubeColor(event, 'pink');" placeholder='#FF9D9A'/>
-			</div>
-			<div class="settingsEntry">
-				<div>Beige</div> <input type='text' value='#F4F3AA' class='settinginput' id='cc-beige'
-					onchange="changeCubeColor(event, 'beige');" placeholder='#F4F3AA'/>
-			</div>
-			<div class="settingsEntry">
-				<div>Yellow</div> <input type='text' value='#F1CE63' class='settinginput' id='cc-yellow'
-					onchange="changeCubeColor(event, 'yellow');" placeholder='#F1CE63'/>
-			</div>
-			<div class="settingsEntry">
-				<div>Green</div> <input type='text' value='#59A14F' class='settinginput' id='cc-green'
-					onchange="changeCubeColor(event, 'green');" placeholder='#59A14F'/>
-			</div>
-			<div class="settingsEntry">
-				<div>Lightgreen</div> <input type='text' value='#8CD17D' class='settinginput' id='cc-lightgreen'
-					onchange="changeCubeColor(event, 'lightgreen');" placeholder='#8CD17D'/>
-			</div>
-			<div class="settingsEntry">
-				<div>Purple</div> <input type='text' value='#B07AA1' class='settinginput' id='cc-purple'
-					onchange="changeCubeColor(event, 'purple');" placeholder='#B07AA1'/>
-			</div>
-			<div class="settingsEntry">
-				<div>Orange</div> <input type='text' value='#F28E2B' class='settinginput' id='cc-orange'
-					onchange="changeCubeColor(event, 'orange');" placeholder='#F28E2B'/>
-			</div>
+			</details>
+			<details class="settingsDetails" name="mainSettings">
+				<summary class="settingsSummary">Blind trainer behavior</summary>
+				<div class="colFlex">
+					<div class="settingsEntry">
+						<div> Corner Letterscheme</div><input type="text" value="abcdefghijklmnopqrstuvwx" class="settinginput" id="cornerSchemeInput" onchange="changeSettingsKey(event, 'letterSchemeCorners')">
+					</div>
+					<div class="settingsEntry">
+						<div> Edges Letterscheme</div><input type="text" value="abcdefghijklmnopqrstuvwx" class="settinginput" id="edgeSchemeInput" onchange="changeSettingsKey(event, 'letterSchemeEdges')">
+					</div>
+					<div class="settingsEntry">
+						<div>Change Letter Pairs</div>
+						<div class="plusMinus">
+							<label for="uploadLP" id="uploadLPLabel" class="material-symbols-outlined abutton" >
+								upload
+							</label><input type="file" id="uploadLP" style="display: none;" onchange="uploadLetterPairs()">
+							<button onclick="" type="button" class="material-symbols-outlined abutton">download</button>
+						</div>
+					</div>
+					<div class="settingsEntry">
+						<div>Corner Letter Pair Words</div>
+						<!-- Rounded switch -->
+						<label class="switch">
+							<input onclick="toggleSetting(this, 'useCornersLetterPairs');" type="checkbox" id="corners_letter_pairs_on_off" value="using">
+							<span class="slider round"></span>
+						</label>
+					</div>
+					<div class="settingsEntry">
+						<div>Edges Letter Pair Words</div>
+						<!-- Rounded switch -->
+						<label class="switch">
+							<input onclick="toggleSetting(this, 'useEdgesLetterPairs');" type="checkbox" id="edges_letter_pairs_on_off" value="using">
+							<span class="slider round"></span>
+						</label>
+					</div>
+				</div>
+			</details>
+			<details class="settingsDetails" name="mainSettings">
+				<summary class="settingsSummary">Cube colors</summary>
+				<div class="colFlex">
+
+					<div class="settingsEntry">
+						<div>Cube Colors</div>
+						<div id="cubeColorPresets">
+							<button onclick="resetCubeColors('default')" class="abutton">Default</button>
+							<button onclick="resetCubeColors('redgreen')" class="abutton">Red-Green</button>
+							<button onclick="resetCubeColors('blueyellow')" class="abutton">Blue-Yellow</button>
+						</div>
+					</div>
+					<div class="settingsEntry">
+						<div>White</div> <input type='text' value='#FAFAFA' class='settinginput' id='cc-white'
+							onchange="changeCubeColor(event, 'white');" placeholder='#FAFAFA'/>
+					</div>
+					<div class="settingsEntry">
+						<div>Grey</div> <input type='text' value='#777777' class='settinginput' id='cc-ignore'
+							onchange="changeCubeColor(event, 'ignore');" placeholder='#777777'/>
+					</div>
+					<div class="settingsEntry">
+						<div>Black</div> <input type='text' value='#222222' class='settinginput' id='cc-black'
+							onchange="changeCubeColor(event, 'black');" placeholder='#222222'/>
+					</div>
+					<div class="settingsEntry">
+						<div>Ligtblue</div> <input type='text' value='#A0CBE8' class='settinginput' id='cc-lightblue'
+							onchange="changeCubeColor(event, 'lightblue');" placeholder='#A0CBE8'/>
+					</div>
+					<div class="settingsEntry">
+						<div>Blue</div> <input type='text' value='#4E79A7' class='settinginput' id='cc-blue'
+							onchange="changeCubeColor(event, 'blue');" placeholder='#4E79A7'/>
+					</div>
+					<div class="settingsEntry">
+						<div>Red</div> <input type='text' value='#E15759' class='settinginput' id='cc-red'
+							onchange="changeCubeColor(event, 'red');" placeholder='#E15759'/>
+					</div>
+					<div class="settingsEntry">
+						<div>Pink</div> <input type='text' value='#FF9D9A' class='settinginput' id='cc-pink'
+							onchange="changeCubeColor(event, 'pink');" placeholder='#FF9D9A'/>
+					</div>
+					<div class="settingsEntry">
+						<div>Beige</div> <input type='text' value='#F4F3AA' class='settinginput' id='cc-beige'
+							onchange="changeCubeColor(event, 'beige');" placeholder='#F4F3AA'/>
+					</div>
+					<div class="settingsEntry">
+						<div>Yellow</div> <input type='text' value='#F1CE63' class='settinginput' id='cc-yellow'
+							onchange="changeCubeColor(event, 'yellow');" placeholder='#F1CE63'/>
+					</div>
+					<div class="settingsEntry">
+						<div>Green</div> <input type='text' value='#59A14F' class='settinginput' id='cc-green'
+							onchange="changeCubeColor(event, 'green');" placeholder='#59A14F'/>
+					</div>
+					<div class="settingsEntry">
+						<div>Lightgreen</div> <input type='text' value='#8CD17D' class='settinginput' id='cc-lightgreen'
+							onchange="changeCubeColor(event, 'lightgreen');" placeholder='#8CD17D'/>
+					</div>
+					<div class="settingsEntry">
+						<div>Purple</div> <input type='text' value='#B07AA1' class='settinginput' id='cc-purple'
+							onchange="changeCubeColor(event, 'purple');" placeholder='#B07AA1'/>
+					</div>
+					<div class="settingsEntry">
+						<div>Orange</div> <input type='text' value='#F28E2B' class='settinginput' id='cc-orange'
+							onchange="changeCubeColor(event, 'orange');" placeholder='#F28E2B'/>
+					</div>
+				</div>
+			</details>
 			
 		</div>
 		<div class="dialogBackground" onclick="closeDialog('settings')"></div>
@@ -352,7 +391,7 @@
 					<a href="https://crazymonkeyonspeed.github.io/">Frederik's FH Algs</a>
 					<a href="https://www.youtube.com/@BrinaSun">Brian Sun 3x3 Algs</a>
 					<a href="https://speedcubedb.com/">SpeedCubeDB</a>
-					<a href="https://docs.google.com/document/d/1nkgNFdAu9v6p871urGrdkKD-QGmftYhjqZjD75z4Wqo/edit#heading=h.zf1ib2cgt533">Octaminx TCP</a>
+					<a href="https://docs.google.com/document/d/1nkgNFdAu9v6p871urGrdkKD-QGmftYhjqZjD75z4Wqo/edit#heading=h.zf1ib2cgt533">FTO TCP</a>
 					<a href="https://docs.google.com/spreadsheets/d/1uc5V3G-kRH3qV5b6Lq1yzTjnqSMS3D3dZcsCIOiJqcI/edit?gid=1409661599#gid=1409661599">2H CMLL</a>
 					<a href="https://docs.google.com/spreadsheets/d/1WHnksK4yyv63sv3Es-PuKfnFRtZGafqp6rEuEfOx-cg/edit?gid=1409661599#gid=1409661599">OH CMLL</a>
 					<a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vSKmPOKUtF0g1FUn7wEFtyZJFYegBXuYxlA4ZcUDYmoqC4xBQOXnsaKgAydGoohlI-c97HeRpMyec7d/pubhtml?gid=0&single=true">OH PLL</a>
@@ -361,6 +400,8 @@
 					<a href="https://docs.google.com/spreadsheets/d/1s8Q2VM2c1eV3oLIxFfM4exvABO0AcCeMCUdMiYKnzC0/edit?gid=0#gid=0">ZBLS Tao Yu</a>
 					<a href="https://docs.google.com/spreadsheets/d/1VQNYNwdOLqqBkacHcfYtEBst22FOVhH9EAhTOYOZTgo/edit?gid=467747530#gid=467747530">Daniel's PBL Document</a>
 					<a href="https://docs.google.com/spreadsheets/d/1txRjB-fAWWSM-1e1w-eJbDp9xhu0ZDwLWQdswNZhcew/edit?gid=804375502#gid=804375502">Elliot Full Floating</a>
+					<a href="https://zwegner.github.io/cubing/fto/lbt-algs.html">Zach Wegner's LBT Algs</a>
+					<a href="https://docs.google.com/spreadsheets/d/1Dh4MEQzpCuTylqnkn09UxBEvEq9MNYMqMiWQgFsBuYE/edit?gid=418973378#gid=418973378">2 Look last triplet (Nautilus)</a>
 				</div>
 				<div class="colFlex">
 					<span>Other</span>
@@ -373,5 +414,4 @@
 		</div>
 		<div class="dialogBackground" onclick="closeDialog('aboutDialog')"></div>
 	</dialog>
-</body>
 </body>

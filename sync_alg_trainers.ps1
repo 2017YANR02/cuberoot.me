@@ -27,6 +27,22 @@ $destBase = Join-Path $LocalDir "tools" "alg_trainers"
 # ===== 加载配置 =====
 $config = Get-Content (Join-Path $syncDir "alg_trainers_config.json") -Raw | ConvertFrom-Json
 
+# NOTE: 上游 index.html 已改为从 index.json 动态渲染训练器列表，该文件即目录清单的单一数据源。
+#       以它为准（config.trainerDirs 仅作旧版上游的回退），否则新增训练器会在首页出现但 404。
+$upstreamIndexJson = Join-Path $UpstreamDir "index.json"
+if (Test-Path $upstreamIndexJson)
+{
+    $trainerDirs = @(
+        (Get-Content $upstreamIndexJson -Raw | ConvertFrom-Json).PSObject.Properties.Value |
+            ForEach-Object { $_.location } | Select-Object -Unique
+    )
+    Write-Host "  [INFO] trainerDirs from upstream index.json: $($trainerDirs.Count)" -ForegroundColor DarkGray
+}
+else
+{
+    $trainerDirs = @($config.trainerDirs)
+}
+
 # ===== 统计计数器 =====
 $stats = @{ srcFiles = 0; styleFiles = 0; rootFiles = 0; trainerDirs = 0; indexConverted = 0 }
 
@@ -96,7 +112,7 @@ foreach ($file in $config.rootFiles)
 # ===== Step 3: 同步训练器子目录（整体覆盖） =====
 Write-Host "`nStep 3: Syncing trainer directories..." -ForegroundColor Green
 
-foreach ($dir in $config.trainerDirs)
+foreach ($dir in $trainerDirs)
 {
     $srcDir = Join-Path $UpstreamDir $dir
     $destDir2 = Join-Path $destBase $dir
@@ -161,8 +177,15 @@ function goTrainer(path) {
             $content = $content -replace '(</html>)', "$helperScript`n`$1"
         }
 
-        # 替换所有 onclick='window.location="xxx/index.html"' 为 goTrainer('xxx/index.html')
+        # 替换所有 onclick='window.location="xxx/index.html"' 为 goTrainer('xxx/index.html')（旧版上游的静态列表）
         $content = [regex]::Replace($content, "onclick='window\.location=""([^""]+)""'", 'onclick="goTrainer(''$1'')"')
+
+        # NOTE: 新版上游改为 fetch('index.json') 动态渲染按钮，导航写在 renderTrainerSelections 里，
+        #       同样要走 goTrainer 才能带上 ?select 并落 localStorage 的语言
+        $content = [regex]::Replace(
+            $content,
+            'window\.location = `\$\{entry\.location\}/index\.html`;',
+            "goTrainer(entry.location + '/index.html');")
     }
 
     # --- 写入文件 ---
@@ -182,7 +205,7 @@ function goTrainer(path) {
 # ===== Step 5: 转换训练器子页面（注入 i18n.js + 替换分析脚本） =====
 Write-Host "`nStep 5: Patching trainer pages (i18n + analytics)..." -ForegroundColor Green
 
-foreach ($dir in $config.trainerDirs)
+foreach ($dir in $trainerDirs)
 {
     $trainerIndex = Join-Path $destBase "$dir\index.html"
     if (-not (Test-Path $trainerIndex)) { continue }

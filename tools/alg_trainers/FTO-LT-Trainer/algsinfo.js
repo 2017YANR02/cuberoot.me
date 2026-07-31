@@ -1,0 +1,9 @@
+const timesArrayKey = "ftoltTimesArray";
+const selectionArrayKey = "ftoltSelection";
+var trainerTitle = "FTO LT Trainer";
+var preRotations = [""];
+var postRotations = [""];
+var preMoves = ["U", "U'", "U2"];
+var postMoves = preMoves;
+var selCases = [];
+var maxAlgsPerRow = 7;

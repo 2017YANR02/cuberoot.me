@@ -1,11 +1,11 @@
 Vendored from https://github.com/cs0x7f/cstimer
-Commit:  fdf0aef
-Date:    2026-04-26
+Commit:  22a6aed
+Date:    2026-06-25 14:17:39 +0800
 License: GPLv3 (see ./LICENSE)
 
 Files in lib/ and scramble/ are copied verbatim from upstream
 src/js/lib/ and src/js/scramble/. Do not edit; resync via
-scripts/sync_cstimer_scramble.ps1 at repo root.
+_sync_cstimer_scramble.ps1 at repo root.
 
-Used by:  core/packages/client/src/utils/cstimerScramble.ts
+Used by:  core/packages/client/lib/cstimer-scramble.ts
           (worker bridge at tools/cstimer-scramble/scrambler.worker.js)
