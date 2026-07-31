@@ -13,18 +13,12 @@ import AlgAdminValidate from '@/components/AlgAdminValidate';
 import BackHome from '@/components/BackHome';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
-import { Eye, Blocks, GraduationCap, type LucideIcon } from 'lucide-react';
+import { GraduationCap } from 'lucide-react';
 import './alg.css';
 import { tr } from '@/i18n/tr';
 
-/**
- * Standalone method trainers (not per-set timing drills) — surfaced on the landing.
- * Skewb 技巧训练不列在这 —— /alg/skewb 的「训练专区」已经有入口了,这里再放一张是重复。
- */
-const LANDING_TRAINERS: { href: string; zh: string; en: string; Icon: LucideIcon }[] = [
-  { href: '/alg/3bld', zh: '三盲', en: '3BLD', Icon: Eye },
-  { href: '/alg/roux', zh: '桥式', en: 'Roux', Icon: Blocks },
-];
+// 三盲 / 桥式 / Skewb 的训练器入口只在各自魔方页的「训练专区」里(/alg/3x3、/alg/skewb),
+// 落地页不再重复一排 —— 同一个入口出现两次,反而看不出它属于哪个魔方。
 
 export default function AlgIndexPage() {
   const { i18n } = useTranslation();
@@ -67,18 +61,6 @@ export default function AlgIndexPage() {
             <span>{tr({ zh: '换位子', en: 'Commutator' })}</span>
           </div>
         </Link>
-      </div>
-
-      <h2 className="alg-index-subheading">{tr({ zh: '训练器', en: 'Trainers' })}</h2>
-      <div className="alg-puzzle-grid">
-        {LANDING_TRAINERS.map((t) => (
-          <Link key={t.href} href={t.href} className="alg-puzzle-card" prefetch={false}>
-            <div className="alg-puzzle-name">
-              <t.Icon className="alg-puzzle-icon" size={20} aria-hidden="true" />
-              <span>{tr({ zh: t.zh, en: t.en })}</span>
-            </div>
-          </Link>
-        ))}
       </div>
 
       <p className="alg-index-credit">
