@@ -1674,7 +1674,9 @@ export default function CompDetailPage() {
                       title={tr({ zh: '点击复制比赛名', en: 'Click to copy name'
                       })}
                     >
-                      {localizeCompName(slug, decodeEntities(data.name), isZh, { explicitNameZh: cubingZh?.nameZh })}
+                      {/* 标题下面紧跟着「日期」字段 —— 名字里的年号是重复信息,剥掉(issue #65)。
+                          复制走 resolveCompName 的原始全名、tab 标题走 compNameTitle,两处都仍带年号。 */}
+                      {localizeCompName(slug, decodeEntities(data.name), isZh, { explicitNameZh: cubingZh?.nameZh, date: compInfo?.start_date })}
                     </button>
                     {nameCopied && <Check size={18} className="comp-title-name-check" />}
                   </span>
