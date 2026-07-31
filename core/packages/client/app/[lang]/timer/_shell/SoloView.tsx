@@ -2456,7 +2456,21 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       })()}
 
       {reconstructSolve && (
-        <ReconstructModal key={`recon-${reconstructSolve.id}`} solve={reconstructSolve} isZh={isZh} onClose={() => setReconstructSolve(null)} history={byEvent[reconstructSolve.event] ?? []} onUseScramble={useScramble} />
+        <ReconstructModal
+          key={`recon-${reconstructSolve.id}`}
+          solve={reconstructSolve}
+          isZh={isZh}
+          onClose={() => setReconstructSolve(null)}
+          history={byEvent[reconstructSolve.event] ?? []}
+          onUseScramble={useScramble}
+          // Two writes because the modal reads a *snapshot*: the store keeps the
+          // answer, and the copy the modal is rendering has to agree with it or
+          // the button won't look pressed.
+          onReconFeedback={(ok) => {
+            updateSolve(reconstructSolve.id, { reconOk: ok });
+            setReconstructSolve(s => (s ? { ...s, reconOk: ok } : s));
+          }}
+        />
       )}
 
       {settingsOpen && <SettingsPanel isZh={isZh} event={event} tools={toolsList} onClose={() => setSettingsOpen(false)} onDataReplaced={() => setByEvent(loadAll())} />}

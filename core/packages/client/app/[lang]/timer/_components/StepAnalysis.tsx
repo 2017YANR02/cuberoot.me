@@ -32,7 +32,8 @@ import type { StepMetricsResult } from '../_lib/reconstruct/step_metrics';
 import { tokensForRange } from '../_lib/reconstruct/step_metrics';
 import { htmMoves } from '../_lib/reconstruct/htm';
 import type { SolveMove } from '../_lib/reconstruct/stage_segments';
-import type { ReferenceResult } from '../_lib/reconstruct/reference';
+import type { ReferenceResult, SlotReference, StepGrade } from '../_lib/reconstruct/reference';
+import { gradeForDelta } from '../_lib/reconstruct/reference';
 import type { F2lSlotsResult, F2lStart } from '../_lib/reconstruct/f2l_slots';
 import type { MethodWalkResult } from '../_lib/reconstruct/method_walk';
 import { METHOD_ORDER, METHODS } from '../_lib/reconstruct/methods';
@@ -49,6 +50,9 @@ export interface StepAnalysisProps {
   slots: F2lSlotsResult | null;
   /** CFOP-only: per-stage reference turn counts; null until the search lands. */
   reference: ReferenceResult | null;
+  /** CFOP-only: the same question asked per F2L pair — see reference.ts. Lands
+   *  with `reference`; the two are computed in the same deferred pass. */
+  slotReference: SlotReference[] | null;
   /** Personal stage averages, for the ±% row. CFOP-only (they are CFOP stages). */
   ao12: StageAverages | null;
   /** Any method: the generic walk. Used directly when the method isn't CFOP. */
@@ -72,6 +76,8 @@ interface Col {
   turns: number | null;
   refTurns: number | null;
   refDelta: number | null;
+  /** The reference line itself, shown under the table beside the sequence. */
+  refSolution: string | null;
   /** Personal average for this stage, when there is one. */
   avgMs: number | null;
   skipped: boolean;
@@ -86,6 +92,25 @@ const sec = (ms: number | null | undefined): string =>
 
 const num = (n: number | null | undefined): string =>
   n === null || n === undefined ? '–' : String(n);
+
+/** The one-word verdict, as a word. See `gradeForDelta` for what each means. */
+function gradeLabel(g: StepGrade): string {
+  return g === 'brilliant'
+    ? tr({ zh: '妙手', en: 'Brilliant' })
+    : tr({ zh: '最优', en: 'Optimal' });
+}
+
+function gradeTitle(g: StepGrade): string {
+  return g === 'brilliant'
+    ? tr({
+      zh: '比参考解法还短 —— 参考不是真最优(F2L 不许用 D,末层只查我们表里的公式),你找到了它表达不出来的线',
+      en: 'Shorter than the reference. The reference is not a true optimum (no D turns in F2L, library algs only on the last layer) — you found a line it cannot express',
+    })
+    : tr({
+      zh: '和参考解法一样短',
+      en: 'As short as the reference line',
+    });
+}
 
 function startLabel(s: F2lStart): string | null {
   switch (s) {
@@ -115,6 +140,7 @@ function buildCfopColumns(
   stepMetrics: StepMetricsResult | null,
   slots: F2lSlotsResult | null,
   reference: ReferenceResult | null,
+  slotReference: SlotReference[] | null,
   ao12: StageAverages | null,
 ): Col[] {
   const step = (k: string) => stepMetrics?.steps.find(s => s.step === k) ?? null;
@@ -135,6 +161,7 @@ function buildCfopColumns(
     turns: cross?.turns ?? segs.crossHtm,
     refTurns: crossRef?.refTurns ?? null,
     refDelta: crossRef?.delta ?? null,
+    refSolution: crossRef?.refSolution ?? null,
     avgMs: ao12?.crossMs ?? null,
     skipped: cross?.skipped ?? false,
     endIdx: segs.crossEndIdx ?? null,
@@ -142,6 +169,10 @@ function buildCfopColumns(
 
   if (slots && slots.slots.length > 0) {
     slots.slots.forEach((s, i) => {
+      // Positional, not keyed by slot id: `computeF2lSlotReferences` walks the
+      // same array in the same order, and two pairs CAN share a slot id only if
+      // the walker went wrong — matching by index keeps a mismatch loud.
+      const sr = slotReference?.[i] ?? null;
       cols.push({
         key: `slot-${s.slot}`,
         label: tr({ zh: `第 ${i + 1} 对`, en: `Slot ${i + 1}` }),
@@ -153,8 +184,9 @@ function buildCfopColumns(
         stepMs: s.stepMs,
         cumulativeMs: s.cumulativeMs,
         turns: s.turns,
-        refTurns: null,
-        refDelta: null,
+        refTurns: sr && sr.slot === s.slot ? sr.refTurns : null,
+        refDelta: sr && sr.slot === s.slot ? sr.delta : null,
+        refSolution: sr && sr.slot === s.slot ? sr.refSolution : null,
         avgMs: null,
         skipped: s.free,
         endIdx: s.endIdx,
@@ -175,6 +207,7 @@ function buildCfopColumns(
       turns: f2l?.turns ?? segs.f2lHtm,
       refTurns: f2lRef?.refTurns ?? null,
       refDelta: f2lRef?.delta ?? null,
+      refSolution: f2lRef?.refSolution ?? null,
       avgMs: ao12?.f2lMs ?? null,
       skipped: f2l?.skipped ?? false,
       endIdx: segs.f2lEndIdx ?? null,
@@ -196,6 +229,7 @@ function buildCfopColumns(
       turns: st?.turns ?? (k === 'oll' ? segs.ollHtm : segs.pllHtm),
       refTurns: r?.refTurns ?? null,
       refDelta: r?.delta ?? null,
+      refSolution: r?.refSolution ?? null,
       avgMs: k === 'oll' ? (ao12?.ollMs ?? null) : (ao12?.pllMs ?? null),
       skipped: st?.skipped ?? false,
       endIdx: (k === 'oll' ? segs.ollEndIdx : segs.solvedEndIdx) ?? null,
@@ -217,6 +251,7 @@ function buildWalkColumns(walk: MethodWalkResult, isZh: boolean): Col[] {
     turns: s.turns,
     refTurns: null,
     refDelta: null,
+    refSolution: null,
     avgMs: null,
     skipped: s.skipped,
     endIdx: s.endIdx,
@@ -224,16 +259,18 @@ function buildWalkColumns(walk: MethodWalkResult, isZh: boolean): Col[] {
 }
 
 export default function StepAnalysis(props: StepAnalysisProps) {
-  const { method, onMethodChange, segs, stepMetrics, slots, reference, ao12, walk, moves, isZh } = props;
+  const { method, onMethodChange, segs, stepMetrics, slots, reference, slotReference, ao12, walk, moves, isZh } = props;
   // Which column is open. One at a time: the sequences are long enough that
   // four of them at once is the wall of text the table exists to avoid.
   const [openKey, setOpenKey] = useState<string | null>(null);
 
   const cols = useMemo<Col[]>(() => {
-    if (method === 'cfop' && segs) return buildCfopColumns(segs, stepMetrics, slots, reference, ao12);
+    if (method === 'cfop' && segs) {
+      return buildCfopColumns(segs, stepMetrics, slots, reference, slotReference, ao12);
+    }
     if (walk) return buildWalkColumns(walk, isZh);
     return [];
-  }, [method, segs, stepMetrics, slots, reference, ao12, walk, isZh]);
+  }, [method, segs, stepMetrics, slots, reference, slotReference, ao12, walk, isZh]);
 
   const totals = useMemo(() => {
     let rec = 0, exec = 0, turns = 0, step = 0;
@@ -390,20 +427,31 @@ export default function StepAnalysis(props: StepAnalysisProps) {
             {hasRef && (
               <tr className="sa-row-ref">
                 <th scope="row" className="sa-rowhead">{tr({ zh: '参考', en: 'Reference' })}</th>
-                {cols.map(c => (
-                  <td key={c.key}>
-                    {c.refTurns === null ? '–' : (
-                      <>
-                        {c.refTurns}
-                        {c.refDelta !== null && c.refDelta !== 0 && (
-                          <span className={`sa-delta ${c.refDelta > 0 ? 'slower' : 'faster'}`}>
-                            {c.refDelta > 0 ? '+' : ''}{c.refDelta}
-                          </span>
-                        )}
-                      </>
-                    )}
-                  </td>
-                ))}
+                {cols.map(c => {
+                  // A skipped step spent no turns and owes none, so its delta is
+                  // 0 — but "you matched the optimum" is not a thing to say
+                  // about a pair the scramble handed you. No badge there.
+                  const grade = c.skipped ? null : gradeForDelta(c.refDelta);
+                  return (
+                    <td key={c.key} data-open={openKey === c.key ? '' : undefined}>
+                      {c.refTurns === null ? '–' : (
+                        <>
+                          {c.refTurns}
+                          {grade && (
+                            <span className={`sa-grade ${grade}`} title={gradeTitle(grade)}>
+                              {gradeLabel(grade)}
+                            </span>
+                          )}
+                          {!grade && c.refDelta !== null && c.refDelta !== 0 && (
+                            <span className={`sa-delta ${c.refDelta > 0 ? 'slower' : 'faster'}`}>
+                              {c.refDelta > 0 ? '+' : ''}{c.refDelta}
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </td>
+                  );
+                })}
                 {/* Opening F2L into pairs costs the F2L column, and with it the
                     place its reference used to print. The whole-solve figure
                     still lands here, and the per-stage lines are still under
@@ -415,12 +463,13 @@ export default function StepAnalysis(props: StepAnalysisProps) {
               <tr className="sa-row-avg">
                 <th scope="row" className="sa-rowhead">{tr({ zh: '对比 ao12', en: 'vs ao12' })}</th>
                 {cols.map(c => {
+                  const open = openKey === c.key ? '' : undefined;
                   if (c.avgMs === null || c.stepMs === null || c.avgMs <= 0) {
-                    return <td key={c.key}>–</td>;
+                    return <td key={c.key} data-open={open}>–</td>;
                   }
                   const pct = Math.round(((c.stepMs - c.avgMs) / c.avgMs) * 100);
                   return (
-                    <td key={c.key}>
+                    <td key={c.key} data-open={open}>
                       <span className={`sa-delta ${pct > 0 ? 'slower' : 'faster'}`}>
                         {pct > 0 ? '+' : ''}{pct}%
                       </span>
@@ -436,8 +485,19 @@ export default function StepAnalysis(props: StepAnalysisProps) {
 
       {openCol && (
         <div className="sa-seq">
-          <span className="sa-seq-label">{openCol.label}</span>
-          <span className="sa-seq-moves">{(sequences.get(openCol.key) ?? []).join(' ')}</span>
+          <div className="sa-seq-row">
+            <span className="sa-seq-label">{openCol.label}</span>
+            <span className="sa-seq-moves">{(sequences.get(openCol.key) ?? []).join(' ')}</span>
+          </div>
+          {/* The reference line right under the cuber's own, because the only
+              useful thing to do with "7 turns were available" is to see which
+              seven. Absent for a skipped step — there is nothing to compare. */}
+          {!openCol.skipped && openCol.refSolution && (
+            <div className="sa-seq-row is-ref">
+              <span className="sa-seq-label">{tr({ zh: '参考', en: 'Reference' })}</span>
+              <span className="sa-seq-moves">{openCol.refSolution}</span>
+            </div>
+          )}
         </div>
       )}
     </section>

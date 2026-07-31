@@ -24,7 +24,7 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Link2, ChevronDown, ChevronRight } from 'lucide-react';
+import { Link2, ChevronDown, ChevronRight, ThumbsUp, ThumbsDown, Info } from 'lucide-react';
 import type { Solve, EventId } from '../_lib/types';
 import { effectiveMs } from '../_lib/types';
 import { formatMs } from '../_lib/stats';
@@ -33,8 +33,8 @@ import { computeStageAverages, computeStageSegments } from '../_lib/reconstruct/
 import { computeStepMetrics } from '../_lib/reconstruct/step_metrics';
 import type { StepMetricsResult } from '../_lib/reconstruct/step_metrics';
 import { detectWastedWork } from '../_lib/reconstruct/error_detect';
-import { computeStageReferences } from '../_lib/reconstruct/reference';
-import type { ReferenceResult, StageReference } from '../_lib/reconstruct/reference';
+import { computeF2lSlotReferences, computeStageReferences } from '../_lib/reconstruct/reference';
+import type { ReferenceResult, SlotReference, StageReference } from '../_lib/reconstruct/reference';
 import { computeSolveQuality } from '../_lib/reconstruct/quality';
 import type { SolveQuality } from '../_lib/reconstruct/quality';
 import { computeF2lSlots } from '../_lib/reconstruct/f2l_slots';
@@ -68,6 +68,9 @@ interface Props {
   /** Load this solve's scramble into the timer. Omitted where there is no timer
    *  to load it into (the modal is also opened from places that only read). */
   onUseScramble?: (scramble: string) => void;
+  /** Record whether the reconstruction matched reality. `undefined` clears a
+   *  previous answer. Omitted where the solve can't be written back to. */
+  onReconFeedback?: (ok: boolean | undefined) => void;
 }
 
 const BLD_AUTO_DETECT_EVENTS = new Set<EventId>(['333bld', '444bld', '555bld', '333mbld']);
@@ -130,7 +133,9 @@ function AccordionSection({
   );
 }
 
-export default function ReconstructModal({ solve, isZh, onClose, history, onMemoApply, onUseScramble }: Props) {
+export default function ReconstructModal({
+  solve, isZh, onClose, history, onMemoApply, onUseScramble, onReconFeedback,
+}: Props) {
   const titleId = useId();
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
 
@@ -163,12 +168,21 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
     return set;
   }, [waste]);
 
+  // F2L, one pair at a time — the column set the step table opens F2L into.
+  // Derived, never stored: it is a second reading of the same move stream.
+  // Declared before the analysis effect below, which prices its slots.
+  const slots = useMemo(
+    () => (stageSegs ? computeF2lSlots(solve.scramble, moves, solve.timeMs, stageSegs) : null),
+    [stageSegs, solve.scramble, moves, solve.timeMs],
+  );
+
   // Per-stage reference lines + the quality score. Deferred to after the first
   // paint: the cross/F2L references are IDA* searches, and a modal that takes
   // 100ms to appear feels broken in a way a number that lands 100ms late does
   // not. Recomputed whenever the solve changes; nothing is persisted.
   const [analysis, setAnalysis] = useState<{
     reference: ReferenceResult | null;
+    slotReference: SlotReference[] | null;
     quality: SolveQuality | null;
   } | null>(null);
   // Scoreable = the 3x3 model actually reached solved (putDownMs is null
@@ -188,13 +202,23 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
       } catch (err) {
         console.warn('[reconstruct] stage reference failed:', err);
       }
+      // Same deferred pass, separate search: pricing one pair at a time asks a
+      // different (and more constrained) question than pricing the block — see
+      // computeF2lSlotReferences. A failure here must not cost us the block.
+      let slotReference: SlotReference[] | null = null;
+      try {
+        if (slots) slotReference = computeF2lSlotReferences(solve.scramble, moves, slots);
+      } catch (err) {
+        console.warn('[reconstruct] slot reference failed:', err);
+      }
       setAnalysis({
         reference,
+        slotReference,
         quality: computeSolveQuality(moves, stepMx, reference, waste),
       });
     }, 0);
     return () => { alive = false; clearTimeout(timer); };
-  }, [scoreable, stepMx, solve.scramble, moves, waste]);
+  }, [scoreable, stepMx, solve.scramble, moves, waste, slots]);
 
   // Personal stage averages computed from the caller-provided history.
   // We exclude the current solve so a fresh solve isn't compared against
@@ -221,13 +245,6 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
   // the close button is the last thing in a report that is now taller than the
   // modal, and a plain focus() scrolls the first screen straight out of view.
   useEffect(() => { closeBtnRef.current?.focus({ preventScroll: true }); }, []);
-
-  // F2L, one pair at a time — the column set the step table opens F2L into.
-  // Derived, never stored: it is a second reading of the same move stream.
-  const slots = useMemo(
-    () => (stageSegs ? computeF2lSlots(solve.scramble, moves, solve.timeMs, stageSegs) : null),
-    [stageSegs, solve.scramble, moves, solve.timeMs],
-  );
 
   // Which method the report is read as. Not persisted on the solve: it is a
   // property of the READER, not of the solve, and a Roux solver switching once
@@ -478,6 +495,7 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
             stepMetrics={stepMx}
             slots={slots}
             reference={analysis?.reference ?? null}
+            slotReference={analysis?.slotReference ?? null}
             ao12={stageAvgs?.ao12 ?? null}
             walk={walk}
             moves={moves}
@@ -490,6 +508,9 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
             stepMetrics={stepMx}
             inspectionMs={solve.inspectionMs ?? null}
           />
+        )}
+        {onReconFeedback && stageSegs && memoMs === undefined && (
+          <ReconFeedback value={solve.reconOk} onChange={onReconFeedback} />
         )}
 
         {waste && waste.spans.length > 0 && (
@@ -662,6 +683,54 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * 「这份复盘对不对?」 —— 两个按钮,不改任何一个数字。
+ *
+ * 阶段切分是**推**出来的:魔方只报转了什么,不报你心里把哪一手当成 F2L 的开始。
+ * 边界推错的那把,表里每个数都跟着错,而唯一知道错了的人是刚拧完的那个。这一行
+ * 就是给他一个说「不对」的地方 —— 答案落在 `Solve.reconOk` 上,和那把成绩存在
+ * 一起,以后要查切分 bug 时有样本可捞。
+ *
+ * 再按一次同一个按钮 = 收回答案(回到「没问过」),因为误点比不答更常见。
+ */
+function ReconFeedback({
+  value, onChange,
+}: {
+  value: boolean | undefined;
+  onChange: (v: boolean | undefined) => void;
+}) {
+  const hint = tr({
+    zh: '阶段边界是从动作流推出来的,不是魔方报的。推错了这里说一声 —— 不影响任何数字,只是留个记号。',
+    en: 'The stage boundaries are inferred from the turn stream, not reported by the cube. Say so if they are wrong — it changes no number, it just leaves a marker.',
+  });
+  return (
+    <div className="rc-feedback">
+      <span className="rc-feedback-q">{tr({ zh: '复盘对不对?', en: 'Reconstruction correct?' })}</span>
+      <button
+        type="button"
+        className={`rc-feedback-btn${value === true ? ' is-on' : ''}`}
+        aria-pressed={value === true}
+        onClick={() => onChange(value === true ? undefined : true)}
+        title={tr({ zh: '切分是对的', en: 'The split is right' })}
+      >
+        <ThumbsUp size={14} />
+      </button>
+      <button
+        type="button"
+        className={`rc-feedback-btn${value === false ? ' is-off' : ''}`}
+        aria-pressed={value === false}
+        onClick={() => onChange(value === false ? undefined : false)}
+        title={tr({ zh: '切分不对', en: 'The split is wrong' })}
+      >
+        <ThumbsDown size={14} />
+      </button>
+      <span className="rc-feedback-info" title={hint} aria-label={hint}>
+        <Info size={13} />
+      </span>
     </div>
   );
 }
