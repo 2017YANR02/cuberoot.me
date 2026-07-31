@@ -78,6 +78,7 @@ export const MODULES: Mod[] = [
   { route: '/cstimer',         zh: 'csTimer',     en: 'csTimer',      origin: 'fork', upstream: 'cs0x7f/cstimer' },
   { route: '/solver',          zh: '复原器',      en: 'Solver',       origin: 'fork', upstream: 'or18/RubiksSolverDemo' },
   { route: '/alg-trainers',    zh: '公式训练器',  en: 'Alg Trainers', origin: 'fork', upstream: 'mihlefeld/Alg-Trainers' },
+  { route: '/blddb',           zh: '盲拧公式库',  en: 'BLDDB',        origin: 'fork', upstream: 'nbwzx/blddb' },
 ];
 
 export interface Decision {

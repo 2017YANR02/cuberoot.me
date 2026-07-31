@@ -23,6 +23,7 @@ export const TEXTS: Record<string, { en: string; zh: string
 },
   algTrainer:      { en: 'mihlefeld Trainer', zh: 'mihlefeld 训练器'
 },
+  blddb:           { en: 'BLDDB', zh: 'BLDDB 盲拧公式库' },
   hthGrapher:      { en: 'Calculator', zh: '计算器'
 },
   viz:             { en: 'Distribution', zh: '分布'
@@ -121,12 +122,13 @@ export const SECTIONS: Section[] = [
     eyebrow: { en: 'TRAIN', zh: '训练' },
     title:   { en: 'Recall, look ahead, drill.', zh: '记忆、预判、背公式。'
     },
-    sub:     { en: 'Memory drills, lookahead practice and a colour-interference focus test, plus two classic algorithm trainers. Head-to-head battles live inside the timer.', zh: '盲拧记忆、预判练习、色词干扰测专注力,外加两套经典公式训练器;双人对战在计时器里。'
+    sub:     { en: 'Memory drills, lookahead practice and a colour-interference focus test, plus the blindfolded algorithm database and two classic algorithm trainers. Head-to-head battles live inside the timer.', zh: '盲拧记忆、预判练习、色词干扰测专注力,外加盲拧公式库与两套经典公式训练器;双人对战在计时器里。'
     },
     cards: [
       { id: 'memo',     href: '/memo',         internal: true, tier: 'standard', Icon: Brain,     nameKey: 'memo' },
       { id: 'predict',  href: '/predict',      internal: true, tier: 'standard', Icon: Eye,       nameKey: 'predict' },
       { id: 'stroop',   href: '/stroop',       internal: true, tier: 'standard', Icon: Palette,   nameKey: 'stroop' },
+      { id: 'blddb',    href: '/blddb',        internal: true, tier: 'standard', iconImg: '/icons/upstream/blddb.png', nameKey: 'blddb' },
       { id: 'trainer',  href: '/alg-trainers', internal: true, tier: 'standard', iconImg: '/icons/upstream/algtrainer.png', nameKey: 'algTrainer' },
       { id: 'cstimer',  href: '/cstimer',      internal: true, tier: 'standard', nameKey: 'cstimer', iconImg: '/cstimer_logo.png' },
     ],
