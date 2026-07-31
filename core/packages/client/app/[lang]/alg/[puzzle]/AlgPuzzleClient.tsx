@@ -10,7 +10,7 @@ import { Fragment, useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Eye, Blocks, ScanSearch, Box, X, type LucideIcon } from 'lucide-react';
+import { ArrowLeft, Eye, Blocks, Box, X, type LucideIcon } from 'lucide-react';
 import { ALG_CATALOG, ALG_PUZZLES, loadAlg, type AlgCase, type AlgPuzzle } from '@cuberoot/shared';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
@@ -21,6 +21,7 @@ import { ClearButton } from '@/components/ClearButton';
 import { MIX_MIN_SETS, mixHref, mixTitle } from '@/lib/alg-mix';
 import { useSavedMixes } from '@/lib/alg-mix-saved';
 import AlgAdminValidate from '@/components/AlgAdminValidate';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { FaceletsCube } from '@/components/FaceletsCube';
 import { TOTAL_CASES as LSLL_TOTAL, categoryCardFacelets } from '@/lib/lsll/model';
 import '../alg.css';
@@ -29,17 +30,16 @@ import { tr } from '@/i18n/tr';
 /** Old single-segment 3x3 set slugs we used to live at /alg/<slug>. Redirect to /alg/3x3/<slug>. */
 const LEGACY_3X3_SLUGS = new Set(['f2l', 'adv-f2l', 'oll', 'pll']);
 
-/** Method trainers / recognition that aren't a per-set timing drill — surfaced per puzzle. */
+/**
+ * 整套方法的训练器 —— 不对应任何一套公式,所以留在这层。
+ *
+ * 各套的观察训练(`/recognize/oll` 等)以前也堆在这一排,已经搬到各自的公式集页首
+ * (`/alg/3x3/oll` 的「观察」),那里才看得出这一次练的是哪套。
+ */
 const TRAINER_MODULES: Record<string, { href: string; zh: string; en: string; Icon: LucideIcon }[]> = {
   '3x3': [
     { href: '/alg/3bld', zh: '3BLD 盲拧训练', en: '3BLD Trainer', Icon: Eye },
     { href: '/alg/roux', zh: 'Roux 桥式训练', en: 'Roux Trainer', Icon: Blocks },
-    { href: '/recognize/oll', zh: 'OLL 观察', en: 'OLL Recognition', Icon: ScanSearch },
-    { href: '/recognize/pll', zh: 'PLL 观察', en: 'PLL Recognition', Icon: ScanSearch },
-    { href: '/recognize/coll', zh: 'COLL 观察', en: 'COLL Recognition', Icon: ScanSearch },
-    { href: '/recognize/ell', zh: 'ELL 观察', en: 'ELL Recognition', Icon: ScanSearch },
-    { href: '/recognize/zbll', zh: 'ZBLL 观察', en: 'ZBLL Recognition', Icon: ScanSearch },
-    { href: '/recognize/1lll', zh: '1LLL 观察', en: '1LLL Recognition', Icon: ScanSearch },
   ],
   'skewb': [
     { href: '/alg/skewb-trainer', zh: 'Skewb 技巧训练', en: 'Skewb Skills', Icon: Box },
@@ -56,6 +56,9 @@ export default function AlgPuzzleClient() {
   const router = useRouter();
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
+  // 窄屏这排卡片是四列(alg.css 的 480 断点),96px 的图会撑破格子 —— 图跟着降档。
+  const narrow = useIsMobile(480);
+  const thumbSize = narrow ? 60 : 96;
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [firstCases, setFirstCases] = useState<Record<string, AlgCase | null>>({});
 
@@ -155,7 +158,7 @@ export default function AlgPuzzleClient() {
                   /* 每阶最多二十来张、全在首屏附近,本地渲染实测 19 张 26ms —— 图与数量同帧出现,
                      不再各自等一次跨域请求。渲染器本来就静态 import 进了 bundle,不额外增体积。
                      长 case 网格不能照抄这条,那边走 loading="lazy",见 AlgCategoryView。 */
-                  <CaseThumb puzzle={puzzle} set={s.slug} sticker={first.sticker} alg={firstAlg} setup={first.setup} size={96} local />
+                  <CaseThumb puzzle={puzzle} set={s.slug} sticker={first.sticker} alg={firstAlg} setup={first.setup} size={thumbSize} local />
                 )}
                 title={tr(s)}
                 count={n == null ? '…' : n < 0 ? '!' : n}
@@ -164,7 +167,7 @@ export default function AlgPuzzleClient() {
                 <AlgCard
                   href="/alg/lsll"
                   prefetch={false}
-                  thumb={<FaceletsCube fd={categoryCardFacelets('ap')} size={96} alt="LSLL" />}
+                  thumb={<FaceletsCube fd={categoryCardFacelets('ap')} size={thumbSize} alt="LSLL" />}
                   title="LSLL"
                   count={LSLL_TOTAL.toLocaleString()}
                 />

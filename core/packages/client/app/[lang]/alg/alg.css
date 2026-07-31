@@ -82,7 +82,8 @@ html[data-theme=dark] .alg-root {
   margin: 0 auto;
   padding: 0 24px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  /* 180 而不是 200:容器封顶 1200(内容 1152)时正好排到六列,一屏看全一个魔方的所有套。 */
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 12px;
 }
 
@@ -1030,8 +1031,19 @@ a.alg-community-author:hover {
   .alg-case-list { grid-template-columns: 1fr; }
   /* 只看图时窄屏仍保持两列画廊 —— 一列太空、认图效率低 */
   .alg-case-list.is-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  /* 套列表窄屏也走两列 —— 一列一张卡太空,滚动条也拉太长 */
-  .alg-bento { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  /* 套列表窄屏走四列 —— 一屏能看全一个魔方的所有套,不用来回滚。
+     卡片随之收窄:内边距 / 字号 / 缩略图(size 由 AlgPuzzleClient 按视口给)一起降档。 */
+  .alg-bento { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 0 12px; }
+  .alg-bento .alg-card { padding: 8px 4px 7px; gap: 5px; border-radius: 8px; }
+  .alg-bento .alg-card-thumb { min-height: 0; }
+  .alg-bento .alg-card-foot { gap: 2px 4px; }
+  .alg-bento .alg-card-title { font-size: 12px; letter-spacing: 0; }
+  .alg-bento .alg-card-count { font-size: 10px; }
+  /* 魔方项目 / 训练器卡片(纯文字)窄屏两列 —— 一列一张时整页全是空白 */
+  .alg-puzzle-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 0 12px; }
+  .alg-puzzle-card { padding: 12px 10px; }
+  .alg-puzzle-name { font-size: 16px; gap: 6px; }
+  .alg-puzzle-icon, .alg-bracket-icon { font-size: 20px; }
 }
 
 /* ─── Admin alg case editor (modal) ─── */
