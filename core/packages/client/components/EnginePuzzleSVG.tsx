@@ -47,8 +47,15 @@ function getEngine() {
   return worldPromise;
 }
 
+/** `case`(=公式,逆着看)→ 正向 setup。两条消费路(本组件 / PDF 导出)同一份换算。 */
+export function engineForwardAlg(kind: EnginePuzzleKind, driver: { alg?: string; case?: string }): string {
+  const c = driver.case;
+  if (c && c.trim()) return kind === 'sq1' ? invertSq1Alg(c) : invertAlg(c);
+  return driver.alg ?? '';
+}
+
 /** 同 server engine_render:World 复用 + setup 重放 + schematic 导出。 */
-async function renderEngineSvg(kind: EnginePuzzleKind, forward: string, size: number): Promise<string | null> {
+export async function renderEngineSvg(kind: EnginePuzzleKind, forward: string, size: number): Promise<string | null> {
   const { world: w, exportSchematic, hasFacelets, sizeSvg } = await getEngine();
   if (w.puzzleKind !== kind) w.setPuzzle(kind);
   // 引擎默认视角(与 /sim 一致);headless 无渲染循环 → 手动刷相机 matrixWorld
@@ -87,9 +94,7 @@ export function EnginePuzzleSVG({
   const hostRef = useRef<HTMLDivElement>(null);
   const [, setTick] = useState(0);
 
-  const forward = caseAlg && caseAlg.trim()
-    ? (kind === 'sq1' ? invertSq1Alg(caseAlg) : invertAlg(caseAlg))
-    : (alg ?? '');
+  const forward = engineForwardAlg(kind, { alg, case: caseAlg });
   const key = `${kind}|${forward}|${size}`;
   const cached = svgCache.get(key);
 

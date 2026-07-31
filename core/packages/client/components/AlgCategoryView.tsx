@@ -34,6 +34,8 @@ import AlgPlayer from '@/components/AlgPlayer';
 import SortableAlgRow from '@/components/SortableAlgRow';
 import AlgMirrorPanel, { hasMirror } from '@/components/AlgMirrorPanel';
 import AlgViewModeToggle, { useAlgViewMode } from '@/components/AlgViewModeToggle';
+import AlgPdfButton from '@/components/AlgPdfButton';
+import { algSheetFromCases } from '@/lib/alg_pdf/from_cases';
 import { useCopy } from '@/hooks/useCopy';
 import { stm } from '@cuberoot/shared/alg-notation';
 import { listSubmissions } from '@/lib/alg_api';
@@ -665,6 +667,27 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
         : ''
   );
 
+  /**
+   * 「下载 PDF」要印的那份表。**所见即所印**:当前视角(y 切换)、当前标签筛选、
+   * 当前子组都跟着走。唯独子组选择页(还没列 case)例外 —— 那里印整套。
+   */
+  const buildPdfSheet = () => {
+    const listing = !showSubgroupPicker && !showSubSubgroupPicker;
+    const pdfCases = listing ? visibleCases : (data?.cases ?? []);
+    const title = `${puzzleParam} ${tr(meta)}${subgroupDisplay ? ` ${subgroupDisplay}` : ''}`;
+    return algSheetFromCases({
+      puzzle: puzzleParam as AlgPuzzle,
+      set,
+      cases: pdfCases,
+      title,
+      sourcePath: `/alg/${puzzleParam}/${set}${subgroupSlug ? `/${subgroupSlug}` : ''}`,
+      filename: `${puzzleParam}-${set}${subgroupSlug ? `-${subgroupSlug}` : ''}`,
+      oriOf: listing ? (c => caseOri[c.name] ?? activeOri) : undefined,
+      algFilter: listing && filtering ? (a => !!a.tags?.includes(tagFilter)) : undefined,
+      groupLabel: (sub) => ollByGroup.get(sub) ?? sub,
+    });
+  };
+
   const toggleGroup = (g: string) => setCollapsedGroups(prev => {
     const next = new Set(prev);
     if (next.has(g)) next.delete(g); else next.add(g);
@@ -702,6 +725,11 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
             <option value="all">{tr({ zh: '全部公式', en: 'All algs' })}</option>
             {availableTags.map(t => <option key={t} value={t}>{ALG_TAG_LABEL[t]()}</option>)}
           </select>
+        )}
+        {/* 打印表:子组选择页(没列 case)也给 —— 那一层下载的是**整套**,
+            正是「把这套公式印出来」最自然的落点 */}
+        {data && data.cases.length > 0 && (
+          <AlgPdfButton build={buildPdfSheet} />
         )}
         {/* set 级(含 umbrella 落地页)从全集选;subgroup 页带 ?scope= 只从该组选 */}
         {data && (

@@ -1002,6 +1002,18 @@ export const CATALOG: ComponentEntry[] = [
     Demo: BackHomeDemo,
   },
   {
+    name: 'AlgPdfButton',
+    import: "import AlgPdfButton from '@/components/AlgPdfButton';\nimport { algSheetFromCases } from '@/lib/alg_pdf/from_cases';",
+    category: 'more',
+    zh: '「下载 PDF」按钮 —— 把一批 case(图 + 名字 + 公式)排成可打印的 A4。`/alg` 下任何列 case 的页面都该挂:公式集页、子组页、case 详情页、3BLD 换位子字典。`build` 是点击那刻才跑的回调(拼一份 ZBLL 表要遍历几百个 case,渲染期算纯属浪费);表怎么拼交给 algSheetFromCases(视角 / 标签筛选 / 剥不剥收尾 AUF / 出不出图都是它的开关)。生成器 jsPDF + svg2pdf 动态 import,不进首屏。魔方图在 PDF 里仍是矢量,本地渲染不发请求(NxN 走 visualcube,sq1/金字塔走 /sim 引擎,五魔走 sr,斜转走自绘扇形)。',
+    en: 'A "Download PDF" button that lays a batch of cases (image + name + algs) out as a printable A4 sheet. Belongs on every page under /alg that lists cases: set pages, subgroup pages, the case detail page, the 3BLD commutator dictionary. `build` is a callback run at click time (assembling a ZBLL sheet walks hundreds of cases — pointless on every render); algSheetFromCases does the assembling, with switches for orientation, tag filter, whether to strip the trailing AUF, and whether to draw thumbnails. jsPDF + svg2pdf are dynamically imported, so nothing lands in the initial bundle. Cube images stay vector in the PDF and are rendered locally with no requests (NxN via visualcube, sq1/pyraminx via the /sim engine, megaminx via sr, skewb via the hand-drawn fan).',
+    usage: "<AlgPdfButton build={() => algSheetFromCases({\n  puzzle, set, cases: visibleCases,\n  title: `${puzzle} ${setName}`, sourcePath: `/alg/${puzzle}/${set}`,\n  filename: `${puzzle}-${set}`,\n})} />",
+    note: {
+      zh: '换位子那两套(comm-corner / comm-edge)必须传 rawAlg:818 条里有 229 条真的以 U/U\' /U2 收尾,剥了就是条错公式。',
+      en: "The two commutator sets (comm-corner / comm-edge) must pass rawAlg: 229 of the 818 genuinely end in U/U'/U2, and stripping that yields a wrong alg.",
+    },
+  },
+  {
     name: 'AlgMirrorPanel',
     import: "import AlgMirrorPanel, { hasMirror } from '@/components/AlgMirrorPanel';",
     category: 'more',
