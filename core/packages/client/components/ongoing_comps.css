@@ -87,13 +87,19 @@
   gap: 0.4rem;
 }
 
-/* 分组视图(当前 / 未来 / 往期):每组只有一两场比赛时单列会在右侧留大片空白,
-   改成自适应多列铺满面板宽度。列宽下限 300px,放不下自动降列数。 */
-.ongoing-comps-groups.is-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  align-content: start;
-  gap: 0.4rem 1.5rem;
+/* 分组视图(当前 / 未来 / 往期):每组只有一两场比赛时独占一行会在右侧留大片空白。
+   分组按自身内容宽度横向流动、放不下才换行 —— 比定宽列网格更紧凑(短国名不撑满列)。 */
+.ongoing-comps-groups.is-flow {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 0.35rem 1.25rem;
+}
+
+.ongoing-comps-groups.is-flow > .ongoing-comps-group {
+  flex: 0 1 auto;
+  max-width: 100%;
 }
 
 /* Records list is rendered headless inside the panel — the panel owns the
@@ -188,8 +194,8 @@
     letter-spacing: 0.03em;
   }
   .ongoing-comps-scope { padding-left: 0.5rem; }
-  /* 窄屏一列即可(minmax 的 300px 下限在更窄容器里会横向溢出) */
-  .ongoing-comps-groups.is-grid {
-    grid-template-columns: 1fr;
+  /* 窄屏每组仍独占一行(横向流动会挤成难读的碎块) */
+  .ongoing-comps-groups.is-flow > .ongoing-comps-group {
+    flex: 1 0 100%;
   }
 }
