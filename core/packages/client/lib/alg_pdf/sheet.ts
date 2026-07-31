@@ -9,6 +9,7 @@
  * 子组标题横贯整行。所有单位都是 pt(jsPDF 的 'pt'),A4 = 595.28 × 841.89。
  */
 import { jsPDF } from 'jspdf';
+import { renderSVG } from 'uqr';
 import { FONT_MONO, FONT_SANS, FONT_CJK, loadPdfFonts, ensureCjkFont, hasCjk } from '@/lib/pdf-fonts';
 import { svgStringToElement, embedSvg } from '@/lib/pdf-svg';
 import { loadPdfLogo, drawPdfLogo } from '@/lib/pdf-logo';
@@ -43,6 +44,8 @@ export interface AlgPdfSheetInput {
   shouldCancel?: () => boolean;
   /** 纸色。默认 `light`(白纸黑字,打印用);`dark` 是屏幕上看的深底白字。 */
   theme?: AlgPdfTheme;
+  /** 首页右上角二维码指向的网址(一般就是这份表所在的页面);省略 = 不印二维码。 */
+  url?: string;
 }
 
 export type AlgPdfTheme = 'light' | 'dark';
@@ -60,6 +63,9 @@ const ALG_SIZE = 8;             // 公式字号上限(放不下会往 7 降,见 
 const SETUP_SIZE = 6.6;
 const LOCKUP_H = 46;            // 首页刊头的完整标志(含中英文字)高
 const RUN_LOGO_H = 9;           // 续页页眉那枚小标记
+// 二维码边长。一条 /alg 网址编出来是 33×33 模块(含 2 模块留白),54pt 下每模块
+// 约 0.58mm —— 手机相机可靠识别的下限在 0.5mm 上下,再小就得贴到镜头前才扫得出。
+const QR_SIZE = 54;
 const CELL_PAD = 4;
 const GAP_X = 12;
 const GAP_Y = 8;
@@ -126,7 +132,7 @@ export async function downloadAlgSheet(input: AlgPdfSheetInput): Promise<void> {
 
 /** 建好整份文档;被取消则返回 null。 */
 export async function buildAlgSheet({
-  title, subtitle, cases, onProgress, shouldCancel, theme = 'light',
+  title, subtitle, cases, onProgress, shouldCancel, theme = 'light', url,
 }: AlgPdfSheetInput): Promise<jsPDF | null> {
   const doc = new jsPDF({ unit: 'pt', format: 'a4', compress: true });
   await loadPdfFonts(doc);
@@ -196,6 +202,12 @@ export async function buildAlgSheet({
   // ── 首页刊头:标志 / 标题 / 出处一列居中。副标题里带着 `cuberoot.me/alg/...`,
   //    正好接在标志下面成一块出处。
   paintPage();
+  // 二维码扫过去就是这份表的在线版(带上当前视角 / 筛选)。永远白底黑码,不跟着纸色反相
+  // —— 反相的二维码有相当一部分相机认不出;深色纸上那圈白留白反而是它的取景框。
+  if (url) {
+    const qr = renderSVG(url, { border: 2, ecc: 'M', blackColor: '#111', whiteColor: '#fff' });
+    await embedSvg(doc, svgStringToElement(qr), PAGE_W - MARGIN - QR_SIZE, MARGIN, QR_SIZE, QR_SIZE);
+  }
   const logoW = await drawPdfLogo(doc, lockup, PAGE_W / 2, y, LOCKUP_H, 'center');
   if (logoW) y += LOCKUP_H + 10;
   doc.setFont(SANS, 'bold');

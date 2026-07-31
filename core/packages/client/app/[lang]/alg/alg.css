@@ -115,45 +115,42 @@ html[data-theme=dark] .alg-root {
   font-size: 13px;
 }
 /* 「下载 PDF」—— 把当前这批 case 排成可打印的 A4(components/AlgPdfButton) */
-/* 动作 + 它的选项做成一个分段控件:边框画在外层,两段共用 —— 纸色单独立一个开关的话
-   会跟同一行的「图/表」视图开关撞脸,看不出它管的是 PDF。 */
 .alg-pdf-group {
   display: inline-flex;
-  align-items: stretch;
-  border: 1px solid var(--border-default);
-  border-radius: 8px;
-  overflow: hidden;
-  transition: border-color 0.15s;
-}
-.alg-pdf-group:hover { border-color: color-mix(in srgb, var(--foreground) 35%, transparent); }
-.alg-pdf-btn,
-.alg-pdf-paper {
-  display: inline-flex;
   align-items: center;
-  background: transparent;
-  border: none;
-  color: var(--muted-foreground);
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  gap: 6px;
 }
 .alg-pdf-btn {
+  display: inline-flex;
+  align-items: center;
   gap: 5px;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  color: var(--muted-foreground);
   padding: 5px 12px;
+  border-radius: 8px;
   font-size: 13px;
   font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
-.alg-pdf-paper {
-  gap: 4px;
-  padding: 5px 10px;
-  font-size: 12px;
-  border-left: 1px solid var(--border-default);
-}
-.alg-pdf-btn:hover,
-.alg-pdf-paper:hover {
+.alg-pdf-btn:hover {
   background: color-mix(in srgb, var(--foreground) 7%, transparent);
   color: var(--foreground);
+  border-color: color-mix(in srgb, var(--foreground) 35%, transparent);
 }
-.alg-pdf-paper:disabled { cursor: default; opacity: 0.5; }
+/* 纸色下拉配合按钮压到同一个视觉重量(ListSelect 默认偏大) */
+.alg-pdf-paper .list-select-trigger {
+  padding: 5px 10px;
+  font-size: 12px;
+}
+/* 面板改成右对齐 + 贴合内容:ListSelect 默认 left/right 都钉 0 再加 min-width 220,
+   在页头最右侧这个位置就会被那条 min-width 顶出视口右沿。两个选项也用不着 220px。 */
+.alg-pdf-paper .list-select-popup {
+  left: auto;
+  right: 0;
+  min-width: max-content;
+}
 /* 生成中:数字会一位位跳动,定宽免得按钮跟着抖 */
 .alg-pdf-btn.is-busy {
   color: var(--foreground);

@@ -11,13 +11,12 @@
  *    每次都算一遍纯属浪费,点了才算。
  *  - 纸色(浅 / 深)记在 localStorage:挑一次就该在整个公式库里一直有效,
  *    不该每翻一页重挑。默认浅色 —— 深色底打印机要喷满一页墨。
- *
- * 纸色这个二选一没用 `PillToggle`:它单独站在按钮旁边时,跟同一行已有的「图/表」
- * 视图开关长得一模一样,读起来像第二个页面级开关,看不出管的是 PDF。做成同一个
- * 边框里的分段控件(动作 + 它的选项),归属一眼就清楚。
+ *  - 表里印的二维码指向**当前这一页**(含语言前缀和筛选参数),扫过去就是在线版。
+ *    地址点击那刻现取,不是渲染期算的 —— 筛选改了地址也跟着改。
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FileDown, Loader2, Moon, Sun } from 'lucide-react';
+import { FileDown, Loader2 } from 'lucide-react';
+import { ListSelect } from '@/components/ListSelect';
 import type { AlgPdfSheetInput, AlgPdfTheme } from '@/lib/alg_pdf/sheet';
 import { persistItem } from '@/lib/safe-storage';
 import { tr } from '@/i18n/tr';
@@ -34,17 +33,20 @@ export interface AlgPdfButtonProps {
 
 export default function AlgPdfButton({ build, className, label = 'PDF' }: AlgPdfButtonProps) {
   const [pct, setPct] = useState<number | null>(null);
-  const [dark, setDark] = useState(false);
+  const [theme, setTheme] = useState<AlgPdfTheme>('light');
   const cancelRef = useRef(false);
 
   // 首帧不读 localStorage:这些页面是静态预渲染的,读了会 hydration 不一致
   useEffect(() => {
-    try { setDark(localStorage.getItem(THEME_KEY) === 'dark'); } catch { /* 无痕模式 */ }
+    try {
+      if (localStorage.getItem(THEME_KEY) === 'dark') setTheme('dark');
+    } catch { /* 无痕模式 */ }
   }, []);
 
-  const pickTheme = useCallback((next: boolean) => {
-    setDark(next);
-    persistItem(THEME_KEY, next ? 'dark' : 'light');
+  const pickTheme = useCallback((next: string) => {
+    const t: AlgPdfTheme = next === 'dark' ? 'dark' : 'light';
+    setTheme(t);
+    persistItem(THEME_KEY, t);
   }, []);
 
   const onClick = useCallback(async () => {
@@ -56,8 +58,10 @@ export default function AlgPdfButton({ build, className, label = 'PDF' }: AlgPdf
       const sheet = build();
       if (!sheet.cases.length) return;
       await downloadAlgSheet({
+        // 二维码指向当前地址,但去掉 hash(#case 锚点这类只在本次会话有意义)
+        url: sheet.url ?? `${window.location.origin}${window.location.pathname}${window.location.search}`,
         ...sheet,
-        theme: (dark ? 'dark' : 'light') satisfies AlgPdfTheme,
+        theme,
         onProgress: (done, total) => setPct(Math.round((done / total) * 100)),
         shouldCancel: () => cancelRef.current,
       });
@@ -67,9 +71,15 @@ export default function AlgPdfButton({ build, className, label = 'PDF' }: AlgPdf
     } finally {
       setPct(null);
     }
-  }, [build, dark, pct]);
+  }, [build, theme, pct]);
 
   const busy = pct !== null;
+  // 标签写「纸」而不是光「浅色 / 深色」:这个下拉紧挨着页面本身的视图切换器,
+  // 不点明是纸色的话会被当成又一个页面开关。
+  const papers = [
+    { value: 'light', label: tr({ zh: '浅色纸', en: 'Light paper' }) },
+    { value: 'dark', label: tr({ zh: '深色纸', en: 'Dark paper' }) },
+  ];
   return (
     <div className={`alg-pdf-group${className ? ` ${className}` : ''}`}>
       <button
@@ -83,20 +93,14 @@ export default function AlgPdfButton({ build, className, label = 'PDF' }: AlgPdf
         {busy ? <Loader2 size={14} className="alg-pdf-spin" /> : <FileDown size={14} />}
         {busy ? `${pct}%` : label}
       </button>
-      <button
-        type="button"
+      <ListSelect
         className="alg-pdf-paper"
-        onClick={() => pickTheme(!dark)}
-        disabled={busy}
-        aria-pressed={dark}
-        aria-label={tr({ zh: 'PDF 纸色', en: 'PDF paper colour' })}
-        title={dark
-          ? tr({ zh: '深色纸:适合屏幕上看。点一下换成浅色', en: 'Dark paper — good on screen. Click for light' })
-          : tr({ zh: '浅色纸:适合打印。点一下换成深色', en: 'Light paper — good for printing. Click for dark' })}
-      >
-        {dark ? <Moon size={12} /> : <Sun size={12} />}
-        {dark ? tr({ zh: '深色', en: 'Dark' }) : tr({ zh: '浅色', en: 'Light' })}
-      </button>
+        items={papers}
+        value={theme}
+        onChange={pickTheme}
+        allLabel={papers[0].label}
+        clearable={false}
+      />
     </div>
   );
 }
