@@ -147,7 +147,7 @@ function translateAlgName(algName) {
 }
 
 function getAlgName(caseId) {
-    return translateAlgName(algsInfo[caseId]["name"]);
+    return String(translateAlgName(algsInfo[caseId]["name"]));
 }
 
 function translateAlgGroup(group) {
@@ -163,5 +163,5 @@ function translateAlgGroup(group) {
 }
 
 function getAlgGroup(caseId) {
-    return translateAlgGroup(algsInfo[caseId]["group"]);
+    return String(translateAlgGroup(algsInfo[caseId]["group"]));
 }

@@ -19,6 +19,25 @@ input[type=text]:focus {
 }
 
 
+details.settingsDetails:open {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2em;
+}
+
+summary.settingsSummary {
+    padding: 0.3em;
+    user-select: none;
+    background: var(--secondary);
+    color: var(--secondaryText);
+    border-radius: var(--borderRadius);
+}
+
+summary.settingsSummary:hover {
+    cursor: pointer;
+}
+
+
 .settingsEntry {
     display: flex;
     flex-direction: row;
@@ -29,7 +48,7 @@ input[type=text]:focus {
     padding: 0.3em;
 }
 
-dialog#settings button, #uploadLSLabel, #uploadLPLabel {
+dialog#settings button, #settingsUploadCustomAlgsLabel, #uploadLSLabel, #uploadLPLabel {
     width: 3em;
     height: 100%;
     font-size: 1em;

@@ -26,12 +26,14 @@ $bashInit = "export PATH=`"/c/mingw64/bin:`$PATH`""
 Write-Host "[2/4] 构建 cstimer.js + twisty.js + index.html..." -ForegroundColor Cyan
 & $bash -c "$bashInit && cd '$csUnix' && mingw32-make local"
 
-Write-Host "[3/4] 构建 scramble_module.js（无 IIFE，供 battle 用）..." -ForegroundColor Cyan
+Write-Host "[3/4] 构建 scramble_module.js（无 IIFE，供 /timer 双人模式用）..." -ForegroundColor Cyan
 & $bash -c "$bashInit && cd '$csUnix' && mingw32-make battle_module"
 
 Write-Host "[4/6] 复制构建产物..." -ForegroundColor Cyan
 Copy-Item -Path "$CstimerDir\dist\local\*" -Destination "$ProjectDir\tools\cstimer\" -Recurse -Force
-Copy-Item "$CstimerDir\dist\js\scramble_module.js" "$ProjectDir\tools\battle\scramble_module.js" -Force
+# NOTE: 旧的 tools/battle/ 随 /battle 路由退役；引擎加载器 timer/_battle/engine/engine_loader.ts
+#       从站点根拉 /scramble_module.js，即 client 的 public/。
+Copy-Item "$CstimerDir\dist\js\scramble_module.js" "$ProjectDir\core\packages\client\public\scramble_module.js" -Force
 
 # NOTE: 复制上游编译后的语言 JS 文件（35 种语言），供客户端动态加载
 Write-Host "[5/6] 复制语言文件..." -ForegroundColor Cyan
@@ -44,7 +46,7 @@ Write-Host "  已复制 $langCount 个语言文件到 cstimer/lang/" -Foreground
 # NOTE: 向 index.html 注入语言引导脚本
 # 上游 make local 生成的静态 HTML 只含英文变量，语言切换 ?lang= 参数无效
 # 注入逻辑：在 LANG_CUR 定义之后插入一段 JS，解析 ?lang= 参数并同步加载对应语言文件
-Write-Host "[6/6] 注入语言切换引导脚本 + git commit..." -ForegroundColor Cyan
+Write-Host "[6/6] 注入语言切换引导脚本..." -ForegroundColor Cyan
 $indexPath = "$ProjectDir\tools\cstimer\index.html"
 # HACK: 用字节级操作避免 PowerShell 破坏编码或行尾符
 $bytes = [System.IO.File]::ReadAllBytes($indexPath)
@@ -74,10 +76,6 @@ if ($html.Contains($anchor)) {
     Write-Host "  警告：未找到 LANG_CUR 锚点，跳过注入" -ForegroundColor Yellow
 }
 
-Push-Location $ProjectDir
+# NOTE: 不自动 commit —— 统一由 sync_upstream.ps1 跑完全部上游后由人工审 diff 再提交。
 $version = git -C $CstimerDir describe --tags --always 2>$null
-git add tools/cstimer/ tools/battle/scramble_module.js
-git commit -m "chore: update csTimer to $version"
-Pop-Location
-
-Write-Host "完成！" -ForegroundColor Green
+Write-Host "完成！csTimer $version（未提交，自行 git diff 后 commit）" -ForegroundColor Green

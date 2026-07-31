@@ -138,6 +138,36 @@ if (Test-Path $swPath)
     Write-Host "  [PATCH] sw.js: removed analytics.js, fixed HTML paths" -ForegroundColor DarkCyan
 }
 
+# ===== Step 2c2: 修正 sw-register.js 的 sw.js 定位 =====
+# NOTE: 上游 register('sw.js') 是相对页面 URL 解析的，上游页面都在根目录所以没问题；
+#       本站页面重构进了子目录（/tools/solver/ 等），会去请求 /tools/solver/sw.js → 404。
+#       改成按本脚本自身 URL 解析，回到 /tools/sw.js。sw-register.js 在 rootFiles 里逐字覆盖，
+#       所以每次同步都要重打这个补丁。
+Write-Host "`nStep 2c2: Patching sw-register.js..." -ForegroundColor Green
+
+$swRegPath = Join-Path $LocalDir "tools" "sw-register.js"
+if (Test-Path $swRegPath)
+{
+    $swRegContent = Read-Utf8File $swRegPath
+
+    $anchor = "navigator.serviceWorker.register('sw.js')"
+    if ($swRegContent.Contains($anchor))
+    {
+        # NOTE: document.currentScript 只在脚本同步执行期间有值，load 回调里读一定是 null，
+        #       所以基准 URL 必须在顶层先存下来。
+        $swRegContent = $swRegContent.Replace(
+            "if ('serviceWorker' in navigator) {",
+            "if ('serviceWorker' in navigator) {`n`t// 按本脚本自身 URL 定位 sw.js —— 本站页面在子目录，相对页面解析会 404`n`tconst swRegisterBase = document.currentScript ? document.currentScript.src : window.location.href;")
+        $swRegContent = $swRegContent.Replace($anchor, "navigator.serviceWorker.register(new URL('sw.js', swRegisterBase).href)")
+        if (-not $DryRun) { Write-Utf8File $swRegPath $swRegContent }
+        Write-Host "  [PATCH] sw-register.js: sw.js path resolved against script URL" -ForegroundColor DarkCyan
+    }
+    elseif ($swRegContent -notmatch 'document\.currentScript')
+    {
+        Write-Host "  [WARN] sw-register.js: 未找到 register('sw.js') 锚点，上游可能改了写法，请手工核对" -ForegroundColor Yellow
+    }
+}
+
 # ===== Step 2d: 修正 manifest.json =====
 # NOTE: 上游 manifest.json 的路径、名称和图标都需要适配本站
 Write-Host "`nStep 2d: Patching manifest.json..." -ForegroundColor Green

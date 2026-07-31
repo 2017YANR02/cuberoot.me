@@ -1,0 +1,9 @@
+const timesArrayKey = "ftoL6XTimesArray";
+const selectionArrayKey = "ftoL6XSelection";
+var trainerTitle = "FTO L6X Trainer"
+var maxAlgsPerRow = 5;
+var preRotations = [''];
+var postRotations = [''];
+var preMoves = ["", "U", "U'"];
+var postMoves = preMoves;
+var selCases = [];

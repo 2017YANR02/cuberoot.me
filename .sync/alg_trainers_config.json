@@ -33,7 +33,8 @@
     ],
     "rootFiles": [
         "template.html",
-        "icon.png"
+        "icon.png",
+        "index.json"
     ],
     "analytics": {
         "trackingId": "G-MXJH30352W"

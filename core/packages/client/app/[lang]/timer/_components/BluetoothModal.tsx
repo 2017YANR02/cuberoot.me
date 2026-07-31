@@ -37,9 +37,16 @@ interface SupportedDevice {
   gyro?: boolean;
 }
 
+/**
+ * 这张表是**说明**,不是白名单 —— 真正决定认不认的是连上之后读到的 GATT service
+ * UUID(见 `_lib/bluetooth/index.ts` 的 connect:先按 service 选驱动,名字只是
+ * 兜底)。所以同一代协议的新型号不用改代码就能用,这里写「及同代新款」而不是把型
+ * 号一个个列全:列表逐个列型号,只会在厂商出新款时把「没写=不支持」这个错觉留给
+ * 用户 —— GAN 16 ui 就是这么被问出来的。
+ */
 const SUPPORTED_CUBES: SupportedDevice[] = [
   { zh: 'GAN 356 i / i3 / 357', en: 'GAN 356 i / i3 / 357', gyro: true },
-  { zh: 'GAN 12 / 14 / i Carry', en: 'GAN 12 / 14 / i Carry', gyro: true },
+  { zh: 'GAN 12 / 14 / 16 ui / i Carry 及同代新款', en: 'GAN 12 / 14 / 16 ui / i Carry and newer of the same generation', gyro: true },
   { zh: 'MoYu 32 系列（威龙 V10 AI 及之后）', en: 'MoYu 32 series (WeiLong V10 Ai onward)', gyro: true },
   { zh: 'MoYu AI（旧 MHC 协议）', en: 'MoYu AI (legacy MHC protocol)' },
   { zh: 'QiYi 奇艺智能 / 风 AI Tornado V4', en: 'QiYi Smart Cube / Tornado V4 Ai' },
