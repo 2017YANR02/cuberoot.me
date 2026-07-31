@@ -21,6 +21,7 @@ import { persistItem } from '@/lib/safe-storage';
 const KEY = 'cuberoot-timer.v3';
 const LEGACY_V2_KEY = 'cuberoot-timer.v2';
 const LEGACY_V1_KEY = 'cuberoot-timer.v1';
+const SAVE_COUNTER_KEY = 'cuberoot-timer.saveCounter';
 const BACKUP_KEEP = 10;
 
 type ByEvent = Partial<Record<EventId, Solve[]>>;
@@ -166,15 +167,38 @@ export function loadAll(): Record<string, Solve[]> {
   return activeByEvent(db) as Record<string, Solve[]>;
 }
 
-let _saveCounter = 0;
+/**
+ * 自动备份的写入计数器 —— 存 localStorage,不是模块变量。
+ *
+ * 它原来是 `let _saveCounter = 0`,每次刷新页面归零,于是设置里那句「每 N 次
+ * 写入触发」实际的意思变成了「**单次页面会话里**连续存够 N 次才触发」。默认
+ * N=10,而开发时热更新和手动刷新极频繁,计数器基本到不了 10 —— 实测两个月只
+ * 落下过一条备份,真丢数据时几乎没有可回滚的点。计数器跟着库一起持久化之后,
+ * N 次写入就是 N 次写入,和刷新无关。
+ *
+ * 返回 -1 表示计数不可用(localStorage 读写抛了,隐私模式 / 配额满)。这时候
+ * **不备份** —— 而不是当成 0 —— 否则 `0 % every === 0` 会让每一次保存都触发一
+ * 次全量备份,在本来就写不进去的环境里雪上加霜。
+ */
+function bumpSaveCounter(): number {
+  let prev = 0;
+  try {
+    prev = Number(localStorage.getItem(SAVE_COUNTER_KEY));
+  } catch {
+    return -1;
+  }
+  const next = Number.isFinite(prev) && prev > 0 ? Math.floor(prev) + 1 : 1;
+  persistItem(SAVE_COUNTER_KEY, String(next));
+  return next;
+}
 
 export function saveAll(byEvent: Record<string, Solve[]>): void {
   const db = loadRaw();
   db.dataBySession[db.activeSessionId] = byEvent as ByEvent;
   saveRaw(db);
-  _saveCounter++;
+  const n = bumpSaveCounter();
   const every = getSettings().autoBackupEvery | 0;
-  if (every > 0 && _saveCounter % every === 0) {
+  if (every > 0 && n > 0 && n % every === 0) {
     void pushBackup(); // fire-and-forget:备份失败不影响保存本体
   }
 }
