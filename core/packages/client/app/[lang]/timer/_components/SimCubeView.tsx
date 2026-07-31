@@ -1,11 +1,20 @@
 'use client';
 
 /**
- * LiveCubeGyroView — the live smart-cube mirror as a real 3D cube whose
- * orientation follows the cube's gyroscope.
+ * SimCubeView — a real 3D cube built by the /sim engine, driven by a move log,
+ * optionally posed by the cube's gyroscope.
  *
- * Stickers come from the move log LiveCubeState maintains; orientation comes
- * from the BLE quaternion feed. The two are independent channels and they stay
+ * Two callers, one component, because they are the same picture:
+ *   - the LIVE mirror while timing (LiveCubeState), posed by the BLE gyro feed;
+ *   - the post-solve REPLAY (PlaybackPanel), where the gyro track is optional —
+ *     with a pose it shows how the cube sat in the hands, without one it just
+ *     shows the state, which is still the /sim cube and not a second renderer.
+ *
+ * `quat = null` is not an error state: the frame hook simply never writes an
+ * orientation, and the engine's own iso view is what you see.
+ *
+ * Stickers come from the move log the caller maintains; orientation comes from
+ * the quaternion feed. The two are independent channels and they stay
  * independent here:
  *
  *   - STICKERS  → `twister.setup(moves)` — layer twists, applied by
@@ -60,7 +69,7 @@ import {
 /** Below this the pose is "unchanged" and we skip the render entirely. */
 const STILL_EPS_RAD = 1e-4;
 
-export interface LiveCubeGyroViewProps {
+export interface SimCubeViewProps {
   /** Moves since the cube was last known SOLVED — see the note above. */
   moves: string[];
   /** Latest orientation sample, or null when none has arrived. */
@@ -83,9 +92,12 @@ export interface LiveCubeGyroViewProps {
   mirror?: boolean;
   /** Fired once the WebGL context is up and the first cube state is applied. */
   onReady?: () => void;
+  /** Screen-reader label. Defaults to the live-mirror wording; the replay
+   *  passes its own, since "实时" is a lie there. */
+  ariaLabel?: string;
 }
 
-export default function LiveCubeGyroView(props: LiveCubeGyroViewProps): JSX.Element {
+export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
   const {
     moves,
     quat,
@@ -94,6 +106,7 @@ export default function LiveCubeGyroView(props: LiveCubeGyroViewProps): JSX.Elem
     sensorBasis = 'identity',
     mirror = false,
     onReady,
+    ariaLabel,
   } = props;
 
   const hostRef = useRef<HTMLDivElement>(null);
@@ -236,7 +249,7 @@ export default function LiveCubeGyroView(props: LiveCubeGyroViewProps): JSX.Elem
       ref={hostRef}
       className="timer-live-cube-3d"
       role="img"
-      aria-label={tr({
+      aria-label={ariaLabel ?? tr({
         zh: '智能魔方实时三维状态（跟随陀螺仪朝向）',
         en: 'Live 3D smart-cube state (follows the gyroscope orientation)',
       })}

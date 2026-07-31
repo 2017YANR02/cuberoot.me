@@ -29,11 +29,12 @@
 import { detectCfopStage, stageRank } from '../cube/cfop_detect';
 import type { CfopStage } from '../cube/cfop_detect';
 import type { CubeFaces, FaceArr } from '../cube/state';
-import { applyMoves, applyScramble, solved } from '../cube/state';
+import { applyScramble, solved } from '../cube/state';
+import { applyOneToken } from '../cube/apply_token';
 import type { Face } from '../cube/moves';
-import { parseScramble } from '../cube/moves';
 import { recognizeOllExact, recognizePllExact } from '../components/cfop_recognize';
 import { htmMoves } from './htm';
+import { normalizeSolve } from './orient';
 import ollData from '@cuberoot/shared/data/oll.json';
 import type { EventId, Solve } from '../types';
 
@@ -107,22 +108,12 @@ function isFaceTurnToken(raw: string): boolean {
 }
 
 /**
- * Apply a single move token to faces in place (returns new state, or the same
- * reference on failure). Defensive: never throws. Exported for the other
- * move-stream walkers (error_detect) so there is exactly one tolerant
- * token-application in the reconstruct layer.
+ * The one tolerant token-application in the reconstruct layer. It moved to
+ * `../cube/apply_token.ts` to break a dependency cycle (orient.ts needs it and
+ * this file needs orient.ts); re-exported here so the walkers that already
+ * import it from this module keep working.
  */
-export function applyOneToken(prev: CubeFaces, token: string): CubeFaces {
-  const trimmed = token.trim();
-  if (!trimmed) return prev;
-  try {
-    const parsed = parseScramble(trimmed);
-    if (parsed.length === 0) return prev;
-    return applyMoves(prev, 3, parsed);
-  } catch {
-    return prev;
-  }
-}
+export { applyOneToken };
 
 function cloneFaces(f: CubeFaces): CubeFaces {
   return {
@@ -253,11 +244,22 @@ function formatPllCase(state: CubeFaces): string | null {
 }
 
 export function computeStageSegments(
-  scramble: string,
-  moves: SolveMove[],
+  scrambleIn: string,
+  movesIn: SolveMove[],
   totalMs: number,
 ): StageSegments | null {
-  if (!moves || moves.length === 0) return null;
+  if (!movesIn || movesIn.length === 0) return null;
+
+  // Everything below reads the D face — `isCross`, `isF2l`, the OLL/PLL
+  // recognizers. A smart cube reports turns in its OWN colour frame (white is
+  // always U), so a white cross solved with white DOWN lands on U and none of
+  // it fires until the last move, when the solved cube satisfies every stage
+  // at once. Rotate the whole problem so the cross is on D first; the token
+  // rewrite is 1:1, so every index below still points into the caller's array.
+  // Idempotent — a solve already in the standard frame passes through untouched.
+  const norm = normalizeSolve(scrambleIn, movesIn);
+  const scramble = norm.scramble;
+  const moves = norm.moves;
 
   // Build the scrambled starting state. If parsing the scramble itself fails,
   // we fall back to a solved cube so we at least produce something — though
@@ -369,8 +371,19 @@ export function computeStageSegments(
     : null;
 
   // Case recognition on the snapshotted states. F2L-done state → OLL case;
-  // OLL-done state → PLL case; cross-done state → which face was crossed.
-  const crossSide = crossDoneState ? detectCrossSide(crossDoneState) : null;
+  // OLL-done state → PLL case.
+  //
+  // Cross side comes from the normalization instead of from `detectCrossSide`
+  // on the snapshot: the snapshot is taken in the ROTATED frame, where the
+  // cross is on D by construction, so scanning it could only ever answer
+  // "D-cross". (It could only ever answer that before the rotation existed
+  // either — the snapshot was taken when `isCross(D)` first held.) The
+  // normalizer knows which face the cuber actually crossed, which is the
+  // question this field was always asking. `detectCrossSide` stays as the
+  // fallback for a solve the normalizer could not read.
+  const crossSide = crossDoneState
+    ? (norm.crossFace ? `${norm.crossFace}-cross` : detectCrossSide(crossDoneState))
+    : null;
   const ollCase   = f2lDoneState   ? formatOllCase(f2lDoneState)     : null;
   const pllCase   = ollDoneState   ? formatPllCase(ollDoneState)     : null;
 
