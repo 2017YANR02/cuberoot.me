@@ -900,10 +900,9 @@ button.stl-track:focus-visible { outline: 2px solid var(--ring); outline-offset:
 .sml-line + .sml-line { margin-top: 6px; }
 .sml-line[data-state='future'] { opacity: 0.42; }
 .sml-line[data-state='now'] .sml-moves { color: var(--accent); }
-.sml-sub {
-  display: flex; align-items: baseline; gap: 6px;
-  font-size: 11px; color: var(--muted-foreground);
-}
+/* 「第 n 对」和动作同一行(见 StepMoveList.tsx),所以它自己带小字号和弱化色,
+   不再靠一个包住整行的 .sml-sub 容器。 */
+.sml-sub-name { font-size: 11px; color: var(--muted-foreground); }
 .sml-body { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .sml-moves {
   font-family: var(--font-mono); font-size: 13px; line-height: 1.7;

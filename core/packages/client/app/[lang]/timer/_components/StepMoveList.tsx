@@ -6,8 +6,7 @@
  *     CROSS [1.73]                                     ⧉
  *       U R' F R' B2 L                    // Y cross
  *     F2L [11.35]
- *       第 1 对   最优
- *       U F2 R' F2 U2 R                   // BR
+ *       第 1 组  最优  U F2 R' F2 U2 R     // BR
  *       ...
  *     OLL [2.01]   最优
  *       U2 F U R U' R' F'                 // OLL-F-
@@ -40,7 +39,7 @@ export interface StepMoveListProps {
   recon: ReconTextResult | null;
   /** 每阶段参考步数(十字 / OLL / PLL 的徽章从这里来)。 */
   reference: ReferenceResult | null;
-  /** 每对参考步数(四个槽的徽章从这里来)。 */
+  /** 每组参考步数(四个槽的徽章从这里来)。 */
   slotReference: SlotReference[] | null;
   /** 回放游标 = 已经播了几手。省略则不做高亮。 */
   currentIdx?: number | null;
@@ -145,7 +144,7 @@ export default function StepMoveList({
 
       {groups.map(g => {
         const ms = groupMs(g);
-        // 十字 / OLL / PLL 只有一行,徽章跟着组标题走 —— 「第 1 对」那种小标题
+        // 十字 / OLL / PLL 只有一行,徽章跟着组标题走 —— 「第 1 组」那种小标题
         // 只有 F2L 才有,不该为了摆徽章给它们也造一个。
         const soloGrade = g.lines.length === 1 && g.key !== 'f2l' ? gradeFor(g.lines[0]) : null;
         return (
@@ -160,15 +159,17 @@ export default function StepMoveList({
               const st = stateOf(line);
               return (
                 <div key={line.key} className="sml-line" data-state={st ?? undefined}>
-                  {g.key === 'f2l' && (
-                    <div className="sml-sub">
-                      <span className="sml-sub-name">
-                        {tr({ zh: `第 ${i + 1} 对`, en: `Slot ${i + 1}` })}
-                      </span>
-                      {grade && <span className={`sa-grade ${grade}`}>{gradeLabel(grade)}</span>}
-                    </div>
-                  )}
+                  {/* 「第 n 对」和它的徽章跟动作同一行 —— 一对 F2L 是一件事,
+                      拆两行读起来是两件,四对就白占四行。窄屏由 flex-wrap 兜。 */}
                   <div className="sml-body">
+                    {g.key === 'f2l' && (
+                      <>
+                        <span className="sml-sub-name">
+                          {tr({ zh: `第 ${i + 1} 组`, en: `Slot ${i + 1}` })}
+                        </span>
+                        {grade && <span className={`sa-grade ${grade}`}>{gradeLabel(grade)}</span>}
+                      </>
+                    )}
                     {onSeek ? (
                       <button
                         type="button"

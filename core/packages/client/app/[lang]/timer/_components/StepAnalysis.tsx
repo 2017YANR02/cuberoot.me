@@ -198,7 +198,7 @@ function buildCfopColumns(
       const sr = slotReference?.[i] ?? null;
       cols.push({
         key: `slot-${s.slot}`,
-        label: tr({ zh: `第 ${i + 1} 对`, en: `Slot ${i + 1}` }),
+        label: tr({ zh: `第 ${i + 1} 组`, en: `Slot ${i + 1}` }),
         chip: s.free ? startLabel('solved') : `${slotLabel(s.slot)}${
           startLabel(s.start) ? ` · ${startLabel(s.start)}` : ''}`,
         tone: 1,
