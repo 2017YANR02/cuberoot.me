@@ -68,7 +68,7 @@ const MODE_LABELS: Record<PredictMode, { zh: string; en: string }> = {
   normal: { zh: '常规', en: 'Normal' },
   cross: { zh: '十字', en: 'Cross' },
   twoLayers: { zh: '前两层', en: 'Two layers' },
-  f2l: { zh: 'F2L 对', en: 'F2L pair' },
+  f2l: { zh: 'F2L', en: 'F2L' },
 };
 
 /** 三阶那套追踪档(它的引擎只认这三档;中心在三阶上不动,追它没意义)。 */
@@ -88,8 +88,8 @@ const SOURCES: ScrambleSource[] = ['random', 'f2lAlg', 'custom'];
 const PUZZLE_SOURCES: ScrambleSource[] = ['random', 'custom'];
 const SOURCE_LABELS: Record<ScrambleSource, { zh: string; en: string }> = {
   random: { zh: '随机公式', en: 'Random moves' },
-  f2lAlg: { zh: '随机 F2L 公式', en: 'Random F2L algs' },
-  custom: { zh: '自己输入', en: 'Your own' },
+  f2lAlg: { zh: 'F2L 公式', en: 'F2L algs' },
+  custom: { zh: '输入', en: 'Custom' },
 };
 
 /**
@@ -401,29 +401,29 @@ function PredictPageInner() {
         })}</p>
       </header>
 
+      {/* 选项自己就说明了自己(拼图名 / 常规-十字-前两层 / 棱块-角块 / 随机-F2L-输入),
+          那几档不写小标题;只有值本身读不出含义的(一个数字、一个朝向记号)才留标题。
+          没标题的控件不进 .predict-control(那个类会把自己顶到行首对齐标题),直接当
+          .predict-controls 的孩子,由容器的 align-items:flex-end 与有标题那几个的
+          下沿对齐 —— 否则整行会高低错开。 */}
       <div className="predict-controls">
-        <label className="predict-control">
-          <span>{tr({ zh: '拼图', en: 'Puzzle' })}</span>
-          <select
-            className="predict-select"
-            value={puzzleId}
-            onChange={(e) => void setPuzzleId(e.target.value as PredictPuzzleId)}
-          >
-            {PREDICT_PUZZLE_IDS.map((id) => (
-              <option key={id} value={id}>{tr(PUZZLE_LABELS[id])}</option>
-            ))}
-          </select>
-        </label>
+        <select
+          className="predict-select"
+          aria-label={tr({ zh: '拼图', en: 'Puzzle' })}
+          value={puzzleId}
+          onChange={(e) => void setPuzzleId(e.target.value as PredictPuzzleId)}
+        >
+          {PREDICT_PUZZLE_IDS.map((id) => (
+            <option key={id} value={id}>{tr(PUZZLE_LABELS[id])}</option>
+          ))}
+        </select>
 
         {is333 && (
-          <div className="predict-control">
-            <span>{tr({ zh: '模式', en: 'Mode' })}</span>
-            <LiquidGlassChips<PredictMode>
-              items={MODES} value={mode} onChange={(v) => void setMode(v)}
-              getLabel={(m) => tr(MODE_LABELS[m])}
-              ariaLabel={tr({ zh: '模式', en: 'Mode' })}
-            />
-          </div>
+          <LiquidGlassChips<PredictMode>
+            items={MODES} value={mode} onChange={(v) => void setMode(v)}
+            getLabel={(m) => tr(MODE_LABELS[m])}
+            ariaLabel={tr({ zh: '模式', en: 'Mode' })}
+          />
         )}
 
         {crossMode ? (
@@ -438,24 +438,18 @@ function PredictPageInner() {
             />
           </div>
         ) : tracks.length > 1 && (
-          <div className="predict-control">
-            <span>{tr({ zh: '追踪', en: 'Track' })}</span>
-            <LiquidGlassChips<PredictTrack>
-              items={tracks} value={track} onChange={(v) => void setTrack(v)}
-              getLabel={(k) => tr(TRACK_LABELS[k])}
-              ariaLabel={tr({ zh: '追踪对象', en: 'Piece to track' })}
-            />
-          </div>
+          <LiquidGlassChips<PredictTrack>
+            items={tracks} value={track} onChange={(v) => void setTrack(v)}
+            getLabel={(k) => tr(TRACK_LABELS[k])}
+            ariaLabel={tr({ zh: '追踪对象', en: 'Piece to track' })}
+          />
         )}
 
-        <div className="predict-control">
-          <span>{tr({ zh: '公式', en: 'Moves' })}</span>
-          <LiquidGlassChips<ScrambleSource>
-            items={sources} value={source} onChange={(v) => void setSource(v)}
-            getLabel={(s) => tr(SOURCE_LABELS[s])}
-            ariaLabel={tr({ zh: '公式来源', en: 'Move source' })}
-          />
-        </div>
+        <LiquidGlassChips<ScrambleSource>
+          items={sources} value={source} onChange={(v) => void setSource(v)}
+          getLabel={(s) => tr(SOURCE_LABELS[s])}
+          ariaLabel={tr({ zh: '公式来源', en: 'Move source' })}
+        />
 
         {source === 'custom' && (
           <div className="predict-control predict-control--alg">
@@ -597,18 +591,8 @@ function PredictPageInner() {
             );
           })}
         </ol>
-        <ul className="predict-legend">
-          {puzzle.faces.map((f) => {
-            const color = shown[puzzle.faceColor[f]];
-            return (
-              <li key={f}>
-                <i style={{ background: CUBE_FILL[color] }} aria-hidden="true" />
-                {f}: {tr(puzzle.faceName[f])}
-                {tr({ zh: `（${COLOR_NAMES[color].zh}）`, en: ` (${COLOR_NAMES[color].en})` })}
-              </li>
-            );
-          })}
-        </ul>
+        {/* 这里原来还有一排「U: 上(白)…」的面色图例。场景里六个面各浮着自己的字母、
+            公式按钮本身就是面色,图例只是把同一件事再写一遍,撤掉。 */}
       </section>
 
       <div className="predict-prompt">
