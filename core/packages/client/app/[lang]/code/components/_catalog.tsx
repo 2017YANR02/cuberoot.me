@@ -1199,8 +1199,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'AppearanceToggle',
     import: "import AppearanceToggle from '@/components/AppearanceToggle';",
     category: 'toggle',
-    zh: `右上角统一的「外观」菜单,把明暗(浅 / 深)和中国色配色合并成一份互斥单选下拉,切换走 lib/theme 并持久化。`,
-    en: `Unified top-bar Appearance menu merging light/dark and color palettes into one mutually-exclusive radio dropdown; persists via lib/theme.`,
+    zh: `右上角统一的「外观」菜单,把明暗(浅 / 深)和中国色配色合并成一份互斥单选下拉,外加一条正交的柔和度(降对比护眼)三档,切换走 lib/theme 并持久化。`,
+    en: `Unified top-bar Appearance menu merging light/dark and color palettes into one mutually-exclusive radio dropdown, plus an orthogonal three-step softness (lower-contrast) control; persists via lib/theme.`,
     note: { zh: `全站外观入口,合并了旧的 ThemeToggle 和 PaletteToggle,新代码用它而非那两个。`, en: `Site-wide appearance entry; replaces the separate ThemeToggle + PaletteToggle — prefer this.` },
   },
   {

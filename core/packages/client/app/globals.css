@@ -406,6 +406,61 @@ option {
   background-color: #ffffff !important;
 }
 
+/* ── 柔和度(降低对比度,护眼)— <html data-contrast=soft|softer>,lib/theme.ts ──
+   正交于明暗与配色:只把对比拉低一档,不换色相,所以经典 / 6 套配色 / 暗锁页全都跟。
+   混色写在 body 层而不是 :root:自定义属性在同一元素上自引用会循环失效,html→body
+   天然差一层,body 上的 var(--foreground) 取到的正是 :root 的原值。
+   文字往 --muted-foreground 混(变灰,不是变淡到看不见),底也往同一中灰挪一点点 ——
+   浅底自动压暗、深底自动提亮,不用分主题写两套。--muted-foreground 自身不动:
+   它既是混色基准(动了就循环),本来也已经是弱化层级,再拉低就糊了。 */
+:root {
+  --soften-text: 0%;
+  --soften-bg: 0%;
+}
+:root[data-contrast=soft] {
+  --soften-text: 18%;
+  --soften-bg: 4%;
+}
+:root[data-contrast=softer] {
+  --soften-text: 34%;
+  --soften-bg: 8%;
+}
+
+/* 第一层(html):把要柔化的 token 原值快照成 --base-*。混色不能在同一元素上写成
+   `--foreground: color-mix(..., var(--foreground), ...)` —— 自定义属性引用自身即判定
+   为循环,整条声明作废(即使值来自继承)。快照在 html、混色在 body,链路才是
+   base(html)→ token(body),无环。顺带把 html 自己的 background 也混一次:它在
+   :root 层解析,吃不到 body 的覆盖,不混则 overscroll 时露出没柔化的底色。 */
+html[data-contrast=soft],
+html[data-contrast=softer] {
+  --base-background: var(--background);
+  --base-card: var(--card);
+  --base-popover: var(--popover);
+  --base-muted: var(--muted);
+  --base-secondary: var(--secondary);
+  --base-foreground: var(--foreground);
+  --base-card-foreground: var(--card-foreground);
+  --base-popover-foreground: var(--popover-foreground);
+  --base-secondary-foreground: var(--secondary-foreground);
+  --base-primary: var(--primary);
+  background: color-mix(in srgb, var(--base-background), var(--muted-foreground) var(--soften-bg));
+}
+/* 第二层(body):真正的柔化,全站后代都吃到。 */
+html[data-contrast=soft] body,
+html[data-contrast=softer] body {
+  --background: color-mix(in srgb, var(--base-background), var(--muted-foreground) var(--soften-bg));
+  --card: color-mix(in srgb, var(--base-card), var(--muted-foreground) var(--soften-bg));
+  --popover: color-mix(in srgb, var(--base-popover), var(--muted-foreground) var(--soften-bg));
+  --muted: color-mix(in srgb, var(--base-muted), var(--muted-foreground) var(--soften-bg));
+  --secondary: color-mix(in srgb, var(--base-secondary), var(--muted-foreground) var(--soften-bg));
+  --foreground: color-mix(in srgb, var(--base-foreground), var(--muted-foreground) var(--soften-text));
+  --card-foreground: color-mix(in srgb, var(--base-card-foreground), var(--muted-foreground) var(--soften-text));
+  --popover-foreground: color-mix(in srgb, var(--base-popover-foreground), var(--muted-foreground) var(--soften-text));
+  --secondary-foreground: color-mix(in srgb, var(--base-secondary-foreground), var(--muted-foreground) var(--soften-text));
+  /* 主按钮块本身是「深/浅实心」,不跟着柔化就会在柔化后的页面上显得死黑。 */
+  --primary: color-mix(in srgb, var(--base-primary), var(--muted-foreground) var(--soften-text));
+}
+
 html {
   background: var(--background);
   scrollbar-gutter: stable;
@@ -582,6 +637,39 @@ a {
   margin-top: 3px;
   padding-top: 8px;
   border-top: 1px solid var(--border-default);
+}
+
+/* 柔和度三档:强度是「一条刻度」,横排 chip 能左右对比,比再堆三行单选清楚。 */
+.appearance-chips {
+  display: flex;
+  gap: 4px;
+  padding: 2px 10px 4px;
+}
+.appearance-chip {
+  padding: 4px 9px;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+  line-height: 1.2;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.appearance-hint {
+  padding: 0 10px 4px;
+  max-width: 200px;
+  font-size: 0.68rem;
+  line-height: 1.35;
+  color: var(--faint-foreground);
+}
+.appearance-chip:hover {
+  color: var(--foreground);
+}
+.appearance-chip.is-active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 
 .theme-toggle-inline {

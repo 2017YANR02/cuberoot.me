@@ -14,6 +14,20 @@ export type Theme = 'system' | 'light' | 'dark';
 export type EffectiveTheme = 'light' | 'dark';
 export const THEME_KEY = 'theme';
 
+// 柔和度 — 正交于明暗 / 配色的一档「降低对比」偏好(护眼)。写 <html data-contrast=x>,
+// 实际混色在 app/globals.css(body 层 color-mix,见那里的注释)。normal = 不写属性。
+export type ContrastLevel = 'normal' | 'soft' | 'softer';
+export const CONTRAST_KEY = 'contrast';
+export const CONTRAST_LEVELS: { id: ContrastLevel; zh: string; en: string }[] = [
+  { id: 'normal', zh: '标准', en: 'Normal' },
+  { id: 'soft', zh: '柔和', en: 'Soft' },
+  { id: 'softer', zh: '更柔', en: 'Softer' },
+];
+
+function isContrastLevel(v: string | null | undefined): v is ContrastLevel {
+  return v === 'normal' || v === 'soft' || v === 'softer';
+}
+
 type DocumentWithViewTransition = Document & {
   startViewTransition?: (cb: () => void) => unknown;
 };
@@ -93,6 +107,30 @@ export function applyPalette(id: string | null, animate = false) {
   };
   runTransition(commit, animate);
   window.dispatchEvent(new Event('theme-change'));
+}
+
+// 选柔和度。与明暗 / 配色互不干扰:只调 token 的对比强度,不换色相。
+export function applyContrast(level: ContrastLevel, animate = false) {
+  const root = document.documentElement;
+  if (level === 'normal') {
+    try { localStorage.removeItem(CONTRAST_KEY); } catch { /* ignore */ }
+  } else {
+    persistItem(CONTRAST_KEY, level);
+  }
+  runTransition(() => {
+    if (level === 'normal') root.removeAttribute('data-contrast');
+    else root.setAttribute('data-contrast', level);
+  }, animate);
+  window.dispatchEvent(new Event('theme-change'));
+}
+
+export function readContrast(): ContrastLevel {
+  try {
+    const v = localStorage.getItem(CONTRAST_KEY);
+    return isContrastLevel(v) ? v : 'normal';
+  } catch {
+    return 'normal';
+  }
 }
 
 export function readPalette(): string | null {
