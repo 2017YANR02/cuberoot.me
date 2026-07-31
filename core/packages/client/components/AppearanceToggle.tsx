@@ -16,10 +16,14 @@ import { Sun, Moon, Check } from 'lucide-react';
 import { persistItem } from '@/lib/safe-storage';
 import {
   THEME_KEY,
+  CONTRAST_LEVELS,
   applyTheme,
   applyPalette,
+  applyContrast,
+  readContrast,
   readPalette,
   useEffectiveTheme,
+  type ContrastLevel,
 } from '@/lib/theme';
 import { PALETTES, type PaletteId } from '@/lib/palettes';
 import AppLink from '@/components/AppLink';
@@ -49,18 +53,25 @@ export default function AppearanceToggle({ className }: { className?: string }) 
     palette: t('配色', 'Color'),
     light: t('浅色', 'Light'),
     dark: t('深色', 'Dark'),
+    soften: t('柔和度', 'Softness'),
+    softenHint: t('降低对比,长时间看更省眼', 'Lower contrast — easier on the eyes'),
     more: t('比较全部', 'Compare all'),
   };
-  const nameOf = (p: (typeof PALETTES)[number]) => (isZh ? p.zh : p.en);
+  const nameOf = (p: (typeof PALETTES)[number] | (typeof CONTRAST_LEVELS)[number]) =>
+    isZh ? p.zh : p.en;
 
   const [mounted, setMounted] = useState(false);
   const [palette, setPalette] = useState<PaletteId | null>(null);
+  const [contrast, setContrast] = useState<ContrastLevel>('normal');
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const eff = useEffectiveTheme();
 
   useEffect(() => {
-    const readState = () => setPalette(readPalette() as PaletteId | null);
+    const readState = () => {
+      setPalette(readPalette() as PaletteId | null);
+      setContrast(readContrast());
+    };
     readState();
     setMounted(true);
     window.addEventListener('theme-change', readState);
@@ -99,6 +110,12 @@ export default function AppearanceToggle({ className }: { className?: string }) 
   const pickPalette = (id: PaletteId) => {
     setOpen(false);
     applyPalette(id, true);
+  };
+
+  // 选柔和度:正交于明暗 / 配色,菜单不关,让用户原地连点三档看效果。
+  const pickContrast = (level: ContrastLevel) => {
+    setContrast(level);
+    applyContrast(level, true);
   };
 
   const cls = ['theme-toggle-inline', className].filter(Boolean).join(' ');
@@ -174,6 +191,26 @@ export default function AppearanceToggle({ className }: { className?: string }) 
               </button>
             );
           })}
+
+          <div className="appearance-sec-label appearance-sec-div">{L.soften}</div>
+          <div className="appearance-chips" role="group" aria-label={L.soften}>
+            {CONTRAST_LEVELS.map((c) => {
+              const on = c.id === contrast;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={on}
+                  className={`appearance-chip${on ? ' is-active' : ''}`}
+                  onClick={() => pickContrast(c.id)}
+                >
+                  {nameOf(c)}
+                </button>
+              );
+            })}
+          </div>
+          <div className="appearance-hint">{L.softenHint}</div>
 
           <AppLink href="/appearance" className="palette-menu-more" onClick={() => setOpen(false)}>
             {L.more} →
