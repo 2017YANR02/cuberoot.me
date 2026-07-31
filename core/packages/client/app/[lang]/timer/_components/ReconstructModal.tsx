@@ -40,7 +40,11 @@ import type { SolveQuality } from '../_lib/reconstruct/quality';
 import { computeF2lSlots } from '../_lib/reconstruct/f2l_slots';
 import { walkMethod } from '../_lib/reconstruct/method_walk';
 import type { MethodId } from '../_lib/reconstruct/methods';
+import { buildReconText } from '../_lib/reconstruct/recon_text';
+import type { ReconTextResult } from '../_lib/reconstruct/recon_text';
 import StepAnalysis from './StepAnalysis';
+import StepMoveList from './StepMoveList';
+import SolveTimeline from './SolveTimeline';
 import { encodeReplayUrl } from '../_lib/share/encode';
 import { nxnSizeForEvent } from '../_lib/cube';
 import { toReconEventId } from '../_shared/event-bridge';
@@ -220,6 +224,24 @@ export default function ReconstructModal({
     return () => { alive = false; clearTimeout(timer); };
   }, [scoreable, stepMx, solve.scramble, moves, waste, slots]);
 
+  // 文字复盘。识别那一层是 cubing.js 的活(每一行两次 detectStage + 末层查表),
+  // 所以和参考解法一样推到首帧之后 —— 报告该立刻出现,标注可以晚一拍。
+  const [reconText, setReconText] = useState<ReconTextResult | null>(null);
+  useEffect(() => {
+    setReconText(null);
+    if (!stageSegs || moves.length === 0) return;
+    let alive = true;
+    const timer = setTimeout(() => {
+      buildReconText({
+        scramble: solve.scramble, moves, totalMs: solve.timeMs,
+        segs: stageSegs, metrics: stepMx, slots,
+      })
+        .then(r => { if (alive) setReconText(r); })
+        .catch(err => console.warn('[reconstruct] recon text failed:', err));
+    }, 0);
+    return () => { alive = false; clearTimeout(timer); };
+  }, [stageSegs, stepMx, slots, solve.scramble, solve.timeMs, moves]);
+
   // Personal stage averages computed from the caller-provided history.
   // We exclude the current solve so a fresh solve isn't compared against
   // itself. Both windows require at least 5 eligible samples to render
@@ -256,7 +278,9 @@ export default function ReconstructModal({
   );
 
   const [copied, setCopied] = useState(false);
-  const [playbackExpanded, setPlaybackExpanded] = useState(false);
+  // 默认展开:回放 + 分步动作现在是这份报告的主体,不是附录。折叠留给「原始动作
+  // 序列」那种真的很少看的东西。
+  const [playbackExpanded, setPlaybackExpanded] = useState(true);
   const [moveListExpanded, setMoveListExpanded] = useState(false);
   const [referenceExpanded, setReferenceExpanded] = useState(false);
   const playbackAvailable = moves.length > 0 && nxnSizeForEvent(solve.event) !== null;
@@ -487,6 +511,19 @@ export default function ReconstructModal({
           <QualityRow quality={analysis?.quality ?? null} pending={analysis === null} />
         )}
 
+        {/* 一手一个方块的时间轴。放在最上面,因为「这把慢在哪」是看报告的第一个
+            问题,而它是唯一一眼能答出来的东西 —— 停顿在这里是看得见的空隙。 */}
+        {reconText && reconText.lines.length > 0 && memoMs === undefined && (
+          <div className="reconstruct-timeline">
+            <SolveTimeline
+              moves={moves}
+              totalMs={solve.timeMs}
+              lines={reconText.lines}
+              showLabels
+            />
+          </div>
+        )}
+
         {(stageSegs || walk) && memoMs === undefined && (
           <StepAnalysis
             method={method}
@@ -499,6 +536,7 @@ export default function ReconstructModal({
             ao12={stageAvgs?.ao12 ?? null}
             walk={walk}
             moves={moves}
+            hideBar={method === 'cfop' && !!reconText && reconText.lines.length > 0}
             isZh={isZh}
           />
         )}
@@ -508,9 +546,6 @@ export default function ReconstructModal({
             stepMetrics={stepMx}
             inspectionMs={solve.inspectionMs ?? null}
           />
-        )}
-        {onReconFeedback && stageSegs && memoMs === undefined && (
-          <ReconFeedback value={solve.reconOk} onChange={onReconFeedback} />
         )}
 
         {waste && waste.spans.length > 0 && (
@@ -577,10 +612,7 @@ export default function ReconstructModal({
                 ? <ChevronDown size={14} />
                 : <ChevronRight size={14} />}
               <span>
-                {playbackExpanded
-                  ? tr({ zh: '3D 回放', en: '3D playback' })
-                  : tr({ zh: '显示 3D 回放', en: 'Show 3D playback'
-                                                  })}
+                {tr({ zh: '回放与分步动作', en: 'Replay and turns per step' })}
               </span>
             </button>
             {playbackExpanded && (
@@ -590,6 +622,19 @@ export default function ReconstructModal({
                 moves={moves}
                 totalMs={solve.timeMs}
                 isZh={isZh}
+                lines={reconText?.lines ?? []}
+                side={reconText ? ({ idx, seek }) => (
+                  <StepMoveList
+                    recon={reconText}
+                    reference={analysis?.reference ?? null}
+                    slotReference={analysis?.slotReference ?? null}
+                    currentIdx={idx}
+                    onSeek={seek}
+                    feedback={onReconFeedback
+                      ? <ReconFeedback value={solve.reconOk} onChange={onReconFeedback} />
+                      : undefined}
+                  />
+                ) : undefined}
               />
             )}
           </div>
