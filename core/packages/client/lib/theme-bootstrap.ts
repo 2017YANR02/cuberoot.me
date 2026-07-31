@@ -38,8 +38,7 @@ export const THEME_BOOTSTRAP = `(() => {
         : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     }
     // 柔和度(降对比护眼)— 正交于明暗/配色,首屏即设,避免高对比闪一下。
-    var c = localStorage.getItem('contrast');
-    if (c === 'soft' || c === 'softer') de.setAttribute('data-contrast', c);
+    if (localStorage.getItem('contrast') === 'soft') de.setAttribute('data-contrast', 'soft');
     var link = document.getElementById('app-favicon');
     if (link) {
       link.href = eff === 'dark' ? '/icons/CubeRoot-dark.png' : '/icons/CubeRoot.png';
