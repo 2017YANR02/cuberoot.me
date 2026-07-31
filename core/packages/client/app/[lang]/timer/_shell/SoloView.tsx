@@ -238,7 +238,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   const [hintsSheetParam] = useQueryState(HINTS_PARAM, parseAsBoolean.withDefault(false));
   const hintsSheetOpen = hintsSheetParam;
 
-  // ── Side panel (desktop rail / phone bottom sheet) ──────────────
+  // ── Side panel (desktop rail / 非桌面整屏) ──────────────────────
   const [panelTab, setPanelTab] = useState<PanelTab | null>(null);
   const [chartKind, setChartKind] = useState<ChartKind>('histogram');
 
@@ -1592,12 +1592,24 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   // phaseRef is declared up by genScramble (the scramble buffer's safety gate
   // reads it); keep it in sync with the live timer phase here.
   useEffect(() => { phaseRef.current = timer.phase; }, [timer.phase]);
+  // 成绩 / 图表面板在非桌面宽度下是整屏的(桌面是右侧常驻栏,不挡计时器),所以只有
+  // 整屏那一形态要算进「有东西盖住计时器」—— 否则空格会穿到后面预备计时。
+  const panelFullscreen = panelTab !== null && !isDesktop;
   const otherModalOpen =
     settingsOpen || shortcutsOpen || bluetoothOpen || stackmatOpen ||
     trainerSubsetOpen !== null || statsModalOpen ||
     manualEntryOpen || solverOpen || bulkScrambleOpen ||
-    drillModalOpen || bldHelperOpen ||
+    drillModalOpen || bldHelperOpen || panelFullscreen ||
     modalSolve !== null || reconstructSolve !== null;
+  // 整屏之后没有「点空白处关掉」了(遮罩全被盖住,已删),所以 Escape 得亲自接住 ——
+  // 主键盘处理器见 anyModalOpenRef 那道闸,面板开着时它整个不响应,不会误触 reset()。
+  useEffect(() => {
+    if (!panelFullscreen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setPanelTab(null); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [panelFullscreen]);
+
   const anyModalOpen = otherModalOpen || hintsSheetOpen;
   const anyModalOpenRef = useRef(anyModalOpen);
   useEffect(() => { anyModalOpenRef.current = anyModalOpen; }, [anyModalOpen]);
@@ -2482,23 +2494,21 @@ export default function SoloView({ playersControl }: SoloViewProps) {
 
       </div>
 
-      {/* ── Side panel: desktop dock / phone bottom sheet ──────
-          入口是左下角那块统计(见上);底部导航条已撤掉,「工具」搬进了设置。 */}
+      {/* ── Side panel: desktop dock / 非桌面整屏 ───────────────
+          入口是左下角那块统计(见上);底部导航条已撤掉,「工具」搬进了设置。
+          非桌面宽度整屏铺开,关闭走右上角 × 或 Escape。 */}
       {panelTab && (
-        <>
-          {!isDesktop && <div className="shell-sheet-backdrop" onClick={() => setPanelTab(null)} />}
-          <aside className={`shell-panel${isDesktop ? ' shell-panel--rail' : ' shell-panel--sheet'}`}>
-            <div className="shell-panel-tabs">
-              <button type="button" className={`shell-panel-tab${panelTab === 'times' ? ' active' : ''}`} onClick={() => setPanelTab('times')}>{tr({ zh: '成绩', en: 'Times'
-            })}</button>
-              <button type="button" className={`shell-panel-tab${panelTab === 'chart' ? ' active' : ''}`} onClick={() => setPanelTab('chart')}>{tr({ zh: '图表', en: 'Chart'
-            })}</button>
-              <button type="button" className="shell-panel-close" onClick={() => setPanelTab(null)} aria-label={tr({ zh: '关闭', en: 'Close'
-            })}><X size={16} /></button>
-            </div>
-            <div className="shell-panel-body">{renderPanelBody()}</div>
-          </aside>
-        </>
+        <aside className={`shell-panel${isDesktop ? ' shell-panel--rail' : ' shell-panel--sheet'}`}>
+          <div className="shell-panel-tabs">
+            <button type="button" className={`shell-panel-tab${panelTab === 'times' ? ' active' : ''}`} onClick={() => setPanelTab('times')}>{tr({ zh: '成绩', en: 'Times'
+          })}</button>
+            <button type="button" className={`shell-panel-tab${panelTab === 'chart' ? ' active' : ''}`} onClick={() => setPanelTab('chart')}>{tr({ zh: '图表', en: 'Chart'
+          })}</button>
+            <button type="button" className="shell-panel-close" onClick={() => setPanelTab(null)} aria-label={tr({ zh: '关闭', en: 'Close'
+          })}><X size={16} /></button>
+          </div>
+          <div className="shell-panel-body">{renderPanelBody()}</div>
+        </aside>
       )}
 
       {/* ── Radial gesture wheel (touch press-and-drag, idle/stopped) ── */}

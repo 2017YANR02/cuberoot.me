@@ -1093,32 +1093,22 @@ html[data-theme=dark] { --scramble-fg: #fff; }
    (.shell-stat-rail,点它就弹),工具搬进设置弹窗。计时页因此整屏都是计时区。 */
 
 /* ── Side panel: phone sheet / desktop rail ─────────────── */
-.shell-sheet-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  background: color-mix(in srgb, var(--foreground) 32%, transparent);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-}
 .shell-panel {
   display: flex;
   flex-direction: column;
   background: var(--card);
   color: var(--card-foreground);
 }
+
+/* 非桌面宽度下整屏展开,不再是 78dvh 的半截抽屉 —— 成绩表和图表本来就是打开它时
+   唯一要看的东西,压在小半屏里一页看不到几行,会话切换器还得先滚。整屏之后遮罩
+   全被盖住(点不到也看不见),所以那个元素连同它的 CSS 一起去掉了,关闭走标题栏
+   右上角的 ×。 */
 .shell-panel--sheet {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   z-index: 61;
-  max-height: 78dvh;
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
-  border-top: 1px solid var(--border-default);
-  box-shadow: 0 -8px 28px color-mix(in srgb, var(--foreground) 20%, transparent);
+  padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
   animation: shell-sheet-up 200ms ease;
 }
@@ -1437,7 +1427,6 @@ html[data-theme=dark] { --scramble-fg: #fff; }
     background: var(--background);
     overflow: hidden;
   }
-  .shell-sheet-backdrop { display: none; }
 }
 
 /* ── Phone (<480px) ─────────────────────────────────────── */
@@ -1577,7 +1566,7 @@ body:has(.timer-shell.is-solving) .clawd-deskpet {
    surface is up (it reappears on close). Same :has() approach as is-solving —
    we never touch the global DeskPet component. Covers Solo (timer-shell sheets/
    menus) AND Battle (battle-container overlays/sheets). */
-body:has(.timer-shell .shell-sheet-backdrop) .clawd-deskpet,
+body:has(.timer-shell .shell-panel--sheet) .clawd-deskpet,
 /* 解法提示浮层 portal 到 body(不在 .timer-shell 里),所以这条不带 .timer-shell 前缀。 */
 body:has(.solver-sheet) .clawd-deskpet,
 body:has(.timer-shell .shell-penalty-sheet) .clawd-deskpet,
