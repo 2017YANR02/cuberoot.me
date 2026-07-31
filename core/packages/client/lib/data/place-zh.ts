@@ -6,6 +6,7 @@
 // 重新生成:见 scripts/gen-place-zh.mjs 顶部。
 export const PLACE_CITY_ZH: Record<string, string> = {
   // 手补(重跑 gen 需离线 GeoNames dump,本机暂缺;源已入 scripts/place-tail-zh.json,重跑会归位重排):
+  "BG:vratsa": "弗拉察",
   "SK:zilina": "日利纳",
   "LT:klaipeda": "克莱佩达",
   "PT:machico": "马希科",

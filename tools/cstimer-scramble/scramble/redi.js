@@ -250,6 +250,81 @@ var redi = (function() {
 		}
 	}
 
+	// ── Dino Cube solver export (cuberoot.me NONWCA loop D-tier, near-optimal) ──
+	//
+	// The Dino Cube is edge-only: its state is the 12-edge permutation `ep` (no
+	// orientation — cstimer's dino model carries no eo). The 8 corner moves
+	// F L B R f l b r are 3-cycles of the edges around each corner (each with an
+	// optional prime = its square, since the moves have order 3). `dinoso` is a
+	// random-STATE scrambler: it builds a random ep and SOLVES it (solveDino) to
+	// produce the scramble string. We expose a `solveScramble` that does the
+	// inverse direction: build ep from a scramble string, then solveDino(ep, 0).
+	// This reuses cstimer's own optimal-ish IDA* dino searcher (3 edge-comb prune
+	// tables) as the engine — same省力 D-tier path as mpyr. Validity
+	// (scramble∘solution = solved) is the contract, asserted via roundTripCheck.
+
+	var AXIS_LETTERS = 'FLBRflbr';
+
+	// Parse a dino scramble/solution string into [axis(0..7), pow(1|2)] moves.
+	// Notation: axis letter + optional "'" ("" = +1 turn, "'" = +2 = inverse).
+	// Throws on an unknown token.
+	function parseDino(scr) {
+		var toks = String(scr).trim().split(/\s+/).filter(Boolean);
+		var moves = [];
+		for (var i = 0; i < toks.length; i++) {
+			var tok = toks[i];
+			var ax = AXIS_LETTERS.indexOf(tok.charAt(0));
+			var rest = tok.slice(1);
+			if (ax < 0 || (rest !== '' && rest !== "'")) {
+				throw new Error('unknown dino token: ' + tok);
+			}
+			moves.push([ax, rest === "'" ? 2 : 1]);
+		}
+		return moves;
+	}
+
+	// Apply parsed moves to an edge-perm array in place (cstimer acycle semantics).
+	function applyDinoMoves(ep, moves) {
+		for (var i = 0; i < moves.length; i++) {
+			mathlib.acycle(ep, edgeMoveSwaps[moves[i][0]], moves[i][1]);
+		}
+		return ep;
+	}
+
+	// Build the solved edge-perm and apply a scramble's moves to it.
+	function epFromScramble(scr) {
+		var ep = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+		return applyDinoMoves(ep, parseDino(scr));
+	}
+
+	// Near-optimal-solve an arbitrary dinoso scramble string. Returns a space-
+	// separated solution (cstimer dino IDA* searcher, min length 0). Applying the
+	// scramble then this solution yields the solved (identity) edge perm.
+	function solveScramble(scr) {
+		initDino();
+		var ep = epFromScramble(scr);
+		return solveDino(ep, 0);
+	}
+
+	// Validity oracle: solve `scr`, apply scramble∘solution to the solved ep, and
+	// confirm the result is the identity permutation (== solved). Returns boolean.
+	function roundTripCheck(scr) {
+		var ep = epFromScramble(scr);
+		var sol = solveScramble(scr);
+		applyDinoMoves(ep, parseDino(sol));
+		for (var i = 0; i < 12; i++) {
+			if (ep[i] !== i) return false;
+		}
+		return true;
+	}
+
+	// 12-entry edge-perm array for a scramble's state — used by tests to anchor
+	// the TS preview port (lib/dino-solver epFromScramble) against cstimer's own
+	// acycle model, move-for-move.
+	function edgePermOfScramble(scr) {
+		return epFromScramble(scr);
+	}
+
 	scrMgr.reg('rediso', getRandomScramble)
 		('dinoo', getRandomScramble)
 		('dinoso', getRandomScramble);
@@ -258,6 +333,9 @@ var redi = (function() {
 		solveRedi: solveRedi,
 		getRandomScramble: getRandomScramble,
 		testRedi: testRedi,
-		testDino: testDino
+		testDino: testDino,
+		solveScramble: solveScramble,
+		roundTripCheck: roundTripCheck,
+		edgePermOfScramble: edgePermOfScramble
 	}
 })();
