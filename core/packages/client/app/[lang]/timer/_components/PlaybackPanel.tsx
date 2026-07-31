@@ -25,19 +25,27 @@
  * 重新应用 —— 状态一定对,代价是没有逐手动画。
  */
 
-import { useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
   ChevronLeft, ChevronRight, Play, Pause, SkipBack, SkipForward,
 } from 'lucide-react';
 
+import BoolToggle from '@/components/BoolToggle';
 import { tr } from '@/i18n/tr';
 
 import type { EventId } from '../_lib/types';
 import CubePreview from '../_lib/cube/CubePreview';
+import { decodeGyroTrack, sampleGyroAt } from '../_lib/bluetooth/gyro_track';
+import { mirrorForBrand, sensorBasisForBrand } from '../_lib/bluetooth/orientation';
 import type { ReconTextLine } from '../_lib/reconstruct/recon_text';
 import type { SolveMove } from '../_lib/reconstruct/stage_segments';
 import SolveTimeline from './SolveTimeline';
+
+// WebGL + the /sim engine. Only mounted when the user turns the gyro replay on,
+// so a report opened just to read the numbers never pays for it.
+const LiveCubeGyroView = dynamic(() => import('./LiveCubeGyroView'), { ssr: false });
 
 interface Props {
   event: EventId;
@@ -49,6 +57,10 @@ interface Props {
   lines?: ReconTextLine[];
   /** 右栏。拿得到游标和 seek,所以是渲染 prop 而不是普通 children。 */
   side?: (ctx: { idx: number; seek: (i: number) => void }) => ReactNode;
+  /** 这把录到的姿态流(base64,见 `_lib/bluetooth/gyro_track.ts`)。有才给开关。 */
+  gyro?: string | null;
+  /** 录这把的魔方型号,用来挑传感器基。 */
+  deviceModel?: string | null;
 }
 
 const MIN_TIMEOUT_MS = 16;
@@ -63,13 +75,18 @@ function formatSec(ms: number, digits = 2): string {
 }
 
 export default function PlaybackPanel({
-  event, scramble, moves, totalMs, lines, side,
+  event, scramble, moves, totalMs, lines, side, gyro, deviceModel,
 }: Props) {
   const total = moves.length;
   const [idx, setIdx] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speedMult, setSpeedMult] = useState(1);
+  const [gyroOn, setGyroOn] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // 解一次就够,别每帧解。空录像 → 没开关。
+  const gyroTrack = useMemo(() => decodeGyroTrack(gyro), [gyro]);
+  const hasGyro = gyroTrack.length > 0;
 
   useEffect(() => {
     if (idx > total) setIdx(total);
@@ -127,6 +144,14 @@ export default function PlaybackPanel({
     setPlaying(p => !p);
   };
 
+  // LiveCubeGyroView 是 alg 驱动的,必须从**复原态**起算 —— 所以喂给它的是
+  // 「打乱 + 已播的这几手」,不是 composed 那个字符串(内容一样,但那边是给
+  // scramble-display 用的整条文本)。
+  const gyroMoves = useMemo(
+    () => [...scramble.trim().split(/\s+/).filter(Boolean), ...moves.slice(0, idx).map(m => m.m)],
+    [scramble, moves, idx],
+  );
+
   const playLabel = playing
     ? tr({ zh: '暂停', en: 'Pause' })
     : (idx >= total ? tr({ zh: '重播', en: 'Replay' }) : tr({ zh: '播放', en: 'Play' }));
@@ -152,10 +177,36 @@ export default function PlaybackPanel({
           </span>
         </div>
 
+        {/* 开关只在**这把真的录到姿态**时出现。没录到就没有 —— 一个按下去什么
+            也不会发生的开关比没有这个开关更糟。 */}
+        {hasGyro && (
+          <div className="reconstruct-playback-gyro">
+            <BoolToggle
+              value={gyroOn}
+              onChange={setGyroOn}
+              label={tr({ zh: '陀螺仪', en: 'Gyro' })}
+            />
+          </div>
+        )}
+
         {/* 3D 而不是展开图:回放是「看别人拧」,展开图看不出这是一次转动还是
-            三次。展开图留给打乱预览那种「一眼扫全六面」的场合。 */}
-        <div className="reconstruct-playback-cube">
-          <CubePreview event={event} scramble={composed} size={20} visualization="3D" />
+            三次。展开图留给打乱预览那种「一眼扫全六面」的场合。
+
+            开了陀螺仪就换成 LiveCubeGyroView —— 它本来就是 alg 驱动、从复原态
+            起算的,所以「打乱 + 前 idx 手」原样喂进去就是这一刻的状态,姿态另
+            走一路。回放不需要它的平滑跟随(样本本来就是按时间插好的),但留着
+            也无害:两个样本之间它只是滑得更顺。 */}
+        <div className={`reconstruct-playback-cube${gyroOn ? ' is-gyro' : ''}`}>
+          {gyroOn && hasGyro ? (
+            <LiveCubeGyroView
+              moves={gyroMoves}
+              quat={sampleGyroAt(gyroTrack, elapsedMs)}
+              sensorBasis={sensorBasisForBrand(deviceModel)}
+              mirror={mirrorForBrand(deviceModel)}
+            />
+          ) : (
+            <CubePreview event={event} scramble={composed} size={20} visualization="3D" />
+          )}
         </div>
 
         <div className="reconstruct-playback-counter">

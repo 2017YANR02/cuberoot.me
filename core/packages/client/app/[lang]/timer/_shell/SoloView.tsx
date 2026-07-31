@@ -68,7 +68,8 @@ import { formatTargetTime, useSettings, getSettings, updateSettings } from '../_
 import { warmupSound } from '../_lib/sound';
 import { setMetronomeHold } from '@/lib/metronome';
 import { useBluetoothCube } from '../_lib/bluetooth';
-import { mirrorForBrand, sensorBasisForBrand, type Quat } from '../_lib/bluetooth/orientation';
+import { mirrorForBrand, readDevQuatSource, sensorBasisForBrand, type Quat } from '../_lib/bluetooth/orientation';
+import { GyroRecorder, encodeGyroTrack } from '../_lib/bluetooth/gyro_track';
 import { applyScramble, facesEqual, type CubeFaces } from '../_lib/cube/state';
 import { hintScramble, type ScrambleHint } from '../_lib/bluetooth/scramble_hint';
 import { createFixupRequester } from '../_lib/bluetooth/scramble_fixup';
@@ -721,6 +722,10 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     if (bld) solve.bld = bld;
     if (caseIdAtStartRef.current) solve.caseId = caseIdAtStartRef.current;
     if (movesRef.current.length > 0) solve.moves = movesRef.current.slice();
+    // 姿态流。没开录 / 魔方没报姿态 / 一次都没动 → take() 是空的,编码给 null,
+    // 字段整个不出现 —— 回放面板就是靠「有没有这个字段」决定要不要给陀螺仪开关的。
+    const gyro = encodeGyroTrack(gyroRecRef.current.take());
+    if (gyro && solve.moves) solve.gyro = gyro;
     // Inspection actually used (0 when inspection was off / never entered).
     if (res.inspectionMs > 0) solve.inspectionMs = Math.round(res.inspectionMs);
     // Which cube solved it — only meaningful when the solve has a move stream.
@@ -793,6 +798,8 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     } else if (!cubeStartedRef.current) {
       movesRef.current = [];
       solveStartTsRef.current = performance.now();
+      gyroRecRef.current.reset();
+      gyroStartRef.current = solveStartTsRef.current;
     }
   }, [timer.phase, scramble, event]);
 
@@ -822,6 +829,11 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   const gyroQuatRef = useRef<Quat | null>(null);
   const [calibrateNonce, setCalibrateNonce] = useState(0);
   const want3dLiveCube = settings.liveCubeView === '3d';
+  // 姿态流录制。样本时刻用 performance.now() 而不是 solveStartTsRef —— 后者在
+  // 「魔方起表」那条路上存的是**设备时钟**,而陀螺仪回调根本不带时间戳,两个
+  // 时钟相减出来的是垃圾。这里自己记一个本地起点。
+  const gyroRecRef = useRef(new GyroRecorder());
+  const gyroStartRef = useRef(0);
   // What the live view actually rendered. LiveCubeState decides — it owns the
   // phone / no-sample / not-anchored fallbacks — and reports back, because the
   // calibrate button below must follow the outcome, not the request.
@@ -847,12 +859,45 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     cubeStartedRef.current = true;
     movesRef.current = [];
     solveStartTsRef.current = ts;
+    gyroRecRef.current.reset();
+    gyroStartRef.current = performance.now();
   };
+
+  /**
+   * dev 专用:没有真魔方时把**录制**这条路走通。
+   *
+   * 假魔方(`__cuberootFakeCube`)立的是 GAN v4 的 GATT,但它不发姿态帧,所以
+   * `onGyro` 永远不会响 —— 3D 实况那边靠的是 `LiveCubeState` 自己轮询
+   * `window.__cuberootFakeQuat`(见那个文件的 `useSyntheticQuat`),那条路绕开了
+   * 蓝牙层,录制器就看不见。这里按同样的节奏、同样的来源补一路,让录制在没有
+   * 硬件的时候也能被真的验一遍。
+   *
+   * 生产构建里整段被 `NODE_ENV` 判断消掉,和它模仿的那个 hook 一样。
+   */
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production') return;
+    if (!settings.recordGyro || timer.phase !== 'running') return;
+    const id = setInterval(() => {
+      const q = readDevQuatSource(performance.now());
+      if (!q) return;
+      gyroQuatRef.current = q;
+      gyroRecRef.current.push(q, performance.now() - gyroStartRef.current);
+    }, 40);
+    return () => clearInterval(id);
+  }, [settings.recordGyro, timer.phase]);
 
   const bluetoothCube = useBluetoothCube({
     // Passing onGyro is what turns the stream on at all (MoYu32 has an explicit
     // enable opcode), so only ask for it when the 3D view could use it.
-    onGyro: want3dLiveCube ? (q) => { gyroQuatRef.current = q; } : undefined,
+    onGyro: (want3dLiveCube || settings.recordGyro)
+      ? (q) => {
+        gyroQuatRef.current = q;
+        // 只在真的在计时的时候录:观察阶段和拧完之后的姿态不属于这一把。
+        if (settings.recordGyro && phaseSnapshotRef.current === 'running') {
+          gyroRecRef.current.push(q, performance.now() - gyroStartRef.current);
+        }
+      }
+      : undefined,
     onMove: (move: string, ts: number) => {
       // Before the broadcast, deliberately: if this turn starts the clock, the
       // subscribers below have to see it as the solve's first move. They read

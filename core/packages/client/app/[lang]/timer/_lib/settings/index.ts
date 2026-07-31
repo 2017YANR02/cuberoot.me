@@ -214,6 +214,18 @@ export interface TimerSettings {
   liveCubeView: '2d' | 'net' | '3d';
 
   /**
+   * 把陀螺仪的姿态流一起存进成绩,好在复盘里重放「怎么拧的」——转体在哪儿发生、
+   * 握持怎么换。动作流答不了这些。
+   *
+   * 默认**关**,而且这不是保守:成绩存在 localStorage 里,姿态流哪怕已经压到
+   * 一把几百字节(死区 + int8 定点 + base64,见 `_lib/bluetooth/gyro_track.ts`),
+   * 也是在花别人的存储配额。开了它就该是用户自己想要回放,不是我们替他决定。
+   *
+   * 打开还会让魔方一直发姿态(有些型号要显式开),费电。
+   */
+  recordGyro: boolean;
+
+  /**
    * Keyboard-binding OVERRIDES for the rebindable timer actions — not the
    * resolved map. Merged over `DEFAULT_KEYMAP` (see ../keymap.ts), so bindings
    * added in a later release still reach a user who customised one key. An
@@ -319,6 +331,7 @@ export const DEFAULTS: TimerSettings = {
   autoBackupEvery: 10,
   bluetoothAutoReady: 'scrambled',
   liveCubeView: '3d',
+  recordGyro: false,
   keymap: {},
   round: DEFAULT_ROUND_CONFIG,
   inspectionTrigger: 'down',
