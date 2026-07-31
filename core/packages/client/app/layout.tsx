@@ -61,6 +61,14 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <link id="app-favicon" rel="icon" href="/icons/CubeRoot.png" />
+        {/* iOS「添加到主屏幕」的图标。Safari 只认 apple-touch-icon —— 缺这条它就
+            截一张页面缩略图当图标(这正是主屏图标不是 logo 的原因),rel="icon" 不顶用。
+            必须是不透明 PNG:iOS 会把 alpha 合成到黑底上。生成脚本见 scripts/gen-app-icons.mjs。
+            不做主题切换:web clip 图标在添加那一刻就烘焙进主屏,之后改 DOM 无效。 */}
+        <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
+        {/* 主屏图标下的名字 —— 不写就取 document.title(那串很长的页面标题)。 */}
+        <meta name="apple-mobile-web-app-title" content="CubeRoot" />
+        <link rel="manifest" href="/manifest.json" />
         {/* iOS Safari chrome (top/bottom toolbar) tint. Bootstrap sets a pre-paint
             guess; ThemeColorSync refines it to the live page bg. */}
         <meta id="app-theme-color" name="theme-color" content="#fafafa" />

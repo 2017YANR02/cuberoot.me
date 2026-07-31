@@ -415,10 +415,11 @@ function pick(lang: string): 'zh' | 'en' {
  *  that derive entries from their own data (e.g. the regulation chapters). */
 export function metadataFromEntry(entry: PageMetaEntry, lang: string): Metadata {
   const l = pick(lang);
-  // Empty page title degrades to the bare brand, matching useDocumentTitle
-  // rather than emitting a leading separator.
+  // Brand leads: "CubeRoot — 魔方工具…". The tab strip truncates from the right,
+  // so a narrow tab still shows who the site is. Empty page title degrades to the
+  // bare brand, matching useDocumentTitle rather than emitting a bare separator.
   const page = entry.title[l].trim();
-  const title = page ? `${page}${SEP}${BRAND}` : BRAND;
+  const title = page ? `${BRAND}${SEP}${page}` : BRAND;
   const description = entry.description?.[l];
   return {
     title,
