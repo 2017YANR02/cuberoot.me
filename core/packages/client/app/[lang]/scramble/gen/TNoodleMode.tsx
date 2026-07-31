@@ -1183,7 +1183,8 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
             className="gen-tn-comp-link"
             title={t('查看比赛成绩', 'View competition results')}
           >
-            <CompCell compId={loadedCompId} compName={loadedCompName} isZh={isZh} />
+            {/* 选中的比赛旁边不显示日期 —— 年号保留(date={null}) */}
+            <CompCell compId={loadedCompId} compName={loadedCompName} isZh={isZh} date={null} />
           </Link>
           <ClearButton
             variant="standalone"

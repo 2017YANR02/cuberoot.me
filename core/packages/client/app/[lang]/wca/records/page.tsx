@@ -344,7 +344,7 @@ function RowsTable({ rows, isZh, showEvent, showRank = true }: RowsTableProps) {
             </td>
             <td>
               <Link {...compLinkProps(r.c)}>
-                <CompCell compId={r.c} compName={r.cn} isZh={isZh} />
+                <CompCell compId={r.c} compName={r.cn} isZh={isZh} date={r.d} />
               </Link>
             </td>
             <td className="wse-detail-cell">{r.d}</td>

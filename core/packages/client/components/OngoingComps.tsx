@@ -44,10 +44,6 @@ function pickScope(key: TabKey): string {
   return tr(o);
 }
 
-function stripTrailingYear(s: string): string {
-  return s.replace(/\s?\d{4}$/, '').trim();
-}
-
 function shiftIso(iso: string, days: number): string {
   const d = new Date(iso + 'T00:00:00');
   d.setDate(d.getDate() + days);
@@ -139,7 +135,7 @@ function CompChip({ comp, lang, isZh, showFlag }: {
       title={`${comp.name}  ${formatDateRangeIso(comp.start_date, comp.end_date)}`}
     >
       {showFlag && <Flag iso2={(comp.country || '').toLowerCase()} className="ongoing-comps-chip-flag" />}
-      <span>{stripTrailingYear(localizeCompName(comp.id, comp.name, isZh))}</span>
+      <span>{localizeCompName(comp.id, comp.name, isZh, { date: comp.start_date })}</span>
     </Link>
   );
 }

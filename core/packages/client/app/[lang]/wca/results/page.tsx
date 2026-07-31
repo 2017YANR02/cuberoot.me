@@ -815,7 +815,7 @@ function AllResultsPageInner() {
                           </span>
                         </td>
                         <td className="wse-detail-cell">{r.compDate ?? ''}</td>
-                        <td><Link {...compLinkProps(r.compId)}><CompCell compId={r.compId} compName={r.compName} isZh={isZh} /></Link></td>
+                        <td><Link {...compLinkProps(r.compId)}><CompCell compId={r.compId} compName={r.compName} isZh={isZh} date={r.compDate ?? null} /></Link></td>
                         <AttemptCells attempts={r.attempts} eventId={singleEvent} count={Math.min(5, data.rows.reduce((m, r) => Math.max(m, r.attempts?.length ?? 0), 0))} />
                       </tr>
                     ))}
@@ -852,7 +852,7 @@ function AllResultsPageInner() {
                         </td>
                         <td className="wse-value-col">{r.value != null ? formatWcaResult(r.value, singleEvent, effType) : '—'}</td>
                         <td className="wse-detail-cell">{r.compDate ?? ''}</td>
-                        <td>{r.compId ? <Link {...compLinkProps(r.compId)}><CompCell compId={r.compId} compName={r.compName} isZh={isZh} /></Link> : ''}</td>
+                        <td>{r.compId ? <Link {...compLinkProps(r.compId)}><CompCell compId={r.compId} compName={r.compName} isZh={isZh} date={r.compDate ?? null} /></Link> : ''}</td>
                         <AttemptCells attempts={r.value != null ? r.attempts : []} eventId={singleEvent} count={Math.min(5, data.rows.reduce((m, r) => Math.max(m, r.attempts?.length ?? 0), 0))} />
                       </tr>
                     ))}

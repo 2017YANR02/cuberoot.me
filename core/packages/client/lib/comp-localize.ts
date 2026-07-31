@@ -17,18 +17,30 @@ export function stripWcaPrefix(s: string): string {
   return out.trim();
 }
 
-// 名字末尾的年号跟旁边写着的比赛日期是同一个信息 —— 显示层剥掉(数据不动)。
-// 只在年号与比赛年份一致时剥,免得吃掉名字里本身有意义的四位数。
-export function stripCompYear(name: string, isoDate?: string | null): string {
-  const year = isoDate?.slice(0, 4);
-  if (!name || !year || !/^\d{4}$/.test(year)) return name;
-  const out = name.replace(new RegExp(`\\s*${year}\\s*$`), '').trim();
+// 全站规则:比赛年份同时出现在页面上(同一行的日期列 / 卡片日期 / 年份分组标题)时,
+// 比赛名里就不再重复那个年号 —— 「夹江公开赛2026 / 2026-07-25」重复,显示成「夹江公开赛」。
+// 显示层剥掉,数据不动;只在年号与传入的年份一致时剥,免得吃掉名字里本身有意义的四位数。
+// 页面上没有任何地方写着年份时(搜索下拉、无日期列的榜单)必须保留年号 —— 传 null 即可。
+// 唯一实现:别在调用点手写 /\s*20\d\d\s*$/ 之类的正则(CI tests/comp-year-single-source.test.ts 会红)。
+// isoDateOrYear 接受 '2026' / '2026-07-25' / '2026-07-25 ...' 任一形式。
+export function stripCompYear(name: string, isoDateOrYear?: string | null): string {
+  const year = /^(\d{4})/.exec((isoDateOrYear ?? '').trim())?.[1];
+  if (!name || !year) return name;
+  const out = name
+    .replace(new RegExp(`\\s*${year}\\s*$`), '')       // 夹江公开赛2026 / Jiajiang Open 2026
+    .replace(new RegExp(`^\\s*${year}\\s*年?\\s*`), '') // 2026年夹江公开赛 / 2026 Jiajiang Open
+    .trim();
   return out || name;
 }
 
 export interface LocalizeCompOpts {
   upcomingNameZhById?: Map<string, string> | null;
   explicitNameZh?: string | null;
+  /**
+   * 页面上已经显示的该场比赛日期 / 年份('2026-07-25' 或 '2026')。传入即从比赛名里剥掉
+   * 重复的年号(见 stripCompYear)。页面没显示日期时不要传 —— 年号是那里唯一的区分信息。
+   */
+  date?: string | null;
 }
 
 // 解析比赛名(zh fallback),但不剥 WCA 前缀 — 拿原始全名(如 2026WCA黄冈魔方公开赛)。
@@ -62,5 +74,5 @@ export function localizeCompName(
   isZh: boolean,
   opts?: LocalizeCompOpts,
 ): string {
-  return stripWcaPrefix(resolveCompName(id, name, isZh, opts));
+  return stripCompYear(stripWcaPrefix(resolveCompName(id, name, isZh, opts)), opts?.date);
 }

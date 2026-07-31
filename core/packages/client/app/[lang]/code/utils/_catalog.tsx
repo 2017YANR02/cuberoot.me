@@ -346,11 +346,12 @@ export const CATALOG: UtilEntry[] = [
   },
   {
     name: 'localizeCompName',
-    sig: 'localizeCompName(id: string, name: string, isZh: boolean, opts?): string',
+    sig: 'localizeCompName(id: string, name: string, isZh: boolean, opts?: { date?: string | null; explicitNameZh?: string | null }): string',
     imp: "import { localizeCompName } from '@/lib/comp-localize';",
+    usage: "localizeCompName(c.id, c.name, isZh, { date: c.start_date }) // \"夹江公开赛\"(旁边已写 2026-07-25)",
     category: 'wca',
-    zh: '比赛名:去 WCA 前缀 + 中文名回退(走 cubing.com)。',
-    en: 'Competition name: strip the WCA prefix and fall back to the Chinese name.',
+    zh: '比赛名:去 WCA 前缀 + 中文名回退(走 cubing.com)。opts.date = 页面上已经显示的该场日期/年份,传了就剥掉名字里重复的年号(单一实现 stripCompYear);页面没显示年份就别传。',
+    en: 'Competition name: strip the WCA prefix and fall back to the Chinese name. opts.date is the comp date/year already shown on the page — pass it and the duplicated year is stripped from the name (single implementation: stripCompYear); omit it where no year is shown.',
   },
   {
     name: 'unofficialAoN',
