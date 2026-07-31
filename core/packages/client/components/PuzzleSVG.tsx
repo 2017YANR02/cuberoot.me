@@ -169,10 +169,12 @@ export function PuzzleSVG({
   }, [kind, alg, caseAlg, size, strokeWidth, minx, miny, svgWidth, svgHeight, rotations,
       cameraDist, srMask, stickerColors, scheme, arrows, arrowColor]);
 
+  // puzzle-art:柔和度的统一钩子(见 globals.css),贴纸色不走 token,靠它跟。
+  const cls = className ? `puzzle-art ${className}` : 'puzzle-art';
   if (customSvg !== null) {
     return (
       <div
-        className={className}
+        className={cls}
         style={{ width: size, height: size, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', lineHeight: 0 }}
         dangerouslySetInnerHTML={{ __html: customSvg }}
       />
@@ -181,7 +183,7 @@ export function PuzzleSVG({
   return (
     <div
       ref={hostRef}
-      className={className}
+      className={cls}
       style={{ width: size, height: size, display: 'inline-block', lineHeight: 0 }}
     />
   );

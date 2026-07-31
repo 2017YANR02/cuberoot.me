@@ -227,7 +227,7 @@ function CubeNet({ facelets, alt }: { facelets: string; alt: string }) {
     <span
       role="img"
       aria-label={alt}
-      className="timer-live-net"
+      className="timer-live-net puzzle-art"
       dangerouslySetInnerHTML={{ __html: svg }}
     />
   );

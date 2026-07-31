@@ -2087,7 +2087,9 @@ export default function SimPage() {
       <div className="sim-body">
         <div className="sim-stage">
         <div
-          className={`sim-canvas-wrap${flatMode ? ' sim-canvas-wrap--net' : ''}${imgSwapActive ? ' sim-canvas-wrap--imgswap' : ''}`}
+          // puzzle-art:柔和度的统一钩子(见 globals.css)。挂在 wrap 而不是 3D canvas
+          // 或 SimCubeNet 上 —— 它把两者都包住,一层 filter 就够,不会叠加两次。
+          className={`sim-canvas-wrap puzzle-art${flatMode ? ' sim-canvas-wrap--net' : ''}${imgSwapActive ? ' sim-canvas-wrap--imgswap' : ''}`}
           ref={containerRef}
         >
           {netMode && (
