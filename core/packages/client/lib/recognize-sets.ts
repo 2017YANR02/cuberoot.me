@@ -1,6 +1,6 @@
 /**
- * `/recognize/<set>` 的两个识别训练器,差异全在这一份定义里:题库、题图、答题输入、摊牌
- * 文案。页面和 store 只读这里,所以两个集合走的是同一条代码路径 —— 之前 OLL 那半截是
+ * `/recognize/<set>` 的观察训练器,差异全在这一份定义里:题库、题图、答题输入、摊牌
+ * 文案。页面和 store 只读这里,所以每个集合走的是同一条代码路径 —— 之前 OLL 那半截是
  * 「PLL 页面里塞了个 else 分支」,队列还是 PLL 的,查 OLL 公式表查不到,题图恒为还原态。
  *
  * ## 两处刻意不对称
@@ -9,6 +9,9 @@
  *   OLL 题图只有顶面 + 顶排一圈,`U` 就够了,而且 `U` 正是解法里真会遇到的那个 AUF。
  * - **一轮多少题**:PLL 把 21 个 case 按对称性展开成 73 个朝向(H 只有 1 个,N/E/Z 各 2 个);
  *   OLL 57 个 case 各出一次、AUF 随机,再展开成 228 就没人做得完了。
+ *
+ * COLL / ELL / ZBLL / 1LLL 的题库在 `alg_cases` 表里,定义在 `recognize-db-sets`,
+ * 按同一份契约拼出来,这里只把它们并进 {@link RECOGNIZE_SETS}。
  */
 import ollMap from '@cuberoot/shared/data/oll.json';
 import pllMap from '@cuberoot/shared/data/pll.json';
@@ -18,11 +21,12 @@ import {
   D_TURN_OPTIONS,
 } from './pll-helpers';
 import { displayOllName, displayPllName, OLL_NAME_BY_NUMBER } from './alg_case_display';
+import { DB_RECOGNIZE_SETS, isDbRecognizeSetId, type DbRecognizeSetId } from './recognize-db-sets';
 
 const typedOllMap = ollMap as Record<string, { name: string; alg: string }>;
 const typedPllMap = pllMap as Record<string, Record<string, string>>;
 
-export type RecognizeSetId = 'pll' | 'oll';
+export type RecognizeSetId = 'pll' | 'oll' | DbRecognizeSetId;
 
 /** 敲一下键之后该干嘛。`pending` 是还没凑齐的前缀(`G_` / `1_`),显示在提示行上。 */
 export type KeyStep =
@@ -40,8 +44,10 @@ export interface RecognizeButton {
 
 export interface RecognizeImage {
   setup: string;
-  view: 'iso' | 'pll-iso' | 'oll';
+  view: 'iso' | 'pll-iso' | 'oll' | 'pll' | 'f2l';
   size: number;
+  /** visualcube 遮罩(COLL 压灰棱块)。 */
+  mask?: string;
   hideGreySides?: boolean;
 }
 
@@ -58,9 +64,21 @@ export interface RecognizeSet {
   image: (c: PllCaseInstance, mistake: boolean) => RecognizeImage;
   /** 人看的 case 名:`OLL 27` → `S+ (27)`。 */
   label: (name: string) => string;
+  /**
+   * 该 case 的正确答案(默认 = case 名)。答子组的集合(ZBLL / 1LLL)在这里把
+   * case 名折成子组 —— 判定和摊牌提示都走它,`label` 仍给完整 case 名。
+   */
+  answerFor?: (name: string) => string;
+  /** 摊牌提示里要按的那个东西;不给 = `label`。 */
+  answerLabel?: (name: string) => string;
   /** 摊牌时给的公式。 */
   solution: (name: string) => string;
-  buttons: RecognizeButton[];
+  /** 函数而非常量:DB 题库的按钮要等 {@link load} 拉完才知道。 */
+  buttons: () => RecognizeButton[];
+  /** 按钮文字长(`4 Flip Ua`)→ 屏幕键盘用宽轨道。 */
+  wideKeys?: boolean;
+  /** 题库要现拉的集合(DB 集)在这里拉;拉完才有 `allKeys` / `buttons`。 */
+  load?: () => Promise<void>;
   prompt: { zh: string; en: string };
   step: (pending: string | null, key: string) => KeyStep;
 }
@@ -100,7 +118,7 @@ export const PLL_SET: RecognizeSet = {
   }),
   label: displayPllName,
   solution: (name) => typedPllMap[name]?.noAuf ?? '',
-  buttons: PLL_BUTTONS,
+  buttons: () => PLL_BUTTONS,
   prompt: { zh: '这是哪个 PLL？输入公式名字', en: 'Which PLL is this? Type the algorithm name' },
   step: pllStep,
 };
@@ -159,7 +177,7 @@ export const OLL_SET: RecognizeSet = {
   }),
   label: displayOllName,
   solution: (name) => typedOllMap[name]?.alg ?? '',
-  buttons: OLL_BUTTONS,
+  buttons: () => OLL_BUTTONS,
   prompt: { zh: '这是哪个 OLL？输入编号', en: 'Which OLL is this? Type its number' },
   step: ollStep,
 };
@@ -167,11 +185,12 @@ export const OLL_SET: RecognizeSet = {
 export const RECOGNIZE_SETS: Record<RecognizeSetId, RecognizeSet> = {
   pll: PLL_SET,
   oll: OLL_SET,
+  ...DB_RECOGNIZE_SETS,
 };
 
 export const isRecognizeSetId = (v: string): v is RecognizeSetId =>
-  v === 'pll' || v === 'oll';
+  v === 'pll' || v === 'oll' || isDbRecognizeSetId(v);
 
-/** 不认识的 set 一律当 PLL —— 路由只预渲染 pll/oll 两个,兜底不该炸页面。 */
+/** 不认识的 set 一律当 PLL —— 路由只预渲染 RECOGNIZE_SETS 里那几个,兜底不该炸页面。 */
 export const recognizeSetFor = (id: string): RecognizeSet =>
   isRecognizeSetId(id) ? RECOGNIZE_SETS[id] : PLL_SET;

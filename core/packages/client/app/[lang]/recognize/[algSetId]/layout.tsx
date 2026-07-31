@@ -1,12 +1,16 @@
 import type { Metadata } from 'next';
 import { metadataFromEntry } from '@/lib/page-meta';
 
-// Two prerendered sets. /recognize/pll already has its own entry in
-// lib/page-meta (it predates this route being dynamic and is listed in the
-// sitemap), so this only has to cover the pair uniformly.
+// /recognize/pll already has its own entry in lib/page-meta (it predates this
+// route being dynamic and is listed in the sitemap), so this only has to cover
+// every prerendered set uniformly.
 const SETS: Record<string, { zh: string; en: string; caseCount: number }> = {
   pll: { zh: 'PLL', en: 'PLL', caseCount: 21 },
   oll: { zh: 'OLL', en: 'OLL', caseCount: 57 },
+  coll: { zh: 'COLL', en: 'COLL', caseCount: 40 },
+  ell: { zh: 'ELL', en: 'ELL', caseCount: 25 },
+  zbll: { zh: 'ZBLL', en: 'ZBLL', caseCount: 472 },
+  '1lll': { zh: '1LLL', en: '1LLL', caseCount: 3397 },
 };
 
 export async function generateMetadata({ params }: {
@@ -18,11 +22,11 @@ export async function generateMetadata({ params }: {
   return metadataFromEntry(
     {
       title: {
-        zh: `${set.zh} 识别训练`,
+        zh: `${set.zh} 观察`,
         en: `${set.en} Recognition Trainer`,
       },
       description: {
-        zh: `计时练习 ${set.caseCount} 个 ${set.zh} 情况的识别:只认图形,不还原,统计每个情况的反应时间。`,
+        zh: `计时练习 ${set.caseCount} 个 ${set.zh} 情况的观察:只认图形,不还原,统计每个情况的反应时间。`,
         en: `A timed drill for recognising all ${set.caseCount} ${set.en} cases — pattern only, no solving — with per-case reaction times.`,
       },
     },
