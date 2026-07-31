@@ -167,8 +167,8 @@ export const ALG_CATALOG: Record<AlgPuzzle, AlgSetMeta[]> = {
     { slug: 'eg2',        scd: 'EG2',       en: 'EG 2',       zh: 'EG 2' },
   ],
   '3x3': [
-    { slug: 'f2l',       scd: 'F2L',         en: 'F2L',                  zh: 'F2L (基础)' },
-    { slug: 'adv-f2l',   scd: 'AdvancedF2L', en: 'Advanced F2L',         zh: 'F2L (进阶)' },
+    { slug: 'f2l',       scd: 'F2L',         en: 'F2L',                  zh: 'F2L' },
+    { slug: 'adv-f2l',   scd: 'AdvancedF2L', en: 'Advanced F2L',         zh: 'F2L 进阶' },
     { slug: 'oll',       scd: 'OLL',         en: 'OLL',                  zh: 'OLL' },
     { slug: 'pll',       scd: 'PLL',         en: 'PLL',                  zh: 'PLL' },
     /* ZBLS / ZBLL(以及页面上紧跟其后的 LSLL)是 CFOP 之后最常练的大套,顶到 PLL 后面免得埋在长尾里 */
