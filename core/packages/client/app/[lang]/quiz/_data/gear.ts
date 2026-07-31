@@ -1,0 +1,133 @@
+import type { Question } from './types';
+
+// 装备与配色 —— 六面怎么配、魔方怎么调、赛场用什么设备。
+export const GEAR: Question[] = [
+  {
+    id: 'ger-01', cat: 'gear', type: 'choice',
+    q: { zh: '标准配色里,白色的对面是什么颜色?', en: 'On the standard colour scheme, what is opposite white?' },
+    options: [
+      { zh: '黄色', en: 'Yellow' },
+      { zh: '蓝色', en: 'Blue' },
+      { zh: '红色', en: 'Red' },
+      { zh: '绿色', en: 'Green' },
+    ],
+    answer: 0,
+    why: { zh: '白对黄、红对橙、蓝对绿,这三组是固定的。', en: 'White–yellow, red–orange and blue–green are the three fixed pairs.' },
+  },
+  {
+    id: 'ger-02', cat: 'gear', type: 'choice',
+    q: { zh: '标准配色里,红色的对面是什么?', en: 'What is opposite red?' },
+    options: [
+      { zh: '橙色', en: 'Orange' },
+      { zh: '黄色', en: 'Yellow' },
+      { zh: '绿色', en: 'Green' },
+      { zh: '白色', en: 'White' },
+    ],
+    answer: 0,
+  },
+  {
+    id: 'ger-03', cat: 'gear', type: 'choice',
+    q: { zh: '白面朝上、绿面朝自己时,红面在哪一边?', en: 'White on top and green facing you — where is red?' },
+    options: [
+      { zh: '右手边', en: 'On the right' },
+      { zh: '左手边', en: 'On the left' },
+      { zh: '朝上', en: 'On top' },
+      { zh: '朝下', en: 'On the bottom' },
+    ],
+    answer: 0,
+    why: { zh: '这就是通行的标准配色(白上绿前红右),站内的打乱图和公式都按它画。', en: 'That is the standard scheme (white up, green front, red right) used by every scramble image and algorithm here.' },
+  },
+  {
+    id: 'ger-04', cat: 'gear', type: 'choice',
+    q: { zh: '一个三阶魔方的一个面有多少张贴纸?', en: 'How many stickers on one face of a 3×3?' },
+    options: [
+      { zh: '9 张', en: '9' },
+      { zh: '6 张', en: '6' },
+      { zh: '8 张', en: '8' },
+      { zh: '4 张', en: '4' },
+    ],
+    answer: 0,
+  },
+  {
+    id: 'ger-05', cat: 'gear', type: 'choice',
+    q: { zh: '现在的竞速魔方里普遍装了什么来改善手感?', en: 'What do modern speed cubes commonly contain to improve feel?' },
+    options: [
+      { zh: '磁铁', en: 'Magnets' },
+      { zh: '弹珠', en: 'Ball bearings on the outside' },
+      { zh: '弹簧秤', en: 'A spring scale' },
+      { zh: '电池', en: 'A battery' },
+    ],
+    answer: 0,
+    why: { zh: '磁铁帮每一层「咬」到位,手快时不容易转过头。', en: 'Magnets snap each layer into place so fast turns overshoot less.' },
+  },
+  {
+    id: 'ger-06', cat: 'gear', type: 'choice',
+    q: { zh: '调「张紧度」是在调什么?', en: 'What are you adjusting when you change the tensions?' },
+    options: [
+      { zh: '中心的螺丝和弹簧,决定松紧', en: 'The centre screws and springs, i.e. how loose it turns' },
+      { zh: '贴纸的贴合程度', en: 'How firmly the stickers stick' },
+      { zh: '磁铁的极性', en: 'The polarity of the magnets' },
+      { zh: '魔方的大小', en: 'The size of the cube' },
+    ],
+    answer: 0,
+  },
+  {
+    id: 'ger-07', cat: 'gear', type: 'choice',
+    q: { zh: '润滑油一般打在魔方哪里?', en: 'Where does lubricant go?' },
+    options: [
+      { zh: '内部的滑轨和核心', en: 'Inside, on the tracks and core' },
+      { zh: '外表面的贴纸上', en: 'On the outer stickers' },
+      { zh: '手上', en: 'On your hands' },
+      { zh: '计时器垫子上', en: 'On the timer mat' },
+    ],
+    answer: 0,
+  },
+  {
+    id: 'ger-08', cat: 'gear', type: 'choice',
+    q: { zh: '比赛计时用的设备通常叫什么?', en: 'What is the timing device used at competitions usually called?' },
+    options: [
+      { zh: 'Stackmat 计时器(带一块垫子)', en: 'A Stackmat timer, with a mat' },
+      { zh: '手机秒表', en: 'A phone stopwatch' },
+      { zh: '沙漏', en: 'An hourglass' },
+      { zh: '裁判手动掐表', en: 'The judge counting by hand' },
+    ],
+    answer: 0,
+    why: { zh: '双手放在感应区上起表、离手开始、双手拍停;只有个别项目(如最少步)才不用它。', en: 'Both hands on the pads to arm it, lift to start, slap to stop. Only a few events (like fewest moves) skip it.' },
+  },
+  {
+    id: 'ger-09', cat: 'gear', type: 'choice',
+    q: { zh: '观察阶段结束时,魔方应该放在哪儿?', en: 'Where must the puzzle be when inspection ends?' },
+    options: [
+      { zh: '放在垫子上,不能压在计时器上', en: 'On the mat, not resting on the timer' },
+      { zh: '拿在手里等起表', en: 'Held in your hands, ready to go' },
+      { zh: '放在计时器上', en: 'On top of the timer' },
+      { zh: '交给裁判', en: 'Handed to the judge' },
+    ],
+    answer: 0,
+    why: { zh: '规则 A3d:魔方要完全放在垫子上,压到计时器要 +2。', en: 'Regulation A3d — fully on the mat; overlapping the timer costs +2.' },
+  },
+  {
+    id: 'ger-10', cat: 'gear', type: 'choice',
+    q: { zh: '现在的高端魔方大多是「无贴纸」的,颜色怎么来的?', en: 'Most high-end cubes today are stickerless — where does the colour come from?' },
+    options: [
+      { zh: '塑料本身就是那个颜色', en: 'The plastic itself is coloured' },
+      { zh: '喷漆', en: 'Spray paint' },
+      { zh: '内部灯光', en: 'Internal lighting' },
+      { zh: '贴了透明膜', en: 'A clear film on top' },
+    ],
+    answer: 0,
+    why: { zh: '好处是不会翘边、不会磨花,坏处是盲拧时摸不出颜色区别。', en: 'Nothing peels or wears out — but you cannot feel the colours, which matters for blindfolded solving.' },
+  },
+  {
+    id: 'ger-11', cat: 'gear', type: 'choice',
+    q: { zh: '比赛现场用什么决定打乱?', en: 'How are competition scrambles decided?' },
+    options: [
+      { zh: '官方软件生成的随机打乱,打乱员照着拧', en: 'Randomly generated by official software, then applied by a scrambler' },
+      { zh: '打乱员自己随手拧', en: 'The scrambler just mixes it up freely' },
+      { zh: '选手互相打乱', en: 'Competitors scramble for each other' },
+      { zh: '每轮沿用同一个打乱', en: 'The same scramble is reused every round' },
+    ],
+    answer: 0,
+    why: { zh: '同一组所有人用同一份打乱,所以打乱必须照着公式一步不差地执行,还要签名确认。', en: 'Everyone in a group gets the same scramble, so it must be applied exactly and signed off.' },
+  },
+];

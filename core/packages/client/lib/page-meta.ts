@@ -259,6 +259,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'Lookahead trainer — practise seeing the next step before you finish the current one.',
     },
   },
+  'quiz': {
+    title: { zh: '魔方知识问答', en: 'Cubing Quiz' },
+    description: {
+      zh: '魔方知识问答:历史、WCA 规则、项目赛制、记号术语、解法、数学与装备,八类共百余道选择题和问答题,答完即给解析。',
+      en: 'A cubing quiz — history, WCA regulations, events, notation, methods, maths and gear. Over a hundred multiple-choice and short-answer questions, each with an explanation.',
+    },
+  },
   'pseudo_pairing_trainer': { title: { zh: '伪配对训练', en: 'Pseudo Pairing Trainer' } },
   'pseudo_xcross_trainer': { title: { zh: '伪 XCross 训练', en: 'Pseudo XCross Trainer' } },
   'recon': {
