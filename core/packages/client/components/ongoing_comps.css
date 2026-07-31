@@ -87,6 +87,15 @@
   gap: 0.4rem;
 }
 
+/* 分组视图(当前 / 未来 / 往期):每组只有一两场比赛时单列会在右侧留大片空白,
+   改成自适应多列铺满面板宽度。列宽下限 300px,放不下自动降列数。 */
+.ongoing-comps-groups.is-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  align-content: start;
+  gap: 0.4rem 1.5rem;
+}
+
 /* Records list is rendered headless inside the panel — the panel owns the
    scroll, so drop the list's own overflow/right-padding to avoid a double bar. */
 .ongoing-comps-groups .recent-records-list {
@@ -179,4 +188,8 @@
     letter-spacing: 0.03em;
   }
   .ongoing-comps-scope { padding-left: 0.5rem; }
+  /* 窄屏一列即可(minmax 的 300px 下限在更窄容器里会横向溢出) */
+  .ongoing-comps-groups.is-grid {
+    grid-template-columns: 1fr;
+  }
 }
