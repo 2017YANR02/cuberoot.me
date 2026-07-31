@@ -44,13 +44,23 @@ export const EDGE_PAIRS: ReadonlyArray<readonly [number, number]> = [
 ];
 
 /** Face m (opposite vertex m) → fill color, WCA-consistent with the vertex letters
- *  U/L/R/B (face X touches every vertex except its opposite): D↔U yellow, R↔L red,
- *  L↔R blue, F↔B green — the standard scheme (green front, red right, blue left,
- *  yellow down in the default pose). CUBE_FILL keys are cube faces, reused for hue. */
+ *  U/L/R/B (face X touches every vertex except its opposite): D↔U yellow, L↔R red,
+ *  R↔L blue, F↔B green — the WCA scheme (green front, RED LEFT, BLUE RIGHT, yellow
+ *  down), single-sourced from tnoodle `PyraminxPuzzle.defaultColorScheme` = cubing.js
+ *  `defaultPlatonicColorSchemes()[4]` (both: F green / D yellow / L red / R blue).
+ *  CUBE_FILL keys are cube faces, reused for hue.
+ *
+ *  ⚠ Red and blue used to sit the other way round (issue #64) — a MIRRORED scheme, so
+ *  every /alg pyraminx thumbnail read as the mirror case (Sune looked like AntiSune).
+ *  The letter↔face binding here is not a naming choice: `tests/engine-mask` derives
+ *  canonical-face → engine-face m from the group structure alone (both handednesses
+ *  tried, unique conjugation) and locks R='m1', L='m2'. So m1 MUST be the WCA R color
+ *  (blue) and m2 the L color (red). Don't "fix" a mirrored-looking case by swapping
+ *  these back — check the pose instead. */
 const FACE_COLOR: Record<number, number> = {
   0: hex(CUBE_FILL.D), // D face (opp U) yellow
-  1: hex(CUBE_FILL.R), // R face (opp L) red
-  2: hex(CUBE_FILL.B), // L face (opp R) blue
+  1: hex(CUBE_FILL.B), // R face (opp L) blue
+  2: hex(CUBE_FILL.R), // L face (opp R) red
   3: hex(CUBE_FILL.F), // F face (opp B) green
 };
 
@@ -60,9 +70,9 @@ function hex(s: string): number { return parseInt(s.replace('#', ''), 16); }
  *  Calibrated against the actual render, NOT model azimuth — the sim camera sits ~60°
  *  off the +Z axis, so the yaw is set by what shows on screen: the R vertex faces the
  *  camera with the U-R edge running down the middle, so the two visible faces are
- *  F {U,L,R} (green) on the LEFT and R {U,R,B} (red) on the RIGHT, U apex up, L bottom-
- *  left, B to the right — the standard pyraminx product pose (green front-left, red
- *  front-right). Applied to the whole cube group, not the pieces. */
+ *  F {U,L,R} (green) on the LEFT and R {U,R,B} (blue) on the RIGHT, U apex up, L bottom-
+ *  left, B to the right — the standard pyraminx product pose. Applied to the whole cube
+ *  group, not the pieces. */
 export const APEX_UP_QUAT = new THREE.Quaternion()
   .setFromAxisAngle(new THREE.Vector3(0, 1, 0), 13 * Math.PI / 12)
   .multiply(new THREE.Quaternion().setFromUnitVectors(

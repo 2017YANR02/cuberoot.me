@@ -20,6 +20,7 @@ import {
   buildCornerPiece, buildEdgePiece, buildCenterPiece, R_IN as MEGA_R,
 } from '@/app/[lang]/sim/engine/mega/megaGeometry';
 import { FACE_NORMAL as MEGA_FACE_NORMAL } from '@/app/[lang]/sim/engine/mega/megaState';
+import { PYRA_DEFAULT_COLORS } from '@/app/[lang]/scramble/gen/_svg/pyraminx_svg';
 
 const fixture = JSON.parse(
   readFileSync('lib/puzzle-image/data/engine-sid-map.json', 'utf8'),
@@ -54,8 +55,50 @@ describe('engine sid map — pyraminx', () => {
   it('re-derives byte-for-byte from engine geometry + canonical perms (shipped-table lock)', () => {
     const r = derivePyraEngineMap();
     expect(r.map).toEqual(fixture.pyraminx);
-    // 配色锚点:canonical 面 → 引擎面 m(FACE_COLOR:D=m0 黄 / R=m1 红 / L=m2 蓝 / F=m3 绿)
+    // 配色锚点:canonical 面 → 引擎面 m(FACE_COLOR:D=m0 黄 / R=m1 蓝 / L=m2 红 / F=m3 绿)
     expect(r.faceMap).toEqual({ D: 'm0', R: 'm1', L: 'm2', F: 'm3' });
+  });
+
+  /**
+   * 引擎贴纸的**颜色**必须和 canonical(tnoodle = cubing.js)配色一致 —— 上面那条只
+   * 锁「哪个引擎面是 canonical 的哪个面」,颜色是另一回事:红蓝互换照样过前一条,
+   * 但画出来是镜像(issue #64:Sune 看着像 AntiSune)。这里把两端接上。
+   */
+  it('sticker colors match the WCA scheme (F green / D yellow / L red / R blue)', () => {
+    const scene = new THREE.Scene();
+    for (let k = 0; k < 4; k++) {
+      scene.add(buildPyraPiece('tip', k).pivot);
+      scene.add(buildPyraPiece('corner', k).pivot);
+    }
+    for (const [a, b] of EDGE_PAIRS) scene.add(buildPyraPiece('edge', a, b).pivot);
+    const byFace = new Map<string, Set<string>>();
+    scene.traverse((o) => {
+      const key = o.userData.stickerKey as string | undefined;
+      if (!key) return;
+      const face = `m${key.split(':')[1]}`;
+      // makeSticker: material = [cap(彩色), wall(黑体)] —— 取 cap
+      const cap = (o as THREE.Mesh).material as THREE.MeshPhongMaterial[];
+      const hex = `#${cap[0].color.getHexString()}`;
+      (byFace.get(face) ?? byFace.set(face, new Set()).get(face)!).add(hex.toUpperCase());
+    });
+    // 比色相不比色值:引擎走站内调色板(CUBE_FILL 的绿 #00D800),tnoodle 是纯 #00FF00,
+    // 同一个「绿」。要锁的是「哪个面是哪个颜色」,不是具体那一档绿。
+    const hue = (hex: string): string => {
+      const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+      if (r > 128 && g > 128) return 'yellow';
+      if (r > 128) return 'red';
+      if (g > 128) return 'green';
+      if (b > 128) return 'blue';
+      return `#${hex}`;
+    };
+    const { faceMap } = derivePyraEngineMap();
+    for (const [canonical, engineFace] of Object.entries(faceMap)) {
+      const colors = byFace.get(engineFace);
+      expect(colors?.size, `${canonical} → ${engineFace} paints one color`).toBe(1);
+      expect(hue([...colors!][0]), `${canonical} face color`).toBe(
+        hue(PYRA_DEFAULT_COLORS[canonical]),
+      );
+    }
   });
 
   it('bijection + piece structure (14 pieces)', () => {

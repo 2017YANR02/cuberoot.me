@@ -1,10 +1,13 @@
 // Ported from packages/client-vite/src/utils/trainerScramble.ts
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import { flattenAlg } from '@cuberoot/shared/alg-notation';
+import { equivalentPyraScramble } from './pyraminx-solver';
 import { tr } from '@/i18n/tr';
 
 const AUF = ['', 'U', 'U2', "U'"];
 const Y = ['', 'y', 'y2', "y'"];
+/** 金字塔的顶层是 3 阶轴,只有 U / U' 两种「不是不转」的对齐(没有 U2)。 */
+const PYRA_AUF = ['', 'U', "U'"];
 
 function pick<T>(arr: readonly T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -74,7 +77,7 @@ function inverseAlg(alg: string): string {
  * 导入时已逐条过 16 折轨道判据,验不过的**不入库**(见 alg-build/import_1lll.mjs)——
  * 所以这里看到的都是真的。缺了就退回 `inv`,绝不猜。
  */
-export type ScrambleKind = 'inv' | 'cstimer' | 'stm' | 'sqtm' | 'htm' | 'qtm' | 'coep';
+export type ScrambleKind = 'inv' | 'cstimer' | 'rand' | 'stm' | 'sqtm' | 'htm' | 'qtm' | 'coep';
 
 /**
  * 选择器里的顺序与名字。`SH*` / `SQ*` / `H*` / `Q*` 是站长表里的列名(星号 = 最优),
@@ -83,6 +86,9 @@ export type ScrambleKind = 'inv' | 'cstimer' | 'stm' | 'sqtm' | 'htm' | 'qtm' | 
  */
 export const SCRAMBLE_KINDS: ReadonlyArray<{ id: ScrambleKind; label: () => string }> = [
   { id: 'htm', label: () => `H* (HTM)` },
+  // 金字塔专有(见 generateScramble):同一个 case,随机长路径 + 随机顶层朝向。
+  // 排在 `inv` 之前 —— 它是金字塔的默认(TrainerRunClient 的 kinds 兜底取它)。
+  { id: 'rand', label: () => tr({ zh: '随机长打乱', en: 'Randomized' }) },
   { id: 'inv', label: () => tr({ zh: '逆 case', en: 'Inv case' }) },
   { id: 'stm', label: () => `SH* (STM)` },
   { id: 'sqtm', label: () => `SQ* (SQTM)` },
@@ -163,6 +169,24 @@ export function generateScramble(
   if (puzzle === '2x2') {
     const post = opts?.postAuf === false ? '' : pick(AUF);
     return joinWithAufMerge(pre, base.split(/\s+/).filter(Boolean), post);
+  }
+
+  /**
+   * 金字塔:`inv` 就是库里的 setup 原文(最少步),`rand` 是本站默认(issue #64)——
+   *
+   *  ① 顶层随机转一下(PYRA_AUF)。金字塔的顶层没有「自动对齐」,真解里本来就要先补一个
+   *     U / U' 才认得出 case;setup 原文永远把顶层摆正,等于把这一步免掉了。顶层转动只动
+   *     顶层,槽位里那个没解开的棱一动不动 —— case 没变,只是相位不同(与三阶 post-AUF 同理),
+   *     所以记忆模式(postAuf === false)不加:那边题面要与库里那张 case 图逐字一致。
+   *  ② 换一条到达同一状态的随机长路径(≈10-15 步)。L4E 的 setup 多是 4-7 步最少步,
+   *     照着打乱念一遍就把答案倒着背了一遍;长路径下摆出来的魔方一模一样,但反推不出来。
+   *
+   * 解不出来(状态不可达 / 记号不认识)时 `equivalentPyraScramble` 原样退回,不编假打乱。
+   */
+  if (puzzle === 'pyraminx') {
+    if (kind !== 'rand') return base;
+    const post = opts?.postAuf === false ? '' : pick(PYRA_AUF);
+    return equivalentPyraScramble([base, post].filter(Boolean).join(' ')) || base;
   }
 
   return base;
