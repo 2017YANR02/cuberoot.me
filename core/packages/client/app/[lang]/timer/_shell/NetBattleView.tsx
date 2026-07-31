@@ -36,7 +36,13 @@ import TimingSurface from './TimingSurface';
 import BluetoothModal from '../_components/BluetoothModal';
 import { useBluetoothCube } from '../_lib/bluetooth';
 import { useAutoReady } from '../_lib/bluetooth/auto_ready';
+import { installFakeCube } from '../_lib/bluetooth/fake_cube';
 import { useTimer, type SolveResult } from '../_shared/useTimer';
+import { appendSolves, makeSolve } from '../_lib/storage/db';
+import { stageSegmentsFor } from '../_lib/reconstruct/stage_segments';
+import { hintScramble, type ScrambleHint } from '../_lib/bluetooth/scramble_hint';
+import ScrambleHintText from '../_components/ScrambleHintText';
+import { applyScramble, facesEqual, type CubeFaces } from '../_lib/cube/state';
 import { useSettings } from '../_lib/settings';
 import { formatMs } from '../_lib/stats';
 import { generateScramble } from '../_lib/scramble';
@@ -254,8 +260,39 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [applyState]);
 
+  /**
+   * 这一把的转动流(智能魔方才有)。房间只收一个成绩数字,所以在此之前,联机房里
+   * 用智能魔方拧的每一把都是**扔掉的** —— 没有复盘、没有回放、不进统计。
+   * 记下来之后走的是和 Solo 完全同一条:同样的 `makeSolve` + `stageSegmentsFor`
+   * + `appendSolves`,于是复盘 / 回放 / 分段统计一行新代码都不用写就都有了。
+   */
+  const movesRef = useRef<Array<{ m: string; ts: number }>>([]);
+  /** 起表那一刻的时刻(魔方给的 / performance.now()),转动流的时间以它为零点。 */
+  const solveStartTsRef = useRef(0);
+  /** 起表那一刻的打乱与设备 —— 中途换轮 / 掉线都不该改写这一把记的是什么。 */
+  const scrambleAtStartRef = useRef('');
+  const eventAtStartRef = useRef<EventId>('333');
+  const deviceAtStartRef = useRef<{ model: string; name: string } | null>(null);
+
   const onSolve = useCallback((res: SolveResult) => {
     const r = roomRef.current, id = pidRef.current;
+    // 本机留档先做:上传失败也不该连自己的复盘一起丢。
+    if (movesRef.current.length > 0 && scrambleAtStartRef.current) {
+      const ev = eventAtStartRef.current;
+      const solve = makeSolve({
+        timeMs: res.timeMs,
+        scramble: scrambleAtStartRef.current,
+        event: ev,
+        penalty: res.autoPenalty,
+      });
+      solve.moves = movesRef.current.slice();
+      if (res.inspectionMs > 0) solve.inspectionMs = Math.round(res.inspectionMs);
+      if (deviceAtStartRef.current) solve.device = deviceAtStartRef.current;
+      const segs = stageSegmentsFor(solve);
+      if (segs) solve.stageSegments = segs;
+      appendSolves(ev, [solve]);
+      movesRef.current = [];
+    }
     if (!r || !id) return;
     const p: NetPenalty = res.autoPenalty === 'DNF' ? 'dnf' : res.autoPenalty === '+2' ? '+2' : 'ok';
     const round = solvingRoundRef.current || r.round;
@@ -270,6 +307,28 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
 
   const timer = useTimer(onSolve);
   const phaseRef = useRef(timer.phase); phaseRef.current = timer.phase;
+
+  /**
+   * 起表前把「这一把记的是什么」定住,起表瞬间把缓冲清空 —— 和 Solo 逐字同一条
+   * (那边是 `cubeStartedRef`)。`cubeStarted` 那个分支不能重做清空:魔方起表走的是
+   * 同步路径,起表那一手**已经**在缓冲里了,再清一次就把这一把的第一步丢了。
+   */
+  const cubeStartedRef = useRef(false);
+  useEffect(() => {
+    if (timer.phase !== 'running') {
+      cubeStartedRef.current = false;
+      const r = roomRef.current, id = pidRef.current;
+      scrambleAtStartRef.current = (r && id ? myScramble(r, id) : null) ?? '';
+      eventAtStartRef.current = (r && id
+        ? netEventToSelectorId(playerEventOf(r, id))
+        : '333') as EventId;
+      const bt = btStatusRef.current;
+      deviceAtStartRef.current = bt?.connected ? { model: bt.brand, name: bt.deviceName } : null;
+    } else if (!cubeStartedRef.current) {
+      movesRef.current = [];
+      solveStartTsRef.current = performance.now();
+    }
+  }, [timer.phase, room]);
 
   // 起表瞬间锁定「这条打乱属于第几轮」:交卷投递到该轮,轮次已被推进则服务端拒收
   useEffect(() => {
@@ -568,11 +627,19 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
   startFromCubeRef.current = (ts: number) => {
     if (gateRef.current || startAtRef.current !== null || !canSolveRef.current) return;
     if (!timer.startFromCube(ts)) return;
+    // 起表那一手也属于这一把,所以缓冲要在**这里**清干净并把零点定在它身上。
+    // 交给上面那个 phase effect 做就晚了一个 React 周期,第一步会被清掉。
+    cubeStartedRef.current = true;
+    movesRef.current = [];
+    solveStartTsRef.current = ts;
     phaseRef.current = 'running';
   };
 
   const bluetoothCube = useBluetoothCube({
     onMove: (move, ts) => {
+      // 先起表,后广播:如果这一手就是起表那一手,下面的录制订阅必须已经看到
+      // 「在计时」。它读的是 `phaseRef`,而上面那行是同步写的 —— 等 React 重渲染
+      // 就会丢掉这一步,而 BLE 可能在同一个调用栈里连给两手。
       startFromCubeRef.current(ts);
       for (const sub of btSubscribersRef.current) {
         try { sub(move, ts); } catch (e) { console.error('[bt-broadcast]', e); }
@@ -621,9 +688,8 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
    * 顺带一个好处:enabled 随轮次翻转(交卷→关,新一轮→开),等于每轮自动重新布防,
    * useAutoReady 的「一次性 fire」正好按轮复位。
    */
-  // 'scrambled'(全站默认)在这里等于关:这个 shell 不做打乱校验,没有那个信号可读。
-  // 退回 'still' 更糟 —— 用户选的是「打乱对了再预备」,给他「停手两秒就预备」是另一条
-  // 规则,在多人房里会把没就位的人拖进起表。
+  // 'scrambled'(全站默认)不走这个 hook —— 它只认转动手势,而「打乱对了」是状态,
+  // 由下面的打乱校验那段直接触发预备。两条路的房间态门控是同一套。
   const autoReadyEnabled =
     (settings.bluetoothAutoReady === 'still' || settings.bluetoothAutoReady === 'double-flick')
     && bluetoothCube.status.connected
@@ -646,6 +712,83 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
       return () => { subs.delete(cb); };
     },
   });
+
+  const btStatusRef = useRef(bluetoothCube.status);
+  btStatusRef.current = bluetoothCube.status;
+  const btCubeRef = useRef(bluetoothCube);
+  useEffect(() => { btCubeRef.current = bluetoothCube; }, [bluetoothCube]);
+
+  // dev 专用假魔方(生产构建里整段是空操作)。房里这条路和 Solo 不是同一条 —— 起表
+  // 门控、打乱校验、录制都是这个文件自己的 —— 所以没硬件时也要能真的走一遍。
+  const scrambleForFakeRef = useRef<string>('');
+  useEffect(() => { installFakeCube(() => scrambleForFakeRef.current); }, []);
+
+  // 录制:计时中的每一手进缓冲,时刻相对起表点。和 Solo 同一个订阅位。
+  useEffect(() => {
+    const subs = btSubscribersRef.current;
+    const recorder = (m: string, ts: number) => {
+      if (phaseRef.current !== 'running') return;
+      movesRef.current.push({ m, ts: ts - solveStartTsRef.current });
+    };
+    subs.add(recorder);
+    return () => { subs.delete(recorder); };
+  }, []);
+
+  // 我这一轮要拧的打乱。房里可以各选各的项目,所以是 per-player 的;没身份时退回
+  // 房间项目那条(大厅预览)。
+  const myScr = room && pid ? myScramble(room, pid) : (room?.scrambles[room.event] ?? null);
+  scrambleForFakeRef.current = myScr ?? '';
+
+  // ── 打乱校验 + 逐步提示 ─────────────────────────────────────
+  // 联机房原来没有这个信号,于是全站默认的「打乱正确即预备」在房里等于关着。
+  // 魔方本来就知道自己是什么状态,这是它比按键强的地方,没有理由只在 Solo 用。
+  // 只比三阶:追踪器建模的就是三阶,而 FMC / 多盲的打乱串根本没有可比对象。
+  const scrambleTarget = useMemo<CubeFaces | null>(() => {
+    if (myEvent !== '333' && myEvent !== '333oh') return null;
+    const s = myScr ?? '';
+    if (!s.trim()) return null;
+    try { return applyScramble(3, s); } catch { return null; }
+  }, [myEvent, myScr]);
+  const [scrambleMatch, setScrambleMatch] = useState<boolean | null>(null);
+  const [scrambleHint, setScrambleHint] = useState<ScrambleHint | null>(null);
+  const scrambleTargetRef = useRef<CubeFaces | null>(null);
+  const scrambleTextRef = useRef('');
+  useEffect(() => {
+    scrambleTargetRef.current = scrambleTarget;
+    scrambleTextRef.current = scrambleTarget ? (myScr ?? '') : '';
+    setScrambleMatch(null);
+    setScrambleHint(null);
+  }, [scrambleTarget, myScr]);
+  useEffect(() => {
+    const subs = btSubscribersRef.current;
+    const verify = () => {
+      const target = scrambleTargetRef.current;
+      if (!target) return;
+      // 计时中魔方本来就不该等于打乱了,这时比对没有意义。
+      if (phaseRef.current === 'running') return;
+      const faces = btCubeRef.current?.getFaces();
+      if (!faces) return;
+      const match = facesEqual(faces, target);
+      setScrambleMatch(match);
+      // 「打乱正确即预备」放在这里而不是放在 scrambleMatch 的 effect 里:它是
+      // 「这一手把打乱拧完了」这个**事件**,不是「等于打乱」这个状态。当成状态的话,
+      // 停表那一次提交也会命中(计时中跳过比对,所以那时的值还是拧完打乱时的 true),
+      // 于是每把结束都会自动预备下一把,下一条打乱的头几手就把表起了。
+      // 房间态门控与 useAutoReady 那段同一套(理由见其上的长注释)。
+      if (match
+        && settings.bluetoothAutoReady === 'scrambled'
+        && !gateRef.current && startAtRef.current === null && canSolveRef.current) {
+        const ph = phaseRef.current;
+        if (ph === 'idle' || ph === 'stopped') timer.onPressDown();
+      }
+      const text = scrambleTextRef.current;
+      if (!text) { setScrambleHint(null); return; }
+      setScrambleHint(hintScramble(text, faces));
+    };
+    subs.add(verify);
+    return () => { subs.delete(verify); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings.bluetoothAutoReady]);
 
   // ── 按压接线(pointer 在计时面板 + 空格全局)────────────────────
   const pressDown = useCallback(() => {
@@ -1032,7 +1175,6 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
     .map((w) => { const p = room.players[w]; return p ? netPlayerName(p, isZh) : '?'; })
     .join(' / ');
   const serverNowEst = Date.now() + (offsetRef.current ?? 0);
-  const myScr = pid ? myScramble(room, pid) : (room.scrambles[room.event] ?? null);
   const displayScramble = myScr ? formatScrambleForEvent(myEvent, myScr) : '';
   /** 房内是否存在多种项目(决定玩家条/历史是否显示各自项目图标)。 */
   const mixedEvents = new Set(players.map((p) => p.event || room.event)).size > 1;
@@ -1125,13 +1267,27 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
           scrambleSlot={
             <div
               className={`scramble-strip sf-${settings.scrambleFont}`}
+              // 智能魔方的打乱校验:魔方状态 == 这条打乱作用于还原态时为 'ok'。
+              // 没魔方 / 没可比状态 / 一手没拧过 → 不出这个属性。
+              data-scramble-match={scrambleMatch === null ? undefined : scrambleMatch ? 'ok' : 'off'}
               style={{ '--scramble-scale': settings.scrambleFontScale } as React.CSSProperties}
               onClick={copyScramble}
               title={tr({ zh: '点击复制打乱', en: 'Click to copy' })}
             >
               <span className="scramble-text">
-                {displayScramble || tr({ zh: '生成打乱中…', en: 'Generating scramble…' })}
+                {scrambleHint && !scrambleHint.complete
+                  ? <ScrambleHintText hint={scrambleHint} />
+                  : displayScramble || tr({ zh: '生成打乱中…', en: 'Generating scramble…' })}
               </span>
+              {/* 提示条自己就是状态,拧到一半标「不符」读起来像出错;只在提示条说不了的
+                  两种状态出这枚标:拧完了、和打乱完全对不上。 */}
+              {!(scrambleHint && !scrambleHint.complete) && scrambleMatch !== null && (
+                <span className="scramble-verify" data-ok={scrambleMatch ? 'true' : 'false'}>
+                  {scrambleMatch
+                    ? tr({ zh: '打乱已就绪', en: 'Scrambled' })
+                    : tr({ zh: '与打乱不符', en: 'Doesn’t match' })}
+                </span>
+              )}
               {scrambleCopied && <span className="net-copied">{tr({ zh: '已复制', en: 'Copied' })}</span>}
             </div>
           }

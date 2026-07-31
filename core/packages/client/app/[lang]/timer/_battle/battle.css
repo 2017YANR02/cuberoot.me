@@ -2078,3 +2078,71 @@ body.solo .scramble-img {
         font-size: clamp(1.6rem, 10vw, 3rem);
     }
 }
+
+/* ==========================================================
+   智能魔方(设置面板里的组 + 格子里的状态点)
+   ========================================================== */
+
+/* 逐人连接按钮。已连时按品牌名显示,所以宽度贴合内容而不钉死。 */
+.bc-connect-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--background);
+    color: var(--muted-foreground);
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+.bc-connect-btn:hover {
+    background: color-mix(in srgb, var(--foreground) 5%, transparent);
+}
+.bc-connect-btn.is-live {
+    border-color: var(--signal-success);
+    color: var(--signal-success);
+}
+
+/* 「轮到谁」:选项恒 ≤4 且要横着比,所以用 chip 而不是下拉。 */
+.bc-holder-row {
+    display: flex;
+    gap: 6px;
+}
+.bc-holder-btn {
+    background: var(--background);
+    color: var(--muted-foreground);
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+.bc-holder-btn:hover {
+    background: color-mix(in srgb, var(--foreground) 5%, transparent);
+}
+.bc-holder-btn.is-holder {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.bc-hint {
+    color: var(--faint-foreground);
+    font-size: 0.8rem;
+    line-height: 1.5;
+    padding-top: 4px;
+}
+
+/* 状态点。挂在已有的比分/控制条上(middle-bar 的 score-section、田字格的
+   cell-controls),不另起浮层 —— 放进 player-area 的正常流会压在打乱那行上。
+   轮到本人时用品牌色,否则弱化 —— 只说这两件事。 */
+.bc-dot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--faint-foreground);
+}
+.bc-dot.is-holding {
+    color: var(--accent);
+}

@@ -15,7 +15,7 @@
  * The engine itself (_shared/useTimer + _lib/scramble + _lib/storage) is untouched.
  */
 
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import dynamic from 'next/dynamic';
 import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsBoolean, parseAsString, parseAsStringEnum } from 'nuqs';
@@ -72,6 +72,7 @@ import { mirrorForBrand, readDevQuatSource, sensorBasisForBrand, type Quat } fro
 import { GyroRecorder, encodeGyroTrack } from '../_lib/bluetooth/gyro_track';
 import { applyScramble, facesEqual, type CubeFaces } from '../_lib/cube/state';
 import { hintScramble, type ScrambleHint } from '../_lib/bluetooth/scramble_hint';
+import ScrambleHintText from '../_components/ScrambleHintText';
 import { createFixupRequester } from '../_lib/bluetooth/scramble_fixup';
 import { installFakeCube } from '../_lib/bluetooth/fake_cube';
 import { nxnSizeForEvent } from '../_lib/cube/colors';
@@ -2166,26 +2167,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                         // 打乱拧完(complete)就整条恢复正常 —— 此时右侧「打乱已就绪」已经说明一切,
                         // 再留一堆暗字反而像出错。拧歪(hint === null)也回到纯文本。
                         if (scrambleHint && !scrambleHint.complete) {
-                          const h = scrambleHint;
-                          const moves = [
-                            ...h.done.map((m) => ({ m, state: 'done' })),
-                            ...(h.current === null ? [] : [{ m: h.current, state: 'current' }]),
-                            ...h.pending.map((m) => ({ m, state: 'pending' })),
-                          ];
-                          return moves.map(({ m, state }, idx) => {
-                            const isLast = idx === moves.length - 1;
-                            const span = (
-                              <span className="scramble-move" data-hint={state}>{m}</span>
-                            );
-                            return (
-                              <Fragment key={idx}>
-                                {idx > 0 ? ' ' : null}
-                                {isLast
-                                  ? <span className="scramble-copied-tail">{span}{copiedCheck}</span>
-                                  : span}
-                              </Fragment>
-                            );
-                          });
+                          return <ScrambleHintText hint={scrambleHint} tailExtra={copiedCheck} />;
                         }
                         const i = displayScramble.lastIndexOf(' ');
                         const head = i >= 0 ? displayScramble.slice(0, i + 1) : '';
