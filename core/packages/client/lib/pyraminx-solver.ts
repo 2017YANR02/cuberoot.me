@@ -465,6 +465,49 @@ export function derivePyraScramble(facelet: string): string {
   return invertPyraAlg(solvePyraFacelet(facelet).solution);
 }
 
+/**
+ * 与 `scramble` **状态完全相同**、但绕了一段随机远路的等价打乱(≈10-15 步)。
+ *
+ * 公式库里的 setup 都是最少步(金字塔 L4E 多为 4-7 步),照着念一遍就等于把答案倒背了一遍 ——
+ * 打乱完手还记得最后三步,练的是记忆不是识别(issue #64)。这里换一条到达同一状态的长路:
+ * 先随机走 `detour` 步 R,再把「剩下要补的那个群元」= R⁻¹·S 解出来取逆接在后面。乘起来
+ * 恰好还是 S,所以**摆出来的魔方一模一样**(连尖块朝向都一样),只是没法反推。
+ *
+ * 尾段走的是随机剩余态的最优解,不是 case 本身 —— 结构上与 case 无关,记不住。
+ * 求解本身是本地精确表(建表 ~240ms 一次,之后每条 ~0.1ms),同步返回。
+ */
+export function equivalentPyraScramble(
+  scramble: string,
+  opts?: { detour?: number; rng?: () => number },
+): string {
+  const src = scramble.trim();
+  // 一个认得的记号都没有(空串 / 别的拼图的记号):原样退回。tnoodle 的解析器对认不出的
+  // token 是**静默跳过**,不是抛错 —— 不先拦一道的话,这里会给一段「什么都没做」的乱码
+  // 编出一条 12 步的假打乱。
+  if (!invertPyraAlg(src)) return src;
+  const rand = opts?.rng ?? Math.random;
+  const detour = Math.max(1, opts?.detour ?? 6);
+
+  const head: string[] = [];
+  let lastAxis = -1;
+  for (let i = 0; i < detour; i++) {
+    let axis: number;
+    do { axis = Math.floor(rand() * 4); } while (axis === lastAxis);   // 同轴连出会自相抵消
+    lastAxis = axis;
+    head.push(AXIS_LETTERS[axis] + (rand() < 0.5 ? '' : "'"));
+  }
+
+  try {
+    const target = pyraFaceletFromMoves(src);
+    const residual = pyraFaceletFromMoves(`${invertPyraAlg(head.join(' '))} ${src}`);
+    const out = `${head.join(' ')} ${derivePyraScramble(residual)}`.trim();
+    // 兜底:算出来的东西必须真的摆成同一个状态,否则宁可用原打乱(错打乱 = 错练)
+    return pyraFaceletFromMoves(out) === target ? out : src;
+  } catch {
+    return src;
+  }
+}
+
 /** 随机合法状态:核心随机走 10 步(同轴不连出)+ 4 个尖各自随机。 */
 export function randomLegalPyraFacelet(): string {
   const tokens: string[] = [];

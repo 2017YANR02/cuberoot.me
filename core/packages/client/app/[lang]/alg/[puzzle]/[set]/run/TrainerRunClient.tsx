@@ -342,6 +342,8 @@ export default function TrainerRunClient() {
     // cstimer 风格 = 求解器现算随机态打乱,不依赖表 meta,3x3 一律可用(issue #30)。
     // 虚拟集的打乱本来就是求解器现算的随机态序列,再求一次解只是换个等价写法 —— 不给这个选项。
     if (puzzle === '3x3' && !virtual) seen.add('cstimer');
+    // 金字塔:同状态的随机长打乱 + 随机顶层朝向(issue #64),本地求解器现算,一律可用。
+    if (puzzle === 'pyraminx') seen.add('rand');
     return SCRAMBLE_KINDS.filter(k => seen.has(k.id));
   }, [pool, cases, puzzle, virtual]);
 
@@ -349,10 +351,13 @@ export default function TrainerRunClient() {
   // value 落空、显示成一片空白。退回 `inv`(它永远支持)。
   // pool 为空(还没选 case / cases 未加载)时 kinds 只是过渡态(仅 cstimer),此时 htm 尚未
   // 「入列」不代表不被支持 —— 据此重置会把默认 htm 误打回 inv,且之后 htm 可用也不再扶回。
+  // 金字塔的默认是 `rand`(setup 原文太短,念一遍等于背答案 —— issue #64),不是 `inv`。
   useEffect(() => {
     if (pool.length === 0) return;
-    if (kinds.length && !kinds.some(k => k.id === scrambleKind)) setScrambleKind('inv');
-  }, [kinds, scrambleKind, setScrambleKind, pool.length]);
+    if (kinds.length && !kinds.some(k => k.id === scrambleKind)) {
+      setScrambleKind(puzzle === 'pyraminx' ? 'rand' : 'inv');
+    }
+  }, [kinds, scrambleKind, setScrambleKind, pool.length, puzzle]);
 
   useEffect(() => {
     // 读 live 状态而不是闭包值:setScope 的 effect 可能在同一个 commit 里已经出过题了,
