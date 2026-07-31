@@ -10,7 +10,7 @@
 
 /* 宽屏两栏(/sim 同款:左边只有魔方,右边全是字与控件)。
    窄屏什么都不做 —— .predict-page 仍是普通块流,.predict-boardcol 只是个透明的壳,
-   顺序照旧「标题 → 参数 → 题板 → 复盘条 → 题面 → 按钮 → 公式」。
+   顺序为「标题 → 参数 → 题板 → 复盘条 → 公式 → 题面 → 按钮」。
    宽屏改用 grid-template-areas 摆位:题板整列贴住视口顶(sticky),右列跟页面一起滚,
    于是滚到底看公式清单时魔方还在。 */
 @media (min-width: 900px) {
@@ -22,9 +22,9 @@
       "topbar topbar"
       "board  header"
       "board  controls"
+      "board  moves"
       "board  prompt"
       "board  actions"
-      "board  moves"
       "board  origin";
     align-items: start;
     column-gap: 1.75rem;
@@ -385,6 +385,11 @@
 }
 
 /* ---- 招式 ---- */
+
+/* 排在题面上方(先看要做什么,再看问什么),自己带开题板 / 复盘条的间距 */
+.predict-moves {
+  margin-top: 0.9rem;
+}
 
 .predict-moves h2 {
   margin: 0 0 0.5rem;
