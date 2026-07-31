@@ -650,6 +650,14 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
               en: 'Once a cube is connected, the picture under the time switches from the scramble preview to the cube in your hands. 3D turns with the cube via its gyroscope — 3x3 only, and only while the cube reports orientation and its state is anchored at solved; phones and cubes with no orientation fall back to the net. The net shows all six faces so you can check them one by one; the isometric draws only three',
             })}</span>
           </Row>
+          <Row label={tr({ zh: '录姿态用于回放', en: 'Record orientation for replay'
+        })}>
+            <BoolToggle value={s.recordGyro} onChange={(v) => updateSettings({ recordGyro: v })} />
+            <span className="hint">{tr({
+              zh: '把魔方的朝向一起存进成绩,复盘里就能重放「怎么拧的」——转体在哪儿发生、握持怎么换。压过之后一把几百字节,但它花的是浏览器本地存储的配额,而且会让魔方一直发姿态、费电,所以默认关',
+              en: 'Stores the cube’s orientation alongside the solve so the report can replay HOW you turned it — where the rotations happened, how the grip changed. A few hundred bytes per solve after compression, but it spends your browser storage and keeps the cube streaming orientation (battery), so it is off by default',
+            })}</span>
+          </Row>
           <Row label={tr({ zh: '隐藏运行中的时间', en: 'Hide time while running'
         })}>
             <BoolToggle value={s.hideTime} onChange={(v) => updateSettings({ hideTime: v })} />

@@ -623,6 +623,8 @@ export default function ReconstructModal({
                 totalMs={solve.timeMs}
                 isZh={isZh}
                 lines={reconText?.lines ?? []}
+                gyro={solve.gyro ?? null}
+                deviceModel={solve.device?.model ?? null}
                 side={reconText ? ({ idx, seek }) => (
                   <StepMoveList
                     recon={reconText}
