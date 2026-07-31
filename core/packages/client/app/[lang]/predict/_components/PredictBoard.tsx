@@ -29,6 +29,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RotateCcw } from 'lucide-react';
+import type * as THREE from 'three';
 import type World from '@/app/[lang]/sim/engine/world';
 import type Cube from '@/app/[lang]/sim/engine/nxn/cube';
 import type Toucher from '@/app/[lang]/sim/Toucher';
@@ -347,26 +348,45 @@ async function mountNxnPainter(
 
 // ─── 金字塔 / 斜转 / 枫叶:逐张贴纸 mesh,直接改材质色 ────────────────────
 
+/** 贴纸正面那份材质:三个拼图各用各的(Phong / Lambert),这里只用到「有 color」。 */
+type CapMaterial = THREE.Material & { color: THREE.Color };
+
 async function mountSolidPainter(
   puzzle: PredictPuzzle, world: World, mount: SimMount,
   onStickerRef: React.RefObject<(slot: number) => void>,
   disposers: (() => void)[],
 ): Promise<Painter> {
-  const [three, gesture, slotMap] = await Promise.all([
+  const [three, gesture, slotMap, outline] = await Promise.all([
     import('three'),
     import('@/components/sim-embed/orbitTapGesture'),
     import('./engineSlotMap'),
+    import('./solidOutline'),
   ]);
 
   const meshes = slotMap.collectStickerMeshes(puzzle, world.cube);
   // 引擎的 stickerMat 按颜色缓存 + 共享 → 必须逐张 clone,否则改一张串一片。
   const caps = meshes.map((mesh) => {
     const mats = mesh.material;
-    const cap = (Array.isArray(mats) ? mats[0] : mats).clone();
+    const cap = (Array.isArray(mats) ? mats[0] : mats).clone() as CapMaterial;
     mesh.material = Array.isArray(mats) ? [cap, mats[1]] : cap;
-    return cap as unknown as { color: { set(c: string): void }; dispose(): void };
+    return cap;
   });
   disposers.push(() => { for (const c of caps) c.dispose(); });
+
+  // 高亮框(= NxN 的 FM_OUTLINE)。只有真被点名的贴纸才需要,所以按需建、建完留着复用。
+  const frames = new Array<ReturnType<typeof outline.attachStickerFrame>>(meshes.length).fill(null);
+  const framed = (i: number): (typeof frames)[number] => {
+    // 材质克隆自这张贴纸自己那份(同型号才和没加框的贴纸一个观感);dispose 归这里管。
+    frames[i] ??= outline.attachStickerFrame(meshes[i], caps[i].clone() as CapMaterial);
+    return frames[i];
+  };
+  disposers.push(() => {
+    for (const f of frames) {
+      if (!f) continue;
+      f.patch.removeFromParent();
+      f.material.dispose();
+    }
+  });
 
   // 金字塔的方位提示 = 四个顶点字母(U/L/R/B),正好就是它的转动记号。淡入靠
   // mountSimWorld 的 onFrame 每帧 tick(见挂载处)。
@@ -399,9 +419,14 @@ async function mountSolidPainter(
     for (let i = 0; i < caps.length; i++) {
       const label = shownLabels[i] ?? '';
       if (!label) continue;
-      caps[i].color.set(plain
-        ? shadedColor(label, 'bright')
-        : shadedColor(label, full.has(i) ? 'bright' : half.has(i) ? 'dim' : 'ignored'));
+      const own = shadedColor(label, plain || full.has(i)
+        ? 'bright' : half.has(i) ? 'dim' : 'ignored');
+      // 加框那张:本体整片刷描边色,中心那张副本刷回真实颜色 —— 与 NxN 同语义
+      //(颜色照旧是它自己的,只有外圈那一圈换成高亮色),玩家照样读得出是什么色。
+      const frame = !plain && full.has(i) ? framed(i) : frames[i];
+      if (frame) frame.patch.visible = !plain && full.has(i);
+      if (frame?.patch.visible) frame.material.color.set(own);
+      caps[i].color.set(frame?.patch.visible ? outline.OUTLINE_DEFAULT : own);
     }
   };
 
