@@ -38,6 +38,7 @@ import { formatTimeHtml as formatTime } from '@/app/[lang]/timer/_shared/format'
 import { computeAo5 } from '@/app/[lang]/timer/_shared/stats-core';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import type { PenaltyType } from '@/app/[lang]/timer/_battle/engine/constants';
+import { BattleCubesProvider, BattleCubeSettingsGroup, BattleCubeDot } from '@/app/[lang]/timer/_battle/BattleCubes';
 import HistoryPanel from '@/app/[lang]/timer/_battle/HistoryPanel';
 import VsHistoryPanel from '@/app/[lang]/timer/_battle/VsHistoryPanel';
 import { MilestoneToast } from '@/app/[lang]/timer/_battle/AdvancedFeatures';
@@ -640,6 +641,8 @@ function CellControls({ playerId, corner }: { playerId: number; corner: 'left' |
       </span>
       <BattleEventButton playerId={playerId} />
       <PenaltyDropdown playerId={playerId} />
+      {/* 智能魔方状态点 —— 挂在这条已有的控制条上,不另起一层浮层 */}
+      <BattleCubeDot playerId={playerId} />
     </div>
   );
 }
@@ -764,6 +767,7 @@ function MiddleBar({
           </span>
           <BattleEventButton playerId={leftId} />
           <PenaltyDropdown playerId={leftId} />
+          <BattleCubeDot playerId={leftId} />
         </div>
       )}
 
@@ -790,6 +794,7 @@ function MiddleBar({
           </span>
           <BattleEventButton playerId={rightId} />
           <PenaltyDropdown playerId={rightId} />
+          <BattleCubeDot playerId={rightId} />
         </div>
       )}
     </div>
@@ -1162,6 +1167,9 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
           </div>
         </div>
 
+        {/* 智能魔方 — 仅多人对战:选「每人一颗 / 一颗轮流」,逐人连接 */}
+        {store.mode !== 'solo' && <BattleCubeSettingsGroup />}
+
         {/* 背景自定义 — 1v1 双人独立,Solo 只显示 P1 */}
         <BackgroundSettingsGroup mode={store.mode} isZh={isZh} />
 
@@ -1352,6 +1360,7 @@ export default function BattleView({ playerCount, playersControl }: BattleViewPr
   );
 
   return (
+    <BattleCubesProvider>
     <div className={`battle-container${mode === '1v1' && !isGrid && store.layout === 'side' ? ' side-layout' : ''}${mode === '1v1' && !isGrid && store.layout === 'side' && bottomSame ? ' side-shared' : ''}${isGrid ? ' grid-layout' : ''}`}>
 
       {/* === 田字格布局：上排旋转 180° 面向对面;3 人时上排单区跨两列 ===
@@ -1492,5 +1501,6 @@ export default function BattleView({ playerCount, playersControl }: BattleViewPr
         <MilestoneToast message={toastMsg} onDone={() => setToastMsg(null)} />
       )}
     </div>
+    </BattleCubesProvider>
   );
 }
