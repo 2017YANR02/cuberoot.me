@@ -17,9 +17,16 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { createStackmatMicSource, type StackmatMicSource, type StackmatSnapshot } from './source';
+import {
+  createStackmatMicSource,
+  type StackmatInputDevice,
+  type StackmatMicSource,
+  type StackmatSnapshot,
+} from './source';
 
-export type { StackmatPhase, StackmatSnapshot, StackmatMicSource } from './source';
+export type {
+  StackmatPhase, StackmatSnapshot, StackmatMicSource, StackmatInputDevice,
+} from './source';
 export { createStackmatMicSource, packetToPhase, phaseToTimerState } from './source';
 export type { StackmatPacket } from './packet';
 
@@ -29,13 +36,26 @@ export interface StackmatStatus {
   phase: StackmatPhase;
   ms: number;
   listening: boolean;
+  /** True while frames are actually decoding — "plugged in and talking". */
+  signalPresent: boolean;
+  /** Raw state byte of the last frame; '' before the first one. */
+  stateByte: string;
+  /** Device time resolution: 1 = ms, 10 = centiseconds, 0 = not known yet. */
+  unit: 0 | 1 | 10;
+  /** Audio input in use; '' = system default. */
+  deviceId: string;
 }
 
 export interface StackmatHandle {
   status: StackmatStatus;
-  start(): Promise<void>;
+  /** Start listening. Pass a deviceId to pin a specific audio input. */
+  start(deviceId?: string): Promise<void>;
   stop(): void;
   signalLevel: number;
+  /** Decoder noise estimate 0..1 — high with no signal means wrong input. */
+  noise: number;
+  /** Audio inputs; labels only populate after mic permission is granted. */
+  listInputDevices(): Promise<StackmatInputDevice[]>;
 }
 
 export interface UseStackmatOptions {
@@ -43,15 +63,29 @@ export interface UseStackmatOptions {
   onStop?: (ms: number) => void;
 }
 
-const IDLE_STATUS: StackmatStatus = { phase: 'unknown', ms: 0, listening: false };
+const IDLE_STATUS: StackmatStatus = {
+  phase: 'unknown', ms: 0, listening: false,
+  signalPresent: false, stateByte: '', unit: 0, deviceId: '',
+};
+
+function toStatus(s: StackmatSnapshot): StackmatStatus {
+  return {
+    phase: s.phase, ms: s.ms, listening: s.listening,
+    signalPresent: s.signalPresent, stateByte: s.stateByte,
+    unit: s.unit, deviceId: s.deviceId,
+  };
+}
 
 function sameStatus(a: StackmatStatus, b: StackmatStatus): boolean {
-  return a.phase === b.phase && a.ms === b.ms && a.listening === b.listening;
+  return a.phase === b.phase && a.ms === b.ms && a.listening === b.listening
+    && a.signalPresent === b.signalPresent && a.stateByte === b.stateByte
+    && a.unit === b.unit && a.deviceId === b.deviceId;
 }
 
 export function useStackmat(opts: UseStackmatOptions = {}): StackmatHandle {
   const [status, setStatus] = useState<StackmatStatus>(IDLE_STATUS);
   const [signalLevel, setSignalLevel] = useState(0);
+  const [noise, setNoise] = useState(0);
 
   const onStartRef = useRef(opts.onStart);
   const onStopRef = useRef(opts.onStop);
@@ -86,12 +120,13 @@ export function useStackmat(opts: UseStackmatOptions = {}): StackmatHandle {
         const s = pendingRef.current;
         pendingRef.current = null;
         if (!s) return;
-        const next: StackmatStatus = { phase: s.phase, ms: s.ms, listening: s.listening };
+        const next = toStatus(s);
         if (!sameStatus(next, appliedRef.current)) {
           appliedRef.current = next;
           setStatus(next);
         }
         setSignalLevel(s.signalLevel);
+        setNoise(s.noise);
       });
     });
 
@@ -108,11 +143,10 @@ export function useStackmat(opts: UseStackmatOptions = {}): StackmatHandle {
     };
   }, [source, cancelFlush]);
 
-  const start = useCallback(async (): Promise<void> => {
-    await source.connect();
+  const start = useCallback(async (deviceId?: string): Promise<void> => {
+    await source.connect(deviceId);
     // Reflect "listening" immediately rather than waiting for the first frame.
-    const s = source.snapshot();
-    const next: StackmatStatus = { phase: s.phase, ms: s.ms, listening: s.listening };
+    const next = toStatus(source.snapshot());
     appliedRef.current = next;
     setStatus(next);
   }, [source]);
@@ -120,10 +154,14 @@ export function useStackmat(opts: UseStackmatOptions = {}): StackmatHandle {
   const stop = useCallback((): void => {
     void source.disconnect();
     cancelFlush();
-    appliedRef.current = IDLE_STATUS;
-    setStatus(IDLE_STATUS);
+    const next: StackmatStatus = { ...IDLE_STATUS, deviceId: source.deviceId };
+    appliedRef.current = next;
+    setStatus(next);
     setSignalLevel(0);
+    setNoise(0);
   }, [source, cancelFlush]);
 
-  return { status, start, stop, signalLevel };
+  const listInputDevices = useCallback(() => source.listInputDevices(), [source]);
+
+  return { status, start, stop, signalLevel, noise, listInputDevices };
 }
