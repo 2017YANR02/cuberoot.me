@@ -128,7 +128,7 @@ function PodiumCompGroup({
       <tr className="wp-podium-comp-row">
         <td colSpan={5}>
           <Link {...compLinkProps(comp.compId, { view: 'result' })} className="wp-bycomp-name">
-            <CompCell compId={comp.compId} compName={comp.compName} isZh={isZh} />
+            <CompCell compId={comp.compId} compName={comp.compName} isZh={isZh} date={comp.compDate} />
           </Link>
           <span className="wp-cell-comp-date">{formatDateRangeIso(comp.compDate, comp.compDate)}</span>
         </td>

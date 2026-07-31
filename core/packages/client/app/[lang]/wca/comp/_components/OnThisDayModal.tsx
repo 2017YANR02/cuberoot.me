@@ -197,7 +197,8 @@ export default function OnThisDayModal({ date: initialDate, isZh, onClose }: Pro
                         className="otd-comp-name"
                         {...compLinkProps(m.comp.id)}
                       >
-                        {localizeCompName(m.comp.id, m.comp.name, isZh)}
+                        {/* 分组标题就是年份 —— 比赛名里的年号是重复信息,剥掉 */}
+                        {localizeCompName(m.comp.id, m.comp.name, isZh, { date: m.comp.start_date })}
                       </Link>
                       <span className="otd-meta">
                         <MapPin size={12} className="otd-icon" />

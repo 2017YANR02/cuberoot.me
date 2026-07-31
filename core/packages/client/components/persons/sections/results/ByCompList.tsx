@@ -201,7 +201,7 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                         {...compLinkProps(comp.id, { view: 'result' })}
                         prefetch={false}
                         className="wp-bycomp-name"
-                      ><CompCell compId={comp.id} compName={comp.name} isZh={isZh} /></Link>
+                      ><CompCell compId={comp.id} compName={comp.name} isZh={isZh} date={comp.start_date} /></Link>
                       <span className="wp-bycomp-date">{formatDateRangeIso(comp.start_date, comp.end_date)}</span>
                     </div>
                   </th>

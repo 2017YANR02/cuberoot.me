@@ -200,18 +200,10 @@ function monthGridStart(year: number, month: number): Date {
 
 // 中文模式下比赛名本地化:upcoming JSON 的 name_zh(追踪选手近期赛)→ comp_names_zh.json 的英→中映射 → 兜底英文。
 // 走单一入口 localizeCompName,c.name_zh 通过 explicitNameZh 传进去。
-function localizeName(c: { id?: string; name: string; name_zh?: string }, isZh: boolean): string {
-  return localizeCompName(c.id ?? '', c.name, isZh, { explicitNameZh: c.name_zh });
-}
-
-// 日历/紧凑/详情视图里去掉名字结尾的年份 —— 月历自带年月,名字里的年是冗余。
-// 英文名 "Wuhan Open 2026"(空格分隔)和中文名贴年 "漳州公开赛2026"(stripWcaPrefix 把前缀年挪到尾部、
-// 结尾是 CJK 时不加空格)都要去掉,否则只有英文名/带拉丁后缀的被剥、纯中文名残留年份(就是用户看到的不一致)。
-// 仅用于日历相关视图;列表视图保留年份(跨年滚动需消歧)。
-function localizeNameNoYear(c: { id?: string; name: string; name_zh?: string }, isZh: boolean): string {
-  const name = localizeName(c, isZh);
-  const out = name.replace(/\s*(?:19|20)\d{2}$/, '').trimEnd();
-  return out || name;
+// date:该视图旁边已经显示的比赛日期/年份(日历自带年月、列表有日期列)—— 传了就剥掉名字里
+// 重复的年号(全站规则 issue #65,单一实现 stripCompYear);纯名字场合(排序键 / 名长指标)不传。
+function localizeName(c: { id?: string; name: string; name_zh?: string }, isZh: boolean, date?: string | null): string {
+  return localizeCompName(c.id ?? '', c.name, isZh, { explicitNameZh: c.name_zh, date });
 }
 
 function Flag({ iso2 }: { iso2: string }) {
@@ -962,7 +954,7 @@ function measureNameCityCols(comps: Competition[], isZh: boolean): { namePx: num
   ctx.font = `500 ${nameFontPx}px ${bodyFont}`;
   let maxName = 0;
   for (let i = 0; i < comps.length; i++) {
-    const w = ctx.measureText(localizeName(comps[i], isZh)).width;
+    const w = ctx.measureText(localizeName(comps[i], isZh, comps[i].start_date)).width;
     if (w > maxName) maxName = w;
   }
   ctx.font = `400 ${cityFontPx}px ${bodyFont}`;
@@ -1236,7 +1228,8 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
           const endDate = c.end_date || c.start_date;
           const dateStr = formatDateRangeIso(c.start_date, endDate);
           const crossYear = c.start_date.slice(0, 4) !== endDate.slice(0, 4);
-          const displayName = localizeName(c, isZh);
+          // 左边就是日期列(带年,跨年时两半都写全)—— 名字里的年号是重复信息,剥掉。
+          const displayName = localizeName(c, isZh, c.start_date);
           const displayCity = displayCityOf(c, isZh);
           const prefetch = c.rounds ? undefined : () => { void fetchCompRounds(c.id); };
           const events = c.events ?? [];
@@ -2580,7 +2573,7 @@ function CalendarPageInner() {
                 {week.bars.map((bar) => {
                   const reg = regState(bar.comp.registration_open, bar.comp.registration_close, bar.comp.registered, bar.comp.competitor_limit);
                   const cancelled = isCancelledComp(bar.comp, cancelledCutoffIso);
-                  const displayName = localizeNameNoYear(bar.comp, isZh);
+                  const displayName = localizeName(bar.comp, isZh, bar.comp.start_date);
                   const classes = [
                     'event-bar',
                     `reg-${reg}`,
@@ -2670,7 +2663,7 @@ function CalendarPageInner() {
                       const titleText = tile.count > 1
                         ? `${countryName(c.country, isZh)} — ${tile.count}${tr({ zh: ' 场', en: ' comps'
                         })}`
-                        : `${localizeNameNoYear(c, isZh)} — ${c.top_cubers.length} cubers`;
+                        : `${localizeName(c, isZh, c.start_date)} — ${c.top_cubers.length} cubers`;
                       return (
                         <button
                           key={`${c.country.toLowerCase()}-${c.id}`}

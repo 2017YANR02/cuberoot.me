@@ -138,7 +138,7 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
   // 微信朋友圈/会话卡片:标题=成绩(时间 项目 选手),描述补上比赛+日期。私享门(下方 early return)
   // 之前 solve 为 null,传 null 即 no-op;非微信内置浏览器同样静默。
   const reconShareDesc = solve?.comp
-    ? `${localizeCompName(solve.compWcaId ?? '', solve.comp, isZh)}${solve.date ? ` ${solve.date.slice(0, 10)}` : ''}`
+    ? `${localizeCompName(solve.compWcaId ?? '', solve.comp, isZh, { date: solve.date })}${solve.date ? ` ${solve.date.slice(0, 10)}` : ''}`
     : '';
   useWeChatShare(solve ? { title: reconTitle, desc: reconShareDesc } : null);
 
@@ -262,11 +262,12 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
             <span className="detail-meta-item">
               {solve.country && <Flag iso2={solve.country} className="recon-inline-flag" />}
               <span>
+                {/* 同一条 meta bar 左边已经写着日期 —— 比赛名里的年号剥掉 */}
                 {solve.compWcaId ? (
                   <Link {...compLinkProps(solve.compWcaId)}>
-                    {localizeCompName(solve.compWcaId ?? '', solve.comp, isZh)}
+                    {localizeCompName(solve.compWcaId ?? '', solve.comp, isZh, { date: solve.date })}
                   </Link>
-                ) : localizeCompName(solve.compWcaId ?? '', solve.comp, isZh)}
+                ) : localizeCompName(solve.compWcaId ?? '', solve.comp, isZh, { date: solve.date })}
                 {solve.round && (isZh ? `，${localizeRound(solve.round, t)}` : `, ${localizeRound(solve.round, t)}`)}
               </span>
             </span>

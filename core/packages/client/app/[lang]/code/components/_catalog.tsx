@@ -1475,7 +1475,7 @@ export const CATALOG: ComponentEntry[] = [
     category: 'display',
     zh: `行内小单元:国旗 + 本地化比赛名,从 compId 推导国旗与中文名,适合在表格 / 列表里紧凑显示一场比赛(noFlag 可去旗)。`,
     en: `Inline cell showing a country flag plus localized competition name, deriving flag and Chinese name from compId; good for compactly showing one comp in tables/lists (noFlag drops the flag).`,
-    note: { zh: `比赛名一律走 localizeCompName,别直接渲染原始 c.name。`, en: `Always localize via localizeCompName; don't render the raw c.name.` },
+    note: { zh: `比赛名一律走 localizeCompName,别直接渲染原始 c.name。date 必填:同行/同卡已显示日期就传进去(名字里重复的年号会被剥掉),没显示年份的地方传 null。`, en: `Always localize via localizeCompName; don't render the raw c.name. The date prop is required: pass the date already shown in the same row/card (the duplicate year is stripped from the name), or null where no year is shown.` },
   },
   {
     name: 'MonthGrid',

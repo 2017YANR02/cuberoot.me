@@ -95,7 +95,7 @@ export default function CompsTab({ profile, results, comps, isZh }: Props) {
                   <Link
                     {...compLinkProps(c.id)}
                     className="wp-link-comp"
-                  ><CompCell compId={c.id} compName={c.name} isZh={isZh} /></Link>
+                  ><CompCell compId={c.id} compName={c.name} isZh={isZh} date={c.start_date} /></Link>
                 </td>
                 <td className="wp-cell-events">
                   <span className="wp-event-strip">

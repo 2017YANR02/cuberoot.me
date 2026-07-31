@@ -125,7 +125,8 @@ function AllEventsDonePageInner() {
                       <PersonLink wcaId={r.wcaId} name={r.name} isZh={isZh} />
                     </td>
                     <td className="wse-value-col">{r.daysToComplete != null ? `${r.daysToComplete.toLocaleString()} ${tr({ zh: '天', en: 'd' })}` : '—'}</td>
-                    <td>{r.achievementCompId ? <CompCell compId={r.achievementCompId} compName={r.achievementCompName} isZh={isZh} /> : ''}</td>
+                    {/* 无日期列,年号是这格唯一的时间信息 —— 保留(date={null}) */}
+                    <td>{r.achievementCompId ? <CompCell compId={r.achievementCompId} compName={r.achievementCompName} isZh={isZh} date={null} /> : ''}</td>
                     <td className="wse-value-col">{r.totalCompCount}</td>
                     {!onlyDone && <td className="wse-value-col">{r.doneCount}/17</td>}
                     <td>
