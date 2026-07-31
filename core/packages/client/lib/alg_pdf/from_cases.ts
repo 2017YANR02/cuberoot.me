@@ -54,6 +54,8 @@ export interface FromCasesOptions {
    * 顺序即优先级(第一条是主推解法),所以砍掉的是尾巴。传 `Infinity` 全印。
    */
   maxAlgs?: number;
+  /** 每个子组另起一页(见 {@link AlgPdfSheetInput.groupPerPage});只有一个子组时自动失效。 */
+  groupPerPage?: boolean;
 }
 
 export function algSheetFromCases(o: FromCasesOptions): AlgSheetInput {
@@ -103,5 +105,6 @@ export function algSheetFromCases(o: FromCasesOptions): AlgSheetInput {
     subtitle: o.sourcePath ? `${count} — cuberoot.me${o.sourcePath}` : count,
     cases: out,
     filename: o.filename,
+    groupPerPage: showGroups && o.groupPerPage,
   };
 }
