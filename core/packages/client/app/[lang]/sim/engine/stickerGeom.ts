@@ -138,6 +138,35 @@ export function cubeFaceBasis(normal: readonly number[]): FaceBasis {
   return { u, v, n };
 }
 
+/**
+ * A sticker's OUTWARD-facing contour, tagged onto its geometry's `userData` at build
+ * time. Anything that wants to draw tight to a sticker's edge (/predict's highlight
+ * frame) needs the contour itself: a triangle soup only gives you the boundary back by
+ * reverse-engineering the extruder, and a centroid scale is NOT an offset — it widens
+ * with the local radius, so on a long shape (Ivy petal) the band balloons at the tip and
+ * vanishes at the arc. `pts` are the SAME samples the extruder used, so the two edges
+ * coincide exactly.
+ */
+export interface StickerOutline {
+  /** Contour samples in the sticker's own in-plane coords, no repeated closing point. */
+  pts: V2[];
+  /** (x, y, 0) → a 3D point on the sticker's outward cap, in the geometry's own frame. */
+  matrix: THREE.Matrix4;
+}
+
+/** Tag the outward contour onto an extruded sticker geometry. `basis` maps in-plane
+ *  coords back to 3D; `depth`/`flip` are the extrude's, and decide which cap faces out. */
+export function tagStickerOutline(
+  geo: THREE.BufferGeometry, pts: V2[], basis: THREE.Matrix4, depth: number, flip: boolean,
+): void {
+  const last = pts[pts.length - 1];
+  const closed = pts.length > 1 && last[0] === pts[0][0] && last[1] === pts[0][1];
+  geo.userData.simStickerOutline = {
+    pts: closed ? pts.slice(0, -1) : pts,
+    matrix: basis.clone().multiply(new THREE.Matrix4().makeTranslation(0, 0, flip ? -depth : depth)),
+  } satisfies StickerOutline;
+}
+
 /** Extrude a 2D outline (in the face's u/v plane, already in WORLD units) into a thick
  *  sticker tile oriented on the face. `origin` = where outline (0,0) maps (already
  *  lifted off the body). `flip` mirrors the extrude when the basis normal is inward
@@ -151,7 +180,9 @@ export function extrudeOntoFace(
   const shape = new THREE.Shape(outline.map(([x, y]) => new THREE.Vector2(x, y)));
   const geo = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: false });
   if (flip) geo.translate(0, 0, -depth);
-  geo.applyMatrix4(new THREE.Matrix4().makeBasis(basis.u, basis.v, basis.n).setPosition(basis.origin));
+  const toFace = new THREE.Matrix4().makeBasis(basis.u, basis.v, basis.n).setPosition(basis.origin);
+  geo.applyMatrix4(toFace);
+  tagStickerOutline(geo, outline, toFace, depth, flip);
   return geo;
 }
 
