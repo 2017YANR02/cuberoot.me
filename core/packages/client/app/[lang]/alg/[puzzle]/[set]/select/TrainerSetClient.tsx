@@ -16,6 +16,7 @@ import {
 } from '@/lib/trainer-marks';
 import { caseKey } from '@/lib/trainer-case-key';
 import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
+import { sortByCp } from '@/lib/alg_cp_order';
 import { displayZbllToken } from '@/lib/alg_case_display';
 import { CaseTreePicker } from '@/app/[lang]/alg/_trainer/trainer-components';
 import MixSetPicker from '@/app/[lang]/alg/_trainer/MixSetPicker';
@@ -124,14 +125,17 @@ export default function TrainerSetClient() {
       .catch(e => console.error('[trainer] loadAlg failed', e));
   }, [puzzle, setSlug, meta, isMix, mixKey, storePuzzle, storeSet, cases.length, loadSession, loadMixSession]);
 
-  // scope 内的 case(与 run 页同一套 top/sub 两级 slug 匹配);无 scope 或 slug 落空 = 全部
+  // scope 内的 case(与 run 页同一套 top/sub 两级 slug 匹配);无 scope 或 slug 落空 = 全部。
+  // 顺序和公式库一致(ZBLL / COLL 把角块已成型和对角换提到组内最前),否则同一批 case
+  // 在库里和选集页排得不一样。
   const scopedCases = useMemo(() => {
-    if (!scopeSlug || cases.length === 0) return cases;
+    const all = sortByCp(setSlug, cases);
+    if (!scopeSlug || all.length === 0) return all;
     const parts = (c: AlgCase) => (c.subgroup || '').toLowerCase().split('/');
-    const isTop = cases.some(c => parts(c)[0] === scopeSlug);
-    const hit = cases.filter(c => (isTop ? parts(c)[0] : parts(c)[1]) === scopeSlug);
-    return hit.length > 0 ? hit : cases;
-  }, [cases, scopeSlug]);
+    const isTop = all.some(c => parts(c)[0] === scopeSlug);
+    const hit = all.filter(c => (isTop ? parts(c)[0] : parts(c)[1]) === scopeSlug);
+    return hit.length > 0 ? hit : all;
+  }, [cases, scopeSlug, setSlug]);
 
   // 过滤后的可见 case(过滤只影响显示,不动 selected)。进度统计在 SetProgressStrip 里算。
   const visibleCases = useMemo(() => {
