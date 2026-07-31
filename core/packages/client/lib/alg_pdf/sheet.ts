@@ -41,7 +41,11 @@ export interface AlgPdfSheetInput {
   onProgress?: (done: number, total: number) => void;
   /** 取消信号:每个 case 前查一次,true 就中止(用户点了停 / 离开页面) */
   shouldCancel?: () => boolean;
+  /** 纸色。默认 `light`(白纸黑字,打印用);`dark` 是屏幕上看的深底白字。 */
+  theme?: AlgPdfTheme;
 }
+
+export type AlgPdfTheme = 'light' | 'dark';
 
 const PAGE_W = 595.28;
 const PAGE_H = 841.89;
@@ -54,8 +58,8 @@ const GROUP_SIZE = 9.5;
 const NAME_SIZE = 8.5;
 const ALG_SIZE = 8;             // 公式字号上限(放不下会往 7 降,见 pickLayout)
 const SETUP_SIZE = 6.6;
-const LOGO_H = 22;              // 首页刊头的标志高
-const RUN_LOGO_H = 9;           // 续页页眉那枚小标志
+const LOCKUP_H = 46;            // 首页刊头的完整标志(含中英文字)高
+const RUN_LOGO_H = 9;           // 续页页眉那枚小标记
 const CELL_PAD = 4;
 const GAP_X = 12;
 const GAP_Y = 8;
@@ -63,6 +67,26 @@ const IMG_GAP = 6;              // 图与文字之间
 
 /** 列数 → 缩略图边长。列越多图越小,否则文字列会被挤没。 */
 const IMG_FOR_COLS: Record<number, number> = { 1: 56, 2: 46, 3: 40, 4: 33 };
+
+/**
+ * 纸色。灰阶数值直接喂 `setTextColor(n)`。
+ *
+ * 浅色版不铺底色 —— 让纸自己白,打印机不会为一整页背景喷墨。深色版必须铺满整页:
+ * PDF 阅读器不会给你补背景,只画白字就是一页空白。
+ */
+interface Palette {
+  /** 整页底色;省略 = 不铺(白纸) */
+  page?: [number, number, number];
+  title: number;
+  body: number;
+  muted: number;
+  faint: number;
+  rule: number;
+}
+const PALETTE: Record<AlgPdfTheme, Palette> = {
+  light: { title: 0, body: 20, muted: 130, faint: 150, rule: 205 },
+  dark: { page: [23, 23, 23], title: 237, body: 224, muted: 152, faint: 128, rule: 74 },
+};
 
 /**
  * 挑「几列 + 公式多大字」:先保字号,再尽量多列。
@@ -102,11 +126,19 @@ export async function downloadAlgSheet(input: AlgPdfSheetInput): Promise<void> {
 
 /** 建好整份文档;被取消则返回 null。 */
 export async function buildAlgSheet({
-  title, subtitle, cases, onProgress, shouldCancel,
+  title, subtitle, cases, onProgress, shouldCancel, theme = 'light',
 }: AlgPdfSheetInput): Promise<jsPDF | null> {
   const doc = new jsPDF({ unit: 'pt', format: 'a4', compress: true });
   await loadPdfFonts(doc);
-  const logo = await loadPdfLogo();
+  const dark = theme === 'dark';
+  const pal = PALETTE[theme];
+  const [lockup, mark] = await Promise.all([loadPdfLogo('lockup', dark), loadPdfLogo('mark', dark)]);
+
+  const paintPage = () => {
+    if (!pal.page) return;
+    doc.setFillColor(...pal.page);
+    doc.rect(0, 0, PAGE_W, PAGE_H, 'F');
+  };
 
   // 中文只可能出现在标题 / 子组名这类「文案」里(公式和 case 名都是记号),
   // 真有才拖那 4MB 的字体。
@@ -148,33 +180,34 @@ export async function buildAlgSheet({
   let y = MARGIN;
 
   const pageBottom = () => PAGE_H - MARGIN - FOOT_H;
-  const newPage = () => {
+  const newPage = async () => {
     doc.addPage();
+    paintPage();
     y = MARGIN;
-    // 续页页眉:小标志 + 重复一行标题 —— 打印出来散落在桌上时还认得出是哪份表、出自哪
-    const lw = drawPdfLogo(doc, logo, MARGIN, y - 1, RUN_LOGO_H);
+    // 续页页眉:小标记 + 重复一行标题 —— 打印出来散落在桌上时还认得出是哪份表、出自哪
+    const lw = await drawPdfLogo(doc, mark, MARGIN, y - 1, RUN_LOGO_H);
     doc.setFont(SANS, 'normal');
     doc.setFontSize(SUB_SIZE);
-    doc.setTextColor(140);
+    doc.setTextColor(pal.muted);
     doc.text(title, MARGIN + (lw ? lw + 6 : 0), y + SUB_SIZE - 1);
-    doc.setTextColor(0);
     y += Math.max(SUB_SIZE, RUN_LOGO_H) + 10;
   };
 
   // ── 首页刊头:标志 / 标题 / 出处一列居中。副标题里带着 `cuberoot.me/alg/...`,
   //    正好接在标志下面成一块出处。
-  const logoW = drawPdfLogo(doc, logo, PAGE_W / 2, y, LOGO_H, 'center');
-  if (logoW) y += LOGO_H + 9;
+  paintPage();
+  const logoW = await drawPdfLogo(doc, lockup, PAGE_W / 2, y, LOCKUP_H, 'center');
+  if (logoW) y += LOCKUP_H + 10;
   doc.setFont(SANS, 'bold');
   doc.setFontSize(TITLE_SIZE);
+  doc.setTextColor(pal.title);
   doc.text(title, PAGE_W / 2, y + TITLE_SIZE, { align: 'center' });
   y += TITLE_SIZE + 4;
   if (subtitle) {
     doc.setFont(SANS, 'normal');
     doc.setFontSize(SUB_SIZE);
-    doc.setTextColor(130);
+    doc.setTextColor(pal.muted);
     doc.text(subtitle, PAGE_W / 2, y + SUB_SIZE, { align: 'center' });
-    doc.setTextColor(0);
     y += SUB_SIZE + 4;
   }
   y += 10;
@@ -198,13 +231,13 @@ export async function buildAlgSheet({
     // 它的 case 全翻到下一页。
     const headH = g && g !== lastGroup ? GROUP_SIZE + 8 : 0;
     lastGroup = g;
-    if (y + headH + rowH > pageBottom()) newPage();
+    if (y + headH + rowH > pageBottom()) await newPage();
     if (headH) {
       doc.setFont(SANS, 'bold');
       doc.setFontSize(GROUP_SIZE);
-      doc.setTextColor(0);
+      doc.setTextColor(pal.title);
       doc.text(g!, MARGIN, y + GROUP_SIZE);
-      doc.setDrawColor(205);
+      doc.setDrawColor(pal.rule);
       doc.setLineWidth(0.5);
       doc.line(MARGIN, y + GROUP_SIZE + 3, PAGE_W - MARGIN, y + GROUP_SIZE + 3);
       y += headH;
@@ -222,13 +255,13 @@ export async function buildAlgSheet({
 
       doc.setFont(SANS, 'bold');
       doc.setFontSize(NAME_SIZE);
-      doc.setTextColor(0);
+      doc.setTextColor(pal.title);
       doc.text(c.name, x + textX, ty + NAME_SIZE - 1);
       if (c.sub) {
         const w = doc.getTextWidth(c.name);
         doc.setFont(SANS, 'normal');
         doc.setFontSize(NAME_SIZE - 1);
-        doc.setTextColor(150);
+        doc.setTextColor(pal.faint);
         doc.text(c.sub, x + textX + w + 4, ty + NAME_SIZE - 1);
       }
       ty += NAME_SIZE + 2;
@@ -236,14 +269,14 @@ export async function buildAlgSheet({
       if (c.setup) {
         doc.setFont(FONT_MONO, 'normal');
         doc.setFontSize(SETUP_SIZE);
-        doc.setTextColor(140);
+        doc.setTextColor(pal.muted);
         doc.text(c.setup, x + textX, ty + SETUP_SIZE - 1, { maxWidth: textW });
         ty += SETUP_SIZE + 2;
       }
 
       doc.setFont(FONT_MONO, 'normal');
       doc.setFontSize(algSize);
-      doc.setTextColor(20);
+      doc.setTextColor(pal.body);
       for (const wrapped of lines) {
         for (const line of wrapped) {
           doc.text(line, x + textX, ty + algSize - 1.5);
@@ -267,10 +300,9 @@ export async function buildAlgSheet({
     doc.setPage(p);
     doc.setFont(SANS, 'normal');
     doc.setFontSize(7.5);
-    doc.setTextColor(150);
+    doc.setTextColor(pal.faint);
     doc.text(`${p} / ${total}`, PAGE_W - MARGIN, PAGE_H - MARGIN, { align: 'right' });
     doc.text('cuberoot.me', MARGIN, PAGE_H - MARGIN);
   }
-  doc.setTextColor(0);
   return doc;
 }
