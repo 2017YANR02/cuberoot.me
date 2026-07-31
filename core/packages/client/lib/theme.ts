@@ -16,16 +16,15 @@ export const THEME_KEY = 'theme';
 
 // 柔和度 — 正交于明暗 / 配色的一档「降低对比」偏好(护眼)。写 <html data-contrast=x>,
 // 实际混色在 app/globals.css(body 层 color-mix,见那里的注释)。normal = 不写属性。
-export type ContrastLevel = 'normal' | 'soft' | 'softer';
+export type ContrastLevel = 'normal' | 'soft';
 export const CONTRAST_KEY = 'contrast';
 export const CONTRAST_LEVELS: { id: ContrastLevel; zh: string; en: string }[] = [
   { id: 'normal', zh: '标准', en: 'Normal' },
   { id: 'soft', zh: '柔和', en: 'Soft' },
-  { id: 'softer', zh: '更柔', en: 'Softer' },
 ];
 
 function isContrastLevel(v: string | null | undefined): v is ContrastLevel {
-  return v === 'normal' || v === 'soft' || v === 'softer';
+  return v === 'normal' || v === 'soft';
 }
 
 type DocumentWithViewTransition = Document & {

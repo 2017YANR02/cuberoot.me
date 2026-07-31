@@ -406,39 +406,40 @@ option {
   background-color: #ffffff !important;
 }
 
-/* ── 柔和度(降低对比度,护眼)— <html data-contrast=soft|softer>,lib/theme.ts ──
-   正交于明暗与配色:只把对比拉低一档,不换色相,所以经典 / 6 套配色 / 暗锁页全都跟。
-   混色写在 body 层而不是 :root:自定义属性在同一元素上自引用会循环失效,html→body
-   天然差一层,body 上的 var(--foreground) 取到的正是 :root 的原值。
-   文字往 --muted-foreground 混(变灰,不是变淡到看不见),底也往同一中灰挪一点点 ——
-   浅底自动压暗、深底自动提亮,不用分主题写两套。--muted-foreground 自身不动:
-   它既是混色基准(动了就循环),本来也已经是弱化层级,再拉低就糊了。
-   底是最有效的一档:大面积的纯白 / 纯黑一沉,压在它上面的每一层文字(含不参与混色的
-   --muted-foreground)对比都跟着降,所以 bg 给得比 text 更舍得。边框要混得比底更多,
-   否则底一沉就追上原本更浅的 --border-default,卡片轮廓会反转看不见。 */
+/* ── 柔和度(降低对比度,护眼)— <html data-contrast=soft>,lib/theme.ts ──
+   一档开关(标准 / 柔和),正交于明暗与配色:只压对比,不换色相,所以经典 / 6 套配色 /
+   暗锁页全都跟。所有色都往 --muted-foreground(该主题自己的中灰)收:纯白 / 纯黑两端
+   往中间挤,浅底自动压暗、深底自动提亮,一套百分比通吃明暗,不用分主题写两份。
+   混色在 oklab 而不是 srgb:srgb 插值在暗端偏黑,同一比例下深色主题会比浅色主题少动
+   一截,感知上两边不对等。
+   底是压得最狠的一档:它是大面积光源,压它最省眼,而且压了底之后压在上面的每一层
+   (包括根本不参与混色的 --muted-foreground)对比都跟着降。
+   边框不按比例混,而是直接从「柔化后的底」再走一点点 --base-foreground:边框本来就
+   只是相对底的一丝区分,这样浅色下不会被抬上来的底吃掉、深色下也不会因为原值是半透明
+   白、混进不透明灰把 alpha 推高而变得比柔化前更抢眼(实测过,4.36:1 的边框太吵)。
+   --muted-foreground / --faint-foreground 反过来往 --foreground 加深一点:底抬这么多
+   之后,次要文字若原地不动会掉到 3:1 以下糊成一片,这一步把它们拉回可读。
+   量到底给多少的判据是对比度不是手感:柔和档下正文 ≈5:1、次要文字 ≈3.5:1,都还在
+   WCAG AA 之上,再狠就该跌破了。 */
 :root {
   --soften-text: 0%;
   --soften-bg: 0%;
-  --soften-border: 0%;
+  --soften-muted: 0%;
 }
 :root[data-contrast=soft] {
-  --soften-text: 24%;
-  --soften-bg: 10%;
-  --soften-border: 20%;
-}
-:root[data-contrast=softer] {
-  --soften-text: 44%;
-  --soften-bg: 20%;
-  --soften-border: 40%;
+  --soften-text: 50%;
+  --soften-bg: 33%;
+  --soften-muted: 24%;
 }
 
 /* 第一层(html):把要柔化的 token 原值快照成 --base-*。混色不能在同一元素上写成
    `--foreground: color-mix(..., var(--foreground), ...)` —— 自定义属性引用自身即判定
    为循环,整条声明作废(即使值来自继承)。快照在 html、混色在 body,链路才是
-   base(html)→ token(body),无环。顺带把 html 自己的 background 也混一次:它在
-   :root 层解析,吃不到 body 的覆盖,不混则 overscroll 时露出没柔化的底色。 */
-html[data-contrast=soft],
-html[data-contrast=softer] {
+   base(html)→ token(body),无环。混色一律引用 --base-*(不是 --muted-foreground
+   本身):body 上它自己也被重定义了,再拿它当基准会让各 token 互相牵连。
+   顺带把 html 自己的 background 也混一次:它在 :root 层解析,吃不到 body 的覆盖,
+   不混则 overscroll 时露出没柔化的底色。 */
+html[data-contrast=soft] {
   --base-background: var(--background);
   --base-card: var(--card);
   --base-popover: var(--popover);
@@ -449,28 +450,30 @@ html[data-contrast=softer] {
   --base-popover-foreground: var(--popover-foreground);
   --base-secondary-foreground: var(--secondary-foreground);
   --base-primary: var(--primary);
-  --base-border-default: var(--border-default);
-  --base-border-strong: var(--border-strong);
-  --base-input: var(--input);
-  background: color-mix(in srgb, var(--base-background), var(--muted-foreground) var(--soften-bg));
+  --base-muted-foreground: var(--muted-foreground);
+  --base-faint-foreground: var(--faint-foreground);
+  background: color-mix(in oklab, var(--base-background), var(--base-muted-foreground) var(--soften-bg));
 }
 /* 第二层(body):真正的柔化,全站后代都吃到。 */
-html[data-contrast=soft] body,
-html[data-contrast=softer] body {
-  --background: color-mix(in srgb, var(--base-background), var(--muted-foreground) var(--soften-bg));
-  --card: color-mix(in srgb, var(--base-card), var(--muted-foreground) var(--soften-bg));
-  --popover: color-mix(in srgb, var(--base-popover), var(--muted-foreground) var(--soften-bg));
-  --muted: color-mix(in srgb, var(--base-muted), var(--muted-foreground) var(--soften-bg));
-  --secondary: color-mix(in srgb, var(--base-secondary), var(--muted-foreground) var(--soften-bg));
-  --foreground: color-mix(in srgb, var(--base-foreground), var(--muted-foreground) var(--soften-text));
-  --card-foreground: color-mix(in srgb, var(--base-card-foreground), var(--muted-foreground) var(--soften-text));
-  --popover-foreground: color-mix(in srgb, var(--base-popover-foreground), var(--muted-foreground) var(--soften-text));
-  --secondary-foreground: color-mix(in srgb, var(--base-secondary-foreground), var(--muted-foreground) var(--soften-text));
+html[data-contrast=soft] body {
+  --background: color-mix(in oklab, var(--base-background), var(--base-muted-foreground) var(--soften-bg));
+  --card: color-mix(in oklab, var(--base-card), var(--base-muted-foreground) var(--soften-bg));
+  --popover: color-mix(in oklab, var(--base-popover), var(--base-muted-foreground) var(--soften-bg));
+  --muted: color-mix(in oklab, var(--base-muted), var(--base-muted-foreground) var(--soften-bg));
+  --secondary: color-mix(in oklab, var(--base-secondary), var(--base-muted-foreground) var(--soften-bg));
+  --foreground: color-mix(in oklab, var(--base-foreground), var(--base-muted-foreground) var(--soften-text));
+  --card-foreground: color-mix(in oklab, var(--base-card-foreground), var(--base-muted-foreground) var(--soften-text));
+  --popover-foreground: color-mix(in oklab, var(--base-popover-foreground), var(--base-muted-foreground) var(--soften-text));
+  --secondary-foreground: color-mix(in oklab, var(--base-secondary-foreground), var(--base-muted-foreground) var(--soften-text));
   /* 主按钮块本身是「深/浅实心」,不跟着柔化就会在柔化后的页面上显得死黑。 */
-  --primary: color-mix(in srgb, var(--base-primary), var(--muted-foreground) var(--soften-text));
-  --border-default: color-mix(in srgb, var(--base-border-default), var(--muted-foreground) var(--soften-border));
-  --border-strong: color-mix(in srgb, var(--base-border-strong), var(--muted-foreground) var(--soften-border));
-  --input: color-mix(in srgb, var(--base-input), var(--muted-foreground) var(--soften-border));
+  --primary: color-mix(in oklab, var(--base-primary), var(--base-muted-foreground) var(--soften-text));
+  /* 边框从上面刚算出的 --background 再走一点(同元素引用另一个 token,不成环)。 */
+  --border-default: color-mix(in oklab, var(--background), var(--base-foreground) 12%);
+  --border-strong: color-mix(in oklab, var(--background), var(--base-foreground) 24%);
+  --input: color-mix(in oklab, var(--background), var(--base-foreground) 12%);
+  /* 次要文字反向加深,补偿抬上来的底。 */
+  --muted-foreground: color-mix(in oklab, var(--base-muted-foreground), var(--base-foreground) var(--soften-muted));
+  --faint-foreground: color-mix(in oklab, var(--base-faint-foreground), var(--base-foreground) var(--soften-muted));
 }
 
 html {
