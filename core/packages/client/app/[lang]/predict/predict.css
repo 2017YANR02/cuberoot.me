@@ -423,6 +423,12 @@
   cursor: pointer;
 }
 
+/* 金字塔 / 斜转 / 枫叶的记号转的是顶点不是面,没有「面色」可上,走中性底 */
+.predict-move.is-plain {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  color: var(--foreground);
+}
+
 /* 可点的提示:描一圈浅色(比 is-current 淡,底下那条规则在后面,当前这一招悬停时仍是实色) */
 .predict-move:hover {
   outline: 2px solid color-mix(in srgb, var(--foreground) 40%, transparent);

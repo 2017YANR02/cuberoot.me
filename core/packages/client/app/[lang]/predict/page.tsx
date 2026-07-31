@@ -4,7 +4,7 @@
  * /predict —— 预判训练(Lookahead Challenge)。
  *
  * 复刻 Dan Boharon 的 Rubik's Cube Lookahead Challenge(见 /about 致谢):
- * 一个几乎全灰的魔方上只亮着目标块,给你一串招式,你在脑子里做完,直接点出那枚
+ * 一个几乎全灰的拼图上只亮着目标块,给你一串公式,你在脑子里做完,直接点出那枚
  * 贴纸最终落在哪一格。点对了那格就把颜色贴上去(看着它"落位"),点错弹红叉。
  *
  * 本站版本的差异:
@@ -13,10 +13,13 @@
  *   - 视角可自由旋转到背面(原站锁死正面),否则落在背面的答案点不到;背面本身靠
  *     /sim 的「提示贴片」读得到,所以起手朝向恒为 /sim 的默认视角,不随题目乱转;
  *   - 六面浮 U/D/L/R/F/B 字母作参照,而不是把字母印在中心贴纸上;
- *   - 公式除了随机 / 随机 F2L,还可以自己输入(原站只有前两档),练自己那条。
+ *   - 公式除了随机 / 随机 F2L,还可以自己输入(原站只有前两档),练自己那条;
+ *   - 不止三阶:二 ~ 七阶、金字塔、斜转、枫叶都能练(原站只有三阶)。
  *
- * 出题与判定全在 _lib/challenge.ts(纯函数,tests/predict_challenge.test.ts 锁),
- * 本文件只管交互与呈现。
+ * 出题与判定全在 _lib/ 的两个纯函数引擎:三阶走 `challenge.ts`(它多带十字 / 前两层 /
+ * F2L 三档按解法阶段出题的模式),其余拼图走 `puzzle_challenge.ts`(通用的「追一枚
+ * 贴纸」)。两边输出形状对齐,**展示元数据一律从 `_lib/puzzles` 取**,所以本文件不为
+ * 三阶另开一条分支 —— 只在「出题」那一步分派。
  */
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -34,14 +37,21 @@ import { CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '@/lib/cube-colors';
 import { CUBE_ORIENTATIONS, orientedFaceColors } from '@/lib/cube-orientation';
 import CubeOrientationSelect from '@/components/CubeOrientationSelect';
 import {
-  generateChallenge, parseMoveInput, FACE_LETTERS, faceletFace,
-  MOVE_COUNT_MIN, MOVE_COUNT_MAX, CROSS_EDGES_MIN, CROSS_EDGES_MAX, CUSTOM_MOVES_MAX,
-  type PredictChallenge, type PredictMode, type PieceKind, type ScrambleSource, type MoveInputError,
+  generateChallenge, parseMoveInput,
+  MOVE_COUNT_MIN, CROSS_EDGES_MIN, CROSS_EDGES_MAX, CUSTOM_MOVES_MAX,
+  type PredictMode, type PieceKind, type ScrambleSource, type MoveInputError,
 } from './_lib/challenge';
+import {
+  generatePuzzleChallenge, trackOptions,
+  type PredictBoardChallenge, type PredictTrack,
+} from './_lib/puzzle_challenge';
+import {
+  getPuzzle, stickerCount, PREDICT_PUZZLE_IDS, PUZZLE_LABELS,
+  type PredictPuzzle, type PredictPuzzleId,
+} from './_lib/puzzles';
 import './predict.css';
 
-/** 还没出题时:空标签 = 用块自己的颜色(还原态),遮罩为空 = 不压暗。 */
-const EMPTY_LABELS: readonly string[] = Array<string>(54).fill('');
+/** 还没出题时:遮罩为空 = 不压暗。 */
 const EMPTY_FACELETS: readonly number[] = [];
 
 const PredictBoard = dynamic(() => import('./_components/PredictBoard'), {
@@ -61,29 +71,39 @@ const MODE_LABELS: Record<PredictMode, { zh: string; en: string }> = {
   f2l: { zh: 'F2L 对', en: 'F2L pair' },
 };
 
-const KINDS: PieceKind[] = ['edge', 'corner', 'pair'];
-const KIND_LABELS: Record<PieceKind, { zh: string; en: string }> = {
+/** 三阶那套追踪档(它的引擎只认这三档;中心在三阶上不动,追它没意义)。 */
+const CUBE333_TRACKS: PredictTrack[] = ['edge', 'corner', 'pair'];
+const ALL_TRACKS: PredictTrack[] = ['edge', 'corner', 'center', 'tip', 'pair'];
+
+const TRACK_LABELS: Record<PredictTrack, { zh: string; en: string }> = {
   edge: { zh: '棱块', en: 'Edge' },
   corner: { zh: '角块', en: 'Corner' },
+  center: { zh: '中心块', en: 'Center' },
+  tip: { zh: '尖角', en: 'Tip' },
   pair: { zh: '一对', en: 'Pair' },
 };
 
 const SOURCES: ScrambleSource[] = ['random', 'f2lAlg', 'custom'];
+/** F2L 公式是三阶专属,别的拼图只有随机 / 自己输入两档。 */
+const PUZZLE_SOURCES: ScrambleSource[] = ['random', 'custom'];
 const SOURCE_LABELS: Record<ScrambleSource, { zh: string; en: string }> = {
   random: { zh: '随机公式', en: 'Random moves' },
   f2lAlg: { zh: '随机 F2L 公式', en: 'Random F2L algs' },
   custom: { zh: '自己输入', en: 'Your own' },
 };
 
-/** 自己输入的公式没通过检查时说人话 —— 光说「无效」等于让人自己猜哪个词写错了。 */
-function algErrorText(e: MoveInputError): { zh: string; en: string } {
+/**
+ * 自己输入的公式没通过检查时说人话 —— 光说「无效」等于让人自己猜哪个词写错了。
+ * 收哪些记号各拼图不一样,所以由拼图自己报(`puzzle.notation`)。
+ */
+function algErrorText(e: MoveInputError, puzzle: PredictPuzzle): { zh: string; en: string } {
   switch (e.kind) {
     case 'empty':
       return { zh: '写一条公式,回车出题。', en: 'Type an algorithm, then press Enter.' };
     case 'token':
       return {
-        zh: `不认识「${e.token}」:只收 U R F D L B(可加 ' 或 2);宽转 r / Rw、中层 M E S、转体 x y z 都追不了。`,
-        en: `Cannot read “${e.token}”: only U R F D L B (each with an optional ' or 2) — no wide turns, slices or rotations.`,
+        zh: `不认识「${e.token}」:${puzzle.notation.zh}`,
+        en: `Cannot read “${e.token}”: ${puzzle.notation.en}`,
       };
     case 'parens':
       return {
@@ -111,19 +131,8 @@ const COLOR_NAMES: Record<CubeFace, { zh: string; en: string }> = {
 /** 色块标签:中文「黄格」这样一个词说完(不写「黄色贴纸」),英文仍是颜色词,后面的句子接 sticker。 */
 const colorChipLabel = (c: CubeFace): string => tr({ zh: `${COLOR_NAMES[c].zh}格`, en: COLOR_NAMES[c].en });
 
-const FACE_NAMES: Record<CubeFace, { zh: string; en: string }> = {
-  U: { zh: '顶', en: 'Up' },
-  D: { zh: '底', en: 'Down' },
-  F: { zh: '前', en: 'Front' },
-  B: { zh: '后', en: 'Back' },
-  L: { zh: '左', en: 'Left' },
-  R: { zh: '右', en: 'Right' },
-};
-
-const LEGEND_FACES: CubeFace[] = ['U', 'D', 'F', 'B', 'L', 'R'];
-
-/** 六个中心的 facelet(URFDLB 每面第 5 格)。中心不动,拿来当方位锚。 */
-const CENTER_FACELETS: readonly number[] = [4, 13, 22, 31, 40, 49];
+/** 不吃「拿方朝向」的拼图(金字塔)用这张恒等表 —— 它的面色是死的,没有 24 档可换。 */
+const IDENTITY_FACES: Record<CubeFace, CubeFace> = { U: 'U', D: 'D', F: 'F', B: 'B', L: 'L', R: 'R' };
 
 /** 被复刻的原站(见 /about 致谢),页面底部给个链接。 */
 const ORIGIN_URL = 'https://app--cube-lookahead-24bc12e4.base44.app/';
@@ -139,14 +148,16 @@ const clock = (seconds: number): string => {
 
 function PredictPageInner() {
 
+  const [puzzleId, setPuzzleId] = useQueryState('puzzle',
+    parseAsStringEnum<PredictPuzzleId>([...PREDICT_PUZZLE_IDS]).withDefault('3').withOptions({ history: 'replace', scroll: false }));
   const [mode, setMode] = useQueryState('mode',
     parseAsStringEnum<PredictMode>(MODES).withDefault('normal').withOptions({ history: 'replace', scroll: false }));
-  const [kind, setKind] = useQueryState('piece',
-    parseAsStringEnum<PieceKind>(KINDS).withDefault('pair').withOptions({ history: 'replace', scroll: false }));
-  const [source, setSource] = useQueryState('src',
+  const [rawTrack, setTrack] = useQueryState('piece',
+    parseAsStringEnum<PredictTrack>(ALL_TRACKS).withDefault('pair').withOptions({ history: 'replace', scroll: false }));
+  const [rawSource, setSource] = useQueryState('src',
     parseAsStringEnum<ScrambleSource>(SOURCES).withDefault('random').withOptions({ history: 'replace', scroll: false }));
-  const [moveCount, setMoveCount] = useQueryState('moves',
-    parseAsInteger.withDefault(6).withOptions({ history: 'replace', scroll: false }));
+  const [rawMoveCount, setMoveCount] = useQueryState('moves',
+    parseAsInteger.withOptions({ history: 'replace', scroll: false }));
   const [crossEdges, setCrossEdges] = useQueryState('edges',
     parseAsInteger.withDefault(1).withOptions({ history: 'replace', scroll: false }));
   const [orientation, setOrientation] = useQueryState('ori',
@@ -154,7 +165,7 @@ function PredictPageInner() {
   const [alg, setAlg] = useQueryState('alg',
     parseAsString.withDefault('').withOptions({ history: 'replace', scroll: false }));
 
-  const [challenge, setChallenge] = useState<PredictChallenge | null>(null);
+  const [challenge, setChallenge] = useState<PredictBoardChallenge | null>(null);
   const [algError, setAlgError] = useState<MoveInputError | null>(null);
   const [found, setFound] = useState<boolean[]>([]);
   const [wrong, setWrong] = useState(false);
@@ -170,15 +181,43 @@ function PredictPageInner() {
   const algRef = useRef(alg);
   useEffect(() => { algRef.current = alg; }, [alg]);
 
-  const shown = useMemo(() => orientedFaceColors(orientation), [orientation]);
-  const solved = challenge != null && found.length > 0 && found.every(Boolean);
-  /** 这题结束了(答完 or 认输)—— 结束就自动复盘一遍。 */
-  const over = challenge != null && (solved || revealed);
-  const totalSteps = challenge?.moves.length ?? 0;
+  const puzzle = getPuzzle(puzzleId);
+  /** 三阶走另一套引擎(多三档方法学模式),别的都走通用引擎。 */
+  const is333 = puzzleId === '3';
+  const total = stickerCount(puzzle);
+
+  // URL 上可能留着别的拼图的档(换拼图不清参数),这里当场钳到本拼图有的那几档。
+  const tracks = useMemo(() => (is333 ? CUBE333_TRACKS : trackOptions(puzzle)), [is333, puzzle]);
+  const track = tracks.includes(rawTrack) ? rawTrack : tracks[0];
+  const sources = is333 ? SOURCES : PUZZLE_SOURCES;
+  const source = sources.includes(rawSource) ? rawSource : 'random';
+  const moveCount = rawMoveCount ?? puzzle.defaultMoveCount;
+
+  /** 面字母 → 屏幕上的颜色。立方体族吃 24 档拿方朝向,金字塔那种没有对面的不吃。 */
+  const shown = useMemo(
+    () => (puzzle.cubeLike ? orientedFaceColors(orientation) : IDENTITY_FACES),
+    [puzzle, orientation],
+  );
+  /** 本位面序号 → 屏幕上的颜色。 */
+  const faceColorOf = useCallback(
+    (face: number): CubeFace => shown[puzzle.faceColor[puzzle.faces[face]]],
+    [shown, puzzle],
+  );
 
   /**
-   * 跳到第 n 步(= 已做 n 招后的盘面)。口径和 /recon 详情页点解法、/sim 播放条一致:
-   * `step` 是已做步数,`step - 1` 是「当前这一招」。题板自己判断这是「往前一步」
+   * 换拼图那一帧 `challenge` 还是上一个拼图的(贴纸数都不一样),直接喂给题板会越界。
+   * 出题的 effect 随后就会补上,这里先当作「还没出题」。
+   */
+  const ch = challenge && challenge.startColors.length === total ? challenge : null;
+
+  const solved = ch != null && found.length > 0 && found.length === ch.targets.length && found.every(Boolean);
+  /** 这题结束了(答完 or 认输)—— 结束就自动复盘一遍。 */
+  const over = ch != null && (solved || revealed);
+  const totalSteps = ch?.moves.length ?? 0;
+
+  /**
+   * 跳到第 n 步(= 已做 n 步后的盘面)。口径和 /recon 详情页点解法、/sim 播放条一致:
+   * `step` 是已做步数,`step - 1` 是「当前这一步」。题板自己判断这是「往前一步」
    * (放动画)还是「跳过去」(瞬时重放),这里只管改数。
    *
    * 答题中也能跳:答案本来就有「显示答案」一键可看,把复盘锁死只是让想核对某一步的人
@@ -189,7 +228,7 @@ function PredictPageInner() {
     setStep(Math.max(0, Math.min(n, totalSteps)));
   }, [totalSteps]);
 
-  /** 播放条:默认不占地方,一旦复盘开始(自动或手点某一招)就出来 —— 否则跳到第 3 步后没法回起点。 */
+  /** 播放条:默认不占地方,一旦复盘开始(自动或手点某一步)就出来 —— 否则跳到第 3 步后没法回起点。 */
   const showPlayback = over || step > 0;
 
   /**
@@ -199,7 +238,8 @@ function PredictPageInner() {
   const deal = useCallback((algText?: string) => {
     let customMoves: readonly string[] = [];
     if (source === 'custom') {
-      const parsed = parseMoveInput(algText ?? algRef.current);
+      const text = algText ?? algRef.current;
+      const parsed = is333 ? parseMoveInput(text) : puzzle.parse(text);
       setAlgError(parsed.error);
       // 公式不合法就不出题:硬出一道等于把「我看不懂你写的」变成一道答案随机的题。
       if (parsed.error) { setChallenge(null); return; }
@@ -207,7 +247,13 @@ function PredictPageInner() {
     } else {
       setAlgError(null);
     }
-    const next = generateChallenge({ mode, kind, source, moveCount, crossEdges, orientation, customMoves });
+    const next: PredictBoardChallenge = is333
+      ? generateChallenge({
+        mode, kind: track as PieceKind, source, moveCount, crossEdges, orientation, customMoves,
+      })
+      : generatePuzzleChallenge({
+        puzzle, track, source: source === 'custom' ? 'custom' : 'random', moveCount, customMoves,
+      });
     setChallenge(next);
     setWrong(false);
     setRevealed(false);
@@ -215,37 +261,38 @@ function PredictPageInner() {
     setPlaying(false);
     setElapsed(0);
     startedAt.current = Date.now();
-  }, [mode, kind, source, moveCount, crossEdges, orientation]);
+  }, [puzzle, is333, mode, track, source, moveCount, crossEdges, orientation]);
 
   /** 认输:切到「答案盘面」(目标块整块画在落点上)。落点在背面也读得到 —— 提示贴片
    *  会把那三面的贴纸浮在方块外侧,所以这里不再替玩家转视角。 */
   const reveal = useCallback(() => {
-    if (!challenge) return;
+    if (!ch) return;
     setRevealed(true);
-  }, [challenge]);
+  }, [ch]);
 
   /** 恢复默认:出题参数全回出厂值(= 清掉 URL 上那几个参数),视角推回 /sim 的默认姿势。
-   *  参数一变上面的 effect 就自动换一题;本来就在默认值时只复位视角,不打断当前这题。 */
+   *  参数一变上面的 effect 就自动换一题;本来就在默认值时只复位视角,不打断当前这题。
+   *  **不动拼图**:那是这页练什么的选择,不是出题参数,清掉等于把人踢回三阶。 */
   const restoreDefaults = useCallback(() => {
     void setMode(null);
-    void setKind(null);
+    void setTrack(null);
     void setSource(null);
     void setMoveCount(null);
     void setCrossEdges(null);
     void setOrientation(null);
     void setAlg(null);
     setViewResetNonce((n) => n + 1);
-  }, [setMode, setKind, setSource, setMoveCount, setCrossEdges, setOrientation, setAlg]);
+  }, [setMode, setTrack, setSource, setMoveCount, setCrossEdges, setOrientation, setAlg]);
 
   useEffect(() => { deal(); }, [deal]);
   useEffect(() => { setFound(challenge ? challenge.targets.map(() => false) : []); }, [challenge]);
 
   // 计时到答完(或认输看答案)为止;只按秒刷新,免得每帧重渲染整页。
   useEffect(() => {
-    if (!challenge || solved || revealed) return;
+    if (!ch || solved || revealed) return;
     const id = setInterval(() => setElapsed(Math.floor((Date.now() - startedAt.current) / 1000)), 250);
     return () => clearInterval(id);
-  }, [challenge, solved, revealed]);
+  }, [ch, solved, revealed]);
 
   useEffect(() => {
     if (!wrong) return;
@@ -254,7 +301,7 @@ function PredictPageInner() {
   }, [wrong]);
 
   // 这题一结束就自动复盘一遍 —— 看着目标块被转过去,比看一张静态答案图有用得多。
-  // 从头播:答题中可能已经手点到某一招了,不回零就会从半截接着往下播。
+  // 从头播:答题中可能已经手点到某一步了,不回零就会从半截接着往下播。
   useEffect(() => { if (over) { setStep(0); setPlaying(true); } }, [over]);
 
   // 一步一格往前推;题板收到「比上一步多 1」就放一步动画,推到头就停。
@@ -268,71 +315,73 @@ function PredictPageInner() {
   // 题板通过 ref 拿最新的这个闭包,所以直接读 state 就行 —— 别把 setWrong 塞进
   // setFound 的 updater 里,那是 reducer 里做副作用,StrictMode 双调用会把它吞掉。
   const onSticker = useCallback((facelet: number) => {
-    if (!challenge || revealed || found.length === 0 || found.every(Boolean)) return;
-    const hit = challenge.targets.findIndex((t, i) => !found[i] && t.answerFacelet === facelet);
+    if (!ch || revealed || found.length === 0 || found.every(Boolean)) return;
+    const hit = ch.targets.findIndex((t, i) => !found[i] && t.answerFacelet === facelet);
     if (hit < 0) { setWrong(true); return; }
     setFound(found.map((v, i) => (i === hit ? true : v)));
-  }, [challenge, revealed, found]);
+  }, [ch, revealed, found]);
 
   /**
-   * 54 个引擎色标签 = **起点盘面的真实颜色**(按朝向翻译)。
+   * 每一格的引擎色标签 = **起点盘面的真实颜色**(按朝向翻译)。
    *
    * 只画起点:落点是题板自己把那串公式真转过去得到的(复盘动画),另算一套落点盘面
    * 就成了第二个真源。这份只跟题 + 朝向有关,答对与否不进来 —— labels 一变题板就得
    * 整盘重贴,播到一半改它会把那一步的动画吃掉。
    */
   const labels = useMemo(() => {
-    if (!challenge) return EMPTY_LABELS;
-    return [...challenge.startColors].map((ch) => shown[ch as CubeFace]);
-  }, [challenge, shown]);
+    if (!ch) return Array<string>(total).fill('');
+    return [...ch.startColors].map((c) => shown[puzzle.faceColor[c]]);
+  }, [ch, shown, puzzle, total]);
 
   /**
-   * 满色的 facelet:题面点名的那几枚贴纸 + 已经答对的落点(当记号,这题一结束就撤)。
+   * 满色的格:题面点名的那几枚贴纸 + 已经答对的落点(当记号,这题一结束就撤)。
    *
    * 走题板的阶段遮罩而不是改色,所以它怎么变都不会打断复盘动画。
    */
   const bright = useMemo(() => {
-    if (!challenge) return EMPTY_FACELETS;
-    const out = challenge.targets.map((t) => t.startFacelet);
-    if (!over) challenge.targets.forEach((t, i) => { if (found[i]) out.push(t.answerFacelet); });
+    if (!ch) return EMPTY_FACELETS;
+    const out = ch.targets.map((t) => t.startFacelet);
+    if (!over) ch.targets.forEach((t, i) => { if (found[i]) out.push(t.answerFacelet); });
     return out;
-  }, [challenge, found, over]);
+  }, [ch, found, over]);
 
   /**
-   * 压暗的 facelet = 目标块剩下的贴纸 + 六个中心。
+   * 压暗的格 = 目标块剩下的贴纸 + 方位锚(奇数阶的六个中心)。
    *
    * 前者:问的是「白色那枚落在哪」,同块的绿橙两枚只用来认出这是同一个角块,不该跟它一样亮。
    * 后者:中心不动,是读方位的锚(哪面是绿面);压暗才不跟目标抢眼 —— 满色中心在灰底上
-   * 比目标还显眼,这题就变成「找那个不是中心的彩格」了。
+   * 比目标还显眼,这题就变成「找那个不是中心的彩格」了。没有固定块的拼图(斜转 / 枫叶 /
+   * 金字塔 / 偶数阶)锚是空的,方位靠场景里的面字母读。
    */
   const dim = useMemo(() => {
-    if (!challenge) return EMPTY_FACELETS;
-    const asked = new Set(challenge.targets.map((t) => t.startFacelet));
-    const out = CENTER_FACELETS.filter((f) => !asked.has(f));
-    [...challenge.startFacelets].forEach((ch, i) => { if (ch !== '.' && !asked.has(i)) out.push(i); });
+    if (!ch) return EMPTY_FACELETS;
+    const asked = new Set(ch.targets.map((t) => t.startFacelet));
+    const out = puzzle.anchors.filter((f) => !asked.has(f));
+    [...ch.startFacelets].forEach((c, i) => { if (c !== '.' && !asked.has(i)) out.push(i); });
     return out;
-  }, [challenge]);
+  }, [ch, puzzle]);
 
   // 十字模式恒为「找棱」,追踪选择器换成「找几条」。
-  const kindDisabled = mode === 'cross';
+  const crossMode = is333 && mode === 'cross';
 
   /** 十字模式那 N 条棱同类同色,合成一行 —— 否则就是 N 句一模一样的话在刷屏。 */
   const promptGroups = useMemo(() => {
-    if (!challenge || found.length !== challenge.targets.length) return [];
-    const first = challenge.targets[0];
-    const uniform = challenge.targets.length > 1
-      && challenge.targets.every((t) => t.kind === first.kind && t.colorFace === first.colorFace);
+    if (!ch || found.length !== ch.targets.length) return [];
+    const first = ch.targets[0];
+    if (!first) return [];
+    const uniform = ch.targets.length > 1
+      && ch.targets.every((t) => t.kind === first.kind && t.colorFace === first.colorFace);
     if (uniform) {
       return [{
-        key: 'all', kind: first.kind, colorFace: first.colorFace,
-        total: challenge.targets.length, done: found.filter(Boolean).length,
+        key: 'all', kind: first.kind as PredictTrack, colorFace: first.colorFace,
+        total: ch.targets.length, done: found.filter(Boolean).length,
       }];
     }
-    return challenge.targets.map((t, i) => ({
-      key: `${t.kind}-${t.piece}-${t.sticker}`, kind: t.kind, colorFace: t.colorFace,
+    return ch.targets.map((t, i) => ({
+      key: `${t.kind}-${t.startFacelet}`, kind: t.kind as PredictTrack, colorFace: t.colorFace,
       total: 1, done: found[i] ? 1 : 0,
     }));
-  }, [challenge, found]);
+  }, [ch, found]);
 
   return (
     <div className="predict-page">
@@ -353,16 +402,31 @@ function PredictPageInner() {
       </header>
 
       <div className="predict-controls">
-        <div className="predict-control">
-          <span>{tr({ zh: '模式', en: 'Mode' })}</span>
-          <LiquidGlassChips<PredictMode>
-            items={MODES} value={mode} onChange={(v) => void setMode(v)}
-            getLabel={(m) => tr(MODE_LABELS[m])}
-            ariaLabel={tr({ zh: '模式', en: 'Mode' })}
-          />
-        </div>
+        <label className="predict-control">
+          <span>{tr({ zh: '拼图', en: 'Puzzle' })}</span>
+          <select
+            className="predict-select"
+            value={puzzleId}
+            onChange={(e) => void setPuzzleId(e.target.value as PredictPuzzleId)}
+          >
+            {PREDICT_PUZZLE_IDS.map((id) => (
+              <option key={id} value={id}>{tr(PUZZLE_LABELS[id])}</option>
+            ))}
+          </select>
+        </label>
 
-        {kindDisabled ? (
+        {is333 && (
+          <div className="predict-control">
+            <span>{tr({ zh: '模式', en: 'Mode' })}</span>
+            <LiquidGlassChips<PredictMode>
+              items={MODES} value={mode} onChange={(v) => void setMode(v)}
+              getLabel={(m) => tr(MODE_LABELS[m])}
+              ariaLabel={tr({ zh: '模式', en: 'Mode' })}
+            />
+          </div>
+        )}
+
+        {crossMode ? (
           <div className="predict-control">
             <span>{tr({ zh: '找几条', en: 'Edges' })}</span>
             <LiquidGlassChips<number>
@@ -373,12 +437,12 @@ function PredictPageInner() {
               ariaLabel={tr({ zh: '要找的十字棱条数', en: 'Cross edges to find' })}
             />
           </div>
-        ) : (
+        ) : tracks.length > 1 && (
           <div className="predict-control">
             <span>{tr({ zh: '追踪', en: 'Track' })}</span>
-            <LiquidGlassChips<PieceKind>
-              items={KINDS} value={kind} onChange={(v) => void setKind(v)}
-              getLabel={(k) => tr(KIND_LABELS[k])}
+            <LiquidGlassChips<PredictTrack>
+              items={tracks} value={track} onChange={(v) => void setTrack(v)}
+              getLabel={(k) => tr(TRACK_LABELS[k])}
               ariaLabel={tr({ zh: '追踪对象', en: 'Piece to track' })}
             />
           </div>
@@ -387,7 +451,7 @@ function PredictPageInner() {
         <div className="predict-control">
           <span>{tr({ zh: '公式', en: 'Moves' })}</span>
           <LiquidGlassChips<ScrambleSource>
-            items={SOURCES} value={source} onChange={(v) => void setSource(v)}
+            items={sources} value={source} onChange={(v) => void setSource(v)}
             getLabel={(s) => tr(SOURCE_LABELS[s])}
             ariaLabel={tr({ zh: '公式来源', en: 'Move source' })}
           />
@@ -403,7 +467,10 @@ function PredictPageInner() {
               rows={1}
               autoSpace
               autoResize
-              placeholder="R U R' U'"
+              placeholder={puzzle.placeholder}
+              // 站内那块公式键盘只有立方体记号,金字塔 / 斜转 / 枫叶用不上;
+              // 不放它就得把系统键盘放回来,否则手机上这个框根本打不了字。
+              inputMode={puzzle.cubeLike ? undefined : 'text'}
               onChange={(text) => void setAlg(text)}
               onKeyDown={(e) => {
                 // 回车 = 出题(而不是在单行框里换行)。组字中的回车是输入法在选词,别抢。
@@ -412,13 +479,15 @@ function PredictPageInner() {
                 deal((e.currentTarget as HTMLTextAreaElement).value);
               }}
             />
-            <CubeKeyboardSection
-              target={algElRef as React.RefObject<HTMLTextAreaElement | HTMLDivElement | null>}
-              onInput={() => { if (algElRef.current) void setAlg(algElRef.current.value); }}
-            />
+            {puzzle.cubeLike && (
+              <CubeKeyboardSection
+                target={algElRef as React.RefObject<HTMLTextAreaElement | HTMLDivElement | null>}
+                onInput={() => { if (algElRef.current) void setAlg(algElRef.current.value); }}
+              />
+            )}
             <p className={algError ? 'predict-alg-error' : 'predict-hint'}>
               {algError
-                ? tr(algErrorText(algError))
+                ? tr(algErrorText(algError, puzzle))
                 : tr({ zh: '回车出题;换一题 = 同一条公式换个起点。', en: 'Enter deals; New challenge re-rolls the start position.' })}
             </p>
           </div>
@@ -429,35 +498,39 @@ function PredictPageInner() {
             <span>{tr({ zh: '步数', en: 'Length' })}</span>
             <select
               className="predict-select"
-              value={Math.min(Math.max(moveCount, MOVE_COUNT_MIN), MOVE_COUNT_MAX)}
+              value={Math.min(Math.max(moveCount, MOVE_COUNT_MIN), puzzle.moveCountMax)}
               onChange={(e) => void setMoveCount(Number(e.target.value))}
             >
-              {Array.from({ length: MOVE_COUNT_MAX }, (_, i) => i + 1).map((n) => (
+              {Array.from({ length: puzzle.moveCountMax }, (_, i) => i + 1).map((n) => (
                 <option key={n} value={n}>{n}</option>
               ))}
             </select>
           </label>
         )}
 
-        <label className="predict-control">
-          <span>{tr({ zh: '朝向', en: 'Holding' })}</span>
-          <CubeOrientationSelect
-            className="predict-select"
-            value={orientation}
-            onChange={(v) => void setOrientation(v)}
-          />
-        </label>
+        {puzzle.cubeLike && (
+          <label className="predict-control">
+            <span>{tr({ zh: '朝向', en: 'Holding' })}</span>
+            <CubeOrientationSelect
+              className="predict-select"
+              value={orientation}
+              onChange={(v) => void setOrientation(v)}
+            />
+          </label>
+        )}
       </div>
 
       <div className="predict-boardcol">
         <div className="predict-stage">
           <PredictBoard
+            key={puzzleId}
+            puzzle={puzzle}
             labels={labels}
             bright={bright}
             dim={dim}
             onSticker={onSticker}
             viewResetNonce={viewResetNonce}
-            moves={challenge?.moves}
+            moves={ch?.moves}
             step={step}
           />
           <div className="predict-clock" aria-live="off">{clock(elapsed)}</div>
@@ -502,16 +575,18 @@ function PredictPageInner() {
       <section className="predict-moves">
         <h2>{tr({ zh: '要做的公式', en: 'Execute these moves' })}</h2>
         <ol className="predict-move-list">
-          {challenge?.moves.map((m, i) => {
-            const face = shown[m[0] as CubeFace];
+          {ch?.moves.map((m, i) => {
+            // 金字塔 / 斜转 / 枫叶的记号是顶点、不是面,给它上「面色」会误导 —— 那就不上色。
+            const letter = puzzle.moveFace(m);
+            const face = letter ? shown[puzzle.faceColor[letter]] : null;
             // 已经转过的压暗,刚做完的那一步描一圈(= step - 1,与 /recon、/sim 同一口径)。
             const state = step === 0 ? '' : i === step - 1 ? 'is-current' : i < step ? 'is-done' : '';
             return (
               <li key={`${i}-${m}`}>
                 <button
                   type="button"
-                  className={`predict-move${state ? ` ${state}` : ''}`}
-                  style={{ background: CUBE_FILL[face], color: CUBE_ON_FILL[face] }}
+                  className={`predict-move${face ? '' : ' is-plain'}${state ? ` ${state}` : ''}`}
+                  style={face ? { background: CUBE_FILL[face], color: CUBE_ON_FILL[face] } : undefined}
                   aria-current={i === step - 1 ? 'step' : undefined}
                   title={tr({ zh: `同步到第 ${i + 1} 步`, en: `Jump to move ${i + 1}` })}
                   onClick={() => seek(i + 1)}
@@ -523,20 +598,23 @@ function PredictPageInner() {
           })}
         </ol>
         <ul className="predict-legend">
-          {LEGEND_FACES.map((f) => (
-            <li key={f}>
-              <i style={{ background: CUBE_FILL[shown[f]] }} aria-hidden="true" />
-              {f}: {tr(FACE_NAMES[f])}
-              {tr({ zh: `（${COLOR_NAMES[shown[f]].zh}）`, en: ` (${COLOR_NAMES[shown[f]].en})` })}
-            </li>
-          ))}
+          {puzzle.faces.map((f) => {
+            const color = shown[puzzle.faceColor[f]];
+            return (
+              <li key={f}>
+                <i style={{ background: CUBE_FILL[color] }} aria-hidden="true" />
+                {f}: {tr(puzzle.faceName[f])}
+                {tr({ zh: `（${COLOR_NAMES[color].zh}）`, en: ` (${COLOR_NAMES[color].en})` })}
+              </li>
+            );
+          })}
         </ul>
       </section>
 
       <div className="predict-prompt">
         {promptGroups.map((g) => {
-          const color = shown[FACE_LETTERS[g.colorFace]];
-          const piece = KIND_LABELS[g.kind];
+          const color = faceColorOf(g.colorFace);
+          const piece = TRACK_LABELS[g.kind];
           const done = g.done === g.total;
           return (
             <p key={g.key} className={done ? 'is-found' : undefined}>
@@ -563,19 +641,19 @@ function PredictPageInner() {
             {tr({ zh: `全对!用时 ${clock(elapsed)}`, en: `Solved in ${clock(elapsed)}` })}
           </p>
         )}
-        {revealed && challenge && (
+        {revealed && ch && (
           <div className="predict-answer">
             <span className="predict-answer-tag">{tr({ zh: '答案', en: 'Answer' })}</span>
-            {challenge.targets.map((t) => {
-              const color = shown[FACE_LETTERS[t.colorFace]];
-              const face = FACE_LETTERS[faceletFace(t.answerFacelet)];
+            {ch.targets.map((t) => {
+              const color = faceColorOf(t.colorFace);
+              const face = puzzle.faces[Math.floor(t.answerFacelet / puzzle.perFace)];
               return (
-                <span key={`${t.kind}-${t.piece}-${t.sticker}`} className="predict-answer-item">
+                <span key={`${t.kind}-${t.startFacelet}`} className="predict-answer-item">
                   <b className="predict-color" style={{ background: CUBE_FILL[color], color: CUBE_ON_FILL[color] }}>
                     {colorChipLabel(color)}
                   </b>
                   <ArrowRight size={13} aria-hidden="true" />
-                  {face} {tr(FACE_NAMES[face])}
+                  {face} {tr(puzzle.faceName[face])}
                   {tr({ zh: '面', en: ' face' })}
                 </span>
               );
@@ -601,7 +679,7 @@ function PredictPageInner() {
           type="button"
           className="predict-reveal"
           onClick={reveal}
-          disabled={!challenge || solved || revealed}
+          disabled={!ch || solved || revealed}
         >
           <Eye size={15} aria-hidden="true" />
           {tr({ zh: '显示答案', en: 'Show answer' })}
@@ -609,8 +687,8 @@ function PredictPageInner() {
         <ResetDefaultsButton
           onReset={restoreDefaults}
           title={tr({
-            zh: '出题参数(模式 / 追踪 / 公式 / 步数 / 朝向)与视角恢复默认',
-            en: 'Reset the challenge settings (mode / track / moves / length / holding) and the view',
+            zh: '出题参数(模式 / 追踪 / 公式 / 步数 / 朝向)与视角恢复默认,拼图不变',
+            en: 'Reset the challenge settings (mode / track / moves / length / holding) and the view; keeps the puzzle',
           })}
         />
         <div className="predict-progress">
@@ -620,7 +698,7 @@ function PredictPageInner() {
               className={`predict-chip${g.done === g.total ? ' is-found' : ''}${revealed ? ' is-revealed' : ''}`}
             >
               {g.done === g.total && !revealed && <Check size={13} aria-hidden="true" />}
-              {tr(KIND_LABELS[g.kind])}
+              {tr(TRACK_LABELS[g.kind])}
               {g.total > 1 && <span className="predict-chip-count">{g.done}/{g.total}</span>}
             </span>
           ))}

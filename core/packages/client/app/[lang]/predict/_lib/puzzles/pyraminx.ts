@@ -99,6 +99,10 @@ export const pyraminxPuzzle: PredictPuzzle = {
     return out;
   },
 
+  notation: {
+    zh: "只收 U L R B(大写转顶点层、小写 u l r b 只转尖角,可加 ');面层记号 Dw / Lw 这块板子追不了。",
+    en: "Only U L R B (uppercase turns the vertex layer, lowercase u l r b turns the tip alone, optional '); face-layer tokens like Dw are not tracked here.",
+  },
   parse: parsePyraInput,
   moveFace: () => null, // U/L/R/B 是顶点不是面,给转动卡片上「面色」会误导
 };

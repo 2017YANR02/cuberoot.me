@@ -26,6 +26,7 @@ import { buildFaceletMap, buildReverseFaceletMap } from '@/components/sim-embed/
 import { ENGINE_SID_MAP } from '@/lib/puzzle-image/puzzle-mask';
 import { getPuzzle, identityPerm, stickerCount, type PredictPuzzle } from '@/app/[lang]/predict/_lib/puzzles';
 import { generatePuzzleChallenge, trackOptions } from '@/app/[lang]/predict/_lib/puzzle_challenge';
+import { collectStickerMeshes } from '@/app/[lang]/predict/_components/engineSlotMap';
 
 /** mulberry32 —— 确定性 RNG,让每条断言可复现。 */
 function seeded(seed: number): () => number {
@@ -244,6 +245,21 @@ describe('/predict 金字塔 / 斜转模型 ≡ /sim 引擎', () => {
     }
   });
 
+  // 上面两条锁的是「模型的置换 = 引擎的几何置换」,用的是测试自己按 canonical 下标排的
+  // mesh。题板画色 / 点击命中走的是 `collectStickerMeshes`,两者必须是同一份排法 ——
+  // 差一格,题板就会把高亮画在别的贴纸上,而且盘面看上去照样自洽,肉眼查不出来。
+  for (const id of ['pyraminx', 'skewb'] as const) {
+    it(`${id}:题板的 collectStickerMeshes 与几何验过的那份排法逐格相同`, () => {
+      const puzzle = getPuzzle(id);
+      const n = stickerCount(puzzle);
+      const indexOf = keyToIndex(puzzle, ENGINE_SID_MAP[id]);
+      const cube: THREE.Object3D = id === 'pyraminx' ? new PyraCube() : new SkewbCube();
+      const { meshes } = engineStickers(
+        cube, (m) => (m.userData.stickerKey as string | undefined) ?? null, indexOf, n,
+      );
+      expect(collectStickerMeshes(puzzle, cube)).toEqual(meshes);
+    });
+  }
 });
 
 // ─── 出题引擎 ────────────────────────────────────────────────────────────
