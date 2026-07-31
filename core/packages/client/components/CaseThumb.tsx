@@ -37,6 +37,33 @@ const CORNER_LL_MASK: Partial<Record<string, string>> = {
   cmll: 'cmll',
 };
 
+/**
+ * NxN 分支最终喂给 visualcube 的那几个参数(视角 / 遮罩 / 是否删灰格 / 阶数)。
+ *
+ * 抽成纯函数是因为**同一张图要出两次**:屏幕上走 `<VisualCube>`,PDF 导出走
+ * `renderFromSimpleQuery` 拿字符串(lib/alg_pdf/case_svg.ts)。参数留在 JSX 里的话,
+ * 两条路迟早各走各的 —— 改了这里的遮罩,PDF 里的图还是老样子。
+ */
+export function cubeThumbParams(
+  puzzle: AlgPuzzle, set: string, sticker: AlgSticker, maskOverride?: string,
+): { view: 'iso' | 'oll' | 'pll' | 'f2l' | 'pll-iso'; mask?: string; hideGreySides?: boolean; puzzleSize: number } {
+  const puzzleSize = PUZZLE_SIZE[puzzle];
+  if (maskOverride) return { view: 'pll', mask: maskOverride, puzzleSize };
+  // 最后一槽 + 顶层:等距视角。两个集观察域相同,但遮罩不能共用 ——
+  //  zbls 只到「末槽 + 翻棱」,顶层角块不看,vh 遮罩(压灰十字、另三槽、顶层角与四周顶排)正合适;
+  //  lsll 整层一步解完,顶层角块与四周顶排恰恰是要认的信息,压灰等于把题遮了。全彩不加遮罩,
+  //  与 /alg/lsll 库里那批本地渲染的图(lsll/model.caseFacelets)一致。
+  if (puzzle === '3x3' && set === 'lsll') return { view: 'iso', puzzleSize };
+  if (puzzle === '3x3' && set === 'zbls') return { view: 'iso', mask: 'vh', puzzleSize };
+  const cornerMask = puzzle === '3x3' ? CORNER_LL_MASK[set] : undefined;
+  if (cornerMask) return { view: 'pll', mask: cornerMask, puzzleSize };
+  const view = pickView(puzzle, set, sticker);
+  // OLL 图侧面那一圈灰格是「这里不是黄」的占位,信息全在黄条上 —— 删掉灰格就是通行的
+  // OLL 识别图。顶面 9 格一格不动(侧环由渲染器另一个 pass 画)。pll 不加:那圈是真配色;
+  // coll / cmll 更不能加(上面已单独 return),那里的灰恰恰是「这条棱不用看」的题面。
+  return { view, hideGreySides: view === 'oll', puzzleSize };
+}
+
 export function CaseThumb({
   puzzle, set, sticker, alg, setup, size = 88, mask: maskOverride, local, loading,
 }: {
@@ -79,35 +106,16 @@ export function CaseThumb({
     const kind = srPuzzleKind(puzzle)!;
     return <PuzzleSVG kind={kind} {...driver} size={size} />;
   }
-  if (maskOverride) {
-    return <VisualCube algorithm={alg} setup={setup} view="pll" mask={maskOverride} size={size} local={local} loading={loading} />;
-  }
-  // 最后一槽 + 顶层:等距视角。两个集观察域相同,但遮罩不能共用 ——
-  //  zbls 只到「末槽 + 翻棱」,顶层角块不看,vh 遮罩(压灰十字、另三槽、顶层角与四周顶排)正合适;
-  //  lsll 整层一步解完,顶层角块与四周顶排恰恰是要认的信息,压灰等于把题遮了。全彩不加遮罩,
-  //  与 /alg/lsll 库里那批本地渲染的图(lsll/model.caseFacelets)一致。
-  if (puzzle === '3x3' && set === 'lsll') {
-    return <VisualCube algorithm={alg} setup={setup} view="iso" size={size} local={local} loading={loading} />;
-  }
-  if (puzzle === '3x3' && set === 'zbls') {
-    return <VisualCube algorithm={alg} setup={setup} view="iso" mask="vh" size={size} local={local} loading={loading} />;
-  }
-  const cornerMask = puzzle === '3x3' ? CORNER_LL_MASK[set] : undefined;
-  if (cornerMask) {
-    return <VisualCube algorithm={alg} setup={setup} view="pll" mask={cornerMask} size={size} local={local} loading={loading} />;
-  }
-  const view = pickView(puzzle, set, sticker);
+  const p = cubeThumbParams(puzzle, set, sticker, maskOverride);
   return (
     <VisualCube
       algorithm={alg}
       setup={setup}
-      view={view}
-      // OLL 图侧面那一圈灰格是「这里不是黄」的占位,信息全在黄条上 —— 删掉灰格就是通行的
-      // OLL 识别图。顶面 9 格一格不动(侧环由渲染器另一个 pass 画)。pll 不加:那圈是真配色;
-      // coll / cmll 更不能加(上面已单独 return),那里的灰恰恰是「这条棱不用看」的题面。
-      hideGreySides={view === 'oll'}
+      view={p.view}
+      mask={p.mask}
+      hideGreySides={p.hideGreySides}
       size={size}
-      puzzleSize={PUZZLE_SIZE[puzzle]}
+      puzzleSize={p.puzzleSize}
       local={local}
       loading={loading}
     />

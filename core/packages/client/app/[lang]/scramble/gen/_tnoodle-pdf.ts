@@ -21,7 +21,8 @@
  *   fonts: LiberationMono-Regular, NotoSans-Regular (tnoodle/resources/fonts)
  */
 import { jsPDF } from 'jspdf';
-import 'svg2pdf.js';
+import { FONT_MONO, FONT_SANS, FONT_CJK, loadPdfFonts, ensureCjkFont } from '@/lib/pdf-fonts';
+import { svgStringToElement, embedSvg } from '@/lib/pdf-svg';
 import { renderUnfoldedSvgForEvent, eventToCubeSize } from '@cuberoot/shared/cube-unfolded-svg';
 import { renderClockScrambleSvg, DEFAULT_CLOCK_COLORS } from './_svg/clock_svg';
 import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS } from '@/lib/sq1-svg';
@@ -55,9 +56,6 @@ const PAGE_MARGIN_H = 35;
 const PAGE_MARGIN_V = 75;
 const A4_WIDTH = 595.28;   // pt
 const A4_HEIGHT = 841.89;  // pt
-const FONT_MONO = 'LiberationMono';
-const FONT_SANS = 'NotoSans';
-const FONT_CJK = 'wqy-microhei';
 // FMC sheet (FmcSolutionSheet.kt companion)
 const FMC_MARGIN = 35;                       // all 4 sides for FMC page
 const FMC_RIGHT_PCT = 0.45;                  // SCRAMBLE_IMAGE_WIDTH_PERCENT
@@ -124,48 +122,6 @@ export interface PdfOptions {
    *  its own cube-preview cell that's part of the WCA solution sheet
    *  layout. Defaults to true. */
   showPreview?: boolean;
-}
-
-// ─── Font loading (cached) ────────────────────────────────────────────────
-let monoB64: Promise<string> | null = null;
-let sansB64: Promise<string> | null = null;
-let cjkB64: Promise<string> | null = null;
-const cjkLoadedDocs = new WeakSet<jsPDF>();
-
-async function fetchFontBase64(url: string): Promise<string> {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Font fetch failed: ${url}`);
-  const buf = await res.arrayBuffer();
-  const bytes = new Uint8Array(buf);
-  // Chunked btoa to avoid call-stack issues on large fonts
-  let bin = '';
-  const chunk = 0x8000;
-  for (let i = 0; i < bytes.length; i += chunk) {
-    bin += String.fromCharCode(...bytes.subarray(i, i + chunk));
-  }
-  return btoa(bin);
-}
-
-async function loadFonts(doc: jsPDF): Promise<void> {
-  monoB64 ??= fetchFontBase64('/fonts/LiberationMono-Regular.ttf');
-  sansB64 ??= fetchFontBase64('/fonts/NotoSans-Regular.ttf');
-  const [mono, sans] = await Promise.all([monoB64, sansB64]);
-  doc.addFileToVFS('LiberationMono-Regular.ttf', mono);
-  doc.addFont('LiberationMono-Regular.ttf', FONT_MONO, 'normal');
-  doc.addFileToVFS('NotoSans-Regular.ttf', sans);
-  doc.addFont('NotoSans-Regular.ttf', FONT_SANS, 'normal');
-  doc.addFont('NotoSans-Regular.ttf', FONT_SANS, 'bold');  // bold simulated by jsPDF
-}
-
-/** Lazy-load wqy-microhei into a doc; cheap noop if already loaded. */
-async function ensureCjkFont(doc: jsPDF): Promise<void> {
-  if (cjkLoadedDocs.has(doc)) return;
-  cjkB64 ??= fetchFontBase64('/fonts/wqy-microhei.ttf');
-  const cjk = await cjkB64;
-  doc.addFileToVFS('wqy-microhei.ttf', cjk);
-  doc.addFont('wqy-microhei.ttf', FONT_CJK, 'normal');
-  doc.addFont('wqy-microhei.ttf', FONT_CJK, 'bold');
-  cjkLoadedDocs.add(doc);
 }
 
 function fontForLocaleName(locale: TnoodleLocale): string {
@@ -373,7 +329,7 @@ export async function generateTnoodlePdf(
   opts: PdfOptions,
 ): Promise<Blob> {
   const doc = new jsPDF({ unit: 'pt', format: 'a4', compress: true });
-  await loadFonts(doc);
+  await loadPdfFonts(doc);
 
   const today = new Date().toISOString().slice(0, 10);
   let pageCounter = 0;
@@ -639,43 +595,6 @@ async function renderPage(
       { align: 'center', baseline: 'middle' });
     currentY += 2 * EXTRA_SCRAMBLE_LABEL_SIZE;
     await renderRows(extraAttempts, true);
-  }
-}
-
-function svgStringToElement(svgStr: string): SVGSVGElement {
-  const parser = new DOMParser();
-  const parsed = parser.parseFromString(svgStr, 'image/svg+xml');
-  return parsed.documentElement as unknown as SVGSVGElement;
-}
-
-let svgRenderHost: HTMLDivElement | null = null;
-function getSvgRenderHost(): HTMLDivElement {
-  if (svgRenderHost && svgRenderHost.isConnected) return svgRenderHost;
-  const div = document.createElement('div');
-  div.style.cssText = 'position:fixed;left:-99999px;top:-99999px;width:600px;height:450px;visibility:hidden;pointer-events:none;';
-  document.body.appendChild(div);
-  svgRenderHost = div;
-  return div;
-}
-
-async function embedSvg(
-  doc: jsPDF,
-  el: SVGSVGElement,
-  x: number, y: number, w: number, h: number,
-): Promise<void> {
-  // svg2pdf.js calls getBBox / getComputedStyle, which only work for
-  // *attached* elements. Briefly attach to an off-screen host.
-  const host = getSvgRenderHost();
-  el.setAttribute('width', String(w));
-  el.setAttribute('height', String(h));
-  host.appendChild(el);
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (doc as any).svg(el, { x, y, width: w, height: h });
-  } catch (err) {
-    console.warn('[tnoodle_pdf] svg2pdf failed', err);
-  } finally {
-    try { el.remove(); } catch { /* swallow */ }
   }
 }
 

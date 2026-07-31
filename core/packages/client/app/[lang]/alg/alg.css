@@ -114,9 +114,43 @@ html[data-theme=dark] .alg-root {
   color: var(--muted-foreground);
   font-size: 13px;
 }
+/* 「下载 PDF」—— 把当前这批 case 排成可打印的 A4(components/AlgPdfButton) */
+.alg-pdf-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  color: var(--muted-foreground);
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.alg-pdf-btn:hover {
+  background: color-mix(in srgb, var(--foreground) 7%, transparent);
+  color: var(--foreground);
+  border-color: color-mix(in srgb, var(--foreground) 35%, transparent);
+}
+/* 生成中:数字会一位位跳动,定宽免得按钮跟着抖 */
+.alg-pdf-btn.is-busy {
+  color: var(--foreground);
+  min-width: 78px;
+  justify-content: center;
+}
+.alg-pdf-spin { animation: alg-pdf-spin 0.9s linear infinite; }
+@keyframes alg-pdf-spin { to { transform: rotate(360deg); } }
+
+/* 公式集页头靠右那一簇的推力挂在 PDF 按钮上(它排在训练 CTA 前面);空集那种没有
+   PDF 按钮的页面,推力落回训练 CTA —— 两个都写 auto 会把空白分到两者中间。
+   别把 auto 写进 .alg-pdf-btn 本身:换位子字典那条工具栏里它是普通一项,不推。 */
+.alg-cat-header .alg-pdf-btn { margin-left: auto; }
+.alg-cat-header:not(:has(.alg-pdf-btn)) .alg-train-cta { margin-left: auto; }
+
 /* 「开始训练」CTA —— 跳到 /alg/<puzzle>/<set>/select 的计时训练流(镜像 trainer-start-btn 配色) */
 .alg-train-cta {
-  margin-left: auto;
   display: inline-flex;
   align-items: center;
   gap: 6px;

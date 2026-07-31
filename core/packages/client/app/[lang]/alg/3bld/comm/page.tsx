@@ -34,6 +34,8 @@ import { ClearButton } from '@/components/ClearButton';
 import { Spinner } from '@/components/Spinner/Spinner';
 import CubingPreview from '@/components/CubingPreview';
 import AlgViewModeToggle, { useAlgViewMode } from '@/components/AlgViewModeToggle';
+import AlgPdfButton from '@/components/AlgPdfButton';
+import { algSheetFromCases } from '@/lib/alg_pdf/from_cases';
 import AdminCaseEditor, { type AdminEditorState } from '@/components/AdminCaseEditor';
 import AlgAdminValidate from '@/components/AlgAdminValidate';
 import SortableAlgRow from '@/components/SortableAlgRow';
@@ -292,6 +294,27 @@ export default function CommLibraryPage(): JSX.Element {
             ? tr({ zh: '加载中…', en: 'Loading…' })
             : tr({ zh: `${shown.length} 组`, en: `${shown.length}` })}
         </span>
+
+        {/* 打印用的字母对字典:不出图(818 张缩略图对认编码没用),中文联想词跟着印 */}
+        {file && shown.length > 0 && (
+          <AlgPdfButton
+            build={() => algSheetFromCases({
+              puzzle: PUZZLE,
+              set: SET_SLUG[kind],
+              cases: shown,
+              title: tr({
+                zh: `3BLD ${kindLabel(kind)}换位子`,
+                en: `3BLD ${kind} commutators`,
+              }),
+              sourcePath: '/alg/3bld/comm',
+              filename: `3bld-comm-${kind}`,
+              rawAlg: true,   // 收尾 AUF 不能剥 —— 见文件头注
+              thumbs: false,
+              setups: false,
+              subOf: (c) => assoc[c.name],
+            })}
+          />
+        )}
 
         {/* 校验作用在**当前这一套**上;报告里点失败项由本页的编辑器接管(免两份叠着) */}
         {isAdmin && file && (

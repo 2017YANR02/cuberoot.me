@@ -29,6 +29,8 @@ import AlgPlayer from '@/components/AlgPlayer';
 import CommunityAlgs from '@/components/CommunityAlgs';
 import AdminCaseEditor, { type AdminEditorState } from '@/components/AdminCaseEditor';
 import AlgAdminValidate from '@/components/AlgAdminValidate';
+import AlgPdfButton from '@/components/AlgPdfButton';
+import { algSheetFromCases } from '@/lib/alg_pdf/from_cases';
 import SortableAlgRow from '@/components/SortableAlgRow';
 import AlgMirrorPanel, { hasMirror } from '@/components/AlgMirrorPanel';
 import { algCaseHref, algCaseDetailHref, buildCaseSlugMap } from '@/lib/alg_case_link';
@@ -236,6 +238,19 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
             </button>
           )}
         </h1>
+        {/* 单张也能印:每个视角各一份(这页本来就把视角都列出来了) */}
+        <AlgPdfButton
+          build={() => algSheetFromCases({
+            puzzle,
+            set,
+            cases: [caseObj],
+            title: `${puzzle} ${set.toUpperCase()} ${primary}`,
+            sourcePath: `/alg/${puzzle}/${set}`,
+            filename: `${puzzle}-${set}-${primary.replace(/\s+/g, '-').toLowerCase()}`,
+            allOris: true,
+            maxAlgs: Infinity,  // 单张 case 的表,备选公式正是它的价值
+          })}
+        />
         {/* 校验只扫这一张 —— 报告里点失败项就开上面同一个编辑器,不再叠第二个 */}
         <AlgAdminValidate
           scope={{ kind: 'case', puzzle, set, caseObj }}
