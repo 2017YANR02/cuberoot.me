@@ -1,0 +1,166 @@
+import type { Question } from './types';
+
+// 记号与术语 —— 公式怎么读、圈里的黑话是什么意思。
+export const NOTATION: Question[] = [
+  {
+    id: 'not-01', cat: 'notation', type: 'choice',
+    q: { zh: '公式里的 R 表示什么?', en: 'What does R mean in cube notation?' },
+    options: [
+      { zh: '右面顺时针转 90 度', en: 'Turn the right face 90° clockwise' },
+      { zh: '右面逆时针转 90 度', en: 'Turn the right face 90° anticlockwise' },
+      { zh: '整个魔方向右转', en: 'Rotate the whole cube to the right' },
+      { zh: '右面转 180 度', en: 'Turn the right face 180°' },
+    ],
+    answer: 0,
+    why: { zh: 'R L U D F B 六个字母分别是右、左、上、下、前、后六个面,单写就是顺时针 90 度。', en: 'R L U D F B are the right, left, up, down, front and back faces; a bare letter means 90° clockwise.' },
+  },
+  {
+    id: 'not-02', cat: 'notation', type: 'choice',
+    q: { zh: 'R\' 怎么理解?', en: 'What about R\' ?' },
+    options: [
+      { zh: '右面逆时针 90 度', en: 'Right face 90° anticlockwise' },
+      { zh: '右面转两次', en: 'Right face twice' },
+      { zh: '右面转到底', en: 'Right face all the way round' },
+      { zh: '左面顺时针 90 度', en: 'Left face 90° clockwise' },
+    ],
+    answer: 0,
+    why: { zh: '那一撇读作 prime,表示反方向。', en: 'The prime mark means the opposite direction.' },
+  },
+  {
+    id: 'not-03', cat: 'notation', type: 'choice',
+    q: { zh: 'U2 表示什么?', en: 'What does U2 mean?' },
+    options: [
+      { zh: '上面转 180 度', en: 'Turn the top face 180°' },
+      { zh: '上面转两个 90 度但方向不同', en: 'Two 90° turns in opposite directions' },
+      { zh: '上面两层一起转', en: 'Turn the top two layers' },
+      { zh: '上下面各转一次', en: 'Turn the top and bottom faces once each' },
+    ],
+    answer: 0,
+    why: { zh: '转半圈,顺逆方向无所谓。', en: 'A half turn — direction does not matter.' },
+  },
+  {
+    id: 'not-04', cat: 'notation', type: 'choice',
+    q: { zh: '小写的 x y z(或 x\' y\')在公式里表示什么?', en: 'What do x, y and z mean in an algorithm?' },
+    options: [
+      { zh: '整个魔方的翻转,不动任何一层', en: 'Rotating the whole cube without turning a layer' },
+      { zh: '中层的转动', en: 'Turning a middle slice' },
+      { zh: '两层一起转', en: 'Turning two layers together' },
+      { zh: '随便哪个面转都行', en: 'Any face, your choice' },
+    ],
+    answer: 0,
+    why: { zh: 'x 跟 R 同方向,y 跟 U 同方向,z 跟 F 同方向,只是换个视角。', en: 'x follows R, y follows U, z follows F — you are just changing your viewpoint.' },
+  },
+  {
+    id: 'not-05', cat: 'notation', type: 'choice',
+    q: { zh: '四阶公式里的 Rw 是什么?', en: 'On a 4×4, what is Rw?' },
+    options: [
+      { zh: '右边两层一起转', en: 'Turn the two right-hand layers together' },
+      { zh: '只转右边的内层', en: 'Turn only the inner right slice' },
+      { zh: '右面转两次', en: 'Turn the right face twice' },
+      { zh: '整个魔方向右翻', en: 'Rotate the whole puzzle right' },
+    ],
+    answer: 0,
+    why: { zh: 'w 是 wide(宽层)的意思,表面那层带着相邻内层一起走。', en: 'The w stands for "wide" — the outer layer takes the adjacent inner layer with it.' },
+  },
+  {
+    id: 'not-06', cat: 'notation', type: 'choice',
+    q: { zh: 'M 层指的是哪一层?', en: 'Which slice is M?' },
+    options: [
+      { zh: '左右之间的中层', en: 'The middle slice between L and R' },
+      { zh: '上下之间的中层', en: 'The middle slice between U and D' },
+      { zh: '前后之间的中层', en: 'The middle slice between F and B' },
+      { zh: '任意一层,看上下文', en: 'Any slice, depending on context' },
+    ],
+    answer: 0,
+    why: { zh: 'M 是左右中间那层(跟 L 同方向),E 是上下中间那层,S 是前后中间那层。', en: 'M is the L/R middle slice (following L), E the U/D one, S the F/B one.' },
+  },
+  {
+    id: 'not-07', cat: 'notation', type: 'open',
+    q: { zh: '「PB」在速拧圈里是什么意思?', en: 'What does "PB" mean among speedcubers?' },
+    answer: { zh: 'Personal Best,个人最好成绩', en: 'Personal best' },
+    accept: ['personal best', '个人最好', '个人最佳', '个人纪录', '个人记录'],
+  },
+  {
+    id: 'not-08', cat: 'notation', type: 'choice',
+    q: { zh: '说「我 sub-20 了」是什么意思?', en: 'What does "I\'m sub-20" mean?' },
+    options: [
+      { zh: '成绩稳定在 20 秒以内', en: 'Solving reliably under 20 seconds' },
+      { zh: '练了 20 天', en: 'Been practising for 20 days' },
+      { zh: '会 20 条公式', en: 'Knows 20 algorithms' },
+      { zh: '排名进了前 20', en: 'Ranked in the top 20' },
+    ],
+    answer: 0,
+    why: { zh: 'sub 就是「低于」,一般指平均成绩稳定在那条线以内。', en: '"Sub" means below — usually referring to a stable average under that mark.' },
+  },
+  {
+    id: 'not-09', cat: 'notation', type: 'choice',
+    q: { zh: 'Ao5 和 Mo3 的区别是什么?', en: 'What is the difference between Ao5 and Mo3?' },
+    options: [
+      { zh: 'Ao5 要去掉最好和最坏,Mo3 是三次直接平均', en: 'Ao5 drops the best and worst; Mo3 just averages three' },
+      { zh: 'Ao5 是官方成绩,Mo3 只能自己练', en: 'Ao5 is official, Mo3 is practice-only' },
+      { zh: 'Ao5 算平均,Mo3 取最快', en: 'Ao5 averages, Mo3 takes the fastest' },
+      { zh: '没区别,只是叫法不同', en: 'No difference, just two names' },
+    ],
+    answer: 0,
+  },
+  {
+    id: 'not-10', cat: 'notation', type: 'choice',
+    q: { zh: '「AUF」指的是什么?', en: 'What is an "AUF"?' },
+    options: [
+      { zh: '公式前后把顶层转一下对准', en: 'Turning the top layer to line things up before or after an algorithm' },
+      { zh: '一种盲拧编码', en: 'A blindfolded lettering scheme' },
+      { zh: '一种手法', en: 'A kind of fingertrick' },
+      { zh: '魔方的一种故障', en: 'A type of puzzle malfunction' },
+    ],
+    answer: 0,
+    why: { zh: 'Adjust Upper Face —— 顶层多转的那一下,不算解法主体但要算步数。', en: 'Adjust Upper Face — the extra U turn that lines up a case, still counted in your move count.' },
+  },
+  {
+    id: 'not-11', cat: 'notation', type: 'choice',
+    q: { zh: '「pop」在速拧里指什么?', en: 'What is a "pop"?' },
+    options: [
+      { zh: '转动时块飞了出来', en: 'A piece flying out of the puzzle' },
+      { zh: '公式记错了', en: 'Forgetting an algorithm' },
+      { zh: '手法特别快', en: 'An extremely fast fingertrick' },
+      { zh: '打乱特别好', en: 'Getting a lucky scramble' },
+    ],
+    answer: 0,
+    why: { zh: '规则允许当场装回去(只能修故障的块),但时间还在跑。', en: 'The regulations let you reassemble it mid-solve, but the clock keeps running.' },
+  },
+  {
+    id: 'not-12', cat: 'notation', type: 'choice',
+    q: { zh: '「容错」(corner cutting)说的是什么?', en: 'What does "corner cutting" describe?' },
+    options: [
+      { zh: '层没完全对齐时也能继续转过去', en: 'Being able to keep turning even when layers are not lined up' },
+      { zh: '把角块磨圆一点', en: 'Sanding the corner pieces round' },
+      { zh: '省掉几步的解法', en: 'A solution that skips a few moves' },
+      { zh: '角块先还原的方法', en: 'Solving corners first' },
+    ],
+    answer: 0,
+    why: { zh: '容错好的魔方手快时不容易卡住,是选魔方的重要指标。', en: 'Good corner cutting keeps a fast solve from locking up — a key thing people look for in a cube.' },
+  },
+  {
+    id: 'not-13', cat: 'notation', type: 'choice',
+    q: { zh: '一条公式里的「三循环」(3-cycle)是指?', en: 'What is a 3-cycle?' },
+    options: [
+      { zh: '三个块互相换位置', en: 'Three pieces swapping around among themselves' },
+      { zh: '公式重复三遍', en: 'Repeating an algorithm three times' },
+      { zh: '转三次就还原', en: 'Solving in three moves' },
+      { zh: '三层一起转', en: 'Turning three layers at once' },
+    ],
+    answer: 0,
+    why: { zh: '盲拧几乎全靠三循环拼出来,因为两两交换会破坏奇偶性。', en: 'Blindfolded methods are built on 3-cycles, because plain 2-swaps break parity.' },
+  },
+  {
+    id: 'not-14', cat: 'notation', type: 'choice',
+    q: { zh: '高阶魔方里说的「parity」(奇偶校验)是什么情况?', en: 'What is "parity" on a big cube?' },
+    options: [
+      { zh: '出现一种三阶上不可能有的状态,得用专门公式解', en: 'A state that cannot happen on a 3×3, needing its own algorithm' },
+      { zh: '魔方装错了', en: 'The puzzle was assembled wrongly' },
+      { zh: '打乱步数是奇数', en: 'The scramble has an odd number of moves' },
+      { zh: '两个面颜色一样', en: 'Two faces share a colour' },
+    ],
+    answer: 0,
+    why: { zh: '四阶等偶数阶因为中心块不固定、棱块成对,会出现看起来「只差两个块」的局面。', en: 'On even-order cubes the centres are free and edges come in pairs, so you can end up seemingly two pieces short.' },
+  },
+];

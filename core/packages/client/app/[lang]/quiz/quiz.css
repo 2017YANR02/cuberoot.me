@@ -1,0 +1,443 @@
+/* /quiz 魔方知识问答。双主题:颜色全部走 :root token,light/dark 自动翻。
+   刻意不给内容套卡片外框 —— 层级靠间距和字号,只有可点的选项/分类才有边。 */
+
+.quiz-page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 1.25rem 1rem 4rem;
+    color: var(--foreground);
+}
+
+.quiz-head {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.75rem;
+}
+
+.quiz-head .back-home {
+    margin-right: auto;
+}
+
+/* ── 选题页 ── */
+
+.quiz-hub h1 {
+    font-size: 1.6rem;
+    font-weight: 650;
+    margin: 0 0 0.5rem;
+}
+
+.quiz-intro {
+    margin: 0 0 1.5rem;
+    color: var(--muted-foreground);
+    font-size: 0.94rem;
+    line-height: 1.6;
+}
+
+.quiz-mixed,
+.quiz-cat {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    width: 100%;
+    padding: 0.8rem 0.95rem;
+    border: 1px solid var(--border-default);
+    border-radius: 10px;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    text-decoration: none;
+    font: inherit;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.quiz-mixed:hover,
+.quiz-cat:hover {
+    border-color: var(--border-strong);
+    background: color-mix(in srgb, var(--foreground) 4%, transparent);
+}
+
+.quiz-mixed {
+    margin-bottom: 1.5rem;
+    border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.quiz-mixed:hover {
+    border-color: var(--accent);
+}
+
+.quiz-mixed svg,
+.quiz-cat svg {
+    flex: none;
+    color: var(--accent);
+}
+
+.quiz-mixed-text,
+.quiz-cat-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+}
+
+.quiz-mixed-text strong,
+.quiz-cat-text strong {
+    font-size: 0.98rem;
+    font-weight: 600;
+}
+
+.quiz-mixed-text em,
+.quiz-cat-text em {
+    font-style: normal;
+    font-size: 0.84rem;
+    line-height: 1.45;
+    color: var(--muted-foreground);
+}
+
+.quiz-cats {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.quiz-cat-n {
+    margin-left: auto;
+    flex: none;
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--faint-foreground);
+}
+
+/* ── 答题 ── */
+
+.quiz-bar {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    font-size: 0.82rem;
+    color: var(--muted-foreground);
+}
+
+.quiz-bar-cat {
+    font-weight: 600;
+    color: var(--foreground);
+}
+
+/* 三项紧凑靠左排,不塞 spacer 把计分推到行尾。 */
+.quiz-bar-pos,
+.quiz-bar-score {
+    font-variant-numeric: tabular-nums;
+}
+
+.quiz-progress {
+    height: 2px;
+    margin: 0.5rem 0 1.5rem;
+    background: color-mix(in srgb, var(--foreground) 10%, transparent);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.quiz-progress i {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.2s ease;
+}
+
+.quiz-q {
+    font-size: 1.22rem;
+    font-weight: 600;
+    line-height: 1.5;
+    margin: 0 0 1.25rem;
+}
+
+.quiz-options {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.quiz-option {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    width: 100%;
+    padding: 0.7rem 0.9rem;
+    border: 1px solid var(--border-default);
+    border-radius: 10px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.quiz-option:hover:not(:disabled) {
+    border-color: var(--border-strong);
+    background: color-mix(in srgb, var(--foreground) 4%, transparent);
+}
+
+.quiz-option:disabled {
+    cursor: default;
+}
+
+.quiz-option-key {
+    flex: none;
+    width: 1.35rem;
+    height: 1.35rem;
+    display: grid;
+    place-items: center;
+    border-radius: 5px;
+    background: color-mix(in srgb, var(--foreground) 8%, transparent);
+    color: var(--muted-foreground);
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.quiz-option-text {
+    flex: 1;
+    min-width: 0;
+    line-height: 1.45;
+}
+
+.quiz-option.is-right {
+    border-color: var(--signal-success);
+    background: color-mix(in srgb, var(--signal-success) 12%, transparent);
+}
+
+.quiz-option.is-right svg {
+    color: var(--signal-success);
+}
+
+.quiz-option.is-wrong {
+    border-color: var(--destructive);
+    background: color-mix(in srgb, var(--destructive) 10%, transparent);
+}
+
+.quiz-option.is-wrong svg {
+    color: var(--destructive);
+}
+
+/* 问答题 */
+
+.quiz-open {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-start;
+}
+
+.quiz-input {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--input);
+    border-radius: 10px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+}
+
+.quiz-input:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 1px;
+}
+
+.quiz-open-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.quiz-open-answer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.quiz-open-label {
+    font-size: 0.78rem;
+    color: var(--muted-foreground);
+}
+
+.quiz-open-answer strong {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--signal-success);
+}
+
+/* 判卷反馈 */
+
+.quiz-feedback {
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-default);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
+}
+
+.quiz-feedback-head {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.92rem;
+    font-weight: 600;
+    flex-wrap: wrap;
+}
+
+.quiz-feedback.is-right .quiz-feedback-head {
+    color: var(--signal-success);
+}
+
+.quiz-feedback.is-wrong .quiz-feedback-head {
+    color: var(--destructive);
+}
+
+.quiz-flip {
+    border: none;
+    background: none;
+    padding: 0;
+    font: inherit;
+    font-weight: 400;
+    font-size: 0.82rem;
+    color: var(--muted-foreground);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+}
+
+.quiz-why {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.65;
+    color: var(--muted-foreground);
+}
+
+/* 按钮 */
+
+.quiz-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.5rem 0.9rem;
+    border: 1px solid var(--border-default);
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 0.9rem;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.quiz-btn:hover {
+    border-color: var(--border-strong);
+    background: color-mix(in srgb, var(--foreground) 4%, transparent);
+}
+
+.quiz-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.quiz-btn.is-primary {
+    border-color: transparent;
+    background: var(--primary);
+    color: var(--primary-foreground);
+}
+
+.quiz-btn.is-primary:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--primary) 88%, black);
+}
+
+.quiz-next {
+    margin-top: 0.25rem;
+}
+
+/* ── 结算 ── */
+
+.quiz-result-score {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.quiz-result-score strong {
+    font-size: 2.6rem;
+    font-weight: 650;
+    line-height: 1;
+}
+
+.quiz-result-score span {
+    font-size: 1.1rem;
+    color: var(--muted-foreground);
+}
+
+.quiz-result-line {
+    margin: 0.75rem 0 1.75rem;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--muted-foreground);
+}
+
+.quiz-wrong h2 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--muted-foreground);
+    margin: 0 0 0.6rem;
+}
+
+.quiz-wrong ul {
+    list-style: none;
+    margin: 0 0 1.75rem;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.quiz-wrong li {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.quiz-wrong-q {
+    font-size: 0.92rem;
+    line-height: 1.5;
+}
+
+.quiz-wrong-a {
+    font-size: 0.88rem;
+    color: var(--signal-success);
+}
+
+.quiz-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 480px) {
+    .quiz-page {
+        padding: 1rem 0.85rem 3rem;
+    }
+
+    .quiz-q {
+        font-size: 1.08rem;
+    }
+
+    .quiz-result-score strong {
+        font-size: 2.1rem;
+    }
+}
