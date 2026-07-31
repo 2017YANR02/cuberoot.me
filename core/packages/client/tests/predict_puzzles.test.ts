@@ -27,7 +27,7 @@ import { ENGINE_SID_MAP } from '@/lib/puzzle-image/puzzle-mask';
 import { getPuzzle, identityPerm, stickerCount, type PredictPuzzle } from '@/app/[lang]/predict/_lib/puzzles';
 import { generatePuzzleChallenge, trackOptions } from '@/app/[lang]/predict/_lib/puzzle_challenge';
 import { collectStickerMeshes } from '@/app/[lang]/predict/_components/engineSlotMap';
-import { attachStickerFrame } from '@/app/[lang]/predict/_components/solidOutline';
+import { expectEvenFrame } from './_predict_frame';
 
 /** mulberry32 —— 确定性 RNG,让每条断言可复现。 */
 function seeded(seed: number): () => number {
@@ -266,38 +266,10 @@ describe('/predict 金字塔 / 斜转模型 ≡ /sim 引擎', () => {
 // ─── 题板高亮框 ──────────────────────────────────────────────────────────
 
 describe('/predict 题板高亮框', () => {
-  /** 框宽 ÷ 质心到轮廓的距离 —— `solidOutline.ts` 的 BAND_RATIO,与 NxN 那圈
-   *  (OUTLINE_WIDTH 4.5 ÷ 半宽 28)对齐。改这个数就是改框的粗细,当 review 信号。 */
-  const K = 1 - 0.16;
-
   for (const id of ['pyraminx', 'skewb'] as const) {
-    it(`${id}:框的副本与贴纸共面、绕质心均匀内缩`, () => {
+    it(`${id}:每张贴纸的框都贴在正面、宽度处处相等`, () => {
       const cube: THREE.Object3D = id === 'pyraminx' ? new PyraCube() : new SkewbCube();
-      const meshes = collectStickerMeshes(getPuzzle(id), cube);
-      for (const mesh of meshes) {
-        const frame = attachStickerFrame(mesh, new THREE.MeshBasicMaterial());
-        expect(frame, '每张贴纸都该挂得上框').toBeTruthy();
-        const mat = frame!.patch.matrix;
-        const n = (mesh.userData.simStickerNormal as THREE.Vector3).clone().normalize();
-        const pos = mesh.geometry.getAttribute('position');
-        const c = new THREE.Vector3();
-        const p = new THREE.Vector3();
-        for (let i = 0; i < pos.count; i++) c.add(p.fromBufferAttribute(pos, i));
-        c.multiplyScalar(1 / pos.count);
-        // 质心是不动点 —— 框往一边偏就会一侧粗一侧细。
-        expect(c.clone().applyMatrix4(mat).distanceTo(c)).toBeLessThan(1e-4);
-        const inPlane = (v: THREE.Vector3): number => {
-          const d = v.clone().sub(c);
-          return d.addScaledVector(n, -d.dot(n)).length();
-        };
-        for (let i = 0; i < pos.count; i++) {
-          p.fromBufferAttribute(pos, i);
-          const q = p.clone().applyMatrix4(mat);
-          // 法向那一维必须原样:副本浮起来的话,斜视角下会与本体错位成宽窄不匀的框。
-          expect(Math.abs(q.clone().sub(p).dot(n))).toBeLessThan(1e-4);
-          expect(Math.abs(inPlane(q) - inPlane(p) * K)).toBeLessThan(1e-4);
-        }
-      }
+      collectStickerMeshes(getPuzzle(id), cube).forEach((mesh, i) => expectEvenFrame(mesh, `${id} 第 ${i} 格`));
     });
   }
 });

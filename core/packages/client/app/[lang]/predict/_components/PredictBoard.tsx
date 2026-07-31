@@ -376,8 +376,12 @@ async function mountSolidPainter(
   // 高亮框(= NxN 的 FM_OUTLINE)。只有真被点名的贴纸才需要,所以按需建、建完留着复用。
   const frames = new Array<ReturnType<typeof outline.attachStickerFrame>>(meshes.length).fill(null);
   const framed = (i: number): (typeof frames)[number] => {
-    // 材质克隆自这张贴纸自己那份(同型号才和没加框的贴纸一个观感);dispose 归这里管。
-    frames[i] ??= outline.attachStickerFrame(meshes[i], caps[i].clone() as CapMaterial);
+    frames[i] ??= (() => {
+      // 材质克隆自这张贴纸自己那份(同型号才和贴纸一个受光观感);dispose 归这里管。
+      const mat = caps[i].clone() as CapMaterial;
+      mat.color.set(outline.OUTLINE_DEFAULT);
+      return outline.attachStickerFrame(meshes[i], mat);
+    })();
     return frames[i];
   };
   disposers.push(() => {
@@ -385,6 +389,7 @@ async function mountSolidPainter(
       if (!f) continue;
       f.patch.removeFromParent();
       f.material.dispose();
+      f.geometry.dispose();
     }
   });
 
@@ -419,14 +424,12 @@ async function mountSolidPainter(
     for (let i = 0; i < caps.length; i++) {
       const label = shownLabels[i] ?? '';
       if (!label) continue;
-      const own = shadedColor(label, plain || full.has(i)
-        ? 'bright' : half.has(i) ? 'dim' : 'ignored');
-      // 加框那张:本体整片刷描边色,中心那张副本刷回真实颜色 —— 与 NxN 同语义
-      //(颜色照旧是它自己的,只有外圈那一圈换成高亮色),玩家照样读得出是什么色。
-      const frame = !plain && full.has(i) ? framed(i) : frames[i];
-      if (frame) frame.patch.visible = !plain && full.has(i);
-      if (frame?.patch.visible) frame.material.color.set(own);
-      caps[i].color.set(frame?.patch.visible ? outline.OUTLINE_DEFAULT : own);
+      // 与 NxN 同语义:颜色照旧是贴纸自己的(玩家要读出它是什么色),只在边缘扣一圈框。
+      const wanted = !plain && full.has(i);
+      caps[i].color.set(shadedColor(label, plain || full.has(i)
+        ? 'bright' : half.has(i) ? 'dim' : 'ignored'));
+      const frame = wanted ? framed(i) : frames[i];
+      if (frame) frame.patch.visible = wanted;
     }
   };
 

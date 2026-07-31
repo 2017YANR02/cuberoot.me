@@ -24,7 +24,7 @@ import { SIZE } from '../define';
 import { CUBE_FILL } from '@/lib/cube-colors';
 import { ConvexGeometry } from 'three/examples/jsm/geometries/ConvexGeometry.js';
 import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { makeSticker } from '../stickerGeom';
+import { makeSticker, tagStickerOutline } from '../stickerGeom';
 
 /** Tetra circumradius-ish scale (world units); frames like a ~3x3 in the shared rig. */
 export const PYRA_A = SIZE * 1.5;
@@ -93,6 +93,9 @@ const STICKER_DEPTH = 1.5;
  *  (narrow grooves) + low sticker protrusion (flat-ish) for a clean single-color face. */
 const STICKER_INSET_DIST = 0.6;
 const STICKER_CORNER_R = 0.16;
+/** 圆角的采样段数 —— 挤出体与 `tagStickerOutline` 记的轮廓必须同一个数,否则框会和
+ *  贴纸边缘差出一条缝。 */
+const CURVE_SEG = 8;
 const BODY_ROUND = 1;
 /** Each piece is shrunk toward its own centroid by this factor, opening a uniform
  *  gap to its neighbours so the dark core shows through as a thick seam — without
@@ -200,8 +203,12 @@ function roundedTriSticker(p0: THREE.Vector3, p1: THREE.Vector3, p2: THREE.Vecto
   const b0 = trimB(0); shape.moveTo(b0.x, b0.y);
   for (const i of [1, 2, 0]) { const aa = trimA(i), bb = trimB(i); shape.lineTo(aa.x, aa.y); shape.quadraticCurveTo(C[i].x, C[i].y, bb.x, bb.y); }
   shape.closePath();
-  const geom = new THREE.ExtrudeGeometry(shape, { depth: STICKER_DEPTH, bevelEnabled: false, curveSegments: 8 });
-  geom.applyMatrix4(new THREE.Matrix4().makeBasis(u, w, n).setPosition(origin));
+  const geom = new THREE.ExtrudeGeometry(shape, { depth: STICKER_DEPTH, bevelEnabled: false, curveSegments: CURVE_SEG });
+  const toFace = new THREE.Matrix4().makeBasis(u, w, n).setPosition(origin);
+  geom.applyMatrix4(toFace);
+  // 同一批采样点(挤出体用的也是它)记到几何上,给贴着轮廓画的东西用(/predict 的高亮框)。
+  tagStickerOutline(geom, shape.extractPoints(CURVE_SEG).shape.map((p): [number, number] => [p.x, p.y]),
+    toFace, STICKER_DEPTH, false);
   return geom;
 }
 

@@ -21,7 +21,7 @@ import { SIZE } from '../define';
 import { CUBE_FILL } from '@/lib/cube-colors';
 import { ConvexGeometry } from 'three/examples/jsm/geometries/ConvexGeometry.js';
 import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { makeSticker, schematicPolyFromFacet } from '../stickerGeom';
+import { makeSticker, schematicPolyFromFacet, tagStickerOutline } from '../stickerGeom';
 import { CORNER_AXIS, CENTER_AXIS } from './skewbState';
 
 /** Cube half-side (world units) — frames like the other engine puzzles. */
@@ -36,6 +36,9 @@ const STICKER_LIFT = 0.5;      // clear z-fight with the body face
 const STICKER_DEPTH = 6;       // raised pillow thickness
 const STICKER_INSET = 0.07;    // fraction toward the face-polygon centroid (black outline)
 const STICKER_CORNER_R = 0.18; // rounded-corner radius, fraction of shortest edge
+/** 圆角的采样段数 —— 挤出体与 `tagStickerOutline` 记的轮廓必须同一个数,否则框会和
+ *  贴纸边缘差出一条缝。 */
+const CURVE_SEG = 8;
 const BODY_ROUND = 8;          // body corner/edge round radius (world units)
 
 const BODY_COLOR = 0x141414;
@@ -186,8 +189,12 @@ function roundedPolySticker(pts: THREE.Vector3[], normal: THREE.Vector3): THREE.
     shape.quadraticCurveTo(C[i].x, C[i].y, b.x, b.y);
   }
   shape.closePath();
-  const geom = new THREE.ExtrudeGeometry(shape, { depth: STICKER_DEPTH, bevelEnabled: false, curveSegments: 8 });
-  geom.applyMatrix4(new THREE.Matrix4().makeBasis(u, w, n).setPosition(origin));
+  const geom = new THREE.ExtrudeGeometry(shape, { depth: STICKER_DEPTH, bevelEnabled: false, curveSegments: CURVE_SEG });
+  const toFace = new THREE.Matrix4().makeBasis(u, w, n).setPosition(origin);
+  geom.applyMatrix4(toFace);
+  // 同一批采样点(挤出体用的也是它)记到几何上,给贴着轮廓画的东西用(/predict 的高亮框)。
+  tagStickerOutline(geom, shape.extractPoints(CURVE_SEG).shape.map((p): [number, number] => [p.x, p.y]),
+    toFace, STICKER_DEPTH, false);
   return geom;
 }
 
