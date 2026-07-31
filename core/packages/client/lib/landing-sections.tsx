@@ -6,6 +6,7 @@ import {
   Film, ScanSearch, BookOpen, Shuffle, Library, BookA,
   Compass, Grid2x2, Trophy, Timer as TimerIcon, Code as CodeIcon,
   Brain, Box, Sigma, Scale, Sprout, Brush, MessagesSquare, Shapes, Blocks, Eye, Palette,
+  CircleQuestionMark,
   type LucideIcon,
 } from 'lucide-react';
 import { type LandingSearchCard } from '@/components/LandingSearch';
@@ -43,6 +44,7 @@ export const TEXTS: Record<string, { en: string; zh: string
   alg:             { en: 'Tutorial',   zh: '教程' },
   algdb:           { en: 'Algorithms', zh: '公式' },
   wiki:            { en: 'Wiki', zh: 'Wiki' },
+  quiz:            { en: 'Quiz', zh: '问答' },
   sitesDirectory:  { en: 'Web', zh: '网站'
 },
   mosaic:          { en: 'Mosaic', zh: '马赛克'
@@ -149,10 +151,11 @@ export const SECTIONS: Section[] = [
     eyebrow: { en: 'LEARN', zh: '学习' },
     title:   { en: 'Tutorials, terms, rules.', zh: '教程、术语、规则。'
     },
-    sub:     { en: 'Illustrated tutorials, a bilingual glossary, the full WCA regulations, and the group theory underneath.', zh: '图文教程、双语术语表、WCA 规则全文,以及魔方背后的群论。'
+    sub:     { en: 'Illustrated tutorials, a bilingual glossary, the full WCA regulations, the group theory underneath — and a quiz to check what stuck.', zh: '图文教程、双语术语表、WCA 规则全文、魔方背后的群论,以及一套问答检验你记住了多少。'
     },
     cards: [
       { id: 'alg',      href: '/tutorial', internal: true, tier: 'medium', Icon: Library,    nameKey: 'alg' },
+      { id: 'quiz',     href: '/quiz',     internal: true, tier: 'medium', Icon: CircleQuestionMark, nameKey: 'quiz' },
       { id: 'wiki',     href: '/wiki',     internal: true, tier: 'medium', Icon: BookA,      nameKey: 'wiki' },
       { id: 'regulation', href: '/regulation', internal: true, tier: 'medium', Icon: Scale, nameKey: 'regulation' },
       { id: 'math-hub', href: '/math', internal: true, tier: 'medium', Icon: Sigma, nameKey: 'theoryGroup' },
