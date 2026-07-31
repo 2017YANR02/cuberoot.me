@@ -116,7 +116,7 @@ pnpm --filter @cuberoot/client lint
 ## 页面标题 / SEO metadata
 
 - 新路由必做两步:`lib/page-meta.ts` 加一条双语 `title`(内容页顺带 `description`)+ 该路由建 3 行 server `layout.tsx` 调 `pageMetadata('<route>')`。守卫 `tests/page-metadata-coverage.test.ts`(漏配 / key 拼错 / PAGE_META 孤儿条目都直接红;哨兵壳走该文件 ALLOWLIST 并写理由)。
-- 标题里别出现第二个破折号:`metadataFromEntry` 会补 ` — CubeRoot`,自己再写 ` — ` 就成了双破折号,改用冒号。
+- 标题里别出现第二个破折号:`metadataFromEntry` 会前缀 `CubeRoot — `(品牌在前),自己再写 ` — ` 就成了双破折号,改用冒号。
 - `page.tsx` 保持 `'use client'` 不用拆 —— client page 不能 export metadata,但同目录 server `layout.tsx` 可以,metadata 向下合并。
 - 禁在 `[lang]/layout.tsx` 或 metadata 里用 `headers()` 判路径(全站转 dynamic,直接撞 Vercel CPU 上限);语言一律取 `params.lang`,`tr()`/`useT()` 是 client-only 用不了。
 - 一处只留一个标题源:页面已有 layout metadata 就删掉它的 `useDocumentTitle`,否则 hydration 后被客户端覆盖回旧文案。仅「服务端看不见的运行时状态」(`?event=` 分发等)才留 hook,此时路由 metadata 写通用名。
