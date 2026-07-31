@@ -52,6 +52,7 @@ import { buildCommentSuggestions } from '@/lib/popup_suggest';
 import { htmMoves } from './htm';
 import type { F2lSlotsResult } from './f2l_slots';
 import type { SolveMove, StageSegments } from './stage_segments';
+import { stepTimeBounds } from './rotation_detect';
 import type { RotationEvent } from './rotation_detect';
 import { tokensForRange } from './step_metrics';
 import type { StepMetricsResult } from './step_metrics';
@@ -263,15 +264,17 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
   // 这一行的时间窗:上一行最后一手之后 → 自己最后一手为止。第一行往前开口到无穷,
   // 因为起表前后那次「把魔方摆正」属于它。
   let prevEndMs = -Infinity;
+  // 时间窗的界和分步分析表用的是同一份规矩(收尾那步开口到无穷),所以共用一个
+  // `stepTimeBounds` —— 两边各写一遍迟早会分叉,而分叉的表现是「同一把,文字里
+  // 有那次转体、表里没有」。
+  const spanEndMs = stepTimeBounds(spans.map(s => s.endIdx), moves);
 
-  for (const span of spans) {
+  for (const [spanIdx, span] of spans.entries()) {
     const from = prevEnd + 1;
     // 识别用的动作和显示用的动作要分开:转体不是转动,喂给识别器会把局面算错、
     // 把步数撑大。识别永远只看 `turnTokens`。
     const turnTokens = tokensForRange(moves, counted, from, span.endIdx);
-    // 收尾那一步的时间窗往后开口:它之后没有动作了,所以「拧完之后把魔方转回去」
-    // 那次转体只能归它 —— 卡在最后一手的时刻上会把它整个丢掉。
-    const endMs = span.endIdx >= moves.length - 1 ? Infinity : (moves[span.endIdx]?.ts ?? Infinity);
+    const endMs = spanEndMs[spanIdx];
     const mine = rotations.filter(r => r.tMs > prevEndMs && r.tMs <= endMs);
     const lineMoves = weaveRotations(turnTokens, mine, moves, from, span.endIdx);
     prevEndMs = endMs;

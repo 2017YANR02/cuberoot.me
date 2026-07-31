@@ -550,6 +550,7 @@ export default function ReconstructModal({
             ao12={stageAvgs?.ao12 ?? null}
             walk={walk}
             moves={moves}
+            rotations={rotations}
             hideBar={method === 'cfop' && !!reconText && reconText.lines.length > 0}
             isZh={isZh}
           />
