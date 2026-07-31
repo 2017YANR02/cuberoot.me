@@ -42,7 +42,10 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import { useBluetoothCube } from '../_lib/bluetooth';
 import type { BluetoothCubeHandle } from '../_lib/bluetooth';
+import { GyroRecorder, encodeGyroTrack } from '../_lib/bluetooth/gyro_track';
+import type { Quat } from '../_lib/bluetooth/orientation';
 import { applyScramble, facesEqual, type CubeFaces } from '../_lib/cube/state';
+import { useSettings } from '../_lib/settings';
 import { stageSegmentsFor } from '../_lib/reconstruct/stage_segments';
 import { appendSolves, makeSolve } from '../_lib/storage/db';
 import type { EventId } from '../_lib/types';
@@ -76,6 +79,52 @@ export function ownerOf(slot: number, cubeMode: 'own' | 'shared', holder: number
   return cubeMode === 'shared' ? holder : slot;
 }
 
+/**
+ * 这一路的事件算不算数。
+ *
+ * `'shared'` 的定义就是「只有第 0 路在用」(见文件头),可是四路连接**一直挂着**,
+ * 换语义时并不会把 1~3 路断开。于是在 own 模式下连好的那几颗,切到 shared 之后
+ * 还在报事件,而 `ownerOf` 会把它们**全部**记到持有者头上 —— 队友把手边那颗闲置
+ * 的魔方碰一下(它恰好是复原态),持有者的表就被停掉了。所以要在入口挡住。
+ */
+export function slotCounts(slot: number, cubeMode: 'own' | 'shared'): boolean {
+  return cubeMode !== 'shared' || slot === 0;
+}
+
+/**
+ * 这一把该不该进**本机计时记录**。
+ *
+ * 本机记录是「我」的练习历史 —— PB / Ao5 / 分段统计都从它来,而 `Solve` 里根本没有
+ * 「这是谁拧的」这个字段,混进去就再也分不开。同屏对战里 P2~P4 是**别人**:own 语义
+ * 下他们各连各的魔方,shared 语义下轮到他们的那几把也走第 0 路 —— 两条都得挡掉,
+ * 所以判据是折算之后的 `owner`,不是槽位。他们的成绩照常进对战记分板,那是另一本账。
+ */
+export function recordsToLocalHistory(
+  slot: number, cubeMode: 'own' | 'shared', holder: number,
+): boolean {
+  return slotCounts(slot, cubeMode) && ownerOf(slot, cubeMode, holder) === 0;
+}
+
+/**
+ * 一把的身份 = 谁的哪一次起表。`startTime` 由 store 在起表那一刻写死(魔方那条路
+ * 用魔方给的时刻,按键那条路用 `performance.now()`,同一口径),所以它天然就是
+ * 「这一把」的编号:换人、换轮、重新起表都会变。
+ */
+function attemptKey(owner: number, startTime: number): string {
+  return `${owner}:${startTime}`;
+}
+
+interface Track {
+  /** 这份缓冲属于哪一把(`attemptKey`)。`''` = 空的,不属于任何一把。 */
+  attempt: string;
+  moves: Array<{ m: string; ts: number }>;
+  t0: number;
+  scramble: string;
+  event: string;
+}
+
+const emptyTrack = (): Track => ({ attempt: '', moves: [], t0: 0, scramble: '', event: '333' });
+
 export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
   // 回调可能每次渲染都是新的;用 ref 打住,免得四路连接跟着重挂。
   const onNeedMacRef = useRef(opts.onNeedMac);
@@ -98,42 +147,88 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
    * (同一个 `makeSolve` + `stageSegmentsFor` + `appendSolves`),复盘 / 回放 / 分段
    * 统计就全都有了 —— 对战自己的记分板一个字都不用改。
    */
-  const trackRef = useRef<Array<{ moves: Array<{ m: string; ts: number }>; t0: number; scramble: string; event: string }>>(
-    Array.from({ length: MAX_PLAYERS }, () => ({ moves: [], t0: 0, scramble: '', event: '333' })),
+  const trackRef = useRef<Array<Track>>(
+    Array.from({ length: MAX_PLAYERS }, emptyTrack),
   );
   const deviceRef = useRef<Array<{ model: string; name: string } | null>>(
     Array.from({ length: MAX_PLAYERS }, () => null),
   );
+  /**
+   * 姿态流,每路一份。开关沿用 Solo 的 `recordGyro` 设置 —— 一个人不会「在单人想录、
+   * 在对战不想录」,所以这里不另开一个开关。
+   *
+   * 零点用 `performance.now()` 自己记一个,不用起表时刻:起表时刻是**魔方那一下**的
+   * 时刻(来自 BLE 事件),而陀螺仪回调根本不带时间戳,两个钟相减出来的是垃圾 ——
+   * 和 Solo 那边踩过的是同一个坑。
+   */
+  const gyroRecRef = useRef<GyroRecorder[]>(Array.from({ length: MAX_PLAYERS }, () => new GyroRecorder()));
+  const gyroStartRef = useRef<number[]>(Array.from({ length: MAX_PLAYERS }, () => 0));
 
-  const onMove = useCallback((slot: number, move: string, ts: number) => {
-    lastMoveAtRef.current[slot] = ts;
+  /**
+   * 这一路的缓冲对得上当前这一把吗?对不上就重开一份。
+   *
+   * 缓冲原先只在「魔方起表」那条路上开、只在「魔方停表成功」那条路上清。可是一把的
+   * **开始和结束都不止那一条路**:队友可以用按键起表(那一刻缓冲还留着上一把的),
+   * 这一轮也可以被重置 / 判 DNF 掉(那一刻缓冲永远等不到那次成功的停表)。于是上一把
+   * 的转动流会原样挂到下一把的记录上,连打乱字段都还是上一把那条 —— 存下来的复盘
+   * 从头到尾是错的。所以缓冲要认「这是谁的哪一次起表」,对不上就整份丢掉重开。
+   *
+   * 零点统一取 `startTime`(而不是各记各的):转动流和姿态流必须共用一个零点,
+   * `rotationsByStep` 就是拿姿态流的时刻去对转动流切出来的步界的。
+   */
+  const syncTrack = useCallback((slot: number, owner: number): Track => {
     const st = useBattleStore.getState();
-    const owner = ownerOf(slot, st.cubeMode, st.cubeHolder);
     const p = st.players[owner];
-    if (p.isTiming) { trackRef.current[slot].moves.push({ m: move, ts: ts - trackRef.current[slot].t0 }); return; }
-    if (armedRef.current[slot] && p.canStart) {
-      armedRef.current[slot] = false;
-      if (!st.cubeStart(owner, ts)) return;
-      // 起表那一手也属于这一把,零点就定在它身上。
+    const key = attemptKey(owner, p.startTime);
+    if (trackRef.current[slot].attempt !== key) {
       trackRef.current[slot] = {
-        moves: [{ m: move, ts: 0 }],
-        t0: ts,
+        attempt: key,
+        moves: [],
+        t0: p.startTime,
         scramble: st.scrambles[owner] ?? '',
         event: st.puzzleIds[owner],
       };
+      gyroRecRef.current[slot].reset();
+      gyroStartRef.current[slot] = p.startTime;
+    }
+    return trackRef.current[slot];
+  }, []);
+
+  const onMove = useCallback((slot: number, move: string, ts: number) => {
+    const st = useBattleStore.getState();
+    if (!slotCounts(slot, st.cubeMode)) return;
+    lastMoveAtRef.current[slot] = ts;
+    const owner = ownerOf(slot, st.cubeMode, st.cubeHolder);
+    const p = st.players[owner];
+    if (p.isTiming) {
+      const track = syncTrack(slot, owner);
+      track.moves.push({ m: move, ts: ts - track.t0 });
+      return;
+    }
+    if (armedRef.current[slot] && p.canStart) {
+      armedRef.current[slot] = false;
+      if (!st.cubeStart(owner, ts)) return;
+      // 起表那一手也属于这一把 —— cubeStart 已经把 startTime 定在它身上了。
+      syncTrack(slot, owner).moves.push({ m: move, ts: 0 });
       return;
     }
     // 没预备就转动 —— 可能正在拧打乱。下面的 checkArm 会在拧到位时把预备补上。
-  }, []);
+  }, [syncTrack]);
 
   const onSolved = useCallback((slot: number) => {
     const st = useBattleStore.getState();
+    if (!slotCounts(slot, st.cubeMode)) return;
     const owner = ownerOf(slot, st.cubeMode, st.cubeHolder);
+    const attempt = attemptKey(owner, st.players[owner].startTime);
     const stopped = st.cubeStop(owner, lastMoveAtRef.current[slot] || performance.now());
     armedRef.current[slot] = false;
-    if (!stopped) return;                       // 没成把(太短 / 没在计时)就不留档
+    // 缓冲无论如何都要清空:这一路已经不在这一把里了,留着只会漏给下一把。
     const track = trackRef.current[slot];
-    trackRef.current[slot] = { moves: [], t0: 0, scramble: '', event: '333' };
+    const gyro = encodeGyroTrack(gyroRecRef.current[slot].take());
+    trackRef.current[slot] = emptyTrack();
+    if (!stopped) return;                       // 没成把(太短 / 没在计时)就不留档
+    if (track.attempt !== attempt) return;      // 缓冲不是这一把的(上一把没清干净)
+    if (!recordsToLocalHistory(slot, st.cubeMode, st.cubeHolder)) return;   // 别人的把,不进我的历史
     if (track.moves.length === 0 || !track.scramble) return;
     const ev = battleToTimerEvent(track.event) as EventId;
     // 停表已经把观察罚时结算进 player.penalty 了,照抄过来 —— 本机记录和对战记分板
@@ -146,6 +241,9 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
       penalty: done.penalty === PENALTY.DNF ? 'DNF' : done.penalty === PENALTY.PLUS2 ? '+2' : 'ok',
     });
     solve.moves = track.moves;
+    // 没开录 / 魔方不报姿态 / 一次都没动 → 编码是 null,字段整个不出现 —— 回放面板
+    // 就是靠「有没有这个字段」决定要不要给陀螺仪开关的。
+    if (gyro) solve.gyro = gyro;
     if (deviceRef.current[slot]) solve.device = deviceRef.current[slot]!;
     const segs = stageSegmentsFor(solve);
     if (segs) solve.stageSegments = segs;
@@ -173,6 +271,7 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
    */
   const checkArm = useCallback((slot: number, handle: BluetoothCubeHandle) => {
     const st = useBattleStore.getState();
+    if (!slotCounts(slot, st.cubeMode)) return;
     const owner = ownerOf(slot, st.cubeMode, st.cubeHolder);
     const p = st.players[owner];
     if (p.isTiming || p.canStart) return;
@@ -193,10 +292,28 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
 
   // hooks 不能进循环 —— MAX_PLAYERS 是常量,所以写死四次。多出来的那几路在
   // 没人点「连接」之前不碰任何 GATT,代价是零。
-  const h0 = useSlot(0, onMove, onSolved, checkArm, needMac);
-  const h1 = useSlot(1, onMove, onSolved, checkArm, needMac);
-  const h2 = useSlot(2, onMove, onSolved, checkArm, needMac);
-  const h3 = useSlot(3, onMove, onSolved, checkArm, needMac);
+  /**
+   * 姿态样本进这一路的录制器。传不传 `onGyro` 本身就是「要不要姿态流」——
+   * 有的牌子(MoYu32 的 0xAC)只在有人听的时候才开那条流,所以没开录时**不传**,
+   * 一点电和带宽都不多费。
+   */
+  const recordGyro = useSettings().recordGyro;
+  const onGyro = useCallback((slot: number, q: Quat) => {
+    const st = useBattleStore.getState();
+    if (!slotCounts(slot, st.cubeMode)) return;
+    const owner = ownerOf(slot, st.cubeMode, st.cubeHolder);
+    // 只在真的在计时的时候录:预备阶段和拧完之后的姿态不属于这一把。
+    if (!st.players[owner].isTiming) return;
+    // 和转动流同一份缓冲、同一个零点 —— 姿态的时刻要能和转动的时刻直接比,
+    // 而且这一把如果是按键起的表,姿态流也得在这里把上一把的残留清掉。
+    syncTrack(slot, owner);
+    gyroRecRef.current[slot].push(q, performance.now() - gyroStartRef.current[slot]);
+  }, [syncTrack]);
+
+  const h0 = useSlot(0, onMove, onSolved, checkArm, needMac, recordGyro ? onGyro : undefined);
+  const h1 = useSlot(1, onMove, onSolved, checkArm, needMac, recordGyro ? onGyro : undefined);
+  const h2 = useSlot(2, onMove, onSolved, checkArm, needMac, recordGyro ? onGyro : undefined);
+  const h3 = useSlot(3, onMove, onSolved, checkArm, needMac, recordGyro ? onGyro : undefined);
   const handles = [h0, h1, h2, h3];
 
   const cubeMode = useBattleStore(s => s.cubeMode);
@@ -223,6 +340,7 @@ function useSlot(
   onSolved: (slot: number) => void,
   checkArm: (slot: number, handle: BluetoothCubeHandle) => void,
   needMac: (slot: number, deviceName: string, isWrongKey?: boolean) => Promise<string | null>,
+  onGyro: ((slot: number, q: Quat) => void) | undefined,
 ): BluetoothCubeHandle {
   // handle 要在自己的回调里被读到,而它是这次调用的返回值 —— 用 ref 打个结。
   // 在 effect 里写而不是渲染期写:连接必须由用户点出来,所以第一次 BLE 回调一定
@@ -235,6 +353,7 @@ function useSlot(
     },
     onSolved: () => onSolved(slot),
     onNeedMac: (deviceName, isWrongKey) => needMac(slot, deviceName, isWrongKey),
+    onGyro: onGyro ? (q) => onGyro(slot, q) : undefined,
   });
   useEffect(() => { selfRef.current = handle; });
   return handle;

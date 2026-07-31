@@ -38,7 +38,7 @@ import { useBluetoothCube } from '../_lib/bluetooth';
 import { useAutoReady } from '../_lib/bluetooth/auto_ready';
 import { installFakeCube } from '../_lib/bluetooth/fake_cube';
 import { useTimer, type SolveResult } from '../_shared/useTimer';
-import { appendSolves, makeSolve } from '../_lib/storage/db';
+import { appendSolves, makeSolve, updateSolves } from '../_lib/storage/db';
 import { stageSegmentsFor } from '../_lib/reconstruct/stage_segments';
 import { hintScramble, type ScrambleHint } from '../_lib/bluetooth/scramble_hint';
 import ScrambleHintText from '../_components/ScrambleHintText';
@@ -46,7 +46,7 @@ import { applyScramble, facesEqual, type CubeFaces } from '../_lib/cube/state';
 import { useSettings } from '../_lib/settings';
 import { formatMs } from '../_lib/stats';
 import { generateScramble } from '../_lib/scramble';
-import type { EventId } from '../_lib/types';
+import type { EventId, Solve } from '../_lib/types';
 import { CubePreview } from '../_lib/cube';
 import { SegmentTime } from '@/components/SegmentTime';
 import CubeRootLogo from '@/components/CubeRootLogo';
@@ -274,9 +274,13 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
   const eventAtStartRef = useRef<EventId>('333');
   const deviceAtStartRef = useRef<{ model: string; name: string } | null>(null);
 
+  /** 刚留档的那条本机记录 —— 之后改罚时要跟着改,别让两边对同一把给出两个判罚。 */
+  const localSolveRef = useRef<{ event: EventId; solve: Solve } | null>(null);
+
   const onSolve = useCallback((res: SolveResult) => {
     const r = roomRef.current, id = pidRef.current;
     // 本机留档先做:上传失败也不该连自己的复盘一起丢。
+    localSolveRef.current = null;
     if (movesRef.current.length > 0 && scrambleAtStartRef.current) {
       const ev = eventAtStartRef.current;
       const solve = makeSolve({
@@ -291,6 +295,7 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
       const segs = stageSegmentsFor(solve);
       if (segs) solve.stageSegments = segs;
       appendSolves(ev, [solve]);
+      localSolveRef.current = { event: ev, solve };
       movesRef.current = [];
     }
     if (!r || !id) return;
@@ -314,20 +319,38 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
    * 同步路径,起表那一手**已经**在缓冲里了,再清一次就把这一把的第一步丢了。
    */
   const cubeStartedRef = useRef(false);
+
+  /**
+   * 起表**瞬间**才做的事:清缓冲 + 定零点。依赖只能有 `timer.phase`。
+   *
+   * 这两件事和「快照」原本写在同一个 effect 里,而快照要跟着 `room` 走 —— 房间每秒
+   * 轮询一次,`getNetRoom` 每次都是新解析出来的对象,`room` 的身份就每秒换一次,于是
+   * 这个 effect 在**计时中**每秒重跑一遍,把已经录到的转动全冲掉、零点往后挪一秒。
+   * 实测:一把 6.2 秒 20 手的成绩,存下来只剩最后 3 手。魔方起表那条路因为
+   * `cubeStartedRef` 挡着看不出来,而按键起表和「同时开始」倒计时起表全中 ——
+   * 后者是联机房里智能魔方唯一的起表方式,等于每一把都坏。
+   *
+   * Solo 那边同样一段之所以没事,是因为它的依赖是 `[timer.phase, scramble, event]`,
+   * 三个都不会在一把中间变。
+   */
   useEffect(() => {
-    if (timer.phase !== 'running') {
-      cubeStartedRef.current = false;
-      const r = roomRef.current, id = pidRef.current;
-      scrambleAtStartRef.current = (r && id ? myScramble(r, id) : null) ?? '';
-      eventAtStartRef.current = (r && id
-        ? netEventToSelectorId(playerEventOf(r, id))
-        : '333') as EventId;
-      const bt = btStatusRef.current;
-      deviceAtStartRef.current = bt?.connected ? { model: bt.brand, name: bt.deviceName } : null;
-    } else if (!cubeStartedRef.current) {
-      movesRef.current = [];
-      solveStartTsRef.current = performance.now();
-    }
+    if (timer.phase !== 'running') { cubeStartedRef.current = false; return; }
+    // 魔方起表走的是同步路径,起表那一手**已经**在缓冲里了,再清一次就把第一步丢了。
+    if (cubeStartedRef.current) return;
+    movesRef.current = [];
+    solveStartTsRef.current = performance.now();
+  }, [timer.phase]);
+
+  /** 「这一把记的是什么」—— 没起表时一直跟着房间走(换轮 / 换项目都会改打乱)。 */
+  useEffect(() => {
+    if (timer.phase === 'running') return;
+    const r = roomRef.current, id = pidRef.current;
+    scrambleAtStartRef.current = (r && id ? myScramble(r, id) : null) ?? '';
+    eventAtStartRef.current = (r && id
+      ? netEventToSelectorId(playerEventOf(r, id))
+      : '333') as EventId;
+    const bt = btStatusRef.current;
+    deviceAtStartRef.current = bt?.connected ? { model: bt.brand, name: bt.deviceName } : null;
   }, [timer.phase, room]);
 
   // 起表瞬间锁定「这条打乱属于第几轮」:交卷投递到该轮,轮次已被推进则服务端拒收
@@ -863,6 +886,13 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
     if (!r || !id) return;
     const cur = r.results[String(r.round)]?.[id];
     if (!cur) return;
+    // 本机那条记录也要跟着改 —— 同一把在房间记分板上是 DNF、在自己的历史里还是有效
+    // 成绩,那两边就对不上了。留档只在有转动流时发生,所以这里可能是 null。
+    const local = localSolveRef.current;
+    if (local) {
+      local.solve.penalty = p === 'dnf' ? 'DNF' : p === '+2' ? '+2' : 'ok';
+      updateSolves(local.event, [local.solve]);
+    }
     void postNetResult(r.code, id, r.round, cur.t, p).then(applyState).catch(() => {});
   }, [applyState]);
 

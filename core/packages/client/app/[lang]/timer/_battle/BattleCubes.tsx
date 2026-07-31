@@ -97,16 +97,25 @@ export function BattleCubesProvider({ children }: { children: ReactNode }) {
   return (
     <Ctx.Provider value={value}>
       {children}
+      {/*
+        连接弹窗是从**设置面板里**点出来的,所以必须叠在它上面。`.timer-modal-overlay`
+        自己是 z-index 100(timer.css),而对战的设置面板是 z-index 200 且整屏不透明
+        (battle.css `.settings-overlay` / `.settings-panel`),两者又同处一个层叠上下文
+        —— 不套这一层的话,点「连接」看上去毫无反应:弹窗确实挂上了,只是整个被面板盖住,
+        连输 MAC 的那一步也一样看不见,连接流程就卡在那儿。
+      */}
       {openHandle && (
-        <BluetoothModal
-          isZh={i18n.language.startsWith('zh')}
-          cube={openHandle}
-          onClose={() => { resolveMac(null); setOpenSlot(null); }}
-          onConnect={() => openHandle.connect()}
-          macPrompt={macPrompt}
-          onSubmitMac={resolveMac}
-          onCancelMac={() => resolveMac(null)}
-        />
+        <div className="bc-modal-layer">
+          <BluetoothModal
+            isZh={i18n.language.startsWith('zh')}
+            cube={openHandle}
+            onClose={() => { resolveMac(null); setOpenSlot(null); }}
+            onConnect={() => openHandle.connect()}
+            macPrompt={macPrompt}
+            onSubmitMac={resolveMac}
+            onCancelMac={() => resolveMac(null)}
+          />
+        </div>
       )}
     </Ctx.Provider>
   );

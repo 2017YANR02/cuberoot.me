@@ -39,7 +39,9 @@ vi.mock('@/app/[lang]/timer/_lib/scramble/wca_pool', () => ({
 const { useBattleStore, MAX_PLAYERS } = await import(
   '@/app/[lang]/timer/_battle/engine/battle_store'
 );
-const { ownerOf } = await import('@/app/[lang]/timer/_battle/useBattleCubes');
+const { ownerOf, slotCounts, recordsToLocalHistory } = await import(
+  '@/app/[lang]/timer/_battle/useBattleCubes'
+);
 
 const DELAY = 300;
 
@@ -267,5 +269,178 @@ describe('setCubeMode / setCubeHolder', () => {
     resetPlayers(2, 'shared');
     useBattleStore.getState().setCubeHolder(3);
     expect(useBattleStore.getState().cubeHolder).toBe(0);
+  });
+});
+
+/**
+ * 回归(审查发现):`cubeHolder` 是**指进玩家数组的下标**,所以凡是重建这个数组的动作
+ * 都得把它拉回范围内。写入口 `setCubeHolder` 一直有边界检查,漏的是「范围在存好的值
+ * **底下**缩了」这条路 —— 4 人 shared、魔方在 3 号手里,改成 2 人之后 `cubeHolder`
+ * 还是 3,`inPlay(3)` = false,于是 arm / start / stop 全被拒,魔方彻底哑掉。而且**自愈
+ * 不了**:`advanceCubeHolder` 只能从 `cubeStop` 进,而 `cubeStop` 自己就先被拒了;界面上
+ * 3 号的传递 chip 也不渲染,用户点不到。所以测试不能只看字段,要一路拧到停表。
+ */
+describe('参战人数变了之后魔方还能用', () => {
+  it('4 人 shared 缩到 2 人:魔方交回 0 号,预备/起表/停表整条路都还通', () => {
+    resetPlayers(4, 'shared');
+    useBattleStore.getState().setCubeHolder(3);
+    expect(useBattleStore.getState().cubeHolder).toBe(3);
+
+    useBattleStore.getState().setPlayerCount(2);
+    expect(useBattleStore.getState().cubeHolder).toBe(0);
+
+    // 光看字段不算数 —— 真拧一把:0 号槽的事件记在持有者(还是 0 号)头上。
+    useBattleStore.setState({
+      scrambles: Array.from({ length: MAX_PLAYERS }, (_, i) => (i < 2 ? "R U R' U'" : null)),
+    });
+    const st = useBattleStore.getState();
+    expect(st.cubeArm(0)).toBe(true);
+    expect(P(0).canStart).toBe(true);
+    expect(st.cubeStart(0, 1000)).toBe(true);
+    expect(P(0).isTiming).toBe(true);
+    expect(st.cubeStop(0, 6000)).toBe(true);
+    expect(P(0).time).toBe(5000);
+  });
+
+  it('切到 solo 也一样(solo 只有 0 号在场)', () => {
+    resetPlayers(4, 'shared');
+    useBattleStore.getState().setCubeHolder(2);
+    useBattleStore.getState().setMode('solo');
+    expect(useBattleStore.getState().cubeHolder).toBe(0);
+  });
+});
+
+/**
+ * 回归(审查发现):传魔方原先只挂在 `cubeStop` 上,可是「拧完」不止魔方那一条路。
+ * 队友用按键停表、观察超时自动 DNF,都会让持有者变成一个**已经拧完**的人;而
+ * `cubeArm` 对已完成的人恒拒,于是下一位怎么拧都预备不了 —— 整颗魔方这一轮就废了。
+ * 现在挂在 `checkBothFinished` 上(四条「拧完」的路都汇到那儿),因此也必须**幂等**:
+ * 持有者自己还没拧完的时候,别人拧完不该把魔方从他手里推走。
+ */
+describe('传魔方跟的是「有人拧完了」,不是「魔方停的表」', () => {
+  it('持有者用按键停表,魔方照样传给下一位', () => {
+    resetPlayers(3, 'shared');
+    const st = useBattleStore.getState();
+    expect(st.cubeHolder).toBe(0);
+    // P1 走按键那条路:预备 → 起表 → 停表
+    st.playerDown(0);
+    vi.advanceTimersByTime(DELAY + 10);
+    st.playerUp(0);
+    expect(P(0).isTiming).toBe(true);
+    vi.advanceTimersByTime(5000);
+    st.playerDown(0);
+    expect(P(0).hasFinished).toBe(true);
+    expect(useBattleStore.getState().cubeHolder).toBe(1);
+  });
+
+  it('轮到的人自己还没拧完时,别人拧完不动他手里的魔方', () => {
+    resetPlayers(3, 'shared');
+    useBattleStore.getState().setCubeHolder(1);
+    const st = useBattleStore.getState();
+    // P3(槽位 2)先用按键拧完 —— 魔方在 P2 手里,不该被推走
+    st.playerDown(2);
+    vi.advanceTimersByTime(DELAY + 10);
+    st.playerUp(2);
+    vi.advanceTimersByTime(5000);
+    st.playerDown(2);
+    expect(P(2).hasFinished).toBe(true);
+    expect(useBattleStore.getState().cubeHolder).toBe(1);
+  });
+
+  it('传走之后下一位能预备(原来这里是死的)', () => {
+    resetPlayers(2, 'shared');
+    const st = useBattleStore.getState();
+    st.playerDown(0);
+    vi.advanceTimersByTime(DELAY + 10);
+    st.playerUp(0);
+    vi.advanceTimersByTime(5000);
+    st.playerDown(0);
+    expect(useBattleStore.getState().cubeHolder).toBe(1);
+    expect(useBattleStore.getState().cubeArm(1)).toBe(true);
+    expect(P(1).canStart).toBe(true);
+  });
+});
+
+/**
+ * 回归(审查发现):「同时开始」下预备是一次**集合**,`checkBothReady` 要求全员
+ * `isReady && !canStart`。而 `cubeArm` 原先直接给绿灯(`isReady:false, canStart:true`),
+ * 于是那条判据永远凑不齐 —— 谁都起不了表,这一轮连结算都走不到,只能关掉「同时开始」
+ * 或刷新页面。混着用魔方和按键是这个功能明写的场景,而 shared 语义下非持有者**必然**
+ * 在用按键,所以这条是必踩的。
+ */
+describe('同时开始 + 智能魔方', () => {
+  beforeEach(() => {
+    resetPlayers(2, 'own');
+    useBattleStore.setState({ syncStart: true });
+  });
+
+  it('魔方预备的人按「已准备」入列,不自己先绿', () => {
+    expect(useBattleStore.getState().cubeArm(0)).toBe(true);
+    expect(P(0).isReady).toBe(true);
+    expect(P(0).canStart).toBe(false);
+  });
+
+  it('魔方 + 按键各一人:两人到齐后一起绿灯', () => {
+    useBattleStore.getState().cubeArm(0);
+    useBattleStore.getState().playerDown(1);
+    vi.advanceTimersByTime(DELAY + 10);
+    expect(P(0).canStart).toBe(true);
+    expect(P(1).canStart).toBe(true);
+  });
+
+  it('绿灯之后魔方那一路照常起表、停表,这一轮能结算', () => {
+    useBattleStore.getState().cubeArm(0);
+    useBattleStore.getState().playerDown(1);
+    vi.advanceTimersByTime(DELAY + 10);
+    expect(useBattleStore.getState().cubeStart(0, 1000)).toBe(true);
+    expect(useBattleStore.getState().cubeStop(0, 6000)).toBe(true);
+    expect(P(0).time).toBe(5000);
+    // 按键那位照常收尾,全员拧完 = 这一轮真的结算得掉
+    useBattleStore.getState().playerUp(1);
+    vi.advanceTimersByTime(4000);
+    useBattleStore.getState().playerDown(1);
+    expect(P(1).hasFinished).toBe(true);
+    expect(useBattleStore.getState().winners.length).toBeGreaterThan(0);
+  });
+
+  it('各自开始时仍旧直接绿灯(没有红灯延时那 300ms)', () => {
+    useBattleStore.setState({ syncStart: false });
+    expect(useBattleStore.getState().cubeArm(0)).toBe(true);
+    expect(P(0).canStart).toBe(true);
+  });
+});
+
+/**
+ * 回归(审查发现):四路连接一直挂着,换语义并不断开谁。`'shared'` 的定义是「只有
+ * 第 0 路在用」,可原先没人挡 —— own 模式下连好的那几颗切到 shared 之后还在报事件,
+ * 而 `ownerOf` 把它们全记到持有者头上:队友碰一下手边那颗闲置的(恰好复原态)魔方,
+ * 持有者的表就被停了。
+ */
+describe('slotCounts —— shared 语义下只有第 0 路算数', () => {
+  it('own:四路都算自己的', () => {
+    for (let i = 0; i < MAX_PLAYERS; i++) expect(slotCounts(i, 'own')).toBe(true);
+  });
+
+  it('shared:只有第 0 路算,别的一律不理', () => {
+    expect(slotCounts(0, 'shared')).toBe(true);
+    for (let i = 1; i < MAX_PLAYERS; i++) expect(slotCounts(i, 'shared')).toBe(false);
+  });
+});
+
+/**
+ * 回归(审查发现):同屏对战里 P2~P4 是**别人**,他们的成绩原先照样被写进本机计时
+ * 记录 —— 也就是设备主人的练习历史,直接污染 PB / Ao5 / 分段统计,而 `Solve` 里没有
+ * 「谁拧的」这个字段,事后再也筛不出来。
+ */
+describe('recordsToLocalHistory —— 只留设备主人自己的把', () => {
+  it('own:只有 P1 那一路进本机历史', () => {
+    expect(recordsToLocalHistory(0, 'own', 0)).toBe(true);
+    for (let i = 1; i < MAX_PLAYERS; i++) expect(recordsToLocalHistory(i, 'own', 0)).toBe(false);
+  });
+
+  it('shared:同样一路连接,轮到别人时就不进 —— 判据是折算后的人,不是槽位', () => {
+    expect(recordsToLocalHistory(0, 'shared', 0)).toBe(true);
+    expect(recordsToLocalHistory(0, 'shared', 1)).toBe(false);
+    expect(recordsToLocalHistory(0, 'shared', 3)).toBe(false);
   });
 });
