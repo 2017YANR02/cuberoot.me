@@ -53,6 +53,14 @@ export default function AlgIndexPage() {
             </div>
           </Link>
         ))}
+        {/* 三盲自成一个项目(编码 / 换位子 / 训练都在 /alg/3bld),不是 3x3 的一套公式 ——
+            所以和魔方项目并排,而不是挂在 /alg/3x3 的训练专区里。 */}
+        <Link href="/alg/3bld" className="alg-puzzle-card" prefetch={false}>
+          <div className="alg-puzzle-name">
+            <EventIcon event="333bf" className="alg-puzzle-icon" />
+            <span>{tr({ zh: '三盲', en: '3BLD' })}</span>
+          </div>
+        </Link>
         <Link href="/alg/commutator" className="alg-puzzle-card">
           <div className="alg-puzzle-name">
             <span className="alg-puzzle-icon alg-bracket-icon" aria-hidden="true">
