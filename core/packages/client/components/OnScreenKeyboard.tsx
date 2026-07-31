@@ -17,11 +17,9 @@ interface OnScreenKeyboardProps {
   buttons: RecognizeButton[];
   /** 返回判定结果,用来给按钮闪一下绿/红;返回 null 表示这次点击没被受理。 */
   onAnswer: (value: string) => 'correct' | 'wrong' | null;
-  /** 按钮文字长(ELL 的 `4 Flip Ua`)时换宽轨道 —— 标签 nowrap,窄轨道会顶出格子。 */
-  wide?: boolean;
 }
 
-export default function OnScreenKeyboard({ buttons, onAnswer, wide }: OnScreenKeyboardProps) {
+export default function OnScreenKeyboard({ buttons, onAnswer }: OnScreenKeyboardProps) {
   const [feedback, setFeedback] = useState<ButtonFeedback>({ key: null, type: null });
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -56,7 +54,7 @@ export default function OnScreenKeyboard({ buttons, onAnswer, wide }: OnScreenKe
   };
 
   return (
-    <div className={wide ? 'on-screen-keyboard on-screen-keyboard--wide' : 'on-screen-keyboard'}>
+    <div className="on-screen-keyboard">
       {buttons.map(({ value, label, sub }) => (
         <button
           key={value}

@@ -263,7 +263,7 @@ export default function RecognizeClient() {
       )}
 
       {trainMode === 'recognition' && gameState === 'playing' && (
-        <OnScreenKeyboard buttons={recog.buttons()} wide={recog.wideKeys} onAnswer={submitAnswer} />
+        <OnScreenKeyboard buttons={recog.buttons()} onAnswer={submitAnswer} />
       )}
 
       {gameState === 'playing' && (

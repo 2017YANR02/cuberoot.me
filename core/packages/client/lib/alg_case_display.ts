@@ -106,12 +106,15 @@ export function displayZbllToken(token: string): string {
   return (ZBLL_TOP_DISPLAY[m[1]] ?? m[1].toUpperCase()) + m[2].toUpperCase();
 }
 
-/** ZBLL 案例名展示:"ZBLL AS 13" → "ZBLL S- 13","ZBLL S 13" → "ZBLL S+ 13";其余原样。 */
+/**
+ * ZBLL 案例名展示:`"ZBLL AS 13"` → `"ZBLL S-13"`,`"ZBLL S 13"` → `"ZBLL S+13"`;其余原样。
+ * 组名和编号之间不留空格 —— 和 `meta.ollcp`(`S-F9`)、COLL 的 `S-1` 对齐。
+ */
 export function displayZbllName(name: string): string {
   const m = /^ZBLL\s+(AS|S)\s+(\d+)$/.exec(name.trim());
   if (!m) return name;
   const renamed = ZBLL_GROUP_RENAME[m[1]];
-  return renamed ? `ZBLL ${renamed} ${m[2]}` : name;
+  return renamed ? `ZBLL ${renamed}${m[2]}` : name;
 }
 
 /**
@@ -126,11 +129,23 @@ export function zbllCommentLabel(name: string): string | null {
   return `ZBLL-${group}${m[2]}`;
 }
 
-/** /alg 列表用:按 (puzzle, set) 决定是否套 OLL/PLL/ZBLL 展示变换。 */
+/**
+ * COLL 案例名展示:`"AS 1"` → `"S-1"`,`"S 1"` → `"S+1"`,其余组只去掉空格(`"L 1"` → `"L1"`)。
+ * 组名跟 ZBLL 同一套({@link ZBLL_GROUP_RENAME}):两页说的是同一个顶层形状,不能一页叫
+ * AS 另一页叫 S-。DB 里的 name / subgroup 不动 —— 和 ZBLL 一样,`+` 进 URL 会被当空格。
+ */
+export function displayCollName(name: string): string {
+  const m = /^(AS|S|L|U|T|Pi|H)\s+(\d+)$/.exec(name.trim());
+  if (!m) return name;
+  return `${ZBLL_GROUP_RENAME[m[1]] ?? m[1]}${m[2]}`;
+}
+
+/** /alg 列表用:按 (puzzle, set) 决定是否套 OLL/PLL/ZBLL/COLL 展示变换。 */
 export function displayAlgCaseName(puzzle: string, set: string, name: string): string {
   if (puzzle === '3x3' && set === 'oll') return displayOllName(name);
   if (puzzle === '3x3' && set === 'pll') return displayPllName(name);
   if (puzzle === '3x3' && set === 'zbll') return displayZbllName(name);
+  if (puzzle === '3x3' && set === 'coll') return displayCollName(name);
   return name;
 }
 
