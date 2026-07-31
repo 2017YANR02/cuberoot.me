@@ -7,6 +7,7 @@
 //   2. 随机 AUF 只把这 21 格整体转一下,不换 case。
 //
 // 模拟走 @cuberoot/visualcube 自己的 CubeData,和线上出图同一套转动语义。
+import { DB_RECOGNIZE_SETS } from '@/lib/recognize-db-sets';
 import { describe, it, expect } from 'vitest';
 import { CubeData, AllFaces, Face, parseAlgorithm } from '@cuberoot/visualcube';
 import DB_SETUPS from './fixtures/oll_db_setups.json';
@@ -127,10 +128,10 @@ describe('OLL 编号输入', () => {
   });
 
   it('答案就是 DB 的 case 名,和按钮上那个值一致', () => {
-    const byValue = new Set(OLL_SET.buttons.map((b) => b.value));
+    const byValue = new Set(OLL_SET.buttons().map((b) => b.value));
     expect(byValue.size).toBe(57);
     for (let n = 1; n <= 57; n++) expect(byValue.has(ollCaseName(n))).toBe(true);
-    expect(OLL_SET.buttons[0]).toEqual({ value: 'OLL 1', label: 'DH', sub: '1' });
+    expect(OLL_SET.buttons()[0]).toEqual({ value: 'OLL 1', label: 'DH', sub: '1' });
     expect(ollCaseNumber('OLL 27')).toBe(27);
     expect(ollCaseNumber('OLL 58')).toBeNull();
     expect(ollCaseNumber('Aa')).toBeNull();
@@ -178,6 +179,43 @@ describe('两个集合互不干扰', () => {
   it('未知 set 落回 PLL,不炸页面', () => {
     expect(recognizeSetFor('pll')).toBe(PLL_SET);
     expect(recognizeSetFor('oll')).toBe(OLL_SET);
-    expect(recognizeSetFor('zbll')).toBe(PLL_SET);
+    expect(recognizeSetFor('zbll')).toBe(DB_RECOGNIZE_SETS.zbll);
+    expect(recognizeSetFor('vls')).toBe(PLL_SET);
+  });
+});
+
+describe('DB 题库的四套(COLL / ELL / ZBLL / 1LLL)', () => {
+  it('题库没拉下来时是空题库,而不是抛异常', () => {
+    for (const id of ['coll', 'ell', 'zbll', '1lll'] as const) {
+      const recog = DB_RECOGNIZE_SETS[id];
+      expect(recog.allKeys()).toEqual([]);
+      expect(recog.buttons()).toEqual([]);
+      expect(recog.solution('nope')).toBe('');
+      expect(recog.image({ name: 'nope', rotation: '', dTurn: '', colorShift: 0, crossColor: 'w' }, false).setup)
+        .toBe('');
+    }
+  });
+
+  it('不随机 AUF —— 这几套的名字带角块换位,拧一下顶层就是另一个 case', () => {
+    for (const id of ['coll', 'ell', 'zbll', '1lll'] as const) {
+      expect(DB_RECOGNIZE_SETS[id].turnOptions).toEqual(['']);
+      expect(DB_RECOGNIZE_SETS[id].includeNoAuf).toBe(true);
+    }
+  });
+
+  it('大套装答子组,小套装答 case 名', () => {
+    expect(DB_RECOGNIZE_SETS.zbll.answerFor).toBeTypeOf('function');
+    expect(DB_RECOGNIZE_SETS['1lll'].answerFor).toBeTypeOf('function');
+    // 题库还没拉时,answerFor 查不到 case 就原样返回,判定退化成「答 case 名」而不是崩。
+    expect(DB_RECOGNIZE_SETS.zbll.answerFor!('ZBLL U 1')).toBe('ZBLL U 1');
+  });
+
+  it('1LLL 用编号输入,规则和 OLL 那套一致(题库空时一律不受理)', () => {
+    const step = DB_RECOGNIZE_SETS['1lll'].step;
+    expect(step(null, '1')).toEqual({ kind: 'pending', pending: '1' });
+    expect(step(null, '0')).toEqual({ kind: 'ignore' });
+    expect(step('5', '8')).toEqual({ kind: 'ignore' });
+    // 编号合法但题库还没到 → 没有这个答案,不受理。
+    expect(step(null, '7')).toEqual({ kind: 'ignore' });
   });
 });
