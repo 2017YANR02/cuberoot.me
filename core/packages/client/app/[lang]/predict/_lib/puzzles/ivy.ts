@@ -138,6 +138,10 @@ export const ivyPuzzle: PredictPuzzle = {
     return out;
   },
 
+  notation: {
+    zh: "只收 R L D B(可加 ',四个可转角)。",
+    en: "Only R L D B (the four turnable corners, optional ').",
+  },
   parse: parseIvyInput,
   moveFace: () => null, // R/L/D/B 是可转角不是面
 };

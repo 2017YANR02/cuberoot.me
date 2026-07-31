@@ -1,34 +1,33 @@
 'use client';
 
 /**
- * /predict 的题板 —— 一个可自由旋转、逐贴纸可点的 3D 魔方。
+ * /predict 的题板 —— 一个可自由旋转、逐贴纸可点的 3D 拼图。
  *
- * 复用 /sim 的 WebGL 引擎(mountSimWorld + paintMode),不另造渲染器:
- *   - `paintMode` + `dragEmpty='view'`:任何拖拽都只转视角,绝不拧层;单击照旧派
- *     `taps`,于是「点某枚贴纸」就有了。答案可能落在背面,所以视角必须能转到底
- *     (两轴无界累加,不钳 pitch),再给一个复位按钮。
- *   - 起始视角恒为 `HOME_SCENE_ROT`(= /sim 打开时那个 U 上 F 前 R 右)。以前是「按题目
- *     所在的面自动挑一个角度」,结果每出一题朝向都不一样,连自己在看哪一面都得先认;
- *     现在朝向钉死,背面靠提示贴片读(下条),要转自己拖。
- *   - 方位字母常驻(`faceHints: true`,= /sim 设置里「字母」开着的状态,本页不给开关):
- *     题面大半格子是压暗的,只靠颜色认方位不够,U/D/L/R/F/B 得一直看得见。引擎里
- *     `show()` 只设目标透明度、`tick` 每帧淡入,没人 `hide()` 就一直亮着。
- *   - 提示贴片常驻(`instancedRenderer.hint`,= /sim 设置里「提示贴片」开着的状态,本页
- *     同样不给开关):背对镜头那三面的贴纸会在方块外侧浮一层影子,所以朝向钉死也读得到
- *     背面。影子色走同一套阶段遮罩(`computeHintColor` 内部就是 `resolveStickerColor`),
- *     于是灰掉的格子影子也是灰的 —— 只有目标那枚的影子亮着。
- *   - 颜色逐贴纸给:`labels[i]` 是 facelet i 的引擎色标签(整盘真实颜色)。
- *   - 「只亮该找的那一枚」不靠改色,靠 /sim 那套阶段遮罩:`setStickering` 把 `bright`
- *     留满色、`dim` 压半、其余压成 FM_IGNORED 灰;遮罩定义在还原帧上 → 复盘转动时
- *     这三档自己跟着块走。
- *   - 复盘动画不另算盘面:题板一律「起点上色 + 真转招式」,让引擎自己把贴纸转过去
- *     (`twister.push` 逐步动画 / `setup` 瞬时跳转)。`cube.stick` 按**原始位置**寻址,
- *     所以每次改色必须先 `setup('')` 复位几何,再按当前步重放回去。
+ * 复用 /sim 的 WebGL 引擎(mountSimWorld),不另造渲染器。所有拼图共用同一套口径:
+ *   - 起始视角恒为 `HOME_SCENE_ROT`(= /sim 打开时那个姿势)。以前是「按题目所在的面
+ *     自动挑一个角度」,结果每出一题朝向都不一样,连自己在看哪一面都得先认;现在朝向
+ *     钉死,要转自己拖,另给一个复位按钮。
+ *   - 颜色逐贴纸给:`labels[i]` 是**本位第 i 格**的颜色(整盘真实颜色)。题板一律
+ *     「还原态上色 + 真转公式」,让引擎自己把贴纸转过去(`twister.push` 逐步动画 /
+ *     `setup` 瞬时跳转),复盘不另算盘面。
+ *   - 「只亮该找的那一枚」是三档:满色 = 题面点名的那枚,压暗(自己的颜色减半)=
+ *     同块的其余贴纸 + 方位锚,其余一律 `#666` 灰。灰色档跟 /sim 的阶段遮罩同一个色值。
+ *
+ * 两条渲染路径,因为引擎的两族拼图根本不是一种画法:
+ *   · **NxN**(二 ~ 七阶)—— 贴纸是 InstancedMesh,没有逐张 mesh。走 /sim 自己那套:
+ *     `cube.stick` 上色 + `setStickering` 三档遮罩(遮罩键在还原帧的贴纸上,复盘转动时
+ *     高亮自己跟着块跑),外加方位字母 + 提示贴片(背对镜头那三面的贴纸会在方块外侧浮
+ *     一层影子,所以朝向钉死也读得到背面)。
+ *   · **金字塔 / 斜转 / 枫叶** —— 每张贴纸是独立 mesh,那就直接改它自己的材质色(引擎的
+ *     stickerMat 按颜色缓存 + 共享,所以必须逐张 clone 一份,否则改一张串一片)。颜色挂在
+ *     mesh 上,天然跟着块走,和 NxN 那套遮罩是同一个语义。这几个拼图没有提示贴片,背面
+ *     要拖过去看;金字塔的方位提示用四个顶点字母(U/L/R/B,正好就是它的转动记号)。
  *
  * three + 引擎走动态 import,不进首包(和 /scramble/solver 的立体画板同一条路)。
+ * 换拼图时页面用 `key` 整块重挂,所以这里不必处理「挂载中途换拼图」。
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { RotateCcw } from 'lucide-react';
 import type World from '@/app/[lang]/sim/engine/world';
 import type Cube from '@/app/[lang]/sim/engine/nxn/cube';
@@ -41,7 +40,9 @@ import { timing } from '@/app/[lang]/sim/engine/tweenTiming';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { tr } from '@/i18n/tr';
 import { engineHomeSid } from '@/app/[lang]/sim/engine/nxn/netIndex';
-import { FM_OUTLINE, FM_DIM, FM_IGNORED } from '@/app/[lang]/sim/engine/nxn/stickering';
+import { FM_OUTLINE, FM_DIM, FM_IGNORED, FM_FIXED_COLOR, dimFaceletColor } from '@/app/[lang]/sim/engine/nxn/stickering';
+import { CUBE_FILL, type CubeFace } from '@/lib/cube-colors';
+import type { PredictPuzzle } from '../_lib/puzzles';
 
 /** 复盘动画每 90° 的帧数(引擎默认 30,这里快一档);挂载时设,卸载时还回去。 */
 const PLAY_FRAMES = 16;
@@ -49,14 +50,28 @@ const PLAY_FRAMES = 16;
 const NO_MOVES: readonly string[] = [];
 const NO_FACELETS: readonly number[] = [];
 
+/** /sim 把压暗的白钉在 #dddddd(免得跟 ignored 灰撞),可那跟满色白根本分不出 ——
+ *  这块板子上白中心、白目标可能同时在场,压暗的白得一眼是暗的。 */
+const DIM_WHITE = '#aaaaaa';
+const IGNORED_GREY = FM_FIXED_COLOR[FM_IGNORED] ?? '#666666';
+
 /** 提示贴片的底色 = 页面背景(影子按它预混,免得棋盘/深浅背景透过来);跟着主题翻。 */
 function pageBackdrop(): string {
   return getComputedStyle(document.documentElement).getPropertyValue('--background').trim();
 }
 
+/** 一格三档遮罩下画出来的颜色(非 NxN 路径自己算,NxN 交给引擎的遮罩层)。 */
+function shadedColor(label: string, tier: 'bright' | 'dim' | 'ignored'): string {
+  if (tier === 'ignored') return IGNORED_GREY;
+  const base = CUBE_FILL[label as CubeFace] ?? IGNORED_GREY;
+  if (tier === 'bright') return base;
+  return base.toLowerCase() === '#ffffff' ? DIM_WHITE : dimFaceletColor(base);
+}
+
 type BoardEngine = {
   mountSimWorld: (opts: {
-    host: HTMLElement; interactive: boolean; perspective: number; faceHints: boolean;
+    host: HTMLElement; puzzle?: World['puzzleKind']; interactive: boolean; perspective: number;
+    faceHints: boolean; onFrame?: (world: World, dt: number) => boolean;
   }) => SimMount;
   Toucher: typeof Toucher;
 };
@@ -74,34 +89,42 @@ export function preloadBoardEngine(): Promise<BoardEngine> {
   return enginePromise;
 }
 
+/** 上色 + 遮罩这两件事,两条渲染路径各自实现;其余(复盘、视角、手势)是共用的。 */
+interface Painter {
+  /** 整盘上色。`labels[i]` = 本位第 i 格的颜色字母。 */
+  colors(labels: readonly string[]): void;
+  /** 三档遮罩。入参是**本位格号**,和 labels 同一个空间。 */
+  tiers(bright: readonly number[], dim: readonly number[]): void;
+}
+
 export interface PredictBoardProps {
-  /** 54 个引擎色标签,facelet(URFDLB)序 —— 整盘的真实颜色,空串 = 用块自己的色。 */
+  puzzle: PredictPuzzle;
+  /** 每一格的颜色字母(本位格序)—— 整盘真实颜色,空串 = 用块自己的色。 */
   labels: readonly string[];
-  /** 满色的 facelet:题面点名的那枚贴纸(+ 已答对的落点记号)。空 = 整盘原色不加遮罩。 */
+  /** 满色的格:题面点名的那枚贴纸(+ 已答对的落点记号)。空 = 整盘原色不加遮罩。 */
   bright?: readonly number[];
-  /** 压暗(各自颜色减半)的 facelet:目标块剩下的那几枚 —— 看得出是同一块,又不抢那枚。 */
+  /** 压暗(各自颜色减半)的格:同块的其余贴纸 + 方位锚。 */
   dim?: readonly number[];
-  onSticker: (faceletIndex: number) => void;
+  onSticker: (slot: number) => void;
   /** 变一次就把视角复位回 `HOME_SCENE_ROT`(页面上的「恢复默认」按的就是它)。 */
   viewResetNonce?: number;
-  /** 复盘用的题面招式。 */
+  /** 复盘用的题面公式。 */
   moves?: readonly string[];
   /** 已经走到第几步:比上一次多 1 = 放一步动画,其余情况瞬时跳过去。 */
   step?: number;
 }
 
 export default function PredictBoard({
-  labels, bright = NO_FACELETS, dim = NO_FACELETS, onSticker,
+  puzzle, labels, bright = NO_FACELETS, dim = NO_FACELETS, onSticker,
   viewResetNonce = 0, moves = NO_MOVES, step = 0,
 }: PredictBoardProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mountRef = useRef<SimMount | null>(null);
-  const toucherRef = useRef<Toucher | null>(null);
+  const painterRef = useRef<Painter | null>(null);
   const [ready, setReady] = useState(false);
   const [showBusy, setShowBusy] = useState(false);
 
-  const faceletMap = useMemo(() => buildFaceletMap(3), []);
-  const reverseMap = useMemo(() => buildReverseFaceletMap(faceletMap), [faceletMap]);
+  const order = typeof puzzle.sim === 'number' ? puzzle.sim : 0;
 
   // taps 从引擎闭包里回调,拿 ref 读最新的 onSticker。
   const onStickerRef = useRef(onSticker);
@@ -130,41 +153,37 @@ export default function PredictBoard({
 
       // perspective 比引擎默认(5)松一档:题板是正方形,转到角对角时立方体最长,
       // 松一点才不会顶到画布边。
-      // faceHints:方位字母强制常驻(本页不给 toggle)。字母浮在 2.6×SIZE 处,取景半径
-      // 是 3×SIZE,不会顶出画框。
-      const mount = mountSimWorld({ host, interactive: true, perspective: 5.6, faceHints: true });
+      // 方位字母:立方体族强制常驻(本页不给 toggle)。题面大半格子是灰的,只靠颜色
+      // 认方位不够。金字塔不是六面体,它的方位提示是四个顶点字母,另行打开(见下)。
+      const mount = mountSimWorld({
+        host,
+        puzzle: puzzle.sim,
+        interactive: order > 0,
+        perspective: 5.6,
+        faceHints: puzzle.cubeLike,
+        ...(puzzle.id === 'pyraminx'
+          ? { onFrame: (w: World, dt: number) => w.pyraHints.tick(dt) }
+          : {}),
+      });
       mountRef.current = mount;
       const world: World = mount.world;
 
-      const toucher = new TouchClass();
-      toucher.init(mount.renderer.domElement, world.controller.touch);
-      toucherRef.current = toucher;
+      const disposers: (() => void)[] = [];
 
-      world.controller.dragEmpty = 'view';
-      world.controller.paintMode = true;
-      // 无界 orbit(两轴一直累加,含 yawSign 修正)—— 钳了 pitch 就翻不过顶/底,
-      // 背面的答案就点不到。题板故意**不**走求解器画板那档「自动转体」:那档会把视角
-      // 折成真的整体转体,而这里整盘题面(labels/stickering)是按 home 面序喂进来的。
-      world.controller.onOrbit = (dx, dy) => orbitSceneFree(world, dx, dy, ORBIT_K);
-      world.controller.taps.push((index, face) => {
-        if (index < 0 || face === null) return;
-        const fi = reverseMap.get(`${index}_${face}`);
-        if (fi !== undefined) onStickerRef.current(fi);
-      });
+      // Toucher 是 NxN controller 的输入口(它把指针事件翻成 controller 的 TouchAction)。
+      // 别的拼图没有 controller,`controller.touch` 是 undefined —— 照装的话 Toucher 会拿
+      // 一个 undefined 当回调,一点画布就 `this.callback is not a function`。那几个拼图的
+      // 指针走 mountSolidPainter 里的 attachOrbitTap,这里不该再插一层。
+      const touch = world.controller?.touch;
+      if (touch) {
+        const toucher = new TouchClass();
+        toucher.init(mount.renderer.domElement, touch);
+        disposers.push(() => toucher.destroy());
+      }
 
-      // 提示贴片强制常驻(本页不给 toggle):朝向钉死在 home,背对镜头那三面只能靠它读。
-      // 影子色 = 贴纸色与页面背景预混,所以主题一翻要重新注入一次底色。
-      const cube = world.cube as Cube;
-      cube.instancedRenderer.setHintBackdrop(pageBackdrop());
-      cube.instancedRenderer.hint = true;
-      const syncBackdrop = () => {
-        cube.instancedRenderer.setHintBackdrop(pageBackdrop());
-        mount.invalidate();
-      };
-      const themeObserver = new MutationObserver(syncBackdrop);
-      themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-      const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      darkQuery.addEventListener('change', syncBackdrop);
+      painterRef.current = order > 0
+        ? await mountNxnPainter(world, order, mount, onStickerRef, disposers)
+        : await mountSolidPainter(puzzle, world, mount, onStickerRef, disposers);
 
       const onContextMenu = (e: MouseEvent) => e.preventDefault();
       mount.renderer.domElement.addEventListener('contextmenu', onContextMenu);
@@ -177,93 +196,69 @@ export default function PredictBoard({
 
       cleanup = () => {
         timing.frames = prevFrames;
-        themeObserver.disconnect();
-        darkQuery.removeEventListener('change', syncBackdrop);
+        for (const d of disposers) d();
         mount.renderer.domElement.removeEventListener('contextmenu', onContextMenu);
-        toucher.destroy();
         mount.dispose();
         mountRef.current = null;
-        toucherRef.current = null;
+        painterRef.current = null;
       };
       if (cancelled) cleanup();
     })();
 
     return () => { cancelled = true; cleanup?.(); };
-  }, [reverseMap]);
+    // 换拼图 = 页面换 key 整块重挂,所以这里只在首挂跑一次。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /**
    * 颜色 + 复盘进度只能有一个同步口。
    *
    * 分成两个 effect 试过,结果是同一步被走了两遍(改色那边要「按当前步重放」把位置
-   * 补回来,走步那边又推了同一招,`F2` 的题转完回到原地、`R'` 变成 `R2`)。所以合成
+   * 补回来,走步那边又推了同一步,`F2` 的题转完回到原地、`R'` 变成 `R2`)。所以合成
    * 一个:只有「labels 没变 + 步数正好 +1」才放动画,其余一律整盘重来一次。
    */
   useEffect(() => {
     const mount = mountRef.current;
-    if (!mount || !ready) return;
-    const cube = mount.world.cube as Cube;
+    const painter = painterRef.current;
+    if (!mount || !painter || !ready) return;
+    const twister = (mount.world.cube as { twister: { setup(a: string): void; push(a: string): void } }).twister;
     const last = lastSyncRef.current;
     lastSyncRef.current = { labels, step };
 
     if (last && last.labels === labels && step === last.step + 1 && step > 0) {
-      cube.twister.push(moves[step - 1]); // push 自己排队,不会因为还在转而丢招
+      twister.push(moves[step - 1]); // push 自己排队,不会因为还在转而丢一步
     } else {
-      // stick 按原始位置寻址,转过之后再上色会贴到别的块上 —— 先复位再上色。
-      cube.twister.setup('');
-      for (let i = 0; i < faceletMap.length; i++) {
-        cube.stick(faceletMap[i].cube, faceletMap[i].face, labels[i] ?? '');
-      }
+      // 上色按**本位**寻址,转过之后再上色会贴到别的块上 —— 先复位再上色。
+      twister.setup('');
+      painter.colors(labels);
       const done = moves.slice(0, step).join(' ');
-      if (done) cube.twister.setup(done);
+      if (done) twister.setup(done);
     }
     mount.invalidate();
-  }, [labels, step, moves, ready, faceletMap]);
+  }, [labels, step, moves, ready]);
 
-  /**
-   * 只亮目标块 = /sim 的阶段遮罩(`setStickering`),不是另一套改色:遮罩键在还原帧的
-   * 贴纸上,复盘转动时高亮自己跟着块跑;上色那条路(`stick`)照旧给整盘真实颜色,
-   * 两者正交,所以这个 effect 不碰几何、也不会吃掉动画。
-   *
-   * 三档,不是两档:
-   *   `FM_OUTLINE`(满色 + 描边)= 题面点名的那一枚。光靠满色在灰底上还不够跳 ——
-   *     描边给它一圈高亮框,而颜色留着不动(这块板子问的就是「那枚什么色的贴纸」,
-   *     换色的记号法在这里等于把题干抹了);
-   *   `FM_DIM`(自己的颜色减半)= 目标块剩下的贴纸 + 六个中心 —— 前者得看得出这几枚
-   *     是同一块,后者是方位参照(压暗才不跟目标抢);
-   *   `FM_IGNORED`(整片 #666 灰)= 其余 40 来格,和上游那版一样是灰底。
-   */
+  /** 三档遮罩不碰几何,所以答对一枚就换记号也不会吃掉复盘动画。 */
   useEffect(() => {
     const mount = mountRef.current;
-    if (!mount || !ready) return;
-    const cube = mount.world.cube as Cube;
-    // /sim 把压暗的白钉在 #dddddd(免得跟 ignored 灰撞),可那跟满色白根本分不出 ——
-    // 这块板子上白中心、白目标可能同时在场,压暗的白得一眼是暗的。
-    cube.instancedRenderer.dimWhite = '#aaaaaa';
-    const sid = (f: number) => engineHomeSid(faceletMap[f].cube, faceletMap[f].face, 3);
-    const full = new Set(bright.map(sid));
-    const half = new Set(dim.map(sid));
-    cube.instancedRenderer.setStickering(
-      full.size === 0 && half.size === 0 ? null : (initial, face) => {
-        const s = engineHomeSid(initial, face, 3);
-        return full.has(s) ? FM_OUTLINE : half.has(s) ? FM_DIM : FM_IGNORED;
-      },
-    );
+    if (!mount || !painterRef.current || !ready) return;
+    painterRef.current.tiers(bright, dim);
     mount.invalidate();
-  }, [bright, dim, ready, faceletMap]);
+  }, [bright, dim, ready]);
 
-  /** 复位 = 回到 /sim 打开时那个姿势(U 上 F 前 R 右),`HOME_SCENE_ROT` 单一源。 */
-  const resetView = () => {
+  /** 复位 = 回到 /sim 打开时那个姿势,`HOME_SCENE_ROT` 单一源。 */
+  const resetView = useCallback(() => {
     const world = mountRef.current?.world;
-    if (world) resetSceneView(world);
-  };
+    if (world) {
+      resetSceneView(world);
+      mountRef.current?.invalidate();
+    }
+  }, []);
 
   // 页面上的「恢复默认」也复位视角(拖歪了不用再去找题板角上那颗按钮)。
   useEffect(() => {
     if (!ready || viewResetNonce === 0) return;
     resetView();
-    // resetView 只读 ref,不进依赖;nonce 变一次复位一次。
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, viewResetNonce]);
+  }, [ready, viewResetNonce, resetView]);
 
   return (
     <div className="predict-board">
@@ -284,4 +279,134 @@ export default function PredictBoard({
       </button>
     </div>
   );
+}
+
+// ─── NxN:instanced 贴纸,走 /sim 自己的上色 + 阶段遮罩 ───────────────────
+
+async function mountNxnPainter(
+  world: World, order: number, mount: SimMount,
+  onStickerRef: React.RefObject<(slot: number) => void>,
+  disposers: (() => void)[],
+): Promise<Painter> {
+  const faceletMap = buildFaceletMap(order);
+  const reverseMap = buildReverseFaceletMap(faceletMap);
+  const cube = world.cube as Cube;
+
+  world.controller.dragEmpty = 'view';
+  world.controller.paintMode = true;
+  // 无界 orbit(两轴一直累加,含 yawSign 修正)—— 钳了 pitch 就翻不过顶/底,
+  // 背面的答案就点不到。故意**不**走求解器画板那档「自动转体」:那档会把视角折成真的
+  // 整体转体,而这里整盘题面(labels / 遮罩)是按 home 面序喂进来的。
+  world.controller.onOrbit = (dx, dy) => orbitSceneFree(world, dx, dy, ORBIT_K);
+  world.controller.taps.push((index, face) => {
+    if (index < 0 || face === null) return;
+    const fi = reverseMap.get(`${index}_${face}`);
+    if (fi !== undefined) onStickerRef.current(fi);
+  });
+
+  // 提示贴片强制常驻(本页不给 toggle):朝向钉死在 home,背对镜头那三面只能靠它读。
+  // 影子色 = 贴纸色与页面背景预混,所以主题一翻要重新注入一次底色。
+  cube.instancedRenderer.setHintBackdrop(pageBackdrop());
+  cube.instancedRenderer.hint = true;
+  cube.instancedRenderer.dimWhite = DIM_WHITE;
+  const syncBackdrop = () => {
+    cube.instancedRenderer.setHintBackdrop(pageBackdrop());
+    mount.invalidate();
+  };
+  const themeObserver = new MutationObserver(syncBackdrop);
+  themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  darkQuery.addEventListener('change', syncBackdrop);
+  disposers.push(() => {
+    themeObserver.disconnect();
+    darkQuery.removeEventListener('change', syncBackdrop);
+  });
+
+  const sid = (f: number) => engineHomeSid(faceletMap[f].cube, faceletMap[f].face, order);
+
+  return {
+    colors(labels) {
+      for (let i = 0; i < faceletMap.length; i++) {
+        cube.stick(faceletMap[i].cube, faceletMap[i].face, labels[i] ?? '');
+      }
+    },
+    tiers(bright, dim) {
+      // 遮罩键在还原帧的贴纸上,复盘转动时高亮自己跟着块跑;上色那条路(`stick`)照旧给
+      // 整盘真实颜色,两者正交。
+      const full = new Set(bright.map(sid));
+      const half = new Set(dim.map(sid));
+      cube.instancedRenderer.setStickering(
+        full.size === 0 && half.size === 0 ? null : (initial, face) => {
+          const s = engineHomeSid(initial, face, order);
+          return full.has(s) ? FM_OUTLINE : half.has(s) ? FM_DIM : FM_IGNORED;
+        },
+      );
+    },
+  };
+}
+
+// ─── 金字塔 / 斜转 / 枫叶:逐张贴纸 mesh,直接改材质色 ────────────────────
+
+async function mountSolidPainter(
+  puzzle: PredictPuzzle, world: World, mount: SimMount,
+  onStickerRef: React.RefObject<(slot: number) => void>,
+  disposers: (() => void)[],
+): Promise<Painter> {
+  const [three, gesture, slotMap] = await Promise.all([
+    import('three'),
+    import('@/components/sim-embed/orbitTapGesture'),
+    import('./engineSlotMap'),
+  ]);
+
+  const meshes = slotMap.collectStickerMeshes(puzzle, world.cube);
+  // 引擎的 stickerMat 按颜色缓存 + 共享 → 必须逐张 clone,否则改一张串一片。
+  const caps = meshes.map((mesh) => {
+    const mats = mesh.material;
+    const cap = (Array.isArray(mats) ? mats[0] : mats).clone();
+    mesh.material = Array.isArray(mats) ? [cap, mats[1]] : cap;
+    return cap as unknown as { color: { set(c: string): void }; dispose(): void };
+  });
+  disposers.push(() => { for (const c of caps) c.dispose(); });
+
+  // 金字塔的方位提示 = 四个顶点字母(U/L/R/B),正好就是它的转动记号。淡入靠
+  // mountSimWorld 的 onFrame 每帧 tick(见挂载处)。
+  if (puzzle.id === 'pyraminx') world.pyraHints.show();
+
+  const raycaster = new three.Raycaster();
+  const pointer = new three.Vector2();
+  const detach = gesture.attachOrbitTap({
+    world,
+    canvas: mount.renderer.domElement,
+    // 不给 autoRotate:这块板子只转视角,一步都不许拧,也不许把视角折成整体转体
+    //(题面 labels / 遮罩是按 home 面序喂的,折进本体姿态就对不上了)。
+    onTap: (x, y) => {
+      pointer.set((x / world.width) * 2 - 1, -(y / world.height) * 2 + 1);
+      raycaster.setFromCamera(pointer, world.camera);
+      world.scene.updateMatrixWorld();
+      const hit = raycaster.intersectObjects(meshes, false)[0];
+      if (!hit) return;
+      const slot = meshes.indexOf(hit.object as (typeof meshes)[number]);
+      if (slot >= 0) onStickerRef.current(slot);
+    },
+  });
+  disposers.push(detach);
+
+  let shownLabels: readonly string[] = [];
+  let full = new Set<number>();
+  let half = new Set<number>();
+  const repaint = (): void => {
+    const plain = full.size === 0 && half.size === 0;
+    for (let i = 0; i < caps.length; i++) {
+      const label = shownLabels[i] ?? '';
+      if (!label) continue;
+      caps[i].color.set(plain
+        ? shadedColor(label, 'bright')
+        : shadedColor(label, full.has(i) ? 'bright' : half.has(i) ? 'dim' : 'ignored'));
+    }
+  };
+
+  return {
+    colors(labels) { shownLabels = labels; repaint(); },
+    tiers(bright, dim) { full = new Set(bright); half = new Set(dim); repaint(); },
+  };
 }

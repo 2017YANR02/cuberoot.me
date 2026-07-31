@@ -144,6 +144,17 @@ export function makeNxnPuzzle(N: number): PredictPuzzle {
     placementMoves: (rnd) => randomMoves(N <= 2 ? 11 : N === 3 ? 15 : 10 * N, rnd),
 
     parse: (text) => parseNxnInput(text, N),
+    // 三阶那档的输入其实走 `../challenge.ts` 的 parseMoveInput(它连宽转都不收),
+    // 所以这句话按那边的实际口径写,别照抄下面这条。
+    notation: N === 3
+      ? {
+        zh: "只收 U R F D L B(可加 ' 或 2);宽转 r / Rw、中层 M E S、转体 x y z 都追不了。",
+        en: "Only U R F D L B (each with an optional ' or 2) — no wide turns, slices or rotations.",
+      }
+      : {
+        zh: "只收 U R F D L B,可带宽转前缀(Rw / 2R / 3Rw)与 ' / 2;中层 M E S、转体 x y z 追不了。",
+        en: "Only U R F D L B, optionally with a layer prefix (Rw / 2R / 3Rw) and ' / 2 — no slices or rotations.",
+      },
     moveFace: (move) => /([URFDLB])/.exec(move)?.[1] ?? null,
   };
 }

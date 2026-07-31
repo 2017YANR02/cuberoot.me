@@ -21,6 +21,7 @@ import {
 import { cubeOnly, expandGroups, tokenizeMoves } from '@cuberoot/shared/alg-notation';
 import type { CubeFace } from '@/lib/cube-colors';
 import { orientedFaceColors, faceShowingColor } from '@/lib/cube-orientation';
+import { CUSTOM_MOVES_MAX } from './puzzles/types';
 import { F2L_ALGS } from './f2l_algs';
 
 /** 本位面序号 → 面字母(与 cube333 的 FACE_CH 同序)。 */
@@ -33,11 +34,12 @@ export type PieceKind = 'edge' | 'corner' | 'pair';
 export type ScrambleSource = 'random' | 'f2lAlg' | 'custom';
 
 export const MOVE_COUNT_MIN = 1;
-export const MOVE_COUNT_MAX = 20;
+/** 页面那个步数下拉的上限走 `puzzle.moveCountMax`(三阶那份也是 20),这里只钳出题。 */
+const MOVE_COUNT_MAX = 20;
 export const CROSS_EDGES_MIN = 1;
 export const CROSS_EDGES_MAX = 4;
-/** 自己输入的公式最多几步 —— 追踪一枚贴纸再长也没意义,而且题面那排卡片会溢出。 */
-export const CUSTOM_MOVES_MAX = 40;
+/** 自己输入的公式步数上限 —— 与别的拼图共用一份(`./puzzles/types`)。 */
+export { CUSTOM_MOVES_MAX } from './puzzles/types';
 
 /** 目标块被甩到起点位置用的隐藏乱转步数(与被复刻的原站一致)。 */
 const PLACEMENT_MOVES = 15;
@@ -123,9 +125,6 @@ function pieceFacelets(state: Cube333, kind: 'corner' | 'edge', piece: number): 
   return Array.from({ length: n }, (_, k) => stickerFacelet(state, kind, piece, k));
 }
 
-/** facelet 序号 → 它在哪个面(URFDLB 分段,与 FACE_LETTERS 同序)。 */
-export const faceletFace = (facelet: number): number => Math.floor(facelet / 9);
-
 /** 目标块整块的贴纸 → 面字母(= 满色那几格),其余 '.'(压暗)。 */
 function paintPieces(state: Cube333, picks: readonly { kind: 'corner' | 'edge'; piece: number }[]): string {
   const out = Array<string>(54).fill('.');
@@ -154,15 +153,9 @@ export function randomMoves(count: number, rnd: () => number): string[] {
   return out;
 }
 
-export type MoveInputError =
-  | { kind: 'empty' }
-  | { kind: 'token'; token: string }
-  | { kind: 'parens' }
-  | { kind: 'tooLong'; count: number };
-
-export type MoveInputResult =
-  | { moves: string[]; error: null }
-  | { moves: null; error: MoveInputError };
+/** 公式输入的判定结果 —— 与别的拼图共用一份(`./puzzles/types`),页面只认这一个形状。 */
+export type { MoveInputError, MoveInputResult } from './puzzles/types';
+import type { MoveInputResult } from './puzzles/types';
 
 /**
  * 玩家自己输入的公式 → 题面那串。

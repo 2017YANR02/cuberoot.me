@@ -80,6 +80,10 @@ export const skewbPuzzle: PredictPuzzle = {
     return out;
   },
 
+  notation: {
+    zh: "只收 R U L B(可加 ',WCA 的四个角);别的角 F D UL UR 与转体 x y z 这块板子不收。",
+    en: "Only R U L B (the four WCA corners, optional '); the other grips F D UL UR and rotations x y z are not accepted here.",
+  },
   parse: parseSkewbInput,
   moveFace: () => null, // R/U/L/B 是角不是面,给转动卡片上「面色」会误导
 };

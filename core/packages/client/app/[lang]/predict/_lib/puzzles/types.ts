@@ -81,6 +81,8 @@ export interface PredictPuzzle {
   moveCountMax: number;
   /** 自己输入的公式 → 题面那串(必须是本拼图 + `/sim` 引擎都认的记号)。 */
   parse: (text: string) => MoveInputResult;
+  /** 收哪些记号 —— 输入框写错时原样说给用户听。 */
+  notation: { zh: string; en: string };
   /** 一步里代表「面 / 轴」的那个字母,给题面卡片上色用;认不出返回 null。 */
   moveFace: (move: string) => string | null;
   /** 输入框的占位示例。 */
