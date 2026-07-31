@@ -214,6 +214,9 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
         calibrateToken={calibrateToken}
         sensorBasis={sensorBasis}
         mirror={mirror}
+        // 拧的时候屏幕上要看得见「转了哪一层」,而不是每一手瞬间变成另一个局面。
+        // 只在「新日志是老日志 + 几手」时才播,别的情况(重新锚定 / 回填)照旧瞬切。
+        animate
       />
     );
   }

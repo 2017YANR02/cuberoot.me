@@ -17,8 +17,10 @@
  * the quaternion feed. The two are independent channels and they stay
  * independent here:
  *
- *   - STICKERS  → `twister.setup(moves)` — layer twists, applied by
- *     the engine to child CubeGroups and per-instance matrices.
+ *   - STICKERS  → the engine's twister — layer twists applied to child
+ *     CubeGroups and per-instance matrices. `setup()` snaps the whole log;
+ *     `push()` plays the new turns. See the `animate` prop for which is used
+ *     when and why the default is to snap.
  *
  * The engine is alg-driven — it has no facelet setter — so the move log MUST
  * be anchored at a solved cube for this to be truthful. LiveCubeState owns
@@ -69,6 +71,11 @@ import {
 /** Below this the pose is "unchanged" and we skip the render entirely. */
 const STILL_EPS_RAD = 1e-4;
 
+/** Turns allowed to be mid-flight before the next one snaps what is playing.
+ *  Two is enough to keep a fast solve looking continuous and short enough that
+ *  the mirror is never meaningfully behind the cube in the user's hands. */
+const MAX_ANIM_QUEUE = 2;
+
 export interface SimCubeViewProps {
   /** Moves since the cube was last known SOLVED — see the note above. */
   moves: string[];
@@ -90,6 +97,16 @@ export interface SimCubeViewProps {
   /** Reverse the sense of rotation (handedness fix). Calibration cannot do
    *  this — see orientation.ts. */
   mirror?: boolean;
+  /**
+   * Play the turns instead of snapping to the new state.
+   *
+   * Only ever applies to a pure APPEND — the new log starting with the old one.
+   * Anything else (a seek, a rewind, a re-anchor) still snaps, because there is
+   * no honest animation for "the state jumped". And an append longer than
+   * `MAX_ANIM_QUEUE` finishes what is playing first: the point of the animation
+   * is to make one turn readable, not to let the screen fall behind the hands.
+   */
+  animate?: boolean;
   /** Fired once the WebGL context is up and the first cube state is applied. */
   onReady?: () => void;
   /** Screen-reader label. Defaults to the live-mirror wording; the replay
@@ -105,6 +122,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
     calibrateToken = 0,
     sensorBasis = 'identity',
     mirror = false,
+    animate = false,
     onReady,
     ariaLabel,
   } = props;
@@ -234,15 +252,37 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
     };
   }, []);
 
-  // ── Sticker state: replay from solved, snapped (not animated) so the
-  //    mirror can never lag behind the physical cube. ──
+  // ── Sticker state. ──
+  //
+  // `setup()` snaps: it drops the play queue, resets and re-applies the whole
+  // log. That is the only honest answer to a state that JUMPED (a seek, a
+  // rewind, a re-anchored live log), and it stays the default.
+  //
+  // `push()` plays the turn. It is used only when the new log literally starts
+  // with the old one — the one case where "what changed" is a sequence of
+  // turns and animating them is showing what happened rather than inventing it.
+  // The queue is capped: fall more than MAX_ANIM_QUEUE behind and the pending
+  // turns are finished instantly before the new one is pushed, so the screen
+  // can drift a couple of turns behind the hands and no further.
   const composed = moves.join(' ');
+  const shownRef = useRef('');
   useEffect(() => {
     const world = mountRef.current?.world;
     if (!ready || !world) return;
-    (world.cube as NxnCube).twister.setup(composed);
+    const twister = (world.cube as NxnCube).twister;
+    const prev = shownRef.current;
+    shownRef.current = composed;
+    // An empty `prev` is the first mount, where the whole scramble would
+    // otherwise "play" — that is a state jump too, not a sequence of turns.
+    const appended = animate && prev !== '' && composed.startsWith(`${prev} `);
+    if (appended) {
+      if (twister.length > MAX_ANIM_QUEUE) twister.finish();
+      twister.push(composed.slice(prev.length).trim());
+    } else {
+      twister.setup(composed);
+    }
     mountRef.current?.invalidate();
-  }, [ready, composed]);
+  }, [ready, composed, animate]);
 
   return (
     <div
