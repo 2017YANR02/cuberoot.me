@@ -53,6 +53,7 @@ import { displayAlg, oriAdjustSetup, shortOriName } from '@/lib/alg_display';
 import { sanitizeAlgHtml } from '@/lib/alg_html';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useHashHighlight } from '@/hooks/useHashHighlight';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
 
 // oriAdjustSetup / shortOriName 已提到 lib/alg_display 与 case 详情页共用(详情页原先漏了它们,见那里的注释)。
@@ -239,6 +240,9 @@ function SubgroupIndex({
 
   const useF2lThumb = puzzle === '3x3' && set === 'zbls';
   const pickerMask = LEVEL2_PICKER_MASK[set];
+  // 窄屏这两个网格都是四列(alg.css 的 480 断点),110px 的图会撑破格子 —— 图跟着降档。
+  // 只能从这里给:缩略图的宽高是 React 出的(inline style / img 属性),CSS 压不住。
+  const thumbSize = useIsMobile(480) ? 60 : 110;
 
   // 卡片网格:单级 umbrella(直接链到 case),或组太多的两级 umbrella(链到二级选择页)。
   if (!inlineExpand) {
@@ -258,8 +262,8 @@ function SubgroupIndex({
               /* 组封面一页几十张,窄屏整页能到 10000px 以上(实测 1lll / ollcp)。懒加载在桌面
                  是 no-op(整页都落在 Chrome 的预加载阈值内),手机首屏请求实测能砍掉三到五成。 */
               thumb={useF2lThumb
-                ? <VisualCube setup={sample.setup} algorithm={firstAlg} view="f2l" size={110} loading="lazy" />
-                : <VisualCube setup={sample.setup} algorithm={firstAlg} view="oll" size={110} loading="lazy" hideGreySides />}
+                ? <VisualCube setup={sample.setup} algorithm={firstAlg} view="f2l" size={thumbSize} loading="lazy" />
+                : <VisualCube setup={sample.setup} algorithm={firstAlg} view="oll" size={thumbSize} loading="lazy" hideGreySides />}
               title={ollName ?? (useF2lThumb ? (dispTop || tr({ zh: '其他', en: 'Other' })) : `${set.toUpperCase()} ${dispTop || tr({ zh: '其他', en: 'Other' })}`)}
               count={total}
               sub={ollName ? `${set.toUpperCase()} ${dispTop}` : undefined}
@@ -286,7 +290,7 @@ function SubgroupIndex({
               expand={isCollapsed ? 'closed' : 'open'}
               onClick={() => toggle(topLabel)}
               tooltip={isCollapsed ? tr({ zh: '展开', en: 'Expand' }) : tr({ zh: '收起', en: 'Collapse' })}
-              thumb={<VisualCube setup={e.sample.setup} algorithm={firstAlg} view="oll" size={110} hideGreySides />}
+              thumb={<VisualCube setup={e.sample.setup} algorithm={firstAlg} view="oll" size={thumbSize} hideGreySides />}
               title={title}
               count={e.total}
             />
@@ -297,7 +301,7 @@ function SubgroupIndex({
                 <AlgCard
                   key={subLabel}
                   href={`/alg/${puzzle}/${set}/${subSlug}`}
-                  thumb={<CaseThumb puzzle={puzzle} set={set} sticker={sample.sticker} alg={subFirstAlg} setup={sample.setup} size={110} mask={pickerMask} loading="lazy" />}
+                  thumb={<CaseThumb puzzle={puzzle} set={set} sticker={sample.sticker} alg={subFirstAlg} setup={sample.setup} size={thumbSize} mask={pickerMask} loading="lazy" />}
                   title={set === 'zbll' ? displayZbllToken(subLabel) : subLabel}
                   count={count}
                 />
@@ -321,6 +325,7 @@ export interface AlgCategoryViewProps {
 export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initialData }: AlgCategoryViewProps) {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
+  const narrow = useIsMobile(480);
   const validPuzzle = isPuzzle(puzzleParam);
   const meta = validPuzzle ? getAlgSetMeta(puzzleParam, set) : undefined;
   const algSetTitle = (() => {
@@ -822,6 +827,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
 
       {data && showSubSubgroupPicker && (() => {
         const pickerMask = LEVEL2_PICKER_MASK[set];
+        const thumbSize = narrow ? 60 : 110; // 同 SubgroupIndex:窄屏四列,图跟着降档
         return (
           <div className="alg-subgroup-grid">
             {subSubgroups.map(([subLabel, { sample, count }]) => {
@@ -833,7 +839,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                   href={`/alg/${puzzleParam}/${set}/${sub2Slug}`}
                   /* 子组卡片一页几十张,窄屏下整页能到 10000px 以上(实测 1lll / ollcp)。
                      懒加载在桌面是 no-op(整页都在 Chrome 阈值内),但手机首屏请求实测能砍掉三到五成。 */
-                  thumb={<CaseThumb puzzle={puzzleParam as AlgPuzzle} set={set} sticker={sample.sticker} alg={firstAlg} setup={sample.setup} size={110} mask={pickerMask} loading="lazy" />}
+                  thumb={<CaseThumb puzzle={puzzleParam as AlgPuzzle} set={set} sticker={sample.sticker} alg={firstAlg} setup={sample.setup} size={thumbSize} mask={pickerMask} loading="lazy" />}
                   title={set === 'zbll' ? displayZbllToken(subLabel) : subLabel}
                   count={count}
                 />
