@@ -1550,14 +1550,26 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   // phaseRef is declared up by genScramble (the scramble buffer's safety gate
   // reads it); keep it in sync with the live timer phase here.
   useEffect(() => { phaseRef.current = timer.phase; }, [timer.phase]);
-  const anyModalOpen =
+  const otherModalOpen =
     settingsOpen || shortcutsOpen || bluetoothOpen || stackmatOpen ||
     trainerSubsetOpen !== null || statsModalOpen ||
     manualEntryOpen || solverOpen || bulkScrambleOpen ||
-    drillModalOpen || bldHelperOpen || hintsSheetOpen ||
+    drillModalOpen || bldHelperOpen ||
     modalSolve !== null || reconstructSolve !== null;
+  const anyModalOpen = otherModalOpen || hintsSheetOpen;
   const anyModalOpenRef = useRef(anyModalOpen);
   useEffect(() => { anyModalOpenRef.current = anyModalOpen; }, [anyModalOpen]);
+  // 解法全屏浮层是唯一的例外:它盖住整屏,但讲的就是眼前这条打乱 —— 换题键(默认左右键)
+  // 仍要能用,否则全屏形态下只能先关掉浮层才能换题。其余键照旧被吞(空格不能穿到后面预备计时)。
+  const hintsOnlyRef = useRef(false);
+  useEffect(() => { hintsOnlyRef.current = hintsSheetOpen && !otherModalOpen; }, [hintsSheetOpen, otherModalOpen]);
+  // 换题(浮层里的键盘 / 手势共用):计时、预备、观察进行中不换 —— 那会把正在解的题换掉。
+  const canSwitchScramble = useCallback(() => {
+    const ph = phaseRef.current;
+    return !(ph === 'running' || ph === 'holding' || ph === 'ready' || ph === 'inspecting');
+  }, []);
+  const sheetPrevScramble = useCallback(() => { if (canSwitchScramble()) prevScramble(); }, [canSwitchScramble, prevScramble]);
+  const sheetNextScramble = useCallback(() => { if (canSwitchScramble()) nextScramble(); }, [canSwitchScramble, nextScramble]);
   // Through a ref so rebinding a key doesn't tear down and re-add the window
   // listeners — and so the handler's dep array stays as it was.
   const resolvedKeymap = useMemo(() => resolveKeymap(settings.keymap), [settings.keymap]);
@@ -1565,7 +1577,19 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   useEffect(() => { keymapRef.current = resolvedKeymap; }, [resolvedKeymap]);
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (anyModalOpenRef.current) return;
+      if (anyModalOpenRef.current) {
+        // 解法全屏浮层:只放行「上/下一个打乱」这两个动作(见 hintsOnlyRef 处的注释),
+        // 走的是同一份可改键位表,所以用户改过键位在浮层里也照样生效。
+        if (!hintsOnlyRef.current || e.repeat) return;
+        const t = e.target as HTMLElement | null;
+        if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+        const b = bindingForEvent(e);
+        const a = b ? keymapRef.current[b] : undefined;
+        if (a !== 'next-scramble' && a !== 'prev-scramble') return;
+        e.preventDefault();
+        (a === 'prev-scramble' ? sheetPrevScramble : sheetNextScramble)();
+        return;
+      }
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
       // Focus inside an always-present in-page control region (解法提示面板 / 打乱来源栏的
@@ -1653,7 +1677,8 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
     };
-  }, [onPressDown, onPressUp, reset, updateSolve, deleteSolve, nextScramble, prevScramble, toggleFullscreen, multiStageActive, bldMemoActive]);
+  }, [onPressDown, onPressUp, reset, updateSolve, deleteSolve, nextScramble, prevScramble,
+    sheetNextScramble, sheetPrevScramble, toggleFullscreen, multiStageActive, bldMemoActive]);
 
   // 计时进行中:点屏幕任何地方都停表。计时面板内由 useGestureWheel(surfaceRef)处理,
   // 这里只补面板之外的区域,并跳过面板内目标避免双触发(双触发会停表后立即重新进入 hold/观察)。
@@ -1999,7 +2024,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   // 解法提示(仅 333)。同一个组件在两处挂点里二选一:桌面进右侧 .shell-rail(展开成竖栏),
   // 手机进顶栏那一组控件的末尾(点开 = 全屏浮层)。写成一个变量,免得两处各写一遍 props。
   const solverHintPanel = event === '333'
-    ? <SolverHintPanel scramble={scramble} isZh={isZh} />
+    ? <SolverHintPanel scramble={scramble} isZh={isZh} onPrevScramble={sheetPrevScramble} onNextScramble={sheetNextScramble} />
     : null;
 
   return (

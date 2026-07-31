@@ -16,6 +16,9 @@
  *    那一层内部有效,会被外面 z-index:61 的底部抽屉盖住。
  *  · 桌面也可以要全屏:右栏头部的 ⤢ 打开同一个浮层(窄栏里 3D 魔方 + 解法列表被迫上下叠,
  *    全屏才摊得开)。此时右栏内容卸载,避免两份 StageSolver 各解一遍同一条打乱。
+ *  · 换题(上/下一条打乱)在两套形态里都能用:右栏形态下计时区还露着,归主区的键盘 +
+ *    径向手势;全屏浮层盖住了主区,于是键盘走 SoloView 的 hintsOnly 分支放行,手势由
+ *    这里的 useScrambleSwipe 接管(横划一下,方向同径向手势:右 = 下一个)。
  *
  * 引擎/动画仍复用 components/StageSolver(analyzer 主面板同款),首次展开才 next/dynamic
  * 拉表;收起后再展开复用站内共享池(getRustCrossPool 单例),不重拉。
@@ -60,6 +63,60 @@ interface Props {
   isZh: boolean;
 }
 
+/** 换题回调。右栏形态下换题归主区(计时面板的径向手势 + 键盘),全屏浮层把整屏盖住了,
+ *  这两件事得由浮层自己接过来:横划手势在这儿,键盘在 SoloView 的 hintsOnlyRef 分支。 */
+interface ScrambleNav {
+  onPrevScramble?: () => void;
+  onNextScramble?: () => void;
+}
+
+/** 横划手势的判据:横向位移下限,以及「必须明显横向」的横/竖比 —— 浮层内容是竖向滚动的,
+ *  比值太松会把斜着的滚动当成换题。方向沿用计时面板的径向手势:右 = 下一个,左 = 上一个。 */
+const SWIPE_MIN_X = 60;
+const SWIPE_RATIO = 1.6;
+/** 这些元素里起手的拖动各有主人(3D 魔方转视角、表单控件自己的拖动),不当换题手势。 */
+const SWIPE_IGNORE = 'canvas, twisty-player, input, textarea, select, [data-no-swipe]';
+
+function useScrambleSwipe({ onPrevScramble, onNextScramble }: ScrambleNav) {
+  const startRef = useRef<{ x: number; y: number; mouse: boolean } | null>(null);
+  // 手势起手落在按钮上(解法列表每行都是按钮)时,松手那下的 click 要吞掉,否则划一下
+  // 顺带把那行选中了。
+  const swallowClickRef = useRef(false);
+  const enabled = !!onPrevScramble && !!onNextScramble;
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    swallowClickRef.current = false;
+    startRef.current = null;
+    if (!enabled) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if ((e.target as HTMLElement | null)?.closest(SWIPE_IGNORE)) return;
+    startRef.current = { x: e.clientX, y: e.clientY, mouse: e.pointerType === 'mouse' };
+  };
+  // 在 move 里判、判中就地触发并清空起点:一次拖动只换一题,也不必担心浏览器接管滚动时
+  // 发来的 pointercancel 把 up 吃掉。
+  const onPointerMove = (e: React.PointerEvent) => {
+    const s = startRef.current;
+    if (!s) return;
+    const dx = e.clientX - s.x;
+    const dy = e.clientY - s.y;
+    if (Math.abs(dx) < SWIPE_MIN_X || Math.abs(dx) < Math.abs(dy) * SWIPE_RATIO) return;
+    // 鼠标:拖过解法文本是在选文本,不是换题 —— 这一拖选中了东西就不算手势。
+    if (s.mouse && !(window.getSelection()?.isCollapsed ?? true)) { startRef.current = null; return; }
+    startRef.current = null;
+    swallowClickRef.current = true;
+    (dx > 0 ? onNextScramble : onPrevScramble)?.();
+  };
+  const onPointerEnd = () => { startRef.current = null; };
+  const onClickCapture = (e: React.MouseEvent) => {
+    if (!swallowClickRef.current) return;
+    swallowClickRef.current = false;
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  return { onPointerDown, onPointerMove, onPointerUp: onPointerEnd, onPointerCancel: onPointerEnd, onClickCapture };
+}
+
 /** 桌面形态二选一:右栏 ↔ 全屏。右栏头部和全屏头部各挂一个,两处都能切回去。 */
 function ModeToggle({ full, onChange }: { full: boolean; onChange: (full: boolean) => void }) {
   return (
@@ -90,11 +147,12 @@ function SolverBody({ scramble, isZh, compact }: Props & { compact: boolean }) {
 
 /** Full-screen sheet. Own component so useModalDismiss's Escape + body-scroll-lock
  *  mount and unmount with the sheet itself. `onDock` 只有桌面传(手机没有右栏可回)。 */
-function SolverSheet({ scramble, isZh, compact, onClose, onDock }: Props & { compact: boolean; onClose: () => void; onDock?: () => void }) {
+function SolverSheet({ scramble, isZh, compact, onClose, onDock, onPrevScramble, onNextScramble }: Props & ScrambleNav & { compact: boolean; onClose: () => void; onDock?: () => void }) {
   useModalDismiss(onClose);
+  const swipe = useScrambleSwipe({ onPrevScramble, onNextScramble });
   const title = tr(PANEL_TITLE);
   return (
-    <div className="solver-sheet" data-no-timer role="dialog" aria-modal="true" aria-label={title}>
+    <div className="solver-sheet" data-no-timer role="dialog" aria-modal="true" aria-label={title} {...swipe}>
       <div className="solver-sheet-head">
         <span className="solver-sheet-title">{title}</span>
         {onDock && <ModeToggle full onChange={(v) => { if (!v) onDock(); }} />}
@@ -114,7 +172,7 @@ function SolverSheet({ scramble, isZh, compact, onClose, onDock }: Props & { com
   );
 }
 
-export default function SolverHintPanel({ scramble, isZh }: Props) {
+export default function SolverHintPanel({ scramble, isZh, onPrevScramble, onNextScramble }: Props & ScrambleNav) {
   const isPhone = useIsMobile(560);
   const isDesktopRail = !useIsMobile(1023); // ≥1024 时面板是右侧 ~360px 窄栏
 
@@ -236,6 +294,8 @@ export default function SolverHintPanel({ scramble, isZh }: Props) {
           // 桌面关掉全屏 = 选回右栏(否则记着的形态与眼前看到的不一致,一刷新又弹回全屏)。
           onClose={isDesktopRail ? () => pickFull(false) : closeSheet}
           onDock={isDesktopRail ? () => pickFull(false) : undefined}
+          onPrevScramble={onPrevScramble}
+          onNextScramble={onNextScramble}
         />,
         document.body,
       )}
