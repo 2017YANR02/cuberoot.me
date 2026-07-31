@@ -11,6 +11,7 @@
 import { jsPDF } from 'jspdf';
 import { FONT_MONO, FONT_SANS, FONT_CJK, loadPdfFonts, ensureCjkFont, hasCjk } from '@/lib/pdf-fonts';
 import { svgStringToElement, embedSvg } from '@/lib/pdf-svg';
+import { loadPdfLogo, drawPdfLogo } from '@/lib/pdf-logo';
 import { algCaseSvg, type CaseSvgInput } from './case_svg';
 
 export interface AlgPdfCase {
@@ -53,6 +54,8 @@ const GROUP_SIZE = 9.5;
 const NAME_SIZE = 8.5;
 const ALG_SIZE = 8;             // 公式字号上限(放不下会往 7 降,见 pickLayout)
 const SETUP_SIZE = 6.6;
+const LOGO_H = 22;              // 首页刊头的标志高
+const RUN_LOGO_H = 9;           // 续页页眉那枚小标志
 const CELL_PAD = 4;
 const GAP_X = 12;
 const GAP_Y = 8;
@@ -103,6 +106,7 @@ export async function buildAlgSheet({
 }: AlgPdfSheetInput): Promise<jsPDF | null> {
   const doc = new jsPDF({ unit: 'pt', format: 'a4', compress: true });
   await loadPdfFonts(doc);
+  const logo = await loadPdfLogo();
 
   // 中文只可能出现在标题 / 子组名这类「文案」里(公式和 case 名都是记号),
   // 真有才拖那 4MB 的字体。
@@ -147,29 +151,33 @@ export async function buildAlgSheet({
   const newPage = () => {
     doc.addPage();
     y = MARGIN;
-    // 续页顶上重复一行小标题 —— 打印出来散落在桌上时还认得出是哪份表
+    // 续页页眉:小标志 + 重复一行标题 —— 打印出来散落在桌上时还认得出是哪份表、出自哪
+    const lw = drawPdfLogo(doc, logo, MARGIN, y - 1, RUN_LOGO_H);
     doc.setFont(SANS, 'normal');
     doc.setFontSize(SUB_SIZE);
     doc.setTextColor(140);
-    doc.text(title, MARGIN, y + SUB_SIZE);
+    doc.text(title, MARGIN + (lw ? lw + 6 : 0), y + SUB_SIZE - 1);
     doc.setTextColor(0);
-    y += SUB_SIZE + 10;
+    y += Math.max(SUB_SIZE, RUN_LOGO_H) + 10;
   };
 
-  // ── 页首
+  // ── 首页刊头:标志 / 标题 / 出处一列居中。副标题里带着 `cuberoot.me/alg/...`,
+  //    正好接在标志下面成一块出处。
+  const logoW = drawPdfLogo(doc, logo, PAGE_W / 2, y, LOGO_H, 'center');
+  if (logoW) y += LOGO_H + 9;
   doc.setFont(SANS, 'bold');
   doc.setFontSize(TITLE_SIZE);
-  doc.text(title, MARGIN, y + TITLE_SIZE);
+  doc.text(title, PAGE_W / 2, y + TITLE_SIZE, { align: 'center' });
   y += TITLE_SIZE + 4;
   if (subtitle) {
     doc.setFont(SANS, 'normal');
     doc.setFontSize(SUB_SIZE);
     doc.setTextColor(130);
-    doc.text(subtitle, MARGIN, y + SUB_SIZE);
+    doc.text(subtitle, PAGE_W / 2, y + SUB_SIZE, { align: 'center' });
     doc.setTextColor(0);
     y += SUB_SIZE + 4;
   }
-  y += 8;
+  y += 10;
 
   let i = 0;
   let lastGroup: string | undefined;
