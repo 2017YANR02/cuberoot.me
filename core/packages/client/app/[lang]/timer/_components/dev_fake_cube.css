@@ -1,0 +1,111 @@
+/* 假魔方调试面板(dev 专用,见 DevFakeCubePanel.tsx)。
+   固定在右下角,和站里其它全局固定按钮同一条右沿规则。 */
+
+.devcube-pill,
+.devcube {
+  position: fixed;
+  /* 左下角:右下角被桌宠占着(z-index 100000,252px 见方),而它是给用户看的,
+     一个 dev 工具没资格压在它上面。左下在计时页是空的。 */
+  left: 16px;
+  /* Next 自己的 dev 指示器钉在左下 20px 处、36px 见方 —— 让开它。 */
+  bottom: 68px;
+  /* 计时器右栏是 z-index 42 的定位元素,40 会被它吃掉点击。dev 工具该盖在页面
+     chrome 之上、又低于模态(70+)—— 开着弹窗时它不该挡路。 */
+  z-index: 50;
+  font-size: 12px;
+}
+
+.devcube-pill {
+  padding: 4px 10px;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--muted-foreground);
+}
+
+.devcube-pill:hover { color: var(--foreground); }
+
+.devcube {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: min(320px, calc(100vw - 32px));
+  padding: 10px 12px;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  background: var(--popover);
+  color: var(--foreground);
+}
+
+.devcube-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.devcube-title { font-weight: 600; }
+
+.devcube-status {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+}
+
+/* 收起按钮是这一行唯一该靠右的东西 —— 这里的两端对齐是有意的。 */
+.devcube-close {
+  margin-left: auto;
+  color: var(--muted-foreground);
+}
+
+.devcube-close:hover { color: var(--foreground); }
+
+.devcube-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* 类选择器,不写 `.devcube-row button` —— 裸 tag 穿透会顺着 BoolToggle 之类的
+   子组件一路盖进去,守卫 tests/css-no-bare-interactive-descendant.test.ts 拦这个。 */
+.devcube-btn {
+  padding: 3px 8px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--foreground);
+}
+
+.devcube-btn:hover { background: color-mix(in srgb, var(--foreground) 8%, transparent); }
+
+.devcube-btn.is-on {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.devcube-alg {
+  flex: 1 1 140px;
+  min-width: 0;
+  padding: 3px 6px;
+  border: 1px solid var(--input);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-mono);
+}
+
+.devcube-hint,
+.devcube-err,
+.devcube-facelets {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.devcube-hint { color: var(--muted-foreground); }
+.devcube-err { color: var(--destructive); }
+
+.devcube-facelets {
+  color: var(--faint-foreground);
+  font-family: var(--font-mono);
+  word-break: break-all;
+}
