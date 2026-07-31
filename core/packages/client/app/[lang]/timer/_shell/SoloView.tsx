@@ -132,6 +132,7 @@ const SolveModal = dynamic(() => import('../_components/SolveModal'), { ssr: fal
 const ReconstructModal = dynamic(() => import('../_components/ReconstructModal'), { ssr: false });
 const ShortcutsModal = dynamic(() => import('../_components/ShortcutsModal'), { ssr: false });
 const BluetoothModal = dynamic(() => import('../_components/BluetoothModal'), { ssr: false });
+const StackmatModal = dynamic(() => import('../_components/StackmatModal'), { ssr: false });
 const TrainerSubsetModal = dynamic(() => import('../_components/TrainerSubsetModal'), { ssr: false });
 const StatsModal = dynamic(() => import('../_components/StatsModal'), { ssr: false });
 const ManualEntryModal = dynamic(() => import('../_components/ManualEntryModal'), { ssr: false });
@@ -1517,6 +1518,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [bluetoothOpen, setBluetoothOpen] = useState(false);
+  const [stackmatOpen, setStackmatOpen] = useState(false);
   const [trainerSubsetOpen, setTrainerSubsetOpen] = useState<'oll' | 'pll' | null>(null);
   const [statsModalOpen, setStatsModalOpen] = useState(false);
   const [manualEntryOpen, setManualEntryOpen] = useState(false);
@@ -1549,7 +1551,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   // reads it); keep it in sync with the live timer phase here.
   useEffect(() => { phaseRef.current = timer.phase; }, [timer.phase]);
   const anyModalOpen =
-    settingsOpen || shortcutsOpen || bluetoothOpen ||
+    settingsOpen || shortcutsOpen || bluetoothOpen || stackmatOpen ||
     trainerSubsetOpen !== null || statsModalOpen ||
     manualEntryOpen || solverOpen || bulkScrambleOpen ||
     drillModalOpen || bldHelperOpen || hintsSheetOpen ||
@@ -1730,20 +1732,12 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     {
       icon: <Mic size={14} />,
       label: stackmat.status.listening
-        ? tr({ zh: 'Stackmat 监听中（点击停止）', en: 'Stackmat listening (stop)' })
-        : tr({ zh: '启用 Stackmat（麦克风）', en: 'Enable Stackmat (mic)' }),
-      onClick: async () => {
-        if (stackmat.status.listening) { stackmat.stop(); return; }
-        try { await stackmat.start(); }
-        catch (err) {
-          setInfoToast({
-            msg: tr({
-              zh: `麦克风启用失败：${(err as Error).message}`,
-              en: `Mic error: ${(err as Error).message}`,
-            }),
-          });
-        }
-      },
+        ? tr({ zh: 'Stackmat 监听中', en: 'Stackmat listening' })
+        : tr({ zh: 'Stackmat 计时器（麦克风）', en: 'Stackmat timer (mic)' }),
+      // Opens the panel rather than toggling straight away: which audio input
+      // the browser picked, and whether frames are decoding at all, is the
+      // difference between "works" and "silently does nothing".
+      onClick: () => setStackmatOpen(true),
     },
     {
       icon: <Timer size={14} />,
@@ -2531,6 +2525,10 @@ export default function SoloView({ playersControl }: SoloViewProps) {
             }
           }}
         />
+      )}
+
+      {stackmatOpen && (
+        <StackmatModal stackmat={stackmat} onClose={() => setStackmatOpen(false)} />
       )}
 
       {statsModalOpen && <StatsModal event={event} solves={solves} isZh={isZh} onClose={() => setStatsModalOpen(false)} />}
