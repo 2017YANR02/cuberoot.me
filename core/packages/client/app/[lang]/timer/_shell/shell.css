@@ -1103,18 +1103,16 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 /* 非桌面宽度下整屏展开,不再是 78dvh 的半截抽屉 —— 成绩表和图表本来就是打开它时
    唯一要看的东西,压在小半屏里一页看不到几行,会话切换器还得先滚。整屏之后遮罩
    全被盖住(点不到也看不见),所以那个元素连同它的 CSS 一起去掉了,关闭走标题栏
-   右上角的 ×。 */
+   右上角的 ×。
+
+   不做上滑动画:抽屉时代那 200ms 是在讲「有块东西从底下升上来」,现在它换的是
+   整个屏幕,一升就成了整页内容跟着滑一下,读起来是晃而不是动。 */
 .shell-panel--sheet {
   position: fixed;
   inset: 0;
   z-index: 61;
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
-  animation: shell-sheet-up 200ms ease;
-}
-@keyframes shell-sheet-up {
-  from { transform: translateY(100%); }
-  to   { transform: translateY(0); }
 }
 .shell-panel-tabs {
   display: flex;
@@ -1365,6 +1363,11 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   align-items: flex-end;
   justify-content: center;
 }
+/* 这个上滑还留着 —— 快捷操作条真的是从屏幕底下升上来的一小条(见 .row-quick-sheet)。 */
+@keyframes shell-sheet-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
 .row-quick-sheet {
   width: 100%;
   padding: 6px 8px calc(10px + env(safe-area-inset-bottom));
@@ -1490,7 +1493,8 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   font-weight: 600;
   cursor: pointer;
 }
-@media (prefers-reduced-motion: reduce) {.shell-panel--sheet { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .row-quick-sheet { animation: none; }
 }
 
 /* tb-btn used in topbar. */
