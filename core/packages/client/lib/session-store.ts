@@ -15,7 +15,7 @@ import {
   randomCrossColor,
   type RecognitionResult,
 } from './pll-helpers';
-import { OLL_SET, PLL_SET, type RecognizeSet } from './recognize-sets';
+import { RECOGNIZE_SETS, type RecognizeSet, type RecognizeSetId } from './recognize-sets';
 
 export type GameState = 'paused' | 'playing' | 'evaluationDone';
 export type TrainMode = 'recognition' | 'timer';
@@ -142,7 +142,8 @@ function createSessionStore(recog: RecognizeSet) {
         if (s.gameState !== 'playing' || s.queue.length === 0) return null;
         const current = s.queue[0];
 
-        const isCorrect = current.name === answer;
+        // 答子组的集合(ZBLL / 1LLL)在这里把 case 名折成子组;其余集合 answerFor 就是原名。
+        const isCorrect = (recog.answerFor?.(current.name) ?? current.name) === answer;
 
         if (!s.mistake) {
           const currentMistake = isCorrect ? '' : answer;
@@ -293,20 +294,18 @@ function createSessionStore(recog: RecognizeSet) {
 
 export type SessionStore = ReturnType<typeof createSessionStore>;
 
-export const useSessionStore = createSessionStore(PLL_SET);
-export const useOllSessionStore = createSessionStore(OLL_SET);
+const STORE_BY_SET = Object.fromEntries(
+  Object.entries(RECOGNIZE_SETS).map(([id, recog]) => [id, createSessionStore(recog)]),
+) as Record<RecognizeSetId, SessionStore>;
 
-const STORE_BY_SET: Record<string, SessionStore> = {
-  pll: useSessionStore,
-  oll: useOllSessionStore,
-};
+const PLL_STORE = STORE_BY_SET.pll;
 
 /** 路由段 → 该集合的 store。不认识的段落回 PLL,和 {@link recognizeSetFor} 一致。 */
 export function sessionStoreFor(setId: string): SessionStore {
-  return STORE_BY_SET[setId] ?? useSessionStore;
+  return STORE_BY_SET[setId as RecognizeSetId] ?? PLL_STORE;
 }
 
-export function useSessionHydrated(store: SessionStore = useSessionStore): boolean {
+export function useSessionHydrated(store: SessionStore = PLL_STORE): boolean {
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
     setHydrated(false);

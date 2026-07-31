@@ -21,6 +21,15 @@ export default function RecognizeClient() {
   const useStore = sessionStoreFor(recog.id);
   const { t } = useTranslation();
   const hydrated = useSessionHydrated(useStore);
+  // DB 题库(COLL / ELL / ZBLL / 1LLL)现拉;PLL / OLL 没有 load,一上来就是就绪的。
+  const [dataReady, setDataReady] = useState(!recog.load);
+  useEffect(() => {
+    if (!recog.load) { setDataReady(true); return; }
+    let cancelled = false;
+    setDataReady(false);
+    recog.load().then(() => { if (!cancelled) setDataReady(true); });
+    return () => { cancelled = true; };
+  }, [recog]);
 
   const gameState = useStore((s) => s.gameState);
   const trainMode = useStore((s) => s.trainMode);
@@ -54,9 +63,9 @@ export default function RecognizeClient() {
   const image = currentCase ? recog.image(currentCase, mistake !== '') : null;
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || !dataReady) return;
     setInitial();
-  }, [setInitial, hydrated]);
+  }, [setInitial, hydrated, dataReady]);
 
   useEffect(() => {
     if (prevMistakeRef.current === '' && mistake !== '') {
@@ -134,7 +143,7 @@ export default function RecognizeClient() {
       return `${pendingKey}_ ...`;
     }
     if (gameState === 'playing' && mistake && currentCase) {
-      const label = recog.label(currentCase.name);
+      const label = (recog.answerLabel ?? recog.label)(currentCase.name);
       return tr({
         zh: `按 ${label} 继续，Esc 暂停`,
         en: `Press ${label} to continue, Esc to pause`,
@@ -151,7 +160,7 @@ export default function RecognizeClient() {
     return '';
   };
 
-  if (!hydrated) {
+  if (!hydrated || !dataReady) {
     return <div className="training-page" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-mute)' }} />;
   }
 
@@ -225,6 +234,7 @@ export default function RecognizeClient() {
             <VisualCube
               setup={image.setup}
               view={image.view}
+              mask={image.mask}
               size={image.size}
               hideGreySides={image.hideGreySides}
               alt={currentCase ? recog.label(currentCase.name) : undefined}
@@ -253,7 +263,7 @@ export default function RecognizeClient() {
       )}
 
       {trainMode === 'recognition' && gameState === 'playing' && (
-        <OnScreenKeyboard buttons={recog.buttons} onAnswer={submitAnswer} />
+        <OnScreenKeyboard buttons={recog.buttons()} wide={recog.wideKeys} onAnswer={submitAnswer} />
       )}
 
       {gameState === 'playing' && (

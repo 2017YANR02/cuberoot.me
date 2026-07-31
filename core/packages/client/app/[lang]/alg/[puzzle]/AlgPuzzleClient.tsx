@@ -34,8 +34,12 @@ const TRAINER_MODULES: Record<string, { href: string; zh: string; en: string; Ic
   '3x3': [
     { href: '/alg/3bld', zh: '3BLD 盲拧训练', en: '3BLD Trainer', Icon: Eye },
     { href: '/alg/roux', zh: 'Roux 桥式训练', en: 'Roux Trainer', Icon: Blocks },
-    { href: '/recognize/oll', zh: 'OLL 识别训练', en: 'OLL Recognition', Icon: ScanSearch },
-    { href: '/recognize/pll', zh: 'PLL 识别训练', en: 'PLL Recognition', Icon: ScanSearch },
+    { href: '/recognize/oll', zh: 'OLL 观察', en: 'OLL Recognition', Icon: ScanSearch },
+    { href: '/recognize/pll', zh: 'PLL 观察', en: 'PLL Recognition', Icon: ScanSearch },
+    { href: '/recognize/coll', zh: 'COLL 观察', en: 'COLL Recognition', Icon: ScanSearch },
+    { href: '/recognize/ell', zh: 'ELL 观察', en: 'ELL Recognition', Icon: ScanSearch },
+    { href: '/recognize/zbll', zh: 'ZBLL 观察', en: 'ZBLL Recognition', Icon: ScanSearch },
+    { href: '/recognize/1lll', zh: '1LLL 观察', en: '1LLL Recognition', Icon: ScanSearch },
   ],
   'skewb': [
     { href: '/alg/skewb-trainer', zh: 'Skewb 技巧训练', en: 'Skewb Skills', Icon: Box },
