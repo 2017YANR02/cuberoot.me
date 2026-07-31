@@ -499,6 +499,40 @@ function PredictPageInner() {
         )}
       </div>
 
+      <section className="predict-moves">
+        <h2>{tr({ zh: '要做的公式', en: 'Execute these moves' })}</h2>
+        <ol className="predict-move-list">
+          {challenge?.moves.map((m, i) => {
+            const face = shown[m[0] as CubeFace];
+            // 已经转过的压暗,刚做完的那一步描一圈(= step - 1,与 /recon、/sim 同一口径)。
+            const state = step === 0 ? '' : i === step - 1 ? 'is-current' : i < step ? 'is-done' : '';
+            return (
+              <li key={`${i}-${m}`}>
+                <button
+                  type="button"
+                  className={`predict-move${state ? ` ${state}` : ''}`}
+                  style={{ background: CUBE_FILL[face], color: CUBE_ON_FILL[face] }}
+                  aria-current={i === step - 1 ? 'step' : undefined}
+                  title={tr({ zh: `同步到第 ${i + 1} 步`, en: `Jump to move ${i + 1}` })}
+                  onClick={() => seek(i + 1)}
+                >
+                  {m}
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+        <ul className="predict-legend">
+          {LEGEND_FACES.map((f) => (
+            <li key={f}>
+              <i style={{ background: CUBE_FILL[shown[f]] }} aria-hidden="true" />
+              {f}: {tr(FACE_NAMES[f])}
+              {tr({ zh: `（${COLOR_NAMES[shown[f]].zh}）`, en: ` (${COLOR_NAMES[shown[f]].en})` })}
+            </li>
+          ))}
+        </ul>
+      </section>
+
       <div className="predict-prompt">
         {promptGroups.map((g) => {
           const color = shown[FACE_LETTERS[g.colorFace]];
@@ -592,40 +626,6 @@ function PredictPageInner() {
           ))}
         </div>
       </div>
-
-      <section className="predict-moves">
-        <h2>{tr({ zh: '要做的公式', en: 'Execute these moves' })}</h2>
-        <ol className="predict-move-list">
-          {challenge?.moves.map((m, i) => {
-            const face = shown[m[0] as CubeFace];
-            // 已经转过的压暗,刚做完的那一招描一圈(= step - 1,与 /recon、/sim 同一口径)。
-            const state = step === 0 ? '' : i === step - 1 ? 'is-current' : i < step ? 'is-done' : '';
-            return (
-              <li key={`${i}-${m}`}>
-                <button
-                  type="button"
-                  className={`predict-move${state ? ` ${state}` : ''}`}
-                  style={{ background: CUBE_FILL[face], color: CUBE_ON_FILL[face] }}
-                  aria-current={i === step - 1 ? 'step' : undefined}
-                  title={tr({ zh: `同步到第 ${i + 1} 步`, en: `Jump to move ${i + 1}` })}
-                  onClick={() => seek(i + 1)}
-                >
-                  {m}
-                </button>
-              </li>
-            );
-          })}
-        </ol>
-        <ul className="predict-legend">
-          {LEGEND_FACES.map((f) => (
-            <li key={f}>
-              <i style={{ background: CUBE_FILL[shown[f]] }} aria-hidden="true" />
-              {f}: {tr(FACE_NAMES[f])}
-              {tr({ zh: `（${COLOR_NAMES[shown[f]].zh}）`, en: ` (${COLOR_NAMES[shown[f]].en})` })}
-            </li>
-          ))}
-        </ul>
-      </section>
 
       <p className="predict-origin">
         {tr({ zh: '复刻自 Dan Boharon 的 Cube Lookahead Challenge:', en: 'Ported from Dan Boharon’s Cube Lookahead Challenge:' })}
