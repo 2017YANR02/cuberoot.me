@@ -115,78 +115,93 @@ html[data-theme=dark] .alg-root {
   font-size: 13px;
 }
 /* 「下载 PDF」—— 把当前这批 case 排成可打印的 A4(components/AlgPdfButton) */
-.alg-pdf-group {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+/* 页首靠右那一排(PDF / 训练 / 观察)一律纯文字:无框、无图标、同一个字号,
+   靠颜色和字重分主次。页头是 align-items:baseline,按钮里塞图标会把基线抬到图标盒子上
+   (实测比纯文字的高 1.7px),一排就站不齐 —— 所以这排不用 lucide。 */
+.alg-pdf {
+  position: relative;
+  display: inline-block;
 }
 .alg-pdf-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: transparent;
-  border: 1px solid var(--border-default);
+  background: none;
+  border: none;
+  padding: 0;
   color: var(--muted-foreground);
-  padding: 5px 12px;
-  border-radius: 8px;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition: color 0.15s;
 }
-.alg-pdf-btn:hover {
-  background: color-mix(in srgb, var(--foreground) 7%, transparent);
-  color: var(--foreground);
-  border-color: color-mix(in srgb, var(--foreground) 35%, transparent);
-}
-/* 纸色下拉配合按钮压到同一个视觉重量(ListSelect 默认偏大) */
-.alg-pdf-paper .list-select-trigger {
-  padding: 5px 10px;
-  font-size: 12px;
-}
-/* 面板改成右对齐 + 贴合内容:ListSelect 默认 left/right 都钉 0 再加 min-width 220,
-   在页头最右侧这个位置就会被那条 min-width 顶出视口右沿。两个选项也用不着 220px。 */
-.alg-pdf-paper .list-select-popup {
-  left: auto;
+.alg-pdf-btn:hover { color: var(--foreground); }
+/* 纸色菜单:按钮点开才出现,两项,宽度贴合内容(页头最右侧,右对齐免得越出视口右沿)。
+   anchored-panel: clamped(usePanelClamp) */
+.alg-pdf-menu {
+  position: absolute;
+  top: calc(100% + 4px);
   right: 0;
+  z-index: 100;
   min-width: max-content;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+  background: var(--popover);
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--foreground) 20%, transparent);
 }
-/* 生成中:数字会一位位跳动,定宽免得按钮跟着抖 */
+.alg-pdf-menu-item {
+  padding: 6px 12px;
+  background: none;
+  border: none;
+  border-radius: 5px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.alg-pdf-menu-item:hover { background: color-mix(in srgb, var(--foreground) 8%, transparent); }
+/* 上次印的那种标出来 —— 不然每次点开都得回想上回选的是哪个 */
+.alg-pdf-menu-item.is-current { color: var(--foreground); }
+/* 生成中:定宽免得数字一位位跳动时整排跟着抖;没有转圈图标了,用呼吸表示还在跑 */
 .alg-pdf-btn.is-busy {
+  display: inline-block;
+  min-width: 34px;
+  text-align: center;
   color: var(--foreground);
-  min-width: 78px;
-  justify-content: center;
+  font-variant-numeric: tabular-nums;
+  animation: alg-pdf-pulse 1.2s ease-in-out infinite;
 }
-.alg-pdf-spin { animation: alg-pdf-spin 0.9s linear infinite; }
-@keyframes alg-pdf-spin { to { transform: rotate(360deg); } }
+@keyframes alg-pdf-pulse { 50% { opacity: 0.45; } }
 
 /* 公式集页头靠右那一簇的推力挂在 PDF 按钮上(它排在训练 CTA 前面);空集那种没有
    PDF 按钮的页面,推力落回训练 CTA —— 两个都写 auto 会把空白分到两者中间。
    别把 auto 写进 .alg-pdf-btn 本身:换位子字典那条工具栏里它是普通一项,不推。 */
-.alg-cat-header .alg-pdf-group { margin-left: auto; }
-.alg-cat-header:not(:has(.alg-pdf-group)) .alg-train-cta { margin-left: auto; }
+.alg-cat-header .alg-pdf { margin-left: auto; }
+.alg-cat-header:not(:has(.alg-pdf)) .alg-train-cta { margin-left: auto; }
 
 /* 「开始训练」CTA —— 跳到 /alg/<puzzle>/<set>/select 的计时训练流(镜像 trainer-start-btn 配色) */
 .alg-train-cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: color-mix(in srgb, var(--accent) 20%, transparent);
-  border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
-  color: color-mix(in srgb, var(--accent) 70%, var(--foreground));
-  padding: 5px 14px;
-  border-radius: 8px;
+  color: var(--accent);
   font-size: 13px;
   font-weight: 600;
   text-decoration: none !important;
-  transition: background 0.15s, color 0.15s;
+  transition: color 0.15s;
 }
-.alg-train-cta:hover {
-  background: color-mix(in srgb, var(--accent) 30%, transparent);
-  color: var(--foreground);
-}
+.alg-train-cta:hover { color: color-mix(in srgb, var(--accent) 65%, var(--foreground)); }
 
-/* 「训练专区」—— 某阶下的方法训练器 / 识别训练入口(非 per-set 计时,不在套列表里) */
+/* 「观察」—— 同一套 case 的识别训练(/recognize/<set>)。次于「训练」,所以只描边不填底 */
+.alg-recog-cta {
+  color: color-mix(in srgb, var(--accent) 60%, var(--muted-foreground));
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none !important;
+  transition: color 0.15s;
+}
+.alg-recog-cta:hover { color: var(--accent); }
+
+/* 「训练专区」—— 某阶下的方法训练器(非 per-set 计时,不在套列表里) */
 .alg-train-modules {
   max-width: 1200px;
   margin: 4px auto 0;
