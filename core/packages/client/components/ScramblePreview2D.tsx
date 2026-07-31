@@ -202,6 +202,7 @@ export function ScramblePreview2D({
   if (!customSvg) return null;
   const inner = (
     <div
+      className="puzzle-art"
       style={hostStyle}
       dangerouslySetInnerHTML={{ __html: customSvg }}
     />

@@ -259,6 +259,9 @@ export default function PuzzleImage({
 
   const cls = [
     'vc-preview',
+    // 柔和度(globals.css 的 html[data-contrast=soft] .puzzle-art)统一钩子:贴纸色是
+    // 身份色、不走 token,只能靠这层 filter 跟上;任何画魔方的组件根都要挂它。
+    'puzzle-art',
     extraClass,
     wantIds ? 'vc-preview-pickable' : null,
     className,

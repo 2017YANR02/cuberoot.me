@@ -66,15 +66,17 @@ export function VisualCube({ algorithm = '', setup, view, mask, size = 88, puzzl
     return apiUrl(`/v1/visualcube.svg?${params}`);
   }, [local, algorithm, setup, view, mask, size, puzzleSize, hideGreySides]);
 
+  // puzzle-art:柔和度的统一钩子(见 globals.css),贴纸色不走 token,靠它跟。
   if (svg) {
     return (
       <span
         role="img"
+        className="puzzle-art"
         aria-label={alt}
         style={{ display: 'inline-flex', width: size, height: size }}
         dangerouslySetInnerHTML={{ __html: svg }}
       />
     );
   }
-  return <img src={src} width={size} height={size} alt={alt} loading={loading} />;
+  return <img className="puzzle-art" src={src} width={size} height={size} alt={alt} loading={loading} />;
 }

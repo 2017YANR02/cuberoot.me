@@ -32,6 +32,8 @@ export function FaceletsCube({ fd, size = 88, alt = 'Cube state', view, fill = f
   return (
     <span
       role="img"
+      // puzzle-art:柔和度的统一钩子(见 globals.css),贴纸色不走 token,靠它跟。
+      className="puzzle-art"
       aria-label={alt}
       style={fill
         ? { display: 'block', height: '100%' }
