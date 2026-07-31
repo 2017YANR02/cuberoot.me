@@ -199,6 +199,21 @@ export interface ReconTextInput {
    * 规则同一套,见 Sprint 20。
    */
   rotations?: readonly RotationEvent[];
+  /**
+   * 同一把在**魔方自己的配色系**里的样子 —— 也就是没有转进「十字朝下」的那一对
+   * (`orient.ts` 的 `normalizeSolve` 之前)。不给就当 `scramble`/`moves` 本身就是。
+   *
+   * 为什么要分开:转视角是把记号**换名**,换完颜色也跟着换 —— 白面被叫成了 D,
+   * 而 D 在标准配色里是黄。谱子的**记号**要用换过名的(顶层公式才写成 U 层,和人
+   * 手上的动作对得上),但喂给识别器的**局面**必须是真颜色的,否则明明做的白十字
+   * 会被标成「Y cross」。
+   */
+  physical?: { scramble: string; moves: SolveMove[] };
+  /**
+   * 把 `physical` 转到「十字朝下」的那个整体旋转(`normalizeSolve` 的 `rotation`)。
+   * 接在局面末尾 —— 转的是整颗魔方,颜色跟着块走,所以十字落到 D 而且还是白的。
+   */
+  viewRotation?: string;
 }
 
 /**
@@ -252,14 +267,21 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
   const spans = stepSpans(segs, metrics, slots);
   const counted = htmMoves(moves);
 
+  // 识别走真颜色那一份(见 `physical`);显示走换过名的 `moves`。两者一一对应,
+  // 下标通用 —— 换名不增不减记号。
+  const phys = input.physical ?? { scramble, moves };
+  const physCounted = phys.moves === moves ? counted : htmMoves(phys.moves);
+  const viewRot = input.viewRotation ?? '';
+  const alg = (...parts: string[]) => parts.filter(t => t.trim() !== '').join(' ');
+
   // 每个切点一个局面,顺带复用:第 i 行的「上一行末局面」就是第 i-1 行的末局面。
   // 打乱本身算一次(第 0 个),所以 spans.length + 1 个 pattern。
   const rawUpTo = (end: number) =>
-    moves.slice(0, end + 1).map(m => m.m).filter(Boolean).join(' ');
+    phys.moves.slice(0, end + 1).map(m => m.m).filter(Boolean).join(' ');
 
   const lines: ReconTextLine[] = [];
   let prevEnd = -1;
-  let prevPattern = await patternFromAlg(scramble);
+  let prevPattern = await patternFromAlg(alg(phys.scramble, viewRot));
 
   // 这一行的时间窗:上一行最后一手之后 → 自己最后一手为止。第一行往前开口到无穷,
   // 因为起表前后那次「把魔方摆正」属于它。
@@ -278,16 +300,15 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
     const mine = rotations.filter(r => r.tMs > prevEndMs && r.tMs <= endMs);
     const lineMoves = weaveRotations(turnTokens, mine, moves, from, span.endIdx);
     prevEndMs = endMs;
-    const currPattern = await patternFromAlg(
-      [scramble, rawUpTo(span.endIdx)].filter(t => t.trim() !== '').join(' '),
-    );
+    const currPattern = await patternFromAlg(alg(phys.scramble, rawUpTo(span.endIdx), viewRot));
 
     let label: string | null = null;
     try {
       label = firstLabel(await buildCommentSuggestions({
         prevPattern,
         currPattern,
-        lineMovesText: turnTokens.join(' '),
+        // 局面是真颜色的,喂给它的动作也必须是同一系的原始记号。
+        lineMovesText: tokensForRange(phys.moves, physCounted, from, span.endIdx).join(' '),
         prevMovesText: prevEnd >= 0 ? rawUpTo(prevEnd) : '',
         moveCount: turnTokens.length,
       }));

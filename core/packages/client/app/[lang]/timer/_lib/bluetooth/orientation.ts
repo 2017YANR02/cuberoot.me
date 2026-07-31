@@ -4,7 +4,7 @@
  * NO DOM, NO three.js, NO BLE. Everything here is a plain function over
  * `{w,x,y,z}` records so it can be unit-tested in the Node vitest environment
  * (see tests/bluetooth_orientation.test.ts). The three.js side of the bridge
- * lives in _components/LiveCubeGyroView.tsx, which just copies the result into
+ * lives in _components/SimCubeView.tsx, which just copies the result into
  * `world.cube.quaternion`.
  *
  * ── The three knobs, and which problem each one actually solves ────────────
@@ -201,7 +201,10 @@ export type SensorBasisName =
   | 'negZ'
   | 'rotX90'
   | 'rotY90'
-  | 'rotZ90';
+  | 'rotZ90'
+  | 'rotX270'
+  | 'rotY270'
+  | 'rotZ270';
 
 const R2 = Math.SQRT1_2; // sin(90°) · (1/√2) for the 180° diagonal turns
 const C45 = Math.cos(Math.PI / 4);
@@ -228,37 +231,55 @@ export const SENSOR_BASES: Readonly<Record<SensorBasisName, Quat>> = Object.free
   rotY90: { w: C45, x: 0, y: S45, z: 0 },
   /** +90° about Z — x→y, y→−x. */
   rotZ90: { w: C45, x: 0, y: 0, z: S45 },
+  /** −90° about X — z→y, y→−z. THE Z-up → Y-up change of basis. */
+  rotX270: { w: C45, x: -S45, y: 0, z: 0 },
+  /** −90° about Y — x→z, z→−x. */
+  rotY270: { w: C45, x: 0, y: -S45, z: 0 },
+  /** −90° about Z — y→x, x→−y. */
+  rotZ270: { w: C45, x: 0, y: 0, z: -S45 },
 });
 
 /**
  * Per-brand sensor basis.
  *
- * UNVERIFIED — we own no smart cube of any brand, so not one of these has been
- * checked against hardware. Every brand therefore defaults to `identity`: the
- * honest "we don't know" value, which at worst shows a consistently remapped
- * (never a jittering or diverging) cube. Whoever first holds a cube of a given
- * brand should turn it 90° about a known axis, watch which way the render goes,
- * and correct exactly that one row.
+ * The default is no longer `identity`. Reported from real hardware: a physical
+ * `y` — the cube turned about its own vertical — rendered on screen as a `z`,
+ * a tumble about the depth axis. Nothing brand-specific produces that. It is
+ * the signature of a **Z-up** sensor frame handed straight to a **Y-up**
+ * renderer: the IMU calls the axis out of the top of the cube +Z (the ordinary
+ * AHRS convention), three.js calls it +Y, and a yaw about the one arrives as a
+ * roll about the other. The change of basis that reconciles them is a single
+ * −90° rotation about X (`rotX270`: sensor z → screen y), applied as the
+ * similarity in knob 2 above.
+ *
+ * It is a PROPER rotation, so it cannot and does not change handedness —
+ * `BRAND_MIRROR` stays a separate question and stays false.
+ *
+ * Still per-brand, and still not individually verified: this is one report from
+ * one cube. If some brand's IMU turns out to be Y-up already, that one row goes
+ * back to `identity` — which is exactly the granularity this table exists for.
  *
  * Keyed by plain string rather than the `CubeBrand` union from ./types on
  * purpose: the drivers in this directory are being rewritten in parallel, and
- * an unknown key here is a silent fall-through to `identity`, not a build break.
+ * an unknown key here is a silent fall-through, not a build break.
  */
 export const BRAND_SENSOR_BASIS: Readonly<Record<string, SensorBasisName>> = Object.freeze({
-  'gan-v2': 'identity',  // UNVERIFIED — no hardware
-  'gan-v3': 'identity',  // UNVERIFIED — no hardware
-  'gan-v4': 'identity',  // UNVERIFIED — no hardware
-  gocube: 'identity',    // UNVERIFIED — no hardware
-  qiyi: 'identity',      // UNVERIFIED — no hardware
-  giiker: 'identity',    // UNVERIFIED — no hardware
-  moyu: 'identity',      // UNVERIFIED — no hardware
-  unknown: 'identity',   // UNVERIFIED — no hardware
+  'gan-v2': 'rotX270',  // Z-up IMU (see above)
+  'gan-v3': 'rotX270',  // Z-up IMU
+  'gan-v4': 'rotX270',  // Z-up IMU
+  gocube: 'rotX270',    // Z-up IMU
+  qiyi: 'rotX270',      // Z-up IMU
+  giiker: 'rotX270',    // Z-up IMU
+  moyu: 'rotX270',      // Z-up IMU
+  unknown: 'rotX270',   // Z-up IMU
 });
 
-/** Brand → basis name, defaulting to `identity` for anything unrecognized. */
+/** Brand → basis name. An unknown or absent brand gets the same treatment as
+ *  the `unknown` row, not `identity` — "we didn't recognise the cube" is not a
+ *  reason to believe its IMU is Y-up when no cube we have seen is. */
 export function sensorBasisForBrand(brand: string | null | undefined): SensorBasisName {
-  if (!brand) return 'identity';
-  return BRAND_SENSOR_BASIS[brand] ?? 'identity';
+  if (!brand) return BRAND_SENSOR_BASIS.unknown;
+  return BRAND_SENSOR_BASIS[brand] ?? BRAND_SENSOR_BASIS.unknown;
 }
 
 /** Per-brand mirror flag.

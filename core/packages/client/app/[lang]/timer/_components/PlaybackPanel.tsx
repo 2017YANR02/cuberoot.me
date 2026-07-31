@@ -21,9 +21,22 @@
  * 它自己还在说「这把慢在哪」。右栏的 `side` 由调用方给(渲染 prop,因为它要读
  * 游标),这样面板不需要知道分步列表是什么。
  *
- * 中间状态靠重算打乱得到:`原打乱 + 前 idx 手` 交给 CubePreview,每次渲染整条
- * 重新应用 —— 状态一定对,代价是没有逐手动画。
- */
+ * 中间状态靠重算打乱得到:`打乱 + 前 idx 手` 每次整条重新应用 —— 状态一定对,
+ * 代价是没有逐手动画。
+ *
+ * 魔方本身走 `SimCubeView`(/sim 引擎),和计时页上那颗实时魔方是同一个组件:
+ * 同一个站里不该有两种三维魔方长相。非 NxN 的项目没有 sim 魔方,退回打乱预览。
+ *
+ * ## 朝向:转整颗魔方,不换记号
+ *
+ * `scramble`/`moves` 是魔方自己配色系里的原始那对,`viewRotation` 是把十字转到
+ * 下面的那个整体旋转(见 `orient.ts`),**接在动作末尾**喂给引擎。
+ *
+ * 为什么是接一个旋转而不是喂换过名的记号:换名会把颜色也换掉 —— 白面被叫成 D,
+ * 而 D 在标准配色里是黄,屏幕上就成了「黄十字朝下」。接一个真旋转是把整颗魔方转
+ * 过去,颜色跟着块走,白十字还是白的。
+ *
+ * 开陀螺仪时不接 —— 姿态流本来就是在魔方自己那个系里测的,朝向由它说了算。 */
 
 import dynamic from 'next/dynamic';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -37,15 +50,16 @@ import { tr } from '@/i18n/tr';
 
 import type { EventId } from '../_lib/types';
 import CubePreview from '../_lib/cube/CubePreview';
+import { nxnSizeForEvent } from '../_lib/cube';
 import { decodeGyroTrack, sampleGyroAt } from '../_lib/bluetooth/gyro_track';
 import { mirrorForBrand, sensorBasisForBrand } from '../_lib/bluetooth/orientation';
 import type { ReconTextLine } from '../_lib/reconstruct/recon_text';
 import type { SolveMove } from '../_lib/reconstruct/stage_segments';
 import SolveTimeline from './SolveTimeline';
 
-// WebGL + the /sim engine. Only mounted when the user turns the gyro replay on,
-// so a report opened just to read the numbers never pays for it.
-const LiveCubeGyroView = dynamic(() => import('./LiveCubeGyroView'), { ssr: false });
+// WebGL + the /sim engine. Only mounted when the playback section is open, so a
+// report opened just to read the numbers never pays for it.
+const SimCubeView = dynamic(() => import('./SimCubeView'), { ssr: false });
 
 interface Props {
   event: EventId;
@@ -61,6 +75,11 @@ interface Props {
   gyro?: string | null;
   /** 录这把的魔方型号,用来挑传感器基。 */
   deviceModel?: string | null;
+  /**
+   * 把这把转到「十字朝下」的整体旋转(`normalizeSolve` 的 `rotation`,可能是空串)。
+   * 只影响看到的朝向,不影响状态。开陀螺仪时忽略。
+   */
+  viewRotation?: string;
 }
 
 const MIN_TIMEOUT_MS = 16;
@@ -75,8 +94,10 @@ function formatSec(ms: number, digits = 2): string {
 }
 
 export default function PlaybackPanel({
-  event, scramble, moves, totalMs, lines, side, gyro, deviceModel,
+  event, scramble, moves, totalMs, lines, side, gyro, deviceModel, viewRotation,
 }: Props) {
+  // /sim 只画 NxN;这里只有 3x3 会有动作流(智能魔方就这一种),别的项目退回预览图。
+  const isNxn3 = nxnSizeForEvent(event) === 3;
   const total = moves.length;
   const [idx, setIdx] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -144,12 +165,16 @@ export default function PlaybackPanel({
     setPlaying(p => !p);
   };
 
-  // LiveCubeGyroView 是 alg 驱动的,必须从**复原态**起算 —— 所以喂给它的是
-  // 「打乱 + 已播的这几手」,不是 composed 那个字符串(内容一样,但那边是给
-  // scramble-display 用的整条文本)。
-  const gyroMoves = useMemo(
-    () => [...scramble.trim().split(/\s+/).filter(Boolean), ...moves.slice(0, idx).map(m => m.m)],
-    [scramble, moves, idx],
+  // SimCubeView 是 alg 驱动的,必须从**复原态**起算 —— 喂给它的是「打乱 + 已播
+  // 的这几手」,末尾按需接一个整体旋转(见头注)。
+  const posed = gyroOn && hasGyro;
+  const simMoves = useMemo(
+    () => [
+      ...scramble.trim().split(/\s+/).filter(Boolean),
+      ...moves.slice(0, idx).map(m => m.m),
+      ...(!posed && viewRotation ? [viewRotation] : []),
+    ],
+    [scramble, moves, idx, posed, viewRotation],
   );
 
   const playLabel = playing
@@ -192,17 +217,20 @@ export default function PlaybackPanel({
         {/* 3D 而不是展开图:回放是「看别人拧」,展开图看不出这是一次转动还是
             三次。展开图留给打乱预览那种「一眼扫全六面」的场合。
 
-            开了陀螺仪就换成 LiveCubeGyroView —— 它本来就是 alg 驱动、从复原态
-            起算的,所以「打乱 + 前 idx 手」原样喂进去就是这一刻的状态,姿态另
-            走一路。回放不需要它的平滑跟随(样本本来就是按时间插好的),但留着
-            也无害:两个样本之间它只是滑得更顺。 */}
+            姿态给了就跟姿态,没给就是引擎自己的等轴视角 —— 同一个组件,不为
+            「有没有陀螺仪」换一套渲染。回放不需要它的平滑跟随(样本本来就是按
+            时间插好的),但留着也无害:两个样本之间它只是滑得更顺。 */}
         <div className={`reconstruct-playback-cube${gyroOn ? ' is-gyro' : ''}`}>
-          {gyroOn && hasGyro ? (
-            <LiveCubeGyroView
-              moves={gyroMoves}
-              quat={sampleGyroAt(gyroTrack, elapsedMs)}
+          {isNxn3 ? (
+            <SimCubeView
+              moves={simMoves}
+              quat={posed ? sampleGyroAt(gyroTrack, elapsedMs) : null}
               sensorBasis={sensorBasisForBrand(deviceModel)}
               mirror={mirrorForBrand(deviceModel)}
+              ariaLabel={tr({
+                zh: '这把的三维回放',
+                en: '3D replay of this solve',
+              })}
             />
           ) : (
             <CubePreview event={event} scramble={composed} size={20} visualization="3D" />

@@ -319,20 +319,70 @@ describe('smoothing', () => {
 });
 
 describe('brand tables', () => {
-  it('every brand currently defaults to identity / no mirror (UNVERIFIED)', () => {
+  it('every brand assumes a Z-up IMU (the reported y-reads-as-z symptom)', () => {
     for (const [brand, basis] of Object.entries(BRAND_SENSOR_BASIS)) {
-      expect(basis, `${brand} basis`).toBe('identity');
+      expect(basis, `${brand} basis`).toBe('rotX270');
     }
+  });
+
+  it('no brand mirrors — a change of basis is proper and cannot fix handedness', () => {
     for (const [brand, m] of Object.entries(BRAND_MIRROR)) {
       expect(m, `${brand} mirror`).toBe(false);
     }
   });
 
-  it('an unknown / missing brand falls through to identity rather than throwing', () => {
-    expect(sensorBasisForBrand('some-brand-invented-tomorrow')).toBe('identity');
-    expect(sensorBasisForBrand(null)).toBe('identity');
-    expect(sensorBasisForBrand(undefined)).toBe('identity');
+  it('an unknown / missing brand falls through to the `unknown` row, not identity', () => {
+    // "We didn't recognise this cube" is not evidence that its IMU is Y-up.
+    expect(sensorBasisForBrand('some-brand-invented-tomorrow')).toBe(BRAND_SENSOR_BASIS.unknown);
+    expect(sensorBasisForBrand(null)).toBe(BRAND_SENSOR_BASIS.unknown);
+    expect(sensorBasisForBrand(undefined)).toBe(BRAND_SENSOR_BASIS.unknown);
     expect(mirrorForBrand('nope')).toBe(false);
+  });
+});
+
+/**
+ * The reported bug, as an assertion: 「实体做的是 y 转体,屏幕里做的是 z 转体」。
+ *
+ * The cube's IMU calls the axis out of its top face +Z, three.js calls it +Y.
+ * Feed one to the other unchanged and every yaw arrives as a roll — which is
+ * exactly what a `y` rendering as a `z` is. These lock the correction down in
+ * both directions so nobody "simplifies" the basis back to identity.
+ */
+describe('Z-up sensor into a Y-up renderer', () => {
+  it('identity IS the bug: a sensor yaw about +Z renders as a roll about +Z', () => {
+    const out = applyOrientation(fromAxisAngle(Z, 90 * DEG), null, { basis: 'identity' });
+    expectSameRotation(out, fromAxisAngle(Z, 90 * DEG));
+  });
+
+  it('rotX270 lands that same yaw on the screen\'s +Y — the fix', () => {
+    const out = applyOrientation(fromAxisAngle(Z, 90 * DEG), null, { basis: 'rotX270' });
+    expectSameRotation(out, fromAxisAngle(Y, 90 * DEG));
+    // Same sense, not just the same axis: +90 stays +90.
+    expect(rotate(out, X)[2]).toBeCloseTo(-1, 12);
+  });
+
+  it('maps the whole frame, not just the one axis: z→y, y→−z, x fixed', () => {
+    const b = SENSOR_BASES.rotX270;
+    const [zx, zy, zz] = rotate(b, Z);
+    expect([zx, zy, zz].map(n => Math.round(n))).toEqual([0, 1, 0]);
+    const [yx, yy, yz] = rotate(b, Y);
+    expect([yx, yy, yz].map(n => Math.round(n))).toEqual([0, 0, -1]);
+    expect(rotate(b, X)[0]).toBeCloseTo(1, 12);
+  });
+
+  it('is proper — it moves axes and leaves handedness alone', () => {
+    // A mirror would be needed on top if the cube also yawed backwards; the
+    // basis alone must not introduce that.
+    const b = SENSOR_BASES.rotX270;
+    const [ax, ay, az] = rotate(b, X);
+    const [bx, by, bz] = rotate(b, Y);
+    const cross: [number, number, number] = [
+      ay * bz - az * by, az * bx - ax * bz, ax * by - ay * bx,
+    ];
+    const [cx, cy, cz] = rotate(b, Z);
+    expect(cross[0]).toBeCloseTo(cx, 12);
+    expect(cross[1]).toBeCloseTo(cy, 12);
+    expect(cross[2]).toBeCloseTo(cz, 12);
   });
 });
 

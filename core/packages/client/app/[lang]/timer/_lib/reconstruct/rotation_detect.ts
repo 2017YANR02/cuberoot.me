@@ -188,8 +188,11 @@ export function detectRotations(
 
   // 先把传感器装配姿态(M)折掉,再谈记号。存下来的流是**原始**四元数
   // (`gyro_track` 有意不含校准、不含品牌基),所以折算只能在这儿做。
-  const basis = sensorBasisForBrand(opts.brand);
-  const mirror = mirrorForBrand(opts.brand);
+  // 没给牌子就按正装算(见 `brand` 的注释)。这和 `sensorBasisForBrand(null)` 不是
+  // 一回事:那个函数答的是「不认识的魔方按什么算」,而这里的「没给」意思是调用方
+  // 拿的本来就是已经在屏幕系里的样本 —— 别替它加一层它没要的换基。
+  const basis = opts.brand ? sensorBasisForBrand(opts.brand) : 'identity';
+  const mirror = opts.brand ? mirrorForBrand(opts.brand) : false;
   const stream: readonly GyroSample[] = basis === 'identity' && !mirror
     ? samples
     : samples.map(s => ({ tMs: s.tMs, q: applyOrientation(s.q, null, { basis, mirror }) }));

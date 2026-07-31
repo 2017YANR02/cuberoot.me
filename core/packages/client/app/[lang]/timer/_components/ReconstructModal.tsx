@@ -43,6 +43,7 @@ import type { MethodId } from '../_lib/reconstruct/methods';
 import { decodeGyroTrack } from '../_lib/bluetooth/gyro_track';
 import { detectRotations } from '../_lib/reconstruct/rotation_detect';
 import { buildReconText } from '../_lib/reconstruct/recon_text';
+import { normalizeSolve } from '../_lib/reconstruct/orient';
 import type { ReconTextResult } from '../_lib/reconstruct/recon_text';
 import StepAnalysis from './StepAnalysis';
 import StepMoveList from './StepMoveList';
@@ -154,6 +155,13 @@ export default function ReconstructModal({
     () => computeStageSegments(solve.scramble, moves, solve.timeMs),
     [solve.scramble, moves, solve.timeMs],
   );
+  // The same rotation the analysis layer applies to itself (see orient.ts),
+  // made explicit here because the two things the USER looks at need it too:
+  // the written reconstruction, so the last layer reads as U-moves the way the
+  // cuber executed it rather than as the D-moves the cube's colour frame
+  // reports; and the replay, so the cross is on the bottom the way they were
+  // holding it. Same move count, same indices — only the frame differs.
+  const view = useMemo(() => normalizeSolve(solve.scramble, moves), [solve.scramble, moves]);
   // Recognition/execution split (Cubeast definitions — see step_metrics.ts).
   // 3x3-shaped events only: the stage walker underneath models a 3x3.
   const stepMx = useMemo(
@@ -247,14 +255,15 @@ export default function ReconstructModal({
     let alive = true;
     const timer = setTimeout(() => {
       buildReconText({
-        scramble: solve.scramble, moves, totalMs: solve.timeMs,
+        scramble: view.scramble, moves: view.moves, totalMs: solve.timeMs,
         segs: stageSegs, metrics: stepMx, slots, rotations,
+        physical: { scramble: solve.scramble, moves }, viewRotation: view.rotation,
       })
         .then(r => { if (alive) setReconText(r); })
         .catch(err => console.warn('[reconstruct] recon text failed:', err));
     }, 0);
     return () => { alive = false; clearTimeout(timer); };
-  }, [stageSegs, stepMx, slots, solve.scramble, solve.timeMs, moves, rotations]);
+  }, [stageSegs, stepMx, slots, view, solve.timeMs, rotations]);
 
   // Personal stage averages computed from the caller-provided history.
   // We exclude the current solve so a fresh solve isn't compared against
@@ -635,6 +644,7 @@ export default function ReconstructModal({
                 event={solve.event}
                 scramble={solve.scramble}
                 moves={moves}
+                viewRotation={view.rotation}
                 totalMs={solve.timeMs}
                 isZh={isZh}
                 lines={reconText?.lines ?? []}

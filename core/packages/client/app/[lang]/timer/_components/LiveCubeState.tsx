@@ -9,7 +9,7 @@
  *     can be in, and the one you can check face-by-face against your hands.
  *   mode '2d'            — the isometric still: three faces visible, three not.
  *   mode '3d'            — a live 3D cube whose orientation follows the cube's
- *     gyroscope (LiveCubeGyroView). 3x3 only, only once a real orientation
+ *     gyroscope (SimCubeView). 3x3 only, only once a real orientation
  *     sample has arrived, and only while the state is expressible as an alg
  *     (see `moves` below).
  *
@@ -49,7 +49,7 @@ import { renderCubeNetSvg } from '@/lib/cube-net-svg';
 import { readDevQuatSource, type Quat, type SensorBasisName } from '../_lib/bluetooth/orientation';
 
 /** three + the /sim engine only load when a 3D view is actually mounted. */
-const LiveCubeGyroView = dynamic(() => import('./LiveCubeGyroView'), {
+const SimCubeView = dynamic(() => import('./SimCubeView'), {
   ssr: false,
   loading: () => (
     <div
@@ -207,7 +207,7 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
   // reads facelets and is always exact.
   if (view === '3d') {
     return (
-      <LiveCubeGyroView
+      <SimCubeView
         moves={moves}
         quat={liveQuat}
         quatRef={quatRef}
