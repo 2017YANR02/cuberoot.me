@@ -4,7 +4,7 @@
 
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { Brain, Library, FileText, Compass, Timer as TimerIcon } from 'lucide-react';
+import { Brain, Library, FileText, Compass, Search, Timer as TimerIcon } from 'lucide-react';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 
 import helperIcon from '../_icons/helper.svg';
@@ -98,6 +98,8 @@ const GROUPS: BldGroup[] = [
       { href: '/alg/3bld/memo', zh: '记忆默写训练', en: 'Memory Recall', icon: <Brain size={40} strokeWidth={1.5} />
     },
       { href: '/alg/3bld/comm', zh: '公式库', en: 'Commutator Library', icon: <Library size={40} strokeWidth={1.5} />
+    },
+      { href: '/alg/3bld/3style', zh: '三循环查询', en: '3-Style Lookup', icon: <Search size={40} strokeWidth={1.5} />
     },
     ]
 },

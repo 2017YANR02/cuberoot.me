@@ -25,6 +25,7 @@ import {
   Library,
   ExternalLink,
 } from 'lucide-react';
+import Link from '@/components/AppLink';
 import '../3bld.css';
 import { tr } from '@/i18n/tr';
 
@@ -32,6 +33,8 @@ interface ResLink {
   href: string;
   zh: string;
   en: string;
+  /** 站内页面 —— 走 AppLink(带 lang 前缀、可中键新开),不开新标签、不挂外链图标。 */
+  internal?: boolean;
   /** original author / 出处, shown inline after the title */
   by?: string;
   /** optional one-line description under the title */
@@ -131,6 +134,22 @@ const SECTIONS: ResSection[] = [
     noteZh: '可下载的离线公式表已链接到其公开来源（公式库 / 公开 Google 表格）。',
     noteEn: 'Downloadable offline sheets are linked to their public source (alg database / public Google Sheets).',
     links: [
+      {
+        href: '/alg/3bld/3style',
+        internal: true,
+        zh: '三循环公式查询（站内）',
+        en: '3-Style lookup (on this site)',
+        descZh: '按缓冲和两个目标查，列出常用写法、换位子与使用者；数据来自 blddb。',
+        descEn: 'Query by buffer and two targets — common writings, commutators and who uses them; data from blddb.'
+    },
+      {
+        href: '/blddb',
+        internal: true,
+        zh: 'BLDDB 完整库（站内）',
+        en: 'Full BLDDB (on this site)',
+        descZh: '上游 blddb 全站镜像：噩梦公式集、高阶盲拧、翻色扭角、换位子工具都在这里。',
+        descEn: 'Mirror of the full upstream blddb — Nightmare sets, big BLD, twists/flips and the commutator tools.'
+    },
       {
         href: 'https://blddb.net/',
         zh: '三盲公式库 blddb.net',
@@ -333,7 +352,18 @@ export default function ResourcesPage(): JSX.Element {
             <div className="bld-res-list">
               {sec.links.map((l) => {
                 const desc = (isZh ? l.descZh : l.descEn);
-                return (
+                const title = (
+                  <span className="bld-res-link-title">
+                    {tr(l)}
+                    {l.by && <span className="bld-res-link-by">{l.by}</span>}
+                    {desc && <span className="bld-res-link-desc">{desc}</span>}
+                  </span>
+                );
+                return l.internal ? (
+                  <Link key={l.href + l.en} className="bld-res-link" href={l.href}>
+                    {title}
+                  </Link>
+                ) : (
                   <a
                     key={l.href + l.en}
                     className="bld-res-link"
@@ -341,11 +371,7 @@ export default function ResourcesPage(): JSX.Element {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <span className="bld-res-link-title">
-                      {tr(l)}
-                      {l.by && <span className="bld-res-link-by">{l.by}</span>}
-                      {desc && <span className="bld-res-link-desc">{desc}</span>}
-                    </span>
+                    {title}
                     <ExternalLink size={14} className="bld-res-link-ext" aria-hidden="true" />
                   </a>
                 );
