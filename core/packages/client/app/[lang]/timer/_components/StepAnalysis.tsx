@@ -59,6 +59,11 @@ export interface StepAnalysisProps {
   walk: MethodWalkResult | null;
   /** The raw turn stream, for the per-step sequences. */
   moves: SolveMove[];
+  /** Hide the four-block proportion bar. Set when the report is already showing
+   *  the per-turn timeline above, which says strictly more (it has the pauses).
+   *  Two bars stacked would be the same fact twice — the thing this table exists
+   *  to avoid. The bar stays for methods the timeline can't colour. */
+  hideBar?: boolean;
   isZh: boolean;
 }
 
@@ -75,6 +80,9 @@ interface Col {
   cumulativeMs: number | null;
   turns: number | null;
   refTurns: number | null;
+  /** 参考实际比的那个用户步数。末层是执行步数(不含起手 AUF),其余就是步数格
+   *  本身。两者不同的时候必须说出来,否则「7 / 6 / 最优」看着像算错了。 */
+  refUserTurns: number | null;
   refDelta: number | null;
   /** The reference line itself, shown under the table beside the sequence. */
   refSolution: string | null;
@@ -160,6 +168,7 @@ function buildCfopColumns(
     cumulativeMs: cross?.cumulativeMs ?? segs.crossDoneMs,
     turns: cross?.turns ?? segs.crossHtm,
     refTurns: crossRef?.refTurns ?? null,
+    refUserTurns: crossRef?.userTurns ?? null,
     refDelta: crossRef?.delta ?? null,
     refSolution: crossRef?.refSolution ?? null,
     avgMs: ao12?.crossMs ?? null,
@@ -185,6 +194,7 @@ function buildCfopColumns(
         cumulativeMs: s.cumulativeMs,
         turns: s.turns,
         refTurns: sr && sr.slot === s.slot ? sr.refTurns : null,
+        refUserTurns: sr && sr.slot === s.slot ? sr.userTurns : null,
         refDelta: sr && sr.slot === s.slot ? sr.delta : null,
         refSolution: sr && sr.slot === s.slot ? sr.refSolution : null,
         avgMs: null,
@@ -206,6 +216,7 @@ function buildCfopColumns(
       cumulativeMs: f2l?.cumulativeMs ?? segs.f2lDoneMs,
       turns: f2l?.turns ?? segs.f2lHtm,
       refTurns: f2lRef?.refTurns ?? null,
+      refUserTurns: f2lRef?.userTurns ?? null,
       refDelta: f2lRef?.delta ?? null,
       refSolution: f2lRef?.refSolution ?? null,
       avgMs: ao12?.f2lMs ?? null,
@@ -228,6 +239,7 @@ function buildCfopColumns(
       cumulativeMs: st?.cumulativeMs ?? (k === 'oll' ? segs.ollDoneMs : segs.solvedMs),
       turns: st?.turns ?? (k === 'oll' ? segs.ollHtm : segs.pllHtm),
       refTurns: r?.refTurns ?? null,
+      refUserTurns: r?.userTurns ?? null,
       refDelta: r?.delta ?? null,
       refSolution: r?.refSolution ?? null,
       avgMs: k === 'oll' ? (ao12?.ollMs ?? null) : (ao12?.pllMs ?? null),
@@ -250,6 +262,7 @@ function buildWalkColumns(walk: MethodWalkResult, isZh: boolean): Col[] {
     cumulativeMs: s.cumulativeMs,
     turns: s.turns,
     refTurns: null,
+    refUserTurns: null,
     refDelta: null,
     refSolution: null,
     avgMs: null,
@@ -259,7 +272,7 @@ function buildWalkColumns(walk: MethodWalkResult, isZh: boolean): Col[] {
 }
 
 export default function StepAnalysis(props: StepAnalysisProps) {
-  const { method, onMethodChange, segs, stepMetrics, slots, reference, slotReference, ao12, walk, moves, isZh } = props;
+  const { method, onMethodChange, segs, stepMetrics, slots, reference, slotReference, ao12, walk, moves, hideBar, isZh } = props;
   // Which column is open. One at a time: the sequences are long enough that
   // four of them at once is the wall of text the table exists to avoid.
   const [openKey, setOpenKey] = useState<string | null>(null);
@@ -341,7 +354,7 @@ export default function StepAnalysis(props: StepAnalysisProps) {
         </label>
       </div>
 
-      {barTotal > 0 && (
+      {barTotal > 0 && !hideBar && (
         <div className="sa-bar" role="img" aria-label={tr({ zh: '各步用时占比', en: 'Time per step' })}>
           {cols.map(c => {
             const w = ((c.stepMs ?? 0) / barTotal) * 100;
@@ -432,8 +445,22 @@ export default function StepAnalysis(props: StepAnalysisProps) {
                   // 0 — but "you matched the optimum" is not a thing to say
                   // about a pair the scramble handed you. No badge there.
                   const grade = c.skipped ? null : gradeForDelta(c.refDelta);
+                  // 末层比的是**去掉起手 AUF 的执行步数**(参考公式本身不含 AUF),
+                  // 所以「步数 7 / 参考 6 / 最优」三个格看起来会打架。把比的那个
+                  // 数说出来,否则读的人只能猜哪一格错了。
+                  const cmp = c.refUserTurns;
+                  const mismatch = cmp !== null && c.turns !== null && cmp !== c.turns;
                   return (
-                    <td key={c.key} data-open={openKey === c.key ? '' : undefined}>
+                    <td
+                      key={c.key}
+                      data-open={openKey === c.key ? '' : undefined}
+                      title={mismatch
+                        ? tr({
+                          zh: `比的是执行步数 ${cmp}(不含起手 AUF)—— 参考公式本身没有 AUF`,
+                          en: `Compared against ${cmp} execution turns (the leading AUF is excluded — the reference alg has none)`,
+                        })
+                        : undefined}
+                    >
                       {c.refTurns === null ? '–' : (
                         <>
                           {c.refTurns}

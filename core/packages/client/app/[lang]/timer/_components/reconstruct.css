@@ -408,16 +408,46 @@
   color: var(--foreground);
 }
 
+/* 左魔方 右分步。两栏是同一件事的两种读法,分开折叠就得来回开关,而「对着看」
+   正是回放的全部意义。窄屏落成上下两段(grid 单列),顺序不变。 */
 .reconstruct-playback {
   margin-top: 10px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+.reconstruct-playback.has-side {
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  align-items: start;
+}
+
+.reconstruct-playback-main,
+.reconstruct-playback-side {
   background: var(--card);
   border: 1px solid var(--border-default);
   border-radius: 6px;
   padding: 12px;
+  min-width: 0;
+}
+.reconstruct-playback-main {
   display: flex;
   flex-direction: column;
+  gap: 10px;
+}
+.reconstruct-playback-side { max-height: 460px; overflow-y: auto; }
+
+.reconstruct-playback-top {
+  display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: space-between;
+  gap: 10px;
+}
+.reconstruct-playback-cap {
+  font-size: 11px; letter-spacing: 0.08em;
+  color: var(--faint-foreground);
+}
+.reconstruct-playback-speed-cap {
+  font-size: 11px; color: var(--muted-foreground); margin-right: 2px;
 }
 
 .reconstruct-playback-cube {
@@ -436,6 +466,10 @@
   display: flex;
   justify-content: center;
   gap: 6px;
+}
+.reconstruct-playback-buttons .reconstruct-pb-btn.is-play {
+  width: 42px;
+  border-radius: 999px;
 }
 
 .reconstruct-playback-buttons .reconstruct-pb-btn {
@@ -480,11 +514,16 @@
 }
 
 .reconstruct-playback-counter {
-  color: var(--foreground);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
 .reconstruct-playback-speed {
   display: inline-flex;
+  align-items: center;
   gap: 4px;
 }
 
@@ -506,6 +545,12 @@
   background: color-mix(in srgb, var(--signal-info) 18%, transparent);
   border-color: var(--signal-info);
   color: var(--signal-info);
+}
+
+@media (max-width: 760px) {
+  /* 两栏挤到一起谁都读不了 —— 落成上下两段。 */
+  .reconstruct-playback.has-side { grid-template-columns: 1fr; }
+  .reconstruct-playback-side { max-height: none; }
 }
 
 @media (max-width: 768px) {
@@ -768,3 +813,110 @@
   display: inline-flex; align-items: center;
   color: var(--faint-foreground); cursor: help;
 }
+
+/* ── 时间轴:一手一个方块,宽度 = 这一手花的时间 ──────────────────────────
+   方块之间的空隙是真的停顿,所以不能用 flex 均分 —— 一律按时间绝对定位。
+   两处复用:报告顶部(带阶段名)和回放进度条(带游标、可点)。 */
+.stl { width: 100%; }
+.stl-track {
+  position: relative; width: 100%; height: 12px;
+  border-radius: 6px; overflow: hidden;
+  background: color-mix(in srgb, var(--foreground) 7%, transparent);
+  /* button 复位:这条轨道本身就是 seek 的点击区 */
+  appearance: none; border: 0; padding: 0; display: block;
+}
+button.stl-track { cursor: pointer; }
+button.stl-track:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.stl-move {
+  position: absolute; top: 0; bottom: 0;
+  border-radius: 6px;
+  background: var(--muted-foreground);
+}
+.stl-move[data-stage='cross'] { background: var(--rc-stage-cross); }
+.stl-move[data-stage='f2l']   { background: var(--rc-stage-f2l); }
+.stl-move[data-stage='oll']   { background: var(--rc-stage-oll); }
+.stl-move[data-stage='pll']   { background: var(--rc-stage-pll); }
+.stl-cursor {
+  position: absolute; top: -2px; bottom: -2px; width: 2px;
+  margin-left: -1px; border-radius: 1px;
+  background: var(--foreground);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--background) 70%, transparent);
+}
+
+.stl-row { position: relative; height: 15px; }
+.stl-times { margin-bottom: 3px; }
+.stl-names { margin-top: 3px; }
+.stl-cap {
+  position: absolute; top: 0;
+  text-align: center; white-space: nowrap; overflow: hidden;
+  font-size: 11px; line-height: 15px;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted-foreground);
+}
+.stl-times .stl-cap { color: var(--foreground); font-weight: 600; }
+.stl-names .stl-cap { letter-spacing: 0.06em; }
+.stl-names .stl-cap[data-stage='cross'] { color: var(--rc-stage-cross); }
+.stl-names .stl-cap[data-stage='f2l']   { color: var(--rc-stage-f2l); }
+.stl-names .stl-cap[data-stage='oll']   { color: var(--rc-stage-oll); }
+.stl-names .stl-cap[data-stage='pll']   { color: var(--rc-stage-pll); }
+
+/* ── 分步动作列表 ─────────────────────────────────────────────────────
+   动作 + 标注 + 徽章。没有卡片框,层级全靠留白和字重。 */
+.sml { position: relative; }
+.sml-head { display: flex; justify-content: flex-end; }
+.sml-copy {
+  appearance: none; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 24px; padding: 0; border-radius: 5px;
+  background: transparent; border: 1px solid transparent;
+  color: var(--muted-foreground);
+}
+.sml-copy:hover {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  color: var(--foreground);
+}
+.sml-copy:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
+
+.sml-group + .sml-group { margin-top: 12px; }
+.sml-group-head {
+  display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap;
+  margin: 0 0 4px; font-size: 11px; font-weight: 600;
+  letter-spacing: 0.08em; color: var(--muted-foreground);
+}
+.sml-group-name[data-stage='cross'] { color: var(--rc-stage-cross); }
+.sml-group-name[data-stage='f2l']   { color: var(--rc-stage-f2l); }
+.sml-group-name[data-stage='oll']   { color: var(--rc-stage-oll); }
+.sml-group-name[data-stage='pll']   { color: var(--rc-stage-pll); }
+.sml-group-ms { font-variant-numeric: tabular-nums; color: var(--faint-foreground); }
+
+.sml-line + .sml-line { margin-top: 6px; }
+.sml-line[data-state='future'] { opacity: 0.42; }
+.sml-line[data-state='now'] .sml-moves { color: var(--accent); }
+.sml-sub {
+  display: flex; align-items: baseline; gap: 6px;
+  font-size: 11px; color: var(--muted-foreground);
+}
+.sml-body { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.sml-moves {
+  font-family: var(--font-mono); font-size: 13px; line-height: 1.7;
+  color: var(--foreground); word-break: break-word;
+  text-align: left;
+}
+button.sml-moves {
+  appearance: none; background: transparent; border: 0; padding: 0;
+  cursor: pointer;
+}
+button.sml-moves:hover { color: var(--accent); }
+button.sml-moves:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.sml-label {
+  font-family: var(--font-mono); font-size: 12px;
+  color: var(--faint-foreground); white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .sml-moves { font-size: 12px; }
+  .sml-label { font-size: 11px; }
+}
+
+/* 顶部那根时间轴。上下留白就是它和别的块的分隔,不加框。 */
+.reconstruct-timeline { margin: 2px 0 14px; }
