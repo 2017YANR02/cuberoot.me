@@ -277,7 +277,7 @@ export default function OngoingComps({ lang }: Props) {
         </div>
         <span className="ongoing-comps-scope">{pickScope(active)}</span>
       </div>
-      <div className="ongoing-comps-groups scroll-panel">
+      <div className={`ongoing-comps-groups scroll-panel${groups.length > 0 ? ' is-grid' : ''}`}>
         {active === 'announced' ? (
           <div className="reg-comps">
             <div className="reg-cards">
