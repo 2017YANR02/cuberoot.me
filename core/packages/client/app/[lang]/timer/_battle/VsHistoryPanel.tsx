@@ -5,10 +5,13 @@
 
 'use client';
 
-import { Fragment, useState, useCallback } from 'react';
+import { Fragment, useMemo, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Trophy, Download, Trash2 } from 'lucide-react';
-import { useBattleStore } from './engine/battle_store';
+import { Trophy, Download, Trash2, Waypoints } from 'lucide-react';
+import { useBattleStore, battleToTimerEvent } from './engine/battle_store';
+import { battleReconIndex, battleReconKey } from '@/app/[lang]/timer/_lib/storage/db';
+import ReconstructModal from '@/app/[lang]/timer/_components/ReconstructModal';
+import type { EventId, Solve } from '@/app/[lang]/timer/_lib/types';
 import { formatTimePlain } from '@/app/[lang]/timer/_shared/format';
 import { getEffectiveTimeFromEntry } from '@/app/[lang]/timer/_shared/stats-core';
 import { PUZZLES } from './engine/constants';
@@ -212,6 +215,23 @@ function RoundDetailModal({
   const winners = getRoundWinners(entries);
   const dateStr = formatDateTime(entries.find(e => e?.date)?.date || '');
 
+  /**
+   * 复盘入口。对战记分板只存数字,整把(转动流 / 分段)在**本机计时记录**里 ——
+   * 用智能魔方拧的那些把会同时留一份(见 `useBattleCubes`)。两边没有共用的 id,
+   * 按「打乱 + 没取整的用时」认回来(见 `battleReconIndex`)。
+   *
+   * 只有 P1 认得回来:本机记录是这台设备主人的练习历史,队友的把根本不往里写。
+   * 认不回来的行不长按钮 —— 没连魔方的人一个多余图标都看不见。
+   */
+  const [reconSolve, setReconSolve] = useState<Solve | null>(null);
+  const recon = useMemo(() => {
+    const e = entries[0];
+    if (!e?.scramble) return null;
+    const { index, solves } = battleReconIndex(battleToTimerEvent(puzzles[0]) as EventId);
+    const hit = index.get(battleReconKey(e.scramble, e.time));
+    return hit ? { hit, solves } : null;
+  }, [entries, puzzles]);
+
   // NOTE: 相同打乱合并展示(同 puzzle 共享打乱时只显示一条)
   const scrambleGroups: Array<[string, number[]]> = [];
   entries.forEach((e, pi) => {
@@ -272,6 +292,17 @@ function RoundDetailModal({
         </div>
 
         <div className="round-modal-actions">
+          {recon && (
+            <button
+              type="button"
+              className="round-modal-recon"
+              onClick={() => setReconSolve(recon.hit)}
+              title={tr({ zh: 'P1 复盘', en: 'P1 reconstruction' })}
+            >
+              <Waypoints size={14} />
+              {tr({ zh: '复盘', en: 'Reconstruction' })}
+            </button>
+          )}
           <button
             type="button"
             className="round-modal-delete"
@@ -285,6 +316,14 @@ function RoundDetailModal({
           </button>
         </div>
       </div>
+      {reconSolve && recon && (
+        <ReconstructModal
+          solve={reconSolve}
+          isZh={isZh}
+          history={recon.solves}
+          onClose={() => setReconSolve(null)}
+        />
+      )}
     </div>
   );
 }

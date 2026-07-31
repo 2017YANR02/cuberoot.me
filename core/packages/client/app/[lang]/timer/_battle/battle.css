@@ -1262,6 +1262,28 @@ body.solo .scramble-img {
     border-color: var(--destructive);
 }
 
+/* 复盘入口。只在这一轮 P1 真的有转动流(智能魔方拧的)时才渲染 —— 出现本身就是
+   「这一把能看」的信号,所以带文字而不是只留一个图标让人猜。 */
+.round-modal-recon {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+    color: var(--accent);
+    height: 36px;
+    padding: 0 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.round-modal-recon:hover {
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    border-color: var(--accent);
+}
+
 @media (max-width: 480px) {
     .round-modal-time {
         font-size: 2rem;
@@ -1407,9 +1429,37 @@ body.solo .scramble-img {
     background: color-mix(in srgb, var(--destructive) 12%, transparent);
 }
 
+/* 复盘入口。只在这一把真的有转动流(智能魔方拧的)时才渲染,所以不做常显 ——
+   出现本身就是「这一把能看」的信号。样式跟着删除按钮走,一行里两个图标才是一套。 */
+.h-recon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+    opacity: 0.55;
+    transition: opacity 0.15s, color 0.15s, background 0.15s;
+    color: var(--muted-foreground);
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.history-item:hover .h-recon {
+    opacity: 1;
+}
+
+.h-recon:hover {
+    opacity: 1;
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
 /* NOTE: 触屏没 hover,直接保持比较亮 */
 @media (hover: none) and (pointer: coarse) {
-    .h-delete {
+    .h-delete,
+    .h-recon {
         opacity: 0.85;
     }
 }

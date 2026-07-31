@@ -483,6 +483,37 @@ export function makeSolve(args: {
   };
 }
 
+/**
+ * 按「打乱 + 用时」把一条**对战**成绩认回本机记录。
+ *
+ * 对战记分板和本机计时记录是两本账:前者只存数字,后者存整把(转动流 / 姿态流 /
+ * 分段)。智能魔方那条路会把同一把按 Solo 的格式也留一份(见 `useBattleCubes`),
+ * 所以对战那一行**可能**有对应的复盘 —— 但两边没有共用的 id。
+ *
+ * 与其给对战自己的持久化格式加一个 id(那是要迁移的),不如按内容认:同一条打乱
+ * 加上**没取整的**用时。两把要撞,得是同一条打乱、还得毫秒的小数位一模一样。
+ * 只认带转动流的那些 —— 没有转动流就没有复盘可看,认回来也没用。
+ *
+ * 认不回来返回 null,绝大多数把都这样(没连魔方就没有转动流)。
+ */
+export function battleReconKey(scramble: string, timeMs: number): string {
+  return `${timeMs}|${scramble}`;
+}
+
+/**
+ * 一个事件下所有**能复盘**的把,按上面那个键索引;`solves` 是同一次读出来的整份
+ * 列表(复盘面板要拿它算个人分段均值)。整份记录只读一次 —— 逐行去查会把一次
+ * localStorage 解析乘上行数。
+ */
+export function battleReconIndex(eventId: EventId): { index: Map<string, Solve>; solves: Solve[] } {
+  const solves = loadAll()[eventId] ?? [];
+  const index = new Map<string, Solve>();
+  for (const s of solves) {
+    if (s.moves && s.moves.length > 0 && s.scramble) index.set(battleReconKey(s.scramble, s.timeMs), s);
+  }
+  return { index, solves };
+}
+
 /* ---------- Re-exports from import_export.ts ---------- */
 // So callers can do `import { importCstimerJson } from './storage/db'`.
 export {
