@@ -74,6 +74,7 @@ export default function DevFakeCubePanel(props: DevFakeCubePanelProps): JSX.Elem
   const [alg, setAlg] = useState("R U R' U'");
   const [pose, setPose] = useState<Pose>('off');
   const [err, setErr] = useState<string | null>(null);
+  const [connecting, setConnecting] = useState(false);
   // 贴纸串每次操作后重读一次。没必要跟着每一帧走 —— 它是给人核对用的。
   const [facelets, setFacelets] = useState<string | null>(null);
 
@@ -100,6 +101,27 @@ export default function DevFakeCubePanel(props: DevFakeCubePanelProps): JSX.Elem
       setErr(e instanceof Error ? e.message : String(e));
     }
     setFacelets(api()?.state() ?? null);
+  };
+
+  /**
+   * 连接。**必须把失败显出来** —— 这里原来是 `void onConnect()`,连接抛错什么都
+   * 不显示,屏幕上只剩「未连接」,看起来就像按钮没反应。一个调试面板把错误吞掉
+   * 是最坏的一种 bug:它把「哪里坏了」这个唯一要回答的问题变成了无法回答。
+   */
+  const connect = async () => {
+    const f = api();
+    if (!f) { setErr(tr({ zh: '假魔方没装上(生产构建里没有它)', en: 'fake cube not installed (absent in production builds)' })); return; }
+    f.arm();
+    setConnecting(true);
+    setErr(null);
+    try {
+      await onConnect();
+    } catch (e) {
+      setErr(e instanceof Error ? (e.message || e.name) : String(e));
+    } finally {
+      setConnecting(false);
+      setFacelets(api()?.state() ?? null);
+    }
   };
 
   if (!open) {
@@ -131,9 +153,12 @@ export default function DevFakeCubePanel(props: DevFakeCubePanelProps): JSX.Elem
           <button
             type="button"
             className="devcube-btn"
-            onClick={() => { api()?.arm(); void onConnect(); }}
+            disabled={connecting}
+            onClick={() => { void connect(); }}
           >
-            {tr({ zh: '连上假魔方', en: 'Connect fake cube' })}
+            {connecting
+              ? tr({ zh: '连接中…', en: 'Connecting…' })
+              : tr({ zh: '连上假魔方', en: 'Connect fake cube' })}
           </button>
         )}
         <BoolToggle
