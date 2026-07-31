@@ -412,18 +412,24 @@ option {
    天然差一层,body 上的 var(--foreground) 取到的正是 :root 的原值。
    文字往 --muted-foreground 混(变灰,不是变淡到看不见),底也往同一中灰挪一点点 ——
    浅底自动压暗、深底自动提亮,不用分主题写两套。--muted-foreground 自身不动:
-   它既是混色基准(动了就循环),本来也已经是弱化层级,再拉低就糊了。 */
+   它既是混色基准(动了就循环),本来也已经是弱化层级,再拉低就糊了。
+   底是最有效的一档:大面积的纯白 / 纯黑一沉,压在它上面的每一层文字(含不参与混色的
+   --muted-foreground)对比都跟着降,所以 bg 给得比 text 更舍得。边框要混得比底更多,
+   否则底一沉就追上原本更浅的 --border-default,卡片轮廓会反转看不见。 */
 :root {
   --soften-text: 0%;
   --soften-bg: 0%;
+  --soften-border: 0%;
 }
 :root[data-contrast=soft] {
-  --soften-text: 18%;
-  --soften-bg: 4%;
+  --soften-text: 24%;
+  --soften-bg: 10%;
+  --soften-border: 20%;
 }
 :root[data-contrast=softer] {
-  --soften-text: 34%;
-  --soften-bg: 8%;
+  --soften-text: 44%;
+  --soften-bg: 20%;
+  --soften-border: 40%;
 }
 
 /* 第一层(html):把要柔化的 token 原值快照成 --base-*。混色不能在同一元素上写成
@@ -443,6 +449,9 @@ html[data-contrast=softer] {
   --base-popover-foreground: var(--popover-foreground);
   --base-secondary-foreground: var(--secondary-foreground);
   --base-primary: var(--primary);
+  --base-border-default: var(--border-default);
+  --base-border-strong: var(--border-strong);
+  --base-input: var(--input);
   background: color-mix(in srgb, var(--base-background), var(--muted-foreground) var(--soften-bg));
 }
 /* 第二层(body):真正的柔化,全站后代都吃到。 */
@@ -459,6 +468,9 @@ html[data-contrast=softer] body {
   --secondary-foreground: color-mix(in srgb, var(--base-secondary-foreground), var(--muted-foreground) var(--soften-text));
   /* 主按钮块本身是「深/浅实心」,不跟着柔化就会在柔化后的页面上显得死黑。 */
   --primary: color-mix(in srgb, var(--base-primary), var(--muted-foreground) var(--soften-text));
+  --border-default: color-mix(in srgb, var(--base-border-default), var(--muted-foreground) var(--soften-border));
+  --border-strong: color-mix(in srgb, var(--base-border-strong), var(--muted-foreground) var(--soften-border));
+  --input: color-mix(in srgb, var(--base-input), var(--muted-foreground) var(--soften-border));
 }
 
 html {
