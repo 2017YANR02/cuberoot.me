@@ -1,7 +1,8 @@
 'use client';
 
 // Ported from packages/client-vite/src/utils/useDocumentTitle.ts.
-// Same brand + em-dash separator. Resets on unmount so unsetting pages tab to "CubeRoot".
+// Same brand + em-dash separator, brand FIRST (must match lib/page-meta.ts, or the
+// tab flips wording on hydration). Resets on unmount so unsetting pages tab to "CubeRoot".
 
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -14,7 +15,7 @@ export function useDocumentTitle(zh: string, en: string): void {
   const isZh = i18n.language.startsWith('zh');
   useEffect(() => {
     const page = (isZh ? zh : en).trim();
-    document.title = page ? `${page}${SEP}${BRAND}` : BRAND;
+    document.title = page ? `${BRAND}${SEP}${page}` : BRAND;
     return () => {
       document.title = BRAND;
     };

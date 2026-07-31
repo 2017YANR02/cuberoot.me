@@ -1,5 +1,5 @@
 {
-  "name": "CubeRoot Trainer",
+  "name": "CubeRoot",
   "short_name": "CubeRoot",
   "description": "Rubik's Cube training toolkit — Timer, Battle, Stats, Recon",
   "start_url": "/",
@@ -8,10 +8,22 @@
   "theme_color": "#2d2b2a",
   "icons": [
     {
-      "src": "/icons/CubeRoot.png",
-      "sizes": "640x640",
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
