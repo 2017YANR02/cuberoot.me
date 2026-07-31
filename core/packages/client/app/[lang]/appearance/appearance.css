@@ -23,6 +23,31 @@
   margin-bottom: 28px;
 }
 
+/* 柔和度:正交于配色的一条强度刻度,所以摆在卡片网格之上、和配色卡分开。
+   chip 样式复用 globals.css 的 .appearance-chips / .appearance-chip(桌宠菜单同一套)。 */
+.ac-soften {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-bottom: 28px;
+}
+
+.ac-soften-label {
+  color: var(--foreground);
+  font-size: 0.9rem;
+}
+
+.ac-soften .appearance-chips {
+  padding: 0;
+}
+
+.ac-soften-hint {
+  color: var(--muted-foreground);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
 .ac-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));

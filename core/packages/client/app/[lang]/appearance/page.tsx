@@ -6,7 +6,14 @@
 
 import { useEffect, useState } from 'react';
 import { Check, Play, RotateCcw } from 'lucide-react';
-import { applyPalette, readPalette } from '@/lib/theme';
+import {
+  CONTRAST_LEVELS,
+  applyContrast,
+  applyPalette,
+  readContrast,
+  readPalette,
+  type ContrastLevel,
+} from '@/lib/theme';
 import { PALETTES } from '@/lib/palettes';
 import { tr } from '@/i18n/tr';
 import './appearance.css';
@@ -27,9 +34,13 @@ const CARDS: Card[] = [
 export default function AppearancePage() {
 
   const [current, setCurrent] = useState<string | null>(null);
+  const [contrast, setContrast] = useState<ContrastLevel>('normal');
   useEffect(() => {
-    setCurrent(readPalette());
-    const r = () => setCurrent(readPalette());
+    const r = () => {
+      setCurrent(readPalette());
+      setContrast(readContrast());
+    };
+    r();
     window.addEventListener('theme-change', r);
     window.addEventListener('storage', r);
     return () => {
@@ -50,6 +61,35 @@ export default function AppearancePage() {
           en: 'Dress the whole site in a Chinese traditional-color palette. "Classic" is the default terracotta; the rest are drawn from 中国色 — tap any card to fade the whole site into it, switch back to Classic anytime.'
         })}
       </p>
+
+      <div className="ac-soften">
+        <span className="ac-soften-label">{tr({ zh: '柔和度', en: 'Softness' })}</span>
+        <div className="appearance-chips" role="group" aria-label={tr({ zh: '柔和度', en: 'Softness' })}>
+          {CONTRAST_LEVELS.map((c) => {
+            const on = c.id === contrast;
+            return (
+              <button
+                key={c.id}
+                type="button"
+                aria-pressed={on}
+                className={`appearance-chip${on ? ' is-active' : ''}`}
+                onClick={() => {
+                  applyContrast(c.id, true);
+                  setContrast(c.id);
+                }}
+              >
+                {tr(c)}
+              </button>
+            );
+          })}
+        </div>
+        <span className="ac-soften-hint">
+          {tr({
+            zh: '整站降低对比度,配色和明暗照旧,长时间看更省眼。',
+            en: 'Lowers contrast site-wide — same palette, same light/dark, easier on the eyes for long sessions.',
+          })}
+        </span>
+      </div>
 
       <div className="ac-grid">
         {CARDS.map((c) => {
