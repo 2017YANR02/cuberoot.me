@@ -233,11 +233,26 @@ export async function crossOnDRotation(pattern: KPattern): Promise<string> {
   // DB. (The old "first frame whose sticker-cross looks solved" relied on the
   // sticker checker REJECTING tilted frames — it couldn't see L/R crosses at all
   // and let a y-rotated frame slip through, breaking the lookups.)
+  //
+  // Which face carries the cross is decided by the SAME rule `detectStage`
+  // uses — most solved F2L pairs wins, first face on a tie — and not by "first
+  // face whose four edges happen to be solved". Once F2L is done, a side face's
+  // four edges can all read solved by accident (three of them are cross/F2L
+  // edges, and the fourth is a last-layer edge that landed home): a first-match
+  // scan then canonicalises to that face, the OLL/PLL fingerprint misses, and
+  // every last-layer label silently degrades to the generic `// OLL`. The two
+  // functions disagreeing about the cross face is the bug; they now can't.
   let raw = r0;
-  let found = false;
+  let bestF = -1;
+  let bestPairs = -1;
   for (let f = 0; f < 6; f++) {
-    if (crossEdgesSolved(home, f)) { raw = [r0, FACE_TO_D_ROT[f]].filter(Boolean).join(' '); found = true; break; }
+    if (!crossEdgesSolved(home, f)) continue;
+    const pairs = F2L_SLOTS_BY_FACE[f]
+      .filter(sl => cornerHome(home, sl.corner) && edgeHome(home, sl.edge)).length;
+    if (pairs > bestPairs) { bestF = f; bestPairs = pairs; }
   }
+  const found = bestF >= 0;
+  if (found) raw = [r0, FACE_TO_D_ROT[bestF]].filter(Boolean).join(' ');
   if (!found) {
     for (let f = 0; f < 6; f++) {
       const m = FACE_MOVE[f];
