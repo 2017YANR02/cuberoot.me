@@ -32,10 +32,12 @@
  * 空的一步(白给的那一对 / OLL 跳过)`endIdx` 是 null,不占一行 —— 一行零个记号
  * 配一个标签是噪声,它在表里已经写着「跳过」了。
  *
- * ## 智能魔方没有转体
+ * ## 转体
  *
- * 魔方不报 x/y/z,所以这里几乎不会出现 `// insp` 那一行。逻辑照旧留着(手输动作
- * 的复盘、以后真能推出转体时都会用到),但不为它编造任何东西。
+ * 魔方不报 x/y/z(陀螺仪装在中心核里,转体不改状态字节),所以动作流里没有它们。
+ * Sprint 28 起,**录了姿态流的那些把**可以把转体从姿态里推出来
+ * (`rotation_detect.ts`),经 `input.rotations` 传进来按时刻插回各行 —— 谱子于是
+ * 长得和人写的一样。没录姿态的把照旧没有转体:不为它编造任何东西。
  *
  * ## 成本
  *
@@ -50,6 +52,7 @@ import { buildCommentSuggestions } from '@/lib/popup_suggest';
 import { htmMoves } from './htm';
 import type { F2lSlotsResult } from './f2l_slots';
 import type { SolveMove, StageSegments } from './stage_segments';
+import type { RotationEvent } from './rotation_detect';
 import { tokensForRange } from './step_metrics';
 import type { StepMetricsResult } from './step_metrics';
 
@@ -186,6 +189,15 @@ export interface ReconTextInput {
   segs: StageSegments;
   metrics: StepMetricsResult | null;
   slots: F2lSlotsResult | null;
+  /**
+   * 从姿态流里推出来的转体(Sprint 28)。给了就按时刻插进各行的动作里,谱子于是长得
+   * 和人写的一样:`y R U R' U'`。
+   *
+   * 转体**不计步** —— HTM 里它是 0 步,表里的步数格也不含它,所以插进来之后
+   * 「序列比步数长」本身就是信息(那一步里有转体 / 有废动作),和点列名看动作那条
+   * 规则同一套,见 Sprint 20。
+   */
+  rotations?: readonly RotationEvent[];
 }
 
 /**
@@ -194,8 +206,48 @@ export interface ReconTextInput {
  * 任何一行识别失败(查表抛异常、打乱有引擎读不了的记号)只让那一行的 `label`
  * 变成 null,不会带走整段 —— 一份只差几个标签的谱子仍然有用。
  */
+/**
+ * 把转体按时刻插进一行的动作里。
+ *
+ * 位置靠**时刻**定,而不是靠下标 —— 转体压根不在动作流里,没有下标可用。一次转体
+ * 排在「它之后发生的第一手」前面;比这一行所有动作都晚的排在末尾。
+ *
+ * `lineMoves` 是 `tokensForRange` 已经按 HTM 合并过的记号,和原始动作流不是一一对应
+ * (半转会被并成一条),所以插入位置按**原始**动作的时刻算出下标,再按「这是这一行
+ * 的第几手」折算到合并后的序列上 —— 合并只会让位置提前,不会把转体挪到别的行去。
+ */
+function weaveRotations(
+  lineMoves: string[],
+  rots: readonly RotationEvent[],
+  moves: SolveMove[],
+  from: number,
+  to: number,
+): string[] {
+  if (rots.length === 0) return lineMoves;
+  const n = to - from + 1;
+  if (n <= 0) return lineMoves;
+  // 原始下标 → 合并后下标。第 k 手原始动作落在合并序列的哪个位置,按比例折算:
+  // 合并只会缩短,`lineMoves.length <= n`,所以这个映射单调不减且不越界。
+  const mapIdx = (rawOffset: number): number =>
+    Math.min(lineMoves.length, Math.round((rawOffset / n) * lineMoves.length));
+  const out: string[] = [];
+  let cursor = 0;
+  const placed = rots.map((r) => {
+    let off = 0;
+    while (off < n && moves[from + off].ts < r.tMs) off++;
+    return { token: r.token, at: mapIdx(off) };
+  }).sort((a, b) => a.at - b.at);
+  for (const p of placed) {
+    while (cursor < p.at) out.push(lineMoves[cursor++]);
+    out.push(p.token);
+  }
+  while (cursor < lineMoves.length) out.push(lineMoves[cursor++]);
+  return out;
+}
+
 export async function buildReconText(input: ReconTextInput): Promise<ReconTextResult> {
   const { scramble, moves, totalMs, segs, metrics, slots } = input;
+  const rotations = input.rotations ?? [];
   const spans = stepSpans(segs, metrics, slots);
   const counted = htmMoves(moves);
 
@@ -208,9 +260,21 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
   let prevEnd = -1;
   let prevPattern = await patternFromAlg(scramble);
 
+  // 这一行的时间窗:上一行最后一手之后 → 自己最后一手为止。第一行往前开口到无穷,
+  // 因为起表前后那次「把魔方摆正」属于它。
+  let prevEndMs = -Infinity;
+
   for (const span of spans) {
     const from = prevEnd + 1;
-    const lineMoves = tokensForRange(moves, counted, from, span.endIdx);
+    // 识别用的动作和显示用的动作要分开:转体不是转动,喂给识别器会把局面算错、
+    // 把步数撑大。识别永远只看 `turnTokens`。
+    const turnTokens = tokensForRange(moves, counted, from, span.endIdx);
+    // 收尾那一步的时间窗往后开口:它之后没有动作了,所以「拧完之后把魔方转回去」
+    // 那次转体只能归它 —— 卡在最后一手的时刻上会把它整个丢掉。
+    const endMs = span.endIdx >= moves.length - 1 ? Infinity : (moves[span.endIdx]?.ts ?? Infinity);
+    const mine = rotations.filter(r => r.tMs > prevEndMs && r.tMs <= endMs);
+    const lineMoves = weaveRotations(turnTokens, mine, moves, from, span.endIdx);
+    prevEndMs = endMs;
     const currPattern = await patternFromAlg(
       [scramble, rawUpTo(span.endIdx)].filter(t => t.trim() !== '').join(' '),
     );
@@ -220,9 +284,9 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
       label = firstLabel(await buildCommentSuggestions({
         prevPattern,
         currPattern,
-        lineMovesText: lineMoves.join(' '),
+        lineMovesText: turnTokens.join(' '),
         prevMovesText: prevEnd >= 0 ? rawUpTo(prevEnd) : '',
-        moveCount: lineMoves.length,
+        moveCount: turnTokens.length,
       }));
     } catch (err) {
       console.warn('[recon-text] label failed for', span.key, err);
@@ -246,7 +310,11 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
 
   // 最后一手之后还有动作(拧过头了、或者切分没走到底)——照实补一行,不丢。
   if (prevEnd < moves.length - 1) {
-    const tail = tokensForRange(moves, counted, prevEnd + 1, moves.length - 1);
+    const tail = weaveRotations(
+      tokensForRange(moves, counted, prevEnd + 1, moves.length - 1),
+      rotations.filter(r => r.tMs > prevEndMs),
+      moves, prevEnd + 1, moves.length - 1,
+    );
     if (tail.length > 0) {
       lines.push({
         kind: 'pll', key: 'tail', moves: tail,

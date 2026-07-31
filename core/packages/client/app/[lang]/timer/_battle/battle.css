@@ -2146,3 +2146,12 @@ body.solo .scramble-img {
 .bc-dot.is-holding {
     color: var(--accent);
 }
+
+/* 连接弹窗的层。弹窗是从设置面板里点出来的,而 .timer-modal-overlay 是 z-index 100
+   (timer.css)、这里的 .settings-overlay 是 200 且整屏不透明 —— 同一个层叠上下文里
+   200 直接盖死 100,点「连接」就成了没反应。这一层把弹窗整个抬到面板之上。 */
+.bc-modal-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+}
