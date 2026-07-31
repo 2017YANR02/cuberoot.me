@@ -246,6 +246,8 @@ function generateScramble() {
 var startMilliseconds, stopMiliseconds; // date and time when timer was started
 var allowed = true; // allowed var is for preventing auto-repeat when you hold a button
 var running = false; var waiting = false;
+var holdTimeout = null;
+var holdPassed = false; 
 var timer = null;
 var timerActivatingButton = 32; // 17 for ctrl
 var timeout;
@@ -320,22 +322,39 @@ function timerStop() {
 function timerAbort() {
     waiting = true;
     running = false;
-    clearTimeout();
+    holdPassed = false;
+    clearTimeout(holdTimeout);
     timer.innerHTML = "0.00";
+    timerAfterStop();
 }
 
 function timerSetReady() {
+    holdPassed = false;
     waiting = false;
-    timer.innerHTML = "0.00";
-    timer.style.color = "#008500";
+    if (currentSettings['enableHoldDelay']) {
+        holdTimeout = setTimeout(() => {
+            if (!waiting) {
+                timer.style.color = "#008500";
+                holdPassed = true;
+            }
+        }, 200);
+    }
+    else {
+        timer.style.color = "#008500";
+        holdPassed = true;
+    }
 }
 
 function timerStart() {
-    var d = new Date();
-    startMilliseconds = d.getTime();
-    running = true;
-    timeout = setInterval(displayTime, 10);
-    timer.style.color = currentSettings['colors']['--text'];
+    if (holdPassed) {
+        var d = new Date();
+        startMilliseconds = d.getTime();
+        running = true;
+        timeout = setInterval(displayTime, 10);
+        timer.style.color = currentSettings['colors']['--text'];
+    } else {
+        timerAbort();
+    }
 }
 
 function timerAfterStop() {
@@ -431,6 +450,21 @@ function editAlg() {
         return
     }
 
+}
+
+function resetAlg() {
+    if (confirm("Do you want to reset the custom algs for this case?")) {
+        delete customAlgs[hintCase]
+        saveAlgs();
+        showHint(hintCase);
+    }
+}
+
+function resetAllAlgs() {
+    if (confirm("Do yo want to reset all your custom algs entered to this trainer?")) {
+        customAlgs = {};
+        saveAlgs();
+    }
 }
 
 function renderHint(i) {

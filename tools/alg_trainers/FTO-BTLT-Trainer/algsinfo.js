@@ -1,0 +1,9 @@
+const timesArrayKey = "ftoBTLTTimesArray";
+const selectionArrayKey = "ftoBTLTSelection";
+var trainerTitle = "FTO BTLT Trainer"
+var maxAlgsPerRow = 8;
+var preRotations = [''];
+var postRotations = [''];
+var preMoves = ["", "U", "U'"];
+var postMoves = preMoves;
+var selCases = [];

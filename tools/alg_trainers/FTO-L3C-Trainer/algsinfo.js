@@ -1,0 +1,9 @@
+const timesArrayKey = "ftoL3CTimesArray";
+const selectionArrayKey = "ftoL3CSelection";
+var trainerTitle = "FTO L3C Trainer"
+var maxAlgsPerRow = 5;
+var preRotations = [''];
+var postRotations = [''];
+var preMoves = ["", "U", "U'"];
+var postMoves = preMoves;
+var selCases = [];

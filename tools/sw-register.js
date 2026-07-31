@@ -1,14 +1,13 @@
 if ('serviceWorker' in navigator) {
+	// 按本脚本自身 URL 定位 sw.js —— 本站页面在子目录，相对页面解析会 404
+	const swRegisterBase = document.currentScript ? document.currentScript.src : window.location.href;
 	const postSwMessage = (msg) => {
 		if (navigator.serviceWorker && navigator.serviceWorker.controller) {
 			navigator.serviceWorker.controller.postMessage(msg);
 		}
 	};
 	window.addEventListener('load', () => {
-		// 使用当前脚本的 URL 来相对定位 sw.js，避免破坏上游兼容性
-		const basePath = document.currentScript ? document.currentScript.src : window.location.href;
-		const swPath = new URL('sw.js', basePath).href;
-		navigator.serviceWorker.register(swPath).then(registration => {
+		navigator.serviceWorker.register(new URL('sw.js', swRegisterBase).href).then(registration => {
 			console.log('Service Worker registered successfully:', registration);
 			if (navigator.serviceWorker.controller) {
 				postSwMessage({ type: 'DP_PRECACHE' });

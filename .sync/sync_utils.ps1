@@ -6,6 +6,33 @@
     供 _sync_RubiksSolverDemo.ps1 和 sync_alg_trainers.ps1 共用。
 #>
 
+function Invoke-WithFileRetry
+{
+    <#
+    .SYNOPSIS
+        重试包装：Windows 上索引器/杀软/dev server 会短暂锁住刚写的文件
+        （"being used by another process" / "user-mapped section open"），退避重试即可。
+    #>
+    param(
+        [scriptblock]$Action,
+        [int]$Attempts = 5
+    )
+
+    for ($i = 1; $i -le $Attempts; $i++)
+    {
+        try
+        {
+            & $Action
+            return
+        }
+        catch
+        {
+            if ($i -eq $Attempts) { throw }
+            Start-Sleep -Milliseconds (200 * [Math]::Pow(2, $i - 1))
+        }
+    }
+}
+
 function Sync-FileIfChanged
 {
     <#
@@ -35,7 +62,7 @@ function Sync-FileIfChanged
             {
                 New-Item -ItemType Directory -Path $destDir -Force | Out-Null
             }
-            Copy-Item $Src $Dest -Force
+            Invoke-WithFileRetry { Copy-Item $Src $Dest -Force }
         }
         return $true
     }
@@ -56,8 +83,8 @@ function Sync-Directory
 
     if (-not $DryRun)
     {
-        if (Test-Path $Dest) { Remove-Item $Dest -Recurse -Force }
-        Copy-Item $Src $Dest -Recurse -Force
+        Invoke-WithFileRetry { if (Test-Path $Dest) { Remove-Item $Dest -Recurse -Force } }
+        Invoke-WithFileRetry { Copy-Item $Src $Dest -Recurse -Force }
     }
 }
 
@@ -112,5 +139,5 @@ function Write-Utf8File
     )
 
     $outBytes = [System.Text.Encoding]::UTF8.GetBytes($Content)
-    [System.IO.File]::WriteAllBytes($Path, $outBytes)
+    Invoke-WithFileRetry { [System.IO.File]::WriteAllBytes($Path, $outBytes) }
 }

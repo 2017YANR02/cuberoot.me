@@ -61,6 +61,14 @@ function isPuzzle(s: string): s is AlgPuzzle {
   return (ALG_PUZZLES as readonly string[]).includes(s);
 }
 
+/**
+ * 有观察训练器(`/recognize/<set>`)的 3x3 公式集 —— 入口就挂在这一套自己的页面上,
+ * 而不是堆在 `/alg/3x3` 的「训练专区」里(一整排 chip 看不出各自属于哪套)。
+ * 名单与 `lib/recognize-sets` 的 RECOGNIZE_SETS 对齐;这里只要 id,不 import 那份
+ * 模块是为了不把 oll/pll 题库和打乱生成器拽进公式库页的 bundle。
+ */
+const RECOGNIZE_SETS_3X3 = new Set(['oll', 'pll', 'coll', 'ell', 'zbll', '1lll']);
+
 /** 打乱行。复制的是**屏幕上这一条**(sq1 之类会重排格式),不是库里的原文。 */
 function SetupLine({ puzzle, setup }: { puzzle: string; setup: string }) {
   const { copied, copy } = useCopy();
@@ -751,6 +759,13 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
             prefetch={false}
           >
             {tr({ zh: '训练', en: 'Train' })}
+          </Link>
+        )}
+        {/* 观察训练:只认图形不还原,和上面的「训练」是同一套 case 的另一种练法,
+            所以入口就在这套自己的页首(以前是 /alg/3x3 底部一排不分套的 chip)。 */}
+        {puzzleParam === '3x3' && RECOGNIZE_SETS_3X3.has(set) && (
+          <Link href={`/recognize/${set}`} className="alg-recog-cta" prefetch={false}>
+            {tr({ zh: '观察', en: 'Recognition' })}
           </Link>
         )}
         {/* 新增 / 校验作用在**整个 set** 上,和这一层是不是列 case 卡片无关 ——

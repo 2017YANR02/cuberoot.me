@@ -20,6 +20,7 @@ var defaultSettings = {
     'scrambleSize': 2,
     'weightedChoice': true,
     'weightedChoiceTime' : false,
+    'enableHoldDelay': true,
     'colors': {},
     'cubecolors': {
         "white": "#fafafa",
@@ -191,6 +192,7 @@ function applySettings() {
     try {    
         document.getElementById('timer').style.fontSize = currentSettings['timerSize'] + "em";
         document.getElementById('scramble').style.fontSize = currentSettings['scrambleSize'] + "em";
+        document.getElementById("hold_delay_on_off").checked = currentSettings['enableHoldDelay'];
         document.getElementById("weighted_choice_on_off").checked = currentSettings['weightedChoice'];
         document.getElementById("weighted_choice_time_on_off").checked = currentSettings['weightedChoiceTime']
         document.getElementById('cornerSchemeInput').value = currentSettings['letterSchemeCorners'];
