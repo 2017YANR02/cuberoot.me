@@ -1031,14 +1031,25 @@ a.alg-community-author:hover {
   .alg-case-list { grid-template-columns: 1fr; }
   /* 只看图时窄屏仍保持两列画廊 —— 一列太空、认图效率低 */
   .alg-case-list.is-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  /* 套列表窄屏走四列 —— 一屏能看全一个魔方的所有套,不用来回滚。
-     卡片随之收窄:内边距 / 字号 / 缩略图(size 由 AlgPuzzleClient 按视口给)一起降档。 */
+  /* 套列表 / 子组选择窄屏都走四列 —— 一屏能看全一个魔方的所有套(或一组的所有子组),
+     不用来回滚。卡片随之收窄:内边距 / 字号 / 缩略图(size 由组件按视口给)一起降档。 */
   .alg-bento { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 0 12px; }
-  .alg-bento .alg-card { padding: 8px 4px 7px; gap: 5px; border-radius: 8px; }
-  .alg-bento .alg-card-thumb { min-height: 0; }
-  .alg-bento .alg-card-foot { gap: 2px 4px; }
-  .alg-bento .alg-card-title { font-size: 12px; letter-spacing: 0; }
-  .alg-bento .alg-card-count { font-size: 10px; }
+  /* is-f2l-thumb 要一并写出来:两个类的选择器比这条单类的更特殊,不列就压不住。 */
+  .alg-subgroup-grid,
+  .alg-subgroup-grid.is-f2l-thumb { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 12px; }
+  .alg-l2-index { padding: 12px 12px 0; gap: 12px; }
+  .alg-bento .alg-card,
+  .alg-subgroup-grid .alg-card { padding: 8px 4px 7px; gap: 5px; border-radius: 8px; }
+  .alg-bento .alg-card-thumb,
+  .alg-subgroup-grid .alg-card-thumb { min-height: 0; }
+  .alg-bento .alg-card-foot,
+  .alg-subgroup-grid .alg-card-foot { gap: 2px 4px; }
+  .alg-bento .alg-card-title,
+  .alg-subgroup-grid .alg-card-title { font-size: 12px; letter-spacing: 0; }
+  .alg-bento .alg-card-count,
+  .alg-subgroup-grid .alg-card-count { font-size: 10px; }
+  .alg-subgroup-grid .alg-card-sub { font-size: 10px; }
+  .alg-subgroup-grid .alg-card-chevron { top: 4px; left: 4px; }
   /* 魔方项目 / 训练器卡片(纯文字)窄屏两列 —— 一列一张时整页全是空白 */
   .alg-puzzle-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 0 12px; }
   .alg-puzzle-card { padding: 12px 10px; }
