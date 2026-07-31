@@ -751,8 +751,8 @@
   },
   {
     "date": "2026-07-17",
-    "zh": "/alg/progress 跨公式集学习进度总览上线 + /code 新增 WCA 官网与 CubingChina 项目介绍 + /math/gcd-sequence 上线 + /sim 齿轮魔方按真实齿轮啮合重建 + 计时器加地区排名徽章开关",
-    "en": "A cross-set learning-progress overview launches at /alg/progress + /code adds profiles for the WCA website and CubingChina + /math/gcd-sequence launches + /sim rebuilds the Gear Cube around real tooth meshing + the timer gains a toggle for the regional-rank badge"
+    "zh": "/alg/progress 跨公式集学习进度总览上线 + /code 新增 WCA 官网与 CubingChina 项目介绍 + /sim 齿轮魔方按真实齿轮啮合重建 + 计时器加地区排名徽章开关",
+    "en": "A cross-set learning-progress overview launches at /alg/progress + /code adds profiles for the WCA website and CubingChina + /sim rebuilds the Gear Cube around real tooth meshing + the timer gains a toggle for the regional-rank badge"
   },
   {
     "date": "2026-07-18",

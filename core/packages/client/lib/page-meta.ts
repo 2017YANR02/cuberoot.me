@@ -206,7 +206,6 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'math/demigod': { title: { zh: '半神之数 (Demigod\'s Number)', en: 'Demigod\'s Number' } },
-  'math/gcd-sequence': { title: { zh: '公因子数列', en: 'Common-factor sequence' } },
   'math/god': {
     title: { zh: '上帝之数', en: 'God\'s Number' },
     description: {

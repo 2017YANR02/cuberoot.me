@@ -482,12 +482,12 @@ export const TIMELINE: TLEntry[] = [
     tag: 'feature',
     zh: {
       title: '跨公式集学习进度总览上线',
-      body: '新增 /alg/progress，把各公式集的已掌握、生疏与未学数量汇总在一页，也会显示在自己的主页上；同期新增 /math/gcd-sequence 与 /code 里 WCA 官网、CubingChina 两篇项目介绍。',
+      body: '新增 /alg/progress，把各公式集的已掌握、生疏与未学数量汇总在一页，也会显示在自己的主页上；同期在 /code 新增 WCA 官网、CubingChina 两篇项目介绍。',
       expand: '总览可以下钻到具体是哪些公式，并直接开始针对生疏项的训练。',
     },
     en: {
       title: 'A cross-set learning-progress overview launches',
-      body: 'The new /alg/progress page gathers mastered, shaky and unlearned counts across every algorithm set into one view, also surfaced on your own hub. /math/gcd-sequence launched alongside it, as did profiles of the WCA website and CubingChina under /code.',
+      body: 'The new /alg/progress page gathers mastered, shaky and unlearned counts across every algorithm set into one view, also surfaced on your own hub. Profiles of the WCA website and CubingChina launched alongside it under /code.',
       expand: 'The overview drills down to the individual algorithms behind each count and starts a session on the shaky ones.',
     }
 },
