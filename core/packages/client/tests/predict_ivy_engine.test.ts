@@ -16,6 +16,7 @@ import { parseIvyMoves } from '@/app/[lang]/sim/engine/ivy/IvyTwister';
 import { MOVE_CENTERS } from '@/lib/ivy-solver';
 import { getPuzzle, identityPerm, stickerCount } from '@/app/[lang]/predict/_lib/puzzles';
 import { ivyLensIndex, ivyPetalIndex } from '@/app/[lang]/predict/_lib/puzzles/ivy';
+import { collectStickerMeshes } from '@/app/[lang]/predict/_components/engineSlotMap';
 
 /** canonical 面法向,面序 U R F B L D(= lib/ivy-solver 的 `centers` 下标)。 */
 const FACE_NORMAL: readonly THREE.Vector3[] = [
@@ -123,5 +124,14 @@ describe('/predict 枫叶模型 ≡ /sim 引擎', () => {
       }
       expect(puzzle.apply(identityPerm(n), [token]), `token ${token}`).toEqual(enginePerm);
     }
+  });
+
+  // 上面那条锁的是「模型的置换 = 引擎的几何置换」,用的是这里按法向 + 角轴排的 mesh。
+  // 题板画色 / 点击命中走的是 `collectStickerMeshes`(同一套推法,但那是产品代码那一份),
+  // 两者必须逐格相同 —— 差一格,题板会把高亮画在别的贴纸上,盘面看上去照样自洽。
+  it('题板的 collectStickerMeshes 与几何验过的那份排法逐格相同', () => {
+    const cube = new IvyCube();
+    const slots = buildSlots(cube);
+    expect(collectStickerMeshes(getPuzzle('ivy'), cube)).toEqual(slots.map((s) => s.mesh));
   });
 });
