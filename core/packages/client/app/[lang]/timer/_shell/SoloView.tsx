@@ -996,10 +996,11 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   // ── Live cube-state mirror ──────────────────────────────────────
   // The flat views read `bluetoothCube.facelets` (the cube's own state)
   // directly. This log exists only for the 3D view, which is alg-driven: it
-  // is anchored at the last moment the cube was SOLVED, so replaying it from
-  // a solved cube reproduces the current state exactly. `algAnchored` says
-  // whether that anchor exists at all — without it the 3D view would be
-  // drawing a state nobody verified, so we stay on the flat one.
+  // is anchored either at the last moment the cube was SOLVED or at a derived
+  // opening (see the anchor effect below), so replaying it from a solved cube
+  // reproduces the current state exactly. `algAnchored` says whether that
+  // anchor exists at all — without it the 3D view would be drawing a state
+  // nobody verified, so we stay on the flat one.
   const [liveMoves, setLiveMoves] = useState<string[]>([]);
   const [algAnchored, setAlgAnchored] = useState(false);
   useEffect(() => {
@@ -1016,6 +1017,43 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     // above, so clearing here leaves the log correctly empty.
     if (cubeSolved) { setLiveMoves([]); setAlgAnchored(true); }
   }, [cubeConnected, cubeSolved]);
+
+  // Connect a cube that is ALREADY scrambled and there is no anchor: nobody
+  // knows how it got that way, so the 3D view had nothing to replay and the
+  // first solve of a session never got one. The missing piece is not the
+  // renderer, it is the opening — and the cube reports its own facelets, so we
+  // can solve for it (see _lib/bluetooth/anchor.ts, which also verifies the
+  // result before handing it over).
+  //
+  // Ordering: moves that land while the solver is running have already been
+  // appended, so the answer is spliced in FRONT of them rather than replacing
+  // the log.
+  //
+  // ONCE PER CONNECTION, and the ref is what enforces it: `facelets` changes on
+  // every single turn, so keying the attempt on its value would fire a fresh
+  // two-phase solve per move for as long as the cube stays un-anchored. One
+  // attempt is also the right answer for a state the solver rejects — retrying
+  // it per turn would just burn the worker on the same impossible cube.
+  const anchorAskedRef = useRef(false);
+  const liveMovesLenRef = useRef(0);
+  liveMovesLenRef.current = liveMoves.length;
+  const anchorFacelets = cubeConnected && !algAnchored ? bluetoothCube.facelets : null;
+  useEffect(() => {
+    if (!anchorFacelets || anchorAskedRef.current) return;
+    anchorAskedRef.current = true;
+    const baseLen = liveMovesLenRef.current;
+    let cancelled = false;
+    void (async () => {
+      const { anchorAlgFor } = await import('../_lib/bluetooth/anchor');
+      const tokens = await anchorAlgFor(anchorFacelets);
+      if (cancelled || tokens === null) return;
+      setLiveMoves(prev => [...tokens, ...prev.slice(baseLen)]);
+      setAlgAnchored(true);
+    })();
+    return () => { cancelled = true; };
+  }, [anchorFacelets]);
+  // A disconnect must let the next connection ask again.
+  useEffect(() => { if (!cubeConnected) anchorAskedRef.current = false; }, [cubeConnected]);
 
   // ── The cube picture under the digits ───────────────────────────
   // One box, two tenants. Without a smart cube it shows the scramble — the
