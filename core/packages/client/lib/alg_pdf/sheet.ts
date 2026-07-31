@@ -46,6 +46,12 @@ export interface AlgPdfSheetInput {
   theme?: AlgPdfTheme;
   /** 首页右上角二维码指向的网址(一般就是这份表所在的页面);省略 = 不印二维码。 */
   url?: string;
+  /**
+   * 每个子组独占一页(ZBLL 那种「一页一类」的练习表:翻到哪页就练哪一类)。
+   * 开了之后首页只剩刊头,成一张封面;版面也会按「一组恰好一页」重算图和行距。
+   * 只有一个子组时没有意义,调用方(`algSheetFromCases`)会自己关掉。
+   */
+  groupPerPage?: boolean;
 }
 
 export type AlgPdfTheme = 'light' | 'dark';
@@ -63,6 +69,7 @@ const ALG_SIZE = 8;             // 公式字号上限(放不下会往 7 降,见 
 const SETUP_SIZE = 6.6;
 const LOCKUP_H = 46;            // 首页刊头的完整标志(含中英文字)高
 const RUN_LOGO_H = 9;           // 续页页眉那枚小标记
+const RUN_HEAD_H = Math.max(SUB_SIZE, RUN_LOGO_H) + 10;  // 续页页眉整条占高
 // 二维码边长。一条 /alg 网址编出来是 33×33 模块(含 2 模块留白),54pt 下每模块
 // 约 0.58mm —— 手机相机可靠识别的下限在 0.5mm 上下,再小就得贴到镜头前才扫得出。
 const QR_SIZE = 54;
@@ -101,29 +108,34 @@ const PALETTE: Record<AlgPdfTheme, Palette> = {
  * 把字号从 8 降到 7(打印出来仍是脚注大小)。判据用 85 分位而不是最长那条:库里总有
  * 一两条二十步的怪物,为它一条把整份表压成单列不划算,那几条折行就是了。
  */
-function pickLayout(doc: jsPDF, cases: AlgPdfCase[], withImage: boolean): { cols: number; algSize: number } {
+function pickLayout(doc: jsPDF, cases: AlgPdfCase[], withImage: boolean): { cols: number; algSize: number; p85: number } {
   doc.setFont(FONT_MONO, 'normal');
   doc.setFontSize(10);
   const widths = cases.flatMap(c => c.algs.map(a => doc.getTextWidth(a)));
-  if (!widths.length) return { cols: 3, algSize: ALG_SIZE };
+  if (!widths.length) return { cols: 3, algSize: ALG_SIZE, p85: 0 };
   widths.sort((a, b) => a - b);
   const p85at10 = widths[Math.min(widths.length - 1, Math.floor(widths.length * 0.85))];
   const textWidthFor = (cols: number) =>
     (CONTENT_W - GAP_X * (cols - 1)) / cols - 2 * CELL_PAD - (withImage ? IMG_FOR_COLS[cols] + IMG_GAP : 0);
   for (const algSize of [ALG_SIZE, 7.5, 7]) {
     for (const cols of [4, 3, 2]) {
-      if (textWidthFor(cols) >= p85at10 * algSize / 10) return { cols, algSize };
+      if (textWidthFor(cols) >= p85at10 * algSize / 10) return { cols, algSize, p85: p85at10 };
     }
   }
-  return { cols: 1, algSize: ALG_SIZE };
+  return { cols: 1, algSize: ALG_SIZE, p85: p85at10 };
 }
 
 interface Laid {
   c: AlgPdfCase;
+  /** 打乱折行后的文本行 */
+  setup: string[];
   /** 每条公式折行后的文本行 */
   lines: string[][];
   h: number;
 }
+
+/** 折行后第二行起缩进,不然三条各折两行的公式会糊成一坨,看不出哪行接哪行。 */
+const WRAP_INDENT = 8;
 
 export async function downloadAlgSheet(input: AlgPdfSheetInput): Promise<void> {
   const doc = await buildAlgSheet(input);
@@ -132,7 +144,7 @@ export async function downloadAlgSheet(input: AlgPdfSheetInput): Promise<void> {
 
 /** 建好整份文档;被取消则返回 null。 */
 export async function buildAlgSheet({
-  title, subtitle, cases, onProgress, shouldCancel, theme = 'light', url,
+  title, subtitle, cases, onProgress, shouldCancel, theme = 'light', url, groupPerPage,
 }: AlgPdfSheetInput): Promise<jsPDF | null> {
   const doc = new jsPDF({ unit: 'pt', format: 'a4', compress: true });
   await loadPdfFonts(doc);
@@ -154,12 +166,9 @@ export async function buildAlgSheet({
   const SANS = cjk ? FONT_CJK : FONT_SANS;
 
   const withImage = cases.some(c => c.thumb);
-  const { cols, algSize } = pickLayout(doc, cases, withImage);
+  const { cols, algSize, p85 } = pickLayout(doc, cases, withImage);
   const algLine = algSize * 1.2;
   const colW = (CONTENT_W - GAP_X * (cols - 1)) / cols;
-  const img = withImage ? IMG_FOR_COLS[cols] : 0;
-  const textX = CELL_PAD + (withImage ? img + IMG_GAP : 0);
-  const textW = colW - CELL_PAD - textX;
 
   // 同组的 case 归到一起(库里的顺序是交错的:PLL 的 Adj Swap / Opp Swap / Adj Swap…)。
   // 不归拢的话「组变了就起一条标题」会把同一个组名印上好几遍。按**首次出现**排序,
@@ -172,20 +181,79 @@ export async function buildAlgSheet({
   }
   const ordered = [...byGroup.values()].flat();
 
-  // 折行 + 高度先全算出来:格子高不依赖图(图是定宽方块),所以排版可以一次过,
-  // 边排边把 SVG 塞进去,不用把几百张图先全渲染出来堆在内存里。
-  doc.setFont(FONT_MONO, 'normal');
-  doc.setFontSize(algSize);
-  const laid: Laid[] = ordered.map(c => {
-    const lines = c.algs.map(a => doc.splitTextToSize(a, textW) as string[]);
-    const nLines = lines.reduce((n, l) => n + l.length, 0);
-    const textH = NAME_SIZE + 2 + (c.setup ? SETUP_SIZE + 2 : 0) + nLines * algLine;
-    return { c, lines, h: Math.max(img, textH) + 2 * CELL_PAD };
-  });
-
-  let y = MARGIN;
-
   const pageBottom = () => PAGE_H - MARGIN - FOOT_H;
+  const perPage = !!groupPerPage && byGroup.size > 1;
+  const groupTop = MARGIN + RUN_HEAD_H + GROUP_SIZE + 8;   // 一页一组时,内容从页眉 + 组标题下面起
+  const groupBudget = pageBottom() - groupTop;
+
+  doc.setFont(FONT_MONO, 'normal');
+  /** 折行按**首行**的宽度算(续行缩进,窄一点),够用且不会低估行数。 */
+  const wrap = (text: string, size: number, tw: number) => {
+    doc.setFontSize(size);
+    return doc.splitTextToSize(text, tw - WRAP_INDENT) as string[];
+  };
+  const layOut = (imgSize: number): Laid[] => {
+    const tw = colW - 2 * CELL_PAD - (withImage ? imgSize + IMG_GAP : 0);
+    return ordered.map(c => {
+      // 打乱也会折行 —— 只按一行算高的话,第二行直接压在第一条公式上
+      const setup = c.setup ? wrap(c.setup, SETUP_SIZE, tw) : [];
+      const lines = c.algs.map(a => wrap(a, algSize, tw));
+      const nLines = lines.reduce((n, l) => n + l.length, 0);
+      const textH = NAME_SIZE + 2 + setup.length * (SETUP_SIZE + 2) + nLines * algLine;
+      return { c, setup, lines, h: Math.max(imgSize, textH) + 2 * CELL_PAD };
+    });
+  };
+  /** 最挤的那一组排下来有多高(行高 = 行内最高的格子)。 */
+  const tallestGroup = (laid: Laid[]) => {
+    let worst = 0;
+    let at = 0;
+    for (const g of byGroup.values()) {
+      const hs = laid.slice(at, at + g.length).map(l => l.h);
+      at += g.length;
+      let total = -GAP_Y;
+      for (let i = 0; i < hs.length; i += cols) total += Math.max(...hs.slice(i, i + cols)) + GAP_Y;
+      worst = Math.max(worst, total);
+    }
+    return worst;
+  };
+
+  // 一页一组时把图放大到页面吃得下的最大尺寸。ZBLL 一类才 12 个 case,照原尺寸排就是
+  // 整页顶着三分之一的内容、下面全白。图变大 ⟹ 文字列变窄 ⟹ 折行变多 ⟹ 格子变高,
+  // 所以不能算一次了事:在「排得下」这个单调条件上二分。下界是原尺寸(放大不成就照旧),
+  // 上界让 85 分位的公式最多折成两行 —— 再窄下去整页都是断成三四截的公式。
+  let img = withImage ? IMG_FOR_COLS[cols] : 0;
+  if (perPage && withImage) {
+    let lo = img;
+    let hi = Math.min(
+      groupBudget - 2 * CELL_PAD,
+      colW - 2 * CELL_PAD - IMG_GAP - Math.max(p85 * algSize / 10 / 2, 60),
+    );
+    if (hi > lo && tallestGroup(layOut(lo)) <= groupBudget) {
+      for (let k = 0; k < 7 && hi - lo > 2; k++) {
+        const mid = (lo + hi) / 2;
+        if (tallestGroup(layOut(mid)) <= groupBudget) lo = mid; else hi = mid;
+      }
+      img = lo;
+    }
+  }
+  const textX = CELL_PAD + (withImage ? img + IMG_GAP : 0);
+
+  // 折行 + 高度全算出来:格子高不依赖图(图是定宽方块),所以排版可以一次过,
+  // 边排边把 SVG 塞进去,不用把几百张图先全渲染出来堆在内存里。
+  const laid = layOut(img);
+
+  // 图放到头之后仍有富余(比如公式短、一组不满一页)就摊进行距,每行最多多给 24pt ——
+  // 硬撑到页底的话最后一行会贴着页脚。
+  let gapY = GAP_Y;
+  if (perPage) {
+    const rows = Math.ceil(Math.max(...[...byGroup.values()].map(g => g.length)) / cols);
+    const slack = groupBudget - tallestGroup(laid);
+    if (rows > 1 && slack > 0) gapY = GAP_Y + Math.min(24, slack / (rows - 1));
+  }
+
+  // 一页一组时首页只剩刊头 —— 顶在页首像是排版排漏了,压到三分之一处才像张扉页
+  let y = perPage ? PAGE_H * 0.3 : MARGIN;
+
   const newPage = async () => {
     doc.addPage();
     paintPage();
@@ -240,10 +308,11 @@ export async function buildAlgSheet({
 
     // 子组换了 ⟹ 先落一条横贯标题(整行独占,后面的格子从新行起)。
     // 换页判据把**跟在它后面那一行**也算进去 —— 否则标题会孤零零留在页底,
-    // 它的 case 全翻到下一页。
-    const headH = g && g !== lastGroup ? GROUP_SIZE + 8 : 0;
+    // 它的 case 全翻到下一页。一页一组时子组一换就翻页,首页因此只剩刊头(封面)。
+    const newGroup = g !== lastGroup;
+    const headH = g && newGroup ? GROUP_SIZE + 8 : 0;
     lastGroup = g;
-    if (y + headH + rowH > pageBottom()) await newPage();
+    if ((perPage && newGroup) || y + headH + rowH > pageBottom()) await newPage();
     if (headH) {
       doc.setFont(SANS, 'bold');
       doc.setFontSize(GROUP_SIZE);
@@ -256,7 +325,7 @@ export async function buildAlgSheet({
     }
 
     for (let k = 0; k < row.length; k++) {
-      const { c, lines } = row[k];
+      const { c, lines, setup } = row[k];
       const x = MARGIN + k * (colW + GAP_X);
       let ty = y + CELL_PAD;
 
@@ -278,20 +347,22 @@ export async function buildAlgSheet({
       }
       ty += NAME_SIZE + 2;
 
-      if (c.setup) {
+      if (setup.length) {
         doc.setFont(FONT_MONO, 'normal');
         doc.setFontSize(SETUP_SIZE);
         doc.setTextColor(pal.muted);
-        doc.text(c.setup, x + textX, ty + SETUP_SIZE - 1, { maxWidth: textW });
-        ty += SETUP_SIZE + 2;
+        for (let n = 0; n < setup.length; n++) {
+          doc.text(setup[n], x + textX + (n ? WRAP_INDENT : 0), ty + SETUP_SIZE - 1);
+          ty += SETUP_SIZE + 2;
+        }
       }
 
       doc.setFont(FONT_MONO, 'normal');
       doc.setFontSize(algSize);
       doc.setTextColor(pal.body);
       for (const wrapped of lines) {
-        for (const line of wrapped) {
-          doc.text(line, x + textX, ty + algSize - 1.5);
+        for (let n = 0; n < wrapped.length; n++) {
+          doc.text(wrapped[n], x + textX + (n ? WRAP_INDENT : 0), ty + algSize - 1.5);
           ty += algLine;
         }
       }
@@ -301,7 +372,7 @@ export async function buildAlgSheet({
     }
 
     i += row.length;
-    y += rowH + GAP_Y;
+    y += rowH + gapY;
     // 让出主线程,否则几百个 case 的表在生成期间整页卡住
     if (i % (cols * 4) === 0) await new Promise(r => setTimeout(r, 0));
   }

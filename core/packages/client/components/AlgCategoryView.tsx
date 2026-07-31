@@ -47,6 +47,7 @@ import { replaceHash } from '@/lib/url_hash';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { displayAlgCaseName, primaryCaseName, displayZbllToken } from '@/lib/alg_case_display';
 import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
+import { sortByCp } from '@/lib/alg_cp_order';
 import { ALG_TAG_LABEL, ALG_TAGS } from '@/lib/alg_tags';
 import { displayAlg, oriAdjustSetup, shortOriName } from '@/lib/alg_display';
 import { sanitizeAlgHtml } from '@/lib/alg_html';
@@ -579,9 +580,15 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     return null;
   }, [data, slugLevel, subgroupSlug]);
 
+  /**
+   * 展示用的排序:ZBLL / COLL 把「角块已成型」(U)和「对角换」(D)提到所在组的最前。
+   * 只动这一份 —— `data.cases` 保持库里的原顺序,admin 拖动重排写回的还是它。
+   */
+  const orderedCases = useMemo(() => sortByCp(set, data?.cases ?? []), [data, set]);
+
   const visibleCases = useMemo(() => {
     if (!data) return [];
-    const inSubgroup = !subgroupSlug ? data.cases : data.cases.filter(c => {
+    const inSubgroup = !subgroupSlug ? orderedCases : orderedCases.filter(c => {
       const parts = (c.subgroup || '').toLowerCase().split('/');
       if (slugLevel === 'top') return parts[0] === subgroupSlug;
       if (slugLevel === 'sub') return parts[1] === subgroupSlug;
@@ -669,11 +676,12 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
 
   /**
    * 「下载 PDF」要印的那份表。**所见即所印**:当前视角(y 切换)、当前标签筛选、
-   * 当前子组都跟着走。唯独子组选择页(还没列 case)例外 —— 那里印整套。
+   * 当前子组都跟着走。只有还没挑过组的那张落地页(`/alg/3x3/zbll`)才印整套 ——
+   * 挑过组之后即使停在二级选择页(`/zbll/u`),要的也是这一组,不是整个 ZBLL。
    */
   const buildPdfSheet = () => {
     const listing = !showSubgroupPicker && !showSubSubgroupPicker;
-    const pdfCases = listing ? visibleCases : (data?.cases ?? []);
+    const pdfCases = listing || subgroupSlug ? visibleCases : orderedCases;
     const title = `${puzzleParam} ${tr(meta)}${subgroupDisplay ? ` ${subgroupDisplay}` : ''}`;
     return algSheetFromCases({
       puzzle: puzzleParam as AlgPuzzle,
@@ -684,7 +692,11 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       filename: `${puzzleParam}-${set}${subgroupSlug ? `-${subgroupSlug}` : ''}`,
       oriOf: listing ? (c => caseOri[c.name] ?? activeOri) : undefined,
       algFilter: listing && filtering ? (a => !!a.tags?.includes(tagFilter)) : undefined,
-      groupLabel: (sub) => ollByGroup.get(sub) ?? sub,
+      // 组标题印展示名:库里的 `AS/ASD` 在页面上叫 `S-D`,打印表不该露出 DB 里那一串
+      groupLabel: (sub) => ollByGroup.get(sub)
+        ?? (set === 'zbll' ? displayZbllToken(sub.split('/').pop() ?? sub) : sub),
+      // ZBLL 一页一类:每个子组 12 个 case 正好是一张练习表,翻到哪页就练哪一类
+      groupPerPage: set === 'zbll',
     });
   };
 
@@ -790,7 +802,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     })}</div>}
 
       {data && showSubgroupPicker && (
-        <SubgroupIndex puzzle={puzzleParam as AlgPuzzle} set={set} cases={data.cases} ollByGroup={ollByGroup} isZh={isZh} />
+        <SubgroupIndex puzzle={puzzleParam as AlgPuzzle} set={set} cases={orderedCases} ollByGroup={ollByGroup} isZh={isZh} />
       )}
 
       {data && showSubSubgroupPicker && (() => {
