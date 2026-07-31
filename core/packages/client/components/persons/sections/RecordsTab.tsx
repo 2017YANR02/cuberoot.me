@@ -158,7 +158,7 @@ function TierRows({
             <td className="wp-cell-comp">
               {cmp ? (
                 <Link {...compLinkProps(cmp.id, { event: r.event_id, round: r.round_type_id, view: 'result' })} className="wp-bycomp-name">
-                  <CompCell compId={cmp.id} compName={cmp.name} isZh={isZh} />
+                  <CompCell compId={cmp.id} compName={cmp.name} isZh={isZh} date={cmp.start_date} />
                 </Link>
               ) : r.competition_id}
               {cmp && <div className="wp-cell-comp-date">{formatDateRangeIso(cmp.start_date, cmp.end_date)}</div>}

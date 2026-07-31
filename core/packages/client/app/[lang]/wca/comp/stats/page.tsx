@@ -487,7 +487,7 @@ function GeoExtremesSection({ comps, isZh }: { comps: Comp[]; isZh: boolean }) {
             <span className="cs-geo-comp">
               <Flag iso2={r.comp.country} />
               <Link href={compHref(r.comp.id)} className="cs-geo-name">
-                {localizeCompName(r.comp.id, r.comp.name, isZh)}
+                {localizeCompName(r.comp.id, r.comp.name, isZh, { date: r.comp.start_date })}
               </Link>
             </span>
             <span className="cs-geo-meta">

@@ -179,7 +179,8 @@ function champCell(c: { compId: string; name: string | null; pos: number | null 
   if (!c) return '';
   const medal = c.pos === 1 ? '🥇' : c.pos === 2 ? '🥈' : c.pos === 3 ? '🥉' : '';
   return (
-    <span><CompCell compId={c.compId} compName={c.name} isZh={isZh} /> {medal}</span>
+    // 表里没有日期列,年号是这格唯一的时间信息 —— 保留(date={null})。
+    <span><CompCell compId={c.compId} compName={c.name} isZh={isZh} date={null} /> {medal}</span>
   );
 }
 

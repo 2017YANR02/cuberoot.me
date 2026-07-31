@@ -84,7 +84,7 @@ export function CompCard({ comp, isZh, lang, pill, dimmed, follow, competitorLim
   /** 额外区块(如单场弹窗的纪录列表),渲染在卡片内、主链接与顶尖选手之后(同样不嵌在主 a 里)。 */
   children?: ReactNode;
 }) {
-  const name = localizeCompName(comp.id, comp.name, isZh, { explicitNameZh: comp.name_zh ?? undefined }).replace(/\s*20\d\d\s*$/, '');
+  const name = localizeCompName(comp.id, comp.name, isZh, { explicitNameZh: comp.name_zh ?? undefined, date: comp.start_date });
   const city = comp.city ? (isZh ? localizeCity(comp.city, true, comp.country) : comp.city) : '';
   const country = countryName(comp.country, isZh);
   const dateStr = formatDateRangeIso(comp.start_date, comp.end_date || comp.start_date).replace(/20\d\d-/g, '');

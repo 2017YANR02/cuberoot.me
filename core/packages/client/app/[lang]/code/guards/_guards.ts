@@ -85,6 +85,14 @@ export const PAIRED_GUARDS: PairedGuard[] = [
     zh: { title: '可伪造 X-Forwarded-For 作 IP', desc: '禁在 server 源码读取 X-Forwarded-For 头作请求 IP 来源 —— XFF 由客户端自填,谁都能伪造 → IP / visitor_id / 国家 spoofing、绕限流、污染统计。请求 IP 统一走 getIp(c)(utils/analytics_helpers.ts 单一源,只读 nginx 写入的可信 x-real-ip);原来 21 个 route 各抄一份带 XFF 回退的本地 getIp,已收敛成这一份。确有正当用途(仅记录原始 XFF 链、绝不用于身份判定)行内 allow-forwarded-for 豁免。' },
     en: { title: 'Forgeable X-Forwarded-For as IP', desc: 'No reading the X-Forwarded-For header as the request IP source in server code — XFF is client-set and anyone can forge it → IP / visitor_id / country spoofing, rate-limit bypass, polluted analytics. Request IP funnels through getIp(c) (utils/analytics_helpers.ts, the single source, reads only nginx’s trusted x-real-ip); 21 routes each had their own local getIp with an XFF fallback, now collapsed to this one. Genuine uses (logging the raw XFF chain, never for identity) are exempt via inline allow-forwarded-for.' },
   },
+  {
+    id: 'comp-name-year',
+    hook: 'block-comp-name-year-regex.ps1 → hook-detect-comp-year-regex.mjs',
+    test: 'comp-year-single-source.test.ts',
+    baseline: '0（3 份手抄 → 1 份）',
+    zh: { title: '比赛名年号各剥各的', desc: '全站规则:比赛年份已经写在页面上(同行日期列 / 卡片日期 / 年份分组标题)时,比赛名里不再重复年号 —— 人物页成绩表原先是「夹江公开赛2026」压着「2026-07-25」(issue #65)。这条规则曾被三处各抄一份正则实现(CompCard、OngoingComps、CompDetailPage),口径互不相同还漏了人物页。现在唯一实现是 lib/comp-localize.ts 的 stripCompYear,调用点走 localizeCompName(…, { date }) 或 <CompCell date={…} />;CompCell 的 date 是必填(string | null),逼每个调用点表态 —— 页面没显示年份的地方(搜索下拉、无日期列的榜单)传 null 保留年号。再手搓「尾部四位年」正则直接红。' },
+    en: { title: 'Comp-name year stripped ad hoc', desc: 'Site-wide rule: when the competition year is already on the page (same-row date column, card date, year group header), the comp name must not repeat it — the person page used to stack "夹江公开赛2026" right on top of "2026-07-25" (issue #65). The rule had three separate hand-written implementations (CompCard, OngoingComps, CompDetailPage), none of them agreeing and none covering the person page. The single implementation is now stripCompYear in lib/comp-localize.ts, reached via localizeCompName(…, { date }) or <CompCell date={…} />; CompCell’s date prop is required (string | null) so every call site takes a position — pass null where no year is shown (search dropdowns, tables without a date column) and the year stays. Hand-rolling a trailing-year regex turns CI red.' },
+  },
 ];
 
 export interface CiGuard {

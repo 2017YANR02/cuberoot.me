@@ -47,9 +47,9 @@ export default function MilestonesTab({ profile, results, comps, isZh }: Props) 
   const [threshold, setThreshold] = useState(33);
   const [asc, setAsc] = useState(false);
 
-  const compNameById = useMemo(() => {
-    const m = new Map<string, string>();
-    if (comps) for (const c of comps) m.set(c.id, c.name);
+  const compById = useMemo(() => {
+    const m = new Map<string, { name: string; date: string | null }>();
+    if (comps) for (const c of comps) m.set(c.id, { name: c.name, date: c.start_date ?? null });
     return m;
   }, [comps]);
 
@@ -59,9 +59,10 @@ export default function MilestonesTab({ profile, results, comps, isZh }: Props) 
       improvementThreshold: threshold / 100,
       eventZh: EVENT_ZH,
       eventEn: EVENT_EN,
-      compName: (id) => localizeCompName(id, compNameById.get(id) ?? id, isZh),
+      // 每条里程碑左侧已经写着日期 —— 比赛名里的年号是重复信息,剥掉。
+      compName: (id) => localizeCompName(id, compById.get(id)?.name ?? id, isZh, { date: compById.get(id)?.date }),
     });
-  }, [profile, results, comps, threshold, isZh, compNameById]);
+  }, [profile, results, comps, threshold, isZh, compById]);
 
   if (!milestones) return <div className="wp-loading-inline">{t('加载中…', 'Loading…')}</div>;
 

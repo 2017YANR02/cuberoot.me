@@ -731,7 +731,7 @@ export default function ReconListPage() {
       case 'comp': {
         const flag = solve.country ? <Flag iso2={solve.country} className="recon-inline-flag" /> : null;
         const rawName = solve.comp || '';
-        const displayName = localizeCompName(solve.compWcaId ?? '', rawName, isZh);
+        const displayName = localizeCompName(solve.compWcaId ?? '', rawName, isZh, { date: solve.date });
         if (solve.compWcaId) {
           return (
             <>

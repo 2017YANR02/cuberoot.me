@@ -272,7 +272,7 @@ export default function ReconPersonClient() {
                       { name: s.person || '', id: s.personId, country: s.personCountry },
                       ...(s.coPersons ?? []),
                     ].filter(c => c.name);
-                    const compName = s.comp ? localizeCompName(s.compWcaId ?? '', s.comp, isZh) : '';
+                    const compName = s.comp ? localizeCompName(s.compWcaId ?? '', s.comp, isZh, { date: s.date }) : '';
                     const compFlag = s.country ? <Flag iso2={s.country} className="recon-inline-flag" /> : null;
                     return (
                       <tr

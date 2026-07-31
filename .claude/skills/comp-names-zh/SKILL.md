@@ -1,11 +1,20 @@
 ---
 name: comp-names-zh
-description: "Use when regenerating `stats/comp_names_zh.json`, debugging Chinese comp names, or displaying comp name in new code (must go through `utils/comp_localize.ts`, never raw `c.name`). Triggers: \"中国比赛中文\", \"localizeCompName\", \"comp_names_zh\", \"fetch_comp_names_zh\", \"比赛名本地化\", \"stripWcaPrefix\", \"localizeCity\", \"CITY_ZH\"."
+description: "Use when regenerating `stats/comp_names_zh.json`, debugging Chinese comp names, or rendering a competition name anywhere in the UI (must go through `lib/comp-localize.ts`, never raw `c.name`; the year in the name must not duplicate a date shown next to it). Triggers: \"中国比赛中文\", \"localizeCompName\", \"comp_names_zh\", \"fetch_comp_names_zh\", \"比赛名本地化\", \"stripWcaPrefix\", \"CompCell\", \"比赛名年份\", \"比赛名重复年份\", \"stripCompYear\", \"localizeCity\", \"CITY_ZH\"."
 ---
 
 # 中国比赛名中文化
 
 前端显示规则全在 `core/packages/client/lib/comp-localize.ts` 的 JSDoc（`localizeCompName` / `stripWcaPrefix`）。新代码渲染比赛名一律走它，禁止裸 `c.name`。`compNameZh()` 命中前先 `await loadFlagData()`。
+
+## 年份不重复（全站规则，issue #65）
+
+比赛年份已经显示在页面上（同行日期列 / 卡片日期 / 年份分组标题）时，比赛名里就不再出现年号：`夹江公开赛2026` + `2026-07-25` → 显示 `夹江公开赛`。
+
+- 表格 / 列表用 `<CompCell … date={comp.start_date} />`；`date` **必填**（`string | null`），逼你表态。
+- 其它渲染点 `localizeCompName(id, name, isZh, { date })`。
+- 页面上**没写**年份的地方（搜索下拉、无日期列的榜单、比赛详情页 H1 与复制名）传 `null` / 不传 —— 那里年号是唯一的区分信息。
+- 唯一实现是 `stripCompYear`，**禁**在调用点手写 `/\s*20\d\d\s*$/` 之类正则。守卫：写入即拦 `.claude/hooks/block-comp-name-year-regex.ps1` + CI `tests/comp-year-single-source.test.ts`。
 
 ## 数据：`stats/comp_names_zh.json`
 
