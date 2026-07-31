@@ -10,8 +10,9 @@
       _sync_cstimer_scramble.ps1  csTimer 打乱源码 → tools/cstimer-scramble/（纯拷贝）
       _sync_RubiksSolverDemo.ps1  Solver → tools/{src,solver,2x2x2,...}/
       sync_alg_trainers.ps1       Alg-Trainers → tools/alg_trainers/
+      _sync_blddb.ps1             BLDDB → tools/blddb/(next build 静态导出)
 .PARAMETER Only
-    只同步部分上游：cstimer / solver / algtrainers（可多选）。默认全同步。
+    只同步部分上游：cstimer / solver / algtrainers / blddb（可多选）。默认全同步。
 .PARAMETER SkipPull
     跳过 git pull，只用当前 clone 的工作区重新生成产物。
 .PARAMETER DryRun
@@ -20,7 +21,7 @@
     前置：Java 21 + PHP 8.3 + C:\mingw64\bin\mingw32-make.exe（仅 csTimer 构建需要）。
 #>
 param(
-    [ValidateSet('cstimer', 'solver', 'algtrainers')]
+    [ValidateSet('cstimer', 'solver', 'algtrainers', 'blddb')]
     [string[]]$Only,
     [switch]$SkipPull,
     [switch]$DryRun
@@ -34,6 +35,7 @@ $upstreams = @(
     @{ Key = 'cstimer';     Dir = 'D:\cube\cstimer';                  Branch = 'master'; Repo = 'https://github.com/cs0x7f/cstimer.git' }
     @{ Key = 'solver';      Dir = 'D:\cube\RubiksSolverDemo';         Branch = 'main';   Repo = 'https://github.com/or18/RubiksSolverDemo.git' }
     @{ Key = 'algtrainers'; Dir = 'D:\cube\mihlefeld-alg-trainers';   Branch = 'master'; Repo = 'https://github.com/mihlefeld/Alg-Trainers.git' }
+    @{ Key = 'blddb';       Dir = 'D:\cube\blddb';                    Branch = 'v2';     Repo = 'https://github.com/nbwzx/blddb.git' }
 )
 
 $targets = if ($Only) { $Only } else { $upstreams.Key }
@@ -132,6 +134,20 @@ if ($targets -contains 'algtrainers')
 {
     Write-Host "`n--- Alg-Trainers ---" -ForegroundColor Cyan
     & (Join-Path $root 'sync_alg_trainers.ps1') @dry
+}
+
+if ($targets -contains 'blddb')
+{
+    if ($DryRun)
+    {
+        Write-Host "`n[DRY RUN] 跳过 BLDDB（要 next build 才知道产物，无法预览）" -ForegroundColor Yellow
+    }
+    else
+    {
+        # NOTE: 上游是 Next 应用,这里是真 build(npm install + next build 静态导出),不是拷文件。
+        Write-Host "`n--- BLDDB（构建，需 Node/npm）---" -ForegroundColor Cyan
+        & (Join-Path $root '_sync_blddb.ps1') -SkipPull
+    }
 }
 
 # ===== 汇总 =====

@@ -57,10 +57,13 @@ export default function IframePage({ src, title }: IframePageProps) {
             if (iframeDoc) {
               // NOTE: 防止在 iframe 内部通过 <a> 标签导航时，把 React SPA 加载到 iframe 里形成套娃。
               // 自动将同源绝对路径的链接（如 href="/cross_trainer/"）设为 _top，交给外层的 React App 路由处理。
+              // 例外：指向本 iframe 自己那棵树的绝对链接（BLDDB 是 Next 应用，内部链接都带
+              // basePath /tools/blddb/…）—— 打 _top 会把整个站跳出去，且 next/link 见到
+              // target 就放弃客户端路由，站内导航直接废掉。
               const links = iframeDoc.querySelectorAll('a');
               links.forEach(a => {
                 const href = a.getAttribute('href');
-                if (href && href.startsWith('/')) {
+                if (href && href.startsWith('/') && !href.startsWith(src)) {
                   a.target = '_top';
                 }
               });

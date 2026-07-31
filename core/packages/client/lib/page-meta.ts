@@ -99,6 +99,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'alg/skewb-trainer': { title: { zh: 'Skewb 技巧训练', en: 'Skewb Skills' } },
   'algTrainer': { title: { zh: '公式训练器', en: 'Alg Trainer' } },
   'appearance': { title: { zh: '配色主题', en: 'Color Themes' } },
+  'blddb': {
+    title: { zh: 'BLDDB 盲拧公式库', en: 'BLDDB' },
+    description: {
+      zh: 'BLDDB 盲拧公式库:三阶角块 / 棱块全缓冲区三循环,翻色扭角,以及高阶盲拧的翼棱与中心块公式。',
+      en: 'BLDDB — blindfolded algorithm database: 3-style corners and edges for every buffer, twists and flips, plus wings and centers for big BLD.',
+    },
+  },
   'calc': {
     title: { zh: '成绩计算器', en: 'Score Calculator' },
     description: {
