@@ -1,0 +1,186 @@
+import type { Question } from '../types';
+
+// 进阶 规则与判罚 —— 打乱要求、时限、录像证据这些平时只有代表和裁判会翻的条款。
+// 每条都对着站内 WCA 规则全文写,解析里给条款号。
+export const RULES_HARD: Question[] = [
+  {
+    id: 'rule-h01', cat: 'rules', type: 'choice',
+    q: { zh: '官方打乱必须随机到「至少几步才能还原」的状态(一般项目)?', en: 'Official scrambles must land on a state needing at least how many moves (general case)?' },
+    options: [
+      { zh: '2 步', en: '2' },
+      { zh: '1 步', en: '1' },
+      { zh: '5 步', en: '5' },
+      { zh: '没有下限', en: 'No minimum' },
+    ],
+    answer: 0,
+    why: { zh: '规则 4b3:在「至少两步才能还原」的所有状态里等概率随机,免得抽到几乎已还原的打乱。', en: 'Regulation 4b3 — uniformly random among all states needing at least two moves, so nobody draws a nearly-solved scramble.' },
+  },
+  {
+    id: 'rule-h02', cat: 'rules', type: 'choice',
+    q: { zh: '二阶的官方打乱要求至少几步才能还原?', en: 'A 2×2 scramble must need at least how many moves?' },
+    options: [
+      { zh: '4 步', en: '4' },
+      { zh: '2 步', en: '2' },
+      { zh: '7 步', en: '7' },
+      { zh: '11 步', en: '11' },
+    ],
+    answer: 0,
+    why: { zh: '规则 4b3b。状态空间小,门槛要抬高些才不至于送分。', en: 'Regulation 4b3b — the state space is small, so the bar is raised.' },
+  },
+  {
+    id: 'rule-h03', cat: 'rules', type: 'choice',
+    q: { zh: '斜转(Skewb)的打乱至少几步?', en: 'A Skewb scramble must need at least how many moves?' },
+    options: [
+      { zh: '7 步', en: '7' },
+      { zh: '4 步', en: '4' },
+      { zh: '6 步', en: '6' },
+      { zh: '11 步', en: '11' },
+    ],
+    answer: 0,
+    why: { zh: '规则 4b3c。顺带一提,斜转的上帝之数就是 11 步。', en: 'Regulation 4b3c. For reference, the Skewb\'s God\'s number is 11.' },
+  },
+  {
+    id: 'rule-h04', cat: 'rules', type: 'choice',
+    q: { zh: 'Square-1 的打乱至少几步?', en: 'A Square-1 scramble must need at least how many moves?' },
+    options: [
+      { zh: '11 步', en: '11' },
+      { zh: '6 步', en: '6' },
+      { zh: '7 步', en: '7' },
+      { zh: '13 步', en: '13' },
+    ],
+    answer: 0,
+    why: { zh: '规则 4b3d,而且这个状态必须能在不转 (X, Y) 的前提下先转「/」。', en: 'Regulation 4b3d — and the state must allow a "/" without first turning (X, Y).' },
+  },
+  {
+    id: 'rule-h05', cat: 'rules', type: 'choice',
+    q: { zh: '金字塔的打乱至少几步?', en: 'A Pyraminx scramble must need at least how many moves?' },
+    options: [
+      { zh: '6 步', en: '6' },
+      { zh: '4 步', en: '4' },
+      { zh: '7 步', en: '7' },
+      { zh: '2 步', en: '2' },
+    ],
+    answer: 0,
+    why: { zh: '规则 4b3f。', en: 'Regulation 4b3f.' },
+  },
+  {
+    id: 'rule-h06', cat: 'rules', type: 'choice',
+    q: { zh: '哪些项目用「随机转动」而不是「随机状态」来打乱?', en: 'Which events are scrambled by random moves instead of a random state?' },
+    options: [
+      { zh: '五阶、六阶、七阶和五魔方', en: '5×5, 6×6, 7×7 and Megaminx' },
+      { zh: '所有盲拧项目', en: 'All blindfolded events' },
+      { zh: '二阶和金字塔', en: '2×2 and Pyraminx' },
+      { zh: '只有七阶', en: 'Only 7×7' },
+    ],
+    answer: 0,
+    why: { zh: '规则 4b3e:这几个魔方没有实用的随机状态求解器,只能随机转一长串。', en: 'Regulation 4b3e — no practical random-state solver exists for these, so a long random sequence is used.' },
+  },
+  {
+    id: 'rule-h07', cat: 'rules', type: 'choice',
+    q: { zh: '同一条打乱公式在首次使用后多久内必须用完?', en: 'A scramble sequence must be used within how long after its first use?' },
+    options: [
+      { zh: '2 小时', en: 'Two hours' },
+      { zh: '30 分钟', en: 'Thirty minutes' },
+      { zh: '当天之内', en: 'The same day' },
+      { zh: '没有限制', en: 'No limit' },
+    ],
+    answer: 0,
+    why: { zh: '规则 4b4:拖太久泄题风险大。已经在时限内开始的还原不会被中断。', en: 'Regulation 4b4 — the longer it lingers, the greater the leak risk. A solve already started is never interrupted.' },
+  },
+  {
+    id: 'rule-h08', cat: 'rules', type: 'choice',
+    q: { zh: '金字塔打乱时的朝向是什么?', en: 'What orientation is a Pyraminx scrambled in?' },
+    options: [
+      { zh: '黄面(最亮面)朝下,绿面朝前', en: 'Yellow (lightest) face down, green facing front' },
+      { zh: '白面朝上,绿面朝前', en: 'White up, green front' },
+      { zh: '任意朝向', en: 'Any orientation' },
+      { zh: '红面朝上', en: 'Red up' },
+    ],
+    answer: 0,
+    why: { zh: '规则 4d2。三阶和五魔方才是白(最亮)朝上、绿(最暗的相邻面)朝前。', en: 'Regulation 4d2. NxN cubes and Megaminx are the ones scrambled white-up, green-front.' },
+  },
+  {
+    id: 'rule-h09', cat: 'rules', type: 'choice',
+    q: { zh: '斜转打乱时的朝向?', en: 'And how is a Skewb scrambled?' },
+    options: [
+      { zh: '白面朝上,绿面朝左前', en: 'White up, green at front-left' },
+      { zh: '白面朝上,绿面朝正前', en: 'White up, green straight ahead' },
+      { zh: '黄面朝下,绿面朝前', en: 'Yellow down, green front' },
+      { zh: '任意朝向', en: 'Any orientation' },
+    ],
+    answer: 0,
+    why: { zh: '规则 4d5:斜转没有「正前」的面,所以定的是左前那条棱的方向。', en: 'Regulation 4d5 — a Skewb has no square front face, so the front-left corner region is what gets fixed.' },
+  },
+  {
+    id: 'rule-h10', cat: 'rules', type: 'choice',
+    q: { zh: '单次还原的默认时限是多久?', en: 'What is the default time limit for a single attempt?' },
+    options: [
+      { zh: '10 分钟', en: 'Ten minutes' },
+      { zh: '5 分钟', en: 'Five minutes' },
+      { zh: '15 分钟', en: 'Fifteen minutes' },
+      { zh: '按项目不同,没有统一默认值', en: 'It varies by event, with no default' },
+    ],
+    answer: 0,
+    why: { zh: '规则 A1a1:主办团队可以宣布更长或更短,但每轮必须一致;还可以叠加「累计时限」。', en: 'Regulation A1a1 — organisers may announce a different limit, equal for the whole round, and may add a cumulative limit.' },
+  },
+  {
+    id: 'rule-h11', cat: 'rules', type: 'choice',
+    q: { zh: '预计超过 10 分钟的尝试,必须额外用什么计时?', en: 'An attempt expected to exceed ten minutes needs what extra timing device?' },
+    options: [
+      { zh: '秒表', en: 'A stopwatch' },
+      { zh: '第二台 Stackmat', en: 'A second Stackmat' },
+      { zh: '手机计时器', en: 'A phone timer' },
+      { zh: '不需要额外设备', en: 'Nothing extra' },
+    ],
+    answer: 0,
+    why: { zh: '规则 A1b:Stackmat 到十分钟就翻篇,长项目一律配秒表;选手可以拿起来看,但不能碰它计时。', en: 'Regulation A1b — a Stackmat rolls over at ten minutes. Competitors may look at the stopwatch but not operate it.' },
+  },
+  {
+    id: 'rule-h12', cat: 'rules', type: 'choice',
+    q: { zh: '一个项目相邻两轮之间,至少要淘汰多少选手?', en: 'Between consecutive rounds of an event, at least how many competitors must be cut?' },
+    options: [
+      { zh: '25%', en: '25%' },
+      { zh: '10%', en: '10%' },
+      { zh: '50%', en: '50%' },
+      { zh: '没有要求', en: 'There is no requirement' },
+    ],
+    answer: 0,
+    why: { zh: '规则 9p1(双重轮例外)。所以「决赛人数」不是想设多少就设多少。', en: 'Regulation 9p1, with dual rounds exempt — so field sizes can\'t be chosen freely.' },
+  },
+  {
+    id: 'rule-h13', cat: 'rules', type: 'choice',
+    q: { zh: '什么情况下才允许用慢放或逐帧的录像来判罚?', en: 'When may slow-motion or frame-by-frame video be used in a ruling?' },
+    options: [
+      { zh: '涉及纪录、世界前 50 选手的个人纪录,或锦标赛决赛等少数情形', en: 'Only in a few cases: records, personal bests of top-50 competitors, championship finals and the like' },
+      { zh: '任何有争议的还原都可以', en: 'Any disputed solve' },
+      { zh: '只要选手申请就可以', en: 'Whenever the competitor asks' },
+      { zh: '一律不允许', en: 'Never' },
+    ],
+    answer: 0,
+    why: { zh: '规则 11f1:默认只能按正常速度看。逐帧结论还只能用于取消判罚等有限用途。', en: 'Regulation 11f1 — video is normally reviewed at normal speed, and frame-by-frame findings may only support a limited set of decisions.' },
+  },
+  {
+    id: 'rule-h14', cat: 'rules', type: 'choice',
+    q: { zh: '手一抖比魔方还原早了一点点停表,差多少以内还能补救?', en: 'You stop the timer a fraction too early. Within what margin can the attempt be salvaged?' },
+    options: [
+      { zh: '差 0.06 秒以内可以给一次额外尝试,达到或超过就 DNF', en: 'Under 0.06s you may be granted an extra attempt; at or beyond that it is a DNF' },
+      { zh: '差 0.5 秒以内都算还原', en: 'Anything under 0.5s still counts as solved' },
+      { zh: '一律 +2', en: 'Always +2' },
+      { zh: '一律 DNF,没有余地', en: 'Always DNF, no exceptions' },
+    ],
+    answer: 0,
+    why: { zh: '规则 A6b1 / A6b2:0.06 秒是「计时器可能自己出问题」的容差线,不是给手抖的宽容。', en: 'Regulations A6b1 and A6b2 — 0.06s is the allowance for a possible timer fault, not for a twitchy hand.' },
+  },
+  {
+    id: 'rule-h15', cat: 'rules', type: 'choice',
+    q: { zh: '盲拧项目里裁判示意「准备好了」之后,选手必须在多久内开始?', en: 'In a blindfolded event, how long do you have to start after the judge says they are ready?' },
+    options: [
+      { zh: '1 分钟,否则记 DNS', en: 'One minute, or it is a DNS' },
+      { zh: '15 秒', en: 'Fifteen seconds' },
+      { zh: '5 分钟', en: 'Five minutes' },
+      { zh: '不限时', en: 'No limit' },
+    ],
+    answer: 0,
+    why: { zh: '规则 B2a。盲拧没有观察阶段,启动计时器那一刻就直接开始记忆。', en: 'Regulation B2a. Blindfolded events have no inspection — the clock starts and memorisation begins.' },
+  },
+];

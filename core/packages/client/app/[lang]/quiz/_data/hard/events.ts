@@ -1,0 +1,173 @@
+import type { Question } from '../types';
+
+// 进阶 项目与赛制 —— 最少步和多盲的细则,以及那些少见的轮次形式。
+export const EVENTS_HARD: Question[] = [
+  {
+    id: 'evt-h01', cat: 'events', type: 'choice',
+    q: { zh: '最少步(FMC)一次尝试给多少时间?', en: 'How long is one Fewest Moves attempt?' },
+    options: [
+      { zh: '60 分钟', en: 'Sixty minutes' },
+      { zh: '30 分钟', en: 'Thirty minutes' },
+      { zh: '90 分钟', en: 'Ninety minutes' },
+      { zh: '不限时,写完就交', en: 'Unlimited — hand in when done' },
+    ],
+    answer: 0,
+    why: { zh: '规则 E2b。裁判会在第 55 分钟提醒「还剩 5 分钟」,60 分钟喊停。', en: 'Regulation E2b. The judge calls "5 minutes left" at 55 minutes and "stop" at 60.' },
+  },
+  {
+    id: 'evt-h02', cat: 'events', type: 'choice',
+    q: { zh: 'FMC 提交的解法最长可以写多少步?', en: 'What is the maximum length of a submitted Fewest Moves solution?' },
+    options: [
+      { zh: '80 步(按 ETM 数,含整体旋转)', en: '80 moves, counted in ETM including rotations' },
+      { zh: '60 步', en: '60' },
+      { zh: '100 步', en: '100' },
+      { zh: '不限', en: 'No limit' },
+    ],
+    answer: 0,
+    why: { zh: '规则 E2d1:超过 80 步直接 DNF。而成绩本身是按 OBTM 计步的(整体旋转不算步)。', en: 'Regulation E2d1 — over 80 and it is a DNF. The score itself is counted in OBTM, where rotations are free.' },
+  },
+  {
+    id: 'evt-h03', cat: 'events', type: 'choice',
+    q: { zh: 'FMC 的成绩按哪种度量计步?', en: 'Which metric scores a Fewest Moves solution?' },
+    options: [
+      { zh: 'OBTM,整体旋转不计步', en: 'OBTM — whole-cube rotations are free' },
+      { zh: 'ETM,整体旋转也计步', en: 'ETM — rotations count' },
+      { zh: 'QTM,半转算两步', en: 'QTM — a half turn counts twice' },
+      { zh: 'STM,切片算一步', en: 'STM — slices count as one' },
+    ],
+    answer: 0,
+    why: { zh: '规则 E2d。所以写 y 或 z 调整视角不花步数,但受 80 步的 ETM 上限约束。', en: 'Regulation E2d. Writing y or z costs nothing, though it still counts towards the 80-move ETM cap.' },
+  },
+  {
+    id: 'evt-h04', cat: 'events', type: 'choice',
+    q: { zh: 'FMC 时选手最多能带几个魔方上场?', en: 'How many cubes may a competitor use during Fewest Moves?' },
+    options: [
+      { zh: '3 个', en: 'Three' },
+      { zh: '1 个', en: 'One' },
+      { zh: '2 个', en: 'Two' },
+      { zh: '不限', en: 'As many as they like' },
+    ],
+    answer: 0,
+    why: { zh: '规则 E3b:自备,开始时不必是还原态;还可以带贴纸、修正带和一块表。', en: 'Regulation E3b — bring your own, not necessarily solved. Stickers, correction tape and a watch are allowed too.' },
+  },
+  {
+    id: 'evt-h05', cat: 'events', type: 'choice',
+    q: { zh: 'FMC 的解法能和逆打乱有重合吗?', en: 'May a Fewest Moves solution overlap with the inverse scramble?' },
+    options: [
+      { zh: '不能,前 4 步以上完全一致就 DNF', en: 'No — matching more than four moves is a DNF' },
+      { zh: '可以,只要总步数够短', en: 'Yes, as long as it is short' },
+      { zh: '可以,但要标注出来', en: 'Yes, if it is marked' },
+      { zh: '只有决赛不能', en: 'Only banned in finals' },
+    ],
+    answer: 0,
+    why: { zh: '规则 E2e:解法禁止「照抄逆打乱」,代表还可以要求你解释每一步的目的。', en: 'Regulation E2e — no unwinding the scramble, and the Delegate may ask you to justify every move.' },
+  },
+  {
+    id: 'evt-h06', cat: 'events', type: 'choice',
+    q: { zh: '多盲最少要申报几个魔方?', en: 'What is the minimum number of cubes you may declare in multi-blind?' },
+    options: [
+      { zh: '2 个', en: 'Two' },
+      { zh: '1 个', en: 'One' },
+      { zh: '3 个', en: 'Three' },
+      { zh: '6 个', en: 'Six' },
+    ],
+    answer: 0,
+    why: { zh: '规则 H1a:开始前提交个数,提交后不能改。', en: 'Regulation H1a — you submit the count beforehand and cannot change it.' },
+  },
+  {
+    id: 'evt-h07', cat: 'events', type: 'choice',
+    q: { zh: '多盲的时限怎么算?', en: 'How is the multi-blind time limit determined?' },
+    options: [
+      { zh: '少于 6 个:10 分钟 × 个数;6 个及以上:60 分钟', en: 'Under six cubes: ten minutes each. Six or more: sixty minutes flat' },
+      { zh: '一律 60 分钟', en: 'Always sixty minutes' },
+      { zh: '一律 10 分钟 × 个数', en: 'Always ten minutes per cube' },
+      { zh: '由主办团队每场自定', en: 'Set by the organisers each time' },
+    ],
+    answer: 0,
+    why: { zh: '规则 H1b。所以申报 5 个是 50 分钟,申报 6 个反而给满 60 分钟。', en: 'Regulation H1b — five cubes give you 50 minutes, while six give the full hour.' },
+  },
+  {
+    id: 'evt-h08', cat: 'events', type: 'choice',
+    q: { zh: '多盲里如果有两个魔方各吃了一个 +2,时间怎么算?', en: 'Two cubes in a multi-blind attempt each earn a +2. What happens to the time?' },
+    options: [
+      { zh: '两个都累加,总共 +4', en: 'Both add up, so +4 in total' },
+      { zh: '只算一次 +2', en: 'Only one +2 counts' },
+      { zh: '整次尝试判 DNF', en: 'The whole attempt is a DNF' },
+      { zh: '那两个魔方算未还原', en: 'Those two cubes count as unsolved' },
+    ],
+    answer: 0,
+    why: { zh: '规则 H1d:加罚累加,所以最终成绩可能写成 60:04 这种超过时限的数。', en: 'Regulation H1d — penalties stack, which is why you sometimes see a final time like 60:04.' },
+  },
+  {
+    id: 'evt-h09', cat: 'events', type: 'choice',
+    q: { zh: '多盲名次怎么排?', en: 'How is multi-blind ranked?' },
+    options: [
+      { zh: '看「还原数 − 未还原数」,差越大越好;平了看总时间', en: 'By solved minus unsolved, larger is better; ties broken by total time' },
+      { zh: '只看还原了几个', en: 'By the number solved' },
+      { zh: '只看总时间', en: 'By total time' },
+      { zh: '看正确率百分比', en: 'By success percentage' },
+    ],
+    answer: 0,
+    why: { zh: '规则 9f12c:差小于 0、或者只还原了 1 个,这次尝试都判 DNF。', en: 'Regulation 9f12c — a difference below zero, or only one cube solved, makes the attempt a DNF.' },
+  },
+  {
+    id: 'evt-h10', cat: 'events', type: 'choice',
+    q: { zh: '三阶单手项目,观察阶段能用双手吗?', en: 'In one-handed solving, may you use both hands during inspection?' },
+    options: [
+      { zh: '可以,限制只在还原阶段', en: 'Yes — the restriction only applies once solving starts' },
+      { zh: '不行,全程单手', en: 'No, one hand throughout' },
+      { zh: '可以,但只能碰不能翻', en: 'You may touch it but not turn it over' },
+      { zh: '看裁判允许', en: 'At the judge\'s discretion' },
+    ],
+    answer: 0,
+    why: { zh: '规则 C1b+。同一轮里不同次还原甚至可以换手,但一次还原中途不能换。', en: 'Regulation C1b+. You may even switch hands between attempts — just not mid-solve.' },
+  },
+  {
+    id: 'evt-h11', cat: 'events', type: 'choice',
+    q: { zh: '单手还原途中魔方散架,该用哪只手修?', en: 'Your cube pops mid-solve in one-handed. Which hand may repair it?' },
+    options: [
+      { zh: '只能用还原用的那只手', en: 'Only the hand you are solving with' },
+      { zh: '两只手都行', en: 'Either or both' },
+      { zh: '可以请裁判帮忙', en: 'The judge may help' },
+      { zh: '必须停止还原', en: 'You must stop the attempt' },
+    ],
+    answer: 0,
+    why: { zh: '规则 C1b2:换手修 = DNF。', en: 'Regulation C1b2 — using the other hand means DNF.' },
+  },
+  {
+    id: 'evt-h12', cat: 'events', type: 'choice',
+    q: { zh: '「双重轮」(dual round)是什么意思?', en: 'What is a dual round?' },
+    options: [
+      { zh: '一个项目连着打两轮,取较好的一轮排名,两轮之间不淘汰人', en: 'Two consecutive rounds of one event, ranked by the better of the two, with nobody cut in between' },
+      { zh: '两个项目合并成一轮', en: 'Two events merged into one round' },
+      { zh: '两人一组同时比', en: 'Two people competing side by side' },
+      { zh: '打两次取平均', en: 'Two rounds averaged together' },
+    ],
+    answer: 0,
+    why: { zh: '规则 9v:只能是某项目的前两轮,两轮的赛制、时限、及格线必须一致,两轮成绩都进世界排名。', en: 'Regulation 9v — only the first two rounds, with identical format, limits and cutoff. Both rounds count for rankings.' },
+  },
+  {
+    id: 'evt-h13', cat: 'events', type: 'choice',
+    q: { zh: '「有及格线的轮次」(combined round)第一阶段是什么形式?', en: 'What is the first phase of a combined round?' },
+    options: [
+      { zh: '「X 次取最好」加一条及格线,达到才能继续打后面几次', en: '"Best of X" plus a cutoff — reach it to continue' },
+      { zh: '直接打完 5 次再截取', en: 'All five attempts, then a cut' },
+      { zh: '按报名成绩筛人', en: 'A cut based on registration times' },
+      { zh: '抽签决定', en: 'A random draw' },
+    ],
+    answer: 0,
+    why: { zh: '规则 9g:第一阶段的成绩照样计入整轮成绩,不会因为没过线就作废。', en: 'Regulation 9g — first-phase results still count towards the round, cutoff or not.' },
+  },
+  {
+    id: 'evt-h14', cat: 'events', type: 'choice',
+    q: { zh: '哪个项目不需要打乱员?', en: 'Which event needs no scrambler?' },
+    options: [
+      { zh: '三阶最少步', en: 'Fewest Moves' },
+      { zh: '三阶多盲', en: 'Multi-blind' },
+      { zh: '魔表', en: 'Clock' },
+      { zh: '每个项目都需要', en: 'Every event needs one' },
+    ],
+    answer: 0,
+    why: { zh: '规则 1f:FMC 是把打乱公式直接发到选手手上的,自己照着拧。', en: 'Regulation 1f — in Fewest Moves the scramble is handed to competitors on paper.' },
+  },
+];

@@ -32,6 +32,10 @@
  * 空的一步(白给的那一对 / OLL 跳过)`endIdx` 是 null,不占一行 —— 一行零个记号
  * 配一个标签是噪声,它在表里已经写着「跳过」了。
  *
+ * 唯一一处「表里的步数 ≠ 这里的记号数」是**中层**:魔方把一个 `S` 报成一对相对面,
+ * `humanize.ts` 把它写回一个 `S`,于是那一行比表里少一个记号。切点一手没动,少的
+ * 那个就是被并进中层的那一半 —— 详见 `humanize.ts` 头注。
+ *
  * ## 转体
  *
  * 魔方不报 x/y/z(陀螺仪装在中心核里,转体不改状态字节),所以动作流里没有它们。
@@ -50,6 +54,7 @@ import { patternFromAlg } from '@/lib/cube3';
 import { buildCommentSuggestions } from '@/lib/popup_suggest';
 
 import { htmMoves } from './htm';
+import { humanizeStream } from './humanize';
 import type { F2lSlotsResult } from './f2l_slots';
 import type { SolveMove, StageSegments } from './stage_segments';
 import { stepTimeBounds } from './rotation_detect';
@@ -266,6 +271,15 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
   const rotations = input.rotations ?? [];
   const spans = stepSpans(segs, metrics, slots);
   const counted = htmMoves(moves);
+  // 中层还原。魔方按「相对中心核」报手法,所以一个 `S` 到这里是一对相对面 + 后面
+  // 每一手都被换了名 —— 那行谱子于是不像任何公式。只重写**写出来的记号**:计步、
+  // 识别、参考解仍然吃 `counted`(魔方确实转了两下面)。
+  const humanized = humanizeStream(counted, { boundaries: new Set(spans.map(s => s.endIdx)) });
+  const shownFor = (from: number, to: number): string[] => (
+    humanized.merges > 0
+      ? tokensForRange(moves, humanized.moves, from, to)
+      : tokensForRange(moves, counted, from, to)
+  );
 
   // 识别走真颜色那一份(见 `physical`);显示走换过名的 `moves`。两者一一对应,
   // 下标通用 —— 换名不增不减记号。
@@ -298,7 +312,7 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
     const turnTokens = tokensForRange(moves, counted, from, span.endIdx);
     const endMs = spanEndMs[spanIdx];
     const mine = rotations.filter(r => r.tMs > prevEndMs && r.tMs <= endMs);
-    const lineMoves = weaveRotations(turnTokens, mine, moves, from, span.endIdx);
+    const lineMoves = weaveRotations(shownFor(from, span.endIdx), mine, moves, from, span.endIdx);
     prevEndMs = endMs;
     const currPattern = await patternFromAlg(alg(phys.scramble, rawUpTo(span.endIdx), viewRot));
 
@@ -335,7 +349,7 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
   // 最后一手之后还有动作(拧过头了、或者切分没走到底)——照实补一行,不丢。
   if (prevEnd < moves.length - 1) {
     const tail = weaveRotations(
-      tokensForRange(moves, counted, prevEnd + 1, moves.length - 1),
+      shownFor(prevEnd + 1, moves.length - 1),
       rotations.filter(r => r.tMs > prevEndMs),
       moves, prevEnd + 1, moves.length - 1,
     );

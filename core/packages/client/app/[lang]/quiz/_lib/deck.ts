@@ -4,8 +4,8 @@
 // 直接渲染的话「答案永远是第一项」。所以出题时给每道题生成一个显示顺序 order,
 // order[i] 是显示在第 i 位的原始选项下标。
 
-import type { Question, QuizCat } from '../_data/types';
-import { ALL_QUESTIONS, BY_CAT } from '../_data';
+import type { Level, Question, QuizCat } from '../_data/types';
+import { allQuestions, BANK } from '../_data';
 
 /** 混合模式(不选分类)一局出多少题。 */
 export const MIXED_ROUND_SIZE = 20;
@@ -29,11 +29,11 @@ export function shuffle<T>(items: readonly T[], rng: Rng = Math.random): T[] {
 }
 
 /**
- * 出一局的题。cat 为 null = 混合模式,从全部题库里随机抽 MIXED_ROUND_SIZE 道;
- * 指定分类则该分类全部题目上场(顺序打乱)。
+ * 出一局的题。cat 为 null = 混合模式,从该难度档的全部题库里随机抽
+ * MIXED_ROUND_SIZE 道;指定分类则该分类全部题目上场(顺序打乱)。
  */
-export function buildDeck(cat: QuizCat | null, rng: Rng = Math.random): DeckItem[] {
-  const pool = cat ? BY_CAT[cat] : ALL_QUESTIONS;
+export function buildDeck(level: Level, cat: QuizCat | null, rng: Rng = Math.random): DeckItem[] {
+  const pool = cat ? BANK[level][cat] : allQuestions(level);
   const picked = cat ? shuffle(pool, rng) : shuffle(pool, rng).slice(0, MIXED_ROUND_SIZE);
   return picked.map((q) => ({
     q,

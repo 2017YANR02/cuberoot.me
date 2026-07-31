@@ -204,7 +204,8 @@ export type SensorBasisName =
   | 'rotZ90'
   | 'rotX270'
   | 'rotY270'
-  | 'rotZ270';
+  | 'rotZ270'
+  | 'rotY90X270';
 
 const R2 = Math.SQRT1_2; // sin(90°) · (1/√2) for the 180° diagonal turns
 const C45 = Math.cos(Math.PI / 4);
@@ -237,6 +238,20 @@ export const SENSOR_BASES: Readonly<Record<SensorBasisName, Quat>> = Object.free
   rotY270: { w: C45, x: 0, y: -S45, z: 0 },
   /** −90° about Z — y→x, x→−y. */
   rotZ270: { w: C45, x: 0, y: 0, z: -S45 },
+  /**
+   * `rotY90 ∘ rotX270` — x→−z, y→−x, z→y. 120° about (−1,1,1)/√3.
+   *
+   * The Z-up→Y-up change of basis (rotX270) PLUS the 90° yaw that one left
+   * behind. Measured, not derived: with rotX270 alone a physical `y` came out
+   * right, but a physical `x` rendered as `z` and a physical `z` as `x'`. That
+   * residual is exactly `rotY90`'s inverse, so composing it on the left cancels
+   * it and leaves `y` where it already was.
+   *
+   * Composed on the LEFT because the similarity is `B ⊗ q ⊗ B⁻¹`: chaining two
+   * of them gives `(B₂B₁) ⊗ q ⊗ (B₂B₁)⁻¹`, so the correction applied to the
+   * screen result is the outer (left) factor.
+   */
+  rotY90X270: { w: 0.5, x: -0.5, y: 0.5, z: 0.5 },
 });
 
 /**
@@ -248,30 +263,38 @@ export const SENSOR_BASES: Readonly<Record<SensorBasisName, Quat>> = Object.free
  * the signature of a **Z-up** sensor frame handed straight to a **Y-up**
  * renderer: the IMU calls the axis out of the top of the cube +Z (the ordinary
  * AHRS convention), three.js calls it +Y, and a yaw about the one arrives as a
- * roll about the other. The change of basis that reconciles them is a single
- * −90° rotation about X (`rotX270`: sensor z → screen y), applied as the
- * similarity in knob 2 above.
+ * roll about the other. The change of basis that reconciles them is a −90°
+ * rotation about X (`rotX270`: sensor z → screen y), applied as the similarity
+ * in knob 2 above.
  *
- * It is a PROPER rotation, so it cannot and does not change handedness —
- * `BRAND_MIRROR` stays a separate question and stays false.
+ * SECOND ROUND, also from hardware. With `rotX270` alone the `y` was correct
+ * but the other two were still wrong, and wrong in a specific way: a physical
+ * `x` rendered as a `z`, and a physical `z` as an `x'`. That map — x→z, z→−x,
+ * y fixed — is a −90° rotation about Y, i.e. the Z-up fix was right about which
+ * axis is up and 90° off about where the cube is facing. Cancelling it is one
+ * more factor on the left, and the pair is `rotY90X270`.
  *
- * Still per-brand, and still not individually verified: this is one report from
- * one cube. If some brand's IMU turns out to be Y-up already, that one row goes
- * back to `identity` — which is exactly the granularity this table exists for.
+ * Both factors are PROPER rotations, so neither can change handedness —
+ * `BRAND_MIRROR` stays a separate question and stays false. That the whole
+ * error was fixable by a proper rotation is itself evidence the sense is right.
+ *
+ * Still per-brand, and still measured on ONE cube: if some brand mounts its IMU
+ * differently, that one row changes — which is exactly the granularity this
+ * table exists for.
  *
  * Keyed by plain string rather than the `CubeBrand` union from ./types on
  * purpose: the drivers in this directory are being rewritten in parallel, and
  * an unknown key here is a silent fall-through, not a build break.
  */
 export const BRAND_SENSOR_BASIS: Readonly<Record<string, SensorBasisName>> = Object.freeze({
-  'gan-v2': 'rotX270',  // Z-up IMU (see above)
-  'gan-v3': 'rotX270',  // Z-up IMU
-  'gan-v4': 'rotX270',  // Z-up IMU
-  gocube: 'rotX270',    // Z-up IMU
-  qiyi: 'rotX270',      // Z-up IMU
-  giiker: 'rotX270',    // Z-up IMU
-  moyu: 'rotX270',      // Z-up IMU
-  unknown: 'rotX270',   // Z-up IMU
+  'gan-v2': 'rotY90X270',  // Z-up IMU, yawed 90° (see above)
+  'gan-v3': 'rotY90X270',
+  'gan-v4': 'rotY90X270',  // the cube the two rounds above were measured on
+  gocube: 'rotY90X270',
+  qiyi: 'rotY90X270',
+  giiker: 'rotY90X270',
+  moyu: 'rotY90X270',
+  unknown: 'rotY90X270',
 });
 
 /** Brand → basis name. An unknown or absent brand gets the same treatment as

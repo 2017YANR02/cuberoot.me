@@ -814,8 +814,8 @@
   color: var(--faint-foreground); cursor: help;
 }
 
-/* ── 时间轴:一手一个方块,宽度 = 这一手花的时间 ──────────────────────────
-   方块之间的空隙是真的停顿,所以不能用 flex 均分 —— 一律按时间绝对定位。
+/* ── 时间轴:一步两段,亮 = 在拧,暗 = 在看 ────────────────────────────
+   段的位置就是它在时间上的位置,所以不能用 flex 均分 —— 一律绝对定位。
    两处复用:报告顶部(带阶段名)和回放进度条(带游标、可点)。 */
 .stl { width: 100%; }
 .stl-track {
@@ -827,15 +827,23 @@
 }
 button.stl-track { cursor: pointer; }
 button.stl-track:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
-.stl-move {
+.stl-seg {
   position: absolute; top: 0; bottom: 0;
   border-radius: 6px;
-  background: var(--muted-foreground);
+  --stl-c: var(--muted-foreground);
+  background: var(--stl-c);
 }
-.stl-move[data-stage='cross'] { background: var(--rc-stage-cross); }
-.stl-move[data-stage='f2l']   { background: var(--rc-stage-f2l); }
-.stl-move[data-stage='oll']   { background: var(--rc-stage-oll); }
-.stl-move[data-stage='pll']   { background: var(--rc-stage-pll); }
+.stl-seg[data-stage='cross'] { --stl-c: var(--rc-stage-cross); }
+.stl-seg[data-stage='f2l']   { --stl-c: var(--rc-stage-f2l); }
+.stl-seg[data-stage='oll']   { --stl-c: var(--rc-stage-oll); }
+.stl-seg[data-stage='pll']   { --stl-c: var(--rc-stage-pll); }
+/* 四对 F2L 同一个蓝但逐对退一档 —— 暗的停顿已经把它们分开了,深浅只是让
+   「第几对」不用数也看得出来。退太多会让第 4 对看着像背景,所以只走到 64%。 */
+.stl-seg[data-stage='f2l'][data-shade='1'] { --stl-c: color-mix(in srgb, var(--rc-stage-f2l) 88%, var(--background)); }
+.stl-seg[data-stage='f2l'][data-shade='2'] { --stl-c: color-mix(in srgb, var(--rc-stage-f2l) 76%, var(--background)); }
+.stl-seg[data-stage='f2l'][data-shade='3'] { --stl-c: color-mix(in srgb, var(--rc-stage-f2l) 64%, var(--background)); }
+/* 停顿:同一个色压暗,所以「这段发呆属于哪一步」不用连线也看得出来。 */
+.stl-seg[data-pause] { background: color-mix(in srgb, var(--stl-c) 26%, transparent); }
 .stl-cursor {
   position: absolute; top: -2px; bottom: -2px; width: 2px;
   margin-left: -1px; border-radius: 1px;
