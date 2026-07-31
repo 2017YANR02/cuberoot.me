@@ -105,6 +105,19 @@ export interface Solve {
    *  set by the user during a multi-stage solve; this carries the richer
    *  HTM counts + cross-side / OLL-case / PLL-case labels. */
   stageSegments?: StageSegments;
+  /** Recorded orientation stream, base64 of the packed format in
+   *  `_lib/bluetooth/gyro_track.ts`. Written only when the cube reports
+   *  orientation AND `settings.recordGyro` is on, because it roughly doubles a
+   *  solve's footprint in a localStorage-backed store. Absent everywhere else,
+   *  which is exactly how the playback panel decides whether to offer the
+   *  gyro replay. */
+  gyro?: string;
+  /** Did the reconstruction match what the cuber actually did? Set only when
+   *  they answered 👍/👎 in the report; `undefined` means "not asked / not
+   *  answered", which is NOT the same as 👎. Nothing reads it to change a
+   *  number — it exists so a segmentation bug has somewhere to be recorded
+   *  next to the solve that shows it. */
+  reconOk?: boolean;
   /** Optional auto-tags. Reserved for future persistence; HistoryPanel
    *  currently recomputes tags on the fly from solve + history. */
   tags?: string[];

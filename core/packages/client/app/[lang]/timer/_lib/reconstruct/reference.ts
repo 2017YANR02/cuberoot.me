@@ -54,10 +54,11 @@ import type { CubeFaces } from '../cube/state';
 import { applyScramble } from '../cube/state';
 import { parseScramble } from '../cube/moves';
 import { recognizeOllExact, recognizePllExact } from '../components/cfop_recognize';
-import { CFOP_METHOD, solveMethodFrom } from '../solver/methods';
+import { CFOP_METHOD, F2L_SLOT_FLAG, solveF2lTo, solveMethodFrom } from '../solver/methods';
 import { faceTurnToken } from '../solver/cube3x3';
 import { applyOneToken } from './stage_segments';
 import type { SolveMove } from './stage_segments';
+import type { F2lSlotId, F2lSlotsResult } from './f2l_slots';
 import { stmWeight } from './step_metrics';
 import type { StepKey, StepMetricsResult } from './step_metrics';
 
@@ -412,4 +413,158 @@ export function computeStageReferences(
     userTurns: userTotal,
     delta: refTotal !== null && userTotal !== null ? userTotal - refTotal : null,
   };
+}
+
+/* ------------------------------------------------------------------ */
+/* F2L, priced one pair at a time                                      */
+/* ------------------------------------------------------------------ */
+
+export interface SlotReference {
+  slot: F2lSlotId;
+  /** Turns the shortest line costs for THIS pair, given everything already in. */
+  refTurns: number | null;
+  refSolution: string | null;
+  userTurns: number | null;
+  /** userTurns - refTurns. Negative means the cuber beat the reference — which
+   *  is reachable here, see the D-turn note below. */
+  delta: number | null;
+  note: ReferenceNote | null;
+}
+
+/**
+ * Price each F2L pair against the shortest line that solves THAT pair while
+ * leaving the cross and every already-finished pair standing.
+ *
+ * This is a different question from the whole-F2L reference above, and a
+ * strictly harder one for the reference to win: it is charged from the position
+ * the cuber was actually in when they started that pair, and it may not disturb
+ * the pairs they had already placed. So the four slot numbers do NOT sum to the
+ * F2L number — pricing the block as a whole lets the engine reorder the pairs
+ * and multislot, which is cheaper. Both are printed, and they are not the same
+ * claim; nothing adds them together.
+ *
+ * Same D-turn caveat as the block reference (it is the same alphabet): a cuber
+ * who inserts with D moves can legitimately come in UNDER the reference. We
+ * report that as a negative delta rather than clamping it to zero, because
+ * "you found something the engine's move set can't express" is the truth.
+ *
+ * Returns null when there is nothing to price at all.
+ */
+export function computeF2lSlotReferences(
+  scramble: string,
+  moves: SolveMove[],
+  slots: F2lSlotsResult,
+): SlotReference[] | null {
+  if (!moves || moves.length === 0) return null;
+  if (!scramble || !scramble.trim()) return null;
+  const crossEndIdx = slots.segments.crossEndIdx;
+  if (crossEndIdx === null || crossEndIdx === undefined) return null;
+
+  const scrTokens: string[] = [];
+  for (const raw of scramble.trim().split(/\s+/)) {
+    if (!raw) continue;
+    const tok = faceTurnToken(raw);
+    // One token the engine can't express and every pair is unpriceable — the
+    // position we would be searching from is not the one the cuber was in.
+    if (tok === null) {
+      return slots.slots.map(s => ({
+        slot: s.slot, refTurns: null, refSolution: null,
+        userTurns: s.turns, delta: null, note: 'unsupported-moves' as ReferenceNote,
+      }));
+    }
+    scrTokens.push(tok);
+  }
+  const userTokens = moves.map(mv => faceTurnToken(mv.m));
+
+  const out: SlotReference[] = [];
+  // Pairs already standing when the cross landed cost nothing and block nothing
+  // — but they DO have to be in the mask, or the search is free to take them
+  // apart and we would be pricing a line the cuber could not have used.
+  let standing = 0;
+  for (const s of slots.slots) if (s.free) standing |= F2L_SLOT_FLAG[s.slot];
+  let prevEndIdx = crossEndIdx;
+
+  for (const s of slots.slots) {
+    if (s.free) {
+      out.push({
+        slot: s.slot, refTurns: 0, refSolution: null,
+        userTurns: 0, delta: 0, note: 'skipped',
+      });
+      continue;
+    }
+    if (s.endIdx === null) {
+      out.push({
+        slot: s.slot, refTurns: null, refSolution: null,
+        userTurns: s.turns, delta: null, note: 'unreached',
+      });
+      continue;
+    }
+    const prefix = scrTokens.slice();
+    let expressible = true;
+    for (let i = 0; i <= prevEndIdx; i++) {
+      const tok = userTokens[i];
+      if (tok === null) { expressible = false; break; }
+      prefix.push(tok);
+    }
+    if (!expressible) {
+      out.push({
+        slot: s.slot, refTurns: null, refSolution: null,
+        userTurns: s.turns, delta: null, note: 'unsupported-moves',
+      });
+      standing |= F2L_SLOT_FLAG[s.slot];
+      prevEndIdx = s.endIdx;
+      continue;
+    }
+    const want = standing | F2L_SLOT_FLAG[s.slot];
+    const sol = solveF2lTo(prefix, want);
+    if (sol === null) {
+      out.push({
+        slot: s.slot, refTurns: null, refSolution: null,
+        userTurns: s.turns, delta: null, note: 'no-reference',
+      });
+    } else {
+      const refTurns = sol.length;
+      out.push({
+        slot: s.slot,
+        refTurns,
+        refSolution: sol.map(m => m.trim()).join(' '),
+        userTurns: s.turns,
+        delta: s.turns !== null ? s.turns - refTurns : null,
+        note: null,
+      });
+    }
+    standing = want;
+    prevEndIdx = s.endIdx;
+  }
+  return out;
+}
+
+/* ------------------------------------------------------------------ */
+/* Turning a delta into a word                                         */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The one-word verdict on a step, or null for "nothing worth saying".
+ *
+ * Only two words, and both mean something exact:
+ *   'optimal'   — you used as many turns as the reference. For the cross that
+ *                 IS the optimum; for the last layer it is the shortest alg in
+ *                 our tables; for an F2L pair it is the shortest insertion that
+ *                 leaves the finished pairs alone.
+ *   'brilliant' — you used FEWER. Only reachable where the reference is not a
+ *                 true optimum (an F2L pair solved with D turns, a last-layer
+ *                 alg shorter than anything we hold), which is precisely when
+ *                 the cuber deserves to hear about it.
+ *
+ * Everything slower gets no badge: the `+N` the table already prints says it
+ * better than a third adjective would, and a badge on every column is a badge
+ * on none.
+ */
+export type StepGrade = 'optimal' | 'brilliant';
+
+export function gradeForDelta(delta: number | null | undefined): StepGrade | null {
+  if (delta === null || delta === undefined) return null;
+  if (delta < 0) return 'brilliant';
+  if (delta === 0) return 'optimal';
+  return null;
 }

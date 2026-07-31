@@ -434,7 +434,6 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       disconnectListenerRef.current = null;
       setStatus(INITIAL_STATUS);
       setFacelets(null);
-    setFacelets(null);
       return;
     }
 
@@ -514,8 +513,6 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
         disconnectListenerRef.current = null;
         setStatus(INITIAL_STATUS);
         setFacelets(null);
-      setFacelets(null);
-    setFacelets(null);
         return;
       }
       scheduleReconnectRef.current?.(next);
