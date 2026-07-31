@@ -17,6 +17,7 @@ import { MOVE_CENTERS } from '@/lib/ivy-solver';
 import { getPuzzle, identityPerm, stickerCount } from '@/app/[lang]/predict/_lib/puzzles';
 import { ivyLensIndex, ivyPetalIndex } from '@/app/[lang]/predict/_lib/puzzles/ivy';
 import { collectStickerMeshes } from '@/app/[lang]/predict/_components/engineSlotMap';
+import { expectEvenFrame } from './_predict_frame';
 
 /** canonical 面法向,面序 U R F B L D(= lib/ivy-solver 的 `centers` 下标)。 */
 const FACE_NORMAL: readonly THREE.Vector3[] = [
@@ -133,5 +134,12 @@ describe('/predict 枫叶模型 ≡ /sim 引擎', () => {
     const cube = new IvyCube();
     const slots = buildSlots(cube);
     expect(collectStickerMeshes(getPuzzle('ivy'), cube)).toEqual(slots.map((s) => s.mesh));
+  });
+
+  // 花瓣是全站最刁的贴纸形状:又长又尖,还有一条朝内凹的弧。框宽一旦不是等距内缩,
+  // 这里最先露馅(尖端糊成一片、弧那侧几乎没框)。
+  it('高亮框贴在贴纸正面、宽度处处相等', () => {
+    const cube = new IvyCube();
+    collectStickerMeshes(getPuzzle('ivy'), cube).forEach((mesh, i) => expectEvenFrame(mesh, `ivy 第 ${i} 格`));
   });
 });
