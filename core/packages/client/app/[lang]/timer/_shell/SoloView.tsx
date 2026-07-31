@@ -106,7 +106,6 @@ import HourChart from '../_components/charts/HourChart';
 import PracticeHeatmap from '../_components/charts/PracticeHeatmap';
 import { CubePreview } from '../_lib/cube';
 import LiveCubeState from '../_components/LiveCubeState';
-
 import TimingSurface from './TimingSurface';
 import GestureWheel from '@/components/GestureWheel';
 import { SegmentTime } from '@/components/SegmentTime';
@@ -139,6 +138,10 @@ const ManualEntryModal = dynamic(() => import('../_components/ManualEntryModal')
 const SolverModal = dynamic(() => import('../_components/SolverModal'), { ssr: false });
 const BulkScrambleModal = dynamic(() => import('../_components/BulkScrambleModal'), { ssr: false });
 const DrillModal = dynamic(() => import('../_components/DrillModal'), { ssr: false });
+/** 假魔方调试面板只在 dev 存在;判断提到模块级,好让打包器把整个分支和它的
+ *  chunk 一起消掉(见 DevFakeCubePanel.tsx)。 */
+const DEV_PANEL = process.env.NODE_ENV !== 'production';
+const DevFakeCubePanel = dynamic(() => import('../_components/DevFakeCubePanel'), { ssr: false });
 import './shell.css';
 import { tr } from '@/i18n/tr';
 
@@ -2626,6 +2629,17 @@ export default function SoloView({ playersControl }: SoloViewProps) {
         />
       )}
 
+      {/* 没有硬件时把假魔方从控制台搬到页面上。`DEV_PANEL` 在生产里是 false 且
+          `next/dynamic` 的那个 chunk 从没被引用过,所以整块不进生产包。 */}
+      {DEV_PANEL && (
+        <DevFakeCubePanel
+          connected={bluetoothCube.status.connected}
+          deviceName={bluetoothCube.status.deviceName ?? null}
+          onConnect={bluetoothCube.connect}
+          onDisconnect={bluetoothCube.disconnect}
+          scramble={scramble}
+        />
+      )}
     </div>
   );
 }
