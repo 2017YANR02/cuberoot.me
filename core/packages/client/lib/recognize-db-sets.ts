@@ -18,7 +18,7 @@
  */
 import { loadAlg, type AlgCase } from '@cuberoot/shared';
 import { cubeThumbParams } from '@/components/CaseThumb';
-import { OLL_NAME_BY_NUMBER } from './alg_case_display';
+import { displayZbllToken, OLL_NAME_BY_NUMBER, primaryCaseName } from './alg_case_display';
 import type { KeyStep, RecognizeButton, RecognizeImage, RecognizeSet } from './recognize-sets';
 import { shuffle } from './pll-helpers';
 
@@ -41,12 +41,14 @@ interface DbSpec {
   answerLabelFor?: (answer: string) => string;
   /** 物理键盘输入(只有 1LLL 有:编号)。 */
   step?: (pending: string | null, key: string, answers: Set<string>) => KeyStep;
-  /** 按钮文字长(ELL 的 `4 Flip Ua`)→ 键盘用宽轨道。 */
-  wideKeys?: boolean;
   prompt: { zh: string; en: string };
 }
 
 const uniqueInOrder = (xs: string[]): string[] => [...new Set(xs)];
+
+/** ZBLL 子组 `AS/ASF` → 展示名 `S-F`(库页子组卡片上写的那个)。 */
+const zbllSubgroupLabel = (subgroup: string): string =>
+  displayZbllToken(subgroup.split('/').pop() ?? subgroup);
 
 /** `1LLL` 的子组就是 OLL 编号(`'01'`..`'57'`,缺号的不出现)。 */
 const ollNumberStep = (pending: string | null, key: string, answers: Set<string>): KeyStep => {
@@ -76,7 +78,6 @@ const SPECS: Record<DbRecognizeSetId, DbSpec> = {
   ell: {
     id: 'ell',
     slug: 'ell',
-    wideKeys: true,
     prompt: { zh: '这是哪个 ELL？', en: 'Which ELL is this?' },
   },
   zbll: {
@@ -85,12 +86,12 @@ const SPECS: Record<DbRecognizeSetId, DbSpec> = {
     roundLimit: ROUND_LIMIT,
     // 顶层形状 + 角块换位 = 选哪条公式真正要认的东西;棱块排列决定组内第几条,不进答案。
     answerFor: (c) => c.subgroup,
-    // 按钮只写换位那半截(`U/UR` → `UR`):换位名本来就带着形状字母,不会重名,
-    // 而 `AS/ASF` 这种全名在窄轨道里会被切掉。
+    // 按钮只写换位那半截(`AS/ASF` → `S-F`):换位名本来就带着形状字母,不会重名;
+    // 展示走 displayZbllToken —— 库页的子组卡片写的就是 `S-F`,两处必须是同一个字。
     buttonsFor: (cases) => uniqueInOrder(cases.map((c) => c.subgroup)).map((v) => ({
-      value: v, label: v.split('/').pop() ?? v,
+      value: v, label: zbllSubgroupLabel(v),
     })),
-    answerLabelFor: (a) => a.split('/').pop() ?? a,
+    answerLabelFor: zbllSubgroupLabel,
     prompt: {
       zh: '这是哪个 ZBLL 子组？(顶层形状 + 角块换位)',
       en: 'Which ZBLL group is this? (OLL shape + corner permutation)',
@@ -139,7 +140,7 @@ export function ensureDbRecognizeCases(id: DbRecognizeSetId): Promise<void> {
         byName: new Map(cases.map((c) => [c.name, c])),
         buttons: spec.buttonsFor
           ? spec.buttonsFor(cases)
-          : cases.map((c) => ({ value: c.name, label: c.name.trim() })),
+          : cases.map((c) => ({ value: c.name, label: primaryCaseName('3x3', spec.slug, c) })),
         answers: new Set(cases.map((c) => answerOf(spec, c))),
       };
     })
@@ -172,16 +173,23 @@ function makeSet(spec: DbSpec): RecognizeSet {
       const p = cubeThumbParams('3x3', spec.slug, target?.sticker ?? { kind: 'raw', tag: '', attrs: {} });
       return { setup: target?.setup ?? '', view: p.view, mask: p.mask, hideGreySides: p.hideGreySides, size: 260 };
     },
-    label: (name) => name.trim(),
+    // 名字不自己拼:走公式库那条(`meta.ollcp` 优先,其次 set 的展示变换),
+    // 摊牌写的字和库里卡片上的字一模一样。
+    label: (name) => {
+      const target = caseOf(name);
+      return target ? primaryCaseName('3x3', spec.slug, target) : name.trim();
+    },
+    // 答案就是 case 名的集合(COLL / ELL),提示行写的必须是按钮上那个展示名(`T4`),
+    // 不是 DB 原名(`T 4`)。
     answerLabel: (name) => {
       const target = caseOf(name);
       if (!target) return name.trim();
-      const a = answerOf(spec, target);
-      return spec.answerLabelFor ? spec.answerLabelFor(a) : a.trim();
+      return spec.answerLabelFor
+        ? spec.answerLabelFor(answerOf(spec, target))
+        : primaryCaseName('3x3', spec.slug, target);
     },
     solution: (name) => firstAlg(caseOf(name)),
     buttons: () => data()?.buttons ?? [],
-    wideKeys: spec.wideKeys,
     prompt: spec.prompt,
     step: (pending, key) =>
       spec.step ? spec.step(pending, key, data()?.answers ?? new Set()) : { kind: 'ignore' },
