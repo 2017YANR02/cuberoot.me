@@ -99,6 +99,7 @@
     "eslint": "^9.39.4",
     "fake-indexeddb": "^6.2.5",
     "globals": "^17.7.0",
+    "jsdom": "^30.0.1",
     "tailwindcss": "^4.2.2",
     "typescript": "^5",
     "vitest": "^4.1.6"

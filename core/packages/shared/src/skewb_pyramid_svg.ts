@@ -226,7 +226,17 @@ function findCorner(p: Vec3): number {
   return -1;
 }
 
-class SkewbStateWCA {
+/**
+ * WCA Regulations #12h skewb state. `image[face][sticker]` (URFDLB × 0=center,
+ * 1-4=corners) matches tnoodle's `SkewbState` cell-for-cell, so the same canonical
+ * sticker-id space (`U0`..`B4`) addresses both — only the LETTERS differ (tnoodle
+ * names a different corner per axis). Seeded with face-colour ids; reseed `image`
+ * with sticker ids if you need piece identity to survive the moves.
+ *
+ * Exported because /predict tracks a single sticker through a WCA-lettered alg and
+ * must agree move-for-move with the /sim engine, whose skewb grips are the WCA ones.
+ */
+export class SkewbStateWCA {
   image: number[][] = Array.from({ length: 6 }, (_, i) => Array(5).fill(i));
 
   private cornerTurnOnce(cornerIdx: number) {
