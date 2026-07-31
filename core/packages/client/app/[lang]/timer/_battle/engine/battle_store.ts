@@ -183,6 +183,12 @@ export function findBestAverage(
   return best;
 }
 
+/** 这个槽位现在算不算参战(solo 只有 0 号)。三个 cube* 动作共用同一道闸。 */
+function inPlay(s: BattleState, playerId: number): boolean {
+  if (playerId < 0) return false;
+  return s.mode === 'solo' ? playerId === 0 : playerId < s.playerCount;
+}
+
 // ===== Store 接口定义 =====
 
 export interface BattleState {
@@ -234,6 +240,19 @@ export interface BattleState {
   timerPrecision: number;
   // NOTE: 启动延时（ms），按住多久后才能开始计时
   startDelay: number;
+  /**
+   * 智能魔方的语义:一人一颗,还是一颗轮流拧。
+   *
+   * `'own'`   — 每人自己一颗。四路蓝牙各连各的,谁拧谁起表,互不影响。
+   * `'shared'`— 全场一颗,拧完传给下一个。只连一路,事件全记在「现在拿着魔方的
+   *             那个人」(`cubeHolder`)头上;他停表之后自动传给下一个还没拧完的人。
+   *
+   * 两种都要,因为它们是两种真实场景:自己家里几个人各带各的魔方,和线下活动上
+   * 只有一颗智能魔方轮流上。
+   */
+  cubeMode: 'own' | 'shared';
+  /** `'shared'` 下现在拿着魔方的是谁。`'own'` 下无意义。 */
+  cubeHolder: number;
   // NOTE: 用户选择显示的 Average 类型
   enabledAverages: number[];
   // NOTE: 目标 Ao5 时间（秒，用于进度条显示）
@@ -269,6 +288,27 @@ export interface BattleState {
   // NOTE: 状态机核心
   playerDown: (playerId: number) => boolean;
   playerUp: (playerId: number) => void;
+  /**
+   * 智能魔方三件套。和按键那条路**并存**而不是互相翻译 —— 合成假的按键事件会
+   * 把「按住多久」这种按键才有的语义强加给一颗魔方。
+   *
+   * `cubeArm`   拧到与打乱一致 → 直接绿灯。没有红灯延时:按键那 300ms 防的是
+   *             「手放上去还没准备好」,而把魔方拧回打乱状态本身就是准备好了。
+   * `cubeStart` 第一下转动起表(csTimer 的规矩,solo 那边已经这么干了)。
+   * `cubeStop`  拧回复原 → 停表。
+   *
+   * 两个时刻参数都是 `performance.now()` 口径的**本地**时刻,由调用方把设备时钟
+   * 换算好再传进来 —— store 里全部时间都是本地时钟,混进设备时钟会让计时错几百毫秒。
+   *
+   * 返回值 = 这一下有没有被采纳(状态不对时什么也不做)。
+   */
+  cubeArm: (playerId: number) => boolean;
+  cubeStart: (playerId: number, atMs: number) => boolean;
+  cubeStop: (playerId: number, atMs: number) => boolean;
+  setCubeMode: (mode: 'own' | 'shared') => void;
+  setCubeHolder: (playerId: number) => void;
+  /** 传给下一个还没拧完的人;都拧完了就停在原地。 */
+  advanceCubeHolder: () => void;
   // NOTE: 罚时处理
   handlePenalty: (playerId: number, penaltyType: PenaltyType) => void;
   // NOTE: 设置操作
@@ -367,6 +407,11 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   eventPickerOpen: Array.from({ length: MAX_PLAYERS }, () => false),
   timerPrecision: (() => { const v = localStorage.getItem(LS_PREFIX + 'timerPrecision'); return v !== null ? parseInt(v) : 3; })(),
   startDelay: (() => { const v = localStorage.getItem(LS_PREFIX + 'startDelay'); return v !== null ? parseInt(v) : 300; })(),
+  cubeMode: (() => {
+    const v = localStorage.getItem(LS_PREFIX + 'cubeMode');
+    return v === 'shared' ? 'shared' as const : 'own' as const;
+  })(),
+  cubeHolder: 0,
   enabledAverages: JSON.parse(localStorage.getItem(LS_PREFIX + 'enabledAverages') || '[5, 12]'),
   goalTime: parseFloat(localStorage.getItem(LS_PREFIX + 'goalTime') || '0') || 0,
   scrambles: Array.from({ length: MAX_PLAYERS }, () => null),
@@ -478,6 +523,100 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   },
 
   // ===== 状态机核心 =====
+
+  // ===== 智能魔方三件套 =====
+  // 走的是和按键同一套 player 字段(isReady / canStart / isTiming / hasFinished),
+  // 所以「一半人用魔方、一半人用键盘」是自然成立的,不需要第二套状态。
+
+  cubeArm: (playerId: number): boolean => {
+    const s = get();
+    if (!inPlay(s, playerId)) return false;
+    // 上一轮全员拧完了 → 这一下是「开下一轮」。和 playerDown 同一条规则。
+    if (s.mode !== 'solo' && s.players.slice(0, s.playerCount).every(pl => pl.hasFinished)) {
+      get().resetForNextRound();
+    } else if (s.mode === 'solo' && s.players[0].hasFinished) {
+      get().resetForNextRound();
+    }
+    const st = get();
+    const p = st.players[playerId];
+    if (p.isTiming || p.hasFinished) return false;
+    if (!st.scrambles[playerId]) return false;
+    // 直接绿灯,不走红灯延时:那 300ms 防的是「手放上去还没准备好」,而把魔方
+    // 拧回打乱状态本身就是准备好了 —— 再让人干等 300ms 只是噪声。
+    get().cancelReadyTimer(playerId);
+    const players = [...st.players];
+    players[playerId] = { ...p, isReady: false, canStart: true };
+    set({ players });
+    return true;
+  },
+
+  cubeStart: (playerId: number, atMs: number): boolean => {
+    const s = get();
+    if (!inPlay(s, playerId)) return false;
+    const p = s.players[playerId];
+    if (p.isTiming || p.hasFinished) return false;
+    // 没预备就转动 = 还在打乱 / 手滑,不起表。预备是 cubeArm 给的。
+    if (!p.canStart) return false;
+    get().cancelReadyTimer(playerId);
+    const players = [...s.players];
+    // startTime 用魔方那一下的**本地时刻**,不是现在 —— BLE 一批可以晚到几十毫秒,
+    // 用 performance.now() 会白送出去那几十毫秒。
+    players[playerId] = {
+      ...p,
+      canStart: false,
+      isReady: false,
+      isTiming: true,
+      startTime: atMs,
+      time: 0,
+      phaseSplits: [],
+      penalty: p.inspectionPenalty ? p.penalty : PENALTY.OK,
+    };
+    set({ players });
+    get().clearInspection(playerId);
+    return true;
+  },
+
+  cubeStop: (playerId: number, atMs: number): boolean => {
+    const s = get();
+    if (!inPlay(s, playerId)) return false;
+    const p = s.players[playerId];
+    if (!p.isTiming) return false;
+    const elapsed = atMs - p.startTime;
+    // 起表后立刻又「复原」= 打乱没拧完 / 误报,不算一把。和按键那条同一道闸。
+    if (elapsed <= MIN_SOLVE_TIME) return false;
+    let penalty = p.penalty;
+    if (p.inspectionPenalty === '+2') penalty = PENALTY.PLUS2;
+    else if (p.inspectionPenalty === 'dnf') penalty = PENALTY.DNF;
+    const players = [...s.players];
+    players[playerId] = { ...p, time: elapsed, isTiming: false, hasFinished: true, penalty };
+    if (p.rafId !== null) cancelAnimationFrame(p.rafId);
+    set({ players });
+    // 一颗魔方轮流拧:这位停表了,魔方就该到下一位手里。
+    if (s.cubeMode === 'shared' && s.mode !== 'solo') get().advanceCubeHolder();
+    get().checkBothFinished();
+    return true;
+  },
+
+  setCubeMode: (mode: 'own' | 'shared') => {
+    persistItem(LS_PREFIX + 'cubeMode', mode);
+    set({ cubeMode: mode, cubeHolder: 0 });
+  },
+
+  setCubeHolder: (playerId: number) => {
+    const s = get();
+    if (playerId < 0 || playerId >= s.playerCount) return;
+    set({ cubeHolder: playerId });
+  },
+
+  advanceCubeHolder: () => {
+    const s = get();
+    const n = s.mode === 'solo' ? 1 : s.playerCount;
+    for (let step = 1; step <= n; step++) {
+      const cand = (s.cubeHolder + step) % n;
+      if (!s.players[cand].hasFinished) { set({ cubeHolder: cand }); return; }
+    }
+    // 全员拧完了 —— 停在原地,下一轮由 resetForNextRound 之后的 arm 决定。
+  },
 
   // 1:1 翻译自 battle.js playerDown()（行 542~636）
   playerDown: (playerId: number): boolean => {
