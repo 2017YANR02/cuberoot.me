@@ -333,11 +333,28 @@ describe('未知的传感器姿态:消掉的和消不掉的', () => {
     expect(detectRotations(conj).map(e => e.token)).not.toEqual(want.map(e => e.token));
   });
 
-  it('牌子那张表今天全是 identity,所以带不带 brand 结论一样', () => {
-    // 这条不是废话:它把「记号正确」这件事的依赖钉在那张表上。哪天有人填了真机
-    // 验过的值,这条会红 —— 那正是该重新看一眼记号的时候。
+  it('不给 brand = 按正装算,不替调用方加一层它没要的换基', () => {
+    expect(detectRotations(base, {}).map(e => e.token)).toEqual(want.map(e => e.token));
+    expect(detectRotations(base, { brand: null }).map(e => e.token)).toEqual(want.map(e => e.token));
+  });
+
+  it('给了 brand 就吃那张表 —— 现在全表是 Z-up,记号跟着换', () => {
+    // 这条不是废话:它把「记号正确」这件事的依赖钉在 `BRAND_SENSOR_BASIS` 上。
+    // 表一动这里就红,那正是该重新看一眼记号的时候。
+    //
+    // 今天表里是 `rotX270`(传感器 z = 魔方朝上那根轴,渲染器 y 才是),所以一个
+    // 绕**样本 y 轴**的合成动作在真机语义下根本不是 y —— 它是绕深度轴的 z'。
+    // 真机流里绕的是样本的 z,换基之后才读成 y。
     expect(detectRotations(base, { brand: 'gan-v4' }).map(e => e.token))
-      .toEqual(want.map(e => e.token));
+      .toEqual(["z'", "x'"]);
+  });
+
+  it('真机语义:绕传感器 z 的一次转,带上牌子之后读成 y', () => {
+    // 用户报的就是这个 —— 实体做 y,屏幕做 z。样本按传感器系造(绕 z),
+    // 不带 brand 读成 z(错的那条路),带 brand 读成 y(对的)。
+    const sensor = [...hold(QUAT_IDENTITY, 0), ...hold(axis('z', 90), 400)];
+    expect(detectRotations(sensor).map(e => e.token)).toEqual(['z']);
+    expect(detectRotations(sensor, { brand: 'gan-v4' }).map(e => e.token)).toEqual(['y']);
   });
 });
 

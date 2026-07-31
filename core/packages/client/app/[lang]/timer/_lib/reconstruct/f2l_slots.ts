@@ -50,10 +50,12 @@
  * taxonomy the numbering groups by, minus the number.
  *
  * Cross side: everything here reads the D layer, exactly like `isCross` /
- * `isF2l` in `cube/cfop_detect.ts`. A solve done with the cross on another face
- * without rotating the cube into place is already invisible to the whole
- * segmentation layer; this does not make that worse, and fixing it belongs
- * there, once, not here.
+ * `isF2l` in `cube/cfop_detect.ts`. That used to mean a cross solved on any
+ * other face — which is every white-cross solve recorded by a smart cube, since
+ * the protocol calls white U no matter how the cuber holds it — was invisible
+ * to the whole segmentation layer. It is fixed in one place, `orient.ts`, which
+ * rotates the solve into the cross-on-D frame before any of this runs. This
+ * function calls it too rather than trusting its caller to have done so.
  */
 
 import type { CubeFaces } from '../cube/state';
@@ -63,6 +65,7 @@ import { htmMoves } from './htm';
 import type { HtmMove } from './htm';
 import { applyOneToken, computeStageSegments } from './stage_segments';
 import type { SolveMove, StageSegments } from './stage_segments';
+import { normalizeSolve } from './orient';
 import { metricForRange } from './step_metrics';
 
 /** The four F2L slots, named by the two side faces that bound them. */
@@ -297,12 +300,17 @@ function walkSlotStates(scramble: string, moves: SolveMove[]): CubeFaces[] {
  * exactly what you want to see on a DNF.
  */
 export function computeF2lSlots(
-  scramble: string,
-  moves: SolveMove[],
+  scrambleIn: string,
+  movesIn: SolveMove[],
   totalMs: number,
   precomputed?: StageSegments | null,
 ): F2lSlotsResult | null {
-  if (!moves || moves.length === 0) return null;
+  if (!movesIn || movesIn.length === 0) return null;
+  // The four slots are read off the D layer, so this walk needs the same
+  // cross-on-D frame `computeStageSegments` puts itself in — otherwise the
+  // boundaries come from one frame and the slot states from another, which is
+  // worse than either being wrong alone. 1:1 rewrite: indices still line up.
+  const { scramble, moves } = normalizeSolve(scrambleIn, movesIn);
   const segments = precomputed ?? computeStageSegments(scramble, moves, totalMs);
   if (!segments) return null;
   const crossEndIdx = segments.crossEndIdx ?? null;

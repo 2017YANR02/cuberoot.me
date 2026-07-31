@@ -234,6 +234,10 @@ export function computeStepMetrics(
   totalMs: number,
 ): StepMetricsResult | null {
   if (!moves || moves.length === 0) return null;
+  // `computeStageSegments` rotates the solve into the cross-on-D frame itself
+  // (see its header). Everything here is indices and timestamps into the
+  // caller's array, and the rotation is a 1:1 token rewrite, so the boundaries
+  // it returns are already the right ones — nothing to re-map.
   const segments = computeStageSegments(scramble, moves, totalMs);
   if (!segments) return null;
 
