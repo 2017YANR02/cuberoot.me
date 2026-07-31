@@ -10,7 +10,7 @@ import { Fragment, useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Eye, Blocks, Box, X, type LucideIcon } from 'lucide-react';
+import { ArrowLeft, Blocks, Box, X, type LucideIcon } from 'lucide-react';
 import { ALG_CATALOG, ALG_PUZZLES, loadAlg, type AlgCase, type AlgPuzzle } from '@cuberoot/shared';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
@@ -37,8 +37,8 @@ const LEGACY_3X3_SLUGS = new Set(['f2l', 'adv-f2l', 'oll', 'pll']);
  * (`/alg/3x3/oll` 的「观察」),那里才看得出这一次练的是哪套。
  */
 const TRAINER_MODULES: Record<string, { href: string; zh: string; en: string; Icon: LucideIcon }[]> = {
+  // 三盲不在这排 —— 它在 /alg 落地页自成一个项目(整套编码体系,不是 3x3 的一套公式)。
   '3x3': [
-    { href: '/alg/3bld', zh: '3BLD 盲拧训练', en: '3BLD Trainer', Icon: Eye },
     { href: '/alg/roux', zh: 'Roux 桥式训练', en: 'Roux Trainer', Icon: Blocks },
   ],
   'skewb': [
