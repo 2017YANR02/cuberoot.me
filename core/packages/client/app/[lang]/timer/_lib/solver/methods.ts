@@ -299,6 +299,51 @@ export function solveMethodFrom(
   return { stages, totalMoves: total };
 }
 
+/* ---- One F2L pair at a time ------------------------------------------- */
+//
+// The F2L block of CFOP_METHOD above already carries a target for EVERY subset
+// of the four slots — stage F2L-1 holds the four singletons, F2L-2 the six
+// pairs, F2L-3 the four triples, F2L-4 the full set — each tagged with the
+// bitflags of the slots it keeps standing. That is exactly what pricing one
+// pair needs: "solve THIS slot without taking apart the ones already in".
+// So the per-slot reference is a lookup in that table, not a new mask set.
+//
+// The slot ↔ bit correspondence is read off the masks: 0x1 adds the R-face
+// stickers of the FR pair to the cross, 0x2 the F/L pair, and so on.
+// `tests/f2l_slot_reference.test.ts` proves it by solving and then asking
+// `isSlotSolved`, rather than trusting the reading.
+export const F2L_SLOT_FLAG = { FR: 0x1, FL: 0x2, BR: 0x4, BL: 0x8 } as const;
+export type F2lSlotName = keyof typeof F2L_SLOT_FLAG;
+
+let f2lByFlags: Map<number, { target: ParallelTarget; maxl: number }> | null = null;
+
+function f2lTargetIndex(): Map<number, { target: ParallelTarget; maxl: number }> {
+  if (f2lByFlags) return f2lByFlags;
+  const compiled = compile(CFOP_METHOD);
+  const index = new Map<number, { target: ParallelTarget; maxl: number }>();
+  // Stage 0 is the cross; every later stage is an F2L subset.
+  for (let i = 1; i < compiled.length; i++) {
+    for (const t of compiled[i].targets) index.set(t.mask, { target: t, maxl: compiled[i].maxl });
+  }
+  f2lByFlags = index;
+  return index;
+}
+
+/**
+ * Shortest line from `prefixTokens` to "cross plus exactly the slots in
+ * `flags`", in the F2L alphabet (no D turns — cstimer's convention, so the
+ * cross is never disturbed and then repaired).
+ *
+ * Returns null when the flag set names no target (0, or out of range) or when
+ * nothing was found inside the table's own depth bound.
+ */
+export function solveF2lTo(prefixTokens: string[], flags: number): string[] | null {
+  const entry = f2lTargetIndex().get(flags);
+  if (!entry) return null;
+  const { sol } = solveParallel(cubeMove, prefixTokens, [entry.target], 0, entry.maxl);
+  return sol ?? null;
+}
+
 export function solveCFOP(scramble: string): SolveResult {
   return solveMethod(scramble, CFOP_METHOD);
 }
