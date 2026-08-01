@@ -123,11 +123,12 @@ const ALL_CICS: number[] = Array.from(
  *     data service from their scan record, hence both halves.
  *   - `acceptAllDevices` — every BLE device nearby, user picks by name.
  *
- * The second exists because the filter set is the one part of this call a
- * browser can reject before showing anything: iOS Bluefy bridges Web Bluetooth
- * to native code and has failed the filtered call outright with an opaque `2`,
- * with no chooser and nothing to act on. Dropping the filters is the only lever
- * we have from here, and it costs the user one extra look at a longer list.
+ * The second was added while chasing an iOS Bluefy failure that turned out not
+ * to be about filters at all — it was a numeric 16-bit UUID in
+ * `optionalServices` (see BATTERY_SERVICE in ./driver). It stays because it is
+ * independently useful: a cube whose firmware advertises neither a known
+ * service nor a known name prefix is invisible to the filtered chooser, and
+ * this is the only way to reach it.
  *
  * `optionalServices` / `optionalManufacturerData` stay in both: they don't
  * populate the chooser, they authorise what we may read afterwards, and without
@@ -145,7 +146,7 @@ export interface ConnectPickOptions {
 }
 
 export function pickerOptions(acceptAllDevices: boolean): RequestDeviceOptions {
-  const optional = new Set<string | number>();
+  const optional = new Set<string>();
   for (const d of DRIVERS) {
     optional.add(d.service);
     for (const s of d.optionalServices ?? []) optional.add(s);

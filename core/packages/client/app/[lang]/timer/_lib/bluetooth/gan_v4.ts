@@ -41,6 +41,7 @@
  */
 
 import type { CubeDriver, CubeDriverStartResult } from './driver';
+import { BATTERY_SERVICE } from './driver';
 import type { CubeBrand } from './types';
 import {
   decodeGanGyro,
@@ -64,7 +65,6 @@ const GAN_V4_COMMAND_CHAR = '0000fff5-0000-1000-8000-00805f9b34fb';
 // cubes do NOT expose the standard service — they ship battery via mode
 // 0xEF events on the notify pipe — but we still try, and fall back to the
 // most recent 0xEF reading.
-const BATTERY_SERVICE = 0x180f;
 const BATTERY_LEVEL_CHAR = 0x2a19;
 
 // GAN v4 base key / IV. cstimer compresses these into LZString blobs
