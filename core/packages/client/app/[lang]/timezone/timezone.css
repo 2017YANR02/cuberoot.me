@@ -1,0 +1,500 @@
+/* /timezone —— 双主题(全走 :root token,light/dark 自动翻)。
+   时段配色是「数据」不是主题色:四档由 --signal-* / --accent 兑出来,深浅两套下都还能读。 */
+
+.tz-page {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 0.75rem 1rem 3rem;
+  color: var(--foreground);
+}
+
+.tz-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.tz-header h1,
+.tz-page > h1 {
+  margin: 0 0 0.35rem;
+  font-size: 1.6rem;
+}
+
+.tz-header p {
+  margin: 0 0 1.25rem;
+  max-width: 46rem;
+  color: var(--muted-foreground);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.tz-skeleton {
+  height: 18rem;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+}
+
+/* ── 时段四档 ───────────────────────────────────────────────────────────── */
+.tz-page {
+  --band-night: color-mix(in srgb, var(--signal-info) 22%, transparent);
+  --band-early: color-mix(in srgb, var(--signal-warning) 26%, transparent);
+  --band-day: color-mix(in srgb, var(--signal-success) 28%, transparent);
+  --band-evening: color-mix(in srgb, var(--accent) 24%, transparent);
+}
+.band-night { --band: var(--band-night); }
+.band-early { --band: var(--band-early); }
+.band-day { --band: var(--band-day); }
+.band-evening { --band: var(--band-evening); }
+
+/* ── 基准行 ─────────────────────────────────────────────────────────────── */
+.tz-base {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.tz-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.tz-field-label {
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+}
+
+/* ListSelect 自身是 width:100% 的块,宽度由这里给 */
+.tz-picker { width: min(100%, 17rem); }
+
+.tz-input {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--input);
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  color: var(--foreground);
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+}
+.tz-input:focus-visible {
+  outline: none;
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+.tz-now-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-default);
+  background: none;
+  color: var(--foreground);
+  font-family: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.tz-now-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--foreground) 8%, transparent); }
+.tz-now-btn.is-live {
+  border-color: color-mix(in srgb, var(--signal-success) 45%, transparent);
+  color: var(--signal-success);
+  cursor: default;
+  opacity: 1;
+}
+
+/* ── 时区卡片 ───────────────────────────────────────────────────────────── */
+.tz-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 0.75rem;
+}
+
+.tz-card {
+  position: relative;
+  padding: 0.7rem 0.85rem 0.6rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-default);
+  /* 左缘一道时段色条:一眼看出对方是深夜还是白天 */
+  border-left: 4px solid color-mix(in srgb, var(--band) 100%, transparent);
+  background: color-mix(in srgb, var(--band) 22%, transparent);
+}
+.tz-card.is-home {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.tz-card-top {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.tz-card-flag {
+  width: 1.15em;
+  height: 0.86em;
+  flex-shrink: 0;
+}
+img.tz-card-flag { object-fit: cover; }
+
+.tz-card-city {
+  font-size: 0.95rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tz-card-mine {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  color: var(--accent);
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+
+.tz-card-remove {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.tz-card-remove:hover {
+  background: color-mix(in srgb, var(--foreground) 10%, transparent);
+  color: var(--foreground);
+}
+
+.tz-card-time {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: 0.3rem 0 0.35rem;
+}
+
+.tz-card-clock {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 1.9rem;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.tz-card-date {
+  color: var(--muted-foreground);
+  font-size: 0.82rem;
+}
+
+.tz-card-daydelta {
+  margin-left: 0.35rem;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--signal-warning) 22%, transparent);
+  color: var(--foreground);
+  font-style: normal;
+  font-size: 0.74rem;
+  white-space: nowrap;
+}
+
+.tz-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.6rem;
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+}
+
+.tz-card-dst { color: var(--signal-warning); }
+.tz-card-diff { color: var(--foreground); }
+
+.tz-card-transition {
+  margin-top: 0.3rem;
+  color: var(--faint-foreground);
+  font-size: 0.73rem;
+}
+
+.tz-card-tz {
+  margin-top: 0.25rem;
+  color: var(--faint-foreground);
+  font-size: 0.7rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── 添加 / 复制 ────────────────────────────────────────────────────────── */
+.tz-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.85rem 0 2rem;
+}
+
+.tz-add {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--muted-foreground);
+}
+
+.tz-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-default);
+  background: none;
+  color: var(--foreground);
+  font-family: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.tz-copy-btn:hover { background: color-mix(in srgb, var(--foreground) 8%, transparent); }
+
+/* ── 一整天对照条 ──────────────────────────────────────────────────────── */
+.tz-strip-section h2,
+.tz-meet h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.1rem;
+}
+
+.tz-note {
+  margin: 0 0 0.7rem;
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
+/* 窄屏横向滚动;首列吸左,滚出去也认得出是哪个时区 */
+.tz-strip-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tz-strip {
+  border-collapse: separate;
+  border-spacing: 2px;
+}
+
+.tz-strip th {
+  font-weight: 400;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+
+.tz-strip-rowhead {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  padding-right: 0.5rem;
+  text-align: left;
+  /* 吸住的首列必须不透明,否则滚动时下面的格子会透上来;右缘一道投影标出「这里是钉住的边」 */
+  background: var(--background);
+  box-shadow: 3px 0 5px -3px color-mix(in srgb, var(--foreground) 40%, transparent);
+}
+
+.tz-strip-zone {
+  display: inline-block;
+  max-width: 7.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--foreground);
+  font-size: 0.8rem;
+  vertical-align: middle;
+}
+
+/* 半点时区的分钟标在行首(如「加尔各答 :30」),格子里就只剩整点,列宽才收得住 */
+.tz-strip-min {
+  margin-left: 0.15rem;
+  color: var(--muted-foreground);
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.tz-strip-hour {
+  min-width: 2.1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.tz-strip-cellwrap { padding: 0; }
+
+.tz-strip-cell {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-width: 2.1rem;
+  padding: 5px 2px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: var(--band);
+  color: var(--foreground);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+  cursor: pointer;
+}
+.tz-strip-cell:hover { border-color: color-mix(in srgb, var(--foreground) 35%, transparent); }
+.tz-strip-cell.is-selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.tz-strip-delta {
+  position: absolute;
+  top: 0;
+  right: 2px;
+  color: var(--muted-foreground);
+  font-size: 0.6rem;
+}
+
+.tz-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.9rem;
+  margin: 0.6rem 0 2rem;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+
+.tz-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.tz-legend-swatch {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 3px;
+  background: var(--band);
+}
+
+/* ── 通话时段 ──────────────────────────────────────────────────────────── */
+.tz-meet-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.tz-hour-select {
+  padding: 6px 8px;
+  border-radius: 7px;
+  border: 1px solid var(--input);
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  color: var(--foreground);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.tz-dash { color: var(--muted-foreground); }
+
+.tz-empty {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.tz-window-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.tz-window {
+  padding: 0.55rem 0.7rem;
+  border-radius: 9px;
+  border: 1px solid color-mix(in srgb, var(--signal-success) 30%, transparent);
+  background: color-mix(in srgb, var(--signal-success) 8%, transparent);
+}
+
+.tz-window-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.tz-window-range {
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+}
+.tz-window-range em {
+  margin-left: 0.4rem;
+  color: var(--muted-foreground);
+  font-style: normal;
+  font-size: 0.78rem;
+}
+
+.tz-window-pick {
+  padding: 3px 9px;
+  border-radius: 6px;
+  border: 1px solid var(--border-default);
+  background: none;
+  color: var(--foreground);
+  font-family: inherit;
+  font-size: 0.76rem;
+  cursor: pointer;
+}
+.tz-window-pick:hover { background: color-mix(in srgb, var(--foreground) 8%, transparent); }
+
+.tz-window-zones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 1rem;
+  margin-top: 0.3rem;
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.tz-window-zone-name {
+  margin-right: 0.35rem;
+  color: var(--foreground);
+}
+
+.tz-window-day {
+  margin-left: 0.3rem;
+  font-style: normal;
+  color: var(--signal-warning);
+}
+
+.tz-foot {
+  margin: 2rem 0 0;
+  color: var(--faint-foreground);
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 480px) {
+  .tz-page { padding: 0.75rem 0.75rem 2.5rem; }
+  .tz-base { gap: 0.6rem 0.75rem; }
+  .tz-picker { width: 100%; }
+  .tz-cards { grid-template-columns: 1fr; }
+  .tz-card-clock { font-size: 1.7rem; }
+  .tz-strip-zone { max-width: 5rem; }
+}
