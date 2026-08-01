@@ -6,7 +6,7 @@ import {
   Film, ScanSearch, BookOpen, Shuffle, Library, BookA,
   Compass, Grid2x2, Trophy, Timer as TimerIcon, Code as CodeIcon,
   Brain, Box, Sigma, Scale, Sprout, Brush, MessagesSquare, Shapes, Blocks, Eye, Palette,
-  CircleQuestionMark,
+  CircleQuestionMark, Globe2,
   type LucideIcon,
 } from 'lucide-react';
 import { type LandingSearchCard } from '@/components/LandingSearch';
@@ -65,6 +65,8 @@ export const TEXTS: Record<string, { en: string; zh: string
   memo:            { en: 'Memo', zh: '记忆'
 },
   code:            { en: 'Code', zh: '编程'
+},
+  timezone:        { en: 'Time Zones', zh: '时区'
 },
   sim:             { en: 'Sim', zh: '模拟'
 },
@@ -138,7 +140,7 @@ export const SECTIONS: Section[] = [
     eyebrow: { en: 'TOOL', zh: '工具' },
     title:   { en: 'Solve, count, make.', zh: '求解、数帧、创作。'
     },
-    sub:     { en: 'A solver for any scramble and frame-accurate timing, plus cube mosaics, vector drawings and event icons.', zh: '把任意打乱交给求解器、逐帧核对成绩,以及拼马赛克、画矢量图、生成项目图标。'
+    sub:     { en: 'A solver for any scramble and frame-accurate timing, plus cube mosaics, vector drawings, event icons and a time zone converter for cubers spread across the world.', zh: '把任意打乱交给求解器、逐帧核对成绩,以及拼马赛克、画矢量图、生成项目图标,还有给天南海北的魔友用的时区换算。'
     },
     cards: [
       { id: 'frame-count', href: '/frame-count', internal: true, tier: 'medium', Icon: Film,       nameKey: 'frameCount' },
@@ -146,6 +148,7 @@ export const SECTIONS: Section[] = [
       { id: 'mosaic',      href: '/mosaic',      internal: true, tier: 'medium', Icon: Grid2x2,    nameKey: 'mosaic' },
       { id: 'paint',       href: '/paint',       internal: true, tier: 'medium', Icon: Brush,      nameKey: 'paint' },
       { id: 'icon',        href: '/icon',        internal: true, tier: 'medium', Icon: Shapes,     nameKey: 'icon' },
+      { id: 'timezone',    href: '/timezone',    internal: true, tier: 'medium', Icon: Globe2,     nameKey: 'timezone' },
     ],
   },
   {

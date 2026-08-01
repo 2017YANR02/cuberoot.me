@@ -118,6 +118,14 @@ img.list-select-flag { object-fit: cover; }
   overflow-y: auto;
 }
 
+/* maxVisible 截断后的「还有 N 项」提示 */
+.list-select-more {
+  padding: 8px 10px 4px;
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
 .list-select-item {
   display: flex;
   align-items: center;

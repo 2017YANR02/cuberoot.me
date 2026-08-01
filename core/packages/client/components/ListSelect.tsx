@@ -8,6 +8,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, X } from 'lucide-react';
 import { Flag } from '@/components/Flag';
+import { tr } from '@/i18n/tr';
 import './ListSelect.css';
 
 export interface ListSelectItem {
@@ -35,9 +36,13 @@ interface ListSelectProps {
   searchable?: boolean;
   /** 是否显示 × 清除按钮. 默认 true (筛选语义). 视图切换器这种"必须选一项"的场景传 false. */
   clearable?: boolean;
+  /** popup 里最多渲染几条 (超出显示「还有 N 项」提示). 列表上百条时必传, 否则一次开就是几百个 DOM 节点. */
+  maxVisible?: number;
+  /** 搜索框 placeholder */
+  searchPlaceholder?: string;
 }
 
-export function ListSelect({ items, value, onChange, allLabel, className, searchable, clearable = true }: ListSelectProps) {
+export function ListSelect({ items, value, onChange, allLabel, className, searchable, clearable = true, maxVisible, searchPlaceholder }: ListSelectProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const ref = useRef<HTMLDivElement>(null);
@@ -68,6 +73,10 @@ export function ListSelect({ items, value, onChange, allLabel, className, search
       (i.searchTerms ?? '').toLowerCase().includes(q),
     );
   }, [items, query, searchable]);
+
+  // maxVisible 未传 = 老行为(全渲染)。传了就截断,剩余数量在列表底部提示,靠继续输入收敛。
+  const shown = maxVisible && filtered.length > maxVisible ? filtered.slice(0, maxVisible) : filtered;
+  const hidden = filtered.length - shown.length;
 
   const select = (next: string) => {
     onChange(next);
@@ -114,12 +123,13 @@ export function ListSelect({ items, value, onChange, allLabel, className, search
               type="text"
               className="list-select-search"
               value={query}
+              placeholder={searchPlaceholder}
               onChange={e => setQuery(e.target.value)}
               autoFocus
             />
           )}
           <div className="list-select-list">
-            {filtered.map(i => (
+            {shown.map(i => (
               <button
                 key={i.value}
                 type="button"
@@ -132,6 +142,11 @@ export function ListSelect({ items, value, onChange, allLabel, className, search
                 {i.hint && <span className="list-select-hint">{i.hint}</span>}
               </button>
             ))}
+            {hidden > 0 && (
+              <div className="list-select-more">
+                {tr({ zh: `还有 ${hidden} 项,继续输入以缩小范围`, en: `${hidden} more — keep typing to narrow` })}
+              </div>
+            )}
           </div>
         </div>
       )}
