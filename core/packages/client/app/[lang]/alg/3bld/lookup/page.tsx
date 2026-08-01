@@ -25,7 +25,6 @@ import { Check, Copy, ExternalLink, Users, Video } from 'lucide-react';
 import Link from '@/components/AppLink';
 import { SearchInput } from '@/components/SearchInput';
 import { Spinner } from '@/components/Spinner/Spinner';
-import { VisualCube } from '@/components/VisualCube';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { useCopy } from '@/hooks/useCopy';
 import { tr } from '@/i18n/tr';
@@ -281,19 +280,15 @@ function CaseBlock({
   onPlay: (alg: string, raw: string) => void;
 }): JSX.Element | null {
   if (rows.length === 0) return null;
-  const firstAlg = rows[0].algs[0] ?? '';
   const showComm = hasCommutators(type);
 
   return (
     <section className="bld-db-case">
+      {/* 不出 case 图 —— 盲拧是按**编码**认 case 的,一张图对认编码没帮助,编码 + 位置
+          那两行已经把 case 说死了。高阶更是画不对:VisualCube 的分词器压根没有 `m`(整步
+          静默丢掉);cubing.js 认这些记号,但库里 `l` 与 `Lw` 是同一条公式里的两个不同动作
+          (`Lw U L' U l2 …`)—— 小写在这份数据里是**单层内切**,不是本站别处的两层宽。 */}
       <header className="bld-db-case-head">
-        {/* 高阶不配图,也别顺手换成 TwistyPlayer:VisualCube 的分词器压根没有 `m`(整步静默
-            丢掉,画出一个**看着像真的**错图);cubing.js 认这些记号,但库里 `l` 与 `Lw` 是
-            同一条公式里的两个不同动作(`Lw U L' U l2 …`)—— 小写在这份数据里是**单层内切**,
-            不是本站别处的两层宽,直接喂过去解出来的是另一个 case。位置那一行已经说清楚 case 了。 */}
-        {firstAlg && !isBigbld(type) && (
-          <VisualCube algorithm={firstAlg} view="iso" size={76} loading="lazy" alt="" />
-        )}
         <div>
           <div className="bld-db-case-code">
             {describeCode(writing, type, scheme, wingAlt)}
