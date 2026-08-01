@@ -2594,13 +2594,9 @@ export default function SoloView({ playersControl }: SoloViewProps) {
           onSubmitMac={(mac) => resolveMac(mac)}
           onCancelMac={() => resolveMac(null)}
           onClose={() => { if (macResolverRef.current) resolveMac(null); setBluetoothOpen(false); }}
-          onConnect={async () => {
-            try { await bluetoothCube.connect(); }
-            catch (err) {
-              const msg = (err as Error).message ?? String(err);
-              if (msg !== 'NO_WEB_BLUETOOTH') alert((isZh ? `连接失败：${msg}` : `Connection failed: ${msg}`));
-            }
-          }}
+          // Failures are the modal's job — it knows which step broke and can
+          // say so next to the button that started it.
+          onConnect={() => bluetoothCube.connect()}
         />
       )}
 

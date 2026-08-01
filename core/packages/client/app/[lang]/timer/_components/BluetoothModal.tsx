@@ -11,8 +11,8 @@
  */
 
 import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
-import { detectBluetoothEnv, envAdvice } from '../_lib/bluetooth';
-import type { BluetoothCubeHandle } from '../_lib/bluetooth';
+import { detectBluetoothEnv, envAdvice, BluetoothConnectError, CONNECT_STAGE_LABEL, describeError } from '../_lib/bluetooth';
+import type { BluetoothCubeHandle, ConnectStage } from '../_lib/bluetooth';
 import { normalizeMac } from '../_lib/bluetooth/mac';
 import { Bluetooth, Battery, Check, X, RotateCcw, ExternalLink } from 'lucide-react';
 import { useIsMobile } from '@/hooks/useIsMobile';
@@ -22,6 +22,12 @@ interface Props {
   isZh: boolean;
   cube: BluetoothCubeHandle;
   onClose: () => void;
+  /**
+   * Start a connection. Allowed — expected — to reject: this modal owns the
+   * failure UI. It used to be each caller's job, and all three did it
+   * differently (two `alert(err.message)` variants, and BattleCubes not at all,
+   * which turned every failure there into a silent unhandled rejection).
+   */
   onConnect: () => Promise<void>;
   /** Set while connect() is awaiting a manually-entered MAC for this cube. */
   macPrompt?: { deviceName: string; isWrongKey?: boolean } | null;
@@ -74,12 +80,78 @@ const SUPPORTED_TIMERS: SupportedDevice[] = [
   { zh: 'Stackmat（走麦克风，不是蓝牙）', en: 'Stackmat (via microphone, not Bluetooth)' },
 ];
 
+/**
+ * What failed, at which step, and what to try next.
+ *
+ * The detail line is shown verbatim and in mono on purpose. It is whatever the
+ * browser threw, and on iOS Bluefy that is a bare native code with no text at
+ * all (the report this was built for read only "连接失败：2"). Naming the step
+ * turns that same code into something actionable — "2 while opening the GATT
+ * connection" is a different problem from "2 while choosing the device" — and
+ * makes it worth screenshotting, which is how it will reach us.
+ */
+function ConnectFailure({ failure, inBluefy }: {
+  failure: { stage: ConnectStage | null; detail: string };
+  inBluefy: boolean;
+}) {
+  const step = failure.stage === null ? null : CONNECT_STAGE_LABEL[failure.stage];
+  return (
+    <div className="modal-section bt-warn" style={{ marginTop: 10 }} role="alert">
+      <h3 className="bt-warn-title" style={{ margin: 0 }}>
+        {step
+          ? tr({ zh: `连接失败：${step.zh}这一步`, en: `Connection failed while ${step.en}` })
+          : tr({ zh: '连接失败', en: 'Connection failed' })}
+      </h3>
+      <p className="bt-error-detail">{failure.detail}</p>
+      {inBluefy && (
+        <ul style={{ margin: '10px 0 0', paddingLeft: 18, fontSize: 12, lineHeight: 1.6, color: 'var(--muted-foreground)' }}>
+          <li>{tr({
+            zh: 'iOS「设置 → Bluefy → 蓝牙」要允许，否则一台设备都搜不到。',
+            en: 'iOS Settings → Bluefy → Bluetooth must be allowed, or nothing will be found.',
+          })}</li>
+          <li>{tr({
+            zh: '打开 Bluefy 设置里的 Enable BLE Advertisements —— GAN、魔域 32、奇艺都要从蓝牙广播里取 MAC 才能解密。',
+            en: 'Turn on “Enable BLE Advertisements” in Bluefy’s settings — GAN, MoYu 32 and QiYi all read their MAC out of the advertisement to derive the key.',
+          })}</li>
+          <li>{tr({
+            zh: '魔方同一时刻只接受一个连接：先在其他 App 和 iOS 蓝牙设置里把它断开。',
+            en: 'A cube accepts one connection at a time — disconnect it in other apps and in iOS Bluetooth settings first.',
+          })}</li>
+          <li>{tr({
+            zh: '转一下魔方唤醒它，休眠时它不发广播。',
+            en: 'Turn a face to wake the cube — it stops advertising while asleep.',
+          })}</li>
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export default function BluetoothModal({ isZh, cube, onClose, onConnect, macPrompt, onSubmitMac, onCancelMac }: Props) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const isMobile = useIsMobile(480);
   const [macInput, setMacInput] = useState('');
   const [macError, setMacError] = useState(false);
+  const [connecting, setConnecting] = useState(false);
+  const [connectError, setConnectError] = useState<{ stage: ConnectStage | null; detail: string } | null>(null);
+
+  const runConnect = async (): Promise<void> => {
+    setConnectError(null);
+    setConnecting(true);
+    try {
+      await onConnect();
+    } catch (err) {
+      // NO_WEB_BLUETOOTH already has its own section above (envAdvice) — don't
+      // say it twice.
+      if ((err as { kind?: unknown } | null)?.kind === 'no-web-bluetooth') return;
+      setConnectError(err instanceof BluetoothConnectError
+        ? { stage: err.stage, detail: err.detail }
+        : { stage: null, detail: describeError(err) });
+    } finally {
+      setConnecting(false);
+    }
+  };
   const submitMac = (): void => {
     const norm = normalizeMac(macInput);
     if (!norm) { setMacError(true); return; }
@@ -264,12 +336,15 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect, macProm
             <button
               className="bt-connect-btn"
               style={connectBtnStyle ? { ...connectBtnStyle, marginTop: 10 } : { marginTop: 10 }}
-              onClick={() => { void onConnect(); }}
+              disabled={connecting}
+              onClick={() => { void runConnect(); }}
             >
               <Bluetooth size={14} />
-              <span>{tr({ zh: '搜索并连接', en: 'Search & connect'
-            })}</span>
+              <span>{connecting
+                ? tr({ zh: '连接中…', en: 'Connecting…' })
+                : tr({ zh: '搜索并连接', en: 'Search & connect' })}</span>
             </button>
+            {connectError && <ConnectFailure failure={connectError} inBluefy={inBluefy} />}
           </div>
         )}
 
