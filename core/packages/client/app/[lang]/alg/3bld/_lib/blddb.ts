@@ -1,162 +1,433 @@
-// BLDDB (nbwzx/blddb) 三循环公式库的读取层 —— 给 /alg/3bld/3style 用。
+// BLDDB(nbwzx/blddb)人工整理公式集的读取层 —— 给 /alg/3bld/lookup 用。
 //
-// 数据是 fork 同步下来的那份人工整理集(`tools/blddb/data/*Manmade.json`,由
-// _sync_blddb.ps1 落地),不入 client bundle,运行时按需拉。穷举生成的 Nightmare
-// 集不在这里,那套只在 iframe 版 /blddb 里。
+// 数据是 fork 同步下来的那份(`tools/blddb/data/*Manmade.json`,由 _sync_blddb.ps1
+// 落地),不入 client bundle,运行时按需拉。穷举生成的 Nightmare 集、高阶盲拧(翼棱 /
+// 中心块)不在这里,那两套只在 iframe 版 /blddb 里。
 //
-// ── 键是怎么编的 ────────────────────────────────────────────────────────────
-// 键 = 三个贴纸的**彳亍(Chichu)默认编码**字母,但只存一个代表元。同一个三循环
-// 有多种等价写法:
+// ── 库键是怎么编的 ─────────────────────────────────────────────────────────
+// 键 = 若干个贴纸的**彳亍(Chichu)默认编码**字母,而且同一个 case 只存一个代表元,
+// 等价写法要自己算。两条产生等价写法的操作:
 //   ① 循环移位:`(b t1 t2)` = `(t1 t2 b)` = `(t2 b t1)`,同一个置换;
-//   ② 整体换贴纸:把三个字母**同时**换成同一块上的下一个贴纸(棱 2 个、角 3 个)。
-//      这一步也保置换 —— σ 把每个**位置**映到同一块的另一面,"t1 归位到 b"
-//      自动等价于"σt1 归位到 σb"。
-// 所以候选键 = 棱 2×3 = 6 个 / 角 3×3 = 9 个,库里至多命中一个。
-// 实例:UF-UB-RU → 彳亍 AEH → 换贴纸 BFG → 移位 GBF,库里就是 GBF。
-// 与上游 `codeConverter.customCodeToVariantCode` 的等价性由
-// tests/blddb_lookup.test.ts 拿上游源码当 oracle 逐个核对。
+//   ② 整体换贴纸:把所有字母**同时**换成同一块上的下一个贴纸(棱 2 个、角 3 个)。
+//      这一步保置换 —— σ 把每个**位置**映到同一块的另一面,"t1 归位到 b"自动等价于
+//      "σt1 归位到 σb"。
+// 各类型的具体组合见下面 VARIANTS。实例:UF-UB-RU → 彳亍 AEH → 换贴纸 BFG →
+// 移位 GBF,库里就是 GBF。正确性锁在 tests/blddb_lookup.test.ts(代表元唯一 +
+// 覆盖计数),外加对着 iframe 版逐 case 实测。
 //
-// 上游 license: GPL-3.0(见 tools/blddb/LICENSE)
+// 上游 license: GPL-3.0(见 tools/blddb/LICENSE)。这里只读它的**数据**,编码逻辑
+// 是本站按同一套记号自己实现的。
 
 import { staticUrl } from '@/lib/stats-base';
 import { nearcorner, nearedge } from './lettering';
 import { CHICHU_SCHEME, SPEFFZ_SCHEME, type SchemeId } from './scheme-presets';
 
+/** 库里的十个 case 类型中,本站原生支持的六个(都是三阶)。 */
+export type BlddbType = 'edge' | 'corner' | 'parity' | 'twists' | 'flips' | 'ltct';
+
+/** 块类型 —— 决定"下一个贴纸"怎么走。 */
 export type BlddbPiece = 'corner' | 'edge';
 
+export const BLDDB_TYPES: BlddbType[] = ['edge', 'corner', 'parity', 'twists', 'flips', 'ltct'];
+
 /**
- * 库里一条记录:`[[公式...], [用这条的人...], [换位子...]]`。
- * 公式和换位子一一对应且**同一条公式的不同写法**(换手 / 转体),共用一份用者名单;
- * 换位子写不出来时上游填字符串 `"Not found."`。
+ * 库里一条记录:`[[公式...], [用这条的人...], [换位子...]?]`。
+ * 一条记录里的多个公式是**同一条公式的不同写法**(换手 / 转体),共用一份用者名单;
+ * 换位子那一项只有 corner / edge / flips / twists 有,写不出来时上游填 `"Not found."`。
  */
-export type BlddbEntry = readonly [algs: string[], users: string[], comms: string[]];
+export type BlddbEntry = readonly [algs: string[], users: string[], comms?: string[]];
 export type BlddbSet = Readonly<Record<string, BlddbEntry[]>>;
 
-/** 人名 → 各套公式表的公开链接(3 循环 / 5 循环等,按 codeType 分)。 */
+/** 人名 → 各套公式表的公开链接(按 codeType 分,带 3bld / bld 兜底)。 */
 export type SourceToUrl = Readonly<Record<string, Record<string, string>>>;
 /** 人名 → WCA id 与盲拧成绩(百分秒)。 */
 export type SourceToResult = Readonly<Record<string, { wca_id?: string; '3bld'?: number; '4bld'?: number }>>;
-
-/** 上游给这条公式配的讲解视频。 */
+/** 上游给某条公式配的讲解视频(bilibili / 抖音 / YouTube 内嵌页)。 */
 export type AlgToUrl = Readonly<Record<string, { url: string; width: string; height: string }[]>>;
 
 export const NO_COMMUTATOR = 'Not found.';
+/** 输入里的通配符:一位任意字母,用来列出一整组 case。 */
+export const WILDCARD = '*';
 
-// ── 编码 ───────────────────────────────────────────────────────────────────
+// ── 贴纸格 ─────────────────────────────────────────────────────────────────
 
-// 一块上"下一个贴纸"。彳亍默认串里的配对就是物理配对,与库里的编码同源
-// (上游 tracer.ts 的 cornerChDefault / edgeChDefault 是同一组配对)。
-const NEXT_STICKER: Record<BlddbPiece, (s: string) => string> = {
-  corner: nearcorner,
-  edge: nearedge,
-};
+/**
+ * 48 个贴纸格的位置名,顺序 = scheme-presets 那两串编码方案的下标顺序
+ * (面序 U D L R F B,每面 8 格按阅读序去掉中心)。角在每面的 0/2/5/7,棱在 1/3/4/6。
+ *
+ * 与库同源的证据:CHICHU_SCHEME 在 UF / UB / RU 三格上正好是 A / E / H,而上游页面
+ * ?position=UF-UB-RU 的字母对就是彳亍 AEH。整表的自洽性(双射 + 角棱分类)锁在测试里。
+ */
+export const POSITIONS_48: readonly string[] = [
+  'UBL', 'UB', 'UBR', 'UL', 'UR', 'UFL', 'UF', 'UFR',
+  'DFL', 'DF', 'DFR', 'DL', 'DR', 'DBL', 'DB', 'DBR',
+  'LUB', 'LU', 'LUF', 'LB', 'LF', 'LDB', 'LD', 'LDF',
+  'RUF', 'RU', 'RUB', 'RF', 'RB', 'RDF', 'RD', 'RDB',
+  'FUL', 'FU', 'FUR', 'FL', 'FR', 'FDL', 'FD', 'FDR',
+  'BUR', 'BU', 'BUL', 'BR', 'BL', 'BDR', 'BD', 'BDL',
+];
 
-/** 一块有几个贴纸 —— 也就是"整体换贴纸"能换几轮。 */
-const STICKERS: Record<BlddbPiece, number> = { corner: 3, edge: 2 };
+/** 每面 8 格里角 / 棱各占哪几个下标。 */
+const CELL_INDEXES: Record<BlddbPiece, number[]> = { corner: [0, 2, 5, 7], edge: [1, 3, 4, 6] };
 
-// scheme-presets 的两串都铺在同一套 48 个贴纸格上(每面 8 格,去掉中心),
-// 所以同下标 = 同一个贴纸,可以直接对位翻译。每面 8 格里角在 [0,2,5,7]、
-// 棱在 [1,3,4,6](3x3 的 1/3/7/9 与 2/4/6/8)。
-// 正确性由 tests/blddb_lookup.test.ts 兜:两组下标取出的字母必须各自恰好是 24 个
-// 角 / 棱字母的一个排列,错一个下标就红。
+function slotIndexes(piece: BlddbPiece): number[] {
+  return [0, 1, 2, 3, 4, 5].flatMap((f) => CELL_INDEXES[piece].map((k) => f * 8 + k));
+}
+
 const SLOT_INDEXES: Record<BlddbPiece, number[]> = {
-  corner: [0, 1, 2, 3, 4, 5].flatMap((f) => [0, 2, 5, 7].map((k) => f * 8 + k)),
-  edge: [0, 1, 2, 3, 4, 5].flatMap((f) => [1, 3, 4, 6].map((k) => f * 8 + k)),
+  corner: slotIndexes('corner'),
+  edge: slotIndexes('edge'),
 };
 
-function buildSchemeMap(piece: BlddbPiece, from: string): Record<string, string> {
+/** 彳亍字母 → 位置名。角棱各一张表 —— 同一个字母在两类里都出现(A 既是 UFL 又是 UF)。 */
+const POS_OF_LETTER: Record<BlddbPiece, Record<string, string>> = { corner: {}, edge: {} };
+/** 位置名 → 彳亍字母。 */
+const LETTER_OF_POS: Record<string, string> = {};
+
+for (const piece of ['corner', 'edge'] as const) {
+  for (const i of SLOT_INDEXES[piece]) {
+    POS_OF_LETTER[piece][CHICHU_SCHEME[i]] = POSITIONS_48[i];
+    LETTER_OF_POS[POSITIONS_48[i]] = CHICHU_SCHEME[i];
+  }
+}
+
+/**
+ * 字母表分档 —— 上游 codeTypeToPositions 的四档:
+ *  - `corner` / `edge`:全部 24 个贴纸;
+ *  - `corner1`:角块上不在 U/D 面的那 16 个贴纸(翻角只用得到这些);
+ *  - `edge0`:每条棱选一个代表贴纸(U/D 面的 8 个 + FL/FR/BL/BR),共 12 个 —— 翻棱
+ *    只认这一档,因为"这条棱翻了"跟用哪面贴纸称呼它无关。
+ */
+export type SlotKind = 'corner' | 'edge' | 'corner1' | 'edge0';
+
+const EDGE0_EXTRA = new Set(['FL', 'FR', 'BL', 'BR']);
+
+function inKind(pos: string, kind: SlotKind): boolean {
+  if (kind === 'corner') return pos.length === 3;
+  if (kind === 'edge') return pos.length === 2;
+  if (kind === 'corner1') return pos.length === 3 && pos[0] !== 'U' && pos[0] !== 'D';
+  return pos.length === 2 && (pos[0] === 'U' || pos[0] === 'D' || EDGE0_EXTRA.has(pos));
+}
+
+/** 某一档的位置名(下拉选项用的顺序 = 48 格顺序)。 */
+export function kindPositions(kind: SlotKind): string[] {
+  return POSITIONS_48.filter((p) => inKind(p, kind));
+}
+
+/** 某个位置在指定编码方案下的字母。 */
+export function letterAtPosition(pos: string, scheme: SchemeId): string {
+  const i = POSITIONS_48.indexOf(pos);
+  if (i < 0) return '';
+  return (scheme === 'speffz' ? SPEFFZ_SCHEME : CHICHU_SCHEME)[i];
+}
+
+/** 某一档在指定编码方案下的合法字母。 */
+export function kindLetters(kind: SlotKind, scheme: SchemeId): string[] {
+  const src = scheme === 'speffz' ? SPEFFZ_SCHEME : CHICHU_SCHEME;
+  const out: string[] = [];
+  for (let i = 0; i < 48; i++) if (inKind(POSITIONS_48[i], kind)) out.push(src[i]);
+  return out;
+}
+
+/** 兼容旧签名:某类块在指定方案下的 24 个字母(排序后)。 */
+export function schemeLetters(piece: BlddbPiece, scheme: SchemeId): string[] {
+  return [...new Set(kindLetters(piece, scheme))].sort();
+}
+
+const pieceOfKind = (kind: SlotKind): BlddbPiece => (kind === 'corner' || kind === 'corner1' ? 'corner' : 'edge');
+
+// ── 编码方案互译 ───────────────────────────────────────────────────────────
+
+function buildSchemeMap(piece: BlddbPiece, from: string, to: string): Record<string, string> {
   const map: Record<string, string> = {};
-  for (const i of SLOT_INDEXES[piece]) map[from[i]] = CHICHU_SCHEME[i];
+  for (const i of SLOT_INDEXES[piece]) map[from[i]] = to[i];
   return map;
 }
 
 const SPEFFZ_TO_CHICHU: Record<BlddbPiece, Record<string, string>> = {
-  corner: buildSchemeMap('corner', SPEFFZ_SCHEME),
-  edge: buildSchemeMap('edge', SPEFFZ_SCHEME),
+  corner: buildSchemeMap('corner', SPEFFZ_SCHEME, CHICHU_SCHEME),
+  edge: buildSchemeMap('edge', SPEFFZ_SCHEME, CHICHU_SCHEME),
+};
+const CHICHU_TO_SPEFFZ: Record<BlddbPiece, Record<string, string>> = {
+  corner: buildSchemeMap('corner', CHICHU_SCHEME, SPEFFZ_SCHEME),
+  edge: buildSchemeMap('edge', CHICHU_SCHEME, SPEFFZ_SCHEME),
 };
 
-/** 该编码方案下这类块的合法字母(用来校验输入)。 */
-export function schemeLetters(piece: BlddbPiece, scheme: SchemeId): string[] {
-  const src = scheme === 'speffz' ? SPEFFZ_SCHEME : CHICHU_SCHEME;
-  return [...new Set(SLOT_INDEXES[piece].map((i) => src[i]))].sort();
-}
-
-/** 用户编码 → 库里用的彳亍编码。彳亍本身原样返回。 */
+/** 用户编码的单个字母 → 库里用的彳亍编码。彳亍本身原样返回。 */
 export function toChichu(letters: string, piece: BlddbPiece, scheme: SchemeId): string {
   if (scheme !== 'speffz') return letters;
   const map = SPEFFZ_TO_CHICHU[piece];
-  return [...letters].map((c) => map[c] ?? c).join('');
+  return [...letters].map((c) => (c === WILDCARD ? c : (map[c] ?? c))).join('');
+}
+
+/** 彳亍 → 用户编码。 */
+export function fromChichu(letters: string, piece: BlddbPiece, scheme: SchemeId): string {
+  if (scheme !== 'speffz') return letters;
+  const map = CHICHU_TO_SPEFFZ[piece];
+  return [...letters].map((c) => (c === WILDCARD ? c : (map[c] ?? c))).join('');
+}
+
+// ── 类型规格 ───────────────────────────────────────────────────────────────
+
+interface TypeSpec {
+  /** 每一位字母属于哪一档(twists 是变长,单独标)。 */
+  slots: SlotKind[];
+  /** twists 那种"1~8 位、每位同一档"的变长码。 */
+  variadic?: { kind: SlotKind; max: number };
+  /** 这套数据带不带换位子列。 */
+  hasComm: boolean;
+}
+
+const SPECS: Record<BlddbType, TypeSpec> = {
+  edge: { slots: ['edge', 'edge', 'edge'], hasComm: true },
+  corner: { slots: ['corner', 'corner', 'corner'], hasComm: true },
+  parity: { slots: ['edge', 'edge', 'corner', 'corner'], hasComm: false },
+  twists: { slots: [], variadic: { kind: 'corner1', max: 8 }, hasComm: true },
+  flips: { slots: ['edge0', 'edge0'], hasComm: true },
+  ltct: { slots: ['corner', 'corner', 'corner1'], hasComm: false },
+};
+
+/** 这个类型的码有多长(twists 变长,返回上限)。 */
+export function codeLength(type: BlddbType): number {
+  const spec = SPECS[type];
+  return spec.variadic ? spec.variadic.max : spec.slots.length;
+}
+
+export function isVariadic(type: BlddbType): boolean {
+  return SPECS[type].variadic !== undefined;
+}
+
+export function hasCommutators(type: BlddbType): boolean {
+  return SPECS[type].hasComm;
+}
+
+/** 第 i 位属于哪一档。 */
+export function slotKind(type: BlddbType, i: number): SlotKind {
+  const spec = SPECS[type];
+  return spec.variadic ? spec.variadic.kind : spec.slots[i];
+}
+
+/** 整串码逐位换编码方案(每位按自己那一档的块类型走)。 */
+function convertCode(code: string, type: BlddbType, fn: (c: string, p: BlddbPiece) => string): string {
+  return [...code].map((c, i) => fn(c, pieceOfKind(slotKind(type, i)))).join('');
+}
+
+export function codeToChichu(code: string, type: BlddbType, scheme: SchemeId): string {
+  return convertCode(code, type, (c, p) => toChichu(c, p, scheme));
+}
+
+export function codeFromChichu(code: string, type: BlddbType, scheme: SchemeId): string {
+  return convertCode(code, type, (c, p) => fromChichu(c, p, scheme));
+}
+
+// ── 等价写法 ───────────────────────────────────────────────────────────────
+
+/** 同一块上的下一个贴纸。通配符原样穿过(它代表"任意",换贴纸也还是任意)。 */
+function nextSticker(letter: string, piece: BlddbPiece): string {
+  if (letter === WILDCARD) return WILDCARD;
+  return piece === 'corner' ? nearcorner(letter) : nearedge(letter);
+}
+
+const displaceAll = (code: string, piece: BlddbPiece): string =>
+  [...code].map((c) => nextSticker(c, piece)).join('');
+
+const rotations = (s: string): string[] =>
+  [...s].map((_, r) => s.slice(r) + s.slice(0, r));
+
+/** 换贴纸 × 循环移位 —— 三循环 / 翻棱对 / 奇偶的半边都用这个。 */
+function displaceAndRotate(code: string, piece: BlddbPiece): string[] {
+  const out: string[] = [];
+  let cur = code;
+  for (let d = 0; d < (piece === 'corner' ? 3 : 2); d++) {
+    out.push(...rotations(cur));
+    cur = displaceAll(cur, piece);
+  }
+  return out;
+}
+
+/** 一个角贴纸所在角块的三个贴纸,从 U/D 面那个起。 */
+function cornerTriple(letter: string): [string, string, string] {
+  let c0 = letter;
+  for (let i = 0; i < 3; i++) {
+    const pos = POS_OF_LETTER.corner[c0];
+    if (pos && (pos[0] === 'U' || pos[0] === 'D')) break;
+    c0 = nearcorner(c0);
+  }
+  const c1 = nearcorner(c0);
+  return [c0, c1, nearcorner(c1)];
+}
+
+/**
+ * 翻角方向 —— 换一次贴纸到的是逆时针那面,换两次是顺时针。
+ * (UFR 的三个贴纸 UFR → RUF → FUR,上游 twists 表里 RUF 记 ccw、FUR 记 cw。)
+ */
+export function twistDirection(letter: string): 'cw' | 'ccw' | null {
+  const [, ccw, cw] = cornerTriple(letter);
+  if (letter === ccw) return 'ccw';
+  if (letter === cw) return 'cw';
+  return null; // U/D 面那个贴纸不表示翻角
+}
+
+/** 翻角那 16 个字母:每个角一对(逆时针面 / 顺时针面)。 */
+export function twistLetterOf(cornerPos: string, dir: 'cw' | 'ccw'): string {
+  const [, ccw, cw] = cornerTriple(LETTER_OF_POS[cornerPos]);
+  return dir === 'ccw' ? ccw : cw;
+}
+
+/** 八个角块的 U/D 面位置名 —— 翻角输入按这个顺序排。 */
+export const TWIST_CORNERS: readonly string[] = POSITIONS_48.filter(
+  (p) => p.length === 3 && (p[0] === 'U' || p[0] === 'D'),
+);
+
+function ltctVariants(code: string): string[] {
+  const twisted = code[2];
+  // 换贴纸的三种写法(不含移位)。
+  const d: string[] = [code.slice(0, 2)];
+  for (let i = 1; i < 3; i++) d.push(displaceAll(d[i - 1], 'corner'));
+
+  // 翻角未知时退回"全部移位",与上游 cycle=0 分支一致。
+  if (twisted === WILDCARD) {
+    return d.flatMap(rotations).map((p) => p + twisted);
+  }
+  // 两个目标反着写时,换位子里的翻角会错开一格 —— 错开几格由翻角方向决定。
+  const c = twistDirection(twisted) === 'ccw' ? 1 : 2;
+  return [
+    ...d,
+    d[0][1] + d[c % 3][0],
+    d[1][1] + d[(c + 1) % 3][0],
+    d[2][1] + d[(c + 2) % 3][0],
+  ].map((p) => p + twisted);
+}
+
+function cartesian(a: string[], b: string[]): string[] {
+  return a.flatMap((x) => b.map((y) => x + y));
+}
+
+/**
+ * 一个 case 的全部等价写法(彳亍编码)。库里至多命中一个。
+ * 通配符 `*` 原样参与移位 / 换贴纸,所以带通配的码也能当模式用。
+ */
+export function variantKeys(code: string, type: BlddbType): string[] {
+  switch (type) {
+    case 'corner':
+      return displaceAndRotate(code, 'corner');
+    case 'edge':
+      return displaceAndRotate(code, 'edge');
+    case 'flips':
+      return displaceAndRotate(code, 'edge');
+    case 'parity':
+      return cartesian(
+        displaceAndRotate(code.slice(0, 2), 'edge'),
+        displaceAndRotate(code.slice(2, 4), 'corner'),
+      );
+    case 'ltct':
+      return ltctVariants(code);
+    case 'twists':
+      // 翻角不靠移位:哪个角朝哪转是一组无序事实,键就是排序后的字母。
+      return [[...code].sort().join('')];
+  }
 }
 
 /** 两个字母是不是同一块上的贴纸(缓冲和目标撞块 = 这不是三循环)。 */
 export function sameSticker(a: string, b: string, piece: BlddbPiece): boolean {
   let cur = a;
-  for (let i = 0; i < STICKERS[piece]; i++) {
+  for (let i = 0; i < (piece === 'corner' ? 3 : 2); i++) {
     if (cur === b) return true;
-    cur = NEXT_STICKER[piece](cur);
+    cur = nextSticker(cur, piece);
   }
   return false;
 }
 
+// ── 查表 ───────────────────────────────────────────────────────────────────
+
+export interface BlddbHit {
+  /** 命中的库内键(彳亍代表元)。 */
+  key: string;
+  /** 这个 case 对上输入的那种写法(彳亍编码,通配位已填实)。 */
+  writing: string;
+  entries: BlddbEntry[];
+}
+
+const matchesPattern = (pattern: string, s: string): boolean =>
+  pattern.length === s.length && [...pattern].every((c, i) => c === WILDCARD || c === s[i]);
+
 /**
- * 一个三循环的全部等价键(彳亍编码)。见文件头注:整体换贴纸 × 循环移位。
- * 顺序不重要 —— 库里至多命中一个。
+ * 按彳亍编码的**模式**查库。不带 `*` 时至多一条(走等价写法直接命中键);
+ * 带 `*` 时扫全表,列出该组的每个 case。
  */
-export function variantKeys(chichu: string, piece: BlddbPiece): string[] {
-  const next = NEXT_STICKER[piece];
-  const out: string[] = [];
-  let cur = chichu;
-  for (let d = 0; d < STICKERS[piece]; d++) {
-    for (let r = 0; r < cur.length; r++) out.push(cur.slice(r) + cur.slice(0, r));
-    cur = [...cur].map(next).join('');
+export function findCases(set: BlddbSet, pattern: string, type: BlddbType): BlddbHit[] {
+  if (!pattern.includes(WILDCARD)) {
+    for (const key of variantKeys(pattern, type)) {
+      const entries = set[key];
+      if (entries) return [{ key, writing: pattern, entries }];
+    }
+    return [];
+  }
+  const out: BlddbHit[] = [];
+  for (const key of Object.keys(set)) {
+    for (const writing of variantKeys(key, type)) {
+      if (matchesPattern(pattern, writing)) {
+        out.push({ key, writing, entries: set[key] });
+        break;
+      }
+    }
   }
   return out;
 }
 
-export interface BlddbLookup {
-  /** 命中的库内键(彳亍编码,代表元)。 */
-  key: string;
-  entries: BlddbEntry[];
+/** 旧签名(只查三循环、只返一条)—— 测试与外部调用还在用。 */
+export function lookupCase(set: BlddbSet, chichu: string, piece: BlddbPiece): BlddbHit | null {
+  return findCases(set, chichu, piece)[0] ?? null;
 }
 
-/** 查一个三循环。没有人工整理的公式就返回 null(不代表这个 case 不存在)。 */
-export function lookupCase(
-  set: BlddbSet,
-  chichu: string,
-  piece: BlddbPiece,
-): BlddbLookup | null {
-  for (const key of variantKeys(chichu, piece)) {
-    const entries = set[key];
-    if (entries) return { key, entries };
+// ── 位置描述 ───────────────────────────────────────────────────────────────
+
+/** 一串彳亍码逐位翻成位置名(通配位给 `*`)。 */
+export function positionsOf(code: string, type: BlddbType): string[] {
+  return [...code].map((c, i) => {
+    if (c === WILDCARD) return WILDCARD;
+    return POS_OF_LETTER[pieceOfKind(slotKind(type, i))][c] ?? c;
+  });
+}
+
+/** 翻角码 → 每个被翻的角 + 方向,按 TWIST_CORNERS 顺序。 */
+export function twistTargets(code: string): { corner: string; dir: 'cw' | 'ccw' }[] {
+  const out: { corner: string; dir: 'cw' | 'ccw' }[] = [];
+  for (const corner of TWIST_CORNERS) {
+    for (const dir of ['cw', 'ccw'] as const) {
+      if (code.includes(twistLetterOf(corner, dir))) out.push({ corner, dir });
+    }
   }
-  return null;
+  return out;
 }
 
 // ── 取数 ───────────────────────────────────────────────────────────────────
 
 const BASE = '/tools/blddb/data';
 
-// 同一份 JSON 全站只拉一次:2.4MB(角) / 3.5MB(棱),切来切去不该重拉。
-// 存 promise 而不是结果,并发调用共用同一个请求。
+// 同一份 JSON 全站只拉一次(棱 3.5MB / 角 2.4MB,其余都在 400KB 以内),切来切去
+// 不该重拉。存 promise 而不是结果,并发调用共用同一个请求。
 const cache = new Map<string, Promise<unknown>>();
 
 function fetchJson<T>(path: string): Promise<T> {
   const hit = cache.get(path);
   if (hit) return hit as Promise<T>;
-  const p = fetch(staticUrl(`${BASE}/${path}`)).then((r) => {
-    if (!r.ok) throw new Error(`blddb ${path}: HTTP ${r.status}`);
-    return r.json() as Promise<T>;
-  }).catch((err) => {
-    // 失败的不留在缓存里,否则一次网络抖动这页到刷新前都好不了。
-    cache.delete(path);
-    throw err;
-  });
+  const p = fetch(staticUrl(`${BASE}/${path}`))
+    .then((r) => {
+      if (!r.ok) throw new Error(`blddb ${path}: HTTP ${r.status}`);
+      return r.json() as Promise<T>;
+    })
+    .catch((err) => {
+      // 失败的不留在缓存里,否则一次网络抖动这页到刷新前都好不了。
+      cache.delete(path);
+      throw err;
+    });
   cache.set(path, p);
   return p;
 }
 
-export function loadBlddbSet(piece: BlddbPiece): Promise<BlddbSet> {
-  return fetchJson<BlddbSet>(`${piece}Manmade.json`);
+export function loadBlddbSet(type: BlddbType): Promise<BlddbSet> {
+  return fetchJson<BlddbSet>(`${type}Manmade.json`);
 }
 
 export function loadSourceToUrl(): Promise<SourceToUrl> {
@@ -169,4 +440,11 @@ export function loadSourceToResult(): Promise<SourceToResult> {
 
 export function loadAlgToUrl(): Promise<AlgToUrl> {
   return fetchJson<AlgToUrl>('algToUrl.json');
+}
+
+/** 某人公开公式表的链接:先按 case 类型找,再退 3bld,再退通用 bld。 */
+export function sourceLink(sourceUrl: SourceToUrl | null, name: string, type: BlddbType): string | undefined {
+  const row = sourceUrl?.[name];
+  if (!row) return undefined;
+  return row[type] ?? row['3bld'] ?? row['bld'];
 }

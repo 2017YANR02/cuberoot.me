@@ -99,7 +99,7 @@ const GROUPS: BldGroup[] = [
     },
       { href: '/alg/3bld/comm', zh: '公式库', en: 'Commutator Library', icon: <Library size={40} strokeWidth={1.5} />
     },
-      { href: '/alg/3bld/3style', zh: '三循环查询', en: '3-Style Lookup', icon: <Search size={40} strokeWidth={1.5} />
+      { href: '/alg/3bld/lookup', zh: '公式查询', en: 'Algorithm Lookup', icon: <Search size={40} strokeWidth={1.5} />
     },
     ]
 },
