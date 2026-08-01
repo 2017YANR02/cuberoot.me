@@ -118,7 +118,14 @@ describe('BluetoothConnectError', () => {
   });
 
   it('every stage has a bilingual label', () => {
-    const stages: ConnectStage[] = ['picker', 'advertisement', 'gatt', 'discover', 'handshake'];
+    const stages: ConnectStage[] = [
+      'adapter-asleep',
+      'picker',
+      'advertisement',
+      'gatt',
+      'discover',
+      'handshake',
+    ];
     for (const s of stages) {
       expect(CONNECT_STAGE_LABEL[s].zh.length).toBeGreaterThan(0);
       expect(CONNECT_STAGE_LABEL[s].en.length).toBeGreaterThan(0);

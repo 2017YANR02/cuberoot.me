@@ -3322,3 +3322,35 @@ cstimer 的 `giikerutil.chkAvail()` 在每次 `requestDevice` 前 `await navigat
 ### 还差什么
 
 - 全靠用户跑这一页。这是第一次把 React / Next / 我们全部代码同时排除在外。
+
+---
+
+## Sprint 40 — 根因落定:Bluefy 的蓝牙栈开机是睡着的
+
+前面五轮全打偏了(过滤条件、服务 UUID 的数字简写、域名、CORS、header),因为唯一相关的那个信号一直被当噪声:`getAvailability()`。
+
+`bt-test.html` 在用户手机上的三次读数把它钉死了:
+
+| 时刻 | `getAvailability()` | `requestDevice()` |
+|---|---|---|
+| 刚打开浏览器 | `false`(7ms 就答) | 裸 `2`,不弹选择框 |
+| 强退重开后 | **永不落地**(挂死) | 裸 `2` |
+| 先用 cstimer 连过一次之后 | `true`(22ms) | **弹出选择框,选中 GAN16ui_C296** |
+
+第三行是判决:代码一个字没改,栈醒了就全好。所以故障从来不在我们发什么参数,而在**我们在栈还没醒的时候就发**。
+
+cstimer 之所以在同一台手机上稳:它的 `giikerutil.chkAvail()` 开口就问 availability,问这一下本身就把原生栈叫醒了 —— 我们是不问直接冲。
+
+### 改了什么
+
+1. `bluetoothReady(maxMs, callMs)` —— 开选择框之前先问、必要时轮询等它醒,返回 `ready | unavailable | unknown`。
+2. `withTimeout()` —— **任何跨原生桥的 await 都必须有上界**。这一条是拿血换的:上一版我直接 `await getAvailability()`,在用户手机上把「搜索并连接」永久卡在「连接中…」,还白吞了两轮诊断。
+3. `readyBudget(inBluefy)` —— Bluefy 等满 3s;其它浏览器只取一次 ≤400ms 的读数。因为 Chrome 的 transient user activation 点击后约 5s 过期,在一个第一次问就答了的浏览器上耗三秒轮询,等于拿一个我们没有的 bug 换我们有的那个。
+4. `requestDeviceWaking()` —— 被拒且当时没就绪,等 1.2s 再试一次。**只在 Bluefy**:别处第二次调用没有 activation,会抛 `NotAllowedError`,而本模块把它读成「用户取消」直接静默 —— 真错误会变成「点了连接毫无反应」。
+5. 新阶段 `adapter-asleep`,标题写「蓝牙还没准备好」而不是「…这一步失败」(压根没走到那一步),下面直接给能动手的三条:再点一次 / 关开蓝牙 / 彻底退出浏览器重开。
+
+### 验证
+
+- `tests/bluetooth_adapter_wake.test.ts` 11 条,钉的是**决策表**(要不要重试)和等待预算,不是实现细节 —— 会出事的正是这两处。蓝牙相关测试共 49 条全绿。
+- Playwright 在 `/timer` 里换掉 `navigator.bluetooth`,伪装 Bluefy UA,复刻「前 2 秒 `getAvailability()` 挂死 + `requestDevice` 回裸 2,之后醒」:等待吸掉睡眠窗口,`requestDevice` **只调一次**(@2212ms)就拿到选择框,界面无报错。
+- 另一路:availability 恒 false + 恒拒,界面出「蓝牙还没准备好」+ `2 (number)` + 三条建议,1.5s 内落定,不卡「连接中」。

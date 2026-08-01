@@ -104,14 +104,28 @@ function ConnectFailure({ failure, inBluefy, busy, onShowAllDevices, probe, prob
   return (
     <div className="modal-section bt-warn" style={{ marginTop: 10 }} role="alert">
       <h3 className="bt-warn-title" style={{ margin: 0 }}>
-        {step
-          ? tr({ zh: `连接失败：${step.zh}这一步`, en: `Connection failed while ${step.en}` })
-          : tr({ zh: '连接失败', en: 'Connection failed' })}
+        {/* "…这一步" reads as "it got that far and tripped", which is exactly
+            wrong for adapter-asleep: nothing was attempted at all. */}
+        {failure.stage === 'adapter-asleep'
+          ? tr({ zh: '蓝牙还没准备好', en: 'Bluetooth is not ready yet' })
+          : step
+            ? tr({ zh: `连接失败：${step.zh}这一步`, en: `Connection failed while ${step.en}` })
+            : tr({ zh: '连接失败', en: 'Connection failed' })}
       </h3>
       <p className="bt-error-detail">{failure.detail}</p>
-      {/* Only for a picker-stage failure: past that point a device was already
-          chosen, so re-opening the chooser unfiltered would fix nothing. */}
-      {failure.stage === 'picker' && (
+      {/* The one failure whose cause we actually know. Say it plainly instead of
+          leaving the user staring at whatever the bridge threw. */}
+      {failure.stage === 'adapter-asleep' && (
+        <p className="bt-retry-hint">
+          {tr({
+            zh: '浏览器报告蓝牙还没就绪，这时候它会拒绝一切搜索。多数情况下再点一次「搜索并连接」就好；还是不行就把手机蓝牙关掉再打开，或者彻底退出浏览器重开。',
+            en: 'The browser reports Bluetooth as not ready, and refuses every scan while that lasts. Tapping “Search & connect” again usually clears it; if not, toggle Bluetooth off and on, or fully quit and reopen the browser.',
+          })}
+        </p>
+      )}
+      {/* Only while the chooser itself is the problem: past that point a device
+          was already chosen, so re-opening it unfiltered would fix nothing. */}
+      {(failure.stage === 'picker' || failure.stage === 'adapter-asleep') && (
         <>
           <button
             type="button"
