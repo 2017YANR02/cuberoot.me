@@ -30,6 +30,7 @@ import { simMasksRoutes } from './routes/sim_masks.js';
 import { wcaFormatRoutes } from './routes/wca_format.js';
 import { wcaRecentRecordsRoutes, startRecentRecordsPoller } from './routes/wca_recent_records.js';
 import { timerBackupsRoutes } from './routes/timer_backups.js';
+import { calendarRoutes, startCalendarReminderSweep } from './routes/calendar.js';
 import { wcaScheduleRoutes } from './routes/wca_schedule.js';
 import { wcaScramblesRoutes } from './routes/wca_scrambles.js';
 import { scrambleMarksRoutes } from './routes/scramble_marks.js';
@@ -133,6 +134,7 @@ app.route('/v1', simMasksRoutes);
 app.route('/v1', wcaFormatRoutes);
 app.route('/v1', wcaRecentRecordsRoutes);
 app.route('/v1', timerBackupsRoutes);
+app.route('/v1', calendarRoutes);
 app.route('/v1', wcaScheduleRoutes);
 app.route('/v1', wcaScramblesRoutes);
 app.route('/v1', scrambleMarksRoutes);
@@ -204,6 +206,10 @@ startPrewarmCron();
 // wca-monitor 推送套件(WCA Live 纪录/PR + 粗饼纪录/比赛 + WCA 比赛)后台 poller.
 // MONITORS_ENABLED!=1 时直接返回(休眠);MONITOR_PUSH_ENABLED!=1 时只 DRY 日志不真推.
 startMonitors();
+
+// /calendar 日程提醒:每分钟扫一遍「该发提醒了吗」,命中写站内通知(+ 邮件旁路)。
+// 去重靠 calendar_reminder_log 的主键抢占,重启 / 窗口重叠都不会重复发。
+startCalendarReminderSweep();
 
 // 首页「今日公示」数据源:后台轮询 WCA announced_at(独立于监控门控).启动 90s 后首拉,之后每 20min.
 startAnnouncedCompsPoller();

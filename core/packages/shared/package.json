@@ -81,6 +81,18 @@
       "node": "./dist/nnn_sim.js",
       "default": "./src/nnn_sim.ts"
     },
+    "./tz": {
+      "node": "./dist/tz.js",
+      "default": "./src/tz.ts"
+    },
+    "./recur": {
+      "node": "./dist/recur.js",
+      "default": "./src/recur.ts"
+    },
+    "./calendar": {
+      "node": "./dist/calendar.js",
+      "default": "./src/calendar.ts"
+    },
     "./data/*.json": "./data/*.json"
   },
   "scripts": {

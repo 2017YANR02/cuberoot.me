@@ -58,6 +58,7 @@ const SCHEMA = loadSchema();
 const OWNER_COLUMNS = [
   'wca_id', 'user_key', 'actor_key', 'author_id', 'owner_wca_id',
   'reporter_id', 'reporter_wca_id', 'voter_wca_id', 'added_by_id', 'owner_key',
+  'guest_key',
 ];
 
 describe('清单 ↔ schema', () => {
