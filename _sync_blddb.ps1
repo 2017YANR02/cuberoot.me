@@ -240,9 +240,9 @@ if ($homeHtml -match '(?<!blddb)"/images/')
 
 # NOTE: public/data/ 的 49MB JSON 上游是**编译期** import 进 chunk 的（见 CLAUDE.md），
 #       导出里 out/data/ 那份对 iframe 版的 /blddb 是纯死重量。但我们自己的
-#       /alg/3bld/3style 是运行时 fetch 它的（见 lib/blddb-data.ts），所以留下人工整理的
-#       manmade 那批，砍掉 Nightmare（穷举生成的，37MB，只有 /blddb 里用得到，
-#       而那边是编译期内联的，删了不影响）。
+#       /alg/3bld/lookup 是运行时 fetch 它的（见 app/[lang]/alg/3bld/_lib/blddb.ts），
+#       所以留下人工整理的 manmade 那批，砍掉 Nightmare（穷举生成的，37MB，只有 /blddb
+#       里用得到，而那边是编译期内联的，删了不影响）。
 $dataDir = Join-Path $out 'data'
 if (Test-Path $dataDir)
 {
@@ -256,10 +256,15 @@ if (Test-Path $dataDir)
     Write-Host ("  data/：砍 Nightmare {0}MB，留 {1}MB" -f
         [math]::Round(($before - $after) / 1MB, 1), [math]::Round($after / 1MB, 1)) -ForegroundColor Gray
 
-    # 我们自己的页面靠这几个文件，缺了就是空表
+    # 我们自己的页面靠这几个文件，缺了就是空表。六套 case 一套一个文件，少一套那个
+    # 类型在 /alg/3bld/lookup 上就永远"查不到"——不会报错，所以这里硬卡。
     $dataMust = @(
         'cornerManmade.json'
         'edgeManmade.json'
+        'parityManmade.json'
+        'twistsManmade.json'
+        'flipsManmade.json'
+        'ltctManmade.json'
         'sourceToUrl.json'
         'sourceToResult.json'
         'algToUrl.json'
@@ -267,7 +272,7 @@ if (Test-Path $dataDir)
     $dataMissing = $dataMust | Where-Object { -not (Test-Path (Join-Path $dataDir $_)) }
     if ($dataMissing)
     {
-        throw "data/ 少了 $($dataMissing -join ', ') —— /alg/3bld/3style 会空表。"
+        throw "data/ 少了 $($dataMissing -join ', ') —— /alg/3bld/lookup 会空表。"
     }
 }
 

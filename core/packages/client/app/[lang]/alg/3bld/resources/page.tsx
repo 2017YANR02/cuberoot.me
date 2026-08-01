@@ -135,12 +135,12 @@ const SECTIONS: ResSection[] = [
     noteEn: 'Downloadable offline sheets are linked to their public source (alg database / public Google Sheets).',
     links: [
       {
-        href: '/alg/3bld/3style',
+        href: '/alg/3bld/lookup',
         internal: true,
-        zh: '三循环公式查询（站内）',
-        en: '3-Style lookup (on this site)',
-        descZh: '按缓冲和两个目标查，列出常用写法、换位子与使用者；数据来自 blddb。',
-        descEn: 'Query by buffer and two targets — common writings, commutators and who uses them; data from blddb.'
+        zh: '盲拧公式查询（站内）',
+        en: 'BLD algorithm lookup (on this site)',
+        descZh: '棱角三循环、奇偶、翻角、翻棱、奇偶带翻，列出常用写法、换位子与使用者；数据来自 blddb。',
+        descEn: '3-cycles, parity, twists, flips and LTCT — common writings, commutators and who uses them; data from blddb.'
     },
       {
         href: '/blddb',
