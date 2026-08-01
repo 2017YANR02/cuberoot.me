@@ -4,7 +4,7 @@
 
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { Brain, Library, FileText, Compass, Search, Timer as TimerIcon } from 'lucide-react';
+import { Brain, Library, FileText, Compass, Search, TableProperties, NotebookPen, Timer as TimerIcon } from 'lucide-react';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 
 import helperIcon from '../_icons/helper.svg';
@@ -101,6 +101,10 @@ const GROUPS: BldGroup[] = [
     },
       { href: '/alg/3bld/lookup', zh: '公式查询', en: 'Algorithm Lookup', icon: <Search size={40} strokeWidth={1.5} />
     },
+      { href: '/alg/3bld/tables', zh: '速查表', en: 'Cheat Sheets', icon: <TableProperties size={40} strokeWidth={1.5} />
+    },
+      { href: '/alg/3bld/sheets', zh: '公式表名录', en: 'Alg Sheets', icon: <NotebookPen size={40} strokeWidth={1.5} />
+    },
     ]
 },
   {
@@ -134,11 +138,6 @@ function HubBody({ isZh }: { isZh: boolean }) {
         <span className="bld-spacer" />
         <TimerLink isZh={isZh} />
       </div>
-
-      <p className="bld-hub-intro">
-        {tr({ zh: '三阶盲拧全套训练：读码还原、棱角公式、浮动缓冲、编组、奇偶，以及记忆默写与公式库。', en: 'Full 3BLD training suite: read-code helper, edge/corner drills, floating buffer, 2-2 swaps, parity, plus memory recall and a commutator library.'
-        })}
-      </p>
 
       {GROUPS.map((group) => (
         <section key={group.en} className="bld-hub-group">

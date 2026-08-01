@@ -18,6 +18,7 @@
 // 上游 license: GPL-3.0(见 tools/blddb/LICENSE)。这里只读它的**数据**,编码逻辑
 // 是本站按同一套记号自己实现的。
 
+import { mirrorMoveString } from '@cuberoot/shared/alg-mirror';
 import { staticUrl } from '@/lib/stats-base';
 import { nearcorner, nearedge } from './lettering';
 import { CHICHU_SCHEME, SPEFFZ_SCHEME, type SchemeId } from './scheme-presets';
@@ -31,12 +32,54 @@ export type BlddbPiece = 'corner' | 'edge';
 export const BLDDB_TYPES: BlddbType[] = ['edge', 'corner', 'parity', 'twists', 'flips', 'ltct'];
 
 /**
- * 库里一条记录:`[[公式...], [用这条的人...], [换位子...]?]`。
+ * 库里一条记录,定长四位:`[[公式...], [用这条的人...], [换位子...]|null, [起手...]]`。
  * 一条记录里的多个公式是**同一条公式的不同写法**(换手 / 转体),共用一份用者名单;
- * 换位子那一项只有 corner / edge / flips / twists 有,写不出来时上游填 `"Not found."`。
+ * 换位子只有 corner / edge / flips / twists 有(其余为 null),写不出来时上游填
+ * `"Not found."`。起手与公式一一对应,编码见 {@link THUMB_LABELS}。
+ *
+ * 定长化和起手都是 `.sync/blddb_postprocess.mjs` 在同步期做的 —— 起手那套算法是上游
+ * GPL 的,只在构建期跑,结果入数据,不进 client bundle。
  */
-export type BlddbEntry = readonly [algs: string[], users: string[], comms?: string[]];
+export type BlddbEntry = readonly [
+  algs: string[],
+  users: string[],
+  comms: string[] | null,
+  fingers: string[],
+];
 export type BlddbSet = Readonly<Record<string, BlddbEntry[]>>;
+
+/**
+ * 起手拇指位置的编码 → 文案。大写 = 左手镜像那一侧(上游把左手的「中立」也叫中立)。
+ * 一条公式可能有多个可行起手,数据里就是多个字符连写(如 `du`)。
+ *
+ * 短标签跟在每条公式后面显示(要够窄,不能把行撑开),长的挂 title 解释。
+ */
+export const THUMB_LABELS: Readonly<Record<string, { zh: string; en: string; fullZh: string; fullEn: string }>> = {
+  h: { zh: '中', en: 'Home', fullZh: '中立握法', fullEn: 'Home grip' },
+  H: { zh: '中', en: 'Home', fullZh: '中立握法', fullEn: 'Home grip' },
+  u: { zh: '上', en: 'Up', fullZh: '右手拇指朝上', fullEn: 'Right thumb up' },
+  d: { zh: '下', en: 'Down', fullZh: '右手拇指朝下', fullEn: 'Right thumb down' },
+  U: { zh: '左上', en: 'L-up', fullZh: '左手拇指朝上', fullEn: 'Left thumb up' },
+  D: { zh: '左下', en: 'L-down', fullZh: '左手拇指朝下', fullEn: 'Left thumb down' },
+};
+
+function joinThumb(code: string | undefined, pick: (v: (typeof THUMB_LABELS)[string]) => string): string | null {
+  if (!code) return null;
+  const parts = [...code].map((c) => THUMB_LABELS[c]).filter(Boolean);
+  if (parts.length === 0) return null;
+  // 去重:左右两侧的「中立」文案相同,连写成 hH 时别显示两遍。
+  return [...new Set(parts.map(pick))].join(' / ');
+}
+
+/** 一条公式的起手编码 → 短标签(多个可行起手用 `/` 连)。算不出来给 null。 */
+export function thumbLabel(code: string | undefined, isZh: boolean): string | null {
+  return joinThumb(code, (v) => (isZh ? v.zh : v.en));
+}
+
+/** 同上,展开成完整说明 —— 挂 title 用。 */
+export function thumbTitle(code: string | undefined, isZh: boolean): string | null {
+  return joinThumb(code, (v) => (isZh ? v.fullZh : v.fullEn));
+}
 
 /** 人名 → 各套公式表的公开链接(按 codeType 分,带 3bld / bld 兜底)。 */
 export type SourceToUrl = Readonly<Record<string, Record<string, string>>>;
@@ -380,6 +423,72 @@ export function lookupCase(set: BlddbSet, chichu: string, piece: BlddbPiece): Bl
   return findCases(set, chichu, piece)[0] ?? null;
 }
 
+/**
+ * 三循环的逆 case:换掉两个目标的先后。`(b t1 t2)` 的逆是 `(b t2 t1)`,公式就是倒着做,
+ * 所以想同时看两边的人可以顺手拿到。只有 corner / edge 有意义 —— 奇偶 / 翻角 / 翻棱
+ * 都是对合(自己就是自己的逆),奇偶带翻的逆不在同一套编码里。
+ */
+export function hasInverseCase(type: BlddbType): boolean {
+  return type === 'corner' || type === 'edge';
+}
+
+export function inverseCode(code: string): string {
+  return code.length === 3 ? code[0] + code[2] + code[1] : code;
+}
+
+/**
+ * 一条公式(或换位子)镜像到 M 平面另一侧。规则表在 `@cuberoot/shared/alg-mirror`
+ * (M / x 不取反那条坑写在它注释里),这里只负责**保住换位子的结构** ——
+ * `[ ] , : / ( )` 原样穿过,只把中间的记号串交给它。
+ */
+export function mirrorAlgText(text: string): string {
+  return text
+    .split(/([[\],:/()])/u)
+    .map((part) => {
+      if (!/[A-Za-z]/u.test(part)) return part;
+      try {
+        return mirrorMoveString(part, 'M');
+      } catch {
+        return part; // 认不出来的写法就别改它,总比吐一条错公式强
+      }
+    })
+    .join('');
+}
+
+/** 位置名镜像到 M 平面另一侧 —— 面名里的 L / R 互换,其余不动(UFR→UFL、RU→LU)。 */
+export function mirrorPosition(pos: string): string {
+  return pos.replace(/[LR]/gu, (c) => (c === 'L' ? 'R' : 'L'));
+}
+
+/**
+ * 一整串彳亍码镜像。左右镜像不是「把查到的公式翻一下」那么简单:库里那条公式解的是
+ * **镜像后的** case,所以要**先把查询镜过去**,再把查到的公式镜回来 —— 两次镜像抵消,
+ * 拿到的才是解你这个 case 的左手写法。展示时把命中的写法再镜回去当标签(镜像是对合)。
+ */
+export function mirrorChichu(code: string, type: BlddbType): string {
+  return [...code]
+    .map((c, i) => {
+      if (c === WILDCARD) return c;
+      const pos = POS_OF_LETTER[pieceOfKind(slotKind(type, i))][c];
+      if (!pos) return c;
+      return LETTER_OF_POS[mirrorPosition(pos)] ?? c;
+    })
+    .join('');
+}
+
+/** 结果排序:按当前编码的字母,或按位置在 48 格里的顺序。 */
+export type BlddbOrder = 'letter' | 'position';
+
+/** 排序键 —— 拿命中写法的**第一个通配位**(没有就整串)去比。 */
+export function orderKey(writing: string, type: BlddbType, scheme: SchemeId, order: BlddbOrder): string {
+  if (order === 'position') {
+    return positionsOf(writing, type)
+      .map((p) => String(POSITIONS_48.indexOf(p)).padStart(2, '0'))
+      .join('');
+  }
+  return codeFromChichu(writing, type, scheme);
+}
+
 // ── 位置描述 ───────────────────────────────────────────────────────────────
 
 /** 一串彳亍码逐位翻成位置名(通配位给 `*`)。 */
@@ -405,14 +514,25 @@ export function twistTargets(code: string): { corner: string; dir: 'cw' | 'ccw' 
 
 const BASE = '/tools/blddb/data';
 
-// 同一份 JSON 全站只拉一次(棱 3.5MB / 角 2.4MB,其余都在 400KB 以内),切来切去
+/**
+ * 数据版本 —— **改了 JSON 的形状就必须 +1**。
+ *
+ * `/tools/*` 是按 24h `max-age` 发的(静态 fork 的资产,本来就该长缓存),所以形状一变,
+ * 老浏览器会拿着旧结构的缓存渲染新代码,直接崩在读新字段那一行。带上 `?v=` 等于换了
+ * 一个 URL,缓存自然失效。
+ *
+ * v2:每条记录补成定长四位 `[公式, 用者, 换位子|null, 起手]`(.sync/blddb_postprocess.mjs)。
+ */
+const DATA_VERSION = 2;
+
+// 同一份 JSON 全站只拉一次(棱 1.6MB / 角 1.1MB,其余都在 200KB 以内),切来切去
 // 不该重拉。存 promise 而不是结果,并发调用共用同一个请求。
 const cache = new Map<string, Promise<unknown>>();
 
 function fetchJson<T>(path: string): Promise<T> {
   const hit = cache.get(path);
   if (hit) return hit as Promise<T>;
-  const p = fetch(staticUrl(`${BASE}/${path}`))
+  const p = fetch(staticUrl(`${BASE}/${path}?v=${DATA_VERSION}`))
     .then((r) => {
       if (!r.ok) throw new Error(`blddb ${path}: HTTP ${r.status}`);
       return r.json() as Promise<T>;
@@ -440,6 +560,32 @@ export function loadSourceToResult(): Promise<SourceToResult> {
 
 export function loadAlgToUrl(): Promise<AlgToUrl> {
   return fetchJson<AlgToUrl>('algToUrl.json');
+}
+
+// ── 速查表(/alg/3bld/tables)────────────────────────────────────────────────
+
+/** 「每个 case 一条推荐解」的表:库键(彳亍代表元)→ 公式。 */
+export type NightmareSelected = Readonly<Record<string, string>>;
+
+/** 上游 Nightmare 菜单里带推荐解网格的两套。 */
+export const SELECTED_TYPES = ['corner', 'edge'] as const;
+export type SelectedType = (typeof SELECTED_TYPES)[number];
+
+export function loadNightmareSelected(type: SelectedType): Promise<NightmareSelected> {
+  return fetchJson<NightmareSelected>(`${type}NightmareSelected.json`);
+}
+
+/**
+ * 上游 Nightmare 菜单里那九张静态速查表(`data/nightmare/*.json`)。
+ * 形状是原始的行数组:每行若干「标题, 公式」列,整行全空 = 分节。
+ */
+export const TABLE_NAMES = [
+  '2e2e', '2c2c', '2flips', '4flips', '2twists', '3twists', 'parity', 'ltct', '5style',
+] as const;
+export type TableName = (typeof TABLE_NAMES)[number];
+
+export function loadNightmareTable(name: TableName): Promise<string[][]> {
+  return fetchJson<string[][]>(`nightmare/${name}.json`);
 }
 
 /** 某人公开公式表的链接:先按 case 类型找,再退 3bld,再退通用 bld。 */
