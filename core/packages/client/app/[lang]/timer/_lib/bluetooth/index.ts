@@ -215,11 +215,19 @@ async function bluetoothReady(maxMs: number, callMs: number): Promise<BluetoothR
   }
 }
 
+/** Every number involved in waiting for the adapter, in one place. */
+const WAKE = {
+  /** Bluefy: the stack really is asleep and really does wake up, so wait. */
+  bluefy: { maxMs: 3000, callMs: 800 },
+  /** Everywhere else: one short reading, then get on with the tap. */
+  other: { maxMs: 0, callMs: 400 },
+  /** Between the refused call and the single retry. */
+  retryDelayMs: 1200,
+} as const;
+
 /** How long we'll wait for the adapter, by browser. See {@link bluetoothReady}. */
 export function readyBudget(inBluefy: boolean): { maxMs: number; callMs: number } {
-  // Bluefy: the stack really is asleep and really does wake up, so wait.
-  // Everywhere else: one short reading, then get on with the tap.
-  return inBluefy ? { maxMs: 3000, callMs: 800 } : { maxMs: 0, callMs: 400 };
+  return inBluefy ? WAKE.bluefy : WAKE.other;
 }
 
 /**
@@ -241,13 +249,14 @@ async function requestDeviceWaking(
   bt: Bluetooth,
   opts: RequestDeviceOptions,
   readiness: BluetoothReadiness,
+  inBluefy: boolean,
 ): Promise<BluetoothDevice> {
   try {
     return await bt.requestDevice(opts);
   } catch (err) {
-    if (readiness === 'ready' || !isBluefy() || isNoDeviceSelected(err)) throw err;
-    await new Promise((r) => setTimeout(r, 1200));
-    await bluetoothReady(2000, 800);
+    if (readiness === 'ready' || !inBluefy || isNoDeviceSelected(err)) throw err;
+    await new Promise((r) => setTimeout(r, WAKE.retryDelayMs));
+    await bluetoothReady(WAKE.bluefy.maxMs, WAKE.bluefy.callMs);
     return bt.requestDevice(opts);
   }
 }
@@ -967,7 +976,8 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     cancelPendingReconnect();
 
     // Give a sleeping adapter a moment to wake before we ask it for anything.
-    const budget = readyBudget(isBluefy());
+    const inBluefy = isBluefy();
+    const budget = readyBudget(inBluefy);
     const readiness = await bluetoothReady(budget.maxMs, budget.callMs);
 
     let device: BluetoothDevice;
@@ -976,6 +986,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
         navigator.bluetooth,
         pickerOptions(pick?.acceptAllDevices === true),
         readiness,
+        inBluefy,
       );
     } catch (err) {
       // User cancelled the picker, denied permission, or no device found.
