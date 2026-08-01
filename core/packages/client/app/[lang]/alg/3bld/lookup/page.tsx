@@ -2,9 +2,13 @@
 
 // 盲拧公式查询 —— BLDDB(nbwzx/blddb,GPL-3.0)人工整理公式集的本站版。
 //
-// 覆盖三阶那六套:棱 / 角三循环、奇偶、翻角、翻棱、奇偶带翻。iframe 版 /blddb 原样留着,
-// 那边额外有穷举生成的 Nightmare 全集和高阶盲拧(翼棱 / 中心块),数据量和编码另成一套。
-// Nightmare 菜单里那些**速查表**在本站 /alg/3bld/tables。
+// 覆盖上游人工集的全部十套:三阶的棱 / 角三循环、奇偶、翻角、翻棱、奇偶带翻,加高阶的
+// 翼棱 / X 中心 / T 中心 / 中棱。iframe 版 /blddb 原样留着,那边额外有穷举生成的
+// Nightmare 全集(37MB,不值得进本站)。Nightmare 菜单里那些**速查表**在
+// 本站 /alg/3bld/tables。
+//
+// 高阶四套也挂在这条路由下:编码、查表、显示开关跟三阶完全共用一套(高阶的字母表就是
+// 三阶那 24 个字母,见 _lib/blddb.ts 的 BIG_BASE),没必要为它再开一个页面。
 //
 // 与同目录 /alg/3bld/comm 分工:comm 是**固定缓冲**的字母对字典(每对一条,PG 里可编辑,
 // 带联想词);这里是**任意缓冲**的只读查询,一个 case 给出全部在用的写法 + 换位子 + 谁在用。
@@ -27,6 +31,8 @@ import { useCopy } from '@/hooks/useCopy';
 import { tr } from '@/i18n/tr';
 import { commutatorPost } from '../../commutator/engine';
 import {
+  BIGBLD_TYPES,
+  BLD3_TYPES,
   BLDDB_TYPES,
   NO_COMMUTATOR,
   TWIST_CORNERS,
@@ -39,6 +45,7 @@ import {
   hasCommutators,
   hasInverseCase,
   inverseCode,
+  isBigbld,
   isVariadic,
   kindLetters,
   kindPositions,
@@ -51,7 +58,8 @@ import {
   mirrorChichu,
   orderKey,
   positionsOf,
-  sameSticker,
+  resultKey,
+  samePiece,
   slotKind,
   sourceLink,
   thumbLabel,
@@ -72,6 +80,7 @@ import { AlgVideoModal, orderVideos } from '../_components/AlgVideoModal';
 import type { SchemeId } from '../_lib/scheme-presets';
 import '../3bld.css';
 
+// 高阶那四个中文名以 wiki/glossary 为准:X-center = 角心、T-center = 边心。
 const TYPE_LABEL: Record<BlddbType, { zh: string; en: string }> = {
   edge: { zh: '棱块三循环', en: 'Edge 3-cycle' },
   corner: { zh: '角块三循环', en: 'Corner 3-cycle' },
@@ -79,15 +88,25 @@ const TYPE_LABEL: Record<BlddbType, { zh: string; en: string }> = {
   twists: { zh: '翻角', en: 'Corner twists' },
   flips: { zh: '翻棱', en: 'Edge flips' },
   ltct: { zh: '奇偶带翻', en: 'LTCT' },
+  wing: { zh: '翼棱', en: 'Wing' },
+  xcenter: { zh: '角心', en: 'X-center' },
+  tcenter: { zh: '边心', en: 'T-center' },
+  midge: { zh: '中棱', en: 'Midge' },
 };
 
+const BIG_TARGET = { zh: '缓冲 + 两个目标', en: 'Buffer + 2 targets' };
+
 const PLACEHOLDER: Record<BlddbType, { zh: string; en: string }> = {
-  edge: { zh: '缓冲 + 两个目标', en: 'Buffer + 2 targets' },
-  corner: { zh: '缓冲 + 两个目标', en: 'Buffer + 2 targets' },
+  edge: BIG_TARGET,
+  corner: BIG_TARGET,
   parity: { zh: '两个棱 + 两个角', en: '2 edges + 2 corners' },
   twists: { zh: '每个翻角一个字母', en: 'One letter per twisted corner' },
   flips: { zh: '两条翻掉的棱', en: 'The two flipped edges' },
   ltct: { zh: '两个角 + 翻掉的角', en: '2 corners + the twisted one' },
+  wing: BIG_TARGET,
+  xcenter: BIG_TARGET,
+  tcenter: BIG_TARGET,
+  midge: BIG_TARGET,
 };
 
 /** 每个类型的输入分组:一组一个标题 + 若干位。 */
@@ -210,7 +229,7 @@ function UserList({
         <ul className="bld-db-users-list">
           {users.map((name) => {
             const href = sourceLink(sourceUrl, name, type);
-            const best = sourceResult?.[name]?.['3bld'];
+            const best = sourceResult?.[name]?.[resultKey(type)];
             return (
               <li key={name}>
                 {href ? (
@@ -238,6 +257,7 @@ function CaseBlock({
   rows,
   type,
   scheme,
+  wingAlt,
   isZh,
   isInverse,
   highlight,
@@ -251,6 +271,7 @@ function CaseBlock({
   rows: Row[];
   type: BlddbType;
   scheme: SchemeId;
+  wingAlt: boolean;
   isZh: boolean;
   isInverse: boolean;
   highlight: string;
@@ -266,17 +287,21 @@ function CaseBlock({
   return (
     <section className="bld-db-case">
       <header className="bld-db-case-head">
-        {firstAlg && (
+        {/* 高阶不配图,也别顺手换成 TwistyPlayer:VisualCube 的分词器压根没有 `m`(整步静默
+            丢掉,画出一个**看着像真的**错图);cubing.js 认这些记号,但库里 `l` 与 `Lw` 是
+            同一条公式里的两个不同动作(`Lw U L' U l2 …`)—— 小写在这份数据里是**单层内切**,
+            不是本站别处的两层宽,直接喂过去解出来的是另一个 case。位置那一行已经说清楚 case 了。 */}
+        {firstAlg && !isBigbld(type) && (
           <VisualCube algorithm={firstAlg} view="iso" size={76} loading="lazy" alt="" />
         )}
         <div>
           <div className="bld-db-case-code">
-            {describeCode(writing, type, scheme)}
+            {describeCode(writing, type, scheme, wingAlt)}
             {isInverse && (
               <span className="bld-db-case-tag">{tr({ zh: '逆 case', en: 'inverse' })}</span>
             )}
           </div>
-          <div className="bld-db-case-sub">{describePositions(writing, type)}</div>
+          <div className="bld-db-case-sub">{describePositions(writing, type, wingAlt)}</div>
         </div>
       </header>
 
@@ -313,20 +338,20 @@ function CaseBlock({
 }
 
 /** 编码显示:按用户选的方案翻回去,再按类型分段。 */
-function describeCode(chichu: string, type: BlddbType, scheme: SchemeId): string {
-  const s = codeFromChichu(chichu, type, scheme);
+function describeCode(chichu: string, type: BlddbType, scheme: SchemeId, wingAlt: boolean): string {
+  const s = codeFromChichu(chichu, type, scheme, wingAlt);
   if (type === 'parity') return `${s.slice(0, 2)} ${s.slice(2)}`;
   if (type === 'ltct') return `${s.slice(0, 2)}[${s.slice(2)}]`;
   return s;
 }
 
-function describePositions(chichu: string, type: BlddbType): string {
+function describePositions(chichu: string, type: BlddbType, wingAlt: boolean): string {
   if (type === 'twists') {
     return twistTargets(chichu)
       .map(({ corner, dir }) => `${corner} ${dir === 'cw' ? '↻' : '↺'}`)
       .join('   ');
   }
-  const p = positionsOf(chichu, type);
+  const p = positionsOf(chichu, type, wingAlt);
   if (type === 'parity') return `${p[0]}-${p[1]}   ${p[2]}-${p[3]}`;
   if (type === 'flips') return `${p[0]}   ${p[1]}`;
   if (type === 'ltct') return `${p[0]}-${p[1]} [${p[2]}]`;
@@ -345,14 +370,16 @@ function buildRows(
 ): Row[] {
   const cutoff = prefs.maxSecs === '' ? null : Number.parseFloat(prefs.maxSecs) * 100;
   const showComm = hasCommutators(type);
+  // 三阶按作者的三盲成绩筛,高阶按四盲 —— 与上游那两个独立开关同。
+  const best = resultKey(type);
 
   const rows: Row[] = [];
   for (const [algs, users, comms, fingers] of hit.entries) {
     const kept = cutoff === null || Number.isNaN(cutoff)
       ? users
       : users.filter((n) => {
-          const best = sourceResult?.[n]?.['3bld'];
-          return best !== undefined && best <= cutoff;
+          const v = sourceResult?.[n]?.[best];
+          return v !== undefined && v <= cutoff;
         });
     if (kept.length === 0) continue;
     const shown = prefs.mirror ? algs.map(mirrorAlgText) : algs;
@@ -450,10 +477,11 @@ export default function BlddbLookupPage(): JSX.Element {
       if (parts.length < 2 || parts.length > maxLen) return;
       const letters = parts.map((p, i) => {
         if (p === WILDCARD) return WILDCARD;
-        const pos = p.toUpperCase();
-        // 只认位置名(UFR / RU);粘一串字母走不到这儿,输入框自己会收。
-        if (!kindPositions(slotKind(type, i)).includes(pos)) return '';
-        return letterAtPosition(pos, scheme);
+        // 只认位置名(UFR / RU / UFr);粘一串字母走不到这儿,输入框自己会收。
+        // 高阶位置名是大小写混写的(`UFr` ≠ `UFR`),所以不能先 toUpperCase 再比。
+        const pos = kindPositions(slotKind(type, i), prefs.wingAlt)
+          .find((q) => q.toLowerCase() === p.toLowerCase());
+        return pos ? letterAtPosition(pos, scheme) : '';
       });
       if (letters.some((l) => l === '')) return;
       e.preventDefault();
@@ -461,7 +489,7 @@ export default function BlddbLookupPage(): JSX.Element {
     };
     document.addEventListener('paste', onPaste);
     return () => document.removeEventListener('paste', onPaste);
-  }, [type, scheme, maxLen, onCodeChange]);
+  }, [type, scheme, maxLen, prefs.wingAlt, onCodeChange]);
 
   // 没填满的位当"任意"补齐 —— 输到一半就能看到那一组,填完自动收敛到一条。
   const pattern = variadic ? code : code.padEnd(maxLen, WILDCARD);
@@ -489,7 +517,7 @@ export default function BlddbLookupPage(): JSX.Element {
         });
       }
     }
-    const chichu = codeToChichu(pattern, type, scheme);
+    const chichu = codeToChichu(pattern, type, scheme, prefs.wingAlt);
     // 同一段里的两个字母不能落在同一块上(那就不是交换 / 三循环了)。
     const segments: number[][] = type === 'parity' ? [[0, 1], [2, 3]]
       : type === 'ltct' ? [[0, 1]]
@@ -499,8 +527,7 @@ export default function BlddbLookupPage(): JSX.Element {
         for (let b = a + 1; b < seg.length; b++) {
           const [x, y] = [chichu[seg[a]], chichu[seg[b]]];
           if (x === WILDCARD || y === WILDCARD) continue;
-          const piece = slotKind(type, seg[a]).startsWith('corner') ? 'corner' : 'edge';
-          if (sameSticker(x, y, piece)) {
+          if (samePiece(x, y, slotKind(type, seg[a]))) {
             return type === 'twists'
               ? tr({ zh: '同一个角只能翻一个方向', en: 'A corner can only be twisted one way' })
               : tr({ zh: '两个目标不能落在同一块上', en: 'Two targets cannot sit on the same piece' });
@@ -509,12 +536,12 @@ export default function BlddbLookupPage(): JSX.Element {
       }
     }
     return null;
-  }, [code, pattern, type, scheme]);
+  }, [code, pattern, type, scheme, prefs.wingAlt]);
 
   /** 命中的 case:库里那条 + 用户视角的写法(镜像时要翻回去)+ 是不是逆 case。 */
   const hits = useMemo((): { hit: BlddbHit; writing: string; isInverse: boolean }[] => {
     if (!set || problem || code.length === 0) return [];
-    const chichu = codeToChichu(pattern, type, scheme);
+    const chichu = codeToChichu(pattern, type, scheme, prefs.wingAlt);
     // 镜像:先把查询镜过去(库里存的是右手 case),查到的公式再镜回来 —— 见 mirrorChichu。
     const query = prefs.mirror ? mirrorChichu(chichu, type) : chichu;
     const unmirror = (w: string) => (prefs.mirror ? mirrorChichu(w, type) : w);
@@ -537,7 +564,8 @@ export default function BlddbLookupPage(): JSX.Element {
       }
     }
     return out;
-  }, [set, problem, pattern, code.length, type, scheme, prefs.mirror, prefs.order, prefs.inverse]);
+  }, [set, problem, pattern, code.length, type, scheme,
+      prefs.mirror, prefs.order, prefs.inverse, prefs.wingAlt]);
 
   const blocks = useMemo(
     () => hits.map((h) => ({ ...h, rows: buildRows(h.hit, type, prefs, sourceResult) }))
@@ -568,8 +596,8 @@ export default function BlddbLookupPage(): JSX.Element {
 
       <p className="bld-input-summary">
         {tr({
-          zh: '按位置或字母查一个 case,把大家在用的写法一并列出,带换位子、起手和使用者。数据来自 BLDDB 的人工整理集;某一位填 * 可以列出一整组。穷举生成的 Nightmare 全集和高阶盲拧在完整库里。',
-          en: 'Look up a case by position or letters — every writing people actually use, with its commutator, thumb position and who uses it. Data is BLDDB’s hand-curated set; put * in one slot to list a whole group. The exhaustive Nightmare sets and big BLD live in the full library.',
+          zh: '按位置或字母查一个 case,把大家在用的写法一并列出,带换位子、起手和使用者。三阶六套 + 高阶的翼棱 / 角心 / 边心 / 中棱,数据来自 BLDDB 的人工整理集;某一位填 * 可以列出一整组。穷举生成的 Nightmare 全集在完整库里。',
+          en: 'Look up a case by position or letters — every writing people actually use, with its commutator, thumb position and who uses it. Covers the six 3BLD sets plus wings, X-centers, T-centers and midges, from BLDDB’s hand-curated data; put * in one slot to list a whole group. The exhaustive Nightmare sets live in the full library.',
         })}
       </p>
 
@@ -582,9 +610,16 @@ export default function BlddbLookupPage(): JSX.Element {
             onChange={(e) => onTypeChange(e.target.value as BlddbType)}
             aria-label={tr({ zh: 'case 类型', en: 'Case type' })}
           >
-            {BLDDB_TYPES.map((t) => (
-              <option key={t} value={t}>{tr(TYPE_LABEL[t])}</option>
-            ))}
+            <optgroup label={tr({ zh: '三阶', en: '3BLD' })}>
+              {BLD3_TYPES.map((t) => (
+                <option key={t} value={t}>{tr(TYPE_LABEL[t])}</option>
+              ))}
+            </optgroup>
+            <optgroup label={tr({ zh: '高阶', en: 'Big BLD' })}>
+              {BIGBLD_TYPES.map((t) => (
+                <option key={t} value={t}>{tr(TYPE_LABEL[t])}</option>
+              ))}
+            </optgroup>
           </select>
         </label>
 
@@ -625,10 +660,22 @@ export default function BlddbLookupPage(): JSX.Element {
         )}
       </div>
 
-      <PositionPicker type={type} code={code} scheme={scheme} onChange={onCodeChange} />
+      <PositionPicker
+        type={type}
+        code={code}
+        scheme={scheme}
+        wingAlt={prefs.wingAlt}
+        onChange={onCodeChange}
+      />
 
       {prefsHydrated && (
-        <BlddbOptions showComm={hasCommutators(type)} showInverse={hasInverseCase(type)} />
+        <BlddbOptions
+          showComm={hasCommutators(type)}
+          showInverse={hasInverseCase(type)}
+          showThumb={!isBigbld(type)}
+          showWingCode={type === 'wing'}
+          cutoffEvent={resultKey(type)}
+        />
       )}
 
       {loadError && (
@@ -649,8 +696,8 @@ export default function BlddbLookupPage(): JSX.Element {
         <p className="bld-db-empty">
           {hits.length > 0
             ? tr({
-                zh: '这个 case 有公式,但没有作者的三盲成绩在你设的上限之内。把「只看快于」清空就能看到。',
-                en: 'This case has algorithms, but nobody using them is under your 3BLD cutoff. Clear it to see them.',
+                zh: `这个 case 有公式,但没有作者的${isBigbld(type) ? '四' : '三'}盲成绩在你设的上限之内。把「只看快于」清空就能看到。`,
+                en: `This case has algorithms, but nobody using them is under your ${resultKey(type).toUpperCase()} cutoff. Clear it to see them.`,
               })
             : tr({
                 zh: '这一条没有人工整理的公式。完整库的 Nightmare 集是穷举生成的,那边多半查得到。',
@@ -673,6 +720,7 @@ export default function BlddbLookupPage(): JSX.Element {
           rows={b.rows}
           type={type}
           scheme={scheme}
+          wingAlt={prefs.wingAlt}
           isZh={isZh}
           isInverse={b.isInverse}
           highlight={highlight}
@@ -698,14 +746,16 @@ function PositionPicker({
   type,
   code,
   scheme,
+  wingAlt,
   onChange,
 }: {
   type: BlddbType;
   code: string;
   scheme: SchemeId;
+  wingAlt: boolean;
   onChange: (next: string) => void;
 }): JSX.Element {
-  const chichu = codeToChichu(code, type, scheme);
+  const chichu = codeToChichu(code, type, scheme, wingAlt);
 
   if (type === 'twists') {
     const chosen = new Map(twistTargets(chichu).map(({ corner, dir }) => [corner, dir]));
@@ -740,7 +790,7 @@ function PositionPicker({
   }
 
   const len = codeLength(type);
-  const positions = positionsOf(chichu, type);
+  const positions = positionsOf(chichu, type, wingAlt);
   const setSlot = (i: number, pos: string) => {
     // 没选的位一律记成通配 —— 与文本框"没填满就当任意"是同一套表示。
     const next = [...code.padEnd(len, WILDCARD)];
@@ -763,7 +813,7 @@ function PositionPicker({
               onChange={(e) => setSlot(i, e.target.value)}
             >
               <option value="">{tr({ zh: '任意', en: 'any' })}</option>
-              {kindPositions(slotKind(type, i)).map((p) => (
+              {kindPositions(slotKind(type, i), wingAlt).map((p) => (
                 <option key={p} value={p}>{p}</option>
               ))}
             </select>

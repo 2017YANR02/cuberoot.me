@@ -1742,7 +1742,7 @@
 }
 .bld-db-video-source { color: color-mix(in srgb, #fff 65%, transparent); }
 .bld-db-video-bar a { color: inherit; }
-.bld-db-video-bar button {
+.bld-db-video-close {
   display: inline-flex;
   align-items: center;
   background: transparent;

@@ -1,8 +1,8 @@
 // BLDDB(nbwzx/blddb)人工整理公式集的读取层 —— 给 /alg/3bld/lookup 用。
 //
-// 数据是 fork 同步下来的那份(`tools/blddb/data/*Manmade.json`,由 _sync_blddb.ps1
-// 落地),不入 client bundle,运行时按需拉。穷举生成的 Nightmare 集、高阶盲拧(翼棱 /
-// 中心块)不在这里,那两套只在 iframe 版 /blddb 里。
+// 数据是 fork 同步下来的那份(`tools/blddb/data/*Manmade.json` + `data/bigbld/*`,由
+// _sync_blddb.ps1 落地),不入 client bundle,运行时按需拉。穷举生成的 Nightmare 全集
+// (37MB)不在这里,那套只在 iframe 版 /blddb 里。
 //
 // ── 库键是怎么编的 ─────────────────────────────────────────────────────────
 // 键 = 若干个贴纸的**彳亍(Chichu)默认编码**字母,而且同一个 case 只存一个代表元,
@@ -23,13 +23,22 @@ import { staticUrl } from '@/lib/stats-base';
 import { nearcorner, nearedge } from './lettering';
 import { CHICHU_SCHEME, SPEFFZ_SCHEME, type SchemeId } from './scheme-presets';
 
-/** 库里的十个 case 类型中,本站原生支持的六个(都是三阶)。 */
-export type BlddbType = 'edge' | 'corner' | 'parity' | 'twists' | 'flips' | 'ltct';
+/** 库里的十个 case 类型。前六个是三阶,后四个是高阶盲拧。 */
+export type BlddbType =
+  | 'edge' | 'corner' | 'parity' | 'twists' | 'flips' | 'ltct'
+  | 'wing' | 'xcenter' | 'tcenter' | 'midge';
 
 /** 块类型 —— 决定"下一个贴纸"怎么走。 */
 export type BlddbPiece = 'corner' | 'edge';
 
-export const BLDDB_TYPES: BlddbType[] = ['edge', 'corner', 'parity', 'twists', 'flips', 'ltct'];
+export const BLD3_TYPES: BlddbType[] = ['edge', 'corner', 'parity', 'twists', 'flips', 'ltct'];
+/** 高阶盲拧四套。四阶只有翼棱 + X 中心,五阶四套都用得上。 */
+export const BIGBLD_TYPES: BlddbType[] = ['wing', 'xcenter', 'tcenter', 'midge'];
+export const BLDDB_TYPES: BlddbType[] = [...BLD3_TYPES, ...BIGBLD_TYPES];
+
+export function isBigbld(type: BlddbType): boolean {
+  return BIGBLD_TYPES.includes(type);
+}
 
 /**
  * 库里一条记录,定长四位:`[[公式...], [用这条的人...], [换位子...]|null, [起手...]]`。
@@ -135,31 +144,94 @@ for (const piece of ['corner', 'edge'] as const) {
 }
 
 /**
- * 字母表分档 —— 上游 codeTypeToPositions 的四档:
+ * 字母表分档 —— 上游 codeTypeToPositions 那几档:
  *  - `corner` / `edge`:全部 24 个贴纸;
  *  - `corner1`:角块上不在 U/D 面的那 16 个贴纸(翻角只用得到这些);
  *  - `edge0`:每条棱选一个代表贴纸(U/D 面的 8 个 + FL/FR/BL/BR),共 12 个 —— 翻棱
- *    只认这一档,因为"这条棱翻了"跟用哪面贴纸称呼它无关。
+ *    只认这一档,因为"这条棱翻了"跟用哪面贴纸称呼它无关;
+ *  - `wing` / `xcenter` / `tcenter` / `midge`:高阶盲拧那四档,见下面 BIG_BASE。
  */
-export type SlotKind = 'corner' | 'edge' | 'corner1' | 'edge0';
+export type SlotKind = 'corner' | 'edge' | 'corner1' | 'edge0' | 'wing' | 'xcenter' | 'tcenter' | 'midge';
 
 const EDGE0_EXTRA = new Set(['FL', 'FR', 'BL', 'BR']);
 
+/**
+ * 高阶那四档挂在三阶哪一套贴纸上 —— **编码完全共用三阶的字母**,只是块换了:
+ *  - 中棱(midge)就是三阶的棱贴纸,连位置名都一样(`UB`);
+ *  - T 中心贴在棱旁边,`UB` → `Ub`,字母跟那条棱同一个;
+ *  - X 中心贴在角旁边,`UBL` → `Ubl`,字母跟那个角同一个;
+ *  - 翼棱一条棱两片,只有一片被编码(见 wingName),`UB` → `UBl`。
+ * 这也是为什么这里不需要单独一套 150 格的高阶编码表。
+ */
+const BIG_BASE: Partial<Record<SlotKind, BlddbPiece>> = {
+  wing: 'edge', tcenter: 'edge', midge: 'edge', xcenter: 'corner',
+};
+
 function inKind(pos: string, kind: SlotKind): boolean {
+  const big = BIG_BASE[kind];
+  if (big) return pos.length === (big === 'corner' ? 3 : 2);
   if (kind === 'corner') return pos.length === 3;
   if (kind === 'edge') return pos.length === 2;
   if (kind === 'corner1') return pos.length === 3 && pos[0] !== 'U' && pos[0] !== 'D';
   return pos.length === 2 && (pos[0] === 'U' || pos[0] === 'D' || EDGE0_EXTRA.has(pos));
 }
 
-/** 某一档的位置名(下拉选项用的顺序 = 48 格顺序)。 */
-export function kindPositions(kind: SlotKind): string[] {
-  return POSITIONS_48.filter((p) => inKind(p, kind));
+// ── 高阶位置名 ─────────────────────────────────────────────────────────────
+
+/** 六个面的单位向量,右手系:x 向 R、y 向 U、z 向 F。 */
+const FACE_VEC: Readonly<Record<string, readonly [number, number, number]>> = {
+  U: [0, 1, 0], D: [0, -1, 0], R: [1, 0, 0], L: [-1, 0, 0], F: [0, 0, 1], B: [0, 0, -1],
+};
+
+/**
+ * 从 X 面外侧看,绕着 X 逆时针数,Y 的下一个邻面 —— 就是叉积 X × Y。
+ * (U × B = L:从上面看,B 的逆时针方向是 L。)
+ */
+function ccwFace(x: string, y: string): string {
+  const a = FACE_VEC[x];
+  const b = FACE_VEC[y];
+  const v = [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  return Object.keys(FACE_VEC).find((f) => FACE_VEC[f].every((c, i) => c === v[i])) ?? x;
 }
 
-/** 某个位置在指定编码方案下的字母。 */
+/**
+ * 三阶贴纸名 → 高阶那一档的位置名。
+ *
+ * 翼棱是唯一要动脑的:一条棱有两片翼,`UB` 这一侧的两片是 `UBl` / `UBr`,而 `UBl` 与
+ * `BUl` 是**同一块**的两面。彳亍(和 Speffz)只给每块翼棱编一个字母,落在 `XY + ccw(X,Y)`
+ * 那一片上 —— 于是 24 个棱贴纸名恰好一一对应 24 块翼棱,复用棱的字母表。
+ */
+function bigbldName(base: string, kind: SlotKind, wingAlt = false): string {
+  switch (kind) {
+    case 'tcenter': return base[0] + base[1].toLowerCase();
+    case 'xcenter': return base[0] + base.slice(1).toLowerCase();
+    // 非标准约定编在另一片上,那片正好是顺时针方向(叉积交换两项就变号)。
+    case 'wing': return base + (wingAlt ? ccwFace(base[1], base[0]) : ccwFace(base[0], base[1])).toLowerCase();
+    default: return base; // midge 与三阶棱同名
+  }
+}
+
+/**
+ * 高阶位置名 → 三阶贴纸名(中棱同名,不必登记)。翼棱两种约定的名字互不重叠
+ * (一条棱四片:标准占两片,非标准占另两片),所以两套可以并存在同一张表里。
+ */
+const BASE_OF_BIG: Record<string, string> = {};
+for (const kind of ['wing', 'tcenter', 'xcenter'] as const) {
+  for (const p of POSITIONS_48) {
+    if (!inKind(p, kind)) continue;
+    BASE_OF_BIG[bigbldName(p, kind)] = p;
+    if (kind === 'wing') BASE_OF_BIG[bigbldName(p, kind, true)] = p;
+  }
+}
+
+/** 某一档的位置名(下拉选项用的顺序 = 48 格顺序)。 */
+export function kindPositions(kind: SlotKind, wingAlt = false): string[] {
+  return POSITIONS_48.filter((p) => inKind(p, kind)).map((p) => bigbldName(p, kind, wingAlt));
+}
+
+/** 某个位置在指定编码方案下的字母。高阶位置名先折回它挂着的三阶贴纸。 */
 export function letterAtPosition(pos: string, scheme: SchemeId): string {
-  const i = POSITIONS_48.indexOf(pos);
+  const i = POSITIONS_48.indexOf(BASE_OF_BIG[pos] ?? pos);
   if (i < 0) return '';
   return (scheme === 'speffz' ? SPEFFZ_SCHEME : CHICHU_SCHEME)[i];
 }
@@ -177,7 +249,8 @@ export function schemeLetters(piece: BlddbPiece, scheme: SchemeId): string[] {
   return [...new Set(kindLetters(piece, scheme))].sort();
 }
 
-const pieceOfKind = (kind: SlotKind): BlddbPiece => (kind === 'corner' || kind === 'corner1' ? 'corner' : 'edge');
+const pieceOfKind = (kind: SlotKind): BlddbPiece =>
+  kind === 'corner' || kind === 'corner1' || kind === 'xcenter' ? 'corner' : 'edge';
 
 // ── 编码方案互译 ───────────────────────────────────────────────────────────
 
@@ -228,6 +301,11 @@ const SPECS: Record<BlddbType, TypeSpec> = {
   twists: { slots: [], variadic: { kind: 'corner1', max: 8 }, hasComm: true },
   flips: { slots: ['edge0', 'edge0'], hasComm: true },
   ltct: { slots: ['corner', 'corner', 'corner1'], hasComm: false },
+  // 高阶四套都是三循环,四套都带换位子列。
+  wing: { slots: ['wing', 'wing', 'wing'], hasComm: true },
+  xcenter: { slots: ['xcenter', 'xcenter', 'xcenter'], hasComm: true },
+  tcenter: { slots: ['tcenter', 'tcenter', 'tcenter'], hasComm: true },
+  midge: { slots: ['midge', 'midge', 'midge'], hasComm: true },
 };
 
 /** 这个类型的码有多长(twists 变长,返回上限)。 */
@@ -255,12 +333,25 @@ function convertCode(code: string, type: BlddbType, fn: (c: string, p: BlddbPiec
   return [...code].map((c, i) => fn(c, pieceOfKind(slotKind(type, i)))).join('');
 }
 
-export function codeToChichu(code: string, type: BlddbType, scheme: SchemeId): string {
-  return convertCode(code, type, (c, p) => toChichu(c, p, scheme));
+/**
+ * 非标准翼棱约定 ↔ 库里的标准约定。上游把这个做成开关(`code.wingCodeSetting`:
+ * 标准编在 `UFr`、非标准编在 `FUr`),两种约定下**一条棱的两块翼互换字母** ——
+ * 选错不会报错,只会静默给出另一块翼的公式,所以这一步不能省。
+ * 是对合,进出用同一个函数。
+ */
+function wingSwap(code: string, type: BlddbType): string {
+  if (type !== 'wing') return code;
+  return [...code].map((c) => (c === WILDCARD ? c : nearedge(c))).join('');
 }
 
-export function codeFromChichu(code: string, type: BlddbType, scheme: SchemeId): string {
-  return convertCode(code, type, (c, p) => fromChichu(c, p, scheme));
+export function codeToChichu(code: string, type: BlddbType, scheme: SchemeId, wingAlt = false): string {
+  const s = convertCode(code, type, (c, p) => toChichu(c, p, scheme));
+  return wingAlt ? wingSwap(s, type) : s;
+}
+
+export function codeFromChichu(code: string, type: BlddbType, scheme: SchemeId, wingAlt = false): string {
+  const s = wingAlt ? wingSwap(code, type) : code;
+  return convertCode(s, type, (c, p) => fromChichu(c, p, scheme));
 }
 
 // ── 等价写法 ───────────────────────────────────────────────────────────────
@@ -368,6 +459,14 @@ export function variantKeys(code: string, type: BlddbType): string[] {
     case 'twists':
       // 翻角不靠移位:哪个角朝哪转是一组无序事实,键就是排序后的字母。
       return [[...code].sort().join('')];
+    case 'midge':
+      // 中棱就是三阶的棱。
+      return displaceAndRotate(code, 'edge');
+    case 'wing':
+    case 'xcenter':
+    case 'tcenter':
+      // 这三档一块只有一个被编码的贴纸,没有"换贴纸"这一步,只剩循环移位。
+      return rotations(code);
   }
 }
 
@@ -379,6 +478,15 @@ export function sameSticker(a: string, b: string, piece: BlddbPiece): boolean {
     cur = nextSticker(cur, piece);
   }
   return false;
+}
+
+/**
+ * 两个字母是不是落在同一块上 —— 按档判,别一律拿棱 / 角的"换贴纸"去套:
+ * 翼棱 / 中心那三档一块一个字母,`nearedge(E) = F` 指的是**另一块**翼棱,不是同一块。
+ */
+export function samePiece(a: string, b: string, kind: SlotKind): boolean {
+  if (kind === 'wing' || kind === 'xcenter' || kind === 'tcenter') return a === b;
+  return sameSticker(a, b, pieceOfKind(kind));
 }
 
 // ── 查表 ───────────────────────────────────────────────────────────────────
@@ -425,11 +533,15 @@ export function lookupCase(set: BlddbSet, chichu: string, piece: BlddbPiece): Bl
 
 /**
  * 三循环的逆 case:换掉两个目标的先后。`(b t1 t2)` 的逆是 `(b t2 t1)`,公式就是倒着做,
- * 所以想同时看两边的人可以顺手拿到。只有 corner / edge 有意义 —— 奇偶 / 翻角 / 翻棱
+ * 所以想同时看两边的人可以顺手拿到。只有纯三循环那几套有意义 —— 奇偶 / 翻角 / 翻棱
  * 都是对合(自己就是自己的逆),奇偶带翻的逆不在同一套编码里。
  */
+const INVERSE_TYPES = new Set<BlddbType>([
+  'corner', 'edge', 'wing', 'xcenter', 'tcenter', 'midge',
+]);
+
 export function hasInverseCase(type: BlddbType): boolean {
-  return type === 'corner' || type === 'edge';
+  return INVERSE_TYPES.has(type);
 }
 
 export function inverseCode(code: string): string {
@@ -455,9 +567,12 @@ export function mirrorAlgText(text: string): string {
     .join('');
 }
 
-/** 位置名镜像到 M 平面另一侧 —— 面名里的 L / R 互换,其余不动(UFR→UFL、RU→LU)。 */
+/**
+ * 位置名镜像到 M 平面另一侧 —— 面名里的 L / R 互换,其余不动(UFR→UFL、RU→LU)。
+ * 高阶位置名里表示偏移方向的那位是小写面名(`Ul` / `UBl`),同样要换。
+ */
 export function mirrorPosition(pos: string): string {
-  return pos.replace(/[LR]/gu, (c) => (c === 'L' ? 'R' : 'L'));
+  return pos.replace(/[LRlr]/gu, (c) => ({ L: 'R', R: 'L', l: 'r', r: 'l' })[c] ?? c);
 }
 
 /**
@@ -469,9 +584,13 @@ export function mirrorChichu(code: string, type: BlddbType): string {
   return [...code]
     .map((c, i) => {
       if (c === WILDCARD) return c;
-      const pos = POS_OF_LETTER[pieceOfKind(slotKind(type, i))][c];
+      const kind = slotKind(type, i);
+      const pos = POS_OF_LETTER[pieceOfKind(kind)][c];
       if (!pos) return c;
-      return LETTER_OF_POS[mirrorPosition(pos)] ?? c;
+      const m = mirrorPosition(pos);
+      // 翼棱:镜面把手性也翻了,`XY + ccw(X,Y)` 镜过去落在**没被编码**的那一片上
+      // (ccw 是叉积,镜像反射行列式为 -1,叉积跟着变号)。同一块的另一片就是 `YX`。
+      return LETTER_OF_POS[kind === 'wing' ? m[1] + m[0] : m] ?? c;
     })
     .join('');
 }
@@ -483,7 +602,7 @@ export type BlddbOrder = 'letter' | 'position';
 export function orderKey(writing: string, type: BlddbType, scheme: SchemeId, order: BlddbOrder): string {
   if (order === 'position') {
     return positionsOf(writing, type)
-      .map((p) => String(POSITIONS_48.indexOf(p)).padStart(2, '0'))
+      .map((p) => String(POSITIONS_48.indexOf(BASE_OF_BIG[p] ?? p)).padStart(2, '0'))
       .join('');
   }
   return codeFromChichu(writing, type, scheme);
@@ -492,10 +611,14 @@ export function orderKey(writing: string, type: BlddbType, scheme: SchemeId, ord
 // ── 位置描述 ───────────────────────────────────────────────────────────────
 
 /** 一串彳亍码逐位翻成位置名(通配位给 `*`)。 */
-export function positionsOf(code: string, type: BlddbType): string[] {
-  return [...code].map((c, i) => {
+export function positionsOf(code: string, type: BlddbType, wingAlt = false): string[] {
+  // 非标准约定下这一位指的是同一条棱的另一块翼,先换回用户认的那块。
+  const src = wingAlt ? wingSwap(code, type) : code;
+  return [...src].map((c, i) => {
     if (c === WILDCARD) return WILDCARD;
-    return POS_OF_LETTER[pieceOfKind(slotKind(type, i))][c] ?? c;
+    const kind = slotKind(type, i);
+    const pos = POS_OF_LETTER[pieceOfKind(kind)][c];
+    return pos ? bigbldName(pos, kind, wingAlt) : c;
   });
 }
 
@@ -547,7 +670,15 @@ function fetchJson<T>(path: string): Promise<T> {
 }
 
 export function loadBlddbSet(type: BlddbType): Promise<BlddbSet> {
-  return fetchJson<BlddbSet>(`${type}Manmade.json`);
+  return fetchJson<BlddbSet>(`${isBigbld(type) ? 'bigbld/' : ''}${type}Manmade.json`);
+}
+
+/**
+ * 按作者成绩筛公式时看哪一项 —— 高阶那四套看四盲单次(与上游 settings 的两个开关同)。
+ * 只会三阶的人拿三盲成绩筛翼棱公式没有意义。
+ */
+export function resultKey(type: BlddbType): '3bld' | '4bld' {
+  return isBigbld(type) ? '4bld' : '3bld';
 }
 
 export function loadSourceToUrl(): Promise<SourceToUrl> {
@@ -588,9 +719,9 @@ export function loadNightmareTable(name: TableName): Promise<string[][]> {
   return fetchJson<string[][]>(`nightmare/${name}.json`);
 }
 
-/** 某人公开公式表的链接:先按 case 类型找,再退 3bld,再退通用 bld。 */
+/** 某人公开公式表的链接:先按 case 类型找,再退整套(3bld / bigbld),再退通用 bld。 */
 export function sourceLink(sourceUrl: SourceToUrl | null, name: string, type: BlddbType): string | undefined {
   const row = sourceUrl?.[name];
   if (!row) return undefined;
-  return row[type] ?? row['3bld'] ?? row['bld'];
+  return row[type] ?? row[isBigbld(type) ? 'bigbld' : '3bld'] ?? row['bld'];
 }

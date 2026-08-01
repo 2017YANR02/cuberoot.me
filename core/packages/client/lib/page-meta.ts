@@ -78,8 +78,8 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'alg/3bld/lookup': {
     title: { zh: '盲拧公式查询', en: 'BLD Algorithm Lookup' },
     description: {
-      zh: '查三阶盲拧公式:棱角三循环、奇偶、翻角、翻棱、奇偶带翻,每个 case 列出常用写法、换位子、起手与使用者,可左右镜像。',
-      en: 'Look up 3BLD algorithms — edge/corner 3-cycles, parity, corner twists, edge flips and LTCT — with every common writing of each case, its commutator, thumb position and who uses it. Mirrors left/right.',
+      zh: '查盲拧公式:三阶的棱角三循环、奇偶、翻角、翻棱、奇偶带翻,以及高阶的翼棱、角心、边心、中棱。每个 case 列出常用写法、换位子、起手与使用者,可左右镜像。',
+      en: 'Look up BLD algorithms — 3BLD edge/corner 3-cycles, parity, corner twists, edge flips and LTCT, plus big-cube wings, X-centers, T-centers and midges. Every common writing of each case, with its commutator, thumb position and who uses it. Mirrors left/right.',
     },
   },
   'alg/3bld/tables': {

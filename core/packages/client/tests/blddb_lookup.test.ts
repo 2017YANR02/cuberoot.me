@@ -23,10 +23,12 @@ import {
   codeFromChichu,
   codeToChichu,
   findCases,
+  isBigbld,
   kindLetters,
   kindPositions,
   lookupCase,
   positionsOf,
+  samePiece,
   sameSticker,
   schemeLetters,
   slotKind,
@@ -56,6 +58,18 @@ const VARIANT_COUNT: Record<BlddbType, number> = {
   twists: 1,
   flips: 4,
   ltct: 6,
+  // 高阶:中棱就是三阶的棱(换贴纸 × 移位);翼棱 / 两种中心一块只有一个被编码的贴纸,
+  // 没有换贴纸这一步,只剩三种循环移位。
+  midge: 6,
+  wing: 3,
+  xcenter: 3,
+  tcenter: 3,
+};
+
+/** 每个类型一个真实存在的 case,做等价类 / 封闭性的种子。 */
+const SEED: Record<BlddbType, string> = {
+  edge: 'AEH', corner: 'ADM', parity: 'ACAD', twists: 'BEH', flips: 'AC', ltct: 'ADK',
+  wing: 'ABC', xcenter: 'ABC', tcenter: 'ABC', midge: 'ACE',
 };
 
 function dataFile(name: string): string | null {
@@ -68,7 +82,7 @@ function dataFile(name: string): string | null {
 }
 
 function loadSet(type: BlddbType): BlddbSet | null {
-  const f = dataFile(`${type}Manmade.json`);
+  const f = dataFile(`${isBigbld(type) ? 'bigbld/' : ''}${type}Manmade.json`);
   return f ? (JSON.parse(fs.readFileSync(f, 'utf8')) as BlddbSet) : null;
 }
 
@@ -96,6 +110,51 @@ describe('贴纸格表', () => {
   // 上游 ?position=UF-UB-RU 的字母对是彳亍 AEH —— 位置表与编码串同序的实测锚点。
   it('AEH = UF-UB-RU', () => {
     expect(positionsOf('AEH', 'edge')).toEqual(['UF', 'UB', 'RU']);
+  });
+
+  /**
+   * 高阶那四档不另存一套 150 格编码表 —— 它们挂在三阶的 48 格上,字母完全共用:
+   * 中棱 = 棱贴纸本身、边心 `Xy` 跟着棱 `XY`、角心 `Xyz` 跟着角 `XYZ`、
+   * 翼棱取 `XY + ccw(X,Y)` 那一片(彳亍 / Speffz 一条棱只编一块翼)。
+   */
+  describe('高阶四档挂在三阶贴纸上', () => {
+    it.each(['wing', 'xcenter', 'tcenter', 'midge'] as const)('%s:24 个位置,字母表就是三阶那 24 个', (kind) => {
+      const pos = kindPositions(kind);
+      expect(pos).toHaveLength(24);
+      expect(new Set(pos).size).toBe(24);
+      const piece = kind === 'xcenter' ? 'corner' : 'edge';
+      expect([...new Set(kindLetters(kind, 'chichu'))].sort().join('')).toBe(sorted(CH_LETTERS[piece]));
+    });
+
+    it('位置名的写法:大小写区分出是哪一档', () => {
+      expect(positionsOf('A', 'midge')).toEqual(['UF']);
+      expect(positionsOf('A', 'tcenter')).toEqual(['Uf']);
+      expect(positionsOf('A', 'xcenter')).toEqual(['Ufl']);
+      expect(positionsOf('A', 'wing')).toEqual(['UFr']);
+    });
+
+    // ccw 是叉积:U × F = R,所以 UF 那侧被编码的是 `UFr`;非标准约定编在另一片 `UFl`。
+    it('翼棱两种编码约定各占一条棱的一片,互不重叠', () => {
+      const std = kindPositions('wing');
+      const alt = kindPositions('wing', true);
+      expect(std).toContain('UFr');
+      expect(alt).toContain('UFl');
+      expect(std.filter((p) => alt.includes(p))).toEqual([]);
+      // 非标准下同一块翼的字母换成同一条棱的另一面
+      expect(codeToChichu('A', 'wing', 'chichu', true)).toBe('B');
+      expect(codeFromChichu('B', 'wing', 'chichu', true)).toBe('A');
+      expect(positionsOf('B', 'wing', true)).toEqual(['UFl']);
+    });
+
+    it('撞块判定按档走:翼棱 / 中心一块一个字母', () => {
+      // 三阶的棱:A 和 B 是同一条棱的两面
+      expect(samePiece('A', 'B', 'edge')).toBe(true);
+      expect(samePiece('A', 'B', 'midge')).toBe(true);
+      // 翼棱 / 中心:A 和 B 是两块不同的块,不该算撞块
+      expect(samePiece('A', 'B', 'wing')).toBe(false);
+      expect(samePiece('A', 'B', 'tcenter')).toBe(false);
+      expect(samePiece('A', 'A', 'wing')).toBe(true);
+    });
   });
 
   it('翻棱只认每条棱一个代表贴纸,翻角只认非 U/D 面贴纸', () => {
@@ -138,19 +197,13 @@ describe('编码方案互译', () => {
 
 describe('等价写法', () => {
   it.each(BLDDB_TYPES)('%s:数量固定且两两不同', (type) => {
-    const seed: Record<BlddbType, string> = {
-      edge: 'AEH', corner: 'ADM', parity: 'ACAD', twists: 'BEH', flips: 'AC', ltct: 'ADK',
-    };
-    const v = variantKeys(seed[type], type);
+    const v = variantKeys(SEED[type], type);
     expect(v).toHaveLength(VARIANT_COUNT[type]);
     expect(new Set(v).size).toBe(VARIANT_COUNT[type]);
   });
 
   it.each(BLDDB_TYPES)('%s:等价类封闭 —— 从任一写法出发得到同一个集合', (type) => {
-    const seed: Record<BlddbType, string> = {
-      edge: 'AEH', corner: 'ADM', parity: 'ACAD', twists: 'BEH', flips: 'AC', ltct: 'ADK',
-    };
-    const base = [...variantKeys(seed[type], type)].sort();
+    const base = [...variantKeys(SEED[type], type)].sort();
     for (const v of base) {
       expect([...variantKeys(v, type)].sort()).toEqual(base);
     }
@@ -205,7 +258,7 @@ describe('翻角方向', () => {
   });
 });
 
-// ② 六个类型各一条,全部拿 iframe 版 /blddb 页面 ?position= 实测过:那边显示的字母对
+// ② 三阶那六条全部拿 iframe 版 /blddb 页面 ?position= 实测过:那边显示的字母对
 // (浏览器存的是 Speffz)、命中的库键、第一条公式与用者数,都对得上下面这些常量。
 // 这层保的是**语义**:位置 → 字母 → 键这条链没有整体错位(结构不变量看不出这种错)。
 describe('对上游页面实测', () => {
@@ -242,6 +295,28 @@ describe('对上游页面实测', () => {
       type: 'ltct', speffz: 'DAM', chichu: 'ADK', key: 'ADK',
       positions: ['UFL', 'UBL', 'RUF'],
       alg: "R' D' R U2 R' D R U R U2 R' U R U R' U2", users: 3,
+    },
+    // 高阶四套:位置 / 等价类是拿上游 bigbldCodeConverter 对全量键(5388 个)比对过的,
+    // 这里各钉一条真实记录,防的是"哪天数据换形状了还静默读得出东西"。
+    {
+      type: 'wing', speffz: 'CID', chichu: 'ABC', key: 'ABC',
+      positions: ['UFr', 'FUl', 'ULf'],
+      alg: "Lw U L' U l2 U' L U l2 U2 Lw'", users: 16, comm: "Lw U:[L',U l2 U']",
+    },
+    {
+      type: 'xcenter', speffz: 'DIF', chichu: 'ABC', key: 'ABC',
+      positions: ['Ufl', 'Ful', 'Luf'],
+      alg: "S u l' U2 l u' l' U2 l S'", users: 4, comm: "S:[u,l' U2 l]",
+    },
+    {
+      type: 'tcenter', speffz: 'CID', chichu: 'ABC', key: 'ABC',
+      positions: ['Uf', 'Fu', 'Ul'],
+      alg: "U 3Lw' U' l U m U' l' U Lw U'", users: 4, comm: "U Lw':[m',U' l U]",
+    },
+    {
+      type: 'midge', speffz: 'CDA', chichu: 'ACE', key: 'ACE',
+      positions: ['UF', 'UL', 'UB'],
+      alg: "U' m2 U' m U2 m' U' m2 U", users: 11, comm: "U' m2 U':[m,U2]",
     },
   ];
 

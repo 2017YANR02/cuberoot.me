@@ -23,10 +23,15 @@ export interface BlddbPrefs {
   /** 通配结果的排序。 */
   order: BlddbOrder;
   /**
-   * 只看「三盲单次快于 N 秒」的人在用的写法。空 = 不过滤。
+   * 只看「单次快于 N 秒」的人在用的写法(三阶看三盲、高阶看四盲)。空 = 不过滤。
    * 存字符串而不是数字:输入过程中的 `1.` 是合法中间态,转数字会被吃掉。
    */
   maxSecs: string;
+  /**
+   * 翼棱用非标准编码位置(编在 `FUr` 而不是 `UFr`)。两种约定下一条棱的两块翼互换字母,
+   * 选错会静默查到另一块翼的公式,所以给到设置里。
+   */
+  wingAlt: boolean;
   // ── 换位子写法(上游 /settings 的 commutator 组)──
   slashNotation: boolean;
   noBrackets: boolean;
@@ -41,6 +46,7 @@ export const DEFAULT_BLDDB_PREFS: BlddbPrefs = {
   mirror: false,
   order: 'letter',
   maxSecs: '',
+  wingAlt: false,
   slashNotation: false,
   noBrackets: false,
   spaceAfterColon: false,
