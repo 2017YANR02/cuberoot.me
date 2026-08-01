@@ -38,6 +38,12 @@ export type MoveInputResult =
 /** 自己输入的公式最多几步 —— 再长追不动,题面那排卡片也会溢出。 */
 export const CUSTOM_MOVES_MAX = 40;
 
+/** 一个方位字母:贴在拼图外侧的标签 + 它朝哪儿(引擎坐标系的方向,不必归一)。 */
+export interface PredictFaceHint {
+  letter: string;
+  dir: readonly [number, number, number];
+}
+
 export interface PredictPuzzle {
   id: PredictPuzzleId;
   /** 喂 `/sim` 引擎的拼图类型(NxN 就是阶数)。 */
@@ -95,6 +101,15 @@ export interface PredictPuzzle {
    * 才翻一次。
    */
   engineMove?: (move: string) => string;
+  /**
+   * 方位字母:每个面(或转动轴)一个标签,题板把它们浮在拼图外侧,朝这边的看得见、
+   * 背面的被拼图挡住。
+   *
+   * 立方体族不给这个 —— `cubeLike` 走引擎自带的 `world.faceHints`(U/D/L/R/F/B)。给的
+   * 必须是**题面自己那套面名**:五魔方引擎的面名是 PG 的 `C A I BF E`,照搬引擎那份,
+   * 屏幕上写着 `A`、题面念的却是 `DL`,等于没标。
+   */
+  hints?: readonly PredictFaceHint[];
 }
 
 /** 还原态 perm。 */
