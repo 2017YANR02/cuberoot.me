@@ -6,6 +6,7 @@ import { formatEventMs, formatMs, formatSolveResult, isMbldDnf, mbldPoints } fro
 import CubePreview from '../_lib/cube/CubePreview';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
+import { onIdle } from '@/lib/on-idle';
 
 function BldSplits({ bld, totalMs }: { bld: NonNullable<Solve['bld']>; isZh: boolean; totalMs: number }) {
   const memo = bld.memoMs;
@@ -146,6 +147,21 @@ export default function SolveModal({ solve, index, isZh, onClose, onChangePenalt
   useEffect(() => {
     firstButtonRef.current?.focus();
   }, []);
+
+  // The reconstruction names its OLL and PLL case, and those names come from
+  // lookup tables built by walking the whole alg set through cubing.js — two
+  // fetches and a few thousand parses. Built on demand it lands exactly when
+  // the panel opens and makes it unscrollable for a beat; built now, while the
+  // solve modal is being read, it is already there. Only for solves that have
+  // a move stream, since only those have a reconstruction to open.
+  const hasMoves = (solve.moves?.length ?? 0) > 0;
+  useEffect(() => {
+    if (!hasMoves) return;
+    return onIdle(() => {
+      void import('@/lib/oll_lookup').then((m) => { m.prewarmOllTable(); });
+      void import('@/lib/pll_lookup').then((m) => { m.prewarmPllTable(); });
+    });
+  }, [hasMoves]);
 
   const dt = new Date(solve.ts);
 

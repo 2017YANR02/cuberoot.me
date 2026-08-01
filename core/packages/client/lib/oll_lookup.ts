@@ -18,6 +18,7 @@ import {
   cornerStickerOnFace, edgeStickerOnFace,
 } from './sticker_tables';
 import { loadAlg } from '@cuberoot/shared/alg';
+import { forEachYielding } from './build-yield';
 
 export interface OllAlgEntry {
   /** Alg in canonical frame (already includes any pre-AUF wrap). */
@@ -64,7 +65,9 @@ async function buildTable(): Promise<Map<string, OllAlgEntry[]>> {
     const solved = kp.defaultPattern();
     const t = new Map<string, OllAlgEntry[]>();
 
-    for (const c of db.cases) {
+    // Yields between cases — see build-yield.ts. Without it this loop is one
+    // ~400ms task and the reconstruction panel cannot be scrolled while it runs.
+    await forEachYielding(db.cases, (c) => {
       const variants = c.algs[0] ?? [];
       for (const variant of variants) {
         const a = variant.alg;
@@ -88,10 +91,24 @@ async function buildTable(): Promise<Map<string, OllAlgEntry[]>> {
           }
         }
       }
-    }
+    });
     return t;
   })();
   return _tablePromise;
+}
+
+/**
+ * Start building the table without needing an answer from it.
+ *
+ * Call this the moment it becomes likely someone will open a reconstruction —
+ * the table costs two fetches and a few thousand alg parses, and doing that
+ * while they are still reading the solve modal is free, whereas doing it when
+ * they click through is exactly when they want to scroll.
+ *
+ * Idempotent: the promise is cached, so extra calls are a no-op.
+ */
+export function prewarmOllTable(): void {
+  void buildTable().catch(() => {/* a failed prewarm must stay silent */});
 }
 
 export async function lookupOllAlgs(canonical: KPattern): Promise<OllAlgEntry[]> {

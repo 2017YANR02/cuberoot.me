@@ -3367,3 +3367,52 @@ cstimer 之所以在同一台手机上稳:它的 `giikerutil.chkAvail()` 开口�
 失败面板从「标题 + 原始值 + 三段提示 + 两个按钮 + 结果列表」缩到「标题 + 原始值 + 一段能动手的话」,只有真正到了选择设备那一步才多给一个回退按钮。
 
 顺手修了 `~/.claude/bin/trash.ps1`:`Resolve-Path -Path` 把 `[lang]` 当通配符字符类,含方括号的真实路径会解析成空然后被当"不存在"跳过 —— "以为删了其实没删"比直接报错坏得多。现在解析不到就退回 `-LiteralPath`。
+
+---
+
+## Sprint 41 — 打开复盘要卡几秒才能滚动
+
+用户报的:点「查看复盘」,面板画出来了,但要等几秒才拖得动进度条。
+
+### 先量,别猜
+
+CDP 抓真实 CPU profile(本机 dev,一条 50 步的三阶成绩,冷开):
+
+| 指标 | 值 |
+|---|---|
+| 最长单次主线程占用 | **402ms**(点击后 883ms 处) |
+| 总阻塞 | 506ms / 6 次长任务,持续到 1285ms |
+| cubing.js 占 CPU | 480ms,其中 `simplifyAlg` 254ms |
+| 额外网络 | `/v1/alg/sets/3x3/{oll,pll}` 两个请求 + `stack_kernel_bg.wasm` 186ms |
+
+把每个采样回溯到栈根,答案是一个 `buildTable()`。链条:
+
+`ReconstructModal` → `buildReconText` → `buildCommentSuggestions`(`lib/popup_suggest.ts`)
+→ `lookupOllAlgs` / `lookupPllAlgs` → `buildTable()`
+
+它在**打开复盘那一刻**才现拉整个 OLL/PLL 公式库,然后每条公式 × 每个变体 × 每个 AUF
+过一遍 cubing.js —— `invertAlg`(解析+求逆+转字符串)、两次 `applyAlg`(再解析)、
+一次 `simplifyAlg`(再解析+化简+转字符串)。PLL 更狠,前后 AUF 组合是 16 种。
+合计约四千次 alg 解析,**全在一个不中断的同步循环里**。
+
+不是渲染慢、不是 3D、不是成绩数据大。是一张查找表建在了最不该建的时刻。
+
+### 改了什么
+
+1. **`lib/build-yield.ts` 的 `forEachYielding`** —— 按时间片(8ms)让出宏任务。
+   必须是 `setTimeout` 不能是 `await Promise.resolve()`:后者是微任务,不出当前
+   宏任务,循环该多长还多长,看着像修了其实一点没变。两张表的外层循环都换成它。
+2. **`prewarmOllTable()` / `prewarmPllTable()`**,在**成绩弹窗**里 `onIdle` 触发,
+   只对有动作流的成绩。用户还在读打乱和图的时候表就建好了,点进复盘是现成的。
+
+### 验证
+
+同一条路径重测:最长单次占用 **402ms → 263ms**,总阻塞 506ms → 359ms,而 cubing.js
+的表构建**从 profile 里彻底消失**。
+
+剩下的 263ms 拆开:119ms React 渲染(`jsxDEV` 自身 89ms)+ 54ms 模块实例化 ——
+这两项是 dev 模式独有的,生产构建没有;真正属于应用的是 43ms `humanizeStream`
+和 42ms `SimCubeView` 的 three.js 场景构建。
+
+`tests/build_yield.test.ts` 5 条,重点那条钉的是「真的让出了宏任务」——
+让路期间排队的 `setTimeout` 必须能插进来,否则这个改动等于没做。
