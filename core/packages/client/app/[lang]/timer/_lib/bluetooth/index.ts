@@ -859,6 +859,15 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     intentionalDisconnectRef.current = false;
     cancelPendingReconnect();
 
+    // Pre-flight, copied from cstimer (`giikerutil.chkAvail`), which connects on
+    // iOS Bluefy where we do not. It is the one thing it does before the picker
+    // that we did not: awaiting getAvailability() gives a bridged implementation
+    // a chance to bring its native Bluetooth stack up before the first real
+    // call. Best-effort — a `false` answer or a rejection is not treated as
+    // fatal, because Chrome returns false for "no adapter" states the picker
+    // would still handle better than we can.
+    await navigator.bluetooth.getAvailability?.().catch(() => undefined);
+
     let device: BluetoothDevice;
     try {
       device = await navigator.bluetooth.requestDevice(
