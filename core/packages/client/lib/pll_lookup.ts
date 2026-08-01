@@ -20,6 +20,7 @@ import {
   cornerStickerOnFace, edgeStickerOnFace,
 } from './sticker_tables';
 import { loadAlg } from '@cuberoot/shared/alg';
+import { forEachYielding } from './build-yield';
 
 export interface PllAlgEntry {
   /** Alg in canonical frame, post-AUF baked in. */
@@ -69,7 +70,10 @@ async function buildTable(): Promise<Map<string, PllAlgEntry[]>> {
     const solved = kp.defaultPattern();
     const t = new Map<string, PllAlgEntry[]>();
 
-    for (const c of db.cases) {
+    // Yields between cases — see build-yield.ts. PLL is the heavier of the two
+    // tables (16 AUF combinations per variant, each parsed and simplified), and
+    // as one synchronous loop it froze the reconstruction panel on open.
+    await forEachYielding(db.cases, (c) => {
       const variants = c.algs[0] ?? [];
       for (const variant of variants) {
         const a = variant.alg;
@@ -91,10 +95,15 @@ async function buildTable(): Promise<Map<string, PllAlgEntry[]>> {
           }
         }
       }
-    }
+    });
     return t;
   })();
   return _tablePromise;
+}
+
+/** Same contract as `prewarmOllTable` — start early, ignore the result. */
+export function prewarmPllTable(): void {
+  void buildTable().catch(() => {/* a failed prewarm must stay silent */});
 }
 
 export async function lookupPllAlgs(canonical: KPattern): Promise<PllAlgEntry[]> {
