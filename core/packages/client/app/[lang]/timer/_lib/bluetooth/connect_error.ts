@@ -24,6 +24,14 @@
 
 /** The steps `connect()` walks through, in order. */
 export type ConnectStage =
+  /**
+   * The chooser was refused while `getAvailability()` never once said yes.
+   * Its own stage because the browser's raw complaint is worthless here — iOS
+   * Bluefy says `2` — while the real cause is plain and worth saying out loud:
+   * the adapter had not woken up. Ordering matters to nothing but reading:
+   * it sits before `picker` because it happens instead of it.
+   */
+  | 'adapter-asleep'
   | 'picker'          // navigator.bluetooth.requestDevice — the browser's chooser
   | 'advertisement'   // watchAdvertisements — best-effort MAC recovery
   | 'gatt'            // device.gatt.connect()
@@ -31,6 +39,7 @@ export type ConnectStage =
   | 'handshake';      // driver.start — key exchange, subscriptions
 
 export const CONNECT_STAGE_LABEL: Record<ConnectStage, { en: string; zh: string }> = {
+  'adapter-asleep': { en: 'waiting for Bluetooth to wake up', zh: '等待蓝牙就绪' },
   picker: { en: 'choosing the device', zh: '选择设备' },
   advertisement: { en: 'reading the BLE advertisement', zh: '读取蓝牙广播' },
   gatt: { en: 'opening the GATT connection', zh: '建立 GATT 连接' },
