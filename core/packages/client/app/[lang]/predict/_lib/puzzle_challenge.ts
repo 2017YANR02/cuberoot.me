@@ -33,10 +33,15 @@ export interface PredictBoardTarget {
 export interface PredictBoardChallenge {
   moves: string[];
   targets: PredictBoardTarget[];
-  /** 起始盘面每一格的真实颜色(面字母)。 */
-  startColors: string;
-  /** 目标块整块的贴纸画出来(面字母),其余 `.`(压暗)。 */
-  startFacelets: string;
+  /** 起始盘面每一格的真实颜色(面名,逐格一项)。 */
+  startColors: string[];
+  /**
+   * 目标块整块的贴纸画出来(面名),其余 `.`(压暗)。
+   *
+   * 逐格一项的**数组**而不是一个字符串:五魔方的面名是 `BL` / `DBR` 这种多字母,
+   * 拼成字符串就没法逐格切回来了。
+   */
+  startFacelets: string[];
 }
 
 export interface PuzzleChallenge extends PredictBoardChallenge {
@@ -65,11 +70,29 @@ export const hasPairTrack = (p: PredictPuzzle): boolean =>
 export const trackOptions = (p: PredictPuzzle): PredictTrack[] =>
   hasPairTrack(p) ? [...p.trackable, 'pair'] : [...p.trackable];
 
+/** 起点 + 题面最多重掷几次(见 `generatePuzzleChallenge` 里那段)。 */
+const CHALLENGE_TRIES = 40;
+
 /** perm 里某枚本位贴纸现在坐在哪一格。 */
 function slotOf(perm: readonly number[], home: number): number {
   const i = perm.indexOf(home);
   if (i < 0) throw new Error(`[predict] sticker ${home} not on the puzzle`);
   return i;
+}
+
+type Pick = { kind: PredictPieceKind; piece: readonly number[]; sticker: number };
+
+/** 这个起点 + 这串公式下,每个目标的高亮格与落点格。 */
+function readTargets(
+  puzzle: PredictPuzzle, picks: readonly Pick[], startPerm: readonly number[], moves: readonly string[],
+): PredictBoardTarget[] {
+  const endPerm = puzzle.apply(startPerm, moves);
+  return picks.map((p) => ({
+    kind: p.kind,
+    colorFace: Math.floor(p.sticker / puzzle.perFace),
+    startFacelet: slotOf(startPerm, p.sticker),
+    answerFacelet: slotOf(endPerm, p.sticker),
+  }));
 }
 
 export function generatePuzzleChallenge(opts: PuzzleChallengeOptions): PuzzleChallenge {
@@ -104,24 +127,32 @@ export function generatePuzzleChallenge(opts: PuzzleChallengeOptions): PuzzleCha
   // 兜个角块回来,总比出一道没有目标的题强。
   if (picks.length === 0) take('corner', null);
 
-  const placement = puzzle.placementMoves(rnd);
-  const startPerm = puzzle.apply(identityPerm(n), placement);
-
-  const moves = opts.source === 'custom'
+  /** 题面公式:自己输入那档是定的,随机那档每次重掷都换一条。 */
+  const rollMoves = (): string[] => (opts.source === 'custom'
     ? [...(opts.customMoves ?? [])]
-    : puzzle.randomMoves(Math.max(1, Math.min(opts.moveCount, puzzle.moveCountMax)), rnd);
-  const endPerm = puzzle.apply(startPerm, moves);
+    : puzzle.randomMoves(Math.max(1, Math.min(opts.moveCount, puzzle.moveCountMax)), rnd));
 
-  const targets: PredictBoardTarget[] = picks.map((p) => ({
-    kind: p.kind,
-    colorFace: Math.floor(p.sticker / puzzle.perFace),
-    startFacelet: slotOf(startPerm, p.sticker),
-    answerFacelet: slotOf(endPerm, p.sticker),
-  }));
+  /**
+   * 重掷,直到题面公式**真的碰到**每一枚目标贴纸。
+   *
+   * 一步没动的题答案就是它自己那一格,点一下就过 —— 送分题。面一多就成了常态:五魔方
+   * 十二个面,默认三步碰不到某一块的概率过半。两样都换:掷起点(隐藏乱转)换的是这块
+   * **坐在哪一格**,能把它挪进转得到的层里;换公式则躲开 `F' BR F` 这种大半自相抵消、
+   * 净影响只剩十来格的题面。掷不出来就认了 —— 自定义公式可能压根不碰某些格,不能在
+   * 这儿转不出去。
+   */
+  let moves = rollMoves();
+  let placement = puzzle.placementMoves(rnd);
+  let startPerm = puzzle.apply(identityPerm(n), placement);
+  let targets = readTargets(puzzle, picks, startPerm, moves);
+  for (let tries = 1; tries < CHALLENGE_TRIES && targets.some((t) => t.answerFacelet === t.startFacelet); tries++) {
+    moves = rollMoves();
+    placement = puzzle.placementMoves(rnd);
+    startPerm = puzzle.apply(identityPerm(n), placement);
+    targets = readTargets(puzzle, picks, startPerm, moves);
+  }
 
-  const startColors = startPerm
-    .map((home) => puzzle.faces[Math.floor(home / puzzle.perFace)])
-    .join('');
+  const startColors = startPerm.map((home) => puzzle.faces[Math.floor(home / puzzle.perFace)]);
 
   // 目标块整块画出来:同块的其余贴纸只用来认出「这几枚是一块的」,页面会把它们压暗。
   const painted = Array<string>(n).fill('.');
@@ -131,5 +162,5 @@ export function generatePuzzleChallenge(opts: PuzzleChallengeOptions): PuzzleCha
     }
   }
 
-  return { moves, placement, targets, startColors, startFacelets: painted.join('') };
+  return { moves, placement, targets, startColors, startFacelets: painted };
 }

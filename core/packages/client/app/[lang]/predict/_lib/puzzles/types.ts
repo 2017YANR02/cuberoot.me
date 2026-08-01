@@ -15,10 +15,11 @@
  * 三阶不走这里:它的出题还带十字 / 前两层 / F2L 那三档方法学模式,引擎在 `../challenge.ts`。
  */
 import type { PuzzleKind } from '@/app/[lang]/sim/engine/world';
-import type { CubeFace } from '@/lib/cube-colors';
+import type { PredictColor } from '../colors';
 
 /** URL 上的拼图值。数字 = NxN 的阶;三阶('3')走 `../challenge.ts` 那套。 */
-export type PredictPuzzleId = '2' | '3' | '4' | '5' | '6' | '7' | 'pyraminx' | 'skewb' | 'ivy';
+export type PredictPuzzleId =
+  '2' | '3' | '4' | '5' | '6' | '7' | 'pyraminx' | 'skewb' | 'ivy' | 'megaminx';
 
 /** 追踪对象的块类别。'pair' 不在这里 —— 那是「同时追两枚」的出题选项,不是块本身。 */
 export type PredictPieceKind = 'corner' | 'edge' | 'center' | 'tip';
@@ -45,8 +46,8 @@ export interface PredictPuzzle {
   faces: readonly string[];
   /** 每面几枚贴纸。 */
   perFace: number;
-  /** 面字母 → 站内配色 token。立方体族是恒等,金字塔另配 4 色。 */
-  faceColor: Readonly<Record<string, CubeFace>>;
+  /** 面字母 → 显示色号(`../colors`)。立方体族是恒等,金字塔另配 4 色,五魔方 12 色。 */
+  faceColor: Readonly<Record<string, PredictColor>>;
   /** 面字母 → 方位名(题面念「落在 X 面」用)。 */
   faceName: Readonly<Record<string, { zh: string; en: string }>>;
   /**
@@ -87,6 +88,13 @@ export interface PredictPuzzle {
   moveFace: (move: string) => string | null;
   /** 输入框的占位示例。 */
   placeholder: string;
+  /**
+   * 题面 token → 喂 `/sim` 引擎播动画的 token 串(可以是多步,空串 = 这一步不动)。
+   * 省略 = 两边同一套记号 —— 除五魔方外都是这样,那是刻意的:记号不同就有「模型和
+   * 眼睛看到的对不上」的风险,所以只在引擎面名实在读不出方位时(PG 的 `C A I BF E`)
+   * 才翻一次。
+   */
+  engineMove?: (move: string) => string;
 }
 
 /** 还原态 perm。 */
