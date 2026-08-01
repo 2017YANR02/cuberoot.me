@@ -32,8 +32,8 @@ import { loadAlg, type AlgCase, type AlgEntry, type AlgFile } from '@cuberoot/sh
 import { useCopy } from '@/hooks/useCopy';
 import { ClearButton } from '@/components/ClearButton';
 import { Spinner } from '@/components/Spinner/Spinner';
-import CubingPreview from '@/components/CubingPreview';
-import AlgViewModeToggle, { useAlgViewMode } from '@/components/AlgViewModeToggle';
+import PillToggle from '@/components/PillToggle/PillToggle';
+import { useAlgViewMode } from '@/components/AlgViewModeToggle';
 import AlgPdfButton from '@/components/AlgPdfButton';
 import { algSheetFromCases } from '@/lib/alg_pdf/from_cases';
 import AdminCaseEditor, { type AdminEditorState } from '@/components/AdminCaseEditor';
@@ -287,7 +287,15 @@ export default function CommLibraryPage(): JSX.Element {
           )}
         </div>
 
-        <AlgViewModeToggle value={view} onChange={changeView} />
+        {/* 与全站 case 列表共用同一个偏好(alg-list-view),但这页没有图,
+            所以不套 AlgViewModeToggle 的「图 / 公式」字样。 */}
+        <PillToggle
+          value={showAlgs}
+          onChange={(on) => changeView(on ? 'full' : 'cards')}
+          offLabel={tr({ zh: '编码', en: 'Letters' })}
+          onLabel={tr({ zh: '公式', en: 'Algs' })}
+          ariaLabel={tr({ zh: '切换只看编码 / 看公式', en: 'Toggle letters-only / show algs' })}
+        />
 
         <span className="bld-comm-count">
           {loading
@@ -427,10 +435,7 @@ export default function CommLibraryPage(): JSX.Element {
                   onClick={() => setSelected(c.name)}
                   title={bad ? tr({ zh: '这个 case 有公式校验不通过', en: 'This case has failing algs' }) : undefined}
                 >
-                  <span className="bld-comm-card-thumb">
-                    {/* 缩略图画的是 **case 态**(库里的 setup),不是「公式跑完的样子」 */}
-                    <CubingPreview event="333" scramble={c.setup} visualization="2D" size={8} />
-                  </span>
+                  {/* 盲拧按编码认 case,不看图 —— 这里不出缩略图(点开有可交互播放) */}
                   <span className="bld-comm-card-head">
                     <span className="bld-comm-card-pair">{c.name}</span>
                   </span>
