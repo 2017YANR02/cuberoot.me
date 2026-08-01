@@ -17,14 +17,17 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { KPattern } from 'cubing/kpuzzle';
+import { flattenAlg, tokenizeMoves } from '@cuberoot/shared/alg-notation';
 import { patternFromAlg } from '@/lib/cube3';
 import {
+  BLD3_TYPES,
   BLDDB_TYPES,
   NO_COMMUTATOR,
   THUMB_LABELS,
   hasCommutators,
+  isBigbld,
   kindLetters,
-  sameSticker,
+  samePiece,
   slotKind,
   mirrorAlgText,
   mirrorChichu,
@@ -47,7 +50,7 @@ function dataFile(name: string): string | null {
 }
 
 function loadSet(type: BlddbType): BlddbSet | null {
-  const f = dataFile(`${type}Manmade.json`);
+  const f = dataFile(`${isBigbld(type) ? 'bigbld/' : ''}${type}Manmade.json`);
   return f ? (JSON.parse(fs.readFileSync(f, 'utf8')) as BlddbSet) : null;
 }
 
@@ -80,6 +83,7 @@ describe('位置镜像', () => {
     const cases: [string, BlddbType][] = [
       ['AEH', 'edge'], ['JDX', 'corner'], ['ACAD', 'parity'],
       ['BEH', 'twists'], ['AC', 'flips'], ['ADK', 'ltct'],
+      ['ACE', 'midge'], ['ABC', 'xcenter'], ['ABC', 'tcenter'],
     ];
     for (const [code, type] of cases) {
       const m = mirrorChichu(code, type);
@@ -90,6 +94,23 @@ describe('位置镜像', () => {
       const after = positionsOf(m, type);
       expect(after).toEqual(before.map(mirrorPosition));
     }
+  });
+
+  /**
+   * 翼棱是唯一位置名不能直接照镜子的一档:被编码的那片是 `XY + ccw(X,Y)`,而 ccw 是叉积,
+   * 镜面反射行列式为 -1,叉积跟着变号 —— 镜过去正好落在**没被编码**的那片上,得取同一块的
+   * 另一片(`XYz` ↔ `YXz`)。这条弄反 = 给左手党另一块翼的公式。
+   */
+  it('翼棱镜像要连手性一起翻', () => {
+    const m = mirrorChichu('ABC', 'wing');
+    expect(mirrorChichu(m, 'wing')).toBe('ABC');
+    const before = positionsOf('ABC', 'wing');
+    const after = positionsOf(m, 'wing');
+    const partner = (p: string) => p[1] + p[0] + p[2];
+    expect(after).toEqual(before.map((p) => partner(mirrorPosition(p))));
+    // 实例:UBl 这块翼镜过去是 UBr 那片所在的块,它被编码在 BUr 上。
+    expect(positionsOf('E', 'wing')).toEqual(['UBl']);
+    expect(positionsOf(mirrorChichu('E', 'wing'), 'wing')).toEqual(['BUr']);
   });
 
   it('通配位原样穿过', () => {
@@ -140,8 +161,9 @@ describe('位置镜像', () => {
       for (const seg of segs) {
         for (let a = 0; a < seg.length; a++) {
           for (let b = a + 1; b < seg.length; b++) {
-            const piece = slotKind(type, seg[a]).startsWith('corner') ? 'corner' : 'edge';
-            if (sameSticker(m[seg[a]], m[seg[b]], piece)) problems.push(`${k} → ${m}: 第 ${a + 1}/${b + 1} 位撞块`);
+            if (samePiece(m[seg[a]], m[seg[b]], slotKind(type, seg[a]))) {
+              problems.push(`${k} → ${m}: 第 ${a + 1}/${b + 1} 位撞块`);
+            }
           }
         }
       }
@@ -174,6 +196,26 @@ describe('公式镜像', () => {
       expect(mirrorAlgText(mirrorAlgText(a))).toBe(a);
     }
   });
+
+  // 高阶记号:`Lw` / `3Lw` / `l` / `m` / `u`。mirrorAlgText 认不出来的片段是**原样退回**的
+  // (总比吐一条错公式强),于是"没镜到"是静默的 —— 拿全量数据把这条堵死:切词不许有 junk,
+  // 镜两次必须回到原文。
+  it.each(AVAILABLE)('%s:库里每条公式都切得动词、镜两次回到原文', (type) => {
+    const set = SETS[type]!;
+    const bad: string[] = [];
+    let n = 0;
+    for (const list of Object.values(set)) {
+      for (const e of list) {
+        for (const a of e[0]) {
+          n++;
+          if (tokenizeMoves(flattenAlg(a)).junk.length) bad.push(`认不出来:${a}`);
+          else if (mirrorAlgText(mirrorAlgText(a)) !== a) bad.push(`不是对合:${a} → ${mirrorAlgText(a)}`);
+        }
+      }
+    }
+    expect(n).toBeGreaterThan(0);
+    expect(bad.slice(0, 5)).toEqual([]);
+  });
 });
 
 // ── 决定性那条:拿真实魔方状态验「镜像的公式解镜像的 case」──────────────────
@@ -190,7 +232,7 @@ const HAS_ROTATION = /[xyz]/u;
  * 两条公式本来就对不上,判据会误报。角三循环 / 翻角同理只管角轨(它们本来也不动棱,
  * 但显式写出来省得下次又去猜)。
  */
-const ORBITS: Record<BlddbType, string[]> = {
+const ORBITS: Record<string, string[]> = {
   corner: ['CORNERS'],
   twists: ['CORNERS'],
   ltct: ['CORNERS'],
@@ -203,7 +245,10 @@ function sameOrbits(a: KPattern, b: KPattern, orbits: string[]): boolean {
   return orbits.every((o) => JSON.stringify(a.patternData[o]) === JSON.stringify(b.patternData[o]));
 }
 
-describe.each(AVAILABLE)('%s:镜像后的公式解的正是镜像后的 case', (type) => {
+// 只跑三阶那六套 —— 高阶公式动的是翼棱 / 中心,三阶的 KPuzzle 根本没有那些轨,
+// 拿它当 oracle 会把 `3Rw` 这种记号解成别的东西,验出来的是假的。高阶那四套的镜像
+// 与等价类是拿上游 bigbldCodeConverter 对全量键比对过的(见 commit 说明)。
+describe.each(AVAILABLE.filter((t) => BLD3_TYPES.includes(t)))('%s:镜像后的公式解的正是镜像后的 case', (type) => {
   const set = SETS[type]!;
   // 先挑出「本 case 和它的镜像 case 都有不带转体的公式」的那些,再等距取样 ——
   // 直接对全部键取样的话,奇偶 / 奇偶带翻大半会因为镜像 case 不在库里被跳过,
@@ -245,7 +290,13 @@ describe('数据形状(.sync/blddb_postprocess.mjs 的产物)', () => {
       for (const e of list) {
         entries++;
         if (e.length !== 4) { problems.push(`${key}: 长度 ${e.length}`); continue; }
-        if (e[0].length !== e[3].length) problems.push(`${key}: ${e[0].length} 条公式对 ${e[3].length} 个起手`);
+        // 起手要么整条不给(高阶那四套,上游也只在三阶算),要么与公式一一对应。
+        if (e[3].length !== 0 && e[0].length !== e[3].length) {
+          problems.push(`${key}: ${e[0].length} 条公式对 ${e[3].length} 个起手`);
+        }
+        if (isBigbld(type) !== (e[3].length === 0)) {
+          problems.push(`${key}: ${type} 的起手列该${isBigbld(type) ? '空' : '有值'}`);
+        }
         for (const f of e[3]) {
           if ([...f].some((c) => !FINGER_CHARS.has(c))) problems.push(`${key}: 起手编码 ${f} 不认识`);
         }

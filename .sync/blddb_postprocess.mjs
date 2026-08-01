@@ -3,7 +3,7 @@
 //
 //   node .sync/blddb_postprocess.mjs [--upstream D:\cube\blddb] [--repo <仓库根>]
 //
-// 干三件事，全部写进 tools/blddb/data/（那份 JSON 只有本站原生页面在吃，iframe 版
+// 干四件事，全部写进 tools/blddb/data/（那份 JSON 只有本站原生页面在吃，iframe 版
 // 是编译期把数据内联进 chunk 的，改这里动不到它）：
 //
 //  ① 起手位置。上游给每条公式算「起手拇指在哪」(finger.ts)，是它最有辨识度的一列。
@@ -13,6 +13,9 @@
 //     编码：h=中立 u=拇指上 d=拇指下，大写是左手镜像那三种，- = 算不出来。
 //     顺带把每条记录补齐成定长 4 位 [公式[], 用者[], 换位子[]|null, 起手[]]，
 //     免得客户端还要按类型猜第三位是什么。
+//
+//  ①b 高阶盲拧(翼棱 / X 中心 / T 中心 / 中棱)那四套的记录形状跟三阶不一样，一并归一成
+//     同一个四位元组。
 //
 //  ② Nightmare 推荐解。cornerNightmareSelected / edgeNightmareSelected 等，加起来
 //     130KB，是「每个 case 一条推荐公式」的速查网格，跟 37MB 的穷举全集不是一回事
@@ -91,6 +94,9 @@ const MANMADE_TYPES = ['corner', 'edge', 'parity', 'twists', 'flips', 'ltct'];
 /** 这几套上游带换位子列（Table 的 commutatorNeededList）。 */
 const HAS_COMM = new Set(['corner', 'edge', 'flips', 'twists']);
 
+/** 高阶盲拧那四套(data/bigbld/ 下)。记录形状与三阶不同，见 stepBigbld。 */
+const BIGBLD_TYPES = ['wing', 'xcenter', 'tcenter', 'midge'];
+
 async function stepFinger() {
   const fingerMod = await loadUpstream(path.join(UPSTREAM, 'src', 'utils', 'finger.ts'), 'finger');
   const finger = fingerMod.default ?? fingerMod;
@@ -148,6 +154,42 @@ async function stepFinger() {
   );
   if ((dist['-'] ?? 0) > memo.size * 0.2) {
     throw new Error('两成以上的公式算不出起手 —— 上游 finger.ts 多半换了返回格式，别把坏数据发出去。');
+  }
+}
+
+// ── ①b 高阶盲拧四套 ───────────────────────────────────────────────────────
+
+/**
+ * 上游 data/bigbld/*.json 的记录是 `[公式, 用者[], 换位子]`（一条记录只有一种写法，
+ * 公式和换位子都是**裸字符串**），跟三阶那六套的数组形状对不上。这里补成同一个四位
+ * 元组，客户端只认一种形状。
+ *
+ * 起手那一列留空：上游 Table 也只在三阶显示（`isThumbPositionNeeded = is3bld && …`）——
+ * finger.ts 那套握法判断没在宽层 / 内层记号上验证过，宁可不给也别给个看着像真的错值。
+ */
+function stepBigbld() {
+  const dir = path.join(DATA, 'bigbld');
+  if (!existsSync(dir)) throw new Error(`缺 tools/blddb/data/bigbld/ —— 先跑 _sync_blddb.ps1`);
+  for (const type of BIGBLD_TYPES) {
+    const file = path.join(dir, `${type}Manmade.json`);
+    if (!existsSync(file)) throw new Error(`缺 bigbld/${type}Manmade.json`);
+    const set = readJson(file);
+    const before = readFileSync(file).length;
+    let entries = 0;
+    for (const key of Object.keys(set)) {
+      set[key] = set[key].map((e) => {
+        entries++;
+        // 幂等：跑第二遍时 e[0] 已经是数组了，别再包一层。
+        const algs = Array.isArray(e[0]) ? e[0] : [e[0]];
+        const comms = e[2] == null ? null : (Array.isArray(e[2]) ? e[2] : [e[2]]);
+        return [algs, e[1], comms, []];
+      });
+    }
+    writeJson(file, set);
+    console.log(
+      `  bigbld/${type.padEnd(8)} ${String(entries).padStart(5)} 条记录，` +
+      `${kb(before)} → ${kb(readFileSync(file).length)}`,
+    );
   }
 }
 
@@ -220,6 +262,8 @@ async function stepTables() {
 
 console.log('[blddb-postprocess] 起手位置（上游 finger.ts，构建期跑）...');
 await stepFinger();
+console.log('[blddb-postprocess] 高阶盲拧四套归一...');
+stepBigbld();
 console.log('[blddb-postprocess] Nightmare 推荐解...');
 stepSelected();
 console.log('[blddb-postprocess] Nightmare 静态速查表...');

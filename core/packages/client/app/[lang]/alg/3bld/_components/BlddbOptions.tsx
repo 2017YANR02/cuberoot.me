@@ -24,9 +24,21 @@ interface Props {
   showComm: boolean;
   /** 这个类型有没有逆 case。 */
   showInverse: boolean;
+  /** 这个类型算不算起手(高阶不算,见 .sync/blddb_postprocess.mjs)。 */
+  showThumb: boolean;
+  /** 翼棱才有「编码位置」这个约定。 */
+  showWingCode: boolean;
+  /** 按作者成绩筛时看哪一项。 */
+  cutoffEvent: '3bld' | '4bld';
 }
 
-export function BlddbOptions({ showComm, showInverse }: Props): JSX.Element {
+export function BlddbOptions({
+  showComm,
+  showInverse,
+  showThumb,
+  showWingCode,
+  cutoffEvent,
+}: Props): JSX.Element {
   const [open, setOpen] = useState(false);
   const prefs = useBlddbPrefsStore((s) => s.prefs);
   const setPrefs = useBlddbPrefsStore((s) => s.setPrefs);
@@ -36,7 +48,8 @@ export function BlddbOptions({ showComm, showInverse }: Props): JSX.Element {
   if (prefs.mirror) on.push(tr({ zh: '镜像', en: 'mirrored' }));
   if (prefs.inverse && showInverse) on.push(tr({ zh: '含逆', en: '+inverse' }));
   if (prefs.maxSecs) on.push(tr({ zh: `sub-${prefs.maxSecs}`, en: `sub-${prefs.maxSecs}` }));
-  if (!prefs.thumb) on.push(tr({ zh: '无起手', en: 'no grip' }));
+  if (!prefs.thumb && showThumb) on.push(tr({ zh: '无起手', en: 'no grip' }));
+  if (prefs.wingAlt && showWingCode) on.push(tr({ zh: '非标准翼棱编码', en: 'alt wing code' }));
 
   return (
     <div className="bld-config-bar">
@@ -57,11 +70,13 @@ export function BlddbOptions({ showComm, showInverse }: Props): JSX.Element {
       {open && (
         <div className="bld-db-opt-panel">
           <div className="bld-db-opt-row">
-            <BoolToggle
-              value={prefs.thumb}
-              onChange={(v) => setPrefs({ thumb: v })}
-              label={tr({ zh: '显示起手', en: 'Show thumb position' })}
-            />
+            {showThumb && (
+              <BoolToggle
+                value={prefs.thumb}
+                onChange={(v) => setPrefs({ thumb: v })}
+                label={tr({ zh: '显示起手', en: 'Show thumb position' })}
+              />
+            )}
             <BoolToggle
               value={prefs.mirror}
               onChange={(v) => setPrefs({ mirror: v })}
@@ -89,7 +104,12 @@ export function BlddbOptions({ showComm, showInverse }: Props): JSX.Element {
             </label>
 
             <label className="bld-db-opt-field">
-              <span>{tr({ zh: '只看三盲单次快于', en: 'Only authors with 3BLD single under' })}</span>
+              <span>
+                {tr({
+                  zh: `只看${cutoffEvent === '4bld' ? '四' : '三'}盲单次快于`,
+                  en: `Only authors with ${cutoffEvent.toUpperCase()} single under`,
+                })}
+              </span>
               <input
                 type="text"
                 inputMode="decimal"
@@ -97,7 +117,10 @@ export function BlddbOptions({ showComm, showInverse }: Props): JSX.Element {
                 value={prefs.maxSecs}
                 placeholder="—"
                 autoComplete="off"
-                aria-label={tr({ zh: '三盲单次秒数上限', en: '3BLD single cutoff in seconds' })}
+                aria-label={tr({
+                  zh: `${cutoffEvent === '4bld' ? '四' : '三'}盲单次秒数上限`,
+                  en: `${cutoffEvent.toUpperCase()} single cutoff in seconds`,
+                })}
                 onChange={(e) => {
                   const v = e.target.value;
                   // 允许输入中的 `12.` 这种中间态,但挡住字母和第二个小数点。
@@ -106,6 +129,21 @@ export function BlddbOptions({ showComm, showInverse }: Props): JSX.Element {
               />
               <span>{tr({ zh: '秒的人在用的', en: 'seconds' })}</span>
             </label>
+
+            {/* 翼棱两种编码约定下,一条棱的两块翼字母互换 —— 选错查到的是另一块翼的公式,
+                不会报错。上游把它放在编码设置页,这里就地给。 */}
+            {showWingCode && (
+              <label className="bld-db-opt-field">
+                <span>{tr({ zh: '翼棱编码位置', en: 'Wing lettering position' })}</span>
+                <PillToggle
+                  value={prefs.wingAlt}
+                  onChange={(v) => setPrefs({ wingAlt: v })}
+                  offLabel="UFr"
+                  onLabel="FUr"
+                  ariaLabel={tr({ zh: '翼棱编码位置', en: 'Wing lettering position' })}
+                />
+              </label>
+            )}
           </div>
 
           {showComm && (

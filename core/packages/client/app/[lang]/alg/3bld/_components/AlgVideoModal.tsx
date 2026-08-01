@@ -113,7 +113,12 @@ export function AlgVideoModal({ alg, videos, onClose }: Props): JSX.Element | nu
         <a href={current.url} target="_blank" rel="noopener noreferrer">
           {tr({ zh: '打不开?去源站', en: 'Open at source' })}
         </a>
-        <button type="button" onClick={onClose} aria-label={tr({ zh: '关闭', en: 'Close' })}>
+        <button
+          type="button"
+          className="bld-db-video-close"
+          onClick={onClose}
+          aria-label={tr({ zh: '关闭', en: 'Close' })}
+        >
           <X size={16} />
         </button>
       </div>
