@@ -111,6 +111,30 @@ export default function PlaybackPanel({
   const gyroTrack = useMemo(() => decodeGyroTrack(gyro), [gyro]);
   const hasGyro = gyroTrack.length > 0;
 
+  // 魔方等**滚到跟前**再建。
+  //
+  // 建一个 /sim world 要开 WebGL 上下文、编 shader、铺 27 个块的实例矩阵,实测
+  // 76ms 主线程(dev),而复盘弹窗刚打开时这颗魔方还在视口外 —— 报告顶部那一屏
+  // 要能立刻滚动,就不该先替一个看不见的东西付这笔钱。rootMargin 留一屏提前量,
+  // 用户滚到这儿时它已经建好了,看不出是后建的。
+  //
+  // 已经在视口里(宽屏、或直接滚到底)也不亏:回调仍是下一帧才来,等于把这一块
+  // 从首帧那批活里挪出去一帧,报告先画完。
+  const cubeBoxRef = useRef<HTMLDivElement>(null);
+  const [cubeNear, setCubeNear] = useState(false);
+  useEffect(() => {
+    if (cubeNear) return;
+    const el = cubeBoxRef.current;
+    if (!el) return;
+    if (typeof IntersectionObserver !== 'function') { setCubeNear(true); return; }
+    const io = new IntersectionObserver(
+      entries => { if (entries.some(e => e.isIntersecting)) setCubeNear(true); },
+      { rootMargin: '300px' },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [cubeNear]);
+
   useEffect(() => {
     if (idx > total) setIdx(total);
   }, [total, idx]);
@@ -223,8 +247,8 @@ export default function PlaybackPanel({
             姿态给了就跟姿态,没给就是引擎自己的等轴视角 —— 同一个组件,不为
             「有没有陀螺仪」换一套渲染。回放不需要它的平滑跟随(样本本来就是按
             时间插好的),但留着也无害:两个样本之间它只是滑得更顺。 */}
-        <div className={`reconstruct-playback-cube${gyroOn ? ' is-gyro' : ''}`}>
-          {isNxn3 ? (
+        <div ref={cubeBoxRef} className={`reconstruct-playback-cube${gyroOn ? ' is-gyro' : ''}`}>
+          {isNxn3 ? (cubeNear ? (
             <SimCubeView
               moves={simMoves}
               pose={simPose}
@@ -239,6 +263,10 @@ export default function PlaybackPanel({
               })}
             />
           ) : (
+            /* 空占位,和 SimCubeView 的宿主同一个 class —— 尺寸完全一样,
+               魔方建好时原地替换,滚过去不会跳一下。 */
+            <div className="timer-live-cube-3d" aria-hidden />
+          )) : (
             <CubePreview event={event} scramble={composed} size={20} visualization="3D" />
           )}
         </div>

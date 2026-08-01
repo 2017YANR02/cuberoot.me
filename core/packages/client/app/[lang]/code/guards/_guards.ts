@@ -167,6 +167,12 @@ export const CI_GUARDS_DRIFT: CiGuard[] = [
     en: { title: '/code/tokens value drift', desc: '/code/tokens hand-mirrors color values from globals.css for display. This re-diffs every value — change a token in globals.css without updating the page and CI goes red.' },
   },
   {
+    id: 'recon-open-prefetch',
+    test: 'recon_open_prefetch.test.ts',
+    zh: { title: '复盘打开路径懒加载漂移', desc: '点「查看复盘」曾要等 1473ms —— 三级串行的动态 import,每层等上层执行完才开始下载。现在整条链在成绩详情空闲时并行预取。这条测试守覆盖关系:复盘路径上任何 import() 出去的模块都必须在预取清单里,新加一个忘了预取直接红。' },
+    en: { title: 'Reconstruction open-path lazy-load drift', desc: 'Opening the reconstruction once cost 1473ms — a three-level serial dynamic-import chain, each level waiting for the one above to execute. The whole chain is now prefetched in parallel while the solve modal is idle. This test guards coverage: every module the open path import()s must appear in the prefetch list, so adding one without prefetching it turns CI red.' },
+  },
+  {
     id: 'schema-api-drift',
     test: 'code-schema-api-drift.test.ts',
     zh: { title: '/code/schema + /code/api 快照漂移', desc: '/code/schema 的迁移台账须列全 packages/server/migrations 下每个文件;/code/api 的路由清单须等于 server/src/index.ts 里 app.route(‘/v1’, …) 实际挂载的路由。各自漏一条都红。' },
