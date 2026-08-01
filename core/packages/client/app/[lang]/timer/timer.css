@@ -1213,19 +1213,6 @@
 }
 .bluetooth-modal .bt-retry-btn:hover { background: color-mix(in srgb, var(--foreground) 12%, transparent); }
 .bluetooth-modal .bt-retry-btn:disabled { opacity: 0.55; cursor: default; }
-/* Probe results. Mono because they are meant to be screenshotted and read back
-   to us; the refused rung is the answer, so it gets the warning colour. */
-.bluetooth-modal .bt-probe-list {
-  margin: 8px 0 0;
-  padding-left: 18px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  line-height: 1.7;
-  color: var(--muted-foreground);
-  word-break: break-word;
-  user-select: text;
-}
-.bluetooth-modal .bt-probe-list .is-refused { color: var(--signal-warning); }
 .bluetooth-modal .bt-retry-hint {
   margin: 6px 0 0;
   font-size: 12px;
