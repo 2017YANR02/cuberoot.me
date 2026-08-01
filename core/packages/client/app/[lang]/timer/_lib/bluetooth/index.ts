@@ -60,12 +60,15 @@ import { applyHijack, makeHijack, type StateHijack } from './state_hijack';
 import { toFaceletString, fromFaceletString } from '../cube/state';
 import { stepSolved, type CubeStep } from '../cube/steps';
 import { watchAdvertisementsMac, savedMac, saveMac, clearMac, parseMacFromName, normalizeMac } from './mac';
+import { BluetoothConnectError, atStage, isNoDeviceSelected } from './connect_error';
 import type { BluetoothCubeStatus } from './types';
 
 export type { BluetoothCubeStatus, CubeBrand } from './types';
 export type { CubeDriver, CubeDriverStartResult, GyroSink, GyroQuaternion, GyroVelocity } from './driver';
 export { detectBluetoothEnv, envAdvice, isBluefy } from './env';
 export type { BluetoothEnv, EnvAdvice } from './env';
+export { BluetoothConnectError, CONNECT_STAGE_LABEL, describeError } from './connect_error';
+export type { ConnectStage } from './connect_error';
 
 /* ------------------------------------------------------------------ */
 /*  Connection-state event surface                                    */
@@ -618,9 +621,14 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     advMac: string | null,
   ): Promise<void> => {
     if (!device.gatt) {
-      throw new Error('Selected device does not expose a GATT server.');
+      throw new BluetoothConnectError('gatt', 'Selected device does not expose a GATT server.');
     }
-    const server = await device.gatt.connect();
+    let server: BluetoothRemoteGATTServer;
+    try {
+      server = await device.gatt.connect();
+    } catch (err) {
+      throw atStage('gatt', err);
+    }
 
     // Pick the driver by which GATT service the cube actually exposes (GAN
     // v2/v3/v4 share no service, so this is unambiguous); fall back to name.
@@ -635,7 +643,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     if (!driver) driver = pickDriver(device);
     if (!driver) {
       try { server.disconnect(); } catch { /* ignore */ }
-      throw new Error(`Unrecognised smart cube: ${device.name ?? '(no name)'}`);
+      throw new BluetoothConnectError('discover', `Unrecognised smart cube: ${device.name ?? '(no name)'}`);
     }
 
     // Resolve a MAC for MAC-keyed drivers: advertisement → saved → device-name
@@ -764,7 +772,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       device.removeEventListener('gattserverdisconnected', onDisc);
       disconnectListenerRef.current = null;
       try { server.disconnect(); } catch { /* ignore */ }
-      throw err;
+      throw atStage('handshake', err);
     }
   }, [handleMove, handleCubeState, cancelPendingReconnect, internalDisconnect]);
 
@@ -825,16 +833,22 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       // User cancelled the picker, denied permission, or no device found.
       // We don't throw — the caller asked us to connect; we just return
       // without changing state. Re-throw on truly unexpected errors.
-      if (err instanceof DOMException && (err.name === 'NotFoundError' || err.name === 'NotAllowedError')) {
-        return;
-      }
-      throw err;
+      //
+      // Matched by error *name* rather than `instanceof DOMException`: iOS
+      // Bluefy bridges Web Bluetooth to native code and rejects with bare
+      // values, so an instanceof test can never hold there and a dismissed
+      // chooser would surface as a connection failure. See connect_error.ts.
+      if (isNoDeviceSelected(err)) return;
+      throw atStage('picker', err);
     }
 
     // Recover the MAC from a BLE advertisement BEFORE connecting (matches
     // cstimer's order; GAN / MoYu / QiYi need it for AES key derivation).
     // Best-effort: resolves null when unsupported or no manufacturer data.
-    const advMac = await watchAdvertisementsMac(device);
+    // It is documented never to reject; the tag is here so a broken contract
+    // still names the step it broke in rather than arriving unlabelled.
+    const advMac = await watchAdvertisementsMac(device)
+      .catch((err: unknown) => { throw atStage('advertisement', err); });
     await attachToDevice(device, advMac);
   }, [attachToDevice, cancelPendingReconnect]);
 
