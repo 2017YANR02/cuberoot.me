@@ -39,6 +39,7 @@
  */
 
 import type { CubeDriver, CubeDriverStartResult } from './driver';
+import { BATTERY_SERVICE } from './driver';
 import type { CubeBrand } from './types';
 import {
   decryptFrame,
@@ -60,7 +61,6 @@ const GAN_V3_COMMAND_CHAR = '8653000c-43e6-47b7-9cb0-5fc21d4ae340';
 // expose the standard service — battery arrives as mode-16 events on the
 // notify pipe — but we still attempt the read and fall back to the cached
 // value from the most recent in-band event.
-const BATTERY_SERVICE = 0x180f;
 const BATTERY_LEVEL_CHAR = 0x2a19;
 
 // GAN v3 base key / IV. cstimer compresses these into LZString blobs

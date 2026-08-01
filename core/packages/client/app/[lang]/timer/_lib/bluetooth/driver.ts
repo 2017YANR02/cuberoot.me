@@ -204,15 +204,32 @@ export interface CubeDriverContext {
   onGyro?: GyroSink;
 }
 
+/**
+ * Standard Battery Service, written out in full.
+ *
+ * The spec lets you pass the 16-bit alias as a number (`0x180f`) and Chrome
+ * expands it for you, but that shorthand is what broke iOS Bluefy: it bridges
+ * Web Bluetooth to native code, and a number where it wants a UUID string made
+ * `requestDevice()` reject the whole call with an opaque `2` — no chooser, no
+ * device list, nothing to act on. cstimer, which works there, passes full
+ * 128-bit strings and nothing else.
+ *
+ * So: never a bare number, and never `String(0x180f)` either — that yields the
+ * decimal "6159", which every implementation rejects. Full form or nothing.
+ */
+export const BATTERY_SERVICE = '0000180f-0000-1000-8000-00805f9b34fb';
+
 export interface CubeDriver {
   brand: CubeBrand;
   /** Primary GATT service UUID this driver advertises with. */
   service: string;
-  /** Extra services the picker needs access to (battery, device-info, etc.).
-   * Entries may be full UUID strings or numeric 16-bit aliases (e.g. 0x180f).
-   * Do NOT pre-stringify a numeric alias — `String(0x180f)` yields the decimal
-   * "6159", which Web Bluetooth rejects as an invalid service name. */
-  optionalServices?: (string | number)[];
+  /**
+   * Extra services the picker needs access to (battery, device-info, etc.).
+   * Full 128-bit lowercase UUID strings only — see {@link BATTERY_SERVICE} for
+   * why the numeric 16-bit alias is banned here. `tests/bluetooth_uuid_shape.test.ts`
+   * enforces it.
+   */
+  optionalServices?: string[];
   /**
    * True when this driver derives its AES key from the cube MAC (GAN family).
    * The hook will resolve a MAC (and prompt the user if needed) before start().

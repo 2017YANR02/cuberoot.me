@@ -48,6 +48,7 @@
  */
 
 import type { CubeDriver, CubeDriverStartResult, CubeDriverContext } from './driver';
+import { BATTERY_SERVICE } from './driver';
 import type { CubeBrand } from './types';
 import {
   decodeGanGyro,
@@ -68,7 +69,6 @@ const GAN_V2_COMMAND_CHAR = '28be4a4a-cd67-11e9-a32f-2a2ae2dbcce4';
 // Standard Bluetooth Battery Service / level characteristic. v2 cubes report
 // battery as a mode-9 event on the notify pipe — but we still attempt the
 // standard read and fall back to the cached value from the most recent event.
-const BATTERY_SERVICE = 0x180f;
 const BATTERY_LEVEL_CHAR = 0x2a19;
 
 // Normal GAN v2 base key / IV — identical to v3 (cstimer KEYS[2]/KEYS[3]).
