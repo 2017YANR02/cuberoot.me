@@ -148,19 +148,39 @@ export default function SolveModal({ solve, index, isZh, onClose, onChangePenalt
     firstButtonRef.current?.focus();
   }, []);
 
-  // The reconstruction names its OLL and PLL case, and those names come from
-  // lookup tables built by walking the whole alg set through cubing.js — two
-  // fetches and a few thousand parses. Built on demand it lands exactly when
-  // the panel opens and makes it unscrollable for a beat; built now, while the
-  // solve modal is being read, it is already there. Only for solves that have
-  // a move stream, since only those have a reconstruction to open.
+  // 「查看复盘」按下去之前,把那份报告要用的东西全拉到手边。
+  //
+  // 不这么做的话它是一条**三级串行**的懒加载链,每一层都得等上一层先跑起来才
+  // 开始下载(2026-08-01 dev 实测,resource timing):
+  //
+  //   点击 ─┬─ 125ms ── ReconstructModal 自己的 chunk(211 KB)──── 916ms
+  //         └─ 要等它开始执行 ─┬─ 719ms ── oll/pll 查找表 chunk ── 405ms
+  //                            │            └─ 再等它去取 /oll /pll 公式库
+  //                            └─ 1252ms ── SimCubeView → three + cubing.js
+  //
+  // 合计 ~1.5s 才齐活,而且 chunk 编译是主线程的活 —— 这正是用户说的「面板出来
+  // 了但拉不动进度条」:画面在,主线程在编译。
+  //
+  // 这里只是把同样几个 import() 提前到「成绩详情开着、用户在读」的空闲里发出去。
+  // 三层同时下载,点下去时模块已在注册表里,dynamic 直接命中。都是 import 幂等,
+  // 用户不点也只是白拉一次;真点了就是秒开。查找表还要再走一遍 cubing.js 解析,
+  // 所以额外调 prewarm 把表也建好(见 lib/build-yield.ts)。
+  //
+  // 只对有动作流的成绩做 —— 「查看复盘」按钮本来就只在那时才出现。
   const hasMoves = (solve.moves?.length ?? 0) > 0;
   useEffect(() => {
     if (!hasMoves) return;
     return onIdle(() => {
+      // 和 SoloView 的 dynamic(() => import('../_components/ReconstructModal'))
+      // 是同一个模块,打包器按模块去重,不会多出一份。
+      void import('./ReconstructModal');
+      void import('./SimCubeView');
+      void import('@/components/sim-embed/mountSimWorld');
       void import('@/lib/oll_lookup').then((m) => { m.prewarmOllTable(); });
       void import('@/lib/pll_lookup').then((m) => { m.prewarmPllTable(); });
-    });
+      // timeout 卡在 500ms:真闲下来就立刻拉,一直不闲也别等满两秒 —— 用户从看到
+      // 这一屏到按下「查看复盘」通常就这么点时间,等太久等于没预取。
+    }, { timeout: 500 });
   }, [hasMoves]);
 
   const dt = new Date(solve.ts);

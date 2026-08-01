@@ -3416,3 +3416,72 @@ CDP 抓真实 CPU profile(本机 dev,一条 50 步的三阶成绩,冷开):
 
 `tests/build_yield.test.ts` 5 条,重点那条钉的是「真的让出了宏任务」——
 让路期间排队的 `setTimeout` 必须能插进来,否则这个改动等于没做。
+
+---
+
+## Sprint 42 — 复盘还是卡:是懒加载瀑布,不是算法
+
+Sprint 41 把查找表挪走之后,用户回来说还卡,并怀疑是那颗 3D 魔方的动画
+(「可 `/sim?puzzle=3` 是秒加载的」)。
+
+### 先证伪自己的第一直觉
+
+离线量了报告打开时**每一段计算**(vitest 探针,真跑一条 CFOP 解法):
+
+| 环节 | 耗时 |
+|---|---|
+| computeStageSegments / normalizeSolve / stepMetrics / F2L 分槽 | 各 1–4 ms |
+| computeStageReferences(十字 IDA*) | 23 ms |
+| computeF2lSlotReferences(4 个槽) | 10 ms |
+| buildReconText | 122 ms |
+
+都不是「几秒」的量级 —— 参考解法搜索和三维渲染都不是嫌疑人。CPU profile 也印证:
+自耗时第一名是 V8 的 `(program)` 1624ms,根本不在 JS 帧里。
+
+### 根因:三级串行的懒加载链
+
+resource timing 把它摊开了(dev,冷开):
+
+| 起点 | 耗时 | 内容 |
+|---|---|---|
+| 125ms | **916ms** | `ReconstructModal` 自己的 chunk,211 KB |
+| 719ms | 405ms | oll/pll 查找表 chunk —— 要等上面那个**执行起来**才发请求 |
+| 1219ms | — | `/oll` `/pll` 公式库 API,再等一层 |
+| 1252ms | 213ms | SimCubeView → mountSimWorld → three + cubing.js |
+
+合计 ~1.5s,而且 chunk 编译是主线程的活。这正是「面板出来了但拉不动进度条」:
+画面在,主线程在编译。`/sim` 秒开是因为那些模块在它的路由包里,早就编好了。
+
+### 改了什么
+
+1. **`SolveModal` 空闲时并行预取整条链**(`ReconstructModal` / `SimCubeView` /
+   `mountSimWorld`,外加原有的两张表)。三层同时下载,点下去时模块已在注册表里。
+   `onIdle` 给了 `timeout: 500` —— 一直等不到空闲也别干等满两秒,用户从看到这一屏
+   到按下按钮通常就这么点时间。
+2. **3D 魔方等滚到跟前再建**(`PlaybackPanel` 的 `IntersectionObserver`,
+   `rootMargin: 300px`)。弹窗刚打开时它在视口外,建 WebGL world 是主线程 76ms
+   的活,不该抢在首屏前面。占位盒复用 `.timer-live-cube-3d`,尺寸一致,替换不跳
+   —— 少了它盒子高度是 0,魔方一出现下面整体跳 200px(实测)。
+
+### 验证(同一条路径,同一台机器)
+
+| 指标 | 改前 | 预取后 | 再加可见性门 |
+|---|---|---|---|
+| 最后一个资源就绪 | 1473 ms | 333 ms | **98 ms** |
+| 点击后请求数 | 17 | 4 | **2** |
+| 长任务总时长 | 633 ms | 543 ms | **171 ms** |
+| 最长单次任务 | 162 ms | 160 ms | **99 ms** |
+| 事件循环最大停顿 | 298 ms | 389 ms | **111 ms** |
+
+「用户点太快、预取还没跑完」这一路也测了:最后资源就绪 1258ms → 756ms,
+最长单次任务 169ms → 132ms。
+
+`tests/recon_open_prefetch.test.ts` 10 条守的是**覆盖关系**不是速度:复盘路径上
+每个 `import()` 出去的模块都必须在预取清单里(跨文件归一化路径后比对),以后谁
+再加一个动态模块却忘了预取,瀑布会悄悄长回一级 —— 页面照常能用,只是又卡了。
+另有一条钉住占位盒,防的是那次实测出来的 200px 跳动。
+
+### 顺手记一笔(不在本轮范围)
+
+计时页有个常驻循环,静置 3s 也有 ~1080 次 layout,**开不开复盘弹窗都一样**,
+所以不是本轮的原因,但 33% 的空闲 CPU 占用本身值得单独查一次。
