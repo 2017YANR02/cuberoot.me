@@ -1196,6 +1196,29 @@
   word-break: break-all;
   user-select: text;
 }
+/* Secondary action inside the failure box. Deliberately quieter than
+   .bt-connect-btn: it is the fallback, not the thing to reach for first. */
+.bluetooth-modal .bt-retry-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--foreground) 22%, transparent);
+  color: var(--foreground);
+  padding: 7px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.bluetooth-modal .bt-retry-btn:hover { background: color-mix(in srgb, var(--foreground) 12%, transparent); }
+.bluetooth-modal .bt-retry-btn:disabled { opacity: 0.55; cursor: default; }
+.bluetooth-modal .bt-retry-hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+}
 .bluetooth-modal .bt-tip {
   background: color-mix(in srgb, var(--signal-info) 6%, transparent);
   border: 1px solid color-mix(in srgb, var(--signal-info) 20%, transparent);
