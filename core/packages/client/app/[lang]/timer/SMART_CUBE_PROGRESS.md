@@ -3281,3 +3281,44 @@ cstimer 的 `giikerutil.chkAvail()` 在每次 `requestDevice` 前 `await navigat
 ### 还差什么
 
 - 全靠用户跑一次探针。结果会直接指名是哪一项 —— 或者指明我们的选项全都无辜。
+
+---
+
+## Sprint 39 — 探针回话:与选项无关;不是域名;下一刀切框架
+
+用户跑了探针,结果是**第 1 级就被拒**:
+
+```
+1. 最小调用 — 被拒: 2 (number)
+```
+
+`{ acceptAllDevices: true }` —— 没有过滤条件、没有服务列表、没有厂商编号,Web Bluetooth 能写出来的最简单的合法调用 —— 照样不弹选择框。
+
+**所以前三个 Sprint 改的东西没有一样是原因。** 数字 UUID(37)、过滤条件与逃生通道(36)、阶段标注(35)都在「选项字典」这个错误的范围里打转。探针早两轮做出来能省三次往返。
+
+### 又排除掉两条
+
+**响应头**:cuberoot.me 和 cstimer.net 都不发 `Permissions-Policy` / `Feature-Policy` / COOP / COEP / CSP。没有任何一层在关 Web Bluetooth。
+
+**域名**:让用户在 `next.cuberoot.me`(同一份代码、不同 origin)上试,一模一样被拒。所以不是 Bluefy 对 `cuberoot.me` 存了什么站点级拒绝状态 —— 上一轮那个 `CBManagerAuthorization.denied = 2` 的联想可以放下了。
+
+**我们自己也没动过 API**:全仓没有任何对 `navigator.bluetooth` 的赋值或 `defineProperty`,`fake_cube` 在 `NODE_ENV==='production'` 直接返回 null,全站没有 service worker。
+
+### 下一刀:`public/bt-test.html`
+
+纯静态页面,一个 `<script>`,零框架、零打包、零 import,和 `/timer` 同源。四个按钮各发一次 `requestDevice`:
+
+1. `{acceptAllDevices:true}`
+2. `{filters:[{namePrefix:'GAN'}]}`(最简单的过滤形式)
+3. **cstimer 的那套值**(它的 11 条 opservs + 它仅有的一条 service filter + 名字前缀;注意它的 `servFilters` 只有一条 `0000fff0-…`,我们有 8 条)
+4. 我们 `/timer` 实际发的那套
+
+页头还打印 origin / secureContext / `navigator.bluetooth` 是否存在 / `getAvailability` 与 `getDevices` 是否存在 / 是否在 frame 里 / UA / `getAvailability()` 的返回值 —— 一张截图就带走全部环境信息。
+
+判据同探针:**选择框弹出来又被取消,算成功**(`NotFoundError` 系列)。
+
+有按钮能弹 → 故障在应用里,继续二分;一个都不弹 → 应用无罪,差异在两个站点之间某个选项碰不到的地方。
+
+### 还差什么
+
+- 全靠用户跑这一页。这是第一次把 React / Next / 我们全部代码同时排除在外。
