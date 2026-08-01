@@ -3192,3 +3192,51 @@ typecheck / lint / 蓝牙相关 128 条测试干净。
   `optionalManufacturerData`(代价:GAN 要手填 MAC)。
 - 交叉对照还没做:同一台手机开 `/cstimer`(独立实现、同样的选项形状)。它也失败 =
   Bluefy 环境问题,与我们的调用无关。
+
+---
+
+## Sprint 37 — `2` 的根因:`optionalServices` 里混了一个数字
+
+用户在同一台 iPhone、同一个 Bluefy、同一颗 GAN16ui 上,**cstimer.net 一次就连上了**(截图有设备选择器列出 `GAN16ui_C296`,连上后正常计时),而我们仍然是 `2`。这就把「Bluefy 环境问题」彻底排除了 —— 问题在我们传的选项里。
+
+逐字对 cstimer 的 `opservs`:
+
+```
+"0000aadb-0000-1000-8000-00805f9b34fb"
+"0000fff0-0000-1000-8000-00805f9b34fb"
+"0000180a-0000-1000-8000-00805f9b34fb"
+...
+```
+
+**全是完整 128 位字符串,一个数字都没有**,而且它根本不请求电池服务。
+
+我们:
+
+```ts
+const BATTERY_SERVICE = 0x180f;      // ← 数字
+optionalServices: [BATTERY_SERVICE]
+```
+
+规范里 `BluetoothServiceUUID` 确实是 `(DOMString or unsigned long)`,16 位简写合法,Chrome 会替你展开成 `0000180f-…`。**但 Bluefy 是把 Web Bluetooth 桥到原生代码的**,一个数字出现在它要 UUID 字符串的位置,整个 `requestDevice()` 就被拒了 —— 没有选择器,只有一个 `2`。
+
+这个 bug 难抓在两处,都值得记下来:
+
+1. **在 Chrome 上永远看不出来**。本机、CI、安卓全绿,只有那一类实现会炸。
+2. **它污染的是两版选项**。上一轮为它加的 `acceptAllDevices` 逃生通道同样带 `optionalServices`,所以逃生通道**也一起挂** —— 反而制造了「过滤条件没问题」的伪证据,把我往错方向推了一轮。上一轮那个「只隔离 filters 一个变量」的设计本身没错,错在我以为 filters 是唯一嫌疑。
+
+### 改法
+
+`BATTERY_SERVICE` 提到 `driver.ts` 一处共享(原来 gan_v2/v3/v4 各抄一遍,三份同值常量),值写成完整的 `0000180f-0000-1000-8000-00805f9b34fb`。`CubeDriver.optionalServices` 的类型从 `(string | number)[]` 收紧成 `string[]`,数字连编译都过不去。
+
+`acceptAllDevices` 逃生通道**留着**:它现在的价值跟 Bluefy 无关 —— 固件既不广播已知 service、名字也不匹配任何前缀的魔方,只有它能碰到。注释已改成这个理由,不再挂在错误的因果上。
+
+### 实证
+
+- `tests/bluetooth_uuid_shape.test.ts` 8 条:凡是流向 `requestDevice` 的 UUID(`optionalServices` + `filters[].services`)必须是完整 128 位小写字符串;`optionalManufacturerData` 相反,必须是数字(那里规范要的就是 16 位公司编号)—— 这条划清界限,免得有人顺手把 CIC 也「修」成字符串。
+- 守卫验过会咬:把常量改回 `0x180f`,**过滤版和逃生版同时红**,正是用户遇到的形状。
+- Playwright 实跑:`optionalServices` 10 条,`typeof !== 'string'` 的 0 条,电池那条是完整 UUID,CIC 仍全是 number。
+- typecheck / lint / 蓝牙相关 180 条测试干净。
+
+### 还差什么
+
+- **根因判定尚未在真机上确认**。证据链够强(差分对照 cstimer + 能解释全部现象,含逃生通道为何也失败),但只有用户那台 iPhone 连上了才算证实。在那之前这仍是「最可能」,不是「已证」。
