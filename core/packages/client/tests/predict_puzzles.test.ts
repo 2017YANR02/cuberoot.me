@@ -331,6 +331,26 @@ describe('/predict 五魔方模型 ≡ /sim 引擎', () => {
     expect(homeSceneRot('pyraminx')).toEqual({ ...HOME_SCENE_ROT });
   });
 
+  /**
+   * 方位字母贴在哪儿:题面面名 `X` 的字母必须浮在**画着 X 那些贴纸**的那个面上。两边各
+   * 走各的路(字母朝向来自 `ENGINE_SID_MAP` 推出的引擎面序号,贴纸位置来自 mesh 几何),
+   * 对不上就会出现「写着 DL 的面上摆着 DR 的格子」。
+   */
+  it('十二个方位字母浮在自己那一面上', () => {
+    const puzzle = getPuzzle('megaminx');
+    expect(puzzle.hints, '五魔方没给方位字母').toHaveLength(12);
+    const cube = new MegaminxCube();
+    cube.updateMatrixWorld(true);
+    const meshes = collectStickerMeshes(puzzle, cube);
+    puzzle.hints!.forEach((hint, cf) => {
+      expect(hint.letter, `第 ${cf} 个字母`).toBe(puzzle.faces[cf]);
+      const dir = new THREE.Vector3(...hint.dir).normalize();
+      // 中心贴纸(面内槽 10)就在这个面的正中间 —— 字母的朝向该与它同向。
+      const center = centroid(meshes[cf * puzzle.perFace + 10]).normalize();
+      expect(dir.dot(center), `${hint.letter} 的字母没浮在自己那一面上`).toBeGreaterThan(0.999);
+    });
+  });
+
   it('十二个中心一步都不挪 —— 题板拿它们当方位锚', () => {
     const puzzle = getPuzzle('megaminx');
     const n = stickerCount(puzzle);

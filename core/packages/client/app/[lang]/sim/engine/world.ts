@@ -20,7 +20,7 @@ import MegaminxCube from "./mega/MegaminxCube";
 import FtoCube from "./fto/FtoCube";
 import ClockBoard from "./clock/clockBoard";
 import { APEX_UP_QUAT } from "./pyra/pyraGeometry";
-import FaceHints, { IVY_CORNER_HINTS, DINO_CORNER_HINTS, REDI_CORNER_HINTS, REX_CORNER_HINTS, HELI_EDGE_HINTS, SKEWB_CORNER_HINTS, PYRA_VERTEX_HINTS, MEGA_FACE_HINTS, FTO_FACE_HINTS } from "./face_hints";
+import FaceHints, { IVY_CORNER_HINTS, DINO_CORNER_HINTS, REDI_CORNER_HINTS, REX_CORNER_HINTS, HELI_EDGE_HINTS, SKEWB_CORNER_HINTS, PYRA_VERTEX_HINTS, MEGA_FACE_HINTS, MEGA_HINT_LAYOUT, FTO_FACE_HINTS } from "./face_hints";
 import { HOME_SCENE_ROT } from "./viewControls";
 import type HandsRig from "./hands/handsRig";
 import type { HandsCubeLike } from "./hands/handsRig";
@@ -177,7 +177,9 @@ export default class World {
     this.scene.add(this.pyraHints);
     // Megaminx: 12 face labels at the dodecahedron face centers (inradius ≈2.4·SIZE),
     // floated just past the faces and shrunk so 12 labels don't crowd.
-    this.megaHints = new FaceHints(SIZE, MEGA_FACE_HINTS, 2.9, 0.8);
+    this.megaHints = new FaceHints(
+      SIZE, MEGA_FACE_HINTS, MEGA_HINT_LAYOUT.distanceMul, MEGA_HINT_LAYOUT.sizeMul,
+    );
     this.scene.add(this.megaHints);
     // FTO: 8 face labels at the octahedron face centers (inradius ≈1.85·SIZE). The solid
     // reaches ≈3.2·SIZE at its vertices, so float the labels past them (3.4) + shrink.
