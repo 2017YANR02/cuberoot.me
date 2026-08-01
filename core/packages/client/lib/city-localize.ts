@@ -56,6 +56,9 @@ const CITY_ZH: Record<string, string> = {
   'Las Vegas': '拉斯维加斯', 'Lake Buena Vista': '布埃纳维斯塔湖',
   'Düsseldorf': '杜塞尔多夫', 'Dusseldorf': '杜塞尔多夫', 'Budapest': '布达佩斯',
   'Ramallah': '拉姆安拉',
+  // 生成字典缺口:该城市此前没办过比赛,GeoNames 那一层没收录。生成器的输入
+  // (.tmp/geonames)只在本机有,所以补在这个覆盖层。
+  'Manzini': '曼齐尼',
 };
 
 const GREATER_CN = new Set(['CN', 'HK', 'MO', 'TW']);
