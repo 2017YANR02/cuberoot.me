@@ -12,7 +12,7 @@
 
 import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
 import { detectBluetoothEnv, envAdvice, BluetoothConnectError, CONNECT_STAGE_LABEL, describeError } from '../_lib/bluetooth';
-import type { BluetoothCubeHandle, ConnectStage } from '../_lib/bluetooth';
+import type { BluetoothCubeHandle, ConnectStage, ConnectPickOptions } from '../_lib/bluetooth';
 import { normalizeMac } from '../_lib/bluetooth/mac';
 import { Bluetooth, Battery, Check, X, RotateCcw, ExternalLink } from 'lucide-react';
 import { useIsMobile } from '@/hooks/useIsMobile';
@@ -28,7 +28,7 @@ interface Props {
    * differently (two `alert(err.message)` variants, and BattleCubes not at all,
    * which turned every failure there into a silent unhandled rejection).
    */
-  onConnect: () => Promise<void>;
+  onConnect: (pick?: ConnectPickOptions) => Promise<void>;
   /** Set while connect() is awaiting a manually-entered MAC for this cube. */
   macPrompt?: { deviceName: string; isWrongKey?: boolean } | null;
   onSubmitMac?: (mac: string) => void;
@@ -90,9 +90,11 @@ const SUPPORTED_TIMERS: SupportedDevice[] = [
  * connection" is a different problem from "2 while choosing the device" — and
  * makes it worth screenshotting, which is how it will reach us.
  */
-function ConnectFailure({ failure, inBluefy }: {
+function ConnectFailure({ failure, inBluefy, busy, onShowAllDevices }: {
   failure: { stage: ConnectStage | null; detail: string };
   inBluefy: boolean;
+  busy: boolean;
+  onShowAllDevices: () => void;
 }) {
   const step = failure.stage === null ? null : CONNECT_STAGE_LABEL[failure.stage];
   return (
@@ -103,6 +105,27 @@ function ConnectFailure({ failure, inBluefy }: {
           : tr({ zh: '连接失败', en: 'Connection failed' })}
       </h3>
       <p className="bt-error-detail">{failure.detail}</p>
+      {/* Only for a picker-stage failure: past that point a device was already
+          chosen, so re-opening the chooser unfiltered would fix nothing. */}
+      {failure.stage === 'picker' && (
+        <>
+          <button
+            type="button"
+            className="bt-retry-btn"
+            disabled={busy}
+            onClick={onShowAllDevices}
+          >
+            <Bluetooth size={14} />
+            <span>{tr({ zh: '显示全部蓝牙设备', en: 'Show all Bluetooth devices' })}</span>
+          </button>
+          <p className="bt-retry-hint">
+            {tr({
+              zh: '不带过滤条件重搜一次。有的浏览器会连过滤条件本身一起拒掉，列表会长很多，按名字认你的魔方。',
+              en: 'Search again with no filters. Some browsers reject the filter set itself; the list will be much longer, so find your cube by name.',
+            })}
+          </p>
+        </>
+      )}
       {inBluefy && (
         <ul style={{ margin: '10px 0 0', paddingLeft: 18, fontSize: 12, lineHeight: 1.6, color: 'var(--muted-foreground)' }}>
           <li>{tr({
@@ -136,11 +159,11 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect, macProm
   const [connecting, setConnecting] = useState(false);
   const [connectError, setConnectError] = useState<{ stage: ConnectStage | null; detail: string } | null>(null);
 
-  const runConnect = async (): Promise<void> => {
+  const runConnect = async (pick?: ConnectPickOptions): Promise<void> => {
     setConnectError(null);
     setConnecting(true);
     try {
-      await onConnect();
+      await onConnect(pick);
     } catch (err) {
       // NO_WEB_BLUETOOTH already has its own section above (envAdvice) — don't
       // say it twice.
@@ -344,7 +367,14 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect, macProm
                 ? tr({ zh: '连接中…', en: 'Connecting…' })
                 : tr({ zh: '搜索并连接', en: 'Search & connect' })}</span>
             </button>
-            {connectError && <ConnectFailure failure={connectError} inBluefy={inBluefy} />}
+            {connectError && (
+              <ConnectFailure
+                failure={connectError}
+                inBluefy={inBluefy}
+                busy={connecting}
+                onShowAllDevices={() => { void runConnect({ acceptAllDevices: true }); }}
+              />
+            )}
           </div>
         )}
 

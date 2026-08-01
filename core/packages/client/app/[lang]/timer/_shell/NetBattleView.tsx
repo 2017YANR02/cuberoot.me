@@ -1493,7 +1493,7 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
           onClose={() => { if (macResolverRef.current) resolveMac(null); setBluetoothOpen(false); }}
           // 失败也交给弹窗:它知道断在哪一步(选设备 / GATT / 握手),说得比这里清楚,
           // 而且 Solo、对战、房间三处不会再各报各的。
-          onConnect={() => bluetoothCube.connect()}
+          onConnect={pick => bluetoothCube.connect(pick)}
         />
       )}
     </div>

@@ -2596,7 +2596,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
           onClose={() => { if (macResolverRef.current) resolveMac(null); setBluetoothOpen(false); }}
           // Failures are the modal's job — it knows which step broke and can
           // say so next to the button that started it.
-          onConnect={() => bluetoothCube.connect()}
+          onConnect={pick => bluetoothCube.connect(pick)}
         />
       )}
 

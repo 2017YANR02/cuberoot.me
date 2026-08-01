@@ -110,7 +110,7 @@ export function BattleCubesProvider({ children }: { children: ReactNode }) {
             isZh={i18n.language.startsWith('zh')}
             cube={openHandle}
             onClose={() => { resolveMac(null); setOpenSlot(null); }}
-            onConnect={() => openHandle.connect()}
+            onConnect={pick => openHandle.connect(pick)}
             macPrompt={macPrompt}
             onSubmitMac={resolveMac}
             onCancelMac={() => resolveMac(null)}
