@@ -3129,3 +3129,66 @@ Playwright 里把 UA 伪成 Bluefy、`requestDevice` 换成 `throw 2`:
 ### 还差什么
 
 - `2` 到底是什么仍未知。下次用户再遇到,截图里会直接写着是哪一步,那时才谈得上定位。
+
+---
+
+## Sprint 36 — 「2」落在 picker,给一条不带过滤的逃生通道
+
+上一轮的赌注兑现了:用户复现,截图里写着 **「连接失败:选择设备这一步 / `2 (number)`」**,
+同时附了 iOS「设置 → Bluefy → 蓝牙」已开的截图。范围一下子塌缩了:
+
+- 跟魔方型号、GATT、握手、密钥全都**无关** —— `requestDevice()` 自己就拒了,选择器根本
+  没弹出来,一台设备都没列。
+- 跟系统授权也无关(用户已排除)。
+
+剩下唯一能被浏览器**在给你看任何东西之前**拒掉的,就是那个选项字典。
+
+### 排除掉的
+
+- **user activation**:从 `onClick` 到 `requestDevice` 全程同步,中间没有 await。而且
+  cstimer 是在 `chkAvail().then(...)` 里调的 —— 隔了一整个 microtask 还能用,说明 Bluefy
+  根本没严格卡这个。
+- **选项形状**:cstimer 传的是同一套 `{filters, optionalServices, optionalManufacturerData}`,
+  filters 也同样是「namePrefix 一组 + service 一组」,数量还比我们多。不是形状的差异。
+- **`2` 的含义**:仍然查不到。W3C 那条 Bluefy 报告(web-bluetooth#624)被 reillyeon 以
+  「这是实现问题,不是规范问题」直接关掉,没有任何技术细节;Bluefy 也没有公开码表。
+  **继续不猜。**
+
+### 做法
+
+`pickerOptions(acceptAllDevices)` —— 同一个函数出两版,差别**只在过滤**:
+
+| | filters | optionalServices | optionalManufacturerData |
+|---|---|---|---|
+| 默认 | 13 条(8 个驱动 service + 5 个名字前缀) | ✓ | ✓ |
+| 逃生 | 无(`acceptAllDevices: true`) | ✓ 同一份 | ✓ 同一份 |
+
+两个 optional* 必须留在逃生版里:它们不参与填充选择器,授权的是**选完之后能读什么**。
+掉了的话,逃生版选出来的设备照样是废的 —— 读不了 GATT service,也拿不到厂商数据里的
+MAC(GAN / 魔域 32 / 奇艺都要靠它推密钥)。所以这一版隔离的变量**恰好只有 filters 一个**:
+它要是通了,就是过滤条件被拒;还是 `2`,那 filters 也洗清了,下一刀切 optionalManufacturerData。
+
+UI 上,这个按钮**只在 picker 阶段失败时出现** —— 再往后已经选中设备了,重开一次选择器
+治不了任何东西。而且必须由用户点:自动接着重试会吃掉 user activation,在真按这一条的
+浏览器上反而更糟。
+
+### 实证
+
+Playwright 里把 `requestDevice` 换成记录参数并 `reject(2)`:
+
+- 第 1 次调用:13 条 filters + optionalServices + optionalManufacturerData → 「选择设备
+  这一步 / `2 (number)`」,逃生按钮出现。
+- 点逃生按钮,第 2 次调用:`acceptAllDevices: true`、**无 `filters`**、两个 optional* 与
+  第 1 次逐字节相同。
+- `tests/bluetooth_picker_options.test.ts` 11 条锁契约,其中最要命的一条是「逃生版绝不
+  能同时带 filters」—— 规范里两者互斥,同时给会抛 TypeError,那样逃生通道自己先坏,还
+  偏偏坏在最需要它的浏览器上。
+
+typecheck / lint / 蓝牙相关 128 条测试干净。
+
+### 还差什么
+
+- 逃生版通不通,只有用户那台 iPhone 能回答。通了 → 是 filters;不通 → 下一刀切
+  `optionalManufacturerData`(代价:GAN 要手填 MAC)。
+- 交叉对照还没做:同一台手机开 `/cstimer`(独立实现、同样的选项形状)。它也失败 =
+  Bluefy 环境问题,与我们的调用无关。

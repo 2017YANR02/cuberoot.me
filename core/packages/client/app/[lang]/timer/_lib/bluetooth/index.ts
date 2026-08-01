@@ -114,6 +114,62 @@ const ALL_CICS: number[] = Array.from(
   new Set(DRIVERS.flatMap((d) => (d.macAdv ? [...d.macAdv.cics] : []))),
 );
 
+/**
+ * What we hand `requestDevice`. Two shapes, differing *only* in how the chooser
+ * is populated:
+ *
+ *   - filtered (default) — only devices advertising a driver's service UUID, or
+ *     carrying a known name prefix, reach the chooser. Some firmwares omit the
+ *     data service from their scan record, hence both halves.
+ *   - `acceptAllDevices` — every BLE device nearby, user picks by name.
+ *
+ * The second exists because the filter set is the one part of this call a
+ * browser can reject before showing anything: iOS Bluefy bridges Web Bluetooth
+ * to native code and has failed the filtered call outright with an opaque `2`,
+ * with no chooser and nothing to act on. Dropping the filters is the only lever
+ * we have from here, and it costs the user one extra look at a longer list.
+ *
+ * `optionalServices` / `optionalManufacturerData` stay in both: they don't
+ * populate the chooser, they authorise what we may read afterwards, and without
+ * them a device picked either way is unusable (no GATT service access, and no
+ * manufacturer data to recover a GAN/MoYu/QiYi MAC from). Everything after the
+ * chooser — driver selection, MAC, handshake — is identical.
+ */
+export interface ConnectPickOptions {
+  /**
+   * Skip the filters and let the chooser list every BLE device nearby. Only
+   * worth setting after a filtered attempt has failed at the picker stage —
+   * see `pickerOptions`.
+   */
+  acceptAllDevices?: boolean;
+}
+
+export function pickerOptions(acceptAllDevices: boolean): RequestDeviceOptions {
+  const optional = new Set<string | number>();
+  for (const d of DRIVERS) {
+    optional.add(d.service);
+    for (const s of d.optionalServices ?? []) optional.add(s);
+  }
+  const shared = {
+    optionalServices: Array.from(optional),
+    // Every brand's CICs, not just GAN's — see ALL_CICS.
+    optionalManufacturerData: ALL_CICS,
+  };
+  if (acceptAllDevices) return { ...shared, acceptAllDevices: true };
+  return {
+    ...shared,
+    filters: [
+      ...DRIVERS.map((d) => ({ services: [d.service] })),
+      { namePrefix: 'GAN' },
+      { namePrefix: 'MG' },
+      { namePrefix: 'AiCube' },
+      { namePrefix: 'Gi' },
+      // MoYu32 (WeiLong V10 Ai and later) advertise as `WCU_MY32_XXYY`.
+      { namePrefix: 'WCU' },
+    ],
+  };
+}
+
 /* ------------------------------------------------------------------ */
 /*  Hook                                                               */
 /* ------------------------------------------------------------------ */
@@ -131,8 +187,8 @@ export interface BluetoothCubeHandle {
    * move being reported.
    */
   facelets: string | null;
-  /** Open the picker + connect. */
-  connect(): Promise<void>;
+  /** Open the picker + connect. Rejects with a {@link BluetoothConnectError}. */
+  connect(pick?: ConnectPickOptions): Promise<void>;
   /** Disconnect + cleanup. */
   disconnect(): void;
   /** Reset internal cube state to "solved" (after the user resets the cube physically). */
@@ -776,7 +832,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     }
   }, [handleMove, handleCubeState, cancelPendingReconnect, internalDisconnect]);
 
-  const connect = useCallback(async (): Promise<void> => {
+  const connect = useCallback(async (pick?: ConnectPickOptions): Promise<void> => {
     // Dev escape hatch: `__cuberootFakeCube.arm()` in the console stands up a
     // fake GAN v4 peripheral so the whole smart-cube experience can be driven
     // without hardware. It joins the normal path below at the same point a real
@@ -802,33 +858,11 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     intentionalDisconnectRef.current = false;
     cancelPendingReconnect();
 
-    // requestDevice: match by known service UUIDs OR GAN-family name prefixes
-    // (some firmwares don't advertise the data service in the scan record),
-    // expose every driver service for post-connect probing, and request GAN
-    // manufacturer data so we can recover the MAC from advertisements.
-    const filters: BluetoothLEScanFilter[] = [
-      ...DRIVERS.map(d => ({ services: [d.service] })),
-      { namePrefix: 'GAN' },
-      { namePrefix: 'MG' },
-      { namePrefix: 'AiCube' },
-      { namePrefix: 'Gi' },
-      // MoYu32 (WeiLong V10 Ai and later) advertise as `WCU_MY32_XXYY`.
-      { namePrefix: 'WCU' },
-    ];
-    const optional = new Set<string | number>();
-    for (const d of DRIVERS) {
-      optional.add(d.service);
-      for (const s of d.optionalServices ?? []) optional.add(s);
-    }
-
     let device: BluetoothDevice;
     try {
-      device = await navigator.bluetooth.requestDevice({
-        filters,
-        optionalServices: Array.from(optional),
-        // Every brand's CICs, not just GAN's — see ALL_CICS.
-        optionalManufacturerData: ALL_CICS,
-      });
+      device = await navigator.bluetooth.requestDevice(
+        pickerOptions(pick?.acceptAllDevices === true),
+      );
     } catch (err) {
       // User cancelled the picker, denied permission, or no device found.
       // We don't throw — the caller asked us to connect; we just return
