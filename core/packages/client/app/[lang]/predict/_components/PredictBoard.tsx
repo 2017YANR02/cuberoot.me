@@ -4,7 +4,7 @@
  * /predict 的题板 —— 一个可自由旋转、逐贴纸可点的 3D 拼图。
  *
  * 复用 /sim 的 WebGL 引擎(mountSimWorld),不另造渲染器。所有拼图共用同一套口径:
- *   - 起始视角恒为 `HOME_SCENE_ROT`(= /sim 打开时那个姿势)。以前是「按题目所在的面
+ *   - 起始视角恒为 `homeSceneRot(拼图)`(= /sim 打开时那个姿势)。以前是「按题目所在的面
  *     自动挑一个角度」,结果每出一题朝向都不一样,连自己在看哪一面都得先认;现在朝向
  *     钉死,要转自己拖,另给一个复位按钮。
  *   - 颜色逐贴纸给:`labels[i]` 是**本位第 i 格**的颜色(整盘真实颜色)。题板一律
@@ -107,7 +107,7 @@ export interface PredictBoardProps {
   /** 压暗(各自颜色减半)的格:同块的其余贴纸 + 方位锚。 */
   dim?: readonly number[];
   onSticker: (slot: number) => void;
-  /** 变一次就把视角复位回 `HOME_SCENE_ROT`(页面上的「恢复默认」按的就是它)。 */
+  /** 变一次就把视角复位回开局姿态(页面上的「恢复默认」按的就是它)。 */
   viewResetNonce?: number;
   /** 复盘用的题面公式。 */
   moves?: readonly string[];
@@ -178,6 +178,9 @@ export default function PredictBoard({
       });
       mountRef.current = mount;
       const world: World = mount.world;
+      // World 的构造函数只知道立方体那个姿势(它还没被 setPuzzle 过),开局要摆的是**这个
+      // 拼图**的姿态 —— 五魔方在立方体角度下是一条棱正对镜头,12 个面全是斜的。
+      resetSceneView(world);
 
       const disposers: (() => void)[] = [];
 
@@ -256,7 +259,7 @@ export default function PredictBoard({
     mount.invalidate();
   }, [bright, dim, ready]);
 
-  /** 复位 = 回到 /sim 打开时那个姿势,`HOME_SCENE_ROT` 单一源。 */
+  /** 复位 = 回到 /sim 打开时那个姿势,`homeSceneRot` 单一源。 */
   const resetView = useCallback(() => {
     const world = mountRef.current?.world;
     if (world) {
