@@ -34,6 +34,7 @@
 <h1>Web Bluetooth 裸测</h1>
 <p class="sub">纯静态页面，没有任何框架代码。每个按钮发一次 <code>requestDevice</code>，把浏览器原样抛回来的东西打出来。选择框弹出来后点「取消」即可 —— 弹出来本身就是结果。</p>
 
+<button id="b0">0. 等蓝牙就绪，再发最小调用<small>先轮询 getAvailability() 直到 true（最多 8 秒），然后才调用</small></button>
 <button id="b1">1. 最小调用<small>{ acceptAllDevices: true }</small></button>
 <button id="b2">2. 单条名字前缀<small>{ filters: [{ namePrefix: 'GAN' }] }</small></button>
 <button id="b3">3. cstimer 的那套服务 UUID<small>它在同一台手机上能连</small></button>
@@ -68,21 +69,25 @@
   // A dismissed chooser is a success: it means the picker opened.
   var DISMISSED = { NotFoundError: 1, NotAllowedError: 1, AbortError: 1 };
 
+  // Resolves true when the chooser opened (picked or dismissed), false when the
+  // browser refused to show it at all.
   function run(label, opts) {
     log('▶ ' + label + ' …');
-    if (!navigator.bluetooth) { log('  ✗ navigator.bluetooth 不存在'); return; }
+    if (!navigator.bluetooth) { log('  ✗ navigator.bluetooth 不存在'); return Promise.resolve(false); }
     try {
-      navigator.bluetooth.requestDevice(opts).then(
-        function (d) { log('  ✓ 弹出了，选中：' + (d && d.name ? d.name : '(无名)')); },
+      return navigator.bluetooth.requestDevice(opts).then(
+        function (d) { log('  ✓ 弹出了，选中：' + (d && d.name ? d.name : '(无名)')); return true; },
         function (e) {
           var n = null;
           try { n = e && typeof e.name === 'string' ? e.name : null; } catch (x) {}
-          if (n && DISMISSED[n]) log('  ✓ 弹出了（已取消）');
-          else log('  ✗ 被拒：' + describe(e));
+          if (n && DISMISSED[n]) { log('  ✓ 弹出了（已取消）'); return true; }
+          log('  ✗ 被拒：' + describe(e));
+          return false;
         }
       );
     } catch (e) {
       log('  ✗ 同步抛出：' + describe(e));
+      return Promise.resolve(false);
     }
   }
 
@@ -100,6 +105,55 @@
     '0000fd50-0000-1000-8000-00805f9b34fb'
   ];
 
+  // iOS creates a CBCentralManager in state .unknown and moves it to
+  // .poweredOn asynchronously. If Bluefy builds that manager lazily on the
+  // first API touch, the very first call lands before it is ready — which
+  // matches getAvailability() answering false on a freshly loaded page while
+  // cstimer, whose own chkAvail() would reject on false, connects fine.
+  // Bluefy has been seen returning a getAvailability() promise that never
+  // settles — not resolved, not rejected. Everything that calls it must be
+  // bounded, or the caller simply stops with nothing to show.
+  function availability(ms) {
+    if (!navigator.bluetooth || !navigator.bluetooth.getAvailability) return Promise.resolve('absent');
+    return Promise.race([
+      navigator.bluetooth.getAvailability().then(function (v) { return v ? 'true' : 'false'; },
+                                                 function (e) { return 'threw: ' + describe(e); }),
+      new Promise(function (r) { setTimeout(function () { r('HUNG (' + ms + 'ms 没有回应)'); }, ms); })
+    ]);
+  }
+
+  function whenAvailable(timeoutMs) {
+    var deadline = Date.now() + timeoutMs;
+    return new Promise(function (resolve) {
+      (function poll() {
+        availability(1200).then(function (v) {
+          if (v === 'true') return resolve('就绪（等了 ' + (timeoutMs - (deadline - Date.now())) + 'ms）');
+          if (Date.now() >= deadline) return resolve('等了 ' + timeoutMs + 'ms 仍然是 ' + v);
+          setTimeout(poll, 400);
+        });
+      })();
+    });
+  }
+
+  // Two attempts in one tap. If the first call is itself what brings the native
+  // stack up — plausible when getAvailability() answers false forever, since a
+  // manager that is never created can never report poweredOn — then the second
+  // attempt succeeds and that difference is the whole answer.
+  document.getElementById('b0').onclick = function () {
+    log('▶ 第一轮：等就绪 …');
+    whenAvailable(4000).then(function (how) {
+      log('  ' + how);
+      return run('第一次调用', { acceptAllDevices: true });
+    }).then(function (opened) {
+      if (opened) return;
+      log('▶ 第二轮：隔 1.5 秒再试一次 …');
+      return new Promise(function (r) { setTimeout(r, 1500); }).then(function () {
+        return availability(1200).then(function (v) { log('  此刻 getAvailability() → ' + v); });
+      }).then(function () {
+        return run('第二次调用', { acceptAllDevices: true });
+      });
+    });
+  };
   document.getElementById('b1').onclick = function () {
     run('最小调用', { acceptAllDevices: true });
   };
@@ -147,11 +201,38 @@
              'frames: ' + (window.top === window.self ? 'top-level' : 'IN A FRAME'),
              'UA: ' + navigator.userAgent];
   document.getElementById('env').textContent = env.join('\n');
-  if (navigator.bluetooth && navigator.bluetooth.getAvailability) {
-    navigator.bluetooth.getAvailability().then(
-      function (v) { document.getElementById('env').textContent += '\ngetAvailability() → ' + v; },
-      function (e) { document.getElementById('env').textContent += '\ngetAvailability() 抛出：' + describe(e); }
+  // getDevices() lists peripherals this origin was already granted. It needs no
+  // user gesture, so it answers for free: a rejection here says whether the
+  // bridge is refusing this page outright or merely has nothing to show.
+  if (navigator.bluetooth && navigator.bluetooth.getDevices) {
+    var gd = document.createElement('div');
+    document.getElementById('env').appendChild(gd);
+    navigator.bluetooth.getDevices().then(
+      function (list) {
+        gd.textContent = '\ngetDevices() → ' + (list && list.length ? list.length + ' 台: ' +
+          list.map(function (d) { return d.name || '(无名)'; }).join(', ') : '空');
+      },
+      function (e) { gd.textContent = '\ngetDevices() 抛出：' + describe(e); }
     );
+  }
+
+  // Watch it rather than sampling once: if the answer flips from false to true
+  // on its own, the native stack was simply still coming up, and every earlier
+  // failure was a race we lost by asking too early.
+  if (navigator.bluetooth && navigator.bluetooth.getAvailability) {
+    var line = document.createElement('div');
+    document.getElementById('env').appendChild(line);
+    var t0 = Date.now(), seen = [], ticks = 0;
+    line.textContent = '\ngetAvailability() 变化: 查询中…';
+    (function watch() {
+      availability(1200).then(function (v) {
+        var last = seen.length ? seen[seen.length - 1].v : null;
+        if (v !== last) seen.push({ t: Date.now() - t0, v: v });
+        line.textContent = '\ngetAvailability() 变化: ' +
+          seen.map(function (s) { return s.t + 'ms→' + s.v; }).join('  ');
+        if (++ticks < 24) setTimeout(watch, 500);   // ~20s including the races
+      });
+    })();
   }
 })();
 </script>
