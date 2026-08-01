@@ -14,6 +14,7 @@ import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
 import { detectBluetoothEnv, envAdvice, BluetoothConnectError, CONNECT_STAGE_LABEL, describeError } from '../_lib/bluetooth';
 import type { BluetoothCubeHandle, ConnectStage, ConnectPickOptions } from '../_lib/bluetooth';
 import { normalizeMac } from '../_lib/bluetooth/mac';
+import { probePicker, type ProbeStep } from '../_lib/bluetooth/picker_probe';
 import { Bluetooth, Battery, Check, X, RotateCcw, ExternalLink } from 'lucide-react';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
@@ -90,11 +91,14 @@ const SUPPORTED_TIMERS: SupportedDevice[] = [
  * connection" is a different problem from "2 while choosing the device" — and
  * makes it worth screenshotting, which is how it will reach us.
  */
-function ConnectFailure({ failure, inBluefy, busy, onShowAllDevices }: {
+function ConnectFailure({ failure, inBluefy, busy, onShowAllDevices, probe, probing, onProbe }: {
   failure: { stage: ConnectStage | null; detail: string };
   inBluefy: boolean;
   busy: boolean;
   onShowAllDevices: () => void;
+  probe: ProbeStep[] | null;
+  probing: boolean;
+  onProbe: () => void;
 }) {
   const step = failure.stage === null ? null : CONNECT_STAGE_LABEL[failure.stage];
   return (
@@ -124,6 +128,29 @@ function ConnectFailure({ failure, inBluefy, busy, onShowAllDevices }: {
               en: 'Search again with no filters. Some browsers reject the filter set itself; the list will be much longer, so find your cube by name.',
             })}
           </p>
+          <button type="button" className="bt-retry-btn" disabled={busy || probing} onClick={onProbe}>
+            <span>{probing
+              ? tr({ zh: '试探中…', en: 'Probing…' })
+              : tr({ zh: '逐项试探是哪一项被拒', en: 'Find which option is refused' })}</span>
+          </button>
+          <p className="bt-retry-hint">
+            {tr({
+              zh: '会连着弹几次选择框，每次点「取消」就行 —— 弹出来本身就说明那一项没问题。跑完把结果截图发我。',
+              en: 'It opens the chooser a few times; tap Cancel each time — the chooser appearing is itself the result. Screenshot what it prints.',
+            })}
+          </p>
+          {probe && probe.length > 0 && (
+            <ul className="bt-probe-list">
+              {probe.map((s, i) => (
+                <li key={i} className={s.outcome === 'refused' ? 'is-refused' : undefined}>
+                  {`${i + 1}. ${tr(s.adds)} — `}
+                  {s.outcome === 'opened'
+                    ? tr({ zh: '弹出了', en: 'opened' })
+                    : `${tr({ zh: '被拒', en: 'refused' })}: ${s.detail}`}
+                </li>
+              ))}
+            </ul>
+          )}
         </>
       )}
       {inBluefy && (
@@ -158,6 +185,8 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect, macProm
   const [macError, setMacError] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [connectError, setConnectError] = useState<{ stage: ConnectStage | null; detail: string } | null>(null);
+  const [probe, setProbe] = useState<ProbeStep[] | null>(null);
+  const [probing, setProbing] = useState(false);
 
   const runConnect = async (pick?: ConnectPickOptions): Promise<void> => {
     setConnectError(null);
@@ -373,6 +402,15 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect, macProm
                 inBluefy={inBluefy}
                 busy={connecting}
                 onShowAllDevices={() => { void runConnect({ acceptAllDevices: true }); }}
+                probe={probe}
+                probing={probing}
+                onProbe={() => {
+                  setProbe(null);
+                  setProbing(true);
+                  void probePicker()
+                    .then(setProbe)
+                    .finally(() => { setProbing(false); });
+                }}
               />
             )}
           </div>
