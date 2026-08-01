@@ -78,8 +78,22 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'alg/3bld/lookup': {
     title: { zh: '盲拧公式查询', en: 'BLD Algorithm Lookup' },
     description: {
-      zh: '查三阶盲拧公式:棱角三循环、奇偶、翻角、翻棱、奇偶带翻,每个 case 列出常用写法、换位子与使用者。',
-      en: 'Look up 3BLD algorithms — edge/corner 3-cycles, parity, corner twists, edge flips and LTCT — with every common writing of each case, its commutator and who uses it.',
+      zh: '查三阶盲拧公式:棱角三循环、奇偶、翻角、翻棱、奇偶带翻,每个 case 列出常用写法、换位子、起手与使用者,可左右镜像。',
+      en: 'Look up 3BLD algorithms — edge/corner 3-cycles, parity, corner twists, edge flips and LTCT — with every common writing of each case, its commutator, thumb position and who uses it. Mirrors left/right.',
+    },
+  },
+  'alg/3bld/tables': {
+    title: { zh: '盲拧速查表', en: 'BLD Cheat Sheets' },
+    description: {
+      zh: '整表背用的盲拧速查表:全缓冲角块与棱块每个 case 一条推荐解,外加双棱双棱、多角翻、多棱翻、奇偶带翻、五循环等成组的表。',
+      en: 'BLD cheat sheets for learning whole sets: one recommended algorithm per case for corners and edges from every buffer, plus the grouped 2e2e, multi-twist, multi-flip, LTCT and 5-style tables.',
+    },
+  },
+  'alg/3bld/sheets': {
+    title: { zh: '盲拧公式表名录', en: 'BLD Algorithm Sheets' },
+    description: {
+      zh: '盲拧选手公开的公式表汇总,带 WCA ID 与三盲 / 四盲单次成绩,可按成绩排序。',
+      en: 'A directory of public BLD algorithm sheets by their authors, with WCA IDs and 3BLD / 4BLD singles, sortable by result.',
     },
   },
   'alg/3bld/comm': { title: { zh: '3BLD 公式库', en: '3BLD Commutator Library' } },

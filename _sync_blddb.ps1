@@ -241,8 +241,10 @@ if ($homeHtml -match '(?<!blddb)"/images/')
 # NOTE: public/data/ 的 49MB JSON 上游是**编译期** import 进 chunk 的（见 CLAUDE.md），
 #       导出里 out/data/ 那份对 iframe 版的 /blddb 是纯死重量。但我们自己的
 #       /alg/3bld/lookup 是运行时 fetch 它的（见 app/[lang]/alg/3bld/_lib/blddb.ts），
-#       所以留下人工整理的 manmade 那批，砍掉 Nightmare（穷举生成的，37MB，只有 /blddb
-#       里用得到，而那边是编译期内联的，删了不影响）。
+#       所以留下人工整理的 manmade 那批，砍掉 Nightmare 全集（穷举生成的，37MB，只有
+#       /blddb 里用得到，而那边是编译期内联的，删了不影响）。
+#       *NightmareSelected*（每 case 一条推荐解，共 130KB）和 nightmare/*.ts 速查表
+#       这里也一并删 —— Step 7 的后处理会直接从上游 public/data 取，落成压缩过的 JSON。
 $dataDir = Join-Path $out 'data'
 if (Test-Path $dataDir)
 {
@@ -277,11 +279,18 @@ if (Test-Path $dataDir)
 }
 
 # ===== Step 6: 落到 tools/blddb/ =====
-Write-Host "[6/6] 同步到 tools/blddb/..." -ForegroundColor Cyan
+Write-Host "[6/7] 同步到 tools/blddb/..." -ForegroundColor Cyan
 # NOTE: 整目录换掉而不是增量 —— Next 的 chunk 文件名带 hash，增量会攒一堆孤儿。
 if (Test-Path $dst) { Invoke-WithFileRetry { Remove-Item $dst -Recurse -Force } }
 Invoke-WithFileRetry { Copy-Item $out $dst -Recurse -Force }
 Invoke-WithFileRetry { Copy-Item "$BlddbDir\LICENSE" "$dst\LICENSE" -Force }
+
+# ===== Step 7: 后处理 data/ =====
+# NOTE: 起手位置（上游 GPL 的 finger.ts，构建期跑，只把结果写进数据）+ Nightmare 推荐解
+#       + Nightmare 速查表。详见脚本头注。顺带把 JSON 压掉缩进，manmade 那批小一半。
+Write-Host "[7/7] 后处理 data/（起手位置 + Nightmare 速查表）..." -ForegroundColor Cyan
+& node (Join-Path $ProjectDir '.sync\blddb_postprocess.mjs') --upstream $BlddbDir --repo $ProjectDir
+if ($LASTEXITCODE -ne 0) { throw "blddb_postprocess.mjs 失败 —— /alg/3bld/lookup 的起手列和 /alg/3bld/tables 会缺数据。" }
 
 $sha = git -C $BlddbDir rev-parse --short HEAD
 $date = git -C $BlddbDir log -1 --format="%ai"
@@ -295,11 +304,19 @@ Static export of the upstream Next.js app, built by _sync_blddb.ps1 at repo root
 Do NOT hand-edit anything here — it is generated. Patches (static-export config +
 i18n cookies() removal) live in that script; upstream notes in D:\cube\blddb\CLAUDE.md.
 
-data/ keeps only the hand-curated "manmade" JSON. Upstream imports all of it at build
-time (so the iframe app already has it inside the _next chunks); this copy exists for
-OUR native page at /alg/3bld/3style, which fetches it at runtime via lib/blddb-data.ts.
-The Nightmare sets (~37MB of exhaustively generated cases) are dropped — only the
-iframe app uses those, and it has them inlined.
+data/ is post-processed by .sync/blddb_postprocess.mjs and is NOT a byte copy of
+upstream's public/data. Upstream imports all its JSON at build time (so the iframe app
+already has it inside the _next chunks); this copy exists for OUR native pages under
+/alg/3bld/, which fetch it at runtime via app/[lang]/alg/3bld/_lib/blddb.ts. It keeps:
+  * <type>Manmade.json      — hand-curated sets, minified, every record normalised to
+                              [algs[], users[], commutators[]|null, thumbPositions[]].
+                              The thumb position is computed at build time by running
+                              upstream's own finger.ts, so none of that GPL code ends
+                              up in our client bundle.
+  * <type>NightmareSelected.json + nightmare/*.json — the 235KB of cheat-sheet tables
+                              behind /alg/3bld/tables.
+The exhaustive Nightmare sets (~37MB) are dropped — only the iframe app uses those,
+and it has them inlined.
 
 Served at: /tools/blddb/  (basePath baked into the bundle — moving the path needs a rebuild)
 Wrapped by: core/packages/client/app/[lang]/blddb/page.tsx
