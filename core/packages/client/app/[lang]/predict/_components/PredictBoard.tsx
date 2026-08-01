@@ -21,7 +21,8 @@
  *   · **五魔方 / 金字塔 / 斜转 / 枫叶** —— 每张贴纸是独立 mesh,那就直接改它自己的材质色(引擎的
  *     stickerMat 按颜色缓存 + 共享,所以必须逐张 clone 一份,否则改一张串一片)。颜色挂在
  *     mesh 上,天然跟着块走,和 NxN 那套遮罩是同一个语义。这几个拼图没有提示贴片,背面
- *     要拖过去看;金字塔的方位提示用四个顶点字母(U/L/R/B,正好就是它的转动记号)。
+ *     要拖过去看;方位提示改用浮在外侧的字母 —— 金字塔是四个顶点(U/L/R/B,正好是它的
+ *     转动记号),五魔方是十二个面名(题面那套,不是引擎的 PG 名,见 `puzzle.hints`)。
  *
  * three + 引擎走动态 import,不进首包(和 /scramble/solver 的立体画板同一条路)。
  * 换拼图时页面用 `key` 整块重挂,所以这里不必处理「挂载中途换拼图」。
@@ -166,15 +167,21 @@ export default function PredictBoard({
       // 松一点才不会顶到画布边。
       // 方位字母:立方体族强制常驻(本页不给 toggle)。题面大半格子是灰的,只靠颜色
       // 认方位不够。金字塔不是六面体,它的方位提示是四个顶点字母,另行打开(见下)。
+      // 方位字母的淡入要每帧 tick。立方体族那份(`world.faceHints`)mountSimWorld 自己
+      // 代劳;非立方体族的是 solid painter 挂上来的(金字塔的顶点字母 / 五魔方的面名),
+      // 由它往这儿塞 tick。
+      const frameTicks: ((dt: number) => boolean)[] = [];
       const mount = mountSimWorld({
         host,
         puzzle: puzzle.sim,
         interactive: order > 0,
         perspective: 5.6,
         faceHints: puzzle.cubeLike,
-        ...(puzzle.id === 'pyraminx'
-          ? { onFrame: (w: World, dt: number) => w.pyraHints.tick(dt) }
-          : {}),
+        onFrame: (_w: World, dt: number) => {
+          let dirty = false;
+          for (const tick of frameTicks) if (tick(dt)) dirty = true;
+          return dirty;
+        },
       });
       mountRef.current = mount;
       const world: World = mount.world;
@@ -197,7 +204,7 @@ export default function PredictBoard({
 
       painterRef.current = order > 0
         ? await mountNxnPainter(world, order, mount, onStickerRef, disposers)
-        : await mountSolidPainter(puzzle, world, mount, onStickerRef, disposers);
+        : await mountSolidPainter(puzzle, world, mount, onStickerRef, disposers, frameTicks);
 
       const onContextMenu = (e: MouseEvent) => e.preventDefault();
       mount.renderer.domElement.addEventListener('contextmenu', onContextMenu);
@@ -368,12 +375,15 @@ async function mountSolidPainter(
   puzzle: PredictPuzzle, world: World, mount: SimMount,
   onStickerRef: React.RefObject<(slot: number) => void>,
   disposers: (() => void)[],
+  frameTicks: ((dt: number) => boolean)[],
 ): Promise<Painter> {
-  const [three, gesture, slotMap, outline] = await Promise.all([
+  const [three, gesture, slotMap, outline, hintsMod, define] = await Promise.all([
     import('three'),
     import('@/components/sim-embed/orbitTapGesture'),
     import('./engineSlotMap'),
     import('./solidOutline'),
+    import('@/app/[lang]/sim/engine/face_hints'),
+    import('@/app/[lang]/sim/engine/define'),
   ]);
 
   const meshes = slotMap.collectStickerMeshes(puzzle, world.cube);
@@ -406,9 +416,33 @@ async function mountSolidPainter(
     }
   });
 
-  // 金字塔的方位提示 = 四个顶点字母(U/L/R/B),正好就是它的转动记号。淡入靠
-  // mountSimWorld 的 onFrame 每帧 tick(见挂载处)。
-  if (puzzle.id === 'pyraminx') world.pyraHints.show();
+  // 金字塔的方位提示 = 四个顶点字母(U/L/R/B),正好就是它的转动记号,引擎自带那份直接用。
+  if (puzzle.id === 'pyraminx') {
+    world.pyraHints.show();
+    frameTicks.push((dt) => world.pyraHints.tick(dt));
+  }
+
+  // 五魔方的十二个面名:引擎自带的 `world.megaHints` 写的是 PG 名(`C A I BF E`),和题面
+  // 对不上,所以照同一套排版(`MEGA_HINT_LAYOUT`)另烤一份题面面名的字母贴上去。
+  if (puzzle.hints) {
+    const labels = new hintsMod.default(
+      define.SIZE,
+      puzzle.hints.map((h) => ({ letter: h.letter, dir: new three.Vector3(...h.dir) })),
+      hintsMod.MEGA_HINT_LAYOUT.distanceMul,
+      hintsMod.MEGA_HINT_LAYOUT.sizeMul,
+    );
+    world.scene.add(labels);
+    labels.show();
+    frameTicks.push((dt) => labels.tick(dt));
+    disposers.push(() => {
+      labels.removeFromParent();
+      labels.traverse((obj) => {
+        const mat = (obj as THREE.Sprite).material as THREE.SpriteMaterial | undefined;
+        mat?.map?.dispose();
+        mat?.dispose();
+      });
+    });
+  }
 
   const raycaster = new three.Raycaster();
   const pointer = new three.Vector2();

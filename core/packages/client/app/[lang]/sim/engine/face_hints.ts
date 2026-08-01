@@ -61,6 +61,10 @@ export const REX_CORNER_HINTS: OrientationHint[] = [
 
 // Megaminx is a FACE-turner (dodecahedron): 12 face labels at the face centers, matching
 // FACE_NAME / FACE_NORMAL in mega/megaState (PG order U/F/L/BL/BR/R/C/A/I/BF/E/D).
+/** How far the 12 labels float out / how tall the glyphs are. Shared with embeds that
+ *  build their OWN dodecahedron label set (/predict shows the community face names, not
+ *  the PG ones), so both look identical. */
+export const MEGA_HINT_LAYOUT = { distanceMul: 2.9, sizeMul: 0.8 } as const;
 export const MEGA_FACE_HINTS: OrientationHint[] = FACE_NAME.map((letter, i) => ({
   letter,
   dir: new THREE.Vector3(FACE_NORMAL[i][0], FACE_NORMAL[i][1], FACE_NORMAL[i][2]),

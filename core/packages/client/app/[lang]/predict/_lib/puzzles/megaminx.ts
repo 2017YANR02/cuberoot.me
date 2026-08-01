@@ -23,7 +23,9 @@ import {
   megaSolvedState, megaTurnFace, MEGA_FACE_NAMES, MEGA_STICKERS_PER_FACE,
   type MegaFaceKey, type MegaState,
 } from '@/app/[lang]/scramble/gen/_svg/mega_svg';
-import { FACE_NAME as ENGINE_FACE_NAME, FACE_CORNERS } from '@/app/[lang]/sim/engine/mega/megaState';
+import {
+  FACE_NAME as ENGINE_FACE_NAME, FACE_CORNERS, FACE_NORMAL,
+} from '@/app/[lang]/sim/engine/mega/megaState';
 import { PIECE_GROUPS, ENGINE_SID_MAP } from '@/lib/puzzle-image/puzzle-mask';
 import { megaColor } from '../colors';
 import {
@@ -181,6 +183,10 @@ export const megaminxPuzzle: PredictPuzzle = {
   parse: parseMegaInput,
   moveFace: (move) => TOKEN_RE.exec(move)?.[1] ?? null,
   engineMove: megaEngineMove,
+  // 方位字母写题面那套面名,浮在对应引擎面的法向上 —— 十二个面十二种颜色,不给字母
+  // 就只能靠背色认「答案落在 DBL」是哪一面。引擎自带的 megaHints 写的是 PG 名(`C A
+  // I BF E`),那份对不上题面。
+  hints: FACES.map((letter, cf) => ({ letter, dir: FACE_NORMAL[ENGINE_FACE[cf].face] })),
 };
 
 /** 随机面转:相邻两步不同面(同一面连转两次等于合并成一步)。 */
