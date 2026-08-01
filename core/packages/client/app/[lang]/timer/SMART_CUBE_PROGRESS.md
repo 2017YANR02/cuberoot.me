@@ -3077,3 +3077,55 @@ MAC 派生密钥、丢包重传)。控制台入口照旧留着,两者随便混�
 - 姿态开关 → 画面变;「自转」→ 连续两次采样不同。
 
 全量 typecheck / lint 干净。
+
+---
+
+## Sprint 35 — 「连接失败:2」
+
+用户在 iOS Bluefy 里连智能魔方,反复弹「连接失败:2」。
+
+`2` 不是我们抛的 —— `_lib/bluetooth/**` 和三个调用方里没有任何一处扔数字或字符串。它
+是 Bluefy 原样透出来的原生错误码:Bluefy 的 Web Bluetooth 是原生桥接,reject 出来的是
+裸值而不是 DOMException。Bluefy 没公开码表,所以**这一步查不出 `2` 是什么**。
+
+真正该修的是我们这一侧:那句 `(err as Error).message ?? String(err)` 把一切压成一个
+字符。丢掉的东西比留下的多得多 ——
+
+- `name` / `code` / **值的类型**(数字 `2` 和字符串 `'2'` 是两种不同的桥接行为);
+- **断在哪一步**。选设备、开 GATT、认型号、握手,四种完全不同的故障共用同一句话;
+- `err instanceof DOMException && name === 'NotFoundError'` 这条「用户关掉了选择器」
+  的判断,对裸值永远不成立 —— 于是取消选择在 Chrome 上是静默的,在 Bluefy 上却弹一个
+  红色报错。用户看到的「一直提示」里,可能就混着这种根本不是故障的。
+
+`_lib/bluetooth/connect_error.ts`:不猜 `2`,把现场留住。
+
+- `ConnectStage` = picker / advertisement / gatt / discover / handshake,`connect()` 逐段
+  打标,`atStage` 遇到已打标的原样放行 —— 内层(更具体)的阶段说了算。
+- `describeError(unknown)`:任意形状都挤出一行。裸值带类型,因为那时候类型是仅有的
+  额外线索;`{name,code}` 两样都留,原生桥接常把唯一有用的数字放在 `code` 上;抛异常的
+  getter 和循环引用都不能让它自己炸。
+- `isNoDeviceSelected` 按 **name** 判而不是 `instanceof`:模仿了 spec 名字的桥接该享受
+  同样待遇,跨 realm 的 DOMException 本来也过不了 `instanceof`。
+
+失败 UI 搬进 `BluetoothModal` 自己 —— 原来三个调用方三种行为:Solo `alert()`、
+NetBattle 走 `setBtNotice`、而 `BattleCubes` **一个 catch 都没有**,那里的失败全是静默的
+unhandled rejection。现在统一显示「失败在哪一步 + 原始值」,等宽、可选中,就是给人截图用的。
+在 Bluefy 里额外给四条能动手的:系统蓝牙授权、Enable BLE Advertisements、先从别的
+App 断开、转一下唤醒。
+
+### 实证
+
+Playwright 里把 UA 伪成 Bluefy、`requestDevice` 换成 `throw 2`:
+
+- picker 阶段 → 「连接失败:选择设备这一步 / `2 (number)`」
+- 让 `requestDevice` 成功、`gatt.connect()` 抛同一个 `2` → 「建立 GATT 连接这一步 /
+  `2 (number)`」。同一个码,两句不同的话 —— 这正是原来缺的那一维。
+- `NotFoundError`,DOMException 和普通对象两种形状,都静默(后者是老代码接不住的那种)。
+- 暗色下 `.bt-error-detail` 取到浅色前景,四格无需单独兜。
+
+`tests/bluetooth_connect_error.test.ts` 12 条锁住形状:裸值必须带类型、`code` 不能丢、
+`2` 绝不能被当成「用户取消」吞掉。全量 typecheck / lint / 相关测试(116 条)干净。
+
+### 还差什么
+
+- `2` 到底是什么仍未知。下次用户再遇到,截图里会直接写着是哪一步,那时才谈得上定位。

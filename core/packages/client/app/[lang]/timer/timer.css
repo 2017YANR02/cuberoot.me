@@ -1186,6 +1186,16 @@
   padding: 12px 14px;
 }
 .bluetooth-modal .bt-warn-title { color: var(--signal-warning); }
+/* Raw browser error text. Mono + selectable because it is meant to be copied
+   or screenshotted, and `break-all` because it can be one long unbroken token. */
+.bluetooth-modal .bt-error-detail {
+  margin: 6px 0 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--foreground);
+  word-break: break-all;
+  user-select: text;
+}
 .bluetooth-modal .bt-tip {
   background: color-mix(in srgb, var(--signal-info) 6%, transparent);
   border: 1px solid color-mix(in srgb, var(--signal-info) 20%, transparent);

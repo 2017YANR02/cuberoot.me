@@ -1491,16 +1491,9 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
           onSubmitMac={(mac) => resolveMac(mac)}
           onCancelMac={() => resolveMac(null)}
           onClose={() => { if (macResolverRef.current) resolveMac(null); setBluetoothOpen(false); }}
-          onConnect={async () => {
-            try { await bluetoothCube.connect(); }
-            catch (e) {
-              // NO_WEB_BLUETOOTH 由弹窗自己讲(envAdvice 那一段),不重复报。
-              const msg = (e as Error).message ?? String(e);
-              if (msg !== 'NO_WEB_BLUETOOTH') {
-                setBtNotice(tr({ zh: `连接失败:${msg}`, en: `Connection failed: ${msg}` }));
-              }
-            }
-          }}
+          // 失败也交给弹窗:它知道断在哪一步(选设备 / GATT / 握手),说得比这里清楚,
+          // 而且 Solo、对战、房间三处不会再各报各的。
+          onConnect={() => bluetoothCube.connect()}
         />
       )}
     </div>
