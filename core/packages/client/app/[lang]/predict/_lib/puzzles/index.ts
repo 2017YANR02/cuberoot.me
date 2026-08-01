@@ -9,19 +9,21 @@ import { makeNxnPuzzle } from './nxn';
 import { pyraminxPuzzle } from './pyraminx';
 import { skewbPuzzle } from './skewb';
 import { ivyPuzzle } from './ivy';
+import { megaminxPuzzle } from './megaminx';
 import type { PredictPuzzle, PredictPuzzleId } from './types';
 
 export * from './types';
 
 /** 选择器里的顺序:三阶打头(它是这页的原住民),再按阶数,最后是异形。 */
 export const PREDICT_PUZZLE_IDS: readonly PredictPuzzleId[] = [
-  '3', '2', '4', '5', '6', '7', 'pyraminx', 'skewb', 'ivy',
+  '3', '2', '4', '5', '6', '7', 'megaminx', 'pyraminx', 'skewb', 'ivy',
 ];
 
 const NXN_ORDERS = [2, 3, 4, 5, 6, 7] as const;
 
 const REGISTRY: Record<PredictPuzzleId, PredictPuzzle> = {
   ...Object.fromEntries(NXN_ORDERS.map((n) => [String(n), makeNxnPuzzle(n)])) as Record<PredictPuzzleId, PredictPuzzle>,
+  megaminx: megaminxPuzzle,
   pyraminx: pyraminxPuzzle,
   skewb: skewbPuzzle,
   ivy: ivyPuzzle,
@@ -39,6 +41,7 @@ export const PUZZLE_LABELS: Record<PredictPuzzleId, { zh: string; en: string }> 
   5: { zh: '五阶', en: '5×5' },
   6: { zh: '六阶', en: '6×6' },
   7: { zh: '七阶', en: '7×7' },
+  megaminx: { zh: '五魔方', en: 'Megaminx' },
   pyraminx: { zh: '金字塔', en: 'Pyraminx' },
   skewb: { zh: '斜转', en: 'Skewb' },
   ivy: { zh: '枫叶', en: 'Ivy' },

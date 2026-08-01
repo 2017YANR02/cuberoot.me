@@ -18,7 +18,7 @@
  *     `cube.stick` 上色 + `setStickering` 三档遮罩(遮罩键在还原帧的贴纸上,复盘转动时
  *     高亮自己跟着块跑),外加方位字母 + 提示贴片(背对镜头那三面的贴纸会在方块外侧浮
  *     一层影子,所以朝向钉死也读得到背面)。
- *   · **金字塔 / 斜转 / 枫叶** —— 每张贴纸是独立 mesh,那就直接改它自己的材质色(引擎的
+ *   · **五魔方 / 金字塔 / 斜转 / 枫叶** —— 每张贴纸是独立 mesh,那就直接改它自己的材质色(引擎的
  *     stickerMat 按颜色缓存 + 共享,所以必须逐张 clone 一份,否则改一张串一片)。颜色挂在
  *     mesh 上,天然跟着块走,和 NxN 那套遮罩是同一个语义。这几个拼图没有提示贴片,背面
  *     要拖过去看;金字塔的方位提示用四个顶点字母(U/L/R/B,正好就是它的转动记号)。
@@ -27,7 +27,7 @@
  * 换拼图时页面用 `key` 整块重挂,所以这里不必处理「挂载中途换拼图」。
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RotateCcw } from 'lucide-react';
 import type * as THREE from 'three';
 import type World from '@/app/[lang]/sim/engine/world';
@@ -42,7 +42,7 @@ import { Spinner } from '@/components/Spinner/Spinner';
 import { tr } from '@/i18n/tr';
 import { engineHomeSid } from '@/app/[lang]/sim/engine/nxn/netIndex';
 import { FM_OUTLINE, FM_DIM, FM_IGNORED, FM_FIXED_COLOR, dimFaceletColor } from '@/app/[lang]/sim/engine/nxn/stickering';
-import { CUBE_FILL, type CubeFace } from '@/lib/cube-colors';
+import { PREDICT_FILL, type PredictColor } from '../_lib/colors';
 import type { PredictPuzzle } from '../_lib/puzzles';
 
 /** 复盘动画每 90° 的帧数(引擎默认 30,这里快一档);挂载时设,卸载时还回去。 */
@@ -64,7 +64,7 @@ function pageBackdrop(): string {
 /** 一格三档遮罩下画出来的颜色(非 NxN 路径自己算,NxN 交给引擎的遮罩层)。 */
 function shadedColor(label: string, tier: 'bright' | 'dim' | 'ignored'): string {
   if (tier === 'ignored') return IGNORED_GREY;
-  const base = CUBE_FILL[label as CubeFace] ?? IGNORED_GREY;
+  const base = PREDICT_FILL[label as PredictColor] ?? IGNORED_GREY;
   if (tier === 'bright') return base;
   return base.toLowerCase() === '#ffffff' ? DIM_WHITE : dimFaceletColor(base);
 }
@@ -133,6 +133,16 @@ export default function PredictBoard({
 
   /** 上一次同步到引擎的 (labels, step),用来判断这次是「走了一步」还是「整个换了」。 */
   const lastSyncRef = useRef<{ labels: readonly string[]; step: number } | null>(null);
+
+  /**
+   * 喂引擎的那串。绝大多数拼图题面记号 = 引擎记号,这里就是原串;只有五魔方的引擎
+   * 面名(PG 的 `C A I BF E`)读不出方位,题面用魔友那套,喂之前翻一次。
+   * 一格一步对齐(一个题面 token → 一段引擎 token 串),所以 `step` 的口径不变。
+   */
+  const engineMoves = useMemo(
+    () => (puzzle.engineMove ? moves.map(puzzle.engineMove) : moves),
+    [puzzle, moves],
+  );
 
   useEffect(() => {
     if (ready) return;
@@ -227,16 +237,16 @@ export default function PredictBoard({
     lastSyncRef.current = { labels, step };
 
     if (last && last.labels === labels && step === last.step + 1 && step > 0) {
-      twister.push(moves[step - 1]); // push 自己排队,不会因为还在转而丢一步
+      twister.push(engineMoves[step - 1]); // push 自己排队,不会因为还在转而丢一步
     } else {
       // 上色按**本位**寻址,转过之后再上色会贴到别的块上 —— 先复位再上色。
       twister.setup('');
       painter.colors(labels);
-      const done = moves.slice(0, step).join(' ');
+      const done = engineMoves.slice(0, step).join(' ');
       if (done) twister.setup(done);
     }
     mount.invalidate();
-  }, [labels, step, moves, ready]);
+  }, [labels, step, engineMoves, ready]);
 
   /** 三档遮罩不碰几何,所以答对一枚就换记号也不会吃掉复盘动画。 */
   useEffect(() => {
@@ -346,7 +356,7 @@ async function mountNxnPainter(
   };
 }
 
-// ─── 金字塔 / 斜转 / 枫叶:逐张贴纸 mesh,直接改材质色 ────────────────────
+// ─── 五魔方 / 金字塔 / 斜转 / 枫叶:逐张贴纸 mesh,直接改材质色 ────────────
 
 /** 贴纸正面那份材质:三个拼图各用各的(Phong / Lambert),这里只用到「有 color」。 */
 type CapMaterial = THREE.Material & { color: THREE.Color };

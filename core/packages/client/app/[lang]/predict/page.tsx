@@ -14,7 +14,7 @@
  *     /sim 的「提示贴片」读得到,所以起手朝向恒为 /sim 的默认视角,不随题目乱转;
  *   - 六面浮 U/D/L/R/F/B 字母作参照,而不是把字母印在中心贴纸上;
  *   - 公式除了随机 / 随机 F2L,还可以自己输入(原站只有前两档),练自己那条;
- *   - 不止三阶:二 ~ 七阶、金字塔、斜转、枫叶都能练(原站只有三阶)。
+ *   - 不止三阶:二 ~ 七阶、五魔方、金字塔、斜转、枫叶都能练(原站只有三阶)。
  *
  * 出题与判定全在 _lib/ 的两个纯函数引擎:三阶走 `challenge.ts`(它多带十字 / 前两层 /
  * F2L 三档按解法阶段出题的模式),其余拼图走 `puzzle_challenge.ts`(通用的「追一枚
@@ -33,9 +33,12 @@ import LiquidGlassChips from '@/components/LiquidGlassChips';
 import PlaybackBar from '@/components/PlaybackBar';
 import ResetDefaultsButton from '@/components/ResetDefaultsButton';
 import { tr } from '@/i18n/tr';
-import { CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '@/lib/cube-colors';
 import { CUBE_ORIENTATIONS, orientedFaceColors } from '@/lib/cube-orientation';
 import CubeOrientationSelect from '@/components/CubeOrientationSelect';
+import {
+  PREDICT_FILL, PREDICT_ON_FILL, PREDICT_COLOR_NAMES, IDENTITY_COLORS,
+  type PredictColor,
+} from './_lib/colors';
 import {
   generateChallenge, parseMoveInput,
   MOVE_COUNT_MIN, CROSS_EDGES_MIN, CROSS_EDGES_MAX, CUSTOM_MOVES_MAX,
@@ -118,21 +121,9 @@ function algErrorText(e: MoveInputError, puzzle: PredictPuzzle): { zh: string; e
   }
 }
 
-/** 面 → 颜色名(按站内标准配色:U 白 D 黄 F 绿 B 蓝 L 橙 R 红)。 */
-const COLOR_NAMES: Record<CubeFace, { zh: string; en: string }> = {
-  U: { zh: '白', en: 'white' },
-  D: { zh: '黄', en: 'yellow' },
-  F: { zh: '绿', en: 'green' },
-  B: { zh: '蓝', en: 'blue' },
-  L: { zh: '橙', en: 'orange' },
-  R: { zh: '红', en: 'red' },
-};
-
 /** 色块标签:中文「黄格」这样一个词说完(不写「黄色贴纸」),英文仍是颜色词,后面的句子接 sticker。 */
-const colorChipLabel = (c: CubeFace): string => tr({ zh: `${COLOR_NAMES[c].zh}格`, en: COLOR_NAMES[c].en });
-
-/** 不吃「拿方朝向」的拼图(金字塔)用这张恒等表 —— 它的面色是死的,没有 24 档可换。 */
-const IDENTITY_FACES: Record<CubeFace, CubeFace> = { U: 'U', D: 'D', F: 'F', B: 'B', L: 'L', R: 'R' };
+const colorChipLabel = (c: PredictColor): string =>
+  tr({ zh: `${PREDICT_COLOR_NAMES[c].zh}格`, en: PREDICT_COLOR_NAMES[c].en });
 
 /** 被复刻的原站(见 /about 致谢),页面底部给个链接。 */
 const ORIGIN_URL = 'https://app--cube-lookahead-24bc12e4.base44.app/';
@@ -193,14 +184,16 @@ function PredictPageInner() {
   const source = sources.includes(rawSource) ? rawSource : 'random';
   const moveCount = rawMoveCount ?? puzzle.defaultMoveCount;
 
-  /** 面字母 → 屏幕上的颜色。立方体族吃 24 档拿方朝向,金字塔那种没有对面的不吃。 */
+  /** 色号 → 屏幕上的颜色。立方体族吃 24 档拿方朝向,金字塔 / 五魔方那种没有对面的不吃。 */
   const shown = useMemo(
-    () => (puzzle.cubeLike ? orientedFaceColors(orientation) : IDENTITY_FACES),
+    (): Record<string, PredictColor> => (
+      puzzle.cubeLike ? orientedFaceColors(orientation) : IDENTITY_COLORS
+    ),
     [puzzle, orientation],
   );
   /** 本位面序号 → 屏幕上的颜色。 */
   const faceColorOf = useCallback(
-    (face: number): CubeFace => shown[puzzle.faceColor[puzzle.faces[face]]],
+    (face: number): PredictColor => shown[puzzle.faceColor[puzzle.faces[face]]],
     [shown, puzzle],
   );
 
@@ -330,7 +323,7 @@ function PredictPageInner() {
    */
   const labels = useMemo(() => {
     if (!ch) return Array<string>(total).fill('');
-    return [...ch.startColors].map((c) => shown[puzzle.faceColor[c]]);
+    return ch.startColors.map((c) => shown[puzzle.faceColor[c]]);
   }, [ch, shown, puzzle, total]);
 
   /**
@@ -357,7 +350,7 @@ function PredictPageInner() {
     if (!ch) return EMPTY_FACELETS;
     const asked = new Set(ch.targets.map((t) => t.startFacelet));
     const out = puzzle.anchors.filter((f) => !asked.has(f));
-    [...ch.startFacelets].forEach((c, i) => { if (c !== '.' && !asked.has(i)) out.push(i); });
+    ch.startFacelets.forEach((c, i) => { if (c !== '.' && !asked.has(i)) out.push(i); });
     return out;
   }, [ch, puzzle]);
 
@@ -580,7 +573,7 @@ function PredictPageInner() {
                 <button
                   type="button"
                   className={`predict-move${face ? '' : ' is-plain'}${state ? ` ${state}` : ''}`}
-                  style={face ? { background: CUBE_FILL[face], color: CUBE_ON_FILL[face] } : undefined}
+                  style={face ? { background: PREDICT_FILL[face], color: PREDICT_ON_FILL[face] } : undefined}
                   aria-current={i === step - 1 ? 'step' : undefined}
                   title={tr({ zh: `同步到第 ${i + 1} 步`, en: `Jump to move ${i + 1}` })}
                   onClick={() => seek(i + 1)}
@@ -607,7 +600,7 @@ function PredictPageInner() {
                 zh: g.total > 1 ? `${g.total} 条高亮${piece.zh}上的` : `高亮${piece.zh}上的`,
                 en: g.total > 1 ? `Where do the ${g.total} highlighted ${piece.en.toLowerCase()}s' ` : 'Where does the ',
               })}
-              <b className="predict-color" style={{ background: CUBE_FILL[color], color: CUBE_ON_FILL[color] }}>
+              <b className="predict-color" style={{ background: PREDICT_FILL[color], color: PREDICT_ON_FILL[color] }}>
                 {colorChipLabel(color)}
               </b>
               {tr({
@@ -633,7 +626,7 @@ function PredictPageInner() {
               const face = puzzle.faces[Math.floor(t.answerFacelet / puzzle.perFace)];
               return (
                 <span key={`${t.kind}-${t.startFacelet}`} className="predict-answer-item">
-                  <b className="predict-color" style={{ background: CUBE_FILL[color], color: CUBE_ON_FILL[color] }}>
+                  <b className="predict-color" style={{ background: PREDICT_FILL[color], color: PREDICT_ON_FILL[color] }}>
                     {colorChipLabel(color)}
                   </b>
                   <ArrowRight size={13} aria-hidden="true" />
