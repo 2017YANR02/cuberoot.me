@@ -384,6 +384,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'timer/marks': { title: { zh: '打乱足迹', en: 'Scramble Marks' } },
+  'timezone': {
+    title: { zh: '时区换算', en: 'Time Zone Converter' },
+    description: {
+      zh: '时区换算:填一个时刻,读出世界各地的对应时间,还能一眼找出跨时区都方便的通话时段,夏令时自动处理。',
+      en: 'Convert one moment into local time anywhere in the world, and find the hours that work for everyone across time zones — daylight saving handled automatically.',
+    },
+  },
   'tutorial': {
     title: { zh: '魔方教程', en: 'Cubing Tutorials' },
     description: {
