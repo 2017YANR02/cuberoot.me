@@ -241,6 +241,10 @@ const nextConfig: NextConfig = {
         // Forum subforum list: unbounded slug space, sentinel shell (client reads
         // the slug from window.location — see forum/f/[slug]/page.tsx).
         { source: "/:lang(en|zh)/forum/f/:slug", destination: "/:lang/forum/f/_" },
+        // Shared calendar: one static shell backs every share token (the token
+        // space is random + unbounded, and the page is noindex by design).
+        // See calendar/s/[token]/page.tsx.
+        { source: "/:lang(en|zh)/calendar/s/:token", destination: "/:lang/calendar/s/_" },
         // NOTE: /forum/t/:id is deliberately NOT a sentinel — it runs ISR +
         // generateMetadata so a shared thread link carries a per-thread social
         // card (title + excerpt). See forum/t/[id]/page.tsx (mirrors recon/[id]).

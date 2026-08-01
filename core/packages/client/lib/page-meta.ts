@@ -135,6 +135,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'calc-about': { title: { zh: '成绩计算器说明', en: 'Score Calculator Guide' } },
+  'calendar': {
+    title: { zh: '日历', en: 'Calendar' },
+    description: {
+      zh: '个人日历:月周日视图、重复日程、提醒与参与者,支持按时区安排,并可生成只显示忙碌时段的公开链接。',
+      en: 'A personal calendar with month, week and day views, recurring events, reminders and guests — time-zone aware, with an optional public link that can show busy times only.',
+    },
+  },
   'code': {
     title: { zh: '本站是怎么造的', en: 'How This Site Is Built' },
     description: {

@@ -6,7 +6,7 @@
  * 场景是「和海外朋友约视频」:选自己的时区、填一个时刻,就能读到对方那边是几点几号;
  * 再往下是一整天的 24 小时对照条和「双方都醒着」的时段推荐,免得来回试。
  *
- * 时区数学全在 _lib/tz.ts(纯 Intl,不引日期库),城市名与搜索别名在 _lib/zones.ts。
+ * 时区数学全在 @cuberoot/shared/tz(纯 Intl,不引日期库,/calendar 同用),城市名与搜索别名在 lib/tz-zones.ts(/calendar 同用)。
  * 本文件只做状态与呈现。
  *
  * 状态分两层:
@@ -35,8 +35,8 @@ import {
   isValidZone, localZone, nextTransition, parseDateTime, timeKey, wallPartsIn,
   wallToUtc, zoneAbbrev, zoneOffsetMinutes,
   type WallParts,
-} from './_lib/tz';
-import { isPopularZone, zoneIso2, zoneLabel, zoneOptions, zoneSearchTerms } from './_lib/zones';
+} from '@cuberoot/shared/tz';
+import { isPopularZone, zoneIso2, zoneLabel, zoneOptions, zoneSearchTerms } from '@/lib/tz-zones';
 import './timezone.css';
 
 const STORE_KEY = 'cuberoot-timezone.v1';

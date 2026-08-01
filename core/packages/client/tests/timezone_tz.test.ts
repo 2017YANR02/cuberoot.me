@@ -1,4 +1,5 @@
-// /timezone 的时区数学回归。全部数值都是从 IANA tzdata 得出的确定值,用 toBe() 锁死 ——
+// 时区数学回归(@cuberoot/shared/tz,/timezone 与 /calendar 共用)。全部数值都是从 IANA
+// tzdata 得出的确定值,用 toBe() 锁死 ——
 // 改算法就得主动改这里的期望值,当 review 信号。
 //
 // 前提:运行环境带完整 ICU(Node 18+ 默认如此),否则 Intl 只认 UTC,这些用例会直接红。
@@ -8,8 +9,8 @@ import {
   comfortWindows, dateKey, dayDelta, dstInfo, formatOffset, hourBand, hourGrid,
   inWindow, isValidZone, nextTransition, parseDateTime, timeKey, wallPartsIn,
   wallToUtc, zoneOffsetMinutes,
-} from '@/app/[lang]/timezone/_lib/tz';
-import { isPopularZone, POPULAR_ZONES, zoneLabel, zoneSearchTerms } from '@/app/[lang]/timezone/_lib/zones';
+} from '@cuberoot/shared/tz';
+import { isPopularZone, POPULAR_ZONES, zoneLabel, zoneSearchTerms } from '@/lib/tz-zones';
 
 const JUL = new Date('2026-07-15T12:00:00Z');
 const JAN = new Date('2026-01-15T12:00:00Z');

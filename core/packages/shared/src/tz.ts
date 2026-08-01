@@ -1,4 +1,7 @@
-// /timezone 的全部时区数学 —— 纯函数,不碰 DOM / React / i18n。
+// 时区数学 —— 纯函数,不碰 DOM / React / i18n,前后端共用。
+//
+// 原本只服务 /timezone(app/[lang]/timezone/_lib/tz.ts);/calendar 落地后服务端也要同一套
+// 墙上时间 ↔ 绝对时刻换算(重复事件展开、提醒扫描),所以整体搬到 shared,一份实现两端用。
 //
 // 只用平台自带的 Intl 时区库,不引 luxon / date-fns(站内 lib/comp-schedule.ts 已是同一路数):
 // 浏览器和 Node 都带完整 IANA tzdata,自己抄一份偏移表必然过期,夏令时规则每年都在改。

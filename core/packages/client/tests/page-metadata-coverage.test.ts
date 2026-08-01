@@ -40,6 +40,7 @@ const APP = join(ROOT, 'app', '[lang]');
 // 后 2 条是 dev/poc 页,app/sitemap.ts 的 EXCLUDE 也把它们排除在站点地图外。
 const ALLOWLIST = new Map<string, string>([
   ['alg/[puzzle]/[set]/[subgroup]', '哨兵壳:ZBLL 等 umbrella 集的 subgroup,服务端拿不到 puzzle/set/subgroup'],
+  ['calendar/s/[token]', '哨兵壳:分享 token 服务端不可见,且本就 noindex(拿到链接才能看)'],
   ['forum/f/[slug]', '哨兵壳:板块 slug 服务端不可见'],
   ['memo/colpi/[pair]', '哨兵壳:字母对服务端不可见'],
   ['recon/person/[wcaId]', '哨兵壳:WCA ID 服务端不可见'],
