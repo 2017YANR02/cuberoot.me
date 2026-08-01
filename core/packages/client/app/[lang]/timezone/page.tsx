@@ -111,9 +111,16 @@ function TimezonePage() {
   const [now, setNow] = useState<Date>(() => new Date(0));
   useEffect(() => {
     setMounted(true);
-    setNow(new Date());
-    const id = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(id);
+    // 卡片上有秒,所以不能用 setInterval(1000) —— 它的相位取决于挂载那一刻,秒数会整体
+    // 偏出系统时钟最多一秒,而且 timer 节流下越走越飘。每次都对齐到下一个整秒再跳。
+    let id: ReturnType<typeof setTimeout>;
+    const tick = () => {
+      const d = new Date();
+      setNow(d);
+      id = setTimeout(tick, 1000 - (d.getTime() % 1000) + 5);
+    };
+    tick();
+    return () => clearTimeout(id);
   }, []);
 
   // ── URL 状态 ──────────────────────────────────────────────────────────────
@@ -512,7 +519,10 @@ function ZoneCard({ tz, isHome, at, dayAnchor, homeWall, homeOffset, isZh, onRem
       </div>
 
       <div className="tz-card-time">
-        <span className="tz-card-clock">{timeKey(w)}</span>
+        {/* 秒是次要读数,压小一号:钉住时刻时它恒为 :00,别让它抢走分钟的位置 */}
+        <span className="tz-card-clock">
+          {timeKey(w)}<span className="tz-card-sec">:{String(w.s).padStart(2, '0')}</span>
+        </span>
         <span className="tz-card-date">
           {formatDayLabel(w)}
           {delta !== 0 && <em className="tz-card-daydelta">{dayDeltaLabel(delta)}</em>}

@@ -194,6 +194,12 @@ img.tz-card-flag { object-fit: cover; }
   font-variant-numeric: tabular-nums;
 }
 
+/* 秒:压到分钟的六成大小并置灰,让「几点几分」仍是一眼读到的那一层 */
+.tz-card-sec {
+  font-size: 0.6em;
+  color: var(--muted-foreground);
+}
+
 .tz-card-date {
   color: var(--muted-foreground);
   font-size: 0.82rem;
