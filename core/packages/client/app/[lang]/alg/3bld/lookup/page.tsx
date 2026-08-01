@@ -3,17 +3,20 @@
 // 盲拧公式查询 —— BLDDB(nbwzx/blddb,GPL-3.0)人工整理公式集的本站版。
 //
 // 覆盖三阶那六套:棱 / 角三循环、奇偶、翻角、翻棱、奇偶带翻。iframe 版 /blddb 原样留着,
-// 那边额外有穷举生成的 Nightmare 集和高阶盲拧(翼棱 / 中心块),数据量和编码另成一套。
+// 那边额外有穷举生成的 Nightmare 全集和高阶盲拧(翼棱 / 中心块),数据量和编码另成一套。
+// Nightmare 菜单里那些**速查表**在本站 /alg/3bld/tables。
 //
 // 与同目录 /alg/3bld/comm 分工:comm 是**固定缓冲**的字母对字典(每对一条,PG 里可编辑,
 // 带联想词);这里是**任意缓冲**的只读查询,一个 case 给出全部在用的写法 + 换位子 + 谁在用。
 //
 // 编码按用户在 3BLD 设置里选的方案(彳亍 / Speffz)输入,内部转成库用的彳亍代表元 ——
 // 键怎么编的见 _lib/blddb.ts 头注,正确性锁在 tests/blddb_lookup.test.ts(结构不变量 +
-// 六条对着上游页面实测的 fixture)。
+// 六条对着上游页面实测的 fixture)。显示开关(起手 / 镜像 / 逆 case / 换位子写法 / 排序 /
+// 按成绩筛)在 _store/blddb-prefs-store.ts,对齐上游 /settings。
 
 import { useCallback, useEffect, useMemo, useState, type JSX } from 'react';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
+import { useTranslation } from 'react-i18next';
 import { Check, Copy, ExternalLink, Users, Video } from 'lucide-react';
 import Link from '@/components/AppLink';
 import { SearchInput } from '@/components/SearchInput';
@@ -22,6 +25,7 @@ import { VisualCube } from '@/components/VisualCube';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { useCopy } from '@/hooks/useCopy';
 import { tr } from '@/i18n/tr';
+import { commutatorPost } from '../../commutator/engine';
 import {
   BLDDB_TYPES,
   NO_COMMUTATOR,
@@ -33,6 +37,8 @@ import {
   findCases,
   fromChichu,
   hasCommutators,
+  hasInverseCase,
+  inverseCode,
   isVariadic,
   kindLetters,
   kindPositions,
@@ -41,14 +47,18 @@ import {
   loadBlddbSet,
   loadSourceToResult,
   loadSourceToUrl,
+  mirrorAlgText,
+  mirrorChichu,
+  orderKey,
   positionsOf,
   sameSticker,
   slotKind,
   sourceLink,
+  thumbLabel,
+  thumbTitle,
   twistLetterOf,
   twistTargets,
   type AlgToUrl,
-  type BlddbEntry,
   type BlddbHit,
   type BlddbType,
   type BlddbSet,
@@ -56,6 +66,9 @@ import {
   type SourceToUrl,
 } from '../_lib/blddb';
 import { useBldConfigHydrated, useBldConfigStore } from '../_store/bld-config-store';
+import { useBlddbPrefsHydrated, useBlddbPrefsStore, type BlddbPrefs } from '../_store/blddb-prefs-store';
+import { BlddbOptions } from '../_components/BlddbOptions';
+import { AlgVideoModal, orderVideos } from '../_components/AlgVideoModal';
 import type { SchemeId } from '../_lib/scheme-presets';
 import '../3bld.css';
 
@@ -105,13 +118,47 @@ function formatCentis(v: number): string {
   return m > 0 ? `${m}:${s.toFixed(2).padStart(5, '0')}` : s.toFixed(2);
 }
 
-/** 一条公式:文本 + 复制 + 讲解视频。 */
-function AlgLine({ alg, primary, videos }: { alg: string; primary?: boolean; videos?: AlgToUrl }): JSX.Element {
+/** 一条已经按偏好加工完、可以直接渲染的写法。 */
+interface Row {
+  /** 展示用的公式(镜像后的),与 raw 一一对应。 */
+  algs: string[];
+  /** 库里原样的公式 —— 查视频、判高亮都用这个。 */
+  raw: string[];
+  /** 每条公式的起手编码,与 algs 同序。 */
+  fingers: string[];
+  comms: string[];
+  users: string[];
+}
+
+/** 一条公式:文本 + 起手 + 复制 + 讲解视频。 */
+function AlgLine({
+  alg,
+  raw,
+  finger,
+  primary,
+  highlight,
+  isZh,
+  videos,
+  onPlay,
+}: {
+  alg: string;
+  raw: string;
+  finger?: string;
+  primary?: boolean;
+  highlight: boolean;
+  isZh: boolean;
+  videos?: AlgToUrl;
+  onPlay: (alg: string, raw: string) => void;
+}): JSX.Element {
   const { copied, copy } = useCopy();
-  const video = videos?.[alg]?.[0];
+  const hasVideo = (videos?.[raw]?.length ?? 0) > 0;
+  const thumb = thumbLabel(finger, isZh);
   return (
-    <div className={`bld-db-alg${primary ? ' is-primary' : ''}`}>
+    <div className={`bld-db-alg${primary ? ' is-primary' : ''}${highlight ? ' is-hit' : ''}`}>
       <span className="bld-db-alg-text">{alg}</span>
+      {thumb && (
+        <span className="bld-db-alg-thumb" title={thumbTitle(finger, isZh) ?? undefined}>{thumb}</span>
+      )}
       <button
         type="button"
         className="alg-alg-copy-btn"
@@ -120,16 +167,15 @@ function AlgLine({ alg, primary, videos }: { alg: string; primary?: boolean; vid
       >
         {copied ? <Check size={14} /> : <Copy size={14} className="alg-alg-copy-icon" />}
       </button>
-      {video && (
-        <a
+      {hasVideo && (
+        <button
+          type="button"
           className="bld-db-alg-video"
-          href={video.url}
-          target="_blank"
-          rel="noopener noreferrer"
+          onClick={() => onPlay(alg, raw)}
           title={tr({ zh: '讲解视频', en: 'Video' })}
         >
           <Video size={14} />
-        </a>
+        </button>
       )}
     </div>
   );
@@ -188,25 +234,33 @@ function UserList({
 /** 一个 case:缩略图 + 编码 / 位置,再是每种写法一行。 */
 function CaseBlock({
   hit,
+  writing,
+  rows,
   type,
   scheme,
+  isZh,
+  isInverse,
+  highlight,
   sourceUrl,
   sourceResult,
   videos,
+  onPlay,
 }: {
   hit: BlddbHit;
+  writing: string;
+  rows: Row[];
   type: BlddbType;
   scheme: SchemeId;
+  isZh: boolean;
+  isInverse: boolean;
+  highlight: string;
   sourceUrl: SourceToUrl | null;
   sourceResult: SourceToResult | null;
   videos: AlgToUrl | null;
-}): JSX.Element {
-  // 用者最多的写法排最前 —— 与上游同序,也就是"大家默认用哪条"。
-  const entries = useMemo(
-    () => [...hit.entries].sort((a, b) => b[1].length - a[1].length),
-    [hit.entries],
-  );
-  const firstAlg = entries[0]?.[0]?.[0] ?? '';
+  onPlay: (alg: string, raw: string) => void;
+}): JSX.Element | null {
+  if (rows.length === 0) return null;
+  const firstAlg = rows[0].algs[0] ?? '';
   const showComm = hasCommutators(type);
 
   return (
@@ -216,28 +270,41 @@ function CaseBlock({
           <VisualCube algorithm={firstAlg} view="iso" size={76} loading="lazy" alt="" />
         )}
         <div>
-          <div className="bld-db-case-code">{describeCode(hit.writing, type, scheme)}</div>
-          <div className="bld-db-case-sub">{describePositions(hit.writing, type)}</div>
+          <div className="bld-db-case-code">
+            {describeCode(writing, type, scheme)}
+            {isInverse && (
+              <span className="bld-db-case-tag">{tr({ zh: '逆 case', en: 'inverse' })}</span>
+            )}
+          </div>
+          <div className="bld-db-case-sub">{describePositions(writing, type)}</div>
         </div>
       </header>
 
       {/* 没有换位子那一列的类型(奇偶 / 奇偶带翻)少排一列,别留个空档。 */}
       <div className={`bld-db-rows${showComm ? '' : ' is-nocomm'}`}>
-        {entries.map(([algs, users, comms]: BlddbEntry, index) => (
+        {rows.map((row, index) => (
           <div className="bld-db-row" key={`${hit.key}-${index}`}>
             <div className="bld-db-algs">
-              {algs.map((alg, i) => (
-                <AlgLine key={alg} alg={alg} primary={i === 0} videos={videos ?? undefined} />
+              {row.algs.map((alg, i) => (
+                <AlgLine
+                  key={alg}
+                  alg={alg}
+                  raw={row.raw[i]}
+                  finger={row.fingers[i]}
+                  primary={i === 0}
+                  highlight={highlight !== '' && (row.raw[i] === highlight || alg === highlight)}
+                  isZh={isZh}
+                  videos={videos ?? undefined}
+                  onPlay={onPlay}
+                />
               ))}
             </div>
             {showComm && (
               <div className="bld-db-comm">
-                {(comms ?? [])
-                  .filter((c) => c && c !== NO_COMMUTATOR)
-                  .map((c) => <span key={c}>{c}</span>)}
+                {row.comms.map((c) => <span key={c}>{c}</span>)}
               </div>
             )}
-            <UserList users={users} type={type} sourceUrl={sourceUrl} sourceResult={sourceResult} />
+            <UserList users={row.users} type={type} sourceUrl={sourceUrl} sourceResult={sourceResult} />
           </div>
         ))}
       </div>
@@ -266,24 +333,84 @@ function describePositions(chichu: string, type: BlddbType): string {
   return p.join('-');
 }
 
+/**
+ * 把库里一个 case 的记录按显示偏好加工成可渲染的行:按作者成绩筛人 → 按用者数排 →
+ * 镜像 → 换位子改写法。筛完没人用的写法直接不出现(与上游同)。
+ */
+function buildRows(
+  hit: BlddbHit,
+  type: BlddbType,
+  prefs: BlddbPrefs,
+  sourceResult: SourceToResult | null,
+): Row[] {
+  const cutoff = prefs.maxSecs === '' ? null : Number.parseFloat(prefs.maxSecs) * 100;
+  const showComm = hasCommutators(type);
+
+  const rows: Row[] = [];
+  for (const [algs, users, comms, fingers] of hit.entries) {
+    const kept = cutoff === null || Number.isNaN(cutoff)
+      ? users
+      : users.filter((n) => {
+          const best = sourceResult?.[n]?.['3bld'];
+          return best !== undefined && best <= cutoff;
+        });
+    if (kept.length === 0) continue;
+    const shown = prefs.mirror ? algs.map(mirrorAlgText) : algs;
+    const commList = !showComm
+      ? []
+      : (comms ?? [])
+          .filter((c) => c && c !== NO_COMMUTATOR)
+          .map((c) => (prefs.mirror ? mirrorAlgText(c) : c))
+          .map((c) =>
+            commutatorPost(
+              c,
+              prefs.slashNotation,
+              prefs.noBrackets,
+              prefs.spaceAfterColon,
+              prefs.spaceAfterComma,
+              prefs.outerBrackets,
+            ),
+          );
+    rows.push({
+      algs: shown,
+      raw: algs,
+      // 关掉起手就整列不渲染 —— 别在行里留一堆空 span。
+      // `?? []`:数据是长缓存的静态资产,旧浏览器可能还揣着补起手之前的三位记录。
+      fingers: prefs.thumb ? (fingers ?? []) : [],
+      comms: commList,
+      users: kept,
+    });
+  }
+  // 用者最多的写法排最前 —— 与上游同序,也就是"大家默认用哪条"。
+  return rows.sort((a, b) => b.users.length - a.users.length);
+}
+
 export default function BlddbLookupPage(): JSX.Element {
+  const { i18n } = useTranslation();
+  const isZh = i18n.language.startsWith('zh');
+
   const hydrated = useBldConfigHydrated();
+  const prefsHydrated = useBlddbPrefsHydrated();
   const scheme = useBldConfigStore((s) => s.config.scheme);
   const setConfig = useBldConfigStore((s) => s.setConfig);
+  const prefs = useBlddbPrefsStore((s) => s.prefs);
 
   const [type, setType] = useQueryState(
     'type',
     parseAsStringEnum<BlddbType>(BLDDB_TYPES).withDefault('edge'),
   );
   const [code, setCode] = useQueryState('code', { defaultValue: '' });
+  // 深链高亮某一条(上游 ?highlight=)—— 别人发你「用这条」时直接跳到那一行。
+  const [highlight] = useQueryState('highlight', { defaultValue: '' });
 
   const [set, setSet] = useState<BlddbSet | null>(null);
   const [sourceUrl, setSourceUrl] = useState<SourceToUrl | null>(null);
   const [sourceResult, setSourceResult] = useState<SourceToResult | null>(null);
   const [videos, setVideos] = useState<AlgToUrl | null>(null);
   const [loadError, setLoadError] = useState(false);
+  const [playing, setPlaying] = useState<{ alg: string; raw: string } | null>(null);
 
-  // 换类型就换一份表(棱 3.5MB / 角 2.4MB,其余都小)。模块级缓存兜住来回切。
+  // 换类型就换一份表(棱 1.6MB / 角 1.1MB,其余都小)。模块级缓存兜住来回切。
   useEffect(() => {
     let alive = true;
     setSet(null);
@@ -313,6 +440,28 @@ export default function BlddbLookupPage(): JSX.Element {
     void setType(next);
     void setCode('');
   }, [setType, setCode]);
+
+  // 粘贴 `UFR-UFL-UBL` 直接填进去 —— 上游支持,别人在群里发的就是这个格式。
+  useEffect(() => {
+    const onPaste = (e: ClipboardEvent) => {
+      const text = e.clipboardData?.getData('text/plain')?.trim();
+      if (!text) return;
+      const parts = text.split(/[\s\-—&,]+/u).filter(Boolean);
+      if (parts.length < 2 || parts.length > maxLen) return;
+      const letters = parts.map((p, i) => {
+        if (p === WILDCARD) return WILDCARD;
+        const pos = p.toUpperCase();
+        // 只认位置名(UFR / RU);粘一串字母走不到这儿,输入框自己会收。
+        if (!kindPositions(slotKind(type, i)).includes(pos)) return '';
+        return letterAtPosition(pos, scheme);
+      });
+      if (letters.some((l) => l === '')) return;
+      e.preventDefault();
+      onCodeChange(letters.join(''));
+    };
+    document.addEventListener('paste', onPaste);
+    return () => document.removeEventListener('paste', onPaste);
+  }, [type, scheme, maxLen, onCodeChange]);
 
   // 没填满的位当"任意"补齐 —— 输到一半就能看到那一组,填完自动收敛到一条。
   const pattern = variadic ? code : code.padEnd(maxLen, WILDCARD);
@@ -362,13 +511,42 @@ export default function BlddbLookupPage(): JSX.Element {
     return null;
   }, [code, pattern, type, scheme]);
 
-  const hits = useMemo((): BlddbHit[] => {
+  /** 命中的 case:库里那条 + 用户视角的写法(镜像时要翻回去)+ 是不是逆 case。 */
+  const hits = useMemo((): { hit: BlddbHit; writing: string; isInverse: boolean }[] => {
     if (!set || problem || code.length === 0) return [];
-    const found = findCases(set, codeToChichu(pattern, type, scheme), type);
-    return found.sort((a, b) => a.writing.localeCompare(b.writing));
-  }, [set, problem, pattern, code.length, type, scheme]);
+    const chichu = codeToChichu(pattern, type, scheme);
+    // 镜像:先把查询镜过去(库里存的是右手 case),查到的公式再镜回来 —— 见 mirrorChichu。
+    const query = prefs.mirror ? mirrorChichu(chichu, type) : chichu;
+    const unmirror = (w: string) => (prefs.mirror ? mirrorChichu(w, type) : w);
+
+    const out = findCases(set, query, type).map((hit) => ({
+      hit, writing: unmirror(hit.writing), isInverse: false,
+    }));
+    out.sort((a, b) =>
+      orderKey(a.writing, type, scheme, prefs.order).localeCompare(
+        orderKey(b.writing, type, scheme, prefs.order),
+      ),
+    );
+
+    // 逆 case:只在查单个 case 时补,而且别把同一个 case 列两遍(自逆的三循环不存在,
+    // 但镜像 + 逆的组合可能撞上同一个键)。
+    if (prefs.inverse && hasInverseCase(type) && !pattern.includes(WILDCARD)) {
+      const inv = findCases(set, inverseCode(query), type)[0];
+      if (inv && !out.some((o) => o.hit.key === inv.key)) {
+        out.push({ hit: inv, writing: unmirror(inv.writing), isInverse: true });
+      }
+    }
+    return out;
+  }, [set, problem, pattern, code.length, type, scheme, prefs.mirror, prefs.order, prefs.inverse]);
+
+  const blocks = useMemo(
+    () => hits.map((h) => ({ ...h, rows: buildRows(h.hit, type, prefs, sourceResult) }))
+      .filter((b) => b.rows.length > 0),
+    [hits, type, prefs, sourceResult],
+  );
 
   const ready = code.length > 0 && !problem;
+  const playList = playing && videos?.[playing.raw] ? orderVideos(videos[playing.raw], isZh) : [];
 
   return (
     <div className="bld-trainer-root">
@@ -376,6 +554,12 @@ export default function BlddbLookupPage(): JSX.Element {
         <h1>
           <EventIcon event="333bf" /> {tr({ zh: '盲拧公式查询', en: 'BLD Algorithm Lookup' })}
         </h1>
+        <Link href="/alg/3bld/tables" className="bld-hub-secondary" prefetch={false}>
+          {tr({ zh: '速查表', en: 'Cheat sheets' })}
+        </Link>
+        <Link href="/alg/3bld/sheets" className="bld-hub-secondary" prefetch={false}>
+          {tr({ zh: '公式表名录', en: 'Alg sheets' })}
+        </Link>
         <span className="bld-spacer" />
         <Link href="/blddb" className="bld-hub-secondary" prefetch={false}>
           {tr({ zh: 'BLDDB 完整库', en: 'Full BLDDB' })}
@@ -384,8 +568,8 @@ export default function BlddbLookupPage(): JSX.Element {
 
       <p className="bld-input-summary">
         {tr({
-          zh: '按位置或字母查一个 case,把大家在用的写法一并列出,带换位子和使用者。数据来自 BLDDB 的人工整理集;某一位填 * 可以列出一整组。穷举生成的 Nightmare 集和高阶盲拧在完整库里。',
-          en: 'Look up a case by position or letters — every writing people actually use, with its commutator and who uses it. Data is BLDDB’s hand-curated set; put * in one slot to list a whole group. The exhaustive Nightmare sets and big BLD live in the full library.',
+          zh: '按位置或字母查一个 case,把大家在用的写法一并列出,带换位子、起手和使用者。数据来自 BLDDB 的人工整理集;某一位填 * 可以列出一整组。穷举生成的 Nightmare 全集和高阶盲拧在完整库里。',
+          en: 'Look up a case by position or letters — every writing people actually use, with its commutator, thumb position and who uses it. Data is BLDDB’s hand-curated set; put * in one slot to list a whole group. The exhaustive Nightmare sets and big BLD live in the full library.',
         })}
       </p>
 
@@ -443,6 +627,10 @@ export default function BlddbLookupPage(): JSX.Element {
 
       <PositionPicker type={type} code={code} scheme={scheme} onChange={onCodeChange} />
 
+      {prefsHydrated && (
+        <BlddbOptions showComm={hasCommutators(type)} showInverse={hasInverseCase(type)} />
+      )}
+
       {loadError && (
         <p className="bld-db-empty">
           {tr({ zh: '公式库没拉下来,刷新再试。', en: 'Could not load the library — try reloading.' })}
@@ -457,32 +645,47 @@ export default function BlddbLookupPage(): JSX.Element {
         </div>
       )}
 
-      {ready && set && hits.length === 0 && (
+      {ready && set && blocks.length === 0 && (
         <p className="bld-db-empty">
-          {tr({
-            zh: '这一条没有人工整理的公式。完整库的 Nightmare 集是穷举生成的,那边多半查得到。',
-            en: 'No hand-made algorithm for this case. The full library’s exhaustive Nightmare set most likely has one.',
-          })}
+          {hits.length > 0
+            ? tr({
+                zh: '这个 case 有公式,但没有作者的三盲成绩在你设的上限之内。把「只看快于」清空就能看到。',
+                en: 'This case has algorithms, but nobody using them is under your 3BLD cutoff. Clear it to see them.',
+              })
+            : tr({
+                zh: '这一条没有人工整理的公式。完整库的 Nightmare 集是穷举生成的,那边多半查得到。',
+                en: 'No hand-made algorithm for this case. The full library’s exhaustive Nightmare set most likely has one.',
+              })}
         </p>
       )}
 
-      {hits.length > 1 && (
+      {blocks.length > 1 && (
         <p className="bld-db-count">
-          {tr({ zh: `命中 ${hits.length} 个 case`, en: `${hits.length} cases` })}
+          {tr({ zh: `命中 ${blocks.length} 个 case`, en: `${blocks.length} cases` })}
         </p>
       )}
 
-      {hits.map((hit) => (
+      {blocks.map((b) => (
         <CaseBlock
-          key={hit.key}
-          hit={hit}
+          key={`${b.hit.key}${b.isInverse ? '-inv' : ''}`}
+          hit={b.hit}
+          writing={b.writing}
+          rows={b.rows}
           type={type}
           scheme={scheme}
+          isZh={isZh}
+          isInverse={b.isInverse}
+          highlight={highlight}
           sourceUrl={sourceUrl}
           sourceResult={sourceResult}
           videos={videos}
+          onPlay={(alg, raw) => setPlaying({ alg, raw })}
         />
       ))}
+
+      {playing && playList.length > 0 && (
+        <AlgVideoModal alg={playing.alg} videos={playList} onClose={() => setPlaying(null)} />
+      )}
     </div>
   );
 }
