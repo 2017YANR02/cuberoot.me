@@ -23,7 +23,8 @@ import SkewbCube from '@/app/[lang]/sim/engine/skewb/SkewbCube';
 import MegaminxCube from '@/app/[lang]/sim/engine/mega/MegaminxCube';
 import { parsePyraMoves } from '@/app/[lang]/sim/engine/pyra/pyraState';
 import { parseSkewbMoves } from '@/app/[lang]/sim/engine/skewb/skewbState';
-import { parseMegaMoves } from '@/app/[lang]/sim/engine/mega/megaState';
+import { parseMegaMoves, FACE_NORMAL } from '@/app/[lang]/sim/engine/mega/megaState';
+import { HOME_SCENE_ROT, homeSceneRot } from '@/app/[lang]/sim/engine/viewControls';
 import { megaEngineMove } from '@/app/[lang]/predict/_lib/puzzles/megaminx';
 import { buildFaceletMap, buildReverseFaceletMap } from '@/components/sim-embed/faceletMap';
 import { ENGINE_SID_MAP } from '@/lib/puzzle-image/puzzle-mask';
@@ -308,6 +309,26 @@ describe('/predict 五魔方模型 ≡ /sim 引擎', () => {
         }
       }
     }
+  });
+
+  /**
+   * 开局姿态:立方体那个经典 3/4 视角(偏航 −33.75°)搬到正十二面体上就废了 —— 面与面
+   * 之间隔 72°,−33.75° 差不多正好卡在两面中间,镜头正对的是一条棱,12 个面全是斜的。
+   * 量的是「最正对镜头的那个面偏了多少度」,不是抄一遍角度值。
+   */
+  it('开局正对一面(立方体的 3/4 视角在这里是棱正对镜头)', () => {
+    const camera = new THREE.Vector3(0, 0, 1);
+    const offDeg = (rot: { x: number; y: number; z: number }): number => {
+      const m = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(rot.x, rot.y, rot.z, 'XYZ'));
+      const off = FACE_NORMAL.map((n) => new THREE.Vector3(...n).transformDirection(m).angleTo(camera));
+      return (Math.min(...off) * 180) / Math.PI;
+    };
+    expect(offDeg(homeSceneRot('megaminx')), '五魔方开局没有面正对镜头').toBeLessThan(5);
+    expect(offDeg(HOME_SCENE_ROT), '立方体的 3/4 视角居然也正对着一面?那这条规矩就没意义了')
+      .toBeGreaterThan(20);
+    // 其余拼图一律原样:这条只挪正十二面体。
+    expect(homeSceneRot(3)).toEqual({ ...HOME_SCENE_ROT });
+    expect(homeSceneRot('pyraminx')).toEqual({ ...HOME_SCENE_ROT });
   });
 
   it('十二个中心一步都不挪 —— 题板拿它们当方位锚', () => {

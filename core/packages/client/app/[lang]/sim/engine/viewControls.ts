@@ -7,6 +7,7 @@
  * whole-puzzle turns); see SimPage onOrbit and the solver's 3D painters.
  */
 import type World from './world';
+import type { PuzzleKind } from './world';
 
 /**
  * 引擎自己的初始视角(U 上 F 前 R 右)—— `World` 构造函数就摆这个姿势,任何「重置视角」
@@ -15,13 +16,27 @@ import type World from './world';
  */
 export const HOME_SCENE_ROT = { x: Math.PI / 6, y: -Math.PI / 4 + Math.PI / 16, z: 0 } as const;
 
+/**
+ * 这个拼图的开局姿态。默认就是 `HOME_SCENE_ROT`,只有正十二面体要动偏航。
+ *
+ * 立方体系每 90° 对上一面,`HOME_SCENE_ROT` 的 −33.75° 是「主面朝我、右面露一条」的
+ * 经典四分之三视角;五魔方绕竖轴 72° 才对上一面,同样的 −33.75° 正好卡在两面中间 ——
+ * 开局看到的是一条棱,12 个面没有一个正对镜头。/sim 的 `defaultViewFor` 对五魔方也是
+ * 把左右钉在 0°(正对一面),这里是同一条规矩的引擎侧单一源。
+ */
+export function homeSceneRot(kind: PuzzleKind): { x: number; y: number; z: number } {
+  const { x, y, z } = HOME_SCENE_ROT;
+  return { x, y: kind === 'megaminx' ? 0 : y, z };
+}
+
 /** /sim 默认灵敏度那一档的 orbit 系数(= 设置里 50 的 `mapOrbitK(50)`)。嵌入页不给
  *  灵敏度设置,一律钉这个值,别再各写一份 0.01。 */
 export const ORBIT_K = 0.01;
 
-/** 视角复位到 `HOME_SCENE_ROT`。 */
+/** 视角复位到这个拼图的开局姿态(`homeSceneRot`)。 */
 export function resetSceneView(world: World): void {
-  world.scene.rotation.set(HOME_SCENE_ROT.x, HOME_SCENE_ROT.y, HOME_SCENE_ROT.z);
+  const home = homeSceneRot(world.puzzleKind);
+  world.scene.rotation.set(home.x, home.y, home.z);
   world.scene.updateMatrix();
   world.dirty = true;
 }
