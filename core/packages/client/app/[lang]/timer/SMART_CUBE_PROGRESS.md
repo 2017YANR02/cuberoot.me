@@ -3240,3 +3240,44 @@ optionalServices: [BATTERY_SERVICE]
 ### 还差什么
 
 - **根因判定尚未在真机上确认**。证据链够强(差分对照 cstimer + 能解释全部现象,含逃生通道为何也失败),但只有用户那台 iPhone 连上了才算证实。在那之前这仍是「最可能」,不是「已证」。
+
+---
+
+## Sprint 38 — 数字 UUID 那条被推翻;改为上探针
+
+生产环境实测(Playwright 直连 cuberoot.me,hook 住 `requestDevice` 记参数):`optionalServices` 10 条全是字符串、电池那条已是 `0000180f-…`、`typeof !== 'string'` 的 0 条。**用户拿到的确实是修好的版本,仍然是 `2`。**
+
+所以 Sprint 37 的判断是错的。`0x180f` 是个真缺陷(不合更严格的实现口径),但**不是**这个报告的原因。上一轮结尾写的「根因尚未在真机确认」保住了这次:结论没有被当成事实往下传。
+
+### 停止猜测
+
+已经三轮「改一个变量 → 用户实测 → 还是 2」,每轮一次部署一次往返,只验证一个猜测。剩下的候选还有一串(服务列表内容、厂商编号、过滤条件、调用时机),按这个速率还要好几天。
+
+改成一次问完:`picker_probe.ts` 的 `probePicker()` 跑一条每级只加一样东西的梯子 ——
+
+1. 光 `acceptAllDevices`(最小合法调用)
+2. `+ optionalServices`
+3. `+ optionalManufacturerData`
+4. 换成 `filters`(即真实连接发的那套)
+
+**第一个被拒的那级就是元凶**,后面全是它的超集,所以停在那里,不多让用户点。
+
+判据的关键一步:**选择器弹出来又被取消,算成功**。取消抛的是 `NotFoundError`,不肯弹抛的是别的 —— 所以用户每级点「取消」就行,不用选设备,也不会连上任何东西。
+
+如果连第 1 级都被拒,那么我们的选项一个都不重要,问题在调用本身或环境;如果四级全过,选择器没毛病,故障在下游。
+
+### 顺带补上 cstimer 的预检
+
+cstimer 的 `giikerutil.chkAvail()` 在每次 `requestDevice` 前 `await navigator.bluetooth.getAvailability()`,我们没有 —— 这是对完之后仅剩的结构性差异。已加(best-effort,`false` 或抛错都不当致命,因为 Chrome 在某些无适配器状态下也返 false,而那时选择器比我们更会处理)。
+
+顺带一个反证:cstimer 是在 `.then()` 里调 `requestDevice` 的,隔了一整个 microtask 仍能在 Bluefy 上工作 —— 所以「user activation 被吃掉」这条假设可以彻底排除了。
+
+### 实证
+
+- Playwright 四种模拟桥接,探针都指对:全过 / 卡在第 2 级 / 连最小调用都被拒 / 卡在过滤条件那级。
+- `tests/bluetooth_picker_probe.test.ts` 7 条,钉的是探针自己的判据(取消算弹出、停在第一个被拒的那级、梯子每级只加一样东西、选中设备也算弹出、无 Web Bluetooth 返空不抛)。诊断工具指错方向比没有诊断更糟,所以判据本身要有测试。
+- typecheck / lint / 蓝牙相关 188 条干净。
+
+### 还差什么
+
+- 全靠用户跑一次探针。结果会直接指名是哪一项 —— 或者指明我们的选项全都无辜。
