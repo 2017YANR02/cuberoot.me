@@ -36,6 +36,13 @@ export const PURGE_TABLES: readonly (readonly [string, string])[] = [
   ['feedback', 'wca_id'],                // 反馈会话(feedback_media / feedback_messages 见下)
   ['feedback_messages', 'wca_id'],
   ['colpi_votes', 'voter_wca_id'],       // 术语投票
+  // 日历整套都是私人行程 —— 标题 / 地点 / 参会人比多数表更敏感,一律硬删。
+  // 先删跨事件的两张(我在别人事件里的受邀行、提醒去重记录),再删事件与日历本体。
+  ['calendar_guests', 'guest_key'],      // 我被别人邀请的那些行
+  ['calendar_reminder_log', 'user_key'], // 提醒去重记录
+  ['calendar_events', 'owner_key'],      // 我的日程(删日历也会级联,这里显式兜一遍)
+  ['calendars', 'owner_key'],            // 日历本体
+  ['calendar_shares', 'owner_key'],      // 对外展示设置 + 分享 token
   ['wca_users', 'wca_id'],               // WCA OAuth 缓存(含 access_token,必须销毁)
 ];
 

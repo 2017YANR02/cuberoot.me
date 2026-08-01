@@ -13,7 +13,7 @@ const BASE = 'api.cuberoot.me';
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 type Gate = 'public' | 'login' | 'admin' | 'webhook';
-type Cache = 'cdn' | 'no-store';
+type Cache = 'cdn' | 'short' | 'no-store';
 
 interface Ep {
   d: string;       // domain key
@@ -43,6 +43,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
   { key: 'forum', zh: '论坛', en: 'Forum' },
   { key: 'content', zh: '内容与运维', en: 'Content & ops' },
   { key: 'timer', zh: '计时器', en: 'Timer' },
+  { key: 'calendar', zh: '日历', en: 'Calendar' },
   { key: 'analytics', zh: '访问统计', en: 'Analytics' },
   { key: 'system', zh: '系统与渲染', en: 'System & render' },
 ];
@@ -54,7 +55,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   equals the set mounted via app.route('/v1', …) in packages/server/src/index.ts.
 //   CI red here = a newly-mounted route is undocumented: add its endpoints below,
 //   then add the file stem to this list.
-//   account_auth alg alg_lsll alg_marks alg_srs alg_sets alg_sweep analytics announced_comps article auth battle_rooms cn_comp_names colpi
+//   account_auth alg alg_lsll alg_marks alg_srs alg_sets alg_sweep analytics announced_comps article auth battle_rooms calendar cn_comp_names colpi
 //   comp_follows cube cubeopt_solve cubing_live feedback forum health historical_ranks
 //   membership nav_sites nemesizer notifications ops page_notices paint pattern_examples progress recon scramble_555
 //   scramble_marks sim_masks sponsors timer_backups trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
@@ -393,6 +394,24 @@ const ENDPOINTS: Ep[] = [
   { d: 'timer', m: 'POST', p: '/v1/battle/rooms/:code/kick', g: 'public', zh: '房主把某位玩家移出房间', en: 'Host removes a player from the room' },
   { d: 'timer', m: 'POST', p: '/v1/battle/rooms/:code/leave', g: 'public', zh: '离开房间(空房即删)', en: 'Leave the room (empty room is deleted)' },
 
+  // ---- calendar ----
+  { d: 'calendar', m: 'GET', p: '/v1/calendar/bootstrap', g: 'login', c: 'no-store', zh: '首屏:我的日历列表 + 对外展示设置(首访自动建主日历)', en: 'First paint: my calendars + share settings (creates the default calendar on first visit)' },
+  { d: 'calendar', m: 'POST', p: '/v1/calendar/calendars', g: 'login', zh: '新建日历', en: 'Create a calendar' },
+  { d: 'calendar', m: 'PATCH', p: '/v1/calendar/calendars/:id', g: 'login', zh: '改日历名字 / 颜色 / 时区', en: 'Rename / recolour / re-zone a calendar' },
+  { d: 'calendar', m: 'DELETE', p: '/v1/calendar/calendars/:id', g: 'login', zh: '删日历(主日历不可删)', en: 'Delete a calendar (not the default one)' },
+  { d: 'calendar', m: 'GET', p: '/v1/calendar/events', g: 'login', c: 'no-store', zh: '窗口内事件(含受邀的);重复事件整取,由前端展开', en: 'Events in a window (invitations included); recurring masters are returned whole and expanded client-side' },
+  { d: 'calendar', m: 'POST', p: '/v1/calendar/events', g: 'login', zh: '新建日程', en: 'Create an event' },
+  { d: 'calendar', m: 'PATCH', p: '/v1/calendar/events/:id', g: 'login', zh: '改日程,?scope=this|following|all 决定动这一次 / 此后 / 整条序列', en: 'Edit an event; ?scope=this|following|all picks this occurrence, the tail, or the whole series' },
+  { d: 'calendar', m: 'DELETE', p: '/v1/calendar/events/:id', g: 'login', zh: '删日程(同样分 scope)', en: 'Delete an event (same scopes)' },
+  { d: 'calendar', m: 'POST', p: '/v1/calendar/events/bulk', g: 'login', zh: 'ICS 导入(一次最多 500 条)', en: 'ICS import (up to 500 at a time)' },
+  { d: 'calendar', m: 'POST', p: '/v1/calendar/events/:id/rsvp', g: 'login', zh: '受邀者接受 / 拒绝', en: 'Guest accepts or declines' },
+  { d: 'calendar', m: 'GET', p: '/v1/calendar/people', g: 'login', c: 'no-store', zh: '加嘉宾时的站内用户搜索', en: 'Site-user search for adding guests' },
+  { d: 'calendar', m: 'GET', p: '/v1/calendar/export', g: 'login', c: 'no-store', zh: '导出自己的全部日程为 .ics', en: 'Export all my events as .ics' },
+  { d: 'calendar', m: 'PUT', p: '/v1/calendar/share', g: 'login', zh: '对外展示设置(开关 / 完整或仅忙碌 / 参与展示的日历)', en: 'Share settings (on-off, full or busy-only, which calendars)' },
+  { d: 'calendar', m: 'POST', p: '/v1/calendar/share/rotate', g: 'login', zh: '换一条分享链接,旧的立刻失效', en: 'Reset the share link, invalidating the old one' },
+  { d: 'calendar', m: 'GET', p: '/v1/calendar/public/:token', g: 'public', c: 'no-store', zh: '公开读;busy 档在服务端就抹掉标题 / 说明 / 地点 / 参与者', en: 'Public read; at the busy level titles, notes, location and guests are stripped server-side' },
+  { d: 'calendar', m: 'GET', p: '/v1/calendar/public/:token/ics', g: 'public', c: 'short', zh: '公开订阅源,Google / Apple 日历可直接订阅', en: 'Public subscription feed for Google / Apple Calendar' },
+
   // ---- analytics ----
   { d: 'analytics', m: 'POST', p: '/v1/analytics/pv', g: 'public', c: 'no-store', zh: '上报页面访问(beacon)', en: 'Report page view (beacon)' },
   { d: 'analytics', m: 'POST', p: '/v1/analytics/dwell', g: 'public', c: 'no-store', zh: '上报停留时长', en: 'Report dwell time' },
@@ -422,11 +441,13 @@ const GATE_NOTE: Record<Gate, { zh: string; en: string }> = {
 
 const CACHE_LABEL: Record<Cache, { zh: string; en: string }> = {
   cdn: { zh: 'CDN 可缓存', en: 'CDN cacheable' },
+  short: { zh: '短缓存', en: 'short cache' },
   'no-store': { zh: '不缓存', en: 'no-store' },
 };
 
 const CACHE_NOTE: Record<Cache, { zh: string; en: string }> = {
   cdn: { zh: '天然不可变 / 慢变,nginx 走 s-maxage 长缓存,浏览器短缓存。', en: 'Immutable or slow-moving; long s-maxage at nginx, short browser cache.' },
+  short: { zh: '会变但不急,几分钟的 max-age 就够,过期即回源。', en: 'Changes, but not urgently — a few minutes of max-age, then revalidate.' },
   'no-store': { zh: '暂态或写操作,发 no-store,从不缓存。', en: 'Transient or a write — sent no-store, never cached.' },
 };
 
