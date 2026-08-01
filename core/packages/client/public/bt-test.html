@@ -1,0 +1,157 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Web Bluetooth 裸测</title>
+<!--
+  A deliberately bare Web Bluetooth page. No framework, no bundler, no imports,
+  no service worker, nothing of the app at all — one script tag and four
+  buttons, served from the same origin as /timer.
+
+  It exists to settle one question that the in-app probe could not: whether
+  `requestDevice` fails here because of anything *we* do, or because of the page
+  it is called from. On iOS Bluefy, cstimer.net connects on the first try while
+  cuberoot.me refuses even `{acceptAllDevices: true}` with a bare `2` — and the
+  same failure appears on next.cuberoot.me, so it is not the origin either.
+
+  If a button here opens the chooser, the fault is in the app. If none of them
+  do, the app is innocent and the difference is somewhere between the two sites
+  that no option can reach.
+-->
+<style>
+  :root { color-scheme: light dark; }
+  body { font: 15px/1.6 system-ui, sans-serif; margin: 0; padding: 16px; max-width: 640px; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  p.sub { margin: 0 0 16px; opacity: .7; font-size: 13px; }
+  button { display: block; width: 100%; margin: 0 0 8px; padding: 12px; font: inherit;
+           text-align: left; border-radius: 8px; cursor: pointer; }
+  button small { display: block; opacity: .7; font-size: 12px; }
+  pre { font: 12px/1.6 ui-monospace, monospace; white-space: pre-wrap; word-break: break-all;
+        border-radius: 8px; padding: 10px; margin: 12px 0 0; user-select: text; }
+  .env { opacity: .75; }
+</style>
+
+<h1>Web Bluetooth 裸测</h1>
+<p class="sub">纯静态页面，没有任何框架代码。每个按钮发一次 <code>requestDevice</code>，把浏览器原样抛回来的东西打出来。选择框弹出来后点「取消」即可 —— 弹出来本身就是结果。</p>
+
+<button id="b1">1. 最小调用<small>{ acceptAllDevices: true }</small></button>
+<button id="b2">2. 单条名字前缀<small>{ filters: [{ namePrefix: 'GAN' }] }</small></button>
+<button id="b3">3. cstimer 的那套服务 UUID<small>它在同一台手机上能连</small></button>
+<button id="b4">4. 我们 /timer 实际发的那套<small>13 条过滤 + 服务列表 + 厂商编号</small></button>
+
+<pre id="out"></pre>
+<pre id="env" class="env"></pre>
+
+<script>
+(function () {
+  var out = document.getElementById('out');
+
+  // Same shape as the app's describeError: never collapse a thrown value into
+  // one character. A bare 2 and the string "2" are different bridge behaviours.
+  function describe(e) {
+    if (e === null) return 'null';
+    if (e === undefined) return 'undefined';
+    if (typeof e !== 'object') return String(e) + ' (' + typeof e + ')';
+    var name = '', msg = '', code = '';
+    try { name = typeof e.name === 'string' ? e.name : ''; } catch (x) {}
+    try { msg = typeof e.message === 'string' ? e.message : ''; } catch (x) {}
+    try { code = (typeof e.code === 'number' || typeof e.code === 'string') ? String(e.code) : ''; } catch (x) {}
+    var head = [name, msg].filter(Boolean).join(': ');
+    if (head) return code && head.indexOf(code) < 0 ? head + ' (code ' + code + ')' : head;
+    if (code) return 'code ' + code;
+    try { var j = JSON.stringify(e); if (j && j !== '{}') return Object.prototype.toString.call(e) + ' ' + j; } catch (x) {}
+    return Object.prototype.toString.call(e);
+  }
+
+  function log(s) { out.textContent += s + '\n'; }
+
+  // A dismissed chooser is a success: it means the picker opened.
+  var DISMISSED = { NotFoundError: 1, NotAllowedError: 1, AbortError: 1 };
+
+  function run(label, opts) {
+    log('▶ ' + label + ' …');
+    if (!navigator.bluetooth) { log('  ✗ navigator.bluetooth 不存在'); return; }
+    try {
+      navigator.bluetooth.requestDevice(opts).then(
+        function (d) { log('  ✓ 弹出了，选中：' + (d && d.name ? d.name : '(无名)')); },
+        function (e) {
+          var n = null;
+          try { n = e && typeof e.name === 'string' ? e.name : null; } catch (x) {}
+          if (n && DISMISSED[n]) log('  ✓ 弹出了（已取消）');
+          else log('  ✗ 被拒：' + describe(e));
+        }
+      );
+    } catch (e) {
+      log('  ✗ 同步抛出：' + describe(e));
+    }
+  }
+
+  var CSTIMER_SERVICES = [
+    '0000aadb-0000-1000-8000-00805f9b34fb',
+    '0000aaaa-0000-1000-8000-00805f9b34fb',
+    '6e400001-b5a3-f393-e0a9-e50e24dcca9e',
+    '0000fff0-0000-1000-8000-00805f9b34fb',
+    '0000180a-0000-1000-8000-00805f9b34fb',
+    '6e400001-b5a3-f393-e0a9-e50e24dc4179',
+    '8653000a-43e6-47b7-9cb0-5fc21d4ae340',
+    '00000010-0000-fff7-fff6-fff5fff4fff0',
+    '00001000-0000-1000-8000-00805f9b34fb',
+    '0783b03e-7735-b5a0-1760-a305d2795cb0',
+    '0000fd50-0000-1000-8000-00805f9b34fb'
+  ];
+
+  document.getElementById('b1').onclick = function () {
+    run('最小调用', { acceptAllDevices: true });
+  };
+  document.getElementById('b2').onclick = function () {
+    run('单条名字前缀', { filters: [{ namePrefix: 'GAN' }] });
+  };
+  document.getElementById('b3').onclick = function () {
+    // cstimer's own values: name prefixes plus a single service filter, and its
+    // optionalServices union. No optionalManufacturerData.
+    run('cstimer 的参数', {
+      filters: [
+        { namePrefix: 'GAN' }, { namePrefix: 'MG' }, { namePrefix: 'AiCube' },
+        { namePrefix: 'Gi' }, { namePrefix: 'GoCube' }, { namePrefix: 'Rubiks' },
+        { namePrefix: 'MHC' }, { namePrefix: 'QY-QYSC' }, { namePrefix: 'WCU_MY32' },
+        { services: ['0000fff0-0000-1000-8000-00805f9b34fb'] }
+      ],
+      optionalServices: CSTIMER_SERVICES
+    });
+  };
+  document.getElementById('b4').onclick = function () {
+    run('我们的那套', {
+      filters: [
+        { services: ['8653000a-43e6-47b7-9cb0-5fc21d4ae340'] },
+        { services: ['6e400001-b5a3-f393-e0a9-e50e24dcca9e'] },
+        { services: ['00000010-0000-fff7-fff6-fff5fff4fff0'] },
+        { services: ['0000fff0-0000-1000-8000-00805f9b34fb'] },
+        { services: ['0783b03e-7735-b5a0-1760-a305d2795cb0'] },
+        { services: ['00001000-0000-1000-8000-00805f9b34fb'] },
+        { services: ['0000aadb-0000-1000-8000-00805f9b34fb'] },
+        { services: ['6e400001-b5a3-f393-e0a9-e50e24dc4179'] },
+        { namePrefix: 'GAN' }, { namePrefix: 'MG' }, { namePrefix: 'AiCube' },
+        { namePrefix: 'Gi' }, { namePrefix: 'WCU' }
+      ],
+      optionalServices: CSTIMER_SERVICES.concat(['0000180f-0000-1000-8000-00805f9b34fb']),
+      optionalManufacturerData: [1, 3, 5, 0x0100, 0xff01]
+    });
+  };
+
+  // Environment, printed up front so a screenshot carries it.
+  var env = ['origin: ' + location.origin,
+             'secureContext: ' + window.isSecureContext,
+             'navigator.bluetooth: ' + (navigator.bluetooth ? 'present' : 'MISSING'),
+             'getAvailability: ' + (navigator.bluetooth && navigator.bluetooth.getAvailability ? 'present' : 'absent'),
+             'getDevices: ' + (navigator.bluetooth && navigator.bluetooth.getDevices ? 'present' : 'absent'),
+             'frames: ' + (window.top === window.self ? 'top-level' : 'IN A FRAME'),
+             'UA: ' + navigator.userAgent];
+  document.getElementById('env').textContent = env.join('\n');
+  if (navigator.bluetooth && navigator.bluetooth.getAvailability) {
+    navigator.bluetooth.getAvailability().then(
+      function (v) { document.getElementById('env').textContent += '\ngetAvailability() → ' + v; },
+      function (e) { document.getElementById('env').textContent += '\ngetAvailability() 抛出：' + describe(e); }
+    );
+  }
+})();
+</script>
