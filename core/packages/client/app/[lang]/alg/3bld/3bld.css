@@ -1445,13 +1445,64 @@
   .bld-hub-intro { margin-top: 0; }
 }
 
-/* ─── 三循环公式查询 (/alg/3bld/3style) ─── */
-.bld-3s-input {
+/* ─── 盲拧公式查询 (/alg/3bld/lookup) ─── */
+.bld-db-input {
   text-transform: uppercase;
   letter-spacing: 0.18em;
   padding-left: 12px;
 }
-.bld-3s-empty {
+
+/* 类型下拉 + 位置下拉:一律 fit-content,不钉宽度。 */
+.bld-db-type,
+.bld-db-slot {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+}
+.bld-db-slot-select {
+  width: max-content;
+  background: var(--input);
+  border: 1px solid var(--border-default);
+  color: var(--foreground);
+  padding: 6px 8px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.bld-db-slot-select:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+}
+/* 位置 / 方向那些下拉走等宽,类型下拉是中文标签,跟正文字体。 */
+.bld-db-picker .bld-db-slot-select { font-family: var(--font-mono, monospace); }
+
+/* 位置选择器:紧凑靠左,组与组之间留白分隔,不画框。 */
+.bld-db-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 24px;
+  margin-bottom: 18px;
+}
+.bld-db-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.bld-db-group-label {
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+  margin-right: 2px;
+}
+
+.bld-db-count {
+  font-size: 0.85rem;
+  color: var(--faint-foreground);
+  margin: 0 0 12px;
+}
+.bld-db-empty {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1460,43 +1511,49 @@
   margin: 8px 0 0;
 }
 
-/* case 头:缩略图 + 编码。故意不加边框 —— 层级靠间距。 */
-.bld-3s-case {
+/* 一个 case 一段:头(缩略图 + 编码 + 位置)+ 若干写法。故意不加边框 —— 层级靠间距。 */
+.bld-db-case { margin: 0 0 32px; }
+.bld-db-case-head {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin: 4px 0 18px;
+  gap: 14px;
+  margin-bottom: 6px;
 }
-.bld-3s-case-cube { flex: 0 0 auto; }
-.bld-3s-case-code {
+.bld-db-case-head img { flex: 0 0 auto; }
+.bld-db-case-code {
   font-family: var(--font-mono, monospace);
   font-size: 1.6rem;
   font-weight: 700;
   letter-spacing: 0.16em;
 }
-.bld-3s-case-sub {
-  font-size: 0.82rem;
+.bld-db-case-sub {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.84rem;
   color: var(--faint-foreground);
-  margin-top: 2px;
+  margin-top: 3px;
+  white-space: pre-wrap;
 }
 
-.bld-3s-rows {
+.bld-db-rows {
   display: flex;
   flex-direction: column;
 }
 /* 三列按最长内容对齐后紧凑靠左 —— 不用 1fr 把换位子和人数推到行尾留大片空白。 */
-.bld-3s-row {
+.bld-db-row {
   display: grid;
   grid-template-columns: minmax(0, max-content) minmax(0, max-content) auto;
   align-items: start;
   gap: 8px 28px;
   padding: 10px 0;
 }
-.bld-3s-row + .bld-3s-row {
+.bld-db-rows.is-nocomm .bld-db-row {
+  grid-template-columns: minmax(0, max-content) auto;
+}
+.bld-db-row + .bld-db-row {
   border-top: 1px solid color-mix(in srgb, var(--border-default) 60%, transparent);
 }
 
-.bld-3s-alg {
+.bld-db-alg {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -1505,10 +1562,16 @@
   color: var(--muted-foreground);
 }
 /* 头一条是这组里最通用的写法,其余是换手 / 转体的等价写法。 */
-.bld-3s-alg.is-primary { color: var(--foreground); }
-.bld-3s-alg-text { word-break: break-word; }
+.bld-db-alg.is-primary { color: var(--foreground); }
+.bld-db-alg-text { word-break: break-word; }
+.bld-db-alg-video {
+  display: inline-flex;
+  align-items: center;
+  color: var(--faint-foreground);
+}
+.bld-db-alg-video:hover { color: var(--accent); }
 
-.bld-3s-comm {
+.bld-db-comm {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -1517,8 +1580,8 @@
   color: color-mix(in srgb, var(--accent) 78%, var(--foreground));
 }
 
-.bld-3s-users { position: relative; }
-.bld-3s-users-btn {
+.bld-db-users { position: relative; }
+.bld-db-users-btn {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -1529,8 +1592,8 @@
   cursor: pointer;
   padding: 2px 4px;
 }
-.bld-3s-users-btn:hover { color: var(--foreground); }
-.bld-3s-users-list {
+.bld-db-users-btn:hover { color: var(--foreground); }
+.bld-db-users-list {
   list-style: none;
   margin: 6px 0 0;
   padding: 0;
@@ -1539,22 +1602,22 @@
   font-size: 0.8rem;
   color: var(--muted-foreground);
 }
-.bld-3s-users-list li {
+.bld-db-users-list li {
   display: flex;
   align-items: baseline;
   gap: 6px;
   white-space: nowrap;
   padding: 1px 0;
 }
-.bld-3s-users-list a {
+.bld-db-users-list a {
   display: inline-flex;
   align-items: center;
   gap: 3px;
   color: inherit;
   text-decoration: none;
 }
-.bld-3s-users-list a:hover { color: var(--foreground); }
-.bld-3s-users-list em {
+.bld-db-users-list a:hover { color: var(--foreground); }
+.bld-db-users-list em {
   font-style: normal;
   font-family: var(--font-mono, monospace);
   color: var(--faint-foreground);
@@ -1562,10 +1625,10 @@
 
 @media (max-width: 640px) {
   /* 窄屏三列挤不下:换位子挪到公式下面,人数单独一行右对齐。 */
-  .bld-3s-row {
+  .bld-db-row {
     grid-template-columns: minmax(0, 1fr) auto;
   }
-  .bld-3s-comm { grid-column: 1 / -1; }
-  .bld-3s-users { grid-row: 1; grid-column: 2; }
-  .bld-3s-case-code { font-size: 1.3rem; }
+  .bld-db-comm { grid-column: 1 / -1; }
+  .bld-db-users { grid-row: 1; grid-column: 2; }
+  .bld-db-case-code { font-size: 1.3rem; }
 }

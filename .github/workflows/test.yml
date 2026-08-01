@@ -24,9 +24,10 @@ jobs:
       # 否则 bic/cm3/heli/helicv/ctico/sia222 的 "≥200 real cstimer scrambles" 全 0 条变红.
       # 例外:.claude/hooks(项目级 PreToolUse 钩子)—— code-guards-drift.test.ts 断言
       # block-raw-checkbox.ps1 / block-handwritten-trad.ps1 在仓库根存在,不拉进来会误判缺失.
-      # 例外:tools/blddb/data/cornerManmade.json(2.4MB)—— blddb_lookup.test.ts 拿真实库
-      # 验三循环查表的编码契约(代表元唯一 / 全覆盖)。只点名角那套;棱那套 3.5MB,同样的
-      # 不变量角已经能证,CI 上不值这个下载量(本地跑全集时两套都验)。
+      # 例外:tools/blddb/data/*Manmade.json —— blddb_lookup.test.ts 拿真实库验六套 case
+      # 的编码契约(代表元唯一 / 覆盖完整)。角(2.4MB)+ 奇偶 / 翻角 / 翻棱 / 奇偶带翻
+      # (四套合计 ~1MB)都点名;只有棱那套 3.5MB 留给本地 —— 同样的不变量角已经能证,
+      # CI 上不值这个下载量。缺文件的类型测试会自动 skip,不会红。
       # 例外:stats/scramble 下那两个小 JSON —— skip_probability / skewb_odds 拿它们跟站上
       # 已发布的数据对表;整个 stats/scramble 是 235MB(downloads/ 占大头),所以只点名到文件.
       # 点名到文件就必须关 cone 模式(cone 只认目录),模式改成 gitignore 风格、前导 / 锚定仓库根.
@@ -41,6 +42,10 @@ jobs:
             /tools/cstimer-scramble/
             /tools/solver/rust-cross/cross-solver-worker.js
             /tools/blddb/data/cornerManmade.json
+            /tools/blddb/data/parityManmade.json
+            /tools/blddb/data/twistsManmade.json
+            /tools/blddb/data/flipsManmade.json
+            /tools/blddb/data/ltctManmade.json
             /.claude/hooks/
             /stats/scramble/2x2_essential.json
             /stats/scramble/puzzle_distribution.json
