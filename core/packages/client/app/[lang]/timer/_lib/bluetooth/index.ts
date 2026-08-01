@@ -145,6 +145,30 @@ export interface ConnectPickOptions {
   acceptAllDevices?: boolean;
 }
 
+/**
+ * Await `p`, but never longer than `ms`, and never throw.
+ *
+ * For calls that cross into native code. A bridged implementation can return a
+ * promise that never settles — iOS Bluefy's `getAvailability()` has been seen
+ * doing exactly that — and an unbounded await on one hangs the caller with no
+ * error and nothing to report. Returns `undefined` on timeout or rejection;
+ * callers that need the distinction should not be using this.
+ */
+async function withTimeout<T>(p: Promise<T> | undefined, ms: number): Promise<T | undefined> {
+  if (!p) return undefined;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      p,
+      new Promise<undefined>((resolve) => { timer = setTimeout(() => { resolve(undefined); }, ms); }),
+    ]);
+  } catch {
+    return undefined;
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+}
+
 export function pickerOptions(acceptAllDevices: boolean): RequestDeviceOptions {
   const optional = new Set<string>();
   for (const d of DRIVERS) {
@@ -860,13 +884,18 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     cancelPendingReconnect();
 
     // Pre-flight, copied from cstimer (`giikerutil.chkAvail`), which connects on
-    // iOS Bluefy where we do not. It is the one thing it does before the picker
-    // that we did not: awaiting getAvailability() gives a bridged implementation
-    // a chance to bring its native Bluetooth stack up before the first real
-    // call. Best-effort — a `false` answer or a rejection is not treated as
-    // fatal, because Chrome returns false for "no adapter" states the picker
-    // would still handle better than we can.
-    await navigator.bluetooth.getAvailability?.().catch(() => undefined);
+    // iOS Bluefy where we do not: awaiting getAvailability() gives a bridged
+    // implementation a chance to bring its native stack up before the first real
+    // call. Best-effort — a `false` answer is not fatal, because Chrome answers
+    // false for adapter states the picker still handles better than we can.
+    //
+    // **Bounded**, and that is the whole point of the helper. Bluefy has been
+    // observed returning a promise that never settles at all: not resolved, not
+    // rejected, just gone. An unbounded await there wedges the connect button on
+    // "connecting…" forever, with no error to show and nothing to screenshot —
+    // strictly worse than the failure it was added to diagnose. Nothing bridged
+    // to native code gets to block this path.
+    await withTimeout(navigator.bluetooth.getAvailability?.(), 1500);
 
     let device: BluetoothDevice;
     try {
