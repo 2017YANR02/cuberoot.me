@@ -20,8 +20,11 @@ import World from '@/app/[lang]/sim/engine/world';
 import type Cube from '@/app/[lang]/sim/engine/nxn/cube';
 import PyraCube from '@/app/[lang]/sim/engine/pyra/PyraCube';
 import SkewbCube from '@/app/[lang]/sim/engine/skewb/SkewbCube';
+import MegaminxCube from '@/app/[lang]/sim/engine/mega/MegaminxCube';
 import { parsePyraMoves } from '@/app/[lang]/sim/engine/pyra/pyraState';
 import { parseSkewbMoves } from '@/app/[lang]/sim/engine/skewb/skewbState';
+import { parseMegaMoves } from '@/app/[lang]/sim/engine/mega/megaState';
+import { megaEngineMove } from '@/app/[lang]/predict/_lib/puzzles/megaminx';
 import { buildFaceletMap, buildReverseFaceletMap } from '@/components/sim-embed/faceletMap';
 import { ENGINE_SID_MAP } from '@/lib/puzzle-image/puzzle-mask';
 import { getPuzzle, identityPerm, stickerCount, type PredictPuzzle } from '@/app/[lang]/predict/_lib/puzzles';
@@ -49,10 +52,24 @@ const isPermutation = (perm: readonly number[], n: number): boolean =>
  *  `schematicPoly` 无关,任何拼图都能用(枫叶的贴纸没有 schematicPoly)。 */
 interface EngineSticker { key: string; home: THREE.Vector3 }
 
+/**
+ * 贴纸的世界质心。
+ *
+ * 有 `schematicPoly`(理想晶格小面,相邻 cell 精确共享切割面)就用它的顶点均值 ——
+ * 那是**刚体等变**的:转过去的质心和落点那格的质心逐位精确相等。退回包围球心是给
+ * 没记小面的拼图(枫叶)用的:包围盒是**世界轴对齐**的,转一下中心就不再对应,只有
+ * 各格贴纸形状够对称时才碰巧够用(五魔方的 12 种小面各不相同,靠它会当场认不出格)。
+ */
 function centroid(mesh: THREE.Mesh): THREE.Vector3 {
+  const poly = mesh.userData.schematicPoly as number[] | undefined;
+  if (poly && poly.length >= 9) {
+    const c = new THREE.Vector3();
+    const v = new THREE.Vector3();
+    for (let i = 0; i < poly.length; i += 3) c.add(v.set(poly[i], poly[i + 1], poly[i + 2]));
+    return c.multiplyScalar(3 / poly.length).applyMatrix4(mesh.matrixWorld);
+  }
   mesh.geometry.computeBoundingSphere();
-  const c = mesh.geometry.boundingSphere!.center.clone();
-  return c.applyMatrix4(mesh.matrixWorld);
+  return mesh.geometry.boundingSphere!.center.clone().applyMatrix4(mesh.matrixWorld);
 }
 
 /** 转完之后每张贴纸落在哪个「格」(格 = 还原帧质心)。返回 perm[格] = 贴纸下标。 */
@@ -108,7 +125,7 @@ function keyToIndex(puzzle: PredictPuzzle, table: Record<string, string>): (k: s
 
 // ─── 模型自洽 ────────────────────────────────────────────────────────────
 
-const ALL_IDS = ['2', '3', '4', '5', '6', '7', 'pyraminx', 'skewb', 'ivy'] as const;
+const ALL_IDS = ['2', '3', '4', '5', '6', '7', 'megaminx', 'pyraminx', 'skewb', 'ivy'] as const;
 
 describe('/predict 拼图模型 —— 自洽', () => {
   for (const id of ALL_IDS) {
@@ -246,38 +263,91 @@ describe('/predict 金字塔 / 斜转模型 ≡ /sim 引擎', () => {
     }
   });
 
-  // 上面两条锁的是「模型的置换 = 引擎的几何置换」,用的是测试自己按 canonical 下标排的
-  // mesh。题板画色 / 点击命中走的是 `collectStickerMeshes`,两者必须是同一份排法 ——
-  // 差一格,题板就会把高亮画在别的贴纸上,而且盘面看上去照样自洽,肉眼查不出来。
-  for (const id of ['pyraminx', 'skewb'] as const) {
+});
+
+/**
+ * 五魔方是**唯一**题面记号 ≠ 引擎记号的拼图(引擎那套是 cubing.js PG 的面名,下半球
+ * 叫 `C A I BF E`,对着盘面认不出方位)。所以这里比的不只是「同一个 token 两边理解一致」,
+ * 而是 `megaEngineMove` 翻出来的那串**在引擎上转出的贴纸置换,与模型算的逐格相同** ——
+ * 翻错一个面 / 翻反一个手性,答案就和复盘动画对不上,而盘面看上去照样自洽。
+ */
+describe('/predict 五魔方模型 ≡ /sim 引擎', () => {
+  const MEGA_TOKENS = [
+    ...getPuzzle('megaminx').faces.flatMap((f) => [f, `${f}'`]),
+    'U2', "U2'", 'DBR2', "BL2'",
+  ];
+
+  it('每个 token 翻成引擎记号后的贴纸置换与引擎一致', () => {
+    const puzzle = getPuzzle('megaminx');
+    const n = stickerCount(puzzle);
+    const indexOf = keyToIndex(puzzle, ENGINE_SID_MAP.megaminx);
+    for (const token of MEGA_TOKENS) {
+      const cube = new MegaminxCube();
+      const { stickers, meshes } = engineStickers(
+        cube, (m) => (m.userData.stickerKey as string | undefined) ?? null, indexOf, n,
+      );
+      const engineTokens = megaEngineMove(token);
+      expect(engineTokens, `token ${token} 没翻出引擎记号`).not.toBe('');
+      for (const mv of parseMegaMoves(engineTokens)) cube.applyMoveSilent(mv);
+      const enginePerm = permFromGeometry(cube, stickers, indexOf, meshes, 1e-3);
+      expect(puzzle.apply(identityPerm(n), [token]), `token ${token} → ${engineTokens}`).toEqual(enginePerm);
+    }
+  });
+
+  // 十二个面,默认三步题面碰不到某一块的概率过半 —— 不重掷起点的话大半都是「答案就是
+  // 它现在这一格」的送分题(`generatePuzzleChallenge` 里那段重掷就是为这个加的)。
+  it('出的题里目标贴纸真的动了(不是「原地不动」的送分题)', () => {
+    const puzzle = getPuzzle('megaminx');
+    for (const track of trackOptions(puzzle)) {
+      const rnd = seeded(101 + track.length);
+      for (let i = 0; i < 30; i++) {
+        const c = generatePuzzleChallenge({ puzzle, track, source: 'random', moveCount: 3, random: rnd });
+        for (const t of c.targets) {
+          expect(t.answerFacelet, `${track} 第 ${i} 题:${c.moves.join(' ')} 一步没碰到目标`)
+            .not.toBe(t.startFacelet);
+        }
+      }
+    }
+  });
+
+  it('十二个中心一步都不挪 —— 题板拿它们当方位锚', () => {
+    const puzzle = getPuzzle('megaminx');
+    const n = stickerCount(puzzle);
+    const perm = puzzle.apply(identityPerm(n), puzzle.randomMoves(20, seeded(5)));
+    for (const anchor of puzzle.anchors) expect(perm[anchor], `锚 ${anchor}`).toBe(anchor);
+    expect(puzzle.anchors).toHaveLength(12);
+  });
+});
+
+// ─── 题板寻址 / 高亮框 ───────────────────────────────────────────────────
+
+describe('/predict 题板高亮框', () => {
+  for (const id of ['megaminx', 'pyraminx', 'skewb'] as const) {
     it(`${id}:题板的 collectStickerMeshes 与几何验过的那份排法逐格相同`, () => {
       const puzzle = getPuzzle(id);
-      const n = stickerCount(puzzle);
       const indexOf = keyToIndex(puzzle, ENGINE_SID_MAP[id]);
-      const cube: THREE.Object3D = id === 'pyraminx' ? new PyraCube() : new SkewbCube();
+      const cube: THREE.Object3D = newSolidCube(id);
       const { meshes } = engineStickers(
-        cube, (m) => (m.userData.stickerKey as string | undefined) ?? null, indexOf, n,
+        cube, (m) => (m.userData.stickerKey as string | undefined) ?? null, indexOf, stickerCount(puzzle),
       );
       expect(collectStickerMeshes(puzzle, cube)).toEqual(meshes);
     });
-  }
-});
 
-// ─── 题板高亮框 ──────────────────────────────────────────────────────────
-
-describe('/predict 题板高亮框', () => {
-  for (const id of ['pyraminx', 'skewb'] as const) {
     it(`${id}:每张贴纸的框都贴在正面、宽度处处相等`, () => {
-      const cube: THREE.Object3D = id === 'pyraminx' ? new PyraCube() : new SkewbCube();
+      const cube = newSolidCube(id);
       collectStickerMeshes(getPuzzle(id), cube).forEach((mesh, i) => expectEvenFrame(mesh, `${id} 第 ${i} 格`));
     });
   }
 });
 
+function newSolidCube(id: 'megaminx' | 'pyraminx' | 'skewb'): THREE.Object3D {
+  return id === 'pyraminx' ? new PyraCube() : id === 'skewb' ? new SkewbCube() : new MegaminxCube();
+}
+
 // ─── 出题引擎 ────────────────────────────────────────────────────────────
 
 describe('/predict 通用出题引擎', () => {
-  for (const id of ['2', '4', '5', '6', '7', 'pyraminx', 'skewb', 'ivy'] as const) {
+  for (const id of ['2', '4', '5', '6', '7', 'megaminx', 'pyraminx', 'skewb', 'ivy'] as const) {
     const puzzle = getPuzzle(id);
     it(`${id}:每一档追踪对象出的题都自洽`, () => {
       for (const track of trackOptions(puzzle)) {

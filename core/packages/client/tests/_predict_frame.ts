@@ -1,5 +1,5 @@
 /**
- * /predict 题板高亮框的几何断言(金字塔 / 斜转 / 枫叶共用一份)。
+ * /predict 题板高亮框的几何断言(五魔方 / 金字塔 / 斜转 / 枫叶共用一份)。
  *
  * 框是「沿贴纸轮廓等距内缩一圈」的环。会悄悄坏掉的是**框宽**:一旦内缘退回成「按质心缩
  * 一个比例」,框宽就随该方向的半径走 —— 枫叶花瓣又长又尖,尖端糊成一片、透镜那侧几乎没
@@ -8,8 +8,7 @@
 import { expect } from 'vitest';
 import * as THREE from 'three';
 import type { StickerOutline, V2 } from '@/app/[lang]/sim/engine/stickerGeom';
-import { polyArea2 } from '@/app/[lang]/sim/engine/stickerGeom';
-import { attachStickerFrame } from '@/app/[lang]/predict/_components/solidOutline';
+import { attachStickerFrame, frameOutline, frameWidth } from '@/app/[lang]/predict/_components/solidOutline';
 
 /** 点到闭合折线的距离。 */
 function distToOutline(pts: readonly V2[], x: number, y: number): number {
@@ -40,15 +39,15 @@ export function expectEvenFrame(mesh: THREE.Mesh, label: string): void {
   let cap = -Infinity;
   for (let i = 0; i < own.count; i++) cap = Math.max(cap, p.fromBufferAttribute(own, i).dot(n));
 
-  // 框宽 = 0.16 × 内切半径(2×面积 ÷ 周长)—— 与 solidOutline.ts 的 BAND_RATIO 同一个数,
-  // 改它就是改框的粗细,当 review 信号。
-  const pts = spec!.pts;
+  // 框宽与轮廓都从 solidOutline 取(它按最紧那段圆弧钳过标称宽,五魔方靠这个才不糊)——
+  // 这里再抄一份公式,只会在钳生效的拼图上和实现对不上。
+  const pts = frameOutline(spec!.pts);
   let per = 0;
   for (let i = 0; i < pts.length; i++) {
     const a = pts[i], b = pts[(i + 1) % pts.length];
     per += Math.hypot(b[0] - a[0], b[1] - a[1]);
   }
-  const width = 0.16 * (Math.abs(polyArea2(pts as V2[])) / per);
+  const width = frameWidth(pts);
 
   const inv = spec!.matrix.clone().invert();
   const ring = frame!.geometry.getAttribute('position');

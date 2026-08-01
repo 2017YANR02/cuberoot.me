@@ -147,7 +147,7 @@ describe('generateChallenge', () => {
     for (let seed = 1; seed <= 30; seed++) {
       const c = generateChallenge(opts({ kind: 'pair', random: seeded(seed) }));
       // 与自己的 placement 独立重算一遍(题板就是照这份上色的)
-      expect(c.startColors).toBe(toFacelets(applyAlg(solvedCube(), c.placement.join(' '))).toUpperCase());
+      expect(c.startColors.join('')).toBe(toFacelets(applyAlg(solvedCube(), c.placement.join(' '))).toUpperCase());
       expect(c.startColors).toHaveLength(54);
       for (let i = 0; i < 54; i++) {
         if (c.startFacelets[i] !== '.') expect(c.startColors[i]).toBe(c.startFacelets[i]);

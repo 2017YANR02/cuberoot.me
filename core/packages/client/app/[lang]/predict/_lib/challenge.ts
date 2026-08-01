@@ -68,15 +68,15 @@ export interface PredictChallenge {
   placement: string[];
   targets: PredictTarget[];
   /**
-   * 起始盘面 54 格的真实颜色(面字母)。整盘都画出来,只是非目标格压暗
+   * 起始盘面 54 格的真实颜色(面字母,逐格一项)。整盘都画出来,只是非目标格压暗
    * (/sim 阶段遮罩那档 dim:保留各自颜色减半),所以这里必须是全色而非「灰底」。
    */
-  startColors: string;
+  startColors: string[];
   /**
    * 哪几格满色 = 目标块整块的贴纸,其余 '.'(压暗)。
    * **不含中心**:整盘颜色都在了,中心不再需要当参照系,它满色只会跟目标抢眼。
    */
-  startFacelets: string;
+  startFacelets: string[];
 }
 
 export interface PredictOptions {
@@ -126,7 +126,7 @@ function pieceFacelets(state: Cube333, kind: 'corner' | 'edge', piece: number): 
 }
 
 /** 目标块整块的贴纸 → 面字母(= 满色那几格),其余 '.'(压暗)。 */
-function paintPieces(state: Cube333, picks: readonly { kind: 'corner' | 'edge'; piece: number }[]): string {
+function paintPieces(state: Cube333, picks: readonly { kind: 'corner' | 'edge'; piece: number }[]): string[] {
   const out = Array<string>(54).fill('.');
   for (const p of picks) {
     const colors = p.kind === 'corner' ? cornerColorsOf(p.piece) : edgeColorsOf(p.piece);
@@ -134,7 +134,7 @@ function paintPieces(state: Cube333, picks: readonly { kind: 'corner' | 'edge'; 
       out[f] = FACE_LETTERS[colors[k]];
     }
   }
-  return out.join('');
+  return out;
 }
 
 const cornerColorsOf = (piece: number): readonly number[] => CORNER_COLORS[piece];
@@ -331,7 +331,7 @@ export function generateChallenge(opts: PredictOptions): PredictChallenge {
     placement,
     targets,
     // toFacelets 出的是小写(cube333 内部记号),这里统一成 CubeFace 的大写面字母。
-    startColors: toFacelets(start).toUpperCase(),
+    startColors: [...toFacelets(start).toUpperCase()],
     startFacelets: paintPieces(start, picks),
   };
 }
