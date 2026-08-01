@@ -65,6 +65,7 @@ import type { BluetoothCubeStatus } from './types';
 
 export type { BluetoothCubeStatus, CubeBrand } from './types';
 export type { CubeDriver, CubeDriverStartResult, GyroSink, GyroQuaternion, GyroVelocity } from './driver';
+import { isBluefy } from './env';
 export { detectBluetoothEnv, envAdvice, isBluefy } from './env';
 export type { BluetoothEnv, EnvAdvice } from './env';
 export { BluetoothConnectError, CONNECT_STAGE_LABEL, describeError } from './connect_error';
@@ -166,6 +167,88 @@ async function withTimeout<T>(p: Promise<T> | undefined, ms: number): Promise<T 
     return undefined;
   } finally {
     if (timer !== undefined) clearTimeout(timer);
+  }
+}
+
+/** What `getAvailability()` had to say before we opened the picker. */
+export type BluetoothReadiness =
+  /** It said yes. */
+  | 'ready'
+  /** It kept saying no for the whole window. */
+  | 'unavailable'
+  /** No such method, or it never answered. Tells us nothing either way. */
+  | 'unknown';
+
+/**
+ * Wait, briefly, for the adapter to report itself usable.
+ *
+ * iOS Bluefy starts with its native Bluetooth stack asleep: `getAvailability()`
+ * answers false — or hangs outright — and every `requestDevice()` in that state
+ * is refused with a bare `2`, no chooser, no message. Once something has woken
+ * the stack, the exact same calls work. That is the whole of the bug reported
+ * as "连接失败：2": not our filters, not our service UUIDs, not the origin.
+ *
+ * cstimer refuses to even try while this is false (`giikerutil.chkAvail`). We
+ * don't go that far — Chrome answers false for adapter states whose picker still
+ * behaves better than any message we could write — but we do wait a moment, and
+ * we remember the answer so a later failure can be explained instead of dumped
+ * on the user as a number.
+ *
+ * Every individual call is bounded: see {@link withTimeout}. So is the whole
+ * loop, and tightly so away from Bluefy — this runs *before* `requestDevice`,
+ * and Chrome's transient user activation expires about five seconds after the
+ * tap. Spending three of them polling a browser that answered on the first try
+ * would trade a bug we have for a bug we don't. Elsewhere we take one bounded
+ * reading, purely so a later failure can name its cause.
+ */
+async function bluetoothReady(maxMs: number, callMs: number): Promise<BluetoothReadiness> {
+  const bt = navigator.bluetooth;
+  if (typeof bt?.getAvailability !== 'function') return 'unknown';
+  const deadline = Date.now() + maxMs;
+  let answered = false;
+  for (;;) {
+    const v = await withTimeout(bt.getAvailability(), callMs);
+    if (v === true) return 'ready';
+    if (v === false) answered = true;
+    if (Date.now() >= deadline) return answered ? 'unavailable' : 'unknown';
+    await new Promise((r) => setTimeout(r, 300));
+  }
+}
+
+/** How long we'll wait for the adapter, by browser. See {@link bluetoothReady}. */
+export function readyBudget(inBluefy: boolean): { maxMs: number; callMs: number } {
+  // Bluefy: the stack really is asleep and really does wake up, so wait.
+  // Everywhere else: one short reading, then get on with the tap.
+  return inBluefy ? { maxMs: 3000, callMs: 800 } : { maxMs: 0, callMs: 400 };
+}
+
+/**
+ * `requestDevice`, with one retry when the adapter was asleep.
+ *
+ * On Bluefy the first call against a sleeping stack is refused outright, and
+ * that call appears to be what wakes it — a second attempt a moment later gets
+ * a chooser. Retrying costs a second and turns the reported failure into a
+ * connection.
+ *
+ * Deliberately Bluefy-only, and deliberately not on a `ready` adapter. Web
+ * Bluetooth normally spends the user activation on the first call, so a blind
+ * retry elsewhere would come back as NotAllowedError — which this module reads
+ * as "the user dismissed the chooser" and swallows in silence, converting a
+ * real error into nothing at all. Bluefy is known not to enforce activation:
+ * cstimer calls requestDevice from inside a `.then()` and works there.
+ */
+async function requestDeviceWaking(
+  bt: Bluetooth,
+  opts: RequestDeviceOptions,
+  readiness: BluetoothReadiness,
+): Promise<BluetoothDevice> {
+  try {
+    return await bt.requestDevice(opts);
+  } catch (err) {
+    if (readiness === 'ready' || !isBluefy() || isNoDeviceSelected(err)) throw err;
+    await new Promise((r) => setTimeout(r, 1200));
+    await bluetoothReady(2000, 800);
+    return bt.requestDevice(opts);
   }
 }
 
@@ -883,24 +966,16 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     intentionalDisconnectRef.current = false;
     cancelPendingReconnect();
 
-    // Pre-flight, copied from cstimer (`giikerutil.chkAvail`), which connects on
-    // iOS Bluefy where we do not: awaiting getAvailability() gives a bridged
-    // implementation a chance to bring its native stack up before the first real
-    // call. Best-effort — a `false` answer is not fatal, because Chrome answers
-    // false for adapter states the picker still handles better than we can.
-    //
-    // **Bounded**, and that is the whole point of the helper. Bluefy has been
-    // observed returning a promise that never settles at all: not resolved, not
-    // rejected, just gone. An unbounded await there wedges the connect button on
-    // "connecting…" forever, with no error to show and nothing to screenshot —
-    // strictly worse than the failure it was added to diagnose. Nothing bridged
-    // to native code gets to block this path.
-    await withTimeout(navigator.bluetooth.getAvailability?.(), 1500);
+    // Give a sleeping adapter a moment to wake before we ask it for anything.
+    const budget = readyBudget(isBluefy());
+    const readiness = await bluetoothReady(budget.maxMs, budget.callMs);
 
     let device: BluetoothDevice;
     try {
-      device = await navigator.bluetooth.requestDevice(
+      device = await requestDeviceWaking(
+        navigator.bluetooth,
         pickerOptions(pick?.acceptAllDevices === true),
+        readiness,
       );
     } catch (err) {
       // User cancelled the picker, denied permission, or no device found.
@@ -912,6 +987,12 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       // values, so an instanceof test can never hold there and a dismissed
       // chooser would surface as a connection failure. See connect_error.ts.
       if (isNoDeviceSelected(err)) return;
+      // A refusal while the adapter never reported itself ready is not a
+      // mystery, so don't present it as one: the raw value here is Bluefy's
+      // opaque `2`, and a user shown that number has nothing to act on. Say
+      // what actually happened and let the modal give the Bluefy-specific
+      // advice next to it.
+      if (readiness !== 'ready') throw new BluetoothConnectError('adapter-asleep', err);
       throw atStage('picker', err);
     }
 
