@@ -2,6 +2,7 @@
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import { flattenAlg } from '@cuberoot/shared/alg-notation';
 import { equivalentPyraScramble } from './pyraminx-solver';
+import { allowedPostAuf, oriCornersOnly, type OrientationSel } from './alg_ll_orientation';
 import { tr } from '@/i18n/tr';
 
 const AUF = ['', 'U', 'U2', "U'"];
@@ -107,6 +108,14 @@ export function availableKinds(c: AlgCase): ScrambleKind[] {
   return out;
 }
 
+/**
+ * 这个 case 的默认打乱(= `setup`,没有就取首条公式的逆)。朝向分组要拿它当代表 ——
+ * 与库里那张 case 图同一条串,算出来的朝向和图上看到的一致。
+ */
+export function caseBaseAlg(c: AlgCase): string {
+  return baseForKind(c, 'inv') ?? '';
+}
+
 /** 选定类型下的打乱本体(没有就 null —— 调用方退回 `inv`) */
 function baseForKind(c: AlgCase, kind: ScrambleKind): string | null {
   if (kind === 'coep') return c.meta?.coep?.scramble ?? null;
@@ -134,11 +143,39 @@ export async function cstimerStyleScramble(invScramble: string): Promise<string 
   }
 }
 
+/**
+ * 收尾 AUF 的候选。默认四选一;用户在训练设置里挑了朝向(「黄条只朝上」之类),就只留
+ * 摆得出那个朝向的那些 —— 相对的是 `pre + base` 的实际状态,起手 AUF 挪的相位一并算进去。
+ *
+ * 朝向偏好压过 post-AUF 开关:关掉 post-AUF 是「别随机换朝向」,钉一个朝向同样是这个诉求
+ * 的一种(而且更强)。两个都设了还让开关赢的话,点了图没反应 —— 那才是坏的。
+ * 都没设就照旧:关 = 打乱原样呈现,朝向恒等于库里那张图;开 = 四选一。
+ */
+function postAufPool(
+  c: AlgCase, pre: string, base: string, size: number, opts?: TrainerScrambleOpts,
+): readonly string[] {
+  const corners = oriCornersOnly(size === 2 ? '2x2' : '3x3', c.srcSet ?? opts?.orientationSet);
+  const pinned = allowedPostAuf(
+    [pre, base].filter(Boolean).join(' '), size, opts?.orientation, corners,
+  );
+  if (pinned) return pinned;
+  return opts?.postAuf === false ? [''] : AUF;
+}
+
+export interface TrainerScrambleOpts {
+  preAuf?: boolean;
+  postAuf?: boolean;
+  /** 顶层朝向偏好(朝向组键 → 允许的相位),见 `lib/alg_ll_orientation`。 */
+  orientation?: OrientationSel;
+  /** 本场的 set slug —— 判据按 set 走(CMLL 只看角块)。合练时以 case 自带的 `srcSet` 为准。 */
+  orientationSet?: string | null;
+}
+
 export function generateScramble(
   c: AlgCase,
   puzzle: AlgPuzzle,
   kind: ScrambleKind = 'inv',
-  opts?: { preAuf?: boolean; postAuf?: boolean },
+  opts?: TrainerScrambleOpts,
 ): string {
   // 这个 case 没有选定的那种打乱 → 退回 inv(整个 set 里只有一部分 case 有)
   const base = baseForKind(c, kind) ?? baseForKind(c, 'inv');
@@ -162,12 +199,12 @@ export function generateScramble(
     // Z4×Z4 轨道,`tests/lsll_trainer_set` 逐个验过 16 种接法),而训练器各处的图都是从
     // **实际打乱**渲染的,跟着一起转,不会出现「图与题面对不上」。转出来的相位正是真解里要先
     // 补一个 AUF 才能开搞的样子,该练。想要恒定相位就把这个开关关掉。
-    const post = opts?.postAuf === false ? '' : pick(AUF);
+    const post = pick(postAufPool(c, pre, base, 3, opts));
     return joinWithAufMerge(pre, base.split(/\s+/).filter(Boolean), post);
   }
 
   if (puzzle === '2x2') {
-    const post = opts?.postAuf === false ? '' : pick(AUF);
+    const post = pick(postAufPool(c, pre, base, 2, opts));
     return joinWithAufMerge(pre, base.split(/\s+/).filter(Boolean), post);
   }
 

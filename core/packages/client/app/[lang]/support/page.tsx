@@ -273,11 +273,18 @@ export default function SupportPage() {
             {tr({ zh: '支持本站', en: 'Support this site'
           })}
           </button>
-          <AppLink href="/membership" className="support-member-link">
-            <Crown size={14} />
-            {tr({ zh: '成为会员', en: 'Become a member'
-            })}
-          </AppLink>
+          {/* 会员功能未完工:入口暂时只对 admin 可见,旁边小字自提醒 */}
+          {admin && (
+            <span className="support-member-entry">
+              <AppLink href="/membership" className="support-member-link">
+                <Crown size={14} />
+                {tr({ zh: '成为会员', en: 'Become a member'
+                })}
+              </AppLink>
+              <span className="support-admin-note">{tr({ zh: '仅管理员可见', en: 'Admin only'
+              })}</span>
+            </span>
+          )}
         </div>
       </header>
 

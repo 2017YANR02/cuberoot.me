@@ -36,6 +36,7 @@ import MemoryTrainer from '@/app/[lang]/alg/_trainer/MemoryTrainer';
 import SetProgressStrip from '@/app/[lang]/alg/_trainer/SetProgressStrip';
 import MixSetPicker from '@/app/[lang]/alg/_trainer/MixSetPicker';
 import SmartCubeRow from '@/app/[lang]/alg/_trainer/SmartCubeRow';
+import OrientationPicker from '@/app/[lang]/alg/_trainer/OrientationPicker';
 import { useTrainerCube } from '@/app/[lang]/alg/_trainer/useTrainerCube';
 import { puzzleHasSmartCube } from '@/app/[lang]/alg/_trainer/smartcube';
 import { resolveAlgPuzzle } from '@/app/[lang]/alg/_trainer/events';
@@ -124,6 +125,12 @@ export default function TrainerRunClient() {
   const cases = useTrainerStore(s => s.cases);
   const selected = useTrainerStore(s => s.selected);
   const scope = useTrainerStore(s => s.scope);
+  // 朝向分组只看本场真会出的 case(勾选 ∩ 范围)—— 没勾的形状不该出现在选项里。
+  // 摆在这儿(而不是用到它的地方)是因为下面有几处提前 return,hook 不能落在它们后面。
+  const poolCases = useMemo(() => {
+    const keys = new Set(trainerPool(selected, scope));
+    return cases.filter(c => keys.has(caseKey(c)));
+  }, [cases, selected, scope]);
   const solves = useTrainerStore(s => s.solves);
   const currentName = useTrainerStore(s => s.currentName);
   const currentKey = useTrainerStore(s => s.currentKey);
@@ -148,6 +155,9 @@ export default function TrainerRunClient() {
   const setPreAuf = useTrainerStore(s => s.setPreAuf);
   const postAuf = useTrainerStore(s => s.postAuf);
   const setPostAuf = useTrainerStore(s => s.setPostAuf);
+  const oriSel = useTrainerStore(s => s.oriSel);
+  const setOriSel = useTrainerStore(s => s.setOriSel);
+  const resetOriSel = useTrainerStore(s => s.resetOriSel);
   const timing = useTrainerStore(s => s.timing);
   const setTiming = useTrainerStore(s => s.setTiming);
   const mode = useTrainerStore(s => s.mode);
@@ -165,8 +175,6 @@ export default function TrainerRunClient() {
   const setSrsFillExtra = useTrainerStore(s => s.setSrsFillExtra);
   const srsAutoMark = useTrainerStore(s => s.srsAutoMark);
   const setSrsAutoMark = useTrainerStore(s => s.setSrsAutoMark);
-  const srsShowPlayer = useTrainerStore(s => s.srsShowPlayer);
-  const setSrsShowPlayer = useTrainerStore(s => s.setSrsShowPlayer);
   const srsFromSolves = useTrainerStore(s => s.srsFromSolves);
   const setSrsFromSolves = useTrainerStore(s => s.setSrsFromSolves);
   const room = useTrainerStore(s => s.room);
@@ -183,8 +191,6 @@ export default function TrainerRunClient() {
   const setScrambleFont = useTrainerStore(s => s.setScrambleFont);
   const showPrevCard = useTrainerStore(s => s.showPrevCard);
   const setShowPrevCard = useTrainerStore(s => s.setShowPrevCard);
-  const showNextCard = useTrainerStore(s => s.showNextCard);
-  const setShowNextCard = useTrainerStore(s => s.setShowNextCard);
   const showStats = useTrainerStore(s => s.showStats);
   const setShowStats = useTrainerStore(s => s.setShowStats);
   const showStageThumb = useTrainerStore(s => s.showStageThumb);
@@ -558,7 +564,7 @@ export default function TrainerRunClient() {
   const { wheelRef } = useGestureWheel({
     surfaceRef: stageRef,
     active: stageMounted,
-    // 「下一个」等按钮在计时面板内 — 按它们不应触发按压计时(否则点了直接开始计时)。
+    // 计时面板内也有按钮(标记条等)— 按它们不应触发按压计时(否则点了直接开始计时)。
     // 设置面板开着时整个 stage 也一并跳过:面板外那一下只该关面板,不该切打乱 / 起表。
     ignoreTarget: (t) => optsOpenRef.current || shouldIgnoreTimerTarget(t),
     canGesture: () => {
@@ -886,15 +892,16 @@ export default function TrainerRunClient() {
   // 与智能魔方那边同一份(它在提前 return 之前就要算),别各算一次免得漂
   const currentCase = cubeCase;
 
-  // 「下一个」卡片(预览):← 回看过就是历史里 idx+1 那条,否则是预抽的 peek。
+  // 屏上的下一条(三条一屏的第 2 条 / 单条模式下的离屏预取目标):
+  // 回看过就是历史里 idx+1 那条,否则是预抽的 peek。
   const nextEntry = (hist.idx >= 0 && hist.idx < hist.list.length - 1)
     ? hist.list[hist.idx + 1]
     : peek;
   const nextCase = nextEntry ? findCaseByKey(cases, nextEntry.key) ?? null : null;
   const nextScrambleStr = nextEntry?.scramble ?? null;
 
-  // 「下一个」卡片换题后将显示的那格(再往后一格):在队尾 = 二级预抽 peek2,队尾前一格 = peek,
-  // 更靠前 = 历史里 idx+2 那条(已看过、已缓存)。据此提前一格离屏预取,右卡换图也秒出。
+  // 再往后一格(三条一屏的第 3 条):在队尾 = 二级预抽 peek2,队尾前一格 = peek,
+  // 更靠前 = 历史里 idx+2 那条(已看过、已缓存)。
   const next2Entry =
     (hist.idx >= 0 && hist.idx + 2 <= hist.list.length - 1) ? hist.list[hist.idx + 2]
     : (hist.idx >= 0 && hist.idx + 1 <= hist.list.length - 1) ? peek
@@ -905,9 +912,9 @@ export default function TrainerRunClient() {
   // store 在房间里也维护 peek/peek2(靠 roomAdvance 预领),第 2、3 条照常从预抽取。
   const multi = multiScramble && !timing;
 
-  // 「上一个」卡片(回看 + 标记):默认 = 打乱历史里的上一条,与「下一个」= 下一条对称 ——
-  // 换题(计时停表 / 空格 / →)时光标一起走,两张卡片同步更新(计时停表后的上一条正好是
-  // 你刚做完那把)。在统计里点选某条成绩(pinned)则临时切到那把,标题显示 #N,换题自动解除。
+  // 「上一个」卡片(回看 + 标记):默认 = 打乱历史里的上一条 —— 换题(计时停表 / 空格 / →)
+  // 时光标一起走,卡片跟着更新(计时停表后的上一条正好是你刚做完那把)。在统计里点选某条
+  // 成绩(pinned)则临时切到那把,标题显示 #N,换题自动解除。
   const pinnedSolve = observingPinned ? (solves[observingIdx] ?? null) : null;
   const prevHistEntry = hist.idx > 0 ? hist.list[hist.idx - 1] : null;
   const prevKey = pinnedSolve?.caseKey ?? prevHistEntry?.key ?? null;
@@ -940,9 +947,8 @@ export default function TrainerRunClient() {
   // 两者用同一 showStats 偏好,互补出现;都开着侧栏才铺。
   const statsVisible = timing && showStats;
   const historyVisible = !timing && showStats;
-  // 三块各自成列:上一个在左、下一个(+统计)在右、历史铺满底部。哪块空了哪列就不占宽。
+  // 三块各自成列:上一个在左、统计在右、历史铺满底部。哪块空了哪列就不占宽。
   const leftShown = showPrevCard;
-  const rightShown = (showNextCard && !multi) || statsVisible;
 
   // AUF 开关只对「顶层 case + U 可作 AUF」的场景有意义(F2L 类打乱前加 U 会换 case)
   // 合练:任一成员是 F2L 类就整场关掉(给 F2L 打乱前加 U 会换成另一个 case)
@@ -952,6 +958,8 @@ export default function TrainerRunClient() {
   // 跟着一起转,而收尾 AUF 恰恰是 LSLL 真解里要先补的那一下。
   const aufSupported = (puzzle === '3x3' || puzzle === '2x2') && !isMemo
     && !cases.some(c => c.sticker.kind === 'f2l');
+  /** 有没有钉过朝向 —— 空数组的组在 store 里是删掉而不是留空的,所以数键就够 */
+  const oriPinned = Object.keys(oriSel).length > 0;
   // 真实概率只有带 meta 的 LL set(zbll / pll / ell / 1lll)有数学定义
   // 真实概率按「一套 LL set 内部的 AUF 轨道」定义,跨集混起来没有公认的相对权重 —— 合练不给
   const probSupported = puzzle === '3x3' && !isMix && !!ALG_SET_UNIVERSE[setSlug];
@@ -973,6 +981,10 @@ export default function TrainerRunClient() {
         {/* 训练选项全收进齿轮弹出面板,齿轮居中吸在页面正上方
             (data-no-timer:面板空白不触发按压计时) */}
         <div className="trainer-opts trainer-opts--top" data-no-timer ref={optsRef}>
+          {/* 进度总览贴在齿轮左侧(同复习进度的做法:absolute 脱流,齿轮仍精确居中) */}
+          <Link href="/alg/progress" className="trainer-progress-link" prefetch={false}>
+            {tr({ zh: '进度总览', en: 'All progress' })}
+          </Link>
           <button
             type="button"
             className="trainer-opts-gear"
@@ -1004,7 +1016,7 @@ export default function TrainerRunClient() {
               {addableSets.length > 0 && (
                 <>
                   <div className="trainer-opts-row">
-                    {/* 不挂标题:一行里摆着本场的集名 chip 和「+ 加一套」,这行是干什么的一看就知道。 */}
+                    {/* 不挂标题:一行里摆着本场的集名 chip 和一个「+」下拉,这行是干什么的一看就知道。 */}
                     {sessionSets.map(slug => (
                       <span key={slug} className="trainer-mix-chip">
                         {setLabel(puzzle, slug)}
@@ -1030,7 +1042,9 @@ export default function TrainerRunClient() {
                       }}
                       aria-label={tr({ zh: '加一套公式集', en: 'Add a set' })}
                     >
-                      <option value="">{tr({ zh: '+ 加一套', en: '+ Add a set' })}</option>
+                      {/* 只留一个「+」:摆在集名 chip 后面,是干什么的一目了然,
+                          文字进 aria-label(读屏仍读得到「加一套公式集」)。 */}
+                      <option value="">+</option>
                       {addableSets.map(s => <option key={s.slug} value={s.slug}>{tr(s)}</option>)}
                     </select>
                   </div>
@@ -1156,11 +1170,6 @@ export default function TrainerRunClient() {
                       onChange={setSrsAutoMark}
                       label={tr({ zh: '自动标记', en: 'Auto marks' })}
                     />
-                    <BoolToggle
-                      value={srsShowPlayer}
-                      onChange={setSrsShowPlayer}
-                      label={tr({ zh: '总是演示', en: 'Always animate' })}
-                    />
                   </div>
                   <div className="trainer-opts-hint">
                     {tr({
@@ -1284,10 +1293,28 @@ export default function TrainerRunClient() {
                   </div>
                 </>
               )}
+              {/* 朝向摆在 AUF 开关上面:它是这三个里最具体的一个(直接指着图说「就出这个方向」),
+                  开关是它的粗档。post-AUF 又不能当朝向的前置条件 —— 开关默认关着,藏在后面
+                  等于没有这个功能。 */}
+              {aufSupported && (
+                <OrientationPicker
+                  puzzle={puzzle}
+                  setSlug={setSlug}
+                  cases={poolCases}
+                  postAuf={postAuf}
+                  sel={oriSel}
+                  onChange={setOriSel}
+                  onReset={resetOriSel}
+                />
+              )}
               {aufSupported && (
                 <div className="trainer-opts-row">
                   <BoolToggle value={preAuf} onChange={setPreAuf} label="pre-AUF" />
-                  <BoolToggle value={postAuf} onChange={setPostAuf} label="post-AUF" />
+                  {/* 钉了朝向就没有 post-AUF 这一说了(store 里同时关掉):留一个永远得让位的
+                      开关只会让人以为随机还在跑。pre-AUF 不受影响,它改的是收尾不是朝向。 */}
+                  {!oriPinned && (
+                    <BoolToggle value={postAuf} onChange={setPostAuf} label="post-AUF" />
+                  )}
                 </div>
               )}
               {/* 极简:侧栏两块各自可隐藏(issue #30)。统计=成绩用时列表,不计时根本
@@ -1336,21 +1363,13 @@ export default function TrainerRunClient() {
                   </div>
                 </>
               )}
-              {/* 三条一屏时「下一个」已经在主屏第 2 条里,那张卡片不出 —— 开关一起隐掉,
-                  不留一个按了没反应的死开关;「上一个」则整屏回看,改叫「上三个」。 */}
+              {/* 三条一屏时「上一个」整屏回看,改叫「上三个」。 */}
               <div className="trainer-opts-row">
                 <BoolToggle
                   value={showPrevCard}
                   onChange={setShowPrevCard}
                   label={multi ? tr({ zh: '上三个', en: 'Previous 3' }) : tr({ zh: '上一个', en: 'Previous' })}
                 />
-                {!multi && (
-                  <BoolToggle
-                    value={showNextCard}
-                    onChange={setShowNextCard}
-                    label={tr({ zh: '下一个', en: 'Next' })}
-                  />
-                )}
               </div>
               {timing && (
                 <div className="trainer-opts-row">
@@ -1414,6 +1433,18 @@ export default function TrainerRunClient() {
         selectHref={selectHref}
         onStartMemo={() => setMode('memo')}
         compact
+        // 「到期 / 今日已复习 / 连续天」是记忆调度(SRS)的账,run 页三个模式都不摆:
+        //   · 训练 = 随机抽题,不排期,那几个数根本不动;
+        //   · 复习 = recap(选中的 case 各出一遍),与记忆排期毫无关系 —— 摆在这里等于
+        //     暗示两者相关,「2 待复习」和记忆模式本场的「到期 1」还对不上,只会让人费解;
+        //   · 记忆 = 自己那条本场进度(0/34 + 到期/新学/加练)说得更准。
+        // 想看全套排期账:侧栏「进度总览」/ select 页那条 strip 仍然给。
+        showSrs={false}
+        // 记忆模式自己有一条「本场进度」横条,这里的三段条(整套学习进度)让位 ——
+        // 两条一模一样的横条讲两件事,页面上只留一条,数字仍照常出。
+        showBar={mode !== 'memo'}
+        // 「进度总览」挪到齿轮旁边(见 topbar)
+        showAllLink={false}
       />
 
       {isMemo ? (
@@ -1424,24 +1455,18 @@ export default function TrainerRunClient() {
           pool={memoPool}
           scrambleKind={scrambleKind}
           onExit={() => setMode('recap')}
+          // 点大图开详情,与训练 / 复习那边的卡片同一个入口(同一份弹窗)
+          onShowCase={setMetaCase}
+          paused={overlayOpen}
         />
       ) : (
-      <div className={`trainer-run${leftShown ? ' has-left' : ''}${rightShown ? ' has-right' : ''}`}>
+      <div className={`trainer-run${leftShown ? ' has-left' : ''}${statsVisible ? ' has-right' : ''}`}>
         <div className="trainer-stage" ref={stageRef}>
           {/* head = 图以上的一切(按钮 / 计时数字),body = 图及其以下(图、打乱公式)。
               两段配合 .trainer-run 的 subgrid:主屏与左右两张卡片共用同一套行,
               三张图的顶边落在同一条线上,不靠数魔法像素。
               打乱公式一律排在图**下方** —— 主屏、两侧卡片、三条一屏、记忆模式同一个次序。 */}
           <div className="trainer-stage-head">
-          {/* 正在做这题的标记条,贴主屏右上角 —— 与左卡片标题行那条落在同一行(共用 subgrid)。
-              只出两个图标,不带 case 名:训练模式下答案还不能露。数字键 1、2、4 打的仍是
-              「上一个」那把(pillCase),这里是手点当前这把,两个目标各归各的。
-              三条一屏时屏上有三题,一条标记条指谁都不对 —— 不出。 */}
-          {!multi && currentCase && (
-            <div className="trainer-stage-marks">
-              <CaseMarkBar k={caseKey(currentCase)} />
-            </div>
-          )}
           {/* 三条一屏:当前 + 屏上第 2、3 条(队尾时 = 预抽的 peek / peek2,回看过则是历史里
               后两条),拧完三条再点一次切下一屏。图与打乱交错成六行,每条打乱紧跟自己那张图。
               图走 local 渲染:三张与三条文字在同一次 commit 出现,不再各自等自己的网络往返。 */}
@@ -1482,20 +1507,6 @@ export default function TrainerRunClient() {
                 ))}
             </div>
           )}
-          {/* 不计时模式下点哪都是「下一个」,按钮多余,整行都不出(空 div 也会占竖向余量) */}
-          {timing && (
-            <div className="trainer-stage-actions">
-              <button
-                className="trainer-stage-btn"
-                onClick={onNextCase}
-                disabled={timerState !== TimerState.NOT_RUNNING}
-              >
-                {tr({ zh: '下一个', en: 'Next'
-              })}
-              </button>
-            </div>
-          )}
-
           {timing && (
             <TimerDisplay
               state={timerState}
@@ -1507,20 +1518,27 @@ export default function TrainerRunClient() {
           </div>
 
           <div className="trainer-stage-body">
-          {/* 当前这道题的 case 图:看得见正在练的这一把。
+          {/* 当前这道题的 case 图 + 一左一右夹着它的标记条(与「上一个」卡片同一个排法):
               图从「实际打乱」渲染(含 pre/post-AUF),与下方打乱公式朝向一致。
-              三条一屏时图已经跟在各自那条打乱上面(见上),这里不再重复出。 */}
-          {/* 打乱还没算出来时(虚拟集)不出图 —— 空 setup 会渲染成一个已还原的方块,那是假的 */}
-          {!multi && showStageThumb && currentCase && currentScramble && (
-            <div className="trainer-stage-thumb">
-              <CaseThumb
-                puzzle={puzzle}
-                set={setSlug}
-                sticker={currentCase.sticker}
-                alg={currentCase.algs.flat()[0]?.alg ?? currentCase.standard ?? ''}
-                setup={currentScramble}
-                size={140}
-              />
+              标记条只出两个图标、不带 case 名:训练模式下答案还不能露。数字键 1、2、4 打的仍是
+              「上一个」那把(pillCase),这里是手点当前这把,两个目标各归各的。
+              三条一屏时图与标记都跟在各自那条打乱上面(见上),这里不再重复出。
+              打乱还没算出来时(虚拟集)不出图 —— 空 setup 会渲染成一个已还原的方块,那是假的。 */}
+          {!multi && currentCase && (
+            <div className="trainer-figure">
+              <CaseMarkBar k={caseKey(currentCase)} />
+              {showStageThumb && currentScramble && (
+                <div className="trainer-stage-thumb">
+                  <CaseThumb
+                    puzzle={puzzle}
+                    set={setSlug}
+                    sticker={currentCase.sticker}
+                    alg={currentCase.algs.flat()[0]?.alg ?? currentCase.standard ?? ''}
+                    setup={currentScramble}
+                    size={140}
+                  />
+                </div>
+              )}
             </div>
           )}
           {/* 打乱公式紧跟在图下方(图关掉时它就是这一段的头一行) */}
@@ -1532,32 +1550,19 @@ export default function TrainerRunClient() {
               placeholder={virtual ? tr({ zh: '打乱生成中…', en: 'Generating scramble…' }) : undefined}
             />
           )}
-          {/* 离屏预取即将要显示的图(全部 size=140,与左栏/卡片同一 URL → 共用浏览器缓存):
-              ① next(换题后 = 左栏当前图 / 也是「上一个」卡片的图);② next2(换题后 =「下一个」
-              卡片的图,靠二级预抽 peek2 提前一格备好)。换题时三处都命中缓存秒出,不等网络往返
-              (打乱公式是本地状态所以本就瞬间出)。「打乱图」关时三处卡片都不出图,无需预取。 */}
-          {showStageThumb && (
+          {/* 离屏预取下一题的图(size=140,与主屏/左卡同一 URL → 共用浏览器缓存):换题后它就是
+              主屏当前图,也是「上一个」卡片的图,届时命中缓存秒出,不等网络往返(打乱公式是本地
+              状态所以本就瞬间出)。「打乱图」关时哪都不出图,无需预取。 */}
+          {showStageThumb && nextCase && nextScrambleStr && (
             <div className="trainer-thumb-prefetch" aria-hidden>
-              {nextCase && nextScrambleStr && (
-                <CaseThumb
-                  puzzle={puzzle}
-                  set={setSlug}
-                  sticker={nextCase.sticker}
-                  alg={nextCase.algs.flat()[0]?.alg ?? nextCase.standard ?? ''}
-                  setup={nextScrambleStr}
-                  size={140}
-                />
-              )}
-              {next2Case && next2Entry?.scramble && (
-                <CaseThumb
-                  puzzle={puzzle}
-                  set={setSlug}
-                  sticker={next2Case.sticker}
-                  alg={next2Case.algs.flat()[0]?.alg ?? next2Case.standard ?? ''}
-                  setup={next2Entry.scramble}
-                  size={140}
-                />
-              )}
+              <CaseThumb
+                puzzle={puzzle}
+                set={setSlug}
+                sticker={nextCase.sticker}
+                alg={nextCase.algs.flat()[0]?.alg ?? nextCase.standard ?? ''}
+                setup={nextScrambleStr}
+                size={140}
+              />
             </div>
           )}
 
@@ -1601,10 +1606,10 @@ export default function TrainerRunClient() {
                   c={c}
                   isZh={isZh}
                   showThumb={showStageThumb}
-                  onShowCase={c.meta ? (cc) => setMetaCase(cc) : undefined}
-                  caseHref={virtual?.caseHref}
+                  onShowCase={setMetaCase}
                   header={i === 0 ? tr({ zh: '上三个', en: 'Previous 3' }) : undefined}
                   markSlot={<CaseMarkBar k={caseKey(c)} />}
+                  font={scrambleFont}
                   // 三张一起换,一起出:走本地渲染。三个 <img> 各等各的往返,
                   // 落地有先有后 —— 而且这三张刚在主屏上就是本地渲染的,浏览器缓存里没有它们。
                   localThumb
@@ -1619,45 +1624,28 @@ export default function TrainerRunClient() {
                 c={prevCase}
                 isZh={isZh}
                 showThumb={showStageThumb}
-                onShowCase={prevCase.meta ? (c) => setMetaCase(c) : undefined}
-                caseHref={virtual?.caseHref}
+                onShowCase={setMetaCase}
                 header={prevHeader}
                 markSlot={<CaseMarkBar k={caseKey(prevCase)} />}
+                font={scrambleFont}
               />
             )}
           </aside>
         )}
 
-        {rightShown && (
+        {statsVisible && (
           <aside className="trainer-sidebar is-right">
-            {/* 下一个:预览待做那把(图+名+打乱),不带标记。
-                三条一屏时它已经在主屏第 2 条里,不再重复出一张卡片。 */}
-            {showNextCard && !multi && (
-              <SolveCard
-                puzzle={puzzle}
-                set={setSlug}
-                scramble={shownScramble(nextScrambleStr)}
-                c={nextCase}
-                isZh={isZh}
-                showThumb={showStageThumb}
-                onShowCase={nextCase?.meta ? (c) => setMetaCase(c) : undefined}
-                caseHref={virtual?.caseHref}
-                header={tr({ zh: '下一个', en: 'Next up' })}
-              />
-            )}
-            {statsVisible && (
-              <StatsList
-                solves={solves}
-                observingIdx={observingIdx}
-                isZh={isZh}
-                onPick={pinObserving}
-                onClear={() => {
-                  if (confirm(tr({ zh: '清空所有成绩?', en: 'Clear all solves?'
-                })))
-                    clearSolves();
-                }}
-              />
-            )}
+            <StatsList
+              solves={solves}
+              observingIdx={observingIdx}
+              isZh={isZh}
+              onPick={pinObserving}
+              onClear={() => {
+                if (confirm(tr({ zh: '清空所有成绩?', en: 'Clear all solves?'
+              })))
+                  clearSolves();
+              }}
+            />
           </aside>
         )}
 
@@ -1680,12 +1668,15 @@ export default function TrainerRunClient() {
 
       <GestureWheel ref={wheelRef} isZh={isZh} labels={wheelLabels} />
 
-      {metaCase?.meta && (
+      {/* 有没有 meta 都弹:没有元数据的集(虚拟集等)弹窗里仍有图、全部公式、打乱,
+          外链换成该集自己的详情页地址(算不出库内地址)。 */}
+      {metaCase && (
         <AlgCaseMetaModal
           caseObj={metaCase}
           puzzle={puzzle}
           set={setSlug}
           byNo={byNo}
+          href={virtual?.caseHref ? virtual.caseHref(metaCase) : undefined}
           onClose={() => setMetaCase(null)}
           onJump={(c) => setMetaCase(c)}
         />

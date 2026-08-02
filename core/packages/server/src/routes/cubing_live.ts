@@ -677,7 +677,9 @@ const ROUND_NAME: Record<string, string> = {
  *  非阻塞:无 records 缓存时全部跳过(首请求秒出,fallback 到原行为). */
 async function enrichRecordTags(data: CompData): Promise<void> {
   const dayBest = await buildDayBest(data);
-  const snapshot = enrichComp(data.users, data.resultsByRound, data.events, dayBest);
+  // 比赛日:用来判定「上游 tag 已被本场之前的纪录证伪」(refutesTag).拿不到就不动上游 tag.
+  const compDate = ymd((await getCompDates(data.slug)).start);
+  const snapshot = enrichComp(data.users, data.resultsByRound, data.events, dayBest, compDate);
   if (snapshot) data.currentRecords = snapshot;
 }
 

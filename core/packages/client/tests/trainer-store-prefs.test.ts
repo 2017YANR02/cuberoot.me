@@ -1,0 +1,69 @@
+import { describe, it, expect, beforeEach } from 'vitest';
+
+// 回归:开关之间的联动契约。
+// 「三条一屏」开启 ⇒ 自动关掉「打乱图」(一屏摆三张图放不下,手机尤甚);
+// 关回单条不自动开回来,开着三条时手动勾回图也不许被覆盖。
+
+function makeLocalStorage() {
+  const map = new Map<string, string>();
+  return {
+    get length() { return map.size; },
+    key(i: number) { return [...map.keys()][i] ?? null; },
+    getItem(k: string) { return map.has(k) ? (map.get(k) as string) : null; },
+    setItem(k: string, v: string) { map.set(k, v); },
+    removeItem(k: string) { map.delete(k); },
+    clear() { map.clear(); },
+  };
+}
+
+const g = globalThis as unknown as { window?: unknown; localStorage?: ReturnType<typeof makeLocalStorage> };
+g.window = { addEventListener() {} };
+g.localStorage = makeLocalStorage();
+
+const { useTrainerStore } = await import('@/lib/trainer-store');
+
+const st = () => useTrainerStore.getState();
+
+describe('trainer-store 开关联动', () => {
+  beforeEach(() => {
+    g.localStorage = makeLocalStorage();
+    st().setMultiScramble(false);
+    st().setShowStageThumb(true);
+  });
+
+  it('开三条一屏时自动取消打乱图', () => {
+    expect(st().showStageThumb).toBe(true);
+    st().setMultiScramble(true);
+    expect(st().multiScramble).toBe(true);
+    expect(st().showStageThumb).toBe(false);
+  });
+
+  it('关回单条不自动把打乱图开回来', () => {
+    st().setMultiScramble(true);
+    st().setMultiScramble(false);
+    expect(st().showStageThumb).toBe(false);
+  });
+
+  it('开着三条时手动勾回打乱图,不被覆盖', () => {
+    st().setMultiScramble(true);
+    st().setShowStageThumb(true);
+    expect(st().showStageThumb).toBe(true);
+    expect(st().multiScramble).toBe(true);
+  });
+
+  // 钉朝向 = 「这个形状只出这个方向」,post-AUF = 「随机换方向」,同时开着自相矛盾。
+  // UI 把开关一并收起来,所以状态也必须跟着关 —— 否则收起来的是个还在生效的开关。
+  it('钉了朝向就自动关掉 post-AUF', () => {
+    st().setPostAuf(true);
+    st().setOriSel('2d6', [1]);
+    expect(st().postAuf).toBe(false);
+  });
+
+  it('全放开后 post-AUF 不自动开回来(同「三条 → 打乱图」那条)', () => {
+    st().setPostAuf(true);
+    st().setOriSel('2d6', [1]);
+    st().resetOriSel();
+    expect(st().oriSel).toEqual({});
+    expect(st().postAuf).toBe(false);
+  });
+});

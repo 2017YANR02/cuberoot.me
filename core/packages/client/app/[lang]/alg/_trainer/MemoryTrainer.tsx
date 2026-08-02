@@ -14,15 +14,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from '@/components/AppLink';
 import {
-  Check, Copy, Eye, Undo2, RotateCcw, Play, ChevronDown, ChevronRight, Star, SkipForward,
+  Eye, Undo2, RotateCcw,
 } from 'lucide-react';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import { CaseThumb } from '@/components/CaseThumb';
-import AlgPlayer from '@/components/AlgPlayer';
-import { useCopy } from '@/hooks/useCopy';
+import { CaseMarkBar, CaseThumbAction } from '@/app/[lang]/alg/_trainer/trainer-components';
 import { caseKey, findCaseByKey } from '@/lib/trainer-case-key';
-import { primaryCaseName } from '@/lib/alg_case_display';
-import { sanitizeAlgHtml } from '@/lib/alg_html';
 import { generateScramble, purifyScramble, type ScrambleKind } from '@/lib/trainer-scramble';
 import { useTrainerStore } from '@/lib/trainer-store';
 import { useAlgSrs, autoMarkFromSrs } from '@/lib/alg-srs-store';
@@ -30,7 +27,6 @@ import {
   buildSrsQueue, previewIntervals, srsPhase,
   type SrsGrade, type SrsQueueItem, type SrsRec,
 } from '@/lib/alg-srs';
-import { useTrainerMarks, markStarred } from '@/lib/trainer-marks';
 import { tr } from '@/i18n/tr';
 
 /** 四档自评。颜色沿用全站状态色:忘了=危险、犹豫=警告、记得=成功、秒答=品牌强调。 */
@@ -66,7 +62,7 @@ interface UndoFrame {
 }
 
 export default function MemoryTrainer({
-  puzzle, set, cases, pool, scrambleKind, onExit,
+  puzzle, set, cases, pool, scrambleKind, onExit, onShowCase, paused,
 }: {
   puzzle: AlgPuzzle;
   set: string;
@@ -76,19 +72,20 @@ export default function MemoryTrainer({
   scrambleKind: ScrambleKind;
   /** 「本场结束」面板里的「回训练模式」。 */
   onExit: () => void;
+  /** 点大图弹该 case 的详情弹窗(与训练 / 复习卡片同一个入口)。 */
+  onShowCase?: (c: AlgCase) => void;
+  /** 上头盖着弹层:键盘一律让位(空格别在背后揭示答案,1-4 别在背后记账)。 */
+  paused?: boolean;
 }) {
   const recs = useAlgSrs(s => s.recs);
   const gradeCase = useAlgSrs(s => s.grade);
   const restoreCase = useAlgSrs(s => s.restore);
   const resetCase = useAlgSrs(s => s.reset);
-  const marks = useTrainerMarks(s => s.marks);
-  const applyMarks = useTrainerMarks(s => s.applyMarks);
 
   const newLimit = useTrainerStore(s => s.srsNewLimit);
   const sessionLimit = useTrainerStore(s => s.srsSessionLimit);
   const fillExtra = useTrainerStore(s => s.srsFillExtra);
   const autoMark = useTrainerStore(s => s.srsAutoMark);
-  const showPlayer = useTrainerStore(s => s.srsShowPlayer);
   const pureScramble = useTrainerStore(s => s.pureScramble);
   const showThumb = useTrainerStore(s => s.showStageThumb);
   const resolveCase = useTrainerStore(s => s.resolveCase);
@@ -98,11 +95,8 @@ export default function MemoryTrainer({
   const [revealed, setRevealed] = useState(false);
   const [tally, setTally] = useState<SessionTally>(emptyTally);
   const [undo, setUndo] = useState<UndoFrame | null>(null);
-  const [showAlts, setShowAlts] = useState(false);
-  const [playing, setPlaying] = useState(false);
   /** 本场卡片总数的初始值(队列会因重学而变长,进度分母固定用它更稳)。 */
   const [plannedTotal, setPlannedTotal] = useState(0);
-  const { copied, copy } = useCopy();
 
   // 组队列。只在池 / 额度变化时重组 —— 评分会改 recs,但**不能**据此重排当前这场
   //(刷到一半整队洗牌,人就找不着北了)。所以 recs 读一次快照,不进依赖。
@@ -131,8 +125,6 @@ export default function MemoryTrainer({
   const [scramble, setScramble] = useState('');
   useEffect(() => {
     setRevealed(false);
-    setShowAlts(false);
-    setPlaying(false);
     if (!c) { setScramble(''); return; }
     // 记忆模式一律不加首尾 AUF —— 与 store 的 `aufOpts` 同一条规矩:这里是「看着图把公式
     // 回忆出来」,题面必须与揭示的那条公式逐字对得上。随机 U 不改 case,却会让揭示出来的公式
@@ -206,7 +198,14 @@ export default function MemoryTrainer({
     setUndo(null);
   }, [undo, restoreCase]);
 
-  /** 跳过:不评分、不改记忆,直接看下一张(这把手边没魔方之类)。 */
+  /**
+   * 往下一张走而不评分。只剩一个用处:队列里的 case 已经不在本集里(set 改过),
+   * 拿它当逃生口,免得整页卡在一张打不开的卡上。
+   *
+   * 卡片底部那个「跳过」按钮已经撤了 —— 想放过一张卡,评分里的四档本来就够用
+   * (还有「忘了」会把它塞回本场队列),而跳过是本场彻底不再出现且不留痕,
+   * 到期卡就这么白排了;它又不进 undo,跳完再按撤销撤的是上一次评分,更乱。
+   */
   const skip = useCallback(() => {
     if (!card) return;
     setPos(p => p + 1);
@@ -219,9 +218,12 @@ export default function MemoryTrainer({
   const revealedRef = useRef(revealed);
   revealedRef.current = revealed;
 
-  // 键盘:空格/回车揭示 → 1-4 评分;U 撤销;S 跳过。输入框内不接管。
+  // 键盘:空格/回车揭示 → 1-4 评分;U 撤销。输入框内不接管。
+  const pausedRef = useRef(paused);
+  pausedRef.current = paused;
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (pausedRef.current) return;   // 详情弹窗盖着:Esc 归弹窗,别在背后揭示/记账
       const t = e.target as HTMLElement | null;
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
@@ -232,7 +234,6 @@ export default function MemoryTrainer({
         if (!e.repeat && !revealedRef.current) setRevealed(true);
         return;
       }
-      if (e.code === 'KeyS' && !e.repeat) { e.preventDefault(); skip(); return; }
       const digit = ['Digit1', 'Digit2', 'Digit3', 'Digit4'].indexOf(e.code);
       if (digit >= 0 && !e.repeat) {
         e.preventDefault();
@@ -242,7 +243,7 @@ export default function MemoryTrainer({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [answer, doUndo, skip]);
+  }, [answer, doUndo]);
 
   if (pool.length === 0) {
     return <div className="srs-empty">{tr({ zh: '尚未选 case', en: 'No cases selected' })}</div>;
@@ -321,15 +322,23 @@ export default function MemoryTrainer({
 
   const k = caseKey(c);
   const phase = srsPhase(rec);
-  const entries = c.algs.flat();
-  const primary = entries[0];
-  const alts = entries.slice(1);
+  const primary = c.algs.flat()[0];
   const pct = plannedTotal > 0 ? Math.min(100, (pos / Math.max(plannedTotal, queue.length)) * 100) : 0;
+  /**
+   * 三类卡片的名字。到期那类叫「到期」不叫「复习」—— 顶上那个模式 tab 已经占了「复习」
+   * 这个词(指 recap:选中的 case 各出一遍,与记忆排期毫无关系),两处同名只会让人以为
+   * 是同一件事。
+   */
   const KIND_LABEL: Record<SrsQueueItem['kind'], string> = {
-    due: tr({ zh: '复习', en: 'Review' }),
+    due: tr({ zh: '到期', en: 'Due' }),
     new: tr({ zh: '新学', en: 'New' }),
     extra: tr({ zh: '加练', en: 'Extra' }),
   };
+  /**
+   * 点这张图能不能顶替「显示公式」:图得在(「打乱图」可以关掉)、且点了会就地弹详情。
+   * 不成立时那颗按钮得留着,否则手机上(没有空格键)就没有揭示答案的入口了。
+   */
+  const thumbReveals = showThumb && !!onShowCase;
 
   return (
     <div className="srs-root">
@@ -341,111 +350,80 @@ export default function MemoryTrainer({
         </div>
         <div className="srs-session-meta">
           <span className="srs-session-count">{pos}<i>/</i>{queue.length}</span>
-          {remain.due > 0 && <span className="srs-chip is-due">{tr({ zh: '复习', en: 'Review' })} {remain.due}</span>}
-          {remain.fresh > 0 && <span className="srs-chip is-new">{tr({ zh: '新学', en: 'New' })} {remain.fresh}</span>}
-          {remain.extra > 0 && <span className="srs-chip is-extra">{tr({ zh: '加练', en: 'Extra' })} {remain.extra}</span>}
+          {/* 「还剩什么」用与卡片徽章同一套名字(KIND_LABEL),不另起一套叫法 */}
+          {remain.due > 0 && <span className="srs-chip is-due">{KIND_LABEL.due} {remain.due}</span>}
+          {remain.fresh > 0 && <span className="srs-chip is-new">{KIND_LABEL.new} {remain.fresh}</span>}
+          {remain.extra > 0 && <span className="srs-chip is-extra">{KIND_LABEL.extra} {remain.extra}</span>}
         </div>
       </div>
 
       <div className="srs-card">
+        {/* case 名不出:这里的题面就是「看图回忆公式」,名字本身已经是半个答案。 */}
         <div className="srs-card-top">
           <span className={`srs-kind is-${card.kind}`}>{KIND_LABEL[card.kind]}</span>
-          <span className="srs-case-name">{primaryCaseName(puzzle, set, c)}</span>
-          {markStarred(marks, k) && <Star size={13} className="srs-case-star" aria-label={tr({ zh: '星标', en: 'Starred' })} />}
-          <button
-            type="button"
-            className="srs-mini-btn"
-            onClick={() => applyMarks([k], { f: !markStarred(marks, k) })}
-            title={tr({ zh: '星标(难点)', en: 'Star as tricky' })}
-            aria-pressed={markStarred(marks, k)}
-          >
-            <Star size={13} />
-          </button>
         </div>
 
-        {showThumb && (
-          <div className="srs-thumb">
-            <CaseThumb
-              puzzle={puzzle}
-              set={set}
-              sticker={c.sticker}
-              alg={primary?.alg ?? c.standard ?? ''}
-              setup={scramble || c.setup}
-              size={210}
-              local
-            />
-          </div>
-        )}
+        {/* 图 + 一左一右夹着它的标记条:与训练 / 复习模式同一个 CaseMarkBar、同一套
+            .trainer-figure 网格,不另写一份星标按钮。 */}
+        <div className="trainer-figure">
+          <CaseMarkBar k={k} />
+          {showThumb && (
+            <CaseThumbAction
+              className="srs-thumb"
+              name={c.name}
+              // 点图开详情 = 明着要看答案,顺手把这张卡也算揭示过 —— 关掉弹窗回来正好接着评分,
+              // 不用再点一次「显示公式」。
+              onOpen={thumbReveals ? () => { setRevealed(true); onShowCase!(c); } : undefined}
+            >
+              <CaseThumb
+                puzzle={puzzle}
+                set={set}
+                sticker={c.sticker}
+                alg={primary?.alg ?? c.standard ?? ''}
+                setup={scramble || c.setup}
+                size={210}
+                local
+              />
+            </CaseThumbAction>
+          )}
+        </div>
 
+        {/* 打乱只读不复制:要复制的人点图开详情弹窗,那里每条公式 / 打乱都自带复制按钮。 */}
         {shownScramble && (
           <div className="srs-scramble">
             <code>{shownScramble}</code>
-            <button type="button" className="srs-mini-btn" onClick={() => copy(shownScramble)}
-              title={tr({ zh: '复制打乱', en: 'Copy scramble' })}>
-              {copied ? <Check size={13} /> : <Copy size={13} />}
-            </button>
           </div>
         )}
 
         {!revealed ? (
           <div className="srs-reveal-zone">
-            <button type="button" className="srs-reveal-btn" onClick={() => setRevealed(true)}>
-              <Eye size={16} /> {tr({ zh: '显示公式', en: 'Show algorithm' })}
-              <kbd>{tr({ zh: '空格', en: 'Space' })}</kbd>
-            </button>
+            {/* 点图就能看公式的集不再摆「显示公式」按钮(空格照旧)。点图会跳详情页的
+                虚拟集、或压根没有详情可看的集,按钮得留着 —— 否则手机上没有揭示的入口。 */}
+            {!thumbReveals && (
+              <button type="button" className="srs-reveal-btn" onClick={() => setRevealed(true)}>
+                <Eye size={16} /> {tr({ zh: '显示公式', en: 'Show algorithm' })}
+                <kbd>{tr({ zh: '空格', en: 'Space' })}</kbd>
+              </button>
+            )}
             <p className="srs-reveal-hint">
               {card.kind === 'new'
                 ? tr({ zh: '新卡片:直接看公式,照着做两遍再评「记得」', en: 'New card — reveal it, run it twice, then grade it' })
-                : tr({ zh: '先自己回忆一遍,想不起来再看', en: 'Try to recall it first, then reveal' })}
+                : thumbReveals
+                  ? tr({ zh: '先自己回忆一遍,想不起来点图看公式(或按空格)', en: 'Try to recall it first — tap the picture (or press space) to reveal' })
+                  : tr({ zh: '先自己回忆一遍,想不起来再看', en: 'Try to recall it first, then reveal' })}
             </p>
           </div>
         ) : (
           <div className="srs-answer">
-            <div className="srs-alg-main">
-              {primary?.algHtml && puzzle !== 'sq1'
-                ? <span dangerouslySetInnerHTML={{ __html: sanitizeAlgHtml(primary.algHtml) }} />
-                : <span>{primary?.alg ?? c.standard ?? '—'}</span>}
-              <button type="button" className="srs-mini-btn" onClick={() => copy(primary?.alg ?? '')}
-                title={tr({ zh: '复制公式', en: 'Copy algorithm' })}>
-                <Copy size={13} />
-              </button>
-            </div>
-
+            {/* 公式正文与 3D 演示都不在这里:点图那个详情弹窗已经把主公式、其它几条、打乱、
+                元数据全给全了,这里再抄一遍只是把卡片撑长。只留「重置记忆」—— 那是弹窗
+                没有、也只有记忆模式才有的动作。 */}
             <div className="srs-answer-tools">
-              {alts.length > 0 && (
-                <button type="button" className="srs-link-btn" onClick={() => setShowAlts(v => !v)}>
-                  {showAlts ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
-                  {tr({ zh: `其它 ${alts.length} 条`, en: `${alts.length} more` })}
-                </button>
-              )}
-              {(showPlayer || playing) ? null : (
-                <button type="button" className="srs-link-btn" onClick={() => setPlaying(true)}>
-                  <Play size={13} /> {tr({ zh: '演示', en: 'Animate' })}
-                </button>
-              )}
               <button type="button" className="srs-link-btn" onClick={() => resetCase(k)}
                 title={tr({ zh: '把这张卡当没学过重新开始', en: 'Treat this card as brand new' })}>
                 <RotateCcw size={13} /> {tr({ zh: '重置记忆', en: 'Reset card' })}
               </button>
             </div>
-
-            {showAlts && alts.length > 0 && (
-              <div className="srs-alts">
-                {alts.map((e, i) => (
-                  <div key={i} className="srs-alt">
-                    {e.algHtml && puzzle !== 'sq1'
-                      ? <span dangerouslySetInnerHTML={{ __html: sanitizeAlgHtml(e.algHtml) }} />
-                      : <span>{e.alg}</span>}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {(showPlayer || playing) && primary && (
-              <div className="srs-player">
-                <AlgPlayer alg={primary.alg} puzzle={puzzle} set={set} setup={c.setup} />
-              </div>
-            )}
 
             <div className="srs-grades">
               {GRADES.map(({ g, cls, zh, en, hint }) => (
@@ -481,9 +459,6 @@ export default function MemoryTrainer({
             </>
           )}
           <span className="srs-foot-sp" />
-          <button type="button" className="srs-link-btn" onClick={skip} title={tr({ zh: '跳过这张(S)', en: 'Skip (S)' })}>
-            <SkipForward size={13} /> {tr({ zh: '跳过', en: 'Skip' })}
-          </button>
           <button type="button" className="srs-link-btn" onClick={doUndo} disabled={!undo}
             title={tr({ zh: '撤销上一次评分(U)', en: 'Undo last grade (U)' })}>
             <Undo2 size={13} /> {tr({ zh: '撤销', en: 'Undo' })}

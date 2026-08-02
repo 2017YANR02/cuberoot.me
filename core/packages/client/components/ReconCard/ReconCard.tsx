@@ -20,7 +20,8 @@ import { tr } from '@/i18n/tr';
 import './recon_card.css';
 
 // 卡片缩略图：有视频→封面图（YouTube 直链 / B 站 / 抖音异步取），否则打乱图，再否则项目图标。
-function ReconCardMedia({ solve, isZh }: { solve: ReconSolve; isZh: boolean }) {
+// scrambleThumb=false（首页「今日复盘」）时只留视频封面，没封面就整块不渲染（返回 null）。
+function ReconCardMedia({ solve, isZh, scrambleThumb }: { solve: ReconSolve; isZh: boolean; scrambleThumb: boolean }) {
   const cover = useMemo(() => pickReconCover(solve.videoUrl, isZh), [solve.videoUrl, isZh]);
   const ytSrc = cover ? coverSyncSrc(cover) : null;
   const [asyncSrc, setAsyncSrc] = useState<string | null>(null);
@@ -43,7 +44,7 @@ function ReconCardMedia({ solve, isZh }: { solve: ReconSolve; isZh: boolean }) {
 
   if (imgSrc) {
     return (
-      <>
+      <div className="recon-card-media">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           className="recon-card-cover"
@@ -53,16 +54,18 @@ function ReconCardMedia({ solve, isZh }: { solve: ReconSolve; isZh: boolean }) {
           loading="lazy"
           onError={() => setFailed(true)}
         />
-      </>
+      </div>
     );
   }
+
+  if (!scrambleThumb) return null;
 
   // 无封面：打乱图（自包含 SVG）→ 项目图标兜底
   const previewEvent = toWcaEventId(solve.event);
   const scramble = solve.optimalScramble || solve.wcaScramble || '';
   const hasVideo = !!solve.videoUrl && solve.videoUrl.trim() !== '';
   return (
-    <>
+    <div className="recon-card-media">
       {scramble && eventHasScramblePreview(previewEvent) ? (
         <ScramblePreview2D event={previewEvent} scramble={scramble} size={52} />
       ) : (
@@ -80,12 +83,12 @@ function ReconCardMedia({ solve, isZh }: { solve: ReconSolve; isZh: boolean }) {
       {solve.visibility === 'private' && (
         <span className="recon-card-vis recon-card-vis--private" title={tr({ zh: '私享', en: 'Private' })}><Lock size={12} /></span>
       )}
-    </>
+    </div>
   );
 }
 
-export function ReconCard({ solve, isZh, href, horizontal = false }: {
-  solve: ReconSolve; isZh: boolean; href: string; horizontal?: boolean;
+export function ReconCard({ solve, isZh, href, horizontal = false, scrambleThumb = true }: {
+  solve: ReconSolve; isZh: boolean; href: string; horizontal?: boolean; scrambleThumb?: boolean;
 }) {
   const cubers = [
     { name: solve.person || '', country: solve.personCountry },
@@ -96,9 +99,7 @@ export function ReconCard({ solve, isZh, href, horizontal = false }: {
 
   return (
     <Link href={href} prefetch={false} className={`recon-card${horizontal ? ' recon-card--row' : ''}`}>
-      <div className="recon-card-media">
-        <ReconCardMedia solve={solve} isZh={isZh} />
-      </div>
+      <ReconCardMedia solve={solve} isZh={isZh} scrambleThumb={scrambleThumb} />
       <div className="recon-card-body">
         {/* 表头风格:成绩 + 项目图标 + 项目名 + 国旗 + 选手名,同一行(对齐 /recon 详情页标题) */}
         <div className="recon-card-head">

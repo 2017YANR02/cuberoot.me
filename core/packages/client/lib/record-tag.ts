@@ -113,6 +113,29 @@ export function judgeRecordTag(
   return { tag: '', keatoned, keatonedBy: [...by.values()] };
 }
 
+/** 上游(cubing.com / WCA Live)带来的 tag 是否已被快照里的现存纪录证伪。
+ *
+ *  上游按自己那份可能过期的基线判定 —— 2026-07-25 芜湖把单手平均 WR 刷到 6.99 后,
+ *  上游仍给一周后上海的 7.29 标 WR。快照基线只含已公示成绩(都在今天之前),
+ *  所以直播中的成绩拿它反证是安全的;服务端 refutesTag 另有比赛日门槛供回看历史比赛用。 */
+export function refutesTag(
+  tag: string,
+  value: number,
+  eventId: string,
+  isAvg: boolean,
+  user: JudgeUser | undefined,
+  snap: RecordsSnapshot | undefined,
+): boolean {
+  if (!tag || !snap || !(value > 0)) return false;
+  const k = `${eventId}|${isAvg ? '1' : '0'}`;
+  let baseline: number | undefined;
+  if (tag === 'WR') baseline = snap.wr?.[k];
+  else if (tag === 'NR') baseline = user?.countryId ? snap.nr?.[`${k}|${user.countryId}`] : undefined;
+  else if (tag.endsWith('R')) baseline = user?.continentId ? snap.cr?.[`${k}|${user.continentId}`] : undefined;
+  if (baseline === undefined) return false;
+  return value > baseline;
+}
+
 /** 「日掩」的一句话交代,给 badge 当 title / 无障碍文本。 */
 export function keatonedTitle(k: KeatonedInfo, eventId: string, isAvg: boolean): string {
   const v = formatWcaResult(k.byValue, eventId, isAvg ? 'average' : 'single');

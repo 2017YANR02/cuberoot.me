@@ -21,6 +21,11 @@ export interface CurrentRecords {
   wr: Map<string, number>;                   // "event|isAvg(0|1)"          → min value
   cr: Map<string, number>;                   // "event|isAvg|continent_id"  → min value
   nr: Map<string, number>;                   // "event|isAvg|country_id"    → min value
+  // 各 min 是哪天达成的(ISO yyyy-mm-dd,同值多条取最早).key 同上三张表.
+  // 用途:判定上游 tag 是否已过期 —— 只有「基线早于本场比赛」才能反证(见 refutesTag).
+  wrAt: Map<string, string>;
+  crAt: Map<string, string>;
+  nrAt: Map<string, string>;
   iso2ToCountryId: Map<string, string>;      // iso2 lowercase → wca country id
   nameToCountryId: Map<string, string>;      // country name lowercase → wca country id
   countryIdToContinent: Map<string, string>; // wca country id → continent_id
@@ -77,6 +82,13 @@ let cachedAt = 0;
 let inflight: Promise<CurrentRecords | null> | null = null;
 const TTL_MS = 24 * 60 * 60_000;
 
+/** epoch(1970-01-01)起的天数 → ISO yyyy-mm-dd.SQL 里 DATE 相减得整数,回来自己还原. */
+function epochDayToIso(days: unknown): string | null {
+  const n = Number(days);
+  if (!Number.isFinite(n)) return null;
+  return new Date(n * 86400_000).toISOString().slice(0, 10);
+}
+
 async function load(): Promise<CurrentRecords | null> {
   const t0 = Date.now();
   try {
@@ -96,15 +108,17 @@ async function load(): Promise<CurrentRecords | null> {
       countryIdToContinent.set(c.id, c.continent_id);
     }
 
+    // MIN(ARRAY[value, comp_date - epoch]) 按数组字典序 → 先最小 value,同值再取最早日期;
+    // 一次扫表同时拿到「纪录值」与「达成日」,免得为日期再全扫一遍 11M 行.
     const [wrRows, nrRows] = await Promise.all([
-      query<{ event_id: string; is_avg: boolean; v: number }>(
-        `SELECT event_id, is_avg, MIN(value)::INT AS v
+      query<{ event_id: string; is_avg: boolean; vd: number[] }>(
+        `SELECT event_id, is_avg, MIN(ARRAY[value, (comp_date - DATE '1970-01-01')]) AS vd
          FROM wca_results_flat
          WHERE value > 0
          GROUP BY event_id, is_avg`,
       ),
-      query<{ event_id: string; is_avg: boolean; person_country_id: string; v: number }>(
-        `SELECT event_id, is_avg, person_country_id, MIN(value)::INT AS v
+      query<{ event_id: string; is_avg: boolean; person_country_id: string; vd: number[] }>(
+        `SELECT event_id, is_avg, person_country_id, MIN(ARRAY[value, (comp_date - DATE '1970-01-01')]) AS vd
          FROM wca_results_flat
          WHERE value > 0
          GROUP BY event_id, is_avg, person_country_id`,
@@ -112,25 +126,38 @@ async function load(): Promise<CurrentRecords | null> {
     ]);
 
     const wr = new Map<string, number>();
-    for (const r of wrRows) wr.set(`${r.event_id}|${r.is_avg ? '1' : '0'}`, Number(r.v));
+    const wrAt = new Map<string, string>();
+    for (const r of wrRows) {
+      const k = `${r.event_id}|${r.is_avg ? '1' : '0'}`;
+      wr.set(k, Number(r.vd[0]));
+      const d = epochDayToIso(r.vd[1]);
+      if (d) wrAt.set(k, d);
+    }
 
     const nr = new Map<string, number>();
+    const nrAt = new Map<string, string>();
     const cr = new Map<string, number>();
+    const crAt = new Map<string, string>();
     for (const r of nrRows) {
       const k = `${r.event_id}|${r.is_avg ? '1' : '0'}`;
-      const v = Number(r.v);
+      const v = Number(r.vd[0]);
+      const d = epochDayToIso(r.vd[1]);
       nr.set(`${k}|${r.person_country_id}`, v);
+      if (d) nrAt.set(`${k}|${r.person_country_id}`, d);
       const cont = countryIdToContinent.get(r.person_country_id);
       if (cont) {
         const ck = `${k}|${cont}`;
         const prev = cr.get(ck);
-        if (prev === undefined || v < prev) cr.set(ck, v);
+        if (prev === undefined || v < prev) {
+          cr.set(ck, v);
+          if (d) crAt.set(ck, d); else crAt.delete(ck);
+        }
       }
     }
 
     const ms = Date.now() - t0;
     console.log(`[current_records] loaded WR=${wr.size} NR=${nr.size} CR=${cr.size} in ${ms}ms`);
-    return { wr, cr, nr, iso2ToCountryId, nameToCountryId, countryIdToContinent, countryIdToIso2 };
+    return { wr, cr, nr, wrAt, crAt, nrAt, iso2ToCountryId, nameToCountryId, countryIdToContinent, countryIdToIso2 };
   } catch (e) {
     console.warn('[current_records] load failed:', (e as Error).message);
     return null;
@@ -333,6 +360,52 @@ export function judgeExternalRecord(
   return judgeByDay(value, eventId, isAvg, u, recs, day);
 }
 
+/** 上游 tag(WR / AsR 等洲际 / NR)对应的 scope key + 基线表. */
+function scopeOfTag(tag: string, k: string, u: MinimalUser | undefined, recs: CurrentRecords):
+  { value: number | undefined; at: string | undefined } | null {
+  const rank = recordLevelRank(tag);
+  if (rank === 0) return { value: recs.wr.get(k), at: recs.wrAt.get(k) };
+  if (rank === 1) {
+    if (!u?.continentId) return null;
+    const ck = `${k}|${u.continentId}`;
+    return { value: recs.cr.get(ck), at: recs.crAt.get(ck) };
+  }
+  if (rank === 2) {
+    if (!u?.countryId) return null;
+    const nk = `${k}|${u.countryId}`;
+    return { value: recs.nr.get(nk), at: recs.nrAt.get(nk) };
+  }
+  return null;
+}
+
+/** 上游给的 tag 是否已被「本场比赛之前就存在的纪录」证伪.
+ *
+ *  场景:cubing.com / WCA Live 的纪录标志是它们自己那份(可能已过期的)基线判出来的 ——
+ *  2026-07-25 芜湖陈震把单手平均 WR 刷到 6.99 后,上游仍给一周后上海的 7.29 标 WR.
+ *  本站基线(wca_results_flat)已含 6.99,足以反证.
+ *
+ *  日期门槛不可省:基线是「当前」纪录,含本场之后才出现的成绩.没有 compDate、或纪录
+ *  是本场之后达成的,一律不动上游 tag —— 否则回看历史比赛会把当年真实的 WR 抹掉. */
+export function refutesTag(
+  tag: string,
+  value: number,
+  eventId: string,
+  isAvg: boolean,
+  u: MinimalUser | undefined,
+  recs: CurrentRecords,
+  compDate: string | null | undefined,
+  /** 多日赛用:纪录必须严格早于开赛日.基线日期取比赛 start_date,同日 = 可能就是本场后面
+   *  某一天刷出来的(第一天的合法纪录不该被最后一天的更好成绩反证). */
+  strictlyBefore = false,
+): boolean {
+  if (!tag || !compDate) return false;
+  const scope = scopeOfTag(tag, `${eventId}|${isAvg ? '1' : '0'}`, u, recs);
+  if (!scope || scope.value === undefined || !scope.at) return false;
+  // 纪录发生在本场之后 → 说明不了本场当时的事
+  if (strictlyBefore ? scope.at >= compDate : scope.at > compDate) return false;
+  return value > scope.value;
+}
+
 /** 纪录级别序:WR > 洲际(CR 及 AsR/ER/NAR/SAR/AfR/OcR)> NR.数字越大级别越低.
  *  首页纪录列表排序与下面的降级判定共用这一份. */
 export function recordLevelRank(tag: string): number {
@@ -419,6 +492,7 @@ export function enrichComp(
   resultsByRound: Record<string, MinimalResult[]>,
   events?: MinimalEvent[],
   dayBest?: DayBest | null,
+  compDate?: string | null,
 ): CompRecordsSnapshot | null {
   const recs = peekCurrentRecords();
   if (!recs) return null;
@@ -460,19 +534,25 @@ export function enrichComp(
         for (const lr of ordered) {
           const val = valueOf(lr, isAvg);
           if (val <= 0) continue;
+          const u = users[String(lr.n)];
+          const already = String((isAvg ? lr.ar : lr.sr) || '');
           if (dayBest) {
             // Reg 9i2 路径:同日只认最好.裁决结果覆盖上游 tag —— cubing.com / WCA Live
             // 都只看本场 + 现存纪录,不做跨比赛同日判定,它们标的 WR 可能已被别处抹掉.
-            const { tag, keatoned } = judgeByDay(val, eventId, isAvg, users[String(lr.n)], recs, dayBest);
-            if (isAvg) { if (tag || keatoned) lr.ar = tag; lr.ak = keatoned; }
-            else { if (tag || keatoned) lr.sr = tag; lr.sk = keatoned; }
+            const { tag, keatoned } = judgeByDay(val, eventId, isAvg, u, recs, dayBest);
+            const stale = !tag && !keatoned && refutesTag(already, val, eventId, isAvg, u, recs, compDate);
+            if (isAvg) { if (tag || keatoned || stale) lr.ar = tag; lr.ak = keatoned; }
+            else { if (tag || keatoned || stale) lr.sr = tag; lr.sk = keatoned; }
           } else {
-            // 兜底(多日赛拿不到轮次日期):沿用赛前基线 + 轮次时序 running-min,只填空不覆盖.
-            const already = isAvg ? lr.ar : lr.sr;
-            const tag = stepRecord(val, eventId, isAvg, users[String(lr.n)], runWr, runCr, runNr);
+            // 兜底(多日赛拿不到轮次日期):沿用赛前基线 + 轮次时序 running-min,只填空不覆盖;
+            // 但上游 tag 被赛前就存在的纪录证伪时(过期基线标出来的假 WR)照样清掉.
+            const tag = stepRecord(val, eventId, isAvg, u, runWr, runCr, runNr);
             if (tag && !already) {
               if (isAvg) lr.ar = tag;
               else lr.sr = tag;
+            } else if (!tag && already && refutesTag(already, val, eventId, isAvg, u, recs, compDate, true)) {
+              if (isAvg) lr.ar = '';
+              else lr.sr = '';
             }
           }
         }

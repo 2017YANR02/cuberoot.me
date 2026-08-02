@@ -26,10 +26,16 @@ interface Props {
   byNo: Map<number, AlgCase>;
   onClose: () => void;
   onJump: (c: AlgCase) => void;
+  /**
+   * 标题旁那个外链指到哪。默认按 set + case 算列表页地址;虚拟集(LSLL 等不在 `alg_cases`
+   * 库里的集)算不出来,由调用方给自己的详情页地址。
+   */
+  href?: string;
 }
 
-export default function AlgCaseMetaModal({ caseObj, puzzle, set, byNo, onClose, onJump }: Props) {
-  const m = caseObj.meta as AlgCaseMeta;
+export default function AlgCaseMetaModal({ caseObj, puzzle, set, byNo, onClose, onJump, href }: Props) {
+  // meta 可能整个没有(虚拟集 / 库里还没补元数据的集):标题退回 case 名,正文各段自行消失
+  const m = (caseObj.meta ?? {}) as AlgCaseMeta;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -38,15 +44,15 @@ export default function AlgCaseMetaModal({ caseObj, puzzle, set, byNo, onClose, 
   }, [onClose]);
 
   /** 「在列表中打开」—— 真 <a>,中键能新开(CLAUDE.md「链接支持中键新开」) */
-  const listHref = useMemo(() => algCaseHref(puzzle, set, caseObj), [caseObj, puzzle, set]);
+  const listHref = useMemo(() => href ?? algCaseHref(puzzle, set, caseObj), [href, caseObj, puzzle, set]);
 
   return (
     <div className="alg-admin-modal-backdrop" onClick={onClose} role="dialog" aria-modal="true">
       <div className="alg-admin-modal alg-meta-modal" onClick={e => e.stopPropagation()}>
         <div className="alg-admin-modal-head">
           <h2>
-            {m.ollcp}
-            <span className="alg-meta-head-sub">{caseObj.name}</span>
+            {m.ollcp ?? caseObj.name}
+            {m.ollcp != null && <span className="alg-meta-head-sub">{caseObj.name}</span>}
             {/* 标题旁直达 case 所在列表页(真 <a>,中键可新开) */}
             <Link href={listHref} className="alg-meta-head-open" prefetch={false} title={tr({ zh: '跳转到 case 所在页面', en: 'Open the case in its list page' })}>
               <ExternalLink size={14} />

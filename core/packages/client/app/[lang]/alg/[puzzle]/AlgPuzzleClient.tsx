@@ -4,16 +4,20 @@
  * /alg/[puzzle] — list every alg set for one puzzle (2x2 / 3x3 / 4x4 / 5x5 etc.).
  * Ported from packages/client-vite/src/pages/alg/AlgPuzzlePage.tsx.
  *
+ * /alg 没有自己的落地页了:原来那一排项目卡片换成页首下拉(AlgPuzzleSelect),
+ * /alg 在 next.config 直接 redirect 到默认魔方 /alg/3x3 —— 所以「公式库」入口
+ * 落在的就是本页。
+ *
  * Loads each set's case count lazily so the page renders before all imports finish.
  */
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Blocks, Box, X, type LucideIcon } from 'lucide-react';
+import { GraduationCap, X } from 'lucide-react';
 import { ALG_CATALOG, ALG_PUZZLES, loadAlg, type AlgCase, type AlgPuzzle } from '@cuberoot/shared';
-import { EventIcon } from '@/components/EventIcon/EventIcon';
-import { eventDisplayName } from '@/lib/wca-events';
+import AlgPuzzleSelect from '../_components/AlgPuzzleSelect';
+import BackHome from '@/components/BackHome';
 import { CaseThumb } from '@/components/CaseThumb';
 import AlgCard from '@/components/AlgCard';
 import BoolToggle from '@/components/BoolToggle';
@@ -36,13 +40,13 @@ const LEGACY_3X3_SLUGS = new Set(['f2l', 'adv-f2l', 'oll', 'pll']);
  * 各套的观察训练(`/recognize/oll` 等)以前也堆在这一排,已经搬到各自的公式集页首
  * (`/alg/3x3/oll` 的「观察」),那里才看得出这一次练的是哪套。
  */
-const TRAINER_MODULES: Record<string, { href: string; zh: string; en: string; Icon: LucideIcon }[]> = {
+const TRAINER_MODULES: Record<string, { href: string; zh: string; en: string }[]> = {
   // 三盲不在这排 —— 它在 /alg 落地页自成一个项目(整套编码体系,不是 3x3 的一套公式)。
   '3x3': [
-    { href: '/alg/roux', zh: 'Roux 桥式训练', en: 'Roux Trainer', Icon: Blocks },
+    { href: '/alg/roux', zh: '桥式训练', en: 'Roux Trainer' },
   ],
   'skewb': [
-    { href: '/alg/skewb-trainer', zh: 'Skewb 技巧训练', en: 'Skewb Skills', Icon: Box },
+    { href: '/alg/skewb-trainer', zh: 'Skewb 技巧训练', en: 'Skewb Skills' },
   ],
 };
 
@@ -121,24 +125,31 @@ export default function AlgPuzzleClient() {
 
   return (
     <div className="alg-root">
-      <div className="alg-cat-header">
-        <Link href="/alg" className="alg-back">
-          <ArrowLeft size={14} /> {tr({ zh: '返回', en: 'Back' })}
-        </Link>
-        <h1 className="alg-cat-title">
-          <EventIcon event={puzzle} className="alg-cat-title-icon" />
-          <span>{eventDisplayName(puzzle, isZh)} {tr({ zh: '公式', en: 'Algorithms' })}</span>
-        </h1>
+      <BackHome />
+      <div className="alg-cat-header alg-cat-header--puzzle">
+        <h1 className="alg-cat-title">{tr({ zh: '公式库', en: 'Algorithm DB' })}</h1>
+        {/* 项目切换:原落地页那一排卡片压成一个下拉,每项仍是真链接 */}
+        <AlgPuzzleSelect current={puzzle} isZh={isZh} />
         {/* 合练:多套混成一场练(PLL + ZBLL 一起过)。开着时卡片改成勾选。 */}
         <BoolToggle
           value={picking}
           onChange={v => { setPicking(v); if (!v) setPicked([]); }}
           label={tr({ zh: '合练', en: 'Mix' })}
         />
+        <Link href="/alg/progress" className="alg-index-progress-link" prefetch={false}>
+          <GraduationCap size={16} aria-hidden="true" />
+          {tr({ zh: '学习进度', en: 'Progress' })}
+        </Link>
         {/* 这一层就是「这个魔方的所有公式集」,校验粒度跟着它 —— 一次扫完本页列出的每套 */}
         <AlgAdminValidate
           scope={{ kind: 'puzzle', puzzle }}
           label={tr({ zh: '校验本页公式集', en: 'Validate these sets' })}
+        />
+        {/* 全站唯一一处「一次扫完所有 (puzzle, set)」的入口 —— 原在 /alg 落地页,
+            落地页取消后跟着搬到这里(admin 才看得见) */}
+        <AlgAdminValidate
+          scope={{ kind: 'all' }}
+          label={tr({ zh: '校验全库', en: 'Validate all' })}
         />
       </div>
 
@@ -247,14 +258,21 @@ export default function AlgPuzzleClient() {
 
       {TRAINER_MODULES[puzzle] && (
         <div className="alg-train-modules">
-          <span className="alg-train-modules-label">{tr({ zh: '训练专区', en: 'Trainers' })}</span>
           {TRAINER_MODULES[puzzle].map(m => (
             <Link key={m.href} href={m.href} className="alg-train-module" prefetch={false}>
-              <m.Icon size={15} /> {tr({ zh: m.zh, en: m.en })}
+              {tr({ zh: m.zh, en: m.en })}
             </Link>
           ))}
         </div>
       )}
+
+      {/* 出处行原在 /alg 落地页页尾,落地页取消后跟到每个魔方页 */}
+      <p className="alg-index-credit">
+        {tr({ zh: '部分数据来源: ', en: 'Some data from: ' })}
+        <a href="https://speedcubedb.com" target="_blank" rel="noopener noreferrer">
+          speedcubedb.com
+        </a>
+      </p>
     </div>
   );
 }
