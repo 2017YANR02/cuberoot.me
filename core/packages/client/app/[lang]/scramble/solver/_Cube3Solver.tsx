@@ -38,6 +38,8 @@ import {
 } from './_kociemba/cube';
 import InteractiveCubeNet, { EMPTY_FACELET, type PaintColor } from './_InteractiveCubeNet';
 import Interactive3DCube, { useIdlePreloadPaintEngine } from './_Interactive3DCube';
+import PhotoScanner from './_PhotoScanner';
+import { CUBE3_PAINT } from './_paint-shared';
 import { useT } from "@/hooks/useT";
 import BoolToggle from '@/components/BoolToggle';
 import { ListSelect } from '@/components/ListSelect';
@@ -65,6 +67,7 @@ const SOLVER_OPTIONS: { value: string; size: string }[] = [
 ];
 
 type ReadyState = 'no-solver' | 'need-init' | 'ready' | 'busy';
+type ViewMode = 'net' | 'cube' | 'photo' | 'scramble' | 'recon';
 
 function spawnKociembaWorker(): Worker {
   return new Worker(new URL('./_kociemba/kociemba.worker.ts', import.meta.url), { type: 'module' });
@@ -173,13 +176,14 @@ export default function Cube3Solver() {
   const [saveDirName, setSaveDirName] = useState<string | null>(null);
   const justGeneratedRef = useRef(false);
   // Input method in URL (?view): 'cube' = paint the rotatable 3D cube (default),
-  // 'net' = paint the 2D unfolded cross, 'scramble' = type one or more scramble
+  // 'net' = paint the 2D unfolded cross, 'photo' = shoot the six faces with the
+  // camera and recognize the colors, 'scramble' = type one or more scramble
   // formulas (one per line — shares the `scrambles` state with the batch solve
   // pipeline below), 'recon' = type a single reconstruction (the inverse of the
-  // scramble). All four feed the same cube state (paintFacelet).
+  // scramble). All five feed the same cube state (paintFacelet).
   const [viewMode, setViewMode] = useQueryState(
     'view',
-    parseAsStringEnum<'net' | 'cube' | 'scramble' | 'recon'>(['net', 'cube', 'scramble', 'recon']).withDefault('cube'),
+    parseAsStringEnum<ViewMode>(['net', 'cube', 'photo', 'scramble', 'recon']).withDefault('cube'),
   );
   // 立体是默认视图,组件自己会加载引擎;从别的视图进来时空闲预热,切过去不等。
   useIdlePreloadPaintEngine(viewMode !== 'cube');
@@ -905,11 +909,12 @@ export default function Cube3Solver() {
           <ListSelect
             clearable={false}
             value={viewMode}
-            onChange={(v) => setViewMode(v as 'net' | 'cube' | 'scramble' | 'recon')}
+            onChange={(v) => setViewMode(v as ViewMode)}
             allLabel=""
             items={[
               { value: 'cube', label: t('立体', '3D') },
               { value: 'net', label: t('平面', '2D') },
+              { value: 'photo', label: t('拍照', 'Photo') },
               { value: 'scramble', label: t('打乱', 'Scramble') },
               { value: 'recon', label: t('复盘', 'Reconstruction') },
             ]}
@@ -951,6 +956,12 @@ export default function Cube3Solver() {
                 : { zh: '从上面画的状态求出把它解开的步骤(打乱的逆)', en: 'Derive the moves that solve the painted state (inverse of the scramble)' }}
               secondaryBusy={paintOptimal && (solveSource === 'cloud' ? cloudBusy : readyState === 'busy')}
               optimalToggle={{ value: paintOptimal, onChange: setPaintOptimal }}
+            />
+          ) : viewMode === 'photo' ? (
+            <PhotoScanner
+              spec={CUBE3_PAINT}
+              pixelSize={paintCanvasSize}
+              onApply={(fc) => { setPaintFacelet(fc); void setViewMode('net'); }}
             />
           ) : viewMode === 'scramble' ? (
             <div className="move-input">
