@@ -70,6 +70,8 @@
 .cal-search-field::-webkit-search-cancel-button { display: none; }
 
 .cal-menu-btn { display: none; }
+/* 侧栏在宽屏是常驻栏,没有抽屉也就没有遮罩;只有 900px 以下那档才亮出来 */
+.cal-scrim { display: none; }
 
 /* ── 通用控件 ─────────────────────────────────────────────────────────── */
 
@@ -346,6 +348,15 @@
   background: var(--popover);
   box-shadow: 0 8px 28px color-mix(in srgb, var(--foreground) 14%, transparent);
 }
+
+/* 浮层顶行:标题 + 关闭。这里是少数该用 spacer 顶开两端的地方(左标题右操作)。 */
+.cal-pop-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+}
+.cal-pop-head .cal-field-label { flex: 1 1 auto; }
 
 .cal-pop-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
@@ -828,6 +839,21 @@
 
 .cal-grid .fc .fc-scrollgrid { border-color: var(--border-default); }
 
+/* 表头行和「全天」行不该有滚动条。FullCalendar 一旦发现主体要竖向滚动,就把 scrollgrid
+   每一段都设成 overflow-y:scroll(SimpleScrollGrid 的 forceYScrollbars),好让各段列宽
+   按同样的宽度对齐。macOS 的浮层滚动条看不见,Windows 的经典滚动条会把它们画出来 ——
+   于是表头右侧多两条永远拉不动的假滚动条(带上下箭头那种)。
+   只藏这两段的滚动条外观:列宽是 FullCalendar 按「容器宽 − 滚动条宽」算好后写死在
+   <table style="width:…"> 上的,和这里画不画那条无关,所以空槽还在、列照样对齐。
+   主体那段是 -liquid,排除在外,真滚动条留着。 */
+.cal-grid .fc-scrollgrid-section:not(.fc-scrollgrid-section-liquid) .fc-scroller {
+  scrollbar-width: none;
+}
+.cal-grid .fc-scrollgrid-section:not(.fc-scrollgrid-section-liquid) .fc-scroller::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
 .cal-grid .fc-theme-standard td,
 .cal-grid .fc-theme-standard th { border-color: var(--border-default); }
 
@@ -904,6 +930,17 @@
 
   .cal-page.sidebar-open .cal-sidebar { transform: translateX(0); box-shadow: 0 0 40px color-mix(in srgb, var(--foreground) 22%, transparent); }
 
+  /* 抽屉遮罩,压在抽屉(z-index 40)下面一层 */
+  .cal-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 39;
+    padding: 0;
+    border: none;
+    background: color-mix(in srgb, var(--foreground) 26%, transparent);
+  }
+
   .cal-brand { font-size: 15px; }
   .cal-range-title { font-size: 14px; order: 5; flex-basis: 100%; }
   .cal-search { margin-left: auto; }
@@ -918,6 +955,10 @@
      窄屏只留标题(Google 手机端同样只显示标题)。月 / 日程视图是一行文字,不受影响。 */
   .cal-grid .fc-timegrid-event .cal-chip-time { display: none; }
   .cal-grid .fc-timegrid-event .cal-chip-title { white-space: normal; }
+
+  /* 月 / 年格子同理:一格 ~50px,时间串一占,标题就被省略号吃干净 —— 屏幕上只剩
+     「● 12:00」,等于没说是什么事。留标题去时间,时间点进去看。 */
+  .cal-grid .fc-daygrid-event .cal-chip-time { display: none; }
 }
 
 @media (max-width: 480px) {

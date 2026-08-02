@@ -172,6 +172,15 @@ export const CATALOG: UtilEntry[] = [
     en: 'Viewport clamp for anchored dropdown panels: on open, measures the panel and shifts it left (negative margin-left, transform untouched) if its right edge crosses the viewport. Required for panels anchored below a trigger (absolute + top:100%); declare anchored-panel: clamped in the CSS rule (CI ratchet).',
   },
   {
+    name: 'usePopoverDismiss',
+    sig: 'usePopoverDismiss(open: boolean, close: () => void, panel: RefObject<HTMLElement | null>, trigger?: RefObject<HTMLElement | null>): void',
+    imp: "import { usePopoverDismiss } from '@/hooks/usePopoverDismiss';",
+    usage: 'usePopoverDismiss(open, () => setOpen(false), panelRef, btnRef);',
+    category: 'hook',
+    zh: '浮层的「点外面关 / Esc 关」。触发钮单独传:浮层常不是钮的子节点(fixed / 顶栏外挂),不排除就会「点钮先关再开」= 按不动。只管关闭,定位与钳视口交给 usePanelClamp。',
+    en: 'Outside-click and Escape dismissal for popovers. The trigger is passed separately because the panel often is not a descendant of the button (fixed / rendered outside the toolbar) — without excluding it a click would close-then-reopen. Closing only; positioning and clamping stay with usePanelClamp.',
+  },
+  {
     name: 'useMembership',
     sig: 'useMembership(): { membership: Membership | null; isMember: boolean; loading: boolean; refresh: () => void }',
     imp: "import { useMembership } from '@/hooks/useMembership';",
