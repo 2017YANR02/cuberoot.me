@@ -9,7 +9,9 @@
 //   /visualcube 工作室 → specToCubeOptions(spec)          灰 = spec.maskColor(可被 mkc 改)
 //   /sim 伴图         → exportSimPlanSvg(引擎实时态)      灰 = 引擎自己的 #444
 import { describe, it, expect } from 'vitest';
+import type { AlgSticker } from '@cuberoot/shared';
 import { renderFromSimpleQuery, renderCubeSVG } from '@cuberoot/visualcube';
+import { cubeThumbParams, LEVEL2_PICKER_MASK } from '@/components/CaseThumb';
 import { specToCubeOptions } from '@/lib/puzzle-image/render';
 import { readSpecFromParams, specToParams } from '@/lib/puzzle-image/codec';
 import { DEFAULTS } from '@/lib/puzzle-image/defaults';
@@ -66,6 +68,50 @@ describe('plan view — hide grey sides', () => {
     it('no-ops on an iso view (侧环压根没画)', () => {
       const iso = { view: 'iso' as const, size: 88, setup: OLL_DOT };
       expect(renderFromSimpleQuery({ ...iso, ngs: '1' })).toBe(renderFromSimpleQuery(iso));
+    });
+  });
+
+  // 顶层公式集的图统一「侧面无灰」:OLL 的灰是「这里不是黄」,COLL / CMLL 的灰是「这条棱
+  // 不用看」,都是占位而非题面 —— 删了侧环只剩真要认的色块。顶面照旧一格不动(CMLL 顶面
+  // 那圈灰是「M 层没解开」,是题面)。
+  describe('顶层公式集(coll / cmll)', () => {
+    const RAW: AlgSticker = { kind: 'raw', tag: '', attrs: {} };
+    const params = (set: string, mask?: string) => cubeThumbParams('3x3', set, RAW, mask);
+
+    it('coll / cmll 走 pll 视角 + 自家遮罩,并删侧环灰格', () => {
+      expect(params('coll')).toEqual({ view: 'pll', mask: 'coll', hideGreySides: true, puzzleSize: 3 });
+      expect(params('cmll')).toEqual({ view: 'pll', mask: 'cmll', hideGreySides: true, puzzleSize: 3 });
+    });
+
+    it('ZBLL / 1LLL / OLLCP 二级选择卡(mask=coll)同样删', () => {
+      for (const set of ['zbll', '1lll', 'ollcp']) {
+        expect(LEVEL2_PICKER_MASK[set]).toBe('coll');
+        expect(params(set, LEVEL2_PICKER_MASK[set]).hideGreySides).toBe(true);
+      }
+      // 只认角块遮罩:别的遮罩覆盖(zbls 的 vh 等)不顺手打开这个开关。
+      expect(params('zbls', 'vh').hideGreySides).toBeUndefined();
+      expect(params('pll').hideGreySides).toBe(false); // 侧环是真配色,没有灰可删
+    });
+
+    it('COLL:侧环 4 格灰全删,顶面逐字节不变', () => {
+      const q = { view: 'pll' as const, mask: 'coll', size: 88, case: "R U R' U R U2 R'" };
+      const off = renderFromSimpleQuery(q);
+      const on = renderFromSimpleQuery({ ...q, ngs: '1' });
+      expect(beforeRim(on)).toBe(beforeRim(off));
+      expect(withFill(off, '#404040')).toHaveLength(4); // COLL 遮罩:顶面全彩,灰只在侧环
+      expect(polygons(off)).toHaveLength(22);
+      expect(polygons(on)).toHaveLength(18);
+      expect(withFill(on, '#404040')).toHaveLength(0);
+    });
+
+    it('CMLL:侧环 4 格灰删掉,顶面那 5 格灰留着', () => {
+      const q = { view: 'pll' as const, mask: 'cmll', size: 88, case: "R U R' F' R U R' U' R' F R2 U' R'" };
+      const off = renderFromSimpleQuery(q);
+      const on = renderFromSimpleQuery({ ...q, ngs: '1' });
+      expect(beforeRim(on)).toBe(beforeRim(off));
+      expect(withFill(off, '#404040')).toHaveLength(9); // 顶面 4 棱 + 中心 + 侧环 4
+      expect(polygons(on)).toHaveLength(18);
+      expect(withFill(on, '#404040')).toHaveLength(5); // 顶面那 5 格
     });
   });
 
