@@ -18,6 +18,7 @@ import PillToggle from '@/components/PillToggle/PillToggle';
 import { useSubsetSelection, SubsetColorPicker } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import { stageLabel } from '@/lib/scramble-variants';
 import { facesOfSubset, trainerCaps, trainerSlotOptions, trainerStagesOf, trainerVariants } from '@/lib/cross-trainer';
+import { trainerDepthBounds } from '@/lib/cross-trainer/reach';
 import { SLOT_BEST, type GenDiffSettings } from '../_lib/scramble/trainer-source';
 import { tr } from '@/i18n/tr';
 
@@ -57,7 +58,14 @@ export default function GenDiffConfig({ isZh, settings, updateSettings }: Props)
   // 两槽阶段的选项是槽对:XXCross 两槽同解(FR+FL),XCross 配对一解一配、有先后(FR→FL)。
   const slotNames = showSlots ? trainerSlotOptions(variant, stage, faces[0]) : [];
 
-  const [mMin, mMax] = caps ? caps.range : [0, 0];
+  // 刻度轴到「已知存在的最深」(上帝之数下界),但只有抽得出来的那一段可选,再深的置灰 ——
+  // 多底色 / 最优槽取的是多个帧的最小值,深档要所有帧同时深,存在但撞不上(见 reach.ts)。
+  const slotMode = showSlots && settings.genDiffSlot >= 0 ? 'fixed' : 'best';
+  const mMin = caps ? caps.range[0] : 0;
+  const bounds = caps
+    ? trainerDepthBounds(variant, stage, faces.length, slotMode, caps.range[1])
+    : { god: 0, draw: 0 };
+  const mMax = bounds.draw;
   const stored = settings.genDiffSteps;
   const rawLo = stored.length ? stored[0] : (caps ? caps.band[0] : 0);
   const rawHi = stored.length ? stored[stored.length - 1] : (caps ? caps.band[1] : 0);
@@ -128,10 +136,11 @@ export default function GenDiffConfig({ isZh, settings, updateSettings }: Props)
           <div className="wca-src-steps-range">
             <RangeSlider
               min={mMin}
-              max={mMax}
+              max={bounds.god}
+              softMax={mMax}
               value={[lo, hi]}
               onChange={([a, b]) => updateSettings({ genDiffSteps: range(a, b) })}
-              marks={range(mMin, mMax)}
+              marks={range(mMin, bounds.god)}
               ariaLabel={tr({ zh: '步数范围', en: 'Step range' })}
             />
           </div>

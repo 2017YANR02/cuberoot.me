@@ -36,17 +36,25 @@ export interface RangeSliderProps {
   formatValue?: (n: number) => string;
   ariaLabel?: string;
   disabled?: boolean;
+  /**
+   * Highest selectable value, when the axis must still show what lies beyond it. The tail
+   * (softMax, max] keeps its ticks — greyed and out of reach of both thumbs. Use it when the
+   * scale is a fact about the world and the limit is a fact about this tool: the trainer's
+   * step axis runs to the sub-step's god number, but only part of it can actually be generated.
+   */
+  softMax?: number;
 }
 
 export function RangeSlider({
-  min, max, step = 1, value, onChange, marks, markHighlight, formatValue, ariaLabel, disabled,
+  min, max, step = 1, value, onChange, marks, markHighlight, formatValue, ariaLabel, disabled, softMax,
 }: RangeSliderProps) {
   const [lo, hi] = value;
   const span = max - min || 1;
   const pct = (n: number) => `${((n - min) / span) * 100}%`;
   const fmt = formatValue ?? ((n: number) => String(n));
+  const ceil = Math.min(softMax ?? max, max);
   const setLo = (n: number) => onChange([Math.min(Math.max(n, min), hi), hi]);
-  const setHi = (n: number) => onChange([lo, Math.max(Math.min(n, max), lo)]);
+  const setHi = (n: number) => onChange([lo, Math.max(Math.min(n, ceil), lo)]);
 
   const wrapRef = useRef<HTMLDivElement>(null);
   const loRef = useRef<HTMLInputElement>(null);
@@ -79,6 +87,7 @@ export function RangeSlider({
     >
       <div className="range-slider-rail">
         <div className="range-slider-fill" />
+        {ceil < max && <div className="range-slider-cap" style={{ left: pct(ceil) }} />}
       </div>
       <input
         ref={loRef}
@@ -86,6 +95,9 @@ export function RangeSlider({
         className="range-slider-input range-slider-input-lo"
         min={min} max={max} step={step} value={lo} disabled={disabled}
         onChange={(e) => setLo(Number(e.target.value))}
+        // The input keeps `max` so its thumb stays aligned with the rail, but what a screen
+        // reader announces has to be what is actually selectable.
+        aria-valuemax={ceil}
         aria-label={ariaLabel ? `${ariaLabel} — min` : 'minimum'}
         aria-valuetext={fmt(lo)}
       />
@@ -95,6 +107,7 @@ export function RangeSlider({
         className="range-slider-input range-slider-input-hi"
         min={min} max={max} step={step} value={hi} disabled={disabled}
         onChange={(e) => setHi(Number(e.target.value))}
+        aria-valuemax={ceil}
         aria-label={ariaLabel ? `${ariaLabel} — max` : 'maximum'}
         aria-valuetext={fmt(hi)}
       />
@@ -103,7 +116,7 @@ export function RangeSlider({
           {marks.map((m) => (
             <span
               key={m}
-              className={`range-slider-mark${markHighlight && m >= lo && m <= hi ? ' is-in' : ''}`}
+              className={`range-slider-mark${markHighlight && m >= lo && m <= hi ? ' is-in' : ''}${m > ceil ? ' is-out' : ''}`}
               style={{ left: pct(m) }}
             >{fmt(m)}</span>
           ))}

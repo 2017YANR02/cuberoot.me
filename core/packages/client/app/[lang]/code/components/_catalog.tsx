@@ -275,9 +275,10 @@ function RangeSliderDemo() {
       <RangeSlider
         min={0}
         max={14}
+        softMax={11}
         value={v}
         onChange={setV}
-        marks={[0, 7, 14]}
+        marks={[0, 3, 7, 11, 14]}
         ariaLabel={tr({ zh: '步数范围', en: 'Step range' })}
       />
     </div>
@@ -882,11 +883,11 @@ export const CATALOG: ComponentEntry[] = [
     name: 'RangeSlider',
     import: "import { RangeSlider } from '@/components/RangeSlider/RangeSlider';",
     category: 'input',
-    zh: '双圆点 min–max 区间滑块:两个原生 range 输入叠在一条轨道上(输入透传指针、只有圆点可拖),区间填充走 --accent。键盘 / 触摸可用,coarse 指针自动放大圆点;颜色经 --rs-* 变量可在非 token 上下文覆写。',
-    en: 'Dual-thumb min–max range slider: two native range inputs stacked on one rail (inputs are pointer-transparent, only the thumbs drag), fill painted with --accent. Keyboard- and touch-accessible, thumbs enlarge on coarse pointers; colors overridable via --rs-* vars for non-token contexts.',
-    usage: '<RangeSlider min={0} max={14} value={[lo, hi]} onChange={setRange} marks={[0, 7, 14]} />',
+    zh: '双圆点 min–max 区间滑块:两个原生 range 输入叠在一条轨道上(输入透传指针、只有圆点可拖),区间填充走 --accent。键盘 / 触摸可用,coarse 指针自动放大圆点;颜色经 --rs-* 变量可在非 token 上下文覆写。`softMax` 给「刻度轴还要往前画、但只到这里可选」的场合:超出的刻度变淡、轨道打斜线,两个圆点都过不去(aria-valuemax 也跟着收)。',
+    en: 'Dual-thumb min–max range slider: two native range inputs stacked on one rail (inputs are pointer-transparent, only the thumbs drag), fill painted with --accent. Keyboard- and touch-accessible, thumbs enlarge on coarse pointers; colors overridable via --rs-* vars for non-token contexts. `softMax` covers "the axis must keep going but only this far is selectable": ticks past it dim, the rail hatches, neither thumb can pass (aria-valuemax follows).',
+    usage: '<RangeSlider min={0} max={14} softMax={11} value={[lo, hi]} onChange={setRange} marks={[0, 7, 14]} />',
     Demo: RangeSliderDemo,
-    note: { zh: '需要 min–max 双端选择就用它,别再叠两个 <input type=range> 手撸。', en: 'Use it for any min–max dual selection — don’t hand-stack two <input type=range> again.' },
+    note: { zh: '需要 min–max 双端选择就用它,别再叠两个 <input type=range> 手撸。刻度存在但当前取不到,用 softMax 置灰,别直接把 max 调小 —— 那会让人以为再往上不存在。', en: 'Use it for any min–max dual selection — don’t hand-stack two <input type=range> again. When a tick exists but is currently unreachable, dim it with softMax rather than lowering max — a lower max reads as “nothing exists up there”.' },
   },
   {
     name: 'ParamSliders',
