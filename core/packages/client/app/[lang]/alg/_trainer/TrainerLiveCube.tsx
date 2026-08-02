@@ -20,6 +20,7 @@ import { useMemo, useState } from 'react';
 
 import { Spinner } from '@/components/Spinner/Spinner';
 import { tr } from '@/i18n/tr';
+import { mirrorForBrand, sensorBasisForBrand } from '../../timer/_lib/bluetooth/orientation';
 import type { TrainerCubeState } from './useTrainerCube';
 
 /** three + /sim 引擎只在真的挂了这颗魔方时才加载。 */
@@ -55,6 +56,11 @@ export default function TrainerLiveCube({
         moves={log}
         quatRef={quatRef}
         calibrateToken={calibrateNonce}
+        // 轴向走 /timer 那张品牌表,不另开一份:传感器怎么装在魔方里是这颗魔方的
+        // 属性,和它出现在哪个页面上无关。漏传就退回 `identity`,那正是「实际做 y
+        // 屏幕做 z」那个 bug。
+        sensorBasis={sensorBasisForBrand(cube.status.brand)}
+        mirror={mirrorForBrand(cube.status.brand)}
         view="front"
         className="trainer-live-cube-3d"
         animate

@@ -55,8 +55,10 @@
  * ResizeObserver — see `.timer-live-cube-3d` in timer.css.
  *
  * The orientation math (calibration / sensor basis / mirror / smoothing) is
- * pure and lives in ../_lib/bluetooth/orientation.ts — read its header before
- * touching any of these props.
+ * pure and lives in app/[lang]/timer/_lib/bluetooth/orientation.ts — read its
+ * header before touching any of these props. In particular the delta is
+ * BODY-frame, which is what keeps the sensor's power-on heading off the screen;
+ * that header records what it cost to learn.
  */
 
 import { useEffect, useRef, useState, type JSX } from 'react';
@@ -71,7 +73,9 @@ import {
   advanceStillMs,
   applyOrientation,
   calibrate,
+  mirrorForBrand,
   quatAngleTo,
+  sensorBasisForBrand,
   slerpTowards,
   snapWhenSettled,
   type Quat,
@@ -109,8 +113,14 @@ export interface SimCubeViewProps {
   quatRef?: { current: Quat | null };
   /** Bump to capture the current sample as the upright reference. */
   calibrateToken?: number;
-  /** Per-brand sensor axis remap. See orientation.ts — all brands currently
-   *  default to 'identity' because we have verified none of them. */
+  /**
+   * Per-brand sensor axis remap — see orientation.ts.
+   *
+   * Omitting it does NOT mean 'identity'. Every cube measured so far has a Z-up
+   * IMU, so `identity` is the one value known to be wrong for all of them; a
+   * caller that forgets this prop should get the table's `unknown` row, not the
+   * 「实际做 y，屏幕做 z」bug. `sensorBasisForBrand(null)` is that row.
+   */
   sensorBasis?: SensorBasisName;
   /** Reverse the sense of rotation (handedness fix). Calibration cannot do
    *  this — see orientation.ts. */
@@ -156,8 +166,8 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
     quat,
     quatRef,
     calibrateToken = 0,
-    sensorBasis = 'identity',
-    mirror = false,
+    sensorBasis = sensorBasisForBrand(null),
+    mirror = mirrorForBrand(null),
     animate = false,
     view = 'iso',
     onReady,
