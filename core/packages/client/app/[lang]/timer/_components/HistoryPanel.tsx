@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { X, GitCompare, ChevronDown, ChevronUp, CheckSquare, Trash2, MoreVertical, Check, Clipboard, MessageSquare, Layers } from 'lucide-react';
+import { X, GitCompare, ChevronDown, ChevronUp, CheckSquare, Trash2, MoreVertical, Check, Clipboard, MessageSquare } from 'lucide-react';
 import type { Solve, Penalty } from '../_lib/types';
 import { effectiveMs } from '../_lib/types';
 import { formatMs, formatEventMs, formatSolveResult, averageOfN } from '../_lib/stats';
@@ -25,12 +25,10 @@ interface Props {
    *  When omitted the quick-action menu is disabled (normal row tap only). */
   onQuickPenalty?: (id: string, penalty: Penalty) => void;
   onQuickDelete?: (id: string) => void;
-  /** Open the full SolveModal at this solve (for the "Comment" action). */
+  /** Open the full SolveModal at this solve (for the "Comment" action).
+   *  Tapping the row does the same thing — the solve page now opens with the
+   *  reconstruction already on it, so there is no separate «复盘» action. */
   onQuickComment?: (solve: Solve, index: number) => void;
-  /** Open the reconstruction report straight from the row. Without this the
-   *  report is three clicks deep (row → solve modal → 查看复盘) and people who
-   *  did not already know it exists never find it. */
-  onQuickReconstruct?: (solve: Solve, index: number) => void;
   /** cstimer-style per-row rolling-average columns (e.g. [5, 12] → ao5/ao12
    *  ending at each solve). Defaults to [5, 12]; pass [] to hide the columns. */
   aoWindows?: number[];
@@ -82,7 +80,7 @@ const MOBILE_TAG_CAP = 2;
 
 export default function HistoryPanel({
   solves, isZh, onRowClick, onBulkDelete,
-  onQuickPenalty, onQuickDelete, onQuickComment, onQuickReconstruct,
+  onQuickPenalty, onQuickDelete, onQuickComment,
   aoWindows = [5, 12],
 }: Props) {
   const [query, setQuery] = useState('');
@@ -136,7 +134,7 @@ export default function HistoryPanel({
 
   // ── Quick-action menu (right-click desktop / long-press mobile) ────────
   // Reuses SoloView's penalty/delete/comment handlers — no duplicate logic.
-  const quickEnabled = !!(onQuickPenalty || onQuickDelete || onQuickComment || onQuickReconstruct);
+  const quickEnabled = !!(onQuickPenalty || onQuickDelete || onQuickComment);
   const [quickMenu, setQuickMenu] = useState<{ solve: Solve; index: number; x: number; y: number } | null>(null);
   const quickMenuRef = useRef<HTMLDivElement | null>(null);
   const longPressTimerRef = useRef<number | null>(null);
@@ -221,10 +219,6 @@ export default function HistoryPanel({
   };
   const doQuickComment = (s: Solve, index: number) => {
     onQuickComment?.(s, index);
-    closeQuickMenu();
-  };
-  const doQuickReconstruct = (s: Solve, index: number) => {
-    onQuickReconstruct?.(s, index);
     closeQuickMenu();
   };
   const doCopyScramble = async (s: Solve) => {
@@ -1325,12 +1319,6 @@ export default function HistoryPanel({
               <span>DNS</span>
             </button>
             <div className="row-quick-sep" role="separator" />
-            {onQuickReconstruct && (s.moves?.length ?? 0) > 0 && (
-              <button type="button" role="menuitem" className="row-quick-item" onClick={() => doQuickReconstruct(s, quickMenu.index)}>
-                <Layers size={14} />
-                <span>{tr({ zh: '复盘', en: 'Reconstruct' })}</span>
-              </button>
-            )}
             <button type="button" role="menuitem" className="row-quick-item" onClick={() => doQuickComment(s, quickMenu.index)}>
               <MessageSquare size={14} />
               <span>{tr({ zh: '评论', en: 'Comment'

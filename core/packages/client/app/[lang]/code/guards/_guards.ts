@@ -169,8 +169,8 @@ export const CI_GUARDS_DRIFT: CiGuard[] = [
   {
     id: 'recon-open-prefetch',
     test: 'recon_open_prefetch.test.ts',
-    zh: { title: '复盘打开路径懒加载漂移', desc: '点「查看复盘」曾要等 1473ms —— 三级串行的动态 import,每层等上层执行完才开始下载。现在整条链在成绩详情空闲时并行预取。这条测试守覆盖关系:复盘路径上任何 import() 出去的模块都必须在预取清单里,新加一个忘了预取直接红。' },
-    en: { title: 'Reconstruction open-path lazy-load drift', desc: 'Opening the reconstruction once cost 1473ms — a three-level serial dynamic-import chain, each level waiting for the one above to execute. The whole chain is now prefetched in parallel while the solve modal is idle. This test guards coverage: every module the open path import()s must appear in the prefetch list, so adding one without prefetching it turns CI red.' },
+    zh: { title: '复盘打开路径:同一页 + 懒加载漂移', desc: '复盘报告必须渲染在成绩详情这一页上,不许退回「查看复盘」那第二次点击。同时守瀑布:整条链曾是三级串行的动态 import(1473ms),现在在详情挂载时并行预取 —— 复盘路径上任何 import() 出去的模块都必须在预取清单里,新加一个忘了预取直接红。' },
+    en: { title: 'Reconstruction open path: same page + lazy-load drift', desc: 'The report must render on the solve detail page itself, never back behind a second «View reconstruction» click. It also guards the waterfall: the chain was once three serial dynamic imports (1473ms) and is now prefetched in parallel when the detail page mounts — every module the open path import()s must appear in the prefetch list, so adding one without prefetching it turns CI red.' },
   },
   {
     id: 'schema-api-drift',
