@@ -1998,7 +1998,6 @@ export default function SoloView({ playersControl }: SoloViewProps) {
             onQuickPenalty={(id, p) => updateSolve(id, { penalty: p })}
             onQuickDelete={(id) => deleteSolve(id)}
             onQuickComment={(s, idx) => setModalSolve({ s, idx })}
-            onQuickReconstruct={(s) => setReconstructSolve(s)}
           />
           <div className="shell-times-actions">
             <button type="button" className="stats-expand-toggle" onClick={() => setStatsModalOpen(true)}>
@@ -2540,7 +2539,15 @@ export default function SoloView({ playersControl }: SoloViewProps) {
               setModalSolve({ ...modalSolve, s: { ...modalSolve.s, comment: text } });
             }}
             onDelete={() => { deleteSolve(modalSolve.s.id); setModalSolve(null); if (isLatest) setLastPenalty(null); }}
-            onOpenReconstruct={() => setReconstructSolve(modalSolve.s)}
+            history={byEvent[modalSolve.s.event] ?? []}
+            onUseScramble={useScramble}
+            // Two writes because the page reads a *snapshot*: the store keeps
+            // the answer, and the copy being rendered has to agree with it or
+            // the button won't look pressed.
+            onReconFeedback={(ok) => {
+              updateSolve(modalSolve.s.id, { reconOk: ok });
+              setModalSolve(m => (m ? { ...m, s: { ...m.s, reconOk: ok } } : m));
+            }}
             moveTargets={listSessions().filter(s => s.id !== getActiveSessionId()).map(s => ({ id: s.id, name: s.name }))}
             onMoveToSession={(toId) => {
               if (moveSolveToSession(modalSolve.s.id, toId)) {
