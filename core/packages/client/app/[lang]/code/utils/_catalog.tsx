@@ -392,6 +392,15 @@ export const CATALOG: UtilEntry[] = [
     en: 'Last-layer orientation: groups cases by the top-layer “is it the U colour” mask (ZBLL lands on exactly 7 shapes) and says which trailing AUF aims a case a given way. Drives the trainer’s orientation preference.',
   },
   {
+    name: 'classifyScan / sampleGridColors',
+    sig: 'sampleGridColors(data: Uint8ClampedArray, size: number, n: number, patch?: number): RGB[]\nclassifyScan(shots: readonly RGB[][], n: 2 | 3): { facelet; samples; margin; uncertain }',
+    imp: "import { classifyScan, sampleGridColors, SCAN_STEPS } from '@/lib/cube-photo';",
+    usage: "classifyScan(sixShots, 3).facelet // 'BUFLUDLLR…'",
+    category: 'cube',
+    zh: '拍照识别魔方状态:6 张照片按 SCAN_STEPS 的顺序取每格中位色,再用「六色各恰好 n² 格」的带容量指派(匈牙利)+ 每面光照增益迭代,拼出 URFDLB facelet。三阶拿中心块当参照色锚死,二阶靠聚类后整体匹配标准配色。',
+    en: 'Recognize a cube state from photos: median-sample each cell of six shots (SCAN_STEPS order), then a capacity-constrained assignment (exactly n² per color, Hungarian) with per-face illumination gains yields the URFDLB facelet. 3×3 anchors on the fixed centers; 2×2 clusters first, then matches the whole palette.',
+  },
+  {
     name: 'CUBE_FILL / CUBE_ON_FILL',
     sig: 'CUBE_FILL: Record<CubeFace, string>   // U D L R F B',
     imp: "import { CUBE_FILL, CUBE_ON_FILL } from '@/lib/cube-colors';",

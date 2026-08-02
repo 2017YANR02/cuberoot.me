@@ -7,6 +7,7 @@
  * 三阶那套「画状态求解」:
  *   ?view=cube  可转的立体画板(默认,/sim 引擎 order=2)
  *   ?view=net   平面展开图画板(同一份 facelet,24 格)
+ *   ?view=photo 拍 6 面照片认色(_PhotoScanner),认完写回同一份 facelet
  *   ?view=scramble 打乱框(PuzzleOptimalSolver 自己那套,含批量)
  *
  * 与三阶的差别:二阶最优解**纯 TS 本地即时算**(lib/pocket-facelet:整体旋转归一化 +
@@ -28,10 +29,11 @@ import { PuzzleOptimalSolver } from '../_components/PuzzleOptimalSolver';
 import { SPEC_BY_EVENT } from './_puzzle-specs';
 import InteractiveCubeNet from './_InteractiveCubeNet';
 import Interactive3DCube, { useIdlePreloadPaintEngine } from './_Interactive3DCube';
+import PhotoScanner from './_PhotoScanner';
 import { CUBE2_PAINT } from './_paint-spec-222';
 import type { PaintColor } from './_paint-shared';
 
-type View = 'net' | 'cube' | 'scramble';
+type View = 'net' | 'cube' | 'scramble' | 'photo';
 
 export default function Cube2Solver() {
   const t = useT();
@@ -44,7 +46,7 @@ export default function Cube2Solver() {
   const [scrambleFirst] = useState(() => scramble.trim().length > 0);
   const [view, setView] = useQueryState(
     'view',
-    parseAsStringEnum<View>(['net', 'cube', 'scramble']).withDefault(scrambleFirst ? 'scramble' : 'cube'),
+    parseAsStringEnum<View>(['net', 'cube', 'scramble', 'photo']).withDefault(scrambleFirst ? 'scramble' : 'cube'),
   );
 
   // 立体是默认视图,组件自己会加载引擎;从别的视图进来时空闲预热,切过去不等。
@@ -113,12 +115,12 @@ export default function Cube2Solver() {
     plainSolve: true,
   };
 
-  const painting = view !== 'scramble';
+  const painting = view === 'cube' || view === 'net';
 
   return (
     <PuzzleOptimalSolver
       spec={spec}
-      hidePanel={painting}
+      hidePanel={view !== 'scramble'}
       topSlot={(
         <section className="pocket-paint">
           <style>{INLINE_CSS}</style>
@@ -131,10 +133,19 @@ export default function Cube2Solver() {
               items={[
                 { value: 'cube', label: t('立体', '3D') },
                 { value: 'net', label: t('平面', '2D') },
+                { value: 'photo', label: t('拍照', 'Photo') },
                 { value: 'scramble', label: t('打乱', 'Scramble') },
               ]}
             />
           </div>
+
+          {view === 'photo' && (
+            <PhotoScanner
+              spec={CUBE2_PAINT}
+              pixelSize={canvasSize}
+              onApply={(fc) => { setFacelet(fc); void setView('net'); }}
+            />
+          )}
 
           {painting && (
             <>
