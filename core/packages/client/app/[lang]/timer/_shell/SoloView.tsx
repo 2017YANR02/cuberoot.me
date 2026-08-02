@@ -41,6 +41,9 @@ import { preScrambleFor } from '../_lib/scramble/pre_scramble';
 import { applyOrientationPrefix } from '@/lib/cube-orientation';
 import { use222Mode } from '@/lib/scramble-222-mode';
 import { genByStepsScramble, genByStepsSig, wcaStepFilter } from '../_lib/scramble/gen-by-steps';
+import { trainerSpecOf, trainerSig } from '../_lib/scramble/trainer-source';
+import { peekTrainer, nextTrainer, prefetchTrainer, isTrainerSourceEmpty } from '../_lib/scramble/trainer_pool';
+import TrainerCaseBar from '../_components/TrainerCaseBar';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { Flag } from '@/components/Flag';
 import { compFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags';
@@ -391,6 +394,12 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   const genStepsSig = settings.scrambleSource === 'random'
     ? genByStepsSig(event, settings)
     : '';
+  // 随机来源的「难度」(3×3 族):按所选阶段的最优步数直接生成状态(lib/cross-trainer)。
+  // 与真题难度筛互斥 —— 那边筛真题,这边生成,二者只按当前来源取其一。
+  const trainerSpec = settings.scrambleSource === 'random' ? trainerSpecOf(event, settings) : null;
+  const trainerSpecRef = useRef(trainerSpec);
+  trainerSpecRef.current = trainerSpec;
+  const trainerSigVal = settings.scrambleSource === 'random' ? trainerSig(event, settings) : '';
 
   // 手动输入队列:每行一条打乱(去空行);source==='manual' 时按游标顺序取用(走完循环回队首),
   // ←/→ 仍走 scrambleHist 历史。队列内容变了即重置打乱历史(经 genScramble 身份变化)+ 游标。
@@ -444,13 +453,16 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     // 非 WCA puzzle:打乱在 csTimer Worker 里算,nonwca.ts 自带队列。别再套一层
     // scramble_pool —— 那会把「还在生成」的 '' 也缓存进 buffer。'' 由下面的 effect 补。
     if (isNonWcaEvent(event)) return generateScramble(event);
+    // 「按难度生成」(3×3 族):状态在 worker 里按阶段最优步数采样,再由 min2phase 转成打乱 ——
+    // 同样是异步的,队列干了就先出 '',由下面的 effect 补上(期间转圈)。
+    if (trainerSpecRef.current) return peekTrainer(trainerSpecRef.current);
     // 「按步数生成」(2×2 / 金字塔):从完整状态空间均匀采样、按所选度量最优步数过滤(非案例库)。
     // 度量+区间进 pool key,改设置即换 buffer;拒绝采样 + IDA* 在后台 idle 生成,不阻塞计时。
     const byStepsScr = genByStepsScramble(event, s);
     if (byStepsScr) return takeScramble(byStepsScr.key, byStepsScr.gen, canGenScramble);
     return takeScramble(`${event}|${s.cnMode}|${event === '222' ? mode222 : ''}`, () => generateScramble(event), canGenScramble);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [drillTarget, drillAllowed, event, settings.scrambleSource, wcaSourceSig, genStepsSig, manualSig, canGenScramble, mode222]);
+  }, [drillTarget, drillAllowed, event, settings.scrambleSource, wcaSourceSig, genStepsSig, trainerSigVal, manualSig, canGenScramble, mode222]);
 
   const [scrambleHist, setScrambleHist] = useState<{ list: string[]; idx: number }>(
     () => ({ list: [genScramble()], idx: 0 }),
@@ -539,6 +551,33 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     });
     return () => { cancelled = true; };
   }, [event, scramble, settings.scrambleSource, applyScrambleHist]);
+
+  // 「按难度生成」:状态采样在 worker(建表 0.3~1.7s),打乱文本由 min2phase 现算 —— 首条要等,
+  // 之后队列已预热。'' = 还在生成(转圈);worker 明确采不出来(如六色 10 步 XCross)→ 显式提示,
+  // 绝不塞一条别的难度的打乱冒充。
+  const [trainerLoading, setTrainerLoading] = useState(false);
+  const [trainerEmpty, setTrainerEmpty] = useState(false);
+  useEffect(() => {
+    const spec = trainerSpecRef.current;
+    if (!spec) { setTrainerLoading(false); setTrainerEmpty(false); return; }
+    prefetchTrainer(spec);
+    if (scramble !== '') { setTrainerLoading(false); setTrainerEmpty(false); return; }
+    let cancelled = false;
+    setTrainerLoading(true);
+    setTrainerEmpty(false);
+    void nextTrainer(spec).then((real) => {
+      if (cancelled) return;
+      setTrainerLoading(false);
+      const cur = scrambleHistRef.current;
+      if (!real) { setTrainerEmpty(isTrainerSourceEmpty(spec)); return; }
+      if (cur.list[cur.idx] !== '') return;
+      const list = [...cur.list];
+      list[cur.idx] = real;
+      applyScrambleHist({ list, idx: cur.idx });
+    });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scramble, trainerSigVal, applyScrambleHist]);
 
   // Warm the WCA pool ahead of demand (on source change / when mode turns on).
   useEffect(() => {
@@ -2201,34 +2240,39 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                   : tr({ zh: '点击换一个打乱', en: 'Click to refresh'
                                       })}
             >
-              <span className="scramble-text">{scrambleLoading || nonWcaLoading
+              <span className="scramble-text">{scrambleLoading || nonWcaLoading || trainerLoading
                 // 转圈取代了原来的「加载真实打乱…」文字,所以它是唯一的加载提示 → 传 label 供读屏。
                 // 原来包在外面的 .scramble-loading 没有任何 CSS 规则也没有别的消费者,一并去掉。
-                ? <Spinner size={22} label={nonWcaLoading
+                ? <Spinner size={22} label={nonWcaLoading || trainerLoading
                     ? tr({ zh: '生成打乱', en: 'Generating scramble' })
                     : tr({ zh: '加载真实打乱', en: 'Loading real scramble' })} />
-                : wcaSourceEmpty
-                  ? <span className="scramble-empty">{
-                      // 「按步数」过滤在 comp/date 两模式都生效,先判——真题近上帝数,低步数常无匹配。
-                      wcaStep
-                        ? tr({ zh: '该步数范围没有匹配的 WCA 真题,换个步数试试', en: 'No WCA scramble matches this move-count range — try another range' })
-                        // 难度过滤 date/comp 两模式都生效(wcaSpec.diff 仅在难度实际生效时有值)——
-                        // 先判难度,再判 comp 缺项目,避免 comp+难度为空时误报「该比赛没有此项目」。
-                        // comp 模式再按覆盖探测(isWcaCompUnindexed)细分:该场压根没进难度库(离线管道
-                        // 还没算,常见新赛)→ 换步数/配色也没用,提示改用日期模式;已入库只是此难度档无匹配
-                        // → 提示换步数/配色。
-                        : wcaSpec.diff
-                          ? wcaSpec.mode === 'comp'
-                            ? isWcaCompUnindexed(wcaSpec)
-                              ? tr({ zh: '难度库待更新', en: 'Difficulty index not updated yet' })
-                              : tr({ zh: '该比赛没有匹配此难度的真题,换个步数或配色试试', en: 'This competition has no scramble at this difficulty — try other step counts or colors' })
-                            : tr({ zh: '该难度组合没有匹配的 WCA 真题,换个步数或配色试试', en: 'No WCA scramble matches this difficulty — try other step counts or colors' })
-                          : wcaSpec.mode === 'comp'
-                            ? tr({ zh: '该比赛没有此项目的打乱', en: 'This competition has no scrambles for this event' })
-                            : tr({ zh: '该时间段内没有 WCA 真题', en: 'No WCA scrambles in this date range' })
-                    }</span>
-                  : displayScramble
-                    ? <><span className="scramble-moves">{(() => {
+                : trainerEmpty
+                  ? <span className="scramble-empty">{tr({
+                      zh: '这个难度组合生成不出来,把步数范围放宽一点试试',
+                      en: 'Nothing exists at this difficulty — widen the step range',
+                    })}</span>
+                  : wcaSourceEmpty
+                    ? <span className="scramble-empty">{
+                        // 「按步数」过滤在 comp/date 两模式都生效,先判——真题近上帝数,低步数常无匹配。
+                        wcaStep
+                          ? tr({ zh: '该步数范围没有匹配的 WCA 真题,换个步数试试', en: 'No WCA scramble matches this move-count range — try another range' })
+                          // 难度过滤 date/comp 两模式都生效(wcaSpec.diff 仅在难度实际生效时有值)——
+                          // 先判难度,再判 comp 缺项目,避免 comp+难度为空时误报「该比赛没有此项目」。
+                          // comp 模式再按覆盖探测(isWcaCompUnindexed)细分:该场压根没进难度库(离线管道
+                          // 还没算,常见新赛)→ 换步数/配色也没用,提示改用日期模式;已入库只是此难度档无匹配
+                          // → 提示换步数/配色。
+                          : wcaSpec.diff
+                            ? wcaSpec.mode === 'comp'
+                              ? isWcaCompUnindexed(wcaSpec)
+                                ? tr({ zh: '难度库待更新', en: 'Difficulty index not updated yet' })
+                                : tr({ zh: '该比赛没有匹配此难度的真题,换个步数或配色试试', en: 'This competition has no scramble at this difficulty — try other step counts or colors' })
+                              : tr({ zh: '该难度组合没有匹配的 WCA 真题,换个步数或配色试试', en: 'No WCA scramble matches this difficulty — try other step counts or colors' })
+                            : wcaSpec.mode === 'comp'
+                              ? tr({ zh: '该比赛没有此项目的打乱', en: 'This competition has no scrambles for this event' })
+                              : tr({ zh: '该时间段内没有 WCA 真题', en: 'No WCA scrambles in this date range' })
+                      }</span>
+                    : displayScramble
+                      ? <><span className="scramble-moves">{(() => {
                         // 复制成功的绿勾必须绝对不换行(即使不另起、也不能把最后一步挤下去)。
                         // 做法:把最后一步单独包进 .scramble-copied-tail(relative),绿勾在其中
                         // 绝对定位(left:100%),完全脱离文本流 → 既不新增断行点、也不占宽度,永不换行。
@@ -2285,6 +2329,8 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                         : tr({ zh: '与打乱不符', en: 'Doesn’t match' })}
                     </span>
                   )}
+              {/* 「按难度生成」的题面 + 答案(只在该来源下有 meta 时出现)。 */}
+              {!scrambleLoading && !trainerLoading && <TrainerCaseBar scramble={scramble} isZh={isZh} />}
               {wcaSrcDisplay && (
                 <div className="scramble-src-row">
                 <a
