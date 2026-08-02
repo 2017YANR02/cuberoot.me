@@ -17,6 +17,7 @@ import {
   SENSOR_BASES,
   BRAND_SENSOR_BASIS,
   BRAND_MIRROR,
+  MEASURED_SENSOR_MOUNT,
   applyOrientation,
   calibrate,
   mirrorForBrand,
@@ -122,43 +123,83 @@ describe('calibration', () => {
   });
 });
 
-describe('world-frame composition (the one that is easy to get backwards)', () => {
-  // Calibrate with the cube TILTED — the case that separates the two orders.
-  const tilt = fromAxisAngle(X, 30 * DEG);
-  const yaw90 = fromAxisAngle(Y, 90 * DEG);
-  // The user yaws the physical cube 90° about the room's vertical. In world
-  // terms that left-multiplies the current pose.
-  const raw = quatMul(yaw90, tilt);
+/**
+ * THE COMPOSITION ORDER — and the bug it kept causing. Read this before
+ * "simplifying" `applyOrientation`.
+ *
+ * A sample is `qRaw = W ⊗ C ⊗ M⁻¹`: `W` is the sensor's power-on HEADING (not
+ * constant between sessions — a cube boots resting on a face, so it lands on a
+ * quarter turn), `C` the cube's pose, `M` the mounting. The body-frame delta
+ * `q0⁻¹ ⊗ qRaw` cancels `W`; the world-frame delta `qRaw ⊗ q0⁻¹` cancels `M`
+ * instead and hands the heading to the renderer, where it reads as「我做 x',
+ * 屏幕做 z」. That report was measured on hardware twice, and both times it was
+ * written into `BRAND_SENSOR_BASIS` as though it were a mounting — the second
+ * time inverting the first. The second test below is that history, executable.
+ */
+describe('body-frame composition (the one that is easy to get backwards)', () => {
+  /** A physical cube move: `x`, about the cube's OWN left-right axis.
+   *  记号约定:x / y / z 都是绕对应**正轴 −90°**(从正轴看过去顺时针),`x`
+   *  把 D 面转到前面。写成 +90° 就是它们的逆,别把两边搞混。 */
+  const xMove = fromAxisAngle(X, -90 * DEG);
+  /** Power-on headings. A yaw, quantised to quarter turns; different each session. */
+  const HEADINGS = [
+    QUAT_IDENTITY,
+    fromAxisAngle(Y, 90 * DEG),
+    fromAxisAngle(Y, 180 * DEG),
+    fromAxisAngle(Y, -90 * DEG),
+  ];
+  /** How the cube happened to be held when the user tapped 校准. */
+  const GRIPS = [
+    QUAT_IDENTITY,
+    fromAxisAngle(X, 30 * DEG),
+    fromAxisAngle([0.4, -0.2, 0.9], 110 * DEG),
+  ];
+  /** A body-frame move right-multiplies the pose; the heading left-multiplies it.
+   *  The mounting is left out here (M = identity) so this block is about the
+   *  composition ORDER alone — the mounting gets its own end-to-end block below. */
+  const sample = (heading: Quat, pose: Quat, move: Quat) =>
+    quatMul(quatMul(heading, pose), move);
 
-  it('a 90° world yaw displays as a 90° yaw about the screen up axis', () => {
-    const shown = applyOrientation(raw, calibrate(tilt));
-    expectSameRotation(shown, yaw90);
-    // Spelled out on the axis itself: screen up must be a fixed point.
-    const up = rotate(shown, Y);
-    expect(up[0]).toBeCloseTo(0, 12);
-    expect(up[1]).toBeCloseTo(1, 12);
-    expect(up[2]).toBeCloseTo(0, 12);
-    expect(quatAngleTo(QUAT_IDENTITY, shown)).toBeCloseTo(90 * DEG, 12);
+  it('one physical x displays as x — from every heading and every grip', () => {
+    for (const heading of HEADINGS) {
+      for (const grip of GRIPS) {
+        const before = sample(heading, grip, QUAT_IDENTITY);
+        const after = sample(heading, grip, xMove);
+        expectSameRotation(applyOrientation(after, calibrate(before)), xMove);
+      }
+    }
   });
 
-  it('is NOT the body-frame order q0⁻¹ ⊗ qRaw', () => {
-    const bodyFrame = quatMul(quatInverse(tilt), raw);
-    // Both are 90° turns, but the body-frame one is about a 30°-tilted axis —
-    // the cube would visibly tumble instead of spinning flat.
-    expect(sameRotation(bodyFrame, yaw90)).toBe(false);
-    const up = rotate(bodyFrame, Y);
-    expect(Math.abs(up[1] - 1)).toBeGreaterThan(1e-3);
-    expectSameRotation(applyOrientation(raw, calibrate(tilt)), yaw90);
+  it("the world-frame order is the bug: 90° of heading turns that x into a z'", () => {
+    const worldFrame = (before: Quat, after: Quat) => quatMul(after, quatInverse(before));
+    const shown = HEADINGS.map((heading) => {
+      const before = sample(heading, QUAT_IDENTITY, QUAT_IDENTITY);
+      return worldFrame(before, sample(heading, QUAT_IDENTITY, xMove));
+    });
+    // Heading 0: it happens to be right, which is why this ever shipped.
+    expectSameRotation(shown[0], xMove);
+    // Heading 90°: the same physical move, rendered as a z′ — 用户那句「我做 x',
+    // 屏幕做 z」的逆写法,同一件事。
+    expectSameRotation(shown[1], fromAxisAngle(Z, 90 * DEG));
+    expect(sameRotation(shown[1], xMove)).toBe(false);
+    // Heading 270°: the same complaint, inverted — Sprint 31's report.
+    expectSameRotation(shown[3], fromAxisAngle(Z, -90 * DEG));
+    // Body-frame, same samples, no dependence on the heading at all.
+    for (const heading of HEADINGS) {
+      const before = sample(heading, QUAT_IDENTITY, QUAT_IDENTITY);
+      expectSameRotation(applyOrientation(sample(heading, QUAT_IDENTITY, xMove), calibrate(before)), xMove);
+    }
   });
 
-  it('the displayed pose is independent of how the cube was held at calibration', () => {
-    // Same physical yaw, three different calibration poses ⇒ same display.
-    for (const pose of [
-      QUAT_IDENTITY,
-      fromAxisAngle(X, 30 * DEG),
-      fromAxisAngle([0.4, -0.2, 0.9], 110 * DEG),
-    ]) {
-      expectSameRotation(applyOrientation(quatMul(yaw90, pose), calibrate(pose)), yaw90);
+  it('a whole solve of body-frame moves composes, it does not accumulate error', () => {
+    const grip = fromAxisAngle([0.4, -0.2, 0.9], 110 * DEG);
+    const heading = fromAxisAngle(Y, 90 * DEG);
+    const moves = [fromAxisAngle(X, -90 * DEG), fromAxisAngle(Y, -90 * DEG), fromAxisAngle(Z, -90 * DEG)];
+    let pose = QUAT_IDENTITY;
+    const before = sample(heading, grip, QUAT_IDENTITY);
+    for (const m of moves) {
+      pose = quatMul(pose, m);
+      expectSameRotation(applyOrientation(sample(heading, grip, pose), calibrate(before)), pose);
     }
   });
 });
@@ -269,16 +310,16 @@ describe('mirror (handedness)', () => {
 
   it('is something calibration provably cannot do', () => {
     // For every calibration reference, the un-mirrored display of a pure +yaw
-    // stays a +yaw: right-multiplying by a constant cannot flip the sense.
+    // stays a +yaw: composing with a constant cannot flip the sense.
     const yaw = fromAxisAngle(Y, 40 * DEG);
     for (const pose of [QUAT_IDENTITY, fromAxisAngle(X, 25 * DEG), fromAxisAngle(Z, 61 * DEG)]) {
-      const shown = applyOrientation(quatMul(yaw, pose), calibrate(pose));
+      const shown = applyOrientation(quatMul(pose, yaw), calibrate(pose));
       expect(sameRotation(shown, fromAxisAngle(Y, -40 * DEG))).toBe(false);
       expectSameRotation(shown, yaw);
     }
     // The mirror knob is the only thing that does flip it.
     expectSameRotation(
-      applyOrientation(quatMul(yaw, QUAT_IDENTITY), calibrate(QUAT_IDENTITY), { mirror: true }),
+      applyOrientation(quatMul(QUAT_IDENTITY, yaw), calibrate(QUAT_IDENTITY), { mirror: true }),
       fromAxisAngle(Y, -40 * DEG),
     );
   });
@@ -319,9 +360,25 @@ describe('smoothing', () => {
 });
 
 describe('brand tables', () => {
-  it('every brand assumes a Z-up IMU yawed 90° (both reported symptoms)', () => {
+  it('every brand assumes a Z-up IMU', () => {
     for (const [brand, basis] of Object.entries(BRAND_SENSOR_BASIS)) {
-      expect(basis, `${brand} basis`).toBe('rotY90X270');
+      expect(basis, `${brand} basis`).toBe('rotX270');
+    }
+  });
+
+  /**
+   * 表里每一行都必须正好是 `MEASURED_SENSOR_MOUNT` 的逆 —— 换句话说,基表只允许
+   * 记「传感器怎么装在魔方里」这一条硬件事实,不许再夹带别的修正。
+   *
+   * 这条就是防重犯的那道闸:上一次是把开机航向(一次 90° 偏航)当成装配姿态写进
+   * 表里,而且是搭在一个和陀螺仪毫无关系的提交里进来的。有了这条,那种改动当场红。
+   * 真要动它,得先动 `MEASURED_SENSOR_MOUNT`,那是个必须写明「在真机上重新量过」
+   * 的改动,不是顺手补一个常量。
+   */
+  it('every row is exactly the measured mounting inverted — no room for a second correction', () => {
+    const wanted = quatInverse(MEASURED_SENSOR_MOUNT);
+    for (const [brand, basis] of Object.entries(BRAND_SENSOR_BASIS)) {
+      expect(quatAngleTo(SENSOR_BASES[basis], wanted), `${brand} basis`).toBeLessThan(1e-9);
     }
   });
 
@@ -373,7 +430,7 @@ describe('Z-up sensor into a Y-up renderer', () => {
   it('is proper — it moves axes and leaves handedness alone', () => {
     // A mirror would be needed on top if the cube also yawed backwards; the
     // basis alone must not introduce that.
-    const b = SENSOR_BASES.rotY90X270;
+    const b = SENSOR_BASES.rotX270;
     const [ax, ay, az] = rotate(b, X);
     const [bx, by, bz] = rotate(b, Y);
     const cross: [number, number, number] = [
@@ -387,52 +444,88 @@ describe('Z-up sensor into a Y-up renderer', () => {
 });
 
 /**
- * 第二轮真机报告:「y 现在对了,但实际做 x 屏幕做 z,实际做 z 屏幕做 x'」。
+ * 「物理动作 → 屏幕动作」—— 整块朝向代码的唯一验收标准,端到端走一遍。
  *
- * 三句话把传感器的三条轴全钉死了。第一轮已经定下**传感器 +Z 就是魔方的竖轴**
- * (它转到屏幕的 +Y 之后 `y` 才对的);这一轮的两个症状再把另外两条定出来:
+ * 上面那些都是零件:这一组把零件拼起来,按真机语义造样本(装配姿态 = 实测的
+ * `MEASURED_SENSOR_MOUNT`,再叠一个任意开机航向和任意握法),然后要求屏幕上做的
+ * 就是手里做的那一下。用户报 bug 用的是这套话术,验收也就该用这套。
  *
- *   rotX270 把 s_x 送到屏幕 +x、把 s_y 送到 −z。物理 x 出来是 **+z** ⇒ 物理 x = −s_y;
- *   物理 z 出来是 **−x** ⇒ 物理 z = −s_x。
- *
- * 于是「物理三轴 → 屏幕三轴」在两个基下各是什么,就成了可以直接断言的事实。
+ * 这一组红了只意味着一件事:**要么基表被人动了,要么合成顺序被人动了**。两者都
+ * 该回到 orientation.ts 的头注,而不是在这里调参数把它调绿。
  */
-describe('the second round: x and z were still 90° out', () => {
-  /** 魔方自己的三条轴,写在传感器坐标里(推导见上)。 */
-  const PHYS_X: [number, number, number] = [0, -1, 0];
-  const PHYS_Y: [number, number, number] = [0, 0, 1];
-  const PHYS_Z: [number, number, number] = [-1, 0, 0];
-  // `|| 0` 把 −0 折成 0:轴向对不对和它是从哪一边趋近于零无关。
-  const round = (v: [number, number, number]) => v.map(n => Math.round(n) || 0);
+describe('物理动作 → 屏幕动作(端到端)', () => {
+  const MOUNT = MEASURED_SENSOR_MOUNT;
+  const basis = sensorBasisForBrand('gan-v4');
+  const mirror = mirrorForBrand('gan-v4');
 
-  it('rotX270 reproduces exactly what the user saw: x→z, z→x−, y already right', () => {
-    const b = SENSOR_BASES.rotX270;
-    expect(round(rotate(b, PHYS_X))).toEqual([0, 0, 1]);    // 做 x,屏幕做 z
-    expect(round(rotate(b, PHYS_Z))).toEqual([-1, 0, 0]);   // 做 z,屏幕做 x'
-    expect(round(rotate(b, PHYS_Y))).toEqual([0, 1, 0]);    // y 是对的
+  /**
+   * 一颗真机会报什么:`qRaw = W ⊗ C ⊗ M⁻¹`。
+   * `heading` 是开机航向 W,`pose` 是魔方相对校准姿态转过的量(魔方自己的坐标)。
+   */
+  const raw = (heading: Quat, grip: Quat, pose: Quat): Quat =>
+    quatMul(quatMul(quatMul(heading, grip), pose), quatInverse(MOUNT));
+
+  /**
+   * 三条魔方自己的轴:x 穿 R 面,y 穿 U 面,z 穿 F 面。
+   * 记号是**绕正轴 −90°**(从正轴看过去顺时针):`x` 把 D 转到前面、`y` 把 R 转到
+   * 前面、`z` 把 L 转到上面。写成 +90° 就成了它的逆,这一步反过 —— 别再反。
+   */
+  const MOVES: ReadonlyArray<[string, [number, number, number], number]> = [
+    ['x', X, -90], ["x'", X, 90],
+    ['y', Y, -90], ["y'", Y, 90],
+    ['z', Z, -90], ["z'", Z, 90],
+    ['x2', X, 180], ['y2', Y, 180], ['z2', Z, 180],
+  ];
+
+  // 航向是绕**传感器自己的竖轴**转的 —— 它是 Z-up 的,所以这里绕 Z 不绕 Y。
+  const HEADINGS: ReadonlyArray<[string, Quat]> = [
+    ['开机朝北', QUAT_IDENTITY],
+    ['开机偏 90°', fromAxisAngle(Z, 90 * DEG)],
+    ['开机偏 180°', fromAxisAngle(Z, 180 * DEG)],
+    ['开机偏 270°', fromAxisAngle(Z, -90 * DEG)],
+  ];
+
+  const GRIPS: ReadonlyArray<[string, Quat]> = [
+    ['摆正校准', QUAT_IDENTITY],
+    ['歪着校准', fromAxisAngle([0.4, -0.2, 0.9], 110 * DEG)],
+  ];
+
+  for (const [headingName, heading] of HEADINGS) {
+    for (const [gripName, grip] of GRIPS) {
+      it(`${headingName} / ${gripName}:六个转体各就各位`, () => {
+        const reference = calibrate(raw(heading, grip, QUAT_IDENTITY));
+        for (const [name, axis, deg] of MOVES) {
+          const move = fromAxisAngle(axis, deg * DEG);
+          const shown = applyOrientation(raw(heading, grip, move), reference, { basis, mirror });
+          expect(quatAngleTo(shown, move), `做 ${name}`).toBeLessThan(1e-9);
+        }
+      });
+    }
+  }
+
+  it('一次两手也对:x 之后再 y,屏幕上是同一个复合', () => {
+    const heading = fromAxisAngle(Z, 90 * DEG);
+    const grip = fromAxisAngle(X, 30 * DEG);
+    const reference = calibrate(raw(heading, grip, QUAT_IDENTITY));
+    const pose = quatMul(fromAxisAngle(X, -90 * DEG), fromAxisAngle(Y, -90 * DEG));
+    expectSameRotation(applyOrientation(raw(heading, grip, pose), reference, { basis, mirror }), pose);
   });
 
-  it('rotY90X270 puts all three where they belong', () => {
-    const b = SENSOR_BASES.rotY90X270;
-    expect(round(rotate(b, PHYS_X))).toEqual([1, 0, 0]);
-    expect(round(rotate(b, PHYS_Y))).toEqual([0, 1, 0]);
-    expect(round(rotate(b, PHYS_Z))).toEqual([0, 0, 1]);
-  });
-
-  it('and it really is rotY90 composed onto rotX270, left factor first', () => {
-    const composed = quatMul(SENSOR_BASES.rotY90, SENSOR_BASES.rotX270);
-    expectSameRotation(SENSOR_BASES.rotY90X270, composed);
-  });
-
-  it('chaining the two similarities equals applying the composite once', () => {
-    // `B ⊗ q ⊗ B⁻¹` twice = `(B₂B₁) ⊗ q ⊗ (B₂B₁)⁻¹`. This is why the fix is a
-    // LEFT factor and not a second call somewhere downstream.
-    const sample = fromAxisAngle([0.3, -0.7, 0.5], 37 * DEG);
-    const twice = applyOrientation(
-      applyOrientation(sample, null, { basis: 'rotX270' }), null, { basis: 'rotY90' },
+  /**
+   * 曾经的两次真机报告,写成断言 —— 它们互为逆,所以不可能同时是「装配姿态」。
+   * 把航向当成装配姿态写进表里,只会让同一句抱怨换个方向再来一次。
+   */
+  it('把航向写进基表就会这样:同一个 x,航向差 90° 就成了 z′', () => {
+    const worldFrameDelta = (before: Quat, after: Quat) => quatMul(after, quatInverse(before));
+    const xMove = fromAxisAngle(X, -90 * DEG);
+    const seen = (heading: Quat) => worldFrameDelta(
+      raw(heading, QUAT_IDENTITY, QUAT_IDENTITY),
+      raw(heading, QUAT_IDENTITY, xMove),
     );
-    const once = applyOrientation(sample, null, { basis: 'rotY90X270' });
-    expectSameRotation(twice, once);
+    const b = SENSOR_BASES[basis];
+    const through = (q: Quat) => quatMul(quatMul(b, q), quatConjugate(b));
+    expectSameRotation(through(seen(fromAxisAngle(Z, 90 * DEG))), fromAxisAngle(Z, 90 * DEG));
+    expectSameRotation(through(seen(fromAxisAngle(Z, -90 * DEG))), fromAxisAngle(Z, -90 * DEG));
   });
 });
 

@@ -7,43 +7,73 @@
  * lives in _components/SimCubeView.tsx, which just copies the result into
  * `world.cube.quaternion`.
  *
+ * ── The two unknowns, and why only one of them is a constant ──────────────
+ *
+ * A sample is NOT "the cube's orientation". Writing C for the cube's pose in
+ * the room, what the packet actually carries is
+ *
+ *        qRaw = W ⊗ C ⊗ M⁻¹
+ *
+ *   W — the SENSOR'S WORLD frame relative to the room. An IMU fuses gravity, so
+ *       its +Z is up; the heading (the yaw about that +Z) is whatever the fusion
+ *       initialised to when the cube powered on. **W IS NOT A CONSTANT.** It
+ *       differs between sessions, and because a cube powers on resting on a
+ *       face, its yaw lands on some multiple of 90°.
+ *   M — the MOUNTING: how the sensor board sits inside the cube. This one IS a
+ *       hardware constant, and it is what `BRAND_SENSOR_BASIS` records.
+ *
+ * Every step below is classified by which of the two it cancels. Getting that
+ * wrong is not a rounding error: it is how a live heading ends up baked into a
+ * table of hardware constants (see the HISTORY note in knob 1).
+ *
  * ── The three knobs, and which problem each one actually solves ────────────
  *
- * 1. CALIBRATION (`reference` / q0) — removes a CONSTANT OFFSET.
+ * 1. CALIBRATION (`reference` / q0) — cancels W.
  *    We capture the raw sample at the moment the user says "this is how the
  *    cube is sitting right now" and thereafter show
  *
- *        qDisplay = qRaw ⊗ q0⁻¹        ← WORLD-frame / LEFT composition
+ *        qDisplay = B ⊗ (q0⁻¹ ⊗ qRaw) ⊗ B⁻¹   ← BODY-frame / RIGHT composition
  *
- *    Left composition is the correct one here: `qRaw ⊗ q0⁻¹` is the rotation
- *    that carries the calibration pose to the current pose EXPRESSED IN THE
- *    SENSOR'S WORLD FRAME, so a 90° yaw of the physical cube about the room's
- *    vertical shows up as a 90° yaw about the screen's up axis regardless of
- *    how the cube happened to be held at calibration time.
- *    The body-frame variant `q0⁻¹ ⊗ qRaw` re-expresses the delta in the CUBE'S
- *    own frame instead; with a tilted calibration pose the same physical yaw
- *    then comes out as a tumble about some oblique cube axis. That is the
- *    classic "it drifts sideways when I calibrated the cube at an angle" bug,
- *    so: left, not right. `applyOrientation` and its test lock this down.
+ *    Substitute the model and the reason is immediate:
  *
- *    What calibration CANNOT fix: it right-multiplies by a single constant, so
- *    it can only ever remove a constant offset. It cannot permute axes and it
- *    cannot change handedness — if yaw runs backwards before calibration it
- *    runs backwards after it, from every calibration pose. Chasing an inverted
- *    axis by re-calibrating is a dead end; that is what knobs 2 and 3 are for.
+ *        q0⁻¹ ⊗ qRaw = M ⊗ (C₀⁻¹ ⊗ C) ⊗ M⁻¹
  *
- * 2. SENSOR BASIS (`basis` / B) — fixes an AXIS PERMUTATION.
- *    Brands disagree about which physical cube axis their gyro calls +Y, so the
- *    delta above may be about the right physical axis but the wrong screen one.
- *    A change of basis is a similarity transform, not a multiplication:
+ *    W is gone, and what survives is THE ROTATION THE CUBE ITSELF MADE, written
+ *    in sensor axes. That is exactly the quantity this app is about: a user who
+ *    says "I did x'" is making a claim about the cube's own axes, never about
+ *    the room's.
  *
- *        qDisplay = B ⊗ (qRaw ⊗ q0⁻¹) ⊗ B⁻¹
+ *    HISTORY, and the reason this comment is this long. This used to be
+ *    `qRaw ⊗ q0⁻¹` — the world-frame/left composition, which cancels M and
+ *    leaves W. It was argued for on the grounds that a yaw about the ROOM's
+ *    vertical should read as a yaw about the SCREEN's up axis whatever the grip.
+ *    That is true, and it is the wrong thing to want, because the same property
+ *    puts the live per-power-cycle heading in W straight onto the screen. It
+ *    cost two rounds of "the axes are 90° out": each time the surviving yaw was
+ *    measured on hardware and written into `BRAND_SENSOR_BASIS` as if it were
+ *    the mounting, and each time it was a heading that had already moved on.
+ *    Sprint 31's `rotY90X270` and its retraction are both exactly that.
+ *    So: **a yaw never belongs in the brand table.** If one reaches the screen,
+ *    the composition is wrong, not the table.
  *
- *    B comes from the small named table below, keyed by brand. Note that a bare
- *    axis negation like (x,y,z) → (−x,y,z) is improper (det −1) and therefore
- *    NOT expressible as a quaternion at all — the `negX`-style entries are the
- *    proper 180° rotations, which is what a real sensor mounting difference
- *    actually is.
+ *    Grip no longer matters either, which is the other half of the same win: a
+ *    body-frame delta reports the cube's own rotation, so a physical x' renders
+ *    as x' whether the cube was calibrated square, tilted, or facing sideways.
+ *    Calibration then decides one thing only — which pose reads as home on
+ *    screen — and that is all it should ever have decided.
+ *
+ * 2. SENSOR BASIS (`basis` / B) — the MOUNTING, and nothing else.
+ *    The delta above is the cube's own rotation but written in SENSOR axes, and
+ *    the renderer wants cube axes, so B is a change of basis — a similarity
+ *    transform, not a multiplication:
+ *
+ *        qDisplay = B ⊗ (q0⁻¹ ⊗ qRaw) ⊗ B⁻¹,    B = M⁻¹
+ *
+ *    B comes from the small named table below, keyed by brand, and it has one
+ *    job: undo the mounting. Note that a bare axis negation like (x,y,z) →
+ *    (−x,y,z) is improper (det −1) and therefore NOT expressible as a
+ *    quaternion at all — the `negX`-style entries are the proper 180° rotations,
+ *    which is what a real sensor mounting difference actually is.
  *
  * 3. MIRROR (`mirror`) — fixes a HANDEDNESS mismatch.
  *    Negating (x,y,z) conjugates the quaternion, i.e. reverses the sense of
@@ -204,8 +234,7 @@ export type SensorBasisName =
   | 'rotZ90'
   | 'rotX270'
   | 'rotY270'
-  | 'rotZ270'
-  | 'rotY90X270';
+  | 'rotZ270';
 
 const R2 = Math.SQRT1_2; // sin(90°) · (1/√2) for the 180° diagonal turns
 const C45 = Math.cos(Math.PI / 4);
@@ -238,21 +267,34 @@ export const SENSOR_BASES: Readonly<Record<SensorBasisName, Quat>> = Object.free
   rotY270: { w: C45, x: 0, y: -S45, z: 0 },
   /** −90° about Z — y→x, x→−y. */
   rotZ270: { w: C45, x: 0, y: 0, z: -S45 },
-  /**
-   * `rotY90 ∘ rotX270` — x→−z, y→−x, z→y. 120° about (−1,1,1)/√3.
-   *
-   * The Z-up→Y-up change of basis (rotX270) PLUS the 90° yaw that one left
-   * behind. Measured, not derived: with rotX270 alone a physical `y` came out
-   * right, but a physical `x` rendered as `z` and a physical `z` as `x'`. That
-   * residual is exactly `rotY90`'s inverse, so composing it on the left cancels
-   * it and leaves `y` where it already was.
-   *
-   * Composed on the LEFT because the similarity is `B ⊗ q ⊗ B⁻¹`: chaining two
-   * of them gives `(B₂B₁) ⊗ q ⊗ (B₂B₁)⁻¹`, so the correction applied to the
-   * screen result is the outer (left) factor.
-   */
-  rotY90X270: { w: 0.5, x: -0.5, y: 0.5, z: 0.5 },
 });
+
+/**
+ * THE MOUNTING (M) — the one hardware fact in this file. Everything in
+ * `BRAND_SENSOR_BASIS` is derived from it, so this is the thing to re-measure,
+ * and the table is not somewhere to record a second opinion.
+ *
+ * Read it as: the cube's own axes (x through the R face, y through U, z through
+ * F), written in sensor coordinates.
+ *
+ *     cube x → sensor +x      cube y → sensor +z      cube z → sensor −y
+ *
+ * That is `rotX90`: an entirely ordinary **Z-up** IMU — the axis out of the top
+ * of the cube is the one the AHRS calls +Z — with no extra yaw. The renderer is
+ * Y-up, so the basis that undoes it is the single factor `M⁻¹ = rotX270`.
+ *
+ * No yaw appears here and none ever should: a mounting yaw and the sensor's
+ * power-on heading are indistinguishable in one measurement, and the heading is
+ * the one that moves. See knob 1's HISTORY note — that confusion is what put a
+ * 90° yaw in this file twice.
+ *
+ * HOW IT WAS MEASURED (2026-08-01, GAN v4, and the protocol for re-measuring):
+ * calibrate, then make ONE whole-cube rotation and say which one the screen
+ * made. `x'` came out as `z` and `z` came out as `x`; `y` was already right.
+ * Those two sentences pin all three axes, and they agree with each other — one
+ * observation cannot tell a mounting apart from a heading, two crossing ones can.
+ */
+export const MEASURED_SENSOR_MOUNT: Quat = SENSOR_BASES.rotX90;
 
 /**
  * Per-brand sensor basis.
@@ -267,34 +309,38 @@ export const SENSOR_BASES: Readonly<Record<SensorBasisName, Quat>> = Object.free
  * rotation about X (`rotX270`: sensor z → screen y), applied as the similarity
  * in knob 2 above.
  *
- * SECOND ROUND, also from hardware. With `rotX270` alone the `y` was correct
- * but the other two were still wrong, and wrong in a specific way: a physical
- * `x` rendered as a `z`, and a physical `z` as an `x'`. That map — x→z, z→−x,
- * y fixed — is a −90° rotation about Y, i.e. the Z-up fix was right about which
- * axis is up and 90° off about where the cube is facing. Cancelling it is one
- * more factor on the left, and the pair is `rotY90X270`.
+ * It is a PROPER rotation, so it cannot and does not change handedness —
+ * `BRAND_MIRROR` stays a separate question and stays false.
  *
- * Both factors are PROPER rotations, so neither can change handedness —
- * `BRAND_MIRROR` stays a separate question and stays false. That the whole
- * error was fixable by a proper rotation is itself evidence the sense is right.
+ * Every row is `MEASURED_SENSOR_MOUNT`'s inverse and nothing else; the test
+ * asserts that literally, so a row can only move by re-measuring the mounting.
  *
- * Still per-brand, and still measured on ONE cube: if some brand mounts its IMU
- * differently, that one row changes — which is exactly the granularity this
- * table exists for.
+ * RETRACTED, and left written down so it is not rediscovered: a second round
+ * once put `rotY90X270` here — `rotX270` with a 90° yaw composed on — because a
+ * physical `x` was reported rendering as `z`. That yaw was the sensor's
+ * power-on HEADING, not the mounting, and the world-frame composition then in
+ * use was what let it reach the screen at all (knob 1's HISTORY note). Its only
+ * effect was to make the same complaint come back inverted one session later.
+ * The composition is fixed; the table goes back to the mounting alone.
+ *
+ * Still per-brand: every row currently holds the same value because one cube is
+ * all that has been measured, and if some brand mounts its IMU differently that
+ * one row changes — which is exactly the granularity this table exists for.
+ * What no row may ever hold is a yaw.
  *
  * Keyed by plain string rather than the `CubeBrand` union from ./types on
  * purpose: the drivers in this directory are being rewritten in parallel, and
  * an unknown key here is a silent fall-through, not a build break.
  */
 export const BRAND_SENSOR_BASIS: Readonly<Record<string, SensorBasisName>> = Object.freeze({
-  'gan-v2': 'rotY90X270',  // Z-up IMU, yawed 90° (see above)
-  'gan-v3': 'rotY90X270',
-  'gan-v4': 'rotY90X270',  // the cube the two rounds above were measured on
-  gocube: 'rotY90X270',
-  qiyi: 'rotY90X270',
-  giiker: 'rotY90X270',
-  moyu: 'rotY90X270',
-  unknown: 'rotY90X270',
+  'gan-v2': 'rotX270',  // Z-up IMU (see above)
+  'gan-v3': 'rotX270',  // Z-up IMU
+  'gan-v4': 'rotX270',  // the cube MEASURED_SENSOR_MOUNT was measured on
+  gocube: 'rotX270',    // Z-up IMU
+  qiyi: 'rotX270',      // Z-up IMU
+  giiker: 'rotX270',    // Z-up IMU
+  moyu: 'rotX270',      // Z-up IMU
+  unknown: 'rotX270',   // Z-up IMU
 });
 
 /** Brand → basis name. An unknown or absent brand gets the same treatment as
@@ -347,7 +393,7 @@ export function calibrate(raw: Quat): Quat {
 /**
  * raw sample (+ optional calibration reference) → quaternion to hand three.js.
  *
- *     qDisplay = B ⊗ mirror?( qRaw ⊗ q0⁻¹ ) ⊗ B⁻¹
+ *     qDisplay = B ⊗ mirror?( q0⁻¹ ⊗ qRaw ) ⊗ B⁻¹
  *
  * `reference == null` means "not calibrated yet" and the raw sample passes
  * through the basis/mirror stages unchanged.
@@ -359,9 +405,11 @@ export function applyOrientation(
 ): Quat {
   const { basis = 'identity', mirror = false } = opts;
   const q = quatNormalize(raw);
-  // WORLD-frame composition — see header note 1. Do not "simplify" to
-  // quatMul(quatInverse(reference), q).
-  let out = reference ? quatMul(q, quatInverse(reference)) : q;
+  // BODY-frame composition — reference FIRST. This is the line that cancels the
+  // sensor's power-on heading; flipping it to `quatMul(q, quatInverse(reference))`
+  // puts a live yaw on screen, which reads as "the axes are 90° out" and has
+  // twice been mistaken for a mounting. See header note 1.
+  let out = reference ? quatMul(quatInverse(reference), q) : q;
   if (mirror) out = quatConjugate(out);
   if (basis !== 'identity') {
     const b = SENSOR_BASES[basis];
