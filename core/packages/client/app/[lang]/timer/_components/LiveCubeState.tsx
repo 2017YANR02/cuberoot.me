@@ -55,7 +55,10 @@ import { tr } from '@/i18n/tr';
 import { FaceletsCube } from '@/components/FaceletsCube';
 import { CUBE_FILL } from '@/lib/cube-colors';
 import { renderCubeNetSvg } from '@/lib/cube-net-svg';
-import { readDevQuatSource, type Quat, type SensorBasisName } from '../_lib/bluetooth/orientation';
+import {
+  mirrorForBrand, readDevQuatSource, sensorBasisForBrand,
+  type Quat, type SensorBasisName,
+} from '../_lib/bluetooth/orientation';
 
 /** three + the /sim engine only load when a 3D view is actually mounted. */
 const SimCubeView = dynamic(() => import('@/components/sim-embed/SimCubeView'), {
@@ -162,8 +165,9 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
     quat = null,
     quatRef,
     calibrateToken = 0,
-    sensorBasis = 'identity',
-    mirror = false,
+    // 漏传不等于 identity —— 见 SimCubeView 里同名 prop 的注释。
+    sensorBasis = sensorBasisForBrand(null),
+    mirror = mirrorForBrand(null),
     onViewChange,
   } = props;
 
