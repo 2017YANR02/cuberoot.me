@@ -37,6 +37,18 @@ const CORNER_LL_MASK: Partial<Record<string, string>> = {
   cmll: 'cmll',
 };
 
+/** 只看角块的遮罩(集自带的 + {@link LEVEL2_PICKER_MASK})—— 侧环删灰。 */
+const CORNER_LL_MASK_NAMES = new Set(Object.values(CORNER_LL_MASK));
+
+/**
+ * umbrella 二级选择卡的缩略图遮罩:只显示与该阶段相关的贴纸(角块 LL)。
+ * 公式库列表(`AlgCategoryView`)和训练器选择面板(`_trainer/trainer-components`)
+ * 是同一批卡片,遮罩表放这里,两边都从 `<CaseThumb mask=…>` 走,不各留一份。
+ */
+export const LEVEL2_PICKER_MASK: Record<string, string> = {
+  zbll: 'coll', '1lll': 'coll', ollcp: 'coll',
+};
+
 /**
  * NxN 分支最终喂给 visualcube 的那几个参数(视角 / 遮罩 / 是否删灰格 / 阶数)。
  *
@@ -48,19 +60,24 @@ export function cubeThumbParams(
   puzzle: AlgPuzzle, set: string, sticker: AlgSticker, maskOverride?: string,
 ): { view: 'iso' | 'oll' | 'pll' | 'f2l' | 'pll-iso'; mask?: string; hideGreySides?: boolean; puzzleSize: number } {
   const puzzleSize = PUZZLE_SIZE[puzzle];
-  if (maskOverride) return { view: 'pll', mask: maskOverride, puzzleSize };
+  if (maskOverride) {
+    const hideGreySides = CORNER_LL_MASK_NAMES.has(maskOverride) || undefined;
+    return { view: 'pll', mask: maskOverride, hideGreySides, puzzleSize };
+  }
   // 最后一槽 + 顶层:等距视角。两个集观察域相同,但遮罩不能共用 ——
   //  zbls 只到「末槽 + 翻棱」,顶层角块不看,vh 遮罩(压灰十字、另三槽、顶层角与四周顶排)正合适;
   //  lsll 整层一步解完,顶层角块与四周顶排恰恰是要认的信息,压灰等于把题遮了。全彩不加遮罩,
   //  与 /alg/lsll 库里那批本地渲染的图(lsll/model.caseFacelets)一致。
   if (puzzle === '3x3' && set === 'lsll') return { view: 'iso', puzzleSize };
   if (puzzle === '3x3' && set === 'zbls') return { view: 'iso', mask: 'vh', puzzleSize };
+  // 顶层公式集(coll / cmll)侧环那一圈灰格是「这条棱不用看」的占位,和 OLL 的灰同一
+  // 性质 —— 一并删掉,四个侧面只剩真正要认的角块色块。顶面不动(cmll 顶面的灰棱是
+  // 「M 层没解开」的题面,侧环由渲染器另一个 pass 画,hideGrey 只管侧环)。
   const cornerMask = puzzle === '3x3' ? CORNER_LL_MASK[set] : undefined;
-  if (cornerMask) return { view: 'pll', mask: cornerMask, puzzleSize };
+  if (cornerMask) return { view: 'pll', mask: cornerMask, hideGreySides: true, puzzleSize };
   const view = pickView(puzzle, set, sticker);
   // OLL 图侧面那一圈灰格是「这里不是黄」的占位,信息全在黄条上 —— 删掉灰格就是通行的
-  // OLL 识别图。顶面 9 格一格不动(侧环由渲染器另一个 pass 画)。pll 不加:那圈是真配色;
-  // coll / cmll 更不能加(上面已单独 return),那里的灰恰恰是「这条棱不用看」的题面。
+  // OLL 识别图。顶面 9 格一格不动。pll 不加:那圈是真配色,没有灰可删。
   return { view, hideGreySides: view === 'oll', puzzleSize };
 }
 

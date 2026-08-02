@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Trash2, ChevronDown, ChevronRight, Check, Star, TriangleAlert } from 'lucide-react';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import Link from '@/components/AppLink';
-import { CaseThumb } from '@/components/CaseThumb';
+import { CaseThumb, LEVEL2_PICKER_MASK } from '@/components/CaseThumb';
 import { VisualCube } from '@/components/VisualCube';
 import { SegmentTime } from '@/components/SegmentTime';
 import { TimerState } from '@/lib/trainer-store';
@@ -615,7 +615,7 @@ export function CaseTreePicker({
                     const subAll = subSelectedCount === subCases.length;
                     const subNone = subSelectedCount === 0;
                     const subSampleAlg = subCases[0]?.algs.flat()[0]?.alg ?? subCases[0]?.standard ?? '';
-                    const useCollMask = puzzle === '3x3' && (set === 'zbll' || set === '1lll' || set === 'ollcp');
+                    const pickerMask = puzzle === '3x3' ? LEVEL2_PICKER_MASK[set] : undefined;
                     return (
                       <div
                         className={`trainer-sub-subgroup${subExpanded ? ' is-expanded' : ''}`}
@@ -639,10 +639,8 @@ export function CaseTreePicker({
                               onClick={() => toggleBulk(subCases)}
                             >
                               <TriCheckbox checked={subAll} indeterminate={!subAll && !subNone} />
-                              {useCollMask
-                                ? <VisualCube algorithm={subSampleAlg} setup={subCases[0].setup} view="pll" mask="coll" size={36} />
-                                : <CaseThumb puzzle={puzzle} set={set} sticker={subCases[0].sticker}
-                                    alg={subSampleAlg} setup={subCases[0].setup} size={36} />}
+                              <CaseThumb puzzle={puzzle} set={set} sticker={subCases[0].sticker}
+                                alg={subSampleAlg} setup={subCases[0].setup} size={36} mask={pickerMask} />
                               <span>{set === 'zbll' ? displayZbllToken(subLabel) : subLabel}</span>
                               <span style={{ color: 'var(--muted-foreground)', fontWeight: 400, fontSize: '0.85rem' }}>
                                 ({subSelectedCount}/{subCases.length})
