@@ -19,13 +19,25 @@
 
 import { describe, it, expect } from 'vitest';
 
-import { pickerOptions } from '@/app/[lang]/timer/_lib/bluetooth';
+import { CUBE_DRIVERS, pickerOptions } from '@/app/[lang]/timer/_lib/bluetooth';
 
 type Filtered = { filters: BluetoothLEScanFilter[] } & Record<string, unknown>;
 type AcceptAll = { acceptAllDevices: boolean } & Record<string, unknown>;
 
 const filtered = (): Filtered => pickerOptions(false) as Filtered;
+/** The Bluefy shape: same call, minus the service filters. */
+const nameOnly = (): Filtered => pickerOptions(false, true) as Filtered;
 const acceptAll = (): AcceptAll => pickerOptions(true) as AcceptAll;
+
+const asDevice = (name: string): BluetoothDevice => ({ name }) as BluetoothDevice;
+
+/** Does this name get past the chooser's filters? */
+function reachesPicker(opts: Filtered, name: string): boolean {
+  return opts.filters.some(f => typeof f.namePrefix === 'string' && name.startsWith(f.namePrefix));
+}
+
+const driverFor = (name: string): string | null =>
+  CUBE_DRIVERS.find(d => d.matches(asDevice(name)))?.brand ?? null;
 
 describe('pickerOptions — 两版共有的授权部分', () => {
   it('两版都带 optionalServices,且非空', () => {
@@ -90,13 +102,96 @@ describe('pickerOptions — 过滤版', () => {
     for (const s of servs) expect(o.optionalServices as string[]).toContain(s);
   });
 
-  it('GAN 家族的名字前缀在', () => {
-    const prefixes = filtered().filters
+  it('名字前缀排在 service 前面', () => {
+    // 只认前几条过滤的浏览器,该被留下的是认得出魔方的那半边。iOS Bluefy 就是
+    // 一条 service 过滤下去整个列表就空了(见 pickerOptions 的注释)。
+    const fs = filtered().filters;
+    const lastName = fs.findLastIndex(f => typeof f.namePrefix === 'string');
+    const firstServ = fs.findIndex(f => Array.isArray(f.services));
+    expect(lastName).toBeGreaterThanOrEqual(0);
+    expect(firstServ).toBeGreaterThan(lastName);
+  });
+
+  it('每个驱动声明的名字前缀都进了选择器', () => {
+    const prefixes = new Set(filtered().filters
       .map(f => f.namePrefix)
-      .filter((p): p is string => typeof p === 'string');
-    expect(prefixes).toContain('GAN');
-    // 魔域 32(威龙 V10 Ai 起)播成 `WCU_MY32_XXYY`。
-    expect(prefixes).toContain('WCU');
+      .filter((p): p is string => typeof p === 'string'));
+    for (const d of CUBE_DRIVERS) {
+      for (const p of d.namePrefixes) {
+        expect(prefixes, `${d.brand} 的前缀 ${p} 没进选择器`).toContain(p);
+      }
+    }
+  });
+});
+
+/**
+ * 真机名字表。**这一条才是用户报的 bug**:2026-08-01 之前选择器的名字前缀是手写
+ * 的五条(GAN / MG / AiCube / Gi / WCU),而 UI 上写着支持、`matches()` 里也认得的
+ * GoCube、Rubik's Connected、奇艺、魔域 MHC 全不在里面 —— 它们只能靠 service 过滤
+ * 进选择器,而 iOS Bluefy 上那条根本不管用。名字得从驱动来,不能再手写。
+ *
+ * 每个名字要过两关:进得了选择器,且进来之后有驱动认。少哪一关都是坏的 ——
+ * 前者是「明明在旁边却不显示」,后者是「点了报『无法识别的智能魔方』」。
+ */
+describe('pickerOptions — 各家真机名字都能进选择器并配到驱动', () => {
+  const NAMES: Array<[name: string, brand: string]> = [
+    ['GAN16ui_C296', 'gan-v4'],         // 用户手上那颗,截图里的原名
+    ['GAN356i_1234', 'gan-v3'],
+    ['MG-1234', 'gan-v4'],
+    ['AiCube_1234', 'gan-v4'],
+    ['GoCube_1234', 'gocube'],
+    ["Rubik's Connected", 'gocube'],
+    ['QY-QYSC-1234', 'qiyi'],
+    ['XMD-TornadoV4-i-1234', 'qiyi'],
+    ['WCU_MY32_1A2B', 'moyu32'],
+    ['MHC-1234', 'moyu'],
+    ['Gi123456', 'giiker'],
+    ['Mi Smart Magic Cube', 'giiker'],
+    ['Hi-Cube1234', 'giiker'],
+  ];
+
+  for (const [name, brand] of NAMES) {
+    it(`${name} → ${brand}`, () => {
+      expect(reachesPicker(filtered(), name), '进不了选择器').toBe(true);
+      expect(reachesPicker(nameOnly(), name), 'Bluefy 版进不了选择器').toBe(true);
+      expect(driverFor(name)).toBe(brand);
+    });
+  }
+
+  it('不相干的设备照样挡在外面 —— 过滤还是过滤', () => {
+    // 用户截图里「显示全部蓝牙设备」那一版列出来的邻居,没名字的用标识符占位。
+    for (const n of ['A280CF60-52A4-26AF-1DD6-B05BD643', 'iPhone', 'MacBook Pro']) {
+      expect(reachesPicker(filtered(), n), `${n} 不该进选择器`).toBe(false);
+    }
+  });
+});
+
+/**
+ * iOS Bluefy 版:名字前缀,别的什么都不带。
+ *
+ * 起因(2026-08-01,用户在 Bluefy 实测):带过滤那版每次都弹出选择器却一台都不列,
+ * 连两寸外那颗名字明明匹配 `{namePrefix:'GAN'}` 的 GAN16ui 都不列;换 acceptAll
+ * 同一台手机立刻列出四台,那颗就在里面。同机的 cstimer 能列、而且只列那一颗。
+ * cstimer 的魔方选择器只发名字前缀(`servFilters` 只有 GAN 计时器声明,而计时器
+ * 是另一个选择器),所以两边唯一的结构差别就是 service 过滤。
+ */
+describe('pickerOptions — Bluefy 版', () => {
+  it('一条 service 过滤都不带', () => {
+    for (const f of nameOnly().filters) {
+      expect(f.services, '给 Bluefy 的过滤里出现了 service').toBeUndefined();
+      expect(typeof f.namePrefix).toBe('string');
+    }
+  });
+
+  it('名字前缀一条不少 —— 只去掉 service,不缩窄名字', () => {
+    const names = (o: Filtered): (string | undefined)[] =>
+      o.filters.map(f => f.namePrefix).filter(p => typeof p === 'string');
+    expect(names(nameOnly())).toEqual(names(filtered()));
+  });
+
+  it('授权部分照旧 —— 少了就是选得中读不了', () => {
+    expect(nameOnly().optionalServices).toEqual(filtered().optionalServices);
+    expect(nameOnly().optionalManufacturerData).toEqual(filtered().optionalManufacturerData);
   });
 });
 

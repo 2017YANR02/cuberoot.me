@@ -53,6 +53,7 @@ describe('BATTERY_SERVICE', () => {
 describe('requestDevice 选项里不许出现数字 UUID', () => {
   for (const [label, opts] of [
     ['过滤版', pickerOptions(false)],
+    ['Bluefy 版', pickerOptions(false, true)],
     ['逃生版', pickerOptions(true)],
   ] as const) {
     describe(label, () => {

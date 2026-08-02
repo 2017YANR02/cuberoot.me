@@ -115,6 +115,7 @@ function parseTurn(dv: DataView, faceStatus: Int8Array): string[] {
 export const moyuDriver: CubeDriver = {
   brand: 'moyu' satisfies CubeBrand,
   service: MOYU_SERVICE,
+  namePrefixes: ['MHC', 'MoYu', 'MY-'],
   optionalServices: [],
 
   matches(device: BluetoothDevice): boolean {

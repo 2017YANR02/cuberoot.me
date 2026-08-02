@@ -224,6 +224,21 @@ export interface CubeDriver {
   /** Primary GATT service UUID this driver advertises with. */
   service: string;
   /**
+   * Device-name prefixes this brand's cubes advertise, and the ONLY thing that
+   * decides who reaches the chooser — see `pickerOptions` in ./index for why we
+   * don't filter cubes by service UUID.
+   *
+   * Every prefix here must be accepted by this driver's own {@link matches}: a
+   * device we let into the chooser and then refuse to drive is worse than one we
+   * never showed. `tests/bluetooth_picker_options.test.ts` checks both halves —
+   * that the picker offers every prefix, and that every prefix has a driver.
+   *
+   * Case-sensitive, and matched against the whole advertised name from the
+   * start. `matches` may be broader (it runs after the user has picked, on a
+   * name we can read in full); this list may not.
+   */
+  namePrefixes: readonly string[];
+  /**
    * Extra services the picker needs access to (battery, device-info, etc.).
    * Full 128-bit lowercase UUID strings only — see {@link BATTERY_SERVICE} for
    * why the numeric 16-bit alias is banned here. `tests/bluetooth_uuid_shape.test.ts`

@@ -99,6 +99,13 @@ const DRIVERS: CubeDriver[] = [
   moyu32Driver, moyuDriver, giikerDriver, ganV2Driver,
 ];
 
+/**
+ * The registry, for the picker guard test. Nothing in the app should reach for
+ * this — `connect()` owns device selection, and a second caller doing its own
+ * matching is how the chooser and the driver end up disagreeing.
+ */
+export const CUBE_DRIVERS: readonly CubeDriver[] = DRIVERS;
+
 function pickDriver(device: BluetoothDevice): CubeDriver | null {
   for (const d of DRIVERS) if (d.matches(device)) return d;
   return null;
@@ -119,15 +126,11 @@ const ALL_CICS: number[] = Array.from(
  * What we hand `requestDevice`. Two shapes, differing *only* in how the chooser
  * is populated:
  *
- *   - filtered (default) — only devices advertising a driver's service UUID, or
- *     carrying a known name prefix, reach the chooser. Some firmwares omit the
- *     data service from their scan record, hence both halves.
+ *   - filtered (default) — only devices carrying a known name prefix, or (off
+ *     iOS) advertising a driver's service UUID, reach the chooser.
  *   - `acceptAllDevices` — every BLE device nearby, user picks by name.
  *
- * The second was added while chasing an iOS Bluefy failure that turned out not
- * to be about filters at all — it was a numeric 16-bit UUID in
- * `optionalServices` (see BATTERY_SERVICE in ./driver). It stays because it is
- * independently useful: a cube whose firmware advertises neither a known
+ * The second exists because a cube whose firmware advertises neither a known
  * service nor a known name prefix is invisible to the filtered chooser, and
  * this is the only way to reach it.
  *
@@ -261,7 +264,42 @@ async function requestDeviceWaking(
   }
 }
 
-export function pickerOptions(acceptAllDevices: boolean): RequestDeviceOptions {
+/**
+ * Every name prefix any driver answers to, in registry order, deduplicated.
+ *
+ * This is the whole of the chooser's guest list. It has to stay in step with
+ * the drivers or a brand we ship support for simply never appears — which is
+ * exactly what happened to GoCube, Rubik's Connected, QiYi, MoYu and Giiker
+ * while this list was five hand-written entries (2026-08-01): the UI advertised
+ * them, `matches()` knew them, and the picker had never heard of them.
+ */
+const ALL_NAME_PREFIXES: string[] = Array.from(
+  new Set(DRIVERS.flatMap((d) => [...d.namePrefixes])),
+);
+
+/**
+ * @param nameOnly Leave out the service-UUID filters, so the chooser is
+ *   populated by name prefix alone.
+ *
+ *   For iOS Bluefy, where a `{ services: [...] }` filter empties the chooser
+ *   outright: the picker opens, scans, and lists nothing — not the GAN cube two
+ *   inches away that `{ namePrefix: 'GAN' }` in the same array matches by name.
+ *   Drop to `acceptAllDevices` on the same phone and that cube is right there in
+ *   the list, so it is being advertised and Bluefy can see it.
+ *
+ *   cstimer works on that phone, and its cube picker passes name prefixes and
+ *   nothing else — `servFilters` is declared by exactly one model, the GAN
+ *   *timer*, which lives in a separate picker (`src/js/hardware/bluetooth.js:79`
+ *   builds the filters; only `gantimer.js:119` sets `servFilters`). So the one
+ *   structural difference between the call that works there and the call that
+ *   doesn't is the presence of service filters, and this is us not sending them.
+ *
+ *   Bluefy is closed-source and we can't see what it does with them — but we
+ *   don't need to: matching the known-good call is the fix. Everywhere else the
+ *   service filters cost nothing and stay, as a net for a cube whose name we
+ *   don't recognise but whose service we do.
+ */
+export function pickerOptions(acceptAllDevices: boolean, nameOnly = false): RequestDeviceOptions {
   const optional = new Set<string>();
   for (const d of DRIVERS) {
     optional.add(d.service);
@@ -276,13 +314,11 @@ export function pickerOptions(acceptAllDevices: boolean): RequestDeviceOptions {
   return {
     ...shared,
     filters: [
-      ...DRIVERS.map((d) => ({ services: [d.service] })),
-      { namePrefix: 'GAN' },
-      { namePrefix: 'MG' },
-      { namePrefix: 'AiCube' },
-      { namePrefix: 'Gi' },
-      // MoYu32 (WeiLong V10 Ai and later) advertise as `WCU_MY32_XXYY`.
-      { namePrefix: 'WCU' },
+      // Names first. A browser that honours only some of the filters it is
+      // handed should be left holding the half that identifies actual cubes.
+      ...ALL_NAME_PREFIXES.map((namePrefix) => ({ namePrefix })),
+      ...(nameOnly ? [] : Array.from(new Set(DRIVERS.map((d) => d.service)))
+        .map((service) => ({ services: [service] }))),
     ],
   };
 }
@@ -984,7 +1020,8 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     try {
       device = await requestDeviceWaking(
         navigator.bluetooth,
-        pickerOptions(pick?.acceptAllDevices === true),
+        // `nameOnly` on Bluefy — service filters empty its chooser. See pickerOptions.
+        pickerOptions(pick?.acceptAllDevices === true, inBluefy),
         readiness,
         inBluefy,
       );

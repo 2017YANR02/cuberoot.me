@@ -3563,3 +3563,69 @@ q0⁻¹ ⊗ qRaw = M ⊗ (C₀⁻¹ ⊗ C) ⊗ M⁻¹
 
 - [x] 陀螺仪轴向:三轮之后,根因从「表填错」纠正到「相对量取错」
 - [ ] `BRAND_MIRROR` 仍全表 false 且未验 —— 换基是 proper 的,修不了手性
+
+---
+
+## Sprint 44 —— iOS 上选择器一台都不列:过滤条件抄漏了半张表
+
+### 症状
+
+用户在 iOS Bluefy:「点搜索并连接,弹出了选择器,但从来没有任何一次显示出任何
+device。只有点『显示全部蓝牙设备』时才出现。」附 cstimer 截图 —— 同一台手机,
+cstimer 不但列得出来,而且**只**列出那颗 GAN16ui_C296,别的邻居一个不显示。
+
+### 两个毛病,一个在明处一个在暗处
+
+**明处:名字前缀是手写的,而且抄漏了。** `pickerOptions` 里的名字过滤是五条硬写的
+常量 —— `GAN` / `MG` / `AiCube` / `Gi` / `WCU`。可支持列表上写着的 GoCube、
+Rubik's Connected、奇艺 QY-QYSC / 风 Ai Tornado V4、魔域 MHC,一条都没有;
+`Mi Smart Magic Cube` / `Hi-` 这两个小米/Giiker 的名字也没有。这些牌子只能靠
+service 过滤挤进选择器 —— 也就是说在任何浏览器上,它们能不能被看见都取决于固件肯
+不肯在广播包里放 data service。驱动的 `matches()` 一直认得它们,UI 一直在宣传它们,
+只有选择器没听说过。
+
+修法不是把漏的补上(下次加驱动照样漏),是**让名字从驱动来**:`CubeDriver` 加
+`namePrefixes`,`pickerOptions` 取并集。计时器那半边(`timer/driver.ts`)一直就是
+这么写的,魔方这半边是唯一的例外。补全后 5 条 → 14 条。
+
+**暗处:service 过滤会让 Bluefy 的选择器整个空掉。** 这条不是推的,是三个观测卡死的:
+
+| 同一台手机、同一颗魔方 | 结果 |
+|---|---|
+| 我们的过滤版(8 条 service + 5 条 namePrefix) | 选择器弹出,**0 台** |
+| 我们的 `acceptAllDevices` | 4 台,GAN16ui_C296 就在里面 |
+| cstimer(只发 namePrefix) | 1 台,正好那颗 |
+
+第二行证明设备在广播、名字读得到、Bluefy 看得见它;第三行证明 Bluefy 的
+`namePrefix` 过滤本身是好的,而且能精确收窄。而我们那 13 条过滤里,
+`{namePrefix:'GAN'}` 明摆着匹配 `GAN16ui_C296` —— 却一台不列。
+
+翻 cstimer 源确认它到底发了什么:`src/js/hardware/bluetooth.js:79-89` 建过滤,
+`servFilters` 全仓库只有 `gantimer.js:119` 一处声明,而 GAN 计时器注册在
+`BluetoothTimer` 那个工厂里,是**另一个**选择器。所以 cstimer 的魔方选择器发出去的
+是清一色的 `{namePrefix}`,零条 service。
+
+于是两边唯一的结构差别就是 service 过滤。Bluefy 闭源,拿不到它对这几条做了什么
+(合并成 CoreBluetooth 的 `scanForPeripherals(withServices:)` 是最像的一种,那样没在
+广播里放 service 的魔方压根不会被扫出来,后面的名字匹配也就无从谈起)—— 但不需要
+知道:**照着那个已知能用的调用发**就是修法。
+
+所以 `pickerOptions(acceptAllDevices, nameOnly)`:Bluefy 走 `nameOnly`,别处保留
+service 过滤当兜底(名字不认识但 service 认识的魔方),顺手把名字前缀排到 service
+前面 —— 只认前几条过滤的浏览器,该被留下的是认得出魔方的那半边。
+
+### 守卫
+
+`tests/bluetooth_picker_options.test.ts` 加 13 个真机名字(含用户截图里那颗
+`GAN16ui_C296`),每个过两关:**进得了选择器**,且**进来之后有驱动认**。少前一关是
+「明明在旁边却不显示」,少后一关是「点了报『无法识别的智能魔方』」—— 这次的 bug 正
+好是前一关,以前没测。另加:每个驱动声明的前缀都得在过滤里、名字排在 service 前、
+Bluefy 版一条 service 都不许带、不相干设备照样挡在外面。
+
+`bluetooth_uuid_shape.test.ts` 的三版 UUID 形状检查也把 Bluefy 版纳进来。
+
+### 还差什么
+
+- [ ] 用户在 iOS 实测确认:过滤版能列出魔方(唯一能证的地方是那台手机)
+- [ ] Bluefy 取消选择器仍回一个裸 `2`,和真失败分不开 —— 现在会走「唤醒重试」再弹
+      一次选择器,取消两次才收场
