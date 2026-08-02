@@ -26,6 +26,7 @@ import BoolToggle from '@/components/BoolToggle';
 import { ClearButton } from '@/components/ClearButton';
 import { useAuthUser, nextQuery } from '@/lib/auth-store';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { usePopoverDismiss } from '@/hooks/usePopoverDismiss';
 import { tr, useLang } from '@/i18n/tr';
 import { localZone, isValidZone, formatOffset, zoneOffsetMinutes } from '@cuberoot/shared/tz';
 import { parseIcs, eventsToIcs, type CalEvent, type EditScope } from '@cuberoot/shared/calendar';
@@ -61,6 +62,8 @@ export default function CalendarClient() {
   const isZh = lang === 'zh';
   const user = useAuthUser();
   const isMobile = useIsMobile();
+  // 768 是「侧栏改抽屉」的线;真正窄到一周排不开是 640(同 calendar.css 里那档)。
+  const isNarrow = useIsMobile(640);
   const gridRef = useRef<GridHandle>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -84,6 +87,18 @@ export default function CalendarClient() {
   const [dateParam, setDateParam] = useQueryState('d', parseAsString.withDefault(''));
   const view: ViewKey = isViewKey(viewParam) ? viewParam : 'timeGridWeek';
 
+  // 手机首屏落「日」:390px 上一周七列每列才 45 px,标题只能竖着排 —— Google 手机端
+  // 同样默认单日。只在 URL 自己没写 view 时改(用户切过就尊重他的选择),replace 不留
+  // 历史,免得返回键要按两下才离开日历。转屏后不再回头改。
+  const pickedStartView = useRef(false);
+  useEffect(() => {
+    if (!mounted || pickedStartView.current) return;
+    pickedStartView.current = true;
+    if (!isNarrow || new URLSearchParams(window.location.search).has('view')) return;
+    void setViewParam('timeGridDay', { history: 'replace' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在挂载后跑一次
+  }, [mounted]);
+
   // 首帧用 URL 里的日期,之后的跳转走 FullCalendar 自己的 API(不重建视图)。
   const initialDate = useMemo(() => {
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateParam)) return dayStart(displayTz, dateParam);
@@ -98,6 +113,14 @@ export default function CalendarClient() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [tzOpen, setTzOpen] = useState(false);
+  // 顶栏两个浮层:点外面 / Esc 关。它们是 fixed 定位、挂在顶栏外面,所以触发钮要单独排除,
+  // 否则「点钮 → 先关再开」,看着就是按不动。
+  const tzBtnRef = useRef<HTMLButtonElement>(null);
+  const tzPopRef = useRef<HTMLDivElement>(null);
+  const setBtnRef = useRef<HTMLButtonElement>(null);
+  const setPopRef = useRef<HTMLDivElement>(null);
+  usePopoverDismiss(tzOpen, () => setTzOpen(false), tzPopRef, tzBtnRef);
+  usePopoverDismiss(settingsOpen, () => setSettingsOpen(false), setPopRef, setBtnRef);
   const [query, setQuery] = useState('');
   const [dialog, setDialog] = useState<DialogDraft | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
@@ -364,6 +387,18 @@ export default function CalendarClient() {
     void setDateParam(dayKeyIn(displayTz, r.anchor));
   }, [displayTz, setDateParam]);
 
+  // 点一下空白格。年视图的格子只有二十几像素,点它多半是想去那天看看,不是想在那儿
+  // 建个全天日程(Google 同样是跳转);其余视图按点中的位置起一条 —— 时间格 1 小时,
+  // 全天 / 月格一整天,和拖一格出来的时长一致。
+  const onDateClick = useCallback((ms: number, allDay: boolean) => {
+    if (view === 'multiMonthYear') {
+      void setViewParam('timeGridDay');
+      gotoDate(ms);
+      return;
+    }
+    openCreate(ms, ms + (allDay ? DAY : 3600_000), allDay);
+  }, [view, setViewParam, gotoDate, openCreate]);
+
   // 键盘快捷键,和 Google 一致:T 今天、J/K 或 ←/→ 翻页、D/X/W/M/Y/A 切视图、C 新建。
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
@@ -371,6 +406,8 @@ export default function CalendarClient() {
       if (el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (dialog || shareOpen || scopeAsk) return;
+      // 窄屏的侧栏是覆盖式抽屉,开着时汉堡钮被它盖住 —— Esc 得能退出来(遮罩也能点关)。
+      if (e.key === 'Escape' && sidebarOpen) { setSidebarOpen(false); return; }
       const map: Record<string, ViewKey> = {
         d: 'timeGridDay', x: 'fourDay', w: 'timeGridWeek',
         m: 'dayGridMonth', y: 'multiMonthYear', a: 'listMonth',
@@ -389,7 +426,7 @@ export default function CalendarClient() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [dialog, shareOpen, scopeAsk, setViewParam, openCreate]);
+  }, [dialog, shareOpen, scopeAsk, sidebarOpen, setViewParam, openCreate]);
 
   const zoneItems = useMemo(() => zoneOptions().map((z) => ({
     value: z.tz,
@@ -470,19 +507,23 @@ export default function CalendarClient() {
         />
 
         <button
+          ref={tzBtnRef}
           type="button"
           className="cal-icon-btn"
           aria-label={tr({ zh: '显示时区', en: 'Display time zone' })}
+          aria-expanded={tzOpen}
           title={zoneLabel(displayTz, isZh)}
-          onClick={() => setTzOpen((v) => !v)}
+          onClick={() => { setSettingsOpen(false); setTzOpen((v) => !v); }}
         >
           <Globe size={17} aria-hidden />
         </button>
         <button
+          ref={setBtnRef}
           type="button"
           className="cal-icon-btn"
           aria-label={tr({ zh: '设置', en: 'Settings' })}
-          onClick={() => setSettingsOpen((v) => !v)}
+          aria-expanded={settingsOpen}
+          onClick={() => { setTzOpen(false); setSettingsOpen((v) => !v); }}
         >
           <Settings2 size={17} aria-hidden />
         </button>
@@ -498,8 +539,18 @@ export default function CalendarClient() {
       </div>
 
       {tzOpen && (
-        <div className="cal-pop cal-pop-tz">
-          <span className="cal-field-label">{tr({ zh: '显示时区', en: 'Display time zone' })}</span>
+        <div className="cal-pop cal-pop-tz" ref={tzPopRef}>
+          <div className="cal-pop-head">
+            <span className="cal-field-label">{tr({ zh: '显示时区', en: 'Display time zone' })}</span>
+            <button
+              type="button"
+              className="cal-icon-btn"
+              onClick={() => setTzOpen(false)}
+              aria-label={tr({ zh: '关闭', en: 'Close' })}
+            >
+              <X size={16} aria-hidden />
+            </button>
+          </div>
           <ListSelect
             items={zoneItems}
             value={displayTz}
@@ -523,7 +574,18 @@ export default function CalendarClient() {
       )}
 
       {settingsOpen && (
-        <div className="cal-pop cal-pop-settings">
+        <div className="cal-pop cal-pop-settings" ref={setPopRef}>
+          <div className="cal-pop-head">
+            <span className="cal-field-label">{tr({ zh: '设置', en: 'Settings' })}</span>
+            <button
+              type="button"
+              className="cal-icon-btn"
+              onClick={() => setSettingsOpen(false)}
+              aria-label={tr({ zh: '关闭', en: 'Close' })}
+            >
+              <X size={16} aria-hidden />
+            </button>
+          </div>
           <BoolToggle
             value={prefs.weekStart === 1}
             label={tr({ zh: '一周从周一开始', en: 'Week starts Monday' })}
@@ -589,6 +651,17 @@ export default function CalendarClient() {
           onOpenInvite={openInvite}
         />
 
+        {/* 窄屏抽屉的遮罩:抽屉盖住了汉堡钮,没有它就只能靠选日期才关得掉。
+            用真 <button> 而不是 <div onClick>(iOS Safari 上 div 的 tap 不可靠)。 */}
+        {sidebarOpen && (
+          <button
+            type="button"
+            className="cal-scrim"
+            aria-label={tr({ zh: '关闭侧栏', en: 'Close sidebar' })}
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
         <main className="cal-main">
           {mounted && (
             <CalendarGrid
@@ -603,6 +676,7 @@ export default function CalendarClient() {
               weekends={prefs.weekends}
               editable
               onSelect={openCreate}
+              onDateClick={onDateClick}
               onEventClick={openEventByKey}
               onEventMove={onEventMove}
               onRangeChange={onRangeChange}

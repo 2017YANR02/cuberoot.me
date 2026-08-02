@@ -9,7 +9,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import type { CalendarOptions, DateSelectArg, EventClickArg, EventDropArg, DatesSetArg } from '@fullcalendar/core';
-import type { EventResizeDoneArg } from '@fullcalendar/interaction';
+import type { DateClickArg, EventResizeDoneArg } from '@fullcalendar/interaction';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import listPlugin from '@fullcalendar/list';
@@ -48,6 +48,8 @@ interface Props {
   editable: boolean;
   /** 拖出一段空白 → 新建 */
   onSelect?: (start: number, end: number, allDay: boolean) => void;
+  /** 点一下空白格。做什么由上层按当前视图决定(新建 / 跳到那天)。 */
+  onDateClick?: (ms: number, allDay: boolean) => void;
   onEventClick: (id: string, el: HTMLElement) => void;
   /** 拖动 / 缩放后的新时间 */
   onEventMove?: (id: string, start: number, end: number, allDay: boolean, revert: () => void) => void;
@@ -140,6 +142,11 @@ const CalendarGrid = forwardRef<GridHandle, Props>(function CalendarGrid(props, 
         select={(arg: DateSelectArg) => {
           props.onSelect?.(arg.start.getTime(), arg.end.getTime(), arg.allDay);
           api.current?.getApi().unselect();
+        }}
+        // 单击空白也要有反应(Google 的行为)。select 只在指针真的拖开之后才触发
+        // (上面的 selectMinDistance),纯点击落不到那里,得单独接 dateClick。
+        dateClick={(arg: DateClickArg) => {
+          props.onDateClick?.(arg.date.getTime(), arg.allDay);
         }}
         eventClick={(arg: EventClickArg) => {
           arg.jsEvent.preventDefault();
