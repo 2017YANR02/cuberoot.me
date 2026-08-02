@@ -488,21 +488,38 @@ export function equivalentPyraScramble(
   const rand = opts?.rng ?? Math.random;
   const detour = Math.max(1, opts?.detour ?? 6);
 
-  const head: string[] = [];
-  let lastAxis = -1;
-  for (let i = 0; i < detour; i++) {
-    let axis: number;
-    do { axis = Math.floor(rand() * 4); } while (axis === lastAxis);   // 同轴连出会自相抵消
-    lastAxis = axis;
-    head.push(AXIS_LETTERS[axis] + (rand() < 0.5 ? '' : "'"));
-  }
+  const randomHead = (n: number): string[] => {
+    const head: string[] = [];
+    let lastAxis = -1;
+    for (let i = 0; i < n; i++) {
+      let axis: number;
+      do { axis = Math.floor(rand() * 4); } while (axis === lastAxis); // 同轴连出会自相抵消
+      lastAxis = axis;
+      head.push(AXIS_LETTERS[axis] + (rand() < 0.5 ? '' : "'"));
+    }
+    return head;
+  };
+
+  const tokens = (s: string) => (s ? s.split(/\s+/).length : 0);
+  // 「明显更长」得是真的:尾段是残态的**最优**解,长度不受控,偶尔短到三步 —— detour 6 + 3
+  // 就没比一条 7 步 setup 长多少,答案又快念出来了。所以给个下限,不够就把远路加长重来。
+  const floor = tokens(src) + 3;
 
   try {
     const target = pyraFaceletFromMoves(src);
-    const residual = pyraFaceletFromMoves(`${invertPyraAlg(head.join(' '))} ${src}`);
-    const out = `${head.join(' ')} ${derivePyraScramble(residual)}`.trim();
-    // 兜底:算出来的东西必须真的摆成同一个状态,否则宁可用原打乱(错打乱 = 错练)
-    return pyraFaceletFromMoves(out) === target ? out : src;
+    let best = '';
+    // 加长到远路自己就够 floor 为止(尾段只会再加长度),所以下限一定够得到;每轮重试
+    // 只是一次查表求解(~0.1ms)。
+    for (let len = detour; len <= Math.max(detour, floor); len++) {
+      const head = randomHead(len).join(' ');
+      const residual = pyraFaceletFromMoves(`${invertPyraAlg(head)} ${src}`);
+      const out = `${head} ${derivePyraScramble(residual)}`.trim();
+      // 兜底:算出来的东西必须真的摆成同一个状态,否则宁可用原打乱(错打乱 = 错练)
+      if (pyraFaceletFromMoves(out) !== target) continue;
+      if (tokens(out) >= floor) return out;
+      if (tokens(out) > tokens(best)) best = out;
+    }
+    return best || src;
   } catch {
     return src;
   }
