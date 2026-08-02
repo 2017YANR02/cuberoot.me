@@ -174,7 +174,7 @@ export default function SolveModal({ solve, index, isZh, onClose, onChangePenalt
       // 和 SoloView 的 dynamic(() => import('../_components/ReconstructModal'))
       // 是同一个模块,打包器按模块去重,不会多出一份。
       void import('./ReconstructModal');
-      void import('./SimCubeView');
+      void import('@/components/sim-embed/SimCubeView');
       void import('@/components/sim-embed/mountSimWorld');
       void import('@/lib/oll_lookup').then((m) => { m.prewarmOllTable(); });
       void import('@/lib/pll_lookup').then((m) => { m.prewarmPllTable(); });

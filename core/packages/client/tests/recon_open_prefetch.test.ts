@@ -33,7 +33,8 @@ const TIMER = join(ROOT, 'app', '[lang]', 'timer');
 const SOLVE_MODAL = join(TIMER, '_components', 'SolveModal.tsx');
 const SOLO_VIEW = join(TIMER, '_shell', 'SoloView.tsx');
 const PLAYBACK = join(TIMER, '_components', 'PlaybackPanel.tsx');
-const SIM_CUBE = join(TIMER, '_components', 'SimCubeView.tsx');
+// 三维魔方是 /timer 和公式训练器共用的,住在共享的 sim-embed 里,不在 timer 页里。
+const SIM_CUBE = join(ROOT, 'components', 'sim-embed', 'SimCubeView.tsx');
 
 const read = (p: string) => readFileSync(p, 'utf8');
 
@@ -66,7 +67,7 @@ describe('复盘打开路径:懒加载的都得先预取', () => {
   // 链上三段,各自由不同的文件 import() 出去 —— 少任何一段,点击后就多一级往返。
   const CHAIN: Array<{ what: string; file: string; match: RegExp }> = [
     { what: '复盘弹窗本体', file: SOLO_VIEW, match: /_components\/ReconstructModal$/ },
-    { what: '三维魔方', file: PLAYBACK, match: /_components\/SimCubeView$/ },
+    { what: '三维魔方', file: PLAYBACK, match: /sim-embed\/SimCubeView$/ },
     { what: 'sim 引擎挂载', file: SIM_CUBE, match: /sim-embed\/mountSimWorld$/ },
   ];
 

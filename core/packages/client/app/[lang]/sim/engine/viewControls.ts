@@ -17,6 +17,14 @@ import type { PuzzleKind } from './world';
 export const HOME_SCENE_ROT = { x: Math.PI / 6, y: -Math.PI / 4 + Math.PI / 16, z: 0 } as const;
 
 /**
+ * 正对一面的视角:左右 0° / 上下 0°,只看得见 F 面(= /sim 的 `?img_r=y0x0`)。
+ *
+ * 校准用的姿态。等轴视角同时露三个面,好看,但「魔方现在朝哪儿」得靠三个面的相对位置去
+ * 脑补;正对一面时只要绿面不正、不满、不方,一眼就是歪的,把实体魔方摆正再按校准即可。
+ */
+export const FRONT_SCENE_ROT = { x: 0, y: 0, z: 0 } as const;
+
+/**
  * 这个拼图的开局姿态。默认就是 `HOME_SCENE_ROT`,只有正十二面体要动偏航。
  *
  * 立方体系每 90° 对上一面,`HOME_SCENE_ROT` 的 −33.75° 是「主面朝我、右面露一条」的

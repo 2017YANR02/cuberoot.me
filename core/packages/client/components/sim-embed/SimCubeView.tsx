@@ -4,11 +4,18 @@
  * SimCubeView — a real 3D cube built by the /sim engine, driven by a move log,
  * optionally posed by the cube's gyroscope.
  *
- * Two callers, one component, because they are the same picture:
+ * Three callers, one component, because they are the same picture:
  *   - the LIVE mirror while timing (LiveCubeState), posed by the BLE gyro feed;
  *   - the post-solve REPLAY (PlaybackPanel), where the gyro track is optional —
  *     with a pose it shows how the cube sat in the hands, without one it just
- *     shows the state, which is still the /sim cube and not a second renderer.
+ *     shows the state, which is still the /sim cube and not a second renderer;
+ *   - the alg trainer's drill mirror (_trainer/TrainerLiveCube), which is the
+ *     live mirror again with the case's own scramble as the log's anchor.
+ *
+ * It lives in components/sim-embed/ rather than under /timer because of that
+ * third caller: the smart-cube stack grew up inside the timer, but this one is
+ * a /sim embed like its neighbours here, and page-local is the wrong shelf for
+ * something two pages render.
  *
  * `quat = null` is not an error state: the frame hook simply never writes an
  * orientation, and the engine's own iso view is what you see.
@@ -58,7 +65,8 @@ import { tr } from '@/i18n/tr';
 import type World from '@/app/[lang]/sim/engine/world';
 import type NxnCube from '@/app/[lang]/sim/engine/nxn/cube';
 import type { SimMount } from '@/components/sim-embed/mountSimWorld';
-import { planSimUpdate } from '../_lib/cube/sim_log';
+import { FRONT_SCENE_ROT, homeSceneRot } from '@/app/[lang]/sim/engine/viewControls';
+import { planSimUpdate } from '@/app/[lang]/timer/_lib/cube/sim_log';
 import {
   advanceStillMs,
   applyOrientation,
@@ -68,7 +76,7 @@ import {
   snapWhenSettled,
   type Quat,
   type SensorBasisName,
-} from '../_lib/bluetooth/orientation';
+} from '@/app/[lang]/timer/_lib/bluetooth/orientation';
 
 /** Below this the pose is "unchanged" and we skip the render entirely. */
 const STILL_EPS_RAD = 1e-4;
@@ -89,8 +97,8 @@ export interface SimCubeViewProps {
    * costs you the animation. See _lib/cube/sim_log.ts.
    */
   pose?: string;
-  /** Latest orientation sample, or null when none has arrived. */
-  quat: Quat | null;
+  /** Latest orientation sample, or null/omitted when none has arrived. */
+  quat?: Quat | null;
   /**
    * Preferred over `quat` when given: a mutable box the owner writes each BLE
    * sample into. Orientation lands at 20-50 Hz; routing it through props would
@@ -117,11 +125,28 @@ export interface SimCubeViewProps {
    * is to make one turn readable, not to let the screen fall behind the hands.
    */
   animate?: boolean;
+  /**
+   * 镜头角度。
+   *
+   *   'iso'   引擎自己的等轴视角(上下 30° / 左右 −33.75°),三个面都露一点 —— 看状态用。
+   *   'front' 正对 F 面(左右 0° / 上下 0°,= /sim 的 `?img_r=y0x0`)—— 校准用:
+   *           实体魔方摆正时屏幕上的绿面才是正方形,歪一点立刻看得出来,等轴视角下
+   *           那点偏差混在三个面的透视里根本读不出来。
+   *
+   * 摆的是 `scene.rotation`(镜头轨道),不是 `cube.quaternion`(魔方自身姿态,陀螺仪
+   * 独占的那条通道)—— 两条通道在这个组件里从不互相写。
+   */
+  view?: 'iso' | 'front';
   /** Fired once the WebGL context is up and the first cube state is applied. */
   onReady?: () => void;
   /** Screen-reader label. Defaults to the live-mirror wording; the replay
    *  passes its own, since "实时" is a lie there. */
   ariaLabel?: string;
+  /**
+   * 宿主 class。尺寸必须由调用方钉死两边(见 `.timer-live-cube-3d` 的注释:
+   * mountSimWorld 量这个盒子再把结果写回 canvas,让内容决定宽度会锁死第一次量到的值)。
+   */
+  className?: string;
 }
 
 export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
@@ -134,8 +159,10 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
     sensorBasis = 'identity',
     mirror = false,
     animate = false,
+    view = 'iso',
     onReady,
     ariaLabel,
+    className = 'timer-live-cube-3d',
   } = props;
 
   const hostRef = useRef<HTMLDivElement>(null);
@@ -153,6 +180,8 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
   const measuredRef = useRef<Quat | null>(null);
   const stillMsRef = useRef(0);
   const pendingCalibrationRef = useRef(false);
+  /** 挂载时读一次(避免先按等轴画一帧);之后的改动走下面的 effect。 */
+  const viewRef = useRef(view);
   const basisRef = useRef<SensorBasisName>(sensorBasis);
   const mirrorRef = useRef(mirror);
   const onReadyRef = useRef(onReady);
@@ -209,6 +238,8 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
         interactive: false, // gyro-driven: a pointer Controller would fight it
         faceHints: false,
         pixelRatioCap: 2,
+        // 'iso' 就是引擎构造函数摆好的姿势,不用再写一遍。
+        sceneRot: viewRef.current === 'front' ? FRONT_SCENE_ROT : undefined,
         onFrame: (world: World, dtMs: number): boolean => {
           const raw = externalQuatRef.current?.current ?? rawRef.current;
           if (!raw) return false;
@@ -263,6 +294,17 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
     };
   }, []);
 
+  // 挂载后再换视角(调用方切换 iso ↔ front)。挂载时那一次由 sceneRot 摆好。
+  useEffect(() => {
+    viewRef.current = view;
+    const world = mountRef.current?.world;
+    if (!ready || !world) return;
+    const rot = view === 'front' ? FRONT_SCENE_ROT : homeSceneRot(world.puzzleKind);
+    world.scene.rotation.set(rot.x, rot.y, rot.z);
+    world.scene.updateMatrix();
+    mountRef.current?.invalidate();
+  }, [ready, view]);
+
   // ── Sticker state. ──
   //
   // Which engine entry point, and what exactly to hand it, is `planSimUpdate`'s
@@ -292,7 +334,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
   return (
     <div
       ref={hostRef}
-      className="timer-live-cube-3d"
+      className={className}
       role="img"
       aria-label={ariaLabel ?? tr({
         zh: '智能魔方实时三维状态（跟随陀螺仪朝向）',
