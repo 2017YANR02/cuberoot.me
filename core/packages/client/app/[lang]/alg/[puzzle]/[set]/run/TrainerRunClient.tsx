@@ -1528,23 +1528,26 @@ export default function TrainerRunClient() {
           {!multi && currentCase && (
             <div className="trainer-figure">
               <CaseMarkBar k={caseKey(currentCase)} />
-              {/* 魔方连着就换成实时的那颗:同一个格子、同一件事,但它还告诉你拧到哪儿了。
-                  静态图画的是出题那一刻,拧起来纹丝不动 —— 看着就像魔方没连上。
-                  没瞄准(还没把这题喂给魔方)时仍旧出静态图:那会儿魔方上的状态不是这题。 */}
+              {/* 出题时出识别图,动手之后才换实时那颗 —— 换的时机归 TrainerLiveCube 管,
+                  见它的头注。没瞄准(还没把这题喂给魔方)时也是识别图:那会儿魔方上的
+                  状态根本不是这题。 */}
               {showStageThumb && currentScramble && (
                 <div className="trainer-stage-thumb">
-                  {trainerCube.armed ? (
-                    <TrainerLiveCube state={trainerCube} scramble={currentScramble} />
-                  ) : (
-                    <CaseThumb
-                      puzzle={puzzle}
-                      set={setSlug}
-                      sticker={currentCase.sticker}
-                      alg={currentCase.algs.flat()[0]?.alg ?? currentCase.standard ?? ''}
-                      setup={currentScramble}
-                      size={140}
-                    />
-                  )}
+                  {(() => {
+                    const thumb = (
+                      <CaseThumb
+                        puzzle={puzzle}
+                        set={setSlug}
+                        sticker={currentCase.sticker}
+                        alg={currentCase.algs.flat()[0]?.alg ?? currentCase.standard ?? ''}
+                        setup={currentScramble}
+                        size={140}
+                      />
+                    );
+                    return trainerCube.armed
+                      ? <TrainerLiveCube state={trainerCube} scramble={currentScramble} idle={thumb} />
+                      : thumb;
+                  })()}
                 </div>
               )}
             </div>
