@@ -26,8 +26,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
   min-height: 96px; /* 加载中缩略图未到位时,卡片不塌 */
 }
+/* 缩略图再大也只是等比缩进卡片,不许顶穿。默认这层是空转(图的 px 尺寸本来就 ≤ 卡片内容宽);
+   它兜的是「图的 px 尺寸和当前视口对不上」那一刻 —— 那时 shrink-to-fit 的盒子会比卡片宽,
+   图在里面左对齐、越过卡片左边框,看着就是「没居中」(issue #66)。 */
+.alg-card-thumb > * { max-width: 100%; }
+.alg-card-thumb > img,
+.alg-card-thumb .puzzle-art > svg { max-width: 100%; height: auto; }
 /* 名字 + 数量同一行 */
 .alg-card-foot {
   display: flex;
