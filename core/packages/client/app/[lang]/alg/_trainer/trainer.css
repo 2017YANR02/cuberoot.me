@@ -401,6 +401,19 @@
   display: flex; justify-content: center;
   margin: 0 0 4px;
 }
+/* 智能魔方连着时顶替 case 图的那颗实时魔方(TrainerLiveCube)。
+   宽高两边都写死、不看内容:mountSimWorld 量这个盒子再把量到的尺寸写回 canvas 的行内
+   样式,让内容决定宽度就会把第一次量到的值锁死。140px = 上面那张 case 图的边长,连上
+   魔方时这一格不会变大变小,下面的打乱行也就不会跳。 */
+.trainer-live-cube {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 4px;
+}
+.trainer-live-cube-3d { width: 140px; height: 140px; }
+.trainer-live-cube-loading {
+  display: flex; align-items: center; justify-content: center;
+}
+
 /* 下一题图的离屏预取:渲染但移出视口(仍会加载 → 进浏览器缓存),换题秒出 */
 .trainer-thumb-prefetch {
   position: fixed;

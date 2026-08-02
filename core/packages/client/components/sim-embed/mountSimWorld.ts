@@ -49,6 +49,13 @@ export interface SimMountOpts {
   faceHints?: boolean;
   /** world.perspective override (framing tightness). Engine default is 5. */
   perspective?: number;
+  /**
+   * 镜头轨道角度(`scene.rotation`),弧度。省略 = 引擎自己的开局姿态
+   * (`viewControls.HOME_SCENE_ROT`,等轴)。想正对一面传 `FRONT_SCENE_ROT`。
+   *
+   * 在挂载时摆而不是让调用方挂载后再改:后者会先按等轴画出一帧再跳过去。
+   */
+  sceneRot?: { x: number; y: number; z: number };
   /** Clamp for devicePixelRatio. Default 2 — a corner overlay on a 3x DPR
    *  phone does not need 9x the fragments. */
   pixelRatioCap?: number;
@@ -87,6 +94,7 @@ export function mountSimWorld(opts: SimMountOpts): SimMount {
     interactive = false,
     faceHints = false,
     perspective,
+    sceneRot,
     pixelRatioCap = 2,
     onFrame,
     onRendered,
@@ -104,6 +112,10 @@ export function mountSimWorld(opts: SimMountOpts): SimMount {
   if (faceHints) world.faceHints.show();
   else world.faceHints.hide();
   if (perspective != null) world.perspective = perspective;
+  if (sceneRot) {
+    world.scene.rotation.set(sceneRot.x, sceneRot.y, sceneRot.z);
+    world.scene.updateMatrix();
+  }
 
   const renderer = new THREE.WebGLRenderer({
     antialias: true,
