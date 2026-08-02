@@ -1,7 +1,7 @@
 'use client';
 
 // Ported from packages/client-vite/src/pages/trainer/components.tsx
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Trash2, ChevronDown, ChevronRight, Check, Star, TriangleAlert } from 'lucide-react';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import Link from '@/components/AppLink';
@@ -75,8 +75,48 @@ export function ScrambleHeader({ scramble, label, font = 'sans', placeholder }: 
   );
 }
 
+/**
+ * 「点这张图 = 打开这个 case」的包装 —— 训练 / 复习的卡片、记忆模式的大图共用这一份。
+ *
+ * 有详情页(虚拟集如 LSLL)走真 `<a>`,中键 / Ctrl 点能新开;否则弹详情弹窗,用真
+ * `<button>`(剥 UA 样式)—— 不用 div onClick,iOS Safari 的 tap 只在原生可交互元素上可靠。
+ * 两者都没有就退回一个纯容器,不装成能点。
+ */
+export function CaseThumbAction({
+  name, href, onOpen, className = '', children,
+}: {
+  /** 无障碍名,通常是 case 名(图本身没有可读文字)。 */
+  name: string;
+  href?: string;
+  onOpen?: () => void;
+  /** 额外类名(调用方自己的排版类)。 */
+  className?: string;
+  children: ReactNode;
+}) {
+  const viewLabel = tr({ zh: '查看该情况', en: 'View this case' });
+  const cls = `trainer-solve-thumb${className ? ` ${className}` : ''}`;
+  if (href) {
+    return (
+      <Link href={href} className={`${cls} is-clickable`} title={viewLabel}
+        aria-label={`${name} — ${viewLabel}`} prefetch={false}>
+        {children}
+      </Link>
+    );
+  }
+  if (onOpen) {
+    return (
+      <button type="button" className={`${cls} is-clickable`} onClick={onOpen}
+        title={viewLabel} aria-label={`${name} — ${viewLabel}`}>
+        {children}
+      </button>
+    );
+  }
+  return <div className={cls}>{children}</div>;
+}
+
 export function SolveCard({
-  puzzle, set, scramble, c, header, markSlot, onShowCase, caseHref, showThumb = true, localThumb,
+  puzzle, set, scramble, c, header, markSlot, onShowCase, showThumb = true, localThumb,
+  font = 'sans',
 }: {
   puzzle: AlgPuzzle;
   set: string;
@@ -88,13 +128,8 @@ export function SolveCard({
   header?: ReactNode;
   /** 标题行右侧的学习标记 pill(CaseMarkPill)。 */
   markSlot?: ReactNode;
-  /** 点 case 名弹出该情况的详情弹窗(元数据 / 公式)。 */
+  /** 点图弹出该情况的详情弹窗(元数据 / 公式)。 */
   onShowCase?: (c: AlgCase) => void;
-  /**
-   * case 名做成链接指向详情页(没有弹窗可弹的集用这条,如 LSLL)。
-   * 真 `<a>`,中键 / Ctrl 点能新开;与 `onShowCase` 二选一,两个都给时链接优先。
-   */
-  caseHref?: (c: AlgCase) => string;
   /** 打乱图开关(「打乱图」关时整卡不出 CaseThumb)。默认 true。 */
   showThumb?: boolean;
   /**
@@ -102,39 +137,20 @@ export function SolveCard({
    * 三个 `<img>` 各走各的网络往返,会一张一张地陆续落地。见 `VisualCube` 的 `local`。
    */
   localThumb?: boolean;
+  /** 打乱字体档位,同主屏(用户在侧栏「打乱字体」里选的那个)。 */
+  font?: string;
 }) {
-  // 标题行三格:左「上一个」/ 正中 case 名 / 右标记图标 —— 名字在图正上方,不再单占一行
+  // case 名不摆出来:训练时它就是答案的一半,而且卡片本体是「图 + 打乱」,名字只是重复。
+  // 要看是哪个 case 就点图(详情弹窗 / 详情页),名字进图的 aria-label / title。
   const name = c ? primaryCaseName(puzzle, set, c) : null;
   return (
     <div className="trainer-solve-card">
       {/* 打乱排在图下方 —— 与主屏 / 记忆模式同序。head / body 两段是给 .trainer-run
           的 subgrid 用的:三列共用同一套行,三张图的顶边自然齐平。 */}
       <div className="trainer-card-head">
-        {(header != null || markSlot != null || name != null) && (
+        {header != null && (
           <div className="trainer-card-header is-solve">
             <span className="trainer-card-slot">{header}</span>
-            <span className="trainer-card-name">
-              {name != null && (caseHref && c ? (
-                <Link
-                  href={caseHref(c)}
-                  className="trainer-case-link"
-                  title={tr({ zh: '查看该情况', en: 'View this case' })}
-                  prefetch={false}
-                >
-                  {name}
-                </Link>
-              ) : onShowCase && c ? (
-                <button
-                  type="button"
-                  className="trainer-case-link"
-                  onClick={() => onShowCase(c)}
-                  title={tr({ zh: '查看该情况', en: 'View this case' })}
-                >
-                  {name}
-                </button>
-              ) : name)}
-            </span>
-            <span className="trainer-card-slot is-end">{markSlot}</span>
           </div>
         )}
       </div>
@@ -144,38 +160,33 @@ export function SolveCard({
           })}</div>
         ) : (
           <>
-            {showThumb && (() => {
-              const thumb = (
-                <CaseThumb
-                  puzzle={puzzle}
-                  set={set}
-                  sticker={c.sticker}
-                  alg={c.algs.flat()[0]?.alg ?? c.standard ?? ''}
-                  // 图从「实际打乱」渲染(含 pre/post-AUF),而非 case 规范 setup —— 否则
-                  // 图与卡片上的打乱公式朝向对不上(3x3/2x2 才有 AUF;其余打乱==规范 setup)。
-                  setup={scramble ?? c.setup}
-                  // 与左栏大图 / 离屏预取同 size=140:同一 URL 共用浏览器缓存,换题时秒出不再重取。
-                  size={140}
-                  local={localThumb}
-                />
-              );
-              // 图和名字指的是同一个 case,点哪个都该开详情 —— 图还是更大更好点的那个目标。
-              // 真 <button>(剥 UA 样式),不用 div onClick:iOS Safari 的 tap 只在原生可交互元素上可靠。
-              return onShowCase ? (
-                <button
-                  type="button"
-                  className="trainer-solve-thumb is-clickable"
-                  onClick={() => onShowCase(c)}
-                  title={tr({ zh: '查看该情况', en: 'View this case' })}
-                  aria-label={`${primaryCaseName(puzzle, set, c)} — ${tr({ zh: '查看该情况', en: 'View this case' })}`}
+            {/* 图这一行三格:标记图标一左一右夹着图。标记是顺手一点的事,贴着它指的那张图
+                最好按 —— 摆回标题行就离图远了,还得多占一行。 */}
+            <div className="trainer-figure">
+              {markSlot}
+              {showThumb && (
+                <CaseThumbAction
+                  name={name ?? ''}
+                  onOpen={onShowCase && c ? () => onShowCase(c) : undefined}
                 >
-                  {thumb}
-                </button>
-              ) : (
-                <div className="trainer-solve-thumb">{thumb}</div>
-              );
-            })()}
-            <div className="trainer-solve-scramble">{scramble}</div>
+                  <CaseThumb
+                    puzzle={puzzle}
+                    set={set}
+                    sticker={c.sticker}
+                    alg={c.algs.flat()[0]?.alg ?? c.standard ?? ''}
+                    // 图从「实际打乱」渲染(含 pre/post-AUF),而非 case 规范 setup —— 否则
+                    // 图与卡片上的打乱公式朝向对不上(3x3/2x2 才有 AUF;其余打乱==规范 setup)。
+                    setup={scramble ?? c.setup}
+                    // 与左栏大图 / 离屏预取同 size=140:同一 URL 共用浏览器缓存,换题时秒出不再重取。
+                    size={140}
+                    local={localThumb}
+                  />
+                </CaseThumbAction>
+              )}
+            </div>
+            {/* 打乱与主屏那条同一份渲染(同字号 / 同字体档位):两边并排摆着,字号不一样
+                只会让人以为它们是两种东西。 */}
+            <ScrambleHeader scramble={scramble} font={font} />
           </>
         )}
       </div>
@@ -233,13 +244,34 @@ export function StatsList({
  * 不计时模式的「历史」面板:列出打乱历史(hist.list),点某条 = 跳回查看那条打乱(主屏 +
  * 上/下卡片一起切过去)。不计时没有用时可统计 —— 列的是 case 本身,当前所在条高亮。
  *
- * 每条给足三样:**打乱图**(按该条**实际打乱**渲染,含 AUF —— 与主屏那张同源,不是 case 规范
- * setup)、case 名、**公式**。以前只有一个名字药丸,打乱塞在 `title` 里 —— 触屏没有 hover,
- * 等于回看历史全靠盲点。
+ * 每条只出**打乱图**(按该条**实际打乱**渲染,含 AUF —— 与主屏那张同源,不是 case 规范
+ * setup):回看时认的就是那张图,名字和公式摆出来既占地方,又在训练模式下等于直接给答案。
+ * case 名进 aria-label / title(读屏与 hover 仍拿得到),要看细节点开详情弹窗。
  *
- * 当前所在那条不印公式:历史里包含「正在做的这题」,在训练模式下把答案摆出来就没得练了。
- * (点开详情弹窗是另一回事 —— 那是明着要看答案。)
+ * 一屏只摆最新 HIST_PAGE 条,其余翻页看:上限 50 条铺开是四五行图,把主屏挤下去了。
+ * 页码跟着当前所在那条走(换新打乱 / 点回看都会自动翻到它在的那页),手动翻页时不打断。
  */
+const HIST_PAGE = 10;
+
+/**
+ * 页码窗口:首页、末页、当前页±1,中间断开处填省略号 —— 不论几页都恒定 ≤7 格,
+ * 页码自己不会变成第二片刷屏。7 页以内直接全列(填不满窗口,折叠反而更难点)。
+ */
+export function histPageWindow(cur: number, count: number): (number | '…')[] {
+  if (count <= 7) return Array.from({ length: count }, (_, i) => i);
+  let lo = Math.max(1, cur - 1);
+  let hi = Math.min(count - 2, cur + 1);
+  // 贴边时把窗口往里撑,免得头尾几页只剩两三个格子
+  if (cur <= 2) hi = 3;
+  if (cur >= count - 3) lo = count - 4;
+  const out: (number | '…')[] = [0];
+  if (lo > 1) out.push('…');
+  for (let p = lo; p <= hi; p++) out.push(p);
+  if (hi < count - 2) out.push('…');
+  out.push(count - 1);
+  return out;
+}
+
 export function HistoryList({
   hist, cases, puzzle, set, onPick, onShowCase,
 }: {
@@ -257,10 +289,50 @@ export function HistoryList({
 }) {
   // set 名当页首已给(topbar「3×3 · ZBLL …」),卡片里再顶个 "ZBLL " 冗余 —— 剥掉只留组号。
   const setPrefix = new RegExp('^' + set.toUpperCase() + '\\s+', 'i');
+
+  // 同 StatsList:最新在最前。`i` 必须是原始下标(onPick / 高亮都按它),
+  // 所以先带上下标再倒序,别 reverse 完拿新下标。
+  const ordered = useMemo(
+    () => hist.list.map((e, i) => [e, i] as const).reverse(),
+    [hist.list],
+  );
+  const pageCount = Math.max(1, Math.ceil(ordered.length / HIST_PAGE));
+  // 当前所在那条落在第几页(倒序里的位置 / 每页条数)
+  const activePage = Math.min(
+    pageCount - 1,
+    Math.max(0, Math.floor((hist.list.length - 1 - hist.idx) / HIST_PAGE)),
+  );
+  const [page, setPage] = useState(activePage);
+  // 换新打乱(游标回队尾)或点某条回看时,把页跟过去 —— 否则高亮的那条不在眼前。
+  // 只在 activePage 真变了才动:手动翻页浏览时它不变,选择就不会被抢走。
+  useEffect(() => { setPage(activePage); }, [activePage]);
+  const cur = Math.min(page, pageCount - 1);
+  const shown = ordered.slice(cur * HIST_PAGE, cur * HIST_PAGE + HIST_PAGE);
+
   return (
     <div className="trainer-stats-card">
       <div className="trainer-card-header">
         <span>{tr({ zh: '历史', en: 'History' })}</span>
+        {pageCount > 1 && (
+          <div className="trainer-hist-pages">
+            {histPageWindow(cur, pageCount).map((p, slot) => (p === '…' ? (
+              <span key={`gap${slot}`} className="trainer-hist-gap" aria-hidden>…</span>
+            ) : (
+              <button
+                key={p}
+                type="button"
+                className={`trainer-hist-page${p === cur ? ' is-active' : ''}`}
+                onClick={() => setPage(p)}
+                aria-current={p === cur ? 'page' : undefined}
+                title={p === 0
+                  ? tr({ zh: `最新 ${HIST_PAGE} 条`, en: `Latest ${HIST_PAGE}` })
+                  : tr({ zh: `再往前第 ${p} 页`, en: `Page ${p + 1}` })}
+              >
+                {p + 1}
+              </button>
+            )))}
+          </div>
+        )}
       </div>
       <hr className="trainer-card-divider" />
       {hist.list.length === 0 ? (
@@ -268,9 +340,7 @@ export function HistoryList({
         })}</div>
       ) : (
         <div className="trainer-hist-grid">
-          {/* 同 StatsList:最新在最前。`i` 必须是原始下标(onPick / 高亮都按它),
-              所以先带上下标再倒序,别 reverse 完拿新下标。 */}
-          {hist.list.map((e, i) => [e, i] as const).reverse().map(([e, i]) => {
+          {shown.map(([e, i]) => {
             const c = findCaseByKey(cases, e.key);
             const name = (c ? primaryCaseName(puzzle, set, c) : e.name).replace(setPrefix, '');
             const active = hist.idx === i;
@@ -282,12 +352,13 @@ export function HistoryList({
                 type="button"
                 className={`trainer-hist-item${active ? ' is-active' : ''}`}
                 // 回看那条打乱 + 摊开这个 case:一次点击两件事,因为它们是同一个意图
-                // (「这题我看看」)。有详情可看的集才弹,其余仍旧只是回看。
-                onClick={() => { onPick(i); if (c?.meta) onShowCase?.(c); }}
-                title={e.scramble}
+                // (「这题我看看」)。没有 meta 的集(虚拟集等)照弹 —— 弹窗里还有图和全部公式。
+                onClick={() => { onPick(i); if (c) onShowCase?.(c); }}
+                title={`${name} ${e.scramble}`}
+                aria-label={name}
                 aria-current={active ? 'true' : undefined}
               >
-                {c && (
+                {c ? (
                   <CaseThumb
                     puzzle={puzzle}
                     set={set}
@@ -297,9 +368,11 @@ export function HistoryList({
                     setup={e.scramble || c.setup}
                     size={56}
                   />
+                ) : (
+                  // 这一条的 case 已不在当前选集里(切过 set / 合练成员变了):没有图可画,
+                  // 退回名字,总好过一个空按钮。
+                  <span className="trainer-hist-name">{name}</span>
                 )}
-                <span className="trainer-hist-name">{name}</span>
-                {alg && !active && <code className="trainer-hist-alg">{alg}</code>}
               </button>
             );
           })}

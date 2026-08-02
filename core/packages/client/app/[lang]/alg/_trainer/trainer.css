@@ -301,13 +301,13 @@
 }
 
 /* ─── run page (timer) ─── */
-/* 三列 + 一条底通栏:上一个在左、下一个(+统计)在右、打乱历史铺满底部。
-   窄屏(≤900)全部落成一列,顺序 = 主屏 → 上一个 → 下一个 → 历史。
+/* 三列 + 一条底通栏:上一个在左、成绩统计在右、打乱历史铺满底部。
+   窄屏(≤900)全部落成一列,顺序 = 主屏 → 上一个 → 统计 → 历史。
    列宽由 has-left / has-right 决定 —— 哪块没开就不排那一列,免得空一格 320px。 */
 .trainer-run {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: "stage" "prev" "next" "history";
+  grid-template-areas: "stage" "prev" "stats" "history";
   /* 每列内部再分 head(图以上)/ body(图及以下)两行,见下方 subgrid。
      行间距要能被 subgrid 复用(子网格若自带 gap 会错位),所以走变量,两处同一个值。 */
   --tr-row-gap: 16px;
@@ -317,12 +317,12 @@
 }
 .trainer-stage { grid-area: stage; }
 .trainer-sidebar.is-left { grid-area: prev; }
-.trainer-sidebar.is-right { grid-area: next; }
+.trainer-sidebar.is-right { grid-area: stats; }
 .trainer-sidebar.is-bottom { grid-area: history; }
 @media (min-width: 901px) {
   .trainer-run.has-left.has-right {
     grid-template-columns: 300px minmax(0, 1fr) 300px;
-    grid-template-areas: "prev stage next" "prev stage next" "history history history";
+    grid-template-areas: "prev stage stats" "prev stage stats" "history history history";
   }
   .trainer-run.has-left:not(.has-right) {
     grid-template-columns: 300px minmax(0, 1fr);
@@ -330,17 +330,16 @@
   }
   .trainer-run.has-right:not(.has-left) {
     grid-template-columns: minmax(0, 1fr) 300px;
-    grid-template-areas: "stage next" "stage next" "history history";
+    grid-template-areas: "stage stats" "stage stats" "history history";
   }
   .trainer-run:not(.has-left):not(.has-right) {
     grid-template-areas: "stage" "stage" "history";
   }
-  /* 主屏与两侧卡片共用同一套行:第 1 行 = 图以上,第 2 行 = 图及以下。行高取三列的最大值,
-     所以三张图的顶边天然在同一条线上 —— 不用估行数、不用钉像素。
-     侧栏放着不止一张卡片时(三条一屏的「上三个」/ 计时的成绩表)对不齐也无意义,不接。 */
+  /* 主屏与「上一个」卡片共用同一套行:第 1 行 = 图以上,第 2 行 = 图及以下。行高取各列的
+     最大值,所以两张图的顶边天然在同一条线上 —— 不用估行数、不用钉像素。
+     侧栏放着不止一张卡片时(三条一屏的「上三个」)对不齐也无意义,不接。 */
   .trainer-run .trainer-stage,
   .trainer-run .trainer-sidebar.is-left:has(> .trainer-solve-card:only-child),
-  .trainer-run .trainer-sidebar.is-right:has(> .trainer-solve-card:only-child),
   .trainer-run .trainer-sidebar > .trainer-solve-card:only-child {
     display: grid;
     grid-template-rows: subgrid;
@@ -382,21 +381,6 @@
 /* 当前这题的标记条:主屏右上角。stage-head 是 subgrid 第一行,所以它和两侧卡片
    标题行里那条标记条自然落在同一条线上 */
 .trainer-stage-marks { display: flex; justify-content: flex-end; }
-.trainer-stage-actions {
-  display: flex; justify-content: center; gap: 12px;
-  margin: 16px 0 24px;
-}
-.trainer-stage-btn {
-  display: inline-flex; align-items: center; gap: 6px;
-  background: transparent;
-  border: 1px solid color-mix(in srgb, var(--foreground) 15%, transparent);
-  color: var(--foreground);
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-size: 0.85rem;
-  cursor: pointer;
-}
-.trainer-stage-btn:hover { background: color-mix(in srgb, var(--foreground) 6%, transparent); }
 
 /* 三条一屏(不计时模式):图与打乱交错成六行,每条打乱紧跟自己那张图 */
 /* 行占满整列(stretch),这样三条的标记条落在同一条右边线上;图与打乱仍由行自己居中 */
@@ -417,7 +401,7 @@
   display: flex; justify-content: center;
   margin: 0 0 4px;
 }
-/* 「下一个」图的离屏预取:渲染但移出视口(仍会加载 → 进浏览器缓存),换题秒出 */
+/* 下一题图的离屏预取:渲染但移出视口(仍会加载 → 进浏览器缓存),换题秒出 */
 .trainer-thumb-prefetch {
   position: fixed;
   left: -9999px; top: 0;
@@ -453,6 +437,31 @@
   font-size: 0.85rem;
   color: var(--faint-foreground);
   margin-top: 12px;
+}
+
+/* 进度总览:贴在齿轮左侧,同复习进度的做法(absolute 脱流 → 齿轮仍精确居中)。
+   垂直方向靠 top:50% + translateY 对齐齿轮中线,不吃行内基线(否则文字比图标低半行)。 */
+.trainer-progress-link {
+  position: absolute;
+  right: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  font-size: 0.82rem;
+  color: var(--muted-foreground);
+  text-decoration: none;
+}
+@media (hover: hover) {
+  .trainer-progress-link:hover { color: var(--foreground); }
+}
+/* 窄屏齿轮改行内靠右(见下方 media query),左边没空间摆 absolute —— 回到行内 */
+@media (max-width: 768px) {
+  .trainer-progress-link {
+    position: static;
+    transform: none;
+    align-self: center;
+    margin-right: 6px;
+  }
 }
 
 /* 复习进度(26/472):贴在齿轮右侧。absolute 脱流 —— 齿轮保持精确居中,
@@ -557,6 +566,56 @@
   max-width: 240px;
 }
 
+/* ─── 顶层朝向偏好(post-AUF 的细化版,见 _trainer/OrientationPicker.tsx) ─── */
+/* 展开/收起:裸文字 + 箭头,不做成按钮块 —— 它只是把下面那张图列折起来 */
+.trainer-ori-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+.trainer-ori-toggle:hover { color: var(--foreground); }
+/* 组名一列 + 朝向图一列:grid 让各组的图自动对齐,不用给组名钉死宽度 */
+.trainer-ori-list {
+  display: grid;
+  grid-template-columns: max-content auto;
+  align-items: center;
+  gap: 6px 8px;
+  width: 100%;
+  /* OLL 一类一组一个形状(50+ 组),滚动看,别把设置面板顶穿 */
+  max-height: 42vh;
+  overflow-y: auto;
+  margin-top: -4px;
+}
+.trainer-ori-group { display: contents; }
+.trainer-ori-name {
+  font-size: 0.74rem;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+  justify-self: end;
+}
+.trainer-ori-cells { display: flex; flex-wrap: wrap; gap: 4px; }
+/* 没被选中的压暗;被钉住的那个套一圈开启色。全放开时四张都亮、都不套圈 */
+.trainer-ori-cell {
+  display: inline-flex;
+  padding: 1px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  /* 浅色下黄格本来就淡,压太狠会看不出那格画的是什么形状 —— 留到还认得出为止 */
+  opacity: 0.38;
+  cursor: pointer;
+  transition: opacity 0.12s ease;
+}
+.trainer-ori-cell.is-on { opacity: 1; }
+.trainer-ori-cell[aria-pressed='true'] { box-shadow: 0 0 0 2px var(--toggle-on); }
+.trainer-ori-cell:hover { opacity: 1; }
+
 /* ─── sidebar (solve card + stats) ─── */
 .trainer-sidebar {
   display: flex; flex-direction: column; gap: 16px;
@@ -567,7 +626,7 @@
   border-radius: 10px;
   padding: 14px 16px;
 }
-/* 上一个 / 下一个不套框:三列共用行高(见 .trainer-run 的 subgrid),框一画就得被拉到
+/* 「上一个」卡片不套框:各列共用行高(见 .trainer-run 的 subgrid),框一画就得被拉到
    最高那列的高度,内容再怎么贴边也堵不住框里的空。层次交给间距,不交给边框。 */
 .trainer-solve-card { padding: 0 4px; }
 .trainer-card-header {
@@ -576,18 +635,12 @@
   font-size: 0.95rem; font-weight: 600;
   margin-bottom: 10px;
 }
-/* solve 卡片的标题行:三格网格,case 名永远落在正中(右侧没有标记时也不偏) */
+/* solve 卡片的标题行:只剩「上一个」/「#3」这一格(case 名不摆,标记挪到图两侧) */
 .trainer-card-header.is-solve {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  gap: 4px 8px;
-  align-items: center;
   /* 横线去掉了,靠图自己那 8px 上边距分隔 —— 不用再空出一行的量 */
   margin-bottom: 2px;
 }
 .trainer-card-slot { min-width: 0; }
-.trainer-card-slot.is-end { justify-self: end; display: inline-flex; }
-.trainer-card-name { min-width: 0; text-align: center; }
 .trainer-card-header .trainer-icon-btn {
   background: transparent; border: none; color: var(--muted-foreground); cursor: pointer;
   padding: 4px;
@@ -597,15 +650,36 @@
   border: none; border-top: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
   margin: 0 0 10px;
 }
+/* 图这一行(主屏与「上一个」卡片共用):标记图标一左一右夹住图。mark-bar 自己
+   display:contents,让它那两个按钮直接当本网格的格子(DOM 不变 → data-no-timer 的
+   closest 查找照常命中)。图关掉时只剩两个图标,仍各据一侧。 */
+.trainer-figure {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 4px;
+}
+.trainer-figure > .trainer-mark-bar { display: contents; }
+/* 三格全部钉在第 1 行:源码顺序是「两个图标 → 图」,不钉行的话自动放置的光标已经越过
+   第 3 列,图会被挤到第 2 行去。 */
+.trainer-figure > .trainer-mark-bar > .trainer-mark-btn:first-child {
+  grid-row: 1; grid-column: 1; justify-self: end;
+}
+.trainer-figure > .trainer-mark-bar > .trainer-mark-btn:last-child {
+  grid-row: 1; grid-column: 3; justify-self: start;
+}
+/* 中间那格 = 图。不列举容器类名(卡片 / 主屏 / 记忆模式各叫各的),凡不是标记条的
+   直接子元素都落第 2 列。 */
+.trainer-figure > :not(.trainer-mark-bar) { grid-row: 1; grid-column: 2; }
 .trainer-solve-thumb {
   display: flex; justify-content: center;
   margin: 0;
 }
-/* 图本身也是「打开该情况」的入口(真 button,剥掉 UA 样式);hover 才给提示,触屏不留假态 */
+/* 图本身也是「打开该情况」的入口(真 button / 真 a,剥掉 UA 样式);hover 才给提示,触屏不留假态 */
 .trainer-solve-thumb.is-clickable {
   appearance: none; -webkit-appearance: none;
-  width: 100%;
   background: none; border: none; padding: 0;
+  text-decoration: none; color: inherit;
   cursor: pointer;
 }
 @media (hover: hover) {
@@ -616,29 +690,18 @@
 }
 /* 卡片上半:标题行;下半:图 + 打乱。两段是 subgrid 的两行(见 .trainer-run) */
 .trainer-card-head { display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; }
-.trainer-card-body .trainer-solve-scramble { text-align: center; margin-top: 6px; }
 .trainer-card-body { display: flex; flex-direction: column; justify-content: flex-start; }
 .trainer-solve-row {
   font-size: 0.85rem;
   margin: 4px 0;
   text-align: center;
 }
-.trainer-solve-scramble {
-  font-family: 'Inter', monospace;
-  font-size: 0.78rem;
-  color: var(--muted-foreground);
-  word-break: break-word;
+/* 卡片里的打乱与主屏共用 .trainer-scramble-text(字号 / 字重 / 字距同源),这里只管
+   它在窄列里的排版:居中 + 长打乱照常折行。 */
+.trainer-card-body .trainer-scramble-text {
+  text-align: center;
+  overflow-wrap: anywhere;
 }
-/* case 名按钮 —— 点开该情况的元数据弹窗 */
-.trainer-case-link {
-  appearance: none; -webkit-appearance: none;
-  background: none; border: none; padding: 0;
-  font: inherit; font-weight: 600;
-  color: var(--tr-sel);
-  display: inline-flex; align-items: center; gap: 4px;
-  cursor: pointer;
-}
-.trainer-case-link:hover { text-decoration: underline; }
 
 .trainer-stats-list {
   display: flex; flex-wrap: wrap; gap: 6px;
@@ -658,21 +721,24 @@
 }
 .trainer-stats-list .trainer-stat-time.is-dnf { color: var(--faint-foreground); }
 
-/* ─── 历史面板:每条 = 打乱图 + case 名 + 公式 ─── */
+/* ─── 历史面板:每条 = 一张打乱图(名字/公式不出,见 HistoryList 注释) ─── */
 .trainer-hist-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  /* 列宽贴着 56px 的图 + 内边距:一行能摆下的图尽量多,不留成排的空白 */
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
   gap: 10px;
 }
+/* 不套框也不铺底:一格就是一张图,层次交给间距。当前所在那条才上一层底色 —— 只有它需要
+   被一眼认出来。 */
 .trainer-hist-item {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  padding: 8px 6px;
+  padding: 6px;
   border-radius: 8px;
-  border: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
-  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+  border: 0;
+  background: transparent;
   cursor: pointer;
   text-align: center;
   /* 剥 UA 按钮样式:字体不继承会在 Safari 里缩成 13px system-ui */
@@ -680,24 +746,41 @@
   color: inherit;
 }
 .trainer-hist-item.is-active {
-  background: color-mix(in srgb, var(--tr-sel) 15%, transparent);
-  border-color: color-mix(in srgb, var(--tr-sel) 50%, transparent);
+  background: color-mix(in srgb, var(--tr-sel) 18%, transparent);
 }
 @media (hover: hover) {
-  .trainer-hist-item:hover { border-color: color-mix(in srgb, var(--foreground) 24%, transparent); }
+  .trainer-hist-item:hover { background: color-mix(in srgb, var(--foreground) 7%, transparent); }
+  .trainer-hist-item.is-active:hover { background: color-mix(in srgb, var(--tr-sel) 26%, transparent); }
 }
+/* 页码:一排小数字,当前页高亮。页多了由 histPageWindow 折成「1 … 4 5 6 … 12」,恒定 ≤7 格。 */
+.trainer-hist-pages { display: flex; align-items: center; gap: 4px; }
+.trainer-hist-gap { color: var(--faint-foreground); font-size: 0.8rem; padding: 0 1px; }
+.trainer-hist-page {
+  min-width: 22px;
+  padding: 2px 5px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.trainer-hist-page.is-active {
+  background: color-mix(in srgb, var(--tr-sel) 18%, transparent);
+  color: var(--foreground);
+}
+@media (hover: hover) {
+  .trainer-hist-page:hover { background: color-mix(in srgb, var(--foreground) 8%, transparent); }
+  .trainer-hist-page.is-active:hover { background: color-mix(in srgb, var(--tr-sel) 26%, transparent); }
+}
+
+/* 只在「这条的 case 不在当前选集里」时出现(没有图可画时的兜底) */
 .trainer-hist-name {
   font-size: 0.82rem;
   font-weight: 500;
   color: var(--foreground);
-}
-/* 公式是回看时最想看的那行:不截断,长公式照常折行 */
-.trainer-hist-alg {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  line-height: 1.45;
-  color: var(--muted-foreground);
-  overflow-wrap: anywhere;
 }
 .trainer-stats-empty {
   color: var(--faint-foreground); font-size: 0.85rem;

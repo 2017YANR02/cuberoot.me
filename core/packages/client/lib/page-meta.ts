@@ -64,13 +64,8 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'account': { title: { zh: '账号', en: 'Account' } },
-  'alg': {
-    title: { zh: '公式库', en: 'Algorithms' },
-    description: {
-      zh: '公式库:F2L、OLL、PLL、COLL、ZBLL、CMLL 等,按魔方与套装分类,配识别图与训练器。',
-      en: 'Algorithm library — F2L, OLL, PLL, COLL, ZBLL, CMLL and more, organised by puzzle and set, with recognition images and trainers.',
-    },
-  },
+  // 'alg' 没有条目:/alg 不再是页面(next.config 直接 redirect 到 /alg/3x3),
+  // 每个魔方页的标题由 alg/[puzzle]/layout.tsx 的 generateMetadata 逐个发。
   'alg-trainers': { title: { zh: '公式训练器', en: 'Alg Trainers' } },
   'alg/3bld': { title: { zh: '盲拧训练', en: '3BLD Trainer' } },
   'alg/3bld/2c2c': { title: { zh: '双角双角训练', en: '2-Corner / 2-Corner Trainer' } },

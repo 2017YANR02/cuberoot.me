@@ -45,6 +45,13 @@
 .donate-member-link:hover {
     background: color-mix(in srgb, var(--accent) 18%, transparent);
 }
+/* 会员入口只对 admin 渲染,小字提醒这条普通访客看不到 */
+.donate-admin-note {
+    font-size: 0.72rem;
+    font-weight: 400;
+    color: var(--faint-foreground);
+    white-space: nowrap;
+}
 
 .donate-close {
     position: absolute;

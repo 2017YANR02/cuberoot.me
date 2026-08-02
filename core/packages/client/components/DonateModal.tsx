@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { User, Mail, Copy, Check, Info, Crown } from 'lucide-react';
 import AppLink from '@/components/AppLink';
+import { useIsAdmin } from '@/lib/auth-store';
 import './donate-modal.css';
 
 interface Props {
@@ -56,6 +57,7 @@ function TiktokIcon() {
 export default function DonateModal({ lang, onClose }: Props) {
   const [copied, setCopied] = useState<string | null>(null);
   const copyTimer = useRef<number | null>(null);
+  const admin = useIsAdmin();
 
   useModalDismiss(onClose);
   useEffect(() => () => {
@@ -94,10 +96,14 @@ export default function DonateModal({ lang, onClose }: Props) {
         <button className="donate-close" onClick={onClose} aria-label={t('关闭', 'Close')}>✕</button>
         <h2 className="donate-title">{t('支持 CubeRoot', 'Support CubeRoot')}</h2>
 
-        <AppLink href="/membership" className="donate-member-link" onClick={onClose}>
-          <Crown size={ICON_SIZE} strokeWidth={2} />
-          {t('成为会员,解锁专属权益 →', 'Become a member — unlock perks →')}
-        </AppLink>
+        {/* 会员功能未完工:入口暂时只对 admin 可见(同 /support 的「成为会员」),小字自提醒 */}
+        {admin && (
+          <AppLink href="/membership" className="donate-member-link" onClick={onClose}>
+            <Crown size={ICON_SIZE} strokeWidth={2} />
+            {t('成为会员,解锁专属权益 →', 'Become a member — unlock perks →')}
+            <span className="donate-admin-note">{t('仅管理员可见', 'Admin only')}</span>
+          </AppLink>
+        )}
 
         <div className="donate-qr-row">
           <figure className="donate-qr">

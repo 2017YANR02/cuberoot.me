@@ -143,15 +143,21 @@ interface TrainerPrefs {
   preAuf: boolean;
   /** 打乱收尾随机 AUF(历史默认行为,关掉 = 打乱原样呈现)。 */
   postAuf: boolean;
+  /**
+   * 顶层朝向偏好:朝向组键 → 允许的相位(见 `lib/alg_ll_orientation`)。收尾 AUF 的
+   * 细化版 —— 不是「随机四选一」而是「只出这几个方向」。组键按形状算,跨 set 通用,
+   * 所以一份就够(在 ZBLL 里把 U 形状钉成朝上,练 COLL / OLL 的同一形状也跟着钉)。
+   * 没有条目的组 = 不限制。
+   */
+  oriSel: Record<string, number[]>;
   timing: boolean;
   mode: TrainerMode;
   probMode: TrainerProbMode;
   recapOrder: TrainerRecapOrder;
   timerFont: TrainerTimerFont;
   scrambleFont: TrainerTimerFont;
-  /** 极简开关:侧栏「上一个 / 下一个」卡片、统计卡片,可各自隐藏。 */
+  /** 极简开关:侧栏「上一个」卡片、统计卡片,可各自隐藏。 */
   showPrevCard: boolean;
-  showNextCard: boolean;
   showStats: boolean;
   /** 左栏计时数字下方的当前 case 图,可隐藏。 */
   showStageThumb: boolean;
@@ -167,8 +173,6 @@ interface TrainerPrefs {
   srsFillExtra: boolean;
   /** 记忆模式:按记忆进展自动升降「不熟 / 已掌握」标记。 */
   srsAutoMark: boolean;
-  /** 记忆模式:揭示公式时一并展示 3D 演示。 */
-  srsShowPlayer: boolean;
   /** 计时/复习模式里做完一把也计入记忆调度(同一 case 每到期一次只计一把)。 */
   srsFromSolves: boolean;
   /**
@@ -179,11 +183,11 @@ interface TrainerPrefs {
   smartCube: boolean;
 }
 const DEFAULT_PREFS: TrainerPrefs = {
-  preAuf: true, postAuf: true, timing: false, mode: 'recap', probMode: 'uniform',
+  preAuf: true, postAuf: true, oriSel: {}, timing: false, mode: 'recap', probMode: 'uniform',
   recapOrder: 'shuffle', timerFont: 'lcd', scrambleFont: 'sans',
-  showPrevCard: true, showNextCard: true, showStats: true, showStageThumb: true,
+  showPrevCard: true, showStats: true, showStageThumb: true,
   pureScramble: true, multiScramble: false,
-  srsNewLimit: 10, srsSessionLimit: 60, srsFillExtra: true, srsAutoMark: true, srsShowPlayer: false,
+  srsNewLimit: 10, srsSessionLimit: 60, srsFillExtra: true, srsAutoMark: true,
   srsFromSolves: true, smartCube: true,
 };
 const PREFS_KEY = 'trainer:prefs';
@@ -204,14 +208,14 @@ const persistPrefs = (p: TrainerPrefs) => {
 
 /** 从整个 store state 里只摘偏好字段(直接 stringify 整个 state 会把 cases/solves 一起写进去)。 */
 const prefsOf = (st: TrainerPrefs): TrainerPrefs => ({
-  preAuf: st.preAuf, postAuf: st.postAuf, timing: st.timing, mode: st.mode,
+  preAuf: st.preAuf, postAuf: st.postAuf, oriSel: st.oriSel, timing: st.timing, mode: st.mode,
   probMode: st.probMode, recapOrder: st.recapOrder,
   timerFont: st.timerFont, scrambleFont: st.scrambleFont,
-  showPrevCard: st.showPrevCard, showNextCard: st.showNextCard, showStats: st.showStats,
+  showPrevCard: st.showPrevCard, showStats: st.showStats,
   showStageThumb: st.showStageThumb, pureScramble: st.pureScramble,
   multiScramble: st.multiScramble,
   srsNewLimit: st.srsNewLimit, srsSessionLimit: st.srsSessionLimit,
-  srsFillExtra: st.srsFillExtra, srsAutoMark: st.srsAutoMark, srsShowPlayer: st.srsShowPlayer,
+  srsFillExtra: st.srsFillExtra, srsAutoMark: st.srsAutoMark,
   srsFromSolves: st.srsFromSolves, smartCube: st.smartCube,
 });
 
@@ -258,14 +262,14 @@ interface TrainerState {
   currentName: string | null;
   currentScramble: string | null;
   /**
-   * 预抽的「下一题」(lookahead):侧栏「下一个」卡片显示它,出下一题时把它扶正为 current
-   * 再预抽一条 —— 预览的打乱与将来实际要做的完全一致(train 随机也不会重roll)。
+   * 预抽的「下一题」(lookahead):三条一屏时它就是屏上第 2 条,单条时 UI 拿它离屏预取图;
+   * 出下一题时把它扶正为 current 再预抽一条 —— 预抽的打乱与将来实际要做的完全一致
+   * (train 随机也不会重roll)。
    * pool 空 / 历史中段(← 回看过)时为 null,此时「下一题」= 历史里 idx+1 那条。
    */
   peek: TrainerHistEntry | null;
   /**
-   * 再下一题(二级 lookahead):出下一题时它递补为 peek。UI 据此把「下一个」卡片将要显示的
-   * 图提前一格离屏预取 —— 换题时右卡也秒出图,与左栏(靠预取 peek)同速,不再等网络往返。
+   * 再下一题(二级 lookahead):出下一题时它递补为 peek,三条一屏时它是屏上第 3 条。
    */
   peek2: TrainerHistEntry | null;
   /** ←/→ 打乱历史(与 /timer 同一套环形队列,lib/scramble-history)。 */
@@ -310,6 +314,7 @@ interface TrainerState {
   // 训练偏好(localStorage `trainer:prefs`;SSR 渲染默认值,挂载后 hydratePrefs 补水)
   preAuf: boolean;
   postAuf: boolean;
+  oriSel: Record<string, number[]>;
   timing: boolean;
   mode: TrainerMode;
   probMode: TrainerProbMode;
@@ -317,7 +322,6 @@ interface TrainerState {
   timerFont: TrainerTimerFont;
   scrambleFont: TrainerTimerFont;
   showPrevCard: boolean;
-  showNextCard: boolean;
   showStats: boolean;
   showStageThumb: boolean;
   pureScramble: boolean;
@@ -327,7 +331,6 @@ interface TrainerState {
   srsSessionLimit: number;
   srsFillExtra: boolean;
   srsAutoMark: boolean;
-  srsShowPlayer: boolean;
   srsFromSolves: boolean;
 
   /** recap 模式的洗牌队列:pool 变了(recapSig 失配)重洗。 */
@@ -362,6 +365,10 @@ interface TrainerState {
   hydratePrefs: () => void;
   setPreAuf: (v: boolean) => void;
   setPostAuf: (v: boolean) => void;
+  /** 改某个朝向组的相位偏好。`offs` 为空 / 覆盖全部 = 该组不限制(存成空数组)。 */
+  setOriSel: (key: string, offs: readonly number[]) => void;
+  /** 清掉全部朝向限制,回到「随机四选一」。 */
+  resetOriSel: () => void;
   setTiming: (v: boolean) => void;
   setMode: (m: TrainerMode) => void;
   setProbMode: (m: TrainerProbMode) => void;
@@ -373,7 +380,6 @@ interface TrainerState {
   setTimerFont: (f: TrainerTimerFont) => void;
   setScrambleFont: (f: TrainerTimerFont) => void;
   setShowPrevCard: (v: boolean) => void;
-  setShowNextCard: (v: boolean) => void;
   setShowStats: (v: boolean) => void;
   setShowStageThumb: (v: boolean) => void;
   setPureScramble: (v: boolean) => void;
@@ -383,7 +389,6 @@ interface TrainerState {
   setSrsSessionLimit: (v: number) => void;
   setSrsFillExtra: (v: boolean) => void;
   setSrsAutoMark: (v: boolean) => void;
-  setSrsShowPlayer: (v: boolean) => void;
   setSrsFromSolves: (v: boolean) => void;
 
   /** 下一个打乱:历史中段先前进,到队尾才出新题(train 随机 / recap 逐个)。 */
@@ -491,8 +496,12 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
    * 首尾随机 U 虽然不改 case,但会把揭示出来的那条公式变成对不上眼前这张图的公式,
    * 背的人只会以为自己记错了。训练 / 复习照旧随机(练的正是识别,不是背图)。
    */
-  const aufOpts = (st: { mode: TrainerMode; preAuf: boolean; postAuf: boolean }) =>
-    st.mode === 'memo' ? { preAuf: false, postAuf: false } : { preAuf: st.preAuf, postAuf: st.postAuf };
+  const aufOpts = (st: {
+    mode: TrainerMode; preAuf: boolean; postAuf: boolean;
+    oriSel: Record<string, number[]>; set: string | null;
+  }) => (st.mode === 'memo'
+    ? { preAuf: false, postAuf: false }
+    : { preAuf: st.preAuf, postAuf: st.postAuf, orientation: st.oriSel, orientationSet: st.set });
 
   /** 某个 case 的 setup 到位后,把当时留空的打乱补上(当前 / 预抽两条 / 历史里同一 case)。 */
   const patchScramble = (key: string) => {
@@ -921,19 +930,23 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     }
   };
 
-  /** 当前题的打乱重出一条(换打乱类型 / 切 pre-AUF 时),历史当前条 + 手上预取的全部同步替换。 */
+  /** 当前题的打乱重出一条(换打乱类型 / 切 pre-AUF / 改朝向时),历史当前条 + 手上预取的全部同步替换。 */
   const regenCurrent = () => {
-    const { currentKey, cases, puzzle, timerState, scrambleKind, preAuf, postAuf, hist, peek, peek2, roomBuf } = get();
+    const st = get();
+    const { currentKey, cases, puzzle, timerState, scrambleKind, hist, peek, peek2, roomBuf } = st;
     if (!currentKey || !puzzle || timerState !== TimerState.NOT_RUNNING) return;
     const c = findCaseByKey(cases, currentKey);
     if (!c) return;
-    const scramble = generateScramble(c, puzzle, scrambleKind, { preAuf, postAuf });
+    // 走 aufOpts 而不是直接读 preAuf/postAuf —— 出题(draw)用的就是它,两条路各读各的
+    // 会让「重出」这一下和原来那题不是同一套规则(记忆模式尤其明显:那边一律不加 AUF)。
+    const opts = aufOpts(st);
+    const scramble = generateScramble(c, puzzle, scrambleKind, opts);
     const list = hist.list.map((e, i) => (i === hist.idx ? { ...e, scramble } : e));
     // 预览的下两题、房间里手上揣着的预取也一起用新打乱类型重出,保证看到的 == 将来实际要做的
     const regenPeek = <T extends TrainerHistEntry | null>(pk: T): T => {
       if (!pk) return pk;
       const pc = findCaseByKey(cases, pk.key);
-      return (pc ? { ...pk, scramble: generateScramble(pc, puzzle, scrambleKind, { preAuf, postAuf }) } : pk) as T;
+      return (pc ? { ...pk, scramble: generateScramble(pc, puzzle, scrambleKind, opts) } : pk) as T;
     };
     set({
       currentScramble: scramble, hist: { list, idx: hist.idx },
@@ -967,6 +980,8 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       // 光靠一次性的 hydratePrefs 是回不来的。
       preAuf: opts?.noAufDefault ? false : prefs.preAuf,
       postAuf: opts?.noAufDefault ? false : prefs.postAuf,
+      // 朝向偏好按形状分组、跨 set 通用,没有「本场默认关」这回事 —— 直接取落盘的。
+      oriSel: prefs.oriSel,
       selected,
       solves: persisted.solves,
       currentKey: null,
@@ -1071,6 +1086,22 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       if (!get().noAufDefault) persistPrefs(prefsOf(get()));
       regenCurrent();
     },
+    setOriSel: (key, offs) => {
+      const next = { ...get().oriSel };
+      if (offs.length === 0) delete next[key];
+      else next[key] = [...offs].sort((a, b) => a - b);
+      // 钉了朝向就顺手关掉 post-AUF:两者是同一件事的粗细两档,同时摆着只会让人以为
+      // 「随机四选一」还在跑。UI 也把开关收起来(见 TrainerRunClient)。
+      set({ oriSel: next, postAuf: Object.keys(next).length > 0 ? false : get().postAuf });
+      persistPrefs(prefsOf(get()));
+      regenCurrent(); // 立刻在当前题上生效,同 setPostAuf
+    },
+    resetOriSel: () => {
+      if (Object.keys(get().oriSel).length === 0) return;
+      set({ oriSel: {} });
+      persistPrefs(prefsOf(get()));
+      regenCurrent();
+    },
     setTiming: (v) => {
       set({ timing: v });
       persistPrefs(prefsOf(get()));
@@ -1114,10 +1145,6 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       set({ showPrevCard: v });
       persistPrefs(prefsOf(get()));
     },
-    setShowNextCard: (v) => {
-      set({ showNextCard: v });
-      persistPrefs(prefsOf(get()));
-    },
     setShowStats: (v) => {
       set({ showStats: v });
       persistPrefs(prefsOf(get()));
@@ -1135,7 +1162,9 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       persistPrefs(prefsOf(get()));
     },
     setMultiScramble: (v) => {
-      set({ multiScramble: v });
+      // 三条一屏要摆三张打乱图,一屏根本放不下(手机尤甚),所以开三条时顺手把打乱图关掉。
+      // 关回单条不自动开回来 —— 还想要图自己再勾上,别跟用户抢开关。
+      set(v ? { multiScramble: true, showStageThumb: false } : { multiScramble: false });
       persistPrefs(prefsOf(get()));
       // 房间里现开三条一屏:预取目标从 1 涨到 5,立刻补上 —— 当前这屏马上凑满三条
       // (否则要先切一次才补上),下一屏也一并备好。
@@ -1157,10 +1186,6 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     },
     setSrsAutoMark: (v) => {
       set({ srsAutoMark: v });
-      persistPrefs(prefsOf(get()));
-    },
-    setSrsShowPlayer: (v) => {
-      set({ srsShowPlayer: v });
       persistPrefs(prefsOf(get()));
     },
     setSrsFromSolves: (v) => {
@@ -1199,8 +1224,8 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
         return;
       }
       // 已在队尾:把预抽的下一题(peek)扶正为当前题,peek2 递补为新 peek,再预抽新的 peek2。
-      // 这样「你先前看到的下一题」就是「现在要做的这一题」,预览稳定不重roll;右卡预览也提前
-      // 一格备好(peek2),换题时右图秒出。
+      // 这样「先前预抽的下一题」就是「现在要做的这一题」,打乱稳定不重roll(三条一屏切下一屏
+      // 同理,屏上三条各就各位)。
       promoteNext();
     },
 
@@ -1374,9 +1399,9 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       });
       // Celebrate a new fastest single across the session.
       if (solves.length > 0 && ms < Math.min(...solves.map(s => s.ms))) petReact('happy');
-      // 停表即自动出下一题(cstimer 式):把预览的下一题(peek)扶正为 current 再预抽一条。
-      // 左栏随之显示「下一个要 solve 的把 + 它的图」,计时数字停留在刚做完这把的成绩,
-      // 右栏「下一把」也跟着滚到再下一个 —— 不然连续 solve 时 current/peek 都不动,右卡冻住。
+      // 停表即自动出下一题(cstimer 式):把预抽的下一题(peek)扶正为 current 再预抽一条。
+      // 主屏随之显示「下一个要 solve 的把 + 它的图」,计时数字停留在刚做完这把的成绩 ——
+      // 不然连续 solve 时 current/peek 都不动,屏上冻住。
       setTimeout(() => get().nextScramble(), 0);
     },
 

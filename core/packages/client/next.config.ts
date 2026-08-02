@@ -332,6 +332,12 @@ const nextConfig: NextConfig = {
       { source: "/code/mojo", destination: "/code/language/mojo", permanent: true },
       { source: "/code/compare", destination: "/code/language/compare", permanent: true },
       { source: "/code/scramble", destination: "/code/language/scramble", permanent: true },
+      // /alg 不再有自己的落地页(项目卡片已换成页首下拉)——「公式库」就等于默认魔方
+      // 三阶的公式集页。配置层直接跳,省掉一个只会 redirect 的函数渲染;两条是因为
+      // 英文裸 URL(/alg)与 /zh、/en 前缀是不同的 path(Pattern B)。
+      // permanent: false —— 默认魔方是产品选择,不该被浏览器永久缓存成 308。
+      { source: "/alg", destination: "/alg/3x3", permanent: false },
+      { source: "/:lang(en|zh)/alg", destination: "/:lang/alg/3x3", permanent: false },
       // /battle is retired — the battle experience lives only at /timer?players=2..4.
       // No redirect: old /battle URLs 404 on purpose.
       // /blog/* → blog.cuberoot.me (双轨:境内 nginx 在主域 vhost ^~ /blog/ alias 直 serve;

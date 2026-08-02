@@ -374,6 +374,15 @@ export const CATALOG: UtilEntry[] = [
     en: 'Alg-set group ordering: within a letter, + before − (the zbls library order); numeric bases sort numerically.',
   },
   {
+    name: 'orientationCycle / allowedPostAuf',
+    sig: 'orientationCycle(base: string, size: number, corners?: boolean): OriCycle | null\nallowedPostAuf(base, size, sel, corners?): readonly string[] | null',
+    imp: "import { orientationCycle, allowedPostAuf } from '@/lib/alg_ll_orientation';",
+    usage: "orientationCycle(\"R U R' U R U2 R'\", 3)!.distinct // 4(H 组是 2)",
+    category: 'cube',
+    zh: '顶层朝向:按「顶层哪些格是顶色」把 case 按翻色形状分组(ZBLL 正好 7 组),并算出补哪个收尾 AUF 能摆成指定朝向。训练器的朝向偏好靠它出题。',
+    en: 'Last-layer orientation: groups cases by the top-layer “is it the U colour” mask (ZBLL lands on exactly 7 shapes) and says which trailing AUF aims a case a given way. Drives the trainer’s orientation preference.',
+  },
+  {
     name: 'CUBE_FILL / CUBE_ON_FILL',
     sig: 'CUBE_FILL: Record<CubeFace, string>   // U D L R F B',
     imp: "import { CUBE_FILL, CUBE_ON_FILL } from '@/lib/cube-colors';",
