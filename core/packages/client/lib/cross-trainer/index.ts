@@ -24,7 +24,7 @@ import {
   type EoCoord, type EoFrame, type EoFrameData,
 } from './eo';
 import { crossDist, decodeCross, encodeCross } from './dist';
-import { sampleCrossState } from './sample';
+import { sampleCrossLayer } from './sample';
 import { fillState, type Pin } from './fill';
 import {
   frameData, sampleXCoord, xcrossDistCapped, XCROSS_MAX_DEPTH,
@@ -35,7 +35,7 @@ import {
   type PairFrame,
 } from './pair';
 import {
-  PSEUDO_CROSS_MAX_DEPTH, PSEUDO_XCROSS_PRACTICAL_MAX, XXCROSS_PRACTICAL_MAX,
+  PSEUDO_CROSS_MAX_DEPTH, PSEUDO_XCROSS_MAX_DEPTH, XXCROSS_MAX_DEPTH,
   pseudoCrossDist, pseudoCrossPins, pseudoXFrameData, pseudoXcrossDistCapped, pseudoXcrossPins,
   samplePseudoCross, samplePseudoXCoord, sampleXXCoord, xxFrameData, xxcrossDistCapped, xxcrossPins,
   type XXCoord, type XXFrame, type XXFrameData,
@@ -109,9 +109,20 @@ export interface TrainerFrame {
 }
 
 type Sampler = (spec: ResolvedSpec, rng: () => number, def: StageDef) => Sampled | null;
+
+/**
+ * Why a draw came back empty. The distinction is the whole difference between an honest
+ * "no cube has this difficulty" and a lie: a cold table build or an unlucky rare window must
+ * NOT be reported as non-existent, or the UI latches a permanent false notice.
+ */
+export type DrawOutcome =
+  | { ok: true; state: CubieCube; depth: number }
+  | { ok: false; reason: 'empty' | 'budget' };
 interface StageDef extends TrainerCaps {
   variant: string;
   stage: string;
+  /** One frame's sampler walks fully enumerated layers → "nothing came back" proves emptiness. */
+  exactLayers?: boolean;
   /** Exactly-uniform draw. Given ONE frame it should use that stage's enumerated layers. */
   sample: Sampler;
   /** The frames a spec covers. */
@@ -127,6 +138,10 @@ interface ResolvedSpec {
   slot: number | 'best';
   lo: number;
   hi: number;
+  /** Wall clock a multi-frame draw may spend before reporting "unreachable". */
+  budgetMs: number;
+  /** Out-param: why the draw failed. Only meaningful when the sampler returned null. */
+  fail: { reason: 'empty' | 'budget' };
 }
 
 /** The frames of a spec, for a stage with an F2L slot dimension. */
@@ -142,30 +157,155 @@ const pairFrames = ({ faces, slot }: ResolvedSpec): TrainerFrame[] =>
 export interface XLike { crossPieces: number[]; cornerPiece: number; edgePiece: number }
 
 /**
- * Wrap a single-frame exact sampler: one frame → that sampler; several (colour neutral, best
- * slot) → rejection on uniform cubes, because the frames of one cube are dependent and there is
- * no layer left to enumerate. The budget is a wall clock, not a try count: a deep XXCross draw
- * costs milliseconds, and 300k of those would hang the worker instead of reporting "unreachable".
+ * Wrap a single-frame exact sampler. One frame (or18's semantics: fixed colour, fixed slot) ->
+ * that sampler, which enumerates the layer and is exact. Several frames (a colour subset, or
+ * "best slot") -> the metric is a MINIMUM over dependent coordinates, and there are two ways to
+ * draw it. We alternate between them, because each one is hopeless exactly where the other wins:
+ *
+ *   A  uniform cube -> best over the frames, accept if it lands in the window. Exactly uniform,
+ *      and the right engine when the window covers the bulk of the distribution.
+ *   B  conditional draw: pick a frame f, ask the stage for a state whose length **in f's own
+ *      frame** lands in [lo,hi] (every stage can do that exactly), then accept iff no other frame
+ *      is shallower - and when another frame ties, only if f is the first of them.
+ *
+ * Why B is uniform too: its proposal is uniform over the union of the frames' own windows (a
+ * SUPERSET of the target set), and the tie-break makes every state in the target the output of
+ * exactly one (frame, draw). Uniform over a superset, accept a subset -> uniform over the subset.
+ *
+ * That is also why B draws the WHOLE window instead of one depth at a time. Conditioning on a
+ * single depth is exact only for that depth, so cycling the depths inside the window silently
+ * reweighted it: "six colours, 4-6 moves" came back 4 moves 84% of the time against a true 26%,
+ * and "0-8 moves" returned an already-solved cross essentially every time.
+ *
+ * B is what makes the rare end reachable: "six-colour cross, 0 moves" is 1 state in 190,080 for A
+ * (~30k draws) and a first-try hit for B - the other five colours cannot be below 0, so the test
+ * is free. A stays because a wide window around the mode is exactly where B's "nothing shallower"
+ * test throws almost everything away.
+ *
+ * Known deviation, deliberate: B is uniform only when the frames are conjugate, so that their
+ * windows have equal size. That holds wherever frames differ by a colour and/or one slot. It does
+ * NOT hold for the two stages whose "best" frames come in two SHAPES - XXCross (4 adjacent slot
+ * pairs + 2 diagonal) and XCross+pair - whose layer sizes part ways from depth 2 (see multi.ts).
+ * There the diagonal representatives come out ~1-2% under weight.
+ *
+ * The budget is a wall clock, not a try count: one deep XXCross draw costs milliseconds, and a
+ * fixed try count would hang the worker instead of reporting "unreachable".
  */
-const REJECT_BUDGET_MS = 8000;
-function oneFrame(
-  sampleFrame: (frame: TrainerFrame, lo: number, hi: number, rng: () => number) => Sampled | null,
-): Sampler {
+export const REJECT_BUDGET_MS = 8000;
+
+/** A stage's own draw for ONE frame. `maxTries` is honoured by the stages that reject. */
+type FrameSampler =
+  (frame: TrainerFrame, lo: number, hi: number, rng: () => number, maxTries?: number) => Sampled | null;
+
+/** Tries a single frame gets before "did not come back" counts as "not there" (the samplers' own
+ *  historical default — kept so the drop/empty decisions below mean what they used to). */
+const TRY_CAP = 200000;
+/** One conditional-layer attempt's slice. B alternates with A, so it may not eat the whole budget. */
+const B_SLICE_MS = 120;
+
+/**
+ * Draw from one frame under a WALL CLOCK. The stage samplers count tries, but a try costs anywhere
+ * from a microsecond (cross) to 1.2 ms (XCross + pair), so a try count bounds nothing: 200k tries
+ * of the latter is a four-minute freeze of the worker, which is what "single-colour XCross+pair at
+ * 11 moves" used to do. So: ask for a small chunk, time it, and size the next chunk to what is
+ * left. `done` means more tries would not help — an enumerating stage said no, or the try cap is
+ * spent — as opposed to simply running out of clock.
+ */
+function drawFrame(
+  sampleFrame: FrameSampler, frame: TrainerFrame, lo: number, hi: number,
+  rng: () => number, budgetMs: number, exact: boolean,
+): { got: Sampled | null; done: boolean } {
+  // Start tiny. The first chunk is unconditional - it is the one that pays for the table build -
+  // so sizing it for a cheap stage (1 us/try) makes an expensive one (3.3 ms/try at the XXCross
+  // cap) blow a whole 120 ms slice on its very first call. Growth is geometric, so a cheap stage
+  // reaches its stride within a handful of calls.
+  let chunk = 32;
+  let spent = 0;
+  let deadline = 0;
+  for (;;) {
+    const t0 = Date.now();
+    const got = sampleFrame(frame, lo, hi, rng, chunk);
+    spent += chunk;
+    if (got) return { got, done: false };
+    // Enumerated the window: nothing there, ever. That - and only that - is a proof of emptiness.
+    // A spent try cap is just a spent try cap; reporting it as `done` would let the UI latch a
+    // permanent "this difficulty does not exist" on what is really a slow machine.
+    if (exact) return { got: null, done: true };
+    const now = Date.now();
+    // The clock starts after the first chunk, which is the one that pays for the table build
+    // (a cold XXCross build alone outlasts any sampling budget).
+    if (!deadline) deadline = now + budgetMs;
+    const left = deadline - now;
+    if (left <= 0 || spent >= TRY_CAP) return { got: null, done: false };
+    const perMs = chunk / Math.max(1, now - t0);
+    chunk = Math.max(1, Math.min(chunk * 4, Math.ceil(perMs * left), TRY_CAP - spent));
+  }
+}
+
+function oneFrame(sampleFrame: FrameSampler): Sampler {
   return (spec, rng, def) => {
     const frames = def.frames(spec);
-    if (frames.length === 1) return sampleFrame(frames[0], spec.lo, spec.hi, rng);
-    const deadline = Date.now() + REJECT_BUDGET_MS;
-    for (let t = 0; t < 300000; t++) {
-      const state = fillState([], [], rng);
-      let best = -1;
-      for (const fr of frames) {
-        const v = def.frameDist(state, fr, best < 0 ? spec.hi : best - 1);
-        if (v >= 0 && (best < 0 || v < best)) best = v;
-        if (best === 0) break;
-      }
-      if (best >= spec.lo) return { state, depth: best };
-      if ((t & 63) === 63 && Date.now() > deadline) break;
+    if (frames.length === 1) {
+      const one = drawFrame(sampleFrame, frames[0], spec.lo, spec.hi, rng, spec.budgetMs, !!def.exactLayers);
+      // A single frame enumerates its own layers, so "nothing came back" IS emptiness for the
+      // stages that enumerate; the ones that reject internally can only have run out of tries.
+      if (!one.got) spec.fail.reason = def.exactLayers ? 'empty' : 'budget';
+      return one.got;
     }
+    // Frames are conjugate, so one frame proving ITS window empty proves the minimum over frames
+    // cannot land in the window either. Only an enumerating stage can prove that.
+    let proven = false;
+    // The clock starts AFTER the first draw, which is the one that pays for the table build:
+    // a cold XXCross build alone outlasts the whole budget, and charging it to the search made
+    // the caller report "this difficulty does not exist" for a window that samples in 1 ms warm.
+    // No try cap: the budget is the wall clock. A try costs a microsecond for cross and a
+    // millisecond for XXCross, so any fixed count either wastes most of a cheap stage's budget
+    // (300k cross tries = 1 s of an allotted 3) or freezes an expensive one.
+    let deadline = Number.POSITIVE_INFINITY;
+    for (let t = 0; ; t++) {
+      if (t === 1) deadline = Date.now() + spec.budgetMs;
+      if (t & 1) {
+        // -- A: uniform cube, keep it if the best frame lands in the window --
+        const state = fillState([], [], rng);
+        let best = -1;
+        for (const fr of frames) {
+          const v = def.frameDist(state, fr, best < 0 ? spec.hi : best - 1);
+          if (v >= 0 && (best < 0 || v < best)) best = v;
+          if (best === 0) break;
+        }
+        // `<= hi` is checked explicitly: a frameDist that ignores its cap would otherwise hand
+        // back a state of the wrong difficulty (pseudo-cross did exactly that).
+        if (best >= spec.lo && best <= spec.hi) return { state, depth: best };
+        // A is the cheap half - one clock read per 16 of them is enough.
+        if ((t & 15) === 15 && Date.now() > deadline) break;
+      } else {
+        // -- B: draw one frame's own window, accept only if it is the shallowest (first) frame --
+        const fi = (rng() * frames.length) | 0;
+        const { got, done } = drawFrame(
+          sampleFrame, frames[fi], spec.lo, spec.hi, rng, Math.min(B_SLICE_MS, spec.budgetMs),
+          !!def.exactLayers,
+        );
+        if (got) {
+          const d = got.depth;
+          let ok = true;
+          for (let g = 0; g < frames.length && ok; g++) {
+            if (g === fi) continue;
+            // Earlier frames may not even tie (they would own the state); later ones must be deeper.
+            const cap = g < fi ? d : d - 1;
+            if (cap >= 0 && def.frameDist(got.state, frames[g], cap) >= 0) ok = false;
+          }
+          if (ok) return { state: got.state, depth: d };
+        } else if (done) {
+          proven = true;
+          break;
+        }
+        // B is the expensive half - check the clock after every one of them.
+        if (Date.now() > deadline) break;
+      }
+    }
+    // Emptiness has to be PROVEN (an enumerated window came back empty); a spent budget is not a
+    // proof, and reporting it as one is what latched a permanent, false "cannot be generated".
+    spec.fail.reason = proven ? 'empty' : 'budget';
     return null;
   };
 }
@@ -175,13 +315,11 @@ const unrotate = (state: CubieCube, rot: number): CubieCube => rotateState(state
 
 // ── stage: cross ─────────────────────────────────────────────────────────────────────────────
 
-const sampleCross: Sampler = ({ faces, lo, hi }, rng) => {
-  const state = sampleCrossState({ faces, lo, hi }, rng);
-  if (!state) return null;
-  // The requested depth IS the metric here (sampleCrossState is exact), so re-derive it
-  // rather than trusting the window: a one-colour draw returns some depth inside [lo,hi].
-  return { state, depth: crossMetric(state, faces) };
-};
+// Cross goes through the same two engines as every other stage. It used to have its own
+// multi-colour loop (pure rejection), and that loop could not reach the extremes: "six colours,
+// 8 moves" needs ALL SIX crosses at the maximum at once (p ≈ 1e-8 for a uniform cube), while
+// engine B starts from one colour's enumerated depth-8 layer and only has to test the other five.
+const sampleCross: Sampler = oneFrame((fr, lo, hi, rng) => sampleCrossLayer(fr.face, lo, hi, rng));
 
 /** Best optimal cross length over `faces` (the metric the site's difficulty filter uses). */
 export function crossMetric(state: CubieCube, faces: FaceIdx[]): number {
@@ -235,10 +373,10 @@ export function xcrossMetric(state: CubieCube, faces: FaceIdx[], slot: number | 
   return best;
 }
 
-const sampleXcross = oneFrame((fr, lo, hi, rng) => {
+const sampleXcross = oneFrame((fr, lo, hi, rng, tries) => {
   // Exact + O(1) for the shallow layers, rejection above — and no wasted work, since the
   // canonical frame's answer is carried back to the requested frame by one relabel.
-  const got = sampleXCoord(CANON_FRAME, lo, Math.min(hi, XCROSS_MAX_DEPTH), rng);
+  const got = sampleXCoord(CANON_FRAME, lo, Math.min(hi, XCROSS_MAX_DEPTH), rng, tries);
   if (!got) return null;
   const d = frameData(CANON_FRAME);
   const state = fillState(...pinsOfXCoord(d, got.coord), rng);
@@ -275,24 +413,17 @@ export function eoFrameDist(state: CubieCube, face: FaceIdx, cap: number): numbe
   return eoCrossDistCapped(d, eoCoordOf(rotateState(state, rotForEo(face)), d), cap);
 }
 
-const sampleEo: Sampler = ({ faces, lo, hi }, rng) => {
-  if (faces.length === 1) {
-    const got = sampleEoCrossState(CANON_EO_FRAME, lo, hi, rng);
-    if (!got) return null;
-    return { state: rotateState(got.state, inverseRotation(rotForEo(faces[0]))), depth: got.depth };
-  }
-  for (let t = 0; t < 300000; t++) {
-    const state = fillState([], [], rng);
-    let best = -1;
-    for (const f of faces) {
-      const v = eoFrameDist(state, f, best < 0 ? hi : best - 1);
-      if (v >= 0 && (best < 0 || v < best)) best = v;
-      if (best === 0) break;
-    }
-    if (best >= lo) return { state, depth: best };
-  }
-  return null;
-};
+/**
+ * EOCross draws in the canonical frame (one 24 MB table for all six colours) and rotates the
+ * result onto the requested colour. It goes through `oneFrame` like every other stage, which is
+ * what gives the colour-neutral rare end (EO solved + a cross already done = 0 moves) a
+ * conditional draw instead of a hopeless global rejection.
+ */
+const sampleEo: Sampler = oneFrame((fr, lo, hi, rng) => {
+  const got = sampleEoCrossState(CANON_EO_FRAME, lo, hi, rng);
+  if (!got) return null;
+  return { state: rotateState(got.state, inverseRotation(rotForEo(fr.face))), depth: got.depth };
+});
 
 // ── stages: free pair / pseudo cross / pseudo xcross / pseudo pair ───────────────────────────
 
@@ -313,9 +444,9 @@ const pairDistOf = (pseudo: boolean) => {
   };
 };
 
-const samplePair = (pseudo: boolean): Sampler => oneFrame((fr, lo, hi, rng) => {
+const samplePair = (pseudo: boolean): Sampler => oneFrame((fr, lo, hi, rng, tries) => {
   const frame = pseudo ? CANON_PSEUDO_PAIR : CANON_PAIR;
-  const got = samplePairCoord(frame, lo, hi, rng);
+  const got = samplePairCoord(frame, lo, hi, rng, tries);
   if (!got) return null;
   const d = pairFrameData(frame);
   const { edgePins, cornerPins } = pairPins(d, got.coord);
@@ -326,8 +457,12 @@ const samplePair = (pseudo: boolean): Sampler => oneFrame((fr, lo, hi, rng) => {
 });
 
 /** Pseudo cross keeps its own per-colour table (190 KB) — no frame machinery needed. */
-const pseudoCrossDistOf = (state: CubieCube, fr: TrainerFrame): number =>
-  pseudoCrossDist(fr.face)[crossCoordOf(state, FACE_EDGES[fr.face])];
+// The table is exact and complete, but the cap still has to be honoured: callers read -1 as
+// "deeper than cap", and a stage that always answers breaks the multi-frame draw's tie-breaking.
+const pseudoCrossDistOf = (state: CubieCube, fr: TrainerFrame, cap: number): number => {
+  const v = pseudoCrossDist(fr.face)[crossCoordOf(state, FACE_EDGES[fr.face])];
+  return v <= cap ? v : -1;
+};
 
 const samplePseudoCrossStage: Sampler = oneFrame((fr, lo, hi, rng) => {
   const got = samplePseudoCross(fr.face, lo, hi, rng);
@@ -341,8 +476,8 @@ const pseudoXDist = (state: CubieCube, fr: TrainerFrame, cap: number): number =>
   return xLikeDist(d, (st, c) => pseudoXcrossDistCapped(d, st, c))(state, fr, cap);
 };
 
-const samplePseudoXcross: Sampler = oneFrame((fr, lo, hi, rng) => {
-  const got = samplePseudoXCoord(CANON_FRAME, lo, hi, rng);
+const samplePseudoXcross: Sampler = oneFrame((fr, lo, hi, rng, tries) => {
+  const got = samplePseudoXCoord(CANON_FRAME, lo, hi, rng, tries);
   if (!got) return null;
   const { edgePins, cornerPins } = pseudoXcrossPins(pseudoXFrameData(CANON_FRAME), got.coord);
   return {
@@ -375,9 +510,9 @@ const xpDist = (state: CubieCube, fr: TrainerFrame, cap: number): number => {
   return xpairDistCapped(d, xxcoordOf(rotateState(state, rot), d), cap);
 };
 
-const sampleXpair: Sampler = oneFrame((fr, lo, hi, rng) => {
+const sampleXpair: Sampler = oneFrame((fr, lo, hi, rng, tries) => {
   const { rot, frame } = xpRotFor(fr.face, fr.slots);
-  const got = sampleXPairCoord(frame, lo, hi, rng);
+  const got = sampleXPairCoord(frame, lo, hi, rng, tries);
   if (!got) return null;
   const { edgePins, cornerPins } = xpairPins(xpairFrameData(frame), got.coord);
   return { state: unrotate(fillState(edgePins, cornerPins, rng), rot), depth: got.depth };
@@ -426,9 +561,9 @@ const xxDist = (state: CubieCube, fr: TrainerFrame, cap: number): number => {
   return xxcrossDistCapped(d, xxcoordOf(rotateState(state, rot), d), cap);
 };
 
-const sampleXxcross: Sampler = oneFrame((fr, lo, hi, rng) => {
+const sampleXxcross: Sampler = oneFrame((fr, lo, hi, rng, tries) => {
   const { rot, frame } = xxRotFor(fr.face, fr.slots);
-  const got = sampleXXCoord(frame, lo, Math.min(hi, XXCROSS_PRACTICAL_MAX), rng);
+  const got = sampleXXCoord(frame, lo, hi, rng, tries);
   if (!got) return null;
   const { edgePins, cornerPins } = xxcrossPins(xxFrameData(frame), got.coord);
   return { state: unrotate(fillState(edgePins, cornerPins, rng), rot), depth: got.depth };
@@ -438,11 +573,13 @@ const sampleXxcross: Sampler = oneFrame((fr, lo, hi, rng) => {
 
 const STAGES: StageDef[] = [
   {
-    variant: 'std', stage: 'cross',
+    variant: 'std', stage: 'cross', exactLayers: true,
     slots: false, range: [0, 8], band: [4, 6], heavy: false,
     sample: sampleCross,
     frames: faceFrames,
-    frameDist: (state, fr) => crossDistOf(state, fr.face),
+    // The cap is not decoration: engine B's tie-break reads -1 as "deeper than cap", and a
+    // frameDist that always answers would reject every conditional draw.
+    frameDist: (state, fr, cap) => { const v = crossDistOf(state, fr.face); return v <= cap ? v : -1; },
   },
   {
     variant: 'std', stage: 'xcross',
@@ -452,16 +589,16 @@ const STAGES: StageDef[] = [
     frameDist: (state, fr, cap) => xcrossFrameDist(state, fr.face, fr.slots[0], cap),
   },
   {
-    // or18's XXCross. Depth 12 exists (p ≈ 1e-4, ~30 s to hit) and 13 is unreachable by
-    // rejection, so the slider stops at the deepest one we can actually deliver.
+    // `range` is the stage's THEORETICAL span; what the slider offers and what it greys out
+    // are reach.ts's business (depth 12 exists — 161 of the 1.27M xcross_2_col_10f corpus).
     variant: 'std', stage: 'xxcross',
-    slots: true, range: [0, XXCROSS_PRACTICAL_MAX], band: [9, 10], heavy: true,
+    slots: true, range: [0, XXCROSS_MAX_DEPTH], band: [9, 10], heavy: true,
     sample: sampleXxcross,
     frames: pairFrames,
     frameDist: xxDist,
   },
   {
-    variant: 'eo', stage: 'eo_cross',
+    variant: 'eo', stage: 'eo_cross', exactLayers: true,
     slots: false, range: [0, EOCROSS_MAX_DEPTH], band: [7, 8], heavy: true,
     sample: sampleEo,
     frames: faceFrames,
@@ -485,7 +622,7 @@ const STAGES: StageDef[] = [
   },
   {
     // Pseudo = the cross may sit D-rotated (a "wrong-AUF" cross that F2L still works from).
-    variant: 'pseudo', stage: 'pseudo_cross',
+    variant: 'pseudo', stage: 'pseudo_cross', exactLayers: true,
     slots: false, range: [0, PSEUDO_CROSS_MAX_DEPTH], band: [4, 5], heavy: false,
     sample: samplePseudoCrossStage,
     frames: faceFrames,
@@ -493,7 +630,7 @@ const STAGES: StageDef[] = [
   },
   {
     variant: 'pseudo', stage: 'pseudo_xcross',
-    slots: true, range: [0, PSEUDO_XCROSS_PRACTICAL_MAX], band: [7, 8], heavy: true,
+    slots: true, range: [0, PSEUDO_XCROSS_MAX_DEPTH], band: [7, 8], heavy: true,
     sample: samplePseudoXcross,
     frames: slotFrames,
     frameDist: pseudoXDist,
@@ -605,15 +742,58 @@ export const trainerSpecKey = (s: TrainerSpec): string =>
  * Returns null when the combination is unreachable or the rejection budget ran out — callers
  * must show that honestly rather than substitute an unfiltered scramble.
  */
-export function sampleTrainerState(spec: TrainerSpec, rng: () => number = Math.random): Sampled | null {
+export function sampleTrainerState(
+  spec: TrainerSpec, rng: () => number = Math.random, budgetMs = REJECT_BUDGET_MS,
+): Sampled | null {
+  const got = drawTrainerState(spec, rng, budgetMs);
+  return got.ok ? { state: got.state, depth: got.depth } : null;
+}
+
+/**
+ * Same draw, but says WHY it failed. `empty` is a proof that no cube has this difficulty;
+ * `budget` only means this attempt ran out of time (cold tables, a rare window, a busy phone) —
+ * callers must retry rather than tell the user the combination does not exist.
+ */
+export function drawTrainerState(
+  spec: TrainerSpec, rng: () => number = Math.random, budgetMs = REJECT_BUDGET_MS,
+): DrawOutcome {
   const def = byKey.get(`${spec.variant}/${spec.stage}`);
-  if (!def) return null;
+  if (!def) return { ok: false, reason: 'empty' };
+  const resolved = resolve(spec, def, budgetMs);
+  if (!resolved) return { ok: false, reason: 'empty' };
+  const got = def.sample(resolved, rng, def);
+  return got ? { ok: true, state: got.state, depth: got.depth } : { ok: false, reason: resolved.fail.reason };
+}
+
+/**
+ * Monte-Carlo histogram of a spec's metric over uniform cubes — how often each optimal length
+ * turns up naturally. This is what says "six-colour cross never needs 8 moves" or "best-slot
+ * XCross tops out around 9", i.e. where the slider should stop; the generator itself can reach
+ * the rare LOW end that this histogram will never show (that is engine B's job).
+ * The last bin counts states deeper than the stage's declared range.
+ */
+export function trainerMetric(spec: TrainerSpec, samples: number, rng: () => number = Math.random): number[] {
+  const def = byKey.get(`${spec.variant}/${spec.stage}`);
+  if (!def) return [];
   const resolved = resolve(spec, def);
-  return resolved ? def.sample(resolved, rng, def) : null;
+  if (!resolved) return [];
+  const frames = def.frames({ ...resolved, lo: def.range[0], hi: def.range[1] });
+  const hist = new Array<number>(def.range[1] + 2).fill(0);
+  for (let i = 0; i < samples; i++) {
+    const state = fillState([], [], rng);
+    let best = -1;
+    for (const fr of frames) {
+      const v = def.frameDist(state, fr, best < 0 ? def.range[1] : best - 1);
+      if (v >= 0 && (best < 0 || v < best)) best = v;
+      if (best === 0) break;
+    }
+    hist[best >= 0 ? best : hist.length - 1]++;
+  }
+  return hist;
 }
 
 /** Clamp a spec into what the stage can actually do; null when nothing is left. */
-function resolve(spec: TrainerSpec, def: StageDef): ResolvedSpec | null {
+function resolve(spec: TrainerSpec, def: StageDef, budgetMs = REJECT_BUDGET_MS): ResolvedSpec | null {
   const faces = facesOfSubset(spec.colors);
   if (!faces.length) return null;
   const [rLo, rHi] = def.range;
@@ -623,7 +803,7 @@ function resolve(spec: TrainerSpec, def: StageDef): ResolvedSpec | null {
   const slot = def.slots
     ? (spec.slot === 'best' ? 'best' : Math.min(Math.max(spec.slot, 0), nSlots - 1))
     : 0;
-  return { faces, slot, lo, hi };
+  return { faces, slot, lo, hi, budgetMs, fail: { reason: 'budget' } };
 }
 
 const slotOptionCount = (def: StageDef): number => (

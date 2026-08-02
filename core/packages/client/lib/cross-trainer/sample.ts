@@ -42,8 +42,14 @@ function pickDepth(layers: Int32Array[], lo: number, hi: number, rng: () => numb
   return hi;
 }
 
-/** One uniform state whose cross on `face` is exactly `depth` moves. */
-function sampleFixed(face: FaceIdx, lo: number, hi: number, rng: () => number): CubieCube | null {
+/**
+ * One uniform state whose cross on `face` is exactly N moves, N drawn from [lo,hi] weighted by
+ * layer size. The layer is fully enumerated, so a null return PROVES the window is empty for
+ * this face — which is what lets the multi-colour draw treat it as a conditional layer sampler.
+ */
+export function sampleCrossLayer(
+  face: FaceIdx, lo: number, hi: number, rng: () => number,
+): { state: CubieCube; depth: number } | null {
   const layers = crossLayers(face);
   const d = pickDepth(layers, lo, hi, rng);
   if (d < 0) return null;
@@ -52,8 +58,11 @@ function sampleFixed(face: FaceIdx, lo: number, hi: number, rng: () => number): 
   decodeCross(coord, scratch);
   const pieces = FACE_EDGES[face];
   const pins: Pin[] = pieces.map((piece, k) => ({ piece, slot: scratch[k] >> 1, ori: scratch[k] & 1 }));
-  return fillState(pins, [], rng);
+  return { state: fillState(pins, [], rng), depth: d };
 }
+
+const sampleFixed = (face: FaceIdx, lo: number, hi: number, rng: () => number): CubieCube | null =>
+  sampleCrossLayer(face, lo, hi, rng)?.state ?? null;
 
 /** Random legal edge configuration (uniform), returned as pins for all 12 edges. */
 function randomEdgePins(rng: () => number): Pin[] {

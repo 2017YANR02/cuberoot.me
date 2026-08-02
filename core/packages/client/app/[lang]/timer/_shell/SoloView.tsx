@@ -42,7 +42,7 @@ import { applyOrientationPrefix } from '@/lib/cube-orientation';
 import { use222Mode } from '@/lib/scramble-222-mode';
 import { genByStepsScramble, genByStepsSig, wcaStepFilter } from '../_lib/scramble/gen-by-steps';
 import { trainerSpecOf, trainerSig } from '../_lib/scramble/trainer-source';
-import { peekTrainer, nextTrainer, prefetchTrainer, isTrainerSourceEmpty } from '../_lib/scramble/trainer_pool';
+import { peekTrainer, awaitTrainer, prefetchTrainer, releaseTrainer, retryTrainer } from '../_lib/scramble/trainer_pool';
 import TrainerCaseBar from '../_components/TrainerCaseBar';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { Flag } from '@/components/Flag';
@@ -552,32 +552,39 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     return () => { cancelled = true; };
   }, [event, scramble, settings.scrambleSource, applyScrambleHist]);
 
-  // 「按难度生成」:状态采样在 worker(建表 0.3~1.7s),打乱文本由 min2phase 现算 —— 首条要等,
-  // 之后队列已预热。'' = 还在生成(转圈);worker 明确采不出来(如六色 10 步 XCross)→ 显式提示,
-  // 绝不塞一条别的难度的打乱冒充。
+  // 「按难度生成」:状态采样在 worker(冷启建表 0.3~10s),打乱文本由 min2phase 现算 —— 首条要等,
+  // 之后队列已预热。'' = 还在生成(转圈)。**取不到分两种**:worker 证明了这个窗口没有任何状态
+  // (empty)才说「生成不出来」;只是没在预算内找到(rare)说的是「太稀有」并且可以再试 ——
+  // 冷启建表被算成「不存在」正是之前那条假提示的来源。绝不塞一条别的难度的打乱冒充。
   const [trainerLoading, setTrainerLoading] = useState(false);
-  const [trainerEmpty, setTrainerEmpty] = useState(false);
+  const [trainerMiss, setTrainerMiss] = useState<'empty' | 'rare' | null>(null);
+  // 「再试一次」靠它重跑下面那个 effect —— 重试不改 spec,不进依赖就不会重新 await。
+  const [trainerRetry, setTrainerRetry] = useState(0);
   useEffect(() => {
     const spec = trainerSpecRef.current;
-    if (!spec) { setTrainerLoading(false); setTrainerEmpty(false); return; }
+    // 难度关了 / 不适用:放掉缓冲,否则上一个 spec 的 awaitTrainer 永远不会落地。
+    if (!spec) { releaseTrainer(); setTrainerLoading(false); setTrainerMiss(null); return; }
     prefetchTrainer(spec);
-    if (scramble !== '') { setTrainerLoading(false); setTrainerEmpty(false); return; }
+    if (scramble !== '') { setTrainerLoading(false); setTrainerMiss(null); return; }
     let cancelled = false;
     setTrainerLoading(true);
-    setTrainerEmpty(false);
-    void nextTrainer(spec).then((real) => {
+    setTrainerMiss(null);
+    void awaitTrainer(spec).then((status) => {
       if (cancelled) return;
       setTrainerLoading(false);
+      if (status === 'empty' || status === 'rare') { setTrainerMiss(status); return; }
+      if (status !== 'ready') return;
       const cur = scrambleHistRef.current;
-      if (!real) { setTrainerEmpty(isTrainerSourceEmpty(spec)); return; }
       if (cur.list[cur.idx] !== '') return;
+      const real = peekTrainer(spec);
+      if (!real) return;
       const list = [...cur.list];
       list[cur.idx] = real;
       applyScrambleHist({ list, idx: cur.idx });
     });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scramble, trainerSigVal, applyScrambleHist]);
+  }, [scramble, trainerSigVal, trainerRetry, applyScrambleHist]);
 
   // Warm the WCA pool ahead of demand (on source change / when mode turns on).
   useEffect(() => {
@@ -2246,11 +2253,23 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                 ? <Spinner size={22} label={nonWcaLoading || trainerLoading
                     ? tr({ zh: '生成打乱', en: 'Generating scramble' })
                     : tr({ zh: '加载真实打乱', en: 'Loading real scramble' })} />
-                : trainerEmpty
-                  ? <span className="scramble-empty">{tr({
-                      zh: '这个难度组合生成不出来,把步数范围放宽一点试试',
-                      en: 'Nothing exists at this difficulty — widen the step range',
-                    })}</span>
+                : trainerMiss
+                  ? <span className="scramble-empty">{trainerMiss === 'empty'
+                      ? tr({
+                          zh: '没有任何打乱是这个难度,把步数范围放宽一点',
+                          en: 'No scramble has this difficulty — widen the step range',
+                        })
+                      // “太稀有”是预算用完,不是证明不存在 —— 所以得给一个重试入口,
+                      // 否则这个 spec 就锁死了,只能换难度才能脱身。
+                      : <>{tr({
+                          zh: '这个难度太稀有,一时找不出来。',
+                          en: 'This difficulty is too rare to find quickly.',
+                        })}{' '}<button type="button" className="scramble-empty-retry" onClick={() => {
+                          const sp = trainerSpecRef.current;
+                          if (!sp) return;
+                          retryTrainer(sp);
+                          setTrainerRetry((n) => n + 1);
+                        }}>{tr({ zh: '再试一次', en: 'Try again' })}</button></>}</span>
                   : wcaSourceEmpty
                     ? <span className="scramble-empty">{
                         // 「按步数」过滤在 comp/date 两模式都生效,先判——真题近上帝数,低步数常无匹配。

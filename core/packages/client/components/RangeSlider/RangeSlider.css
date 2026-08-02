@@ -115,6 +115,23 @@
   color: var(--rs-fill);
   font-weight: 600;
 }
+/* Beyond softMax: the value exists on this scale but this tool can't reach it. Dimmed rather
+   than dropped, so the axis still tells the truth about how deep the scale goes. */
+.range-slider-mark.is-out {
+  opacity: 0.4;
+}
+.range-slider-cap {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  border-radius: 0 999px 999px 0;
+  background: repeating-linear-gradient(
+    -45deg,
+    color-mix(in srgb, var(--foreground) 12%, transparent) 0 3px,
+    transparent 3px 6px
+  );
+}
 
 /* Coarse pointer (touch): larger thumbs + taller hit area. */
 @media (pointer: coarse) {
