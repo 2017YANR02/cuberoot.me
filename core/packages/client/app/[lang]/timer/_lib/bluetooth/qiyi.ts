@@ -230,6 +230,7 @@ function parseStateMoves(msg: Uint8Array, prevLastTs: number):
 export const qiyiDriver: CubeDriver = {
   brand: 'qiyi' satisfies CubeBrand,
   service: QIYI_SERVICE,
+  namePrefixes: ['QY-QYSC', 'XMD-TornadoV4-i'],
   optionalServices: [],
   macAdv: QIYI_MAC_ADV,
   // TODO(gyro): the Tornado V4 does carry an orientation feed, but NOBODY has

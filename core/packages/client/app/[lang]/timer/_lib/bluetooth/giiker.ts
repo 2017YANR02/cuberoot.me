@@ -243,6 +243,7 @@ function diffMoves(
 export const giikerDriver: CubeDriver = {
   brand: 'giiker' satisfies CubeBrand,
   service: GIIKER_DATA_SERVICE,
+  namePrefixes: ['Gi', 'Mi Smart Magic Cube', 'Hi-'],
   optionalServices: [GIIKER_RW_SERVICE],
 
   matches(device: BluetoothDevice): boolean {

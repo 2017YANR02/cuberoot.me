@@ -158,6 +158,9 @@ export function parseGoCubeQuaternion(dv: DataView, payloadLen: number): GyroQua
 export const gocubeDriver: CubeDriver = {
   brand: 'gocube' satisfies CubeBrand,
   service: GOCUBE_SERVICE,
+  // `Rubik` and not cstimer's `Rubiks`: Rubik's Connected ships firmwares
+  // advertising both `Rubiks Connected` and `Rubik's Connected`.
+  namePrefixes: ['GoCube', 'Rubik'],
   // Plaintext protocol: no AES, no MAC, so this is the one brand whose gyro
   // we can reason about end-to-end from the bytes alone.
   hasGyro: true,
