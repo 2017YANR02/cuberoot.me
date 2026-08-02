@@ -353,6 +353,7 @@ export function decodeGanV4Frame(
 export const ganV4Driver: CubeDriver = {
   brand: 'gan-v4' satisfies CubeBrand,
   service: GAN_V4_SERVICE,
+  namePrefixes: ['GAN', 'MG', 'AiCube'],
   optionalServices: [BATTERY_SERVICE],
   needsMac: true,
   macAdv: GAN_MAC_ADV,

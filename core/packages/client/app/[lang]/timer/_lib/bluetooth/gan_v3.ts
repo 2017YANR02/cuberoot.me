@@ -278,6 +278,8 @@ function decodeFrame(frame: Uint8Array, dec: MoveDecodeState): TimedMove[] {
 export const ganV3Driver: CubeDriver = {
   brand: 'gan-v3' satisfies CubeBrand,
   service: GAN_V3_SERVICE,
+  // `Gi` for the GiC- / GiS- 356i firmwares; the 356 itself advertises as GAN…
+  namePrefixes: ['GAN', 'Gi'],
   optionalServices: [BATTERY_SERVICE],
   needsMac: true,
   macAdv: GAN_MAC_ADV,

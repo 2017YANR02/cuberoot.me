@@ -348,6 +348,7 @@ function commandFrame(opcode: number, ...rest: number[]): Uint8Array {
 export const moyu32Driver: CubeDriver = {
   brand: 'moyu32' satisfies CubeBrand,
   service: MOYU32_SERVICE,
+  namePrefixes: ['WCU_MY3'],
   optionalServices: [],
   needsMac: true,
   macAdv: MOYU32_MAC_ADV,
