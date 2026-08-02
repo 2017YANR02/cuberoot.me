@@ -58,7 +58,7 @@ import { useCompRowChangeMap } from '@/components/persons/logic/use-row-change-m
 import { ResultChangeChain } from '@/components/persons/sections/results/ChangedResultValue';
 import type { ResultChangeTarget } from '@/components/persons/sections/results/ResultChangeEditor';
 import type { ResultChange } from '@/lib/result-watch-api';
-import { judgeRecordTag, type KeatonedInfo, type RecordsSnapshot } from '@/lib/record-tag';
+import { judgeRecordTag, refutesTag, type KeatonedInfo, type RecordsSnapshot } from '@/lib/record-tag';
 import { expandContinentRecord } from '@/lib/recon-utils';
 import '../comp.css';
 import { tr } from '@/i18n/tr';
@@ -166,6 +166,19 @@ function inferLiveRecordTag(
   snapshot: CompRecordsSnapshot | undefined,
 ): string {
   return judgeRecordTag(value, eventId, isAvg, user, snapshot).tag;
+}
+
+// 空 tag 补判、上游 tag 被现存纪录证伪就清掉(过期基线标出来的假 WR).原地改 r.
+function applyLiveRecordTags(r: LiveResult, u: User | undefined, snapshot: CompRecordsSnapshot | undefined): void {
+  if (r.b > 0) {
+    if (!r.sr) r.sr = inferLiveRecordTag(r.b, r.e, false, u, snapshot) || r.sr;
+    else if (refutesTag(r.sr, r.b, r.e, false, u, snapshot)) r.sr = '';
+  }
+  if (r.a > 0) {
+    const ar = String(r.ar || '');
+    if (!ar) r.ar = inferLiveRecordTag(r.a, r.e, true, u, snapshot) || r.ar;
+    else if (refutesTag(ar, r.a, r.e, true, u, snapshot)) r.ar = '';
+  }
 }
 
 function classifyPr(result: LiveResult, pb: PbByEvent | null): { singleRank: number | null; averageRank: number | null } {
@@ -1174,14 +1187,7 @@ export default function CompDetailPage() {
         const r = patch.result as LiveResult;
         if (r.c !== prev.compId) return prev;
         const u = prev.users[String(r.n)];
-        if (r.b > 0 && !r.sr) {
-          const tag = inferLiveRecordTag(r.b, r.e, false, u, prev.currentRecords);
-          if (tag) r.sr = tag;
-        }
-        if (r.a > 0 && !r.ar) {
-          const tag = inferLiveRecordTag(r.a, r.e, true, u, prev.currentRecords);
-          if (tag) r.ar = tag;
-        }
+        applyLiveRecordTags(r, u, prev.currentRecords);
         const key = `${r.e}:${r.r}`;
         const arr = prev.resultsByRound[key] || [];
         const nextArr = applyResultPatch(arr, patch) as LiveResult[];
@@ -1245,15 +1251,7 @@ export default function CompDetailPage() {
       const key = `${update.eventId}:${update.roundTypeId}`;
       const rows = update.rows as LiveResult[];
       for (const r of rows) {
-        const u = prev.users[String(r.n)];
-        if (r.b > 0 && !r.sr) {
-          const tag = inferLiveRecordTag(r.b, r.e, false, u, prev.currentRecords);
-          if (tag) r.sr = tag;
-        }
-        if (r.a > 0 && !r.ar) {
-          const tag = inferLiveRecordTag(r.a, r.e, true, u, prev.currentRecords);
-          if (tag) r.ar = tag;
-        }
+        applyLiveRecordTags(r, prev.users[String(r.n)], prev.currentRecords);
       }
       return {
         ...prev,

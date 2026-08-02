@@ -61,6 +61,17 @@
   text-decoration: none;
 }
 .support-member-link:hover { text-decoration: underline; }
+/* 会员入口只对 admin 渲染,小字提醒这条链接普通访客看不到 */
+.support-member-entry {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.support-admin-note {
+  font-size: 0.72rem;
+  color: var(--faint-foreground);
+  white-space: nowrap;
+}
 
 .support-count {
   display: flex;

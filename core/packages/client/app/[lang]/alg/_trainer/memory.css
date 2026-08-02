@@ -251,27 +251,6 @@ a.trainer-strip-num, button.trainer-strip-num { cursor: pointer; }
 }
 .srs-kind.is-new { background: var(--accent-soft); color: var(--accent); }
 .srs-kind.is-due { background: color-mix(in srgb, var(--signal-info) 15%, transparent); color: var(--signal-info); }
-.srs-case-name {
-  font-size: 1.02rem;
-  font-weight: 620;
-  color: var(--foreground);
-}
-.srs-case-star { fill: var(--destructive); color: var(--destructive); }
-.srs-mini-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 3px;
-  border: none;
-  border-radius: 5px;
-  background: transparent;
-  color: var(--faint-foreground);
-  cursor: pointer;
-}
-@media (hover: hover) {
-  .srs-mini-btn:hover { color: var(--accent); background: color-mix(in srgb, var(--foreground) 7%, transparent); }
-}
-.srs-mini-btn[aria-pressed='true'] { color: var(--destructive); }
 
 .srs-thumb { line-height: 0; }
 .srs-thumb :is(img, svg) { max-width: 100%; height: auto; }
@@ -332,19 +311,6 @@ a.trainer-strip-num, button.trainer-strip-num { cursor: pointer; }
   width: 100%;
   margin-top: 18px;
 }
-.srs-alg-main {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 1.25rem;
-  font-weight: 560;
-  color: var(--foreground);
-  text-align: center;
-  overflow-wrap: anywhere;
-  line-height: 1.45;
-}
-.srs-alg-main u.wavy { text-decoration: underline wavy; }
-
 .srs-answer-tools {
   display: flex;
   flex-wrap: wrap;
@@ -367,20 +333,6 @@ a.trainer-strip-num, button.trainer-strip-num { cursor: pointer; }
 @media (hover: hover) {
   .srs-link-btn:not(:disabled):hover { color: var(--accent); }
 }
-
-.srs-alts {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-top: 10px;
-  font-size: 0.88rem;
-  color: var(--muted-foreground);
-  text-align: center;
-  overflow-wrap: anywhere;
-}
-.srs-alts u.wavy { text-decoration: underline wavy; }
-
-.srs-player { margin-top: 14px; }
 
 /* 四档评分 */
 .srs-grades {
@@ -454,6 +406,5 @@ a.trainer-strip-num, button.trainer-strip-num { cursor: pointer; }
 @media (max-width: 520px) {
   .srs-root { padding-left: 14px; padding-right: 14px; }
   .srs-grades { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .srs-alg-main { font-size: 1.08rem; }
   .trainer-strip { padding-left: 14px; padding-right: 14px; }
 }

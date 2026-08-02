@@ -1666,8 +1666,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'TodayRecon',
     import: "import TodayRecon from '@/components/TodayRecon';",
     category: 'more',
-    zh: `首页「今日复盘」面板:展示 /recon 最新录入那天的复盘,默认一条静态预览卡(2D 打乱图 + 成绩 / 选手 / 比赛 / 方法摘要),多条时可展开,点卡进 /recon/[id] 回放。`,
-    en: `Landing Recon of the Day panel: shows recons from the latest day entered in /recon, defaulting to one static preview card, expandable when there are several, each linking into /recon/[id].`,
+    zh: `首页「今日复盘」面板:展示 /recon 最新录入那天的复盘,复用 ReconCard 排成宽屏四卡网格(成绩 / 选手 / 比赛,不出打乱图,有视频才带封面),超高走滚动面板,点卡进 /recon/[id] 回放。`,
+    en: `Landing Recon of the Day panel: shows recons from the latest day entered in /recon as a four-up ReconCard grid (no scramble thumbnail — only video covers), scrolling once it overflows, each card linking into /recon/[id].`,
     note: { zh: `靠 getTodayRecons 拉后端,无数据返回 null。`, en: `Driven by getTodayRecons from the backend; returns null when empty.` },
   },
   {

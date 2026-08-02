@@ -82,7 +82,12 @@ export default function AlgCaseMetaContent({
   algsWrap = (rows) => rows,
   algRowWrap = (row) => row,
 }: Props) {
-  const m = caseObj.meta as AlgCaseMeta;
+  /**
+   * 没有 meta 的集(虚拟集 LSLL、库里还没补元数据的集)一样要能看:空对象兜底后
+   * 下面每个字段各自 `&&` / `??` 保护,整块整块地自动消失,剩下图 + 公式 + 打乱那几样。
+   * 不能让 `caseObj.meta` 直接是 undefined —— `m.no` / `m.sym` 会当场抛。
+   */
+  const m = (caseObj.meta ?? {}) as AlgCaseMeta;
 
   /** 首个朝向的公式(1lll / zbll / pll / ell 都只有一个朝向)。显示 / 步数都剥掉收尾 AUF。 */
   const algs = useMemo(() => (caseObj.algs[0] ?? []).map(a => {
@@ -132,7 +137,7 @@ export default function AlgCaseMetaContent({
     const labels = new Map<number, string[]>();
     const notes: Array<{ key: string; text: string }> = [];
     const gone = new Map<number, { key: string; labels: string[]; no: number }>();
-    for (const r of relsOf(origin.meta as AlgCaseMeta)) {
+    for (const r of relsOf((origin.meta ?? {}) as AlgCaseMeta)) {
       if (r.no === originNo) { notes.push({ key: r.key, text: r.self }); continue; }
       const t = byNo.get(r.no);
       if (!t) {
@@ -257,11 +262,12 @@ export default function AlgCaseMetaContent({
         </div>
       </div>
 
-      {/* 编号 / 子集 / OLL … 每条都只有几个字符,一行一条右边全是空的 —— 三列铺开(窄了自动退档)。 */}
+      {/* 编号 / 子集 / OLL … 每条都只有几个字符,一行一条右边全是空的 —— 三列铺开(窄了自动退档)。
+          每条都是「有才出」:没有 meta 的集不该摆一排空值。 */}
       <div className="alg-meta-facts">
-        <Row label={tr({ zh: '编号', en: 'No.' })}>{m.no}</Row>
-        <Row label={tr({ zh: '子集', en: 'Subset' })}>{m.subset}</Row>
-        <Row label="OLL">{m.oll}</Row>
+        {m.no != null && <Row label={tr({ zh: '编号', en: 'No.' })}>{m.no}</Row>}
+        {m.subset && <Row label={tr({ zh: '子集', en: 'Subset' })}>{m.subset}</Row>}
+        {m.oll && <Row label="OLL">{m.oll}</Row>}
         {m.cp && <Row label={tr({ zh: '角换', en: 'CP' })}>{m.cp}</Row>}
         {m.type && <Row label={tr({ zh: '叠加类型', en: 'Type' })}>{m.type}</Row>}
         {m.gen && <Row label={tr({ zh: '生成元', en: 'Generators' })}><code>{m.gen}</code></Row>}

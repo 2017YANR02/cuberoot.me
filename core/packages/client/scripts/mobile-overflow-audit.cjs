@@ -78,7 +78,8 @@ const DEFAULT_ROUTES = [
   // /wca/[statId] 拉不存在的 globe.json,审的是错误页。
   '/zh/wca/viz', '/zh/wca/comp?view=globe', '/zh/wca/prediction', '/zh/wca/sor',
   '/zh/scramble/gen', '/zh/scramble/stats', '/zh/scramble/solver', '/zh/scramble/analyzer',
-  '/zh/timer', '/zh/battle', '/zh/calc', '/zh/recon', '/zh/alg',
+  // /zh/alg 已 redirect 到默认魔方页,直接审目的地
+  '/zh/timer', '/zh/battle', '/zh/calc', '/zh/recon', '/zh/alg/3x3',
   '/zh/membership', '/zh/support', '/zh/mosaic', '/zh/frame-count', '/zh/paint',
   '/zh/sim',
   '/zh/site', '/zh/site?q=MCC',   // 搜索态行更长,曾因裸 1fr 把整页撑宽
