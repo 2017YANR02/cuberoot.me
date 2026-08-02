@@ -326,6 +326,12 @@ html[data-theme=dark] { --scramble-fg: #fff; }
    interleaved between moves. */
 .timing-surface-scramble .scramble-moves { word-break: break-word; }
 .timing-surface-scramble .scramble-empty { color: var(--faint-foreground); }
+/* 「太稀有」旁边的重试:行内文字按钮,跟提示同一行,不做成方块。 */
+.timing-surface-scramble .scramble-empty-retry {
+  color: var(--accent);
+  text-decoration: underline;
+  cursor: pointer;
+}
 
 /* Smart-cube step-by-step hinting: which move the cube is waiting for.
    Rendered only while a connected cube is partway through the scramble — done

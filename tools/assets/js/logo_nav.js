@@ -5,6 +5,15 @@
     // 首页不显示 logo
     if (location.pathname === '/' || location.pathname === '/index.html')
         return;
+    // NOTE: 被站内页面 iframe 嵌进来时也不显示 —— 外层已经是站点自己的壳,
+    // 再在 iframe 左上角贴一个固定 logo 只会盖住工具本身的 UI。
+    try {
+        if (window.self !== window.top)
+            return;
+    }
+    catch (e) {
+        return; // 跨域访问 window.top 抛错 = 一定在别人的 iframe 里
+    }
     const a = document.createElement('a');
     a.href = '/';
     a.setAttribute('aria-label', 'Home');
