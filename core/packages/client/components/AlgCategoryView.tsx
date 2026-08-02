@@ -24,7 +24,7 @@ import {
   type AlgCase, type AlgEntry, type AlgFile, type AlgPuzzle, type AlgSubmission, type AlgTag,
 } from '@cuberoot/shared';
 import { VisualCube } from '@/components/VisualCube';
-import { CaseThumb } from '@/components/CaseThumb';
+import { CaseThumb, LEVEL2_PICKER_MASK } from '@/components/CaseThumb';
 import AlgCard from '@/components/AlgCard';
 import CommunityAlgs from '@/components/CommunityAlgs';
 import AdminCaseEditor, { type AdminEditorState } from '@/components/AdminCaseEditor';
@@ -186,10 +186,6 @@ function SortableCaseCard({ id, draggable, children }: { id: number; draggable: 
   );
 }
 
-/** umbrella 二级选择页 / 一级展开里的缩略图遮罩:只显示与该阶段相关的贴纸(角块 LL)。 */
-const LEVEL2_PICKER_MASK: Record<string, string> = {
-  zbll: 'coll', '1lll': 'coll', ollcp: 'coll',
-};
 
 /**
  * umbrella set 的落地页(`/alg/<p>/<set>`)。
