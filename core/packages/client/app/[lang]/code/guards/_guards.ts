@@ -110,6 +110,12 @@ export const CI_GUARDS_UI: CiGuard[] = [
     en: { title: 'Cubing term mistranslations', desc: 'AI-written bilingual copy tends to translate cubing jargon literally (Overwork, Commutator, Finger Trick rendered as generic Chinese) — grammatical but not what the community says; the approved terms are 复用 / 换位子 / 指法. The single source of approved translations is the /wiki glossary.json (713 EN/ZH entries); this guard locks a blacklist of corrected mistranslations, growing as new ones get fixed. Inline allow-cubing-term to exempt.' },
   },
   {
+    id: 'results-url-null',
+    test: 'wca-results-url-params.test.ts',
+    zh: { title: 'URL 参数写 null 表示非默认值', desc: '/wca/results 有个 effect 把缺省的筛选参数补成派生值,而派生值不一定等于「写 null 想表达的意思」—— 实际踩过:「显示」toggle 的成绩态写成 show:null,派生规则却是缺省=选手,于是 toggle 点了立刻弹回、看着点不动。守卫从 effect 里现推受管键(show/type/country/gender/basis/year/month/q),禁止任何一个被写成 null,并锁死 update() 不做 `|| null` 折叠。' },
+    en: { title: 'URL param set to null to mean a non-default', desc: '/wca/results has an effect that backfills missing filter params with their derived values — and the derived value isn’t necessarily what writing null was meant to express. Hit for real: the Show toggle wrote show:null for the Results state while the derivation defaults an absent param to Persons, so the toggle snapped straight back and looked dead. The guard re-derives the managed key set from the effect itself (show/type/country/gender/basis/year/month/q), forbids null for any of them, and pins update() against `|| null` collapsing.' },
+  },
+  {
     id: 'sort-arrow',
     test: 'sort-arrow-unified.test.ts',
     zh: { title: '自造排序箭头', desc: '禁 JSX 渲染 <ChevronsUpDown>(双向 ^v),表头排序指示统一走 SortArrow(↑/↓ 贴文字右侧,仅当前排序列显示)。' },
