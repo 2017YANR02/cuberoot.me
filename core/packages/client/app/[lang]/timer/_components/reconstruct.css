@@ -1,23 +1,20 @@
-/* ReconstructModal — owned by Round 12B; do not merge into timer.css. */
+/* ReconstructReport / ReconstructModal — owned by Round 12B; do not merge into timer.css. */
 
 /* 选择器带上 .timer-modal:两者同权重(0,1,0)时 timer.css 的 480px 后到先得,
    这一行原本写的 560px 从来没生效过。八列的分步分析表要放得下 —— 480px 下
    OLL / PLL / 合计 全在视线外,一张必须横向拖才能看完的表等于没有。 */
 .timer-modal.reconstruct-modal {
   max-width: 880px;
+}
 
-  /* CFOP 阶段色:领域色板(哪一段是十字/F2L/OLL/PLL),不是状态语义,所以不套 --signal-*。
-     阶段条和阶段圆点原本各硬码一份同样的四个色,这里合成单一源。中饱和度,明暗两档都够对比。 */
+/* CFOP 阶段色:领域色板(哪一段是十字/F2L/OLL/PLL),不是状态语义,所以不套 --signal-*。
+   阶段条和阶段圆点原本各硬码一份同样的四个色,这里合成单一源。中饱和度,明暗两档都够对比。
+   挂在报告自己身上,不挂在外面那层 —— 同一份报告现在有两个容器(独立弹窗 / 成绩详情页)。 */
+.rc-report {
   --rc-stage-cross: #d4b85a;
   --rc-stage-f2l: #5aa8d4;
   --rc-stage-oll: #d4885a;
   --rc-stage-pll: #7ad45a;
-}
-
-.reconstruct-modal h2 .reconstruct-date {
-  font-weight: 400;
-  color: var(--muted-foreground);
-  font-size: 13px;
 }
 
 .reconstruct-bld-bar {
@@ -736,17 +733,46 @@
 /* ── 顶部六个数 ────────────────────────────────────────────────────────
    时间 / TPS / 步数 / 流畅 / 日期 / 魔方。以前散在标题和各个面板里,要自己拼;
    报告应该一开口就说完。分隔靠竖线不靠卡片框。 */
-/* 复盘看完的那个动作。靠左紧凑,不撑成一整行的条。 */
-.rc-actions { display: flex; gap: 8px; margin: -6px 0 14px; }
+/* 读完那几个数之后的动作:再打一遍 / 分享 / 拿到别的工具里看。靠左紧凑,不撑成
+   一整行的条;第一个是主动作(实心),其余是次动作(描边)。 */
+.rc-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: -6px 0 14px; }
 .rc-action {
   appearance: none; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 5px;
   padding: 5px 12px; border-radius: 6px;
   font-size: 13px; font-weight: 500;
   color: var(--accent-foreground); background: var(--accent);
   border: 1px solid transparent;
+  text-decoration: none;
 }
 .rc-action:hover { background: color-mix(in srgb, var(--accent) 88%, black); }
 .rc-action:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.rc-action--ghost {
+  color: var(--foreground); background: var(--shell-chip);
+  border-color: var(--border-default);
+}
+.rc-action--ghost:hover { background: var(--shell-hover); }
+.rc-action--ghost:disabled { opacity: 0.5; cursor: default; }
+.rc-action--ghost:disabled:hover { background: var(--shell-chip); }
+
+/* 盲拧那两块提示:一句话 + 一张两列表。信息量小,不值一个卡片框,只用弱背景托底。 */
+.reconstruct-auto-memo-hint,
+.reconstruct-bld-memo {
+  margin: 6px 0; padding: 8px 10px;
+  font-size: 12px; color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+  border-radius: 6px;
+}
+.reconstruct-auto-memo-hint { display: flex; align-items: center; gap: 8px; }
+.reconstruct-bld-memo-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: 8px; margin-bottom: 4px;
+}
+.reconstruct-bld-memo-title { font-weight: 600; }
+.reconstruct-bld-memo-buffers { color: var(--muted-foreground); }
+.reconstruct-bld-memo-grid { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; }
+.reconstruct-bld-memo-key { color: var(--muted-foreground); }
+.reconstruct-bld-memo-val { font-family: var(--font-mono); letter-spacing: 0.05em; }
 
 .rc-summary {
   display: flex; flex-wrap: wrap; margin: 10px 0 14px; padding: 0;
