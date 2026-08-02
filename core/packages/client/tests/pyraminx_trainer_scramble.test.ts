@@ -43,6 +43,19 @@ describe('pyraminx trainer scramble', () => {
     }
   });
 
+  // 上面那条一度是间歇性红的(~15% 的 run):尾段走的是残态**最优**解,长度不受控,
+  // 偶尔只有三步,6 步远路 + 3 步 = 9 < 7+3。现在 detour 会自己加长到够为止,所以
+  // 「比 setup 长 3 步」是保证而不是概率 —— 这里补一条比默认远路还长的 setup 压那条新路径。
+  it('setup 比远路还长时,下限照样够得到', () => {
+    const long = "R U R' U R U R' L' U' L U' L' U' L"; // 14 步,floor 17 > 默认 detour 6
+    const target = pyraFaceletFromMoves(long);
+    for (let i = 0; i < 30; i++) {
+      const s = equivalentPyraScramble(long);
+      expect(pyraFaceletFromMoves(s), `${long} → ${s}`).toBe(target);
+      expect(s.split(/\s+/).length).toBeGreaterThanOrEqual(long.split(/\s+/).length + 3);
+    }
+  });
+
   it('同一个 case 连出两条打乱不会一样(不是换汤不换药的定式)', () => {
     const seen = new Set<string>();
     for (let i = 0; i < 20; i++) seen.add(equivalentPyraScramble(SETUPS[0]));
