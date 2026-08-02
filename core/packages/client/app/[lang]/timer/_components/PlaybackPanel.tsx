@@ -61,7 +61,7 @@ import SolveTimeline from './SolveTimeline';
 
 // WebGL + the /sim engine. Only mounted when the playback section is open, so a
 // report opened just to read the numbers never pays for it.
-const SimCubeView = dynamic(() => import('./SimCubeView'), { ssr: false });
+const SimCubeView = dynamic(() => import('@/components/sim-embed/SimCubeView'), { ssr: false });
 
 interface Props {
   event: EventId;

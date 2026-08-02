@@ -35,6 +35,7 @@ import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import { useBluetoothCube, type BluetoothCubeHandle } from '../../timer/_lib/bluetooth';
 import { installFakeCube } from '../../timer/_lib/bluetooth/fake_cube';
 import type { CubeStep } from '../../timer/_lib/cube/steps';
+import type { Quat } from '../../timer/_lib/bluetooth/orientation';
 import { TimerState, useTrainerStore } from '@/lib/trainer-store';
 import { autoStopStep, caseTargetFacelets, puzzleHasSmartCube } from './smartcube';
 
@@ -47,6 +48,26 @@ export interface TrainerCubeState {
   cube: BluetoothCubeHandle;
   /** True while the cube is presenting the current case and driving the clock. */
   armed: boolean;
+  /**
+   * Turns made since the case was presented, for the on-screen 3D mirror.
+   *
+   * The mirror is alg-driven (the /sim engine has no facelet setter), so its log
+   * has to start from a SOLVED cube — and here it does, for free: the case is
+   * presented by making the cube report the scramble applied to solved, so
+   * `scramble + these` IS the state on the table. That is the whole reason the
+   * trainer needs no equivalent of /timer's `anchorAlgFor` guesswork.
+   *
+   * Cleared on every re-aim, including the re-aims that absorb the tail of the
+   * previous rep — the cube is put back to the case each time, so a log that
+   * kept those turns would draw a state the cube is not in.
+   */
+  moves: string[];
+  /**
+   * Latest orientation sample, as a mutable box. Samples land at 20-50 Hz and
+   * only the 3D view's frame loop reads them; routing them through state would
+   * re-render the whole trainer that often for a value nothing else looks at.
+   */
+  quatRef: { current: Quat | null };
   /**
    * What will stop the clock, or null when nothing will and the user has to.
    * Worth surfacing in the UI: "it stops when OLL is done" is not guessable.
@@ -148,6 +169,10 @@ export function useTrainerCube(opts: UseTrainerCubeOpts): TrainerCubeState {
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** What to re-aim at from inside the move handler, where render values are stale. */
   const aimRef = useRef<{ target: string; step: CubeStep } | null>(null);
+  /** Turns since the case was presented — the 3D mirror's log. See the field doc. */
+  const [moves, setMoves] = useState<string[]>([]);
+  /** Orientation samples. A box, not state: 20-50 Hz, read only by a frame loop. */
+  const quatRef = useRef<Quat | null>(null);
 
   const beginSettle = useCallback(() => {
     settlingRef.current = true;
@@ -185,7 +210,10 @@ export function useTrainerCube(opts: UseTrainerCubeOpts): TrainerCubeState {
 
   const cube = useBluetoothCube({
     onNeedMac,
-    onMove: (_move, ts) => {
+    // Orientation is a firehose and nothing here reacts to it — straight into
+    // the box the 3D mirror's frame loop reads.
+    onGyro: (q) => { quatRef.current = q; },
+    onMove: (move, ts) => {
       lastMoveEpochRef.current = toEpochMs(ts);
       if (!enabledRef.current || !armedRef.current) return;
       // Still settling: this turn is the tail of the last rep, not the start of
@@ -195,8 +223,11 @@ export function useTrainerCube(opts: UseTrainerCubeOpts): TrainerCubeState {
       if (settlingRef.current && aim) {
         cubeRef.current.hijackTo(aim.target, aim.step);
         beginSettle();
+        // Re-aimed = back at the case, so the mirror's log starts over too.
+        setMoves([]);
         return;
       }
+      setMoves((prev) => [...prev, move]);
       if (!timingRef.current) return;
       const st = useTrainerStore.getState();
       // Any turn while the case is up starts the rep. STOPPING is where the
@@ -247,12 +278,14 @@ export function useTrainerCube(opts: UseTrainerCubeOpts): TrainerCubeState {
         setAimed(false);
         aimRef.current = null;
         cubeRef.current.clearHijack();
+        setMoves([]);
       }
       return;
     }
     if (useTrainerStore.getState().timerState === TimerState.RUNNING) return;
     aimRef.current = { target, step: judgeStep };
     setAimed(cubeRef.current.hijackTo(target, judgeStep));
+    setMoves([]);
     beginSettle();
   }, [enabled, connected, target, judgeStep, currentKey, setAimed, beginSettle]);
 
@@ -285,5 +318,5 @@ export function useTrainerCube(opts: UseTrainerCubeOpts): TrainerCubeState {
     : settling ? 'settling'
     : 'ready';
 
-  return { cube, armed, stopStep, reason, connect, macPrompt, submitMac, cancelMac };
+  return { cube, armed, moves, quatRef, stopStep, reason, connect, macPrompt, submitMac, cancelMac };
 }
