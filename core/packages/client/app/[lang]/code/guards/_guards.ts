@@ -157,6 +157,12 @@ export const CI_GUARDS_UI: CiGuard[] = [
     zh: { title: 'hash 锚点滚动+高亮各写一份', desc: '「点某项 → URL 片段 → 滚到它并高亮」原本六处各手搓(/wiki 词条、person 两张成绩表、/alg 公式卡、/wca/prediction 项目段、论坛帖子),ByCompList/ByEventView 更是逐字复制。已抽成 useHashHighlight(差异点 resolve / reveal / linger / highlightClass / onScroll / deps 全作 options)。除该 hook 外任何文件再挂 hashchange 监听 = CI 红,指回 hook;OAuth 回调等另类用途走 ALLOWLIST + 理由。' },
     en: { title: 'Hand-rolled hash-anchor scroll+highlight', desc: '"Click a thing → URL fragment → scroll to it and highlight" was hand-rolled in six places (wiki entries, the two person result tables, alg cards, prediction event sections, forum posts) — ByCompList/ByEventView near-verbatim copies. Unified into useHashHighlight (differences are options: resolve / reveal / linger / highlightClass / onScroll / deps). Any file other than that hook adding a hashchange listener turns CI red and points back to it; genuinely different uses (OAuth callback, global infra) go through the ALLOWLIST with a reason.' },
   },
+  {
+    id: 'alg-thumb-corner-mask',
+    test: 'alg-thumb-corner-mask.test.ts',
+    zh: { title: '手搓顶层公式集缩略图遮罩', desc: '顶层公式集(COLL / CMLL,以及 ZBLL / 1LLL / OLLCP 那批同样用 coll 遮罩的二级选择卡)的图,视角 / 遮罩 / 侧环删灰(hideGreySides)一处定在 CaseThumb 的 cubeThumbParams —— 列表、训练器选择面板、/recognize 题图、PDF 导出全从它取。谁再手写一个 <VisualCube view="pll" mask="coll">(训练器里真出现过一份),那张图就绕开删灰:同一个 case 列表里侧面干净、选择面板里却挂一圈灰格。CaseThumb 之外写死 coll / cmll 遮罩 = CI 红;特例行内 allow-corner-mask 豁免。' },
+    en: { title: 'Hand-rolled corner-LL thumbnail mask', desc: 'Last-layer sets (COLL / CMLL, plus the ZBLL / 1LLL / OLLCP second-level picker cards that use the same coll mask) get their view / mask / hidden grey rim (hideGreySides) from one place — cubeThumbParams in CaseThumb — which the library list, the trainer picker, the /recognize prompts and the PDF export all read. Hand-rolling a `<VisualCube view="pll" mask="coll">` (one really did exist in the trainer) skips the grey-rim pass: the same case shows clean sides in the list and a ring of grey squares in the picker. A literal coll / cmll mask outside CaseThumb turns CI red; exceptions take an inline allow-corner-mask.' },
+  },
 ];
 
 export const CI_GUARDS_DRIFT: CiGuard[] = [
