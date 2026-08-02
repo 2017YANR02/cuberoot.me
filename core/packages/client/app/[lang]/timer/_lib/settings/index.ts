@@ -135,6 +135,17 @@ export interface TimerSettings {
    *  尤其明显:BG 十字 8 步全库仅 1 条,还落在 333bf 决赛)。关掉 = 只用当前项目的真题。 */
   wcaDiffMerged: boolean;
 
+  /** 随机状态来源的「难度」(3×3 族):不是过滤,而是**直接按所选阶段的最优步数生成状态** ——
+   *  真题源筛不到的稀有档(六色十字 0 步、10 步 XCross)这里也出得来。方法/阶段/底色子集/步数区间
+   *  与真题难度筛同口径(lib/scramble-variants),多一个 F2L 槽位维度(or18 训练器的口径:定色 + 定槽)。
+   *  genDiffSlot = 槽位序号,-1 = 四槽取最优。引擎见 lib/cross-trainer。 */
+  genDiffOn: boolean;
+  genDiffVariant: string;
+  genDiffStage: string;
+  genDiffColors: string;
+  genDiffSlot: number;
+  genDiffSteps: number[];
+
   /** "按步数" scramble filter for 2×2 (face/layer/cube-HTM/QTM) and pyraminx (V / cube-HTM). Works under
    *  both sources: random = uniform full-space sampling + reject; WCA = filter real scrambles by the metric.
    *  genStepsMetric is a metric key from _lib/scramble/step-metrics (validated per event); genSteps = the
@@ -320,6 +331,12 @@ export const DEFAULTS: TimerSettings = {
   genByStepsOn: false,
   genStepsMetric: 'face',
   genSteps: [],
+  genDiffOn: false,
+  genDiffVariant: 'std',
+  genDiffStage: 'cross',
+  genDiffColors: 'BGORWY',
+  genDiffSlot: -1,
+  genDiffSteps: [],
   autoMarkWcaScramble: true,
   scrambleClickAction: 'copy',
   scrambleClickMigrated: false,

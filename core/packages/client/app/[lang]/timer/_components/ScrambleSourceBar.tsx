@@ -16,7 +16,9 @@ import { updateSettings, useSettings } from '../_lib/settings';
 import type { EventId } from '../_lib/types';
 import WcaSourceConfig from '@/components/WcaSourceConfig';
 import GenStepsConfig from './GenStepsConfig';
+import GenDiffConfig from './GenDiffConfig';
 import { stepPuzzleOf } from '../_lib/scramble/step-metrics';
+import { canTrainerDifficulty } from '../_lib/scramble/trainer-source';
 import { tr } from '@/i18n/tr';
 import Scramble222ModePicker from '@/components/Scramble222ModePicker';
 
@@ -52,6 +54,11 @@ export default function ScrambleSourceBar({ event, isZh }: Props) {
             aria-label={tr({ zh: '手动输入打乱', en: 'Manual scrambles' })}
           />
         </div>
+      )}
+
+      {/* 随机状态来源的难度 = 直接生成该难度的状态(3×3 族;真题那边的难度筛在 WcaSourceConfig 里)。 */}
+      {src === 'random' && canTrainerDifficulty(event) && (
+        <GenDiffConfig isZh={isZh} settings={s} updateSettings={updateSettings} />
       )}
 
       {hasSteps && src !== 'manual' && (

@@ -38,6 +38,20 @@ export async function m2pScramble333(): Promise<string> {
   return m.solveEx(facelets, 21, 100_000, 0, INVERSE_SOLUTION).trim();
 }
 
+/**
+ * The scramble that BUILDS `facelets` from solved (the inverse of its solution),
+ * i.e. what `m2pScramble333` does for a random cube, for a state you chose yourself.
+ * Used by the cross-trainer source, which picks the state first and needs a scramble
+ * that reproduces it exactly.
+ */
+export async function m2pScrambleForFacelets(facelets: string): Promise<string> {
+  const m = await getInstance();
+  const out = m.solveEx(facelets, 21, 100_000, 0, INVERSE_SOLUTION).trim();
+  // min2phase reports failures as "Error N" rather than throwing.
+  if (!out || /^Error/i.test(out)) throw new Error(`min2phase: ${out || 'empty'}`);
+  return out;
+}
+
 /** Fire-and-forget warmup: kicks off WASM fetch + Tables build so the first
  *  real scramble call has zero perceived latency. Safe from effects on
  *  /scramble/gen mount. */
