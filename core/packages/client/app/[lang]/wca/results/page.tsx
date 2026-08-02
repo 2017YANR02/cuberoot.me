@@ -184,9 +184,9 @@ function AllResultsPageInner() {
   // 切换:single/average → 排名视图(清 view+mmetric);其余 id → 指标视图(view=metric, mmetric=id)
   const onTypeViewChange = (id: string) => {
     if (RANK_TYPE_IDS.has(id)) {
-      setQuery({ view: null, mmetric: null, type: id === 'average' ? 'average' : null, page: null });
+      setQuery({ view: null, mmetric: null, type: id === 'average' ? 'average' : 'single', page: null });
     } else {
-      setQuery({ view: 'metric', mmetric: id, type: null, page: null });
+      setQuery({ view: 'metric', mmetric: id, type: 'single', page: null });
     }
   };
   const country = query.country ?? '';
@@ -266,21 +266,27 @@ function AllResultsPageInner() {
   };
   const isCatActive = (cat: typeof EVENT_CATEGORIES[0]) => cat.events.every(e => selectedSet.has(e));
 
-  // 单项控件
-  const update = (k: string, v: string, resetPage = true) => {
-    const patch: Record<string, string | null> = { [k]: v || null };
+  // 单项控件。**写什么就是什么,不做 `v || null` 折叠** —— 下面「全参数常驻 URL」的 effect 覆盖的那批
+  // 筛选参数(show/type/country/gender/basis/year/month/q)缺省时会被补成派生值,而派生值不一定等于
+  // 「空」的语义(show 缺省=persons、year 缺省+persons=当年),折成 null 就等于把用户的选择丢给派生规则。
+  // 想清除某个参数的调用方自己传 null(仅限不在 backfill 名单里的键,如 pname/plmin/plmax)。
+  // 守卫:tests/wca-results-url-params.test.ts。
+  const update = (k: string, v: string | null, resetPage = true) => {
+    const patch: Record<string, string | null> = { [k]: v };
     if (resetPage) patch.page = null;
     setQuery(patch as Parameters<typeof setQuery>[0]);
   };
   const handleBasisChange = (v: 'period' | 'cumulative') => {
-    setQuery({ basis: v, ...(v === 'cumulative' ? { month: null } : {}), page: null });
+    setQuery({ basis: v, ...(v === 'cumulative' ? { month: '0' } : {}), page: null });
   };
   const handleShowChange = (v: ShowMode) => {
     if (v === 'persons') {
       const keepYear = query.year && query.year !== '0';
-      setQuery({ show: 'persons', month: null, q: null, ...(keepYear ? {} : { year: String(currentYear) }), page: null });
+      setQuery({ show: 'persons', month: '0', q: '', ...(keepYear ? {} : { year: String(currentYear) }), page: null });
     } else {
-      setQuery({ show: null, page: null });
+      // 必须写显式 'results':show 缺省时派生值是 'persons',而下面「全参数常驻 URL」的 effect
+      // 会把缺省参数补回派生值 —— 写 null 等于立刻被刷回 persons,toggle 看起来取消不掉。
+      setQuery({ show: 'results', page: null });
     }
   };
 
@@ -289,7 +295,7 @@ function AllResultsPageInner() {
   useEffect(() => {
     if (mode !== 'single' || show !== 'results') return;
     if (qInput === qFromUrl) return;
-    const t = setTimeout(() => { setQuery({ q: qInput || null, page: null }); }, 300);
+    const t = setTimeout(() => { setQuery({ q: qInput, page: null }); }, 300);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qInput, qFromUrl, show, mode]);
@@ -517,7 +523,7 @@ function AllResultsPageInner() {
   const genderSelect = (
     <div className="wse-filter wse-filter-show">
       <label htmlFor="wse-gender">{tr({ zh: '性别', en: 'Gender' })}</label>
-      <select id="wse-gender" className="wse-filter-select" value={gender} onChange={(e) => update('gender', e.target.value === 'all' ? '' : e.target.value)}>
+      <select id="wse-gender" className="wse-filter-select" value={gender} onChange={(e) => update('gender', e.target.value)}>
         <option value="all">{tr({ zh: '所有', en: 'All' })}</option>
         <option value="m">{tr({ zh: '男', en: 'Male' })}</option>
         <option value="f">{tr({ zh: '女', en: 'Female' })}</option>
@@ -621,7 +627,7 @@ function AllResultsPageInner() {
                   isZh={isZh}
                   queryKey="nstab"
                   nameMode={pname}
-                  onNameModeChange={(m) => update('pname', m === 'latin' ? '' : m)}
+                  onNameModeChange={(m) => update('pname', m === 'latin' ? null : m)}
                 />
               </>
             )}
@@ -650,11 +656,11 @@ function AllResultsPageInner() {
               <div className="wse-len-range">
                 <input type="number" min={0} inputMode="numeric" className="wse-len-input"
                   placeholder={tr({ zh: '最小', en: 'min' })} value={plmin}
-                  onChange={e => update('plmin', e.target.value)} />
+                  onChange={e => update('plmin', e.target.value || null)} />
                 <span className="wse-len-dash">–</span>
                 <input type="number" min={0} inputMode="numeric" className="wse-len-input"
                   placeholder={tr({ zh: '最大', en: 'max' })} value={plmax}
-                  onChange={e => update('plmax', e.target.value)} />
+                  onChange={e => update('plmax', e.target.value || null)} />
                 {(plmin || plmax) && (
                   <ClearButton variant="standalone"
                     onClick={() => setQuery({ plmin: null, plmax: null, page: null })} />
@@ -736,7 +742,7 @@ function AllResultsPageInner() {
             </div>
             <div className="wse-filter">
               <label>{tr({ zh: '年份', en: 'Year' })}</label>
-              <select className="wse-filter-select" value={year} onChange={e => update('year', e.target.value === '0' ? '' : e.target.value)}>
+              <select className="wse-filter-select" value={year} onChange={e => update('year', e.target.value)}>
                 {show === 'results' && <option value={0}>{tr({ zh: '全部年份', en: 'All years' })}</option>}
                 {years.map(y => <option key={y} value={y}>{y}</option>)}
               </select>
@@ -748,7 +754,7 @@ function AllResultsPageInner() {
                 <select
                   className="wse-filter-select"
                   value={month}
-                  onChange={e => update('month', e.target.value === '0' ? '' : e.target.value)}
+                  onChange={e => update('month', e.target.value)}
                 >
                   <option value={0}>{tr({ zh: '全年', en: 'All months' })}</option>
                   {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}</option>)}
