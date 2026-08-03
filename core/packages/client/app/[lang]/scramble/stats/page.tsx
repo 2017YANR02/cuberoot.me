@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useQueryState, parseAsString, parseAsStringEnum, parseAsBoolean } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
@@ -195,6 +196,17 @@ const EXACT_SET_META: SetData = {
     eo: { sample_count: 0, stages: EXACT_EO_STAGES, data: {} },
   },
 };
+
+/**
+ * 精确集里「点柱看状态」的规模上限:一档最多这么多个才列(现场枚举 + 逐条现算打乱)。
+ * 够用的理由是这一族的档本来就悬殊 —— 能列的最大一档是双色底十字 8 步的 3,672 个,
+ * 再往下一档就是 1.75 亿。所以这个数落在哪儿都行,不是能力边界。
+ */
+const EXACT_CASE_CAP = 5000;
+
+// 列表要现场枚举(cross-trainer 的距离表)+ 现算打乱(min2phase WASM),两样都不该进
+// 这个页面的首包 —— 点了柱子才拉。
+const ExactCaseList = dynamic(() => import('./_components/ExactCaseList'), { ssr: false });
 
 // ── 整解:cube20.org 的理论分布 ────────────────────────────────────────────
 // 真题那条(整解最优步数,n=1,317,565)是从均匀随机态里抽的样,理论分布就是它的母体。
@@ -582,6 +594,19 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     if (!currentSet) return [];
     return currentSet.variants[variant]?.data[stage]?.[effectiveSubset]?.example_bins ?? [];
   }, [currentSet, variant, stage, effectiveSubset]);
+
+  // 精确穷举:哪几档能把状态**列全**(见 _components/ExactCaseList 的文件头)。
+  // 单色底每一档都是那一面自己的一层;多色底只有最深那一档 =「每个颜色都这么深」。
+  // 上限纯粹是「一页页翻得完」,不是能力边界 —— 双色底 8 步 3,672 个已经是最大的一档。
+  const exactCaseDepths = useMemo<number[]>(() => {
+    if (!isExact || variant !== 'std' || stage !== 'cross' || slot !== 'unfixed' || !exactFull) return [];
+    const top = exactFull.counts.length - 1;
+    const single = subsetKey.length === 1;
+    return exactFull.counts
+      .map((c, d) => ({ n: Number(c), d }))
+      .filter(({ n, d }) => n > 0 && n <= EXACT_CASE_CAP && (single || d === top))
+      .map(({ d }) => d);
+  }, [isExact, variant, stage, slot, exactFull, subsetKey]);
 
   // per-event 选择时示例走独立分片(该项目自己的 reservoir);合并池/xcross 走 examples.json
   const isPerEvent = dataset === 'wca' && scrambleSet !== 'wca';
@@ -1589,10 +1614,11 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             isZh={isZh}
             yMode={yMode}
             chartMode={chartMode}
-            // 精确穷举是全空间的理论分布,不来自任何打乱池 —— 没有示例打乱可点。
-            clickableBins={isExact ? [] : previewBins}
+            // 精确穷举不来自任何打乱池,所以没有「示例真题」可点;但小到能列全的那几档
+            // 可以把状态本身摆出来(exactCaseDepths),那些柱子照样可点。
+            clickableBins={isExact ? exactCaseDepths : previewBins}
             selectedBin={selectedBin}
-            onBarClick={isExact ? undefined : handleBarClick}
+            onBarClick={isExact ? setSelectedBin : handleBarClick}
             hideLegendColors
             logY={logY}
             onLogYToggle={setLogY}
@@ -1636,6 +1662,25 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
               + 'theory is an exact enumeration, so the gap there is sampling error; for d = 16..19 cube20.org '
               + 'publishes only two significant digits, so part of that gap is its own rounding, not the scramble pool.',
           })}
+        />
+      )}
+
+      {/* 能列全的那几档:说一句哪几档能点,免得别的柱子点不动像是坏了。 */}
+      {isExact && exactCaseDepths.length > 0 && selectedBin === null && (
+        <p className="scramble-stats-exact-note">
+          {tr({
+            zh: `${exactCaseDepths.join(' / ')} 步这几档小到能把状态列全,点柱子看;其余各档动辄上亿,只有计数。`,
+            en: `The ${exactCaseDepths.join(' / ')}-move bins are small enough to list state by state — click one. The rest run to the hundreds of millions, so they are counts only.`,
+          })}
+        </p>
+      )}
+
+      {isExact && selectedBin !== null && exactFull && (
+        <ExactCaseList
+          subsetKey={subsetKey}
+          depth={selectedBin}
+          goldenCount={Number(exactFull.counts[selectedBin])}
+          lang={lang}
         />
       )}
 

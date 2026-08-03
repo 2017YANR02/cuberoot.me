@@ -55,9 +55,11 @@ interface CorpusCell {
 /**
  * Every edge configuration whose cross is exactly `depth` moves for EVERY face in `faces`.
  *
- * Only valid at the metric's maximum (8 for cross), and that is the only place it is used: there
- * "the best of the colours is 8" and "all of the colours are 8" are the same statement, because
- * no colour can be deeper. Below the maximum they part ways and this would enumerate the wrong set.
+ * With more than one face this equals the class "the BEST colour is `depth`" only at the metric's
+ * maximum (8 for cross): there "the best of the colours is 8" and "all of the colours are 8" are
+ * the same statement, because no colour can be deeper. Below the maximum they part ways and this
+ * would enumerate the wrong set — callers must check. With a single face there is nothing to
+ * minimise over, so every depth is fair game (that is the /scramble/stats case list's other half).
  *
  * The search walks the faces, and for each one iterates that face's OWN depth-`depth` layer
  * (102 coordinates) rather than the free slots — a colour's layer already knows where its four
@@ -65,7 +67,7 @@ interface CorpusCell {
  * overlap (each edge belongs to two crosses), so the constraint tightens fast: the first two
  * colours leave ~10⁴ candidates and every later colour cuts it to almost nothing.
  */
-function enumerateCrossTop(faces: FaceIdx[], depth: number): CorpusMember[] {
+export function enumerateCrossTop(faces: FaceIdx[], depth: number): CorpusMember[] {
   const slotOf = new Int8Array(12).fill(-1);
   const oriOf = new Int8Array(12);
   let used = 0;
