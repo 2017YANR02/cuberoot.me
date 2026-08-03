@@ -7,7 +7,7 @@ import { notify } from '../utils/notify.js';
 import { isValidZone } from '@cuberoot/shared/tz';
 import { expandOccurrences, parseRRule, formatRRule } from '@cuberoot/shared/recur';
 import {
-  eventsToIcs, isCalendarColor, parseNumList, redactBusy,
+  eventsToIcs, isCalendarColor, parseNumList, redactBusy, ICS_IMPORT_BATCH,
   type CalEvent, type CalendarMeta, type EventGuest, type ShareDetail,
 } from '@cuberoot/shared/calendar';
 
@@ -40,8 +40,8 @@ const NO_STORE = 'no-cache, no-store, must-revalidate';
 
 const MAX_CALENDARS_PER_USER = 30;
 const MAX_EVENTS_PER_USER = 20_000;
-/** 一次导入最多多少条(ICS 文件可能上千条,分批传)。 */
-const MAX_BULK = 500;
+/** 一次导入最多多少条(ICS 文件可能上千条,分批传)。批大小与前端同源,见 shared/calendar。 */
+const MAX_BULK = ICS_IMPORT_BATCH;
 const MAX_GUESTS_PER_EVENT = 50;
 /** 单次查询窗口上限:两年。再宽就该分页了,而日历界面一次最多看一年。 */
 const MAX_WINDOW_MS = 750 * 86_400_000;
@@ -542,12 +542,16 @@ calendarRoutes.post('/calendar/events', async (c) => {
 /** ICS 导入:一次塞多条,全部落在同一个日历里。 */
 calendarRoutes.post('/calendar/events/bulk', async (c) => {
   c.header('Cache-Control', NO_STORE);
-  checkRateLimit(getIp(c), { bucket: 'cal-bulk', max: 10 });
+  // 一份 Google 导出动辄几千条 = 十几批,10 次/分钟会把正常导入卡在半路。
+  checkRateLimit(getIp(c), { bucket: 'cal-bulk', max: 30 });
   const me = await requireAuth(c);
   const body = await c.req.json<{ calendarId?: number; events?: Record<string, unknown>[] }>()
     .catch(() => ({} as { calendarId?: number; events?: Record<string, unknown>[] }));
-  const list = Array.isArray(body.events) ? body.events.slice(0, MAX_BULK) : [];
+  const list = Array.isArray(body.events) ? body.events : [];
   if (list.length === 0) return c.json({ error: 'no events' }, 400);
+  // 超出就退回去让调用方切批。原来是 slice 掉多的,于是「导入 500 条」看着像成功,
+  // 其实后面几千条被无声吞了。
+  if (list.length > MAX_BULK) return c.json({ error: `at most ${MAX_BULK} events per request` }, 400);
   const count = await query<{ n: number }>(
     'SELECT COUNT(*)::int AS n FROM calendar_events WHERE owner_key = ?', [me.wcaId],
   );
