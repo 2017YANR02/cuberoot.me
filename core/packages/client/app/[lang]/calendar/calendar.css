@@ -1118,19 +1118,22 @@ html:root[data-theme=dark]:has(.cal-page) {
 .cal-grid .fc .fc-timegrid-now-indicator-arrow { display: none; }
 
 .cal-grid .fc .fc-timegrid-now-indicator-line {
-  border-width: 2px 0 0;
+  --cal-now-line: 2px;   /* 线厚 */
+  --cal-now-dot: 12px;   /* 圆点直径 */
+  border-width: var(--cal-now-line) 0 0;
   border-top-style: solid;
 }
 
 .cal-grid .fc .fc-timegrid-now-indicator-line::before {
   content: '';
   position: absolute;
-  /* 线是 border-top,元素自身高 0:圆心要落在 0~2px 这条线的中点(1px)上,
-     所以 12px 的点往上挪 5px。 */
-  top: -5px;
+  /* 绝对定位的子元素以父元素的 **padding box** 为原点,而这条线画的是 border-top ——
+     padding box 已经在线下面了。所以先减掉线厚回到线的上沿,再上移半个点径,最后补回
+     半个线厚,圆心才真落在线的中线上。写死一个数会在改线厚 / 点径时悄悄错位。 */
+  top: calc(-1 * var(--cal-now-line) - var(--cal-now-dot) / 2 + var(--cal-now-line) / 2);
   left: 0;
-  width: 12px;
-  height: 12px;
+  width: var(--cal-now-dot);
+  height: var(--cal-now-dot);
   border-radius: 50%;
   background: var(--fc-now-indicator-color);
 }
