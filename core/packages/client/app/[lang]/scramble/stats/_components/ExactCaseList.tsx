@@ -20,12 +20,14 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from '@/components/AppLink';
+import PillToggle from '@/components/PillToggle/PillToggle';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { cubieToFacelet } from '@/lib/cube-facelet';
 import { m2pScrambleForFacelets, prewarmM2p } from '@/lib/m2p-scramble';
 import { facesOfSubset } from '@/lib/cross-trainer';
 import { enumerateCrossTop, type CorpusMember } from '@/lib/cross-trainer/corpus';
 import { fillState } from '@/lib/cross-trainer/fill';
+import { subsetSymmetries, symmetryClasses } from '@/lib/cross-trainer/symmetry';
 import { groupDigits } from '@/lib/group-digits';
 import { tr } from '@/i18n/tr';
 
@@ -54,6 +56,7 @@ interface Props {
 }
 
 export default function ExactCaseList({ subsetKey, depth, goldenCount, lang }: Props) {
+  const [essential, setEssential] = useState(true);
   const [shown, setShown] = useState(PAGE);
   const [scrambles, setScrambles] = useState<Record<number, string>>({});
   const runId = useRef(0);
@@ -67,8 +70,27 @@ export default function ExactCaseList({ subsetKey, depth, goldenCount, lang }: P
     return list.length === goldenCount ? list : null;
   }, [subsetKey, depth, goldenCount]);
 
-  useEffect(() => { setShown(PAGE); setScrambles({}); }, [subsetKey, depth]);
+  // 「去除同构」用的群得**保住这道题**(六色底 48 个、白底 8 个 …… 见 symmetry.ts)。
+  const symmetries = useMemo(() => subsetSymmetries(facesOfSubset(subsetKey)), [subsetKey]);
+  const classes = useMemo(() => (members ? symmetryClasses(members, symmetries) : []), [members, symmetries]);
+
+  useEffect(() => { setShown(PAGE); setScrambles({}); setEssential(true); }, [subsetKey, depth]);
+  useEffect(() => { setShown(PAGE); }, [essential]);
   useEffect(() => { prewarmM2p(); }, []);
+
+  /** 当前视图的行:本质 = 每类一个代表,全部 = 逐个。值是 members 的下标(打乱按它缓存)。 */
+  const rows = useMemo<number[]>(() => {
+    if (!members) return [];
+    return essential
+      ? classes.map((c) => c.rep)
+      : Array.from({ length: members.length }, (_, i) => i);
+  }, [members, classes, essential]);
+
+  const sizeOf = useMemo(() => {
+    const m = new Map<number, number>();
+    for (const c of classes) m.set(c.rep, c.size);
+    return m;
+  }, [classes]);
 
   // 打乱由 min2phase(WASM)现算,只算看得见的那几行。换档/翻页都会重进,runId 挡住旧批次。
   useEffect(() => {
@@ -76,7 +98,7 @@ export default function ExactCaseList({ subsetKey, depth, goldenCount, lang }: P
     const mine = ++runId.current;
     let alive = true;
     void (async () => {
-      for (let i = 0; i < Math.min(shown, members.length); i++) {
+      for (const i of rows.slice(0, shown)) {
         if (!alive || runId.current !== mine) return;
         const state = fillState(members[i].edgePins, members[i].cornerPins, seeded(i));
         const scr = await m2pScrambleForFacelets(cubieToFacelet(state)).catch(() => '');
@@ -87,42 +109,67 @@ export default function ExactCaseList({ subsetKey, depth, goldenCount, lang }: P
     return () => { alive = false; };
     // scrambles 不进依赖:它由本 effect 自己写,进依赖会每写一行就重跑一轮。
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [members, shown]);
+  }, [members, rows, shown]);
 
   if (!members) return null;
 
-  const visible = members.slice(0, shown);
+  const visible = rows.slice(0, shown);
   return (
     <div className="scramble-stats-panel scramble-stats-examples-panel">
       <div className="scramble-stats-examples-header">
         <div className="scramble-stats-panel-title">
           {tr({ zh: `${depth} 步状态`, en: `${depth}-move states` })}
           <span className="scramble-stats-examples-allcount">
-            {tr({ zh: '全部 {n} 个', en: 'all {n}' }).replace('{n}', groupDigits(String(members.length)))}
+            {essential
+              ? tr({ zh: '本质 {n} 个', en: '{n} essentially different' })
+                .replace('{n}', String(classes.length))
+              : tr({ zh: '全部 {n} 个', en: 'all {n}' })
+                .replace('{n}', groupDigits(String(members.length)))}
           </span>
         </div>
+        <PillToggle
+          value={essential}
+          onChange={setEssential}
+          offLabel={tr({ zh: '全部', en: 'All' })}
+          onLabel={tr({ zh: '本质', en: 'Essential' })}
+          ariaLabel={tr({ zh: '列全部状态或去除同构后的本质状态', en: 'All states, or one per symmetry class' })}
+        />
       </div>
       <p className="scramble-stats-exact-note">
+        {essential && tr({
+          zh: `${members.length} 个状态在保住这道题的 ${symmetries.length} 个对称(转体与镜像)下并成 ${classes.length} 类,这里每类摆一个代表,后面的比例是该类的大小。`,
+          en: `The ${members.length} states fall into ${classes.length} classes under the ${symmetries.length} symmetries that preserve this question (rotations and mirror); one representative each, with its class size after it.`,
+        })}
+        {' '}
         {tr({
           zh: '十字口径只读棱块,所以每行的角块与用不上的棱块是随机补的 —— 换一批补法,还是这一档。',
           en: 'The cross metric reads edges only, so each row’s corners and untouched edges are filled at random — a different filling is still the same bin.',
         })}
       </p>
       <ul className="scramble-stats-examples-list">
-        {visible.map((_, i) => {
-          const scr = scrambles[i];
+        {visible.map((idx, row) => {
+          const scr = scrambles[idx];
+          const size = sizeOf.get(idx);
           if (scr === undefined) {
             return (
-              <li key={i}>
-                <span className="scramble-stats-exact-case-no">#{i + 1}</span>
+              <li key={idx}>
+                <span className="scramble-stats-exact-case-no">#{row + 1}</span>
                 <span className="scramble-stats-examples-hint">{tr({ zh: '生成中…', en: 'Generating…' })}</span>
               </li>
             );
           }
           const href = `/${lang}/scramble/analyzer?${new URLSearchParams({ scramble: scr.replace(/ /g, '_') })}`;
           return (
-            <li key={i}>
-              <span className="scramble-stats-exact-case-no">#{i + 1}</span>
+            <li key={idx}>
+              <span className="scramble-stats-exact-case-no">#{row + 1}</span>
+              {essential && size !== undefined && (
+                <span
+                  className="scramble-stats-exact-case-orbit"
+                  title={tr({ zh: `这一类共 ${size} 个状态`, en: `${size} states in this class` })}
+                >
+                  {size}/{members.length}
+                </span>
+              )}
               <Link
                 className="scramble-stats-examples-cube"
                 href={href}
@@ -138,7 +185,7 @@ export default function ExactCaseList({ subsetKey, depth, goldenCount, lang }: P
           );
         })}
       </ul>
-      {shown < members.length && (
+      {shown < rows.length && (
         <div className="scramble-stats-fulllist-foot">
           <button
             type="button"

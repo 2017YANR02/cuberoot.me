@@ -19,19 +19,10 @@ import {
 } from '@/app/[lang]/timer/_lib/scramble/kociemba/cube';
 import { EXACT_DIST } from '@/app/[lang]/scramble/stats/_data/exact_dist';
 import { facesOfSubset, stageMetric } from '@/lib/cross-trainer';
-import { enumerateCrossTop, type CorpusMember } from '@/lib/cross-trainer/corpus';
+import { enumerateCrossTop } from '@/lib/cross-trainer/corpus';
 import { fillState } from '@/lib/cross-trainer/fill';
 import { N_ROTATIONS, mirrorState, rotateState } from '@/lib/cross-trainer/rotate';
-
-/** 棱块状态的身份:槽位 → 棱块 + 该槽的翻转。角块不进 key(十字口径根本不读角块)。 */
-const edgeKey = (c: CubieCube): string => `${c.ep.join(',')}|${c.eo.join('')}`;
-
-/** 枚举出的成员同样只钉棱块;补成一个 CubieCube(角块随便,只用来比棱)。 */
-function memberState(m: CorpusMember): CubieCube {
-  const s = solvedCubie();
-  for (const { piece, slot, ori } of m.edgePins) { s.ep[slot] = piece; s.eo[slot] = ori; }
-  return s;
-}
+import { edgeKey, memberState, subsetSymmetries, symmetryClasses } from '@/lib/cross-trainer/symmetry';
 
 /** ExactCaseList 里那把种子 rng —— 行代表必须可复现,测试用同一把。 */
 function seeded(seed: number): () => number {
@@ -127,6 +118,27 @@ describe('exact case list / 六色底 8 步 40 个 vs 手算表', () => {
       expect(stageMetric('std', 'cross', st, 'BGORWY'), scramble).toBe(8);
       expect(keys.has(edgeKey(st)), scramble).toBe(true);
     }
+  });
+
+  // 页面「本质」那一栏走的就是 symmetry.ts 这两个函数,所以这里直接测它们,不再抄一份。
+  it('页面用的分类器给出 5 类,大小 1/3/6/6/24', () => {
+    const syms = subsetSymmetries(facesOfSubset('BGORWY'));
+    expect(syms.length).toBe(48); // 六色底:整个 48 元群都保住这道题
+    const classes = symmetryClasses(members, syms);
+    expect(classes.map((c) => c.size).sort((a, b) => a - b)).toEqual([1, 3, 6, 6, 24]);
+    expect(classes.reduce((n, c) => n + c.size, 0)).toBe(40);
+    // 5 个代表与手算表的 5 条一一同构(代表可以取到不同的那一个,类必须是同一批)。
+    const repOrbit = classes.map((c) => orbit48(memberState(members[c.rep])));
+    for (const { scramble, orbit } of CN8_REPS) {
+      const hit = repOrbit.filter((o) => o.has(edgeKey(stateOf(scramble))));
+      expect(hit.length, scramble).toBe(1);
+      expect(hit[0].size, scramble).toBe(orbit);
+    }
+  });
+
+  // 单色底问的是「白色十字」,把白面转走的对称问的是另一道题 —— 群缩到固定该面的 8 个。
+  it('白底只保住 8 个对称', () => {
+    expect(subsetSymmetries(facesOfSubset('W')).length).toBe(8);
   });
 
   it('48 元群把 40 个分成 5 条轨道,大小 1/3/6/6/24', () => {

@@ -122,7 +122,8 @@ export function rotateState(c: CubieCube, r: number): CubieCube {
  * tests/scramble_exact_cases.test.ts pins this against the site's own single source for mirroring
  * — `mirrorFamily` on the move sequence — over random scrambles, pieces and orientations both.
  */
-const MIRROR: Rotation = derive([0, 4, 2, 3, 1, 5]); // U→U R→L F→F D→D L→R B→B
+export const MIRROR_FACE: readonly number[] = [0, 4, 2, 3, 1, 5]; // U→U R→L F→F D→D L→R B→B
+const MIRROR: Rotation = derive([...MIRROR_FACE]);
 
 /** The state seen in an M-plane mirror. */
 export function mirrorState(c: CubieCube): CubieCube {
