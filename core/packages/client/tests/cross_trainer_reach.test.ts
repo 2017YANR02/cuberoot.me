@@ -48,14 +48,23 @@ describe('cross-trainer / offered depths', () => {
           // 定槽只在单色下出现;多色时面板隐掉槽选择器,spec 也强制走最优槽。
           const modes: SlotMode[] = caps.slots && colors === 1 ? ['fixed', 'best'] : ['best'];
           for (const mode of modes) {
-            const { god, draw } = trainerDepthBounds(variant, stage, colors, mode, caps.range[1]);
+            const { god, allowed } = trainerDepthBounds(
+              variant, stage, colors, mode, caps.range[1], caps.range[0],
+            );
             const tag = `${variant}/${stage} ${colors}c/${mode}`;
-            expect(draw, `${tag} draw <= god`).toBeLessThanOrEqual(god);
-            expect(draw, `${tag} draw`).toBeGreaterThanOrEqual(caps.band[0]);
+            expect(allowed.length, `${tag} has something to offer`).toBeGreaterThan(0);
+            expect(allowed[allowed.length - 1], `${tag} max(allowed) <= god`).toBeLessThanOrEqual(god);
+            expect(allowed[0], `${tag} starts at the stage floor`).toBe(caps.range[0]);
+            // 逐个抽太贵(每格 3 s 预算 × 3 次重试),抽的是边界:0(条件抽样的用武之地)、
+            // 连续可抽段的最深一格,以及每个「靠枚举补上」的孤岛档。中间那些只会更容易。
             const slot = mode === 'fixed' ? 0 : ('best' as const);
-            const spec: TrainerSpec = { variant, stage, colors: SUBSET[colors], slot, lo: draw, hi: draw };
-            expect(draws(spec, draw), `${tag} @${draw}`).toBe(true);
-            expect(draws({ ...spec, lo: 0, hi: 0 }, 0), `${tag} @0`).toBe(true);
+            let contiguous = allowed[0];
+            while (allowed.includes(contiguous + 1)) contiguous++;
+            const probes = [...new Set([caps.range[0], contiguous, ...allowed.filter((d) => d > contiguous)])];
+            for (const d of probes) {
+              const spec: TrainerSpec = { variant, stage, colors: SUBSET[colors], slot, lo: d, hi: d };
+              expect(draws(spec, d), `${tag} @${d}`).toBe(true);
+            }
           }
         }
       }, 600_000);

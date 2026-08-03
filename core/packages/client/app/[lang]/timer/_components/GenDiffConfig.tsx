@@ -20,7 +20,7 @@ import PillToggle from '@/components/PillToggle/PillToggle';
 import { useSubsetSelection, SubsetColorPicker } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import { stageLabel } from '@/lib/scramble-variants';
 import { facesOfSubset, trainerCaps, trainerSlotOptions, trainerStagesOf, trainerVariants } from '@/lib/cross-trainer';
-import { trainerDepthBounds } from '@/lib/cross-trainer/reach';
+import { snapAllowed, trainerDepthBounds } from '@/lib/cross-trainer/reach';
 import { SLOT_BEST, type GenDiffSettings } from '../_lib/scramble/trainer-source';
 import { tr } from '@/i18n/tr';
 
@@ -33,7 +33,17 @@ interface Props {
 }
 
 const range = (a: number, b: number) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
-const clamp = (x: number, lo: number, hi: number) => Math.min(Math.max(x, lo), hi);
+
+/** 把升序整数列压成连续区间:[9] → [[9,9]];[3,4,5,9] → [[3,5],[9,9]]。 */
+function spans(xs: number[]): Array<[number, number]> {
+  const out: Array<[number, number]> = [];
+  for (const x of xs) {
+    const last = out[out.length - 1];
+    if (last && x === last[1] + 1) last[1] = x;
+    else out.push([x, x]);
+  }
+  return out;
+}
 
 export default function GenDiffConfig({ isZh, settings, updateSettings, toggleSlot }: Props) {
   const variants = trainerVariants();
@@ -62,30 +72,34 @@ export default function GenDiffConfig({ isZh, settings, updateSettings, toggleSl
   // 两槽阶段的选项是槽对:XXCross 两槽同解(FR+FL),XCross 配对一解一配、有先后(FR→FL)。
   const slotNames = showSlots ? trainerSlotOptions(variant, stage, faces[0]) : [];
 
-  // 刻度轴到「已知存在的最深」(上帝之数下界),但只有抽得出来的那一段可选,再深的置灰 ——
-  // 多底色 / 最优槽取的是多个帧的最小值,深档要所有帧同时深,存在但撞不上(见 reach.ts)。
+  // 刻度轴到「已知存在的最深」(上帝之数下界),但不是每一格都出得来:多底色 / 最优槽取的是
+  // 多个帧的最小值,深档要所有帧同时深,存在但撞不上。撞不上的里头又分两种 —— 整档能列全的
+  // (六色底十字 8 步共 40 个、六色底 XCross 10 步共 438 个)照样能出,其余置灰。见 reach.ts。
   const slotMode = showSlots && settings.genDiffSlot >= 0 ? 'fixed' : 'best';
   const mMin = caps ? caps.range[0] : 0;
   const bounds = caps
-    ? trainerDepthBounds(variant, stage, faces.length, slotMode, caps.range[1])
-    : { god: 0, draw: 0 };
-  const mMax = bounds.draw;
+    ? trainerDepthBounds(variant, stage, faces.length, slotMode, caps.range[1], caps.range[0])
+    : { god: 0, allowed: [] as number[] };
+  const allowed = bounds.allowed;
+  const mMax = allowed.length ? allowed[allowed.length - 1] : mMin;
+  const snap = (v: number) => snapAllowed(v, allowed);
   const stored = settings.genDiffSteps;
   const rawLo = stored.length ? stored[0] : (caps ? caps.band[0] : 0);
   const rawHi = stored.length ? stored[stored.length - 1] : (caps ? caps.band[1] : 0);
-  const lo = clamp(Math.min(rawLo, rawHi), mMin, mMax);
-  const hi = clamp(Math.max(rawLo, rawHi), mMin, mMax);
+  const lo = snap(Math.min(rawLo, rawHi));
+  const hi = snap(Math.max(rawLo, rawHi));
 
-  // 步数为空(首开 / 换阶段)→ 落该阶段默认带;越界(换阶段端点变窄)→ 夹回去,保证滑块与生成口径一致。
+  // 步数为空(首开 / 换阶段)→ 落该阶段默认带;端点越界或落进空档 → 贴回最近的可选档,
+  // 保证滑块显示的和真去生成的是同一个区间。
   useEffect(() => {
     if (!settings.genDiffOn || !caps) return;
     if (stored.length === 0) {
-      updateSettings({ genDiffSteps: range(clamp(caps.band[0], mMin, mMax), clamp(caps.band[1], mMin, mMax)) });
-    } else if (stored[0] < mMin || stored[stored.length - 1] > mMax) {
+      updateSettings({ genDiffSteps: range(snap(caps.band[0]), snap(caps.band[1])) });
+    } else if (stored[0] !== lo || stored[stored.length - 1] !== hi) {
       updateSettings({ genDiffSteps: range(lo, hi) });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings.genDiffOn, variant, stage, mMin, mMax]);
+  }, [settings.genDiffOn, variant, stage, mMin, mMax, allowed.length]);
 
   const diffToggle = (
     <span className="settings-row-tight-group">
@@ -99,12 +113,11 @@ export default function GenDiffConfig({ isZh, settings, updateSettings, toggleSl
   );
 
   const body = !!(settings.genDiffOn && caps);
-  // 置灰段([draw+1, god])的说明。刻度画得比可选的深是有意的(那些难度真的存在),但用户
-  // 看到的是「拖不过去」—— 不写一句原因就只是个坏掉的滑块。
-  const capped = body && bounds.draw < bounds.god;
-  const capSpan = bounds.draw + 1 === bounds.god
-    ? `${bounds.god}`
-    : `${bounds.draw + 1}–${bounds.god}`;
+  // 置灰刻度的说明。刻度画得比可选的深是有意的(那些难度真的存在),但用户看到的是「拖不过去」
+  // —— 不写一句原因就只是个坏掉的滑块。空档不一定连着最后一格(六色底 XCross 缺的是 9,10 反而
+  // 有那 438 个),所以按连续段逐段报,不假设只有一条尾巴。
+  const gaps = body ? spans(range(mMin, bounds.god).filter((d) => !allowed.includes(d))) : [];
+  const gapText = gaps.map(([a, b]) => (a === b ? `${a}` : `${a}–${b}`)).join('、');
 
   return (
     <>
@@ -156,7 +169,7 @@ export default function GenDiffConfig({ isZh, settings, updateSettings, toggleSl
                 <RangeSlider
                   min={mMin}
                   max={bounds.god}
-                  softMax={mMax}
+                  allowed={allowed}
                   value={[lo, hi]}
                   onChange={([a, b]) => updateSettings({ genDiffSteps: range(a, b) })}
                   marks={range(mMin, bounds.god)}
@@ -168,18 +181,20 @@ export default function GenDiffConfig({ isZh, settings, updateSettings, toggleSl
 
           {/* div 而非 p:InfoTooltip 展开的气泡是 div,套在 p 里是非法嵌套(浏览器会自动闭合 p,
               服务端与客户端的 DOM 因此对不上 → hydration 报错)。 */}
-          {capped && (
+          {gaps.length > 0 && (
             <div className="wca-src-hint gen-diff-cap">
-              {tr({ zh: `${capSpan} 步太罕见,抽不出来`, en: `${capSpan} moves: too rare to draw` })}
+              {tr({ zh: `${gapText} 步太罕见,抽不出来`, en: `${gapText} moves: too rare to draw` })}
               <InfoTooltip
                 iconSize={12}
                 content={tr({
                   zh: `刻度画到 ${bounds.god} 步,是因为这个难度确实存在 —— 站内数据里见过这样的状态。\n`
-                    + '但越深的档状态越少,多底色 / 最优槽还要每个底色、每个槽同时这么深;'
-                    + `均匀随机撞不上,一条打乱的等待时间里出不来,所以只放到 ${bounds.draw} 步。`,
+                    + '但越深的档状态越少,多底色 / 最优槽还要每个底色、每个槽同时这么深,均匀随机撞不上。'
+                    + '整档能一个不漏地列出来的(六色底十字 8 步共 40 个、六色底 XCross 10 步共 438 个)'
+                    + '就直接从那份名单里出题,列不出来的才置灰。',
                   en: `The axis runs to ${bounds.god} because that difficulty really exists — the site's own data contains such states.\n`
-                    + 'But deeper bands hold ever fewer states, and multi-colour / best-slot needs every colour and every slot to be that deep at once. '
-                    + `A uniform draw never lands on one within the wait for a single scramble, so the cap is ${bounds.draw}.`,
+                    + 'But deeper bands hold ever fewer states, and multi-colour / best-slot needs every colour and every slot to be that deep at once, '
+                    + 'which a uniform draw never hits. Where the whole band can be listed (40 states for six-colour cross at 8, 438 for '
+                    + 'six-colour XCross at 10) cases come straight off that list; only the bands we cannot list are greyed out.',
                 })}
               />
             </div>
