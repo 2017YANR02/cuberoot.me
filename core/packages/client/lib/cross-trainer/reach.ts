@@ -69,7 +69,9 @@ const DRAW: Record<string, StageReach> = {
   'std/cross': { fixed: [8, 8, 7, 7], best: [8, 8, 7, 7] },
   'std/xcross': { fixed: [10, 9, 9, 9], best: [9, 9, 8, 8] },
   'std/xxcross': { fixed: [11, 11, 11, 10], best: [10, 10, 10, 10] },
-  'eo/eo_cross': { fixed: [10, 9, 9, 8], best: [10, 9, 9, 8] },
+  // 2026-08-03 重测:EOCross 的每色口径改成「两条垂直轴取更小」(§6.1),帧数翻倍 → 度量整体变浅,
+  // 深档更稀有,四色那格从 9 掉到 8。
+  'eo/eo_cross': { fixed: [10, 9, 8, 8], best: [10, 9, 8, 8] },
   'pair/cross_pair': { fixed: [9, 8, 8, 7], best: [8, 8, 7, 7] },
   'pair/xcross_pair': { fixed: [10, 10, 9, 9], best: [9, 9, 9, 8] },
   'pseudo/pseudo_cross': { fixed: [8, 8, 7, 6], best: [8, 8, 7, 6] },

@@ -42,13 +42,13 @@ const CASES: Case[] = [
   { dir: 'comp_steps_pair', offset: 0, variant: 'pair', stage: 'cross_pair' },
   { dir: 'comp_steps_pair', offset: 6, variant: 'pair', stage: 'xcross_pair' },
   { dir: 'comp_steps_pseudo', offset: 0, variant: 'pseudo', stage: 'pseudo_cross' },
+  { dir: 'comp_steps_eo', offset: 0, variant: 'eo', stage: 'eo_cross' },
   { dir: 'comp_steps_eoline', offset: 0, variant: 'eoline', stage: 'eo' },
   { dir: 'comp_steps_eoline', offset: 6, variant: 'eoline', stage: 'eoline' },
   { dir: 'comp_steps_222', offset: 0, variant: '222', stage: 'block222' },
   // Known divergences, measured 2026-08-03 and tracked in docs/cross-trainer-difficulty.md §6.1.
-  // All three involve a definition the port guessed rather than read off the engine: EOCross's
-  // orientation axis, and what "pseudo" means once a slot is in play.
-  { dir: 'comp_steps_eo', offset: 0, variant: 'eo', stage: 'eo_cross', hits: 959 },
+  // Both are the same shape of mistake: the port pairs one F2L slot's corner with that same slot's
+  // edge, while the engine lets the two come from DIFFERENT slots (16 combinations, not 4).
   { dir: 'comp_steps_pseudo', offset: 6, variant: 'pseudo', stage: 'pseudo_xcross', hits: 822 },
   { dir: 'comp_steps_pseudo_pair', offset: 0, variant: 'pseudo_pair', stage: 'pseudo_cross_pseudo_pair', hits: 911 },
 ];
