@@ -429,6 +429,13 @@ export default function CalendarClient() {
   // 点一下空白格。年视图的格子只有二十几像素,点它多半是想去那天看看,不是想在那儿
   // 建个全天日程(Google 同样是跳转);其余视图按点中的位置起一条 —— 时间格 1 小时,
   // 全天 / 月格一整天,和拖一格出来的时长一致。
+  /** 「创建」/ 悬浮钮:从下一个整点起一小时。左栏和窄屏那颗共用同一份。 */
+  const openCreateNow = useCallback(() => {
+    const base = new Date();
+    base.setMinutes(0, 0, 0);
+    openCreate(base.getTime() + 3600_000, base.getTime() + 2 * 3600_000, false);
+  }, [openCreate]);
+
   const onDateClick = useCallback((ms: number, allDay: boolean) => {
     if (view === 'multiMonthYear') {
       void setViewParam('timeGridDay');
@@ -728,6 +735,7 @@ export default function CalendarClient() {
           weekStart={prefs.weekStart}
           busyDays={busyDays}
           invites={invites}
+          onCreate={() => { openCreateNow(); if (isMobile) setSidebarOpen(false); }}
           onPickDate={(ms) => { gotoDate(ms); if (isMobile) setSidebarOpen(false); }}
           onToggle={store.toggleHidden}
           onAdd={() => void store.addCalendar({
@@ -755,6 +763,10 @@ export default function CalendarClient() {
             <CalendarGrid
               ref={gridRef}
               view={view}
+              tzLabel={
+                // Google 那里写 GMT+08;站内一律 UTC+8(时区选择器就在上面一行,别两种写法)
+                formatOffset(zoneOffsetMinutes(displayTz, new Date(range.anchor)))
+              }
               initialDate={initialDate}
               events={fcEvents}
               tz={displayTz}
@@ -813,11 +825,7 @@ export default function CalendarClient() {
         type="button"
         className="cal-fab"
         aria-label={tr({ zh: '新建日程', en: 'New event' })}
-        onClick={() => {
-          const base = new Date();
-          base.setMinutes(0, 0, 0);
-          openCreate(base.getTime() + 3600_000, base.getTime() + 2 * 3600_000, false);
-        }}
+        onClick={openCreateNow}
       >
         <Plus size={22} aria-hidden />
       </button>

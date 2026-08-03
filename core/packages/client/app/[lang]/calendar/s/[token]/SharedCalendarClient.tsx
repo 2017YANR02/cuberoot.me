@@ -15,7 +15,7 @@ import { ListSelect } from '@/components/ListSelect';
 import { useCopy } from '@/hooks/useCopy';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr, useLang } from '@/i18n/tr';
-import { localZone, isValidZone } from '@cuberoot/shared/tz';
+import { localZone, isValidZone, formatOffset, zoneOffsetMinutes } from '@cuberoot/shared/tz';
 import { colorHex, readableInk } from '@/lib/calendar-colors';
 import { expandRange } from '@/lib/calendar-store';
 import { fetchPublicCalendar, icsFeedUrl, type PublicCalendar } from '@/lib/calendar-api';
@@ -167,6 +167,8 @@ export default function SharedCalendarClient() {
             <CalendarGrid
               ref={gridRef}
               view={view}
+              // 分享页更需要这个:看的人多半不在发布者的时区。
+              tzLabel={formatOffset(zoneOffsetMinutes(displayTz, new Date()))}
               initialDate={Date.now()}
               events={fcEvents}
               tz={displayTz}
