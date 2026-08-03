@@ -56,6 +56,48 @@ export function blockPieces(face: FaceIdx, slot: number): { corner: number; edge
 /** The canonical frame this file's table is built for: D cross, FR slot → the DFR block. */
 export const CANON_BLOCK = blockPieces(CANON_FACE, CANON_SLOT);
 
+/**
+ * The two Roux openers' whole histograms, from ./tracked's BFS. Exported because
+ * /scramble/stats ships them as exhaustive datasets and both places must read one number;
+ * `tests/cross_trainer_tracked.test.ts` re-derives them from every frame on every run.
+ */
+export const SQUARE122_HISTOGRAM: readonly number[] = [1, 9, 78, 590, 2922, 6523, 2525, 24];
+export const BLOCK123_HISTOGRAM: readonly number[] =
+  [1, 12, 132, 1406, 14099, 122279, 797145, 2638638, 1715068, 33460];
+
+/** The face opposite `f` — kociemba's order is U R F D L B, so it is a fixed offset. */
+const opposite = (f: FaceIdx): FaceIdx => ((f + 3) % 6) as FaceIdx;
+/** The edge piece shared by two adjacent faces. */
+const sharedEdge = (a: FaceIdx, b: FaceIdx): number =>
+  FACE_EDGES[a].find((e) => FACE_EDGES[b].includes(e))!;
+
+/**
+ * Roux's first block, the 1×2×3 standing on face `f` against side face `s`: face s's two
+ * corners that also touch f, plus its three edges that avoid the face opposite f. Derived from
+ * membership like the 2×2×2 above, so the four side faces of a colour come out for free —
+ * `solver/src/bin/roux_analyzer.rs` measures exactly those four ("每底色 4 个侧立块最小").
+ */
+export function block123Pieces(f: FaceIdx, s: FaceIdx): { corners: number[]; edges: number[] } {
+  if (s === f || s === opposite(f)) throw new Error(`side face ${s} is not adjacent to ${f}`);
+  const opp = opposite(f);
+  return {
+    corners: FACE_CORNERS[s].filter((c) => FACE_CORNERS[f].includes(c)),
+    edges: FACE_EDGES[s].filter((e) => !FACE_EDGES[opp].includes(e)),
+  };
+}
+
+/**
+ * Roux's square, the 1×2×2 half of that block: one of its two corners, the f–s edge, and the
+ * edge joining s to that corner's third face. `which` picks the half (0/1 = the two corners in
+ * ascending piece order) — the eight targets a colour has in the analyzer are these two halves
+ * over the four side faces.
+ */
+export function square122Pieces(f: FaceIdx, s: FaceIdx, which: 0 | 1): { corners: number[]; edges: number[] } {
+  const corner = block123Pieces(f, s).corners[which];
+  const third = CORNER_FACES[corner].find((x) => x !== f && x !== s)! as FaceIdx;
+  return { corners: [corner], edges: [sharedEdge(f, s), sharedEdge(s, third)].sort((a, b) => a - b) };
+}
+
 // ── coordinate ───────────────────────────────────────────────────────────────────────────────
 
 /** Pack three edge placements (each `slot*2 + ori`, in tracked-piece order) into 0..10,559. */

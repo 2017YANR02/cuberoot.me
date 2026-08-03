@@ -1,11 +1,25 @@
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
-  EXACT_DIST, EXACT_STAGES, SLOT_OK,
+  EXACT_DIST, EXACT_STAGES, EXACT_STAGE_VARIANT, EXACT_VARIANT_STAGES, FRAME_NOTE, FRAME_STATES,
+  SLOT_OK,
   compactExact, exactColorsOf, exactMean, exactRatio, exactRatios, formatExactPct, getExactCell,
   groupDigits, isSlotApplicable,
   type ExactFull, type ExactStage,
 } from '@/app/[lang]/scramble/stats/_data/exact_dist';
 import { CUBE3_STATES, GOD_DIST_333, GOD_DIST_333_NORMALIZED } from '@/lib/god-distance-333';
+import { EO_UI_STAGES, VARIANT_STAGES, uiVariantOf } from '@/lib/scramble-variants';
+import {
+  BLOCK123_HISTOGRAM, SQUARE122_HISTOGRAM, block222Histogram,
+} from '@/lib/cross-trainer/block';
+import { eoLineHistogram } from '@/lib/cross-trainer/eoline';
+import { PAIR_HISTOGRAM, PSEUDO_PAIR_HISTOGRAM } from '@/lib/cross-trainer/pair';
+import { PSEUDO_XCROSS_HISTOGRAM } from '@/lib/cross-trainer/multi';
+import {
+  EO_AXIS_STATES, EO_BEST_OF_2_HIST, EO_BEST_OF_3_HIST, EO_ONE_AXIS_HIST,
+} from '@/lib/eo-axis-dist';
 
 /**
  * 精确穷举分布的回归锁。数值来自 solver/src/bin/dist_*.rs 的 GOLDEN 注释
@@ -29,12 +43,14 @@ describe('exact_dist 数据完整性', () => {
   // 13 个完整分布 = 9 个标准阶段 + 4 档伪十字(dist_cross_6col --pseudo × 四个色集)。
   // 四色底那 4 格没有对应 bin,0 步由 lib/skip-probability 的容斥现算 ——
   // 同一套代码把其余 12 个 0 步金标逐位复现,证明见 tests/skip_probability.test.ts。
-  it('矩阵 28 格:14 个完整分布 + 14 个仅 0 步', () => {
+  // 整解那一格是同一个对象挂在四个底色键上(最优解长度与底色无关),所以它记 4 格。
+  // 2×2×3(E1)与 EO+XCross(E2)是 solver/src/bin/dist_tracked.rs 跑出来的,各占 1 格。
+  it('矩阵 46 格:32 个完整分布 + 14 个仅 0 步', () => {
     let full = 0, zero = 0;
     eachCell((_s, _sl, _c, cell) => {
       if ((cell as ExactFull).kind === 'full') full++; else zero++;
     });
-    expect(full).toBe(14);
+    expect(full).toBe(32);
     expect(zero).toBe(14);
   });
 
@@ -307,12 +323,170 @@ describe('底色折叠与槽位适用性', () => {
     expect(isSlotApplicable('xxcross', 'diag')).toBe(true);
   });
 
-  it('SLOT_OK 覆盖全部阶段,且每档都真有数据', () => {
+  // 菜单与 WCA 那套逐项相同,所以绝大多数格子还没算 —— 那些格子必须**说得出话**:
+  // 要么有数据,要么是一条写清楚了可行性与卡点的 todo。空着不算数。
+  it('每个适用的格子都取得到东西:有数据,或一条说得清楚的 todo', () => {
     for (const stage of EXACT_STAGES) {
-      expect(SLOT_OK[stage].length).toBeGreaterThan(0);
+      expect(SLOT_OK[stage].length, stage).toBeGreaterThan(0);
       for (const slot of SLOT_OK[stage]) {
-        expect(Object.keys(EXACT_DIST[stage][slot] ?? {}).length).toBeGreaterThan(0);
+        for (const colors of ['W', 'WY', 'BGOR', 'BGORWY']) {
+          const cell = getExactCell(stage, slot, colors);
+          expect(cell, `${stage}/${slot}/${colors}`).not.toBe(null);
+          if (cell!.kind !== 'todo') continue;
+          expect(cell!.note.zh.length, `${stage}/${slot}/${colors} zh`).toBeGreaterThan(4);
+          expect(cell!.note.en.length, `${stage}/${slot}/${colors} en`).toBeGreaterThan(4);
+          // 「待跑」是有承诺的一档:必须指得出跟踪文档里的单元号。
+          if (cell!.feasible === 'ready') expect(cell!.unit, `${stage}/${slot}/${colors}`).toBeTruthy();
+        }
       }
+    }
+  });
+
+  it('固定单帧那一档都写明了固定的是什么', () => {
+    for (const stage of EXACT_STAGES) {
+      if (!SLOT_OK[stage].includes('fixed1')) continue;
+      expect(FRAME_NOTE[stage], stage).toBeTruthy();
+      expect(FRAME_STATES[stage], stage).toMatch(/^\d+$/);
+    }
+  });
+});
+
+/**
+ * 菜单必须和 WCA 那套**逐项相同** —— 用户看到的两个下拉是同一套词表,只是数据来源不同。
+ * 真源是 stats/scramble/distribution.json 的 sets.wca.variants;这里逐键逐项对,
+ * 顺序也对。管道加了新变体 / 新阶段而精确集没跟上,这条当场红。
+ */
+describe('菜单与 WCA 数据集逐项相同', () => {
+  const STATS = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../../stats/scramble');
+  const wca = JSON.parse(readFileSync(path.join(STATS, 'distribution.json'), 'utf-8'))
+    .sets.wca.variants as Record<string, { stages: string[] }>;
+
+  it('变体键集合相同', () => {
+    expect(Object.keys(EXACT_VARIANT_STAGES).sort()).toEqual(Object.keys(wca).sort());
+  });
+
+  it('每个变体的阶段序相同', () => {
+    for (const v of Object.keys(wca)) {
+      expect(EXACT_VARIANT_STAGES[v], v).toEqual(wca[v].stages);
+    }
+  });
+
+  it('展平后的阶段表就是矩阵的行,一个不多一个不少', () => {
+    const flat = Object.values(wca).flatMap((v) => v.stages).sort();
+    expect([...EXACT_STAGES].sort()).toEqual(flat);
+    expect(EXACT_STAGES.length).toBe(39);
+    // 每个阶段都得知道自己属于哪个变体(矩阵分组 + 深链的 variant 参数)
+    for (const st of EXACT_STAGES) expect(EXACT_STAGE_VARIANT[st], st).toBeTruthy();
+  });
+
+  it('展开序让同一个 UI 方法连成一段(矩阵靠它合并方法列)', () => {
+    const seen = new Set<string>();
+    let prev = '';
+    for (const st of EXACT_STAGES) {
+      const v = uiVariantOf(EXACT_STAGE_VARIANT[st]);
+      if (v === prev) continue;
+      expect(seen.has(v), `${v} 被拆成了两段`).toBe(false);
+      seen.add(v);
+      prev = v;
+    }
+    // 10 个方法 = 截图里那份下拉
+    expect(seen.size).toBe(10);
+  });
+
+  it('砖 / EO 两个聚合方法的阶段序与阶段下拉一致', () => {
+    const stagesOf = (ui: string) => EXACT_STAGES.filter((s) => uiVariantOf(EXACT_STAGE_VARIANT[s]) === ui);
+    expect(stagesOf('block')).toEqual(VARIANT_STAGES.block);
+    expect(stagesOf('eo')).toEqual(EO_UI_STAGES);
+  });
+});
+
+/**
+ * 这一批格子不是从 solver 的 GOLDEN 抄来的,而是站内自己算的 —— 所以每一格都必须**指回它的
+ * 计算源**,而不是各留一份数字。源本身由各自的测试每次重算(cross_trainer_tracked /
+ * eo_axis_dist / cross_trainer_pair 的 PAIR_FULL_BFS / cross_trainer_multi 的 PX_FULL_BFS)。
+ */
+describe('站内自算的格子:与计算源同一个数', () => {
+  const full = (stage: string, slot: string) => getExactCell(stage, slot, 'W') as ExactFull;
+  const nums = (c: ExactFull) => c.counts.map(Number);
+
+  it('纯 EO 三档:固定轴 / 两轴取最优 / 三轴取最优', () => {
+    expect(nums(full('eo', 'fixed1'))).toEqual([...EO_ONE_AXIS_HIST]);
+    expect(full('eo', 'fixed1').total).toBe('2048');
+
+    for (const k of ['W', 'WY']) {
+      const c = getExactCell('eo', 'unfixed', k) as ExactFull;
+      expect(nums(c), k).toEqual([...EO_BEST_OF_2_HIST]);
+      expect(c.total).toBe(String(EO_AXIS_STATES));
+    }
+    for (const k of ['BGOR', 'BGORWY']) {
+      const c = getExactCell('eo', 'unfixed', k) as ExactFull;
+      expect(nums(c), k).toEqual([...EO_BEST_OF_3_HIST]);
+    }
+    // 轴越多越浅,但直径都是 7 —— 三档一起看才说明白「多给轴只是让深档变稀有」
+    expect(exactMean(full('eo', 'fixed1')) > exactMean(getExactCell('eo', 'unfixed', 'W') as ExactFull)).toBe(true);
+    expect(exactMean(getExactCell('eo', 'unfixed', 'W') as ExactFull)
+      > exactMean(getExactCell('eo', 'unfixed', 'BGOR') as ExactFull)).toBe(true);
+    expect(full('eo', 'fixed1').counts.length).toBe(8);
+    expect((getExactCell('eo', 'unfixed', 'BGORWY') as ExactFull).counts.length).toBe(8);
+  });
+
+  it('EOLine / 222 / 122 / 123 = 各自那台整表 BFS', () => {
+    expect(nums(full('eoline', 'fixed1'))).toEqual(eoLineHistogram());
+    expect(nums(full('block222', 'fixed1'))).toEqual(block222Histogram());
+    expect(nums(full('fbsquare', 'fixed1'))).toEqual([...SQUARE122_HISTOGRAM]);
+    expect(nums(full('rouxs1', 'fixed1'))).toEqual([...BLOCK123_HISTOGRAM]);
+  });
+
+  it('基态 / 伪基态 / 伪 XCross 定槽 = 72,990,720 全表 BFS', () => {
+    expect(nums(full('cross_pair', 'fixed1'))).toEqual([...PAIR_HISTOGRAM]);
+    expect(nums(full('pseudo_cross_pseudo_pair', 'fixed1'))).toEqual([...PSEUDO_PAIR_HISTOGRAM]);
+    expect(nums(full('pseudo_xcross', 'fixed1'))).toEqual([...PSEUDO_XCROSS_HISTOGRAM]);
+    for (const s of ['cross_pair', 'pseudo_cross_pseudo_pair', 'pseudo_xcross', 'xcross']) {
+      expect(full(s, 'fixed1').total, s).toBe('72990720');
+    }
+    // 放宽目标集只会变近:同一个坐标上,伪基态 ≤ 基态、伪 XCross ≤ XCross(按均值)
+    expect(exactMean(full('pseudo_cross_pseudo_pair', 'fixed1')) < exactMean(full('cross_pair', 'fixed1'))).toBe(true);
+    expect(exactMean(full('pseudo_xcross', 'fixed1')) < exactMean(full('xcross', 'fixed1'))).toBe(true);
+  });
+
+  it('整体那一格 = cube20.org 的归一化分布,且标了「不是全穷举」', () => {
+    const c = getExactCell('333', 'unfixed', 'BGORWY') as ExactFull;
+    expect(c.total).toBe(CUBE3_STATES);
+    expect(c.counts).toEqual([...GOD_DIST_333_NORMALIZED]);
+    expect(c.caveat).toBeTruthy();
+    // 与底色无关:四档取到的是同一个对象
+    expect(getExactCell('333', 'unfixed', 'W')).toBe(c);
+    expect(getExactCell('333', 'unfixed', 'BGOR')).toBe(c);
+    expect(exactMean(c).toFixed(2)).toBe('17.70');
+  });
+
+  // 2×2×3 与 EO+XCross 这两条曲线出自 Rust(solver/src/bin/dist_tracked.rs),TS 这边没法
+  // 现算复核。能查的是「加约束只会变难」:大问题投影到小问题上,每个小态的原像数一样多,
+  // 所以大问题的累积分布逐档不高于小问题。抄错一位数几乎必然违反它。
+  const cumNotAbove = (big: ExactFull, small: ExactFull, label: string) => {
+    const tb = BigInt(big.total), ts = BigInt(small.total);
+    let cb = 0n, cs = 0n;
+    const n = Math.max(big.counts.length, small.counts.length);
+    for (let d = 0; d < n; d++) {
+      cb += BigInt(big.counts[d] ?? '0');
+      cs += BigInt(small.counts[d] ?? '0');
+      expect(cb * ts <= cs * tb, `${label} d=${d}`).toBe(true);
+    }
+  };
+
+  it('2×2×3 / EO+XCross:比自己包住的子问题逐档更难', () => {
+    cumNotAbove(full('block223', 'fixed1'), full('rouxs1', 'fixed1'), '223 ⊃ 123');
+    cumNotAbove(full('eo_xcross', 'fixed1'), full('eo_cross', 'fixed1'), 'EOXCross ⊃ EOCross');
+    cumNotAbove(full('eo_xcross', 'fixed1'), full('xcross', 'fixed1'), 'EOXCross ⊃ XCross');
+    // 同一台 Rust 引擎在同一次运行里复现的五条已知曲线之一(xcross),口径没跑偏的旁证
+    expect(full('xcross', 'fixed1').total).toBe('72990720');
+  });
+
+  it('固定单帧那几格的 total 就是它的坐标空间', () => {
+    for (const stage of EXACT_STAGES) {
+      const cell = EXACT_DIST[stage].fixed1?.W;
+      if (!cell || cell.kind !== 'full') continue;
+      expect(cell.total, stage).toBe(FRAME_STATES[stage]);
     }
   });
 });

@@ -133,8 +133,10 @@ describe('EOCross:固定轴 ≠ 站内真题那列', () => {
 });
 
 describe('EOCross:进了精确集', () => {
+  // 落在「固定单帧」而不是「取最优帧」:底面定死之后 EO 还剩两条轴(差一个 y 旋转),
+  // 站内单色底口径是那两条取更短的一条,这张表只固定一条轴 —— 它是上界,不是站内那条曲线。
   it('exact_dist 的 eo_cross 格与本文件同源', () => {
-    const cell = EXACT_DIST.eo_cross.unfixed!.W as ExactFull;
+    const cell = EXACT_DIST.eo_cross.fixed1!.W as ExactFull;
     expect(cell.kind).toBe('full');
     expect(cell.total).toBe(String(EO_CROSS_TOTAL));
     expect(cell.counts.map(Number)).toEqual([...EO_CROSS_HIST]);

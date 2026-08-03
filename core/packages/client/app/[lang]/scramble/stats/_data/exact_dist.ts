@@ -1,72 +1,292 @@
 /**
- * 精确穷举分布 —— 三阶 Cross / XCross 系列子阶段在**全状态空间**上的深度分布。
+ * 精确穷举分布 —— 三阶各子阶段在**全状态空间**上的深度分布。
  *
  * 与本页其它数据的根本区别:distribution.json 是拿真实 WCA 打乱跑分析器得到的**经验分布**
  * (n = 130 万条),本文件是把整个状态空间穷举 BFS 得到的**理论分布**,与任何打乱池无关。
  * 两者同图叠加即可看出 TNoodle 打乱离均匀随机态有多近(实测最大逐档偏差 0.07 个百分点)。
  *
- * 数据来源:solver/src/bin/dist_*.rs 头注释里的 GOLDEN 常量。每个数据集都是
- * 「C++ 先出金标 → Rust 独立复算 → 逐位一致」,两端耗时对照见 solver/CLAUDE.md。
- * 例外是四色底那 4 个「仅 0 步」格:solver 没有对应 bin,由 lib/skip-probability 的
- * 容斥现算 —— 同一套代码把其余 12 个 0 步金标(分别出自 5 个不同的 bin)逐位复现,
- * 见 tests/skip_probability.test.ts。
- * 全部 28 个数据集加起来不到 8KB,故走 TS 常量而非 stats/*.json 的 rsync 管道。
- * 例外之二是 EOCross:它没有 Rust bin,由 lib/eocross-dist.ts 在纯 TS 里 BFS 全部
- * 24,330,240 个态得到(约 7 秒,只在测试里跑)。
+ * ## 三种口径,不能混着读
+ *
+ * 同一个阶段问「几步」可以问出三件不同的事,本文件把它们分到不同的**槽/帧档**里:
+ *
+ *   取最优帧(`unfixed`)  该底色下所有帧取最小 —— **站内口径**,与真题那列可以直接叠加。
+ *                        六色底十字 = 六个面取最优,单色底 XCross = 该色四个槽取最优。
+ *   固定单帧(`fixed1`)  把度量钉死在一个具体的帧上(一个槽 / 一条 EO 轴 / 一个块)。
+ *                        它是站内口径的**上界**,与真题那列不是同一个问题,不叠加。
+ *   固定双槽(`adj`/`diag`) 两个槽的相邻 / 对角两种形状,是两个不同的谜题,分开列。
+ *
+ * 「固定单帧」不是凑数:一个帧的坐标空间往往小到能整表 BFS,而同一阶段的站内口径要读整只
+ * 魔方(多帧取最小),动辄 1e14 以上。本文件里有数的格子多半是前者。
+ *
+ * ## 数据来源(每一格都标了)
+ *
+ *   - `solver/src/bin/dist_*.rs` 头注释里的 GOLDEN 常量:「C++ 先出金标 → Rust 独立复算 →
+ *     逐位一致」。十字族的 14 格出自这里。
+ *   - 四色底那 4 个「仅 0 步」格:`lib/skip-probability` 的容斥现算,同一套代码把其余 12 个
+ *     0 步金标逐位复现(`tests/skip_probability.test.ts`)。
+ *   - EOCross:`lib/eocross-dist.ts` 在纯 TS 里 BFS 全部 24,330,240 个态。
+ *   - 纯 EO 的多轴档:`lib/eo-axis-dist.ts`,70,963,200 的联合商空间(`tests/eo_axis_dist.test.ts`)。
+ *   - 122 / 123 / 222 三个块:`lib/cross-trainer/tracked.ts` 的通用整表 BFS,同一台引擎逐位
+ *     复现了十字与 222 两条已知曲线(`tests/cross_trainer_tracked.test.ts`)。
+ *   - 基态 / 伪基态 / 伪 XCross 三个定槽档:72,990,720 全表 BFS,`tests/cross_trainer_pair.test.ts`
+ *     (`PAIR_FULL_BFS=1`)与 `tests/cross_trainer_multi.test.ts`(`PX_FULL_BFS=1`)。后者顺带
+ *     用纯 TS 复算了 `dist_xcross_1col_fixed.rs` 的 GOLDEN,逐位相同。
+ *   - 整体:`lib/god-distance-333.ts`(cube20.org)。**这一格不是全穷举**,d ≥ 16 是估计值,
+ *     故带 `caveat`。
+ *
+ * 数据量不到 20KB,故走 TS 常量而非 stats/*.json 的 rsync 管道。
+ *
+ * ## 还没算的格子也要说话
+ *
+ * 菜单与 WCA 那套逐项相同(守卫:`tests/scramble_exact_dist.test.ts`),所以绝大多数格子是空的。
+ * 空格不写「暂无数据」,一律给 `kind: 'todo'`:坐标空间多大、可行性哪一档(代码就位 / 有路线没代码 /
+ * 现有硬件够不着)、卡在哪。要跑的单元列在 `solver/EXACT_DIST_EXPANSION.md`。
  *
  * ⚠ counts / total 一律是**字符串**,不是 number。双色底 XCross 的 d=7 是
  * 25,284,688,565,714,070,184,比 Number.MAX_SAFE_INTEGER 大三个数量级 —— 存成 number
- * 会静默丢精度且不报错。一切算术走 BigInt(见本文件底部的 exactPct / exactMean)。
+ * 会静默丢精度且不报错。一切算术走 BigInt(见本文件底部的 exactRatio / exactMean)。
  */
 
 import { groupDigits } from '@/lib/group-digits';
+import { CUBE3_STATES, GOD_DIST_333_NORMALIZED } from '@/lib/god-distance-333';
+
+/** 双语文案。 */
+export interface Text { zh: string; en: string }
 
 /**
- * 阶段键 —— 与 lib/scramble-variants.ts 的 VARIANT_STAGES 逐字相同,可与经验分布直接对照。
- * 精确集目前覆盖两个变体:标准 CFOP 的 5 个阶段 + 伪(pseudo)变体的十字。
+ * 阶段键 —— 与 lib/scramble-variants.ts 的 VARIANT_STAGES / distribution.json 的
+ * `variants[*].stages` 逐字相同,可与经验分布直接对照。全部 39 个都在,包括一个数都还没算的。
  */
 export type ExactStage =
+  | '333'
   | 'cross' | 'xcross' | 'xxcross' | 'xxxcross' | 'xxxxcross'
-  | 'pseudo_cross' | 'eo_cross';
-/** 精确集里 std 变体的阶段序(= VARIANT_STAGES.std)。 */
-export const EXACT_STD_STAGES: ExactStage[] = ['cross', 'xcross', 'xxcross', 'xxxcross', 'xxxxcross'];
-/** 精确集里 pseudo 变体的阶段序(VARIANT_STAGES.pseudo 的前缀,后三档还没算)。 */
-export const EXACT_PSEUDO_STAGES: ExactStage[] = ['pseudo_cross'];
-/** 精确集里 EO 变体的阶段序(VARIANT_STAGES.eo 的前缀,后四档还没算)。 */
-export const EXACT_EO_STAGES: ExactStage[] = ['eo_cross'];
-/** 全部有精确数据的阶段,覆盖矩阵与守卫测试按这个枚举。 */
-export const EXACT_STAGES: ExactStage[] = [
-  ...EXACT_STD_STAGES, ...EXACT_PSEUDO_STAGES, ...EXACT_EO_STAGES,
-];
+  | 'pseudo_cross' | 'pseudo_xcross' | 'pseudo_xxcross' | 'pseudo_xxxcross'
+  | 'cross_pair' | 'xcross_pair' | 'xxcross_pair' | 'xxxcross_pair'
+  | 'pseudo_cross_pseudo_pair' | 'pseudo_xcross_pseudo_pair'
+  | 'pseudo_xxcross_pseudo_pair' | 'pseudo_xxxcross_pseudo_pair'
+  | 'eo' | 'eoline'
+  | 'eo_cross' | 'eo_xcross' | 'eo_xxcross' | 'eo_xxxcross' | 'eo_xxxxcross'
+  | 'f2leo_cross' | 'f2leo_xcross' | 'f2leo_xxcross' | 'f2leo_xxxcross'
+  | 'pseudo_f2leo_cross' | 'pseudo_f2leo_xcross' | 'pseudo_f2leo_xxcross' | 'pseudo_f2leo_xxxcross'
+  | 'fbsquare' | 'rouxs1' | 'block222' | 'block223' | 'f2b'
+  | 'dr';
 
 /**
- * 槽位档。经验分布只有「不固定槽」这一种语义(分析器对 4 个 F2L 槽取 min),
- * 固定槽是精确集独有的额外内容,与真题无可比对象 → 叠加对照只在 unfixed 时可用。
+ * 每个**数据变体**的阶段序 —— 与 `stats/scramble/distribution.json` 的 `sets.wca.variants`
+ * 逐键逐项相同,页面据此把精确集的方法 / 阶段下拉做成和 WCA 那套一模一样。
+ * 漏一项、多一项、顺序不同都会被 `tests/scramble_exact_dist.test.ts` 抓住。
+ */
+export const EXACT_VARIANT_STAGES: Record<string, ExactStage[]> = {
+  '333': ['333'],
+  std: ['cross', 'xcross', 'xxcross', 'xxxcross', 'xxxxcross'],
+  pseudo: ['pseudo_cross', 'pseudo_xcross', 'pseudo_xxcross', 'pseudo_xxxcross'],
+  pair: ['cross_pair', 'xcross_pair', 'xxcross_pair', 'xxxcross_pair'],
+  pseudo_pair: [
+    'pseudo_cross_pseudo_pair', 'pseudo_xcross_pseudo_pair',
+    'pseudo_xxcross_pseudo_pair', 'pseudo_xxxcross_pseudo_pair',
+  ],
+  eoline: ['eo', 'eoline'],
+  eo: ['eo_cross', 'eo_xcross', 'eo_xxcross', 'eo_xxxcross', 'eo_xxxxcross'],
+  f2leo: ['f2leo_cross', 'f2leo_xcross', 'f2leo_xxcross', 'f2leo_xxxcross'],
+  pseudo_f2leo: [
+    'pseudo_f2leo_cross', 'pseudo_f2leo_xcross', 'pseudo_f2leo_xxcross', 'pseudo_f2leo_xxxcross',
+  ],
+  '123': ['fbsquare', 'rouxs1'],
+  '123x2': ['f2b'],
+  '222': ['block222'],
+  '223': ['block223'],
+  dr: ['dr'],
+};
+
+/**
+ * 变体的展示序,矩阵按它排行。= lib/scramble-variants 的 VARIANT_ORDER 展开到数据变体,
+ * 且展开顺序必须让**同一个 UI 方法的数据变体连成一段**、段内阶段序与阶段下拉一致:
+ * 砖那一段展平后是 122 / 123 / 222 / 223 / F2B(= VARIANT_STAGES.block),
+ * EO 那一段是 EO / EOLine / 十字…(= EO_UI_STAGES)。
+ */
+export const EXACT_VARIANT_ORDER: string[] = [
+  '333', 'std', 'pseudo', 'pair', 'pseudo_pair', 'eoline', 'eo', 'f2leo', 'pseudo_f2leo',
+  '123', '222', '223', '123x2', 'dr',
+];
+
+/** 全部阶段,按变体展示序展平 —— 覆盖矩阵与守卫测试按这个枚举。 */
+export const EXACT_STAGES: ExactStage[] = EXACT_VARIANT_ORDER.flatMap((v) => EXACT_VARIANT_STAGES[v]);
+
+/** 阶段 → 它属于哪个数据变体(矩阵分组、深链的 variant 参数都用它)。 */
+export const EXACT_STAGE_VARIANT: Record<string, string> = Object.fromEntries(
+  EXACT_VARIANT_ORDER.flatMap((v) => EXACT_VARIANT_STAGES[v].map((s) => [s, v])),
+);
+
+/** 精确集里 std 变体的阶段序(= VARIANT_STAGES.std)。 */
+export const EXACT_STD_STAGES: ExactStage[] = EXACT_VARIANT_STAGES.std;
+/** 精确集里 pseudo 变体的阶段序。 */
+export const EXACT_PSEUDO_STAGES: ExactStage[] = EXACT_VARIANT_STAGES.pseudo;
+/** 精确集里 eo 变体的阶段序。 */
+export const EXACT_EO_STAGES: ExactStage[] = EXACT_VARIANT_STAGES.eo;
+
+/**
+ * 帧档。经验分布只有「取最优帧」这一种语义(分析器对该底色的所有帧取 min),
+ * 固定帧是精确集独有的额外内容,与真题无可比对象 → 叠加对照只在 unfixed 时可用。
+ *
+ * 键名沿用最早那版(`fixed1` 当时只有 XCross 的定槽一种含义),换名会把已经发出去的深链打断;
+ * 含义已经推广成「一个具体的帧」,具体是哪个帧见 FRAME_NOTE。
  */
 export type ExactSlot = 'unfixed' | 'fixed1' | 'adj' | 'diag';
 
+export const SLOT_LABEL: Record<ExactSlot, Text> = {
+  unfixed: { zh: '取最优帧', en: 'Best frame' },
+  fixed1: { zh: '固定单帧', en: 'One fixed frame' },
+  adj: { zh: '固定相邻双槽', en: 'Fixed adjacent pair' },
+  diag: { zh: '固定对角双槽', en: 'Fixed diagonal pair' },
+};
+
 /**
- * 每个阶段有意义的槽位档。其余组合是**不适用**而非「未计算」——
- * Cross 阶段根本没有 F2L 槽的概念;XCross 只解 1 个槽,谈不上相邻/对角;
- * XXCross 要 2 个槽,谈不上固定单槽。不适用的入口直接不给(槽位下拉按阶段动态列出)。
+ * 每个阶段有意义的帧档。其余组合是**不适用**而非「未计算」——
+ * 十字 / 伪十字 / F2LEO 十字单色底只有一个帧(取最优 = 那个帧本身),故不另列固定档;
+ * XCross 只解 1 个槽,谈不上相邻 / 对角;XXCross 要 2 个槽,谈不上固定单槽;
+ * DR 只依赖轴,一个底色恰好一条轴。不适用的入口直接不给(帧档下拉按阶段动态列出)。
  */
 export const SLOT_OK: Record<ExactStage, ExactSlot[]> = {
+  '333': ['unfixed'],
+
   cross: ['unfixed'],
   xcross: ['unfixed', 'fixed1'],
   xxcross: ['unfixed', 'adj', 'diag'],
-  xxxcross: ['unfixed'],
+  xxxcross: ['unfixed', 'fixed1'],
   xxxxcross: ['unfixed'],
-  // 伪十字只解底面 4 棱,同样没有 F2L 槽的概念。
+
   pseudo_cross: ['unfixed'],
-  // EOCross 同理:只有 12 条棱参与,没有 F2L 槽。
-  eo_cross: ['unfixed'],
+  pseudo_xcross: ['unfixed', 'fixed1'],
+  pseudo_xxcross: ['unfixed', 'adj', 'diag'],
+  pseudo_xxxcross: ['unfixed', 'fixed1'],
+
+  cross_pair: ['unfixed', 'fixed1'],
+  xcross_pair: ['unfixed', 'adj', 'diag'],
+  xxcross_pair: ['unfixed'],
+  xxxcross_pair: ['unfixed'],
+
+  pseudo_cross_pseudo_pair: ['unfixed', 'fixed1'],
+  pseudo_xcross_pseudo_pair: ['unfixed', 'adj', 'diag'],
+  pseudo_xxcross_pseudo_pair: ['unfixed'],
+  pseudo_xxxcross_pseudo_pair: ['unfixed'],
+
+  eo: ['unfixed', 'fixed1'],
+  eoline: ['unfixed', 'fixed1'],
+
+  eo_cross: ['unfixed', 'fixed1'],
+  eo_xcross: ['unfixed', 'fixed1'],
+  eo_xxcross: ['unfixed', 'adj', 'diag'],
+  eo_xxxcross: ['unfixed', 'fixed1'],
+  eo_xxxxcross: ['unfixed'],
+
+  f2leo_cross: ['unfixed'],
+  f2leo_xcross: ['unfixed', 'fixed1'],
+  f2leo_xxcross: ['unfixed', 'adj', 'diag'],
+  f2leo_xxxcross: ['unfixed', 'fixed1'],
+
+  pseudo_f2leo_cross: ['unfixed'],
+  pseudo_f2leo_xcross: ['unfixed', 'fixed1'],
+  pseudo_f2leo_xxcross: ['unfixed', 'adj', 'diag'],
+  pseudo_f2leo_xxxcross: ['unfixed', 'fixed1'],
+
+  fbsquare: ['unfixed', 'fixed1'],
+  rouxs1: ['unfixed', 'fixed1'],
+  block222: ['unfixed', 'fixed1'],
+  block223: ['unfixed', 'fixed1'],
+  f2b: ['unfixed', 'fixed1'],
+
+  dr: ['unfixed'],
 };
 
-export const SLOT_LABEL: Record<ExactSlot, { zh: string; en: string }> = {
-  unfixed: { zh: '不固定槽', en: 'Any slot' },
-  fixed1: { zh: '固定 BL 槽', en: 'Fixed BL slot' },
-  adj: { zh: '固定相邻双槽', en: 'Fixed adjacent pair' },
-  diag: { zh: '固定对角双槽', en: 'Fixed diagonal pair' },
+/** 「固定单帧」到底固定的是什么 —— 每个阶段不一样,列头写不下,落到格子里。 */
+const SLOT_ONE = { zh: '一个 F2L 槽', en: 'one F2L slot' };
+const SLOT_THREE = { zh: '三个 F2L 槽', en: 'three F2L slots' };
+export const FRAME_NOTE: Partial<Record<ExactStage, Text>> = {
+  xcross: SLOT_ONE,
+  xxxcross: SLOT_THREE,
+  pseudo_xcross: SLOT_ONE,
+  pseudo_xxxcross: SLOT_THREE,
+  cross_pair: SLOT_ONE,
+  pseudo_cross_pseudo_pair: SLOT_ONE,
+  eo_xcross: SLOT_ONE,
+  eo_xxxcross: SLOT_THREE,
+  f2leo_xcross: SLOT_ONE,
+  f2leo_xxxcross: SLOT_THREE,
+  pseudo_f2leo_xcross: SLOT_ONE,
+  pseudo_f2leo_xxxcross: SLOT_THREE,
+  eo: { zh: '一条 EO 轴', en: 'one EO axis' },
+  eoline: { zh: '一条线(面 + 轴)', en: 'one line (face + axis)' },
+  eo_cross: { zh: '一条 EO 轴', en: 'one EO axis' },
+  fbsquare: { zh: '一个 1×2×2', en: 'one 1×2×2' },
+  rouxs1: { zh: '一个 1×2×3', en: 'one 1×2×3' },
+  block222: { zh: '一个 2×2×2', en: 'one 2×2×2' },
+  block223: { zh: '一个 2×2×3', en: 'one 2×2×3' },
+  f2b: { zh: '一对 1×2×3', en: 'one pair of 1×2×3' },
+};
+
+/**
+ * 一个具体帧上的坐标空间大小。「这一格有多贵」的第一判据,也是矩阵行头那一行小字。
+ * 全部由块的构成算出:追踪 k 个角 = ∏(8−i)·3,追踪 m 条棱 = ∏(12−i)·2;
+ * EO 族把「全部 12 条棱的翻转字」(2¹¹)乘上被追踪棱的有序位置。
+ */
+export const FRAME_STATES: Partial<Record<ExactStage, string>> = {
+  cross: '190080',
+  xcross: '72990720',
+  xxcross: '21459271680',
+  xxxcross: '4635202682880',
+  xxxxcross: '695280402432000',
+
+  pseudo_cross: '190080',
+  pseudo_xcross: '72990720',
+  pseudo_xxcross: '21459271680',
+  pseudo_xxxcross: '4635202682880',
+
+  cross_pair: '72990720',
+  xcross_pair: '21459271680',
+  xxcross_pair: '4635202682880',
+  xxxcross_pair: '695280402432000',
+
+  pseudo_cross_pseudo_pair: '72990720',
+  pseudo_xcross_pseudo_pair: '21459271680',
+  pseudo_xxcross_pseudo_pair: '4635202682880',
+  pseudo_xxxcross_pseudo_pair: '695280402432000',
+
+  eo: '2048',
+  eoline: '270336',
+
+  // EO 族:(4 条底棱的有序位置)×(被解的 n 个槽棱在剩下 8 个槽里的有序位置)×(角位)× 2¹¹ 翻转字。
+  eo_cross: '24330240',
+  eo_xcross: '4671406080',
+  eo_xxcross: '686696693760',
+  eo_xxxcross: '74163242926080',
+  eo_xxxxcross: '5562243219456000',
+
+  // F2LEO 族:棱那一半恒是「4 条底棱 + 4 条中层棱的有序位置 × 这 8 条的翻转位」= 51 亿,
+  // 阶段越深只是多乘几个角位(被解的那几个槽的角)。
+  f2leo_cross: '5109350400',
+  f2leo_xcross: '122624409600',
+  f2leo_xxcross: '2575112601600',
+  f2leo_xxxcross: '46352026828800',
+
+  pseudo_f2leo_cross: '5109350400',
+  pseudo_f2leo_xcross: '122624409600',
+  pseudo_f2leo_xxcross: '2575112601600',
+  pseudo_f2leo_xxxcross: '46352026828800',
+
+  fbsquare: '12672',
+  rouxs1: '5322240',
+  block222: '253440',
+  block223: '1532805120',
+  f2b: '5794003353600',
+
+  dr: '2217093120',
+};
+
+export const COLORS_LABEL: Record<ExactColors, Text> = {
+  W: { zh: '单色底', en: 'Single color' },
+  WY: { zh: '双色底', en: 'Dual color' },
+  BGOR: { zh: '四色底', en: 'Four colors' },
+  BGORWY: { zh: '六色底', en: 'Color neutral' },
 };
 
 /**
@@ -77,12 +297,12 @@ export const SLOT_LABEL: Record<ExactSlot, { zh: string; en: string }> = {
  */
 export type ExactColors = 'W' | 'WY' | 'BGOR' | 'BGORWY';
 export const EXACT_COLOR_KEYS: ExactColors[] = ['W', 'WY', 'BGOR', 'BGORWY'];
-export const COLORS_LABEL: Record<ExactColors, { zh: string; en: string }> = {
-  W: { zh: '单色底', en: 'Single color' },
-  WY: { zh: '双色底', en: 'Dual color' },
-  BGOR: { zh: '四色底', en: 'Four colors' },
-  BGORWY: { zh: '六色底', en: 'Color neutral' },
-};
+
+/**
+ * 与底色无关的阶段。整体(最优解长度)不看你打算把哪个面当底,四档底色是同一个问题、
+ * 同一份答案 —— 页面上也不给底色选择器(`is333`)。
+ */
+export const COLOR_FREE: ReadonlySet<string> = new Set<string>(['333']);
 
 /** 完整深度分布:counts[d] = 距离恰为 d 的状态数(字符串十进制),下标即深度,从 0 起。 */
 export interface ExactFull {
@@ -91,13 +311,15 @@ export interface ExactFull {
   counts: string[];
   /**
    * 有真题分布、但**与本格不是同一个口径**,故不叠加。文案直接摆给用户看。
-   * 目前只有 EOCross:本格固定一条 EO 轴,真题那列两条轴取 min(见 lib/eocross-dist.ts)。
-   * 留空 = 可以叠加(绝大多数格)。
+   * 固定帧那几档天然如此(页面按 slot !== 'unfixed' 一律禁掉叠加,不必逐格写);
+   * 这里只写「口径看着像、其实不是」的例外,目前是 EOCross。
    */
-  noOverlay?: { zh: string; en: string };
+  noOverlay?: Text;
+  /** 这一格不是全穷举,或者有别的必须先说清楚的前提。 */
+  caveat?: Text;
 }
-/** 只算出了 0 步状态数(完整分布跑不动或无可信金标)。blocked = 卡在哪,直接显示给用户。
- *  不单独导出 —— 消费方一律经 ExactCell 收窄(cell.kind === 'zero')。 */
+
+/** 只算出了 0 步状态数(完整分布跑不动或无可信金标)。blocked = 卡在哪,直接显示给用户。 */
 interface ExactZeroOnly {
   kind: 'zero';
   zero: string;
@@ -109,7 +331,7 @@ interface ExactZeroOnly {
   top?: {
     depth: number;
     count: string;
-    label: { zh: string; en: string };
+    label: Text;
     href?: string;
   };
   /**
@@ -122,17 +344,57 @@ interface ExactZeroOnly {
    * 表格写 7.97 —— 少进了一位。剩下这几格我们算不动,同一个来源同一套口径,当参考值比留空强。
    */
   refMean?: number;
-  blocked: { zh: string; en: string };
+  blocked: Text;
 }
-export type ExactCell = ExactFull | ExactZeroOnly;
+
+/**
+ * 还没算的格子。空着不写「暂无数据」—— 多大、可不可行、卡在哪,这三件事本身就是内容。
+ *
+ *   ready  算法与代码都就位,只差机时(单元号见 solver/EXACT_DIST_EXPANSION.md)
+ *   plan   路线清楚、代码还没写
+ *   oor    现有硬件够不着(out of reach),写清楚要多少
+ */
+export interface ExactPending {
+  kind: 'todo';
+  feasible: 'ready' | 'plan' | 'oor';
+  /** 该格坐标空间大小(十进制字符串);说不准就留空。 */
+  states?: string;
+  note: Text;
+  /** 跟踪文档里的单元号。 */
+  unit?: string;
+}
+
+export type ExactCell = ExactFull | ExactZeroOnly | ExactPending;
 
 type StageTable = Partial<Record<ExactSlot, Partial<Record<ExactColors, ExactCell>>>>;
 
+/** 四档底色同一份数据(与底色无关的阶段用)。 */
+const allColors = (cell: ExactCell): Partial<Record<ExactColors, ExactCell>> =>
+  Object.fromEntries(EXACT_COLOR_KEYS.map((c) => [c, cell]));
+
 /**
- * 28 个数据集。数值逐位抄自 solver/src/bin/dist_*.rs 的 GOLDEN 注释(四色底那 4 格与 EOCross 除外,
- * 见文件头),每组的和必须等于 total —— tests/scramble_exact_dist.test.ts 用 toBe 锁死。
+ * 已经算出来的格子。数值逐位抄自各自的来源(见文件头),每组的和必须等于 total ——
+ * tests/scramble_exact_dist.test.ts 用 toBe 锁死。没列出来的格子走 pendingCell() 的兜底。
  */
 export const EXACT_DIST: Record<ExactStage, StageTable> = {
+  // ── 整体 ──────────────────────────────────────────────────────────────
+  // lib/god-distance-333.ts(cube20.org)。唯一一格不是自己穷举出来的。
+  '333': {
+    unfixed: allColors({
+      kind: 'full',
+      total: CUBE3_STATES,
+      counts: [...GOD_DIST_333_NORMALIZED],
+      caveat: {
+        zh: '这一格只有 d ≤ 15 是穷举精确值(Rokicki 等人,2010)。d = 16..19 cube20.org 只公布两位'
+          + '有效数字,这里按「|G| − Σ(d ≤ 15)」这个精确的尾部总和等比归一化;d = 20 的 4.9 亿是'
+          + '「已经找到这么多个」的下界。别把这四档的位数当真。',
+        en: 'Only d ≤ 15 is an exact enumeration here (Rokicki et al., 2010). cube20.org publishes '
+          + 'd = 16..19 to two significant figures; those four bins are scaled to the exact tail total '
+          + '|G| − Σ(d ≤ 15), and the 490 million at d = 20 is a lower bound, not a count.',
+      },
+    }),
+  },
+
   // ── Cross ─────────────────────────────────────────────────────────────
   // dist_cross_1col / _2col / _6col(四色底走 `dist_cross_6col --faces LRFB`)
   cross: {
@@ -166,7 +428,7 @@ export const EXACT_DIST: Record<ExactStage, StageTable> = {
   },
 
   // ── XCross ────────────────────────────────────────────────────────────
-  // dist_xcross_1col(不固定槽,4 槽取 min)/ dist_xcross_1col_fixed(固定 BL 槽)
+  // dist_xcross_1col(不固定槽,4 槽取 min)/ dist_xcross_1col_fixed(固定单槽)
   // / dist_xcross_2col / dist_xcross_6col_0f
   xcross: {
     unfixed: {
@@ -361,29 +623,6 @@ export const EXACT_DIST: Record<ExactStage, StageTable> = {
     },
   },
 
-
-  // ── EOCross ───────────────────────────────────────────────────────────
-  // lib/eocross-dist.ts 现场 BFS(11,880 × 2,048 = 24,330,240),与 3x3.xlsx 的
-  // `fixed eocross` 表逐档相同;d=10 的 140 个态在 /scramble/hardest 列全了。
-  // 唯一一格不叠真题:口径不同(固定轴 vs 两轴取 min),见 noOverlay。
-  eo_cross: {
-    unfixed: {
-      W: {
-        kind: 'full',
-        total: '24330240',
-        counts: ['1', '15', '178', '1982', '21041', '204732', '1645039',
-          '8477633', '12917628', '1061851', '140'],
-        noOverlay: {
-          zh: '这一格不叠真题对照:底面定死后 EO 还剩两条轴可选(差一个 y 旋转),本格固定一条轴,'
-            + '而真题那列出自 Rust eo_cross_analyzer —— 它对两条轴取更短的那条。'
-            + '差距是系统性的:固定轴均值 7.531,真题那列 7.219。',
-          en: 'No WCA overlay here: with the bottom face fixed, EO still has two possible axes (a y rotation apart). '
-            + 'This cell fixes one axis, while the empirical column comes from the Rust eo_cross_analyzer, which takes '
-            + 'the shorter of the two. The gap is systematic: 7.531 moves fixed-axis vs 7.219 for that column.',
-        },
-      },
-    },
-  },
   // ── 伪十字(pseudo cross)────────────────────────────────────────────────
   // dist_cross_6col --pseudo --faces {U,UD,LRFB,UDLRFB}。
   // 与上面的 Cross 是同一份 12!·2¹¹ 商空间、同一个分母,只把目标集从「还原」放宽成
@@ -418,7 +657,342 @@ export const EXACT_DIST: Record<ExactStage, StageTable> = {
       },
     },
   },
+
+  // ── 伪 XCross ──────────────────────────────────────────────────────────
+  // 定槽档 = or18 公布的层大小,`tests/cross_trainer_multi.test.ts`(PX_FULL_BFS=1)
+  // 从目标集出发把 72,990,720 个态全 BFS 了一遍,逐位相同。
+  pseudo_xcross: {
+    fixed1: {
+      W: {
+        kind: 'full',
+        total: '72990720',
+        counts: ['4', '48', '568', '6556', '70495', '693185', '5618257',
+          '27845257', '36570024', '2186315', '11'],
+      },
+    },
+  },
+
+  // ── 基态(Pair)─────────────────────────────────────────────────────────
+  // 十字解好 + 一个 F2L 对「已配好」(Setup × Insert 能一把塞进去),定义见
+  // solver/DEFINITIONS.md § Pair Analyzer。全表 BFS:tests/cross_trainer_pair.test.ts
+  // (PAIR_FULL_BFS=1),0 步 17 个态就是 or18 公布的那 17 个。
+  cross_pair: {
+    fixed1: {
+      W: {
+        kind: 'full',
+        total: '72990720',
+        counts: ['17', '255', '3102', '35217', '367070', '3184390',
+          '18621816', '41028188', '9746797', '3868'],
+      },
+    },
+  },
+
+  // ── 伪基态 ─────────────────────────────────────────────────────────────
+  // 同上,目标集再按底面四个 D 偏移闭包一次 → 68 = 4 × 17,无碰撞。
+  pseudo_cross_pseudo_pair: {
+    fixed1: {
+      W: {
+        kind: 'full',
+        total: '72990720',
+        counts: ['68', '816', '9256', '103681', '1012687', '7689281',
+          '32089788', '30868369', '1216774'],
+      },
+    },
+  },
+
+  // ── 纯 EO ──────────────────────────────────────────────────────────────
+  // lib/eo-axis-dist.ts。固定轴那格是 2,048 个翻转字的整表;取最优帧那两格是
+  // 70,963,200 的联合商空间(三条轴的 EO 字在这上面同时定义得下来)。
+  // 单色底 = 双色底(一对对面色共用一条面轴 → 垂直轴恒为同两条);
+  // 四色底 = 六色底(四色已经把三条轴占满)。这两条等式是数据本身,不是近似。
+  eo: {
+    unfixed: {
+      W: {
+        kind: 'full',
+        total: '70963200',
+        counts: ['69230', '138320', '1716120', '12886020', '31047310', '23418220', '1681750', '6230'],
+      },
+      WY: {
+        kind: 'full',
+        total: '70963200',
+        counts: ['69230', '138320', '1716120', '12886020', '31047310', '23418220', '1681750', '6230'],
+      },
+      BGOR: {
+        kind: 'full',
+        total: '70963200',
+        counts: ['103741', '207066', '2550149', '17895502', '34885236', '14971488', '349617', '401'],
+      },
+      BGORWY: {
+        kind: 'full',
+        total: '70963200',
+        counts: ['103741', '207066', '2550149', '17895502', '34885236', '14971488', '349617', '401'],
+      },
+    },
+    fixed1: {
+      W: {
+        kind: 'full',
+        total: '2048',
+        counts: ['1', '2', '25', '202', '620', '900', '285', '13'],
+      },
+    },
+  },
+
+  // ── EOLine ─────────────────────────────────────────────────────────────
+  // lib/cross-trainer/eoline.ts 的整表 BFS(2,048 翻转字 × 132 有序线位)。
+  eoline: {
+    fixed1: {
+      W: {
+        kind: 'full',
+        total: '270336',
+        counts: ['1', '9', '91', '851', '6831', '41703', '130239', '88683', '1927', '1'],
+      },
+    },
+  },
+
+  // ── EOCross ───────────────────────────────────────────────────────────
+  // lib/eocross-dist.ts 现场 BFS(11,880 × 2,048 = 24,330,240),与 3x3.xlsx 的
+  // `fixed eocross` 表逐档相同;d=10 的 140 个态在 /scramble/hardest 列全了。
+  // 这一格是**固定轴**,不是站内的单色底口径(那是两条垂直轴取最优),故落在固定帧列。
+  eo_cross: {
+    fixed1: {
+      W: {
+        kind: 'full',
+        total: '24330240',
+        counts: ['1', '15', '178', '1982', '21041', '204732', '1645039',
+          '8477633', '12917628', '1061851', '140'],
+        noOverlay: {
+          zh: '这一格不叠真题对照:底面定死后 EO 还剩两条轴可选(差一个 y 旋转),本格固定一条轴,'
+            + '而真题那列出自 Rust eo_cross_analyzer —— 它对两条轴取更短的那条。'
+            + '差距是系统性的:固定轴均值 7.531,真题那列 7.219。',
+          en: 'No WCA overlay here: with the bottom face fixed, EO still has two possible axes (a y rotation apart). '
+            + 'This cell fixes one axis, while the empirical column comes from the Rust eo_cross_analyzer, which takes '
+            + 'the shorter of the two. The gap is systematic: 7.531 moves fixed-axis vs 7.219 for that column.',
+        },
+      },
+    },
+  },
+
+  // ── 砖 ─────────────────────────────────────────────────────────────────
+  // lib/cross-trainer/tracked.ts 的整表 BFS。同一台引擎逐位复现了十字(190,080)与
+  // 222(253,440)两条已知曲线,见 tests/cross_trainer_tracked.test.ts。
+  fbsquare: {
+    fixed1: {
+      W: {
+        kind: 'full',
+        total: '12672',
+        counts: ['1', '9', '78', '590', '2922', '6523', '2525', '24'],
+      },
+    },
+  },
+  rouxs1: {
+    fixed1: {
+      W: {
+        kind: 'full',
+        total: '5322240',
+        counts: ['1', '12', '132', '1406', '14099', '122279', '797145', '2638638', '1715068', '33460'],
+      },
+    },
+  },
+  block222: {
+    fixed1: {
+      W: {
+        kind: 'full',
+        total: '253440',
+        counts: ['1', '9', '90', '852', '7169', '44182', '131636', '68940', '561'],
+      },
+    },
+  },
+  // solver/src/bin/dist_tracked.rs 的 `223` preset(15.3 亿态,14s)。同一台引擎在同一次
+  // 运行里逐档复现了十字 / 122 / 222 / 123 / XCross 五条已知曲线,见该文件头注。
+  block223: {
+    fixed1: {
+      W: {
+        kind: 'full',
+        total: '1532805120',
+        counts: ['1', '12', '141', '1746', '20935', '243092', '2698935', '27258179',
+          '216204042', '830686751', '453825501', '1865784', '1'],
+      },
+    },
+  },
+  f2b: {},
+
+  // ── 一个数都还没有的阶段 ────────────────────────────────────────────────
+  // 空表 = 每一格都走 pendingCell() 的兜底,那里按阶段说清楚多大、可不可行、卡在哪。
+  pseudo_xxcross: {},
+  pseudo_xxxcross: {},
+  xcross_pair: {},
+  xxcross_pair: {},
+  xxxcross_pair: {},
+  pseudo_xcross_pseudo_pair: {},
+  pseudo_xxcross_pseudo_pair: {},
+  pseudo_xxxcross_pseudo_pair: {},
+  // solver/src/bin/dist_tracked.rs 的 `eo_xcross` preset(46.7 亿态,40s):
+  // 12 条棱的翻转字 × 五条棱的有序位置 × 一个角。固定一条 EO 轴 + 一个 F2L 槽。
+  eo_xcross: {
+    fixed1: {
+      W: {
+        kind: 'full',
+        total: '4671406080',
+        counts: ['1', '15', '186', '2317', '28337', '335934', '3837763', '40923897',
+          '371417146', '2016467967', '2190899897', '47492614', '6'],
+      },
+    },
+  },
+  eo_xxcross: {},
+  eo_xxxcross: {},
+  eo_xxxxcross: {},
+  f2leo_cross: {},
+  f2leo_xcross: {},
+  f2leo_xxcross: {},
+  f2leo_xxxcross: {},
+  pseudo_f2leo_cross: {},
+  pseudo_f2leo_xcross: {},
+  pseudo_f2leo_xxcross: {},
+  pseudo_f2leo_xxxcross: {},
+  dr: {},
 };
+
+// ── 还没算的格子怎么说话 ────────────────────────────────────────────────────
+
+/** 兜底文案的模板:阶段级的一句话 + 该档的可行性。 */
+interface PendingPlan {
+  /** 固定单帧那一列的可行性与说明。 */
+  frame?: { feasible: ExactPending['feasible']; unit?: string; note: Text };
+  /** 取最优帧(站内口径)那几列的说明;不写就用通用那条。 */
+  best?: { feasible: ExactPending['feasible']; unit?: string; note: Text };
+}
+
+const READY = (unit: string, zh: string, en: string) =>
+  ({ feasible: 'ready' as const, unit, note: { zh, en } });
+const PLAN = (unit: string, zh: string, en: string) =>
+  ({ feasible: 'plan' as const, unit, note: { zh, en } });
+const OOR = (zh: string, en: string) => ({ feasible: 'oor' as const, note: { zh, en } });
+
+/** 多帧取最优要读整只魔方 —— 十字族之外几乎所有阶段的共同死因。 */
+const BEST_TOO_BIG = OOR(
+  '多帧取最优要同时知道所有帧的棋子,空间跳出商空间、直奔整只魔方(4.3×10¹⁹),穷举无从谈起',
+  'Taking the best over frames needs every frame\'s pieces at once, which leaves the quotient and lands on the '
+  + 'whole cube (4.3×10¹⁹) — no enumeration is possible',
+);
+
+/**
+ * 每个阶段的兜底说法。写不出具体路线的就一句「太大」,别编。
+ * 单元号对应 solver/EXACT_DIST_EXPANSION.md 的 backlog 项。
+ */
+const STAGE_PLAN: Partial<Record<ExactStage, PendingPlan>> = {
+  xcross: { best: BEST_TOO_BIG },
+  xxcross: { best: BEST_TOO_BIG },
+  xxxcross: {
+    frame: OOR('固定三槽 4.6×10¹² 个态,visited 位图就要 2.2TB', 'The fixed-3-slot space is 4.6×10¹² states — 2.2 TB just for the visited bitmap'),
+    best: BEST_TOO_BIG,
+  },
+  xxxxcross: { best: OOR('6.95×10¹⁴ 个态,350TB visited', '6.95×10¹⁴ states, 350 TB of visited state') },
+
+  pseudo_xcross: { best: BEST_TOO_BIG },
+  pseudo_xxcross: {
+    frame: PLAN('P2', '与标准 XXCross 同一个 214 亿坐标,只换目标集(四个 D 偏移)—— 路线现成,表也是 21GB 那一档', 'Same 21.5-billion coordinate as plain XXCross with a four-goal set — the route exists, the table is in the 21 GB class'),
+    best: BEST_TOO_BIG,
+  },
+  pseudo_xxxcross: {
+    frame: OOR('同标准 XXXCross,4.6×10¹²', 'Same as plain XXXCross, 4.6×10¹²'),
+    best: BEST_TOO_BIG,
+  },
+
+  cross_pair: { best: BEST_TOO_BIG },
+  xcross_pair: {
+    frame: PLAN('E4', '与 XXCross 定双槽同一个 214 亿坐标,BFS 那头 dist_tracked 已经能跑;缺的是把「配好一对」的 17 个目标态从 lib/cross-trainer/pair.ts 导出来喂进去', 'Same 21.5-billion coordinate as fixed-two-slot XXCross, and dist_tracked can already run that BFS; what is missing is exporting the 17 "pair formed" goal states out of lib/cross-trainer/pair.ts and feeding them in'),
+    best: BEST_TOO_BIG,
+  },
+  xxcross_pair: {
+    frame: OOR('4.6×10¹²', '4.6×10¹²'),
+    best: BEST_TOO_BIG,
+  },
+  xxxcross_pair: {
+    frame: OOR('6.95×10¹⁴', '6.95×10¹⁴'),
+    best: BEST_TOO_BIG,
+  },
+
+  pseudo_cross_pseudo_pair: { best: BEST_TOO_BIG },
+  pseudo_xcross_pseudo_pair: {
+    frame: PLAN('P3', '214 亿坐标 + 「D 偏移 × 插入公式」目标集;口径本身还没和 Rust 引擎对齐(1344 里只对上 911),先修口径再谈穷举', '21.5-billion coordinate with a "D-offset × insert" goal set; the definition itself still disagrees with the Rust engine (911/1344), so the parity fix comes first'),
+    best: BEST_TOO_BIG,
+  },
+  pseudo_xxcross_pseudo_pair: { best: BEST_TOO_BIG },
+  pseudo_xxxcross_pseudo_pair: { best: BEST_TOO_BIG },
+
+  eo: {},
+  eoline: {
+    best: PLAN('E6', '一个底色两条线、六色十二条线取最优,要读全部 12 条棱的位置与朝向 —— 12!·2¹¹ = 9.81×10¹¹,和六色底十字同一个量级,同一套走法(dist_cross_6col)能拿下', 'Best over a colour\'s two lines (twelve for CN) needs every edge\'s slot and flip: 12!·2¹¹ = 9.81×10¹¹, the same scale and the same route as colour-neutral cross'),
+  },
+  eo_cross: {
+    best: PLAN('E5', '一个底色两条垂直轴取最优,要 (4 条底棱的有序位置 + 其余按类) × 翻转字 = 1.02×10¹⁰;类商空间这套已经在 lib/eo-axis-dist.ts 上验过(纯 EO 那份),带十字的这版还没写', 'Best over a colour\'s two perpendicular axes needs (ordered slots of the four bottom edges + the rest by class) × the flip word = 1.02×10¹⁰; the class quotient itself is already proven in lib/eo-axis-dist.ts for plain EO, but the version carrying the cross is not written yet'),
+  },
+  eo_xcross: { best: BEST_TOO_BIG },
+  eo_xxcross: {
+    frame: OOR('6.87×10¹¹,343GB nibble', '6.87×10¹¹ states, a 343 GB nibble table'),
+    best: BEST_TOO_BIG,
+  },
+  eo_xxxcross: { best: BEST_TOO_BIG },
+  eo_xxxxcross: { best: BEST_TOO_BIG },
+
+  f2leo_cross: {
+    best: READY('E3', '十字解好 + 四条中层棱朝向好 = 51 亿态(一个底色只有一个帧,这一格就是站内口径)。dist_tracked 的 f2leo_cross preset 已就位:8 条棱拆 6+2 两个因子,要 11.2GB nibble + 3GB 转动表',
+      'Cross solved plus the four middle-layer edges oriented = 5.11 billion states (a colour has only one frame here, so this cell IS the site metric). dist_tracked ships the f2leo_cross preset: the eight edges split 6+2 into two factors, needing an 11.2 GB nibble table plus the 3 GB move table'),
+  },
+  f2leo_xcross: {
+    frame: OOR('再乘 24 个角位 = 1.23×10¹¹', 'Times 24 corner placements = 1.23×10¹¹'),
+    best: BEST_TOO_BIG,
+  },
+  f2leo_xxcross: { best: BEST_TOO_BIG },
+  f2leo_xxxcross: { best: BEST_TOO_BIG },
+  pseudo_f2leo_cross: {
+    best: PLAN('P4', '与 F2LEO 十字同一个 51 亿坐标,目标集按底面四个 D 偏移闭包', 'Same 5.11-billion coordinate as F2LEO cross, with the goal set closed under the four D offsets'),
+  },
+  pseudo_f2leo_xcross: { best: BEST_TOO_BIG },
+  pseudo_f2leo_xxcross: { best: BEST_TOO_BIG },
+  pseudo_f2leo_xxxcross: { best: BEST_TOO_BIG },
+
+  fbsquare: {
+    best: OOR('一个底色八个 1×2×2 取最优,要 4 个角 + 8 条棱 —— 跳出商空间', 'Best over a colour\'s eight 1×2×2 blocks needs 4 corners and 8 edges — outside the quotient'),
+  },
+  rouxs1: { best: OOR('一个底色四个 1×2×3 取最优,同上', 'Best over a colour\'s four 1×2×3 blocks — same reason') },
+  block222: {
+    best: OOR('一个底色四个 2×2×2 取最优,要 4 个角 + 8 条棱 = 6.95×10¹⁴', 'Best over a colour\'s four 2×2×2 blocks needs 4 corners and 8 edges = 6.95×10¹⁴'),
+  },
+  block223: {
+    best: OOR('四个块取最优,跳出商空间', 'Best over the four blocks leaves the quotient'),
+  },
+  f2b: {
+    frame: OOR('两个 1×2×3 = 4 个角 + 6 条棱 = 5.79×10¹²,单帧就已经够不着', 'Two 1×2×3 blocks = 4 corners + 6 edges = 5.79×10¹² — even one frame is out of reach'),
+    best: OOR(
+      '一个底色两对 1×2×3 取最优,而单帧的 5.79×10¹² 就已经够不着了',
+      'Best over a colour\'s two block pairs — and even a single frame\'s 5.79×10¹² is already out of reach',
+    ),
+  },
+
+  dr: {
+    best: PLAN('E7', 'Kociemba 第一阶段那个坐标:2¹¹ × 3⁷ × C(12,4) = 22.2 亿。一个底色只有一条轴,所以单 / 双色底就是定轴那份;四 / 六色底是三条轴取最优,要三条轴的联合', 'Kociemba\'s phase-1 coordinate: 2¹¹ × 3⁷ × C(12,4) = 2.22 billion. A colour has exactly one axis, so the single/dual-colour cells ARE the fixed-axis table; four/six-colour needs the three axes jointly'),
+  },
+};
+
+const GENERIC_PENDING: Text = {
+  zh: '还没算 —— 这一格的空间与算法都还没定下来',
+  en: 'Not computed — neither the space nor the route is settled for this cell',
+};
+
+/** 没有显式数据的格子,兜底出一个「说得清楚」的 todo。 */
+export function pendingCell(stage: ExactStage, slot: ExactSlot): ExactPending {
+  const plan = STAGE_PLAN[stage];
+  const side = slot === 'unfixed' ? plan?.best : plan?.frame;
+  const states = slot === 'unfixed' ? undefined : FRAME_STATES[stage];
+  return {
+    kind: 'todo',
+    feasible: side?.feasible ?? 'plan',
+    states,
+    note: side?.note ?? GENERIC_PENDING,
+    unit: side?.unit,
+  };
+}
 
 /**
  * 页面的 subsetKey(SubsetColorPicker 产出,如 'W' / 'Y' / 'BG' / 'BGOR' / 'BGORWY')
@@ -434,16 +1008,29 @@ export function exactColorsOf(subsetKey: string): ExactColors | null {
   return null;
 }
 
+/**
+ * 一格的内容。没有显式数据但组合说得通 → 兜底 todo;组合本身不适用 → null。
+ * 与底色无关的阶段(整体)忽略 subsetKey。
+ */
 export function getExactCell(stage: string, slot: string, subsetKey: string): ExactCell | null {
   const st = EXACT_DIST[stage as ExactStage];
   if (!st) return null;
   if (!SLOT_OK[stage as ExactStage]?.includes(slot as ExactSlot)) return null;
-  const colors = exactColorsOf(subsetKey);
+  const colors = COLOR_FREE.has(stage) ? 'W' : exactColorsOf(subsetKey);
   if (!colors) return null;
-  return st[slot as ExactSlot]?.[colors] ?? null;
+  return st[slot as ExactSlot]?.[colors] ?? pendingCell(stage as ExactStage, slot as ExactSlot);
 }
 
-/** 该 (stage, slot, subset) 是否在这个阶段说得通 —— 用来区分「不适用」与「未计算」。 */
+/**
+ * 这一格的 0 步状态数。完整分布取 counts[0],「仅 0 步」格取 zero,还没算的格子没有 ——
+ * 两种格子的 0 步是同一个量,消费方(容斥守卫、速查表对账)不该各写一遍这个三元。
+ */
+export function zeroStates(cell: ExactCell): string | null {
+  if (cell.kind === 'full') return cell.counts[0];
+  return cell.kind === 'zero' ? cell.zero : null;
+}
+
+/** 该 (stage, slot) 在这个阶段说得通 —— 用来区分「不适用」与「未计算」。 */
 export function isSlotApplicable(stage: string, slot: string): boolean {
   return SLOT_OK[stage as ExactStage]?.includes(slot as ExactSlot) ?? false;
 }
