@@ -714,3 +714,28 @@ IDA*",复用 `pair_solver.rs` 已验证的 `huge_check`(= C++ `hugeTablePrunes`)
 (与 C++ 一致)。各阶段 IDA* 上界:XXC=14,XXXC=16,F2L=16;F2L 的 max_h>16 直接
 记 17。
 
+
+## Phase 12:dist_tracked(通用 tracked-piece 分布)
+
+`/scramble/stats` 的「完整状态空间」数据集要的是一族形状相同的分布:盯住 k 块角 +
+m 条棱,归位即达标。逐个写 bin 会写出十来个只差几行的文件,所以这次写成一个
+preset 化的 bin。
+
+**两因子乘积空间**是这个 bin 唯一的设计决策。8 条棱的精确坐标 P(12,8)·2⁸ = 51 亿,
+转动表 51e9 × 18 × 4B = **368 GB**,建不出来;拆成两个因子后转动表小到可忽略,代价是
+乘积空间(6+2 拆法 225 亿)大于真实空间(51 亿)。多出来的全是「两块占同一个位」的
+非法态,**BFS 从合法目标出发永远走不到它们**,所以逐深度计数仍然精确 —— 前提是
+起点集自己合法,故 `run()` 里对目标笛卡尔积逐个查重位。总数断言(`spec.states`)就是
+这条论证的验尸单:混进非法态或漏掉合法态,总数立刻对不上。
+
+**正确性不自证**:`verify` 一次比七条外部曲线(本仓库 dist_cross_1col /
+dist_xcross_1col_fixed + TS 端 `lib/cross-trainer/{dist,block,tracked,eoline}.ts`),
+再加一组「同一个问题两种拆法」等价性 —— 后者是 `HomeThenOriented`(一个分量里混
+口径)与「非法态不可达」这两件事唯一跑得起的证据,E3 那种 11 GB 的单元靠它们背书。
+
+**坑**:`mt_eo12` 的值**预乘了 18**(给 SlotView 那套用),当索引表要走
+`mt_eo12_alt`。第一次跑 `eo` preset 只出 1 个态就是这个原因。
+
+`bfs_xxcross_packed4` 拆成了 `bfs_multi_packed4` 的单起点包装 —— 多目标(F2LEO
+的中层四棱「朝向对即可,位置随意」有 1,680 个目标态)需要多源 BFS,原来那个只收单点。
+既有两个 bin 的 golden 断言未动,回归有人看着。
