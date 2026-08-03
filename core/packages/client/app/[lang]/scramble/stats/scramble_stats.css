@@ -1021,6 +1021,18 @@ a.scramble-timeline-scramble:hover {
   font-variant-numeric: tabular-nums;
 }
 
+/* 本质视图里的类大小(6/40):紧跟行号,和它一样是行首的窄列。 */
+/* 类的大小(6/40、24/40)—— 留够两位数的位子,免得各行的打乱图错开一格。 */
+.scramble-stats-exact-case-orbit {
+  flex-shrink: 0;
+  min-width: 3.4em;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  line-height: 1.6;
+  font-variant-numeric: tabular-nums;
+}
+
 .scramble-stats-exact-zero {
   color: var(--muted-foreground);
 }
