@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useQueryState, parseAsString, parseAsStringEnum, parseAsBoolean } from 'nuqs';
+import { usePathname } from 'next/navigation';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -184,9 +185,14 @@ const DIFFICULTY_EVENTS = new Set(['333', '333oh', '333bf', '333fm', '333ft', '3
 // 而是 _data/exact_dist.ts 的 TS 常量。这里只合成一个同形状的空壳 SetData 塞进 sets,
 // 让数据集下拉 / 阶段下拉 / variant 回退这些既有逻辑原样复用;真正的数值走 EXACT_DIST 旁路。
 const EXACT_SET_KEY = 'exact';
+/** 图表区的锚点 id —— 覆盖矩阵在页尾,点一格得把视口带回图上。 */
+const DIST_ANCHOR = 'dist-view';
+/** 阶段属于哪个变体(阶段下拉按变体列选项,少设这一步会让下拉里没有刚选中的那档)。 */
+const exactVariantOf = (st: ExactStage): string =>
+  EXACT_PSEUDO_STAGES.includes(st) ? 'pseudo' : EXACT_EO_STAGES.includes(st) ? 'eo' : 'std';
 const EXACT_SET_META: SetData = {
-  label: 'Exhaustive',
-  label_zh: '精确穷举',
+  label: 'Full state space',
+  label_zh: '完整状态空间',
   sample_count: 0,
   variants: {
     // 标准 CFOP 全 5 阶段 + 伪变体的十字 + EO 变体的 EOCross 有精确数据;stages 供阶段下拉用,
@@ -299,6 +305,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   // 不前缀 —— 它是顶部项目选择器(SolveTabs)的共享键,分布要跟着求解区一起切项目。
   // 独立访问 /scramble/stats 时 embedded=false,键名不变,旧深链照常。
   const k = (key: string) => (embedded ? `d${key}` : key);
+  const pathname = usePathname();
 
   // 难度/长度 大视图切换进 URL(?tab),push 进历史(后退能返回)。
   const [tab, setTab] = useQueryState(
@@ -394,11 +401,20 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     void loadFlagData().then((v) => { if (v !== flagVer) setFlagVer(v); });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 底色子集 → 写回 ?colors(六色默认省略);URL 只在首次挂载用于还原(filter → replace)。
+  // 底色子集 → 写回 ?colors(六色默认省略,filter → replace)。
   useEffect(() => {
     void setColorsParam(sel.subsetKey === 'BGORWY' ? null : sel.subsetKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sel.subsetKey]);
+
+  // ?colors → 底色子集。选择器的状态在 useSubsetSelection 内部,URL 只在挂载时给过初值;
+  // 少了这一路,任何**不经过选择器**的 URL 变化(覆盖矩阵的深链、浏览器前进后退)都只换地址
+  // 不换图。两路各自带等值判断,不会来回打架。
+  useEffect(() => {
+    const want = colorsParam ?? 'BGORWY';
+    if (want !== sel.subsetKey) sel.selectByKey(want);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [colorsParam]);
 
   useEffect(() => {
     // v= bump:2026-06-14 333 整解最优注入真实产出(240 雏形 → 226,965 样本),防缓存旧 JSON
@@ -566,6 +582,29 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     [isExact, stage, slot, subsetKey],
   );
   const exactFull: ExactFull | null = exactCell?.kind === 'full' ? exactCell : null;
+
+  /**
+   * 覆盖矩阵某一格的深链 —— 真 `<a>` 的 href,中键能开新标签,复制出去也能直接落到那一格。
+   * 定位靠 (数据集, 变体, 阶段, 槽位, 底色) 五个键;显示口径(叠加、对数轴、y、曲线)是用户
+   * 在这张图上刚调的,一并带走,别在跳一格之后被打回默认。锚点把视口带回图表 —— 矩阵在页尾,
+   * 不带锚点的话「切过去了」这件事发生在屏幕外。
+   */
+  const exactHref = useMemo(() => (st: ExactStage, sl: ExactSlot, c: ExactColors): string => {
+    const p = new URLSearchParams();
+    if (event !== '333') p.set('event', event);
+    if (tab !== 'difficulty') p.set(k('tab'), tab);
+    p.set(k('set'), EXACT_SET_KEY);
+    p.set(k('variant'), exactVariantOf(st));
+    p.set(k('stage'), st);
+    if (sl !== 'unfixed') p.set(k('slot'), sl);
+    if (c !== 'BGORWY') p.set(k('colors'), c);
+    if (!overlayOn) p.set(k('ovl'), 'false');
+    if (logY) p.set(k('log'), 'true');
+    if (yMode !== 'percent') p.set(k('y'), yMode);
+    if (chartMode !== 'pdf') p.set(k('chart'), chartMode);
+    return `${pathname}?${p.toString()}#${DIST_ANCHOR}`;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, embedded, event, tab, overlayOn, logY, yMode, chartMode]);
 
   // 当前直方图计数:整解 + QTM → counts_qtm(暂空);其余一律 counts。
   const activeCounts = useMemo<Record<string, number>>(() => {
@@ -1371,7 +1410,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     <div className="scramble-stats-page">
       {header}
 
-      <div className="scramble-stats-controls">
+      <div className="scramble-stats-controls" id={DIST_ANCHOR}>
         {/* 整解(333):无配色 / 方法维度,隐藏颜色选择器与方法下拉,改露 HTM/QTM 口径钮。 */}
         {!is333 && (
           <div className="scramble-stats-color-control">
@@ -1541,8 +1580,8 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             variant="modal"
             content={[
               tr({
-                zh: '精确穷举 = 把整个状态空间跑穷举 BFS 得到的理论分布,与任何打乱池无关;WCA 那档是拿真实打乱跑分析器得到的经验分布。两者叠在一起,可以直接看出 WCA 打乱离均匀随机态有多近。',
-                en: 'Exhaustive = the theoretical distribution from a full BFS over the entire state space, independent of any scramble pool; the WCA dataset is the empirical distribution from running the analyzer on real scrambles. Overlaying them shows how close WCA scrambles are to a uniformly random state.',
+                zh: '完整状态空间 = 把整个状态空间跑穷举 BFS 得到的理论分布,与任何打乱池无关;WCA 那档是拿真实打乱跑分析器得到的经验分布。两者叠在一起,可以直接看出 WCA 打乱离均匀随机态有多近。',
+                en: 'Full state space = the theoretical distribution from a full BFS over every state, independent of any scramble pool; the WCA dataset is the empirical distribution from running the analyzer on real scrambles. Overlaying them shows how close WCA scrambles are to a uniformly random state.',
               }),
               tr({
                 zh: '对数 y 轴:这批分布跨 10 个数量级(最大档 51%,最小档 4.7e-9%),线性轴下两端的极小档柱高不足一个像素。',
@@ -1564,7 +1603,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             {!exactColors ? (
               // 走到这里只剩三色底 / 五色底 —— 四色底自 dist_cross_6col --faces 起就有了
               <p>{tr({
-                zh: '三色底与五色底在这批数据里没有对应口径 —— 精确穷举按可选底色数分档,只有单色、双色、四色、六色四档。',
+                zh: '三色底与五色底在这批数据里没有对应口径 —— 这批穷举按可选底色数分档,只有单色、双色、四色、六色四档。',
                 en: 'Three- and five-color bottoms have no counterpart in this dataset — the exhaustive computation is tiered by the number of allowed bottom colors: one, two, four and six.',
               })}</p>
             ) : exactCell?.kind === 'zero' ? (
@@ -1689,12 +1728,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
           stage={stage}
           slot={slot}
           colors={exactColors}
-          onPick={(st, sl, c) => {
-            setStage(st);
-            setSlot(sl);
-            // 底色是共享控件(SubsetColorPicker),点矩阵切列时同步过去。
-            sel.selectByKey(c);
-          }}
+          hrefOf={exactHref}
         />
       )}
 
