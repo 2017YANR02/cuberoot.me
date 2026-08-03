@@ -27,7 +27,7 @@ import { m2pScrambleForFacelets, prewarmM2p } from '@/lib/m2p-scramble';
 import { facesOfSubset } from '@/lib/cross-trainer';
 import { enumerateCrossTop, type CorpusMember } from '@/lib/cross-trainer/corpus';
 import { fillState } from '@/lib/cross-trainer/fill';
-import { subsetSymmetries, symmetryClasses } from '@/lib/cross-trainer/symmetry';
+import { subsetSymmetries, symmetryClasses, type CaseClass } from '@/lib/cross-trainer/symmetry';
 import { groupDigits } from '@/lib/group-digits';
 import { tr } from '@/i18n/tr';
 
@@ -86,9 +86,9 @@ export default function ExactCaseList({ subsetKey, depth, goldenCount, lang }: P
       : Array.from({ length: members.length }, (_, i) => i);
   }, [members, classes, essential]);
 
-  const sizeOf = useMemo(() => {
-    const m = new Map<number, number>();
-    for (const c of classes) m.set(c.rep, c.size);
+  const classOf = useMemo(() => {
+    const m = new Map<number, CaseClass>();
+    for (const c of classes) m.set(c.rep, c);
     return m;
   }, [classes]);
 
@@ -114,6 +114,10 @@ export default function ExactCaseList({ subsetKey, depth, goldenCount, lang }: P
   if (!members) return null;
 
   const visible = rows.slice(0, shown);
+  // 说明文案要具体到这一档:拿第一类的大小当例子,类少时把整个拆分写出来(类一多就成一串噪音)。
+  const first = classes[0]?.size ?? 0;
+  const decomp = classes.length > 1 && classes.length <= 8 ? classes.map((c) => c.size).join(' + ') : '';
+  const hasFixed = classes.some((c) => c.size === 1);
   return (
     <div className="scramble-stats-panel scramble-stats-examples-panel">
       <div className="scramble-stats-examples-header">
@@ -137,8 +141,16 @@ export default function ExactCaseList({ subsetKey, depth, goldenCount, lang }: P
       </div>
       <p className="scramble-stats-exact-note">
         {essential && tr({
-          zh: `${members.length} 个状态在保住这道题的 ${symmetries.length} 个对称(转体与镜像)下并成 ${classes.length} 类,这里每类摆一个代表,后面的比例是该类的大小。`,
-          en: `The ${members.length} states fall into ${classes.length} classes under the ${symmetries.length} symmetries that preserve this question (rotations and mirror); one representative each, with its class size after it.`,
+          zh: `${members.length} 个状态在保住这道题的 ${symmetries.length} 个对称(转体与镜像)下并成 ${classes.length} 类,这里每类摆一个代表。`
+            + `每行前面的 ${first}/${members.length} 是这一类的大小:把这个状态用那 ${symmetries.length} 个对称各作用一遍,只得到 ${first} 个不同的状态,它们算同一个情况`
+            + (decomp ? `(${decomp} = ${members.length})` : '')
+            + `。大小 = ${symmetries.length} ÷ 该状态自身对称的个数,所以状态越对称、它那一类越小`
+            + (hasFixed ? ` —— 大小 1 的那个自身就有全部 ${symmetries.length} 个对称,怎么转、怎么照镜子都还是它。` : '。'),
+          en: `The ${members.length} states fall into ${classes.length} classes under the ${symmetries.length} symmetries that preserve this question (rotations and mirror); one representative each. `
+            + `The ${first}/${members.length} on each row is that class's size: pushing the state through all ${symmetries.length} symmetries yields only ${first} distinct states, and those count as one case`
+            + (decomp ? ` (${decomp} = ${members.length})` : '')
+            + `. A size is ${symmetries.length} ÷ how many symmetries the state has itself, so the more symmetric the state, the smaller its class`
+            + (hasFixed ? ` — the size-1 one has all ${symmetries.length} itself: every rotation and the mirror leave it alone.` : '.'),
         })}
         {' '}
         {tr({
@@ -149,7 +161,7 @@ export default function ExactCaseList({ subsetKey, depth, goldenCount, lang }: P
       <ul className="scramble-stats-examples-list">
         {visible.map((idx, row) => {
           const scr = scrambles[idx];
-          const size = sizeOf.get(idx);
+          const cls = classOf.get(idx);
           if (scr === undefined) {
             return (
               <li key={idx}>
@@ -162,12 +174,17 @@ export default function ExactCaseList({ subsetKey, depth, goldenCount, lang }: P
           return (
             <li key={idx}>
               <span className="scramble-stats-exact-case-no">#{row + 1}</span>
-              {essential && size !== undefined && (
+              {essential && cls && (
                 <span
                   className="scramble-stats-exact-case-orbit"
-                  title={tr({ zh: `这一类共 ${size} 个状态`, en: `${size} states in this class` })}
+                  title={tr({
+                    zh: `这一类共 ${cls.size} 个状态(全部 ${members.length} 个里的 ${cls.size} 个)`
+                      + `:该状态自身有 ${cls.stab} 个对称,${symmetries.length} ÷ ${cls.stab} = ${cls.size}。`,
+                    en: `${cls.size} of the ${members.length} states are this case: it has ${cls.stab} symmetries of its own, `
+                      + `and ${symmetries.length} ÷ ${cls.stab} = ${cls.size}.`,
+                  })}
                 >
-                  {size}/{members.length}
+                  {cls.size}/{members.length}
                 </span>
               )}
               <Link
