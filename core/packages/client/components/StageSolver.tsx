@@ -26,6 +26,7 @@ import CuberReconPlayer from '@/components/CuberReconPlayer';
 import type { ReconPlayerHandle } from '@/components/recon/ReconPlayerBase';
 import { SubsetColorPicker, useSubsetSelection, COLOR_NAME, type ColorLetter } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import { CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '@/lib/cube-colors';
+import CubeColorChip from '@/components/CubeColorChip/CubeColorChip';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { tr } from '@/i18n/tr';
 import { createRustCrossPool, FR_NOT_HTR, HTR_NOT_DR, HTR2_NOT_HTR, type MovesTimed, type RustCrossPool, type SolItem, TABLE_BYTES, TABLE_SETS, XCROSS_TABLES } from '@/lib/rust-cross-client';
@@ -237,6 +238,7 @@ function complementSlot(slots: number[]): number | null {
 }
 
 // 单个槽位色标:两片侧贴纸颜色左右竖分(竖线分隔),对应 F2L 槽的两片侧面。
+// 色块本身是共用的(components/CubeColorChip);这里只管「哪个槽是哪两片」和标题。
 // 定不了颜色(无视角)时退回方位文字,不留空。struck = 划掉(表示这是留到最后的未解槽)。
 function SlotChip({ viewIdx, slotIdx, struck = false }: { viewIdx: number | null; slotIdx: number; struck?: boolean }) {
   const faces = slotFaces(viewIdx, slotIdx);
@@ -244,10 +246,11 @@ function SlotChip({ viewIdx, slotIdx, struck = false }: { viewIdx: number | null
   const title = struck ? `${tr({ zh: '留到最后(未解)', en: 'Left last (unsolved)' })}: ${base}` : base;
   if (!faces) return <span className={`stsv-slot-fallback${struck ? ' is-struck' : ''}`} title={title}>{SLOT_LABELS[slotIdx]}</span>;
   return (
-    <span className={`stsv-slot-chip${struck ? ' is-struck' : ''}`} title={title} aria-label={title} role="img">
-      <span style={{ background: CUBE_FILL[faces[0]] }} />
-      <span style={{ background: CUBE_FILL[faces[1]] }} />
-    </span>
+    <CubeColorChip
+      colors={faces.map((f) => FACE_LETTER[f])}
+      title={title}
+      className={`stsv-slot-chip${struck ? ' is-struck' : ''}`}
+    />
   );
 }
 // 一个槽位组合(1~3 个槽)的色标行:每槽一个 chip 顺排。

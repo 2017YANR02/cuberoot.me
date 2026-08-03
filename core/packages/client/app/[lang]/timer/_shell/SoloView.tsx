@@ -220,9 +220,13 @@ function useMediaQuery(query: string): boolean {
   return matches;
 }
 
-// 「工具」那一档搬进设置弹窗了(见 SettingsPanel 的 tools 节),侧栏只剩成绩 / 图表两档,
-// 入口是左下角那块统计(点它就弹出来),底部导航条已整条撤掉。
-type PanelTab = 'times' | 'chart';
+// 「工具」那一档搬进设置弹窗了(见 SettingsPanel 的 tools 节),入口是左下角那块统计
+// (点它就弹出来),底部导航条已整条撤掉。
+//
+// 三档各答一个问题,名字就是答案:**成绩**是这些把本身(会话 + 那张单子),**统计**
+// 是从它们算出来的数(当前/最佳、σ/CV、阈值占比、完整统计),**图表**是画出来的。
+// 原来成绩那一档从当前/最佳一路铺到阈值占比再到历史,要滚很久才够到自己刚拧的那把。
+type PanelTab = 'times' | 'stats' | 'chart';
 type ChartKind = 'histogram' | 'trend' | 'scatter' | 'hour' | 'heatmap';
 
 interface SoloViewProps {
@@ -2075,11 +2079,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       return (
         <>
           <SessionSwitcher isZh={isZh} onSessionsChanged={reloadActiveSession} />
-          <div className="shell-panel-statgrid">
-            <StatsPanel solves={solves} isZh={isZh} event={event} />
-            <CaseStatsPanel event={event} solves={solves} isZh={isZh} />
-          </div>
-          {/* 历史紧贴当前/最佳统计下方 (cstimer 式);完整统计 / 跨分组统计等次级入口移到列表之后。 */}
+          {/* 这一档就是这些把本身:会话切换器 + 那张单子。算出来的数都在「统计」那档。 */}
           <HistoryPanel
             solves={solves}
             isZh={isZh}
@@ -2089,6 +2089,16 @@ export default function SoloView({ playersControl }: SoloViewProps) {
             onQuickDelete={(id) => deleteSolve(id)}
             onQuickComment={(s, idx) => setModalSolve({ s, idx })}
           />
+        </>
+      );
+    }
+    if (panelTab === 'stats') {
+      return (
+        <>
+          <div className="shell-panel-statgrid">
+            <StatsPanel solves={solves} isZh={isZh} event={event} />
+            <CaseStatsPanel event={event} solves={solves} isZh={isZh} />
+          </div>
           <div className="shell-times-actions">
             <button type="button" className="stats-expand-toggle" onClick={() => setStatsModalOpen(true)}>
               {tr({ zh: '完整统计', en: 'Full stats'
@@ -2605,7 +2615,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
           className="shell-stat-rail surface-chrome"
           onClick={() => setPanelTab(t => (t ? null : 'times'))}
           aria-expanded={panelTab != null}
-          title={tr({ zh: '打开成绩 / 图表', en: 'Open times / chart' })}
+          title={tr({ zh: '打开成绩 / 图表 / 统计', en: 'Open times / chart / stats' })}
         >
           {solves.length > 0 ? (
             <>
@@ -2633,6 +2643,8 @@ export default function SoloView({ playersControl }: SoloViewProps) {
             <button type="button" className={`shell-panel-tab${panelTab === 'times' ? ' active' : ''}`} onClick={() => setPanelTab('times')}>{tr({ zh: '成绩', en: 'Times'
           })}</button>
             <button type="button" className={`shell-panel-tab${panelTab === 'chart' ? ' active' : ''}`} onClick={() => setPanelTab('chart')}>{tr({ zh: '图表', en: 'Chart'
+          })}</button>
+            <button type="button" className={`shell-panel-tab${panelTab === 'stats' ? ' active' : ''}`} onClick={() => setPanelTab('stats')}>{tr({ zh: '统计', en: 'Stats'
           })}</button>
             <button type="button" className="shell-panel-close" onClick={() => setPanelTab(null)} aria-label={tr({ zh: '关闭', en: 'Close'
           })}><X size={16} /></button>

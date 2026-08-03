@@ -52,7 +52,7 @@ import { computeF2lSlots } from '../_lib/reconstruct/f2l_slots';
 import { walkMethod } from '../_lib/reconstruct/method_walk';
 import type { MethodId } from '../_lib/reconstruct/methods';
 import { decodeGyroTrack } from '../_lib/bluetooth/gyro_track';
-import { detectRotations } from '../_lib/reconstruct/rotation_detect';
+import { buildCoreTrack } from '../_lib/reconstruct/core_track';
 import { buildReconText } from '../_lib/reconstruct/recon_text';
 import { normalizeSolve } from '../_lib/reconstruct/orient';
 import type { ReconTextResult } from '../_lib/reconstruct/recon_text';
@@ -241,15 +241,15 @@ export default function ReconstructReport({
   // 所以和参考解法一样推到首帧之后 —— 报告该立刻出现,标注可以晚一拍。
   const [reconText, setReconText] = useState<ReconTextResult | null>(null);
   /**
-   * 转体。魔方不报,只能从姿态流里推(Sprint 28)—— 所以只有**录了姿态**的那些把
-   * 有;没录的把 `solve.gyro` 不存在,这里是空数组,谱子和以前逐字一样。
+   * 中心核的轨迹。转体和中层都只能从它推 —— 所以只有**录了姿态**的那些把有;
+   * 没录的把 `solve.gyro` 不存在,这里是 null,中层退回时间判据、一个转体也不写。
    * 纯几何、不联网,几十个样本的活,不必推到下一帧。
    */
-  const rotations = useMemo(
-    // 牌子决定记号里的轴向(`BRAND_SENSOR_BASIS`);个数和角度与它无关。
+  const core = useMemo(
+    // 牌子决定记号里的轴向(`BRAND_SENSOR_BASIS`);「换没换格」与它无关。
     () => (solve.gyro
-      ? detectRotations(decodeGyroTrack(solve.gyro), { brand: solve.device?.model })
-      : []),
+      ? buildCoreTrack(decodeGyroTrack(solve.gyro), { brand: solve.device?.model })
+      : null),
     [solve.gyro, solve.device?.model],
   );
   useEffect(() => {
@@ -259,14 +259,14 @@ export default function ReconstructReport({
     const timer = setTimeout(() => {
       buildReconText({
         scramble: view.scramble, moves: view.moves, totalMs: solve.timeMs,
-        segs: stageSegs, metrics: stepMx, slots, rotations,
+        segs: stageSegs, metrics: stepMx, slots, core,
         physical: { scramble: solve.scramble, moves }, viewRotation: view.rotation,
       })
         .then(r => { if (alive) setReconText(r); })
         .catch(err => console.warn('[reconstruct] recon text failed:', err));
     }, 0);
     return () => { alive = false; clearTimeout(timer); };
-  }, [stageSegs, stepMx, slots, view, solve.timeMs, rotations]);
+  }, [stageSegs, stepMx, slots, view, solve.timeMs, core]);
 
   // Personal stage averages computed from the caller-provided history.
   // We exclude the current solve so a fresh solve isn't compared against
@@ -382,7 +382,8 @@ export default function ReconstructReport({
           ao12={stageAvgs?.ao12 ?? null}
           walk={walk}
           moves={moves}
-          rotations={rotations}
+          // 转体和谱子里那些是同一份 —— 表里数的和文字里写的必须是一回事。
+          rotations={reconText?.rotations ?? []}
           // 有文字复盘时,阶段条由回放那根带游标的轴负责(同一份切分),这里不再
           // 画第二根;切不出谱子的那些把留着它,否则一根都没有。
           hideBar={method === 'cfop' && !!reconText && reconText.lines.length > 0}
