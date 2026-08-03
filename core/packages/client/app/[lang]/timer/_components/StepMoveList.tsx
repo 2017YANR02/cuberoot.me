@@ -3,7 +3,9 @@
 /**
  * StepMoveList — 这把是怎么拧的,按步分组写出来。
  *
- *     CROSS [1.73]                                     ⧉
+ *     打乱                                              ⧉
+ *       R D B' D2 U2 B R2 F2 D2 B' U2 B'
+ *     CROSS [1.73]
  *       U R' F R' B2 L                    // Y cross
  *     F2L [11.35]
  *       第 1 组  最优  U F2 R' F2 U2 R     // BR
@@ -141,6 +143,25 @@ export default function StepMoveList({
           {copied ? <Check size={14} /> : <Copy size={14} />}
         </button>
       </div>
+
+      {/* 打乱先摆在最上面 —— 这一块要成为一份**照着能复现**的东西:从这个局面
+          开始,往下每一步是怎么拧的。以前它孤零零挂在整页最底下(还配一张打乱图),
+          读谱子的人得先滚到底再滚回来。
+          用 `recon.scramble` 而不是成绩上那条原始打乱:谱子是在「十字朝下」那个
+          视角里写的(见 orient.ts),记号已经换过名,配原始打乱对不上。复制按钮
+          导出的也正是这一条,现在屏上和剪贴板里是同一份。 */}
+      {recon.scramble.trim() !== '' && (
+        <section className="sml-group sml-scramble">
+          <h4 className="sml-group-head">
+            <span className="sml-group-name">{tr({ zh: '打乱', en: 'SCRAMBLE' })}</span>
+          </h4>
+          <div className="sml-line">
+            <div className="sml-body">
+              <span className="sml-moves">{recon.scramble}</span>
+            </div>
+          </div>
+        </section>
+      )}
 
       {groups.map(g => {
         const ms = groupMs(g);

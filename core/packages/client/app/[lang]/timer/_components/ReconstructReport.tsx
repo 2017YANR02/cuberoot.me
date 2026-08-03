@@ -10,15 +10,17 @@
  *                         that have no solve to attach to (?replay= deep links)
  *                         or no timer around them (1v1 history).
  *
- * Layered, because the metric count outgrew one scroll (research doc P0-3):
+ * 顺序:**先这把是怎么拧的,再这把拧得怎么样**(2026-08-03 用户提的)。
  *
- *   first screen — Solve Quality (one 0-100 number and the three it is made
- *     of), the stage bar, and the stage × metric grid. Everything a cuber
- *     wants at a glance, nothing they have to hunt for.
- *   depth        — collapsed sections: the reference lines per stage, 3D
- *     playback, and the raw move stream. Sections rather than the tab strip
- *     the research doc sketched: a tab hides content behind both a click AND
- *     a choice, and two of these are often wanted side by side.
+ *   摘要 — 时间 / TPS / 步数 / 流畅,加上读完之后想做的那几件事。
+ *   回放 + 谱子 — 三维回放和按步写出来的动作(打乱就是谱子的第一行)。默认展开:
+ *     它是报告的主体。上面压着折叠起来的「参考解法」。
+ *   数据 — 质量分、时间轴、分步分析表、四个总量。排在后面不是因为不重要,而是
+ *     因为它们都在**归因**:不知道自己拧了什么的时候,一张 5×7 的表读不出东西。
+ *   原始动作序列 — 折叠,收尾。
+ *
+ * 分区块而不是分标签页(研究文档原本画的是 tab):tab 把内容藏在一次点击**加**一次
+ * 选择后面,而这几块常常要对着看。
  *
  * The reference lines and the score need an IDA* search (~80-110ms cold on a
  * desktop, more on a phone), so they are computed AFTER the modal paints and
@@ -350,6 +352,100 @@ export default function ReconstructReport({
     }
   }, [solve.event, solve.scramble]);
 
+  /**
+   * 数据那一半:质量分、时间轴、分步分析表、废步、四个总量。
+   *
+   * 摘出来是因为它排在**回放和谱子后面**(2026-08-03 用户提的顺序)。以前它是报告
+   * 的第一屏,道理是「这把慢在哪」该一眼看到;但那是在假设读者已经知道自己拧了
+   * 什么。真实顺序是反的 —— 先认出这把是怎么拧的(回放 + 谱子),那些数字才有东西
+   * 可归因;先给一张 5×7 的表,读者第一件事仍然是往下翻去找谱子。
+   */
+  const analysisBlock = (
+    <>
+      {scoreable && (
+        <QualityRow quality={analysis?.quality ?? null} pending={analysis === null} />
+      )}
+
+      {/* 一手一个方块的时间轴:停顿在这里是看得见的空隙。 */}
+      {reconText && reconText.lines.length > 0 && memoMs === undefined && (
+        <div className="reconstruct-timeline">
+          <SolveTimeline
+            moves={moves}
+            totalMs={solve.timeMs}
+            lines={reconText.lines}
+            showLabels
+          />
+        </div>
+      )}
+
+      {(stageSegs || walk) && memoMs === undefined && (
+        <StepAnalysis
+          method={method}
+          onMethodChange={setMethod}
+          segs={stageSegs}
+          stepMetrics={stepMx}
+          slots={slots}
+          reference={analysis?.reference ?? null}
+          slotReference={analysis?.slotReference ?? null}
+          ao12={stageAvgs?.ao12 ?? null}
+          walk={walk}
+          moves={moves}
+          rotations={rotations}
+          hideBar={method === 'cfop' && !!reconText && reconText.lines.length > 0}
+          isZh={isZh}
+        />
+      )}
+      {stageSegs && memoMs === undefined && method === 'cfop' && (
+        <StageMetaLine
+          segs={stageSegs}
+          stepMetrics={stepMx}
+          inspectionMs={solve.inspectionMs ?? null}
+        />
+      )}
+
+      {waste && waste.spans.length > 0 && (
+        <div className="reconstruct-waste-line">
+          {tr({ zh: '废步', en: 'Wasted' })} {waste.totalWastedMoves} {tr({ zh: '步', en: 'turns' })}
+          {' · '}
+          {tr({ zh: '多花', en: 'lost' })} {formatSec(waste.totalWastedMs)}
+          {tr({
+            zh: `（${waste.spans.length} 处,动作表中已标出）`,
+            en: ` (${waste.spans.length} ${waste.spans.length === 1 ? 'loop' : 'loops'}, marked in the move stream)`,
+          })}
+        </div>
+      )}
+
+      <div className="reconstruct-stats">
+        <div className="reconstruct-stat">
+          <div className="reconstruct-stat-num">{slices.htmCount}</div>
+          <div className="reconstruct-stat-label">HTM</div>
+          <div className="reconstruct-stat-sub">{slices.htps.toFixed(2)} {tr({ zh: '步/秒', en: 'tps' })}</div>
+        </div>
+        <div className="reconstruct-stat">
+          <div className="reconstruct-stat-num">{slices.qtmCount}</div>
+          <div className="reconstruct-stat-label">QTM</div>
+          <div className="reconstruct-stat-sub">{slices.qtps.toFixed(2)} {tr({ zh: '步/秒', en: 'tps' })}</div>
+        </div>
+        <div className="reconstruct-stat">
+          <div className="reconstruct-stat-num">{formatSec(slices.firstMoveLatencyMs)}</div>
+          <div className="reconstruct-stat-label">{tr({ zh: '首动延迟', en: 'First move'
+          })}</div>
+          <div className="reconstruct-stat-sub">
+            {memoMs !== undefined ? tr({ zh: '记忆后', en: 'after memo'
+                                    }) : tr({ zh: '从计时开始', en: 'from start'
+                                        })}
+          </div>
+        </div>
+        <div className="reconstruct-stat">
+          <div className="reconstruct-stat-num">{formatSec(slices.longestPauseMs)}</div>
+          <div className="reconstruct-stat-label">{tr({ zh: '最长停顿', en: 'Longest pause'
+          })}</div>
+          <div className="reconstruct-stat-sub">{slices.pauseCount} × &gt;0.5s</div>
+        </div>
+      </div>
+    </>
+  );
+
   return (
     // `.rc-report` carries the CFOP stage palette (--rc-stage-*) that the bar,
     // the dots and the timeline all read. On the report, not on whatever is
@@ -449,6 +545,17 @@ export default function ReconstructReport({
         )}
       </div>
 
+      {/* 打乱。有文字复盘的时候它是谱子的第一行(见 StepMoveList)—— 打乱和动作
+          写在一起才是一份照着能复现的东西,分成两块就得自己拼。这里兜的是没有
+          文字复盘的那些把(非三阶、切分失败):否则整份报告一个字都不提这把是从
+          哪儿开始的。 */}
+      {(solve.scramble ?? '').trim() !== '' && !(reconText && reconText.lines.length > 0) && (
+        <div className="rc-scramble">
+          <span className="rc-scramble-label">{tr({ zh: '打乱', en: 'Scramble' })}</span>
+          <span className="rc-scramble-text">{solve.scramble}</span>
+        </div>
+      )}
+
       {autoMemoMs !== null && (
         <div className="reconstruct-auto-memo-hint">
           <span>
@@ -511,89 +618,6 @@ export default function ReconstructReport({
         </div>
       )}
 
-      {scoreable && (
-        <QualityRow quality={analysis?.quality ?? null} pending={analysis === null} />
-      )}
-
-      {/* 一手一个方块的时间轴。放在最上面,因为「这把慢在哪」是看报告的第一个
-          问题,而它是唯一一眼能答出来的东西 —— 停顿在这里是看得见的空隙。 */}
-      {reconText && reconText.lines.length > 0 && memoMs === undefined && (
-        <div className="reconstruct-timeline">
-          <SolveTimeline
-            moves={moves}
-            totalMs={solve.timeMs}
-            lines={reconText.lines}
-            showLabels
-          />
-        </div>
-      )}
-
-      {(stageSegs || walk) && memoMs === undefined && (
-        <StepAnalysis
-          method={method}
-          onMethodChange={setMethod}
-          segs={stageSegs}
-          stepMetrics={stepMx}
-          slots={slots}
-          reference={analysis?.reference ?? null}
-          slotReference={analysis?.slotReference ?? null}
-          ao12={stageAvgs?.ao12 ?? null}
-          walk={walk}
-          moves={moves}
-          rotations={rotations}
-          hideBar={method === 'cfop' && !!reconText && reconText.lines.length > 0}
-          isZh={isZh}
-        />
-      )}
-      {stageSegs && memoMs === undefined && method === 'cfop' && (
-        <StageMetaLine
-          segs={stageSegs}
-          stepMetrics={stepMx}
-          inspectionMs={solve.inspectionMs ?? null}
-        />
-      )}
-
-      {waste && waste.spans.length > 0 && (
-        <div className="reconstruct-waste-line">
-          {tr({ zh: '废步', en: 'Wasted' })} {waste.totalWastedMoves} {tr({ zh: '步', en: 'turns' })}
-          {' · '}
-          {tr({ zh: '多花', en: 'lost' })} {formatSec(waste.totalWastedMs)}
-          {tr({
-            zh: `（${waste.spans.length} 处,动作表中已标出）`,
-            en: ` (${waste.spans.length} ${waste.spans.length === 1 ? 'loop' : 'loops'}, marked in the move stream)`,
-          })}
-        </div>
-      )}
-
-      <div className="reconstruct-stats">
-        <div className="reconstruct-stat">
-          <div className="reconstruct-stat-num">{slices.htmCount}</div>
-          <div className="reconstruct-stat-label">HTM</div>
-          <div className="reconstruct-stat-sub">{slices.htps.toFixed(2)} {tr({ zh: '步/秒', en: 'tps' })}</div>
-        </div>
-        <div className="reconstruct-stat">
-          <div className="reconstruct-stat-num">{slices.qtmCount}</div>
-          <div className="reconstruct-stat-label">QTM</div>
-          <div className="reconstruct-stat-sub">{slices.qtps.toFixed(2)} {tr({ zh: '步/秒', en: 'tps' })}</div>
-        </div>
-        <div className="reconstruct-stat">
-          <div className="reconstruct-stat-num">{formatSec(slices.firstMoveLatencyMs)}</div>
-          <div className="reconstruct-stat-label">{tr({ zh: '首动延迟', en: 'First move'
-          })}</div>
-          <div className="reconstruct-stat-sub">
-            {memoMs !== undefined ? tr({ zh: '记忆后', en: 'after memo'
-                                    }) : tr({ zh: '从计时开始', en: 'from start'
-                                        })}
-          </div>
-        </div>
-        <div className="reconstruct-stat">
-          <div className="reconstruct-stat-num">{formatSec(slices.longestPauseMs)}</div>
-          <div className="reconstruct-stat-label">{tr({ zh: '最长停顿', en: 'Longest pause'
-          })}</div>
-          <div className="reconstruct-stat-sub">{slices.pauseCount} × &gt;0.5s</div>
-        </div>
-      </div>
-
       {analysis?.reference && (
         <AccordionSection
           title={tr({ zh: '参考解法', en: 'Reference lines' })}
@@ -647,6 +671,8 @@ export default function ReconstructReport({
           )}
         </div>
       )}
+
+      {analysisBlock}
 
       <AccordionSection
         title={tr({ zh: `动作序列 (${moves.length})`, en: `Move stream (${moves.length})` })}

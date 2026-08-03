@@ -346,8 +346,10 @@ export default function SolveModal({
                 onReconFeedback={onReconFeedback}
               />
 
-              {scrambleSection}
-              {cubeRow}
+              {/* 这里不再摆打乱和打乱图(2026-08-03):打乱已经是谱子的第一行
+                  (StepMoveList),摆两遍等于让人怀疑是不是两条不一样的;而打乱图
+                  是给「拿手拧」用的 —— 智能魔方这把已经拧完了,那张图没有读者,
+                  却占着一屏。手动计时的成绩(下面那个分支)照旧两样都有。 */}
               {splitSections}
               {commentSection}
               {moveSection}
