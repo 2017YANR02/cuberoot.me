@@ -61,8 +61,9 @@ export default function ExactCaseList({ subsetKey, depth, goldenCount, lang }: P
   const [scrambles, setScrambles] = useState<Record<number, string>>({});
   const runId = useRef(0);
 
-  // 枚举:同步、毫秒级(最大的一档 3,672 个)。金标对不上就整段不显示 —— 宁可空着,
-  // 也不摆一份数不对的「全部」。
+  // 枚举:同步。单色/双色底几毫秒,六色底约 0.3 秒(约束越多,交出来的候选越少但层数越深),
+  // 首次还要建 6 张 190,080 项的 BFS 表(约 0.8 秒,之后全站共享缓存)。都在点柱之后才发生。
+  // 金标对不上就整段不显示 —— 宁可空着,也不摆一份数不对的「全部」。
   const members = useMemo<CorpusMember[] | null>(() => {
     const faces = facesOfSubset(subsetKey);
     if (!faces.length) return null;
@@ -139,8 +140,8 @@ export default function ExactCaseList({ subsetKey, depth, goldenCount, lang }: P
           ariaLabel={tr({ zh: '列全部状态或去除同构后的本质状态', en: 'All states, or one per symmetry class' })}
         />
       </div>
-      <p className="scramble-stats-exact-note">
-        {essential && tr({
+      {essential && <p className="scramble-stats-exact-note">
+        {tr({
           zh: `${members.length} 个状态在保住这道题的 ${symmetries.length} 个对称(转体与镜像)下并成 ${classes.length} 类,这里每类摆一个代表。`
             + `每行前面的 ${first}/${members.length} 是这一类的大小:把这个状态用那 ${symmetries.length} 个对称各作用一遍,只得到 ${first} 个不同的状态,它们算同一个情况`
             + (decomp ? `(${decomp} = ${members.length})` : '')
@@ -152,12 +153,7 @@ export default function ExactCaseList({ subsetKey, depth, goldenCount, lang }: P
             + `. A size is ${symmetries.length} ÷ how many symmetries the state has itself, so the more symmetric the state, the smaller its class`
             + (hasFixed ? ` — the size-1 one has all ${symmetries.length} itself: every rotation and the mirror leave it alone.` : '.'),
         })}
-        {' '}
-        {tr({
-          zh: '十字口径只读棱块,所以每行的角块与用不上的棱块是随机补的 —— 换一批补法,还是这一档。',
-          en: 'The cross metric reads edges only, so each row’s corners and untouched edges are filled at random — a different filling is still the same bin.',
-        })}
-      </p>
+      </p>}
       <ul className="scramble-stats-examples-list">
         {visible.map((idx, row) => {
           const scr = scrambles[idx];
