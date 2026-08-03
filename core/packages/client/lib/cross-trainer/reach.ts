@@ -51,6 +51,13 @@ export const TRAINER_GOD: Record<string, ByColor> = {
   'pseudo/pseudo_cross': [8, 8, 7, 7],
   'pseudo/pseudo_xcross': [9, 9, 9, 9],
   'pseudo_pair/pseudo_cross_pseudo_pair': [8, 8, 7, 7],
+  // 后三个不是从 distribution.json 读的 —— 它们的单帧空间小到能整表 BFS,所以证据更强:
+  // 每格取「40 万次均匀抽样里见过的最深」与「实际抽出来过的最深」的较大者,而单帧直径
+  // (EO 7 / EOLine 9 / block222 8)又是所有帧取最小值的天花板。凡是打到直径的格子就不只是
+  // 下界,是**准确值**:eo 全部四档、eoline 单色、block222 单色定槽。
+  'eoline/eo': [7, 7, 7, 7],
+  'eoline/eoline': [9, 7, 7, 7],
+  '222/block222': [7, 7, 7, 7],
 };
 
 /**
@@ -68,6 +75,12 @@ const DRAW: Record<string, StageReach> = {
   'pseudo/pseudo_cross': { fixed: [8, 8, 7, 6], best: [8, 8, 7, 6] },
   'pseudo/pseudo_xcross': { fixed: [9, 9, 8, 8], best: [8, 8, 8, 8] },
   'pseudo_pair/pseudo_cross_pseudo_pair': { fixed: [8, 8, 7, 7], best: [8, 7, 7, 6] },
+  // 枚举型阶段:单帧任何一层都是 O(1) 抽,所以 draw 直接顶到 god,一格不置灰。
+  // eo / eoline 没有槽维度(面板不显示槽选择器),两行相同只是为了对齐类型。
+  'eoline/eo': { fixed: [7, 7, 7, 7], best: [7, 7, 7, 7] },
+  'eoline/eoline': { fixed: [9, 7, 7, 7], best: [9, 7, 7, 7] },
+  // 两个对面色的四个块合起来就是全部 8 个块,所以 best 的双 / 四 / 六色三档必然相同。
+  '222/block222': { fixed: [8, 8, 7, 7], best: [7, 7, 7, 7] },
 };
 
 /**
@@ -84,6 +97,7 @@ const FRAME_MAX_VERIFIED: Record<string, number> = {
   'pseudo/pseudo_cross': 8,
   'pair/cross_pair': 9,
   'pseudo/pseudo_xcross': 10,
+  '222/block222': 8,
 };
 
 const colorIndex = (n: number): number => {
