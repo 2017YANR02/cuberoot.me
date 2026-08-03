@@ -8,6 +8,7 @@
  * Writes its state into TimerSettings; the wca_pool reads those to fetch.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { CompPicker } from '@/components/CompPicker';
 import { ClearButton } from '@/components/ClearButton';
 import PillToggle from '@/components/PillToggle/PillToggle';
@@ -87,10 +88,16 @@ interface Props {
   event: EventId;
   settings: WcaSourceSettings;
   updateSettings: (patch: Partial<WcaSourceSettings>) => void;
+  /**
+   * 把「难度」开关渲染进这个容器,而不是留在本组件的顶行 —— 计时器把它收进顶栏那排常驻控件
+   * (人数 / 项目 / 来源 / 解法)。可用性判断留在这里:只有本组件知道当前项目有没有难度数据、
+   * 当前比赛入没入库。不传 = 就地渲染(分析器、对战面板没有顶栏可借)。
+   */
+  toggleSlot?: HTMLElement | null;
 }
 
 export default function WcaSourceConfig({
-  isZh, event, settings, updateSettings,
+  isZh, event, settings, updateSettings, toggleSlot,
 }: Props) {
   const wev = wcaEventId(event);
   const mode = settings.wcaScrambleMode;
@@ -368,6 +375,24 @@ export default function WcaSourceConfig({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stepLo, stepHi]);
 
+  // 「难度」开关。就地渲染或 portal 去顶栏(toggleSlot),两条路同一份节点 —— 灰锁状态、
+  // 点击行为只写一遍。
+  const diffToggle = (
+    <span className="settings-row-tight-group">
+      <span className="settings-row-label">{tr({ zh: '难度', en: 'Difficulty' })}</span>
+      <PillToggle
+        value={diffLocked ? false : settings.wcaDifficultyOn}
+        onChange={(v) => {
+          // 灰锁(该场未入库):任何点击/拖动都不切换,只弹出原因说明(拖动多次触发也只是保持展开)。
+          if (diffLocked) { setShowDiffWhy(true); return; }
+          updateSettings({ wcaDifficultyOn: v });
+        }}
+        className={diffLocked ? 'pill-toggle--locked' : undefined}
+        ariaLabel={tr({ zh: '难度过滤', en: 'Difficulty filter' })}
+      />
+    </span>
+  );
+
   return (
     <div className="wca-src-config">
       <div className="settings-row wca-src-toprow">
@@ -452,21 +477,7 @@ export default function WcaSourceConfig({
             />
           </span>
         )}
-        {canDifficulty && (
-          <span className="settings-row-tight-group">
-            <span className="settings-row-label">{tr({ zh: '难度', en: 'Difficulty' })}</span>
-            <PillToggle
-              value={diffLocked ? false : settings.wcaDifficultyOn}
-              onChange={(v) => {
-                // 灰锁(该场未入库):任何点击/拖动都不切换,只弹出原因说明(拖动多次触发也只是保持展开)。
-                if (diffLocked) { setShowDiffWhy(true); return; }
-                updateSettings({ wcaDifficultyOn: v });
-              }}
-              className={diffLocked ? 'pill-toggle--locked' : undefined}
-              ariaLabel={tr({ zh: '难度过滤', en: 'Difficulty filter' })}
-            />
-          </span>
-        )}
+        {canDifficulty && (toggleSlot ? createPortal(diffToggle, toggleSlot) : diffToggle)}
       </div>
 
       {diffLocked && showDiffWhy && (

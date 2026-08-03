@@ -25,9 +25,11 @@ import Scramble222ModePicker from '@/components/Scramble222ModePicker';
 interface Props {
   event: EventId;
   isZh: boolean;
+  /** 顶栏里「难度」开关的落点(SoloView 提供)。给了就把开关 portal 上去,不给就留在本条里。 */
+  diffSlot?: HTMLElement | null;
 }
 
-export default function ScrambleSourceBar({ event, isZh }: Props) {
+export default function ScrambleSourceBar({ event, isZh, diffSlot }: Props) {
   const s = useSettings();
   const hasSteps = !!stepPuzzleOf(event);
   const src = s.scrambleSource;
@@ -38,7 +40,7 @@ export default function ScrambleSourceBar({ event, isZh }: Props) {
   return (
     <div className="scramble-src-bar surface-chrome" data-no-timer>
       {src === 'wca' && (
-        <WcaSourceConfig isZh={isZh} event={event} settings={s} updateSettings={updateSettings} />
+        <WcaSourceConfig isZh={isZh} event={event} settings={s} updateSettings={updateSettings} toggleSlot={diffSlot} />
       )}
 
       {src === 'manual' && (
@@ -58,7 +60,7 @@ export default function ScrambleSourceBar({ event, isZh }: Props) {
 
       {/* 随机状态来源的难度 = 直接生成该难度的状态(3×3 族;真题那边的难度筛在 WcaSourceConfig 里)。 */}
       {src === 'random' && canTrainerDifficulty(event) && (
-        <GenDiffConfig isZh={isZh} settings={s} updateSettings={updateSettings} />
+        <GenDiffConfig isZh={isZh} settings={s} updateSettings={updateSettings} toggleSlot={diffSlot} />
       )}
 
       {hasSteps && src !== 'manual' && (

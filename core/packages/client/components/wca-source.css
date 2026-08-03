@@ -82,7 +82,8 @@
 /* flex-basis 故意压低(不是理想展示宽):换行判定用的是各项基准宽之和,基准太大会把
    同行的「最优/生成」挤到下一行;真正的展示宽靠 flex-grow:1 在有余量时再撑开。 */
 .wca-src-comp-inline { flex: 1 1 140px; min-width: 100px; }
-/* 已选中一场:别撑满整行(短名会把「难度」开关推到行尾留空),按内容宽度紧凑排列。 */
+/* 已选中一场:别撑满整行(短名会把同行的「合并」开关推到行尾留空),按内容宽度紧凑排列。
+   计时器里「难度」开关已搬去顶栏,这条对「合并」仍然成立。 */
 .wca-src-comp-inline--picked { flex: 0 1 auto; min-width: 0; max-width: 60%; }
 .wca-src-comppick { position: relative; flex: 1; min-width: 0; }
 .wca-src-comppick > :first-child { width: 100%; }

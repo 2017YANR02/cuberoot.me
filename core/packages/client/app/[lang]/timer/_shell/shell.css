@@ -84,6 +84,12 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   align-items: center;
   gap: 6px;
 }
+/* 「难度」开关的挂点。内容由打乱来源条里的 WcaSourceConfig / GenDiffConfig portal 过来
+   —— 它们才知道当前项目 / 当前比赛能不能筛难度,开关却属于这排常驻控件(摆在「解法」左边)。
+   display:contents:开关直接当这排的一员排布,吃顶栏自己的 gap,不多套一层盒子;
+   没有可用难度时槽是空的,contents 让它彻底不占位。 */
+.shell-topbar-diff { display: contents; }
+.shell-topbar-diff .settings-row-tight-group { font-size: 13px; }
 /* 品牌 logo:占第 1 列贴左(与对战 middle-bar 的 logo 同一份资源 + 主页链接). */
 .shell-topbar-brand {
   grid-column: 1;
@@ -1044,6 +1050,13 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 /* 上面那条按后代匹配,会连难度子区里的滑块一起钉成整行(→ 配色/方法/阶段 与滑块被迫分两行)。
    难度子区内的滑块只占同行剩余宽度,与选择器并成一行。 */
 .scramble-src-bar .wca-src-diff .wca-src-steps-range { flex: 1 1 150px; }
+/* 步数滑块置灰段的原因(GenDiffConfig):一行短句 + 点开看详情的 ⓘ,居中跟在滑块下面。 */
+.scramble-src-bar .gen-diff-cap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
 /* 手动输入队列:整行让位给全宽文本域(不走 label+control 两列)。 */
 .scramble-src-bar .scramble-src-manual { display: block; flex: 1 1 100%; }
 .scramble-src-manual-input {
@@ -1455,8 +1468,9 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   .shell-topbar-left { gap: 4px 6px; }
   .shell-players-select { padding: 0 4px; font-size: 12px; }
   .shell-event-btn { padding: 5px 10px; font-size: 12px; }
-  /* 顶栏这组控件在手机上要挤下四件,解法入口跟着同档收窄。 */
+  /* 顶栏这组控件在手机上要挤下五件(多了「难度」),解法入口与难度开关跟着同档收窄。 */
   .shell-topbar-left .solver-panel-head { height: 30px; padding: 0 3px; font-size: 12px; gap: 4px; }
+  .shell-topbar-diff .settings-row-tight-group { font-size: 12px; gap: 4px; }
   /* Anchor the picker to the viewport (not the off-center button) so a wide
      grid never runs off the right edge; full-width with 8px gutters. */
   .shell-event-pop {
