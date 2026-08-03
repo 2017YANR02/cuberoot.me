@@ -8,7 +8,7 @@ import { isValidZone } from '@cuberoot/shared/tz';
 import { expandOccurrences, parseRRule, formatRRule } from '@cuberoot/shared/recur';
 import {
   eventsToIcs, isCalendarColor, parseNumList, redactBusy, ICS_IMPORT_BATCH,
-  type CalEvent, type CalendarMeta, type EventGuest, type ShareDetail,
+  type CalEvent, type CalendarImport, type CalendarMeta, type EventGuest, type ShareDetail,
 } from '@cuberoot/shared/calendar';
 
 /**
@@ -20,7 +20,8 @@ import {
  *   POST   /calendar/events                新建事件
  *   PATCH  /calendar/events/:id            改事件(?scope=this|following|all)
  *   DELETE /calendar/events/:id            删事件(同上 scope)
- *   POST   /calendar/events/bulk           ICS 导入(一次多条)
+ *   POST   /calendar/events/bulk           ICS 导入(一次多条,带 importId 归入某个批次)
+ *   POST   /calendar/imports               开一个导入批次   GET 列最近的   DELETE /:id 整批撤销
  *   POST   /calendar/events/:id/rsvp       受邀者接受 / 拒绝
  *   GET    /calendar/export                我的全部事件 → .ics 文本
  *   PUT    /calendar/share                 对外展示设置    POST /calendar/share/rotate 换链接
@@ -55,6 +56,24 @@ interface CalendarRow {
   tz: string;
   is_default: boolean;
   sort_order: number;
+}
+
+interface ImportRow {
+  id: string | number;
+  source: string;
+  event_count: number;
+  created_at: string | number;
+  undone_at: string | number | null;
+}
+
+function toImport(r: ImportRow): CalendarImport {
+  return {
+    id: Number(r.id),
+    source: r.source,
+    eventCount: r.event_count,
+    createdAt: Number(r.created_at),
+    undone: r.undone_at != null,
+  };
 }
 
 interface EventRow {
@@ -325,12 +344,14 @@ calendarRoutes.post('/calendar/calendars', async (c) => {
   const count = await query<{ n: number }>('SELECT COUNT(*)::int AS n FROM calendars WHERE owner_key = ?', [me.wcaId]);
   if ((count[0]?.n ?? 0) >= MAX_CALENDARS_PER_USER) return c.json({ error: 'too many calendars' }, 400);
   const now = Date.now();
+  // 导入新建的日历记一笔 —— 撤销那次导入时,空了就跟着删掉,不留一列空壳。
+  const importId = await ownedImportId(me.wcaId, body.importId);
   const rows = await query<CalendarRow>(
-    `INSERT INTO calendars (owner_key, name, color, tz, is_default, sort_order, created_at, updated_at)
-     VALUES (?, ?, ?, ?, FALSE, ?, ?, ?)
+    `INSERT INTO calendars (owner_key, name, color, tz, is_default, sort_order, import_id, created_at, updated_at)
+     VALUES (?, ?, ?, ?, FALSE, ?, ?, ?, ?)
      RETURNING id, name, color, tz, is_default, sort_order`,
     [me.wcaId, str(body.name, 80), color(body.color) || 'flamingo', zone(body.tz, 'UTC'),
-      count[0]?.n ?? 0, now, now],
+      count[0]?.n ?? 0, importId, now, now],
   );
   return c.json({ calendar: toCalendar(rows[0]) });
 });
@@ -455,19 +476,31 @@ async function insertEvent(
   ownerKey: string,
   input: EventInput,
   series?: { seriesId: number; occurrenceMs: number },
+  importId?: number | null,
 ): Promise<EventRow> {
   const now = Date.now();
   const rows = await query<EventRow>(
     `INSERT INTO calendar_events
        (calendar_id, owner_key, title, description, location, all_day, start_ms, end_ms, tz,
-        rrule, exdates, series_id, occurrence_ms, color, reminders, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        rrule, exdates, series_id, occurrence_ms, color, reminders, import_id, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      RETURNING ${EVENT_COLS}`,
     [input.calendarId, ownerKey, input.title, input.description, input.location, input.allDay,
       input.start, input.end, input.tz, input.rrule, input.exdates,
-      series?.seriesId ?? null, series?.occurrenceMs ?? null, input.color, input.reminders, now, now],
+      series?.seriesId ?? null, series?.occurrenceMs ?? null, input.color, input.reminders,
+      importId ?? null, now, now],
   );
   return rows[0];
+}
+
+/** 这个 import id 是不是调用者自己的、且还没撤销;不是就当没传。 */
+async function ownedImportId(ownerKey: string, raw: unknown): Promise<number | null> {
+  const id = Number(raw);
+  if (!Number.isFinite(id) || id <= 0) return null;
+  const rows = await query<{ id: string }>(
+    'SELECT id FROM calendar_imports WHERE id = ? AND owner_key = ? AND undone_at IS NULL', [id, ownerKey],
+  );
+  return rows[0] ? id : null;
 }
 
 /** 事件行,且必须属于调用者。 */
@@ -545,8 +578,8 @@ calendarRoutes.post('/calendar/events/bulk', async (c) => {
   // 一份 Google 导出动辄几千条 = 十几批,10 次/分钟会把正常导入卡在半路。
   checkRateLimit(getIp(c), { bucket: 'cal-bulk', max: 30 });
   const me = await requireAuth(c);
-  const body = await c.req.json<{ calendarId?: number; events?: Record<string, unknown>[] }>()
-    .catch(() => ({} as { calendarId?: number; events?: Record<string, unknown>[] }));
+  const body = await c.req.json<{ calendarId?: number; importId?: number; events?: Record<string, unknown>[] }>()
+    .catch(() => ({} as { calendarId?: number; importId?: number; events?: Record<string, unknown>[] }));
   const list = Array.isArray(body.events) ? body.events : [];
   if (list.length === 0) return c.json({ error: 'no events' }, 400);
   // 超出就退回去让调用方切批。原来是 slice 掉多的,于是「导入 500 条」看着像成功,
@@ -557,18 +590,81 @@ calendarRoutes.post('/calendar/events/bulk', async (c) => {
   );
   if ((count[0]?.n ?? 0) + list.length > MAX_EVENTS_PER_USER) return c.json({ error: 'too many events' }, 400);
 
+  const importId = await ownedImportId(me.wcaId, body.importId);
   let added = 0;
   const failed: number[] = [];
   for (let i = 0; i < list.length; i++) {
     try {
       const input = await readEventInput({ ...list[i], calendarId: body.calendarId }, me.wcaId);
-      await insertEvent(me.wcaId, input);
+      await insertEvent(me.wcaId, input, undefined, importId);
       added++;
     } catch {
       failed.push(i);
     }
   }
+  if (importId != null && added > 0) {
+    await query('UPDATE calendar_imports SET event_count = event_count + ? WHERE id = ?', [added, importId]);
+  }
   return c.json({ added, failed: failed.length });
+});
+
+// ── 导入批次 ────────────────────────────────────────────────────────────────
+//
+// 一次导入跨多个请求(每个日历一批、每批最多 MAX_BULK 条),所以先开一个批次、把 id 带在
+// 后面每个请求上。撤销就是照着这个 id 把事件删干净 —— 不这么记的话只能按时间戳猜哪些是
+// 一起进来的,用户自己在导入前后手建的日程会被误伤。
+
+calendarRoutes.post('/calendar/imports', async (c) => {
+  c.header('Cache-Control', NO_STORE);
+  checkRateLimit(getIp(c), { bucket: 'cal-import', max: 20 });
+  const me = await requireAuth(c);
+  const body = await c.req.json<Record<string, unknown>>().catch(() => ({} as Record<string, unknown>));
+  const rows = await query<{ id: string }>(
+    'INSERT INTO calendar_imports (owner_key, source, created_at) VALUES (?, ?, ?) RETURNING id',
+    [me.wcaId, str(body.source, 120), Date.now()],
+  );
+  return c.json({ id: Number(rows[0].id) });
+});
+
+/** 最近几次导入,给「撤销」用。撤销过的也列出来,免得用户以为记录丢了。 */
+calendarRoutes.get('/calendar/imports', async (c) => {
+  c.header('Cache-Control', NO_STORE);
+  checkRateLimit(getIp(c));
+  const me = await requireAuth(c);
+  const rows = await query<ImportRow>(
+    `SELECT id, source, event_count, created_at, undone_at
+       FROM calendar_imports WHERE owner_key = ? ORDER BY id DESC LIMIT 10`, [me.wcaId],
+  );
+  // 一条都没导成的批次(全失败 / 中途关页)对用户没有意义,不占位置。
+  return c.json({ imports: rows.filter((r) => r.event_count > 0).map(toImport) });
+});
+
+calendarRoutes.delete('/calendar/imports/:id', async (c) => {
+  c.header('Cache-Control', NO_STORE);
+  checkRateLimit(getIp(c), { bucket: 'cal-import', max: 20 });
+  const me = await requireAuth(c);
+  const id = Number(c.req.param('id'));
+  const rows = await query<ImportRow>(
+    `SELECT id, source, event_count, created_at, undone_at
+       FROM calendar_imports WHERE id = ? AND owner_key = ?`, [id, me.wcaId],
+  );
+  if (!rows[0]) return c.json({ error: 'not found' }, 404);
+  if (rows[0].undone_at != null) return c.json({ error: 'already undone' }, 400);
+
+  // 事件先走:日历上还挂着东西的话下面那步就不该删它。
+  const gone = await query<{ id: string }>(
+    'DELETE FROM calendar_events WHERE import_id = ? AND owner_key = ? RETURNING id', [id, me.wcaId],
+  );
+  // 这次导入新建、且此刻确实空了的日历才删。用户后来往里加过日程就留着 —— 撤销导入不该
+  // 顺手带走人家自己写的东西。主日历永远不动。
+  const dropped = await query<{ id: string }>(
+    `DELETE FROM calendars c
+      WHERE c.import_id = ? AND c.owner_key = ? AND NOT c.is_default
+        AND NOT EXISTS (SELECT 1 FROM calendar_events e WHERE e.calendar_id = c.id)
+      RETURNING c.id`, [id, me.wcaId],
+  );
+  await query('UPDATE calendar_imports SET undone_at = ? WHERE id = ?', [Date.now(), id]);
+  return c.json({ removedEvents: gone.length, removedCalendars: dropped.length });
 });
 
 /**

@@ -29,6 +29,18 @@ export interface CalendarMeta {
   sortOrder: number;
 }
 
+/** 一次 .ics / .zip 导入。记着是为了能整批撤销 —— 详见 migration 0101。 */
+export interface CalendarImport {
+  id: number;
+  /** 导入的文件名 */
+  source: string;
+  /** 实际落库条数 */
+  eventCount: number;
+  createdAt: number;
+  /** 已经撤销过了(记录留着,不再能撤第二次) */
+  undone: boolean;
+}
+
 export interface EventGuest {
   /** 归属键(真 wca_id 或 u<uid>) */
   key: string;
