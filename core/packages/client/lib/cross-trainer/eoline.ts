@@ -47,7 +47,12 @@ export function linePieces(face: FaceIdx, axis: EoAxis): number[] {
 const CANON_AXIS: EoAxis = defaultEoAxis(CANON_FACE);
 export const CANON_LINE = linePieces(CANON_FACE, CANON_AXIS);
 /** The rotation carrying a (colour, axis) EOLine frame onto the canonical one. */
-export const rotForLine = (face: FaceIdx, axis: EoAxis): number => rotForFaceAxis(face, axis);
+export const rotForLine = (face: FaceIdx, axis: EoAxis): number => {
+  // An axis parallel to the face is not a line at all; `rotForFaceAxis` would answer -1 and the
+  // rotation would then fail deep inside with an unreadable error. Say so here, like ./eo does.
+  if (axis === (face % 3)) throw new Error(`EO axis ${axis} is the face's own axis — not an EOLine`);
+  return rotForFaceAxis(face, axis);
+};
 
 // ── pure EO ──────────────────────────────────────────────────────────────────────────────────
 
@@ -196,7 +201,9 @@ function pickLayer(
   let total = 0;
   for (let d = lo; d <= top; d++) total += t.hist[d];
   if (!total) return null;
-  let r = (rng() * total) | 0;
+  // Clamped for the same reason as ./block's draw: for an `exactLayers` stage a null is read as
+  // proof that the difficulty does not exist, so an rng returning exactly 1 must not produce one.
+  let r = Math.min((rng() * total) | 0, total - 1);
   for (let d = lo; d <= top; d++) {
     if (r < t.hist[d]) return { value: t.layer[t.start[d] + r], depth: d };
     r -= t.hist[d];
