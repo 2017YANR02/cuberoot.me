@@ -26,7 +26,7 @@ import AvgExamplesPanel, { type AvgGroupCase } from './_components/AvgExamplesPa
 import ExactCoverageMatrix from './_components/ExactCoverageMatrix';
 import ExactDistTable from './_components/ExactDistTable';
 import {
-  EXACT_EO_STAGES, EXACT_PSEUDO_STAGES, EXACT_STD_STAGES, SLOT_LABEL, SLOT_OK,
+  EXACT_STAGE_VARIANT, EXACT_VARIANT_STAGES, FRAME_NOTE, SLOT_LABEL, SLOT_OK,
   compactExact, exactColorsOf, exactMean, exactRatios, getExactCell, groupDigits,
   type ExactColors, type ExactFull, type ExactSlot, type ExactStage,
 } from './_data/exact_dist';
@@ -50,8 +50,7 @@ import { countryName } from '@/lib/country-name';
 import { fetchByDifficultyCountries, type ByDifficultyCountry } from '@/lib/scramble-by-difficulty';
 import { statsUrl } from '@/lib/stats-base';
 import {
-  stageLabel, isBlockVariant, VARIANT_ORDER, VARIANT_STAGES, BLOCK_DATA_VARIANTS, BLOCK_STAGE_VARIANT,
-  EO_DATA_VARIANTS, EO_STAGE_VARIANT, EO_UI_STAGES, isEoVariant,
+  stageLabel, isBlockVariant, uiVariantOf, uiVariantOptions, uiStagesOf, dataVariantOfStage,
   type ScrambleVariant,
 } from '@/lib/scramble-variants';
 import { VariantSelect } from '@/components/VariantSelect';
@@ -188,19 +187,22 @@ const EXACT_SET_KEY = 'exact';
 /** 图表区的锚点 id —— 覆盖矩阵在页尾,点一格得把视口带回图上。 */
 const DIST_ANCHOR = 'dist-view';
 /** 阶段属于哪个变体(阶段下拉按变体列选项,少设这一步会让下拉里没有刚选中的那档)。 */
-const exactVariantOf = (st: ExactStage): string =>
-  EXACT_PSEUDO_STAGES.includes(st) ? 'pseudo' : EXACT_EO_STAGES.includes(st) ? 'eo' : 'std';
+const exactVariantOf = (st: ExactStage): string => EXACT_STAGE_VARIANT[st] ?? 'std';
+/**
+ * 方法 / 阶段下拉与 WCA 那套**逐项相同** —— 变体键与 stages 数组直接来自 EXACT_VARIANT_STAGES,
+ * 那张表又被 tests/scramble_exact_dist.test.ts 钉在 distribution.json 上。所以「精确集少了几个
+ * 方法」不可能悄悄发生:漏一项、多一项、顺序不同,测试当场红。
+ * data 恒空(数值不走这里,走 EXACT_DIST 旁路);算没算得出来由格子自己说,不靠菜单藏。
+ */
 const EXACT_SET_META: SetData = {
   label: 'Full state space',
   label_zh: '完整状态空间',
   sample_count: 0,
-  variants: {
-    // 标准 CFOP 全 5 阶段 + 伪变体的十字 + EO 变体的 EOCross 有精确数据;stages 供阶段下拉用,
-    // data 恒空(数值不走这里,走 EXACT_DIST 旁路)。
-    std: { sample_count: 0, stages: EXACT_STD_STAGES, data: {} },
-    pseudo: { sample_count: 0, stages: EXACT_PSEUDO_STAGES, data: {} },
-    eo: { sample_count: 0, stages: EXACT_EO_STAGES, data: {} },
-  },
+  variants: Object.fromEntries(
+    Object.entries(EXACT_VARIANT_STAGES).map(([v, stages]) => [
+      v, { sample_count: 0, stages: stages as string[], data: {} },
+    ]),
+  ),
 };
 
 /**
@@ -1390,21 +1392,16 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   // 样本量由图内自报(DiscreteHistogram 对 series 求和 = 打乱条数 / 组数),这里不再另算一份。
 
   // 方法下拉:数据层块变体(123/123x2/222/223)聚合显示为「砖」,EOLine 变体并入「EO」;
-  // 阶段下拉列细分(块形状 / EO·EOLine),选中时经 *_STAGE_VARIANT 落回底层变体,
-  // 数据/示例/下载全走原 variant+stage 键。顺序走共享 VARIANT_ORDER(与首页 RecentScrambles 一致)。
-  const methodOptions = VARIANT_ORDER.filter((v) =>
-    v === 'block'
-      ? BLOCK_DATA_VARIANTS.some((b) => !!currentSet.variants[b])
-      : v === 'eo'
-        ? EO_DATA_VARIANTS.some((b) => !!currentSet.variants[b])
-        : !!currentSet.variants[v],
-  ) as VariantKey[];
-  const blockStages = VARIANT_STAGES.block.filter((s) =>
-    currentSet.variants[BLOCK_STAGE_VARIANT[s]]?.stages.includes(s));
-  const eoStages = EO_UI_STAGES.filter((s) =>
-    currentSet.variants[EO_STAGE_VARIANT[s]]?.stages.includes(s));
-  const isBlockUi = isBlockVariant(variant);
-  const isEoUi = isEoVariant(variant);
+  // 阶段下拉列细分(块形状 / EO·EOLine),选中时经 dataVariantOfStage 落回底层变体,
+  // 数据/示例/下载全走原 variant+stage 键。聚合规则用 scramble-variants 那三个共享函数
+  // (与 /timer 的 GenDiffConfig / WcaSourceConfig 同一份),这里不另写一遍。
+  const methodOptions = uiVariantOptions((dv) => !!currentSet.variants[dv]) as VariantKey[];
+  const uiVariant = uiVariantOf(variant) as VariantKey;
+  /** 该 UI 方法在本数据集里真有数据的阶段(聚合方法跨数据变体展开)。 */
+  const stagesOfUi = (v: string) => uiStagesOf(v).filter((s) =>
+    currentSet.variants[dataVariantOfStage(v, s)]?.stages.includes(s));
+  const isAggregate = uiVariant !== variant;
+  const stageOptions = isAggregate ? stagesOfUi(uiVariant) : currentStages;
 
   return (
     <div className="scramble-stats-page">
@@ -1420,17 +1417,13 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
         <label>
           <VariantSelect
             className="scramble-stats-select"
-            value={isBlockUi ? 'block' : isEoUi ? 'eo' : variant}
+            value={uiVariant}
             options={methodOptions}
             onChange={(val) => {
               const v = val as VariantKey;
-              if (v === 'block') {
-                const s = blockStages[0];
-                if (s) { setVariant(BLOCK_STAGE_VARIANT[s] as VariantKey); setStage(s); }
-              } else if (v === 'eo') {
-                const s = eoStages[0];
-                if (s) { setVariant(EO_STAGE_VARIANT[s] as VariantKey); setStage(s); }
-              } else setVariant(v);
+              const s = stagesOfUi(v)[0];
+              if (s) { setVariant(dataVariantOfStage(v, s) as VariantKey); setStage(s); }
+              else setVariant(v);
             }}
             isZh={i18n.language.startsWith('zh')}
             ariaLabel={tr({ zh: '变体', en: 'Variant'
@@ -1441,10 +1434,9 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
           <VariantSelect
             className="scramble-stats-select"
             value={stage}
-            options={isBlockUi ? blockStages : isEoUi ? eoStages : currentStages}
+            options={stageOptions}
             onChange={(s) => {
-              if (isBlockUi && BLOCK_STAGE_VARIANT[s]) setVariant(BLOCK_STAGE_VARIANT[s] as VariantKey);
-              else if (isEoUi && EO_STAGE_VARIANT[s]) setVariant(EO_STAGE_VARIANT[s] as VariantKey);
+              if (isAggregate) setVariant(dataVariantOfStage(uiVariant, s) as VariantKey);
               setStage(s);
             }}
             isZh={isZh}
@@ -1453,9 +1445,10 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
         })}
           />
         </label>
-        {/* 槽位:精确穷举集专属。按阶段动态列出有意义的档 —— Cross 没有 F2L 槽的概念、
-            XCross 只解 1 槽(谈不上相邻/对角)、XXCross 要 2 槽(谈不上固定单槽),
-            不适用的入口直接不给,不留会算出垃圾值的选项。只剩一档时不渲染下拉。 */}
+        {/* 帧档:精确穷举集专属。按阶段动态列出有意义的档 —— 十字单色底只有一个帧(取最优
+            就是那个帧本身)、XCross 只解 1 槽(谈不上相邻/对角)、XXCross 要 2 槽(谈不上
+            固定单帧),不适用的入口直接不给,不留会算出垃圾值的选项。只剩一档时不渲染下拉。
+            「固定单帧」到底固定的是槽、轴还是块,每个阶段不同,写进选项里。 */}
         {isExact && SLOT_OK[stage as ExactStage] && SLOT_OK[stage as ExactStage].length > 1 && (
           <label>
             <VariantSelect
@@ -1464,8 +1457,12 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
               options={SLOT_OK[stage as ExactStage]}
               onChange={(v) => setSlot(v)}
               isZh={isZh}
-              label={(v) => tr(SLOT_LABEL[v as ExactSlot])}
-              ariaLabel={tr({ zh: '槽位', en: 'Slot' })}
+              label={(v) => {
+                const base = tr(SLOT_LABEL[v as ExactSlot]);
+                const note = v === 'fixed1' ? FRAME_NOTE[stage as ExactStage] : undefined;
+                return note ? `${base}(${tr(note)})` : base;
+              }}
+              ariaLabel={tr({ zh: '帧档', en: 'Frame mode' })}
             />
           </label>
         )}
@@ -1588,8 +1585,8 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
                 en: 'Log y-axis: these distributions span 10 orders of magnitude (largest bin 51%, smallest 4.7e-9%); on a linear axis the tails are under one pixel tall.',
               }),
               tr({
-                zh: '槽位:「不固定槽」对 4 个 F2L 槽取最小值,与真题分析器同口径;固定槽是精确集独有的额外内容。',
-                en: 'Slot: “any slot” takes the minimum over all four F2L slots, matching the analyzer; the fixed-slot variants are exclusive to the exhaustive dataset.',
+                zh: '帧档:「取最优帧」对该底色的所有帧(四个 F2L 槽 / 两条 EO 轴 / 八个块…)取最小值,与真题分析器同口径,所以只有它能叠加对照;固定帧是把度量钉死在一个具体的帧上,是精确集独有的额外内容,与真题不是同一个问题。',
+                en: 'Frame mode: “best frame” takes the minimum over every frame a colour admits (four F2L slots / two EO axes / eight blocks …), which is the analyzer’s own metric — so it is the only mode that can be overlaid. A fixed frame pins the metric to one specific frame; it is exclusive to the exhaustive dataset and is not the same question the WCA column answers.',
               }),
             ].join('\n\n')}
           />
@@ -1643,6 +1640,31 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
                   </p>
                 )}
               </>
+            ) : exactCell?.kind === 'todo' ? (
+              // 还没算的格子。「多大、可不可行、卡在哪」三件事本身就是内容 —— 比一句
+              // 「暂无数据」有用得多,也让「没算」与「算不动」不至于被读成同一件事。
+              <>
+                <p className="scramble-stats-exact-todo-head">
+                  {tr({
+                    ready: { zh: '还没跑 —— 算法与代码都就位,只差机时。', en: 'Not run yet — the algorithm and the code are in place; only machine time is missing.' },
+                    plan: { zh: '还没写 —— 路线清楚,代码还没写。', en: 'Not written yet — the route is clear, the code is not.' },
+                    oor: { zh: '够不着 —— 现有硬件跑不动这一格。', en: 'Out of reach — this cell is beyond the hardware at hand.' },
+                  }[exactCell.feasible])}
+                </p>
+                {exactCell.states && (
+                  <p className="scramble-stats-exact-zero">
+                    {tr({ zh: '坐标空间', en: 'Coordinate space' })}
+                    <b>{groupDigits(exactCell.states)}</b>
+                  </p>
+                )}
+                <p>{tr(exactCell.note)}</p>
+                {exactCell.unit && (
+                  <p>{tr({
+                    zh: `进度与跑法见 solver/EXACT_DIST_EXPANSION.md 的单元 ${exactCell.unit}。`,
+                    en: `Progress and how to run it: unit ${exactCell.unit} in solver/EXACT_DIST_EXPANSION.md.`,
+                  })}</p>
+                )}
+              </>
             ) : (
               <p>{tr({ zh: '该组合未计算', en: 'This combination has not been computed' })}</p>
             )}
@@ -1672,6 +1694,11 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
       {/* 有真题分布但口径不同的格:说清为什么不叠,别让用户以为是数据缺失。 */}
       {isExact && exactFull?.noOverlay && (
         <p className="scramble-stats-exact-note">{tr(exactFull.noOverlay)}</p>
+      )}
+
+      {/* 这一格不是全穷举(目前只有整解):前提写在图正下方,别让人把估计值当穷举值读。 */}
+      {isExact && exactFull?.caveat && (
+        <p className="scramble-stats-exact-note">{tr(exactFull.caveat)}</p>
       )}
 
       {/* 完整精确值:图上柱顶是紧凑写法,逐位数字在这张表里看。 */}

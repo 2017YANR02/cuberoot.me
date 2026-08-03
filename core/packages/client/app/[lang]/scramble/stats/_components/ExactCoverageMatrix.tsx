@@ -1,48 +1,38 @@
 'use client';
 
 /**
- * 精确穷举分布的覆盖矩阵 —— 5 阶段 × 3 底色 × 槽位。
+ * 精确穷举分布的覆盖矩阵 —— 全部 39 个阶段 × 底色档 × 帧档。
  *
- * 这张表同时是「占坑」的载体:能画图的格子只有 8 个,其余要么只算出了 0 步状态数
- * (完整分布跑不动或无可信金标),要么在该阶段根本不适用。与其在图表区显示一句
- * 「暂无数据」,不如把每格「有什么 / 缺什么 / 缺的那部分卡在哪」直接摊开。
+ * 阶段行与方法/阶段下拉逐项相同(菜单怎么列,这里就有几行),所以绝大多数格子是空的。
+ * 这张表的价值恰恰在空格上:每格说明**有什么、缺什么、缺的那部分卡在哪**,以及那一格的坐标
+ * 空间有多大 —— 「没算」和「算不动」是两件事,「算不动」和「不适用」又是两件事。
  *
- * 三态:
+ * 五态:
  *   完整分布  可点,跳到上方图表的那一格
  *   仅 0 步   同样可点(那一格上方会说明只有端点数);另显示状态数 + 完整分布卡在哪
- *   不适用    该阶段没有这个槽位概念(Cross 无 F2L 槽;XCross 只解 1 槽,谈不上相邻/对角)
+ *   待跑      算法与代码就位,只差机时 —— 单元号见 solver/EXACT_DIST_EXPANSION.md
+ *   有路线    路线清楚、代码还没写
+ *   够不着    现有硬件够不着,写清楚要多少
+ *   不适用    该阶段没有这个帧档(十字没有 F2L 槽;XCross 只解 1 槽,谈不上相邻/对角)
  *
  * 可点的格子是真 `<a>`(href 由 page.tsx 的 exactHref 拼,带锚点回图表),不是 button + JS:
  * 中键 / Ctrl 点得能开新标签,地址也得复制得出去。
  */
 
 import Link from '@/components/AppLink';
-import { tr } from '@/i18n/tr';
+import { tr, useLang } from '@/i18n/tr';
+import { stageLabel, uiVariantOf, variantLabel } from '@/lib/scramble-variants';
 import {
-  COLORS_LABEL, EXACT_COLOR_KEYS, EXACT_DIST, EXACT_STAGES, SLOT_LABEL, SLOT_OK,
-  groupDigits, isSlotApplicable,
-  type ExactColors, type ExactFull, type ExactSlot, type ExactStage,
+  COLORS_LABEL, COLOR_FREE, EXACT_COLOR_KEYS, EXACT_DIST, EXACT_STAGES, EXACT_STAGE_VARIANT,
+  FRAME_NOTE, FRAME_STATES, SLOT_LABEL, SLOT_OK,
+  compactExact, groupDigits, isSlotApplicable, pendingCell,
+  type ExactColors, type ExactFull, type ExactPending, type ExactSlot, type ExactStage,
 } from '../_data/exact_dist';
 import './exact-coverage.css';
 
 /**
- * 阶段显示名。前 5 个与 lib/scramble-variants.ts 的 stageLabel 一致;伪十字不能直接走
- * stageLabel —— 那个函数按设计会剥掉 `pseudo_` 前缀(变体名由方法下拉承担),在这张
- * 跨变体的矩阵里会和标准 Cross 撞成同一行名。
- */
-const STAGE_LABEL: Record<ExactStage, { zh: string; en: string }> = {
-  cross: { zh: 'Cross', en: 'Cross' },
-  xcross: { zh: 'XCross', en: 'XCross' },
-  xxcross: { zh: 'XXCross', en: 'XXCross' },
-  xxxcross: { zh: 'XXXCross', en: 'XXXCross' },
-  xxxxcross: { zh: 'XXXXCross', en: 'XXXXCross' },
-  pseudo_cross: { zh: '伪 Cross', en: 'Pseudo cross' },
-  eo_cross: { zh: 'EOCross', en: 'EOCross' },
-};
-
-/**
- * 列 = (槽位, 底色) 组合。固定槽那几档只有单色底有数据(C++ 端没写双色/六色的固定槽版),
- * 全列出来会得到一张三分之二是空的宽表 —— 故固定槽只出单色底一列。
+ * 列 = (帧档, 底色)组合。固定帧那几档只有单色底有数据 —— 固定一个帧之后底色就没有自由度了
+ * (换个底色就是换个帧),多列出来只会得到三倍宽的空表。
  */
 const COLUMNS: Array<{ slot: ExactSlot; colors: ExactColors }> = [
   ...EXACT_COLOR_KEYS.map((colors) => ({ slot: 'unfixed' as ExactSlot, colors })),
@@ -50,6 +40,12 @@ const COLUMNS: Array<{ slot: ExactSlot; colors: ExactColors }> = [
   { slot: 'adj', colors: 'W' },
   { slot: 'diag', colors: 'W' },
 ];
+
+const PENDING_LABEL: Record<ExactPending['feasible'], { zh: string; en: string }> = {
+  ready: { zh: '待跑', en: 'Ready to run' },
+  plan: { zh: '有路线', en: 'Route only' },
+  oor: { zh: '够不着', en: 'Out of reach' },
+};
 
 interface Props {
   /** 当前图表选中的格子,用于高亮。 */
@@ -60,15 +56,48 @@ interface Props {
   hrefOf: (stage: ExactStage, slot: ExactSlot, colors: ExactColors) => string;
 }
 
+/**
+ * 四个底色档的「取最优帧」经常是同一句死因(多帧取最优 → 整只魔方),四格照抄四遍只会把表变成
+ * 一堵字墙。同一行里这四格若都没数据且完全同话,合成一格横跨四列 —— 说的还是那件事,只说一遍。
+ * 有一格有数据就不合并:那一行的看点正是「哪个底色档算得出来」。
+ */
+function bestColsMerge(st: ExactStage): ExactPending | null {
+  if (!isSlotApplicable(st, 'unfixed')) return null;
+  const cells = EXACT_COLOR_KEYS.map((c) => EXACT_DIST[st].unfixed?.[c] ?? pendingCell(st, 'unfixed'));
+  const first = cells[0];
+  if (first.kind !== 'todo') return null;
+  const same = cells.every((x) => x.kind === 'todo'
+    && x.feasible === first.feasible && x.states === first.states
+    && x.unit === first.unit && x.note.zh === first.note.zh);
+  return same ? first : null;
+}
+
+/** 连续同 UI 方法的行数 —— 方法列用 rowSpan 合并。 */
+function variantGroups(): Array<{ variant: string; stages: ExactStage[] }> {
+  const out: Array<{ variant: string; stages: ExactStage[] }> = [];
+  for (const st of EXACT_STAGES) {
+    const v = uiVariantOf(EXACT_STAGE_VARIANT[st]);
+    const last = out[out.length - 1];
+    if (last && last.variant === v) last.stages.push(st);
+    else out.push({ variant: v, stages: [st] });
+  }
+  return out;
+}
+
 export default function ExactCoverageMatrix({ stage, slot, colors, hrefOf }: Props) {
+  const isZh = useLang() === 'zh';
+  const groups = variantGroups();
+
   return (
     <div className="exact-cov">
       <div className="exact-cov-head">
         <h3>{tr({ zh: '覆盖矩阵', en: 'Coverage matrix' })}</h3>
         <p>
           {tr({
-            zh: '每格说明有什么、缺什么、缺的那部分卡在哪。有数据的格子(绿、黄)都能点,点了跳到上方图表的那一格。',
-            en: 'Each cell states what exists, what is missing, and what blocks it. Cells with data (green, amber) link to that cell in the chart above.',
+            zh: '行与方法 / 阶段下拉逐项相同。每格说明有什么、缺什么、缺的那部分卡在哪。'
+              + '有数据的格子(绿、黄)都能点,点了跳到上方图表的那一格。',
+            en: 'One row per entry in the method / stage pickers. Each cell states what exists, what is missing, '
+              + 'and what blocks it. Cells with data (green, amber) link to that cell in the chart above.',
           })}
         </p>
       </div>
@@ -78,6 +107,9 @@ export default function ExactCoverageMatrix({ stage, slot, colors, hrefOf }: Pro
         <table className="exact-cov-table">
           <thead>
             <tr>
+              <th scope="col" className="exact-cov-rowhead">
+                {tr({ zh: '方法', en: 'Method' })}
+              </th>
               <th scope="col" className="exact-cov-rowhead">
                 {tr({ zh: '阶段', en: 'Stage' })}
               </th>
@@ -90,12 +122,41 @@ export default function ExactCoverageMatrix({ stage, slot, colors, hrefOf }: Pro
             </tr>
           </thead>
           <tbody>
-            {EXACT_STAGES.map((st) => (
-              <tr key={st}>
-                <th scope="row" className="exact-cov-rowhead">{tr(STAGE_LABEL[st])}</th>
-                {COLUMNS.map(({ slot: sl, colors: c }) => {
+            {groups.map((g) => g.stages.map((st, i) => (
+              <tr key={st} className={i === 0 ? 'exact-cov-group-start' : undefined}>
+                {i === 0 && (
+                  <th scope="row" rowSpan={g.stages.length} className="exact-cov-rowhead exact-cov-variant">
+                    {variantLabel(g.variant, isZh)}
+                  </th>
+                )}
+                <th scope="row" className="exact-cov-rowhead">
+                  <span className="exact-cov-stage">{stageLabel(st, isZh)}</span>
+                  {FRAME_STATES[st] && (
+                    <span className="exact-cov-space">
+                      {tr({ zh: '定帧 ', en: 'frame ' })}{compactExact(FRAME_STATES[st])}
+                    </span>
+                  )}
+                </th>
+                {COLUMNS.map(({ slot: sl, colors: c }, ci) => {
                   const key = `${st}-${sl}-${c}`;
-                  const selected = st === stage && sl === slot && c === colors;
+                  const selected = st === stage && sl === slot
+                    && (c === colors || (COLOR_FREE.has(st) && sl === slot));
+                  // 四个「取最优帧」列同话时:第一列画一格横跨四列,其余三列不画。
+                  const merged = bestColsMerge(st);
+                  if (merged && sl === 'unfixed') {
+                    if (ci > 0) return null;
+                    return (
+                      <td key={key} colSpan={EXACT_COLOR_KEYS.length}>
+                        <div className={`exact-cov-cell is-${merged.feasible}`}>
+                          <span className="exact-cov-state">{tr(PENDING_LABEL[merged.feasible])}</span>
+                          <span className="exact-cov-blocked">
+                            {tr(merged.note)}
+                            {merged.unit && <b className="exact-cov-unit">{merged.unit}</b>}
+                          </span>
+                        </div>
+                      </td>
+                    );
+                  }
 
                   if (!isSlotApplicable(st, sl)) {
                     return (
@@ -107,14 +168,20 @@ export default function ExactCoverageMatrix({ stage, slot, colors, hrefOf }: Pro
                     );
                   }
 
-                  const cell = EXACT_DIST[st][sl]?.[c];
-                  if (!cell) {
-                    // 「未实现」≠「不适用」:这一格说得通,只是还没跑。样式必须能分开,
-                    // 否则四色底那一列的四个空格会被读成「四色底 XCross 没有意义」。
+                  const cell = EXACT_DIST[st][sl]?.[c] ?? pendingCell(st, sl);
+
+                  if (cell.kind === 'todo') {
                     return (
                       <td key={key}>
-                        <div className="exact-cov-cell is-todo">
-                          <span className="exact-cov-state">{tr({ zh: '未实现', en: 'Not built' })}</span>
+                        <div className={`exact-cov-cell is-${cell.feasible}`}>
+                          <span className="exact-cov-state">{tr(PENDING_LABEL[cell.feasible])}</span>
+                          {cell.states && (
+                            <span className="exact-cov-val">{groupDigits(cell.states)}</span>
+                          )}
+                          <span className="exact-cov-blocked">
+                            {tr(cell.note)}
+                            {cell.unit && <b className="exact-cov-unit">{cell.unit}</b>}
+                          </span>
                         </div>
                       </td>
                     );
@@ -137,6 +204,9 @@ export default function ExactCoverageMatrix({ stage, slot, colors, hrefOf }: Pro
                             {tr({ zh: `深度 ≤ ${full.counts.length - 1}`, en: `depth ≤ ${full.counts.length - 1}` })}
                           </span>
                           <span className="exact-cov-val">{groupDigits(full.total)}</span>
+                          {sl === 'fixed1' && FRAME_NOTE[st] && (
+                            <span className="exact-cov-blocked">{tr(FRAME_NOTE[st])}</span>
+                          )}
                         </Link>
                       </td>
                     );
@@ -178,7 +248,7 @@ export default function ExactCoverageMatrix({ stage, slot, colors, hrefOf }: Pro
                   );
                 })}
               </tr>
-            ))}
+            )))}
           </tbody>
         </table>
       </div>
@@ -187,36 +257,47 @@ export default function ExactCoverageMatrix({ stage, slot, colors, hrefOf }: Pro
         <li>
           <b className="is-full">{tr({ zh: '完整分布', en: 'Full distribution' })}</b>
           {tr({
-            zh: `${countKind('full')} 项 —— 整个状态空间穷举 BFS,逐深度精确计数`,
-            en: `${countKind('full')} of them — exhaustive BFS over the whole state space, exact per-depth counts`,
+            zh: `${countKind('full')} 个组合 —— 整个状态空间穷举 BFS,逐深度精确计数`,
+            en: `${countKind('full')} combinations — exhaustive BFS over the whole state space, exact per-depth counts`,
           })}
         </li>
         <li>
           <b className="is-zero">{tr({ zh: '只有端点', en: 'Endpoints only' })}</b>
           {tr({
-            zh: `${countKind('zero')} 项 —— 0 步状态数由容斥算出,完整分布受内存或金标所限未算;`
+            zh: `${countKind('zero')} 个组合 —— 0 步状态数由容斥算出,完整分布受内存或金标所限未算;`
               + '六色底 XCross 另有最深一档(10 步 438 个)由上游穷举搜索给出',
-            en: `${countKind('zero')} of them — the 0-move count comes from inclusion-exclusion and the full `
+            en: `${countKind('zero')} combinations — the 0-move count comes from inclusion-exclusion and the full `
               + 'distribution is blocked by memory or by the lack of a trusted ground truth; colour-neutral '
               + 'XCross additionally has its deepest bin (438 states at 10 moves) from an upstream exhaustive search',
           })}
         </li>
-        {/* 一格未实现都没有时不列这一条 —— 「未实现 0 项」比不写还费解。
-            样式与 countMissing() 留着:以后加新阶段/新槽位又会空出格子。 */}
-        {countMissing() > 0 && (
-          <li>
-            <b className="is-todo">{tr({ zh: '未实现', en: 'Not built' })}</b>
-            {tr({
-              zh: `${countMissing()} 项 —— 这个组合说得通,只是还没跑;不是「不适用」`,
-              en: `${countMissing()} of them — the combination makes sense, it just has not been computed; not the same as N/A`,
-            })}
-          </li>
-        )}
+        <li>
+          <b className="is-ready">{tr(PENDING_LABEL.ready)}</b>
+          {tr({
+            zh: `${countPending('ready')} 个组合 —— 算法与代码都就位,只差机时;单元号见 solver/EXACT_DIST_EXPANSION.md`,
+            en: `${countPending('ready')} combinations — algorithm and code are in place, only machine time is missing; `
+              + 'see solver/EXACT_DIST_EXPANSION.md for the unit ids',
+          })}
+        </li>
+        <li>
+          <b className="is-plan">{tr(PENDING_LABEL.plan)}</b>
+          {tr({
+            zh: `${countPending('plan')} 个组合 —— 路线清楚,代码还没写`,
+            en: `${countPending('plan')} combinations — the route is clear, the code is not written`,
+          })}
+        </li>
+        <li>
+          <b className="is-oor">{tr(PENDING_LABEL.oor)}</b>
+          {tr({
+            zh: `${countPending('oor')} 个组合 —— 现有硬件够不着,格子里写了要多少;四个底色档同话时并成一格`,
+            en: `${countPending('oor')} combinations — beyond the hardware at hand; each cell says by how much, and the four colour tiers merge into one cell when the reason is the same`,
+          })}
+        </li>
         <li>
           <b className="is-na">{tr({ zh: '不适用', en: 'N/A' })}</b>
           {tr({
-            zh: '该阶段没有这个槽位概念,槽位下拉里也不会出现这一档',
-            en: 'the stage has no such slot notion; the slot picker does not offer it either',
+            zh: '该阶段没有这个帧档,帧档下拉里也不会出现这一档',
+            en: 'the stage has no such frame mode; the frame picker does not offer it either',
           })}
         </li>
       </ul>
@@ -224,27 +305,26 @@ export default function ExactCoverageMatrix({ stage, slot, colors, hrefOf }: Pro
   );
 }
 
-/** 统计矩阵里各态的格子数 —— 图例上的数字与表格永远同源,不手写。 */
-function countKind(kind: 'full' | 'zero'): number {
-  let n = 0;
-  for (const st of EXACT_STAGES) {
-    for (const sl of SLOT_OK[st]) {
-      for (const c of EXACT_COLOR_KEYS) {
-        if (EXACT_DIST[st][sl]?.[c]?.kind === kind) n++;
-      }
-    }
-  }
-  return n;
-}
-
-/** 说得通但还没跑的格子数。只数矩阵真正画出来的那些列(COLUMNS),别把没画的算进去。 */
-function countMissing(): number {
-  let n = 0;
+/** 遍历矩阵真正画出来的格子 —— 图例上的数字与表格永远同源,不手写。 */
+function eachDrawnCell(fn: (cell: ReturnType<typeof pendingCell> | NonNullable<ReturnType<typeof cellAt>>) => void) {
   for (const st of EXACT_STAGES) {
     for (const { slot, colors } of COLUMNS) {
       if (!SLOT_OK[st].includes(slot)) continue;
-      if (!EXACT_DIST[st][slot]?.[colors]) n++;
+      fn(EXACT_DIST[st][slot]?.[colors] ?? pendingCell(st, slot));
     }
   }
+}
+
+const cellAt = (st: ExactStage, slot: ExactSlot, colors: ExactColors) => EXACT_DIST[st][slot]?.[colors];
+
+function countKind(kind: 'full' | 'zero'): number {
+  let n = 0;
+  eachDrawnCell((cell) => { if (cell.kind === kind) n++; });
+  return n;
+}
+
+function countPending(feasible: ExactPending['feasible']): number {
+  let n = 0;
+  eachDrawnCell((cell) => { if (cell.kind === 'todo' && cell.feasible === feasible) n++; });
   return n;
 }

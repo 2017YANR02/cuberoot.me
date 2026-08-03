@@ -269,6 +269,54 @@ describe('cross-trainer / pseudo XCross', () => {
     expect(PSEUDO_XCROSS_HISTOGRAM.reduce((a, b) => a + b, 0)).toBe(72990720);
   });
 
+  /*
+   * The tail of PSEUDO_XCROSS_HISTOGRAM was or18's number, re-derived here only as far as the
+   * shallow layers reach (depth 5). /scramble/stats now ships the whole thing as an exhaustive
+   * dataset, and "published" is not the standard that page holds itself to — so enumerate the
+   * whole coordinate once, from the goal set, with nothing but the move tables.
+   *
+   * Same run re-derives plain XCross's fixed-slot histogram, which reached exact_dist.ts from
+   * `solver/src/bin/dist_xcross_1col_fixed.rs`. A third independent implementation agreeing to
+   * the digit is what makes that cell a fact rather than a transcription.
+   *
+   * ~60 s per goal set + 109 MB — opt in with PX_FULL_BFS=1.
+   */
+  it.runIf(!!process.env.PX_FULL_BFS)('exhaustive BFS reproduces both fixed-slot histograms', () => {
+    const fullHistogram = (goals: readonly number[]): number[] => {
+      const next = crossNext();
+      const N = CROSS_STATES * 576;
+      const dist = new Uint8Array(N).fill(255);
+      for (const g of goals) dist[g] = 0;
+      const hist: number[] = [goals.length];
+      for (let depth = 0; ; depth++) {
+        let found = 0;
+        for (let v = 0; v < N; v++) {
+          if (dist[v] !== depth) continue;
+          const e = v % 24, co = ((v - e) / 24) % 24, c = ((v - e) / 24 - co) / 24;
+          const base = c * 18;
+          for (let m = 0; m < 18; m++) {
+            const nv = next[base + m] * 576 + CORNER_STEP[m][co] * 24 + EDGE_STEP[m][e];
+            if (dist[nv] === 255) { dist[nv] = depth + 1; found++; }
+          }
+        }
+        if (!found) return hist;
+        hist.push(found);
+      }
+    };
+    const pack = (cross: number, corner: number, edge: number) => cross * 576 + corner * 24 + edge;
+
+    const px = pseudoXFrameData(frame);
+    const pseudo = fullHistogram(px.goals.map((g) => pack(g.cross, g.corner, g.edge)));
+    expect(pseudo).toEqual([...PSEUDO_XCROSS_HISTOGRAM]);
+    expect(pseudo.reduce((a, b) => a + b, 0)).toBe(72990720);
+
+    const xd = frameData(frame);
+    const plain = fullHistogram([pack(xd.crossGoal, xd.cornerPiece * 3, xd.edgePiece * 2)]);
+    // solver/src/bin/dist_xcross_1col_fixed.rs GOLDEN, as shipped in _data/exact_dist.ts.
+    expect(plain).toEqual([1, 15, 172, 1950, 21535, 220368, 1989591, 13431990, 40963892, 16325184, 36022]);
+    expect(plain.reduce((a, b) => a + b, 0)).toBe(72990720);
+  }, 1_800_000);
+
   it('every slot of every colour gives the same shallow histogram', () => {
     const want = PSEUDO_XCROSS_HISTOGRAM.slice(0, PX_BFS_DEPTH + 1);
     for (const f of [D, COLOR_FACE.White] as const) {

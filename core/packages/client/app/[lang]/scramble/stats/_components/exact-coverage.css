@@ -1,5 +1,6 @@
-/* 精确穷举分布的覆盖矩阵。三态靠语义色区分:
-   完整分布 = success / 仅 0 步 = warning / 不适用 = faint。
+/* 精确穷举分布的覆盖矩阵。六态靠语义色区分:
+   完整分布 = success / 仅 0 步 = warning / 待跑 = info / 有路线 = muted(虚线)/
+   够不着 = faint / 不适用 = faint + 底纹。
    双主题页,全部走 :root token + color-mix,不硬码灰阶。 */
 
 .exact-cov {
@@ -66,6 +67,33 @@
   background: var(--muted);
   font-weight: 500;
   color: var(--muted-foreground);
+  vertical-align: top;
+}
+
+/* 方法列:一段行只写一次(rowSpan),竖直居中好扫 */
+.exact-cov-variant {
+  vertical-align: middle;
+  color: var(--foreground);
+}
+
+.exact-cov-stage {
+  display: block;
+}
+
+/* 一个具体帧上的坐标空间 —— 「这一格有多贵」的第一判据 */
+.exact-cov-space {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--faint-foreground);
+}
+
+/* 方法换段处加一道分隔线,39 行不至于糊成一片 */
+.exact-cov-group-start > th,
+.exact-cov-group-start > td {
+  border-top: 1px solid var(--border-strong);
 }
 
 /* ── 格子 ─────────────────────────────────────────────── */
@@ -156,7 +184,7 @@
   outline-offset: -2px;
 }
 
-/* 不适用:该阶段没有这个槽位概念 */
+/* 不适用:该阶段没有这个帧档 */
 .exact-cov-cell.is-na {
   background: color-mix(in srgb, var(--foreground) 3%, transparent);
 }
@@ -165,10 +193,33 @@
   color: var(--faint-foreground);
 }
 
-/* 未实现:说得通、也跑得动,只是还没跑。与「不适用」必须能一眼分开 */
-.exact-cov-cell.is-todo .exact-cov-state {
+/* 待跑:代码就位,只差机时。三档「还没算」里最积极的一档,给它状态色 */
+.exact-cov-cell.is-ready .exact-cov-state {
+  color: var(--signal-info);
+  font-weight: 600;
+}
+
+/* 有路线:代码还没写。与「待跑」必须能一眼分开,与「不适用」也是 */
+.exact-cov-cell.is-plan .exact-cov-state {
   color: var(--muted-foreground);
   border-bottom: 1px dashed color-mix(in srgb, var(--muted-foreground) 55%, transparent);
+}
+
+/* 够不着:硬件不够,不是没想到 */
+.exact-cov-cell.is-oor .exact-cov-state {
+  color: var(--faint-foreground);
+}
+
+/* 跟踪文档里的单元号 */
+.exact-cov-unit {
+  margin-left: 4px;
+  padding: 0 3px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--signal-info) 16%, transparent);
+  color: var(--signal-info);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
 }
 
 /* 当前图表选中的格 */
@@ -198,5 +249,7 @@
 
 .exact-cov-legend b.is-full { color: var(--signal-success); }
 .exact-cov-legend b.is-zero { color: var(--signal-warning); }
+.exact-cov-legend b.is-ready { color: var(--signal-info); }
+.exact-cov-legend b.is-plan { color: var(--muted-foreground); }
+.exact-cov-legend b.is-oor { color: var(--faint-foreground); }
 .exact-cov-legend b.is-na { color: var(--faint-foreground); }
-.exact-cov-legend b.is-todo { color: var(--muted-foreground); }
