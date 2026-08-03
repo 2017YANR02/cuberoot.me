@@ -8,11 +8,15 @@
  * 「暂无数据」,不如把每格「有什么 / 缺什么 / 缺的那部分卡在哪」直接摊开。
  *
  * 三态:
- *   完整分布  可点,点了把上方图表切到该格
- *   仅 0 步   显示状态数 + 完整分布卡在哪(2.2TB visited / 无可信金标 等)
+ *   完整分布  可点,跳到上方图表的那一格
+ *   仅 0 步   同样可点(那一格上方会说明只有端点数);另显示状态数 + 完整分布卡在哪
  *   不适用    该阶段没有这个槽位概念(Cross 无 F2L 槽;XCross 只解 1 槽,谈不上相邻/对角)
+ *
+ * 可点的格子是真 `<a>`(href 由 page.tsx 的 exactHref 拼,带锚点回图表),不是 button + JS:
+ * 中键 / Ctrl 点得能开新标签,地址也得复制得出去。
  */
 
+import Link from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
 import {
   COLORS_LABEL, EXACT_COLOR_KEYS, EXACT_DIST, EXACT_STAGES, SLOT_LABEL, SLOT_OK,
@@ -52,19 +56,19 @@ interface Props {
   stage: string;
   slot: string;
   colors: ExactColors | null;
-  /** 点「完整分布」格 → 把图表切过去。 */
-  onPick: (stage: ExactStage, slot: ExactSlot, colors: ExactColors) => void;
+  /** 该格的深链(带锚点回图表)。 */
+  hrefOf: (stage: ExactStage, slot: ExactSlot, colors: ExactColors) => string;
 }
 
-export default function ExactCoverageMatrix({ stage, slot, colors, onPick }: Props) {
+export default function ExactCoverageMatrix({ stage, slot, colors, hrefOf }: Props) {
   return (
     <div className="exact-cov">
       <div className="exact-cov-head">
         <h3>{tr({ zh: '覆盖矩阵', en: 'Coverage matrix' })}</h3>
         <p>
           {tr({
-            zh: '每格说明有什么、缺什么、缺的那部分卡在哪。绿格可点,点了把上方图表切过去。',
-            en: 'Each cell states what exists, what is missing, and what blocks it. Green cells are clickable and switch the chart above.',
+            zh: '每格说明有什么、缺什么、缺的那部分卡在哪。有数据的格子(绿、黄)都能点,点了跳到上方图表的那一格。',
+            en: 'Each cell states what exists, what is missing, and what blocks it. Cells with data (green, amber) link to that cell in the chart above.',
           })}
         </p>
       </div>
@@ -120,11 +124,11 @@ export default function ExactCoverageMatrix({ stage, slot, colors, onPick }: Pro
                     const full = cell as ExactFull;
                     return (
                       <td key={key}>
-                        <button
-                          type="button"
+                        <Link
                           className={`exact-cov-cell is-full${selected ? ' is-selected' : ''}`}
-                          onClick={() => onPick(st, sl, c)}
-                          aria-pressed={selected}
+                          href={hrefOf(st, sl, c)}
+                          prefetch={false}
+                          aria-current={selected ? 'true' : undefined}
                         >
                           <span className="exact-cov-state">
                             {tr({ zh: '完整分布', en: 'Full distribution' })}
@@ -133,14 +137,19 @@ export default function ExactCoverageMatrix({ stage, slot, colors, onPick }: Pro
                             {tr({ zh: `深度 ≤ ${full.counts.length - 1}`, en: `depth ≤ ${full.counts.length - 1}` })}
                           </span>
                           <span className="exact-cov-val">{groupDigits(full.total)}</span>
-                        </button>
+                        </Link>
                       </td>
                     );
                   }
 
                   return (
                     <td key={key}>
-                      <div className={`exact-cov-cell is-zero${selected ? ' is-selected' : ''}`}>
+                      <Link
+                        className={`exact-cov-cell is-zero${selected ? ' is-selected' : ''}`}
+                        href={hrefOf(st, sl, c)}
+                        prefetch={false}
+                        aria-current={selected ? 'true' : undefined}
+                      >
                         <span className="exact-cov-state">
                           {cell.top
                             ? tr({ zh: '只知道两端', en: 'Both ends only' })
@@ -164,7 +173,7 @@ export default function ExactCoverageMatrix({ stage, slot, colors, onPick }: Pro
                           </span>
                         )}
                         <span className="exact-cov-blocked">{tr(cell.blocked)}</span>
-                      </div>
+                      </Link>
                     </td>
                   );
                 })}
