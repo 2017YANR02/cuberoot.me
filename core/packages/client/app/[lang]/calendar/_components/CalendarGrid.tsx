@@ -198,8 +198,11 @@ const CalendarGrid = forwardRef<GridHandle, Props>(function CalendarGrid(props, 
                   aria-hidden
                 />
               )}
-              {arg.timeText && <span className="cal-chip-time">{arg.timeText}</span>}
+              {/* 时间格里 Google 是「标题在上、时间在下」—— 一眼先看是什么事,格子的位置
+                  本身已经说了几点。月 / 年 / 日程视图是一行「● 时间 标题」,那里时间在前,
+                  靠 CSS order 换,不为此再分一套 DOM。 */}
               <span className="cal-chip-title">{arg.event.title}</span>
+              {arg.timeText && <span className="cal-chip-time">{arg.timeText}</span>}
               {p.location && <span className="cal-chip-loc">{p.location}</span>}
             </div>
           );
