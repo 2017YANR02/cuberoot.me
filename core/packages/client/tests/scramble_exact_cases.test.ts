@@ -127,6 +127,9 @@ describe('exact case list / 六色底 8 步 40 个 vs 手算表', () => {
     const classes = symmetryClasses(members, syms);
     expect(classes.map((c) => c.size).sort((a, b) => a - b)).toEqual([1, 3, 6, 6, 24]);
     expect(classes.reduce((n, c) => n + c.size, 0)).toBe(40);
+    // 轨道-稳定子:类的大小 × 该状态自身对称的个数 = 群的大小(页面就是这么解释 6/40 的)。
+    expect(classes.map((c) => c.stab).sort((a, b) => a - b)).toEqual([2, 8, 8, 16, 48]);
+    for (const c of classes) expect(c.size * c.stab).toBe(48);
     // 5 个代表与手算表的 5 条一一同构(代表可以取到不同的那一个,类必须是同一批)。
     const repOrbit = classes.map((c) => orbit48(memberState(members[c.rep])));
     for (const { scramble, orbit } of CN8_REPS) {

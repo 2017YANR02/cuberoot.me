@@ -49,6 +49,11 @@ export interface CaseClass {
   rep: number;
   /** 该类含多少个状态(轨道大小)。 */
   size: number;
+  /**
+   * 该状态自身的对称有几个(稳定子的大小)—— 轨道-稳定子定理:size × stab = 群的大小。
+   * 越对称的状态,类越小;吃下全部对称的那个,自己就是一整类。
+   */
+  stab: number;
 }
 
 /**
@@ -69,7 +74,7 @@ export function symmetryClasses(
     const orbit = new Set<string>();
     for (const g of symmetries) orbit.add(edgeKey(g(st)));
     for (const k of orbit) seen.add(k);
-    out.push({ rep: i, size: orbit.size });
+    out.push({ rep: i, size: orbit.size, stab: symmetries.length / orbit.size });
   }
   return out;
 }
