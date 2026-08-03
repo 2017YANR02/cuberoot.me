@@ -75,6 +75,7 @@ html:root:has(.cal-page) {
     --destructive: #f28b82;
     --destructive-foreground: #131314;
     --cal-today-wash: transparent;
+    --cal-picker-invert: 1;
   }
 }
 
@@ -103,6 +104,7 @@ html:root[data-theme=dark]:has(.cal-page) {
   --destructive: #f28b82;
   --destructive-foreground: #131314;
   --cal-today-wash: transparent;
+  --cal-picker-invert: 1;
 }
 
 .cal-page {
@@ -489,7 +491,8 @@ html:root[data-theme=dark]:has(.cal-page) {
 }
 
 .cal-modal {
-  width: min(560px, 100%);
+  /* Google 那个弹窗比我们原来窄一档:一列信息,不是一张表单 */
+  width: min(468px, 100%);
   max-height: min(88dvh, 760px);
   display: flex;
   flex-direction: column;
@@ -506,41 +509,63 @@ html:root[data-theme=dark]:has(.cal-page) {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 14px 16px 8px;
+  padding: 10px 12px 0;
 }
-
-.cal-modal-head h2 { flex: 1 1 auto; margin: 0; font-size: 16px; font-weight: 600; }
 
 .cal-modal-body {
   flex: 1 1 auto;
   overflow-y: auto;
-  padding: 4px 16px 12px;
+  padding: 0 20px 8px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
+/* Google 的底部没有分隔线,操作靠右;保存是实心蓝胶囊,别的都是轻的。 */
 .cal-modal-foot {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 8px;
-  padding: 10px 16px 14px;
-  border-top: 1px solid var(--border-default);
+  padding: 6px 20px 18px;
   flex-wrap: wrap;
 }
 
+.cal-modal-foot .cal-btn { border-radius: 999px; padding: 8px 22px; }
+
+.cal-modal-foot .cal-btn:not(.is-primary):not(.is-danger) {
+  border-color: transparent;
+  background: transparent;
+  color: var(--accent);
+}
+
+.cal-modal-foot .cal-btn:not(.is-primary):not(.is-danger):hover {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.cal-modal-foot .cal-btn.is-danger { border-color: transparent; background: transparent; }
+.cal-modal-foot .cal-btn.is-danger:hover { background: color-mix(in srgb, var(--destructive) 14%, transparent); }
+
+/* Google 的标题:大一号、无框、底下一条线,聚焦时那条线变蓝加粗。
+   左边缩进对齐下面那列图标右侧的文字,整个弹窗只有一条起排线。 */
 .cal-title-input {
-  width: 100%;
-  font-size: 20px;
-  padding: 6px 2px;
+  margin: 2px 0 8px 26px;
+  width: calc(100% - 26px);
+  font-size: 22px;
+  padding: 6px 0;
   border: none;
-  border-bottom: 1px solid var(--input);
+  border-bottom: 1px solid var(--border-strong);
   background: transparent;
   color: var(--foreground);
   outline: none;
 }
 
-.cal-title-input:focus { border-bottom-color: var(--accent); }
+.cal-title-input::placeholder { color: var(--faint-foreground); }
+
+.cal-title-input:focus {
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: 5px;
+}
 
 .cal-field {
   display: flex;
@@ -556,14 +581,16 @@ html:root[data-theme=dark]:has(.cal-page) {
 
 .cal-field-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
+/* 弹窗里的输入件:Google 那里平时就是一行字,鼠标压上去才浮出一块底,聚焦才成型。
+   一格一个方框会把弹窗切成十几个小盒子,和它那种「一列信息」的观感完全不同。 */
 .cal-text-input,
 .cal-textarea {
   flex: 1 1 auto;
   min-width: 0;
-  padding: 6px 8px;
-  border: 1px solid var(--input);
+  padding: 7px 8px;
+  border: 1px solid transparent;
   border-radius: 8px;
-  background: var(--card);
+  background: transparent;
   color: var(--foreground);
   font-size: 13px;
   font-family: inherit;
@@ -574,14 +601,41 @@ html:root[data-theme=dark]:has(.cal-page) {
 .cal-date,
 .cal-time,
 .cal-num {
-  padding: 5px 8px;
-  border: 1px solid var(--input);
+  padding: 6px 8px;
+  border: 1px solid transparent;
   border-radius: 8px;
-  background: var(--card);
+  background: transparent;
   color: var(--foreground);
   font-size: 13px;
   font-family: inherit;
 }
+
+.cal-text-input:hover,
+.cal-textarea:hover,
+.cal-date:hover,
+.cal-time:hover,
+.cal-num:hover { background: color-mix(in srgb, var(--foreground) 7%, transparent); }
+
+.cal-text-input:focus,
+.cal-textarea:focus,
+.cal-date:focus,
+.cal-time:focus,
+.cal-num:focus {
+  outline: none;
+  background: color-mix(in srgb, var(--foreground) 7%, transparent);
+  border-color: var(--accent);
+}
+
+/* 原生日期 / 时间控件的小图标在暗色下是黑的,得反过来 */
+.cal-date::-webkit-calendar-picker-indicator,
+.cal-time::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.55;
+  filter: invert(var(--cal-picker-invert, 0));
+}
+
+.cal-date:hover::-webkit-calendar-picker-indicator,
+.cal-time:hover::-webkit-calendar-picker-indicator { opacity: 1; }
 
 .cal-num { width: 68px; }
 

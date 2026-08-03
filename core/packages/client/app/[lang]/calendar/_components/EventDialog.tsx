@@ -124,13 +124,18 @@ export default function EventDialog(props: Props) {
       className="cal-modal-backdrop"
       onMouseDown={(e) => { if (e.target === e.currentTarget && !props.saving) props.onClose(); }}
     >
-      <div className="cal-modal" role="dialog" aria-modal="true" aria-label={tr({ zh: '日程', en: 'Event' })}>
+      <div
+        className="cal-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label={d.id
+          ? (readOnly ? tr({ zh: '日程详情', en: 'Event' }) : tr({ zh: '编辑日程', en: 'Edit event' }))
+          : tr({ zh: '新建日程', en: 'New event' })}
+      >
+        {/* Google 这个弹窗没有标题栏 —— 标题栏那行字重复了下面的输入框(「新建日程」上面
+            压着「添加标题」),只留关闭。名字给读屏器,走 aria-label。 */}
         <div className="cal-modal-head">
-          <h2>
-            {d.id
-              ? (readOnly ? tr({ zh: '日程详情', en: 'Event' }) : tr({ zh: '编辑日程', en: 'Edit event' }))
-              : tr({ zh: '新建日程', en: 'New event' })}
-          </h2>
+          <span className="cal-foot-gap" />
           <button type="button" className="cal-icon-btn" onClick={props.onClose} aria-label={tr({ zh: '关闭', en: 'Close' })}>
             <X size={18} aria-hidden />
           </button>
