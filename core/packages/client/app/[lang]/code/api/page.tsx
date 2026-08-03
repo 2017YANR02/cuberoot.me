@@ -41,6 +41,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
   { key: 'feedback', zh: '反馈', en: 'Feedback' },
   { key: 'notification', zh: '通知', en: 'Notifications' },
   { key: 'forum', zh: '论坛', en: 'Forum' },
+  { key: 'quiz', zh: '知识问答', en: 'Quiz' },
   { key: 'content', zh: '内容与运维', en: 'Content & ops' },
   { key: 'timer', zh: '计时器', en: 'Timer' },
   { key: 'calendar', zh: '日历', en: 'Calendar' },
@@ -57,7 +58,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   then add the file stem to this list.
 //   account_auth alg alg_lsll alg_marks alg_srs alg_sets alg_sweep analytics announced_comps article auth battle_rooms calendar cn_comp_names colpi
 //   comp_follows cube cubeopt_solve cubing_live feedback forum health historical_ranks
-//   membership nav_sites nemesizer notifications ops page_notices paint pattern_examples progress recon scramble_555
+//   membership nav_sites nemesizer notifications ops page_notices paint pattern_examples progress quiz recon scramble_555
 //   scramble_marks sim_masks sponsors timer_backups trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wechat_jssdk wiki
 // ─ covers-routes-end ─
@@ -308,6 +309,17 @@ const ENDPOINTS: Ep[] = [
   { d: 'forum', m: 'POST', p: '/v1/forum/reports/:id/resolve', g: 'admin', zh: '标记举报已处理', en: 'Mark report resolved' },
   { d: 'forum', m: 'GET', p: '/v1/forum/review', g: 'admin', zh: '待审核队列(新用户主题 + 回帖)', en: 'Review queue (new users’ threads + replies)' },
   { d: 'forum', m: 'POST', p: '/v1/forum/review/:type/:id/:action', g: 'admin', zh: '审核:通过 / 驳回(thread|post,驳回可附原因)', en: 'Moderate: approve / reject (thread|post, optional reject reason)' },
+
+  // ---- quiz 社区题(登录用户出题,直接上线 + 举报) ----
+  { d: 'quiz', m: 'GET', p: '/v1/quiz/questions', g: 'public', c: 'short', zh: '某一档的全部已发布社区题', en: 'Published community questions at one level' },
+  { d: 'quiz', m: 'GET', p: '/v1/quiz/mine', g: 'login', c: 'no-store', zh: '我出的题(含被下架的,带理由)', en: 'My questions (including taken-down ones, with the reason)' },
+  { d: 'quiz', m: 'POST', p: '/v1/quiz/questions', g: 'login', zh: '出一道题,直接上线(每人每日 30 道)', en: 'Write a question — live immediately (30/day per person)' },
+  { d: 'quiz', m: 'PATCH', p: '/v1/quiz/questions/:id', g: 'login', zh: '改题:作者改自己的;管理员可补译 / 下架', en: 'Edit: authors their own; admins can translate or take down' },
+  { d: 'quiz', m: 'DELETE', p: '/v1/quiz/questions/:id', g: 'login', zh: '删题:作者删自己的,管理员删任意', en: 'Delete: authors their own, admins any' },
+  { d: 'quiz', m: 'POST', p: '/v1/quiz/questions/:id/report', g: 'login', zh: '举报一道题(一人一题一条,推送给管理员)', en: 'Report a question (one per person, pushed to admins)' },
+  { d: 'quiz', m: 'GET', p: '/v1/quiz/admin/questions', g: 'admin', c: 'no-store', zh: '全部社区题(含已下架)', en: 'All community questions, taken-down included' },
+  { d: 'quiz', m: 'GET', p: '/v1/quiz/admin/reports', g: 'admin', c: 'no-store', zh: '举报列表(默认只看待处理)', en: 'Reports (open ones by default)' },
+  { d: 'quiz', m: 'POST', p: '/v1/quiz/admin/reports/:id/resolve', g: 'admin', zh: '标记举报已处理', en: 'Mark report resolved' },
 
   // ---- wechat ----
   { d: 'wechat', m: 'GET', p: '/v1/wechat/jssdk-signature', g: 'public', zh: '微信 JS-SDK wx.config 签名(朋友圈/会话分享卡片;未配公众号返回 disabled)', en: 'WeChat JS-SDK wx.config signature (Moments/chat share card; returns disabled when the MP account is unconfigured)' },

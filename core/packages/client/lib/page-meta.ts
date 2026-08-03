@@ -296,6 +296,9 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'A cubing quiz — history, WCA regulations, events, notation, methods, maths and gear. Over a hundred multiple-choice and short-answer questions, each with an explanation.',
     },
   },
+  'quiz/new': { title: { zh: '出一道题', en: 'Write a Quiz Question' } },
+  'quiz/mine': { title: { zh: '我出的题', en: 'My Quiz Questions' } },
+  'quiz/manage': { title: { zh: '社区题管理', en: 'Community Questions' } },
   'pseudo_pairing_trainer': { title: { zh: '伪配对训练', en: 'Pseudo Pairing Trainer' } },
   'pseudo_xcross_trainer': { title: { zh: '伪 XCross 训练', en: 'Pseudo XCross Trainer' } },
   'recon': {

@@ -42,6 +42,7 @@ export type NotificationKind =
   | 'forum_thread' | 'forum_reply' | 'forum_report'
   | 'forum_review' | 'forum_approved' | 'forum_rejected'
   | 'comp_reg'
+  | 'quiz_report' | 'quiz_hidden'
   | 'cal_reminder' | 'cal_invite' | 'cal_rsvp';
 
 /** 邮件语言。站点只有 en / zh-Hans 两种。 */
@@ -78,6 +79,8 @@ const KIND_TEXT: Record<NotificationKind, Record<MailLang, string>> = {
   forum_approved: { zh: '通过了你的帖子', en: 'approved your post' },
   forum_rejected: { zh: '驳回了你的帖子', en: 'declined your post' },
   comp_reg: { zh: '报名了国外比赛', en: 'registered for an overseas competition' },
+  quiz_report: { zh: '举报了一道社区题', en: 'reported a community quiz question' },
+  quiz_hidden: { zh: '下架了你出的题', en: 'took down one of your questions' },
   // 日程提醒没有「谁」触发,actorName 传空串 —— 标题行只剩下面这句(subject 已 trim)。
   cal_reminder: { zh: '日程提醒', en: 'Event reminder' },
   cal_invite: { zh: '邀请你参加日程', en: 'invited you to an event' },
