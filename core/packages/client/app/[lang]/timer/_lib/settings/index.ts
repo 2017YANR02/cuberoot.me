@@ -283,6 +283,13 @@ export interface TimerSettings {
    * 设了才额外显 CR(大洲)/ NR(国家)。未设时前端回退登录 WCA 账号的国家。
    */
   rankCountry?: string;
+
+  /**
+   * 智能魔方拧完一把后,复盘直接摊在计时页上(不遮挡,开下一把即收起)。默认开。
+   * 只对录到动作流的成绩生效 —— 手动/键盘计时那些没有可复盘的东西。旧存档无此键
+   * -> 视为 true。
+   */
+  autoRecap?: boolean;
 }
 
 /** Max ao windows shown as stats/history columns (the ao5/ao12-style picker). */
@@ -356,6 +363,7 @@ export const DEFAULTS: TimerSettings = {
   dailySolveGoal: null,
   showRankBadge: true,
   rankCountry: '',
+  autoRecap: true,
 };
 
 /**

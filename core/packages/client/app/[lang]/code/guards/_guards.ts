@@ -185,6 +185,12 @@ export const CI_GUARDS_DRIFT: CiGuard[] = [
     en: { title: 'Reconstruction open path: same page + lazy-load drift', desc: 'The report must render on the solve detail page itself, never back behind a second «View reconstruction» click. It also guards the waterfall: the chain was once three serial dynamic imports (1473ms) and is now prefetched in parallel when the detail page mounts — every module the open path import()s must appear in the prefetch list, so adding one without prefetching it turns CI red.' },
   },
   {
+    id: 'timer-solve-recap',
+    test: 'timer_solve_recap.test.ts',
+    zh: { title: '拧完那把的复盘 + 计时中的实时魔方', desc: '智能魔方停表后复盘就摊在计时页上(判据 shouldAutoRecap:只对录到动作流的成绩,开下一把即收起),报告仍是懒加载且魔方一连上就预取整条链。同一条还守住「计时中那颗实时魔方不被专注模式淡掉」——「隐藏全部界面」仍一票否决,以及那半屏不许把计时区挤出视口。' },
+    en: { title: 'Post-solve reconstruction + the live cube while timing', desc: 'After a smart-cube solve the reconstruction opens right on the timer page (gated by shouldAutoRecap: turn-stream solves only, dismissed when the next solve starts), still lazily loaded with the whole chain prefetched as soon as a cube connects. The same file pins that the live cube is NOT faded out by distraction-free mode while timing (the explicit "hide all UI" setting still wins), and that the panel can never push the timing area out of the viewport.' },
+  },
+  {
     id: 'schema-api-drift',
     test: 'code-schema-api-drift.test.ts',
     zh: { title: '/code/schema + /code/api 快照漂移', desc: '/code/schema 的迁移台账须列全 packages/server/migrations 下每个文件;/code/api 的路由清单须等于 server/src/index.ts 里 app.route(‘/v1’, …) 实际挂载的路由。各自漏一条都红。' },
