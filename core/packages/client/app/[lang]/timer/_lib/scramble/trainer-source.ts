@@ -14,7 +14,7 @@
  */
 
 import { canTrain, trainerCaps, trainerSpecKey, type TrainerSpec } from '@/lib/cross-trainer';
-import { trainerDepthBounds } from '@/lib/cross-trainer/reach';
+import { snapAllowed, trainerDepthBounds } from '@/lib/cross-trainer/reach';
 
 /** Events whose scramble is one 3×3 random state (so a cross/F2L difficulty is meaningful). */
 const TRAINER_EVENTS = new Set(['333', '333oh', '333bf', '333ft', '333fm']);
@@ -46,14 +46,18 @@ export function trainerSpecOf(event: string, s: GenDiffSettings): TrainerSpec | 
   // 用户还看不见是哪来的。
   const colorCount = new Set(s.genDiffColors.toUpperCase()).size;
   const fixedSlot = caps.slots && colorCount === 1 && s.genDiffSlot >= 0;
-  // 上限取**抽得出来**的那个,不是理论上限:面板的收窄只在面板挂载时才写回存档,而这里是
+  // 端点夹到**真出得来**的那几档,不是理论上限:面板的收窄只在面板挂载时才写回存档,而这里是
   // SoloView 每次取题都会走的路。旧存档 / 没打开过设置的用户否则会一直请求置灰档,永远转圈。
-  const top = trainerDepthBounds(
-    s.genDiffVariant, s.genDiffStage, colorCount, fixedSlot ? 'fixed' : 'best', caps.range[1],
-  ).draw;
+  // allowed 可能有空档(六色底 XCross 能出 8 和 10、出不了 9),所以是「贴到最近的可选档」
+  // 而不是简单地取 min —— 取 min 会把用户选的 10 打回 8,而 10 恰恰是那 438 个列得出来的。
+  const { allowed } = trainerDepthBounds(
+    s.genDiffVariant, s.genDiffStage, colorCount, fixedSlot ? 'fixed' : 'best',
+    caps.range[1], caps.range[0],
+  );
+  if (!allowed.length) return null;
   const steps = s.genDiffSteps.length ? s.genDiffSteps : rangeOf(caps.band);
-  const lo = Math.min(Math.max(steps[0], caps.range[0]), top);
-  const hi = Math.min(steps[steps.length - 1], top);
+  const lo = snapAllowed(steps[0], allowed);
+  const hi = snapAllowed(steps[steps.length - 1], allowed);
   if (lo > hi) return null;
   return {
     variant: s.genDiffVariant,

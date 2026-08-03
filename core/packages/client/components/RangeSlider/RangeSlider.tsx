@@ -37,24 +37,41 @@ export interface RangeSliderProps {
   ariaLabel?: string;
   disabled?: boolean;
   /**
-   * Highest selectable value, when the axis must still show what lies beyond it. The tail
-   * (softMax, max] keeps its ticks — greyed and out of reach of both thumbs. Use it when the
-   * scale is a fact about the world and the limit is a fact about this tool: the trainer's
-   * step axis runs to the sub-step's god number, but only part of it can actually be generated.
+   * The values a thumb may actually land on, when the axis must still show what it cannot offer.
+   * Anything on the scale but not in this list keeps its tick — greyed, and skipped over by both
+   * thumbs and the keyboard. Use it when the scale is a fact about the world and the gaps are
+   * facts about this tool: the trainer's step axis runs to the sub-step's god number, but only
+   * part of it can be generated, and the reachable part need not be contiguous (six-colour XCross
+   * can produce 8 and 10 — the 438 states of the latter are enumerated — but not 9).
+   * Omit for a plain contiguous slider.
    */
-  softMax?: number;
+  allowed?: number[];
 }
 
 export function RangeSlider({
-  min, max, step = 1, value, onChange, marks, markHighlight, formatValue, ariaLabel, disabled, softMax,
+  min, max, step = 1, value, onChange, marks, markHighlight, formatValue, ariaLabel, disabled, allowed,
 }: RangeSliderProps) {
   const [lo, hi] = value;
   const span = max - min || 1;
   const pct = (n: number) => `${((n - min) / span) * 100}%`;
   const fmt = formatValue ?? ((n: number) => String(n));
-  const ceil = Math.min(softMax ?? max, max);
-  const setLo = (n: number) => onChange([Math.min(Math.max(n, min), hi), hi]);
-  const setHi = (n: number) => onChange([lo, Math.max(Math.min(n, ceil), lo)]);
+  const okSet = allowed?.length ? new Set(allowed) : null;
+  const ceil = okSet ? Math.min(Math.max(...allowed!), max) : max;
+  const floor = okSet ? Math.max(Math.min(...allowed!), min) : min;
+  // Dragging across a gap must not stall on it: land on the nearest value that exists, breaking
+  // ties towards where the thumb was heading.
+  const snap = (n: number, from: number): number => {
+    if (!okSet || okSet.has(n)) return n;
+    let best = from;
+    let bestD = Infinity;
+    for (const a of allowed!) {
+      const d = Math.abs(a - n) * 2 + ((a - n) * Math.sign(n - from) < 0 ? 1 : 0);
+      if (d < bestD) { bestD = d; best = a; }
+    }
+    return best;
+  };
+  const setLo = (n: number) => onChange([Math.min(Math.max(snap(n, lo), floor), hi), hi]);
+  const setHi = (n: number) => onChange([lo, Math.max(Math.min(snap(n, hi), ceil), lo)]);
 
   const wrapRef = useRef<HTMLDivElement>(null);
   const loRef = useRef<HTMLInputElement>(null);
@@ -116,7 +133,7 @@ export function RangeSlider({
           {marks.map((m) => (
             <span
               key={m}
-              className={`range-slider-mark${markHighlight && m >= lo && m <= hi ? ' is-in' : ''}${m > ceil ? ' is-out' : ''}`}
+              className={`range-slider-mark${markHighlight && m >= lo && m <= hi ? ' is-in' : ''}${okSet && !okSet.has(m) ? ' is-out' : ''}`}
               style={{ left: pct(m) }}
             >{fmt(m)}</span>
           ))}
