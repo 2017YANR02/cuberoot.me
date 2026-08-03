@@ -21,6 +21,7 @@
 - ✅ dist_cross_{1col,2col,6col} 单/双/六色底 Cross 分布,bit-exact (1col 45ms,2col 38ms vs cpp 300ms,6col 32s vs cpp 21s)
 - ✅ dist_cross_6col `--faces <UDLRFB 子集>`:任意底色集的 Cross 分布,同一个 12!·2¹¹ 分母。四色底(去掉一对相对色)Avg 5.0194,三种取法逐位相同;`--faces U` / `--faces UD` 分别 = 5,160,960× / 192× 单双色金标(参数化路径的正确性证明)
 - ✅ dist_xcross_2col 双色 (D4h 16-elem) 不固定槽 XCross 11 深度分布,bit-exact (total=43,252,003,274,489,856,000;1048s vs cpp 877s)
+- ✅ dist_tracked 通用「盯住 k 角 + m 棱」分布 bin(2026-08-03):preset 化,`verify` 一次对七条已知曲线(cross/122/222/123/xcross/eo/eoline)+ 一组两种拆法等价性;已跑出 **223 15.3 亿 14s**、**eo_xcross 46.7 亿 40s** 两条新曲线。待跑单元与回填流程见 `EXACT_DIST_EXPANSION.md`
 - ✅ dist_*_0f 11 个 0 步状态数(xcross/xxcross/xxxcross × 1col/2col/6col + xxxxcross × 2col/6col),纯容斥 + dist/combo.rs,全部 bit-exact 对齐 cpp 输出
 - ⏭️ dist_xxxcross_1col_fixed 跳过 — 2.2 TB visited 不可跑(32GB 机器)
 - ⏭️ dist_xxcross_1col(6-min 折叠不固定槽)跳过 — 695T 全空间研究级,cpp 端自己都没解出来
@@ -92,6 +93,8 @@ cargo test --release -- --ignored     # 8 个 ignored(中表 + e2e XCross + pseu
 | `src/bin/dist_xxcross_1col_{adj,diag}.rs` | 固定双槽 XXCross,13 深度 4-bit packed BFS(~10 GB visited + 3 GB mt_edge6),~140s |
 | `src/bin/dist_cross_{1col,2col,6col}.rs` | 1/2/6 色 Cross 分布(_2col 走 W/Y 独立 495×495 mask 容斥;_6col 走 6 BFS + AVX2 32-batch min-reduction,`--faces` 收窄取 min 的面集) |
 | `src/bin/dist_xcross_2col.rs` | 双色 XCross 分布(D4h 16-elem,8 张 109MB pruning 表,70 partition × 24 perm × 16 ori × AVX2 conv3,11 深度),~17 分钟 |
+| `src/bin/dist_tracked.rs` | 通用 tracked-piece 分布:A×B 两因子(Corners/Edges/EdgePos/EoWord 分量拼)+ 多源 packed4 BFS;`verify` 对七条金标;大 preset 走 `CUBE_ALLOW_HUGE_TABLES=1` |
+| `EXACT_DIST_EXPANSION.md` | 站内「完整状态空间」缺的那些格子的台账:坐标 / 内存 / 算法 / 跑法 / 回填清单 |
 | `src/bin/dist_*_0f.rs` | 11 个 0 步状态数 bin(容斥;1col 子空间 / 2col,6col 全空间 + cube laws) |
 | `src/bin/state_cross_1col.rs` | 单色 cross 1..8 步 scramble,输出 1..8.txt(190K 行) |
 | `src/bin/state_cross_2col.rs` | 双色 cross d=8 配对 IDA*,输出 cross_2_col_state.txt(3672 行) |

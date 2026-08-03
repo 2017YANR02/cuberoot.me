@@ -5,9 +5,9 @@
 //! - nibble 写入用 AtomicU8 CAS 处理同字节不同 nibble 的竞争
 //! - 块扫描用 AVX2 一次比对 64 nibble,跳过全部无 d 的块
 //!
-//! 当前给 `dist_xxcross_1col_{adj,diag}` 用 — 两者只差 target_edges/target_corners,
-//! 共用同一个 `bfs_xxcross_packed4` 入口。后续 xxcross_1col(6-min)若也走 (e×c) layout
-//! 可复用;走更复杂 layout 时再加新入口,别强抽象。
+//! 当前给 `dist_xxcross_1col_{adj,diag}`(单起点)与 `dist_tracked`(多起点、任意两因子)用。
+//! 两者共用 `bfs_multi_packed4`;`bfs_xxcross_packed4` 只是它的单起点包装。
+//! 走更复杂 layout 时再加新入口,别强抽象。
 
 use std::sync::atomic::{AtomicU64, AtomicU8, Ordering};
 
@@ -63,13 +63,30 @@ pub fn bfs_xxcross_packed4(
     mt_edges: &[i32],
     mt_corns: &[i32],
 ) -> (Vec<u8>, Vec<u64>) {
+    bfs_multi_packed4(edge_sz, corn_sz, &[start_e * corn_sz + start_c], mt_edges, mt_corns)
+}
+
+/// 同上,但起点是一个**集合** —— 目标不是单个态而是一族态时用(如「一个槽解好 + 另一个槽配好」、
+/// 「十字解好 + 中层四棱朝向好」)。多源 BFS 的每个深度 d = 到目标集最近成员的距离。
+///
+/// 起点集必须全是**合法**态:两块占同一个位的乘积态永远不该进来,否则会凭空长出一片
+/// 不可达分量,把计数污染掉。合法性由调用方保证(`dist_tracked` 在枚举目标时逐个筛)。
+pub fn bfs_multi_packed4(
+    edge_sz: usize,
+    corn_sz: usize,
+    starts: &[usize],
+    mt_edges: &[i32],
+    mt_corns: &[i32],
+) -> (Vec<u8>, Vec<u64>) {
     let total = edge_sz * corn_sz;
     let packed_len = (total + 1) / 2 + 32; // +32 byte AVX 越界 padding
     let mut table = vec![0xFFu8; packed_len];
 
-    let start_idx = start_e * corn_sz + start_c;
-    // SAFETY: start_idx < total,packed_len 已含 padding
-    unsafe { set_nibble_atomic(table.as_mut_ptr(), start_idx, 0); }
+    for &start_idx in starts {
+        assert!(start_idx < total, "start {} out of range {}", start_idx, total);
+        // SAFETY: start_idx < total,packed_len 已含 padding
+        unsafe { set_nibble_atomic(table.as_mut_ptr(), start_idx, 0); }
+    }
 
     let ptr_addr = table.as_mut_ptr() as usize;
     let mt_edges_addr = mt_edges.as_ptr() as usize;
