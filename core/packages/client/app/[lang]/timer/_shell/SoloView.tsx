@@ -2011,6 +2011,11 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   // Picker dropdown open state (the topbar event pill opens the icon grid).
   const [eventPickerOpen, setEventPickerOpen] = useState(false);
 
+  // 「难度」开关的挂点。开关的可用性归打乱来源那两个配置组件(只有它们知道当前项目 / 当前
+  // 比赛能不能按难度筛),但它属于顶栏这排常驻控件 —— 所以状态留在原处,DOM 用 portal 送上来。
+  // 用 state 而非 ref:portal 的目标必须在子组件渲染时已存在,ref.current 那一帧还是 null。
+  const [diffSlot, setDiffSlot] = useState<HTMLSpanElement | null>(null);
+
   const distractionFree = timer.phase === 'running' && !prefersReducedMotion;
   // Opt-in, and stronger than `distractionFree`: that one only fades
   // .surface-chrome, this also takes the side panel and the solver rail. It is
@@ -2186,6 +2191,10 @@ export default function SoloView({ playersControl }: SoloViewProps) {
             <option value="random">{tr({ zh: '随机状态', en: 'Random' })}</option>
             <option value="manual">{tr({ zh: '手动输入', en: 'Manual' })}</option>
           </select>
+          {/* 「难度」开关的落点(内容由 ScrambleSourceBar 里的两个配置组件 portal 过来)。
+              摆在「解法」左边,和来源下拉同一组:难度讲的就是这条打乱怎么来的。
+              data-no-timer 得挂在这儿 —— 开关已经不在打乱来源条里,借不到那块的豁免。 */}
+          <span className="shell-topbar-diff" data-no-timer ref={setDiffSlot} />
           {/* 解法提示(手机形态)。桌面同一个组件挂在右侧 .shell-rail 里(见下),
               这里是二选一 —— 两处同时挂就有两个实例抢同一个 ?hints。 */}
           {!isDesktop && solverHintPanel}
@@ -2213,7 +2222,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       {/* ── Main column ─────────────────────────────────────── */}
       <div className="shell-main">
         {/* 打乱来源配置条 —— 常驻计时读数上方(全项目)。计时中随 surface-chrome 淡出。 */}
-        <ScrambleSourceBar event={event} isZh={isZh} />
+        <ScrambleSourceBar event={event} isZh={isZh} diffSlot={diffSlot} />
         <TimingSurface
           phase={timer.phase}
           colorClass={`${colorClass} tf-${settings.timerFont}`.trim()}
