@@ -70,6 +70,7 @@
 
 /* ── 格子 ─────────────────────────────────────────────── */
 
+/* 可点的格子是 <a>,不可点的是 <div> —— 两者外观必须一样,所以这里连链接的默认样式一起剥掉。 */
 .exact-cov-cell {
   display: block;
   width: 100%;
@@ -81,6 +82,7 @@
   border: 0;
   font: inherit;
   color: inherit;
+  text-decoration: none;
 }
 
 .exact-cov-state {
@@ -140,9 +142,18 @@
   outline-offset: -2px;
 }
 
-/* 仅 0 步:有数但画不出图 */
+/* 仅 0 步:有数但画不出图 —— 同样可点(跳过去看那一格能说什么) */
 .exact-cov-cell.is-zero .exact-cov-state {
   color: var(--signal-warning);
+}
+
+.exact-cov-cell.is-zero:hover {
+  background: color-mix(in srgb, var(--signal-warning) 10%, transparent);
+}
+
+.exact-cov-cell.is-zero:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
 }
 
 /* 不适用:该阶段没有这个槽位概念 */
