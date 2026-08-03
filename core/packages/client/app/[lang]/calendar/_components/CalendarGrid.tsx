@@ -52,6 +52,8 @@ interface Props {
   onSelect?: (start: number, end: number, allDay: boolean) => void;
   /** 点一下空白格。做什么由上层按当前视图决定(新建 / 跳到那天)。 */
   onDateClick?: (ms: number, allDay: boolean) => void;
+  /** 点表头那个日期数字 —— Google 的意思是「只看这一天」,由上层切到日视图。 */
+  onDayLink?: (ms: number) => void;
   onEventClick: (id: string, el: HTMLElement) => void;
   /** 拖动 / 缩放后的新时间 */
   onEventMove?: (id: string, start: number, end: number, allDay: boolean, revert: () => void) => void;
@@ -123,6 +125,10 @@ const CalendarGrid = forwardRef<GridHandle, Props>(function CalendarGrid(props, 
         // 24 小时制不能省整点的分钟:中文 locale 会把 12:00 缩成「12时」,Google 那里写的是 12:00。
         // 12 小时制照 Google 省掉(12 PM)。
         eventTimeFormat={{ hour: props.hour24 ? '2-digit' : 'numeric', minute: '2-digit', hour12: !props.hour24, omitZeroMinute: !props.hour24 }}
+        // 表头日期数字 / 月视图格子里的数字可点 → 只看那一天。视图切换交给上层(URL 是
+        // 单一真相),所以这里不用 FullCalendar 自己的跳转,只把日期报上去。
+        navLinks
+        navLinkDayClick={(date: Date) => { props.onDayLink?.(date.getTime()); }}
         dayHeaderFormat={{ weekday: 'short' }}
         dayHeaderContent={(arg) => {
           // Google 的周 / 日表头是两行:星期在上,日号在下(今天的日号套一个实心圆)。

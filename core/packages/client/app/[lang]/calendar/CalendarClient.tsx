@@ -436,6 +436,12 @@ export default function CalendarClient() {
     openCreate(base.getTime() + 3600_000, base.getTime() + 2 * 3600_000, false);
   }, [openCreate]);
 
+  /** 表头日期数字:切到日视图并停在那天。 */
+  const onDayLink = useCallback((ms: number) => {
+    void setViewParam('timeGridDay');
+    gotoDate(ms);
+  }, [setViewParam, gotoDate]);
+
   const onDateClick = useCallback((ms: number, allDay: boolean) => {
     if (view === 'multiMonthYear') {
       void setViewParam('timeGridDay');
@@ -776,6 +782,7 @@ export default function CalendarClient() {
               weekends={prefs.weekends}
               editable
               onSelect={openCreate}
+              onDayLink={onDayLink}
               onDateClick={onDateClick}
               onEventClick={openEventByKey}
               onEventMove={onEventMove}
