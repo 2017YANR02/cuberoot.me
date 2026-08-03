@@ -8,11 +8,13 @@
  * 说法,把最终裁量权交回用户比死判更合理。
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Check, X, RotateCcw, ArrowRight } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Check, X, RotateCcw, ArrowRight, Flag } from 'lucide-react';
 import Link from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
 import { persistItem } from '@/lib/safe-storage';
+import { useAuthStore, useAuthUser } from '@/lib/auth-store';
+import { reportQuestion } from '@/lib/quiz-api';
 import type { Level, Question, QuizCat, QuizCategory } from '../_data';
 import { buildDeck, gradeChoice, gradeOpen, rebuildDeck, type DeckItem } from '../_lib/deck';
 
@@ -44,9 +46,11 @@ interface Props {
   /** null = 混合模式。 */
   cat: QuizCat | null;
   category: QuizCategory | undefined;
+  /** 社区题(运行时拉的);还没拉到就是空数组,这一局只出内置题。 */
+  community: readonly Question[];
 }
 
-export default function QuizRunner({ level, cat, category }: Props) {
+export default function QuizRunner({ level, cat, category, community }: Props) {
   // 出题要用 Math.random,SSR 首帧不能有牌 —— 挂载后再发,避免 hydration 错配。
   const [deck, setDeck] = useState<DeckItem[] | null>(null);
   const [idx, setIdx] = useState(0);
@@ -56,6 +60,30 @@ export default function QuizRunner({ level, cat, category }: Props) {
   const [typed, setTyped] = useState('');
   const [revealed, setRevealed] = useState(false);
   const [correct, setCorrect] = useState(false);
+  // 举报社区题。入口只在答完之后露出 —— 先看到题面、答案和解析,才谈得上判断它有没有问题。
+  const user = useAuthUser();
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportText, setReportText] = useState('');
+  const [reportState, setReportState] = useState<'idle' | 'sending' | 'done' | 'error'>('idle');
+
+  const resetReport = useCallback(() => {
+    setReportOpen(false);
+    setReportText('');
+    setReportState('idle');
+  }, []);
+
+  const sendReport = useCallback(async (dbId: number) => {
+    const reason = reportText.trim();
+    if (!reason) return;
+    setReportState('sending');
+    try {
+      await reportQuestion(dbId, reason);
+      setReportState('done');
+      setReportOpen(false);
+    } catch {
+      setReportState('error');
+    }
+  }, [reportText]);
 
   const start = useCallback((items: DeckItem[]) => {
     setDeck(items);
@@ -67,7 +95,16 @@ export default function QuizRunner({ level, cat, category }: Props) {
     setCorrect(false);
   }, []);
 
-  useEffect(() => { start(buildDeck(level, cat)); }, [level, cat, start]);
+  // 社区题走 ref 而不是进 effect 依赖:这批题是 fetch 来的,数组身份会在答题过程中变
+  // (父组件重渲、后台刷新)。进依赖的话一变就重出一局,用户答到一半的进度被抹掉。
+  const communityRef = useRef(community);
+  communityRef.current = community;
+  const deal = useCallback(
+    (c: QuizCat | null) => buildDeck(level, c, Math.random, communityRef.current),
+    [level],
+  );
+
+  useEffect(() => { start(deal(cat)); }, [cat, deal, start]);
 
   const item = deck && idx < deck.length ? deck[idx] : null;
   const finished = deck !== null && idx >= deck.length;
@@ -90,7 +127,8 @@ export default function QuizRunner({ level, cat, category }: Props) {
     setTyped('');
     setRevealed(false);
     setCorrect(false);
-  }, [correct, item, revealed]);
+    resetReport();
+  }, [correct, item, resetReport, revealed]);
 
   const pick = useCallback((displayIndex: number) => {
     if (!item || item.q.type !== 'choice' || revealed) return;
@@ -177,7 +215,7 @@ export default function QuizRunner({ level, cat, category }: Props) {
           )}
 
           <div className="quiz-actions">
-            <button type="button" className="quiz-btn is-primary" onClick={() => start(buildDeck(level, cat))}>
+            <button type="button" className="quiz-btn is-primary" onClick={() => start(deal(cat))}>
               <RotateCcw size={15} aria-hidden />
               {tr({ zh: '再来一局', en: 'Play again' })}
             </button>
@@ -287,6 +325,71 @@ export default function QuizRunner({ level, cat, category }: Props) {
             )}
           </div>
           {q.why && <p className="quiz-why">{tr(q.why)}</p>}
+
+          {q.by && (
+            <div className="quiz-by">
+              <span className="quiz-by-who">
+                {tr({
+                  zh: `出题人:${q.by.authorName || '一位用户'}`,
+                  en: `Contributed by ${q.by.authorName || 'a member'}`,
+                })}
+              </span>
+              {q.by.onlyLang && (
+                <span className="quiz-by-lang">
+                  {q.by.onlyLang === 'zh'
+                    ? tr({ zh: '仅中文', en: 'Chinese only' })
+                    : tr({ zh: '仅英文', en: 'English only' })}
+                </span>
+              )}
+              {reportState === 'done' ? (
+                <span className="quiz-by-note">
+                  {tr({ zh: '已举报,管理员会看到', en: 'Reported — an admin will see it' })}
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  className="quiz-flip"
+                  onClick={() => {
+                    if (!user) { useAuthStore.getState().login(); return; }
+                    setReportOpen((o) => !o);
+                  }}
+                >
+                  <Flag size={12} aria-hidden />
+                  {tr({ zh: '这题有问题', en: 'Something’s wrong' })}
+                </button>
+              )}
+            </div>
+          )}
+
+          {q.by && reportOpen && (
+            <div className="quiz-report">
+              <input
+                className="quiz-input"
+                value={reportText}
+                onChange={(e) => setReportText(e.target.value)}
+                maxLength={500}
+                placeholder={tr({ zh: '哪里不对?例如:参考答案是错的', en: 'What’s wrong? e.g. the answer is incorrect' })}
+                aria-label={tr({ zh: '举报理由', en: 'Reason' })}
+              />
+              <button
+                type="button"
+                className="quiz-btn is-primary"
+                disabled={!reportText.trim() || reportState === 'sending'}
+                onClick={() => { void sendReport(q.by!.dbId); }}
+              >
+                {tr({ zh: '提交', en: 'Send' })}
+              </button>
+              <button type="button" className="quiz-btn" onClick={resetReport}>
+                {tr({ zh: '取消', en: 'Cancel' })}
+              </button>
+              {reportState === 'error' && (
+                <span className="quiz-by-note is-error">
+                  {tr({ zh: '提交失败,稍后再试', en: 'Could not send — try again later' })}
+                </span>
+              )}
+            </div>
+          )}
+
           <button type="button" className="quiz-btn is-primary quiz-next" onClick={next}>
             {idx + 1 === total ? tr({ zh: '看结果', en: 'See results' }) : tr({ zh: '下一题', en: 'Next' })}
             <ArrowRight size={15} aria-hidden />

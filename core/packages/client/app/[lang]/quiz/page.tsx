@@ -12,16 +12,20 @@
  * 所以 history 用默认的 replace,不往浏览历史里塞记录。
  */
 
-import { Suspense } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useQueryState, parseAsStringLiteral } from 'nuqs';
-import { Shuffle } from 'lucide-react';
+import { Shuffle, PenLine } from 'lucide-react';
 import BackHome from '@/components/BackHome';
 import HeaderToggles from '@/components/HeaderToggles';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import Link from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
+import { fetchCommunityQuestions } from '@/lib/quiz-api';
+import { useIsAdmin } from '@/lib/auth-store';
 import { BANK, CATEGORIES, CAT_IDS, findCategory, LEVELS } from './_data';
+import type { Question } from './_data';
 import { MIXED_ROUND_SIZE } from './_lib/deck';
+import { countByCat, forLevel } from './_lib/community';
 import QuizRunner from './_components/QuizRunner';
 import './quiz.css';
 
@@ -38,6 +42,23 @@ function QuizPage() {
     parseAsStringLiteral(LEVELS).withDefault('easy'),
   );
 
+  // 社区题(登录用户出的)运行时拉,与内置题同池出场。拉不到就当没有 —— 题库本身是静态的,
+  // API 挂了顶多少几道题,不该把整个 /quiz 拖下水,所以这里只记 settled,不显示错误。
+  const [community, setCommunity] = useState<Question[]>([]);
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    setSettled(false);
+    fetchCommunityQuestions(level)
+      .then((rows) => { if (!cancelled) setCommunity(forLevel(rows, level)); })
+      .catch(() => { if (!cancelled) setCommunity([]); })
+      .finally(() => { if (!cancelled) setSettled(true); });
+    return () => { cancelled = true; };
+  }, [level]);
+
+  const communityCounts = useMemo(() => countByCat(community), [community]);
+  const isAdmin = useIsAdmin();
+
   const category = findCategory(mode);
   const running = mode !== null && (category !== undefined || mode === 'mixed');
   const suffix = level === 'easy' ? '' : `&level=${level}`;
@@ -50,7 +71,15 @@ function QuizPage() {
       </div>
 
       {running ? (
-        <QuizRunner level={level} cat={category ? category.id : null} category={category} />
+        // 开局前等社区题落定:一局的牌在挂载时就发好,数据晚到就只能等下一局才上场。
+        settled ? (
+          <QuizRunner
+            level={level}
+            cat={category ? category.id : null}
+            category={category}
+            community={community}
+          />
+        ) : <div className="quiz-stage" aria-busy="true" />
       ) : (
         <div className="quiz-hub">
           <h1>{tr({ zh: '魔方知识问答', en: 'Cubing quiz' })}</h1>
@@ -94,21 +123,51 @@ function QuizPage() {
           </Link>
 
           <ul className="quiz-cats">
-            {CATEGORIES.map((c) => (
-              <li key={c.id}>
-                <Link href={`/quiz?cat=${c.id}${suffix}`} className="quiz-cat">
-                  <c.Icon size={20} strokeWidth={1.6} aria-hidden />
-                  <span className="quiz-cat-text">
-                    <strong>{tr(c.name)}</strong>
-                    <em>{tr(c.blurb[level])}</em>
-                  </span>
-                  <span className="quiz-cat-n">
-                    {tr({ zh: `${BANK[level][c.id].length} 题`, en: `${BANK[level][c.id].length}` })}
-                  </span>
-                </Link>
-              </li>
-            ))}
+            {CATEGORIES.map((c) => {
+              const n = BANK[level][c.id].length + (communityCounts[c.id] ?? 0);
+              return (
+                <li key={c.id}>
+                  <Link href={`/quiz?cat=${c.id}${suffix}`} className="quiz-cat">
+                    <c.Icon size={20} strokeWidth={1.6} aria-hidden />
+                    <span className="quiz-cat-text">
+                      <strong>{tr(c.name)}</strong>
+                      <em>{tr(c.blurb[level])}</em>
+                    </span>
+                    <span className="quiz-cat-n">
+                      {tr({ zh: `${n} 题`, en: `${n}` })}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
+
+          {/* 出题入口。社区题直接上线、混进对应分类,所以这一段放在题库下面而不是单开一类。 */}
+          <div className="quiz-contribute">
+            <Link href="/quiz/new" className="quiz-contribute-link">
+              <PenLine size={16} strokeWidth={1.7} aria-hidden />
+              {tr({ zh: '我来出一道题', en: 'Write a question' })}
+            </Link>
+            <Link href="/quiz/mine" className="quiz-contribute-link is-quiet">
+              {tr({ zh: '我出的题', en: 'My questions' })}
+            </Link>
+            {isAdmin && (
+              <Link href="/quiz/manage" className="quiz-contribute-link is-quiet">
+                {tr({ zh: '社区题管理', en: 'Moderate' })}
+              </Link>
+            )}
+            <span className="quiz-contribute-hint">
+              {community.length > 0
+                ? tr({
+                  zh: `这一档已有 ${community.length} 道来自站友的题,答题时会和内置题一起出现。`,
+                  en: `${community.length} member-written question${community.length === 1 ? '' : 's'} at this level, mixed in with the built-in ones.`,
+                })
+                : tr({
+                  zh: '写一道你觉得该被问到的题,登录后即可发布,别人马上就能答到。',
+                  en: 'Write the question you think should be asked — log in, publish, and it goes live for everyone.',
+                })}
+            </span>
+          </div>
         </div>
       )}
     </div>

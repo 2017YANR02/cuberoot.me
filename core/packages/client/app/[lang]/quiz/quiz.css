@@ -457,6 +457,322 @@
     flex-wrap: wrap;
 }
 
+/* ── 社区题:出题入口、署名、举报 ── */
+
+.quiz-contribute {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.9rem;
+    margin-top: 1.75rem;
+}
+
+.quiz-contribute-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.92rem;
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.quiz-contribute-link:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.quiz-contribute-link.is-quiet {
+    color: var(--muted-foreground);
+}
+
+.quiz-contribute-hint {
+    flex-basis: 100%;
+    font-size: 0.84rem;
+    line-height: 1.55;
+    color: var(--muted-foreground);
+}
+
+/* 答完之后才露出的一行:谁出的题、缺哪种语言、举报入口 */
+.quiz-by {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+    font-size: 0.82rem;
+    color: var(--muted-foreground);
+}
+
+/* 举报按钮:.quiz-flip 本身是行内下划线文字,图标要跟文字同行 */
+.quiz-by .quiz-flip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.quiz-by-lang {
+    padding: 0.1rem 0.4rem;
+    border-radius: 5px;
+    background: var(--accent-soft);
+    color: var(--accent-foreground);
+    font-size: 0.75rem;
+}
+
+.quiz-by-note {
+    font-size: 0.8rem;
+}
+
+.quiz-by-note.is-error {
+    color: var(--destructive);
+}
+
+.quiz-report {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.quiz-report .quiz-input {
+    flex: 1 1 16rem;
+    width: auto;
+}
+
+/* ── 出题 / 管理表单 ── */
+
+.quiz-form-page h1 {
+    margin-bottom: 0.5rem;
+}
+
+.quiz-login {
+    align-self: flex-start;
+}
+
+.quiz-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-bottom: 1.25rem;
+}
+
+.quiz-editor-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 1.5rem;
+}
+
+.quiz-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.quiz-field.is-inline {
+    gap: 0.35rem;
+    align-self: flex-start;
+}
+
+.quiz-field-label {
+    font-size: 0.82rem;
+    color: var(--muted-foreground);
+}
+
+.quiz-field-hint {
+    font-size: 0.8rem;
+    line-height: 1.55;
+    color: var(--faint-foreground);
+}
+
+.quiz-select {
+    align-self: flex-start;
+    width: fit-content;
+    padding: 0.45rem 0.6rem;
+    border: 1px solid var(--input);
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 0.9rem;
+}
+
+.quiz-textarea {
+    width: 100%;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid var(--input);
+    border-radius: 10px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    line-height: 1.55;
+    resize: vertical;
+}
+
+.quiz-textarea:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 1px;
+}
+
+/* 中英并排。窄屏折成上下两行 —— 微信里 CJK 更宽,别钉定宽列 */
+.quiz-bilingual {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+    gap: 0.6rem;
+}
+
+.quiz-lang-box {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.quiz-lang-tag {
+    font-size: 0.72rem;
+    color: var(--faint-foreground);
+    white-space: nowrap;
+}
+
+.quiz-opt-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.quiz-opt-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.quiz-opt-mark,
+.quiz-opt-del {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    border: 1px solid var(--border-default);
+    border-radius: 7px;
+    background: transparent;
+    color: var(--faint-foreground);
+    cursor: pointer;
+}
+
+.quiz-opt-row.is-answer .quiz-opt-mark {
+    border-color: transparent;
+    background: var(--signal-success);
+    color: var(--primary-foreground);
+}
+
+.quiz-opt-del:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.quiz-opt-add,
+.quiz-accept-fill {
+    align-self: flex-start;
+    margin-top: 0.15rem;
+    font-size: 0.85rem;
+}
+
+.quiz-editor-lang {
+    margin: 0;
+    font-size: 0.84rem;
+    line-height: 1.55;
+    color: var(--muted-foreground);
+}
+
+.quiz-form-error {
+    margin: 0 0 0.75rem;
+    font-size: 0.88rem;
+    color: var(--destructive);
+}
+
+.quiz-form-hint {
+    margin: 0.5rem 0 0;
+    font-size: 0.84rem;
+    color: var(--muted-foreground);
+}
+
+/* ── 我出的题 / 管理列表 ── */
+
+.quiz-manage-h2 {
+    margin: 2rem 0 0.75rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+.quiz-mine-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.quiz-mine-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--border-default);
+}
+
+.quiz-mine-item.is-hidden .quiz-mine-q {
+    color: var(--muted-foreground);
+    text-decoration: line-through;
+}
+
+.quiz-mine-q {
+    font-size: 0.98rem;
+    line-height: 1.5;
+}
+
+.quiz-mine-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.75rem;
+    font-size: 0.8rem;
+    color: var(--muted-foreground);
+}
+
+.quiz-mine-flag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.05rem 0.4rem;
+    border-radius: 5px;
+    background: var(--accent-soft);
+    color: var(--accent-foreground);
+    white-space: nowrap;
+}
+
+.quiz-mine-note {
+    margin: 0;
+    font-size: 0.86rem;
+    line-height: 1.55;
+    color: var(--muted-foreground);
+}
+
+.quiz-mine-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.35rem;
+}
+
+.quiz-manage-note {
+    flex: 1 1 14rem;
+    width: auto;
+    padding: 0.4rem 0.7rem;
+    font-size: 0.88rem;
+}
+
 @media (max-width: 480px) {
     .quiz-page {
         padding: 1rem 0.85rem 3rem;
@@ -468,5 +784,19 @@
 
     .quiz-result-score strong {
         font-size: 2.1rem;
+    }
+
+    /* 选项行:窄屏把两个语言输入框叠起来,勾选和删除留在第一行两端 */
+    .quiz-opt-row {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+    }
+
+    .quiz-opt-row .quiz-input:nth-of-type(2) {
+        grid-column: 2 / 3;
+    }
+
+    .quiz-opt-row .quiz-opt-del {
+        grid-column: 3;
+        grid-row: 1;
     }
 }
