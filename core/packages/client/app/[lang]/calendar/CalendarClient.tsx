@@ -16,7 +16,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import {
   CalendarDays, ChevronLeft, ChevronRight, Download, Globe, Menu, Plus, Search, Settings2,
-  Share2, Upload, X,
+  Share2, Undo2, Upload, X,
 } from 'lucide-react';
 import BackHome from '@/components/BackHome';
 import HeaderToggles from '@/components/HeaderToggles';
@@ -29,11 +29,11 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import { usePopoverDismiss } from '@/hooks/usePopoverDismiss';
 import { tr, useLang } from '@/i18n/tr';
 import { localZone, isValidZone, formatOffset, zoneOffsetMinutes } from '@cuberoot/shared/tz';
-import { eventsToIcs, type CalEvent, type EditScope } from '@cuberoot/shared/calendar';
+import { eventsToIcs, type CalEvent, type CalendarImport, type EditScope } from '@cuberoot/shared/calendar';
 import { colorHex, readableInk } from '@/lib/calendar-colors';
 import { zoneLabel, zoneOptions, zoneSearchTerms } from '@/lib/tz-zones';
 import { expandRange, parseOccurrenceKey, useCalendarStore } from '@/lib/calendar-store';
-import { exportIcs } from '@/lib/calendar-api';
+import { exportIcs, listImports, undoImport } from '@/lib/calendar-api';
 import { importCalendarFile, type ImportProgress } from './_lib/import';
 import CalendarGrid, { type GridHandle, type GridRange } from './_components/CalendarGrid';
 import EventDialog, { type DialogDraft } from './_components/EventDialog';
@@ -120,6 +120,12 @@ export default function CalendarClient() {
   const tzPopRef = useRef<HTMLDivElement>(null);
   const setBtnRef = useRef<HTMLButtonElement>(null);
   const setPopRef = useRef<HTMLDivElement>(null);
+  // 导入记录只在真去看设置时才拉 —— 首屏没人关心,不该多一个请求。
+  useEffect(() => {
+    if (!settingsOpen) return;
+    void listImports().then(setImports).catch(() => { /* 没登录 / 离线时不打扰 */ });
+  }, [settingsOpen]);
+
   usePopoverDismiss(tzOpen, () => setTzOpen(false), tzPopRef, tzBtnRef);
   usePopoverDismiss(settingsOpen, () => setSettingsOpen(false), setPopRef, setBtnRef);
   const [query, setQuery] = useState('');
@@ -131,6 +137,9 @@ export default function CalendarClient() {
   const [toast, setToast] = useState('');
   /** 导入中的进度;非 null = 正在导。几千条要跑十几批,没进度会以为卡死了。 */
   const [importing, setImporting] = useState<ImportProgress | null>(null);
+  /** 最近几次导入,用来整批撤销(导错时区 / 导错文件时不必一条条删)。 */
+  const [imports, setImports] = useState<CalendarImport[]>([]);
+  const [undoingId, setUndoingId] = useState<number | null>(null);
 
   // ── 加载 ────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -353,6 +362,7 @@ export default function CalendarClient() {
         return;
       }
       await store.reload();
+      setImports(await listImports().catch(() => []));
       // 落进哪几个日历要说 —— 一份 Google 导出会铺开成好几列,不讲一声会以为没导进来。
       const into = r.calendars.length
         ? tr({ zh: ` → ${r.calendars.join('、')}`, en: ` → ${r.calendars.join(', ')}` })
@@ -368,6 +378,25 @@ export default function CalendarClient() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [defaultCalendarId, displayTz, calendars]);
+
+  // 撤销一次导入。整批走服务端一条 DELETE —— 几千条事件靠前端逐条删既慢又会半途而废。
+  const onUndoImport = useCallback(async (im: CalendarImport) => {
+    setUndoingId(im.id);
+    try {
+      const r = await undoImport(im.id);
+      await store.reload();
+      setImports(await listImports().catch(() => []));
+      setToast(tr({
+        zh: `已撤销 ${r.removedEvents} 条${r.removedCalendars ? `,并删掉 ${r.removedCalendars} 个空日历` : ''}`,
+        en: `Removed ${r.removedEvents} events${r.removedCalendars ? `, and ${r.removedCalendars} now-empty calendars` : ''}`,
+      }));
+    } catch (e) {
+      setToast((e as Error).message);
+    } finally {
+      setUndoingId(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const onExport = useCallback(async () => {
     try {
@@ -642,6 +671,39 @@ export default function CalendarClient() {
               en: 'Google Calendar: Settings → Import & export → Export. Pick the downloaded .zip as-is — each calendar inside lands in its own list.',
             })}
           </p>
+
+          {imports.length > 0 && (
+            <div className="cal-imports">
+              <span className="cal-field-label">{tr({ zh: '最近导入', en: 'Recent imports' })}</span>
+              {imports.map((im) => (
+                <div key={im.id} className="cal-import-row">
+                  <span className="cal-import-what">
+                    {im.source || tr({ zh: '未命名文件', en: 'Unnamed file' })}
+                    <span className="cal-import-meta">
+                      {tr({ zh: `${im.eventCount} 条`, en: `${im.eventCount} events` })}
+                      {'  '}
+                      {dayKeyIn(displayTz, im.createdAt)} {formatClock(im.createdAt, displayTz, prefs.hour24, isZh)}
+                    </span>
+                  </span>
+                  {im.undone ? (
+                    <span className="cal-import-meta">{tr({ zh: '已撤销', en: 'Undone' })}</span>
+                  ) : (
+                    <button
+                      type="button"
+                      className="cal-btn"
+                      disabled={undoingId === im.id}
+                      onClick={() => void onUndoImport(im)}
+                    >
+                      <Undo2 size={15} aria-hidden />
+                      {undoingId === im.id
+                        ? tr({ zh: '撤销中…', en: 'Undoing…' })
+                        : tr({ zh: '撤销', en: 'Undo' })}
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
