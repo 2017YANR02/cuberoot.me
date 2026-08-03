@@ -11,7 +11,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { stageLabel, variantLabel } from '@/lib/scramble-variants';
+import { stageLabel, uiVariantOf, variantLabel } from '@/lib/scramble-variants';
 import { solveTrainerCase, trainerMetaFor } from '../_lib/scramble/trainer_pool';
 import { tr } from '@/i18n/tr';
 
@@ -38,7 +38,11 @@ export default function TrainerCaseBar({ scramble, isZh }: Props) {
   };
 
   const stage = stageLabel(meta.spec.stage, isZh);
-  const method = meta.spec.variant === 'std' ? '' : `${variantLabel(meta.spec.variant, isZh)} `;
+  // 方法名按站内的 UI 聚合来叫(数据变体 '222' 在下拉里是「砖」、'eoline' 是「EO」),否则这里会
+  // 冒出「222 222」这种数据层的名字。标准不加前缀;方法名和阶段名同形(EO 方法的 EO 阶段)也不叠。
+  const ui = uiVariantOf(meta.spec.variant);
+  const name = ui === 'std' ? '' : variantLabel(ui, isZh);
+  const method = name && name !== stage ? `${name} ` : '';
 
   return (
     <div

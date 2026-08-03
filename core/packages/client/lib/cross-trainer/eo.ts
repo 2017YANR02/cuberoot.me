@@ -144,7 +144,7 @@ export function eoPosNext(): Int32Array {
   return t;
 }
 
-interface AxisData {
+export interface AxisData {
   step: readonly Int8Array[];
   /** eoNext[word*18 + m] over the 2,048 packed flip words. */
   next: Int32Array;
@@ -155,7 +155,12 @@ interface AxisData {
 
 const axisCache = new Map<EoAxis, AxisData>();
 
-function axisData(axis: EoAxis): AxisData {
+/**
+ * Everything that depends on the EO axis alone: the 2,048-word transition table, the exact
+ * distance of the flip word by itself (which IS the "pure EO" stage — see ./eoline), and the
+ * bridge between this axis' convention and kociemba's.
+ */
+export function eoAxisData(axis: EoAxis): AxisData {
   const hit = axisCache.get(axis);
   if (hit) return hit;
   const step = edgeStepForAxis(axis);
@@ -213,7 +218,7 @@ export function eoFrameData(frame: EoFrame): EoFrameData {
   if (axis === faceAxis(frame.face)) {
     throw new Error(`EO axis ${axis} is the cross face's own axis — not a ZZ EOCross`);
   }
-  const a = axisData(axis);
+  const a = eoAxisData(axis);
   const pieces = FACE_EDGES[frame.face];
   const data: EoFrameData = {
     face: frame.face,
@@ -484,19 +489,29 @@ export function eoCrossPins(frame: EoFrame, st: EoCoord, rng: () => number): Pin
   const d = eoFrameData(frame);
   const slots = new Int8Array(4);
   slotUnrank(st.pos, 4, slots);
-  const word = eoWord(st.eo);
-  const oriOf = (piece: number, slot: number) => ((word >> slot) & 1) ^ d.delta[piece * 12 + slot];
+  return eoPins(d.delta, d.pieces, slots, eoWord(st.eo), rng);
+}
 
+/**
+ * The same job for any number of tracked edges (0 for pure EO, 2 for EOLine, 4 for EOCross):
+ * `pieces[k]` goes to `slots[k]`, the rest are shuffled into what is left, and every slot's flip
+ * comes from `word` translated out of the axis convention by `delta`.
+ */
+export function eoPins(
+  delta: Uint8Array, pieces: readonly number[], slots: ArrayLike<number>, word: number,
+  rng: () => number,
+): Pin[] {
+  const oriOf = (piece: number, slot: number) => ((word >> slot) & 1) ^ delta[piece * 12 + slot];
   const used = new Uint8Array(12);
   const pins: Pin[] = [];
-  for (let k = 0; k < 4; k++) {
-    const piece = d.pieces[k], slot = slots[k];
+  for (let k = 0; k < pieces.length; k++) {
+    const piece = pieces[k], slot = slots[k];
     used[slot] = 1;
     pins.push({ piece, slot, ori: oriOf(piece, slot) });
   }
   const freeSlots: number[] = [], freePieces: number[] = [];
   for (let s = 0; s < 12; s++) if (!used[s]) freeSlots.push(s);
-  for (let p = 0; p < 12; p++) if (!d.pieces.includes(p)) freePieces.push(p);
+  for (let p = 0; p < 12; p++) if (!pieces.includes(p)) freePieces.push(p);
   for (let i = freePieces.length - 1; i > 0; i--) {
     const j = (rng() * (i + 1)) | 0;
     const t = freePieces[i]; freePieces[i] = freePieces[j]; freePieces[j] = t;

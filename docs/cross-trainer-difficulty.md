@@ -17,8 +17,11 @@
 
 ## 1. 已上线
 
-9 个阶段:`std/{cross,xcross,xxcross}`、`eo/eo_cross`、`pair/{cross_pair,xcross_pair}`、
-`pseudo/{pseudo_cross,pseudo_xcross}`、`pseudo_pair/pseudo_cross_pseudo_pair`。
+12 个阶段:`std/{cross,xcross,xxcross}`、`eo/eo_cross`、`pair/{cross_pair,xcross_pair}`、
+`pseudo/{pseudo_cross,pseudo_xcross}`、`pseudo_pair/pseudo_cross_pseudo_pair`、
+以及 T1 那批 `eoline/{eo,eoline}`、`222/block222`(见 §6.2)。
+方法下拉走站内的 UI 聚合(`uiVariantOptions`/`uiStagesOf`/`dataVariantOfStage`),所以
+`eoline` 并进「EO」、`222` 并进「砖」—— 与 /scramble/solver、首页近期打乱、真题难度筛同一份下拉。
 
 - 采样严格均匀:子步坐标均匀 × 其余块均匀补全 = 该最优步数下全体状态上均匀(纤维等势)。
 - **帧折叠**:只给规范坐标系(D 面十字、DFR 槽)建表,其余 (底色, 槽) 用 24 个整体旋转换算 ——
@@ -224,9 +227,10 @@ for var, st in KEYS:
 | 伪基态 | xcross(`pseudo_xcross_pseudo_pair`) | ❌ | `VariantSolverWasm`,无单帧入口 |
 | 基态 / 伪 / 伪基态 | xxcross / xxxcross | ❌ | `VariantSolverWasm`;伪基态 xxxcross 9.6–57 s/帧,不可行 |
 | F2LEO / 伪 F2LEO | cross…xxxcross | ❌ | `VariantSolverWasm`,建表 4.2–4.9 s,xxxcross 1–6.6 s/帧 |
-| 砖 | 122 / 123 / 222 / 223 / F2B | ❌ | `Roux223SolverWasm` 建表 2.87 s;**F2B 每条 ~3 s(无缓存,IDA*)** |
+| 砖 | 222 | ✅ 原生 TS(§6.2) | 25.3 万态,一次 BFS 114 ms |
+| 砖 | 122 / 123 / 223 / F2B | ❌ | `Roux223SolverWasm` 建表 2.87 s;**F2B 每条 ~3 s(无缓存,IDA*)** |
 | DR | dr | ❌ | `EoDrSolverWasm` 建表 442 ms,测量 ~2 ms/帧 |
-| EOLine | eo / eoline | ❌(数据层变体,UI 并入 EO) | 同上,≤1 ms |
+| EOLine | eo / eoline | ✅ 原生 TS(§6.2) | 2,048 / 27 万态,BFS 各 ~0.1 s |
 | 整体 | 333 | ❌ | **无可用客户端引擎**:cubeopt 要 SAB + COOP/COEP(全站只有 /scramble/solver 发),表 30 MB–15 GB;或走登录态的服务端 SSE |
 
 (以上成本由 `wf_b4b6d65f-1c0` 工作流在本机 Node 实测,浏览器桌面 ≈1–1.5×,手机 3–5×。)
@@ -245,12 +249,58 @@ for var, st in KEYS:
 > DR/HTR,否则返回哨兵值),不能直接当任意随机态的难度轴 —— DR 方法要用的是
 > `EoDrSolverWasm` 的「到 DR 的最优步数」,不是那几个条件阶段。
 
+## 6.1 口径核对:与站内 Rust 引擎逐列比对
+
+这批新阶段一上来就问了一个之前没问过的问题:**生成器说的「白 · 十字 · 5 步」,和
+/scramble/stats 说的是同一句话吗?** 之前每个测试都是拿生成器和它自己的表对,自证。
+
+现在有了外部判据:`stats/scramble/comp_steps*` 是 Rust 分析器逐条真题算出来的每色步数
+(6 列 = 分析器那 6 个视角,列序 W Y R O B G,对应 `_z0 _z2 _z3 _z1 _x3 _x1`)。守卫
+`tests/cross_trainer_parity.test.ts` 把每个阶段的 224 条真题 × 6 色全部对一遍:
+
+| 阶段 | 对上 / 总数 |
+|---|---|
+| `std/{cross,xcross,xxcross}`、`pair/{cross_pair,xcross_pair}`、`pseudo/pseudo_cross` | 1344 / 1344 |
+| **`eoline/{eo,eoline}`、`222/block222`(新)** | **1344 / 1344** |
+| `eo/eo_cross` | 959 / 1344 |
+| `pseudo/pseudo_xcross` | 822 / 1344 |
+| `pseudo_pair/pseudo_cross_pseudo_pair` | 911 / 1344 |
+
+后三个是**先前就存在的口径分歧**,不是这次改出来的(这次只是第一次量到)。共同点是「移植时靠推断
+补的定义」:EOCross 的取向轴该怎么随底色走、以及带槽的「伪」到底伪在哪。数值用 `toBe` 锁住,
+修好一个就该顶到 1344 并挪进上面那行 —— 绝不允许把断言放宽。
+
+新阶段没踩这个坑,是因为定义是**读引擎读来的**,不是猜的:
+- 纯 EO 的每色列 = 该底色**两条垂直轴**里更小的那个(不是 ZZ 惯用的那一条),所以对面色恒等、
+  四色就已经把三条轴占满 —— 四色档与六色档必然同值。
+- EOLine 的每色列 = 该面**两条线**(D 面的 DF/DB 与 DR/DL)里更小的那个,六色 = 12 条线。
+- 222 的每色列 = 该层**四个块**里最小的那个;一对对面色的八个块就是全部八个,所以双 / 四 / 六色
+  三档必然同值。
+
+## 6.2 T1:三个原生阶段
+
+| 阶段 | 坐标 | 态数 | BFS | 上帝之数(穷举) |
+|---|---|---|---|---|
+| 纯 EO | 12 位翻转字(偶校验) | 2,048 | 瞬时 | **7** |
+| EOLine | 翻转字 × 两条线棱的有序位置 | 2,048 × 132 = 270,336 | 81 ms | **9** |
+| 222 | 1 角(24)× 3 棱有序(10,560) | 253,440 | 114 ms | **8** |
+
+三个都是**整表枚举**,所以没有「抽不到」的档:单帧任意一层都是 O(1) 直接从层里取,`draw` 顶到
+`god`,滑块一格不置灰。这也是它们和 §5 那套「采样 + 置灰」的根本差别 —— 便宜到不需要采样。
+
+god 的证据这次不来自 distribution.json(§5 那张表的来源),因为该文件的观测最大值低于真上帝之数
+(block222 观测 7,实际 8)。改用两条:40 万次均匀抽样见过的最深,与实际抽出来过的最深;而单帧
+直径又是「多帧取最小」的天花板,所以凡是打到直径的格子就是**准确值**,不只是下界。
+
 ## 7. 待办
 
 - [x] 可达区间表 → 滑块上下限(按 阶段 × 底色档 × 槽档);不可达刻度置灰。
 - [x] 建表预热:选中阶段就在 worker 里开始建,别等第一条打乱。
 - [x] iframe 里不再注入 CubeRoot logo(`tools/assets/js/logo_nav.js`:`window.self !== window.top` 直接 return)。
-- [ ] **T1 扩展**:纯 EO / EOLine / block222 三个原生阶段(方法下拉多出「砖」)。
+- [x] **T1 扩展**:纯 EO / EOLine / block222 三个原生阶段(方法下拉多出「砖」),见 §6.2;
+      方法/阶段下拉同时换成站内的 UI 聚合。
+- [ ] 修 §6.1 那三个口径分歧:`eo/eo_cross`(取向轴怎么随底色走)、`pseudo/pseudo_xcross`、
+      `pseudo_pair/pseudo_cross_pseudo_pair`。判据现成(comp_steps 逐列比对),缺的是读引擎。
 - [ ] **T2 扩展**:DR、标准 xxxcross(worker 里挂 `cross_solver_bg.wasm`)。
 - [x] 深端真出题(§5.5):六色底十字 8 步(40 个,现算)、四色底十字 8 步(591 个,现算)、
       六色底 XCross 10 步(438 个,随包)。

@@ -21,7 +21,7 @@ import {
 } from './model';
 import {
   EOCROSS_MAX_DEPTH, defaultEoAxis, eoCrossDistCapped, eoFrameData, sampleEoCrossState,
-  type EoCoord, type EoFrame, type EoFrameData,
+  type EoAxis, type EoCoord, type EoFrame, type EoFrameData,
 } from './eo';
 import { crossDist, decodeCross, encodeCross } from './dist';
 import { sampleCrossLayer } from './sample';
@@ -43,6 +43,10 @@ import {
 import {
   XPAIR_MAX_DEPTH, sampleXPairCoord, xpairDistCapped, xpairFrameData, xpairPins,
 } from './xpair';
+import { BLOCK222_MAX_DEPTH, block222DistCapped, blockCoordOf, sampleBlockState } from './block';
+import {
+  EOLINE_MAX_DEPTH, EO_MAX_DEPTH, eoDistCapped, eoLineDist, sampleEoLineState, sampleEoState,
+} from './eoline';
 import { CANON_FACE, CANON_SLOT, ROTATIONS, ROT_FOR_FRAME, inverseRotation, rotForFaceAxis, rotateState } from './rotate';
 import { drawCorpus } from './corpus';
 
@@ -107,6 +111,10 @@ export interface TrainerFrame {
   slots: number[];
   /** The slots have different roles (XCross-pair: first solved, second paired). */
   ordered?: boolean;
+  /** EO stages: the axis orientation is measured against — a cross colour admits two of them. */
+  axis?: EoAxis;
+  /** Pure EO: the axis alone names the frame, the colour that led to it carries no information. */
+  axisOnly?: boolean;
 }
 
 type Sampler = (spec: ResolvedSpec, rng: () => number, def: StageDef) => Sampled | null;
@@ -570,6 +578,74 @@ const sampleXxcross: Sampler = oneFrame((fr, lo, hi, rng, tries) => {
   return { state: unrotate(fillState(edgePins, cornerPins, rng), rot), depth: got.depth };
 });
 
+// ── stages: pure EO / EOLine / 2×2×2 block ───────────────────────────────────────────────────
+
+/**
+ * A cross colour names a face, and orientation is measured against an axis — so a colour admits
+ * the TWO axes perpendicular to it, and the site's metric (`solver/src/eoline_solver.rs`, and the
+ * `eoline` columns of stats/scramble/distribution.json) is the better of the two. Not one axis:
+ * that would be ZZ's own convention for a D cross, but it is not what the rest of the site means
+ * by "EO, yellow".
+ *
+ * Consequences worth stating because the reach table shows them: one colour = 2 axes, an opposite
+ * PAIR = the same 2 (opposite faces share an axis, hence share their perpendiculars), and four
+ * colours already saturate all 3 — so the four- and six-colour rows of pure EO are identical.
+ * The duplicates are dropped here rather than left to `oneFrame`'s tie-break: it would still be
+ * correct (each state is awarded to the lowest-index frame achieving the minimum) but every
+ * conditional draw from a duplicate frame is thrown away.
+ */
+const perpAxes = (face: FaceIdx): EoAxis[] =>
+  ([0, 1, 2] as EoAxis[]).filter((a) => a !== (face % 3));
+
+const axisFrames = ({ faces }: ResolvedSpec): TrainerFrame[] => {
+  const seen = new Set<EoAxis>();
+  const out: TrainerFrame[] = [];
+  for (const face of faces) {
+    for (const axis of perpAxes(face)) {
+      if (seen.has(axis)) continue;
+      seen.add(axis);
+      out.push({ face, slots: [], axis, axisOnly: true });
+    }
+  }
+  return out;
+};
+
+/** The same pairing for EOLine, where the axis also picks WHICH line of the face (DF/DB vs DL/DR). */
+const lineFrames = ({ faces }: ResolvedSpec): TrainerFrame[] =>
+  faces.flatMap((face) => perpAxes(face).map((axis) => ({ face, slots: [], axis })));
+
+const sampleEoStage: Sampler = oneFrame((fr, lo, hi, rng) => sampleEoState(fr.axis!, lo, hi, rng));
+const sampleEoLine: Sampler = oneFrame((fr, lo, hi, rng) => sampleEoLineState(fr.face, fr.axis!, lo, hi, rng));
+
+/**
+ * A block is named by (cross colour, F2L slot) — but each of the 8 blocks is reachable from each
+ * of its three faces, so the 24 frames name 8 problems. Same deduplication, same reason as above;
+ * note it also means two OPPOSITE colours already cover all eight blocks, which is why the two-,
+ * four- and six-colour rows of this stage's reach table are identical.
+ */
+const blockFrames = ({ faces, slot }: ResolvedSpec): TrainerFrame[] => {
+  const seen = new Set<number>();
+  const out: TrainerFrame[] = [];
+  for (const face of faces) {
+    for (const s of slot === 'best' ? [0, 1, 2, 3] : [slot]) {
+      const corner = f2lSlots(face)[s].corner;
+      if (seen.has(corner)) continue;
+      seen.add(corner);
+      out.push({ face, slots: [s] });
+    }
+  }
+  return out;
+};
+
+const blockDist = (state: CubieCube, fr: TrainerFrame, cap: number): number =>
+  block222DistCapped(blockCoordOf(rotateState(state, ROT_FOR_FRAME[fr.face][fr.slots[0]])), cap);
+
+const sampleBlock: Sampler = oneFrame((fr, lo, hi, rng) => {
+  const got = sampleBlockState(lo, hi, rng);
+  if (!got) return null;
+  return { state: unrotate(got.state, ROT_FOR_FRAME[fr.face][fr.slots[0]]), depth: got.depth };
+});
+
 // ── registry ─────────────────────────────────────────────────────────────────────────────────
 
 const STAGES: StageDef[] = [
@@ -642,6 +718,32 @@ const STAGES: StageDef[] = [
     sample: samplePair(true),
     frames: slotFrames,
     frameDist: pairDistOf(true),
+  },
+  // The three stages small enough to enumerate outright (./eoline, ./block): one BFS each, every
+  // layer indexed, so a single frame draws any depth in microseconds and `range` is the true
+  // diameter rather than a search bound.
+  {
+    variant: 'eoline', stage: 'eo', exactLayers: true,
+    slots: false, range: [0, EO_MAX_DEPTH], band: [4, 5], heavy: false,
+    sample: sampleEoStage,
+    frames: axisFrames,
+    frameDist: (state, fr, cap) => eoDistCapped(state, fr.axis!, cap),
+  },
+  {
+    variant: 'eoline', stage: 'eoline', exactLayers: true,
+    slots: false, range: [0, EOLINE_MAX_DEPTH], band: [6, 7], heavy: false,
+    sample: sampleEoLine,
+    frames: lineFrames,
+    frameDist: (state, fr, cap) => eoLineDist(state, fr.face, fr.axis!, cap),
+  },
+  {
+    // `slots` is on so or18's fixed semantics stay available (one colour, one named block); the
+    // site's own metric is the best of a layer's four, which is what 'best' produces.
+    variant: '222', stage: 'block222', exactLayers: true,
+    slots: true, range: [0, BLOCK222_MAX_DEPTH], band: [5, 6], heavy: false,
+    sample: sampleBlock,
+    frames: blockFrames,
+    frameDist: blockDist,
   },
 ];
 
@@ -721,14 +823,25 @@ export function trainerSolution(spec: TrainerSpec, state: CubieCube): TrainerSol
   return { frame: best, moves, notation: moves.map((m) => MOVE_NAMES[m]).join(' ') };
 }
 
-/** Human name of a frame: the cross colour, plus the slot(s) when the stage pairs any. */
+/**
+ * Human name of a frame: the cross colour, plus the slot(s) when the stage pairs any and the axis
+ * when the stage measures orientation. Pure EO is the one frame with no colour in it at all — the
+ * colours that were picked only chose which axes to try, and naming one of them would suggest the
+ * answer depends on a face it does not depend on.
+ */
 export function frameLabel(frame: TrainerFrame, isZh: boolean): string {
+  const axis = frame.axis === undefined ? '' : AXIS_LABEL[frame.axis];
+  if (frame.axisOnly) return axis;
   const color = FACE_COLOR[frame.face];
   const name = isZh ? COLOR_ZH[color] : color;
+  if (axis) return `${name} ${axis}`;
   if (!frame.slots.length) return name;
   const names = slotNamesOf(frame.face);
   return `${name} ${frame.slots.map((s) => names[s]).join(frame.ordered ? '→' : '+')}`;
 }
+
+/** EO axes, in ./eo's numbering. */
+const AXIS_LABEL = ['U/D', 'R/L', 'F/B'];
 
 const COLOR_ZH: Record<string, string> = {
   White: '白', Yellow: '黄', Green: '绿', Blue: '蓝', Red: '红', Orange: '橙',
@@ -795,16 +908,39 @@ export function trainerMetric(spec: TrainerSpec, samples: number, rng: () => num
   const frames = def.frames({ ...resolved, lo: def.range[0], hi: def.range[1] });
   const hist = new Array<number>(def.range[1] + 2).fill(0);
   for (let i = 0; i < samples; i++) {
-    const state = fillState([], [], rng);
-    let best = -1;
-    for (const fr of frames) {
-      const v = def.frameDist(state, fr, best < 0 ? def.range[1] : best - 1);
-      if (v >= 0 && (best < 0 || v < best)) best = v;
-      if (best === 0) break;
-    }
+    const best = bestOverFrames(def, frames, fillState([], [], rng));
     hist[best >= 0 ? best : hist.length - 1]++;
   }
   return hist;
+}
+
+/**
+ * The stage's difficulty of a given state: the best over the spec's frames, which is what the
+ * site means by "EO, yellow" or "XCross, six-colour". -1 when the stage is unknown or every frame
+ * exceeds its own range (which cannot happen for a legal cube).
+ *
+ * This is the read-only half of the generator, and the tests use it to hold the whole thing to the
+ * site's Rust engine: run it over real WCA scrambles and it must reproduce
+ * `stats/scramble/comp_steps*` column for column.
+ */
+export function stageMetric(
+  variant: string, stage: string, state: CubieCube, colors: string, slot: number | 'best' = 'best',
+): number {
+  const def = byKey.get(`${variant}/${stage}`);
+  if (!def) return -1;
+  const resolved = resolve({ variant, stage, colors, slot, lo: 0, hi: def.range[1] }, def);
+  return resolved ? bestOverFrames(def, def.frames(resolved), state) : -1;
+}
+
+function bestOverFrames(def: StageDef, frames: TrainerFrame[], state: CubieCube): number {
+  let best = -1;
+  for (const fr of frames) {
+    // Each frame is asked only whether it beats the running best, so the deep frames stop early.
+    const v = def.frameDist(state, fr, best < 0 ? def.range[1] : best - 1);
+    if (v >= 0 && (best < 0 || v < best)) best = v;
+    if (best === 0) break;
+  }
+  return best;
 }
 
 /** Clamp a spec into what the stage can actually do; null when nothing is left. */
