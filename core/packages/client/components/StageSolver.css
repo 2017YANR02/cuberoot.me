@@ -176,20 +176,8 @@ html[data-theme='dark'] .stsv {
    槽位方位(BL/BR/FR/FL)对应两片侧面贴纸,这里画成两色竖分小块(竖线分隔),替代方位字母。
    下拉:原生 <select> 无法在 <option> 里放色块,故自绘 listbox,交互对齐 SubsetColorPicker。 */
 .stsv-slot-chips { display: inline-flex; align-items: center; gap: 3px; flex: 0 0 auto; vertical-align: middle; }
-.stsv-slot-chip {
-  display: inline-flex;
-  align-items: stretch;
-  width: 20px;
-  height: 13px;
-  gap: 1.5px;                       /* 缝隙透出背景色 = 两色间的竖分隔线 */
-  border-radius: 3px;
-  overflow: hidden;
-  background: var(--sv-border-strong);
-  border: 1px solid var(--sv-border-strong);
-  vertical-align: middle;
-  flex: 0 0 auto;
-}
-.stsv-slot-chip > span { flex: 1 1 0; min-width: 0; }
+/* 格子本身走共用的 .ccc-chip(components/CubeColorChip);这里只把边框换成本页那一档。 */
+.stsv-slot-chip { --chip-edge: var(--sv-border-strong); }
 /* 划掉:xxxc 只画那 1 个未解(留到最后)的槽,一条对角线划过 = 「这格空着」。
    白线 + 深色描边 → 任意底色都看得清;overflow:hidden 把两端裁到格子边框内,看着像角到角。 */
 .stsv-slot-chip.is-struck { position: relative; }

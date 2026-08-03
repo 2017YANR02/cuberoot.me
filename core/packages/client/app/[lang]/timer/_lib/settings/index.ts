@@ -228,11 +228,18 @@ export interface TimerSettings {
    * 把陀螺仪的姿态流一起存进成绩,好在复盘里重放「怎么拧的」——转体在哪儿发生、
    * 握持怎么换。动作流答不了这些。
    *
-   * 默认**关**,而且这不是保守:成绩存在 localStorage 里,姿态流哪怕已经压到
-   * 一把几百字节(死区 + int8 定点 + base64,见 `_lib/bluetooth/gyro_track.ts`),
-   * 也是在花别人的存储配额。开了它就该是用户自己想要回放,不是我们替他决定。
+   * **2026-08-03 改成默认开。** 原来默认关,理由是「一把几百字节也是在花别人的
+   * 存储配额」。那个理由把这条当成了「回放的一个可选装饰」——它不是。姿态流是
+   * 中心核转没转的唯一证据,而那件事决定了两个**每把都在用**的东西:
    *
-   * 打开还会让魔方一直发姿态(有些型号要显式开),费电。
+   *   - 谱子里有没有转体(魔方一手也不报,只能从这儿推);
+   *   - 那一对相对面到底是一个 `M` 还是两手真转(没有它只能靠时间猜,猜错了
+   *     `ρ` 从此就错,后面每一手的名字跟着错 —— 用户看到的就是「PLL 不像公式」)。
+   *
+   * 默认关的代价因此不是「少一个回放功能」,而是**复盘默认是错的**。几百字节
+   * (死区 + int8 定点 + base64,见 `_lib/bluetooth/gyro_track.ts`)换这个,值。
+   *
+   * 开着会让魔方一直发姿态(有些型号要显式开),费电 —— 所以开关留着。
    */
   recordGyro: boolean;
 
@@ -355,7 +362,7 @@ export const DEFAULTS: TimerSettings = {
   autoBackupEvery: 10,
   bluetoothAutoReady: 'scrambled',
   liveCubeView: '3d',
-  recordGyro: false,
+  recordGyro: true,
   keymap: {},
   round: DEFAULT_ROUND_CONFIG,
   inspectionTrigger: 'down',

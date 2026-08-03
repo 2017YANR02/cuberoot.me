@@ -26,6 +26,9 @@ import {
 } from '@/app/[lang]/timer/_lib/reconstruct/recon_text';
 import { computeStageSegments } from '@/app/[lang]/timer/_lib/reconstruct/stage_segments';
 import { computeStepMetrics } from '@/app/[lang]/timer/_lib/reconstruct/step_metrics';
+import { applyOneToken } from '@/app/[lang]/timer/_lib/cube/apply_token';
+import { applyScramble } from '@/app/[lang]/timer/_lib/cube/state';
+import type { CubeFaces } from '@/app/[lang]/timer/_lib/cube/state';
 import { patternFromAlg } from '@/lib/cube3';
 import { crossOnDRotation, detectStage } from '@/lib/stage_detect';
 import { loadAlg } from '@cuberoot/shared/alg';
@@ -55,12 +58,17 @@ function build() {
   return buildReconText({ scramble: SCRAMBLE, moves, totalMs, segs, metrics, slots });
 }
 
-/** 同一把,但带上从姿态流推出来的转体(Sprint 28)。 */
-function buildWithRotations(rotations: Array<{ tMs: number; token: string; angleRad: number }>) {
+/**
+ * 同一把,但带上一条姿态流认下来的核心换格。
+ *
+ * 传的是**核心轨迹**而不是「转体列表」:这条流里既有人做的转体,也有中层带的 ——
+ * 分开它们是 `humanize.ts` 的事,不是调用方的事。空的一条 = 录了姿态、核心一次没转。
+ */
+function buildWithRotations(events: Array<{ tMs: number; token: string; angleRad: number }>) {
   const segs = computeStageSegments(SCRAMBLE, moves, totalMs)!;
   const metrics = computeStepMetrics(SCRAMBLE, moves, totalMs)!;
   const slots = computeF2lSlots(SCRAMBLE, moves, totalMs, segs)!;
-  return buildReconText({ scramble: SCRAMBLE, moves, totalMs, segs, metrics, slots, rotations });
+  return buildReconText({ scramble: SCRAMBLE, moves, totalMs, segs, metrics, slots, core: { events } });
 }
 
 /** 公式库在 API 上。拉不到(离线 / API 挂了)就跳过依赖它的那一条,并吼一声。 */
@@ -201,7 +209,24 @@ describe('转体织进谱子(Sprint 28)', () => {
   it('多个转体各就各位,顺序按时刻', async () => {
     const r = await buildWithRotations([rot(400, 'y'), rot(2400, "x'"), rot(2600, 'z2')]);
     const all = r.lines.flatMap(l => l.moves).filter(m => /^[xyz]/.test(m));
-    expect(all).toEqual(['y', "x'", 'z2']);
+    expect(all).toHaveLength(3);
+    // 第一个原样(此时还没换过视角);后面两个按前面那些换过名 —— 姿态流报的是
+    // 魔方自己那个系里的转动,而谱子写在人的系里。下面那条「照着拧还是复原」是
+    // 这件事的判据,这里只钉住个数和顺序。
+    expect(all[0]).toBe('y');
+  });
+
+  it('带转体的谱子照着拧,魔方还是复原的 —— 这正是以前错的地方', async () => {
+    // 以前转体是插进去就完了:后面每一手仍按转之前写,于是那条谱子照着拧出来是
+    // 一颗拧坏的魔方 —— 而它看上去完全正常,没有任何地方会红。
+    const r = await buildWithRotations([rot(400, 'y'), rot(2400, "x'"), rot(2600, 'z2')]);
+    let st = applyScramble(3, SCRAMBLE);
+    for (const tok of r.lines.flatMap(l => l.moves)) st = applyOneToken(st, tok);
+    // 「复原」要按整体旋转不敏感的说法问:谱子里最后可能剩一个没抵消的转体,而
+    // 转过去的复原态仍然是复原态。
+    for (const face of Object.values(st as CubeFaces)) {
+      expect(new Set(face).size, `面不是单色:${face.join('')}`).toBe(1);
+    }
   });
 
   it('转体**不计步** —— HTM 和 TPS 一个数都不动', async () => {
