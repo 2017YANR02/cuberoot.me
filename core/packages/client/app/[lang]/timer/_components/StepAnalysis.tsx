@@ -44,7 +44,6 @@ import type { MethodWalkResult } from '../_lib/reconstruct/method_walk';
 import { METHOD_ORDER, METHODS } from '../_lib/reconstruct/methods';
 import type { MethodId } from '../_lib/reconstruct/methods';
 import { rotationsByStep, stepTimeBounds } from '../_lib/reconstruct/rotation_detect';
-import type { RotationEvent } from '../_lib/reconstruct/rotation_detect';
 
 export interface StepAnalysisProps {
   method: MethodId;
@@ -72,7 +71,7 @@ export interface StepAnalysisProps {
    * 空 / 不给的时候整行不渲染,而不是渲染一行 `–`:大多数把根本没有这个数,一行占位
    * 的横杠既没信息又占地方(和参考行、ao12 行同一条规矩)。
    */
-  rotations?: readonly RotationEvent[];
+  rotations?: readonly { tMs: number }[];
   /** Hide the four-block proportion bar. Set when the report is already showing
    *  the per-turn timeline above, which says strictly more (it has the pauses).
    *  Two bars stacked would be the same fact twice — the thing this table exists
@@ -136,7 +135,7 @@ function gradeTitle(g: StepGrade): string {
 
 function startLabel(s: F2lStart): string | null {
   switch (s) {
-    case 'paired-top':     return tr({ zh: '顶层配好', en: 'paired on top' });
+    case 'paired-top':     return tr({ zh: '顶层组好', en: 'paired on top' });
     case 'split-top':      return tr({ zh: '顶层拆开', en: 'split on top' });
     case 'corner-slotted': return tr({ zh: '角已入槽', en: 'corner in slot' });
     case 'edge-slotted':   return tr({ zh: '棱已入槽', en: 'edge in slot' });

@@ -39,9 +39,12 @@
  * ## 转体
  *
  * 魔方不报 x/y/z(陀螺仪装在中心核里,转体不改状态字节),所以动作流里没有它们。
- * Sprint 28 起,**录了姿态流的那些把**可以把转体从姿态里推出来
- * (`rotation_detect.ts`),经 `input.rotations` 传进来按时刻插回各行 —— 谱子于是
- * 长得和人写的一样。没录姿态的把照旧没有转体:不为它编造任何东西。
+ * 录了姿态流的把能从姿态里把它们推出来 —— 但**推出来之后不能只是插进去**:转体
+ * 一插,后面每一手都得跟着换名,否则那条谱子照着拧是错的(这正是 Sprint 28 留下
+ * 的 bug)。换名的账本 ρ 在 `humanize.ts` 手里(中层也在改它),所以转体现在也交给
+ * 它,一趟走完 —— 这里只负责把它给的那几个记号按时刻插回对应的行。
+ *
+ * 没录姿态的把照旧一个转体也没有:不为它编造任何东西。
  *
  * ## 成本
  *
@@ -53,12 +56,15 @@
 import { patternFromAlg } from '@/lib/cube3';
 import { buildCommentSuggestions } from '@/lib/popup_suggest';
 
+import { conjugateCoreTrack } from './core_track';
+import type { CoreTrack } from './core_track';
 import { htmMoves } from './htm';
 import { humanizeStream } from './humanize';
+import type { HumanRotation } from './humanize';
 import type { F2lSlotsResult } from './f2l_slots';
+import { facePermFor } from './orient';
 import type { SolveMove, StageSegments } from './stage_segments';
 import { stepTimeBounds } from './rotation_detect';
-import type { RotationEvent } from './rotation_detect';
 import { tokensForRange } from './step_metrics';
 import type { StepMetricsResult } from './step_metrics';
 
@@ -92,6 +98,12 @@ export interface ReconTextResult {
   tps: number | null;
   /** 整段文字,可直接粘进 /recon/submit 的动作框。 */
   text: string;
+  /**
+   * 这把里人做的转体(中层带的核心转动已经减掉了)。谱子里已经写进各行,这里再报
+   * 一份是给分步分析表数「每一步转了几次」用的 —— 两处必须是同一份,不然会出现
+   * 「文字里有那次转体、表里没有」。
+   */
+  rotations: HumanRotation[];
 }
 
 /** 一行要切在哪、时间是多少。纯数据,不碰魔方。 */
@@ -196,14 +208,14 @@ export interface ReconTextInput {
   metrics: StepMetricsResult | null;
   slots: F2lSlotsResult | null;
   /**
-   * 从姿态流里推出来的转体(Sprint 28)。给了就按时刻插进各行的动作里,谱子于是长得
-   * 和人写的一样:`y R U R' U'`。
+   * 这把的核心轨迹(姿态流)。给了它两件事一起变准:中层不再靠时间猜,转体按时刻
+   * 插进各行,谱子于是长得和人写的一样:`y R U R' U'`。
    *
    * 转体**不计步** —— HTM 里它是 0 步,表里的步数格也不含它,所以插进来之后
    * 「序列比步数长」本身就是信息(那一步里有转体 / 有废动作),和点列名看动作那条
    * 规则同一套,见 Sprint 20。
    */
-  rotations?: readonly RotationEvent[];
+  core?: CoreTrack | null;
   /**
    * 同一把在**魔方自己的配色系**里的样子 —— 也就是没有转进「十字朝下」的那一对
    * (`orient.ts` 的 `normalizeSolve` 之前)。不给就当 `scramble`/`moves` 本身就是。
@@ -233,13 +245,16 @@ export interface ReconTextInput {
  * 位置靠**时刻**定,而不是靠下标 —— 转体压根不在动作流里,没有下标可用。一次转体
  * 排在「它之后发生的第一手」前面;比这一行所有动作都晚的排在末尾。
  *
+ * 记号本身已经是人的视角了(`humanize.ts` 换过名,和它旁边那些动作同一个 ρ),
+ * 这里只管摆位置。
+ *
  * `lineMoves` 是 `tokensForRange` 已经按 HTM 合并过的记号,和原始动作流不是一一对应
  * (半转会被并成一条),所以插入位置按**原始**动作的时刻算出下标,再按「这是这一行
  * 的第几手」折算到合并后的序列上 —— 合并只会让位置提前,不会把转体挪到别的行去。
  */
 function weaveRotations(
   lineMoves: string[],
-  rots: readonly RotationEvent[],
+  rots: readonly HumanRotation[],
   moves: SolveMove[],
   from: number,
   to: number,
@@ -268,17 +283,24 @@ function weaveRotations(
 
 export async function buildReconText(input: ReconTextInput): Promise<ReconTextResult> {
   const { scramble, moves, totalMs, segs, metrics, slots } = input;
-  const rotations = input.rotations ?? [];
   const spans = stepSpans(segs, metrics, slots);
   const counted = htmMoves(moves);
-  // 中层还原。魔方按「相对中心核」报手法,所以一个 `S` 到这里是一对相对面 + 后面
-  // 每一手都被换了名 —— 那行谱子于是不像任何公式。只重写**写出来的记号**:计步、
-  // 识别、参考解仍然吃 `counted`(魔方确实转了两下面)。
-  const humanized = humanizeStream(counted, { boundaries: new Set(spans.map(s => s.endIdx)) });
+  // 姿态流是魔方自己配色系里的,而 `moves` 已经被 `orient.ts` 转进「十字朝下」——
+  // 转体的记号得跟着换,不然谱子里的 `x` 和它旁边的动作不是一个系的。
+  const core = input.core
+    ? conjugateCoreTrack(input.core, facePermFor(input.viewRotation ?? ''))
+    : null;
+  // 中层还原 + 转体。魔方按「相对中心核」报手法,所以一个 `S` 到这里是一对相对面 +
+  // 后面每一手都被换了名 —— 那行谱子于是不像任何公式。转体同理,而且它和中层改的是
+  // 同一个 ρ,所以一趟走完。只重写**写出来的记号**:计步、识别、参考解仍然吃
+  // `counted`(魔方确实转了两下面)。
+  const humanized = humanizeStream(counted, {
+    boundaries: new Set(spans.map(s => s.endIdx)),
+    core,
+  });
+  const rotations = humanized.rotations;
   const shownFor = (from: number, to: number): string[] => (
-    humanized.merges > 0
-      ? tokensForRange(moves, humanized.moves, from, to)
-      : tokensForRange(moves, counted, from, to)
+    tokensForRange(moves, humanized.moves, from, to)
   );
 
   // 识别走真颜色那一份(见 `physical`);显示走换过名的 `moves`。两者一一对应,
@@ -371,6 +393,7 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
     seconds,
     tps: seconds > 0 ? turns / seconds : null,
     text: lines.map(formatReconLine).join('\n'),
+    rotations,
   };
 }
 

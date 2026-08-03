@@ -297,11 +297,11 @@ export function stepTimeBounds(
  *
  * 用时刻而不是动作下标分,因为转体**没有动作下标** —— 它压根不在动作流里。
  */
-export function rotationsByStep(
-  events: readonly RotationEvent[],
+export function rotationsByStep<T extends { tMs: number }>(
+  events: readonly T[],
   bounds: readonly number[],
-): RotationEvent[][] {
-  const out: RotationEvent[][] = bounds.map(() => []);
+): T[][] {
+  const out: T[][] = bounds.map(() => []);
   for (const ev of events) {
     let i = bounds.findIndex((b) => ev.tMs <= b);
     if (i < 0) i = bounds.length - 1;      // 最后一步之后(收尾的转体)归最后一步

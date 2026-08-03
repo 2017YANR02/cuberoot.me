@@ -654,8 +654,8 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
         })}>
             <BoolToggle value={s.recordGyro} onChange={(v) => updateSettings({ recordGyro: v })} />
             <span className="hint">{tr({
-              zh: '把魔方的朝向一起存进成绩,复盘里就能重放「怎么拧的」——转体在哪儿发生、握持怎么换。压过之后一把几百字节,但它花的是浏览器本地存储的配额,而且会让魔方一直发姿态、费电,所以默认关',
-              en: 'Stores the cube’s orientation alongside the solve so the report can replay HOW you turned it — where the rotations happened, how the grip changed. A few hundred bytes per solve after compression, but it spends your browser storage and keeps the cube streaming orientation (battery), so it is off by default',
+              zh: '把魔方的朝向一起存进成绩。复盘要用它认转体(魔方一手也不报)和中层(一对相对面到底是一个 M 还是两手真转),关掉的话谱子里没有转体、中层只能靠手速猜。压过之后一把几百字节;代价是魔方要一直发姿态、费电',
+              en: 'Stores the cube’s orientation alongside the solve. The report needs it to name your rotations (the cube reports none) and to tell a real slice move from two opposite face turns — without it the reconstruction has no rotations and has to guess the slices from timing. A few hundred bytes per solve after compression; the cost is that the cube keeps streaming orientation (battery)',
             })}</span>
           </Row>
           <Row label={tr({ zh: '隐藏运行中的时间', en: 'Hide time while running'

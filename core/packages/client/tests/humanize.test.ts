@@ -80,6 +80,71 @@ function stamped(tokens: readonly string[], gap = 200, tight: ReadonlySet<number
   });
 }
 
+/**
+ * 人的公式(**可以带转体**)→ 魔方会报的那条流 + 姿态流会认下来的每一次核心换格。
+ *
+ * `record()` 只走动作那一半;这个走全套,因为转体在动作流里一个字都没有 —— 它只在
+ * 姿态流里。两条规矩:
+ *
+ *   - **中层**:报成一对相对面,核心转 σ,`ρ ← ρ·σ`;
+ *   - **转体**:一手也不报,核心转 σ = ρ⁻¹ h ρ,`ρ ← ρ·σ⁻¹`(方向和中层相反,
+ *     见 `humanize.ts` 的 `advance`)。
+ *
+ * 和重写器互为逆运算,只共用拆分表和 `conjugateToken` 两个事实。
+ */
+function recordWithCore(human: readonly string[], gap = 600): {
+  moves: HtmMove[];
+  core: { events: Array<{ tMs: number; token: string; angleRad: number }> };
+} {
+  const tokens: string[] = [];
+  const tight = new Set<number>();
+  /** 换格发生在「第几个报出来的记号」之前(中层的那次就在它自己那一对里)。 */
+  const turns: Array<{ before: number; inPair: boolean; token: string }> = [];
+  let rho = '';
+
+  for (const h of human) {
+    const inv = facePermFor(rho);
+    if (/^[xyz]/.test(h)) {
+      const sigma = conjugateToken(h, inv);
+      if (!sigma) throw new Error(`cannot reframe ${h}`);
+      turns.push({ before: tokens.length, inPair: false, token: sigma });
+      rho = rho === '' ? invert(sigma) : `${rho} ${invert(sigma)}`;
+      continue;
+    }
+    if (/^[MES]/.test(h)) {
+      const inFrame = conjugateToken(h, inv);
+      if (!inFrame) throw new Error(`cannot reframe ${h}`);
+      const { pair, rotation } = pairForSlice(inFrame);
+      turns.push({ before: tokens.length, inPair: true, token: rotation });
+      tight.add(tokens.length + 1);
+      tokens.push(pair[0], pair[1]);
+      rho = rho === '' ? rotation : `${rho} ${rotation}`;
+      continue;
+    }
+    const tok = conjugateToken(h, inv);
+    if (!tok) throw new Error(`cannot reframe ${h}`);
+    tokens.push(tok);
+  }
+
+  const moves = stamped(tokens, gap, tight);
+  const last = moves.length > 0 ? moves[moves.length - 1].ts : 0;
+  const events = turns.map(t => ({
+    // 中层那次落在它自己那一对里;转体那次落在它后面第一手之前。收尾的转体(后面
+    // 没有手了)排在最后一手之后 —— 拧完把魔方摆正正是这么发生的。
+    tMs: t.before < moves.length
+      ? moves[t.before].ts + (t.inPair ? 5 : -100)
+      : last + 100,
+    token: t.token,
+    angleRad: t.token.endsWith('2') ? Math.PI : Math.PI / 2,
+  }));
+  return { moves, core: { events } };
+}
+
+/** 单个记号取逆。`x2` 自逆。 */
+function invert(token: string): string {
+  return token.endsWith('2') ? token : token.endsWith("'") ? token.slice(0, -1) : `${token}'`;
+}
+
 describe('拆分表', () => {
   const table = sliceSplitTable();
 
@@ -157,6 +222,70 @@ describe('等价性 —— 重写只换写法,不换这把', () => {
       expect(facesEqual(apply(rec), apply(rewritten))).toBe(true);
     });
   }
+});
+
+describe('录了姿态的把:中层不再靠时间猜,转体也写进去', () => {
+  // 用户 2026-08-03 报的那两条,一字不改。报告里当时印出来的是
+  //   `M R L' B2 R' L U M R L' B M M B M'`  和  `R B' R' F R B R' F' …`
+  // —— 前者是中层只合对了一半(ρ 从此就错了),后者是转体压根没被认出来。
+  const Z_PERM = T("M2 U2 M U M2 U M2 U M");
+  const E_PERM = T("x' R U' R' D R U R' D' R U R' D R U' R' D' x");
+
+  it('Z perm(全是中层):原样还原', () => {
+    const { moves, core } = recordWithCore(Z_PERM);
+    const r = humanizeStream(moves, { core });
+    expect(r.moves.map(m => m.m)).toEqual(Z_PERM);
+    expect(r.rotations).toEqual([]);      // 一个转体都没有,核心那几次都是中层带的
+  });
+
+  it('E perm(带转体):转体和它后面的换名一起对', () => {
+    const { moves, core } = recordWithCore(E_PERM);
+    const r = humanizeStream(moves, { core });
+    const written = [...r.moves.map(m => m.m)];
+    // 转体不在 `moves` 里(它不是一手),按时刻插回去才是整条谱子。
+    expect(r.rotations.map(x => x.token)).toEqual(["x'", 'x']);
+    expect(written).toEqual(E_PERM.filter(t => !/^[xyz]/.test(t)));
+  });
+
+  it('照着重写后的谱子拧,和魔方真报的那条流拧出来一样', () => {
+    for (const [name, human] of [['Z perm', Z_PERM], ['E perm', E_PERM]] as const) {
+      const { moves, core } = recordWithCore(human);
+      const r = humanizeStream(moves, { core });
+      // 谱子 = 动作 + 按时刻插进去的转体。等价性要连 ρ_final 一起算。
+      const merged: string[] = [];
+      let ri = 0;
+      for (const m of r.moves) {
+        while (ri < r.rotations.length && r.rotations[ri].tMs <= m.ts) merged.push(r.rotations[ri++].token);
+        merged.push(m.m);
+      }
+      while (ri < r.rotations.length) merged.push(r.rotations[ri++].token);
+      expect(facesEqual(apply(moves.map(m => m.m)), apply([...merged, ...T(r.rotation)])), name).toBe(true);
+    }
+  });
+
+  it('核心没换过格 → 那些相对面就是两手真转,挨得再近也不合', () => {
+    // 同一条流、同一个时间戳,只差「有没有录姿态」。时间判据会合,核心判据不合。
+    const rec = T("F B' U2 R");
+    const tight = new Set([1]);
+    expect(humanizeStream(stamped(rec, 200, tight)).merges).toBe(1);
+    expect(humanizeStream(stamped(rec, 200, tight), { core: { events: [] } }).merges).toBe(0);
+  });
+
+  it('`M2` 报成两对时并成一个,不写成 `M M`', () => {
+    // 编码器按四分之一圈报,一个 M2 常常是 `R L' R L'` 两对。
+    const { moves, core } = recordWithCore(T('M M'));
+    const r = humanizeStream(moves, { core });
+    expect(r.moves.map(m => m.m)).toEqual(['M2']);
+  });
+
+  it('认不出来的转体(`?`)一个字都不写,ρ 也不动 —— 写错比缺一个更糟', () => {
+    const { moves } = recordWithCore(T("R U R'"));
+    const r = humanizeStream(moves, {
+      core: { events: [{ tMs: moves[1].ts - 100, token: '?', angleRad: 1 }] },
+    });
+    expect(r.rotations).toEqual([]);
+    expect(r.moves.map(m => m.m)).toEqual(T("R U R'"));
+  });
 });
 
 describe('不该合的不合', () => {

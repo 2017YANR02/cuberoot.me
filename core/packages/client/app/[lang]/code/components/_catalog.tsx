@@ -42,6 +42,7 @@ import NumberCommitInput from '@/components/NumberCommitInput';
 import CubeOrientationSelect from '@/components/CubeOrientationSelect';
 import TimerFontPicker from '@/components/TimerFontPicker';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
+import CubeColorChip from '@/components/CubeColorChip/CubeColorChip';
 import MembershipBadge from '@/components/MembershipBadge';
 import { Flag } from '@/components/Flag';
 import { ContinentIcon } from '@/components/ContinentIcon';
@@ -386,6 +387,16 @@ function EventSelectorDemo() {
   const [ev, setEv] = useState('333');
   const avail = new Set(['333', '222', '444', '555', '333oh', 'pyram', 'skewb', 'sq1', 'clock', 'minx', '333bf']);
   return <WcaEventSelector availableEvents={avail} onlyAvailable isZh={isZh} selectedEvent={ev} onSelect={setEv} />;
+}
+
+function CubeColorChipDemo() {
+  return (
+    <div className="cg-row">
+      <CubeColorChip colors="GR" />
+      <CubeColorChip colors="OB" />
+      <CubeColorChip colors="W" />
+    </div>
+  );
 }
 
 function RecordBadgeDemo() {
@@ -921,6 +932,15 @@ export const CATALOG: ComponentEntry[] = [
     usage: '<WcaEventSelector availableEvents={set} isZh={isZh} selectedEvent={ev} onSelect={setEv} />',
     Demo: EventSelectorDemo,
     note: { zh: '项目选择器必须绿色 active,只走这个组件,禁 per-page 覆写。', en: 'Event pickers must be green-active — only this component, no per-page overrides.' },
+  },
+  {
+    name: 'CubeColorChip',
+    import: "import CubeColorChip from '@/components/CubeColorChip/CubeColorChip';",
+    category: 'badge',
+    zh: '一两片贴纸的颜色画成小色块。站里用色字母说 F2L 的槽和十字的面(GR / OB / W cross),色块摆在字母旁边,不认得那套写法的人也看得懂。',
+    en: 'One or two stickers as a small colour chip. The site names F2L slots and cross faces by colour letters (GR / OB / W cross) — the chip sits beside them so the notation is not a table you have to memorise.',
+    usage: '<CubeColorChip colors="GR" />',
+    Demo: CubeColorChipDemo,
   },
   {
     name: 'RecordBadge',
