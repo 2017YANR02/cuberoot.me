@@ -1076,6 +1076,89 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 .scramble-src-manual-input:focus { outline: none; border-color: var(--accent); }
 .scramble-src-manual-input::placeholder { color: var(--faint-foreground); }
 
+/* ── 停表后就地摊开的复盘 ───────────────────────────────
+   在文档流里,不是浮层:它把计时区顶上去而不是盖住它,所以读数、打乱、实时魔方
+   照旧在上面,空格照按。
+
+   高度写死成一格(不是 max-height):报告比这格高得多,靠自己滚;而定高才让上面的
+   计时区有一个稳定的剩余空间,以及让绝对定位的统计条知道该往上让多少(见下面的
+   --recap-h)。留 0 时这块整个不存在,所有让位规则一起归零。 */
+.shell-main { --recap-h: 0px; }
+/* 高度按「计时区压不动的那部分」倒推,不是拍一个 44dvh 就完事:读数 128 + 打乱两行
+   148 + 缩小后的魔方 ~110 + 间距 + 顶栏和打乱来源条 ≈ 545px,复盘只能拿剩下的。
+   多给一格就是把读数顶出视口(实测过:surface 被压到 min-content 以下时,居中列直接
+   溢出到打乱来源条上面,读数和「比赛」下拉叠在一起)。 */
+.shell-main:has(> .shell-recap) { --recap-h: clamp(180px, calc(100dvh - 545px), 460px); }
+/* 外壳平时是 `min-height: 100dvh`(可以被内容撑高,溢出的那截由 overflow:hidden
+   吃掉)。复盘展开时必须钉成正好一屏,否则「不足」这个前提不成立,下面的
+   flex-shrink 永远不触发 —— 实测就是整页多出 105px 滚动条,复盘的下半截落在屏外。
+   只在有复盘时钉,不动其它形态。 */
+.timer-shell:has(.shell-recap) { height: 100dvh; }
+.shell-recap {
+  /* 收缩允许:上面的计时区(读数 + 打乱 + 魔方)有它压不动的最小高度,矮屏上该让的
+     是复盘 —— 反正它自己会滚,少一格是少看两行,不是丢内容。 */
+  flex: 0 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: var(--recap-h);
+  border-top: 1px solid var(--shell-divider);
+}
+.shell-recap-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+}
+.shell-recap-title { font-size: 13px; color: var(--muted-foreground); }
+.shell-recap-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 12px;
+  cursor: pointer;
+}
+.shell-recap-btn:hover { background: var(--shell-hover); }
+/* 工具栏形态:左标题右关闭,这个 auto 是有意的两端对齐。 */
+.shell-recap-x {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.shell-recap-x:hover { background: var(--shell-hover); color: var(--foreground); }
+.shell-recap-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 12px 12px;
+}
+/* 报告在宽屏上不铺满整行 —— 一行几十厘米的表格读起来要来回甩头。 */
+.shell-recap-body .rc-report { max-width: 1000px; margin: 0 auto; }
+
+/* 复盘吃掉的那半屏得有人让。让的是魔方图那一格:它是四件东西里唯一按比例缩了还
+   照样成立的(读数是主角,打乱要能读,复盘是刚打开的那件事)。缩不是藏 —— 连着智能
+   魔方时这一格显示的是手里那颗的实时状态,拧完正要对着它看复盘。 */
+.shell-main:has(> .shell-recap) .timing-surface { --timer-cube-h: min(20vw, 13dvh, 110px); }
+/* 同理让位:校准是「拧之前把朝向摆正」的动作,拧完这一刻没人按它。收起复盘就回来。 */
+.shell-main:has(> .shell-recap) .live-cube-calibrate { display: none; }
+
+/* 统计条是相对 .shell-main 绝对定位的左下角浮层,复盘一展开就正好压在它上面。
+   往上让一整格 —— 它是成绩 / 图表面板的唯一入口,不能在拧完那一刻消失。 */
+.shell-main:has(> .shell-recap) .shell-stat-rail { bottom: calc(var(--recap-h) + 10px); }
+
 /* ── Distraction-free fade while running ────────────────── */
 .timer-shell.is-solving .surface-chrome {
   opacity: 0;
@@ -1087,6 +1170,25 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 .timer-shell.is-solving .timing-surface .surface-chrome { opacity: 0; }
 /* Scramble + cube fade (opacity:0) but KEEP their box while running, so the
    centered column's height is constant and the readout never jumps on start. */
+
+/* 例外:连着智能魔方时那颗**实时**魔方,计时中照常显示。
+   淡出这一套是给「静态打乱图 + 打乱文字」设计的 —— 那些讲的是你要拧到哪儿去,
+   拧起来之后确实只剩干扰。实时魔方讲的是你现在拧到哪儿了,它每一手都在变,恰恰
+   只有计时中才有内容(拧完就停在还原态)。把它一起淡掉,等于在唯一有意义的那段
+   时间里关掉它 —— /alg 训练器的实时魔方全程都在,这里对齐。
+   `:has(.timer-live-cube)` 精确挑出「实时」那一种:同一个格子的另一位租客是静态
+   CubePreview(见 SoloView 的 centerCubeSlot),那个照旧淡出。
+   `hide-ui`(用户显式选的「计时中隐藏全部界面」)仍然一票否决。 */
+.timer-shell.is-solving:not(.hide-ui) .timing-surface .timing-surface-cube:has(.timer-live-cube) {
+  opacity: 1;
+  pointer-events: auto;
+}
+/* 留下的是那颗魔方,不是它底下的按钮:校准是拧之前摆正朝向的动作,计时中没人按它,
+   留着只是在专注模式里多一个亮着的控件。 */
+.timer-shell.is-solving .timing-surface-cube .live-cube-calibrate {
+  opacity: 0;
+  pointer-events: none;
+}
 
 /* "Hide all UI while running" (opt-in setting). Goes further than .is-solving:
    that only touches .surface-chrome, which leaves the side panel and the solver

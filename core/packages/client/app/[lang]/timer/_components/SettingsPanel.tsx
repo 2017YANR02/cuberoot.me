@@ -1283,6 +1283,12 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
         })}>
             <BoolToggle value={s.hideAllUiWhileRunning} onChange={(v) => updateSettings({ hideAllUiWhileRunning: v })} />
           </Row>
+          {/* 标签里点名「智能魔方」:这个开关只对录到动作流的成绩生效(判据见
+              _lib/reconstruct/recap.ts),不说清的话手动计时的用户会以为它坏了。 */}
+          <Row label={tr({ zh: '智能魔方拧完直接看复盘', en: 'Reconstruction after each smart-cube solve'
+        })}>
+            <BoolToggle value={s.autoRecap !== false} onChange={(v) => updateSettings({ autoRecap: v })} />
+          </Row>
           <Row label={tr({ zh: '显示排名', en: 'Show ranks'
         })}>
             <BoolToggle value={s.showRankBadge !== false} onChange={(v) => updateSettings({ showRankBadge: v })} />

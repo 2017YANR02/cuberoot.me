@@ -61,6 +61,7 @@ import { formatMs, bestSingle, bestAverageOfN, bestMbldSolve, compareMbld, summa
 import type { EventId, Penalty, Solve } from '../_lib/types';
 import { EVENTS, isBldEvent, toWcaSpelling, fromWcaSpelling } from '../_lib/types';
 import { stageSegmentsFor } from '../_lib/reconstruct/stage_segments';
+import { shouldAutoRecap } from '../_lib/reconstruct/recap';
 import { isNonWcaEvent, prefetchNonWca, nextNonWcaScramble } from '../_lib/scramble/nonwca';
 import {
   loadAll, saveAll, exportJson, importJson, makeSolve,
@@ -116,6 +117,7 @@ import { useGestureWheel } from '@/hooks/useGestureWheel';
 import { histBack, histForward, histPush } from '@/lib/scramble-history';
 import { shouldIgnoreTimerTarget } from '@/lib/timer-ignore-target';
 import { persistItem } from '@/lib/safe-storage';
+import { onIdle } from '@/lib/on-idle';
 import RankBadge from './RankBadge';
 import SessionSwitcher from './SessionSwitcher';
 import { useRankCountry } from '@/app/[lang]/timer/_shared/use-rank-country';
@@ -141,6 +143,10 @@ const ManualEntryModal = dynamic(() => import('../_components/ManualEntryModal')
 const SolverModal = dynamic(() => import('../_components/SolverModal'), { ssr: false });
 const BulkScrambleModal = dynamic(() => import('../_components/BulkScrambleModal'), { ssr: false });
 const DrillModal = dynamic(() => import('../_components/DrillModal'), { ssr: false });
+/** 停表后就地摊开的复盘(见 SolveRecap 头注)。和上面那些弹层一样留在自己的 chunk
+ *  里,但它不是「用户可能会打开的东西」而是「拧完就会出现的东西」—— 所以魔方一连上
+ *  就 onIdle 预取(见 recapPrefetch),真停表那下已经在注册表里。 */
+const SolveRecap = dynamic(() => import('../_components/SolveRecap'), { ssr: false });
 /** 假魔方调试面板只在 dev 存在;判断提到模块级,好让打包器把整个分支和它的
  *  chunk 一起消掉(见 DevFakeCubePanel.tsx)。 */
 const DEV_PANEL = process.env.NODE_ENV !== 'production';
@@ -817,9 +823,12 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     }
 
     setByEvent(prev => ({ ...prev, [ev]: [...(prev[ev] ?? []), solve] }));
+    // 拧完了复盘就在这一屏,不用去成绩里找那条刚拧的。只对录到动作流的成绩成立
+    // (判据见 shouldAutoRecap),下一把一开始就收起。
+    setRecapId(shouldAutoRecap(solve, { autoRecap: settings.autoRecap }) ? solve.id : null);
     if (res.autoPenalty === 'DNF') petReact('error');
     nextScramble();
-  }, [nextScramble, settings.multiStage, settings.bldMemo, settings.precision]);
+  }, [nextScramble, settings.multiStage, settings.bldMemo, settings.precision, settings.autoRecap]);
 
   const timer = useTimer(recordSolve);
 
@@ -1103,6 +1112,22 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   }, [anchorFacelets]);
   // A disconnect must let the next connection ask again.
   useEffect(() => { if (!cubeConnected) anchorAskedRef.current = false; }, [cubeConnected]);
+
+  // 复盘那一屏的整条懒加载链,魔方一连上就预取。连了智能魔方的人下一步几乎必然是
+  // 拧一把,而拧完那一下 SolveRecap 就要渲染 —— 到那时才开始下载 200 KB 的报告
+  // (它自己还要再串三维魔方和 OLL/PLL 表),就是眼睁睁等一秒。这里把三级串行摊平成
+  // 一次空闲期的并行下载,和成绩详情那条路走的是同一份清单(见 SolveModal)。
+  useEffect(() => {
+    if (!cubeConnected) return;
+    return onIdle(() => {
+      void import('../_components/SolveRecap');
+      void import('../_components/ReconstructReport');
+      void import('@/components/sim-embed/SimCubeView');
+      void import('@/components/sim-embed/mountSimWorld');
+      void import('@/lib/oll_lookup').then((m) => { m.prewarmOllTable(); });
+      void import('@/lib/pll_lookup').then((m) => { m.prewarmPllTable(); });
+    }, { timeout: 1000 });
+  }, [cubeConnected]);
 
   // ── The cube picture under the digits ───────────────────────────
   // One box, two tenants. Without a smart cube it shows the scramble — the
@@ -1530,6 +1555,20 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   // ── Modals ──────────────────────────────────────────────────────
   const [modalSolve, setModalSolve] = useState<{ s: Solve; idx: number } | null>(null);
   const [reconstructSolve, setReconstructSolve] = useState<Solve | null>(null);
+
+  // ── 停表后就地摊开的复盘 ────────────────────────────────────────
+  // 存 id 不存 solve:改惩罚、加注释、删除都在别处写库,存快照就得跟着同步,而这块
+  // 显示的正是那些数字。null = 不显示(还没拧完 / 关了开关 / 用户收起了 / 开下一把)。
+  const [recapId, setRecapId] = useState<string | null>(null);
+  const recapSolve = useMemo(
+    () => (recapId ? solves.find(s => s.id === recapId) ?? null : null),
+    [recapId, solves],
+  );
+  // 开下一把就收起 —— 观察、按住、计时中都不该有半屏复盘在下面。停表停在原地
+  // (那正是它该在的时候),换项目/换会话由上面 find 不到自然落空。
+  useEffect(() => {
+    if (timer.phase !== 'stopped') setRecapId(null);
+  }, [timer.phase]);
 
   // Gesture: open the last solve's detail (to add a note / comment).
   const commentLast = useCallback(() => {
@@ -2504,6 +2543,24 @@ export default function SoloView({ playersControl }: SoloViewProps) {
             </div>
           )}
         </TimingSurface>
+
+        {/* 刚拧完那把的复盘 —— 在文档流里,从下面把计时区顶上去,不遮挡也不用点。
+            开下一把即消失(见上面的 phase 副作用)。 */}
+        {recapSolve && (
+          <SolveRecap
+            key={recapSolve.id}
+            solve={recapSolve}
+            isZh={isZh}
+            history={byEvent[recapSolve.event] ?? []}
+            onFull={() => {
+              const idx = solves.findIndex(s => s.id === recapSolve.id);
+              setModalSolve({ s: recapSolve, idx: idx >= 0 ? idx : solves.length - 1 });
+            }}
+            onDismiss={() => setRecapId(null)}
+            onUseScramble={useScramble}
+            onReconFeedback={(ok) => updateSolve(recapSolve.id, { reconOk: ok })}
+          />
+        )}
 
         {/* Goal pill + trainer subset + solver hints (chrome, fade while solving) */}
         <div className="shell-undersurface surface-chrome">
