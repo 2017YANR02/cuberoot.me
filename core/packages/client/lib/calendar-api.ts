@@ -7,7 +7,7 @@
 import { apiUrl, publicApiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 import type {
-  CalEvent, CalendarMeta, EditScope, ShareDetail, ShareSettings,
+  CalEvent, CalendarImport, CalendarMeta, EditScope, ShareDetail, ShareSettings,
 } from '@cuberoot/shared/calendar';
 
 export interface BootstrapPayload {
@@ -55,7 +55,9 @@ export async function fetchEvents(from: number, to: number): Promise<EventsPaylo
   return handleApi<EventsPayload>(r);
 }
 
-export async function createCalendar(input: { name: string; color: string; tz: string }): Promise<CalendarMeta> {
+export async function createCalendar(
+  input: { name: string; color: string; tz: string; importId?: number },
+): Promise<CalendarMeta> {
   const r = await fetch(apiUrl('/v1/calendar/calendars'), {
     method: 'POST', headers: authHeaders(), body: JSON.stringify(input),
   });
@@ -101,12 +103,35 @@ export async function deleteEvent(id: number, scope: EditScope, occurrenceMs?: n
 }
 
 export async function importEvents(
-  calendarId: number, events: Omit<EventDraft, 'calendarId'>[],
+  calendarId: number, events: Omit<EventDraft, 'calendarId'>[], importId?: number,
 ): Promise<{ added: number; failed: number }> {
   const r = await fetch(apiUrl('/v1/calendar/events/bulk'), {
-    method: 'POST', headers: authHeaders(), body: JSON.stringify({ calendarId, events }),
+    method: 'POST', headers: authHeaders(), body: JSON.stringify({ calendarId, importId, events }),
   });
   return handleApi<{ added: number; failed: number }>(r);
+}
+
+/** 开一个导入批次 —— 之后的建日历 / 塞事件都挂在它下面,用来整批撤销。 */
+export async function startImport(source: string): Promise<number> {
+  const r = await fetch(apiUrl('/v1/calendar/imports'), {
+    method: 'POST', headers: authHeaders(), body: JSON.stringify({ source }),
+  });
+  return (await handleApi<{ id: number }>(r)).id;
+}
+
+export async function listImports(): Promise<CalendarImport[]> {
+  const r = await fetch(apiUrl('/v1/calendar/imports'), {
+    headers: authHeaders(false), cache: 'no-store',
+  });
+  return (await handleApi<{ imports: CalendarImport[] }>(r)).imports;
+}
+
+/** 撤销:删掉那次导入进来的全部事件,以及它新建且此刻仍空着的日历。 */
+export async function undoImport(id: number): Promise<{ removedEvents: number; removedCalendars: number }> {
+  const r = await fetch(apiUrl(`/v1/calendar/imports/${id}`), {
+    method: 'DELETE', headers: authHeaders(false),
+  });
+  return handleApi<{ removedEvents: number; removedCalendars: number }>(r);
 }
 
 export async function rsvp(id: number, status: 'accepted' | 'declined'): Promise<void> {

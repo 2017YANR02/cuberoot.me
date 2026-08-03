@@ -16,7 +16,7 @@ import {
   parseIcs, icsCalendarName, ICS_IMPORT_BATCH, CALENDAR_COLORS,
   type CalendarMeta, type ParsedIcsEvent,
 } from '@cuberoot/shared/calendar';
-import { createCalendar, importEvents } from '@/lib/calendar-api';
+import { createCalendar, importEvents, startImport } from '@/lib/calendar-api';
 
 /** 一份待导入的日历:一个 .ics 文件的内容。 */
 export interface IcsSource {
@@ -36,6 +36,8 @@ export interface ImportResult {
   failed: number;
   /** 落进了哪几个日历(按名字) */
   calendars: string[];
+  /** 这次导入的批次 id,用来整批撤销;一条都没进就没有 */
+  importId: number | null;
 }
 
 /** 429 之后的退避:后端 cal-bulk 是 60 秒滑窗,等一小段再试就过去了。 */
@@ -79,7 +81,7 @@ export async function readIcsSources(file: File, fallbackTz: string): Promise<Ic
  * 建不出来(比如到了日历数量上限)就退回主日历,总比整批导入失败强。
  */
 async function resolveCalendar(
-  name: string, existing: CalendarMeta[], fallbackId: number, tz: string,
+  name: string, existing: CalendarMeta[], fallbackId: number, tz: string, importId: number,
 ): Promise<{ id: number; name: string; created: CalendarMeta | null }> {
   const clean = name.trim().slice(0, 60);
   if (!clean) return { id: fallbackId, name: '', created: null };
@@ -88,7 +90,8 @@ async function resolveCalendar(
   try {
     // 颜色按已有日历数量轮着给,免得新建的几个全撞成同一种。
     const color = CALENDAR_COLORS[existing.length % CALENDAR_COLORS.length];
-    const made = await createCalendar({ name: clean, color, tz });
+    // importId 让撤销时知道这列是这次导入建的 —— 撤销时它若已空就一并删掉。
+    const made = await createCalendar({ name: clean, color, tz, importId });
     return { id: made.id, name: made.name, created: made };
   } catch {
     return { id: fallbackId, name: '', created: null };
@@ -97,7 +100,7 @@ async function resolveCalendar(
 
 /** 送一批,撞限流就退避重试(导入是一次性动作,等几秒也比丢一半强)。 */
 async function sendBatch(
-  calendarId: number, batch: ParsedIcsEvent[],
+  calendarId: number, batch: ParsedIcsEvent[], importId: number,
 ): Promise<{ added: number; failed: number }> {
   const payload = batch.map((p) => ({
     title: p.title, description: p.description, location: p.location,
@@ -106,7 +109,7 @@ async function sendBatch(
   }));
   for (let attempt = 0; ; attempt++) {
     try {
-      return await importEvents(calendarId, payload);
+      return await importEvents(calendarId, payload, importId);
     } catch (e) {
       if (!isRateLimit(e) || attempt >= MAX_RETRY) throw e;
       await sleep(RETRY_WAIT_MS);
@@ -128,7 +131,10 @@ export async function importCalendarFile(opts: {
 }): Promise<ImportResult> {
   const sources = (await readIcsSources(opts.file, opts.tz)).filter((s) => s.events.length > 0);
   const total = sources.reduce((n, s) => n + s.events.length, 0);
-  if (total === 0) return { added: 0, failed: 0, calendars: [] };
+  if (total === 0) return { added: 0, failed: 0, calendars: [], importId: null };
+
+  // 批次先开:后面建的日历、塞的事件都挂在它下面,一次「撤销」就能全收回。
+  const importId = await startImport(opts.file.name);
 
   const known = [...opts.calendars];
   const landed = new Set<string>();
@@ -140,13 +146,13 @@ export async function importCalendarFile(opts: {
   for (const src of sources) {
     // 单份 .ics 且名字撞不上已有日历时也照建 —— 用户导进来的是「另一个日历」,
     // 混进主日历就分不开了。
-    const target = await resolveCalendar(src.name, known, opts.defaultCalendarId, opts.tz);
+    const target = await resolveCalendar(src.name, known, opts.defaultCalendarId, opts.tz, importId);
     if (target.created) known.push(target.created);
     if (target.name) landed.add(target.name);
 
     for (let i = 0; i < src.events.length; i += ICS_IMPORT_BATCH) {
       const batch = src.events.slice(i, i + ICS_IMPORT_BATCH);
-      const r = await sendBatch(target.id, batch);
+      const r = await sendBatch(target.id, batch, importId);
       added += r.added;
       failed += r.failed;
       done += batch.length;
@@ -154,5 +160,5 @@ export async function importCalendarFile(opts: {
     }
   }
 
-  return { added, failed, calendars: [...landed] };
+  return { added, failed, calendars: [...landed], importId };
 }

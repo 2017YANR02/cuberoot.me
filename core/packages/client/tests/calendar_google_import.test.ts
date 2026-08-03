@@ -14,12 +14,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { zipSync, strToU8 } from 'fflate';
 import { parseIcs, icsCalendarName, ICS_IMPORT_BATCH, type CalendarMeta } from '@cuberoot/shared/calendar';
 import { readIcsSources, importCalendarFile } from '@/app/[lang]/calendar/_lib/import';
-import { createCalendar, importEvents } from '@/lib/calendar-api';
+import { createCalendar, importEvents, startImport } from '@/lib/calendar-api';
 
-// 编排那一层(建日历 / 切批 / 限流重试)只能打桩验:真跑要本地 API + PG。
+// 编排那一层(建日历 / 切批 / 限流重试 / 挂批次)只能打桩验:真跑要本地 API + PG。
 vi.mock('@/lib/calendar-api', () => ({
   createCalendar: vi.fn(),
   importEvents: vi.fn(),
+  startImport: vi.fn(),
 }));
 import { expandOccurrences } from '@cuberoot/shared/recur';
 import { wallToUtc } from '@cuberoot/shared/tz';
@@ -236,6 +237,8 @@ describe('Google 导出的 .zip', () => {
   describe('落库编排', () => {
     const created = vi.mocked(createCalendar);
     const sent = vi.mocked(importEvents);
+    const opened = vi.mocked(startImport);
+    const BATCH_ID = 77;
 
     const cal = (id: number, name: string): CalendarMeta => ({
       id, name, color: 'peacock', tz: SH, isDefault: id === 1, sortOrder: id,
@@ -244,8 +247,30 @@ describe('Google 导出的 .zip', () => {
     beforeEach(() => {
       vi.clearAllMocks();
       let nextId = 100;
+      opened.mockResolvedValue(BATCH_ID);
       created.mockImplementation(async (input) => cal(nextId++, input.name));
       sent.mockImplementation(async (_id, events) => ({ added: events.length, failed: 0 }));
+    });
+
+    it('先开批次,建的日历和塞的事件都挂在它下面', async () => {
+      const f = zipFile({ 'a.ics': oneEvent('工作', '周会') });
+      const r = await importCalendarFile({
+        file: f, tz: SH, defaultCalendarId: 1, calendars: [cal(1, '我的日历')],
+      });
+      expect(opened).toHaveBeenCalledWith('google-calendar.zip');
+      // 少挂一处,撤销就漏一处:新建的日历会变成删不掉的空壳,事件会留在库里。
+      expect(created.mock.calls[0][0].importId).toBe(BATCH_ID);
+      expect(sent.mock.calls[0][2]).toBe(BATCH_ID);
+      expect(r.importId).toBe(BATCH_ID);
+    });
+
+    it('一条都没读出来就不开批次(不留空记录)', async () => {
+      const f = new File(['BEGIN:VCALENDAR\r\nEND:VCALENDAR'], 'empty.ics', { type: 'text/calendar' });
+      const r = await importCalendarFile({
+        file: f, tz: SH, defaultCalendarId: 1, calendars: [cal(1, '我的日历')],
+      });
+      expect(opened).not.toHaveBeenCalled();
+      expect(r).toEqual({ added: 0, failed: 0, calendars: [], importId: null });
     });
 
     /** 造一份含 n 条事件的 .ics。 */
