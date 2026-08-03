@@ -7,6 +7,10 @@
 import type { Level, Question, QuizCat } from '../_data/types';
 import { allQuestions, BANK } from '../_data';
 
+// 归一化与判卷的真身在 @cuberoot/shared/quiz —— 服务端校验社区题时要用同一套规则
+// (「参考答案自己判不对」这条红线两边都得认)。这里原样转出,老的 import 路径不变。
+export { normalizeAnswer, gradeOpen } from '@cuberoot/shared/quiz';
+
 /** 混合模式(不选分类)一局出多少题。 */
 export const MIXED_ROUND_SIZE = 20;
 
@@ -31,9 +35,18 @@ export function shuffle<T>(items: readonly T[], rng: Rng = Math.random): T[] {
 /**
  * 出一局的题。cat 为 null = 混合模式,从该难度档的全部题库里随机抽
  * MIXED_ROUND_SIZE 道;指定分类则该分类全部题目上场(顺序打乱)。
+ *
+ * extra = 社区题(用户出的,运行时从 API 拉来)。与内置题同池混洗、一视同仁 ——
+ * 出题人选的分类和难度就是它的分类和难度,故这里只按 cat 过滤,不额外分组。
  */
-export function buildDeck(level: Level, cat: QuizCat | null, rng: Rng = Math.random): DeckItem[] {
-  const pool = cat ? BANK[level][cat] : allQuestions(level);
+export function buildDeck(
+  level: Level,
+  cat: QuizCat | null,
+  rng: Rng = Math.random,
+  extra: readonly Question[] = [],
+): DeckItem[] {
+  const community = cat ? extra.filter((q) => q.cat === cat) : extra;
+  const pool = [...(cat ? BANK[level][cat] : allQuestions(level)), ...community];
   const picked = cat ? shuffle(pool, rng) : shuffle(pool, rng).slice(0, MIXED_ROUND_SIZE);
   return picked.map((q) => ({
     q,
@@ -47,31 +60,6 @@ export function rebuildDeck(questions: readonly Question[], rng: Rng = Math.rand
     q,
     order: q.type === 'choice' ? shuffle(q.options.map((_, i) => i), rng) : [],
   }));
-}
-
-/**
- * 判卷用的归一化:大小写、全角/半角、空白、标点全部抹掉,只留下「字」。
- * 「Ernő Rubik!」「erno rubik」「鲁比克(Rubik)」归一化后都能命中同一批关键词。
- */
-export function normalizeAnswer(raw: string): string {
-  return raw
-    .normalize('NFKC')
-    .toLowerCase()
-    // 常见分隔与标点(中英文都算),连空白一起去掉
-    .replace(/[\s.,;:!?'"`~^*_\-—–/\\|()[\]{}<>·、,。;:!?「」『』()《》【】]/gu, '');
-}
-
-/**
- * open 题判对:作答里包含任意一个 accept 关键词就算对。宁松不紧 —— 判错了
- * 用户还能在结果里手动改判。
- */
-export function gradeOpen(input: string, accept: readonly string[]): boolean {
-  const said = normalizeAnswer(input);
-  if (!said) return false;
-  return accept.some((k) => {
-    const key = normalizeAnswer(k);
-    return key.length > 0 && said.includes(key);
-  });
 }
 
 /** 判 choice 题:传入的是显示位置,换算回原始下标再比。 */

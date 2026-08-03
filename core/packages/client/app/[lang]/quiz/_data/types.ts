@@ -25,13 +25,30 @@ export type QuizCat =
   | 'math'
   | 'gear';
 
+/**
+ * 社区题的附加信息(内置题没有这一段)。
+ * 社区题由登录用户出,直接上线,可被举报 —— 见 _lib/community.ts 与 server/routes/quiz.ts。
+ */
+export interface Contributed {
+  /** quiz_questions.id。举报 / 编辑 / 删除都用它。 */
+  dbId: number;
+  authorName: string;
+  /**
+   * 作者只写了这一种语言,另一侧是原文回落 —— 答题页据此标注「仅中文 / English only」。
+   * 双语齐全(或管理员补译过)则为 null。
+   */
+  onlyLang: 'zh' | 'en' | null;
+}
+
 interface QuestionBase {
-  /** 全局唯一,分类前缀 + 序号(如 hist-01);URL / localStorage 里都用它,别改已有的。 */
+  /** 全局唯一,分类前缀 + 序号(如 hist-01);社区题是 `c-<dbId>`。URL / localStorage 里都用它,别改已有的。 */
   id: string;
   cat: QuizCat;
   q: Msg;
   /** 答完显示的解析。事实类题目尽量都写,写不出可靠出处就别编。 */
   why?: Msg;
+  /** 有这一段就是社区题;内置题一律没有。 */
+  by?: Contributed;
 }
 
 export interface ChoiceQuestion extends QuestionBase {

@@ -51,6 +51,7 @@ import { notificationRoutes } from './routes/notifications.js';
 import { trainerRoomsRoutes } from './routes/trainer_rooms.js';
 import { battleRoomsRoutes } from './routes/battle_rooms.js';
 import { wechatJssdkRoutes } from './routes/wechat_jssdk.js';
+import { quizRoutes } from './routes/quiz.js';
 import { ensureDaemon as ensureCubeoptDaemon, isEnabled as cubeoptEnabled } from './cubeopt/daemon.js';
 import { startWcaPastResultsMonitor } from './monitors/wca_past_results.js';
 import { startWatchedForeignRegMonitor } from './monitors/watched_foreign_reg.js';
@@ -155,6 +156,7 @@ app.route('/v1', notificationRoutes);
 app.route('/v1', trainerRoomsRoutes);
 app.route('/v1', battleRoomsRoutes);
 app.route('/v1', wechatJssdkRoutes);
+app.route('/v1', quizRoutes);
 
 // Kick off nemesizer dataset load asynchronously — the worker would otherwise
 // block the listener from coming up. Routes return 503 until ready (~5s).
