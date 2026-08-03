@@ -191,6 +191,12 @@ export const CI_GUARDS_DRIFT: CiGuard[] = [
     en: { title: 'Post-solve reconstruction + the live cube while timing', desc: 'After a smart-cube solve the reconstruction opens right on the timer page (gated by shouldAutoRecap: turn-stream solves only, dismissed when the next solve starts), still lazily loaded with the whole chain prefetched as soon as a cube connects. The same file pins that the live cube is NOT faded out by distraction-free mode while timing (the explicit "hide all UI" setting still wins), and that the panel can never push the timing area out of the viewport.' },
   },
   {
+    id: 'recon-report-layout',
+    test: 'recon_report_layout.test.ts',
+    zh: { title: '复盘报告的顺序 + 打乱只出现一次', desc: '报告先给回放和按步谱子(默认展开),质量分 / 分步分析表 / 四个总量整块排在后面 —— 不知道自己拧了什么之前,一张 5×7 的表读不出东西。打乱是谱子的第一行且用视角归一化后那条(和复制导出的逐字相同);智能魔方那把不再另摆一遍打乱和打乱图,手动计时的成绩照旧两样都有。' },
+    en: { title: 'Reconstruction report order + the scramble appears once', desc: 'The report leads with the replay and the per-step move text (expanded by default); the quality score, step table and totals come after as one block — a 5×7 grid reads as nothing until you know what you turned. The scramble is the first line of that move text, in the normalized viewing frame (byte-identical to what the copy button exports); the smart-cube solve page no longer repeats the scramble or draws the scramble picture, while manually-timed solves keep both.' },
+  },
+  {
     id: 'schema-api-drift',
     test: 'code-schema-api-drift.test.ts',
     zh: { title: '/code/schema + /code/api 快照漂移', desc: '/code/schema 的迁移台账须列全 packages/server/migrations 下每个文件;/code/api 的路由清单须等于 server/src/index.ts 里 app.route(‘/v1’, …) 实际挂载的路由。各自漏一条都红。' },

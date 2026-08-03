@@ -755,6 +755,21 @@
 .rc-action--ghost:disabled { opacity: 0.5; cursor: default; }
 .rc-action--ghost:disabled:hover { background: var(--shell-chip); }
 
+/* 打乱兜底那一行(见 ReconstructReport:只在没有文字复盘时出现,有的话打乱是
+   谱子的第一行)。一行摆完,标签在左。 */
+.rc-scramble {
+  display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px;
+  margin: 0 0 14px;
+}
+.rc-scramble-label {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+  color: var(--muted-foreground);
+}
+.rc-scramble-text {
+  font-family: var(--font-mono); font-size: 13px; line-height: 1.7;
+  color: var(--foreground); word-break: break-word;
+}
+
 /* 盲拧那两块提示:一句话 + 一张两列表。信息量小,不值一个卡片框,只用弱背景托底。 */
 .reconstruct-auto-memo-hint,
 .reconstruct-bld-memo {
@@ -912,6 +927,8 @@ button.stl-track:focus-visible { outline: 2px solid var(--ring); outline-offset:
 .sml-copy:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
 
 .sml-group + .sml-group { margin-top: 12px; }
+/* 打乱是**起点**,不是这把的一步:动作压一档色,和下面真正拧的那些分开。 */
+.sml-scramble .sml-moves { color: var(--muted-foreground); }
 .sml-group-head {
   display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap;
   margin: 0 0 4px; font-size: 11px; font-weight: 600;
