@@ -109,6 +109,40 @@ export function rotateState(c: CubieCube, r: number): CubieCube {
   return { cp, co, ep, eo };
 }
 
+/**
+ * The M-plane mirror (L↔R), as the same kind of relabelling — the other half of the 48-element
+ * symmetry group the site's "essentially different" counts are quoted in (see
+ * app/[lang]/scramble/hardest, whose 438 states are 23 representatives × that group).
+ *
+ * A reflection is not a cube move, but it is still just a face permutation, so `derive` builds its
+ * piece maps exactly as it does a rotation's. One difference: a reflection reverses the clockwise
+ * sense corner twists are counted in, so the corner term is negated. Edges have two stickers and
+ * no handedness, so theirs is the plain relabel.
+ *
+ * tests/scramble_exact_cases.test.ts pins this against the site's own single source for mirroring
+ * — `mirrorFamily` on the move sequence — over random scrambles, pieces and orientations both.
+ */
+const MIRROR: Rotation = derive([0, 4, 2, 3, 1, 5]); // U→U R→L F→F D→D L→R B→B
+
+/** The state seen in an M-plane mirror. */
+export function mirrorState(c: CubieCube): CubieCube {
+  const ep = new Array<number>(12), eo = new Array<number>(12);
+  const cp = new Array<number>(8), co = new Array<number>(8);
+  for (let i = 0; i < 12; i++) {
+    const piece = c.ep[i];
+    const slot = MIRROR.eMap[i];
+    ep[slot] = MIRROR.eMap[piece];
+    eo[slot] = (c.eo[i] + MIRROR.eDelta[i] + MIRROR.eDelta[piece]) & 1;
+  }
+  for (let i = 0; i < 8; i++) {
+    const piece = c.cp[i];
+    const slot = MIRROR.cMap[i];
+    cp[slot] = MIRROR.cMap[piece];
+    co[slot] = ((-c.co[i] + MIRROR.cDelta[i] - MIRROR.cDelta[piece]) % 3 + 3) % 3;
+  }
+  return { cp, co, ep, eo };
+}
+
 /** Index of the rotation undoing `r`. */
 export const inverseRotation = (r: number): number => {
   const pi = ROTATIONS[r].face;
