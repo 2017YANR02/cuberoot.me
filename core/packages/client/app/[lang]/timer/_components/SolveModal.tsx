@@ -145,7 +145,7 @@ export default function SolveModal({
   const [comment, setComment] = useState(solve.comment ?? '');
   const [editing, setEditing] = useState(false);
   const titleId = useId();
-  const firstButtonRef = useRef<HTMLButtonElement | null>(null);
+  const firstControlRef = useRef<HTMLSelectElement | null>(null);
   const isMobile = useIsMobile(480);
 
   useEffect(() => {
@@ -160,9 +160,9 @@ export default function SolveModal({
   }, [editing, onClose]);
 
   // preventScroll: the report below can be several screens tall, and focusing a
-  // button that happens to sit under it would scroll past everything.
+  // control that happens to sit under it would scroll past everything.
   useEffect(() => {
-    firstButtonRef.current?.focus({ preventScroll: true });
+    firstControlRef.current?.focus({ preventScroll: true });
   }, []);
 
   // 复盘报告就在这一屏上(2026-08-02 起不再是「查看复盘」那一下),所以它自己的
@@ -197,35 +197,32 @@ export default function SolveModal({
 
   const dt = new Date(solve.ts);
 
-  const penaltyButtons = (
-    <>
-      <button
-        ref={firstButtonRef}
-        className={solve.penalty === 'ok' ? 'modal-action-btn primary' : 'modal-action-btn'}
-        onClick={() => onChangePenalty('ok')}
+  /**
+   * 罚时。四个并排的按钮换成一个下拉(2026-08-03 用户提的)。
+   *
+   * 它们是四选一、彼此互斥、任何时候只有一个是当前值 —— 摊成一排等宽按钮,等于
+   * 把「现在是哪个」和「能改成哪些」画成同样的分量;而打开一条成绩九成是在读它,
+   * 不是在改它。收成下拉之后,闭合态那一格直接就是答案。全站切换器默认下拉。
+   */
+  const penaltyControl = (
+    <label className="solve-penalty">
+      <span className="solve-penalty-label">{tr({ zh: '罚时', en: 'Penalty' })}</span>
+      <select
+        ref={firstControlRef}
+        className="solve-penalty-select"
+        value={solve.penalty}
+        onChange={(e) => onChangePenalty(e.target.value as Penalty)}
+        title={tr({
+          zh: 'DNS = 未开始,和 DNF 一样计入平均',
+          en: 'DNS = did not start — scored like a DNF in every average',
+        })}
       >
-        OK
-      </button>
-      <button
-        className={solve.penalty === '+2' ? 'modal-action-btn primary' : 'modal-action-btn'}
-        onClick={() => onChangePenalty('+2')}
-      >
-        +2
-      </button>
-      <button
-        className={solve.penalty === 'DNF' ? 'modal-action-btn primary' : 'modal-action-btn'}
-        onClick={() => onChangePenalty('DNF')}
-      >
-        DNF
-      </button>
-      <button
-        className={solve.penalty === 'DNS' ? 'modal-action-btn primary' : 'modal-action-btn'}
-        onClick={() => onChangePenalty('DNS')}
-        title={tr({ zh: '未开始（DNS）— 与 DNF 同样计入平均', en: 'Did Not Start — scored like a DNF in every average' })}
-      >
-        DNS
-      </button>
-    </>
+        <option value="ok">{tr({ zh: '无', en: 'None' })}</option>
+        <option value="+2">+2</option>
+        <option value="DNF">DNF</option>
+        <option value="DNS">DNS</option>
+      </select>
+    </label>
   );
 
   const scrambleSection = (
@@ -323,7 +320,7 @@ export default function SolveModal({
             <div className="solve-full-inner">
               <h2 id={titleId}>#{index + 1}</h2>
               <span className="solve-full-when">{dt.toLocaleString()}</span>
-              <div className="modal-actions solve-full-penalties">{penaltyButtons}</div>
+              {penaltyControl}
               <button
                 type="button"
                 className="solver-modal-x solve-full-x"
@@ -394,13 +391,15 @@ export default function SolveModal({
           <div>{tr({ zh: '原始时间', en: 'Raw time' })}: {formatEventMs(solve.event, solve.timeMs)}</div>
           <div>{tr({ zh: '日期', en: 'Date' })}: {dt.toLocaleString()}</div>
         </div>
+        {/* 罚时是「关于这条成绩」的一个值,和底下那排「删除 / 关闭」不是一类事,
+            所以跟着上面的读数走,不再混在动作按钮里。 */}
+        <div className="modal-section">{penaltyControl}</div>
         {scrambleSection}
         {cubeRow}
         {splitSections}
         {commentSection}
         {moveSection}
         <div className={`modal-actions${isMobile ? ' solve-actions-stacked' : ''}`} style={actionsStyle}>
-          {penaltyButtons}
           <button className="danger modal-action-btn" onClick={onDelete}>
             {tr({ zh: '删除', en: 'Delete' })}
           </button>
