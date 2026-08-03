@@ -176,7 +176,10 @@ export function sampleBlockCoord(
   let total = 0;
   for (let d = lo; d <= top; d++) total += hist[d];
   if (!total) return null;
-  let r = (rng() * total) | 0;
+  // An rng that can return exactly 1 would land r on `total` and fall out of the loop — and for an
+  // `exactLayers` stage a null draw is read as PROOF the difficulty does not exist, which the UI
+  // then latches. Clamp instead: a one-in-2^32 bias beats a permanent false notice.
+  let r = Math.min((rng() * total) | 0, total - 1);
   for (let d = lo; d <= top; d++) {
     if (r < hist[d]) return { coord: layer[start[d] + r], depth: d };
     r -= hist[d];

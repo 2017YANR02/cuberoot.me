@@ -20,7 +20,7 @@ import {
   f2lSlots, slotRank, type FaceIdx,
 } from './model';
 import {
-  EOCROSS_MAX_DEPTH, defaultEoAxis, eoCrossDistCapped, eoFrameData, sampleEoCrossState,
+  EOCROSS_MAX_DEPTH, eoCrossDistCapped, eoFrameData, sampleEoCrossState,
   type EoAxis, type EoCoord, type EoFrame, type EoFrameData,
 } from './eo';
 import { crossDist, decodeCross, encodeCross } from './dist';
@@ -403,9 +403,17 @@ function pinsOfXCoord(d: XLike, coord: XCoord): [Pin[], Pin[]] {
 
 // ── stage: EOCross ───────────────────────────────────────────────────────────────────────────
 
-/** ZZ convention: edges oriented against the axis perpendicular to the cross, F/B for a D cross. */
+/**
+ * A cross colour admits BOTH axes perpendicular to it, and the site takes the better of the two —
+ * `EOCrossSolver::get_stats` measures each colour twice (the view, and the view after a y) and
+ * folds the pair with a min. Pinning ZZ's own choice, `(face + 2) % 3`, made "EOCross, yellow"
+ * mean something the rest of the site does not mean by it, and reproduced only 959 of the 1,344
+ * columns in stats/scramble/comp_steps_eo (see cross_trainer_parity.test.ts).
+ *
+ * One table still serves everything: the canonical frame is D cross with the F/B axis, and
+ * `rotForFaceAxis` carries any (colour, axis) onto it.
+ */
 const CANON_EO_FRAME: EoFrame = { face: CANON_FACE, axis: 2 };
-const rotForEo = (f: FaceIdx): number => rotForFaceAxis(f, defaultEoAxis(f));
 
 /** EOCross coordinate of a state, read in `d`'s own frame (no rotation applied). */
 export function eoCoordOf(state: CubieCube, d: EoFrameData): EoCoord {
@@ -416,10 +424,10 @@ export function eoCoordOf(state: CubieCube, d: EoFrameData): EoCoord {
   return { pos: slotRank(slots, 4), eo: word >> 1 }; // bit 0 is redundant (even parity)
 }
 
-/** Exact EOCross length for one cross colour, or -1 above `cap`. */
-export function eoFrameDist(state: CubieCube, face: FaceIdx, cap: number): number {
+/** Exact EOCross length for one (cross colour, orientation axis) frame, or -1 above `cap`. */
+export function eoFrameDist(state: CubieCube, face: FaceIdx, axis: EoAxis, cap: number): number {
   const d = eoFrameData(CANON_EO_FRAME);
-  return eoCrossDistCapped(d, eoCoordOf(rotateState(state, rotForEo(face)), d), cap);
+  return eoCrossDistCapped(d, eoCoordOf(rotateState(state, rotForFaceAxis(face, axis)), d), cap);
 }
 
 /**
@@ -431,7 +439,8 @@ export function eoFrameDist(state: CubieCube, face: FaceIdx, cap: number): numbe
 const sampleEo: Sampler = oneFrame((fr, lo, hi, rng) => {
   const got = sampleEoCrossState(CANON_EO_FRAME, lo, hi, rng);
   if (!got) return null;
-  return { state: rotateState(got.state, inverseRotation(rotForEo(fr.face))), depth: got.depth };
+  const rot = inverseRotation(rotForFaceAxis(fr.face, fr.axis!));
+  return { state: rotateState(got.state, rot), depth: got.depth };
 });
 
 // ── stages: free pair / pseudo cross / pseudo xcross / pseudo pair ───────────────────────────
@@ -610,8 +619,13 @@ const axisFrames = ({ faces }: ResolvedSpec): TrainerFrame[] => {
   return out;
 };
 
-/** The same pairing for EOLine, where the axis also picks WHICH line of the face (DF/DB vs DL/DR). */
-const lineFrames = ({ faces }: ResolvedSpec): TrainerFrame[] =>
+/**
+ * The frames of a stage measured against an axis while still naming a cross face: every chosen
+ * colour paired with each of its two perpendicular axes. Shared by EOCross and EOLine — for
+ * EOLine the axis also picks WHICH line of the face (DF/DB vs DL/DR), for EOCross it is the
+ * orientation axis alone. No deduplication here: unlike pure EO, these frames differ by face too.
+ */
+const perpFrames = ({ faces }: ResolvedSpec): TrainerFrame[] =>
   faces.flatMap((face) => perpAxes(face).map((axis) => ({ face, slots: [], axis })));
 
 const sampleEoStage: Sampler = oneFrame((fr, lo, hi, rng) => sampleEoState(fr.axis!, lo, hi, rng));
@@ -678,8 +692,8 @@ const STAGES: StageDef[] = [
     variant: 'eo', stage: 'eo_cross', exactLayers: true,
     slots: false, range: [0, EOCROSS_MAX_DEPTH], band: [7, 8], heavy: true,
     sample: sampleEo,
-    frames: faceFrames,
-    frameDist: (state, fr, cap) => eoFrameDist(state, fr.face, cap),
+    frames: perpFrames,
+    frameDist: (state, fr, cap) => eoFrameDist(state, fr.face, fr.axis!, cap),
   },
   {
     // "Free pair": cross + the slot's pair BUILT but not necessarily inserted (or18's Pairing).
@@ -733,7 +747,7 @@ const STAGES: StageDef[] = [
     variant: 'eoline', stage: 'eoline', exactLayers: true,
     slots: false, range: [0, EOLINE_MAX_DEPTH], band: [6, 7], heavy: false,
     sample: sampleEoLine,
-    frames: lineFrames,
+    frames: perpFrames,
     frameDist: (state, fr, cap) => eoLineDist(state, fr.face, fr.axis!, cap),
   },
   {

@@ -179,17 +179,34 @@ describe('cross-trainer / registry', () => {
     }
   }, 300_000);
 
-  it('eocross: a draw is that many moves in ITS OWN frame, not the canonical one', () => {
+  /**
+   * A colour's EOCross is the better of its TWO perpendicular axes — the site's caliber
+   * (`solver/src/eo_cross_solver.rs` folds each colour's two symmetries with a min; see
+   * docs/cross-trainer-difficulty.md §6.1). Measured here with tables built DIRECTLY for each
+   * (face, axis), so no rotation is involved and the canonical frame is not consulted.
+   */
+  const eoBest = (state: CubieCube, faces: readonly number[], cap: number): number => {
+    let best = 99;
+    for (const face of faces) {
+      for (const axis of [0, 1, 2] as const) {
+        if (axis === face % 3) continue;
+        const d = eoFrameData({ face: face as FaceIdx, axis });
+        const v = eoCrossDistCapped(d, eoCoordOf(state, d), cap);
+        if (v >= 0) best = Math.min(best, v);
+      }
+    }
+    return best;
+  };
+
+  it('eocross: a draw is that many moves in ITS OWN frames, not the canonical one', () => {
     const rng = lcg(808);
     for (const [face, letter] of [[COLOR_FACE.White, 'W'], [COLOR_FACE.Green, 'G']] as const) {
-      // frame data built straight for this (face, axis) — no rotation involved
-      const d = eoFrameData({ face });
       for (const depth of [3, 5, 7]) {
         const got = sampleTrainerState({ variant: 'eo', stage: 'eo_cross', colors: letter, slot: 'best', lo: depth, hi: depth }, rng);
         expect(got, `${letter} d=${depth}`).not.toBeNull();
         expect(got!.depth).toBe(depth);
         expect(validateCubie(got!.state)).toBeNull();
-        expect(eoCrossDistCapped(d, eoCoordOf(got!.state, d), depth + 1), `${letter} d=${depth}`).toBe(depth);
+        expect(eoBest(got!.state, [face], depth + 1), `${letter} d=${depth}`).toBe(depth);
       }
     }
   }, 300_000);
@@ -198,13 +215,7 @@ describe('cross-trainer / registry', () => {
     const rng = lcg(1234);
     const got = sampleTrainerState({ variant: 'eo', stage: 'eo_cross', colors: 'WY', slot: 'best', lo: 5, hi: 6 }, rng);
     expect(got).not.toBeNull();
-    let best = 99;
-    for (const face of [COLOR_FACE.White, COLOR_FACE.Yellow]) {
-      const d = eoFrameData({ face });
-      const v = eoCrossDistCapped(d, eoCoordOf(got!.state, d), 7);
-      if (v >= 0) best = Math.min(best, v);
-    }
-    expect(best).toBe(got!.depth);
+    expect(eoBest(got!.state, [COLOR_FACE.White, COLOR_FACE.Yellow], 7)).toBe(got!.depth);
   }, 300_000);
 
   // Every remaining stage generates in the canonical frame and relabels the result into the

@@ -262,13 +262,34 @@ for var, st in KEYS:
 |---|---|
 | `std/{cross,xcross,xxcross}`、`pair/{cross_pair,xcross_pair}`、`pseudo/pseudo_cross` | 1344 / 1344 |
 | **`eoline/{eo,eoline}`、`222/block222`(新)** | **1344 / 1344** |
-| `eo/eo_cross` | 959 / 1344 |
+| **`eo/eo_cross`(已修,原 959)** | **1344 / 1344** |
 | `pseudo/pseudo_xcross` | 822 / 1344 |
 | `pseudo_pair/pseudo_cross_pseudo_pair` | 911 / 1344 |
 
-后三个是**先前就存在的口径分歧**,不是这次改出来的(这次只是第一次量到)。共同点是「移植时靠推断
-补的定义」:EOCross 的取向轴该怎么随底色走、以及带槽的「伪」到底伪在哪。数值用 `toBe` 锁住,
-修好一个就该顶到 1344 并挪进上面那行 —— 绝不允许把断言放宽。
+三个都是**先前就存在的口径分歧**,不是这次改出来的(这次只是第一次量到)。共同点是「移植时靠推断
+补的定义」。数值用 `toBe` 锁住,修好一个就该顶到 1344 并挪进上面那行 —— 绝不允许把断言放宽。
+
+**已修:`eo/eo_cross`。** 分析器每个底色跑**两个姿态**(原始 + y),`fold_cross_sym_to_rot` 取
+`min(sym[2c], sym[2c+1])`(`solver/src/eo_cross_solver.rs:1178`,`solver/DEFINITIONS.md:207`);
+`mt_eo12` 是旋转后帧里的 kociemba F/B 约定,而 y 恰好把 F/B 轴换成 L/R 轴、D 十字不动 ——
+所以那个 min **就是「该底色两条垂直轴取更小」**。移植时钉死了 ZZ 惯用的那一条
+(`defaultEoAxis`),于是「EOCross 黄色」说的不是站内说的那件事。现在 `eo_cross` 和 EOLine
+共用 `perpFrames`(每色 × 两条垂直轴),`eoFrameDist` 收 axis 参数。副作用:帧数翻倍 → 度量整体
+变浅 → 深档更稀有,`DRAW['eo/eo_cross']` 四色那格实测从 9 掉到 8(reach.ts 已改)。
+
+**未修的两个,配方已验(都能打到 1344/1344):**
+
+- `pseudo/pseudo_xcross`:引擎跑 **16 个组合 = 4 个角槽 × 4 个棱槽,彼此独立**
+  (`solver/src/pseudo_xcross_solver.rs:173`),判定是「十字 + 角在 4 个 D 偏移里的某一个」**且**
+  「棱回到**绝对**物理槽位(不随 D 偏移)」(`:517`,`DEFINITIONS.md:139`)。移植只取了 4 个
+  **同槽**组合(`multi.ts` 的 `pseudoXFrameData` 由单个槽推出角与棱),是引擎的真子集 ——
+  实测 522 次偏深、0 次偏浅。
+- `pseudo_pair/pseudo_cross_pseudo_pair`:同样是 16 个 (棱槽, 角槽) 独立组合
+  (`solver/src/pseudo_pair_solver.rs:805`),且目标集要按
+  `home · D^j · insert · U^a · D^b` 生成 —— **`j` = 把角槽转到棱槽的那个 D 次数**,插入公式取
+  **棱**那一侧(`prune_create.rs:718 / 839`)。只解耦成 16 个组合、不做 `D^j` 预对齐只能到 989,
+  两边都错 —— 预对齐才是关键那一半。
+- 代价:两者都要按组合建表(4 张而非 1 张),`pseudo_xcross` 的表本来就重,不是「便宜」那一档。
 
 新阶段没踩这个坑,是因为定义是**读引擎读来的**,不是猜的:
 - 纯 EO 的每色列 = 该底色**两条垂直轴**里更小的那个(不是 ZZ 惯用的那一条),所以对面色恒等、
@@ -299,8 +320,9 @@ god 的证据这次不来自 distribution.json(§5 那张表的来源),因为该
 - [x] iframe 里不再注入 CubeRoot logo(`tools/assets/js/logo_nav.js`:`window.self !== window.top` 直接 return)。
 - [x] **T1 扩展**:纯 EO / EOLine / block222 三个原生阶段(方法下拉多出「砖」),见 §6.2;
       方法/阶段下拉同时换成站内的 UI 聚合。
-- [ ] 修 §6.1 那三个口径分歧:`eo/eo_cross`(取向轴怎么随底色走)、`pseudo/pseudo_xcross`、
-      `pseudo_pair/pseudo_cross_pseudo_pair`。判据现成(comp_steps 逐列比对),缺的是读引擎。
+- [x] 修 `eo/eo_cross` 的口径(§6.1):每色取两条垂直轴的较小者,1344/1344。
+- [ ] 修剩下两个口径分歧:`pseudo/pseudo_xcross`、`pseudo_pair/pseudo_cross_pseudo_pair`。
+      配方已在 §6.1 验过(都能到 1344/1344),差的是按 16 个组合建表 —— 不便宜。
 - [ ] **T2 扩展**:DR、标准 xxxcross(worker 里挂 `cross_solver_bg.wasm`)。
 - [x] 深端真出题(§5.5):六色底十字 8 步(40 个,现算)、四色底十字 8 步(591 个,现算)、
       六色底 XCross 10 步(438 个,随包)。
