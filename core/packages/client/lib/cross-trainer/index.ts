@@ -44,6 +44,7 @@ import {
   XPAIR_MAX_DEPTH, sampleXPairCoord, xpairDistCapped, xpairFrameData, xpairPins,
 } from './xpair';
 import { CANON_FACE, CANON_SLOT, ROTATIONS, ROT_FOR_FRAME, inverseRotation, rotForFaceAxis, rotateState } from './rotate';
+import { drawCorpus } from './corpus';
 
 // ── vocabulary ───────────────────────────────────────────────────────────────────────────────
 
@@ -761,6 +762,20 @@ export function drawTrainerState(
   if (!def) return { ok: false, reason: 'empty' };
   const resolved = resolve(spec, def, budgetMs);
   if (!resolved) return { ok: false, reason: 'empty' };
+  // A window pinned to ONE depth that happens to be an enumerated class: serve it from the list.
+  // Those are the difficulties no sampler reaches — six-colour cross at 8 is 40 states in 9.8e11 —
+  // so this is not an optimisation, it is the only way they come out at all. Deliberately limited
+  // to lo === hi: over a wider window the true conditional gives the deep end a weight of ~1e-11,
+  // and honouring that (i.e. never producing it) is correct — asking for it means asking for it
+  // alone, which is exactly what dragging both slider handles onto that tick does.
+  if (resolved.lo === resolved.hi) {
+    // `resolve` parks a slotless stage's slot at 0; that is a placeholder, not "the fixed slot",
+    // and passing it through would look up a fixed-slot class that cross does not have.
+    const state = drawCorpus(
+      spec.variant, spec.stage, resolved.faces, def.slots ? resolved.slot : 'best', resolved.lo, rng,
+    );
+    if (state) return { ok: true, state, depth: resolved.lo };
+  }
   const got = def.sample(resolved, rng, def);
   return got ? { ok: true, state: got.state, depth: got.depth } : { ok: false, reason: resolved.fail.reason };
 }

@@ -14,6 +14,8 @@
  * 共轭,可达性一致。
  */
 
+import { corpusDepths } from './corpus';
+
 /** 槽档:定槽(or18 口径)或四槽/槽对取最优(站内口径)。 */
 export type SlotMode = 'fixed' | 'best';
 
@@ -93,28 +95,51 @@ const colorIndex = (n: number): number => {
 export interface DepthBounds {
   /** 滑块刻度到这里(已知存在的最深)。 */
   god: number;
-  /** 到这里为止可选,再深的刻度置灰。 */
-  draw: number;
+  /** 真能出题的步数,升序。中间的空档 = 存在、但既抽不出来也没被枚举 —— 刻度照画,置灰。 */
+  allowed: number[];
 }
 
 /**
- * 该组合的两个上限。表里没有的阶段(新增还没测)两个都退 fallback —— 新阶段先全开,
+ * 该组合的刻度轴与可选档。表里没有的阶段(新增还没测)整段全开 —— 新阶段先给全,
  * 而不是被一张空表卡死。
+ *
+ * 可选档有两个来源,它们是两回事:
+ *   抽  [min, draw] —— 采样够得着的那一段,连续。
+ *   枚举 corpusDepths —— 采样够不着但整档能列全的那几个点(六色底十字 8 / 六色底 XCross 10)。
+ * 所以 allowed 可能不连续:六色底 XCross 到 8 能抽、9 抽不到也没枚举、10 有那 438 个。
  */
 export function trainerDepthBounds(
-  variant: string, stage: string, colors: number, slot: SlotMode, fallback: number,
+  variant: string, stage: string, colors: number, slot: SlotMode, fallback: number, min = 0,
 ): DepthBounds {
   const key = `${variant}/${stage}`;
   const i = colorIndex(colors);
   const god = TRAINER_GOD[key];
   const draw = DRAW[key];
-  if (!god || !draw) return { god: fallback, draw: fallback };
-  // 刻度轴的顶 = 三种证据里最强的一条:语料里出现过、我们自己抽出来过、或者这一格被穷举过。
-  // 三条都是「有东西在那儿」的证据 —— 绝不拿只当搜索上界用的常数充数(见 FRAME_MAX_VERIFIED)。
+  const listed = corpusDepths(variant, stage, COLOR_COUNTS[i], slot).filter((d) => d <= fallback);
+  if (!god || !draw) {
+    return { god: fallback, allowed: rangeOf(min, fallback) };
+  }
+  // 刻度轴的顶 = 四种证据里最强的一条:语料里出现过、我们自己抽出来过、这一格被穷举过、
+  // 或者整档已经列全了。四条都是「有东西在那儿」的证据 —— 绝不拿只当搜索上界用的常数充数
+  // (见 FRAME_MAX_VERIFIED)。
   const top = Math.min(fallback, Math.max(
     god[i],
     draw[slot][i],
+    ...listed,
     slot === 'fixed' && colors <= 1 ? (FRAME_MAX_VERIFIED[key] ?? 0) : 0,
   ));
-  return { god: top, draw: Math.min(top, draw[slot][i]) };
+  const sampled = Math.min(top, draw[slot][i]);
+  const allowed = new Set([...rangeOf(min, sampled), ...listed.filter((d) => d <= top)]);
+  return { god: top, allowed: [...allowed].sort((a, b) => a - b) };
+}
+
+const rangeOf = (a: number, b: number): number[] =>
+  (b < a ? [] : Array.from({ length: b - a + 1 }, (_, k) => a + k));
+
+/** 把一个步数夹到最近的可选档(滑块拖过空档时用)。 */
+export function snapAllowed(v: number, allowed: number[]): number {
+  if (!allowed.length) return v;
+  let best = allowed[0];
+  for (const a of allowed) if (Math.abs(a - v) < Math.abs(best - v)) best = a;
+  return best;
 }
