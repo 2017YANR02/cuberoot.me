@@ -291,11 +291,9 @@ background-color: #0a0a0f;
         $content = $content -replace '(</body>)', "<script src=""../i18n/i18n.js"" defer></script>`n`$1"
     }
 
-    # 注入 logo_nav.js（如果还没有）
-    if ($content -notmatch 'logo_nav\.js')
-    {
-        $content = $content -replace '(</body>)', "<script src=""../assets/js/logo_nav.js"" defer></script>`n`$1"
-    }
+    # NOTE: 这些页面**不注入** logo_nav.js —— 上游自带抽屉菜单，左上角再固定一个 CubeRoot logo
+    # 会压在页面标题/汉堡按钮上。回家的路走抽屉里的站点链接。
+    # (alg_trainers 那个 fork 没有抽屉，那边的页面仍然带 logo_nav.js，手工维护，不归本脚本管。)
 
     # --- 写入文件 ---
     if (-not $DryRun)
