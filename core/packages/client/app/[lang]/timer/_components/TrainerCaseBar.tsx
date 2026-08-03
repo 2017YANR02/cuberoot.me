@@ -39,10 +39,11 @@ export default function TrainerCaseBar({ scramble, isZh }: Props) {
 
   const stage = stageLabel(meta.spec.stage, isZh);
   // 方法名按站内的 UI 聚合来叫(数据变体 '222' 在下拉里是「砖」、'eoline' 是「EO」),否则这里会
-  // 冒出「222 222」这种数据层的名字。标准不加前缀;方法名和阶段名同形(EO 方法的 EO 阶段)也不叠。
+  // 冒出「222 222」这种数据层的名字。标准不加前缀;阶段名里已经含着方法名的(EO 方法的 EO 与
+  // EOLine 两个阶段)也不叠 —— 「EO EOLine」只是把同一个词说了两遍。
   const ui = uiVariantOf(meta.spec.variant);
   const name = ui === 'std' ? '' : variantLabel(ui, isZh);
-  const method = name && name !== stage ? `${name} ` : '';
+  const method = name && !stage.startsWith(name) ? `${name} ` : '';
 
   return (
     <div
