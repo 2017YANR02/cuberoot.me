@@ -33,6 +33,8 @@ const STEP_LIST = join(TIMER, '_components', 'StepMoveList.tsx');
 const SOLVE_MODAL = join(TIMER, '_components', 'SolveModal.tsx');
 
 const read = (p: string) => readFileSync(p, 'utf8');
+/** 只留代码。断言「不许再出现某个写法」时用 —— 注释里讲得清来历,那不算回归。 */
+const stripComments = (src: string) => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
 
 describe('报告顺序:回放和谱子在前,数据在后', () => {
   const src = read(REPORT);
@@ -43,13 +45,12 @@ describe('报告顺序:回放和谱子在前,数据在后', () => {
     expect(src).toMatch(/const analysisBlock = \(/);
   });
 
-  it('那一块里确实是质量分 / 分步分析 / 四个总量,不是个空壳', () => {
+  it('那一块里确实是质量分 / 分步分析 / 总量,不是个空壳', () => {
     const from = src.indexOf('const analysisBlock = (');
     const block = src.slice(from, src.indexOf('\n  return (', from));
     expect(block).toMatch(/<QualityRow\b/);
     expect(block).toMatch(/<StepAnalysis\b/);
     expect(block).toMatch(/className="reconstruct-stats"/);
-    expect(block).toMatch(/<SolveTimeline\b/);
   });
 
   it('渲染时排在回放后面', () => {
@@ -63,6 +64,56 @@ describe('报告顺序:回放和谱子在前,数据在后', () => {
   it('回放默认展开 —— 它是主体,不是附录', () => {
     // 排到第一位却折叠着,等于把报告的主体藏在一次点击后面。
     expect(src).toMatch(/const \[playbackExpanded, setPlaybackExpanded\] = useState\(true\)/);
+  });
+});
+
+describe('同一个数不写两遍', () => {
+  const report = read(REPORT);
+  const timeline = join(TIMER, '_components', 'SolveTimeline.tsx');
+
+  it('阶段条整页只有一根,且长在回放上', () => {
+    // 报告顶部那根和回放那根是同一个组件、同一份切分,只差一个游标。两根并存时
+    // 读者第一反应是去找它们的区别 —— 而并不存在区别。
+    expect(report).not.toMatch(/<SolveTimeline\b/);
+    expect(read(join(TIMER, '_components', 'PlaybackPanel.tsx'))).toMatch(/<SolveTimeline\b/);
+    expect(readFileSync(timeline, 'utf8')).toMatch(/export default function SolveTimeline/);
+  });
+
+  it('留下的那根带阶段名和阶段用时', () => {
+    const pb = read(join(TIMER, '_components', 'PlaybackPanel.tsx'));
+    // 一根没有标注的彩条只能看出「有几段」。
+    expect(pb).toMatch(/<SolveTimeline[\s\S]{0,240}showLabels/);
+  });
+
+  it('HTM 那张卡不再和摘要里的「步数 / TPS」重复', () => {
+    const from = report.indexOf('className="reconstruct-stats"');
+    const stats = report.slice(from, report.indexOf('</div>\n    </>', from));
+    expect(stats).not.toMatch(/>HTM</);
+    // QTM 留着:四分之一圈是另一个口径,摘要里没有。
+    expect(stats).toMatch(/>QTM</);
+  });
+});
+
+describe('回放进度条匀速走', () => {
+  const pb = read(join(TIMER, '_components', 'PlaybackPanel.tsx'));
+
+  it('时钟按墙钟每帧算,不是一手一个定时器', () => {
+    // 一手一个 setTimeout 时长是对的,但游标只在那一手落下的瞬间跳一格 —— 两手
+    // 之间那 200ms 屏幕完全静止,看起来就是一跳一跳的。
+    expect(pb).toMatch(/requestAnimationFrame\(/);
+    expect(pb).toMatch(/performance\.now\(\)/);
+    // 注释里提得起老写法(那段来历值得留着),代码里不许再有。
+    expect(stripComments(pb)).not.toMatch(/setTimeout\(/);
+  });
+
+  it('每帧不走 React 状态 —— 60fps 的 setState 会把右栏列表也重画', () => {
+    expect(pb).toMatch(/setPlayhead\(/);
+    expect(read(join(TIMER, '_components', 'SolveTimeline.tsx'))).toMatch(/style\.left/);
+  });
+
+  it('该播到第几手是从时间反查的,不是自增', () => {
+    // 自增会和墙钟脱钩:掉帧 / 后台标签页回来之后,魔方停在半路而游标已经到底。
+    expect(pb).toMatch(/while \(i < total && moves\[i\]\.ts <= at\) i\+\+/);
   });
 });
 
@@ -128,6 +179,16 @@ describe('智能魔方那把不摆打乱图', () => {
 
   it('整屏详情页不再第二次摆打乱 —— 谱子里已经有了', () => {
     expect(fullPage).not.toMatch(/\{scrambleSection\}/);
+  });
+
+  it('罚时是一个下拉,不是四个并排的按钮', () => {
+    // 四选一、彼此互斥、任何时候只有一个是当前值。并排按钮把「现在是哪个」和
+    // 「能改成哪些」画成同样的分量,而看一条成绩九成是在读它。
+    expect(src).toMatch(/<select[\s\S]{0,200}className="solve-penalty-select"/);
+    for (const v of ['ok', '+2', 'DNF', 'DNS']) {
+      expect(src, `罚时下拉少了 ${v}`).toContain(`value="${v}"`);
+    }
+    expect(src).not.toMatch(/onClick=\{\(\) => onChangePenalty\(/);
   });
 
   it('手动 / 键盘计时那个弹窗照旧两样都有', () => {

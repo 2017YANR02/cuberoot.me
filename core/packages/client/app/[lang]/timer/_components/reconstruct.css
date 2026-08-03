@@ -857,7 +857,7 @@
 
 /* ── 时间轴:一步两段,亮 = 在拧,暗 = 在看 ────────────────────────────
    段的位置就是它在时间上的位置,所以不能用 flex 均分 —— 一律绝对定位。
-   两处复用:报告顶部(带阶段名)和回放进度条(带游标、可点)。 */
+   全页只有一根:回放那根(阶段名 + 阶段用时 + 游标,可点着跳)。 */
 .stl { width: 100%; }
 .stl-track {
   position: relative; width: 100%; height: 12px;
@@ -897,7 +897,10 @@ button.stl-track:focus-visible { outline: 2px solid var(--ring); outline-offset:
 .stl-names { margin-top: 3px; }
 .stl-cap {
   position: absolute; top: 0;
-  text-align: center; white-space: nowrap; overflow: hidden;
+  text-align: center; white-space: nowrap;
+  /* 不裁:OLL / PLL 常常只占轨道的百分之几,裁掉就成了「0.0」和半个字。宁可让它
+     压出格子一点点 —— 相邻两段同时窄到会打架的情况,时间本来也读不出来。 */
+  overflow: visible;
   font-size: 11px; line-height: 15px;
   font-variant-numeric: tabular-nums;
   color: var(--muted-foreground);
@@ -967,9 +970,6 @@ button.sml-moves:focus-visible { outline: 2px solid var(--ring); outline-offset:
   .sml-moves { font-size: 12px; }
   .sml-label { font-size: 11px; }
 }
-
-/* 顶部那根时间轴。上下留白就是它和别的块的分隔,不加框。 */
-.reconstruct-timeline { margin: 2px 0 14px; }
 
 /* 陀螺仪开关。只在这把真的录到姿态时出现,所以它没有「禁用态」这一说。 */
 .reconstruct-playback-gyro { display: flex; justify-content: flex-end; }
