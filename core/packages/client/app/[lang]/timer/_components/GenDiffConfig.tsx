@@ -18,8 +18,8 @@ import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { VariantSelect } from '@/components/VariantSelect';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { useSubsetSelection, SubsetColorPicker } from '@/components/SubsetColorPicker/SubsetColorPicker';
-import { stageLabel } from '@/lib/scramble-variants';
-import { facesOfSubset, trainerCaps, trainerSlotOptions, trainerStagesOf, trainerVariants } from '@/lib/cross-trainer';
+import { dataVariantOfStage, stageLabel, uiStagesOf, uiVariantOf, uiVariantOptions } from '@/lib/scramble-variants';
+import { canTrain, facesOfSubset, trainerCaps, trainerSlotOptions, trainerStagesOf } from '@/lib/cross-trainer';
 import { snapAllowed, trainerDepthBounds } from '@/lib/cross-trainer/reach';
 import { SLOT_BEST, type GenDiffSettings } from '../_lib/scramble/trainer-source';
 import { tr } from '@/i18n/tr';
@@ -45,11 +45,21 @@ function spans(xs: number[]): Array<[number, number]> {
   return out;
 }
 
+/**
+ * 方法 / 阶段下拉走**站内的 UI 聚合**(lib/scramble-variants),不是引擎的数据变体列表:
+ * 数据层的 `eoline`(纯 EO / EOLine)并进「EO」方法,`222` 并进「砖」—— 与 /scramble/solver、
+ * 首页近期打乱、真题难度筛看到的一模一样。存回设置的仍是数据变体(引擎按它查表)。
+ */
+const stagesOfMethod = (method: string): string[] =>
+  uiStagesOf(method).filter((s) => canTrain(dataVariantOfStage(method, s), s));
+
 export default function GenDiffConfig({ isZh, settings, updateSettings, toggleSlot }: Props) {
-  const variants = trainerVariants();
-  const variant = variants.includes(settings.genDiffVariant) ? settings.genDiffVariant : variants[0];
-  const stages = trainerStagesOf(variant);
+  const methods = useMemo(() => uiVariantOptions((dv) => trainerStagesOf(dv).length > 0), []);
+  const storedMethod = uiVariantOf(settings.genDiffVariant);
+  const method = methods.includes(storedMethod) ? storedMethod : methods[0];
+  const stages = useMemo(() => stagesOfMethod(method), [method]);
   const stage = stages.includes(settings.genDiffStage) ? settings.genDiffStage : stages[0];
+  const variant = dataVariantOfStage(method, stage);
   const caps = trainerCaps(variant, stage);
 
   // 底色子集:与真题难度筛共用同一个选择器(sel.subsetKey 是过滤性质,变了就写回)。
@@ -132,12 +142,17 @@ export default function GenDiffConfig({ isZh, settings, updateSettings, toggleSl
             <div className="wca-src-diff">
               <div className="wca-src-diff-row">
                 <SubsetColorPicker sel={sel} isZh={isZh} />
-                {variants.length > 1 && (
+                {methods.length > 1 && (
                   <VariantSelect
                     className="settings-row-control-select"
-                    value={variant}
-                    options={variants}
-                    onChange={(v) => updateSettings({ genDiffVariant: v, genDiffStage: trainerStagesOf(v)[0], genDiffSteps: [] })}
+                    value={method}
+                    options={methods}
+                    onChange={(m) => {
+                      const first = stagesOfMethod(m)[0];
+                      updateSettings({
+                        genDiffVariant: dataVariantOfStage(m, first), genDiffStage: first, genDiffSteps: [],
+                      });
+                    }}
                     isZh={isZh}
                     ariaLabel={tr({ zh: '方法', en: 'Method' })}
                   />
@@ -146,7 +161,9 @@ export default function GenDiffConfig({ isZh, settings, updateSettings, toggleSl
                   className="settings-row-control-select"
                   value={stage}
                   options={stages}
-                  onChange={(s) => updateSettings({ genDiffStage: s, genDiffSteps: [] })}
+                  onChange={(s) => updateSettings({
+                    genDiffVariant: dataVariantOfStage(method, s), genDiffStage: s, genDiffSteps: [],
+                  })}
                   isZh={isZh}
                   label={stageLabel}
                   ariaLabel={tr({ zh: '阶段', en: 'Stage' })}
