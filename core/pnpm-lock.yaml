@@ -168,6 +168,9 @@ importers:
       echarts-for-react:
         specifier: ^3.0.6
         version: 3.0.6(echarts@6.0.0)(react@19.2.4)
+      fflate:
+        specifier: 0.8.2
+        version: 0.8.2
       flag-icons:
         specifier: ^7.5.0
         version: 7.5.0

@@ -360,6 +360,15 @@
 
 .cal-pop-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
+/* 导入按钮下面那行「Google 导出怎么拿」的说明 */
+.cal-pop-hint {
+  margin: 0;
+  max-width: 30ch;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+}
+
 .cal-field-label { font-size: 12px; color: var(--muted-foreground); }
 
 /* ── 弹窗 ─────────────────────────────────────────────────────────────── */
