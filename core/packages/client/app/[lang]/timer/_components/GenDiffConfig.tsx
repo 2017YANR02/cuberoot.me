@@ -12,7 +12,9 @@
  */
 
 import { useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { RangeSlider } from '@/components/RangeSlider/RangeSlider';
+import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { VariantSelect } from '@/components/VariantSelect';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { useSubsetSelection, SubsetColorPicker } from '@/components/SubsetColorPicker/SubsetColorPicker';
@@ -26,12 +28,14 @@ interface Props {
   isZh: boolean;
   settings: GenDiffSettings;
   updateSettings: (patch: Partial<GenDiffSettings>) => void;
+  /** 「难度」开关的落点(计时器顶栏)。同 WcaSourceConfig 的 toggleSlot,不传就留在本组件顶行。 */
+  toggleSlot?: HTMLElement | null;
 }
 
 const range = (a: number, b: number) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
 const clamp = (x: number, lo: number, hi: number) => Math.min(Math.max(x, lo), hi);
 
-export default function GenDiffConfig({ isZh, settings, updateSettings }: Props) {
+export default function GenDiffConfig({ isZh, settings, updateSettings, toggleSlot }: Props) {
   const variants = trainerVariants();
   const variant = variants.includes(settings.genDiffVariant) ? settings.genDiffVariant : variants[0];
   const stages = trainerStagesOf(variant);
@@ -83,69 +87,105 @@ export default function GenDiffConfig({ isZh, settings, updateSettings }: Props)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.genDiffOn, variant, stage, mMin, mMax]);
 
-  return (
-    <div className="wca-src-config">
-      <div className="settings-row wca-src-toprow">
-        <span className="settings-row-tight-group">
-          <span className="settings-row-label">{tr({ zh: '难度', en: 'Difficulty' })}</span>
-          <PillToggle
-            value={settings.genDiffOn}
-            onChange={(v) => updateSettings({ genDiffOn: v })}
-            ariaLabel={tr({ zh: '按难度生成', en: 'Generate by difficulty' })}
-          />
-        </span>
-      </div>
+  const diffToggle = (
+    <span className="settings-row-tight-group">
+      <span className="settings-row-label">{tr({ zh: '难度', en: 'Difficulty' })}</span>
+      <PillToggle
+        value={settings.genDiffOn}
+        onChange={(v) => updateSettings({ genDiffOn: v })}
+        ariaLabel={tr({ zh: '按难度生成', en: 'Generate by difficulty' })}
+      />
+    </span>
+  );
 
-      {settings.genDiffOn && caps && (
-        <div className="wca-src-diff">
-          <div className="wca-src-diff-row">
-            <SubsetColorPicker sel={sel} isZh={isZh} />
-            {variants.length > 1 && (
-              <VariantSelect
-                className="settings-row-control-select"
-                value={variant}
-                options={variants}
-                onChange={(v) => updateSettings({ genDiffVariant: v, genDiffStage: trainerStagesOf(v)[0], genDiffSteps: [] })}
-                isZh={isZh}
-                ariaLabel={tr({ zh: '方法', en: 'Method' })}
+  const body = !!(settings.genDiffOn && caps);
+  // 置灰段([draw+1, god])的说明。刻度画得比可选的深是有意的(那些难度真的存在),但用户
+  // 看到的是「拖不过去」—— 不写一句原因就只是个坏掉的滑块。
+  const capped = body && bounds.draw < bounds.god;
+  const capSpan = bounds.draw + 1 === bounds.god
+    ? `${bounds.god}`
+    : `${bounds.draw + 1}–${bounds.god}`;
+
+  return (
+    <>
+      {/* 开关搬去顶栏(toggleSlot)时,本组件在原处就只剩难度细项 —— 难度关着连 wrapper 都不渲染,
+          否则来源条里留下一个空 div,:empty 收不起来,计时读数上方白挂 16px。 */}
+      {toggleSlot && createPortal(diffToggle, toggleSlot)}
+      {(!toggleSlot || body) && (
+        <div className="wca-src-config">
+          {!toggleSlot && <div className="settings-row wca-src-toprow">{diffToggle}</div>}
+
+          {body && (
+            <div className="wca-src-diff">
+              <div className="wca-src-diff-row">
+                <SubsetColorPicker sel={sel} isZh={isZh} />
+                {variants.length > 1 && (
+                  <VariantSelect
+                    className="settings-row-control-select"
+                    value={variant}
+                    options={variants}
+                    onChange={(v) => updateSettings({ genDiffVariant: v, genDiffStage: trainerStagesOf(v)[0], genDiffSteps: [] })}
+                    isZh={isZh}
+                    ariaLabel={tr({ zh: '方法', en: 'Method' })}
+                  />
+                )}
+                <VariantSelect
+                  className="settings-row-control-select"
+                  value={stage}
+                  options={stages}
+                  onChange={(s) => updateSettings({ genDiffStage: s, genDiffSteps: [] })}
+                  isZh={isZh}
+                  label={stageLabel}
+                  ariaLabel={tr({ zh: '阶段', en: 'Stage' })}
+                />
+                {showSlots && (
+                  <select
+                    className="settings-row-control-select"
+                    value={settings.genDiffSlot}
+                    onChange={(e) => updateSettings({ genDiffSlot: Number(e.target.value) })}
+                    aria-label={tr({ zh: 'F2L 槽位', en: 'F2L slot' })}
+                  >
+                    <option value={SLOT_BEST}>{tr({ zh: '最优槽', en: 'Best slot' })}</option>
+                    {slotNames.map((name, i) => (
+                      <option key={name} value={i}>{name}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+              <div className="wca-src-steps-range">
+                <RangeSlider
+                  min={mMin}
+                  max={bounds.god}
+                  softMax={mMax}
+                  value={[lo, hi]}
+                  onChange={([a, b]) => updateSettings({ genDiffSteps: range(a, b) })}
+                  marks={range(mMin, bounds.god)}
+                  ariaLabel={tr({ zh: '步数范围', en: 'Step range' })}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* div 而非 p:InfoTooltip 展开的气泡是 div,套在 p 里是非法嵌套(浏览器会自动闭合 p,
+              服务端与客户端的 DOM 因此对不上 → hydration 报错)。 */}
+          {capped && (
+            <div className="wca-src-hint gen-diff-cap">
+              {tr({ zh: `${capSpan} 步太罕见,抽不出来`, en: `${capSpan} moves: too rare to draw` })}
+              <InfoTooltip
+                iconSize={12}
+                content={tr({
+                  zh: `刻度画到 ${bounds.god} 步,是因为这个难度确实存在 —— 站内数据里见过这样的状态。\n`
+                    + '但越深的档状态越少,多底色 / 最优槽还要每个底色、每个槽同时这么深;'
+                    + `均匀随机撞不上,一条打乱的等待时间里出不来,所以只放到 ${bounds.draw} 步。`,
+                  en: `The axis runs to ${bounds.god} because that difficulty really exists — the site's own data contains such states.\n`
+                    + 'But deeper bands hold ever fewer states, and multi-colour / best-slot needs every colour and every slot to be that deep at once. '
+                    + `A uniform draw never lands on one within the wait for a single scramble, so the cap is ${bounds.draw}.`,
+                })}
               />
-            )}
-            <VariantSelect
-              className="settings-row-control-select"
-              value={stage}
-              options={stages}
-              onChange={(s) => updateSettings({ genDiffStage: s, genDiffSteps: [] })}
-              isZh={isZh}
-              label={stageLabel}
-              ariaLabel={tr({ zh: '阶段', en: 'Stage' })}
-            />
-            {showSlots && (
-              <select
-                className="settings-row-control-select"
-                value={settings.genDiffSlot}
-                onChange={(e) => updateSettings({ genDiffSlot: Number(e.target.value) })}
-                aria-label={tr({ zh: 'F2L 槽位', en: 'F2L slot' })}
-              >
-                <option value={SLOT_BEST}>{tr({ zh: '最优槽', en: 'Best slot' })}</option>
-                {slotNames.map((name, i) => (
-                  <option key={name} value={i}>{name}</option>
-                ))}
-              </select>
-            )}
-          </div>
-          <div className="wca-src-steps-range">
-            <RangeSlider
-              min={mMin}
-              max={bounds.god}
-              softMax={mMax}
-              value={[lo, hi]}
-              onChange={([a, b]) => updateSettings({ genDiffSteps: range(a, b) })}
-              marks={range(mMin, bounds.god)}
-              ariaLabel={tr({ zh: '步数范围', en: 'Step range' })}
-            />
-          </div>
+            </div>
+          )}
         </div>
       )}
-    </div>
+    </>
   );
 }
