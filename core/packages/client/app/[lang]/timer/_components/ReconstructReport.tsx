@@ -58,7 +58,6 @@ import { normalizeSolve } from '../_lib/reconstruct/orient';
 import type { ReconTextResult } from '../_lib/reconstruct/recon_text';
 import StepAnalysis from './StepAnalysis';
 import StepMoveList from './StepMoveList';
-import SolveTimeline from './SolveTimeline';
 import { encodeReplayUrl } from '../_lib/share/encode';
 import { nxnSizeForEvent } from '../_lib/cube';
 import { toReconEventId } from '../_shared/event-bridge';
@@ -366,17 +365,10 @@ export default function ReconstructReport({
         <QualityRow quality={analysis?.quality ?? null} pending={analysis === null} />
       )}
 
-      {/* 一手一个方块的时间轴:停顿在这里是看得见的空隙。 */}
-      {reconText && reconText.lines.length > 0 && memoMs === undefined && (
-        <div className="reconstruct-timeline">
-          <SolveTimeline
-            moves={moves}
-            totalMs={solve.timeMs}
-            lines={reconText.lines}
-            showLabels
-          />
-        </div>
-      )}
+      {/* 这里以前还有一根 SolveTimeline(带阶段名的那条)。删了:回放那根进度条
+          是同一根轴、同一份切分,只是多了个游标 —— 同一件事在一页上画两遍,读者
+          第一反应是去找两者的区别。留下的是回放那根,并给它补上阶段名和阶段用时
+          (2026-08-03 用户提的)。 */}
 
       {(stageSegs || walk) && memoMs === undefined && (
         <StepAnalysis
@@ -391,6 +383,8 @@ export default function ReconstructReport({
           walk={walk}
           moves={moves}
           rotations={rotations}
+          // 有文字复盘时,阶段条由回放那根带游标的轴负责(同一份切分),这里不再
+          // 画第二根;切不出谱子的那些把留着它,否则一根都没有。
           hideBar={method === 'cfop' && !!reconText && reconText.lines.length > 0}
           isZh={isZh}
         />
@@ -415,12 +409,10 @@ export default function ReconstructReport({
         </div>
       )}
 
+      {/* 这里以前第一张是 HTM 卡(步数 + 步/秒)。删了:顶上那排摘要里「步数」和
+          「TPS」就是这两个数,同一页上写两遍。QTM 留着 —— 它数的是四分之一圈,
+          和 HTM 不是同一个口径。 */}
       <div className="reconstruct-stats">
-        <div className="reconstruct-stat">
-          <div className="reconstruct-stat-num">{slices.htmCount}</div>
-          <div className="reconstruct-stat-label">HTM</div>
-          <div className="reconstruct-stat-sub">{slices.htps.toFixed(2)} {tr({ zh: '步/秒', en: 'tps' })}</div>
-        </div>
         <div className="reconstruct-stat">
           <div className="reconstruct-stat-num">{slices.qtmCount}</div>
           <div className="reconstruct-stat-label">QTM</div>
