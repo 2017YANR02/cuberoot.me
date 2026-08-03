@@ -12,7 +12,7 @@ import {
 } from '@/lib/skip-probability';
 import { CUBE3_STATES } from '@/lib/god-distance-333';
 import { CORNER_FACELET, EDGE_FACELET } from '@/lib/cube-facelet';
-import { EXACT_DIST, type ExactFull } from '@/app/[lang]/scramble/stats/_data/exact_dist';
+import { EXACT_DIST, zeroStates, type ExactFull } from '@/app/[lang]/scramble/stats/_data/exact_dist';
 
 /**
  * 跳步概率的回归锁。这批数字全部**现算**,所以测试锁的是「算出来的东西对不对」,
@@ -105,7 +105,7 @@ describe('拿精确集的 0 步金标验容斥(全 16 格)', () => {
   ] as const)('%s 四档底色', (stage, k) => {
     for (const colors of ['W', 'WY', 'BGOR', 'BGORWY'] as const) {
       const cell = EXACT_DIST[stage].unfixed![colors]!;
-      const golden = cell.kind === 'full' ? cell.counts[0] : cell.zero;
+      const golden = zeroStates(cell)!;
       const den = cell.kind === 'full' ? BigInt(cell.total) : denOf(colors);
       const mine = statesWithAnyXCrossSolved(BOTTOM_FACES[colors], k);
       // 交叉相乘比分数,不比浮点
@@ -117,7 +117,7 @@ describe('拿精确集的 0 步金标验容斥(全 16 格)', () => {
   it('速查表的 CN 四条 = 覆盖矩阵的六色底 0 步', () => {
     for (const [k, stage] of [[1, 'xcross'], [2, 'xxcross'], [3, 'xxxcross'], [4, 'xxxxcross']] as const) {
       const cell = EXACT_DIST[stage].unfixed!.BGORWY!;
-      const golden = cell.kind === 'full' ? cell.counts[0] : cell.zero;
+      const golden = zeroStates(cell)!;
       expect(`${stage}=${entryById(`xcross${k}-cn`).num}`).toBe(`${stage}=${golden}`);
     }
   });
@@ -125,8 +125,7 @@ describe('拿精确集的 0 步金标验容斥(全 16 格)', () => {
   it('四色底那 4 格夹在双色底与六色底之间', () => {
     for (const stage of ['xcross', 'xxcross', 'xxxcross', 'xxxxcross'] as const) {
       const z = (c: 'WY' | 'BGOR' | 'BGORWY') => {
-        const cell = EXACT_DIST[stage].unfixed![c]!;
-        return BigInt(cell.kind === 'full' ? cell.counts[0] : cell.zero);
+        return BigInt(zeroStates(EXACT_DIST[stage].unfixed![c]!)!);
       };
       // 同一个分母(多色底都是 |G|),可以直接比大小
       expect(`${stage}: ${z('WY') < z('BGOR')} ${z('BGOR') < z('BGORWY')}`).toBe(`${stage}: true true`);

@@ -53,6 +53,15 @@ export const PAIR_STATES = 72990720;
 /** Published maxima, re-verified by the exhaustive BFS above: Free Pair 9, Pseudo Free Pair 8. */
 export const PAIR_MAX_DEPTH = 9;
 export const PSEUDO_PAIR_MAX_DEPTH = 8;
+/**
+ * The whole histograms of one frame, from that BFS (`PAIR_FULL_BFS=1`). Exported because
+ * /scramble/stats ships them as an exhaustive dataset and both places must read one number:
+ * a prefix that agrees with or18 and a tail that only lived in a comment is not a source.
+ */
+export const PAIR_HISTOGRAM: readonly number[] =
+  [17, 255, 3102, 35217, 367070, 3184390, 18621816, 41028188, 9746797, 3868];
+export const PSEUDO_PAIR_HISTOGRAM: readonly number[] =
+  [68, 816, 9256, 103681, 1012687, 7689281, 32089788, 30868369, 1216774];
 /** Layers up to this depth are enumerated exactly; deeper ones use rejection. */
 const BFS_DEPTH = 5;
 

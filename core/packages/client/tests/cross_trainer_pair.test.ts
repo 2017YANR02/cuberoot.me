@@ -19,16 +19,21 @@ import { CROSS_STATES, crossNext } from '@/lib/cross-trainer/dist';
 import { CORNER_STEP, EDGE_STEP, f2lSlots, skipRow, COLOR_FACE, type FaceIdx } from '@/lib/cross-trainer/model';
 import { fillState } from '@/lib/cross-trainer/fill';
 import {
-  PAIR_STATES, pairDistCapped, pairFrameData, pairGoals, pairInsertNames, pairPins,
+  PAIR_HISTOGRAM, PAIR_STATES, PSEUDO_PAIR_HISTOGRAM,
+  pairDistCapped, pairFrameData, pairGoals, pairInsertNames, pairPins,
   pairShallowHistogram, randomPairCoord, samplePairCoord, type PairCoord, type PairFrame,
 } from '@/lib/cross-trainer/pair';
 
 /** or18's published prefixes (the layers this file enumerates). */
 const PUBLISHED_PAIR = [17, 255, 3102, 35217, 367070, 3184390];
 const PUBLISHED_PSEUDO = [68, 816, 9256, 103681, 1012687, 7689281];
-/** Full histograms, measured by exhaustive BFS over the whole coordinate (see PAIR_FULL_BFS). */
-const FULL_PAIR = [...PUBLISHED_PAIR, 18621816, 41028188, 9746797, 3868];
-const FULL_PSEUDO = [...PUBLISHED_PSEUDO, 32089788, 30868369, 1216774];
+/**
+ * Full histograms, measured by the exhaustive BFS below. They live in ./pair now (both this file
+ * and /scramble/stats read them), so the prefix check here doubles as a check that the published
+ * six entries really are the head of the shipped array.
+ */
+const FULL_PAIR = [...PAIR_HISTOGRAM];
+const FULL_PSEUDO = [...PSEUDO_PAIR_HISTOGRAM];
 
 function lcg(seed: number): () => number {
   let s = seed >>> 0;
