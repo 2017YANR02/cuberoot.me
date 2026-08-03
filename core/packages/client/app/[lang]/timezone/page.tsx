@@ -37,6 +37,7 @@ import {
   type WallParts,
 } from '@cuberoot/shared/tz';
 import { isPopularZone, zoneIso2, zoneLabel, zoneOptions, zoneSearchTerms } from '@/lib/tz-zones';
+import DiscordStamps from './_components/DiscordStamps';
 import './timezone.css';
 
 const STORE_KEY = 'cuberoot-timezone.v1';
@@ -341,6 +342,9 @@ function TimezonePage() {
           {copied ? tr({ zh: '已复制', en: 'Copied' }) : tr({ zh: '复制各地时间', en: 'Copy all times' })}
         </button>
       </div>
+
+      {/* ── Discord 时间码 ── */}
+      <DiscordStamps at={baseAt} now={now} homeTz={home} />
 
       {/* ── 一整天的对照条 ── */}
       <section className="tz-strip-section">
