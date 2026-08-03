@@ -25,6 +25,8 @@ interface Props {
   invites: CalEvent[];
   onPickDate: (ms: number) => void;
   onToggle: (id: number) => void;
+  /** 新建日程(Google 那个左上角的「创建」) */
+  onCreate: () => void;
   onAdd: () => void;
   onRename: (id: number, name: string) => void;
   onRecolor: (id: number, color: string) => void;
@@ -58,6 +60,12 @@ export default function Sidebar(props: Props) {
 
   return (
     <aside className="cal-sidebar">
+      {/* Google 把「创建」放在左栏最上面,不是右下角的悬浮钮 —— 那个只在窄屏留着。 */}
+      <button type="button" className="cal-create-btn" onClick={props.onCreate}>
+        <Plus size={20} aria-hidden />
+        {tr({ zh: '创建', en: 'Create' })}
+      </button>
+
       <div className="cal-mini">
         <div className="cal-mini-head">
           <span className="cal-mini-title">{monthLabel}</span>
