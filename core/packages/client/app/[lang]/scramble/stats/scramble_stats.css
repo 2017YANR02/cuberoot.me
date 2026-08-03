@@ -1010,6 +1010,17 @@ a.scramble-timeline-scramble:hover {
   line-height: 1.7;
 }
 
+/* 精确集的状态列表:行号占一个等宽的窄列,免得两位数把后面的图顶得参差不齐。 */
+.scramble-stats-exact-case-no {
+  flex-shrink: 0;
+  min-width: 2.4em;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  line-height: 1.6;
+  font-variant-numeric: tabular-nums;
+}
+
 .scramble-stats-exact-zero {
   color: var(--muted-foreground);
 }
