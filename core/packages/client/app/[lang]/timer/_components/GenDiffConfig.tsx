@@ -53,8 +53,20 @@ function spans(xs: number[]): Array<[number, number]> {
 const stagesOfMethod = (method: string): string[] =>
   uiStagesOf(method).filter((s) => canTrain(dataVariantOfStage(method, s), s));
 
+/**
+ * 换方法 / 换阶段时一并归零的两项。**槽位必须跟着清**:槽序号在阶段之间不通用(XCross 配对有 12
+ * 个有序槽对,砖只有 4 个块),留着旧值会让面板显示「最优槽」、`trainerSpecOf` 却按定槽生成 ——
+ * 难度上限还跟着变(砖定槽到 8 步、最优槽只到 7),而用户在下拉里根本点不回来:「最优槽」已经是
+ * 当前选中项,再点一次不触发 change。
+ */
+const RESET = { genDiffSteps: [] as number[], genDiffSlot: SLOT_BEST };
+
 export default function GenDiffConfig({ isZh, settings, updateSettings, toggleSlot }: Props) {
-  const methods = useMemo(() => uiVariantOptions((dv) => trainerStagesOf(dv).length > 0), []);
+  // 方法有没有阶段,判据只有一个:**下拉真能列出来的**阶段数。用引擎侧的 trainerStagesOf 判会留
+  // 一个缺口 —— 阶段键没登记进 VARIANT_STAGES 的话,方法照样出现、阶段下拉却是空的,于是 caps
+  // 为 null、整个难度区悄悄消失,而引擎侧的测试全绿。
+  const methods = useMemo(() => uiVariantOptions((dv) => trainerStagesOf(dv).length > 0)
+    .filter((m) => stagesOfMethod(m).length > 0), []);
   const storedMethod = uiVariantOf(settings.genDiffVariant);
   const method = methods.includes(storedMethod) ? storedMethod : methods[0];
   const stages = useMemo(() => stagesOfMethod(method), [method]);
@@ -72,7 +84,7 @@ export default function GenDiffConfig({ isZh, settings, updateSettings, toggleSl
   // 存的方法/阶段不在支持列表里(旧存档 / 从真题筛那边带过来的组合)→ 回退到能生成的第一项。
   useEffect(() => {
     if (variant !== settings.genDiffVariant || stage !== settings.genDiffStage) {
-      updateSettings({ genDiffVariant: variant, genDiffStage: stage, genDiffSteps: [] });
+      updateSettings({ genDiffVariant: variant, genDiffStage: stage, ...RESET });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [variant, stage]);
@@ -85,7 +97,10 @@ export default function GenDiffConfig({ isZh, settings, updateSettings, toggleSl
   // 刻度轴到「已知存在的最深」(上帝之数下界),但不是每一格都出得来:多底色 / 最优槽取的是
   // 多个帧的最小值,深档要所有帧同时深,存在但撞不上。撞不上的里头又分两种 —— 整档能列全的
   // (六色底十字 8 步共 40 个、六色底 XCross 10 步共 438 个)照样能出,其余置灰。见 reach.ts。
-  const slotMode = showSlots && settings.genDiffSlot >= 0 ? 'fixed' : 'best';
+  // 越界的槽序号一律按「最优槽」算,不按定槽算 —— 下拉里没有那一项,所以它显示的就是「最优槽」,
+  // 判成定槽就会让显示和真去生成的对不上(而且用户点不回来:当前选中项已经是它了)。
+  const slot = settings.genDiffSlot >= 0 && settings.genDiffSlot < slotNames.length ? settings.genDiffSlot : SLOT_BEST;
+  const slotMode = showSlots && slot >= 0 ? 'fixed' : 'best';
   const mMin = caps ? caps.range[0] : 0;
   const bounds = caps
     ? trainerDepthBounds(variant, stage, faces.length, slotMode, caps.range[1], caps.range[0])
@@ -150,7 +165,7 @@ export default function GenDiffConfig({ isZh, settings, updateSettings, toggleSl
                     onChange={(m) => {
                       const first = stagesOfMethod(m)[0];
                       updateSettings({
-                        genDiffVariant: dataVariantOfStage(m, first), genDiffStage: first, genDiffSteps: [],
+                        genDiffVariant: dataVariantOfStage(m, first), genDiffStage: first, ...RESET,
                       });
                     }}
                     isZh={isZh}
@@ -162,7 +177,7 @@ export default function GenDiffConfig({ isZh, settings, updateSettings, toggleSl
                   value={stage}
                   options={stages}
                   onChange={(s) => updateSettings({
-                    genDiffVariant: dataVariantOfStage(method, s), genDiffStage: s, genDiffSteps: [],
+                    genDiffVariant: dataVariantOfStage(method, s), genDiffStage: s, ...RESET,
                   })}
                   isZh={isZh}
                   label={stageLabel}
@@ -171,11 +186,16 @@ export default function GenDiffConfig({ isZh, settings, updateSettings, toggleSl
                 {showSlots && (
                   <select
                     className="settings-row-control-select"
-                    value={settings.genDiffSlot}
+                    value={slot}
                     onChange={(e) => updateSettings({ genDiffSlot: Number(e.target.value) })}
-                    aria-label={tr({ zh: 'F2L 槽位', en: 'F2L slot' })}
+                    // 砖挑的是块(角),不是 F2L 槽 —— 名字同形(FR/FL/BL/BR),含义不同。
+                    aria-label={stage === 'block222'
+                      ? tr({ zh: '块', en: 'Block' })
+                      : tr({ zh: 'F2L 槽位', en: 'F2L slot' })}
                   >
-                    <option value={SLOT_BEST}>{tr({ zh: '最优槽', en: 'Best slot' })}</option>
+                    <option value={SLOT_BEST}>
+                      {stage === 'block222' ? tr({ zh: '最优块', en: 'Best block' }) : tr({ zh: '最优槽', en: 'Best slot' })}
+                    </option>
                     {slotNames.map((name, i) => (
                       <option key={name} value={i}>{name}</option>
                     ))}
