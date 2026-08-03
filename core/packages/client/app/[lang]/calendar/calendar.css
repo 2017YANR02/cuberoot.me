@@ -46,7 +46,7 @@ html:root:has(.cal-page) {
   --primary-foreground: #ffffff;
   --destructive: #d93025;
   --destructive-foreground: #ffffff;
-  --cal-today-wash: color-mix(in srgb, #1a73e8 6%, transparent);
+  --cal-today-wash: color-mix(in srgb, #1a73e8 4%, transparent);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -696,15 +696,36 @@ html:root[data-theme=dark]:has(.cal-page) {
 /* 嘉宾 */
 .cal-guests { display: flex; flex-direction: column; gap: 6px; }
 
+/* 弹窗里的下拉:ListSelect 是全站共用件,只在这里改它的观感,别动全局。
+   Google 那里下拉平时也是一行字加个小箭头,不带框。 */
+.cal-modal .list-select-trigger {
+  border-color: transparent;
+  background: transparent;
+}
+
+.cal-modal .list-select-trigger:hover {
+  background: color-mix(in srgb, var(--foreground) 7%, transparent);
+}
+
+.cal-modal .list-select-trigger:focus-visible { border-color: var(--accent); }
+
+/* 和弹窗里其它输入件同一副脾气:静止无框,悬停浮一层底,聚焦才出蓝框。 */
 .cal-guest-input {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 8px;
-  border: 1px solid var(--input);
+  padding: 6px 8px;
+  border: 1px solid transparent;
   border-radius: 8px;
-  background: var(--card);
+  background: transparent;
   color: var(--muted-foreground);
+}
+
+.cal-guest-input:hover { background: color-mix(in srgb, var(--foreground) 7%, transparent); }
+
+.cal-guest-input:focus-within {
+  background: color-mix(in srgb, var(--foreground) 7%, transparent);
+  border-color: var(--accent);
 }
 
 .cal-guest-field {
@@ -914,7 +935,6 @@ html:root[data-theme=dark]:has(.cal-page) {
   border: none;
   background: var(--primary);
   color: var(--primary-foreground);
-  display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
@@ -1094,6 +1114,9 @@ html:root[data-theme=dark]:has(.cal-page) {
 /* 月视图里一格一行,时间和标题排一行更省空间 */
 .cal-grid .fc-daygrid-event .cal-chip,
 .cal-grid .fc-list-event .cal-chip { flex-direction: row; gap: 4px; align-items: baseline; }
+/* 这两处是一行「● 时间 标题」,时间要回到标题前面(DOM 里标题在前,见 CalendarGrid) */
+.cal-grid .fc-daygrid-event .cal-chip-time,
+.cal-grid .fc-list-event .cal-chip-time { order: -1; }
 .cal-grid .fc-daygrid-event .cal-chip-loc { display: none; }
 
 /* dot-event 的色点:标记事件属于哪个日历,块本身不上色时全靠它 */
