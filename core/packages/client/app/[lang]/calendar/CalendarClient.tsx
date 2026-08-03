@@ -29,11 +29,12 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import { usePopoverDismiss } from '@/hooks/usePopoverDismiss';
 import { tr, useLang } from '@/i18n/tr';
 import { localZone, isValidZone, formatOffset, zoneOffsetMinutes } from '@cuberoot/shared/tz';
-import { parseIcs, eventsToIcs, type CalEvent, type EditScope } from '@cuberoot/shared/calendar';
+import { eventsToIcs, type CalEvent, type EditScope } from '@cuberoot/shared/calendar';
 import { colorHex, readableInk } from '@/lib/calendar-colors';
 import { zoneLabel, zoneOptions, zoneSearchTerms } from '@/lib/tz-zones';
 import { expandRange, parseOccurrenceKey, useCalendarStore } from '@/lib/calendar-store';
-import { importEvents, exportIcs } from '@/lib/calendar-api';
+import { exportIcs } from '@/lib/calendar-api';
+import { importCalendarFile, type ImportProgress } from './_lib/import';
 import CalendarGrid, { type GridHandle, type GridRange } from './_components/CalendarGrid';
 import EventDialog, { type DialogDraft } from './_components/EventDialog';
 import ShareDialog from './_components/ShareDialog';
@@ -128,6 +129,8 @@ export default function CalendarClient() {
   const [scopeAsk, setScopeAsk] = useState<{ mode: 'edit' | 'delete'; run: (s: EditScope) => void } | null>(null);
   const [pendingMove, setPendingMove] = useState<PendingMove | null>(null);
   const [toast, setToast] = useState('');
+  /** 导入中的进度;非 null = 正在导。几千条要跑十几批,没进度会以为卡死了。 */
+  const [importing, setImporting] = useState<ImportProgress | null>(null);
 
   // ── 加载 ────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -336,28 +339,35 @@ export default function CalendarClient() {
 
   // ── 导入 / 导出 ──────────────────────────────────────────────────────────
   const onImportFile = useCallback(async (file: File) => {
-    const text = await file.text();
-    const parsed = parseIcs(text, displayTz);
-    if (parsed.length === 0) {
-      setToast(tr({ zh: '没读出任何日程', en: 'No events found in that file' }));
-      return;
-    }
+    setImporting({ done: 0, total: 0 });
     try {
-      const r = await importEvents(defaultCalendarId, parsed.map((p) => ({
-        title: p.title, description: p.description, location: p.location,
-        allDay: p.allDay, start: p.start, end: p.end, tz: p.tz,
-        rrule: p.rrule, exdates: p.exdates, reminders: p.reminders,
-      })));
+      const r = await importCalendarFile({
+        file,
+        tz: displayTz,
+        calendars,
+        defaultCalendarId,
+        onProgress: setImporting,
+      });
+      if (r.added === 0 && r.failed === 0) {
+        setToast(tr({ zh: '没读出任何日程', en: 'No events found in that file' }));
+        return;
+      }
       await store.reload();
+      // 落进哪几个日历要说 —— 一份 Google 导出会铺开成好几列,不讲一声会以为没导进来。
+      const into = r.calendars.length
+        ? tr({ zh: ` → ${r.calendars.join('、')}`, en: ` → ${r.calendars.join(', ')}` })
+        : '';
       setToast(tr({
-        zh: `导入 ${r.added} 条${r.failed ? `,${r.failed} 条跳过` : ''}`,
-        en: `Imported ${r.added}${r.failed ? `, skipped ${r.failed}` : ''}`,
+        zh: `导入 ${r.added} 条${r.failed ? `,${r.failed} 条跳过` : ''}${into}`,
+        en: `Imported ${r.added}${r.failed ? `, skipped ${r.failed}` : ''}${into}`,
       }));
     } catch (e) {
       setToast((e as Error).message);
+    } finally {
+      setImporting(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [defaultCalendarId, displayTz]);
+  }, [defaultCalendarId, displayTz, calendars]);
 
   const onExport = useCallback(async () => {
     try {
@@ -607,22 +617,38 @@ export default function CalendarClient() {
             onChange={(v) => store.setPrefs({ showDeclined: v })}
           />
           <div className="cal-pop-actions">
-            <button type="button" className="cal-btn" onClick={() => fileRef.current?.click()}>
+            <button
+              type="button"
+              className="cal-btn"
+              disabled={importing != null}
+              onClick={() => fileRef.current?.click()}
+            >
               <Upload size={15} aria-hidden />
-              {tr({ zh: '导入 .ics', en: 'Import .ics' })}
+              {/* total 还是 0 = 文件刚点开、zip 还没拆完,这时候报「0/0」像是坏了。 */}
+              {importing && importing.total > 0
+                ? tr({ zh: `导入中 ${importing.done}/${importing.total}`, en: `Importing ${importing.done}/${importing.total}` })
+                : importing
+                  ? tr({ zh: '读取中…', en: 'Reading…' })
+                  : tr({ zh: '导入 .ics / .zip', en: 'Import .ics / .zip' })}
             </button>
             <button type="button" className="cal-btn" onClick={() => void onExport()}>
               <Download size={15} aria-hidden />
               {tr({ zh: '导出 .ics', en: 'Export .ics' })}
             </button>
           </div>
+          <p className="cal-pop-hint">
+            {tr({
+              zh: 'Google 日历:设置 → 导入和导出 → 导出,下载到的 .zip 不用解压,里面每个日历会各自成一列。',
+              en: 'Google Calendar: Settings → Import & export → Export. Pick the downloaded .zip as-is — each calendar inside lands in its own list.',
+            })}
+          </p>
         </div>
       )}
 
       <input
         ref={fileRef}
         type="file"
-        accept=".ics,text/calendar"
+        accept=".ics,.zip,text/calendar,application/zip"
         className="cal-file-input"
         onChange={(e) => {
           const f = e.target.files?.[0];

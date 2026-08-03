@@ -360,7 +360,12 @@ export interface ParsedIcsEvent {
   rrule: string;
   exdates: number[];
   reminders: number[];
+  /** 原文件里的 UID,用来把覆盖行认领回它的主事件。我们自己不存。 */
+  uid: string;
 }
+
+/** 一次导入请求最多带多少条。客户端按它切批,服务端按它拒收 —— 同一个数,免得静默截断。 */
+export const ICS_IMPORT_BATCH = 500;
 
 function unescapeIcs(s: string): string {
   return s.replace(/\\([\\;,nN])/g, (_, c: string) => (c === 'n' || c === 'N' ? '\n' : c));
@@ -441,7 +446,11 @@ function triggerToMinutes(v: string): number | null {
 export function parseIcs(text: string, fallbackTz: string): ParsedIcsEvent[] {
   const lines = unfold(text);
   const out: ParsedIcsEvent[] = [];
-  let cur: Partial<ParsedIcsEvent> & { exdates: number[]; reminders: number[] } | null = null;
+  /** 覆盖行(带 RECURRENCE-ID 的那种)先攒着,等整份读完再认领主事件。event 为 null = 那次被删了。 */
+  const overrides: { at: number; uid: string; event: ParsedIcsEvent | null }[] = [];
+  let cur: (Partial<ParsedIcsEvent> & {
+    exdates: number[]; reminders: number[]; cancelled?: boolean; recurrenceId?: number;
+  }) | null = null;
   let inAlarm = false;
   let depth = 0;
 
@@ -461,12 +470,17 @@ export function parseIcs(text: string, fallbackTz: string): ParsedIcsEvent[] {
       const kind = prop.value.trim().toUpperCase();
       if (kind === 'VALARM') { inAlarm = false; continue; }
       if (kind === 'VEVENT') {
-        if (cur && cur.start != null) {
+        // STATUS:CANCELLED 是「这条已经取消」的墓碑,Google 导出里混着一堆。收进来就成了
+        // 一堆本该消失的日程。带 RECURRENCE-ID 的取消例外 —— 那是「删掉这一次」,
+        // 它得变成主事件上的 EXDATE,直接扔掉的话那一次会照常冒出来。
+        if (cur && cur.start != null && cur.cancelled && cur.recurrenceId != null) {
+          overrides.push({ at: cur.recurrenceId, uid: cur.uid || '', event: null });
+        } else if (cur && cur.start != null && !cur.cancelled) {
           const start = cur.start;
           const end = cur.end != null && cur.end > start
             ? cur.end
             : start + (cur.allDay ? 86_400_000 : 3_600_000);
-          out.push({
+          const ev: ParsedIcsEvent = {
             title: cur.title || '',
             description: cur.description || '',
             location: cur.location || '',
@@ -477,7 +491,10 @@ export function parseIcs(text: string, fallbackTz: string): ParsedIcsEvent[] {
             rrule: cur.rrule || '',
             exdates: cur.exdates,
             reminders: [...new Set(cur.reminders)].sort((a, b) => a - b).slice(0, 5),
-          });
+            uid: cur.uid || '',
+          };
+          if (cur.recurrenceId != null) overrides.push({ at: cur.recurrenceId, uid: ev.uid, event: ev });
+          else out.push(ev);
         }
         cur = null;
         continue;
@@ -496,6 +513,16 @@ export function parseIcs(text: string, fallbackTz: string): ParsedIcsEvent[] {
     if (depth > 0) continue;
 
     switch (prop.name) {
+      case 'UID': cur.uid = prop.value.trim(); break;
+      case 'STATUS': cur.cancelled = prop.value.trim().toUpperCase() === 'CANCELLED'; break;
+      // RANGE=THISANDFUTURE(「这一次及以后」)按单次覆盖处理:那一次改对了,后面几次保持原样。
+      // Google 改「以后所有」时是拆成新 UID 另起一条序列,不走这个参数,所以对导入 Google
+      // 的场景没影响;Apple / Outlook 的文件会在这里少改几次。
+      case 'RECURRENCE-ID': {
+        const t = icsTimeToMs(prop.value, prop.params, cur.tz || fallbackTz);
+        if (t) cur.recurrenceId = t.ms;
+        break;
+      }
       case 'SUMMARY': cur.title = unescapeIcs(prop.value).slice(0, 300); break;
       case 'DESCRIPTION': cur.description = unescapeIcs(prop.value).slice(0, 5000); break;
       case 'LOCATION': cur.location = unescapeIcs(prop.value).slice(0, 300); break;
@@ -530,5 +557,30 @@ export function parseIcs(text: string, fallbackTz: string): ParsedIcsEvent[] {
       default: break;
     }
   }
+
+  // 覆盖行归位。ICS 里「改了/删了重复日程的某一次」是另起一条 VEVENT + RECURRENCE-ID 指认
+  // 是哪一次,主事件那边并不写 EXDATE。照单全收的话那一次会出现两遍(主事件按 RRULE 排一次,
+  // 覆盖行自己再排一次),所以这里替主事件把它 EXDATE 掉,改动过的那条留成独立日程。
+  const masters = new Map<string, ParsedIcsEvent>();
+  for (const e of out) if (e.uid && e.rrule) masters.set(e.uid, e);
+  for (const o of overrides) {
+    const master = masters.get(o.uid);
+    if (master) master.exdates.push(o.at);
+    // 认不出主事件(只导出了片段)时,删除标记无处安放,只能丢掉;改动过的那条照收。
+    if (o.event) out.push({ ...o.event, rrule: '' });
+  }
+  for (const e of out) if (e.exdates.length) e.exdates = [...new Set(e.exdates)].sort((a, b) => a - b);
+
   return out;
+}
+
+/** 取 X-WR-CALNAME —— 导出方给这份日历起的名字,导入时拿它当目标日历名。 */
+export function icsCalendarName(text: string): string {
+  for (const line of unfold(text)) {
+    const prop = parseProp(line);
+    if (prop?.name === 'X-WR-CALNAME') return unescapeIcs(prop.value).trim().slice(0, 60);
+    // 名字在头部;真进了 VEVENT 就别再往下翻整份文件了。
+    if (prop?.name === 'BEGIN' && prop.value.trim().toUpperCase() === 'VEVENT') break;
+  }
+  return '';
 }
