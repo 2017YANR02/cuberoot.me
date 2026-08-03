@@ -716,6 +716,9 @@ html:root[data-theme=dark]:has(.cal-page) {
 
 /* 分享弹窗 */
 .cal-share-field { display: flex; flex-direction: column; gap: 6px; }
+/* column flex 默认 stretch,开关会被拉成整行宽;贴合内容,别钉 min-width。
+   只管开关 —— 下面那段说明文字要占满宽才好换行。 */
+.cal-share-field > .pill-toggle { align-self: flex-start; }
 
 .cal-share-cals { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 
@@ -970,6 +973,24 @@ html:root[data-theme=dark]:has(.cal-page) {
   font-weight: 600;
 }
 
+/* navLinks 把表头和月格里的日期变成了 <a>:它是「只看这一天」的按钮,不是正文链接,
+   所以去掉下划线,改成 Google 那种悬停有底色的圆。 */
+.cal-grid .fc a.fc-col-header-cell-cushion,
+.cal-grid .fc a.fc-daygrid-day-number { text-decoration: none; }
+
+.cal-grid .fc a.fc-col-header-cell-cushion:hover .cal-dayhead-num {
+  background: color-mix(in srgb, var(--foreground) 12%, transparent);
+}
+
+.cal-grid .fc a.fc-col-header-cell-cushion:hover .cal-dayhead-num.is-today {
+  background: color-mix(in srgb, var(--accent) 86%, black);
+}
+
+.cal-grid .fc a.fc-daygrid-day-number:hover {
+  text-decoration: none;
+  color: var(--accent);
+}
+
 /* 今天那一列的表头整体已被上面的规则染成 accent 色;圆圈里的字要跟着背景走。 */
 .cal-grid .fc .fc-day-today .fc-col-header-cell-cushion .cal-dayhead-num.is-today {
   color: var(--accent-foreground);
@@ -1038,7 +1059,27 @@ html:root[data-theme=dark]:has(.cal-page) {
 
 .cal-grid .fc-event:has(.cal-chip.is-pending) .cal-chip { color: var(--foreground); }
 
-.cal-grid .fc .fc-timegrid-now-indicator-line { border-width: 2px 0 0; }
+/* 当前时刻:Google 画的是「一条实线 + 线头一个实心圆点」,圆点在列内。
+   FullCalendar 默认在时间轴那侧摆一个三角箭头,形状和位置都不是这个意思。 */
+.cal-grid .fc .fc-timegrid-now-indicator-arrow { display: none; }
+
+.cal-grid .fc .fc-timegrid-now-indicator-line {
+  border-width: 2px 0 0;
+  border-top-style: solid;
+}
+
+.cal-grid .fc .fc-timegrid-now-indicator-line::before {
+  content: '';
+  position: absolute;
+  /* 线是 border-top,元素自身高 0:圆心要落在 0~2px 这条线的中点(1px)上,
+     所以 12px 的点往上挪 5px。 */
+  top: -5px;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--fc-now-indicator-color);
+}
 
 .cal-grid .fc .fc-multimonth {
   border: none;
