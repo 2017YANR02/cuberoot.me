@@ -41,6 +41,8 @@ interface Props {
   initialDate: number;
   events: FcEvent[];
   tz: string;
+  /** 全天行左槽那个「GMT+08」 */
+  tzLabel: string;
   isZh: boolean;
   hour24: boolean;
   weekStart: 0 | 1;
@@ -114,6 +116,9 @@ const CalendarGrid = forwardRef<GridHandle, Props>(function CalendarGrid(props, 
         slotDuration="00:30:00"
         snapDuration="00:15:00"
         allDaySlot
+        // Google 在全天那行的左槽写的是网格所在时区的偏移(GMT+08),不是「全天」——
+        // 一屏之内唯一说明「这些时间按哪儿算」的地方,而我们还带时区选择器,更该有。
+        allDayContent={() => props.tzLabel}
         slotLabelFormat={{ hour: props.hour24 ? '2-digit' : 'numeric', minute: '2-digit', hour12: !props.hour24, omitZeroMinute: !props.hour24 }}
         // 24 小时制不能省整点的分钟:中文 locale 会把 12:00 缩成「12时」,Google 那里写的是 12:00。
         // 12 小时制照 Google 省掉(12 PM)。

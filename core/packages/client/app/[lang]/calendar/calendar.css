@@ -1,12 +1,109 @@
-/* /calendar —— Google 日历那副样子,但配色全部走站内 token(深浅主题都跟)。
+/* /calendar —— Google 日历那副样子。
  *
- * 两部分:
+ * 三部分:
+ *   0. 配色钉死成 Google 的(见下一段),token 名不变;
  *   1. 页面骨架(顶栏 / 左栏 / 弹窗 / 芯片),纯自有类名 cal-*;
  *   2. FullCalendar 的皮肤覆盖(.cal-grid .fc-*)—— 它自带的 CSS 变量能一次性接管
  *      边框、今日底色、now 指示线,所以这里改的是变量,不是逐条压样式。
  *
  * 衍生色一律 color-mix,不手写 rgba;深浅两套靠 token 自动翻。
  */
+
+/* ── 配色:钉死成 Google 日历那一套 ──────────────────────────────────────
+ *
+ * 这一页不跟站内 6 套配色主题走。事件色本来就是 Google 的 11 色原始 hex
+ * (lib/calendar-colors),chrome 再跟着暖色配色跑,整页就是暖底配冷块 —— 而且
+ * 「和 Google 一样」是这页的产品目标,不是可配置项。
+ *
+ * `html:root:has(.cal-page)` = (0,2,1),压过配色块 `:root[data-palette]` = (0,2,0),
+ * 所以任何配色都渗不进来;深浅仍跟用户的 ThemeToggle / 系统偏好,因为 Google 自己
+ * 也有明暗两套。token 名照旧,所以下面几百行样式和 FullCalendar 皮肤一行都不用改。
+ *
+ * 色值取自 Google 日历网页版:蓝 #1a73e8 / 暗色 #a8c7fa,线 #dadce0 / #444746,
+ * now 指示线红 #d93025 / #f28b82。
+ */
+html:root:has(.cal-page) {
+  color-scheme: light;
+  --background: #ffffff;
+  --card: #ffffff;
+  --card-foreground: #1f1f1f;
+  --popover: #ffffff;
+  --popover-foreground: #1f1f1f;
+  --foreground: #1f1f1f;
+  --muted: #f1f3f4;
+  --muted-foreground: #5f6368;
+  --faint-foreground: #80868b;
+  --secondary: #f1f3f4;
+  --secondary-foreground: #1f1f1f;
+  --border-default: #dadce0;
+  --border-strong: #bdc1c6;
+  --input: #dadce0;
+  --ring: #1a73e8;
+  --accent: #1a73e8;
+  --accent-foreground: #ffffff;
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
+  --primary: #1a73e8;
+  --primary-foreground: #ffffff;
+  --destructive: #d93025;
+  --destructive-foreground: #ffffff;
+  --cal-today-wash: color-mix(in srgb, #1a73e8 6%, transparent);
+}
+
+@media (prefers-color-scheme: dark) {
+  html:root:not([data-theme=light]):has(.cal-page) {
+    color-scheme: dark;
+    --background: #131314;
+    --card: #1e1f20;
+    --card-foreground: #e3e3e3;
+    --popover: #282a2c;
+    --popover-foreground: #e3e3e3;
+    --foreground: #e3e3e3;
+    --muted: #28292a;
+    --muted-foreground: #9aa0a6;
+    --faint-foreground: #80868b;
+    --secondary: #28292a;
+    --secondary-foreground: #e3e3e3;
+    --border-default: #444746;
+    --border-strong: #5f6368;
+    --input: #444746;
+    --ring: #a8c7fa;
+    --accent: #a8c7fa;
+    --accent-foreground: #062e6f;
+    --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+    --primary: #a8c7fa;
+    --primary-foreground: #062e6f;
+    --destructive: #f28b82;
+    --destructive-foreground: #131314;
+    --cal-today-wash: transparent;
+  }
+}
+
+html:root[data-theme=dark]:has(.cal-page) {
+  color-scheme: dark;
+  --background: #131314;
+  --card: #1e1f20;
+  --card-foreground: #e3e3e3;
+  --popover: #282a2c;
+  --popover-foreground: #e3e3e3;
+  --foreground: #e3e3e3;
+  --muted: #28292a;
+  --muted-foreground: #9aa0a6;
+  --faint-foreground: #80868b;
+  --secondary: #28292a;
+  --secondary-foreground: #e3e3e3;
+  --border-default: #444746;
+  --border-strong: #5f6368;
+  --input: #444746;
+  --ring: #a8c7fa;
+  --accent: #a8c7fa;
+  --accent-foreground: #062e6f;
+  --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+  --primary: #a8c7fa;
+  --primary-foreground: #062e6f;
+  --destructive: #f28b82;
+  --destructive-foreground: #131314;
+  --cal-today-wash: transparent;
+}
 
 .cal-page {
   display: flex;
@@ -724,7 +821,32 @@
 
 /* ── 悬浮新建 + toast ─────────────────────────────────────────────────── */
 
+/* Google 的「创建」:左栏最上面一颗抬起来的胶囊,不是描边按钮。 */
+.cal-create-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  margin-bottom: 14px;
+  padding: 12px 22px 12px 14px;
+  border: none;
+  border-radius: 16px;
+  background: var(--card);
+  color: var(--foreground);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow:
+    0 1px 2px color-mix(in srgb, var(--foreground) 20%, transparent),
+    0 1px 3px 1px color-mix(in srgb, var(--foreground) 10%, transparent);
+}
+
+.cal-create-btn:hover { background: color-mix(in srgb, var(--foreground) 8%, var(--card)); }
+
 .cal-fab {
+  /* 左栏已经有「创建」了,宽屏再挂一颗悬浮钮就是两个入口做同一件事;窄屏左栏收成
+     抽屉,那颗才是唯一入口(Google 手机端同样是悬浮钮)。 */
+  display: none;
   position: fixed;
   bottom: 22px;
   right: max(16px, calc((100vw - 1400px) / 2));
@@ -791,7 +913,9 @@
   --fc-border-color: var(--border-default);
   --fc-page-bg-color: var(--background);
   --fc-neutral-bg-color: var(--muted);
-  --fc-today-bg-color: color-mix(in srgb, var(--accent) 10%, transparent);
+  /* Google 只用表头那个蓝圆点名今天,列身几乎不染(暗色下完全不染)—— 整列刷一层
+     accent 会把当天的事件块压得看不清,也不是 Google 的样子。 */
+  --fc-today-bg-color: var(--cal-today-wash);
   --fc-now-indicator-color: var(--destructive);
   --fc-event-border-color: transparent;
   --fc-list-event-hover-bg-color: color-mix(in srgb, var(--foreground) 6%, transparent);
@@ -931,6 +1055,8 @@
 
 @media (max-width: 900px) {
   .cal-menu-btn { display: inline-flex; }
+  /* 左栏收进抽屉了,「创建」得有个够得着的入口 */
+  .cal-fab { display: flex; }
 
   .cal-sidebar {
     position: fixed;
