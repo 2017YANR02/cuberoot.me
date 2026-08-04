@@ -714,16 +714,16 @@ export default function ReconstructReport({
 }
 
 /**
- * 「这把没录姿态」—— 只在**确实猜过**的时候说一句。
+ * 「这把没录姿态」—— 只在**确实还有拿不准的地方**时说一句。
  *
  * 陀螺仪装在中心核里,而核心转没转是「这一对相对面是一个 `M` 还是两手真转」「这儿
- * 有没有转体」的唯一证据(见 `_lib/reconstruct/core_track.ts`)。没录姿态的把只能
- * 按时间猜,而猜错**一对**的后果不是少一个记号:那一对之后每一手都被写在一个人没
- * 待过的系里,整段读起来就不像公式了。
+ * 有没有转体」的唯一证据(见 `_lib/reconstruct/core_track.ts`)。没录姿态的把靠
+ * 「中心块必须回家」这条约束来配对中层 —— 大多数情况够用,但配不上的那几对就只能
+ * 按两手真转写,而它们本来也可能是一个中层。
  *
- * 这一行的存在理由是**别默默降级**:乱码和正常输出长得一样,用户没有别的办法知道
- * 这段是猜的。所以条件卡得很紧 —— 这把没有姿态流,**并且**确实遇到过要猜的相对面
- * (`blindPairs > 0`)。一把没有中层的解不会看到它。
+ * 这一行的存在理由是**别默默降级**:少认一个中层和正常输出长得一样,用户没有别的
+ * 办法知道。所以条件卡得很紧 —— 这把没有姿态流,**并且**确实有配不上的相对面
+ * (`blindPairs > 0`)。中层都配上了的把不会看到它。
  */
 function NoGyroNotice() {
   const on = useSettings().recordGyro;
@@ -733,12 +733,12 @@ function NoGyroNotice() {
       <span>
         {on
           ? tr({
-            zh: '这把没录姿态,中层和转体只能按时间猜 —— 现在已经开着了,下一把就准。',
-            en: 'No orientation was recorded for this solve, so slices and rotations had to be guessed from timing. It is on now — the next solve will be exact.',
+            zh: '这把没录姿态,还有几处相对面判不准是不是中层 —— 现在已经开着了,下一把就准。',
+            en: 'No orientation was recorded for this solve, so a few opposite-face pairs could not be confirmed as slices. It is on now — the next solve will be exact.',
           })
           : tr({
-            zh: '这把没录姿态,中层和转体只能按时间猜 —— 猜错一处,后面就不像公式了。',
-            en: 'No orientation was recorded for this solve, so slices and rotations had to be guessed from timing — one wrong guess and the rest stops looking like an alg.',
+            zh: '这把没录姿态,还有几处相对面判不准是不是中层 —— 转体也一个都推不出来。',
+            en: 'No orientation was recorded for this solve, so a few opposite-face pairs could not be confirmed as slices — and rotations cannot be recovered at all.',
           })}
       </span>
       {!on && (

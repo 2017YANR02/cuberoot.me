@@ -105,9 +105,9 @@ export interface ReconTextResult {
    */
   rotations: HumanRotation[];
   /**
-   * 这把里「只能靠时间猜」的相对面对数(见 `humanize.ts` 的 `blindPairs`)。没录姿态
-   * 的把才可能非 0。UI 拿它决定要不要说一句「这段是猜的」—— 猜错一对,后面整段就
-   * 不像公式了,而用户看不出那是猜的。
+   * 这把里「配不上中层」的相对面对数(见 `humanize.ts` 的 `blindPairs`)。没录姿态
+   * 的把才可能非 0。UI 拿它决定要不要说一句「这几处判不准」—— 少认一个中层和正常
+   * 输出长得一样,用户看不出来。
    */
   blindPairs: number;
 }
