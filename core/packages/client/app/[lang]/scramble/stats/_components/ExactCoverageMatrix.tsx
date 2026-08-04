@@ -157,7 +157,7 @@ export default function ExactCoverageMatrix({ stage, slot, colors, hrefOf }: Pro
                   <span className="exact-cov-stage">{stageLabel(st, isZh)}</span>
                   {FRAME_STATES[st] && (
                     <span className="exact-cov-space">
-                      {tr({ zh: '定帧 ', en: 'frame ' })}{compactExact(FRAME_STATES[st])}
+                      {tr({ zh: '固定 ', en: 'frame ' })}{compactExact(FRAME_STATES[st])}
                     </span>
                   )}
                 </th>
@@ -328,7 +328,7 @@ export default function ExactCoverageMatrix({ stage, slot, colors, hrefOf }: Pro
         <li>
           <b className="is-na">{tr({ zh: '不适用', en: 'N/A' })}</b>
           {tr({
-            zh: '该阶段没有这个帧档,帧档下拉里也不会出现这一档',
+            zh: '该阶段没有这一档,页面上那个「固定方式」下拉里也不会出现它',
             en: 'the stage has no such frame mode; the frame picker does not offer it either',
           })}
         </li>

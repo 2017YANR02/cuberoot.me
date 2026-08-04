@@ -177,8 +177,8 @@ export default function ExactCaseList({ stage, slot, subsetKey, depth, goldenCou
       {frameParts && (
         <p className="scramble-stats-exact-note">
           {tr({
-            zh: `这一帧 = ${frameParts.zh}(同一阶段的各个帧互相共轭,分布逐档相同,挑哪一个都行;`
-              + `下面这些打乱是对这一帧的 ${depth} 步)。`,
+            zh: `这里固定的是 ${frameParts.zh}(同一阶段的各种固定法互相共轭,分布逐档相同,挑哪一个都行;`
+              + `下面这些打乱是对这一个的 ${depth} 步)。`,
             en: `This frame = ${frameParts.en} (the frames of a stage are conjugate, so every one has this same `
               + `histogram; the scrambles below are ${depth} moves for THIS frame).`,
           })}

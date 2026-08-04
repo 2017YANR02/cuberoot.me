@@ -139,9 +139,14 @@ export const EXACT_EO_STAGES: ExactStage[] = EXACT_VARIANT_STAGES.eo;
  */
 export type ExactSlot = 'unfixed' | 'fixed1' | 'adj' | 'diag';
 
+/*
+ * 中文一律不写「帧」:站内 /frame-count 那边的「帧」是视频帧,同一个字两种意思会读岔。
+ * 中文说「取最优 / 固定」,固定的是什么由 FRAME_NOTE 补在后面(`固定(一个 2×2×2)`);
+ * 英文保留 frame,代码标识符也保留(FRAME_NOTE / FRAME_STATES / ExactSlot)。
+ */
 export const SLOT_LABEL: Record<ExactSlot, Text> = {
-  unfixed: { zh: '取最优帧', en: 'Best frame' },
-  fixed1: { zh: '固定单帧', en: 'One fixed frame' },
+  unfixed: { zh: '取最优', en: 'Best frame' },
+  fixed1: { zh: '固定', en: 'One fixed frame' },
   adj: { zh: '固定相邻双槽', en: 'Fixed adjacent pair' },
   diag: { zh: '固定对角双槽', en: 'Fixed diagonal pair' },
 };
@@ -206,7 +211,11 @@ export const SLOT_OK: Record<ExactStage, ExactSlot[]> = {
   dr: ['unfixed'],
 };
 
-/** 「固定单帧」到底固定的是什么 —— 每个阶段不一样,列头写不下,落到格子里。 */
+/**
+ * 「固定」那一档到底固定的是什么 —— 每个阶段不一样,列头写不下,落到格子里。
+ * SLOT_OK 里带 `fixed1` 的阶段必须在这里有一条,否则中文那个「固定」就成了没有宾语的孤字
+ * (中文标签不写「帧」)。tests/scramble_exact_dist.test.ts 锁死这个覆盖。
+ */
 const SLOT_ONE = { zh: '一个 F2L 槽', en: 'one F2L slot' };
 const SLOT_THREE = { zh: '三个 F2L 槽', en: 'three F2L slots' };
 // F2LEO 一族的帧还多一个自由度:EO 的轴。底面定死后还剩两条(差一个 y 旋转),
@@ -884,7 +893,7 @@ export const EXACT_DIST: Record<ExactStage, StageTable> = {
           '1287282000', '2894881104', '664001160', '326976'],
         noOverlay: {
           zh: '这一格不叠真题对照:底面定死后 EO 还剩两条轴(差一个 y 旋转),本格固定一条轴,'
-            + '而真题那列出自 Rust f2leo_analyzer —— 它对两条轴取更短的那条(取最优帧那一格就是它)。'
+            + '而真题那列出自 Rust f2leo_analyzer —— 它对两条轴取更短的那条(「取最优」那一格就是它)。'
             + '差距是系统性的:固定轴均值 6.768,两轴取最短 6.495。',
           en: 'No WCA overlay here: with the bottom face fixed, EO still has two possible axes (a y rotation apart). '
             + 'This cell fixes one axis, while the empirical column comes from the Rust f2leo_analyzer, which takes '
@@ -950,7 +959,7 @@ const OOR = (zh: string, en: string) => ({ feasible: 'oor' as const, note: { zh,
 
 /** 多帧取最优要读整只魔方 —— 十字族之外几乎所有阶段的共同死因。 */
 const BEST_TOO_BIG = OOR(
-  '多帧取最优要同时知道所有帧的棋子,空间跳出商空间、直奔整只魔方(4.3×10¹⁹),穷举无从谈起',
+  '跨多个槽 / 轴 / 块取最优,要同时知道它们各自的棋子,空间跳出商空间、直奔整只魔方(4.3×10¹⁹),穷举无从谈起',
   'Taking the best over frames needs every frame\'s pieces at once, which leaves the quotient and lands on the '
   + 'whole cube (4.3×10¹⁹) — no enumeration is possible',
 );
@@ -1044,9 +1053,9 @@ const STAGE_PLAN: Partial<Record<ExactStage, PendingPlan>> = {
     best: OOR('四个块取最优,跳出商空间', 'Best over the four blocks leaves the quotient'),
   },
   f2b: {
-    frame: OOR('两个 1×2×3 = 4 个角 + 6 条棱 = 5.79×10¹²,单帧就已经够不着', 'Two 1×2×3 blocks = 4 corners + 6 edges = 5.79×10¹² — even one frame is out of reach'),
+    frame: OOR('两个 1×2×3 = 4 个角 + 6 条棱 = 5.79×10¹²,固定一对就已经够不着', 'Two 1×2×3 blocks = 4 corners + 6 edges = 5.79×10¹² — even one frame is out of reach'),
     best: OOR(
-      '一个底色两对 1×2×3 取最优,而单帧的 5.79×10¹² 就已经够不着了',
+      '一个底色两对 1×2×3 取最优,而固定一对的 5.79×10¹² 就已经够不着了',
       'Best over a colour\'s two block pairs — and even a single frame\'s 5.79×10¹² is already out of reach',
     ),
   },

@@ -1448,10 +1448,10 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
         })}
           />
         </label>
-        {/* 帧档:精确穷举集专属。按阶段动态列出有意义的档 —— 十字单色底只有一个帧(取最优
-            就是那个帧本身)、XCross 只解 1 槽(谈不上相邻/对角)、XXCross 要 2 槽(谈不上
-            固定单帧),不适用的入口直接不给,不留会算出垃圾值的选项。只剩一档时不渲染下拉。
-            「固定单帧」到底固定的是槽、轴还是块,每个阶段不同,写进选项里。 */}
+        {/* 固定方式:精确穷举集专属。按阶段动态列出有意义的档 —— 十字单色底只有一种解法(取
+            最优就是它本身)、XCross 只解 1 槽(谈不上相邻/对角)、XXCross 要 2 槽(谈不上固定
+            单个),不适用的入口直接不给,不留会算出垃圾值的选项。只剩一档时不渲染下拉。
+            「固定」到底固定的是槽、轴还是块,每个阶段不同,写进选项里。 */}
         {isExact && SLOT_OK[stage as ExactStage] && SLOT_OK[stage as ExactStage].length > 1 && (
           <label>
             <VariantSelect
@@ -1465,7 +1465,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
                 const note = v === 'fixed1' ? FRAME_NOTE[stage as ExactStage] : undefined;
                 return note ? `${base}(${tr(note)})` : base;
               }}
-              ariaLabel={tr({ zh: '帧档', en: 'Frame mode' })}
+              ariaLabel={tr({ zh: '固定方式', en: 'Frame mode' })}
             />
           </label>
         )}
@@ -1473,7 +1473,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
         {colorInert && !is333 && (
           <span className="scramble-stats-puzzle-toggle-hint">
             {tr({
-              zh: '固定帧不分底色 —— 帧本身已经把底面钉死了',
+              zh: '固定之后不分底色 —— 钉死一个具体的槽 / 轴 / 块,底面也就跟着钉死了',
               en: 'A fixed frame has no colour tier — the frame already pins the face',
             })}
           </span>
@@ -1597,7 +1597,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
                 en: 'Log y-axis: these distributions span 10 orders of magnitude (largest bin 51%, smallest 4.7e-9%); on a linear axis the tails are under one pixel tall.',
               }),
               tr({
-                zh: '帧档:「取最优帧」对该底色的所有帧(四个 F2L 槽 / 两条 EO 轴 / 八个块…)取最小值,与真题分析器同口径,所以只有它能叠加对照;固定帧是把度量钉死在一个具体的帧上,是精确集独有的额外内容,与真题不是同一个问题。',
+                zh: '固定方式:「取最优」对该底色的所有解法(四个 F2L 槽 / 两条 EO 轴 / 八个块…)取最小值,与真题分析器同口径,所以只有它能叠加对照;「固定」是把度量钉死在其中一个具体的槽 / 轴 / 块上,是精确集独有的额外内容,与真题不是同一个问题。',
                 en: 'Frame mode: “best frame” takes the minimum over every frame a colour admits (four F2L slots / two EO axes / eight blocks …), which is the analyzer’s own metric — so it is the only mode that can be overlaid. A fixed frame pins the metric to one specific frame; it is exclusive to the exhaustive dataset and is not the same question the WCA column answers.',
               }),
             ].join('\n\n')}
