@@ -1,0 +1,35 @@
+# LiveKit SFU 配置 —— /timer 联机对战房间的视频通话媒体面。
+#
+# 这份配置**部署在境内节点**,不是主站服务器。主站的 nginx 配置走 ops/nginx/(由
+# deploy_nginx.yml 自动 scp),这个目录里的东西**不在任何 CI 流水线里**,手动放上去。
+#
+# 端口分工:
+#   7880       信令(HTTP/WebSocket)。只有它走 nginx 反代 + TLS,对外是 wss://rtc.<域名>。
+#   7881/TCP   ICE/TCP 兜底。UDP 被网络封掉时走这条,必须开,否则严格网络下连不上。
+#   7882-7892  媒体 UDP(端口复用)。**不经过 nginx** —— 媒体是 UDP,nginx 不转发它。
+#
+# 为什么用 udp_port 端口段而不是默认的 port_range_start/end(50000-60000):
+# 轻量云实例的防火墙是一条条加规则,开一万个端口既麻烦又扎眼。UDP mux 用 11 个端口
+# 就能承载全部媒体流(LiveKit 在同一端口上多路复用),对 2-4 人的小房间绰绰有余。
+port: 7880
+
+rtc:
+  tcp_port: 7881
+  udp_port: 7882-7892
+  # 云主机拿到的是内网地址(网卡上看不到公网 IP),必须让 LiveKit 自己去探测公网出口,
+  # 否则它会把内网地址写进 ICE candidate,外面的人永远连不上。
+  use_external_ip: true
+
+# API key/secret **不写在这里** —— 通过 systemd 的 EnvironmentFile 注入 LIVEKIT_KEYS,
+# 那个文件不进仓库(见同目录 README)。这里留空,避免有人不小心把密钥提交上来。
+keys: {}
+
+# 内置 TURN。默认关:2-4 人且多数在境内的场景,UDP mux + ICE/TCP 已经能覆盖绝大多数网络。
+# 真遇到连不通的用户再开(开之前先看 README 里关于 443 被 nginx 占用的说明)。
+turn:
+  enabled: false
+
+logging:
+  level: info
+  # 结构化日志,方便 journalctl 里 grep。
+  json: false
