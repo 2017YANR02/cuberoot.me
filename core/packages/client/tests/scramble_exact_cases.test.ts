@@ -17,9 +17,14 @@ import { mirrorFamily, mirrorKeepsAmount } from '@cuberoot/shared/alg-notation';
 import {
   applySequence, parseMoves, solvedCubie, type CubieCube,
 } from '@/app/[lang]/timer/_lib/scramble/kociemba/cube';
-import { EXACT_DIST } from '@/app/[lang]/scramble/stats/_data/exact_dist';
+import {
+  EXACT_CASE_FIXED_STAGES, EXACT_COLOR_KEYS, EXACT_DIST, EXACT_STAGES, SLOT_OK,
+  exactCasePlan, getExactCell,
+} from '@/app/[lang]/scramble/stats/_data/exact_dist';
 import { facesOfSubset, stageMetric } from '@/lib/cross-trainer';
+import { block222DistCapped, blockCoordOf } from '@/lib/cross-trainer/block';
 import { enumerateCrossTop } from '@/lib/cross-trainer/corpus';
+import { exactCaseSource } from '@/lib/cross-trainer/exact-cases';
 import { fillState } from '@/lib/cross-trainer/fill';
 import { N_ROTATIONS, mirrorState, rotateState } from '@/lib/cross-trainer/rotate';
 import { edgeKey, memberState, subsetSymmetries, symmetryClasses } from '@/lib/cross-trainer/symmetry';
@@ -93,6 +98,125 @@ describe('exact case list / 枚举与金标一致', () => {
 });
 
 /*
+ * 定帧那几格:度量只读固定的那几块,所以**每一档**都是那张穷举表的一层。
+ *
+ * 这里要证的还是那三件事,只是判据换了:
+ *   ① 逐档个数等于 _data/exact_dist.ts 的金标(那批数字来自 solver/src/bin/dist_tracked.rs);
+ *   ② 补齐不改这几块 —— 补完再读一遍度量看得见的部分,必须与钉的时候一模一样;
+ *      2×2×2 那格再走一遍 ./block 自己那张独立写的表(两份实现对上,才不算自证)。
+ *   ③ 保住这道题的对称把这一档整条轨道留在档内,且轨道 × 稳定子 = 群的大小。
+ */
+describe('exact case list / 定帧那几格', () => {
+  const CELLS = EXACT_CASE_FIXED_STAGES.map((stage) => {
+    const cell = EXACT_DIST[stage].fixed1?.W;
+    if (cell?.kind !== 'full') throw new Error(`${stage} 定帧那格没有完整分布`);
+    return { stage, counts: cell.counts.map(Number) };
+  });
+
+  it.each(CELLS)('$stage:逐档个数对上金标', ({ stage, counts }) => {
+    const src = exactCaseSource(stage, 'fixed1', 'W', []);
+    expect(src).not.toBeNull();
+    expect(counts.map((_, d) => src!.members(d).length)).toEqual(counts);
+    // 这张表就是整个坐标空间,没有第十一档 —— 越界的档必须是空的,不是「还没算」。
+    expect(src!.members(counts.length).length).toBe(0);
+  });
+
+  it.each(CELLS)('$stage:最深一档补齐后,度量读到的那几块原封不动', ({ stage, counts }) => {
+    const src = exactCaseSource(stage, 'fixed1', 'W', [])!;
+    const depth = counts.length - 1;
+    const members = src.members(depth);
+    for (let i = 0; i < members.length; i++) {
+      const filled = fillState(members[i].edgePins, members[i].cornerPins, seeded(i));
+      expect(src.key(filled), `${stage} #${i}`).toBe(src.key(memberState(members[i])));
+    }
+  });
+
+  // 2×2×2 有第二份实现(./block 自己的坐标 + 自己的 BFS),拿它复测补齐后的整只魔方 ——
+  // 枚举走的是 ./tracked 那台共享引擎,两条路对上才说明这 561 个真的是 8 步。
+  it('2×2×2 最深一档 561 个:换一份表复测仍是 8 步', () => {
+    const counts = CELLS.find((c) => c.stage === 'block222')!.counts;
+    const depth = counts.length - 1;
+    const members = exactCaseSource('block222', 'fixed1', 'W', [])!.members(depth);
+    expect(members.length).toBe(561);
+    const measured = members.map((m, i) =>
+      block222DistCapped(blockCoordOf(fillState(m.edgePins, m.cornerPins, seeded(i))), depth));
+    expect(new Set(measured)).toEqual(new Set([depth]));
+  });
+
+  // 群不是 48 也不是 8:定帧把面和块都钉死了,剩下的只有把那几块换到自己身上的那几个。
+  it.each([
+    ['fbsquare', 2],
+    ['rouxs1', 2],
+    ['block222', 6],
+  ] as const)('%s 的对称群是 %i 个', (stage, size) => {
+    expect(exactCaseSource(stage, 'fixed1', 'W', [])!.symmetries.length).toBe(size);
+  });
+
+  it.each(CELLS)('$stage:最深一档的轨道整条落在档内,轨道 × 稳定子 = 群', ({ stage, counts }) => {
+    const src = exactCaseSource(stage, 'fixed1', 'W', [])!;
+    expectClosedOrbits(src, counts.length - 1, counts[counts.length - 1], stage);
+  });
+});
+
+/**
+ * 页面「本质」那一栏的不变量,两类格子共用一份:
+ *   轨道整条落在这一档里 —— 否则「这一档」就不是个对称不变的性质,分类也就没意义;
+ *   轨道 × 稳定子 = 群的大小(页面就是这么解释 6/40 的);
+ *   各类大小之和 = 这一档的金标个数。
+ */
+function expectClosedOrbits(
+  src: NonNullable<ReturnType<typeof exactCaseSource>>, depth: number, count: number, label: string,
+): void {
+  const members = src.members(depth);
+  const keys = new Set(members.map((m) => src.key(memberState(m))));
+  const classes = symmetryClasses(members, src.symmetries, src.key);
+  for (const c of classes) {
+    const st = memberState(members[c.rep]);
+    for (const g of src.symmetries) expect(keys.has(src.key(g(st))), label).toBe(true);
+    expect(c.size * c.stab, label).toBe(src.symmetries.length);
+  }
+  expect(classes.reduce((n, c) => n + c.size, 0), label).toBe(count);
+}
+
+// 十字那四档也走同一套不变量 —— memberState 的补法与分类用的 key 都是两类格子共用的代码。
+describe('exact case list / 取最优帧的十字也满足同一套不变量', () => {
+  it.each(['W', 'WY', 'BGOR', 'BGORWY'])('%s 最深一档', (key) => {
+    const cell = EXACT_DIST.cross.unfixed?.[key as 'W'];
+    if (cell?.kind !== 'full') throw new Error(`${key} 没有完整分布`);
+    const depth = cell.counts.length - 1;
+    const src = exactCaseSource('cross', 'unfixed', key, facesOfSubset(key))!;
+    expectClosedOrbits(src, depth, Number(cell.counts[depth]), key);
+  });
+});
+
+/*
+ * 「哪几格能列」有两份代码读它:页面拿 exactCasePlan 决定哪根柱子可点(不能为此把整台引擎
+ * 拉进首包),枚举那边拿 exactCaseSource 真去列。两者各自判断,答案必须一样 —— 否则要么柱子
+ * 点了没内容,要么列得出来却点不动。
+ */
+describe('exact case list / 两个入口对同一批格子说同一句话', () => {
+  it('整张矩阵逐格一致', () => {
+    let listable = 0;
+    for (const stage of EXACT_STAGES) {
+      for (const slot of SLOT_OK[stage] ?? []) {
+        for (const colors of EXACT_COLOR_KEYS) {
+          const plan = exactCasePlan(stage, slot, colors);
+          const src = exactCaseSource(stage, slot, colors, facesOfSubset(colors));
+          expect(!!src, `${stage}/${slot}/${colors}`).toBe(!!plan);
+          if (!plan || !src) continue;
+          expect(src.everyDepth, `${stage}/${slot}/${colors}`).toBe(plan.everyDepth);
+          listable++;
+          // 能列的格子必须真有完整分布可对 —— 否则金标那道闸永远拦着,等于列不出来。
+          expect(getExactCell(stage, slot, colors)?.kind, `${stage}/${slot}/${colors}`).toBe('full');
+        }
+      }
+    }
+    // 十字取最优帧四档 + 定帧三格(不分底色,四个底色 key 走同一格)= 4 + 12。
+    expect(listable).toBe(16);
+  });
+});
+
+/*
  * 六色底 8 步的 40 个态,按 24 个转体分成 5 类 —— 用户(张铭源)手算表给的代表与轨道大小。
  * 顺序即表里的顺序;最后一条是自对称的那个(超级翻转棋盘)。
  */
@@ -124,7 +248,8 @@ describe('exact case list / 六色底 8 步 40 个 vs 手算表', () => {
   it('页面用的分类器给出 5 类,大小 1/3/6/6/24', () => {
     const syms = subsetSymmetries(facesOfSubset('BGORWY'));
     expect(syms.length).toBe(48); // 六色底:整个 48 元群都保住这道题
-    const classes = symmetryClasses(members, syms);
+    // 六色底把十二条棱全钉住了,edgeKey 读到的就是度量读到的 —— 这一格可以直接用它。
+    const classes = symmetryClasses(members, syms, edgeKey);
     expect(classes.map((c) => c.size).sort((a, b) => a - b)).toEqual([1, 3, 6, 6, 24]);
     expect(classes.reduce((n, c) => n + c.size, 0)).toBe(40);
     // 轨道-稳定子:类的大小 × 该状态自身对称的个数 = 群的大小(页面就是这么解释 6/40 的)。

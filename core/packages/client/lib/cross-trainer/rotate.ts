@@ -23,12 +23,16 @@
  */
 
 import { CORNER_FACELET, EDGE_FACELET, type CubieCube } from '@/lib/cube-facelet';
-import { D, FACE_CORNERS, f2lSlots, type FaceIdx } from './model';
+import { D, FACE_CORNERS, FACE_LETTERS, f2lSlots, type FaceIdx } from './model';
 
 /** Canonical face order of each edge's stickers (primary first) — U/R/F/D/L/B = 0..5. */
 const EDGE_CANON: number[][] = EDGE_FACELET.map(([a, b]) => [(a / 9) | 0, (b / 9) | 0]);
 /** Canonical face order of each corner's stickers (U/D sticker first, then clockwise). */
 const CORNER_CANON: number[][] = CORNER_FACELET.map(([a, b, c]) => [(a / 9) | 0, (b / 9) | 0, (c / 9) | 0]);
+
+/** A piece's name, spelled out of the faces it touches — same sticker table, no second list. */
+export const edgeName = (e: number): string => EDGE_CANON[e].map((f) => FACE_LETTERS[f]).join('');
+export const cornerName = (c: number): string => CORNER_CANON[c].map((f) => FACE_LETTERS[f]).join('');
 
 /** A face permutation: PI[f] = the face that f becomes. */
 type FacePerm = number[];
@@ -142,6 +146,22 @@ export function mirrorState(c: CubieCube): CubieCube {
     co[slot] = ((-c.co[i] + MIRROR.cDelta[i] - MIRROR.cDelta[piece]) % 3 + 3) % 3;
   }
   return { cp, co, ep, eo };
+}
+
+/**
+ * How one element of the 48-group moves the PIECES (mirror first, then rotation) — the same
+ * composition `rotateState(mirrorState(c), r)` performs, read off as two relabellings.
+ *
+ * A fixed-frame question ("solve THIS 2×2×2") is preserved by exactly those elements that map its
+ * tracked pieces onto themselves, so ./symmetry filters the group with this instead of with faces.
+ */
+export function pieceAction(r: number, mirrored: boolean): { edge: Int8Array; corner: Int8Array } {
+  const R = ROTATIONS[r];
+  const edge = new Int8Array(12);
+  const corner = new Int8Array(8);
+  for (let i = 0; i < 12; i++) edge[i] = R.eMap[mirrored ? MIRROR.eMap[i] : i];
+  for (let i = 0; i < 8; i++) corner[i] = R.cMap[mirrored ? MIRROR.cMap[i] : i];
+  return { edge, corner };
 }
 
 /** Index of the rotation undoing `r`. */
