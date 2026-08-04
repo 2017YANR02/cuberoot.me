@@ -252,6 +252,7 @@
   /* Hide non-active tab sections. The wrapper carries .stats-tab-<id>
      and individual sections carry data-tab="<id>". */
   .stats-modal-body.stats-tab-overview [data-tab]:not([data-tab="overview"]) { display: none; }
+  .stats-modal-body.stats-tab-daily    [data-tab]:not([data-tab="daily"])    { display: none; }
   .stats-modal-body.stats-tab-charts   [data-tab]:not([data-tab="charts"])   { display: none; }
   .stats-modal-body.stats-tab-cases    [data-tab]:not([data-tab="cases"])    { display: none; }
 }

@@ -36,6 +36,25 @@ export function bucketStats(solves: Solve[], from: Date, toExclusive: Date): Buc
   };
 }
 
+/** 本地时区的 `YYYY-MM-DD`。用本地日不是 UTC 日 —— 「今天练了几把」是按人所在的
+ *  时区分的,晚上 9 点那把不该算进明天。 */
+export function dayKeyOf(ts: number): string {
+  const d = new Date(ts);
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${mm}-${dd}`;
+}
+
+/**
+ * 有成绩的那些天,升序。**只列有成绩的天** —— 翻页翻到一张空表是没有意义的一次
+ * 点击,而「上一次练是哪天」本身就是要看的信息。
+ */
+export function solveDayKeys(solves: Solve[]): string[] {
+  const seen = new Set<string>();
+  for (const s of solves) seen.add(dayKeyOf(s.ts));
+  return Array.from(seen).sort();
+}
+
 /** ISO 8601 weekday: Mon=0 .. Sun=6 (JS getDay returns Sun=0..Sat=6). */
 function isoWeekdayIndex(d: Date): number {
   const js = d.getDay(); // 0=Sun..6=Sat

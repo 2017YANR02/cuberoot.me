@@ -41,8 +41,9 @@ export const TAG_DEFS: Record<TagId, TagDef> = {
   'pb-single': { id: 'pb-single', tone: 'gold',  labelEn: 'PB',          labelZh: 'PB' },
   'pb-ao5':    { id: 'pb-ao5',    tone: 'gold',  labelEn: 'PB ao5',      labelZh: 'PB ao5' },
   'pb-ao12':   { id: 'pb-ao12',   tone: 'gold',  labelEn: 'PB ao12',     labelZh: 'PB ao12' },
-  'oll-skip':  { id: 'oll-skip',  tone: 'gold',  labelEn: 'OLL skip',    labelZh: 'OLL 跳' },
-  'pll-skip':  { id: 'pll-skip',  tone: 'gold',  labelEn: 'PLL skip',    labelZh: 'PLL 跳' },
+  // 中文按圈里的叫法:「跳O」/「跳P」,不是「OLL 跳」的直译(2026-08-04 用户提的)。
+  'oll-skip':  { id: 'oll-skip',  tone: 'gold',  labelEn: 'OLL skip',    labelZh: '跳O' },
+  'pll-skip':  { id: 'pll-skip',  tone: 'gold',  labelEn: 'PLL skip',    labelZh: '跳P' },
   'fast-cross':{ id: 'fast-cross',tone: 'green', labelEn: 'fast cross',  labelZh: '十字快' },
   'slow-cross':{ id: 'slow-cross',tone: 'red',   labelEn: 'slow cross',  labelZh: '十字慢' },
   'dnf':       { id: 'dnf',       tone: 'muted', labelEn: 'DNF',         labelZh: 'DNF' },
