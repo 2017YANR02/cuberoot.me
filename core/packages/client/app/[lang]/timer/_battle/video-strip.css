@@ -1,5 +1,6 @@
-/* VideoStrip — 对战房视频通话条。/timer 是双主题页,全部走 :root token 自动翻 light/dark。
-   刻意做得矮而窄:主角是计时器,视频只是「看得见对手」的辅助,不能把 TimingSurface 挤下去。 */
+/* VideoStrip — 对战房视频通话。/timer 是双主题页,全部走 :root token 自动翻 light/dark。
+   平时刻意做得矮而窄:主角是计时器,视频只是「看得见对手」的辅助,不能把 TimingSurface
+   挤下去。想看清楚就点开某一格放大(那也是唯一能拿到 1080p 的路径,见 VideoStrip.tsx 头注)。 */
 
 .vs-strip {
   display: flex;
@@ -8,33 +9,38 @@
   padding: 8px 0;
 }
 
-/* 未连接态:一个按钮 + 可能的错误说明,靠左紧凑排,不铺满整行。 */
+/* 未连接时这条整个不渲染,只有出错说明会借它落地。 */
 .vs-strip.is-idle {
   flex-direction: row;
   align-items: center;
   gap: 10px;
 }
 
-.vs-join {
+/* 顶栏开关。裸图标:它紧挨着人数下拉,再套边框就成了两个并排的芯片。
+   宽高给足 28px 是为了移动端点得中,视觉上仍然只有一个图标。 */
+.vs-toggle {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
-  border: 1px solid var(--border-default);
-  border-radius: 999px;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
   background: transparent;
   color: var(--muted-foreground);
-  font: inherit;
-  font-size: 13px;
   cursor: pointer;
 }
 
-.vs-join:hover:not(:disabled) {
-  border-color: var(--border-strong);
+.vs-toggle:hover:not(:disabled) {
   color: var(--foreground);
 }
 
-.vs-join:disabled {
+/* 通话中 = 开启态,用全站开关的那个绿。 */
+.vs-toggle[aria-pressed='true'] {
+  color: var(--toggle-on);
+}
+
+.vs-toggle:disabled {
   color: var(--faint-foreground);
   cursor: default;
 }
@@ -53,12 +59,46 @@
   max-width: 520px;
 }
 
+/* 放大态:被点的那格独占一行,其余缩成缩略图跟在下面。用 order 而不是改 DOM 顺序 ——
+   谁被放大是随手点的,重排 DOM 会让 <video> 元素重挂、画面黑一下。
+   上限 960px 不是随便定的:1080p 那层要 <video> 宽到 960 才会被 adaptiveStream 选中,
+   卡在 520 就永远停在 540p —— 放大了却还是糊的,比不给放大更让人困惑。 */
+.vs-tiles.is-spotlight {
+  display: flex;
+  flex-wrap: wrap;
+  max-width: min(100%, 960px);
+}
+
+.vs-tiles.is-spotlight .vs-tile {
+  flex: 0 0 84px;
+  order: 2;
+}
+
+.vs-tiles.is-spotlight .vs-tile[data-spot] {
+  flex: 1 0 100%;
+  order: 1;
+  /* 摄像头基本都是 16:9,放大这一格就别再按 4:3 裁了。 */
+  aspect-ratio: 16 / 9;
+}
+
+/* 整格可点(点开放大 / 再点还原),所以是真 button,这里把 UA 样式剥干净。 */
 .vs-tile {
+  display: block;
   position: relative;
   aspect-ratio: 4 / 3;
+  padding: 0;
+  border: 0;
   border-radius: 8px;
   overflow: hidden;
   background: color-mix(in srgb, var(--foreground) 10%, transparent);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.vs-tile:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }
 
 .vs-video {
@@ -68,8 +108,9 @@
   display: block;
 }
 
-/* 自己那格镜像:不镜像的自拍会让人对不准手和魔方的左右。 */
-.vs-video[data-local] {
+/* 只镜像自己的前置画面:不镜像的自拍会让人对不准手和魔方的左右;后置拍的是外部世界,
+   镜像了字全是反的。属性由 VideoStrip 按轨道实际朝向发。 */
+.vs-video[data-mirror] {
   transform: scaleX(-1);
 }
 
@@ -102,6 +143,11 @@
   color: var(--muted-foreground);
 }
 
+/* 缩略图上放不下名字,留画面。 */
+.vs-tiles.is-spotlight .vs-tile:not([data-spot]) .vs-name {
+  display: none;
+}
+
 /* 控制条:靠左紧凑,不塞 spacer 把按钮推到两端。 */
 .vs-controls {
   display: flex;
@@ -122,8 +168,13 @@
   cursor: pointer;
 }
 
-.vs-ctrl:hover {
+.vs-ctrl:hover:not(:disabled) {
   border-color: var(--border-strong);
+}
+
+.vs-ctrl:disabled {
+  color: var(--faint-foreground);
+  cursor: default;
 }
 
 /* 关闭态(静音 / 关摄像头)才是需要一眼看见的异常状态,给它上色而不是给开启态上色。 */
@@ -146,6 +197,10 @@
   .vs-tiles {
     grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
     max-width: 100%;
+  }
+
+  .vs-tiles.is-spotlight .vs-tile {
+    flex-basis: 64px;
   }
 
   .vs-name {

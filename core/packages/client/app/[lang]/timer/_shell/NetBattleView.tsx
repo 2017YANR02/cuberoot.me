@@ -33,7 +33,7 @@ import { useQueryState } from 'nuqs';
 import { Copy, Check, LogOut, Swords, Trophy, RotateCcw, BarChart3, X, Crown, UserMinus, Bluetooth, QrCode } from 'lucide-react';
 
 import TimingSurface from './TimingSurface';
-import VideoStrip from '../_battle/VideoStrip';
+import VideoStrip, { VideoToggle, useVideoRoom } from '../_battle/VideoStrip';
 import BluetoothModal from '../_components/BluetoothModal';
 import { useBluetoothCube } from '../_lib/bluetooth';
 import { useAutoReady } from '../_lib/bluetooth/auto_ready';
@@ -979,11 +979,16 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
 
   const fontSize = `calc(clamp(48px, 10vw, 132px) * ${settings.timerFontScale})`;
 
+  // 视频通话。开关在顶栏、画面在玩家条下方,两处共用这一份状态。
+  // code / pid 任一为空 = 身份还没落定(正在加入 / 恢复),此时签不出 token,整套 UI 不出现。
+  const video = useVideoRoom(room?.code ?? null, pid);
+
   // ── 渲染 ────────────────────────────────────────────────────
   const topbar = (
     <header className="shell-topbar surface-chrome">
       <CubeRootLogo className="shell-topbar-brand" />
       <div className="shell-topbar-left">
+        <VideoToggle video={video} />
         {playersControl}
         {room && (
           // 我的项目:本轮未交卷时可改(每人独立选,默认房间项目);已交卷则显示为静态芯片。
@@ -1289,10 +1294,9 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
         })}
       </div>
 
-      {/* 视频条:默认不连接,要用户自己点「开视频」。放玩家条下方、计时器上方 ——
-          与玩家条同属「房间里有谁」这一层信息,而计时器是自己的事。
-          pid 为空 = 身份还没落定(正在加入/恢复),此时签不出 token,先不渲染。 */}
-      {pid && <VideoStrip code={room.code} pid={pid} />}
+      {/* 视频画面:放玩家条下方、计时器上方 —— 与玩家条同属「房间里有谁」这一层信息,
+          而计时器是自己的事。没开视频时这里什么都不渲染(开关在顶栏)。 */}
+      <VideoStrip video={video} />
 
         <TimingSurface
           phase={timer.phase}
