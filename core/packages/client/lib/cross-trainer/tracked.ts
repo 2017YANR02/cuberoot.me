@@ -21,8 +21,10 @@
  * datasets on /scramble/stats need.
  */
 
+import type { CubieCube } from '@/app/[lang]/timer/_lib/scramble/kociemba/cube';
 import { CORNER_STEP, EDGE_STEP, slotRank, slotUnrank } from './model';
 import { crossNext } from './dist';
+import type { Pin } from './fill';
 
 /** The pieces a sub-step has to bring home. Order fixes the coordinate; any order works. */
 export interface TrackedSpec {
@@ -203,3 +205,43 @@ export function trackedTable(spec: TrackedSpec): TrackedTable {
 
 /** Depth histogram of a spec's whole coordinate space, index = optimal length. */
 export const trackedHistogram = (spec: TrackedSpec): number[] => trackedTable(spec).hist.slice();
+
+// ── reading a layer back out ─────────────────────────────────────────────────────────────────
+
+/**
+ * Every coordinate whose optimal length is exactly `depth`, in coordinate order.
+ *
+ * A linear scan rather than a stored layer index: the caller is /scramble/stats listing one layer
+ * on demand, and 5 M byte comparisons cost less than the 20 MB Int32Array an index would keep
+ * alive for a table that is already cached whole.
+ */
+export function trackedLayer(spec: TrackedSpec, depth: number): number[] {
+  const { dist, hist } = trackedTable(spec);
+  const out: number[] = [];
+  if (depth < 0 || depth >= hist.length) return out;
+  for (let i = 0; i < dist.length; i++) if (dist[i] === depth) out.push(i);
+  return out;
+}
+
+/** A coordinate as fill.ts pins — the tracked pieces placed, everything else left to the filler. */
+export function trackedPins(spec: TrackedSpec, coord: number): { edgePins: Pin[]; cornerPins: Pin[] } {
+  const k = spec.corners.length;
+  const m = spec.edges.length;
+  const ne = edgeStates(m);
+  const c = (coord / ne) | 0;
+  const cbuf = new Int8Array(k);
+  const ebuf = new Int8Array(m);
+  unpackCorners(c, k, cbuf);
+  unpackEdges(coord - c * ne, m, ebuf);
+  return {
+    cornerPins: spec.corners.map((piece, i) => ({ piece, slot: (cbuf[i] / 3) | 0, ori: cbuf[i] % 3 })),
+    edgePins: spec.edges.map((piece, i) => ({ piece, slot: ebuf[i] >> 1, ori: ebuf[i] & 1 })),
+  };
+}
+
+/** What the metric actually reads off a cube: where each tracked piece sits, and how it is turned. */
+export function trackedKey(spec: TrackedSpec, c: CubieCube): string {
+  const corner = spec.corners.map((p) => { const s = c.cp.indexOf(p); return s * 3 + c.co[s]; });
+  const edge = spec.edges.map((p) => { const s = c.ep.indexOf(p); return s * 2 + c.eo[s]; });
+  return `${corner.join(',')}|${edge.join(',')}`;
+}

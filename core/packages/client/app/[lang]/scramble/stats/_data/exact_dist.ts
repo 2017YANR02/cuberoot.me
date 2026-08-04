@@ -1105,6 +1105,34 @@ export function isColorFreeCell(stage: string, slot: string): boolean {
 }
 
 /**
+ * 定帧那一列里能把**一整档状态列全**的阶段 —— 度量只读固定的那几块,于是它就是
+ * lib/cross-trainer/tracked 那台通用穷举 BFS 的一张表,某一档就是那张表的一层。
+ *
+ * 名单只此一份:引擎那边的帧表按 `ExactCaseStage` 建,漏一个阶段直接编译不过。
+ * 名单外的定帧格子不是「不该列」,是坐标空间大到浏览器里建不起表(2×2×3 15 亿、
+ * XCross 7,299 万),要列得先有别的路线。
+ */
+export const EXACT_CASE_FIXED_STAGES = ['fbsquare', 'rouxs1', 'block222'] as const;
+export type ExactCaseStage = typeof EXACT_CASE_FIXED_STAGES[number];
+
+/**
+ * 这一格能不能把一档列全:`everyDepth` = 每一档都能,否则只有最深那一档。
+ *
+ * 只有多色底的「取最优帧」受这个限制 —— 那里的度量是「颜色里取最优」,唯独在最深处
+ * 「最好的那个颜色是 d」与「每个颜色都是 d」才是同一句话,别的档求交求的是另一个集合。
+ * 定帧与单色底都没有可取最优的东西,每一档都是老老实实的一层。
+ */
+export function exactCasePlan(
+  stage: string, slot: string, subsetKey: string,
+): { everyDepth: boolean } | null {
+  if (slot === 'fixed1') {
+    return (EXACT_CASE_FIXED_STAGES as readonly string[]).includes(stage) ? { everyDepth: true } : null;
+  }
+  if (slot === 'unfixed' && stage === 'cross') return { everyDepth: subsetKey.length === 1 };
+  return null;
+}
+
+/**
  * 一格的内容。没有显式数据但组合说得通 → 兜底 todo;组合本身不适用 → null。
  * 没有底色维度的格(见 isColorFreeCell)忽略 subsetKey —— 否则底色档一切,
  * 明明算好的固定帧曲线会被读成「还没算」。

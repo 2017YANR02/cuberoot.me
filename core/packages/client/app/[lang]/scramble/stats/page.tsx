@@ -27,7 +27,8 @@ import ExactCoverageMatrix from './_components/ExactCoverageMatrix';
 import ExactDistTable from './_components/ExactDistTable';
 import {
   EXACT_STAGE_VARIANT, EXACT_VARIANT_STAGES, FRAME_NOTE, SLOT_LABEL, SLOT_OK,
-  compactExact, exactColorsOf, exactMean, exactRatios, getExactCell, groupDigits, isColorFreeCell,
+  compactExact, exactCasePlan, exactColorsOf, exactMean, exactRatios, getExactCell, groupDigits,
+  isColorFreeCell,
   type ExactColors, type ExactFull, type ExactSlot, type ExactStage,
 } from './_data/exact_dist';
 import {
@@ -210,10 +211,12 @@ const EXACT_SET_META: SetData = {
 
 /**
  * 精确集里「点柱看状态」的规模上限:一档最多这么多个才列(现场枚举 + 逐条现算打乱)。
- * 够用的理由是这一族的档本来就悬殊 —— 能列的最大一档是双色底十字 8 步的 3,672 个,
- * 再往下一档就是 1.75 亿。所以这个数落在哪儿都行,不是能力边界。
+ *
+ * 这是**翻页预算**,不是能力边界 —— 枚举一档只是扫一遍那张已经在内存里的距离表,
+ * 4 万条也就几十毫秒;真正受不了的是让人一页 50 条翻下去。定帧那几格的最深档
+ * (2×2×2 的 561、1×2×3 的 33,460)都在这个数以内,所以它们每一档该能点的都能点。
  */
-const EXACT_CASE_CAP = 5000;
+const EXACT_CASE_CAP = 40000;
 
 // 列表要现场枚举(cross-trainer 的距离表)+ 现算打乱(min2phase WASM),两样都不该进
 // 这个页面的首包 —— 点了柱子才拉。
@@ -646,18 +649,19 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     return currentSet.variants[variant]?.data[stage]?.[effectiveSubset]?.example_bins ?? [];
   }, [currentSet, variant, stage, effectiveSubset]);
 
-  // 精确穷举:哪几档能把状态**列全**(见 _components/ExactCaseList 的文件头)。
-  // 单色底每一档都是那一面自己的一层;多色底只有最深那一档 =「每个颜色都这么深」。
-  // 上限纯粹是「一页页翻得完」,不是能力边界 —— 双色底 8 步 3,672 个已经是最大的一档。
+  // 精确穷举:哪几档能把状态**列全**(哪些格子有枚举路线见 lib/cross-trainer/exact-cases)。
+  // 定帧与单色底每一档都是那一帧自己的一层;多色底只有最深那一档 =「每个颜色都这么深」。
+  // 上限纯粹是「一页页翻得完」,不是能力边界。
   const exactCaseDepths = useMemo<number[]>(() => {
-    if (!isExact || variant !== 'std' || stage !== 'cross' || slot !== 'unfixed' || !exactFull) return [];
+    if (!isExact || !exactFull) return [];
+    const plan = exactCasePlan(stage, slot, subsetKey);
+    if (!plan) return [];
     const top = exactFull.counts.length - 1;
-    const single = subsetKey.length === 1;
     return exactFull.counts
       .map((c, d) => ({ n: Number(c), d }))
-      .filter(({ n, d }) => n > 0 && n <= EXACT_CASE_CAP && (single || d === top))
+      .filter(({ n, d }) => n > 0 && n <= EXACT_CASE_CAP && (plan.everyDepth || d === top))
       .map(({ d }) => d);
-  }, [isExact, variant, stage, slot, exactFull, subsetKey]);
+  }, [isExact, stage, slot, exactFull, subsetKey]);
 
   // per-event 选择时示例走独立分片(该项目自己的 reservoir);合并池/xcross 走 examples.json
   const isPerEvent = dataset === 'wca' && scrambleSet !== 'wca';
@@ -1759,14 +1763,16 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
       {isExact && exactCaseDepths.length > 0 && selectedBin === null && (
         <p className="scramble-stats-exact-note">
           {tr({
-            zh: `${exactCaseDepths.join(' / ')} 步这几档小到能把状态列全,点柱子看;其余各档动辄上亿,只有计数。`,
-            en: `The ${exactCaseDepths.join(' / ')}-move bins are small enough to list state by state — click one. The rest run to the hundreds of millions, so they are counts only.`,
+            zh: `${exactCaseDepths.join(' / ')} 步这几档小到能把状态列全,点柱子看;其余各档太大,只有计数。`,
+            en: `The ${exactCaseDepths.join(' / ')}-move bins are small enough to list state by state — click one. The rest are too big, so they are counts only.`,
           })}
         </p>
       )}
 
       {isExact && selectedBin !== null && exactFull && (
         <ExactCaseList
+          stage={stage}
+          slot={slot}
           subsetKey={subsetKey}
           depth={selectedBin}
           goldenCount={Number(exactFull.counts[selectedBin])}
