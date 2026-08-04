@@ -391,7 +391,9 @@ describe('底色折叠与槽位适用性', () => {
     expect(isColorFreeCell('333', 'unfixed')).toBe(true);
   });
 
-  it('固定单帧那一档都写明了固定的是什么', () => {
+  // 中文标签只有「固定」两个字(不写「帧」,会与视频帧读岔),固定的是什么全靠 FRAME_NOTE
+  // 补在括号里 —— 漏一条,下拉里就出现一个没有宾语的「固定」。
+  it('固定那一档都写明了固定的是什么', () => {
     for (const stage of EXACT_STAGES) {
       if (!SLOT_OK[stage].includes('fixed1')) continue;
       expect(FRAME_NOTE[stage], stage).toBeTruthy();
