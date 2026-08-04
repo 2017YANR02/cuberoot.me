@@ -754,6 +754,8 @@
 .rc-action--ghost:hover { background: var(--shell-hover); }
 .rc-action--ghost:disabled { opacity: 0.5; cursor: default; }
 .rc-action--ghost:disabled:hover { background: var(--shell-chip); }
+/* 只有一个图标的按钮:收掉文字那一档的左右内边距,不然一个箭头挂在一片空白中间。 */
+.rc-action--icon { padding: 5px 9px; }
 
 /* 打乱兜底那一行(见 ReconstructReport:只在没有文字复盘时出现,有的话打乱是
    谱子的第一行)。一行摆完,标签在左。 */

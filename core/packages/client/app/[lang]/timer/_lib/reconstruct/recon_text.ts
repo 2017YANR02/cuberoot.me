@@ -93,6 +93,14 @@ export interface ReconTextResult {
   lines: ReconTextLine[];
   /** HTM 步数(不是 STM:我们全站按 HTM 计,见 Sprint 17)。 */
   turns: number;
+  /**
+   * STM 步数 —— 谱子里真写出来的记号数:一个中层算一个(`S`,不是 `F' B`),
+   * 转体算零。就是 `turns` 减掉合并掉的那几对。
+   *
+   * 报告顶上那个数用它,因为读者能对着谱子数出来;效率比对、分步分析表仍然吃
+   * `turns`(魔方确实转了两下面,参考解法也是按 HTM 报的),见 `humanize.ts` 头注。
+   */
+  stm: number;
   seconds: number;
   /** turns / seconds。seconds 为 0 时是 null。 */
   tps: number | null;
@@ -396,6 +404,7 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
     scramble,
     lines,
     turns,
+    stm: turns - humanized.merges,
     seconds,
     tps: seconds > 0 ? turns / seconds : null,
     text: lines.map(formatReconLine).join('\n'),
