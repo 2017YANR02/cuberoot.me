@@ -104,6 +104,12 @@ export interface ReconTextResult {
    * 「文字里有那次转体、表里没有」。
    */
   rotations: HumanRotation[];
+  /**
+   * 这把里「只能靠时间猜」的相对面对数(见 `humanize.ts` 的 `blindPairs`)。没录姿态
+   * 的把才可能非 0。UI 拿它决定要不要说一句「这段是猜的」—— 猜错一对,后面整段就
+   * 不像公式了,而用户看不出那是猜的。
+   */
+  blindPairs: number;
 }
 
 /** 一行要切在哪、时间是多少。纯数据,不碰魔方。 */
@@ -394,6 +400,7 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
     tps: seconds > 0 ? turns / seconds : null,
     text: lines.map(formatReconLine).join('\n'),
     rotations,
+    blindPairs: humanized.blindPairs,
   };
 }
 

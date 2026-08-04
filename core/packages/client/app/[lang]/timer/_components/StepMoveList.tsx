@@ -48,6 +48,8 @@ export interface StepMoveListProps {
   currentIdx?: number | null;
   /** 点某一步跳到它开头。省略则标题不是按钮。 */
   onSeek?: (idx: number) => void;
+  /** 谱子底下的一句提醒(如「这把没录姿态」)。省略则不显示。 */
+  notice?: React.ReactNode;
   /** 「复盘对不对」那一行。省略则不显示。 */
   feedback?: React.ReactNode;
 }
@@ -90,7 +92,7 @@ function groupMs(g: Group): number | null {
 }
 
 export default function StepMoveList({
-  recon, reference, slotReference, currentIdx, onSeek, feedback,
+  recon, reference, slotReference, currentIdx, onSeek, notice, feedback,
 }: StepMoveListProps) {
   const [copied, setCopied] = useState(false);
 
@@ -222,6 +224,7 @@ export default function StepMoveList({
         );
       })}
 
+      {notice}
       {feedback}
     </div>
   );

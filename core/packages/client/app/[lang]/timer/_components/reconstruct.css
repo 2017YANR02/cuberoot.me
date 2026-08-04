@@ -855,6 +855,23 @@
   color: var(--faint-foreground); cursor: help;
 }
 
+/* 「这把没录姿态」——只在真猜过的时候出现,所以按提示写,不做成警告条(没有框)。
+   图标不跟着文字换行:自己一列,文字在旁边整块折。 */
+.rc-nogyro {
+  display: flex; align-items: flex-start; gap: 6px; flex-wrap: wrap;
+  margin: 8px 0 0; font-size: 12px; line-height: 1.5;
+  color: var(--muted-foreground);
+}
+.rc-nogyro > svg { flex: none; margin-top: 2px; color: var(--faint-foreground); }
+.rc-nogyro-fix {
+  appearance: none; cursor: pointer;
+  padding: 2px 8px; border-radius: 5px; font-size: 12px;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent); border: 1px solid transparent;
+}
+.rc-nogyro-fix:hover { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.rc-nogyro-fix:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
+
 /* ── 时间轴:一步两段,亮 = 在拧,暗 = 在看 ────────────────────────────
    段的位置就是它在时间上的位置,所以不能用 flex 均分 —— 一律绝对定位。
    全页只有一根:回放那根(阶段名 + 阶段用时 + 游标,可点着跳)。 */
