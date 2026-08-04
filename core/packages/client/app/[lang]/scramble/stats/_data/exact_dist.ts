@@ -1109,10 +1109,10 @@ export function isColorFreeCell(stage: string, slot: string): boolean {
  * lib/cross-trainer/tracked 那台通用穷举 BFS 的一张表,某一档就是那张表的一层。
  *
  * 名单只此一份:引擎那边的帧表按 `ExactCaseStage` 建,漏一个阶段直接编译不过。
- * 名单外的定帧格子不是「不该列」,是坐标空间大到浏览器里建不起表(2×2×3 15 亿、
- * XCross 7,299 万),要列得先有别的路线。
+ * 名单外的定帧格子不是「不该列」,是浏览器里没有那张整表:2×2×3 15 亿、F2LEO 十字 51 亿
+ * 建不起来;XCross / 配对 那几档有表但只到某个深度为止(剪枝式),要列得先有别的路线。
  */
-export const EXACT_CASE_FIXED_STAGES = ['fbsquare', 'rouxs1', 'block222'] as const;
+export const EXACT_CASE_FIXED_STAGES = ['fbsquare', 'rouxs1', 'block222', 'eo', 'eoline', 'eo_cross'] as const;
 export type ExactCaseStage = typeof EXACT_CASE_FIXED_STAGES[number];
 
 /**
@@ -1130,6 +1130,28 @@ export function exactCasePlan(
   }
   if (slot === 'unfixed' && stage === 'cross') return { everyDepth: subsetKey.length === 1 };
   return null;
+}
+
+/**
+ * 一档最多这么多个才列(现场枚举 + 逐条现算打乱)。
+ *
+ * 这是**翻页预算**,不是能力边界 —— 枚举一档只是扫一遍那张已经在内存里的距离表,4 万条也就
+ * 几十毫秒;真正受不了的是让人一页 50 条翻下去。定帧那几格的最深档(2×2×2 的 561、1×2×3 的
+ * 33,460、EOCross 的 140)都在这个数以内,所以它们该能点的都能点。
+ */
+export const EXACT_CASE_CAP = 40000;
+
+/** 这一格哪几档能点开看状态。图上按它决定柱子可不可点,守卫测试按它决定查哪几档。 */
+export function exactCaseDepths(
+  stage: string, slot: string, subsetKey: string, counts: readonly string[],
+): number[] {
+  const plan = exactCasePlan(stage, slot, subsetKey);
+  if (!plan) return [];
+  const top = counts.length - 1;
+  return counts
+    .map((c, d) => ({ n: Number(c), d }))
+    .filter(({ n, d }) => n > 0 && n <= EXACT_CASE_CAP && (plan.everyDepth || d === top))
+    .map(({ d }) => d);
 }
 
 /**

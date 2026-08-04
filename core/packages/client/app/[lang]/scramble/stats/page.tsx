@@ -27,8 +27,8 @@ import ExactCoverageMatrix from './_components/ExactCoverageMatrix';
 import ExactDistTable from './_components/ExactDistTable';
 import {
   EXACT_STAGE_VARIANT, EXACT_VARIANT_STAGES, FRAME_NOTE, SLOT_LABEL, SLOT_OK,
-  compactExact, exactCasePlan, exactColorsOf, exactMean, exactRatios, getExactCell, groupDigits,
-  isColorFreeCell,
+  compactExact, exactCaseDepths as caseDepthsOf, exactColorsOf, exactMean, exactRatios,
+  getExactCell, groupDigits, isColorFreeCell,
   type ExactColors, type ExactFull, type ExactSlot, type ExactStage,
 } from './_data/exact_dist';
 import {
@@ -208,15 +208,6 @@ const EXACT_SET_META: SetData = {
     ]),
   ),
 };
-
-/**
- * 精确集里「点柱看状态」的规模上限:一档最多这么多个才列(现场枚举 + 逐条现算打乱)。
- *
- * 这是**翻页预算**,不是能力边界 —— 枚举一档只是扫一遍那张已经在内存里的距离表,
- * 4 万条也就几十毫秒;真正受不了的是让人一页 50 条翻下去。定帧那几格的最深档
- * (2×2×2 的 561、1×2×3 的 33,460)都在这个数以内,所以它们每一档该能点的都能点。
- */
-const EXACT_CASE_CAP = 40000;
 
 // 列表要现场枚举(cross-trainer 的距离表)+ 现算打乱(min2phase WASM),两样都不该进
 // 这个页面的首包 —— 点了柱子才拉。
@@ -649,19 +640,12 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     return currentSet.variants[variant]?.data[stage]?.[effectiveSubset]?.example_bins ?? [];
   }, [currentSet, variant, stage, effectiveSubset]);
 
-  // 精确穷举:哪几档能把状态**列全**(哪些格子有枚举路线见 lib/cross-trainer/exact-cases)。
-  // 定帧与单色底每一档都是那一帧自己的一层;多色底只有最深那一档 =「每个颜色都这么深」。
-  // 上限纯粹是「一页页翻得完」,不是能力边界。
-  const exactCaseDepths = useMemo<number[]>(() => {
-    if (!isExact || !exactFull) return [];
-    const plan = exactCasePlan(stage, slot, subsetKey);
-    if (!plan) return [];
-    const top = exactFull.counts.length - 1;
-    return exactFull.counts
-      .map((c, d) => ({ n: Number(c), d }))
-      .filter(({ n, d }) => n > 0 && n <= EXACT_CASE_CAP && (plan.everyDepth || d === top))
-      .map(({ d }) => d);
-  }, [isExact, stage, slot, exactFull, subsetKey]);
+  // 精确穷举:哪几档能把状态**列全**(规则与上限在 _data/exact_dist,枚举路线在
+  // lib/cross-trainer/exact-cases)。
+  const exactCaseDepths = useMemo<number[]>(
+    () => (isExact && exactFull ? caseDepthsOf(stage, slot, subsetKey, exactFull.counts) : []),
+    [isExact, stage, slot, exactFull, subsetKey],
+  );
 
   // per-event 选择时示例走独立分片(该项目自己的 reservoir);合并池/xcross 走 examples.json
   const isPerEvent = dataset === 'wca' && scrambleSet !== 'wca';

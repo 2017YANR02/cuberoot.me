@@ -28,7 +28,7 @@ import { cubieToFacelet } from '@/lib/cube-facelet';
 import { m2pScrambleForFacelets, prewarmM2p } from '@/lib/m2p-scramble';
 import { facesOfSubset } from '@/lib/cross-trainer';
 import type { CorpusMember } from '@/lib/cross-trainer/corpus';
-import { exactCaseSource } from '@/lib/cross-trainer/exact-cases';
+import { exactCaseSource, type ExactCaseSource } from '@/lib/cross-trainer/exact-cases';
 import { fillState } from '@/lib/cross-trainer/fill';
 import { symmetryClasses, type CaseClass } from '@/lib/cross-trainer/symmetry';
 import { groupDigits } from '@/lib/group-digits';
@@ -47,6 +47,22 @@ function seeded(seed: number): () => number {
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
+}
+
+/** 帧的读法:面 / 轴 / 角 / 棱,有哪样写哪样(`D 面 + F/B 轴 + DF / DB 棱`)。 */
+function describeFrame(frame: ExactCaseSource['frame']): { zh: string; en: string } | null {
+  if (!frame) return null;
+  const parts: Array<{ zh: string; en: string }> = [];
+  if (frame.face) parts.push({ zh: `${frame.face} 面`, en: `face ${frame.face}` });
+  if (frame.axis) parts.push({ zh: `${frame.axis} 轴`, en: `axis ${frame.axis}` });
+  if (frame.corners?.length) {
+    parts.push({ zh: `${frame.corners.join(' / ')} 角`, en: `corner ${frame.corners.join(' / ')}` });
+  }
+  if (frame.edges?.length) {
+    parts.push({ zh: `${frame.edges.join(' / ')} 棱`, en: `edges ${frame.edges.join(' / ')}` });
+  }
+  if (!parts.length) return null;
+  return { zh: parts.map((p) => p.zh).join(' + '), en: parts.map((p) => p.en).join(' + ') };
 }
 
 interface Props {
@@ -129,6 +145,7 @@ export default function ExactCaseList({ stage, slot, subsetKey, depth, goldenCou
   if (!members) return null;
 
   const visible = rows.slice(0, shown);
+  const frameParts = describeFrame(source?.frame);
   // 说明文案要具体到这一档:拿第一类的大小当例子,类少时把整个拆分写出来(类一多就成一串噪音)。
   const total = groupDigits(String(members.length));
   const nClasses = groupDigits(String(classes.length));
@@ -157,13 +174,13 @@ export default function ExactCaseList({ stage, slot, subsetKey, depth, goldenCou
         />
       </div>
       {/* 帧是任选的,但列出来的打乱只对这一帧是那个步数 —— 写清楚才核对得了。 */}
-      {source?.frame && (
+      {frameParts && (
         <p className="scramble-stats-exact-note">
           {tr({
-            zh: `这一帧 = ${source.frame.corners.join(' / ')} 角 + ${source.frame.edges.join(' / ')} 棱`
-              + `(24 个帧互相共轭,分布逐档相同,挑哪一个都行;下面这些打乱是对这一帧的 ${depth} 步)。`,
-            en: `This frame = corner ${source.frame.corners.join(' / ')} + edges ${source.frame.edges.join(' / ')} `
-              + `(the 24 frames are conjugate, so every one has this same histogram; the scrambles below are ${depth} moves for THIS frame).`,
+            zh: `这一帧 = ${frameParts.zh}(同一阶段的各个帧互相共轭,分布逐档相同,挑哪一个都行;`
+              + `下面这些打乱是对这一帧的 ${depth} 步)。`,
+            en: `This frame = ${frameParts.en} (the frames of a stage are conjugate, so every one has this same `
+              + `histogram; the scrambles below are ${depth} moves for THIS frame).`,
           })}
         </p>
       )}

@@ -51,19 +51,27 @@ function fillRest(perm: number[], ori: number[], pins: readonly Pin[], n: number
   for (let i = 0; i < n; i++) if (!pinned[i]) { perm[i] = rest[k++]; ori[i] = 0; }
 }
 
-/** 48 元群(24 转体 × 镜像)里把这组底色整体映到自己身上的那些。 */
-export function subsetSymmetries(faces: readonly FaceIdx[]): Array<(c: CubieCube) => CubieCube> {
-  const set = new Set<number>(faces);
+/**
+ * 48 元群里把**每一组面**都整体映到自己身上的那些。
+ *
+ * 一组 = 一个必须保住的东西:底色集是一组;EO 轴是「一对相对面」这一组;EOLine 的题面同时
+ * 钉住底面与轴,那就是两组,都得保住(结果只剩 4 个)。
+ */
+export function faceSymmetries(sets: ReadonlyArray<readonly FaceIdx[]>): Array<(c: CubieCube) => CubieCube> {
   const out: Array<(c: CubieCube) => CubieCube> = [];
   for (const mirrored of [false, true]) {
     for (let r = 0; r < N_ROTATIONS; r++) {
       const image = (f: number) => ROTATIONS[r].face[mirrored ? MIRROR_FACE[f] : f];
-      if (!faces.every((f) => set.has(image(f)))) continue;
+      if (!sets.every((s) => s.every((f) => s.includes(image(f) as FaceIdx)))) continue;
       out.push((c) => rotateState(mirrored ? mirrorState(c) : c, r));
     }
   }
   return out;
 }
+
+/** 48 元群(24 转体 × 镜像)里把这组底色整体映到自己身上的那些。 */
+export const subsetSymmetries = (faces: readonly FaceIdx[]): Array<(c: CubieCube) => CubieCube> =>
+  faceSymmetries([faces]);
 
 /**
  * 定帧那道题的对称群:48 元里把**被盯的那组块**整体映到自己身上的那些。
