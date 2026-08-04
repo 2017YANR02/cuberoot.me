@@ -262,9 +262,11 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'math/unit-distance': { title: { zh: '单位距离问题', en: 'Unit Distance Problem' } },
   'meet': {
     title: { zh: '会议', en: 'Meeting' },
+    // 不写人数:上限是服务端 MAX_MEET_PARTICIPANTS,静态 metadata 读不到 /video/config,
+    // 抄一份进来就是第三处副本 —— 改了上限,页面正文跟着变而搜索结果和分享卡片还在承诺旧数字。
     description: {
-      zh: '多人视频会议:建一场会,把链接发出去,最多 6 人同时开摄像头,1080p。',
-      en: 'Group video meeting — start a room, share the link, up to 6 people at 1080p.',
+      zh: '多人视频会议:建一场会,把链接发出去,1080p 画质,支持屏幕共享和文字聊天。',
+      en: 'Group video meeting — start a room, share the link, 1080p with screen sharing and chat.',
     },
   },
   'membership': { title: { zh: '会员', en: 'Membership' } },

@@ -1,7 +1,7 @@
-/* VideoTiles — 视频通话的画面宫格与控制条,/timer 联机对战和 /meet 会议室共用。
+/* VideoTiles — 视频通话的画面宫格与控制条(/timer 联机对战房)。
    双主题页,全部走 :root token 自动翻 light/dark。
-   在 /timer 里刻意做得矮而窄(主角是计时器),在 /meet 里可以铺开 —— 两处的差异靠外面的
-   容器给 max-width,这里不写死。想看清楚就点开某一格放大,那也是唯一能拿到 1080p 的路径。 */
+   刻意做得矮而窄:主角是计时器。想看清楚就点开某一格放大,那也是唯一能拿到 1080p 的路径。
+   .vc-err 是两条路都在用的错误文案样式,/meet 的 page.tsx 也 import 这个文件。 */
 
 .vc-err {
   color: var(--signal-warning);

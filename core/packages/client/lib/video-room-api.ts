@@ -1,6 +1,7 @@
 // 视频通话的客户端 API(对应 server/routes/video_rooms.ts)。两种房共用:
-//   /timer 联机对战房 —— 身份是对战房的 pid,服务端回库校验
-//   /meet  会议室      —— 链接即凭证,身份是本机随机生成的一次性 id
+//   /timer 联机对战房 —— 免登录,身份是对战房的 pid,服务端回库校验
+//   /meet  会议室      —— **必须登录**,身份和显示名都由服务端从 session token 里取;
+//                        这里只报会议码,报不了自己是谁
 //
 // 媒体面走自建 LiveKit(SFU):这里只负责换凭证,拿到 {url,token} 之后就交给 livekit-client
 // 直连,本文件不参与任何媒体传输。对战状态仍走 battle-room-api 的 1s 轮询,两套互不干扰。
@@ -19,10 +20,6 @@ export const VIDEO_MAX_BITRATE = 3_000_000;
  * 屏幕共享是摄像头之外**额外**的一路,不在 n*(n-1) 那个模型里,两处不一致就是悄悄超发。
  */
 export const SCREEN_SHARE_MAX_BITRATE = 1_500_000;
-
-/** 视频采集分辨率上限。宫格里的小窗会由 simulcast 自动降层,这里只定「最高能到多少」。 */
-export const VIDEO_MAX_WIDTH = 1920;
-export const VIDEO_MAX_HEIGHT = 1080;
 
 export interface VideoConfig {
   /** 站点是否配了 LiveKit。false 时客户端应完全隐藏视频入口,而不是点了才报错。 */
@@ -121,15 +118,25 @@ export class VideoDeniedError extends Error {
   }
 }
 
-/** 问一次站点视频配置。失败按「没开」处理 —— 视频是增强功能,不该拖累对战本身。 */
-export async function getVideoConfig(): Promise<VideoConfig> {
-  try {
-    const res = await fetch(apiUrl('/v1/video/config'));
-    if (!res.ok) return { enabled: false, maxParticipants: 0, maxBitrateMbps: 0 };
-    return await res.json();
-  } catch {
-    return { enabled: false, maxParticipants: 0, maxBitrateMbps: 0 };
+/**
+ * 问一次站点视频配置。
+ *
+ * 失败返回 **null(不知道)** 而不是 `{enabled:false}`(本站没开)—— 这两件事的界面差得远:
+ * 后者是终局页面「本站未启用视频」,没有重试也没有出路;而 core-api 重启时的一个 502 只是
+ * 两秒钟的事。把二者混为一谈,等于让一次瞬时抖动把 /meet 变成一块写着「本站不做视频」的砖。
+ * 调用方按 `cfg && !cfg.enabled` 判终局,null 一律当「先按能用走,真去签 token 时再报错」。
+ */
+export async function getVideoConfig(): Promise<VideoConfig | null> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetch(apiUrl('/v1/video/config'));
+      // 4xx 是服务端明确答复「没有这个端点」,重试没有意义;5xx / 网络错误才值得再试一次。
+      if (res.ok) return await res.json();
+      if (res.status < 500) return null;
+    } catch { /* 网络错误,下一轮重试 */ }
+    if (attempt === 0) await new Promise((r) => setTimeout(r, 600));
   }
+  return null;
 }
 
 /**
