@@ -956,11 +956,6 @@ button.stl-track:focus-visible { outline: 2px solid var(--ring); outline-offset:
   margin: 0 0 4px; font-size: 11px; font-weight: 600;
   letter-spacing: 0.08em; color: var(--muted-foreground);
 }
-.sml-group-name[data-stage='cross'] { color: var(--rc-stage-cross); }
-.sml-group-name[data-stage='f2l']   { color: var(--rc-stage-f2l); }
-.sml-group-name[data-stage='oll']   { color: var(--rc-stage-oll); }
-.sml-group-name[data-stage='pll']   { color: var(--rc-stage-pll); }
-.sml-group-ms { font-variant-numeric: tabular-nums; color: var(--faint-foreground); }
 
 .sml-line + .sml-line { margin-top: 6px; }
 .sml-line[data-state='future'] { opacity: 0.42; }

@@ -147,6 +147,29 @@ describe('打乱是谱子的第一行', () => {
   });
 });
 
+describe('阶段名和阶段用时只出现一次(2026-08-04)', () => {
+  const src = stripComments(read(STEP_LIST));
+
+  it('谱子这一块不写「十字 [4.02]」', () => {
+    // 同一屏左边那根带游标的轴(SolveTimeline showLabels)已经把四段的名字和
+    // 用时画出来了。两处都写等于同一件事说两次,而且两处口径一旦分叉没人看得出来。
+    expect(src).not.toMatch(/sml-group-ms/);
+    expect(src).not.toMatch(/data-stage=/);
+  });
+
+  it('组标题只剩打乱那一个', () => {
+    expect(src.match(/sml-group-head/g) ?? []).toHaveLength(1);
+    expect(src).toMatch(/sml-scramble[\s\S]{0,200}sml-group-head/);
+  });
+
+  it('十字 / OLL / PLL 的徽章跟着动作那一行走,没有被一起删掉', () => {
+    // 徽章以前挂在组标题上,标题没了要是不搬家就会静悄悄消失 —— 界面上少一个
+    // 「妙手」不会报错,只会没人再看见。
+    expect(src).toMatch(/g\.key === 'f2l' \|\| g\.lines\.length === 1 \? gradeFor\(line\)/);
+    expect(src).toMatch(/className=\{`sa-grade \$\{grade\}`\}/);
+  });
+});
+
 describe('打乱不许一个字都不剩', () => {
   const src = read(REPORT);
 
