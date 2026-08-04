@@ -280,14 +280,17 @@ export default function ExactCoverageMatrix({ stage, slot, colors, hrefOf }: Pro
               + 'XCross additionally has its deepest bin (438 states at 10 moves) from an upstream exhaustive search',
           })}
         </li>
-        <li>
-          <b className="is-ready">{tr(PENDING_LABEL.ready)}</b>
-          {tr({
-            zh: `${countPending('ready')} 个组合 —— 算法与代码都就位,只差机时;单元号见 solver/EXACT_DIST_EXPANSION.md`,
-            en: `${countPending('ready')} combinations — algorithm and code are in place, only machine time is missing; `
-              + 'see solver/EXACT_DIST_EXPANSION.md for the unit ids',
-          })}
-        </li>
+        {/* 一个格子都没有的档不占一行 —— 「待跑 0 个」是噪声,不是信息 */}
+        {countPending('ready') > 0 && (
+          <li>
+            <b className="is-ready">{tr(PENDING_LABEL.ready)}</b>
+            {tr({
+              zh: `${countPending('ready')} 个组合 —— 算法与代码都就位,只差机时;单元号见 solver/EXACT_DIST_EXPANSION.md`,
+              en: `${countPending('ready')} combinations — algorithm and code are in place, only machine time is missing; `
+                + 'see solver/EXACT_DIST_EXPANSION.md for the unit ids',
+            })}
+          </li>
+        )}
         <li>
           <b className="is-plan">{tr(PENDING_LABEL.plan)}</b>
           {tr({
