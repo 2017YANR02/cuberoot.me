@@ -13,6 +13,9 @@
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { join, dirname } from 'node:path';
 
 import {
   fixupState,
@@ -361,5 +364,36 @@ describe('solvedCubie sanity', () => {
     const c = faceletToCubie(toFaceletString(applyScramble(3, SCRAMBLE)));
     expect(cubieEquals(multiply(c, solvedCubie()), c)).toBe(true);
     expect(cubieEquals(multiply(solvedCubie(), c), c)).toBe(true);
+  });
+});
+
+/**
+ * 修正路径亮着的时候,点击复制给的是**打乱**,不是条上写着的那串。
+ *
+ * 2026-08-04 用户撞上:条上是 `B2 D2 L2 …`(修正路径),末尾一个绿勾,剪贴板里
+ * 却是 `F' L U2 …`(那把真正的打乱)。复制的内容是对的 —— 成绩记的就是它,
+ * 而修正路径每转一下就会重算,复制它没有意义。错的是那个勾:它贴在最后一步
+ * 右边,读起来就是「复制的是你看到的这串」。
+ *
+ * 所以:修正路径上不挂勾,改成右边一个写明白的绿标。
+ */
+describe('复制反馈不能骑在修正路径上(2026-08-04)', () => {
+  const src = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), '..', 'app', '[lang]', 'timer', '_shell', 'SoloView.tsx'),
+    'utf8',
+  );
+
+  it('绿勾在 fixup 亮着时不渲染', () => {
+    expect(src).toMatch(/const copiedCheck = scrambleCopied && !fixupActive &&/);
+  });
+
+  it('改成一条说清楚复制了什么的绿标', () => {
+    expect(src).toMatch(/已复制原打乱/);
+    expect(src).toMatch(/Copied the scramble/);
+  });
+
+  it('复制的仍然是打乱本身,不是条上那串', () => {
+    // 取 scrambleHist 当前项 → 就是成绩会记下的那条打乱。
+    expect(src).toMatch(/scrambleHistRef\.current\.list\[scrambleHistRef\.current\.idx\]/);
   });
 });
