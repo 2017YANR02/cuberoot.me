@@ -1,4 +1,6 @@
-// /timer 联机对战房间的视频通话客户端 API(对应 server/routes/video_rooms.ts)。
+// 视频通话的客户端 API(对应 server/routes/video_rooms.ts)。两种房共用:
+//   /timer 联机对战房 —— 身份是对战房的 pid,服务端回库校验
+//   /meet  会议室      —— 链接即凭证,身份是本机随机生成的一次性 id
 //
 // 媒体面走自建 LiveKit(SFU):这里只负责换凭证,拿到 {url,token} 之后就交给 livekit-client
 // 直连,本文件不参与任何媒体传输。对战状态仍走 battle-room-api 的 1s 轮询,两套互不干扰。
@@ -18,8 +20,71 @@ export const VIDEO_MAX_HEIGHT = 1080;
 export interface VideoConfig {
   /** 站点是否配了 LiveKit。false 时客户端应完全隐藏视频入口,而不是点了才报错。 */
   enabled: boolean;
+  /** 对战房上限(先有的字段,保持原义)。 */
   maxParticipants: number;
+  /** 会议室上限。老服务端没有这个字段,故 optional —— 前后端不是同一次部署上线的。 */
+  meetMaxParticipants?: number;
   maxBitrateMbps: number;
+}
+
+/**
+ * 会议码字母表:32 个字符,去掉了 0/1/I/O 这些照着念或抄会错的。
+ * **必须与服务端 video_rooms.ts 的 MEET_CODE_RE 完全一致** —— 客户端生成、服务端校验,
+ * 分叉的话每一次「新建会议」都会 400。守卫见 tests/meet-code-format.test.ts。
+ */
+export const MEET_CODE_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+/** 9 位 × 32 字符 = 45 bit。会议室没有名单可查,链接就是凭证,熵是唯一的防线。 */
+export const MEET_CODE_LEN = 9;
+
+/** 从 32 字符表里取 n 个字符。32 整除 256,所以 `byte % 32` 是均匀的,不需要拒绝采样。 */
+function randomFrom(alphabet: string, n: number): string {
+  const bytes = new Uint8Array(n);
+  crypto.getRandomValues(bytes);
+  let out = '';
+  for (const b of bytes) out += alphabet[b % alphabet.length];
+  return out;
+}
+
+/** 新建一个会议码。用 crypto 而不是 Math.random —— 后者可预测,等于没有熵。 */
+export function newMeetCode(): string {
+  return randomFrom(MEET_CODE_ALPHABET, MEET_CODE_LEN);
+}
+
+/**
+ * 本机一次性身份。服务端只要求 /^[a-z0-9]{6,16}$/,这里取 12 位小写 base32 ——
+ * 会议室的 identity 不代表任何账号,只用来让 SFU 区分「谁是谁」以及重连时认出是同一个人。
+ */
+export function newParticipantId(): string {
+  return randomFrom('abcdefghijklmnopqrstuvwxyz234567', 12);
+}
+
+/**
+ * 把用户手抄 / 粘贴进来的会议码归一:大写,丢掉字母表以外的一切(空格、连字符、
+ * 整条 URL 里的斜杠)。抄错成 0/O、1/I 的那两对不在这里纠 —— 猜错人家的房间比报错更糟。
+ */
+export function normalizeMeetCode(raw: string): string {
+  // 粘进来的多半是整条邀请链接,先把 ?room= 挖出来。
+  const fromUrl = /[?&]room=([^&#\s]*)/i.exec(raw);
+  if (fromUrl) return keepAlphabet(fromUrl[1]!);
+
+  // 看着像链接、却没有 room= —— 直接判空。硬过滤的话 "https://cuberoot.me/" 里的
+  // H T T P S C U B E 全在字母表里,会拼出 HTTPSCUBE 这么个**合法**会议码,
+  // 把人静默送进一个陌生人的房间。宁可什么都不给。
+  if (/[:/?#]/.test(raw)) return '';
+
+  return keepAlphabet(raw);
+}
+
+/** 只留字母表里的字符(丢掉空格、连字符这些手抄进来的噪声),截到码长。 */
+function keepAlphabet(raw: string): string {
+  let out = '';
+  for (const ch of raw.toUpperCase()) if (MEET_CODE_ALPHABET.includes(ch)) out += ch;
+  return out.slice(0, MEET_CODE_LEN);
+}
+
+export function isMeetCode(s: string): boolean {
+  return s.length === MEET_CODE_LEN && [...s].every((ch) => MEET_CODE_ALPHABET.includes(ch));
 }
 
 export interface VideoToken {
@@ -42,6 +107,8 @@ export type VideoDenyReason =
   | 'unavailable'
   /** 该 pid 不在该房间(房间过期 / 被踢 / 伪造)。 */
   | 'not in room'
+  /** 会议码 / 名字不合法(手抄错了、或名字洗完是空的)。 */
+  | 'invalid'
   | 'video not configured';
 
 export class VideoDeniedError extends Error {
@@ -70,14 +137,31 @@ export async function getVideoConfig(): Promise<VideoConfig> {
  * 调用方据 reason 给不同文案。
  */
 export async function getVideoToken(code: string, pid: string): Promise<VideoToken> {
-  const res = await fetch(apiUrl('/v1/video/token'), {
+  return postToken('/v1/video/token', { code, pid });
+}
+
+/**
+ * 换取会议室凭证。会议室没有在册名单,服务端只校验会议码格式 —— 拿到 token 就意味着
+ * 「码合法 + 房没满 + 有带宽」,不代表你被谁批准了(这就是链接即凭证的语义)。
+ * name 会被服务端洗一遍(去控制字符、限长 24)再发给其他人。
+ */
+export async function getMeetToken(code: string, id: string, name: string): Promise<VideoToken> {
+  return postToken('/v1/video/meet/token', { code, id, name });
+}
+
+async function postToken(path: string, body: Record<string, string>): Promise<VideoToken> {
+  const res = await fetch(apiUrl(path), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ code, pid }),
+    body: JSON.stringify(body),
   });
   if (!res.ok) {
     const msg = (await res.json().catch(() => ({}))) as { error?: string };
-    throw new VideoDeniedError((msg.error as VideoDenyReason) || 'unavailable');
+    // 服务端的 400 文案是 'invalid code/id/name' 这种带细节的串,收敛成一个 reason ——
+    // 细节对用户没用,而漏收敛会让未知串混进 VideoDenyReason 的联合类型里当合法值。
+    const raw = msg.error ?? '';
+    const reason: VideoDenyReason = raw.startsWith('invalid') ? 'invalid' : (raw as VideoDenyReason);
+    throw new VideoDeniedError(reason || 'unavailable');
   }
   return res.json();
 }

@@ -260,6 +260,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'math/unit-distance': { title: { zh: '单位距离问题', en: 'Unit Distance Problem' } },
+  'meet': {
+    title: { zh: '会议', en: 'Meeting' },
+    description: {
+      zh: '多人视频会议:建一场会,把链接发出去,最多 6 人同时开摄像头,1080p。',
+      en: 'Group video meeting — start a room, share the link, up to 6 people at 1080p.',
+    },
+  },
   'membership': { title: { zh: '会员', en: 'Membership' } },
   'memo': { title: { zh: '盲拧记忆训练', en: 'Memory Training' } },
   'memo/colpi': { title: { zh: 'COLPI 编码', en: 'COLPI Lettering' } },
