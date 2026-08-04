@@ -236,10 +236,10 @@ export const CI_GUARDS_API: CiGuard[] = [
     en: { title: 'API cache header layering', desc: 'Mutable-data endpoints can’t ship a browser-layer max-age > 600s (hit for real on 2026-06-10: a transient null during a reload window got pinned by the browser for a day). Long caching only via s-maxage (the nginx shared layer); exceptions must join IMMUTABLE_ALLOWLIST.' },
   },
   {
-    id: 'one-email-per-account',
-    test: 'one_email_per_account.test.ts',
-    zh: { title: '一个账号只能绑一个邮箱', desc: '约束铺三层:0078 偏唯一索引(唯一真保证,挡并发)+ addIdentity 先行检查回 has-email + 前端已有邮箱时不给绑定入口。重点守跨包字面量耦合 —— 服务端错误串和前端 authErrorText 的 includes() 靠同一句英文对上,改一边措辞前端就静默退化成把英文糊给用户。' },
-    en: { title: 'One email per account', desc: 'Enforced in three layers: the 0078 partial unique index (the only real guarantee — it stops concurrent double-binds), an addIdentity pre-check returning has-email, and the panel hiding the link entry once an email exists. Mainly guards a cross-package literal: the server error string and the client authErrorText includes() match on the same English sentence, so rewording one side silently degrades the UI into showing raw English.' },
+    id: 'one-credential-per-account',
+    test: 'one_credential_per_account.test.ts',
+    zh: { title: '一个账号只能绑一个邮箱 / 一个手机号', desc: '两条凭据同一套规矩,各铺三层:0078 / 0103 偏唯一索引(唯一真保证,挡并发)+ addIdentity 先行检查回 has-email / has-phone + 前端已有该凭据时不给绑定入口(改走「更换」)。重点守跨包字面量耦合 —— 服务端错误串和前端 authErrorText 的 includes() 靠同一句英文对上,改一边措辞前端就静默退化成把英文糊给用户。换绑那条出口也一并钉住:唯一的登录方式不许解绑,少了原地 UPDATE,只有手机号的账号就永远换不了号。' },
+    en: { title: 'One email and one phone per account', desc: 'Both credentials follow the same rule, each enforced in three layers: the 0078 / 0103 partial unique indexes (the only real guarantee — they stop concurrent double-binds), an addIdentity pre-check returning has-email / has-phone, and the panel hiding the link entry once that credential exists (you use “Change” instead). Mainly guards a cross-package literal: the server error string and the client authErrorText includes() match on the same English sentence, so rewording one side silently degrades the UI into showing raw English. The change-in-place escape hatch is pinned too: your only login method cannot be unlinked, so without that in-place UPDATE an account holding just a phone number could never change it.' },
   },
   {
     id: 'wca-link-onboarding',

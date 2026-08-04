@@ -17,7 +17,7 @@ import {
   sendEmailCode, verifyEmailCode, sendPhoneCode, verifyPhoneCode,
   loginPassword, setPassword as apiSetPassword, removePassword,
   linkEmailSend, linkEmailVerify, linkPhoneSend, linkPhoneVerify,
-  unlinkIdentity, fetchIdentities, fetchAuthProviders, loginGoogle, linkGoogle, replaceEmailVerify,
+  unlinkIdentity, fetchIdentities, fetchAuthProviders, loginGoogle, linkGoogle, replaceEmailVerify, replacePhoneVerify,
   deleteAccount,
   type Identity, type AuthProviders, type SocialProvider,
 } from '@/lib/account-api';
@@ -134,6 +134,7 @@ function authErrorText(raw: string, t: (zh: string, en: string) => string): stri
   if (m.includes('invalid password')) return t('密码至少 8 位', 'Password must be at least 8 characters');
   if (m.includes('not configured')) return t('该登录方式暂未开放', "This sign-in method isn't available yet");
   if (m.includes('account already has an email')) return t('一个账号只能绑定一个邮箱,请先解绑现有邮箱', 'An account can have only one email — unlink the current one first');
+  if (m.includes('account already has a phone')) return t('一个账号只能绑定一个手机号,请先解绑现有手机号', 'An account can have only one phone number — unlink the current one first');
   if (m.includes('already linked')) return t('该方式已绑定到另一个账号', 'Already linked to another account');
   if (m.includes('invalid email')) return t('邮箱格式不正确', 'Invalid email address');
   if (m.includes('invalid phone')) return t('手机号格式不正确', 'Invalid phone number');
@@ -150,7 +151,7 @@ function authErrorText(raw: string, t: (zh: string, en: string) => string): stri
  * 邮箱/手机验证码流程(发码 → 输码 → 校验)。
  *   login    验证后登录
  *   link     绑到当前账号
- *   replace  换掉当前账号已有的邮箱(仅 email)—— 发码与 link 同一条链路,只有最后落库不同
+ *   replace  换掉当前账号已有的那条(邮箱 / 手机号)—— 发码与 link 同一条链路,只有最后落库不同
  */
 function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' | 'link' | 'replace'; onDone: OnSignedIn }) {
   const lang = useLang();
@@ -186,7 +187,7 @@ function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' |
     setBusy(true);
     try {
       if (mode === 'replace') {
-        await replaceEmailVerify(target, code);
+        channel === 'email' ? await replaceEmailVerify(target, code) : await replacePhoneVerify(target, code);
         onDone();
       } else if (mode === 'link') {
         channel === 'email' ? await linkEmailVerify(target, code) : await linkPhoneVerify(target, code);
@@ -236,7 +237,7 @@ function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' |
           {error && <p className="auth-error">{error}</p>}
           <button className="auth-primary" disabled={code.length !== CODE_LEN || busy} onClick={() => void verify()}>
             {busy ? <Loader2 size={ICON} className="auth-spin" /> : null}
-            {mode === 'link' ? t('绑定', 'Link') : t('登录', 'Sign in')}
+            {mode === 'login' ? t('登录', 'Sign in') : mode === 'replace' ? t('更换', 'Change') : t('绑定', 'Link')}
           </button>
           <button className="auth-textbtn" onClick={() => { setStep('input'); setCode(''); setError(null); }}>
             {t('改用其它' + label, 'Use another ' + label.toLowerCase())}
@@ -807,8 +808,8 @@ export function AccountPanel() {
   const [canReset, setCanReset] = useState(false);
   const [pwAction, setPwAction] = useState<'set' | 'remove' | null>(null);
   const [linking, setLinking] = useState<'email' | 'phone' | null>(null);
-  // 换绑邮箱。与 linking 互斥:同时展开两个验证码表单,用户分不清哪个码填哪儿。
-  const [replacingEmail, setReplacingEmail] = useState(false);
+  // 换绑邮箱 / 手机号。与 linking 互斥:同时展开两个验证码表单,用户分不清哪个码填哪儿。
+  const [replacing, setReplacing] = useState<'email' | 'phone' | null>(null);
   const [error, setError] = useState<string | null>(null);
   // 解绑二次确认:先点「解绑」进入待确认态,再点「确定」才真正调用。
   const [confirmKey, setConfirmKey] = useState<string | null>(null);
@@ -840,6 +841,7 @@ export function AccountPanel() {
   const hasGoogle = (identities ?? []).some((i) => i.provider === 'google');
   // 密码登录 = 邮箱 + 密码,故仅当账号有邮箱身份时才给密码入口(无邮箱设了也用不上)。
   const hasEmail = (identities ?? []).some((i) => i.provider === 'email');
+  const hasPhone = (identities ?? []).some((i) => i.provider === 'phone');
   const boundProviders = new Set((identities ?? []).map((i) => i.provider));
   const availableSocials = SOCIALS.filter((s) => !!avail.social[s.key] && !boundProviders.has(s.key));
 
@@ -935,13 +937,17 @@ export function AccountPanel() {
                   </div>
                 ) : (
                   <div className="auth-idactions">
-                    {/* 换邮箱只能走这里:一个账号只能一个邮箱、唯一的登录方式又不许解绑,
-                        「先解绑再绑定」对只有邮箱的账号是死路。这个按钮原地换掉那条身份。 */}
-                    {i.provider === 'email' && (
+                    {/* 换邮箱 / 手机号只能走这里:各只能有一个、唯一的登录方式又不许解绑,
+                        「先解绑再绑定」对只有这一条的账号是死路。这个按钮原地换掉那条身份。
+                        方式本身没开(如短信未配置)就别给入口 —— 点进去发码必 503。 */}
+                    {(i.provider === 'email' || i.provider === 'phone') && avail[i.provider] && (
                       <button
                         type="button"
                         className="auth-link"
-                        onClick={() => { setLinking(null); setReplacingEmail((v) => !v); }}
+                        onClick={() => {
+                          setLinking(null);
+                          setReplacing((v) => (v === i.provider ? null : (i.provider as 'email' | 'phone')));
+                        }}
                       >
                         {t('更换', 'Change')}
                       </button>
@@ -965,43 +971,45 @@ export function AccountPanel() {
 
       {error && <p className="auth-error">{error}</p>}
 
-      {replacingEmail && (
+      {replacing && (
         <div className="auth-replace">
           <p className="auth-hint">
-            {t('验证新邮箱后,原邮箱立即失效。', 'Once the new address is verified, the old one stops working immediately.')}
+            {replacing === 'email'
+              ? t('验证新邮箱后,原邮箱立即失效。', 'Once the new address is verified, the old one stops working immediately.')
+              : t('验证新手机号后,原手机号立即失效。', 'Once the new number is verified, the old one stops working immediately.')}
           </p>
           <CodeFlow
-            channel="email"
+            channel={replacing}
             mode="replace"
-            onDone={() => { setReplacingEmail(false); void reload(); }}
+            onDone={() => { setReplacing(null); void reload(); }}
           />
         </div>
       )}
 
       {/* 「还能绑什么」在拿到已绑列表前无从谈起:identities 为 null 时 hasEmail/hasWca 全是
           false,会把已绑过的方式先闪一行再撤掉。等加载完再渲染整块。
-          一个账号只能绑一个邮箱(0078 偏唯一索引),已有就不给入口 —— 否则和上面「邮箱
-          xxx@x 解绑」那行撞脸,看着像重复渲染。手机仍可多绑,故不加同样的判断。 */}
+          一个账号只能绑一个邮箱 / 一个手机号(0078 / 0103 偏唯一索引),已有就不给入口 ——
+          否则和上面「邮箱 xxx@x 解绑」那行撞脸,看着像重复渲染;要换走上面的「更换」。 */}
       {identities !== null
-        && ((avail.email && !hasEmail) || avail.phone || !hasWca || (googleOn && !hasGoogle) || availableSocials.length > 0) && (
+        && ((avail.email && !hasEmail) || (avail.phone && !hasPhone) || !hasWca || (googleOn && !hasGoogle) || availableSocials.length > 0) && (
         <div className="auth-linklist">
           {avail.email && !hasEmail && (
             <div className="auth-idrow">
               <ProviderGlyph provider="email" />
               <span className="auth-idprov">{t('邮箱', 'Email')}</span>
               <div className="auth-idactions">
-                <button type="button" className="auth-link" onClick={() => { setReplacingEmail(false); setLinking(linking === 'email' ? null : 'email'); }}>
+                <button type="button" className="auth-link" onClick={() => { setReplacing(null); setLinking(linking === 'email' ? null : 'email'); }}>
                   {t('绑定', 'Link')}
                 </button>
               </div>
             </div>
           )}
-          {avail.phone && (
+          {avail.phone && !hasPhone && (
             <div className="auth-idrow">
               <ProviderGlyph provider="phone" />
               <span className="auth-idprov">{t('手机', 'Phone')}</span>
               <div className="auth-idactions">
-                <button type="button" className="auth-link" onClick={() => { setReplacingEmail(false); setLinking(linking === 'phone' ? null : 'phone'); }}>
+                <button type="button" className="auth-link" onClick={() => { setReplacing(null); setLinking(linking === 'phone' ? null : 'phone'); }}>
                   {t('绑定', 'Link')}
                 </button>
               </div>

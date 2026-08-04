@@ -65,6 +65,8 @@ export const linkEmailVerify = (email: string, code: string) => post<{ ok: true;
 export const replaceEmailVerify = (email: string, code: string) => post<{ ok: true; identities: Identity[] }>('/v1/auth/email/replace', { email, code }, true);
 export const linkPhoneSend = (phone: string) => post<{ ok: true }>('/v1/auth/link/phone/send', { phone }, true);
 export const linkPhoneVerify = (phone: string, code: string) => post<{ ok: true; identities: Identity[] }>('/v1/auth/link/phone/verify', { phone, code }, true);
+// 换绑手机号:同 replaceEmailVerify,理由一样(0103 起手机也是一个账号一条)。
+export const replacePhoneVerify = (phone: string, code: string) => post<{ ok: true; identities: Identity[] }>('/v1/auth/phone/replace', { phone, code }, true);
 export const linkWca = (accessToken: string) => post<{ ok: true; token?: string; user?: SessionUser; identities: Identity[] }>('/v1/auth/link/wca', { accessToken }, true);
 export const unlinkIdentity = (provider: string, providerUid?: string) => post<{ ok: true; token?: string; user?: SessionUser; identities: Identity[] }>('/v1/auth/unlink', { provider, providerUid }, true);
 
