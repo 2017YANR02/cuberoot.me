@@ -19,7 +19,7 @@ import {
 } from '@/app/[lang]/timer/_lib/scramble/kociemba/cube';
 import {
   EXACT_CASE_FIXED_STAGES, EXACT_COLOR_KEYS, EXACT_DIST, EXACT_STAGES, SLOT_OK,
-  exactCasePlan, getExactCell,
+  exactCaseDepths, exactCasePlan, getExactCell,
 } from '@/app/[lang]/scramble/stats/_data/exact_dist';
 import { facesOfSubset, stageMetric } from '@/lib/cross-trainer';
 import { block222DistCapped, blockCoordOf } from '@/lib/cross-trainer/block';
@@ -113,11 +113,15 @@ describe('exact case list / 定帧那几格', () => {
     return { stage, counts: cell.counts.map(Number) };
   });
 
-  it.each(CELLS)('$stage:逐档个数对上金标', ({ stage, counts }) => {
+  // 只查页面真会让人点开的那几档:EOCross 的中间几档有上百万个态,把它们逐个物化成钉法
+  // 会把这份测试(和浏览器)吃干净 —— 那也正是 EXACT_CASE_CAP 存在的原因。
+  it.each(CELLS)('$stage:可点的每一档个数都对上金标', ({ stage, counts }) => {
     const src = exactCaseSource(stage, 'fixed1', 'W', []);
     expect(src).not.toBeNull();
-    expect(counts.map((_, d) => src!.members(d).length)).toEqual(counts);
-    // 这张表就是整个坐标空间,没有第十一档 —— 越界的档必须是空的,不是「还没算」。
+    const depths = exactCaseDepths(stage, 'fixed1', 'W', counts.map(String));
+    expect(depths.length).toBeGreaterThan(0);
+    for (const d of depths) expect(src!.members(d).length, `${stage} d=${d}`).toBe(counts[d]);
+    // 这张表就是整个坐标空间 —— 越界的档必须是空的,不是「还没算」。
     expect(src!.members(counts.length).length).toBe(0);
   });
 
@@ -143,11 +147,22 @@ describe('exact case list / 定帧那几格', () => {
     expect(new Set(measured)).toEqual(new Set([depth]));
   });
 
-  // 群不是 48 也不是 8:定帧把面和块都钉死了,剩下的只有把那几块换到自己身上的那几个。
+  /*
+   * 群不是 48 也不是 8:定帧把题面钉死了,剩下的只有保住它的那几个。这几个数是**推得出来**的,
+   * 所以值得当面钉住 —— 群悄悄变大只会让「本质 N 个」变小,轨道封闭那条测试是看不出来的。
+   *   1×2×2  该角 + 那两条棱:恒等 + 交换那两条棱的镜像 = 2
+   *   1×2×3  两角 + 三棱:恒等 + 沿块中面的镜像 = 2
+   *   2×2×2  该角 + 三条棱:绕那条体对角线的 3 个转体 × 镜像 = 6(S₃ 作用在三条棱上)
+   *   EO     只需保住那一对相对面(轴):24/3 × 2 = 16
+   *   EOLine / EOCross  轴之外还钉住底面,两组都要保住 = 4
+   */
   it.each([
     ['fbsquare', 2],
     ['rouxs1', 2],
     ['block222', 6],
+    ['eo', 16],
+    ['eoline', 4],
+    ['eo_cross', 4],
   ] as const)('%s 的对称群是 %i 个', (stage, size) => {
     expect(exactCaseSource(stage, 'fixed1', 'W', [])!.symmetries.length).toBe(size);
   });
@@ -211,8 +226,9 @@ describe('exact case list / 两个入口对同一批格子说同一句话', () =
         }
       }
     }
-    // 十字取最优帧四档 + 定帧三格(不分底色,四个底色 key 走同一格)= 4 + 12。
-    expect(listable).toBe(16);
+    // 十字取最优帧四档 + 定帧六格 ×(四个底色 key 走同一格)= 4 + 24。
+    // 加一格能列的阶段这个数就得改 —— 那正是要当面看一眼的地方。
+    expect(listable).toBe(28);
   });
 });
 
