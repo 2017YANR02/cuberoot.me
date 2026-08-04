@@ -1,54 +1,27 @@
 /**
- * 摄像头切换 —— 「下一个摄像头是哪个」这一个决策。纯函数,不碰 DOM,边界全在这里收,
- * 好让它能被测到(真正调 restartTrack 的那几行在 VideoStrip 里)。
+ * 摄像头切换 —— 只做一件事:前置 ↔ 后置。纯函数,不碰 DOM,好让它能被测到
+ * (真正调 restartTrack 的那几行在 components/video/VideoTiles.tsx 里)。
  *
- * 两条路,由**当前轨道自己报的** facingMode 决定走哪条:
- *   报得出 user / environment(手机、平板)→ 翻面。一次点击 = 前后互换,和所有视频 App 一致。
- *   报不出(桌面摄像头没有「朝向」这回事)→ 按 deviceId 顺序轮换,插了两个摄像头的台式机也能换。
+ * 判据是「这颗摄像头有没有朝向」:手机、平板报得出 user / environment,桌面摄像头没有
+ * 「朝向」这回事 —— 于是切换按钮在桌面上自动不出现,这正是我们要的。
  *
- * 手机上**不能**走 deviceId 轮换:Android 会把主摄 / 广角 / 长焦 / 深度都列成独立 videoinput,
- * 轮一圈要点四五次,中间还会停在没法用的深度相机上。反过来桌面也不能走 facingMode ——
- * 那里所有摄像头都匹配不上任何 facing,约束直接失败。所以必须按设备实际情况分流,不能二选一写死。
+ * 曾经还有一条「桌面按 deviceId 顺序轮换」的路,删了。浏览器报的 videoinput 条目里绝大多数
+ * 不是你想切过去的摄像头:实测一台装了直播软件的 Windows 机器报 7 个 —— 1 个真摄像头
+ * 加上 WebcastMate、vMix ×4、OBS 这六个虚拟摄像头,groupId 各不相同,按硬件去重也去不掉;
+ * 而几乎每台带 Windows Hello 的机器还会多报一路红外镜头,切过去是一片黑白噪点。
+ * 要在桌面上选摄像头,该做的是一个带标签的下拉,不是轮换 —— 在那之前,不给按钮。
  */
-import type { VideoCaptureOptions } from 'livekit-client';
 
 export type CameraFacing = 'user' | 'environment';
 
-/** 当前采集参数,取自 MediaStreamTrack.getSettings() 的两个字段。 */
+/** 当前采集参数,取自 MediaStreamTrack.getSettings()。 */
 export interface CameraSettings {
   facingMode?: string;
-  deviceId?: string;
 }
 
-/** enumerateDevices 给的 videoinput 里我们用得上的三个字段。 */
-export interface CameraDevice {
-  deviceId: string;
-  groupId?: string;
-}
-
-/**
- * 真正「切得过去」的摄像头。浏览器报的 videoinput 条目不都是另一个摄像头:
- *
- *   - Windows Hello 的红外镜头和彩色镜头是同一颗模组的两路输出,groupId 相同。切过去是
- *     一片黑白噪点 —— 而绝大多数 Windows 笔记本都有这么一路,于是「只有一个摄像头」的人
- *     也会看到切换按钮。
- *   - deviceId 为空的是没拿到权限时的占位条目,根本切不过去。
- *
- * 所以按 groupId 去重、丢掉空 id。**只在 groupId 非空时才去重** —— iOS Safari 对所有
- * 设备都报空 groupId,一律去重会把前后置合成一个,手机上反而没得切了。
- */
-export function usableCameras<T extends CameraDevice>(devices: readonly T[]): T[] {
-  const seenGroups = new Set<string>();
-  const out: T[] = [];
-  for (const d of devices) {
-    if (!d.deviceId) continue;
-    if (d.groupId) {
-      if (seenGroups.has(d.groupId)) continue;
-      seenGroups.add(d.groupId);
-    }
-    out.push(d);
-  }
-  return out;
+/** 采集能力,取自 MediaStreamTrack.getCapabilities()。 */
+export interface CameraCapabilities {
+  facingMode?: string[];
 }
 
 /**
@@ -59,23 +32,35 @@ export function facingOf(settings: CameraSettings | undefined): CameraFacing {
   return settings?.facingMode === 'environment' ? 'environment' : 'user';
 }
 
+/** settings 里报得出朝向。left / right 是规范里两个罕见值,不当作可翻面。 */
+export function hasFacing(settings: CameraSettings | undefined): boolean {
+  return settings?.facingMode === 'user' || settings?.facingMode === 'environment';
+}
+
 /**
- * 下一个摄像头的采集约束;只有一个摄像头(或一个都枚举不到)时返回 null —— 调用方据此
- * 隐藏按钮,而不是给一个点了没反应的按钮。
+ * 这颗摄像头能不能翻面 —— 决定切换按钮出不出现。两个来源任一报得出朝向就算:
+ *
+ *   getSettings().facingMode      Chrome / Android 一定有。
+ *   getCapabilities().facingMode  Safari 那边 settings 是否填 facingMode 没人验证过
+ *                                 (MDN browser-compat-data 里 safari / safari_ios 都是
+ *                                 null = 未知),所以再问一次能力表兜底。
+ *
+ * 桌面摄像头和虚拟摄像头两处都报不出,按钮因此在那里不出现。
  */
-export function nextCamera(
-  current: CameraSettings | undefined,
-  cameras: readonly { deviceId: string }[],
-): VideoCaptureOptions | null {
-  if (cameras.length < 2) return null;
+export function canFlipCamera(
+  settings: CameraSettings | undefined,
+  caps: CameraCapabilities | undefined,
+): boolean {
+  if (hasFacing(settings)) return true;
+  return !!caps?.facingMode?.some((f) => f === 'user' || f === 'environment');
+}
 
-  const facing = current?.facingMode;
-  if (facing === 'user' || facing === 'environment') {
-    return { facingMode: facing === 'user' ? 'environment' : 'user' };
-  }
-
-  // 当前设备不在列表里(deviceId 拿不到 / 摄像头被拔了)就从头开始 —— 换到第一个总比
-  // 什么都不做强,下一次点击就能接上正常轮换。
-  const i = cameras.findIndex((d) => d.deviceId === current?.deviceId);
-  return { deviceId: cameras[(i + 1) % cameras.length]!.deviceId };
+/**
+ * 翻到另一面。参数是**我们自己记着的**当前朝向,不是每次现从 settings 读 —— 万一某个浏览器
+ * 的 settings 里没有 facingMode(能力表却说有前后置),现读会永远拿不到值、翻不动。
+ * 只带 facingMode,**不带 deviceId**:两个一起给等于同时要求「后置」和「就是这一颗镜头」,
+ * 必然冲突。
+ */
+export function oppositeFacing(current: CameraFacing): CameraFacing {
+  return current === 'user' ? 'environment' : 'user';
 }
