@@ -52,6 +52,17 @@ describe('video bitrate — server budget and client publish must agree', () => 
     ).toBe(mbps * 1_000_000);
   });
 
+  it('screen-share bitrate agrees too — it is an EXTRA stream outside the n*(n-1) model', () => {
+    // 屏幕共享不在摄像头那个二次项里,是额外的 (n-1) 一路。服务端按 SCREEN_SHARE_MBPS
+    // 给它预留带宽,客户端按 SCREEN_SHARE_MAX_BITRATE 真发 —— 分叉同样是静默超发/白拒。
+    const mbps = Number(/const SCREEN_SHARE_MBPS\s*=\s*([\d.]+)\s*;/.exec(serverSrc)![1]);
+    const bps = num(/SCREEN_SHARE_MAX_BITRATE\s*=\s*([\d_]+)\s*;/.exec(clientSrc)![1]);
+    expect(
+      bps,
+      `屏幕共享码率两处不一致:server ${mbps} Mbps,client ${bps} bps。`,
+    ).toBe(mbps * 1_000_000);
+  });
+
   it('the shared room options publish via the constant, not an inline number', () => {
     const enc = /videoEncoding:\s*\{[^}]*\}/.exec(stripSrc)?.[0] ?? '';
     expect(enc, 'components/video/video-call.ts 没有 videoEncoding 配置了?').not.toBe('');

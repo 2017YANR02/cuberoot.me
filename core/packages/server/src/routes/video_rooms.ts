@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { AccessToken, RoomServiceClient } from 'livekit-server-sdk';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
-import { checkRateLimit } from '../utils/recon_helpers.js';
+import { checkRateLimit, requireAuth } from '../utils/recon_helpers.js';
 
 /**
  * /v1/video — 全站视频通话的凭证签发(LiveKit SFU)。两种房,同一套带宽闸:
@@ -17,17 +17,19 @@ import { checkRateLimit } from '../utils/recon_helpers.js';
  *
  * 两种房的授权模型是**不同**的,这是本文件最要紧的一处区别:
  *
- *   对战房 `battle-<code>`  房间码只有 5 位(24 bit)且用户会当面念出来,可猜 —— 所以必须
- *                           回库确认该 pid 此刻确实在 battle_rooms.players 里。identity = pid,
- *                           显示名取房里的昵称(与对战 UI 同一个名字,不接受客户端自报)。
- *   会议室 `meet-<code>`    没有在册名单可查:**链接就是凭证**,和 Zoom 一样。校验因此退化成
- *                           「码的格式对不对」,安全性全部来自 45 bit 熵(见 MEET_CODE_RE)。
- *                           显示名由用户自填,故必须在这里洗一遍再发给其他人。
+ *   对战房 `battle-<code>`  免登录。房间码只有 5 位(24 bit)且用户会当面念出来,可猜 ——
+ *                           所以必须回库确认该 pid 此刻确实在 battle_rooms.players 里。
+ *                           identity = pid,显示名取房里的昵称(不接受客户端自报)。
+ *   会议室 `meet-<code>`    **必须登录**。没有在册名单可查,进哪一间由会议码决定(45 bit 熵,
+ *                           见 MEET_CODE_RE),但「能不能用这个功能」由账号决定。identity 与
+ *                           显示名一律取自 token 里的账号 —— 客户端只报会议码,报不了自己是谁,
+ *                           所以会议里不可能出现顶着别人名字的画面。
  *
  * 带宽:实例峰值 200 Mbps,预算按 140 留出站点自身 HTTP 流量。SFU 要把每人的流转发给其余
- * n-1 人,故单房出向 ≈ n*(n-1)*单路码率 —— 二人 6、四人 36、六人 90 Mbps。签 token 前先
- * 向 LiveKit 查一遍在线房间算总占用,超预算直接拒发(而不是放进去把所有人一起拖卡)。
- * 房间数不写死:二人房便宜、六人房贵,按预算算出来的并发数自然随人数浮动。
+ * n-1 人,故单房出向 ≈ n*(n-1)*单路码率 —— 二人 6、四人 36、六人 90 Mbps,会议室再加一路
+ * 屏幕共享的 (n-1)*1.5。签 token 前先向 LiveKit 查一遍在线房间算总占用,超预算直接拒发
+ * (而不是放进去把所有人一起拖卡)。房间数不写死:二人房便宜、六人房贵,按预算算出来的
+ * 并发数自然随人数浮动。
  *
  * 注意:query() 会把 SQL 里所有 `?` 重写成 $n,jsonb 存在性判断必须用 jsonb_exists() 函数
  * 形式,不能写 `players ? pid` 操作符(与 battle_rooms 同一约束)。
@@ -45,6 +47,12 @@ const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET ?? '';
  */
 const PER_STREAM_MBPS = 3;
 
+/**
+ * 屏幕共享的码率上限(Mbps)。只有会议室有这个功能,而且同一时刻通常只有一个人在共享 ——
+ * 但它是**额外**的一路,不在 n*(n-1) 那个模型里,漏算就等于把预算悄悄超发。
+ */
+const SCREEN_SHARE_MBPS = 1.5;
+
 /** 服务端出向带宽预算(Mbps):实例峰值 200,留 30% 给站点自身 HTTP 流量。 */
 const BANDWIDTH_BUDGET_MBPS = 140;
 
@@ -52,9 +60,10 @@ const BANDWIDTH_BUDGET_MBPS = 140;
 const MAX_VIDEO_PARTICIPANTS = 4;
 
 /**
- * 会议室人数上限。最坏 6*5*3 = 90 Mbps,140 的预算里还剩得下一间四人对战房(36)。
- * 再放一档到 8 人就是 8*7*3 = 168 —— 一间房吃穿整个预算。人数要再往上,只能同时降码率
- * (PER_STREAM_MBPS 是二次项的系数),这两个数不能各调各的。
+ * 会议室人数上限。最坏 6*5*3 + 5*1.5 = 97.5 Mbps(摄像头 + 一路屏幕共享),140 的预算里
+ * 还剩得下一间四人对战房(36)。再放一档到 8 人光摄像头就是 8*7*3 = 168 —— 一间房吃穿
+ * 整个预算。人数要再往上,只能同时降码率(PER_STREAM_MBPS 是二次项的系数),这两个数
+ * 不能各调各的。
  */
 const MAX_MEET_PARTICIPANTS = 6;
 
@@ -67,22 +76,14 @@ const PID_RE = /^[a-z0-9]{6,16}$/;
 /**
  * 会议码:32 字符表(去掉 0/1/I/O 这些会抄错的)取 9 位 = 45 bit。
  *
- * 熵是这里唯一的防线 —— 会议室没有在册名单可查,拿到码就能进。45 bit 配上 60 次/分钟的
- * 限流,扫穿要 10^7 年量级;对战房那个 5 位码(24 bit)之所以必须回库校验,正因为它只有
- * 一千万种、还会被人当面念出来。
+ * 登录只解决「谁能用这个功能」,**进哪一间会议仍然只由这个码决定** —— 没有在册名单可查,
+ * 任何登录用户拿到码就能进。所以熵仍是房间层面唯一的防线:45 bit 配上 60 次/分钟的限流,
+ * 扫穿要 10^7 年量级;对战房那个 5 位码(24 bit)之所以必须回库校验,正因为它只有一千万种、
+ * 还会被人当面念出来。
  * 客户端 lib/video-room-api.ts 按同一张表生成,两处必须一致 —— 守卫见
  * client tests/meet-code-format.test.ts(不一致的话每一次「新建会议」都会 400)。
  */
 const MEET_CODE_RE = /^[2-9A-HJ-NP-Z]{9}$/;
-
-/**
- * 会议里的显示名由用户自填、且会出现在**别人**的屏幕上,所以在签进 token 之前洗一遍:
- * 去掉控制字符与零宽(拿它们伪装成别人、或撑爆布局),压缩空白,限长 24。
- */
-function cleanName(raw: unknown): string {
-  if (typeof raw !== 'string') return '';
-  return raw.replace(/\p{C}/gu, '').replace(/\s+/g, ' ').trim().slice(0, 24);
-}
 
 const RATE = { bucket: 'video-token', max: 60 } as const;
 
@@ -112,8 +113,16 @@ function svc(): RoomServiceClient {
  * 宫格里的小窗会自动订阅低分辨率层,实际占用通常只有三分之一到一半。故意按最坏算 ——
  * 少开一个房只是少一个房,超卖带宽是所有房间一起卡。
  */
-function roomEgressMbps(n: number): number {
-  return n <= 1 ? 0 : n * (n - 1) * PER_STREAM_MBPS;
+function roomEgressMbps(n: number, screenShare: boolean): number {
+  if (n <= 1) return 0;
+  const camera = n * (n - 1) * PER_STREAM_MBPS;
+  // 屏幕共享:同一时刻按一路算(会议里通常只有一个人在讲),同样要转发给其余 n-1 人。
+  return camera + (screenShare ? (n - 1) * SCREEN_SHARE_MBPS : 0);
+}
+
+/** 房名前缀决定这间房有没有屏幕共享 —— 对战房没有这个功能,不该替它多留带宽。 */
+function isMeetRoom(name: string): boolean {
+  return name.startsWith('meet-');
 }
 
 /**
@@ -150,9 +159,9 @@ async function capacityCheck(
 
   let total = 0;
   for (const r of rooms) {
-    total += roomEgressMbps(r.name === targetRoom ? nextCount : r.numParticipants);
+    total += roomEgressMbps(r.name === targetRoom ? nextCount : r.numParticipants, isMeetRoom(r.name));
   }
-  if (!rooms.some(r => r.name === targetRoom)) total += roomEgressMbps(nextCount);
+  if (!rooms.some(r => r.name === targetRoom)) total += roomEgressMbps(nextCount, isMeetRoom(targetRoom));
 
   return total > BANDWIDTH_BUDGET_MBPS ? { ok: false, reason: 'bandwidth' } : { ok: true };
 }
@@ -182,8 +191,9 @@ async function mintToken(room: string, identity: string, name: string, maxPartic
     room,
     canPublish: true,
     canSubscribe: true,
-    // 数据通道用不上(对战状态走既有的 1s 轮询,会议室没有共享状态),关掉少一条可滥用的路径。
-    canPublishData: false,
+    // 数据通道只有会议室要(文字聊天走它)。对战房用不上 —— 对战状态走既有的 1s 轮询 ——
+    // 那就别开,少一条可滥用的路径。
+    canPublishData: isMeetRoom(room),
   });
 
   return {
@@ -232,8 +242,11 @@ videoRoomsRoutes.post('/video/token', async (c) => {
   return c.json(await mintToken(roomName, pid, rows[0].name ?? pid, MAX_VIDEO_PARTICIPANTS));
 });
 
-// POST /video/meet/token — 会议室凭证。与对战房唯一的区别:没有在册名单可查,链接即凭证,
-// 所以校验退化成「码的格式对不对 + 名字洗干净」,安全性来自 MEET_CODE_RE 的 45 bit 熵。
+// POST /video/meet/token — 会议室凭证。**必须登录**:requireAuth 抛的
+// 'Authentication required' 由全局 onError 转成 401。
+//
+// 身份完全取自 token,客户端只报会议码 —— 它报不了自己是谁,所以会议里不可能出现顶着
+// 别人名字的画面(这也是「登录」在这里买到的东西:免登录时显示名只能靠客户端自报)。
 // 会议室不需要预先创建:LiveKit 在第一个人进来时自动建房,没人了自动关 —— 因此本站不存
 // 任何会议记录,也就没有「会议列表」可以被人翻。
 videoRoomsRoutes.post('/video/meet/token', async (c) => {
@@ -242,24 +255,22 @@ videoRoomsRoutes.post('/video/meet/token', async (c) => {
 
   if (!videoEnabled()) return c.json({ error: 'video not configured' }, 503);
 
-  let body: { code?: unknown; id?: unknown; name?: unknown };
+  const user = await requireAuth(c);
+
+  let body: { code?: unknown };
   try { body = await c.req.json(); } catch { return c.json({ error: 'invalid body' }, 400); }
 
   const code = typeof body.code === 'string' ? body.code.toUpperCase() : '';
-  const id = typeof body.id === 'string' ? body.id : '';
-  const name = cleanName(body.name);
-  // 名字洗完为空(全是控制字符 / 只有空白)也算无效 —— 会议里一格没有名字的画面
-  // 谁也认不出是谁。
-  if (!MEET_CODE_RE.test(code) || !PID_RE.test(id) || !name) {
-    return c.json({ error: 'invalid code/id/name' }, 400);
-  }
+  if (!MEET_CODE_RE.test(code)) return c.json({ error: 'invalid code' }, 400);
 
+  // identity 用归属键(绑了 WCA 是真 wca_id,否则 u<uid>)—— 同一个人刷新页面重连会被认成
+  // 同一个参与者而不是新增一人,带宽准入才算得准。
   const roomName = `meet-${code}`;
-  const cap = await capacityCheck(roomName, id, MAX_MEET_PARTICIPANTS);
+  const cap = await capacityCheck(roomName, user.wcaId, MAX_MEET_PARTICIPANTS);
   if (!cap.ok) {
     const status = cap.reason === 'unavailable' ? 503 : 429;
     return c.json({ error: cap.reason }, status);
   }
 
-  return c.json(await mintToken(roomName, id, name, MAX_MEET_PARTICIPANTS));
+  return c.json(await mintToken(roomName, user.wcaId, user.name || user.wcaId, MAX_MEET_PARTICIPANTS));
 });

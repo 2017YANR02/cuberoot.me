@@ -5,7 +5,7 @@
 import { VideoPresets, type RoomOptions } from 'livekit-client';
 
 import { tr } from '@/i18n/tr';
-import { VIDEO_MAX_BITRATE, type VideoDenyReason } from '@/lib/video-room-api';
+import { SCREEN_SHARE_MAX_BITRATE, VIDEO_MAX_BITRATE, type VideoDenyReason } from '@/lib/video-room-api';
 
 /** 失败原因:服务端给的那几种,加上只可能发生在浏览器这侧的三种。 */
 export type FailReason = VideoDenyReason | 'media' | 'connect' | 'camera';
@@ -29,7 +29,9 @@ export function denyMessage(reason: FailReason, maxParticipants: number): string
     case 'not in room':
       return tr({ zh: '你已不在这个房间里', en: 'You are no longer in this room' });
     case 'invalid':
-      return tr({ zh: '会议码或名字不对,请检查后重试', en: 'Bad meeting code or name — check and try again' });
+      return tr({ zh: '会议码不对,请检查后重试', en: 'Bad meeting code — check and try again' });
+    case 'auth':
+      return tr({ zh: '会议需要登录后使用', en: 'Meetings require you to be signed in' });
     case 'video not configured':
       return tr({ zh: '本站未启用视频', en: 'Video is not enabled on this site' });
     case 'media':
@@ -57,5 +59,8 @@ export const LIVEKIT_ROOM_OPTIONS: RoomOptions = {
     videoEncoding: { maxBitrate: VIDEO_MAX_BITRATE, maxFramerate: 30 },
     // 只列两条附加层:宫格小窗吃 180p,半屏吃 540p,点开大图才用主层 1080p。
     videoSimulcastLayers: [VideoPresets.h180, VideoPresets.h540],
+    // 屏幕共享(只有 /meet 有)。15 帧足够看幻灯片和代码,而它是摄像头之外额外的一路,
+    // 帧率给高了直接吃掉给别人摄像头留的带宽。
+    screenShareEncoding: { maxBitrate: SCREEN_SHARE_MAX_BITRATE, maxFramerate: 15 },
   },
 };
