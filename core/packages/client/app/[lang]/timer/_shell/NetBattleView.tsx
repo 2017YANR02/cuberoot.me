@@ -33,6 +33,7 @@ import { useQueryState } from 'nuqs';
 import { Copy, Check, LogOut, Swords, Trophy, RotateCcw, BarChart3, X, Crown, UserMinus, Bluetooth, QrCode } from 'lucide-react';
 
 import TimingSurface from './TimingSurface';
+import VideoStrip from '../_battle/VideoStrip';
 import BluetoothModal from '../_components/BluetoothModal';
 import { useBluetoothCube } from '../_lib/bluetooth';
 import { useAutoReady } from '../_lib/bluetooth/auto_ready';
@@ -1287,6 +1288,11 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
           );
         })}
       </div>
+
+      {/* 视频条:默认不连接,要用户自己点「开视频」。放玩家条下方、计时器上方 ——
+          与玩家条同属「房间里有谁」这一层信息,而计时器是自己的事。
+          pid 为空 = 身份还没落定(正在加入/恢复),此时签不出 token,先不渲染。 */}
+      {pid && <VideoStrip code={room.code} pid={pid} />}
 
         <TimingSurface
           phase={timer.phase}

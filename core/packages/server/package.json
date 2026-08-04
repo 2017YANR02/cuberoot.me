@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@cuberoot/shared": "workspace:*",
+    "@cuberoot/vendor-sr-puzzlegen": "workspace:*",
     "@cuberoot/visualcube": "workspace:*",
     "@hono/node-server": "^1.0.0",
     "@types/ws": "^8.18.1",
@@ -24,10 +25,10 @@
     "hono": "^4.0.0",
     "jsonwebtoken": "^9.0.0",
     "linkedom": "^0.18.12",
+    "livekit-server-sdk": "^2.17.0",
     "maxmind": "^5.0.6",
     "postgres": "^3.4.9",
     "qrcode": "^1.5.4",
-    "@cuberoot/vendor-sr-puzzlegen": "workspace:*",
     "ws": "^8.20.0"
   },
   "devDependencies": {
