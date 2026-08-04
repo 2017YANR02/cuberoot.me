@@ -25,7 +25,7 @@ import {
   buildReconText, formatReconLine, reconTextForClipboard, reconTextHeader,
 } from '@/app/[lang]/timer/_lib/reconstruct/recon_text';
 import { computeStageSegments } from '@/app/[lang]/timer/_lib/reconstruct/stage_segments';
-import { computeStepMetrics } from '@/app/[lang]/timer/_lib/reconstruct/step_metrics';
+import { computeStepMetrics, stmWeight } from '@/app/[lang]/timer/_lib/reconstruct/step_metrics';
 import { applyOneToken } from '@/app/[lang]/timer/_lib/cube/apply_token';
 import { applyScramble } from '@/app/[lang]/timer/_lib/cube/state';
 import type { CubeFaces } from '@/app/[lang]/timer/_lib/cube/state';
@@ -286,5 +286,25 @@ describe('录了姿态、但中层那几对姿态流没看见(2026-08-04)', () =
     // 轴向是 M 不是 S:前面那个 y 把整段换过名(`L2` 同样印成 `B2`)。
     expect(last.moves).toEqual("U B2 U M U2 M' U B2 U2".split(' '));
     expect(r.blindPairs).toBe(0);
+  });
+
+  /**
+   * 报告顶上那个数(2026-08-04 用户提的:「步数改成 STM」)。合并之后谱子上一个中层
+   * 是**一个**记号,所以「读者数得出来的步数」比面转数少一个 —— 这里两边都锁死。
+   */
+  it('STM 比 HTM 少掉合并出来的那两个中层', async () => {
+    const segs = computeStageSegments(SCR_0804, mv0804, total0804)!;
+    const metrics = computeStepMetrics(SCR_0804, mv0804, total0804)!;
+    const slots = computeF2lSlots(SCR_0804, mv0804, total0804, segs);
+    const r = await buildReconText({
+      scramble: SCR_0804, moves: mv0804, totalMs: total0804, segs, metrics, slots,
+      core: { events: [{ tMs: 1500, token: 'y', angleRad: Math.PI / 2 }] },
+    });
+    // PLL 那一行:魔方转了 11 下面,写出来是 9 个记号 —— 差的就是两个中层。
+    const last = r.lines[r.lines.length - 1];
+    expect(last.moves.filter(t => stmWeight(t) > 0)).toHaveLength(9);
+    // 整把:HTM 那份不动(效率比对和分步分析表吃的是它),STM 少两个。
+    expect(r.turns).toBe(40);
+    expect(r.stm).toBe(38);
   });
 });

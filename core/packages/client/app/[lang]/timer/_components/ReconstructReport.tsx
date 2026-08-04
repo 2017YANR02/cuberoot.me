@@ -12,7 +12,7 @@
  *
  * 顺序:**先这把是怎么拧的,再这把拧得怎么样**(2026-08-03 用户提的)。
  *
- *   摘要 — 时间 / TPS / 步数 / 流畅,加上读完之后想做的那几件事。
+ *   摘要 — 时间 / STM / TPS / 流畅,加上读完之后想做的那几件事。
  *   回放 + 谱子 — 三维回放和按步写出来的动作(打乱就是谱子的第一行)。默认展开:
  *     它是报告的主体。上面压着折叠起来的「参考解法」。
  *   数据 — 质量分、时间轴、分步分析表、四个总量。排在后面不是因为不重要,而是
@@ -35,7 +35,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Link2, ChevronDown, ChevronRight, ThumbsUp, ThumbsDown, Info } from 'lucide-react';
+import { Forward, Check, ChevronDown, ChevronRight, ThumbsUp, ThumbsDown, Info } from 'lucide-react';
 import type { Solve, EventId } from '../_lib/types';
 import { effectiveMs } from '../_lib/types';
 import { formatMs } from '../_lib/stats';
@@ -61,8 +61,6 @@ import StepAnalysis from './StepAnalysis';
 import StepMoveList from './StepMoveList';
 import { encodeReplayUrl } from '../_lib/share/encode';
 import { nxnSizeForEvent } from '../_lib/cube';
-import { toReconEventId } from '../_shared/event-bridge';
-import { buildExternalLinks } from '@/lib/recon-utils';
 import { memoize3bld } from '../_lib/solver/bld_helper';
 import PlaybackPanel from './PlaybackPanel';
 import './reconstruct.css';
@@ -299,19 +297,11 @@ export default function ReconstructReport({
   const [referenceExpanded, setReferenceExpanded] = useState(false);
   const playbackAvailable = moves.length > 0 && nxnSizeForEvent(solve.event) !== null;
   const canShare = moves.length > 0;
-
-  // External alg viewers (alg.cubing.net / twizzle for non-cubes, plus
-  // cubedb.net). Reuses /recon's battle-tested builder — it keys on recon
-  // event ids, so bridge our EventId first. null = no single puzzle applies
-  // (relays / custom), in which case we render no links.
-  const externalLinks = useMemo(() => {
-    if (!canShare) return null;
-    const reconEvent = toReconEventId(solve.event);
-    if (!reconEvent) return null;
-    const alg = moves.map(m => m.m).join(' ');
-    if (!alg.trim()) return null;
-    return buildExternalLinks(reconEvent, solve.scramble ?? '', alg);
-  }, [canShare, solve.event, solve.scramble, moves]);
+  const shareLabel = !canShare
+    ? tr({ zh: '没有动作记录，无法分享回放', en: 'No move log — share unavailable' })
+    : copied
+      ? tr({ zh: '链接已复制', en: 'Link copied' })
+      : tr({ zh: '复制分享链接', en: 'Copy share link' });
 
   const handleCopyShare = async () => {
     try {
@@ -327,6 +317,31 @@ export default function ReconstructReport({
   const eff = effectiveMs(solve);
   const dt = new Date(solve.ts);
   const memoMs = solve.bld?.memoMs;
+
+  // 摘要里的步数按 STM 记:谱子上一个中层是一个记号(`S`,不是 `F' B`),读者对着
+  // 谱子数出来的就该是这个数。文字复盘落地前先拿面转数顶着 —— 两者只差合并掉的
+  // 那几对。效率比对和分步分析表仍然按 HTM 数(那边和参考解法比,口径必须一致,
+  // 见 `humanize.ts` 头注),所以那张表的步数会比这里多几个。
+  const stmCount = reconText ? reconText.stm : slices.htmCount;
+  const stmTps = slices.executionMs >= 1 ? stmCount / (slices.executionMs / 1000) : 0;
+
+  // 流畅那格的说明。除了定义,把三个原料也写出来 —— 峰值手速、不停顿要多久、实际
+  // 多久。不写的话「0%」说不出所以然:它既可能是「停顿真的多」,也可能是「峰值被
+  // 某个采样撑大了」,而这两种在界面上长得一模一样。
+  const flowQ = analysis?.quality ?? null;
+  const flowHint = flowQ && flowQ.peakTps !== null && flowQ.idealMs !== null
+    ? tr({
+      zh: '手速能达到的最短时间 ÷ 实际用时，40% 记 0 分，90% 记 100 分。\n'
+        + `峰值手速 ${flowQ.peakTps.toFixed(2)} 步/秒（最快的连续 8 步）\n`
+        + `不停顿只要 ${formatSec(flowQ.idealMs)}，实际 ${formatSec(flowQ.solvingMs)}`,
+      en: 'What your hands alone would have taken ÷ what it took; 40% scores 0, 90% scores 100.\n'
+        + `Peak ${flowQ.peakTps.toFixed(2)} tps (fastest 8 turns in a row)\n`
+        + `Without pauses ${formatSec(flowQ.idealMs)}, actual ${formatSec(flowQ.solvingMs)}`,
+    })
+    : tr({
+      zh: '手速能达到的最短时间 ÷ 实际用时。100% = 全程没有停顿。',
+      en: 'What your hands alone would have taken ÷ what it took. 100% = never paused.',
+    });
 
   // Auto-detect memo pause for BLD-class solves that haven't had a memoMs
   // set manually. The hint surfaces at the top of the report; user can apply
@@ -457,18 +472,15 @@ export default function ReconstructReport({
           </dd>
         </div>
         <div className="rc-summary-cell">
+          <dt>STM</dt>
+          <dd className="rc-summary-big">{stmCount}</dd>
+        </div>
+        <div className="rc-summary-cell">
           <dt>TPS</dt>
-          <dd className="rc-summary-big">{slices.htps.toFixed(2)}</dd>
+          <dd className="rc-summary-big">{stmTps.toFixed(2)}</dd>
         </div>
         <div className="rc-summary-cell">
-          <dt>{tr({ zh: '步数', en: 'Turns' })}</dt>
-          <dd className="rc-summary-big">{slices.htmCount}</dd>
-        </div>
-        <div className="rc-summary-cell">
-          <dt title={tr({
-            zh: '手速能达到的最短时间 ÷ 实际用时。100% = 全程没有停顿。',
-            en: 'What your hands alone would have taken ÷ what it took. 100% = never paused.',
-          })}>{tr({ zh: '流畅', en: 'Fluency' })}</dt>
+          <dt title={flowHint}>{tr({ zh: '流畅', en: 'Fluency' })}</dt>
           <dd className="rc-summary-big">
             {analysis?.quality?.flow !== null && analysis?.quality?.flow !== undefined
               ? `${Math.round(analysis.quality.flow)}%`
@@ -501,42 +513,18 @@ export default function ReconstructReport({
             {tr({ zh: '用这条打乱', en: 'Use this scramble' })}
           </button>
         )}
+        {/* 转发。只一个图标 —— 「复制分享链接」这句话比它做的事长,而复制成功
+            与否由图标自己说(√ 一下)。 */}
         <button
           type="button"
-          className="rc-action rc-action--ghost"
+          className="rc-action rc-action--ghost rc-action--icon"
           onClick={handleCopyShare}
           disabled={!canShare}
-          title={!canShare
-            ? tr({ zh: '没有动作记录，无法分享回放', en: 'No move log — share unavailable' })
-            : tr({ zh: '复制分享链接', en: 'Copy share link' })}
+          aria-label={shareLabel}
+          title={shareLabel}
         >
-          <Link2 size={14} />
-          {copied
-            ? tr({ zh: '已复制', en: 'Copied' })
-            : tr({ zh: '复制分享链接', en: 'Copy share link' })}
+          {copied ? <Check size={15} /> : <Forward size={15} />}
         </button>
-        {externalLinks && (
-          <>
-            <a
-              className="rc-action rc-action--ghost"
-              href={externalLinks.algUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              title={tr({ zh: `在 ${externalLinks.algSiteName} 打开`, en: `Open on ${externalLinks.algSiteName}` })}
-            >
-              {externalLinks.algSiteName}
-            </a>
-            <a
-              className="rc-action rc-action--ghost"
-              href={externalLinks.cubedbUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              title={tr({ zh: '在 cubedb.net 打开', en: 'Open on cubedb.net' })}
-            >
-              cubedb.net
-            </a>
-          </>
-        )}
       </div>
 
       {/* 打乱。有文字复盘的时候它是谱子的第一行(见 StepMoveList)—— 打乱和动作
