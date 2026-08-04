@@ -1,7 +1,9 @@
 # LiveKit SFU 配置 —— /timer 联机对战房间的视频通话媒体面。
 #
-# 这份配置**部署在境内节点**,不是主站服务器。主站的 nginx 配置走 ops/nginx/(由
-# deploy_nginx.yml 自动 scp),这个目录里的东西**不在任何 CI 流水线里**,手动放上去。
+# LiveKit 与全站(nginx / 三个 Next 应用 / Hono / PG)**跑在同一台服务器上**,该机在境内。
+# 这个目录里的 yaml 和 unit **不在任何 CI 流水线里**,手动放到 /etc/livekit/ 和
+# /etc/systemd/system/;只有 nginx vhost 走 ops/nginx/rtc.cuberoot.me.conf(由
+# deploy_nginx.yml 自动 scp 到 /etc/nginx/vhost.d/)。
 #
 # 端口分工:
 #   7880       信令(HTTP/WebSocket)。只有它走 nginx 反代 + TLS,对外是 wss://rtc.<域名>。
@@ -20,9 +22,9 @@ rtc:
   # 否则它会把内网地址写进 ICE candidate,外面的人永远连不上。
   use_external_ip: true
 
-# API key/secret **不写在这里** —— 通过 systemd 的 EnvironmentFile 注入 LIVEKIT_KEYS,
-# 那个文件不进仓库(见同目录 README)。这里留空,避免有人不小心把密钥提交上来。
-keys: {}
+# API key/secret **刻意不在这个文件里出现**(连空的 `keys: {}` 都不写 —— 那会覆盖掉
+# 环境变量注入的密钥,服务器起不来且报错含糊)。密钥走 systemd 的 EnvironmentFile 注入
+# LIVEKIT_KEYS,那个文件不进仓库,见同目录 README。
 
 # 内置 TURN。默认关:2-4 人且多数在境内的场景,UDP mux + ICE/TCP 已经能覆盖绝大多数网络。
 # 真遇到连不通的用户再开(开之前先看 README 里关于 443 被 nginx 占用的说明)。
