@@ -325,22 +325,22 @@ export default function ReconstructReport({
   const stmCount = reconText ? reconText.stm : slices.htmCount;
   const stmTps = slices.executionMs >= 1 ? stmCount / (slices.executionMs / 1000) : 0;
 
-  // 流畅那格的说明。除了定义,把三个原料也写出来 —— 峰值手速、不停顿要多久、实际
-  // 多久。不写的话「0%」说不出所以然:它既可能是「停顿真的多」,也可能是「峰值被
-  // 某个采样撑大了」,而这两种在界面上长得一模一样。
+  // 流畅那格的说明:先一句定义,再把拆出来的两段时间写出来。定义之外还要写原料,
+  // 是因为一个百分比本身说不出它为什么低 —— 「转了多久 / 停了多久 / 一下算多快」
+  // 三个数摆在一起,低是低在哪儿当场就看得出来。
   const flowQ = analysis?.quality ?? null;
-  const flowHint = flowQ && flowQ.peakTps !== null && flowQ.idealMs !== null
+  const flowHint = flowQ && flowQ.turningMs !== null && flowQ.pausingMs !== null && flowQ.turnMs !== null
     ? tr({
-      zh: '手速能达到的最短时间 ÷ 实际用时，40% 记 0 分，90% 记 100 分。\n'
-        + `峰值手速 ${flowQ.peakTps.toFixed(2)} 步/秒（最快的连续 8 步）\n`
-        + `不停顿只要 ${formatSec(flowQ.idealMs)}，实际 ${formatSec(flowQ.solvingMs)}`,
-      en: 'What your hands alone would have taken ÷ what it took; 40% scores 0, 90% scores 100.\n'
-        + `Peak ${flowQ.peakTps.toFixed(2)} tps (fastest 8 turns in a row)\n`
-        + `Without pauses ${formatSec(flowQ.idealMs)}, actual ${formatSec(flowQ.solvingMs)}`,
+      zh: '这把里你有多大比例的时间在转，而不是在停。\n'
+        + `转 ${formatSec(flowQ.turningMs)}，停 ${formatSec(flowQ.pausingMs)}\n`
+        + `按一下 ${Math.round(flowQ.turnMs)} 毫秒算（你自己最快的那批手速）`,
+      en: 'What proportion of your solve you have been turning instead of pausing.\n'
+        + `Turning ${formatSec(flowQ.turningMs)}, paused ${formatSec(flowQ.pausingMs)}\n`
+        + `One turn costs ${Math.round(flowQ.turnMs)}ms (your own fastest quarter)`,
     })
     : tr({
-      zh: '手速能达到的最短时间 ÷ 实际用时。100% = 全程没有停顿。',
-      en: 'What your hands alone would have taken ÷ what it took. 100% = never paused.',
+      zh: '这把里你有多大比例的时间在转，而不是在停。100% = 全程没停过。',
+      en: 'What proportion of your solve you have been turning instead of pausing. 100% = never paused.',
     });
 
   // Auto-detect memo pause for BLD-class solves that haven't had a memoMs
