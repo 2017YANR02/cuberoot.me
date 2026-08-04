@@ -6,7 +6,7 @@ import {
   EXACT_DIST, EXACT_STAGES, EXACT_STAGE_VARIANT, EXACT_VARIANT_STAGES, FRAME_NOTE, FRAME_STATES,
   SLOT_OK,
   compactExact, exactColorsOf, exactMean, exactRatio, exactRatios, formatExactPct, getExactCell,
-  groupDigits, isSlotApplicable,
+  groupDigits, isColorFreeCell, isSlotApplicable,
   type ExactFull, type ExactStage,
 } from '@/app/[lang]/scramble/stats/_data/exact_dist';
 import { CUBE3_STATES, GOD_DIST_333, GOD_DIST_333_NORMALIZED } from '@/lib/god-distance-333';
@@ -340,6 +340,53 @@ describe('底色折叠与槽位适用性', () => {
         }
       }
     }
+  });
+
+  // 帧 = (面, 槽/轴/块)。钉死一个帧就把底面一并钉死了 —— 底色档在这一档下不成立,
+  // 四档取到的必须是同一个对象。这条曾经不成立:数据只挂在 W 上,而查表照样按底色档索引,
+  // 于是 222 定块这种早就穷举完的曲线,一切到双色底就显示成「还没写」。
+  it('固定帧不分底色:四档底色取到同一个对象', () => {
+    const TIERS = ['W', 'WY', 'BGOR', 'BGORWY'];
+    let checked = 0;
+    for (const stage of EXACT_STAGES) {
+      for (const slot of SLOT_OK[stage]) {
+        if (slot === 'unfixed') continue;
+        expect(isColorFreeCell(stage, slot), `${stage}/${slot}`).toBe(true);
+        // 有数据的格是同一个对象;还没算的格每次现造一条 todo,故比内容
+        const base = getExactCell(stage, slot, 'W');
+        for (const t of TIERS) {
+          expect(getExactCell(stage, slot, t), `${stage}/${slot}/${t}`).toStrictEqual(base);
+        }
+        checked++;
+      }
+    }
+    // 固定帧共 34 格(20 个 fixed1 + 7 个阶段各一对 adj/diag),其中 14 格已有完整曲线。
+    // 修好之前那 14 格里各有 3 档底色够不着,42 个早就算完的组合被显示成「还没写」。
+    expect(checked).toBe(34);
+  });
+
+  it('固定帧的数据只存一份(存储键恒为 W)', () => {
+    eachCell((stage, slot, colors) => {
+      if (slot === 'unfixed') return;
+      expect(colors, `${stage}/${slot}`).toBe('W');
+    });
+  });
+
+  it('222 定块四档底色都拿得到那条 253,440 的曲线', () => {
+    for (const t of ['W', 'WY', 'BGOR', 'BGORWY']) {
+      const cell = getExactCell('block222', 'fixed1', t) as ExactFull;
+      expect(cell.kind, t).toBe('full');
+      expect(cell.total, t).toBe('253440');
+    }
+  });
+
+  it('取最优帧仍然分底色:底色档一变,曲线就得变', () => {
+    expect(isColorFreeCell('cross', 'unfixed')).toBe(false);
+    const w = getExactCell('cross', 'unfixed', 'W') as ExactFull;
+    const wy = getExactCell('cross', 'unfixed', 'WY') as ExactFull;
+    expect(wy).not.toBe(w);
+    // 整解是唯一一个「取最优帧」也不分底色的阶段(最优解长度与底面无关)
+    expect(isColorFreeCell('333', 'unfixed')).toBe(true);
   });
 
   it('固定单帧那一档都写明了固定的是什么', () => {
