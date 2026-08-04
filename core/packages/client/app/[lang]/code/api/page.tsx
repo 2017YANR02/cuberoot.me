@@ -59,7 +59,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   account_auth alg alg_lsll alg_marks alg_srs alg_sets alg_sweep analytics announced_comps article auth battle_rooms calendar cn_comp_names colpi
 //   comp_follows cube cubeopt_solve cubing_live feedback forum health historical_ranks
 //   membership nav_sites nemesizer notifications ops page_notices paint pattern_examples progress quiz recon scramble_555
-//   scramble_marks sim_masks sponsors timer_backups trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
+//   scramble_marks sim_masks sms_receipt sponsors timer_backups trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wechat_jssdk wiki
 // ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
@@ -83,6 +83,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'auth', m: 'POST', p: '/v1/auth/link/phone/send', g: 'login', zh: '给当前账号发绑定手机验证码', en: 'Send code to link a phone' },
   { d: 'auth', m: 'POST', p: '/v1/auth/link/phone/verify', g: 'login', zh: '绑定手机到当前账号(已有手机号则 409,一个账号只能一个)', en: 'Link phone to current account (409 if one already exists — one phone per account)' },
   { d: 'auth', m: 'POST', p: '/v1/auth/phone/replace', g: 'login', zh: '换绑手机号:原地改掉那条身份(发码复用 link/phone/send)。只有手机号的账号换不了号,靠它开口子', en: 'Change the account phone in place (code comes from link/phone/send). The escape hatch for accounts whose only identity is that phone number' },
+  { d: 'auth', m: 'POST', p: '/v1/sms/receipt/:token', g: 'public', zh: '短信送达回执落点(服务商 HTTP 推送)。同步 Code: OK 只代表受理,送达失败是异步回执,不接就永远看不见。token 走 env,没配则整个端点 404', en: 'Delivery-receipt sink for the SMS provider’s HTTP push. A synchronous Code: OK only means accepted — delivery failures arrive asynchronously and are invisible unless received here. The token comes from env; unset means the endpoint 404s' },
   { d: 'auth', m: 'POST', p: '/v1/auth/link/wca', g: 'login', zh: '用 WCA token 绑定 WCA 身份', en: 'Link WCA identity via access token' },
   { d: 'auth', m: 'POST', p: '/v1/auth/google', g: 'public', zh: '用墙外中继签发的 Google 断言登录/注册', en: 'Sign in/up via relay-signed Google assertion' },
   { d: 'auth', m: 'POST', p: '/v1/auth/link/google', g: 'login', zh: '用墙外中继签发的 Google 断言绑定当前账号', en: 'Link Google identity via relay-signed assertion' },

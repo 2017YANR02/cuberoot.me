@@ -137,7 +137,9 @@ function authErrorText(raw: string, t: (zh: string, en: string) => string): stri
   if (m.includes('account already has a phone')) return t('一个账号只能绑定一个手机号,请先解绑现有手机号', 'An account can have only one phone number — unlink the current one first');
   if (m.includes('already linked')) return t('该方式已绑定到另一个账号', 'Already linked to another account');
   if (m.includes('invalid email')) return t('邮箱格式不正确', 'Invalid email address');
-  if (m.includes('invalid phone')) return t('手机号格式不正确', 'Invalid phone number');
+  // 只支持中国大陆号(sms.ts 走的是国内通道)。旧文案「手机号格式不正确」对一个合法的
+  // 美国号码是句假话,人家会以为自己填错了。说清楚不支持,并指路还能用的方式。
+  if (m.includes('invalid phone')) return t('请输入 11 位中国大陆手机号。国外号码暂不支持,可用邮箱 / WCA / Google 登录', 'Enter an 11-digit mainland China number. Other countries aren’t supported yet — use email, WCA or Google instead');
   if (m.includes('invalid input')) return t('输入有误,请检查', 'Invalid input');
   if (m.includes('send failed')) return t('发送失败,请稍后重试', 'Send failed — please try again');
   if (m.includes('popup_closed')) return t('登录窗口已关闭', 'Sign-in window closed');
@@ -210,20 +212,31 @@ function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' |
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code, step]);
 
+  const input = (
+    <input
+      className="auth-input"
+      type={channel === 'email' ? 'email' : 'tel'}
+      value={target}
+      autoFocus
+      placeholder={placeholder}
+      onChange={(e) => setTarget(e.target.value)}
+      onKeyDown={(e) => { if (e.key === 'Enter' && target && !busy) void send(); }}
+    />
+  );
+
   return (
     <div className="auth-flow">
       {step === 'input' ? (
         <>
           <label className="auth-label">{label}</label>
-          <input
-            className="auth-input"
-            type={channel === 'email' ? 'email' : 'tel'}
-            value={target}
-            autoFocus
-            placeholder={placeholder}
-            onChange={(e) => setTarget(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter' && target && !busy) void send(); }}
-          />
+          {/* 手机号框挂一个 +86 前缀:只支持中国大陆号,这事该在输入前就说,而不是等人填完
+              国外号码再回一句错误。前缀纯装饰,不进 target —— normalizePhone 认裸 11 位。 */}
+          {channel === 'phone' ? (
+            <div className="auth-phonefield">
+              <span className="auth-phoneprefix">+86</span>
+              {input}
+            </div>
+          ) : input}
           {error && <p className="auth-error">{error}</p>}
           <button className="auth-primary" disabled={!target || busy} onClick={() => void send()}>
             {busy ? <Loader2 size={ICON} className="auth-spin" /> : null}
