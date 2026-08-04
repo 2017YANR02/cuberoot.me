@@ -13,11 +13,14 @@
  *     ratio 1.0 → 100, 1.2 → 74, 1.5 → 35, ≥1.77 → 0. Null when no stage had
  *     a reference (then the total is renormalised over what's left).
  *
- *   流畅 flow — "if you never stopped, this solve would have taken X". X is
- *     your turn count divided by YOUR OWN peak turn rate (the fastest 8-turn
- *     burst in this solve), so a 30-second beginner and a 7-second pro are
- *     each measured against their own hands rather than a global TPS table.
- *     flowFraction = X / solving time; mapped 0.40 → 0, 0.90 → 100.
+ *   流畅 fluency — what proportion of the solve you spent TURNING rather than
+ *     PAUSING. Every gap between two reported quarter turns is one turn's
+ *     execution plus however long you stood still first; charge each gap one
+ *     turn's worth (turningSplit below) and whatever is left over is a pause.
+ *     The score IS the percentage — no curve on top, because the number is
+ *     already a share of the solve and a rescaled share is exactly what nobody
+ *     can read (a 2026-08-04 report showed 0% for a solve that was turning
+ *     roughly 40% of the time; the floor of the old 0.40→0/0.90→100 mapping).
  *     This is the axis that sees the pauses INSIDE F2L, which the per-step
  *     recognition/execution split (step_metrics.ts) structurally cannot: its
  *     recognition is only the four gaps between steps.
@@ -31,7 +34,7 @@
  *
  * Weights 0.40 / 0.40 / 0.20. Calibration target from the research doc was
  * "typical values land 50-95"; the anchors pinned in quality.test.ts put a
- * competent solve near 75, a tight one near 90, and a sloppy one near 45.
+ * competent solve near 80, a tight one near 93, and a sloppy one near 48.
  *
  * Scored solves only: an unfinished solve (DNF mid-solve) gets no score at
  * all rather than a flattering one — half a solve has no put-down, no last
@@ -39,19 +42,29 @@
  */
 
 import type { ErrorDetectResult } from './error_detect';
-import { htmMoves } from './htm';
 import type { ReferenceResult } from './reference';
 import type { SolveMove } from './stage_segments';
 import type { StepMetricsResult } from './step_metrics';
 
-/** Turns in the burst used to measure peak turn rate. Long enough that one
- *  lucky fast pair of quarter turns can't set the pace, short enough that
- *  every real solve contains at least one. */
-const PEAK_WINDOW = 8;
+/**
+ * Below this a gap is not a human quarter turn: it is two moves that reached us
+ * in one BLE packet and got stamped together (move_clock.ts spells out why —
+ * the protocols with no device clock fall back to arrival time, and a packet
+ * carries several moves at once). Such gaps still count as turning; they are
+ * only kept out of the turn-cost ESTIMATE, so one batched pair cannot drag the
+ * cost to zero and the whole solve to 0%. 40ms = 25 tps, comfortably above any
+ * human quarter turn.
+ */
+const MIN_TURN_MS = 40;
 
-/** flowFraction mapped to 0-100 between these bounds. */
-const FLOW_FLOOR = 0.40;
-const FLOW_CEIL = 0.90;
+/**
+ * Which of your own gaps counts as "one turn, nothing else in it". The 25th
+ * percentile: low enough that it lands inside a burst rather than in the middle
+ * of a pause, high enough that a couple of freak samples cannot set it. A mean
+ * or a median would fold the pauses into the very thing that is supposed to
+ * measure them.
+ */
+const TURN_COST_QUANTILE = 0.25;
 
 /** Score points lost per unit of (turn ratio - 1). */
 const EFFICIENCY_SLOPE = 130;
@@ -70,11 +83,13 @@ export interface SolveQuality {
   wasteFree: number;
   /** userTurns / refTurns; null when no stage had a reference. */
   turnRatio: number | null;
-  /** Fastest sustained turn rate in this solve (turns/s). */
-  peakTps: number | null;
-  /** Turn count ÷ peak rate: how long the hands alone would have taken. */
-  idealMs: number | null;
-  /** First turn → last turn (the denominator for flow and waste). */
+  /** Of `solvingMs`, how much was spent turning. Null without move timings. */
+  turningMs: number | null;
+  /** The rest of `solvingMs`: standing still, looking. */
+  pausingMs: number | null;
+  /** What one quarter turn costs these hands (ms) — the split's yardstick. */
+  turnMs: number | null;
+  /** First turn → last turn (the denominator for fluency and waste). */
   solvingMs: number;
   wastedMs: number;
 }
@@ -83,23 +98,49 @@ function clamp100(v: number): number {
   return v < 0 ? 0 : v > 100 ? 100 : v;
 }
 
+export interface TurningSplit {
+  /** Of the solve, the part spent turning. */
+  turningMs: number;
+  /** The rest: pauses (recognition, lookahead, hesitation). */
+  pausingMs: number;
+  /** One quarter turn, as these hands do it. */
+  turnMs: number;
+}
+
 /**
- * Fastest sustained turn rate: the best (window turns / elapsed) over every
- * span of `PEAK_WINDOW` consecutive turns, falling back to the whole stream
- * when the solve is shorter than one window. Null when every timestamp is
- * identical (a stream with no timing information).
+ * Split the solve into turning and pausing.
+ *
+ * The cube reports one timestamp per quarter turn, so the gap between two of
+ * them is `turnMs` of execution plus however long the solver stood still first.
+ * Charge every gap one `turnMs` and the leftovers are the pauses:
+ *
+ *     pausingMs = Σ max(0, gap − turnMs)
+ *     turningMs = solvingMs − pausingMs
+ *
+ * Measured on RAW quarter turns, not on merged HTM moves: every physical turn
+ * costs about the same, whereas a merged R2 is one move that legitimately took
+ * two turns' time and would be charged as a pause.
+ *
+ * Null when there is no usable timing (fewer than two moves, or every timestamp
+ * identical).
  */
-export function peakTurnRate(moves: SolveMove[], window = PEAK_WINDOW): number | null {
-  if (!moves || moves.length < 2) return null;
-  const span = Math.min(window, moves.length - 1);
-  let best: number | null = null;
-  for (let i = 0; i + span < moves.length; i++) {
-    const elapsed = moves[i + span].ts - moves[i].ts;
-    if (elapsed <= 0) continue;
-    const tps = span / (elapsed / 1000);
-    if (best === null || tps > best) best = tps;
+export function turningSplit(moves: SolveMove[], solvingMs: number): TurningSplit | null {
+  if (!moves || moves.length < 2 || solvingMs <= 0) return null;
+  const gaps: number[] = [];
+  for (let i = 1; i < moves.length; i++) {
+    const gap = moves[i].ts - moves[i - 1].ts;
+    if (gap > 0) gaps.push(gap);
   }
-  return best;
+  if (gaps.length === 0) return null;
+
+  const human = gaps.filter(g => g >= MIN_TURN_MS);
+  const sorted = (human.length > 0 ? human : gaps).slice().sort((a, b) => a - b);
+  const turnMs = sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * TURN_COST_QUANTILE))];
+
+  let pausingMs = 0;
+  for (const gap of gaps) if (gap > turnMs) pausingMs += gap - turnMs;
+  if (pausingMs > solvingMs) pausingMs = solvingMs;
+  return { turningMs: solvingMs - pausingMs, pausingMs, turnMs };
 }
 
 export function computeSolveQuality(
@@ -117,16 +158,8 @@ export function computeSolveQuality(
   const solvingMs = metrics.solvingMs;
   if (solvingMs <= 0) return null;
 
-  // Measured on MERGED moves, because metrics.totalTurns is HTM: mixing the
-  // two units here would understate idealMs and quietly drag flow down for
-  // anyone who turns double turns (i.e. everyone).
-  const peakTps = peakTurnRate(htmMoves(moves));
-  const idealMs = peakTps !== null && peakTps > 0
-    ? (metrics.totalTurns / peakTps) * 1000
-    : null;
-  const flow = idealMs !== null
-    ? clamp100(((idealMs / solvingMs) - FLOW_FLOOR) / (FLOW_CEIL - FLOW_FLOOR) * 100)
-    : null;
+  const split = turningSplit(moves, solvingMs);
+  const flow = split !== null ? clamp100((split.turningMs / solvingMs) * 100) : null;
 
   const turnRatio = reference && reference.refTurns !== null && reference.refTurns > 0
       && reference.userTurns !== null
@@ -150,8 +183,9 @@ export function computeSolveQuality(
     flow,
     wasteFree,
     turnRatio,
-    peakTps,
-    idealMs,
+    turningMs: split?.turningMs ?? null,
+    pausingMs: split?.pausingMs ?? null,
+    turnMs: split?.turnMs ?? null,
     solvingMs,
     wastedMs,
   };
