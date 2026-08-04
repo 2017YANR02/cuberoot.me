@@ -13,11 +13,8 @@
 
 import { describe, it, expect } from 'vitest';
 
-import {
-  MAX_PAIR_GAP_MS,
-  humanizeStream,
-  sliceSplitTable,
-} from '@/app/[lang]/timer/_lib/reconstruct/humanize';
+import { humanizeStream } from '@/app/[lang]/timer/_lib/reconstruct/humanize';
+import { SLICE_PAIRS, sliceSplitTable, sliceExpansion } from '@/lib/slice-pair';
 import { facePermFor, conjugateToken } from '@/app/[lang]/timer/_lib/reconstruct/orient';
 import { htmMoves } from '@/app/[lang]/timer/_lib/reconstruct/htm';
 import type { HtmMove } from '@/app/[lang]/timer/_lib/reconstruct/htm';
@@ -145,14 +142,58 @@ function invert(token: string): string {
   return token.endsWith('2') ? token : token.endsWith("'") ? token.slice(0, -1) : `${token}'`;
 }
 
+/**
+ * 拆分表的**判据**:拿魔方模型枚举六个面 × 三种量 × 九个中层 × 九个转体,逐条搜。
+ *
+ * 这段搜索原本长在 `humanize.ts` 里。表要给 /recon 那边共用之后搬成了
+ * `lib/slice-pair.ts` 的静态数据 —— 但「抄六个面 × 三个量的符号是给手误留位置」这条
+ * 理由没变,所以搜索留在这里当 oracle:那张表写错一个撇号,下面第一条就红。
+ */
+function searchSplitTable(): Map<string, { slice: string; rotation: string }> {
+  const suffixes = ['', "'", '2'];
+  const opposite: Record<string, string> = { U: 'D', D: 'U', R: 'L', L: 'R', F: 'B', B: 'F' };
+  const slices = ['M', 'E', 'S'].flatMap(f => suffixes.map(s => `${f}${s}`));
+  const rotations = ['x', 'y', 'z'].flatMap(f => suffixes.map(s => `${f}${s}`));
+  const out = new Map<string, { slice: string; rotation: string }>();
+  for (const a of Object.keys(opposite)) {
+    for (const sa of suffixes) {
+      for (const sb of suffixes) {
+        const pair = [`${a}${sa}`, `${opposite[a]}${sb}`];
+        const goal = apply(pair);
+        for (const slice of slices) {
+          const hit = rotations.find(r => facesEqual(apply([slice, r]), goal));
+          if (hit) { out.set(pair.join(' '), { slice, rotation: hit }); break; }
+        }
+      }
+    }
+  }
+  return out;
+}
+
 describe('拆分表', () => {
   const table = sliceSplitTable();
+
+  it('和魔方模型搜出来的一模一样', () => {
+    const searched = searchSplitTable();
+    expect(searched.size).toBe(18);
+    expect(Object.fromEntries(table)).toEqual(Object.fromEntries(searched));
+  });
 
   it('每一条都真的等价 —— 一对相对面 = 中层 + 转体', () => {
     expect(table.size).toBeGreaterThan(0);
     for (const [key, { slice, rotation }] of table) {
       expect(facesEqual(apply(T(key)), apply([slice, rotation]))).toBe(true);
     }
+  });
+
+  it('反过来也对 —— `M\' ≡ R\' L x`,/recon 那个 ⇄ 按钮吃的就是这一份', () => {
+    for (const { slice } of SLICE_PAIRS) {
+      const exp = sliceExpansion(slice);
+      expect(exp, slice).toBeTruthy();
+      expect(facesEqual(apply([slice]), apply([exp!.a, exp!.b, exp!.rotation])), slice).toBe(true);
+    }
+    expect(sliceExpansion("M'")).toEqual({ a: "R'", b: 'L', rotation: 'x' });
+    expect(sliceExpansion('U')).toBeNull();
   });
 
   it('六个有序轴向 × 三种量 = 18 条', () => {
@@ -198,28 +239,48 @@ describe('humanizeStream —— 用户报的那条 PLL', () => {
     expect(moves.map(m => m.m)).toEqual(HUMAN);
   });
 
-  it('间隔拉开到两个动作那么远就不合 —— 宁可少写一个中层', () => {
+  /**
+   * 用户 2026-08-03 报的第二次:间隔判据把这把拦下来了(一对 15ms 合了、另一对
+   * 95ms 没合),于是印出来的是 `R2 U' B' F R2 F' B U' R2`。中心块那条约束不看间隔,
+   * 所以下面这两条现在都还原成公式。
+   */
+  it('间隔拉多开都还原 —— 判据是中心块回没回家,不是毫秒数', () => {
     const rec = record(HUMAN);
-    const { moves, merges } = humanizeStream(stamped(rec, 200));
-    expect(merges).toBe(0);
-    expect(moves.map(m => m.m)).toEqual(rec);
+    for (const gap of [200, 2000]) {
+      const { moves, merges } = humanizeStream(stamped(rec, gap));
+      expect(merges, `gap=${gap}`).toBe(2);
+      expect(moves.map(m => m.m), `gap=${gap}`).toEqual(HUMAN);
+    }
+  });
+
+  it('只有一对挨得近也照样两对一起合 —— 只合一对抵消不掉', () => {
+    const rec = record(HUMAN);
+    // 旧判据在这条输入上正好合一对、漏一对,后面整段跟着换名。
+    const { moves, merges } = humanizeStream(stamped(rec, 200, new Set([3])));
+    expect(merges).toBe(2);
+    expect(moves.map(m => m.m)).toEqual(HUMAN);
   });
 });
 
 describe('等价性 —— 重写只换写法,不换这把', () => {
-  const cases: Array<[string, string[], Set<number>]> = [
-    ['一个 S', T("F B' U2 R"), new Set([1])],
-    ['一个 M', T("R L' U F'"), new Set([1])],
-    ['一个 E', T("U D' R2 F"), new Set([1])],
-    ['连着两个中层', T("F B' U2 B F' R"), new Set([1, 4])],
+  // 全是「中层成对出现、中心块回得了家」的真解法形状 —— 一步之内落单的中层不存在,
+  // 那样的局面根本不算这一步做完了(见 `humanize.ts` 头注)。
+  const cases: Array<[string, string[]]> = [
+    ['一对 S', T("S U2 S' R")],
+    ['一对 M', T("M U M' F")],
+    ['一对 E', T("E R E' F")],
+    ['两个 M2', T('M2 U M2 R')],
+    ['H perm', T('M2 U M2 U2 M2 U M2')],
   ];
 
-  for (const [name, rec, tight] of cases) {
+  for (const [name, human] of cases) {
     it(`${name}:重写后的谱子 + 剩下的转体 = 原流`, () => {
-      const { moves, merges, rotation } = humanizeStream(stamped(rec, 200, tight));
+      const rec = record(human);
+      const { moves, merges, rotation } = humanizeStream(stamped(rec, 200));
       expect(merges).toBeGreaterThan(0);
       const rewritten = [...moves.map(m => m.m), ...T(rotation)];
       expect(facesEqual(apply(rec), apply(rewritten))).toBe(true);
+      expect(moves.map(m => m.m)).toEqual(human);
     });
   }
 });
@@ -263,12 +324,12 @@ describe('录了姿态的把:中层不再靠时间猜,转体也写进去', () =>
     }
   });
 
-  it('核心没换过格 → 那些相对面就是两手真转,挨得再近也不合', () => {
-    // 同一条流、同一个时间戳,只差「有没有录姿态」。时间判据会合,核心判据不合。
-    const rec = T("F B' U2 R");
-    const tight = new Set([1]);
-    expect(humanizeStream(stamped(rec, 200, tight)).merges).toBe(1);
-    expect(humanizeStream(stamped(rec, 200, tight), { core: { events: [] } }).merges).toBe(0);
+  it('核心没换过格 → 那些相对面就是两手真转,抵不抵消都不合', () => {
+    // 同一条流,只差「有没有录姿态」。中心块判据会合,而核心说它一动没动 —— 姿态
+    // 是实测,实测赢。
+    const rec = record(T("S U2 S' R"));
+    expect(humanizeStream(stamped(rec, 200)).merges).toBe(2);
+    expect(humanizeStream(stamped(rec, 200), { core: { events: [] } }).merges).toBe(0);
   });
 
   it('`M2` 报成两对时并成一个,不写成 `M M`', () => {
@@ -288,52 +349,61 @@ describe('录了姿态的把:中层不再靠时间猜,转体也写进去', () =>
   });
 });
 
-describe('猜过几次要报出来 —— 乱码和正常输出长得一样', () => {
-  it('没录姿态:每一对相对面都记一笔,不管最后合没合', () => {
+describe('判不准的要报出来 —— 少认一个中层和正常输出长得一样', () => {
+  it('中心块配得上的那些不算判不准 —— 那是算出来的', () => {
     const rec = record(T("R2 U' S' U2 S U' R2"));
-    const tight = new Set([3, 6]);
-    // 合上了:两对都是猜的。
-    expect(humanizeStream(stamped(rec, 200, tight)).blindPairs).toBe(2);
-    // 没合上:同样是猜的 —— 猜「不是中层」也是猜。
-    expect(humanizeStream(stamped(rec, 200)).blindPairs).toBe(2);
+    expect(humanizeStream(stamped(rec, 200)).blindPairs).toBe(0);
   });
 
-  it('录了姿态就一次都不用猜', () => {
+  it('落单、抵消不掉的那一对记一笔', () => {
+    // 一对 `F B'` 孤零零站着:合了它中心块就回不了家,只能按两手真转写 —— 但它也
+    // 可能真是个 `S'` 而这一步里另一半没被认出来,所以要说一句。
+    const r = humanizeStream(stamped(T("F B' U2 R"), 12));
+    expect(r.merges).toBe(0);
+    expect(r.blindPairs).toBe(1);
+  });
+
+  it('录了姿态就一处都不用判', () => {
     const { moves, core } = recordWithCore(T("R2 U' S' U2 S U' R2"));
     const r = humanizeStream(moves, { core });
     expect(r.blindPairs).toBe(0);
     expect(r.moves.map(m => m.m)).toEqual(T("R2 U' S' U2 S U' R2"));
   });
 
-  it('一对相对面都没有的把:没录姿态也不算猜过', () => {
+  it('一对相对面都没有的把:没录姿态也不用判', () => {
     expect(humanizeStream(stamped(T("R U R' U' F R F'"), 200)).blindPairs).toBe(0);
   });
 });
 
 describe('不该合的不合', () => {
-  it('跨过步骤边界不合', () => {
-    const rec = T("F B' U2");
-    const tight = new Set([1]);
-    const plain = humanizeStream(stamped(rec, 200, tight));
-    expect(plain.merges).toBe(1);
-    const split = humanizeStream(stamped(rec, 200, tight), { boundaries: new Set([0]) });
-    expect(split.merges).toBe(0);
+  it('跨过步骤边界不合 —— 边界也是「中心块必须在家」的那条线', () => {
+    const rec = record(T("S U2 S' R"));
+    expect(humanizeStream(stamped(rec, 200)).merges).toBe(2);
+    // 把两个中层劈到两步里:各自那一步都抵消不掉,于是一对都不合。
+    const cut = humanizeStream(stamped(rec, 200), { boundaries: new Set([2]) });
+    expect(cut.merges).toBe(0);
   });
 
-  it('没有设备时钟(整条流的间隔都被打包成一样)时整体退化成不合并', () => {
-    // 到达时间戳:同一个 BLE 包里的几手挤成同一刻,中位间隔也是 0 —— 相对判据于是
-    // 没有哪一对能「明显更短」。
-    const rec = T("F B' U2 R U");
+  it('转向相反的一对(`R L`)不是中层,再挨得近也不合', () => {
+    expect(humanizeStream(stamped(T('R L U2'), 12)).merges).toBe(0);
+  });
+
+  it('没有设备时钟(整条流的时间戳挤成同一刻)照样还原 —— 判据不吃时间', () => {
+    const rec = record(T("S U2 S' R"));
     const flat = rec.map((m, i) => ({
       m, ts: 0, endTs: 0, quarters: 1, startIdx: i, endIdx: i,
     }));
-    expect(humanizeStream(flat).merges).toBe(0);
+    const r = humanizeStream(flat);
+    expect(r.merges).toBe(2);
+    expect(r.moves.map(m => m.m)).toEqual(T("S U2 S' R"));
   });
 
-  it('绝对上限本身就拦得住一半的常速手法', () => {
-    const rec = T("F B'");
-    const justOver = humanizeStream(stamped(rec, MAX_PAIR_GAP_MS + 1, new Set()));
-    expect(justOver.merges).toBe(0);
+  it('落单的 `M2` 不合 —— 它自己就把中心块转走了 x2', () => {
+    // `M M` 报成 `R L' R L'`,合两对是 x·x = x2:中心块没回家,这一步就不算做完。
+    // 真解法里 `M2` 总有伴(H perm 四个 M2 乘出来是恒等),那种才合 —— 见上面的等价性。
+    const rec = record(T('M M'));
+    expect(rec).toEqual(T("R L' R L'"));
+    expect(humanizeStream(stamped(rec, 12)).merges).toBe(0);
   });
 
   it('空流 / 单手不炸', () => {

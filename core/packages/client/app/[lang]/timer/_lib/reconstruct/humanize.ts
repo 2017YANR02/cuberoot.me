@@ -36,7 +36,7 @@
  *
  * ## 什么时候才敢合
  *
- * 光看动作流是分不出来的:真做了一个 `S'`,和真的分两手拧了 `B` 再 `F'`,报上来
+ * 光看动作流是分不出来的:真做了一个 `S'`,和真的分两手拧了 `B'` 再 `F`,报上来
  * **逐字相同**。所以判据得从别处来,而有两个别处:
  *
  * ### 录了姿态的把:问中心核(准的那条)
@@ -45,21 +45,26 @@
  * 两个面。所以有 `core` 的时候直接问它:这一对的时间窗里核心换格了没有?换了就是
  * 中层,没换就是两手。判据到此为止,不掺时间。细节见 `core_track.ts`。
  *
- * ### 没录姿态的把:退回时间(猜的那条)
+ * ### 没录姿态的把:问中心块回没回家(算出来的那条)
  *
- * 中层是一个动作出两个事件,两手是两个动作。GAN v3/v4 的帧自带毫秒计数器(见
- * `move_clock.ts`),所以这个间隔是真的。两条都要过:
- *   - 绝对:间隔 ≤ `MAX_PAIR_GAP_MS`;
- *   - 相对:间隔 ≤ 这把中位间隔的 `MAX_PAIR_GAP_RATIO`。
+ * 中层会把中心块转走,而**每个步骤边界上中心块都必须在家**:十字要和中心块对上才
+ * 算十字,一对 F2L 要和中心块对上才算插好,OLL / PLL 更是。所以有
  *
- * 相对那条是给**没有设备时钟**的牌子兜底的:那些牌子的时间戳是通知到达时间,同一个
- * BLE 包里的几手会挤成 0 间隔 —— 于是中位间隔也接近 0,没有哪一对能「明显更短」,
- * 整条规则自己退化成不合并。宁可少写一个 `S`,不能把两手真转的写成中层再把后面
- * 一整段换名。
+ *     一个步骤之内,那些中层带的核心旋转,乘起来必须是恒等。
  *
- * **这两个数还没在真机上标定过。** 机制本身有用户那把作证,阈值是按「一个动作 vs
- * 两个动作」推的。真机上若发现该合的没合,先调 `MAX_PAIR_GAP_MS` —— 或者干脆把
- * 「录姿态」打开,那条路不需要标定。
+ * 这不是阈值,是定理(WCA 打乱只有面转,所以起点的中心块也是在家的)。判据于是变成
+ * 一道小搜索:在这一步里挑一组互不重叠的相对面对,要求它们的旋转乘积抵消,并且合得
+ * 最多。用户那把 PLL 里两对分别是 `z` 和 `z'`,只有「两对都合」和「一对都不合」抵消
+ * 得掉,前者合得多 —— 于是 `R2 U' B' F R2 F' B U' R2` 被写回 `R2 U' S' U2 S U' R2`。
+ * 只合一对(旧的时间判据恰好这么干过)乘出来是 `z`,直接出局。
+ *
+ * 附带一条更要紧的性质:**判错也漏不出这一步**。抵消掉的 ρ 到边界就归零,下一步的
+ * 记号不会跟着错。旧判据没有这条约束,漏掉一对就把后面**整把**换了名 —— 用户看到的
+ * 那段乱码正是这么来的。
+ *
+ * **时间彻底退场。** 它曾经是唯一判据,而那两个没在真机上标定过的毫秒数把用户那把
+ * PLL 拦下来过一次。定理不需要标定,也不需要设备时钟 —— 那些时间戳只是通知到达时间
+ * 的牌子,现在和有时钟的牌子一样准。
  *
  * ## 转体也在这一趟里
  *
@@ -86,91 +91,24 @@
  * 就是被写成中层的那一对。步骤边界一手没动:合并不许跨过 `boundaries`。
  */
 
-import { facesEqual, solved } from '../cube/state';
-import { applyOneToken } from '../cube/apply_token';
+import { sliceSplitTable } from '@/lib/slice-pair';
+import type { SliceSplit } from '@/lib/slice-pair';
+
 import { coreTurnsIn } from './core_track';
 import type { CoreTrack } from './core_track';
 import type { HtmMove } from './htm';
-import { conjugateToken, facePermFor } from './orient';
+import { conjugateToken, facePermFor, CUBE_FACES } from './orient';
 import type { CubeFace, FacePerm } from './orient';
-
-/** 一对相对面之间超过这么久就当两个动作。 */
-export const MAX_PAIR_GAP_MS = 70;
-/** 而且要明显短于这把自己的节奏。 */
-export const MAX_PAIR_GAP_RATIO = 0.45;
-/**
- * 中位间隔低于这个数就当这条流的时间戳不可信,整把不合并。
- *
- * 40ms 的中位间隔等于 25 TPS —— 人类做不到(世界纪录级也就 13 上下),所以只可能是
- * 时间戳来自**通知到达时间**:没有设备时钟的牌子会把同一个 BLE 包里的几手挤成同一
- * 刻(见 `move_clock.ts` 的头注)。那种流分不出「一个动作」和「两个动作」,只能不合。
- */
-export const MIN_MEDIAN_GAP_MS = 40;
-
-const SUFFIXES = ['', "'", '2'] as const;
-
-/** 六种有序相对面。顺序有意义:`F B'` 和 `B' F` 拆出来的转体方向相反。 */
-const OPPOSITE: Readonly<Record<CubeFace, CubeFace>> = Object.freeze({
-  U: 'D', D: 'U', R: 'L', L: 'R', F: 'B', B: 'F',
-});
-
-const SLICE_TOKENS: readonly string[] = ['M', 'E', 'S'].flatMap(f => SUFFIXES.map(s => `${f}${s}`));
-const ROT_TOKENS: readonly string[] = ['x', 'y', 'z'].flatMap(f => SUFFIXES.map(s => `${f}${s}`));
-
-function apply(tokens: readonly string[]) {
-  let st = solved(3);
-  for (const t of tokens) st = applyOneToken(st, t);
-  return st;
-}
-
-export interface SliceSplit {
-  /** 这一对其实是哪个中层。 */
-  slice: string;
-  /** 顺带把核心转了多少 —— 后面每一手被换名就是它干的。 */
-  rotation: string;
-}
-
-let SPLIT_TABLE: Map<string, SliceSplit> | null = null;
-
-/**
- * `"F B'" → { slice: "S'", rotation: 'z' }` 之类。拆不开的组合(比如 `R L`、
- * 或者两边转的量不一样)不在表里。
- *
- * 表是搜出来的不是抄的:抄六个面 × 三个量的符号是给手误留位置,而符号写反的表现
- * 是「谱子看着像公式但拧出来不对」,比现在这个 bug 更难发现。
- */
-export function sliceSplitTable(): ReadonlyMap<string, SliceSplit> {
-  if (SPLIT_TABLE) return SPLIT_TABLE;
-  const t = new Map<string, SliceSplit>();
-  for (const a of Object.keys(OPPOSITE) as CubeFace[]) {
-    for (const sa of SUFFIXES) {
-      for (const sb of SUFFIXES) {
-        const t1 = `${a}${sa}`;
-        const t2 = `${OPPOSITE[a]}${sb}`;
-        const goal = apply([t1, t2]);
-        let hit: SliceSplit | null = null;
-        for (const slice of SLICE_TOKENS) {
-          for (const rotation of ROT_TOKENS) {
-            if (facesEqual(apply([slice, rotation]), goal)) { hit = { slice, rotation }; break; }
-          }
-          if (hit) break;
-        }
-        if (hit) t.set(`${t1} ${t2}`, hit);
-      }
-    }
-  }
-  SPLIT_TABLE = t;
-  return t;
-}
 
 export interface HumanizeOptions {
   /**
    * 原始流里的步骤边界(每一步最后一手的下标)。跨过边界的一对不合 —— 合了会把
    * 一个记号从后一步挪到前一步,而边界是分步分析表和这里共用的那把刀。
+   *
+   * 没录姿态时它还有第二个身份:**中心块必须回家的那条线**。合并方案按边界分段搜,
+   * 每一段里的旋转乘积要抵消,见文件头。
    */
   boundaries?: ReadonlySet<number>;
-  maxGapMs?: number;
-  maxGapRatio?: number;
   /**
    * 这把的核心轨迹(姿态流)。给了它:中层不再靠时间猜,转体也一并写进谱子。
    * 不给 = 没录姿态,退回时间判据、一个转体也不写。见文件头。
@@ -199,26 +137,16 @@ export interface HumanizedStream {
   /** 人做的那些转体(中层带的已经减掉了),按时刻。没有姿态流时是空数组。 */
   rotations: HumanRotation[];
   /**
-   * 没有姿态流、只能靠时间猜的那几对相对面。有姿态流时恒为 0。
+   * 没录姿态、而且**中心块那条判据也没能定下来**的相对面对数:摆在那里像中层,但把
+   * 它当中层会让这一步的旋转乘积对不上恒等,于是只能按两手真转写。有姿态流时恒为 0。
    *
-   * 报出来是因为**猜错一对,后面整段就不像公式了**:漏掉的那一对不推 ρ,而魔方的
-   * 核心确实转过去了,于是这一对之后的每一手都写在一个人没待过的系里。谱子仍然
-   * 「拧出来是对的」(等价性由 ρ 保证),但读起来是乱码 —— 用户那把 PLL 就是这么
-   * 变成 `U B2 U' M U2 R' L …` 的。
+   * 它们是这一层剩下的全部不确定性。合上的那些不算 —— 那是算出来的,不是猜的
+   * (见文件头「问中心块回没回家」)。没合上的这些则两种可能都说得通:要么人真的
+   * 分两手拧了,要么这一步里还有一个中层没被认出来配对。
    *
-   * 所以这个数不是给调优用的,是给 UI 用的:>0 且这把没录姿态,就该明说「这段是
-   * 猜的,开了『录姿态』下一把才准」,而不是默默端一段乱码上去。
+   * 所以这个数是给 UI 用的:>0 且这把没录姿态,就该明说一句,而不是默默端上去。
    */
   blindPairs: number;
-}
-
-/** 这把的中位手间间隔(ms)。不足两手时是 null。 */
-function medianGap(moves: readonly HtmMove[]): number | null {
-  const gaps: number[] = [];
-  for (let i = 1; i < moves.length; i++) gaps.push(moves[i].ts - moves[i - 1].endTs);
-  if (gaps.length === 0) return null;
-  gaps.sort((a, b) => a - b);
-  return gaps[gaps.length >> 1];
 }
 
 /**
@@ -250,6 +178,118 @@ function sliceFor(family: string, quarters: number): string {
   return quarters === 1 ? family : quarters === 2 ? `${family}2` : `${family}'`;
 }
 
+/** 面置换复合:先 `p` 再 `q`。`p[a]=b` 读作「原来在 a 面的东西转到了 b 面」。 */
+function composePerm(p: FacePerm, q: FacePerm): FacePerm {
+  const out: Record<string, CubeFace> = {};
+  for (const f of CUBE_FACES) out[f] = q[p[f]];
+  return out as FacePerm;
+}
+
+function permKey(p: FacePerm): string {
+  return CUBE_FACES.map(f => p[f]).join('');
+}
+
+const IDENTITY_PERM = facePermFor('');
+const IDENTITY_KEY = permKey(IDENTITY_PERM);
+
+/** DP 的一格:走到这一层、累计旋转是这个的最优走法。 */
+interface PlanCell {
+  merges: number;
+  /** 从哪一层过来的(合并跨两层,不合跨一层)。 */
+  fromLayer: number;
+  fromKey: string;
+  /** 这一步是不是合并;是的话合的就是 `fromLayer` 那个位置。 */
+  merged: boolean;
+}
+
+/**
+ * 一段(两个步骤边界之间)里该合哪几对。
+ *
+ * 约束是「这一段里中层带的旋转乘起来是恒等」—— 中心块在每个边界上都必须在家,
+ * 见文件头。目标是合得最多;同样多的两组保留先搜到的那一组(左边先合)。
+ *
+ * 时间在这里一个字都没有。间隔曾经是唯一判据,而那两个没标定过的毫秒数把用户那把
+ * PLL 拦下来过一次 —— 现在它连并列裁判都不当:并列在真数据里出不来(一段里的中层
+ * 怎么配对,基本被「相邻、同族、能抵消」钉死了),而为出不来的情况留一条没测过的
+ * 分支,是给下一个 bug 留位置。
+ *
+ * DP 的状态是**累计旋转**(只有 24 种),所以段有多长都不会炸。
+ */
+function planSegment(
+  counted: readonly HtmMove[],
+  table: ReadonlyMap<string, SliceSplit>,
+  from: number,
+  to: number,
+  chosen: Set<number>,
+): void {
+  const len = to - from + 1;
+  if (len < 2) return;
+
+  const cand: Array<FacePerm | null> = [];
+  let any = false;
+  for (let p = 0; p < len; p++) {
+    const a = counted[from + p];
+    const b = p + 1 < len ? counted[from + p + 1] : undefined;
+    const split = b ? table.get(`${a.m} ${b.m}`) : undefined;
+    if (!split || faceToken(a.m) === null) { cand.push(null); continue; }
+    cand.push(facePermFor(split.rotation));
+    any = true;
+  }
+  if (!any) return;
+
+  const perms = new Map<string, FacePerm>([[IDENTITY_KEY, IDENTITY_PERM]]);
+  const layers: Array<Map<string, PlanCell>> = Array.from({ length: len + 1 }, () => new Map());
+  layers[0].set(IDENTITY_KEY, { merges: 0, fromLayer: -1, fromKey: '', merged: false });
+  const relax = (layer: number, key: string, cell: PlanCell): void => {
+    const cur = layers[layer].get(key);
+    if (!cur || cell.merges > cur.merges) layers[layer].set(key, cell);
+  };
+
+  for (let p = 0; p < len; p++) {
+    for (const [key, cell] of layers[p]) {
+      relax(p + 1, key, { merges: cell.merges, fromLayer: p, fromKey: key, merged: false });
+
+      const sigma = cand[p];
+      if (!sigma || p + 2 > len) continue;
+      const next = composePerm(perms.get(key) as FacePerm, sigma);
+      const nk = permKey(next);
+      if (!perms.has(nk)) perms.set(nk, next);
+      relax(p + 2, nk, { merges: cell.merges + 1, fromLayer: p, fromKey: key, merged: true });
+    }
+  }
+
+  // 「一对都不合」永远是可行解(空积就是恒等),所以这里一定取得到。
+  let layer = len;
+  let key = IDENTITY_KEY;
+  while (layer > 0) {
+    const cell = layers[layer].get(key) as PlanCell;
+    if (cell.merged) chosen.add(from + cell.fromLayer);
+    layer = cell.fromLayer;
+    key = cell.fromKey;
+  }
+}
+
+/**
+ * 整条流该合哪几对(只在没录姿态时用 —— 录了就问核心,那条是实测)。
+ * 按步骤边界切段,每段各自搜。
+ */
+function planMerges(
+  counted: readonly HtmMove[],
+  table: ReadonlyMap<string, SliceSplit>,
+  boundaries: ReadonlySet<number> | undefined,
+): Set<number> {
+  const chosen = new Set<number>();
+  const n = counted.length;
+  let from = 0;
+  while (from < n) {
+    let to = from;
+    while (to < n - 1 && !(boundaries?.has(counted[to].endIdx) ?? false)) to++;
+    planSegment(counted, table, from, to, chosen);
+    from = to + 1;
+  }
+  return chosen;
+}
+
 /**
  * 重写一条流。识别不出来的记号原样留着 —— 这一层的失败方式必须是「少写一个中层」,
  * 不能是「多写一个错的」。
@@ -258,13 +298,13 @@ export function humanizeStream(
   counted: readonly HtmMove[],
   opts: HumanizeOptions = {},
 ): HumanizedStream {
-  const maxGap = opts.maxGapMs ?? MAX_PAIR_GAP_MS;
-  const ratio = opts.maxGapRatio ?? MAX_PAIR_GAP_RATIO;
   const boundaries = opts.boundaries;
-  const median = medianGap(counted);
   const table = sliceSplitTable();
 
   const core = opts.core ?? null;
+  // 没录姿态:先把「哪几对是中层」整段解出来,再走下面这一趟。判据是中心块必须
+  // 回家,不是间隔 —— 见文件头。录了姿态的把逐对问核心,用不上这个。
+  const planned = core ? null : planMerges(counted, table, boundaries);
 
   const out: HtmMove[] = [];
   const rotations: HumanRotation[] = [];
@@ -349,15 +389,12 @@ export function humanizeStream(
     const pairable = !!split
       && faceToken(a.m) !== null
       && !(boundaries?.has(a.endIdx) ?? false);
-    // 录了姿态就问核心,没录才退回时间 —— 两条判据的分工见文件头。
-    const gap = b ? b.ts - a.endTs : Infinity;
-    const byClock = gap >= 0
-      && gap <= maxGap
-      && median !== null && median >= MIN_MEDIAN_GAP_MS && gap <= median * ratio;
+    // 录了姿态就问核心,没录就照 `planned` 走 —— 两条判据的分工见文件头。
     const byCore = !!core && !!b && coreTurnsIn(core, a.ts, b.endTs).length > 0;
-    const canMerge = pairable && (core ? byCore : byClock);
-    // 没有姿态流的时候,这一对不管合不合都是**猜**的 —— 记一笔,让 UI 有机会说出口。
-    if (pairable && !core) blindPairs += 1;
+    const canMerge = pairable && (core ? byCore : (planned as Set<number>).has(i));
+    // 没录姿态、这一对又没被中心块那条判据认下来:两种可能都说得通,记一笔让 UI
+    // 有机会说出口。合上的那些不记 —— 那是算出来的。
+    if (pairable && !core && !canMerge) blindPairs += 1;
 
     if (canMerge && split && b) {
       // 先认领再写转体:这一对的那次换格是中层带的,不能在它前面漏出一个 `x'`。
