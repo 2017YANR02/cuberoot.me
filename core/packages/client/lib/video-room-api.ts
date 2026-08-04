@@ -5,6 +5,7 @@
 // 媒体面走自建 LiveKit(SFU):这里只负责换凭证,拿到 {url,token} 之后就交给 livekit-client
 // 直连,本文件不参与任何媒体传输。对战状态仍走 battle-room-api 的 1s 轮询,两套互不干扰。
 import { apiUrl } from './api-base';
+import { getSessionToken } from './auth-store';
 
 /**
  * 单路视频最大码率(bps)。1080p30 取 LiveKit h1080 预设的 3 Mbps。
@@ -12,6 +13,12 @@ import { apiUrl } from './api-base';
  * 服务端按这个数守带宽预算,客户端真发得比它多就会超卖。
  */
 export const VIDEO_MAX_BITRATE = 3_000_000;
+
+/**
+ * 屏幕共享的码率上限(bps)。**与 server 的 SCREEN_SHARE_MBPS 同口径,改一处必须改两处** ——
+ * 屏幕共享是摄像头之外**额外**的一路,不在 n*(n-1) 那个模型里,两处不一致就是悄悄超发。
+ */
+export const SCREEN_SHARE_MAX_BITRATE = 1_500_000;
 
 /** 视频采集分辨率上限。宫格里的小窗会由 simulcast 自动降层,这里只定「最高能到多少」。 */
 export const VIDEO_MAX_WIDTH = 1920;
@@ -49,14 +56,6 @@ function randomFrom(alphabet: string, n: number): string {
 /** 新建一个会议码。用 crypto 而不是 Math.random —— 后者可预测,等于没有熵。 */
 export function newMeetCode(): string {
   return randomFrom(MEET_CODE_ALPHABET, MEET_CODE_LEN);
-}
-
-/**
- * 本机一次性身份。服务端只要求 /^[a-z0-9]{6,16}$/,这里取 12 位小写 base32 ——
- * 会议室的 identity 不代表任何账号,只用来让 SFU 区分「谁是谁」以及重连时认出是同一个人。
- */
-export function newParticipantId(): string {
-  return randomFrom('abcdefghijklmnopqrstuvwxyz234567', 12);
 }
 
 /**
@@ -107,8 +106,10 @@ export type VideoDenyReason =
   | 'unavailable'
   /** 该 pid 不在该房间(房间过期 / 被踢 / 伪造)。 */
   | 'not in room'
-  /** 会议码 / 名字不合法(手抄错了、或名字洗完是空的)。 */
+  /** 会议码不合法(手抄错了)。 */
   | 'invalid'
+  /** 会议室要求登录。 */
+  | 'auth'
   | 'video not configured';
 
 export class VideoDeniedError extends Error {
@@ -141,20 +142,19 @@ export async function getVideoToken(code: string, pid: string): Promise<VideoTok
 }
 
 /**
- * 换取会议室凭证。会议室没有在册名单,服务端只校验会议码格式 —— 拿到 token 就意味着
- * 「码合法 + 房没满 + 有带宽」,不代表你被谁批准了(这就是链接即凭证的语义)。
- * name 会被服务端洗一遍(去控制字符、限长 24)再发给其他人。
+ * 换取会议室凭证。**必须登录**:身份与显示名全部由服务端从 token 里取,这里只报会议码 ——
+ * 客户端报不了自己是谁,所以会议里不可能出现顶着别人名字的画面。
+ * 拿到 token 意味着「已登录 + 码合法 + 房没满 + 有带宽」。
  */
-export async function getMeetToken(code: string, id: string, name: string): Promise<VideoToken> {
-  return postToken('/v1/video/meet/token', { code, id, name });
+export async function getMeetToken(code: string): Promise<VideoToken> {
+  return postToken('/v1/video/meet/token', { code }, true);
 }
 
-async function postToken(path: string, body: Record<string, string>): Promise<VideoToken> {
-  const res = await fetch(apiUrl(path), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+async function postToken(path: string, body: Record<string, string>, authed = false): Promise<VideoToken> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (authed) headers.Authorization = `Bearer ${getSessionToken()}`;
+  const res = await fetch(apiUrl(path), { method: 'POST', headers, body: JSON.stringify(body) });
+  if (res.status === 401) throw new VideoDeniedError('auth');
   if (!res.ok) {
     const msg = (await res.json().catch(() => ({}))) as { error?: string };
     // 服务端的 400 文案是 'invalid code/id/name' 这种带细节的串,收敛成一个 reason ——

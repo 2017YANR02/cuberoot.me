@@ -1,6 +1,93 @@
-/* /meet 会议室。画面宫格本身在 components/video/video-call.css(与 /timer 共用),
-   这里只管进会之前那个表单、以及会议室里画面该多宽。双主题页,全走 :root token。 */
+/* /meet 会议室。
+   会议中那一屏用 @livekit/components-react 的成品件(VideoConference / PreJoin),它们自带
+   一整套 .lk-* 样式,主题变量挂在 [data-lk-theme=default] 上(0,1,0)。这里用
+   `.meet-x[data-lk-theme=default]`(0,2,0)压过去,把它接到本站 token —— 于是会议界面
+   跟着全站 light/dark 和配色走,而不是永远一身它自带的深蓝。
+   注意别去改 .lk-* 的具体规则:那是库的内部结构,升级即碎。只换变量。 */
 
+/* ── 主题桥接:--lk-* → 本站 token ───────────────────────── */
+.meet-page[data-lk-theme='default'],
+.meet-live[data-lk-theme='default'] {
+  /* 库自带的是 dark;交给本站主题决定,别钉死配色方案。 */
+  color-scheme: light dark;
+
+  --lk-bg: var(--background);
+  --lk-bg2: color-mix(in srgb, var(--foreground) 6%, var(--background));
+  --lk-bg3: color-mix(in srgb, var(--foreground) 12%, var(--background));
+  --lk-bg4: color-mix(in srgb, var(--foreground) 18%, var(--background));
+  --lk-bg5: color-mix(in srgb, var(--foreground) 26%, var(--background));
+
+  --lk-fg: var(--foreground);
+  --lk-fg2: var(--foreground);
+  --lk-fg3: var(--muted-foreground);
+  --lk-fg4: var(--muted-foreground);
+  /* 聊天里的时间戳 / 昵称等次要信息走这一档。 */
+  --lk-fg5: var(--muted-foreground);
+
+  --lk-border-color: var(--border-default);
+  --lk-border-radius: 8px;
+
+  --lk-accent-bg: var(--accent);
+  --lk-accent-fg: var(--accent-foreground);
+  --lk-accent2: color-mix(in srgb, var(--accent) 88%, black);
+  --lk-accent3: color-mix(in srgb, var(--accent) 78%, black);
+  /* 别人发的聊天气泡底色 —— 文字用 --lk-fg,所以这一档必须够浅才读得出来。 */
+  --lk-accent4: color-mix(in srgb, var(--accent) 22%, var(--background));
+
+  --lk-danger: var(--destructive);
+  --lk-danger-fg: var(--destructive-foreground);
+  --lk-danger2: color-mix(in srgb, var(--destructive) 88%, black);
+  --lk-danger3: color-mix(in srgb, var(--destructive) 78%, black);
+  --lk-danger4: color-mix(in srgb, var(--destructive) 24%, var(--background));
+
+  --lk-success: var(--signal-success);
+  --lk-success-fg: var(--accent-foreground);
+
+  /* 网络质量指示器:和全站信号色同源,别再引入第三套红黄绿。 */
+  --lk-connection-excellent: var(--signal-success);
+  --lk-connection-good: var(--signal-warning);
+  --lk-connection-poor: var(--destructive);
+
+  --lk-font-family: inherit;
+  --lk-font-size: 15px;
+  --lk-box-shadow: 0 8px 24px color-mix(in srgb, var(--foreground) 18%, transparent);
+}
+
+/* ── 会议中:占满视口,和所有会议软件一样 ────────────────── */
+.meet-live {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  background: var(--background);
+}
+
+/* LiveKitRoom 把 className 加在 .lk-room-container 上,它自己是 width/height:100%,
+   所以这里给 flex:1 + min-height:0(不写 min-height 的话 flex 子项不肯缩,控制条会被挤出视口)。 */
+.meet-room {
+  flex: 1;
+  min-height: 0;
+}
+
+/* 顶栏:会议码 + 复制邀请链接。做得薄,画面才是主角。 */
+.meet-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-default);
+}
+
+/* ── 入会前 ──────────────────────────────────────────────── */
+/* 名字来自账号,不让改 —— PreJoin 自带的用户名输入框在这里没有意义(改了也不算数,
+   服务端只认 token 里的身份)。留着它反而像是能改。 */
+.lk-prejoin .lk-username-container {
+  display: none;
+}
+
+/* ── 进会之前的几屏(登录 / 大厅 / 入会前)────────────────── */
 .meet-page {
   display: flex;
   flex-direction: column;
@@ -11,10 +98,8 @@
   padding: 32px 16px 48px;
 }
 
-/* 会中让画面吃满容器 —— 平铺时靠宫格自己的 auto-fit 分列,放大时 960 正好是
-   adaptiveStream 选中 1080p 那层的门槛。 */
-.meet-page.is-live .vc-tiles {
-  width: 100%;
+.meet-page.is-prejoin {
+  max-width: 520px;
 }
 
 .meet-title {
@@ -32,16 +117,6 @@
   line-height: 1.6;
 }
 
-/* 表单项:标签在上、输入在下,整块贴合内容宽而不是拉满整行。 */
-.meet-field {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  font-size: 13px;
-  color: var(--muted-foreground);
-}
-
-.meet-name-input,
 .meet-code-input {
   width: 15em;
   max-width: 100%;
@@ -52,19 +127,15 @@
   color: var(--foreground);
   font: inherit;
   font-size: 14px;
-}
-
-.meet-name-input:focus-visible,
-.meet-code-input:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 1px;
-}
-
-/* 会议码是给人抄和念的,等宽字体读起来才不会把 5/S 看混。 */
-.meet-code-input {
+  /* 会议码是给人抄和念的,等宽字体读起来才不会把 5/S 看混。 */
   font-family: var(--font-mono);
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.meet-code-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
 }
 
 /* 一行里的控件紧凑靠左,不塞 spacer 把最后一个推到行尾。 */
@@ -89,6 +160,7 @@
   font: inherit;
   font-size: 14px;
   cursor: pointer;
+  text-decoration: none;
 }
 
 .meet-go {
@@ -114,14 +186,6 @@
   cursor: default;
 }
 
-/* 会中那条:会议码 + 复制邀请链接。 */
-.meet-invite {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
 .meet-code {
   font-family: var(--font-mono);
   font-size: 15px;
@@ -140,7 +204,6 @@
     padding: 20px 12px 40px;
   }
 
-  .meet-name-input,
   .meet-code-input {
     width: 100%;
   }
