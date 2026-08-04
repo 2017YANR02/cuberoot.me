@@ -5,11 +5,12 @@
  * (`alg-build/import_1lll.mjs`),线上 3915 张有 meta 的 case 里 17 张是空的,详情页那一栏
  * 整块消失(`/alg/3x3/pll/u-` 就是其中之一)。`caseScramble` 补上这个洞。
  *
- * 补法不能盲信 `meta.inv`:站长表的 `Inv` 列在 1lll 里有 12 条与公式定出来的态互相矛盾
- * (拿 `alg-build/ll_ident.mjs` 的 16 折轨道判据实测),照着取公式会摆出**别的** case。
- * 所以本测试两侧都钉:
- *   ① 指针可信(Ua / 1LLL 4 44)→ 必须取到逆 case 的公式;
- *   ② 指针不可信(1LLL 6 7)→ 必须**退回 setup**,绝不能把逆 case 那条端上来。
+ * 补法不能盲信 `meta.inv` —— 这个指针**真的错过**:2026-08-04 查出 8 张 1lll case 的整块 meta
+ * 挂到了别人的行上,连带 12 张的 `inv` 指向不是自己的逆态(migration `0102` 已修,始末见
+ * `docs/1lll-sheet-issues.md` §元数据层)。所以本测试两侧都钉:
+ *   ① 印证得上(Ua / 1LLL 4 44)→ 必须取到逆 case 的公式;
+ *   ② 印证不上(下面那对取自 0102 之前的真实库数据)→ 必须**退回 setup**,绝不能把逆 case
+ *      那条端上来。这条同时是 0102 那类事故的回归样本。
  * 判据用站上自己那份 `validateAlgCase`(cubing.js),不是眼看。
  */
 import { describe, expect, it } from 'vitest';
@@ -39,7 +40,8 @@ const F: Record<string, AlgCase> = {
     algs: [[{ alg: "x· (R' U R' D2) (R U' R' D2) R2 x'" }]],
     meta: { no: 11, inv: 12, scramble: "x· R2' D2 (R U R' D2) R U' R x'" } as AlgCase['meta'],
   },
-  // 洞②:1lll 的坏指针 —— 6 7 说自己的逆是 7 12,但 7 12 的公式打出来是**另一张**
+  // 洞②:0102 之前的真实数据 —— 6 7 说自己的逆是 7 12,而 7 12 的公式打出来是**另一张**
+  // (真凶是 7 7 / 7 12 两张的 meta 装反了)。留作「印证不上就别用」的回归样本。
   '1LLL 6 7': {
     name: '1LLL 6 7', subgroup: '6', setup: "F R U R' U' F' U F U R U' R' F' y",
     sticker: { kind: 'face', us: 'bbooyyryy', ub: 'yyrrrrrrr', uf: 'yrgoooooo', ul: 'yyggggggg', ur: 'ogbbbbbbb' },
@@ -101,7 +103,7 @@ describe('caseScramble — 每张 case 的打乱', () => {
     });
   });
 
-  it('缺 scramble + 指针与公式对不上 → 退回 setup,不端出逆 case 那条', () => {
+  it('缺 scramble + 逆 case 那条印证不上 → 退回 setup,不端出逆 case 的公式', () => {
     const got = caseScramble(F['1LLL 6 7'], byNo)!;
     expect(got).toEqual({ text: "F R U R' U' F' U F U R U' R' F' y", fromInvCase: false });
     // 钉住反面:指针指的那条**确实**是错的,退回不是白退
