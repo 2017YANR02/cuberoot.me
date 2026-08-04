@@ -20,11 +20,11 @@ import {
   useLocalParticipant,
   useTracks,
 } from '@livekit/components-react';
-import { Room, Track, VideoPresets } from 'livekit-client';
+import { Track, VideoPresets } from 'livekit-client';
 import { Video, VideoOff, Mic, MicOff, PhoneOff, SwitchCamera, UserRound } from 'lucide-react';
 
 import { tr } from '@/i18n/tr';
-import { facingOf, nextCamera, usableCameras, type CameraFacing } from '@/lib/video-camera';
+import { canFlipCamera, facingOf, hasFacing, oppositeFacing, type CameraFacing } from '@/lib/video-camera';
 
 import './video-call.css';
 
@@ -40,52 +40,43 @@ export default function VideoTiles({
   const tracks = useTracks([{ source: Track.Source.Camera, withPlaceholder: true }]);
   const { localParticipant, isCameraEnabled, isMicrophoneEnabled } = useLocalParticipant();
 
-  const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
   const [facing, setFacing] = useState<CameraFacing>('user');
+  /** 这台设备有前后置(手机 / 平板)。一旦确认就不再撤销 —— 否则关掉摄像头时按钮会消失,
+      控制条跟着跳一下。 */
+  const [flippable, setFlippable] = useState(false);
   const [switching, setSwitching] = useState(false);
   /** 被放大的那一格(参与者 key);null = 平铺宫格。 */
   const [spotlight, setSpotlight] = useState<string | null>(null);
 
   const camTrack = localParticipant.getTrackPublication(Track.Source.Camera)?.videoTrack;
 
-  // 摄像头清单,过一遍 usableCameras —— 浏览器报的 videoinput 条目不都是另一个摄像头
-  // (Windows Hello 的红外镜头是同模组的第二路,切过去一片噪点)。
-  // 权限在开摄像头时已经拿过,所以这里能读到真实的 deviceId 和 groupId。
-  // 跟着 devicechange 走:插拔外接摄像头、手机切后台回来,列表都会变。
-  useEffect(() => {
-    let dead = false;
-    const refresh = () => {
-      void Room.getLocalDevices('videoinput', false)
-        .then((d) => { if (!dead) setCameras(usableCameras(d)); })
-        .catch(() => { if (!dead) setCameras([]); });
-    };
-    refresh();
-    navigator.mediaDevices?.addEventListener('devicechange', refresh);
-    return () => {
-      dead = true;
-      navigator.mediaDevices?.removeEventListener('devicechange', refresh);
-    };
-  }, []);
-
   // 起始朝向以轨道自己报的为准,不假定「一开始一定是前置」—— 手机上浏览器记住过上次的
   // 选择时开出来就可能是后置,那时候还镜像就全反了。
+  // 同一处判定这台设备有没有前后置:报得出朝向的才是手机 / 平板,才给切换按钮。
   useEffect(() => {
-    if (camTrack) setFacing(facingOf(camTrack.mediaStreamTrack.getSettings()));
+    const mst = camTrack?.mediaStreamTrack;
+    if (!mst) return;
+    const settings = mst.getSettings();
+    setFacing(facingOf(settings));
+    if (canFlipCamera(settings, mst.getCapabilities?.())) setFlippable(true);
   }, [camTrack]);
 
   const switchCamera = useCallback(() => {
     if (!camTrack) return;
-    const next = nextCamera(camTrack.mediaStreamTrack.getSettings(), cameras);
-    if (!next) return;
+    const want = oppositeFacing(facing);
     setSwitching(true);
     // 必须带上 resolution:restartTrack 的约束是整套替换的,不写就掉回浏览器默认档(多半 480p)。
     camTrack
-      .restartTrack({ ...next, resolution: VideoPresets.h1080.resolution })
-      // 换完回读一次真实朝向,而不是信我们请求的那个 —— 约束是「尽量满足」,设备可以不给。
-      .then(() => setFacing(facingOf(camTrack.mediaStreamTrack.getSettings())))
+      .restartTrack({ facingMode: want, resolution: VideoPresets.h1080.resolution })
+      .then(() => {
+        // 优先回读真实朝向(约束是「尽量满足」,设备可以不给);读不到就只能信我们请求的那个,
+        // 否则 settings 不填 facingMode 的浏览器上镜像会一直按前置来。
+        const after = camTrack.mediaStreamTrack.getSettings();
+        setFacing(hasFacing(after) ? facingOf(after) : want);
+      })
       .catch(onCameraError)
       .finally(() => setSwitching(false));
-  }, [camTrack, cameras, onCameraError]);
+  }, [camTrack, facing, onCameraError]);
 
   const keyOf = (t: (typeof tracks)[number]) => `${t.participant.identity}-${t.source}`;
   // 被放大的人退房了 → 放大态自动失效。否则 is-spotlight 还在、却没有任何一格是大图,
@@ -153,8 +144,8 @@ export default function VideoTiles({
         >
           {isCameraEnabled ? <Video size={16} /> : <VideoOff size={16} />}
         </button>
-        {/* 只有一个摄像头就不出这个按钮 —— 出了也只能点个寂寞。 */}
-        {cameras.length > 1 && (
+        {/* 桌面摄像头没有「朝向」,翻不了面,所以那里根本不出这个按钮 —— 出了也只能点个寂寞。 */}
+        {flippable && (
           <button
             type="button"
             className="vc-ctrl"
