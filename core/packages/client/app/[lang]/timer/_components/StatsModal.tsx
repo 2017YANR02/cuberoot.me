@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
-import { BarChart3, Layers, LayoutDashboard } from 'lucide-react';
+import { BarChart3, CalendarDays, Layers, LayoutDashboard } from 'lucide-react';
 import type { EventId, Solve } from '../_lib/types';
 import { effectiveMs } from '../_lib/types';
 import { EVENTS } from '../_lib/types';
@@ -25,6 +25,7 @@ import HistogramChart from './charts/HistogramChart';
 import HourChart from './charts/HourChart';
 import RecordsOverlay from './RecordsOverlay';
 import CfopCaseStatsPanel from './CfopCaseStatsPanel';
+import DailyStatsPanel from './DailyStatsPanel';
 import { tr } from '@/i18n/tr';
 
 interface Props {
@@ -35,7 +36,7 @@ interface Props {
 }
 
 type DateRange = 'all' | '7d' | '30d' | '90d' | '365d';
-type StatsTab = 'overview' | 'charts' | 'cases';
+type StatsTab = 'overview' | 'daily' | 'charts' | 'cases';
 
 const RANGE_DAYS: Record<Exclude<DateRange, 'all'>, number> = {
   '7d': 7,
@@ -256,6 +257,8 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
           {([
             { id: 'overview' as const, labelZh: '概览', labelEn: 'Overview', Icon: LayoutDashboard
             },
+            { id: 'daily'    as const, labelZh: '按天', labelEn: 'By day',  Icon: CalendarDays
+            },
             { id: 'charts'   as const, labelZh: '图表', labelEn: 'Charts',   Icon: BarChart3
             },
             { id: 'cases'    as const, labelZh: '案例', labelEn: 'Cases',    Icon: Layers },
@@ -371,6 +374,13 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
             userPbAvgMs={userPbAvgMs}
             isZh={isZh}
           />
+        </div>
+
+        {/* 按天。上面「时间段」那张回答「最近怎么样」(今日/本周/本月/今年,只有时间);
+            这张回答「那一天怎么样」,能往回翻,并且带上智能魔方才有的步数/TPS/流畅。 */}
+        <div className="modal-section" data-tab="daily">
+          <h3 className="settings-h3">{tr({ zh: '按天', en: 'By day' })}</h3>
+          <DailyStatsPanel solves={solves} event={event} />
         </div>
 
         {event === '333' && (
