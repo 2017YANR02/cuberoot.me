@@ -14,7 +14,7 @@ import { query } from '../db/connection.js';
 import { requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
 import { signSession, hasFreshEmailGrant } from '../utils/session.js';
 import {
-  issueCode, verifyCode, loginWithIdentity, addIdentity, removeIdentity, replaceEmailIdentity,
+  issueCode, verifyCode, loginWithIdentity, addIdentity, removeIdentity, replaceCredentialIdentity,
   getIdentities, getUserById, findUserByWcaId, publicUser,
   normalizeEmail, isValidEmail, normalizePhone, isValidPhone, isValidPassword,
   loginWithPassword, setPassword, clearPassword, getPasswordHash, verifyPassword,
@@ -282,7 +282,7 @@ accountAuthRoutes.post('/auth/link/email/verify', async (c) => {
 /**
  * 换绑邮箱。发码复用 link/email/send(拿的是同一个 'link' 用途的码,新地址的所有权证明
  * 一模一样),只有落库这步不同:原地改那条 email 身份,不是新增一条。
- * 见 replaceEmailIdentity —— 「先解绑再绑定」对只有邮箱的账号走不通。
+ * 见 replaceCredentialIdentity —— 「先解绑再绑定」对只有邮箱的账号走不通。
  */
 accountAuthRoutes.post('/auth/email/replace', async (c) => {
   c.header('Cache-Control', 'no-store');
@@ -293,9 +293,25 @@ accountAuthRoutes.post('/auth/email/replace', async (c) => {
   if (!isValidEmail(norm) || !/^\d{6}$/.test(code ?? '')) return c.json({ error: 'invalid input' }, 400);
   const ok = await verifyCode('email', norm, 'link', code as string);
   if (!ok) return c.json({ error: 'wrong or expired code' }, 401);
-  const r = await replaceEmailIdentity(uid, norm);
+  const r = await replaceCredentialIdentity(uid, 'email', norm);
   if (r === 'conflict') return c.json({ error: 'email already linked to another account' }, 409);
-  if (r === 'no-email') return c.json({ error: 'no email to replace' }, 409);
+  if (r === 'none') return c.json({ error: 'no email to replace' }, 409);
+  return c.json({ ok: true, identities: await getIdentities(uid) });
+});
+
+/** 换绑手机号。与上面同构,理由同上(0103 起手机也是一个账号一条)。 */
+accountAuthRoutes.post('/auth/phone/replace', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  const uid = await requireUserId(c);
+  const { phone, code } = await c.req.json<{ phone?: string; code?: string }>().catch(() => ({ phone: undefined, code: undefined }));
+  const norm = normalizePhone(phone ?? '');
+  if (!isValidPhone(norm) || !/^\d{6}$/.test(code ?? '')) return c.json({ error: 'invalid input' }, 400);
+  const ok = await verifyCode('phone', norm, 'link', code as string);
+  if (!ok) return c.json({ error: 'wrong or expired code' }, 401);
+  const r = await replaceCredentialIdentity(uid, 'phone', norm);
+  if (r === 'conflict') return c.json({ error: 'phone already linked to another account' }, 409);
+  if (r === 'none') return c.json({ error: 'no phone to replace' }, 409);
   return c.json({ ok: true, identities: await getIdentities(uid) });
 });
 
@@ -330,6 +346,7 @@ accountAuthRoutes.post('/auth/link/phone/verify', async (c) => {
   const ok = await verifyCode('phone', norm, 'link', code as string);
   if (!ok) return c.json({ error: 'wrong or expired code' }, 401);
   const r = await addIdentity(uid, 'phone', norm);
+  if (r === 'has-phone') return c.json({ error: 'account already has a phone' }, 409);
   if (r === 'conflict') return c.json({ error: 'phone already linked to another account' }, 409);
   return c.json({ ok: true, identities: await getIdentities(uid) });
 });
