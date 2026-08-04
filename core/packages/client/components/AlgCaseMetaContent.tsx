@@ -18,6 +18,7 @@ import { stm } from '@cuberoot/shared/alg-notation';
 import { CaseThumb } from '@/components/CaseThumb';
 import { useCopy } from '@/hooks/useCopy';
 import { ALG_SET_UNIVERSE, LL_UNIVERSE_TOTAL, caseOrbit, probabilityFraction } from '@/lib/alg_probability';
+import { caseScramble } from '@/lib/alg_scramble';
 import { ALG_TAG_LABEL } from '@/lib/alg_tags';
 import { primaryCaseName } from '@/lib/alg_case_display';
 import { displayAlg } from '@/lib/alg_display';
@@ -167,6 +168,8 @@ export default function AlgCaseMetaContent({
     return { family: fam, selfNotes: notes, missing: [...gone.values()] };
   }, [m, byNo, caseObj]);
 
+  const scramble = useMemo(() => caseScramble(caseObj, byNo), [caseObj, byNo]);
+
   const sym = m.sym ?? {};
   const symFlags = [
     sym.selfMirror && tr({ zh: '自镜像', en: 'self-mirror' }),
@@ -240,11 +243,14 @@ export default function AlgCaseMetaContent({
       </div>
 
       {/* 打乱紧跟着图 —— 图画的就是打乱之后的样子,两者一起看才对得上;公式是「怎么解开它」,
-          排在后面。 */}
-      {m.scramble && (
+          排在后面。取值的三档(逆 case 的公式 / 现推 / setup 保底)见 {@link caseScramble}。 */}
+      {scramble && (
         <div className="alg-meta-section">
           <h3>{tr({ zh: '打乱', en: 'Scramble' })}</h3>
-          <AlgLine label={tr({ zh: '逆 case', en: 'Inv case' })} alg={m.scramble} />
+          <AlgLine
+            label={scramble.fromInvCase ? tr({ zh: '逆 case', en: 'Inv case' }) : ''}
+            alg={scramble.text}
+          />
         </div>
       )}
 
