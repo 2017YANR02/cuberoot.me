@@ -2353,7 +2353,11 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                         // 复制成功的绿勾必须绝对不换行(即使不另起、也不能把最后一步挤下去)。
                         // 做法:把最后一步单独包进 .scramble-copied-tail(relative),绿勾在其中
                         // 绝对定位(left:100%),完全脱离文本流 → 既不新增断行点、也不占宽度,永不换行。
-                        const copiedCheck = scrambleCopied && (
+                        //
+                        // 但修正路径上不挂勾:那时条上这串**不是**打乱,剪贴板里的才是,
+                        // 一个贴在末尾的勾等于说「复制的就是你看到的这串」。那种情况改在右边
+                        // 出一个写明白的绿标(见下面 data-ok="true" 那条)。
+                        const copiedCheck = scrambleCopied && !fixupActive && (
                           <Check className="scramble-copied-check" aria-label={tr({ zh: '已复制', en: 'Copied' })} />
                         );
                         // 智能魔方逐步提示:已拧的变暗、当前这步高亮、剩下的正常。
@@ -2390,14 +2394,23 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                   same state, so the solve still records the original scramble. */}
               {scrambleHint && !scrambleHint.complete
                 ? fixupActive && (
-                    <span
-                      className="scramble-verify"
-                      data-ok="fix"
-                      title={tr({
-                        zh: '拧歪了。这些不是上面那条打乱,而是从魔方现在的状态回到同一个打乱状态的步骤,拧完成绩记的还是原打乱。',
-                        en: 'Off the scramble path. These moves are not the printed scramble — they lead from where the cube is now to the same scrambled state, and the solve still records the original scramble.',
-                      })}
-                    >{tr({ zh: '拧回原打乱', en: 'Back to scramble' })}</span>
+                    <>
+                      <span
+                        className="scramble-verify"
+                        data-ok="fix"
+                        title={tr({
+                          zh: '拧歪了。这些不是上面那条打乱,而是从魔方现在的状态回到同一个打乱状态的步骤,拧完成绩记的还是原打乱。',
+                          en: 'Off the scramble path. These moves are not the printed scramble — they lead from where the cube is now to the same scrambled state, and the solve still records the original scramble.',
+                        })}
+                      >{tr({ zh: '拧回原打乱', en: 'Back to scramble' })}</span>
+                      {/* 点击复制永远给的是打乱本身(成绩记的也是它),可这会儿条上写着的是
+                          修正路径 —— 不说一声,用户就会以为复制错了。 */}
+                      {scrambleCopied && (
+                        <span className="scramble-verify" data-ok="true">
+                          {tr({ zh: '已复制原打乱', en: 'Copied the scramble' })}
+                        </span>
+                      )}
+                    </>
                   )
                 : scrambleMatch !== null && (
                     <span className="scramble-verify" data-ok={scrambleMatch ? 'true' : 'false'}>
