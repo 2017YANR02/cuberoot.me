@@ -59,18 +59,31 @@ interface Props {
 
 /**
  * 四个底色档的「取最优帧」经常是同一句死因(多帧取最优 → 整只魔方),四格照抄四遍只会把表变成
- * 一堵字墙。同一行里这四格若都没数据且完全同话,合成一格横跨四列 —— 说的还是那件事,只说一遍。
- * 有一格有数据就不合并:那一行的看点正是「哪个底色档算得出来」。
+ * 一堵字墙。所以把**连续同话的空格子**并成一格 —— 说的还是那件事,只说一遍。
+ *
+ * 按「连续同话」而不是「四格全同」来并,是因为常见形状恰恰是「单色底算得出来、剩下三档同一句
+ * 死因」(F2LEO 十字就是):有数据那格照常单列 —— 那一行的看点正是「哪个底色档算得出来」——
+ * 后面三格合成一格。
  */
-function bestColsMerge(st: ExactStage): ExactPending | null {
-  if (!isSlotApplicable(st, 'unfixed')) return null;
+type PendingRun = { start: number; len: number; cell: ExactPending };
+
+function bestColRuns(st: ExactStage): PendingRun[] {
+  if (!isSlotApplicable(st, 'unfixed')) return [];
   const cells = EXACT_COLOR_KEYS.map((c) => EXACT_DIST[st].unfixed?.[c] ?? pendingCell(st, 'unfixed'));
-  const first = cells[0];
-  if (first.kind !== 'todo') return null;
-  const same = cells.every((x) => x.kind === 'todo'
-    && x.feasible === first.feasible && x.states === first.states
-    && x.unit === first.unit && x.note.zh === first.note.zh);
-  return same ? first : null;
+  const sameAs = (a: ExactPending, b: typeof cells[number]) => b.kind === 'todo'
+    && a.feasible === b.feasible && a.states === b.states
+    && a.unit === b.unit && a.note.zh === b.note.zh;
+  const runs: PendingRun[] = [];
+  let i = 0;
+  while (i < cells.length) {
+    const head = cells[i];
+    if (head.kind !== 'todo') { i++; continue; }
+    let j = i + 1;
+    while (j < cells.length && sameAs(head, cells[j])) j++;
+    if (j - i > 1) runs.push({ start: i, len: j - i, cell: head });
+    i = j;
+  }
+  return runs;
 }
 
 /** 连续同 UI 方法的行数 —— 方法列用 rowSpan 合并。 */
@@ -131,7 +144,9 @@ export default function ExactCoverageMatrix({ stage, slot, colors, hrefOf }: Pro
             </tr>
           </thead>
           <tbody>
-            {groups.map((g) => g.stages.map((st, i) => (
+            {groups.map((g) => g.stages.map((st, i) => {
+              const runs = bestColRuns(st);
+              return (
               <tr key={st} className={i === 0 ? 'exact-cov-group-start' : undefined}>
                 {i === 0 && (
                   <th scope="row" rowSpan={g.stages.length} className="exact-cov-rowhead exact-cov-variant">
@@ -150,21 +165,25 @@ export default function ExactCoverageMatrix({ stage, slot, colors, hrefOf }: Pro
                   const key = `${st}-${sl}-${c}`;
                   const selected = st === stage && sl === slot
                     && (c === colors || isColorFreeCell(st, sl));
-                  // 四个「取最优帧」列同话时:第一列画一格横跨四列,其余三列不画。
-                  const merged = bestColsMerge(st);
-                  if (merged && sl === 'unfixed') {
-                    if (ci > 0) return null;
-                    return (
-                      <td key={key} colSpan={EXACT_COLOR_KEYS.length}>
-                        <div className={`exact-cov-cell is-${merged.feasible}`}>
-                          <span className="exact-cov-state">{tr(PENDING_LABEL[merged.feasible])}</span>
-                          <span className="exact-cov-blocked">
-                            {tr(merged.note)}
-                            {merged.unit && <b className="exact-cov-unit">{merged.unit}</b>}
-                          </span>
-                        </div>
-                      </td>
-                    );
+                  // 「取最优帧」里连续同话的空格子:头一格横跨整段,段内其余列不画。
+                  if (sl === 'unfixed') {
+                    const inRun = runs.find((r) => ci >= r.start && ci < r.start + r.len);
+                    if (inRun && ci > inRun.start) return null;
+                    if (inRun) {
+                      const { cell: m } = inRun;
+                      return (
+                        <td key={key} colSpan={inRun.len}>
+                          <div className={`exact-cov-cell is-${m.feasible}`}>
+                            <span className="exact-cov-state">{tr(PENDING_LABEL[m.feasible])}</span>
+                            {m.states && <span className="exact-cov-val">{groupDigits(m.states)}</span>}
+                            <span className="exact-cov-blocked">
+                              {tr(m.note)}
+                              {m.unit && <b className="exact-cov-unit">{m.unit}</b>}
+                            </span>
+                          </div>
+                        </td>
+                      );
+                    }
                   }
 
                   if (!isSlotApplicable(st, sl)) {
@@ -257,7 +276,8 @@ export default function ExactCoverageMatrix({ stage, slot, colors, hrefOf }: Pro
                   );
                 })}
               </tr>
-            )))}
+              );
+            }))}
           </tbody>
         </table>
       </div>
