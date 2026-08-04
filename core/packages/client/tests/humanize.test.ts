@@ -288,6 +288,28 @@ describe('录了姿态的把:中层不再靠时间猜,转体也写进去', () =>
   });
 });
 
+describe('猜过几次要报出来 —— 乱码和正常输出长得一样', () => {
+  it('没录姿态:每一对相对面都记一笔,不管最后合没合', () => {
+    const rec = record(T("R2 U' S' U2 S U' R2"));
+    const tight = new Set([3, 6]);
+    // 合上了:两对都是猜的。
+    expect(humanizeStream(stamped(rec, 200, tight)).blindPairs).toBe(2);
+    // 没合上:同样是猜的 —— 猜「不是中层」也是猜。
+    expect(humanizeStream(stamped(rec, 200)).blindPairs).toBe(2);
+  });
+
+  it('录了姿态就一次都不用猜', () => {
+    const { moves, core } = recordWithCore(T("R2 U' S' U2 S U' R2"));
+    const r = humanizeStream(moves, { core });
+    expect(r.blindPairs).toBe(0);
+    expect(r.moves.map(m => m.m)).toEqual(T("R2 U' S' U2 S U' R2"));
+  });
+
+  it('一对相对面都没有的把:没录姿态也不算猜过', () => {
+    expect(humanizeStream(stamped(T("R U R' U' F R F'"), 200)).blindPairs).toBe(0);
+  });
+});
+
 describe('不该合的不合', () => {
   it('跨过步骤边界不合', () => {
     const rec = T("F B' U2");
