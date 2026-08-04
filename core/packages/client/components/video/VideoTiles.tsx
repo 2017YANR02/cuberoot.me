@@ -24,7 +24,7 @@ import { Room, Track, VideoPresets } from 'livekit-client';
 import { Video, VideoOff, Mic, MicOff, PhoneOff, SwitchCamera, UserRound } from 'lucide-react';
 
 import { tr } from '@/i18n/tr';
-import { facingOf, nextCamera, type CameraFacing } from '@/lib/video-camera';
+import { facingOf, nextCamera, usableCameras, type CameraFacing } from '@/lib/video-camera';
 
 import './video-call.css';
 
@@ -48,14 +48,15 @@ export default function VideoTiles({
 
   const camTrack = localParticipant.getTrackPublication(Track.Source.Camera)?.videoTrack;
 
-  // 摄像头清单。权限在开摄像头时已经拿过,所以这里能读到真实的 deviceId(没权限时浏览器
-  // 只给一条空标签的占位,会误判成「只有一个摄像头」而藏掉切换按钮)。
+  // 摄像头清单,过一遍 usableCameras —— 浏览器报的 videoinput 条目不都是另一个摄像头
+  // (Windows Hello 的红外镜头是同模组的第二路,切过去一片噪点)。
+  // 权限在开摄像头时已经拿过,所以这里能读到真实的 deviceId 和 groupId。
   // 跟着 devicechange 走:插拔外接摄像头、手机切后台回来,列表都会变。
   useEffect(() => {
     let dead = false;
     const refresh = () => {
       void Room.getLocalDevices('videoinput', false)
-        .then((d) => { if (!dead) setCameras(d); })
+        .then((d) => { if (!dead) setCameras(usableCameras(d)); })
         .catch(() => { if (!dead) setCameras([]); });
     };
     refresh();

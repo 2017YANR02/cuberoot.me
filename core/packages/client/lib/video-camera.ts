@@ -20,6 +20,37 @@ export interface CameraSettings {
   deviceId?: string;
 }
 
+/** enumerateDevices 给的 videoinput 里我们用得上的三个字段。 */
+export interface CameraDevice {
+  deviceId: string;
+  groupId?: string;
+}
+
+/**
+ * 真正「切得过去」的摄像头。浏览器报的 videoinput 条目不都是另一个摄像头:
+ *
+ *   - Windows Hello 的红外镜头和彩色镜头是同一颗模组的两路输出,groupId 相同。切过去是
+ *     一片黑白噪点 —— 而绝大多数 Windows 笔记本都有这么一路,于是「只有一个摄像头」的人
+ *     也会看到切换按钮。
+ *   - deviceId 为空的是没拿到权限时的占位条目,根本切不过去。
+ *
+ * 所以按 groupId 去重、丢掉空 id。**只在 groupId 非空时才去重** —— iOS Safari 对所有
+ * 设备都报空 groupId,一律去重会把前后置合成一个,手机上反而没得切了。
+ */
+export function usableCameras<T extends CameraDevice>(devices: readonly T[]): T[] {
+  const seenGroups = new Set<string>();
+  const out: T[] = [];
+  for (const d of devices) {
+    if (!d.deviceId) continue;
+    if (d.groupId) {
+      if (seenGroups.has(d.groupId)) continue;
+      seenGroups.add(d.groupId);
+    }
+    out.push(d);
+  }
+  return out;
+}
+
 /**
  * 画面该不该镜像,看的是「是不是后置」。前置(以及所有没有朝向概念的桌面摄像头)镜像 ——
  * 不镜像的自拍会让人对不准手和魔方的左右;后置拍的是外部世界,镜像了反而是错的(字全反)。
