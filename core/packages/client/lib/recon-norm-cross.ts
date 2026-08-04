@@ -6,7 +6,19 @@
  *   3. 宽转动按 C++ switch 表分解为「先旋转 + 记录 counter slot」。
  *   4. 末尾用 BFS（≤2 步）找到把 identity 变成 state 的最简转体序列作为 prefix。
  *   5. 输出每个 history move 时，查 face→当前 slot，emit 该 slot 名 + 后缀。
+ *
+ * ## `expandSlices`:把中层也拆成单层转
+ *
+ * 默认 `M` 原样留着(它本来就是一手,写成中层最短)。开了 `expandSlices` 就按
+ * `lib/slice-pair.ts` 那张表拆成一对相对面 + 一次转体:`M' → R' L x`。
+ *
+ * 那个 `x` **不能省**:`M'` 和 `R' L` 差的正是它,省掉之后这一步之后的每一手都错位。
+ * 好在这里不用为它做任何特殊处理 —— 它和宽转动带的旋转走同一条路(进 `state`,
+ * 末尾被 `solveSimplification` 收进 prefix,前面的面转跟着换名),而 `prefix + 重写`
+ * 与原串是同一个空间置换,所以**十字行之后的内容一个字都不用动**。
  */
+
+import { sliceExpansion } from './slice-pair';
 
 const FACE_NAMES = ['U', 'L', 'F', 'R', 'B', 'D'] as const;
 const U = 0, L = 1, F = 2, R = 3, B = 4, D = 5;
@@ -98,14 +110,16 @@ function charToFace(c: string): number {
   }
 }
 
-function processToken(token: string, state: number[], history: RecordedMove[]) {
+function processToken(
+  token: string,
+  state: number[],
+  history: RecordedMove[],
+  expandSlices = false,
+) {
   if (!token) return;
   const base = token[0];
 
-  // amount 检测——对齐 C++：先看是否含 '2'，否则看是否含 "'"
-  let amount = 1;
-  if (token.includes('2')) amount = 2;
-  else if (token.includes("'")) amount = 3;
+  const amount = amountOf(token);
 
   // wide notation 'Rw' / 'Lw' / 'Uw' 等：第二个字符是 w
   const isWideUpper = token.length > 1 && token[1] === 'w' && base >= 'A' && base <= 'Z';
@@ -121,7 +135,21 @@ function processToken(token: string, state: number[], history: RecordedMove[]) {
   // 于是招式**从 history 里凭空消失**,状态算错却不报错。实测 rotateSolutionY("M2 U M U2 M' U M2", 1)
   // 曾得到 "y U U2 U" —— 四个 M 全没了。今天没炸只因调用点喂的都是纯面转的十字解。
   if (!isWideUpper && (base === 'M' || base === 'E' || base === 'S')) {
-    history.push({ originalFace: state[SLICE_REF[base]], amount, slice: true });
+    if (!expandSlices) {
+      history.push({ originalFace: state[SLICE_REF[base]], amount, slice: true });
+      return;
+    }
+    // `M' → R' L x`。表在 lib/slice-pair.ts,两处共用(见那个文件的头注)。
+    const exp = sliceExpansion(base + suffix(amount));
+    if (!exp) return;
+    for (const t of [exp.a, exp.b]) {
+      const slot = charToFace(t[0]);
+      if (slot < 0) return;
+      history.push({ originalFace: state[slot], amount: amountOf(t) });
+    }
+    // 转体的轴就是这个中层的轴,而那根轴上的两个面正是刚记下的两手 —— 所以先转还是
+    // 后转都一样,它不会改变 `state[a]` / `state[b]`。
+    applyRot(state, exp.rotation[0] as Axis, amountOf(exp.rotation));
     return;
   }
 
@@ -159,6 +187,13 @@ function suffix(amount: number): string {
   return '';
 }
 
+/** 记号后缀 → 四分之一圈数。对齐 C++：先看是否含 '2'，否则看是否含 "'"。 */
+function amountOf(token: string): number {
+  if (token.includes('2')) return 2;
+  if (token.includes("'")) return 3;
+  return 1;
+}
+
 /** 把一条记录还原成当前朝向下的写法。面转查 slot 名,中层查参照面落到哪个 slot。 */
 function emit(m: RecordedMove, orig2slot: number[]): string {
   const slot = orig2slot[m.originalFace];
@@ -167,14 +202,19 @@ function emit(m: RecordedMove, orig2slot: number[]): string {
   return family + suffix(flipped ? (4 - m.amount) % 4 : m.amount);
 }
 
+export interface NormalizeOptions {
+  /** 把 `M/E/S` 也拆成一对相对面 + 一次转体(`M' → R' L x`)。默认原样保留。 */
+  expandSlices?: boolean;
+}
+
 /**
  * 标准化输入 token 序列。
  * 输出：[...prefix rotations, ...face moves]，全部为单层 + 整体转体。
  */
-export function normalize(tokens: string[]): string[] {
+export function normalize(tokens: string[], opts: NormalizeOptions = {}): string[] {
   const state = [0, 1, 2, 3, 4, 5];
   const history: RecordedMove[] = [];
-  for (const tok of tokens) processToken(tok, state, history);
+  for (const tok of tokens) processToken(tok, state, history, opts.expandSlices);
 
   const prefix = solveSimplification(state);
 
@@ -190,7 +230,7 @@ export function normalize(tokens: string[]): string[] {
  * 按行标准化：每行返回该行原本的 face moves 在最终朝向下的写法，
  * 所有 rotations 合并成单一 prefix。
  */
-export function normalizeLines(linesOfTokens: string[][]): {
+export function normalizeLines(linesOfTokens: string[][], opts: NormalizeOptions = {}): {
   prefix: string[];
   perLine: string[][];
 } {
@@ -198,7 +238,7 @@ export function normalizeLines(linesOfTokens: string[][]): {
   const perLineHistory: RecordedMove[][] = [];
   for (const toks of linesOfTokens) {
     const hist: RecordedMove[] = [];
-    for (const tok of toks) processToken(tok, state, hist);
+    for (const tok of toks) processToken(tok, state, hist, opts.expandSlices);
     perLineHistory.push(hist);
   }
 

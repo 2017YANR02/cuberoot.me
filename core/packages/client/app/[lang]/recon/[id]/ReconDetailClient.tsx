@@ -59,7 +59,7 @@ import ReconPlayerCanvas from '@/components/recon/ReconPlayerCanvas';
 import SolutionView from '@/components/SolutionView';
 import { canonicalSq1Alg, formatScrambleForEvent, compactSq1Solution } from '@cuberoot/shared/sq1-notation';
 import {
-  buildNormalizedSolution, findCrossLineIndex, hasWideMoveInCrossSection,
+  buildNormalizedSolution, findCrossLineIndex, hasNormalizableCrossMove,
 } from '@/lib/recon-norm-cross-extract';
 import { computeAllStats, buildCaption, buildCaptionHeader } from '@/lib/recon-stats';
 import {
@@ -319,7 +319,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
   const [alts, setAlts] = useState<ReconAlternative[]>(solve.alternatives ?? []);
 
   const canToggle = useMemo(
-    () => hasWideMoveInCrossSection(solutionText),
+    () => hasNormalizableCrossMove(solutionText),
     [solutionText],
   );
   const normalizedText = useMemo(

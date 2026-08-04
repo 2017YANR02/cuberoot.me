@@ -59,7 +59,7 @@ import {
 import { mergePersonLive } from '@/lib/person-live-merge';
 import { computePrRank } from '@/components/persons/logic/progress';
 import { syncReconPlayerCursorFromText, findIllegalNotationChars } from '@/lib/recon-alg-utils';
-import { buildNormalizedSolution, hasWideMoveInCrossSection } from '@/lib/recon-norm-cross-extract';
+import { buildNormalizedSolution, hasNormalizableCrossMove } from '@/lib/recon-norm-cross-extract';
 import { encodeUrlAlg, decodeUrlAlg } from '@/lib/cubedb-url';
 import { simPuzzleForReconEvent, buildSimQuery } from '@/lib/sim-recon-link';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
@@ -1248,7 +1248,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   // ── Normalized cross toggle ──
   const [normalized, setNormalized] = useState(false);
   const canNormalize = useMemo(
-    () => hasWideMoveInCrossSection(form.solution || ''),
+    () => hasNormalizableCrossMove(form.solution || ''),
     [form.solution],
   );
   useEffect(() => { if (!canNormalize && normalized) setNormalized(false); }, [canNormalize, normalized]);

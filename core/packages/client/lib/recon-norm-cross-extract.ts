@@ -44,8 +44,16 @@ export function findCrossLineIndex(solution: string): number {
   return -1;
 }
 
-/** 仅当 cross 段（line 0 .. cross line）含宽转动（小写 r/l/u/d/f/b 或 Xw）时才返回 true */
-export function hasWideMoveInCrossSection(solution: string): boolean {
+/**
+ * cross 段（line 0 .. cross line）里有没有「能被拆成单层转」的记号 —— 有才值得给
+ * 那一行挂 ⇄ 按钮。两类:
+ *
+ *   - **宽转动**(小写 r/l/u/d/f/b 或 `Xw`):拆成 单层 + 转体;
+ *   - **中层**(M/E/S):拆成一对相对面 + 转体(`M' → R' L x`)。
+ *
+ * 中层这一类是后加的:`/recon/2473` 的十字整个就是一个 `M'`,原本一个按钮都没有。
+ */
+export function hasNormalizableCrossMove(solution: string): boolean {
   const idx = findCrossLineIndex(solution);
   if (idx < 0) return false;
   const lines = solution.split(/\r?\n/);
@@ -57,6 +65,10 @@ export function hasWideMoveInCrossSection(solution: string): boolean {
       if (tok.length > 1 && tok[1] === 'w' && c >= 'A' && c <= 'Z') return true;
       // 小写宽转动（排除 x/y/z 整体转体）
       if (c === 'r' || c === 'l' || c === 'u' || c === 'd' || c === 'f' || c === 'b') return true;
+      // 中层
+      if (tok.length === 1 || tok[1] !== 'w') {
+        if (c === 'M' || c === 'E' || c === 'S') return true;
+      }
     }
   }
   return false;
@@ -79,8 +91,9 @@ export function extractAndNormalizeCross(
 
 /**
  * 按行标准化：每行的 face moves 留在该行（按最终朝向重写），
- * rotations + wide-move 隐含的旋转都合到 prefix，prefix 落到第一条原本非空的 pre-cross 行。
- * cross 行后面的内容原样保留。
+ * rotations + wide-move + 中层隐含的旋转都合到 prefix，prefix 落到第一条原本非空的
+ * pre-cross 行。cross 行后面的内容原样保留 —— 重写前后是同一个空间置换，所以后面
+ * 那些步骤本来就不需要动，详见 `recon-norm-cross.ts` 头注。
  */
 export function buildNormalizedSolution(solution: string): string | null {
   if (!solution) return null;
@@ -111,7 +124,7 @@ export function buildNormalizedSolution(solution: string): string | null {
 
   let result;
   try {
-    result = normalizeLines(lineTokens);
+    result = normalizeLines(lineTokens, { expandSlices: true });
   } catch {
     return null;
   }
