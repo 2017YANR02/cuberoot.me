@@ -53,6 +53,8 @@ jobs:
             /.claude/hooks/
             /stats/scramble/2x2_essential.json
             /stats/scramble/puzzle_distribution.json
+            # scramble_exact_dist.test.ts 拿它当「WCA 那套菜单」的真源逐项比对(420KB)。
+            /stats/scramble/distribution.json
           filter: blob:none
 
       - uses: pnpm/action-setup@v6

@@ -6,6 +6,13 @@
 // 重新生成:见 scripts/gen-place-zh.mjs 顶部。
 export const PLACE_CITY_ZH: Record<string, string> = {
   // 手补(重跑 gen 需离线 GeoNames dump,本机暂缺;源已入 scripts/place-tail-zh.json,重跑会归位重排):
+  // 下面三条译名取自 Wikidata zh-hans 标签 / 中文维基条目名,非音译臆造:
+  //   Aleksandrów Łódzki = Q664371 zh-hans;Helsingborg = Q25411 zh-hans;
+  //   Jhenaidah 无 Wikidata 中文标签,取中文维基「切尼达县」(Q2188750)的地名部分。
+  // 注意 Ł 不参与 NFD 分解,norm 会把它整个丢掉 ⟹ key 是 aleksandrowodzki 而非 ...lodzki。
+  "PL:aleksandrowodzki": "罗兹地区亚历山德鲁夫",
+  "BD:jhenaidah": "切尼达",
+  "SE:helsingborg": "赫尔辛堡",
   "FR:meaux": "莫城",
   "BG:vratsa": "弗拉察",
   "SK:zilina": "日利纳",
