@@ -164,6 +164,19 @@ export interface TimerSettings {
   /** One-shot marker: the scramble-click default flipped to 'copy' (migrate legacy 'next'). */
   scrambleClickMigrated?: boolean;
 
+  /**
+   * One-shot marker: `recordGyro` 的默认值从关翻成开(2026-08-03),这个标记负责把
+   * **老存档里那个 false** 也翻过来。
+   *
+   * 为什么光改 `DEFAULTS` 不够:`load()` 只要跑过一次迁移就会 `save()` 整个对象,
+   * 于是每个动过设置的用户存档里都躺着一份**当时的默认值**。改 `DEFAULTS` 只对
+   * 「从没存过设置」的人生效 —— 老用户的 `recordGyro` 会永远是那个没人选过的
+   * `false`,而它决定复盘对不对(见 `recordGyro` 的注释)。
+   *
+   * 翻过之后再关掉的会留着:标记先落盘,此后的 `false` 才是用户的意思。
+   */
+  recordGyroMigrated?: boolean;
+
   /** Hide entire UI (topbar / scramble / charts) while timer is running. */
   hideAllUiWhileRunning: boolean;
 
@@ -354,6 +367,7 @@ export const DEFAULTS: TimerSettings = {
   autoMarkWcaScramble: true,
   scrambleClickAction: 'copy',
   scrambleClickMigrated: false,
+  recordGyroMigrated: false,
   hideAllUiWhileRunning: false,
   metronomeOn: false,
   inspectionBeepAt: [],
@@ -439,18 +453,28 @@ function load(): TimerSettings {
     if (!raw) return { ...DEFAULTS };
     const parsed = JSON.parse(raw) as Partial<TimerSettings>;
     const merged = { ...DEFAULTS, ...parsed };
+    // 迁移都先改 `merged`,末尾只落一次盘 —— 每条自己 `save()` 会在一次加载里写三遍。
+    let dirty = false;
     // One-shot migration: scramble-click now copies by default. Flip the legacy
     // 'next' default once (leave a deliberate 'none' alone), then persist the marker.
     if (!merged.scrambleClickMigrated) {
       if (merged.scrambleClickAction === 'next') merged.scrambleClickAction = 'copy';
       merged.scrambleClickMigrated = true;
-      save(merged);
+      dirty = true;
+    }
+    // 录姿态默认从关翻成开 —— 存档里那个 false 是旧默认值,不是用户选的。
+    // 见 `recordGyroMigrated`。
+    if (!merged.recordGyroMigrated) {
+      merged.recordGyro = true;
+      merged.recordGyroMigrated = true;
+      dirty = true;
     }
     // Cap legacy selections at MAX_AO_WINDOWS (the stats/history ao columns).
     if (Array.isArray(merged.statsAoWindows) && merged.statsAoWindows.length > MAX_AO_WINDOWS) {
       merged.statsAoWindows = merged.statsAoWindows.slice(0, MAX_AO_WINDOWS);
-      save(merged);
+      dirty = true;
     }
+    if (dirty) save(merged);
     return merged;
   } catch {
     return { ...DEFAULTS };

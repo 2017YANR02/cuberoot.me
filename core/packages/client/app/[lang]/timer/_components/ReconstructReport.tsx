@@ -51,6 +51,7 @@ import type { SolveQuality } from '../_lib/reconstruct/quality';
 import { computeF2lSlots } from '../_lib/reconstruct/f2l_slots';
 import { walkMethod } from '../_lib/reconstruct/method_walk';
 import type { MethodId } from '../_lib/reconstruct/methods';
+import { useSettings, updateSettings } from '../_lib/settings';
 import { decodeGyroTrack } from '../_lib/bluetooth/gyro_track';
 import { buildCoreTrack } from '../_lib/reconstruct/core_track';
 import { buildReconText } from '../_lib/reconstruct/recon_text';
@@ -655,6 +656,9 @@ export default function ReconstructReport({
                   slotReference={analysis?.slotReference ?? null}
                   currentIdx={idx}
                   onSeek={seek}
+                  notice={!solve.gyro && reconText.blindPairs > 0
+                    ? <NoGyroNotice />
+                    : undefined}
                   feedback={onReconFeedback
                     ? <ReconFeedback value={solve.reconOk} onChange={onReconFeedback} />
                     : undefined}
@@ -705,6 +709,47 @@ export default function ReconstructReport({
           </ol>
         )}
       </AccordionSection>
+    </div>
+  );
+}
+
+/**
+ * 「这把没录姿态」—— 只在**确实猜过**的时候说一句。
+ *
+ * 陀螺仪装在中心核里,而核心转没转是「这一对相对面是一个 `M` 还是两手真转」「这儿
+ * 有没有转体」的唯一证据(见 `_lib/reconstruct/core_track.ts`)。没录姿态的把只能
+ * 按时间猜,而猜错**一对**的后果不是少一个记号:那一对之后每一手都被写在一个人没
+ * 待过的系里,整段读起来就不像公式了。
+ *
+ * 这一行的存在理由是**别默默降级**:乱码和正常输出长得一样,用户没有别的办法知道
+ * 这段是猜的。所以条件卡得很紧 —— 这把没有姿态流,**并且**确实遇到过要猜的相对面
+ * (`blindPairs > 0`)。一把没有中层的解不会看到它。
+ */
+function NoGyroNotice() {
+  const on = useSettings().recordGyro;
+  return (
+    <div className="rc-nogyro">
+      <Info size={13} />
+      <span>
+        {on
+          ? tr({
+            zh: '这把没录姿态,中层和转体只能按时间猜 —— 现在已经开着了,下一把就准。',
+            en: 'No orientation was recorded for this solve, so slices and rotations had to be guessed from timing. It is on now — the next solve will be exact.',
+          })
+          : tr({
+            zh: '这把没录姿态,中层和转体只能按时间猜 —— 猜错一处,后面就不像公式了。',
+            en: 'No orientation was recorded for this solve, so slices and rotations had to be guessed from timing — one wrong guess and the rest stops looking like an alg.',
+          })}
+      </span>
+      {!on && (
+        <button
+          type="button"
+          className="rc-nogyro-fix"
+          onClick={() => updateSettings({ recordGyro: true })}
+        >
+          {tr({ zh: '开启录姿态', en: 'Record orientation' })}
+        </button>
+      )}
     </div>
   );
 }

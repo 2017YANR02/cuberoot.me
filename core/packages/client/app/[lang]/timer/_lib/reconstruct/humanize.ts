@@ -198,6 +198,18 @@ export interface HumanizedStream {
   rotation: string;
   /** 人做的那些转体(中层带的已经减掉了),按时刻。没有姿态流时是空数组。 */
   rotations: HumanRotation[];
+  /**
+   * 没有姿态流、只能靠时间猜的那几对相对面。有姿态流时恒为 0。
+   *
+   * 报出来是因为**猜错一对,后面整段就不像公式了**:漏掉的那一对不推 ρ,而魔方的
+   * 核心确实转过去了,于是这一对之后的每一手都写在一个人没待过的系里。谱子仍然
+   * 「拧出来是对的」(等价性由 ρ 保证),但读起来是乱码 —— 用户那把 PLL 就是这么
+   * 变成 `U B2 U' M U2 R' L …` 的。
+   *
+   * 所以这个数不是给调优用的,是给 UI 用的:>0 且这把没录姿态,就该明说「这段是
+   * 猜的,开了『录姿态』下一把才准」,而不是默默端一段乱码上去。
+   */
+  blindPairs: number;
 }
 
 /** 这把的中位手间间隔(ms)。不足两手时是 null。 */
@@ -257,6 +269,7 @@ export function humanizeStream(
   const out: HtmMove[] = [];
   const rotations: HumanRotation[] = [];
   let merges = 0;
+  let blindPairs = 0;
   // ρ:到这里为止核心一共转了多少。记号串,不是置换 —— 置换要复合,串只要接上。
   let rot = '';
   let perm: FacePerm = facePermFor('');
@@ -343,6 +356,8 @@ export function humanizeStream(
       && median !== null && median >= MIN_MEDIAN_GAP_MS && gap <= median * ratio;
     const byCore = !!core && !!b && coreTurnsIn(core, a.ts, b.endTs).length > 0;
     const canMerge = pairable && (core ? byCore : byClock);
+    // 没有姿态流的时候,这一对不管合不合都是**猜**的 —— 记一笔,让 UI 有机会说出口。
+    if (pairable && !core) blindPairs += 1;
 
     if (canMerge && split && b) {
       // 先认领再写转体:这一对的那次换格是中层带的,不能在它前面漏出一个 `x'`。
@@ -367,5 +382,5 @@ export function humanizeStream(
   // 最后一手之后还有转体:拧完把魔方摆正。照写 —— 那也是这把发生过的事。
   writeRotationsBefore(Infinity);
 
-  return { moves: out, merges, rotation: rot, rotations };
+  return { moves: out, merges, rotation: rot, rotations, blindPairs };
 }
