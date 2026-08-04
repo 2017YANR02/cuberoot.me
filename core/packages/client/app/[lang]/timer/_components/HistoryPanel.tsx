@@ -1,12 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { X, GitCompare, ChevronDown, ChevronUp, CheckSquare, Trash2, MoreVertical, Check, Clipboard, MessageSquare } from 'lucide-react';
 import type { Solve, Penalty } from '../_lib/types';
 import { effectiveMs } from '../_lib/types';
 import { formatMs, formatEventMs, formatSolveResult, averageOfN } from '../_lib/stats';
 import CompareSolvesModal from './CompareSolvesModal';
 import { computeAllTags, TAG_DEFS, ALL_TAG_IDS } from '../_lib/storage/auto_tag';
+import { dayKeyOf } from '../_lib/stats_buckets';
 import type { TagId } from '../_lib/storage/auto_tag';
 import { ClearButton } from '@/components/ClearButton';
 import { RecordBadge } from '@/components/RecordBadge';
@@ -370,6 +371,17 @@ export default function HistoryPanel({
 
   const matchCount = filteredReversed.length;
   const hasAnyFilter = !!trimmed || activeFilterCount > 0;
+
+  /** 每个日期分隔行右边那个数。数的是**筛选后**留下的把数 —— 分隔行下面摆着几行,
+   *  它就该写几,否则筛完之后两者对不上。 */
+  const dayCounts = useMemo(() => {
+    const out = new Map<string, number>();
+    for (const s of filteredReversed) {
+      const k = dayKeyOf(s.ts);
+      out.set(k, (out.get(k) ?? 0) + 1);
+    }
+    return out;
+  }, [filteredReversed]);
 
   const clearAllFilters = () => {
     setQuery('');
@@ -1034,8 +1046,12 @@ export default function HistoryPanel({
             {visibleAoWindows.map(n => <span key={n} className="hao-head">ao{n}</span>)}
           </div>
         )}
-        {filteredReversed.map((s) => {
+        {filteredReversed.map((s, listIdx) => {
           const realIdx = idToRealIdx.get(s.id) ?? -1;
+          // 日期分隔行。列表是新到旧,所以每天的第一行上面插一条 —— 而不是给每行加
+          // 一列日期:同一天的几十把会把同一个日期重复几十遍,窄屏还得为它让出一列。
+          const dayKey = dayKeyOf(s.ts);
+          const newDay = listIdx === 0 || dayKeyOf(filteredReversed[listIdx - 1].ts) !== dayKey;
           const isSelected = compareMode && selectedIds.includes(s.id);
           const isBulkSelected = selectMode && bulkSelected.has(s.id);
 
@@ -1065,9 +1081,17 @@ export default function HistoryPanel({
           };
 
           return (
+            <Fragment key={s.id}>
+            {newDay && (
+              <div className="history-day">
+                <span className="history-day-key">{dayKey}</span>
+                <span className="history-day-n">
+                  {tr({ zh: `${dayCounts.get(dayKey) ?? 0} 次`, en: `${dayCounts.get(dayKey) ?? 0}` })}
+                </span>
+              </div>
+            )}
             <div
               className={classNames.join(' ')}
-              key={s.id}
               style={rowStyle}
               onClick={handleRowClick}
               onContextMenu={(e) => handleRowContextMenu(e, s, realIdx)}
@@ -1166,6 +1190,7 @@ export default function HistoryPanel({
                 </div>
               ))}
             </div>
+            </Fragment>
           );
         })}
       </div>

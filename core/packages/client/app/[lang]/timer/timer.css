@@ -1691,3 +1691,99 @@
   .history-row .idx { color: #888 !important; }
   .history-row .time { color: #000 !important; }
 }
+
+/* 按天统计(DailyStatsPanel):◀ 日期 ▶ + 日/总,下面是「项 / 值 / 较上次」三列。
+   数值列给的是 em 而不是 px —— 微信里 CJK 会被放大,贴着内容量的定宽必折行。 */
+.dsp-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.dsp-day {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.dsp-nav {
+  appearance: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 5px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--muted-foreground);
+}
+.dsp-nav:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  color: var(--foreground);
+}
+.dsp-nav:disabled { opacity: 0.35; cursor: default; }
+.dsp-nav:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
+
+.dsp-table { font-family: var(--font-mono); }
+.dsp-row {
+  display: grid;
+  grid-template-columns: 1fr 5.6em 6.4em;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--shell-divider);
+}
+.dsp-row-head {
+  font-family: inherit;
+  font-size: 11px;
+  color: var(--muted-foreground);
+  letter-spacing: 0.05em;
+  padding: 0 0 5px;
+}
+.dsp-table.is-total .dsp-row { grid-template-columns: 1fr 5.6em; }
+.dsp-row-head span:not(:first-child) { text-align: right; white-space: nowrap; }
+.dsp-lbl {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+/* 「这一行其实只有 N 把算得出来」—— 和练习次数不一致时才出现,压一档色。 */
+.dsp-note { font-size: 11px; color: var(--faint-foreground); }
+.dsp-val {
+  text-align: right;
+  font-size: 15px;
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+}
+.dsp-val.is-empty { color: var(--faint-foreground); }
+.dsp-delta {
+  text-align: right;
+  font-size: 12px;
+  color: var(--faint-foreground);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.dsp-delta[data-better='true']  { color: var(--signal-success); }
+.dsp-delta[data-better='false'] { color: var(--destructive); }
+
+/* 成绩列表的日期分隔行。列表是新到旧,每天的第一行上面插一条;不给每行加日期列 ——
+   同一天几十把会把同一个日期重复几十遍,窄屏还要为它让出一列。 */
+.history-day {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 10px 14px 4px;
+  font-size: 11px;
+  color: var(--faint-foreground);
+  font-variant-numeric: tabular-nums;
+}
+.history-day-key { font-family: var(--font-mono); }
