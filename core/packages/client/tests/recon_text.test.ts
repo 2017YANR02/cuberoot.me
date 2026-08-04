@@ -248,3 +248,43 @@ describe('转体织进谱子(Sprint 28)', () => {
     expect(last.moves[last.moves.length - 1]).toBe('z');
   });
 });
+
+/**
+ * 录了姿态的把,中层照样要合出来 —— 用户 2026-08-04 报的那把。
+ * =========================================================================
+ *
+ * 报告里 PLL 印的是 `U L2 U F' B L2 F B' U L2 U2`:两对相对面一个都没合。根因不在
+ * 配对那一层,而是「录了姿态就只问核心」把「中心块必须回家」那条定理整个关掉了
+ * (`humanize.ts` 的 `planned = core ? null : …`),而这把的整个 PLL 姿态流一次换格
+ * 都没认出来 —— 证据在那一行输出本身:它连一个转体记号都没有,而没被中层认领的
+ * 换格一定会被打印出来。
+ *
+ * 所以这条守的是**整条管道**:core 非空(OLL 之前有一次真的 `y`)、PLL 段一次换格
+ * 都没有,印出来的那一行仍然是带中层的公式。单元层面的判据在 `humanize.test.ts`。
+ */
+describe('录了姿态、但中层那几对姿态流没看见(2026-08-04)', () => {
+  const inv0804 = (toks: string[]) => toks.slice().reverse()
+    .map(t => (t.endsWith('2') ? t : t.endsWith("'") ? t.slice(0, -1) : `${t}'`));
+  // 十字 + 三组 F2L + OLL(CP) + 那把 U perm 的**原流**(中层报成相对面的样子)。
+  const SOL_0804 = ("D R' D2 F  U R U' R'  U' L' U L  U F' U F"
+    + "  U2 R U R' U R U2 R'  R U R' U R U2 R'"
+    + "  U L2 U F' B L2 F B' U L2 U2").trim().split(/\s+/);
+  const SCR_0804 = inv0804(SOL_0804).join(' ');
+  const mv0804 = SOL_0804.map((m, i) => ({ m, ts: (i + 1) * 200 }));
+  const total0804 = mv0804[mv0804.length - 1].ts + 300;
+
+  it('PLL 那一行印的是中层,不是四手相对面', async () => {
+    const segs = computeStageSegments(SCR_0804, mv0804, total0804)!;
+    const metrics = computeStepMetrics(SCR_0804, mv0804, total0804)!;
+    const slots = computeF2lSlots(SCR_0804, mv0804, total0804, segs);
+    const r = await buildReconText({
+      scramble: SCR_0804, moves: mv0804, totalMs: total0804, segs, metrics, slots,
+      // 姿态流只有 OLL 之前那一次 y;PLL 段一次换格都没认出来 —— 和用户那把一样。
+      core: { events: [{ tMs: 1500, token: 'y', angleRad: Math.PI / 2 }] },
+    });
+    const last = r.lines[r.lines.length - 1];
+    // 轴向是 M 不是 S:前面那个 y 把整段换过名(`L2` 同样印成 `B2`)。
+    expect(last.moves).toEqual("U B2 U M U2 M' U B2 U2".split(' '));
+    expect(r.blindPairs).toBe(0);
+  });
+});

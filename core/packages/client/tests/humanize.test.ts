@@ -260,6 +260,28 @@ describe('humanizeStream —— 用户报的那条 PLL', () => {
     expect(merges).toBe(2);
     expect(moves.map(m => m.m)).toEqual(HUMAN);
   });
+
+  /**
+   * 用户 2026-08-04 报的第三次。这回**录了姿态**(报告里 OLL 那行印着一个 `y`),
+   * 而印出来的 PLL 是 `U L2 U F' B L2 F B' U L2 U2` —— 两对一个都没合。
+   *
+   * 根因不在配对那一层:上一版「录了姿态就只问核心」把定理整个关掉了,而这把的整个
+   * PLL 姿态流一次换格都没认出来。证据在那一行输出本身 —— 它连一个转体记号都没有,
+   * 而没被中层认领的换格一定会被打印出来(`humanize.ts` 的 `writeRotationsBefore`)。
+   * 阴性读数背后是三道没在真机上标定过的闸,现在不再有否决权。
+   */
+  const RAW_0804 = T("U L2 U F' B L2 F B' U L2 U2");
+  const HUMAN_0804 = T("U L2 U S U2 S' U L2 U2");
+
+  it('录了姿态、姿态流却一次换格都没认出来 —— 照样还原成公式', () => {
+    for (const [name, core] of [['没录姿态', null], ['录了但一次换格都没认出来', { events: [] }]] as const) {
+      const r = humanizeStream(stamped(RAW_0804, 200), { core });
+      expect(r.merges, name).toBe(2);
+      expect(r.moves.map(m => m.m), name).toEqual(HUMAN_0804);
+      // 重写只换写法:谱子 + 剩下的转体,拧出来还是原流那把。
+      expect(facesEqual(apply(RAW_0804), apply([...r.moves.map(m => m.m), ...T(r.rotation)])), name).toBe(true);
+    }
+  });
 });
 
 describe('等价性 —— 重写只换写法,不换这把', () => {
@@ -324,19 +346,24 @@ describe('录了姿态的把:中层不再靠时间猜,转体也写进去', () =>
     }
   });
 
-  it('核心没换过格 → 那些相对面就是两手真转,抵不抵消都不合', () => {
-    // 同一条流,只差「有没有录姿态」。中心块判据会合,而核心说它一动没动 —— 姿态
-    // 是实测,实测赢。
+  it('核心没换过格**不是**否决票 —— 阴性读数背后有三道没标定过的闸', () => {
+    // 同一条流,只差「有没有录姿态」。这条曾经断言「录了姿态就以核心一动没动为准」,
+    // 而那正是 2026-08-04 那把 U perm 印成乱码的原因(见上面那条回归)。
+    // 判错的代价也不对等:少合出来的是没人读得懂的一行、还会把这一步后面全换错名;
+    // 多合出来的是同一个置换的另一种写法,ρ 照样在边界归零。
     const rec = record(T("S U2 S' R"));
     expect(humanizeStream(stamped(rec, 200)).merges).toBe(2);
-    expect(humanizeStream(stamped(rec, 200), { core: { events: [] } }).merges).toBe(0);
+    expect(humanizeStream(stamped(rec, 200), { core: { events: [] } }).merges).toBe(2);
   });
 
-  it('`M2` 报成两对时并成一个,不写成 `M M`', () => {
-    // 编码器按四分之一圈报,一个 M2 常常是 `R L' R L'` 两对。
+  it('实测钉死的中层抵不掉时以实测为准 —— 落单的 `M2` 只有这一种情况下才合', () => {
+    // 编码器按四分之一圈报,一个 M2 常常是 `R L' R L'` 两对。它自己把中心块转走了
+    // x2,定理这一段无解 —— 但姿态流两对都实测到了换格,那就是实测赢:定理只对
+    // 「不净转中心块的步骤」成立,而实测说这一步就是净转了。
     const { moves, core } = recordWithCore(T('M M'));
-    const r = humanizeStream(moves, { core });
-    expect(r.moves.map(m => m.m)).toEqual(['M2']);
+    expect(humanizeStream(moves, { core }).moves.map(m => m.m)).toEqual(['M2']);
+    // 同一条流没有实测就不合 —— 这条退路只有钉死的位置才走得到。
+    expect(humanizeStream(moves).merges).toBe(0);
   });
 
   it('认不出来的转体(`?`)一个字都不写,ρ 也不动 —— 写错比缺一个更糟', () => {

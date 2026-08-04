@@ -37,18 +37,13 @@
  * ## 什么时候才敢合
  *
  * 光看动作流是分不出来的:真做了一个 `S'`,和真的分两手拧了 `B'` 再 `F`,报上来
- * **逐字相同**。所以判据得从别处来,而有两个别处:
+ * **逐字相同**。所以判据得从别处来。
  *
- * ### 录了姿态的把:问中心核(准的那条)
- *
- * 中层的定义就是核心转过去,两手真转则核心一动不动 —— 这不是相关性,是同一件事的
- * 两个面。所以有 `core` 的时候直接问它:这一对的时间窗里核心换格了没有?换了就是
- * 中层,没换就是两手。判据到此为止,不掺时间。细节见 `core_track.ts`。
- *
- * ### 没录姿态的把:问中心块回没回家(算出来的那条)
+ * ### 主判据:中心块必须回家(算出来的,常开)
  *
  * 中层会把中心块转走,而**每个步骤边界上中心块都必须在家**:十字要和中心块对上才
- * 算十字,一对 F2L 要和中心块对上才算插好,OLL / PLL 更是。所以有
+ * 算十字,一对 F2L 要和中心块对上才算插好,OLL / PLL 更是 —— 末层公式净转了中心块
+ * 的话,已经拼好的 F2L 就跟着错位了。所以有
  *
  *     一个步骤之内,那些中层带的核心旋转,乘起来必须是恒等。
  *
@@ -59,8 +54,28 @@
  * 只合一对(旧的时间判据恰好这么干过)乘出来是 `z`,直接出局。
  *
  * 附带一条更要紧的性质:**判错也漏不出这一步**。抵消掉的 ρ 到边界就归零,下一步的
- * 记号不会跟着错。旧判据没有这条约束,漏掉一对就把后面**整把**换了名 —— 用户看到的
- * 那段乱码正是这么来的。
+ * 记号不会跟着错。旧判据没有这条约束,漏掉一对就把后面**整把**换了名。
+ *
+ * ### 姿态流只做加法:实测到的中层钉死(阳性才算数)
+ *
+ * 中层的定义就是核心转过去,两手真转则核心一动不动。所以姿态流在这一对的时间窗里
+ * **认下了一次核心换格**,就是直接的物理证据:这一对钉成中层,不给「不合」那条路。
+ * 钉死之后再让定理去配剩下的。
+ *
+ * 反过来**不成立,而这里返过一次工**:姿态流**没**认出换格,不等于核心没转。中间
+ * 隔着三道没在真机上标定过的闸 —— 录制端 4° 死区(`gyro_track.ts`)、进格 30°、
+ * 保持 120ms(`rotation_detect.ts`)—— 任何一道漏了,和「真的没转」长得一模一样。
+ * 曾经这条阴性读数是有姿态的把的**唯一**判据,于是用户 2026-08-04 那把 U perm 里
+ * 两个 S 一个都没合:整个 PLL 姿态流一次换格都没认出来(证据在输出本身 —— 那一行
+ * 连一个转体记号都没有,而没被中层认领的换格一定会被打印出来)。
+ *
+ * 两种判错的代价也不对等:少合(把 `S` 写成 `F' B`)出来的是没人读得懂的一行,而且
+ * 一对里只漏一个就把这一步后面全换错名;多合(把两手真转写成 `S`)出来的是**同一个
+ * 置换的另一种写法**,ρ 照样在边界归零。所以阴性读数不给否决权。
+ *
+ * 钉死的那些自己抵不掉时(比如一个孤零零的、实测过的 `M2`),以实测为准 —— 定理只对
+ * 「不净转中心块的步骤」成立,而实测说这一步就是净转了。没有实测时这条退路走不到:
+ * 「一对都不合」永远是一个恒等解。
  *
  * **时间彻底退场。** 它曾经是唯一判据,而那两个没在真机上标定过的毫秒数把用户那把
  * PLL 拦下来过一次。定理不需要标定,也不需要设备时钟 —— 那些时间戳只是通知到达时间
@@ -105,13 +120,15 @@ export interface HumanizeOptions {
    * 原始流里的步骤边界(每一步最后一手的下标)。跨过边界的一对不合 —— 合了会把
    * 一个记号从后一步挪到前一步,而边界是分步分析表和这里共用的那把刀。
    *
-   * 没录姿态时它还有第二个身份:**中心块必须回家的那条线**。合并方案按边界分段搜,
-   * 每一段里的旋转乘积要抵消,见文件头。
+   * 它还有第二个身份:**中心块必须回家的那条线**。合并方案按边界分段搜,每一段里的
+   * 旋转乘积要抵消,见文件头。
    */
   boundaries?: ReadonlySet<number>;
   /**
-   * 这把的核心轨迹(姿态流)。给了它:中层不再靠时间猜,转体也一并写进谱子。
-   * 不给 = 没录姿态,退回时间判据、一个转体也不写。见文件头。
+   * 这把的核心轨迹(姿态流)。给了它:实测到核心换格的那些相对面对被钉成中层,转体
+   * 也一并写进谱子。不给 = 没录姿态,中层全靠定理配、一个转体也不写。
+   *
+   * 注意它只做加法:**没**实测到换格不构成「这不是中层」的证据,见文件头。
    */
   core?: CoreTrack | null;
 }
@@ -137,14 +154,16 @@ export interface HumanizedStream {
   /** 人做的那些转体(中层带的已经减掉了),按时刻。没有姿态流时是空数组。 */
   rotations: HumanRotation[];
   /**
-   * 没录姿态、而且**中心块那条判据也没能定下来**的相对面对数:摆在那里像中层,但把
-   * 它当中层会让这一步的旋转乘积对不上恒等,于是只能按两手真转写。有姿态流时恒为 0。
+   * **中心块那条判据没能定下来**的相对面对数:摆在那里像中层,但把它当中层会让这一
+   * 步的旋转乘积对不上恒等,于是只能按两手真转写。
    *
-   * 它们是这一层剩下的全部不确定性。合上的那些不算 —— 那是算出来的,不是猜的
-   * (见文件头「问中心块回没回家」)。没合上的这些则两种可能都说得通:要么人真的
-   * 分两手拧了,要么这一步里还有一个中层没被认出来配对。
+   * 它们是这一层剩下的全部不确定性。合上的那些不算 —— 那是算出来的(或者姿态流实测
+   * 钉死的),不是猜的。没合上的这些则两种可能都说得通:要么人真的分两手拧了,要么
+   * 这一步里还有一个中层没被认出来配对。
    *
    * 所以这个数是给 UI 用的:>0 且这把没录姿态,就该明说一句,而不是默默端上去。
+   * 录了姿态的把也可能 >0(那一对既没被实测钉死、又配不成对),但那时用户手里已经
+   * 有姿态这条线索了,提示词不适用 —— 所以 UI 只在没姿态流时才拿它说话。
    */
   blindPairs: number;
 }
@@ -207,6 +226,7 @@ interface PlanCell {
  *
  * 约束是「这一段里中层带的旋转乘起来是恒等」—— 中心块在每个边界上都必须在家,
  * 见文件头。目标是合得最多;同样多的两组保留先搜到的那一组(左边先合)。
+ * `forced[i]` 为真的位置是姿态流**实测**到核心换过格的,不给「不合」那条路。
  *
  * 时间在这里一个字都没有。间隔曾经是唯一判据,而那两个没标定过的毫秒数把用户那把
  * PLL 拦下来过一次 —— 现在它连并列裁判都不当:并列在真数据里出不来(一段里的中层
@@ -218,6 +238,7 @@ interface PlanCell {
 function planSegment(
   counted: readonly HtmMove[],
   table: ReadonlyMap<string, SliceSplit>,
+  forced: readonly boolean[],
   from: number,
   to: number,
   chosen: Set<number>,
@@ -246,10 +267,13 @@ function planSegment(
   };
 
   for (let p = 0; p < len; p++) {
+    const sigma = cand[p];
+    // 姿态流实测到这一对带着核心换格 —— 那它就是中层,「不合」这条路直接封掉。
+    const mustMerge = sigma !== null && forced[from + p];
     for (const [key, cell] of layers[p]) {
-      relax(p + 1, key, { merges: cell.merges, fromLayer: p, fromKey: key, merged: false });
-
-      const sigma = cand[p];
+      if (!mustMerge) {
+        relax(p + 1, key, { merges: cell.merges, fromLayer: p, fromKey: key, merged: false });
+      }
       if (!sigma || p + 2 > len) continue;
       const next = composePerm(perms.get(key) as FacePerm, sigma);
       const nk = permKey(next);
@@ -258,9 +282,20 @@ function planSegment(
     }
   }
 
-  // 「一对都不合」永远是可行解(空积就是恒等),所以这里一定取得到。
   let layer = len;
   let key = IDENTITY_KEY;
+  if (!layers[len].has(key)) {
+    // 走到这里只有一种可能:钉死的那些中层自己抵不掉(孤零零一个实测过的 `M2`
+    // 之类)。此时以实测为准 —— 定理只对「不净转中心块的步骤」成立,而实测说这一步
+    // 就是净转了。没有实测钉死时这条退路走不到:「一对都不合」永远是一个恒等解。
+    let best: string | null = null;
+    let bestMerges = -1;
+    for (const [k, c] of layers[len]) {
+      if (c.merges > bestMerges) { bestMerges = c.merges; best = k; }
+    }
+    if (best === null) return;
+    key = best;
+  }
   while (layer > 0) {
     const cell = layers[layer].get(key) as PlanCell;
     if (cell.merged) chosen.add(from + cell.fromLayer);
@@ -270,12 +305,13 @@ function planSegment(
 }
 
 /**
- * 整条流该合哪几对(只在没录姿态时用 —— 录了就问核心,那条是实测)。
- * 按步骤边界切段,每段各自搜。
+ * 整条流该合哪几对。按步骤边界切段,每段各自搜。
+ * 没有姿态流时 `forced` 全假,搜出来的就是纯定理解。
  */
 function planMerges(
   counted: readonly HtmMove[],
   table: ReadonlyMap<string, SliceSplit>,
+  forced: readonly boolean[],
   boundaries: ReadonlySet<number> | undefined,
 ): Set<number> {
   const chosen = new Set<number>();
@@ -284,7 +320,7 @@ function planMerges(
   while (from < n) {
     let to = from;
     while (to < n - 1 && !(boundaries?.has(counted[to].endIdx) ?? false)) to++;
-    planSegment(counted, table, from, to, chosen);
+    planSegment(counted, table, forced, from, to, chosen);
     from = to + 1;
   }
   return chosen;
@@ -302,9 +338,15 @@ export function humanizeStream(
   const table = sliceSplitTable();
 
   const core = opts.core ?? null;
-  // 没录姿态:先把「哪几对是中层」整段解出来,再走下面这一趟。判据是中心块必须
-  // 回家,不是间隔 —— 见文件头。录了姿态的把逐对问核心,用不上这个。
-  const planned = core ? null : planMerges(counted, table, boundaries);
+  // 姿态流实测到核心换格的那些位置:钉成中层,不参与搜索。**只有阳性读数算数** ——
+  // 没读到不等于没转(三道没标定的闸都能吃掉它),见文件头。
+  const forced = counted.map((a, i) => {
+    const b = counted[i + 1];
+    return !!core && !!b && coreTurnsIn(core, a.ts, b.endTs).length > 0;
+  });
+  // 「哪几对是中层」整段解出来再走下面这一趟。判据是中心块必须回家,不是间隔,
+  // 也不是「姿态流没看见就算没有」—— 见文件头。
+  const planned = planMerges(counted, table, forced, boundaries);
 
   const out: HtmMove[] = [];
   const rotations: HumanRotation[] = [];
@@ -389,12 +431,11 @@ export function humanizeStream(
     const pairable = !!split
       && faceToken(a.m) !== null
       && !(boundaries?.has(a.endIdx) ?? false);
-    // 录了姿态就问核心,没录就照 `planned` 走 —— 两条判据的分工见文件头。
-    const byCore = !!core && !!b && coreTurnsIn(core, a.ts, b.endTs).length > 0;
-    const canMerge = pairable && (core ? byCore : (planned as Set<number>).has(i));
-    // 没录姿态、这一对又没被中心块那条判据认下来:两种可能都说得通,记一笔让 UI
-    // 有机会说出口。合上的那些不记 —— 那是算出来的。
-    if (pairable && !core && !canMerge) blindPairs += 1;
+    // 合不合只看这一份方案:定理配的 + 姿态流钉死的,都已经在里面了。
+    const canMerge = pairable && planned.has(i);
+    // 这一对既没被实测钉死、中心块那条判据也没能认下来:两种可能都说得通,记一笔让
+    // UI 有机会说出口。合上的那些不记 —— 那是算出来的。
+    if (pairable && !canMerge) blindPairs += 1;
 
     if (canMerge && split && b) {
       // 先认领再写转体:这一对的那次换格是中层带的,不能在它前面漏出一个 `x'`。
