@@ -9,7 +9,7 @@ import { checkRateLimit, requireAuth } from '../utils/recon_helpers.js';
  *
  *   GET  /video/config      — 视频功能是否可用、两种房各自的人数上限
  *   POST /video/token       — 对战房(/timer 联机):{code,pid}      → {url,token,…}
- *   POST /video/meet/token  — 会议室(/meet):     {code,id,name} → {url,token,…}
+ *   POST /video/meet/token  — 会议室(/meet):     {code} + Bearer → {url,token,…}
  *
  * 媒体面完全由自建的 LiveKit 服务器承担(信令 + SFU 转发),本服务只做两件事:
  * **签发凭证** 和 **守带宽预算**。因此这里没有 WebSocket —— LiveKit 客户端拿到 token 后
