@@ -6,7 +6,7 @@ import {
   Film, ScanSearch, BookOpen, Shuffle, Library, BookA,
   Compass, Grid2x2, Trophy, Timer as TimerIcon, Code as CodeIcon,
   Brain, Box, Sigma, Scale, Sprout, Brush, MessagesSquare, Shapes, Blocks, Eye, Palette,
-  CircleQuestionMark, Globe2, CalendarDays,
+  CircleQuestionMark, Globe2, CalendarDays, Video,
   type LucideIcon,
 } from 'lucide-react';
 import { type LandingSearchCard } from '@/components/LandingSearch';
@@ -83,6 +83,7 @@ export const TEXTS: Record<string, { en: string; zh: string
   whyCube:         { en: 'Why Cube', zh: '为何学魔方'
 },
   forum:           { en: 'Forum', zh: '论坛' },
+  meet:            { en: 'Meeting', zh: '会议' },
   comingSoon:      { en: 'Coming soon', zh: '即将上线'
 },
   creditsPrefix:   { en: 'Inspired by', zh: '致谢'
@@ -179,6 +180,7 @@ export const SECTIONS: Section[] = [
     },
     cards: [
       { id: 'forum', href: '/forum', internal: true, tier: 'medium', Icon: MessagesSquare, nameKey: 'forum' },
+      { id: 'meet', href: '/meet',  internal: true,  tier: 'medium', Icon: Video,      nameKey: 'meet' },
       { id: 'code', href: '/code',  internal: true,  tier: 'medium', Icon: CodeIcon, nameKey: 'code' },
       { id: 'blog', href: '/blog/', internal: false, tier: 'medium', Icon: BookOpen, nameKey: 'blog' },
       { id: 'site', href: '/site',  internal: true,  tier: 'medium', Icon: Compass,  nameKey: 'sitesDirectory' },

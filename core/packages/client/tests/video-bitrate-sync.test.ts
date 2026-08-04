@@ -22,7 +22,8 @@ const HERE = dirname(fileURLToPath(import.meta.url)); // packages/client/tests
 const CLIENT = join(HERE, '..');
 const SERVER_ROUTE = join(CLIENT, '..', 'server', 'src', 'routes', 'video_rooms.ts');
 const CLIENT_API = join(CLIENT, 'lib', 'video-room-api.ts');
-const VIDEO_STRIP = join(CLIENT, 'app', '[lang]', 'timer', '_battle', 'VideoStrip.tsx');
+// 连接参数是 /timer 对战房与 /meet 会议室共用的一份(两边只有授权方式不同)。
+const VIDEO_STRIP = join(CLIENT, 'components', 'video', 'video-call.ts');
 
 /** 去掉数字字面量里的下划线分隔符(3_000_000)再转数。 */
 function num(raw: string): number {
@@ -51,12 +52,12 @@ describe('video bitrate — server budget and client publish must agree', () => 
     ).toBe(mbps * 1_000_000);
   });
 
-  it('VideoStrip publishes via the constant, not an inline number', () => {
+  it('the shared room options publish via the constant, not an inline number', () => {
     const enc = /videoEncoding:\s*\{[^}]*\}/.exec(stripSrc)?.[0] ?? '';
-    expect(enc, 'VideoStrip 没有 videoEncoding 配置了?').not.toBe('');
+    expect(enc, 'components/video/video-call.ts 没有 videoEncoding 配置了?').not.toBe('');
     expect(
       enc,
-      `VideoStrip 的 maxBitrate 必须写 VIDEO_MAX_BITRATE,不能就地写数字 —— ` +
+      `LIVEKIT_ROOM_OPTIONS 的 maxBitrate 必须写 VIDEO_MAX_BITRATE,不能就地写数字 —— ` +
         `写死了改常量不生效,而服务端仍按常量算预算。实际:${enc}`,
     ).toContain('VIDEO_MAX_BITRATE');
   });
