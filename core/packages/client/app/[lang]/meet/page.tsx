@@ -95,12 +95,16 @@ export default function MeetPage() {
   );
 
   const join = useCallback((target: string) => {
+    // 到这里的码一定过了 isMeetCode,所以服务端再回 invalid 就不是用户抄错(见 stale-api)。
     if (!isMeetCode(target)) return;
     setBusy(true);
     setErr(null);
     getMeetToken(target)
       .then(setToken)
-      .catch((e: unknown) => fail(e instanceof VideoDeniedError ? e.reason : 'connect'))
+      .catch((e: unknown) => {
+        if (!(e instanceof VideoDeniedError)) { fail('connect'); return; }
+        fail(e.reason === 'invalid' ? 'stale-api' : e.reason);
+      })
       .finally(() => setBusy(false));
   }, [fail]);
 
