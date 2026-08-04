@@ -83,6 +83,19 @@
 .auth-pweye:hover { color: var(--foreground); }
 .auth-pwform { margin-top: 6px; }
 
+/* 手机号输入的 +86 前缀。短信通道只发中国大陆号,与其让人填完国外号再收一句「格式不正确」,
+   不如把国家码钉在框里,进门就说清楚。与 .auth-pwfield 同构:relative 壳 + 绝对定位的装饰
+   + 给 input 让出内边距。纯装饰,值不参与提交 —— normalizePhone 本来就认裸 11 位和 86 前缀。 */
+.auth-phonefield { position: relative; display: flex; align-items: center; }
+.auth-phonefield .auth-input { padding-left: 52px; }
+.auth-phoneprefix {
+  position: absolute;
+  left: 12px;
+  font-size: 15px;
+  color: var(--muted-foreground);
+  pointer-events: none;   /* 点前缀也该聚焦到输入框 */
+}
+
 .auth-label {
   font-size: 12px;
   color: var(--muted-foreground);
