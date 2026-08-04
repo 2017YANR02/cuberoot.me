@@ -1,0 +1,161 @@
+/* VideoTiles — 视频通话的画面宫格与控制条,/timer 联机对战和 /meet 会议室共用。
+   双主题页,全部走 :root token 自动翻 light/dark。
+   在 /timer 里刻意做得矮而窄(主角是计时器),在 /meet 里可以铺开 —— 两处的差异靠外面的
+   容器给 max-width,这里不写死。想看清楚就点开某一格放大,那也是唯一能拿到 1080p 的路径。 */
+
+.vc-err {
+  color: var(--signal-warning);
+  font-size: 12px;
+}
+
+/* 画面宫格。auto-fit + minmax 让人数自然铺开,不用按人数写死列数。 */
+.vc-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 6px;
+}
+
+/* 放大态:被点的那格独占一行,其余缩成缩略图跟在下面。用 order 而不是改 DOM 顺序 ——
+   谁被放大是随手点的,重排 DOM 会让 <video> 元素重挂、画面黑一下。 */
+.vc-tiles.is-spotlight {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.vc-tiles.is-spotlight .vc-tile {
+  flex: 0 0 84px;
+  order: 2;
+}
+
+.vc-tiles.is-spotlight .vc-tile[data-spot] {
+  flex: 1 0 100%;
+  order: 1;
+  /* 摄像头基本都是 16:9,放大这一格就别再按 4:3 裁了。 */
+  aspect-ratio: 16 / 9;
+}
+
+/* 整格可点(点开放大 / 再点还原),所以是真 button,这里把 UA 样式剥干净。 */
+.vc-tile {
+  display: block;
+  position: relative;
+  aspect-ratio: 4 / 3;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--foreground) 10%, transparent);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.vc-tile:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.vc-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* 只镜像自己的前置画面:不镜像的自拍会让人对不准手和魔方的左右;后置拍的是外部世界,
+   镜像了字全是反的。属性由 VideoTiles 按轨道实际朝向发。 */
+.vc-video[data-mirror] {
+  transform: scaleX(-1);
+}
+
+/* 对方没开摄像头时的占位。仍占一格,避免开关摄像头导致宫格跳动。 */
+.vc-video-off {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--faint-foreground);
+}
+
+.vc-name {
+  position: absolute;
+  left: 4px;
+  bottom: 4px;
+  max-width: calc(100% - 8px);
+  padding: 1px 6px;
+  border-radius: 999px;
+  /* 压在画面上,必须自带底色才读得出来 —— 视频内容的明暗不可控。 */
+  background: color-mix(in srgb, var(--background) 72%, transparent);
+  color: var(--foreground);
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vc-me {
+  color: var(--muted-foreground);
+}
+
+/* 缩略图上放不下名字,留画面。 */
+.vc-tiles.is-spotlight .vc-tile:not([data-spot]) .vc-name {
+  display: none;
+}
+
+/* 控制条:靠左紧凑,不塞 spacer 把按钮推到两端。 */
+.vc-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vc-ctrl {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+.vc-ctrl:hover:not(:disabled) {
+  border-color: var(--border-strong);
+}
+
+.vc-ctrl:disabled {
+  color: var(--faint-foreground);
+  cursor: default;
+}
+
+/* 关闭态(静音 / 关摄像头)才是需要一眼看见的异常状态,给它上色而不是给开启态上色。 */
+.vc-ctrl[aria-pressed='false'] {
+  border-color: color-mix(in srgb, var(--destructive) 45%, transparent);
+  color: var(--destructive);
+}
+
+.vc-ctrl.is-leave {
+  color: var(--destructive);
+}
+
+.vc-ctrl.is-leave:hover {
+  background: color-mix(in srgb, var(--destructive) 12%, transparent);
+  border-color: var(--destructive);
+}
+
+/* 窄屏:格子再缩一档,四人也能一行排下不横向溢出。 */
+@media (max-width: 480px) {
+  .vc-tiles {
+    grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
+  }
+
+  .vc-tiles.is-spotlight .vc-tile {
+    flex-basis: 64px;
+  }
+
+  .vc-name {
+    font-size: 10px;
+  }
+}

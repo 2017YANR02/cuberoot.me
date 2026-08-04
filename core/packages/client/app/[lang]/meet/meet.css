@@ -1,0 +1,152 @@
+/* /meet 会议室。画面宫格本身在 components/video/video-call.css(与 /timer 共用),
+   这里只管进会之前那个表单、以及会议室里画面该多宽。双主题页,全走 :root token。 */
+
+.meet-page {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 32px 16px 48px;
+}
+
+/* 会中让画面吃满容器 —— 平铺时靠宫格自己的 auto-fit 分列,放大时 960 正好是
+   adaptiveStream 选中 1080p 那层的门槛。 */
+.meet-page.is-live .vc-tiles {
+  width: 100%;
+}
+
+.meet-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.meet-sub {
+  margin: 0;
+  max-width: 46em;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* 表单项:标签在上、输入在下,整块贴合内容宽而不是拉满整行。 */
+.meet-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+
+.meet-name-input,
+.meet-code-input {
+  width: 15em;
+  max-width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--input);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 14px;
+}
+
+.meet-name-input:focus-visible,
+.meet-code-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+/* 会议码是给人抄和念的,等宽字体读起来才不会把 5/S 看混。 */
+.meet-code-input {
+  font-family: var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* 一行里的控件紧凑靠左,不塞 spacer 把最后一个推到行尾。 */
+.meet-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.meet-go,
+.meet-join,
+.meet-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.meet-go {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.meet-go:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 88%, black);
+}
+
+.meet-join:hover:not(:disabled),
+.meet-copy:hover {
+  border-color: var(--border-strong);
+}
+
+.meet-go:disabled,
+.meet-join:disabled {
+  border-color: var(--border-default);
+  background: transparent;
+  color: var(--faint-foreground);
+  cursor: default;
+}
+
+/* 会中那条:会议码 + 复制邀请链接。 */
+.meet-invite {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.meet-code {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  letter-spacing: 0.12em;
+  color: var(--foreground);
+}
+
+.meet-copy {
+  padding: 4px 10px;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+
+@media (max-width: 480px) {
+  .meet-page {
+    padding: 20px 12px 40px;
+  }
+
+  .meet-name-input,
+  .meet-code-input {
+    width: 100%;
+  }
+
+  /* 窄屏输入框铺满,那一行的「加入」按钮就得换行,别硬挤在旁边压成两个字宽。 */
+  .meet-row {
+    align-items: stretch;
+  }
+}

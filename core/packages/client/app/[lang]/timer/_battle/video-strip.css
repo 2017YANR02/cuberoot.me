@@ -1,6 +1,6 @@
-/* VideoStrip — 对战房视频通话。/timer 是双主题页,全部走 :root token 自动翻 light/dark。
-   平时刻意做得矮而窄:主角是计时器,视频只是「看得见对手」的辅助,不能把 TimingSurface
-   挤下去。想看清楚就点开某一格放大(那也是唯一能拿到 1080p 的路径,见 VideoStrip.tsx 头注)。 */
+/* VideoStrip — /timer 对战房里的视频通话条。画面宫格本身在 components/video/video-call.css
+   (与 /meet 共用),这里只管**它在计时器页里该多大、开关长什么样**。
+   /timer 是双主题页,全部走 :root token 自动翻 light/dark。 */
 
 .vs-strip {
   display: flex;
@@ -14,6 +14,18 @@
   flex-direction: row;
   align-items: center;
   gap: 10px;
+}
+
+/* 主角是计时器,视频只是「看得见对手」的辅助,不能把 TimingSurface 挤下去 —— 所以平铺时
+   压到 520px。想看清楚就点开某一格。 */
+.vs-strip .vc-tiles {
+  max-width: 520px;
+}
+
+/* 放大态放宽到 960:1080p 那层要 <video> 宽到 960 才会被 adaptiveStream 选中,
+   卡在 520 就永远停在 540p —— 放大了却还是糊的,比不给放大更让人困惑。 */
+.vs-strip .vc-tiles.is-spotlight {
+  max-width: min(100%, 960px);
 }
 
 /* 顶栏开关。裸图标:它紧挨着人数下拉,再套边框就成了两个并排的芯片。
@@ -45,165 +57,8 @@
   cursor: default;
 }
 
-.vs-err {
-  color: var(--signal-warning);
-  font-size: 12px;
-}
-
-/* 画面宫格。auto-fit + minmax 让 1-4 人自然铺开:两人各占一半,四人挤成四格,
-   不用按人数写死列数。max-content 上限防止单人时铺满整行变成巨幅自拍。 */
-.vs-tiles {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 6px;
-  max-width: 520px;
-}
-
-/* 放大态:被点的那格独占一行,其余缩成缩略图跟在下面。用 order 而不是改 DOM 顺序 ——
-   谁被放大是随手点的,重排 DOM 会让 <video> 元素重挂、画面黑一下。
-   上限 960px 不是随便定的:1080p 那层要 <video> 宽到 960 才会被 adaptiveStream 选中,
-   卡在 520 就永远停在 540p —— 放大了却还是糊的,比不给放大更让人困惑。 */
-.vs-tiles.is-spotlight {
-  display: flex;
-  flex-wrap: wrap;
-  max-width: min(100%, 960px);
-}
-
-.vs-tiles.is-spotlight .vs-tile {
-  flex: 0 0 84px;
-  order: 2;
-}
-
-.vs-tiles.is-spotlight .vs-tile[data-spot] {
-  flex: 1 0 100%;
-  order: 1;
-  /* 摄像头基本都是 16:9,放大这一格就别再按 4:3 裁了。 */
-  aspect-ratio: 16 / 9;
-}
-
-/* 整格可点(点开放大 / 再点还原),所以是真 button,这里把 UA 样式剥干净。 */
-.vs-tile {
-  display: block;
-  position: relative;
-  aspect-ratio: 4 / 3;
-  padding: 0;
-  border: 0;
-  border-radius: 8px;
-  overflow: hidden;
-  background: color-mix(in srgb, var(--foreground) 10%, transparent);
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-}
-
-.vs-tile:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-}
-
-.vs-video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-/* 只镜像自己的前置画面:不镜像的自拍会让人对不准手和魔方的左右;后置拍的是外部世界,
-   镜像了字全是反的。属性由 VideoStrip 按轨道实际朝向发。 */
-.vs-video[data-mirror] {
-  transform: scaleX(-1);
-}
-
-/* 对方没开摄像头时的占位。仍占一格,避免开关摄像头导致宫格跳动。 */
-.vs-video-off {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--faint-foreground);
-}
-
-.vs-name {
-  position: absolute;
-  left: 4px;
-  bottom: 4px;
-  max-width: calc(100% - 8px);
-  padding: 1px 6px;
-  border-radius: 999px;
-  /* 压在画面上,必须自带底色才读得出来 —— 视频内容的明暗不可控。 */
-  background: color-mix(in srgb, var(--background) 72%, transparent);
-  color: var(--foreground);
-  font-size: 11px;
-  line-height: 1.5;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.vs-me {
-  color: var(--muted-foreground);
-}
-
-/* 缩略图上放不下名字,留画面。 */
-.vs-tiles.is-spotlight .vs-tile:not([data-spot]) .vs-name {
-  display: none;
-}
-
-/* 控制条:靠左紧凑,不塞 spacer 把按钮推到两端。 */
-.vs-controls {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.vs-ctrl {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border: 1px solid var(--border-default);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--foreground);
-  cursor: pointer;
-}
-
-.vs-ctrl:hover:not(:disabled) {
-  border-color: var(--border-strong);
-}
-
-.vs-ctrl:disabled {
-  color: var(--faint-foreground);
-  cursor: default;
-}
-
-/* 关闭态(静音 / 关摄像头)才是需要一眼看见的异常状态,给它上色而不是给开启态上色。 */
-.vs-ctrl[aria-pressed='false'] {
-  border-color: color-mix(in srgb, var(--destructive) 45%, transparent);
-  color: var(--destructive);
-}
-
-.vs-ctrl.is-leave {
-  color: var(--destructive);
-}
-
-.vs-ctrl.is-leave:hover {
-  background: color-mix(in srgb, var(--destructive) 12%, transparent);
-  border-color: var(--destructive);
-}
-
-/* 窄屏:格子再缩一档,四人也能一行排下不横向溢出。 */
 @media (max-width: 480px) {
-  .vs-tiles {
-    grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
+  .vs-strip .vc-tiles {
     max-width: 100%;
-  }
-
-  .vs-tiles.is-spotlight .vs-tile {
-    flex-basis: 64px;
-  }
-
-  .vs-name {
-    font-size: 10px;
   }
 }
