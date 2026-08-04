@@ -45,12 +45,14 @@ describe('exact_dist 数据完整性', () => {
   // 同一套代码把其余 12 个 0 步金标逐位复现,证明见 tests/skip_probability.test.ts。
   // 整解那一格是同一个对象挂在四个底色键上(最优解长度与底色无关),所以它记 4 格。
   // 2×2×3(E1)与 EO+XCross(E2)是 solver/src/bin/dist_tracked.rs 跑出来的,各占 1 格。
-  it('矩阵 46 格:32 个完整分布 + 14 个仅 0 步', () => {
+  // F2LEO 十字(E3)与伪 F2LEO 十字(P4)各两格:站内口径(两条 EO 轴取最短)+ 固定一条轴。
+  // 都是 dist_tracked 在 EdgeSet 商空间上跑的,各 2.6s;两条站内口径那格与真题逐档对过。
+  it('矩阵 50 格:36 个完整分布 + 14 个仅 0 步', () => {
     let full = 0, zero = 0;
     eachCell((_s, _sl, _c, cell) => {
       if ((cell as ExactFull).kind === 'full') full++; else zero++;
     });
-    expect(full).toBe(32);
+    expect(full).toBe(36);
     expect(zero).toBe(14);
   });
 
@@ -360,9 +362,9 @@ describe('底色折叠与槽位适用性', () => {
         checked++;
       }
     }
-    // 固定帧共 34 格(20 个 fixed1 + 7 个阶段各一对 adj/diag),其中 14 格已有完整曲线。
-    // 修好之前那 14 格里各有 3 档底色够不着,42 个早就算完的组合被显示成「还没写」。
-    expect(checked).toBe(34);
+    // 固定帧共 36 格(22 个 fixed1 + 7 个阶段各一对 adj/diag),其中 16 格已有完整曲线。
+    // 修好之前那些格子各有 3 档底色够不着,48 个早就算完的组合被显示成「还没写」。
+    expect(checked).toBe(36);
   });
 
   it('固定帧的数据只存一份(存储键恒为 W)', () => {
@@ -444,6 +446,41 @@ describe('菜单与 WCA 数据集逐项相同', () => {
     const stagesOf = (ui: string) => EXACT_STAGES.filter((s) => uiVariantOf(EXACT_STAGE_VARIANT[s]) === ui);
     expect(stagesOf('block')).toEqual(VARIANT_STAGES.block);
     expect(stagesOf('eo')).toEqual(EO_UI_STAGES);
+  });
+
+  /**
+   * 「取最优帧」那几格与真题同口径,所以两条曲线必须逐档贴着走。这不是风格检查:
+   * F2LEO 十字那格的口径要是搞错了(比如固定一条 EO 轴、而真题那列对两条取最短),
+   * 均值会差 0.27 步、逐档差好几个百分点 —— 一眼看不出来,这条能。
+   *
+   * 阈值 0.08 个百分点。实测:F2LEO 十字 0.027、单色底十字 0.019、六色底十字 0.0706
+   * (最后这个就是文件头注里那句「实测最大逐档偏差 0.07 个百分点」的出处)。n = 131.8 万、
+   * 最大那档占 50% 时采样标准差约 0.04 个百分点,所以 0.08 就是噪声底上方一点点 ——
+   * 口径搞错的差是**几个百分点**量级,这个阈值照样一眼逮住。
+   */
+  const wcaData = JSON.parse(readFileSync(path.join(STATS, 'distribution.json'), 'utf-8'))
+    .sets.wca.variants as Record<string, { data: Record<string, Record<string, { counts: Record<string, number> }>> }>;
+
+  it.each([
+    ['std', 'cross', 'W'],
+    ['std', 'cross', 'BGORWY'],
+    ['f2leo', 'f2leo_cross', 'W'],
+    ['pseudo_f2leo', 'pseudo_f2leo_cross', 'W'],
+  ])('%s/%s/%s:穷举与真题逐档贴合', (variant, stage, colors) => {
+    const cell = getExactCell(stage, 'unfixed', colors) as ExactFull;
+    expect(cell.kind).toBe('full');
+    const emp = wcaData[variant].data[stage][colors].counts;
+    const n = Object.values(emp).reduce((a, b) => a + b, 0);
+    expect(n).toBeGreaterThan(1_000_000);
+    const total = BigInt(cell.total);
+    let worst = 0;
+    for (let d = 0; d < cell.counts.length; d++) {
+      // 分子先放大再除,避免 5e9 分母上的整数除法把小档抹成 0
+      const theory = Number((BigInt(cell.counts[d]) * 1_000_000_000n) / total) / 1e7;
+      const real = (emp[String(d)] ?? 0) / n * 100;
+      worst = Math.max(worst, Math.abs(theory - real));
+    }
+    expect(worst, `${stage}/${colors} 最大逐档偏差 ${worst.toFixed(4)} 个百分点`).toBeLessThan(0.08);
   });
 });
 
@@ -527,6 +564,30 @@ describe('站内自算的格子:与计算源同一个数', () => {
     cumNotAbove(full('eo_xcross', 'fixed1'), full('xcross', 'fixed1'), 'EOXCross ⊃ XCross');
     // 同一台 Rust 引擎在同一次运行里复现的五条已知曲线之一(xcross),口径没跑偏的旁证
     expect(full('xcross', 'fixed1').total).toBe('72990720');
+  });
+
+  // F2LEO 十字:十字解好 + 中层四棱朝向好。夹在两个已知曲线中间 ——
+  // 比十字严(多了四条棱的朝向门),比 EOCross 松(EOCross 要全部 12 条都朝向好)。
+  it('F2LEO 十字:比十字难,比 EOCross 易', () => {
+    cumNotAbove(full('f2leo_cross', 'fixed1'), full('cross', 'unfixed'), 'F2LEO十字 ⊃ 十字');
+    cumNotAbove(full('eo_cross', 'fixed1'), full('f2leo_cross', 'fixed1'), 'EOCross ⊃ F2LEO十字');
+    // 两条轴取最短只会更浅:同一个坐标、目标集大一倍
+    cumNotAbove(full('f2leo_cross', 'fixed1'), full('f2leo_cross', 'unfixed'), '固定轴 ⊃ 两轴取最短');
+    // 商掉四条中层棱的 4! 种贴法之后再乘回来 —— 分母必须回到坐标空间那个数
+    expect(full('f2leo_cross', 'unfixed').total).toBe(FRAME_STATES.f2leo_cross);
+    expect(exactMean(full('f2leo_cross', 'unfixed')).toFixed(4)).toBe('6.4946');
+    expect(exactMean(full('f2leo_cross', 'fixed1')).toFixed(4)).toBe('6.7682');
+  });
+
+  // 伪 = 目标集放宽成「底十字拼好即可,绕 D 轴偏一格不算错」,只会更近。
+  it('伪 F2LEO 十字:逐档比标准版更浅', () => {
+    cumNotAbove(full('f2leo_cross', 'unfixed'), full('pseudo_f2leo_cross', 'unfixed'), '标准 ⊃ 伪(两轴)');
+    cumNotAbove(full('f2leo_cross', 'fixed1'), full('pseudo_f2leo_cross', 'fixed1'), '标准 ⊃ 伪(定轴)');
+    cumNotAbove(full('pseudo_f2leo_cross', 'fixed1'), full('pseudo_f2leo_cross', 'unfixed'), '定轴 ⊃ 两轴');
+    // 0 步 = 目标集大小:四个 D 偏移 × 两条轴,标准版那格恰好是它的 1/4
+    expect(Number(full('pseudo_f2leo_cross', 'unfixed').counts[0]))
+      .toBe(Number(full('f2leo_cross', 'unfixed').counts[0]) * 4);
+    expect(exactMean(full('pseudo_f2leo_cross', 'unfixed')).toFixed(4)).toBe('6.0387');
   });
 
   it('固定单帧那几格的 total 就是它的坐标空间', () => {

@@ -185,12 +185,14 @@ export const SLOT_OK: Record<ExactStage, ExactSlot[]> = {
   eo_xxxcross: ['unfixed', 'fixed1'],
   eo_xxxxcross: ['unfixed'],
 
-  f2leo_cross: ['unfixed'],
+  // 底面定死之后 EO 还剩两条轴(差一个 y 旋转),F2LEO 一族因此每个底色都有两个帧 ——
+  // 分析器 f2leo_solver::get_stats 的折叠正是 min(rot, rot·y)。所以十字这档也有固定帧可谈。
+  f2leo_cross: ['unfixed', 'fixed1'],
   f2leo_xcross: ['unfixed', 'fixed1'],
   f2leo_xxcross: ['unfixed', 'adj', 'diag'],
   f2leo_xxxcross: ['unfixed', 'fixed1'],
 
-  pseudo_f2leo_cross: ['unfixed'],
+  pseudo_f2leo_cross: ['unfixed', 'fixed1'],
   pseudo_f2leo_xcross: ['unfixed', 'fixed1'],
   pseudo_f2leo_xxcross: ['unfixed', 'adj', 'diag'],
   pseudo_f2leo_xxxcross: ['unfixed', 'fixed1'],
@@ -207,6 +209,10 @@ export const SLOT_OK: Record<ExactStage, ExactSlot[]> = {
 /** 「固定单帧」到底固定的是什么 —— 每个阶段不一样,列头写不下,落到格子里。 */
 const SLOT_ONE = { zh: '一个 F2L 槽', en: 'one F2L slot' };
 const SLOT_THREE = { zh: '三个 F2L 槽', en: 'three F2L slots' };
+// F2LEO 一族的帧还多一个自由度:EO 的轴。底面定死后还剩两条(差一个 y 旋转),
+// 站内那列对这两条取最短,所以「固定单帧」在这一族里连轴一起钉死。
+const SLOT_ONE_EO = { zh: '一个 F2L 槽 + 一条 EO 轴', en: 'one F2L slot and one EO axis' };
+const SLOT_THREE_EO = { zh: '三个 F2L 槽 + 一条 EO 轴', en: 'three F2L slots and one EO axis' };
 export const FRAME_NOTE: Partial<Record<ExactStage, Text>> = {
   xcross: SLOT_ONE,
   xxxcross: SLOT_THREE,
@@ -216,10 +222,12 @@ export const FRAME_NOTE: Partial<Record<ExactStage, Text>> = {
   pseudo_cross_pseudo_pair: SLOT_ONE,
   eo_xcross: SLOT_ONE,
   eo_xxxcross: SLOT_THREE,
-  f2leo_xcross: SLOT_ONE,
-  f2leo_xxxcross: SLOT_THREE,
-  pseudo_f2leo_xcross: SLOT_ONE,
-  pseudo_f2leo_xxxcross: SLOT_THREE,
+  f2leo_cross: { zh: '一条 EO 轴', en: 'one EO axis' },
+  pseudo_f2leo_cross: { zh: '一条 EO 轴', en: 'one EO axis' },
+  f2leo_xcross: SLOT_ONE_EO,
+  f2leo_xxxcross: SLOT_THREE_EO,
+  pseudo_f2leo_xcross: SLOT_ONE_EO,
+  pseudo_f2leo_xxxcross: SLOT_THREE_EO,
   eo: { zh: '一条 EO 轴', en: 'one EO axis' },
   eoline: { zh: '一条线(面 + 轴)', en: 'one line (face + axis)' },
   eo_cross: { zh: '一条 EO 轴', en: 'one EO axis' },
@@ -847,11 +855,76 @@ export const EXACT_DIST: Record<ExactStage, StageTable> = {
   eo_xxcross: {},
   eo_xxxcross: {},
   eo_xxxxcross: {},
-  f2leo_cross: {},
+  // ── F2LEO 十字 ─────────────────────────────────────────────────────────
+  // solver/src/bin/dist_tracked.rs 的 `f2leo_cross` / `f2leo_cross_1axis`,各 2.6s。
+  //
+  // 这一格曾经标着「51 亿态、11.2GB nibble、等机时」。贵在把四条中层棱当成**可区分的**
+  // 棋子追:P(12,4)·2⁴ = 190,080。但目标只是「这四条都朝向好」—— 谁在哪个位不影响达标,
+  // 也不影响任何一条转动的作用(翻转只看位和转动)。4! 种贴法是同一个态,商掉之后
+  // C(12,4)·2⁴ = 7,920,整问题 2.13 亿、nibble 753MB。counts 是商空间的 24 倍还原值,
+  // 总数逐次断言 = 5,109,350,400。
+  f2leo_cross: {
+    // 站内口径:两条 EO 轴取最短(分析器的 min(rot, rot·y))。四条中层棱同属 E 层一个类,
+    // 所以「按另一条轴算朝向」在同一个坐标里表达得下来 —— 只是并上 y 共轭那组目标。
+    // 与 131.8 万条真题逐档对得上,最大偏差 0.027 个百分点。
+    unfixed: {
+      W: {
+        kind: 'full',
+        total: '5109350400',
+        counts: ['3336', '50040', '572688', '5883792', '54026472', '396366384',
+          '1837667304', '2578068384', '236664768', '47232'],
+      },
+    },
+    // 固定一条轴 —— 站内口径的上界(均值 6.768 vs 6.495),与真题那列不是同一个问题。
+    fixed1: {
+      W: {
+        kind: 'full',
+        total: '5109350400',
+        counts: ['1680', '25200', '289344', '3021840', '28839744', '230681352',
+          '1287282000', '2894881104', '664001160', '326976'],
+        noOverlay: {
+          zh: '这一格不叠真题对照:底面定死后 EO 还剩两条轴(差一个 y 旋转),本格固定一条轴,'
+            + '而真题那列出自 Rust f2leo_analyzer —— 它对两条轴取更短的那条(取最优帧那一格就是它)。'
+            + '差距是系统性的:固定轴均值 6.768,两轴取最短 6.495。',
+          en: 'No WCA overlay here: with the bottom face fixed, EO still has two possible axes (a y rotation apart). '
+            + 'This cell fixes one axis, while the empirical column comes from the Rust f2leo_analyzer, which takes '
+            + 'the shorter of the two — that is the best-frame cell. The gap is systematic: 6.768 moves fixed-axis '
+            + 'vs 6.495 over both.',
+        },
+      },
+    },
+  },
   f2leo_xcross: {},
   f2leo_xxcross: {},
   f2leo_xxxcross: {},
-  pseudo_f2leo_cross: {},
+  // ── 伪 F2LEO 十字 ──────────────────────────────────────────────────────
+  // 与 F2LEO 十字同一个坐标、同一个 EdgeSet 商,只把目标集按 D / D2 / D' 闭包一次
+  // (底十字拼好即可,整体绕 D 轴偏一格不算错)。dist_tracked 的
+  // `pseudo_f2leo_cross` / `_1axis`,各 2.6s。与真题逐档最大偏差 0.052 个百分点。
+  pseudo_f2leo_cross: {
+    unfixed: {
+      W: {
+        kind: 'full',
+        total: '5109350400',
+        counts: ['13344', '160128', '1650240', '16478016', '139695264', '869949888',
+          '2688265824', '1382214816', '10922688', '192'],
+      },
+    },
+    fixed1: {
+      W: {
+        kind: 'full',
+        total: '5109350400',
+        counts: ['6720', '80640', '834816', '8522880', '76372032', '540112704',
+          '2229223488', '2184453792', '69743136', '192'],
+        noOverlay: {
+          zh: '这一格不叠真题对照:与 F2LEO 十字同理,本格固定一条 EO 轴,真题那列对两条取更短。'
+            + '固定轴均值 6.314,两轴取最短 6.039。',
+          en: 'No WCA overlay here: as with F2LEO cross, this cell fixes one EO axis while the empirical column '
+            + 'takes the shorter of the two. 6.314 moves fixed-axis vs 6.039 over both.',
+        },
+      },
+    },
+  },
   pseudo_f2leo_xcross: {},
   pseudo_f2leo_xxcross: {},
   pseudo_f2leo_xxxcross: {},
@@ -868,8 +941,9 @@ interface PendingPlan {
   best?: { feasible: ExactPending['feasible']; unit?: string; note: Text };
 }
 
-const READY = (unit: string, zh: string, en: string) =>
-  ({ feasible: 'ready' as const, unit, note: { zh, en } });
+// 'ready'(算法与代码就位、只差机时)这一档目前一个格子都没有 —— E3 本来在这儿,
+// 后来发现它根本不用等机时(见 f2leo_cross 那段),2.6s 就跑完了。档位保留在类型里,
+// 下一个真要排队的格子直接用;图例按数量为 0 隐藏,不占一行。
 const PLAN = (unit: string, zh: string, en: string) =>
   ({ feasible: 'plan' as const, unit, note: { zh, en } });
 const OOR = (zh: string, en: string) => ({ feasible: 'oor' as const, note: { zh, en } });
@@ -942,8 +1016,8 @@ const STAGE_PLAN: Partial<Record<ExactStage, PendingPlan>> = {
   eo_xxxxcross: { best: BEST_TOO_BIG },
 
   f2leo_cross: {
-    best: READY('E3', '十字解好 + 四条中层棱朝向好 = 51 亿态(一个底色只有一个帧,这一格就是站内口径)。dist_tracked 的 f2leo_cross preset 已就位:8 条棱拆 6+2 两个因子,要 11.2GB nibble + 3GB 转动表',
-      'Cross solved plus the four middle-layer edges oriented = 5.11 billion states (a colour has only one frame here, so this cell IS the site metric). dist_tracked ships the f2leo_cross preset: the eight edges split 6+2 into two factors, needing an 11.2 GB nibble table plus the 3 GB move table'),
+    best: OOR('单色底那格已经算完(两条 EO 轴取最短)。多色底还要跨底面取最优 —— 那要同时知道每个面的十字四棱与各自的中层四棱,跳出商空间',
+      'The single-colour cell is done (shortest over both EO axes). More colours means taking the best across bottom faces too, which needs every face\'s cross edges and its own middle four at once — outside the quotient'),
   },
   f2leo_xcross: {
     frame: OOR('再乘 24 个角位 = 1.23×10¹¹', 'Times 24 corner placements = 1.23×10¹¹'),
@@ -952,7 +1026,8 @@ const STAGE_PLAN: Partial<Record<ExactStage, PendingPlan>> = {
   f2leo_xxcross: { best: BEST_TOO_BIG },
   f2leo_xxxcross: { best: BEST_TOO_BIG },
   pseudo_f2leo_cross: {
-    best: PLAN('P4', '与 F2LEO 十字同一个 51 亿坐标,目标集按底面四个 D 偏移闭包', 'Same 5.11-billion coordinate as F2LEO cross, with the goal set closed under the four D offsets'),
+    best: OOR('单色底那格已经算完(两条 EO 轴取最短)。多色底同 F2LEO 十字:跨底面取最优要同时读每个面的四棱',
+      'The single-colour cell is done (shortest over both EO axes). More colours has the same blocker as F2LEO cross: taking the best across faces needs every face\'s four edges at once'),
   },
   pseudo_f2leo_xcross: { best: BEST_TOO_BIG },
   pseudo_f2leo_xxcross: { best: BEST_TOO_BIG },
