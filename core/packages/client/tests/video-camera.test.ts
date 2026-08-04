@@ -1,7 +1,7 @@
 // 摄像头切换的选择逻辑。这段的失败模式全是「在某类设备上点了没反应 / 换到奇怪的镜头」,
 // 而开发机(单摄像头笔记本)恰恰是唯一试不出问题的设备 —— 所以边界只能靠这里守。
 import { describe, it, expect } from 'vitest';
-import { facingOf, nextCamera } from '@/lib/video-camera';
+import { facingOf, nextCamera, usableCameras } from '@/lib/video-camera';
 
 const CAMS = [{ deviceId: 'a' }, { deviceId: 'b' }, { deviceId: 'c' }];
 
@@ -51,6 +51,47 @@ describe('nextCamera — 换不了就明说', () => {
 
   it('一个都枚举不到 → null', () => {
     expect(nextCamera({ facingMode: 'user' }, [])).toBeNull();
+  });
+});
+
+describe('usableCameras — 浏览器报的不都是「另一个摄像头」', () => {
+  it('Windows Hello:红外与彩色是同模组两路(groupId 相同)→ 只算一个', () => {
+    // 绝大多数 Windows 笔记本都长这样。不去重的话「只有一个摄像头」的人也会看到切换按钮,
+    // 点下去是一片黑白噪点。
+    const devices = [
+      { deviceId: 'rgb', groupId: 'lid-module' },
+      { deviceId: 'ir', groupId: 'lid-module' },
+    ];
+    expect(usableCameras(devices).map((d) => d.deviceId)).toEqual(['rgb']);
+  });
+
+  it('两个真·独立摄像头(groupId 不同)照常都留着', () => {
+    const devices = [
+      { deviceId: 'builtin', groupId: 'lid-module' },
+      { deviceId: 'usb', groupId: 'external-cam' },
+    ];
+    expect(usableCameras(devices)).toHaveLength(2);
+  });
+
+  it('iOS Safari 对所有设备都报空 groupId —— 空值不参与去重,否则手机上前后置合成一个', () => {
+    const devices = [
+      { deviceId: 'front', groupId: '' },
+      { deviceId: 'back', groupId: '' },
+    ];
+    expect(usableCameras(devices)).toHaveLength(2);
+  });
+
+  it('deviceId 为空的占位条目(没权限时浏览器给的)丢掉 —— 切不过去', () => {
+    const devices = [{ deviceId: '', groupId: '' }, { deviceId: 'real', groupId: 'g' }];
+    expect(usableCameras(devices).map((d) => d.deviceId)).toEqual(['real']);
+  });
+
+  it('去重后只剩一个 → nextCamera 返回 null,按钮该藏起来', () => {
+    const devices = [
+      { deviceId: 'rgb', groupId: 'lid-module' },
+      { deviceId: 'ir', groupId: 'lid-module' },
+    ];
+    expect(nextCamera({ deviceId: 'rgb' }, usableCameras(devices))).toBeNull();
   });
 });
 
