@@ -413,7 +413,8 @@ function pinsOfXCoord(d: XLike, coord: XCoord): [Pin[], Pin[]] {
  * One table still serves everything: the canonical frame is D cross with the F/B axis, and
  * `rotForFaceAxis` carries any (colour, axis) onto it.
  */
-const CANON_EO_FRAME: EoFrame = { face: CANON_FACE, axis: 2 };
+/** The one EOCross frame every table here is built for: D cross, F/B orientation axis. */
+export const CANON_EO_FRAME: EoFrame = { face: CANON_FACE, axis: 2 };
 
 /** EOCross coordinate of a state, read in `d`'s own frame (no rotation applied). */
 export function eoCoordOf(state: CubieCube, d: EoFrameData): EoCoord {

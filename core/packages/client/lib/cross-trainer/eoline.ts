@@ -24,7 +24,7 @@ import {
   EO_WORD_STATES, defaultEoAxis, eoAxisData, eoPins, eoWord, type EoAxis,
 } from './eo';
 import { CANON_FACE, inverseRotation, rotForFaceAxis, rotateState } from './rotate';
-import { fillState } from './fill';
+import { fillState, type Pin } from './fill';
 
 /** Ordered slots of the two line edges. */
 export const LINE_POS_STATES = 12 * 11;              // 132
@@ -44,7 +44,7 @@ export function linePieces(face: FaceIdx, axis: EoAxis): number[] {
 }
 
 /** The canonical EOLine frame every table here is built for: D face, F/B axis → the DF/DB line. */
-const CANON_AXIS: EoAxis = defaultEoAxis(CANON_FACE);
+export const CANON_AXIS: EoAxis = defaultEoAxis(CANON_FACE);
 export const CANON_LINE = linePieces(CANON_FACE, CANON_AXIS);
 /** The rotation carrying a (colour, axis) EOLine frame onto the canonical one. */
 export const rotForLine = (face: FaceIdx, axis: EoAxis): number => {
@@ -163,6 +163,21 @@ const lineTable = (): LineTable => (lineCache ??= buildLine());
 /** Layer sizes of EOLine, index = optimal length. Sums to 270,336. */
 export const eoLineHistogram = (): number[] => lineTable().hist.slice();
 
+/** Every canonical-frame coordinate at exactly `depth` — /scramble/stats lists a layer whole. */
+export function eoLineLayer(depth: number): number[] {
+  const { layer, start, hist } = lineTable();
+  if (depth < 0 || depth >= hist.length) return [];
+  return Array.from(layer.slice(start[depth], start[depth + 1]));
+}
+
+/** A canonical-frame coordinate as twelve edge pins (the line placed, the rest shuffled by `rng`). */
+export function eoLinePins(coord: number, rng: () => number): Pin[] {
+  const slots = new Int8Array(2);
+  slotUnrank(coord % LINE_POS_STATES, 2, slots);
+  const { delta } = eoAxisData(CANON_AXIS);
+  return eoPins(delta, CANON_LINE, slots, eoWord((coord / LINE_POS_STATES) | 0), rng);
+}
+
 /** The canonical frame's EOLine coordinate of a state already rotated into that frame. */
 export function eoLineCoordOf(state: CubieCube): number {
   const slots = new Int8Array(2);
@@ -182,11 +197,7 @@ export function sampleEoLineState(
 ): { state: CubieCube; depth: number } | null {
   const got = pickLayer(lineTable(), lo, hi, rng);
   if (!got) return null;
-  const slots = new Int8Array(2);
-  slotUnrank(got.value % LINE_POS_STATES, 2, slots);
-  const word = eoWord((got.value / LINE_POS_STATES) | 0);
-  const { delta } = eoAxisData(CANON_AXIS);
-  const state = fillState(eoPins(delta, CANON_LINE, slots, word, rng), [], rng);
+  const state = fillState(eoLinePins(got.value, rng), [], rng);
   return { state: rotateState(state, inverseRotation(rotForLine(face, axis))), depth: got.depth };
 }
 
