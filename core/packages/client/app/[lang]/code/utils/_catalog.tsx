@@ -492,4 +492,13 @@ export const CATALOG: UtilEntry[] = [
     zh: '打乱池:路由挂载时 prewarm 预热,用时 pooled 秒取(cubing.js 现算太慢)。',
     en: 'Scramble pool: prewarm on mount, pop instantly with pooled (raw gen is slow).',
   },
+  {
+    name: 'canFlipCamera / oppositeFacing',
+    sig: 'canFlipCamera(settings?: MediaTrackSettings, caps?: MediaTrackCapabilities): boolean\noppositeFacing(current?: CameraFacing): CameraFacing',
+    imp: "import { canFlipCamera, oppositeFacing } from '@/lib/video-camera';",
+    usage: "await track.restartTrack({ facingMode: oppositeFacing(facing), resolution })",
+    category: 'util',
+    zh: '前后置切换是否该出现,以及切到哪一面。判据是轨道**自报的 facingMode**(getSettings 优先、getCapabilities 兜底),不是数摄像头个数 —— 桌面上 videoinput 一大半是 OBS / vMix 这类虚拟设备,数个数会给台式机也画一个切不动的按钮。',
+    en: 'Whether to offer a front/back camera flip, and which way to flip. The test is the facingMode the track *reports* (getSettings first, getCapabilities as backup), not how many cameras exist — most videoinput entries on a desktop are virtual devices (OBS, vMix), so counting them puts a dead flip button on desktops.',
+  },
 ];

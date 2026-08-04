@@ -1,11 +1,13 @@
 'use client';
 
 /**
- * VideoTiles — 视频通话的画面宫格 + 本地控制条。/timer 联机对战和 /meet 会议室共用。
+ * VideoTiles — 视频通话的画面宫格 + 本地控制条。/timer 联机对战房用。
+ * (/meet 会议室不用这个:它要的是会议软件那一整套界面,见 app/[lang]/meet/MeetStage.tsx。
+ *  两边共用的只有 video-call.ts 里的连接参数和失败文案。)
  *
  * 必须是 LiveKitRoom 的子组件(这些 hook 依赖它提供的 context)。它只管「已经连上之后」
  * 的事:谁的画面放哪、镜不镜像、麦克风摄像头开关、换前后置。**换 token / 授权 / 带宽**
- * 全部由各自的调用方负责 —— 那正是两种房唯一不同的地方。
+ * 全部由调用方负责。
  *
  * 画质与放大:publish 走 simulcast 三层(180p / 540p / 1080p),adaptiveStream 按 <video>
  * 元素在屏幕上的**实际尺寸**挑订阅哪一层。所以点开大图不是锦上添花,而是画质本身的一部分:

@@ -2,7 +2,7 @@
 // /timer 对战房(app/[lang]/timer/_battle/VideoStrip.tsx)和 /meet 会议室共用 ——
 // 两边只有授权方式不同,连上之后的行为必须一致,所以这些常量只能有一份。
 
-import { VideoPresets, type RoomOptions } from 'livekit-client';
+import { DisconnectReason, VideoPresets, type RoomOptions } from 'livekit-client';
 
 import { tr } from '@/i18n/tr';
 import { SCREEN_SHARE_MAX_BITRATE, VIDEO_MAX_BITRATE, type VideoDenyReason } from '@/lib/video-room-api';
@@ -40,6 +40,39 @@ export function denyMessage(reason: FailReason, maxParticipants: number): string
       return tr({ zh: '切换摄像头失败,可能被其他应用占用', en: 'Could not switch camera — another app may be using it' });
     default:
       return tr({ zh: '视频连接失败', en: 'Video connection failed' });
+  }
+}
+
+/**
+ * 掉线原因翻成人话。**只有自己按挂断(CLIENT_INITIATED)才返回 null** —— 其余每一种
+ * 都是「画面突然没了而我什么都没做」,不给话就等于静默失败。
+ *
+ * 最要紧的是 DUPLICATE_IDENTITY:一个账号只占一个席位(见 server 的 video_rooms.ts),
+ * 从第二台设备进来会把第一台踢掉。没有这句话,用户看到的是笔记本莫名其妙掉出会议、
+ * 再点进去又把手机踢掉 —— 来回弹,毫无线索。
+ */
+export function disconnectMessage(reason: DisconnectReason | undefined): string | null {
+  switch (reason) {
+    case undefined:
+    case DisconnectReason.CLIENT_INITIATED:
+      return null;
+    case DisconnectReason.DUPLICATE_IDENTITY:
+      return tr({
+        zh: '你在另一台设备上进入了这场会议,这一端已退出',
+        en: 'You joined this meeting on another device, so this one was disconnected',
+      });
+    case DisconnectReason.PARTICIPANT_REMOVED:
+      return tr({ zh: '你已被移出这个房间', en: 'You were removed from this room' });
+    case DisconnectReason.ROOM_DELETED:
+    case DisconnectReason.ROOM_CLOSED:
+      return tr({ zh: '这个房间已经结束了', en: 'This room has ended' });
+    case DisconnectReason.SERVER_SHUTDOWN:
+      return tr({ zh: '视频服务正在重启,过一会儿再进', en: 'The video service is restarting — try again shortly' });
+    case DisconnectReason.JOIN_FAILURE:
+      // LiveKit 侧把人数上限钉死了,超编的那一个就是在这里被拒的。
+      return tr({ zh: '进不去这个房间,可能已经满了', en: 'Could not join — the room may be full' });
+    default:
+      return tr({ zh: '与房间的连接断开了', en: 'Disconnected from the room' });
   }
 }
 

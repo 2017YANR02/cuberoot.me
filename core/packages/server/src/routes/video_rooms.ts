@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { AccessToken, RoomServiceClient } from 'livekit-server-sdk';
+import { AccessToken, RoomServiceClient, TrackSource } from 'livekit-server-sdk';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { checkRateLimit, requireAuth } from '../utils/recon_helpers.js';
@@ -31,6 +31,10 @@ import { checkRateLimit, requireAuth } from '../utils/recon_helpers.js';
  * (而不是放进去把所有人一起拖卡)。房间数不写死:二人房便宜、六人房贵,按预算算出来的
  * 并发数自然随人数浮动。
  *
+ * 人数上限有两道:签 token 前的快照(为了给出「已满」这种能看懂的文案)和建房时钉在
+ * LiveKit 上的 maxParticipants(见 ensureRoom)。后者才是真闸 —— 快照永远慢一个连接延迟,
+ * 一场会开始时十来个人同时点进来,每个请求看到的都是空房。
+ *
  * 注意:query() 会把 SQL 里所有 `?` 重写成 $n,jsonb 存在性判断必须用 jsonb_exists() 函数
  * 形式,不能写 `players ? pid` 操作符(与 battle_rooms 同一约束)。
  */
@@ -46,6 +50,13 @@ const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET ?? '';
  * 这里估低了会超卖带宽,估高了会白白拒掉本可以开的房间。
  */
 const PER_STREAM_MBPS = 3;
+
+/**
+ * 口径提醒:这个数以及整个预算算的是**出向**(SFU 转发给订阅者的那一侧),而 SFU 对每个
+ * 订阅者只转一层,所以每路出向确实 ≤ 3 Mbps。入向是另一回事:simulcast 会额外推 180p 和
+ * 540p 两层,每个发布者的上行约 3 + 0.8 + 0.16 ≈ 3.96 Mbps —— 六人满员时入向约 24 Mbps。
+ * 两个方向各走各的,别把入向加进 BANDWIDTH_BUDGET_MBPS 里重复计算。
+ */
 
 /**
  * 屏幕共享的码率上限(Mbps)。只有会议室有这个功能,而且同一时刻通常只有一个人在共享 ——
@@ -69,6 +80,13 @@ const MAX_MEET_PARTICIPANTS = 6;
 
 /** token 有效期:只用于建立连接,连上之后会话由 LiveKit 自己维持,不需要长 TTL。 */
 const TOKEN_TTL = '10m';
+
+/**
+ * 房间在「建好但还没人进来」和「最后一个人走了」之后各留多久(秒)。
+ * 我们在签 token 时就把房建出来(见 ensureRoom),所以必须有个不为零的空房宽限期,
+ * 否则用户还在入会前那一屏挑摄像头,房就被回收了 —— 连带 maxParticipants 一起没了。
+ */
+const ROOM_EMPTY_TIMEOUT = 300;
 
 const CODE_RE = /^[A-Z0-9]{4,12}$/;
 const PID_RE = /^[a-z0-9]{6,16}$/;
@@ -113,11 +131,13 @@ function svc(): RoomServiceClient {
  * 宫格里的小窗会自动订阅低分辨率层,实际占用通常只有三分之一到一半。故意按最坏算 ——
  * 少开一个房只是少一个房,超卖带宽是所有房间一起卡。
  */
-function roomEgressMbps(n: number, screenShare: boolean): number {
+function roomEgressMbps(n: number, screenShares: number): number {
   if (n <= 1) return 0;
   const camera = n * (n - 1) * PER_STREAM_MBPS;
-  // 屏幕共享:同一时刻按一路算(会议里通常只有一个人在讲),同样要转发给其余 n-1 人。
-  return camera + (screenShare ? (n - 1) * SCREEN_SHARE_MBPS : 0);
+  // 屏幕共享每一路都要转发给其余 n-1 人。会议室**至少**按一路预留(随时可能有人开始讲),
+  // 真开了更多路就照实算 —— 界面上已经限制同时只有一个人共享,但那是客户端的事,
+  // 预算不能建立在「客户端不会乱来」上。
+  return camera + screenShares * (n - 1) * SCREEN_SHARE_MBPS;
 }
 
 /** 房名前缀决定这间房有没有屏幕共享 —— 对战房没有这个功能,不该替它多留带宽。 */
@@ -140,6 +160,8 @@ async function capacityCheck(
   let rooms: Awaited<ReturnType<RoomServiceClient['listRooms']>>;
   let alreadyIn = false;
   let targetCount = 0;
+  /** 目标房此刻真在推的屏幕共享路数(其余房拿不到名单,只能按模型的一路算)。 */
+  let targetShares = 0;
   try {
     rooms = await svc().listRooms();
     const target = rooms.find(r => r.name === targetRoom);
@@ -147,6 +169,9 @@ async function capacityCheck(
     if (target) {
       const parts = await svc().listParticipants(targetRoom);
       alreadyIn = parts.some(p => p.identity === pid);
+      targetShares = parts
+        .flatMap(p => p.tracks)
+        .filter(t => t.source === TrackSource.SCREEN_SHARE).length;
     }
   } catch {
     // LiveKit 连不上 ⟹ 算不出占用。这里**故意 fail closed**:算不准就不发 token。
@@ -157,13 +182,47 @@ async function capacityCheck(
   const nextCount = alreadyIn ? targetCount : targetCount + 1;
   if (nextCount > maxParticipants) return { ok: false, reason: 'full' };
 
+  // 会议室至少预留一路共享;目标房实际开了几路是查得到的,取两者的大者。
+  const shares = (room: string, actual = 0) => (isMeetRoom(room) ? Math.max(1, actual) : 0);
+
   let total = 0;
   for (const r of rooms) {
-    total += roomEgressMbps(r.name === targetRoom ? nextCount : r.numParticipants, isMeetRoom(r.name));
+    total += r.name === targetRoom
+      ? roomEgressMbps(nextCount, shares(r.name, targetShares))
+      : roomEgressMbps(r.numParticipants, shares(r.name));
   }
-  if (!rooms.some(r => r.name === targetRoom)) total += roomEgressMbps(nextCount, isMeetRoom(targetRoom));
+  if (!rooms.some(r => r.name === targetRoom)) total += roomEgressMbps(nextCount, shares(targetRoom));
 
   return total > BANDWIDTH_BUDGET_MBPS ? { ok: false, reason: 'bandwidth' } : { ok: true };
+}
+
+/**
+ * 把人数上限**钉在 LiveKit 上**,而不是只靠上面那次快照。
+ *
+ * capacityCheck 读的是「此刻房里有几个人」,而这个人要到 WebSocket 连上(0.3~2 s 后)才会
+ * 被算进去 —— 一场会开始时十来个人同时点「进入会议」,每个请求看到的都是 0 人,于是全放行。
+ * 六人房的模型是 6*5*3 + 5*1.5 = 97.5 Mbps,真进来八个人就是 178.5,把整条预算吃穿,而
+ * 站点自身的 HTTP 也跟着一起卡 —— 恰是这个文件存在的理由。
+ *
+ * createRoom 是幂等的(房已存在就原样返回),而 LiveKit 只在第一个人连上时自动建房,所以
+ * 先建后签一定赶在所有人前面。房建出来带着 maxParticipants,超编的那一个由 LiveKit 自己在
+ * 握手阶段拒掉 —— 一个原子的判断,不再有窗口。此后 capacityCheck 退化成「提前给个好文案」。
+ *
+ * 空房不占带宽(roomEgressMbps(0) = 0),故预算账不受影响。
+ */
+async function ensureRoom(name: string, maxParticipants: number): Promise<boolean> {
+  try {
+    await svc().createRoom({
+      name,
+      maxParticipants,
+      emptyTimeout: ROOM_EMPTY_TIMEOUT,
+      departureTimeout: ROOM_EMPTY_TIMEOUT,
+    });
+    return true;
+  } catch {
+    // 建不出来 = LiveKit 连不上。与 capacityCheck 同一条原则:算不准就不发 token。
+    return false;
+  }
 }
 
 // GET /video/config — 客户端启动时问一次:这站开没开视频、单房上限几人、码率多少。
@@ -191,6 +250,12 @@ async function mintToken(room: string, identity: string, name: string, maxPartic
     room,
     canPublish: true,
     canSubscribe: true,
+    // 能发哪几路必须和 roomEgressMbps 的模型一致 —— 不写 canPublishSources 等于「什么都能发」,
+    // 于是对战房里任何人在控制台敲一行就能推屏幕共享,而带宽闸压根没给对战房留这笔钱
+    // (isMeetRoom 为假时不加那 (n-1)*1.5)。权限和模型分叉就是悄悄超发。
+    canPublishSources: isMeetRoom(room)
+      ? [TrackSource.CAMERA, TrackSource.MICROPHONE, TrackSource.SCREEN_SHARE, TrackSource.SCREEN_SHARE_AUDIO]
+      : [TrackSource.CAMERA, TrackSource.MICROPHONE],
     // 数据通道只有会议室要(文字聊天走它)。对战房用不上 —— 对战状态走既有的 1s 轮询 ——
     // 那就别开,少一条可滥用的路径。
     canPublishData: isMeetRoom(room),
@@ -238,6 +303,9 @@ videoRoomsRoutes.post('/video/token', async (c) => {
     const status = cap.reason === 'unavailable' ? 503 : 429;
     return c.json({ error: cap.reason }, status);
   }
+  if (!await ensureRoom(roomName, MAX_VIDEO_PARTICIPANTS)) {
+    return c.json({ error: 'unavailable' }, 503);
+  }
 
   return c.json(await mintToken(roomName, pid, rows[0].name ?? pid, MAX_VIDEO_PARTICIPANTS));
 });
@@ -247,8 +315,8 @@ videoRoomsRoutes.post('/video/token', async (c) => {
 //
 // 身份完全取自 token,客户端只报会议码 —— 它报不了自己是谁,所以会议里不可能出现顶着
 // 别人名字的画面(这也是「登录」在这里买到的东西:免登录时显示名只能靠客户端自报)。
-// 会议室不需要预先创建:LiveKit 在第一个人进来时自动建房,没人了自动关 —— 因此本站不存
-// 任何会议记录,也就没有「会议列表」可以被人翻。
+// 房由 ensureRoom 在签 token 时建出来(为的是把人数上限钉在 LiveKit 上),没人了自动关 ——
+// 本站仍不存任何会议记录,也就没有「会议列表」可以被人翻。
 videoRoomsRoutes.post('/video/meet/token', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c), RATE);
@@ -265,11 +333,19 @@ videoRoomsRoutes.post('/video/meet/token', async (c) => {
 
   // identity 用归属键(绑了 WCA 是真 wca_id,否则 u<uid>)—— 同一个人刷新页面重连会被认成
   // 同一个参与者而不是新增一人,带宽准入才算得准。
+  //
+  // 代价是**一个账号只占一个席位**:同一账号从第二台设备进来时,LiveKit 会以
+  // DUPLICATE_IDENTITY 把先前那条连接关掉。这是有意的 —— 六人的房本来就是按带宽算出来的,
+  // 一个人开三台设备就等于挤掉两个人。客户端会把这个 reason 翻成人话(见 meet/page.tsx),
+  // 不能让它静默掉线。
   const roomName = `meet-${code}`;
   const cap = await capacityCheck(roomName, user.wcaId, MAX_MEET_PARTICIPANTS);
   if (!cap.ok) {
     const status = cap.reason === 'unavailable' ? 503 : 429;
     return c.json({ error: cap.reason }, status);
+  }
+  if (!await ensureRoom(roomName, MAX_MEET_PARTICIPANTS)) {
+    return c.json({ error: 'unavailable' }, 503);
   }
 
   return c.json(await mintToken(roomName, user.wcaId, user.name || user.wcaId, MAX_MEET_PARTICIPANTS));

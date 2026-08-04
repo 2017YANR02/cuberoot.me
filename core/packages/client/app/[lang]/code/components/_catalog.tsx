@@ -2067,6 +2067,17 @@ export const CATALOG: ComponentEntry[] = [
     },
   },
   {
+    name: 'VideoTiles',
+    import: "import VideoTiles from '@/components/video/VideoTiles';",
+    category: 'more',
+    zh: `LiveKit 视频通话「连上之后」的画面宫格 + 本地控制条(/timer 联机对战房)。必须当 LiveKitRoom 的子组件用 —— 换 token / 授权 / 带宽全归调用方。点开某一格放大不是装饰:publish 走 simulcast 三层,adaptiveStream 按 <video> 元素在屏上的**实际尺寸**挑订阅哪一层,250px 宽的小窗永远只收 180p,没有放大入口 = 手上的 1080p 一辈子看不到。前后置切换只在真报得出 facingMode 的设备上出现(桌面那一堆虚拟摄像头不是摄像头)。`,
+    en: `The tile grid and local control bar for a LiveKit call once connected (the /timer battle room). Must be rendered inside LiveKitRoom — tokens, authorization and bandwidth all belong to the caller. Clicking a tile to enlarge it is not decoration: publishing uses three simulcast layers and adaptiveStream picks the layer from the <video> element's *rendered* size, so a 250px tile only ever receives 180p and without an enlarge affordance the 1080p you are sending is never seen. The front/back camera flip only appears where facingMode is actually reported (the pile of virtual cameras on a desktop are not cameras).`,
+    note: {
+      zh: `/meet 会议室不用它(那边要的是会议软件整套界面,见 app/[lang]/meet/MeetStage.tsx);两处共用的只有 components/video/video-call.ts 的连接参数与失败文案。码率常量有跨包守卫 tests/video-bitrate-sync.test.ts。`,
+      en: `/meet does not use it (that route needs a full conferencing UI — see app/[lang]/meet/MeetStage.tsx); the two share only the connection options and failure copy in components/video/video-call.ts. The bitrate constants have a cross-package guard in tests/video-bitrate-sync.test.ts.`,
+    },
+  },
+  {
     name: 'attachOrbitTap',
     import: "import { attachOrbitTap } from '@/components/sim-embed/orbitTapGesture';",
     category: 'more',
