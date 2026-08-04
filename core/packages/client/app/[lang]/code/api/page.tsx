@@ -60,7 +60,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   comp_follows cube cubeopt_solve cubing_live feedback forum health historical_ranks
 //   membership nav_sites nemesizer notifications ops page_notices paint pattern_examples progress quiz recon scramble_555
 //   scramble_marks sim_masks sponsors timer_backups trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
-//   wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wechat_jssdk wiki
+//   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wechat_jssdk wiki
 // ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
   // ---- auth ----
@@ -405,6 +405,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'timer', m: 'POST', p: '/v1/battle/rooms/:code/admin', g: 'public', zh: '房主转让给房里另一位玩家', en: 'Transfer host to another player in the room' },
   { d: 'timer', m: 'POST', p: '/v1/battle/rooms/:code/kick', g: 'public', zh: '房主把某位玩家移出房间', en: 'Host removes a player from the room' },
   { d: 'timer', m: 'POST', p: '/v1/battle/rooms/:code/leave', g: 'public', zh: '离开房间(空房即删)', en: 'Leave the room (empty room is deleted)' },
+  { d: 'timer', m: 'GET', p: '/v1/video/config', g: 'public', c: 'no-store', zh: '本站是否启用视频通话 + 单房人数/码率上限', en: 'Whether video calling is enabled, plus per-room participant and bitrate caps' },
+  { d: 'timer', m: 'POST', p: '/v1/video/token', g: 'public', c: 'no-store', zh: '换取对战房视频的 LiveKit 凭证(校验 pid 在房内 + 带宽预算)', en: 'Mint a LiveKit token for a battle room’s video (verifies the pid is in the room and the bandwidth budget allows it)' },
 
   // ---- calendar ----
   { d: 'calendar', m: 'GET', p: '/v1/calendar/bootstrap', g: 'login', c: 'no-store', zh: '首屏:我的日历列表 + 对外展示设置(首访自动建主日历)', en: 'First paint: my calendars + share settings (creates the default calendar on first visit)' },

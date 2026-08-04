@@ -1,0 +1,154 @@
+/* VideoStrip — 对战房视频通话条。/timer 是双主题页,全部走 :root token 自动翻 light/dark。
+   刻意做得矮而窄:主角是计时器,视频只是「看得见对手」的辅助,不能把 TimingSurface 挤下去。 */
+
+.vs-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+/* 未连接态:一个按钮 + 可能的错误说明,靠左紧凑排,不铺满整行。 */
+.vs-strip.is-idle {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.vs-join {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.vs-join:hover:not(:disabled) {
+  border-color: var(--border-strong);
+  color: var(--foreground);
+}
+
+.vs-join:disabled {
+  color: var(--faint-foreground);
+  cursor: default;
+}
+
+.vs-err {
+  color: var(--signal-warning);
+  font-size: 12px;
+}
+
+/* 画面宫格。auto-fit + minmax 让 1-4 人自然铺开:两人各占一半,四人挤成四格,
+   不用按人数写死列数。max-content 上限防止单人时铺满整行变成巨幅自拍。 */
+.vs-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 6px;
+  max-width: 520px;
+}
+
+.vs-tile {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: 8px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--foreground) 10%, transparent);
+}
+
+.vs-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* 自己那格镜像:不镜像的自拍会让人对不准手和魔方的左右。 */
+.vs-video[data-local] {
+  transform: scaleX(-1);
+}
+
+/* 对方没开摄像头时的占位。仍占一格,避免开关摄像头导致宫格跳动。 */
+.vs-video-off {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--faint-foreground);
+}
+
+.vs-name {
+  position: absolute;
+  left: 4px;
+  bottom: 4px;
+  max-width: calc(100% - 8px);
+  padding: 1px 6px;
+  border-radius: 999px;
+  /* 压在画面上,必须自带底色才读得出来 —— 视频内容的明暗不可控。 */
+  background: color-mix(in srgb, var(--background) 72%, transparent);
+  color: var(--foreground);
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vs-me {
+  color: var(--muted-foreground);
+}
+
+/* 控制条:靠左紧凑,不塞 spacer 把按钮推到两端。 */
+.vs-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vs-ctrl {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+.vs-ctrl:hover {
+  border-color: var(--border-strong);
+}
+
+/* 关闭态(静音 / 关摄像头)才是需要一眼看见的异常状态,给它上色而不是给开启态上色。 */
+.vs-ctrl[aria-pressed='false'] {
+  border-color: color-mix(in srgb, var(--destructive) 45%, transparent);
+  color: var(--destructive);
+}
+
+.vs-ctrl.is-leave {
+  color: var(--destructive);
+}
+
+.vs-ctrl.is-leave:hover {
+  background: color-mix(in srgb, var(--destructive) 12%, transparent);
+  border-color: var(--destructive);
+}
+
+/* 窄屏:格子再缩一档,四人也能一行排下不横向溢出。 */
+@media (max-width: 480px) {
+  .vs-tiles {
+    grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
+    max-width: 100%;
+  }
+
+  .vs-name {
+    font-size: 10px;
+  }
+}
