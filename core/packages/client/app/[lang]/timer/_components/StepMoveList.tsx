@@ -5,15 +5,19 @@
  *
  *     打乱                                              ⧉
  *       R D B' D2 U2 B R2 F2 D2 B' U2 B'
- *     CROSS [1.73]
+ *
  *       U R' F R' B2 L                    // Y cross
- *     F2L [11.35]
+ *
  *       第 1 组  最优  U F2 R' F2 U2 R     // BR
  *       ...
- *     OLL [2.01]   最优
- *       U2 F U R U' R' F'                 // OLL-F-
- *     PLL [3.33]
+ *       最优  U2 F U R U' R' F'           // OLL-F-
+ *
  *       U' F2 U' F2 D R2 B2 U B2 D' R2 U  // PLL-T
+ *
+ * 阶段名和阶段用时(「十字 [4.02]」)**不在这里**(2026-08-04 用户提的):同一屏左边
+ * 那根带游标的轴已经把四段的名字和用时画出来了,这里再写一遍是同一件事说两次。分组
+ * 本身留着 —— 组与组之间的空白就是它,而每一行右边的标注(`// Y cross`、`第 1 组`、
+ * `// OLL-F-`)本来就说得出自己是谁。
  *
  * 三样东西在这一块里第一次凑齐:**动作**(以前要点开表头才看得到一列)、
  * **标注**(以前只有 /recon 有)、**徽章**(以前只在表里那一行)。它们本来就是
@@ -54,10 +58,10 @@ export interface StepMoveListProps {
   feedback?: React.ReactNode;
 }
 
-/** 分组:十字 / F2L(可能好几行)/ OLL / PLL。空组不出现。 */
+/** 分组:十字 / F2L(可能好几行)/ OLL / PLL。空组不出现。组不再有标题,它只剩
+ *  两个作用:组间的那道空白,以及「F2L 才编第 n 组」这条判断。 */
 interface Group {
   key: string;
-  label: string;
   lines: ReconTextLine[];
 }
 
@@ -65,10 +69,9 @@ function groupLines(lines: ReconTextLine[]): Group[] {
   const out: Group[] = [];
   for (const line of lines) {
     const key = line.kind === 'f2l' ? 'f2l' : line.kind;
-    const label = key === 'cross' ? tr({ zh: '十字', en: 'CROSS' }) : key.toUpperCase();
     const last = out[out.length - 1];
     if (last && last.key === key) last.lines.push(line);
-    else out.push({ key, label, lines: [line] });
+    else out.push({ key, lines: [line] });
   }
   return out;
 }
@@ -77,18 +80,6 @@ function gradeLabel(g: StepGrade): string {
   return g === 'brilliant'
     ? tr({ zh: '妙手', en: 'Brilliant' })
     : tr({ zh: '最优', en: 'Optimal' });
-}
-
-const sec = (ms: number | null): string => (ms === null ? '–' : (ms / 1000).toFixed(2));
-
-/** 一组的用时 = 组内各行本步用时之和(和表里「本步」那一行同一口径)。 */
-function groupMs(g: Group): number | null {
-  let sum = 0;
-  let any = false;
-  for (const l of g.lines) {
-    if (l.stepMs !== null) { sum += l.stepMs; any = true; }
-  }
-  return any ? sum : null;
 }
 
 export default function StepMoveList({
@@ -166,20 +157,13 @@ export default function StepMoveList({
         </section>
       )}
 
-      {groups.map(g => {
-        const ms = groupMs(g);
-        // 十字 / OLL / PLL 只有一行,徽章跟着组标题走 —— 「第 1 组」那种小标题
-        // 只有 F2L 才有,不该为了摆徽章给它们也造一个。
-        const soloGrade = g.lines.length === 1 && g.key !== 'f2l' ? gradeFor(g.lines[0]) : null;
-        return (
+      {groups.map(g => (
           <section key={g.key} className="sml-group">
-            <h4 className="sml-group-head">
-              <span className="sml-group-name" data-stage={g.key}>{g.label}</span>
-              {ms !== null && <span className="sml-group-ms">[{sec(ms)}]</span>}
-              {soloGrade && <span className={`sa-grade ${soloGrade}`}>{gradeLabel(soloGrade)}</span>}
-            </h4>
             {g.lines.map((line, i) => {
-              const grade = g.key === 'f2l' ? gradeFor(line) : null;
+              // 徽章:F2L 一组一个。十字 / OLL / PLL 的以前挂在组标题上,标题去掉
+              // 之后跟着它那一行走 —— 但只在这一组确实只有一行时,PLL 后面那条
+              // 收尾行(recon_text 的 `tail`)没有参考,标了也是空的。
+              const grade = g.key === 'f2l' || g.lines.length === 1 ? gradeFor(line) : null;
               const st = stateOf(line);
               return (
                 <div key={line.key} className="sml-line" data-state={st ?? undefined}>
@@ -187,13 +171,11 @@ export default function StepMoveList({
                       拆两行读起来是两件,四对就白占四行。窄屏由 flex-wrap 兜。 */}
                   <div className="sml-body">
                     {g.key === 'f2l' && (
-                      <>
-                        <span className="sml-sub-name">
-                          {tr({ zh: `第 ${i + 1} 组`, en: `Slot ${i + 1}` })}
-                        </span>
-                        {grade && <span className={`sa-grade ${grade}`}>{gradeLabel(grade)}</span>}
-                      </>
+                      <span className="sml-sub-name">
+                        {tr({ zh: `第 ${i + 1} 组`, en: `Slot ${i + 1}` })}
+                      </span>
                     )}
+                    {grade && <span className={`sa-grade ${grade}`}>{gradeLabel(grade)}</span>}
                     {onSeek ? (
                       <button
                         type="button"
@@ -221,8 +203,7 @@ export default function StepMoveList({
               );
             })}
           </section>
-        );
-      })}
+      ))}
 
       {notice}
       {feedback}

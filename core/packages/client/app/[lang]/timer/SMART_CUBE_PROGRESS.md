@@ -4299,3 +4299,38 @@ turningMs = solvingMs - pausingMs
   的失败方向是「把两手算成一次连续转动」(偏高一点),而不是贴 0。
 - 识别/执行切分和 TPS 仍然吃同一层时间戳,没动。
 - Sprint 51/52 那三条原样留着(竖轴视角、「合得最多」启发式、三道没标定的闸)。
+
+## Sprint 55 — 谱子上的阶段标题去掉:同一屏已经有一根轴在说这件事
+
+用户:「十字 [4.02]」「F2L [8.43]」不需要再出现,左边动画下面的进度条已经展示了。
+
+确认这条前提是**结构上成立**的,不是碰巧:`StepMoveList` 只在 `PlaybackPanel` 的
+`side` 里渲染,而同一个 `PlaybackPanel` 无条件渲染 `SolveTimeline showLabels`(那根
+带游标的轴,阶段名 + 阶段用时都在上面)。反过来也已经处理过 —— `StepAnalysis` 的
+`hideBar` 正是「有谱子时不画第二根轴」。所以谱子里那份标题是这一屏上的**第三**处。
+
+### 删的时候要保住的那个东西
+
+组标题上挂着三样:阶段名、阶段用时、以及十字 / OLL / PLL 的徽章(「妙手」/「最优」)。
+前两样别处有,**徽章没有**——F2L 的徽章在「第 n 组」旁边,而十字 / OLL / PLL 没有
+「第 n 组」这种小标题,徽章就只挂在组标题上。整块删掉的话界面上少一个「妙手」不会
+报错,只会没人再看见。所以徽章搬进了动作那一行(和 F2L 同一个位置),条件从
+「组只有一行且不是 f2l」改成「是 f2l,或组只有一行」—— PLL 后面那条收尾行
+(`recon_text` 的 `tail`)没有参考,不标。
+
+分组本身留着:`.sml-group + .sml-group { margin-top: 12px }` 那道空白就是它,而每行右边
+的标注(`// W cross`、`第 1 组`、`// OLL(CP)`)本来就说得出自己是谁。
+
+### 顺带清掉的
+
+- `groupMs()` / `sec()` 没有调用方了,删。
+- `Group.label` 不再计算。
+- CSS 的 `.sml-group-ms` 和四条 `.sml-group-name[data-stage]` 上色规则同上;
+  `.sml-group-head` / `.sml-group-name` 留着 —— 打乱那一块还用。
+- 剪贴板格式(`reconTextForClipboard`)本来就不写阶段标题,没动。
+
+### 实测
+
+`tests/recon_report_layout.test.ts` 加三条守卫(24 条全过):谱子里不许再出现
+`sml-group-ms` / `data-stage=`;`sml-group-head` 只剩打乱那一个;徽章那行判断和
+`sa-grade` 必须还在(防的正是「搬家时忘了搬」)。typecheck + lint 干净。
