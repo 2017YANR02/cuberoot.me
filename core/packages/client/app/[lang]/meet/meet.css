@@ -54,13 +54,30 @@
 }
 
 /* ── 会议中:占满视口,和所有会议软件一样 ────────────────── */
+/* 高度不写 100%/inset:0 而走 --meet-vvh(MeetStage 从 visualViewport 写入):手机上弹键盘时
+   布局视口不缩,只有 visualViewport 会 —— 不跟着它缩,聊天输入框就在键盘底下,人在盲打。
+   顶上给 --page-notice-h 让位,与 /sim /paint 同一套(否则全屏基座盖住全局通知条)。
+   左右下用安全区 token,免得控制条落进 iPhone 的 home indicator 或被刘海裁掉。 */
 .meet-live {
   position: fixed;
-  inset: 0;
+  left: 0;
+  right: 0;
+  top: calc(var(--page-notice-h, 0px) + var(--meet-vvt, 0px));
+  height: calc(var(--meet-vvh, 100dvh) - var(--page-notice-h, 0px));
   z-index: 60;
   display: flex;
   flex-direction: column;
+  padding: 0 var(--sar) var(--sab) var(--sal);
   background: var(--background);
+}
+
+/* 全局固定浮层的 z-index 比这里高一大截(桌宠 100000、会员提醒 900),在会议里会压在控制条
+   和聊天输入框上,连点击都被它的拖拽热区吃掉。全屏沉浸面用的是同一招(shell.css)。 */
+body:has(.meet-live) .clawd-deskpet,
+body:has(.meet-live) .mem-reminder {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 /* LiveKitRoom 把 className 加在 .lk-room-container 上,它自己是 width/height:100%,
@@ -80,10 +97,103 @@
   border-bottom: 1px solid var(--border-default);
 }
 
+/* ── 控制条与侧边面板 ────────────────────────────────────── */
+/* 「参与者」「聊天」两个开关是我们自己的按钮(库里没有参与者面板),外观借库的 .lk-button,
+   这里只补一个按下态和未读角标。 */
+.meet-widget-toggle {
+  position: relative;
+}
+
+.meet-widget-toggle[aria-pressed='true'] {
+  background: var(--lk-control-active-bg, var(--muted));
+}
+
+.meet-unread {
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--destructive);
+  color: var(--destructive-foreground);
+  font-size: 10px;
+  line-height: 16px;
+  text-align: center;
+}
+
+/* 参与者面板与聊天面板并排同一个位置,所以几何照抄 .lk-chat(库的栅格:标题行 + 列表)。 */
+.meet-roster {
+  grid-template-rows: var(--lk-chat-header-height, 3rem) 1fr;
+  width: clamp(200px, 30ch, 34ch);
+  border-left: 1px solid var(--border-default);
+  background: color-mix(in srgb, var(--foreground) 6%, var(--background));
+  align-items: end;
+}
+
+.meet-roster-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  max-height: 100%;
+  overflow: auto;
+  padding: 4px 8px 8px;
+}
+
+.meet-roster-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 4px;
+  font-size: 13px;
+}
+
+.meet-roster-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--foreground);
+}
+
+.meet-roster-me {
+  margin-left: 4px;
+  color: var(--muted-foreground);
+}
+
+.meet-roster-state {
+  display: inline-flex;
+  color: var(--muted-foreground);
+}
+
+/* 关掉的那个才是需要一眼看见的状态,给它上色而不是给开着的上色。 */
+.meet-roster-state[data-off] {
+  color: var(--destructive);
+}
+
+@media (max-width: 600px) {
+  /* 窄屏两块面板都盖满,底部留给控制条 —— 与库给 .lk-chat 的处理一致,
+     再加上安全区,免得列表最后一行压在 home indicator 上。 */
+  .meet-roster {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: calc(var(--lk-control-bar-height, 69px) + var(--sab));
+    max-width: 100%;
+    width: 100%;
+  }
+}
+
 /* ── 入会前 ──────────────────────────────────────────────── */
 /* 名字来自账号,不让改 —— PreJoin 自带的用户名输入框在这里没有意义(改了也不算数,
-   服务端只认 token 里的身份)。留着它反而像是能改。 */
-.lk-prejoin .lk-username-container {
+   服务端只认 token 里的身份)。留着它反而像是能改。
+
+   只藏输入框本身,别藏它的父元素:`.lk-username-container` 是个 <form>,而「进入会议」
+   那个 submit 按钮是它的**兄弟节点、同一个 form 的孩子**。藏掉 form 等于连按钮一起藏,
+   于是整个 /meet 没有任何一个控件能进会 —— typecheck / vitest / eslint 谁都看不见这种
+   跨包的 CSS 层叠事故,只有真去点一次才会发现。
+   选择器 (0,3,0) 压得过库自己的 `[data-lk-theme] .lk-form-control` (0,2,0)。 */
+.lk-prejoin .lk-username-container > .lk-form-control {
   display: none;
 }
 

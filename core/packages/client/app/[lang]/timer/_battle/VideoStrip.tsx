@@ -11,8 +11,9 @@
  *
  * 身份复用对战房的 {code, pid}:服务端签 token 前会回库确认该 pid 确实在该房间的 players
  * 里(房间码只有 5 位,可猜),所以这里不需要额外的登录态。视频房名 `battle-<code>`,
- * 与对战房一一对应。/meet 会议室是另一套授权(链接即凭证),但连上之后的画面宫格是同一个
- * components/video/VideoTiles。
+ * 与对战房一一对应。/meet 会议室是另一套授权(必须登录,身份取自 session token),而且它
+ * 用的是会议软件那套完整界面;与这里共用的只有 components/video/video-call.ts 里的连接参数
+ * 和失败文案。
  *
  * 画质:采集上限 1080p,publish 走 simulcast 三层。码率上限 VIDEO_MAX_BITRATE 与服务端的
  * PER_STREAM_MBPS 是同一个数,改一处必须改两处,否则服务端会按错误的口径算带宽。
