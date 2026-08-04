@@ -43,6 +43,9 @@ export const PURGE_TABLES: readonly (readonly [string, string])[] = [
   ['calendar_events', 'owner_key'],      // 我的日程(删日历也会级联,这里显式兜一遍)
   ['calendars', 'owner_key'],            // 日历本体
   ['calendar_shares', 'owner_key'],      // 对外展示设置 + 分享 token
+  // 导入批次行。事件和日历都已在上面删掉了,但批次行不会跟着走 —— 那两列是
+  // ON DELETE SET NULL,删的是被指向的一方,批次自己留了下来,还带着导入文件名。
+  ['calendar_imports', 'owner_key'],     // 一次 .ics / .zip 导入一行(source = 原文件名)
   ['wca_users', 'wca_id'],               // WCA OAuth 缓存(含 access_token,必须销毁)
 ];
 
