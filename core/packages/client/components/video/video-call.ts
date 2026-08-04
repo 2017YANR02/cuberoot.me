@@ -7,8 +7,8 @@ import { DisconnectReason, VideoPresets, type RoomOptions } from 'livekit-client
 import { tr } from '@/i18n/tr';
 import { SCREEN_SHARE_MAX_BITRATE, VIDEO_MAX_BITRATE, type VideoDenyReason } from '@/lib/video-room-api';
 
-/** 失败原因:服务端给的那几种,加上只可能发生在浏览器这侧的三种。 */
-export type FailReason = VideoDenyReason | 'media' | 'connect' | 'camera';
+/** 失败原因:服务端给的那几种,加上只可能发生在浏览器这侧的四种。 */
+export type FailReason = VideoDenyReason | 'media' | 'connect' | 'camera' | 'stale-api';
 
 /**
  * 被拒 / 出错时给出**可操作**的说明,而不是笼统的「失败」。
@@ -30,6 +30,15 @@ export function denyMessage(reason: FailReason, maxParticipants: number): string
       return tr({ zh: '你已不在这个房间里', en: 'You are no longer in this room' });
     case 'invalid':
       return tr({ zh: '会议码不对,请检查后重试', en: 'Bad meeting code — check and try again' });
+    case 'stale-api':
+      // 「码不对」这句话只有在**用户可能抄错**时才该说。会议码在发出去之前已经过了
+      // isMeetCode(同一张字母表、同一个长度),所以服务端此时再说 invalid,唯一的解释是
+      // 两边不是同一个版本(前端已上线、后端还没)。把这个说成用户抄错会让人对着一个
+      // 完全正确的码反复重试。
+      return tr({
+        zh: '服务端暂时不认这个会议码(前后端版本不一致),稍后再试',
+        en: 'The server does not accept this code yet — the site is mid-deploy, try again shortly',
+      });
     case 'auth':
       return tr({ zh: '会议需要登录后使用', en: 'Meetings require you to be signed in' });
     case 'video not configured':
