@@ -18,6 +18,12 @@
  * 「固定单帧」不是凑数:一个帧的坐标空间往往小到能整表 BFS,而同一阶段的站内口径要读整只
  * 魔方(多帧取最小),动辄 1e14 以上。本文件里有数的格子多半是前者。
  *
+ * **固定帧那两档没有底色维度**:帧 = (面, 槽 / 轴 / 块),钉死一个帧就把底面一并钉死了,
+ * 「允许几个底色」在这一档下不是一个问题(换个底色就是换个帧,同一条曲线)。故 `fixed1` /
+ * `adj` / `diag` 每个阶段只存一份,存在 `W` 键下 —— 那是存储位置,不读作「单色底」。
+ * 查表一律走 `getExactCell()`,它按 `isColorFreeCell()` 把底色档忽略掉;直接索引
+ * `EXACT_DIST[st].fixed1[colors]` 会让四档底色里的三档凭空「查无此格」。
+ *
  * ## 数据来源(每一格都标了)
  *
  *   - `solver/src/bin/dist_*.rs` 头注释里的 GOLDEN 常量:「C++ 先出金标 → Rust 独立复算 →
@@ -1009,14 +1015,30 @@ export function exactColorsOf(subsetKey: string): ExactColors | null {
 }
 
 /**
+ * 这一格有没有底色维度。两种情况没有:
+ *
+ *   整体(COLOR_FREE)  最优解长度不看你打算把哪个面当底。
+ *   任何固定帧          「帧」= (面, 槽 / 轴 / 块)。钉死一个帧就把底面一并钉死了,
+ *                      「允许几个底色」这个问题在这一档下根本不存在 —— 换个底色就是换个帧,
+ *                      同一条曲线。故这几档每个阶段只存一份,存在 `W` 这个键下;那里的
+ *                      `W` 只是**存储位置**,不读作「单色底」。
+ *
+ * 底色档只在「取最优帧」下才有意义 —— 它决定的正是对多少个帧取 min。
+ */
+export function isColorFreeCell(stage: string, slot: string): boolean {
+  return COLOR_FREE.has(stage) || (slot !== 'unfixed' && isSlotApplicable(stage, slot));
+}
+
+/**
  * 一格的内容。没有显式数据但组合说得通 → 兜底 todo;组合本身不适用 → null。
- * 与底色无关的阶段(整体)忽略 subsetKey。
+ * 没有底色维度的格(见 isColorFreeCell)忽略 subsetKey —— 否则底色档一切,
+ * 明明算好的固定帧曲线会被读成「还没算」。
  */
 export function getExactCell(stage: string, slot: string, subsetKey: string): ExactCell | null {
   const st = EXACT_DIST[stage as ExactStage];
   if (!st) return null;
   if (!SLOT_OK[stage as ExactStage]?.includes(slot as ExactSlot)) return null;
-  const colors = COLOR_FREE.has(stage) ? 'W' : exactColorsOf(subsetKey);
+  const colors = isColorFreeCell(stage, slot) ? 'W' : exactColorsOf(subsetKey);
   if (!colors) return null;
   return st[slot as ExactSlot]?.[colors] ?? pendingCell(stage as ExactStage, slot as ExactSlot);
 }

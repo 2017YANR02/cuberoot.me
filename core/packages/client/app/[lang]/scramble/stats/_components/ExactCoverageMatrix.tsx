@@ -23,16 +23,17 @@ import Link from '@/components/AppLink';
 import { tr, useLang } from '@/i18n/tr';
 import { stageLabel, uiVariantOf, variantLabel } from '@/lib/scramble-variants';
 import {
-  COLORS_LABEL, COLOR_FREE, EXACT_COLOR_KEYS, EXACT_DIST, EXACT_STAGES, EXACT_STAGE_VARIANT,
+  COLORS_LABEL, EXACT_COLOR_KEYS, EXACT_DIST, EXACT_STAGES, EXACT_STAGE_VARIANT,
   FRAME_NOTE, FRAME_STATES, SLOT_LABEL, SLOT_OK,
-  compactExact, groupDigits, isSlotApplicable, pendingCell,
+  compactExact, groupDigits, isColorFreeCell, isSlotApplicable, pendingCell,
   type ExactColors, type ExactFull, type ExactPending, type ExactSlot, type ExactStage,
 } from '../_data/exact_dist';
 import './exact-coverage.css';
 
 /**
- * 列 = (帧档, 底色)组合。固定帧那几档只有单色底有数据 —— 固定一个帧之后底色就没有自由度了
- * (换个底色就是换个帧),多列出来只会得到三倍宽的空表。
+ * 列 = (帧档, 底色)组合。固定帧那三档**没有底色维度**(`isColorFreeCell`):固定一个帧之后
+ * 底色就没有自由度了 —— 换个底色就是换个帧,同一条曲线。故各只出一列,数据也只存一份
+ * (存储键 `W`,不读作「单色底」);列头因此不标底色,标的是帧本身。
  */
 const COLUMNS: Array<{ slot: ExactSlot; colors: ExactColors }> = [
   ...EXACT_COLOR_KEYS.map((colors) => ({ slot: 'unfixed' as ExactSlot, colors })),
@@ -113,10 +114,18 @@ export default function ExactCoverageMatrix({ stage, slot, colors, hrefOf }: Pro
               <th scope="col" className="exact-cov-rowhead">
                 {tr({ zh: '阶段', en: 'Stage' })}
               </th>
+              {/* 取最优帧:底色档是主标(它决定对多少个帧取 min)。固定帧:没有底色维度,
+                  主标就是帧档本身,副标说明这一列对四档底色通用。 */}
               {COLUMNS.map(({ slot: sl, colors: c }) => (
                 <th scope="col" key={`${sl}-${c}`}>
-                  <span className="exact-cov-colmain">{tr(COLORS_LABEL[c])}</span>
-                  <span className="exact-cov-colsub">{tr(SLOT_LABEL[sl])}</span>
+                  <span className="exact-cov-colmain">
+                    {sl === 'unfixed' ? tr(COLORS_LABEL[c]) : tr(SLOT_LABEL[sl])}
+                  </span>
+                  <span className="exact-cov-colsub">
+                    {sl === 'unfixed'
+                      ? tr(SLOT_LABEL[sl])
+                      : tr({ zh: '不分底色', en: 'any colour' })}
+                  </span>
                 </th>
               ))}
             </tr>
@@ -140,7 +149,7 @@ export default function ExactCoverageMatrix({ stage, slot, colors, hrefOf }: Pro
                 {COLUMNS.map(({ slot: sl, colors: c }, ci) => {
                   const key = `${st}-${sl}-${c}`;
                   const selected = st === stage && sl === slot
-                    && (c === colors || (COLOR_FREE.has(st) && sl === slot));
+                    && (c === colors || isColorFreeCell(st, sl));
                   // 四个「取最优帧」列同话时:第一列画一格横跨四列,其余三列不画。
                   const merged = bestColsMerge(st);
                   if (merged && sl === 'unfixed') {

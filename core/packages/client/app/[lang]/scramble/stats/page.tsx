@@ -27,7 +27,7 @@ import ExactCoverageMatrix from './_components/ExactCoverageMatrix';
 import ExactDistTable from './_components/ExactDistTable';
 import {
   EXACT_STAGE_VARIANT, EXACT_VARIANT_STAGES, FRAME_NOTE, SLOT_LABEL, SLOT_OK,
-  compactExact, exactColorsOf, exactMean, exactRatios, getExactCell, groupDigits,
+  compactExact, exactColorsOf, exactMean, exactRatios, getExactCell, groupDigits, isColorFreeCell,
   type ExactColors, type ExactFull, type ExactSlot, type ExactStage,
 } from './_data/exact_dist';
 import {
@@ -188,6 +188,9 @@ const EXACT_SET_KEY = 'exact';
 const DIST_ANCHOR = 'dist-view';
 /** 阶段属于哪个变体(阶段下拉按变体列选项,少设这一步会让下拉里没有刚选中的那档)。 */
 const exactVariantOf = (st: ExactStage): string => EXACT_STAGE_VARIANT[st] ?? 'std';
+
+/** 没有底色维度的曲线(整解 / 固定帧)的柱色:中性暖灰,不暗示任何一个底色。 */
+const NEUTRAL_FILL = '#8B7D72';
 /**
  * 方法 / 阶段下拉与 WCA 那套**逐项相同** —— 变体键与 stages 数组直接来自 EXACT_VARIANT_STAGES,
  * 那张表又被 tests/scramble_exact_dist.test.ts 钉在 distribution.json 上。所以「精确集少了几个
@@ -577,8 +580,13 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     ? (dataset === 'wca' && DIFFICULTY_EVENTS.has(event) && !is333)
     : !!lengthsData?.events[event];
   const avgOn = avgMode && avgAvailable;
-  // 精确穷举:当前 (阶段, 槽位, 底色) 对应的数据格。四色底在这批数据里无对应口径 → null。
-  const exactColors: ExactColors | null = isExact ? exactColorsOf(subsetKey) : null;
+  // 精确穷举:当前 (阶段, 槽位, 底色) 对应的数据格。三 / 五色底在这批数据里无对应口径 → null。
+  // 固定帧那几档没有底色维度(钉死一个帧就把底面一并钉死了),一律折到存储键 W ——
+  // 否则底色档一切,明明算好的曲线会被读成「还没算」,矩阵里那一格也不再高亮。
+  const colorInert = isExact && isColorFreeCell(stage, slot);
+  const exactColors: ExactColors | null = isExact
+    ? (colorInert ? 'W' : exactColorsOf(subsetKey))
+    : null;
   const exactCell = useMemo(
     () => (isExact ? getExactCell(stage, slot, subsetKey) : null),
     [isExact, stage, slot, subsetKey],
@@ -599,7 +607,9 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     p.set(k('variant'), exactVariantOf(st));
     p.set(k('stage'), st);
     if (sl !== 'unfixed') p.set(k('slot'), sl);
-    if (c !== 'BGORWY') p.set(k('colors'), c);
+    // 没有底色维度的格不写 colors —— 写了等于替用户把底色档改成单色底,
+    // 他切回「取最优帧」时会发现自己的选择被这一跳悄悄改掉了。
+    if (!isColorFreeCell(st, sl) && c !== 'BGORWY') p.set(k('colors'), c);
     if (!overlayOn) p.set(k('ovl'), 'false');
     if (logY) p.set(k('log'), 'true');
     if (yMode !== 'percent') p.set(k('y'), yMode);
@@ -750,7 +760,10 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
       exactFull.counts.forEach((c, d) => { label[String(d)] = compactExact(c); });
       const theory: HistSeries = {
         name: modeLabel,
-        fillColors: fillColorsForSubset(selectedColors),
+        // 柱色是在说这条曲线属于哪个底色档。没有底色维度的格(整解 / 任何固定帧)按六个
+        // 面色刷渐变就是拿一个不成立的维度上色 —— 何况那时选择器都藏了,渐变来自一个
+        // 用户看不见的旧选择。这两种一律中性单色。
+        fillColors: colorInert ? [NEUTRAL_FILL] : fillColorsForSubset(selectedColors),
         counts: activeCounts,
         ratios: exactRatios(exactFull),
         exactLabel: label,
@@ -769,7 +782,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     const empirical: HistSeries = {
       // 整解:中性暖色单色;其余按所选配色子集渐变。
       name: is333 ? (optMetric === 'qtm' ? 'QTM' : 'HTM') : modeLabel,
-      fillColors: is333 ? ['#8B7D72'] : fillColorsForSubset(selectedColors),
+      fillColors: is333 ? [NEUTRAL_FILL] : fillColorsForSubset(selectedColors),
       counts: activeCounts,
     };
     // 整解 HTM:把 cube20.org 的 0..20 理论分布套在真题柱外面。WCA 打乱本就是随机态,
@@ -1408,8 +1421,10 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
       {header}
 
       <div className="scramble-stats-controls" id={DIST_ANCHOR}>
-        {/* 整解(333):无配色 / 方法维度,隐藏颜色选择器与方法下拉,改露 HTM/QTM 口径钮。 */}
-        {!is333 && (
+        {/* 整解(333):无配色 / 方法维度,隐藏颜色选择器与方法下拉,改露 HTM/QTM 口径钮。
+            固定帧同理:帧已经把底面钉死,底色档在这一档下不是一个问题,留着只会是个
+            拨了不动的控件(理由由下方 frame-hint 当场说明)。 */}
+        {!is333 && !colorInert && (
           <div className="scramble-stats-color-control">
             <SubsetColorPicker sel={sel} isZh={isZh} />
           </div>
@@ -1465,6 +1480,15 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
               ariaLabel={tr({ zh: '帧档', en: 'Frame mode' })}
             />
           </label>
+        )}
+        {/* 底色选择器刚刚消失了 —— 说清为什么,别让它读成「控件坏了」。 */}
+        {colorInert && !is333 && (
+          <span className="scramble-stats-puzzle-toggle-hint">
+            {tr({
+              zh: '固定帧不分底色 —— 帧本身已经把底面钉死了',
+              en: 'A fixed frame has no colour tier — the frame already pins the face',
+            })}
+          </span>
         )}
         {is333 && (
           <div className="scramble-stats-puzzle-toggle">
