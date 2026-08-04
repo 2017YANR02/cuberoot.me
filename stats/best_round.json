@@ -881,9 +881,9 @@
           "[FMC World 2026](https://www.worldcubeassociation.org/competitions/FMCWorld2026/results/all#e333fm_f)",
           "Final",
           "1:00.00",
-          "[Enrico Tenuti](https://www.worldcubeassociation.org/persons/2017TENU01)",
-          "20.00",
           "[Baiqiang Dong (董百强)](https://www.worldcubeassociation.org/persons/2008DONG06)",
+          "20.00",
+          "[Enrico Tenuti](https://www.worldcubeassociation.org/persons/2017TENU01)",
           "20.00",
           "[Wong Chong Wen (黄崇文)](https://www.worldcubeassociation.org/persons/2014WENW01)",
           "20.00"
@@ -900,17 +900,6 @@
           "22.00"
         ],
         [
-          "[FMC Europe 2024](https://www.worldcubeassociation.org/competitions/FMCEurope2024/results/all#e333fm_f)",
-          "Final",
-          "1:02.00",
-          "[Radomił Baran](https://www.worldcubeassociation.org/persons/2020BARA02)",
-          "20.00",
-          "[Jaye Sloan](https://www.worldcubeassociation.org/persons/2022SLOA01)",
-          "21.00",
-          "[Wojciech Rogoziński](https://www.worldcubeassociation.org/persons/2019ROGO04)",
-          "21.00"
-        ],
-        [
           "[Nordic Swedish Championship 2026](https://www.worldcubeassociation.org/competitions/NordicSwedishChampionship2026/results/all#e333fm_f)",
           "Final",
           "1:02.00",
@@ -918,18 +907,29 @@
           "19.67",
           "[Theodor Nordstrand](https://www.worldcubeassociation.org/persons/2016NORD02)",
           "21.00",
-          "[Niklas Aasen Eliasson](https://www.worldcubeassociation.org/persons/2021ELIA01)",
+          "[Jan Bentlage](https://www.worldcubeassociation.org/persons/2010BENT01)",
           "21.33"
+        ],
+        [
+          "[FMC Europe 2024](https://www.worldcubeassociation.org/competitions/FMCEurope2024/results/all#e333fm_f)",
+          "Final",
+          "1:02.00",
+          "[Radomił Baran](https://www.worldcubeassociation.org/persons/2020BARA02)",
+          "20.00",
+          "[Wojciech Rogoziński](https://www.worldcubeassociation.org/persons/2019ROGO04)",
+          "21.00",
+          "[Jaye Sloan](https://www.worldcubeassociation.org/persons/2022SLOA01)",
+          "21.00"
         ],
         [
           "[Fun with FM in Kraków 2025](https://www.worldcubeassociation.org/competitions/FunwithFMinKrakow2025/results/all#e333fm_1)",
           "First round",
           "1:02.01",
+          "[Enrico Tenuti](https://www.worldcubeassociation.org/persons/2017TENU01)",
+          "20.67",
           "[Radomił Baran](https://www.worldcubeassociation.org/persons/2020BARA02)",
           "20.67",
           "[Krzysztof Pietrusiak](https://www.worldcubeassociation.org/persons/2019PIET01)",
-          "20.67",
-          "[Wojciech Rogoziński](https://www.worldcubeassociation.org/persons/2019ROGO04)",
           "20.67"
         ],
         [
@@ -949,7 +949,7 @@
           "1:02.67",
           "[Krzysztof Pietrusiak](https://www.worldcubeassociation.org/persons/2019PIET01)",
           "20.67",
-          "[Wojciech Rogoziński](https://www.worldcubeassociation.org/persons/2019ROGO04)",
+          "[Louis-Marie Ratto](https://www.worldcubeassociation.org/persons/2019RATT02)",
           "21.00",
           "[Moritz Lotz](https://www.worldcubeassociation.org/persons/2017LOTZ01)",
           "21.00"
@@ -1353,17 +1353,6 @@
           "2.89"
         ],
         [
-          "[NAC 2026](https://www.worldcubeassociation.org/competitions/NAC2026/results/all#eclock_1)",
-          "First round",
-          "8.47",
-          "[Alessandro Diomampo](https://www.worldcubeassociation.org/persons/2023DIOM01)",
-          "2.69",
-          "[Jonathan Wang (王嘉洺)](https://www.worldcubeassociation.org/persons/2022WANG23)",
-          "2.73",
-          "[Brendyn Dunagan](https://www.worldcubeassociation.org/persons/2021DUNA01)",
-          "3.05"
-        ],
-        [
           "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#eclock_1)",
           "First round",
           "8.47",
@@ -1373,6 +1362,17 @@
           "2.87",
           "[Carter Thomas](https://www.worldcubeassociation.org/persons/2018THOM29)",
           "2.92"
+        ],
+        [
+          "[NAC 2026](https://www.worldcubeassociation.org/competitions/NAC2026/results/all#eclock_1)",
+          "First round",
+          "8.47",
+          "[Alessandro Diomampo](https://www.worldcubeassociation.org/persons/2023DIOM01)",
+          "2.69",
+          "[Jonathan Wang (王嘉洺)](https://www.worldcubeassociation.org/persons/2022WANG23)",
+          "2.73",
+          "[Brendyn Dunagan](https://www.worldcubeassociation.org/persons/2021DUNA01)",
+          "3.05"
         ],
         [
           "[WCA European Championship 2026](https://www.worldcubeassociation.org/competitions/Euro2026/results/all#eclock_1)",
