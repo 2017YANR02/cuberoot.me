@@ -128,15 +128,17 @@ const ROT_FOR: Readonly<Record<CubeFace, [string, boolean]>> = Object.freeze({
   F: ['z', false], B: ['z', true],
 });
 
-/** `R'` → `{ family:'R', wide:false, suffix:"'" }`;认不出来返回 null。 */
+/** `R2'` → `{ family:'R', wide:false, suffix:"2'" }`;认不出来返回 null。 */
 function splitToken(token: string): { family: string; wide: boolean; suffix: string } | null {
-  const m = /^([UDFBLRMESxyz])(w?)([2']?)$/.exec(token.trim());
+  const m = /^([UDFBLRMESxyz])(w?)(2'?|'?)$/.exec(token.trim());
   if (!m) return null;
   return { family: m[1], wide: m[2] === 'w', suffix: m[3] };
 }
 
 function withSuffix(base: string, suffix: string, flip: boolean): string {
-  if (!flip || suffix === '2') return `${base}${suffix}`;
+  if (!flip) return `${base}${suffix}`;
+  if (suffix === "2'") return `${base}2`;
+  if (suffix === '2') return `${base}2'`;
   return suffix === "'" ? base : `${base}'`;
 }
 

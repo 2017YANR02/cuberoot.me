@@ -283,8 +283,11 @@ interface WovenItem extends RangeMoveItem {
   rotationMs?: number;
 }
 
-function quarterToken(family: string, quarters: number): string {
-  return quarters === 1 ? family : quarters === 2 ? `${family}2` : `${family}'`;
+function quarterToken(family: string, signedQuarters: number): string {
+  const quarters = ((signedQuarters % 4) + 4) % 4;
+  if (quarters === 1) return family;
+  if (quarters === 2) return `${family}2${signedQuarters < 0 ? "'" : ''}`;
+  return `${family}'`;
 }
 
 const WIDE_PAIRS = (() => {
@@ -295,8 +298,9 @@ const WIDE_PAIRS = (() => {
     ['f', 'z', 1, 'B'], ['b', 'z', 3, 'F'],
   ] as const;
   for (const [wide, rotation, rotationQuarter, face] of defs) {
-    for (const q of [1, 2, 3]) {
-      const rot = quarterToken(rotation, (rotationQuarter * q) % 4);
+    const rotationSign = rotationQuarter === 3 ? -1 : 1;
+    for (const q of [1, 2, -2, -1]) {
+      const rot = quarterToken(rotation, rotationSign * q);
       const outer = quarterToken(face, q);
       const result = quarterToken(wide, q);
       out.set(`${rot} ${outer}`, result);
@@ -345,14 +349,6 @@ function compactNotation(items: WovenItem[], absorbedRotations: Set<number>): Wo
 function displayLabel(label: string | null): string | null {
   if (!label) return null;
   return label.replace(/^EPLL-/, 'PLL-');
-}
-
-function styleRecognizedAlg(moves: string[], label: string | null): string[] {
-  if (label !== 'PLL-Z') return moves;
-  const canonical = 'M2 U2 M U M2 U M2 U M U2';
-  if (moves.join(' ') !== canonical) return moves;
-  // 这条 Z perm 的手法方向写作 M2'；半转置换相同，但方向信息对指法复盘有用。
-  return moves.map(move => move === 'M2' ? "M2'" : move);
 }
 
 function weaveRotations(
@@ -486,7 +482,7 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
     lines.push({
       kind: span.kind,
       key: span.key,
-      moves: styleRecognizedAlg(lineMoves, label),
+      moves: lineMoves,
       fromIdx: from,
       toIdx: span.endIdx,
       label,

@@ -8,7 +8,7 @@
  *   - 转体(x/y/z):所有层跟着核心一起动,一手也不报 —— 现有代码已经知道这件事。
  *   - **中层(M/E/S):报成一对相对面。** 做 `S` 的时候手按住前后两层、把中间那层
  *     拧过去,实际是**核心转了**,于是前后两层相对核心各转了一下:魔方报 `F' B`。
- *     而且核心转过去之后**后面每一手都被换了名** —— 人手上的 `U2` 会被报成 `L2`。
+ *     而且核心转过去之后**后面每一手都被换了名** —— 人手上的 `U2'` 会被报成 `L2'`。
  *
  * 这不是推测。用户报的那把:他做的是 `R2 U' S' U2' S U' R2`(公式库里 U- perm 的
  * 第一条),报告里印出来的是
@@ -17,7 +17,7 @@
  *              ↑    ↑    ↑
  *            第一个 S'  被换名的 U2'   第二个 S
  *
- * 两个中层各自变成一对相对面,夹在中间的 `U2'` 被换名成 `L2` —— 一手不差。所以那行
+ * 两个中层各自变成一对相对面,夹在中间的 `U2'` 被换名成 `L2'` —— 一手不差。所以那行
  * 谱子既不像 U- perm,也不像任何公式,因为它根本不是在人的视角里写的。
  *
  * ## 做法
@@ -185,27 +185,34 @@ export interface HumanizedStream {
  */
 function invertRotation(seq: string): string {
   return seq.trim().split(/\s+/).filter(Boolean).reverse()
-    .map(t => (t.endsWith('2') ? t : t.endsWith("'") ? t.slice(0, -1) : `${t}'`))
+    .map(t => (t.endsWith("2'") ? t.slice(0, -1) : t.endsWith('2') ? `${t}'`
+      : t.endsWith("'") ? t.slice(0, -1) : `${t}'`))
     .join(' ');
 }
 
 /** 记号是不是「某一面转某个量」。中层 / 转体 / 宽层都不是。 */
 function faceToken(token: string): CubeFace | null {
-  const m = /^([UDFBLR])[2']?$/.exec(token.trim());
+  const m = /^([UDFBLR])(?:2'?|'?)$/.exec(token.trim());
   return m ? (m[1] as CubeFace) : null;
 }
 
-/** `M2` → `{ family:'M', quarters:2 }`;`R'` → `{ family:'R', quarters:3 }`。
+/** `M2'` → `{ family:'M', signedQuarters:-2 }`;`R'` → `{ family:'R', signedQuarters:-1 }`。
  *  面和中层用同一条规则拆 —— 「相邻的同族按四分之一圈相加」对两者一字不差。 */
-function familyToken(token: string): { family: string; quarters: number } | null {
-  const m = /^([UDFBLRMES])([2'])?$/.exec(token.trim());
+function familyToken(token: string): { family: string; signedQuarters: number } | null {
+  const m = /^([UDFBLRMES])(2'?|'?)$/.exec(token.trim());
   if (!m) return null;
-  return { family: m[1], quarters: m[2] === '2' ? 2 : m[2] === "'" ? 3 : 1 };
+  const suffix = m[2];
+  return {
+    family: m[1],
+    signedQuarters: suffix === "2'" ? -2 : suffix === '2' ? 2 : suffix === "'" ? -1 : 1,
+  };
 }
 
-/** 四分之一圈数 → 记号后缀。0 圈的调用方自己处理(那一对抵消了)。 */
-function sliceFor(family: string, quarters: number): string {
-  return quarters === 1 ? family : quarters === 2 ? `${family}2` : `${family}'`;
+/** 有向四分之一圈数 → 记号后缀。0 圈的调用方自己处理(那一对抵消了)。 */
+function sliceFor(family: string, quarters: number, signedQuarters: number): string {
+  if (quarters === 1) return family;
+  if (quarters === 2) return `${family}2${signedQuarters < 0 ? "'" : ''}`;
+  return `${family}'`;
 }
 
 /** 面置换复合:先 `p` 再 `q`。`p[a]=b` 读作「原来在 a 面的东西转到了 b 面」。 */
@@ -402,7 +409,8 @@ export function humanizeStream(
     for (const idx of coreTurnsIn(core, a.ts, b.endTs)) claimed.add(idx);
   }
   const inverseToken = (token: string): string => (
-    token.endsWith('2') ? token : token.endsWith("'") ? token.slice(0, -1) : `${token}'`
+    token.endsWith("2'") ? token.slice(0, -1) : token.endsWith('2') ? `${token}'`
+      : token.endsWith("'") ? token.slice(0, -1) : `${token}'`
   );
   // 握持倾斜有时会被吸附成一次转体又立刻回原格。成对去掉比把中间整段换错面名
   // 安全；真正需要改变记号系的转体不会在不足一秒内原路返回。
@@ -487,7 +495,8 @@ export function humanizeStream(
       && out.length - 1 >= noJoinBefore
       && !(boundaries?.has(prev.endIdx) ?? false);
     if (!joinable || !cur || !before || !prev) { out.push(move); return; }
-    const net = (before.quarters + cur.quarters) % 4;
+    const signed = before.signedQuarters + cur.signedQuarters;
+    const net = ((signed % 4) + 4) % 4;
     out.pop();
     if (net === 0) {
       // 抵消干净之后**不许**让两边再并到一起:`R U2 R' R U` 里那对 `R' R` 走掉了,
@@ -498,7 +507,7 @@ export function humanizeStream(
     }
     out.push({
       ...prev,
-      m: sliceFor(cur.family, net),
+      m: sliceFor(cur.family, net, signed),
       endTs: move.endTs,
       endIdx: move.endIdx,
       quarters: net === 3 ? 1 : net,
@@ -527,7 +536,7 @@ export function humanizeStream(
         endTs: b.endTs,
         endIdx: b.endIdx,
         // 中层是一手,不是两手 —— 这条只喂谱子,计步照旧走原始 `counted`。
-        quarters: split.slice.endsWith('2') ? 2 : 1,
+        quarters: split.slice.includes('2') ? 2 : 1,
       });
       advance(split.rotation);
       merges += 1;

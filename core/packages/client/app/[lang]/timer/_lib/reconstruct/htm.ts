@@ -36,7 +36,7 @@ import type { SolveMove } from './stage_segments';
 
 /** One counted move, possibly assembled from several notifications. */
 export interface HtmMove {
-  /** Canonical token: "R", "R2", "R'". */
+  /** Direction-preserving token: "R", "R2", "R2'", "R'". */
   m: string;
   /** Timestamp of the FIRST quarter turn in the run (when the move began). */
   ts: number;
@@ -53,7 +53,7 @@ export interface HtmMove {
  *  turn of a single face or slice: whole-cube rotations, empty tokens, garbage.
  *  The key is the token without its suffix, so `R` and `R'` share a key while
  *  `R` and `Rw` do not. */
-function turnOf(raw: string): { key: string; quarters: number } | null {
+function turnOf(raw: string): { key: string; quarters: number; signedQuarters: number } | null {
   const t = raw.trim();
   if (!t) return null;
   if (/^[xyzXYZ]/.test(t)) return null;          // whole-cube rotation: 0 moves
@@ -65,12 +65,15 @@ function turnOf(raw: string): { key: string; quarters: number } | null {
   // counts nothing, rather than being folded into a neighbour's move.
   if (!/^\d?[A-Za-z]/.test(key)) return null;
   const half = two === '2' || twoAfterPrime === '2';
-  const quarters = half ? 2 : prime === "'" ? 3 : 1;
-  return { key, quarters };
+  const signedQuarters = half ? (prime === "'" ? -2 : 2) : prime === "'" ? -1 : 1;
+  const quarters = ((signedQuarters % 4) + 4) % 4;
+  return { key, quarters, signedQuarters };
 }
 
-function tokenFor(key: string, quarters: number): string {
-  return quarters === 1 ? key : quarters === 2 ? `${key}2` : `${key}'`;
+function tokenFor(key: string, quarters: number, signedQuarters: number): string {
+  if (quarters === 1) return key;
+  if (quarters === 2) return `${key}2${signedQuarters < 0 ? "'" : ''}`;
+  return `${key}'`;
 }
 
 /**
@@ -83,7 +86,7 @@ export function htmMoves(moves: SolveMove[]): HtmMove[] {
   if (!moves || moves.length === 0) return out;
 
   let key: string | null = null;
-  let quarters = 0;
+  let signedQuarters = 0;
   let ts = 0;
   let endTs = 0;
   let startIdx = 0;
@@ -91,12 +94,12 @@ export function htmMoves(moves: SolveMove[]): HtmMove[] {
 
   const flush = (): void => {
     if (key === null) return;
-    const net = ((quarters % 4) + 4) % 4;
+    const net = ((signedQuarters % 4) + 4) % 4;
     if (net !== 0) {
-      out.push({ m: tokenFor(key, net), ts, endTs, quarters: net, startIdx, endIdx });
+      out.push({ m: tokenFor(key, net, signedQuarters), ts, endTs, quarters: net, startIdx, endIdx });
     }
     key = null;
-    quarters = 0;
+    signedQuarters = 0;
   };
 
   for (let i = 0; i < moves.length; i++) {
@@ -105,11 +108,11 @@ export function htmMoves(moves: SolveMove[]): HtmMove[] {
     if (turn.key !== key) {
       flush();
       key = turn.key;
-      quarters = 0;
+      signedQuarters = 0;
       ts = moves[i].ts;
       startIdx = i;
     }
-    quarters += turn.quarters;
+    signedQuarters += turn.signedQuarters;
     endTs = moves[i].ts;
     endIdx = i;
   }
@@ -143,7 +146,7 @@ export function quarterMoves(moves: SolveMove[]): HtmMove[] {
     const turn = turnOf(moves[i].m);
     if (!turn) continue;                            // 转体 / 认不出来的记号:不占一条
     out.push({
-      m: tokenFor(turn.key, turn.quarters),
+      m: tokenFor(turn.key, turn.quarters, turn.signedQuarters),
       ts: moves[i].ts, endTs: moves[i].ts,
       quarters: turn.quarters, startIdx: i, endIdx: i,
     });
