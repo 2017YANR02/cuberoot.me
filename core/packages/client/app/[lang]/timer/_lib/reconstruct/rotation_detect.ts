@@ -59,7 +59,8 @@
  *
  * 人拧的时候魔方一直在手里晃 —— 二三十度的倾斜是常态,那不是转体。两道:
  *
- *   - **进格阈值**:新格子要近到 `ENTER_RAD` 才认(默认 35°,而相邻格差 90°);
+ *   - **进格阈值**:通常要进 35°;手持倾斜落在 35°~45° 的只作为宽松候选,必须稳定
+ *     500ms 才认。45° 是相邻两格的等距边界,不会越界猜格;
  *   - **保持时长**:新格子要待够 `HOLD_MS` 才认(默认 120ms)。转体是**持续**的
  *     状态改变,而转的路上那些中间姿态是一闪而过的 —— 这一条把两者分开。
  *
@@ -87,8 +88,12 @@ import {
 } from '../bluetooth/orientation';
 import type { GyroSample } from '../bluetooth/gyro_track';
 
-/** 新格子要近到这个角度才认。相邻格差 90°,35° 能容纳真机握持漂移。 */
+/** 普通候选进格阈值。 */
 export const ENTER_RAD = (35 * Math.PI) / 180;
+/** 宽松候选不越过相邻两格的等距边界。 */
+const RELAXED_ENTER_RAD = Math.PI / 4;
+/** 真机一次 0.8s 的转体因手持倾斜落在 35.7°;宽松候选用更长保持挡住短暂漂移。 */
+const RELAXED_HOLD_MS = 500;
 /** 新格子要连续保持这么久才算一次转体(毫秒)。 */
 export const HOLD_MS = 120;
 
@@ -101,6 +106,8 @@ export interface RotationEvent {
   token: string;
   /** 这次转体本身的角度(弧度),90° 或 180°。 */
   angleRad: number;
+  /** A core rotation compensated by the opposite outer face: a wide turn, not a view change. */
+  wide?: boolean;
 }
 
 export interface DetectRotationsOptions {
@@ -187,12 +194,13 @@ function latticeIndex(q: Quat): number {
  *
  * 起始姿态不算一次转体 —— 「魔方一开始朝哪边」是握持,不是动作。它只是第一个基准。
  */
-export function detectRotations(
+function detectRotationsPass(
   samples: readonly GyroSample[],
-  opts: DetectRotationsOptions = {},
+  opts: DetectRotationsOptions,
+  enterRad: number,
+  holdMs: number,
+  recoveryOnly: boolean,
 ): RotationEvent[] {
-  const enterRad = opts.enterRad ?? ENTER_RAD;
-  const holdMs = opts.holdMs ?? HOLD_MS;
   if (samples.length === 0) return [];
 
   // 先把传感器装配姿态(M)折掉,再谈记号。存下来的流是**原始**四元数
@@ -224,7 +232,14 @@ export function detectRotations(
     const measuredRel = quatNormalize(quatMul(quatConjugate(ref), q));
     const near = nearestCubeOrientation(measuredRel);
     if (near.angleRad > enterRad) return { idx: -1, rel: near.quat, measuredRel };
-    return { idx: latticeIndex(near.quat), rel: near.quat, measuredRel };
+    const idx = latticeIndex(near.quat);
+    // The recovery pass is only for recordings that *just miss* the strict
+    // gate. A strict blip interrupted by mid-cell wobble must not be bridged by
+    // the wider threshold; the strict pass already judged that gesture.
+    if (recoveryOnly && idx !== identityIdx && near.angleRad <= ENTER_RAD) {
+      return { idx: -1, rel: near.quat, measuredRel };
+    }
+    return { idx, rel: near.quat, measuredRel };
   };
 
   /** 候选的持续段在 `untilMs` 结束了 —— 够长就记一次转体。返回记没记。 */
@@ -280,8 +295,26 @@ export function detectRotations(
     candMeasuredRel = measuredRel;
   }
   // 录像结束 = 最后一个姿态一直管到最后(拧完之后魔方就停在那儿了)。
-  closeCandidate(Infinity);
+  closeCandidate(recoveryOnly ? stream[stream.length - 1].tMs : Infinity);
   return out;
+}
+
+export function detectRotations(
+  samples: readonly GyroSample[],
+  opts: DetectRotationsOptions = {},
+): RotationEvent[] {
+  const strict = detectRotationsPass(
+    samples,
+    opts,
+    opts.enterRad ?? ENTER_RAD,
+    opts.holdMs ?? HOLD_MS,
+    false,
+  );
+  // Explicit thresholds are a caller's complete policy. The narrow recovery
+  // is only the default-path fallback for a real recording that found no grid
+  // change at all under the established 35°/120ms detector.
+  if (strict.length > 0 || opts.enterRad !== undefined || opts.holdMs !== undefined) return strict;
+  return detectRotationsPass(samples, opts, RELAXED_ENTER_RAD, RELAXED_HOLD_MS, true);
 }
 
 /**

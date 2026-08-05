@@ -60,6 +60,12 @@
 import { detectCfopStage, stageRank } from '../cube/cfop_detect';
 import type { CubeFaces } from '../cube/state';
 import { applyScramble, solved } from '../cube/state';
+import {
+  applyOrientation, mirrorForBrand, nearestCubeOrientation, quatConjugate,
+  quatMul, quatNormalize, sensorBasisForBrand,
+} from '../bluetooth/orientation';
+import type { Quat } from '../bluetooth/orientation';
+import type { GyroSample } from '../bluetooth/gyro_track';
 import { applyOneToken } from './stage_segments';
 import type { SolveMove } from './stage_segments';
 
@@ -91,6 +97,84 @@ export type FacePerm = Readonly<Record<CubeFace, CubeFace>>;
 const IDENTITY_PERM: FacePerm = Object.freeze({
   U: 'U', D: 'D', F: 'F', B: 'B', L: 'L', R: 'R',
 });
+
+const FACE_VECTOR: Readonly<Record<CubeFace, readonly [number, number, number]>> = Object.freeze({
+  U: [0, 1, 0], D: [0, -1, 0], F: [0, 0, 1],
+  B: [0, 0, -1], L: [-1, 0, 0], R: [1, 0, 0],
+});
+
+function rotateVector(q: Quat, v: readonly [number, number, number]): [number, number, number] {
+  const n = quatNormalize(q);
+  const p: Quat = { w: 0, x: v[0], y: v[1], z: v[2] };
+  const r = quatMul(quatMul(n, p), quatConjugate(n));
+  return [r.x, r.y, r.z];
+}
+
+function faceForVector(v: readonly [number, number, number]): CubeFace {
+  let best: CubeFace = 'U';
+  let bestDot = -Infinity;
+  for (const face of CUBE_FACES) {
+    const axis = FACE_VECTOR[face];
+    const dot = v[0] * axis[0] + v[1] * axis[1] + v[2] * axis[2];
+    if (dot > bestDot) { best = face; bestDot = dot; }
+  }
+  return best;
+}
+
+function facePermFromQuat(q: Quat): FacePerm {
+  const out = {} as Record<CubeFace, CubeFace>;
+  for (const face of CUBE_FACES) out[face] = faceForVector(rotateVector(q, FACE_VECTOR[face]));
+  return Object.freeze(out);
+}
+
+function permKey(perm: FacePerm): string {
+  return CUBE_FACES.map(face => perm[face]).join('');
+}
+
+/**
+ * The 24 whole-cube poses, named in shortest notation. Token order is part of
+ * the display convention: an edge-axis half turn is written `x2 y`, matching
+ * the notation a cuber uses when describing the inspection grip.
+ */
+const ROTATION_BY_PERM = (() => {
+  const tokens = ['x', "x'", 'x2', 'y', "y'", 'y2', 'z', "z'", 'z2'] as const;
+  const out = new Map<string, string>();
+  const queue = [''];
+  while (queue.length > 0 && out.size < 24) {
+    const rotation = queue.shift()!;
+    const key = permKey(facePermFor(rotation));
+    if (out.has(key)) continue;
+    out.set(key, rotation);
+    if (rotation.trim().split(/\s+/).filter(Boolean).length >= 2) continue;
+    for (const token of tokens) queue.push(rotation ? `${rotation} ${token}` : token);
+  }
+  return out;
+})();
+
+/** A hand-held cube can lean far from square; beyond 45° the nearest of two
+ * cube poses is genuinely ambiguous, so the recording must fall back to the
+ * cross-only orientation instead of guessing. */
+const INITIAL_POSE_MAX_ERROR_RAD = Math.PI / 4;
+
+/**
+ * Recover the inspection grip from the first recorded absolute pose. The IMU
+ * basis/mirror correction is the same one used by playback. Empty, degenerate
+ * or between-two-poses recordings return null and keep the old safe fallback.
+ */
+export function initialPoseRotation(
+  samples: readonly GyroSample[],
+  brand?: string | null,
+): string | null {
+  const first = samples[0];
+  if (!first) return null;
+  const posed = applyOrientation(first.q, null, {
+    basis: sensorBasisForBrand(brand),
+    mirror: mirrorForBrand(brand),
+  });
+  const nearest = nearestCubeOrientation(posed);
+  if (nearest.angleRad > INITIAL_POSE_MAX_ERROR_RAD) return null;
+  return ROTATION_BY_PERM.get(permKey(facePermFromQuat(nearest.quat))) ?? null;
+}
 
 /**
  * 旋转记号 → 面置换。一串也行(`humanize.ts` 会累积好几个转体),空串 = 恒等。
@@ -261,12 +345,29 @@ function unchanged(scramble: string, moves: SolveMove[], crossFace: CubeFace | n
  *
  * 幂等:对结果再调一次,`crossFace` 是 `'D'`,`changed` 是 false。
  */
-export function normalizeSolve(scramble: string, moves: SolveMove[]): NormalizedSolve {
+export interface NormalizeSolveOptions {
+  /** Absolute physical → viewer grip recovered from the first gyro sample. It
+   * is accepted only when it also puts the detected cross face on D. */
+  preferredRotation?: string | null;
+}
+
+export function normalizeSolve(
+  scramble: string,
+  moves: SolveMove[],
+  opts: NormalizeSolveOptions = {},
+): NormalizedSolve {
   if (!moves || moves.length === 0) return unchanged(scramble, moves, null);
   const face = pickCrossFace(scanCrossFaces(scramble, moves));
-  if (face === null || face === 'D') return unchanged(scramble, moves, face);
+  if (face === null) return unchanged(scramble, moves, face);
 
-  const perm = facePermFor(ROTATION_TO_D[face]);
+  const preferred = opts.preferredRotation;
+  const preferredPerm = preferred !== undefined && preferred !== null
+    ? facePermFor(preferred)
+    : null;
+  const rotation = preferredPerm?.[face] === 'D' ? preferred! : ROTATION_TO_D[face];
+  if (rotation === '') return unchanged(scramble, moves, face);
+
+  const perm = facePermFor(rotation);
   const scr = conjugateSequence(scramble, perm);
   if (scr === null) return unchanged(scramble, moves, face);
   const out: SolveMove[] = new Array(moves.length);
@@ -275,7 +376,7 @@ export function normalizeSolve(scramble: string, moves: SolveMove[]): Normalized
     if (c === null) return unchanged(scramble, moves, face);
     out[i] = { ...moves[i], m: c };
   }
-  return { scramble: scr, moves: out, crossFace: face, rotation: ROTATION_TO_D[face], changed: true };
+  return { scramble: scr, moves: out, crossFace: face, rotation, changed: true };
 }
 
 /**
