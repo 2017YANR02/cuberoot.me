@@ -29,6 +29,7 @@ import {
 import { normalizeSolve } from '@/app/[lang]/timer/_lib/reconstruct/orient';
 import { computeStageSegments } from '@/app/[lang]/timer/_lib/reconstruct/stage_segments';
 import { computeStepMetrics, stmWeight } from '@/app/[lang]/timer/_lib/reconstruct/step_metrics';
+import { solveFromReplay } from '@/app/[lang]/timer/_lib/share/decode';
 import { applyOneToken } from '@/app/[lang]/timer/_lib/cube/apply_token';
 import { applyScramble } from '@/app/[lang]/timer/_lib/cube/state';
 import type { CubeFaces } from '@/app/[lang]/timer/_lib/cube/state';
@@ -373,6 +374,23 @@ describe('用户那把 15.269s(2026-08-04)', () => {
 
   it('89 手都在,一手不多一手不少', () => {
     expect(mvU).toHaveLength(89);
+  });
+
+  it('旧链接和带陀螺仪的新链接都自动采用这份用户真值', () => {
+    const replay = {
+      event: '333' as const,
+      scramble: SCR_U,
+      moves: mvU,
+      totalMs: 15269,
+      gyro: GYRO_U,
+      device: { model: 'gan-v4', name: 'GAN16ui_ (C2:AF)' },
+    };
+    expect(solveFromReplay(replay, [], 42).reconstruction).toEqual(VERIFIED_U);
+    expect(solveFromReplay({ ...replay, gyro: undefined, device: undefined }, [], 42).reconstruction)
+      .toEqual(VERIFIED_U);
+
+    const changedMoves = mvU.map((move, i) => i === 50 ? { ...move, ts: move.ts + 1 } : move);
+    expect(solveFromReplay({ ...replay, moves: changedMoves }, [], 42).reconstruction).toBeUndefined();
   });
 
   it('印的是原始打乱,不是共轭过的那条', async () => {
