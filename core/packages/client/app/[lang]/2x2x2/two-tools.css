@@ -53,7 +53,7 @@
 }
 .tt-search-row:focus-within { border-color: var(--accent); }
 .tt-search-row.is-invalid { border-color: var(--destructive); }
-.tt-search-row input {
+.tt-scramble-input {
   min-width: 0;
   flex: 1 1 auto;
   border: 0;
@@ -121,8 +121,8 @@
 .tt-group-head h2 { margin: 0; min-width: 3.5rem; font: 650 0.82rem/1 var(--font-mono); }
 .tt-group-head label,
 .tt-alg-count { display: flex; align-items: center; gap: 0.7rem; color: var(--muted-foreground); font-size: 0.75rem; }
-.tt-group-head input,
-.tt-alg-count input { width: min(10rem, 38vw); accent-color: var(--accent); }
+.tt-depth-range,
+.tt-alg-count-range { width: min(10rem, 38vw); accent-color: var(--accent); }
 .tt-method-toggles { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; }
 .tt-alg-count { width: fit-content; }
 
@@ -229,7 +229,7 @@
 @media (max-width: 480px) {
   .tt-hero h1 { font-size: 2.15rem; }
   .tt-search-row { flex-wrap: wrap; }
-  .tt-search-row input { flex-basis: calc(100% - 2.5rem); }
+  .tt-scramble-input { flex-basis: calc(100% - 2.5rem); }
   .tt-search-submit { margin: 0.25rem 0 0.45rem; }
   .tt-solution-main { grid-template-columns: 1.55rem minmax(0, 1fr); gap: 0.4rem; padding-left: 0.35rem; }
   .tt-solution-line { grid-template-columns: 3.55rem minmax(0, 1fr); }
