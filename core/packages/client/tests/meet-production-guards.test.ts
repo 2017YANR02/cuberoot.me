@@ -16,6 +16,7 @@ const server = readFileSync(SERVER, 'utf8');
 const css = readFileSync(join(MEET, 'meet.css'), 'utf8');
 const controls = readFileSync(join(MEET, 'MeetControlBar.tsx'), 'utf8');
 const stage = readFileSync(join(MEET, 'MeetStage.tsx'), 'utf8');
+const page = readFileSync(join(MEET, 'page.tsx'), 'utf8');
 
 describe('/meet production invariants', () => {
   it('puts the hard participant cap in the token instead of pre-creating empty rooms', () => {
@@ -41,5 +42,11 @@ describe('/meet production invariants', () => {
     expect(stage).toContain("zh: '连接中…', en: 'Connecting…'");
     expect(stage).toContain("zh: '正在重新连接…', en: 'Reconnecting…'");
     expect(stage).toContain("zh: '连接已断开', en: 'Disconnected'");
+  });
+
+  it('reuses the shared room QR modal for meeting invites', () => {
+    expect(page).toContain("import { RoomQrModal } from '@/components/RoomQrModal'");
+    expect(page).toContain('<RoomQrModal url={inviteUrl} code={code}');
+    expect(page).not.toContain("from 'uqr'");
   });
 });
