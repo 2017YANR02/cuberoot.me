@@ -55,7 +55,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'A speedcubing toolkit: puzzle solvers, solve reconstructions, algorithm trainers, scramble analysis and WCA statistics. Free, bilingual, no account needed.',
     },
   },
-  '2x2x2': { title: { zh: '2x2 求解器', en: '2x2x2 Solver' } },
+  '2x2x2': {
+    title: { zh: '二阶实战解法查找器', en: '2×2 Practical Solution Finder' },
+    description: {
+      zh: '为任意二阶打乱搜索 CLL、EG、TCLL 与 LS 实战解法，比较底色、建面深度并按手感排序。',
+      en: 'Find practical CLL, EG, TCLL, and LS solutions for any 2×2 scramble, with bottom-color and build-depth filters plus ergonomic ranking.',
+    },
+  },
   'about': {
     title: { zh: '关于', en: 'About' },
     description: {

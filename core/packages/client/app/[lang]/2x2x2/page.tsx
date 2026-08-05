@@ -1,5 +1,5 @@
-import IframePage from '@/components/IframePage';
+import TwoToolsPage from './_TwoToolsPage';
 
 export default function Page() {
-  return <IframePage src="/tools/2x2x2/" title="2x2x2 Solver" />;
+  return <TwoToolsPage />;
 }

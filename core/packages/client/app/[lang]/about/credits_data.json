@@ -7,6 +7,13 @@
     "long_en": "3×3 solver & trainer pages, PWA scaffolding"
   },
   {
+    "name": "WACWCA/two-tool + Best 2x2 Algs",
+    "url": "https://github.com/WACWCA/two-tool",
+    "zh": "二阶实战解法查找器的双向搜索、手感排序与方法结构；公式数据经授权合并自 Best 2x2 Algs 表格，状态计算和 3D 展示改用本站引擎",
+    "en": "Two-Tools bidirectional search, ergonomic ranking, and method structure; authorized Best 2x2 Algs sheet data is merged into the library, with state math and 3D rendering moved to the site's own engines",
+    "long_en": "Will Callan's practical 2×2 solution finder provides the bidirectional face/layer search design, method filters, and measured three-move timing table. Its authorized Best 2x2 Algs spreadsheet is normalized and merged into CubeRoot's algorithm database; the port replaces the upstream sticker mapper and twisty-player with CubeRoot's existing pocket-state solver and /sim engine."
+  },
+  {
     "name": "jonatanklosko/wca_statistics",
     "url": "https://github.com/jonatanklosko/wca_statistics",
     "zh": "WCA 统计管道原型(本站为 TS 重写版)",
