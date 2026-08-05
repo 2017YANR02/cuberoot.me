@@ -12,6 +12,7 @@ import { Spinner } from '@/components/Spinner/Spinner';
 import { useT } from '@/hooks/useT';
 import { CUBE_FILL } from '@/lib/cube-colors';
 import { applyPocketAlg, solvedPocketState, type PocketFace } from '@/lib/pocket-facelet';
+import { persistItem } from '@/lib/safe-storage';
 import type {
   TwoToolsCaseInput,
   TwoToolsDepths,
@@ -165,12 +166,12 @@ export default function TwoToolsPage() {
   const setMethod = (method: string, value: boolean) => {
     const next = { ...selected, [method]: value };
     setSelected(next);
-    localStorage.setItem('two-tools-methods', JSON.stringify(next));
+    persistItem('two-tools-methods', JSON.stringify(next));
   };
   const setDepth = (group: keyof TwoToolsDepths, value: number) => {
     const next = { ...depths, [group]: value };
     setDepths(next);
-    localStorage.setItem('two-tools-depths', JSON.stringify(next));
+    persistItem('two-tools-depths', JSON.stringify(next));
   };
   const copySolution = async (solution: TwoToolsSolution) => {
     const text = [
@@ -204,6 +205,7 @@ export default function TwoToolsPage() {
         <div className={`tt-search-row${invalid ? ' is-invalid' : ''}`}>
           <input
             id="two-tools-scramble"
+            className="tt-scramble-input"
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             placeholder="R U R' F2 U' R2"
@@ -244,7 +246,7 @@ export default function TwoToolsPage() {
                     <h2>{group}</h2>
                     <label>
                       <span>{t('建面深度', 'Build depth')}: {depths[group]}</span>
-                      <input type="range" min={1} max={6} value={depths[group]} onChange={(e) => setDepth(group, Number(e.target.value))} />
+                      <input className="tt-depth-range" type="range" min={1} max={6} value={depths[group]} onChange={(e) => setDepth(group, Number(e.target.value))} />
                     </label>
                   </div>
                   <div className="tt-method-toggles">
@@ -256,7 +258,7 @@ export default function TwoToolsPage() {
               ))}
               <label className="tt-alg-count">
                 <span>{t('每个 case 的公式数', 'Algorithms per case')}: {algsPerCase === 3 ? '3+' : algsPerCase}</span>
-                <input type="range" min={1} max={3} value={algsPerCase} onChange={(e) => setAlgsPerCase(Number(e.target.value))} />
+                <input className="tt-alg-count-range" type="range" min={1} max={3} value={algsPerCase} onChange={(e) => setAlgsPerCase(Number(e.target.value))} />
               </label>
             </div>
           </details>
