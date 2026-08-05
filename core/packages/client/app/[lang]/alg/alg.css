@@ -1491,7 +1491,29 @@ a.alg-community-author:hover {
 .alg-case-detail-ori {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0;
+}
+/* 同一朝向的公式是一个连续列表:相邻行共用一条边,不要各画一条横线再留缝。
+   普通访客的行直接相邻;管理员多一层 sortable 外壳,两种 DOM 都要拼起来。 */
+.alg-case-detail-ori > .alg-alg-row:has(+ .alg-alg-row),
+.alg-case-detail-ori > .alg-alg-sortable:has(+ .alg-alg-sortable) > .alg-alg-row {
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.alg-case-detail-ori > .alg-alg-row + .alg-alg-row,
+.alg-case-detail-ori > .alg-alg-sortable + .alg-alg-sortable {
+  margin-top: -1px;
+}
+.alg-case-detail-ori > .alg-alg-row + .alg-alg-row,
+.alg-case-detail-ori > .alg-alg-sortable + .alg-alg-sortable > .alg-alg-row {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+.alg-case-detail-ori > .alg-alg-row:hover,
+.alg-case-detail-ori > .alg-alg-row.is-expanded,
+.alg-case-detail-ori > .alg-alg-sortable:hover {
+  position: relative;
+  z-index: 1;
 }
 .alg-case-detail-ori-label {
   font-size: 12px;
