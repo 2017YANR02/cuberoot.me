@@ -55,7 +55,7 @@ import { useSettings, updateSettings } from '../_lib/settings';
 import { decodeGyroTrack } from '../_lib/bluetooth/gyro_track';
 import { buildCoreTrack } from '../_lib/reconstruct/core_track';
 import { applyReconTextOverride, buildReconText } from '../_lib/reconstruct/recon_text';
-import { normalizeSolve } from '../_lib/reconstruct/orient';
+import { initialPoseRotation, normalizeSolve } from '../_lib/reconstruct/orient';
 import type { ReconTextResult } from '../_lib/reconstruct/recon_text';
 import StepAnalysis from './StepAnalysis';
 import StepMoveList from './StepMoveList';
@@ -163,7 +163,15 @@ export default function ReconstructReport({
   // cuber executed it rather than as the D-moves the cube's colour frame
   // reports; and the replay, so the cross is on the bottom the way they were
   // holding it. Same move count, same indices — only the frame differs.
-  const view = useMemo(() => normalizeSolve(solve.scramble, moves), [solve.scramble, moves]);
+  const gyroSamples = useMemo(() => decodeGyroTrack(solve.gyro), [solve.gyro]);
+  const recordedViewRotation = useMemo(
+    () => initialPoseRotation(gyroSamples, solve.device?.model),
+    [gyroSamples, solve.device?.model],
+  );
+  const view = useMemo(
+    () => normalizeSolve(solve.scramble, moves, { preferredRotation: recordedViewRotation }),
+    [solve.scramble, moves, recordedViewRotation],
+  );
   // Recognition/execution split (Cubeast definitions — see step_metrics.ts).
   // 3x3-shaped events only: the stage walker underneath models a 3x3.
   const stepMx = useMemo(
@@ -246,10 +254,10 @@ export default function ReconstructReport({
    */
   const core = useMemo(
     // 牌子决定记号里的轴向(`BRAND_SENSOR_BASIS`);「换没换格」与它无关。
-    () => (solve.gyro
-      ? buildCoreTrack(decodeGyroTrack(solve.gyro), { brand: solve.device?.model })
+    () => (gyroSamples.length > 0
+      ? buildCoreTrack(gyroSamples, { brand: solve.device?.model })
       : null),
-    [solve.gyro, solve.device?.model],
+    [gyroSamples, solve.device?.model],
   );
   useEffect(() => {
     setReconText(null);

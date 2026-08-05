@@ -101,6 +101,7 @@ export function coreTurnsIn(track: CoreTrack, fromMs: number, toMs: number): num
   const hi = toMs + CORE_EVENT_SLACK_MS;
   const out: number[] = [];
   for (let i = 0; i < track.events.length; i++) {
+    if (track.events[i].wide) continue;
     const t = track.events[i].tMs;
     if (t >= lo && t <= hi) out.push(i);
   }
