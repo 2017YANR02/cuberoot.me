@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { RoomConfiguration } from '@livekit/protocol';
 import { AccessToken, RoomServiceClient, TrackSource } from 'livekit-server-sdk';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
@@ -31,9 +32,9 @@ import { checkRateLimit, requireAuth } from '../utils/recon_helpers.js';
  * (而不是放进去把所有人一起拖卡)。房间数不写死:二人房便宜、六人房贵,按预算算出来的
  * 并发数自然随人数浮动。
  *
- * 人数上限有两道:签 token 前的快照(为了给出「已满」这种能看懂的文案)和建房时钉在
- * LiveKit 上的 maxParticipants(见 ensureRoom)。后者才是真闸 —— 快照永远慢一个连接延迟,
- * 一场会开始时十来个人同时点进来,每个请求看到的都是空房。
+ * 人数上限有两道:签 token 前的快照(为了给出「已满」这种能看懂的文案)和 token 里的
+ * roomConfig.maxParticipants。后者才是真闸 —— LiveKit 在首个参与者真正连接、自动创建房间
+ * 时原子应用配置,不会留下并发超编窗口,也不会让一次 HTTP 请求凭空制造无人房间。
  *
  * 注意:query() 会把 SQL 里所有 `?` 重写成 $n,jsonb 存在性判断必须用 jsonb_exists() 函数
  * 形式,不能写 `players ? pid` 操作符(与 battle_rooms 同一约束)。
@@ -81,11 +82,7 @@ const MAX_MEET_PARTICIPANTS = 6;
 /** token 有效期:只用于建立连接,连上之后会话由 LiveKit 自己维持,不需要长 TTL。 */
 const TOKEN_TTL = '10m';
 
-/**
- * 房间在「建好但还没人进来」和「最后一个人走了」之后各留多久(秒)。
- * 我们在签 token 时就把房建出来(见 ensureRoom),所以必须有个不为零的空房宽限期,
- * 否则用户还在入会前那一屏挑摄像头,房就被回收了 —— 连带 maxParticipants 一起没了。
- */
+/** 房间在最后一个人离开后保留多久(秒),方便短暂断线后回到原房。 */
 const ROOM_EMPTY_TIMEOUT = 300;
 
 const CODE_RE = /^[A-Z0-9]{4,12}$/;
@@ -173,9 +170,10 @@ async function capacityCheck(
         .flatMap(p => p.tracks)
         .filter(t => t.source === TrackSource.SCREEN_SHARE).length;
     }
-  } catch {
+  } catch (error) {
     // LiveKit 连不上 ⟹ 算不出占用。这里**故意 fail closed**:算不准就不发 token。
     // 反正 LiveKit 挂了客户端也连不上,提前给个明确错误比让它连超时强。
+    console.error('[video] LiveKit capacity check failed', { targetRoom, error });
     return { ok: false, reason: 'unavailable' };
   }
 
@@ -194,35 +192,6 @@ async function capacityCheck(
   if (!rooms.some(r => r.name === targetRoom)) total += roomEgressMbps(nextCount, shares(targetRoom));
 
   return total > BANDWIDTH_BUDGET_MBPS ? { ok: false, reason: 'bandwidth' } : { ok: true };
-}
-
-/**
- * 把人数上限**钉在 LiveKit 上**,而不是只靠上面那次快照。
- *
- * capacityCheck 读的是「此刻房里有几个人」,而这个人要到 WebSocket 连上(0.3~2 s 后)才会
- * 被算进去 —— 一场会开始时十来个人同时点「进入会议」,每个请求看到的都是 0 人,于是全放行。
- * 六人房的模型是 6*5*3 + 5*1.5 = 97.5 Mbps,真进来八个人就是 178.5,把整条预算吃穿,而
- * 站点自身的 HTTP 也跟着一起卡 —— 恰是这个文件存在的理由。
- *
- * createRoom 是幂等的(房已存在就原样返回),而 LiveKit 只在第一个人连上时自动建房,所以
- * 先建后签一定赶在所有人前面。房建出来带着 maxParticipants,超编的那一个由 LiveKit 自己在
- * 握手阶段拒掉 —— 一个原子的判断,不再有窗口。此后 capacityCheck 退化成「提前给个好文案」。
- *
- * 空房不占带宽(roomEgressMbps(0) = 0),故预算账不受影响。
- */
-async function ensureRoom(name: string, maxParticipants: number): Promise<boolean> {
-  try {
-    await svc().createRoom({
-      name,
-      maxParticipants,
-      emptyTimeout: ROOM_EMPTY_TIMEOUT,
-      departureTimeout: ROOM_EMPTY_TIMEOUT,
-    });
-    return true;
-  } catch {
-    // 建不出来 = LiveKit 连不上。与 capacityCheck 同一条原则:算不准就不发 token。
-    return false;
-  }
 }
 
 // GET /video/config — 客户端启动时问一次:这站开没开视频、单房上限几人、码率多少。
@@ -245,6 +214,17 @@ videoRoomsRoutes.get('/video/config', (c) => {
  */
 async function mintToken(room: string, identity: string, name: string, maxParticipants: number) {
   const at = new AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, { identity, name, ttl: TOKEN_TTL });
+  /**
+   * 不在 HTTP 路由里 createRoom:只拿 token 却从不连接的请求不应在 LiveKit 停放空房。
+   * roomConfig 会在首个参与者真正连接、LiveKit 自动创建房间时原子应用,同时解决两件事:
+   * 人数上限没有快照竞态,恶意请求也不能用零带宽成本堆出成百上千间空房。
+   */
+  at.roomConfig = new RoomConfiguration({
+    name: room,
+    maxParticipants,
+    emptyTimeout: ROOM_EMPTY_TIMEOUT,
+    departureTimeout: ROOM_EMPTY_TIMEOUT,
+  });
   at.addGrant({
     roomJoin: true,
     room,
@@ -303,10 +283,6 @@ videoRoomsRoutes.post('/video/token', async (c) => {
     const status = cap.reason === 'unavailable' ? 503 : 429;
     return c.json({ error: cap.reason }, status);
   }
-  if (!await ensureRoom(roomName, MAX_VIDEO_PARTICIPANTS)) {
-    return c.json({ error: 'unavailable' }, 503);
-  }
-
   return c.json(await mintToken(roomName, pid, rows[0].name ?? pid, MAX_VIDEO_PARTICIPANTS));
 });
 
@@ -315,7 +291,7 @@ videoRoomsRoutes.post('/video/token', async (c) => {
 //
 // 身份完全取自 token,客户端只报会议码 —— 它报不了自己是谁,所以会议里不可能出现顶着
 // 别人名字的画面(这也是「登录」在这里买到的东西:免登录时显示名只能靠客户端自报)。
-// 房由 ensureRoom 在签 token 时建出来(为的是把人数上限钉在 LiveKit 上),没人了自动关 ——
+// 房由第一个拿到 token 且真正连接的人自动创建,没人了自动关。只拿 token 不连接不会留空房;
 // 本站仍不存任何会议记录,也就没有「会议列表」可以被人翻。
 videoRoomsRoutes.post('/video/meet/token', async (c) => {
   c.header('Cache-Control', 'no-store');
@@ -344,9 +320,5 @@ videoRoomsRoutes.post('/video/meet/token', async (c) => {
     const status = cap.reason === 'unavailable' ? 503 : 429;
     return c.json({ error: cap.reason }, status);
   }
-  if (!await ensureRoom(roomName, MAX_MEET_PARTICIPANTS)) {
-    return c.json({ error: 'unavailable' }, 503);
-  }
-
   return c.json(await mintToken(roomName, user.wcaId, user.name || user.wcaId, MAX_MEET_PARTICIPANTS));
 });

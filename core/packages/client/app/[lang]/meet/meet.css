@@ -109,6 +109,9 @@ body:has(.meet-live) .mem-reminder {
 }
 
 .meet-unread {
+  position: absolute;
+  top: 2px;
+  right: 2px;
   min-width: 16px;
   height: 16px;
   padding: 0 4px;
@@ -124,9 +127,20 @@ body:has(.meet-live) .mem-reminder {
 .meet-roster {
   grid-template-rows: var(--lk-chat-header-height, 69px) 1fr;
   width: clamp(200px, 30ch, 34ch);
+  flex-shrink: 0;
   border-left: 1px solid var(--border-default);
   background: color-mix(in srgb, var(--foreground) 6%, var(--background));
-  align-items: end;
+  align-items: stretch;
+}
+
+.lk-chat {
+  flex-shrink: 0;
+}
+
+/* 参与者贴片固定是暗色半透明底,不能跟浅色主题的深色正文走,否则名字和 pin 图标几乎消失。 */
+.meet-live .lk-participant-metadata-item,
+.meet-live .lk-focus-toggle-button {
+  color: var(--destructive-foreground);
 }
 
 .meet-roster-list {
@@ -172,13 +186,12 @@ body:has(.meet-live) .mem-reminder {
 }
 
 @media (max-width: 600px) {
-  /* 窄屏两块面板都盖满,底部留给控制条 —— 与库给 .lk-chat 的处理一致,
-     再加上安全区,免得列表最后一行压在 home indicator 上。 */
+  /* fixed 会钉在布局视口,绕过 .meet-live 的 visualViewport 高度和安全区,软键盘一弹就盖住
+     输入框。改成相对会议台定位:跟着可视视口一起缩,顶部也自然落在全局通知条下面。 */
+  .lk-chat,
   .meet-roster {
-    position: fixed;
-    top: 0;
-    right: 0;
-    bottom: calc(var(--lk-control-bar-height, 69px) + var(--sab));
+    position: absolute;
+    inset: 0 0 var(--lk-control-bar-height, 69px);
     max-width: 100%;
     width: 100%;
   }

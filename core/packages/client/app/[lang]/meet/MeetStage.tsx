@@ -17,23 +17,26 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { RoomEvent, Track } from 'livekit-client';
+import { ConnectionState, RoomEvent, Track } from 'livekit-client';
 import {
   CarouselLayout,
-  ConnectionStateToast,
   FocusLayout,
   FocusLayoutContainer,
   GridLayout,
   LayoutContextProvider,
   ParticipantTile,
   RoomAudioRenderer,
+  Toast,
   isTrackReference,
   useCreateLayoutContext,
+  useConnectionState,
   usePinnedTracks,
   useTracks,
   type TrackReferenceOrPlaceholder,
 } from '@livekit/components-react';
+import { LoaderCircle } from 'lucide-react';
 
+import { tr } from '@/i18n/tr';
 import MeetChat from './MeetChat';
 import MeetControlBar from './MeetControlBar';
 import MeetRoster from './MeetRoster';
@@ -51,6 +54,37 @@ function sameTrackRef(
     return a.publication.trackSid === b.publication.trackSid;
   }
   return a.participant.identity === b.participant.identity && a.source === b.source;
+}
+
+/** LiveKit 成品提示写死英文,这里保留同一状态机,只把可见文案接入本站双语。 */
+function MeetConnectionToast() {
+  const state = useConnectionState();
+  let message: string | null = null;
+  let spinning = false;
+
+  switch (state) {
+    case ConnectionState.Connecting:
+      message = tr({ zh: '连接中…', en: 'Connecting…' });
+      spinning = true;
+      break;
+    case ConnectionState.Reconnecting:
+      message = tr({ zh: '正在重新连接…', en: 'Reconnecting…' });
+      spinning = true;
+      break;
+    case ConnectionState.Disconnected:
+      message = tr({ zh: '连接已断开', en: 'Disconnected' });
+      break;
+    default:
+      break;
+  }
+
+  if (!message) return null;
+  return (
+    <Toast className="lk-toast-connection-state">
+      {spinning && <LoaderCircle className="lk-spinner" size={16} />}
+      {message}
+    </Toast>
+  );
 }
 
 export default function MeetStage() {
@@ -173,7 +207,7 @@ export default function MeetStage() {
         <MeetRoster open={showRoster} onClose={toggleRoster} />
       </LayoutContextProvider>
       <RoomAudioRenderer />
-      <ConnectionStateToast />
+      <MeetConnectionToast />
     </div>
   );
 }

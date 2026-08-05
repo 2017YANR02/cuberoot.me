@@ -15,9 +15,8 @@
  * battle_rooms.players 里)且免登录;会议室要登录,进哪一间由 9 位 45 bit 的会议码决定
  * (见 lib/video-room-api.ts 的 MEET_CODE_ALPHABET)。
  *
- * 本站不存任何会议记录:房在签 token 那一刻建出来(为的是把人数上限钉在 LiveKit 上)、
- * 没人了自动关。因此既没有「会议列表」可以被人翻,也不需要清理任务。刷新页面会带着
- * ?room= 回到同一场会。
+ * 本站不存任何会议记录:房在首个人真正连接时由 LiveKit 自动创建、没人了自动关。
+ * 因此既没有「会议列表」可以被人翻,也不需要清理任务。刷新页面会带着 ?room= 回到同一场会。
  *
  * 人数上限 6 人 · 1080p:SFU 要把每人的流转发给其余 n-1 人,最坏出向 6*5*3 + 屏幕共享
  * 5*1.5 = 97.5 Mbps,在 140 的预算里还剩得下一间四人对战房。上限由服务端 /video/config
@@ -93,6 +92,10 @@ export default function MeetPage() {
     (reason: FailReason) => setErr(denyMessage(reason, maxParticipants)),
     [maxParticipants],
   );
+  const connectFail = useCallback(
+    () => setErr((current) => current ?? denyMessage('connect', maxParticipants)),
+    [maxParticipants],
+  );
 
   const join = useCallback((target: string) => {
     // 到这里的码一定过了 isMeetCode,所以服务端再回 invalid 就不是用户抄错(见 stale-api)。
@@ -119,7 +122,8 @@ export default function MeetPage() {
   const leave = useCallback((reason?: DisconnectReason) => {
     setToken(null);
     setErr(disconnectMessage(reason));
-    void setRoomParam(null);
+    // 挂断不能再 push 一条历史:否则按一次返回就回到 PreJoin,摄像头马上重新亮起。
+    void setRoomParam(null, { history: 'replace' });
   }, [setRoomParam]);
 
   const copyInvite = useCallback(() => {
@@ -200,7 +204,8 @@ export default function MeetPage() {
           audio={choices?.audioEnabled ?? true}
           options={roomOptions}
           onDisconnected={leave}
-          onError={() => fail('connect')}
+          // onDisconnected 往往能给出「房满/另一台设备登录」等具体原因;通用错误不能覆盖它。
+          onError={connectFail}
           onMediaDeviceFailure={() => fail('media')}
           className="meet-room"
         >
@@ -253,7 +258,7 @@ export default function MeetPage() {
           type="button"
           className="meet-go"
           disabled={busy}
-          onClick={() => { const fresh = newMeetCode(); void setRoomParam(fresh); }}
+          onClick={() => { setErr(null); const fresh = newMeetCode(); void setRoomParam(fresh); }}
         >
           <Video size={15} />
           {tr({ zh: '新建会议', en: 'New meeting' })}
@@ -268,13 +273,18 @@ export default function MeetPage() {
           // 粘整条邀请链接也认:normalizeMeetCode 会把 ?room= 挖出来。
           placeholder={tr({ zh: '会议码或邀请链接', en: 'Code or invite link' })}
           onChange={(e) => setCodeInput(normalizeMeetCode(e.target.value))}
-          onKeyDown={(e) => { if (e.key === 'Enter' && codeInput.length === MEET_CODE_LEN) void setRoomParam(codeInput); }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && codeInput.length === MEET_CODE_LEN) {
+              setErr(null);
+              void setRoomParam(codeInput);
+            }
+          }}
         />
         <button
           type="button"
           className="meet-join"
           disabled={codeInput.length !== MEET_CODE_LEN}
-          onClick={() => void setRoomParam(codeInput)}
+          onClick={() => { setErr(null); void setRoomParam(codeInput); }}
         >
           {tr({ zh: '加入', en: 'Join' })}
         </button>

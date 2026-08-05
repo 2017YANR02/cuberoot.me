@@ -51,8 +51,8 @@ export default function MeetControlBar({
   onToggleRoster,
   remoteScreenShare,
 }: MeetControlBarProps) {
-  // 窄屏只留图标:六个按钮带文字在手机上必然换行,把画面挤没。
-  const compact = useIsMobile(760);
+  // 侧边面板会再吃掉 200~480px,所以面板打开时提前收成图标档,别等控制条已经被挤扁才切。
+  const compact = useIsMobile(showChat || showRoster ? 1000 : 760);
   const [sharing, setSharing] = useState(false);
   const permissions = useLocalParticipantPermissions();
 
@@ -62,6 +62,14 @@ export default function MeetControlBar({
     saveAudioInputDeviceId,
     saveVideoInputDeviceId,
   } = usePersistentUserChoices({});
+
+  // useTrackToggle 会把 onChange 放进 effect 依赖;稳定引用避免每次渲染都重跑一次持久化回调。
+  const onMicChange = useCallback((enabled: boolean, userInitiated: boolean) => {
+    if (userInitiated) saveAudioInputEnabled(enabled);
+  }, [saveAudioInputEnabled]);
+  const onCameraChange = useCallback((enabled: boolean, userInitiated: boolean) => {
+    if (userInitiated) saveVideoInputEnabled(enabled);
+  }, [saveVideoInputEnabled]);
 
   const can = useCallback(
     (source: Track.Source) => {
@@ -101,7 +109,7 @@ export default function MeetControlBar({
           <TrackToggle
             source={Track.Source.Microphone}
             showIcon
-            onChange={(enabled, userInitiated) => { if (userInitiated) saveAudioInputEnabled(enabled); }}
+            onChange={onMicChange}
           >
             {!compact && micLabel}
           </TrackToggle>
@@ -120,7 +128,7 @@ export default function MeetControlBar({
           <TrackToggle
             source={Track.Source.Camera}
             showIcon
-            onChange={(enabled, userInitiated) => { if (userInitiated) saveVideoInputEnabled(enabled); }}
+            onChange={onCameraChange}
           >
             {!compact && camLabel}
           </TrackToggle>
