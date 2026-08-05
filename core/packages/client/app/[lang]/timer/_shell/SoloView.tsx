@@ -91,7 +91,7 @@ import StatsPanel from '../_components/StatsPanel';
 import CrossSessionStats from '../_components/CrossSessionStats';
 import CaseStatsPanel from '../_components/CaseStatsPanel';
 import HistoryPanel from '../_components/HistoryPanel';
-import { decodeReplayParam } from '../_lib/share/decode';
+import { decodeReplayParam, solveFromReplay } from '../_lib/share/decode';
 import { extractReplayParam } from '../_lib/share/paste_import';
 import SettingsPanel from '../_components/SettingsPanel';
 import GoalProgress from '../_components/GoalProgress';
@@ -1610,19 +1610,11 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     if (!decoded) {
       console.warn('[timer] invalid ?replay= payload');
     } else {
-      const ephemeral: Solve = {
-        id: `replay-${Date.now()}`,
-        timeMs: decoded.totalMs,
-        penalty: 'ok',
-        scramble: decoded.scramble,
-        event: decoded.event,
-        ts: Date.now(),
-        moves: decoded.moves.length > 0 ? decoded.moves : undefined,
-      };
+      const ephemeral = solveFromReplay(decoded, byEvent[decoded.event] ?? []);
       setReconstructSolve(ephemeral);
     }
     void setReplay(null);
-  }, [replay, setReplay]);
+  }, [replay, setReplay, byEvent]);
 
   const handlePasteReplay = useCallback(() => {
     const raw = window.prompt(tr({ zh: '粘贴 replay URL 或 token：', en: 'Paste a replay URL or token:'
@@ -1634,17 +1626,9 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     const decoded = decodeReplayParam(param);
     if (!decoded) { alert(tr({ zh: 'replay 数据无法解码。', en: 'Failed to decode replay payload.'
     })); return; }
-    const ephemeral: Solve = {
-      id: `replay-${Date.now()}`,
-      timeMs: decoded.totalMs,
-      penalty: 'ok',
-      scramble: decoded.scramble,
-      event: decoded.event,
-      ts: Date.now(),
-      moves: decoded.moves.length > 0 ? decoded.moves : undefined,
-    };
+    const ephemeral = solveFromReplay(decoded, byEvent[decoded.event] ?? []);
     setReconstructSolve(ephemeral);
-  }, [isZh]);
+  }, [isZh, byEvent]);
 
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);

@@ -93,11 +93,19 @@
  * 两条一模一样,因为它们本来就是一件事:「从这里往后,我写谱子的那个系,相对魔方
  * 报名字的那个系,转过去了。」
  *
- * ## 相邻的同一个中层要并起来
+ * ## 相邻的同族要并起来 —— 而且必须排在认中层**之后**
  *
  * `M2` 是一个手势,但编码器按四分之一圈报,常常报成 `R L' R L'` 两对 —— 拆完就是
- * `M M`。人不会那么写。所以合完之后紧挨着的同族中层按四分之一圈相加(满四圈的
- * 直接抵消掉)。中间隔着转体的不并:那两下之间人把魔方转过,不是一个手势。
+ * `M M`。人不会那么写。所以合完之后紧挨着的同族按四分之一圈相加(满四圈的直接
+ * 抵消掉)。中间隔着转体的不并:那两下之间人把魔方转过,不是一个手势;跨步骤边界
+ * 的也不并 —— 边界是表和谱子共用的那把刀。
+ *
+ * 面也走这一条,原因不是对称好看,是**顺序**:合同面以前在 `htmMoves` 里,排在认
+ * 中层之前。用户 2026-08-04 那把 Z perm 报上来是 `L R' | R' L | U U | ...`,中间那对
+ * `R' R'` 先被合成 `R2`,`L R2 L` 就再也配不出两个 M —— 印出来是
+ * `R2 L D2 M D M2 D L R2 L U M U2`,谁也认不出那是 Z perm。所以这一层现在吃的是
+ * **一手一条**的四分之一转流(`htm.ts` 的 `quarterMoves`),先认中层,再合同族。
+ * 计步仍然走 `htmMoves`(魔方确实转了那么多下面)。
  *
  * ## 只改谱子,不改数字
  *
@@ -185,9 +193,10 @@ function faceToken(token: string): CubeFace | null {
   return m ? (m[1] as CubeFace) : null;
 }
 
-/** `M2` → `{ family:'M', quarters:2 }`。不是中层就是 null。 */
-function sliceToken(token: string): { family: string; quarters: number } | null {
-  const m = /^([MES])([2'])?$/.exec(token.trim());
+/** `M2` → `{ family:'M', quarters:2 }`;`R'` → `{ family:'R', quarters:3 }`。
+ *  面和中层用同一条规则拆 —— 「相邻的同族按四分之一圈相加」对两者一字不差。 */
+function familyToken(token: string): { family: string; quarters: number } | null {
+  const m = /^([UDFBLRMES])([2'])?$/.exec(token.trim());
   if (!m) return null;
   return { family: m[1], quarters: m[2] === '2' ? 2 : m[2] === "'" ? 3 : 1 };
 }
@@ -406,13 +415,22 @@ export function humanizeStream(
   };
 
   /**
-   * 刚写下的中层能不能和前一条并成一个(`M M` → `M2`)。并不了就原样推入。
-   * 抵消干净的(`M M'`)两条一起去掉 —— 那两下人没写在谱子上,它们在废动作那一轴。
+   * 刚写下的这一条能不能和前一条并成一个(`M M` → `M2`,`U U` → `U2`)。并不了就
+   * 原样推入。抵消干净的(`M M'` / `R R'`)两条一起去掉 —— 那两下人没写在谱子上,
+   * 它们在废动作那一轴。
+   *
+   * 中层和面走同一条规则,而且必须走同一条:合同面这一步以前在 `htmMoves` 里、
+   * 排在认中层**之前**,于是 `L R' R' L`(两个 M)被先合成 `L R2 L`,中层再也配
+   * 不出来。现在顺序反过来 —— 谱子这一层吃的是一手一条的四分之一转流
+   * (`quarterMoves`),合同面在这里做,排在认中层之后。
+   *
+   * 三条不许并:跨步骤边界(边界是表和谱子共用的那把刀)、隔着转体(那两下之间人
+   * 把魔方转过,不是一个手势)、以及中间夹了别的记号(本来就不相邻)。
    */
-  const pushSlice = (move: HtmMove): void => {
+  const pushMove = (move: HtmMove): void => {
     const prev = out[out.length - 1];
-    const cur = sliceToken(move.m);
-    const before = prev ? sliceToken(prev.m) : null;
+    const cur = familyToken(move.m);
+    const before = prev ? familyToken(prev.m) : null;
     const joinable = prev !== undefined && cur !== null && before !== null
       && before.family === cur.family
       && out.length - 1 >= noJoinBefore
@@ -420,7 +438,13 @@ export function humanizeStream(
     if (!joinable || !cur || !before || !prev) { out.push(move); return; }
     const net = (before.quarters + cur.quarters) % 4;
     out.pop();
-    if (net === 0) return;
+    if (net === 0) {
+      // 抵消干净之后**不许**让两边再并到一起:`R U2 R' R U` 里那对 `R' R` 走掉了,
+      // 剩下的 `U2 U` 在原流里隔着两手,不是一个手势。`htmMoves` 也是这条规矩
+      // (「只并相邻的」),两边一致,谱子和步数才对得上。
+      noJoinBefore = out.length;
+      return;
+    }
     out.push({ ...prev, m: sliceFor(cur.family, net), endTs: move.endTs, endIdx: move.endIdx, quarters: net === 3 ? 1 : net });
   };
 
@@ -441,7 +465,7 @@ export function humanizeStream(
       // 先认领再写转体:这一对的那次换格是中层带的,不能在它前面漏出一个 `x'`。
       claimCoreTurns(a.ts, b.endTs);
       writeRotationsBefore(a.ts);
-      pushSlice({
+      pushMove({
         ...a,
         m: rename(split.slice),
         endTs: b.endTs,
@@ -455,7 +479,7 @@ export function humanizeStream(
       continue;
     }
     writeRotationsBefore(a.ts);
-    out.push(rot === '' ? a : { ...a, m: rename(a.m) });
+    pushMove(rot === '' ? a : { ...a, m: rename(a.m) });
   }
   // 最后一手之后还有转体:拧完把魔方摆正。照写 —— 那也是这把发生过的事。
   writeRotationsBefore(Infinity);

@@ -13,9 +13,14 @@
  * 再滚回来才凑齐「从这个局面开始,往下是这么拧的」。搬进谱子那一块之后这一块
  * 自己就是一份能照着复现的东西 —— 和复制按钮导出的那份逐字相同。
  *
- * 用的必须是 `recon.scramble`(视角归一化之后那条,见 orient.ts),不是成绩上的
- * 原始打乱:谱子写在「十字朝下」的视角里,记号已经换过名,配原始打乱对不上,
- * 而对不上的两行摆在一起没人看得出来是哪条错了。
+ * 用的必须是 `recon.scramble`,而 2026-08-04 起它就是**这把真正的打乱** —— 和成绩
+ * 里存的、和用户手上拧的那条逐字相同。以前它是「转进十字朝下」共轭之后的写法,
+ * 理由是谱子写在那个视角里、配原始打乱对不上;理由没错,办法错了:用户做的是
+ * `R2 B' L2 R D' …`,报告印的是 `R2 F' L2 R U' …`,「这不行,必须是原始打乱」。
+ * 共轭过的那条不是任何人做过的打乱,粘到 cubedb 也对不上。
+ *
+ * 现在两边这么接:打乱印原始的,视角那一手写成谱子的第一行(`recon.inspection`,
+ * `z2 // 观察`),和人写复盘一模一样 —— 打乱 + 观察 + 谱子接起来照着拧还是这把。
  *
  * **三、智能魔方那把不摆打乱图。** 打乱图是给「照着拧」用的,而这把已经拧完了。
  * 手动计时的成绩仍然两样都有 —— 它们没有谱子可以承载打乱。
@@ -124,11 +129,26 @@ describe('打乱是谱子的第一行', () => {
     expect(src).toMatch(/className="sml-group sml-scramble"/);
   });
 
-  it('摆的是 recon.scramble —— 和谱子同一个视角', () => {
-    // 成绩上那条原始打乱是魔方配色系里的写法;谱子是「十字朝下」共轭之后的写法。
-    // 两者记号不同,摆在一起对不上。
+  it('摆的是 recon.scramble', () => {
     expect(src).toMatch(/\{recon\.scramble\}/);
     expect(src).not.toMatch(/solve\.scramble/);
+  });
+
+  it('recon.scramble 就是原始打乱,不是共轭过的那条(2026-08-04)', () => {
+    const recon = read(join(TIMER, '_lib', 'reconstruct', 'recon_text.ts'));
+    // `phys` 是「魔方自己配色系里的那一份」= 计时器发的原始打乱。
+    expect(recon).toMatch(/scramble: phys\.scramble/);
+  });
+
+  it('观察那一手印在打乱下面 —— 少了它两边接不上', () => {
+    expect(src).toMatch(/\{recon\.inspection\}/);
+    const scramble = src.indexOf('sml-scramble');
+    const insp = src.indexOf('{recon.inspection}');
+    expect(insp).toBeGreaterThan(scramble);
+    expect(insp).toBeLessThan(src.indexOf('{groups.map('));
+    // 剪贴板那一份也得带上,否则粘出去的谱子照着拧是错的。
+    const recon = read(join(TIMER, '_lib', 'reconstruct', 'recon_text.ts'));
+    expect(recon).toMatch(/viewRot === '' \? \[\] : \[`\$\{viewRot\} \/\/ insp`\]/);
   });
 
   it('排在十字前面', () => {

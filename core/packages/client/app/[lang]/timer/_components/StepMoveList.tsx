@@ -141,9 +141,11 @@ export default function StepMoveList({
       {/* 打乱先摆在最上面 —— 这一块要成为一份**照着能复现**的东西:从这个局面
           开始,往下每一步是怎么拧的。以前它孤零零挂在整页最底下(还配一张打乱图),
           读谱子的人得先滚到底再滚回来。
-          用 `recon.scramble` 而不是成绩上那条原始打乱:谱子是在「十字朝下」那个
-          视角里写的(见 orient.ts),记号已经换过名,配原始打乱对不上。复制按钮
-          导出的也正是这一条,现在屏上和剪贴板里是同一份。 */}
+          `recon.scramble` 就是**这把真正的打乱**,和成绩里那条逐字相同。谱子确实
+          写在「十字朝下」那个视角里(见 orient.ts),但接法不是改写打乱 —— 是把
+          观察那一手(`recon.inspection`,`z2` 之类)当成谱子的第一行印出来,和人
+          写复盘一模一样。2026-08-04 用户报的就是这个:印出来的打乱不是他做的那条,
+          「这不行,必须是原始打乱」。复制按钮导出的是同一份。 */}
       {recon.scramble.trim() !== '' && (
         <section className="sml-group sml-scramble">
           <h4 className="sml-group-head">
@@ -152,6 +154,19 @@ export default function StepMoveList({
           <div className="sml-line">
             <div className="sml-body">
               <span className="sml-moves">{recon.scramble}</span>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* 观察那一手。它不是注释,是谱子的第一行:少了它,上面那条原始打乱配下面
+          这些动作对不上。 */}
+      {recon.inspection.trim() !== '' && (
+        <section className="sml-group">
+          <div className="sml-line">
+            <div className="sml-body">
+              <span className="sml-moves">{recon.inspection}</span>
+              <span className="sml-label">{'// '}{tr({ zh: '观察', en: 'inspection' })}</span>
             </div>
           </div>
         </section>

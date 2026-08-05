@@ -54,7 +54,7 @@ import type { MethodId } from '../_lib/reconstruct/methods';
 import { useSettings, updateSettings } from '../_lib/settings';
 import { decodeGyroTrack } from '../_lib/bluetooth/gyro_track';
 import { buildCoreTrack } from '../_lib/reconstruct/core_track';
-import { buildReconText } from '../_lib/reconstruct/recon_text';
+import { applyReconTextOverride, buildReconText } from '../_lib/reconstruct/recon_text';
 import { normalizeSolve } from '../_lib/reconstruct/orient';
 import type { ReconTextResult } from '../_lib/reconstruct/recon_text';
 import StepAnalysis from './StepAnalysis';
@@ -261,11 +261,11 @@ export default function ReconstructReport({
         segs: stageSegs, metrics: stepMx, slots, core,
         physical: { scramble: solve.scramble, moves }, viewRotation: view.rotation,
       })
-        .then(r => { if (alive) setReconText(r); })
+        .then(r => { if (alive) setReconText(applyReconTextOverride(r, solve.reconstruction)); })
         .catch(err => console.warn('[reconstruct] recon text failed:', err));
     }, 0);
     return () => { alive = false; clearTimeout(timer); };
-  }, [stageSegs, stepMx, slots, view, solve.timeMs, core]);
+  }, [stageSegs, stepMx, slots, view, solve.timeMs, solve.reconstruction, core]);
 
   // Personal stage averages computed from the caller-provided history.
   // We exclude the current solve so a fresh solve isn't compared against
