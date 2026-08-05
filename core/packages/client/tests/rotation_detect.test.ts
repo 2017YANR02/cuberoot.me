@@ -50,7 +50,7 @@ function sweep(a: Quat, b: Quat, fromMs: number, ms: number, stepMs = 20): GyroS
 }
 
 describe('tokenForRelative', () => {
-  it('九个基本转体各叫各的名字', () => {
+  it('基本转体各叫各的名字', () => {
     expect(tokenForRelative(axis('x', 90))).toBe('x');
     expect(tokenForRelative(axis('x', -90))).toBe("x'");
     expect(tokenForRelative(axis('x', 180))).toBe('x2');
@@ -61,9 +61,9 @@ describe('tokenForRelative', () => {
     expect(tokenForRelative(axis('z', 180))).toBe('z2');
   });
 
-  it('半转的正反是同一个记号(x2 == x2\',魔方记号里没有后者)', () => {
+  it("半转终态虽相同，仍按到达方向区分 2 和 2'", () => {
     expect(tokenForRelative(axis('y', 180))).toBe('y2');
-    expect(tokenForRelative(axis('y', -180))).toBe('y2');
+    expect(tokenForRelative(axis('y', -180))).toBe("y2'");
   });
 
   it('不是单次转体的,说不知道而不是硬凑一个名字', () => {
@@ -271,6 +271,15 @@ describe('连着转不漂(真 GyroRecorder 压过的流)', () => {
     for (let e = 20; e <= 240; e += 20) { rec.push(axis('y', 180 * (e / 240)), t); t += 20; }
     for (let k = 0; k < 900; k += 20) { rec.push(axis('y', 180), t); t += 20; }
     expect(detectRotations(rec.take()).map(e => e.token)).toEqual(['y2']);
+  });
+
+  it("反向快半转读成 y2'", () => {
+    const rec = new GyroRecorder();
+    let t = 0;
+    for (let k = 0; k < 600; k += 20) { rec.push(QUAT_IDENTITY, t); t += 20; }
+    for (let e = 20; e <= 240; e += 20) { rec.push(axis('y', -180 * (e / 240)), t); t += 20; }
+    for (let k = 0; k < 900; k += 20) { rec.push(axis('y', -180), t); t += 20; }
+    expect(detectRotations(rec.take()).map(e => e.token)).toEqual(["y2'"]);
   });
 });
 

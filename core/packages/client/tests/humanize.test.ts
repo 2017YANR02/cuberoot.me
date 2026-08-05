@@ -4,7 +4,7 @@
  *
  * 起因是用户的一句话:「我做的 PLL 实际上是 `R2 U' S' U2' S U' R2`」,而报告里印的是
  * `L2 U' B F' L2 F B' U' L2 U2`。两个中层各变成一对相对面,夹在中间的 `U2'` 被换名
- * 成 `L2` —— 因为做中层的时候中心核跟着转了,后面每一手都换了名。
+ * 成 `L2'` —— 因为做中层的时候中心核跟着转了,后面每一手都换了名。
  *
  * 所以这里的头号测试是**把那条公式按魔方的报法生成一遍,再要求重写器原样还原它**。
  * 生成器 `record()` 走的是和重写器相反的方向,两边只共用拆分表这一个事实;要是符号
@@ -73,7 +73,7 @@ function stamped(tokens: readonly string[], gap = 200, tight: ReadonlySet<number
   let t = 0;
   return tokens.map((m, i) => {
     t += i === 0 ? gap : (tight.has(i) ? 12 : gap);
-    return { m, ts: t, endTs: t, quarters: m.endsWith('2') ? 2 : 1, startIdx: i, endIdx: i };
+    return { m, ts: t, endTs: t, quarters: m.includes('2') ? 2 : 1, startIdx: i, endIdx: i };
   });
 }
 
@@ -137,13 +137,16 @@ function recordWithCore(human: readonly string[], gap = 600): {
   return { moves, core: { events } };
 }
 
-/** 单个记号取逆。`x2` 自逆。 */
+/** 单个记号取逆，半转也保留执行方向。 */
 function invert(token: string): string {
-  return token.endsWith('2') ? token : token.endsWith("'") ? token.slice(0, -1) : `${token}'`;
+  if (token.endsWith("2'")) return token.slice(0, -1);
+  if (token.endsWith('2')) return `${token}'`;
+  return token.endsWith("'") ? token.slice(0, -1) : `${token}'`;
 }
 
 /**
- * 拆分表的**判据**:拿魔方模型枚举六个面 × 三种量 × 九个中层 × 九个转体,逐条搜。
+ * 拆分表的状态判据:拿魔方模型枚举六个面 × 三种量 × 九个中层 × 九个转体,逐条搜。
+ * 模型状态分不出 `2/2'`，比较时把有向半转折叠到同一个状态记号。
  *
  * 这段搜索原本长在 `humanize.ts` 里。表要给 /recon 那边共用之后搬成了
  * `lib/slice-pair.ts` 的静态数据 —— 但「抄六个面 × 三个量的符号是给手误留位置」这条
@@ -173,10 +176,15 @@ function searchSplitTable(): Map<string, { slice: string; rotation: string }> {
 describe('拆分表', () => {
   const table = sliceSplitTable();
 
-  it('和魔方模型搜出来的一模一样', () => {
+  it("忽略 2/2' 的执行方向后，和魔方模型搜出来的一模一样", () => {
     const searched = searchSplitTable();
     expect(searched.size).toBe(18);
-    expect(Object.fromEntries(table)).toEqual(Object.fromEntries(searched));
+    const stateToken = (token: string): string => token.replace(/2'/g, '2');
+    const collapsed = new Map([...table].map(([key, value]) => [
+      stateToken(key),
+      { slice: stateToken(value.slice), rotation: stateToken(value.rotation) },
+    ]));
+    expect(Object.fromEntries(collapsed)).toEqual(Object.fromEntries(searched));
   });
 
   it('每一条都真的等价 —— 一对相对面 = 中层 + 转体', () => {
@@ -193,11 +201,13 @@ describe('拆分表', () => {
       expect(facesEqual(apply([slice]), apply([exp!.a, exp!.b, exp!.rotation])), slice).toBe(true);
     }
     expect(sliceExpansion("M'")).toEqual({ a: "R'", b: 'L', rotation: 'x' });
+    expect(sliceExpansion('M2')).toEqual({ a: 'R2', b: "L2'", rotation: "x2'" });
+    expect(sliceExpansion("M2'")).toEqual({ a: "R2'", b: 'L2', rotation: 'x2' });
     expect(sliceExpansion('U')).toBeNull();
   });
 
-  it('六个有序轴向 × 三种量 = 18 条', () => {
-    expect(table.size).toBe(18);
+  it('六个有序轴向 × 四种有向转量 = 24 条', () => {
+    expect(table.size).toBe(24);
   });
 
   it('转向相反的一对拆不开 —— `R L` 不是中层', () => {
@@ -218,17 +228,16 @@ describe('拆分表', () => {
 });
 
 describe('humanizeStream —— 用户报的那条 PLL', () => {
-  // 用户写的是 `U2'`,标准写法是 `U2`(半转没有方向),其余一字不改。
-  const HUMAN = T("R2 U' S' U2 S U' R2");
+  const HUMAN = T("R2 U' S' U2' S U' R2");
 
   it('魔方的报法确实把中层变成一对相对面、并且换掉后面的名', () => {
     const rec = record(HUMAN);
     // 7 手里有两个中层,各变成两手 → 9 手。
     expect(rec).toHaveLength(9);
-    // 夹在两个中层之间的那一手不再写成 U —— 这正是用户看到的 `L2`。
+    // 夹在两个中层之间的那一手不再写成 U,方向仍然保留为 `2'`。
     const mid = rec[4];
     expect(mid.startsWith('U')).toBe(false);
-    expect(mid.endsWith('2')).toBe(true);
+    expect(mid.endsWith("2'")).toBe(true);
   });
 
   it('重写回来就是那条公式,一个记号不差', () => {

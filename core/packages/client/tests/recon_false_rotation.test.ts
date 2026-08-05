@@ -45,5 +45,7 @@ describe('真实握持倾斜和转体要分开', () => {
     const thirdPair = result.lines.find(line => line.key === 'slot-FR');
     expect(thirdPair?.moves).toEqual(['R', 'U', "R'", 'U', 'y', "L'", "U'", 'L']);
     expect(result.rotations).toContainEqual({ tMs: 5175, token: 'y' });
+    const pll = result.lines.find(line => line.kind === 'pll');
+    expect(pll?.moves).toEqual(["M2'", 'U2', 'M', 'U', "M2'", 'U', "M2'", 'U', 'M', "U'"]);
   });
 });

@@ -97,7 +97,7 @@ export interface RotationEvent {
   startMs?: number;
   /** 转体**完成**的时刻(相对起表),即新朝向第一次被采到的那个样本的时刻。 */
   tMs: number;
-  /** 记号,如 `y` / `x'` / `z2`。认不出来(复合转体)时是 `?`。 */
+  /** 记号,如 `y` / `x'` / `z2'`。认不出来(复合转体)时是 `?`。 */
   token: string;
   /** 这次转体本身的角度(弧度),90° 或 180°。 */
   angleRad: number;
@@ -132,7 +132,7 @@ function axisQuat(axis: 'x' | 'y' | 'z', deg: number): Quat {
 }
 
 /**
- * 九个基本转体的相对旋转。轴向按魔方的记号:`x` 绕 R 面法线(+X)、`y` 绕 U 面法线
+ * 九个基本转体终态的相对旋转。轴向按魔方的记号:`x` 绕 R 面法线(+X)、`y` 绕 U 面法线
  * (+Y)、`z` 绕 F 面法线(+Z),都按右手定则,和 `SENSOR_BASES.rotX90/rotY90`
  * (`CUBE_ORIENTATIONS` 的生成元)同一套轴。
  */
@@ -152,10 +152,17 @@ const ROTATION_TOKENS: ReadonlyArray<{ token: string; quat: Quat }> = Object.fre
  * 把一个相对旋转翻译成记号。认不出来的返回 `null` —— 那是复合转体(两次转体挨太近
  * 被并成一步),硬塞一个名字比说不知道更糟。
  */
-export function tokenForRelative(rel: Quat): string | null {
+export function tokenForRelative(rel: Quat, directionSample: Quat = rel): string | null {
   const n = quatNormalize(rel);
   for (const { token, quat } of ROTATION_TOKENS) {
-    if (quatAngleTo(n, quat) < 1e-3) return token;
+    if (quatAngleTo(n, quat) >= 1e-3) continue;
+    if (!token.endsWith('2')) return token;
+    // 180° 的终态相同，但到达它的路径有方向。把实测样本固定到 w≥0 的半球后，
+    // 向量部与正向半转轴反向就说明用户做的是 x2'/y2'/z2'。
+    let d = quatNormalize(directionSample);
+    if (d.w < 0) d = { w: -d.w, x: -d.x, y: -d.y, z: -d.z };
+    const axisDot = d.x * quat.x + d.y * quat.y + d.z * quat.z;
+    return axisDot < 0 ? `${token}'` : token;
   }
   return null;
 }
@@ -207,15 +214,17 @@ export function detectRotations(
   let candIdx = -1;
   let candFirstMs = 0;
   let candRel: Quat = QUAT_IDENTITY;
+  /** 候选刚进格时的实测相对量。半转终态相同，靠它保留到达方向。 */
+  let candMeasuredRel: Quat = QUAT_IDENTITY;
   /** 从上一格出发的第一条样本。候选落格前的过渡样本也算。 */
   let motionStartMs: number | null = null;
 
   /** 这个样本相对当前基准落在哪一格;落在两格之间(离最近的一格也超过阈值)给 -1。 */
-  const cellOf = (q: Quat): { idx: number; rel: Quat } => {
-    const rel = quatNormalize(quatMul(quatConjugate(ref), q));
-    const near = nearestCubeOrientation(rel);
-    if (near.angleRad > enterRad) return { idx: -1, rel: near.quat };
-    return { idx: latticeIndex(near.quat), rel: near.quat };
+  const cellOf = (q: Quat): { idx: number; rel: Quat; measuredRel: Quat } => {
+    const measuredRel = quatNormalize(quatMul(quatConjugate(ref), q));
+    const near = nearestCubeOrientation(measuredRel);
+    if (near.angleRad > enterRad) return { idx: -1, rel: near.quat, measuredRel };
+    return { idx: latticeIndex(near.quat), rel: near.quat, measuredRel };
   };
 
   /** 候选的持续段在 `untilMs` 结束了 —— 够长就记一次转体。返回记没记。 */
@@ -225,7 +234,7 @@ export function detectRotations(
     out.push({
       startMs: motionStartMs ?? candFirstMs,
       tMs: candFirstMs,
-      token: tokenForRelative(candRel) ?? '?',
+      token: tokenForRelative(candRel, candMeasuredRel) ?? '?',
       angleRad: quatAngleTo(QUAT_IDENTITY, candRel),
     });
     /**
@@ -252,7 +261,7 @@ export function detectRotations(
 
   for (const s of stream) {
     const q = quatNormalize(s.q);
-    let { idx, rel } = cellOf(q);
+    let { idx, rel, measuredRel } = cellOf(q);
     if (idx === identityIdx) motionStartMs = null;
     else if (motionStartMs === null) motionStartMs = s.tMs;
     if (idx === candIdx) continue;              // 还停在候选那一格上,继续攒时长
@@ -261,13 +270,14 @@ export function detectRotations(
     // 不打断的话「65° 晃两下」会被两次之间的时间差凑够时长,变成一次假转体。
     if (closeCandidate(s.tMs)) {
       // 基准换了,这个样本要按新基准重算一次。
-      ({ idx, rel } = cellOf(q));
+      ({ idx, rel, measuredRel } = cellOf(q));
       if (idx !== identityIdx) motionStartMs = s.tMs;
     }
     if (idx < 0 || idx === identityIdx) { candIdx = -1; continue; }
     candIdx = idx;
     candFirstMs = s.tMs;
     candRel = rel;
+    candMeasuredRel = measuredRel;
   }
   // 录像结束 = 最后一个姿态一直管到最后(拧完之后魔方就停在那儿了)。
   closeCandidate(Infinity);
