@@ -33,9 +33,10 @@ import { usePathname } from 'next/navigation';
 import { useQueryState } from 'nuqs';
 import { LiveKitRoom, PreJoin, type LocalUserChoices } from '@livekit/components-react';
 import type { DisconnectReason } from 'livekit-client';
-import { Check, Copy, LogIn, Video } from 'lucide-react';
+import { Check, Copy, LogIn, QrCode, Video } from 'lucide-react';
 
 import AppLink from '@/components/AppLink';
+import { RoomQrModal } from '@/components/RoomQrModal';
 import { LIVEKIT_ROOM_OPTIONS, denyMessage, disconnectMessage, type FailReason } from '@/components/video/video-call';
 import { tr } from '@/i18n/tr';
 import { nextQuery, useAuthUser } from '@/lib/auth-store';
@@ -69,6 +70,7 @@ export default function MeetPage() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
   /** 首帧不能按登录态分叉渲染 —— 这页是静态预渲染的,分叉会 hydration 错配。 */
   const [mounted, setMounted] = useState(false);
 
@@ -88,6 +90,9 @@ export default function MeetPage() {
    * 会议码会变空、「复制邀请链接」复制出一条没有 room 的裸链接 —— 发给谁谁进不来。
    */
   const code = token ? token.room.slice('meet-'.length) : urlCode;
+  const inviteUrl = mounted && code
+    ? `${window.location.origin}${pathname}?room=${code}`
+    : '';
   const fail = useCallback(
     (reason: FailReason) => setErr(denyMessage(reason, maxParticipants)),
     [maxParticipants],
@@ -121,6 +126,7 @@ export default function MeetPage() {
    */
   const leave = useCallback((reason?: DisconnectReason) => {
     setToken(null);
+    setQrOpen(false);
     setErr(disconnectMessage(reason));
     // 挂断不能再 push 一条历史:否则按一次返回就回到 PreJoin,摄像头马上重新亮起。
     void setRoomParam(null, { history: 'replace' });
@@ -128,12 +134,11 @@ export default function MeetPage() {
 
   const copyInvite = useCallback(() => {
     // 同理,链接从会议码拼,不读 window.location —— 后者可能已经被返回键弹掉了 room。
-    const url = `${window.location.origin}${window.location.pathname}?room=${code}`;
-    void navigator.clipboard?.writeText(url).then(() => {
+    void navigator.clipboard?.writeText(inviteUrl).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 1600);
     }).catch(() => { /* 剪贴板被拒:链接就在地址栏里,不值得报错打断 */ });
-  }, [code]);
+  }, [inviteUrl]);
 
   // 入会前那一屏挑的设备要真的用上,否则「选了摄像头却开了另一个」。
   const roomOptions = useMemo(() => ({
@@ -193,6 +198,15 @@ export default function MeetPage() {
             {copied ? <Check size={14} /> : <Copy size={14} />}
             {copied ? tr({ zh: '已复制', en: 'Copied' }) : tr({ zh: '复制邀请链接', en: 'Copy invite link' })}
           </button>
+          <button
+            type="button"
+            className="meet-copy"
+            onClick={() => setQrOpen(true)}
+            title={tr({ zh: '二维码(扫码加入会议)', en: 'QR code (scan to join meeting)' })}
+            aria-label={tr({ zh: '会议二维码', en: 'Meeting QR code' })}
+          >
+            <QrCode size={14} />
+          </button>
           {err && <span className="vc-err">{err}</span>}
         </header>
 
@@ -211,6 +225,9 @@ export default function MeetPage() {
         >
           <MeetStage />
         </LiveKitRoom>
+        {qrOpen && inviteUrl && (
+          <RoomQrModal url={inviteUrl} code={code} onClose={() => setQrOpen(false)} />
+        )}
       </main>
     );
   }
