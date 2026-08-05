@@ -121,3 +121,32 @@ export function htmMoves(moves: SolveMove[]): HtmMove[] {
 export function countHtm(moves: SolveMove[]): number {
   return htmMoves(moves).length;
 }
+
+/**
+ * 同一条流,但**一个四分之一转一条**,什么都不合。
+ *
+ * 谱子那一层要的是这一份,因为「同面连着的合成半转」和「相对面配成中层」抢同一批
+ * 记号,而先合同面会把中层拆散:用户 2026-08-04 那把 Z perm 报上来是
+ * `L R' | R' L | U U | ...`,`htmMoves` 先把中间那对 `R' R'` 合成 `R2`,于是
+ * `L R2 L` 再也配不出两个 M —— 印出来的是 `R2 L D2 M D M2 D L R2 L U M U2`,
+ * 谁也认不出那是 Z perm。
+ *
+ * 所以顺序反过来:**先认中层,再合同面**。合同面那一步搬进 `humanize.ts`(它本来
+ * 就在合相邻的同族中层,`M M → M2`,同一条规则),这里只负责把流摊成一手一条。
+ *
+ * 计步仍然走 `htmMoves` —— 魔方确实转了那么多下面,效率对比也是按面转算的。
+ */
+export function quarterMoves(moves: SolveMove[]): HtmMove[] {
+  const out: HtmMove[] = [];
+  if (!moves || moves.length === 0) return out;
+  for (let i = 0; i < moves.length; i++) {
+    const turn = turnOf(moves[i].m);
+    if (!turn) continue;                            // 转体 / 认不出来的记号:不占一条
+    out.push({
+      m: tokenFor(turn.key, turn.quarters),
+      ts: moves[i].ts, endTs: moves[i].ts,
+      quarters: turn.quarters, startIdx: i, endIdx: i,
+    });
+  }
+  return out;
+}

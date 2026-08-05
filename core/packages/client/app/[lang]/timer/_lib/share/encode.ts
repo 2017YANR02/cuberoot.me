@@ -2,7 +2,8 @@
  * Encode a Solve into a shareable replay URL.
  *
  * Payload schema (kept intentionally compact — keys are 1 letter):
- *   { e: EventId, s: scramble, m: [[move, msFromFirstMove], ...], t: timeMs }
+ *   { e: EventId, s: scramble, m: [[move, msFromFirstMove], ...], t: timeMs,
+ *     g?: packedGyroTrack, d?: [deviceModel, deviceName], r?: verifiedLines }
  *
  * `moves[i].ts` in the source Solve are absolute performance.now() rebased to
  * solve start. We re-rebase to the FIRST move so the URL is shorter (skips
@@ -17,6 +18,13 @@ export interface ReplayPayload {
   s: string;
   m: Array<[string, number]>;
   t: number;
+  /** Optional orientation track. Without it, x/y/z rotations are not
+   * recoverable from a smart cube's face-turn notifications. */
+  g?: string;
+  /** The gyro axis basis is protocol-specific, so the model travels with g. */
+  d?: [string, string];
+  /** Optional user-verified notation, one display line per step. */
+  r?: string[];
 }
 
 function base64UrlEncode(input: string): string {
@@ -37,6 +45,9 @@ export function encodeReplayPayload(solve: Solve): string {
     m: compactMoves,
     t: Math.round(solve.timeMs),
   };
+  if (solve.gyro) payload.g = solve.gyro;
+  if (solve.device) payload.d = [solve.device.model, solve.device.name];
+  if (solve.reconstruction?.length) payload.r = solve.reconstruction;
   return base64UrlEncode(JSON.stringify(payload));
 }
 

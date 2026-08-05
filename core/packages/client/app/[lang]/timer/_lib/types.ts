@@ -112,6 +112,9 @@ export interface Solve {
    *  which is exactly how the playback panel decides whether to offer the
    *  gyro replay. */
   gyro?: string;
+  /** User-verified reconstruction lines. Displayed verbatim over the automatic
+   * notation while timing/state analysis still uses moves + gyro. */
+  reconstruction?: string[];
   /** Did the reconstruction match what the cuber actually did? Set only when
    *  they answered 👍/👎 in the report; `undefined` means "not asked / not
    *  answered", which is NOT the same as 👎. Nothing reads it to change a

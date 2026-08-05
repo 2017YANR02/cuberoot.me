@@ -20,10 +20,13 @@
  */
 import { describe, it, expect } from 'vitest';
 
+import { decodeGyroTrack } from '@/app/[lang]/timer/_lib/bluetooth/gyro_track';
+import { buildCoreTrack } from '@/app/[lang]/timer/_lib/reconstruct/core_track';
 import { computeF2lSlots } from '@/app/[lang]/timer/_lib/reconstruct/f2l_slots';
 import {
-  buildReconText, formatReconLine, reconTextForClipboard, reconTextHeader,
+  applyReconTextOverride, buildReconText, formatReconLine, reconTextForClipboard, reconTextHeader,
 } from '@/app/[lang]/timer/_lib/reconstruct/recon_text';
+import { normalizeSolve } from '@/app/[lang]/timer/_lib/reconstruct/orient';
 import { computeStageSegments } from '@/app/[lang]/timer/_lib/reconstruct/stage_segments';
 import { computeStepMetrics, stmWeight } from '@/app/[lang]/timer/_lib/reconstruct/step_metrics';
 import { applyOneToken } from '@/app/[lang]/timer/_lib/cube/apply_token';
@@ -306,5 +309,113 @@ describe('录了姿态、但中层那几对姿态流没看见(2026-08-04)', () =
     // 整把:HTM 那份不动(效率比对和分步分析表吃的是它),STM 少两个。
     expect(r.turns).toBe(40);
     expect(r.stm).toBe(38);
+  });
+});
+
+/**
+ * 用户 2026-08-04 报的那把 —— 两件事一起验:打乱印原始的,PLL 认得出是 Z perm。
+ * =========================================================================
+ *
+ * 他做的是 `R2 B' L2 R D' B R2 B F' U R U2 B' F U2 L B D R2`,报告里印出来的却是
+ * `R2 F' L2 R U' F R2 F B' D R D2 F' B D2 L F U R2` —— 「这不行,必须是原始打乱」。
+ * 那条是共轭进「十字朝下」之后的写法,不是任何人做过的打乱。
+ *
+ * 同一把还暴露了第二件事:PLL 那一行印的是
+ *
+ *     R2 L D2 M D M2 D L R2 L U M U2
+ *
+ * 十三个记号,谁也认不出那是 Z perm。根因是**顺序**:魔方按四分之一圈报,这一段是
+ * `L R' | R' L | U U | …`,`htmMoves` 先把中间那对 `R' R'` 合成 `R2`,`L R2 L` 就
+ * 再也配不出两个 M 了。合同面必须排在认中层**之后** —— 现在谱子这一层吃的是
+ * `quarterMoves`(一手一条),合同族搬进了 `humanize.ts`。
+ */
+describe('用户那把 15.269s(2026-08-04)', () => {
+  const SCR_U = "R2 B' L2 R D' B R2 B F' U R U2 B' F U2 L B D R2";
+  const TOK_U = ("L' L' F L U F F R' R' U' D' R D' R' F B' D F' B D' B D B' D B D' B' B'"
+    + " D B D L R' L U B' U' R L' D' L' D D L' D' L D' F B' U' L U F' B D' R D R'"
+    + " D R D L' D R' D' L L R' R' L U U R L' B L R' L R' F L R' R' L B R L' D D"
+  ).split(' ');
+  const TS_U = [
+    0, 82, 129, 202, 337, 540, 597, 1058, 1117, 1334, 2872, 2971, 3053, 3181, 3378, 3423,
+    3468, 3624, 4248, 4871, 5153, 5243, 5319, 5358, 5423, 5476, 5550, 5604, 5683, 5836,
+    6520, 6697, 6728, 6827, 6925, 7150, 7291, 7356, 7429, 7501, 7659, 8844, 8904, 9327,
+    9444, 9572, 10031, 10224, 10323, 10422, 10470, 10582, 10659, 10986, 11312, 11395,
+    11469, 11541, 11803, 11913, 11968, 12115, 12236, 12342, 12453, 12522, 13525, 13533,
+    13613, 13667, 13720, 13807, 13894, 13984, 14074, 14226, 14263, 14299, 14315, 14380,
+    14557, 14565, 14609, 14652, 14712, 14778, 14962, 15146, 15206,
+  ];
+  const GYRO_U = 'RwEAiAA2/AN85gCBBAx74wCU/v9/+wAcBQF/+gAvCgd85wCNDRh43wBSBSR14QBnBxR76gBYAAB/+QBS//h+8QBlCvR97QBoBe198wA//ux99wD79u59+QBs9e99/gHb9fB9BwBE7ON2HwDP8+d5GABe9ex8EABQ9vB9CgCz9fF9DwEN+fB9CwAl/O5+/ABSBuN56QBn/ep87gBT9ep9AACM+O19/gA9UetfBQBEUdlaAACaP9hm9gBs/+586gBXA/J+9QBICvt+DwBPFQNzMQCKEABxNwBGDf90MgA6Cv53KwCZB/p9FABCCP5//wC1BgB/BwBUBf1/BAC3+zZzAABX+0Ft/QCG+0pn+QBk2EJlBgBQ60lkEACOAVBjAAC9605hDQAdD11V+QAtF1pX/gAtEFxW+gE8EFha+wBZDFVe+gBaCFNg+gDhAVRf+QAvAVBi+QBYCE1k+ACcLz1WNQBxNDhSPAAuIElDSACHLEJLQQAsH0xCSABaKEZCSQBbP0FLLwCTDFxW9wB2HV5P+QBgImFK/gAsG2NK+gBcHF5Q+wCzDlZc/AAA/k5k/QCz+09j+gCH81JgAQBb7lZbCgBZ51ZXFwBb5lZVHABZ9FlZDwBa+ldcBAFo+09jCAC0AVNgCAAADGRNCQAB/nYu/gBZ9n4NAwAJ2Hj9EABR43r6FQAt8n4ABgBc/X4NAQBY+H4RAgDi+34P/gC+AH4S/AB+BH4O+QBZDWAIrwA7/2YOtgB/5WYhwgBnAGANrgBJDXwV8wBYBX0V/ABZAX4P/gC1AH4K+gC3/n4O/QFl3nYb7gAr7HsY+QAvCH4O+QAt9X0V/QCF+X0W/QBc6Xob+wBZx20b8QBazXEU7QC0wm0N8gBjy3EX/gAk7XsDGgAt8H34CwCHEX0J/gAtDX0R9ABaCn0R+gC0DH4O/QDhEX0O/ABaDX0I9AFFUGAU+wBQffUOCwBbfPkXDwBZe/ocCwBbazkk8wCGY0Qi6gBaY0cf7gCHbTgg9gBaasMaFgAuUKQQHgBZUKYRJQBb9InuKACzsKfaFwBb3JHiKAAA943xMwBZ8If2IgBZ7oP3DQCI8oP0CQ==';
+  const VERIFIED_U = [
+    'z2 // insp',
+    "R2' F R D F2 L2 D' // W cross",
+    "U' L U' L' S' L S // GR",
+    "d' R U R' U R U' R2' U R // BR",
+    "U FS' R U' R' S U' F' // OG",
+    "U2 y L' U' L U' S L' U L S' // OB/ZBLS",
+    "U' R U R' U R U L' U R' U' L // OLL(CP)",
+    "M2' U2 M U M2' U M2' U M U2 // PLL-Z",
+  ];
+  const mvU = TOK_U.map((m, i) => ({ m, ts: TS_U[i] }));
+
+  async function buildU(coreOverride = buildCoreTrack(decodeGyroTrack(GYRO_U), { brand: 'gan-v4' })) {
+    const segs = computeStageSegments(SCR_U, mvU, 15269)!;
+    const metrics = computeStepMetrics(SCR_U, mvU, 15269)!;
+    const slots = computeF2lSlots(SCR_U, mvU, 15269, segs);
+    const view = normalizeSolve(SCR_U, mvU);
+    const auto = await buildReconText({
+        scramble: view.scramble, moves: view.moves, totalMs: 15269,
+        segs, metrics, slots,
+        core: coreOverride,
+        physical: { scramble: SCR_U, moves: mvU }, viewRotation: view.rotation,
+      });
+    return { view, auto, r: applyReconTextOverride(auto, VERIFIED_U) };
+  }
+
+  it('89 手都在,一手不多一手不少', () => {
+    expect(mvU).toHaveLength(89);
+  });
+
+  it('印的是原始打乱,不是共轭过的那条', async () => {
+    const { r } = await buildU();
+    expect(r.scramble).toBe(SCR_U);
+    expect(r.scramble).not.toContain("R2 F' L2 R U'");
+  });
+
+  it('观察那一手写出来了 —— 十字在 U,`z2` 把它转下去,绿面留在前面', async () => {
+    const { view, r } = await buildU();
+    expect(view.crossFace).toBe('U');
+    expect(r.inspection).toBe('z2');
+    expect(r.text.split('\n')[0]).toBe('z2 // insp');
+    // 剪贴板那一份:打乱是原始的,紧跟着就是观察那一手。
+    const clip = reconTextForClipboard(r).split('\n');
+    expect(clip[1]).toBe(SCR_U);
+    expect(clip[3]).toBe('z2 // insp');
+  });
+
+  it('十字那一行和他手写的复盘逐字相同', async () => {
+    const { r } = await buildU();
+    expect(r.lines[0].moves.join(' ')).toBe("R2' F R D F2 L2 D'");
+  });
+
+  it('带姿态的整份复盘逐行等于用户核对过的真值', async () => {
+    const { r } = await buildU();
+    expect([
+      `${r.inspection} // insp`,
+      ...r.lines.map(line => `${line.moves.join(' ')} // ${line.label ?? ''}`.trim()),
+    ]).toEqual(VERIFIED_U);
+  });
+
+  it('PLL 认得出是 Z perm —— 十个记号,不是十三个', async () => {
+    const { r } = await buildU();
+    const pll = r.lines[r.lines.length - 1];
+    expect(pll.moves.join(' ')).toBe("M2' U2 M U M2' U M2' U M U2");
+  });
+
+  it('OLL 那一行不再把 PLL 的第一手偷过来', async () => {
+    const { r } = await buildU();
+    const oll = r.lines[r.lines.length - 2];
+    // 原流里 65 手和 66 手都是 `L`,中间隔着一秒 —— 不是一个 `L2` 手势,
+    // 而且它们分属 OLL 和 PLL。合同面不许跨步骤边界。
+    expect(oll.moves.join(' ')).toBe("U' R U R' U R U L' U R' U' L");
   });
 });

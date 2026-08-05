@@ -190,7 +190,11 @@ describe('normalizeSolve', () => {
   it('把十字转到 D,并说清楚它原本在哪', () => {
     expect(norm.changed).toBe(true);
     expect(norm.crossFace).toBe('U');
-    expect(norm.rotation).toBe('x2');
+    // 2026-08-04 从 `x2` 改成 `z2`:两个都是一手把 U 转到 D,判据是少动一个面。
+    // 魔方在协议里恒等于「白 U 绿 F」,`z2` 只把白转下去、绿留在 F,`x2` 连绿也甩到
+    // 后面。这一手现在会印在谱子第一行(`z2 // insp`),所以它就是人观察时那一下,
+    // 得写成人真会拿的样子。
+    expect(norm.rotation).toBe('z2');
   });
 
   it('手数一个不差 —— 共轭是换名,所有 endIdx 仍指原始流', () => {
