@@ -54,9 +54,11 @@
  */
 
 import { patternFromAlg } from '@/lib/cube3';
-import { buildCommentSuggestions } from '@/lib/popup_suggest';
+import { buildCommentSuggestions, crossFamilyCancelInto } from '@/lib/popup_suggest';
+import { sliceSplitTable } from '@/lib/slice-pair';
+import { detectStage } from '@/lib/stage_detect';
 
-import { conjugateCoreTrack } from './core_track';
+import { conjugateCoreTrack, CORE_EVENT_SLACK_MS } from './core_track';
 import type { CoreTrack } from './core_track';
 import { htmMoves, quarterMoves } from './htm';
 import { humanizeStream } from './humanize';
@@ -158,6 +160,7 @@ function stepSpans(
   segs: StageSegments,
   metrics: StepMetricsResult | null,
   slots: F2lSlotsResult | null,
+  moves: readonly SolveMove[],
 ): Span[] {
   const step = (k: string) => metrics?.steps.find(s => s.step === k) ?? null;
   const out: Span[] = [];
@@ -192,7 +195,25 @@ function stepSpans(
     });
   }
 
-  for (const k of ['oll', 'pll'] as const) {
+  const ollEnd = segs.ollEndIdx;
+  const solvedEnd = segs.solvedEndIdx;
+  const oneLookLl = ollEnd !== null && ollEnd !== undefined
+    && solvedEnd !== null && solvedEnd !== undefined
+    && solvedEnd > ollEnd
+    && moves.slice(ollEnd + 1, solvedEnd + 1).every(move => /^U(?:2'?|')?$/.test(move.m));
+
+  if (oneLookLl) {
+    const oll = step('oll');
+    const pll = step('pll');
+    const stepMs = (oll?.stepMs ?? segs.ollMs ?? 0) + (pll?.stepMs ?? segs.pllMs ?? 0);
+    const recognitionMs = oll?.recognitionMs ?? null;
+    out.push({
+      kind: 'oll', key: 'oll', endIdx: solvedEnd,
+      recognitionMs,
+      executionMs: recognitionMs === null ? null : Math.max(0, stepMs - recognitionMs),
+      stepMs,
+    });
+  } else for (const k of ['oll', 'pll'] as const) {
     const endIdx = k === 'oll' ? segs.ollEndIdx : segs.solvedEndIdx;
     if (endIdx === null || endIdx === undefined) continue;
     const st = step(k);
@@ -207,6 +228,25 @@ function stepSpans(
   // 同一手同时收尾两步(XCross、OLL skip、PLL skip)时后一步的 endIdx 和前一步
   // 相等 —— 那一步一个记号也没有,同样不占行。前面按顺序推入,所以只用比上一个。
   return out.filter((s, i) => i === 0 || s.endIdx > out[i - 1].endIdx);
+}
+
+/**
+ * A cross/xcross may be complete just before its final U adjustment. When that
+ * adjustment is followed by a clear recognition pause, keep it with the cross
+ * instead of presenting it as the first move of F2L. This also covers a fast
+ * opposite-face follow-through such as `D2 U'` without depending on direction.
+ */
+function snapCrossAufBeforePause(
+  rawEnd: number,
+  counted: ReturnType<typeof htmMoves>,
+  totalMs: number,
+): number {
+  const at = counted.findIndex(move => move.endIdx === rawEnd);
+  if (at < 0 || at >= counted.length - 1) return rawEnd;
+  const next = counted[at + 1];
+  if (!/^U(?:2'?|')?$/.test(next.m)) return rawEnd;
+  const followingTs = counted[at + 2]?.ts ?? totalMs;
+  return followingTs - next.endTs >= 1000 ? next.endIdx : rawEnd;
 }
 
 /** `['// GR', '// GR (6)', ...]` → `'GR'`。空数组 → null。 */
@@ -310,6 +350,62 @@ const WIDE_PAIRS = (() => {
   return out;
 })();
 
+function inverseRotationToken(token: string): string | null {
+  if (!/^[xyz](?:2'?|')?$/.test(token)) return null;
+  if (token.endsWith("2'")) return token.slice(0, -1);
+  if (token.endsWith('2')) return `${token}'`;
+  return token.endsWith("'") ? token.slice(0, -1) : `${token}'`;
+}
+
+/**
+ * A 3x3 wide turn rotates the sensor-bearing core and compensates with the
+ * opposite outer face. The gyro therefore resembles a whole-cube rotation,
+ * but it must not be treated like a whole-cube regrip. Exact, simultaneous
+ * pair candidates are only trusted when an inverse event later closes the
+ * frame; weave their inverse rotations back so the outer notifications compact
+ * to `r/l/u/d/f/b`.
+ */
+function markWideCoreEvents(
+  core: CoreTrack | null,
+  counted: ReturnType<typeof htmMoves>,
+): CoreTrack | null {
+  if (!core) return null;
+  const slicePairs = sliceSplitTable();
+  const candidates: number[] = [];
+  const wide = new Set<number>();
+  core.events.forEach((event, idx) => {
+    const inverse = inverseRotationToken(event.token);
+    if (!inverse) return;
+    const eventMs = event.startMs !== undefined && event.tMs - event.startMs <= 1200
+      ? event.startMs
+      : event.tMs;
+    const belongsToSlice = counted.some((move, moveIdx) => {
+      const next = counted[moveIdx + 1];
+      return !!next && slicePairs.has(`${move.m} ${next.m}`)
+        && event.tMs >= move.ts - CORE_EVENT_SLACK_MS
+        && event.tMs <= next.endTs + CORE_EVENT_SLACK_MS;
+    });
+    if (belongsToSlice) return;
+    const outer = counted.find(move => {
+      const close = Math.min(Math.abs(move.ts - eventMs), Math.abs(move.endTs - eventMs)) <= 120;
+      return close && (WIDE_PAIRS.has(`${move.m} ${inverse}`) || WIDE_PAIRS.has(`${inverse} ${move.m}`));
+    });
+    if (!outer) return;
+    candidates.push(idx);
+  });
+  for (let i = 0; i + 1 < candidates.length; i += 1) {
+    const aIdx = candidates[i], bIdx = candidates[i + 1];
+    const a = core.events[aIdx], b = core.events[bIdx];
+    if (bIdx === aIdx + 1 && b.tMs - a.tMs <= 4000
+      && inverseRotationToken(a.token) === b.token) {
+      wide.add(aIdx);
+      wide.add(bIdx);
+      i += 1;
+    }
+  }
+  return { events: core.events.map((event, idx) => (wide.has(idx) ? { ...event, wide: true } : event)) };
+}
+
 function sameAxisFaceSlice(face: string, slice: string): boolean {
   return ((face === 'F' || face === 'B') && slice === 'S')
     || ((face === 'R' || face === 'L') && slice === 'M')
@@ -318,9 +414,26 @@ function sameAxisFaceSlice(face: string, slice: string): boolean {
 
 function compactNotation(items: WovenItem[], absorbedRotations: Set<number>): WovenItem[] {
   const out: WovenItem[] = [];
+  const opposite: Readonly<Record<string, string>> = {
+    B: 'F', F: 'B', L: 'R', R: 'L', D: 'U', U: 'D',
+  };
+  const pairOrder: Readonly<Record<string, number>> = {
+    B: 0, F: 1, L: 0, R: 1, D: 0, U: 1,
+  };
   for (let i = 0; i < items.length; i += 1) {
     const a = items[i], b = items[i + 1];
     if (b) {
+      const aFace = /^([UDFBLR])(?:2'?|')?$/.exec(a.token)?.[1];
+      const bFace = /^([UDFBLR])(?:2'?|')?$/.exec(b.token)?.[1];
+      // Near-simultaneous opposite faces commute, and Bluetooth arrival order
+      // can flip them. Give these two-hand gestures one stable written order.
+      if (a.rotationMs === undefined && b.rotationMs === undefined
+        && aFace && bFace && opposite[aFace] === bFace
+        && b.ts - a.endTs <= 100 && pairOrder[aFace] > pairOrder[bFace]) {
+        out.push(b, a);
+        i += 1;
+        continue;
+      }
       const wide = WIDE_PAIRS.get(`${a.token} ${b.token}`);
       if (wide && (a.rotationMs !== undefined || b.rotationMs !== undefined)) {
         const rotationMs = a.rotationMs ?? b.rotationMs;
@@ -349,6 +462,12 @@ function compactNotation(items: WovenItem[], absorbedRotations: Set<number>): Wo
 function displayLabel(label: string | null): string | null {
   if (!label) return null;
   return label.replace(/^EPLL-/, 'PLL-');
+}
+
+function crossIsDone(stage: string): boolean {
+  return stage === 'cross' || stage === 'xcross' || stage === 'xxcross'
+    || stage === 'xxxcross' || stage === 'f2l' || stage === 'oll'
+    || stage === 'pll' || stage === 'solved';
 }
 
 function weaveRotations(
@@ -389,9 +508,10 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
   const counted = htmMoves(moves);
   // 姿态流是魔方自己配色系里的,而 `moves` 已经被 `orient.ts` 转进「十字朝下」——
   // 转体的记号得跟着换,不然谱子里的 `x` 和它旁边的动作不是一个系的。
-  const core = input.core
+  const measuredCore = input.core
     ? conjugateCoreTrack(input.core, facePermFor(input.viewRotation ?? ''))
     : null;
+  const core = markWideCoreEvents(measuredCore, counted);
   // 中层还原 + 转体。魔方按「相对中心核」报手法,所以一个 `S` 到这里是一对相对面 +
   // 后面每一手都被换了名 —— 那行谱子于是不像任何公式。转体同理,而且它和中层改的是
   // 同一个 ρ,所以一趟走完。只重写**写出来的记号**:计步、识别、参考解仍然吃
@@ -407,16 +527,23 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
   // Stage detection can therefore fire after the first event, in the middle of
   // one physical gesture. Keep that gesture on one line and evaluate the stage
   // only after its final event.
-  const snappedEnd = (rawEnd: number): number => {
+  const snappedEnd = (span: Span): number => {
+    const rawEnd = span.endIdx;
     let end = rawEnd;
     for (const move of roughHumanized.moves) {
-      if (move.startIdx <= end && move.endIdx > end) end = move.endIdx;
+      const families = new Set(
+        moves.slice(move.startIdx, move.endIdx + 1).map(raw => /^([UDFBLR])/.exec(raw.m)?.[1]),
+      );
+      const fastSameFace = move.endTs - move.ts <= 200;
+      if ((families.size > 1 || fastSameFace) && move.startIdx <= end && move.endIdx > end) {
+        end = move.endIdx;
+      }
     }
-    return end;
+    return span.kind === 'cross' ? snapCrossAufBeforePause(end, counted, totalMs) : end;
   };
-  const snappedSpans = stepSpans(segs, metrics, slots).map(span => ({
+  const snappedSpans = stepSpans(segs, metrics, slots, moves).map(span => ({
     ...span,
-    endIdx: snappedEnd(span.endIdx),
+    endIdx: snappedEnd(span),
   }));
   const spans = snappedSpans.filter((span, i) => i === 0 || span.endIdx > snappedSpans[i - 1].endIdx);
   const humanized = humanizeStream(quarterMoves(moves), {
@@ -444,6 +571,7 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
   const lines: ReconTextLine[] = [];
   let prevEnd = -1;
   let prevPattern = await patternFromAlg(alg(phys.scramble, viewRot));
+  const patternHistory = [prevPattern];
 
   // 这一行的时间窗:上一行最后一手之后 → 自己最后一手为止。第一行往前开口到无穷,
   // 因为起表前后那次「把魔方摆正」属于它。
@@ -466,13 +594,39 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
 
     let label: string | null = null;
     try {
+      let effectivePrev = prevPattern;
+      const prevInfo = await detectStage(prevPattern);
+      if (!crossIsDone(prevInfo.stage)) {
+        const beforePrevPattern = patternHistory.at(-2) ?? patternHistory[0];
+        const beforePrevInfo = await detectStage(beforePrevPattern);
+        const isCancelInto = crossIsDone(beforePrevInfo.stage)
+          || (await crossFamilyCancelInto(beforePrevInfo, prevPattern)).length > 0;
+        if (isCancelInto) {
+          const prefix = phys.moves.slice(from, span.endIdx + 1);
+          for (let k = 1; k <= prefix.length; k += 1) {
+            const through = prefix[k - 1].m;
+            const candidate = await patternFromAlg(alg(
+              phys.scramble,
+              rawUpTo(from - 1),
+              prefix.slice(0, k - 1).map(move => move.m).join(' '),
+              through,
+              viewRot,
+            ));
+            if (crossIsDone((await detectStage(candidate)).stage)) {
+              effectivePrev = candidate;
+              break;
+            }
+          }
+        }
+      }
       label = firstLabel(await buildCommentSuggestions({
-        prevPattern,
+        prevPattern: effectivePrev,
         currPattern,
         // 局面是真颜色的,喂给它的动作也必须是同一系的原始记号。
         lineMovesText: tokensForRange(phys.moves, physCounted, from, span.endIdx).join(' '),
         prevMovesText: prevEnd >= 0 ? rawUpTo(prevEnd) : '',
         moveCount: turnTokens.length,
+        explicit: true,
       }));
     } catch (err) {
       console.warn('[recon-text] label failed for', span.key, err);
@@ -493,6 +647,7 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
 
     prevEnd = span.endIdx;
     prevPattern = currPattern;
+    patternHistory.push(currPattern);
   }
 
   // 最后一手之后还有动作(拧过头了、或者切分没走到底)——照实补一行,不丢。

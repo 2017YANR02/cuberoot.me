@@ -19,15 +19,12 @@
  *     breaks it at 16 and restores it at 20, and the backwards scan reports both
  *     pairs as finishing at 20.
  *
- * So we count the way the stage walker does — by first arrival at a new high
- * water mark. Walk forward tracking how many pairs stand; when that count
- * exceeds every earlier count, the pairs newly standing are the ones that move
- * finished. A dip and recovery sets no record and is charged to nobody, which is
- * exactly right: the disturbance belongs to the pair being inserted.
- *
- * The residual case this gets wrong is a pair solved by accident, broken, and
- * genuinely solved later: it is credited to the accident. That is not a silent
- * error — undoing your own work is what `error_detect.ts` reports.
+ * So we start with the stage walker's high-water mark: when the number of
+ * standing pairs exceeds every earlier count, the newly standing pair gets the
+ * boundary. One real-solve correction sits on top: if that provisional pair is
+ * broken, restored, and followed by a clear recognition pause, the restoration
+ * replaces the accidental pass-through. A dip with no pause stays charged to
+ * the next insertion, so B-turn disturbances still do not move old boundaries.
  *
  * A pair that is already together when the cross lands (an XCross, or a pair the
  * scramble left standing) never sets a record. Those are reported as `free` with
@@ -327,16 +324,40 @@ export function computeF2lSlots(
 
   // Pairs already up when the cross landed. They set no record and cost nothing.
   const free = new Set(standing(crossEndIdx));
-  // High water mark: a pair is credited to the first move that pushed the count
-  // of standing pairs past every earlier count. See the header.
+  // High water mark. A slot can also look solved for one move in the middle of
+  // an insertion, fall out, then be restored immediately before the cuber stops
+  // to inspect the next pair. That long pause is the observable difference
+  // between an accidental pass-through and the intended finish, so a settled
+  // recovery may replace the provisional boundary. Brief dips while inserting
+  // the next pair do not: without a pause, the original high-water mark stays.
   const closedAt = new Map<F2lSlotId, number>();
   let peak = free.size;
+  const frozen = new Set(free);
+  let currentLevel: F2lSlotId[] = [];
+  let dipped = false;
+  const SETTLED_GAP_MS = 900;
   for (let i = crossEndIdx + 1; i <= horizon; i++) {
     const cur = standing(i);
-    if (cur.length <= peak) continue;
-    peak = cur.length;
-    for (const id of cur) {
-      if (!free.has(id) && !closedAt.has(id)) closedAt.set(id, i);
+    if (cur.length > peak) {
+      for (const id of currentLevel) frozen.add(id);
+      peak = cur.length;
+      currentLevel = cur.filter(id => !frozen.has(id));
+      for (const id of currentLevel) closedAt.set(id, i);
+      dipped = false;
+      continue;
+    }
+    if (cur.length < peak) {
+      dipped = true;
+      continue;
+    }
+    const nextTs = moves[i + 1]?.ts ?? totalMs;
+    if (dipped
+      && nextTs - moves[i].ts >= SETTLED_GAP_MS
+      && [...frozen].every(id => cur.includes(id))) {
+      for (const id of currentLevel) closedAt.delete(id);
+      currentLevel = cur.filter(id => !frozen.has(id));
+      for (const id of currentLevel) closedAt.set(id, i);
+      dipped = false;
     }
   }
 

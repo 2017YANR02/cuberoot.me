@@ -257,6 +257,7 @@ function planSegment(
   counted: readonly HtmMove[],
   table: ReadonlyMap<string, SliceSplit>,
   forced: readonly boolean[],
+  eligible: readonly boolean[],
   from: number,
   to: number,
   chosen: Set<number>,
@@ -270,7 +271,7 @@ function planSegment(
     const a = counted[from + p];
     const b = p + 1 < len ? counted[from + p + 1] : undefined;
     const split = b ? table.get(`${a.m} ${b.m}`) : undefined;
-    if (!split || faceToken(a.m) === null) { cand.push(null); continue; }
+    if (!split || faceToken(a.m) === null || !eligible[from + p]) { cand.push(null); continue; }
     cand.push(facePermFor(split.rotation));
     any = true;
   }
@@ -330,6 +331,7 @@ function planMerges(
   counted: readonly HtmMove[],
   table: ReadonlyMap<string, SliceSplit>,
   forced: readonly boolean[],
+  eligible: readonly boolean[],
   boundaries: ReadonlySet<number> | undefined,
 ): Set<number> {
   const chosen = new Set<number>();
@@ -338,7 +340,7 @@ function planMerges(
   while (from < n) {
     let to = from;
     while (to < n - 1 && !(boundaries?.has(counted[to].endIdx) ?? false)) to++;
-    planSegment(counted, table, forced, from, to, chosen);
+    planSegment(counted, table, forced, eligible, from, to, chosen);
     from = to + 1;
   }
   return chosen;
@@ -362,10 +364,23 @@ export function humanizeStream(
     const b = counted[i + 1];
     return !!core && !!b && coreTurnsIn(core, a.ts, b.endTs).length > 0;
   });
+  const eligible = counted.map(() => true);
+  // Cross algorithms often contain two unrelated opposite-face turns whose
+  // implied centre rotations happen to cancel algebraically. With a recorded
+  // core track, require positive physical evidence before rewriting such a pair
+  // as M/E/S in the first step; later algorithmic slices keep the algebraic
+  // fallback because the sensor may miss a brief middle-layer gesture.
+  if (core && boundaries && boundaries.size > 0) {
+    const firstBoundary = Math.min(...boundaries);
+    for (let i = 0; i < counted.length; i++) {
+      if (counted[i].endIdx > firstBoundary) break;
+      if (!forced[i]) eligible[i] = false;
+    }
+  }
   // 「哪几对是中层」整段解出来再走下面这一趟。先求纯代数方案,再求带姿态阳性的
   // 增量方案；判据是中心块必须回家,不是间隔,也不是「姿态流没看见就算没有」。
-  const algebraicPlan = planMerges(counted, table, counted.map(() => false), boundaries);
-  const measuredPlan = planMerges(counted, table, forced, boundaries);
+  const algebraicPlan = planMerges(counted, table, counted.map(() => false), eligible, boundaries);
+  const measuredPlan = planMerges(counted, table, forced, eligible, boundaries);
   // 姿态阳性只在它能认出更多中层时介入。相同合并数时纯代数方案已经满足中心
   // 回位,而真机姿态里的短暂倾斜可能恰好落进别的相对面对,不能拿它改写整段。
   const planned = measuredPlan.size > algebraicPlan.size ? measuredPlan : algebraicPlan;
@@ -418,6 +433,7 @@ export function humanizeStream(
   const leftover = events.map((event, idx) => ({ event, idx })).filter(x => !claimed.has(x.idx));
   for (let i = 0; i + 1 < leftover.length; i += 1) {
     const a = leftover[i], b = leftover[i + 1];
+    if (a.event.wide || b.event.wide) continue;
     if (b.event.tMs - a.event.tMs <= 750 && inverseToken(a.event.token) === b.event.token) {
       suppressed.add(a.idx);
       suppressed.add(b.idx);
@@ -430,6 +446,7 @@ export function humanizeStream(
   const briefSettle = new Set<number>();
   for (let i = 0; i + 1 < leftover.length; i += 1) {
     const current = leftover[i], next = leftover[i + 1];
+    if (current.event.wide || next.event.wide) continue;
     if (current.event.startMs === undefined || next.event.startMs === undefined) continue;
     if (next.event.startMs - current.event.tMs < 250) briefSettle.add(current.idx);
   }
@@ -462,12 +479,21 @@ export function humanizeStream(
     while (evPtr < events.length && eventTime(events[evPtr]) <= tMs) {
       const idx = evPtr++;
       if (claimed.has(idx) || suppressed.has(idx)) continue;
-      const token = events[idx].token;
+      const event = events[idx];
+      const token = event.wide ? inverseToken(event.token) : event.token;
       // `?` = 复合转体(两次挨太近被并成一步)。宁可不写也不硬塞一个名字 —— 但 ρ
       // 也就跟着不准了,所以这里连 ρ 都不动:写错的谱子比缺一个转体的谱子更糟。
       if (!/^[xyz]/.test(token)) continue;
-      if (briefSettle.has(idx) && makesNextTurnsWorse(events[idx], token)) continue;
-      rotations.push({ tMs: eventTime(events[idx]), token: rename(token) });
+      if (briefSettle.has(idx) && makesNextTurnsWorse(event, token)) continue;
+      rotations.push({ tMs: eventTime(event), token: rename(token) });
+      if (event.wide) {
+        // A wide turn moves the sensor-bearing core while the user's view stays
+        // put. Its frame update is therefore the same direction as a slice,
+        // not the inverse used for a whole-cube regrip.
+        advance(event.token);
+        noJoinBefore = out.length;
+        continue;
+      }
       advance(invertRotation(token));    // 转体的方向和中层相反,见 `advance`
       // 转体把「相邻」打断了:它前后那两手中间人把魔方转过,不是一个手势。
       noJoinBefore = out.length;
