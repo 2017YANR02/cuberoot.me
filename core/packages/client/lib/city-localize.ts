@@ -82,7 +82,15 @@ export function normalizeCityKey(city: string): string {
 // 单段译:第 1 段=城市,其余=行政区。生成字典(按国家 scope)优先,再回退手维护表。
 function translateSeg(seg: string, idx: number, I: string): string {
   const k = `${I}:${normSeg(seg)}`;
-  const gen = idx === 0 ? PLACE_CITY_ZH[k] : (PLACE_ADMIN_ZH[k] ?? PLACE_CITY_ZH[k]);
+  // 瑞士等地常把州缩写写在城市后面:`La Tour-de-Peilz (VD)`。生成表存的是城市本名,
+  // 查整串会变成 latourdepeilzvd 而漏掉已有的 latourdepeilz;只对 2~3 位大写行政缩写
+  // 做第二次查找,不碰 `(Vicenza)` 这类真正参与地名消歧的括号内容。
+  const bare = seg.replace(/\s*\([A-Z]{2,3}\)\s*$/, '').trim();
+  const bareKey = `${I}:${normSeg(bare)}`;
+  const lookup = (key: string) => idx === 0
+    ? PLACE_CITY_ZH[key]
+    : (PLACE_ADMIN_ZH[key] ?? PLACE_CITY_ZH[key]);
+  const gen = lookup(k) ?? (bareKey !== k ? lookup(bareKey) : undefined);
   return gen ?? CITY_ZH[normalizeCityKey(seg)] ?? seg;
 }
 

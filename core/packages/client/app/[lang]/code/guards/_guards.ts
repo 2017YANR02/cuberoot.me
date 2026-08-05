@@ -271,6 +271,12 @@ export const CI_GUARDS_API: CiGuard[] = [
     zh: { title: '进会议的按钮不能被自家 CSS 藏掉', desc: '/meet 入会前那一屏用的是 @livekit/components-react 的 PreJoin,而它把「进入会议」这个 submit 按钮和用户名输入框放在**同一个 <form> 里**。meet.css 想藏掉输入框(名字取自账号,改了不算数),写成了藏这个 form —— 于是按钮跟着一起没了。后果不是难看:join() 全站只有 PreJoin 的 onSubmit 一个调用方,按钮没了等于任何人在任何设备上都进不了会议,而 typecheck / eslint / vitest / knip 全绿,功能照常「部署成功」,只有真去点一次才发现。守卫从库的产物里认出按钮的父容器类名,再扫 meet.css 里所有 display:none 的选择器,落在祖先链任何一环上就红;库升级换了结构也会一起红。' },
     en: { title: 'Our CSS must not hide the button that enters a meeting', desc: '/meet’s pre-join screen is @livekit/components-react’s PreJoin, which puts the “Join” submit button and the username input inside the *same* <form>. meet.css meant to hide the input (the display name comes from the account, so editing it changes nothing) but targeted that form instead — taking the button with it. The consequence is not cosmetic: join() has exactly one caller, PreJoin’s onSubmit, so with no button nobody can enter a meeting on any device, while typecheck, eslint, vitest and knip all stay green and the feature still “deploys fine”. Only clicking it once reveals anything. The guard reads the button’s parent container class out of the library’s shipped bundle, then scans every display:none selector in meet.css and fails if one lands on any link of that ancestor chain — so a library restructure trips it too.' },
   },
+  {
+    id: 'meet-production-guards',
+    test: 'meet-production-guards.test.ts',
+    zh: { title: '会议上线的四条硬约束', desc: '/meet 的人数硬上限必须随 token 在首个参与者真正连接时原子建房,不能让只请求 token 的人批量停放零带宽空房;手机聊天和参与者面板必须相对 visualViewport 已缩小的会议台定位,不能被软键盘、全局通知条或安全区盖住;侧栏打开后控制条要提前切成图标档;连接、重连和断开提示必须全部走中英双语。四处跨越服务端、第三方组件 DOM 和响应式 CSS,任何一处退化都能在 typecheck 全绿时直接破坏线上使用。' },
+    en: { title: 'Four hard constraints for production meetings', desc: '/meet must carry its hard participant cap in the token and create a room atomically only when the first participant really connects, rather than letting token-only requests park zero-bandwidth rooms; mobile chat and roster panels must be positioned against the visual-viewport-sized meeting stage so the keyboard, notice bar and safe area cannot cover them; opening a side panel must move the control bar to icon-only mode earlier; and connecting, reconnecting and disconnected states must all use the bilingual UI. These invariants cross the server, third-party component DOM and responsive CSS, so each can break production while typecheck remains green.' },
+  },
 ];
 
 export interface ProcessGuard {

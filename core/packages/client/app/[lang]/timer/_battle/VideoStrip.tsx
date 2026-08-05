@@ -24,10 +24,11 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { LiveKitRoom } from '@livekit/components-react';
+import type { DisconnectReason } from 'livekit-client';
 import { Video } from 'lucide-react';
 
 import VideoTiles from '@/components/video/VideoTiles';
-import { LIVEKIT_ROOM_OPTIONS, denyMessage, type FailReason } from '@/components/video/video-call';
+import { LIVEKIT_ROOM_OPTIONS, denyMessage, disconnectMessage, type FailReason } from '@/components/video/video-call';
 import { tr } from '@/i18n/tr';
 import {
   VideoDeniedError,
@@ -49,7 +50,7 @@ export interface VideoRoom {
   maxParticipants: number;
   /** 开 / 关视频。已连接时再点就是挂断。 */
   toggle: () => void;
-  leave: () => void;
+  leave: (reason?: DisconnectReason) => void;
   fail: (reason: FailReason) => void;
 }
 
@@ -77,7 +78,10 @@ export function useVideoRoom(code: string | null, pid: string | null): VideoRoom
     [maxParticipants],
   );
 
-  const leave = useCallback(() => { setToken(null); setErr(null); }, []);
+  const leave = useCallback((reason?: DisconnectReason) => {
+    setToken(null);
+    setErr(disconnectMessage(reason));
+  }, []);
 
   const toggle = useCallback(() => {
     if (token) { leave(); return; }

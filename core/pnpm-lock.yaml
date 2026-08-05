@@ -380,6 +380,9 @@ importers:
       '@hono/node-server':
         specifier: ^1.0.0
         version: 1.19.11(hono@4.12.9)
+      '@livekit/protocol':
+        specifier: ^1.50.4
+        version: 1.50.4
       '@types/ws':
         specifier: ^8.18.1
         version: 8.18.1

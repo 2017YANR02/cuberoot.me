@@ -16,6 +16,12 @@ import { localizeCity } from '@/lib/city-localize';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..'); // packages/client
 const DATA = join(ROOT, '..', '..', '..', 'stats', 'all_upcoming_comps.json'); // 仓库根 stats/
 
+describe('city-localize administrative suffixes', () => {
+  it('reuses the base city translation when a Swiss canton code is appended', () => {
+    expect(localizeCity('La Tour-de-Peilz (VD)', true, 'CH')).toBe('拉图尔德佩勒');
+  });
+});
+
 const hasCjk = (s: string) => /[㐀-鿿]/.test(s);
 // 纯数字 / 符号城市段(WCA 个别数据把邮编填进城市)无中文可译,豁免。
 const isUntranslatable = (s: string) => !/[A-Za-z㐀-鿿]/.test(s);
