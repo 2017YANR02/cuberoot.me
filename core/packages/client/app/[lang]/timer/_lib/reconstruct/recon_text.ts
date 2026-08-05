@@ -22,17 +22,17 @@
  * 排序不是我们重新定的 —— 弹窗里排第一的那条就是 /recon 认为最该填的那条,
  * 在这里换个挑法等于把复用来的模块又猜一遍。
  *
- * ## 边界用 timer 自己的,不重新切
+ * ## 边界沿用 timer 的阶段,但不能切开一个物理手势
  *
  * 行的切点 = 表里那几列的切点(十字末手、四对各自末手、OLL 末手、PLL 末手),
- * 直接读 `stage_segments` / `f2l_slots` 已经算好的 `endIdx`。这样文字复盘和
- * 分步分析表**永远是同一把刀切的**:表里第 3 组写 7 步,文字里第 3 组就是 7 个
- * 记号。要是这里另起一套识别去切,两处一旦不一致,用户看到的是两个都不可信的东西。
+ * 先读 `stage_segments` / `f2l_slots` 已经算好的 `endIdx`。唯一修正是:智能魔方把
+ * 一个中层/宽层手势报成多条外层通知时,阶段可能在第一条通知后短暂成立;切点必须
+ * 推到这个手势的最后一条通知,否则一个 `S` 会被劈到两行、前一行的标签也认不出。
  *
  * 空的一步(白给的那一对 / OLL 跳过)`endIdx` 是 null,不占一行 —— 一行零个记号
  * 配一个标签是噪声,它在表里已经写着「跳过」了。
  *
- * 唯一一处「表里的步数 ≠ 这里的记号数」是**中层**:魔方把一个 `S` 报成一对相对面,
+ * 「表里的步数 ≠ 这里的记号数」主要来自**中层**:魔方把一个 `S` 报成一对相对面,
  * `humanize.ts` 把它写回一个 `S`,于是那一行比表里少一个记号。切点一手没动,少的
  * 那个就是被并进中层的那一半 —— 详见 `humanize.ts` 头注。
  *
@@ -65,8 +65,8 @@ import type { F2lSlotsResult } from './f2l_slots';
 import { facePermFor } from './orient';
 import type { SolveMove, StageSegments } from './stage_segments';
 import { stepTimeBounds } from './rotation_detect';
-import { tokensForRange } from './step_metrics';
-import type { StepMetricsResult } from './step_metrics';
+import { moveItemsForRange, tokensForRange } from './step_metrics';
+import type { RangeMoveItem, StepMetricsResult } from './step_metrics';
 
 /** 一行属于哪一类。UI 用它决定缩进和配色,和表里的 `tone` 对得上。 */
 export type ReconLineKind = 'inspection' | 'cross' | 'f2l' | 'oll' | 'pll';
@@ -268,12 +268,6 @@ export interface ReconTextInput {
 }
 
 /**
- * 产出整段文字复盘。异步:识别那一层是 cubing.js 的活。
- *
- * 任何一行识别失败(查表抛异常、打乱有引擎读不了的记号)只让那一行的 `label`
- * 变成 null,不会带走整段 —— 一份只差几个标签的谱子仍然有用。
- */
-/**
  * 把转体按时刻插进一行的动作里。
  *
  * 位置靠**时刻**定,而不是靠下标 —— 转体压根不在动作流里,没有下标可用。一次转体
@@ -282,42 +276,120 @@ export interface ReconTextInput {
  * 记号本身已经是人的视角了(`humanize.ts` 换过名,和它旁边那些动作同一个 ρ),
  * 这里只管摆位置。
  *
- * `lineMoves` 是 `tokensForRange` 已经按 HTM 合并过的记号,和原始动作流不是一一对应
- * (半转会被并成一条),所以插入位置按**原始**动作的时刻算出下标,再按「这是这一行
- * 的第几手」折算到合并后的序列上 —— 合并只会让位置提前,不会把转体挪到别的行去。
+ * `lineMoves` 的每个合并记号仍保留第一条原始通知的时刻,所以直接逐项比较。不能按
+ * 动作数量做比例折算:某一段中层很多时,合并前后的数量差会把 `y` 推迟好几手。
  */
-function weaveRotations(
-  lineMoves: string[],
-  rots: readonly HumanRotation[],
-  moves: SolveMove[],
-  from: number,
-  to: number,
-): string[] {
-  if (rots.length === 0) return lineMoves;
-  const n = to - from + 1;
-  if (n <= 0) return lineMoves;
-  // 原始下标 → 合并后下标。第 k 手原始动作落在合并序列的哪个位置,按比例折算:
-  // 合并只会缩短,`lineMoves.length <= n`,所以这个映射单调不减且不越界。
-  const mapIdx = (rawOffset: number): number =>
-    Math.min(lineMoves.length, Math.round((rawOffset / n) * lineMoves.length));
-  const out: string[] = [];
-  let cursor = 0;
-  const placed = rots.map((r) => {
-    let off = 0;
-    while (off < n && moves[from + off].ts < r.tMs) off++;
-    return { token: r.token, at: mapIdx(off) };
-  }).sort((a, b) => a.at - b.at);
-  for (const p of placed) {
-    while (cursor < p.at) out.push(lineMoves[cursor++]);
-    out.push(p.token);
+interface WovenItem extends RangeMoveItem {
+  rotationMs?: number;
+}
+
+function quarterToken(family: string, quarters: number): string {
+  return quarters === 1 ? family : quarters === 2 ? `${family}2` : `${family}'`;
+}
+
+const WIDE_PAIRS = (() => {
+  const out = new Map<string, string>();
+  const defs = [
+    ['r', 'x', 1, 'L'], ['l', 'x', 3, 'R'],
+    ['u', 'y', 1, 'D'], ['d', 'y', 3, 'U'],
+    ['f', 'z', 1, 'B'], ['b', 'z', 3, 'F'],
+  ] as const;
+  for (const [wide, rotation, rotationQuarter, face] of defs) {
+    for (const q of [1, 2, 3]) {
+      const rot = quarterToken(rotation, (rotationQuarter * q) % 4);
+      const outer = quarterToken(face, q);
+      const result = quarterToken(wide, q);
+      out.set(`${rot} ${outer}`, result);
+      out.set(`${outer} ${rot}`, result);
+    }
   }
-  while (cursor < lineMoves.length) out.push(lineMoves[cursor++]);
+  return out;
+})();
+
+function sameAxisFaceSlice(face: string, slice: string): boolean {
+  return ((face === 'F' || face === 'B') && slice === 'S')
+    || ((face === 'R' || face === 'L') && slice === 'M')
+    || ((face === 'U' || face === 'D') && slice === 'E');
+}
+
+function compactNotation(items: WovenItem[], absorbedRotations: Set<number>): WovenItem[] {
+  const out: WovenItem[] = [];
+  for (let i = 0; i < items.length; i += 1) {
+    const a = items[i], b = items[i + 1];
+    if (b) {
+      const wide = WIDE_PAIRS.get(`${a.token} ${b.token}`);
+      if (wide && (a.rotationMs !== undefined || b.rotationMs !== undefined)) {
+        const rotationMs = a.rotationMs ?? b.rotationMs;
+        if (rotationMs !== undefined) absorbedRotations.add(rotationMs);
+        out.push({
+          token: wide,
+          ts: Math.min(a.ts, b.ts), endTs: Math.max(a.endTs, b.endTs),
+          startIdx: Math.min(a.startIdx, b.startIdx), endIdx: Math.max(a.endIdx, b.endIdx),
+        });
+        i += 1;
+        continue;
+      }
+      const face = /^([UDFBLR])([2']?)$/.exec(a.token);
+      const slice = /^([MES])([2']?)$/.exec(b.token);
+      if (face && slice && sameAxisFaceSlice(face[1], slice[1]) && b.ts - a.ts <= 80) {
+        out.push({ ...a, token: `${a.token}${b.token}`, endTs: b.endTs, endIdx: b.endIdx });
+        i += 1;
+        continue;
+      }
+    }
+    out.push(a);
+  }
   return out;
 }
 
+function displayLabel(label: string | null): string | null {
+  if (!label) return null;
+  return label.replace(/^EPLL-/, 'PLL-');
+}
+
+function styleRecognizedAlg(moves: string[], label: string | null): string[] {
+  if (label !== 'PLL-Z') return moves;
+  const canonical = 'M2 U2 M U M2 U M2 U M U2';
+  if (moves.join(' ') !== canonical) return moves;
+  // 这条 Z perm 的手法方向写作 M2'；半转置换相同，但方向信息对指法复盘有用。
+  return moves.map(move => move === 'M2' ? "M2'" : move);
+}
+
+function weaveRotations(
+  lineMoves: RangeMoveItem[],
+  rots: readonly HumanRotation[],
+  absorbedRotations: Set<number>,
+): string[] {
+  const out: WovenItem[] = [];
+  let cursor = 0;
+  const placed = rots.map((r) => {
+    let at = 0;
+    while (at < lineMoves.length && lineMoves[at].ts < r.tMs) at++;
+    return { ...r, at };
+  }).sort((a, b) => a.at - b.at);
+  for (const p of placed) {
+    while (cursor < p.at) out.push(lineMoves[cursor++]);
+    out.push({
+      token: p.token,
+      ts: p.tMs,
+      endTs: p.tMs,
+      startIdx: -1,
+      endIdx: -1,
+      rotationMs: p.tMs,
+    });
+  }
+  while (cursor < lineMoves.length) out.push(lineMoves[cursor++]);
+  return compactNotation(out, absorbedRotations).map(item => item.token);
+}
+
+/**
+ * 产出整段文字复盘。异步:识别那一层是 cubing.js 的活。
+ *
+ * 任何一行识别失败(查表抛异常、打乱有引擎读不了的记号)只让那一行的 `label`
+ * 变成 null,不会带走整段 —— 一份只差几个标签的谱子仍然有用。
+ */
 export async function buildReconText(input: ReconTextInput): Promise<ReconTextResult> {
   const { scramble, moves, totalMs, segs, metrics, slots } = input;
-  const spans = stepSpans(segs, metrics, slots);
   const counted = htmMoves(moves);
   // 姿态流是魔方自己配色系里的,而 `moves` 已经被 `orient.ts` 转进「十字朝下」——
   // 转体的记号得跟着换,不然谱子里的 `x` 和它旁边的动作不是一个系的。
@@ -331,13 +403,34 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
   // 谱子这一层吃**一手一条**的流,不是合过同面的 `counted`:合同面和配中层抢同一批
   // 记号,而先合同面会把中层拆散(`L R' R' L` → `L R2 L`,两个 M 全没了)。合同族
   // 现在在 `humanizeStream` 里做,排在认中层之后。计步照旧走 `counted`。
+  // First pass discovers the physical gesture spans without stage cuts. The
+  // second pass below restores the stage-level centre invariant after those
+  // cuts have been moved out of the middle of any discovered gesture.
+  const roughHumanized = humanizeStream(quarterMoves(moves), { core });
+  // A slice/wide gesture reaches the protocol as multiple outer-face events.
+  // Stage detection can therefore fire after the first event, in the middle of
+  // one physical gesture. Keep that gesture on one line and evaluate the stage
+  // only after its final event.
+  const snappedEnd = (rawEnd: number): number => {
+    let end = rawEnd;
+    for (const move of roughHumanized.moves) {
+      if (move.startIdx <= end && move.endIdx > end) end = move.endIdx;
+    }
+    return end;
+  };
+  const snappedSpans = stepSpans(segs, metrics, slots).map(span => ({
+    ...span,
+    endIdx: snappedEnd(span.endIdx),
+  }));
+  const spans = snappedSpans.filter((span, i) => i === 0 || span.endIdx > snappedSpans[i - 1].endIdx);
   const humanized = humanizeStream(quarterMoves(moves), {
-    boundaries: new Set(spans.map(s => s.endIdx)),
     core,
+    boundaries: new Set(spans.map(span => span.endIdx)),
   });
   const rotations = humanized.rotations;
-  const shownFor = (from: number, to: number): string[] => (
-    tokensForRange(moves, humanized.moves, from, to)
+  const absorbedRotations = new Set<number>();
+  const shownFor = (from: number, to: number): RangeMoveItem[] => (
+    moveItemsForRange(moves, humanized.moves, from, to)
   );
 
   // 识别走真颜色那一份(见 `physical`);显示走换过名的 `moves`。两者一一对应,
@@ -371,7 +464,7 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
     const turnTokens = tokensForRange(moves, counted, from, span.endIdx);
     const endMs = spanEndMs[spanIdx];
     const mine = rotations.filter(r => r.tMs > prevEndMs && r.tMs <= endMs);
-    const lineMoves = weaveRotations(shownFor(from, span.endIdx), mine, moves, from, span.endIdx);
+    const lineMoves = weaveRotations(shownFor(from, span.endIdx), mine, absorbedRotations);
     prevEndMs = endMs;
     const currPattern = await patternFromAlg(alg(phys.scramble, rawUpTo(span.endIdx), viewRot));
 
@@ -389,10 +482,11 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
       console.warn('[recon-text] label failed for', span.key, err);
     }
 
+    label = displayLabel(label);
     lines.push({
       kind: span.kind,
       key: span.key,
-      moves: lineMoves,
+      moves: styleRecognizedAlg(lineMoves, label),
       fromIdx: from,
       toIdx: span.endIdx,
       label,
@@ -410,7 +504,7 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
     const tail = weaveRotations(
       shownFor(prevEnd + 1, moves.length - 1),
       rotations.filter(r => r.tMs > prevEndMs),
-      moves, prevEnd + 1, moves.length - 1,
+      absorbedRotations,
     );
     if (tail.length > 0) {
       lines.push({
@@ -439,7 +533,7 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
       ...(viewRot === '' ? [] : [`${viewRot} // insp`]),
       ...lines.map(formatReconLine),
     ].join('\n'),
-    rotations,
+    rotations: rotations.filter(rotation => !absorbedRotations.has(rotation.tMs)),
     blindPairs: humanized.blindPairs,
   };
 }
