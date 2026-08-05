@@ -20,6 +20,7 @@
     "@cuberoot/vendor-sr-puzzlegen": "workspace:*",
     "@cuberoot/visualcube": "workspace:*",
     "@hono/node-server": "^1.0.0",
+    "@livekit/protocol": "^1.50.4",
     "@types/ws": "^8.18.1",
     "cubing": "^0.63.3",
     "hono": "^4.0.0",

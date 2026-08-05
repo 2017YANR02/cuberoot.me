@@ -18,6 +18,9 @@ export type FailReason = VideoDenyReason | 'media' | 'connect' | 'camera' | 'sta
 export function denyMessage(reason: FailReason, maxParticipants: number): string {
   switch (reason) {
     case 'full':
+      if (maxParticipants <= 0) {
+        return tr({ zh: '视频位已满,可以先让别人退出', en: 'Video is full — someone needs to leave first' });
+      }
       return tr({
         zh: `视频位已满(最多 ${maxParticipants} 人),可以先让别人退出`,
         en: `Video is full (${maxParticipants} max) — someone needs to leave first`,
