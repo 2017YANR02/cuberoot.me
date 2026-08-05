@@ -358,9 +358,9 @@ describe('用户那把 15.269s(2026-08-04)', () => {
   ];
   const AUTO_U = [
     'z2 // insp',
-    "R2 F R D F2 L2 D' // W cross",
+    "R2' F R D F2 L2' D' // W cross",
     "U' L U' L' S' L S // GR",
-    "d' R U R' U R U' R2 U R // RB",
+    "d' R U R' U R U' R2' U R // RB",
     "U FS' R U' R' S U' F' // GO",
     "U2 y L' U' L U' S L' U L S' // OB/ZBLS",
     "U' R U R' U R U L' U R' U' L // OLL(CP)",

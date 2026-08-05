@@ -85,6 +85,8 @@ export function buildCoreTrack(
     // absolute orientation basis is a separate concern.
     if (brand === 'gan-v4' && event.token === 'y') return { ...event, token: "y'" };
     if (brand === 'gan-v4' && event.token === "y'") return { ...event, token: 'y' };
+    if (brand === 'gan-v4' && event.token === 'y2') return { ...event, token: "y2'" };
+    if (brand === 'gan-v4' && event.token === "y2'") return { ...event, token: 'y2' };
     return event;
   });
   return { events };

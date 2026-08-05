@@ -15,14 +15,14 @@
  * 两边共用这一张表,因为它们共用的是**同一个事实**;各写一份的失败方式是符号写反,
  * 而符号写反的表现是「谱子看着像公式但拧出来不对」,比缺一个记号难发现得多。
  *
- * 表本身是**搜出来的**:`tests/humanize.test.ts` 拿魔方模型枚举六个面 × 三种量 ×
- * 九个中层 × 九个转体,逐条核对下面每一行。所以这里写错一个撇号会红,不会静默。
+ * 表的状态关系由 `tests/humanize.test.ts` 拿魔方模型逐条核对；半转的 `2/2'` 状态
+ * 相同，执行方向则由两次四分之一转的方向单独锁定。
  */
 
 /**
  * 一条事实,读作 **`a b ≡ slice rotation`**。
  *
- * 相对面可交换,所以 `b a` 同样成立 —— `sliceSplitTable()` 因此有 18 条而不是 9 条。
+ * 相对面可交换,所以 `b a` 同样成立 —— `sliceSplitTable()` 因此有 24 条而不是 12 条。
  */
 export interface SlicePair {
   /** 中层记号,如 `M'`。 */
@@ -38,18 +38,22 @@ export interface SlicePair {
 export const SLICE_PAIRS: readonly SlicePair[] = Object.freeze([
   { slice: 'M', a: 'R', b: "L'", rotation: 'x' },
   { slice: "M'", a: "R'", b: 'L', rotation: "x'" },
-  { slice: 'M2', a: 'R2', b: 'L2', rotation: 'x2' },
+  { slice: 'M2', a: 'R2', b: "L2'", rotation: 'x2' },
+  { slice: "M2'", a: "R2'", b: 'L2', rotation: "x2'" },
   { slice: 'E', a: 'U', b: "D'", rotation: 'y' },
   { slice: "E'", a: "U'", b: 'D', rotation: "y'" },
-  { slice: 'E2', a: 'U2', b: 'D2', rotation: 'y2' },
+  { slice: 'E2', a: 'U2', b: "D2'", rotation: 'y2' },
+  { slice: "E2'", a: "U2'", b: 'D2', rotation: "y2'" },
   { slice: 'S', a: "F'", b: 'B', rotation: "z'" },
   { slice: "S'", a: 'F', b: "B'", rotation: 'z' },
-  { slice: 'S2', a: 'F2', b: 'B2', rotation: 'z2' },
+  { slice: 'S2', a: "F2'", b: 'B2', rotation: "z2'" },
+  { slice: "S2'", a: 'F2', b: "B2'", rotation: 'z2' },
 ]);
 
-/** 单个记号取逆。`x2` 自逆。 */
+/** 单个记号取逆，半转也保留执行方向。 */
 function invertToken(token: string): string {
-  if (token.endsWith('2')) return token;
+  if (token.endsWith("2'")) return token.slice(0, -1);
+  if (token.endsWith('2')) return `${token}'`;
   return token.endsWith("'") ? token.slice(0, -1) : `${token}'`;
 }
 

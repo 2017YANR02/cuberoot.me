@@ -107,7 +107,8 @@ describe('conjugateToken', () => {
     // E 跟着 D;x2 把 D 送到 U,跟着 U 的中层是 E'。
     expect(conjugateToken('E', p)).toBe("E'");
     expect(conjugateToken("E'", p)).toBe('E');
-    expect(conjugateToken('E2', p)).toBe('E2');
+    expect(conjugateToken('E2', p)).toBe("E2'");
+    expect(conjugateToken("E2'", p)).toBe('E2');
   });
 
   it('整体旋转也共轭', () => {

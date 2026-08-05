@@ -34,6 +34,12 @@ describe('htmMoves', () => {
     expect(r[0].endIdx).toBe(1);
   });
 
+  it("半转保留两次四分之一转的方向", () => {
+    expect(htmMoves(stream("R' R'")).map(h => h.m)).toEqual(["R2'"]);
+    expect(htmMoves(stream('R R')).map(h => h.m)).toEqual(['R2']);
+    expect(htmMoves(stream("U2' F2")).map(h => h.m)).toEqual(["U2'", 'F2']);
+  });
+
   it('三个 90 度 = 一步反向转,四个 = 没转', () => {
     expect(htmMoves(stream('R R R')).map(h => h.m)).toEqual(["R'"]);
     expect(htmMoves(stream('R R R R'))).toEqual([]);
