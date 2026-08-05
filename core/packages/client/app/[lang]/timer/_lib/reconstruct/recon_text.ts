@@ -58,7 +58,7 @@ import { buildCommentSuggestions } from '@/lib/popup_suggest';
 
 import { conjugateCoreTrack } from './core_track';
 import type { CoreTrack } from './core_track';
-import { htmMoves } from './htm';
+import { htmMoves, quarterMoves } from './htm';
 import { humanizeStream } from './humanize';
 import type { HumanRotation } from './humanize';
 import type { F2lSlotsResult } from './f2l_slots';
@@ -89,7 +89,27 @@ export interface ReconTextLine {
 }
 
 export interface ReconTextResult {
+  /**
+   * **这把真正的打乱** —— 计时器发的那一条,和成绩里存的、和粘到 cubedb 去的
+   * 逐字相同。
+   *
+   * 曾经这里放的是「转进十字朝下」之后共轭过的那一条,理由是谱子写在那个视角里、
+   * 配原始打乱对不上。理由本身没错,错的是解决办法:用户 2026-08-04 报的就是这个
+   * —— 他做的是 `R2 B' L2 R D' ...`,报告里印出来的是 `R2 F' L2 R U' ...`,
+   * 「这不行,必须是原始打乱」。共轭过的那条不是他做的那把打乱,粘到哪里都对不上。
+   *
+   * 现在换个办法把两边接上:打乱印原始的,视角那一手写成谱子的第一行
+   * (`inspection`,`z2 // 观察`),和人写复盘时一模一样 —— 打乱 + 观察转体 + 谱子
+   * 三样接起来照着拧,还是这把。
+   */
   scramble: string;
+  /**
+   * 观察时把魔方转成「十字朝下」的那一手(`z2` / `x'` / …)。`''` = 不用转。
+   *
+   * 它是 `orient.ts` 挑的那个 ρ,只是以前只在内部用。写出来之后 `scramble` 才敢印
+   * 原始的:谱子后面每一行都在 ρ 之后的那个系里。
+   */
+  inspection: string;
   lines: ReconTextLine[];
   /** HTM 步数(不是 STM:我们全站按 HTM 计,见 Sprint 17)。 */
   turns: number;
@@ -308,7 +328,10 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
   // 后面每一手都被换了名 —— 那行谱子于是不像任何公式。转体同理,而且它和中层改的是
   // 同一个 ρ,所以一趟走完。只重写**写出来的记号**:计步、识别、参考解仍然吃
   // `counted`(魔方确实转了两下面)。
-  const humanized = humanizeStream(counted, {
+  // 谱子这一层吃**一手一条**的流,不是合过同面的 `counted`:合同面和配中层抢同一批
+  // 记号,而先合同面会把中层拆散(`L R' R' L` → `L R2 L`,两个 M 全没了)。合同族
+  // 现在在 `humanizeStream` 里做,排在认中层之后。计步照旧走 `counted`。
+  const humanized = humanizeStream(quarterMoves(moves), {
     boundaries: new Set(spans.map(s => s.endIdx)),
     core,
   });
@@ -401,13 +424,21 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
   const turns = counted.length;
   const seconds = totalMs / 1000;
   return {
-    scramble,
+    // 原始打乱 + 观察转体。共轭过的那条只在这个模块内部用(识别、切分),不出门。
+    scramble: phys.scramble,
+    inspection: viewRot,
     lines,
     turns,
-    stm: turns - humanized.merges,
+    // 数出来的,不是减出来的:一个中层吃掉两手、一次同面合并也吃掉一手,
+    // `turns - merges` 只算得清前者。谱子上写着几个记号,这里就是几。
+    stm: humanized.moves.length,
     seconds,
     tps: seconds > 0 ? turns / seconds : null,
-    text: lines.map(formatReconLine).join('\n'),
+    // 观察那一手是谱子的第一行,不是附注:少了它,原始打乱配下面这些动作对不上。
+    text: [
+      ...(viewRot === '' ? [] : [`${viewRot} // insp`]),
+      ...lines.map(formatReconLine),
+    ].join('\n'),
     rotations,
     blindPairs: humanized.blindPairs,
   };
@@ -422,4 +453,47 @@ export function reconTextHeader(r: ReconTextResult): string {
 /** 剪贴板里那一份:头 + 打乱 + 谱子,和 /recon/submit 的输入格式一致。 */
 export function reconTextForClipboard(r: ReconTextResult): string {
   return [reconTextHeader(r), r.scramble, '', r.text].join('\n');
+}
+
+/**
+ * Overlay notation that the cuber has personally verified onto the automatic
+ * reconstruction. The recording remains authoritative for timestamps,
+ * playback ranges and metrics; only the human-facing notation is replaced.
+ * A malformed or differently segmented override fails closed.
+ */
+export function applyReconTextOverride(
+  auto: ReconTextResult,
+  override: readonly string[] | null | undefined,
+): ReconTextResult {
+  if (!override || override.length === 0) return auto;
+  const lines = override.map(line => line.trim()).filter(Boolean);
+  let inspection = auto.inspection;
+  let body = lines;
+  if (lines.length === auto.lines.length + 1) {
+    const first = /^(.*?)\s*\/\/\s*(?:insp|inspection|观察)\s*$/i.exec(lines[0]);
+    if (!first || first[1].trim() === '') return auto;
+    inspection = first[1].trim();
+    body = lines.slice(1);
+  }
+  if (body.length !== auto.lines.length) return auto;
+
+  const parsed = body.map((raw) => {
+    const cut = raw.lastIndexOf('//');
+    const movesText = (cut < 0 ? raw : raw.slice(0, cut)).trim();
+    const label = cut < 0 ? null : raw.slice(cut + 2).trim() || null;
+    const moves = movesText.split(/\s+/).filter(Boolean);
+    return moves.length > 0 ? { moves, label } : null;
+  });
+  if (parsed.some(line => line === null)) return auto;
+
+  return {
+    ...auto,
+    inspection,
+    lines: auto.lines.map((line, i) => ({
+      ...line,
+      moves: parsed[i]!.moves,
+      label: parsed[i]!.label,
+    })),
+    text: lines.join('\n'),
+  };
 }
