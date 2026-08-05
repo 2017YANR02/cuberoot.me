@@ -59,7 +59,7 @@
  *
  * 人拧的时候魔方一直在手里晃 —— 二三十度的倾斜是常态,那不是转体。两道:
  *
- *   - **进格阈值**:新格子要近到 `ENTER_RAD` 才认(默认 30°,而相邻格差 90°);
+ *   - **进格阈值**:新格子要近到 `ENTER_RAD` 才认(默认 35°,而相邻格差 90°);
  *   - **保持时长**:新格子要待够 `HOLD_MS` 才认(默认 120ms)。转体是**持续**的
  *     状态改变,而转的路上那些中间姿态是一闪而过的 —— 这一条把两者分开。
  *
@@ -87,12 +87,14 @@ import {
 } from '../bluetooth/orientation';
 import type { GyroSample } from '../bluetooth/gyro_track';
 
-/** 新格子要近到这个角度才认。相邻格差 90°,30° 留出充裕的余量。 */
-export const ENTER_RAD = (30 * Math.PI) / 180;
+/** 新格子要近到这个角度才认。相邻格差 90°,35° 能容纳真机握持漂移。 */
+export const ENTER_RAD = (35 * Math.PI) / 180;
 /** 新格子要连续保持这么久才算一次转体(毫秒)。 */
 export const HOLD_MS = 120;
 
 export interface RotationEvent {
+  /** 核心开始离开上一格的时刻。记谱位置用它,避免把转体晚插到后面几手。 */
+  startMs?: number;
   /** 转体**完成**的时刻(相对起表),即新朝向第一次被采到的那个样本的时刻。 */
   tMs: number;
   /** 记号,如 `y` / `x'` / `z2`。认不出来(复合转体)时是 `?`。 */
@@ -205,6 +207,8 @@ export function detectRotations(
   let candIdx = -1;
   let candFirstMs = 0;
   let candRel: Quat = QUAT_IDENTITY;
+  /** 从上一格出发的第一条样本。候选落格前的过渡样本也算。 */
+  let motionStartMs: number | null = null;
 
   /** 这个样本相对当前基准落在哪一格;落在两格之间(离最近的一格也超过阈值)给 -1。 */
   const cellOf = (q: Quat): { idx: number; rel: Quat } => {
@@ -219,6 +223,7 @@ export function detectRotations(
     if (candIdx < 0 || candIdx === identityIdx) { candIdx = -1; return false; }
     if (untilMs - candFirstMs < holdMs) { candIdx = -1; return false; }
     out.push({
+      startMs: motionStartMs ?? candFirstMs,
       tMs: candFirstMs,
       token: tokenForRelative(candRel) ?? '?',
       angleRad: quatAngleTo(QUAT_IDENTITY, candRel),
@@ -228,25 +233,28 @@ export function detectRotations(
      *
      * 这里返过第三次工,两个方向都试过、都会滚雪球:
      *
-     *   - 用**刚进格**那一下(第一版):进格阈值是 30°,所以那一刻手还差着二三十度
+     *   - 用**刚进格**那一下(第一版):进格阈值是 35°,所以那一刻手还差着二三十度
      *     没转到位,基准就落后一截;下一次转体相对这个落后的基准算,于是更早认下来、
      *     基准更落后。实测四个连着的 y 数出**五**次 —— 一次转体被劈成两次。
      *   - 用这一格里**最后**看到的那一下:死区压缩过的流里,停住的那段根本不发样本,
-     *     所以「最后一下」往往已经是下一次转体转出去 30° 的地方,基准反过来超前一截,
+     *     所以「最后一下」往往已经是下一次转体转出去 35° 的地方,基准反过来超前一截,
      *     一样滚。实测四个 y 只数出**三**次 —— 这回是漏。
      *
      * 两头都不对,是因为拿**测量值**当基准就一定带着当时的偏差。而我们刚刚已经断定
      * 「这一段就是某一格」了,那就直接按那一格走:基准始终精确落在格点上,偏差不进位。
-     * 手上的慢漂由 30° 进格阈值兜着,本来也不需要基准去追。
+     * 手上的慢漂由 35° 进格阈值兜着,本来也不需要基准去追。
      */
     ref = quatNormalize(quatMul(ref, candRel));
     candIdx = -1;
+    motionStartMs = null;
     return true;
   };
 
   for (const s of stream) {
     const q = quatNormalize(s.q);
     let { idx, rel } = cellOf(q);
+    if (idx === identityIdx) motionStartMs = null;
+    else if (motionStartMs === null) motionStartMs = s.tMs;
     if (idx === candIdx) continue;              // 还停在候选那一格上,继续攒时长
     // 换格了(或者晃进了两格之间)—— 候选这一段到此为止。
     // **任何**不落在候选格上的样本都算打断:在两格之间恰恰说明魔方没停在那儿,
@@ -254,6 +262,7 @@ export function detectRotations(
     if (closeCandidate(s.tMs)) {
       // 基准换了,这个样本要按新基准重算一次。
       ({ idx, rel } = cellOf(q));
+      if (idx !== identityIdx) motionStartMs = s.tMs;
     }
     if (idx < 0 || idx === identityIdx) { candIdx = -1; continue; }
     candIdx = idx;
