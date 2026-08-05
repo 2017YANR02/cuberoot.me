@@ -120,7 +120,7 @@ describe('detectRotations', () => {
     const b = axis('y', 90);
     const track = [
       ...hold(a, 0),
-      // b 上只停 60ms(< HOLD_MS=120),然后回 a
+      // b 上只停 60ms(< HOLD_MS),然后回 a
       { tMs: 400, q: b }, { tMs: 440, q: b },
       ...hold(a, 500),
     ];
@@ -199,6 +199,17 @@ describe('死区压缩过的录像(真编码器产出的形状)', () => {
     ];
     // 只该数出最终那次 y2,不该在 y 那一格上多数一次
     expect(detectRotations(track).map(e => e.token)).toEqual(['y2']);
+  });
+
+  it('手持倾斜扫过一格 180ms 后继续走，不把中间格写成转体', () => {
+    const track: GyroSample[] = [
+      { tMs: 0, q: QUAT_IDENTITY },
+      { tMs: 1350, q: axis('x', 90) },
+      { tMs: 1530, q: axis('x', 130) },
+      { tMs: 1710, q: axis('x', 180) },
+      { tMs: 2300, q: axis('x', 180) },
+    ];
+    expect(detectRotations(track).map(e => e.token)).toEqual(['x2']);
   });
 });
 
