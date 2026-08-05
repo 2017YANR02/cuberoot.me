@@ -1,0 +1,111 @@
+{
+  "source": "https://docs.google.com/spreadsheets/d/1OFXakCV85Mp2zsQBXMxiMX9a506JeAcLnUXZr8FgXAY/edit",
+  "fetchedAt": "2026-08-05T09:20:01.043Z",
+  "sheets": {
+    "PBL": {
+      "sha": "ab6fb70ec66d8ffe",
+      "rows": 33,
+      "file": "PBL.jsonl"
+    },
+    "CLL": {
+      "sha": "05042d4d50f40f93",
+      "rows": 75,
+      "file": "CLL.jsonl"
+    },
+    "EG-1": {
+      "sha": "1b9e559123914888",
+      "rows": 57,
+      "file": "EG-1.jsonl"
+    },
+    "EG-2": {
+      "sha": "0d3bf009648f261b",
+      "rows": 49,
+      "file": "EG-2.jsonl"
+    },
+    "LEG-1": {
+      "sha": "b1ff5c449f1eaa1c",
+      "rows": 50,
+      "file": "LEG-1.jsonl"
+    },
+    "TCLL+": {
+      "sha": "eaaf2b720933b764",
+      "rows": 55,
+      "file": "TCLL_2B.jsonl"
+    },
+    "TCLL-": {
+      "sha": "72b27d16717bd3b7",
+      "rows": 50,
+      "file": "TCLL-.jsonl"
+    },
+    "LS-1": {
+      "sha": "9fade3c53d6d5e1a",
+      "rows": 51,
+      "file": "LS-1.jsonl"
+    },
+    "LS-2": {
+      "sha": "3280ffd019ea26c6",
+      "rows": 56,
+      "file": "LS-2.jsonl"
+    },
+    "LS-3": {
+      "sha": "29b1c37b8a7208a2",
+      "rows": 48,
+      "file": "LS-3.jsonl"
+    },
+    "LS-4": {
+      "sha": "f41858966fa335b4",
+      "rows": 51,
+      "file": "LS-4.jsonl"
+    },
+    "LS-5": {
+      "sha": "9555e30465338c90",
+      "rows": 55,
+      "file": "LS-5.jsonl"
+    },
+    "LS-6": {
+      "sha": "574a4e1c8addd021",
+      "rows": 55,
+      "file": "LS-6.jsonl"
+    },
+    "LS-7": {
+      "sha": "1d537b63aadaf151",
+      "rows": 49,
+      "file": "LS-7.jsonl"
+    },
+    "LS-8": {
+      "sha": "8f17f25caaf007fb",
+      "rows": 60,
+      "file": "LS-8.jsonl"
+    },
+    "LS-9": {
+      "sha": "31725efd4952bb4a",
+      "rows": 54,
+      "file": "LS-9.jsonl"
+    },
+    "TEG2+": {
+      "sha": "6ffde71b1eb19ec8",
+      "rows": 55,
+      "file": "TEG2_2B.jsonl"
+    },
+    "Home": {
+      "sha": "ff97e381f4690d88",
+      "rows": 17,
+      "file": "Home.jsonl"
+    },
+    "External Catalog": {
+      "sha": "fad63b76366b2cea",
+      "rows": 9,
+      "file": "External_20Catalog.jsonl"
+    },
+    "PBL Angles": {
+      "sha": "5dd588ddf386ffc5",
+      "rows": 13,
+      "file": "PBL_20Angles.jsonl"
+    },
+    "LS Explanation": {
+      "sha": "cce5ae2d7ab466da",
+      "rows": 11,
+      "file": "LS_20Explanation.jsonl"
+    }
+  }
+}

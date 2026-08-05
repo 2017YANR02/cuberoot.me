@@ -1,0 +1,57 @@
+# 每周检查公开的 Best 2x2 Algs Google Sheet。检测只负责提醒，不自动灌库：
+# 表里存在分支记号和偶发错位公式，必须先跑模拟器交叉校验再生成新迁移。
+name: Best 2x2 Algs Drift
+
+on:
+  schedule:
+    - cron: '30 8 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: core
+          filter: blob:none
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - name: Check spreadsheet drift
+        id: check
+        working-directory: core
+        run: |
+          set +e
+          node packages/client/scripts/best2x2-check.mjs --report "$RUNNER_TEMP/best2x2-drift-report.md"
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Fail on detector error
+        if: steps.check.outputs.code == '1' || steps.check.outputs.code == '2'
+        run: |
+          echo "::error::Best 2x2 Algs drift detector failed (exit ${{ steps.check.outputs.code }})"
+          exit 1
+
+      - name: Open or update drift issue
+        if: steps.check.outputs.code == '3'
+        working-directory: core
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create best2x2-drift --color C15F3C --description "Best 2x2 Algs 表格出现更新" --force || true
+          existing=$(gh issue list --label best2x2-drift --state open --json number --jq '.[0].number')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body-file "$RUNNER_TEMP/best2x2-drift-report.md"
+          else
+            gh issue create \
+              --label best2x2-drift \
+              --assignee "${{ github.repository_owner }}" \
+              --title "Best 2x2 Algs 表格更新 ($(date -u +%Y-%m-%d))" \
+              --body-file "$RUNNER_TEMP/best2x2-drift-report.md"
+          fi

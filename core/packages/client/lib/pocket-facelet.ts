@@ -273,6 +273,81 @@ export function applyPocketMoves(s: PocketState, alg: string): PocketState {
   return cur;
 }
 
+// ── 整体转体 x / y / z ────────────────────────────────────────────────────────────────────────
+// 人写的二阶公式里转体很常见(CLL/EG/LS 公式表满篇 `y` / `y'` / `x`)。转体不改变「解没解开」,
+// 但**改变后续每一步转哪个面**,所以照做时不能丢 —— 丢一个 y,后面整条就全错了。
+//
+// 三个轴各自的面像不手写表:x 跟 R 同向、y 跟 U 同向、z 跟 F 同向,按这三条在
+// POCKET_ROTATIONS 里认出对应那一项(认不到就抛,说明旋转表本身坏了)。
+
+export type PocketRotationAxis = 'x' | 'y' | 'z';
+
+/** 轴 → 该轴一步的面像 σ:σ(U), σ(R), σ(F)。 */
+const AXIS_FACE_IMAGE: Record<PocketRotationAxis, readonly [PocketFace, PocketFace, PocketFace]> = {
+  x: ['B', 'R', 'U'],   // 跟 R:F→U→B→D→F,R/L 不动
+  y: ['U', 'F', 'L'],   // 跟 U:F→L→B→R→F,U/D 不动
+  z: ['R', 'D', 'F'],   // 跟 F:U→R→D→L→U,F/B 不动
+};
+
+const ROTATION_BY_AXIS: Record<PocketRotationAxis, PocketRotation> = (() => {
+  const uI = F_IDX('U'), rI = F_IDX('R'), fI = F_IDX('F');
+  const pick = (axis: PocketRotationAxis) => {
+    const [u2, r2, f2] = AXIS_FACE_IMAGE[axis].map(F_IDX);
+    const hit = POCKET_ROTATIONS.find(
+      (rot) => rot.faceMap[uI] === u2 && rot.faceMap[rI] === r2 && rot.faceMap[fI] === f2,
+    );
+    if (!hit) throw new Error(`no rotation for ${axis} (旋转表坏了)`);
+    return hit;
+  };
+  return { x: pick('x'), y: pick('y'), z: pick('z') };
+})();
+
+/** 整体转体 × amount(1/2/3)。 */
+export function applyPocketRotation(s: PocketState, axis: PocketRotationAxis, amount: number): PocketState {
+  let cur = s;
+  const rot = ROTATION_BY_AXIS[axis];
+  for (let i = 0; i < amount; i++) cur = rotatePocketState(cur, rot);
+  return cur;
+}
+
+// `U2'` 是站内既有写法(`invertMoveString` 就这么出,现有 2x2 公式集的 setup 里满是它):
+// 半圈没有方向,`2'` 与 `2` 同义 —— 认下来,别让一条合法数据在这里炸。
+const ALG_TOKEN_RE = /^([URFDLBxyz])(2'?|')?$/;
+
+/**
+ * 施加一条公式:六面转 + 整体转体 x / y / z。
+ *
+ * 与 {@link applyPocketMoves} 的分工 —— 那个是「打乱串」的口径(WCA 打乱不含转体),
+ * 这个是「人写的公式」的口径。**输入必须已归一**(展开 `(...)N`、剥括号、空格分词),
+ * 走 `@cuberoot/shared/alg-notation` 的 `toMoveString`;这里不再重复实现一遍记号解析。
+ */
+export function applyPocketAlg(s: PocketState, alg: string): PocketState {
+  let cur = s;
+  for (const tok of alg.trim().split(/\s+/).filter(Boolean)) {
+    const m = ALG_TOKEN_RE.exec(tok);
+    if (!m) throw new Error(tok);
+    // `2` 和 `2'` 都是半圈 —— 用 startsWith 判,别拿 `=== '2'` 比(`U2'` 会掉进兜底当成 1/4 圈)。
+    const amount = m[2]?.startsWith('2') ? 2 : m[2] === "'" ? 3 : 1;
+    cur = 'xyz'.includes(m[1])
+      ? applyPocketRotation(cur, m[1] as PocketRotationAxis, amount)
+      : applyPocketFaceTurn(cur, m[1] as PocketFace, amount);
+  }
+  return cur;
+}
+
+/**
+ * 二阶物理状态的朝向规范键:24 个整体转体全作用一遍，取字典序最小的 facelet。
+ * 两个状态只差观察朝向时 key 相等；方法 case 还会额外模掉 AUF，由调用方在这一层之上处理。
+ */
+export function pocketCaseKey(s: PocketState): string {
+  let best: string | null = null;
+  for (const rot of POCKET_ROTATIONS) {
+    const f = pocketStateToFacelet(rotatePocketState(s, rot));
+    if (best === null || f < best) best = f;
+  }
+  return best!;
+}
+
 /** 打乱串 → facelet(非法 token 抛错)。 */
 export function pocketFaceletFromMoves(alg: string): string {
   return pocketStateToFacelet(applyPocketMoves(solvedPocketState(), alg));
