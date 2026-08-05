@@ -138,31 +138,54 @@ function countRange(counted: HtmMove[], from: number, to: number): number {
  * step whose sequence reads longer than its turn count is a step with wasted
  * work in it, which is worth seeing.
  */
+export interface RangeMoveItem {
+  token: string;
+  ts: number;
+  endTs: number;
+  startIdx: number;
+  endIdx: number;
+}
+
+export function moveItemsForRange(
+  moves: SolveMove[],
+  counted: HtmMove[],
+  from: number,
+  to: number,
+): RangeMoveItem[] {
+  const startsAt = new Map<number, HtmMove>();
+  const covered = new Set<number>();
+  for (const h of counted) {
+    if (h.startIdx >= from && h.startIdx <= to) startsAt.set(h.startIdx, h);
+    for (let i = h.startIdx; i <= h.endIdx; i++) covered.add(i);
+  }
+  const out: RangeMoveItem[] = [];
+  const lo = Math.max(0, from);
+  const hi = Math.min(to, moves.length - 1);
+  for (let i = lo; i <= hi; i++) {
+    const merged = startsAt.get(i);
+    if (merged) {
+      out.push({
+        token: merged.m, ts: merged.ts, endTs: merged.endTs,
+        startIdx: merged.startIdx, endIdx: merged.endIdx,
+      });
+      continue;
+    }
+    // A later quarter of a move already emitted, or of one attributed to the
+    // previous step. Either way it is not this step's to print.
+    if (covered.has(i)) continue;
+    const raw = (moves[i]?.m ?? '').trim();
+    if (raw) out.push({ token: raw, ts: moves[i].ts, endTs: moves[i].ts, startIdx: i, endIdx: i });
+  }
+  return out;
+}
+
 export function tokensForRange(
   moves: SolveMove[],
   counted: HtmMove[],
   from: number,
   to: number,
 ): string[] {
-  const startsAt = new Map<number, string>();
-  const covered = new Set<number>();
-  for (const h of counted) {
-    if (h.startIdx >= from && h.startIdx <= to) startsAt.set(h.startIdx, h.m);
-    for (let i = h.startIdx; i <= h.endIdx; i++) covered.add(i);
-  }
-  const out: string[] = [];
-  const lo = Math.max(0, from);
-  const hi = Math.min(to, moves.length - 1);
-  for (let i = lo; i <= hi; i++) {
-    const merged = startsAt.get(i);
-    if (merged) { out.push(merged); continue; }
-    // A later quarter of a move already emitted, or of one attributed to the
-    // previous step. Either way it is not this step's to print.
-    if (covered.has(i)) continue;
-    const raw = (moves[i]?.m ?? '').trim();
-    if (raw) out.push(raw);
-  }
-  return out;
+  return moveItemsForRange(moves, counted, from, to).map(item => item.token);
 }
 
 /** The five numbers a contiguous run of moves produces. */

@@ -56,14 +56,15 @@
  * 附带一条更要紧的性质:**判错也漏不出这一步**。抵消掉的 ρ 到边界就归零,下一步的
  * 记号不会跟着错。旧判据没有这条约束,漏掉一对就把后面**整把**换了名。
  *
- * ### 姿态流只做加法:实测到的中层钉死(阳性才算数)
+ * ### 姿态流只做加法:实测证据不能降低代数解的质量
  *
  * 中层的定义就是核心转过去,两手真转则核心一动不动。所以姿态流在这一对的时间窗里
- * **认下了一次核心换格**,就是直接的物理证据:这一对钉成中层,不给「不合」那条路。
- * 钉死之后再让定理去配剩下的。
+ * **认下了一次核心换格**,就是直接的物理证据。它先产生一份「这些位置必须合」的
+ * 候选方案；只有这份方案比纯代数方案认出更多中层时才采用。合并数相同时保留代数
+ * 方案,避免握持倾斜恰好吸附到另一格后改写一整段记号。
  *
  * 反过来**不成立,而这里返过一次工**:姿态流**没**认出换格,不等于核心没转。中间
- * 隔着三道没在真机上标定过的闸 —— 录制端 4° 死区(`gyro_track.ts`)、进格 30°、
+ * 隔着三道没在真机上标定过的闸 —— 录制端 4° 死区(`gyro_track.ts`)、进格 35°、
  * 保持 120ms(`rotation_detect.ts`)—— 任何一道漏了,和「真的没转」长得一模一样。
  * 曾经这条阴性读数是有姿态的把的**唯一**判据,于是用户 2026-08-04 那把 U perm 里
  * 两个 S 一个都没合:整个 PLL 姿态流一次换格都没认出来(证据在输出本身 —— 那一行
@@ -133,8 +134,9 @@ export interface HumanizeOptions {
    */
   boundaries?: ReadonlySet<number>;
   /**
-   * 这把的核心轨迹(姿态流)。给了它:实测到核心换格的那些相对面对被钉成中层,转体
-   * 也一并写进谱子。不给 = 没录姿态,中层全靠定理配、一个转体也不写。
+   * 这把的核心轨迹(姿态流)。给了它:实测到核心换格的相对面对成为增量候选,只有能
+   * 比纯代数方案认出更多中层时才采用；转体也一并写进谱子。不给 = 没录姿态,中层
+   * 全靠定理配、一个转体也不写。
    *
    * 注意它只做加法:**没**实测到换格不构成「这不是中层」的证据,见文件头。
    */
@@ -347,15 +349,19 @@ export function humanizeStream(
   const table = sliceSplitTable();
 
   const core = opts.core ?? null;
-  // 姿态流实测到核心换格的那些位置:钉成中层,不参与搜索。**只有阳性读数算数** ——
-  // 没读到不等于没转(三道没标定的闸都能吃掉它),见文件头。
+  // 姿态流实测到核心换格的那些位置:生成一份强制中层的增量方案。**只有阳性读数
+  // 算数** —— 没读到不等于没转(三道没标定的闸都能吃掉它),见文件头。
   const forced = counted.map((a, i) => {
     const b = counted[i + 1];
     return !!core && !!b && coreTurnsIn(core, a.ts, b.endTs).length > 0;
   });
-  // 「哪几对是中层」整段解出来再走下面这一趟。判据是中心块必须回家,不是间隔,
-  // 也不是「姿态流没看见就算没有」—— 见文件头。
-  const planned = planMerges(counted, table, forced, boundaries);
+  // 「哪几对是中层」整段解出来再走下面这一趟。先求纯代数方案,再求带姿态阳性的
+  // 增量方案；判据是中心块必须回家,不是间隔,也不是「姿态流没看见就算没有」。
+  const algebraicPlan = planMerges(counted, table, counted.map(() => false), boundaries);
+  const measuredPlan = planMerges(counted, table, forced, boundaries);
+  // 姿态阳性只在它能认出更多中层时介入。相同合并数时纯代数方案已经满足中心
+  // 回位,而真机姿态里的短暂倾斜可能恰好落进别的相对面对,不能拿它改写整段。
+  const planned = measuredPlan.size > algebraicPlan.size ? measuredPlan : algebraicPlan;
 
   const out: HtmMove[] = [];
   const rotations: HumanRotation[] = [];
@@ -390,30 +396,44 @@ export function humanizeStream(
   // 了),剩下的按时刻写成转体。
   const events = core?.events ?? [];
   const claimed = new Set<number>();
+  for (const i of planned) {
+    const a = counted[i], b = counted[i + 1];
+    if (!a || !b || !core) continue;
+    for (const idx of coreTurnsIn(core, a.ts, b.endTs)) claimed.add(idx);
+  }
+  const inverseToken = (token: string): string => (
+    token.endsWith('2') ? token : token.endsWith("'") ? token.slice(0, -1) : `${token}'`
+  );
+  // 握持倾斜有时会被吸附成一次转体又立刻回原格。成对去掉比把中间整段换错面名
+  // 安全；真正需要改变记号系的转体不会在不足一秒内原路返回。
+  const suppressed = new Set<number>();
+  const leftover = events.map((event, idx) => ({ event, idx })).filter(x => !claimed.has(x.idx));
+  for (let i = 0; i + 1 < leftover.length; i += 1) {
+    const a = leftover[i], b = leftover[i + 1];
+    if (b.event.tMs - a.event.tMs <= 750 && inverseToken(a.event.token) === b.event.token) {
+      suppressed.add(a.idx);
+      suppressed.add(b.idx);
+      i += 1;
+    }
+  }
   let evPtr = 0;
   /** `out` 里从这个下标起才允许和前一条并 —— 转体会把它推到末尾。 */
   let noJoinBefore = 0;
   /** 这一手开始之前还没被认领的换格 = 人在这儿做了转体。 */
   const writeRotationsBefore = (tMs: number): void => {
-    while (evPtr < events.length && events[evPtr].tMs <= tMs) {
+    while (evPtr < events.length && (events[evPtr].startMs ?? events[evPtr].tMs) <= tMs) {
       const idx = evPtr++;
-      if (claimed.has(idx)) continue;
+      if (claimed.has(idx) || suppressed.has(idx)) continue;
       const token = events[idx].token;
       // `?` = 复合转体(两次挨太近被并成一步)。宁可不写也不硬塞一个名字 —— 但 ρ
       // 也就跟着不准了,所以这里连 ρ 都不动:写错的谱子比缺一个转体的谱子更糟。
       if (!/^[xyz]/.test(token)) continue;
-      rotations.push({ tMs: events[idx].tMs, token: rename(token) });
+      rotations.push({ tMs: events[idx].startMs ?? events[idx].tMs, token: rename(token) });
       advance(invertRotation(token));    // 转体的方向和中层相反,见 `advance`
       // 转体把「相邻」打断了:它前后那两手中间人把魔方转过,不是一个手势。
       noJoinBefore = out.length;
     }
   };
-  /** 这一对是中层 → 它那段时间里的换格都归它,不再算成转体。 */
-  const claimCoreTurns = (fromMs: number, toMs: number): void => {
-    if (!core) return;
-    for (const idx of coreTurnsIn(core, fromMs, toMs)) claimed.add(idx);
-  };
-
   /**
    * 刚写下的这一条能不能和前一条并成一个(`M M` → `M2`,`U U` → `U2`)。并不了就
    * 原样推入。抵消干净的(`M M'` / `R R'`)两条一起去掉 —— 那两下人没写在谱子上,
@@ -445,7 +465,13 @@ export function humanizeStream(
       noJoinBefore = out.length;
       return;
     }
-    out.push({ ...prev, m: sliceFor(cur.family, net), endTs: move.endTs, endIdx: move.endIdx, quarters: net === 3 ? 1 : net });
+    out.push({
+      ...prev,
+      m: sliceFor(cur.family, net),
+      endTs: move.endTs,
+      endIdx: move.endIdx,
+      quarters: net === 3 ? 1 : net,
+    });
   };
 
   for (let i = 0; i < counted.length; i++) {
@@ -463,7 +489,6 @@ export function humanizeStream(
 
     if (canMerge && split && b) {
       // 先认领再写转体:这一对的那次换格是中层带的,不能在它前面漏出一个 `x'`。
-      claimCoreTurns(a.ts, b.endTs);
       writeRotationsBefore(a.ts);
       pushMove({
         ...a,

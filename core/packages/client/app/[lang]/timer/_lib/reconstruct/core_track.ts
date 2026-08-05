@@ -78,7 +78,16 @@ export function buildCoreTrack(
   opts: BuildCoreTrackOptions = {},
 ): CoreTrack | null {
   if (samples.length === 0) return null;
-  return { events: detectRotations(samples, { brand: opts.brand ?? null }) };
+  const brand = opts.brand ?? null;
+  const events = detectRotations(samples, { brand }).map(event => {
+    // GAN v4/16ui's real gyro stream has the yaw sign opposite to its face-turn
+    // convention. Keep this at the reconstruction boundary: the 3D renderer's
+    // absolute orientation basis is a separate concern.
+    if (brand === 'gan-v4' && event.token === 'y') return { ...event, token: "y'" };
+    if (brand === 'gan-v4' && event.token === "y'") return { ...event, token: 'y' };
+    return event;
+  });
+  return { events };
 }
 
 /**
