@@ -122,7 +122,7 @@ body:has(.meet-live) .mem-reminder {
 
 /* 参与者面板与聊天面板并排同一个位置,所以几何照抄 .lk-chat(库的栅格:标题行 + 列表)。 */
 .meet-roster {
-  grid-template-rows: var(--lk-chat-header-height, 3rem) 1fr;
+  grid-template-rows: var(--lk-chat-header-height, 69px) 1fr;
   width: clamp(200px, 30ch, 34ch);
   border-left: 1px solid var(--border-default);
   background: color-mix(in srgb, var(--foreground) 6%, var(--background));
