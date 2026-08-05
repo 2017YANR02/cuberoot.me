@@ -182,11 +182,11 @@ describe('阶段名和阶段用时只出现一次(2026-08-04)', () => {
     expect(src).toMatch(/sml-scramble[\s\S]{0,200}sml-group-head/);
   });
 
-  it('十字 / OLL / PLL 的徽章跟着动作那一行走,没有被一起删掉', () => {
-    // 徽章以前挂在组标题上,标题没了要是不搬家就会静悄悄消失 —— 界面上少一个
-    // 「妙手」不会报错,只会没人再看见。
+  it('十字 / OLL / PLL 的最优徽章跟着动作那一行走', () => {
+    // 只保留追平参考时的「最优」；比参考更短的情况不再显示评价徽章。
     expect(src).toMatch(/g\.key === 'f2l' \|\| g\.lines\.length === 1 \? gradeFor\(line\)/);
     expect(src).toMatch(/className=\{`sa-grade \$\{grade\}`\}/);
+    expect(src).not.toMatch(/妙手|Brilliant|brilliant/);
   });
 });
 

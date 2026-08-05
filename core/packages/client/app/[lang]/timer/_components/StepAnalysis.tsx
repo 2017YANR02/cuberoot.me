@@ -37,7 +37,7 @@ import type { StepMetricsResult } from '../_lib/reconstruct/step_metrics';
 import { tokensForRange } from '../_lib/reconstruct/step_metrics';
 import { htmMoves } from '../_lib/reconstruct/htm';
 import type { SolveMove } from '../_lib/reconstruct/stage_segments';
-import type { ReferenceResult, SlotReference, StepGrade } from '../_lib/reconstruct/reference';
+import type { ReferenceResult, SlotReference } from '../_lib/reconstruct/reference';
 import { gradeForDelta } from '../_lib/reconstruct/reference';
 import type { F2lSlotsResult, F2lStart } from '../_lib/reconstruct/f2l_slots';
 import type { MethodWalkResult } from '../_lib/reconstruct/method_walk';
@@ -114,23 +114,16 @@ const sec = (ms: number | null | undefined): string =>
 const num = (n: number | null | undefined): string =>
   n === null || n === undefined ? '–' : String(n);
 
-/** The one-word verdict, as a word. See `gradeForDelta` for what each means. */
-function gradeLabel(g: StepGrade): string {
-  return g === 'brilliant'
-    ? tr({ zh: '妙手', en: 'Brilliant' })
-    : tr({ zh: '最优', en: 'Optimal' });
+/** Only the exact reference match gets a badge; negative deltas stay numeric. */
+function gradeLabel(): string {
+  return tr({ zh: '最优', en: 'Optimal' });
 }
 
-function gradeTitle(g: StepGrade): string {
-  return g === 'brilliant'
-    ? tr({
-      zh: '比参考解法还短 —— 参考不是真最优(F2L 不许用 D,末层只查我们表里的公式),你找到了它表达不出来的线',
-      en: 'Shorter than the reference. The reference is not a true optimum (no D turns in F2L, library algs only on the last layer) — you found a line it cannot express',
-    })
-    : tr({
-      zh: '和参考解法一样短',
-      en: 'As short as the reference line',
-    });
+function gradeTitle(): string {
+  return tr({
+    zh: '和参考解法一样短',
+    en: 'As short as the reference line',
+  });
 }
 
 function startLabel(s: F2lStart): string | null {
@@ -480,7 +473,9 @@ export default function StepAnalysis(props: StepAnalysisProps) {
                   // A skipped step spent no turns and owes none, so its delta is
                   // 0 — but "you matched the optimum" is not a thing to say
                   // about a pair the scramble handed you. No badge there.
-                  const grade = c.skipped ? null : gradeForDelta(c.refDelta);
+                  const grade = c.skipped || gradeForDelta(c.refDelta) !== 'optimal'
+                    ? null
+                    : 'optimal';
                   // 末层比的是**去掉起手 AUF 的执行步数**(参考公式本身不含 AUF),
                   // 所以「步数 7 / 参考 6 / 最优」三个格看起来会打架。把比的那个
                   // 数说出来,否则读的人只能猜哪一格错了。
@@ -501,8 +496,8 @@ export default function StepAnalysis(props: StepAnalysisProps) {
                         <>
                           {c.refTurns}
                           {grade && (
-                            <span className={`sa-grade ${grade}`} title={gradeTitle(grade)}>
-                              {gradeLabel(grade)}
+                            <span className={`sa-grade ${grade}`} title={gradeTitle()}>
+                              {gradeLabel()}
                             </span>
                           )}
                           {!grade && c.refDelta !== null && c.refDelta !== 0 && (

@@ -699,8 +699,7 @@
 }
 .sa-table th[data-open] .sa-col-name { color: var(--accent); }
 
-/* 追平 / 超越参考的那一个词。只在这两种时候出现,所以不需要第三种配色:
-   成功色一档给「最优」,accent 给「妙手」(它比最优更少见,也更该被看见)。 */
+/* 追平参考时显示「最优」；比参考更短时直接显示负步数差，不再另造评价徽章。 */
 .sa-grade {
   margin-left: 5px; padding: 1px 5px; border-radius: 999px;
   font-size: 10px; font-weight: 600; letter-spacing: 0.02em; white-space: nowrap;
@@ -709,11 +708,6 @@
   color: var(--signal-success);
   background: color-mix(in srgb, var(--signal-success) 14%, transparent);
 }
-.sa-grade.brilliant {
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 16%, transparent);
-}
-
 /* 这一步的动作。等宽,和站里其它记号一致。 */
 .sa-seq { margin-top: 10px; }
 .sa-seq-row {
