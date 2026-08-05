@@ -65,7 +65,7 @@
  *
  * 反过来**不成立,而这里返过一次工**:姿态流**没**认出换格,不等于核心没转。中间
  * 隔着三道没在真机上标定过的闸 —— 录制端 4° 死区(`gyro_track.ts`)、进格 35°、
- * 保持 250ms(`rotation_detect.ts`)—— 任何一道漏了,和「真的没转」长得一模一样。
+ * 保持 120ms(`rotation_detect.ts`)—— 任何一道漏了,和「真的没转」长得一模一样。
  * 曾经这条阴性读数是有姿态的把的**唯一**判据,于是用户 2026-08-04 那把 U perm 里
  * 两个 S 一个都没合:整个 PLL 姿态流一次换格都没认出来(证据在输出本身 —— 那一行
  * 连一个转体记号都没有,而没被中层认领的换格一定会被打印出来)。
@@ -416,19 +416,50 @@ export function humanizeStream(
       i += 1;
     }
   }
+  // 真机握持漂移可能只在某个格点附近停一百多毫秒就继续走。这种候选不能一律删:
+  // 用户这把真正的 y 也只停了 180ms。只把它标成「待复核」,等写到对应动作位置时
+  // 比较转体前后紧接着三手的记号；若转体反而把 U/R/L/F 变成 D/B,才判为漂移。
+  const briefSettle = new Set<number>();
+  for (let i = 0; i + 1 < leftover.length; i += 1) {
+    const current = leftover[i], next = leftover[i + 1];
+    if (current.event.startMs === undefined || next.event.startMs === undefined) continue;
+    if (next.event.startMs - current.event.tMs < 250) briefSettle.add(current.idx);
+  }
+  const awkwardFaceCost = (token: string): number => {
+    const face = /^([UDFBLR])/.exec(token)?.[1];
+    return face === 'D' || face === 'B' ? 1 : 0;
+  };
+  const renamedWith = (token: string, p: FacePerm): string => conjugateToken(token, p) ?? token;
+  const makesNextTurnsWorse = (event: (typeof events)[number], token: string): boolean => {
+    const nextTurns = counted.filter(move => move.ts >= event.tMs).slice(0, 3);
+    if (nextTurns.length < 2) return false;
+    const before = nextTurns.reduce((sum, move) => sum + awkwardFaceCost(renamedWith(move.m, perm)), 0);
+    const sigma = invertRotation(token);
+    const testRot = rot === '' ? sigma : `${rot} ${sigma}`;
+    const afterPerm = facePermFor(invertRotation(testRot));
+    const after = nextTurns.reduce((sum, move) => sum + awkwardFaceCost(renamedWith(move.m, afterPerm)), 0);
+    return after > before;
+  };
+  // 正常转体在几百毫秒内完成；若「开始离格」到落格拖了几秒,开始时刻只是前面的
+  // 握持慢漂。此时用落格时刻安放动作,否则会把第三组的 y 错插到第一组。
+  const eventTime = (event: (typeof events)[number]): number => {
+    const start = event.startMs ?? event.tMs;
+    return event.tMs - start > 1200 ? event.tMs : start;
+  };
   let evPtr = 0;
   /** `out` 里从这个下标起才允许和前一条并 —— 转体会把它推到末尾。 */
   let noJoinBefore = 0;
   /** 这一手开始之前还没被认领的换格 = 人在这儿做了转体。 */
   const writeRotationsBefore = (tMs: number): void => {
-    while (evPtr < events.length && (events[evPtr].startMs ?? events[evPtr].tMs) <= tMs) {
+    while (evPtr < events.length && eventTime(events[evPtr]) <= tMs) {
       const idx = evPtr++;
       if (claimed.has(idx) || suppressed.has(idx)) continue;
       const token = events[idx].token;
       // `?` = 复合转体(两次挨太近被并成一步)。宁可不写也不硬塞一个名字 —— 但 ρ
       // 也就跟着不准了,所以这里连 ρ 都不动:写错的谱子比缺一个转体的谱子更糟。
       if (!/^[xyz]/.test(token)) continue;
-      rotations.push({ tMs: events[idx].startMs ?? events[idx].tMs, token: rename(token) });
+      if (briefSettle.has(idx) && makesNextTurnsWorse(events[idx], token)) continue;
+      rotations.push({ tMs: eventTime(events[idx]), token: rename(token) });
       advance(invertRotation(token));    // 转体的方向和中层相反,见 `advance`
       // 转体把「相邻」打断了:它前后那两手中间人把魔方转过,不是一个手势。
       noJoinBefore = out.length;
