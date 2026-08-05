@@ -40,7 +40,7 @@ import { tr } from '@/i18n/tr';
 import type { ReconTextResult, ReconTextLine } from '../_lib/reconstruct/recon_text';
 import { reconTextForClipboard } from '../_lib/reconstruct/recon_text';
 import { gradeForDelta } from '../_lib/reconstruct/reference';
-import type { ReferenceResult, SlotReference, StepGrade } from '../_lib/reconstruct/reference';
+import type { ReferenceResult, SlotReference } from '../_lib/reconstruct/reference';
 
 export interface StepMoveListProps {
   recon: ReconTextResult | null;
@@ -76,10 +76,8 @@ function groupLines(lines: ReconTextLine[]): Group[] {
   return out;
 }
 
-function gradeLabel(g: StepGrade): string {
-  return g === 'brilliant'
-    ? tr({ zh: '妙手', en: 'Brilliant' })
-    : tr({ zh: '最优', en: 'Optimal' });
+function gradeLabel(): string {
+  return tr({ zh: '最优', en: 'Optimal' });
 }
 
 export default function StepMoveList({
@@ -91,14 +89,14 @@ export default function StepMoveList({
   const groups = groupLines(recon.lines);
 
   /** 这一行的徽章。槽走 slotReference,其余走 stages。 */
-  const gradeFor = (line: ReconTextLine): StepGrade | null => {
+  const gradeFor = (line: ReconTextLine): 'optimal' | null => {
     if (line.key.startsWith('slot-')) {
       const slot = line.key.slice(5);
       const sr = slotReference?.find(s => s.slot === slot) ?? null;
-      return sr ? gradeForDelta(sr.delta) : null;
+      return sr && gradeForDelta(sr.delta) === 'optimal' ? 'optimal' : null;
     }
     const st = reference?.stages.find(s => s.step === line.key) ?? null;
-    return st && !st.note ? gradeForDelta(st.delta) : null;
+    return st && !st.note && gradeForDelta(st.delta) === 'optimal' ? 'optimal' : null;
   };
 
   const handleCopy = async () => {
@@ -190,7 +188,7 @@ export default function StepMoveList({
                         {tr({ zh: `第 ${i + 1} 组`, en: `Slot ${i + 1}` })}
                       </span>
                     )}
-                    {grade && <span className={`sa-grade ${grade}`}>{gradeLabel(grade)}</span>}
+                    {grade && <span className={`sa-grade ${grade}`}>{gradeLabel()}</span>}
                     {onSeek ? (
                       <button
                         type="button"
