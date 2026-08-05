@@ -8,6 +8,7 @@
 
 import type { EventId, Solve } from '../types';
 import { EVENTS } from '../types';
+import { findVerifiedReconstruction } from './verified_reconstruction';
 
 export interface DecodedReplay {
   event: EventId;
@@ -117,7 +118,9 @@ export function solveFromReplay(
   ));
   const gyro = decoded.gyro ?? local?.gyro;
   const device = decoded.device ?? local?.device;
-  const reconstruction = decoded.reconstruction ?? local?.reconstruction;
+  const reconstruction = decoded.reconstruction
+    ?? local?.reconstruction
+    ?? findVerifiedReconstruction(decoded);
   return {
     id: `replay-${now}`,
     timeMs: decoded.totalMs,
