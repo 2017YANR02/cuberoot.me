@@ -473,7 +473,6 @@ html[data-theme=dark] .wp-page {
 .wp-tabs-bar {
     display: flex; gap: 8px;
     padding: 16px 24px 0;
-    border-bottom: 1px solid var(--wp-border);
     overflow-x: auto;
     overflow-y: hidden; /* 显式禁 vertical;否则 overflow-x:auto 会隐式让 y 也变 auto → sub-pixel 误差触发 scrollbar */
 }
@@ -520,7 +519,6 @@ html[data-theme=dark] .wp-page {
 }
 .wp-event-strip-tabs {
     padding: 8px 0 12px;
-    border-bottom: 1px solid var(--wp-border);
     margin-bottom: 16px;
     justify-content: center;
 }
@@ -537,7 +535,6 @@ html[data-theme=dark] .wp-page {
 
 .wp-subsubtab-bar {
     display: flex; gap: 16px;
-    border-bottom: 1px solid var(--wp-border);
     margin-bottom: 12px;
 }
 /* 5 选一子 tab 栏:全部成绩(+ # / ✏ 工具)及 4 个图表视图全部左对齐顺排。
