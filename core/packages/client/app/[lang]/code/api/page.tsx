@@ -58,7 +58,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   then add the file stem to this list.
 //   account_auth alg alg_lsll alg_marks alg_srs alg_sets alg_sweep analytics announced_comps article auth battle_rooms calendar cn_comp_names colpi
 //   comp_follows cube cubeopt_solve cubing_live feedback forum health historical_ranks
-//   membership nav_sites nemesizer notifications ops page_notices paint pattern_examples progress quiz recon scramble_555
+//   membership nav_sites nemesizer notifications ops page_notices paint pattern_examples progress quiz recon recon_ground_truth scramble_555
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wechat_jssdk wiki
 // ─ covers-routes-end ─
@@ -199,6 +199,10 @@ const ENDPOINTS: Ep[] = [
   { d: 'recon', m: 'GET', p: '/v1/recon/bili-cover', g: 'public', zh: 'B 站封面代理', en: 'Bilibili cover proxy' },
   { d: 'recon', m: 'GET', p: '/v1/recon/douyin-cover', g: 'public', zh: '抖音封面代理', en: 'Douyin cover proxy' },
   { d: 'recon', m: 'GET', p: '/v1/recon/resolve-shorturl', g: 'public', zh: '短链解析', en: 'Resolve short URL' },
+  { d: 'recon', m: 'GET', p: '/v1/recon-ground-truth/export', g: 'public', zh: '已确认复盘测试样本的确定性导出', en: 'Deterministic export of confirmed recon test cases' },
+  { d: 'recon', m: 'GET', p: '/v1/recon-ground-truth/candidates', g: 'admin', zh: '管理员复盘测试候选池', en: 'Admin recon-test candidate pool' },
+  { d: 'recon', m: 'GET', p: '/v1/recon-ground-truth/:reconId', g: 'admin', zh: '候选完整性检查与规范化预览', en: 'Candidate completeness check and normalized preview' },
+  { d: 'recon', m: 'PUT', p: '/v1/recon-ground-truth/:reconId', g: 'admin', zh: '保存采用、讨论或不采用决定', en: 'Save include, discuss or reject decision' },
 
   // ---- comp ----
   { d: 'comp', m: 'GET', p: '/v1/comp/announced', g: 'public', zh: '今日公示比赛', en: "Today's announced comps" },

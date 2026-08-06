@@ -1,9 +1,8 @@
 # Reconstruction ground truth
 
-`recon-ground-truth.xlsx` is the only file edited by hand.
+The administrator manages cases at `/recon/ground-truth`.
 
-- Append one solve per row; do not rename the first three columns.
-- Columns A-C are required: source `/recon/<id>` URL, timer replay URL, exact expected reconstruction.
-- Columns D-E are optional context: current wrong output and notes.
-- Run `pnpm --filter @cuberoot/client test:recon-ground-truth` from `core/`; it refreshes `recon-ground-truth.json` and tests every populated row.
-- `recon-ground-truth.json` is generated for Git diff and AI review; do not edit it directly.
+- Only manually confirmed, complete 3×3 solves enter the public export.
+- `recon-ground-truth.json` is the deterministic API snapshot used by CI; do not edit it directly.
+- Run `pnpm --filter @cuberoot/client test:recon-ground-truth` from `core/` to refresh the snapshot and test every confirmed case.
+- Final truth contains only cube moves and semantic `// stage` labels. Timing, ellipses, action parentheses and arrows are removed.
