@@ -112,7 +112,7 @@ pnpm --filter @cuberoot/client lint
 - WCA 时间锚点:时间序列默认视图从 2003-08-22 起步(第 0 帧 = 1982 快照),统计聚合必含 1982 场。
 - 调试不主动 `git log`/`git status`;删文件/配置先确认。
 - 报根因/"修好了"/done 前必须实证(日志/EXPLAIN/run 输出/playwright);未证实标「假设」;性能/502/OOM 先 profile 禁猜。
-- UI 验证走项目内 Playwright MCP;fixtures 全集别采样。
+- Codex CLI 的 UI 验证走已配置的 Playwright MCP;fixtures 全集别采样。
 - 新路由先 grep 防撞名;路由改名/合并不为旧路径加 redirect。
 
 ## 页面标题 / SEO metadata
