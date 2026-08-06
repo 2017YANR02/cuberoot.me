@@ -1,34 +1,5 @@
 /* 记忆模式(闪卡 + 间隔重复)与训练页顶部进度条。配色全走 globals token,派生色用 color-mix。 */
 
-/* ── 模式分段(复习 / 记忆 / 训练)──────────────────────────── */
-
-.trainer-modes {
-  display: flex;
-  gap: 2px;
-  max-width: 1160px;
-  margin: -8px auto 0;
-  padding: 0 20px;
-}
-.trainer-mode-tab {
-  padding: 5px 14px;
-  border: none;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--muted-foreground);
-  font-family: inherit;
-  font-size: 0.86rem;
-  cursor: pointer;
-}
-.trainer-mode-tab.is-active {
-  background: color-mix(in srgb, var(--foreground) 9%, transparent);
-  color: var(--foreground);
-  font-weight: 600;
-}
-.trainer-mode-tab:disabled { color: var(--faint-foreground); cursor: default; }
-@media (hover: hover) {
-  .trainer-mode-tab:not(:disabled):not(.is-active):hover { color: var(--foreground); }
-}
-
 /* 记忆模式的数字额度输入(齿轮面板内) */
 .trainer-opts-num { display: inline-flex; align-items: center; gap: 6px; }
 .trainer-opts-num-input {
