@@ -31,6 +31,10 @@ export interface BspSvgExportOptions {
   srgbColors?: boolean;
   /** 面片总数上限(输入 + BSP 分裂产物),超出抛 SVG_TOO_COMPLEX。 */
   maxTriangles?: number;
+  /** 内部合成入口:只收指定 mesh。省略 = 全场景。 */
+  meshFilter?: (mesh: THREE.Mesh) => boolean;
+  /** 内部合成入口:忽略材质/灯光,所有入选 mesh 强制输出这一平色。 */
+  flatColor?: string;
 }
 
 const DEFAULT_MAX_TRIS = 400_000;
@@ -325,7 +329,8 @@ export function exportSimSvgBspWithDebug(opts: BspSvgExportOptions): { svg: stri
         .normalize();
       dirLights.push({ mask: obj.layers.mask, dx: dir.x, dy: dir.y, dz: dir.z, r: (l.color.r * l.intensity) / Math.PI, g: (l.color.g * l.intensity) / Math.PI, b: (l.color.b * l.intensity) / Math.PI });
     } else if (any.isMesh && !any.isSkinnedMesh) {
-      meshes.push(obj as THREE.Mesh);
+      const mesh = obj as THREE.Mesh;
+      if (!opts.meshFilter || opts.meshFilter(mesh)) meshes.push(mesh);
     }
     // SkinnedMesh / Sprite:截图路径专属,此管线跳过(见文件头)。
   });
@@ -364,6 +369,7 @@ export function exportSimSvgBspWithDebug(opts: BspSvgExportOptions): { svg: stri
     const instCount = inst ? inst.count : 1;
     const ro = mesh.renderOrder || 0;
     const mask = mesh.layers.mask;
+    const forcedColor = opts.flatColor;
 
     const vertTotal = index ? index.count : posAttr.count;
     if (vertTotal < 3) continue;
@@ -401,7 +407,7 @@ export function exportSimSvgBspWithDebug(opts: BspSvgExportOptions): { svg: stri
         const mat = range.mat;
         if (mat.visible === false) continue;
         if (mat.map) continue; // 贴图材质(logo 贴片):画成实心色块必错,直接不画
-        const opacity = mat.transparent ? (mat.opacity ?? 1) : 1;
+        const opacity = forcedColor !== undefined ? 1 : mat.transparent ? (mat.opacity ?? 1) : 1;
         if (opacity <= 0.01) continue;
         const side = mat.side ?? THREE.FrontSide;
         const unlit = mat.isMeshBasicMaterial === true;
@@ -455,7 +461,7 @@ export function exportSimSvgBspWithDebug(opts: BspSvgExportOptions): { svg: stri
             g *= (colAttr.getY(i0) + colAttr.getY(i1) + colAttr.getY(i2)) / 3;
             b *= (colAttr.getZ(i0) + colAttr.getZ(i1) + colAttr.getZ(i2)) / 3;
           }
-          const fill = hexOf(r * lr + emR, g * lg + emG, b * lb + emB, srgbOut);
+          const fill = forcedColor ?? hexOf(r * lr + emR, g * lg + emG, b * lb + emB, srgbOut);
           if (polys.length >= maxTris) throw new Error(`SVG_TOO_COMPLEX:${polys.length}`);
           polys.push({ pts, nx, ny, nz, d, fill, opacity, ro, seq: polys.length });
         }

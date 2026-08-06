@@ -22,7 +22,8 @@
  *   ×0.94 + stroke 0.1 round):墨迹外缘落回真实轮廓附近(封住面与面棱上的抗锯齿
  *   细缝),面的外角被磨成圆角 —— 角块不是数学尖角(见 cornerRound)。等比缩的
  *   拉入量与角的锐钝无关,掠射角的尖角面板不会塌角(等距偏移会,2026-07-22 实测)。
- *   圆角只发生在轮廓上,与 vc 一致。
+ *   圆角只发生在轮廓上,与 vc 一致。SQ1 形变态不是凸体,额外用标记的真实块身
+ *   做平色 BSP 底层,并让逐小面衬底 / 贴纸按深度交错,避免透明洞与背贴纸穿缝。
  *
  * 相机 / 状态直接取引擎 world → 任意视角精确跟随左侧 3D(sr 的 SR_ANGLE_BASE
  * 手工标定层在此路线不存在)。
@@ -46,6 +47,7 @@
 import * as THREE from 'three';
 import type World from './engine/world';
 import { clipPolyByPlane, hexOf, fmt } from './sim_svg_export';
+import { exportSimSvgBspWithDebug } from './sim_svg_export_bsp';
 
 /** 凸包(Andrew 单调链),入参/出参均为扁平 xy。共线点剔除:eps 取 1e-3(px² 量纲;
  *  晶格点共线的叉积误差 ~1e-6,真转角的叉积按面积量级为百千 —— 中间隔 6 个数量级)。 */
@@ -150,6 +152,40 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
 
   scene.updateMatrixWorld(true);
   camera.updateMatrixWorld(true);
+
+  // SQ1 形变后会露出贴纸晶格之外的块身侧壁 / 凹槽。只靠下面的「每个贴纸
+  // 平面一块衬底」无法覆盖这些区域,透明处便会透出页面背景。显式标记的真实
+  // 块身先单独走一次 BSP 隐面消除,强制成当前 bodyColor 平色,再把干净的示意
+  // 面板与贴纸盖上去。其他拼图没有 schematicBody 标记,零额外开销。
+  let hasSchematicBody = false;
+  scene.traverseVisible((obj) => {
+    if ((obj as THREE.Mesh).isMesh && obj.userData.schematicBody === true) hasSchematicBody = true;
+  });
+  let bodyInner = '';
+  let bodyX0 = Infinity, bodyY0 = Infinity, bodyX1 = -Infinity, bodyY1 = -Infinity;
+  let bodyPolys = 0;
+  if (hasSchematicBody && bodyOp > 0) {
+    const body = exportSimSvgBspWithDebug({
+      world,
+      meshFilter: (mesh) => mesh.userData.schematicBody === true,
+      flatColor: bodyColor,
+    });
+    const open = body.svg.indexOf('>');
+    const close = body.svg.lastIndexOf('</svg>');
+    bodyInner = open >= 0 && close > open ? body.svg.slice(open + 1, close) : '';
+    bodyPolys = body.order.length;
+    for (const poly of body.order) {
+      for (let i = 0; i < poly.pts.length; i += 3) {
+        const x = poly.pts[i], y = poly.pts[i + 1];
+        if (x < bodyX0) bodyX0 = x; if (x > bodyX1) bodyX1 = x;
+        if (y < bodyY0) bodyY0 = y; if (y > bodyY1) bodyY1 = y;
+      }
+    }
+    // BSP 的不透明同色描边最大 1.2px;取景把外沿半宽也算进去。
+    if (bodyPolys > 0) {
+      bodyX0 -= 0.6; bodyY0 -= 0.6; bodyX1 += 0.6; bodyY1 += 0.6;
+    }
+  }
   const viewMat = new THREE.Matrix4().copy(camera.matrixWorld).invert();
   const projMat = camera.projectionMatrix;
   const near = camera.near;
@@ -438,6 +474,10 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
     return `<path d="${dOf(core ?? p.pts)}" fill="${p.body}" stroke="${p.body}"`
       + ` stroke-width="${fmt(core ? roundW : 1)}" stroke-linejoin="round"/>`;
   };
+  const faceletBackingOf = (f: Facelet): string => {
+    inkPts(f.pts, 0.5);
+    return `<path d="${dOf(f.pts)}" fill="${f.body}" stroke="${f.body}" stroke-width="1" stroke-linejoin="round"/>`;
+  };
   const stickerOf = (f: Facelet): string =>
     `<path d="${dOf(inset > 0 ? (f.stickerPts ?? insetPts(f.pts)) : f.pts)}" fill="${f.fill}"/>`;
 
@@ -454,12 +494,31 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
   const hid = facelets.filter((f) => f.hidden);
   const vis = facelets.filter((f) => !f.hidden);
   const join = (list: Facelet[], f: (x: Facelet) => string): string => list.map(f).join('');
+  const hiddenPlates = inset > 0 ? makePlates(true) : [];
+  const visiblePlates = inset > 0 ? makePlates(false) : [];
+  const bodyLayer = bodyInner
+    ? `<g data-schematic-body="true"${bodyOp < 100 ? ` opacity="${fmt(bodyOp / 100)}"` : ''}>${bodyInner}</g>`
+    : '';
+
+  // SQ1 形变态不是凸体:远处贴纸可能从近处两块的接缝漏出来。默认不透明模式下
+  // 把「面板 + 贴纸」按视深远→近交错画,让近面板真正挡住远贴纸。半透明/X 光
+  // 仍保留 visualcube 的整层合成语义,避免逐元素 alpha 叠深。
+  const depthComposed = hasSchematicBody && !opts.showHidden && bodyOp === 100 && stickerOp === 100;
+  const depthContent = depthComposed
+    ? vis.flatMap((f) => [
+        { z: f.z, rank: 0, svg: faceletBackingOf(f) },
+        { z: f.z, rank: 1, svg: stickerOf(f) },
+      ]).sort((a, b) => a.z - b.z || a.rank - b.rank).map((x) => x.svg).join('')
+    : '';
 
   const content =
-    g(join(hid, stickerOf), stickerOp)
-    + (inset > 0 ? g(makePlates(true).map(plateOf).join(''), bodyOp) : '')
-    + (inset > 0 ? g(makePlates(false).map(plateOf).join(''), bodyOp) : '')
-    + g(join(vis, stickerOf), stickerOp);
+    bodyLayer
+    + (depthComposed
+      ? depthContent
+      : g(join(hid, stickerOf), stickerOp)
+        + g(hiddenPlates.map(plateOf).join(''), bodyOp)
+        + g(visiblePlates.map(plateOf).join(''), bodyOp)
+        + g(join(vis, stickerOf), stickerOp));
 
   // arrows 箭头层(抄 sr renderArrows:所有多边形画完后单独一遍,盖在最上层 ——
   // 教学标注允许伸出轮廓)。箭头 marker 按色去重生成;markerUnits 默认
@@ -513,10 +572,16 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
   // 圆弧探出量已含) ∪ 箭头端点余量,再加 1.5px。不裁的话导整张画布,拼图缩在中间、
   // 四周大片空边;裁太狠则掠射角下圆弧被切平。
   let bx = 0, by = 0, bw = W, bh = H;
-  if (facelets.length > 0 || arrowPads.length > 0) {
-    let x0 = fx0, y0 = fy0, x1 = fx1, y1 = fy1;
-    if (ix0 < x0) x0 = ix0; if (ix1 > x1) x1 = ix1;
-    if (iy0 < y0) y0 = iy0; if (iy1 > y1) y1 = iy1;
+  if (facelets.length > 0 || bodyPolys > 0 || arrowPads.length > 0) {
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    if (facelets.length > 0) {
+      x0 = Math.min(fx0, ix0); y0 = Math.min(fy0, iy0);
+      x1 = Math.max(fx1, ix1); y1 = Math.max(fy1, iy1);
+    }
+    if (bodyPolys > 0) {
+      if (bodyX0 < x0) x0 = bodyX0; if (bodyX1 > x1) x1 = bodyX1;
+      if (bodyY0 < y0) y0 = bodyY0; if (bodyY1 > y1) y1 = bodyY1;
+    }
     for (const p of arrowPads) {
       if (p.x - p.pad < x0) x0 = p.x - p.pad; if (p.x + p.pad > x1) x1 = p.x + p.pad;
       if (p.y - p.pad < y0) y0 = p.y - p.pad; if (p.y + p.pad > y1) y1 = p.y + p.pad;
