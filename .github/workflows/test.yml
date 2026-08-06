@@ -22,8 +22,8 @@ jobs:
       # 只需 core/(根有 stats/ 709MB + tools/ 等 ~1GB 静态残留);blob:none partial clone 跳过下载.
       # 例外:tools/cstimer-scramble(519K)是非 WCA 求解器测试的打乱 oracle,必须拉进来,
       # 否则 bic/cm3/heli/helicv/ctico/sia222 的 "≥200 real cstimer scrambles" 全 0 条变红.
-      # 例外:.claude/hooks(项目级 PreToolUse 钩子)—— code-guards-drift.test.ts 断言
-      # block-raw-checkbox.ps1 / block-handwritten-trad.ps1 在仓库根存在,不拉进来会误判缺失.
+      # 例外:仓库级守卫入口 —— code-guards-drift / recon-ground-truth-gate 会同时断言
+      # .claude/hooks、.codex/hooks.json、.githooks/pre-commit 存在,三处必须一起拉取。
       # 例外:tools/blddb/data/*Manmade.json —— blddb_lookup.test.ts 拿真实库验十套 case
       # 的编码契约(代表元唯一 / 覆盖完整)。角(1.1MB)+ 奇偶 / 翻角 / 翻棱 / 奇偶带翻
       # (四套合计 ~450KB)都点名;只有棱那套 1.6MB 留给本地 —— 同样的不变量角已经能证,
@@ -51,6 +51,8 @@ jobs:
             /tools/blddb/data/bigbld/wingManmade.json
             /tools/blddb/data/bigbld/midgeManmade.json
             /.claude/hooks/
+            /.codex/hooks.json
+            /.githooks/pre-commit
             /stats/scramble/2x2_essential.json
             /stats/scramble/puzzle_distribution.json
             # scramble_exact_dist.test.ts 拿它当「WCA 那套菜单」的真源逐项比对(420KB)。
