@@ -108,6 +108,8 @@ export interface RotationEvent {
   angleRad: number;
   /** A core rotation compensated by the opposite outer face: a wide turn, not a view change. */
   wide?: boolean;
+  /** Rotation token to weave beside the compensating outer face. */
+  wideToken?: string;
 }
 
 export interface DetectRotationsOptions {

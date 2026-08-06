@@ -210,6 +210,13 @@ describe('转体织进谱子(Sprint 28)', () => {
     expect(r.lines.filter(l => l.moves.includes('y'))).toHaveLength(1);
   });
 
+  it('普通 y 转体紧挨 U 时仍分开书写，不能误压成 d', async () => {
+    const r = await buildWithRotations([rot(80, "y'")]);
+    const all = r.lines.flatMap(line => line.moves);
+    expect(all.slice(0, 2)).toEqual(["y'", 'U']);
+    expect(all).not.toContain('d');
+  });
+
   it('多个转体各就各位,顺序按时刻', async () => {
     const r = await buildWithRotations([rot(400, 'y'), rot(2400, "x'"), rot(2600, 'z2')]);
     const all = r.lines.flatMap(l => l.moves).filter(m => /^[xyz]/.test(m));

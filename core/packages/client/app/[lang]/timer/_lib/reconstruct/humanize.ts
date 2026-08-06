@@ -149,6 +149,8 @@ export interface HumanRotation {
   tMs: number;
   /** 人的视角里的记号,如 `y` / `x'`。 */
   token: string;
+  /** 只有被动作流独立证实的宽层事件，才允许吸收相邻外层动作。 */
+  wide?: true;
 }
 
 export interface HumanizedStream {
@@ -480,17 +482,19 @@ export function humanizeStream(
       const idx = evPtr++;
       if (claimed.has(idx) || suppressed.has(idx)) continue;
       const event = events[idx];
-      const token = event.wide ? inverseToken(event.token) : event.token;
+      const token = event.wide ? (event.wideToken ?? inverseToken(event.token)) : event.token;
       // `?` = 复合转体(两次挨太近被并成一步)。宁可不写也不硬塞一个名字 —— 但 ρ
       // 也就跟着不准了,所以这里连 ρ 都不动:写错的谱子比缺一个转体的谱子更糟。
       if (!/^[xyz]/.test(token)) continue;
       if (briefSettle.has(idx) && makesNextTurnsWorse(event, token)) continue;
-      rotations.push({ tMs: eventTime(event), token: rename(token) });
+      rotations.push(event.wide
+        ? { tMs: eventTime(event), token: rename(token), wide: true }
+        : { tMs: eventTime(event), token: rename(token) });
       if (event.wide) {
         // A wide turn moves the sensor-bearing core while the user's view stays
-        // put. Its frame update is therefore the same direction as a slice,
-        // not the inverse used for a whole-cube regrip.
-        advance(event.token);
+        // put. The written rotation half of the wide move determines the same
+        // face-name update as an ordinary woven rotation.
+        advance(invertRotation(token));
         noJoinBefore = out.length;
         continue;
       }
