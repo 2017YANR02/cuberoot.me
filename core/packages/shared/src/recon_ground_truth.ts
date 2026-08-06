@@ -383,3 +383,35 @@ export function buildReconGroundTruth(scramble: string, solution: string): Recon
     crossNormalized: normalized !== null && normalized !== solution,
   };
 }
+
+export interface ReconCandidateMetadata {
+  scramble: string;
+  solution: string;
+  value: string;
+  rawTime: number | string | null;
+}
+
+/**
+ * ground-truth 候选池的同步入口校验。这里仅判断数据库元数据；魔方状态是否完整复原
+ * 仍由服务端 cubing.js 校验后追加 `source_not_solved`。
+ */
+export function reconCandidateMetadataBlockers(source: ReconCandidateMetadata): string[] {
+  const scramble = source.scramble.trim();
+  const solution = source.solution.trim();
+  const result = source.value.trim();
+  const blockers: string[] = [];
+
+  if (!scramble) blockers.push('missing_scramble');
+  else if (scramble.split(/\s+/).length < 10) blockers.push('short_scramble');
+  if (!solution) blockers.push('missing_solution');
+
+  const normalizedResult = result.toUpperCase();
+  if (/^(?:DNF|DNS)(?:\b|\()/.test(normalizedResult)) blockers.push('dnf_or_dns');
+  if (/^FAIL(?:ED|URE)?\b/.test(normalizedResult) || /\bfail(?:ed|ure)?\b/i.test(solution)) {
+    blockers.push('fail_marker');
+  }
+
+  const rawTime = source.rawTime == null ? Number.NaN : Number(source.rawTime);
+  if (!result || !Number.isFinite(rawTime) || rawTime <= 0) blockers.push('missing_result');
+  return [...new Set(blockers)];
+}
