@@ -26,10 +26,10 @@ import { computeF2lSlots } from '@/app/[lang]/timer/_lib/reconstruct/f2l_slots';
 import {
   applyReconTextOverride, buildReconText, formatReconLine, reconTextForClipboard, reconTextHeader,
 } from '@/app/[lang]/timer/_lib/reconstruct/recon_text';
-import { normalizeSolve } from '@/app/[lang]/timer/_lib/reconstruct/orient';
+import { initialPoseRotation, normalizeSolve } from '@/app/[lang]/timer/_lib/reconstruct/orient';
 import { computeStageSegments } from '@/app/[lang]/timer/_lib/reconstruct/stage_segments';
 import { computeStepMetrics, stmWeight } from '@/app/[lang]/timer/_lib/reconstruct/step_metrics';
-import { solveFromReplay } from '@/app/[lang]/timer/_lib/share/decode';
+import { decodeReplayParam, solveFromReplay } from '@/app/[lang]/timer/_lib/share/decode';
 import { applyOneToken } from '@/app/[lang]/timer/_lib/cube/apply_token';
 import { applyScramble } from '@/app/[lang]/timer/_lib/cube/state';
 import type { CubeFaces } from '@/app/[lang]/timer/_lib/cube/state';
@@ -460,5 +460,40 @@ describe('用户那把 15.269s(2026-08-04)', () => {
     // 原流里 65 手和 66 手都是 `L`,中间隔着一秒 —— 不是一个 `L2` 手势,
     // 而且它们分属 OLL 和 PLL。合同面不许跨步骤边界。
     expect(oll.moves.join(' ')).toBe("U' R U R' U R U L' U R' U' L");
+  });
+});
+
+describe('用户那把 15.214s:长 y 区间跨过整组中层', () => {
+  const REPLAY = 'eyJlIjoiMzMzIiwicyI6IkYgRCcgRiBMMiBGMiBSIEIgUicgRCcgTCBCMiBMMiBGJyBSIEIgRjIgRCcgVSIsIm0iOltbIkYnIiwwXSxbIkQnIiwzMTJdLFsiUiciLDY0Nl0sWyJCIiw3MjldLFsiRCIsMTA1MF0sWyJMJyIsMTIyNF0sWyJMJyIsMTMwMF0sWyJSIiwyMjgxXSxbIkwnIiwyMzY3XSxbIkQiLDI0NTNdLFsiRCIsMjUyN10sWyJSJyIsMjgzMF0sWyJMIiwyODQ1XSxbIkQnIiw0NTM1XSxbIkwiLDQ3ODZdLFsiRCIsNDk2OF0sWyJMJyIsNTA2MV0sWyJEJyIsNTIxN10sWyJGJyIsNTM1M10sWyJEIiw1NTE5XSxbIkYiLDU3MTddLFsiUiciLDY3NDNdLFsiRCciLDY4MDZdLFsiRCciLDY4NTldLFsiUiIsNjkzOF0sWyJEIiw3MDE5XSxbIlInIiw3MDg2XSxbIkQnIiw3MTYwXSxbIkQnIiw3MjA5XSxbIlIiLDcyODhdLFsiRCIsODUzMl0sWyJSIiw4NzQxXSxbIkQnIiw4Nzk0XSxbIkQnIiw4OTQ3XSxbIlInIiw5MDk5XSxbIkQiLDkzOTZdLFsiUiIsMTAyNjNdLFsiRCciLDEwMzIyXSxbIlInIiwxMDQxNl0sWyJCIiwxMTI5N10sWyJSIiwxMTQ4N10sWyJEIiwxMTU5MV0sWyJSJyIsMTE2NTVdLFsiRCciLDExNzI4XSxbIlIiLDExNzc5XSxbIkQiLDExOTE2XSxbIlInIiwxMTk3M10sWyJEJyIsMTIwNTBdLFsiQiciLDEyMjUzXSxbIkQnIiwxMjgxOV0sWyJSIiwxMjk3NF0sWyJSIiwxMzA0OV0sWyJEJyIsMTMxNTNdLFsiRiciLDEzMjU5XSxbIkIiLDEzMzE4XSxbIlInIiwxMzM3N10sWyJSJyIsMTM0NjZdLFsiQiciLDEzNTU1XSxbIkYiLDEzNTkxXSxbIkQnIiwxMzYyN10sWyJSIiwxMzc0NF0sWyJSIiwxMzgxN10sWyJEIiwxMzkzNF1dLCJ0IjoxNTIxNCwiZyI6IlJ3RUFhQUF1RjRVQjZRQ0dGWVVHNlFCYkVZVUY1Z0JaRUlRSTZnQXRBNElGOGdCYytZTC85QUN5NzRJQytBQXQ1b1FJOXdCYTdJTUcrQUJhOTRMKytBQzE4b0w5K1FFNjlvSUI5d0JhODRJQSt3QzA5WVFYQXdCYThwQTdBZ0JhOHBWRC93QmE4NTFPL1FCYTg1NVBCQUNIOGFOVi9BQmErS1JXOHdCYUxyQTh3UURoTEtneXdnQ0hLcW94dlFDMEZLVkV5Z0F0NzZoWTd3QmEvcWxjOUFCYUQ2VldEQUJhRHFGVERBQzBDS0pVQ2dDMEJhWlovd0NIQktsYy9RQzBBS2xjK0FIRC9LZGE5UURtL0tSWCtBQ3UrYVpaK2dCYXhiOUxOUUJhdjhWS053QmF5cXN2UFFDSDZaa3hNd0JhOTVwRElBQmE5YUZUQXdCZzhhZFk3UUJVN3F4YjZnQmE4NlZVNlFCYThxWlg3Z0JhOWFwYjdBSWQrS1paOGdBczk0b3I3d0JhK1lNUitBQmIrWUVHQUFCWjhvTC9BQUNJNjRNSkJRQ0czb2dYQVFBeDZvTUtBUUNEOG9JQUJRQmczSWNRK3dDdTU0UUcvQUMwNG9VSitBQzE2SVFIK1FFTjdZTUcrUUh2OFlJQi9RQ0g5SUw5L2dBdDg0TDlCQURoOUlQOUZBQUUrSVVLSGdCVytZUDlGZ0F1QVlMMUNnQ0g4NEw2L2dCYTdvTDhBQUVOODRMOUJBQTE5WUw1QVFEWitvSDRBQUljQllMMUF3QmJDNEx6QXdDRytJSDgvZ0F1QUlIN0FBRm4vSUg4L2dFNzk0TDcrd0JhOTRFQ0FBQmEvSUVCL0FCYUhvZndFUUJhRG9QeUN3QmI2NFAvL2dCWkVvVHhFZ0M0NzRMNi93Q3g4NEwvL3dDRzc0TCtCUUJhOFlMOEFRQzA3b0lEL2dDMDdJTUEvUUJhOFlMNS9nQ0g5WUw0QXdCZU5KVGVGZ0JXT3FmVE5RQ0lNWmpaSlFBc041TDM0Z0JhQUl6M3pRQmJ5NUlLM3dFV3hiWlBId0FBd01OYUJnQiswNUVoNWdBQjY0UUU3d0VONUlUOStBQmE2SVA4K3c9PSIsImQiOlsiZ2FuLXY0IiwiR0FOMTZ1aV8gKEMyOkFGKSJdfQ';
+
+  it("保留开头的 y，并按新坐标系还原 S' L2 S'", async () => {
+    const replay = decodeReplayParam(REPLAY);
+    if (!replay) throw new Error('invalid replay');
+    const segs = computeStageSegments(replay.scramble, replay.moves, replay.totalMs)!;
+    const metrics = computeStepMetrics(replay.scramble, replay.moves, replay.totalMs)!;
+    const slots = computeF2lSlots(replay.scramble, replay.moves, replay.totalMs, segs);
+    const samples = decodeGyroTrack(replay.gyro);
+    const view = normalizeSolve(replay.scramble, replay.moves, {
+      preferredRotation: initialPoseRotation(samples, replay.device?.model),
+    });
+    const core = buildCoreTrack(samples, { brand: replay.device?.model });
+    const result = await buildReconText({
+      scramble: view.scramble,
+      moves: view.moves,
+      totalMs: replay.totalMs,
+      segs,
+      metrics,
+      slots,
+      core,
+      physical: { scramble: replay.scramble, moves: replay.moves },
+      viewRotation: view.rotation,
+    });
+    expect(result.lines[0].moves.join(' ')).toBe("B' U' R' F U L2'");
+    // The general decoder now preserves the standalone y instead of swallowing
+    // it into the final slice. This recording's last S direction is sensor-
+    // ambiguous, so the user-verified replay override below supplies that bit.
+    expect(result.lines[1].moves.join(' ')).toBe("y S' L2 S");
+    const verified = solveFromReplay(replay, [], 0).reconstruction;
+    expect(verified?.[2]).toBe("y S' L2 S' // OB");
   });
 });

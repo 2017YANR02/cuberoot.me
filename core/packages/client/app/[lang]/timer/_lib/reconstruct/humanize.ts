@@ -364,7 +364,9 @@ export function humanizeStream(
   // 算数** —— 没读到不等于没转(三道没标定的闸都能吃掉它),见文件头。
   const forced = counted.map((a, i) => {
     const b = counted[i + 1];
-    return !!core && !!b && coreTurnsIn(core, a.ts, b.endTs).length > 0;
+    const split = b ? table.get(`${a.m} ${b.m}`) : undefined;
+    return !!core && !!b && !!split
+      && coreTurnsIn(core, a.ts, b.endTs, split.rotation).length > 0;
   });
   const eligible = counted.map(() => true);
   // Cross algorithms often contain two unrelated opposite-face turns whose
@@ -420,10 +422,22 @@ export function humanizeStream(
   // 了),剩下的按时刻写成转体。
   const events = core?.events ?? [];
   const claimed = new Set<number>();
+  // Pair by physical rotation first (axis, direction, and directed half-turn).
+  // A timestamp is only a tie-breaker between otherwise identical candidates.
+  // Each detected core event is consumed at most once; one event may still have
+  // supplied positive evidence for adjacent M2 quarter-pairs above.
   for (const i of planned) {
     const a = counted[i], b = counted[i + 1];
     if (!a || !b || !core) continue;
-    for (const idx of coreTurnsIn(core, a.ts, b.endTs)) claimed.add(idx);
+    const split = table.get(`${a.m} ${b.m}`);
+    if (!split) continue;
+    const pairMid = (a.ts + b.endTs) / 2;
+    const match = coreTurnsIn(core, a.ts, b.endTs, split.rotation)
+      .filter(idx => !claimed.has(idx))
+      .sort((left, right) => (
+        Math.abs(events[left].tMs - pairMid) - Math.abs(events[right].tMs - pairMid)
+      ))[0];
+    if (match !== undefined) claimed.add(match);
   }
   const inverseToken = (token: string): string => (
     token.endsWith("2'") ? token.slice(0, -1) : token.endsWith('2') ? `${token}'`
@@ -467,11 +481,17 @@ export function humanizeStream(
     const after = nextTurns.reduce((sum, move) => sum + awkwardFaceCost(renamedWith(move.m, afterPerm)), 0);
     return after > before;
   };
-  // 正常转体在几百毫秒内完成；若「开始离格」到落格拖了几秒,开始时刻只是前面的
-  // 握持慢漂。此时用落格时刻安放动作,否则会把第三组的 y 错插到第一组。
+  // 正常转体在几百毫秒内完成。长事件通常用落格时刻避开前面的握持慢漂；但若事件
+  // 区间横跨了已由动作流还原出的中层,说明检测器把「独立转体 + 中层核心运动」并成了
+  // 一段。这时开始时刻才是独立转体的位置,不能按结尾把它塞给最后一个中层。
   const eventTime = (event: (typeof events)[number]): number => {
     const start = event.startMs ?? event.tMs;
-    return event.tMs - start > 1200 ? event.tMs : start;
+    if (event.tMs - start <= 1200) return start;
+    const spansPlannedSlice = [...planned].some(i => {
+      const a = counted[i], b = counted[i + 1];
+      return !!a && !!b && a.ts >= start && b.endTs <= event.tMs;
+    });
+    return spansPlannedSlice ? start : event.tMs;
   };
   let evPtr = 0;
   /** `out` 里从这个下标起才允许和前一条并 —— 转体会把它推到末尾。 */
