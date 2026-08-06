@@ -19,6 +19,12 @@ import {
   type Track,
   type Sample,
 } from 'mp4box';
+import {
+  drawOrientedFrame,
+  orientedDimensions,
+  trackMatrixToRotation,
+  type VideoRotation,
+} from './video-orientation';
 
 // mp4box 对 QuickTime/.MOV 里的私有 / 元数据 atom 会用 console.error 抛 "Invalid box type"。
 // 这对抽帧无害 (视频轨样本照常解析,真失败时我们用 parseFailed 兜底切 <video>),
@@ -185,6 +191,9 @@ export function useFrameBuffer(
   const decodeToPresentationRef = useRef<Int32Array>(new Int32Array(0));
   const presentationToDecodeRef = useRef<Int32Array>(new Int32Array(0));
   const configRef = useRef<VideoDecoderConfig | null>(null);
+  // HTMLVideoElement 会自动应用 tkhd 旋转矩阵,WebCodecs 只收到裸编码数据。
+  // 所有解码帧在生成 bitmap 时统一烘焙这个旋转,避免 video/canvas 切换时画面转 90°。
+  const trackRotationRef = useRef<VideoRotation>(0);
   // fps 用 ref 跟踪: 避免用户编辑 FPS 输入框触发整个缩略图解码流水线重跑 (OOM 风险)
   const fpsRef = useRef(fps);
   fpsRef.current = fps;
@@ -248,6 +257,7 @@ export function useFrameBuffer(
     cache.clear();
     samplesRef.current = [];
     configRef.current = null;
+    trackRotationRef.current = 0;
     setIsReady(false);
     setDecoderDead(false);
     setLoadProgress(null);
@@ -289,6 +299,7 @@ export function useFrameBuffer(
 
       videoTrackId = vTrack.id;
       const codecStr = vTrack.codec;
+      trackRotationRef.current = trackMatrixToRotation(vTrack.matrix);
 
       // 提取 description（SPS/PPS extradata）从 trakBox
       const trak = mp4File.getTrackById(videoTrackId);
@@ -417,7 +428,7 @@ export function useFrameBuffer(
         }
         realDurationRef.current = maxEnd / 1_000_000;
 
-        console.log(`[FrameBuffer] READY — ${len} samples, codec=${configRef.current.codec}, ${configRef.current.codedWidth}x${configRef.current.codedHeight}, realDur=${realDurationRef.current.toFixed(3)}s, realFps=${(len / realDurationRef.current).toFixed(3)}`);
+        console.log(`[FrameBuffer] READY — ${len} samples, codec=${configRef.current.codec}, ${configRef.current.codedWidth}x${configRef.current.codedHeight}, rotation=${trackRotationRef.current}, realDur=${realDurationRef.current.toFixed(3)}s, realFps=${(len / realDurationRef.current).toFixed(3)}`);
 
         // VFR 检测: 扫描 sample duration 的 min/max. iPhone VFR 典型 15-67fps 大幅波动,
         // 阈值取 min/max < 0.8 判为变帧率 (容忍定帧率因编码器少量抖动).
@@ -533,6 +544,8 @@ export function useFrameBuffer(
     const scale = Math.min(1, maxDim / NATIVE_DIM);
     const thumbW = Math.round(srcW * scale);
     const thumbH = Math.round(srcH * scale);
+    const trackRotation = trackRotationRef.current;
+    const thumbOutput = orientedDimensions(thumbW, thumbH, trackRotation);
 
     console.log(`[FrameBuffer] thumb plan: stride=${stride}, phase1=${phase1Count}/${iFrameCount} I-frames, est=${expectedThumbs} @ ${thumbW}x${thumbH} (~${Math.round(expectedThumbs * bytesPerThumb / 1024 / 1024)}MB)`);
 
@@ -556,7 +569,7 @@ export function useFrameBuffer(
     // 显式 canvas resize: iOS Safari 对 createImageBitmap(VideoFrame, {resizeWidth}) 支持不可靠,
     // 可能创建全尺寸 bitmap 导致内存爆炸. 用 OffscreenCanvas 强制下采样.
     const resizeCanvas = typeof OffscreenCanvas !== 'undefined'
-      ? new OffscreenCanvas(thumbW, thumbH)
+      ? new OffscreenCanvas(thumbOutput.width, thumbOutput.height)
       : null;
     const resizeCtx = resizeCanvas?.getContext('2d', { alpha: false }) ?? null;
     // iOS Safari (≥17.4, 含 iOS 26): fresh OffscreenCanvas 第一次 drawImage(VideoFrame) →
@@ -582,15 +595,17 @@ export function useFrameBuffer(
           let isBlack = false;
           if (resizeCanvas && resizeCtx) {
             // canvas 路径: 保证真实尺寸下采样, 用 transferToImageBitmap 同步快照避免并发竞态
-            resizeCtx.drawImage(frame, 0, 0, thumbW, thumbH);
+            drawOrientedFrame(resizeCtx, frame, thumbW, thumbH, trackRotation);
             // iOS Safari 兜底: 即便有 warmup, 偶发性 race 仍可能产出全黑 thumb. 中心像素采样,
             // luma<8 视为黑帧丢弃, 让 phase 2 (decoder 已暖) 之后再填.
-            const probe = resizeCtx.getImageData(thumbW >> 1, thumbH >> 1, 1, 1).data;
+            const probe = resizeCtx.getImageData(thumbOutput.width >> 1, thumbOutput.height >> 1, 1, 1).data;
             const luma = probe[0] + probe[1] + probe[2];
             isBlack = luma < 8;
             console.log('[FCLog] thumb pIdx=' + pIdx + ' luma=' + luma + (isBlack ? ' BLACK-DROP' : ''));
             bmp = resizeCanvas.transferToImageBitmap();
           } else {
+            // WebCodecs-capable mobile browsers also expose OffscreenCanvas. This fallback
+            // retains the old path for older desktop engines that cannot bake track rotation.
             bmp = await createImageBitmap(frame, {
               resizeWidth: thumbW,
               resizeHeight: thumbH,
@@ -760,8 +775,10 @@ export function useFrameBuffer(
     const cacheScale = Math.min(1, cacheMaxDim / Math.max(cfgW, cfgH));
     const cacheW = Math.round(cfgW * cacheScale);
     const cacheH = Math.round(cfgH * cacheScale);
-    const cacheCanvas = IS_MOBILE && typeof OffscreenCanvas !== 'undefined'
-      ? new OffscreenCanvas(cacheW, cacheH)
+    const trackRotation = trackRotationRef.current;
+    const cacheOutput = orientedDimensions(cacheW, cacheH, trackRotation);
+    const cacheCanvas = (IS_MOBILE || trackRotation !== 0) && typeof OffscreenCanvas !== 'undefined'
+      ? new OffscreenCanvas(cacheOutput.width, cacheOutput.height)
       : null;
     const cacheCtx = cacheCanvas?.getContext('2d', { alpha: false }) ?? null;
 
@@ -782,7 +799,7 @@ export function useFrameBuffer(
           }
           let bitmap: ImageBitmap;
           if (cacheCanvas && cacheCtx) {
-            cacheCtx.drawImage(frame, 0, 0, cacheW, cacheH);
+            drawOrientedFrame(cacheCtx, frame, cacheW, cacheH, trackRotation);
             bitmap = cacheCanvas.transferToImageBitmap();
           } else {
             bitmap = await createImageBitmap(frame);
