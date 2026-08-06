@@ -51,9 +51,9 @@ import { tr } from '@/i18n/tr';
 
 /** 三种训练模式的标签(topbar 下的分段切换)。 */
 const MODES: Array<{ id: 'train' | 'recap' | 'memo'; zh: string; en: string; tip: { zh: string; en: string } }> = [
-  { id: 'train', zh: '训练', en: 'Train', tip: { zh: '随机抽取,同一 case 可能连续出现', en: 'Random draw' } },
   { id: 'recap', zh: '复习', en: 'Recap', tip: { zh: '选中的 case 洗牌后各出一遍', en: 'Each selected case once per round' } },
   { id: 'memo', zh: '记忆', en: 'Memory', tip: { zh: '间隔重复:看图回忆公式,按记忆强度排期', en: 'Spaced repetition: recall from the picture, scheduled by memory strength' } },
+  { id: 'train', zh: '训练', en: 'Train', tip: { zh: '随机抽取,同一 case 可能连续出现', en: 'Random draw' } },
 ];
 
 const TIMER_DELAY_MS = 0;
