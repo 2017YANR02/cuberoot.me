@@ -15,11 +15,16 @@ interface Props {
   view: 'iso' | 'plan' | 'f2l' | 'oll' | 'pll' | 'pll-iso' | 'trans';
   /** Explicit Masking enum value (e.g. 'vh', 'wv', 'els'). Overrides the view-implied mask. */
   mask?: string;
+  /** U R F D L B face colours, using the visualcube `sch=` format. Only for semantic diagrams. */
+  scheme?: string;
+  /** Plan simplification: keep every sticker carrying the U-face colour. Defaults to renderer behavior. */
+  showLastLayerColor?: boolean;
   /**
    * Plan views (`plan` / `oll` / `pll`) only — drop the grey (masked) side-rim stickers
    * instead of drawing them, so an OLL thumbnail is just the yellow bars. The 9 U-face
-   * stickers are byte-identical either way. No-op on the iso views and on `pll`, whose
-   * rim carries real colours.
+   * stickers are byte-identical either way. Bare `view="plan"` already does this by
+   * default; use the prop for aliases such as `oll`. No-op on iso views and on `pll`,
+   * whose rim carries real colours.
    */
   hideGreySides?: boolean;
   size?: number;
@@ -43,16 +48,18 @@ interface Props {
 
 // Ported from packages/client-vite/src/components/VisualCube.tsx — minus the SW interception note
 // (Next.js bundles a fresh SW; for now this hits the api.cuberoot.me endpoint directly in prod).
-export function VisualCube({ algorithm = '', setup, view, mask, size = 88, puzzleSize = 3, alt = 'Cube state', loading, local, hideGreySides }: Props) {
+export function VisualCube({ algorithm = '', setup, view, mask, scheme, showLastLayerColor, size = 88, puzzleSize = 3, alt = 'Cube state', loading, local, hideGreySides }: Props) {
   // 同一组参数喂两条路:本地渲染直接调 server 端点用的那个函数,URL 版把它们拼成 query。
   const svg = useMemo(() => {
     if (!local) return null;
     return renderFromSimpleQuery({
       ...(setup ? { setup } : { case: algorithm }),
       view, size, pzl: puzzleSize, ...(mask ? { mask } : {}),
+      ...(scheme ? { sch: scheme } : {}),
       ...(hideGreySides ? { ngs: '1' } : {}),
+      ...(showLastLayerColor !== undefined ? { psy: showLastLayerColor ? '1' : '0' } : {}),
     });
-  }, [local, algorithm, setup, view, mask, size, puzzleSize, hideGreySides]);
+  }, [local, algorithm, setup, view, mask, scheme, showLastLayerColor, size, puzzleSize, hideGreySides]);
 
   const src = useMemo(() => {
     if (local) return '';
@@ -60,11 +67,13 @@ export function VisualCube({ algorithm = '', setup, view, mask, size = 88, puzzl
     if (setup) params.set('setup', setup);
     else params.set('case', algorithm);
     if (mask) params.set('mask', mask);
+    if (scheme) params.set('sch', scheme);
+    if (showLastLayerColor !== undefined) params.set('psy', showLastLayerColor ? '1' : '0');
     if (puzzleSize !== 3) params.set('pzl', String(puzzleSize));
     // 新 query key = 新缓存键,老链接的 24h CDN 缓存不受影响,无需 bump v=。
     if (hideGreySides) params.set('ngs', '1');
     return apiUrl(`/v1/visualcube.svg?${params}`);
-  }, [local, algorithm, setup, view, mask, size, puzzleSize, hideGreySides]);
+  }, [local, algorithm, setup, view, mask, scheme, showLastLayerColor, size, puzzleSize, hideGreySides]);
 
   // puzzle-art:柔和度的统一钩子(见 globals.css),贴纸色不走 token,靠它跟。
   if (svg) {

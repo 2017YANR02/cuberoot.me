@@ -57,6 +57,36 @@ describe('二阶公式缩略图', () => {
     });
     expect(withFill(svg, '#404040')).toHaveLength(0);
   });
+
+  it('LS 分类说明用两张 plan 图分别只露出目标白角和占槽黄角', () => {
+    const setup = "R U' R2' F R F' R U R2' F R F' U'"; // LS2:白格朝 U，黄格朝 F
+    const white = renderFromSimpleQuery({
+      view: 'plan',
+      pzl: 2,
+      size: 88,
+      setup,
+      sch: '404040,404040,404040,FFFFFF,404040,404040',
+      psy: '0',
+    });
+    const yellow = renderFromSimpleQuery({
+      view: 'plan',
+      pzl: 2,
+      size: 88,
+      setup: `${setup} x2`, // DFR 槽转到 UBR，D/F/R 三种黄格方向都进入 plan 可见区
+      sch: 'FFFF00,404040,404040,404040,404040,404040',
+      psy: '0',
+    });
+    expect(withFill(white, '#FFFFFF')).toHaveLength(1);
+    expect(withFill(white, '#FFFF00')).toHaveLength(0);
+    expect(withFill(yellow, '#FFFF00')).toHaveLength(1);
+    expect(withFill(yellow, '#FFFFFF')).toHaveLength(0);
+    expect(withFill(white, '#404040')).toHaveLength(3); // 顶面灰保留，侧环灰删除
+    expect(withFill(yellow, '#404040')).toHaveLength(4);
+    for (const color of ['#00FF00', '#FF0000', '#FF8000', '#0000FF']) {
+      expect(withFill(white, color)).toHaveLength(0);
+      expect(withFill(yellow, color)).toHaveLength(0);
+    }
+  });
 });
 
 describe('plan view — hide grey sides', () => {

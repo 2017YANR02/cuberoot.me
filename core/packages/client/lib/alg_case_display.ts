@@ -140,8 +140,14 @@ export function displayCollName(name: string): string {
   return `${ZBLL_GROUP_RENAME[m[1]] ?? m[1]}${m[2]}`;
 }
 
-/** /alg 列表用:按 (puzzle, set) 决定是否套 OLL/PLL/ZBLL/COLL 展示变换。 */
+/** 二阶 LS 案例名展示:`"LS-2 Hammer 1"` → `"LS2 Hammer 1"`。DB / URL 仍保留来源表的原名。 */
+export function display2x2LsName(name: string): string {
+  return name.replace(/^LS-([1-9])(?=\s|$)/, 'LS$1');
+}
+
+/** /alg 列表用:按 (puzzle, set) 决定是否套 OLL/PLL/ZBLL/COLL/LS 展示变换。 */
 export function displayAlgCaseName(puzzle: string, set: string, name: string): string {
+  if (puzzle === '2x2' && /^ls[1-9]$/.test(set)) return display2x2LsName(name);
   if (puzzle === '3x3' && set === 'oll') return displayOllName(name);
   if (puzzle === '3x3' && set === 'pll') return displayPllName(name);
   if (puzzle === '3x3' && set === 'zbll') return displayZbllName(name);

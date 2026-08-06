@@ -73,8 +73,8 @@ export interface SimpleVisualCubeQuery {
   cc?: string;
   co?: string | number;
   /** "no grey sides" — in a plan view (`plan`/`oll`/`pll`), drop the side-rim stickers
-   *  that came out masked-grey instead of drawing them. The 9 U-face stickers are
-   *  untouched. `ngs=0` / absent = off. */
+   *  that came out masked-grey instead of drawing them. The U-face stickers are
+   *  untouched. Bare `view=plan` enables this by default; aliases may opt in with `ngs=1`. */
   ngs?: string | number | boolean;
   /** Plan-view recognition simplification (cube/plan-simplify.ts).
    *  `psr` side rule · `pur` up rule · `psy` keep last-layer colour (default on)
@@ -140,8 +140,9 @@ export function buildSimpleOptions(q: SimpleVisualCubeQuery): ICubeOptions {
 
   if (view === 'plan' || view === 'oll' || view === 'pll') opts.view = 'plan';
 
-  // Plan-view only knobs; harmless (unread) on the iso views.
-  if (truthy(q.ngs)) opts.hideGreySides = true;
+  // 纯 plan 是通用识别图入口:侧环的灰色只是「不参与识别」占位，默认不画；顶面灰格是题面，
+  // renderOLLStickers 的独立 pass 不会碰它。oll/pll 别名保留各自契约，由调用方用 ngs opt in。
+  if (view === 'plan' || truthy(q.ngs)) opts.hideGreySides = true;
   const simplify: NonNullable<ICubeOptions['planSimplify']> = {};
   // Unknown rule names are dropped rather than passed through — this is public,
   // unauthenticated input and the renderer would silently fall back to 'all' anyway.

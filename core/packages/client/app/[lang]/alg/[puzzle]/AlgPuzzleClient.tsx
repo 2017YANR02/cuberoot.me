@@ -10,7 +10,7 @@
  *
  * Loads each set's case count lazily so the page renders before all imports finish.
  */
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import Link from '@/components/AppLink';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
@@ -19,6 +19,7 @@ import { ALG_CATALOG, ALG_PUZZLES, loadAlg, type AlgCase, type AlgPuzzle } from 
 import AlgPuzzleSelect from '../_components/AlgPuzzleSelect';
 import BackHome from '@/components/BackHome';
 import { CaseThumb } from '@/components/CaseThumb';
+import { VisualCube } from '@/components/VisualCube';
 import AlgCard from '@/components/AlgCard';
 import BoolToggle from '@/components/BoolToggle';
 import { ClearButton } from '@/components/ClearButton';
@@ -49,6 +50,111 @@ const TRAINER_MODULES: Record<string, { href: string; zh: string; en: string }[]
     { href: '/alg/skewb-trainer', zh: 'Skewb 技巧训练', en: 'Skewb Skills' },
   ],
 };
+
+const LS_WHITE_ORIENTATIONS = [
+  { face: 'U', sample: 'ls1', zh: '顶层白角朝上', en: 'white corner facing up' },
+  { face: 'B', sample: 'ls4', zh: '顶层白角朝后', en: 'white corner facing back' },
+  { face: 'L', sample: 'ls7', zh: '顶层白角朝左', en: 'white corner facing left' },
+] as const;
+const LS_YELLOW_ORIENTATIONS = [
+  { face: 'D', sample: 'ls1', zh: '占槽黄角朝下', en: 'slotted yellow corner facing down' },
+  { face: 'F', sample: 'ls2', zh: '占槽黄角朝前', en: 'slotted yellow corner facing front' },
+  { face: 'R', sample: 'ls3', zh: '占槽黄角朝右', en: 'slotted yellow corner facing right' },
+] as const;
+
+/** 两张分类图各只追踪一颗角：正常朝向看白角，x2 后看原本位于底层槽位的黄角。 */
+const LS_WHITE_CORNER_SCHEME = '404040,404040,404040,FFFFFF,404040,404040';
+const LS_YELLOW_CORNER_SCHEME = 'FFFF00,404040,404040,404040,404040,404040';
+
+function LsSubsetGuide({ samples, size }: { samples: Record<string, AlgCase | null>; size: number }) {
+  const [current, setCurrent] = useState(1);
+  const [touchMode, setTouchMode] = useState(false);
+  const touchInputRef = useRef(false);
+  const axisSize = Math.round(size * 0.52);
+
+  return (
+    <div className="alg-ls-guide" aria-label={tr({ zh: 'LS 子集朝向图', en: 'LS subset orientation diagram' })}>
+      <nav className="alg-ls-matrix" aria-label={tr({ zh: 'LS 子集选择', en: 'LS subset selector' })}>
+        <div className="alg-ls-matrix-corner">
+          <span>{tr({ zh: '占槽黄角 →', en: 'Yellow corner →' })}</span>
+          <span>{tr({ zh: '顶层白角 ↓', en: 'White corner ↓' })}</span>
+        </div>
+        {LS_YELLOW_ORIENTATIONS.map(item => (
+          <div key={item.face} className="alg-ls-matrix-axis is-column">
+            {samples[item.sample] && (
+              <VisualCube
+                setup={`${samples[item.sample]!.setup} x2`}
+                view="plan"
+                puzzleSize={2}
+                size={axisSize}
+                scheme={LS_YELLOW_CORNER_SCHEME}
+                showLastLayerColor={false}
+                alt={tr({ zh: item.zh, en: item.en })}
+                local
+              />
+            )}
+          </div>
+        ))}
+        {LS_WHITE_ORIENTATIONS.map((item, rowIndex) => (
+          <Fragment key={item.face}>
+            <div className="alg-ls-matrix-axis is-row">
+              {samples[item.sample] && (
+                <VisualCube
+                  setup={samples[item.sample]!.setup}
+                  view="plan"
+                  puzzleSize={2}
+                  size={axisSize}
+                  scheme={LS_WHITE_CORNER_SCHEME}
+                  showLastLayerColor={false}
+                  alt={tr({ zh: item.zh, en: item.en })}
+                  local
+                />
+              )}
+            </div>
+            {LS_YELLOW_ORIENTATIONS.map((_, colIndex) => {
+              const subset = rowIndex * 3 + colIndex + 1;
+              return (
+                <Link
+                  key={subset}
+                  href={`/alg/2x2/ls${subset}`}
+                  className={`alg-ls-matrix-cell${current === subset ? ' is-current' : ''}`}
+                  onMouseEnter={() => setCurrent(subset)}
+                  onFocus={() => setCurrent(subset)}
+                  onPointerDown={event => {
+                    touchInputRef.current = event.pointerType !== 'mouse';
+                    if (touchInputRef.current) {
+                      setTouchMode(true);
+                      setCurrent(subset);
+                    }
+                  }}
+                  onClick={event => {
+                    const previewOnly = touchInputRef.current || window.matchMedia('(hover: none)').matches;
+                    touchInputRef.current = false;
+                    if (!previewOnly) return;
+                    event.preventDefault();
+                    setTouchMode(true);
+                    setCurrent(subset);
+                  }}
+                  aria-label={tr({ zh: `查看 LS${subset}`, en: `View LS${subset}` })}
+                  prefetch={false}
+                >
+                  LS{subset}
+                </Link>
+              );
+            })}
+          </Fragment>
+        ))}
+      </nav>
+      <Link
+        href={`/alg/2x2/ls${current}`}
+        className={`alg-ls-guide-touch-link${touchMode ? ' is-touch-mode' : ''}`}
+        prefetch={false}
+      >
+        {tr({ zh: `查看 LS${current} 公式`, en: `View LS${current} algorithms` })}
+      </Link>
+    </div>
+  );
+}
 
 function isPuzzle(s: string): s is AlgPuzzle {
   return (ALG_PUZZLES as readonly string[]).includes(s);
@@ -82,6 +188,8 @@ export default function AlgPuzzleClient() {
 
   const valid = isPuzzle(puzzle);
   const sets = useMemo(() => (valid ? ALG_CATALOG[puzzle] : []), [puzzle, valid]);
+  const lsSets = puzzle === '2x2' ? sets.filter(s => /^ls[1-9]$/.test(s.slug)) : [];
+  const regularSets = puzzle === '2x2' ? sets.filter(s => !/^ls[1-9]$/.test(s.slug)) : sets;
   const legacyRedirect = !valid && LEGACY_3X3_SLUGS.has(puzzle) ? `/alg/3x3/${puzzle}` : null;
 
   useEffect(() => {
@@ -123,6 +231,39 @@ export default function AlgPuzzleClient() {
     );
   }
 
+  const renderSetCard = (s: (typeof sets)[number]) => {
+    const n = counts[s.slug];
+    const first = firstCases[s.slug];
+    const firstAlg = first?.algs.flat()[0]?.alg ?? first?.standard ?? '';
+    return (
+      /* LSLL 不在 catalog 里(不是一套公式而是整层枚举),但归属上紧跟 ZBLL,所以就地插在它后面 */
+      <Fragment key={s.slug}>
+        <AlgCard
+          href={picking ? undefined : `/alg/${puzzle}/${s.slug}`}
+          onClick={picking ? () => togglePick(s.slug) : undefined}
+          className={picking && picked.includes(s.slug) ? 'is-picked' : undefined}
+          thumb={first && (
+            /* 每阶最多二十来张、全在首屏附近,本地渲染实测 19 张 26ms —— 图与数量同帧出现,
+               不再各自等一次跨域请求。渲染器本来就静态 import 进了 bundle,不额外增体积。
+               长 case 网格不能照抄这条,那边走 loading="lazy",见 AlgCategoryView。 */
+            <CaseThumb puzzle={puzzle} set={s.slug} sticker={first.sticker} alg={firstAlg} setup={first.setup} size={thumbSize} local />
+          )}
+          title={tr(s)}
+          count={n == null ? '…' : n < 0 ? '!' : n}
+        />
+        {s.slug === 'zbll' && puzzle === '3x3' && !picking && (
+          <AlgCard
+            href="/alg/lsll"
+            prefetch={false}
+            thumb={<FaceletsCube fd={categoryCardFacelets('ap')} size={thumbSize} alt="LSLL" />}
+            title="LSLL"
+            count={LSLL_TOTAL.toLocaleString()}
+          />
+        )}
+      </Fragment>
+    );
+  };
+
   return (
     <div className="alg-root">
       <BackHome />
@@ -154,39 +295,20 @@ export default function AlgPuzzleClient() {
       </div>
 
       <div className="alg-bento">
-        {sets.map(s => {
-          const n = counts[s.slug];
-          const first = firstCases[s.slug];
-          const firstAlg = first?.algs.flat()[0]?.alg ?? first?.standard ?? '';
-          return (
-            /* LSLL 不在 catalog 里(不是一套公式而是整层枚举),但归属上紧跟 ZBLL,所以就地插在它后面 */
-            <Fragment key={s.slug}>
-              <AlgCard
-                href={picking ? undefined : `/alg/${puzzle}/${s.slug}`}
-                onClick={picking ? () => togglePick(s.slug) : undefined}
-                className={picking && picked.includes(s.slug) ? 'is-picked' : undefined}
-                thumb={first && (
-                  /* 每阶最多二十来张、全在首屏附近,本地渲染实测 19 张 26ms —— 图与数量同帧出现,
-                     不再各自等一次跨域请求。渲染器本来就静态 import 进了 bundle,不额外增体积。
-                     长 case 网格不能照抄这条,那边走 loading="lazy",见 AlgCategoryView。 */
-                  <CaseThumb puzzle={puzzle} set={s.slug} sticker={first.sticker} alg={firstAlg} setup={first.setup} size={thumbSize} local />
-                )}
-                title={tr(s)}
-                count={n == null ? '…' : n < 0 ? '!' : n}
-              />
-              {s.slug === 'zbll' && puzzle === '3x3' && !picking && (
-                <AlgCard
-                  href="/alg/lsll"
-                  prefetch={false}
-                  thumb={<FaceletsCube fd={categoryCardFacelets('ap')} size={thumbSize} alt="LSLL" />}
-                  title="LSLL"
-                  count={LSLL_TOTAL.toLocaleString()}
-                />
-              )}
-            </Fragment>
-          );
-        })}
+        {regularSets.map(renderSetCard)}
       </div>
+
+      {puzzle === '2x2' && (
+        <section className="alg-ls-index-section" aria-labelledby="alg-ls-index-title">
+          <div className="alg-ls-index-heading">
+            <h2 id="alg-ls-index-title">{tr({ zh: 'LS 方法', en: 'LS method' })}</h2>
+          </div>
+          <LsSubsetGuide samples={firstCases} size={narrow ? 88 : 112} />
+          <div className="alg-bento alg-ls-bento">
+            {lsSets.map(renderSetCard)}
+          </div>
+        </section>
+      )}
 
       {/* 存下来的合练组合:一行一条,点进去直接开练。纯本地快捷方式,进度不在这里。 */}
       {!picking && savedMixes.filter(m => m.puzzle === puzzle).length > 0 && (
