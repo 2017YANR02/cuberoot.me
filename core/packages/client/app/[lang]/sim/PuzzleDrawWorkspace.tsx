@@ -102,6 +102,7 @@ export default function PuzzleDrawWorkspace({
           <label className="sim-draw-order">
             <span>{t('阶数', 'Order')}</span>
             <NumberCommitInput
+              className="sim-draw-order-input"
               value={Math.max(2, Math.min(20, order))}
               min={2}
               max={20}
