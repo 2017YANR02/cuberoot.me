@@ -339,6 +339,26 @@ describe('录了姿态的把:中层不再靠时间猜,转体也写进去', () =>
     expect(written).toEqual(E_PERM.filter(t => !/^[xyz]/.test(t)));
   });
 
+  it("长 y 区间横跨两个中层时不按结束时间吞进最后一对", () => {
+    const times = [2281, 2367, 2453, 2527, 2830, 2845];
+    const moves = T("R L' D D R' L").map((m, i) => ({
+      m,
+      ts: times[i],
+      endTs: times[i],
+      quarters: 1 as const,
+      startIdx: i,
+      endIdx: i,
+    }));
+    const core = {
+      events: [{ startMs: 1485, tMs: 3015, token: 'y', angleRad: Math.PI / 2 }],
+    };
+
+    const r = humanizeStream(moves, { core });
+    expect(r.rotations).toEqual([{ tMs: 1485, token: 'y' }]);
+    // The standalone y changes the notation frame before either slice pair.
+    expect(r.moves.map(move => move.m)).toEqual(T("S' R2 S"));
+  });
+
   it('照着重写后的谱子拧,和魔方真报的那条流拧出来一样', () => {
     for (const [name, human] of [['Z perm', Z_PERM], ['E perm', E_PERM]] as const) {
       const { moves, core } = recordWithCore(human);

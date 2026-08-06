@@ -23,6 +23,19 @@ export function replayFingerprint(replay: ReplayIdentity): string {
 }
 
 const VERIFIED_RECONSTRUCTIONS: Readonly<Record<string, readonly string[]>> = {
+  // User-verified 15.214 s solve from 2026-08-06. The gyro merged y + two
+  // middle-layer gestures into one noisy interval; the final S direction is
+  // not recoverable from that collapsed sensor event, so preserve ground truth.
+  '63-dd80c95344f9c7c8': [
+    'x2 // insp',
+    "B' U' R' F U L2' // W cross",
+    "y S' L2 S' // OB",
+    "U' z' B L B' L' U' L U // GO",
+    "F' L2' F L F' L2' F // GR",
+    "L F L2' F' L F L' F' // RB",
+    "D F L F' L' F L F' L' D' // OLL(CP)",
+    "L' F2 L' E' L2' x S L' U2 L // PLL-U-",
+  ],
   // User-verified 15.269 s solve from 2026-08-04.
   '89-eebeb7df9939882b': [
     'z2 // insp',
