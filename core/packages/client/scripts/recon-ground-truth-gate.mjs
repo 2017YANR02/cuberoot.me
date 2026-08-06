@@ -23,6 +23,7 @@ const EXACT_GUARDED_PATHS = new Set([
   '.codex/hooks.json',
   '.githooks/pre-commit',
   'core/packages/client/scripts/recon-ground-truth-gate.mjs',
+  'core/packages/client/scripts/sync-recon-ground-truth.mjs',
   'core/packages/client/tests/recon_workbook_ground_truth.test.ts',
   'core/packages/client/app/[lang]/timer/_lib/bluetooth/gyro_track.ts',
   'core/packages/client/app/[lang]/timer/_lib/bluetooth/orientation.ts',
@@ -146,6 +147,19 @@ function clearStamp() {
 
 function runGroundTruth() {
   clearStamp();
+  const syncScript = resolve(SCRIPT_DIR, 'sync-recon-ground-truth.mjs');
+  const syncResult = spawnSync(process.execPath, [syncScript, 'sync'], {
+    cwd: CLIENT_ROOT,
+    env: process.env,
+    stdio: 'inherit',
+    windowsHide: true,
+  });
+  if (syncResult.error) {
+    process.stderr.write(`${syncResult.error.message}\n`);
+    return 2;
+  }
+  if (syncResult.status !== 0) return syncResult.status ?? 2;
+
   const vitestBin = resolve(CLIENT_ROOT, 'node_modules/vitest/vitest.mjs');
   if (!existsSync(vitestBin)) {
     process.stderr.write('Vitest is not installed. Run pnpm install in core first.\n');

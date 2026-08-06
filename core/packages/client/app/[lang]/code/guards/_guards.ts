@@ -98,8 +98,8 @@ export const PAIRED_GUARDS: PairedGuard[] = [
     hook: 'recon-ground-truth-gate.ps1 → recon-ground-truth-gate.mjs',
     test: 'recon-ground-truth-gate.test.ts + recon_workbook_ground_truth.test.ts',
     baseline: '当前集合全量',
-    zh: { title: '复盘 Ground Truth 未验证', desc: 'Codex/Claude 命令 hook 与 Git pre-commit 三层拦截：提交复盘算法、陀螺仪/转体处理或 ground-truth fixture 前，当前内容指纹必须对应一次完整测试通过记录。fixture 由同一 registry 动态遍历，不写死数量；新增任何复盘都会让旧凭证立即失效。' },
-    en: { title: 'Unverified reconstruction ground truth', desc: 'Codex/Claude command hooks plus Git pre-commit enforce the same rule: before committing reconstruction logic, gyro/rotation handling, or a ground-truth fixture, the exact current content fingerprint must have a successful full-suite record. One registry is traversed dynamically with no fixed count; adding any reconstruction immediately invalidates the old credential.' },
+    zh: { title: '复盘 Ground Truth 未验证', desc: 'Excel 是唯一手工源，测试命令自动生成供 Git/AI 审查的 JSON。Codex/Claude 命令 hook 与 Git pre-commit 三层拦截：提交复盘算法、陀螺仪/转体处理或工作簿前，当前内容指纹必须对应一次全部有效行测试通过记录；表尾新增任何复盘都会让旧凭证立即失效。' },
+    en: { title: 'Unverified reconstruction ground truth', desc: 'Excel is the only hand-edited source; the test command generates a JSON snapshot for Git and AI review. Codex/Claude command hooks plus Git pre-commit require the exact current content fingerprint to have a successful run over every populated row before reconstruction logic, gyro/rotation handling, or the workbook can be committed. Appending any solve immediately invalidates the old credential.' },
   },
 ];
 
