@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / W / bin 13
-# Population in this bin: 214
+# Population in this bin: 215
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 66347001,R' B2 L F' D L' D2 R' F' R2 F2 D2 R2 U2 F2 L F2 D2 B2 R',W,Montevideo Open 2014 (2014-10-11),333 Final A #4
@@ -172,7 +172,7 @@
 4286518001,F2 L D2 B2 F2 R' F2 D2 F D2 U' B2 U2 R' D' B' U2 F D',W,Weston-super-Mare Autumn 2024 (2024-11-16~17),333oh R1 B #2
 4317700001,B2 U L2 R2 U' B2 R2 F2 R B' F' D F' R2 B2 D' R F' D,W,IALA Open 2024 (2024-11-24),333 R1 F E1
 4336771001,D R2 F2 L2 U2 F' D2 F U2 B' R2 F R' F U' R2 B' L' R2 D L2,W,Jay Peak Cubikon 2024 (2024-12-07),333 Final B E2
-4352594001,R2 D' F' R' F' B U' F U' L' D U2 R' B2 U2 D2 R B2,W,End of Year Ankara 2024 (2024-12-07~08),333 R1 C #1
+5759346001,U2 R2 D R2 B2 F2 D B' L' F' R2 F2 L D' L2 R' B2 D L',W,SPAMTown IV MN 2026 (2026-07-25),333oh R1 A #5
 4393148019,L B2 D2 R L U L' U F' B R' B2 D F2 L2 D' L2 D2 B2 L' F,W,Lužice Winter 2024 (2024-12-21~22),333mbf Final B #1
 4406096001,F' B2 L D' L' U D F' B U R U2 D2 R' L2 F2 B2 D2 R,W,Xi'an New Year 2025 (2025-01-04),333 R1 D E2
 4406149001,F2 D B' R2 U2 L2 F2 D' U B2 L' U2 F D R D' F2 R,W,Xi'an New Year 2025 (2025-01-04),333 R2 C #4

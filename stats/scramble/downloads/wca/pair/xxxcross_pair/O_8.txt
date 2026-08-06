@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / O / bin 8
-# Population in this bin: 122
-# Samples listed: 122 (all entries in this bin)
+# Population in this bin: 123
+# Samples listed: 123 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 33876001,L D2 R U2 L F2 L2 U2 B2 D2 F' D U' R2 F L2 F U' R2 D',O,P3 Grand Open 2014 (2014-06-28~29),333bf Final A E1
@@ -127,3 +127,4 @@
 5447042001,R' D' L' U2 R D2 U2 R' F2 L' R F L2 U2 R F' U L' B,O,Stevenage March 2026 (2026-03-14~15),333 R1 A #4
 5645041001,R' B2 R D2 L U2 B' R U' B2 U F2 R' D2 L2 D2 U',O,Instituto Apontar Rio 2026 (2026-05-16),333 R1 B #5
 5677239027,U B D B2 R U' R F L' U2 L' D2 L' F2 R U' F' D' B R2,O,Lets Go Back to Carlow 2026 (2026-05-30~31),333mbf Final A #1
+5768671001,R' B U' B2 D2 F U2 B' U2 R2 B' L D U B2 R,O,Cubalaya LA 2026 (2026-07-25),333 R1 A #4

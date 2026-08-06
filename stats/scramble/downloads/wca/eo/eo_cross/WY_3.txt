@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / WY / bin 3
-# Population in this bin: 424
+# Population in this bin: 425
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 13167001,B2 R2 F2 U' B2 F2 D' F2 U F2 U' B' U2 B' D2 F D B2 R U,Y,Velbert Easter Open 2014 (2014-04-18~20),333oh Final A E1
@@ -79,7 +79,7 @@
 660790004,L2 B2 R F2 R B2 U2 B2 R B2 L2 B U F' L' R U' R F2 L2 B R,Y,Helsinki Blind Weekend 2015 (2015-08-15~16),333mbf Final A #2
 3328433001,R2 U' B2 U2 R2 D R2 F D2 U' B U2 F2 L2 U' L' B',W,Spanish Championship 2023 (2023-12-08~10),333 R1 E #5
 660939020,U' F2 R2 B2 F2 D F2 U2 B2 D B' U2 L2 F' R B D R2 B F L2,Y,Indian Open Rubik's Cube 2016 (2016-03-04~06),333mbf Final A #3
-2349697001,F' U F' D2 B2 R2 B D2 F2 R2 F D2 U' B U2 B2 R F' R2,Y,Essex Winter 2022 (2022-12-03~04),333 R1 C #4
+5763976001,D F' L2 F R2 D' L F' U B' U2 D2 R2 B2 U2 D2 B D2 F2,W,Thessaloniki Summer Open 2026 (2026-07-25~26),333 R2 A #2
 661142015,B' U2 B D2 B2 U2 R2 U2 L2 B' R' D B2 L R D L2 B' U' L D,Y,ÅF Swedish Cube Open 2016 (2016-10-15~16),333mbf Final A #1
 661146001,L2 R2 B' D2 B' R2 B2 L2 U F2 L2 F' R F R' D2 B L B2,Y,Porto Alegre Open 2016 (2016-10-15~16),333mbf Final A #2
 4427853036,U' R2 D U2 B2 D R D B2 U' F2 L U' L2 U R' U' L2 U2,W,SacQuiet Winter 2025 (2025-01-18),333mbf Final A #1

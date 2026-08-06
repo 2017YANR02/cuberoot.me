@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / R / bin 5
-# Population in this bin: 880
+# Population in this bin: 883
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 3626799001,B U2 F2 D2 L2 U R2 U' F2 R2 U' B2 L B2 D2 F' L B R2 D,R,Red Stick Spring 2024 (2024-03-30),333 R2 B #3
@@ -67,7 +67,7 @@
 886985001,F R' B L B2 U2 F' D2 R L2 F2 D B2 D' R2 L2 F2 U',R,Montevideo Palace 2018 (2018-09-22),333oh Final A E1
 2401295001,R' U B2 D2 F2 R2 B2 D B D' U' R' U F2 L D L,R,Mini Minnesota Friday 2022 (2022-12-30),333oh R2 B E2
 4896346001,B' U B L U2 F2 U2 B2 R F2 D L' R D F' D B2 R2,R,Taizhou Open 2025 (2025-07-26),333 R1 D #3
-299010001,R' U2 B2 D2 F2 L U2 L2 R' D L B' F R' D2 L B L' F',R,Big CubingItaly 2016 (2016-05-14~15),333 Final B #4
+5761640001,D' U2 B' L2 D2 F' R2 U2 L2 F R F' L2 D2 B' U' F2 L' U2,R,Cubing at Sri Eshwar Coimbatore 2026 (2026-07-26),333 R1 E E2
 4761050001,U2 L2 F' D2 L U' B' R2 U' B2 U2 R' D2 R2 F2 B2 R' F2 R D2,R,Naperville Mini 2025 (2025-05-31),333oh R1 B #3
 302546001,L R D2 R U2 F2 L' U2 R' B D L' B R' F L' U' B2 L,R,Open Cubo Mágico Domus Sapiens 2016 (2016-05-21~22),333 R1 D E2
 312230001,U2 B2 F2 L B2 U2 L' F2 R B2 L' D' L' U' F L' U F2 L2,R,Danish Open 2016 (2016-06-10~12),333ft Final A E1
@@ -155,7 +155,7 @@
 1822672001,U2 D F' R2 L' D' L' B2 D2 F B2 U' R2 B2 U' R2 D2 R2 D,R,Let's Try Again Spokane 2022 (2022-03-05),333 R1 A #5
 1968204026,F' L R2 U L2 D U2 R2 D L' F R D' R2 B2 L U2 L2 R' B',R,Kidderminster Summer - British Blind Off 2022 (2022-06-11~12),333mbf Final B #2
 1491120001,F2 D' F2 D2 B2 L2 U' R' D B2 F2 U' F' L B' U2 B' U',R,Ha Noi Cube Day 2020 (2020-01-05),333 R1 J E2
-4655913001,F R' D2 F2 U' B2 F2 D B2 F' R D2 B R2 B F L' F2,R,Bethlehem 2025 (2025-04-17~18),333 R2 B #4
+5770772021,D2 F U F L2 D' U' F2 L2 D U2 F L2 F R2 D2 L F' L,R,Big Brain Battières 2026 (2026-08-01~02),333mbf Final A #1
 5724594001,B' D F' U2 B2 F2 R2 U B2 U' B2 L' U L D' B' U' B,R,VERK XVI 2026 (2026-06-27~28),333oh R1 B E1
 2634434062,R' B2 R U2 R D F D2 F' R F2 B2 L' F2 R2 U2 B2 U2 L' D,R,Solving in Sale 2023 (2023-04-15~16),333mbf Final A #1
 1274040019,F2 U' R2 B2 F2 R2 U2 R2 D' F2 U' B U B U' L2 B R' B' L B R',R,Bucharest Blind and Stuff 2019 (2019-08-24~25),333mbf Final A #3

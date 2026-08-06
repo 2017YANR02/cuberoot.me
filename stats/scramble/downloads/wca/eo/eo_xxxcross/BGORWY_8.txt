@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / BGORWY / bin 8
-# Population in this bin: 703
+# Population in this bin: 708
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 3451814001,L B' U R' B' R U' F L2 B' L2 B2 U2 B2 U2 B' L F,G,Longjum'Open 2024 (2024-01-27~28),333oh R1 A #4
@@ -10,7 +10,7 @@
 5418448001,F R2 D2 R2 B' L2 U2 B F L F2 U2 L' U F' U2 B2 L' U',O,Baja Warm Up I 2026 (2026-02-28),333oh R1 B E2
 28574001,D2 L2 U2 R' B2 F2 U2 F2 L' F2 U L D L2 B' R2 D' L2 U,R,BASC 3: Flagj Day 2014 (2014-06-14),333 R2 A E1
 3662956001,F2 R2 B' R2 D F2 R' U F' B2 R2 F2 U F2 R2 D2 L2 F2 D B2 D',B,UCD Cube Days 2024 (2024-04-13~14),333 R1 C #4
-5171181001,L' B2 R' U2 B2 D2 F' L2 D2 F' D R F L' R F R' D2,R,Gulf Shores 2025 (2025-11-08),333oh R1 A #1
+5758590001,F D2 U2 R2 F' R2 B2 F' L' D L' F' D2 U2 L B2 D2 F',W,Chien Kuo Cubing Party 2026 (2026-07-18~19),333 R1 D #4
 41772001,D' R2 B2 D R2 B' D F D2 B' F' D2 R2 D F2,W,Indian Nationals 2014 (2014-07-25~27),333 R1 A #5
 2372946041,R2 F' L' F' D' L2 U' F2 R' B2 U F2 D' B2 R2 F2 D' F2 B L B',R,Ota Blind Winter 2022 (2022-12-18),333mbf Final B #1
 2365686001,B' D2 L2 D2 R2 F' U' B' D' B2 F' L D2 F' L' D2 L',R,Mongolian Open 2022 (2022-12-11),333 R1 J #3
@@ -115,7 +115,7 @@
 4479278001,B D2 F D2 U2 R2 B2 R B' R' U F' D' F' U L2 D2,O,SSN Cube Open 2025 (2025-02-08~09),333 R1 B E2
 3512843001,L2 D' L2 U F2 R' D' R' B2 U' F D2 R2 U2 D2 F2 D2,R,Weekend Cubing A Israel 2024 (2024-02-16),333 R1 C E1
 1836767001,F2 D2 B2 R2 B U2 F' R2 U' F2 U L2 R2 F' D' B2 L F2,B,Dåstrup Sleepover 2022 (2022-03-19~20),333 R1 A #3
-3482497001,F2 L2 B F D2 U2 R2 D2 R' D2 R U' B' L R2 U' B R U,W,Altavista Open 2024 (2024-02-03~04),333oh Final C #5
+5772088001,D' R2 F U' L U2 F2 U2 R U2 L R D' R2 F' L D F' U',R,Saint-Martin Saturday 2026 (2026-08-01),333oh Final B #3
 2953517001,R2 L' B' U R2 L' D2 B' U B' R2 B' R2 D2 R2 D2 B2,B,Air Capital Cubing Summer 2023 (2023-08-05),333 R1 A #5
 4324135001,D' L2 F2 U R' D' L' B F2 R F2 R B2 L U2 F D2,W,Barcelona Open 2024 (2024-11-30~12-01),333 R1 E #5
 686550001,B U2 L2 U2 R2 F2 L2 U L U' L D2 U B' D B D F',G,Melipilla Open 2018 (2018-01-14),333 R2 B #4

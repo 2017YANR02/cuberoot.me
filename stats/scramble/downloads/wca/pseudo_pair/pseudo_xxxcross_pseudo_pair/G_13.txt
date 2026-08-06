@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / G / bin 13
-# Population in this bin: 221
+# Population in this bin: 222
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 8407001,U L2 D F2 L2 R2 U' L2 R2 B L B L' F L' U R B' L D',G,Danish Open Championship 2014 (2014-04-05~06),333 R1 C #3
@@ -21,7 +21,7 @@
 5500394001,U2 R2 U2 L2 F2 L' F2 U2 F2 R' B U B R F D' L' U L2 R2,G,Moncton 2026 (2026-04-04),333 R1 A #1
 167361001,L2 F2 U' B2 D2 L2 F2 D2 F' L U' R' F L2 U' B' L' D B2 D',G,ŚLS Sosnowiec 2015 (2015-07-18~19),333 R2 A #2
 241672001,R' B' R2 D' L' F2 U' R2 D' F U2 D2 B2 R2 L D2 R U2 B2,G,Beskidy Cubing Day 2016 (2016-01-09),333 R1 D E1
-299291001,R F L B2 U L2 B D' R U F R2 F U2 F' D2 B R2 F2 B' L2,G,Dubai Open 2016 (2016-05-13),333 R2 F #4
+5771074001,U' D' B' D R' D2 R F' R2 L2 D' U2 R U2 D2 F2 R U2 B2 D2,G,Hampton Beach Summer 2026 (2026-08-01),333 R2 B #3
 315757001,B F' L2 R2 F2 L2 U2 F' U2 L2 F2 R' B' D' B2 L2 F' L' B U' L B,G,SCMU 2016 (2016-06-17~19),333bf R1 A #2
 340776001,D2 F' D2 R2 B' U2 R2 B2 U2 F L B R2 D U B R B2 U R' D2,G,Cube Camp in Kanazawa 2016 (2016-08-05~07),333 R1 B #1
 362473001,F2 D L2 F L B' U' R' L' F2 L2 F2 U' F2 D L2 D R2 U2 B2,G,Ha Noi Open 2016 (2016-09-11),333 Final E E1

@@ -1,15 +1,15 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / BG / bin 3
-# Population in this bin: 694
+# Population in this bin: 697
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 242001,L' U2 F2 L D2 U2 R D2 U' B' R2 D R' B D F' D' B2 D',B,Montréal Open 2014 (2014-03-15),333 R1 A #3
 5214254001,F D2 R' U B2 D' R2 D' L2 B2 L2 F2 L' R' B' F' U R' U',G,Shin Kong Cube Open - Taichung 2025 (2025-11-22),333 R2 A E2
 2630488026,D2 F U R2 D2 L D2 R' B2 D2 F2 D2 B' U L2 R U2 R2 U2 L,G,Barby Cube 2023 (2023-04-08~10),333mbf Final A #1
 13714001,U2 R2 F2 L' U2 R B2 R B' F U B' F2 D2 B L2 R B2 U',G,Berkeley Spring 2014 (2014-04-19),333oh R1 A #5
-4190955001,L' B2 L2 U2 R' D2 R D2 L B U' L' F' L2 U L2 D2 F2 U2,B,CubingUSA Mid-Atlantic Championship 2024 (2024-10-12~14),333 R2 A #1
+5771439017,F' R' B2 D' R' U2 R' F2 L' R' U2 F' U L U2 F' R F' L' F,G,Silent Korea Open 2026 (2026-08-01~02),333mbf Final A #1
 4496827001,F' D' L2 B2 L2 B2 R2 D U L2 R D2 B' U2 B D2 U' R',G,URJC Open 2025 (2025-02-15~16),333 R2 B #1
 1265172001,R2 F2 D B2 D2 B2 F2 R2 U' R2 U2 R U' F U' F D B' F' L',G,Kharkiv Open 2019 (2019-08-17~18),333ft R1 B E1
 35153001,D' R' U' D2 L F' L2 U2 B2 D F U2 F B2 R2 D2 F U2 B,G,Plentzia Open 2014 (2014-06-28~29),333ft Final A #1
@@ -35,7 +35,7 @@
 3472862001,B' R B' D L B R D2 R2 D2 R2 B' U2 L2 B2 R U,B,Michigan Mini 15 2024 (2024-01-29),333 R2 B #1
 150358001,R' F' U' D2 B2 R' U' F' L' U2 F R2 L' F2 D2 F2 R' F2 U2,G,Taiwan Cubing League - Taipei 2015 (2015-06-13),333 R2 A #2
 3793921001,B2 U2 D F2 U' F D' B' R2 F B U2 L2 F L' U' F',B,Quezon City Open II 2024 (2024-05-25~26),333 R1 A E1
-1902384001,D B' D L' D2 L B2 D2 R D2 R2 B R F' D R D2 L R,G,Stevenage Spring 2022 (2022-04-30~05-01),333 R2 C #3
+5761870001,L' U2 B' D F D2 R' U R' U' L2 B2 D2 L2 F2 R' U',B,Luminous Sol Open 2026 (2026-07-25~26),333oh Final A #3
 3492753001,L2 D B' D L2 U2 F2 R2 U L2 R2 D F D2 U2 L' B2 R' U,B,HCHS Winter Open 2024 (2024-02-03),333 R1 F #3
 4289625001,B' D2 L F2 R' U2 R F2 L' B' R F' R' F R U2 R U,B,Campeonato Brasileiro de Cubo Mágico 2024 (2024-11-15~17),333 R2 B #4
 191419001,D2 F' D2 L2 F' U2 F D2 B R2 U B2 D' L' D U' L2 B2 L' U F L B,B,Moscow South-West Open 2015 (2015-09-19~20),333bf R2 A #2
@@ -177,7 +177,7 @@
 1906436001,R2 F' U2 L2 B2 R2 U2 R2 D' R2 F D2 B' L' U' L2 D2 R2 B2,B,Bursa Open 2022 (2022-05-07~08),333 R1 C #5
 1106989001,R2 U' R' F L2 D L' B U2 B' L' D2 B L2 F L2 U2 B',G,Chanquete Open 2019 (2019-04-13~14),333 R2 A E1
 836306001,L B2 R' F2 R F2 R2 D2 F D2 R' F R2 D' R B2 L2 B,B,Holy Toledo Summer 2018 (2018-07-21),333 R2 A #1
-839680001,F' B R2 L2 D' R' U2 F2 U R U B2 D R2 U' R2 D2 R2,B,Beijing Summer 2018 (2018-07-29),333 Final D E1
+5759688001,F D2 L2 F' D2 B U2 B F L' D' F2 R2 U' F R' B R',G,Pikes Peak AM 2026 (2026-07-25),333oh Final A #1
 2840581001,U' L D2 B2 L D2 B2 L U' B2 D B2 U' F2 R D R,G,Victorian Open 2023 (2023-07-01~02),333oh R1 C #2
 4276489001,L U' B2 L' F B2 U' L' U' B' L2 F2 B2 U2 D B2 U' R2 U' B' L,G,Colombian Nationals Avenida Chile 2024 (2024-11-09~11),333bf Final A E1
 848934005,F2 R2 F2 D2 L2 F2 R F2 R B D' B' L2 D F2 L2 B U2 B2 L,G,Project Radom 2018 (2018-08-04~05),333mbf Final A #1

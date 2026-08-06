@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / BGOR / bin 2
-# Population in this bin: 775
+# Population in this bin: 779
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 3187898001,D2 L2 U2 L' U2 L' U2 L' D2 B2 U B2 F2 R2 F' D F' U,B,Zamiin-Uud Open 2023 (2023-10-21),333 R1 H E1
@@ -92,7 +92,7 @@
 438569001,F' D' R2 F L' B2 U' L F2 D' F R2 D2 R2 U' R2 D' L2 D',B,Rubik Soletta Concepción 2017 (2017-01-29),333oh Final A #2
 442484001,D2 B' R2 F2 U2 B L2 U2 F2 D2 L' B R F2 U R2 U' F2 D B' L B',G,Mental Breakdown Germany 2017 (2017-02-11~12),333bf R2 A #3
 1501211001,D L2 D' R B2 U B' D' B U L2 F2 R2 L2 F2 D F2 L2,B,Ordos Winter 2020 (2020-01-11),333 R2 C #5
-5521656012,R L F2 L' F U' D2 L' U L' U2 R2 L' D2 B2 R2 L B2 L',B,BLD Open Fürth 2026 (2026-04-11~12),333mbf Final B #1
+5759954001,F2 U2 B2 U' F2 L2 U B2 L' B' F' L D B' D2 F L B2 U' L' F,B,Tokyo BLD Summer 2026 (2026-07-25),333bf Final A E1
 5358722001,U2 F D F' L' B L2 U' F2 R2 F' D' L2 D R2 L2 D',G,Tramsheds VIII: Summer Sides 2026 (2026-02-01),333oh Final A #3
 4311551041,B' D F B R2 F2 L B' U2 D2 B U2 R2 D2 B2 U R' F L',R,East Bay Big and Blind 2024 (2024-11-24),333mbf Final A #1
 4804800001,R2 F' D2 U' L2 U2 F2 U2 R2 U' R B2 R2 U2 R' B' R D' B2,G,CubingUSA Southeast Championship 2025 (2025-06-13~15),333 Final A #1
@@ -118,7 +118,7 @@
 1486135001,L' F L U2 B' D2 R' F U R2 D2 L2 D2 F' R2 F2 B' L2 F R2,B,Small Cheese 2019 (2019-12-30),333oh Final A #2
 5020771001,R F' R D2 L' F' B2 R2 D L2 D' R2 B2 U F' L,O,Criciúma Open 2025 (2025-09-13~14),333 R2 A #5
 1312932001,D R2 D R2 B2 U' F2 L' B L2 D2 U2 B R D2 U2 L U,G,Shenzhen Open 2019 (2019-09-21~22),333 R1 E #1
-5539908001,R2 L F' L' F L D2 B2 L2 D' F2 L2 D2 F' L2 F2,R,NZ South Island Championship 2026 (2026-04-10~12),333 Final A #2
+5768808001,U' B' L D' F2 D' B2 R2 U R2 D2 L F R' U F U2 L' B',B,Kansai Mega Day 2026 (2026-08-01),333 R1 C #4
 3940648001,B' U R B2 L2 D' R L2 D2 R2 D2 B U2 F R2 L' F' L,G,Camino al SAC Aves María 2024 (2024-07-13~14),333 R1 B #5
 633373001,R U' R2 U' B2 D' B2 U2 L D2 F2 B U2 D2 F R2 F R2,R,Shri Ram Cubing Challenge 2017 (2017-11-04~05),333 Final A #1
 5749996001,B U R2 U2 B' L' F' D L2 U D2 F B' R2 B U2 D,G,Warm Up Lent 2026 (2026-07-10~12),333 R3 B E2
@@ -203,5 +203,5 @@
 5135866001,F2 U L U2 R2 B2 D F2 L2 U R2 B2 U' F' D L' B2 D2 B R2,B,Baku Fall Open 2025 (2025-10-26),333 R1 A E1
 4301439001,D2 B U' L B2 L2 F' U' L U' R F' U2 L2 B' D2 L2 B,G,Hasty Hastings 2024 (2024-11-23),333 R1 B #2
 3332463001,B L U2 R2 L' D L F2 B' L R2 B2 D2 L2 F R2 F2 B',G,Navidad Explora Medellín 2023 (2023-12-08~10),333oh R1 C #4
-3279097001,B D2 R F' L2 B2 R2 D2 R2 B' U L2 F2 R U2 R2 B' F2,B,Czech Championship 2023 (2023-11-17~19),333 R1 B E2
+5763081001,B2 D2 F U2 R2 B L2 B' D B2 R2 U' B R D' R' D',O,Middle Georgia Summer Solving 2026 (2026-07-25),333 R2 A E1
 909822001,B2 R2 L2 F R F' U' L B2 U F U2 L2 U2 B R2 F2 U2 B2 U2,R,GLS Cup V 2018 (2018-10-20~21),333 R1 F E1

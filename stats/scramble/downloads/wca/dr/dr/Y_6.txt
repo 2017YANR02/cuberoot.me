@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / Y / bin 6
-# Population in this bin: 616
+# Population in this bin: 619
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5415001,B2 D U L2 F2 U' B2 F2 R U2 F2 R' U L F2 L2 U2 R F L' F',Y,Fénix 2014 (2014-03-29~30),333bf R2 A E1
@@ -39,7 +39,7 @@
 1321416001,R' U' F L' B2 R U2 B2 D2 F2 L' D' B D2 L' B' U2 F2 L2 B2 R F R' U' F,Y,Hungarian Open 2019 (2019-09-20~22),333fm Final A #2
 5216793031,R' D' R2 F2 L2 F2 U L2 U L2 D2 L B2 D B2 D' F' L B2 L' F',Y,Park Slope PBQ 2025 (2025-11-22~23),333mbf Final A #1
 5714108001,U R' D' B2 L' F' L2 F' R2 U' F2 U2 F2 L' U2 L2,Y,Lavey-Vous les Mains 2026 (2026-06-20~21),333 Final B #5
-226620001,F2 D U2 B2 U L2 F2 L' D' B2 F L2 F U L' B2 L2 R',Y,New Zealand Nationals 2015 (2015-12-06),333 R1 C #4
+5771127001,D2 F R2 B R2 F' U2 B2 U2 F D' U' L' U' L2 B2 D2 B R',Y,Hampton Beach Summer 2026 (2026-08-01),333 R1 B E1
 228973001,B2 L2 R2 D2 U' L2 D F2 D2 B2 D2 B L U2 L' B2 L' U2 F' D',Y,Plenty o' Parity 2015 (2015-12-12~13),333 R1 G #1
 232933001,D R2 D' B2 D2 F2 L U' R' B2 L' R D L2 R' U R',Y,Merry Cubing 2015 (2015-12-20),333 R1 C #3
 233815001,F2 R2 D2 R2 D L2 U' L2 U' L2 B R F R2 F' D2 U2 B2 R F' R2 B' L',Y,Nanchang Winter 2015 (2015-12-27),333bf Final A E2

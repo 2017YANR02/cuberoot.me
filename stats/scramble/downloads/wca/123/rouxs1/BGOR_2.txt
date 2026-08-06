@@ -1,8 +1,8 @@
 # Scramble samples — 123 / rouxs1 / BGOR / bin 2
-# Population in this bin: 525
+# Population in this bin: 527
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5542001,D' R2 L' F' R2 B2 U B L' U2 F2 L2 U2 F2 B2 U' R2 D' R2 U',B,Swiss Open 2014 (2014-03-29~30),333oh R1 A #2
@@ -36,7 +36,7 @@
 228201001,B2 D' B2 U' R' F2 U D' F L2 U2 F' L2 B2 U2 F R2 B2,G,Santa Lucía Open 2015 (2015-12-12),333oh Final B #1
 3027978001,U2 F U' R2 D' L2 R2 D' F' R F' L' F' D' U2 R F,O,Corona Summer 2023 (2023-09-02),333oh R1 C #4
 4659973030,R2 B' U2 R' D' F' U R D2 F2 D2 F' R2 F U2 B2 D R D',G,CF Goes Sideways Brzeziny 2025 (2025-04-12~13),333mbf Final A #1
-249040001,D2 F2 R' U2 L B' U' B' R U2 F2 B2 U2 L2 U2 R' D2,O,Manchester Open 2016 (2016-01-30~31),333 R1 B #4
+5770627001,F' U F' D2 R B D B D R U2 B2 L2 F2 U2 L' U2 L' D2 B R,R,Super Side Summer Fürth 2026 (2026-07-31~08-02),333bf R2 B E2
 257450001,L2 R2 B2 D' B2 D' F2 D' F2 L2 B R' D R2 D2 B' U' R U2 R2,O,Uchi Montevideo 2016 (2016-02-12~14),333oh Final A E1
 262178001,L2 D2 B2 L B2 L' B2 L D' B2 U' F U' R2 F2 R2 B L2 D',R,Resonance V8.0 Cube Open 2016 (2016-03-06),333 R1 D #4
 4431742001,D B' L U2 L U2 F2 U2 L2 D2 L R D' L B' U' F' L' F',G,Bolivia Cubing Tour - SCZ 2025 (2025-01-19),333oh Final B #3
@@ -128,7 +128,7 @@
 773982001,R2 L D2 R' F2 D L F D' B2 L U2 F B R2 L2 D2 L2 F',O,Heritage Cubing Day 2018 (2018-05-05),333 Final B #5
 2542553001,F2 D R2 U' R2 D R F R2 F2 R2 U B2 D B2 L2 D' F2 D2,O,Turnin' in Termonfeckin Saturday 2023 (2023-03-11),333 Final A #1
 780695001,U R B' U2 R2 U2 D' F' R F' R2 D2 F R2 F' U2 B2 R2 U2 R2,R,BU Spring 2018 (2018-05-12),333 Final A #3
-4478635001,F' L2 U2 F U2 L2 U2 F2 D L' D2 F2 D2 B2 F' U B F2,R,Irabia-Izaga Open 2025 (2025-02-08~09),333 R2 C #4
+5763768001,B2 D2 R B2 D2 U2 L' D2 R' F2 L2 U' B' U' F U2 L2 U' F',R,Carberry Open 2026 (2026-07-25),333 R1 C #5
 4173602030,F L' U F L2 F D' L U L U' D' R2 U' R2 B2 D2 F2 L' F2,B,Götalandsmästerskapet 2024 (2024-10-05~06),333mbf Final B #1
 3869155001,U' F' L D' B L F U2 L2 F2 R2 F2 U' R2 F2 D' R U2 B' L2 U,O,Stockholmsligan 413: Kalle i Kubik - 2024 (2024-06-19),333bf Final A #1
 825135001,D2 L2 F2 D2 F' L B U' R U2 B' D2 F2 B' L2 D2 F L2 B,G,Brooklyn 2018 (2018-07-08),333 R1 D #2

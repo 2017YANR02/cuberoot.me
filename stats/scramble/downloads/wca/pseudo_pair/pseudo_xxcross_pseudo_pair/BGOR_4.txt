@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / BGOR / bin 4
-# Population in this bin: 228
+# Population in this bin: 229
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 31993001,B2 D' L2 B2 R2 F2 U' L2 U B' U' B F' R B' L B' F2 L',B,ULA Rubiks 2014 (2014-06-27~28),333 R2 B #2
@@ -55,7 +55,7 @@
 796714019,F2 D' B2 D' R2 D' U' B2 L' B' F2 L2 B' D L2 B2 L R2 F2 L' F2,O,Please Be Quiet Waterloo 2018 (2018-06-03),333mbf Final A #1
 816854001,F2 R2 U R2 U F2 D' L F L' U' F' L' D2 B D',G,Vantaa Open 2018 (2018-06-30~07-01),333oh R2 C #4
 826306001,L2 D2 B2 R2 B2 F2 U' B2 F D U B' R2 B' U2 B2 U L' R2 D2,O,Wuxi Try to Get a Mean 2018 (2018-07-14~15),333bf R1 A #3
-830102001,D' B2 R' L' U' B' R B L2 F R L2 U2 L F2 U2 F2 U2 R' F2,B,West Coast Cubing Tour - Cupertino 2018 (2018-07-15),333 R1 A E1
+5769010001,B' F2 D2 U2 R2 D' B2 D' L' U' R' F2 U R' B D2 R' F',B,Elmsford Extravaganza II 2026 (2026-07-28),333oh Final B #1
 836298001,L B' U2 F U2 B2 U R B U' R2 D2 R2 L2 D F2 U' L2 D B2,B,Holy Toledo Summer 2018 (2018-07-21),333 R1 E E2
 838990001,U D L U2 B2 U' R' U F R' U F2 D' R2 U L2 U2 F2,R,Mariupol Open 2018 (2018-07-27~29),333 R1 E #4
 5586748001,D2 L2 D2 L2 F2 D2 U F' R' D' F D' L2 D U' R' F,O,Bayankhongor Cup 2026 (2026-04-26),333 R1 B #3

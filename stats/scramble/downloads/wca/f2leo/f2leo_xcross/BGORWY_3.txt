@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xcross / BGORWY / bin 3
-# Population in this bin: 216
+# Population in this bin: 217
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 17106001,U F2 U' D' F D' L' D L2 F2 D' R2 F2 L2 B2 D2 F2 U2,B,SLS Chorzow 2014 (2014-05-03~04),333oh R1 C #5
@@ -56,7 +56,7 @@
 788375001,U L2 B D2 B2 U B' D B R' U2 F' L2 F' L2 U2 B D2,B,Tea Time Spring 2018 (2018-05-26~27),333 R2 B #3
 789982001,D' L2 D2 L' F D' F' L' F' D F2 B2 L2 D' L2 U' L2 U R2 U',B,Clock N' Cats 2018 (2018-05-26),333 R1 A #4
 793777001,L2 F2 U L2 D U F' U F R2 D2 U' B' D' L2 U2,R,Slovakian Cube Day 2018 (2018-05-27),333 Final A #2
-809386040,L2 F' D2 F' R2 F' R' F2 L' D' B F R2 F2 D' U' R F L,Y,CubingUSA Western Championship 2018 (2018-06-15~17),333mbf Final B #2
+5763081001,B2 D2 F U2 R2 B L2 B' D B2 R2 U' B R D' R' D',O,Middle Georgia Summer Solving 2026 (2026-07-25),333 R2 A E1
 812053001,L B' U2 L D F L2 D2 R2 U B' R2 U2 B2 R2 U2 F R2,G,Fairview Cube Day 2018 (2018-06-24),333oh R1 B #3
 817937001,B2 D2 R2 F2 D' B2 U R' U R2 B2 L U' F' R' B2 F,O,Maryland 2018 (2018-06-30~07-01),333 Final A E2
 842540001,B2 U2 L D2 L' U2 R' F2 L B' D' B' U2 L' R U' R' D2 R',B,VCP Invierno 2018 (2018-07-28),333 R1 A #2

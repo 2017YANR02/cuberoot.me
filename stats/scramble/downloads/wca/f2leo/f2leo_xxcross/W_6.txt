@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / W / bin 6
-# Population in this bin: 735
+# Population in this bin: 738
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 946420001,D2 B D2 F' R2 B' L2 B D' L2 R F2 L' B2 F L2 U B2,W,Rocky Top 2018 (2018-12-01~02),333oh R1 B E1
@@ -29,7 +29,7 @@
 3524704001,F' B2 U2 R' F2 L F2 R2 U2 R' D2 U' B2 F R2 D' R2 U B,W,Paradise Park NxNxN 2024 (2024-02-16~18),333 R1 C E1
 126171001,F D2 R2 B2 D2 B D2 F U R' F' D L R D' L2 R' U,W,National Cubing Region Open 2015 (2015-04-11~12),333 Final C #3
 4463884001,L' D2 U2 B' R2 U2 B L2 B2 U2 R B' F' R' D' L2 B' L2 U2,W,Aldeilla Winter Open 2025 (2025-02-01~02),333oh Final A E2
-1643647026,L2 B2 R U' D2 B2 L' D2 L2 R' F2 U2 B' D2 L B' L' F' D' B R,W,Please Be Quiet Brisbane 2021 (2021-04-10),333mbf Final A #1
+5772020014,F2 D L2 D2 F D' F2 L D L2 B2 R2 U2 F2 U2 F B2 D2 B',W,BC Quiet Championship 2026 (2026-08-01),333mbf Final A #1
 4734607001,B U' F' D L' F' B D' F2 R' D2 L' U2 L' F2 R U2 L B R2,W,SA Side State Championship 2025 (2025-05-18),333mbf Final A #1
 5428541001,D R U' R B2 F2 L F2 L' U2 L' B' R' F R' B' L F U L2,W,Please Be Quiet Odivelas 2026 (2026-03-07),333bf Final A #3
 149826001,U2 R2 B F U2 B' L F L' B D2 L2 B L B L U',W,Slow n Steady Spring 2015 (2015-06-06),333 R2 B #2

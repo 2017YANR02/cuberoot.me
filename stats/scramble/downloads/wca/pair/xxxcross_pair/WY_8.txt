@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / WY / bin 8
-# Population in this bin: 244
+# Population in this bin: 245
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 2608001,D' B' L' D L' F2 U F U' L' U2 F D2 R2 F' B2 R2 U2 B2,Y,CMI Fiesta Open 2014 (2014-03-21~23),333 R1 R #4
@@ -125,7 +125,7 @@
 2796788032,R' U2 D2 B' R' U' L' U2 F' U2 R2 B2 L2 U' L2 F2 R2 D2 B L',Y,Tassie Winter 2023 (2023-06-17~18),333mbf Final A #1
 2809222001,L' D R2 U F2 D' U B2 U2 B U' B' D2 L U F2 R' F' R2,Y,Poway Summer Cubing 2023 (2023-06-18),333 R1 A E1
 2855996001,L' R2 D2 U L2 R2 F' R' U2 F2 D' F R' U2 B' U2 B' L',W,Bothell Summer 2023 (2023-07-08),333bf R1 B #3
-5299102001,L U' L' D2 B2 R' B2 L D2 R D' L U2 R2 D2 F D U B,Y,Que la Inocencia te BAlga 2025 (2025-12-28),333 Final A E2
+5772066001,R' L' F U2 D' L' U B' L2 U F2 D F2 L2 F2 U F2 R U2,W,Saint-Martin Saturday 2026 (2026-08-01),333oh Final B #2
 2885400020,L' D2 B U2 F' D' R D R' B2 L2 U2 R2 D2 L B2 U L' U' L B2,W,Kerman Summer 2023 (2023-07-12~14),333mbf Final A #1
 2944684025,R2 D2 L2 B2 U2 B' R' L F R L2 F2 U D2 F2 D2 R2 U2 B,Y,Big Blind Bucharest 2023 (2023-07-29~30),333mbf Final A #3
 2986852001,D F R2 F L2 B2 R2 F L2 U2 F2 D' R' F2 D F' U2 L,Y,Mystic Cubikon 2023 (2023-08-20),333 R2 B #1

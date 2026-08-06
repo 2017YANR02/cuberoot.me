@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / O / bin 2
-# Population in this bin: 13
-# Samples listed: 13 (all entries in this bin)
+# Population in this bin: 14
+# Samples listed: 14 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 41772001,D' R2 B2 D R2 B' D F D2 B' F' D2 R2 D F2,O,Indian Nationals 2014 (2014-07-25~27),333 R1 A #5
@@ -18,3 +18,4 @@
 5006395003,U L U' B2 U R' F R F2 R2 U2 B2 R2 U F2 L2 D F2 B' L2 B' L',O,New York Quiet Championship 2025 (2025-09-06~07),333mbf Final A #2
 5020771001,R F' R D2 L' F' B2 R2 D L2 D' R2 B2 U F' L,O,Criciúma Open 2025 (2025-09-13~14),333 R2 A #5
 5049359001,R B2 F L2 U L2 B2 D L2 F2 L2 R' F' L U' R2 B U2 B2,O,Energy Cube Białołęka 2025 (2025-09-27~28),333oh R1 A E2
+5763081001,B2 D2 F U2 R2 B L2 B' D B2 R2 U' B R D' R' D',O,Middle Georgia Summer Solving 2026 (2026-07-25),333 R2 A E1

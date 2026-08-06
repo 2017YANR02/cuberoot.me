@@ -1,11 +1,11 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / BGWY / bin 8
-# Population in this bin: 291
+# Population in this bin: 293
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
-10613001,R2 U' B2 U R2 U2 B2 R F2 L' F' D B L D' U' L B' L,B,Inspiria Cube Day 2014 (2014-04-12),333oh R1 B #4
+5768603001,B L F' U2 R' U B2 D' B D2 B' D2 R F2 R L2 U2 B2 L B' L2,B,Cubalaya LA 2026 (2026-07-25),333bf Final A #1
 5288167001,U F L B R' L2 D F' D2 B' L F2 L B2 U2 L' U2 L' U2 R,B,DC Hyderabad Winter Open 2025 (2025-12-20~21),333oh R1 C #5
 50492001,L2 U2 L2 U L2 R2 D F2 D B2 D' L U' L2 B R F U' L' U' B,B,Indian Cube Challenge 2014 (2014-08-15~17),333 R1 M E1
 52783001,U R B L U' R' F' U D' F' B2 L D2 R F2 U2 L D2 F2 R,B,ABHC 2014 (2014-08-23~25),333 Final B E1
@@ -21,7 +21,7 @@
 158977001,D2 U R2 D B2 D' U2 R D' B' L U2 B U F' D L' F2 D' B R',B,Lyon Megaminx Open 2015 (2015-07-04~05),333bf Final A #1
 5086684001,R L D B L U F' U2 F2 B2 L D2 R' F2 R L2 U2 D2 R' U,B,Croatian Championship 2025 (2025-10-04~05),333oh Final B #5
 188221001,B2 R B2 U B' D B L' D B R2 B2 U2 R' B2 R' F2 B2 U2 L,B,Manhattan Gdańsk Open 2015 (2015-09-12~13),333oh R1 A #2
-190970001,F U2 R2 F2 R2 B2 F L2 D2 B' U L' R' D L2 F' U B L2 R',B,Hungarian Open 2015 (2015-09-18~20),333oh Final A #4
+5758226001,D' F2 D' R2 D R2 B2 D' U' L F2 R F' D U' B L' U L2 R2,B,Unicentro Armenia V 2026 (2026-07-20),333 R2 C #4
 4764307001,D2 F L2 F D2 B' L2 F' R2 D2 U R D' U R B2 U2 F R' F,B,Only 3x3's in Academyium Bangalore 2025 (2025-06-01),333oh R1 B #5
 231175001,R' F L' D' F2 U' B' U2 D' F2 L2 U2 F2 L B2 U2 R D2 R' D2,B,Santa Claus Cube Race 2015 (2015-12-05~06),333 R2 C E2
 247324001,B U2 B2 L2 F L2 R2 D2 L2 F R' F' D2 L' R B' U' L R' D',B,Hsinchu Winter Open 2016 (2016-01-31),333 R1 A #1

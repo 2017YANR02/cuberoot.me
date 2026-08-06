@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / BGOR / bin 8
-# Population in this bin: 445
+# Population in this bin: 448
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 26001,U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2,R,Galeries Dorian Open 2014 (2014-03-15),333bf Final A E2
@@ -66,7 +66,7 @@
 442484001,D2 B' R2 F2 U2 B L2 U2 F2 D2 L' B R F2 U R2 U' F2 D B' L B',G,Mental Breakdown Germany 2017 (2017-02-11~12),333bf R2 A #3
 442645001,R2 D' B2 D R2 B2 D' U' R2 U2 F U B' F L' B2 L' U R2,R,Rubi-Xtreme Piatra Neamt 2017 (2017-02-11),333 R1 A E2
 3295598001,D' R D L2 D2 L2 F2 L2 B2 R2 D B F2 L2 F D2 R' U,R,Poznań Autumn 2023 (2023-11-25~26),333 Final A E1
-5310982001,U R2 F2 U' L2 D' B' R B' L U' L2 U' R U R2 D',B,Cebu New Year Open 2026 (2026-01-03~04),333 R1 C E1
+5768671001,R' B U' B2 D2 F U2 B' U2 R2 B' L D U B2 R,O,Cubalaya LA 2026 (2026-07-25),333 R1 A #4
 3878170067,F' D F' U2 F' U2 F2 L2 B2 L' D R D2 L' B' U' B L2 U2,G,Ashfield Summer Challenge 2024 (2024-06-23),333mbf Final A #1
 466442001,U' R2 D' L B U' R L2 D B2 R2 F2 D2 B2 R2 D2 R' D2 L,B,Cubing Classic 2017 (2017-03-18~19),333 R1 D #4
 5099154001,U' B2 D F2 R' F2 D F R2 B U2 F2 B' D2 F U2 D L2 D2 B,R,Thailand Championship 2025 (2025-10-11~13),333bf R1 B #1
@@ -77,7 +77,7 @@
 5347562001,R2 L F2 R' D F' R2 F' U' L' F R2 B2 D' R2 D' F2 R2 U2,R,Viña Summer 2026 (2026-01-24~25),333 Final A #1
 3875185001,R' F2 D2 R2 B2 D2 R2 B2 U L' D' R D2 R' U L' D2 B F',G,Chilling in Canberra Saturday 2024 (2024-06-22),333 R2 A #3
 5722683001,D2 L2 U2 L2 R2 B' R2 B' R B L' D' F2 R' B D' B D' U2,B,Yukon Solve It Whitehorse 2026 (2026-06-27),333 Final B #1
-3329794010,U' B D' R2 D2 L2 R F2 L R' B' L' F' R B2 L' B R B R',B,5x5 on Madison Ice 2023 (2023-12-09~10),333mbf Final A #1
+5772088001,D' R2 F U' L U2 F2 U2 R U2 L R D' R2 F' L D F' U',R,Saint-Martin Saturday 2026 (2026-08-01),333oh Final B #3
 3128748001,F U2 B D' R' U2 F2 D2 F R F2 U2 B2 D2 L2 B2 L' D2,R,Cubing for Yuval 2023 (2023-10-01~02),333 R2 C E2
 3581509001,D' F2 R' F U2 L D' R2 D2 R B2 L' D2 F2 D' F2 U' R,O,Northampton Newcomers D 2024 (2024-03-10),333 R2 B #3
 603423001,D2 B2 F2 L2 U B2 R B' U2 L' D2 R2 B2 L R' F R,R,Puget Sound Fall 2017 (2017-09-23),333 R1 F E2

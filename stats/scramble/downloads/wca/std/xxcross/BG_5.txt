@@ -1,8 +1,8 @@
 # Scramble samples — std / xxcross / BG / bin 5
-# Population in this bin: 227
+# Population in this bin: 229
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 1779001,F U2 B' U L' F' R F' B D F R2 U R2 F2 B2 D' F2,G,Kansai Open 2014 (2014-03-21~22),333ft Final A #1
@@ -70,7 +70,7 @@
 931716001,R2 U F' U2 R' U D' R F R F2 B' D2 L2 B2 D2 B' L2 F2,B,Smart Cube Fest 2018 (2018-11-09~11),333 R3 A #2
 1037696001,B2 U R2 D2 U' F' R' F D2 U F2 R2 D' R' U2 L',G,Voronezh Open 2019 (2019-03-02~03),333 R2 A #3
 1044099001,R2 D2 F L2 B2 R2 B' U2 F2 U2 R F2 L D2 R B' F2 U R' B',G,Bay Area Speedcubin' 15 2019 (2019-03-10),333 R1 B #4
-1044146001,R2 F2 D2 B2 U' B2 L2 D R2 F2 D B' R2 D L B2 D F' L D',G,Bay Area Speedcubin' 15 2019 (2019-03-10),333 R2 C #2
+5762024040,L B2 U F2 D U2 L2 F' D2 B R' D B' R2 D' L' B' L2 B R',G,TroisMaisons Zéro Vision 2026 (2026-07-25~26),333mbf Final B #1
 1052340001,U F2 R2 U' L2 D' U F L2 B F2 D2 B' U R' U' F2,B,Anaadyanta Cube Open 2019 (2019-03-08~09),333oh Final B E1
 1073606001,D2 R D2 R2 F2 R' D2 R2 D2 F' D' R U' R' D2 R B D R',B,Szczytno Open 2019 (2019-03-30),333 R2 B E1
 1092193001,U D' R B2 D' R' D2 R U' B L U2 D' R2 U' B2 D B2,G,Indian Nationals 2019 (2019-04-11~14),333ft R1 A #2
@@ -173,7 +173,7 @@
 4298316001,F R' L2 D R L' B' U F R F' B2 D' F2 D F2 D2 B2 L,B,Los Fuertes V2 Puebla 2024 (2024-11-16~18),333bf Final A #2
 4332297001,F' R2 U2 L2 B' L F D' R2 B' U' L2 D' R2 U D',G,Berkeley December Weekday Tricubealon 2024 (2024-12-04),333oh R1 A #2
 4357097043,U L B R' F R2 U' L F2 R2 U' D2 L2 B' U2 F U2 F2 D2 L,G,New Zealand Nationals 2024 (2024-12-13~15),333mbf Final A #1
-4366646001,F B2 D B' U2 L U D2 R U2 L2 U2 B2 R U2 R' D2 F2 D L,G,Avenida Chile XVIII 2024 (2024-12-15),333 Final B #5
+5770720001,L' R' U2 L2 R2 F2 U2 F' U' R' B2 L D' F' U' L2 U2 R',B,Vacaciones Cuenca Open 2026 (2026-08-01),333 R1 B #5
 4473699001,U2 F2 D L2 U' F2 L2 U L2 D B F' L' D' R2 B R B R,B,Singapore Championship 2025 (2025-02-07~09),333 R3 A #4
 4486197001,B' D2 L2 F U' F2 R U R F2 U R2 U F2 R2 B2 D2 F,G,Cubing Returns Nagpur 2025 (2025-02-16),333 R1 D #2
 5358708001,F L2 U2 L2 U2 F2 R F2 D2 R' D L2 F R U F D L' U2,G,Tramsheds VIII: Summer Sides 2026 (2026-02-01),333oh R1 C #3

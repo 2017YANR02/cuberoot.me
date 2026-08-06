@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxxcross / B / bin 11
-# Population in this bin: 567
+# Population in this bin: 571
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4096276001,B' R2 F R2 B' D2 F U R U D2 R2 L2 D R2 U B2 D,B,Laos Championship 2024 (2024-09-14),333oh Final B E2
@@ -39,7 +39,7 @@
 1689059001,B' L2 U2 R2 D' U2 F2 L2 F2 U' B D' U' B' U' R F2 R' F D2,B,Szczytno Open 2021 (2021-08-28),333bf Final A #3
 4861361001,R' D2 U B L2 R2 U2 B' L2 B' R U2 F2 D' B' R U' R',B,Rhein-Sieg Open 2025 (2025-07-11~13),333oh R1 A #3
 243130001,B2 F2 D F2 U' L2 R2 D L2 F2 U2 F D' L' B R B' F2 D R D',B,Ha Noi Cube Day 2016 (2016-01-17),333oh Final C #1
-5691923058,R2 U' F R U2 R' F U L2 D B2 R2 D2 F2 U' L2 F2 D F' L B R',B,Swisscubing Cup Mental Breakdown I 2026 (2026-06-06~07),333mbf Final A #1
+5770253001,D2 F R2 U2 F' D2 B L2 F' L B F2 R' B' D' B L2,B,Willimiehen Kuutiopäivät 2026 (2026-08-01~02),333bf Final A E1
 4328788001,R B R' F2 B2 D F' D L' F2 L2 F2 L2 D R2 L2 U2 R',B,Sendero Tijuana 2024 (2024-11-30~12-01),333 R1 B E2
 2986836001,F' B2 R2 U' B2 L2 U2 R' U' F U' L F L' B' F2,B,Mystic Cubikon 2023 (2023-08-20),333 R1 C E1
 4021078001,D2 F2 L D2 L2 B2 L' U2 R' U2 B' L2 D2 R' U' B2 U' F',B,Rosemount Big Cubes 2024 (2024-08-18),333oh R1 A #4
@@ -160,7 +160,7 @@
 2036653001,B2 R B L F' L2 D2 B R2 F' L2 R2 D F' U2 F U' B' R,B,La Tablaza Open 2022 (2022-07-16~17),333 Final A #4
 5121429001,D F2 R2 D B2 D L2 F2 L2 U B D' B2 F' D L U L2 R,B,Bodocó Open 2025 (2025-10-18~19),333 Final B E1
 4940283001,F' U2 B' L2 F D2 L2 F2 R2 U' B L' B R F U L' U2 F,B,Paraíso Winter DC 2025 (2025-08-16~17),333 R2 B #1
-1351985001,F2 L2 F2 U2 L U2 F2 U F' R U' R D' U2 L2 R2 B' L',B,Empire State Fall 2019 (2019-10-12~13),333 Final A #3
+5762311001,L' U B D' R' D' F U L2 F2 D B2 D L2 U R2 D2 F L',B,Mallorca Open 2026 (2026-07-25~26),333oh Final C E1
 4603710001,R' B2 L' B2 D2 B2 F2 R2 D2 F2 R F' L' U' L' D L D2 U B,B,Happy Crew CO 2025 (2025-03-29),333 R1 B #5
 4954035001,R2 F' D' L' B2 D R' F2 B2 U2 D' B2 U2 D' R2 F2 B' L,B,South India Cube Championship 2025 (2025-08-14~17),333 R2 A E2
 955948001,D2 R2 U2 B' F2 U2 L2 U2 F' U L' B2 L F' D2 B2 D2 L2 F,B,Saint-Raphaël Winter Open 2018 (2018-12-15),333 Final A #5

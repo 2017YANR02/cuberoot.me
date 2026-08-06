@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / BGORWY / bin 4
-# Population in this bin: 336
+# Population in this bin: 337
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 10812001,B2 L R' D2 B2 F D F R D2 L' B L B' U' R,W,Open Cube Project 2014 (2014-04-12),333 Final A E2
@@ -57,7 +57,7 @@
 653276001,U2 F R2 D2 R2 B L2 F' D2 U' F2 R2 B L' B2 D B' D R2,G,Weston-super-Mare Open 2017 (2017-11-25~26),333 R1 D #5
 660464015,L R2 B2 F2 D2 B2 R' F2 R2 D R2 F2 L B R' B2 U2 R2 U L B2,W,Brasilia Open 2014 (2014-05-17~18),333mbf Final A #2
 3243093002,R2 F' U2 B2 L2 B R' F' L2 R B F2 L F' U2 L U' B,G,CubingUSA Rocky Mountain Championship 2023 (2023-11-03~05),333mbf Final B #1
-660660029,U F2 D' R2 U' L2 D' B2 U R' U' R U B' R2 D2 L' U2 L' F',W,Grudziadz Open 2015 (2015-03-07~08),333mbf Final A #1
+5769010001,B' F2 D2 U2 R2 D' B2 D' L' U' R' F2 U R' B D2 R' F',B,Elmsford Extravaganza II 2026 (2026-07-28),333oh Final B #1
 660669011,D2 B2 L2 B2 L' R2 U2 R' B' D' F D U B' D B2 U' B L2 U2,Y,Indian Open Rubik's Cube 2015 (2015-03-20~22),333mbf Final A #1
 660707002,U' L2 U F2 R2 B2 D2 L2 F2 U F' L D' F D' L D2 R2 F2 D2 B R,B,Mega Rubik 2015 (2015-05-02~03),333mbf Final A #1
 660804002,L2 F2 L2 R2 D F2 D2 R2 F R2 U2 R2 B' U' R U2 B2 R' F2 L B,O,Italian Championship 2015 (2015-08-29~30),333mbf Final A #1

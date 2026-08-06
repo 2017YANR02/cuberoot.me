@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxcross_pair / W / bin 6
-# Population in this bin: 237
+# Population in this bin: 239
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5354559001,D' L2 D2 B F2 R2 D2 B' U' R' F' L2 D2 F2 U' R2 D2 L,W,DIA EH Cube for Change Dubai B 2026 (2026-02-01),333 Final A E1
@@ -113,7 +113,7 @@
 2259786037,D R' F2 R2 L' U2 L2 D' R' D2 B2 L B2 R2 L F' L D2 L2,W,CubingUSA Texas Quiet Championship 2022 (2022-10-22),333mbf Final A #2
 2279730049,L' D2 B2 R2 U2 R F2 L2 B R' F2 D L2 D' R' B' F' R F' L B,W,Ayase Autumn A 2022 (2022-11-03),333mbf Final A #1
 4922343001,B D L' R' D2 L' D2 U2 L' R D R2 D' F2 U B' D2 F' L',W,Clemson Cube Catastrophe 2025 (2025-08-09),333 R2 A #2
-2308610029,R' U D F L' F' L R2 F' R2 F2 D2 B U2 F2 R B' L' F' L B,W,Colorado Sensory Shutdown 2022 (2022-11-19),333mbf Final B #1
+5766433001,F' L2 U' L2 F2 U' R2 D L2 B2 R U' R2 U B' U B2 L2 R,W,Pocos Cupos Bogotá XXVIII 2026 (2026-07-25),333 Final A #3
 5223732001,F D2 L F D2 F2 L2 F R2 F' D L' D2 L' D' B F' R',W,Waterloo Fall 2025 (2025-11-29),333 R2 C E1
 2372744001,L2 D2 F' R2 B D2 F2 R2 B' R2 D2 U2 R' B L D F2 R B L,W,Mental Breakdown Bogotá 2022 (2022-12-17),333bf R1 A #1
 2386807001,U L2 F R2 F L2 D2 B' F U B L2 B D2 R' F2 U2 L',W,Cubing Sunday in SSN 2022 (2022-12-18),333 R1 F #5

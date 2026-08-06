@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / R / bin 3
-# Population in this bin: 366
+# Population in this bin: 368
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5787001,R L2 F' L' F2 L U F L2 U' D2 B2 L2 B D2 B' U2 F' D2,R,GuateRubik 2014 (2014-03-30),333oh R1 A #3
@@ -16,7 +16,7 @@
 84567001,U2 B F2 D2 F R2 B' D2 R2 F' U' L' D2 U' L B U' F D2 L' F,R,Cube Elite Union Cafe 2014 (2014-12-06),333bf Final A #1
 122016001,D R2 D' B2 U' R2 B2 D F2 U2 F U' R B2 F R' U' R U,R,Ceará Open 2015 (2015-03-28~29),333 Final A E1
 131609001,F D' L2 U' D L2 F R D2 F2 B2 R2 U R2 F2 D' R2 U2 R2,R,Slovenian Open 2015 (2015-04-18~19),333oh R1 A E1
-141834001,U2 F2 L' U2 R' B2 R D2 U' B2 F D' F R B2 F2 D F2 L2,R,Fuzhou Open 2015 (2015-05-24),333 R1 A #4
+5770881001,B2 R B2 R B2 D2 F R2 U F2 L2 F2 D' L' B' D,R,Rose City OR 2026 (2026-08-01),333 R2 C #2
 145814001,L2 F2 R2 F' D2 F' L2 D2 U2 B L' F' D' B L R' D' B U L B' L2,R,Jogja Mini Competition 2015 (2015-05-31),333bf Final A E2
 4210563001,D' B2 F2 D F2 D' R2 F L' F2 L R2 U B2 L' D2 L B,R,Vancouver Southlands Sprint 2024 (2024-10-19~20),333 R3 B #3
 5085327010,B' U' F2 L2 U B2 L' F2 B2 D2 L2 U R2 U' R2 U' B L U' B,R,Cubing for Yuval Israel 2025 (2025-10-08~09),333mbf Final A #1

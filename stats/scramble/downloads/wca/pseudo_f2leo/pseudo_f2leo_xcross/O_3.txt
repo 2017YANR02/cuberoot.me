@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / O / bin 3
-# Population in this bin: 360
+# Population in this bin: 363
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 11485001,D2 B' D2 R2 B L2 F2 D2 R2 F' D F' D U L D L B' U2,O,Beijing Spring 2014 (2014-04-19),333 Final A #4
@@ -90,7 +90,7 @@
 3091336001,L2 R2 U' L2 D2 U' L2 B2 R2 L' U' L' R D2 U2 B2 F' U',O,RioMar Fortaleza Open 2023 (2023-09-16~17),333 R1 A #5
 846875001,F' L2 F' R2 B2 D2 R2 U2 R' D' F2 U2 L B2 L2 F' L2 D L,O,SPB Summer 2018 (2018-08-04~05),333 R3 A #4
 864964001,B2 R' D2 R F2 R D2 B2 R2 B L2 U2 L' U' R D2 B L' R' B' L B',O,Cube Mahotsav 2018 (2018-08-25~26),333bf Final A #3
-5484550001,L U2 L F L' D2 L' R2 F2 L2 U2 F' U2 F' B2 L B2 D',O,Cube Against Cancer Pittsburgh 2026 (2026-03-28),333 R2 C #3
+5761666001,F2 B U2 L' U B U2 R' F2 L2 U' F2 B2 L2 U D2 R' L2,O,Barpeta Cubing Open 2026 (2026-07-26),333 R1 C #1
 3872288001,L' B2 R' U2 F R2 D2 B' L2 U2 R2 F R D F2 D2 U R B,O,Sambil Barquisimeto 2024 (2024-06-16),333 Final A #4
 918819001,D2 U' B2 F2 R2 U F2 L D R2 B' R2 D' L' D' U B' F2 L2 U',O,Cubing ATMOSphere 2018 (2018-10-27~28),333bf Final A E2
 3095972001,R' B2 R' F U2 F' R' F2 L' U2 L2 F2 L D2 L2 U2,O,Minnesota Cube Day 2023 (2023-09-23),333 R2 A E1

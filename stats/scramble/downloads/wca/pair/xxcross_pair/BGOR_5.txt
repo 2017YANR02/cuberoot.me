@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxcross_pair / BGOR / bin 5
-# Population in this bin: 75
-# Samples listed: 75 (all entries in this bin)
+# Population in this bin: 76
+# Samples listed: 76 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 26001,U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2,R,Galeries Dorian Open 2014 (2014-03-15),333bf Final A E2
@@ -80,3 +80,4 @@
 5587689001,U L2 U2 B2 D2 L B2 L U F2 D L' R' B' L D' U' B,B,Odd Day in Hong Kong 2026 (2026-04-26),333 R1 D E1
 5675972001,D2 R D R' D2 F' R U L F2 D2 R2 D2 R' B2 D2 L' F2 R,G,Franconia Cube Days 2026 (2026-05-30~31),333oh Final A E2
 5695560015,F2 L R' B2 F2 R U2 B2 D B' U2 B2 D' B' L F D F' D2,B,Jog Your Memory Joondalup 2026 (2026-06-13),333mbf Final A #1
+5770720001,L' R' U2 L2 R2 F2 U2 F' U' R' B2 L D' F' U' L2 U2 R',B,Vacaciones Cuenca Open 2026 (2026-08-01),333 R1 B #5

@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / BGOR / bin 7
-# Population in this bin: 259
+# Population in this bin: 260
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 6373001,U D2 F U' L' F2 D R2 L D' L2 D' F2 R2 F2 U F2 R2 D,B,Rumia Open 2014 (2014-03-29~30),333 R1 A E2
@@ -195,7 +195,7 @@
 5396965001,L2 D' R' U B2 D2 L D' L2 D2 F2 L2 B2 U' R2 L2 U B,G,Singapore Championship 2026 (2026-02-20~22),333oh R2 A E1
 4200299001,U' L B' U2 D F' R2 L U D2 R F2 U2 R F2 L' F2 B2,B,Mashujaa Mega Open 2024 (2024-10-19),333oh R1 A #1
 4269826001,R F R2 F D' R2 U' L2 D' U2 B2 L R2 B R' D' F' D',O,Back to Berlin 2024 (2024-11-09~10),333oh R1 A #2
-4346707001,R' B2 R B' U L F2 U' L2 U2 B R2 B D2 B U2 B' D,R,Odd Sides in Sydney 2024 (2024-12-07~08),333oh Final A E1
+5765240001,L2 D' U2 R2 D2 B2 R' D F2 U2 R U B D B F L R2,G,Bucharest Cubing July 2026 (2026-07-25),333 R1 A E1
 4418162043,L2 U F2 U2 F B R U' B2 L' U2 B2 R' D2 R2 D2 U L F2 L' F2,R,Gem City Airplane Mode Special V OH 2025 (2025-01-12),333mbf Final B #1
 4425656001,B L B2 L' B2 U' L F B U2 R2 U2 R2 U2 B' D' R F D',G,A New Year in Auckland 2025 (2025-01-17~18),333bf R1 A #1
 4441979001,F2 R' L2 U' R F2 L' F' R2 U2 F R2 U2 R2 B2 R2 D2 B' D2,G,Franconia Winter 2025 (2025-01-24~25),333 Final A #5

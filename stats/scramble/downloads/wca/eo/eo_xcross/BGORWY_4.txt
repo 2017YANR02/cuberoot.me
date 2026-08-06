@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / BGORWY / bin 4
-# Population in this bin: 313
+# Population in this bin: 314
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 3594698001,R2 B L2 B2 R2 U2 F L2 F' R B L2 B2 L2 B L' U2,R,Delta County Cubing 2024 (2024-03-16),333 Final A #2
@@ -185,7 +185,7 @@
 2853699001,B' R2 F' R2 U2 B' U2 R2 D' F' R U L2 D' F' U' F' R',O,Auckland Mid-Year Madness 2023 (2023-07-01~02),333 R3 B E1
 2859551001,D F2 R2 D' B2 U' R2 F2 B U' R' U' R2 F L' D L' F L2,R,OH in a Madison Ballroom 2023 (2023-07-08),333oh Final A E2
 2871483001,L' U D2 F' D2 B' U2 B' R2 U L B R' U2 R2 B' R2 U2,O,Sens Open 2023 (2023-07-08~09),333oh R1 B #2
-3268100001,D' L' U2 B2 U F2 R2 F2 R' F' D' R2 U2 L D2 B L',W,Cubing in Palem 2023 (2023-11-12),333 R1 D E1
+5770772021,D2 F U F L2 D' U' F2 L2 D U2 F L2 F R2 D2 L F' L,Y,Big Brain Battières 2026 (2026-08-01~02),333mbf Final A #1
 4854239001,B2 L2 U2 L2 D' B D B' F2 R2 B2 U' F2 L2 D F2 L2,W,İstanbul Mid Summer 2025 (2025-07-05~06),333 R1 C #1
 2910188001,U L U L2 D R2 B2 D2 B2 L' D L' D2 L D' F,R,Israel Championship 2023 (2023-07-17~20),333 R3 A #4
 2918661001,U R2 U2 F' U2 B F' R2 B' D2 F R2 U L U L B' R2 U2,R,No Parity Joniškis 2023 (2023-07-22),333oh Final A #5

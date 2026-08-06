@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxxcross / BGORWY / bin 6
-# Population in this bin: 421
+# Population in this bin: 423
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 6373001,U D2 F U' L' F2 D R2 L D' L2 D' F2 R2 F2 U F2 R2 D,B,Rumia Open 2014 (2014-03-29~30),333 R1 A E2
@@ -17,7 +17,7 @@
 74824001,D R2 D2 L2 B2 D2 R U' B R' D2 L2 R' F' R F' U,O,Slow n Steady Fall 2014 (2014-11-09),333 R1 B E1
 5680669001,U2 L2 U' R2 F2 D2 R2 D R2 F D2 B L F D2 U' B U' R2,O,Oruro Open 10th Anniversary 2026 (2026-05-30~31),333oh Final B #4
 4428364001,R B2 F2 U2 F2 D' U' F2 U' R' U B' U2 F2 U F' D' F' R2,Y,Ruta Cubera: Orihuela Open 2025 (2025-01-18~19),333 R2 A E1
-152720001,D2 L2 D U F2 R2 B2 R2 D2 F' U B2 U' B' L' B' U R' D',W,Bogotá Cúbico 2015 (2015-06-20),333oh R1 B #2
+5761802039,F U D R' B' D' L' F2 R2 U L2 U F2 U2 F L' F' L2 U,Y,Luminous Sol Open 2026 (2026-07-25~26),333mbf Final A #1
 169103001,U2 B2 U2 R' F2 D2 R' D2 B2 L D' B D L2 U' R' U' L2 F',B,Skips in Brest 2015 (2015-07-25~26),333 R1 A E1
 172799001,F2 D2 B2 L2 R' U2 F2 L' D' R' U' L' B' D' B' F2 D' F2 D2,G,US Nationals 2015 (2015-07-31~08-02),333 R2 H E2
 3212721001,F' D' B2 R2 D' L2 D2 F2 U R2 B' U2 F' D2 B R' D' F U,B,Davis Fall 2023 (2023-10-29),333 R1 C E1

@@ -1,8 +1,8 @@
 # Scramble samples — std / xxcross / BGWY / bin 5
-# Population in this bin: 459
+# Population in this bin: 462
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5695560015,F2 L R' B2 F2 R U2 B2 D B' U2 B2 D' B' L F D F' D2,B,Jog Your Memory Joondalup 2026 (2026-06-13),333mbf Final A #1
@@ -190,7 +190,7 @@
 4298316001,F R' L2 D R L' B' U F R F' B2 D' F2 D F2 D2 B2 L,B,Los Fuertes V2 Puebla 2024 (2024-11-16~18),333bf Final A #2
 4937846031,D2 R2 F' D2 L2 D' F2 U F2 D' L2 U R D2 L2 B2 F' L' B L2 U,G,BrizZon Side Open IV 2025 (2025-08-15~17),333mbf Final A #2
 2325976001,R L' F2 D B' D2 F' R F' L2 F2 B' U2 F L2 F D2 R' U2,G,El CUBO Tour Zacamil 2022 (2022-11-26~27),333 R2 C #3
-4037415001,U R' F L2 F2 L2 U B' U2 D' B2 D2 F2 L2 F2 D' B2 U' B2 F',G,Micentro Funza 2024 (2024-08-24),333 Final B E1
+5770720001,L' R' U2 L2 R2 F2 U2 F' U' R' B2 L D' F' U' L2 U2 R',B,Vacaciones Cuenca Open 2026 (2026-08-01),333 R1 B #5
 1643647026,L2 B2 R U' D2 B2 L' D2 L2 R' F2 U2 B' D2 L B' L' F' D' B R,W,Please Be Quiet Brisbane 2021 (2021-04-10),333mbf Final A #1
 3424644001,B L' U' F' L2 B U2 B' F L F' D' R' U F2 D F',Y,Negros Speedcubing Cup 2024 (2024-01-13~14),333 R2 D #3
 1709438001,U' R' U' R2 U2 R2 D2 F2 U F' D U' F R2 U2 B' R' U,Y,Cobb Cubes Comeback 2A 2021 (2021-10-30),333 Final A #4

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / Y / bin 9
-# Population in this bin: 367
+# Population in this bin: 370
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 2643001,D2 B2 L2 D2 U2 B2 R' D2 L D2 L2 D B' L2 U2 F' D2 R' B U' L,Y,CMI Fiesta Open 2014 (2014-03-21~23),333 R2 C #4
@@ -114,7 +114,7 @@
 1179167001,U' B2 D' B2 U R2 U' F2 R F2 L' D F' L' R B' U B R2 B',Y,Oficina Open 2019 (2019-06-08~09),333bf Final A #1
 1182035001,U' D R' F2 D R2 L F B2 R2 B R F2 B2 D2 R B2 L2 F2,Y,Pittsburgh Summer 2019 (2019-06-15~16),333 R1 C #1
 1188215023,L2 B2 D2 F' U2 F U2 B L B D R U B F2 R' F2 L2 R B',Y,Silent Summer Orlando 2019 (2019-06-22~23),333mbf Final B #1
-3889525001,F2 L2 B R' D' L2 D R2 D F2 U R2 F U' B' U L U2 R,Y,Kota Cube Festival 2024 (2024-06-23),333 R1 B #4
+5767585001,F U2 F U2 F R2 B2 U2 F' L2 D F2 U' F' D2 L R' F D B',Y,Don't Sleep In Pelita Sungai Dua 2026 (2026-07-25~26),333oh Final A #1
 4008396001,U2 R' D B2 U' B L2 F U2 R2 D2 F2 D L B' R U2 R2 F',Y,Hanoi COP Open 2024 (2024-08-11),333 R1 B E1
 1258384001,L B' L' F R2 U' B2 D' F' B2 R U2 B2 U2 D2 R2 B' R2 U2 F,Y,V ETEC Jacareí Open 2019 (2019-08-10),333 R2 B E1
 1260615001,R2 B2 U B2 U2 R2 F2 U' R2 D' R2 F L' D2 U2 B2 L2 B F2 L' U',Y,Udmurtia Open 2019 (2019-08-10~11),333 R1 A #3
@@ -130,7 +130,7 @@
 5594772001,L R2 B2 D2 L2 B2 U R2 U' F' D2 B F' D2 U R' U B',Y,İstanbul April 2026 (2026-04-25~26),333 Final A #3
 1384408001,R2 D R2 F2 U B2 D L2 D2 F' D L B L2 F' D F D' B2 R,Y,Black Pawn in Brest 2019 (2019-11-02),333 R1 A #2
 4800135001,F' L D L2 D2 F D2 B2 R2 F' R2 L' F2 R2 B L' D B R,Y,Cube Factory League Justynów 2025 (2025-06-14~15),333oh Final A E2
-4583854001,B2 R L U' D' B D' R2 B2 D2 F2 R F2 R B2 L' U2 B' L D',Y,Mainzelcubing 2025 (2025-03-22~23),333oh Final A E1
+5769461001,R' F D2 R2 U' D' L B U L2 U2 F2 D' R2 U' R2 D' F2 L F,Y,Clockholm City Open 2026 (2026-08-01),333 R2 A #4
 1420594001,L2 F2 L U2 L' U2 L2 R' B' U F2 D2 L F' U2 L B' F2,Y,Weston-super-Mare Open 2019 (2019-11-23~24),333 R2 A #4
 1436902001,U2 F L2 U2 B2 L2 B' F R F2 L D2 U R2 F' R' B2 U' F',Y,Cusco Speedcubing III 2019 (2019-11-30),333 R1 D #2
 2818758062,F U' D L F' R D2 F' D2 B' U F D2 B U2 D2 F U2 D2 F2 L2 U',Y,Side Events Bangalore 2023 (2023-06-24~25),333mbf Final B #2

@@ -1,15 +1,15 @@
 # Scramble samples — pseudo / pseudo_xxxcross / BGWY / bin 6
-# Population in this bin: 275
+# Population in this bin: 277
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 6373001,U D2 F U' L' F2 D R2 L D' L2 D' F2 R2 F2 U F2 R2 D,B,Rumia Open 2014 (2014-03-29~30),333 R1 A E2
 13215001,B2 L2 D' B2 D F2 D R2 F2 R U L2 U R U,B,Velbert Easter Open 2014 (2014-04-18~20),333 R2 B #5
 33688001,D' L D2 R2 L' D R' B' D L' F D2 R2 B2 U2 B2 D2 B D2,Y,P3 Grand Open 2014 (2014-06-28~29),333 R1 S E2
 4276692082,L' F D2 B U2 B' D2 L2 F U' L R D' L2 F2 D2 F' D U' L,G,Colombian Nationals Avenida Chile 2024 (2024-11-09~11),333mbf Final B #1
-36432001,D2 F2 D2 R2 U' F2 L2 F2 U' L F' U2 B2 D' L2 B' R2 D',B,FLIP Open 2014 (2014-07-12~13),333 R2 A #5
+5766364001,B' U' L D B2 D F2 R2 D' F2 R2 L' D2 F2 U' F' U R' D,Y,Wuhu Open 2026 (2026-07-25),333 R1 B E2
 5562447001,R B' D2 B2 U2 L2 B U2 D' F2 U F' D' R F,Y,Xi'an Cherry Blossom 2026 (2026-04-04~05),333 Final E #2
 41772001,D' R2 B2 D R2 B' D F D2 B' F' D2 R2 D F2,W,Indian Nationals 2014 (2014-07-25~27),333 R1 A #5
 59534001,R2 B D2 L2 U2 F2 L2 F L2 F' R' U F U R2 D' L R U',Y,Swedish Championship 2014 (2014-09-20~21),333 R1 C #3

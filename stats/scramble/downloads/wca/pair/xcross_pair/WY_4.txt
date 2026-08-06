@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / WY / bin 4
-# Population in this bin: 614
+# Population in this bin: 617
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5126395001,L' B2 L2 U F L' F' D L R2 F D2 L2 F' B' D2 B2 U2,Y,Hvidovre Liga III 2025 (2025-10-25),333 Final A #1
@@ -21,7 +21,7 @@
 4638621001,F2 R2 L D' F' B R2 U L2 B' D' B2 U2 B' U2 L2 B,Y,Risbjerg April 2025 (2025-04-13),333oh Final B #3
 3305762001,D L2 F2 D' R' F' B' U2 B D' L2 D2 L U2 F2 R2 L2 U2 R2,W,Colorado Cold Hands Showdown 2023 (2023-12-02),333 R2 A #5
 2974880001,U' D2 B' F U2 B F2 L2 U F D R2 F' R F D' U' L2,Y,San Marcos Open 2023 (2023-08-12~13),333 R1 G #1
-3594879001,U F R U F2 L2 D F2 D' R2 U F2 L F' D U L2 F2 U',W,Geel Beginners Saturday 2024 (2024-03-16),333 R1 B #5
+5769010001,B' F2 D2 U2 R2 D' B2 D' L' U' R' F2 U R' B D2 R' F',W,Elmsford Extravaganza II 2026 (2026-07-28),333oh Final B #1
 137360001,R' F' D' R2 U2 F2 L' U2 F D' B U2 R2 D F2 U2 L2 B2 U2,Y,Mega Rubik 2015 (2015-05-02~03),333oh R1 B #5
 2969807010,L' D2 F' R2 F2 U2 B2 D' L2 R2 U2 R D R2 F U2 R B R2 D',W,Turkish Nationals 2023 (2023-08-10~13),333mbf Final A #2
 4998897001,L2 U' L' D B2 R2 U F D F' R L U2 F2 R U2 R',Y,Mofunland Speedcubing Singapore 2025 (2025-09-06),333 R3 A #3
@@ -95,7 +95,7 @@
 1182245016,B2 U2 B2 L2 U' B2 R2 B' L' D2 U' R2 B' R2 D2 F D L2 U2 L B,Y,Parla Open 2019 (2019-06-16),333mbf Final A #1
 549323001,L R F2 R2 F2 D2 R2 D2 B D' L B D2 U2 B' R2 B2 D,W,CubingUSA Nationals 2017 (2017-07-07~09),333 R1 AA #1
 4992989001,B2 L' D2 L' D' F D' F2 U F B2 U' D2 B2 D2 R2 D2,Y,Quangang Morning 2025 (2025-08-31),333 Final C #1
-3768431001,L2 U B L2 D2 U2 B2 D2 B F2 R B' D F2 L U' L2 D2,W,Weston-super-Mare Spring 2024 (2024-05-18~19),333 R2 A #1
+5764262001,U2 F D B' L2 B D2 F' U2 L R B2 L' F' R F L2,W,GAN Tarlac Speedcubing Open 2026 (2026-07-25),333 R2 B #3
 4214351016,L' B' L2 D L D2 R2 D2 F2 R' B2 U L2 U2 B F' U' F' L' F,W,Valsugana Speedcubing 2024 (2024-10-19~20),333mbf Final A #1
 5741391001,U' F R2 U2 L2 U' B2 D L2 U B2 R D' L' F U' F',W,Mike's Cubes Israel 2026 (2026-07-05),333 R2 B E2
 2204373001,U2 L2 F U' F2 R' F2 L' B' R L2 U2 D F2 L2 D' L2 B2 U' R2,Y,Finnish Championship 2022 (2022-09-24~25),333oh Final A E2

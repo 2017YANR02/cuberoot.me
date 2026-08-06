@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / BGOR / bin 1
-# Population in this bin: 73
-# Samples listed: 73 (all entries in this bin)
+# Population in this bin: 74
+# Samples listed: 74 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 213504001,B2 U2 L2 D2 F2 D2 F' L F' L2 D B2 F D' B' U2 R U2,B,AZCubing Fall 2015 (2015-11-07),333oh Final A #4
@@ -78,3 +78,4 @@
 5572071001,D2 F2 U' F R D2 F' U D2 R B2 L2 U' B2 R2 B2 U',B,National Trail Open OH 2026 (2026-04-25),333 R2 B #4
 5750550009,R2 B' D2 R2 U2 F2 R' F2 R2 F2 U2 R' B' R2 B D' L' D' B2 L B2,G,GAN New Zealand Nationals 2026 (2026-07-10~12),333mbf Final A E1
 5750594009,R2 B' D2 R2 U2 F2 R' F2 R2 F2 U2 R' B' R2 B D' L' D' B2 L B2,G,GAN New Zealand Nationals 2026 (2026-07-10~12),333mbf Final A #2
+5765481001,U' L' B U2 F' R2 B U2 B L2 B2 L D2 F' U2 F' U' L',G,Samgau Almaty 2026 (2026-07-25~26),333 Final A #3

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / ORWY / bin 6
-# Population in this bin: 246
+# Population in this bin: 248
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5024080001,D B U' D2 F' B' R F R' F R' F2 U2 D F2 R2 D,Y,León Open 2025 (2025-09-13~14),333 R1 A E2
@@ -98,7 +98,7 @@
 1668717001,R' U' B' U' F2 L2 F' D F' B2 D F2 U' B2 U2 L2 U L',O,Idaho Summer A 2021 (2021-07-16),333 R1 B #4
 1677954001,L B L2 B2 U B2 F2 R2 D' L2 F2 U L' U2 F' L F2 D R,O,Bergen Open 2021 (2021-07-31~08-01),333oh Final A E2
 5284150023,D' B L2 U R2 F2 U2 B2 U2 L2 B2 L F' D B' U F D U' B' L',O,Ogunquit Winter 2025 (2025-12-20),333mbf Final A #1
-5598488001,D2 L2 D2 B2 L U D' B R' D' R F' L2 F2 D2 R2 L2 F,R,All Rounders Katowice I 2026 (2026-05-01~03),333 R1 C #2
+5766364001,B' U' L D B2 D F2 R2 D' F2 R2 L' D2 F2 U' F' U R' D,Y,Wuhu Open 2026 (2026-07-25),333 R1 B E2
 1728229001,F2 U R L' F' L F' D B' R2 L D2 B2 L' F2 R' B2 U' B,O,BrizZon Side Open III 2021 (2021-11-12~14),333bf R2 B #1
 1741049001,D2 L' B2 L2 B D2 L2 B U2 R2 F' L' D' L' F2 D' B' R2,R,Tuam Re-Open Saturday 2021 (2021-11-27),333 R1 C #1
 5728070001,F' D2 U' B2 R2 U2 L2 B L' B' F2 D L U F2 R2 F R',O,Warm Up Carolina Pride 2026 (2026-06-27~28),333 R2 A E1
@@ -204,4 +204,4 @@
 4739631026,R F L' U R2 U' F2 D2 F2 D F' L' B R2 D' R2 B2 U2 L2,R,Beginner & Blind Johannesburg 2025 (2025-05-17~18),333mbf Final A #2
 4759279001,B' U F B' R' D' R' B2 L2 B2 L2 B' L2 U2 R2 D' B D2,O,Cube Factory League Koluszki 2025 (2025-05-24~25),333 R2 D #3
 4780009001,U F L F U F2 D' B2 D' R2 B2 U B L D' U R' B R2,R,Utah Speedcubing Pride 2025 (2025-06-07),333 R1 B #2
-4781742001,R L2 F2 R2 U' F2 U B2 F' L2 D' B D R2 B' D' R' D2,O,Minxville Indiana 2025 (2025-06-07),333 R1 D #2
+5761802039,F U D R' B' D' L' F2 R2 U L2 U F2 U2 F L' F' L2 U,Y,Luminous Sol Open 2026 (2026-07-25~26),333mbf Final A #1

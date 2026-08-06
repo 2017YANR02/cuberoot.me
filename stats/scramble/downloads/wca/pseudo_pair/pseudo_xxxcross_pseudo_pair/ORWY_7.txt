@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / ORWY / bin 7
-# Population in this bin: 475
+# Population in this bin: 478
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 2198244038,B U' D' B2 L B' U B2 D2 F2 L2 U2 L2 B2 U' F2 U' R B,W,Trondheim Mental Breakdown 2022 (2022-09-24~25),333mbf Final A #3
@@ -94,7 +94,7 @@
 4943228001,D2 U L2 U2 B2 D B2 U F R F D' L B2 U L2 R' U B,W,Cube en Baie Open 2025 (2025-08-15~17),333 R1 B #1
 4262585001,R F R F L' U2 B L2 U2 F2 R F2 L2 U2 F2 R F' D',Y,Rubik's WCA Asian Championship 2024 (2024-11-01~04),333 Final A #2
 3976122001,B' U' F R B U2 L' F' L2 D B2 D' L2 U' L2 F2 R2 L F2,W,Perth Winter 2024 (2024-07-27~28),333 R1 D #1
-2372945023,R' L2 B' L' D2 R' U2 R' U2 B R D2 F2 L U2 L U2 L B2,R,Ota Blind Winter 2022 (2022-12-18),333mbf Final A #1
+5772088001,D' R2 F U' L U2 F2 U2 R U2 L R D' R2 F' L D F' U',R,Saint-Martin Saturday 2026 (2026-08-01),333oh Final B #3
 3267639001,L D R2 D2 B L B U' B D2 L2 U2 D' F2 R2 L2 D' R2,R,Vermont Cubikon 2023 (2023-11-18),333 Final A #3
 2376390001,L' B' R F U' F' U D' B L2 D2 B2 D2 L B2 L' F2 R' F2 B2,Y,Rubik's WCA Oceanic Championship 2022 (2022-12-15~18),333 R1 D #3
 3787472001,U R D2 F2 U2 F L2 B U2 R2 B2 U L' B L' R B' L',R,Clockeborg 2024 (2024-05-25~26),333 R1 B #4

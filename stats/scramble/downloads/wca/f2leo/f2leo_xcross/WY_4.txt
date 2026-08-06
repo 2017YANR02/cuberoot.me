@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xcross / WY / bin 4
-# Population in this bin: 844
+# Population in this bin: 851
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4919500001,U2 F' D2 U2 L R D2 L' D2 U2 L U2 F L' F U' L U B L' F2,Y,Penang Be Quiet 2025 (2025-08-09),333bf Final B #3
@@ -89,8 +89,8 @@
 385781001,D2 U2 B2 L' B2 F2 R' D2 R F' U' L2 D F' D L R2 D' L,Y,Latvian Open 2016 (2016-10-22~23),333oh Final A #1
 1597040001,L U2 L R F2 L' U2 R2 U2 F2 U' F U' F' U B2 D2 F U,Y,Cube Ala-Eh V 2020 (2020-03-07),333 R1 C #4
 393260001,B' R' B2 R B' D R2 F2 U' L' D F2 D' L2 U L2 D' L2 F2,W,Munich Open 2016 (2016-11-05~06),333 R2 A #3
-3182669001,B U F D2 B' R' D2 B2 R F' R2 F D2 F2 L2 U2 F' L',Y,Three Rounds Aventura 2023 (2023-10-21~22),333 R2 A #5
-394231001,D R2 D2 B2 L' B' L D R2 F B2 R2 D B2 D' L2 D' L2 D2 L2,Y,Gdańsk Rubik's Cube Day 2016 (2016-11-05),333 Final B E2
+5763891001,F U2 F2 R' B2 L2 B2 D2 R' B2 F' R2 D L' D' L' B' L F,Y,Ohio State Summer Mini 2026 (2026-07-26),333 Final C #5
+5767268001,R F2 U2 R' D2 U2 L F' U' B' R U2 R2 D B2 R2 D R2,Y,Cebu Cool Off 2026 (2026-07-25),333 R2 A #2
 4180617001,U2 L' R2 B' R2 B2 U2 L2 F2 U' R2 F2 D L R B' L' R2,W,UC al Cubo - Santiago 2024 (2024-10-05),333 R1 C #1
 400528001,F2 R2 F' U2 F2 D2 L2 D F L U' L' U B2 F' L B L',Y,FME & Cubo y Calla 2016 (2016-11-19~20),333oh Final A #5
 4536937001,D F2 L' D2 B2 D U' F2 L2 U' L2 D L' D L' R' F D' F',W,Mix & Match at McDo Lacson 2025 (2025-03-01),333 R2 C #1
@@ -144,7 +144,7 @@
 3300924004,D F' L R2 D2 R2 F' D2 B2 L2 F R' F2 L2 R2 D' R' D' B',Y,Hilliard Hippocampus XI 2023 (2023-11-30),333mbf Final A #1
 4587773001,B L' U' D2 F L B U R U2 R2 D2 F2 U2 F2 L2 B' U2 F,W,Tagum City Open 2025 (2025-03-22~23),333 R1 A E1
 613782001,F U' L' U D2 L2 D L U' D2 R2 F' D2 R2 F R2 B' U2 B,W,Newport Fall 2017 (2017-10-07),333 R1 H #4
-850393001,U2 D L D' B2 R L U' R2 U' F R' B2 L' U2 D2 L2 B2 R,Y,CubingUSA Northwest Championship 2018 (2018-08-10~12),333 R2 D #2
+5763081001,B2 D2 F U2 R2 B L2 B' D B2 R2 U' B R D' R' D',Y,Middle Georgia Summer Solving 2026 (2026-07-25),333 R2 A E1
 3073275001,L' B2 L U2 D L B2 L' U' R2 F2 U2 R2 D' B2 U',Y,Cranbourne Spring Sunday 2023 (2023-09-10),333 R1 C #5
 2321184001,F' L' D B2 R2 D2 U' F2 U2 B2 F L' B' L' B D' U2 L2,Y,Northside Spring Sunday 2022 (2022-11-27),333 R2 C #3
 5490428014,L B2 L2 F2 D2 L' D2 R' D2 L' F2 R U' L' B2 L U' B2 L' F,Y,Solving Ferry Fast Rosslare 2026 (2026-03-28~29),333mbf Final A #1

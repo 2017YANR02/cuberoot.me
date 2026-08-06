@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / O / bin 2
-# Population in this bin: 421
+# Population in this bin: 422
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5607893001,F2 L2 F2 D B' R2 F D R2 U L2 U' F2 D B D2 R' B',O,Spring Breeze in Burnaby 2026 (2026-05-03),333 Final A #5
@@ -105,7 +105,7 @@
 5053102001,B L U2 L' F' L U D2 L F R2 L2 D2 F2 R2 L2 B' U2 D2,O,Solved Central Alberta 2025 (2025-09-27),333 R1 C #4
 781759046,U2 R2 B2 R2 U' R2 D2 U R D2 F D2 B2 F R2 U2 F2 R' F U L2 U',O,Shanghai Love in ECNU 2018 (2018-05-19~20),333mbf Final A #1
 782587001,D R2 D' R2 B2 U2 B2 R F' D L2 D2 R D2 U' B2 L2,O,Swedish Championship 2018 (2018-05-11~13),333 R1 D E1
-2723741033,R D2 R' F2 L B2 L' U2 L2 D2 F2 D' B2 U2 B' R2 D' R B R',O,May MBLD Madness Singapore 2023 (2023-05-20),333mbf Final A #1
+5761666001,F2 B U2 L' U B U2 R' F2 L2 U' F2 B2 L2 U D2 R' L2,O,Barpeta Cubing Open 2026 (2026-07-26),333 R1 C #1
 805115001,R U R2 F2 L' F' L U' F' U R U2 B2 R B2 R2 D2 R' F2,O,Tangkak Perkasa 2018 (2018-06-14),333ft Final B #4
 4474240001,L' R D2 F2 D2 R F2 R' B' D' L2 D' U F L B2 F D2,O,Tramsheds IV: Summer Sunday 2025 (2025-02-09),333 R1 D #3
 5394166001,B R2 D R2 F2 R2 U F2 U B2 U' R' D U' R U2 B' D2 U2 F',O,Temple Cubing Winter 2026 (2026-02-20),333 R1 B E1

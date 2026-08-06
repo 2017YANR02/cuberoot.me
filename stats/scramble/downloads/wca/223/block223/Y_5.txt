@@ -1,8 +1,8 @@
 # Scramble samples — 223 / block223 / Y / bin 5
-# Population in this bin: 838
+# Population in this bin: 841
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4898928030,D F' B2 R2 B2 F2 D' F2 R2 U R2 U2 L' F U B F' D F' L B,Y,Swedish Blind Marathon 2025 (2025-08-02),333mbf R1 A #1
@@ -19,7 +19,7 @@
 63203001,U2 R2 D' F2 U B2 F2 D L2 B D L U F' U L' U' F D2 R,Y,VIT Rubiks Cube Challenge 2014 (2014-09-26~28),333 R1 A E1
 3815992001,L D2 F2 L' B2 R2 U2 B2 D2 R' F2 B R D2 F' U2 F' U' L2 R',Y,Empire State NxN 2024 (2024-06-02),333 R1 B #5
 923226001,B2 U L2 U R2 B2 F2 U2 L' U B2 D2 U' F2 L' F' D' U L',Y,Respect Kansas 2018 (2018-11-03),333oh R1 A #1
-4740970001,D2 F D B U R' B D' R' F2 L' D' B2 R2 F2 L2 U2 B2 R2,Y,Mumbai Cubing Heat Wave 2025 (2025-05-24),333 R1 D #3
+5762024029,U2 L' D L' F2 D2 F2 R2 F2 U2 L B2 D2 U' B' R' D2 U F L,Y,TroisMaisons Zéro Vision 2026 (2026-07-25~26),333mbf Final B #1
 3944916001,L2 R U2 F2 L' B2 D2 U2 L2 R2 F L D' B U R' B R' U,Y,America's School Speedcubing II Huaraz 2024 (2024-07-13),333 R1 F #4
 2767739003,R' U' F' U2 F2 R2 B' D F' U2 D2 L' B2 U2 R U2 L F2 L B R,Y,Gem City Airplane Mode II 2023 (2023-06-01),333mbf Final A #1
 98112001,R2 F' U' F2 L' U R' L2 F R2 D2 L F2 R' F2 L U2 D2,Y,Another Fantastic Michigan Competition 2015 (2015-01-10),333fm Final A #3

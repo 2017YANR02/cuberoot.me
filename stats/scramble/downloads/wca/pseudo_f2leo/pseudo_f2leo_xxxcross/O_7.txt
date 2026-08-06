@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / O / bin 7
-# Population in this bin: 803
+# Population in this bin: 805
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 1284434015,R2 F' U2 F L2 D2 B2 D2 U' L' U B D U' B' D2 B2 L D B' L',O,Croatian Nationals 2019 (2019-08-31~09-01),333mbf Final A #1
@@ -144,7 +144,7 @@
 1806935035,B R2 F2 D2 R' U2 L' F2 U2 R' B' U2 F D F' L2 D' B R' B R',O,PoliMi Mental Breakdown 2022 (2022-02-12~13),333mbf Final A #1
 3938461017,F U' B' U2 L2 F2 R2 F' R2 B' L' B D' F' D' U2 B2 U2 L2 U2,O,200 Perú 2024 (2024-07-13),333mbf Final A #1
 660492020,R2 D' R2 B2 R2 D2 U' L2 B2 D F2 R' B' D' L F U F' U' R U L2,O,Valenzuela City Open 2 2014 (2014-07-05),333mbf Final A #1
-2120477016,R2 U F2 L F' B R F R B2 D2 F' B U2 B' L2 R' D2 B R2,O,Silence in Tlaxcala 2022 (2022-08-20~21),333mbf Final A #2
+5765863001,R L' B' D' R F' R F2 U' F R2 D2 L2 B2 U2 F' R2 F' R2 F,O,Hawaii Championship 2026 (2026-07-24~26),333 R2 B #5
 3155075001,B L' B' D L2 U' R2 U' L2 B2 F2 L' U2 B R2 B' U2 L',O,Cochabamba Feria al Cubo 2023 (2023-10-08),333 R3 B E1
 1296132001,R' U' F D2 U2 F2 R' U2 B2 L2 D2 F2 L' D' U' F' L' R D' F R2 D B2 D R' U' F,O,Mental Breakdown Germany 2019 (2019-09-14~15),333fm R1 A #2
 4848157001,R D' R2 D' L2 F2 U2 L2 U B F R B2 R2 D L' U2 R',O,Ruta Cubera: Chera Open 2025 (2025-07-05~06),333 R1 B #5

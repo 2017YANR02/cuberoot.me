@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / BG / bin 3
-# Population in this bin: 266
+# Population in this bin: 268
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 17106001,U F2 U' D' F D' L' D L2 F2 D' R2 F2 L2 B2 D2 F2 U2,B,SLS Chorzow 2014 (2014-05-03~04),333oh R1 C #5
@@ -105,7 +105,7 @@
 5424484031,F D2 L' U2 R' D2 F2 D2 F2 L' U' R' U2 L B2 R U B U' L B2,B,Richardshhhon 2026 (2026-02-28~03-01),333mbf Final A #1
 1599974001,F2 D2 F D2 L2 D F2 D2 F2 R2 B2 D' U' B D,B,Arnold Classic North America B 2020 (2020-03-08),333 R1 B E1
 1634664001,U' L' F' R' F L' D' U2 R2 B L2 B D2 F2 R2 L2 F' D F2,B,A New Year in Auckland 2021 (2021-01-08~09),333 R2 B #1
-4874507014,B D R' B' R2 U2 B2 R2 U2 B2 U2 R' F R' D B2 F D F' L' F,B,BrizZon Side Open III 2025 (2025-07-19~20),333mbf Final A #2
+5765696010,D2 F D L2 R2 D2 R2 U F2 D F' L' B R2 D' U' B L D' L2 U2,G,Hawaii Championship 2026 (2026-07-24~26),333mbf Final A #2
 1673019001,B2 L2 B' U2 L2 B' U2 B R D' B2 L2 B2 F' R' D L2 U B,G,WA State Championship 2021 (2021-07-17~18),333oh Final A E2
 1675715001,U R' B' L2 F2 D F2 L2 B2 U' R' U' B' U' R2 F R',G,Bucharest Cubing Days 2021 (2021-07-24~25),333 R2 A #1
 4345338001,D L' B' L' F' U' F' U2 D' F2 D B2 R2 D B2 R F R,B,Helsinki 2024 (2024-12-07~08),333oh R2 B #2
@@ -134,7 +134,7 @@
 2333904001,F D2 F2 D2 U2 R2 D' B D2 R B2 D2 B' R B2 D L,B,Nexus Winter Open 2022 (2022-11-26),333 Final E #3
 2345586001,B' D2 L F2 L' B2 L F2 U2 L2 U2 R2 U' F U' R2 B2 D2 B2 L,G,Navidad Aves María 2022 (2022-12-03~04),333bf R1 A #3
 2352421001,D' B2 R B2 D2 B2 L2 F2 L2 D B2 D B L2 R' D' R' F' R,G,BCM Arya Cubing Challenge 2022 (2022-12-04),333oh R1 D E2
-2370933001,F' D B R2 D2 L' F2 R B2 U2 L' U2 B F R U2 R' B D2,B,Malaysia Cube Championship 2022 (2022-12-09~11),333 Final A #3
+5765481001,U' L' B U2 F' R2 B U2 B L2 B2 L D2 F' U2 F' U' L',G,Samgau Almaty 2026 (2026-07-25~26),333 Final A #3
 5267926001,L B' U2 B U' L2 R' U' L U' F' R' F R2 B' L',G,UNESP Rio Preto Open 2025 (2025-12-13~14),333bf Final B #1
 2432117001,U2 B' D2 L2 B' L2 F2 L2 U' R' D2 B' U' R' D2 B' F2 U' L2,G,Mathsoc Delhi Open 2023 (2023-01-14~15),333 R2 A #5
 2432430001,L2 U B2 R B D' B' U2 R' L' D' R2 F2 U' L2 B2 D F2 D,G,Stockholmsligan 1: The Gunners - 2023 (2023-01-19),333 Final B #1

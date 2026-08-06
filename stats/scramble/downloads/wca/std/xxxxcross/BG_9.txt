@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / BG / bin 9
-# Population in this bin: 45
-# Samples listed: 45 (all entries in this bin)
+# Population in this bin: 46
+# Samples listed: 46 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 102864001,U2 F2 D L2 B2 U R2 U' F' R' D F2 R2 F2 U' R D' U2 F2,B,Eretum Open 2015 (2015-01-11),333 Final A #2
@@ -50,3 +50,4 @@
 5363526001,R2 U2 B' L' B2 R2 B R2 F U2 B' D' U' R B U L' D',B,Di Tella Arranca 2026 (2026-01-31~02-01),333oh R1 A #2
 5398699001,L F2 R D2 L2 F' U2 D' L2 F' L F2 R2 U' D2 R2 B2 U2,B,Megaminx og Meget Mere Hvidovre 2026 (2026-02-21~22),333oh R2 A E1
 5623637001,L2 B2 F' D2 F' D2 R B L2 U2 R2 F U L D L D',G,Nittedal Mental Breakdown Spring 2026 (2026-05-09~10),333bf R1 B #2
+5770792001,R' U' F L' U' R' F D' R B' L F2 L' F B2 U2 L2 B R2 U2 D' R' U' F,G,Big Brain Battières 2026 (2026-08-01~02),333fm Final A #3

@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxxcross / R / bin 10
-# Population in this bin: 30
-# Samples listed: 30 (all entries in this bin)
+# Population in this bin: 31
+# Samples listed: 31 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 603423001,D2 B2 F2 L2 U B2 R B' U2 L' D2 R2 B2 L R' F R,R,Puget Sound Fall 2017 (2017-09-23),333 R1 F E2
@@ -35,3 +35,4 @@
 4913366003,D B2 U2 L' U2 B' U' D B2 R' U2 R2 D2 R' L D B2 L D2,R,More Cubing with the Cougars WV 2025 (2025-08-02~03),333mbf Final A #1
 5068399001,D' R' F2 L B2 R2 D B2 D L2 B R2 F' L2 D U' B',R,Grand Forks 2025 (2025-10-04),333 R1 A #4
 5180367001,L F2 L' B2 D2 L2 U2 R B2 L' U2 F U R2 U' F2 L2 U2 B2,R,Road to Nats: Puebla 2025 (2025-11-08~09),333oh Final C #1
+5765459001,D R2 B2 D2 U2 R B2 R' B R2 B' R U R2 D R' B2 F,R,Samgau Almaty 2026 (2026-07-25~26),333 R1 C #2

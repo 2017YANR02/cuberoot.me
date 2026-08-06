@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / BGWY / bin 7
-# Population in this bin: 275
+# Population in this bin: 277
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 6373001,U D2 F U' L' F2 D R2 L D' L2 D' F2 R2 F2 U F2 R2 D,B,Rumia Open 2014 (2014-03-29~30),333 R1 A E2
@@ -86,7 +86,7 @@
 1128452001,D' F2 L2 U' L2 D U2 F2 R' U2 F2 U2 F D2 U' B2 U' B2,B,Chillán Open 2019 (2019-05-04),333oh Final A #1
 1144613001,F D2 F L2 F2 D2 U2 L D' F2 D L F' D2 R B2 D2,B,Ural Spring 2019 (2019-05-18~19),333 R1 E #5
 1146927001,R' U' F D R2 U F2 D' L2 D2 U' B2 F2 R F' R U2 L' D' U' B2 D2 U R' U' F,W,Uzbekistan Big Cubes Spring 2019 (2019-05-18~19),333fm Final A #1
-1166761001,B2 U2 L2 D F2 L2 D F2 U' F2 U L U' L' R2 F' L U R2,G,Swedish Championship 2019 (2019-05-30~06-02),333ft R1 A #5
+5765240001,L2 D' U2 R2 D2 B2 R' D F2 U2 R U B D B F L R2,G,Bucharest Cubing July 2026 (2026-07-25),333 R1 A E1
 1192974043,U2 B2 L' F2 D2 R B2 L' D2 R U R2 B' R' U' B2 L2 R2 B F' D',W,CubingUSA Western Championship 2019 (2019-06-22~23),333mbf Final A #1
 1201932001,R2 B' D2 F' U2 B L2 B' R2 U' R F L2 F R' B U R2 F',Y,Cusco Speedcubing II 2019 (2019-06-29),333 R1 A E2
 1231985001,D2 B' D2 F2 R2 B2 F2 U2 F' R' D F D' U2 L' D2 B2 U',Y,Gdańsk Cubing Summer Camp 2019 (2019-07-15~19),333 Final A #3
@@ -114,7 +114,7 @@
 1734900001,F D2 R2 B2 U2 R B' L' B2 D' B D2 L D' L B2,B,Slow N Steady Fall 2021 (2021-11-20),333 R2 B #4
 1780924010,L2 F2 D' U2 F2 L2 F2 R' D R' F' D2 R' U L F L2 B D2 L,Y,DSF Generalforsamlingen 2022 (2022-01-15~16),333mbf Final A #1
 1794113001,R2 L2 U2 R U F2 D F' B' R' D2 R2 B' R2 F R2 B' R2,W,Jordan Nationals 2022 (2022-01-28~29),333oh Final D #4
-1802970041,B2 U F2 R U2 B2 R2 U R2 D2 U' L2 B' U' B2 U2 B D R' D,G,Dragon Side Open 2022 (2022-02-12~13),333mbf Final A #1
+5762539001,U2 D2 B' D R' D B' L F2 L2 B2 R' U2 B2 L U2 F2 R2 B R2,Y,Corning Summer 2026 (2026-07-25~26),333bf Final A #2
 4451791001,U' R2 L F' R U' R' D2 R2 U R2 F' D2 F' D2 F' R2 L2,Y,Avenida Chile XIX 2025 (2025-01-25~26),333 R3 A #5
 1921497001,U' B U2 B' U2 R2 B' R' D B' D R2 F' D2 L2 U2,Y,MSU Quiet Qualifier 2022 (2022-05-14),333bf Final B E1
 2013863001,D2 L2 U2 F2 U' R2 B2 R2 U' F L' F2 L' D' B2 U F2 R' B' F',B,Hello Q8Speedcubing 2022 (2022-07-08),333 R1 A #1

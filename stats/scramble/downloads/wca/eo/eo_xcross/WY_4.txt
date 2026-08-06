@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / WY / bin 4
-# Population in this bin: 113
-# Samples listed: 113 (all entries in this bin)
+# Population in this bin: 114
+# Samples listed: 114 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5003001,F D2 F' B2 D F B2 D L' D' L' F2 R' F2 L2 D2 B2,W,Tula Open 2014 (2014-03-28~30),333 R1 B #4
@@ -118,3 +118,4 @@
 5553778001,U' R U2 R2 U' B2 D B2 F2 L' F D L U B U B' U',W,LA PRE Cubing Pucallpa 2026 (2026-04-18),333 Final B #2
 5589131001,U R' B L' U2 B' L2 R2 U2 B R2 D2 U' B' L R2 B' L' F2,Y,Mumbai Cubing Sprint 2026 (2026-04-25),333 R1 C E2
 5591406001,U F2 U' R2 D2 R2 U2 F2 B R2 U F' D2 U' R2 B' F',W,Bull City Big Cubes NC 2026 (2026-05-02),333 R2 A E2
+5770772021,D2 F U F L2 D' U' F2 L2 D U2 F L2 F R2 D2 L F' L,Y,Big Brain Battières 2026 (2026-08-01~02),333mbf Final A #1

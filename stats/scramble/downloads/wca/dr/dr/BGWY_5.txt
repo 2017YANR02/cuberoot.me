@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / BGWY / bin 5
-# Population in this bin: 96
-# Samples listed: 96 (all entries in this bin)
+# Population in this bin: 97
+# Samples listed: 97 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 21296001,R2 U' B2 D R2 U L2 D2 B' F' D' U F' U' F2 U2,W,HEM MariCubik Open 2014 (2014-05-18),333 R1 C #3
@@ -101,3 +101,4 @@
 5523889001,R2 B' R2 U2 F2 L2 F D B U' F2 U B' L2 R F' L',B,Avenida Chile XXXIII 2026 (2026-04-12),333oh R1 A #2
 5569643029,D R2 F2 R2 B2 D' U' F2 L2 B D' B R2 F2 U2 F2 D2 B',W,Langenstein City Blind Open 2026 (2026-04-18~19),333mbf Final B #1
 5589125001,D F2 U' F2 L2 U2 L2 U B2 D R2 D R' B' F' U' F',W,Mumbai Cubing Sprint 2026 (2026-04-25),333 R1 C #1
+5761802036,D2 B2 F' L2 F2 D2 U2 F' U2 R2 D' U' B2 D' R2 B R' B,B,Luminous Sol Open 2026 (2026-07-25~26),333mbf Final A #1

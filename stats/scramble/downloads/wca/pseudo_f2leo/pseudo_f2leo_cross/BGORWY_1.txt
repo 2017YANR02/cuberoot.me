@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / BGORWY / bin 1
-# Population in this bin: 253
+# Population in this bin: 254
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 29329001,B2 R2 F2 U R2 U B2 U2 B U L2 D' F D2 U' L2 U,O,No Parity Open 2014 (2014-06-21),333 R2 A E2
@@ -163,7 +163,7 @@
 3300927001,D U F2 R2 D L2 B2 U2 L' B2 D U' L U' F' D B2 F' R,B,TCG Space II Santa Anita 2023 (2023-11-25~26),333 R1 A #2
 3311768001,R2 U' F2 R' B2 D F' R2 L U' R' B2 L' B2 R' F2 L' F2 D2 L B,R,Mildura Madness 2023 (2023-12-02~03),333bf R1 A #2
 4844589001,U2 R' D' R F' R2 F D2 L' B2 D2 L' D2 F2 D2 R' B2,W,Aníbal ao Cubo 2025 (2025-07-05),333 Final A #4
-3495376001,U L' U' R F' D' R2 L B2 R' L2 F2 U2 L2 F R' F2 R2,R,TN Speedsolving Winter 2024 (2024-02-10),333 R1 A E2
+5763976001,D F' L2 F R2 D' L F' U B' U2 D2 R2 B2 U2 D2 B D2 F2,W,Thessaloniki Summer Open 2026 (2026-07-25~26),333 R2 A #2
 3497584001,U2 R2 F R2 B' R2 B' D2 F2 L' U2 F D' U B2 L2 D F D,Y,Going Back to the Gong 2024 (2024-02-10~11),333 R1 F #1
 5569095001,U2 F2 R' F2 D F2 D' R F U B2 D2 F2 R' D2 R' D2 L2 U2,W,Duper Super Davis Spring 2026 (2026-04-19),333 Final H #4
 3516176001,R' U' F U B2 D' L2 U' F2 U2 F2 L' U' L' D B' U' B' F2 U2 R2 U2 R' U' F,O,Love Is Blind Lima 2024 (2024-02-18),333fm Final A #1

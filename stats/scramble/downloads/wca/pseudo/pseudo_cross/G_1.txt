@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_cross / G / bin 1
-# Population in this bin: 330
+# Population in this bin: 334
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 16806001,L2 B L2 F2 L2 R2 F' R2 F' D2 F' D R U2 L' B' U2 L' U' F' U2 B R,G,Castellon Open 2014 (2014-05-02~03),333bf Final A #2
@@ -144,7 +144,7 @@
 1840104001,D' F B2 L' F2 D' B2 D B' R F2 B2 L' B2 R' B2 R F,G,Aves María 2022 (2022-03-20~21),333oh R1 A #5
 1844255001,D F2 U2 F R2 B' F' U2 D R B D2 B R' B2 U' B2 D2,G,Cubing Khan Shatyr Open 2022 (2022-03-24~25),333oh R1 E #4
 1905084001,R' D F R2 B2 L B2 F2 L D' F L2 R2 D' L2 R' F',G,Oshawa Favourites 2022 (2022-05-07),333 Final A E2
-1952781001,D2 F R' L2 F2 D2 U2 B L2 F' U2 B' R F2 L D' B2 L D' L,G,Korean Spring 2022 (2022-05-29),333 R1 D #4
+5771330001,F' R' U R2 B' D' B' R B2 R' D' R2 U2 B2 R2 U F2 U,G,Cavite Side Events Open 2026 (2026-08-01),333 R1 C E1
 1976173001,L' R2 F2 D2 B L2 D2 L2 B2 D2 F' D F2 U' R' F L' B' L' R2,G,Ciu Open 2022 (2022-06-18~19),333oh Final A #5
 2015043001,L' B2 U' R2 F2 U L2 R2 D U2 L2 U B L' U2 B2 F2 R' D',G,Santiago Wintercubing Open 2022 (2022-07-09),333 R1 C #5
 2042754001,L' F B2 U F2 D' B2 F2 D2 R2 U2 R' D B' R D U R2 B,G,Kostelec Summer 2022 (2022-07-23~24),333oh R1 A #1
@@ -160,7 +160,7 @@
 4445593001,L B2 D2 R' B2 R U2 B2 D L2 B' L2 R' D2 U' F' L D' L2,G,Pai Open VCP 2025 (2025-01-25~26),333oh R1 A #1
 4620767001,U' F L U' R2 U2 B2 R F2 L F' L2 F2 L2 U L2 U B2 D2 B,G,Cube Against Cancer Buffalo 2025 (2025-04-05),333bf Final A E1
 2406592026,B U R F D B R2 F' R U2 R2 B' U2 B' U2 B2 R2 B,G,Indonesian Championship 2022 (2022-12-16~18),333mbf Final A #1
-2432080001,F2 U L2 U B F2 D2 L2 D2 R2 F2 L' B' L' R U L' U2,G,Mathsoc Delhi Open 2023 (2023-01-14~15),333 R1 C #3
+5765481001,U' L' B U2 F' R2 B U2 B L2 B2 L D2 F' U2 F' U' L',G,Samgau Almaty 2026 (2026-07-25~26),333 Final A #3
 2432117001,U2 B' D2 L2 B' L2 F2 L2 U' R' D2 B' U' R' D2 B' F2 U' L2,G,Mathsoc Delhi Open 2023 (2023-01-14~15),333 R2 A #5
 5543888007,F R D' L2 R2 B2 F' D2 F2 R2 U' F U2 L2 U B' R' U B' L2,G,Please Be Quiet Singapore April 2026 (2026-04-18),333mbf Final A #1
 4340463001,B' D2 B' F R2 B L2 D2 U' R2 B L F2 D F2 L R2 B' L2,G,Na'Guara Metropolis Lara 2024 (2024-12-07),333 Final A E2

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / Y / bin 3
-# Population in this bin: 708
+# Population in this bin: 713
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 1067552001,B' D2 R2 F D2 B U L B' L B2 U' F' D2 R2 D' U2,Y,Astrakhan Spring Open 2019 (2019-03-23~24),333 R1 A #5
@@ -74,7 +74,7 @@
 5508209017,D2 B2 R U2 R' U2 L' D' R B' D2 F2 L' D' R2 D2 B U2 B' L,Y,Johnshhhtown 2026 (2026-04-04),333mbf Final A #1
 397207001,B2 L D2 L U2 R U2 L2 U2 B2 U R2 U L' F D2 L2 D R F L2 U',Y,GeniusCube 2016 (2016-11-05~07),333bf R1 B E2
 400528001,F2 R2 F' U2 F2 D2 L2 D F L U' L' U B2 F' L B L',Y,FME & Cubo y Calla 2016 (2016-11-19~20),333oh Final A #5
-3299989017,B' L2 U2 L2 F D2 B2 D U' R F U2 R2 D' L' D R' B2 L' F,Y,No Clock in Lužice 2023 (2023-11-25~26),333mbf Final B #2
+5760656001,R2 F2 D' L2 R2 U' L B' R2 B' D' L' R' U' R' B L U',Y,Temecula Valley Summer 2026 (2026-07-25),333 R1 B #5
 1111244001,L2 R2 F2 D B2 R2 D' F2 D2 U' L' U F D B2 R' F' L' F2 R' U L2 U2,Y,DFW With A Twist 2019 (2019-04-20~21),333bf Final A E1
 2379825001,U R B U2 R' D' R U R' U' L2 U2 B' U2 B L2 B D2,Y,Novi Sad Winter 2022 (2022-12-17~18),333oh Final B #1
 5352794001,L U F B2 D' B2 R' L2 D B' U' L2 D F2 L2 D' F2 D' B',Y,Pickering NxNxN Winter 2026 (2026-01-31),333 R1 B E2

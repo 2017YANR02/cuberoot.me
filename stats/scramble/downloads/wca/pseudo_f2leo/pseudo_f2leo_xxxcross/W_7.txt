@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / W / bin 7
-# Population in this bin: 827
+# Population in this bin: 832
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 3483929001,D B' D F' U2 B U L F2 R F' L2 U2 B2 U' L2 D' F2 L2,W,Empire State Winter 2024 (2024-02-03~04),333 R1 C #2
@@ -152,7 +152,7 @@
 5661276001,L2 F2 U' F2 L2 U' L2 F2 R2 B R' U F' L' F2 R D' B' F2,W,Liuzhou Open 2026 (2026-05-24),333 R2 D E2
 660666012,R2 B U2 B2 F2 U2 B R2 D' F2 U2 L' D2 R U F2 U' R' D' L' F',W,Ural Winter 2015 (2015-03-14~15),333mbf Final A #1
 660755001,F2 D2 U2 F2 U2 R' F2 R2 D' F2 R2 B' U F L2 U' F' L2 B' L2,W,Asturias Open 2015 (2015-07-04~05),333mbf Final A #1
-660763007,U' D F L2 D L' D' L2 U F' U' D' L2 F2 D,W,Medan Open 2015 (2015-07-04~05),333mbf Final A #3
+5760107001,U B2 U2 R U2 F' U2 R' F' U' F2 B2 D B2 L2 D B2 R2 L,W,Elyu Cube Clash III 2026 (2026-07-18),333 Final A E2
 1411343001,L' U2 B2 L' D2 F2 L2 B2 F D' F' D2 F U R2 F2 L D2 L',W,SnoCo Fall 2019 (2019-11-16),333 R1 A #2
 660851016,D2 R2 D2 F L2 R2 D2 B F' D2 F' L' U2 B U' R B L2 R2 U' L2 U',W,Two days in Vitebsk 2015 (2015-10-31~11-01),333mbf Final A #1
 4198257001,U B' L F2 L' B' L' B2 R' L' U' D F2 B2 D',W,Kalyani Cube Open 2024 (2024-10-19),333 R1 A E2

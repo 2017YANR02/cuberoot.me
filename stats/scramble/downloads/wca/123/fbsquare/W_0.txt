@@ -1,8 +1,8 @@
 # Scramble samples — 123 / fbsquare / W / bin 0
-# Population in this bin: 801
+# Population in this bin: 803
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5259667001,D' R D L2 R2 B2 U F2 R2 U2 L2 U' B F2 L' B F' D' R',W,Tashkent Open 2025 (2025-12-06~07),333 Final A #2
@@ -12,7 +12,7 @@
 23310001,R B2 U2 R F2 R2 U2 B2 D2 B' R B D R2 F R F2 L' F,W,Skanstull Cube 2014 (2014-05-24),333oh R1 B #1
 3498352005,U2 B' D' F2 U' B2 F2 U2 L2 D' B2 D2 R' F U2 R' U L' B U' L' F2,W,On the Side South Australia 2024 (2024-02-10),333mbf Final A #1
 3005069001,U L U2 R' F D R' D' L2 B2 L2 U F2 U2 D' F2 B U2 R2,W,Bring the Heat AZ 2023 (2023-08-20),333 R2 A #5
-4312135001,R2 F2 U' R U B2 D2 R2 B' U F2 U' L2 F2 L2 D L2 U',W,St-Méloir-des-Ondes Breizh Open 2024 (2024-11-23~24),333 R1 C #1
+5765639001,B2 U2 L' B' U2 F2 B U' L U2 L2 F' L2 B' U2 R2 B',W,Samgau Almaty 2026 (2026-07-25~26),333 R1 C E2
 1592364001,U L2 D2 U' R2 F2 U' L2 F2 D2 B' D2 R D2 R B2 L2 R U' R D2,W,Santo Domingo Winter 2020 (2020-02-29~03-01),333bf Final A E1
 4732567001,D' R' U' B2 L' U' F' B R2 U2 L2 U L2 D' R2 U F2 B' U,W,Tivat Open 2025 (2025-05-17~18),333 Final A #5
 78811001,R2 B L2 U2 B' R2 D2 U2 B2 L U' B2 D R D L F' U2 F U L2 U2,W,Alhambra LMO 2014 (2014-11-15~16),333bf R1 A E2

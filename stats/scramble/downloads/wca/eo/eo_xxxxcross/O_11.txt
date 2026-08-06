@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxxcross / O / bin 11
-# Population in this bin: 600
+# Population in this bin: 602
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 3315260001,R2 U' R' U2 L U2 R B2 R' U F R F' D' F2 R B',O,ZGZ Open 2023 (2023-12-02~03),333 R1 D E2
@@ -47,7 +47,7 @@
 237977001,D2 L2 U L2 R2 U B2 D U' R' U R2 F U L' B R2 D2 R2,O,Music City Winter 2016 (2016-01-02),333 R1 E #1
 4603523059,U' R' D' F2 L' F' R D F R2 U L2 D' F2 B2 D B2 U' F2 L' F2,O,BrizZon Side Open 2025 (2025-03-29~30),333mbf Final B #2
 2007682001,U B2 R' L' U F B2 U L' F' R2 L2 B2 L2 U' D B2 U' F2 D2,O,Rhein-Neckar Open 2022 (2022-07-09~10),333bf Final A #3
-4298480014,L' B2 R' B2 L2 F2 U2 R2 U2 R' B D R2 D' R2 F L D' R2 U' L B',O,Los Fuertes V2 Puebla 2024 (2024-11-16~18),333mbf Final A #1
+5758643001,U R2 U' B' R' L2 F' L' B' R' F' U2 F B2 U2 R2 B U2,O,Chien Kuo Cubing Party 2026 (2026-07-18~19),333 R1 D #5
 301707001,F' L2 U2 B2 L2 D2 B' U2 B2 R D' U2 B2 F' L' U2 F2 D' L2 R,O,Zurich Open 2016 (2016-05-21~22),333oh R1 B #1
 4295949001,D2 L2 D2 B2 L' B2 R2 F2 D2 L' F2 D' F2 D R' B D L',O,Mirasierra Open 2024 (2024-11-16~17),333oh Final A E1
 4262411001,L D B2 R2 U2 R2 U R2 F2 B' D L B' L2 D U' L D,O,Rubik's WCA Asian Championship 2024 (2024-11-01~04),333 R1 AD #3

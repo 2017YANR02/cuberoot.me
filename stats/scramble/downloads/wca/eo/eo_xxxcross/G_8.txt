@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / G / bin 8
-# Population in this bin: 133
-# Samples listed: 133 (all entries in this bin)
+# Population in this bin: 134
+# Samples listed: 134 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 93006001,L2 U' R2 U B2 L2 B2 F2 D2 R2 D' R' B2 U B2 R' F' U2 F' L2 U,G,Cubers Eve 2014 (2014-12-20),333bf Final A E2
@@ -138,3 +138,4 @@
 5588362001,B U R2 D2 B F2 R2 U2 B R' B2 L B L2 R2 D' U',G,Achacachi Speedcubing Open 2026 (2026-04-26),333 R2 A #4
 5610433001,D L2 U B2 U B2 L2 D F2 D' L2 U' F' U B' R2 F' D B',G,Lipecun Blind II Soacha 2026 (2026-05-09),333 Final B E2
 5697725001,D2 F U2 B2 D2 B' L2 U2 L B2 D F' R' B2 U B R2 U2,G,Boards & Cubes Venteira - Mini A 2026 (2026-06-14),333oh Final A #2
+5761802025,L2 U D F' U2 D L' D F2 R2 F' L2 B2 R2 U2 B' L D' L2 U2,G,Luminous Sol Open 2026 (2026-07-25~26),333mbf Final A #1

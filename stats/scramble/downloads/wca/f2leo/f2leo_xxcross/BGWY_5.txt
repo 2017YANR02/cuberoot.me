@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / BGWY / bin 5
-# Population in this bin: 232
+# Population in this bin: 233
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 1779001,F U2 B' U L' F' R F' B D F R2 U R2 F2 B2 D' F2,G,Kansai Open 2014 (2014-03-21~22),333ft Final A #1
@@ -173,7 +173,7 @@
 4204912053,B2 R B2 D2 B2 U2 L B2 L2 F2 D' F2 L2 U' L R D2 F L' F,G,BrizZon Side Open IV 2024 (2024-10-19~20),333mbf Final A #2
 4216075001,U' B2 R2 U B' D' R2 U' F2 U2 D2 L2 B2 L' D2 R' F2,Y,Berkeley October Weekday Tricubealon 2024 (2024-10-21),333 Final A E2
 4228990001,D2 L' F' D' F2 L2 F' L2 U2 F R D2 R' D2 U2 L2 D,W,Frankfurt Cube Days 2024 (2024-10-26~27),333oh R1 A #4
-4276691018,U F2 L2 U2 B D2 B' D2 B U2 L2 D F2 U L D' U2 F U2 L2,W,Colombian Nationals Avenida Chile 2024 (2024-11-09~11),333mbf Final A #2
+5770720001,L' R' U2 L2 R2 F2 U2 F' U' R' B2 L D' F' U' L2 U2 R',B,Vacaciones Cuenca Open 2026 (2026-08-01),333 R1 B #5
 4279953001,D F R' F' R2 L2 D' R2 U' F' R2 F2 R2 F R2 F' U,B,Egypt Fall 2024 (2024-11-09),333 R2 C #5
 4332297001,F' R2 U2 L2 B' L F D' R2 B' U' L2 D' R2 U D',W,Berkeley December Weekday Tricubealon 2024 (2024-12-04),333oh R1 A #2
 4366646001,F B2 D B' U2 L U D2 R U2 L2 U2 B2 R U2 R' D2 F2 D L,G,Avenida Chile XVIII 2024 (2024-12-15),333 Final B #5

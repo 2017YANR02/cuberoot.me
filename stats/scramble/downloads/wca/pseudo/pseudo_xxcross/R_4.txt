@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxcross / R / bin 4
-# Population in this bin: 183
-# Samples listed: 183 (all entries in this bin)
+# Population in this bin: 186
+# Samples listed: 186 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 810001,B L2 F U2 B' F' L2 B L' R2 U R' F' R2 D' L' F U' B',R,Dnepr Cube Day 2014 (2014-03-15),333 R1 B #4
@@ -188,3 +188,6 @@
 5697437027,R2 L U L B' L' U L2 U2 L2 B2 R2 L' U2 B2 L F' L2 D2 B R,R,Side N Blind Narre Warren 2026 (2026-06-13~14),333mbf Final A #2
 5706827001,L' F L D R2 B R' D2 B' R F2 B R2 U2 F D2 F B,R,Nacionales Honduras 2026 (2026-06-13~14),333 Final A #3
 5748770001,F' R U L' B2 R F2 L D2 R' D' L D L2 F' D' R,R,Australian Nationals 2026 (2026-07-09~12),333oh Final A #1
+5763587001,F' L' F' R2 B L2 U B' L' F' U2 R2 U' F2 U F2 R2 D' F',R,La Silla VI Monterrey 2026 (2026-07-25~26),333 R1 A E1
+5770776008,B' U2 R' U2 L2 B2 L U2 F2 U' L B' D B U F' D U2 B R,R,Big Brain Battières 2026 (2026-08-01~02),333mbf R1 B #1
+5771306001,D2 F' D L' B L D2 F' B D' R L' U2 L F2 L2 F,R,Cavite Side Events Open 2026 (2026-08-01),333 R1 E #5

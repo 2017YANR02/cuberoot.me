@@ -1,8 +1,8 @@
 # Scramble samples — 123 / fbsquare / Y / bin 0
-# Population in this bin: 832
+# Population in this bin: 843
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 1937346001,U B' U' B' R' D2 B' D2 F' B2 R D2 R U2 B2 U2 R2 B2 R,Y,Ponikva Open 2022 (2022-05-21),333oh R1 A #1
@@ -26,7 +26,7 @@
 168240001,R2 B2 D U2 F2 D' U F' L2 U' F2 L' R B R' B2 R2 D2 U',Y,Kimberley Open 2015 (2015-07-25),333oh Final B #4
 2737934009,L' U' L2 U' F2 L2 B2 U' F2 U R F2 U2 F' U L U F R2 B R',Y,Hessen Open 2023 (2023-05-20~21),333mbf Final A #1
 5598381001,B2 R2 F B' R' L' B R' B2 R2 U2 L2 B' U2 R2 U' F,Y,Passo Fundo Cubing 2026 (2026-05-02~03),333oh Final A #1
-4205649001,U B D2 L2 R2 F' R2 D2 B L2 U F' L' F2 L' R' U' L' F',Y,Finnish Championship 2024 (2024-10-17~20),333 R1 B E2
+5762036032,D' B2 L2 U' L2 F2 D L2 R B' U' B2 R B' L' D' R' F' L2 B' L2,Y,TroisMaisons Zéro Vision 2026 (2026-07-25~26),333mbf Final B #2
 185110001,L2 R2 U2 F U2 F L2 F2 D2 B' L2 D' L2 U F L' B2 D F D',Y,CCC End of Summer 2015 (2015-08-28~30),333oh R1 C #4
 1534334020,R2 D' F2 L2 D2 L2 D U2 B2 R D' L R' F' U2 F' D R' B2 L,Y,Popular 'n Blind Flen 2020 (2020-01-31~02-02),333mbf Final A #3
 2312112001,L F U2 B' U2 L2 F' U2 F2 U2 D' R B L' F2 D2 L2 U',Y,Weston-super-Mare Autumn 2022 (2022-11-19~20),333 R2 A #5
@@ -46,7 +46,7 @@
 3028162001,L2 D2 R2 B2 D2 B' D B' R2 D B2 R B R' D' L2 R2,Y,U Cube at UQ Saturday 2023 (2023-09-02),333 R1 B E1
 1215803001,F' U2 L' U2 D' F' B' U2 D2 R' U F2 D' R2 D L2 D2 R2 B2 U2,Y,Byczy Cube Race 2019 (2019-07-06~07),333oh R1 A #5
 3622730001,L D' L2 D' R2 D2 B2 U' L F L' U F R D F' R B' L B2,Y,Silent Korea Spring 2024 (2024-03-30),333bf R1 D #3
-270368001,D' F2 R2 D2 B2 D2 F2 L' B2 L F2 L' B2 U' B2 U' F',Y,Crazy Cubes Summer 2016 (2016-03-20),333 R1 B E2
+5771186001,B2 R F' D' F' B2 L B' U' F2 U2 F R2 F2 B U2 F2 L F,Y,Cavite Side Events Open 2026 (2026-08-01),333 R1 E #1
 999006001,U' R2 U' R D' F' D2 B D L' B' R2 D2 B U2 F' D2 L2 F2,Y,Taipei Peace Open 2019 (2019-01-26~27),333oh R1 C #4
 3797294001,L U2 L2 B L2 B U2 B2 U2 R2 F2 R2 B L' D' R2 U R2 B' D,Y,Centro Comercial Panamá Bogotá 2024 (2024-05-25),333 R2 B E1
 3703470001,R U2 R2 B2 L' B2 U2 R' D2 U R' D' U2 F D' F2 R U2 F',Y,Nanchang Spring 2024 (2024-04-21),333 R1 A E2
@@ -54,7 +54,7 @@
 3452982001,R' U' F R F R F L2 D2 R D F B U B2 R2 U2 F2 R2 U F2 B' R' U' F,Y,All Events in Stockholm 2024 (2024-01-28),333fm Final A #1
 2500831001,F' U' L F' U' B2 U2 B L U2 B' L2 F2 R2 F D2 F',Y,Ohio State RPAC Cube Clash 2023 (2023-02-18),333 R1 B #3
 306414001,B2 L2 B' U2 B' R2 U2 B2 D U2 R F U' F L B' D2 L,Y,Calgary Open Spring 2016 (2016-05-28),333oh Final B #5
-5484092001,F' R B R2 D' L2 D2 F2 U' F2 U R B2 F2 U' F L U2,Y,Twists & Turns SFRAA 2026 (2026-03-28),333 R1 F #1
+5762846001,L' B U' L2 B L' U' R L' D2 B2 L' B2 R' B2 U' B U,Y,Newcastle upon Tyne Summer 2026 (2026-07-25~26),333 R2 B #4
 3425699001,B' R' F B2 D2 R2 B2 L U2 L2 F2 B' U2 R2 B U' B F2,Y,Cubes on the Bayside Winter 2024 (2024-01-14),333 R1 B E2
 2597558001,B U L' U' L2 U2 B U2 R2 F' D2 R' B2 D2 R2 F2 R B2,Y,UPDS Open 2023 (2023-04-01),333 R1 E E2
 324260001,F U2 F L' F L2 D' F' B' L2 U R2 F2 B2 D F2 U' F2 U2,Y,Kaliska Open 2016 (2016-07-02~03),333 R2 A #3
@@ -97,7 +97,7 @@
 5059291001,L U D2 R' U2 F2 L R D2 B R' B F R U B2 U' L,Y,Twist 'n Turn Hyd Open 2025 (2025-09-26~27),333oh R1 C #4
 480101001,B2 L' D2 R' B2 D2 U2 L F' U F' R F' L D L' R U' F2,Y,Xi'an Cherry Blossom 2017 (2017-04-02~03),333 R2 A #2
 3755282007,U F2 R2 D R2 F L2 D' L' D L D2 L2 B2 F L B,Y,Blind Faith Denver 2024 (2024-05-11~12),333mbf R1 B #1
-2393950001,D2 B2 D2 U2 F R2 U2 F2 D2 U' L' U2 F2 R U2 B R B F,Y,Nacionales Guatemala 2022 (2022-12-16~18),333 R1 C E2
+5765481001,U' L' B U2 F' R2 B U2 B L2 B2 L D2 F' U2 F' U' L',Y,Samgau Almaty 2026 (2026-07-25~26),333 Final A #3
 487588001,B' U2 B' F' R2 D2 F L B2 D U2 L2 F2 L' U F D U,Y,Fabulous MN Competition 2017 (2017-04-15),333ft Final A E2
 495545001,D2 R2 F2 R D2 F2 L' D' L U' L' B' U B R2 F2 U',Y,L.P. 3600 Rubik 2017 (2017-04-22),333 Final B #2
 4580406001,B2 D' F2 U F2 L2 R' D2 L2 F' L B' U L2 R' U L' F,Y,UoSM Cube Open SOR 2025 (2025-03-22~23),333 Final B #4
@@ -149,7 +149,7 @@
 5134874001,F L2 D2 R U2 R' B2 F2 U2 R2 D B2 F' U2 L' U' F' L2 U',Y,VR Bengaluru Cube Open A 2025 (2025-10-26),333 Final B E1
 5437909004,F' R' F' U2 F2 U2 B2 L2 D R2 D' B' D F D2 L' U B2 D' B,Y,Glasgow Blind Evening Spring 2026 (2026-03-10),333mbf Final A #1
 661131007,U' L2 R2 D L2 R2 U2 L2 D' B2 D B' L' F L R D' R2 B R2 D' L2,Y,German Nationals 2016 (2016-10-07~09),333mbf Final A #1
-661153018,F R2 F2 L2 B D2 F' L2 F L B U' B2 R' U2 F' L R2 F D L' F',Y,Dutch Open 2016 (2016-10-29~30),333mbf Final A #1
+5763990001,D2 L2 D B2 U' R F' R2 D' F2 D' L2 B' D' F2 D,Y,Thessaloniki Summer Open 2026 (2026-07-25~26),333oh R1 B #2
 661159021,F2 D' L2 R2 D' F2 D' R2 U L2 U2 F R2 U' R' F' D2 B' U2 L' B' L2,Y,Torneo de Speedcubers 2016 (2016-10-29~30),333mbf Final A #2
 2522117001,U' B' R2 U2 R2 F2 D2 U F2 R B2 U2 F L' B' U2 F' L2,Y,Hanoi Super Brain Zyo 2023 (2023-02-25~26),333 R1 E E2
 1074131001,D2 F' U2 B' D2 R2 B2 L2 F U2 B' U' R U2 B F' R B D2 R' F L' F',Y,Le Barcarès Mental Breakdown 2019 (2019-03-30~31),333bf R1 B #1
@@ -189,7 +189,7 @@
 2843239001,F2 B L2 F2 U' B L D F2 U2 R2 F2 B2 U' B2 D L2 D F2,Y,West Side Cube Clash 2023 (2023-07-01),333 Final A #3
 3773812001,B' F2 D2 F' D2 R2 F2 R B' F2 D2 R' D R B2 U2 F',Y,ChessCubing Armenia 2024 (2024-05-16),333 R1 D #4
 5568293001,R2 U2 R U2 B2 L B2 F2 L B2 U B2 F D L' B2 L' B R,Y,Split Open 2026 (2026-04-18~19),333oh R1 A #4
-1425248001,B2 U B2 R2 F2 L2 R' D R2 B' F' U B L2 R2 D R',Y,MPEI Open 2019 (2019-11-22~24),333ft Final A #1
+5767650001,R2 F D2 B2 F D2 R2 B L D2 F2 L' B L2 F2 D' F2 U',Y,Don't Sleep In Pelita Sungai Dua 2026 (2026-07-25~26),333 Final C #2
 1127142001,B R F L' D L B R' F' L2 U' L2 D F2 D2 B2 U' F2 B2 D,Y,Koalafication Adelaide 2019 (2019-05-04),333 R1 B #4
 2234617001,L' B R2 L U' B' L2 F D2 L2 U2 R U2 R B' U2,Y,Beaconhouse Malaysia Cube Open 2022 (2022-10-15),333 Final A #3
 5518180001,R' F U2 F2 D2 R2 D2 B' U2 R2 D' B' D2 L' U L2 D' L B',Y,Utah Puzzling for Awareness V Favorites 2026 (2026-04-11),333oh R1 A E1

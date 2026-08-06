@@ -1,8 +1,8 @@
 # Scramble samples — std / cross / BGORWY / bin 7
-# Population in this bin: 322
+# Population in this bin: 324
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 2643001,D2 B2 L2 D2 U2 B2 R' D2 L D2 L2 D B' L2 U2 F' D2 R' B U' L,B,CMI Fiesta Open 2014 (2014-03-21~23),333 R2 C #4
@@ -87,7 +87,7 @@
 4241159001,D' R' B' U' R2 U2 L D B F2 R' D2 R2 L F2 R' B2 U2 L B2,B,Skowhegan Spookfest 2024 (2024-11-02),333 R1 B #3
 889769001,U2 R2 B U' L' D F' R' U' R' B R D2 F2 D2 L' F2 D2 L,B,Speedcubes Fest in SPB 2018 (2018-09-29~30),333 R2 C E2
 4409804001,B2 F2 R2 U2 B F2 D2 B2 U2 R F' L' B' L' D' F' L' U R,B,Vilnius Winter Open 2025 (2025-01-04~05),333 R1 B #5
-914784001,D2 R2 F2 D2 F2 U F2 L2 D' B2 R U' R2 F D2 L D B' U' R' D',B,Itapeva 2018 (2018-10-27),333 R1 A #5
+5771621001,R2 F2 U' L B' U2 L2 D2 U2 B' R2 L B' L' F2 U' R F',B,Sint Maarten Sunday 2026 (2026-08-02),333 R1 A #1
 923342017,B' D2 B2 F2 L2 B D2 U2 L' R' D B' F' U' B L B D L B2 D',B,LA Blind Cube Day 2018 (2018-11-03),333mbf Final B #2
 928358001,F2 R' D2 R' U2 L B2 D2 B F' L U2 L2 U' L D' R' U2,B,Viva Vida SBC Open 2018 (2018-11-10),333 R2 B #3
 5624809001,B2 L' B2 U' F2 D B2 R2 F2 D B L' R F L' U L' D' L,B,Cubing at Vivira B 2026 (2026-05-10),333 R1 A #4
@@ -200,7 +200,7 @@
 3382334001,U2 R D2 L' R2 B2 R' B2 F2 R' F2 D F' U' L B D' F' R2,B,Bohol Speedcubing Open 2023 (2023-12-28),333oh R1 B #1
 3387692001,D2 U2 L' D2 B2 L' R B2 L2 R' B' R U F' D R' F2 L' D R',B,Chääswürfel 2023 (2023-12-31),333 Final A #5
 3460839001,R2 U L2 R2 B2 D2 U F' L B' U2 F2 R2 U2 F2 L' D' R' U',B,Gort-a Go Fast 2024 (2024-01-27~28),333 R1 C E1
-4079654001,B2 D F D2 B2 U2 L2 B D2 F R2 B2 R' D L' B' D' B2 D2,B,Vibra Social Girardot Cundinamarca 2024 (2024-09-07),333 R1 C #5
+5760617001,F' U2 L2 R2 F2 L2 F' R2 F U' L2 U' F' R' D2 F2 D U B' R',B,Temecula Valley Summer 2026 (2026-07-25),333 R1 C #3
 3509182001,R' U L2 D' L2 D' L2 B2 U2 F L' B' U2 R' B2 F2 L D L2,B,Hurlubiks Cube Mouscron 2024 (2024-02-10~11),333 R1 C #3
 3518430007,D' F2 L U B D2 F2 D2 B L2 B F' R' D' B2 D2 F R B' L2,B,Cube With Retention in Denton 2024 (2024-02-17~18),333mbf R1 B #2
 3590986012,L F B2 R B2 L' D2 L F2 D2 L U F2 L B R' D' U F' U' L2 U,B,No Peeking Calgary 2024 (2024-03-16),333mbf Final C #1

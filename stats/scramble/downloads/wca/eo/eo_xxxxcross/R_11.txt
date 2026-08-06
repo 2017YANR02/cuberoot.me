@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxxcross / R / bin 11
-# Population in this bin: 516
+# Population in this bin: 518
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5671196001,D R2 F' D' L D2 F' R2 L2 B2 U F2 L2 U R2 U' B2 U2 F2,R,Magnolia State Cubing 2026 (2026-05-30),333 R2 B E2
@@ -141,8 +141,8 @@
 1605599028,D F2 L2 F2 D B2 D' F' U L' R' B2 D' B' D F' D B2 U B R',R,Manchester Open 2020 (2020-03-14~15),333mbf Final A #1
 2942499001,R2 D2 R2 U L2 U' R2 D' U2 F' L2 R' D L D U2 L,R,Rionegro al Cubo 2023 (2023-07-29~30),333 R2 A E2
 3937688021,D B L' F D B U' F' B' D2 R2 F2 L2 F2 U B2 L' D2 L B,R,Australian Nationals 2024 (2024-07-12~14),333mbf Final A #1
-2585786001,D L2 D2 B2 R' U R' D' L2 B2 D' B2 R2 D2 B2 D',R,Guwahati Spring Cube Open 2023 (2023-03-25),333oh R1 B #1
-894615001,D' B' D F B' U F2 U2 B R2 U2 R2 F D2 R2 L2,R,Hiroshima 2018 (2018-10-07),333 Final A #1
+5762882001,F L F U' R U2 B' U L2 B' L2 U2 R2 U D R2 L2 B',R,Newcastle upon Tyne Summer 2026 (2026-07-25~26),333 R2 B #5
+5766983001,R' U' F L' R2 D2 B2 R2 F U2 L2 U2 L2 R U B' F U2 L B R2 U F2 R' U' F,R,Ohio Quiet Championship 2026 (2026-07-25~26),333fm Final A #3
 1490971001,F R2 D2 R2 D2 R2 F' D2 B2 D2 L' B R2 D2 B2 D' L' D2 B R2 B R,R,Swisscubing Cup I 2020 (2020-01-04~05),333bf R1 A E1
 898391001,U2 B2 F2 R2 F2 L D2 L F2 L' D' B D' F D B2 D L F',R,Kaohsiung Autumn Open 2018 (2018-10-07),333 R1 F #4
 902251001,B' U2 F2 U2 L2 B R2 B L' D' B' L2 B2 L2 D' F' U B R' B R,R,Montpellier Open 2018 (2018-10-13~14),333bf Final A #1

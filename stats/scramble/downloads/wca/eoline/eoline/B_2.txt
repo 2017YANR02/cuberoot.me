@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / B / bin 2
-# Population in this bin: 913
+# Population in this bin: 914
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4298941001,U B' D2 U2 R2 F' L2 B2 R2 U' B2 R2 F2 U2 F L R' U2,B,Sydney Spring Saturday 2024 (2024-11-16),333oh R1 B #5
@@ -175,7 +175,7 @@
 5307556030,U' R' L2 F2 D2 L2 U B2 R2 B2 L2 F2 U' R' D2 U' B' D' F D2 B R,B,Multi Mayhem VA 2026 (2026-01-02~04),333mbf R1 A #1
 3392855001,D2 L' B2 F2 L2 D2 B2 L F2 D R2 F U2 R2 D F' L' D2 L B R,B,Vilnius Winter 2024 (2024-01-06~07),333mbf Final A #1
 3909390071,F D2 L2 R2 D R2 D B' U2 F2 D2 R2 D F L2 D' F D',B,Hari-Hari Horas 10 2024 (2024-07-05),333mbf Final B #2
-4000070016,D R F2 D2 L B' L' D' B' R2 F2 R' U2 F2 B2 L' D2 B2 D2 L B',B,CubingUSA New England Quiet Championship 2024 (2024-08-10),333mbf Final A #1
+5762619001,R2 D B2 F2 L2 D' F2 D2 B' D B' U L2 U' F U L2 U L2 U2,B,Corning Summer 2026 (2026-07-25~26),333bf Final A #5
 1778652001,F2 L2 R2 D L2 U F2 U B2 L2 D2 L' U' F L F2 L' F2,B,Gem City 2022 (2022-01-09),333 R1 G E2
 807179001,R F' R B2 R L2 F L F R B2 R L' F2 D2 F2 L2 U2,B,Georgia Open 2018 (2018-06-15),333oh Final A #2
 661352027,B' F' U2 B D2 U2 R2 B R D' B F' D F L2 R2 D2 R2 U B,B,Crossroads Cubing Spring 2017 (2017-05-13),333mbf Final A #1

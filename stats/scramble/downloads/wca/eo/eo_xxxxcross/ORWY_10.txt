@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxxcross / ORWY / bin 10
-# Population in this bin: 144
-# Samples listed: 144 (all entries in this bin)
+# Population in this bin: 145
+# Samples listed: 145 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 17388001,R B R2 U2 D' B2 D2 R' L' D B D2 F' U2 D2 F' L2 B U2 B2,Y,Apollo Open 2014 (2014-05-04),333oh Final A #4
@@ -149,3 +149,4 @@
 5564172001,F2 L B2 L2 R2 D2 B' R2 F D2 F U B2 D' R D2 B R D,Y,NOLA Cube Fest 2026 (2026-04-18),333 R1 B #4
 5634547001,R B2 R' U2 R U2 R U2 R2 D R2 U L2 D' B' R' B2 D2,O,Tomelloso Open 2026 (2026-05-16~17),333oh R1 B #2
 5710305001,L2 F R' F D2 R2 D F R D2 F2 R F2 R' F2 L' F' L2,Y,Wakefield Summer 2026 (2026-06-20~21),333 Final A #5
+5765459001,D R2 B2 D2 U2 R B2 R' B R2 B' R U R2 D R' B2 F,R,Samgau Almaty 2026 (2026-07-25~26),333 R1 C #2

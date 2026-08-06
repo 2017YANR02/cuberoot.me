@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / ORWY / bin 8
-# Population in this bin: 467
+# Population in this bin: 471
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4311529001,R' U' F U' D' R D2 F2 R F' U B' R2 F B D2 L2 F2 R2 F R' F R' U' F,O,East Bay Big and Blind 2024 (2024-11-24),333fm Final A #2
@@ -73,7 +73,7 @@
 542645001,U' B2 U B2 R2 F2 U2 L2 R2 D' B' L F' L' R2 F L2 F L2,W,Eger Open 2017 (2017-07-01~02),333 R1 B #2
 562345001,F2 B2 R D B R' U2 B' U F R2 D2 F' B2 D2 F' D2,Y,Tambov Summer 2017 (2017-07-29~30),333 R1 A #3
 5384388001,F2 U2 R2 F2 D R2 U' B2 F2 L' F R F L' D2 U B2 F2,W,Cœur de Cube Charantonnay 2026 (2026-02-14~15),333oh Final A E1
-4214135001,R2 D' L' B D F2 R' F2 R2 D2 F2 U2 R2 U' R2 U' B' U2 R',Y,Valsugana Speedcubing 2024 (2024-10-19~20),333 R1 C #4
+5761702001,F2 D2 U F2 R2 U' F' U' F' D2 R' F2 D B2 F L' B F2,R,Barpeta Cubing Open 2026 (2026-07-26),333oh Final B #3
 4955873001,L2 D U2 R2 F2 R2 B U2 F' L2 R' B' D2 B2 D' R' B R2 F',R,Cubing Kazakhstan Nationals 2025 (2025-08-15~17),333oh R1 A #1
 590697001,F D B' R L U L2 B U2 R' D R2 U2 L2 U L2 F2 U' F2 B2,R, Raipur Cube Challenge 2017 (2017-09-10),333oh Final A #1
 4992989001,B2 L' D2 L' D' F D' F2 U F B2 U' D2 B2 D2 R2 D2,O,Quangang Morning 2025 (2025-08-31),333 Final C #1
@@ -191,7 +191,7 @@
 2100234001,D2 R' U2 R B2 D' B2 D' R2 L D2 R D2 F2 R B2 F U2,O,Korean Championship 2022 (2022-08-12~14),333 R1 D #1
 5369128001,U2 B U2 L' B L2 B U F U' D2 B2 U B2 R2 F',O,Sandnes Winter 2026 (2026-02-07~08),333 Final B E2
 1643647026,L2 B2 R U' D2 B2 L' D2 L2 R' F2 U2 B' D2 L B' L' F' D' B R,W,Please Be Quiet Brisbane 2021 (2021-04-10),333mbf Final A #1
-2305483001,F' U F' U2 B' L2 F D2 U2 L2 U B' L' U2 B2 D2 L2 F2,R,Minerva Open 2022 (2022-11-12),333oh R2 B #1
+5772066001,R' L' F U2 D' L' U B' L2 U F2 D F2 L2 F2 U F2 R U2,W,Saint-Martin Saturday 2026 (2026-08-01),333oh Final B #2
 4474225001,F L' R' B2 D2 L' D2 R2 U2 R' D B D F D2 U2 F2 U',W,Tramsheds IV: Summer Sunday 2025 (2025-02-09),333 R1 B #2
 2240292001,F2 L' B2 R' F2 D2 F2 U2 B' L2 F L R2 F' D F2 L' D L2,R,Santiago UV Open 2022 (2022-10-15~16),333bf Final B #1
 1810530001,L2 U2 B2 L' B2 U2 L' U B2 L' D' F2 L' F U2 R2 F',W,Cape Fear 2022 (2022-02-12),333 R1 C #5

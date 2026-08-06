@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / W / bin 3
-# Population in this bin: 201
+# Population in this bin: 202
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 14804001,D L2 B2 R2 F2 R2 D R2 D' R2 B F2 D2 U L2 U2 B' U L R' U2 L,W,Didas Brest 2014 (2014-04-26~27),333bf Final A #2
@@ -138,7 +138,7 @@
 3621685001,R' B2 R2 F2 L' U2 R2 U L R' D2 L' U' F2 U2 R F2,W,Patio Cubik Open 2024 (2024-03-24),333 R2 C #3
 3651201001,D' U2 B2 D B2 L2 B2 L D' U2 R B2 D' R' D' U R F2 L' F2,W,IndalOpen 2024 (2024-04-06~07),333bf Final A E1
 3735236001,U' R2 F U B U2 F L2 D2 L2 B2 D' B2 D B' L B R2 B',W,BrizZon Side Open II 2024 (2024-05-01~05),333bf Final A E2
-3755284054,B' U' R2 U' R2 F2 D2 U R2 D' B2 F D' L2 D L U' R' B' U' B' L',W,Blind Faith Denver 2024 (2024-05-11~12),333mbf R1 C #1
+5763976001,D F' L2 F R2 D' L F' U B' U2 D2 R2 B2 U2 D2 B D2 F2,W,Thessaloniki Summer Open 2026 (2026-07-25~26),333 R2 A #2
 3776070001,U F L F' B2 U L' U2 F2 U2 F2 D' R2 U' D' B2 F' L D,W,50 Años Cubeando Aves María 2024 (2024-05-18~19),333oh R1 B #1
 3815607053,F2 B2 D' R F' L' U F B' L' B F2 U D L2 B2 U D2 L',W,Glasgow Summer - Scottish Blind Off 2024 (2024-06-01~02),333mbf Final B #2
 3821203001,U' B2 D' B2 U F2 L2 B2 L2 U2 B' D U L B2 R2 D L U',W,Cube Camp in Nakhon Nayok 2024 (2024-06-01~03),333oh Final A #2

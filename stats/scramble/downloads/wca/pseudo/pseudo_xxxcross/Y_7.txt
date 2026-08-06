@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxxcross / Y / bin 7
-# Population in this bin: 863
+# Population in this bin: 867
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4187118001,D L2 R2 D2 L B2 R F L' D2 R2 D' L B2 R F,Y,Tarazona de la Mancha Open 2024 (2024-10-12~13),333 R2 A E1
@@ -48,7 +48,7 @@
 1170553001,U R2 U' F' D' F' U2 B D' B' D L2 B2 U' D2 R2 D2 R2,Y,Vienna Cube Day 2019 (2019-06-01),333 R2 B #2
 5039752001,L U2 F2 D B' R' U' B' U F U' R2 B2 R2 D R2 U B2 D,Y,Eyes Open Open - Ōtautahi 2025 (2025-09-20~21),333oh R1 A E2
 193978001,D2 L R2 D2 R2 F2 D' F D2 U' B L2 B' L U B2 L,Y,Slow n Steady Fall 2015 (2015-09-26),333 R2 B E1
-2128543001,L2 F U2 B' D2 R2 B' U' L B2 U2 B2 L' U' F D2,Y,August Bank Holiday Cheltenham 2022 (2022-08-27~28),333 Final A E2
+5759014001,F2 U' L2 D2 U' B2 R2 B2 F2 D' R2 B R2 B' L B F U R' B F',Y,Rubisian Summer Cubing Iasi 2026 (2026-07-18~19),333 R1 C E2
 203730001,D2 B2 D' U2 B2 D F2 U' F' D2 L2 B2 L B2 F' D2 R' U L B' L',Y,Delhi Autumn Open 2015 (2015-10-17~18),333bf Final B E2
 3703510001,R2 F2 D2 L F2 D2 L B2 D2 L B L R B F L' D' B L,Y,Nanchang Spring 2024 (2024-04-21),333 R2 B #5
 1968432001,R' L2 B' L2 D2 B R2 D2 B' F' R' F' U' F' L R' U L2 D',Y,Olimpiadas de la Mente - Santiago 2022 (2022-06-11),333 R2 A #3
