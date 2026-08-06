@@ -59,6 +59,8 @@ export async function renderPuzzleNetSVG(
   event: string,
   scramble: string,
   invert = false,
+  showSq1Middle = true,
+  sq1BlackTop = true,
 ): Promise<string | null> {
   const key = puzzleLoaderKey(event);
   if (!key) return null;
@@ -86,6 +88,13 @@ export async function renderPuzzleNetSVG(
   const { document } = parseHTML(`<!DOCTYPE html><html><body>${svgTemplate}</body></html>`);
   const svgElem = document.querySelector('svg');
   if (!svgElem) return null;
+
+  // Square-1's WCA template gives the equator a stable group id. Removing the
+  // whole group keeps the upper/lower state untouched and leaves other puzzles
+  // on their byte-identical path.
+  if (key === 'square1' && !showSq1Middle) {
+    svgElem.querySelector('#EQUATOR')?.remove();
+  }
 
   // Collect each sticker's solved fill BEFORE we mutate, so position-based lookup works.
   const solvedFill: Record<string, string> = {};
@@ -117,7 +126,11 @@ export async function renderPuzzleNetSVG(
         if (!el) continue;
         const sourceOri = (orbitDef.numOrientations - fromOriShift + ori) % orbitDef.numOrientations;
         const sourceId = `${orbitDef.orbitName}-l${fromIdx}-o${sourceOri}`;
-        const fill = solvedFill[sourceId] ?? solvedFill[id] ?? '#888';
+        const sourceFill = solvedFill[sourceId] ?? solvedFill[id] ?? '#888';
+        const normalized = sourceFill.toLowerCase().replace(/\s+/g, '');
+        const isYellow = normalized === '#ffff00' || normalized === '#ff0'
+          || normalized === 'yellow' || normalized === 'rgb(255,255,0)';
+        const fill = key === 'square1' && sq1BlackTop && isYellow ? '#000000' : sourceFill;
         el.setAttribute('style', `fill: ${fill}`);
       }
     }

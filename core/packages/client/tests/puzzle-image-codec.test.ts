@@ -38,6 +38,8 @@ const SPECS: Record<string, ImageSpec> = {
   }),
   'cube 2x2 wca net': spec({ cubeSize: 2, cubeView: 'wca' }),
   'sq1 wca case': spec({ puzzleType: 'sq1', puzzleVariant: 'wca', algType: 'case', algorithm: '/(3,3)/(1,0)/' }),
+  'sq1 wca without middle': spec({ puzzleType: 'sq1', puzzleVariant: 'wca', showSq1Middle: false }),
+  'sq1 wca yellow top': spec({ puzzleType: 'sq1', puzzleVariant: 'wca', sq1BlackTop: false }),
   'megaminx top': spec({ puzzleType: 'megaminx', puzzleVariant: 'top' }),
   'pyraminx iso case': spec({ puzzleType: 'pyraminx', algType: 'case', algorithm: "U R' L R B'" }),
   'skewb net': spec({ puzzleType: 'skewb', puzzleVariant: 'net', algorithm: "R U L' B" }),
@@ -93,6 +95,54 @@ describe('puzzle-image codec — msk / mkc / fc discipline', () => {
     const out = specToParams(s, 'img_', opts);
     expect(out.get('img_msk')).toBe('U:0-2');
     expect(out.get('img_alg')).toBeNull(); // host-owned, still never emitted
+  });
+});
+
+describe('puzzle-image codec — Square-1 WCA middle layer', () => {
+  it('keeps the middle layer on by default and emits no key', () => {
+    const s = spec({ puzzleType: 'sq1', puzzleVariant: 'wca' });
+    expect(s.showSq1Middle).toBe(true);
+    expect(specToParams(s, '').get('mid')).toBeNull();
+  });
+
+  it('round-trips the opt-out under bare and panel prefixes', () => {
+    const bare = readSpecFromParams('pzl=sq1&view=wca&mid=0', '');
+    expect(bare.showSq1Middle).toBe(false);
+    expect(specToParams(bare, '').get('mid')).toBe('0');
+
+    const opts: CodecOptions = { puzzle: { puzzleType: 'sq1', cubeSize: 3 } };
+    const panel = readSpecFromParams('img_view=wca&img_mid=0', 'img_', opts);
+    expect(panel.showSq1Middle).toBe(false);
+    expect(specToParams(panel, 'img_', opts).get('img_mid')).toBe('0');
+  });
+
+  it('does not emit the Square-1-only key from another view or puzzle', () => {
+    expect(specToParams(spec({ puzzleType: 'sq1', showSq1Middle: false }), '').get('mid')).toBeNull();
+    expect(specToParams(spec({ cubeView: 'wca', showSq1Middle: false }), '').get('mid')).toBeNull();
+  });
+});
+
+describe('puzzle-image codec — Square-1 black top', () => {
+  it('defaults to black and emits no key', () => {
+    const s = spec({ puzzleType: 'sq1', puzzleVariant: 'wca' });
+    expect(s.sq1BlackTop).toBe(true);
+    expect(specToParams(s, '').get('blk')).toBeNull();
+  });
+
+  it('round-trips the yellow-top opt-out under bare and panel prefixes', () => {
+    const bare = readSpecFromParams('pzl=sq1&view=wca&blk=0', '');
+    expect(bare.sq1BlackTop).toBe(false);
+    expect(specToParams(bare, '').get('blk')).toBe('0');
+
+    const opts: CodecOptions = { puzzle: { puzzleType: 'sq1', cubeSize: 3 } };
+    const panel = readSpecFromParams('img_view=wca&img_blk=0', 'img_', opts);
+    expect(panel.sq1BlackTop).toBe(false);
+    expect(specToParams(panel, 'img_', opts).get('img_blk')).toBe('0');
+  });
+
+  it('does not emit the Square-1-only key from another view or puzzle', () => {
+    expect(specToParams(spec({ puzzleType: 'sq1', sq1BlackTop: false }), '').get('blk')).toBeNull();
+    expect(specToParams(spec({ cubeView: 'wca', sq1BlackTop: false }), '').get('blk')).toBeNull();
   });
 });
 

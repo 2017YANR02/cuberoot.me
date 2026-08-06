@@ -151,18 +151,6 @@ export default function AppearanceToggle({ className }: { className?: string }) 
           <button
             type="button"
             role="menuitemradio"
-            aria-checked={onScheme && eff === 'light'}
-            className={`lang-menu-item${onScheme && eff === 'light' ? ' is-active' : ''}`}
-            onClick={() => pickTheme('light')}
-          >
-            <span className="lang-menu-check">{onScheme && eff === 'light' && <Check size={13} />}</span>
-            <Swatch colors={CLASSIC_LIGHT} />
-            <span>{L.light}</span>
-          </button>
-
-          <button
-            type="button"
-            role="menuitemradio"
             aria-checked={onScheme && eff === 'dark'}
             className={`lang-menu-item${onScheme && eff === 'dark' ? ' is-active' : ''}`}
             onClick={() => pickTheme('dark')}
@@ -170,6 +158,18 @@ export default function AppearanceToggle({ className }: { className?: string }) 
             <span className="lang-menu-check">{onScheme && eff === 'dark' && <Check size={13} />}</span>
             <Swatch colors={CLASSIC_DARK} />
             <span>{L.dark}</span>
+          </button>
+
+          <button
+            type="button"
+            role="menuitemradio"
+            aria-checked={onScheme && eff === 'light'}
+            className={`lang-menu-item${onScheme && eff === 'light' ? ' is-active' : ''}`}
+            onClick={() => pickTheme('light')}
+          >
+            <span className="lang-menu-check">{onScheme && eff === 'light' && <Check size={13} />}</span>
+            <Swatch colors={CLASSIC_LIGHT} />
+            <span>{L.light}</span>
           </button>
 
           <div className="appearance-sec-label appearance-sec-div">{L.palette}</div>

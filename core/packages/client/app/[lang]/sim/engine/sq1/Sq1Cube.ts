@@ -41,6 +41,8 @@ import Sq1Twister from './Sq1Twister';
 import MoveHistory from '../MoveHistory';
 import { makeAnim, type PieceAnim } from '../pieceAnim';
 import type { TweenCube } from '../TweenTwister';
+import { sq1StageHiddenStickerIds } from '@/lib/sq1-stage-mask';
+import { FM_FIXED_COLOR, FM_IGNORED } from '../nxn/stickering';
 
 export type { PieceAnim };
 
@@ -89,6 +91,22 @@ export default class Sq1Cube extends THREE.Group implements TweenCube<Sq1Move> {
 
   pieceById(id: number): PieceEntry | undefined {
     return this.pieces.find((p) => p.pieceId === id);
+  }
+
+  /** Gray irrelevant stickers for CO / EO / CP / EP; full or unknown restores all. */
+  setStickering(stage: string): void {
+    const hidden = sq1StageHiddenStickerIds(stage);
+    this.traverse((obj) => {
+      const key = obj.userData.stickerKey as string | undefined;
+      if (!key) return;
+      const mesh = obj as THREE.Mesh;
+      const material = mesh.material as THREE.MeshPhongMaterial;
+      if (!material?.color) return;
+      const base = (obj.userData.stickeringBaseColor as number | undefined) ?? material.color.getHex();
+      obj.userData.stickeringBaseColor = base;
+      material.color.set(hidden?.has(key) ? FM_FIXED_COLOR[FM_IGNORED]! : base);
+    });
+    this.dirty = true;
   }
 
   /** Snap every piece to its canonical slot pose given the discrete state. */

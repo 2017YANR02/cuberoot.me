@@ -145,9 +145,15 @@ export function display2x2LsName(name: string): string {
   return name.replace(/^LS-([1-9])(?=\s|$)/, 'LS$1');
 }
 
+/** SQ1 cubeshape 名称展示：方向词用卡片上更紧凑的 L / R，DB 原名与 URL 不变。 */
+export function displaySq1CsName(name: string): string {
+  return name.replace(/\bLeft\b/g, 'L').replace(/\bRight\b/g, 'R');
+}
+
 /** /alg 列表用:按 (puzzle, set) 决定是否套 OLL/PLL/ZBLL/COLL/LS 展示变换。 */
 export function displayAlgCaseName(puzzle: string, set: string, name: string): string {
   if (puzzle === '2x2' && /^ls[1-9]$/.test(set)) return display2x2LsName(name);
+  if (puzzle === 'sq1' && set === 'cs') return displaySq1CsName(name);
   if (puzzle === '3x3' && set === 'oll') return displayOllName(name);
   if (puzzle === '3x3' && set === 'pll') return displayPllName(name);
   if (puzzle === '3x3' && set === 'zbll') return displayZbllName(name);

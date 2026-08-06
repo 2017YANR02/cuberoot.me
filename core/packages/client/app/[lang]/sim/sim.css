@@ -135,6 +135,7 @@
   z-index: 9;
   pointer-events: none;
 }
+
 /* portal 的目标节点(React 不能同时管容器 children 和 portal 内容 → 关闭钮挂外层) */
 .sim-image-overlay-host { display: contents; }
 /* portal 出来的预览挂在画布浮层里,不在 .vc-studio 之下 → 吃的是 puzzle-image.css

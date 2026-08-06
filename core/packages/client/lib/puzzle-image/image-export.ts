@@ -9,11 +9,35 @@ export function svgBlob(svg: string): Blob {
   return new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
 }
 
+export type RasterImageFormat = 'png' | 'jpeg';
+
+export interface SvgRasterOptions {
+  /** Output canvas dimensions in physical pixels. */
+  width: number;
+  height?: number;
+  format?: RasterImageFormat;
+  /** JPEG/WebP-style encoder quality. Ignored by PNG. */
+  quality?: number;
+  /** Explicit canvas fill. JPEG defaults to white because it cannot keep alpha. */
+  background?: string | null;
+}
+
+function positivePixelSize(value: number, fallback: number): number {
+  return Number.isFinite(value) && value > 0 ? Math.max(1, Math.round(value)) : fallback;
+}
+
 /**
- * SVG → PNG。`size` 是输出的方形像素边长;非方 viewBox 的引擎矢量按 contain 居中
- * (拉成方形会变形)。
+ * SVG → PNG/JPEG. The source keeps its aspect ratio and is contain-fitted into
+ * the requested canvas, so a non-square engine view never gets stretched.
  */
-export async function svgToPngBlob(svg: string, size: number): Promise<Blob> {
+export async function svgToRasterBlob(svg: string, options: SvgRasterOptions): Promise<Blob> {
+  const width = positivePixelSize(options.width, 1);
+  const height = positivePixelSize(options.height ?? width, width);
+  const format = options.format ?? 'png';
+  const mime = format === 'jpeg' ? 'image/jpeg' : 'image/png';
+  const quality = Number.isFinite(options.quality)
+    ? Math.min(1, Math.max(0, options.quality!))
+    : 0.92;
   const url = URL.createObjectURL(svgBlob(svg));
   try {
     const img = new Image();
@@ -24,21 +48,46 @@ export async function svgToPngBlob(svg: string, size: number): Promise<Blob> {
       img.src = url;
     });
     const canvas = document.createElement('canvas');
-    canvas.width = size;
-    canvas.height = size;
+    canvas.width = width;
+    canvas.height = height;
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('no 2d context');
-    const iw = img.naturalWidth || size;
-    const ih = img.naturalHeight || size;
-    const k = Math.min(size / iw, size / ih);
-    ctx.drawImage(img, (size - iw * k) / 2, (size - ih * k) / 2, iw * k, ih * k);
+    // JPEG has no alpha. White is an export-domain default, not site chrome.
+    const background = options.background === undefined
+      ? (format === 'jpeg' ? '#ffffff' : null)
+      : options.background;
+    if (background) {
+      ctx.fillStyle = background;
+      ctx.fillRect(0, 0, width, height);
+    }
+    const iw = img.naturalWidth || width;
+    const ih = img.naturalHeight || height;
+    const k = Math.min(width / iw, height / ih);
+    ctx.drawImage(img, (width - iw * k) / 2, (height - ih * k) / 2, iw * k, ih * k);
 
     return await new Promise<Blob>((resolve, reject) => {
-      canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('toBlob failed'))), 'image/png');
+      canvas.toBlob(
+        (blob) => (blob ? resolve(blob) : reject(new Error('toBlob failed'))),
+        mime,
+        format === 'jpeg' ? quality : undefined,
+      );
     });
   } finally {
     URL.revokeObjectURL(url);
   }
+}
+
+/**
+ * Back-compatible square PNG helper. `size` is the output pixel edge; non-square
+ * SVG content is contain-fitted and centred exactly as before.
+ */
+export function svgToPngBlob(svg: string, size: number): Promise<Blob> {
+  return svgToRasterBlob(svg, { width: size, height: size, format: 'png' });
+}
+
+/** Square JPEG convenience wrapper for callers that do not need a custom canvas. */
+export function svgToJpegBlob(svg: string, size: number, quality = 0.92): Promise<Blob> {
+  return svgToRasterBlob(svg, { width: size, height: size, format: 'jpeg', quality });
 }
 
 export function saveBlob(blob: Blob, filename: string): void {

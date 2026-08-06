@@ -13,8 +13,10 @@
 import {
   useCallback, useEffect, useMemo, useRef, useState,
 } from 'react';
+import dynamic from 'next/dynamic';
 import { useQueryStates, parseAsString, parseAsStringEnum } from 'nuqs';
 import HomeLink from '@/components/HomeLink';
+import PillToggle from '@/components/PillToggle/PillToggle';
 import { persistItem } from '@/lib/safe-storage';
 // THREE is type-only at module scope — runtime instance is dynamically imported
 // inside the world-init effect so the ~1.2MB three bundle doesn't ship with
@@ -106,6 +108,7 @@ import { PG_DEF_BY_ID, isPgPuzzleId } from './pgCatalog';
 import { EXPLORE_BOUND } from './engine/exploreBound';
 import AlgsPanel from './AlgsPanel';
 import PuzzleImageStudio, { type SimBridge } from '@/components/puzzle-image/PuzzleImageStudio';
+import type { DrawExport } from '@/components/puzzle-draw/types';
 import type { TwistyPlayerLike } from '@/components/puzzle-image/SimCaptureGroup';
 import { useImageSpec } from '@/components/puzzle-image/useImageSpec';
 import { rotationDefaultsFor } from '@/lib/puzzle-image/defaults';
@@ -134,6 +137,8 @@ import { useT } from "@/hooks/useT";
 /** Gap (px) between the back-view window and the canvas top-right corner.
  *  Must match the `top`/`right` in `.sim-backview` (sim.css). */
 const BACKVIEW_MARGIN = 8;
+
+const PuzzleDrawWorkspace = dynamic(() => import('./PuzzleDrawWorkspace'), { ssr: false });
 
 /** Twisty puzzles rendered by cubing.js (not the local cuber engine). */
 export const TWISTY_PUZZLES = ['pyraminx', 'skewb', 'megaminx', 'fto'] as const;
@@ -276,6 +281,9 @@ export default function SimPage() {
   // identity is never silently dropped (which used to read back as a 3x3 fallback).
   const [query, setQuery] = useQueryStates(
     {
+      tool: parseAsStringEnum(['sim', 'draw'] as const)
+        .withDefault('sim')
+        .withOptions({ history: 'push' }),
       puzzle: parseAsString.withDefault('3').withOptions({ clearOnDefault: false }),
       // Custom-cut PuzzleGeometry description for the Puzzle Cuts editor (e.g. "c f 0.255").
       cuts: parseAsString,
@@ -309,6 +317,7 @@ export default function SimPage() {
 
   const algParam = query.alg || '';
   const setupParam = query.setup || '';
+  const drawMode = query.tool === 'draw';
 
   const puzzleParam: SimPuzzle = useMemo(() => {
     const raw = query.puzzle;
@@ -445,6 +454,13 @@ export default function SimPage() {
     if (typeof window === 'undefined') return false;
     try { return localStorage.getItem('sim.fullscreen') === '1'; } catch { return false; }
   });
+  // Load the large flat-template bundle only after the user first enters drawing.
+  // Keep it mounted afterwards so switching back to the simulator does not discard work.
+  const [drawVisited, setDrawVisited] = useState(drawMode);
+  const [drawDocument, setDrawDocument] = useState<DrawExport | null>(null);
+  useEffect(() => {
+    if (drawMode) setDrawVisited(true);
+  }, [drawMode]);
   // Skewb notation choice — only meaningful when puzzleKind === 'skewb'.
   const [skewbNotation, setSkewbNotationState] = useState<SkewbNotation>(() => {
     if (typeof window === 'undefined') return 'wca';
@@ -1516,6 +1532,10 @@ export default function SimPage() {
     if (twisty) return;
     const world = worldRef.current;
     if (!world) return;
+    if (world.cube instanceof Sq1Cube) {
+      world.cube.setStickering(query.stickering);
+      return;
+    }
     const cube = asNxN(world);
     if (!cube) return;
     cube.instancedRenderer.setStickering(stickeringMaskFor(cube));
@@ -2066,14 +2086,22 @@ export default function SimPage() {
   }, [imgSwapActive]);
 
   return (
-    <div className={`sim-page${fullscreen ? ' sim-page--fullscreen' : ''}`} data-board-bg={settings.boardBg}>
+    <div className={`sim-page${fullscreen && !drawMode ? ' sim-page--fullscreen' : ''}`} data-board-bg={settings.boardBg}>
       <header className="sim-header">
         <HomeLink className="sim-back" title={t('返回', 'Back')}>
           <ChevronLeft size={18} />
         </HomeLink>
         <h1 className="sim-title">{t('模拟', 'Sim')}</h1>
+        <PillToggle
+          value={!drawMode}
+          onChange={(simulate) => setQuery({ tool: simulate ? null : 'draw' })}
+          onLabel={t('模拟', 'Simulate')}
+          offLabel={t('绘图', 'Draw')}
+          ariaLabel={t('模拟或绘图', 'Simulate or draw')}
+          className="sim-tool-toggle"
+        />
         <div className="sim-spacer" />
-        {reconHref && (
+        {!drawMode && reconHref && (
           <AppLink
             href={reconHref}
             className="sim-open-recon"
@@ -2084,7 +2112,7 @@ export default function SimPage() {
         )}
       </header>
 
-      <div className="sim-body">
+      <div className="sim-body" style={{ display: drawMode ? 'none' : undefined }} aria-hidden={drawMode}>
         <div className="sim-stage">
         <div
           // puzzle-art:柔和度的统一钩子(见 globals.css)。挂在 wrap 而不是 3D canvas
@@ -2349,6 +2377,26 @@ export default function SimPage() {
           )}
         </aside>
       </div>
+
+      {drawVisited && (
+        <div style={{ display: drawMode ? 'contents' : 'none' }}>
+          <PuzzleDrawWorkspace
+            active={drawMode}
+            puzzle={puzzleParam}
+            order={order}
+            onPuzzleChange={handlePuzzle}
+            onOrderChange={handleOrder}
+            onDocumentChange={setDrawDocument}
+            exportPanel={drawDocument ? (
+              <PuzzleImageStudio
+                spec={imgSpec}
+                onSpecChange={setImgSpec}
+                externalImage={drawDocument}
+              />
+            ) : null}
+          />
+        </div>
+      )}
     </div>
   );
 }

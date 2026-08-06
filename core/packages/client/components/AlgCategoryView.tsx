@@ -12,7 +12,7 @@
  * per-case ori cycle, subgroup collapse, sticker/setup/HTML alg rendering.
  */
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
-import { useQueryState, parseAsStringEnum } from 'nuqs';
+import { useQueryState, parseAsBoolean, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Plus, Pencil, ShieldCheck, GripVertical, AlertTriangle, FlipHorizontal2 } from 'lucide-react';
@@ -55,6 +55,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useHashHighlight } from '@/hooks/useHashHighlight';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
+import BoolToggle from '@/components/BoolToggle';
 
 // oriAdjustSetup / shortOriName 已提到 lib/alg_display 与 case 详情页共用(详情页原先漏了它们,见那里的注释)。
 
@@ -318,18 +319,29 @@ export interface AlgCategoryViewProps {
   initialData?: AlgFile;
 }
 
+/** Large sets normally start collapsed; SQ1 cubeshape is learned slice-count by
+ * slice-count, so its eight groups stay visible on first entry despite 169 cases. */
+export function collapseAlgGroupsByDefault(
+  puzzle: string,
+  set: string,
+  caseCount: number,
+  umbrella: boolean,
+): boolean {
+  return caseCount > 100 && !umbrella && !(puzzle === 'sq1' && set === 'cs');
+}
+
 export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initialData }: AlgCategoryViewProps) {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const narrow = useIsMobile(480);
   const validPuzzle = isPuzzle(puzzleParam);
   const meta = validPuzzle ? getAlgSetMeta(puzzleParam, set) : undefined;
+  const setHeading = meta?.short ?? (meta ? tr(meta) : set);
   const algSetTitle = (() => {
     const fallback = tr({ zh: '公式库', en: 'Algorithms'
     });
     if (!puzzleParam || !set) return fallback;
-    const setName = meta ? tr(meta) : set;
-    return `${puzzleParam} · ${setName}`;
+    return `${puzzleParam} · ${setHeading}`;
   })();
   useDocumentTitle(algSetTitle, algSetTitle);
   const [data, setData] = useState<AlgFile | null>(initialData ?? null);
@@ -377,6 +389,10 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   }, []);
   // 筛选 → replace(不往历史里塞;CLAUDE.md「URL 状态」)
   const [tagFilter, setTagFilter] = useQueryState('tag', parseAsStringEnum<AlgTag | 'all'>(['all', ...ALG_TAGS]).withDefault('all'));
+  const [sq1BlackTop, setSq1BlackTop] = useQueryState(
+    'black',
+    parseAsBoolean.withDefault(true),
+  );
   const animatable = true;
 
   // 列表视图(`cards` 只看图 / `full` 公式内联)。语义 + localStorage key 都在
@@ -486,9 +502,10 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   useEffect(() => {
     if (!validPuzzle || !meta) { setError('unknown set'); setData(null); return; }
     setError(null);
-    // >100 个 case 的非 umbrella set 默认全折(zbll/1lll 走子组页不折)。
+    // >100 个 case 的非 umbrella set 默认全折(zbll/1lll 走子组页不折)。SQ1
+    // cubeshape 是按 slice 数逐组浏览的例外,169 个 case 仍默认全展开。
     const applyCollapse = (d: AlgFile) => {
-      if (d.cases.length > 100 && !meta.umbrella) {
+      if (collapseAlgGroupsByDefault(puzzleParam, set, d.cases.length, !!meta.umbrella)) {
         const groups = new Set<string>();
         for (const c of d.cases) groups.add(c.subgroup || '');
         setCollapsedGroups(groups);
@@ -639,8 +656,11 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   /** 整个 set 的 case → 唯一短链 slug(点卡片跳转用)。落地解析用同一份算法,见 alg_case_link。 */
   const slugMap = useMemo(() => (data ? buildCaseSlugMap(data.cases, set) : null), [data, set]);
   const caseDetailHref = useCallback(
-    (c: AlgCase) => algCaseDetailHref(puzzleParam, set, (c.id != null && slugMap?.byId.get(c.id)) || caseSlugBase(set, c)),
-    [slugMap, puzzleParam, set],
+    (c: AlgCase) => {
+      const href = algCaseDetailHref(puzzleParam, set, (c.id != null && slugMap?.byId.get(c.id)) || caseSlugBase(set, c));
+      return puzzleParam === 'sq1' && !sq1BlackTop ? `${href}?black=false` : href;
+    },
+    [slugMap, puzzleParam, set, sq1BlackTop],
   );
 
   if (!validPuzzle || !meta) {
@@ -664,11 +684,12 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   }, [visibleCases, slugLevel, meta.umbrella]);
   const showSubSubgroupPicker = subSubgroups.length > 1;
 
-  const backTo = slugLevel === 'sub' && subParentSlug
+  const rawBackTo = slugLevel === 'sub' && subParentSlug
     ? `/alg/${puzzleParam}/${set}/${subParentSlug}`
     : subgroupParam
       ? `/alg/${puzzleParam}/${set}`
       : `/alg/${puzzleParam}`;
+  const backTo = puzzleParam === 'sq1' && !sq1BlackTop ? `${rawBackTo}?black=false` : rawBackTo;
 
   const dispToken = (slug: string) => {
     const oll = ollByGroup.get(slug.toUpperCase()) ?? ollByGroup.get(slug);
@@ -724,12 +745,20 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
         <h1 className="alg-cat-title">
           <span className="alg-cat-puzzle">{puzzleParam}</span>
           {' '}
-          {tr(meta)}
+          {setHeading}
           {subgroupDisplay && <span className="alg-cat-subgroup"> {subgroupDisplay}</span>}
         </h1>
+        {meta.short && <p className="alg-cat-intro">{tr(meta)}</p>}
         {data && !showSubgroupPicker && (
           <span className="alg-cat-count">{visibleCases.length} {tr({ zh: '个', en: 'cases'
         })}</span>
+        )}
+        {puzzleParam === 'sq1' && (
+          <BoolToggle
+            value={sq1BlackTop}
+            onChange={setSq1BlackTop}
+            label={tr({ zh: '黑顶', en: 'Black top' })}
+          />
         )}
         {/* 图 / 公式 视图开关(只在真列出 case 的页面;子组选择页没有卡片) */}
         {data && !showSubgroupPicker && !showSubSubgroupPicker && (
@@ -921,6 +950,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                                懒加载让视口外的图根本不发请求 —— 这是长网格的常规做法,
                                也别改成 local 本地渲染:那会把几千次渲染压进主线程,比发请求更糟。 */
                             loading="lazy"
+                            sq1BlackTop={sq1BlackTop}
                           />
                         </div>
                         <div className="alg-case-info">

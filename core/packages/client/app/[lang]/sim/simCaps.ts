@@ -236,8 +236,10 @@ export function resolveCaps(kind: SimPuzzle, renderer: SimRenderer): ResolvedCap
       // table.groups 逐层 angle 可轮询 → 仅 3x3(镜面走 'mirror' kind,不含)。
       hands: kind === 3,
       handsSkeleton: kind === 3,
-      // 阶段色块:NxN 引擎(1 阶无层可分)或 cubing.js 原生支持的 megaminx / fto。
+      // 阶段色块:NxN 引擎(1 阶无层可分)、SQ1 自有 CO/EO/CP/EP 遮罩,
+      // 或 cubing.js 原生支持的 megaminx / fto。
       stickering: (isNxN && (kind as number) >= 2)
+        || kind === 'sq1'
         || (!engineActive && (kind === 'megaminx' || kind === 'fto')),
     },
   };

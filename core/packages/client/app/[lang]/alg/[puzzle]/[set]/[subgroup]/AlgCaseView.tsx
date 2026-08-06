@@ -42,6 +42,8 @@ import { useIsAdmin } from '@/lib/auth-store';
 import { useCopy } from '@/hooks/useCopy';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
+import BoolToggle from '@/components/BoolToggle';
+import { parseAsBoolean, useQueryState } from 'nuqs';
 
 /** 打乱行(和列表卡片同款,sq1 之类会重排格式)。 */
 function SetupLine({ puzzle, setup }: { puzzle: string; setup: string }) {
@@ -115,6 +117,10 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
   const [caseObj, setCaseObj] = useState(caseProp);
   useEffect(() => { setCaseObj(caseProp); }, [caseProp]);
   const [deleted, setDeleted] = useState(false);
+  const [sq1BlackTop, setSq1BlackTop] = useQueryState(
+    'black',
+    parseAsBoolean.withDefault(true),
+  );
   const isAdmin = useIsAdmin();
   const [editorState, setEditorState] = useState<AdminEditorState | null>(null);
   const m = caseObj.meta;
@@ -124,8 +130,17 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
   const showSub = sub && sub !== primary;
   useDocumentTitle(primary, primary);
 
+  const keepSq1Top = (href: string) => {
+    if (puzzle !== 'sq1' || sq1BlackTop) return href;
+    const hashAt = href.indexOf('#');
+    const path = hashAt < 0 ? href : href.slice(0, hashAt);
+    const hash = hashAt < 0 ? '' : href.slice(hashAt);
+    return `${path}${path.includes('?') ? '&' : '?'}black=false${hash}`;
+  };
+
   // 「返回」→ case 所在的子组列表页(带 #name 高亮那张卡)。是有明确目标的导航,不是 history.back。
-  const backHref = algCaseHref(puzzle, set, caseObj);
+  const rawBackHref = algCaseHref(puzzle, set, caseObj);
+  const backHref = keepSq1Top(rawBackHref);
 
   /** meta.no → case,给镜像/逆做详情页之间的链接(表编号,不是 DB id)。 */
   const byNo = useMemo(() => {
@@ -136,8 +151,10 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
 
   /** 全集唯一 slug 表(生成关联链接 / 社区区都要);和列表页、落地解析同一份算法。 */
   const slugMap = useMemo(() => buildCaseSlugMap(data.cases, set), [data, set]);
-  const hrefFor = (c: AlgCase) =>
-    algCaseDetailHref(puzzle, set, (c.id != null && slugMap.byId.get(c.id)) || '');
+  const hrefFor = (c: AlgCase) => {
+    const href = algCaseDetailHref(puzzle, set, (c.id != null && slugMap.byId.get(c.id)) || '');
+    return keepSq1Top(href);
+  };
 
   // 社区公式:只这张 case 的。
   const [submissions, setSubmissions] = useState<AlgSubmission[]>([]);
@@ -238,6 +255,13 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
             </button>
           )}
         </h1>
+        {puzzle === 'sq1' && (
+          <BoolToggle
+            value={sq1BlackTop}
+            onChange={setSq1BlackTop}
+            label={tr({ zh: '黑顶', en: 'Black top' })}
+          />
+        )}
         {/* 单张也能印:每个视角各一份(这页本来就把视角都列出来了) */}
         <AlgPdfButton
           build={() => algSheetFromCases({
@@ -275,7 +299,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
       ) : (
         <div className="alg-case-detail-lean">
           <div className="alg-case-detail-lean-thumb">
-            <CaseThumb puzzle={puzzle} set={set} sticker={caseObj.sticker} alg={caseObj.algs[0]?.[0]?.alg || caseObj.setup || ''} setup={caseObj.setup} size={150} />
+            <CaseThumb puzzle={puzzle} set={set} sticker={caseObj.sticker} alg={caseObj.algs[0]?.[0]?.alg || caseObj.setup || ''} setup={caseObj.setup} size={150} sq1BlackTop={sq1BlackTop} />
           </div>
           {mirror?.card && (
             <div className="alg-mirror-row">
@@ -288,6 +312,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
                   alg={mirror.card.algs[0]?.[0]?.alg || mirror.card.setup || ''}
                   setup={mirror.card.setup}
                   size={44}
+                  sq1BlackTop={sq1BlackTop}
                 />
                 <span className="alg-mirror-name">{mirror.partner}</span>
               </Link>
