@@ -11,6 +11,7 @@ description: "Use when rendering NxN cube state image. Single entry: `<VisualCub
 ## view
 
 - `f2l` → isometric, LL 灰
+- `plan` → 平面识别图；侧环中等于遮罩灰的格子默认删除，顶面灰格必须保留
 - `oll` → plan 顶视, 黄/灰朝向图（自动切 OLL scheme）
 - `pll` → plan 顶视 + 侧边 LL 贴纸（PLL/COLL/ZBLL/CLL/4x4 PLL Parity/5x5 L2E·L2C 都用这个）
 - `pll-iso` → isometric LL
@@ -25,6 +26,7 @@ description: "Use when rendering NxN cube state image. Single entry: `<VisualCub
 - 手写 `<rect>` 拼贴纸（删过 `MiniCube.tsx` / `JcubeThumb.tsx`）
 - 静态图用 cubing.js `TwistyPlayer`（重，是给动画用的）
 - 覆盖 `colorScheme`（除非有具体理由）
+- `plan` 图手动保留侧面灰格；灰色侧环不是题面，`renderFromSimpleQuery({view:'plan'})` 已默认只删侧灰、保留顶灰
 - server / client 各写一份 view→mask 映射 —— 走 `renderFromSimpleQuery`
 
 ## 改包
