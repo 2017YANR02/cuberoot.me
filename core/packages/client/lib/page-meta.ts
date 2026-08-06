@@ -325,6 +325,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   },
   'recon-about': { title: { zh: '复盘库说明', en: 'Recon Library Guide' } },
   'recon/submit': { title: { zh: '提交复盘', en: 'Submit Reconstruction' } },
+  'recon/ground-truth': { title: { zh: '复盘测试样本', en: 'Reconstruction Test Corpus' } },
   'recon/submit-sketch': { title: { zh: '提交草稿', en: 'Submit Sketch' } },
   'regulation': {
     title: { zh: 'WCA 竞赛规则图解', en: 'WCA Regulations, Illustrated' },

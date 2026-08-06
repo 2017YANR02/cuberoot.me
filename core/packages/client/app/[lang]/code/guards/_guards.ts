@@ -96,10 +96,10 @@ export const PAIRED_GUARDS: PairedGuard[] = [
   {
     id: 'recon-ground-truth',
     hook: 'recon-ground-truth-gate.ps1 → recon-ground-truth-gate.mjs',
-    test: 'recon-ground-truth-gate.test.ts + recon_workbook_ground_truth.test.ts',
+    test: 'recon-ground-truth-gate.test.ts + recon_ground_truth.test.ts',
     baseline: '当前集合全量',
-    zh: { title: '复盘 Ground Truth 未验证', desc: 'Excel 是唯一手工源，测试命令自动生成供 Git/AI 审查的 JSON。Codex/Claude 命令 hook 与 Git pre-commit 三层拦截：提交复盘算法、陀螺仪/转体处理或工作簿前，当前内容指纹必须对应一次全部有效行测试通过记录；表尾新增任何复盘都会让旧凭证立即失效。' },
-    en: { title: 'Unverified reconstruction ground truth', desc: 'Excel is the only hand-edited source; the test command generates a JSON snapshot for Git and AI review. Codex/Claude command hooks plus Git pre-commit require the exact current content fingerprint to have a successful run over every populated row before reconstruction logic, gyro/rotation handling, or the workbook can be committed. Appending any solve immediately invalidates the old credential.' },
+    zh: { title: '复盘 Ground Truth 未验证', desc: '管理员管理器是唯一手工入口，测试命令从公开导出生成供 Git 和 AI 审查的 JSON。Codex、Claude 命令 hook 与 Git pre-commit 三层拦截：提交复盘算法、陀螺仪、转体处理或 ground-truth 管道前，当前内容指纹必须对应一次全部 confirmed 样本测试通过记录；管理器新增样本并同步后，旧凭证立即失效。' },
+    en: { title: 'Unverified reconstruction ground truth', desc: 'The admin manager is the only manual entry point; the test command generates the Git- and AI-reviewable JSON from its public export. Codex and Claude command hooks plus Git pre-commit require the exact current content fingerprint to have a successful run over every confirmed case before reconstruction logic, gyro, rotation handling or the ground-truth pipeline can be committed. Syncing a newly confirmed case immediately invalidates the old credential.' },
   },
 ];
 

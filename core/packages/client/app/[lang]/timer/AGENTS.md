@@ -1,3 +1,3 @@
 # Timer
 
-- 复盘 ground truth 唯一手工源是 `tests/fixtures/recon-ground-truth.xlsx`；只往表尾加行，禁手改生成的 JSON。改复盘、陀螺仪、转体、中层识别或工作簿后必须跑 `pnpm --filter @cuberoot/client test:recon-ground-truth`，它会同步 JSON 并测试全部有效行，禁止写死数量。
+- 复盘 ground truth 在 `/recon/ground-truth` 逐条确认；`tests/fixtures/recon-ground-truth.json` 是 API 导出的 CI 快照，禁手改。改复盘、陀螺仪、转体、中层识别或 ground-truth 管道后必须跑 `pnpm --filter @cuberoot/client test:recon-ground-truth`，测试全部 confirmed 条目，禁止写死数量。

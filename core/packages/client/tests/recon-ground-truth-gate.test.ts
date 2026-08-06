@@ -21,10 +21,11 @@ describe('reconstruction ground-truth commit gate', () => {
   it('covers reconstruction sources and a growing fixture registry without a fixed count', () => {
     expect(isGuarded('core/packages/client/app/[lang]/timer/_lib/reconstruct/recon_text.ts')).toBe(true);
     expect(isGuarded('core/packages/client/app/[lang]/timer/_lib/bluetooth/gyro_track.ts')).toBe(true);
-    expect(isGuarded('core/packages/client/tests/recon_workbook_ground_truth.test.ts')).toBe(true);
-    expect(isGuarded('core/packages/client/tests/fixtures/recon-ground-truth.xlsx')).toBe(true);
+    expect(isGuarded('core/packages/client/tests/recon_ground_truth.test.ts')).toBe(true);
     expect(isGuarded('core/packages/client/tests/fixtures/recon-ground-truth.json')).toBe(true);
     expect(isGuarded('core/packages/client/tests/fixtures/recon-workbook/0050.json')).toBe(true);
+    expect(isGuarded('core/packages/shared/src/recon_ground_truth.ts')).toBe(true);
+    expect(isGuarded('core/packages/server/src/routes/recon_ground_truth.ts')).toBe(true);
     expect(isGuarded('core/packages/client/app/[lang]/timer/page.tsx')).toBe(false);
   });
 
@@ -46,13 +47,14 @@ describe('reconstruction ground-truth commit gate', () => {
     const gitHook = readFileSync(join(REPO_ROOT, '.githooks', 'pre-commit'), 'utf8');
     expect(gitHook).toContain('recon-ground-truth-gate.mjs check-staged');
 
-    const groundTruth = readFileSync(join(HERE, 'recon_workbook_ground_truth.test.ts'), 'utf8');
+    const groundTruth = readFileSync(join(HERE, 'recon_ground_truth.test.ts'), 'utf8');
     expect(groundTruth).toContain('for (const fixture of FIXTURES)');
     expect(groundTruth).toContain("sync-recon-ground-truth.mjs");
     expect(groundTruth).not.toMatch(/FIXTURES\.(?:slice|splice)\(\s*0\s*,\s*4\s*\)/);
 
     const syncScript = readFileSync(join(CLIENT_ROOT, 'scripts', 'sync-recon-ground-truth.mjs'), 'utf8');
-    expect(syncScript).toContain('index < rows.length');
-    expect(syncScript).not.toMatch(/rows\.(?:slice|splice)\(\s*1\s*,\s*5\s*\)/);
+    expect(syncScript).toContain('/v1/recon-ground-truth/export');
+    expect(syncScript).toContain('for (const [index, fixture] of value.fixtures.entries())');
+    expect(syncScript).not.toContain('xlsx');
   });
 });

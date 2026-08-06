@@ -33,7 +33,7 @@ const syncCheck = spawnSync(process.execPath, [SYNC_SCRIPT, 'check'], {
   encoding: 'utf8',
 });
 if (syncCheck.status !== 0) {
-  throw new Error(syncCheck.stderr.trim() || 'ground-truth Excel sync check failed');
+  throw new Error(syncCheck.stderr.trim() || 'ground-truth snapshot check failed');
 }
 
 const snapshot = JSON.parse(readFileSync(SNAPSHOT_PATH, 'utf8')) as {
@@ -57,8 +57,8 @@ function expectedFromTruth(truth: string): {
     lines: stepLines.map((line) => {
       const [movesText, label = ''] = line.split(/\s+\/\/\s+/);
       return {
-        // Workbook arrows are human regrip marks, not cube moves. A global
-        // token scan also handles intentionally glued notation such as D2U'.
+        // The manager exports canonical moves, but this scan keeps the regression
+        // parser tolerant of older snapshots with glued notation such as D2U'.
         moves: movesText.match(/[xyzMESUDFBLRudfblr](?:2'?|')?/g) ?? [],
         label: label.trim(),
       };
@@ -66,7 +66,7 @@ function expectedFromTruth(truth: string): {
   };
 }
 
-describe('recon Excel ground truth', () => {
+describe('reconstruction ground truth', () => {
   for (const fixture of FIXTURES) {
     it(fixture.id, async () => {
       const replay = decodeReplayParam(fixture.replay);

@@ -16,7 +16,7 @@ const CLIENT_ROOT = resolve(SCRIPT_DIR, '..');
 const REPO_ROOT = resolve(CLIENT_ROOT, '..', '..', '..');
 const STAMP_PATH = resolve(REPO_ROOT, '.tmp', 'recon-ground-truth-pass.json');
 const STAMP_VERSION = 1;
-const GROUND_TRUTH_TEST = 'tests/recon_workbook_ground_truth.test.ts';
+const GROUND_TRUTH_TEST = 'tests/recon_ground_truth.test.ts';
 
 const EXACT_GUARDED_PATHS = new Set([
   '.claude/hooks/recon-ground-truth-gate.ps1',
@@ -24,7 +24,12 @@ const EXACT_GUARDED_PATHS = new Set([
   '.githooks/pre-commit',
   'core/packages/client/scripts/recon-ground-truth-gate.mjs',
   'core/packages/client/scripts/sync-recon-ground-truth.mjs',
-  'core/packages/client/tests/recon_workbook_ground_truth.test.ts',
+  'core/packages/client/scripts/import-recon-ground-truth.mjs',
+  'core/packages/client/tests/recon_ground_truth.test.ts',
+  'core/packages/shared/src/recon_ground_truth.ts',
+  'core/packages/shared/src/recon_slice.ts',
+  'core/packages/server/src/routes/recon_ground_truth.ts',
+  'core/packages/server/migrations/0105_recon_ground_truth.sql',
   'core/packages/client/app/[lang]/timer/_lib/bluetooth/gyro_track.ts',
   'core/packages/client/app/[lang]/timer/_lib/bluetooth/orientation.ts',
   'core/packages/client/app/[lang]/timer/_lib/share/decode.ts',

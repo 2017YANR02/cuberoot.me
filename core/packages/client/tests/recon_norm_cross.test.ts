@@ -13,10 +13,12 @@
 import { describe, it, expect } from 'vitest';
 
 import {
+  buildReconGroundTruth,
   buildNormalizedSolution,
+  canonicalizeReconSolution,
   findCrossLineIndex,
   hasNormalizableCrossMove,
-} from '@/lib/recon-norm-cross-extract';
+} from '@cuberoot/shared/recon-ground-truth';
 import { normalize } from '@/lib/recon-norm-cross';
 import { applyOneToken } from '@/app/[lang]/timer/_lib/cube/apply_token';
 import { solved, facesEqual } from '@/app/[lang]/timer/_lib/cube/state';
@@ -99,4 +101,27 @@ describe('重写前后是同一个置换', () => {
       expect(facesEqual(apply(algOf(solution)), apply(algOf(out as string))), name).toBe(true);
     });
   }
+});
+
+describe('ground truth 文本口径', () => {
+  it('只保留真转动与有语义的阶段名', () => {
+    expect(canonicalizeReconSolution(
+      "(R U) D2U' → ... // W cross (2.960) ↔ (BO)\n... M2' U2 // PLL-Z (0.22+0.80)",
+    )).toBe("R U D2 U' // W cross (BO)\nM2' U2 // PLL-Z");
+  });
+
+  it('2383 以 Normalize cross 后的文字进入测试', () => {
+    const scramble = "R2 F' D' B L R D U' L B2 F2 L2 F D B2 L R U'";
+    const solution = [
+      "x' z2 // insp",
+      "U' r' D R2 U L F' L' D // W xcross (BO)",
+      "U2 R U' R' // GO",
+    ].join('\n');
+    expect(buildReconGroundTruth(scramble, solution).truth).toBe([
+      scramble,
+      'z2 // insp',
+      "F' L' D R2 U L F' L' D // W xcross (BO)",
+      "U2 R U' R' // GO",
+    ].join('\n'));
+  });
 });

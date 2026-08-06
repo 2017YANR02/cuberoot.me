@@ -60,6 +60,14 @@
       "node": "./dist/result_penalty.js",
       "default": "./src/result_penalty.ts"
     },
+    "./recon-ground-truth": {
+      "node": "./dist/recon_ground_truth.js",
+      "default": "./src/recon_ground_truth.ts"
+    },
+    "./recon-slice": {
+      "node": "./dist/recon_slice.js",
+      "default": "./src/recon_slice.ts"
+    },
     "./cubing-slug": {
       "node": "./dist/cubing_slug.js",
       "default": "./src/cubing_slug.ts"
@@ -116,4 +124,3 @@
     "axios": "^1.13.6"
   }
 }
-
