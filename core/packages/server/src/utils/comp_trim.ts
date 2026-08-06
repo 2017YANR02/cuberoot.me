@@ -18,6 +18,11 @@ export interface TrimmableComp {
   partial?: boolean;
 }
 
+/** 至少有一轮包含成绩。只有轮次 key、但所有数组都为空，不算已有成绩。 */
+export function hasCompResults(data: Pick<TrimmableComp, 'resultsByRound'>): boolean {
+  return Object.values(data.resultsByRound).some(rows => rows.length > 0);
+}
+
 /** 只保留给定轮次:users / personalRecords 同步收窄到这些轮出现过的选手。
  *  events / membersByFilter 等元数据整份保留(客户端要靠它渲染项目栏和轮次切换)。 */
 // 泛型只为把调用方的具体 CompData 原样还回去;内部一律按基础形状操作(泛型索引不可写),
