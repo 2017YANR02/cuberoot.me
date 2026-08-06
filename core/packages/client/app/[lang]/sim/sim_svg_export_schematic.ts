@@ -155,7 +155,16 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
   const near = camera.near;
   const camPos = new THREE.Vector3().setFromMatrixPosition(camera.matrixWorld);
 
-  interface Facelet { pts: number[]; fill: string; body: string; z: number; hidden: boolean; plane: number }
+  interface Facelet {
+    pts: number[];
+    /** 可选的定制内缩轮廓;SQ1 不等宽中层矩形用短边统一绝对缝宽。 */
+    stickerPts?: number[];
+    fill: string;
+    body: string;
+    z: number;
+    hidden: boolean;
+    plane: number;
+  }
   const facelets: Facelet[] = [];
   // 世界平面代表(面板分组用):plane 字段 = 此表下标。
   const planeReps: { nx: number; ny: number; nz: number; d: number }[] = [];
@@ -174,7 +183,13 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
   const maxFacelets = opts.maxFacelets ?? 20_000;
   const cull = !opts.showHidden; // X 光时不剔除背面(仍跳退化/隐藏槽位)
   /** 一个小面:局部轮廓经 mtx 到世界 → 背面剔除 → 近平面裁剪 → 投影入列。 */
-  const addPoly = (poly: number[], mtx: THREE.Matrix4, fill: string, body: string): void => {
+  const addPoly = (
+    poly: number[],
+    mtx: THREE.Matrix4,
+    fill: string,
+    body: string,
+    insetMode?: 'short-axis',
+  ): void => {
     const worldPts: THREE.Vector3[] = [];
     for (let i = 0; i < poly.length; i += 3) {
       worldPts.push(v.set(poly[i], poly[i + 1], poly[i + 2]).clone().applyMatrix4(mtx));
@@ -205,9 +220,8 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
 
     // 视空间 + 近平面裁剪(常规相机距不会触发,保护性)
     let view = worldPts.map((p) => p.clone().applyMatrix4(viewMat));
-    for (const p of view) {
-      if (p.z > -near) { view = clipPolyByPlane(view, 0, 0, -1, -near); break; }
-    }
+    const clipped = view.some((p) => p.z > -near);
+    if (clipped) view = clipPolyByPlane(view, 0, 0, -1, -near);
     if (view.length < 3) return;
 
     const pts: number[] = [];
@@ -218,8 +232,36 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
       pts.push((v4.x * inv * 0.5 + 0.5) * W, (0.5 - v4.y * inv * 0.5) * H);
       zSum += p.z;
     }
+    // SQ1 中层矩形有一宽一窄。普通「向心等比」会让宽块的横向退让也按宽度
+    // 放大,于是同一层两块的缝宽不同。这里仅对显式标记的四边形在世界平面内
+    // 分解成两条半轴,两个方向都按短边长度退让,再投影回 SVG。近平面裁剪会改变
+    // 顶点数,这种极端取景直接退回通用路径;退化边同样在入口兜底。
+    let stickerPts: number[] | undefined;
+    if (inset > 0 && insetMode === 'short-axis' && worldPts.length === 4 && !clipped) {
+      const center = worldPts[0].clone().add(worldPts[2]).multiplyScalar(0.5);
+      const axisA = new THREE.Vector3().subVectors(worldPts[1], worldPts[0]).multiplyScalar(0.5);
+      const axisB = new THREE.Vector3().subVectors(worldPts[3], worldPts[0]).multiplyScalar(0.5);
+      const lenA = axisA.length() * 2;
+      const lenB = axisB.length() * 2;
+      if (lenA > 1e-9 && lenB > 1e-9) {
+        const basis = Math.min(lenA, lenB);
+        const scaleA = Math.max(0.1, 1 - inset * basis / lenA);
+        const scaleB = Math.max(0.1, 1 - inset * basis / lenB);
+        const signs: [number, number][] = [[-1, -1], [1, -1], [1, 1], [-1, 1]];
+        stickerPts = [];
+        for (const [sa, sb] of signs) {
+          const p = center.clone()
+            .addScaledVector(axisA, sa * scaleA)
+            .addScaledVector(axisB, sb * scaleB)
+            .applyMatrix4(viewMat);
+          v4.set(p.x, p.y, p.z, 1).applyMatrix4(projMat);
+          const inv = 1 / v4.w;
+          stickerPts.push((v4.x * inv * 0.5 + 0.5) * W, (0.5 - v4.y * inv * 0.5) * H);
+        }
+      }
+    }
     if (facelets.length >= maxFacelets) throw new Error('SVG_TOO_COMPLEX_SCHEMATIC: facelet cap exceeded');
-    facelets.push({ pts, fill, body, z: zSum / view.length, hidden, plane });
+    facelets.push({ pts, stickerPts, fill, body, z: zSum / view.length, hidden, plane });
   };
 
   scene.traverseVisible((obj) => {
@@ -267,7 +309,8 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
     // (立体贴片开关改 mesh.scale.z)。
     const mtx = (obj.userData.schematicInParent === true && mesh.parent)
       ? mesh.parent.matrixWorld : mesh.matrixWorld;
-    addPoly(poly, mtx, fill, body);
+    const insetMode = obj.userData.schematicInsetMode === 'short-axis' ? 'short-axis' : undefined;
+    addPoly(poly, mtx, fill, body, insetMode);
   });
 
   // 远 → 近(凸体下可见面互不重叠,排序只是对轻微非凸的保护;衬底 + 贴纸按面
@@ -396,7 +439,7 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
       + ` stroke-width="${fmt(core ? roundW : 1)}" stroke-linejoin="round"/>`;
   };
   const stickerOf = (f: Facelet): string =>
-    `<path d="${dOf(inset > 0 ? insetPts(f.pts) : f.pts)}" fill="${f.fill}"/>`;
+    `<path d="${dOf(inset > 0 ? (f.stickerPts ?? insetPts(f.pts)) : f.pts)}" fill="${f.fill}"/>`;
 
   // 半透明层**必须整遍套一个 <g opacity>,不能逐 path 挂**:SVG 的 opacity 是逐元素
   // 合成的,两片 50% 银叠一起就是 75%、三片 87.5%。X 光(showHidden)下正反两面
