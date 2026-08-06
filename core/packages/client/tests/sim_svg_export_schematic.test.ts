@@ -25,9 +25,9 @@ import { buildFtoPieces, R_IN as FTO_R } from '@/app/[lang]/sim/engine/fto/ftoGe
 import { FACE_NORMAL as FTO_FACE_NORMAL } from '@/app/[lang]/sim/engine/fto/ftoState';
 import {
   buildPieceMesh, buildMiddlePair, placementForSlot, isCornerPiece,
-  HALF_MID, W as SQ1_W, SQ1_COLORS,
+  HALF_MID, W as SQ1_W, SQ1_COLORS, SLICE_AXIS,
 } from '@/app/[lang]/sim/engine/sq1/sq1Geometry';
-import { solvedSq1 } from '@/app/[lang]/sim/engine/sq1/sq1State';
+import { applySq1Scramble, solvedSq1, type Sq1State } from '@/app/[lang]/sim/engine/sq1/sq1State';
 import { CUBE_FILL } from '@/lib/cube-colors';
 import { auditSchematicSvg, cornerMismatches } from './_svg_invariants.mjs';
 
@@ -563,9 +563,8 @@ describe('exportSimSvgSchematic — sq1', () => {
 
   /** solved 摆位(复刻 Sq1Cube.applyStateInstant,不 import Cube 类 —— 它的
    *  import 链会在模块级起 rAF 循环,Node 下没有)。 */
-  function buildSq1Scene(): THREE.Scene {
+  function buildSq1Scene(state: Sq1State = solvedSq1()): THREE.Scene {
     const scene = new THREE.Scene();
-    const state = solvedSq1();
     const pieceSlot = new Map<number, number>();
     for (let s = 0; s < 24; s++) if (!pieceSlot.has(state.pieces[s])) pieceSlot.set(state.pieces[s], s);
     for (let piece = 0; piece <= 15; piece++) {
@@ -577,6 +576,7 @@ describe('exportSimSvgSchematic — sq1', () => {
       scene.add(pivot);
     }
     const { big, small } = buildMiddlePair();
+    if (!state.sliceSolved) big.quaternion.setFromAxisAngle(SLICE_AXIS, Math.PI);
     scene.add(big);
     scene.add(small);
     return scene;
@@ -637,5 +637,20 @@ describe('exportSimSvgSchematic — sq1', () => {
     expect(shrunk).toHaveLength(2);
     const retreats = full.map((r, i) => (r.w - shrunk[i].w) / 2);
     expect(Math.abs(retreats[0] - retreats[1])).toBeLessThan(0.05);
+  });
+
+  it('形变态:真实块身底层连续填充暴露凹槽,不透出页面背景', () => {
+    const state = applySq1Scramble('-2/-3/-1-4/41/0-3/-42/04/-3/-33/-1-2/2/0-2');
+    const scene = buildSq1Scene(state);
+    const world = worldFor(scene, new THREE.Vector3(1, 0.8, 1), SQ1_W * 4.5);
+    const svg = exportSimSvgSchematic({ world, inset: 0.06, bodyColor: '#202020' });
+    const layer = svg.match(/<g data-schematic-body="true"[^>]*>([\s\S]*?)<\/g>/)?.[1] ?? '';
+    expect(layer).toContain('<path ');
+    expect(layer).toContain('fill="#202020"');
+    expect(layer).not.toMatch(/fill="(?!#202020)[^"]+"/);
+    expect(svg.indexOf('data-schematic-body="true"')).toBeLessThan(svg.indexOf('fill="#d0021b"'));
+    // 近面衬底必须在远贴纸之后继续出现,不能再「所有衬底 → 所有贴纸」两遍画;
+    // 否则后方绿色会从前方红/蓝块的尖角接缝漏出来。
+    expect(svg.indexOf('fill="#d0021b"/>')).toBeLessThan(svg.lastIndexOf('fill="#202020" stroke="#202020"'));
   });
 });
