@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / ORWY / bin 2
-# Population in this bin: 787
+# Population in this bin: 788
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4772900001,R U B' L2 D2 F' D2 U2 R2 F R2 F R D' L' F L F R2 B R2,W,Kewbz Scottish Championship 2025 (2025-05-30~06-01),333bf Final B #2
@@ -179,7 +179,7 @@
 2673277001,B' R2 U' F2 B R L U2 L2 B D2 F R2 F' U2 R' B2 D',O,German Open 2023 (2023-04-29~30),333oh R1 A #2
 3456653001,D2 R D2 B' U' R L' F2 U' B R' B2 L' D2 L2 F2 B2 D2 B2,R,Paternò: Back To Sicily 2024 (2024-01-27~28),333 R2 A #3
 830549001,F B' L B L B' R2 D F' U2 L2 U L2 U' L2 U L2 D2 F2 U2,Y,Ho Chi Minh Open 2018 (2018-07-14~15),333oh Final A #1
-832710001,L2 B2 R2 D2 L D2 R D L U' L2 D' U L2 F L2 R,R,Ixchel 2018 (2018-07-21),333 R2 C #2
+5763081001,B2 D2 F U2 R2 B L2 B' D B2 R2 U' B R D' R' D',O,Middle Georgia Summer Solving 2026 (2026-07-25),333 R2 A E1
 4811090001,L2 D2 B2 D B2 D' U' R F R B2 D' R' F2 L U2 F2,R,Tabacundo Open 2025 (2025-06-21),333 R2 C #3
 5137939001,F' D2 R' D2 R2 U' R' U L2 B2 D R2 F2 B2 L' F2 U',Y,Hampshire Autumn 2025 (2025-10-25~26),333 R2 A E1
 1632037001,L' D L2 D2 L' B' D' B R D2 L' U2 B2 R2 U2 B2 R' B2 D2,W,Taiwan Championship 2020 (2020-12-18~20),333 R2 B E2

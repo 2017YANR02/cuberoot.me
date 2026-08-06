@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / BGOR / bin 6
-# Population in this bin: 423
+# Population in this bin: 425
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 3270001,D2 R D2 R' F2 D2 F2 R2 F2 R B U' R' U B' U' R2 D F',B,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 S #5
@@ -62,7 +62,7 @@
 5355244030,U2 L2 B' U2 L2 B' F' U' F R2 D B' U2 B' L D R2 D' L',G,BrizZon Side Open 2026 (2026-01-31~02-01),333mbf Final A #2
 5449788001,B' L B2 L2 B L D R2 U' B L2 U R2 F2 L2,G,The Heart of Texas Spring 2026 (2026-03-14),333 R2 A #5
 4897093001,F' D' B2 R2 U' F D2 F U' B U2 B' D2 L2 D2 B,B,Bangalore Mini July 2025 (2025-07-27),333 R1 C #3
-574862001,R B' D' R' D2 R2 U2 L U L2 U2 B2 R' D2 F2 B2 L U2 L,G,ChimboteRubik 2017 (2017-08-19~20),333 R1 C #1
+5759591001,F' U' R' B R' U R B2 R L' F2 U B2 U' R2 D F',G,Jiajiang Open 2026 (2026-07-25),333 R3 A #5
 614922002,B2 L F2 D2 U2 L' F' L2 U2 B L F2 R2 B F2 U2 L B2,B,Silent Swap Open 2017 (2017-10-07~08),333mbf Final A #2
 617197001,L2 B' L2 F L2 B2 U2 B' D L F U' R2 D2 B' L2 U F2 L',R,XPU Open 2017 (2017-10-14),333 R1 D #2
 3121358001,L' D' B2 R2 D F2 D2 L2 F2 D' R' D2 U' F2 D2 B L2 B2 U',O,Bulldog Fall 2023 (2023-09-23),333 R1 B #4
@@ -144,7 +144,7 @@
 1088046001,R2 F2 R' L' D' L' F2 R2 F2 L' D2 F2 U2 D B2 D' L2,R,Oruro al Cubo 2019 (2019-04-07),333 R1 C E1
 2693365001,L' F B2 D B2 D' L2 D B2 F2 D L D2 B2 R U B L,B,Østervang Open 2023 (2023-05-06~07),333bf R1 B E1
 1113046013,L F2 D2 F2 D2 L2 U2 R F D F D F2 L U2 R U L2 F' L2,O,French Championship 2019 (2019-04-20~22),333mbf Final A #2
-1113336001,L2 F2 R2 F2 R2 D2 R' D2 B D R B R2 D' U R2 U2 F' R2,B,French Championship 2019 (2019-04-20~22),333 R1 C E1
+5765307001,B U2 F' U2 B2 R' F' R F2 D2 L2 F' R2 U2 B U2 R2 U,B,Brazuca al Cubo 2026 (2026-07-26),333 R1 C #2
 1116420001,F2 B2 R F U R2 D2 F U B2 U R2 F' U2 F R2 L2 B,B,Idaho Megacomp 2019 (2019-04-20),333 R1 C E2
 1134352040,R2 U' L2 D L2 B2 L2 D' R2 D R' U R' B U B2 L' R' F R2 D' B' L,G,Casal Catalunya Baires Open 2019 (2019-05-03~04),333mbf Final A #1
 5416933013,D' F' D2 B D2 B2 F' U2 R2 D U L' R D' R' B' L2 D' R2 B R,R,Hämeenlinna 2026 (2026-02-28~03-01),333mbf Final A #2

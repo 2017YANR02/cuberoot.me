@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxcross / BGWY / bin 7
-# Population in this bin: 308
+# Population in this bin: 310
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4931144001,R2 B2 D' U2 B2 U' L2 R B L2 U' L2 D U B' D R F,B,Medellín Explora 2025 (2025-08-09~10),333 R1 B E2
@@ -61,7 +61,7 @@
 3839448001,F2 L' F' D L F2 D' L2 D F' B2 U2 R2 U R2 F2 U B2 U,W,24 Horas em Salvador 2024 (2024-06-08~09),333 R1 A E2
 5560802001,U2 R U2 R' B2 R' F2 D2 R2 F' D F' U B' U' B2 D2 L F2,G,Racing Kane 2026 (2026-04-18),333 R1 A #1
 5320925001,U2 L2 U' L2 D' B2 U B2 L2 D2 F R' B U2 F D2 F2 L R2 U',G,SVNIT Cube Open 2026 (2026-01-10~11),333 R2 A E2
-665734001,D F' D' F2 D2 F2 D' B2 U F' R B2 R F2 L2 F2 U2 R L2,B,TCG Spring 2017 (2017-12-09),333 R2 C #2
+5762539001,U2 D2 B' D R' D B' L F2 L2 B2 R' U2 B2 L U2 F2 R2 B R2,Y,Corning Summer 2026 (2026-07-25~26),333bf Final A #2
 667364001,U' R2 D2 L2 D' F2 D' R2 B' U2 L' B' U2 R2 B' L2 B R2,Y,MTD Spring 2017 (2017-12-09~10),333oh Final B #2
 682432001,D2 F2 L' F D' F R' D' R2 L' U' R2 D2 R2 L' F2 U2 R,W,Tulcan Open 2018 (2018-01-06),333 R1 B #2
 4680700063,R U2 R' D2 L2 F U' F2 R' D2 L D2 L2 U2 B2 R' B2 D B L' F2,W,Please Be Quiet Korea Spring 2025 (2025-04-27),333mbf Final A #1

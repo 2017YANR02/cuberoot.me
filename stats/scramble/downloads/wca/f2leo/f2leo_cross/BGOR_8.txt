@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / BGOR / bin 8
-# Population in this bin: 145
-# Samples listed: 145 (all entries in this bin)
+# Population in this bin: 146
+# Samples listed: 146 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 10984001,U2 L R2 D2 R2 F2 L2 B2 F R2 B' L2 D F2 U L R' D' U2,B,Lexington Spring 2014 (2014-04-12),333 R1 A #3
@@ -150,3 +150,4 @@
 5721275001,L U D2 L2 U2 B L U' D' F' R2 F2 L2 B R2 D L B,B,Kublördag Landvetter IV: 2026 (2026-06-27),333bf R1 A #5
 5726850001,B2 F2 U2 L2 D' F2 D2 L R' D F2 L' F L' D B U' B2 U,B,Re-Laois the Cubers 2026 (2026-06-27~28),333 Final A #2
 5748565001,R B' R2 D' U' B2 L2 B2 L2 B' L' F D U L' U2 B2 R D,B,Stevenage July 2026 (2026-07-11~12),333 R1 B E2
+5767257001,D2 B2 L2 F2 D' F2 D2 B' D' B' F' U R' U' B' U' L' B' F,B,Cebu Cool Off 2026 (2026-07-25),333 R1 F #1

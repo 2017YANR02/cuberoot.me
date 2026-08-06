@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / B / bin 7
-# Population in this bin: 841
+# Population in this bin: 844
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 1528404001,U F2 L2 D F2 D' L2 U' B2 U2 R2 B U' L2 U L B2 D U' R',B,İzmir Open 2020 (2020-01-25~26),333 R2 A #1
@@ -149,7 +149,7 @@
 3406557019,L B2 U2 R B2 D2 B2 L F' L R' B' R D' L2 B' D2 U' R' D2,B,Don't DNF Dublin 2024 (2024-01-06),333mbf Final A #1
 3715494001,R2 D2 L D2 L' U2 L R2 U2 F' D' U2 F U2 L D' R2 D2,B,Dubai Open 2024 (2024-04-27),333 R1 E E1
 4640177001,B D2 B2 R2 F L2 D2 R2 B2 L D' F U2 B R' F' U' F2 R',B,South East Louisiana Open 2025 (2025-04-12),333 R1 B #3
-1289854007,U B2 D F2 L2 B2 D L2 U L2 U2 B F2 U' R B2 L2 B' F2 L,B,Champagne Open 2019 (2019-09-07~08),333mbf Final A #1
+5770776028,D2 L F2 D2 L D2 U2 L B U' L' F2 D' B' U L R2 D2,B,Big Brain Battières 2026 (2026-08-01~02),333mbf R1 B #1
 4533877049,F' D' L F2 D2 B' L2 F L2 D2 F R' D R' D B D B2 D2 L2 U2,B,Glasgow Spring - Scottish Blind Off 2025 (2025-03-01~02),333mbf Final A #3
 2920621001,R U2 L' R U2 B2 F' U L B' U B U' F' L' F2 U L B',B,Four The Win Dandenong 2023 (2023-07-23),333bf R2 A #2
 2562559001,L B2 D2 B L2 F D2 F L' B2 F D2 U R' F2 R2 F' R',B,Hurry Up Karrinyup 2023 (2023-03-19),333 R1 A #4

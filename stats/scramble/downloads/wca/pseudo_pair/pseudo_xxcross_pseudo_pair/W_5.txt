@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / W / bin 5
-# Population in this bin: 641
+# Population in this bin: 648
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 2349420001,F' U2 L F' D' B D' B2 L D2 F L2 D2 L2 D2 F' U L,W,TCG Power Up 2022 (2022-12-03~04),333 R2 A #3
@@ -43,7 +43,7 @@
 4802503001,D2 F D2 B L F D' F2 R' B2 R D2 R L' B2 L2 U2 B U',W,Milford Winter Warm Up 2025 (2025-06-14~15),333 R2 A E1
 3731351001,B R U' B' D2 F U2 L2 F L2 U2 R B2 L' D' L R' U2,W,Cavite Speedcubing Open VII 2024 (2024-05-01),333 R1 B E2
 1402000001,B2 R2 F L2 F' D2 F' L2 U2 R D2 R D' L U2 B2 F2 D' B' F2,W,Tomsk Cube Days 2019 (2019-11-09~10),333 R2 B E2
-249035001,R' L U2 R' F L2 F L' B2 D2 R L2 U F2 D F2 U',W,Manchester Open 2016 (2016-01-30~31),333 R1 A E1
+5770869001,F U2 D B D2 L2 U' F U' L2 D B2 U' F' B2 D',W,Rose City OR 2026 (2026-08-01),333 Final A #2
 4672422001,B' U2 D2 F' L2 B' D B' L' F' L2 B D2 F' B D2 L2 U,W,French Championship 2025 (2025-04-19~21),333 Final A #2
 268778001,U2 F' U2 B D2 B' D2 B U2 B2 U' L2 F' U2 L2 B' L' U' B,W,TCG Welcome 2016 (2016-03-19),333oh R1 A #3
 269509001,D F' U2 R2 B' D2 L2 U' B' R' L2 B2 R2 D' R2 D' B2 R2 F2,W,Grudziądz Open 2016 (2016-03-19~20),333 R1 A #4
@@ -121,7 +121,7 @@
 5274029001,B' R' F' D' B2 D F2 D' F2 D R U' R2 B R2 F U' F',W,New Zealand Nationals 2025 (2025-12-12~14),333 R3 B E2
 4345015001,R' B2 D' R2 U' F2 R2 D2 U' R2 F' D R U2 L' U L U2,W,Shenzhen Open 2024 (2024-12-07),333oh R1 D E1
 4550949001,F' B2 L2 U2 L D L D R' D B2 D2 R L2 U2 L2,W,Gdańska Liga Speedcubingu II 2025 (2025-03-08~09),333 R1 D #2
-2711313001,F U R B2 U2 B2 U2 F2 D B2 R' B L' F D2 U F' L,W,Sambil Caracas Edition 2023 (2023-05-07),333 R2 B E1
+5761864001,D R2 U2 B U2 F' R2 F2 R' D U' B D R D U' L2 U,W,Luminous Sol Open 2026 (2026-07-25~26),333 Final B #2
 5337256016,B2 D L' F' B D' L' F' L' F U2 B2 D R2 U L2 U2 L2 U,W,Just Judge Jura 2026 (2026-01-17~18),333mbf Final A #1
 1915025001,U F2 U' F2 D' L2 U L' F' L2 B' L2 F R2 D B2 R' D,W,GamMa Spring 2022 (2022-05-14~15),333 R1 B E2
 3718548001,U B' L F L' B' L D F L2 U' R2 D2 F2 D2 B2 R B2 L,W,Empire State Spring Special 2024 (2024-04-27),333oh Final B #5

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / OR / bin 2
-# Population in this bin: 836
+# Population in this bin: 838
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 82001,B2 L2 U F2 D2 R2 F2 L2 B R' D U2 R' U2 L2 D2 F U',O,Galeries Dorian Open 2014 (2014-03-15),333oh Final B #2
@@ -41,7 +41,7 @@
 2227316001,D2 L' F L R2 U2 L2 D2 F2 D2 R' F' R2 B' R' B' F' D',R,Rubik's WCA African Championship 2022 (2022-10-07~09),333 R1 C E1
 846965001,U' F' B' R U' B' R2 D2 L U B2 R2 F B2 L2 D2 L2,R,SPB Summer 2018 (2018-08-04~05),333oh Final A #3
 1246373001,R U2 B2 D2 F2 L U2 R U2 R2 D F' D' B L' D2 L' B U F,O,CIC Pasto Open 2019 (2019-08-03~04),333ft Final A #5
-5545447001,L B2 R' L' D F' D' L D2 B2 D2 F2 B' U2 F' R2 D' F2 D,R,Swift Cubing in Swabia 2026 (2026-04-17~18),333 Final B #1
+5761666001,F2 B U2 L' U B U2 R' F2 L2 U' F2 B2 L2 U D2 R' L2,O,Barpeta Cubing Open 2026 (2026-07-26),333 R1 C #1
 1882841001,L F R' F D' R2 B' R2 B' L U2 D R2 U2 D2 B2 U' B2 L,O,Paris Open 2022 (2022-04-16~18),333 R2 C #2
 3367333002,D2 B' D2 B F' U2 F2 R F2 L' U2 L F L' U' B L2 D L2,O,I Hope It's Solved Edmonton 2023 (2023-12-16~17),333mbf Final A #1
 4800758017,F L R2 U R2 F2 D2 F2 D U2 B D2 L2 R' U' F2 D2 F' L2,O,Mini Mental Milano IV 2025 (2025-06-15),333mbf Final A #1

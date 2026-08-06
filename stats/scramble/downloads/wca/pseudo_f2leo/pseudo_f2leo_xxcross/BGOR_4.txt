@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / BGOR / bin 4
-# Population in this bin: 317
+# Population in this bin: 318
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 27263001,R' F' B L D R2 L D F' L' F2 B' D2 B' L2 U2 L2 U2 F' L2,G,Polish Nationals 2014 (2014-05-31~06-01),333 R2 B #3
@@ -130,7 +130,7 @@
 3840437016,F B' L' B' R D2 L R2 F2 D' L2 U D2 F2 D' L2 F D2 R2,G,CubingUSA Heartland Championship 2024 (2024-06-07~09),333mbf Final A #1
 1543164001,U2 R2 U2 R' F2 U2 D' L' U D2 F2 D2 L2 F L2 F' U2 B2,O,Pitic Open 2020 (2020-02-07~09),333 R2 B #4
 1545002057,D' F2 D R2 D' U' F2 L2 B D' F' U2 R U R' B2 U' L2 R2 B',O,IIT Roorkee Open 2020 (2020-02-15~16),333mbf Final A #1
-3960674001,L2 F2 U F2 D2 U F2 L' D F2 R' F' D B2 D L2 D2 U' L' F',R,Rubik's WCA South American Championship 2024 (2024-07-22~25),333bf Final A #1
+5770776008,B' U2 R' U2 L2 B2 L U2 F2 U' L B' D B U F' D U2 B R,R,Big Brain Battières 2026 (2026-08-01~02),333mbf R1 B #1
 1625517001,L2 F' D F2 D2 B' L' D B2 R2 B2 L U' D2 F L',B,Darwin Open 2020 (2020-12-05),333bf Final A E1
 1628094001,R' U' F U F L F' L2 U L2 U2 L' D' B2 L2 D R2 D' F2 D' R D2 R' U' F,R,New Zealand Nationals 2020 (2020-12-11~13),333fm Final A #3
 1656522001,B' U' L' B' D2 F2 R2 D' R' B' U2 F2 D2 L2 U2 R2 F U,B,Guilin Open 2021 (2021-05-16),333 R1 H #1

@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / R / bin 10
-# Population in this bin: 290
+# Population in this bin: 294
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 7768001,R2 B2 R2 U' R2 U' R2 B' R' F D' R2 F2 R' U F' U B' D2,R,German Open 2014 (2014-04-05~06),333bf Final A E2
@@ -45,7 +45,7 @@
 592211001,D2 L' D2 F2 L' D2 B2 L2 U2 F2 L B' L' R2 F' R' B' D' L F2,R,Beijing Ten Years Open 2017 (2017-09-17),333 Final A #3
 5208070001,U' B2 D R2 D R2 B2 F2 R2 D2 B' L U2 R' B' D R2 F' U,R,Cumpas y Cubos TJA 2025 (2025-11-22),333 R2 A #3
 603423001,D2 B2 F2 L2 U B2 R B' U2 L' D2 R2 B2 L R' F R,R,Puget Sound Fall 2017 (2017-09-23),333 R1 F E2
-604075001,U2 B2 D2 R2 F2 R' D2 B D L' F R B U2 B U2 F2,R,Big 'n Weird Pretoria 2017 (2017-09-30),333ft Final A #1
+5762882001,F L F U' R U2 B' U L2 B' L2 U2 R2 U D R2 L2 B',R,Newcastle upon Tyne Summer 2026 (2026-07-25~26),333 R2 B #5
 621654001,F2 R' F2 L' B2 D2 L2 B D' U' B' U' R D' R2 U2 R' B2 L' F2,R,Foothills Fall 2017 (2017-10-21),333bf R1 A E2
 3921203001,U F2 U' L' U F2 L' F' R' F' R F' D' L2 U,R,Iguatemi Fortaleza IV 2024 (2024-07-06~07),333oh R1 B #1
 5043547001,F2 U2 B2 L2 B U' R D R F2 L B D2 R2 D2 B U2 F2,R,Shenyang Autumn 2025 (2025-09-21),333 R1 A #1
@@ -98,7 +98,7 @@
 1177706001,B2 U2 L F2 D2 L' B2 R F2 D' B U F' D' B' L2 D' L R' B,R,Ukrainian Open 2019 (2019-06-08~09),333oh R1 C #2
 1194381001,U L2 U L2 U' F2 L2 F2 U B2 F' D' R B2 U' L B' R2 B',R,Bulldog Qualifier 2019 (2019-06-22~23),333 R1 B #4
 1196895001,B' D2 B' R2 B L2 B R2 D2 B' D' L R B' L D2 R D,R,YJ Kazan 2019 (2019-06-22~23),333 R1 B #2
-1204775001,F2 L D2 B2 L' D2 F2 L2 U2 R F' L2 D' L F2 D2 L2 B' D,R,Destino Maya Honduras 2019 (2019-06-30),333 Final A E1
+5765459001,D R2 B2 D2 U2 R B2 R' B R2 B' R U R2 D R' B2 F,R,Samgau Almaty 2026 (2026-07-25~26),333 R1 C #2
 1227249001,B2 D2 L F2 L' R' U2 F2 U2 L D L' D2 B' F R2 B' D' R2 B,R,FLIP Open 2019 (2019-07-20~21),333bf R1 B #1
 1235635001,L U2 L' B2 U2 B2 R2 F2 U2 L D' F' L2 U' B U R D' R U' L' F,R,Sherwood Park Summer 2019 (2019-07-27),333bf R1 A #3
 1242278001,U2 B' D F U F' R2 F' L D F2 R2 F2 B2 D2 R U2 L' U2 L',R,Lubelska Liga Speedcubingu III 2019 (2019-07-27),333oh R1 B #4
@@ -152,7 +152,7 @@
 2743679001,U B R D2 L' R B2 L B' D R2 F' U2 B2 L R D' B R',R,Pavillion Cube Open 2023 (2023-05-20~21),333bf Final A E1
 2775066023,L2 D2 F2 D R2 U R2 F2 R' B2 F U F' U2 R U' L' D2 L' B',R,BrizZon Side Open III 2023 (2023-06-03~04),333mbf Final A #1
 2855896001,L U2 L2 B2 D' U B2 U L' R F2 U R' F' U B R D',R,Bothell Summer 2023 (2023-07-08),333 R1 B E1
-2864066001,R' U' F L' R2 F U2 L2 R2 F R2 D2 L B L U' R U B2 D F2 U2 R' U' F,R,FMC Juazeiro 2023 (2023-07-09),333fm Final A #2
+5762036017,U' D' F U2 B L' B' D2 L2 F2 R' F' U2 F' R2 F' D2 L2 D2 L2,R,TroisMaisons Zéro Vision 2026 (2026-07-25~26),333mbf Final B #2
 4361280012,B L2 D2 F U2 F2 D2 B2 R' D' F L D2 L' B2 D' U' B' D B' L,R,Goiânia Xiu 2024 (2024-12-14~15),333mbf Final A #2
 2913102003,L' B' R' L2 B' U R' D' L2 F2 U2 B' R2 B2 D2 L2 B' R B' L',R,Blandede Bolsjer i Lejre 2023 (2023-07-22),333mbf Final B #1
 4194285001,R2 F2 L2 D2 B L2 U2 R2 D R B2 U' R' F L' U' R' D,R,Regionales Santander 2024 (2024-10-12~14),333oh Final B #3

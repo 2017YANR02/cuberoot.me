@@ -1,8 +1,8 @@
 # Scramble samples — 123x2 / f2b / WY / bin 8
-# Population in this bin: 807
+# Population in this bin: 809
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 969271001,R F2 L' D2 L' U2 B2 D2 U2 R2 B R2 F2 U' R' F U B' R B',W,Welcome to 2019 (2018-12-31~2019-01-01),333bf Final A #1
@@ -81,7 +81,7 @@
 1397929046,L2 B2 D2 L2 B' D2 B R2 F R' B R2 B' D' B D R D' U' L B R',W,OSU Blind Weekend 2019 (2019-11-08~10),333mbf Final A #1
 3646746001,U D2 L2 R2 B' F2 U2 B2 D F' R' D R B' L2 R U2 R',Y,Cuboss Open 2024 (2024-04-06~07),333 R2 C #4
 378056001,B2 F2 L R F2 U2 R2 F2 L F D' U2 L2 R2 B2 L U' R' F,Y,Philippine Championship 2016 (2016-10-07~09),333oh Final A #3
-4038413001,F R2 F2 U' B2 D2 L2 F2 D2 R B2 R2 D2 R' B' F2 U R,Y,Geelong Winter 2024 (2024-08-24~25),333oh R1 B #3
+5761802039,F U D R' B' D' L' F2 R2 U L2 U F2 U2 F L' F' L2 U,Y,Luminous Sol Open 2026 (2026-07-25~26),333mbf Final A #1
 3608299001,F2 R2 U' F' L B2 D2 L D' F R U2 D2 L U2 R L2 B2,W,Ajax 3x3x3 Newcomers B 2024 (2024-03-24),333 R1 C #5
 2792268017,L' U F' L F2 U R2 F2 D2 B' R D2 B' D2 R2 F U2 F U2 L B2,Y,Don't DNF in Tijuana 2023 (2023-06-11),333mbf Final A #1
 2069084001,U F' L' B2 D2 B2 D' B2 D' L2 U2 F L F2 U R2 B2 L2 D2,Y,Fortaleza Open 2022 (2022-07-30),333 R1 A E1

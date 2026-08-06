@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / WY / bin 8
-# Population in this bin: 433
+# Population in this bin: 436
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 903001,L' D' B2 L F L B R U' F' L B2 L2 B' R2 B U2 F' L2,W,Dnepr Cube Day 2014 (2014-03-15),333oh Final A #1
@@ -133,7 +133,7 @@
 2470695001,L' F L U2 F2 B' L' F B D F2 U R2 U2 L2 U2 B2 F L,W,Kęty Open 2023 (2023-02-04~05),333oh R1 A E1
 894592001,R' B R' F2 D F D2 L F' U' R' F L2 D2 F2 B L2 F' U2 F2,W,Hiroshima 2018 (2018-10-07),333 R1 B E1
 3563731001,U B2 D2 F2 D R2 D' F2 R' U2 F2 L' D F' L' R' B F L',W,Altona Algorithms 2024 (2024-03-02~03),333 R2 C #1
-3531171001,R2 D B L2 D2 R2 U2 F L2 B D2 F R' D L' F2 U B' F D',W,Cardinal Cube Day 2024 (2024-02-24),333 R1 B #2
+5765547001,F B2 U B R U B2 U B L' F2 R D2 R' F2 D2 B2 R U F,W,Samgau Almaty 2026 (2026-07-25~26),333oh Final A #5
 4555939001,F2 R2 U' F2 D2 B2 R' F' D B2 D2 R' B D L F' L2,W,Delhi Cube Open 2025 (2025-03-08~09),333 R2 A #4
 923356001,L B2 U2 R2 B2 L' U2 R2 D' U2 F2 U2 L' R2 D B F' R' B2 L B2,W,LA Blind Cube Day 2018 (2018-11-03),333bf Final A #3
 924583001,F' U2 D B R' F' D R' U2 L' U2 R2 D B2 R2 U R2 D' B2 U',W,Iquitos Cubing 2018 (2018-11-03~04),333 R2 C #1

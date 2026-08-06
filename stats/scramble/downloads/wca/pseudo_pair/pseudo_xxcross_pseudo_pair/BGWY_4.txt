@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / BGWY / bin 4
-# Population in this bin: 226
+# Population in this bin: 227
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 10812001,B2 L R' D2 B2 F D F R D2 L' B L B' U' R,W,Open Cube Project 2014 (2014-04-12),333 Final A E2
@@ -82,7 +82,7 @@
 1028964017,L2 R2 B' U2 B2 U2 L2 F U2 F D' B U' L F U2 L B' U F2 D2,Y,CFL Goes Sideways 2019 (2019-02-16~17),333mbf Final A #1
 5008626001,D' L2 D2 F2 D2 R B2 R' B F' D2 L F2 R2 F' L' D' F2,W,Champagne Open 2025 (2025-09-06~07),333oh R1 B #4
 1056660022,F2 L2 U' F2 L2 D B2 R2 U2 F R' B L2 U R' U2 R' D' U' R D',G,Please Be Quiet Korea 2019 (2019-03-16),333mbf Final A #1
-1067959001,D2 F2 L B2 D L D F' R2 D' L2 F' R2 U2 R2 D2 B D2,W,Hefei Spring 2019 (2019-03-23~24),333 R2 C #1
+5769010001,B' F2 D2 U2 R2 D' B2 D' L' U' R' F2 U R' B D2 R' F',B,Elmsford Extravaganza II 2026 (2026-07-28),333oh Final B #1
 1074147020,U' B2 D' B2 F2 U2 B2 F' L2 D' B U B2 F D2 F L' B D2 L B,B,Le Barcarès Mental Breakdown 2019 (2019-03-30~31),333mbf Final A #2
 1080191001,D2 B2 L2 D' R2 U' L2 F2 D R B' D B L2 B2 F' L2 B D,B,Anyang Open 2019 (2019-04-06),333oh R1 C #4
 1163904001,R2 B R2 U2 B L2 B2 D B U' B2 D' L U' L' U' R2 B',W,Cube Factory League Domaniewice 2019 (2019-05-26),333oh R1 B #5

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / BGOR / bin 10
-# Population in this bin: 25
-# Samples listed: 25 (all entries in this bin)
+# Population in this bin: 26
+# Samples listed: 26 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 3460001,R2 B2 R' D2 L' R' B2 L' D2 U2 B U F L' B2 U B2 U2 F2 R' D L2 U',B,CMI Fiesta Open 2014 (2014-03-21~23),333bf R1 E #2
@@ -30,3 +30,4 @@
 5433682001,D R L' D' B D F' L2 U' B L2 D' F2 L2 U L2 F2 L',B,Classic Cubing Capelle 2026 (2026-03-08),333 R2 A #3
 5434174001,D2 B' L' F U D B2 L' B2 R D2 B2 R2 D2 L2 F' L2 B' U,B,Iguanas Nuevo Vallarta 2026 (2026-03-07~08),333oh R1 B #4
 5452982001,D2 F' R' B R' D2 F2 L2 R2 F2 U2 L2 U L F2 R' D2 B' U,B,Baja Spring 2026 (2026-03-14~15),333oh R1 A #3
+5759778001,R F D' R2 B' U' L' F' R' U' R2 B2 L B2 U2 R' F2 B2 U2,B,Pikes Peak AM 2026 (2026-07-25),333oh Final A E2

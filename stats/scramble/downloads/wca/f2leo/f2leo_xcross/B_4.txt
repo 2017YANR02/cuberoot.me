@@ -1,12 +1,12 @@
 # Scramble samples — f2leo / f2leo_xcross / B / bin 4
-# Population in this bin: 435
+# Population in this bin: 437
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 70358001,F' D F' D F2 R' B D R' U2 R2 F L2 B' R2 U2 F2 R2 B2 R2,B,Saint Petersburg Open 2014 (2014-10-25~26),333 R1 A #3
-77694001,B D' F U2 R' B2 D' R B2 U2 F B2 L2 D R2 D2 R2 U' L2,B,Cubetcha 2014 (2014-11-01),333 Final A E2
+5761870001,L' U2 B' D F D2 R' U R' U' L2 B2 D2 L2 F2 R' U',B,Luminous Sol Open 2026 (2026-07-25~26),333oh Final A #3
 3570364001,R' D' R D2 F2 D' B2 U R2 B2 D2 B R2 B2 U' F L F',B,Vanderbilt Spring 2024 (2024-03-09),333 R1 A #2
 2636634001,L F' D' L2 F R B2 D' B2 D R' D2 R' B2 R2 B2 D2 L B2,B,Daegu Hot Spring 2023 (2023-04-15~16),333oh Final D E2
 4385807001,B2 R' U2 B2 R' B2 R D2 L R2 D2 U B2 F R2 F' L R2 D,B,Viradão do Cubo em Araruama 2024 (2024-12-28),333 R1 B #2
@@ -86,7 +86,7 @@
 740158001,D2 L' B2 R D2 F2 L2 D2 L' B U L' U R' U R2 D,B,French Championship 2018 (2018-03-31~04-02),333bf R1 A E1
 768953001,B2 D2 R2 F' U' B' D B2 U' R' D2 L2 F' R2 B' L2 U2 B,B,Santa Fe Autumn V2 2018 (2018-04-28~29),333 R1 C E2
 5378238001,D R2 B2 L2 U L2 F2 U' B' D U R' U' L2 F D' U' F' L B2,B,Don't Inverloch Up 2026 (2026-02-07~08),333bf R1 B E1
-2992291001,L2 D' L2 D2 U' L2 R' F D2 B2 F' L D' R D L' R B' L2,B,Podolian Open 2023 (2023-08-19~20),333bf Final A E2
+5769010001,B' F2 D2 U2 R2 D' B2 D' L' U' R' F2 U R' B D2 R' F',B,Elmsford Extravaganza II 2026 (2026-07-28),333oh Final B #1
 5263281001,B' L2 F' U2 L2 B' L2 B' R B' U2 R2 D' U' B2 U B D2,B,Feral Ricaurte Cundinamarca 2025 (2025-12-12),333 R2 A #1
 791262001,R U F U2 F2 B' R U D' F' D' L2 F2 L2 D' L2 D2 R2 U,B,Cube Factory League Domaniewice 2018 (2018-05-27),333 R2 B #2
 3422380001,R B' R2 L D L' U2 F' D B' D F2 R2 F2 U2 L' U2,B,Rebel County Cubing 2024 (2024-01-13~14),333 R1 B #2

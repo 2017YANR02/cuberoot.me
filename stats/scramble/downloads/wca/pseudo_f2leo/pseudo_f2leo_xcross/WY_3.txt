@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / WY / bin 3
-# Population in this bin: 709
+# Population in this bin: 713
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4641929001,R2 D F B R' D R F2 L B2 U' L' B2 L D2 F2 R2 F2 L,Y,Rexburg Rumble 2025 (2025-04-12),333 R1 C #3
@@ -76,7 +76,7 @@
 4845958007,B' D2 R2 B2 F L2 B R2 U2 L' D' B' F2 U' F D2 R' B U2 R' B R,Y,Czechowice-Dziedzice Open 2025 (2025-07-04~06),333mbf Final A #1
 1410465001,F L U L' U' F' B' D2 F D' F2 D2 F' U2 B' U2 F D2,Y,Palacio del Cubo 2019 (2019-11-16~17),333oh R1 A #3
 2719911001,R' B' U2 R2 U2 B' D2 F U2 F' D' B U2 L' B L' D' R' F,Y,Viña Cubing Fest II 2023 (2023-05-14),333 R1 D E1
-5432980001,U2 B2 L2 B2 D U' F2 L' R' U' L' F D F U' R2 U,Y,Temecula Valley Spring 2026 (2026-03-07),333 R1 C #4
+5759943001,R D R2 B R B2 D F' R U2 D2 R' L U2 R' D2 F R' B R2,W,Tokyo BLD Summer 2026 (2026-07-25),333bf R1 A #4
 3176181001,R2 D2 F2 L2 B2 R2 D2 B D R2 U2 R' D B' D2 R2 B2 F2,Y,Butler Blitz 2023 (2023-10-21),333 R2 B #2
 402161001,L D' L2 F2 U D' L' D2 L2 F D F' D2 B2 D2 F2 L2 F' L2,W,Maharashtra Championship 2016 (2016-11-13),333oh Final F E2
 3089021001,U B2 U2 R' D2 B2 D2 B2 R' F' D F2 U' L2 B D B,W,Avenida Chile III 2023 (2023-09-17),333 R2 B E1

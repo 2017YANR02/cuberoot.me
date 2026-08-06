@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / G / bin 9
-# Population in this bin: 23
-# Samples listed: 23 (all entries in this bin)
+# Population in this bin: 24
+# Samples listed: 24 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 309942001,R2 D2 F2 U2 B L2 R2 D' R2 F2 L' U' B' D U R2 D,G,Cube4Cam 2016 (2016-06-04),333oh R1 C #5
@@ -28,3 +28,4 @@
 5283028001,B' U2 R2 B2 U2 L' R2 D2 R' F2 D R' F' L' F' L B F D,G,Turning in Corning 2025 (2025-12-20),333oh Final B #1
 5342105001,U' L' F R2 B' U2 R2 B U' R2 B2 U2 L2 D R2 B2 F' R' F2,G,Cuñape Open SCZ 2026 (2026-01-23~24),333 R1 B #1
 5623637001,L2 B2 F' D2 F' D2 R B L2 U2 R2 F U L D L D',G,Nittedal Mental Breakdown Spring 2026 (2026-05-09~10),333bf R1 B #2
+5770792001,R' U' F L' U' R' F D' R B' L F2 L' F B2 U2 L2 B R2 U2 D' R' U' F,G,Big Brain Battières 2026 (2026-08-01~02),333fm Final A #3

@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / BGORWY / bin 8
-# Population in this bin: 687
+# Population in this bin: 691
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 2661804001,F2 D2 L F2 R' D2 L F2 D' U' L' U' L' B2 D L2 F' R2,G,Country Roads Huntington 2023 (2023-04-22),333 Final A #1
@@ -25,7 +25,7 @@
 111030001,D B D L2 D2 R2 L2 F' L2 F L U2 B2 U B2 R2 F2 D2,R,Osijek Open 2015 (2015-02-21~22),333 R1 B #5
 2755524012,F' U F2 B U2 F' U' D L U' R2 B2 U L2 D L2 F' L2 D',O,Jaqueca Di Tella 2023 (2023-05-27~28),333mbf Final A #1
 115238001,D R' U L' U2 B U2 L2 B' L' U' B2 U2 R2 U L2 D L2 B2,W,Summit City Open 2015 (2015-03-07),333 R2 A E1
-1463182001,L2 B2 D2 L2 U' B2 D B2 R2 U F R' B2 D' L2 B' L' U2 B R' B,Y,FME Open 2019 (2019-12-14~15),333bf R1 A #3
+5768671001,R' B U' B2 D2 F U2 B' U2 R2 B' L D U B2 R,O,Cubalaya LA 2026 (2026-07-25),333 R1 A #4
 4733374001,F L2 D' U F2 D' U2 B2 U2 L F' L' R B' L F L2 D' L,W,Mololoa Open 2025 (2025-05-17~18),333oh R1 A E1
 122052001,U' D' B R2 D L' D' R' U2 R' F R U2 L F2 L2 D2 R2,B,Swiss Nationals 2015 (2015-03-29),333 R2 B E2
 3133942001,L2 B D L U F R U2 B2 R2 F U2 F R2 F L2 D2 B R B2,Y,Growel's 101 Cube Open 2023 (2023-09-30~10-01),333 R1 F #2

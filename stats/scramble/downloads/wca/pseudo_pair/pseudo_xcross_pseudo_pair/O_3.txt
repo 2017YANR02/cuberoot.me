@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / O / bin 3
-# Population in this bin: 660
+# Population in this bin: 662
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 1013692042,F2 U' B2 D2 L2 F2 U R2 D L2 F2 R' F2 L F U' L' B2 U L' F2 D',O,MathSoc Open 2019 (2019-02-09~10),333mbf Final A #1
@@ -107,7 +107,7 @@
 5255128001,F U F' U' B2 U2 F L2 B L B2 L2 F2 L D2 R2 L' F',O,Pucallpa al Cubo 2025 (2025-12-07),333 Final A #4
 2869198038,F2 D B2 L2 D F2 L' R D2 F U' F L' D' L2 D L2 B' L2,O,Maltby Mega Special 2023 (2023-07-09),333mbf Final A #1
 2051231001,L' D B2 R2 L U B L' B' U' L2 U L2 D' R2 U' R2 L2 D' F2 D2,O,Surabaya Open 2022 (2022-07-23),333bf Final B #3
-2314560001,U' D2 F D2 F' L2 B' F' D2 B R' U' F2 L2 R' D' L U2,O,Iowa Fall 2022 (2022-11-19),333oh R1 C #2
+5763985001,R' F L' D B2 R2 U2 R' B2 L' F2 U' R2 U R F' R2 F,O,Thessaloniki Summer Open 2026 (2026-07-25~26),333 Final A #2
 5559634001,R B2 D' B2 D2 R2 B' U2 R2 B' L' B2 D' B' R2 B D2 L',O,BQHS Spring Open 2026 (2026-04-18~19),333oh R1 A #5
 1349795028,F2 R2 U F2 L2 F2 D2 F' U B' L' D' L D L2 B2 F' D' U2 B' L2,O,345 Cube Day Allen 2019 (2019-10-13),333mbf Final B #2
 629156001,D2 F' U2 L2 B' D2 B D2 B2 U R2 U' R' U' L U2 R B,O,San Ramon Cubed 2017 (2017-10-28),333ft Final A #2

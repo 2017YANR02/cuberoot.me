@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / BGWY / bin 3
-# Population in this bin: 529
+# Population in this bin: 532
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4701564001,B2 R2 D B R D2 R U2 R2 F L D F' U' R' B2,W,Hessen Mini Open 2025 (2025-05-02),333 Final B #4
@@ -182,7 +182,7 @@
 1191798003,D' L2 U' F2 D2 U B' L2 B2 F2 D2 U' R U R2 D2 L' U2 L' F,W,Medan Farewell 2019 (2019-06-22~24),333mbf Final A #1
 3554862001,U' F L' F2 B D B L B' U' B2 U' D' R2 B2 L2 B,Y,Hangzhou Spring 2024 (2024-03-02),333 R2 E #1
 1225812001,L U2 R' B2 D2 B2 L' R B' F' U' L2 B2 U F2 R' F2 D,W,Teletón Salamá 2019 (2019-07-13),333 Final A #3
-1875917001,D2 F2 D2 R2 D2 L2 F D2 B U L' R' U2 L' D' F L R' U2,W,Kirkkonummen Kuutionvääntelyt 2022 (2022-04-15~17),333 R1 A #3
+5764262001,U2 F D B' L2 B D2 F' U2 L R B2 L' F' R F L2,W,GAN Tarlac Speedcubing Open 2026 (2026-07-25),333 R2 B #3
 1236791001,R' U2 F2 L2 B2 L U2 F2 R' D2 R F' U2 F2 D' F' L' D' L' B',Y,SSN Cube Open 2019 (2019-07-27~28),333 R1 D #3
 1252054018,R2 U2 B' R2 D2 B2 L2 B' D L F' D' U F' U' B' D2 B2 U' L2 U,G,CubingUSA Nationals 2019 (2019-08-01~04),333mbf Final A E1
 5469929001,U L2 D' F2 D R2 D' R2 F2 U L' D2 R' B F D L' F2 D' F',B,Happy Navro'z in Tashkent 2026 (2026-03-21~22),333 Final A E2

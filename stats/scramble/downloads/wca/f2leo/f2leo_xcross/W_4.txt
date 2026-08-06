@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xcross / W / bin 4
-# Population in this bin: 416
+# Population in this bin: 418
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 2533429046,U' F2 D R' U' D L F D' U2 F R2 B2 L2 D2 F2 B' R2 U2 D B' L2,W,MBLD in a Madison Meeting Room 2023 (2023-03-04~05),333mbf Final A #2
@@ -101,7 +101,7 @@
 724844001,L2 R' B2 F2 U2 L' U2 F2 R U' F' U F U2 L' U' L' F' R',W,Bogotá Winter Cube 2018 (2018-03-10~11),333oh Final A E1
 728571001,B2 U' L2 U' L2 R2 D U R' B R2 U B2 L B2 R U' R U,W,La Serena Open 2018 (2018-03-17~18),333 Final A E1
 4536937001,D F2 L' D2 B2 D U' F2 L2 U' L2 D L' D L' R' F D' F',W,Mix & Match at McDo Lacson 2025 (2025-03-01),333 R2 C #1
-2763555001,R2 U' F' B L2 U2 B' U L2 U' D2 F2 D F2 R F' R D,W,Solved Central Alberta 2023 (2023-05-27),333 R2 C #3
+5769010001,B' F2 D2 U2 R2 D' B2 D' L' U' R' F2 U R' B D2 R' F',W,Elmsford Extravaganza II 2026 (2026-07-28),333oh Final B #1
 5167579001,L2 B' R B' R U' B L2 F' D' R2 L2 U B2 R2 U L2 U B',W,Guangzhou Small Cubes 2025 (2025-11-09),333 R3 A #5
 758484001,B' R2 F' D2 L2 U2 B R2 B R2 F' D' B U2 R' F R F' U2 B',W,SNZ Southern 2018 (2018-04-21),333bf Final B #2
 4898936020,B' D2 F B' U D2 R B D' R2 F B' U2 F2 D2 L2 R D2 B' L2,W,Swedish Blind Marathon 2025 (2025-08-02),333mbf Final A #3

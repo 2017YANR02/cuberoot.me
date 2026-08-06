@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxxcross / G / bin 7
-# Population in this bin: 920
+# Population in this bin: 924
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 1468868011,B2 D F2 D F2 U B2 U' L2 B2 R U B R2 F2 D2 B2 L' D' B2 U B',G,Bangladesh Cubing Fiesta 2019 (2019-12-19~21),333mbf Final A #1
@@ -196,7 +196,7 @@
 722141001,R' B2 R U2 L' B2 R2 B2 D' F2 D' F2 L R U L D,G,Eretum Open 2018 (2018-03-10~11),333oh Final A #3
 2992160001,B U F D R F U2 F' R2 F2 R' F2 L U2 R' U' R2,G,Podolian Open 2023 (2023-08-19~20),333 R1 A #3
 3522191001,B U' L U2 R F2 L' F2 R F2 U' R2 F' D U L F2 D,G,UNSA Speedcubing Verano 2024 (2024-02-17~18),333 R2 F #1
-4909690001,B' L B2 R' U2 L2 D2 R' D2 R F2 D' F R' D2 F D' L,G,Pune Unscrambled 2025 (2025-08-02~03),333oh R1 B E2
+5760665001,B' L B' D2 F U2 F L2 F2 D2 L' F2 U L2 R' D L,G,Temecula Valley Summer 2026 (2026-07-25),333 R2 C #5
 3189252001,B2 D2 U' R2 D' L B2 F' D' B' U' L' D L F' D2,G,Intercolegial Tarija 2023 (2023-10-21),333 R1 C #2
 5082147001,U' F' D' L B' F2 R2 U2 B' R2 F' L' B2 R D2 U R D2,G,II Campos do Jordão Open 2025 (2025-10-04),333 R1 B #5
 2948047001,F2 L D2 U2 R2 D2 L' F2 L R F L U2 B F U' B2 F' R,G,Bunbury's South West Speedsolving 2023 (2023-08-05),333 R2 A #4

@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / W / bin 8
-# Population in this bin: 111
-# Samples listed: 111 (all entries in this bin)
+# Population in this bin: 113
+# Samples listed: 113 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 14295001,R D2 F' D F' R D F U2 R' U2 B2 L2 F2 B2 D2 B' L2,W,Israel Championship 2014 (2014-04-16~17),333oh Final A #4
@@ -116,3 +116,5 @@
 5645218001,D2 R2 U F U2 R2 B2 F' R2 U2 L2 U R D U' L D' L2,W,Oklahoma Championship 2026 (2026-05-15~17),333 R1 D E2
 5686142001,B D2 B2 R F2 D2 R2 D2 U2 R B R F2 U2 B2 D R' D,W,Only Cubes in ABQ 2026 (2026-06-06),333 R1 C E2
 5700997050,D' F' B2 U' D' R2 U' B' R2 D2 B' D2 L2 B2 R2 B L2 U',W,Redhawk Slow Summer OH 2026 (2026-06-13~14),333mbf Final B #1
+5758590001,F D2 U2 R2 F' R2 B2 F' L' D L' F' D2 U2 L B2 D2 F',W,Chien Kuo Cubing Party 2026 (2026-07-18~19),333 R1 D #4
+5771158001,L2 R2 U2 R F2 B U' L U R F' R2 D2 U2 R' U',W,Cavite Side Events Open 2026 (2026-08-01),333 R1 A #1

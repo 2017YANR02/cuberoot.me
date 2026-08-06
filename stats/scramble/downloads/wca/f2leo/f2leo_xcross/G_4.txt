@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xcross / G / bin 4
-# Population in this bin: 462
+# Population in this bin: 466
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 261001,R' F D L2 F' B U R2 B' R F L2 U L2 U' R2 U2 L2,G,Montréal Open 2014 (2014-03-15),333 R2 B #1
@@ -198,7 +198,7 @@
 2276375001,L2 U B L B2 L2 D F2 L2 R2 D2 R B2 U' L' R U2 B',G,Prague Open 2022 (2022-10-29~30),333bf R1 A #3
 1677842001,F' D2 B R2 B R2 D2 L2 F' U' R2 F2 L' D L F' R F D,G,Bergen Open 2021 (2021-07-31~08-01),333 R2 B E2
 5284580001,D2 R2 D2 B2 R U2 L U2 L' B R2 B2 R B F2 L2 U2,G,Freezing Fryslân 2025 (2025-12-21),333 Final B #2
-5359869009,D L' B2 D2 F L U2 B' U R' B2 D' R2 U' F2 D' F2 R2 D' L' F2,G,Merignac Open CuBeutrois 2026 (2026-01-31~02-01),333mbf Final B #2
+5765696010,D2 F D L2 R2 D2 R2 U F2 D F' L' B R2 D' U' B L D' L2 U2,G,Hawaii Championship 2026 (2026-07-24~26),333mbf Final A #2
 1728229001,F2 U R L' F' L F' D B' R2 L D2 B2 L' F2 R' B2 U' B,G,BrizZon Side Open III 2021 (2021-11-12~14),333bf R2 B #1
 1735256001,U2 R D B2 R U2 L2 U2 F2 D2 R' B2 F U2 B U R2 B2 D',G,Pittsburgh Fall 2021 (2021-11-20~21),333 R2 B #4
 1756083001,D2 R2 F' R D F2 L' F' U2 B D2 F D2 R2 L2 B R D,G,AUA Open 2021 (2021-12-10),333 R1 H E2

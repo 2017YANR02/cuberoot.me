@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxcross / ORWY / bin 7
-# Population in this bin: 296
+# Population in this bin: 297
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4049432001,L B D2 L' D L2 B2 U B2 U2 F2 R' U' L B2 F2 U2,R,Telangana Cube Championship 2024 (2024-08-23~25),333oh R1 E E1
@@ -23,7 +23,7 @@
 132028001,D' R F2 U F L' U' F2 B2 L D2 L2 D R2 F2 U2 D2,W,Cerbuna Open 2015 (2015-04-18~19),333 R1 C E1
 149455001,D R2 U L2 D B2 F2 R' B' D U' L' D2 R F' L2 R',O,Bratislava No-Cutoff Open 2015 (2015-06-06~07),333 R1 C #2
 159027001,R2 B' U2 B D2 F' D2 F2 U2 F2 R' U F R2 F D B2 R2 F U2,O,Lyon Megaminx Open 2015 (2015-07-04~05),333oh Final A E1
-208739001,R2 U R2 D F2 D2 U2 R2 B2 F U L2 U R2 U2 B F D L',Y,Athens Fall 2015 (2015-10-24),333 R2 C E1
+5762539001,U2 D2 B' D R' D B' L F2 L2 B2 R' U2 B2 L U2 F2 R2 B R2,Y,Corning Summer 2026 (2026-07-25~26),333bf Final A #2
 218668001,B2 F2 R F2 L' D2 F2 U' F D' L2 B' D2 B' F U B D2,R,Clash Of Cubers Davao 2015 (2015-11-15),333oh Final A E3
 233963001,R2 F' L2 D2 B U2 F' R2 B2 F' R' F U2 B2 D' U2 B2 R2 U',O,Kyushu Open 2015 (2015-12-27),333 R2 A #2
 5258071001,U' F2 U2 F2 R2 B' R2 D2 U2 R D' F2 U2 L' F U2 F L2,W,Portugal Championship 2025 (2025-11-29~12-01),333oh R1 C #3

@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / Y / bin 9
-# Population in this bin: 23
-# Samples listed: 23 (all entries in this bin)
+# Population in this bin: 25
+# Samples listed: 25 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 248902001,R' B' R2 B2 L2 F D' F D L' F2 L F2 B2 R B2 R,Y,Frankfurt Cube Days 2016 (2016-01-30~31),333 Final B #1
@@ -28,3 +28,5 @@
 5453936057,L B2 L D2 R' F2 R' B L2 R' U L2 D F' R2 F U' F2 D,Y,SCU III: FMC Triple-Scoop 2026 (2026-03-14~15),333mbf Final B #1
 5498605001,B2 D2 F2 D R2 F R' F L' D2 B2 R' F2 R' L U' L2,Y,Yancheng Spring Open 2026 (2026-03-29),333oh Final B #5
 5582461001,L B' R2 B U L U2 R2 U D2 R2 B R2 F U2 B L',Y,Jakarta Mini K-ubing 2026 (2026-04-26),333 R1 G #4
+5761802039,F U D R' B' D' L' F2 R2 U L2 U F2 U2 F L' F' L2 U,Y,Luminous Sol Open 2026 (2026-07-25~26),333mbf Final A #1
+5770737001,U' R2 U B2 F2 U2 L B' D U2 L2 U2 B2 L' B L F2 U',Y,Vacaciones Cuenca Open 2026 (2026-08-01),333 Final A E1

@@ -1,8 +1,8 @@
 # Scramble samples — std / cross / BGWY / bin 1
-# Population in this bin: 385
+# Population in this bin: 386
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 6462001,U L2 D U2 R2 U R2 B F' L' U F' L R2 B' F' D',W,Rumia Open 2014 (2014-03-29~30),333bf R1 A E2
@@ -75,7 +75,7 @@
 619735001,D2 F' R2 B2 U2 F D2 L2 U2 R2 F2 D' F' R' U2 L D R' B2 F,Y,Malaysia Cube Open 2017 (2017-10-14~15),333 R1 A #2
 621783001,U F2 L2 U F2 D F2 L2 D U L2 B' R' B2 D U F' D F' L',G,Atlantic Open Fall 2017 (2017-10-21),333oh R1 A #5
 4228518001,F' U2 F' D2 B D2 U2 F' R2 B R' D' L2 R2 D2 F' R2 F D' R,G,Oct-ober-ahedron i Hvidovre 2024 (2024-10-26~27),333 R2 A E1
-4089044001,F' U2 B2 L2 R2 B R2 B D2 U' R U' B' D F' D2 R' B D',B,Hudson Valley Summer 2024 (2024-09-08),333 R1 A E1
+5765481001,U' L' B U2 F' R2 B U2 B L2 B2 L D2 F' U2 F' U' L',G,Samgau Almaty 2026 (2026-07-25~26),333 Final A #3
 2987280001,U' B2 D2 L2 D F2 R F2 R D' F U2 R F2 D2 U L' R,Y,Dublin Summer Solving Sunday 2023 (2023-08-20),333oh Final A E1
 637626001,U' L2 F2 D' B2 D F2 R' F' U' R2 F R2 F L2 F2 R2 F L2,B,Porto Alegre Open 2017 (2017-11-04~05),333 R2 C #4
 5342757001,R' U' F U2 F' R2 F' U2 R2 U2 F2 L2 R' F' R' U R2 F U' L2 R2 U R' U' F,B,PBQ Ropaži 2026 (2026-01-17~18),333fm Final A #2

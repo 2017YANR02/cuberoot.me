@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / OR / bin 8
-# Population in this bin: 224
+# Population in this bin: 227
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 26001,U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2,R,Galeries Dorian Open 2014 (2014-03-15),333bf Final A E2
@@ -30,7 +30,7 @@
 5099154001,U' B2 D F2 R' F2 D F R2 B U2 F2 B' D2 F U2 D L2 D2 B,R,Thailand Championship 2025 (2025-10-11~13),333bf R1 B #1
 353754001,F D R2 D' B' L' B2 L D2 B D2 R2 L2 F2 B' D2 R2 B D2,O,Slovakian Open 2016 (2016-08-27~28),333oh Final A E2
 357501001,R F2 L2 F' U' B D2 R D L D' B2 L2 U2 B2 U2 F' B2 L2 B',R,CVDB Open 2016 (2016-09-03),333oh Final B E1
-410766001,U2 L U2 R' U2 L2 D2 B2 R2 B D L2 D' B L2 D F' U2,R,Urdaneta City Fiesta Open 2016 (2016-12-04),333 Final B #4
+5768671001,R' B U' B2 D2 F U2 B' U2 R2 B' L D U B2 R,O,Cubalaya LA 2026 (2026-07-25),333 R1 A #4
 414890001,D2 R U2 B2 R F2 D2 R2 F2 U2 F' D R D R U L2 F' L',O,Kaohsiung Winter Open 2016 (2016-12-17~18),333 R1 A #4
 437568001,B' L' B' R2 U' B U' D2 F R2 F' B2 U' R2 L2 B2 D' L2 D2,O,Frankfurt Cube Days 2017 (2017-01-28~29),333 Final B E2
 442645001,R2 D' B2 D R2 B2 D' U' R2 U2 F U B' F L' B2 L' U R2,R,Rubi-Xtreme Piatra Neamt 2017 (2017-02-11),333 R1 A E2
@@ -42,7 +42,7 @@
 590697001,F D B' R L U L2 B U2 R' D R2 U2 L2 U L2 F2 U' F2 B2,R, Raipur Cube Challenge 2017 (2017-09-10),333oh Final A #1
 5227474001,B2 D B' U2 B2 L2 U' L' D R2 F2 R U2 L U2 D2 F2 R B,R,Kyiv Blind Side Autumn 2025 (2025-11-29~30),333 R1 C E2
 613267001,D2 F' R2 U2 B2 D2 F R2 B2 U' F' L U' F' R D' F' D' R2,R,NIT Trichy Open 2017 (2017-10-07~08),333 Final B E2
-655653001,L2 B' L2 B U2 F2 D2 U2 B' R2 D' R B L' U2 B' D F' U2 L',O,Nancy Open 2017 (2017-11-25~26),333 R2 B #2
+5761702001,F2 D2 U F2 R2 U' F' U' F' D2 R' F2 D B2 F L' B F2,R,Barpeta Cubing Open 2026 (2026-07-26),333oh Final B #3
 660590026,D2 L2 B2 D2 B L2 F2 U' R2 U B' F D R' F' D' B' U2 B',O,Rebild Open 2014 (2014-11-08~09),333mbf Final A #3
 5478522001,B2 U B2 L2 U2 L2 B' L2 U2 F2 U' B' R B L F L2 U',R,Potsdam Puzzling 2026 (2026-03-28),333 R1 B #3
 661436024,L2 D2 B L2 B' D2 F' D2 F L2 R D F' D' B R' B R F R' B',R,Swiss Open 2017 (2017-07-21~23),333mbf Final A #2
@@ -163,7 +163,7 @@
 3868980001,L2 U2 B2 R D2 U2 R2 U F2 U' F' R2 D R F R' D',R,Gem City Donut DNF 2024 (2024-06-16),333 Final A #1
 3927268001,U' L2 D' L2 F2 D F2 U L B' L U' R' B' F2 D' R' U L,O,Get Ready Grove City 2024 (2024-07-13),333oh R1 A #2
 3939204001,L F2 R U2 R' F2 L F2 U' F' R' D R2 U R' F' L R',R,Warm Up Wommelgem 2024 (2024-07-13~14),333 R2 B E1
-4014483001,L2 B R2 D2 F2 D2 R2 B R' B F L' B' R' D F R2 B2 L2,R,Blind and Fun Landvetter Summer 2024 (2024-08-18),333 Final B #5
+5772088001,D' R2 F U' L U2 F2 U2 R U2 L R D' R2 F' L D F' U',R,Saint-Martin Saturday 2026 (2026-08-01),333oh Final B #3
 4073507014,U2 B2 U2 L2 D' F' B2 D L F2 L' B2 L B2 R B2 L F' L' F,O,Romanian Breaking Records 2024 (2024-08-30~09-01),333mbf Final A #1
 4093458001,D L R2 D' L2 U L2 R2 D' L2 F' U B2 U2 B' U' R F' U',R,Aliso Niguel Summer 2024 (2024-09-08),333oh R1 A #2
 4222888001,L F2 B D R' F2 L F' U B2 R U2 D2 F2 R' D2 R' D F,O,Tarija Speed Fest 2024 (2024-10-19~20),333 R1 C E2

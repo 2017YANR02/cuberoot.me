@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / BGORWY / bin 4
-# Population in this bin: 465
+# Population in this bin: 466
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5023707001,U2 B U2 L' D' L2 U2 B2 U' R2 U' F R B' D F' D2 F2 L' F',B,Clásico Tlaxcala 2025 (2025-09-13~14),333bf R1 B #3
@@ -169,7 +169,7 @@
 1286244001,B L2 F R2 B2 F' U2 F2 D2 L2 D2 L D' F' L' F R' F2 D' B2,Y,Cubing in Cill Chainnigh 2019 (2019-08-31~09-01),333 R2 A #2
 1286868001,F' L2 D2 F' D2 L2 U2 F' L2 B' D L B2 U' B R' B2 R' U2 F,G,Ibarra Open 2019 (2019-08-31),333 R1 B #2
 4180617001,U2 L' R2 B' R2 B2 U2 L2 F2 U' R2 F2 D L R B' L' R2,W,UC al Cubo - Santiago 2024 (2024-10-05),333 R1 C #1
-2112413019,R F U2 F2 D' B2 D F2 D' U2 F R' B' L2 F2 D U F R B R,G,Vilnius Open 2022 (2022-08-20~21),333mbf Final A #1
+5770776008,B' U2 R' U2 L2 B2 L U2 F2 U' L B' D B U F' D U2 B R,R,Big Brain Battières 2026 (2026-08-01~02),333mbf R1 B #1
 4991650068,F' R2 U2 F2 U R' U' R' F R2 L D2 R2 U2 D2 F2 R' F' D,W,West Coast Cubing Western Championship 2025 (2025-08-29~31),333mbf Final A #2
 5518549001,R D2 B2 L' B2 F L F2 D' L' B2 D2 F' D' U' B L',Y,Colorado Springs Spring 2026 (2026-04-11),333bf Final A #4
 2318007001,U2 B2 L' D2 R2 U2 F2 D2 R' B' R' U2 L B R2 U B' F L,O,Butler Blitz 2022 (2022-11-26),333 R1 E #2

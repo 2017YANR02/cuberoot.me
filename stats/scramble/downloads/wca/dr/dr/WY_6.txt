@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / WY / bin 6
-# Population in this bin: 616
+# Population in this bin: 619
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 1584013001,L2 R2 D2 U' B2 L2 D R2 U' L' B L' U L B' R' D R2 B',W,Hamburg International 2020 (2020-02-29~03-01),333 R1 C #5
@@ -48,7 +48,7 @@
 4567060033,R D F B2 L' U F' R D2 F R2 L2 F B2 D2 F R' B D' L2 U,W,Baja Spring 2025 (2025-03-14~16),333mbf Final A #1
 250137001,R2 F2 D U B2 D L2 U B2 U' R D L' F' U2 F2 L2 D2 R2,W,Mantua Tiny Open 2016 (2016-02-06),333 Final A #3
 5512229001,D' F2 U' R2 B2 F2 D B2 U' L2 D R2 L' U2 F U2 R F,W,Arena HCMC Spring 2026 (2026-04-04),333oh Final A #1
-5086421001,B2 L2 B2 U2 L2 F D' F R U2 R2 F2 R2 B' D2 B' R2 F2,W,The Big Cube Melbourne 2025 (2025-10-11),333 R2 C #4
+5761433001,D U L2 B2 R2 B2 D F2 U' B2 L F L B L2 F' D2 B,W,Cubing Returns Nagpur 2026 (2026-07-25~26),333oh R1 C E2
 1438007001,B2 F2 U' B2 D' F2 U L2 U2 L2 F2 L F' L B2 L' D U L' R,W,Speed and Music Caracas 2019 (2019-11-30),333oh Final A #5
 263312001,U2 L2 B2 U2 B2 D' F2 U' R2 F2 R' F U' L2 R' B R2 B2 L D' B' L2,W,Indian Open Rubik's Cube 2016 (2016-03-04~06),333bf R1 B #2
 1226617042,B2 L2 D R2 D2 L2 R2 F2 D2 U2 L F' U2 L F2 D2 F' U' B U' B' L2,W,PBQtah Sandy Summer 2019 (2019-07-20),333mbf Final A #1
@@ -185,7 +185,7 @@
 1056657001,R' U' F D2 R2 D' L2 R2 F2 U F2 L2 F2 R' B' R' D U' R F' L R' D' B' R' U' F,W,Please Be Quiet Korea 2019 (2019-03-16),333fm Final A #1
 5664732001,L' R' B2 L U2 B2 D2 R' B2 F' D F R B2 D R2 D L,W,CubingUSA Heartland Championship 2026 (2026-05-22~24),333oh R1 B #5
 1061044001,D' F2 D R2 D' R2 B2 U2 R' D F2 D2 B R' F2 D' U B D2 B' L2,W,IISER Pune Cube Open 2019 (2019-03-17),333bf Final B #1
-1062111001,L2 R2 D2 F2 L2 D L2 R U R2 D B2 U' B D2 B2 D' L2,W,Las Vegas Spring 2019 (2019-03-23),333oh Final B #5
+5771127001,D2 F R2 B R2 F' U2 B2 U2 F D' U' L' U' L2 B2 D2 B R',W,Hampton Beach Summer 2026 (2026-08-01),333 R1 B E1
 1718722001,D F2 L U B2 D' R' F' D' F U2 D2 R' F2 U2 D2 L,W,Back to Cubing San José 2021 (2021-11-06),333 R2 B #2
 5201738001,F2 R2 D2 L2 R2 D' R2 U' L2 D F2 D2 F U2 R B' L2 F2 L,W,Campeonato Uruguayo de Speedcubing 2025 (2025-11-15~16),333 Final C #4
 4806114001,F' R' D R2 D R2 U B2 F2 R2 U R2 U2 L' F' R B' F' R U2,W,Cabalen Cubing Fest 2025 (2025-06-14),333 R1 A E2

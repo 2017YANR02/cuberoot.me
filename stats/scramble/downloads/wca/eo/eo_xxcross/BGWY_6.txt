@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / BGWY / bin 6
-# Population in this bin: 425
+# Population in this bin: 429
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 3270001,D2 R D2 R' F2 D2 F2 R2 F2 R B U' R' U B' U' R2 D F',B,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 S #5
@@ -170,7 +170,7 @@
 5392036001,U' R2 D2 L2 B R B D R2 L2 U F2 U2 B2 R' F2 D B',B,UMBC Winter 2026 (2026-02-14),333oh Final C E2
 1427750001,F R2 B R2 F' U2 F' D' R2 U L2 U2 L2 F2 D2 B' F' D',W,Malta Open 2019 (2019-11-30),333bf Final A E1
 2573324001,D2 F' L2 D B2 U' B2 F2 D' U2 L2 R' D2 B' D U2 F D' L2,G,Kendeda Kubing B 2023 (2023-03-19),333oh R1 A #2
-4725510012,D R B2 U' R' L2 U' B2 D F2 L F2 B2 U' D2 F2 D2 L2 U,W,PBQtah 8 2025 (2025-05-17),333mbf Final A #1
+5759406001,R U2 B2 D2 U2 R D2 F R D2 U2 B2 U' L2 F2 L' F2 L',W,SPAMTown IV MN 2026 (2026-07-25),333oh R1 A E2
 1469533001,B' D2 B2 U2 F' R L2 B2 L' B U2 B2 L D2 F2 R2 B2 R2,B,New Year in PSU 2019 (2019-12-21),333 R2 A E1
 1474074001,B2 L U B' U D2 R' L' B' U B D R2 U' R2 L2 F2 L2 F2,B,Florida Winter Break 2019 (2019-12-21~22),333 R1 D #2
 1515722001,B' L2 F U2 F' L2 B' U2 L2 U2 L B' D' U' B D2 R U' R',G,Alberta 5th Anniversary 2020 (2020-01-18~19),333oh R1 A E1

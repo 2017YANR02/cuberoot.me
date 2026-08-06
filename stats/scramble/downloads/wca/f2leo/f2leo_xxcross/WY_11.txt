@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / WY / bin 11
-# Population in this bin: 570
+# Population in this bin: 574
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5665273001,U' L2 R' U2 R' B2 D2 U2 L2 F2 R D2 F D2 L' D' B L D U,W,Hangzhou Open 2026 (2026-05-23),333 R1 F #3
@@ -167,7 +167,7 @@
 874509001,D2 B2 R2 U2 B2 D' F2 D' R F' D U' B' R' F2 D2 R B L',W,German Nationals 2018 (2018-09-07~09),333 R2 B #4
 891518001,L U2 B2 L2 U2 R' F2 R' B2 L B2 F R' U2 F' R2 U B R' D R2,W,China Championship 2018 (2018-10-02~04),333 R1 D E2
 4153766016,B2 U2 L' U2 F' U' L B' U2 L U' R' L2 D2 F2 R B2 R' U2 B,W,New Zealand Cubing Decathlon 2024 (2024-09-28~29),333mbf Final A #1
-5461553001,R F2 L' B2 R F2 D2 F2 U' B L B F L' B' D' U2 L' F',W,Kanta-Hämeen Kuutionvääntelyt 2026 (2026-03-21~22),333 R1 A #1
+5759918016,F2 L U F' R' L2 U2 B F2 L2 F2 U2 L2 D' B2 U' L' D B' L B2,W,Tokyo BLD Summer 2026 (2026-07-25),333mbf Final A #1
 4954810001,F2 U' B R' F2 L' R' F2 U2 L D2 U F' D' L2 B' R' B2 U',W,Maru Cube Day Taiwan 2025 (2025-08-02~03),333 R2 D E1
 944587056,B2 F2 L' D2 L R B2 L F U R D' R B U2 F2 U L' D' L B',W,Please Be Quiet Berkeley 2018 (2018-12-01~02),333mbf Final A #3
 4064874001,F B2 U' L B' R2 U R' U2 R F2 D2 L' B2 R2 F2 D2 L2 B U',W,Washtenaw Summer 2024 (2024-08-31),333 R2 C #5

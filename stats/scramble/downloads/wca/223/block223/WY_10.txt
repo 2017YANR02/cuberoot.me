@@ -1,8 +1,8 @@
 # Scramble samples — 223 / block223 / WY / bin 10
-# Population in this bin: 897
+# Population in this bin: 901
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 3307504001,R2 F U R' B U R F R2 D' L2 U' B2 U2 R2 F2 R F' L',W,Texas Championship 2023 (2023-12-02~03),333 R2 C E1
@@ -165,7 +165,7 @@
 661040020,F U2 B' L2 F D2 L2 B2 U2 R F L B' R D2 U L' R' D' B2 L,W,Cannes Summer Open 2016 (2016-07-02~03),333mbf Final A #2
 1035439003,R2 D B2 D L2 B2 D' L2 B2 R' F D U F2 U' L R2 U' F R' B' L2,W,Myyrmäki Spring Challenge 2019 (2019-03-01~03),333mbf Final A #1
 4527246001,F2 U R' D' F B' U L' U2 R' U2 F' U2 R2 U2 B' U2 L2 F,W,Osijek Open 2025 (2025-02-22~23),333 R2 B #5
-4830280010,U' B2 U L2 D' U2 F2 U L2 F2 R' B' L' U' R2 D L B' D' F' L2 U,W,Valdepeñas Open 2025 (2025-06-28~29),333mbf Final A #1
+5758181001,B' D' F2 D U2 B2 R2 U2 F2 B L' D U' F2 R2 B' L' R' F' L' F',W,Unicentro Armenia V 2026 (2026-07-20),333bf Final B #2
 1144162001,B2 L2 D2 R' D2 R' D2 U2 R' B2 D' L2 F L R B' L D' U' F R,W,Potosi Autumn 2019 (2019-05-19),333 R2 A #3
 5507693051,D' R' B R2 D F R' F' R F2 R2 B2 D2 B2 L F2 D2 R2 U L',W,Bursins Goes Fast 2026 (2026-04-04~05),333mbf Final A #1
 890839001,B2 L2 U' B2 U2 R2 D R2 F2 D2 B R' D F U' R2 U2 F R U,W,Baikal Cubing 2018 (2018-09-29~30),333 R1 A E1
@@ -188,7 +188,7 @@
 705162034,U' F2 D2 L2 D2 R2 U2 F2 D2 R' U L' U2 R' B L' F' L2 R B2 D' L B2,W,Tapiola Winter Open 2018 (2018-02-10),333mbf Final A #1
 5514914001,U' B2 D' F U2 B2 R2 F' D2 L2 F' R2 L D B' F2 D L R' F,W,Alexandria Spring 2026 (2026-04-10),333bf Final A E2
 5389638001,U2 B2 F2 L2 D F2 U2 R2 F2 U' B2 R' B2 D' B' R B2 F' D R',W,El Solar Valentine's Day SC 2026 (2026-02-14),333oh Final B #2
-725322001,L2 F2 U L2 U2 R2 U R2 F2 U2 R2 F U' B' R' D' B' R B2 L' B',W,SD Winter 2018 (2018-03-03~04),333 R2 A E2
+5760674001,L2 D2 B U2 L2 F2 L2 R2 D L2 U2 B2 L R D' B2 R' B U' R',W,Temecula Valley Summer 2026 (2026-07-25),333 R2 A E1
 2485834001,R' F L2 U2 L' F' R' D' R' U B L2 D2 R2 U2 B L2 B2 L2,W,Herrljunga Open 2023 (2023-02-11~12),333oh Final A #1
 3031970001,B U R2 U2 L2 R2 B D2 B2 F R2 D U' F' D' R' D L' D2,W,Szczecin Summer 2023 (2023-08-26~27),333 R1 A #3
 5224181050,D' L F' B2 U B2 F2 D2 U' F2 D F2 B' U R F2 L2 F2 D U L' F2,W,PBQ Madness in Dobřejovice 2025 (2025-11-29),333mbf Final B #3

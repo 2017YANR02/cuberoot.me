@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / WY / bin 7
-# Population in this bin: 229
+# Population in this bin: 230
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 1993001,F' D' F2 R2 U F R F2 D R' D' F2 D2 F R2 F2 R2 L2,Y,Zonhoven Open 2014 (2014-03-22~23),333 R1 A #1
@@ -173,7 +173,7 @@
 3945573001,L' B' R D2 B' D' F B2 L' U2 R' U2 R2 F2 D2 R D' L' B',W,Sunny Cubing Armenia 2024 (2024-07-20),333 R1 A #4
 5277497001,L U2 B2 R' B2 U L D2 L2 D' F U2 F' U2 B' U2 L2 F2 L2 D2 B R',W,Stockholmsligan Sita - Nyoka 2025 (2025-12-18),333bf Final B #3
 3976122001,B' U' F R B U2 L' F' L2 D B2 D' L2 U' L2 F2 R2 L F2,W,Perth Winter 2024 (2024-07-27~28),333 R1 D #1
-4017929001,B' U2 B2 F D2 B' L2 D2 R U' L B2 R' D' R' F' U2 L' U,W,Córdoba Cubea 2024 (2024-08-17~18),333 R1 B E2
+5770869001,F U2 D B D2 L2 U' F U' L2 D B2 U' F' B2 D',W,Rose City OR 2026 (2026-08-01),333 Final A #2
 4057629001,L' U' B2 U2 L' B' D' L' D L D2 B2 L2 U2 D2 F' U2 L2,Y,Welcome to Bishkek 2024 (2024-08-23~25),333oh R1 A #5
 4090288017,D' B2 L F B' L' B F2 D2 L2 U' B2 U F2 U R B2 U' B' L2 U',Y,Titan Big N' Blind 2024 (2024-09-07~08),333mbf Final A #2
 5706565028,B2 R2 D' U R2 F2 L U2 F2 L' F U2 B R2 D2 F' L2,Y,Quiet Prep in Palisades 2026 (2026-06-19),333mbf Final B #1

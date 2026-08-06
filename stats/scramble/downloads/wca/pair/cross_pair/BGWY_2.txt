@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / BGWY / bin 2
-# Population in this bin: 790
+# Population in this bin: 793
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 28543001,D2 R2 D2 B F L2 B U' F' U F' D U' R' D2 R2 F2 U2 L2 U2,G,Bucharest Rubik Summer 2014 (2014-06-15),333bf Final A #1
@@ -41,7 +41,7 @@
 1151886001,R' D2 R B2 R2 B2 D F2 D L2 F2 R B' U F2 U' F,B,Brooklyn 2019 (2019-05-25),333 Final A E1
 3939169009,F L' D' L2 B2 R2 U' B2 R2 B' R' U2 F D' F2 R' F D' B R',W,Big and Blind North Andover 2024 (2024-07-13),333mbf Final B #1
 5425942001,L2 D B2 R2 U R2 D F2 R2 U2 R B R2 F' D2 U R2 U',W,Berkeley Favorites 2026 (2026-03-01),333oh R1 A #5
-218668001,B2 F2 R F2 L' D2 F2 U' F D' L2 B' D2 B' F U B D2,Y,Clash Of Cubers Davao 2015 (2015-11-15),333oh Final A E3
+5761802039,F U D R' B' D' L' F2 R2 U L2 U F2 U2 F L' F' L2 U,B,Luminous Sol Open 2026 (2026-07-25~26),333mbf Final A #1
 4225632001,F D2 F2 D2 U2 L' R2 F2 L R2 B2 D2 U' L2 B' R U B' U2 R2,B,Green Fall 2024 (2024-10-26),333oh R1 B #4
 5137939001,F' D2 R' D2 R2 U' R' U L2 B2 D R2 F2 B2 L' F2 U',Y,Hampshire Autumn 2025 (2025-10-25~26),333 R2 A E1
 238001001,R2 D R2 U L2 D2 L2 R D B' F U' F D2 F2 D F' R,Y,Music City Winter 2016 (2016-01-02),333 R2 A #4

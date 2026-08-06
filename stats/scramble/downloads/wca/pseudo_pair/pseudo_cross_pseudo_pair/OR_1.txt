@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_cross_pseudo_pair / OR / bin 1
-# Population in this bin: 353
+# Population in this bin: 354
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4311551041,B' D F B R2 F2 L B' U2 D2 B U2 R2 D2 B2 U R' F L',R,East Bay Big and Blind 2024 (2024-11-24),333mbf Final A #1
@@ -160,7 +160,7 @@
 2001795001,L B2 L2 D L2 D' B2 D2 L2 D B' R D' R U' L R F U,O,Ibarra UTN Open 2022 (2022-07-02),333oh Final C #4
 2004334001,R L' F R2 B D2 L' D' R2 U F2 R' L' D2 L' F2 R' L2,R,Thessaloniki Open 2022 (2022-07-09~10),333oh R2 A #1
 4968942001,U2 F D B' L' B2 D2 F2 R2 U' L B' F R2 B D B',O,Cubing in Terredise 2025 (2025-08-23),333 R2 B E2
-2081834001,D' F2 R U2 R B2 F2 L2 U2 F2 B' L' R B D' U B2,O,Real Cube 2022 (2022-08-06~07),333 Final B #5
+5762030011,U B2 F2 R2 F2 L B2 F2 R U L' R2 U F D R2 F L2 U L' F,R,TroisMaisons Zéro Vision 2026 (2026-07-25~26),333mbf Final A #2
 2083438001,F2 R' D2 L2 U D2 L B2 U2 R2 D2 R2 B' D2 B' L2 U R2,R,Edén Cubing 2022 (2022-08-06~07),333 R1 F #1
 4938921001,U L' B L D' F2 R' L B D F2 L2 D' F2 R2 U' D2 R' L2,R,Turkish Nationals 2025 (2025-08-07~10),333 R1 B #2
 2114408024,R2 B2 D' F2 R' B' L F2 U F2 U L2 U2 D B2 D2 F2 U' B R2 B R2,O,SacQuiet 2022 (2022-08-21),333mbf Final A #1

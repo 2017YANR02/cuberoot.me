@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / WY / bin 8
-# Population in this bin: 231
+# Population in this bin: 233
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 13215001,B2 L2 D' B2 D F2 D R2 F2 R U L2 U R U,Y,Velbert Easter Open 2014 (2014-04-18~20),333 R2 B #5
@@ -15,7 +15,7 @@
 132028001,D' R F2 U F L' U' F2 B2 L D2 L2 D R2 F2 U2 D2,W,Cerbuna Open 2015 (2015-04-18~19),333 R1 C E1
 188075001,U' L2 U F2 L2 R2 U2 F' U' B2 D' L2 D R2 B' U,Y,LMDL Open 2015 (2015-09-12),333 R1 B #3
 202936001,D' U' B2 R2 D' L2 R2 D' R D L2 U' R' F2 D' R' D' B,W,Korean KAIST Style 2015 (2015-10-09),333 R2 F #1
-5489750001,U2 L2 D' B2 U' L2 R2 U B2 F' D' F R2 U' R U2 B2 L',W,Kopli NxN Rampage 2026 (2026-03-28~29),333 R1 A #2
+5758590001,F D2 U2 R2 F' R2 B2 F' L' D L' F' D2 U2 L B2 D2 F',W,Chien Kuo Cubing Party 2026 (2026-07-18~19),333 R1 D #4
 213707001,L' B2 R' U R' U B2 R' B2 L F R2 F L2 D2 B' D2 B',W,Hayward Rubik's Rumble 2015 (2015-11-07),333oh Final A #4
 218668001,B2 F2 R F2 L' D2 F2 U' F D' L2 B' D2 B' F U B D2,Y,Clash Of Cubers Davao 2015 (2015-11-15),333oh Final A E3
 5550210001,R' F R D2 R B' R B D' B R2 U' B2 U2 F2 U' R2 D2,W,Cube Factory League Jeżów 2026 (2026-04-18~19),333 R1 A #3

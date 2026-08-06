@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / BG / bin 3
-# Population in this bin: 416
+# Population in this bin: 417
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 17503001,R U2 R' F U2 F' R2 F2 D2 R' L2 U' L2 U D2 F2 U L2 U2,B,Mumbai Summer Open 2014 (2014-05-03~04),333 R1 C E2
@@ -190,7 +190,7 @@
 3901716001,L F' D F B2 D2 L U L2 D F2 U2 L2 D R D' R2,B,Lazarillo Open 2024 (2024-06-29~30),333oh Final A E2
 5592560001,F' R L D' F' R B U' D L D2 R' D2 F2 R' D2 R2 F2 R D2 B' L,G,Brizzon Side Open III 2026 (2026-05-01~03),333bf R1 B #3
 3275021001,F' R2 D2 R2 F2 L' D2 R' F2 R' D2 B2 F L' F L2 F D,B,Scarborough Fall B 2023 (2023-11-19),333 R2 D #3
-2259387001,R2 U2 F D2 R2 B' L2 B R2 D2 L' D R' B2 D' L' F D' F',G,Cubing Rising Stars Olesno 2022 (2022-10-22~23),333oh R2 A #2
+5759923034,D' B' R2 F2 L2 R' U2 R' U2 D' R2 D U' F2 R D' L D,G,Tokyo BLD Summer 2026 (2026-07-25),333mbf Final B #1
 2281930001,D' F D' F' L2 U2 B' D' U2 L F2 L F2 B2 L U L B,B,Ayase Autumn B 2022 (2022-11-06),333 R2 A #3
 5571441001,F2 U R2 B2 R' B2 R F U F' B2 U R2 U' D F2 U R',B,INUMP São Paulo 2026 (2026-04-25),333oh Final A E2
 4597779001,U B2 U' R2 B2 R2 U L2 B2 U R2 F D' F2 U2 F D L' U R',B,Hublife Speedcubing 2025 (2025-03-22~23),333oh Final C #5

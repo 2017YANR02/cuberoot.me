@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / G / bin 5
-# Population in this bin: 705
+# Population in this bin: 708
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5139459001,D2 F2 L' B2 R2 F2 L2 D' L2 B' D B2 F' D' R2 F' U' F,G,Spookin' on the Plains at Auburn 2025 (2025-10-25),333oh R1 C E2
@@ -198,7 +198,7 @@
 2562454001,B' D' L D2 L B' R F2 B2 U' F2 R2 U L2 B2 U L' B' L' B',G,Bothell Spring Open 2023 (2023-03-17~18),333bf R1 B #1
 2937481001,U' R U B2 R2 U B' U2 B' L R2 D2 F L2 F L2 D2 L2,G,Geelong Winter 2023 (2023-07-29~30),333 R1 B #4
 2847074001,F L2 D' F' L D L' U' F2 D2 R2 F' L2 B2 R',G,Valenzuela Cubing Open 2023 (2023-07-02),333oh Final B #3
-931382019,U2 B2 L' D2 B2 R U2 B2 D2 B' D2 L2 R B' U' R2 D2 B F R2 B' L2,G,South Texas Open 2018 (2018-11-03),333mbf Final A #2
+5760146001,U R2 B2 R2 D' R2 D R2 B2 R' D' R' D' B D' R' F' D' R',G,Cube4fun Nowa Sarzyna Summer 2026 (2026-07-25),333 R1 A #2
 935091001,F2 D F2 D2 F2 D B2 D F2 L2 D B' D' F L R U R' B F',G,Albacete Open 2018 (2018-11-17~18),333 R1 A #2
 4477617001,B2 D2 B L2 R2 B F2 L D2 L2 U2 B2 U2 F' L' B F,G,PR Time in Burnaby 2025 (2025-02-08),333 Final A #4
 939082011,R2 D2 U2 B2 U2 L2 R' D2 F R U L2 R2 F R F2 D2 U F L2 U2,G,Luna de Xelajú 2018 (2018-11-17~18),333mbf Final A #1

@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / BGWY / bin 2
-# Population in this bin: 585
+# Population in this bin: 587
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5392183001,R F' L U F2 U' R2 B2 U B2 U F' L' B2 D' F D2,G,Melbourne Summer 2026 (2026-01-24~26),333 R1 E E1
@@ -186,7 +186,7 @@
 3110404001,F U' L' D2 L' D2 L' U' L2 F' L2 U' L2 D L2 U' R2 B2 R2,W,Glasgow Autumn 2023 (2023-09-22~24),333 R1 C #5
 1125238001,F U2 F' U2 B' L2 B F R U' F2 L D2 B2 L' R2 B2 L2 D,Y,Chengdu Open 2019 (2019-05-01~02),333 R1 B E1
 2685748001,D2 L' B' F2 L2 F' L2 D2 R2 D2 F' R B' D' R' B2 U2 L B',B,Rose City 2023 (2023-05-06),333oh R1 A #2
-3760964001,R2 F' R2 B U2 B2 F' U2 D R U2 R2 D2 F D R F' D' F,B,Bursa Mother's Day 2024 (2024-05-11~12),333oh R1 A #5
+5763976001,D F' L2 F R2 D' L F' U B' U2 D2 R2 B2 U2 D2 B D2 F2,W,Thessaloniki Summer Open 2026 (2026-07-25~26),333 R2 A #2
 1151886001,R' D2 R B2 R2 B2 D F2 D L2 F2 R B' U F2 U' F,B,Brooklyn 2019 (2019-05-25),333 Final A E1
 2788315001,R' U2 B' R L' F2 B U2 L' F2 L U2 R F2 R U B',Y,Energy Cube Ciechanów 2023 (2023-06-10~11),333 Final A #5
 3236201015,L B' D B U' L2 D' L' B D F2 L2 F2 D R2 L2 B2 D B2 D2,Y,Malpensa: IC Qualifier 2023 (2023-11-04~05),333mbf Final A #2

@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / BG / bin 11
-# Population in this bin: 709
+# Population in this bin: 713
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5748135001,U' R L' U R' D R' F2 U2 F2 B R2 D2 L2 U2 R B' L2 F2,B,Persevere in De Pere 2026 (2026-07-11),333oh R1 C E1
@@ -80,7 +80,7 @@
 4557519001,R' L2 U2 F L' U' L' D' R' F L' B U2 R2 F2 B R2 D2 F,B,Berkeley March Weekday NxN 2025 (2025-03-07),333 R2 A #5
 4273358001,B R B D2 F' U2 R U' F B U B2 U' B2 R2 L2 U D R2 B',B,Amalthea Cube Open 2024 (2024-11-10),333 R1 D #5
 2777586001,D2 L' F2 L2 F B U R' L' D L D2 F2 R2 B2 L U2 L U2 F,B,Dutch Open 2023 (2023-06-03~04),333 Final A #1
-1926042001,U R2 F2 U B2 U' F2 R2 L' F' R2 D U B R U L B' U2,B,Dutch Masters 2022 (2022-05-21~22),333oh R1 C E1
+5766539001,L2 U2 D L B' U' R' D' F B D2 F' U2 R2 F R2 D2 R2 D2 R,B,Thunder Bay 2026 (2026-07-25),333 R1 B #1
 462109001,D2 L2 F2 D F2 R2 B2 D2 U' B L' F' U F' L B F' L2 R' U,B,Nacionales Uruguayas UCHI 2017 (2017-03-04~05),333 R2 D #4
 4326944001,U2 B2 U B2 L2 F' L' B' D L R' U F' L U2 L' R2,B,Liga SLP Jornada Rojo 2024 (2024-12-01),333 R2 B E1
 483021001,R2 U' B2 U' R2 D2 B2 U2 B' L' D2 R2 D2 R2 F' U' L B' D R',B,Eugene 3x3 Mania 2017 (2017-04-08),333oh Final A #2

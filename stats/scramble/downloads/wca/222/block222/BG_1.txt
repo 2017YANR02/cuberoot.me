@@ -1,8 +1,8 @@
 # Scramble samples — 222 / block222 / BG / bin 1
-# Population in this bin: 349
+# Population in this bin: 353
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5441747001,R' U' D L B2 U' B' L U L' R2 U2 F' D2 L2 D2 B' L2 B,G,Xianju NxN 2026 (2026-03-07),333oh R1 A #5
@@ -86,7 +86,7 @@
 4715489001,L2 D2 L' B2 L' F2 L D2 R2 B2 F D R B2 R2 B' U2 F2 U',G,German Open 2025 (2025-05-10~11),333 R2 C E1
 826009001,F2 U2 F2 L' U2 L D2 F R' B2 L' U2 R' B' R U L F',G,Kansai Summer 2018 (2018-07-14),333 R1 C #5
 4892262001,U R2 F' R' F' U2 D2 R U R2 L2 F2 B2 D' L2 F2 B2 D' L2 U2,B,Edén Bogotá IV 2025 (2025-07-27),333 R1 A E1
-836973001,F2 U2 L' U2 L R2 U2 R2 F' R' D2 L' U' L' B2 L2 U',B,Colombia Nationals 2018 (2018-07-20~22),333 R1 B #5
+5769010001,B' F2 D2 U2 R2 D' B2 D' L' U' R' F2 U R' B D2 R' F',B,Elmsford Extravaganza II 2026 (2026-07-28),333oh Final B #1
 842540001,B2 U2 L D2 L' U2 R' F2 L B' D' B' U2 L' R U' R' D2 R',B,VCP Invierno 2018 (2018-07-28),333 R1 A #2
 846460001,F D2 R L2 U F' U R2 D2 R2 B L2 B2 D2 B2 U2 B R2,G,Franconia Open 2018 (2018-08-04~05),333 R1 A #2
 4479873001,F2 R2 F' U F2 D2 R F' R' U2 R2 D2 B2 R' U2 D' L' U,B,Bucharest Cubing February 2025 (2025-02-08),333 R2 B #3
@@ -129,7 +129,7 @@
 1390183001,U2 L2 R2 D' R2 F2 U R2 U' F U2 L' D2 U2 F2 R F U R2,G,Cambodia Cubing Championship 2019 (2019-11-03),333 R1 A #5
 4141941001,R' B R2 F2 L2 B L2 F' R2 F D2 L D2 F2 U2 B' U' F,G,Leicestershire Autumn 2024 (2024-09-28~29),333oh R1 C E1
 4892565001,L' D2 B' U2 B D F L' B2 U2 R' B2 L2 D2 L' F2 B2,B,Cuenca Open 2025 (2025-07-26~27),333oh R1 A #2
-1430012001,L2 D R F R' D2 R L' D' F D2 F' L2 F L2 F D2 R2 L2,G,STEM Cube Open Penang 2019 (2019-11-30),333 R2 C #3
+5764262001,U2 F D B' L2 B D2 F' U2 L R B2 L' F' R F L2,G,GAN Tarlac Speedcubing Open 2026 (2026-07-25),333 R2 B #3
 1440004001,B2 L' R F2 L' R B2 U L B2 F' R2 U' L' B R F' L',G,Campeonato Brasileiro 2019 (2019-11-29~12-01),333ft R1 B #2
 1473343001,L2 D2 F' U L F2 R2 B' U' D B2 U L2 U' R2 L2 D2 B2,B,Medan 10th Anniversary 2019 (2019-12-21~22),333 R1 B E2
 5380604001,R' U2 F' R2 B' R2 B U' L U2 B2 D B2 U2 F2 R2 F',B,The Battle of Concord MA 2026 (2026-02-08),333 R1 C #5
@@ -194,7 +194,7 @@
 3927009001,L U' L' B R' D2 R B U2 F' L2 U2 L2 D2 B2 L U L' F',B,Don't Blow Away Casper 2024 (2024-07-13),333 R2 A E1
 3736395042,F' D F2 D' B2 F2 R2 U R2 D2 B' D' R2 F R B L2 D' R' B' L,G,Silent Brasília 2024 (2024-05-04~05),333mbf Final A #1
 3142148001,U R2 D' F2 U' F2 D' L' B2 D2 F D F' L' U2 L' F2 L',G,T-Town Showdown 2023 (2023-10-07),333 R1 A E2
-5209649001,R' L F2 L' U L2 F' R' D R L2 B R2 U2 D2 F L2 F2 L' F,G,Aarhus Fall 2025 (2025-11-22~23),333bf R1 B #1
+5763081001,B2 D2 F U2 R2 B L2 B' D B2 R2 U' B R D' R' D',G,Middle Georgia Summer Solving 2026 (2026-07-25),333 R2 A E1
 2945298001,R' B U' D2 B2 F2 L2 D2 F2 D2 R D2 U R' B2 U B L' D',B,mcubes Cube Open 2023 (2023-07-29~30),333 R1 F E2
 2871609001,D2 L B2 L2 D B2 R' U' B' D2 R2 B' D2 F' U2 F' U F',G,Irish Championship 2023 (2023-07-07~09),333 R2 B #2
 5256691001,B D2 U2 R F2 U2 L B2 D2 F2 D L' D L' F' U' L2 F' U B' L2,G,Texas Championship 2025 (2025-12-05~07),333bf R1 B E1

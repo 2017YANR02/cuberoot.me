@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / OR / bin 9
-# Population in this bin: 290
+# Population in this bin: 294
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5055001,B2 U' R' U2 D' F' B U L' D F2 U2 D2 R' B2 U2 R L2 F2 U2,O,Tula Open 2014 (2014-03-28~30),333oh R1 B E2
@@ -67,7 +67,7 @@
 775303001,L2 U F' U B D F R2 F B D2 R' U2 R L' U2 F2 U2 B2,O,SESC Gravataí 2018 (2018-05-05~06),333 Final B #1
 788994001,L2 U' L2 B2 D U L2 U2 L' D B' R' D' L U L F U B',O,Battle for Foothills Limited 2018 (2018-05-26),333 R1 J #2
 798584001,R' B' D R2 L' B2 D B' R' D2 L D2 R2 U' R2 U L2 U2 L2 F2,O,Rose City 2018 (2018-06-08~09),333 Final A #2
-801034001,U B2 D' R2 D2 R2 U' B2 U B' F2 D' L D2 U' B' D2 R2 D L' D2 B' L2,O,Dallas Fort Worth 2018 (2018-06-09~10),333bf R1 B #3
+5768019001,B2 R' U2 R U2 B2 L2 R2 U2 D' B2 R U' B D2 U' F U R U,O,Selangor Cube Open 2026 (2026-07-25~26),333oh R1 D #2
 813423001,B2 R2 D2 B2 L U2 L B2 R' D2 R F' R' B' L U' L D U2 L2 F,O,Nantes Open 2018 (2018-06-23~24),333 R1 A #1
 4605331001,R' F L' B2 R L2 F2 U R' F2 D2 L' B2 D2 L F2 B2 U2 D' F,O,Plaza Madero Chía 4 2025 (2025-03-30),333 R2 C #1
 832772005,U2 B' R2 F L2 U2 F L2 U2 B2 U' L' F' U' R' U L' D' B R' U' B R2,O,Ixchel 2018 (2018-07-21),333mbf Final A #1
@@ -113,7 +113,7 @@
 1472350001,L2 F2 D' F2 U L2 D2 B2 U' F2 D' B D R B' F L' B D2 U,O,Taiwan Championship 2019 (2019-12-13~15),333ft Final A #2
 1502415001,U2 R F2 D2 L' R D2 B R2 D' L2 B' L' U' F' R D U2,O,Cubing with Manatees 2020 (2020-01-18),333 R2 B E1
 1531718001,U2 F2 L2 D F2 R2 U2 R2 D L2 D' L' B' U' F L2 B' R' U' L2 B',O,Warden of the West Azerbaijan 2020 (2020-02-02),333 R1 C E1
-5593227001,U F D' F2 U2 B2 R' B U B2 R2 U2 B' D2 F' L2 F' L F2,O,WPI Spring 2026 (2026-05-02),333 R1 C #3
+5764328001,L2 F2 D U2 L2 U B D' U' L' D F' R2 U R' B F2 U',O,GAN Tarlac Speedcubing Open 2026 (2026-07-25),333 R2 B E1
 4640289001,U' B L2 U R L U D R' U2 B D2 B' R2 U2 B R2 U2 R2 B',O,South East Louisiana Open 2025 (2025-04-12),333oh R1 C #3
 4872171001,U2 L2 B2 L2 U2 F2 U' L U2 F L2 D2 L U R F' D R2 F',O,Calgary Summer A 2025 (2025-07-19),333 R1 D #4
 1614207001,U2 R2 U2 F2 L2 R2 U L2 B' L R D F U' B D2 R' B2 L',O,Estonian Open 2020 (2020-08-22~23),333oh R1 C #3
@@ -203,5 +203,5 @@
 3795691001,F' L U2 R2 F2 L2 F2 U L2 U2 F' D B R U2 B U' F R',O,Concepción al Cubo V2 2024 (2024-05-25~26),333 R1 B #3
 3801843001,B2 R D' F' R2 U2 B' D2 U2 B R2 L' U' B D F R' D2,O,Sunway Velocity Mall Open 2024 (2024-05-25~27),333 R1 I E1
 3833772001,U' F2 R' B' D2 B' L2 U2 B2 R2 B' R2 F' U' B' L' F' U F D,O,West Coast 3: Trollhättan 2024 (2024-06-08~09),333 R2 B E2
-3851459001,B L2 B2 D2 F2 D2 L' D2 U2 B' D B2 U F L' D' R' U2 L',O,Husky Pride Seattle 2024 (2024-06-15),333 R1 E E2
+5758226001,D' F2 D' R2 D R2 B2 D' U' L F2 R F' D U' B L' U L2 R2,O,Unicentro Armenia V 2026 (2026-07-20),333 R2 C #4
 4874508034,D B R2 U L2 R2 U F2 D2 U L U R U2 L2 R2 B2 D B,O,BrizZon Side Open III 2025 (2025-07-19~20),333mbf Final B #1

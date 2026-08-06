@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / R / bin 5
-# Population in this bin: 654
+# Population in this bin: 658
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 2411907001,L D' B2 U L2 D2 L B2 R2 D2 F U R' D B' R D,R,Cebu New Year Open 2023 (2023-01-07),333 R2 E #2
@@ -114,7 +114,7 @@
 634693001,R2 U2 F2 R D2 L2 R2 D' B2 L B R2 B' F2 D F2 U2 L',R,Kjeller Open 2017 (2017-11-04~05),333 R1 E #5
 636869023,B2 L2 D' L2 B2 D' B2 F' R U' F2 L' U' R' U2 F D2 L2 F2 L B2,R,Villanueva Open 2017 (2017-11-04~05),333mbf Final A #1
 1240614001,R2 U' F2 B D' F B2 L2 B' D' L2 F2 D2 B2 U2 R U2 L F2,R,Ecuador Nationals 2019 (2019-07-27~28),333 R1 C #5
-2791370018,L R2 B' R2 U2 F L2 B' L' D2 U' F2 L2 B' D L F' D' L' F,R,Ohio State Summer Solving 2023 (2023-06-10~11),333mbf Final B #1
+5770772021,D2 F U F L2 D' U' F2 L2 D U2 F L2 F R2 D2 L F' L,R,Big Brain Battières 2026 (2026-08-01~02),333mbf Final A #1
 644641001,R2 D' L2 R2 F2 D L2 U' B2 D F2 R' B L R B R U' L D',R,Estância Open 2017 (2017-11-18),333 R1 B #3
 653276001,U2 F R2 D2 R2 B L2 F' D2 U' F2 R2 B L' B2 D B' D R2,R,Weston-super-Mare Open 2017 (2017-11-25~26),333 R1 D #5
 1908917001,B F' D2 F L2 B2 L2 U' B' L D B' R' U2 R F' L' D',R,Rose City First-Timers B 2022 (2022-05-08),333 R2 C #1
@@ -169,7 +169,7 @@
 1140925001,F2 R' B2 R B2 F2 U2 R D2 R B F2 R U' R B' D2 B2 R,R,İzmir Spring 2019 (2019-05-11~12),333 R2 B #2
 868791001,L2 R2 D' B2 U F2 D2 F2 L2 F2 U' B' R2 U' R U2 B' L' R D',R,Swisscubing Cup III 2018 (2018-09-01~02),333oh R1 B #3
 878649001,D2 U2 R' U2 B2 U2 R F2 L' B L2 B2 D2 U L' U' R' F2 R' B L B',R,Thailand Championship 2018 (2018-09-15~16),333bf Final A #3
-2642676001,B L D B2 D' R' D2 F' D F2 D2 L2 F' L2 F R2 L2 D2 F',R,Cubing in HD 2023 (2023-04-15~16),333 Final A #3
+5760287051,D B2 R' D' F2 R' U B' D R2 F R2 B' R2 B' L2 F2 R' B R2,R,Mental Breakdown Bangkok 2026 (2026-07-25),333mbf Final A #1
 5503691004,D2 R2 F' R2 U R' U L R2 U2 R2 F2 D2 B R2 U2 F2 L,R,PBQ in Astana 2026 (2026-04-04),333mbf Final A #1
 902251001,B' U2 F2 U2 L2 B R2 B L' D' B' L2 B2 L2 D' F' U B R' B R,R,Montpellier Open 2018 (2018-10-13~14),333bf Final A #1
 2940336001,D F2 L2 U2 F2 U F2 U F2 D' F' D2 L2 F R' F' D' L B,R,Poznań MBLD Cup 2023 (2023-07-29~30),333mbf Final B #2

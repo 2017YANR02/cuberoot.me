@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / R / bin 4
-# Population in this bin: 307
+# Population in this bin: 309
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 3938051001,U D R' B2 U' F R F2 L' U' R2 B2 U2 D' R2 U D L,R,Varna Open 2024 (2024-07-13),333 Final A #2
@@ -128,7 +128,7 @@
 5539908001,R2 L F' L' F L D2 B2 L2 D' F2 L2 D2 F' L2 F2,R,NZ South Island Championship 2026 (2026-04-10~12),333 Final A #2
 5138619001,D' B2 R2 U B2 D' L2 R2 F D2 L B2 L R' U' B' F' D',R,Cubing C3 2025 (2025-10-25),333 Final A #3
 1421848001,L2 B2 D2 U2 R B2 U2 R' D L2 B D' U' F U L D2 B2 D,R,Umnugovi Cube Day 2019 (2019-11-23),333 Final A E2
-4773400001,R' B2 U2 B U L' B U R2 B2 L' F D2 B U2 R2 U2 D2 L' F,R,Luzon Multi-Mega Madness 2025 (2025-06-01),333bf Final B E1
+5762539001,U2 D2 B' D R' D B' L F2 L2 B2 R' U2 B2 L U2 F2 R2 B R2,R,Corning Summer 2026 (2026-07-25~26),333bf Final A #2
 1470228001,F U' F' U' F' U2 L D' L2 F L2 U2 F2 L2 F2 U' B2 D',R,Cebu Speedcubing Year End 2019 (2019-12-21~22),333 R1 B E2
 1476974001,F2 L' F2 U2 L U2 L F' R' D' F2 D R F2 U2 L B' L2,R,KES Cube Open 2019 (2019-12-22),333 Final A E2
 1543372001,U B2 R2 B2 U B2 F2 L F' R2 D2 F D2 F' U2 B D' B2,R,Pitic Open 2020 (2020-02-07~09),333oh R1 B E2
@@ -153,7 +153,7 @@
 2127389001,L F B' U2 L' U F' R U2 B2 L' D2 R B2 U' L2 F',R,Irvine Summer 2022 (2022-08-28),333 R1 A #4
 2156434001,F D2 B' L B' R B2 D' F' D L' D2 F L2 F' B R2 F',R,Apollo Bay Cubing 2022 (2022-09-10~11),333 R1 C #4
 2218680001,L2 U2 B2 D2 F R2 F2 L2 B2 U' B' D' L' D' B' R D' U2 L,R,Kid's Day Conquista 2022 (2022-10-08~09),333 Final B E2
-2218759001,L F R F2 R' D2 U2 R' D2 R2 D2 F D R U L2 D F' L',R,Kid's Day Conquista 2022 (2022-10-08~09),333oh R1 A #2
+5760911001,B' D U2 R2 B L2 B2 D2 B' D2 B U R' B U2 L U2 R D',R,Caminos de Guanajuato - SJI 2026 (2026-07-25),333 Final A #5
 2225377001,D B2 L D2 B2 D2 L' R' B' U2 R F' U2 F D' R F2 U2,R,Rockies Rager Fall 2022 (2022-10-08),333 Final A E1
 2319950001,B2 L2 B U2 R2 F D' L' R F U L R U' F U' F,R,Dragon Cubing 2022 (2022-11-19~20),333 R2 A #5
 2334045001,D2 B2 D' R2 F2 U F2 R F2 L U2 R F' D2 L2 R2 D' F,R,Oakville Fall B 2022 (2022-11-27),333 R1 D #1

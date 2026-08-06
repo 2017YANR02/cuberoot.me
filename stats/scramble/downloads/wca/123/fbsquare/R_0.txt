@@ -1,8 +1,8 @@
 # Scramble samples — 123 / fbsquare / R / bin 0
-# Population in this bin: 814
+# Population in this bin: 818
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5691925006,L D2 L' U2 L D2 L2 B2 U B D U L D2 R' B D B' L B,R,Swisscubing Cup Mental Breakdown I 2026 (2026-06-06~07),333mbf Final B #1
@@ -21,7 +21,7 @@
 1921497001,U' B U2 B' U2 R2 B' R' D B' D R2 F' D2 L2 U2,R,MSU Quiet Qualifier 2022 (2022-05-14),333bf Final B E1
 2648079001,R2 F2 D' B2 L2 D B2 F L B D F R B' R' U' B2 U,R,Szokolya Open 2023 (2023-04-15~16),333oh Final A #2
 3942595001,F2 D2 B L2 U2 F2 D2 B2 F2 L' D U B2 L D F D2 R' B,R,Los Reyes del Cubo II Chiclayo 2024 (2024-07-13),333 R1 B E1
-4680143001,B R2 D2 F' D2 R2 F' R2 D' R B2 U' L' B2 R' D B' L,R,Viña Keep Going 2025 (2025-04-26),333 R1 B E1
+5770831001,R' D' F R' B' R D' L' B2 R2 F2 R U2 D2 R B2 R F2 B2 L B2,R,Big Brain Battières 2026 (2026-08-01~02),333bf R2 B E2
 94843001,B2 D2 F2 R2 F2 D' L2 D F2 L' F U2 B2 U' B U' F2 U R,R,Austin Cubing Limits 2015 (2015-01-03),333oh Final B E1
 3160056001,L2 F R2 B F U2 B D' R' B F2 D2 F' L2 F U' L2,R,SCZ Speedcubing Party 2023 (2023-10-15),333 R1 D #3
 3209431018,B L2 U' F' U2 R2 B U2 L2 F L F U B U2 L' B U' B',R,NZ North Island Championship 2023 (2023-10-27~29),333mbf Final A #1

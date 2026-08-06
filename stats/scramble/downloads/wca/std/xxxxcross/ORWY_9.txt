@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / ORWY / bin 9
-# Population in this bin: 97
-# Samples listed: 97 (all entries in this bin)
+# Population in this bin: 99
+# Samples listed: 99 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 47841001,D' R2 U' F2 U' F2 L2 B R2 D' F' U2 F2 D2 L' F U2 F',O,Rubik's Cube European Championships 2014 (2014-08-08~10),333 R1 D #2
@@ -102,3 +102,5 @@
 5666017001,D F' R D2 F' L2 R2 U2 L2 B L D B' F L B' D B2,R,West Coast Cubing Western Championship 2026 (2026-05-23~25),333 R2 C #5
 5723889001,D2 F' U2 L2 U' F2 R2 U2 L B R D' L2 D' L D,W,Summer Cubing Szczecin 2026 (2026-06-27~28),333 Final A #1
 5748770001,F' R U L' B2 R F2 L D2 R' D' L D L2 F' D' R,R,Australian Nationals 2026 (2026-07-09~12),333oh Final A #1
+5761802039,F U D R' B' D' L' F2 R2 U L2 U F2 U2 F L' F' L2 U,Y,Luminous Sol Open 2026 (2026-07-25~26),333mbf Final A #1
+5770737001,U' R2 U B2 F2 U2 L B' D U2 L2 U2 B2 L' B L F2 U',Y,Vacaciones Cuenca Open 2026 (2026-08-01),333 Final A E1

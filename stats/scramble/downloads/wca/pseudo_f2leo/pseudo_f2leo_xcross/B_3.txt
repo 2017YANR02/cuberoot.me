@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / B / bin 3
-# Population in this bin: 345
+# Population in this bin: 346
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 242001,L' U2 F2 L D2 U2 R D2 U' B' R2 D R' B D F' D' B2 D',B,Montréal Open 2014 (2014-03-15),333 R1 A #3
@@ -92,7 +92,7 @@
 851635001,D F' B' L B' R U R D2 L2 B' R2 F2 L2 F R2 L2 B' D2,B,Dåstrup Sleepover 2018 (2018-08-10~12),333 R1 D #2
 4650274001,D2 L B2 D' L2 R2 U L' D2 B F D' B2 F D' U2 R B R',B,Brazos Cubing Spring 2025 (2025-04-13),333bf R1 A E2
 863366001,D2 R2 F R F' R2 D2 L2 D B2 R2 F2 R2 U F2 U,B,August Bank Holiday Competition 2018 (2018-08-25~26),333oh Final A #1
-866623001,U2 B D' R2 U2 B U' F2 U B2 U2 B2 R B2 L' U2 L F2 L',B,Canada's Best in the West 2018 (2018-08-24~26),333 R1 D #1
+5761870001,L' U2 B' D F D2 R' U R' U' L2 B2 D2 L2 F2 R' U',B,Luminous Sol Open 2026 (2026-07-25~26),333oh Final A #3
 869038001,L' U' D2 R U' F D B L2 U' R D B2 L2 U D2 F2 U',B,Croatian Open 2018 (2018-09-01~02),333 Final A #3
 869749001,U2 F2 L2 B U B R' U2 R' F' R2 D2 R D2 L D2 L,B,Fredrikstad Open 2018 (2018-09-01~02),333oh R2 B E1
 886249008,R' F2 R B2 R D2 R B2 L B' D' F2 D' B' F D2 F2 L' B2 F',B,Sandnes Open 2018 (2018-09-22~23),333mbf Final A #1

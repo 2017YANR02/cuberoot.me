@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / B / bin 2
-# Population in this bin: 207
+# Population in this bin: 210
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 55529001,D2 F' U2 F D2 B' U2 R2 F U F2 U' B L' D' F' D U2 L,B,Mogi Open 2014 (2014-08-30~31),333 Final A E2
@@ -172,7 +172,7 @@
 4407630001,R' L2 U2 B2 U' R2 D' R2 B2 D B' L' U2 F L R U B2 R,B,TCG Space lV Santa Anita 2025 (2025-01-04~05),333 R1 C #5
 4431177001,F' B2 U2 L2 B2 R2 U L2 D2 U' L F L' D' R' U2 B2 D U2,B,Puzzles in Pottsville 2025 (2025-01-18),333 R2 A #3
 4477934001,U B2 F2 D U2 B2 F2 L2 D' U L B' L R U' F L' B R U',B,Cebu Big Cubes 2025 (2025-02-08~09),333oh R1 B #2
-4495572001,U2 R B2 R' U2 F2 L' U2 B2 D2 F2 U' B L' B' D2 B L',B,Cube Against Cancer Edmond 2025 (2025-02-16),333 R2 B E1
+5759954001,F2 U2 B2 U' F2 L2 U B2 L' B' F' L D B' D2 F L B2 U' L' F,B,Tokyo BLD Summer 2026 (2026-07-25),333bf Final A E1
 4509776001,D' F D' L2 D B2 F2 U R2 U' B2 F R F U2 R' F U' B',B,LA PRE Pucallpa Speedcubing 2025 (2025-02-22),333 R2 B #4
 4558189001,D2 L D F2 L2 F' L' F2 U B2 U R2 U' L2 D L' F2 D' L',B,Montemurlo Speedcubing 2025 (2025-03-08~09),333 R1 A #1
 4589834001,U2 L2 B2 U R2 B2 D2 R B' D' F2 U2 F2 R' U L2 R F',B,Slow N Steady UMD Spring 2025 (2025-03-23),333oh R1 C E1
@@ -189,7 +189,7 @@
 4931998001,L2 D' F U2 L2 D F R L D2 R2 D2 B2 L U R2 B',B,Zibo Open 2025 (2025-08-10),333 R2 D E1
 4934264004,L2 B R' D' L2 F' D' R2 F' U2 F2 D2 R' D2 F2 R' U2 L B' L',B,Ashfield Summer Challenge 2025 (2025-08-09~10),333mbf Final A #3
 5688166001,L' B L' U F U R2 F2 U' R' B R2 L B2 L U2 D2 R2,B,LCCC Cubing Summer 2026 (2026-06-06),333 R2 A #3
-4995563001,L' F2 D' R' F D F2 L2 D L D2 R' U2 D2 B2 U2 D2 L2 D',B,FoCo Open 2025 (2025-08-30),333 R1 B #1
+5761802039,F U D R' B' D' L' F2 R2 U L2 U F2 U2 F L' F' L2 U,B,Luminous Sol Open 2026 (2026-07-25~26),333mbf Final A #1
 5693039044,D2 L' D2 R2 U2 L2 B2 R D L' U' F' U' R B' U2 B U R' B R,B,Brilliant Big & Blind Bravo Orlando 2026 (2026-06-06~07),333mbf Final A #1
 5005903001,L2 B2 D L2 R2 F2 U L2 D2 R2 U' L U F' L D B' R' F' D,B,Makati Speedcubing Open IV 2025 (2025-09-07),333 R1 B E1
 5034297002,D U2 R2 U2 F R2 B2 F' D2 B' F' L U R2 U B' L2 U2 B2 L2,B,Cubing Kerala Travancore Open 2025 (2025-09-21),333mbf Final A #1

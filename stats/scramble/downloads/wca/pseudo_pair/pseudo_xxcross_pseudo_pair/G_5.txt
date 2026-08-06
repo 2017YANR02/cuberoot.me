@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / G / bin 5
-# Population in this bin: 683
+# Population in this bin: 686
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 8961001,L2 F R2 B2 L2 B2 R2 D' F' R' D R2 B' D2 L' F' L F',G,BP Cube Day 2014 (2014-04-05),333oh Final C #1
@@ -153,7 +153,7 @@
 4236956001,L2 D R2 D' U' L2 R2 U L D2 R' B R' B' R' B' D' L2,G,Ciudad Crepuscular Lara 2024 (2024-10-26),333 Final A #3
 1904214001,B F' U2 B' L2 U2 L D' R D B' L B' F R2 U2 B,G,TCG Nueva Generación 2022 (2022-04-30~05-01),333 R1 E #2
 788023001,F2 D L2 F2 R2 U2 B2 F2 D' R2 F U F R B' L' U' B2 U L' U L B,G,Baires Centro Open 2018 (2018-05-26~27),333bf Final A E2
-2184786016,F R2 B' F2 U2 B L2 D2 R2 F2 D2 L F D2 R' F' D' U2 F L2 U,G,Please Be Quiet Brisbane 2022 (2022-09-24),333mbf Final B #1
+5766444001,U' D F R' B' R2 L2 B D' U2 R2 D2 R F2 L' U2 F2 R B2,G,Pocos Cupos Bogotá XXVIII 2026 (2026-07-25),333 R1 A #4
 5212839012,F' B2 R2 U2 L F' L F' R' D F2 R' U2 B2 R2 U2 F2 U2 B2 L2 U',G,Ohio Quiet Championship 2025 (2025-11-23),333mbf Final A #1
 808336001,F2 L F2 R F2 U2 R' U2 F2 D U2 L' F L D R B' F2 D2,G,El Escorial Open 2018 (2018-06-16~17),333oh Final A #2
 3278556001,R2 D2 R' F' U2 L' B' D' R2 D2 R B2 R L' B R D2,G,Berkeley Fall 2023 (2023-11-18),333oh R1 D #1

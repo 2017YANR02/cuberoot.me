@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / B / bin 5
-# Population in this bin: 58
-# Samples listed: 58 (all entries in this bin)
+# Population in this bin: 59
+# Samples listed: 59 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 66157001,L2 U2 B2 L2 F R2 F U2 B L D2 L2 B R2 D2 U2 R2,B,Montreal Fall 2014 (2014-10-11~12),333 Final A #1
@@ -63,3 +63,4 @@
 5080728001,F' L' F2 R U2 R2 B2 R' F' L' R F2 L2 B' L2 B,B,Seattle Cube Cascade UW 2025 (2025-10-04),333 Final A E1
 5373775001,B' R2 F D2 R2 F2 R2 B U2 F R2 D2 L' R2 F D F' R',B,Elmira Winter 2026 (2026-02-07~08),333oh Final A E2
 5523889001,R2 B' R2 U2 F2 L2 F D B U' F2 U B' L2 R F' L',B,Avenida Chile XXXIII 2026 (2026-04-12),333oh R1 A #2
+5761802036,D2 B2 F' L2 F2 D2 U2 F' U2 R2 D' U' B2 D' R2 B R' B,B,Luminous Sol Open 2026 (2026-07-25~26),333mbf Final A #1

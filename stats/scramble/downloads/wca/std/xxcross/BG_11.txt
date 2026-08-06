@@ -1,8 +1,8 @@
 # Scramble samples — std / xxcross / BG / bin 11
-# Population in this bin: 8
-# Samples listed: 8 (all entries in this bin)
+# Population in this bin: 9
+# Samples listed: 9 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 484910001,U2 B2 U' L2 F2 U F2 U2 L2 D2 L' F2 D R' U B' L2 B2 F' U' B2 L B,B,Greece Spring Open 2017 (2017-04-10),333bf Final A #3
@@ -13,3 +13,4 @@
 2520254001,F U' R F2 R2 U F2 R2 D' L2 U2 R2 U' L' R U' B F2 D2 F',B,Flatåsen Open 2023 (2023-02-24~26),333 R2 B #4
 3183120001,U' B D' R B2 U R2 D L2 B2 U F2 D' L F' R' D' L U' F,B,Evanston Fall 2023 (2023-10-21),333 R2 A #4
 3545832055,U' F2 D2 L' D2 F2 L F2 L F2 D' B U' B2 R U' B2 L' U F L2 U',B,Please Be Quiet Taiwan 2024 (2024-02-24~25),333mbf Final A #1
+5759273001,F2 D2 B L2 F' D2 F2 D2 F' L' U' R D B' F' U2 L2 D R',B,SPAMTown IV MN 2026 (2026-07-25),333 Final B #2

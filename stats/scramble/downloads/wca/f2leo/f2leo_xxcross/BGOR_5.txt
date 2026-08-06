@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / BGOR / bin 5
-# Population in this bin: 250
+# Population in this bin: 251
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5433363044,D' R' B2 D' L F' U2 B' U2 R' D2 L U2 D2 L F2 R U2 L B,O,BrizZon Side Open II 2026 (2026-03-07~08),333mbf Final A #2
@@ -199,7 +199,7 @@
 4606347001,L2 U2 L2 U R2 D F2 L' F2 L' F' D F2 L B2 R' B' R2,R,South Dakota Playhouse 2025 (2025-03-29),333oh Final A #2
 4650293001,B D' L2 U F D B' L F2 B2 R' U2 R' F2 D R' B,O,Brazos Cubing Spring 2025 (2025-04-13),333oh R1 B #2
 4674893001,U' R D B' R2 B2 R2 B2 D2 U L2 D2 L U' R B U' L B',B,Bayankhongor Open 2025 (2025-04-26),333 R1 G #5
-4684952001,B' D' B2 L' D2 L U2 L F U L U2 B2 F U F2 L2,G,Kaunas Open 2025 (2025-04-26~27),333 R2 A #3
+5770720001,L' R' U2 L2 R2 F2 U2 F' U' R' B2 L D' F' U' L2 U2 R',B,Vacaciones Cuenca Open 2026 (2026-08-01),333 R1 B #5
 4707251001,F' U' R' U2 R2 U' L2 U2 R2 L' D F' R2 U' B2 D' R,R,Flatåsen Open 2025 (2025-05-03~04),333oh R2 A #3
 5692705035,D F2 R' U' F2 D B2 R2 D2 U B D2 R2 B' R2 F2 R B L' F2,B,CubingUSA Great Lakes Championship 2026 (2026-06-05~07),333mbf Final A #1
 5419667001,R' D R' B F R2 D2 B' U2 B' F' D B R2 D' F' U',B,Open de Gatineau 2026 (2026-02-28),333oh Final A E1

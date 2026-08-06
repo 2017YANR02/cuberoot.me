@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / OR / bin 3
-# Population in this bin: 285
+# Population in this bin: 286
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4126175001,L' D2 L' B L' D2 B F2 R D2 L' U2 D2 L2 F2 D L2 B2,R,McMinnville Cubing Fall 2024 (2024-09-21),333oh R1 A #5
@@ -36,7 +36,7 @@
 312054001,D F2 L2 D F2 R2 D' L2 U2 R2 B L' B2 F U' R F R' B D',R,UCSM Supérate Open 2016 (2016-06-11),333 R2 A #4
 319056001,F2 D B2 D F2 L2 U B2 L' R2 B D2 F2 U R U2 R2 D L,O,West Friesche Open 2016 (2016-06-26),333 R1 B E1
 4785035001,U2 L' F2 D' F' L F2 D2 L2 B R' F' U2 F B2 D2 B2,R,Santa Cruz Open 10 Years 2025 (2025-06-07~08),333 R1 C E1
-399335001,F' U2 R2 D2 U2 B' R2 F2 U2 R U L2 F D R' F' R2 B' D,O,Cariri Open 2016 (2016-11-12~13),333oh R1 A #1
+5760911001,B' D U2 R2 B L2 B2 D2 B' D2 B U R' B U2 L U2 R D',R,Caminos de Guanajuato - SJI 2026 (2026-07-25),333 Final A #5
 5630552001,U2 B2 R' L2 D2 R2 F L2 B R2 F' R F2 L2 D R' B' L2 R',O,3x3x3 un Nekas Cits Rīgā 2026 (2026-05-16),333 Final A E2
 429728001,L2 U2 F2 D2 F' L2 R2 B' L U' B' R2 U2 B' L2 R' D B' R',O,Cubers East India Open 2017 (2017-01-07~08),333 R1 C E2
 441634001,F' L U' F2 D2 F' U R' B2 L' B' D2 F' R2 U2 B2 U2 F',R,B.O.N.D. Open 2017 (2017-02-04~05),333oh R2 A E1

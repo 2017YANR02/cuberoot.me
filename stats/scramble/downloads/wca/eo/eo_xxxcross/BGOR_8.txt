@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / BGOR / bin 8
-# Population in this bin: 488
+# Population in this bin: 491
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4910305001,D' F2 D L2 D2 B2 L2 F' D' L2 B L2 D B' L' D R',G,Silesian Minx Fest 2025 (2025-08-02~05),333oh R1 B #3
@@ -183,7 +183,7 @@
 4479278001,B D2 F D2 U2 R2 B2 R B' R' U F' D' F' U L2 D2,O,SSN Cube Open 2025 (2025-02-08~09),333 R1 B E2
 5678420001,U R2 D R F2 B' D R' B U' L2 U2 B2 D L2 B2 R',R,Gif-sûr de PR 2026 (2026-05-30~31),333oh R1 B #4
 5022750001,R' U' F D B2 R2 U' F2 U B2 D B D L' R B R2 B' L2 R F R' U' F,B,Campeonato Nordestino FMC ABRACM 2025 (2025-09-14),333fm Final A #2
-4934237001,R2 L' D2 R' F L2 B D' F L U2 B2 L2 F2 D2 R U2 L' D2 B' L,G,Ashfield Summer Challenge 2025 (2025-08-09~10),333bf Final A #2
+5761802025,L2 U D F' U2 D L' D F2 R2 F' L2 B2 R2 U2 B' L D' L2 U2,G,Luminous Sol Open 2026 (2026-07-25~26),333mbf Final A #1
 1921497001,U' B U2 B' U2 R2 B' R' D B' D R2 F' D2 L2 U2,O,MSU Quiet Qualifier 2022 (2022-05-14),333bf Final B E1
 3921060001,U' L2 U2 L' D2 R D2 L' B2 F L2 F D B' L2 F' D' B,G,Iguatemi Fortaleza IV 2024 (2024-07-06~07),333 R1 D #1
 2744532020,L D R B R2 B D2 U2 F D2 F R2 L' D2 B D2 L' B2 U2 L B,G,SacQuiet Spring 2023 (2023-05-21),333mbf Final A #2

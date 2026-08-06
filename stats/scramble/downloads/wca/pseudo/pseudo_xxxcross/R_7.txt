@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxxcross / R / bin 7
-# Population in this bin: 880
+# Population in this bin: 883
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 3853392001,L' B L' U2 D2 R2 F D' L F' D2 R2 U F2 D F2 D L2,R,Prime Cubing Day Seoul 2024 (2024-06-15),333 R1 E E1
@@ -53,7 +53,7 @@
 246360001,B2 R' D2 L' D2 B2 D2 R2 U' R' D2 B' F2 D B L2 D' B2 R2,R,Good Nutrition Cube Day 2016 (2016-01-24),333 R2 A #2
 3650559001,F L F2 R' U2 L' F2 D2 B2 L' B L R' D2 L' D2 R',R,Sanda Spring 2024 (2024-04-06~07),333 R1 C #5
 4441195001,R' U2 R' D2 L' D2 F2 D2 R U F2 D' R U B2 U2,R,Utah Ice Cubing 2025 (2025-01-25),333oh R1 A #5
-260573001,B' L2 R2 D2 B' R2 F' L2 B2 U2 R F' R2 D L' U' B D L' B,R,Big Apple Cube Clash 2016 (2016-02-27),333 R1 F #1
+5772088001,D' R2 F U' L U2 F2 U2 R U2 L R D' R2 F' L D F' U',R,Saint-Martin Saturday 2026 (2026-08-01),333oh Final B #3
 5434365001,F' D2 F' L' D' R U' F R2 B2 R2 U2 B U' D2 B' L F2,R,North-East Melbourne March Sunday 2026 (2026-03-08),333 Final A E1
 3597944039,F' R' F D2 R2 D2 L' D2 R F2 U B2 D2 L2 D2 F U' F' L' F,R,UCSD Please Be Qualified 2024 (2024-03-17),333mbf Final A #1
 3788786001,R L' U' D R2 L2 B' D2 R' B' U2 R2 B2 U F2 B2 R,R,Ishøj Introduktion 2024 (2024-05-25~26),333oh Final A E2
@@ -65,7 +65,7 @@
 3090630001,F2 D' B' U L U2 L F L U2 L' U' R2 D2 L2 F2 U' R2 F2 L B2,R,Criciúma Open 2023 (2023-09-16~17),333bf Final A E1
 3836839001,F D R2 U2 L B2 D2 U2 F2 D B' L2 D' U L D2 U2 L2,R,Prague June 2024 (2024-06-08~09),333 R2 C #5
 3992623001,D2 F B2 U' F2 L2 F' R F' B L2 U2 L2 U2 F' D',R,A Twisty Day in Araneta 2024 (2024-08-04),333oh R1 A E2
-5736478001,R2 D' L' U2 D2 L2 F' D' R2 F' L2 U2 B2 L2 U' L2 U D,R,BBQ Ropaži 2026 (2026-07-04),333oh Final B #5
+5766259001,B' D2 R2 F U2 L2 F L' U2 L2 U' R2 D' B2 L' D R' U',R,Wuhu Open 2026 (2026-07-25),333 R1 G #3
 3938239001,R' F' L2 B2 R2 D' B2 F2 U' B2 R2 U B D2 U L' B' F' U2 B2,R,200 Perú 2024 (2024-07-13),333 R1 L #1
 317604001,D' L2 F2 D2 L2 D R2 D B2 F' U2 L B2 D L' B' F' D L2,R,Slow N Steady Spring 2016 (2016-06-18~19),333 R2 E #3
 326509001,B R2 B U2 L D2 R' B' U' D B2 R U2 R2 F2 R' F2 B2 R,R,Cowboys Summer 2016 (2016-07-02~03),333oh Final A #5

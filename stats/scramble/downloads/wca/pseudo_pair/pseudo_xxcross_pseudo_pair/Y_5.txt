@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / Y / bin 5
-# Population in this bin: 682
+# Population in this bin: 683
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 1801932001,D R U2 F' R2 L2 D' R' U2 R2 D2 R D2 L' U2 B2 L F2 D R',Y,Summer Kube Vila Velha 2022 (2022-02-05~06),333oh Final B #4
@@ -26,7 +26,7 @@
 87616001,F D2 L D' R U2 L2 B R' B' L2 B2 U2 D F2 U2 D' R2 U2,Y,Santa Claus Cube Race 2014 (2014-12-06~07),333 R1 D #3
 4020383005,D2 U2 B2 D' U2 R' D2 U L' D2 R' D' U L F U,Y,Shhicago II 2024 (2024-08-17~18),333mbf Final B #3
 93322001,L2 D' L2 D' L2 U R2 F2 L B' L' B R2 U2 L' R F2 D,Y,Cubing Mérida 2014 (2014-12-29),333oh R1 B #1
-4057629001,L' U' B2 U2 L' B' D' L' D L D2 B2 L2 U2 D2 F' U2 L2,Y,Welcome to Bishkek 2024 (2024-08-23~25),333oh R1 A #5
+5758847001,D' L2 B2 D F' U F2 B2 D2 R2 F2 R' U2 D2 R D2 R',Y,Rubisian Summer Cubing Iasi 2026 (2026-07-18~19),333 R1 C #2
 2236381006,B2 L2 F B2 R B2 D' B L2 U2 R' F2 D R2 U2 L2 U2,Y,Bishop's Stortford Autumn - British Blind Off 2022 (2022-10-15~16),333mbf R1 B #3
 106449001,U2 F' L2 D2 R2 B2 F' D2 F2 L' F U' R2 U' L' F2 U' B',Y,B.O.N.D. Open 2015 (2015-01-31~02-01),333oh R2 B #3
 4579618001,U' D' R' L F' U2 F2 L' B L2 F' U2 F' B2 U2 L2 F' L' B,Y,Utah Newcomers 2025 (2025-03-22),333 R1 C #4

@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / W / bin 4
-# Population in this bin: 297
+# Population in this bin: 299
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-23
+# Generated: 2026-08-06
 # Columns: id,scramble,bottom_color,competition,round
 
 739001,U L2 F2 D' R2 D' F2 U2 R2 F2 R F L2 D L R' F' L2 U' L' R' D',W,Bogotá Cúbico 2014 (2014-03-15),333bf Final A E1
@@ -139,7 +139,7 @@
 1586445012,L F2 R B2 U2 R2 D2 U2 F' U L2 B2 U' R2 B D' B2 R2 F2 L2 U,W,Auckland Summer Open 2020 (2020-02-29~03-01),333mbf Final A #1
 5723035001,R' F2 L U' D2 B U' L D2 B' U B2 U' D2 B2 U' R2 D,W,Défi à l'Alliance Française El Salvador 2026 (2026-06-27),333 R2 B #3
 1743879001,R' D' R D' B2 U2 L2 U' F2 U2 R2 B2 U2 F' D2 F R' F D' U B',W,Happy Cubing Acton Fall 2021 (2021-11-27~28),333bf Final A #1
-4935724029,B U' L2 U F2 U' R2 U2 B2 R2 U' R U2 B' R F2 D2 B' D' L',W,Kooyong Clock Clash 2025 (2025-08-16~17),333mbf Final A #1
+5764262001,U2 F D B' L2 B D2 F' U2 L R B2 L' F' R F L2,W,GAN Tarlac Speedcubing Open 2026 (2026-07-25),333 R2 B #3
 1828147001,R2 F2 L D' F D2 R2 U B2 D' L' D2 B D F' U' F2 L B,W,Kidderminster - British Blind Off 2022 (2022-03-12~13),333bf R1 B #3
 5357029001,D2 L' D2 B2 R2 F2 L F2 L' D2 B U' B D2 L2 D2 U L2 F2,W,Regreso a Clases Aves Maria 2026 (2026-01-31~02-01),333oh R1 B #1
 1859575001,R2 B' U2 F R2 D2 L2 D2 U F' L D' U2 F D L' F2 U F',W,1st Sri Lankan Open 2022 (2022-04-02),333 R1 C #4
