@@ -16,7 +16,7 @@ import { query } from '../db/connection.js';
 import { enrichComp, resolvePersonIso2, emptyDayBest, foldCompIntoDayBest, judgeExternalRecord, type CompRecordsSnapshot, type DayBest, type KeatonedInfo } from '../utils/current_records.js';
 import type { OverlayEntry } from '../utils/wca_live_overlay.js';
 import { getCnCompZh } from '../utils/cn_comp_zh_cache.js';
-import { trimToRounds, resolveOnlyKeys } from '../utils/comp_trim.js';
+import { hasCompResults, trimToRounds, resolveOnlyKeys } from '../utils/comp_trim.js';
 import { getUpcomingComps } from '../utils/upcoming_comps_cache.js';
 import { wcaIdToCubingSlug, nameToCubingSlug } from '@cuberoot/shared/cubing-slug';
 
@@ -1860,34 +1860,34 @@ async function loadCompInner(wcaId: string, choice: SourceChoice = 'auto', onPro
         const compOver = !!endDate && endDate < isoDaysAgo(ONGOING_WINDOW_DAYS);
         const cubingCacheKey = `${wcaId}:cubing`;
         const cubingCached = cache.get(cubingCacheKey);
-        if (cubingCached && Object.values(cubingCached.resultsByRound).some(arr => arr.length > 0)) {
+        if (cubingCached && hasCompResults(cubingCached)) {
           const ttl = compOver ? ttlFor('wca') : ttlFor('cubing');
           if (Date.now() - cubingCached.fetchedAt < ttl) return cubingCached;
         }
         // wca_live 兜底:非中国比赛 cubing.com 无收录,进行中走过 wca_live → 缓存命中秒返回.
         const wcaLiveCacheKey = `${wcaId}:wca_live`;
         const wcaLiveCached = cache.get(wcaLiveCacheKey);
-        if (wcaLiveCached && Object.values(wcaLiveCached.resultsByRound).some(arr => arr.length > 0)) {
+        if (wcaLiveCached && hasCompResults(wcaLiveCached)) {
           const ttl = compOver ? ttlFor('wca') : ttlFor('wca_live');
           if (Date.now() - wcaLiveCached.fetchedAt < ttl) return wcaLiveCached;
         }
         const cachedFast = cache.get(fastKey);
-        if (cachedFast && Date.now() - cachedFast.fetchedAt < ttlFor('wca')) {
+        if (cachedFast && hasCompResults(cachedFast) && Date.now() - cachedFast.fetchedAt < ttlFor('wca')) {
           return { ...cachedFast, availableSources: cachedFast.availableSources ?? ['wca'] };
         }
         // L2: PG snapshot 兜底. fastKey 是 wca 源;cubing 兜底走前一个分支已查过的 cubingCached.
         const l2Fast = await readSnapshotL2(wcaId, 'wca');
-        if (l2Fast) {
+        if (l2Fast && hasCompResults(l2Fast)) {
           l1Set(fastKey, l2Fast);
           return { ...l2Fast, availableSources: l2Fast.availableSources ?? ['wca'] };
         }
         const l2Cubing = await readSnapshotL2(wcaId, 'cubing');
-        if (l2Cubing) {
+        if (l2Cubing && hasCompResults(l2Cubing)) {
           l1Set(cubingCacheKey, l2Cubing);
           return { ...l2Cubing, availableSources: l2Cubing.availableSources ?? ['cubing', 'wca'] };
         }
         const l2WcaLive = await readSnapshotL2(wcaId, 'wca_live');
-        if (l2WcaLive) {
+        if (l2WcaLive && hasCompResults(l2WcaLive)) {
           l1Set(wcaLiveCacheKey, l2WcaLive);
           return { ...l2WcaLive, availableSources: l2WcaLive.availableSources ?? ['wca_live', 'wca'] };
         }
@@ -1907,7 +1907,7 @@ async function loadCompInner(wcaId: string, choice: SourceChoice = 'auto', onPro
 
           // WCA REST 还没公示成绩(刚结束的比赛 1~4 周内常见) + cubing.com 有数据
           // → 直接走 cubing.com,events/users/results 全替换,前端不再看空表.
-          const wcaHasResults = Object.values(data.resultsByRound).some(arr => arr.length > 0);
+          const wcaHasResults = hasCompResults(data);
           if (!wcaHasResults && probe.cubingMeta) {
             const cubingData = await loadFromCubing(wcaId, onProgress, probe.cubingMeta);
             cubingData.availableSources = available;
@@ -1961,13 +1961,18 @@ async function loadCompInner(wcaId: string, choice: SourceChoice = 'auto', onPro
 
   const cacheKey = `${wcaId}:${useSource}`;
   const cached = cache.get(cacheKey);
-  if (cached && Date.now() - cached.fetchedAt < ttlFor(cached.source)) {
+  const autoWcaCanFallback = choice === 'auto'
+    && useSource === 'wca'
+    && (probe.cubingMeta !== null || probe.wcaLiveId !== null);
+  if (cached
+    && (!autoWcaCanFallback || hasCompResults(cached))
+    && Date.now() - cached.fetchedAt < ttlFor(cached.source)) {
     return { ...cached, availableSources };
   }
 
   // L2: PG snapshot 兜底.pm2 重启 / 新部署后第一个用户秒返回,不再走 cubing.com scrape.
   const l2 = await readSnapshotL2(wcaId, useSource);
-  if (l2) {
+  if (l2 && (!autoWcaCanFallback || hasCompResults(l2))) {
     l1Set(cacheKey, l2);
     return { ...l2, availableSources };
   }
@@ -1985,11 +1990,20 @@ async function loadCompInner(wcaId: string, choice: SourceChoice = 'auto', onPro
 
     // 未来 / 进行中比赛 WCA REST 还没公示成绩 + cubing.com 有 /live 页 → 切到 cubing 拿报名表 + 历史 PR.
     // 走 loadFromCubing 而不是只 scrape /competitors,这样能 enrichPersonalRecords (Psych Sheet 不空).
-    if (choice === 'auto' && data.source === 'wca' && Object.keys(data.users).length === 0 && probe.cubingMeta) {
+    if (choice === 'auto' && data.source === 'wca' && !hasCompResults(data) && probe.cubingMeta) {
       try {
         data = await loadFromCubing(wcaId, onProgress, probe.cubingMeta);
       } catch (e) {
         console.warn(`[cubing-live] cubing fallback failed for ${wcaId}:`, (e as Error).message);
+      }
+    }
+
+    // cubing.com 无收录或加载失败时,再用 WCA Live;空的 WCA 快照不能遮住已有直播成绩。
+    if (choice === 'auto' && data.source === 'wca' && !hasCompResults(data) && probe.wcaLiveId) {
+      try {
+        data = await loadFromWcaLive(wcaId, onProgress, probe.wcaLiveId);
+      } catch (e) {
+        console.warn(`[cubing-live] wca_live fallback failed for ${wcaId}:`, (e as Error).message);
       }
     }
 
