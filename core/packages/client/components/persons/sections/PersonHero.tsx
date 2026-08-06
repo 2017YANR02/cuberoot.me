@@ -3,6 +3,7 @@
 
 import { Mars, Venus } from 'lucide-react';
 import { Flag } from '@/components/Flag';
+import PillToggle from '@/components/PillToggle/PillToggle';
 import { useT } from '@/hooks/useT';
 import { countryName } from '@/lib/country-name';
 import type { WcaPersonProfile, WcaResultRow, WcaFormerIdentity } from '@/lib/wca-person-api';
@@ -12,9 +13,22 @@ interface Props {
   results: WcaResultRow[] | null;
   former?: WcaFormerIdentity[];
   isZh: boolean;
+  rankMode: 'current' | 'historical';
+  onRankModeChange: (mode: 'current' | 'historical') => void;
+  inclCancelled: boolean;
+  onInclCancelledChange: (value: boolean) => void;
 }
 
-export default function PersonHero({ profile, results, former, isZh }: Props) {
+export default function PersonHero({
+  profile,
+  results,
+  former,
+  isZh,
+  rankMode,
+  onRankModeChange,
+  inclCancelled,
+  onInclCancelledChange,
+}: Props) {
   const p = profile.person;
   // 选手主页展示完整 WCA 名(拉丁名 + 括号内本地名),中英文一致;与 WCA 官网对齐。
   const displayName = p.name;
@@ -133,6 +147,27 @@ export default function PersonHero({ profile, results, former, isZh }: Props) {
             <span className="wp-pill">{attempts}</span>
           </div>
         </div>
+      </div>
+
+      <div className="wp-hero-rank-controls">
+        <div className="wp-toggle-group">
+          <button
+            type="button"
+            className={`wp-toggle-btn ${rankMode === 'current' ? 'is-active' : ''}`}
+            onClick={() => onRankModeChange('current')}
+          >{t('当前', 'Current')}</button>
+          <button
+            type="button"
+            className={`wp-toggle-btn ${rankMode === 'historical' ? 'is-active' : ''}`}
+            onClick={() => onRankModeChange('historical')}
+          >{t('历史最佳排名', 'Historical Best')}</button>
+        </div>
+        <PillToggle
+          value={inclCancelled}
+          onChange={onInclCancelledChange}
+          onLabel={t('废止项', 'Cancelled')}
+          offLabel={t('废止项', 'Cancelled')}
+        />
       </div>
     </section>
   );

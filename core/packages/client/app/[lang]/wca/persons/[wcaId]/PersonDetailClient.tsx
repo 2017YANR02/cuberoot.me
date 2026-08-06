@@ -57,6 +57,8 @@ export default function PersonDetailClient() {
   const [error, setError] = useState<string | null>(null);
   // 「废止项」口径开关:Σ 名次和行(PR 表底部)与「最优项目组合」共用一份状态
   const [inclCancelled, setInclCancelled] = useState(false);
+  // 当前 / 历史最佳排名:控件展示在 hero,数据视图由 PR 表消费。
+  const [rankMode, setRankMode] = useState<'current' | 'historical'>('current');
   // 自家库 + 官网两条路都断了才会有 error;重试按钮 bump 它重跑整个加载 effect
   const [reloadKey, setReloadKey] = useState(0);
 
@@ -140,8 +142,17 @@ export default function PersonDetailClient() {
   return (
     <div className="wp-page">
       <main className="wp-main">
-        <PersonHero profile={profile} results={results} former={former} isZh={isZh} />
-        <PersonPRTable profile={profile} results={results} isZh={isZh} inclCancelled={inclCancelled} onInclCancelledChange={setInclCancelled} />
+        <PersonHero
+          profile={profile}
+          results={results}
+          former={former}
+          isZh={isZh}
+          rankMode={rankMode}
+          onRankModeChange={setRankMode}
+          inclCancelled={inclCancelled}
+          onInclCancelledChange={setInclCancelled}
+        />
+        <PersonPRTable profile={profile} results={results} isZh={isZh} inclCancelled={inclCancelled} mode={rankMode} />
         <PersonBestCombos wcaId={profile.person.wca_id} isZh={isZh} inclCancelled={inclCancelled} />
         <PersonResultChanges wcaId={profile.person.wca_id} isZh={isZh} />
         <PersonTabs profile={profile} results={results} comps={comps} liveResults={liveResults} liveComps={liveComps} reconLookup={reconLookup} isZh={isZh} />
