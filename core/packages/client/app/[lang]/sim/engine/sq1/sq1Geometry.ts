@@ -180,6 +180,7 @@ export function buildPieceMesh(piece: number, isTopLayer: boolean): PieceBuild {
   const group = new THREE.Group();
   const bodyMesh = new THREE.Mesh(bodyGeom, bodyMat);
   bodyMesh.userData.simRole = 'body'; // structure-coloring debug overlay (debugColors.ts)
+  bodyMesh.userData.schematicBody = true; // 形变态示意图:真实块身填充暴露凹槽
   group.add(bodyMesh);
 
   // Top sticker (raised ExtrudeGeometry, inset toward centroid for body-color seams).
@@ -284,6 +285,7 @@ export function buildMiddlePair(): MiddlePair {
     const pivot = new THREE.Object3D();
     const bodyMesh = new THREE.Mesh(geom, bodyMat);
     bodyMesh.userData.simRole = 'body'; // structure-coloring debug overlay (debugColors.ts)
+    bodyMesh.userData.schematicBody = true; // 形变态示意图:真实块身填充暴露凹槽
     pivot.add(bodyMesh);
 
     const stickerH = MID_HEIGHT - 2 * SIDE_INSET_V;
