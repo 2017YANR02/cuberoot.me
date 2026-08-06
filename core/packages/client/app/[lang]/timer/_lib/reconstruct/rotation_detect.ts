@@ -140,6 +140,29 @@ function axisQuat(axis: 'x' | 'y' | 'z', deg: number): Quat {
   };
 }
 
+/** A written x/y/z token → its body-frame quaternion. Invalid tokens return null. */
+export function rotationQuaternionForToken(token: string): Quat | null {
+  const parsed = /^([xyz])(2'?|')?$/.exec(token);
+  if (!parsed) return null;
+  const suffix = parsed[2] ?? '';
+  const quarters = suffix === "'" ? -1 : suffix === '2' ? 2 : suffix === "2'" ? -2 : 1;
+  return axisQuat(parsed[1] as 'x' | 'y' | 'z', quarters * 90);
+}
+
+/** Accumulated whole-cube pose at a replay timestamp. Events may be sparse. */
+export function rotationPoseAt(
+  events: readonly { tMs: number; token: string }[],
+  tMs: number,
+): Quat {
+  let pose = QUAT_IDENTITY;
+  for (const event of events) {
+    if (event.tMs > tMs) continue;
+    const delta = rotationQuaternionForToken(event.token);
+    if (delta) pose = quatNormalize(quatMul(pose, delta));
+  }
+  return pose;
+}
+
 /**
  * 九个基本转体终态的相对旋转。轴向按魔方的记号:`x` 绕 R 面法线(+X)、`y` 绕 U 面法线
  * (+Y)、`z` 绕 F 面法线(+Z),都按右手定则,和 `SENSOR_BASES.rotX90/rotY90`

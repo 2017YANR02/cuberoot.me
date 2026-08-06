@@ -15,7 +15,8 @@
 import { describe, it, expect } from 'vitest';
 
 import {
-  detectRotations, rotationsByStep, stepTimeBounds, tokenForRelative, HOLD_MS,
+  detectRotations, rotationPoseAt, rotationQuaternionForToken, rotationsByStep,
+  stepTimeBounds, tokenForRelative, HOLD_MS,
 } from '@/app/[lang]/timer/_lib/reconstruct/rotation_detect';
 import { GyroRecorder, type GyroSample } from '@/app/[lang]/timer/_lib/bluetooth/gyro_track';
 import {
@@ -70,6 +71,27 @@ describe('tokenForRelative', () => {
     // x 之后再 y = 复合,不在九个里
     expect(tokenForRelative(quatMul(axis('y', 90), axis('x', 90)))).toBeNull();
     expect(tokenForRelative(QUAT_IDENTITY)).toBeNull();     // 没转
+  });
+});
+
+describe('rotationPoseAt', () => {
+  it('空事件和未来事件保持原朝向，非法记号直接忽略', () => {
+    expect(rotationPoseAt([], 500)).toEqual(QUAT_IDENTITY);
+    expect(rotationPoseAt([{ tMs: 600, token: 'y' }, { tMs: 0, token: 'R' }], 500))
+      .toEqual(QUAT_IDENTITY);
+  });
+
+  it('按时间累计已识别的 y / x 转体', () => {
+    const events = [{ tMs: 100, token: 'y' }, { tMs: 300, token: "x'" }];
+    expect(rotationPoseAt(events, 200)).toEqual(axis('y', 90));
+    expect(rotationPoseAt(events, 300)).toEqual(
+      quatNormalize(quatMul(axis('y', 90), axis('x', -90))),
+    );
+  });
+
+  it("180 度转体保留 2' 的动画方向", () => {
+    expect(rotationQuaternionForToken('y2')?.y).toBeGreaterThan(0);
+    expect(rotationQuaternionForToken("y2'")?.y).toBeLessThan(0);
   });
 });
 
