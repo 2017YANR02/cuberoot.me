@@ -93,6 +93,14 @@ export const PAIRED_GUARDS: PairedGuard[] = [
     zh: { title: '比赛名年号各剥各的', desc: '全站规则:比赛年份已经写在页面上(同行日期列 / 卡片日期 / 年份分组标题)时,比赛名里不再重复年号 —— 人物页成绩表原先是「夹江公开赛2026」压着「2026-07-25」(issue #65)。这条规则曾被三处各抄一份正则实现(CompCard、OngoingComps、CompDetailPage),口径互不相同还漏了人物页。现在唯一实现是 lib/comp-localize.ts 的 stripCompYear,调用点走 localizeCompName(…, { date }) 或 <CompCell date={…} />;CompCell 的 date 是必填(string | null),逼每个调用点表态 —— 页面没显示年份的地方(搜索下拉、无日期列的榜单)传 null 保留年号。再手搓「尾部四位年」正则直接红。' },
     en: { title: 'Comp-name year stripped ad hoc', desc: 'Site-wide rule: when the competition year is already on the page (same-row date column, card date, year group header), the comp name must not repeat it — the person page used to stack "夹江公开赛2026" right on top of "2026-07-25" (issue #65). The rule had three separate hand-written implementations (CompCard, OngoingComps, CompDetailPage), none of them agreeing and none covering the person page. The single implementation is now stripCompYear in lib/comp-localize.ts, reached via localizeCompName(…, { date }) or <CompCell date={…} />; CompCell’s date prop is required (string | null) so every call site takes a position — pass null where no year is shown (search dropdowns, tables without a date column) and the year stays. Hand-rolling a trailing-year regex turns CI red.' },
   },
+  {
+    id: 'recon-ground-truth',
+    hook: 'recon-ground-truth-gate.ps1 → recon-ground-truth-gate.mjs',
+    test: 'recon-ground-truth-gate.test.ts + recon_workbook_ground_truth.test.ts',
+    baseline: '当前集合全量',
+    zh: { title: '复盘 Ground Truth 未验证', desc: 'Codex/Claude 命令 hook 与 Git pre-commit 三层拦截：提交复盘算法、陀螺仪/转体处理或 ground-truth fixture 前，当前内容指纹必须对应一次完整测试通过记录。fixture 由同一 registry 动态遍历，不写死数量；新增任何复盘都会让旧凭证立即失效。' },
+    en: { title: 'Unverified reconstruction ground truth', desc: 'Codex/Claude command hooks plus Git pre-commit enforce the same rule: before committing reconstruction logic, gyro/rotation handling, or a ground-truth fixture, the exact current content fingerprint must have a successful full-suite record. One registry is traversed dynamically with no fixed count; adding any reconstruction immediately invalidates the old credential.' },
+  },
 ];
 
 export interface CiGuard {

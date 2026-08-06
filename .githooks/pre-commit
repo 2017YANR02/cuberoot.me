@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+# Final runtime-independent enforcement for reconstruction ground-truth changes.
+exec node core/packages/client/scripts/recon-ground-truth-gate.mjs check-staged
