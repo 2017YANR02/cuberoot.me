@@ -1,0 +1,19 @@
+{
+  "description": "Repository enforcement hooks.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "^Bash$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pwsh -NoProfile -File \"$(git rev-parse --show-toplevel)/.claude/hooks/recon-ground-truth-gate.ps1\"",
+            "commandWindows": "pwsh -NoProfile -File \"$(git rev-parse --show-toplevel)/.claude/hooks/recon-ground-truth-gate.ps1\"",
+            "timeout": 15,
+            "statusMessage": "Checking reconstruction ground truth"
+          }
+        ]
+      }
+    ]
+  }
+}
