@@ -67,6 +67,25 @@ export interface BuildCoreTrackOptions {
   brand?: string | null;
 }
 
+function directedRotationQuarters(token: string): { axis: string; quarters: number } | null {
+  const match = /^([xyz])(2)?(')?$/.exec(token);
+  if (!match) return null;
+  return {
+    axis: match[1],
+    quarters: (match[2] ? 2 : 1) * (match[3] ? -1 : 1),
+  };
+}
+
+/** One detected half-turn can physically back two adjacent quarter-turn pairs. */
+function supportsRotation(observed: string, expected: string): boolean {
+  const have = directedRotationQuarters(observed);
+  const need = directedRotationQuarters(expected);
+  return !!have && !!need
+    && have.axis === need.axis
+    && Math.sign(have.quarters) === Math.sign(need.quarters)
+    && Math.abs(have.quarters) >= Math.abs(need.quarters);
+}
+
 /**
  * 从一条姿态流建一条核心轨迹。空录像 → `null`。
  *
@@ -96,12 +115,21 @@ export function buildCoreTrack(
  * 落在 `[fromMs, toMs]`(两头已放宽)里的核心换格,返回下标。空数组 = 这段时间里
  * 核心没动过。
  */
-export function coreTurnsIn(track: CoreTrack, fromMs: number, toMs: number): number[] {
+export function coreTurnsIn(
+  track: CoreTrack,
+  fromMs: number,
+  toMs: number,
+  expectedToken?: string,
+): number[] {
   const lo = fromMs - CORE_EVENT_SLACK_MS;
   const hi = toMs + CORE_EVENT_SLACK_MS;
   const out: number[] = [];
   for (let i = 0; i < track.events.length; i++) {
     if (track.events[i].wide) continue;
+    // A core change only belongs to a slice when it is the rotation required by
+    // that exact opposite-face pair. Time establishes order; it cannot turn an
+    // unrelated y rotation into an M/S gesture merely because both overlapped.
+    if (expectedToken !== undefined && !supportsRotation(track.events[i].token, expectedToken)) continue;
     const t = track.events[i].tMs;
     if (t >= lo && t <= hi) out.push(i);
   }
