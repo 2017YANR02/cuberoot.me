@@ -8,8 +8,8 @@
 //   · 于是 X = 该场轮数 = 有效平均个数,X ∈ [1,4]
 //   · 均值 Math.round 后再格式化(483.5 → 4.84;截断会写成 4.83,与世界榜差一个单位)
 //   · 多盲无官方平均,整项排除
-// PR 名次口径同 logic/progress.ts 的 computePrRank:同「项目 × X 档」内按时间序 dense rank,
-// 一经赋值冻结(Ao3R 只和 Ao3R 比 —— 轮数不同不可比)。直播(非官方)组不进官方序列,
+// AoXR 保留自己的「项目 × X 档」时间序 dense rank,一经赋值冻结
+// (Ao3R 只和 Ao3R 比 —— 轮数不同不可比)。直播(非官方)组不进官方序列,
 // 自己另算一份「官方 + 直播」的名次,与成绩表 prRank / prRankLive 的分层一致。
 
 import type { WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';

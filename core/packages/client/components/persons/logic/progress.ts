@@ -63,12 +63,12 @@ export interface RankFlag {
    *  1 = 当时是 PR (含并列), null = 无效 (DNF/DNS/0)
    *  rank 一经赋值即冻结,后续更好成绩不会"挤掉"它.
    *  单次名次口径 = 该单次发生前本人此项目的「所有 solve」(含平均里非最佳的把)中严格更快的
-   *  不同值数 + 1 (dense rank).
-   *  平均名次口径 = 此前严格更快的有效平均条数 + 1 (standard competition rank):并列同名次,
-   *  但每条并列成绩都会占据后续名次位. */
+   *  有效成绩条数 + 1.
+   *  平均名次同理统计此前严格更快的有效平均条数.两者都是 standard competition rank:
+   *  并列同名次,但每条并列成绩都会占据后续名次位. */
   singleRank: number | null;
   averageRank: number | null;
-  /** 每把单次的时间序 dense rank,口径同 singleRank(在该轮开始前、本人此项目全部 solve 集合里).
+  /** 每把单次的时间序 standard competition rank,口径同 singleRank.
    *  下标对齐 result.attempts;最好那把 == singleRank(同值同名次,与单次列一致).无效次 = null. */
   attemptRanks: (number | null)[];
 }
@@ -79,8 +79,59 @@ const CHRONO_ROUND_ORDER: Record<string, number> = {
   'h': 0, '1': 1, 'd': 1, '2': 2, 'g': 2, '3': 3, 'sf': 3, 'b': 4, 'c': 4, 'f': 5,
 };
 
+/** 标准竞赛排名跟踪器:rank(v)=此前严格更优的成绩条数+1;并列同名次但分别占后续位置。
+ *  值域从完整输入预建坐标,Fenwick tree 让单次、逐把、平均共用同一套 O(log n) 计数。 */
+class CompetitionRankTracker {
+  private readonly indexByValue: Map<number, number>;
+  private readonly tree: Uint32Array;
+  count = 0;
+
+  constructor(values: number[]) {
+    const coordinates = [...new Set(values)].sort((a, b) => a - b);
+    this.indexByValue = new Map(coordinates.map((value, index) => [value, index + 1]));
+    this.tree = new Uint32Array(coordinates.length + 1);
+  }
+
+  rank(value: number): number {
+    const index = this.indexByValue.get(value);
+    if (index === undefined) return 1;
+    let better = 0;
+    for (let i = index - 1; i > 0; i -= i & -i) better += this.tree[i];
+    return better + 1;
+  }
+
+  add(value: number): void {
+    const index = this.indexByValue.get(value);
+    if (index === undefined) return;
+    for (let i = index; i < this.tree.length; i += i & -i) this.tree[i]++;
+    this.count++;
+  }
+}
+
+function rankTrackers(results: WcaResultRow[]): {
+  single: Map<string, CompetitionRankTracker>;
+  average: Map<string, CompetitionRankTracker>;
+} {
+  const singleValues = new Map<string, number[]>();
+  const averageValues = new Map<string, number[]>();
+  for (const r of results) {
+    const singles = singleValues.get(r.event_id) ?? [];
+    if (isValidValue(r.best)) singles.push(r.best);
+    for (const value of r.attempts ?? []) if (isValidValue(value)) singles.push(value);
+    singleValues.set(r.event_id, singles);
+
+    const averages = averageValues.get(r.event_id) ?? [];
+    if (isValidValue(r.average)) averages.push(r.average);
+    averageValues.set(r.event_id, averages);
+  }
+  const build = (values: Map<string, number[]>) => new Map(
+    [...values].map(([eventId, eventValues]) => [eventId, new CompetitionRankTracker(eventValues)]),
+  );
+  return { single: build(singleValues), average: build(averageValues) };
+}
+
 /** 时间序 PR rank: 按 (comp.start_date, round, result.id) 时间序遍历本 person 全部成绩.
- *  单次维度的「已见过」集合 = 此前所有 solve(含平均里非最佳的把),不是只算各轮最佳单次;
+ *  单次维度的「已见过」序列 = 此前所有 solve(含平均里非最佳的把),不是只算各轮最佳单次;
  *  这样一把更早更快的非最佳把(如某次平均里的 43.66)会压低后来更慢单次(如 43.88)的名次.
  *  平均维度按标准竞赛排名:并列平均同名次,但会分别占据后续名次位.
  *  旧成绩 rank 在它发生时就被冻结,后续更好成绩不影响.
@@ -103,48 +154,33 @@ export function computePrRank(
   });
 
   const out = new Map<number, RankFlag>();
-  // 单次维度:维护「此前所有 solve 的不同值」集合;平均维度保留每条成绩,并列也分别占后续名次位.
-  const solvesSeen = new Map<string, Set<number>>();
-  const averagesSeen = new Map<string, number[]>();
-
-  const rankFor = (v: number, seen: Set<number>): number => {
-    let distinctLess = 0;
-    for (const s of seen) if (s < v) distinctLess++;
-    return distinctLess + 1;
-  };
+  const { single: singleRankers, average: averageRankers } = rankTrackers(results);
 
   for (const r of sorted) {
     const eid = r.event_id;
     let singleRank: number | null = null;
     let averageRank: number | null = null;
-    // 「该轮开始前」本人此项目见过的所有 solve(含历史平均里非最佳的把).
-    const seen = solvesSeen.get(eid) ?? new Set<number>();
-    // 逐把名次:在「该轮开始前的所有 solve + 同轮更早的把」里算 dense rank.
-    //   - 用 temp(seen 的副本)逐把累积,同轮更早更快的把会压低后面把的名次.
-    //   - DNF/DNS(v<0)视作 +∞:名次 = 已见 distinct 数 + 1(不加入集合).v===0(空位)不出名次.
-    const temp = new Set(seen);
+    const singleRanker = singleRankers.get(eid)!;
+    // 单次列名次在本轮 attempts 入池前计算;本轮最快把因此与它自己的 attempt rank 一致.
+    if (isValidValue(r.best)) singleRank = singleRanker.rank(r.best);
+    // 逐把按本轮顺序入同一个标准竞赛排名器,同轮更早更快的把会压低后面把的名次.
+    // DNF/DNS(v<0)视作 +∞:名次 = 已见有效 solve 条数 + 1(不入池).v===0(空位)不出名次.
+    let hasValidAttempt = false;
     const attemptRanks = (r.attempts ?? []).map(v => {
-      if (isValidValue(v)) { const rk = rankFor(v, temp); temp.add(v); return rk; }
-      return v < 0 ? temp.size + 1 : null;
+      if (isValidValue(v)) {
+        hasValidAttempt = true;
+        const rank = singleRanker.rank(v);
+        singleRanker.add(v);
+        return rank;
+      }
+      return v < 0 ? singleRanker.count + 1 : null;
     });
-    // 单次列名次:r.best = 本轮最快把,在「该轮开始前的所有 solve」里算 dense rank.
-    // (r.best 是本轮最小值,同轮其它把都 ≥ 它 → 与最好那把的 attemptRank 必然相等.)
-    if (isValidValue(r.best)) {
-      singleRank = rankFor(r.best, seen);
-    }
-    // 本轮所有有效把并入「已见 solve」集合(关键:非最佳的把也算,供后续单次/把名次参考).
     // 无逐把明细时(只有 best)退化为单值,保证单次维度仍能累积.
-    const roundSolves = (r.attempts ?? []).filter(isValidValue);
-    if (roundSolves.length === 0 && isValidValue(r.best)) roundSolves.push(r.best);
-    if (roundSolves.length > 0) {
-      for (const v of roundSolves) seen.add(v);
-      solvesSeen.set(eid, seen);
-    }
+    if (!hasValidAttempt && isValidValue(r.best)) singleRanker.add(r.best);
     if (isValidValue(r.average)) {
-      const seenA = averagesSeen.get(eid) ?? [];
-      averageRank = seenA.reduce((rank, value) => rank + (value < r.average ? 1 : 0), 1);
-      seenA.push(r.average);
-      averagesSeen.set(eid, seenA);
+      const averageRanker = averageRankers.get(eid)!;
+      averageRank = averageRanker.rank(r.average);
+      averageRanker.add(r.average);
     }
     out.set(r.id, { singleRank, averageRank, attemptRanks });
   }
