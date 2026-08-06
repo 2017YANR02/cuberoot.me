@@ -155,6 +155,113 @@ html[data-theme=dark] .alg-root {
   color: var(--muted-foreground);
   font-size: 13px;
 }
+
+/* LS1–LS9:两个角块的 3×3 朝向矩阵。不是装饰卡片，矩阵本身承担定义与跨套导航。 */
+.alg-ls-index-section {
+  margin-top: 30px;
+}
+.alg-ls-index-heading {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px 12px;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.alg-ls-index-heading h2 {
+  margin: 0;
+  font-size: 18px;
+}
+.alg-ls-guide {
+  max-width: 720px;
+  margin: 0 auto 18px;
+  padding: 4px 24px 20px;
+}
+.alg-ls-guide-touch-link {
+  display: none;
+  margin-top: 8px;
+  width: fit-content;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 650;
+  text-decoration: none;
+}
+.alg-ls-guide-touch-link.is-touch-mode {
+  display: flex;
+  margin-inline: auto;
+}
+.alg-ls-matrix {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: max-content repeat(3, minmax(64px, 1fr));
+  gap: 4px;
+}
+.alg-ls-matrix-corner,
+.alg-ls-matrix-axis {
+  min-height: 60px;
+  padding: 2px;
+  display: flex;
+  justify-content: center;
+  color: var(--muted-foreground);
+  font-size: 10px;
+  line-height: 1.2;
+  text-align: center;
+}
+.alg-ls-matrix-corner {
+  flex-direction: column;
+  align-items: flex-start;
+  color: var(--faint-foreground);
+  white-space: nowrap;
+}
+.alg-ls-matrix-axis {
+  align-items: center;
+}
+.alg-ls-matrix-axis.is-column { flex-direction: column; }
+.alg-ls-matrix-axis.is-row { justify-content: center; }
+.alg-ls-matrix-cell {
+  min-height: 46px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border-default);
+  border-radius: 7px;
+  color: var(--foreground);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none !important;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.alg-ls-matrix-cell:hover,
+.alg-ls-matrix-cell:focus-visible {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border-default));
+  outline: none;
+}
+.alg-ls-matrix-cell.is-current {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+@media (max-width: 480px) {
+  .alg-ls-index-heading { padding-inline: 16px; }
+  .alg-ls-guide { padding-inline: 16px; }
+  .alg-ls-matrix {
+    grid-template-columns: max-content repeat(3, minmax(52px, 1fr));
+    gap: 3px;
+  }
+  .alg-ls-matrix-corner,
+  .alg-ls-matrix-axis { padding-inline: 4px; }
+}
+
+/* 无 hover 的设备:矩阵格子负责切换预览，进入公式集走随当前选择更新的真链接。 */
+@media (hover: none), (pointer: coarse) {
+  .alg-ls-guide-touch-link {
+    display: flex;
+    margin-inline: auto;
+  }
+}
 /* 「下载 PDF」—— 把当前这批 case 排成可打印的 A4(components/AlgPdfButton) */
 /* 页首靠右那一排(PDF / 训练 / 观察)一律纯文字:无框、无图标、同一个字号,
    靠颜色和字重分主次。页头是 align-items:baseline,按钮里塞图标会把基线抬到图标盒子上
@@ -397,7 +504,8 @@ html[data-theme=dark] .alg-root {
 }
 /* 「只看图」列表:密排画廊(缩略图居中 + 名字),点整卡进详情页看公式。公式/社区区不渲染。 */
 .alg-case-list.is-cards {
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  /* 桌面最多六列。固定上限避免宽屏偷偷排到七列；每组恰好六个的二阶 LS 可完整放在一行。 */
+  grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 .alg-case-list.is-cards .alg-case {
   padding: 14px 12px;
@@ -417,6 +525,10 @@ html[data-theme=dark] .alg-root {
 .alg-case-list.is-cards .alg-case-name {
   justify-content: center;
   flex-wrap: wrap;
+}
+
+@media (max-width: 900px) {
+  .alg-case-list.is-cards { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 /* 图 / 公式 开关:header 是 baseline 对齐,胶囊按自身高度垂直居中才不偏 */
 .alg-view-toggle {

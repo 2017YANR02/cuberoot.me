@@ -877,6 +877,11 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                   const oriCount = c.algs.length;
                   // 缩略图始终用**未筛选**的首条 —— 筛选只该影响公式列表,不该换掉 case 的图
                   const firstAlg = allAlgsForOri[0]?.alg ?? c.standard ?? '';
+                  const primaryName = primaryCaseName(puzzleParam, set, c);
+                  // LS 页首已经写明 LS1–LS9；卡片只留 Hammer 1 / PBL 2 等组内名称，避免重复套名。
+                  const cardName = puzzleParam === '2x2' && /^ls[1-9]$/.test(set)
+                    ? primaryName.replace(/^LS[1-9]\s+/, '')
+                    : primaryName;
                   return (
                     <SortableCaseCard key={c.id ?? c.name} id={c.id ?? 0} draggable={isAdmin && c.id != null}>
                     <article
@@ -892,7 +897,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                         href={caseDetailHref(c)}
                         className="alg-case-cardlink"
                         prefetch={false}
-                        aria-label={primaryCaseName(puzzleParam, set, c)}
+                        aria-label={cardName}
                       />
                       {isAdmin && c.id != null && (
                         <button
@@ -920,7 +925,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                         </div>
                         <div className="alg-case-info">
                           <div className="alg-case-name">
-                            <span className="alg-case-letter">{primaryCaseName(puzzleParam, set, c)}</span>
+                            <span className="alg-case-letter">{cardName}</span>
                             {/* 字母制主名接管之后,站上原来那个名字(`1LLL 6 7` / `ZBLL L 34`)降为副名 —— 不丢。
                                 但 PLL 的 OLLCP 名剥掉 `PLL-` 前缀后就等于站上的名字,再挂一个副名纯属重复。 */}
                             {(() => {
