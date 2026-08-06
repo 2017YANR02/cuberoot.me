@@ -321,6 +321,8 @@ export interface ReconTextInput {
  */
 interface WovenItem extends RangeMoveItem {
   rotationMs?: number;
+  /** 防止普通转体碰巧挨着 U/D/F/B/L/R 时被压成假的宽层动作。 */
+  wideRotation?: true;
 }
 
 function quarterToken(family: string, signedQuarters: number): string {
@@ -372,7 +374,7 @@ function markWideCoreEvents(
   if (!core) return null;
   const slicePairs = sliceSplitTable();
   const candidates: number[] = [];
-  const wide = new Set<number>();
+  const wideTokens = new Map<number, string>();
   core.events.forEach((event, idx) => {
     const inverse = inverseRotationToken(event.token);
     if (!inverse) return;
@@ -386,6 +388,21 @@ function markWideCoreEvents(
         && event.tMs <= next.endTs + CORE_EVENT_SLACK_MS;
     });
     if (belongsToSlice) return;
+
+    // A lone wide turn has no later inverse event to close the frame. In that
+    // case require much stronger evidence: the core must settle at virtually
+    // the same instant as the compensating outer-face encoder notification.
+    // A normal regrip merely followed by U/D/F/B/L/R stays two written tokens.
+    const synchronousOuter = counted.find(move => {
+      const closeToSettled = Math.min(
+        Math.abs(move.ts - event.tMs),
+        Math.abs(move.endTs - event.tMs),
+      ) <= 60;
+      return closeToSettled
+        && (WIDE_PAIRS.has(`${move.m} ${event.token}`) || WIDE_PAIRS.has(`${event.token} ${move.m}`));
+    });
+    if (synchronousOuter) wideTokens.set(idx, event.token);
+
     const outer = counted.find(move => {
       const close = Math.min(Math.abs(move.ts - eventMs), Math.abs(move.endTs - eventMs)) <= 120;
       return close && (WIDE_PAIRS.has(`${move.m} ${inverse}`) || WIDE_PAIRS.has(`${inverse} ${move.m}`));
@@ -398,12 +415,17 @@ function markWideCoreEvents(
     const a = core.events[aIdx], b = core.events[bIdx];
     if (bIdx === aIdx + 1 && b.tMs - a.tMs <= 4000
       && inverseRotationToken(a.token) === b.token) {
-      wide.add(aIdx);
-      wide.add(bIdx);
+      wideTokens.set(aIdx, inverseRotationToken(a.token)!);
+      wideTokens.set(bIdx, inverseRotationToken(b.token)!);
       i += 1;
     }
   }
-  return { events: core.events.map((event, idx) => (wide.has(idx) ? { ...event, wide: true } : event)) };
+  return {
+    events: core.events.map((event, idx) => {
+      const wideToken = wideTokens.get(idx);
+      return wideToken ? { ...event, wide: true, wideToken } : event;
+    }),
+  };
 }
 
 function sameAxisFaceSlice(face: string, slice: string): boolean {
@@ -435,7 +457,7 @@ function compactNotation(items: WovenItem[], absorbedRotations: Set<number>): Wo
         continue;
       }
       const wide = WIDE_PAIRS.get(`${a.token} ${b.token}`);
-      if (wide && (a.rotationMs !== undefined || b.rotationMs !== undefined)) {
+      if (wide && (a.wideRotation || b.wideRotation)) {
         const rotationMs = a.rotationMs ?? b.rotationMs;
         if (rotationMs !== undefined) absorbedRotations.add(rotationMs);
         out.push({
@@ -491,6 +513,7 @@ function weaveRotations(
       startIdx: -1,
       endIdx: -1,
       rotationMs: p.tMs,
+      ...(p.wide ? { wideRotation: true as const } : {}),
     });
   }
   while (cursor < lineMoves.length) out.push(lineMoves[cursor++]);
