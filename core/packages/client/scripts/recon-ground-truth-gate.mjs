@@ -30,6 +30,7 @@ const EXACT_GUARDED_PATHS = new Set([
   'core/packages/shared/src/recon_slice.ts',
   'core/packages/server/src/routes/recon_ground_truth.ts',
   'core/packages/server/migrations/0105_recon_ground_truth.sql',
+  'core/packages/server/migrations/0106_recon_ground_truth_candidates.sql',
   'core/packages/client/app/[lang]/timer/_lib/bluetooth/gyro_track.ts',
   'core/packages/client/app/[lang]/timer/_lib/bluetooth/orientation.ts',
   'core/packages/client/app/[lang]/timer/_lib/share/decode.ts',

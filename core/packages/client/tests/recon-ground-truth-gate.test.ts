@@ -26,6 +26,7 @@ describe('reconstruction ground-truth commit gate', () => {
     expect(isGuarded('core/packages/client/tests/fixtures/recon-workbook/0050.json')).toBe(true);
     expect(isGuarded('core/packages/shared/src/recon_ground_truth.ts')).toBe(true);
     expect(isGuarded('core/packages/server/src/routes/recon_ground_truth.ts')).toBe(true);
+    expect(isGuarded('core/packages/server/migrations/0106_recon_ground_truth_candidates.sql')).toBe(true);
     expect(isGuarded('core/packages/client/app/[lang]/timer/page.tsx')).toBe(false);
   });
 

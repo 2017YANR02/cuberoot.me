@@ -99,16 +99,15 @@
   white-space: nowrap;
 }
 
-/* NOTE: 添加复盘按钮——纯图标圆形 */
+/* NOTE: 复盘操作入口——仅图标，保留 36px 点击热区 */
 .recon-add-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 36px;
   height: 36px;
-  border-radius: 50%;
-  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
-  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  border: 0;
+  background: transparent;
   color: var(--accent);
   cursor: pointer;
   transition: all 0.2s;
@@ -116,7 +115,6 @@
 }
 
 .recon-add-btn:hover {
-  background: color-mix(in srgb, var(--accent) 30%, transparent);
   color: var(--foreground);
 }
 

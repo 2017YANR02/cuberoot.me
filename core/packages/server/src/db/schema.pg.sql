@@ -139,6 +139,22 @@ CREATE TABLE recon_ground_truth_cases (
 );
 CREATE INDEX idx_recon_ground_truth_status ON recon_ground_truth_cases(status, recon_id);
 
+-- 候选来源的完整复原校验缓存；来源字段变化后由管理 API 自动重算。
+CREATE TABLE recon_ground_truth_candidate_checks (
+  recon_id             INTEGER PRIMARY KEY REFERENCES recons(id) ON DELETE CASCADE,
+  source_event         VARCHAR(20) NOT NULL,
+  source_added_by_id   VARCHAR(20) NOT NULL,
+  source_value         TEXT NOT NULL,
+  source_raw_time      NUMERIC(8,3),
+  source_scramble      TEXT NOT NULL,
+  source_solution      TEXT NOT NULL,
+  eligible             BOOLEAN NOT NULL,
+  blockers_json        TEXT NOT NULL DEFAULT '[]',
+  checked_at           TIMESTAMP NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_recon_ground_truth_candidate_eligible
+  ON recon_ground_truth_candidate_checks(eligible, recon_id);
+
 -- ── 5. wca_users ──
 CREATE TABLE wca_users (
   wca_id            VARCHAR(20) PRIMARY KEY,
