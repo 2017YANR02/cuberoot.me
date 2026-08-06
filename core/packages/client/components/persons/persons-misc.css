@@ -37,11 +37,7 @@
 .wp-misc-total td { font-weight: 600; border-top: 1px solid var(--wp-border); border-bottom: none; }
 
 /* ── sticky 单表工具 ── 列头吸顶机制已抽到 @/components/sticky-table.css(.sticky-scroll + .sticky-thead),
-   全站统计表共用,选手页在 PersonDetailClient.tsx import。这里只留选手页专属的两件事:
-   ① 解除 tabs 卡片裁剪:卡片默认 overflow:hidden(走圆角裁剪)会成为滚动容器,令 thead 无法相对视口吸顶;
-      内容本就被 wp-tab-body 内边距收进圆角内,放开裁剪无视觉副作用。
-   ② 把共用工具的吸顶下划线色设成选手页边框色(原 box-shadow 写死 var(--wp-border))。 */
-.wp-card.wp-tabs-card { overflow: visible; }
+   全站统计表共用。这里只把共用工具的吸顶下划线色设成选手页分隔线色。 */
 .wp-bycomp-table { --sticky-thead-border: var(--wp-border); }
 /* 档分组标题行(纪录:世界/洲际/国家;领奖台:世界/洲际/国家锦标赛):表内整行,左对齐加粗,档间分隔线 */
 .wp-records-table .wp-records-group-row th,
