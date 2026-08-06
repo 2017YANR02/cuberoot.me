@@ -83,7 +83,7 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
     comps ? computePrRank(effResultsForRank.filter((r) => !r.live), comps) : new Map(),
     [effResultsForRank, comps],
   );
-  // 直播行另算一份「官方 + 直播」的时间序名次,使直播行的单次/平均/逐把 PR 与官方行同一 dense-rank
+  // 直播行另算一份「官方 + 直播」的时间序名次,使直播行的单次/平均/逐把 PR 与官方行同一口径
   // 口径且彼此自洽(最好那把 == 单次列)。只取直播行用,不读官方行 → 不污染官方 PR 标记。
   const prRankLive = useMemo(() =>
     results && comps && results.some((r) => r.live) ? computePrRank(results, comps) : null,
@@ -420,5 +420,4 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
     </div>
   );
 }
-
 
