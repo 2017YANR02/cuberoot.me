@@ -238,7 +238,7 @@ export default function ReconGroundTruthPage() {
         />
         <label className="gt-filter-label">
           <span>{tr({ zh: '决定', en: 'Decision' })}</span>
-          <select value={filter} onChange={(e) => { void setFilter(e.target.value as Filter); void setPage(1); }}>
+          <select className="gt-filter-select" value={filter} onChange={(e) => { void setFilter(e.target.value as Filter); void setPage(1); }}>
             {FILTERS.map((value) => (
               <option value={value} key={value}>
                 {value === 'all' ? tr({ zh: '全部', en: 'All' }) : statusText(value)}
@@ -270,11 +270,11 @@ export default function ReconGroundTruthPage() {
             ) : null}
           </div>
           <div className="gt-pages">
-            <button type="button" disabled={page <= 1} onClick={() => void setPage(page - 1)} aria-label={tr({ zh: '上一页', en: 'Previous page' })}>
+            <button className="gt-page-button" type="button" disabled={page <= 1} onClick={() => void setPage(page - 1)} aria-label={tr({ zh: '上一页', en: 'Previous page' })}>
               <ChevronLeft size={16} />
             </button>
             <span>{page} / {totalPages}</span>
-            <button type="button" disabled={page >= totalPages} onClick={() => void setPage(page + 1)} aria-label={tr({ zh: '下一页', en: 'Next page' })}>
+            <button className="gt-page-button" type="button" disabled={page >= totalPages} onClick={() => void setPage(page + 1)} aria-label={tr({ zh: '下一页', en: 'Next page' })}>
               <ChevronRight size={16} />
             </button>
           </div>
@@ -339,7 +339,7 @@ export default function ReconGroundTruthPage() {
               <div className="gt-editor">
                 <label>
                   <span>{tr({ zh: '决定', en: 'Decision' })}</span>
-                  <select value={decisionStatus} onChange={(e) => setDecisionStatus(e.target.value as SavedGroundTruthStatus)}>
+                  <select className="gt-decision-select" value={decisionStatus} onChange={(e) => setDecisionStatus(e.target.value as SavedGroundTruthStatus)}>
                     <option value="discussion">{statusText('discussion')}</option>
                     <option value="confirmed" disabled={!detail.assessment.eligible}>{statusText('confirmed')}</option>
                     <option value="rejected">{statusText('rejected')}</option>
@@ -348,6 +348,7 @@ export default function ReconGroundTruthPage() {
                 <label>
                   <span>{tr({ zh: 'Timer replay 链接', en: 'Timer replay URL' })}</span>
                   <textarea
+                    className="gt-editor-textarea"
                     value={replay}
                     onChange={(e) => setReplay(e.target.value)}
                     rows={3}
@@ -359,11 +360,11 @@ export default function ReconGroundTruthPage() {
                   <span>{decisionStatus === 'confirmed'
                     ? tr({ zh: '备注（可选）', en: 'Note (optional)' })
                     : tr({ zh: '讨论或不采用的原因', en: 'Reason for discussion or rejection' })}</span>
-                  <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} />
+                  <textarea className="gt-editor-textarea" value={note} onChange={(e) => setNote(e.target.value)} rows={3} />
                 </label>
                 <details>
                   <summary>{tr({ zh: '保存当前错误输出（可选）', en: 'Store current wrong output (optional)' })}</summary>
-                  <textarea value={currentWrong} onChange={(e) => setCurrentWrong(e.target.value)} rows={6} spellCheck={false} />
+                  <textarea className="gt-editor-textarea" value={currentWrong} onChange={(e) => setCurrentWrong(e.target.value)} rows={6} spellCheck={false} />
                 </details>
                 {decisionStatus === 'confirmed' && detail.assessment.warnings.length > 0 ? (
                   <BoolToggle

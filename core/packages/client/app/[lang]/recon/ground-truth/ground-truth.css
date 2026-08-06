@@ -39,7 +39,7 @@
 
 .gt-filters { display: flex; align-items: flex-end; gap: 12px; margin-bottom: 14px; }
 .gt-search { width: min(430px, 100%); }
-.gt-search-input, .gt-filter-label select, .gt-editor select, .gt-editor textarea {
+.gt-search-input, .gt-filter-select, .gt-decision-select, .gt-editor-textarea {
   border: 1px solid var(--input);
   border-radius: 7px;
   background: var(--background);
@@ -47,9 +47,9 @@
   outline: none;
 }
 .gt-search-input { width: 100%; min-height: 38px; padding: 8px 34px 8px 10px; }
-.gt-search-input:focus, .gt-filter-label select:focus, .gt-editor select:focus, .gt-editor textarea:focus { border-color: var(--ring); box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 22%, transparent); }
+.gt-search-input:focus, .gt-filter-select:focus, .gt-decision-select:focus, .gt-editor-textarea:focus { border-color: var(--ring); box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 22%, transparent); }
 .gt-filter-label, .gt-editor label { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; color: var(--muted-foreground); font-size: 0.78rem; }
-.gt-filter-label select, .gt-editor select { min-height: 38px; padding: 7px 30px 7px 9px; width: fit-content; }
+.gt-filter-select, .gt-decision-select { min-height: 38px; padding: 7px 30px 7px 9px; width: fit-content; }
 
 .gt-workbench { display: grid; grid-template-columns: minmax(280px, 370px) minmax(0, 1fr); min-height: 680px; border-top: 1px solid var(--border-default); }
 .gt-candidates { border-right: 1px solid var(--border-default); min-width: 0; }
@@ -68,8 +68,8 @@
 .gt-status-discussion { color: var(--accent); }
 .gt-status-rejected, .gt-source-changed { color: var(--destructive); }
 .gt-pages { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; color: var(--muted-foreground); font-size: 0.78rem; }
-.gt-pages button { display: inline-flex; border: 1px solid var(--border-default); border-radius: 5px; background: transparent; color: inherit; padding: 5px; cursor: pointer; }
-.gt-pages button:disabled { opacity: 0.35; cursor: not-allowed; }
+.gt-page-button { display: inline-flex; border: 1px solid var(--border-default); border-radius: 5px; background: transparent; color: inherit; padding: 5px; cursor: pointer; }
+.gt-page-button:disabled { opacity: 0.35; cursor: not-allowed; }
 
 .gt-detail { min-width: 0; padding: 20px 24px 36px; }
 .gt-detail-head { display: flex; align-items: flex-start; gap: 16px; }
@@ -94,7 +94,7 @@
 
 .gt-editor { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; margin-top: 26px; padding-top: 20px; border-top: 1px solid var(--border-default); }
 .gt-editor label { width: min(760px, 100%); }
-.gt-editor textarea { width: 100%; resize: vertical; padding: 9px 10px; font: 0.82rem/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.gt-editor-textarea { width: 100%; resize: vertical; padding: 9px 10px; font: 0.82rem/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 .gt-editor details { width: min(760px, 100%); color: var(--muted-foreground); font-size: 0.78rem; }
 .gt-editor summary { cursor: pointer; margin-bottom: 8px; }
 .gt-save { border-color: color-mix(in srgb, var(--signal-success) 55%, var(--border-default)); background: color-mix(in srgb, var(--signal-success) 13%, transparent); color: var(--foreground); }
