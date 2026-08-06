@@ -41,7 +41,7 @@ export default function PersonHero({ profile, results, former, isZh }: Props) {
         { key: 'national', label: 'NR', value: profile.records.national },
       ],
     },
-  ];
+  ].filter((collection) => collection.items.some((item) => item.value > 0));
 
   // 复原次数 / 尝试次数 (排除 DNS / no-result)
   let solves = 0, attempts = 0;
@@ -100,21 +100,23 @@ export default function PersonHero({ profile, results, former, isZh }: Props) {
         </div>
       </div>
 
-      <div className="wp-hero-collections">
-        {collections.map((collection) => (
-          <section className={`wp-hero-collection wp-hero-collection-${collection.key}`} key={collection.key}>
-            <h2>{collection.title}</h2>
-            <dl>
-              {collection.items.map((item) => (
-                <div className={`wp-hero-collection-item wp-hero-collection-item-${item.key}`} key={item.key}>
-                  <dt>{item.label}</dt>
-                  <dd>{item.value}</dd>
-                </div>
-              ))}
-            </dl>
-          </section>
-        ))}
-      </div>
+      {collections.length > 0 && (
+        <div className="wp-hero-collections">
+          {collections.map((collection) => (
+            <section className={`wp-hero-collection wp-hero-collection-${collection.key}`} key={collection.key}>
+              <h2>{collection.title}</h2>
+              <dl>
+                {collection.items.map((item) => (
+                  <div className={`wp-hero-collection-item wp-hero-collection-item-${item.key}`} key={item.key}>
+                    <dt>{item.label}</dt>
+                    <dd>{item.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+          ))}
+        </div>
+      )}
 
       <div className="wp-hero-table">
         <div className="wp-hero-cell">
