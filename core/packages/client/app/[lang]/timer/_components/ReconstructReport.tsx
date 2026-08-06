@@ -643,6 +643,7 @@ export default function ReconstructReport({
               totalMs={solve.timeMs}
               isZh={isZh}
               lines={reconText?.lines ?? []}
+              rotations={reconText?.rotations}
               gyro={solve.gyro ?? null}
               deviceModel={solve.device?.model ?? null}
               side={reconText ? ({ idx, seek }) => (
