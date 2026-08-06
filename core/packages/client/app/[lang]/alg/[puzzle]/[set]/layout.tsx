@@ -25,8 +25,8 @@ export async function generateMetadata({ params }: {
   return metadataFromEntry(
     {
       title: {
-        zh: `${name} ${meta.zh}公式`,
-        en: `${name} ${meta.en} Algorithms`,
+        zh: `${name} ${meta.short ?? meta.zh}公式`,
+        en: `${name} ${meta.short ?? meta.en} Algorithms`,
       },
       description: {
         zh: `${name} ${meta.zh} 完整公式表:每个情况配图,给出多套解法与作者,可直接进入练习。`,

@@ -28,6 +28,8 @@
  *                            (all|bar|baroppbar). 3x3 only.
  *   psy                      keep every last-layer-coloured sticker (default 1)
  *   pfs / pfh                force-show / force-hide `side=<csv>&up=<csv>` index lists
+ *   mid                      Square-1 wca only: 0 = hide the equator strip
+ *   blk                      Square-1 wca only: 0 = yellow top (default black)
  *
  * Cached 24h since responses are deterministic from inputs.
  */
@@ -96,7 +98,9 @@ cubeRoutes.get('/visualcube.svg', async (c) => {
       : puzzle === 'megaminx' ? 'minx'
       : puzzle === 'pyraminx' ? 'pyram'
       : 'skewb';
-    const svg = await renderPuzzleNetSVG(event, algStr, isCase);
+    const showSq1Middle = q('mid') !== '0';
+    const sq1BlackTop = q('blk') !== '0';
+    const svg = await renderPuzzleNetSVG(event, algStr, isCase, showSq1Middle, sq1BlackTop);
     if (svg) {
       c.header('Content-Type', 'image/svg+xml; charset=utf-8');
       c.header('Cache-Control', 'public, max-age=86400');

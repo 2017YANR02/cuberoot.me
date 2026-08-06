@@ -25,7 +25,9 @@ import { appendArrow, buildArrowEntry, removeArrowByPoints } from '@/lib/puzzle-
 import { sizeEngineSvg } from '@/lib/puzzle-image/engine-svg';
 import {
   clipboardImageSupported, copyPngToClipboard, saveBlob, svgBlob, svgToPngBlob,
+  svgToRasterBlob,
 } from '@/lib/puzzle-image/image-export';
+import type { DrawExport } from '@/components/puzzle-draw/types';
 import { pzlShort } from '@/lib/puzzle-image/codec';
 import { formatMask, parseMask, type StickerId } from '@/lib/puzzle-image/mask-core';
 import { maskSupported, pieceOf } from '@/lib/puzzle-image/puzzle-mask';
@@ -167,9 +169,16 @@ export interface PuzzleImageStudioProps {
    *  两份图,同一个 spec、同一个状态,用来肉眼比两条渲染路线的差异。
    *  /sim 由 `?img_engine=both` 打开;engineOnly 拼图没有 spec 渲染器可比,忽略。 */
   compare?: boolean;
+  /** A free-drawing document rendered in the main /sim canvas. The studio becomes
+   *  an export-only toolbar and deliberately hides API/spec controls that cannot
+   *  represent arbitrary per-cell colours. */
+  externalImage?: DrawExport;
 }
 
-export default function PuzzleImageStudio({ spec, onSpecChange, className, simBridge, previewHost, engineSvg, engineOnly = false, compare = false }: PuzzleImageStudioProps) {
+export default function PuzzleImageStudio({
+  spec, onSpecChange, className, simBridge, previewHost, engineSvg,
+  engineOnly = false, compare = false, externalImage,
+}: PuzzleImageStudioProps) {
   const t = useT();
   const s = spec;
   const set = useCallback(<K extends keyof ImageSpec>(key: K, value: ImageSpec[K]) => {
@@ -200,6 +209,7 @@ export default function PuzzleImageStudio({ spec, onSpecChange, className, simBr
   // no <svg> at all). Only the genuinely DOM-only renderers fall back to
   // serializing the live DOM.
   const getCurrentSvg = useCallback((): string => {
+    if (externalImage) return externalImage.svg;
     // 引擎镜像:所见即所得 —— 下载件也套图片尺寸(PX),否则导出的是导出器紧凑
     // 非方 viewBox 的原生像素尺寸,忽略了尺寸控件(退役对照表 §2b「图片尺寸」)。
     if (engineShown && engineSvg) return sizeEngineSvg(engineSvg, s.imageSize);
@@ -214,18 +224,32 @@ export default function PuzzleImageStudio({ spec, onSpecChange, className, simBr
     // layout, so a tnoodle-net fallback would export a picture unlike the preview.
     const node = previewRef.current?.querySelector('svg');
     return node ? new XMLSerializer().serializeToString(node) : '';
-  }, [s, engineShown, engineSvg]);
+  }, [s, engineShown, engineSvg, externalImage]);
+
+  const exportWidth = externalImage?.width ?? s.imageSize;
+  const exportHeight = externalImage?.height ?? s.imageSize;
+  const exportBase = () => externalImage?.filenameBase ?? `${s.puzzleType}-${Date.now()}`;
 
   const downloadSvg = () => {
     const out = getCurrentSvg();
     if (!out) return;
-    saveBlob(svgBlob(out), `${s.puzzleType}-${Date.now()}.svg`);
+    saveBlob(svgBlob(out), `${exportBase()}.svg`);
   };
 
   const downloadPng = async () => {
     const out = getCurrentSvg();
     if (!out) return;
-    saveBlob(await svgToPngBlob(out, s.imageSize), `${s.puzzleType}-${Date.now()}.png`);
+    saveBlob(await svgToRasterBlob(out, {
+      width: exportWidth, height: exportHeight, format: 'png',
+    }), `${exportBase()}.png`);
+  };
+
+  const downloadJpeg = async () => {
+    const out = getCurrentSvg();
+    if (!out) return;
+    saveBlob(await svgToRasterBlob(out, {
+      width: exportWidth, height: exportHeight, format: 'jpeg',
+    }), `${exportBase()}.jpg`);
   };
 
   // The API endpoint's own (simplified) param set — not specToParams.
@@ -256,6 +280,12 @@ export default function PuzzleImageStudio({ spec, onSpecChange, className, simBr
       if (s.planShowYellow !== DEFAULTS.planShowYellow) p.set('psy', s.planShowYellow ? '1' : '0');
       if (s.planForceShow) p.set('pfs', s.planForceShow);
       if (s.planForceHide) p.set('pfh', s.planForceHide);
+    }
+    if (s.puzzleType === 'sq1' && s.puzzleVariant === 'wca' && !s.showSq1Middle) {
+      p.set('mid', '0');
+    }
+    if (s.puzzleType === 'sq1' && s.puzzleVariant === 'wca' && !s.sq1BlackTop) {
+      p.set('blk', '0');
     }
     if (s.imageSize !== DEFAULTS.imageSize) p.set('size', String(s.imageSize));
     if (s.backgroundColor) p.set('bg', s.backgroundColor);
@@ -399,21 +429,23 @@ export default function PuzzleImageStudio({ spec, onSpecChange, className, simBr
 
   return (
     <div className={`vc-studio${className ? ` ${className}` : ''}`}>
-      {previewHost ? createPortal(preview, previewHost) : preview}
+      {!externalImage && (previewHost ? createPortal(preview, previewHost) : preview)}
 
       <section className="vc-exports">
         {/* 实时截图组排在静态导出之上:它出的是画布当下这一帧,跟左上角浮层里
             看到的是同一个东西,离图更近;下面那排导出的是 spec 重渲染的结果。 */}
-        {simBridge && <SimCaptureGroup simBridge={simBridge} />}
+        {!externalImage && simBridge && <SimCaptureGroup simBridge={simBridge} />}
 
         {/* 链接类按钮指向服务端 spec 渲染(/v1/visualcube.svg),engine-only 拼图服务端
             画不了 → 只留 SVG/PNG(下载预览那份引擎矢量)。没有单独的「分享链接」按钮:
             面板状态本来就写在地址栏的 img_* 里,复制地址栏即分享。 */}
-        {!engineOnly && <CopyButton label={t('API 链接', 'API URL')} getValue={() => apiSvgUrl} />}
+        {!engineOnly && !externalImage && <CopyButton label={t('API 链接', 'API URL')} getValue={() => apiSvgUrl} />}
         {/* 复制图片本身,而不是链接 —— 贴进文档 / 聊天最短的一条路。 */}
         <CopyImageButton
           label={t('复制图片', 'Copy image')}
-          getPng={() => svgToPngBlob(getCurrentSvg(), s.imageSize)}
+          getPng={() => externalImage
+            ? svgToRasterBlob(getCurrentSvg(), { width: exportWidth, height: exportHeight, format: 'png' })
+            : svgToPngBlob(getCurrentSvg(), s.imageSize)}
         />
         <CopyButton
           label={t('复制 SVG', 'Copy SVG')}
@@ -425,16 +457,21 @@ export default function PuzzleImageStudio({ spec, onSpecChange, className, simBr
         <button type="button" className="vc-btn" onClick={downloadPng}>
           <Download size={14} /> PNG
         </button>
-        {!engineOnly && (
+        {externalImage && (
+          <button type="button" className="vc-btn" onClick={downloadJpeg}>
+            <Download size={14} /> JPG
+          </button>
+        )}
+        {!engineOnly && !externalImage && (
           <CopyButton
             label={t('<img> 标签', '<img> tag')}
             getValue={() => `<img src="${apiSvgUrl}" alt="cube" width="${s.imageSize}" height="${s.imageSize}" />`}
           />
         )}
-        {!engineOnly && <CopyButton label="Markdown" getValue={() => `![cube](${apiSvgUrl})`} />}
+        {!engineOnly && !externalImage && <CopyButton label="Markdown" getValue={() => `![cube](${apiSvgUrl})`} />}
       </section>
 
-      <section className="vc-controls">
+      {!externalImage && <section className="vc-controls">
         {!engineOnly && (
         <div className="vc-row">
           <label className="vc-label">{t('视图', 'View')}</label>
@@ -473,6 +510,20 @@ export default function PuzzleImageStudio({ spec, onSpecChange, className, simBr
                 onChange={(v) => set('hideGreySides', v)}
                 label={t('隐去侧面灰格', 'Hide grey sides')}
               />
+            )}
+            {s.puzzleType === 'sq1' && s.puzzleVariant === 'wca' && (
+              <>
+                <BoolToggle
+                  value={s.showSq1Middle}
+                  onChange={(v) => set('showSq1Middle', v)}
+                  label={t('显示中层', 'Show middle layer')}
+                />
+                <BoolToggle
+                  value={s.sq1BlackTop}
+                  onChange={(v) => set('sq1BlackTop', v)}
+                  label={t('黑顶', 'Black top')}
+                />
+              </>
             )}
           </div>
         </div>
@@ -740,9 +791,9 @@ export default function PuzzleImageStudio({ spec, onSpecChange, className, simBr
           allowEmpty
         />
         </>)}
-      </section>
+      </section>}
 
-      {!engineOnly && (
+      {!engineOnly && !externalImage && (
       <details className="vc-api-doc">
         <summary>{t('API 用法（外部嵌入）', 'API usage (embed elsewhere)')}</summary>
         <p>
@@ -770,6 +821,8 @@ export default function PuzzleImageStudio({ spec, onSpecChange, className, simBr
             <tr><td><code>bg</code></td><td>{t('hex（带不带 #）或 CSS 颜色名', 'Hex (with/without #) or CSS colour name')}</td><td>{t('透明', 'transparent')}</td></tr>
             <tr><td><code>cc</code></td><td>{t('壳体色（PHP cc）', 'Cube shell colour (PHP cc)')}</td><td>{t('黑（trans 时银）', 'black (silver when trans)')}</td></tr>
             <tr><td><code>co</code></td><td>{t('壳体不透明度 0-100（PHP co）', 'Cube opacity 0-100 (PHP co)')}</td><td>{t('100（trans 时 50）', '100 (50 when trans)')}</td></tr>
+            <tr><td><code>mid</code></td><td>{t('Square-1 的 wca 视图：0 隐藏中层', 'Square-1 wca view: 0 hides the middle layer')}</td><td>1</td></tr>
+            <tr><td><code>blk</code></td><td>{t('Square-1 的 wca 视图：0 使用黄色顶面', 'Square-1 wca view: 0 uses a yellow top')}</td><td>1</td></tr>
           </tbody>
         </table>
         <p className="vc-api-note">

@@ -9,7 +9,9 @@ import { toWca as toWcaSkewb } from '@cuberoot/shared/skewb-notation';
 import { VisualCube } from '@/components/VisualCube';
 import { PuzzleSVG, type PuzzleKind } from '@/components/PuzzleSVG';
 import { EnginePuzzleSVG } from '@/components/EnginePuzzleSVG';
-import { apiUrl } from '@/lib/api-base';
+import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS } from '@/lib/sq1-svg';
+import { invertSq1Alg } from '@cuberoot/shared/sq1-notation';
+import { sq1StageHiddenStickerIds } from '@/lib/sq1-stage-mask';
 
 export const PUZZLE_SIZE: Record<AlgPuzzle, number> = {
   '2x2': 2, '3x3': 3, '4x4': 4, '5x5': 5,
@@ -87,6 +89,7 @@ export function cubeThumbParams(
 
 export function CaseThumb({
   puzzle, set, sticker, alg, setup, size = 88, mask: maskOverride, local, loading,
+  sq1BlackTop = true,
 }: {
   puzzle: AlgPuzzle;
   set: string;
@@ -102,17 +105,39 @@ export function CaseThumb({
    * 首屏可见的图别传(懒加载会推迟它)。`local` 渲染时无意义(没有请求可省)。
    */
   loading?: 'lazy' | 'eager';
+  /** Square-1 flat thumbnails default to the common black-top colour scheme. */
+  sq1BlackTop?: boolean;
 }) {
   if (puzzle === 'sq1') {
-    const params = new URLSearchParams({ pzl: 'sq1', variant: 'net' });
-    if (setup && setup.trim()) params.set('setup', setup);
-    else if (alg) params.set('case', alg);
+    const forward = setup && setup.trim() ? setup : invertSq1Alg(alg);
+    const hidden = sq1StageHiddenStickerIds(set);
+    const normalizedSet = set.toLowerCase();
+    const renderOptions = {
+      ...(hidden ? { mask: { ids: hidden, color: 'transparent' } } : {}),
+      compactFaces: normalizedSet !== 'cs',
+    };
+    const showMiddle = !['cs', 'parity'].includes(normalizedSet) && !hidden;
+    const colors = normalizedSet === 'cs'
+      ? Object.fromEntries(
+          Object.keys(DEFAULT_SQ1_COLORS).map(face => [face, 'var(--muted-foreground)']),
+        )
+      : sq1BlackTop
+        ? { ...DEFAULT_SQ1_COLORS, U: '#000000' }
+        : DEFAULT_SQ1_COLORS;
+    let svg: string;
+    try {
+      svg = renderSq1ScrambleSvg(forward, colors, renderOptions, showMiddle);
+    } catch {
+      // Keep a malformed DB case from breaking the whole catalog grid.
+      svg = renderSq1ScrambleSvg('', colors, renderOptions, showMiddle);
+    }
     return (
-      <img
-        src={apiUrl(`/v1/visualcube.svg?${params}`)}
-        alt="Square-1 case"
-        loading={loading}
-        style={{ width: size, height: size, objectFit: 'contain' }}
+      <div
+        className="puzzle-art"
+        role="img"
+        aria-label="Square-1 case"
+        style={{ width: size, height: size, display: 'inline-block', lineHeight: 0 }}
+        dangerouslySetInnerHTML={{ __html: svg }}
       />
     );
   }

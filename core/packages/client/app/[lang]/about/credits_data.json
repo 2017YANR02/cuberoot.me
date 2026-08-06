@@ -176,9 +176,9 @@
   {
     "name": "cubing.pro",
     "url": "https://cubing.pro/",
-    "zh": "/wca 各子页 + 选手详情页 UI/概念参考",
-    "en": "UI / concept reference for /wca sub-pages + person detail page",
-    "long_en": "UI/概念参考来源:`/wca` 子页(历史排名 / 大满贯 / 全部成绩排名 / 当年成绩排名 / 参赛届别排名 / 项目成功率 / 全项目达成 / 全项目排名)+ `/wca/persons/:wcaId` 选手详情页(成绩 / 赛事 / 项目统计 / 里程碑 / 点亮城市)"
+    "zh": "/wca 各子页与选手详情页 UI/概念参考；/sim 绘图模式的 SQ1、五魔方、Skewb、Pyraminx、FTO 平面模板与交互经授权移植",
+    "en": "UI / concept reference for /wca pages; authorized drawing templates and interactions for SQ1, Megaminx, Skewb, Pyraminx, and FTO in /sim",
+    "long_en": "UI/concept reference for `/wca` sub-pages and person details. The authorized source also provides the flat SVG templates and puzzle-specific controls ported into `/sim` drawing mode for SQ1, Megaminx, Skewb, Pyraminx, and FTO; CubeRoot supplies the shared editor, theme, responsive UI, and export pipeline."
   },
   {
     "name": "rullerzhou-afk/clawd-on-desk",

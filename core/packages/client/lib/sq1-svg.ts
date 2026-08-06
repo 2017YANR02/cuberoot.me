@@ -12,6 +12,11 @@
 import { applySq1Scramble, type Sq1State } from '@cuberoot/shared/sq1-notation';
 import type { MaskRenderOptions } from '@/lib/puzzle-image/mask-core';
 
+export interface Sq1RenderOptions extends MaskRenderOptions {
+  /** Solved-cubeshape stages can safely use the tighter square-face spacing. */
+  compactFaces?: boolean;
+}
+
 export const SQ1_FACE_KEYS = ['L', 'B', 'R', 'F', 'U', 'D'] as const;
 export type Sq1FaceKey = typeof SQ1_FACE_KEYS[number];
 
@@ -95,7 +100,7 @@ function pieceStickerSid(piece: number, polyIdx: number): string {
 /** Walk the 12-slot face array, drawing each piece + advancing rotation by piece span. */
 function drawFace(
   parts: string[], face: number[], cx: number, cy: number,
-  startAngle: number, scheme: string[], opts?: MaskRenderOptions,
+  startAngle: number, scheme: string[], opts?: Sq1RenderOptions,
 ): void {
   let angle = startAngle;
   let ch = 0;
@@ -111,8 +116,13 @@ function drawFace(
       // Mask 语义 = piece-following 免费获得:face 数组携带 piece id 随打乱走,
       // sid 是 solved 帧命名,灰化自动跟块。
       const sid = pieceStickerSid(piece, i);
-      const fill = opts?.mask?.ids.has(sid) ? opts.mask.color : colors[i];
+      const masked = opts?.mask?.ids.has(sid) ?? false;
+      // A transparent stage mask means the sticker geometry does not exist.
+      // Keeping even an open outline can combine with adjacent sticker borders
+      // into a closed background-coloured wedge that still looks like a block.
+      if (masked && opts?.mask?.color === 'transparent') continue;
       const sidAttr = opts?.stickerIds ? ` data-sid="${sid}"` : '';
+      const fill = masked ? opts!.mask!.color : colors[i];
       parts.push(
         `<path d="${polys[i]}"${sidAttr} fill="${fill}" stroke="#000" stroke-width="${STROKE_WIDTH}" stroke-linejoin="round" transform="translate(${cx},${cy}) rotate(${angle})" />`,
       );
@@ -122,7 +132,12 @@ function drawFace(
   }
 }
 
-export function renderSq1Svg(state: Sq1State, colors: Record<string, string>, opts?: MaskRenderOptions): string {
+export function renderSq1Svg(
+  state: Sq1State,
+  colors: Record<string, string>,
+  opts?: Sq1RenderOptions,
+  showMiddle = true,
+): string {
   const { pieces, sliceSolved } = state;
   const scheme: string[] = SQ1_FACE_KEYS.map(
     (k) => colors[k] ?? DEFAULT_SQ1_COLORS[k],
@@ -132,6 +147,18 @@ export function renderSq1Svg(state: Sq1State, colors: Record<string, string>, op
   const edgeWidth = 2 * RADIUS * MULTIPLIER * Math.sin(Math.PI * 15 / 180);
   const cornerWidth = halfSquareWidth - edgeWidth / 2;
   const equatorH = RADIUS * (MULTIPLIER - 1);
+  // Without the equator, pull both faces toward the centre by slightly more than
+  // one strip height. Crop the same amount off the outer viewBox edges so the
+  // combined drawing stays centred and does not gain empty top/bottom margins.
+  // Corner side stickers can reach the full 61.2px face radius. Therefore the
+  // two face centres must stay more than 122.4px apart for every cube shape.
+  // With no equator, move them 2px outward instead of inward; this leaves room
+  // for both outlines and guarantees that no legal scramble can overlap.
+  const faceInset = showMiddle
+    ? 0
+    : opts?.compactFaces
+      ? equatorH
+      : -STROKE_WIDTH;
 
   const leftX = W / 2 - halfSquareWidth;
   const midY = H / 2 - equatorH / 2;
@@ -142,20 +169,27 @@ export function renderSq1Svg(state: Sq1State, colors: Record<string, string>, op
 
   const parts: string[] = [];
   // Equator: right rect first, left rect on top (clobbers part), then both outlines.
-  parts.push(`<rect x="${leftX}" y="${midY}" width="${rightW}" height="${equatorH}" fill="${rightFill}" />`);
-  parts.push(`<rect x="${leftX}" y="${midY}" width="${cornerWidth}" height="${equatorH}" fill="${scheme[3]}" />`);
-  parts.push(`<rect x="${leftX}" y="${midY}" width="${rightW}" height="${equatorH}" fill="none" stroke="#000" stroke-width="${STROKE_WIDTH}" />`);
-  parts.push(`<rect x="${leftX}" y="${midY}" width="${cornerWidth}" height="${equatorH}" fill="none" stroke="#000" stroke-width="${STROKE_WIDTH}" />`);
+  if (showMiddle) {
+    parts.push(`<rect x="${leftX}" y="${midY}" width="${rightW}" height="${equatorH}" fill="${rightFill}" />`);
+    parts.push(`<rect x="${leftX}" y="${midY}" width="${cornerWidth}" height="${equatorH}" fill="${scheme[3]}" />`);
+    parts.push(`<rect x="${leftX}" y="${midY}" width="${rightW}" height="${equatorH}" fill="none" stroke="#000" stroke-width="${STROKE_WIDTH}" />`);
+    parts.push(`<rect x="${leftX}" y="${midY}" width="${cornerWidth}" height="${equatorH}" fill="none" stroke="#000" stroke-width="${STROKE_WIDTH}" />`);
+  }
 
   // Top face — initial rotation 90+15° puts piece 0 at the bottom-left going CW.
-  drawFace(parts, pieces.slice(0, 12), W / 2, H / 4, 90 + 15, scheme, opts);
+  drawFace(parts, pieces.slice(0, 12), W / 2, H / 4 + faceInset, 90 + 15, scheme, opts);
   // Bottom face — mirrored angle.
-  drawFace(parts, pieces.slice(12, 24), W / 2, 3 * H / 4, -(90 + 15), scheme, opts);
+  drawFace(parts, pieces.slice(12, 24), W / 2, 3 * H / 4 - faceInset, -(90 + 15), scheme, opts);
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" stroke-linecap="round" style="width:100%;height:100%">${parts.join('')}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${faceInset} ${W} ${H - 2 * faceInset}" preserveAspectRatio="xMidYMid meet" stroke-linecap="round" style="width:100%;height:100%">${parts.join('')}</svg>`;
 }
 
 /** Convenience: scramble string + colors → final SVG. */
-export function renderSq1ScrambleSvg(scramble: string, colors: Record<string, string>, opts?: MaskRenderOptions): string {
-  return renderSq1Svg(applySq1Scramble(scramble), colors, opts);
+export function renderSq1ScrambleSvg(
+  scramble: string,
+  colors: Record<string, string>,
+  opts?: Sq1RenderOptions,
+  showMiddle = true,
+): string {
+  return renderSq1Svg(applySq1Scramble(scramble), colors, opts, showMiddle);
 }

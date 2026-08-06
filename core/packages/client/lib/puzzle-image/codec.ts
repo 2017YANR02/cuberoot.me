@@ -22,7 +22,8 @@ import { parseViewRotations } from '@cuberoot/shared/sr-rotations';
 const WRITE_KEYS = [
   'pzl', 'size', 'alg', 'case', 'arw', 'ac', 'view', 'stage',
   'sch', 'r', 'bg', 'cc', 'co', 'fo', 'dist', 'msk', 'mkc', 'fc',
-  'ngs', 'psr', 'pur', 'psy', 'pfs', 'pfh',
+  'ngs', 'psr', 'pur', 'psy', 'pfs', 'pfh', 'mid',
+  'blk',
 ] as const;
 
 const SIDE_RULES: readonly PlanSideRule[] = ['all', 'bar', 'oppline', 'cece', 'light', 'oppbar', 'ecec'];
@@ -224,6 +225,10 @@ export function readSpecFromParams(params: ParamsInput, prefix: string, opts?: C
   if (psy != null) s.planShowYellow = psy !== '0' && psy !== '';
   if (get('pfs') != null) s.planForceShow = get('pfs') ?? '';
   if (get('pfh') != null) s.planForceHide = get('pfh') ?? '';
+  const mid = get('mid');
+  if (mid != null) s.showSq1Middle = mid !== '0' && mid !== '';
+  const blk = get('blk');
+  if (blk != null) s.sq1BlackTop = blk !== '0' && blk !== '';
   // Panel mode: the host owns the alg + colour scheme — inject LAST so it wins over
   // any stray `alg`/`case`/`sch` still in the URL (same clobber-proofing as `puzzle`).
   if (opts?.inherit) {
@@ -288,6 +293,15 @@ export function specToParams(s: ImageSpec, prefix: string, opts?: CodecOptions):
     if (s.planShowYellow !== DEFAULTS.planShowYellow) set('psy', s.planShowYellow ? '1' : '0');
     if (s.planForceShow) set('pfs', s.planForceShow);
     if (s.planForceHide) set('pfh', s.planForceHide);
+  }
+  // Square-1 WCA only. Default-on keeps every pre-option URL byte-identical.
+  if (s.puzzleType === 'sq1' && s.puzzleVariant === 'wca'
+      && s.showSq1Middle !== DEFAULTS.showSq1Middle) {
+    set('mid', s.showSq1Middle ? '1' : '0');
+  }
+  if (s.puzzleType === 'sq1' && s.puzzleVariant === 'wca'
+      && s.sq1BlackTop !== DEFAULTS.sq1BlackTop) {
+    set('blk', s.sq1BlackTop ? '1' : '0');
   }
   return p;
 }

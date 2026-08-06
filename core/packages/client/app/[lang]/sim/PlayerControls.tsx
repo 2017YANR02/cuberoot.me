@@ -309,10 +309,12 @@ const ALL_PUZZLE_TYPE_OPTIONS: { value: string; iconClass: string; labelZh: stri
   ...PG_PUZZLES.map((p) => ({ value: p.id, iconClass: p.icon, labelZh: p.zh, labelEn: p.en })),
 ];
 
-function PuzzleTypeSelect({ value, onChange, isZh }: {
+export function PuzzleTypeSelect({ value, onChange, isZh, allowedValues }: {
   value: string;
   onChange: (v: string) => void;
   isZh: boolean;
+  /** Optional subset for another /sim tool that shares this selector. */
+  allowedValues?: readonly string[];
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -325,7 +327,12 @@ function PuzzleTypeSelect({ value, onChange, isZh }: {
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
-  const current = ALL_PUZZLE_TYPE_OPTIONS.find(o => o.value === value) ?? ALL_PUZZLE_TYPE_OPTIONS[0];
+  const options = useMemo(() => {
+    if (!allowedValues) return ALL_PUZZLE_TYPE_OPTIONS;
+    const allowed = new Set(allowedValues);
+    return ALL_PUZZLE_TYPE_OPTIONS.filter((option) => allowed.has(option.value));
+  }, [allowedValues]);
+  const current = options.find(o => o.value === value) ?? options[0] ?? ALL_PUZZLE_TYPE_OPTIONS[0];
 
   return (
     <div ref={ref} className="sim-puzzle-type-select">
@@ -342,7 +349,7 @@ function PuzzleTypeSelect({ value, onChange, isZh }: {
       </button>
       {open && (
         <div className="sim-puzzle-type-popup">
-          {ALL_PUZZLE_TYPE_OPTIONS.map(o => (
+          {options.map(o => (
             <button
               key={o.value}
               type="button"
