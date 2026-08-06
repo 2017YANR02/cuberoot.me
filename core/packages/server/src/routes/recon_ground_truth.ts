@@ -9,6 +9,7 @@ import { Hono } from 'hono';
 import { puzzles } from 'cubing/puzzles';
 import {
   buildReconGroundTruth,
+  reconCandidateMetadataBlockers,
   reconAlgMoves,
 } from '@cuberoot/shared/recon-ground-truth';
 import { getIp } from '../utils/analytics_helpers.js';
@@ -70,6 +71,8 @@ interface DecisionRow {
 interface ExportRow extends DecisionRow {
   current_event: string | null;
   current_added_by_id: string | null;
+  current_value: string | null;
+  current_raw_time: number | string | null;
   current_scramble: string | null;
   current_solution: string | null;
 }
@@ -128,23 +131,17 @@ async function assessSource(row: SourceRow): Promise<Assessment> {
   const scramble = sourceScramble(row);
   const solution = row.solution?.trim() ?? '';
   const built = buildReconGroundTruth(scramble, solution);
-  const blockers: string[] = [];
+  const blockers = reconCandidateMetadataBlockers({
+    scramble,
+    solution,
+    value: row.value ?? '',
+    rawTime: row.raw_time,
+  });
   const warnings: string[] = [];
 
-  if (!scramble) blockers.push('missing_scramble');
-  if (!solution) blockers.push('missing_solution');
-  const result = row.value?.trim().toUpperCase() ?? '';
-  if (/^(?:DNF|DNS)\b/.test(result)) blockers.push('dnf_or_dns');
-  if (/\bfail(?:ed|ure)?\b/i.test(solution)) blockers.push('fail_marker');
-
-  const sourceSolved = blockers.includes('missing_scramble') || blockers.includes('missing_solution')
-    ? false
-    : await algSolves(scramble, reconAlgMoves(solution));
-  if (!sourceSolved) blockers.push('source_not_solved');
-
-  const scrambleMoves = scramble.split(/\s+/).filter(Boolean).length;
-  if (scrambleMoves < 10) warnings.push('short_scramble');
-  if (row.raw_time == null || !result) warnings.push('missing_result');
+  const hasSourceAlg = !blockers.includes('missing_scramble') && !blockers.includes('missing_solution');
+  const sourceSolved = hasSourceAlg && await algSolves(scramble, reconAlgMoves(solution));
+  if (hasSourceAlg && !sourceSolved) blockers.push('source_not_solved');
   if (!row.comp || !row.date) warnings.push('missing_comp_or_date');
 
   return {
@@ -157,6 +154,87 @@ async function assessSource(row: SourceRow): Promise<Assessment> {
     sourceSolved,
   };
 }
+
+const CANDIDATE_SCRAMBLE_SQL =
+  "COALESCE(NULLIF(BTRIM(r.optimal_scramble), ''), BTRIM(r.wca_scramble), '')";
+
+/**
+ * 候选资格包含一次真实魔方状态校验，不能只靠 SQL 猜。结果持久化，并用全部来源字段
+ * 做快照键；新增或被编辑的复盘才重算，候选池增长后不会在每次翻页时全库求值。
+ */
+async function refreshCandidateChecks(): Promise<void> {
+  const stale = await query<SourceRow>(
+    `SELECT r.id, r.official, r.visibility, r.event, r.person, r.person_id,
+            r.value, r.raw_time, r.comp, r.date, r.method,
+            r.added_by, r.added_by_id, r.reconer, r.reconer_id,
+            r.optimal_scramble, r.wca_scramble, r.solution
+     FROM recons r
+     LEFT JOIN recon_ground_truth_candidate_checks k ON k.recon_id = r.id
+     WHERE r.event = ? AND r.added_by_id = ? AND (
+       k.recon_id IS NULL OR
+       k.source_event IS DISTINCT FROM r.event OR
+       k.source_added_by_id IS DISTINCT FROM r.added_by_id OR
+       k.source_value IS DISTINCT FROM COALESCE(r.value, '') OR
+       k.source_raw_time IS DISTINCT FROM r.raw_time OR
+       k.source_scramble IS DISTINCT FROM ${CANDIDATE_SCRAMBLE_SQL} OR
+       k.source_solution IS DISTINCT FROM COALESCE(r.solution, '')
+     )
+     ORDER BY r.id`,
+    [CURRENT_EVENT, PUBLISHER_WCA_ID],
+  );
+  if (stale.length === 0) return;
+
+  const checked: Array<{ row: SourceRow; assessment: Assessment }> = [];
+  for (const row of stale) checked.push({ row, assessment: await assessSource(row) });
+
+  for (let start = 0; start < checked.length; start += 200) {
+    const chunk = checked.slice(start, start + 200);
+    const values = chunk.map(() => '(?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())').join(', ');
+    const params = chunk.flatMap(({ row, assessment }) => [
+      Number(row.id),
+      row.event,
+      row.added_by_id ?? '',
+      row.value ?? '',
+      row.raw_time,
+      sourceScramble(row),
+      row.solution ?? '',
+      assessment.eligible,
+      JSON.stringify(assessment.blockers),
+    ]);
+    await query(
+      `INSERT INTO recon_ground_truth_candidate_checks (
+         recon_id, source_event, source_added_by_id, source_value, source_raw_time,
+         source_scramble, source_solution, eligible, blockers_json, checked_at
+       ) VALUES ${values}
+       ON CONFLICT (recon_id) DO UPDATE SET
+         source_event = EXCLUDED.source_event,
+         source_added_by_id = EXCLUDED.source_added_by_id,
+         source_value = EXCLUDED.source_value,
+         source_raw_time = EXCLUDED.source_raw_time,
+         source_scramble = EXCLUDED.source_scramble,
+         source_solution = EXCLUDED.source_solution,
+         eligible = EXCLUDED.eligible,
+         blockers_json = EXCLUDED.blockers_json,
+         checked_at = NOW()`,
+      params,
+    );
+  }
+}
+
+let candidateRefresh: Promise<void> | null = null;
+async function ensureCandidateChecks(): Promise<void> {
+  candidateRefresh ??= refreshCandidateChecks().finally(() => { candidateRefresh = null; });
+  await candidateRefresh;
+}
+
+const CANDIDATE_CHECK_JOIN = `JOIN recon_ground_truth_candidate_checks k ON
+  k.recon_id = r.id AND k.eligible = TRUE AND
+  k.source_event = r.event AND
+  k.source_added_by_id = r.added_by_id AND
+  k.source_value = COALESCE(r.value, '') AND
+  k.source_raw_time IS NOT DISTINCT FROM r.raw_time AND
+  k.source_scramble = ${CANDIDATE_SCRAMBLE_SQL} AND
+  k.source_solution = COALESCE(r.solution, '')`;
 
 function extractReplay(input: unknown): string | null {
   if (typeof input !== 'string') return null;
@@ -265,6 +343,8 @@ reconGroundTruthRoutes.get('/recon-ground-truth/export', async (c) => {
     `SELECT g.*,
             r.event AS current_event,
             r.added_by_id AS current_added_by_id,
+            r.value AS current_value,
+            r.raw_time AS current_raw_time,
             COALESCE(NULLIF(BTRIM(r.optimal_scramble), ''), BTRIM(r.wca_scramble), '') AS current_scramble,
             COALESCE(r.solution, '') AS current_solution
      FROM recon_ground_truth_cases g
@@ -274,7 +354,15 @@ reconGroundTruthRoutes.get('/recon-ground-truth/export', async (c) => {
     [CURRENT_EVENT, PUBLISHER_WCA_ID],
   );
   const blockedConfirmed: Array<{ id: string; reasons: string[] }> = [];
-  const fixtures = rows.flatMap((row) => {
+  const fixtures: Array<{
+    id: string;
+    source: string;
+    replay: string;
+    truth: string;
+    currentWrong: string;
+    note: string;
+  }> = [];
+  for (const row of rows) {
     const reasons: string[] = [];
     if (row.current_event !== CURRENT_EVENT || row.current_added_by_id !== PUBLISHER_WCA_ID) {
       reasons.push('source_scope_changed');
@@ -285,19 +373,30 @@ reconGroundTruthRoutes.get('/recon-ground-truth/export', async (c) => {
     if (buildReconGroundTruth(row.source_scramble, row.source_solution).truth !== row.truth) {
       reasons.push('truth_rule_changed');
     }
+    const eligibilityBlockers = reconCandidateMetadataBlockers({
+      scramble: row.current_scramble ?? '',
+      solution: row.current_solution ?? '',
+      value: row.current_value ?? '',
+      rawTime: row.current_raw_time,
+    });
+    const canCheckSolved = !eligibilityBlockers.includes('missing_scramble')
+      && !eligibilityBlockers.includes('missing_solution');
+    const sourceSolved = canCheckSolved
+      && await algSolves(row.current_scramble ?? '', reconAlgMoves(row.current_solution ?? ''));
+    if (eligibilityBlockers.length > 0 || !sourceSolved) reasons.push('source_ineligible');
     if (reasons.length > 0) {
       blockedConfirmed.push({ id: String(row.recon_id), reasons });
-      return [];
+      continue;
     }
-    return [{
+    fixtures.push({
       id: String(row.recon_id),
       source: `https://cuberoot.me/zh/recon/${row.recon_id}`,
       replay: row.replay ?? '',
       truth: row.truth,
       currentWrong: row.current_wrong,
       note: row.note,
-    }];
-  });
+    });
+  }
   c.header('Cache-Control', 'public, max-age=60');
   return c.json({
     version: 1,
@@ -310,6 +409,7 @@ reconGroundTruthRoutes.get('/recon-ground-truth/export', async (c) => {
 reconGroundTruthRoutes.get('/recon-ground-truth/candidates', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   await requireAdminOrApiKey(c);
+  await ensureCandidateChecks();
 
   const q = (c.req.query('q') ?? '').trim();
   const requestedStatus = c.req.query('status') ?? 'all';
@@ -345,14 +445,16 @@ reconGroundTruthRoutes.get('/recon-ground-truth/candidates', async (c) => {
                 g.source_scramble IS DISTINCT FROM COALESCE(NULLIF(BTRIM(r.optimal_scramble), ''), BTRIM(r.wca_scramble), '') OR
                 g.source_solution IS DISTINCT FROM COALESCE(r.solution, '')
               )) AS source_changed
-       FROM recons r LEFT JOIN recon_ground_truth_cases g ON g.recon_id = r.id
+       FROM recons r ${CANDIDATE_CHECK_JOIN}
+       LEFT JOIN recon_ground_truth_cases g ON g.recon_id = r.id
        WHERE ${where}
        ORDER BY r.id DESC LIMIT ? OFFSET ?`,
       [...baseParams, limit, offset],
     ),
     query<{ count: number | string }>(
       `SELECT COUNT(*) AS count
-       FROM recons r LEFT JOIN recon_ground_truth_cases g ON g.recon_id = r.id
+       FROM recons r ${CANDIDATE_CHECK_JOIN}
+       LEFT JOIN recon_ground_truth_cases g ON g.recon_id = r.id
        WHERE ${where}`,
       baseParams,
     ),

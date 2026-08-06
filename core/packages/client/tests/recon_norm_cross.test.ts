@@ -18,6 +18,7 @@ import {
   canonicalizeReconSolution,
   findCrossLineIndex,
   hasNormalizableCrossMove,
+  reconCandidateMetadataBlockers,
 } from '@cuberoot/shared/recon-ground-truth';
 import { normalize } from '@/lib/recon-norm-cross';
 import { applyOneToken } from '@/app/[lang]/timer/_lib/cube/apply_token';
@@ -123,5 +124,34 @@ describe('ground truth 文本口径', () => {
       "F' L' D R2 U L F' L' D // W xcross (BO)",
       "U2 R U' R' // GO",
     ].join('\n'));
+  });
+});
+
+describe('ground truth 候选池硬过滤', () => {
+  const valid = {
+    scramble: "R U R' U' F2 D L2 B2 U R2 D' F L' B U2 R' D2 F'",
+    solution: "R U R' U' // cross",
+    value: '4.12',
+    rawTime: 4.12,
+  };
+
+  it('完整成绩通过元数据入口校验', () => {
+    expect(reconCandidateMetadataBlockers(valid)).toEqual([]);
+  });
+
+  it.each([
+    ['缺少打乱', { ...valid, scramble: '' }, 'missing_scramble'],
+    ['打乱异常短', { ...valid, scramble: "R U R'" }, 'short_scramble'],
+    ['缺少解法', { ...valid, solution: '' }, 'missing_solution'],
+    ['DNF', { ...valid, value: 'DNF' }, 'dnf_or_dns'],
+    ['带时间的 DNF', { ...valid, value: 'DNF(4.12)' }, 'dnf_or_dns'],
+    ['DNS', { ...valid, value: 'DNS' }, 'dnf_or_dns'],
+    ['Fail 成绩', { ...valid, value: 'Failed' }, 'fail_marker'],
+    ['解法含 Fail', { ...valid, solution: 'R U // Fail' }, 'fail_marker'],
+    ['成绩为空', { ...valid, value: '' }, 'missing_result'],
+    ['原始时间为空', { ...valid, rawTime: null }, 'missing_result'],
+    ['原始时间为零', { ...valid, rawTime: 0 }, 'missing_result'],
+  ])('%s 直接排除', (_name, source, blocker) => {
+    expect(reconCandidateMetadataBlockers(source)).toContain(blocker);
   });
 });
