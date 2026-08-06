@@ -38,7 +38,9 @@
  * 而 D 在标准配色里是黄,屏幕上就成了「黄十字朝下」。接一个真旋转是把整颗魔方转
  * 过去,颜色跟着块走,白十字还是白的。
  *
- * 开陀螺仪时不接 —— 姿态流本来就是在魔方自己那个系里测的,朝向由它说了算。 */
+ * 开陀螺仪时不接 —— 姿态流本来就是在魔方自己那个系里测的,朝向由它说了算。
+ * 关闭时则用文字复盘已经确认的离散转体驱动 cube transform；开关只决定姿态来源，
+ * 不决定 `x/y/z` 是否可见。 */
 
 import dynamic from 'next/dynamic';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -55,6 +57,9 @@ import CubePreview from '../_lib/cube/CubePreview';
 import { nxnSizeForEvent } from '../_lib/cube';
 import { decodeGyroTrack, sampleGyroAt } from '../_lib/bluetooth/gyro_track';
 import { mirrorForBrand, sensorBasisForBrand } from '../_lib/bluetooth/orientation';
+import type { Quat } from '../_lib/bluetooth/orientation';
+import { rotationPoseAt } from '../_lib/reconstruct/rotation_detect';
+import type { HumanRotation } from '../_lib/reconstruct/humanize';
 import type { ReconTextLine } from '../_lib/reconstruct/recon_text';
 import type { SolveMove } from '../_lib/reconstruct/stage_segments';
 import SolveTimeline from './SolveTimeline';
@@ -72,6 +77,8 @@ interface Props {
   isZh: boolean;
   /** 分步的行,给进度条上色用。没有(非 3x3 / 切不出阶段)就是一条素条。 */
   lines?: ReconTextLine[];
+  /** 已从姿态流确认、并排除了中层/宽层的整体转体。关闭陀螺仪时用它驱动离散姿态。 */
+  rotations?: readonly HumanRotation[];
   /** 右栏。拿得到游标和 seek,所以是渲染 prop 而不是普通 children。 */
   side?: (ctx: { idx: number; seek: (i: number) => void }) => ReactNode;
   /** 这把录到的姿态流(base64,见 `_lib/bluetooth/gyro_track.ts`)。有才给开关。 */
@@ -96,7 +103,7 @@ function formatSec(ms: number, digits = 2): string {
 }
 
 export default function PlaybackPanel({
-  event, scramble, moves, totalMs, lines, side, gyro, deviceModel, viewRotation,
+  event, scramble, moves, totalMs, lines, rotations, side, gyro, deviceModel, viewRotation,
 }: Props) {
   // /sim 只画 NxN;这里只有 3x3 会有动作流(智能魔方就这一种),别的项目退回预览图。
   const isNxn3 = nxnSizeForEvent(event) === 3;
@@ -109,10 +116,20 @@ export default function PlaybackPanel({
   const playFromRef = useRef(0);
   const timelineRef = useRef<SolveTimelineHandle | null>(null);
   const counterRef = useRef<HTMLSpanElement | null>(null);
+  const playbackQuatRef = useRef<Quat | null>(null);
 
   // 解一次就够,别每帧解。空录像 → 没开关。
   const gyroTrack = useMemo(() => decodeGyroTrack(gyro), [gyro]);
   const hasGyro = gyroTrack.length > 0;
+  const poseAt = useMemo(() => (
+    gyroOn && hasGyro
+      ? (tMs: number) => sampleGyroAt(gyroTrack, tMs)
+      : (tMs: number) => rotationPoseAt(rotations ?? [], tMs)
+  ), [gyroOn, hasGyro, gyroTrack, rotations]);
+
+  useEffect(() => {
+    playbackQuatRef.current = poseAt(playFromRef.current);
+  }, [poseAt]);
 
   // 魔方等**滚到跟前**再建。
   //
@@ -170,6 +187,7 @@ export default function PlaybackPanel({
       const t = solve0 + (performance.now() - wall0) * speedMult;
       const at = Math.min(t, lastTs);
       playFromRef.current = at;
+      playbackQuatRef.current = poseAt(at);
       timelineRef.current?.setPlayhead(at);
       if (counterRef.current) counterRef.current.textContent = formatSec(at);
       let i = 0;
@@ -180,7 +198,7 @@ export default function PlaybackPanel({
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [playing, speedMult, total, moves, lastTs]);
+  }, [playing, speedMult, total, moves, lastTs, poseAt]);
 
   // 暂停时**不**把游标交还给 idx:两手之间按下暂停,时间确实走到了那儿,而下一下
   // 播放也正是从那儿接着走(playFromRef 就停在那)。倒回「最后落下那一手」看着像
@@ -189,6 +207,7 @@ export default function PlaybackPanel({
     setPlaying(false);
     const j = Math.max(0, Math.min(total, i));
     playFromRef.current = tsOf(j);
+    playbackQuatRef.current = poseAt(playFromRef.current);
     setIdx(j);
     timelineRef.current?.setPlayhead(null);
   };
@@ -200,6 +219,7 @@ export default function PlaybackPanel({
     setIdx(i => {
       const j = Math.max(0, Math.min(total, i + delta));
       playFromRef.current = tsOf(j);
+      playbackQuatRef.current = poseAt(playFromRef.current);
       return j;
     });
     timelineRef.current?.setPlayhead(null);
@@ -209,6 +229,7 @@ export default function PlaybackPanel({
     if (idx >= total) {
       setIdx(0);
       playFromRef.current = 0;
+      playbackQuatRef.current = poseAt(0);
       setPlaying(true);
       return;
     }
@@ -268,17 +289,16 @@ export default function PlaybackPanel({
         {/* 3D 而不是展开图:回放是「看别人拧」,展开图看不出这是一次转动还是
             三次。展开图留给打乱预览那种「一眼扫全六面」的场合。
 
-            姿态给了就跟姿态,没给就是引擎自己的等轴视角 —— 同一个组件,不为
-            「有没有陀螺仪」换一套渲染。回放不需要它的平滑跟随(样本本来就是按
-            时间插好的),但留着也无害:两个样本之间它只是滑得更顺。 */}
+            开启连续陀螺仪就跟原始姿态流，关闭时跟已识别的离散转体；一条转体
+            都没有才保持固定等轴视角。同一个组件,不为姿态来源换一套渲染。 */}
         <div ref={cubeBoxRef} className={`reconstruct-playback-cube${gyroOn ? ' is-gyro' : ''}`}>
           {isNxn3 ? (cubeNear ? (
             <SimCubeView
               moves={simMoves}
               pose={simPose}
-              quat={posed ? sampleGyroAt(gyroTrack, elapsedMs) : null}
-              sensorBasis={sensorBasisForBrand(deviceModel)}
-              mirror={mirrorForBrand(deviceModel)}
+              quatRef={playbackQuatRef}
+              sensorBasis={posed ? sensorBasisForBrand(deviceModel) : 'identity'}
+              mirror={posed ? mirrorForBrand(deviceModel) : false}
               // 播放 / 下一步是纯追加,那几手会转给你看;拖时间轴、上一步是跳,瞬切。
               animate
               ariaLabel={tr({

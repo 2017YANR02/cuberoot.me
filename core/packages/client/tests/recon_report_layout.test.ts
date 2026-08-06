@@ -122,6 +122,21 @@ describe('回放进度条匀速走', () => {
   });
 });
 
+describe('关闭连续陀螺仪仍回放已识别转体', () => {
+  const report = read(REPORT);
+  const pb = read(join(TIMER, '_components', 'PlaybackPanel.tsx'));
+
+  it('文字复盘的转体事件传进回放面板', () => {
+    expect(report).toMatch(/<PlaybackPanel[\s\S]{0,500}rotations=\{reconText\?\.rotations\}/);
+  });
+
+  it('开关只切换姿态来源，关闭时走离散转体并在每帧更新时间', () => {
+    expect(pb).toMatch(/gyroOn && hasGyro[\s\S]{0,180}sampleGyroAt[\s\S]{0,180}rotationPoseAt/);
+    expect(pb).toMatch(/playbackQuatRef\.current = poseAt\(at\)/);
+    expect(pb).toMatch(/quatRef=\{playbackQuatRef\}/);
+  });
+});
+
 describe('打乱是谱子的第一行', () => {
   const src = read(STEP_LIST);
 
