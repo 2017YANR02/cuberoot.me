@@ -4,7 +4,6 @@
 // 复选框:显示排名 / 显示领奖台.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { formatWcaResult } from '@/lib/wca-format-result';
@@ -31,10 +30,8 @@ interface Props {
   isZh: boolean;
   /** 「废止项」口径(21 项含废止),状态在 PersonDetailClient,与「最优项目组合」共用 */
   inclCancelled: boolean;
-  onInclCancelledChange: (v: boolean) => void;
+  mode: 'current' | 'historical';
 }
-
-type Mode = 'current' | 'historical';
 
 function rankTier(r: number | null | undefined): string {
   if (!r || r <= 0) return 'wp-rank-tier-mute';
@@ -49,9 +46,8 @@ function RankCell({ r }: { r: number | null | undefined }) {
   return <span className={`wp-rank ${rankTier(r)}`}>{r}</span>;
 }
 
-export default function PersonPRTable({ profile, results, isZh, inclCancelled, onInclCancelledChange }: Props) {
+export default function PersonPRTable({ profile, results, isZh, inclCancelled, mode }: Props) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
-  const [mode, setMode] = useState<Mode>('current');
   const [hist, setHist] = useState<PersonBestRanksResponse | null>(null);
   const [histLoading, setHistLoading] = useState(false);
   const [histError, setHistError] = useState<string | null>(null);
@@ -130,27 +126,6 @@ export default function PersonPRTable({ profile, results, isZh, inclCancelled, o
 
   return (
     <section className="wp-card wp-pr-card">
-      <div className="wp-pr-toolbar">
-        <div className="wp-toggle-group">
-          <button
-            className={`wp-toggle-btn ${mode === 'current' ? 'is-active' : ''}`}
-            onClick={() => setMode('current')}
-          >{t('当前', 'Current')}</button>
-          <button
-            className={`wp-toggle-btn ${mode === 'historical' ? 'is-active' : ''}`}
-            onClick={() => setMode('historical')}
-          >{t('历史最佳排名', 'Historical Best')}</button>
-        </div>
-        {/* 「废止项」口径开关(全页唯一):控制底部 Σ 名次和行 + 下方「最优项目组合」卡.
-            历史最佳无 21 口径数据,historical 模式下 Σ 行不受其影响,但开关保留给组合卡用 */}
-        <PillToggle
-          value={inclCancelled}
-          onChange={onInclCancelledChange}
-          onLabel={t('废止项', 'Cancelled')}
-          offLabel={t('废止项', 'Cancelled')}
-        />
-      </div>
-
       {mode === 'historical' && histLoading && (
         <div className="wp-loading-inline">{t('加载历史排名…', 'Loading historical ranks…')}</div>
       )}
@@ -241,7 +216,7 @@ export default function PersonPRTable({ profile, results, isZh, inclCancelled, o
 // 全项目名次和(Sum of Ranks)摘要 — PR 表底部附加 tbody,三个独立指标各一行:
 //   SoWR = Σ世界名次(按世界排) / SoCR = Σ洲际名次(按本洲排) / SoNR = Σ国家名次(按本国排).
 //   名次落各自 scope 列(与逐项名次对齐),Σ和值落「成绩」列.
-//   跟随表头「当前 / 历史最佳排名」toggle:historical=true 时整块显示历史最佳(名次 + 年份),否则显示当前.
+//   跟随页头「当前 / 历史最佳排名」toggle:historical=true 时整块显示历史最佳(名次 + 年份),否则显示当前.
 //   SoCR 数据未填充(socr=null)时该行显示占位 —,不误显.数据 lazy fetch;整块无数据时不渲染.
 function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2, historical, inclCancelled, selEvents, onClearSel }: { wcaId: string; isZh: boolean; showPodium: boolean; countryIso2: string; historical: boolean; inclCancelled: boolean; selEvents: ReadonlySet<string>; onClearSel: () => void }) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
@@ -405,4 +380,3 @@ function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2, historical, in
     </tbody>
   );
 }
-

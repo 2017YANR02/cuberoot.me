@@ -238,7 +238,6 @@ html[data-theme=dark] .wp-page {
 .wp-hero-gender-f { color: var(--wp-pink); }
 .wp-hero-collections {
     display: flex; align-items: center; gap: 28px;
-    margin-left: auto;
 }
 .wp-hero-collection {
     min-width: max-content;
@@ -280,6 +279,9 @@ html[data-theme=dark] .wp-page {
 .wp-hero-table {
     display: flex; align-items: center; gap: 32px;
 }
+.wp-hero-rank-controls {
+    display: flex; align-items: center; gap: 8px;
+}
 .wp-hero-cell { text-align: center; }
 .wp-hero-cell-label {
     font-size: 0.72rem;
@@ -316,10 +318,6 @@ html[data-theme=dark] .wp-page {
 
 /* ── PR table ──────────────────────────────────────────────────────── */
 .wp-pr-card { padding: 16px; }
-.wp-pr-toolbar {
-    display: flex; justify-content: flex-end; align-items: center;
-    margin-bottom: 12px;
-}
 .wp-toggle-group {
     display: inline-flex;
     border: 1px solid var(--wp-border);
@@ -1047,7 +1045,7 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-ao
     .wp-header { padding: 10px 12px; }
     .wp-main { padding: 12px 12px 48px; }
     .wp-hero-card { padding: 12px 16px; gap: 10px 20px; }
-    .wp-hero-collections { flex-basis: 100%; margin-left: 0; gap: 24px; }
+    .wp-hero-collections { flex-basis: 100%; gap: 24px; }
     .wp-hero-collection { flex: 1 1 0; }
     .wp-hero-collection dl { justify-content: center; }
     .wp-hero-table { margin-left: 0; gap: 24px; }
