@@ -30,7 +30,7 @@
   white-space: nowrap;
 }
 
-.sim-draw-order input {
+.sim-draw-order-input {
   width: 64px;
   height: 30px;
   border: 1px solid var(--input);
