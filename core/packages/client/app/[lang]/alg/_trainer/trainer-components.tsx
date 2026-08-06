@@ -204,18 +204,13 @@ export function StatsList({
   onClear: () => void;
 }) {
   return (
-    <div className="trainer-stats-card">
-      <div className="trainer-card-header">
-        <span>{tr({ zh: '统计', en: 'Statistics'
-        })}</span>
-        {solves.length > 0 && (
-          <button className="trainer-icon-btn" onClick={onClear}
-            title={tr({ zh: '清空', en: 'Clear' })}>
-            <Trash2 size={14} />
-          </button>
-        )}
-      </div>
-      <hr className="trainer-card-divider" />
+    <div className={`trainer-stats-card${solves.length > 0 ? ' has-clear' : ''}`}>
+      {solves.length > 0 && (
+        <button type="button" className="trainer-icon-btn trainer-stats-clear" onClick={onClear}
+          title={tr({ zh: '清空', en: 'Clear' })} aria-label={tr({ zh: '清空', en: 'Clear' })}>
+          <Trash2 size={14} />
+        </button>
+      )}
       {solves.length === 0 ? (
         <div className="trainer-stats-empty">
           {tr({ zh: '空格开始计时', en: 'Space to start'
@@ -311,36 +306,13 @@ export function HistoryList({
 
   return (
     <div className="trainer-stats-card">
-      <div className="trainer-card-header">
-        <span>{tr({ zh: '历史', en: 'History' })}</span>
-        {pageCount > 1 && (
-          <div className="trainer-hist-pages">
-            {histPageWindow(cur, pageCount).map((p, slot) => (p === '…' ? (
-              <span key={`gap${slot}`} className="trainer-hist-gap" aria-hidden>…</span>
-            ) : (
-              <button
-                key={p}
-                type="button"
-                className={`trainer-hist-page${p === cur ? ' is-active' : ''}`}
-                onClick={() => setPage(p)}
-                aria-current={p === cur ? 'page' : undefined}
-                title={p === 0
-                  ? tr({ zh: `最新 ${HIST_PAGE} 条`, en: `Latest ${HIST_PAGE}` })
-                  : tr({ zh: `再往前第 ${p} 页`, en: `Page ${p + 1}` })}
-              >
-                {p + 1}
-              </button>
-            )))}
-          </div>
-        )}
-      </div>
-      <hr className="trainer-card-divider" />
       {hist.list.length === 0 ? (
         <div className="trainer-stats-empty">{tr({ zh: '暂无打乱历史', en: 'No scrambles yet'
         })}</div>
       ) : (
-        <div className="trainer-hist-grid">
-          {shown.map(([e, i]) => {
+        <>
+          <div className="trainer-hist-grid">
+            {shown.map(([e, i]) => {
             const c = findCaseByKey(cases, e.key);
             const name = (c ? primaryCaseName(puzzle, set, c) : e.name).replace(setPrefix, '');
             const active = hist.idx === i;
@@ -375,8 +347,29 @@ export function HistoryList({
                 )}
               </button>
             );
-          })}
-        </div>
+            })}
+          </div>
+          {pageCount > 1 && (
+            <div className="trainer-hist-pages">
+              {histPageWindow(cur, pageCount).map((p, slot) => (p === '…' ? (
+                <span key={`gap${slot}`} className="trainer-hist-gap" aria-hidden>…</span>
+              ) : (
+                <button
+                  key={p}
+                  type="button"
+                  className={`trainer-hist-page${p === cur ? ' is-active' : ''}`}
+                  onClick={() => setPage(p)}
+                  aria-current={p === cur ? 'page' : undefined}
+                  title={p === 0
+                    ? tr({ zh: `最新 ${HIST_PAGE} 条`, en: `Latest ${HIST_PAGE}` })
+                    : tr({ zh: `再往前第 ${p} 页`, en: `Page ${p + 1}` })}
+                >
+                  {p + 1}
+                </button>
+              )))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

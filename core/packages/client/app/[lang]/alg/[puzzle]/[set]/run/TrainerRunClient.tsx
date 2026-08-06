@@ -8,7 +8,7 @@ import { useQueryState } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Settings, Copy, Check, QrCode, RotateCcw, X } from 'lucide-react';
 import { ALG_CATALOG, getAlgSetMeta, loadAlg, type AlgCase } from '@cuberoot/shared';
-import { useTrainerStore, TimerState, trainerPool, mixSessionId } from '@/lib/trainer-store';
+import { useTrainerStore, TimerState, trainerPool, mixSessionId, type TrainerMode } from '@/lib/trainer-store';
 import TimerFontPicker from '@/components/TimerFontPicker';
 import { useSpaceHoldTimer } from '@/hooks/useSpaceHoldTimer';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
@@ -33,7 +33,6 @@ import {
 } from '@/app/[lang]/alg/_trainer/trainer-components';
 import { RoomQrModal } from '@/components/RoomQrModal';
 import MemoryTrainer from '@/app/[lang]/alg/_trainer/MemoryTrainer';
-import SetProgressStrip from '@/app/[lang]/alg/_trainer/SetProgressStrip';
 import MixSetPicker from '@/app/[lang]/alg/_trainer/MixSetPicker';
 import SmartCubeRow from '@/app/[lang]/alg/_trainer/SmartCubeRow';
 import OrientationPicker from '@/app/[lang]/alg/_trainer/OrientationPicker';
@@ -49,11 +48,10 @@ import '@/app/[lang]/alg/_trainer/memory.css';
 import '@/app/[lang]/alg/alg.css';
 import { tr } from '@/i18n/tr';
 
-/** 三种训练模式的标签(topbar 下的分段切换)。 */
-const MODES: Array<{ id: 'train' | 'recap' | 'memo'; zh: string; en: string; tip: { zh: string; en: string } }> = [
-  { id: 'recap', zh: '复习', en: 'Recap', tip: { zh: '选中的 case 洗牌后各出一遍', en: 'Each selected case once per round' } },
-  { id: 'memo', zh: '记忆', en: 'Memory', tip: { zh: '间隔重复:看图回忆公式,按记忆强度排期', en: 'Spaced repetition: recall from the picture, scheduled by memory strength' } },
-  { id: 'train', zh: '训练', en: 'Train', tip: { zh: '随机抽取,同一 case 可能连续出现', en: 'Random draw' } },
+/** 顶层只区分动作训练与间隔记忆;训练内部再选覆盖或随机抽题。 */
+const PRIMARY_MODES: Array<{ id: 'train' | 'memo'; zh: string; en: string }> = [
+  { id: 'train', zh: '训练', en: 'Train' },
+  { id: 'memo', zh: '记忆', en: 'Memory' },
 ];
 
 const TIMER_DELAY_MS = 0;
@@ -163,6 +161,8 @@ export default function TrainerRunClient() {
   const setTiming = useTrainerStore(s => s.setTiming);
   const mode = useTrainerStore(s => s.mode);
   const setMode = useTrainerStore(s => s.setMode);
+  const lastTrainingMode = useRef<Exclude<TrainerMode, 'memo'>>(mode === 'train' ? 'train' : 'recap');
+  if (mode !== 'memo') lastTrainingMode.current = mode;
   const probMode = useTrainerStore(s => s.probMode);
   const setProbMode = useTrainerStore(s => s.setProbMode);
   const recapOrder = useTrainerStore(s => s.recapOrder);
@@ -328,10 +328,9 @@ export default function TrainerRunClient() {
     setScope(scopedKeys);
   }, [scopedKeys, setScope]);
 
-  // 顶部进度条统计的范围 = 本页可见的整套(有 scope 就是该组),与「选了哪几个」无关 ——
-  // 它回答的是「这一套我学到哪了」,不是「这一场练几个」。
+  // 记忆模式没勾选 case 时回落到本页可见的整套(有 scope 就是该组)。
   const allKeys = useMemo(() => cases.map(caseKey), [cases]);
-  const stripKeys = scopedKeys ?? allKeys;
+  const memoScopeKeys = scopedKeys ?? allKeys;
 
   const pool = useMemo(() => trainerPool(selected, scope), [selected, scope]);
 
@@ -856,7 +855,7 @@ export default function TrainerRunClient() {
 
   // 记忆模式按「整套(或该组)」排期 —— 用户从来没进过 select 页也该能直接开练,
   // 所以没勾选时回落到本页范围内的全部 case,而不是把人赶去选择页。
-  const memoPool = pool.length > 0 ? pool : stripKeys;
+  const memoPool = pool.length > 0 ? pool : memoScopeKeys;
 
   // 本机没选 case:房间模式(题面来自服务端队列)不算「未选」,不拦。经邀请链接进来时
   // 显示「正在加入房间…」而非「去选择」,避免加入完成前闪一下空态;链接失效则给原因 + 出口。
@@ -982,7 +981,7 @@ export default function TrainerRunClient() {
         {/* 训练选项全收进齿轮弹出面板,齿轮居中吸在页面正上方
             (data-no-timer:面板空白不触发按压计时) */}
         <div className="trainer-opts trainer-opts--top" data-no-timer ref={optsRef}>
-          {/* 进度总览贴在齿轮左侧(同复习进度的做法:absolute 脱流,齿轮仍精确居中) */}
+          {/* 进度入口贴在齿轮左侧:absolute 脱流,齿轮仍精确居中。 */}
           <Link href="/alg/progress" className="trainer-progress-link" prefetch={false}>
             {tr({ zh: '进度总览', en: 'All progress' })}
           </Link>
@@ -1012,11 +1011,12 @@ export default function TrainerRunClient() {
             <div className="trainer-opts-panel" ref={optsPanelRef}>
               {/* 虚拟集的打乱 / 公式是现算的 —— 这话得摆在设置面板最上面,别让人以为是收录的公式 */}
               {virtual && <div className="trainer-opts-hint">{tr(virtual.note)}</div>}
-              {/* 一起练:本场的公式集成员。单集会话里加一套就地变合练,少到只剩一套自动退回单集。
-                  成员用可点的链接删(中键能新开),加走下拉(可选项十几套,不适合摊成 chip)。 */}
-              {addableSets.length > 0 && (
-                <>
-                  <div className="trainer-opts-row">
+              {/* 公式集与打乱类型共用一行,空间不足时由 trainer-opts-row 自然换行。一起练的成员
+                  用可点的链接删(中键能新开),加走下拉(可选项十几套,不适合摊成 chip)。 */}
+              {(addableSets.length > 0 || kinds.length > 1) && (
+                <div className="trainer-opts-row">
+                  {addableSets.length > 0 && (
+                    <>
                     {/* 不挂标题:一行里摆着本场的集名 chip 和一个「+」下拉,这行是干什么的一看就知道。 */}
                     {sessionSets.map(slug => (
                       <span key={slug} className="trainer-mix-chip">
@@ -1035,7 +1035,7 @@ export default function TrainerRunClient() {
                       </span>
                     ))}
                     <select
-                      className="trainer-scramble-kind"
+                      className="trainer-scramble-kind trainer-set-add-select"
                       value=""
                       onChange={e => {
                         const slug = e.target.value;
@@ -1048,62 +1048,95 @@ export default function TrainerRunClient() {
                       <option value="">+</option>
                       {addableSets.map(s => <option key={s.slug} value={s.slug}>{tr(s)}</option>)}
                     </select>
-                  </div>
-                  {sessionSets.length > 1 && (
-                    <div className="trainer-opts-hint">
-                      {tr({
-                        zh: '多套混在一起出题,进度仍分别记在各自那一套里 —— 这里标的「已掌握」,单独进那一套也看得到',
-                        en: 'Cases from every set are drawn together, but progress still lands in each set on its own — a case you master here shows up mastered in that set too',
-                      })}
-                    </div>
-                  )}
-                </>
-              )}
-              {kinds.length > 1 && (
-                <div className="trainer-opts-row">
-                  <span className="trainer-opts-label">{tr({ zh: '打乱', en: 'Scramble' })}</span>
-                  <select
-                    className="trainer-scramble-kind"
-                    value={scrambleKind}
-                    onChange={e => setScrambleKind(e.target.value as ScrambleKind)}
-                    disabled={timerState !== TimerState.NOT_RUNNING}
-                    aria-label={tr({ zh: '打乱类型', en: 'Scramble type' })}
-                  >
-                    {kinds.map(k => <option key={k.id} value={k.id}>{k.label()}</option>)}
-                  </select>
-                </div>
-              )}
-              {!isMemo && (
-                <div className="trainer-opts-row">
-                  <BoolToggle
-                    value={timing}
-                    onChange={setTiming}
-                    label={tr({ zh: '计时', en: 'Timing' })}
-                  />
-                  {mode === 'recap' && (
-                    <>
-                      <PillToggle
-                        value={recapOrder === 'shuffle'}
-                        onChange={v => setRecapOrder(v ? 'shuffle' : 'seq')}
-                        onLabel={tr({ zh: '乱序', en: 'Shuffled' })}
-                        offLabel={tr({ zh: '顺序', en: 'In order' })}
-                        ariaLabel={tr({ zh: '复习顺序', en: 'Recap order' })}
-                        disabled={!!room}
-                      />
-                      {/* 刷到一半想重来:清掉「7/472」这个本轮进度,重洗后从第 1 个再走一遍 */}
-                      <button
-                        type="button"
-                        className="trainer-opts-btn is-ghost"
-                        onClick={restartRecapRound}
-                        disabled={!!room}
-                        title={room
-                          ? tr({ zh: '房间轮次由全队共享,离开房间才能重开', en: 'Room rounds are shared by the team — leave the room to restart' })
-                          : tr({ zh: '清空本轮进度,重新从第 1 个开始', en: 'Clear this round’s progress and start over from the first case' })}
-                      >
-                        <RotateCcw size={13} /> {tr({ zh: '重置', en: 'Reset' })}
-                      </button>
                     </>
                   )}
+                  {kinds.length > 1 && (
+                    <>
+                      <span className="trainer-opts-label">{tr({ zh: '打乱', en: 'Scramble' })}</span>
+                      <select
+                        className="trainer-scramble-kind"
+                        value={scrambleKind}
+                        onChange={e => setScrambleKind(e.target.value as ScrambleKind)}
+                        disabled={timerState !== TimerState.NOT_RUNNING}
+                        aria-label={tr({ zh: '打乱类型', en: 'Scramble type' })}
+                      >
+                        {kinds.map(k => <option key={k.id} value={k.id}>{k.label()}</option>)}
+                      </select>
+                    </>
+                  )}
+                </div>
+              )}
+              {addableSets.length > 0 && sessionSets.length > 1 && (
+                <div className="trainer-opts-hint">
+                  {tr({
+                    zh: '多套混在一起出题,进度仍分别记在各自那一套里 —— 这里标的「已掌握」,单独进那一套也看得到',
+                    en: 'Cases from every set are drawn together, but progress still lands in each set on its own — a case you master here shows up mastered in that set too',
+                  })}
+                </div>
+              )}
+              <div className="trainer-opts-row">
+                <select
+                  className="trainer-scramble-kind trainer-mode-select"
+                  value={isMemo ? 'memo' : 'train'}
+                  onChange={e => setMode(e.target.value === 'memo' ? 'memo' : lastTrainingMode.current)}
+                  disabled={!!room}
+                  aria-label={tr({ zh: '训练模式', en: 'Training mode' })}
+                >
+                  {PRIMARY_MODES.map(m => (
+                    <option key={m.id} value={m.id}>{tr({ zh: m.zh, en: m.en })}</option>
+                  ))}
+                </select>
+                {!isMemo && (
+                  <>
+                    <span className="trainer-opts-label">{tr({ zh: '出题', en: 'Draw' })}</span>
+                    <PillToggle
+                      value={mode === 'recap'}
+                      onChange={covered => {
+                        const next = covered ? 'recap' : 'train';
+                        lastTrainingMode.current = next;
+                        setMode(next);
+                      }}
+                      onLabel={tr({ zh: '覆盖', en: 'Coverage' })}
+                      offLabel={tr({ zh: '随机', en: 'Random' })}
+                      ariaLabel={tr({ zh: '出题方式', en: 'Draw mode' })}
+                    />
+                    <BoolToggle
+                      value={timing}
+                      onChange={setTiming}
+                      label={tr({ zh: '计时', en: 'Timing' })}
+                    />
+                    {mode === 'recap' && (
+                      <>
+                        <PillToggle
+                          value={recapOrder === 'shuffle'}
+                          onChange={v => setRecapOrder(v ? 'shuffle' : 'seq')}
+                          onLabel={tr({ zh: '乱序', en: 'Shuffled' })}
+                          offLabel={tr({ zh: '顺序', en: 'In order' })}
+                          ariaLabel={tr({ zh: '复习顺序', en: 'Recap order' })}
+                          disabled={!!room}
+                        />
+                        {/* 刷到一半想重来:清掉「7/472」这个本轮进度,重洗后从第 1 个再走一遍 */}
+                        <button
+                          type="button"
+                          className="trainer-opts-btn is-ghost"
+                          onClick={restartRecapRound}
+                          disabled={!!room}
+                          title={room
+                            ? tr({ zh: '房间轮次由全队共享,离开房间才能重开', en: 'Room rounds are shared by the team — leave the room to restart' })
+                            : tr({ zh: '清空本轮进度,重新从第 1 个开始', en: 'Clear this round’s progress and start over from the first case' })}
+                        >
+                          <RotateCcw size={13} /> {tr({ zh: '重置', en: 'Reset' })}
+                        </button>
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
+              {!isMemo && (
+                <div className="trainer-opts-hint">
+                  {mode === 'recap'
+                    ? tr({ zh: '覆盖:每轮每个选中 case 各出一次,全部完成后开始下一轮', en: 'Coverage: show every selected case once per round, then start the next round' })
+                    : tr({ zh: '随机:每题独立抽取,同一 case 可能连续出现', en: 'Random: draw each case independently, so the same case may repeat' })}
                 </div>
               )}
               {/* 智能魔方:接上就不用照打乱拧了,魔方本身变成当前 case */}
@@ -1123,19 +1156,14 @@ export default function TrainerRunClient() {
                   })}
                 </div>
               )}
-              <div className="trainer-opts-hint">
-                {mode === 'train'
-                  ? tr({ zh: '随机抽取,同一 case 可能连续出现', en: 'Random draw, the same case may repeat' })
-                  : mode === 'recap'
-                  ? tr({
-                      zh: '选中的 n 个 case 洗牌后各出一遍,出完重洗。轮内 ≤ n 把必出全部;跨轮看单个 case 最坏间隔 2n−1',
-                      en: 'All n selected cases once per shuffled round, reshuffle when done. Every case within ≤ n draws of a round; worst same-case gap across rounds is 2n−1',
-                    })
-                  : tr({
+              {isMemo && (
+                <div className="trainer-opts-hint">
+                  {tr({
                       zh: '看图回忆公式后自评,系统按 SM-2 间隔重复排期:记得越牢下次间隔越长,忘了当场重来。每天只出到期的那些',
                       en: 'Recall the alg from the picture, then grade yourself. An SM-2 spaced-repetition schedule stretches the interval as memory holds and repeats it immediately when it breaks — only due cards come up each day',
                     })}
-              </div>
+                </div>
+              )}
               {isMemo && (
                 <>
                   <div className="trainer-opts-row">
@@ -1410,43 +1438,6 @@ export default function TrainerRunClient() {
           )}
         </div>
       </div>
-
-      {/* 模式分段 + 本套进度条。放在 topbar 正下方:进训练页第一眼就知道「这套学到哪了、
-          今天还有多少要复习」,而不是要跑去 /alg/progress 才看得到。 */}
-      <div className="trainer-modes" data-no-timer role="group"
-        aria-label={tr({ zh: '训练模式', en: 'Training mode' })}>
-        {MODES.map(m => (
-          <button
-            key={m.id}
-            type="button"
-            className={`trainer-mode-tab${mode === m.id ? ' is-active' : ''}`}
-            onClick={() => setMode(m.id)}
-            disabled={!!room && m.id !== 'recap'}
-            aria-pressed={mode === m.id}
-            title={tr(m.tip)}
-          >
-            {tr({ zh: m.zh, en: m.en })}
-          </button>
-        ))}
-      </div>
-      <SetProgressStrip
-        keys={stripKeys}
-        selectHref={selectHref}
-        onStartMemo={() => setMode('memo')}
-        compact
-        // 「到期 / 今日已复习 / 连续天」是记忆调度(SRS)的账,run 页三个模式都不摆:
-        //   · 训练 = 随机抽题,不排期,那几个数根本不动;
-        //   · 复习 = recap(选中的 case 各出一遍),与记忆排期毫无关系 —— 摆在这里等于
-        //     暗示两者相关,「2 待复习」和记忆模式本场的「到期 1」还对不上,只会让人费解;
-        //   · 记忆 = 自己那条本场进度(0/34 + 到期/新学/加练)说得更准。
-        // 想看全套排期账:侧栏「进度总览」/ select 页那条 strip 仍然给。
-        showSrs={false}
-        // 记忆模式自己有一条「本场进度」横条,这里的三段条(整套学习进度)让位 ——
-        // 两条一模一样的横条讲两件事,页面上只留一条,数字仍照常出。
-        showBar={mode !== 'memo'}
-        // 「进度总览」挪到齿轮旁边(见 topbar)
-        showAllLink={false}
-      />
 
       {isMemo ? (
         <MemoryTrainer
