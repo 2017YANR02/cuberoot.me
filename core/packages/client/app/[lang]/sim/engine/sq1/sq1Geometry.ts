@@ -305,6 +305,9 @@ export function buildMiddlePair(): MiddlePair {
       mesh.position.set(posX, 0, posZ);
       mesh.rotation.set(0, rotY, 0);
       mesh.userData.stickerKey = key; // canonical sid M0-5(mask-core sq1 空间)
+      // 中层两块的横向长度不等。示意导出若仍按各自宽度等比内缩,大块左右
+      // 会各露出一条更宽的黑带;改用短边作为两个轴的共同绝对内缩基准。
+      mesh.userData.schematicInsetMode = 'short-axis';
       // 原核: body wall normal in the (rotateX-baked) middle frame (rawBody.ts).
       mesh.userData.simStickerNormal = new THREE.Vector3(
         axisFace === 'R' ? 1 : axisFace === 'L' ? -1 : 0,
