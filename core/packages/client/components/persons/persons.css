@@ -85,11 +85,11 @@ html[data-theme=dark] .wp-page {
 
 /* ── 通用 card / section ────────────────────────────────────────────── */
 .wp-card {
-    background: var(--wp-surface);
-    border: 1px solid var(--wp-border);
-    border-radius: 14px;
-    box-shadow: var(--wp-shadow);
-    overflow: hidden;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: visible;
 }
 /* 「全部成绩」标题行:编辑模式图标紧贴标题右侧。
    竖直间距移到行容器,h3 自身清零 margin,否则 h3 的不对称 margin 会让文字与图标错位 */
@@ -126,7 +126,13 @@ html[data-theme=dark] .wp-page {
     display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
     margin-top: 2px; align-items: start;
 }
-.wp-combos-bodies .sor-pb { max-width: none; }
+.wp-combos-bodies .sor-pb {
+    max-width: none;
+    padding: 4px 0;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+}
 @media (max-width: 768px) {
     .wp-combos-bodies { grid-template-columns: 1fr; }
 }
@@ -951,10 +957,10 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-ao
 }
 .wp-ms-order:hover { color: var(--wp-text); }
 .wp-ms-filters {
-    background: var(--wp-bg);
-    border: 1px solid var(--wp-border);
-    border-radius: 10px;
-    padding: 12px 16px;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
     display: flex; flex-direction: column; gap: 12px;
 }
 .wp-ms-filter-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -973,11 +979,10 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-ao
 .wp-ms-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .wp-ms-item {
     display: flex; gap: 12px;
-    padding: 10px 14px;
-    border: 1px solid var(--wp-border);
-    border-left: 3px solid var(--wp-blue);
-    border-radius: 8px;
-    background: var(--wp-surface);
+    padding: 10px 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
 }
 .wp-ms-date {
     flex: 0 0 90px;
@@ -1001,16 +1006,6 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-ao
 .wp-ms-tag-medal { color: var(--wp-gold); border-color: var(--wp-gold); background: rgba(201,162,78,0.08); }
 .wp-ms-tag-record { color: var(--wp-pink); border-color: var(--wp-pink); background: var(--wp-pink-soft); }
 
-/* per-type accent color (left border) */
-.wp-ms-item.mt-first { border-left-color: var(--wp-blue); }
-.wp-ms-item.mt-nth   { border-left-color: var(--wp-purple); }
-.wp-ms-item.mt-imp   { border-left-color: var(--wp-green); }
-.wp-ms-item.mt-pod   { border-left-color: var(--wp-gold); }
-.wp-ms-item.mt-bf    { border-left-color: var(--wp-orange); }
-.wp-ms-item.mt-rec   { border-left-color: var(--wp-pink); background: var(--wp-pink-soft); }
-.wp-ms-item.mt-gs    { border-left-color: #1f3f78; background: rgba(31,63,120,0.05); }
-.wp-ms-item.mt-cb    { border-left-color: var(--wp-text-mute); }
-
 .wp-ms-chip.mt-first { border-color: var(--wp-blue); color: var(--wp-blue); }
 .wp-ms-chip.mt-nth   { border-color: var(--wp-purple); color: var(--wp-purple); }
 .wp-ms-chip.mt-imp   { border-color: var(--wp-green); color: var(--wp-green); }
@@ -1024,10 +1019,10 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-ao
 .wp-lit { display: flex; flex-direction: column; gap: 16px; }
 .wp-lit-banner {
     display: flex; align-items: center; gap: 10px;
-    padding: 12px 16px;
-    border: 1px solid var(--wp-border);
-    border-radius: 10px;
-    background: linear-gradient(90deg, var(--wp-blue-soft), transparent 70%);
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
     flex-wrap: wrap;
 }
 .wp-lit-banner-icon { color: var(--wp-blue); flex-shrink: 0; }
