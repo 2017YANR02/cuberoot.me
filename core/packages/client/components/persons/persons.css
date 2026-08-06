@@ -178,9 +178,9 @@ html[data-theme=dark] .wp-page {
 /* ── Hero ──────────────────────────────────────────────────────────── */
 /* 紧凑横排:头像 | 国旗+姓名+ID | 奖牌与纪录 | (右侧)统计;窄屏统计换行 */
 .wp-hero-card {
-    background: var(--wp-surface);
+    background: transparent;
     border: none;
-    border-radius: 14px;
+    border-radius: 0;
     box-shadow: none;
     padding: 14px 20px;
     display: flex; flex-direction: row; align-items: center;
