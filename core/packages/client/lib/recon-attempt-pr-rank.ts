@@ -1,6 +1,6 @@
 // 取某场某轮「第 solveNum 把」(1-based)单次的时间序 PR 名次 —— 口径同选手页逐把角标
 // (computePrRank 的 attemptRanks)。近期未被官方收录的直播比赛会先合并 live 成绩再算,
-// 与选手页 prRankLive 一致。返回 dense rank(1=PR / n=PRn)或 null(无效把 / 取不到行)。
+// 与选手页 prRankLive 一致。返回标准竞赛排名(1=PR / n=PRn)或 null(无效把 / 取不到行)。
 //
 // recon 提交页的「单次纪录」自动填充用:以前只填本轮最佳那把,这里补齐任意把。
 
