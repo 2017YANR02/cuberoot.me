@@ -25,7 +25,7 @@ export default function PersonHero({ profile, results, former, isZh }: Props) {
   const collections = [
     {
       key: 'medals',
-      title: t('奖牌收藏', 'Medal Collection'),
+      title: t('奖牌', 'Medals'),
       items: [
         { key: 'gold', label: t('金牌', 'Gold'), value: profile.medals.gold },
         { key: 'silver', label: t('银牌', 'Silver'), value: profile.medals.silver },
@@ -34,7 +34,7 @@ export default function PersonHero({ profile, results, former, isZh }: Props) {
     },
     {
       key: 'records',
-      title: t('纪录收藏', 'Record Collection'),
+      title: t('纪录', 'Records'),
       items: [
         { key: 'world', label: 'WR', value: profile.records.world },
         { key: 'continental', label: 'CR', value: profile.records.continental },
