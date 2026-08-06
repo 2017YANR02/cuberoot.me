@@ -58,12 +58,12 @@ export const LEVEL2_PICKER_MASK: Record<string, string> = {
  */
 export function cubeThumbParams(
   puzzle: AlgPuzzle, set: string, sticker: AlgSticker, maskOverride?: string,
-): { view: 'iso' | 'oll' | 'pll' | 'f2l' | 'pll-iso'; mask?: string; hideGreySides?: boolean; puzzleSize: number } {
+): { view: 'iso' | 'plan' | 'oll' | 'pll' | 'f2l' | 'pll-iso'; mask?: string; hideGreySides?: boolean; puzzleSize: number } {
   const puzzleSize = PUZZLE_SIZE[puzzle];
   // 二阶没有中心与隐藏的中间层；每一块贴纸都是 case 本身的一部分。
   // LL/PLL 遮罩会把底层涂灰，LS/TCLL 等未完成层 case 因而看起来像缺块。
-  // 二阶缩略图统一画完整状态，不接受选择器传来的识别遮罩覆盖。
-  if (puzzle === '2x2') return { view: 'iso', puzzleSize };
+  // 二阶缩略图保留平面图，但不接受选择器传来的识别遮罩覆盖。
+  if (puzzle === '2x2') return { view: 'plan', puzzleSize };
   if (maskOverride) {
     const hideGreySides = CORNER_LL_MASK_NAMES.has(maskOverride) || undefined;
     return { view: 'pll', mask: maskOverride, hideGreySides, puzzleSize };

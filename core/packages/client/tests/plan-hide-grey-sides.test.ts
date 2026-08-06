@@ -40,10 +40,10 @@ const spec = (p: Partial<ImageSpec>): ImageSpec => ({ ...DEFAULTS, ...p });
 describe('二阶公式缩略图', () => {
   const RAW: AlgSticker = { kind: 'raw', tag: '', attrs: {} };
 
-  it('所有公式集都走完整等距视图，不套 LL 灰色遮罩', () => {
+  it('所有公式集都走完整平面图，不套 LL 灰色遮罩', () => {
     for (const set of ['cll', 'eg1', 'tcll-plus', 'ls1', 'ls9', 'teg2-plus']) {
-      expect(cubeThumbParams('2x2', set, RAW)).toEqual({ view: 'iso', puzzleSize: 2 });
-      expect(cubeThumbParams('2x2', set, RAW, 'coll')).toEqual({ view: 'iso', puzzleSize: 2 });
+      expect(cubeThumbParams('2x2', set, RAW)).toEqual({ view: 'plan', puzzleSize: 2 });
+      expect(cubeThumbParams('2x2', set, RAW, 'coll')).toEqual({ view: 'plan', puzzleSize: 2 });
     }
   });
 

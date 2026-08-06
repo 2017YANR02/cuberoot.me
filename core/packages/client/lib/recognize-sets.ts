@@ -44,7 +44,7 @@ export interface RecognizeButton {
 
 export interface RecognizeImage {
   setup: string;
-  view: 'iso' | 'pll-iso' | 'oll' | 'pll' | 'f2l';
+  view: 'iso' | 'plan' | 'pll-iso' | 'oll' | 'pll' | 'f2l';
   size: number;
   /** visualcube 遮罩(COLL 压灰棱块)。 */
   mask?: string;
