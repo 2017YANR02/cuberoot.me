@@ -69,4 +69,26 @@ describe('computePrRank — 单次名次计入此前所有 solve(含非最佳把
     expect(tiedRanks.get(12)!.averageRank).toBe(2);
     expect(tiedRanks.get(14)!.averageRank).toBe(5);
   });
+
+  it('并列单次和逐把同名次,但分别占据后续名次位', () => {
+    const tiedComps = [
+      comp('singleA', '2026-01-01'),
+      comp('singleB', '2026-02-01'),
+      comp('singleC', '2026-03-01'),
+    ];
+    const tiedRows = [400, 400, 500].map((best, index) => row({
+      id: 20 + index,
+      competition_id: tiedComps[index].id,
+      event_id: '333',
+      format_id: '1',
+      best,
+      attempts: [best],
+    }));
+    const tiedRanks = computePrRank(tiedRows, tiedComps);
+
+    expect(tiedRanks.get(20)!.singleRank).toBe(1);
+    expect(tiedRanks.get(21)!.singleRank).toBe(1);
+    expect(tiedRanks.get(22)!.singleRank).toBe(3);
+    expect(tiedRanks.get(22)!.attemptRanks).toEqual([3]);
+  });
 });
