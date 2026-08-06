@@ -13,6 +13,7 @@
     "reg:check": "node scripts/reg-check.mjs",
     "reg:clauses": "node scripts/build-reg-clauses.mjs",
     "test": "vitest run",
+    "test:recon-ground-truth": "node scripts/recon-ground-truth-gate.mjs run",
     "test:watch": "vitest",
     "test:slow": "node scripts/test-slow.mjs",
     "test:solvers": "node scripts/test-solvers.mjs",

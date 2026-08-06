@@ -25,7 +25,7 @@
 // PAIRED_GUARDS — block-static-onclick-button.ps1, block-button-navigation.ps1,
 // block-raw-history-url-state.ps1, block-nuqs-ime-input.mjs) live on the developer's
 // machine, not in this repo, so CI has no way to verify those filenames exist. Only
-// the two project-scoped hooks (.claude/hooks/ at the repo root) are checked below.
+// the project-scoped hooks (.claude/hooks/ at the repo root) are checked below.
 // guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
@@ -37,6 +37,8 @@ const HERE = dirname(fileURLToPath(import.meta.url)); // packages/client/tests
 const ROOT = join(HERE, '..'); // packages/client
 const REPO_ROOT = join(ROOT, '..', '..', '..'); // packages/client -> packages -> core -> repo root
 const HOOKS_DIR = join(REPO_ROOT, '.claude', 'hooks');
+const CODEX_HOOKS = join(REPO_ROOT, '.codex', 'hooks.json');
+const GIT_PRE_COMMIT = join(REPO_ROOT, '.githooks', 'pre-commit');
 
 const MARKER = '// guard-registry: tracked at /code/guards';
 
@@ -92,12 +94,18 @@ describe('/code/guards stays in sync with guard-registry-marked tests', () => {
     ).toEqual([]);
   });
 
-  it('the two project-scoped guard hooks still exist on disk', () => {
+  it('the project-scoped guard hooks still exist on disk', () => {
     // Only project-scoped hooks (checked into this repo's .claude/hooks/) are
     // verifiable from CI — the global ones live in ~/.claude on the developer's
     // machine and aren't part of this repo. See file header for the full list.
-    const projectHooks = ['block-raw-checkbox.ps1', 'block-handwritten-trad.ps1'];
+    const projectHooks = [
+      'block-raw-checkbox.ps1',
+      'block-handwritten-trad.ps1',
+      'recon-ground-truth-gate.ps1',
+    ];
     const missing = projectHooks.filter((h) => !existsSync(join(HOOKS_DIR, h)));
     expect(missing, `Missing project-scoped hook file(s) in .claude/hooks/:\n${missing.join('\n')}`).toEqual([]);
+    expect(existsSync(CODEX_HOOKS), 'Missing project-scoped Codex hooks.json').toBe(true);
+    expect(existsSync(GIT_PRE_COMMIT), 'Missing repository pre-commit hook').toBe(true);
   });
 });

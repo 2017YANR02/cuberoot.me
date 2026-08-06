@@ -1,3 +1,4 @@
+// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
 import { describe, expect, it } from 'vitest';
 
 import { decodeGyroTrack } from '@/app/[lang]/timer/_lib/bluetooth/gyro_track';
