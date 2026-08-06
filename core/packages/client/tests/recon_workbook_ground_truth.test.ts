@@ -1,5 +1,9 @@
 // guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { decodeGyroTrack } from '@/app/[lang]/timer/_lib/bluetooth/gyro_track';
 import { buildCoreTrack } from '@/app/[lang]/timer/_lib/reconstruct/core_track';
@@ -10,28 +14,36 @@ import { computeStageSegments } from '@/app/[lang]/timer/_lib/reconstruct/stage_
 import { computeStepMetrics } from '@/app/[lang]/timer/_lib/reconstruct/step_metrics';
 import { decodeReplayParam } from '@/app/[lang]/timer/_lib/share/decode';
 
-const FIXTURES = [
-  {
-    "id": "2464",
-    "replay": "eyJlIjoiMzMzIiwicyI6IkYgVTIgUjIgQjIgUiBGIEQgQjIgUjIgRicgRCcgVSBGJyBEJyBGJyBSMiBCJyBMJyIsIm0iOltbIkQnIiwwXSxbIkwnIiw3MjldLFsiUiIsMTExM10sWyJCIiwxNjA1XSxbIlInIiwxODYwXSxbIkwiLDIzMThdLFsiTCIsMjM5Ml0sWyJEJyIsMzA0MF0sWyJMIiwzMzQ3XSxbIkQiLDQ2MDFdLFsiRCIsNDY4OV0sWyJVJyIsNDgwM10sWyJMJyIsNjM3Nl0sWyJVJyIsNjY1NF0sWyJMIiw2OTgwXSxbIlUiLDczNjZdLFsiTCciLDc2MzZdLFsiVSciLDc4OThdLFsiTCIsODEzMl0sWyJVJyIsODg2Nl0sWyJGJyIsOTQzMF0sWyJVIiw5Njc2XSxbIkYiLDk5MzldLFsiUiIsMTA0MjldLFsiVSIsMTA3NDRdLFsiQiIsMTEyODBdLFsiVSciLDExNDg2XSxbIkInIiwxMTcyNF0sWyJSJyIsMTIwMTJdLFsiQiIsMTI1NDRdLFsiVSciLDEyOTY5XSxbIkInIiwxMzI4NF0sWyJCJyIsMTQwMzZdLFsiVSciLDE0ODg1XSxbIlUnIiwxNDk3M10sWyJCIiwxNjExM10sWyJVIiwxNjM5N10sWyJCJyIsMTY2OTFdLFsiVSIsMTcxMDldLFsiQiIsMTc1MDFdLFsiQiIsMTc1NzVdLFsiVSciLDE3ODM3XSxbIkYnIiwxOTE1OF0sWyJVIiwxOTUzOF0sWyJCJyIsMjAxMzldLFsiVSciLDIxMDI0XSxbIkYiLDIxNjk4XSxbIlUnIiwyMjMwNV1dLCJ0IjoyMjMyMCwiZyI6IlJ3RUFUZ0JaOXdMNWdnR1YrZjc3Z1FGbytRSDJnZ0U3Ky8vdmdnQzBBUDN1Z2dCYUEvN3dnZ0VPQUFUeGdnQmEvd24wZ2dFTy9RbjRnZ0NIK0FUemdnQmE5UVh2Z3dDMDl3THlnZ0U3OXdIMmdnQzA5d0g3Z1FDMCtRQUFnUUpKK3dFRmdRRTcrUDBHZ1FKMjl3TUtnZ0w5K1FBR2dRRTcrZjBCZ1FFNzl2ejhnUUdWOVFEM2dnYzErd0g2Z1FCYUp3RDVod0JhU0FINm1BQmFUd0w4blFDMFZBSC9vQUxRVWdmK253QzBVQTBBbmdFT1V3WDlvQURoVlFEOG9nQ0hXZjc2cFFDSFZmcjNvZ0ZvVkFEMm9nR1ZVLzM2b1FDMFZ2MEJvZ0NIVnY0Rm93RU9VL2tEb0FDMFVmYjlud0ljVlBzQm9RRU9WZjRHb2dDSFZRQUtvZ0hDVS80RW9BRGhVdndBbndISVRQcjhtZ0N1Ui9yOWx3Rm9TL3ovbWdEaFR2b0NuQUdWVHZnR25RRU9Udm9DbkFDMFR2Ny9uQUhDVmdFR293QXRXUUlPcGdCYVdnUVVxUUJhV0FVWXFBR1ZWUVVRb3dDMFV3UUlvUUU3VXdJQ29BQzBUd0g5blFLbFVmNy9ud0VNVkFBRm9RQzBWUUVMb2dKSlZnUU9vd0FCVUJZWm93QnZTVEVzc0FCRVRETXV0UUMwU1Rnd3RnQ05Sand1dGdCVVJEOHd1QUZvUUVFdXRRQ05QMEFvc0FDdVBUOG1yQUtrUWp3b3J3Q3pRenNzc1FGb1FqY3FyUUNIVGhJUG5nQXRVQWNEbmdFOFVBSUFuZz09IiwiZCI6WyJnYW4tdjQiLCJHQU4xNnVpXyAoQzI6QUYpIl19",
-    "truth": "F U2 R2 B2 R F D B2 R2 F' D' U F' D' F' R2 B' L'\ny2 // insp\nD' R' L F L' R2↓D' R D2U' // Y xcross (BO)\nR' U' R U R' U' R // OG\ny' U' L' U L // RG\nF U R U' R' F' R U' R' // BR/ZBLS\nR' U2' R U R' U R2 U' r' F R' F' r U' // ZBLL-Pi46"
-  },
-  {
-    "id": "2466",
-    "replay": "eyJlIjoiMzMzIiwicyI6IkwnIEYyIEInIFInIEQyIEYyIFIyIEYgRCcgVTIgTDIgRiBMIEYyIFUnIFIgQicgUiIsIm0iOltbIlInIiwwXSxbIkwnIiwxMjM1XSxbIkInIiwyMDAzXSxbIlIiLDI1MzFdLFsiTCciLDMxMzhdLFsiVSIsMzQ0MF0sWyJMIiwzNzEwXSxbIkwiLDM4MTNdLFsiRCciLDQyNjddLFsiTCciLDUxOTddLFsiTCciLDUyOTddLFsiRCciLDU2MTNdLFsiTCIsNTk3M10sWyJCJyIsMTAyNDVdLFsiRCciLDEwNTI5XSxbIkIiLDEwOTE2XSxbIkQiLDExMzAxXSxbIkInIiwxMTcyNl0sWyJEJyIsMTIwMzddLFsiQiIsMTIzMjldLFsiRCciLDEzMDY5XSxbIkwiLDEzNDE4XSxbIkIiLDEzOTM5XSxbIkQnIiwxNDA1NV0sWyJEJyIsMTQxNDZdLFsiQiciLDE0NTQyXSxbIkQiLDE1Mjc3XSxbIkwnIiwxNTY5N10sWyJCJyIsMTczNTZdLFsiRCciLDE3ODA3XSxbIkIiLDIwMDExXSxbIkQnIiwyMDI4OV0sWyJCJyIsMjA2MTVdLFsiQiciLDIwNzM4XSxbIlUnIiwyMDk4M10sWyJCIiwyMTI5OV0sWyJEIiwyMTYwNV0sWyJEIiwyMTc2Nl0sWyJCJyIsMjIwNTRdLFsiVSIsMjI0MTRdLFsiQiIsMjMwMjddLFsiQiIsMjMxMjldLFsiRCciLDIzNDY4XV0sInQiOjIzNDE4LCJnIjoiUndFQVJBQUsvQWwrOFFCUStnMSs4d0tqL1JCKzl3QmFBUkIrL1FDMEF3OStBZ0FCQkJCK0J3SklCeFI5QlFFN0RoRjlDUUMwQ1JKOUJnQzFBaEYrQVFDRy94QisvQURoK3c5KytRQzArZ3ArOWdDMCtBcCsrd0NIK1E5Ky9BRGgvQTErL3dFT0FBdCsvd0VPQWdwKytRSENBQXQrOVFFOUFBdCs4UUN5L2dwKzlBQmErd2wrK1FFNy9BeCs5Z0ZvL3cxKzhnWDYvd3QrOWdZbi94Qis5d0F0L2haOTl3Q0gvVU5yOUFBdC9GcFovQUVPL0Y1Vy9BQXRBVjlVK3dHVkEyRlMvd0ljQldOUCt3QmFDV05QK1FDMERXUk45Z0hDREdGUStBQzBCMkpRK2dKMkRHTk8rQURoRUdOTitBRm9EbUZSK1FEaENXRlIrd0RoQldCVC9BSHZDRjVWQUFDMENXSlIvZ0U3L2wxVzlBQmE4MXBZOVFCazYxNVI3Z0NxOEZ0VzhRRTc5VnRXOFFCYSsxMVY4UURoQVY1Vjh3T3hCVjVWOXdIQ0NHQlQrUU5YREdOTytRSjJFR0ZROXdPRURHQlMrUVVaQ0Y5VCtnRGhCbDFXL1FGby9sNVdBUURoQkdKUi9nQzBCbVJPL0FIQ0FtQlQrd0RoQUYxVy9RRm9BMTlVQUFCYUJHSlEvd0JhQ21ST0FRRU9EbU5PQXdKMkNtSlFBdz09IiwiZCI6WyJnYW4tdjQiLCJHQU4xNnVpXyAoQzI6QUYpIl19",
-    "truth": "L' F2 B' R' D2 F2 R2 F D' U2 L2 F L F2 U' R B' R\nz2 // insp\nL' R' B' L R' D R2 // W xcross (GR) cancel into\nU' R2' U' R // OB\ny R' U' R U R' U' R // RB\nU' F R U2' R' U F' // GO/ZBLS\nR' U' R↑U' R2' D' R U2 R' D R2 U' // ZBLL-S-21"
-  },
-  {
-    "id": "2467",
-    "replay": "eyJlIjoiMzMzIiwicyI6IkYyIEQnIFIyIEQnIFIyIEIgRjIgUjIgRiBVJyBSJyBGMiBVJyBSMiBVMiBGIiwibSI6W1siUiIsMF0sWyJSIiw4MV0sWyJGIiw0NTVdLFsiVSIsNzAzXSxbIkInIiwxMTA4XSxbIlInIiwxNjI5XSxbIkQnIiwyNDc5XSxbIlIiLDI4NzNdLFsiRiciLDM1NDhdLFsiUiciLDQwMjZdLFsiRiIsNDM2M10sWyJSIiw1NDYyXSxbIkQnIiw1Nzg3XSxbIlInIiw2MTA3XSxbIkwiLDY1MTVdLFsiRCIsNjgxMl0sWyJEIiw2OTUxXSxbIkwnIiw3Mzk1XSxbIkQiLDgwOTBdLFsiUiIsODYwNF0sWyJEIiw5MDI5XSxbIlInIiw5Mzk5XSxbIkQiLDk3MzRdLFsiRCIsOTgxN10sWyJSIiwxMDM5MF0sWyJEJyIsMTA2NTldLFsiRCciLDEwNzU1XSxbIlInIiwxMTE3NF0sWyJSJyIsMTEyODddLFsiRCciLDExNTc1XSxbIlIiLDEyMDYwXSxbIlIiLDEyMTM1XSxbIkQnIiwxMjQyMF0sWyJSJyIsMTMzMjddLFsiUiciLDEzNDM1XSxbIkQnIiwxMzY0Ml0sWyJEJyIsMTM3MzFdLFsiUiIsMTQyNzldLFsiRCIsMTQ3NzZdLFsiRCIsMTQ4NTBdXSwidCI6MTQ4ODMsImciOiJSd0VBUFFDRzdMMW00UUNIOExaaTVBQ0g4Yk5mNGdDMStLcGI2Z0FBKzZaWTdnQlovYUpWK0FDSUE2SlcvUUhCQUtGVSt3QzA5NkZUOXdFNzlaMVArUUhDK1o1US9BRTcvSnROL0FIQy9LQlQrZ0pKK2FGVTl3RU85cVJXOHdGQjlLRlM5QUVPOVo5UitRQ3YrWjFQK3dDeis1TkIrd0JiQVlJUC93QlpBSUVIK3dDMS9ZSDYvUUFzQVlINS9RQzAvWUgyL2dFNy80TDBBUUZvQklMeEJBQzFBSUx5QVFFTy9JTDFBZ0RoOTRMekF3QzArWUx2L2dDei9ZUHQvUUMwL1lMeSt3RGgvb0g0L1FSbC9JTHovUUFCQW9MdUFRQlpDWVBxQndEaURvVHJEZ0hCRElQdEN3Q0hCb0x4QmdGcEFvTHdBQUVOLzRMei9nRTcvNEx6QkFCYS9ZTHlDQURpLzRMMERnQ0cvb1B2RUFFOCtvTHpDUUJaKzRMMUJRQmErb0g0QWdCYStZTDIvZ0U3K0lMMitRSEMrNEx5L0FEaEFJTHgvZ0U4QklMdkFnSjEvNEgzQXdCYUFJSDcvd0MwL1lIK0JBQmcrb0w4Q2dCVTk0TDJCZ0VPOG9MM0JRSjI5b0wyQWdCaCtZTHYvdz09IiwiZCI6WyJnYW4tdjQiLCJHQU4xNnVpXyAoQzI6QUYpIl19",
-    "truth": "F2 D' R2 D' R2 B F2 R2 F U' R' F2 U' R2 U2 F\nx2 y // insp\nF2 R D L' F' // W xcross (OB)\nU' F R' F' R // GR\ny' R U' R' L U2 L' // GO\nU R U R' // RB/ZBLS\nU2 R U2' R2' U' R2 U' R2' U2' R U2 // ZBLL-Pi61"
-  },
-  {
-    "id": "2468",
-    "replay": "eyJlIjoiMzMzIiwicyI6IkwyIEQnIFIgRDIgRiBEIEIyIEYnIFUnIFIyIFUgTCcgRDIgTDIgVScgQjIiLCJtIjpbWyJMIiwwXSxbIlIiLDc4XSxbIkInIiw1NDJdLFsiRCciLDgyN10sWyJMIiwxMTg2XSxbIkQiLDI0MTFdLFsiVSciLDI2ODldLFsiQiciLDM5NzhdLFsiVSIsNDM1MF0sWyJCIiw0Njc3XSxbIkwnIiw1MDExXSxbIlUnIiw1NDI4XSxbIkwiLDU2NDldLFsiQiIsNjIwOF0sWyJVIiw2NDE4XSxbIlUiLDY1MjNdLFsiQiciLDY3NzddLFsiVSIsODAzN10sWyJSIiw5MDE5XSxbIlUnIiw5MjMyXSxbIlInIiw5NDU0XSxbIlUiLDk2MTBdLFsiUiciLDk4MjNdLFsiRiIsOTkyOF0sWyJSIiwxMDUwMl0sWyJGJyIsMTA2MDldLFsiUiIsMTA4NDFdLFsiVSciLDExMDIyXSxbIlInIiwxMTIxM10sWyJVIiwxMTQyOF0sWyJVIiwxMTUxN10sWyJSIiwxMjQ1Nl0sWyJVJyIsMTI2MjhdLFsiUiciLDEyODY3XSxbIlUiLDEzMDg3XSxbIlIiLDEzMzQ5XSxbIlUiLDEzNTE4XSxbIlInIiwxMzY5N10sWyJVIiwxMzg5NV0sWyJSIiwxNDExMV0sWyJVJyIsMTQzNDZdLFsiUiciLDE0NTcwXSxbIlInIiwxNDY5OV0sWyJEJyIsMTQ5MTZdLFsiUiIsMTUxNzFdLFsiVSIsMTU0OTldLFsiUiciLDE1ODQ2XSxbIkQiLDE2MTM5XSxbIlIiLDE2MzY0XSxbIlUiLDE2NTg3XSxbIlUiLDE2Njc3XV0sInQiOjE2Njk1LCJnIjoiUndFQVJ3QTRUTzBQWXdDcFN1NEtaUURoUmUwTWFBQmFTZmdHYUFCYVRQOEFaZ0U3VEFNQ1pnQXNTZjRHYUFEaVJ2MENhZ0VPUy80QlpnQzBUUC84WlFHVlRRVDdaUVZ6VGdIL1pRRU9UUHdEWlFJY1QvOEVZd0VPVHdIK1pBQmFUZjBEWlFDMFRQc0paUUU3U2Y0Tlp3RGhSLzBJYVFDSFIvMENhUUMwVFBnRVpRSkpTZlVJWndCdFNmc0had0IwUi9jR2FRQmZTdk1EWmdFSlRmWUJaUUMwVHZqOFpBR1ZaZjBGVEFCYWV3SURJQUJhZnYwRUVnRU9mdndFREFQZWZ2NENFQUMwZlFJRkZBQmFmUVlJRmdDSGZBb0xGUUNIZlFVR0ZBQmFmZ0lGRVFFN2ZnQUJEd0FJZnZUOUJBQlNmdkQ4OXdCWmZPdjc4d0JiZStUODlRQzBlK1Q1K1FEaGZPVDkvUUJhZmV2N0J3QmFmZS85RUFETGZmd0JGUUJ3ZlFFRUZnQlpmUVlGRndDMGZnSUNFd0ljZmdEK0VnTFJmUU1ERkFCWmZRY0ZGUUw5ZXcwTEd3Q0hlUkVUSEFDSWVoRU9Hd0JhZkFzSUZ3Q3pmUWtFRlFCYWZRUUNFd0VQZlFjRkZ3QXNmQW9JR0FFUGZnZ0ZFUUN6ZndNREJ3Q0lmLzRFQlFCYWYvc0FBd0M2Zi93RUNBTDNmL24vQXdDemZ2YjRBUUMxZi9uNUJBRGhmLzc3Q2dCYWZnSDVEZz09IiwiZCI6WyJnYW4tdjQiLCJHQU4xNnVpXyAoQzI6QUYpIl19",
-    "truth": "L2 D' R D2 F D B2 F' U' R2 U L' D2 L2 U' B2\ny' // insp\nB F L' D' F D U' // Y cross\nL' U L // BO\nF' U' F // OG\nL U2 L' // BR\ny U R U' R' U R' F R F' R U' R' // RG/ZBLS\nU2 R U' R' U R U R' U R U' R2' D' R U R' D R U2 // ZBLL-L56"
-  }
-] as const;
+interface GroundTruthFixture {
+  id: string;
+  source: string;
+  replay: string;
+  truth: string;
+  currentWrong: string;
+  note: string;
+}
+
+const HERE = dirname(fileURLToPath(import.meta.url));
+const CLIENT_ROOT = join(HERE, '..');
+const SYNC_SCRIPT = join(CLIENT_ROOT, 'scripts', 'sync-recon-ground-truth.mjs');
+const SNAPSHOT_PATH = join(HERE, 'fixtures', 'recon-ground-truth.json');
+
+const syncCheck = spawnSync(process.execPath, [SYNC_SCRIPT, 'check'], {
+  cwd: CLIENT_ROOT,
+  encoding: 'utf8',
+});
+if (syncCheck.status !== 0) {
+  throw new Error(syncCheck.stderr.trim() || 'ground-truth Excel sync check failed');
+}
+
+const snapshot = JSON.parse(readFileSync(SNAPSHOT_PATH, 'utf8')) as {
+  version?: unknown;
+  fixtures?: unknown;
+};
+if (snapshot.version !== 1 || !Array.isArray(snapshot.fixtures) || snapshot.fixtures.length === 0) {
+  throw new Error('recon-ground-truth.json 格式错误或没有 fixture');
+}
+const FIXTURES = snapshot.fixtures as GroundTruthFixture[];
 
 function expectedFromTruth(truth: string): {
   scramble: string;
@@ -54,11 +66,11 @@ function expectedFromTruth(truth: string): {
   };
 }
 
-describe('recon.xlsx ground truth', () => {
+describe('recon Excel ground truth', () => {
   for (const fixture of FIXTURES) {
     it(fixture.id, async () => {
       const replay = decodeReplayParam(fixture.replay);
-      if (!replay) throw new Error('invalid replay');
+      if (!replay) throw new Error(`fixture ${fixture.id}: invalid replay`);
       const segs = computeStageSegments(replay.scramble, replay.moves, replay.totalMs)!;
       const metrics = computeStepMetrics(replay.scramble, replay.moves, replay.totalMs)!;
       const slots = computeF2lSlots(replay.scramble, replay.moves, replay.totalMs, segs);
@@ -83,7 +95,7 @@ describe('recon.xlsx ground truth', () => {
       const expected = expectedFromTruth(fixture.truth);
       expect(result.scramble).toBe(expected.scramble);
       expect(result.inspection).toBe(expected.inspection);
-      expect(result.lines.map(line => ({ moves: line.moves, label: line.label }))).toEqual(expected.lines);
+      expect(result.lines.map((line) => ({ moves: line.moves, label: line.label }))).toEqual(expected.lines);
     });
   }
 });
