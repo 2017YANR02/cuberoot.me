@@ -45,4 +45,28 @@ describe('computePrRank — 单次名次计入此前所有 solve(含非最佳把
     expect(ranks.get(1)!.averageRank).toBe(1); // 46.02 先到
     expect(ranks.get(2)!.averageRank).toBe(2); // 52.76 次之
   });
+
+  it('并列平均同名次,但分别占据后续名次位', () => {
+    const tiedComps = [
+      comp('avgA', '2026-01-01'),
+      comp('avgB', '2026-02-01'),
+      comp('avgC', '2026-03-01'),
+      comp('avgD', '2026-04-01'),
+      comp('avgE', '2026-05-01'),
+    ];
+    const averages = [334, 436, 436, 440, 451];
+    const tiedRows = averages.map((average, index) => row({
+      id: 10 + index,
+      competition_id: tiedComps[index].id,
+      event_id: '333',
+      best: average - 20,
+      average,
+      attempts: [average - 20, average, average + 10],
+    }));
+    const tiedRanks = computePrRank(tiedRows, tiedComps);
+
+    expect(tiedRanks.get(11)!.averageRank).toBe(2);
+    expect(tiedRanks.get(12)!.averageRank).toBe(2);
+    expect(tiedRanks.get(14)!.averageRank).toBe(5);
+  });
 });
