@@ -220,7 +220,7 @@ function EventRoundsList({
   }), [results, changeMap]);
   // PR / 名次染色只算官方成绩:直播(非官方)行不参与
   const prRank = useMemo(() => computePrRank(effResultsForRank.filter((r) => !r.live), comps), [effResultsForRank, comps]);
-  // 直播行另算一份「官方 + 直播」的时间序名次,使直播行的单次/平均/逐把 PR 与官方行同一 dense-rank
+  // 直播行另算一份「官方 + 直播」的时间序名次,使直播行的单次/平均/逐把 PR 与官方行同一口径
   // 口径且彼此自洽(最好那把 == 单次列)。只取直播行用,不读官方行 → 不污染官方 PR 标记。
   const prRankLive = useMemo(() =>
     results.some((r) => r.live) ? computePrRank(results, comps) : null,
