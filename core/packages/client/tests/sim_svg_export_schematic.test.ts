@@ -614,4 +614,28 @@ describe('exportSimSvgSchematic — sq1', () => {
     const reps = clusterReps(latticeVerts(svg));
     expect(minGap(reps)).toBeGreaterThan(2); // 顶/墙/中层三方交界处无亚像素错位
   });
+
+  it('正视:中层宽窄两块使用同一绝对横向内缩,大块两侧不会露出粗黑带', () => {
+    const scene = buildSq1Scene();
+    const world = worldFor(scene, new THREE.Vector3(0, 0, 1), SQ1_W * 4);
+    const bare = faceletDs(exportSimSvgSchematic({ world, inset: 0 }));
+    const inset = faceletDs(exportSimSvgSchematic({ world, inset: 0.06 }));
+    const rect = (d: string) => {
+      const pts = ptsOf(d);
+      const xs = pts.map(([x]) => x), ys = pts.map(([, y]) => y);
+      return {
+        cx: (Math.min(...xs) + Math.max(...xs)) / 2,
+        cy: (Math.min(...ys) + Math.max(...ys)) / 2,
+        w: Math.max(...xs) - Math.min(...xs),
+      };
+    };
+    const middle = (ds: string[]) => ds.map(rect)
+      .filter((r) => Math.abs(r.cy - 200) < 1)
+      .sort((a, b) => a.cx - b.cx);
+    const full = middle(bare), shrunk = middle(inset);
+    expect(full).toHaveLength(2);
+    expect(shrunk).toHaveLength(2);
+    const retreats = full.map((r, i) => (r.w - shrunk[i].w) / 2);
+    expect(Math.abs(retreats[0] - retreats[1])).toBeLessThan(0.05);
+  });
 });
