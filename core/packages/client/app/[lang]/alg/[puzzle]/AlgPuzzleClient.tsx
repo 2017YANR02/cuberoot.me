@@ -272,6 +272,18 @@ export default function AlgPuzzleClient() {
         <a href="https://speedcubedb.com" target="_blank" rel="noopener noreferrer">
           speedcubedb.com
         </a>
+        {puzzle === '2x2' && (
+          <>
+            {', '}
+            <a
+              href="https://docs.google.com/spreadsheets/d/1OFXakCV85Mp2zsQBXMxiMX9a506JeAcLnUXZr8FgXAY/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Best 2x2 Algs (Google Sheets)
+            </a>
+          </>
+        )}
       </p>
     </div>
   );
