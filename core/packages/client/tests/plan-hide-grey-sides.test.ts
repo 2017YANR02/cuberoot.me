@@ -37,6 +37,28 @@ const withFill = (svg: string, hex: string): string[] =>
 
 const spec = (p: Partial<ImageSpec>): ImageSpec => ({ ...DEFAULTS, ...p });
 
+describe('二阶公式缩略图', () => {
+  const RAW: AlgSticker = { kind: 'raw', tag: '', attrs: {} };
+
+  it('所有公式集都走完整等距视图，不套 LL 灰色遮罩', () => {
+    for (const set of ['cll', 'eg1', 'tcll-plus', 'ls1', 'ls9', 'teg2-plus']) {
+      expect(cubeThumbParams('2x2', set, RAW)).toEqual({ view: 'iso', puzzleSize: 2 });
+      expect(cubeThumbParams('2x2', set, RAW, 'coll')).toEqual({ view: 'iso', puzzleSize: 2 });
+    }
+  });
+
+  it('LS case 的可见贴纸没有遮罩灰', () => {
+    const p = cubeThumbParams('2x2', 'ls1', RAW);
+    const svg = renderFromSimpleQuery({
+      view: p.view,
+      pzl: p.puzzleSize,
+      size: 88,
+      setup: "R U R' F2' R F' R U R2' F2'",
+    });
+    expect(withFill(svg, '#404040')).toHaveLength(0);
+  });
+});
+
 describe('plan view — hide grey sides', () => {
   describe('/alg thumbnails (renderFromSimpleQuery view=oll)', () => {
     const off = renderFromSimpleQuery({ view: 'oll', size: 88, setup: OLL_DOT });
