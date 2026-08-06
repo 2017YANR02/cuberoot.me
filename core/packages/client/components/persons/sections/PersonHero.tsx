@@ -3,6 +3,7 @@
 
 import { Mars, Venus } from 'lucide-react';
 import { Flag } from '@/components/Flag';
+import { useT } from '@/hooks/useT';
 import { countryName } from '@/lib/country-name';
 import type { WcaPersonProfile, WcaResultRow, WcaFormerIdentity } from '@/lib/wca-person-api';
 
@@ -19,7 +20,28 @@ export default function PersonHero({ profile, results, former, isZh }: Props) {
   const displayName = p.name;
   const wcaUrl = `https://www.worldcubeassociation.org/persons/${p.wca_id}`;
   const avatarUrl = p.avatar?.thumb_url || p.avatar?.url;
-  const t = (zh: string, en: string) => (isZh ? zh : en);
+  const t = useT();
+
+  const collections = [
+    {
+      key: 'medals',
+      title: t('奖牌收藏', 'Medal Collection'),
+      items: [
+        { key: 'gold', label: t('金牌', 'Gold'), value: profile.medals.gold },
+        { key: 'silver', label: t('银牌', 'Silver'), value: profile.medals.silver },
+        { key: 'bronze', label: t('铜牌', 'Bronze'), value: profile.medals.bronze },
+      ],
+    },
+    {
+      key: 'records',
+      title: t('纪录收藏', 'Record Collection'),
+      items: [
+        { key: 'world', label: 'WR', value: profile.records.world },
+        { key: 'continental', label: 'CR', value: profile.records.continental },
+        { key: 'national', label: 'NR', value: profile.records.national },
+      ],
+    },
+  ];
 
   // 复原次数 / 尝试次数 (排除 DNS / no-result)
   let solves = 0, attempts = 0;
@@ -76,6 +98,22 @@ export default function PersonHero({ profile, results, former, isZh }: Props) {
             <a href={wcaUrl} target="_blank" rel="noopener noreferrer" className="wp-hero-id-link" title="WCA">{p.wca_id}</a>
           </div>
         </div>
+      </div>
+
+      <div className="wp-hero-collections">
+        {collections.map((collection) => (
+          <section className={`wp-hero-collection wp-hero-collection-${collection.key}`} key={collection.key}>
+            <h2>{collection.title}</h2>
+            <dl>
+              {collection.items.map((item) => (
+                <div className={`wp-hero-collection-item wp-hero-collection-item-${item.key}`} key={item.key}>
+                  <dt>{item.label}</dt>
+                  <dd>{item.value}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        ))}
       </div>
 
       <div className="wp-hero-table">
