@@ -1,0 +1,126 @@
+.gt-page {
+  width: min(1460px, calc(100% - 32px));
+  margin: 28px auto 72px;
+  color: var(--foreground);
+}
+
+.gt-header { margin-bottom: 22px; }
+.gt-kicker {
+  color: var(--accent);
+  font: 700 0.72rem/1.2 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.gt-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  margin-top: 6px;
+}
+.gt-title-row > div { max-width: 820px; }
+.gt-title-row h1, .gt-header h1 { margin: 0; font-size: clamp(1.65rem, 3vw, 2.45rem); }
+.gt-title-row p { margin: 7px 0 0; color: var(--muted-foreground); line-height: 1.6; }
+.gt-refresh, .gt-source-link, .gt-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--border-default);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--foreground);
+  padding: 8px 11px;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.gt-refresh:hover, .gt-source-link:hover { border-color: var(--accent); color: var(--accent); }
+.gt-refresh:disabled, .gt-save:disabled { opacity: 0.45; cursor: not-allowed; }
+.gt-scope { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 15px; color: var(--muted-foreground); font: 0.78rem/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+.gt-filters { display: flex; align-items: flex-end; gap: 12px; margin-bottom: 14px; }
+.gt-search { width: min(430px, 100%); }
+.gt-search-input, .gt-filter-label select, .gt-editor select, .gt-editor textarea {
+  border: 1px solid var(--input);
+  border-radius: 7px;
+  background: var(--background);
+  color: var(--foreground);
+  outline: none;
+}
+.gt-search-input { width: 100%; min-height: 38px; padding: 8px 34px 8px 10px; }
+.gt-search-input:focus, .gt-filter-label select:focus, .gt-editor select:focus, .gt-editor textarea:focus { border-color: var(--ring); box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 22%, transparent); }
+.gt-filter-label, .gt-editor label { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; color: var(--muted-foreground); font-size: 0.78rem; }
+.gt-filter-label select, .gt-editor select { min-height: 38px; padding: 7px 30px 7px 9px; width: fit-content; }
+
+.gt-workbench { display: grid; grid-template-columns: minmax(280px, 370px) minmax(0, 1fr); min-height: 680px; border-top: 1px solid var(--border-default); }
+.gt-candidates { border-right: 1px solid var(--border-default); min-width: 0; }
+.gt-section-head { display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 0 12px; border-bottom: 1px solid var(--border-default); color: var(--muted-foreground); font-size: 0.78rem; }
+.gt-section-head > :last-child { color: var(--faint-foreground); }
+.gt-candidate-list { max-height: 680px; overflow-y: auto; }
+.gt-candidate { width: 100%; display: block; text-align: left; border: 0; border-bottom: 1px solid var(--border-default); background: transparent; color: var(--foreground); padding: 11px 12px; cursor: pointer; }
+.gt-candidate:hover { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.gt-candidate.is-selected { box-shadow: inset 3px 0 0 var(--accent); background: color-mix(in srgb, var(--accent) 9%, transparent); }
+.gt-candidate-main { display: flex; align-items: baseline; gap: 9px; min-width: 0; }
+.gt-candidate-id { flex: 0 0 auto; color: var(--accent); font: 700 0.78rem/1.2 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.gt-candidate-person { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 620; }
+.gt-candidate-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 10px; margin-top: 7px; color: var(--muted-foreground); font-size: 0.72rem; }
+.gt-status, .gt-source-changed { padding: 2px 6px; border-radius: 999px; background: var(--muted); white-space: nowrap; }
+.gt-status-confirmed { color: var(--signal-success); }
+.gt-status-discussion { color: var(--accent); }
+.gt-status-rejected, .gt-source-changed { color: var(--destructive); }
+.gt-pages { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; color: var(--muted-foreground); font-size: 0.78rem; }
+.gt-pages button { display: inline-flex; border: 1px solid var(--border-default); border-radius: 5px; background: transparent; color: inherit; padding: 5px; cursor: pointer; }
+.gt-pages button:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.gt-detail { min-width: 0; padding: 20px 24px 36px; }
+.gt-detail-head { display: flex; align-items: flex-start; gap: 16px; }
+.gt-detail-head > div { min-width: 0; }
+.gt-detail-id { color: var(--accent); font: 700 0.8rem/1.2 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.gt-detail-head h2 { margin: 3px 0 0; font-size: 1.35rem; overflow-wrap: anywhere; }
+.gt-detail-head p { margin: 5px 0 0; color: var(--muted-foreground); }
+.gt-source-link { padding: 6px 9px; font-size: 0.78rem; }
+.gt-eligibility, .gt-warning, .gt-error, .gt-access { display: flex; align-items: flex-start; gap: 9px; margin-top: 16px; color: var(--muted-foreground); }
+.gt-eligibility svg, .gt-warning svg, .gt-error svg, .gt-access svg { flex: 0 0 auto; margin-top: 1px; }
+.gt-eligibility > div { display: flex; flex-direction: column; gap: 3px; }
+.gt-eligibility.is-ok { color: var(--signal-success); }
+.gt-eligibility.is-blocked, .gt-warning, .gt-error { color: var(--destructive); }
+.gt-issues { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; color: var(--muted-foreground); font-size: 0.78rem; }
+.gt-issues span:not(:first-child) { padding: 2px 7px; border-radius: 999px; background: var(--muted); }
+
+.gt-text-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-top: 24px; }
+.gt-text-compare > div { min-width: 0; }
+.gt-text-compare h3 { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 7px; font-size: 0.82rem; }
+.gt-text-compare h3 span { color: var(--signal-success); font-size: 0.7rem; font-weight: 500; }
+.gt-text-compare pre { margin: 0; min-height: 180px; max-height: 410px; overflow: auto; border-top: 1px solid var(--border-default); padding: 12px 2px; color: var(--foreground); font: 0.79rem/1.65 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.gt-editor { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; margin-top: 26px; padding-top: 20px; border-top: 1px solid var(--border-default); }
+.gt-editor label { width: min(760px, 100%); }
+.gt-editor textarea { width: 100%; resize: vertical; padding: 9px 10px; font: 0.82rem/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.gt-editor details { width: min(760px, 100%); color: var(--muted-foreground); font-size: 0.78rem; }
+.gt-editor summary { cursor: pointer; margin-bottom: 8px; }
+.gt-save { border-color: color-mix(in srgb, var(--signal-success) 55%, var(--border-default)); background: color-mix(in srgb, var(--signal-success) 13%, transparent); color: var(--foreground); }
+.gt-save:hover:not(:disabled) { background: color-mix(in srgb, var(--signal-success) 22%, transparent); }
+.gt-empty { padding: 24px 12px; color: var(--muted-foreground); }
+.gt-access { align-items: center; }
+.gt-selected-announcer { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+@media (max-width: 900px) {
+  .gt-workbench { grid-template-columns: 1fr; }
+  .gt-candidates { border-right: 0; border-bottom: 1px solid var(--border-default); }
+  .gt-candidate-list { max-height: 380px; }
+  .gt-detail { padding-inline: 10px; }
+  .gt-text-compare { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+  .gt-page { width: min(100% - 20px, 1460px); margin-top: 18px; }
+  .gt-title-row, .gt-detail-head { flex-direction: column; }
+  .gt-filters { align-items: stretch; flex-direction: column; }
+  .gt-search { width: 100%; }
+  .gt-filter-label { width: fit-content; }
+  .gt-workbench { min-height: 0; }
+  .gt-detail { padding: 18px 2px 30px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gt-page * { scroll-behavior: auto !important; }
+}

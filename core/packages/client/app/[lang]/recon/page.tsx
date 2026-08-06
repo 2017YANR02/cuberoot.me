@@ -11,7 +11,7 @@ import Link from '@/components/AppLink';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
-import { Plus, HelpCircle, TriangleAlert, LayoutGrid, List } from 'lucide-react';
+import { Plus, HelpCircle, TriangleAlert, LayoutGrid, List, TestTube2 } from 'lucide-react';
 import type { ReconSolve } from '@cuberoot/shared';
 import { useReconStore, type SortKey, type SortDir } from '@/lib/recon-store';
 import {
@@ -37,6 +37,7 @@ import { SearchInput } from '@/components/SearchInput';
 import { isWcaEvent, eventDisplayName } from '@/lib/wca-events';
 import './recon.css';
 import { tr } from '@/i18n/tr';
+import { useIsAdmin } from '@/lib/auth-store';
 
 // ── 视图模式 ──
 type ViewMode = 'list' | 'grid';
@@ -197,6 +198,7 @@ export default function ReconListPage() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
+  const isAdmin = useIsAdmin();
 
   // ── 列表 / 卡片视图切换（进 URL，后退可返回）──
   // 显式写视图：grid / list 都挂 ?view=（clearOnDefault:false 关掉默认省略），
@@ -857,6 +859,16 @@ export default function ReconListPage() {
           <span className="recon-stats-count">
             {t('recon.count', { count: filtered.length })}
           </span>
+          {isAdmin ? (
+            <Link
+              href="/recon/ground-truth"
+              className="recon-add-btn"
+              title={tr({ zh: '复盘测试样本', en: 'Reconstruction test corpus' })}
+              aria-label={tr({ zh: '复盘测试样本', en: 'Reconstruction test corpus' })}
+            >
+              <TestTube2 size={17} />
+            </Link>
+          ) : null}
           <Link href="/recon/submit" className="recon-add-btn" title={t('recon.add')} aria-label={t('recon.add')}>
             <Plus size={18} />
           </Link>

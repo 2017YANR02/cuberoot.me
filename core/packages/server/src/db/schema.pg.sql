@@ -115,6 +115,30 @@ CREATE TABLE edit_history (
 CREATE INDEX idx_eh_solve_id ON edit_history(solve_id);
 CREATE INDEX idx_eh_edited_at ON edit_history(edited_at);
 
+-- ── 4b. recon_ground_truth_cases (管理员确认的智能魔方回归样本) ──
+-- 候选池来自 recons；本表只存人工决定，以及确认当时的来源与期望文本快照。
+CREATE TABLE recon_ground_truth_cases (
+  recon_id             INTEGER PRIMARY KEY,
+  status               VARCHAR(16) NOT NULL
+                         CHECK (status IN ('confirmed', 'discussion', 'rejected')),
+  replay               TEXT,
+  truth                TEXT NOT NULL,
+  truth_mode           VARCHAR(32) NOT NULL DEFAULT 'normalize_cross'
+                         CHECK (truth_mode = 'normalize_cross'),
+  current_wrong        TEXT NOT NULL DEFAULT '',
+  note                 TEXT NOT NULL DEFAULT '',
+  source_event         VARCHAR(20) NOT NULL,
+  source_added_by_id   VARCHAR(20) NOT NULL,
+  source_scramble      TEXT NOT NULL,
+  source_solution      TEXT NOT NULL,
+  created_by_id        VARCHAR(20) NOT NULL,
+  updated_by_id        VARCHAR(20) NOT NULL,
+  created_at           TIMESTAMP NOT NULL DEFAULT NOW(),
+  updated_at           TIMESTAMP NOT NULL DEFAULT NOW(),
+  CHECK (status <> 'confirmed' OR (replay IS NOT NULL AND replay <> ''))
+);
+CREATE INDEX idx_recon_ground_truth_status ON recon_ground_truth_cases(status, recon_id);
+
 -- ── 5. wca_users ──
 CREATE TABLE wca_users (
   wca_id            VARCHAR(20) PRIMARY KEY,
