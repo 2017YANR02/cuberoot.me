@@ -18,6 +18,7 @@ import SimMaskAdmin from './SimMaskAdmin';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import BoolToggle from '@/components/BoolToggle';
 import type { SimPuzzle } from './PlayerControls';
+import { SQ1_STAGE_ITEMS } from '@/lib/sq1-stage-mask';
 
 // cubing.js megaminx 注册的 stickering(cubeLikeStickeringList("megaminx")):full + LL/LS 组。
 const MEGAMINX_GROUPS: StickeringGroup[] = [
@@ -33,6 +34,10 @@ const FTO_GROUPS: StickeringGroup[] = [
     items: ['experimental-fto-fc', 'experimental-fto-f2t', 'experimental-fto-sc',
       'experimental-fto-l2c', 'experimental-fto-lbt', 'experimental-fto-l3t'],
   },
+];
+const SQ1_GROUPS: StickeringGroup[] = [
+  { group: 'Stickering', items: ['full'] },
+  { group: 'Square-1', items: [...SQ1_STAGE_ITEMS] },
 ];
 
 // 自定义阶段的画法。选项文字自带主语(选中 / 其余),两只下拉并排也不会看混,
@@ -117,6 +122,7 @@ export default function StickeringSelect({
   const baseGroups = useMemo<StickeringGroup[]>(() => {
     // NxN:引擎自带阶段(方法学 CFOP/ZZ/Roux/…)+ visualcube 整套 MASK 清单(去重)。
     if (typeof puzzleKind === 'number') return [...stickeringGroupsFor(puzzleKind), ...visualcubeStageGroups(puzzleKind)];
+    if (puzzleKind === 'sq1') return SQ1_GROUPS;
     if (puzzleKind === 'megaminx') return MEGAMINX_GROUPS;
     if (puzzleKind === 'fto') return FTO_GROUPS;
     return [];

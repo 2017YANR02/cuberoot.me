@@ -55,6 +55,8 @@ export const DEFAULTS: ImageSpec = {
   netActiveColor: 'U',
   stickerMask: '',
   maskColor: '#404040',
+  showSq1Middle: true,
+  sq1BlackTop: true,
   hideGreySides: false,
   planSideRule: 'all',
   planUpRule: 'all',

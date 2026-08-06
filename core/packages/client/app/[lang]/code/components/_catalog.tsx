@@ -1151,6 +1151,14 @@ export const CATALOG: ComponentEntry[] = [
     },
   },
   {
+    name: 'DrawCanvas',
+    import: "import DrawCanvas, { renderDrawSvg } from '@/components/puzzle-draw/DrawCanvas';",
+    category: 'more',
+    zh: '自由魔方绘图的共享内核：同一份纯 SVG 输出同时驱动可点选预览与下载文档，支持 PathSvg 几何、线宽、预设色、透明色、自定义色、最近颜色和重置。只记录格子到颜色，不混入求解器合法性。',
+    en: 'Shared free-form puzzle drawing kernel: one pure SVG emitter drives both the paintable preview and the downloadable document, with PathSvg geometry, line width, presets, transparency, custom/recent colors and reset. It only stores cell-to-color paint, never solver legality.',
+    usage: '<DrawCanvas elements={elements} viewBox="0 0 400 400" onDocumentChange={setExport} />',
+  },
+  {
     name: 'SimCaptureGroup',
     import: "import SimCaptureGroup, { type SimBridge } from '@/components/puzzle-image/SimCaptureGroup';",
     category: 'more',

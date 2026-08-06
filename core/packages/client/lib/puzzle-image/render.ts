@@ -218,7 +218,12 @@ export function renderSpecSvg(s: ImageSpec, o?: SpecRenderOptions): string | nul
       ? (s.puzzleType === 'sq1' ? invertSq1Alg(raw) : invertAlg(raw))
       : raw;
     return s.puzzleType === 'sq1'
-      ? renderSq1ScrambleSvg(forward, DEFAULT_SQ1_COLORS, m)
+      ? renderSq1ScrambleSvg(
+        forward,
+        s.sq1BlackTop ? { ...DEFAULT_SQ1_COLORS, U: '#000000' } : DEFAULT_SQ1_COLORS,
+        m,
+        s.showSq1Middle,
+      )
       : s.puzzleType === 'megaminx'
       ? renderMegaScrambleSvg(forward, DEFAULT_MEGA_COLORS, m)
       : s.puzzleType === 'pyraminx'

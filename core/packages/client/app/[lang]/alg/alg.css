@@ -155,6 +155,10 @@ html[data-theme=dark] .alg-root {
   color: var(--muted-foreground);
   font-size: 13px;
 }
+.alg-cat-intro {
+  margin: 0;
+  font-size: 13px;
+}
 
 /* LS1–LS9:两个角块的 3×3 朝向矩阵。不是装饰卡片，矩阵本身承担定义与跨套导航。 */
 .alg-ls-index-section {

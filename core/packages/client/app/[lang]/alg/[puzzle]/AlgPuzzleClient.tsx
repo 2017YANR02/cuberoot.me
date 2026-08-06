@@ -31,6 +31,7 @@ import { FaceletsCube } from '@/components/FaceletsCube';
 import { TOTAL_CASES as LSLL_TOTAL, categoryCardFacelets } from '@/lib/lsll/model';
 import '../alg.css';
 import { tr } from '@/i18n/tr';
+import { parseAsBoolean, useQueryState } from 'nuqs';
 
 /** Old single-segment 3x3 set slugs we used to live at /alg/<slug>. Redirect to /alg/3x3/<slug>. */
 const LEGACY_3X3_SLUGS = new Set(['f2l', 'adv-f2l', 'oll', 'pll']);
@@ -171,6 +172,10 @@ export default function AlgPuzzleClient() {
   const thumbSize = narrow ? 60 : 96;
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [firstCases, setFirstCases] = useState<Record<string, AlgCase | null>>({});
+  const [sq1BlackTop, setSq1BlackTop] = useQueryState(
+    'black',
+    parseAsBoolean.withDefault(true),
+  );
 
   // 合练:开着的时候卡片从「点了进去」变成「点了勾选」,选够两套底部出条开始
   const [picking, setPicking] = useState(false);
@@ -239,16 +244,16 @@ export default function AlgPuzzleClient() {
       /* LSLL 不在 catalog 里(不是一套公式而是整层枚举),但归属上紧跟 ZBLL,所以就地插在它后面 */
       <Fragment key={s.slug}>
         <AlgCard
-          href={picking ? undefined : `/alg/${puzzle}/${s.slug}`}
+          href={picking ? undefined : `/alg/${puzzle}/${s.slug}${puzzle === 'sq1' && !sq1BlackTop ? '?black=false' : ''}`}
           onClick={picking ? () => togglePick(s.slug) : undefined}
           className={picking && picked.includes(s.slug) ? 'is-picked' : undefined}
           thumb={first && (
             /* 每阶最多二十来张、全在首屏附近,本地渲染实测 19 张 26ms —— 图与数量同帧出现,
                不再各自等一次跨域请求。渲染器本来就静态 import 进了 bundle,不额外增体积。
                长 case 网格不能照抄这条,那边走 loading="lazy",见 AlgCategoryView。 */
-            <CaseThumb puzzle={puzzle} set={s.slug} sticker={first.sticker} alg={firstAlg} setup={first.setup} size={thumbSize} local />
+            <CaseThumb puzzle={puzzle} set={s.slug} sticker={first.sticker} alg={firstAlg} setup={first.setup} size={thumbSize} local sq1BlackTop={sq1BlackTop} />
           )}
-          title={tr(s)}
+          title={s.short ?? tr(s)}
           count={n == null ? '…' : n < 0 ? '!' : n}
         />
         {s.slug === 'zbll' && puzzle === '3x3' && !picking && (
@@ -277,6 +282,13 @@ export default function AlgPuzzleClient() {
           onChange={v => { setPicking(v); if (!v) setPicked([]); }}
           label={tr({ zh: '合练', en: 'Mix' })}
         />
+        {puzzle === 'sq1' && (
+          <BoolToggle
+            value={sq1BlackTop}
+            onChange={setSq1BlackTop}
+            label={tr({ zh: '黑顶', en: 'Black top' })}
+          />
+        )}
         <Link href="/alg/progress" className="alg-index-progress-link" prefetch={false}>
           <GraduationCap size={16} aria-hidden="true" />
           {tr({ zh: '学习进度', en: 'Progress' })}

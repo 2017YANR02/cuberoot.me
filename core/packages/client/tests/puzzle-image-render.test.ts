@@ -104,6 +104,42 @@ describe('renderSpecSvg — byte lock', () => {
   }
 });
 
+describe('renderSpecSvg — Square-1 WCA middle layer', () => {
+  it('removes the equator and keeps the two faces safely separated when disabled', () => {
+    const base = specOf('pzl=sq1&view=wca');
+    const shown = renderSpecSvg(base)!;
+    const hidden = renderSpecSvg({ ...base, showSq1Middle: false })!;
+    const equatorRects = /<rect\b[^>]* \/>/g;
+    const faceCenters = (svg: string) => [...svg.matchAll(/transform="translate\([^,]+,([^)]+)\) rotate/g)]
+      .map((m) => Number(m[1]));
+    const viewBoxHeight = (svg: string) => Number(svg.match(/viewBox="[^"]+ ([^"]+)"/)?.[1]);
+    const shownY = faceCenters(shown);
+    const hiddenY = faceCenters(hidden);
+
+    expect(shown.match(equatorRects)).toHaveLength(4);
+    expect(hidden.match(equatorRects)).toBeNull();
+    expect(hidden.match(/<path\b/g)).toHaveLength(shown.match(/<path\b/g)!.length);
+    expect(Math.min(...hiddenY)).toBeLessThan(Math.min(...shownY));
+    expect(Math.max(...hiddenY)).toBeGreaterThan(Math.max(...shownY));
+    expect(viewBoxHeight(hidden)).toBeGreaterThan(viewBoxHeight(shown));
+  });
+});
+
+describe('renderSpecSvg — Square-1 black top', () => {
+  it('replaces yellow with black without changing the other five face colors', () => {
+    const base = specOf('pzl=sq1&view=wca');
+    const black = renderSpecSvg(base)!;
+    const yellow = renderSpecSvg({ ...base, sq1BlackTop: false })!;
+
+    expect(yellow).toContain('#FFFF00');
+    expect(black).not.toContain('#FFFF00');
+    expect(black).toContain('fill="#000000"');
+    for (const color of ['#FFFFFF', '#FF0000', '#00FF00', '#FF8000', '#0000FF']) {
+      expect(black).toContain(color);
+    }
+  });
+});
+
 // ─── the spec's own mask (ImageSpec.stickerMask / .maskColor) ────────────
 
 const spec = (p: Partial<ImageSpec>): ImageSpec => ({ ...DEFAULTS, ...p });

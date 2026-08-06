@@ -153,6 +153,8 @@ export interface AlgSetMeta {
   scd: string;
   en: string;
   zh: string;
+  /** Compact language-neutral label for index cards and set page headings. */
+  short?: string;
   /** True for sets that speedcubedb organises under sub-pages (ZBLL → ZBLL U/L/T/...).
    *  UI shows a subgroup-picker landing page first, then cases for the picked subgroup. */
   umbrella?: boolean;
@@ -210,16 +212,16 @@ export const ALG_CATALOG: Record<AlgPuzzle, AlgSetMeta[]> = {
     { slug: 'l2c', scd: 'L2C', en: 'Last Two Centers', zh: 'Last Two Centers (L2C)' },
   ],
   'sq1': [
-    { slug: 'cs',     scd: 'SQ1CS',     en: 'Cube Shape',          zh: '形状' },
-    { slug: 'co',     scd: 'SQ1CO',     en: 'Corner Orientation',  zh: '角块定向 (CO)' },
-    { slug: 'eo',     scd: 'SQ1EO',     en: 'Edge Orientation',    zh: '棱块定向 (EO)' },
-    { slug: 'cp',     scd: 'SQ1CP',     en: 'Corner Permutation',  zh: '角块排列 (CP)' },
-    { slug: 'ep',     scd: 'SQ1EP',     en: 'Edge Permutation',    zh: '棱块排列 (EP)' },
-    { slug: 'parity', scd: 'SQ1Parity', en: 'Parity',              zh: 'Parity' },
+    { slug: 'cs',     scd: 'SQ1CS',     short: 'CS',     en: 'Cube Shape',         zh: '形状' },
+    { slug: 'co',     scd: 'SQ1CO',     short: 'CO',     en: 'Corner Orientation', zh: '角块朝向' },
+    { slug: 'eo',     scd: 'SQ1EO',     short: 'EO',     en: 'Edge Orientation',   zh: '棱块朝向' },
+    { slug: 'cp',     scd: 'SQ1CP',     short: 'CP',     en: 'Corner Permutation', zh: '角块排列' },
+    { slug: 'ep',     scd: 'SQ1EP',     short: 'EP',     en: 'Edge Permutation',   zh: '棱块排列' },
+    { slug: 'parity', scd: 'SQ1Parity', short: 'Parity', en: 'Parity',             zh: 'Parity' },
   ],
   'megaminx': [
-    { slug: 'eo', scd: 'MegaminxEO', en: 'Edge Orientation',    zh: '棱块定向 (EO)' },
-    { slug: 'co', scd: 'MegaminxCO', en: 'Corner Orientation',  zh: '角块定向 (CO)' },
+    { slug: 'eo', scd: 'MegaminxEO', en: 'Edge Orientation',    zh: '棱块朝向 (EO)' },
+    { slug: 'co', scd: 'MegaminxCO', en: 'Corner Orientation',  zh: '角块朝向 (CO)' },
     { slug: 'ep', scd: 'MegaminxEP', en: 'Edge Permutation',    zh: '棱块排列 (EP)' },
     { slug: 'cp', scd: 'MegaminxCP', en: 'Corner Permutation',  zh: '角块排列 (CP)' },
   ],

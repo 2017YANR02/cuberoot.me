@@ -1,0 +1,205 @@
+.draw-canvas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
+  align-items: start;
+  gap: 24px;
+  width: 100%;
+  max-width: 100%;
+}
+
+.draw-canvas-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.draw-canvas-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+  border-radius: 8px;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.draw-canvas-preview .puzzle-draw-svg {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}
+
+.draw-canvas-preview [data-draw-cell] {
+  cursor: crosshair;
+  pointer-events: all;
+}
+
+.draw-canvas-preview [data-draw-cell]:hover {
+  filter: brightness(1.08);
+}
+
+.draw-canvas-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.draw-canvas-tools {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.draw-canvas-tool-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+}
+
+.draw-canvas-tool-label {
+  color: var(--muted-foreground);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.draw-canvas-text-input {
+  box-sizing: border-box;
+  width: min(220px, 100%);
+  max-width: 100%;
+  padding: 7px 9px;
+  border: 1px solid var(--input);
+  border-radius: 5px;
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+}
+
+.draw-canvas-text-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.draw-canvas-range-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.draw-canvas-range-row input[type='range'] {
+  min-width: 0;
+  width: min(220px, 100%);
+}
+
+.draw-canvas-range-row output {
+  color: var(--foreground);
+  min-width: 2ch;
+  font-variant-numeric: tabular-nums;
+}
+
+.draw-canvas-swatches {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(28px, 32px));
+  gap: 7px;
+  width: 100%;
+}
+
+.draw-canvas-swatch {
+  appearance: none;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 2px solid var(--border-default);
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.draw-canvas-swatch:hover {
+  border-color: var(--border-strong);
+  transform: scale(1.05);
+}
+
+.draw-canvas-swatch.is-active {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 28%, transparent);
+}
+
+.draw-canvas-swatch.is-transparent {
+  background-color: var(--background);
+  background-image:
+    linear-gradient(45deg, var(--border-default) 25%, transparent 25%, transparent 75%, var(--border-default) 75%),
+    linear-gradient(45deg, var(--border-default) 25%, transparent 25%, transparent 75%, var(--border-default) 75%);
+  background-position: 0 0, 5px 5px;
+  background-size: 10px 10px;
+}
+
+.draw-canvas-custom-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.draw-canvas-custom-row input[type='color'] {
+  width: 42px;
+  height: 32px;
+  padding: 2px;
+  border: 1px solid var(--input);
+  border-radius: 5px;
+  background: var(--background);
+  cursor: pointer;
+}
+
+.draw-canvas-button {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  max-width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--border-default);
+  border-radius: 5px;
+  background: var(--muted);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.draw-canvas-button:hover {
+  border-color: var(--accent);
+}
+
+.draw-canvas-button:focus-visible,
+.draw-canvas-swatch:focus-visible,
+.draw-canvas-custom-row input[type='color']:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+@media (max-width: 720px) {
+  .draw-canvas {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .draw-canvas-tools {
+    width: 100%;
+  }
+}

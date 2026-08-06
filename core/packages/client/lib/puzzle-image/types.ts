@@ -61,6 +61,10 @@ export interface ImageSpec {
   stickerMask: string;
   /** Fill for masked stickers. Puzzle sticker data, not a theme token. URL key `mkc`. */
   maskColor: string;
+  /** Square-1 `wca` only — draw the separate equator strip. URL key `mid`. */
+  showSq1Middle: boolean;
+  /** Square-1 `wca` only — replace the yellow U face with black. URL key `blk`. */
+  sq1BlackTop: boolean;
   /**
    * `cubeView: 'plan'` only — drop the greyed side-rim stickers instead of drawing
    * them, leaving a plan image with just the coloured bars (the classic OLL-recognition
