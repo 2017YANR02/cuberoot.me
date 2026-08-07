@@ -1,6 +1,6 @@
 import { CubieCube, Move } from './CubeLib';
 import { Face } from './Defs';
-import { cartesianProduct } from './Math';
+import { EOLR_GOAL_ALGS_AC, EOLR_GOAL_ALGS_MC } from './eolr-goal';
 if ((globalThis as any).$RefreshReg$ === undefined) {
     // hack for disabling refresh plugin in web worker
     (globalThis as any).$RefreshReg$ = () => {};
@@ -906,11 +906,9 @@ function eolrPrunerConfig(center_flag: number, barbie_mode?: string): PrunerConf
       return (eo * 36 + ep) * 4 * 2 + ~~(cube.tp[0] / 2) * 4 + cube.cp[0]// center[0] and cp[0] must be (0-3)
     }
 
-    const moves_ac = cartesianProduct( ["U'", "U"], ["M2"], ["", "U", "U'", "U2"] ).map(x => x.join(" "))
-    const moves_mc = cartesianProduct( ["M'"], ["U", "U'"], ["M2"], ["", "U", "U'", "U2"]).map(x => x.join(" "))
     let moves: string[] = []
-    if (center_flag & 0x01) moves = moves.concat(moves_ac)
-    if (center_flag & 0x10) moves = moves.concat(moves_mc)
+    if (center_flag & 0x01) moves = moves.concat(EOLR_GOAL_ALGS_AC)
+    if (center_flag & 0x10) moves = moves.concat(EOLR_GOAL_ALGS_MC)
 
     const barb_moves_ac = ["U", "U'"]
     const barb_moves_mc = ["M U", "M U'"]

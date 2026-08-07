@@ -21,7 +21,7 @@
  * Sets with no entry are not broken — they still get the cube placed for them,
  * which is the part that saves real work. They just have no auto-stop, because
  * inventing one would mean either stopping early (a mask that the case already
- * satisfies before you touch it) or never stopping at all. Four 3x3 sets are in
+ * satisfies before you touch it) or never stopping at all. Some 3x3 sets are in
  * that position and they are listed, with the reason, below.
  */
 
@@ -38,7 +38,8 @@ import { purifyScramble } from '@/lib/trainer-scramble';
  * library have nothing to connect.
  *
  * Deliberately absent, because there is no honest answer:
- *   - `eo4a`  — Roux edge orientation. Finishing it leaves the M-slice centres
+ *   - `2-look-cmll` — its orient and permute subgroups have different finish lines.
+ *   - `eo4a`, `lse-eolr` — Roux edge orientation. Finishing it leaves the M-slice centres
  *               free, so "oriented" is not a statement about which colour a
  *               facelet shows, and a mask cannot say it.
  *   - `anti-pll`, `fruf` — upstream sets whose finishing state we have not
@@ -63,6 +64,7 @@ const SET_STEP: Readonly<Record<string, CubeStep>> = {
   'coll': 'cpll',          // corners oriented AND permuted; edges left alone
   'ollcp': 'cpll',         // OLL + corner permutation
   'cmll': 'cmll',
+  'oh-cmll': 'cmll',
   'pll': 'solved',
   'ell': 'solved',         // edges of the last layer; corners already done
   'zbll': 'solved',

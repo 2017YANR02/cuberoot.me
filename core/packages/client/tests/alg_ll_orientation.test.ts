@@ -140,6 +140,8 @@ describe('CMLL 只看角块', () => {
   });
   it('判据只对 CMLL 生效 —— COLL 跟 ZBLL / OLL 共用整层键', () => {
     expect(oriCornersOnly('3x3', 'cmll')).toBe(true);
+    expect(oriCornersOnly('3x3', '2-look-cmll')).toBe(true);
+    expect(oriCornersOnly('3x3', 'oh-cmll')).toBe(true);
     expect(oriCornersOnly('3x3', 'coll')).toBe(false);
     expect(oriCornersOnly('3x3', 'zbll')).toBe(false);
     expect(oriCornersOnly('2x2', 'cll')).toBe(false);
@@ -265,4 +267,3 @@ describe('generateScramble 照朝向出题', () => {
     }
   });
 });
-

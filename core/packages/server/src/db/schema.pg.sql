@@ -821,3 +821,16 @@ CREATE TABLE lsll_cases (
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX idx_lsll_cases_htm ON lsll_cases (htm);
+
+-- 每日 WCA 派生数据:Kinch 综合排名(0111;数据由 stats extra 管道重灌)。
+CREATE TABLE IF NOT EXISTS wca_kinch (
+  wca_id                VARCHAR(20) PRIMARY KEY,
+  country_id            VARCHAR(50) NOT NULL,
+  continent_id          VARCHAR(50) NOT NULL,
+  world_score_x100      SMALLINT NOT NULL,
+  continent_score_x100  SMALLINT NOT NULL,
+  country_score_x100    SMALLINT NOT NULL
+);
+CREATE INDEX kinch_world_score ON wca_kinch (world_score_x100 DESC, wca_id);
+CREATE INDEX kinch_continent_score ON wca_kinch (continent_id, continent_score_x100 DESC, wca_id);
+CREATE INDEX kinch_country_score ON wca_kinch (country_id, country_score_x100 DESC, wca_id);

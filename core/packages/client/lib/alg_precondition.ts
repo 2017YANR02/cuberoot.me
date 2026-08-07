@@ -48,6 +48,8 @@ export const SET_PRECONDITION: Record<string, AlgPrecondition> = {
   '3x3/adv-f2l': 'none',
   '3x3/fruf': 'none',
   '3x3/oll': 'll',
+  '3x3/2-look-oll': 'll',
+  '3x3/2-look-pll': 'll',
   '3x3/pll': 'll',
   '3x3/coll': 'll',
   '3x3/ollcp': 'll',

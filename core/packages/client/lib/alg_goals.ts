@@ -18,6 +18,7 @@
  */
 import type { KPattern, KPuzzle } from 'cubing/kpuzzle';
 import type { AlgSticker } from '@cuberoot/shared';
+import { EOLR_GOAL_ALGS } from '@/lib/roux/eolr-goal';
 
 export type AlgGoal =
   | 'solve'        // 整体还原(PLL / ZBLL / 1LLL / ELL / 2x2 CLL / SQ1 / 金字塔 …)
@@ -28,6 +29,7 @@ export type AlgGoal =
   | 'll-corners'   // F2L + 顶层角全好(位 + 向)+ 顶棱已翻色 —— 顶棱排列自由(COLL / OLLCP)
   | 'roux-blocks'  // Roux 左右两块 —— M 层与整个顶层自由(SBLS)
   | 'roux-blocks+eo' // Roux 左右两块 + M 层四棱(UF/UB/DF/DB)已翻色,位置自由(EO4A)
+  | 'roux-blocks+eolr' // EOLR:两块保留,EO 完成且 UL/UR 已配成可用 M2 插入的目标态
   | 'cmll'         // Roux 左右两块 + 顶层角全好 —— M 层与顶棱自由
   | 'co'           // 八个角全翻色,排列自由(二阶 Ortega OLL:两面同色)
   | 'oll-4x4'      // 4x4:除顶面外全还原,顶面同色(排列自由)
@@ -38,9 +40,14 @@ export type AlgGoal =
 export const SET_GOAL: Record<string, AlgGoal> = {
   // 3x3 —— 只解一半的那些
   '3x3/oll': 'oll',
+  // 同一 set 同时含第一步和第二步；弱阶段目标会让第二步 case 在零步时就误判完成。
+  '3x3/2-look-oll': 'solve',
+  '3x3/2-look-pll': 'solve',
   '3x3/ollcp': 'll-corners',
   '3x3/coll': 'll-corners',
   '3x3/cmll': 'cmll',
+  '3x3/2-look-cmll': 'cmll',
+  '3x3/oh-cmll': 'cmll',
   '3x3/wv': 'f2l+co',
   '3x3/sv': 'f2l+co',
   '3x3/vls': 'f2l+co',
@@ -49,6 +56,7 @@ export const SET_GOAL: Record<string, AlgGoal> = {
   // EO4A 是**桥式**的 EO 步:两块做完,再把 M 层四棱翻色(位置自由)。公式满地纯 `M`,
   // 拿 CFOP 的 F2L+EO 判据去卡,29 条全红。
   '3x3/eo4a': 'roux-blocks+eo',
+  '3x3/lse-eolr': 'roux-blocks+eolr',
   // SBLS 是 **Roux** 的二块最后一槽,不是 CFOP F2L —— 它的公式满地 `M` / `r`,M 层在 Roux 里
   // 本来就自由。拿 CFOP F2L 去要求它,135 条好公式全红。
   '3x3/sbls': 'roux-blocks',
@@ -115,6 +123,26 @@ const M_EDGES = [0, 2, 4, 6];
 /** 4x4 顶层的 8 个 wing 槽 */
 const U_WINGS_4 = [0, 1, 2, 3, 4, 8, 12, 16];
 
+const _eolrGoalCache = new WeakMap<KPuzzle, Set<string>>();
+
+/** Same reduced state as the Roux EOLR pruner: blocks, LR slots and EO only. */
+function eolrProjection(p: KPattern): string {
+  const c = orbit(p, 'CORNERS'), e = orbit(p, 'EDGES');
+  const blocks = solvedAt(c, D_CORNERS) && solvedAt(e, ROUX_EDGES);
+  const lrSlots = [e.pieces[4], e.pieces[6]].sort((a, b) => a - b).join(',');
+  return `${blocks ? 1 : 0}|${lrSlots}|${e.orientation.join('')}`;
+}
+
+function eolrGoalKeys(kp: KPuzzle): Set<string> {
+  let keys = _eolrGoalCache.get(kp);
+  if (keys) return keys;
+  keys = new Set(EOLR_GOAL_ALGS.map(alg => eolrProjection(
+    alg ? kp.defaultPattern().applyAlg(alg) : kp.defaultPattern(),
+  )));
+  _eolrGoalCache.set(kp, keys);
+  return keys;
+}
+
 /** 在某一个固定朝向下,这个态达成目标了吗。 */
 function reaches(p: KPattern, kp: KPuzzle, puzzle: string, goal: AlgGoal): boolean {
   if (goal === 'skip') return true;
@@ -156,6 +184,9 @@ function reaches(p: KPattern, kp: KPuzzle, puzzle: string, goal: AlgGoal): boole
     case 'll-corners':   return f2lDone && solvedAt(c, U_CORNERS) && orientedAt(e, U_EDGES);
     case 'roux-blocks':  return rouxBlocks;
     case 'roux-blocks+eo': return rouxBlocks && orientedAt(e, M_EDGES);
+    // Compare the pruner's reduced state, not the full cube: the two UL/UR
+    // edges may still need their final M2 insertion and U corners are free.
+    case 'roux-blocks+eolr': return eolrGoalKeys(kp).has(eolrProjection(p));
     case 'cmll':         return rouxBlocks && solvedAt(c, U_CORNERS);
     default:             return false;
   }

@@ -30,6 +30,14 @@ export const PAIRED_GUARDS: PairedGuard[] = [
     en: { title: 'Reimplementing cataloged components', desc: 'A rule registry blocks high-confidence reinventions instead of guessing from fuzzy similarity. The first rule routes a hand-written <button> + X/× with close/clear semantics through the cataloged ClearButton. Claude Edit/Write and Codex apply_patch are blocked at write time; CI ratchets legacy debt down. Genuinely different interactions require an inline allow-component-reimplementation reason.' },
   },
   {
+    id: 'nested-links',
+    hook: 'block-nested-links.ps1 → hook-detect-nested-links.mjs',
+    test: 'no-nested-links.test.ts',
+    baseline: '0',
+    zh: { title: '链接嵌套链接', desc: '禁 <a> / Link / AppLink / PersonLink 互相嵌套；浏览器会生成非法 <a> 套 <a>，React 只在运行时抛 hydration error，而 typecheck 仍会绿。hook 在内存中还原待写文件即时拦截，CI 用同一 AST 检测器全量兜底。' },
+    en: { title: 'Links nested inside links', desc: 'No nesting among <a>, Link, AppLink, and PersonLink. Browsers receive invalid <a> inside <a>; React reports it only at runtime while typecheck stays green. The hook reconstructs the proposed file in memory before blocking, and CI scans all TSX with the same AST detector.' },
+  },
+  {
     id: 'static-onclick',
     hook: 'block-static-onclick-button.ps1',
     test: 'no-static-element-onclick-button.test.ts',

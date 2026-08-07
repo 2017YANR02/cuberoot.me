@@ -93,7 +93,11 @@ export interface AlgCaseMeta {
 
 export type AlgSticker =
   | { kind: 'f2l'; fl: string }
-  | { kind: 'face'; us: string; ub: string; uf: string; ul: string; ur: string }
+  | {
+      kind: 'face'; us: string; ub: string; uf: string; ul: string; ur: string;
+      /** Optional DB-driven VisualCube mask/scheme for stage sets such as 2 Look OLL. */
+      mask?: string; scheme?: string;
+    }
   | { kind: 'raw'; tag: string; attrs: Record<string, string> };
 
 export interface AlgCase {
@@ -143,8 +147,9 @@ export { MIRROR_SETS, MIRROR_ALG_SYNC_SETS } from './alg_mirror';
 
 /** 3x3 set slug — matches `slug` in {@link ALG_CATALOG['3x3']}. */
 export type Alg3x3Set =
-  | 'f2l' | 'adv-f2l' | 'oll' | 'pll'
-  | 'coll' | 'wv' | 'cmll' | 'sbls' | 'eo4a' | 'anti-pll' | 'sv' | 'ell' | 'fruf'
+  | 'f2l' | 'adv-f2l' | '2-look-oll' | 'oll' | '2-look-pll' | 'pll'
+  | 'coll' | 'wv' | '2-look-cmll' | 'cmll' | 'oh-cmll' | 'sbls' | 'eo4a' | 'lse-eolr'
+  | 'anti-pll' | 'sv' | 'ell' | 'fruf'
   | 'cls' | 'vls' | 'ollcp' | 'zbll' | '1lll' | 'zbls';
 
 /** Catalogue of available sets per puzzle (display name + slug). Drives the index pages. */
@@ -188,16 +193,51 @@ export const ALG_CATALOG: Record<AlgPuzzle, AlgSetMeta[]> = {
   '3x3': [
     { slug: 'f2l',       scd: 'F2L',         en: 'F2L',                  zh: 'F2L' },
     { slug: 'adv-f2l',   scd: 'AdvancedF2L', en: 'Advanced F2L',         zh: 'F2L 进阶' },
+    {
+      slug: '2-look-oll', scd: '', en: '2 Look OLL', zh: '2 步 OLL',
+      intro: {
+        en: 'Orient the last layer in two passes: edges first, then corners.',
+        zh: '分两步完成顶层朝向：先棱块，后角块。',
+      },
+    },
     { slug: 'oll',       scd: 'OLL',         en: 'OLL',                  zh: 'OLL' },
+    {
+      slug: '2-look-pll', scd: '', en: '2 Look PLL', zh: '2 步 PLL',
+      intro: {
+        en: 'Permute the last layer in two passes: corners first, then edges.',
+        zh: '分两步完成顶层排列：先角块，后棱块。',
+      },
+    },
     { slug: 'pll',       scd: 'PLL',         en: 'PLL',                  zh: 'PLL' },
     /* ZBLS / ZBLL(以及页面上紧跟其后的 LSLL)是 CFOP 之后最常练的大套,顶到 PLL 后面免得埋在长尾里 */
     { slug: 'zbls',      scd: 'ZBLS',        en: 'ZBLS',                 zh: 'ZBLS',  umbrella: true },
     { slug: 'zbll',      scd: 'ZBLL',        en: 'ZBLL',                 zh: 'ZBLL',  umbrella: true },
     { slug: 'coll',      scd: 'COLL',        en: 'COLL',                 zh: 'COLL' },
     { slug: 'wv',        scd: 'WV',          en: 'WV',                   zh: 'WV' },
+    {
+      slug: '2-look-cmll', scd: '', en: '2 Look CMLL', zh: '2 步 CMLL',
+      intro: {
+        en: 'Solve Roux last-layer corners in two passes: orient them first, then permute them.',
+        zh: '把桥式顶层角块分两步完成：先调整朝向，再完成排列。',
+      },
+    },
     { slug: 'cmll',      scd: 'CMLL',        en: 'CMLL',                 zh: 'CMLL' },
+    {
+      slug: 'oh-cmll', scd: '', en: 'OH CMLL', zh: '单手 CMLL',
+      intro: {
+        en: 'CMLL algorithms selected for one-handed Roux solves.',
+        zh: '为单手桥式还原挑选的 CMLL 公式。',
+      },
+    },
     { slug: 'sbls',      scd: 'SBLS',        en: 'SBLS',                 zh: 'SBLS' },
-    { slug: 'eo4a',      scd: 'EO4A',        en: 'EO (4a)',              zh: 'EO (4a)' },
+    { slug: 'eo4a',      scd: 'EO4A',        en: 'LSE EO (4a)',          zh: 'LSE 棱朝向 (4a)' },
+    {
+      slug: 'lse-eolr', scd: '', en: 'LSE EOLR', zh: 'LSE EOLR',
+      intro: {
+        en: 'Combine Roux LSE edge orientation with placing the UL and UR edges.',
+        zh: '在桥式 LSE 中同时完成棱块朝向，并放置 UL 与 UR 棱块。',
+      },
+    },
     { slug: 'anti-pll',  scd: 'AntiPLL',     en: 'Anti PLL',             zh: 'Anti PLL' },
     { slug: 'sv',        scd: 'SV',          en: 'SV',                   zh: 'SV' },
     { slug: 'ell',       scd: 'ELL',         en: 'ELL',                  zh: 'ELL' },

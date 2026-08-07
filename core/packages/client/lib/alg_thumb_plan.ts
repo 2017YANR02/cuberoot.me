@@ -21,6 +21,8 @@ export const PUZZLE_SIZE: Record<AlgPuzzle, number> = {
 const CORNER_LL_MASK: Partial<Record<string, string>> = {
   coll: 'coll',
   cmll: 'cmll',
+  '2-look-cmll': 'cmll',
+  'oh-cmll': 'cmll',
 };
 
 /** Only-corner masks whose grey side rim is not part of the recognition case. */
@@ -34,6 +36,7 @@ export const LEVEL2_PICKER_MASK: Record<string, string> = {
 export interface CubeThumbParams {
   view: 'iso' | 'plan' | 'oll' | 'pll' | 'f2l' | 'pll-iso';
   mask?: string;
+  scheme?: string;
   hideGreySides?: boolean;
   puzzleSize: number;
 }
@@ -44,7 +47,7 @@ function pickView(
   sticker: AlgSticker,
 ): 'f2l' | 'oll' | 'pll' | 'pll-iso' {
   if (puzzle === '3x3' && sticker.kind === 'f2l') return 'f2l';
-  if (set === 'oll' || set === 'oll-parity') return 'oll';
+  if (set === 'oll' || set === '2-look-oll' || set === 'oll-parity') return 'oll';
   return 'pll';
 }
 
@@ -60,6 +63,16 @@ export function cubeThumbParams(
   if (maskOverride) {
     const hideGreySides = CORNER_LL_MASK_NAMES.has(maskOverride) || undefined;
     return { view: 'pll', mask: maskOverride, hideGreySides, puzzleSize };
+  }
+  if (sticker.kind === 'face' && sticker.mask) {
+    const hideGreySides = CORNER_LL_MASK_NAMES.has(sticker.mask) || set === '2-look-oll' || undefined;
+    return {
+      view: pickView(puzzle, set, sticker),
+      mask: sticker.mask,
+      scheme: sticker.scheme,
+      hideGreySides,
+      puzzleSize,
+    };
   }
   if (puzzle === '3x3' && set === 'lsll') return { view: 'iso', puzzleSize };
   if (puzzle === '3x3' && set === 'zbls') return { view: 'iso', mask: 'vh', puzzleSize };

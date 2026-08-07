@@ -27,6 +27,11 @@ const FACES: Array<[CrossColorName, FaceIdx]> = [
   ['Blue', COLOR_FACE.Blue], ['Red', COLOR_FACE.Red], ['Orange', COLOR_FACE.Orange],
 ];
 
+// This test verifies state round-tripping, not Kociemba solution quality. Stop at the first
+// solution within the solver's 23-move bound; continuing toward the default 20-move target
+// burns the full wall-clock budget and can report a false "no solution" under suite contention.
+const ROUND_TRIP_SOLVE = { timeoutMs: 2000, targetLen: 23 } as const;
+
 // deterministic RNG so a failure is reproducible
 function lcg(seed: number): () => number {
   let s = seed >>> 0;
@@ -64,7 +69,7 @@ describe('cross-trainer / generated states', () => {
           const state = sampleCrossState({ faces: [f], lo: d, hi: d }, rng);
           expect(state, `${color} d=${d}`).not.toBeNull();
           expect(validateCubie(state!), `${color} d=${d} legality`).toBeNull();
-          const scramble = formatMoves(scrambleFromState(state!, mt, pt, { timeoutMs: 2000 }));
+          const scramble = formatMoves(scrambleFromState(state!, mt, pt, ROUND_TRIP_SOLVE));
           expect(crossLength(scramble, color as CrossColor), `${color} d=${d} #${n}`).toBe(d);
         }
       }
@@ -81,7 +86,7 @@ describe('cross-trainer / generated states', () => {
       for (const [lo, hi] of [[0, 0], [3, 3], [5, 5], [6, 7]] as const) {
         const state = sampleCrossState({ faces, lo, hi }, rng);
         expect(state, `${colors.join('/')} [${lo},${hi}]`).not.toBeNull();
-        const scramble = formatMoves(scrambleFromState(state!, mt, pt, { timeoutMs: 2000 }));
+        const scramble = formatMoves(scrambleFromState(state!, mt, pt, ROUND_TRIP_SOLVE));
         const best = Math.min(...colors.map((c) => crossLength(scramble, c as CrossColor)!));
         expect(best, `${colors.join('/')} [${lo},${hi}]`).toBeGreaterThanOrEqual(lo);
         expect(best).toBeLessThanOrEqual(hi);

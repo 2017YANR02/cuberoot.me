@@ -129,9 +129,9 @@
   {
     "name": "Spencer Chubb / CubingApp",
     "url": "https://cubingapp.com/",
-    "zh": "Square-1 CS、CP、EO、EP 补全，以及 CSP、OBL 全部情况与公式数据 (MIT)",
-    "en": "Square-1 CS, CP, EO and EP completion plus the full CSP and OBL datasets (MIT)",
-    "long_en": "CubingApp's Square-1 datasets, ported from commit 613a49885dc618023368e5f0c2a25024b8c7e9a5 under the MIT License: CS completion, CP taxonomy, EO and EP supplements, all 179 CSP cases with 203 algorithms, and all 185 OBL cases and algorithms"
+    "zh": "Square-1、3x3 入门顶层与桥式、4x4 PLL Parity、Pyraminx 公式数据，以及 WCA Kinch 排名、姓名排名、个人纪录连续场次工具逻辑 (MIT)",
+    "en": "Square-1, 3x3 beginner last layer and Roux, 4x4 PLL Parity, Pyraminx algorithms, plus WCA Kinch ranks, name ranks, and personal-record streak tool logic (MIT)",
+    "long_en": "Selected CubingApp data and calculator semantics ported from commit 613a49885dc618023368e5f0c2a25024b8c7e9a5 under the MIT License: Square-1 CS, CSP, CP, EO, EP and OBL; 2 Look OLL, PLL and CMLL; CMLL and OH CMLL supplements; Roux LSE EO and EOLR; 4x4 PLL Parity alternatives; Pyraminx last-layer and L4E supplements; Kinch rankings; name matching; and personal-record streaks"
   },
   {
     "name": "speedcubedb.com/analyze",

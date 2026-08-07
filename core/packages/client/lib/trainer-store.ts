@@ -3,7 +3,9 @@
 
 import { create } from 'zustand';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
-import { generateScramble, cstimerStyleScramble, type ScrambleKind } from './trainer-scramble';
+import {
+  generateScramble, cstimerStyleScramble, trainerSetScrambleFeatures, type ScrambleKind,
+} from './trainer-scramble';
 import { caseKey, findCaseByKey } from './trainer-case-key';
 import { histBack, histForward, histPush, type ScrambleHist } from './scramble-history';
 import { caseOrbit } from './alg_probability';
@@ -143,6 +145,10 @@ interface TrainerPrefs {
   preAuf: boolean;
   /** 打乱收尾随机 AUF(历史默认行为,关掉 = 打乱原样呈现)。 */
   postAuf: boolean;
+  /** F2L / 进阶 F2L:打乱末尾随机补 AUF。 */
+  randomFinalAuf: boolean;
+  /** F2L / 进阶 F2L:打乱末尾随机补 y 转体。 */
+  randomFinalY: boolean;
   /**
    * 顶层朝向偏好:朝向组键 → 允许的相位(见 `lib/alg_ll_orientation`)。收尾 AUF 的
    * 细化版 —— 不是「随机四选一」而是「只出这几个方向」。组键按形状算,跨 set 通用,
@@ -183,7 +189,8 @@ interface TrainerPrefs {
   smartCube: boolean;
 }
 const DEFAULT_PREFS: TrainerPrefs = {
-  preAuf: true, postAuf: true, oriSel: {}, timing: false, mode: 'recap', probMode: 'uniform',
+  preAuf: true, postAuf: true, randomFinalAuf: true, randomFinalY: true,
+  oriSel: {}, timing: false, mode: 'recap', probMode: 'uniform',
   recapOrder: 'shuffle', timerFont: 'lcd', scrambleFont: 'sans',
   showPrevCard: true, showStats: true, showStageThumb: true,
   pureScramble: true, multiScramble: false,
@@ -208,7 +215,9 @@ const persistPrefs = (p: TrainerPrefs) => {
 
 /** 从整个 store state 里只摘偏好字段(直接 stringify 整个 state 会把 cases/solves 一起写进去)。 */
 const prefsOf = (st: TrainerPrefs): TrainerPrefs => ({
-  preAuf: st.preAuf, postAuf: st.postAuf, oriSel: st.oriSel, timing: st.timing, mode: st.mode,
+  preAuf: st.preAuf, postAuf: st.postAuf,
+  randomFinalAuf: st.randomFinalAuf, randomFinalY: st.randomFinalY,
+  oriSel: st.oriSel, timing: st.timing, mode: st.mode,
   probMode: st.probMode, recapOrder: st.recapOrder,
   timerFont: st.timerFont, scrambleFont: st.scrambleFont,
   showPrevCard: st.showPrevCard, showStats: st.showStats,
@@ -316,6 +325,8 @@ interface TrainerState {
   // 训练偏好(localStorage `trainer:prefs`;SSR 渲染默认值,挂载后 hydratePrefs 补水)
   preAuf: boolean;
   postAuf: boolean;
+  randomFinalAuf: boolean;
+  randomFinalY: boolean;
   oriSel: Record<string, number[]>;
   timing: boolean;
   mode: TrainerMode;
@@ -367,6 +378,8 @@ interface TrainerState {
   hydratePrefs: () => void;
   setPreAuf: (v: boolean) => void;
   setPostAuf: (v: boolean) => void;
+  setRandomFinalAuf: (v: boolean) => void;
+  setRandomFinalY: (v: boolean) => void;
   /** 改某个朝向组的相位偏好。`offs` 为空 / 覆盖全部 = 该组不限制(存成空数组)。 */
   setOriSel: (key: string, offs: readonly number[]) => void;
   /** 清掉全部朝向限制,回到「随机四选一」。 */
@@ -530,11 +543,22 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
    * 背的人只会以为自己记错了。训练 / 复习照旧随机(练的正是识别,不是背图)。
    */
   const aufOpts = (st: {
-    mode: TrainerMode; preAuf: boolean; postAuf: boolean;
-    oriSel: Record<string, number[]>; set: string | null;
-  }) => (st.mode === 'memo'
-    ? { preAuf: false, postAuf: false }
-    : { preAuf: st.preAuf, postAuf: st.postAuf, orientation: st.oriSel, orientationSet: st.set });
+    mode: TrainerMode; puzzle: AlgPuzzle | null; set: string | null;
+    preAuf: boolean; postAuf: boolean; randomFinalAuf: boolean; randomFinalY: boolean;
+    oriSel: Record<string, number[]>;
+  }) => {
+    const features = trainerSetScrambleFeatures(st.puzzle, st.set);
+    return st.mode === 'memo'
+      ? { preAuf: false, postAuf: false, randomFinalAuf: false, randomFinalY: false }
+      : {
+          preAuf: st.preAuf,
+          postAuf: st.postAuf,
+          randomFinalAuf: features.randomFinalAuf && st.randomFinalAuf,
+          randomFinalY: features.randomFinalY && st.randomFinalY,
+          orientation: st.oriSel,
+          orientationSet: st.set,
+        };
+  };
 
   /** 某个 case 的 setup 到位后,把当时留空的打乱补上(当前 / 预抽两条 / 历史里同一 case)。 */
   const patchScramble = (key: string) => {
@@ -1014,6 +1038,8 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       // 光靠一次性的 hydratePrefs 是回不来的。
       preAuf: opts?.noAufDefault ? false : prefs.preAuf,
       postAuf: opts?.noAufDefault ? false : prefs.postAuf,
+      randomFinalAuf: prefs.randomFinalAuf,
+      randomFinalY: prefs.randomFinalY,
       // 朝向偏好按形状分组、跨 set 通用,没有「本场默认关」这回事 —— 直接取落盘的。
       oriSel: prefs.oriSel,
       selected,
@@ -1119,6 +1145,16 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     setPostAuf: (v) => {
       set({ postAuf: v });
       if (!get().noAufDefault) persistPrefs(prefsOf(get()));
+      regenCurrent();
+    },
+    setRandomFinalAuf: (v) => {
+      set({ randomFinalAuf: v });
+      persistPrefs(prefsOf(get()));
+      regenCurrent();
+    },
+    setRandomFinalY: (v) => {
+      set({ randomFinalY: v });
+      persistPrefs(prefsOf(get()));
       regenCurrent();
     },
     setOriSel: (key, offs) => {

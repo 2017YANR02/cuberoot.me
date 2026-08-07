@@ -267,7 +267,7 @@ jobs:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         working-directory: core/packages/stats-build/output/wca_stats_extra
-        # scp 整个 output 目录:增量 / 全量产出的文件集不同
+        # scp 整个 output 目录:增量 / 全量产出的文件集不同；新派生表 TSV（含 wca_kinch）自动随目录上传。
         # (全量含 wca_results_flat.copy.tsv;增量含 wca_results_flat_delta.tsv + wca_results_flat_del.txt).
         run: |
           ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" 'mkdir -p /tmp/wca_stats_extra && rm -rf /tmp/wca_stats_extra/*'

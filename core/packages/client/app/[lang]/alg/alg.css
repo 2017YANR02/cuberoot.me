@@ -160,11 +160,11 @@ html[data-theme=dark] .alg-root {
   font-size: 13px;
 }
 
-/* LS1–LS9:两个角块的 3×3 朝向矩阵。不是装饰卡片，矩阵本身承担定义与跨套导航。 */
-.alg-ls-index-section {
+/* 公式集分区：2x2 LS 与 3x3 Roux 共用标题和留白，不再各造一套容器。 */
+.alg-set-section {
   margin-top: 30px;
 }
-.alg-ls-index-heading {
+.alg-set-section-heading {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 24px 12px;
@@ -173,7 +173,7 @@ html[data-theme=dark] .alg-root {
   gap: 12px;
   flex-wrap: wrap;
 }
-.alg-ls-index-heading h2 {
+.alg-set-section-heading h2 {
   margin: 0;
   font-size: 18px;
 }
@@ -249,7 +249,7 @@ html[data-theme=dark] .alg-root {
 }
 
 @media (max-width: 480px) {
-  .alg-ls-index-heading { padding-inline: 16px; }
+  .alg-set-section-heading { padding-inline: 16px; }
   .alg-ls-guide { padding-inline: 16px; }
   .alg-ls-matrix {
     grid-template-columns: max-content repeat(3, minmax(52px, 1fr));
@@ -1557,7 +1557,7 @@ a.alg-community-author:hover {
 /* ── case 元数据独立详情页(/alg/<puzzle>/<set>/case/<name>,取代原弹窗)──
    正文复用 .alg-meta-body,但详情页是整页滚动、不要弹窗那套内边距/自滚动。 */
 .alg-case-detail {
-  max-width: min(880px, 100%);
+  max-width: min(1040px, 100%);
   margin: 0 auto;
   padding: 16px;
   display: flex;
@@ -1597,9 +1597,16 @@ a.alg-community-author:hover {
 
 /* 非 meta case(f2l / oll / coll / cmll / zbls …)的精简正文:大魔方图 + 可播放公式行。 */
 .alg-case-detail-lean {
+  display: grid;
+  grid-template-columns: 136px minmax(0, 1fr);
+  align-items: start;
+  gap: 24px;
+}
+.alg-case-detail-lean-aside {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  align-items: flex-start;
+  gap: 10px;
 }
 .alg-case-detail-lean-thumb {
   align-self: flex-start;
@@ -1608,6 +1615,14 @@ a.alg-community-author:hover {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-width: 0;
+}
+/* F2L 等四视角公式按槽位排成 2×2,而不是把四组纵向拉成长页。 */
+.alg-case-detail-lean-algs.is-multi-ori {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 14px 16px;
 }
 .alg-case-detail-ori {
   display: flex;
@@ -1637,9 +1652,45 @@ a.alg-community-author:hover {
   z-index: 1;
 }
 .alg-case-detail-ori-label {
+  margin-bottom: 3px;
   font-size: 12px;
   font-weight: 600;
   color: var(--muted-foreground);
+}
+
+@media (max-width: 680px) {
+  .alg-case-detail {
+    padding: 12px;
+    gap: 10px;
+  }
+  .alg-case-detail-head { gap: 10px; }
+  .alg-case-detail-lean {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .alg-case-detail-lean-aside {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 116px minmax(0, 1fr);
+    column-gap: 12px;
+    row-gap: 6px;
+  }
+  .alg-case-detail-lean-thumb { grid-row: 1 / span 3; }
+  .alg-case-detail-lean-aside > :not(.alg-case-detail-lean-thumb) { grid-column: 2; }
+  .alg-case-detail-lean-aside .alg-mirror-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+  }
+  .alg-case-detail-lean-algs.is-multi-ori {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+  .alg-case-detail-ori { width: 100%; }
 }
 
 .alg-meta-section {
