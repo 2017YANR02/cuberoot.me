@@ -215,14 +215,21 @@
   line-height: 1.1;
 }
 
-.predict-wrong {
+.predict-feedback {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--destructive);
   pointer-events: none;
+}
+
+.predict-wrong {
+  color: var(--destructive);
+}
+
+.predict-correct {
+  color: var(--signal-success);
 }
 
 .predict-sr {

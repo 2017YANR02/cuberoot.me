@@ -159,7 +159,7 @@ function PredictPageInner() {
   const [challenge, setChallenge] = useState<PredictBoardChallenge | null>(null);
   const [algError, setAlgError] = useState<MoveInputError | null>(null);
   const [found, setFound] = useState<boolean[]>([]);
-  const [wrong, setWrong] = useState(false);
+  const [feedback, setFeedback] = useState<{ kind: 'correct' | 'wrong' } | null>(null);
   const [revealed, setRevealed] = useState(false);
   /** 「恢复默认」按一次 +1,题板收到就把视角推回 /sim 的默认姿势。 */
   const [viewResetNonce, setViewResetNonce] = useState(0);
@@ -221,9 +221,6 @@ function PredictPageInner() {
     setStep(Math.max(0, Math.min(n, totalSteps)));
   }, [totalSteps]);
 
-  /** 播放条:默认不占地方,一旦复盘开始(自动或手点某一步)就出来 —— 否则跳到第 3 步后没法回起点。 */
-  const showPlayback = over || step > 0;
-
   /**
    * 出一题。`algText` 给「自己输入」那档用:回车时直接把输入框里的原文递进来,
    * 不经过 state 一轮,免得刚敲完的那个字还没落到 ref 上。
@@ -248,7 +245,7 @@ function PredictPageInner() {
         puzzle, track, source: source === 'custom' ? 'custom' : 'random', moveCount, customMoves,
       });
     setChallenge(next);
-    setWrong(false);
+    setFeedback(null);
     setRevealed(false);
     setStep(0);
     setPlaying(false);
@@ -288,10 +285,10 @@ function PredictPageInner() {
   }, [ch, solved, revealed]);
 
   useEffect(() => {
-    if (!wrong) return;
-    const id = setTimeout(() => setWrong(false), 1200);
+    if (!feedback) return;
+    const id = setTimeout(() => setFeedback(null), 1200);
     return () => clearTimeout(id);
-  }, [wrong]);
+  }, [feedback]);
 
   // 这题一结束就自动复盘一遍 —— 看着目标块被转过去,比看一张静态答案图有用得多。
   // 从头播:答题中可能已经手点到某一步了,不回零就会从半截接着往下播。
@@ -305,12 +302,14 @@ function PredictPageInner() {
     return () => clearTimeout(id);
   }, [playing, step, totalSteps]);
 
-  // 题板通过 ref 拿最新的这个闭包,所以直接读 state 就行 —— 别把 setWrong 塞进
+  // 题板通过 ref 拿最新的这个闭包,所以直接读 state 就行 —— 别把 setFeedback 塞进
   // setFound 的 updater 里,那是 reducer 里做副作用,StrictMode 双调用会把它吞掉。
   const onSticker = useCallback((facelet: number) => {
     if (!ch || revealed || found.length === 0 || found.every(Boolean)) return;
     const hit = ch.targets.findIndex((t, i) => !found[i] && t.answerFacelet === facelet);
-    if (hit < 0) { setWrong(true); return; }
+    if (hit < 0) { setFeedback({ kind: 'wrong' }); return; }
+    // 每次都放一个新对象:连续点对多枚时也要从这一次点击重新计满 1.2 秒。
+    setFeedback({ kind: 'correct' });
     setFound(found.map((v, i) => (i === hit ? true : v)));
   }, [ch, revealed, found]);
 
@@ -521,42 +520,46 @@ function PredictPageInner() {
             step={step}
           />
           <div className="predict-clock" aria-live="off">{clock(elapsed)}</div>
-          {wrong && (
-            <div className="predict-wrong" role="alert">
+          {feedback?.kind === 'wrong' && (
+            <div className="predict-feedback predict-wrong" role="alert">
               <X size={120} strokeWidth={3} aria-hidden="true" />
               <span className="predict-sr">{tr({ zh: '点错了', en: 'Wrong square' })}</span>
             </div>
           )}
+          {feedback?.kind === 'correct' && (
+            <div className="predict-feedback predict-correct" role="status">
+              <Check size={120} strokeWidth={3} aria-hidden="true" />
+              <span className="predict-sr">{tr({ zh: '点对了', en: 'Correct square' })}</span>
+            </div>
+          )}
         </div>
 
-        {showPlayback && (
-          <div className="predict-replay">
-            <PlaybackBar
-              step={step}
-              total={totalSteps}
-              playing={playing}
-              onScrub={seek}
-              onSkipStart={() => { setPlaying(false); setStep(0); }}
-              onStepBack={() => { setPlaying(false); setStep((s) => Math.max(0, s - 1)); }}
-              onTogglePlay={() => {
-                if (playing) { setPlaying(false); return; }
-                if (step >= totalSteps) setStep(0); // 播完了再按 = 重播
-                setPlaying(true);
-              }}
-              onStepForward={() => { setPlaying(false); setStep((s) => Math.min(totalSteps, s + 1)); }}
-              onSkipEnd={() => { setPlaying(false); setStep(totalSteps); }}
-              labels={{
-                skipStart: tr({ zh: '回到起点', en: 'Skip to start' }),
-                stepBack: tr({ zh: '退一步', en: 'Step back' }),
-                play: tr({ zh: '播放复盘', en: 'Play' }),
-                pause: tr({ zh: '暂停', en: 'Pause' }),
-                stepForward: tr({ zh: '进一步', en: 'Step forward' }),
-                skipEnd: tr({ zh: '跳到落点', en: 'Skip to end' }),
-                scrub: tr({ zh: '拖动到第几步', en: 'Scrub' }),
-              }}
-            />
-          </div>
-        )}
+        <div className="predict-replay">
+          <PlaybackBar
+            step={step}
+            total={totalSteps}
+            playing={playing}
+            onScrub={seek}
+            onSkipStart={() => { setPlaying(false); setStep(0); }}
+            onStepBack={() => { setPlaying(false); setStep((s) => Math.max(0, s - 1)); }}
+            onTogglePlay={() => {
+              if (playing) { setPlaying(false); return; }
+              if (step >= totalSteps) setStep(0); // 播完了再按 = 重播
+              setPlaying(true);
+            }}
+            onStepForward={() => { setPlaying(false); setStep((s) => Math.min(totalSteps, s + 1)); }}
+            onSkipEnd={() => { setPlaying(false); setStep(totalSteps); }}
+            labels={{
+              skipStart: tr({ zh: '回到起点', en: 'Skip to start' }),
+              stepBack: tr({ zh: '退一步', en: 'Step back' }),
+              play: tr({ zh: '播放复盘', en: 'Play' }),
+              pause: tr({ zh: '暂停', en: 'Pause' }),
+              stepForward: tr({ zh: '进一步', en: 'Step forward' }),
+              skipEnd: tr({ zh: '跳到落点', en: 'Skip to end' }),
+              scrub: tr({ zh: '拖动到第几步', en: 'Scrub' }),
+            }}
+          />
+        </div>
       </div>
 
       <section className="predict-moves">
