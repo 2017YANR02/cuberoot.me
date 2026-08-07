@@ -3,7 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { pickTrainerLiveVisual } from '@/app/[lang]/alg/_trainer/trainer-live-view';
 
 describe('trainer live smart-cube visual', () => {
-  it('shows q2Look immediately when live facelets exist', () => {
+  it('shows each flat projection immediately when live facelets exist', () => {
+    expect(pickTrainerLiveVisual('qcube', true)).toBe('qcube');
+    expect(pickTrainerLiveVisual('qlast', true)).toBe('qlast');
     expect(pickTrainerLiveVisual('q2look', true)).toBe('q2look');
   });
 
@@ -12,7 +14,14 @@ describe('trainer live smart-cube visual', () => {
     expect(pickTrainerLiveVisual('3d', false)).toBe('3d');
   });
 
-  it('does not invent q2Look without facelets', () => {
+  it('keeps the case image when None is selected', () => {
+    expect(pickTrainerLiveVisual('none', true)).toBe('idle');
+    expect(pickTrainerLiveVisual('none', false)).toBe('idle');
+  });
+
+  it('does not invent flat projections without facelets', () => {
+    expect(pickTrainerLiveVisual('qcube', false)).toBe('idle');
+    expect(pickTrainerLiveVisual('qlast', false)).toBe('idle');
     expect(pickTrainerLiveVisual('q2look', false)).toBe('idle');
   });
 });
