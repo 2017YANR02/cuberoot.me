@@ -1,0 +1,255 @@
+/** CubingApp SQ1 CP/EO/EP supplements + complete OBL -> 0108 data migration. */
+import { writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { invertSq1Alg } from '@cuberoot/shared/sq1-notation';
+import {
+  invariant, normalizeSubgroup, readCubingAppSq1Set, sourceAlgs,
+} from './cubingapp_sq1_import.mts';
+
+const HERE = fileURLToPath(new URL('.', import.meta.url));
+const upstreamRoot = resolve(process.cwd(), process.argv[2] ?? resolve(HERE, '../../../../cubingapp'));
+const output = resolve(process.cwd(), process.argv[3] ?? resolve(HERE, '../server/migrations/0108_sq1_cubingapp_stages.sql'));
+
+const cp = readCubingAppSq1Set(upstreamRoot, 'SQ1-CP');
+const eo = readCubingAppSq1Set(upstreamRoot, 'SQ1-EO');
+const ep = readCubingAppSq1Set(upstreamRoot, 'SQ1-EP');
+const obl = readCubingAppSq1Set(upstreamRoot, 'SQ1-OBL');
+
+function assertSetCounts(label: string, cases: Record<string, { algs: Record<string, unknown> }>, caseCount: number, algCount: number) {
+  const entries = Object.entries(cases);
+  invariant(entries.length === caseCount, `${label}: expected ${caseCount} cases, got ${entries.length}`);
+  const gotAlgs = entries.reduce((sum, [, item]) => sum + Object.keys(item.algs).length, 0);
+  invariant(gotAlgs === algCount, `${label}: expected ${algCount} algorithms, got ${gotAlgs}`);
+}
+
+assertSetCounts('CP', cp.cases, 8, 8);
+assertSetCounts('EO', eo.cases, 7, 9);
+assertSetCounts('EP', ep.cases, 40, 41);
+assertSetCounts('OBL', obl.cases, 185, 185);
+
+const cpPayload = Object.entries(cp.cases).map(([name, source], position) => ({
+  sourceName: name,
+  targetName: name,
+  position,
+  subgroup: source.subset,
+  algs: sourceAlgs(source),
+}));
+
+const EO_TARGETS: Record<string, string> = {
+  '1 / 1': '1-1',
+  'Opp / Opp': 'I-I',
+  '4 / 4': '4-4',
+  'Adj / Adj': 'L-L',
+  '3 / 3': '3-3',
+  'Adj / Opp': 'L-I',
+  'Opp / Adj': 'I-L',
+};
+
+const eoPayload = Object.entries(eo.cases).map(([name, source], position) => {
+  const targetName = EO_TARGETS[name];
+  invariant(targetName, `EO: missing target mapping for ${name}`);
+  return {
+    sourceName: name,
+    targetName,
+    position,
+    subgroup: source.subset,
+    algs: sourceAlgs(source),
+  };
+});
+
+/**
+ * These 17 CubingApp cases are the same physical EP states as existing cases.
+ * Ua/Ub labels differ between the two libraries, so this map is state-audited,
+ * not inferred from the visible name. Existing ids, names, algorithms and saved
+ * progress remain stable.
+ */
+const EP_TARGETS: Record<string, string> = {
+  'Opp & Opp': 'Opp / Opp',
+  'Opp & Adj': 'Opp / Adj',
+  'Adj & Adj': 'Adj / Adj',
+  'Adj & Opp': 'Adj / Opp',
+  'Ua & Solved': 'Ua / Solved',
+  'Ua & Ub': 'Ua / Ua',
+  'Ub & Solved': 'Ub / Solved',
+  'Ub & Ua': 'Ub / Ub',
+  'Ub & Ub': 'Ub / Ua',
+  'H & H': 'H / H',
+  'H & Solved': 'H / Solved',
+  'Z & Z': 'Z / Z',
+  'Z & Solved': 'Z / Solved',
+  'Solved & Ua': 'Solved / Ua',
+  'Solved & Ub': 'Solved / Ub',
+  'Solved & Z': 'Solved / Z',
+  'Solved & H': 'Solved / H',
+};
+
+const epPayload = Object.entries(ep.cases).map(([sourceName, source], position) => {
+  const existing = sourceName in EP_TARGETS;
+  // Preserve CubingApp's ampersand for new cases. Mechanical `&` -> `/`
+  // conversion would collide: source `Ua & Ua` is not existing `Ua / Ua`.
+  const targetName = EP_TARGETS[sourceName] ?? sourceName;
+  const algs = sourceAlgs(source);
+  return {
+    sourceName,
+    targetName,
+    position,
+    subgroup: source.subset,
+    existing,
+    setup: invertSq1Alg(algs[0][0].alg),
+    sticker: { kind: 'raw', tag: 'sqcube', attrs: {} },
+    algs,
+  };
+});
+
+invariant(epPayload.filter(item => item.existing).length === 17, 'EP: expected 17 existing state matches');
+invariant(epPayload.filter(item => !item.existing).length === 23, 'EP: expected 23 missing cases');
+invariant(new Set(epPayload.map(item => item.targetName)).size === epPayload.length, 'EP: target names must be unique');
+invariant(epPayload.filter(item => !item.existing).flatMap(item => item.algs[0]).length === 24, 'EP: expected 24 algorithms on missing cases');
+
+const oblPayload = Object.entries(obl.cases).map(([name, source], position) => {
+  const algs = sourceAlgs(source);
+  return {
+    position,
+    name,
+    subgroup: normalizeSubgroup(source.subset),
+    setup: invertSq1Alg(algs[0][0].alg),
+    sticker: { kind: 'raw', tag: 'sqcube', attrs: {} },
+    algs,
+  };
+});
+
+const pretty = (value: unknown) => JSON.stringify(value, null, 2);
+const upstreamCommit = '613a49885dc618023368e5f0c2a25024b8c7e9a5';
+const source = (slug: string, speedCubeDb?: string) => [
+  speedCubeDb ? `https://speedcubedb.com/a/sq1/${speedCubeDb}` : null,
+  `https://cubingapp.com/algorithms/SQ1-${slug}`,
+  `https://github.com/spencerchubb/cubingapp/commit/${upstreamCommit}`,
+].filter(Boolean).join('; ');
+
+const lines = [
+  '-- Supplement SQ1 CP/EO/EP and import the complete CubingApp OBL set.',
+  '-- Generated by packages/alg-build/gen_cubingapp_sq1_stages_sql.mts.',
+  `-- Upstream: CubingApp commit ${upstreamCommit} (MIT).`,
+  '',
+  `INSERT INTO alg_sets (puzzle, set_slug, source, scraped_at) VALUES`,
+  `  ('sq1', 'cp', '${source('CP', 'SQ1CP')}', NOW()),`,
+  `  ('sq1', 'eo', '${source('EO', 'SQ1EO')}', NOW()),`,
+  `  ('sq1', 'ep', '${source('EP', 'SQ1EP')}', NOW()),`,
+  `  ('sq1', 'obl', '${source('OBL')}', NOW())`,
+  'ON CONFLICT (puzzle, set_slug) DO UPDATE SET source = EXCLUDED.source, scraped_at = EXCLUDED.scraped_at;',
+  '',
+  '-- CP already contains all eight source algorithms; restore source taxonomy/order without replacing ids or alternatives.',
+  `WITH payload AS (SELECT $cubingapp_sq1_cp$${pretty(cpPayload)}$cubingapp_sq1_cp$::jsonb AS body),`,
+  'items AS (SELECT value AS item FROM payload, jsonb_array_elements(body))',
+  'UPDATE alg_cases AS c',
+  "SET position = (items.item->>'position')::integer, subgroup = items.item->>'subgroup'",
+  'FROM items',
+  "WHERE c.puzzle = 'sq1' AND c.set_slug = 'cp' AND c.name = items.item->>'targetName';",
+  '',
+  '-- EO keeps every existing algorithm. Missing source algorithms are prepended; notes merge onto exact existing formulas.',
+  `WITH payload AS (SELECT $cubingapp_sq1_eo$${pretty(eoPayload)}$cubingapp_sq1_eo$::jsonb AS body),`,
+  'items AS (SELECT value AS item FROM payload, jsonb_array_elements(body))',
+  'UPDATE alg_cases AS c',
+  'SET position = (items.item->>\'position\')::integer,',
+  '    subgroup = items.item->>\'subgroup\',',
+  '    algs = jsonb_build_array(',
+  '      COALESCE((',
+  '        SELECT jsonb_agg(added.entry ORDER BY added.ord)',
+  "        FROM jsonb_array_elements(COALESCE(items.item->'algs'->0, '[]'::jsonb)) WITH ORDINALITY AS added(entry, ord)",
+  '        WHERE NOT EXISTS (',
+  "          SELECT 1 FROM jsonb_array_elements(COALESCE(c.algs->0, '[]'::jsonb)) AS existing(entry)",
+  "          WHERE regexp_replace(existing.entry->>'alg', '\\s', '', 'g') = regexp_replace(added.entry->>'alg', '\\s', '', 'g')",
+  '        )',
+  "      ), '[]'::jsonb) ||",
+  '      COALESCE((',
+  '        SELECT jsonb_agg(',
+  '          existing.entry || COALESCE((',
+  "            SELECT added.entry - 'alg' - 'source'",
+  "            FROM jsonb_array_elements(COALESCE(items.item->'algs'->0, '[]'::jsonb)) AS added(entry)",
+  "            WHERE regexp_replace(existing.entry->>'alg', '\\s', '', 'g') = regexp_replace(added.entry->>'alg', '\\s', '', 'g')",
+  '            LIMIT 1',
+  "          ), '{}'::jsonb)",
+  '          ORDER BY existing.ord',
+  '        )',
+  "        FROM jsonb_array_elements(COALESCE(c.algs->0, '[]'::jsonb)) WITH ORDINALITY AS existing(entry, ord)",
+  "      ), '[]'::jsonb)",
+  '    )',
+  'FROM items',
+  "WHERE c.puzzle = 'sq1' AND c.set_slug = 'eo' AND c.name = items.item->>'targetName';",
+  '',
+  '-- Move only the 32 legacy EP-only cases after CubingApp order. Source rows are excluded by audited target name.',
+  `WITH payload AS (SELECT $cubingapp_sq1_ep$${pretty(epPayload)}$cubingapp_sq1_ep$::jsonb AS body),`,
+  "source_names AS (SELECT item->>'targetName' AS name FROM payload, jsonb_array_elements(body) AS rows(item)),",
+  'extras AS (',
+  '  SELECT c.id, row_number() OVER (ORDER BY c.position, c.id) AS rn',
+  '  FROM alg_cases AS c',
+  "  WHERE c.puzzle = 'sq1' AND c.set_slug = 'ep'",
+  '    AND NOT EXISTS (SELECT 1 FROM source_names WHERE source_names.name = c.name)',
+  ')',
+  'UPDATE alg_cases AS c',
+  "SET position = 39 + extras.rn, subgroup = 'Additional'",
+  'FROM extras WHERE c.id = extras.id;',
+  '',
+  '-- Existing physical matches keep their ids/names/formulas; only order and subgroup change.',
+  `WITH payload AS (SELECT $cubingapp_sq1_ep$${pretty(epPayload)}$cubingapp_sq1_ep$::jsonb AS body),`,
+  'items AS (SELECT value AS item FROM payload, jsonb_array_elements(body))',
+  'UPDATE alg_cases AS c',
+  "SET position = (items.item->>'position')::integer, subgroup = items.item->>'subgroup'",
+  'FROM items',
+  "WHERE c.puzzle = 'sq1' AND c.set_slug = 'ep' AND c.name = items.item->>'targetName';",
+  '',
+  '-- Insert the 23 genuinely missing EP states (24 algorithms).',
+  `WITH payload AS (SELECT $cubingapp_sq1_ep$${pretty(epPayload)}$cubingapp_sq1_ep$::jsonb AS body),`,
+  "items AS (SELECT value AS item FROM payload, jsonb_array_elements(body) WHERE (value->>'existing')::boolean = false)",
+  'INSERT INTO alg_cases (puzzle, set_slug, position, name, subgroup, setup, sticker, algs)',
+  "SELECT 'sq1', 'ep', (item->>'position')::integer, item->>'targetName', item->>'subgroup', item->>'setup', item->'sticker', item->'algs'",
+  'FROM items',
+  "WHERE NOT EXISTS (SELECT 1 FROM alg_cases WHERE puzzle = 'sq1' AND set_slug = 'ep' AND name = item->>'targetName');",
+  '',
+  '-- OBL is a new set. Update-by-name + insert-missing makes a repeated dry-run preserve ids.',
+  `WITH payload AS (SELECT $cubingapp_sq1_obl$${pretty(oblPayload)}$cubingapp_sq1_obl$::jsonb AS body),`,
+  'items AS (SELECT value AS item FROM payload, jsonb_array_elements(body))',
+  'UPDATE alg_cases AS c',
+  "SET position = (items.item->>'position')::integer, name = items.item->>'name', subgroup = items.item->>'subgroup',",
+  "    setup = items.item->>'setup', sticker = items.item->'sticker', algs = items.item->'algs'",
+  'FROM items',
+  "WHERE c.puzzle = 'sq1' AND c.set_slug = 'obl' AND c.name = items.item->>'name';",
+  '',
+  `WITH payload AS (SELECT $cubingapp_sq1_obl$${pretty(oblPayload)}$cubingapp_sq1_obl$::jsonb AS body),`,
+  'items AS (SELECT value AS item FROM payload, jsonb_array_elements(body))',
+  'INSERT INTO alg_cases (puzzle, set_slug, position, name, subgroup, setup, sticker, algs)',
+  "SELECT 'sq1', 'obl', (item->>'position')::integer, item->>'name', item->>'subgroup', item->>'setup', item->'sticker', item->'algs'",
+  'FROM items',
+  "WHERE NOT EXISTS (SELECT 1 FROM alg_cases WHERE puzzle = 'sq1' AND set_slug = 'obl' AND name = item->>'name');",
+  '',
+  'DO $sq1_cubingapp_stage_counts$',
+  'DECLARE got BIGINT;',
+  'BEGIN',
+  "  SELECT COUNT(*) INTO got FROM alg_cases WHERE puzzle = 'sq1' AND set_slug = 'cp';",
+  "  IF got <> 8 THEN RAISE EXCEPTION 'sq1/cp: expected 8 cases, got %', got; END IF;",
+  "  SELECT SUM(jsonb_array_length(algs->0)) INTO got FROM alg_cases WHERE puzzle = 'sq1' AND set_slug = 'cp';",
+  "  IF got <> 20 THEN RAISE EXCEPTION 'sq1/cp: expected 20 algorithms, got %', got; END IF;",
+  "  SELECT COUNT(*) INTO got FROM alg_cases WHERE puzzle = 'sq1' AND set_slug = 'eo';",
+  "  IF got <> 7 THEN RAISE EXCEPTION 'sq1/eo: expected 7 cases, got %', got; END IF;",
+  "  SELECT SUM(jsonb_array_length(algs->0)) INTO got FROM alg_cases WHERE puzzle = 'sq1' AND set_slug = 'eo';",
+  "  IF got <> 16 THEN RAISE EXCEPTION 'sq1/eo: expected 16 algorithms, got %', got; END IF;",
+  "  SELECT COUNT(*) INTO got FROM alg_cases WHERE puzzle = 'sq1' AND set_slug = 'ep';",
+  "  IF got <> 72 THEN RAISE EXCEPTION 'sq1/ep: expected 72 cases, got %', got; END IF;",
+  "  SELECT SUM(jsonb_array_length(algs->0)) INTO got FROM alg_cases WHERE puzzle = 'sq1' AND set_slug = 'ep';",
+  "  IF got <> 76 THEN RAISE EXCEPTION 'sq1/ep: expected 76 algorithms, got %', got; END IF;",
+  "  SELECT COUNT(DISTINCT position) INTO got FROM alg_cases WHERE puzzle = 'sq1' AND set_slug = 'ep' AND position BETWEEN 0 AND 71;",
+  "  IF got <> 72 THEN RAISE EXCEPTION 'sq1/ep: expected contiguous positions 0..71, got %', got; END IF;",
+  "  SELECT COUNT(*) INTO got FROM alg_cases WHERE puzzle = 'sq1' AND set_slug = 'obl';",
+  "  IF got <> 185 THEN RAISE EXCEPTION 'sq1/obl: expected 185 cases, got %', got; END IF;",
+  "  SELECT SUM(jsonb_array_length(algs->0)) INTO got FROM alg_cases WHERE puzzle = 'sq1' AND set_slug = 'obl';",
+  "  IF got <> 185 THEN RAISE EXCEPTION 'sq1/obl: expected 185 algorithms, got %', got; END IF;",
+  "  SELECT COUNT(DISTINCT position) INTO got FROM alg_cases WHERE puzzle = 'sq1' AND set_slug = 'obl' AND position BETWEEN 0 AND 184;",
+  "  IF got <> 185 THEN RAISE EXCEPTION 'sq1/obl: expected contiguous positions 0..184, got %', got; END IF;",
+  'END',
+  '$sq1_cubingapp_stage_counts$;',
+  '',
+];
+
+writeFileSync(output, lines.join('\n'), 'utf8');
+console.log(`wrote ${output}: CP taxonomy; EO 7 cases/16 total algs; EP 72/76; OBL 185/185`);

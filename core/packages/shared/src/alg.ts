@@ -29,6 +29,8 @@ export interface AlgEntry {
   tags?: AlgTag[];
   /** 公式出处。站长自编的排在外部数据源前面。 */
   source?: 'cuberoot' | 'speedcubedb' | 'cubingapp';
+  /** Optional source annotation shown beside the formula. */
+  note?: { en: string; zh: string };
   /** 这条公式**照写**的步数(`R4` = 1 STM / 4 SQTM —— 它是个真实的物理动作,见 alg_notation)。 */
   stm?: number;
   sqtm?: number;
@@ -226,6 +228,13 @@ export const ALG_CATALOG: Record<AlgPuzzle, AlgSetMeta[]> = {
     { slug: 'eo',     scd: 'SQ1EO',     short: 'EO',     en: 'Edge Orientation',   zh: '棱块朝向' },
     { slug: 'cp',     scd: 'SQ1CP',     short: 'CP',     en: 'Corner Permutation', zh: '角块排列' },
     { slug: 'ep',     scd: 'SQ1EP',     short: 'EP',     en: 'Edge Permutation',   zh: '棱块排列' },
+    {
+      slug: 'obl', scd: 'SQ1OBL', short: 'OBL', en: 'Orientation of Both Layers', zh: '双层色向',
+      intro: {
+        en: 'Solve the orientation of both layers while preserving cubeshape.',
+        zh: '在保持复形的同时完成上下两层色向。',
+      },
+    },
     { slug: 'parity', scd: 'SQ1Parity', short: 'Parity', en: 'Parity',             zh: 'Parity' },
   ],
   'megaminx': [

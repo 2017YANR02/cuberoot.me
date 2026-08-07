@@ -10,6 +10,7 @@ describe('SQ1 algorithm set names', () => {
       { slug: 'eo', short: 'EO', zh: '棱块朝向' },
       { slug: 'cp', short: 'CP', zh: '角块排列' },
       { slug: 'ep', short: 'EP', zh: '棱块排列' },
+      { slug: 'obl', short: 'OBL', zh: '双层色向' },
       { slug: 'parity', short: 'Parity', zh: 'Parity' },
     ]);
   });
