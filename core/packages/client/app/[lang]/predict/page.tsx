@@ -31,7 +31,6 @@ import BackHome from '@/components/BackHome';
 import HeaderToggles from '@/components/HeaderToggles';
 import LiquidGlassChips from '@/components/LiquidGlassChips';
 import PlaybackBar from '@/components/PlaybackBar';
-import ResetDefaultsButton from '@/components/ResetDefaultsButton';
 import { tr } from '@/i18n/tr';
 import { CUBE_ORIENTATIONS, orientedFaceColors } from '@/lib/cube-orientation';
 import CubeOrientationSelect from '@/components/CubeOrientationSelect';
@@ -161,8 +160,6 @@ function PredictPageInner() {
   const [found, setFound] = useState<boolean[]>([]);
   const [feedback, setFeedback] = useState<{ kind: 'correct' | 'wrong' } | null>(null);
   const [revealed, setRevealed] = useState(false);
-  /** 「恢复默认」按一次 +1,题板收到就把视角推回 /sim 的默认姿势。 */
-  const [viewResetNonce, setViewResetNonce] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -259,20 +256,6 @@ function PredictPageInner() {
     if (!ch) return;
     setRevealed(true);
   }, [ch]);
-
-  /** 恢复默认:出题参数全回出厂值(= 清掉 URL 上那几个参数),视角推回 /sim 的默认姿势。
-   *  参数一变上面的 effect 就自动换一题;本来就在默认值时只复位视角,不打断当前这题。
-   *  **不动拼图**:那是这页练什么的选择,不是出题参数,清掉等于把人踢回三阶。 */
-  const restoreDefaults = useCallback(() => {
-    void setMode(null);
-    void setTrack(null);
-    void setSource(null);
-    void setMoveCount(null);
-    void setCrossEdges(null);
-    void setOrientation(null);
-    void setAlg(null);
-    setViewResetNonce((n) => n + 1);
-  }, [setMode, setTrack, setSource, setMoveCount, setCrossEdges, setOrientation, setAlg]);
 
   useEffect(() => { deal(); }, [deal]);
   useEffect(() => { setFound(challenge ? challenge.targets.map(() => false) : []); }, [challenge]);
@@ -515,7 +498,6 @@ function PredictPageInner() {
             bright={bright}
             dim={dim}
             onSticker={onSticker}
-            viewResetNonce={viewResetNonce}
             moves={ch?.moves}
             step={step}
           />
@@ -660,17 +642,11 @@ function PredictPageInner() {
           className="predict-reveal"
           onClick={reveal}
           disabled={!ch || solved || revealed}
+          aria-label={tr({ zh: '显示答案', en: 'Show answer' })}
+          title={tr({ zh: '显示答案', en: 'Show answer' })}
         >
           <Eye size={15} aria-hidden="true" />
-          {tr({ zh: '显示答案', en: 'Show answer' })}
         </button>
-        <ResetDefaultsButton
-          onReset={restoreDefaults}
-          title={tr({
-            zh: '出题参数(模式 / 追踪 / 公式 / 步数 / 朝向)与视角恢复默认,拼图不变',
-            en: 'Reset the challenge settings (mode / track / moves / length / holding) and the view; keeps the puzzle',
-          })}
-        />
         <div className="predict-progress">
           {promptGroups.map((g) => (
             <span

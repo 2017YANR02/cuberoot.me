@@ -108,8 +108,6 @@ export interface PredictBoardProps {
   /** 压暗(各自颜色减半)的格:同块的其余贴纸 + 方位锚。 */
   dim?: readonly number[];
   onSticker: (slot: number) => void;
-  /** 变一次就把视角复位回开局姿态(页面上的「恢复默认」按的就是它)。 */
-  viewResetNonce?: number;
   /** 复盘用的题面公式。 */
   moves?: readonly string[];
   /** 已经走到第几步:比上一次多 1 = 放一步动画,其余情况瞬时跳过去。 */
@@ -118,7 +116,7 @@ export interface PredictBoardProps {
 
 export default function PredictBoard({
   puzzle, labels, bright = NO_FACELETS, dim = NO_FACELETS, onSticker,
-  viewResetNonce = 0, moves = NO_MOVES, step = 0,
+  moves = NO_MOVES, step = 0,
 }: PredictBoardProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mountRef = useRef<SimMount | null>(null);
@@ -274,12 +272,6 @@ export default function PredictBoard({
       mountRef.current?.invalidate();
     }
   }, []);
-
-  // 页面上的「恢复默认」也复位视角(拖歪了不用再去找题板角上那颗按钮)。
-  useEffect(() => {
-    if (!ready || viewResetNonce === 0) return;
-    resetView();
-  }, [ready, viewResetNonce, resetView]);
 
   return (
     <div className="predict-board">
