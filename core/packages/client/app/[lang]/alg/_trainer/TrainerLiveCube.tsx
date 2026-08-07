@@ -3,9 +3,9 @@
 /**
  * 训练器上那颗跟着手转的魔方。
  *
- * q2Look 是用户主动选择的实时投影,一拿到 facelets 就显示;否则选了它却仍看到旧的
- * case 识别图,设置看起来完全没生效。三维则不同:刚出题时要看「这是哪个 case」,
- * 识别图比只露三个面的立体图更清楚;第一手之后问题才变成「我拧到哪儿了」,再切三维。
+ * q2Look / 三维都是用户主动选择的实时投影,选择后就立即显示;否则下拉已经切了,
+ * 画面却仍是旧的 case 识别图,设置看起来完全没生效。q2Look 读实时 facelets;
+ * 三维在第一手之前用当前题打乱建立初始状态,之后再按智能魔方的每一手追加动画。
  *
  * 每次重新瞄准 `moves` 都会清空(见 useTrainerCube),所以下一题自动回到识别图,
  * 上一题的收尾手也不会把它提前翻成立体图。
@@ -52,7 +52,7 @@ export default function TrainerLiveCube({
 }) {
   const [calibrateNonce, setCalibrateNonce] = useState(0);
   const { cube, moves, quatRef, view } = state;
-  const visual = pickTrainerLiveVisual(view, !!cube.facelets, moves.length);
+  const visual = pickTrainerLiveVisual(view, !!cube.facelets);
 
   // three + /sim 引擎那一大块在魔方瞄准这一题时就先拉下来,别等到第一手才开始下载 ——
   // 那一手正是它该出现的时刻,现拉就是当场卡一下。拉完不渲染,不花帧。
