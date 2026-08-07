@@ -3,10 +3,9 @@
 /**
  * 训练器上那颗跟着手转的魔方。
  *
- * **出题时不出它。** 刚出一题的时候要看的是「这是哪个 case」,识别图(顶层平摊那张)
- * 说的就是这个,立体图说不了 —— 它只露一个面,还跟着手歪。等用户动了第一手,问题就
- * 换成了「我拧到哪儿了」,那才轮到立体图,而静态图这时候纹丝不动、看着像魔方没连上。
- * 所以这里按 `moves` 是否为空切:空 = 还没动手 = 出 `idle`(调用方给的识别图)。
+ * q2Look 是用户主动选择的实时投影,一拿到 facelets 就显示;否则选了它却仍看到旧的
+ * case 识别图,设置看起来完全没生效。三维则不同:刚出题时要看「这是哪个 case」,
+ * 识别图比只露三个面的立体图更清楚;第一手之后问题才变成「我拧到哪儿了」,再切三维。
  *
  * 每次重新瞄准 `moves` 都会清空(见 useTrainerCube),所以下一题自动回到识别图,
  * 上一题的收尾手也不会把它提前翻成立体图。
@@ -30,6 +29,7 @@ import { FaceletsCube } from '@/components/FaceletsCube';
 import { tr } from '@/i18n/tr';
 import { mirrorForBrand, sensorBasisForBrand } from '../../timer/_lib/bluetooth/orientation';
 import type { TrainerCubeState } from './useTrainerCube';
+import { pickTrainerLiveVisual } from './trainer-live-view';
 
 /** three + /sim 引擎只在真的挂了这颗魔方时才加载。 */
 const SimCubeView = dynamic(() => import('@/components/sim-embed/SimCubeView'), {
@@ -52,8 +52,7 @@ export default function TrainerLiveCube({
 }) {
   const [calibrateNonce, setCalibrateNonce] = useState(0);
   const { cube, moves, quatRef, view } = state;
-  /** 动过手了没有。清空的时机归 `useTrainerCube` 管。 */
-  const started = moves.length > 0;
+  const visual = pickTrainerLiveVisual(view, !!cube.facelets, moves.length);
 
   // three + /sim 引擎那一大块在魔方瞄准这一题时就先拉下来,别等到第一手才开始下载 ——
   // 那一手正是它该出现的时刻,现拉就是当场卡一下。拉完不渲染,不花帧。
@@ -70,14 +69,14 @@ export default function TrainerLiveCube({
 
   return (
     <div className="trainer-live-cube">
-      {!started ? idle : view === 'q2look' && cube.facelets ? (
+      {visual === 'q2look' && cube.facelets ? (
         <FaceletsCube
           fd={cube.facelets.toLowerCase()}
           view="q2look"
           size={140}
           alt={tr({ zh: '智能魔方 q2Look 实时状态', en: 'Live q2Look smart-cube state' })}
         />
-      ) : (
+      ) : visual === 'idle' ? idle : (
         <SimCubeView
           moves={log}
           quatRef={quatRef}
@@ -95,8 +94,7 @@ export default function TrainerLiveCube({
           })}
         />
       )}
-      {/* 手动校准:把魔方摆正、点一下,这个姿态就成了基准。它属于这次连接而不属于
-          哪张图,所以两张图下面都在。没有陀螺仪的魔方按了也不会变,那就不摆。 */}
+      {/* 手动校准只服务三维姿态:q2Look 是固定投影,不显示一个按了没意义的按钮。 */}
       {view === '3d' && cube.status.hasGyro && (
         <button
           type="button"
