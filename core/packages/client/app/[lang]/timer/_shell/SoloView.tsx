@@ -20,9 +20,9 @@ import dynamic from 'next/dynamic';
 import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsBoolean, parseAsString, parseAsStringEnum } from 'nuqs';
 import {
-  Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2,
-  Bluetooth, Mic, BarChart3, Plus, Wrench, ListPlus, Printer, FileText,
-  FileSpreadsheet, AlertTriangle, Target, Crosshair, Keyboard, Link2, Globe,
+  Trash2, Settings as SettingsIcon, Maximize2, Minimize2,
+  Bluetooth, Mic, BarChart3, Plus, Wrench, ListPlus, Printer,
+  AlertTriangle, Target, Crosshair, Keyboard, Link2, Globe,
   Brain, X, Check, CheckCircle2, Footprints, Repeat,
 } from 'lucide-react';
 import AppLink from '@/components/AppLink';
@@ -63,8 +63,7 @@ import { stageSegmentsFor } from '../_lib/reconstruct/stage_segments';
 import { shouldAutoRecap } from '../_lib/reconstruct/recap';
 import { isNonWcaEvent, prefetchNonWca, nextNonWcaScramble } from '../_lib/scramble/nonwca';
 import {
-  loadAll, saveAll, exportJson, importJson, makeSolve,
-  importCstimerJson, exportCsv, exportSpeedstacks,
+  loadAll, saveAll, makeSolve,
   listSessions, getActiveSessionId, moveSolveToSession,
 } from '../_lib/storage/db';
 import { formatTargetTime, useSettings, getSettings, updateSettings } from '../_lib/settings';
@@ -1828,62 +1827,6 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     return () => document.removeEventListener('pointerdown', onDocDown);
   }, [onPressDown]);
 
-  // ── Import / export ─────────────────────────────────────────────
-  const handleExport = useCallback(() => {
-    const json = exportJson();
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = `cuberoot-timer-${new Date().toISOString().slice(0, 10)}.json`; a.click();
-    URL.revokeObjectURL(url);
-  }, []);
-  const handleExportCsv = useCallback(() => {
-    const csv = exportCsv(byEvent);
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = `cuberoot-timer-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
-    URL.revokeObjectURL(url);
-  }, [byEvent]);
-  const handleExportSs = useCallback(() => {
-    const txt = exportSpeedstacks(solves);
-    const blob = new Blob([txt], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = `cuberoot-timer-${event}-${new Date().toISOString().slice(0, 10)}.ss.txt`; a.click();
-    URL.revokeObjectURL(url);
-  }, [event, solves]);
-  const handleImport = useCallback(() => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'application/json,.txt';
-    input.onchange = () => {
-      const file = input.files?.[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        const text = String(reader.result);
-        if (importJson(text)) { setByEvent(loadAll()); return; }
-        const cs = importCstimerJson(text);
-        if (cs) {
-          setByEvent(prev => {
-            const merged = { ...prev };
-            for (const [evId, list] of Object.entries(cs)) {
-              merged[evId] = [...(merged[evId] ?? []), ...list].sort((a, b) => a.ts - b.ts);
-            }
-            return merged;
-          });
-          alert((isZh ? `从 cstimer 导入了 ${Object.values(cs).reduce((n, l) => n + l.length, 0)} 次成绩。` : `Imported ${Object.values(cs).reduce((n, l) => n + l.length, 0)} solves from cstimer.`));
-          return;
-        }
-        alert(tr({ zh: '导入失败：文件格式无效。', en: 'Import failed: invalid file.'
-        }));
-      };
-      reader.readAsText(file);
-    };
-    input.click();
-  }, [isZh]);
-
   // ── More menu items ─────────────────────────────────────────────
   const moreItems = useMemo<MoreMenuItem[]>(() => [
     // External timing devices. These used to sit inside the mobile-only block,
@@ -1922,14 +1865,6 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     { icon: <Keyboard size={14} />, label: tr({ zh: '快捷键', en: 'Shortcuts'
     }), onClick: () => setShortcutsOpen(true) },
     { icon: fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />, label: tr({ zh: '全屏', en: 'Fullscreen' }), onClick: toggleFullscreen },
-    { icon: <Upload size={14} />, label: tr({ zh: '导入（自动识别 cstimer JSON）', en: 'Import (auto-detects cstimer JSON)'
-    }), onClick: handleImport },
-    { icon: <Download size={14} />, label: tr({ zh: '导出 JSON', en: 'Export JSON'
-    }), onClick: handleExport },
-    { icon: <FileSpreadsheet size={14} />, label: tr({ zh: '导出 CSV', en: 'Export CSV'
-    }), onClick: handleExportCsv },
-    { icon: <FileText size={14} />, label: tr({ zh: '导出 Speedstacks', en: 'Export Speedstacks'
-    }), onClick: handleExportSs },
     { icon: <Plus size={14} />, label: tr({ zh: '手动录入', en: 'Manual entry'
     }), onClick: () => setManualEntryOpen(true) },
     { icon: <Link2 size={14} />, label: tr({ zh: '粘贴 replay 链接', en: 'Paste replay URL'
@@ -1941,7 +1876,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     }), onClick: () => window.print() },
     { icon: <Trash2 size={14} />, label: tr({ zh: '清空当前项目', en: 'Clear current event'
     }), onClick: clearAll, danger: true, disabled: !solves.length },
-  ], [isZh, handleImport, handleExport, handleExportCsv, handleExportSs, clearAll, solves.length, drillAllowed, drillTarget, fullscreen, toggleFullscreen, handlePasteReplay, isMobile, stackmat, i18n, event]);
+  ], [isZh, clearAll, solves.length, drillAllowed, drillTarget, fullscreen, toggleFullscreen, handlePasteReplay, isMobile, stackmat, i18n, event]);
 
   const allSolves = useMemo(() => {
     const out: Solve[] = [];
