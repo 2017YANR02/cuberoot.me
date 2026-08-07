@@ -891,6 +891,132 @@
 .trainer-scramble-kind:disabled { opacity: 0.5; }
 .trainer-set-add-select { field-sizing: content; }
 
+/* 智能魔方显示方式:原生 option 不能画图,所以用当前缩略图触发一张模式画廊。 */
+.trainer-cube-view-picker {
+  position: relative;
+  align-self: flex-start;
+}
+.trainer-cube-view-trigger {
+  display: grid;
+  grid-template-columns: 42px max-content 14px;
+  align-items: center;
+  gap: 7px;
+  padding: 2px 7px 2px 3px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: var(--background);
+  color: var(--foreground);
+  cursor: pointer;
+  text-align: left;
+}
+.trainer-cube-view-trigger:hover,
+.trainer-cube-view-trigger.is-open {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border-default));
+}
+.trainer-cube-view-trigger:focus-visible,
+.trainer-cube-view-option:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.trainer-cube-view-trigger-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.trainer-cube-view-trigger-copy strong,
+.trainer-cube-view-option strong {
+  font-size: 12px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.trainer-cube-view-trigger-copy > span,
+.trainer-cube-view-option > span:last-child {
+  color: var(--muted-foreground);
+  font-size: 10px;
+  line-height: 1.25;
+}
+.trainer-cube-view-caret {
+  color: var(--muted-foreground);
+  transition: transform 140ms ease;
+}
+.trainer-cube-view-trigger.is-open .trainer-cube-view-caret { transform: rotate(180deg); }
+.trainer-cube-view-cube,
+.trainer-cube-view-none {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.trainer-cube-view-cube .puzzle-art,
+.trainer-cube-view-cube svg {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+}
+.trainer-cube-view-none {
+  flex-direction: column;
+  gap: 1px;
+  color: var(--faint-foreground);
+}
+.trainer-cube-view-none span {
+  font-size: 9px;
+  line-height: 1;
+  white-space: nowrap;
+}
+/* anchored-panel: clamped (usePanelClamp in TrainerCubeViewPicker) */
+.trainer-cube-view-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 70;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  width: min(272px, calc(100vw - 16px));
+  max-height: min(360px, 70vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  background: var(--popover);
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--foreground) 16%, transparent);
+}
+.trainer-cube-view-option {
+  display: grid;
+  grid-template-rows: 56px auto auto;
+  justify-items: center;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  padding: 6px 4px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+  text-align: center;
+}
+.trainer-cube-view-option:hover {
+  background: color-mix(in srgb, var(--foreground) 7%, transparent);
+}
+.trainer-cube-view-option.is-active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.trainer-cube-view-option.is-active > span:last-child { color: var(--accent); }
+/* 五项排成 2 + 2 + 1,最后的 q2Look 居中,视觉上不留一个像“缺选项”的空格。 */
+.trainer-cube-view-option:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+  justify-self: center;
+  width: calc(50% - 2px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .trainer-cube-view-caret { transition: none; }
+}
+
 /* 房间码输入框 */
 .trainer-coop-code {
   width: 5.5em;
