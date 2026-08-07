@@ -235,8 +235,10 @@ function renderQLastSVG(options: ResolvedCubeOptions): string {
     }
   }
   for (let pos = 0; pos < n; pos++) {
-    cells.push({ face: Face.L, row: 0, col: pos, x: offset + pos, y: 0 })
-    cells.push({ face: Face.B, row: 0, col: n - 1 - pos, x: 0, y: offset + pos })
+    // Standard URFDLB orientation around U: B is above (reversed), L is left
+    // (natural top-row order), R is right (reversed), and F is below.
+    cells.push({ face: Face.B, row: 0, col: n - 1 - pos, x: offset + pos, y: 0 })
+    cells.push({ face: Face.L, row: 0, col: pos, x: 0, y: offset + pos })
     cells.push({ face: Face.R, row: 0, col: n - 1 - pos, x: offset + n + gap, y: offset + pos })
   }
 
@@ -271,13 +273,16 @@ function renderQCubeSVG(options: ResolvedCubeOptions): string {
     }
   }
   for (let pos = 0; pos < n - 1; pos++) {
-    cells.push({ face: Face.L, row: 0, col: n - 1 - pos, x: 0, y: pos })
+    // L's top row runs back → front beside U's left edge; R runs back → front
+    // only after reversal. This is URFDLB orientation, not csTimer's internal
+    // DLBURF storage orientation.
+    cells.push({ face: Face.L, row: 0, col: pos, x: 0, y: pos })
     cells.push({ face: Face.R, row: 0, col: n - 1 - pos, x: rightX, y: pos })
   }
-  cells.push({ face: Face.L, row: 0, col: 0, x: 0, y: n - 1, height: 2 + gap })
+  cells.push({ face: Face.L, row: 0, col: n - 1, x: 0, y: n - 1, height: 2 + gap })
   cells.push({ face: Face.R, row: 0, col: 0, x: rightX, y: n - 1, height: 2 + gap })
   for (let row = 1; row < n; row++) {
-    cells.push({ face: Face.L, row, col: 0, x: 0, y: frontY + row })
+    cells.push({ face: Face.L, row, col: n - 1, x: 0, y: frontY + row })
     cells.push({ face: Face.R, row, col: 0, x: rightX, y: frontY + row })
   }
 
