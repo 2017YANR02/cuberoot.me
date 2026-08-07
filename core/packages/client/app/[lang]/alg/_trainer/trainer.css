@@ -918,23 +918,11 @@
   outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
-.trainer-cube-view-trigger-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-}
-.trainer-cube-view-trigger-copy strong,
+.trainer-cube-view-trigger > strong,
 .trainer-cube-view-option strong {
   font-size: 12px;
   line-height: 1.2;
   white-space: nowrap;
-}
-.trainer-cube-view-trigger-copy > span,
-.trainer-cube-view-option > span:last-child {
-  color: var(--muted-foreground);
-  font-size: 10px;
-  line-height: 1.25;
 }
 .trainer-cube-view-caret {
   color: var(--muted-foreground);
@@ -954,16 +942,7 @@
   max-width: 100%;
   max-height: 100%;
 }
-.trainer-cube-view-none {
-  flex-direction: column;
-  gap: 1px;
-  color: var(--faint-foreground);
-}
-.trainer-cube-view-none span {
-  font-size: 9px;
-  line-height: 1;
-  white-space: nowrap;
-}
+.trainer-cube-view-none { color: var(--faint-foreground); }
 /* anchored-panel: clamped (usePanelClamp in TrainerCubeViewPicker) */
 .trainer-cube-view-panel {
   position: absolute;
@@ -1006,7 +985,6 @@
   color: var(--accent);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
 }
-.trainer-cube-view-option.is-active > span:last-child { color: var(--accent); }
 /* 五项排成 2 + 2 + 1,最后的 q2Look 居中,视觉上不留一个像“缺选项”的空格。 */
 .trainer-cube-view-option:last-child:nth-child(odd) {
   grid-column: 1 / -1;
