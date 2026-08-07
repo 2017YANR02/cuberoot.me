@@ -1633,6 +1633,8 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [bluetoothOpen, setBluetoothOpen] = useState(false);
+  const [bluetoothConnectAttempt, setBluetoothConnectAttempt] = useState<Promise<void> | null>(null);
+  const bluetoothConnectingRef = useRef(false);
   const [stackmatOpen, setStackmatOpen] = useState(false);
   const [trainerSubsetOpen, setTrainerSubsetOpen] = useState<'oll' | 'pll' | null>(null);
   const [statsModalOpen, setStatsModalOpen] = useState(false);
@@ -1641,6 +1643,24 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   const [bulkScrambleOpen, setBulkScrambleOpen] = useState(false);
   const [bldHelperOpen, setBldHelperOpen] = useState(false);
   const [showCrossSession, setShowCrossSession] = useState(false);
+
+  const openBluetooth = useCallback(() => {
+    setBluetoothOpen(true);
+    if (bluetoothCube.status.connected || bluetoothConnectingRef.current) return;
+
+    // requestDevice() must run in this click's user-activation call stack.
+    // BluetoothModal observes the same promise so it can still own progress,
+    // errors, and the manual retry path.
+    bluetoothConnectingRef.current = true;
+    const attempt = bluetoothCube.connect();
+    setBluetoothConnectAttempt(attempt);
+    void attempt.finally(() => {
+      bluetoothConnectingRef.current = false;
+    }).catch(() => {
+      // BluetoothModal renders the actionable error. This catch only prevents
+      // the parent-owned observer promise from becoming unhandled.
+    });
+  }, [bluetoothCube]);
 
   // ── Fullscreen ──────────────────────────────────────────────────
   const [fullscreen, setFullscreen] = useState(false);
@@ -1939,7 +1959,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     }), onClick: () => setShortcutsOpen(true) },
     { icon: fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />, label: tr({ zh: '全屏', en: 'Fullscreen' }), onClick: toggleFullscreen },
     { icon: <Bluetooth size={14} />, label: tr({ zh: '智能魔方', en: 'Smart cube'
-    }), onClick: () => setBluetoothOpen(true) },
+    }), onClick: openBluetooth },
     { icon: <Upload size={14} />, label: tr({ zh: '导入（自动识别 cstimer JSON）', en: 'Import (auto-detects cstimer JSON)'
     }), onClick: handleImport },
     { icon: <Download size={14} />, label: tr({ zh: '导出 JSON', en: 'Export JSON'
@@ -2237,7 +2257,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
           <button
             type="button"
             className={`tb-btn${bluetoothCube.status.connected ? ' connected' : ''}`}
-            onClick={() => setBluetoothOpen(true)}
+            onClick={openBluetooth}
             title={bluetoothCube.status.connected
               ? ((isZh ? `已连接 ${bluetoothCube.status.deviceName}` : `Connected: ${bluetoothCube.status.deviceName}`))
               : tr({ zh: '智能魔方（iOS 用 Bluefy）', en: 'Smart cube (use Bluefy on iOS)'
@@ -2737,10 +2757,15 @@ export default function SoloView({ playersControl }: SoloViewProps) {
         <BluetoothModal
           isZh={isZh}
           cube={bluetoothCube}
+          connectAttempt={bluetoothConnectAttempt}
           macPrompt={macPrompt}
           onSubmitMac={(mac) => resolveMac(mac)}
           onCancelMac={() => resolveMac(null)}
-          onClose={() => { if (macResolverRef.current) resolveMac(null); setBluetoothOpen(false); }}
+          onClose={() => {
+            if (macResolverRef.current) resolveMac(null);
+            setBluetoothOpen(false);
+            setBluetoothConnectAttempt(null);
+          }}
           // Failures are the modal's job — it knows which step broke and can
           // say so next to the button that started it.
           onConnect={pick => bluetoothCube.connect(pick)}
