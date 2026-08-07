@@ -89,7 +89,7 @@ describe('component reuse rule registry', () => {
   });
 
   it('is wired into both repository hook configurations and the component catalog', () => {
-    const codex = JSON.parse(readFileSync(join(REPO_ROOT, '.Codex', 'hooks.json'), 'utf8'));
+    const codex = JSON.parse(readFileSync(join(REPO_ROOT, '.codex', 'hooks.json'), 'utf8'));
     const preTool = codex.hooks?.PreToolUse ?? [];
     expect(preTool.some((group: { matcher?: string; hooks?: Array<{ command?: string }> }) =>
       group.matcher?.includes('apply_patch')
