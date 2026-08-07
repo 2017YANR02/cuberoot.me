@@ -1922,8 +1922,6 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     { icon: <Keyboard size={14} />, label: tr({ zh: '快捷键', en: 'Shortcuts'
     }), onClick: () => setShortcutsOpen(true) },
     { icon: fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />, label: tr({ zh: '全屏', en: 'Fullscreen' }), onClick: toggleFullscreen },
-    { icon: <Bluetooth size={14} />, label: tr({ zh: '智能魔方', en: 'Smart cube'
-    }), onClick: openBluetooth },
     { icon: <Upload size={14} />, label: tr({ zh: '导入（自动识别 cstimer JSON）', en: 'Import (auto-detects cstimer JSON)'
     }), onClick: handleImport },
     { icon: <Download size={14} />, label: tr({ zh: '导出 JSON', en: 'Export JSON'
