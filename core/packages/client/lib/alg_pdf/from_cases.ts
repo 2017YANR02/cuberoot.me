@@ -56,6 +56,8 @@ export interface FromCasesOptions {
   maxAlgs?: number;
   /** 每个子组另起一页(见 {@link AlgPdfSheetInput.groupPerPage});只有一个子组时自动失效。 */
   groupPerPage?: boolean;
+  /** Square-1 当前的顶面配色；打印图必须跟网页同步。 */
+  sq1BlackTop?: boolean;
 }
 
 export function algSheetFromCases(o: FromCasesOptions): AlgSheetInput {
@@ -90,7 +92,10 @@ export function algSheetFromCases(o: FromCasesOptions): AlgSheetInput {
         setup: setups && setup ? formatScrambleForEvent(puzzle, setup) : undefined,
         algs: picked.map(e => formatScrambleForEvent(puzzle, rawAlg ? e.alg : displayAlg(e.alg))),
         thumb: thumbs
-          ? { puzzle, set, sticker: c.sticker, alg: firstAlg || c.setup || '', setup, size: 160 }
+          ? {
+              puzzle, set, sticker: c.sticker, alg: firstAlg || c.setup || '', setup, size: 160,
+              ...(puzzle === 'sq1' ? { sq1BlackTop: o.sq1BlackTop ?? true } : {}),
+            }
           : undefined,
       });
     }

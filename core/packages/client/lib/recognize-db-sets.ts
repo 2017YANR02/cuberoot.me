@@ -17,7 +17,7 @@
  * 是同一张(COLL 压灰棱、ELL / ZBLL 全彩俯视),两处各写一份迟早会分叉。
  */
 import { loadAlg, type AlgCase } from '@cuberoot/shared';
-import { cubeThumbParams } from '@/components/CaseThumb';
+import { cubeThumbParams } from '@/lib/alg_thumb_plan';
 import { displayZbllToken, OLL_NAME_BY_NUMBER, primaryCaseName } from './alg_case_display';
 import type { KeyStep, RecognizeButton, RecognizeImage, RecognizeSet } from './recognize-sets';
 import { shuffle } from './pll-helpers';
