@@ -25,11 +25,11 @@ interface ViewOption {
 
 function viewOptions(): ViewOption[] {
   return [
-    { value: 'none', name: 'None' },
     { value: '3d', name: 'Virtual' },
     { value: 'qcube', name: 'qCube' },
     { value: 'qlast', name: 'qLast' },
     { value: 'q2look', name: 'q2Look' },
+    { value: 'none', name: 'None' },
   ];
 }
 
