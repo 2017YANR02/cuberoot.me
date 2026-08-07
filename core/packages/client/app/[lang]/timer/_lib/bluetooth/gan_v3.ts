@@ -1,6 +1,6 @@
 /**
- * GAN Smart Cube v3 driver — covers GAN 356 i / i3 / i Play / 357 Play
- * (the firmwares that expose the 8653000a-… service introduced ~2022).
+ * GAN Smart Cube Gen3-protocol driver for firmwares that expose the
+ * 8653000a-… service introduced around 2022.
  *
  * Protocol reference: cstimer's `src/js/hardware/gancube.js` (v3 path —
  * `v3init` / `parseV3Data`). This driver is byte-for-byte aligned with that
@@ -289,12 +289,12 @@ export const ganV3Driver: CubeDriver = {
 
   matches(device: BluetoothDevice): boolean {
     const n = device.name ?? '';
-    // GAN 356 i / i3 / i Play / 357 — the v3 family. cstimer in fact accepts
+    // GAN 356 / i-prefixed smart-cube names. cstimer in fact accepts
     // any 'GAN' / 'MG' / 'AiCube' prefix and discriminates on the service
     // UUID at runtime, but our registry routes by `matches()` so we narrow
     // here to the 356-class names. v4 (GAN 12 / 13 / 14 / Mini / MG / AiCube)
     // is matched by gan_v4 and explicitly excludes 356 via lookahead.
-    return /^(GAN-?(356|357|i)|Gi[CSBM3]?-)/i.test(n);
+    return /^(GAN-?(356|i)|Gi[CSBM3]?-)/i.test(n);
   },
 
   async start(server, onMove, ctx): Promise<CubeDriverStartResult> {

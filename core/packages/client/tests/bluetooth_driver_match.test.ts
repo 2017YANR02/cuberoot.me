@@ -8,7 +8,7 @@
  *
  * 钉的是两件事:
  *
- * 1. **v3 / v4 的分界**。两家都以 `GAN` 开头,靠 356/357 这几个编号分开;v4 那条
+ * 1. **v3 / v4 的分界**。两家都以 `GAN` 开头,靠 356/i 前缀与两位数 ui 型号分开;v4 那条
  *    的 `(?!356)` 前瞻一旦写反,GAN 356 会被 v4 抢走,而 v4 是另一套加密和另一套
  *    事件号 —— 抢走之后不是不解码,是解出垃圾。
  *
@@ -27,10 +27,12 @@ const named = (name: string) => ({ name } as BluetoothDevice);
 
 describe('GAN 名字兜底', () => {
   it('356 家族归 v3,不被 v4 抢走', () => {
-    for (const n of ['GAN-356i', 'GAN356 i3', 'GAN-357', 'GANi Carry']) {
+    for (const n of ['GAN-356i', 'GAN356 i3', 'GANi Carry']) {
       expect(ganV3Driver.matches(named(n)), n).toBe(true);
       expect(ganV4Driver.matches(named(n)), n).toBe(false);
     }
+    expect(ganV3Driver.matches(named('GAN-357'))).toBe(false);
+    expect(ganV4Driver.matches(named('GAN-357'))).toBe(false);
   });
 
   it('两位数编号归 v4 —— 含发布时代码里还没写过的型号', () => {
