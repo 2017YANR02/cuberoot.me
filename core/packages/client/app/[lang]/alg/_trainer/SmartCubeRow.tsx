@@ -20,6 +20,7 @@ import { tr } from '@/i18n/tr';
 import { detectBluetoothEnv, envAdvice } from '../../timer/_lib/bluetooth';
 import type { CubeStep } from '../../timer/_lib/cube/steps';
 import type { TrainerCubeState } from './useTrainerCube';
+import TrainerCubeViewPicker from './TrainerCubeViewPicker';
 
 /** What each finish line is called, in the words the alg library already uses. */
 function stepLabel(step: CubeStep): string {
@@ -109,18 +110,7 @@ export default function SmartCubeRow({ enabled, onEnabledChange, state, supporte
       {cube.status.connected && (
         <div className="trainer-opts-row">
           <span className="trainer-opts-label">{tr({ zh: '显示', en: 'Display' })}</span>
-          <select
-            className="trainer-scramble-kind"
-            value={view}
-            onChange={event => setView(event.target.value as TrainerCubeState['view'])}
-            aria-label={tr({ zh: '智能魔方显示方式', en: 'Smart-cube display' })}
-          >
-            <option value="none">None</option>
-            <option value="3d">Virtual</option>
-            <option value="qcube">qCube</option>
-            <option value="qlast">qLast</option>
-            <option value="q2look">q2Look</option>
-          </select>
+          <TrainerCubeViewPicker value={view} onChange={setView} />
         </div>
       )}
 
