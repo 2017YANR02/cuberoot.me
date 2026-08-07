@@ -24,7 +24,6 @@ import {
   Bluetooth, Mic, BarChart3, Plus, Wrench, ListPlus, Printer, FileText,
   FileSpreadsheet, AlertTriangle, Target, Crosshair, Keyboard, Link2, Globe,
   Brain, X, Check, CheckCircle2, Footprints, Repeat,
-  Timer,
 } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import WcaEventSelector from '@/components/WcaEventSelector';
@@ -83,7 +82,6 @@ import { nxnSizeForEvent } from '../_lib/cube/colors';
 import { DIGIT_OPENS_SOLVE, bindingForEvent, resolveKeymap } from '../_lib/keymap';
 import { useAutoReady } from '../_lib/bluetooth/auto_ready';
 import { useStackmat } from '../_lib/stackmat';
-import { useBluetoothTimer } from '../_lib/bluetooth/timer';
 import { useMultiStage } from '../_lib/multistage';
 import { useBldMemo } from '../_lib/useBldMemo';
 
@@ -1406,9 +1404,8 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     return () => { subs.delete(inspector); };
   }, []);
 
-  // ── External timing devices (Stackmat mic + BLE smart timers) ───
-  // All of them hand us a time the DEVICE measured, so we record it verbatim
-  // rather than re-timing locally.
+  // ── External timing device (Stackmat mic) ───────────────────────
+  // Record the time the device measured verbatim rather than re-timing locally.
   const externalTimeRecordRef = useRef<((ms: number) => void) | null>(null);
   externalTimeRecordRef.current = (ms: number) => {
     const solve = makeSolve({ timeMs: ms, scramble: scrambleAtStartRef.current, event, penalty: 'ok' });
@@ -1417,14 +1414,6 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     nextScramble();
   };
   const stackmat = useStackmat({ onStop: (ms) => externalTimeRecordRef.current?.(ms) });
-
-  const bleTimer = useBluetoothTimer({
-    onStop: (ms) => externalTimeRecordRef.current?.(ms),
-    onNeedMac: (deviceName) => requestMac(deviceName),
-    onConnectionLost: () => {
-      setInfoToast({ msg: tr({ zh: '计时器连接断开', en: 'Timer disconnected' }) });
-    },
-  });
 
   // ── Metronome ───────────────────────────────────────────────────
   // Holds the shared metronome on for the inspect/solve stretch instead of
@@ -1910,30 +1899,6 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       // difference between "works" and "silently does nothing".
       onClick: () => setStackmatOpen(true),
     },
-    {
-      icon: <Timer size={14} />,
-      label: bleTimer.status.connected
-        ? tr({
-            zh: `计时器：${bleTimer.status.deviceName}（点击断开）`,
-            en: `Timer: ${bleTimer.status.deviceName} (disconnect)`,
-          })
-        : tr({ zh: '连接蓝牙计时器', en: 'Connect Bluetooth timer' }),
-      onClick: async () => {
-        if (bleTimer.status.connected) { bleTimer.disconnect(); return; }
-        try { await bleTimer.connect(); }
-        catch (err) {
-          const kind = (err as Error & { kind?: string }).kind;
-          setInfoToast({
-            msg: kind === 'no-web-bluetooth'
-              ? tr({ zh: '当前浏览器不支持 Web Bluetooth', en: 'This browser has no Web Bluetooth' })
-              : tr({
-                  zh: `连接计时器失败：${(err as Error).message}`,
-                  en: `Timer connect failed: ${(err as Error).message}`,
-                }),
-          });
-        }
-      },
-    },
     ...(isMobile ? [
       { icon: <BarChart3 size={14} />, label: tr({ zh: '统计', en: 'Stats'
     }), onClick: () => setStatsModalOpen(true) },
@@ -1978,7 +1943,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     }), onClick: () => window.print() },
     { icon: <Trash2 size={14} />, label: tr({ zh: '清空当前项目', en: 'Clear current event'
     }), onClick: clearAll, danger: true, disabled: !solves.length },
-  ], [isZh, handleImport, handleExport, handleExportCsv, handleExportSs, clearAll, solves.length, drillAllowed, drillTarget, fullscreen, toggleFullscreen, handlePasteReplay, isMobile, stackmat, bleTimer, i18n, event]);
+  ], [isZh, handleImport, handleExport, handleExportCsv, handleExportSs, clearAll, solves.length, drillAllowed, drillTarget, fullscreen, toggleFullscreen, handlePasteReplay, isMobile, stackmat, i18n, event]);
 
   const allSolves = useMemo(() => {
     const out: Solve[] = [];
