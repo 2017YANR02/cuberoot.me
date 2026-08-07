@@ -13,10 +13,9 @@
  * clock will stop. "Stops when OLL is done" has to be on screen.
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Bluetooth, Check, X } from 'lucide-react';
 
-import BoolToggle from '@/components/BoolToggle';
 import { tr } from '@/i18n/tr';
 import { detectBluetoothEnv, envAdvice } from '../../timer/_lib/bluetooth';
 import type { CubeStep } from '../../timer/_lib/cube/steps';
@@ -53,6 +52,12 @@ export default function SmartCubeRow({ enabled, onEnabledChange, state, supporte
   const [error, setError] = useState<string | null>(null);
   const [mac, setMac] = useState('');
 
+  // 连接本身就是启用智能魔方的明确意图。兼容旧版本里曾手动关掉开关、
+  // 但魔方仍保持连接的本地偏好,避免出现「已连接却不工作」且无入口可恢复。
+  useEffect(() => {
+    if (supported && cube.status.connected && !enabled) onEnabledChange(true);
+  }, [supported, cube.status.connected, enabled, onEnabledChange]);
+
   if (!supported) return null;
 
   const doConnect = async () => {
@@ -60,6 +65,7 @@ export default function SmartCubeRow({ enabled, onEnabledChange, state, supporte
     setBusy(true);
     try {
       await connect();
+      onEnabledChange(true);
     } catch (e) {
       // The hook's error already names the reason (no Web Bluetooth, user
       // cancelled the picker, unsupported device), so pass it through.
@@ -75,11 +81,6 @@ export default function SmartCubeRow({ enabled, onEnabledChange, state, supporte
   return (
     <>
       <div className="trainer-opts-row">
-        <BoolToggle
-          value={enabled}
-          onChange={onEnabledChange}
-          label={tr({ zh: '智能魔方', en: 'Smart cube' })}
-        />
         {cube.status.connected ? (
           <>
             <span className="trainer-opts-label">{cube.status.deviceName}</span>
@@ -98,7 +99,9 @@ export default function SmartCubeRow({ enabled, onEnabledChange, state, supporte
             disabled={busy || !!advice}
           >
             <Bluetooth size={13} />
-            {busy ? tr({ zh: '连接中', en: 'Connecting' }) : tr({ zh: '连接魔方', en: 'Connect cube' })}
+            {busy
+              ? tr({ zh: '连接中', en: 'Connecting' })
+              : tr({ zh: '连接智能魔方', en: 'Connect smart cube' })}
           </button>
         )}
       </div>
@@ -157,7 +160,7 @@ export default function SmartCubeRow({ enabled, onEnabledChange, state, supporte
               en: 'Connect a bluetooth cube and each case is handed to you on the cube itself — no scramble to apply, and the clock starts and stops on its own. The cube in your hands drifts further from solved every rep, which never matters',
             })
           : reason === 'off'
-            ? tr({ zh: '开关关着:魔方仍连着,但不驱动计时', en: 'Switched off: the cube stays connected but doesn’t drive the clock' })
+            ? tr({ zh: '正在启用智能魔方…', en: 'Enabling smart cube…' })
             : reason === 'unreadable-case'
               ? tr({ zh: '这题的打乱含看不懂的记号,本题由你自己停表', en: 'This case’s scramble has notation we can’t read, so stop the clock yourself' })
               : reason === 'no-case'
