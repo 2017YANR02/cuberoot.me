@@ -5,7 +5,7 @@
  *
  * 原生 select 的 option 画不了图片,而 qCube / qLast / q2Look 只看名字无法猜出
  * 差别。这里把当前模式的缩略图留在触发钮上,展开后再用同一套 VisualCube 渲染
- * 五个图文选项。None 没有实时投影,所以用“题图”占位明确表示会保留原 case 图。
+ * 五个图文选项。None 没有实时投影,所以只用图片图标占位。
  */
 import { useEffect, useRef, useState } from 'react';
 import { ChevronDown, Image as ImageIcon } from 'lucide-react';
@@ -21,36 +21,15 @@ const SAMPLE_FACELETS = 'u'.repeat(9) + 'r'.repeat(9) + 'f'.repeat(9)
 interface ViewOption {
   value: TrainerCubeView;
   name: string;
-  description: string;
 }
 
 function viewOptions(): ViewOption[] {
   return [
-    {
-      value: 'none',
-      name: 'None',
-      description: tr({ zh: '保留题图', en: 'Keep case image' }),
-    },
-    {
-      value: '3d',
-      name: 'Virtual',
-      description: tr({ zh: '三维跟手转动', en: 'Rotating 3D mirror' }),
-    },
-    {
-      value: 'qcube',
-      name: 'qCube',
-      description: tr({ zh: '顶面和正面', en: 'Top and front faces' }),
-    },
-    {
-      value: 'qlast',
-      name: 'qLast',
-      description: tr({ zh: '完整末层色块', en: 'Full last-layer colors' }),
-    },
-    {
-      value: 'q2look',
-      name: 'q2Look',
-      description: tr({ zh: '两步法精简图', en: 'Two-look projection' }),
-    },
+    { value: 'none', name: 'None' },
+    { value: '3d', name: 'Virtual' },
+    { value: 'qcube', name: 'qCube' },
+    { value: 'qlast', name: 'qLast' },
+    { value: 'q2look', name: 'q2Look' },
   ];
 }
 
@@ -59,7 +38,6 @@ function ViewPreview({ view, size }: { view: TrainerCubeView; size: number }) {
     return (
       <span className="trainer-cube-view-none" style={{ width: size, height: size }} aria-hidden="true">
         <ImageIcon size={size * 0.4} />
-        <span>{tr({ zh: '题图', en: 'Case' })}</span>
       </span>
     );
   }
@@ -126,10 +104,7 @@ export default function TrainerCubeViewPicker({
         })}
       >
         <ViewPreview view={active.value} size={42} />
-        <span className="trainer-cube-view-trigger-copy">
-          <strong>{active.name}</strong>
-          <span>{active.description}</span>
-        </span>
+        <strong>{active.name}</strong>
         <ChevronDown size={14} className="trainer-cube-view-caret" aria-hidden="true" />
       </button>
 
@@ -151,7 +126,6 @@ export default function TrainerCubeViewPicker({
             >
               <ViewPreview view={option.value} size={56} />
               <strong>{option.name}</strong>
-              <span>{option.description}</span>
             </button>
           ))}
         </div>
