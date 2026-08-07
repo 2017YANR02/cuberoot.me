@@ -4,16 +4,34 @@
  * Settings panel — modal launched from the topbar gear button.
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, ChevronRight, CloudDownload, CloudUpload, Download, FileSpreadsheet, FileText, LogIn, RefreshCw, Target, X } from 'lucide-react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import {
+  Bluetooth,
+  CloudDownload,
+  CloudUpload,
+  Database,
+  Dices,
+  Download,
+  FileSpreadsheet,
+  FileText,
+  Keyboard,
+  LogIn,
+  Palette,
+  RefreshCw,
+  Target,
+  Timer as TimerIcon,
+  Trophy,
+  Volume2,
+} from 'lucide-react';
 import { formatTargetTime, parseDailySolveGoal, parseTargetTime, resetSettings, updateSettings, useSettings } from '../_lib/settings';
 import TimerFontPicker from '@/components/TimerFontPicker';
 import { warmupSound, play, playInspectionBeep } from '../_lib/sound';
 import { isVoiceAvailable } from '../_lib/sound/voice';
 import { getSeedCounter, resetSeedCounter } from '../_lib/scramble';
 import {
-  appendSolves, exportJson, exportSpeedstacks, importJson, listBackups,
+  appendSolves, exportJson, exportSpeedstacks, importJson, inspectImportJson, listBackups,
   loadAll, pushBackup, replaceSolves, restoreBackup,
+  type BackupEntry,
 } from '../_lib/storage/db';
 import { parseCstimerExport, type CstimerSessionParsed } from '../_lib/storage/import_cstimer';
 import { exportCstimerJson } from '../_lib/storage/export_cstimer';
@@ -21,14 +39,17 @@ import { exportSolvesCsv } from '../_lib/storage/export_csv';
 import { uploadBackup, restoreFromCloud, fetchBackupMeta, formatSyncTime, type CloudBackupMeta } from '../_lib/storage/cloud';
 import { useAuthStore } from '@/lib/auth-store';
 import { reanalyzeAll } from '../_lib/storage/reanalyze';
-import { eventInfo, type EventId } from '../_lib/types';
+import { EVENTS, eventInfo, isBldEvent, type EventId } from '../_lib/types';
 import { wcaEventId, WCA_OPTIMAL_EVENTS } from '../_lib/scramble/wca_pool';
 import CubeOrientationSelect from '@/components/CubeOrientationSelect';
-import { useIsMobile } from '@/hooks/useIsMobile';
 import { useMetronome, setMetronome, tapTempo, bpmToTps, BPM_MIN, BPM_MAX } from '@/lib/metronome';
 import { CountryInput } from '@/components/CountryInput';
 import PillToggle from '@/components/PillToggle/PillToggle';
+import SharedBoolToggle from '@/components/BoolToggle';
+import { ClearButton } from '@/components/ClearButton';
+import ResetDefaultsButton from '@/components/ResetDefaultsButton';
 import { tr } from '@/i18n/tr';
+import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { cutoffPhase, roundAttempts, type RoundFormat } from '../_lib/round';
 import {
   RESERVED_BINDINGS,
@@ -43,116 +64,100 @@ import {
 // WcaSourceConfig 顺带 import 进来,「打乱来源」那节移出后这里得自己 import,否则每个 Row 掉样式。
 import '@/components/wca-source.css';
 
-/** 布尔设置统一用 PillToggle 无文字 iOS 风开关,替代裸 checkbox。 */
-function BoolToggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
-  return <PillToggle value={value} onChange={onChange} />;
-}
-
 interface Props {
-  isZh: boolean;
   onClose: () => void;
   /** Current event — target-time setting applies to this event. */
   event: EventId;
   /** Called after the local DB is wholesale-replaced (cloud restore) so the host can refresh. */
   onDataReplaced?: () => void;
-  /** 「工具」清单(导入导出 / 蓝牙 / 打印 / 打乱足迹…)。原来是底部导航的第三档,那条
-   *  导航撤掉后它落在这里,作为第一节。清单本身仍由 SoloView 组装 —— 每一项都闭包在它的
-   *  状态上(弹窗开关、Stackmat、全屏…),搬过来只会把那堆状态一起拖进设置面板。 */
-  tools?: React.ReactNode;
 }
 
-interface AccordionSectionProps {
-  id: string;
-  title: string;
-  defaultExpanded: boolean;
-  useMobile: boolean;
-  expanded: Set<string>;
-  setExpanded: (next: Set<string>) => void;
+type SettingsCategory = 'timer' | 'smart-cube' | 'scramble' | 'training' | 'appearance' | 'sound' | 'data' | 'advanced';
+
+interface SettingsSectionProps {
+  category: SettingsCategory;
+  activeCategory: SettingsCategory;
+  title?: string;
   children: React.ReactNode;
-  /** 挂在标题同一行末尾的控件(如整节的总开关),不占单独一行。是展开/折叠按钮的兄弟节点
-   *  (不嵌在按钮内),点它不会触发手风琴折叠。 */
   headerControl?: React.ReactNode;
 }
 
-function AccordionSection({ id, title, defaultExpanded, useMobile, expanded, setExpanded, children, headerControl }: AccordionSectionProps) {
-  // Initialize expansion state on mount.
-  useEffect(() => {
-    if (defaultExpanded && !expanded.has(id)) {
-      const next = new Set(expanded);
-      next.add(id);
-      setExpanded(next);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  if (!useMobile) {
-    return (
-      <div className="modal-section">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <h3 className="settings-h3" style={{ margin: '0 0 8px' }}>{title}</h3>
-          {headerControl && <span style={{ marginLeft: 'auto', marginBottom: 8 }}>{headerControl}</span>}
-        </div>
-        {children}
-      </div>
-    );
-  }
-
-  const isOpen = expanded.has(id);
-  const toggle = () => {
-    const next = new Set(expanded);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    setExpanded(next);
-  };
-
+function SettingsSection({ category, activeCategory, title, children, headerControl }: SettingsSectionProps) {
+  if (category !== activeCategory) return null;
   return (
-    <div className="modal-section">
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          minHeight: 44,
-          borderBottom: '1px solid var(--border, rgba(255,255,255,0.08))',
-        }}
-      >
-        <button
-          type="button"
-          className="settings-accordion-header"
-          aria-expanded={isOpen}
-          onClick={toggle}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            flex: 1,
-            minHeight: 44,
-            padding: '10px 4px',
-            background: 'transparent',
-            border: 'none',
-            color: 'inherit',
-            font: 'inherit',
-            textAlign: 'left',
-            cursor: 'pointer',
-          }}
-        >
-          {isOpen
-            ? <ChevronDown size={16} aria-hidden />
-            : <ChevronRight size={16} aria-hidden />}
-          <span className="settings-h3" style={{ margin: 0 }}>{title}</span>
-        </button>
-        {headerControl && <span style={{ paddingRight: 4 }}>{headerControl}</span>}
-      </div>
-      {isOpen && <div style={{ paddingTop: 8 }}>{children}</div>}
-    </div>
+    <section className="settings-section">
+      {(title || headerControl) && (
+        <div className="settings-section-head">
+          {title && <h4>{title}</h4>}
+          {headerControl}
+        </div>
+      )}
+      {children}
+    </section>
   );
 }
 
-export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, tools }: Props) {
+export default function SettingsPanel({ onClose, event, onDataReplaced }: Props) {
   const s = useSettings();
   const metro = useMetronome();
-  const isMobile = useIsMobile();
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(() => new Set(['timing']));
+  const [activeCategory, setActiveCategory] = useState<SettingsCategory>('timer');
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const mainRef = useRef<HTMLElement | null>(null);
+  const categories = [
+    {
+      id: 'timer' as const,
+      label: tr({ zh: '计时', en: 'Timing' }),
+      description: tr({ zh: '启动、观察和成绩精度', en: 'Start, inspection, and precision' }),
+      icon: TimerIcon,
+    },
+    {
+      id: 'smart-cube' as const,
+      label: tr({ zh: '智能魔方', en: 'Smart cube' }),
+      description: tr({ zh: '起表、实况显示和姿态记录', en: 'Start behavior, live view, and orientation' }),
+      icon: Bluetooth,
+    },
+    {
+      id: 'scramble' as const,
+      label: tr({ zh: '打乱', en: 'Scrambles' }),
+      description: tr({ zh: '生成规则、朝向和同步种子', en: 'Rules, orientation, and sync seed' }),
+      icon: Dices,
+    },
+    {
+      id: 'training' as const,
+      label: tr({ zh: '训练', en: 'Training' }),
+      description: tr({ zh: '目标、分段和轮次模拟', en: 'Goals, splits, and round simulation' }),
+      icon: Trophy,
+    },
+    {
+      id: 'appearance' as const,
+      label: tr({ zh: '外观', en: 'Appearance' }),
+      description: tr({ zh: '字体、打乱显示和排名', en: 'Fonts, scramble display, and ranks' }),
+      icon: Palette,
+    },
+    {
+      id: 'sound' as const,
+      label: tr({ zh: '声音与节奏', en: 'Sound & rhythm' }),
+      description: tr({ zh: '提示音、语音和节拍器', en: 'Sounds, voice, and metronome' }),
+      icon: Volume2,
+    },
+    {
+      id: 'data' as const,
+      label: tr({ zh: '数据', en: 'Data' }),
+      description: tr({ zh: '备份、导入和导出', en: 'Backup, import, and export' }),
+      icon: Database,
+    },
+    {
+      id: 'advanced' as const,
+      label: tr({ zh: '高级', en: 'Advanced' }),
+      description: tr({ zh: '快捷键、同步种子和恢复默认', en: 'Shortcuts, sync seed, and reset' }),
+      icon: Keyboard,
+    },
+  ];
+  const activeCategoryMeta = categories.find((category) => category.id === activeCategory)!;
+  useModalDismiss(onClose);
+  useEffect(() => {
+    mainRef.current?.scrollTo({ top: 0 });
+  }, [activeCategory]);
   const [seedTick, setSeedTick] = useState(0);
   const [seedDraft, setSeedDraft] = useState<string>(() => s.syncSeed ?? '');
   // Keep draft in sync when the active seed changes externally (e.g. settings reset).
@@ -161,6 +166,8 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
   // 「最优打乱」只对同态项目(WCA_OPTIMAL_EVENTS)有意义,判据同 WcaSourceConfig。
   const wev = wcaEventId(event);
   const hasOptimal = !!wev && WCA_OPTIMAL_EVENTS.has(wev);
+  const supportsStageSplits = ['222', '333', '444', '555', '666', '777', '333oh', '333fm'].includes(event);
+  const supportsColorNeutral = ['333', '333oh', '333fm', '333bld', '333ni', '333mbld'].includes(event);
 
   // Target-time input is a free-form string while editing; commit on blur /
   // Enter. Empty / invalid / non-positive → clear the per-event target.
@@ -172,8 +179,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
   // Keep input in sync when user changes event while modal is open.
   useEffect(() => {
     setTargetInput(formatTargetTime(currentTargetMs));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [event]);
+  }, [event, currentTargetMs]);
 
   function commitTargetInput(raw: string): void {
     const parsed = parseTargetTime(raw);
@@ -196,6 +202,9 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
   const [goalInput, setGoalInput] = useState<string>(() =>
     currentDailyGoal === null ? '' : String(currentDailyGoal),
   );
+  useEffect(() => {
+    setGoalInput(currentDailyGoal === null ? '' : String(currentDailyGoal));
+  }, [currentDailyGoal]);
   function commitGoalInput(raw: string): void {
     const parsed = parseDailySolveGoal(raw);
     updateSettings({ dailySolveGoal: parsed });
@@ -207,6 +216,10 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
   // same `parseTargetTime`, so `1:00`, `60`, `10.50` all mean what they look like.
   const [roundCutoffInput, setRoundCutoffInput] = useState<string>(() => formatTargetTime(s.round.cutoffMs));
   const [roundLimitInput, setRoundLimitInput] = useState<string>(() => formatTargetTime(s.round.limitMs));
+  useEffect(() => {
+    setRoundCutoffInput(formatTargetTime(s.round.cutoffMs));
+    setRoundLimitInput(formatTargetTime(s.round.limitMs));
+  }, [s.round.cutoffMs, s.round.limitMs]);
   // 0 until a cutoff is actually typed in, which would make the hint read
   // "the first 0 attempts" — fall back to the clamped configured length so the
   // sentence still describes what will happen once a value lands.
@@ -220,6 +233,9 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
   }
 
   const [beepAtInput, setBeepAtInput] = useState<string>(() => (s.inspectionBeepAt ?? []).join(','));
+  useEffect(() => {
+    setBeepAtInput((s.inspectionBeepAt ?? []).join(','));
+  }, [s.inspectionBeepAt]);
   function commitBeepAtInput(raw: string): void {
     const out: number[] = [];
     for (const p of raw.split(/[,，\s]+/).map(x => x.trim()).filter(Boolean)) {
@@ -258,11 +274,33 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
   }, []);
 
   useEffect(() => {
+    const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    dialogRef.current?.focus({ preventScroll: true });
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key !== 'Tab' || !dialogRef.current) return;
+      const focusable = Array.from(dialogRef.current.querySelectorAll<HTMLElement>(
+        'button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])',
+      )).filter((element) => !element.hasAttribute('hidden') && element.getClientRects().length > 0);
+      if (focusable.length === 0) {
+        e.preventDefault();
+        dialogRef.current.focus();
+        return;
+      }
+      const first = focusable[0]!;
+      const last = focusable[focusable.length - 1]!;
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      previouslyFocused?.focus({ preventScroll: true });
+    };
   }, [onClose]);
 
   // ── csTimer import state ──
@@ -270,10 +308,12 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
   const [cstimerSessions, setCstimerSessions] = useState<CstimerSessionParsed[] | null>(null);
   // Per-session "imported" flag so the UI dims/disables the buttons after action.
   const [cstimerImported, setCstimerImported] = useState<Record<string, 'append' | 'replace'>>({});
+  const [cstimerTargets, setCstimerTargets] = useState<Record<string, EventId>>({});
 
   // ── Import / export status ──
   const [ioMsg, setIoMsg] = useState<string | null>(null);
   const ioMsgTimerRef = useRef<number | null>(null);
+  const [backupEntries, setBackupEntries] = useState<BackupEntry[] | null>(null);
 
   // ── Cloud backup state ──
   const user = useAuthStore((st) => st.user);
@@ -307,7 +347,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
     try {
       const { updatedAt, solveCount, byteSize } = await uploadBackup();
       setCloudMeta({ exists: true, solveCount, updatedAt, byteSize });
-      flashCloudMsg((isZh ? `已上传 ${solveCount} 条到云端` : `Uploaded ${solveCount} solves`));
+      flashCloudMsg(tr({ zh: `已上传 ${solveCount} 条到云端`, en: `Uploaded ${solveCount} solves` }));
     } catch {
       flashCloudMsg(tr({ zh: '上传失败,请重试', en: 'Upload failed, try again'
     }));
@@ -374,9 +414,10 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
       const result = await reanalyzeAll(p => {
         setReanalyzeProgress({ scanned: p.scanned, total: p.total });
       });
-      const msg = (isZh
-              ? `已更新 ${result.updated} 条成绩，涉及 ${result.eventsTouched.length} 个项目`
-              : `Updated ${result.updated} solves across ${result.eventsTouched.length} events`);
+      const msg = tr({
+        zh: `已更新 ${result.updated} 条成绩，涉及 ${result.eventsTouched.length} 个项目`,
+        en: `Updated ${result.updated} solves across ${result.eventsTouched.length} events`,
+      });
       setReanalyzeMsg(msg);
       if (reanalyzeMsgTimerRef.current !== null) window.clearTimeout(reanalyzeMsgTimerRef.current);
       reanalyzeMsgTimerRef.current = window.setTimeout(() => {
@@ -474,9 +515,20 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
     const reader = new FileReader();
     reader.onload = () => {
       const text = String(reader.result);
-      if (importJson(text)) {
+      const nativePreview = inspectImportJson(text);
+      if (nativePreview) {
+        const shouldReplace = confirm(tr({
+          zh: `这个备份包含 ${nativePreview.sessionCount} 个会话、${nativePreview.solveCount} 条成绩。导入会覆盖当前全部成绩，是否继续？`,
+          en: `This backup contains ${nativePreview.sessionCount} sessions and ${nativePreview.solveCount} solves. Importing replaces all current solves. Continue?`,
+        }));
+        if (!shouldReplace) return;
+        if (!importJson(text)) {
+          alert(tr({ zh: '导入失败，请重试。', en: 'Import failed. Try again.' }));
+          return;
+        }
         setCstimerSessions(null);
         setCstimerImported({});
+        setCstimerTargets({});
         onDataReplaced?.();
         flashIoMsg(tr({ zh: 'CubeRoot 备份已导入', en: 'CubeRoot backup imported' }));
         return;
@@ -489,6 +541,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
       }
       setCstimerSessions(sessions);
       setCstimerImported({});
+      setCstimerTargets({});
     };
     reader.onerror = () => {
       alert(tr({ zh: '读取文件失败。', en: 'Failed to read file.'
@@ -504,104 +557,133 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
       return;
     }
     if (mode === 'replace') {
-      const confirmMsg = (isZh
-              ? `确认用 ${sess.solves.length} 条记录替换 ${eventInfo(sess.event).nameZh} 的全部成绩？`
-              : `Replace all ${eventInfo(sess.event).nameEn} solves with ${sess.solves.length} from "${sess.name}"?`);
+      const confirmMsg = tr({
+        zh: `确认用 ${sess.solves.length} 条记录替换 ${eventInfo(sess.event).nameZh} 的全部成绩？`,
+        en: `Replace all ${eventInfo(sess.event).nameEn} solves with ${sess.solves.length} from "${sess.name}"?`,
+      });
       if (!confirm(confirmMsg)) return;
       replaceSolves(sess.event, sess.solves);
     } else {
       appendSolves(sess.event, sess.solves);
     }
     setCstimerImported(prev => ({ ...prev, [sess.sessionId]: mode }));
-    alert(tr({ zh: '已导入。请刷新页面以查看更新后的成绩。', en: 'Imported. Please reload the page to see the updated solves.'
-    }));
+    onDataReplaced?.();
+    flashIoMsg(tr({ zh: `已导入 ${sess.solves.length} 条成绩`, en: `Imported ${sess.solves.length} solves` }));
   }
 
   async function showBackupPicker(): Promise<void> {
-    const list = await listBackups();
-    if (list.length === 0) {
-      alert(tr({ zh: '尚无自动备份。', en: 'No auto-backups yet.'
-    }));
+    if (backupEntries !== null) {
+      setBackupEntries(null);
       return;
     }
-    const lines = list.map((e, i) => {
-      const d = new Date(e.ts);
-      const stamp = d.toISOString().replace('T', ' ').slice(0, 19);
-      const kb = (e.size / 1024).toFixed(1);
-      return `${i + 1}. ${stamp}  (${kb} KB)`;
-    }).join('\n');
-    const prompt1 = (isZh
-          ? `备份列表（输入序号恢复，留空取消）：\n\n${lines}`
-          : `Auto-backups (enter index to restore, blank to cancel):\n\n${lines}`);
-    const ans = window.prompt(prompt1, '');
-    if (!ans) return;
-    const idx = parseInt(ans, 10) - 1;
-    if (!Number.isFinite(idx) || idx < 0 || idx >= list.length) {
-      alert(tr({ zh: '无效序号。', en: 'Invalid index.'
-    }));
-      return;
-    }
-    const target = list[idx]!;
-    if (!confirm((isZh
-              ? `确认用 ${new Date(target.ts).toLocaleString()} 的备份覆盖当前数据？`
-              : `Restore backup from ${new Date(target.ts).toLocaleString()} (overwrites current data)?`))) return;
+    setBackupEntries(await listBackups());
+  }
+
+  async function restoreLocalBackup(target: BackupEntry): Promise<void> {
+    if (!confirm(tr({
+      zh: `确认用 ${new Date(target.ts).toLocaleString()} 的备份覆盖当前数据？`,
+      en: `Restore backup from ${new Date(target.ts).toLocaleString()} (overwrites current data)?`,
+    }))) return;
     const ok = await restoreBackup(target.key);
-    alert(ok
-      ? tr({ zh: '已恢复。请刷新页面。', en: 'Restored. Please reload the page.'
-            })
-      : tr({ zh: '恢复失败。', en: 'Restore failed.'
-            }));
+    if (ok) onDataReplaced?.();
+    flashIoMsg(ok ? tr({ zh: '已恢复本机备份', en: 'Local backup restored' }) : tr({ zh: '恢复失败', en: 'Restore failed' }));
+    if (ok) setBackupEntries(null);
   }
 
   return (
     <div className="timer-modal-overlay" onClick={onClose}>
       <div
+        ref={dialogRef}
         className="timer-modal settings-modal"
         role="dialog"
         aria-modal="true"
         aria-labelledby="settings-modal-title"
+        aria-describedby="settings-modal-description"
+        tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="solver-modal-head">
-          <h2 id="settings-modal-title">{tr({ zh: '设置', en: 'Settings'
-          })}</h2>
-          <button
-            type="button"
-            className="solver-modal-x"
+        <header className="settings-modal-head">
+          <div>
+            <h2 id="settings-modal-title">{tr({ zh: '设置', en: 'Settings' })}</h2>
+            <p id="settings-modal-description">
+              {tr({ zh: '更改会立即保存', en: 'Changes are saved automatically' })}
+            </p>
+          </div>
+          <ClearButton
+            variant="standalone"
+            className="settings-modal-close"
             onClick={onClose}
-            aria-label={tr({ zh: '关闭', en: 'Close' })}
-          >
-            <X size={18} />
-          </button>
-        </div>
+            ariaLabel={tr({ zh: '关闭设置', en: 'Close settings' })}
+          />
+        </header>
 
-        <p className="settings-gesture-hint">
-          {tr({ zh: '按住并拖动呼出轮盘', en: 'Press & drag to open the wheel'
-        })}
-        </p>
+        <div className="settings-layout">
+          <aside className="settings-category-rail" aria-label={tr({ zh: '设置分类', en: 'Settings categories' })}>
+            <nav className="settings-category-nav">
+              {categories.map((category) => {
+                const Icon = category.icon;
+                return (
+                  <button
+                    key={category.id}
+                    type="button"
+                    className="settings-category-button"
+                    data-active={activeCategory === category.id ? 'true' : undefined}
+                    aria-current={activeCategory === category.id ? 'page' : undefined}
+                    onClick={() => setActiveCategory(category.id)}
+                  >
+                    <Icon size={16} aria-hidden />
+                    <span>{category.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
+            <label className="settings-category-picker">
+              <span>{tr({ zh: '分类', en: 'Category' })}</span>
+              <select
+                value={activeCategory}
+                onChange={(event) => setActiveCategory(event.target.value as SettingsCategory)}
+              >
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>{category.label}</option>
+                ))}
+              </select>
+            </label>
+          </aside>
 
-        {tools && (
-          <AccordionSection
-            id="tools"
-            title={tr({ zh: '工具', en: 'Tools' })}
-            defaultExpanded={false}
-            useMobile={isMobile}
-            expanded={expandedSections}
-            setExpanded={setExpandedSections}
-          >
-            {tools}
-          </AccordionSection>
-        )}
+          <main ref={mainRef} className="settings-main">
+            <div className="settings-category-intro">
+              <h3>{activeCategoryMeta.label}</h3>
+              <p>{activeCategoryMeta.description}</p>
+            </div>
 
-        <AccordionSection
-          id="timing"
-          title={tr({ zh: '计时', en: 'Timing'
-        })}
-          defaultExpanded={true}
-          useMobile={isMobile}
-          expanded={expandedSections}
-          setExpanded={setExpandedSections}
-          headerControl={<BoolToggle value={s.timingEnabled} onChange={(v) => updateSettings({ timingEnabled: v })} />}
+            {activeCategory === 'appearance' && (
+              <div
+                className="settings-appearance-preview"
+                style={{
+                  '--settings-time-scale': s.timerFontScale,
+                  '--settings-scramble-scale': s.scrambleFontScale,
+                } as React.CSSProperties}
+                aria-label={tr({ zh: '外观预览', en: 'Appearance preview' })}
+              >
+                <span className="settings-preview-label">{tr({ zh: '预览', en: 'Preview' })}</span>
+                <strong className={`tf-${s.timerFont}`}>12.34</strong>
+                <span className={`sf-${s.scrambleFont}`}>R U R&apos; U&apos; F2</span>
+              </div>
+            )}
+
+        <SettingsSection
+          category="timer"
+          activeCategory={activeCategory}
+          title={tr({ zh: '基础计时', en: 'Basic timing' })}
+          headerControl={
+            <PillToggle
+              value={s.timingEnabled}
+              onChange={(v) => updateSettings({ timingEnabled: v })}
+              onLabel={tr({ zh: '计时', en: 'Timer' })}
+              offLabel={tr({ zh: '只练习', en: 'Practice only' })}
+              ariaLabel={tr({ zh: '计时模式', en: 'Timing mode' })}
+            />
+          }
         >
           <Row label={tr({ zh: '观察时间（秒）', en: 'Inspection (sec)'
         })}>
@@ -611,7 +693,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
               onChange={(e) => updateSettings({ inspection: Math.max(0, Math.min(60, Number(e.target.value) || 0)) })}
             />
             <span className="hint">{s.inspection === 0 ? tr({ zh: '关闭', en: 'off'
-                                  }) : (isZh ? `${s.inspection} 秒（>${s.inspection}s = +2，>${s.inspection + 2}s = DNF）` : `${s.inspection}s (>${s.inspection}s = +2, >${s.inspection + 2}s = DNF)`)}</span>
+                                  }) : tr({ zh: `${s.inspection} 秒（>${s.inspection}s = +2，>${s.inspection + 2}s = DNF）`, en: `${s.inspection}s (>${s.inspection}s = +2, >${s.inspection + 2}s = DNF)` })}</span>
           </Row>
           <Row label={tr({ zh: '按住阈值（毫秒）', en: 'Hold threshold (ms)'
         })}>
@@ -628,14 +710,21 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
               value={s.inspectionTrigger}
               onChange={(e) => updateSettings({ inspectionTrigger: e.target.value as 'down' | 'up' })}
             >
-              <option value="down">{tr({ zh: '按下', en: 'Press down' })}</option>
-              <option value="up">{tr({ zh: '松开', en: 'Release'
+              <option value="down">{tr({ zh: '按下空格时', en: 'When Space is pressed' })}</option>
+              <option value="up">{tr({ zh: '松开空格时', en: 'When Space is released'
             })}</option>
             </select>
             <span className="hint">{tr({ zh: '按下：立即进入观察；松开：松开空格后才进入（Stackmat 习惯）', en: 'down: enter on press; up: enter on release (stackmat-style)'
             })}</span>
           </Row>
-          <Row label={tr({ zh: '蓝牙自动 ready', en: 'Bluetooth auto-ready'
+        </SettingsSection>
+
+        <SettingsSection
+          category="smart-cube"
+          activeCategory={activeCategory}
+          title={tr({ zh: '连接后的行为', en: 'Connected cube behavior' })}
+        >
+          <Row label={tr({ zh: '智能魔方自动预备', en: 'Smart-cube auto-ready'
         })}>
             <select
               className="settings-row-control-select"
@@ -651,8 +740,8 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
             })}</option>
             </select>
             <span className="hint">{tr({
-              zh: "预备后第一下转动即起表(不用按空格)。打乱正确即预备 = 魔方拧到与打乱一致就预备;静止 2 秒 = 停手 2 秒;双反扭 = 做 U U' U U' 确认",
-              en: "Once armed, your first turn starts the clock — no space bar. When scrambled = the cube matches the scramble; still 2s = no move for 2s; double-flick = perform U U' U U' to confirm",
+              zh: '进入预备后，第一下转动立即起表，无需按空格',
+              en: 'Once ready, the first turn starts the timer without pressing Space',
             })}</span>
           </Row>
           <Row label={tr({ zh: '实况魔方', en: 'Live cube'
@@ -669,34 +758,62 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
               <option value="2d">{tr({ zh: '立体图', en: 'Isometric' })}</option>
             </select>
             <span className="hint">{tr({
-              zh: '连上智能魔方后,时间下方显示手里魔方的实时状态。q2Look 固定显示顶面、正面两行和右侧条,适合观察顶层;三维会播放每次转动并可跟随陀螺仪;展开图能检查全部六面;立体图显示三个面',
-              en: 'After a smart cube connects, this mirrors its live state below the time. q2Look fixes the top, two front rows, and a right strip for last-layer recognition; 3D animates every turn and can follow the gyroscope; Net shows all six faces; Isometric shows three',
+              zh: '连接后在时间下方同步显示；三维模式可跟随陀螺仪',
+              en: 'Mirrors the cube below the timer; 3D mode can follow the gyroscope',
             })}</span>
           </Row>
-          <Row label={tr({ zh: '录姿态用于回放', en: 'Record orientation for replay'
-        })}>
-            <BoolToggle value={s.recordGyro} onChange={(v) => updateSettings({ recordGyro: v })} />
+          <BooleanRow
+            label={tr({ zh: '录姿态用于回放', en: 'Record orientation for replay' })}
+            value={s.recordGyro}
+            onChange={(v) => updateSettings({ recordGyro: v })}
+          >
             <span className="hint">{tr({
-              zh: '把魔方的朝向一起存进成绩。复盘要用它认转体(魔方一手也不报)和中层(一对相对面到底是一个 M 还是两手真转),关掉的话谱子里没有转体、中层只能靠手速猜。压过之后一把几百字节;代价是魔方要一直发姿态、费电',
-              en: 'Stores the cube’s orientation alongside the solve. The report needs it to name your rotations (the cube reports none) and to tell a real slice move from two opposite face turns — without it the reconstruction has no rotations and has to guess the slices from timing. A few hundred bytes per solve after compression; the cost is that the cube keeps streaming orientation (battery)',
+              zh: '提高转体和中层动作识别准确度，会略微增加耗电',
+              en: 'Improves rotation and slice recognition with slightly higher battery use',
             })}</span>
-          </Row>
-          <Row label={tr({ zh: '隐藏运行中的时间', en: 'Hide time while running'
-        })}>
-            <BoolToggle value={s.hideTime} onChange={(v) => updateSettings({ hideTime: v })} />
-          </Row>
-          <Row label={tr({ zh: 'CFOP 分阶段计时', en: 'CFOP stage splits'
-        })}>
-            <BoolToggle value={s.multiStage} onChange={(v) => updateSettings({ multiStage: v })} />
-            <span className="hint">{tr({ zh: '按 1=Cross 完成，2=F2L，3=OLL；蓝牙连接时自动检测', en: 'Press 1=Cross, 2=F2L, 3=OLL; auto-detected when bluetooth connected'
-            })}</span>
-          </Row>
-          <Row label={tr({ zh: '盲拧记忆 / 执行分段', en: 'BLD memo split'
-        })}>
-            <BoolToggle value={s.bldMemo} onChange={(v) => updateSettings({ bldMemo: v })} />
-            <span className="hint">{tr({ zh: '盲拧项目运行中按 Enter 标记记忆完成', en: 'On BLD events, press Enter while running to mark memo done'
-            })}</span>
-          </Row>
+          </BooleanRow>
+          <BooleanRow
+            label={tr({ zh: '拧完后打开复盘', en: 'Open reconstruction after each solve' })}
+            value={s.autoRecap !== false}
+            onChange={(v) => updateSettings({ autoRecap: v })}
+          />
+        </SettingsSection>
+
+        <SettingsSection
+          category="timer"
+          activeCategory={activeCategory}
+          title={tr({ zh: '计时显示', en: 'Timing display' })}
+        >
+          <BooleanRow
+            label={tr({ zh: '隐藏运行中的时间', en: 'Hide time while running' })}
+            value={s.hideTime}
+            onChange={(v) => updateSettings({ hideTime: v })}
+          />
+        </SettingsSection>
+
+        <SettingsSection
+          category="training"
+          activeCategory={activeCategory}
+          title={tr({ zh: '目标与分段', en: 'Goals and splits' })}
+        >
+          {supportsStageSplits && (
+            <BooleanRow
+              label={tr({ zh: 'CFOP 分阶段计时', en: 'CFOP stage splits' })}
+              value={s.multiStage}
+              onChange={(v) => updateSettings({ multiStage: v })}
+            >
+              <span className="hint">{tr({ zh: '按 1=Cross 完成，2=F2L，3=OLL；智能魔方连接时自动检测', en: 'Press 1=Cross, 2=F2L, 3=OLL; auto-detected with a smart cube' })}</span>
+            </BooleanRow>
+          )}
+          {isBldEvent(event) && (
+            <BooleanRow
+              label={tr({ zh: '盲拧记忆 / 执行分段', en: 'BLD memo split' })}
+              value={s.bldMemo}
+              onChange={(v) => updateSettings({ bldMemo: v })}
+            >
+              <span className="hint">{tr({ zh: '运行中按 Enter 标记记忆完成', en: 'Press Enter while running to mark memo complete' })}</span>
+            </BooleanRow>
+          )}
           <Row label={tr({ zh: '目标时间', en: 'Target time'
         })}>
             <input
@@ -712,8 +829,8 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
             <span className="hint">
               <Target size={12} style={{ verticalAlign: '-1px', marginRight: 4 }} />
               {currentTargetMs === null
-                ? ((isZh ? `当前 ${eventInfo(event).nameZh}：关闭` : `${eventInfo(event).nameEn}: off`))
-                : ((isZh ? `当前 ${eventInfo(event).nameZh}：${formatTargetTime(currentTargetMs)}` : `${eventInfo(event).nameEn}: ${formatTargetTime(currentTargetMs)}`))}
+                ? tr({ zh: `当前 ${eventInfo(event).nameZh}：关闭`, en: `${eventInfo(event).nameEn}: off` })
+                : tr({ zh: `当前 ${eventInfo(event).nameZh}：${formatTargetTime(currentTargetMs)}`, en: `${eventInfo(event).nameEn}: ${formatTargetTime(currentTargetMs)}` })}
             </span>
           </Row>
           <Row label={tr({ zh: '每日目标次数', en: 'Daily solve goal'
@@ -732,23 +849,41 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
             <span className="hint">{currentDailyGoal === null
               ? tr({ zh: '关闭', en: 'off'
                                       })
-              : ((isZh ? `每天 ${currentDailyGoal} 次（全部项目合计）` : `${currentDailyGoal} solves/day (all events)`))}</span>
+              : tr({ zh: `每天 ${currentDailyGoal} 次（全部项目合计）`, en: `${currentDailyGoal} solves/day (all events)` })}</span>
           </Row>
+        </SettingsSection>
+
+        <SettingsSection
+          category="scramble"
+          activeCategory={activeCategory}
+          title={tr({ zh: '规则与朝向', en: 'Rules and orientation' })}
+        >
           {/* 2x2 的「最优」已挪到打乱条上的口径 picker(Scramble222ModePicker,随机状态与真题统一),
               这里只保留其余同态项目(斜转/金字塔/3x3 族)。 */}
           {hasOptimal && event !== '222' && (
-            <Row label={tr({ zh: '最优打乱', en: 'Optimal scramble'
-          })}>
-              <BoolToggle value={s.wcaUseOptimal} onChange={(v) => updateSettings({ wcaUseOptimal: v })} />
-            </Row>
+            <BooleanRow
+              label={tr({ zh: '最优打乱', en: 'Optimal scramble' })}
+              value={s.wcaUseOptimal}
+              onChange={(v) => updateSettings({ wcaUseOptimal: v })}
+            />
           )}
-          <Row label={tr({ zh: '自动打卡', en: 'Auto-mark done'
-        })}>
-            <BoolToggle value={s.autoMarkWcaScramble} onChange={(v) => updateSettings({ autoMarkWcaScramble: v })} />
-            <span className="hint">{tr({ zh: '做完 WCA 真题后自动把成绩记到该打乱的公开打卡', en: 'after a WCA real-scramble solve, auto-record your result to its public marks'
-        })}</span>
-          </Row>
-          <Row label={tr({ zh: '计时途中', en: 'Live'
+          {s.scrambleSource === 'wca' && (
+            <BooleanRow
+              label={tr({ zh: '完成真题后自动打卡', en: 'Auto-mark completed real scrambles' })}
+              value={s.autoMarkWcaScramble}
+              onChange={(v) => updateSettings({ autoMarkWcaScramble: v })}
+            >
+              <span className="hint">{tr({ zh: '把成绩记录到该打乱的公开打卡', en: 'Records the result on that scramble’s public marks' })}</span>
+            </BooleanRow>
+          )}
+        </SettingsSection>
+
+        <SettingsSection
+          category="timer"
+          activeCategory={activeCategory}
+          title={tr({ zh: '成绩精度', en: 'Result precision' })}
+        >
+          <Row label={tr({ zh: '计时中精度', en: 'Running precision'
         })}>
             <select
               className="settings-row-control-select"
@@ -761,7 +896,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
               <option value={3}>x.xxx</option>
             </select>
           </Row>
-          <Row label={tr({ zh: '最终成绩', en: 'Final'
+          <Row label={tr({ zh: '成绩精度', en: 'Result precision'
         })}>
             <select
               className="settings-row-control-select"
@@ -772,6 +907,9 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
               <option value={3}>x.xxx</option>
             </select>
           </Row>
+        </SettingsSection>
+
+        <SettingsSection category="scramble" activeCategory={activeCategory}>
           <Row label={tr({ zh: '预打乱朝向', en: 'Pre-scramble'
         })}>
             <CubeOrientationSelect
@@ -788,45 +926,43 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
               onChange={(v) => updateSettings({ preScrT: v })}
             />
           </Row>
-          <Row label={tr({ zh: '颜色中立', en: 'Color neutral'
-        })}>
-            <select
-              className="settings-row-control-select"
-              value={s.cnMode}
-              onChange={(e) => updateSettings({ cnMode: e.target.value as 'none' | 'single' | 'dual' | 'six' })}
-            >
-              <option value="none">{tr({ zh: '固定白底', en: 'None (white)' })}</option>
-              <option value="single">{tr({ zh: '单面随机', en: 'Single (random)'
-            })}</option>
-              <option value="dual">{tr({ zh: '双面（白黄）', en: 'Dual (white/yellow)'
-            })}</option>
-              <option value="six">{tr({ zh: '六面', en: 'Six-sided' })}</option>
-            </select>
-            <span className="hint">{tr({ zh: '仅 3x3 类项目生效', en: '3x3 events only'
-            })}</span>
-          </Row>
-        </AccordionSection>
+          {supportsColorNeutral && (
+            <Row label={tr({ zh: '颜色中立', en: 'Color neutral' })}>
+              <select
+                className="settings-row-control-select"
+                value={s.cnMode}
+                onChange={(e) => updateSettings({ cnMode: e.target.value as 'none' | 'single' | 'dual' | 'six' })}
+              >
+                <option value="none">{tr({ zh: '固定白底', en: 'None (white)' })}</option>
+                <option value="single">{tr({ zh: '单面随机', en: 'Single (random)' })}</option>
+                <option value="dual">{tr({ zh: '双面（白黄）', en: 'Dual (white/yellow)' })}</option>
+                <option value="six">{tr({ zh: '六面', en: 'Six-sided' })}</option>
+              </select>
+            </Row>
+          )}
+        </SettingsSection>
 
-        <AccordionSection
-          id="sound"
+        <SettingsSection
+          category="sound"
+          activeCategory={activeCategory}
           title={tr({ zh: '声音', en: 'Sound'
         })}
-          defaultExpanded={false}
-          useMobile={isMobile}
-          expanded={expandedSections}
-          setExpanded={setExpandedSections}
         >
-          <Row label={tr({ zh: '提示音', en: 'Sounds' })}>
-            <BoolToggle value={s.soundsEnabled} onChange={(v) => { updateSettings({ soundsEnabled: v }); if (v) warmupSound(); }} />
-          </Row>
+          <BooleanRow
+            label={tr({ zh: '提示音', en: 'Sounds' })}
+            value={s.soundsEnabled}
+            onChange={(v) => { updateSettings({ soundsEnabled: v }); if (v) warmupSound(); }}
+          />
           <Row label={tr({ zh: '音量', en: 'Volume' })}>
             <input
               type="range" min={0} max={1} step={0.05}
               value={s.volume}
+              disabled={!s.soundsEnabled}
               onChange={(e) => updateSettings({ volume: Number(e.target.value) })}
             />
             <button
               className="hint-btn"
+              disabled={!s.soundsEnabled}
               onClick={() => play('start')}
               title={tr({ zh: '试听', en: 'Test'
             })}
@@ -843,7 +979,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
                 updateSettings({ voiceInspection: e.target.value as 'none' | 'en-male' | 'en-female' | 'zh-male' | 'zh-female' });
                 warmupSound();
               }}
-              disabled={!isVoiceAvailable()}
+              disabled={!s.soundsEnabled || !isVoiceAvailable()}
             >
               <option value="none">{tr({ zh: '关闭（用提示音）', en: 'Off (beeps)'
             })}</option>
@@ -862,27 +998,27 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
               : tr({ zh: '浏览器不支持', en: 'unsupported by browser'
                                       })}</span>
           </Row>
-        </AccordionSection>
+        </SettingsSection>
 
-        <AccordionSection
-          id="metronome"
+        <SettingsSection
+          category="sound"
+          activeCategory={activeCategory}
           title={tr({ zh: '节拍器', en: 'Metronome'
         })}
-          defaultExpanded={false}
-          useMobile={isMobile}
-          expanded={expandedSections}
-          setExpanded={setExpandedSections}
         >
-          <Row label={tr({ zh: '开启', en: 'Enabled'
-        })}>
-            <BoolToggle value={s.metronomeOn} onChange={(v) => { updateSettings({ metronomeOn: v }); if (v) warmupSound(); }} />
+          <BooleanRow
+            label={tr({ zh: '开启节拍器', en: 'Enable metronome' })}
+            value={s.metronomeOn}
+            onChange={(v) => { updateSettings({ metronomeOn: v }); if (v) warmupSound(); }}
+          >
             <span className="hint">{tr({ zh: '观察 / 计时阶段播放', en: 'ticks during inspection / solve'
             })}</span>
-          </Row>
+          </BooleanRow>
           <Row label={tr({ zh: '速度', en: 'Tempo' })}>
             <input
               type="range" min={BPM_MIN} max={BPM_MAX} step={1}
               value={metro.bpm}
+              disabled={!s.metronomeOn}
               onChange={(e) => setMetronome({ bpm: Number(e.target.value) })}
             />
             <span className="hint" style={{ fontVariantNumeric: 'tabular-nums', minWidth: '9ch', display: 'inline-block' }}>
@@ -891,6 +1027,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
             <span className="hint" style={{ fontVariantNumeric: 'tabular-nums' }}>{metro.bpm} BPM</span>
             <button
               className="hint-btn"
+              disabled={!s.metronomeOn}
               onClick={tapBpm}
               title={tr({ zh: '连续敲击设定速度', en: 'Tap repeatedly to set tempo'
             })}
@@ -909,31 +1046,30 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
             <input
               type="text"
               value={beepAtInput}
+              disabled={!s.metronomeOn}
               placeholder={tr({ zh: '例：5,10,15（逗号分隔）', en: 'e.g. 5,10,15 (comma-separated)'
             })}
               onChange={(e) => setBeepAtInput(e.target.value)}
               onBlur={(e) => commitBeepAtInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') commitBeepAtInput((e.target as HTMLInputElement).value); }}
             />
-            <button className="hint-btn" onClick={() => { warmupSound(); playInspectionBeep(); }} title={tr({ zh: '试听', en: 'Test'
+            <button className="hint-btn" disabled={!s.metronomeOn} onClick={() => { warmupSound(); playInspectionBeep(); }} title={tr({ zh: '试听', en: 'Test'
             })}>
               {tr({ zh: '试听', en: 'Test'
             })}
             </button>
-            <span className="hint">{(isZh
-                                    ? `观察到这些秒数各响一声（1..60，独立于 8/12 秒）；当前 ${(s.inspectionBeepAt ?? []).length ? s.inspectionBeepAt.join(' / ') + ' 秒' : '关闭'}`
-                                    : `one beep at each inspection second (1..60, separate from 8/12s); current ${(s.inspectionBeepAt ?? []).length ? s.inspectionBeepAt.join(' / ') + 's' : 'off'}`)}</span>
+            <span className="hint">{tr({
+              zh: `观察到这些秒数各响一声（1..60，独立于 8/12 秒）；当前 ${(s.inspectionBeepAt ?? []).length ? s.inspectionBeepAt.join(' / ') + ' 秒' : '关闭'}`,
+              en: `one beep at each inspection second (1..60, separate from 8/12s); current ${(s.inspectionBeepAt ?? []).length ? s.inspectionBeepAt.join(' / ') + 's' : 'off'}`,
+            })}</span>
           </Row>
-        </AccordionSection>
+        </SettingsSection>
 
-        <AccordionSection
-          id="sync-seed"
+        <SettingsSection
+          category="advanced"
+          activeCategory={activeCategory}
           title={tr({ zh: '同步种子', en: 'Sync seed'
         })}
-          defaultExpanded={false}
-          useMobile={isMobile}
-          expanded={expandedSections}
-          setExpanded={setExpandedSections}
         >
           <Row label={tr({ zh: '种子', en: 'Seed'
         })}>
@@ -983,9 +1119,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
               {s.syncSeed === null
                 ? tr({ zh: '未启用', en: 'off'
                                               })
-                : ((isZh
-                                                  ? `seed=${s.syncSeed}，第 ${getSeedCounter()} 个打乱`
-                                                  : `seed=${s.syncSeed}, scramble #${getSeedCounter()}`))}
+                : tr({ zh: `seed=${s.syncSeed}，第 ${getSeedCounter()} 个打乱`, en: `seed=${s.syncSeed}, scramble #${getSeedCounter()}` })}
             </span>
             <button
               className="hint-btn"
@@ -1000,18 +1134,15 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
             <span className="hint">{tr({ zh: '相同种子在不同设备打出相同序列；计数会跨刷新保留', en: 'same seed → same sequence across devices; counter persists across reloads'
             })}</span>
           </Row>
-        </AccordionSection>
+        </SettingsSection>
 
-        <AccordionSection
-          id="auto-backup"
-          title={tr({ zh: '自动备份', en: 'Auto-backup'
+        <SettingsSection
+          category="data"
+          activeCategory={activeCategory}
+          title={tr({ zh: '本机自动备份', en: 'Local auto-backup'
         })}
-          defaultExpanded={false}
-          useMobile={isMobile}
-          expanded={expandedSections}
-          setExpanded={setExpandedSections}
         >
-          <Row label={tr({ zh: '每 N 次写入触发', en: 'Every N saves'
+          <Row label={tr({ zh: '每完成 N 次自动备份', en: 'Back up every N solves'
         })}>
             <input
               type="number" min={0} max={30} step={1}
@@ -1023,26 +1154,43 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
               : tr({ zh: '保留最近 10 份', en: 'keeps last 10' })}</span>
           </Row>
           <Row label={tr({ zh: '操作', en: 'Actions' })}>
-            <button className="hint-btn" onClick={() => { void pushBackup().then(() => alert(tr({ zh: '已写入备份。', en: 'Backup written.'
-            }))); }}>
+            <button className="hint-btn" onClick={() => { void pushBackup().then(async () => {
+              flashIoMsg(tr({ zh: '已写入本机备份', en: 'Local backup created' }));
+              if (backupEntries !== null) setBackupEntries(await listBackups());
+            }); }}>
               {tr({ zh: '立即备份', en: 'Back up now'
             })}
             </button>
             <button className="hint-btn" onClick={() => { void showBackupPicker(); }}>
-              {tr({ zh: '查看备份', en: 'View backups'
-            })}
+              {backupEntries === null
+                ? tr({ zh: '查看备份', en: 'View backups' })
+                : tr({ zh: '收起备份', en: 'Hide backups' })}
             </button>
           </Row>
-        </AccordionSection>
+          {backupEntries !== null && (
+            <div className="settings-backup-list">
+              {backupEntries.length === 0 ? (
+                <p>{tr({ zh: '还没有本机备份', en: 'No local backups yet' })}</p>
+              ) : backupEntries.map((entry) => (
+                <div key={entry.key} className="settings-backup-row">
+                  <span>
+                    <strong>{new Date(entry.ts).toLocaleString()}</strong>
+                    <small>{(entry.size / 1024).toFixed(1)} KB</small>
+                  </span>
+                  <button type="button" className="hint-btn" onClick={() => { void restoreLocalBackup(entry); }}>
+                    {tr({ zh: '恢复', en: 'Restore' })}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </SettingsSection>
 
-        <AccordionSection
-          id="cloud"
+        <SettingsSection
+          category="data"
+          activeCategory={activeCategory}
           title={tr({ zh: '云备份', en: 'Cloud backup'
         })}
-          defaultExpanded={false}
-          useMobile={isMobile}
-          expanded={expandedSections}
-          setExpanded={setExpandedSections}
         >
           {!user ? (
             <Row label={tr({ zh: '登录', en: 'Sign in'
@@ -1082,16 +1230,17 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
                 </button>
               </Row>
               <Row label="">
-                <span className="hint">{
+                <span className="hint" role="status" aria-live="polite">{
                   cloudMsg !== null
                     ? cloudMsg
                     : cloudMeta === null
                       ? tr({ zh: '正在读取云端状态…', en: 'Checking cloud…'
                                                                   })
                       : cloudMeta.exists
-                        ? ((isZh
-                                                                              ? `云端 ${cloudMeta.solveCount ?? 0} 条,上次同步 ${formatSyncTime(cloudMeta.updatedAt ?? 0, true)}`
-                                                                              : `Cloud: ${cloudMeta.solveCount ?? 0} solves, synced ${formatSyncTime(cloudMeta.updatedAt ?? 0, false)}`))
+                        ? tr({
+                            zh: `云端 ${cloudMeta.solveCount ?? 0} 条，上次同步 ${formatSyncTime(cloudMeta.updatedAt ?? 0, true)}`,
+                            en: `Cloud: ${cloudMeta.solveCount ?? 0} solves, synced ${formatSyncTime(cloudMeta.updatedAt ?? 0, false)}`,
+                          })
                         : tr({ zh: '云端暂无备份', en: 'No cloud backup yet'
                                                                           })
                 }</span>
@@ -1102,16 +1251,13 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
               </Row>
             </>
           )}
-        </AccordionSection>
+        </SettingsSection>
 
-        <AccordionSection
-          id="solve-data"
-          title={tr({ zh: '成绩数据', en: 'Solve data'
+        <SettingsSection
+          category="data"
+          activeCategory={activeCategory}
+          title={tr({ zh: '导入与导出', en: 'Import and export'
         })}
-          defaultExpanded={false}
-          useMobile={isMobile}
-          expanded={expandedSections}
-          setExpanded={setExpandedSections}
         >
           <Row label={tr({ zh: '导入', en: 'Import'
         })}>
@@ -1170,30 +1316,43 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
             </button>
           </Row>
           {ioMsg !== null && (
-            <Row label=""><span className="hint">{ioMsg}</span></Row>
+            <Row label=""><span className="hint" role="status" aria-live="polite">{ioMsg}</span></Row>
           )}
           {cstimerSessions && cstimerSessions.length > 0 && (
             <div className="cstimer-import-list">
               {cstimerSessions.map(sess => {
                 const ev = eventInfo(sess.event);
-                const evLabel = (isZh ? ev.nameZh : ev.nameEn);
+                const evLabel = tr({ zh: ev.nameZh, en: ev.nameEn });
                 const done = cstimerImported[sess.sessionId];
-                const disabled = sess.solves.length === 0;
+                const selectedTarget = cstimerTargets[sess.sessionId];
+                const disabled = sess.solves.length === 0 || (!sess.matched && !selectedTarget);
+                const importSession = selectedTarget ? { ...sess, event: selectedTarget } : sess;
                 return (
                   <div key={sess.sessionId} className="cstimer-import-row">
                     <div className="cstimer-import-info">
                       <span className="cstimer-import-name">{sess.name}</span>
-                      <span className="hint">
-                        {(isZh
-                                                          ? `${sess.solves.length} 条 → ${evLabel}${sess.matched ? '' : '（默认）'}`
-                                                          : `${sess.solves.length} solves → ${evLabel}${sess.matched ? '' : ' (fallback)'}`)}
-                      </span>
+                      {sess.matched ? (
+                        <span className="hint">{tr({ zh: `${sess.solves.length} 条 → ${evLabel}`, en: `${sess.solves.length} solves → ${evLabel}` })}</span>
+                      ) : (
+                        <label className="cstimer-target-picker">
+                          <span>{tr({ zh: `${sess.solves.length} 条，选择项目`, en: `${sess.solves.length} solves, choose event` })}</span>
+                          <select
+                            value={selectedTarget ?? ''}
+                            onChange={(event) => setCstimerTargets((current) => ({ ...current, [sess.sessionId]: event.target.value as EventId }))}
+                          >
+                            <option value="" disabled>{tr({ zh: '选择项目', en: 'Choose event' })}</option>
+                            {EVENTS.map((item) => (
+                              <option key={item.id} value={item.id}>{tr({ zh: item.nameZh, en: item.nameEn })}</option>
+                            ))}
+                          </select>
+                        </label>
+                      )}
                     </div>
                     <div className="cstimer-import-actions">
                       <button
                         className="hint-btn"
                         disabled={disabled || done === 'append'}
-                        onClick={() => importCstimerSession(sess, 'append')}
+                        onClick={() => importCstimerSession(importSession, 'append')}
                         title={tr({ zh: '追加到现有成绩', en: 'Append to existing solves'
                         })}
                       >
@@ -1202,7 +1361,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
                       <button
                         className="hint-btn"
                         disabled={disabled || done === 'replace'}
-                        onClick={() => importCstimerSession(sess, 'replace')}
+                        onClick={() => importCstimerSession(importSession, 'replace')}
                         title={tr({ zh: '清空该项目并以此覆盖', en: 'Clear this event and replace'
                         })}
                       >
@@ -1228,27 +1387,22 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
               <RefreshCw size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
               {reanalyzeBusy
                 ? (reanalyzeProgress && reanalyzeProgress.total > 0
-                    ? ((isZh
-                                                          ? `处理中… ${reanalyzeProgress.scanned}/${reanalyzeProgress.total}`
-                                                          : `Working… ${reanalyzeProgress.scanned}/${reanalyzeProgress.total}`))
+                    ? tr({ zh: `处理中… ${reanalyzeProgress.scanned}/${reanalyzeProgress.total}`, en: `Working… ${reanalyzeProgress.scanned}/${reanalyzeProgress.total}` })
                     : tr({ zh: '处理中…', en: 'Working…'
                                                       }))
                 : tr({ zh: '重新分析', en: 'Reanalyze' })}
             </button>
             {reanalyzeMsg !== null && (
-              <span className="hint">{reanalyzeMsg}</span>
+              <span className="hint" role="status" aria-live="polite">{reanalyzeMsg}</span>
             )}
           </Row>
-        </AccordionSection>
+        </SettingsSection>
 
-        <AccordionSection
-          id="appearance"
+        <SettingsSection
+          category="appearance"
+          activeCategory={activeCategory}
           title={tr({ zh: '外观', en: 'Appearance'
         })}
-          defaultExpanded={false}
-          useMobile={isMobile}
-          expanded={expandedSections}
-          setExpanded={setExpandedSections}
         >
           <Row label={tr({ zh: '计时器字体', en: 'Timer font'
         })}>
@@ -1286,20 +1440,25 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
             />
             <span className="hint">{s.scrambleFontScale.toFixed(2)}×</span>
           </Row>
-          <Row label={tr({ zh: '紧凑打乱', en: 'Compact scramble'
-        })}>
-            <BoolToggle value={s.compactScramble} onChange={(v) => updateSettings({ compactScramble: v })} />
-          </Row>
-          <Row label={tr({ zh: '打乱图', en: 'Scramble image'
-        })}>
-            <BoolToggle value={s.showCubePreview} onChange={(v) => updateSettings({ showCubePreview: v })} />
-          </Row>
-          <Row label={tr({ zh: '3D 立方体', en: '3D cube'
-        })}>
-            <BoolToggle value={s.prefer3D} onChange={(v) => updateSettings({ prefer3D: v })} />
+          <BooleanRow
+            label={tr({ zh: '紧凑打乱', en: 'Compact scramble' })}
+            value={s.compactScramble}
+            onChange={(v) => updateSettings({ compactScramble: v })}
+          />
+          <BooleanRow
+            label={tr({ zh: '打乱图', en: 'Scramble image' })}
+            value={s.showCubePreview}
+            onChange={(v) => updateSettings({ showCubePreview: v })}
+          />
+          <BooleanRow
+            label={tr({ zh: '3D 立方体', en: '3D cube' })}
+            value={s.prefer3D}
+            onChange={(v) => updateSettings({ prefer3D: v })}
+            disabled={!s.showCubePreview}
+          >
             <span className="hint">{tr({ zh: '可拖动旋转；关闭则展开 2D 平面', en: 'drag to rotate; off = 2D net'
             })}</span>
-          </Row>
+          </BooleanRow>
           <Row label={tr({ zh: '点击打乱条', en: 'Scramble click action'
         })}>
             <select
@@ -1315,20 +1474,16 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
             })}</option>
             </select>
           </Row>
-          <Row label={tr({ zh: '运行中隐藏全部 UI', en: 'Hide all UI while running'
-        })}>
-            <BoolToggle value={s.hideAllUiWhileRunning} onChange={(v) => updateSettings({ hideAllUiWhileRunning: v })} />
-          </Row>
-          {/* 标签里点名「智能魔方」:这个开关只对录到动作流的成绩生效(判据见
-              _lib/reconstruct/recap.ts),不说清的话手动计时的用户会以为它坏了。 */}
-          <Row label={tr({ zh: '智能魔方拧完直接看复盘', en: 'Reconstruction after each smart-cube solve'
-        })}>
-            <BoolToggle value={s.autoRecap !== false} onChange={(v) => updateSettings({ autoRecap: v })} />
-          </Row>
-          <Row label={tr({ zh: '显示排名', en: 'Show ranks'
-        })}>
-            <BoolToggle value={s.showRankBadge !== false} onChange={(v) => updateSettings({ showRankBadge: v })} />
-          </Row>
+          <BooleanRow
+            label={tr({ zh: '运行中隐藏全部 UI', en: 'Hide all UI while running' })}
+            value={s.hideAllUiWhileRunning}
+            onChange={(v) => updateSettings({ hideAllUiWhileRunning: v })}
+          />
+          <BooleanRow
+            label={tr({ zh: '显示排名', en: 'Show ranks' })}
+            value={s.showRankBadge !== false}
+            onChange={(v) => updateSettings({ showRankBadge: v })}
+          />
           {/* 登录后账号国家就是权威来源(见 useRankCountry),不再让用户手选 —— 只有未登录时
               才需要这一行来手填,顺带给个登录入口。 */}
           {s.showRankBadge !== false && !user && (
@@ -1350,22 +1505,24 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
               </button>
             </Row>
           )}
-        </AccordionSection>
+        </SettingsSection>
 
-        <AccordionSection
-          id="round"
+        <SettingsSection
+          category="training"
+          activeCategory={activeCategory}
           title={tr({ zh: '轮次模拟', en: 'Round simulation' })}
-          defaultExpanded={false}
-          useMobile={isMobile}
-          expanded={expandedSections}
-          setExpanded={setExpandedSections}
           headerControl={
-            <BoolToggle
+            <PillToggle
               value={s.round.on}
               onChange={(v) => updateSettings({ round: { ...s.round, on: v } })}
+              onLabel={tr({ zh: '开启', en: 'On' })}
+              offLabel={tr({ zh: '关闭', en: 'Off' })}
+              ariaLabel={tr({ zh: '轮次模拟', en: 'Round simulation' })}
             />
           }
         >
+          {s.round.on && (
+            <>
           <Row label={tr({ zh: '赛制', en: 'Format' })}>
             <select
               className="settings-row-control-select"
@@ -1419,42 +1576,73 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
               en: 'per attempt = a limit on each solve (WCA A1a1); cumulative = one budget for the whole round (A1a2) — attempts left once it runs out are DNS',
             })}</span>
           </Row>
-        </AccordionSection>
+            </>
+          )}
+        </SettingsSection>
 
-        <AccordionSection
-          id="keymap"
-          title={tr({ zh: '快捷键', en: 'Shortcuts' })}
-          defaultExpanded={false}
-          useMobile={isMobile}
-          expanded={expandedSections}
-          setExpanded={setExpandedSections}
+        <SettingsSection
+          category="advanced"
+          activeCategory={activeCategory}
+          title={tr({ zh: '快捷键与手势', en: 'Shortcuts and gestures' })}
         >
+          <p className="settings-section-note">
+            {tr({ zh: '在计时区按住并拖动，可呼出操作轮盘', en: 'Press and drag on the timer to open the action wheel' })}
+          </p>
           <KeymapEditor />
-        </AccordionSection>
-
-        <div className="modal-actions">
-          <button className="danger modal-action-btn" onClick={() => {
-            if (confirm(tr({ zh: '把所有设置恢复为默认值？', en: 'Reset all settings to defaults?'
-            }))) {
-              resetSettings();
-            }
-          }}>
-            {tr({ zh: '全部重置', en: 'Reset all' })}
-          </button>
-          <button className="primary modal-action-btn" onClick={onClose}>{tr({ zh: '关闭', en: 'Close'
-        })}</button>
+            <div className="settings-reset-row">
+              <ResetDefaultsButton
+                onReset={() => {
+                  if (confirm(tr({ zh: '把所有设置恢复为默认值？', en: 'Reset all settings to defaults?' }))) {
+                    resetSettings();
+                  }
+                }}
+                title={tr({ zh: '恢复全部计时器设置，不会删除成绩', en: 'Reset all timer settings without deleting solves' })}
+              />
+            </div>
+        </SettingsSection>
+          </main>
         </div>
-
       </div>
     </div>
   );
 }
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
+  const labelId = useId();
   return (
     <div className="settings-row">
+      <span id={label ? labelId : undefined} className="settings-row-label">{label}</span>
+      <span
+        className="settings-row-control"
+        role={label ? 'group' : undefined}
+        aria-labelledby={label ? labelId : undefined}
+      >
+        {children}
+      </span>
+    </div>
+  );
+}
+
+function BooleanRow({
+  label,
+  value,
+  onChange,
+  children,
+  disabled,
+}: {
+  label: string;
+  value: boolean;
+  onChange: (value: boolean) => void;
+  children?: React.ReactNode;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="settings-row settings-row-boolean">
       <span className="settings-row-label">{label}</span>
-      <span className="settings-row-control">{children}</span>
+      <span className="settings-row-control">
+        <SharedBoolToggle value={value} onChange={onChange} label={label} disabled={disabled} />
+        {children}
+      </span>
     </div>
   );
 }
