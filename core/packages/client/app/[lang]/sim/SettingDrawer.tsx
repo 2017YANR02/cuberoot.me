@@ -14,8 +14,8 @@ import { puzzleCaps, type IsolateKind } from './simCaps';
 import { timing } from './engine/tweenTiming';
 import Cubelet from './engine/nxn/cubelet';
 import { STICKER_GAP_DEFAULT } from './engine/define';
-import { setRawMaterialOpacity } from './engine/nxn/rawCore';
 import { applyDebugStructureColors, applyEngineBodyOverlay } from './engine/debugColors';
+import { applyCoreOpacity } from './engine/coreOpacity';
 import { applyStickerThickness } from './engine/stickerThickness';
 import { applyHintFacelets } from './engine/hintFacelets';
 import { loadLogoTexture, SITE_LOGO_SRC } from './engine/nxn/logo';
@@ -386,22 +386,9 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
     Cubelet.CORE.color.set(s.coreColor);
     Cubelet.CORE_BASIC.color.set(s.coreColor);
     Cubelet._PANEL_MAT.color.set(s.coreColor);
-    // 内核不透明度:块身(frame + inner + 占位板 + 原核材质)变半透。**深度照写** —— 停写
-    // 深度就没人拦得住内层的块身,一条视线穿过 N 层各混一次,0.7^N 直接糊成黑坨(issue #56)。
-    // 「看到背面贴纸」交给 instancedRenderer.xray 的独立道次,那条路是排过序的。
-    // 镂空(TRANS)是另一档,开着时块身材质被它接管,这里的值不再可见。
-    const coreOp = Math.min(1, Math.max(0, s.coreOpacity / 100));
-    for (const m of [Cubelet.CORE, Cubelet.CORE_BASIC, Cubelet._PANEL_MAT]) {
-      if (m.opacity === coreOp) continue;   // applySettings 每次改设置都跑,别每次都触发重编译
-      m.opacity = coreOp;
-      m.transparent = coreOp < 1;
-      m.needsUpdate = true;
-    }
-    setRawMaterialOpacity(coreOp);
     // 贴纸不透明度 + 黑边(缝宽):InstancedRenderer 特性,仅 NxN。
     cube.instancedRenderer.stickerOpacity = Math.min(1, Math.max(0, s.stickerOpacity / 100));
     cube.instancedRenderer.stickerGap = Math.min(0.9, Math.max(0, s.stickerGap / 100));
-    cube.instancedRenderer.xray = coreOp < 1;
     // Mirror Cube colours: 'single' = one raw-body colour (solve by shape), 'six' =
     // standard sticker scheme. Kept separate from the NxN coreStyle/faceColors so
     // switching back to a normal cube restores the user's NxN scheme.
@@ -444,6 +431,9 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
     applyEngineBodyOverlay(world.cube, s.hollow, s.debugStructureColor, s.coreStyle === 'raw');
     applyHintFacelets(world.cube, s.hint, hintBg);
   }
+  // 内核透明度在两族引擎的材质/overlay 都落定后统一应用:NxN 走有序 x-ray
+  // 道次,其余拼图按 simRole 克隆块身材质,不会污染共用的贴纸侧材质。
+  applyCoreOpacity(world.cube, s.coreOpacity);
   // Carve: hide one move's moving group to inspect the core + neighbours' inner walls.
   // The UI offers a uniform 挖角/挖面/挖棱 pick on every puzzle, but the engine carves
   // only the puzzle's NATIVE turning element today (setCarve is a boolean; the element
@@ -873,4 +863,3 @@ export function KeymapModal({ open, onClose, keymap, onKeymapChange, onResetKeym
     </div>
   );
 }
-

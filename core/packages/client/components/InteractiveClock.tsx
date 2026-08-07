@@ -99,12 +99,15 @@ export interface InteractiveClockProps {
   animOffset?: (dial: number) => number;
   /** 隐藏组件自带的模式切换 + y2 按钮(宿主自己摆时用)。 */
   hideControls?: boolean;
+  /** /sim 外观设置:只淡出蓝/黄外壳,表盘、指针和针脚保持可见。 */
+  coreOpacity?: number;
   className?: string;
 }
 
 export default function InteractiveClock({
   state, onChange, mode = 'edit', onModeChange, onMove,
-  pinsUp: pinsUpProp, onPinsUpChange, colors, maxWidth = 560, animOffset, hideControls, className,
+  pinsUp: pinsUpProp, onPinsUpChange, colors, maxWidth = 560, animOffset, hideControls,
+  coreOpacity = 100, className,
 }: InteractiveClockProps) {
   const t = useT();
   const svgRef = useRef<SVGSVGElement>(null);
@@ -248,17 +251,19 @@ export default function InteractiveClock({
         onPointerCancel={onPointerUp}
       >
         {/* 半区外形:先画 4 个凸角环(只描边),再盖大圆,最后用面色补回环内那圈 */}
-        {panels.map(({ side, c, face, bulges }) => (
-          <g key={`face-${side}`}>
-            {bulges.map((b, i) => (
-              <circle key={`ring-${i}`} cx={b.x} cy={b.y} r={CLOCK_OUTER_RADIUS} stroke="#000" strokeWidth={STROKE_WIDTH} fill="none" />
-            ))}
-            <circle cx={c.x} cy={c.y} r={RADIUS} stroke="#000" strokeWidth={STROKE_WIDTH} fill={face} />
-            {bulges.map((b, i) => (
-              <circle key={`bulge-${i}`} cx={b.x} cy={b.y} r={CLOCK_OUTER_RADIUS - STROKE_WIDTH / 2} fill={face} />
-            ))}
-          </g>
-        ))}
+        <g opacity={Math.min(100, Math.max(0, coreOpacity)) / 100}>
+          {panels.map(({ side, c, face, bulges }) => (
+            <g key={`face-${side}`}>
+              {bulges.map((b, i) => (
+                <circle key={`ring-${i}`} cx={b.x} cy={b.y} r={CLOCK_OUTER_RADIUS} stroke="#000" strokeWidth={STROKE_WIDTH} fill="none" />
+              ))}
+              <circle cx={c.x} cy={c.y} r={RADIUS} stroke="#000" strokeWidth={STROKE_WIDTH} fill={face} />
+              {bulges.map((b, i) => (
+                <circle key={`bulge-${i}`} cx={b.x} cy={b.y} r={CLOCK_OUTER_RADIUS - STROKE_WIDTH / 2} fill={face} />
+              ))}
+            </g>
+          ))}
+        </g>
 
         {/* 18 个表盘面 + 刻度 */}
         {Array.from({ length: 18 }, (_, i) => {

@@ -3205,8 +3205,8 @@ function PuzzleSettings({
             label={t('内核不透明度', 'Core opacity')}
             value={transCore ? transCore.coreOpacity : settings.coreOpacity}
             onChange={(v) => set('coreOpacity', v)}
-            disabled={!caps.supports.coreFinish || !!transCore}
-            title={transHint ?? hint(caps.supports.coreFinish)}
+            disabled={!caps.supports.coreOpacity || !!transCore}
+            title={transHint ?? hint(caps.supports.coreOpacity)}
           />
           <PercentRow
             label={t('贴纸不透明度', 'Sticker opacity')}
