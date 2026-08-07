@@ -361,6 +361,24 @@
   -webkit-touch-callout: none;
   touch-action: none;
 }
+.trainer-stage.is-loading { cursor: progress; }
+.trainer-scramble-loading {
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--muted-foreground);
+  font-size: 0.95rem;
+}
+.trainer-scramble-loading small {
+  color: var(--faint-foreground);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+.trainer-scramble-loading.is-error { color: var(--destructive); }
+.trainer-scramble-loading.is-error small { color: var(--muted-foreground); }
 .trainer-scramble-label {
   font-size: 1rem; color: var(--muted-foreground); margin-bottom: 8px;
 }
