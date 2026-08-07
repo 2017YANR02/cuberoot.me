@@ -18,4 +18,9 @@ describe('/predict answer feedback and playback controls', () => {
     expect(PAGE).not.toMatch(/showPlayback\s*&&/);
     expect(PAGE).toMatch(/<div className="predict-replay">\s*<PlaybackBar/);
   });
+
+  it('does not offer a bulk reset for the visible challenge settings', () => {
+    expect(PAGE).not.toContain('ResetDefaultsButton');
+    expect(PAGE).not.toContain('restoreDefaults');
+  });
 });

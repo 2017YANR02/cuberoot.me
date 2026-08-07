@@ -335,8 +335,10 @@
 .predict-reveal {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.45rem 0.8rem;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
   border: 1px solid var(--border-default);
   border-radius: 8px;
   background: transparent;
