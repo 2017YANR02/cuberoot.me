@@ -52,6 +52,7 @@ jobs:
             /tools/blddb/data/bigbld/midgeManmade.json
             /.claude/hooks/
             /.codex/hooks.json
+            /.github/workflows/stats.yml
             /.githooks/pre-commit
             /stats/scramble/2x2_essential.json
             /stats/scramble/puzzle_distribution.json
