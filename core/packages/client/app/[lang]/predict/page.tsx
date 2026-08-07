@@ -25,7 +25,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useQueryState, parseAsStringEnum, parseAsInteger, parseAsString } from 'nuqs';
-import { RefreshCw, Check, X, Eye, ArrowRight, ExternalLink } from 'lucide-react';
+import { Check, X, Eye, ArrowRight, ExternalLink } from 'lucide-react';
 import AlgInput from '@/components/AlgInput';
 import BackHome from '@/components/BackHome';
 import HeaderToggles from '@/components/HeaderToggles';
@@ -370,10 +370,6 @@ function PredictPageInner() {
           布局(纯块级),孩子按 DOM 顺序照旧竖着排,和改成两栏之前一模一样。 */}
       <header className="predict-header">
         <h1>{tr({ zh: '预判训练', en: 'Lookahead Challenge' })}</h1>
-        <p>{tr({
-          zh: '在脑子里把公式做完,点出高亮贴纸最终停在哪一格。',
-          en: 'Run the moves in your head, then click the square the highlighted sticker lands on.',
-        })}</p>
       </header>
 
       {/* 选项自己就说明了自己(拼图名 / 常规-十字-前两层 / 棱块-角块 / 随机-F2L-输入),
@@ -415,7 +411,10 @@ function PredictPageInner() {
         ) : tracks.length > 1 && (
           <LiquidGlassChips<PredictTrack>
             items={tracks} value={track} onChange={(v) => void setTrack(v)}
-            getLabel={(k) => tr(TRACK_LABELS[k])}
+            getLabel={(k) => tr({
+              zh: TRACK_LABELS[k].zh.replace(/块$/, ''),
+              en: TRACK_LABELS[k].en,
+            })}
             ariaLabel={tr({ zh: '追踪对象', en: 'Piece to track' })}
           />
         )}
@@ -457,7 +456,7 @@ function PredictPageInner() {
             <p className={algError ? 'predict-alg-error' : 'predict-hint'}>
               {algError
                 ? tr(algErrorText(algError, puzzle))
-                : tr({ zh: '回车出题;换一题 = 同一条公式换个起点。', en: 'Enter deals; New challenge re-rolls the start position.' })}
+                : tr({ zh: '回车出题;下一题 = 同一条公式换个起点。', en: 'Enter deals; Next challenge re-rolls the start position.' })}
             </p>
           </div>
         )}
@@ -545,7 +544,6 @@ function PredictPageInner() {
       </div>
 
       <section className="predict-moves">
-        <h2>{tr({ zh: '要做的公式', en: 'Execute these moves' })}</h2>
         <ol className="predict-move-list">
           {ch?.moves.map((m, i) => {
             // 金字塔 / 斜转 / 枫叶的记号是顶点、不是面,给它上「面色」会误导 —— 那就不上色。
@@ -582,18 +580,17 @@ function PredictPageInner() {
             <p key={g.key} className={done ? 'is-found' : undefined}>
               {done && <Check size={15} aria-hidden="true" />}
               {tr({
-                zh: g.total > 1 ? `${g.total} 条高亮${piece.zh}上的` : `高亮${piece.zh}上的`,
-                en: g.total > 1 ? `Where do the ${g.total} highlighted ${piece.en.toLowerCase()}s' ` : 'Where does the ',
+                zh: g.total > 1 ? `点击${g.total}条高亮${piece.zh}上的` : `点击高亮${piece.zh}上的`,
+                en: 'Click where the ',
               })}
               <b className="predict-color" style={{ background: PREDICT_FILL[color], color: PREDICT_ON_FILL[color] }}>
                 {colorChipLabel(color)}
               </b>
               {tr({
-                // 逗号紧跟在色块徽章后面会浮在半空(徽章自带内边距),中文这里不要它也读得通。
-                zh: g.total > 1 ? '分别落在哪一格?(顺序不限)' : '最终落在哪一格?',
+                zh: g.total > 1 ? '最终落到的格子(顺序不限)。' : '最终落到的那一格。',
                 en: g.total > 1
-                  ? ' stickers end up? (any order)'
-                  : ` sticker of the highlighted ${piece.en.toLowerCase()} end up?`,
+                  ? ` stickers on the ${g.total} highlighted ${piece.en.toLowerCase()}s end up (any order).`
+                  : ` sticker of the highlighted ${piece.en.toLowerCase()} ends up.`,
               })}
             </p>
           );
@@ -633,10 +630,6 @@ function PredictPageInner() {
       </div>
 
       <div className="predict-actions">
-        <button type="button" className="predict-deal" onClick={() => deal()}>
-          <RefreshCw size={16} aria-hidden="true" />
-          {tr({ zh: '换一题', en: 'New challenge' })}
-        </button>
         <button
           type="button"
           className="predict-reveal"
@@ -647,18 +640,9 @@ function PredictPageInner() {
         >
           <Eye size={15} aria-hidden="true" />
         </button>
-        <div className="predict-progress">
-          {promptGroups.map((g) => (
-            <span
-              key={`${g.key}-chip`}
-              className={`predict-chip${g.done === g.total ? ' is-found' : ''}${revealed ? ' is-revealed' : ''}`}
-            >
-              {g.done === g.total && !revealed && <Check size={13} aria-hidden="true" />}
-              {tr(TRACK_LABELS[g.kind])}
-              {g.total > 1 && <span className="predict-chip-count">{g.done}/{g.total}</span>}
-            </span>
-          ))}
-        </div>
+        <button type="button" className="predict-deal" onClick={() => deal()}>
+          {tr({ zh: '下一题', en: 'Next challenge' })}
+        </button>
       </div>
 
       <p className="predict-origin">

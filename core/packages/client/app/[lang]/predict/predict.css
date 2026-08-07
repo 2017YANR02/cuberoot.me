@@ -61,12 +61,6 @@
   font-weight: 700;
 }
 
-.predict-header p {
-  margin: 0.25rem 0 0;
-  color: var(--muted-foreground);
-  font-size: 0.9rem;
-}
-
 .predict-controls {
   display: flex;
   flex-wrap: wrap;
@@ -205,9 +199,6 @@
   position: absolute;
   top: 6px;
   right: 6px;
-  padding: 0.3rem 0.7rem;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--foreground) 8%, transparent);
   font-family: var(--font-mono), monospace;
   font-size: 1.35rem;
   font-weight: 700;
@@ -317,7 +308,6 @@
 .predict-deal {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
   padding: 0.45rem 0.9rem;
   border: none;
   border-radius: 8px;
@@ -358,50 +348,11 @@
   cursor: default;
 }
 
-.predict-progress {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem 0.7rem;
-}
-
-/* 答题进度,**不是按钮**(点它没有任何事发生)。所以不许长得像旁边那两颗真按钮:
-   不描边、不加底、不做胶囊,就是一行会变色的小字。 */
-.predict-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  color: var(--muted-foreground);
-  font-size: 0.8rem;
-  white-space: nowrap;
-}
-
-.predict-chip.is-found {
-  color: var(--signal-success);
-}
-
-/* 看了答案:这一题不算答对,别染成绿的 */
-.predict-chip.is-revealed,
-.predict-chip.is-found.is-revealed {
-  color: var(--signal-warning);
-}
-
-.predict-chip-count {
-  font-family: var(--font-mono), monospace;
-  font-variant-numeric: tabular-nums;
-}
-
-/* ---- 要做的公式 ---- */
+/* ---- 公式 ---- */
 
 /* 排在题面上方(先看要做什么,再看问什么),自己带开题板 / 复盘条的间距 */
 .predict-moves {
   margin-top: 0.9rem;
-}
-
-.predict-moves h2 {
-  margin: 0 0 0.5rem;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--muted-foreground);
 }
 
 .predict-move-list {
