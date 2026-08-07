@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, type MutableRefObject } from 'react';
 import FaceOverlay, { type FaceTable } from './FaceOverlay';
 import ReconPlayOverlay from './recon/ReconPlayOverlay';
+import { applyTwistyCoreOpacity } from './twistyCoreOpacity';
 import './TwistySection.css';
 
 // Pyraminx 4 vertex 方向。screenSlot mode:字母 (U/L/R/B) 不绑定具体 vertex,
@@ -91,6 +92,8 @@ export interface TwistySettings {
   viewGradient: number;
   speed: number;
   hint: boolean;
+  /** /sim only: opacity of the non-sticker foundation. Other callers default to 100%. */
+  coreOpacity?: number;
   /** 'orbit' = 自由 orbit (默认 cubing.js 行为);'rotate' = pointerup 后 snap cameraLat/Long 到 90° 整数倍 */
   dragEmpty?: 'orbit' | 'rotate' | 'view';
   /** 背面视图小窗 → cubing.js 原生 backView 'top-right' / 'none' */
@@ -427,6 +430,19 @@ export default function TwistySection({
     prevPitchRef.current = settings.viewGradient;
     prevNonceRef.current = playerNonce;
   }, [settings?.viewAngle, settings?.viewGradient, settings?.scale, settings?.speed, settings?.hint, settings?.backView, settings?.playbackMode, settings, playerNonce]);
+
+  const coreOpacity = settings?.coreOpacity ?? 100;
+  const coreOpacityEnabled = settings != null;
+  useEffect(() => {
+    const player = playerInstRef.current;
+    if (!player || !coreOpacityEnabled) return;
+    let current = true;
+    void applyTwistyCoreOpacity(player, coreOpacity, () => current).catch(() => {
+      // cubing.js internals can change independently; visibility still falls back to
+      // its supported foundationDisplay path inside the helper.
+    });
+    return () => { current = false; };
+  }, [coreOpacity, coreOpacityEnabled, playerNonce, puzzleDescription]);
 
   // 实时整体转 commit:user 拖动 cube,累积旋转 ≥ 对称阈值时自动 commit alg + camera reset。
   // 视觉无缝要求:commit 瞬间 cube state + camera 同步切换,绕过 cubing.js 的

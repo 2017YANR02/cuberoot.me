@@ -10,8 +10,8 @@
  * 本站版本的差异:
  *   - 配色走站内单一源(白上绿前红右),另给 24 个拿方朝向可切 —— 与 /timer 的
  *     「预打乱朝向」共用 lib/cube-orientation 那张表;
- *   - 视角可自由旋转到背面(原站锁死正面),否则落在背面的答案点不到;背面本身靠
- *     /sim 的「提示贴片」读得到,所以起手朝向恒为 /sim 的默认视角,不随题目乱转;
+ *   - 视角可自由旋转到背面(原站锁死正面),否则落在背面的答案点不到;默认把内核设为
+ *     透明、直接读背贴纸,关闭透明时才用 /sim 的「提示贴片」补背面;
  *   - 六面浮 U/D/L/R/F/B 字母作参照,而不是把字母印在中心贴纸上;
  *   - 公式除了随机 / 随机 F2L,还可以自己输入(原站只有前两档),练自己那条;
  *   - 不止三阶:二 ~ 七阶、五魔方、金字塔、斜转、枫叶都能练(原站只有三阶)。
@@ -24,13 +24,14 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { useQueryState, parseAsStringEnum, parseAsInteger, parseAsString } from 'nuqs';
+import { useQueryState, parseAsStringEnum, parseAsInteger, parseAsString, parseAsBoolean } from 'nuqs';
 import { Check, X, Eye, ArrowRight, ExternalLink } from 'lucide-react';
 import AlgInput from '@/components/AlgInput';
 import BackHome from '@/components/BackHome';
 import HeaderToggles from '@/components/HeaderToggles';
 import LiquidGlassChips from '@/components/LiquidGlassChips';
 import PlaybackBar from '@/components/PlaybackBar';
+import BoolToggle from '@/components/BoolToggle';
 import { tr } from '@/i18n/tr';
 import { CUBE_ORIENTATIONS, orientedFaceColors } from '@/lib/cube-orientation';
 import CubeOrientationSelect from '@/components/CubeOrientationSelect';
@@ -154,6 +155,8 @@ function PredictPageInner() {
     parseAsStringEnum<string>(CUBE_ORIENTATIONS.map((o) => o.value)).withDefault('').withOptions({ history: 'replace', scroll: false }));
   const [alg, setAlg] = useQueryState('alg',
     parseAsString.withDefault('').withOptions({ history: 'replace', scroll: false }));
+  const [transparent, setTransparent] = useQueryState('transparent',
+    parseAsBoolean.withDefault(true).withOptions({ history: 'replace', scroll: false }));
 
   const [challenge, setChallenge] = useState<PredictBoardChallenge | null>(null);
   const [algError, setAlgError] = useState<MoveInputError | null>(null);
@@ -250,8 +253,8 @@ function PredictPageInner() {
     startedAt.current = Date.now();
   }, [puzzle, is333, mode, track, source, moveCount, crossEdges, orientation]);
 
-  /** 认输:切到「答案盘面」(目标块整块画在落点上)。落点在背面也读得到 —— 提示贴片
-   *  会把那三面的贴纸浮在方块外侧,所以这里不再替玩家转视角。 */
+  /** 认输:切到「答案盘面」(目标块整块画在落点上)。透明模式能直接读背贴纸,关闭透明
+   *  后提示贴片会把那三面的贴纸浮在方块外侧,所以这里不再替玩家转视角。 */
   const reveal = useCallback(() => {
     if (!ch) return;
     setRevealed(true);
@@ -486,6 +489,13 @@ function PredictPageInner() {
             />
           </label>
         )}
+
+        <BoolToggle
+          className="predict-transparent"
+          value={transparent}
+          onChange={(v) => void setTransparent(v)}
+          label={tr({ zh: '透明', en: 'Transparent' })}
+        />
       </div>
 
       <div className="predict-boardcol">
@@ -499,6 +509,7 @@ function PredictPageInner() {
             onSticker={onSticker}
             moves={ch?.moves}
             step={step}
+            transparent={transparent}
           />
           <div className="predict-clock" aria-live="off">{clock(elapsed)}</div>
           {feedback?.kind === 'wrong' && (

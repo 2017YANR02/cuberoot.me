@@ -31,6 +31,7 @@ interface Props {
   userMoveRef: RefObject<((action: TwistAction | string) => void) | null>;
   /** 手拧(设置面板):false = 只看不动(涂色 / 拧都停掉)。 */
   pointerTurns?: boolean;
+  coreOpacity?: number;
 }
 
 function clockBoardOf(world: World | null): ClockBoard | null {
@@ -38,7 +39,9 @@ function clockBoardOf(world: World | null): ClockBoard | null {
   return world.cube as ClockBoard;
 }
 
-export default function SimClockBoard({ getWorld, worldTick, userMoveRef, pointerTurns = true }: Props) {
+export default function SimClockBoard({
+  getWorld, worldTick, userMoveRef, pointerTurns = true, coreOpacity = 100,
+}: Props) {
   const t = useT();
   const [, force] = useState(0);
   const rerender = useCallback(() => force((n) => (n + 1) & 0xffff), []);
@@ -112,6 +115,7 @@ export default function SimClockBoard({ getWorld, worldTick, userMoveRef, pointe
         onMove={handleMove}
         animOffset={(dial) => board.animOffset(dial)}
         hideControls={!pointerTurns}
+        coreOpacity={coreOpacity}
         maxWidth={520}
         className="sim-clock-svg"
       />
