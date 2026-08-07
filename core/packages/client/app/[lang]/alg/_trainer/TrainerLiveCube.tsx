@@ -11,8 +11,8 @@
  * 每次重新瞄准 `moves` 都会清空(见 useTrainerCube),所以下一题自动回到识别图,
  * 上一题的收尾手也不会把它提前翻成立体图。
  *
- * 校准按钮不参与这次切换 —— 它属于这次连接,不属于哪张图。放在切换外面还顺带让这个
- * 格子的高度不随切换跳动。
+ * 校准按钮只属于三维视图:q2Look 是固定投影,没有朝向可校准。按钮放在三维画面下方,
+ * 不参与「识别图 → 实况图」的切换。
  *
  * 日志从**还原态**起算,这一点是白得的:出题时 `useTrainerCube` 让魔方谎报「打乱作用在
  * 还原态上」的那个状态,所以 `打乱 + 这一题拧过的手` 恰好就是桌上那颗的真实状态。
@@ -26,6 +26,7 @@ import dynamic from 'next/dynamic';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { Spinner } from '@/components/Spinner/Spinner';
+import { FaceletsCube } from '@/components/FaceletsCube';
 import { tr } from '@/i18n/tr';
 import { mirrorForBrand, sensorBasisForBrand } from '../../timer/_lib/bluetooth/orientation';
 import type { TrainerCubeState } from './useTrainerCube';
@@ -50,13 +51,15 @@ export default function TrainerLiveCube({
   idle: ReactNode;
 }) {
   const [calibrateNonce, setCalibrateNonce] = useState(0);
-  const { cube, moves, quatRef } = state;
+  const { cube, moves, quatRef, view } = state;
   /** 动过手了没有。清空的时机归 `useTrainerCube` 管。 */
   const started = moves.length > 0;
 
   // three + /sim 引擎那一大块在魔方瞄准这一题时就先拉下来,别等到第一手才开始下载 ——
   // 那一手正是它该出现的时刻,现拉就是当场卡一下。拉完不渲染,不花帧。
-  useEffect(() => { void import('@/components/sim-embed/SimCubeView'); }, []);
+  useEffect(() => {
+    if (view === '3d') void import('@/components/sim-embed/SimCubeView');
+  }, [view]);
 
   // 打乱作为日志第一段。拆不拆词无所谓 —— SimCubeView 里最终是 join(' ') 成一条式子的,
   // 但拆开来第二段之后的每一手才算「纯追加」,那是能播动画的前提(见 sim_log.ts)。
@@ -67,7 +70,14 @@ export default function TrainerLiveCube({
 
   return (
     <div className="trainer-live-cube">
-      {!started ? idle : (
+      {!started ? idle : view === 'q2look' && cube.facelets ? (
+        <FaceletsCube
+          fd={cube.facelets.toLowerCase()}
+          view="q2look"
+          size={140}
+          alt={tr({ zh: '智能魔方 q2Look 实时状态', en: 'Live q2Look smart-cube state' })}
+        />
+      ) : (
         <SimCubeView
           moves={log}
           quatRef={quatRef}
@@ -87,7 +97,7 @@ export default function TrainerLiveCube({
       )}
       {/* 手动校准:把魔方摆正、点一下,这个姿态就成了基准。它属于这次连接而不属于
           哪张图,所以两张图下面都在。没有陀螺仪的魔方按了也不会变,那就不摆。 */}
-      {cube.status.hasGyro && (
+      {view === '3d' && cube.status.hasGyro && (
         <button
           type="button"
           className="trainer-opts-btn is-ghost"

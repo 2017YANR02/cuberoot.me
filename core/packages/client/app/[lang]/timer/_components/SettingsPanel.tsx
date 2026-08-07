@@ -638,16 +638,17 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
             <select
               className="settings-row-control-select"
               value={s.liveCubeView}
-              onChange={(e) => updateSettings({ liveCubeView: e.target.value as '2d' | 'net' | '3d' })}
+              onChange={(e) => updateSettings({ liveCubeView: e.target.value as '2d' | 'net' | '3d' | 'q2look' })}
               aria-label={tr({ zh: '实况魔方渲染方式', en: 'Live cube rendering' })}
             >
               <option value="3d">{tr({ zh: '三维', en: '3D' })}</option>
+              <option value="q2look">q2Look</option>
               <option value="net">{tr({ zh: '展开图', en: 'Net' })}</option>
               <option value="2d">{tr({ zh: '立体图', en: 'Isometric' })}</option>
             </select>
             <span className="hint">{tr({
-              zh: '连上智能魔方后,时间下方那张图会从打乱预览换成你手里这颗魔方。三维会跟着魔方陀螺仪一起转,仅三阶,且需要魔方推送姿态、状态已从复原态起算;手机、拿不到姿态时自动退回展开图。展开图六个面都看得见,能逐面和手里的魔方对;立体图只画三个面',
-              en: 'Once a cube is connected, the picture under the time switches from the scramble preview to the cube in your hands. 3D turns with the cube via its gyroscope — 3x3 only, and only while the cube reports orientation and its state is anchored at solved; phones and cubes with no orientation fall back to the net. The net shows all six faces so you can check them one by one; the isometric draws only three',
+              zh: '连上智能魔方后,时间下方显示手里魔方的实时状态。q2Look 固定显示顶面、正面两行和右侧条,适合观察顶层;三维会播放每次转动并可跟随陀螺仪;展开图能检查全部六面;立体图显示三个面',
+              en: 'After a smart cube connects, this mirrors its live state below the time. q2Look fixes the top, two front rows, and a right strip for last-layer recognition; 3D animates every turn and can follow the gyroscope; Net shows all six faces; Isometric shows three',
             })}</span>
           </Row>
           <Row label={tr({ zh: '录姿态用于回放', en: 'Record orientation for replay'

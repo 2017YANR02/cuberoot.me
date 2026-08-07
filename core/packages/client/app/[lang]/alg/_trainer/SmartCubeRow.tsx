@@ -47,7 +47,7 @@ interface Props {
 }
 
 export default function SmartCubeRow({ enabled, onEnabledChange, state, supported }: Props) {
-  const { cube, stopStep, reason, connect, macPrompt, submitMac, cancelMac } = state;
+  const { cube, stopStep, reason, view, setView, connect, macPrompt, submitMac, cancelMac } = state;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mac, setMac] = useState('');
@@ -105,6 +105,21 @@ export default function SmartCubeRow({ enabled, onEnabledChange, state, supporte
           </button>
         )}
       </div>
+
+      {cube.status.connected && (
+        <div className="trainer-opts-row">
+          <span className="trainer-opts-label">{tr({ zh: '显示', en: 'Display' })}</span>
+          <select
+            className="trainer-scramble-kind"
+            value={view}
+            onChange={event => setView(event.target.value as 'q2look' | '3d')}
+            aria-label={tr({ zh: '智能魔方显示方式', en: 'Smart-cube display' })}
+          >
+            <option value="q2look">q2Look</option>
+            <option value="3d">{tr({ zh: '三维', en: '3D' })}</option>
+          </select>
+        </div>
+      )}
 
       {macPrompt && (
         <div className="trainer-opts-row">

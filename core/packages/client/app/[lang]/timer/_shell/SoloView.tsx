@@ -892,7 +892,6 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   // entire shell at gyro cadence for a number nothing here reads.
   const gyroQuatRef = useRef<Quat | null>(null);
   const [calibrateNonce, setCalibrateNonce] = useState(0);
-  const want3dLiveCube = settings.liveCubeView === '3d';
   // 姿态流录制。样本时刻用 performance.now() 而不是 solveStartTsRef —— 后者在
   // 「魔方起表」那条路上存的是**设备时钟**,而陀螺仪回调根本不带时间戳,两个
   // 时钟相减出来的是垃圾。这里自己记一个本地起点。
@@ -901,7 +900,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   // What the live view actually rendered. LiveCubeState decides — it owns the
   // phone / no-sample / not-anchored fallbacks — and reports back, because the
   // calibrate button below must follow the outcome, not the request.
-  const [liveCubeView, setLiveCubeView] = useState<'2d' | 'net' | '3d'>('net');
+  const [liveCubeView, setLiveCubeView] = useState<'2d' | 'net' | '3d' | 'q2look'>('net');
 
   /**
    * The first turn of an armed attempt starts the clock — csTimer's behaviour
@@ -953,7 +952,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   const bluetoothCube = useBluetoothCube({
     // Passing onGyro is what turns the stream on at all (MoYu32 has an explicit
     // enable opcode), so only ask for it when the 3D view could use it.
-    onGyro: (want3dLiveCube || settings.recordGyro)
+    onGyro: (settings.liveCubeView === '3d' || settings.recordGyro)
       ? (q) => {
         gyroQuatRef.current = q;
         // 只在真的在计时的时候录:观察阶段和拧完之后的姿态不属于这一把。
@@ -1158,7 +1157,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
             // 陀螺仪只决定这颗魔方**朝哪儿**,不决定它是什么状态 —— 没有姿态流
             // 的魔方照样该用 3D:贴纸一模一样准,而且每拧一手能把那一层转给你看,
             // 展开图做不到。没姿态就用引擎自己的等轴视角,不假装在跟手。
-            mode={want3dLiveCube ? '3d' : (settings.liveCubeView === '2d' ? '2d' : 'net')}
+            mode={settings.liveCubeView}
             quatRef={gyroQuatRef}
             calibrateToken={calibrateNonce}
             sensorBasis={sensorBasisForBrand(bluetoothCube.status.brand)}

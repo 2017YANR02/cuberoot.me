@@ -11,6 +11,7 @@
  *   mode '3d'            — a live 3D cube that turns as you turn (SimCubeView),
  *     posed by the cube's gyroscope when there is one. 3x3 only, and only
  *     while the state is expressible as an alg (see `moves` below).
+ *   mode 'q2look'        — compact U + F + R projection for last-layer looks.
  *
  * A gyro is NOT required for 3D, and used to be. The two are separate things:
  * the gyro says which way the cube is POINTING, the move log says what STATE it
@@ -130,7 +131,7 @@ export interface LiveCubeStateProps {
    *       face-by-face against the cube in your hands (csTimer only has this one);
    * '2d'  the isometric still, where three faces are visible and three are not.
    */
-  mode?: '2d' | 'net' | '3d';
+  mode?: '2d' | 'net' | '3d' | 'q2look';
   /** Latest orientation sample from the cube, or null when none has arrived. */
   quat?: Quat | null;
   /**
@@ -153,7 +154,7 @@ export interface LiveCubeStateProps {
    * for the request instead of the outcome is how that button ended up showing
    * where it does nothing.
    */
-  onViewChange?: (view: '2d' | 'net' | '3d') => void;
+  onViewChange?: (view: '2d' | 'net' | '3d' | 'q2look') => void;
 }
 
 export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
@@ -177,8 +178,10 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
 
   // The single decision, taken once and reported, so the owner draws the
   // calibrate button against what is on screen rather than what was asked for.
-  const view: '2d' | 'net' | '3d' =
-    wants3d && algAnchored ? '3d' : mode === '2d' ? '2d' : 'net';
+  const view: '2d' | 'net' | '3d' | 'q2look' =
+    wants3d && algAnchored ? '3d'
+      : mode === 'q2look' ? 'q2look'
+        : mode === '2d' ? '2d' : 'net';
   useEffect(() => {
     onViewChange?.(view);
   }, [view, onViewChange]);
@@ -211,6 +214,7 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
   // first facelet snapshot doesn't shove the rest of the column down.
   if (!facelets) return <span style={{ display: 'block', height: '100%' }} />;
   const alt = tr({ zh: '智能魔方当前状态', en: 'Current smart-cube state' });
+  if (view === 'q2look') return <FaceletsCube fd={facelets.toLowerCase()} alt={alt} view="q2look" fill />;
   // Only an explicit '2d' asks for the isometric still. A '3d' request that got
   // this far is a phone or an un-anchored state, and the flat view it falls back
   // to is the net — the one that shows all six faces.
