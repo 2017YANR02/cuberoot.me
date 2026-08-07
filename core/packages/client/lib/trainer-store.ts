@@ -243,6 +243,8 @@ interface TrainerState {
    * 运行时态,由 `loadSession` 传入,不持久化。
    */
   caseResolver: CaseResolver | null;
+  /** 虚拟集打乱生成失败的 case key;运行时态,供训练页显示重试入口。 */
+  caseResolveErrors: Record<string, true>;
   /**
    * 本场的 AUF 默认是关的(虚拟集声明,见 `lib/alg-virtual-sets` 的 `noAufDefault`)。
    *
@@ -431,6 +433,23 @@ interface TrainerState {
   clearSolves: () => void;
 }
 
+/**
+ * 虚拟集的屏上打乱是否全部就绪。普通公式集的 setup 随数据一起到,永远放行;
+ * 虚拟集必须等异步 resolver 补完,否则空白题面也会被「下一题」记成已经练过。
+ */
+export function trainerScramblesReady(
+  st: Pick<TrainerState, 'caseResolver' | 'currentKey' | 'currentScramble' | 'peek' | 'peek2'>,
+  count: 1 | 3 = 1,
+): boolean {
+  if (!st.caseResolver) return true;
+  const slots = [
+    { key: st.currentKey, scramble: st.currentScramble },
+    st.peek,
+    st.peek2,
+  ].slice(0, count);
+  return slots.every(slot => !slot?.key || !!slot.scramble);
+}
+
 /** 实际出题池 = selected ∩ scope(scope 为 null 时不限)。 */
 export const trainerPool = (selected: string[], scope: string[] | null): string[] => {
   if (!scope) return selected;
@@ -469,23 +488,37 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
    * 解出来后**原地**写回那个 case —— 不换 `cases` 数组,一场一万多个 case 的 key 索引
    * 才不用跟着重建(见 trainer-case-key)。同一个 case 并发抽到也只解一次。
    */
-  const resolving = new Map<string, Promise<void>>();
+  // 按本场的 case 对象去重,不要只按 key:离开旧会话时尚未结束的任务可能与新会话同 key,
+  // 若共用一条 Promise,新页面会永远等旧页面的 resolver,甚至被旧结果串场。
+  const resolving = new WeakMap<AlgCase, Promise<void>>();
   const fillCase = (c: AlgCase): Promise<void> => {
     const resolver = get().caseResolver;
     if (!resolver || c.setup.trim()) return Promise.resolve();
     const k = caseKey(c);
-    const hit = resolving.get(k);
+    const hit = resolving.get(c);
     if (hit) return hit;
     const p = resolver(c)
       .then(r => {
-        if (!r) return;
+        if (!r) {
+          set(st => ({ caseResolveErrors: { ...st.caseResolveErrors, [k]: true } }));
+          return;
+        }
         c.setup = r.setup;
         // 打乱取逆就是一条能解开它的公式 —— 记忆模式的「揭示」、卡片上的演示都靠它
         if (r.alg) c.algs = [[{ alg: r.alg }]];
+        set(st => {
+          if (!st.caseResolveErrors[k]) return {};
+          const next = { ...st.caseResolveErrors };
+          delete next[k];
+          return { caseResolveErrors: next };
+        });
       })
-      .catch(() => { /* 算不出就一直留空:UI 摆空打乱,而不是编一条假的 */ })
-      .finally(() => { resolving.delete(k); });
-    resolving.set(k, p);
+      .catch(() => {
+        // 算不出就留空并显式报错:UI 给重试入口,绝不编一条假的或偷偷跳题。
+        set(st => ({ caseResolveErrors: { ...st.caseResolveErrors, [k]: true } }));
+      })
+      .finally(() => { resolving.delete(c); });
+    resolving.set(c, p);
     return p;
   };
 
@@ -975,6 +1008,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       sets,
       cases,
       caseResolver: opts?.caseResolver ?? null,
+      caseResolveErrors: {},
       noAufDefault: !!opts?.noAufDefault,
       // 声明了默认关就压成关;普通集从落盘的偏好取回来 —— 从 LSLL 切回 PLL 得能恢复,
       // 光靠一次性的 hydratePrefs 是回不来的。
@@ -1009,6 +1043,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     sets: null,
     cases: [],
     caseResolver: null,
+    caseResolveErrors: {},
     noAufDefault: false,
     selected: [],
     scope: null,
@@ -1205,6 +1240,9 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       const st = get();
       // 计时进行中 / 蓄力中不换题;STOPPING 放行(stopTimer 收尾就是在这个状态里出下一题)
       if (st.timerState !== TimerState.NOT_RUNNING && st.timerState !== TimerState.STOPPING) return;
+      // 虚拟集的打乱异步生成。当前题还是空的就绝不能前进 —— 否则用户点着空白页,
+      // 复习游标却一路增长;所有 UI / 键盘 / 智能魔方入口最终都由这里兜底。
+      if (st.currentKey && !trainerScramblesReady(st)) return;
       // 「本轮结束」弹窗开着时拦住一切换题 —— 只有弹窗里的「继续下一轮」能推进(见 continueRecapRound)
       if (st.recapRoundDone) return;
       const fwd = histForward(st.hist);
