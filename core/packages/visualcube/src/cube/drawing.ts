@@ -47,6 +47,8 @@ function attr(value: string | number): string {
  * Pure function — no DOM access.
  */
 export function renderCubeSVG(geometry: CubeGeometry, options: ResolvedCubeOptions): string {
+  if (options.view === 'q2look') return renderQ2LookSVG(options)
+
   const faceRotations = rotateFaces(defaultFaceRotations, options.viewportRotations)
   const renderOrder = getRenderOrder(faceRotations)
 
@@ -114,6 +116,68 @@ export function renderCubeSVG(geometry: CubeGeometry, options: ResolvedCubeOptio
   }
 
   parts.push(`</svg>`)
+  return parts.join('')
+}
+
+/**
+ * csTimer-style q2Look projection: the complete U face, the top two F rows,
+ * and the R top row folded into a vertical strip. It is deliberately driven by
+ * the same facelet/color pipeline as every other visualcube view; only the
+ * projection changes.
+ */
+function renderQ2LookSVG(options: ResolvedCubeOptions): string {
+  const n = options.cubeSize
+  const frontRows = Math.min(2, n)
+  const gap = 0.12
+  const inset = 0.07
+  const pad = 0.1
+  const contentWidth = n + 1 + gap
+  const contentHeight = n + frontRows + gap
+  const viewBox = {
+    x: -pad,
+    y: -pad,
+    width: contentWidth + pad * 2,
+    height: contentHeight + pad * 2,
+  }
+  const parts: string[] = [
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${attr(options.width)}" height="${attr(options.height)}" ` +
+      `viewBox="${attr(viewBox.x)} ${attr(viewBox.y)} ${attr(viewBox.width)} ${attr(viewBox.height)}">`,
+    options.backgroundColor
+      ? `<rect x="${attr(viewBox.x)}" y="${attr(viewBox.y)}" width="${attr(viewBox.width)}" height="${attr(viewBox.height)}" fill="${attr(options.backgroundColor)}"/>`
+      : `<rect x="${attr(viewBox.x)}" y="${attr(viewBox.y)}" width="${attr(viewBox.width)}" height="${attr(viewBox.height)}" fill="none" opacity="0"/>`,
+    `<g opacity="${attr(options.cubeOpacity / 100)}" fill="${attr(options.cubeColor)}">` +
+      `<rect x="0" y="0" width="${attr(n)}" height="${attr(n)}"/>` +
+      `<rect x="0" y="${attr(n + gap)}" width="${attr(n)}" height="${attr(frontRows)}"/>` +
+      `<rect x="${attr(n + gap)}" y="0" width="1" height="${attr(n)}"/>` +
+      `</g>`,
+  ]
+
+  const stickers: string[] = []
+  const cell = (face: Face, row: number, col: number, x: number, y: number) => {
+    const color = getStickerColor(face, row, col, options)
+    if (color === ColorName.Transparent) return
+    const p1: Vec3 = [x + inset, y + inset, 0]
+    const p2: Vec3 = [x + 1 - inset, y + inset, 0]
+    const p3: Vec3 = [x + 1 - inset, y + 1 - inset, 0]
+    const p4: Vec3 = [x + inset, y + 1 - inset, 0]
+    stickers.push(renderSticker(p1, p2, p3, p4, color, options.cubeColor))
+  }
+
+  for (let row = 0; row < n; row++) {
+    for (let col = 0; col < n; col++) cell(Face.U, row, col, col, row)
+  }
+  for (let row = 0; row < frontRows; row++) {
+    for (let col = 0; col < n; col++) cell(Face.F, row, col, col, n + gap + row)
+  }
+  for (let pos = 0; pos < n; pos++) {
+    cell(Face.R, 0, n - 1 - pos, n + gap, pos)
+  }
+
+  parts.push(
+    `<g opacity="${attr(options.stickerOpacity / 100)}" stroke-opacity="0.5" ` +
+      `stroke-width="${attr(options.strokeWidth)}" stroke-linejoin="round">${stickers.join('')}</g>`,
+    `</svg>`,
+  )
   return parts.join('')
 }
 
