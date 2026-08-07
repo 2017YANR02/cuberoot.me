@@ -17,7 +17,7 @@
  *   · **NxN**(二 ~ 七阶)—— 贴纸是 InstancedMesh,没有逐张 mesh。走 /sim 自己那套:
  *     `cube.stick` 上色 + `setStickering` 三档遮罩(遮罩键在还原帧的贴纸上,复盘转动时
  *     高亮自己跟着块跑),外加方位字母 + 提示贴片(背对镜头那三面的贴纸会在方块外侧浮
- *     一层影子,所以朝向钉死也读得到背面)。
+ *     一层影子;透明模式会关掉这层影子,改为直接透过 0% 块身读背面)。
  *   · **五魔方 / 金字塔 / 斜转 / 枫叶** —— 每张贴纸是独立 mesh,那就直接改它自己的材质色(引擎的
  *     stickerMat 按颜色缓存 + 共享,所以必须逐张 clone 一份,否则改一张串一片)。颜色挂在
  *     mesh 上,天然跟着块走,和 NxN 那套遮罩是同一个语义。这几个拼图没有提示贴片,背面
@@ -42,6 +42,7 @@ import { timing } from '@/app/[lang]/sim/engine/tweenTiming';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { tr } from '@/i18n/tr';
 import { engineHomeSid } from '@/app/[lang]/sim/engine/nxn/netIndex';
+import { applyCoreOpacity } from '@/app/[lang]/sim/engine/coreOpacity';
 import { FM_OUTLINE, FM_DIM, FM_IGNORED, FM_FIXED_COLOR, dimFaceletColor } from '@/app/[lang]/sim/engine/nxn/stickering';
 import { PREDICT_FILL, type PredictColor } from '../_lib/colors';
 import type { PredictPuzzle } from '../_lib/puzzles';
@@ -112,11 +113,13 @@ export interface PredictBoardProps {
   moves?: readonly string[];
   /** 已经走到第几步:比上一次多 1 = 放一步动画,其余情况瞬时跳过去。 */
   step?: number;
+  /** true = 内核 0% 且关闭提示贴片;false = 内核 100% 且恢复提示贴片。 */
+  transparent?: boolean;
 }
 
 export default function PredictBoard({
   puzzle, labels, bright = NO_FACELETS, dim = NO_FACELETS, onSticker,
-  moves = NO_MOVES, step = 0,
+  moves = NO_MOVES, step = 0, transparent = true,
 }: PredictBoardProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mountRef = useRef<SimMount | null>(null);
@@ -203,6 +206,11 @@ export default function PredictBoard({
       painterRef.current = order > 0
         ? await mountNxnPainter(world, order, mount, onStickerRef, disposers)
         : await mountSolidPainter(puzzle, world, mount, onStickerRef, disposers, frameTicks);
+      applyCoreOpacity(world.cube, transparent ? 0 : 100);
+      if (order > 0) (world.cube as Cube).instancedRenderer.hint = !transparent;
+      // NxN 的 frame 材质是模块级共享;离开题板前还原,避免同一页稍后挂的引擎
+      // 在自己的设置 effect 落地前闪过透明首帧。
+      disposers.push(() => applyCoreOpacity(world.cube, 100));
 
       const onContextMenu = (e: MouseEvent) => e.preventDefault();
       mount.renderer.domElement.addEventListener('contextmenu', onContextMenu);
@@ -264,6 +272,18 @@ export default function PredictBoard({
     mount.invalidate();
   }, [bright, dim, ready]);
 
+  useEffect(() => {
+    const mount = mountRef.current;
+    if (!mount || !ready) return;
+    applyCoreOpacity(mount.world.cube, transparent ? 0 : 100);
+    if (order > 0) {
+      const cube = mount.world.cube as Cube;
+      cube.instancedRenderer.hint = !transparent;
+      if (!transparent) cube.instancedRenderer.setHintBackdrop(pageBackdrop());
+    }
+    mount.invalidate();
+  }, [transparent, ready, order]);
+
   /** 复位 = 回到 /sim 打开时那个姿势,`homeSceneRot` 单一源。 */
   const resetView = useCallback(() => {
     const world = mountRef.current?.world;
@@ -317,7 +337,7 @@ async function mountNxnPainter(
     if (fi !== undefined) onStickerRef.current(fi);
   });
 
-  // 提示贴片强制常驻(本页不给 toggle):朝向钉死在 home,背对镜头那三面只能靠它读。
+  // 非透明模式用提示贴片补背面;透明模式由上层同步 effect 关掉,直接透过块身读背贴纸。
   // 影子色 = 贴纸色与页面背景预混,所以主题一翻要重新注入一次底色。
   cube.instancedRenderer.setHintBackdrop(pageBackdrop());
   cube.instancedRenderer.hint = true;

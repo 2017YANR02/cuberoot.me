@@ -2136,6 +2136,7 @@ export default function SimPage() {
               worldTick={worldTick}
               userMoveRef={userMoveRef}
               pointerTurns={settings.pointerTurns !== false}
+              coreOpacity={renderSettings.coreOpacity}
             />
           )}
           {twisty ? (
@@ -2153,7 +2154,7 @@ export default function SimPage() {
               // 按阶段展示色块:cubing.js 原生支持的拼图直接透传阶段名(其余拼图
               // 不传 — undefined = TwistySection 不接管该属性)。
               experimentalStickering={(puzzleParam === 'megaminx' || puzzleParam === 'fto') ? query.stickering : undefined}
-              settings={settings}
+              settings={renderSettings}
               onUserMove={(moveText) => {
                 // moveText is already cubing.js canonical (`Uv`/`BL2`); pass raw
                 // to skip TwistAction parsing which would eat multi-char families.
