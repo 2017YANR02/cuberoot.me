@@ -8,7 +8,9 @@ import { parseAsString, useQueryState } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Settings, Copy, Check, QrCode, RotateCcw, X } from 'lucide-react';
 import { ALG_CATALOG, getAlgSetMeta, loadAlg, type AlgCase } from '@cuberoot/shared';
-import { useTrainerStore, TimerState, trainerPool, mixSessionId, type TrainerMode } from '@/lib/trainer-store';
+import {
+  useTrainerStore, TimerState, trainerPool, trainerScramblesReady, mixSessionId, type TrainerMode,
+} from '@/lib/trainer-store';
 import TimerFontPicker from '@/components/TimerFontPicker';
 import { useSpaceHoldTimer } from '@/hooks/useSpaceHoldTimer';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
@@ -47,6 +49,7 @@ import '@/app/[lang]/alg/_trainer/trainer.css';
 import '@/app/[lang]/alg/_trainer/memory.css';
 import '@/app/[lang]/alg/alg.css';
 import { tr } from '@/i18n/tr';
+import { Spinner } from '@/components/Spinner/Spinner';
 
 /** 顶层只区分动作训练与间隔记忆;训练内部再选覆盖或随机抽题。 */
 const PRIMARY_MODES: Array<{ id: 'train' | 'memo'; zh: string; en: string }> = [
@@ -157,6 +160,8 @@ export default function TrainerRunClient() {
   const storeSet = useTrainerStore(s => s.set);
   const loadSession = useTrainerStore(s => s.loadSession);
   const loadMixSession = useTrainerStore(s => s.loadMixSession);
+  const resolveCase = useTrainerStore(s => s.resolveCase);
+  const caseResolveErrors = useTrainerStore(s => s.caseResolveErrors);
   const setScope = useTrainerStore(s => s.setScope);
   const hydratePrefs = useTrainerStore(s => s.hydratePrefs);
   const preAuf = useTrainerStore(s => s.preAuf);
@@ -406,16 +411,18 @@ export default function TrainerRunClient() {
   }, []);
   const advanceScramble = useCallback(() => {
     const n = multiRef.current ? 3 : 1;
+    const st = useTrainerStore.getState();
+    // 三条一屏必须三条全部就绪才整屏推进;单条只等当前题。先拦再自动标记,
+    // 否则点加载中的空白也会被误记成「已掌握」。store.nextScramble 另有单题兜底。
+    if (!trainerScramblesReady(st, n)) return;
     {
       // 三条一屏:走掉的是屏上那三条(当前 + 预抽的 peek / peek2),三条一起标。
-      const cur = useTrainerStore.getState();
       markPassedAsMastered(multiRef.current
-        ? [cur.currentKey, cur.peek?.key, cur.peek2?.key]
-        : [cur.currentKey]);
+        ? [st.currentKey, st.peek?.key, st.peek2?.key]
+        : [st.currentKey]);
     }
     // 房间协同:领取是异步网络往返,连调 nextScramble 会被 roomBusy 串行化吞掉后两次 ——
     // 交给单一 roomAdvance(n) 内部按序 await 领 n 步(三条一屏 = 切下一屏三条)。
-    const st = useTrainerStore.getState();
     if (st.room) { void st.roomAdvance(n); return; }
     for (let i = 0; i < n; i++) nextScramble();
   }, [nextScramble]);
@@ -584,7 +591,8 @@ export default function TrainerRunClient() {
       const st = useTrainerStore.getState();
       const hasLast = st.solves.length > 0;
       return [
-        st.timerState === TimerState.NOT_RUNNING,
+        st.timerState === TimerState.NOT_RUNNING
+          && trainerScramblesReady(st, multiRef.current ? 3 : 1),
         hasLast, hasLast, hasLast,
         st.hist.idx > 0,
         !!st.currentKey,
@@ -920,6 +928,44 @@ export default function TrainerRunClient() {
   // 三条一屏只在不计时模式下成立(计时是一把一把的,一屏三条无从计时)。房间协同同样支持:
   // store 在房间里也维护 peek/peek2(靠 roomAdvance 预领),第 2、3 条照常从预抽取。
   const multi = multiScramble && !timing;
+  // 虚拟集的打乱异步补齐。单条等 current;三条一屏等屏上的三条全到,
+  // 期间所有前进入口都被上面的 gate 拦住,这里给用户一个明确、稳定的状态。
+  const scramblePending = !!virtual && (
+    !currentKey || !currentScramble
+    || (multi && (!!nextEntry?.key && !nextEntry.scramble))
+    || (multi && (!!next2Entry?.key && !next2Entry.scramble))
+  );
+  const failedScreenCases = virtual
+    ? [currentCase, ...(multi ? [nextCase, next2Case] : [])]
+        .filter((c): c is AlgCase => !!c && !!caseResolveErrors[caseKey(c)])
+    : [];
+  const scrambleFailed = failedScreenCases.length > 0;
+  const scrambleLoading = (
+    <div className={`trainer-scramble-loading${scrambleFailed ? ' is-error' : ''}`} role="status" aria-live="polite">
+      {!scrambleFailed && <Spinner size={22} />}
+      <span>{scrambleFailed
+        ? tr({ zh: '打乱生成失败', en: 'Could not prepare the scramble' })
+        : tr({ zh: '正在准备打乱…', en: 'Preparing scramble…' })}</span>
+      <small>{scrambleFailed
+        ? tr({
+            zh: '当前题和进度都已保留，请重试生成',
+            en: 'This case and your progress are preserved. Try generating it again',
+          })
+        : tr({
+            zh: '准备完成前不会进入下一题，进度也不会提前变化',
+            en: 'The next case and progress will wait until this scramble is ready',
+          })}</small>
+      {scrambleFailed && (
+        <button
+          type="button"
+          className="trainer-quick-btn"
+          onClick={() => { for (const c of failedScreenCases) void resolveCase(c); }}
+        >
+          {tr({ zh: '重试生成', en: 'Try again' })}
+        </button>
+      )}
+    </div>
+  );
 
   // 「上一个」卡片(回看 + 标记):默认 = 打乱历史里的上一条 —— 换题(计时停表 / 空格 / →)
   // 时光标一起走,卡片跟着更新(计时停表后的上一条正好是你刚做完那把)。在统计里点选某条
@@ -1481,7 +1527,7 @@ export default function TrainerRunClient() {
         />
       ) : (
       <div className={`trainer-run${leftShown ? ' has-left' : ''}${statsVisible ? ' has-right' : ''}`}>
-        <div className="trainer-stage" ref={stageRef}>
+        <div className={`trainer-stage${scramblePending ? ' is-loading' : ''}`} ref={stageRef} aria-busy={scramblePending}>
           {/* head = 图以上的一切(按钮 / 计时数字),body = 图及其以下(图、打乱公式)。
               两段配合 .trainer-run 的 subgrid:主屏与左右两张卡片共用同一套行,
               三张图的顶边落在同一条线上,不靠数魔法像素。
@@ -1490,7 +1536,7 @@ export default function TrainerRunClient() {
           {/* 三条一屏:当前 + 屏上第 2、3 条(队尾时 = 预抽的 peek / peek2,回看过则是历史里
               后两条),拧完三条再点一次切下一屏。图与打乱交错成六行,每条打乱紧跟自己那张图。
               图走 local 渲染:三张与三条文字在同一次 commit 出现,不再各自等自己的网络往返。 */}
-          {multi && (
+          {multi && (scramblePending ? scrambleLoading : (
             <div className="trainer-scramble-multi">
               {[
                 { s: currentScramble, c: currentCase },
@@ -1526,7 +1572,7 @@ export default function TrainerRunClient() {
                   </div>
                 ))}
             </div>
-          )}
+          ))}
           {timing && (
             <TimerDisplay
               state={timerState}
@@ -1544,42 +1590,43 @@ export default function TrainerRunClient() {
               「上一个」那把(pillCase),这里是手点当前这把,两个目标各归各的。
               三条一屏时图与标记都跟在各自那条打乱上面(见上),这里不再重复出。
               打乱还没算出来时(虚拟集)不出图 —— 空 setup 会渲染成一个已还原的方块,那是假的。 */}
-          {!multi && currentCase && (
-            <div className="trainer-figure">
-              <CaseMarkBar k={caseKey(currentCase)} />
-              {/* 出题时出识别图,动手之后才换实时那颗 —— 换的时机归 TrainerLiveCube 管,
-                  见它的头注。没瞄准(还没把这题喂给魔方)时也是识别图:那会儿魔方上的
-                  状态根本不是这题。 */}
-              {showStageThumb && currentScramble && (
-                <div className="trainer-stage-thumb">
-                  {(() => {
-                    const thumb = (
-                      <CaseThumb
-                        puzzle={puzzle}
-                        set={setSlug}
-                        sticker={currentCase.sticker}
-                        alg={currentCase.algs.flat()[0]?.alg ?? currentCase.standard ?? ''}
-                        setup={currentScramble}
-                        size={140}
-                      />
-                    );
-                    return trainerCube.armed
-                      ? <TrainerLiveCube state={trainerCube} scramble={currentScramble} idle={thumb} />
-                      : thumb;
-                  })()}
+          {!multi && (scramblePending ? scrambleLoading : (
+            <>
+              {currentCase && (
+                <div className="trainer-figure">
+                  <CaseMarkBar k={caseKey(currentCase)} />
+                  {/* 出题时出识别图,动手之后才换实时那颗 —— 换的时机归 TrainerLiveCube 管,
+                      见它的头注。没瞄准(还没把这题喂给魔方)时也是识别图:那会儿魔方上的
+                      状态根本不是这题。 */}
+                  {showStageThumb && currentScramble && (
+                    <div className="trainer-stage-thumb">
+                      {(() => {
+                        const thumb = (
+                          <CaseThumb
+                            puzzle={puzzle}
+                            set={setSlug}
+                            sticker={currentCase.sticker}
+                            alg={currentCase.algs.flat()[0]?.alg ?? currentCase.standard ?? ''}
+                            setup={currentScramble}
+                            size={140}
+                          />
+                        );
+                        return trainerCube.armed
+                          ? <TrainerLiveCube state={trainerCube} scramble={currentScramble} idle={thumb} />
+                          : thumb;
+                      })()}
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
-          )}
-          {/* 打乱公式紧跟在图下方(图关掉时它就是这一段的头一行) */}
-          {!multi && (
-            <ScrambleHeader
-              scramble={shownScramble(currentScramble)}
-              label={copied ? tr({ zh: '已复制', en: 'Copied' }) : undefined}
-              font={scrambleFont}
-              placeholder={virtual ? tr({ zh: '打乱生成中…', en: 'Generating scramble…' }) : undefined}
-            />
-          )}
+              {/* 打乱公式紧跟在图下方(图关掉时它就是这一段的头一行) */}
+              <ScrambleHeader
+                scramble={shownScramble(currentScramble)}
+                label={copied ? tr({ zh: '已复制', en: 'Copied' }) : undefined}
+                font={scrambleFont}
+              />
+            </>
+          ))}
           {/* 离屏预取下一题的图(size=140,与主屏/左卡同一 URL → 共用浏览器缓存):换题后它就是
               主屏当前图,也是「上一个」卡片的图,届时命中缓存秒出,不等网络往返(打乱公式是本地
               状态所以本就瞬间出)。「打乱图」关时哪都不出图,无需预取。 */}

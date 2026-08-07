@@ -108,4 +108,60 @@ describe('trainer-store lookahead (peek)', () => {
     const nextEntry = back.hist.list[back.hist.idx + 1];
     expect(nextEntry.key).toBe(x1Key);
   });
+
+  it('虚拟集当前打乱未生成时禁止前进,生成完成后才放行', async () => {
+    const releases = new Map<string, (value: { setup: string; alg: string }) => void>();
+    const cases = ['A', 'B', 'C'].map(name => ({
+      subgroup: 'T', name, setup: '', algs: [[]], sticker: { kind: 'raw', tag: 'virtual', attrs: {} },
+    } as unknown as AlgCase));
+    useTrainerStore.getState().loadSession('3x3', 'virtual-pending', cases, {
+      defaultAll: true,
+      caseResolver: c => new Promise(resolve => { releases.set(c.name, resolve); }),
+    });
+
+    const pending = useTrainerStore.getState();
+    expect(pending.currentKey).not.toBeNull();
+    expect(pending.currentScramble).toBeFalsy();
+    const keyBefore = pending.currentKey;
+    const histBefore = pending.hist.list.length;
+
+    pending.nextScramble();
+    expect(useTrainerStore.getState().currentKey).toBe(keyBefore);
+    expect(useTrainerStore.getState().hist.list.length).toBe(histBefore);
+
+    releases.get(pending.currentName!)?.({ setup: "R U R'", alg: "R U' R'" });
+    await new Promise(resolve => setTimeout(resolve, 0));
+    expect(useTrainerStore.getState().currentScramble).toBeTruthy();
+
+    useTrainerStore.getState().nextScramble();
+    expect(useTrainerStore.getState().hist.list.length).toBe(histBefore + 1);
+  });
+
+  it('虚拟集生成失败时保留当前题并允许原题重试', async () => {
+    const calls = new Map<string, number>();
+    const cases = ['A', 'B', 'C'].map(name => ({
+      subgroup: 'T', name, setup: '', algs: [[]], sticker: { kind: 'raw', tag: 'virtual', attrs: {} },
+    } as unknown as AlgCase));
+    useTrainerStore.getState().loadSession('3x3', 'virtual-retry', cases, {
+      defaultAll: true,
+      caseResolver: async c => {
+        const n = (calls.get(c.name) ?? 0) + 1;
+        calls.set(c.name, n);
+        return n === 1 ? null : { setup: "R U R'", alg: "R U' R'" };
+      },
+    });
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    const failed = useTrainerStore.getState();
+    const keyBefore = failed.currentKey!;
+    const current = failed.cases.find(c => caseKey(c) === keyBefore)!;
+    expect(failed.caseResolveErrors[keyBefore]).toBe(true);
+    failed.nextScramble();
+    expect(useTrainerStore.getState().currentKey).toBe(keyBefore);
+
+    await useTrainerStore.getState().resolveCase(current);
+    const retried = useTrainerStore.getState();
+    expect(retried.caseResolveErrors[keyBefore]).toBeUndefined();
+    expect(retried.currentScramble).toBeTruthy();
+  });
 });
