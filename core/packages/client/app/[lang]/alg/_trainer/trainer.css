@@ -895,6 +895,21 @@
   margin-right: 6px;
   color: var(--faint-foreground);
 }
+.trainer-round-select {
+  field-sizing: content;
+  padding: 2px 3px;
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.trainer-round-select:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
 
 /* ─── 在线协同房间控件 ─── */
 .trainer-room-row { flex-wrap: wrap; gap: 8px 10px; }
