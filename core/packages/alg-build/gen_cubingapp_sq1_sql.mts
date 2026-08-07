@@ -1,39 +1,17 @@
 /** CubingApp SQ1 Cube Shape + CSP JSON -> 0107 data migration. */
-import { readFileSync, writeFileSync } from 'node:fs';
+import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { invertSq1Alg, parseSq1Tokens } from '@cuberoot/shared/sq1-notation';
-
-type UpstreamCase = { subset: string; algs: Record<string, Record<string, never>> };
-type UpstreamSet = { cases: Record<string, UpstreamCase> };
+import { invertSq1Alg } from '@cuberoot/shared/sq1-notation';
+import {
+  invariant, normalizeSubgroup, readCubingAppSq1Set, sourceAlgs, upstreamCase,
+} from './cubingapp_sq1_import.mts';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
 const upstreamRoot = resolve(process.cwd(), process.argv[2] ?? resolve(HERE, '../../../../cubingapp'));
 const output = resolve(process.cwd(), process.argv[3] ?? resolve(HERE, '../server/migrations/0107_sq1_cubingapp_csp.sql'));
-const sourceDir = resolve(upstreamRoot, 'tanstack/src/routes/algorithms/algs');
-const cubeShape = JSON.parse(readFileSync(resolve(sourceDir, 'SQ1-Cube-Shape.json'), 'utf8')) as UpstreamSet;
-const csp = JSON.parse(readFileSync(resolve(sourceDir, 'SQ1-CSP.json'), 'utf8')) as UpstreamSet;
-
-function invariant(ok: unknown, message: string): asserts ok {
-  if (!ok) throw new Error(message);
-}
-
-function normalizeSubgroup(value: string): string {
-  return value === '1 Slash' ? '1 Slice' : value.replace(/ Slashes$/, ' Slices');
-}
-
-function sourceAlgs(source: UpstreamCase) {
-  const algs = Object.keys(source.algs);
-  invariant(algs.length > 0, `case in ${source.subset} has no algorithms`);
-  for (const alg of algs) invariant(parseSq1Tokens(alg).length > 0, `unparseable SQ1 algorithm: ${alg}`);
-  return [algs.map(alg => ({ alg, source: 'cubingapp' as const }))];
-}
-
-function upstreamCase(set: UpstreamSet, name: string): UpstreamCase {
-  const found = set.cases[name];
-  invariant(found, `missing upstream case: ${name}`);
-  return found;
-}
+const cubeShape = readCubingAppSq1Set(upstreamRoot, 'SQ1-Cube-Shape');
+const csp = readCubingAppSq1Set(upstreamRoot, 'SQ1-CSP');
 
 const cubeShapeEntries = Object.entries(cubeShape.cases);
 const cspEntries = Object.entries(csp.cases);

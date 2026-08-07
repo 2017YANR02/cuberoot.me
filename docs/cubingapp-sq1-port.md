@@ -1,17 +1,18 @@
-# CubingApp Square-1 CS and CSP port
+# CubingApp Square-1 algorithm ports
 
 ## Source snapshot
 
-- Application: <https://cubingapp.com/algorithms/SQ1-Cube-Shape> and <https://cubingapp.com/algorithms/SQ1-CSP>
+- Application: <https://cubingapp.com/algorithms/SQ1-Cube-Shape>, <https://cubingapp.com/algorithms/SQ1-CSP>, <https://cubingapp.com/algorithms/SQ1-CP>, <https://cubingapp.com/algorithms/SQ1-EO>, <https://cubingapp.com/algorithms/SQ1-EP>, and <https://cubingapp.com/algorithms/SQ1-OBL>
 - Repository: <https://github.com/spencerchubb/cubingapp>
 - Commit: `613a49885dc618023368e5f0c2a25024b8c7e9a5`
-- Input files: `tanstack/src/routes/algorithms/algs/SQ1-Cube-Shape.json` and `SQ1-CSP.json`
+- Input files: `tanstack/src/routes/algorithms/algs/SQ1-{Cube-Shape,CSP,CP,EO,EP,OBL}.json`
 
 The checked-in SQL is generated from that source snapshot:
 
 ```powershell
 Set-Location core
 pnpm --filter @cuberoot/alg-build exec tsx gen_cubingapp_sq1_sql.mts D:/cube/cubingapp
+pnpm --filter @cuberoot/alg-build exec tsx gen_cubingapp_sq1_stages_sql.mts D:/cube/cubingapp
 ```
 
 ## Coverage
@@ -31,9 +32,19 @@ Both sets use the existing Square-1 flat renderer. CS is grey because only shape
 
 CubingApp's page-level random `before` and `after` rotation strings are not copied: CubeRoot's existing trainer owns case setup and randomisation. The source cases, formulas, order, odd/even labels and recognition states are preserved.
 
+### CP, EO, EP, and OBL
+
+CP already contained all eight CubingApp formulas. Migration 0108 keeps its eight ids, case names and 20 existing alternatives while restoring CubingApp's source order and `Top Adj` / `Top Opp` / `Top Solved` groups.
+
+EO keeps its seven ids and ten existing formulas, adds six source-only alternatives, and preserves the source notes in bilingual formula metadata. Its final coverage is seven cases and 16 formulas.
+
+EP is merged by physical Square-1 state rather than by visible labels. Seventeen source cases match existing states; those retain their ids, names, formulas and saved progress. The other 23 source states add 24 formulas, producing 72 cases and 76 formulas after the site's 32 additional cases. New source names retain CubingApp's `&` separator because `Ua & Ua` and the existing `Ua / Ua` are different physical states; mechanically changing the separator would silently create a name collision.
+
+OBL is imported in source order with all 185 cases and 185 formulas across one through six slices. It uses the same flat Square-1 renderer as the catalog, PDF and trainer. The OBL plan applies the existing EO face-only mask, so recognition images show both face colours but no side stickers or equator. This is an alias in the shared mask function, not a duplicate renderer or a new simulator-stage option.
+
 ## Verification
 
-`tests/sq1-cubingapp-port.test.ts` reads the migration payload and locks the case counts, formula counts, subgroup distribution, odd/even split, source tags and setup inversions. The migration itself checks the final database counts and aborts if the existing CS baseline is not the expected one.
+`tests/sq1-cubingapp-port.test.ts` and `tests/sq1-cubingapp-stages-port.test.ts` read the migration payloads and lock case counts, formula counts, subgroup distributions, mappings, source tags, setup inversions and renderability. The migrations check their final database counts and abort if an existing baseline is not the expected one.
 
 ## MIT license notice
 
