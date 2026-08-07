@@ -44,7 +44,7 @@ export type TrainerCubeReason =
   | 'no-case' | 'unreadable-case' | 'not-aimed'
   | 'settling' | 'ready' | 'running';
 
-export type TrainerCubeView = 'q2look' | '3d';
+export type TrainerCubeView = 'none' | '3d' | 'qcube' | 'qlast' | 'q2look';
 
 export interface TrainerCubeState {
   cube: BluetoothCubeHandle;
@@ -183,7 +183,8 @@ export function useTrainerCube(opts: UseTrainerCubeOpts): TrainerCubeState {
   useEffect(() => {
     try {
       const saved = localStorage.getItem(VIEW_KEY);
-      if (saved === 'q2look' || saved === '3d') setViewState(saved);
+      if (saved === 'none' || saved === '3d' || saved === 'qcube'
+        || saved === 'qlast' || saved === 'q2look') setViewState(saved);
     } catch { /* Storage can be unavailable in private/restricted contexts. */ }
   }, []);
   const setView = useCallback((next: TrainerCubeView) => {

@@ -24,4 +24,27 @@ describe('visualcube q2Look view', () => {
     expect((svg.match(/fill="#FEFE00"/g) ?? [])).toHaveLength(8);
     expect((svg.match(/fill="#00D800"/g) ?? [])).toHaveLength(4);
   });
+
+  it('renders qLast with all four last-layer side strips', () => {
+    const svg = renderCubeSVG({ cubeSize: 3, facelets: SOLVED.split(''), view: 'qlast' });
+    const stickerFills = [...svg.matchAll(/<polygon[^>]* fill="([^"]+)"/g)].map(m => m[1]);
+
+    expect(stickerFills).toHaveLength(24);
+    expect(stickerFills.filter(c => c === '#FEFE00')).toHaveLength(9);
+    expect(stickerFills.filter(c => c === '#EE0000')).toHaveLength(6);
+    expect(stickerFills.filter(c => c === '#0000F2')).toHaveLength(3);
+    expect(stickerFills.filter(c => c === '#FFA100')).toHaveLength(3);
+    expect(stickerFills.filter(c => c === '#00D800')).toHaveLength(3);
+  });
+
+  it('renders qCube with complete U/F faces and folded L/R strips', () => {
+    const svg = renderCubeSVG({ cubeSize: 3, facelets: SOLVED.split(''), view: 'qcube' });
+    const stickerFills = [...svg.matchAll(/<polygon[^>]* fill="([^"]+)"/g)].map(m => m[1]);
+
+    expect(stickerFills).toHaveLength(28);
+    expect(stickerFills.filter(c => c === '#FEFE00')).toHaveLength(9);
+    expect(stickerFills.filter(c => c === '#EE0000')).toHaveLength(9);
+    expect(stickerFills.filter(c => c === '#0000F2')).toHaveLength(5);
+    expect(stickerFills.filter(c => c === '#00D800')).toHaveLength(5);
+  });
 });

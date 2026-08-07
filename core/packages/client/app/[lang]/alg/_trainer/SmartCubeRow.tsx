@@ -112,11 +112,14 @@ export default function SmartCubeRow({ enabled, onEnabledChange, state, supporte
           <select
             className="trainer-scramble-kind"
             value={view}
-            onChange={event => setView(event.target.value as 'q2look' | '3d')}
+            onChange={event => setView(event.target.value as TrainerCubeState['view'])}
             aria-label={tr({ zh: '智能魔方显示方式', en: 'Smart-cube display' })}
           >
+            <option value="none">None</option>
+            <option value="3d">Virtual</option>
+            <option value="qcube">qCube</option>
+            <option value="qlast">qLast</option>
             <option value="q2look">q2Look</option>
-            <option value="3d">{tr({ zh: '三维', en: '3D' })}</option>
           </select>
         </div>
       )}
