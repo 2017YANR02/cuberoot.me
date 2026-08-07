@@ -273,6 +273,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
             filename: `${puzzle}-${set}-${primary.replace(/\s+/g, '-').toLowerCase()}`,
             allOris: true,
             maxAlgs: Infinity,  // 单张 case 的表,备选公式正是它的价值
+            sq1BlackTop,
           })}
         />
         {/* 校验只扫这一张 —— 报告里点失败项就开上面同一个编辑器,不再叠第二个 */}

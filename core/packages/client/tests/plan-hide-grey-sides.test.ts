@@ -11,7 +11,7 @@
 import { describe, it, expect } from 'vitest';
 import type { AlgSticker } from '@cuberoot/shared';
 import { renderFromSimpleQuery, renderCubeSVG } from '@cuberoot/visualcube';
-import { cubeThumbParams, LEVEL2_PICKER_MASK } from '@/components/CaseThumb';
+import { cubeThumbParams, LEVEL2_PICKER_MASK } from '@/lib/alg_thumb_plan';
 import { specToCubeOptions } from '@/lib/puzzle-image/render';
 import { readSpecFromParams, specToParams } from '@/lib/puzzle-image/codec';
 import { DEFAULTS } from '@/lib/puzzle-image/defaults';

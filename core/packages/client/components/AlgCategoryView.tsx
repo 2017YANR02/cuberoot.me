@@ -24,7 +24,8 @@ import {
   type AlgCase, type AlgEntry, type AlgFile, type AlgPuzzle, type AlgSubmission, type AlgTag,
 } from '@cuberoot/shared';
 import { VisualCube } from '@/components/VisualCube';
-import { CaseThumb, LEVEL2_PICKER_MASK } from '@/components/CaseThumb';
+import { CaseThumb } from '@/components/CaseThumb';
+import { LEVEL2_PICKER_MASK } from '@/lib/alg_thumb_plan';
 import AlgCard from '@/components/AlgCard';
 import CommunityAlgs from '@/components/CommunityAlgs';
 import AdminCaseEditor, { type AdminEditorState } from '@/components/AdminCaseEditor';
@@ -727,6 +728,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
         ?? (set === 'zbll' ? displayZbllToken(sub.split('/').pop() ?? sub) : sub),
       // ZBLL 一页一类:每个子组 12 个 case 正好是一张练习表,翻到哪页就练哪一类
       groupPerPage: set === 'zbll',
+      sq1BlackTop,
     });
   };
 
