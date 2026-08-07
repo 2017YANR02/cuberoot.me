@@ -10,6 +10,14 @@ on:
     - cron: '0 20 * * *'
   workflow_dispatch:
     inputs:
+      pipeline:
+        description: 'Pipeline to run'
+        required: true
+        type: choice
+        options:
+          - full
+          - wca_stats_extra
+        default: full
       stats_filter:
         description: 'Comma-separated stat IDs to compute (empty = all). Example: wr_metric,wr_aoxr'
         required: false
@@ -107,10 +115,12 @@ jobs:
       # NOTE: 前置 EXPLAIN 校验所有 stat SQL —— 任何语法错(MySQL 保留字/列名错等)
       # 在几秒内 fail-fast，避免等 compute_all 跑到中途才发现
       - name: Validate stat queries (EXPLAIN preflight)
+        if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
         working-directory: core/packages/stats-build
         run: npx tsx src/bin/validate_queries.ts
 
       - name: Compute all statistics
+        if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
         working-directory: core/packages/stats-build
         env:
           STATS_FILTER: ${{ github.event.inputs.stats_filter || '' }}
@@ -118,61 +128,74 @@ jobs:
         run: npx tsx src/bin/compute_all.ts
 
       - name: Generate WR IDs for calc page
+        if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
         working-directory: core/packages/stats-build
         run: npx tsx src/bin/gen_wr_ids.ts
 
       - name: Generate persons search index
+        if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
         working-directory: core/packages/stats-build
         run: npx tsx src/bin/gen_persons_search.ts
 
       - name: Generate nemesizer dataset
+        if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
         working-directory: core/packages/stats-build
         env:
           NODE_OPTIONS: '--expose-gc --max-old-space-size=6144'
         run: npx tsx src/bin/nemesizer.ts
 
       - name: Compute index
+        if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
         working-directory: core/packages/stats-build
         run: npx tsx src/bin/compute_index.ts
 
       - name: Generate all past competitions JSON
+        if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
         working-directory: core/packages/stats-build
         run: npx tsx src/bin/gen_all_comps.ts
 
       - name: Generate /wca/prediction historical trends JSON
+        if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
         working-directory: core/packages/stats-build
         run: npx tsx src/bin/prediction_build.ts
 
       - name: Generate 3x3 WR history JSON
+        if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
         working-directory: core/packages/stats-build
         run: npx tsx src/bin/wr333_history_build.ts
 
       - name: Generate competition records JSON
+        if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
         working-directory: core/packages/stats-build
         run: npx tsx src/bin/gen_comp_records.ts
 
       # Per-event scramble move-length distribution (/scramble/stats length tab).
       # Streams the `scrambles` table (added to REQUIRED_TABLES) — no extra download.
       - name: Generate scramble length distribution JSON
+        if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
         working-directory: core/packages/stats-build
         run: npx tsx src/bin/build_scramble_lengths.ts
 
       - name: Generate lookup data (person_countries + comp_countries)
+        if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
         working-directory: core/packages/stats-build
         run: npx tsx src/bin/gen_lookup_data.ts
 
       - name: Build historical records JSON (WR/CR/NR)
+        if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
         working-directory: core/packages/stats-build
         run: npx tsx src/bin/records_build.ts
 
       # 非官方多盲平均(333mbf/333mbo Mo3)的区域纪录标签 → stats/records/mbld_avg_records.json
       # (WCA 不追踪多盲平均;选手页平均列用它上 WR/大洲/NR 角标)。随下面 git add -A stats/ 一起提交+同步。
       - name: Build unofficial MBLD-average records JSON
+        if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
         working-directory: core/packages/stats-build
         run: npx tsx src/bin/mbld_avg_records_build.ts
 
       # 性别(女子/男子)历史纪录进程 — /wca/records 性别下拉数据源(world + 6 大洲)
       - name: Build gendered historical records JSON (women/men)
+        if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
         working-directory: core/packages/stats-build
         env:
           NODE_OPTIONS: '--max-old-space-size=8192'
@@ -186,6 +209,7 @@ jobs:
 
       # ── 历史排名 snapshot:复用上面已经导入的 MySQL,算完 scp + ssh 灌进 prod PG ──
       - name: Build historical ranks snapshot
+        if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
         working-directory: core/packages/stats-build
         env:
           NODE_OPTIONS: '--expose-gc --max-old-space-size=12288'
@@ -195,6 +219,7 @@ jobs:
       # (追加进 load.sql,随 historical_ranks 同一 scp+apply 灌库).逐日 race 帧改由下一步 daily builder
       # 产出,故 SKIP_RACE_FILES=1 跳过年级 race/index 写盘(避免撞路径).
       - name: Build SOR best-rank (yearly; race files skipped)
+        if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
         working-directory: core/packages/stats-build
         env:
           NODE_OPTIONS: '--max-old-space-size=8192'
@@ -204,12 +229,13 @@ jobs:
       # SOR 逐日排名演化 race:直接重放 MySQL 17 现役项目结果(historical_ranks 已加载同一 dump)→
       # stats/sor_over_time/*.json + sor_over_time.json 索引(逐比赛日帧,order 去重,commit).~15-20min.
       - name: Build SOR over-time DAILY race JSON
+        if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
         working-directory: core/packages/stats-build
         env:
           NODE_OPTIONS: '--max-old-space-size=8192'
         run: npx tsx src/bin/sor_over_time_daily_build.ts
 
-      - name: Setup SSH for historical ranks deploy
+      - name: Setup SSH for stats deploy
         env:
           SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
@@ -220,6 +246,7 @@ jobs:
           ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
 
       - name: Upload historical ranks TSVs to server
+        if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -232,6 +259,7 @@ jobs:
             "$DEPLOY_USER@$DEPLOY_HOST:/tmp/wca_import/"
 
       - name: Apply historical ranks on server
+        if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -291,6 +319,7 @@ jobs:
         run: ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" 'rm -rf /var/cache/nginx/api/* && nginx -s reload'
 
       - name: Commit and push
+        if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
