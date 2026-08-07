@@ -232,10 +232,11 @@ export interface TimerSettings {
    *   'net' — the unfolded WCA net. All six faces flat, which is the view you
    *           can check face-by-face against the cube in your hands, and the
    *           only one csTimer has. This is also what every fallback lands on.
+   *   'q2look' — compact U + F + R projection for two-look recognition.
    *   '2d'  — the isometric still. Legacy value name, kept so a stored setting
    *           keeps meaning what it meant: three faces visible, three hidden.
    */
-  liveCubeView: '2d' | 'net' | '3d';
+  liveCubeView: '2d' | 'net' | '3d' | 'q2look';
 
   /**
    * 把陀螺仪的姿态流一起存进成绩,好在复盘里重放「怎么拧的」——转体在哪儿发生、

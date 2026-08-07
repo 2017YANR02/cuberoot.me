@@ -12,8 +12,8 @@ export function FaceletsCube({ fd, size = 88, alt = 'Cube state', view, fill = f
   fd: string;
   size?: number;
   alt?: string;
-  /** 'plan' = 顶视 + 四周顶排(通行的 OLL/PLL/ZBLL 图);省略 = 立体图。 */
-  view?: 'iso' | 'plan';
+  /** 'plan' = 顶视 + 四周顶排;'q2look' = U 面 + F 两行 + R 侧条;省略 = 立体图。 */
+  view?: 'iso' | 'plan' | 'q2look';
   /**
    * 撑满外层盒子的高度,而不是钉死 `size` px。给尺寸由 CSS 令牌决定的位置用
    * (如 /timer 时间下方那块,高度是 `--cube-h`)。`size` 仍然决定 svg 的 width /
@@ -25,7 +25,7 @@ export function FaceletsCube({ fd, size = 88, alt = 'Cube state', view, fill = f
   const svg = useMemo(
     () => renderCubeSVG({
       width: size, height: size, cubeSize: 3, facelets: fd.split(''),
-      ...(view === 'plan' ? { view: 'plan' } : {}),
+      ...(view === 'plan' || view === 'q2look' ? { view } : {}),
     }),
     [fd, size, view],
   );

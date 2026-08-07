@@ -44,6 +44,8 @@ export type TrainerCubeReason =
   | 'no-case' | 'unreadable-case' | 'not-aimed'
   | 'settling' | 'ready' | 'running';
 
+export type TrainerCubeView = 'q2look' | '3d';
+
 export interface TrainerCubeState {
   cube: BluetoothCubeHandle;
   /** True while the cube is presenting the current case and driving the clock. */
@@ -68,6 +70,9 @@ export interface TrainerCubeState {
    * re-render the whole trainer that often for a value nothing else looks at.
    */
   quatRef: { current: Quat | null };
+  /** Live mirror projection. Stored here so controls and renderer share one source. */
+  view: TrainerCubeView;
+  setView(view: TrainerCubeView): void;
   /**
    * What will stop the clock, or null when nothing will and the user has to.
    * Worth surfacing in the UI: "it stops when OLL is done" is not guessable.
@@ -133,6 +138,7 @@ function toEpochMs(perfMs: number): number {
  * the cube come to rest. A visible wait beats a drill that silently won't start.
  */
 const SETTLE_MS = 500;
+const VIEW_KEY = 'trainer:smart-cube-view';
 
 export function useTrainerCube(opts: UseTrainerCubeOpts): TrainerCubeState {
   const { enabled, timing, puzzle, sessionSet, currentCase, currentScramble, currentKey } = opts;
@@ -173,6 +179,17 @@ export function useTrainerCube(opts: UseTrainerCubeOpts): TrainerCubeState {
   const [moves, setMoves] = useState<string[]>([]);
   /** Orientation samples. A box, not state: 20-50 Hz, read only by a frame loop. */
   const quatRef = useRef<Quat | null>(null);
+  const [view, setViewState] = useState<TrainerCubeView>('q2look');
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(VIEW_KEY);
+      if (saved === 'q2look' || saved === '3d') setViewState(saved);
+    } catch { /* Storage can be unavailable in private/restricted contexts. */ }
+  }, []);
+  const setView = useCallback((next: TrainerCubeView) => {
+    setViewState(next);
+    try { localStorage.setItem(VIEW_KEY, next); } catch { /* Keep the in-memory choice. */ }
+  }, []);
 
   const beginSettle = useCallback(() => {
     settlingRef.current = true;
@@ -318,5 +335,8 @@ export function useTrainerCube(opts: UseTrainerCubeOpts): TrainerCubeState {
     : settling ? 'settling'
     : 'ready';
 
-  return { cube, armed, moves, quatRef, stopStep, reason, connect, macPrompt, submitMac, cancelMac };
+  return {
+    cube, armed, moves, quatRef, view, setView,
+    stopStep, reason, connect, macPrompt, submitMac, cancelMac,
+  };
 }
