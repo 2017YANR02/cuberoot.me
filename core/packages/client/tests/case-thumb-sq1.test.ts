@@ -40,6 +40,25 @@ describe('CaseThumb — Square-1 renderer', () => {
     expect(html).not.toContain('<rect');
   });
 
+  it('renders OBL with both face colours, no side stickers and no equator', () => {
+    const html = renderToStaticMarkup(createElement(CaseThumb, {
+      puzzle: 'sq1',
+      set: 'obl',
+      sticker: { kind: 'raw', tag: 'sqcube', attrs: {} },
+      alg: '',
+      size: 96,
+      sq1BlackTop: false,
+    }));
+
+    expect(html.match(/<path /g)).toHaveLength(16);
+    expect(html).toContain('#FFFF00');
+    expect(html).toContain('#FFFFFF');
+    for (const color of ['#FF0000', '#00FF00', '#FF8000', '#0000FF']) {
+      expect(html).not.toContain(color);
+    }
+    expect(html).not.toContain('<rect');
+  });
+
   it('renders every cubeshape sticker in one theme-aware gray and hides the equator', () => {
     const props = {
       puzzle: 'sq1',

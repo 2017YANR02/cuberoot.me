@@ -22,6 +22,9 @@ for (let i = 0; i < 6; i++) ALL_STICKERS.add(`M${i}`);
 /** Formula-set slug or stage selector value → canonical SQ1 stage. */
 export function sq1Stage(value: string): Sq1Stage | null {
   const stage = value.toUpperCase();
+  // OBL thumbnails use the EO recognition mask (both face colours, no side
+  // stickers), but OBL is not a simulator stage selector item.
+  if (stage === 'OBL') return 'EO';
   return (SQ1_STAGE_ITEMS as readonly string[]).includes(stage) ? stage as Sq1Stage : null;
 }
 

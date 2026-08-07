@@ -128,9 +128,12 @@ function AlgRow({ entry, expanded, onToggle, animatable, puzzle, set, setup, inv
         {entry.tags?.map(t => (
           <span key={t} className={`alg-tag alg-tag-${t}`} title={ALG_TAG_LABEL[t]()}>{ALG_TAG_LABEL[t]()}</span>
         ))}
-        {algHtml && puzzle !== 'sq1'
-          ? <span className="alg-alg-text" dangerouslySetInnerHTML={{ __html: sanitizeAlgHtml(algHtml) }} />
-          : <span className="alg-alg-text">{algShown}</span>}
+        <span className="alg-alg-text">
+          {algHtml && puzzle !== 'sq1'
+            ? <span dangerouslySetInnerHTML={{ __html: sanitizeAlgHtml(algHtml) }} />
+            : algShown}
+          {entry.note && <span className="alg-alg-note">({tr(entry.note)})</span>}
+        </span>
         {shownStm != null && <span className="alg-alg-len" title="STM">{shownStm}</span>}
         {mirror && (
           <button
@@ -328,7 +331,7 @@ export function collapseAlgGroupsByDefault(
   caseCount: number,
   umbrella: boolean,
 ): boolean {
-  return caseCount > 100 && !umbrella && !(puzzle === 'sq1' && (set === 'cs' || set === 'csp'));
+  return caseCount > 100 && !umbrella && !(puzzle === 'sq1' && ['cs', 'csp', 'obl'].includes(set));
 }
 
 export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initialData }: AlgCategoryViewProps) {

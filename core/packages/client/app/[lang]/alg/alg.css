@@ -720,6 +720,11 @@ html[data-theme=dark] .alg-root {
   overflow-wrap: anywhere;
   word-break: break-word;
 }
+.alg-alg-note {
+  margin-inline-start: 8px;
+  font-size: 11px;
+  font-style: italic;
+}
 .alg-alg-text u {
   text-decoration: underline;
   text-decoration-thickness: 2px;

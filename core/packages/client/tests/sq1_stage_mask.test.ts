@@ -29,6 +29,8 @@ describe('SQ1 stage masks', () => {
   it('accepts set slugs case-insensitively and rejects unrelated sets', () => {
     expect(sq1Stage('co')).toBe('CO');
     expect(sq1Stage('EP')).toBe('EP');
+    expect(sq1Stage('obl')).toBe('EO');
+    expect(sq1StageHiddenStickerIds('obl')).toEqual(sq1StageHiddenStickerIds('EO'));
     expect(sq1Stage('cs')).toBeNull();
     expect(sq1Stage('parity')).toBeNull();
   });

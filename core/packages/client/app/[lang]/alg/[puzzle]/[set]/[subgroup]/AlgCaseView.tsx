@@ -83,7 +83,10 @@ function PlayableAlgRow({ entry, puzzle, set, setup, mirror, ori = 0 }: {
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(o => !o); } }}
         title={open ? 'collapse' : 'play'}
       >
-        <span className="alg-alg-text">{shown}</span>
+        <span className="alg-alg-text">
+          {shown}
+          {entry.note && <span className="alg-alg-note">({tr(entry.note)})</span>}
+        </span>
         {len != null && <span className="alg-alg-len" title="STM">{len}</span>}
         {mirror && (
           <button
