@@ -127,6 +127,13 @@
     "long_en": "algorithm database powering `/algdb` (2x2/3x3/4x4/5x5 alg sets — F2L, OLL, PLL, COLL, ZBLL, 1LLL, OLLCP, VLS, parity, L2E, L2C, …; scraped via `scramble-stats-build/bin/scrape_speedcubedb.ts`)"
   },
   {
+    "name": "Spencer Chubb / CubingApp",
+    "url": "https://cubingapp.com/",
+    "zh": "Square-1 CS 补全与 CSP 全部情况、公式数据 (MIT)",
+    "en": "Complete Square-1 CS coverage and the full CSP case/algorithm data (MIT)",
+    "long_en": "CubingApp's Square-1 Cube Shape and CSP datasets, ported from commit 613a49885dc618023368e5f0c2a25024b8c7e9a5 under the MIT License: one missing CS case, corrected and additional CS algorithms, plus all 179 CSP cases and 203 CSP algorithms"
+  },
+  {
     "name": "speedcubedb.com/analyze",
     "url": "https://speedcubedb.com/analyze",
     "zh": "打乱分析器算法来源(/scramble/analyzer 的 CFOP 解法枚举)",

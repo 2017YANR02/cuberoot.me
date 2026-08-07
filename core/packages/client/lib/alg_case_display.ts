@@ -153,7 +153,7 @@ export function displaySq1CsName(name: string): string {
 /** /alg 列表用:按 (puzzle, set) 决定是否套 OLL/PLL/ZBLL/COLL/LS 展示变换。 */
 export function displayAlgCaseName(puzzle: string, set: string, name: string): string {
   if (puzzle === '2x2' && /^ls[1-9]$/.test(set)) return display2x2LsName(name);
-  if (puzzle === 'sq1' && set === 'cs') return displaySq1CsName(name);
+  if (puzzle === 'sq1' && (set === 'cs' || set === 'csp')) return displaySq1CsName(name);
   if (puzzle === '3x3' && set === 'oll') return displayOllName(name);
   if (puzzle === '3x3' && set === 'pll') return displayPllName(name);
   if (puzzle === '3x3' && set === 'zbll') return displayZbllName(name);

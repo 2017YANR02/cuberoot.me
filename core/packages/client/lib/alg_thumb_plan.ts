@@ -108,19 +108,20 @@ export function caseThumbPlan({
 }: CaseThumbPlanInput): CaseThumbPlan {
   if (puzzle === 'sq1') {
     const normalizedSet = set.toLowerCase();
+    const isCubeshape = normalizedSet === 'cs' || normalizedSet === 'csp';
     // Cube-shape is defined by the solving formula itself. Some imported CS
     // setups are truncated when the formula starts with a free layer turn, so
     // deriving the case from the first formula keeps its name, alg and picture
     // on one source of truth. Other SQ1 stages still need their curated setup.
-    const forward = normalizedSet === 'cs' && alg.trim()
+    const forward = isCubeshape && alg.trim()
       ? invertSq1Alg(alg)
       : setup?.trim() ? setup : invertSq1Alg(alg);
     const hidden = sq1StageHiddenStickerIds(set);
     const renderOptions = {
       ...(hidden ? { mask: { ids: hidden, color: 'transparent' } } : {}),
-      compactFaces: normalizedSet !== 'cs',
+      compactFaces: !isCubeshape,
     };
-    const showMiddle = !['cs', 'parity'].includes(normalizedSet) && !hidden;
+    const showMiddle = !['cs', 'csp', 'parity'].includes(normalizedSet) && !hidden;
     const colors = normalizedSet === 'cs'
       ? Object.fromEntries(
           Object.keys(DEFAULT_SQ1_COLORS).map(face => [face, 'var(--muted-foreground)']),

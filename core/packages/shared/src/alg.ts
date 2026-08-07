@@ -27,8 +27,8 @@ export interface AlgEntry {
   ytId?: string;
   /** 单手 / 脚拧 / 最少步 / 高阶 / 虚拟键盘。UI 据此做筛选。 */
   tags?: AlgTag[];
-  /** 公式出处。站长自编的排在 speedcubedb 抓来的前面。 */
-  source?: 'cuberoot' | 'speedcubedb';
+  /** 公式出处。站长自编的排在外部数据源前面。 */
+  source?: 'cuberoot' | 'speedcubedb' | 'cubingapp';
   /** 这条公式**照写**的步数(`R4` = 1 STM / 4 SQTM —— 它是个真实的物理动作,见 alg_notation)。 */
   stm?: number;
   sqtm?: number;
@@ -153,6 +153,8 @@ export interface AlgSetMeta {
   scd: string;
   en: string;
   zh: string;
+  /** Optional longer set-page explanation. The compact heading still comes from short/en/zh. */
+  intro?: { en: string; zh: string };
   /** Compact language-neutral label for index cards and set page headings. */
   short?: string;
   /** True for sets that speedcubedb organises under sub-pages (ZBLL → ZBLL U/L/T/...).
@@ -212,7 +214,14 @@ export const ALG_CATALOG: Record<AlgPuzzle, AlgSetMeta[]> = {
     { slug: 'l2c', scd: 'L2C', en: 'Last Two Centers', zh: 'Last Two Centers (L2C)' },
   ],
   'sq1': [
-    { slug: 'cs',     scd: 'SQ1CS',     short: 'CS',     en: 'Cube Shape',         zh: '形状' },
+    { slug: 'cs',     scd: 'SQ1CS',     short: 'CS',     en: 'Cube Shape',         zh: '复形' },
+    {
+      slug: 'csp', scd: 'SQ1CSP', short: 'CSP', en: 'Cubeshape Parity', zh: '复形奇偶',
+      intro: {
+        en: 'Detect and correct Square-1 parity during cubeshape; the parity check can be done during inspection.',
+        zh: '在复形阶段判断并修正 Square-1 奇偶；奇偶检查可以在观察阶段完成。',
+      },
+    },
     { slug: 'co',     scd: 'SQ1CO',     short: 'CO',     en: 'Corner Orientation', zh: '角块朝向' },
     { slug: 'eo',     scd: 'SQ1EO',     short: 'EO',     en: 'Edge Orientation',   zh: '棱块朝向' },
     { slug: 'cp',     scd: 'SQ1CP',     short: 'CP',     en: 'Corner Permutation', zh: '角块排列' },
