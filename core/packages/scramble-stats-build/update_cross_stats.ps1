@@ -204,7 +204,9 @@ function Load-OptimalToPg {
     $sql = @"
 \set ON_ERROR_STOP on
 BEGIN;
-CREATE TEMP TABLE _opt_stage (LIKE wca_scramble_optimal) ON COMMIT DROP;
+-- LIKE 默认复制 NOT NULL、但不复制 DEFAULT；目标表新增 rnd NOT NULL DEFAULT random()
+-- 后 staging 若不带 INCLUDING DEFAULTS，显式 COPY 旧 8 列仍会因 rnd=NULL 失败。
+CREATE TEMP TABLE _opt_stage (LIKE wca_scramble_optimal INCLUDING DEFAULTS) ON COMMIT DROP;
 \copy _opt_stage (competition_id,event_id,round_type_id,group_id,is_extra,scramble_num,htm,optimal_scramble) FROM '$remoteDelta' WITH (FORMAT csv, HEADER true)
 INSERT INTO wca_scramble_optimal AS t (competition_id,event_id,round_type_id,group_id,is_extra,scramble_num,htm,optimal_scramble)
   SELECT competition_id,event_id,round_type_id,group_id,is_extra,scramble_num,htm,optimal_scramble FROM _opt_stage
