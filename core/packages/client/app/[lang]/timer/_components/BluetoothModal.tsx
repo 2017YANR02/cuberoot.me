@@ -23,6 +23,12 @@ interface Props {
   cube: BluetoothCubeHandle;
   onClose: () => void;
   /**
+   * A connection already started by the icon's click handler. Web Bluetooth's
+   * picker needs that direct user gesture, so the modal observes the promise
+   * instead of starting it later from an effect.
+   */
+  connectAttempt?: Promise<void> | null;
+  /**
    * Start a connection. Allowed — expected — to reject: this modal owns the
    * failure UI. It used to be each caller's job, and all three did it
    * differently (two `alert(err.message)` variants, and BattleCubes not at all,
@@ -168,7 +174,7 @@ function ConnectFailure({ failure, inBluefy, busy, onShowAllDevices }: {
   );
 }
 
-export default function BluetoothModal({ isZh, cube, onClose, onConnect, macPrompt, onSubmitMac, onCancelMac }: Props) {
+export default function BluetoothModal({ isZh, cube, onClose, onConnect, connectAttempt, macPrompt, onSubmitMac, onCancelMac }: Props) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const isMobile = useIsMobile(480);
@@ -193,6 +199,29 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect, macProm
       setConnecting(false);
     }
   };
+
+  useEffect(() => {
+    if (!connectAttempt) return;
+    let active = true;
+    setConnectError(null);
+    setConnecting(true);
+    void connectAttempt.then(
+      () => {
+        if (active) setConnecting(false);
+      },
+      (err: unknown) => {
+        if (!active) return;
+        if ((err as { kind?: unknown } | null)?.kind !== 'no-web-bluetooth') {
+          setConnectError(err instanceof BluetoothConnectError
+            ? { stage: err.stage, detail: err.detail }
+            : { stage: null, detail: describeError(err) });
+        }
+        setConnecting(false);
+      },
+    );
+    return () => { active = false; };
+  }, [connectAttempt]);
+
   const submitMac = (): void => {
     const norm = normalizeMac(macInput);
     if (!norm) { setMacError(true); return; }
