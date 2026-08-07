@@ -1275,30 +1275,6 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   padding: 12px 14px 18px;
 }
 
-/* Tools tab list */
-.shell-tools-list { display: flex; flex-direction: column; gap: 2px; }
-.shell-tools-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 10px 12px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--foreground);
-  font-size: 14px;
-  text-align: left;
-  /* 表里混着 <button> 和真链接(打乱足迹),两者要长一样。 */
-  text-decoration: none;
-  cursor: pointer;
-}
-.shell-tools-item:hover { background: var(--shell-hover); }
-.shell-tools-item:disabled { opacity: 0.4; cursor: default; }
-.shell-tools-item.danger { color: var(--destructive); }
-.shell-tools-icon { display: inline-flex; color: var(--muted-foreground); }
-.shell-tools-item.danger .shell-tools-icon { color: var(--destructive); }
-
 /* ── Session switcher (top of Times tab) ────────────────── */
 .session-switcher { position: relative; margin-bottom: 10px; }
 .session-trigger {

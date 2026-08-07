@@ -416,6 +416,39 @@ export function exportJson(): string {
   return JSON.stringify(loadRaw(), null, 2);
 }
 
+function parseImportedDb(json: string): DbShapeV3 | null {
+  try {
+    const parsed = JSON.parse(json) as unknown;
+    if (isValidV3(parsed)) return normalizeV3(parsed);
+    const o = parsed as { version?: number; byEvent?: ByEvent; sessions?: Array<{ event: EventId; solves: Solve[] }> };
+    if (o.version === 2 && o.byEvent && typeof o.byEvent === 'object') {
+      return wrapByEventAsDefaultSession(o.byEvent);
+    }
+    if (o.version === 1 && Array.isArray(o.sessions)) {
+      return wrapByEventAsDefaultSession(v1ToByEvent(o));
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export interface NativeImportPreview {
+  sessionCount: number;
+  solveCount: number;
+}
+
+/** Validate a native CubeRoot backup without changing local data. */
+export function inspectImportJson(json: string): NativeImportPreview | null {
+  const db = parseImportedDb(json);
+  if (!db) return null;
+  let solveCount = 0;
+  for (const byEvent of Object.values(db.dataBySession)) {
+    for (const solves of Object.values(byEvent)) solveCount += solves?.length ?? 0;
+  }
+  return { sessionCount: db.sessions.length, solveCount };
+}
+
 /**
  * Native JSON import — replaces contents. Accepts v3 (all sessions), v2
  * (byEvent → wrapped into a default session), or v1 (sessions[] → byEvent →
@@ -423,25 +456,10 @@ export function exportJson(): string {
  * For cstimer's export format, see `importCstimerJson` in `import_export.ts`.
  */
 export function importJson(json: string): boolean {
-  try {
-    const parsed = JSON.parse(json) as unknown;
-    if (isValidV3(parsed)) {
-      saveRaw(normalizeV3(parsed));
-      return true;
-    }
-    const o = parsed as { version?: number; byEvent?: ByEvent; sessions?: Array<{ event: EventId; solves: Solve[] }> };
-    if (o.version === 2 && o.byEvent && typeof o.byEvent === 'object') {
-      saveRaw(wrapByEventAsDefaultSession(o.byEvent));
-      return true;
-    }
-    if (o.version === 1 && Array.isArray(o.sessions)) {
-      saveRaw(wrapByEventAsDefaultSession(v1ToByEvent(o)));
-      return true;
-    }
-    return false;
-  } catch {
-    return false;
-  }
+  const db = parseImportedDb(json);
+  if (!db) return false;
+  saveRaw(db);
+  return true;
 }
 
 /**
