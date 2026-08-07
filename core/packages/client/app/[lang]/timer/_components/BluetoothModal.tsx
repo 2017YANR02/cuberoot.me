@@ -35,8 +35,9 @@ interface Props {
   onCancelMac?: () => void;
 }
 
-/** One supported device. `gyro` marks models whose protocol also carries an
- *  orientation quaternion, which drives the live 3D view. */
+/** One supported device. `gyro` means this site can read the cube's
+ * orientation and drive the live 3D view; it does not merely mean that the
+ * product contains a motion sensor. */
 interface SupportedDevice {
   zh: string;
   en: string;
@@ -44,20 +45,22 @@ interface SupportedDevice {
 }
 
 /**
- * 这张表是**说明**,不是白名单 —— 真正决定认不认的是连上之后读到的 GATT service
- * UUID(见 `_lib/bluetooth/index.ts` 的 connect:先按 service 选驱动,名字只是
- * 兜底)。所以同一代协议的新型号不用改代码就能用,这里写「及同代新款」而不是把型
- * 号一个个列全:列表逐个列型号,只会在厂商出新款时把「没写=不支持」这个错觉留给
- * 用户 —— GAN 16 ui 就是这么被问出来的。
+ * This is a consumer-facing list of the 3x3 families/protocols the timer
+ * implements. Do not derive it from the deliberately broad Bluetooth name
+ * filters: those also see non-smart names and unsupported 2x2/shape-mod
+ * products. GATT service UUIDs choose the actual driver after connection.
  */
 const SUPPORTED_CUBES: SupportedDevice[] = [
-  { zh: 'GAN 356 i / i3 / 357', en: 'GAN 356 i / i3 / 357', gyro: true },
-  { zh: 'GAN 12 / 14 / 16 ui / i Carry 及同代新款', en: 'GAN 12 / 14 / 16 ui / i Carry and newer of the same generation', gyro: true },
-  { zh: 'MoYu 32 系列（威龙 V10 AI 及之后）', en: 'MoYu 32 series (WeiLong V10 Ai onward)', gyro: true },
-  { zh: 'MoYu AI（旧 MHC 协议）', en: 'MoYu AI (legacy MHC protocol)' },
-  { zh: 'QiYi 奇艺智能 / 风 AI Tornado V4', en: 'QiYi Smart Cube / Tornado V4 Ai' },
-  { zh: 'GoCube / Rubik’s Connected', en: 'GoCube / Rubik’s Connected', gyro: true },
-  { zh: 'Giiker i3s / 小米魔方', en: 'Giiker i3s / Xiaomi' },
+  { zh: 'GAN356 i3', en: 'GAN356 i3', gyro: true },
+  { zh: 'GAN356 i Carry / i Carry S / i Carry 2', en: 'GAN356 i Carry / i Carry S / i Carry 2' },
+  { zh: 'GAN Mini ui FreePlay / GAN12 ui / GAN14 ui FreePlay', en: 'GAN Mini ui FreePlay / GAN12 ui / GAN14 ui FreePlay', gyro: true },
+  { zh: 'Monster Go 3Ai', en: 'Monster Go 3Ai' },
+  { zh: '魔域 AI 2023 三阶（MHC / AiCube 协议）', en: 'MoYu AI 2023 3x3 (MHC / AiCube protocol)' },
+  { zh: '魔域 WCU_MY3 协议三阶（如威龙 V10 AI）', en: 'MoYu WCU_MY3-protocol 3x3 (e.g. WeiLong V10 AI)' },
+  { zh: '奇艺 QY SC-S / SC-A / X-Man 风暴 V4 AI', en: 'QiYi QY SC-S / SC-A / X-Man Tornado V4 AI' },
+  { zh: 'GoCube / GoCube Edge 三阶', en: 'GoCube / GoCube Edge 3x3', gyro: true },
+  { zh: 'Rubik’s Connected 三阶', en: 'Rubik’s Connected 3x3' },
+  { zh: 'GiiKER i3 / i3S / 小米米家智能魔方', en: 'GiiKER i3 / i3S / Xiaomi Mi Smart Magic Cube' },
 ];
 
 /** Small inline badge marking a gyro-capable model. Inline rather than a CSS
@@ -353,7 +356,7 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect, macProm
             <p>{tr({ zh: '点击下方按钮，从浏览器选择你的智能魔方。', en: 'Click below to pick your smart cube from the browser picker.'
             })}</p>
             <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginTop: 6 }}>
-              <div style={{ marginBottom: 4 }}>{tr({ zh: '支持的智能魔方：', en: 'Supported smart cubes:'
+              <div style={{ marginBottom: 4 }}>{tr({ zh: '支持的三阶智能魔方（按协议）：', en: 'Supported 3x3 smart cubes (by protocol):'
             })}</div>
               <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.55 }}>
                 {SUPPORTED_CUBES.map((c) => (
@@ -363,6 +366,12 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect, macProm
                   </li>
                 ))}
               </ul>
+              <p style={{ margin: '5px 0 0' }}>
+                {tr({
+                  zh: '兼容性取决于蓝牙协议和固件。GAN i4、i Carry 4、GAN16 ui、魔域威龙 V11 AI 等新型号可能兼容，但本站尚未实机确认。同名普通版、2×2 和异形智能魔方不支持。「陀螺仪」表示本站可读取姿态。',
+                  en: 'Compatibility depends on the Bluetooth protocol and firmware. New models such as GAN i4, i Carry 4, GAN16 ui, and MoYu WeiLong V11 AI may work but are not yet hardware-verified here. Similarly named non-smart, 2×2, and shape-mod smart cubes are not supported. “Gyro” means this site can read orientation.',
+                })}
+              </p>
               <div style={{ margin: '8px 0 4px' }}>{tr({ zh: '支持的计时设备：', en: 'Supported timing devices:'
             })}</div>
               <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.55 }}>
