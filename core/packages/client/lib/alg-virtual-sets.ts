@@ -12,8 +12,8 @@
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import { LISTED_CASES } from './lsll/model';
 import {
-  LSLL_ROUNDS, LSLL_TRAINER_NOTE, lsllCaseKeyString, lsllNextRoundScope, lsllRoundLabel, lsllScopeLabel,
-  lsllSelectHref, loadLsllCases, resolveLsllCase,
+  LSLL_ROUNDS, LSLL_TRAINER_NOTE, lsllCaseKeyString, lsllNextRoundScope, lsllRoundLabel, lsllRoundScope,
+  lsllScopeLabel, lsllSelectHref, loadLsllCases, parseLsllScope, resolveLsllCase,
 } from './lsll/trainer-set';
 
 export interface VirtualAlgSet {
@@ -44,6 +44,9 @@ export interface VirtualAlgSet {
    */
   roundLabel?: (scope: string | null) => { en: string; zh: string } | null;
   nextRoundScope?: (scope: string | null) => string | null;
+  /** 当前轮次与轮次 → scope 映射;两者齐备时训练页显示轮次选择器。 */
+  roundNumber?: (scope: string | null) => number | null;
+  scopeForRound?: (round: number) => string;
   /**
    * 一共几轮。进度页拿它当「过完 N / 494 轮」的分母 —— 57 万个 case 的进度条永远是一条
    * 细线,轮次才是这套集里唯一看得见的进度。不分轮的虚拟集不填。
@@ -78,6 +81,11 @@ const REGISTRY: VirtualAlgSet[] = [
     scopeLabel: lsllScopeLabel,
     roundLabel: lsllRoundLabel,
     nextRoundScope: lsllNextRoundScope,
+    roundNumber: scope => {
+      const parsed = parseLsllScope(scope);
+      return parsed.category ? null : parsed.round;
+    },
+    scopeForRound: lsllRoundScope,
     totalRounds: LSLL_ROUNDS,
     noAufDefault: true,
     caseHref: c => `/alg/lsll/case?k=${lsllCaseKeyString(c)}`,
