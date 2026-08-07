@@ -52,6 +52,7 @@ import { CubePreview } from '../_lib/cube';
 import { SegmentTime } from '@/components/SegmentTime';
 import CubeRootLogo from '@/components/CubeRootLogo';
 import { EventSelect } from '@/components/EventSelect';
+import { RoomCodeInput } from '@/components/RoomCodeInput';
 import { RoomQrModal } from '@/components/RoomQrModal';
 import { EventIcon } from '@/components/EventIcon';
 import { WcaPersonPicker } from '@/components/WcaPersonPicker';
@@ -90,9 +91,6 @@ const LS_NAME = 'net_battle_name';
 const SS_KEY = 'net_battle_session';
 /** 访客不填昵称时的回落名(与服务端 sanitizeName 的默认值一致)。 */
 const GUEST_NAME = 'Cuber';
-/** 生成的房间码固定 5 位;填满即自动加入。 */
-const JOIN_CODE_LEN = 5;
-
 interface SavedSession { code: string; pid: string; name: string }
 
 /** 服务端给重名加的「 (2)」尾巴。 */
@@ -514,24 +512,10 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
       .finally(() => setBusy(false));
   }, [busy, adopt, setRoomParam]);
 
-  // 房间码填满(5 位)即自动加入,无需按钮;同一码只试一次(改码 / 失败后可再试)。
-  // 只在「房间码」变化时触发(身份走 ref,不进依赖),避免访客还在逐字打名字时就
-  // 拿半截昵称抢先加入。
-  const autoJoinedRef = useRef('');
-  useEffect(() => {
-    const c = joinCode.trim().toUpperCase();
-    if (c.length !== JOIN_CODE_LEN || busy) return;
-    if (autoJoinedRef.current === c) return;
-    autoJoinedRef.current = c;
-    doJoin(c);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [joinCode, busy, doJoin]);
-
   // 邀请链接 / 扫码 ?room=CODE:直接进房,不停确认页 —— 扫码的人要的就是「进这个房」,
   // 中间再插一屏点「加入」纯属挡路。身份取现成的(登录用户 = WCA 姓名,访客 =
   // localStorage 记的昵称,都没有就回落 Cuber,重名由服务端加 (2)(3))。
   // 先试 sessionStorage 同码恢复:刷新页面原地回到同一个 pid,不在玩家条里多一个自己。
-  // 自动加入前把码记进 autoJoinedRef,否则下面「填满 5 位即加入」的 effect 会再加入一次。
   const autoJoinRef = useRef(false);
   useEffect(() => {
     if (!roomParam || room || busy || autoJoinRef.current) return;
@@ -545,7 +529,6 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
           if (st.players[saved.pid]) { setPid(saved.pid); applyState(st); return; }
         }
       } catch { /* 读不到就当新人,照常加入 */ }
-      autoJoinedRef.current = codeUp;
       doJoin(codeUp);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1183,15 +1166,13 @@ export default function NetBattleView({ playersControl, onExitNet }: NetBattleVi
                 </button>
                 <span className="net-lobby-or">{tr({ zh: '或输入', en: 'or enter' })}</span>
                 {/* 填满 5 位即自动加入,无「加入」按钮 */}
-                <input
+                <RoomCodeInput
                   className="net-input net-input-code"
                   data-no-timer
                   value={joinCode}
-                  maxLength={JOIN_CODE_LEN}
-                  placeholder={tr({ zh: '房间码', en: 'Room code' })}
-                  onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                  onKeyDown={(e) => { if (e.key === 'Enter') doJoin(joinCode); }}
-                  aria-label={tr({ zh: '房间码', en: 'Room code' })}
+                  onValueChange={setJoinCode}
+                  onComplete={doJoin}
+                  disabled={busy}
                 />
               </div>
 

@@ -5,10 +5,13 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import PersonLink from '@/components/PersonLink';
+import { CompCell } from '@/components/CompCell/CompCell';
 import { Flag } from '@/components/Flag';
 import { fetchWcaPersonMisc } from '@/lib/wca-person-api';
 import type { WcaPersonMisc, WcaPersonProfile, WcaCompetition } from '@/lib/wca-person-api';
 import { buildRegionStats } from '../logic/person-misc-region';
+import Link from '@/components/AppLink';
+import { tr } from '@/i18n/tr';
 
 interface Props {
   profile: WcaPersonProfile;
@@ -64,6 +67,42 @@ export default function MiscTab({ profile, comps, isZh }: Props) {
                 ))}
               </tbody>
             </table>
+          )}
+      </section>
+
+      {/* 连续在每场比赛刷新或追平至少一项 PB；同场多个项目只计一次。 */}
+      <section className="wp-misc-col">
+        <h3 className="wp-misc-title">{tr({ zh: '连续个人纪录', en: 'Personal record streak' })}</h3>
+        {err ? <div className="wp-empty">{tr({ zh: '加载失败', en: 'Failed to load' })}</div>
+          : !misc ? loading
+          : (
+            <div className="wp-streaks">
+              {([
+                { key: 'current', label: { zh: '当前', en: 'Current' }, rows: misc.recordStreak.current },
+                { key: 'longest', label: { zh: '最长', en: 'Longest' }, rows: misc.recordStreak.longest },
+              ] as const).map(group => (
+                <div key={group.key} className="wp-streak-group">
+                  <div className="wp-streak-heading">
+                    <strong>{tr(group.label)}</strong>
+                    <span>{group.rows.length}</span>
+                  </div>
+                  {group.rows.length === 0 ? (
+                    <div className="wp-empty">{tr({ zh: '暂无连续记录', en: 'No active streak' })}</div>
+                  ) : (
+                    <ol className="wp-streak-list">
+                      {group.rows.map(comp => (
+                        <li key={`${group.key}-${comp.compId}`}>
+                          <Link href={`/wca/comp/${encodeURIComponent(comp.compId)}`} prefetch={false}>
+                            <CompCell compId={comp.compId} compName={comp.name} isZh={isZh} date={comp.date} />
+                          </Link>
+                          {comp.date && <span className="wp-streak-date">{comp.date.slice(0, 10)}</span>}
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                </div>
+              ))}
+            </div>
           )}
       </section>
 

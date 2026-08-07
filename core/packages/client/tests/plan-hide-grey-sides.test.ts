@@ -133,6 +133,8 @@ describe('plan view — hide grey sides', () => {
     it('coll / cmll 走 pll 视角 + 自家遮罩,并删侧环灰格', () => {
       expect(params('coll')).toEqual({ view: 'pll', mask: 'coll', hideGreySides: true, puzzleSize: 3 });
       expect(params('cmll')).toEqual({ view: 'pll', mask: 'cmll', hideGreySides: true, puzzleSize: 3 });
+      expect(params('2-look-cmll')).toEqual({ view: 'pll', mask: 'cmll', hideGreySides: true, puzzleSize: 3 });
+      expect(params('oh-cmll')).toEqual({ view: 'pll', mask: 'cmll', hideGreySides: true, puzzleSize: 3 });
     });
 
     it('ZBLL / 1LLL / OLLCP 二级选择卡(mask=coll)同样删', () => {

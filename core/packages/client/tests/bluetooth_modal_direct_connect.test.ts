@@ -108,11 +108,11 @@ describe('BluetoothModal direct connection attempt', () => {
     expect(content).toContain('GAN16ui_ (C2:AF)');
     expect(content).toContain('gan-v4');
     expect(content).toContain('72%');
-    expect(content).toContain('Solved');
+    expect(content).toContain('solved');
     expect(content).toContain("R'");
     expect(content).toContain('automatically stops the timer');
     expect(content).toContain('Reset state');
     expect(content).toContain('Disconnect');
-    expect(content).toContain('Close');
+    expect(host.querySelector('button[aria-label="Close"]')).not.toBeNull();
   });
 });

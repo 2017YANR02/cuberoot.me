@@ -89,6 +89,8 @@ export const LOOKUP_ITEMS: LookupItem[] = [
 },
   { path: '/wca/results',          zh: '全部成绩排名', en: 'All Results'
 },
+  { path: '/wca/kinch',            zh: 'Kinch 综合分', en: 'Kinch Ranks'
+},
   { path: '/wca/cohort-ranks',     zh: '参赛届别排名', en: 'Cohort Ranks'
 },
   { path: '/wca/success-rate',     zh: '项目成功率',   en: 'Success Rate'

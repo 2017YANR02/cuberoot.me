@@ -1807,6 +1807,14 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: `受控浮层,靠一组回调驱动桌宠状态;处理移动端键盘视口贴合。`, en: `Controlled overlay driven by callbacks into the pet; handles mobile keyboard viewport fitting.` },
   },
   {
+    name: 'RoomCodeInput',
+    import: "import { RoomCodeInput } from '@/components/RoomCodeInput';",
+    category: 'more',
+    zh: `统一的 5 位房间码输入框:自动转大写并过滤无效字符,填满即触发加入,同一码不会因重渲染重复提交。`,
+    en: `Shared five-character room-code input: uppercases and filters input, joins as soon as all characters are entered, and prevents duplicate submissions across rerenders.`,
+    note: { zh: `/alg 训练器协同房与 /timer 联机对战共用;传 value / onValueChange / onComplete,连接中用 disabled 锁定。`, en: `Shared by /alg trainer rooms and /timer online battle; pass value / onValueChange / onComplete, and disable it while connecting.` },
+  },
+  {
     name: 'RoomQrModal',
     import: "import { RoomQrModal } from '@/components/RoomQrModal';",
     category: 'more',

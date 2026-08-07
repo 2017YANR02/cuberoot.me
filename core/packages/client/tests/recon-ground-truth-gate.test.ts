@@ -42,8 +42,13 @@ describe('reconstruction ground-truth commit gate', () => {
     expect(hook).not.toMatch(/exit\s+2\b/);
 
     const codexHooks = JSON.parse(readFileSync(join(REPO_ROOT, '.codex', 'hooks.json'), 'utf8'));
-    expect(codexHooks.hooks.PreToolUse[0].matcher).toBe('^Bash$');
-    expect(codexHooks.hooks.PreToolUse[0].hooks[0].commandWindows).toContain('recon-ground-truth-gate.ps1');
+    const bashGroup = codexHooks.hooks.PreToolUse.find(
+      (group: { matcher?: string }) => group.matcher === '^Bash$',
+    );
+    expect(bashGroup, '缺少 Bash PreToolUse 守卫组').toBeDefined();
+    expect(bashGroup.hooks.some(
+      (entry: { commandWindows?: string }) => entry.commandWindows?.includes('recon-ground-truth-gate.ps1'),
+    )).toBe(true);
 
     const gitHook = readFileSync(join(REPO_ROOT, '.githooks', 'pre-commit'), 'utf8');
     expect(gitHook).toContain('recon-ground-truth-gate.mjs check-staged');

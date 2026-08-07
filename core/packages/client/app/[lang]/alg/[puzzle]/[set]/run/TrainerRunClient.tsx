@@ -25,7 +25,10 @@ import { CaseThumb } from '@/components/CaseThumb';
 import { caseKey, findCaseByKey } from '@/lib/trainer-case-key';
 import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
 import { displayZbllToken } from '@/lib/alg_case_display';
-import { availableKinds, purifyScramble, SCRAMBLE_KINDS, type ScrambleKind } from '@/lib/trainer-scramble';
+import {
+  availableKinds, purifyScramble, SCRAMBLE_KINDS, trainerSetScrambleFeatures,
+  type ScrambleKind,
+} from '@/lib/trainer-scramble';
 import { MIX_SLUG, MIX_MIN_SETS, parseMixSets, mixTitle, mixHref, loadMixCases, setLabel } from '@/lib/alg-mix';
 import { virtualAlgSet } from '@/lib/alg-virtual-sets';
 import { useTrainerMarks, markStatus, markStarred, type CaseMarkStatus } from '@/lib/trainer-marks';
@@ -34,6 +37,7 @@ import {
   TimerDisplay, ScrambleHeader, SolveCard, StatsList, HistoryList, CaseMarkBar,
 } from '@/app/[lang]/alg/_trainer/trainer-components';
 import { RoomQrModal } from '@/components/RoomQrModal';
+import { RoomCodeInput } from '@/components/RoomCodeInput';
 import MemoryTrainer from '@/app/[lang]/alg/_trainer/MemoryTrainer';
 import MixSetPicker from '@/app/[lang]/alg/_trainer/MixSetPicker';
 import SmartCubeRow from '@/app/[lang]/alg/_trainer/SmartCubeRow';
@@ -104,10 +108,27 @@ export default function TrainerRunClient() {
   const roundLabel = virtual?.roundLabel?.(virtualScope) ?? null;
   const roundNumber = virtual?.roundNumber?.(virtualScope) ?? null;
   const totalRounds = virtual?.totalRounds ?? null;
-  const roundChoices = useMemo(
-    () => Array.from({ length: totalRounds ?? 0 }, (_, i) => i + 1),
-    [totalRounds],
-  );
+  const [roundDraft, setRoundDraft] = useState('');
+  // Escape 会主动 blur；用 ref 跳过紧随其后的 onBlur 提交，避免闭包仍读到
+  // Escape 前的有效数字并意外跳到那一轮。
+  const cancelRoundBlurRef = useRef(false);
+  useEffect(() => {
+    if (roundNumber != null) setRoundDraft(String(roundNumber));
+  }, [roundNumber]);
+  const commitRoundDraft = () => {
+    if (cancelRoundBlurRef.current) {
+      cancelRoundBlurRef.current = false;
+      return;
+    }
+    if (!roundNumber || !totalRounds || !virtual?.scopeForRound) return;
+    const nextRound = Number(roundDraft);
+    if (!Number.isInteger(nextRound) || nextRound < 1 || nextRound > totalRounds) {
+      setRoundDraft(String(roundNumber));
+      return;
+    }
+    setRoundDraft(String(nextRound));
+    if (nextRound !== roundNumber) void setScopeParam(virtual.scopeForRound(nextRound));
+  };
   const nextRoundScope = virtual?.nextRoundScope?.(virtualScope) ?? null;
   const nextRoundHref = nextRoundScope
     ? `/alg/${puzzleParam}/${setSlug}/run?scope=${encodeURIComponent(nextRoundScope)}`
@@ -168,6 +189,10 @@ export default function TrainerRunClient() {
   const setPreAuf = useTrainerStore(s => s.setPreAuf);
   const postAuf = useTrainerStore(s => s.postAuf);
   const setPostAuf = useTrainerStore(s => s.setPostAuf);
+  const randomFinalAuf = useTrainerStore(s => s.randomFinalAuf);
+  const setRandomFinalAuf = useTrainerStore(s => s.setRandomFinalAuf);
+  const randomFinalY = useTrainerStore(s => s.randomFinalY);
+  const setRandomFinalY = useTrainerStore(s => s.setRandomFinalY);
   const oriSel = useTrainerStore(s => s.oriSel);
   const setOriSel = useTrainerStore(s => s.setOriSel);
   const resetOriSel = useTrainerStore(s => s.resetOriSel);
@@ -529,12 +554,12 @@ export default function TrainerRunClient() {
     if (url) copyCode(url);
   }, [roomInviteUrl, copyCode]);
 
-  // 手动输码加入:成功后清输入框并把码写进 ?room=,使地址栏成为可分享链接。
-  const doJoin = useCallback(() => {
-    const code = joinCode.trim();
-    if (!code) return;
+  // 房间码输满即加入;成功后清输入框并把码写进 ?room=,使地址栏成为可分享链接。
+  const joinWithCode = useCallback((rawCode: string) => {
+    const code = rawCode.trim().toUpperCase();
+    if (code.length !== 5 || roomBusy) return;
     void joinRoom(code).then(r => { if (r.ok) { setJoinCode(''); void setRoomParam(code.toUpperCase()); } });
-  }, [joinCode, joinRoom, setRoomParam]);
+  }, [joinRoom, roomBusy, setRoomParam]);
 
   // 齿轮设置弹出面板(训练选项全收在里面),点外部关闭。
   // 监听 pointerdown 而非 mousedown:stage 手势层在 pointerdown 里 preventDefault,
@@ -1013,6 +1038,11 @@ export default function TrainerRunClient() {
   // 跟着一起转,而收尾 AUF 恰恰是 LSLL 真解里要先补的那一下。
   const aufSupported = (puzzle === '3x3' || puzzle === '2x2') && !isMemo
     && !cases.some(c => c.sticker.kind === 'f2l');
+  // F2L 系的随机末尾调整由公式集显式声明,不拿 sticker.kind 猜 —— 其它同样使用
+  // f2l 贴纸模板的集不会因此凭空多两个开关。合练也不继承单集的特化设置。
+  const setScrambleFeatures = trainerSetScrambleFeatures(puzzle, isMix ? null : setSlug);
+  const finalAdjustSupported = !isMemo
+    && (setScrambleFeatures.randomFinalAuf || setScrambleFeatures.randomFinalY);
   /** 有没有钉过朝向 —— 空数组的组在 store 里是删掉而不是留空的,所以数键就够 */
   const oriPinned = Object.keys(oriSel).length > 0;
   // 真实概率只有带 meta 的 LL set(zbll / pll / ell / 1lll)有数学定义
@@ -1026,9 +1056,12 @@ export default function TrainerRunClient() {
   return (
     <div className="trainer-root">
       <div className="trainer-topbar">
-        <Link href={selectHref} className="trainer-back">
-          <ArrowLeft size={14} /> {tr({ zh: '选 case', en: 'Select Algs'
-        })}
+        <Link
+          href={selectHref}
+          className="trainer-back"
+          aria-label={tr({ zh: '选择 case', en: 'Select cases' })}
+        >
+          <ArrowLeft size={14} />
         </Link>
         <span style={{ fontSize: '1rem', color: 'var(--muted-foreground)' }}>
           {puzzle} · {tr(meta)}{scopeSuffix ? ` · ${scopeSuffix}` : ''}
@@ -1038,7 +1071,7 @@ export default function TrainerRunClient() {
         <div className="trainer-opts trainer-opts--top" data-no-timer ref={optsRef}>
           {/* 进度入口贴在齿轮左侧:absolute 脱流,齿轮仍精确居中。 */}
           <Link href="/alg/progress" className="trainer-progress-link" prefetch={false}>
-            {tr({ zh: '进度总览', en: 'All progress' })}
+            {tr({ zh: '进度', en: 'Progress' })}
           </Link>
           <button
             type="button"
@@ -1056,18 +1089,27 @@ export default function TrainerRunClient() {
               {roundLabel && roundNumber && totalRounds && virtual?.scopeForRound ? (
                 <span className="trainer-recap-round">
                   {tr({ zh: '第', en: 'Round' })}{' '}
-                  <select
-                    className="trainer-round-select"
-                    value={roundNumber}
-                    onChange={(event) => {
-                      const nextRound = Number(event.target.value);
-                      if (!Number.isInteger(nextRound) || nextRound < 1 || nextRound > totalRounds) return;
-                      void setScopeParam(virtual.scopeForRound?.(nextRound) ?? null);
+                  <input
+                    className="trainer-round-input"
+                    type="number"
+                    min={1}
+                    max={totalRounds}
+                    step={1}
+                    inputMode="numeric"
+                    value={roundDraft}
+                    onChange={(event) => setRoundDraft(event.target.value)}
+                    onBlur={commitRoundDraft}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') event.currentTarget.blur();
+                      if (event.key === 'Escape') {
+                        cancelRoundBlurRef.current = true;
+                        setRoundDraft(String(roundNumber));
+                        event.currentTarget.blur();
+                      }
                     }}
                     aria-label={tr({ zh: '选择训练轮次', en: 'Choose training round' })}
-                  >
-                    {roundChoices.map(round => <option key={round} value={round}>{round}</option>)}
-                  </select>
+                    title={tr({ zh: `请输入 1 到 ${totalRounds} 的整数`, en: `Enter an integer from 1 to ${totalRounds}` })}
+                  />
                   {tr({ zh: ` / ${totalRounds} 轮`, en: ` / ${totalRounds}` })}
                 </span>
               ) : roundLabel ? (
@@ -1335,25 +1377,13 @@ export default function TrainerRunClient() {
                           {tr({ zh: '创建房间', en: 'Create room' })}
                         </button>
                         <span className="trainer-opts-label">{tr({ zh: '或', en: 'or' })}</span>
-                        <input
+                        <RoomCodeInput
                           className="trainer-coop-code"
-                          type="text"
                           value={joinCode}
-                          onChange={e => setJoinCode(e.target.value)}
-                          onKeyDown={e => { if (e.key === 'Enter') doJoin(); }}
-                          placeholder={tr({ zh: '房间码', en: 'Code' })}
-                          autoComplete="off"
-                          spellCheck={false}
-                          aria-label={tr({ zh: '房间码', en: 'Room code' })}
+                          onValueChange={setJoinCode}
+                          onComplete={joinWithCode}
+                          disabled={roomBusy}
                         />
-                        <button
-                          type="button"
-                          className="trainer-opts-btn"
-                          onClick={doJoin}
-                          disabled={roomBusy || !joinCode.trim()}
-                        >
-                          {tr({ zh: '加入', en: 'Join' })}
-                        </button>
                       </>
                     )}
                   </div>
@@ -1417,6 +1447,24 @@ export default function TrainerRunClient() {
                       开关只会让人以为随机还在跑。pre-AUF 不受影响,它改的是收尾不是朝向。 */}
                   {!oriPinned && (
                     <BoolToggle value={postAuf} onChange={setPostAuf} label="post-AUF" />
+                  )}
+                </div>
+              )}
+              {finalAdjustSupported && (
+                <div className="trainer-opts-row">
+                  {setScrambleFeatures.randomFinalAuf && (
+                    <BoolToggle
+                      value={randomFinalAuf}
+                      onChange={setRandomFinalAuf}
+                      label="AUF"
+                    />
+                  )}
+                  {setScrambleFeatures.randomFinalY && (
+                    <BoolToggle
+                      value={randomFinalY}
+                      onChange={setRandomFinalY}
+                      label="y"
+                    />
                   )}
                 </div>
               )}

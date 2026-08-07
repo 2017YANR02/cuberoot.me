@@ -93,6 +93,7 @@ export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
   wca_person_avatar: 'WCA 官网头像 URL 缓存(公开资料,非站内账号资产)',
   wca_person_results_snapshot: 'WCA 成绩快照',
   wca_result_changes: 'WCA 成绩变更记录',
+  wca_kinch: 'WCA 官方成绩派生的 Kinch 综合排名,不属于站内账号数据',
 };
 
 /**

@@ -30,7 +30,7 @@
       ]
     },
     "packages/alg-build": {
-      "entry": ["*.{mjs,ts}", "src/**/*.{mjs,ts}"]
+      "entry": ["*.{mjs,mts,ts}", "src/**/*.{mjs,mts,ts}"]
     },
     "packages/scramble-stats-build": {
       "entry": ["*.{mjs,ts,mts}", "src/**/*.{mjs,ts,mts}"]

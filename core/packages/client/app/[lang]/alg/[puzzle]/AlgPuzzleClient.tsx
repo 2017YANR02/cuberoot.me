@@ -36,6 +36,11 @@ import { parseAsBoolean, useQueryState } from 'nuqs';
 /** Old single-segment 3x3 set slugs we used to live at /alg/<slug>. Redirect to /alg/3x3/<slug>. */
 const LEGACY_3X3_SLUGS = new Set(['f2l', 'adv-f2l', 'oll', 'pll']);
 
+/** Roux formula sets live in their own section below the general 3x3 library. */
+const ROUX_SET_SLUGS = new Set([
+  '2-look-cmll', 'cmll', 'oh-cmll', 'sbls', 'eo4a', 'lse-eolr',
+]);
+
 /**
  * 整套方法的训练器 —— 不对应任何一套公式,所以留在这层。
  *
@@ -194,7 +199,12 @@ export default function AlgPuzzleClient() {
   const valid = isPuzzle(puzzle);
   const sets = useMemo(() => (valid ? ALG_CATALOG[puzzle] : []), [puzzle, valid]);
   const lsSets = puzzle === '2x2' ? sets.filter(s => /^ls[1-9]$/.test(s.slug)) : [];
-  const regularSets = puzzle === '2x2' ? sets.filter(s => !/^ls[1-9]$/.test(s.slug)) : sets;
+  const rouxSets = puzzle === '3x3' ? sets.filter(s => ROUX_SET_SLUGS.has(s.slug)) : [];
+  const regularSets = puzzle === '2x2'
+    ? sets.filter(s => !/^ls[1-9]$/.test(s.slug))
+    : puzzle === '3x3'
+      ? sets.filter(s => !ROUX_SET_SLUGS.has(s.slug))
+      : sets;
   const legacyRedirect = !valid && LEGACY_3X3_SLUGS.has(puzzle) ? `/alg/3x3/${puzzle}` : null;
 
   useEffect(() => {
@@ -310,9 +320,20 @@ export default function AlgPuzzleClient() {
         {regularSets.map(renderSetCard)}
       </div>
 
+      {puzzle === '3x3' && (
+        <section className="alg-set-section" aria-labelledby="alg-roux-index-title">
+          <div className="alg-set-section-heading">
+            <h2 id="alg-roux-index-title">{tr({ zh: '桥式', en: 'Roux' })}</h2>
+          </div>
+          <div className="alg-bento">
+            {rouxSets.map(renderSetCard)}
+          </div>
+        </section>
+      )}
+
       {puzzle === '2x2' && (
-        <section className="alg-ls-index-section" aria-labelledby="alg-ls-index-title">
-          <div className="alg-ls-index-heading">
+        <section className="alg-set-section" aria-labelledby="alg-ls-index-title">
+          <div className="alg-set-section-heading">
             <h2 id="alg-ls-index-title">{tr({ zh: 'LS 方法', en: 'LS method' })}</h2>
           </div>
           <LsSubsetGuide samples={firstCases} size={narrow ? 88 : 112} />

@@ -63,7 +63,7 @@ const CACHE_CAP = 4000;
 
 export async function algCaseSvg(input: CaseSvgInput): Promise<string | null> {
   const { puzzle, set, sticker, alg, setup, mask, size = 160, sq1BlackTop = true } = input;
-  const key = `${puzzle}|${set}|${sticker.kind}|${mask ?? ''}|${size}|${sq1BlackTop}|${setup ?? ''}|${alg}`;
+  const key = `${puzzle}|${set}|${JSON.stringify(sticker)}|${mask ?? ''}|${size}|${sq1BlackTop}|${setup ?? ''}|${alg}`;
   const hit = cache.get(key);
   if (hit !== undefined) return hit;
   const svg = await renderCaseSvg(input);
@@ -90,6 +90,7 @@ async function renderCaseSvg({
     size,
     pzl: p.puzzleSize,
     ...(p.mask ? { mask: p.mask } : {}),
+    ...(p.scheme ? { sch: p.scheme } : {}),
     ...(p.hideGreySides ? { ngs: '1' } : {}),
   });
 }

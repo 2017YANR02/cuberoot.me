@@ -70,7 +70,7 @@ export function oriSupportedSize(size: number): boolean {
  * 用同一套键 —— 同一个形状在哪套里都是同一组,朝向偏好因此通用。
  */
 export function oriCornersOnly(puzzle: string, set: string | null | undefined): boolean {
-  return puzzle === '3x3' && set === 'cmll';
+  return puzzle === '3x3' && (set === 'cmll' || set === '2-look-cmll' || set === 'oh-cmll');
 }
 
 /** 角块格的位掩码:顶面四角 + 每条侧排的两端。2 阶全是角,恒等于全 1。 */

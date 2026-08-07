@@ -15,15 +15,16 @@ function pick<T>(arr: readonly T[]): T {
 }
 
 const U_TURN_RE = /^(U2|U'|U)$/;
+const Y_TURN_RE = /^(y2|y'|y)$/;
 function quarterOf(tok: string): number {
-  if (tok === 'U') return 1;
-  if (tok === 'U2') return 2;
-  if (tok === "U'") return 3;
+  if (tok.endsWith('2')) return 2;
+  if (tok.endsWith("'")) return 3;
+  if (tok) return 1;
   return 0;
 }
-function turnOf(q: number): string {
+function turnOf(q: number, face = 'U'): string {
   const m = ((q % 4) + 4) % 4;
-  return m === 0 ? '' : m === 1 ? 'U' : m === 2 ? 'U2' : "U'";
+  return m === 0 ? '' : m === 1 ? face : m === 2 ? `${face}2` : `${face}'`;
 }
 
 /**
@@ -54,6 +55,20 @@ function joinWithAufMerge(pre: string, baseTokens: readonly string[], post: stri
     }
   }
   return [...prefix, ...tokens, ...suffix].join(' ').trim();
+}
+
+/** 把随机 y 接在打乱末尾,并与原本的末尾 y 合并,避免出现 `y y'` 之类空转。 */
+function appendYMerge(base: string, post: string): string {
+  if (!post) return base;
+  const tokens = base.split(/\s+/).filter(Boolean);
+  if (tokens.length > 0 && Y_TURN_RE.test(tokens[tokens.length - 1])) {
+    const merged = turnOf(quarterOf(tokens[tokens.length - 1]) + quarterOf(post), 'y');
+    tokens.pop();
+    if (merged) tokens.push(merged);
+  } else {
+    tokens.push(post);
+  }
+  return tokens.join(' ');
 }
 
 function inverseAlg(alg: string): string {
@@ -116,6 +131,30 @@ export function caseBaseAlg(c: AlgCase): string {
   return baseForKind(c, 'inv') ?? '';
 }
 
+export interface TrainerSetScrambleFeatures {
+  randomFinalAuf: boolean;
+  randomFinalY: boolean;
+}
+
+const NO_SET_SCRAMBLE_FEATURES: TrainerSetScrambleFeatures = {
+  randomFinalAuf: false,
+  randomFinalY: false,
+};
+
+/**
+ * 公式集声明自己的特化打乱能力。UI、持久化偏好和生成器都读取这个入口,
+ * 避免在页面与 store 各写一遍 `set === ...`。
+ */
+export function trainerSetScrambleFeatures(
+  puzzle: AlgPuzzle | null | undefined,
+  set: string | null | undefined,
+): TrainerSetScrambleFeatures {
+  if (puzzle === '3x3' && (set === 'f2l' || set === 'adv-f2l')) {
+    return { randomFinalAuf: true, randomFinalY: true };
+  }
+  return NO_SET_SCRAMBLE_FEATURES;
+}
+
 /** 选定类型下的打乱本体(没有就 null —— 调用方退回 `inv`) */
 function baseForKind(c: AlgCase, kind: ScrambleKind): string | null {
   if (kind === 'coep') return c.meta?.coep?.scramble ?? null;
@@ -165,6 +204,10 @@ function postAufPool(
 export interface TrainerScrambleOpts {
   preAuf?: boolean;
   postAuf?: boolean;
+  /** F2L 系特化:打乱末尾随机补 U / U2 / U' / 无。 */
+  randomFinalAuf?: boolean;
+  /** F2L 系特化:打乱末尾随机补 y / y2 / y' / 无。 */
+  randomFinalY?: boolean;
   /** 顶层朝向偏好(朝向组键 → 允许的相位),见 `lib/alg_ll_orientation`。 */
   orientation?: OrientationSel;
   /** 本场的 set slug —— 判据按 set 走(CMLL 只看角块)。合练时以 case 自带的 `srcSet` 为准。 */
@@ -187,8 +230,10 @@ export function generateScramble(
 
   if (puzzle === '3x3') {
     if (c.sticker.kind === 'f2l') {
-      const yPre = pick(Y);
-      return [yPre, base].filter(Boolean).join(' ');
+      const finalAuf = opts?.randomFinalAuf ? pick(AUF) : '';
+      const finalY = opts?.randomFinalY ? pick(Y) : '';
+      const withAuf = joinWithAufMerge('', base.split(/\s+/).filter(Boolean), finalAuf);
+      return appendYMerge(withAuf, finalY);
     }
     // 收尾随机 AUF(post-AUF,默认开):同一个 case 每次呈现的朝向不同,练的是识别不是背图。
     // 对最优打乱也一样加 —— 多一步 U 不影响「它是最短打乱」这件事(长度在元数据弹窗里看),

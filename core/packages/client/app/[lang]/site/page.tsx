@@ -14,10 +14,12 @@ import { useTranslation } from 'react-i18next';
 import { Search, AlertTriangle, Pencil, Trash2, ArrowUp, ArrowDown, Plus } from 'lucide-react';
 import Fuse from 'fuse.js';
 import { GROUPS } from './data/categories';
+import { WCA_AUTHOR_BY_CREDIT } from './data/wca-authors';
 import type { GroupId, Site } from './data/types';
 import { isAdmin } from '@/lib/auth-store';
 import { firstGlyph } from '@/lib/first-glyph';
 import BackHome from '@/components/BackHome';
+import PersonLink from '@/components/PersonLink';
 import { listSites, deleteSite, reorderGroup } from './nav_sites_api';
 import SiteEditor from './SiteEditor';
 import './sites.css';
@@ -58,7 +60,7 @@ const TEXTS = {
 },
   resultsFor:  { en: 'Results for',      zh: '搜索'
 },
-  altLink:     { en: 'mirrors',          zh: '其他镜像'
+  altLink:     { en: 'related links',    zh: '相关链接'
 },
   noResults:   { en: 'No matches.',      zh: '没有匹配结果。'
 },
@@ -87,6 +89,17 @@ function splitLangTag(s: string): { en: string; zh: string
 function hostOf(url: string): string {
   try {
     return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return url;
+  }
+}
+
+function linkLabel(url: string): string {
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.replace(/^www\./, '');
+    const path = parsed.pathname === '/' ? '' : parsed.pathname;
+    return `${host}${path}${parsed.search}${parsed.hash}`;
   } catch {
     return url;
   }
@@ -126,10 +139,18 @@ function SiteRow({ site, lang, admin, reorderable, canMoveUp, canMoveDown, onEdi
   const name = lang === 'zh' ? site.name_zh || site.name : site.name_en || site.name;
   const desc = lang === 'zh' ? site.desc_zh || site.desc_en : site.desc_en || site.desc_zh;
   const dead = site.status === 'dead';
+  const wcaAuthor = site.author ? WCA_AUTHOR_BY_CREDIT[site.author] : undefined;
 
   return (
     <div className={`site-row${dead ? ' is-dead' : ''}${admin ? ' is-admin' : ''}`}>
-      <a href={site.url} target="_blank" rel="noopener noreferrer" className="site-row-main">
+      <div className="site-row-main">
+        <a
+          href={site.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="site-row-primary-link"
+          aria-label={name}
+        />
         <div className="site-row-icon">
           {dead ? <AlertTriangle size={20} className="site-dead-icon" /> : <LetterAvatar name={name} group={site.group} />}
         </div>
@@ -141,9 +162,13 @@ function SiteRow({ site, lang, admin, reorderable, canMoveUp, canMoveDown, onEdi
           ))}
           {dead && <span className="site-row-dead-badge">{TEXTS.dead[lang]}</span>}
         </div>
-        <div className="site-row-author" title={site.author || ''}>{site.author || ''}</div>
+        <div className="site-row-author" title={site.author || ''}>
+          {wcaAuthor ? (
+            <PersonLink wcaId={wcaAuthor[0]} name={wcaAuthor[1]} isZh={lang === 'zh'} />
+          ) : site.author || ''}
+        </div>
         <div className="site-row-desc" title={desc || ''}>{desc || ''}</div>
-      </a>
+      </div>
 
       {site.youtube && (
         <a href={site.youtube} target="_blank" rel="noopener noreferrer" className="site-row-yt" title="YouTube" onClick={(e) => e.stopPropagation()}>
@@ -168,7 +193,7 @@ function SiteRow({ site, lang, admin, reorderable, canMoveUp, canMoveDown, onEdi
         <div className="site-row-alts">
           <span className="site-row-alts-label">{TEXTS.altLink[lang]}:</span>
           {site.alt_urls.map((u) => (
-            <a key={u} href={u} target="_blank" rel="noopener noreferrer" className="site-row-alt">{hostOf(u)}</a>
+            <a key={u} href={u} target="_blank" rel="noopener noreferrer" className="site-row-alt">{linkLabel(u)}</a>
           ))}
         </div>
       )}
@@ -373,8 +398,12 @@ function SitesPageInner() {
             {filtered.length} {TEXTS.sites[lang]}
           </span>
           {admin && (
-            <button className="sites-add-btn" onClick={() => setCreating(true)}>
-              <Plus size={14} /> {TEXTS.add[lang]}
+            <button
+              className="sites-add-btn"
+              onClick={() => setCreating(true)}
+              aria-label={TEXTS.add[lang]}
+            >
+              <Plus size={14} />
             </button>
           )}
         </header>

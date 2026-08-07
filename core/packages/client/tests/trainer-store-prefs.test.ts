@@ -29,6 +29,8 @@ describe('trainer-store 开关联动', () => {
     g.localStorage = makeLocalStorage();
     st().setMultiScramble(false);
     st().setShowStageThumb(true);
+    st().setRandomFinalAuf(true);
+    st().setRandomFinalY(true);
   });
 
   it('开三条一屏时自动取消打乱图', () => {
@@ -65,5 +67,26 @@ describe('trainer-store 开关联动', () => {
     st().resetOriSel();
     expect(st().oriSel).toEqual({});
     expect(st().postAuf).toBe(false);
+  });
+
+  it('F2L 的末尾 AUF / y 偏好会一起持久化', () => {
+    st().setRandomFinalAuf(false);
+    st().setRandomFinalY(false);
+
+    const saved = JSON.parse(g.localStorage!.getItem('trainer:prefs') ?? '{}');
+    expect(saved.randomFinalAuf).toBe(false);
+    expect(saved.randomFinalY).toBe(false);
+  });
+
+  it('旧偏好没有 F2L 字段时回落到默认开启', () => {
+    g.localStorage!.setItem('trainer:prefs', JSON.stringify({ timing: true }));
+    st().setRandomFinalAuf(false);
+    st().setRandomFinalY(false);
+    // 上面两个 setter 会覆盖存储,重新放回旧版快照再补水。
+    g.localStorage!.setItem('trainer:prefs', JSON.stringify({ timing: true }));
+    st().hydratePrefs();
+
+    expect(st().randomFinalAuf).toBe(true);
+    expect(st().randomFinalY).toBe(true);
   });
 });

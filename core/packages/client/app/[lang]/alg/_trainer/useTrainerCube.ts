@@ -36,6 +36,7 @@ import { useBluetoothCube, type BluetoothCubeHandle } from '../../timer/_lib/blu
 import { installFakeCube } from '../../timer/_lib/bluetooth/fake_cube';
 import type { CubeStep } from '../../timer/_lib/cube/steps';
 import type { Quat } from '../../timer/_lib/bluetooth/orientation';
+import { persistItem } from '@/lib/safe-storage';
 import { TimerState, useTrainerStore } from '@/lib/trainer-store';
 import { autoStopStep, caseTargetFacelets, puzzleHasSmartCube } from './smartcube';
 
@@ -189,7 +190,7 @@ export function useTrainerCube(opts: UseTrainerCubeOpts): TrainerCubeState {
   }, []);
   const setView = useCallback((next: TrainerCubeView) => {
     setViewState(next);
-    try { localStorage.setItem(VIEW_KEY, next); } catch { /* Keep the in-memory choice. */ }
+    persistItem(VIEW_KEY, next);
   }, []);
 
   const beginSettle = useCallback(() => {

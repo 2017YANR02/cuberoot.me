@@ -1055,10 +1055,18 @@
   color: var(--foreground);
   font-weight: 600;
 }
-.settings-category-button:focus-visible,
-.settings-modal button:focus-visible,
-.settings-modal select:focus-visible,
-.settings-modal input:focus-visible {
+.settings-modal :where(
+  .settings-category-button,
+  .settings-modal-close,
+  .settings-row-control-input,
+  .settings-row-control-select,
+  .settings-category-select,
+  .cstimer-target-select,
+  .hint-btn,
+  .keymap-bind-btn,
+  .pill-toggle,
+  .country-input-field
+):focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
@@ -1181,7 +1189,7 @@
   color: var(--muted-foreground);
   font-size: 12px;
 }
-.cstimer-target-picker select {
+.cstimer-target-select {
   width: fit-content;
   min-height: 34px;
   padding: 4px 8px;
@@ -1338,7 +1346,7 @@
     color: var(--muted-foreground);
     font-size: 12px;
   }
-  .settings-category-picker select {
+  .settings-category-select {
     width: max-content;
     min-height: 44px;
     padding: 7px 30px 7px 10px;
@@ -1378,7 +1386,7 @@
   .settings-backup-row .hint-btn { min-height: 44px; }
   .settings-modal .cstimer-import-row { align-items: flex-start; flex-direction: column; }
   .settings-modal .cstimer-target-picker { align-items: flex-start; flex-direction: column; }
-  .settings-modal .cstimer-target-picker select { min-height: 44px; }
+  .settings-modal .cstimer-target-select { min-height: 44px; }
   .settings-modal .cstimer-import-actions { width: 100%; }
   .settings-modal .cstimer-import-actions .hint-btn { flex: 1; min-height: 44px; }
 }
@@ -1439,36 +1447,6 @@
 .cstimer-import-actions .hint-btn:disabled { opacity: 0.5; cursor: default; }
 .cstimer-import-actions .hint-btn:disabled:hover { background: transparent; color: var(--muted-foreground); }
 
-/* --- Shortcuts modal --- */
-.shortcuts-modal { max-width: 560px; }
-.shortcut-rows {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.shortcut-row {
-  display: grid;
-  grid-template-columns: minmax(120px, 160px) 1fr;
-  gap: 12px;
-  align-items: baseline;
-  font-size: 13px;
-}
-.shortcut-row .shortcut-keys { display: flex; align-items: center; gap: 2px; flex-wrap: wrap; }
-.shortcut-row .shortcut-desc { color: var(--foreground); }
-.shortcut-row kbd {
-  background: var(--background);
-  border: 1px solid var(--border-default);
-  border-bottom-width: 2px;
-  border-radius: 4px;
-  padding: 2px 6px;
-  font-family: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
-  font-size: 12px;
-  color: var(--foreground);
-  min-width: 18px;
-  text-align: center;
-  display: inline-block;
-}
-.shortcut-row .key-sep { color: var(--faint-foreground); margin: 0 2px; }
 /* --- Empty-state hints for charts (Distribution / Trend).
    Replaces the previous full-frame "Need 5+ solves" SVG; just a single dim
    line so <5-solve users don't see two big empty rectangles in the bottom
@@ -1619,8 +1597,16 @@
 }
 
 /* --- Bluetooth modal --- */
-.bluetooth-modal { max-width: 520px; }
+.bluetooth-modal { position: relative; max-width: 520px; }
+.bluetooth-modal h2 { padding-right: 38px; }
 .bluetooth-modal h3 { margin: 0 0 8px; font-size: 14px; }
+.bluetooth-modal .bt-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+}
 .bluetooth-modal .bt-warn {
   background: color-mix(in srgb, var(--signal-warning) 8%, transparent);
   border: 1px solid color-mix(in srgb, var(--signal-warning) 30%, transparent);
@@ -1670,43 +1656,30 @@
   color: var(--muted-foreground);
 }
 .bluetooth-modal.bt-connected-modal { max-width: 430px; }
-.bluetooth-modal .bt-connected-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.bluetooth-modal .bt-connected-link,
-.bluetooth-modal .bt-connected-fact .bt-value {
+.bluetooth-modal .bt-connected-state,
+.bluetooth-modal .bt-connected-fact {
   display: inline-flex;
   align-items: center;
   gap: 4px;
 }
-.bluetooth-modal .bt-connected-link {
-  font-weight: 500;
-  white-space: nowrap;
-}
 .bluetooth-modal .bt-connected-summary { margin-bottom: 10px; }
+.bluetooth-modal .bt-connected-primary,
+.bluetooth-modal .bt-connected-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.bluetooth-modal .bt-connected-primary { gap: 6px 12px; }
+.bluetooth-modal .bt-connected-meta {
+  gap: 4px 18px;
+  margin-top: 8px;
+}
 .bluetooth-modal .bt-connected-device {
-  display: block;
-  margin-bottom: 12px;
   font-size: 15px;
   font-weight: 600;
   overflow-wrap: anywhere;
 }
-.bluetooth-modal .bt-connected-facts {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px 18px;
-  margin: 0;
-}
-.bluetooth-modal .bt-connected-fact {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  min-width: 0;
-}
-.bluetooth-modal .bt-connected-fact dt,
-.bluetooth-modal .bt-connected-fact dd { margin: 0; }
+.bluetooth-modal .bt-connected-state { white-space: nowrap; }
 .bluetooth-modal .bt-connected-help {
   margin-bottom: 14px;
   font-size: 12px;
@@ -1733,9 +1706,6 @@
 }
 .bluetooth-modal .bt-install-btn:hover,
 .bluetooth-modal .bt-connect-btn:hover { background: color-mix(in srgb, var(--signal-info) 22%, transparent); }
-@media (max-width: 380px) {
-  .bluetooth-modal .bt-connected-facts { grid-template-columns: 1fr; }
-}
 /* 外观整体由 shell.css 的 .trainer-subset-btn 定(同特异性、加载在后);这里只补它没设的过渡
    和 hover 描边。 */
 .trainer-subset-btn { transition: background 0.15s, border-color 0.15s; }

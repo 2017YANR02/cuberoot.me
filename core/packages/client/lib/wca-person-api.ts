@@ -240,10 +240,14 @@ export interface WcaPersonMisc {
   totalMet: number;                                                  // 见过的不同魔友总数(不含本人)
   closest: { wcaId: string; name: string; iso2: string | null; shared: number }[]; // 最亲密 top 20(带国旗)
   distribution: { shared: number; cubers: number }[];                // 同场次数 → 人数,升序
+  recordStreak: {
+    current: { compId: string; name: string; date: string | null }[];
+    longest: { compId: string; name: string; date: string | null }[];
+  };
 }
 
 export async function fetchWcaPersonMisc(wcaId: string): Promise<WcaPersonMisc> {
-  const key = `wca:misc:v2:${wcaId}`; // v2: closest 加 iso2,甩掉旧缓存
+  const key = `wca:misc:v3:${wcaId}`; // v3:增加当前 / 最长连续 PR 比赛
   const cached = cacheGet<WcaPersonMisc>(key);
   if (cached) return cached;
   const res = await fetch(apiUrl(`/v1/wca/person-misc?wcaId=${encodeURIComponent(wcaId)}`));
@@ -254,6 +258,10 @@ export async function fetchWcaPersonMisc(wcaId: string): Promise<WcaPersonMisc> 
     totalMet: json.totalMet ?? 0,
     closest: Array.isArray(json.closest) ? json.closest : [],
     distribution: Array.isArray(json.distribution) ? json.distribution : [],
+    recordStreak: {
+      current: Array.isArray(json.recordStreak?.current) ? json.recordStreak.current : [],
+      longest: Array.isArray(json.recordStreak?.longest) ? json.recordStreak.longest : [],
+    },
   };
   cacheSet(key, out);
   return out;

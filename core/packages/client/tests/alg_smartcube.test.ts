@@ -226,9 +226,10 @@ describe('the set → step table', () => {
   });
 
   it('declines the sets whose finish we cannot state', () => {
-    for (const slug of ['eo4a', 'anti-pll', 'fruf']) {
+    for (const slug of ['2-look-cmll', 'eo4a', 'lse-eolr', 'anti-pll', 'fruf']) {
       expect(algSetStep('3x3', slug), slug).toBeNull();
     }
+    expect(algSetStep('3x3', 'oh-cmll')).toBe('cmll');
     expect(algSetStep('3x3', 'no-such-set')).toBeNull();
     expect(algSetStep('3x3', '')).toBeNull();
   });
@@ -391,10 +392,10 @@ describe('caseTargetFacelets', () => {
   });
 
   it('keeps a whole-cube rotation as a change of frame only', () => {
-    // F2L cases get a random `y` in front. The state is read against its own
+    // F2L cases can get a random final `y`. The state is read against its own
     // centres downstream, so the case survives; only the holding changes.
     const plain = caseTargetFacelets("R U R'");
-    const rotated = caseTargetFacelets("y R U R'");
+    const rotated = caseTargetFacelets("R U R' y");
     expect(plain).not.toBeNull();
     expect(rotated).not.toBe(plain);
     for (const step of ['cross', 'f2l', 'oll', 'solved'] as CubeStep[]) {

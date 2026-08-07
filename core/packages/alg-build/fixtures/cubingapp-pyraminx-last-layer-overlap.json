@@ -1,0 +1,7 @@
+[
+  { "sourceName": "Sune", "targetName": "Sune", "existingAlg": "R U R' U R U R'" },
+  { "sourceName": "Antisune", "targetName": "AntiSune", "existingAlg": "R U' R' U' R U' R'" },
+  { "sourceName": "2-flip", "targetName": "2 Flip", "existingAlg": "L R' L' R U' R U R'" },
+  { "sourceName": "R' unsexy R", "targetName": "Lefty Bars", "existingAlg": "R' U' L' U L R" },
+  { "sourceName": "L unsexy L'", "targetName": "Righty Bars", "existingAlg": "L U R U' R' L'" }
+]

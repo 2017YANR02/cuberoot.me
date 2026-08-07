@@ -59,6 +59,7 @@ export function CaseThumb({
       setup={plan.setup}
       view={p.view}
       mask={p.mask}
+      scheme={p.scheme}
       hideGreySides={p.hideGreySides}
       size={size}
       puzzleSize={p.puzzleSize}

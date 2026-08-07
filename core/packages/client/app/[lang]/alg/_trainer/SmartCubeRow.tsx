@@ -102,7 +102,7 @@ export default function SmartCubeRow({ enabled, onEnabledChange, state, supporte
             <Bluetooth size={13} />
             {busy
               ? tr({ zh: '连接中', en: 'Connecting' })
-              : tr({ zh: '连接智能魔方', en: 'Connect smart cube' })}
+              : tr({ zh: '智能魔方', en: 'Smart cube' })}
           </button>
         )}
       </div>
