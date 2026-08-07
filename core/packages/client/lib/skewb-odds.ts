@@ -342,6 +342,6 @@ export const SKEWB_PURE_CENTRE_3CYCLE = { states: 24, moves: 8 } as const;
  * 用来和上面的理论条件分布对账。测试直接读那个 JSON 核对,不许两边飘。
  */
 export const SKEWB_WCA_SAMPLE = {
-  sampleCount: 227_780,
-  counts: { 7: 23_318, 8: 90_768, 9: 107_602, 10: 6_088, 11: 4 } as Record<number, number>,
+  sampleCount: 228_795,
+  counts: { 7: 23_413, 8: 91_177, 9: 108_079, 10: 6_122, 11: 4 } as Record<number, number>,
 };
