@@ -140,7 +140,7 @@ describe('斜转:WCA 真题印证', () => {
     }
   });
 
-  it('22.7 万条真题的逐档占比 ≈ 理论条件分布(最大偏差 < 0.1 个百分点)', () => {
+  it('22.8 万条真题的逐档占比 ≈ 理论条件分布(最大偏差 < 0.1 个百分点)', () => {
     let worst = 0;
     for (let d = SKEWB_WCA_MIN_MOVES; d < odds.histogram.length; d++) {
       const theory = odds.histogram[d] / odds.wcaLegal;
