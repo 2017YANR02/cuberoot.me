@@ -113,6 +113,13 @@ describe('wca_kinch stats deploy contract', () => {
     expect(workflow).toMatch(/working-directory: core\/packages\/stats-build\/output\/wca_stats_extra[\s\S]+?scp[^\n]+\.\/\*/);
   });
 
+  it('can bootstrap stats-extra without duplicating or waiting for the full daily pipeline', () => {
+    expect(workflow).toMatch(/pipeline:\s+[\s\S]*?- wca_stats_extra/);
+    expect(workflow.match(/inputs\.pipeline != 'wca_stats_extra'/g)).toHaveLength(21);
+    expect(workflow).toMatch(/name: Build WCA stats extra\s+working-directory:/);
+    expect(workflow).toMatch(/name: Apply WCA stats extra on server\s+env:/);
+  });
+
   it('uses SQL rank semantics so tied two-decimal scores keep the same rank', () => {
     const scores = [9_000, 8_500, 8_500, 8_000];
     const ranks = scores.map(score => 1 + scores.filter(other => other > score).length);
