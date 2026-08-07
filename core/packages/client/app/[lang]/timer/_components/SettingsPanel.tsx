@@ -5,13 +5,16 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, ChevronRight, CloudDownload, CloudUpload, Download, FileSpreadsheet, LogIn, RefreshCw, Target, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, CloudDownload, CloudUpload, Download, FileSpreadsheet, FileText, LogIn, RefreshCw, Target, X } from 'lucide-react';
 import { formatTargetTime, parseDailySolveGoal, parseTargetTime, resetSettings, updateSettings, useSettings } from '../_lib/settings';
 import TimerFontPicker from '@/components/TimerFontPicker';
 import { warmupSound, play, playInspectionBeep } from '../_lib/sound';
 import { isVoiceAvailable } from '../_lib/sound/voice';
 import { getSeedCounter, resetSeedCounter } from '../_lib/scramble';
-import { appendSolves, listBackups, pushBackup, replaceSolves, restoreBackup } from '../_lib/storage/db';
+import {
+  appendSolves, exportJson, exportSpeedstacks, importJson, listBackups,
+  loadAll, pushBackup, replaceSolves, restoreBackup,
+} from '../_lib/storage/db';
 import { parseCstimerExport, type CstimerSessionParsed } from '../_lib/storage/import_cstimer';
 import { exportCstimerJson } from '../_lib/storage/export_cstimer';
 import { exportSolvesCsv } from '../_lib/storage/export_csv';
@@ -268,13 +271,9 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
   // Per-session "imported" flag so the UI dims/disables the buttons after action.
   const [cstimerImported, setCstimerImported] = useState<Record<string, 'append' | 'replace'>>({});
 
-  // ── csTimer export state ──
-  const [cstimerExportMsg, setCstimerExportMsg] = useState<string | null>(null);
-  const cstimerExportTimerRef = useRef<number | null>(null);
-
-  // ── CSV export state ──
-  const [csvExportMsg, setCsvExportMsg] = useState<string | null>(null);
-  const csvExportTimerRef = useRef<number | null>(null);
+  // ── Import / export status ──
+  const [ioMsg, setIoMsg] = useState<string | null>(null);
+  const ioMsgTimerRef = useRef<number | null>(null);
 
   // ── Cloud backup state ──
   const user = useAuthStore((st) => st.user);
@@ -351,12 +350,20 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
 
   useEffect(() => {
     return () => {
-      if (cstimerExportTimerRef.current !== null) window.clearTimeout(cstimerExportTimerRef.current);
-      if (csvExportTimerRef.current !== null) window.clearTimeout(csvExportTimerRef.current);
+      if (ioMsgTimerRef.current !== null) window.clearTimeout(ioMsgTimerRef.current);
       if (reanalyzeMsgTimerRef.current !== null) window.clearTimeout(reanalyzeMsgTimerRef.current);
       if (cloudMsgTimerRef.current !== null) window.clearTimeout(cloudMsgTimerRef.current);
     };
   }, []);
+
+  function flashIoMsg(msg: string): void {
+    setIoMsg(msg);
+    if (ioMsgTimerRef.current !== null) window.clearTimeout(ioMsgTimerRef.current);
+    ioMsgTimerRef.current = window.setTimeout(() => {
+      setIoMsg(null);
+      ioMsgTimerRef.current = null;
+    }, 2000);
+  }
 
   async function onReanalyze(): Promise<void> {
     if (reanalyzeBusy) return;
@@ -385,6 +392,22 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
     }
   }
 
+  function downloadText(contents: string, mime: string, fileName: string): void {
+    const blob = new Blob([contents], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function onCubeRootExport(): void {
+    const date = new Date().toISOString().slice(0, 10);
+    downloadText(exportJson(), 'application/json', `cuberoot-timer-${date}.json`);
+    flashIoMsg(tr({ zh: 'CubeRoot 备份已导出', en: 'CubeRoot backup exported' }));
+  }
+
   async function onCstimerExport(): Promise<void> {
     try {
       const { json, solveCount, sessionCount } = await exportCstimerJson();
@@ -393,28 +416,15 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
         }));
         return;
       }
-      const blob = new Blob([json], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
       const d = new Date();
       const yyyy = d.getFullYear();
       const mm = String(d.getMonth() + 1).padStart(2, '0');
       const dd = String(d.getDate()).padStart(2, '0');
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `cuberoot-export-${yyyy}-${mm}-${dd}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      const msg = (isZh
-              ? `已导出 ${solveCount} 条成绩（${sessionCount} 个会话）`
-              : `Exported ${solveCount} solves across ${sessionCount} sessions`);
-      setCstimerExportMsg(msg);
-      if (cstimerExportTimerRef.current !== null) window.clearTimeout(cstimerExportTimerRef.current);
-      cstimerExportTimerRef.current = window.setTimeout(() => {
-        setCstimerExportMsg(null);
-        cstimerExportTimerRef.current = null;
-      }, 1500);
+      downloadText(json, 'application/json', `cuberoot-export-${yyyy}-${mm}-${dd}.json`);
+      flashIoMsg(tr({
+        zh: `已导出 ${solveCount} 条成绩（${sessionCount} 个会话）`,
+        en: `Exported ${solveCount} solves across ${sessionCount} sessions`,
+      }));
     } catch {
       alert(tr({ zh: '导出失败。', en: 'Export failed.'
     }));
@@ -424,32 +434,37 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
   function onCsvExport(): void {
     try {
       const { csv, solveCount } = exportSolvesCsv();
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
       const d = new Date();
       const yyyy = d.getFullYear();
       const mm = String(d.getMonth() + 1).padStart(2, '0');
       const dd = String(d.getDate()).padStart(2, '0');
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `cuberoot-solves-${yyyy}-${mm}-${dd}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      const msg = (isZh
-              ? `已导出 ${solveCount} 条成绩`
-              : `Exported ${solveCount} solves`);
-      setCsvExportMsg(msg);
-      if (csvExportTimerRef.current !== null) window.clearTimeout(csvExportTimerRef.current);
-      csvExportTimerRef.current = window.setTimeout(() => {
-        setCsvExportMsg(null);
-        csvExportTimerRef.current = null;
-      }, 1500);
+      downloadText(csv, 'text/csv;charset=utf-8', `cuberoot-solves-${yyyy}-${mm}-${dd}.csv`);
+      flashIoMsg(tr({
+        zh: `已导出 ${solveCount} 条成绩`,
+        en: `Exported ${solveCount} solves`,
+      }));
     } catch {
       alert(tr({ zh: '导出失败。', en: 'Export failed.'
     }));
     }
+  }
+
+  function onSpeedstacksExport(): void {
+    const solves = loadAll()[event] ?? [];
+    if (solves.length === 0) {
+      alert(tr({ zh: '当前项目没有可导出的成绩。', en: 'No solves to export for this event.' }));
+      return;
+    }
+    const date = new Date().toISOString().slice(0, 10);
+    downloadText(
+      exportSpeedstacks(solves),
+      'text/plain;charset=utf-8',
+      `cuberoot-timer-${event}-${date}.ss.txt`,
+    );
+    flashIoMsg(tr({
+      zh: `已导出当前项目的 ${solves.length} 条成绩`,
+      en: `Exported ${solves.length} solves from this event`,
+    }));
   }
 
   function onCstimerFile(e: React.ChangeEvent<HTMLInputElement>): void {
@@ -459,9 +474,16 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
     const reader = new FileReader();
     reader.onload = () => {
       const text = String(reader.result);
+      if (importJson(text)) {
+        setCstimerSessions(null);
+        setCstimerImported({});
+        onDataReplaced?.();
+        flashIoMsg(tr({ zh: 'CubeRoot 备份已导入', en: 'CubeRoot backup imported' }));
+        return;
+      }
       const sessions = parseCstimerExport(text);
       if (sessions.length === 0) {
-        alert(tr({ zh: '未识别为 csTimer 导出文件。', en: 'Not a recognized csTimer export.'
+        alert(tr({ zh: '未识别为 CubeRoot 备份或 csTimer 导出文件。', en: 'Not a recognized CubeRoot backup or csTimer export.'
         }));
         return;
       }
@@ -1083,15 +1105,15 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
         </AccordionSection>
 
         <AccordionSection
-          id="cstimer-io"
-          title={tr({ zh: '从 csTimer 导入 / 导出', en: 'csTimer import / export'
+          id="solve-data"
+          title={tr({ zh: '成绩数据', en: 'Solve data'
         })}
           defaultExpanded={false}
           useMobile={isMobile}
           expanded={expandedSections}
           setExpanded={setExpandedSections}
         >
-          <Row label={tr({ zh: '选择 JSON 文件', en: 'Choose JSON file'
+          <Row label={tr({ zh: '导入', en: 'Import'
         })}>
             <input
               ref={cstimerFileRef}
@@ -1107,11 +1129,19 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
               {tr({ zh: '选择文件…', en: 'Choose file…'
             })}
             </button>
-            <span className="hint">{tr({ zh: '导出来源：csTimer → Local backup → Export', en: 'From csTimer → Local backup → Export'
+            <span className="hint">{tr({ zh: '支持 CubeRoot 备份与 csTimer 导出文件', en: 'Accepts CubeRoot backups and csTimer exports'
             })}</span>
           </Row>
-          <Row label={tr({ zh: '导出所有成绩', en: 'Export all solves'
+          <Row label={tr({ zh: '导出', en: 'Export'
         })}>
+            <button
+              className="hint-btn"
+              onClick={onCubeRootExport}
+              title={tr({ zh: '完整备份全部成绩，可重新导入 CubeRoot', en: 'Back up all solves for later re-import into CubeRoot' })}
+            >
+              <Download size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
+              CubeRoot JSON
+            </button>
             <button
               className="hint-btn"
               onClick={() => { void onCstimerExport(); }}
@@ -1119,7 +1149,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
             })}
             >
               <Download size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-              {isZh ? 'csTimer JSON' : 'csTimer JSON'}
+              csTimer JSON
             </button>
             <button
               className="hint-btn"
@@ -1128,15 +1158,20 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced, to
             })}
             >
               <FileSpreadsheet size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-              {isZh ? 'CSV' : 'CSV'}
+              CSV
             </button>
-            {cstimerExportMsg !== null && (
-              <span className="hint">{cstimerExportMsg}</span>
-            )}
-            {csvExportMsg !== null && (
-              <span className="hint">{csvExportMsg}</span>
-            )}
+            <button
+              className="hint-btn"
+              onClick={onSpeedstacksExport}
+              title={tr({ zh: '导出当前项目为 Speedstacks 文本', en: 'Export the current event as Speedstacks text' })}
+            >
+              <FileText size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
+              Speedstacks
+            </button>
           </Row>
+          {ioMsg !== null && (
+            <Row label=""><span className="hint">{ioMsg}</span></Row>
+          )}
           {cstimerSessions && cstimerSessions.length > 0 && (
             <div className="cstimer-import-list">
               {cstimerSessions.map(sess => {
