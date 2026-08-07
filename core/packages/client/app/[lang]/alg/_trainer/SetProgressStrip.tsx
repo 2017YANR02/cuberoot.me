@@ -155,7 +155,7 @@ export default function SetProgressStrip({
 
         {showAllLink && (
           <Link href="/alg/progress" className="trainer-strip-more" prefetch={false}>
-            {tr({ zh: '进度总览', en: 'All progress' })}<ChevronRight size={13} />
+            {tr({ zh: '进度', en: 'Progress' })}<ChevronRight size={13} />
           </Link>
         )}
       </div>
