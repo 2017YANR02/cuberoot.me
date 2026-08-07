@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from '@/components/AppLink';
 import { useParams, useRouter } from 'next/navigation';
-import { useQueryState } from 'nuqs';
+import { parseAsString, useQueryState } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Settings, Copy, Check, QrCode, RotateCcw, X } from 'lucide-react';
 import { ALG_CATALOG, getAlgSetMeta, loadAlg, type AlgCase } from '@cuberoot/shared';
@@ -65,7 +65,10 @@ export default function TrainerRunClient() {
   const router = useRouter();
 
   // 训练范围:subgroup 页的训练按钮带 ?scope=<组slug> 进来,只练该组(筛选/默认 replace)
-  const [scopeParam] = useQueryState('scope');
+  const [scopeParam, setScopeParam] = useQueryState(
+    'scope',
+    parseAsString.withOptions({ history: 'push' }),
+  );
   // 旧数字制子组 slug(u1 / pi 1 / as1 …)→ 新方向制(ur / pif / asf …),老 ?scope= 链接 / 书签不失效(migration 0081)
   // 合练没有子组范围可言(?scope= 是某一套内部的分组),一律忽略
   const scopeSlug = setSlug === MIX_SLUG
@@ -96,6 +99,12 @@ export default function TrainerRunClient() {
   // 「本轮结束」的主按钮是**下一轮的 URL** —— 换 scope 就是换一场,那批 case 全换了
   // 新的收尾 ZBLL,不是重洗同一批。ref 给键盘用(弹窗里回车 = 点主按钮)。
   const roundLabel = virtual?.roundLabel?.(virtualScope) ?? null;
+  const roundNumber = virtual?.roundNumber?.(virtualScope) ?? null;
+  const totalRounds = virtual?.totalRounds ?? null;
+  const roundChoices = useMemo(
+    () => Array.from({ length: totalRounds ?? 0 }, (_, i) => i + 1),
+    [totalRounds],
+  );
   const nextRoundScope = virtual?.nextRoundScope?.(virtualScope) ?? null;
   const nextRoundHref = nextRoundScope
     ? `/alg/${puzzleParam}/${setSlug}/run?scope=${encodeURIComponent(nextRoundScope)}`
@@ -998,7 +1007,26 @@ export default function TrainerRunClient() {
           {recapShown && recapCur && (
             <span className="trainer-recap-progress">
               {/* 分轮次的范围(LSLL 已收录:302 条一轮、494 轮)把「第几轮」摆在进度前面 */}
-              {roundLabel && <span className="trainer-recap-round">{tr(roundLabel)}</span>}
+              {roundLabel && roundNumber && totalRounds && virtual?.scopeForRound ? (
+                <span className="trainer-recap-round">
+                  {tr({ zh: '第', en: 'Round' })}{' '}
+                  <select
+                    className="trainer-round-select"
+                    value={roundNumber}
+                    onChange={(event) => {
+                      const nextRound = Number(event.target.value);
+                      if (!Number.isInteger(nextRound) || nextRound < 1 || nextRound > totalRounds) return;
+                      void setScopeParam(virtual.scopeForRound?.(nextRound) ?? null);
+                    }}
+                    aria-label={tr({ zh: '选择训练轮次', en: 'Choose training round' })}
+                  >
+                    {roundChoices.map(round => <option key={round} value={round}>{round}</option>)}
+                  </select>
+                  {tr({ zh: ` / ${totalRounds} 轮`, en: ` / ${totalRounds}` })}
+                </span>
+              ) : roundLabel ? (
+                <span className="trainer-recap-round">{tr(roundLabel)}</span>
+              ) : null}
               {recapCur.pos}/{recapCur.total}
               {room && (
                 <span className="trainer-recap-coop">
