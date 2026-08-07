@@ -1332,8 +1332,49 @@
   font-size: 12px;
   color: var(--muted-foreground);
 }
-.bluetooth-modal .bt-status { display: grid; grid-template-columns: 100px 1fr; gap: 8px 12px; align-items: center; }
-.bluetooth-modal .bt-row { display: contents; }
+.bluetooth-modal.bt-connected-modal { max-width: 430px; }
+.bluetooth-modal .bt-connected-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.bluetooth-modal .bt-connected-link,
+.bluetooth-modal .bt-connected-fact .bt-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.bluetooth-modal .bt-connected-link {
+  font-weight: 500;
+  white-space: nowrap;
+}
+.bluetooth-modal .bt-connected-summary { margin-bottom: 10px; }
+.bluetooth-modal .bt-connected-device {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.bluetooth-modal .bt-connected-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 18px;
+  margin: 0;
+}
+.bluetooth-modal .bt-connected-fact {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.bluetooth-modal .bt-connected-fact dt,
+.bluetooth-modal .bt-connected-fact dd { margin: 0; }
+.bluetooth-modal .bt-connected-help {
+  margin-bottom: 14px;
+  font-size: 12px;
+  line-height: 1.55;
+}
 .bluetooth-modal .bt-label { color: var(--muted-foreground); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
 .bluetooth-modal .bt-value { color: var(--foreground); font-size: 13px; }
 .bluetooth-modal .bt-value.mono { font-family: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace; }
@@ -1355,6 +1396,9 @@
 }
 .bluetooth-modal .bt-install-btn:hover,
 .bluetooth-modal .bt-connect-btn:hover { background: color-mix(in srgb, var(--signal-info) 22%, transparent); }
+@media (max-width: 380px) {
+  .bluetooth-modal .bt-connected-facts { grid-template-columns: 1fr; }
+}
 /* 外观整体由 shell.css 的 .trainer-subset-btn 定(同特异性、加载在后);这里只补它没设的过渡
    和 hover 描边。 */
 .trainer-subset-btn { transition: background 0.15s, border-color 0.15s; }

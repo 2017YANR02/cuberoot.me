@@ -14,7 +14,7 @@ import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
 import { detectBluetoothEnv, envAdvice, BluetoothConnectError, CONNECT_STAGE_LABEL, describeError } from '../_lib/bluetooth';
 import type { BluetoothCubeHandle, ConnectStage, ConnectPickOptions } from '../_lib/bluetooth';
 import { normalizeMac } from '../_lib/bluetooth/mac';
-import { Bluetooth, Battery, Check, X, RotateCcw, ExternalLink } from 'lucide-react';
+import { Bluetooth, Check, X, RotateCcw, ExternalLink } from 'lucide-react';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
 
@@ -258,19 +258,6 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect, connect
   const connectBtnStyle = isMobile
     ? { display: 'flex', width: '100%', justifyContent: 'center', padding: '10px 14px' }
     : undefined;
-  const statusGridStyle = isMobile
-    ? { gridTemplateColumns: '1fr', gap: '6px 0' }
-    : undefined;
-  const statusRowStyle = isMobile
-    ? ({
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        gap: 12,
-        padding: '6px 0',
-        borderBottom: '1px solid var(--border-default)',
-      } as const)
-    : undefined;
   const actionBtnStyle = isMobile
     ? { flex: '1 1 100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px 14px' }
     : undefined;
@@ -279,17 +266,23 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect, connect
     <div className="timer-modal-overlay" style={overlayStyle} onClick={onClose}>
       <div
         ref={dialogRef}
-        className="timer-modal bluetooth-modal"
+        className={`timer-modal bluetooth-modal${connected ? ' bt-connected-modal' : ''}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         style={modalStyle}
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 id={titleId}>
-          <Bluetooth size={20} style={{ verticalAlign: 'middle', marginRight: 6 }} />
-          {tr({ zh: '智能魔方', en: 'Smart cube'
-        })}
+        <h2 id={titleId} className={connected ? 'bt-connected-title' : undefined}>
+          <span>
+            <Bluetooth size={20} style={{ verticalAlign: 'middle', marginRight: 6 }} />
+            {tr({ zh: '智能魔方', en: 'Smart cube' })}
+          </span>
+          {connected && (
+            <span className="bt-value ok bt-connected-link">
+              <Check size={13} /> {tr({ zh: '已连接', en: 'Connected' })}
+            </span>
+          )}
         </h2>
 
         {macPrompt && (
@@ -433,47 +426,39 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect, connect
 
         {supported && connected && (
           <>
-            <div className="modal-section bt-status" style={statusGridStyle}>
-              <div className="bt-row" style={statusRowStyle}>
-                <span className="bt-label">{tr({ zh: '设备', en: 'Device'
-                })}</span>
-                <span className="bt-value">{cube.status.deviceName}</span>
-              </div>
-              <div className="bt-row" style={statusRowStyle}>
-                <span className="bt-label">{tr({ zh: '型号', en: 'Brand'
-                })}</span>
-                <span className="bt-value">{cube.status.brand}</span>
-              </div>
-              <div className="bt-row" style={statusRowStyle}>
-                <span className="bt-label">
-                  <Battery size={14} style={{ verticalAlign: 'middle' }} />{' '}
-                  {tr({ zh: '电量', en: 'Battery'
-                })}
-                </span>
-                <span className="bt-value">
-                  {cube.status.battery !== null ? `${cube.status.battery}%` : '—'}
-                </span>
-              </div>
-              <div className="bt-row" style={statusRowStyle}>
-                <span className="bt-label">{tr({ zh: '状态', en: 'State'
-                })}</span>
-                <span className={`bt-value ${cube.solved ? 'ok' : 'unsolved'}`}>
-                  {cube.solved
-                    ? <><Check size={14} style={{ verticalAlign: 'middle' }} /> {tr({ zh: '已还原', en: 'Solved'
-                    })}</>
-                    : <><X size={14} style={{ verticalAlign: 'middle' }} /> {tr({ zh: '未还原', en: 'Unsolved'
-                    })}</>}
-                </span>
-              </div>
-              <div className="bt-row" style={statusRowStyle}>
-                <span className="bt-label">{tr({ zh: '最近一步', en: 'Last move' })}</span>
-                <span className="bt-value mono">{cube.lastMove ?? '—'}</span>
-              </div>
+            <div className="modal-section bt-connected-summary">
+              <strong className="bt-connected-device">{cube.status.deviceName}</strong>
+              <dl className="bt-connected-facts">
+                <div className="bt-connected-fact">
+                  <dt className="bt-label">{tr({ zh: '状态', en: 'State' })}</dt>
+                  <dd className={`bt-value ${cube.solved ? 'ok' : 'unsolved'}`}>
+                    {cube.solved
+                      ? <><Check size={13} /> {tr({ zh: '已还原', en: 'Solved' })}</>
+                      : <><X size={13} /> {tr({ zh: '未还原', en: 'Unsolved' })}</>}
+                  </dd>
+                </div>
+                <div className="bt-connected-fact">
+                  <dt className="bt-label">{tr({ zh: '电量', en: 'Battery' })}</dt>
+                  <dd className="bt-value">
+                    {cube.status.battery !== null ? `${cube.status.battery}%` : '—'}
+                  </dd>
+                </div>
+                <div className="bt-connected-fact">
+                  <dt className="bt-label">{tr({ zh: '最近一步', en: 'Last move' })}</dt>
+                  <dd className="bt-value mono">{cube.lastMove ?? '—'}</dd>
+                </div>
+                <div className="bt-connected-fact">
+                  <dt className="bt-label">{tr({ zh: '协议', en: 'Protocol' })}</dt>
+                  <dd className="bt-value">{cube.status.brand}</dd>
+                </div>
+              </dl>
             </div>
-            <div className="modal-section bt-tip">
-              <p>{tr({ zh: '把魔方还原到出厂状态后点击下方"重置状态"，然后开始打乱 → 计时 → 还原，魔方还原瞬间会自动停止计时。', en: 'Set the cube to its solved state, click "Reset state", then scramble → time → solve. The timer auto-stops when the cube is back to solved.'
-            })}</p>
-            </div>
+            <p className="modal-section bt-connected-help">
+              {tr({
+                zh: '状态不同步时，先还原实物，再重置状态；还原后计时会自动停止。',
+                en: 'If the states drift apart, solve the physical cube, then reset its state. Solving automatically stops the timer.',
+              })}
+            </p>
           </>
         )}
 
