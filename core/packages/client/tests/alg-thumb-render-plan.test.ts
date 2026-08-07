@@ -26,7 +26,7 @@ describe('网页与 PDF 共用 case 缩略图渲染计划', () => {
     expect(caseThumbPlan(input('skewb')).renderer).toBe('inline-svg');
   });
 
-  it.each(['cs', 'co', 'eo', 'cp', 'ep', 'parity'])('%s 的网页和 PDF 使用逐字相同的 SQ1 平面 SVG', async (set) => {
+  it.each(['cs', 'csp', 'co', 'eo', 'cp', 'ep', 'parity'])('%s 的网页和 PDF 使用逐字相同的 SQ1 平面 SVG', async (set) => {
     const spec = {
       ...input('sq1', set),
       alg: '(1,0) / (-1,0)',
