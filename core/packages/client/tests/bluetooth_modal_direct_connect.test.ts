@@ -77,4 +77,42 @@ describe('BluetoothModal direct connection attempt', () => {
     expect(host.querySelector('[role="alert"]')?.textContent).toContain('用户取消选择');
     expect(host.textContent).toContain('Search & connect');
   });
+
+  it('keeps the essential connected-cube facts and recovery actions', async () => {
+    const connectedCube = {
+      ...disconnectedCube,
+      status: {
+        connected: true,
+        brand: 'gan-v4',
+        battery: 72,
+        deviceName: 'GAN16ui_ (C2:AF)',
+        hasGyro: true,
+      },
+      solved: true,
+      lastMove: "R'",
+      resetState: vi.fn(),
+      disconnect: vi.fn(),
+    } as BluetoothCubeHandle;
+
+    await act(async () => {
+      root.render(createElement(BluetoothModal, {
+        isZh: false,
+        cube: connectedCube,
+        onClose: vi.fn(),
+        onConnect: vi.fn(() => Promise.resolve()),
+      }));
+    });
+
+    const content = host.textContent ?? '';
+    expect(content).toContain('Connected');
+    expect(content).toContain('GAN16ui_ (C2:AF)');
+    expect(content).toContain('gan-v4');
+    expect(content).toContain('72%');
+    expect(content).toContain('Solved');
+    expect(content).toContain("R'");
+    expect(content).toContain('automatically stops the timer');
+    expect(content).toContain('Reset state');
+    expect(content).toContain('Disconnect');
+    expect(content).toContain('Close');
+  });
 });
