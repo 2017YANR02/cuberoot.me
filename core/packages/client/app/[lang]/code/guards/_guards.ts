@@ -168,8 +168,14 @@ export const CI_GUARDS_UI: CiGuard[] = [
   {
     id: 'alg-thumb-corner-mask',
     test: 'alg-thumb-corner-mask.test.ts',
-    zh: { title: '手搓顶层公式集缩略图遮罩', desc: '顶层公式集(COLL / CMLL,以及 ZBLL / 1LLL / OLLCP 那批同样用 coll 遮罩的二级选择卡)的图,视角 / 遮罩 / 侧环删灰(hideGreySides)一处定在 CaseThumb 的 cubeThumbParams —— 列表、训练器选择面板、/recognize 题图、PDF 导出全从它取。谁再手写一个 <VisualCube view="pll" mask="coll">(训练器里真出现过一份),那张图就绕开删灰:同一个 case 列表里侧面干净、选择面板里却挂一圈灰格。CaseThumb 之外写死 coll / cmll 遮罩 = CI 红;特例行内 allow-corner-mask 豁免。' },
-    en: { title: 'Hand-rolled corner-LL thumbnail mask', desc: 'Last-layer sets (COLL / CMLL, plus the ZBLL / 1LLL / OLLCP second-level picker cards that use the same coll mask) get their view / mask / hidden grey rim (hideGreySides) from one place — cubeThumbParams in CaseThumb — which the library list, the trainer picker, the /recognize prompts and the PDF export all read. Hand-rolling a `<VisualCube view="pll" mask="coll">` (one really did exist in the trainer) skips the grey-rim pass: the same case shows clean sides in the list and a ring of grey squares in the picker. A literal coll / cmll mask outside CaseThumb turns CI red; exceptions take an inline allow-corner-mask.' },
+    zh: { title: '手搓顶层公式集缩略图遮罩', desc: '顶层公式集(COLL / CMLL,以及 ZBLL / 1LLL / OLLCP 那批同样用 coll 遮罩的二级选择卡)的图,视角 / 遮罩 / 侧环删灰(hideGreySides)一处定在 alg_thumb_plan 的 cubeThumbParams —— 列表、训练器选择面板、/recognize 题图、PDF 导出全从它取。谁再手写一个 <VisualCube view="pll" mask="coll">(训练器里真出现过一份),那张图就绕开删灰:同一个 case 列表里侧面干净、选择面板里却挂一圈灰格。alg_thumb_plan 之外写死 coll / cmll 遮罩 = CI 红;特例行内 allow-corner-mask 豁免。' },
+    en: { title: 'Hand-rolled corner-LL thumbnail mask', desc: 'Last-layer sets (COLL / CMLL, plus the ZBLL / 1LLL / OLLCP second-level picker cards that use the same coll mask) get their view / mask / hidden grey rim (hideGreySides) from one place — cubeThumbParams in alg_thumb_plan — which the library list, the trainer picker, the /recognize prompts and the PDF export all read. Hand-rolling a `<VisualCube view="pll" mask="coll">` (one really did exist in the trainer) skips the grey-rim pass: the same case shows clean sides in the list and a ring of grey squares in the picker. A literal coll / cmll mask outside alg_thumb_plan turns CI red; exceptions take an inline allow-corner-mask.' },
+  },
+  {
+    id: 'alg-thumb-render-plan',
+    test: 'alg-thumb-render-plan.test.ts',
+    zh: { title: '网页与 PDF 共用公式图渲染计划', desc: '公式库网页缩略图与 PDF 图统一先走 alg_thumb_plan:它一处决定拼图渲染器、视图、遮罩、SQ1 阶段与黑顶配色,CaseThumb 和 case_svg 只负责把同一个计划适配成 React 或 SVG。两个适配器里再次按 puzzle 分叉直接 CI 红;测试同时逐字比对 SQ1 各阶段的网页计划 SVG 与 PDF SVG。' },
+    en: { title: 'Catalog and PDF share one case-image plan', desc: 'Catalog thumbnails and PDF images first go through alg_thumb_plan, the one place that chooses the puzzle renderer, view, mask, SQ1 stage and black-top scheme. CaseThumb and case_svg only adapt that same plan to React or SVG. Branching on puzzle again in either adapter turns CI red, while the test also byte-compares the planned and PDF SVG for every SQ1 stage.' },
   },
 ];
 

@@ -78,4 +78,16 @@ describe('algSheetFromCases', () => {
     expect(sheet.cases[0].algs).toEqual(["L U L'"]);
     expect(sheet.cases[0].thumb?.alg).toBe("R U R'");
   });
+
+  it('Square-1 PDF 缩略图跟随网页的黑顶开关', () => {
+    const c = mkCase({ name: 'Kite', algs: [[{ alg: '(1,0) / (-1,0)' }]] });
+    const black = algSheetFromCases({
+      ...base, puzzle: 'sq1', set: 'cs', cases: [c], sq1BlackTop: true,
+    });
+    const yellow = algSheetFromCases({
+      ...base, puzzle: 'sq1', set: 'cs', cases: [c], sq1BlackTop: false,
+    });
+    expect(black.cases[0].thumb?.sq1BlackTop).toBe(true);
+    expect(yellow.cases[0].thumb?.sq1BlackTop).toBe(false);
+  });
 });
