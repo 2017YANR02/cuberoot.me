@@ -194,6 +194,20 @@ CREATE INDEX IF NOT EXISTS pr_total_21 ON wca_person_ranks (is_avg, country_id, 
 CREATE INDEX IF NOT EXISTS pr_country_total_21 ON wca_person_ranks (is_avg, country_id, total_country_rank_21);
 CREATE INDEX IF NOT EXISTS pr_continent_total_21 ON wca_person_ranks (is_avg, continent_id, total_continent_rank_21);
 
+-- ── wca_kinch: Kinch 全能排名(每日全量重灌) ──
+-- 分数存百分值的百分之一:7412 = 74.12。逐项明细由 API 复用当前纪录与选手 PB 现算。
+CREATE TABLE IF NOT EXISTS wca_kinch (
+  wca_id                VARCHAR(20) PRIMARY KEY,
+  country_id            VARCHAR(50) NOT NULL,
+  continent_id          VARCHAR(50) NOT NULL,
+  world_score_x100      SMALLINT NOT NULL,
+  continent_score_x100  SMALLINT NOT NULL,
+  country_score_x100    SMALLINT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS kinch_world_score ON wca_kinch (world_score_x100 DESC, wca_id);
+CREATE INDEX IF NOT EXISTS kinch_continent_score ON wca_kinch (continent_id, continent_score_x100 DESC, wca_id);
+CREATE INDEX IF NOT EXISTS kinch_country_score ON wca_kinch (country_id, country_score_x100 DESC, wca_id);
+
 -- ── wca_championship_podiums: 选手页「锦标赛领奖台」(~30k 行) ──
 -- 一行 = 某选手在某锦标赛某项目决赛、按该锦标赛资格内重排后名次 ≤3 的领奖台成绩。
 -- level: 'world' | 大洲 id('_North America') | 国家 iso2('US') | 多国类型('greater_china')。

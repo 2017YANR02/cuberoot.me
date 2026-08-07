@@ -950,7 +950,7 @@
   left: 0;
   z-index: 70;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 4px;
   width: min(272px, calc(100vw - 16px));
   max-height: min(360px, 70vh);
@@ -985,12 +985,6 @@
   color: var(--accent);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
 }
-/* 五项排成 2 + 2 + 1,最后一项居中,视觉上不留一个像“缺选项”的空格。 */
-.trainer-cube-view-option:last-child:nth-child(odd) {
-  grid-column: 1 / -1;
-  justify-self: center;
-  width: calc(50% - 2px);
-}
 @media (prefers-reduced-motion: reduce) {
   .trainer-cube-view-caret { transition: none; }
 }
@@ -1017,8 +1011,9 @@
   margin-right: 6px;
   color: var(--faint-foreground);
 }
-.trainer-round-select {
-  field-sizing: content;
+.trainer-round-input {
+  box-sizing: border-box;
+  width: 4.25em;
   padding: 2px 3px;
   border: 1px solid var(--border-default);
   border-radius: 4px;
@@ -1026,9 +1021,8 @@
   color: var(--foreground);
   font: inherit;
   font-variant-numeric: tabular-nums;
-  cursor: pointer;
 }
-.trainer-round-select:focus-visible {
+.trainer-round-input:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 1px;
 }

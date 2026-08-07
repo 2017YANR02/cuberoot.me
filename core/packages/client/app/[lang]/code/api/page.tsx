@@ -94,11 +94,12 @@ const ENDPOINTS: Ep[] = [
   // ---- wca-stats ----
   { d: 'wca-stats', m: 'GET', p: '/v1/wca/grand-slam', g: 'public', c: 'cdn', zh: '大满贯榜', en: 'Grand-slam leaderboard' },
   { d: 'wca-stats', m: 'GET', p: '/v1/wca/all-results', g: 'public', c: 'cdn', zh: '全成绩查询(姓名口径 / 项目筛选)', en: 'All-results query (name form / event filter)' },
+  { d: 'wca-stats', m: 'GET', p: '/v1/wca/kinch', g: 'public', c: 'cdn', zh: 'Kinch 综合分榜单与选手逐项分', en: 'Kinch leaderboard and per-event person scores' },
   { d: 'wca-stats', m: 'GET', p: '/v1/wca/persons-directory', g: 'public', c: 'cdn', zh: '选手名录', en: 'Persons directory' },
   { d: 'wca-stats', m: 'GET', p: '/v1/wca/person-aka', g: 'public', zh: '曾用名 / 曾属国', en: 'Former names / nationalities' },
   { d: 'wca-stats', m: 'GET', p: '/v1/wca/person-page', g: 'public', zh: '选手页首屏全量:资料 + 全部成绩 + 参赛比赛(自家库,不经官网)', en: 'Whole person page: profile + every result + competitions, from our mirror' },
   { d: 'wca-stats', m: 'GET', p: '/v1/wca/person-avatar', g: 'public', zh: '头像 URL(懒回源 + 入库缓存)', en: 'Avatar URL (lazily fetched, cached)' },
-  { d: 'wca-stats', m: 'GET', p: '/v1/wca/person-misc', g: 'public', zh: '选手杂项(魔友 / 省份)', en: 'Person misc (peers / provinces)' },
+  { d: 'wca-stats', m: 'GET', p: '/v1/wca/person-misc', g: 'public', zh: '选手杂项(魔友 / 省份 / 个人纪录连续场次)', en: 'Person misc (peers / provinces / personal-record streak)' },
   { d: 'wca-stats', m: 'GET', p: '/v1/wca/person-championship-podiums', g: 'public', zh: '冠军赛领奖台', en: 'Championship podiums' },
   { d: 'wca-stats', m: 'GET', p: '/v1/wca/rank-for', g: 'public', zh: '某成绩在当下的名次', en: 'Live rank for a result' },
   { d: 'wca-stats', m: 'POST', p: '/v1/wca/rank-for-batch', g: 'public', zh: '批量算名次', en: 'Batch rank-for' },

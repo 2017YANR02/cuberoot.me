@@ -14,6 +14,11 @@ import { fileURLToPath } from 'url';
 import { parse as parseYaml } from 'yaml';
 import { computeMbfMo3 } from '../core/mbf_average.js';
 import { computeChampionshipPodiums } from '../core/championship_podiums.js';
+import {
+  KINCH_EVENTS,
+  averageKinchScoreX100,
+  calculateKinchEvent,
+} from '@cuberoot/shared/kinch';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -989,19 +994,12 @@ async function main() {
   // 各带 (world_rank, continent_rank, country_rank);set_date = 该 PB 的 bestCompId/avgCompId 比赛 start_date.
   console.log('[fs-D3] current records standing...');
   {
-    const assignContinentRanks = (sorted: Array<{ wcaId: string; val: number; country: string }>) => {
-      const out = new Map<string, number>(); const cont = new Map<string, { prev: number; rank: number; count: number }>();
-      for (const it of sorted) {
-        const k = continentOf.get(it.country) ?? ''; let cs = cont.get(k);
-        if (!cs) { cs = { prev: -1, rank: 0, count: 0 }; cont.set(k, cs); }
-        let cr: number; if (it.val === cs.prev) cr = cs.rank; else { cr = cs.count + 1; cs.prev = it.val; cs.rank = cr; }
-        cs.count++; out.set(it.wcaId, cr);
-      }
-      return out;
-    };
     const dlist = (isAvg: boolean, ev: string) => {
       const acc = accByEvent.get(ev); const out: Array<{ wcaId: string; val: number; country: string }> = [];
-      if (acc) for (const [pid, a] of acc) { const v = isAvg ? a.avg : a.best; if (v > 0) out.push({ wcaId: pid, val: v, country: a.country }); }
+      if (acc) for (const [pid, a] of acc) {
+        const v = isAvg ? a.avg : a.best;
+        if (v > 0) out.push({ wcaId: pid, val: v, country: personCountry.get(pid) ?? a.country });
+      }
       out.sort((x, y) => x.val - y.val); return out;
     };
     const currStream = createWriteStream(resolve(outDir, 'wca_fs_current_records.copy.tsv'));
@@ -1012,16 +1010,15 @@ async function main() {
         if (isAvg && ev === '333mbf') continue;
         const list = dlist(isAvg, ev);
         if (list.length === 0) continue;
-        const contRank = assignContinentRanks(list);
-        const ranksMap = isAvg ? eventRanks[i]!.avg : eventRanks[i]!.single;
+        const currentRanks = assignRanks(list, continentOf);
         const accEv = accByEvent.get(ev);
         const emit = (scopeKind: string, scopeId: string, item: { wcaId: string; val: number; country: string }) => {
-          const rk = ranksMap.get(item.wcaId); const a = accEv?.get(item.wcaId);
+          const rk = currentRanks.get(item.wcaId); const a = accEv?.get(item.wcaId);
           const setCompId = isAvg ? (a?.avgCompId ?? '') : (a?.bestCompId ?? '');
           const setDate = compInfo.get(setCompId)?.startDate ?? '';
           currStream.write(
             `${ev}\t${bool(isAvg)}\t${scopeKind}\t${pgEsc(scopeId)}\t${pgEsc(item.wcaId)}\t${pgEsc(item.country)}\t${item.val}\t` +
-            `${pgEsc(setCompId)}\t${dateOrNull(setDate)}\t${num(rk?.wr ?? null)}\t${num(contRank.get(item.wcaId) ?? null)}\t${num(rk?.cr ?? null)}\n`,
+            `${pgEsc(setCompId)}\t${dateOrNull(setDate)}\t${num(rk?.wr ?? null)}\t${num(rk?.kr ?? null)}\t${num(rk?.cr ?? null)}\n`,
           );
           currCount++;
         };
@@ -1046,6 +1043,80 @@ async function main() {
     const acc = accByEvent.get(ev);
     if (acc) for (const pid of acc.keys()) allActivePids.add(pid);
   }
+
+  // ── 9a. wca_kinch: Kinch 全能分(世界 / 大洲 / 国家三种纪录基准) ──
+  // 只存三档总分供榜单分页。选手明细复用 wca_person_results + wca_fs_current_records
+  // 在 API 中现算逐项分，避免把 9 组 17 项数组重复灌进 PG。
+  if (KINCH_EVENTS.some((eventId, index) => eventId !== ACTIVE_EVENTS[index])) {
+    throw new Error('KINCH_EVENTS must match ACTIVE_EVENTS order');
+  }
+  type KinchReference = {
+    world: number;
+    countries: Map<string, number>;
+    continents: Map<string, number>;
+  };
+  const makeReferences = (
+    ranks: Map<string, { wr: number; cr: number; kr: number; val: number }>,
+  ): KinchReference => {
+    let world = 0;
+    const countries = new Map<string, number>();
+    const continents = new Map<string, number>();
+    for (const [pid, row] of ranks) {
+      if (world === 0 || row.val < world) world = row.val;
+      const country = personCountry.get(pid) ?? '';
+      const continent = continentOf.get(country) ?? '';
+      if (country) {
+        const current = countries.get(country);
+        if (current == null || row.val < current) countries.set(country, row.val);
+      }
+      if (continent) {
+        const current = continents.get(continent);
+        if (current == null || row.val < current) continents.set(continent, row.val);
+      }
+    }
+    return { world, countries, continents };
+  };
+  const kinchReferences = ACTIVE_EVENTS.map((_, index) => ({
+    single: makeReferences(eventRanks[index]!.single),
+    average: makeReferences(eventRanks[index]!.avg),
+  }));
+  const kinchStream = createWriteStream(resolve(outDir, 'wca_kinch.copy.tsv'));
+  let kinchCount = 0;
+  for (const pid of allActivePids) {
+    const country = personCountry.get(pid) ?? '';
+    const continent = continentOf.get(country) ?? '';
+    const scoreFor = (scope: 'world' | 'continent' | 'country') => {
+      const scores = KINCH_EVENTS.map((eventId, index) => {
+        const personal = accByEvent.get(eventId)?.get(pid);
+        const refs = kinchReferences[index]!;
+        const recordSingle = scope === 'world'
+          ? refs.single.world
+          : scope === 'continent'
+            ? (refs.single.continents.get(continent) ?? 0)
+            : (refs.single.countries.get(country) ?? 0);
+        const recordAverage = scope === 'world'
+          ? refs.average.world
+          : scope === 'continent'
+            ? (refs.average.continents.get(continent) ?? 0)
+            : (refs.average.countries.get(country) ?? 0);
+        return calculateKinchEvent({
+          eventId,
+          single: personal?.best ?? 0,
+          average: personal?.avg ?? 0,
+          recordSingle,
+          recordAverage,
+        });
+      });
+      return averageKinchScoreX100(scores);
+    };
+    kinchStream.write(
+      `${pgEsc(pid)}\t${pgEsc(country)}\t${pgEsc(continent)}\t` +
+      `${scoreFor('world')}\t${scoreFor('continent')}\t${scoreFor('country')}\n`,
+    );
+    kinchCount++;
+  }
+  await new Promise<void>(resolveEnd => kinchStream.end(() => resolveEnd()));
+
   for (const pid of allActivePids) {
     const country = personCountry.get(pid) ?? '';
     const continent = continentOf.get(country) ?? '';
@@ -1291,6 +1362,10 @@ CREATE INDEX IF NOT EXISTS wcp_wca ON wca_championship_podiums (wca_id);
 CREATE TABLE IF NOT EXISTS wca_person_results (wca_id VARCHAR(20) NOT NULL, comp_id VARCHAR(50) NOT NULL, comp_date DATE NOT NULL, event_id VARCHAR(20) NOT NULL, round_type_id VARCHAR(2) NOT NULL DEFAULT '', format_id VARCHAR(2) NOT NULL DEFAULT '', pos SMALLINT NOT NULL DEFAULT 0, best INTEGER NOT NULL, average INTEGER NOT NULL DEFAULT 0, attempts INTEGER[], single_record VARCHAR(3) NOT NULL DEFAULT '', average_record VARCHAR(3) NOT NULL DEFAULT '');
 CREATE INDEX IF NOT EXISTS wpr_person ON wca_person_results (wca_id);
 CREATE INDEX IF NOT EXISTS wpr_comp ON wca_person_results (comp_id);
+CREATE TABLE IF NOT EXISTS wca_kinch (wca_id VARCHAR(20) PRIMARY KEY, country_id VARCHAR(50) NOT NULL, continent_id VARCHAR(50) NOT NULL, world_score_x100 SMALLINT NOT NULL, continent_score_x100 SMALLINT NOT NULL, country_score_x100 SMALLINT NOT NULL);
+CREATE INDEX IF NOT EXISTS kinch_world_score ON wca_kinch (world_score_x100 DESC, wca_id);
+CREATE INDEX IF NOT EXISTS kinch_continent_score ON wca_kinch (continent_id, continent_score_x100 DESC, wca_id);
+CREATE INDEX IF NOT EXISTS kinch_country_score ON wca_kinch (country_id, country_score_x100 DESC, wca_id);
 -- wca_competitions 补 city / iso2(表由 schema_wca_stats_extra 建,这里只加列,幂等).
 ALTER TABLE wca_competitions ADD COLUMN IF NOT EXISTS city VARCHAR(120) NOT NULL DEFAULT '';
 ALTER TABLE wca_competitions ADD COLUMN IF NOT EXISTS country_iso2 VARCHAR(2) NOT NULL DEFAULT '';`;
@@ -1304,6 +1379,7 @@ TRUNCATE wca_cohort_ranks;
 TRUNCATE wca_success_rate;
 TRUNCATE wca_all_events_done;
 TRUNCATE wca_person_ranks;
+TRUNCATE wca_kinch;
 TRUNCATE wca_fs_country_ranks;
 TRUNCATE wca_fs_country_ranks_meta;
 TRUNCATE wca_fs_medals;
@@ -1333,6 +1409,8 @@ TRUNCATE wca_championship_podiums;
 \\! rm -f wca_all_events_done.copy.tsv
 \\copy wca_person_ranks (wca_id, is_avg, country_id, events_done, total_world_rank, total_country_rank, best_final_pos, ranks_world, ranks_country, continent_id, total_continent_rank, total_world_rank_21, total_country_rank_21, total_continent_rank_21, ranks_continent) FROM 'wca_person_ranks.copy.tsv';
 \\! rm -f wca_person_ranks.copy.tsv
+\\copy wca_kinch (wca_id, country_id, continent_id, world_score_x100, continent_score_x100, country_score_x100) FROM 'wca_kinch.copy.tsv';
+\\! rm -f wca_kinch.copy.tsv
 \\copy wca_fs_country_ranks (is_avg, country_id, sum, events_present, per_event_rank) FROM 'wca_fs_country_ranks.copy.tsv';
 \\! rm -f wca_fs_country_ranks.copy.tsv
 \\copy wca_fs_country_ranks_meta (is_avg, penalties, all_penalties) FROM 'wca_fs_country_ranks_meta.copy.tsv';
@@ -1413,6 +1491,7 @@ ANALYZE wca_cohort_ranks;
 ANALYZE wca_success_rate;
 ANALYZE wca_all_events_done;
 ANALYZE wca_person_ranks;
+ANALYZE wca_kinch;
 ANALYZE wca_comp_updated_at;
 ANALYZE wca_fs_country_ranks;
 ANALYZE wca_fs_country_ranks_meta;
@@ -1567,6 +1646,7 @@ ${vacuumAnalyze}
   console.log(`  success_rate      : ${srCount.toLocaleString()} rows, ${sizeMb('wca_success_rate.copy.tsv')} MB`);
   console.log(`  all_events_done   : ${aedCount.toLocaleString()} rows, ${sizeMb('wca_all_events_done.copy.tsv')} MB`);
   console.log(`  person_ranks      : ${prCount.toLocaleString()} rows, ${sizeMb('wca_person_ranks.copy.tsv')} MB`);
+  console.log(`  kinch             : ${kinchCount.toLocaleString()} rows, ${sizeMb('wca_kinch.copy.tsv')} MB`);
   console.log(`  comp_updated_at   : ${compMaxCount.toLocaleString()} rows, ${sizeMb('wca_comp_updated_at.copy.tsv')} MB`);
 }
 

@@ -302,28 +302,30 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
         </div>
       ) : (
         <div className="alg-case-detail-lean">
-          <div className="alg-case-detail-lean-thumb">
-            <CaseThumb puzzle={puzzle} set={set} sticker={caseObj.sticker} alg={caseObj.algs[0]?.[0]?.alg || caseObj.setup || ''} setup={caseObj.setup} size={150} sq1BlackTop={sq1BlackTop} />
-          </div>
-          {mirror?.card && (
-            <div className="alg-mirror-row">
-              <span className="alg-mirror-label">{tr({ zh: '镜像 case', en: 'Mirror case' })}</span>
-              <Link href={hrefFor(mirror.card)} className="alg-mirror-link" prefetch={false}>
-                <CaseThumb
-                  puzzle={puzzle}
-                  set={set}
-                  sticker={mirror.card.sticker}
-                  alg={mirror.card.algs[0]?.[0]?.alg || mirror.card.setup || ''}
-                  setup={mirror.card.setup}
-                  size={44}
-                  sq1BlackTop={sq1BlackTop}
-                />
-                <span className="alg-mirror-name">{mirror.partner}</span>
-              </Link>
+          <div className="alg-case-detail-lean-aside">
+            <div className="alg-case-detail-lean-thumb">
+              <CaseThumb puzzle={puzzle} set={set} sticker={caseObj.sticker} alg={caseObj.algs[0]?.[0]?.alg || caseObj.setup || ''} setup={caseObj.setup} size={116} sq1BlackTop={sq1BlackTop} />
             </div>
-          )}
-          {caseObj.setup && <SetupLine puzzle={puzzle} setup={caseObj.setup} />}
-          <div className="alg-case-detail-lean-algs">
+            {mirror?.card && (
+              <div className="alg-mirror-row">
+                <span className="alg-mirror-label">{tr({ zh: '镜像 case', en: 'Mirror case' })}</span>
+                <Link href={hrefFor(mirror.card)} className="alg-mirror-link" prefetch={false}>
+                  <CaseThumb
+                    puzzle={puzzle}
+                    set={set}
+                    sticker={mirror.card.sticker}
+                    alg={mirror.card.algs[0]?.[0]?.alg || mirror.card.setup || ''}
+                    setup={mirror.card.setup}
+                    size={36}
+                    sq1BlackTop={sq1BlackTop}
+                  />
+                  <span className="alg-mirror-name">{mirror.partner}</span>
+                </Link>
+              </div>
+            )}
+            {caseObj.setup && <SetupLine puzzle={puzzle} setup={caseObj.setup} />}
+          </div>
+          <div className={`alg-case-detail-lean-algs${multiOri ? ' is-multi-ori' : ''}`}>
             {caseObj.algs.map((oriAlgs, oi) => {
               const rows = oriAlgs.map((entry, i) => {
                 // setup 必须跟着朝向走 —— 四个槽共用一条原始 setup 时,FL/BL/BR 演的是别的 case

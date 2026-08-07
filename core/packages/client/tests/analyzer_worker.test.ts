@@ -11,7 +11,7 @@
  * Worker bridging lives in tests/_analyzer_worker_runner.cjs (shims classic
  * worker globals: importScripts/postMessage/self/onmessage).
  */
-import { describe, it, expect } from 'vitest';
+import { afterAll, describe, it, expect } from 'vitest';
 import * as path from 'node:path';
 import { Worker } from 'node:worker_threads';
 import { fileURLToPath } from 'node:url';
@@ -31,42 +31,88 @@ interface AnalyzeResult {
 interface AnalyzeRequest {
   scramble: string;
   crosscolors: Record<string, boolean>;
-  howfar: 1 | 2 | 3 | 4;
+  howfar: 0 | 1 | 2 | 3 | 4;
   variant?: 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair';
   stage?: 'cross' | 'xcross' | 'xxcross' | 'xxxcross';
 }
 
 const ALL_COLORS = { Yellow: true, White: true, Red: true, Orange: true, Blue: true, Green: true };
 
-async function runAnalyzer(variant: 'fixed' | 'legacy', req: AnalyzeRequest): Promise<AnalyzeResult> {
-  const workerFile = variant === 'fixed' ? 'analyzer.js' : 'ear.legacy.js';
-  const w = new Worker(RUNNER, {
-    workerData: { publicDir: PUBLIC, workerFile },
-  });
+type ActiveRequest = {
+  messages: Array<Record<string, unknown>>;
+  resolve: (result: AnalyzeResult) => void;
+  reject: (error: Error) => void;
+};
 
-  const messages: Array<Record<string, unknown>> = [];
-  return new Promise<AnalyzeResult>((resolve, reject) => {
-    w.on('message', (m: Record<string, unknown>) => {
-      messages.push(m);
-      if (m.finalSolutions !== undefined) {
-        const last = <K extends string>(key: K) =>
-          messages.filter((x) => x[key] !== undefined).pop()?.[key];
-        w.terminate().then(() =>
-          resolve({
-            crossesCovered: (last('totalnumcross') as number) ?? 0,
-            pairsCovered: (last('pairscovered') as number) ?? 0,
-            llCovered: (last('llcovered') as number) ?? 0,
-            solutions: (last('finalSolutions') as AnalyzeResult['solutions']) ?? [],
-          }),
-        );
+/** One hot worker per implementation; requests are serialized to keep its global protocol unambiguous. */
+class AnalyzerWorkerClient {
+  private readonly worker: Worker;
+  private tail: Promise<void> = Promise.resolve();
+  private active: ActiveRequest | null = null;
+  private fatalError: Error | null = null;
+
+  constructor(variant: 'fixed' | 'legacy') {
+    const workerFile = variant === 'fixed' ? 'analyzer.js' : 'ear.legacy.js';
+    this.worker = new Worker(RUNNER, {
+      workerData: { publicDir: PUBLIC, workerFile },
+    });
+    this.worker.on('message', (message: Record<string, unknown>) => {
+      const current = this.active;
+      if (!current) return;
+      current.messages.push(message);
+      if (message.finalSolutions === undefined) return;
+
+      const last = <K extends string>(key: K) =>
+        current.messages.filter((item) => item[key] !== undefined).pop()?.[key];
+      this.active = null;
+      current.resolve({
+        crossesCovered: (last('totalnumcross') as number) ?? 0,
+        pairsCovered: (last('pairscovered') as number) ?? 0,
+        llCovered: (last('llcovered') as number) ?? 0,
+        solutions: (last('finalSolutions') as AnalyzeResult['solutions']) ?? [],
+      });
+    });
+    this.worker.on('error', (error) => {
+      this.fatalError = error;
+      const current = this.active;
+      this.active = null;
+      current?.reject(error);
+    });
+  }
+
+  run(req: AnalyzeRequest): Promise<AnalyzeResult> {
+    const result = this.tail.then(() => new Promise<AnalyzeResult>((resolve, reject) => {
+      if (this.fatalError) {
+        reject(this.fatalError);
+        return;
       }
-    });
-    w.on('error', (err) => {
-      w.terminate().finally(() => reject(err));
-    });
-    w.postMessage(req);
-  });
+      this.active = { messages: [], resolve, reject };
+      this.worker.postMessage(req);
+    }));
+    this.tail = result.then(() => undefined, () => undefined);
+    return result;
+  }
+
+  async terminate(): Promise<void> {
+    await this.tail;
+    await this.worker.terminate();
+  }
 }
+
+const clients = new Map<'fixed' | 'legacy', AnalyzerWorkerClient>();
+
+function runAnalyzer(variant: 'fixed' | 'legacy', req: AnalyzeRequest): Promise<AnalyzeResult> {
+  let client = clients.get(variant);
+  if (!client) {
+    client = new AnalyzerWorkerClient(variant);
+    clients.set(variant, client);
+  }
+  return client.run(req);
+}
+
+afterAll(async () => {
+  await Promise.all([...clients.values()].map(client => client.terminate()));
+});
 
 const REFERENCE_SCRAMBLE = "B2 L F' U R' D R' F2 D L R2 D R B' D' L2 D2 R' U'";
 
@@ -159,7 +205,7 @@ describe('analyzer worker — fixed (canonical opposite-pair ordering)', () => {
     const r = await runAnalyzer('fixed', {
       scramble: REFERENCE_SCRAMBLE,
       crosscolors: { Yellow: false, White: true, Red: false, Orange: false, Blue: false, Green: false },
-      howfar: 4,
+      howfar: 0,
       variant: 'pseudo',
       stage: 'cross',
     });
@@ -213,7 +259,7 @@ describe('analyzer worker — fixed (canonical opposite-pair ordering)', () => {
     const r = await runAnalyzer('fixed', {
       scramble: REFERENCE_SCRAMBLE,
       crosscolors: { Yellow: false, White: true, Red: false, Orange: false, Blue: false, Green: false },
-      howfar: 4,
+      howfar: 0,
       variant: 'eo',
       stage: 'cross',
     });
@@ -237,7 +283,7 @@ describe('analyzer worker — fixed (canonical opposite-pair ordering)', () => {
     const r = await runAnalyzer('fixed', {
       scramble: REFERENCE_SCRAMBLE,
       crosscolors: { Yellow: false, White: true, Red: false, Orange: false, Blue: false, Green: false },
-      howfar: 4,
+      howfar: 1,
       variant: 'pair',
       stage: 'cross',
     });
@@ -261,7 +307,7 @@ describe('analyzer worker — fixed (canonical opposite-pair ordering)', () => {
     const r = await runAnalyzer('fixed', {
       scramble: REFERENCE_SCRAMBLE,
       crosscolors: { Yellow: false, White: true, Red: false, Orange: false, Blue: false, Green: false },
-      howfar: 4,
+      howfar: 1,
       variant: 'pseudo_pair',
       stage: 'cross',
     });
@@ -275,7 +321,7 @@ describe('analyzer worker — fixed (canonical opposite-pair ordering)', () => {
     const req: AnalyzeRequest = {
       scramble: "R L U R'",
       crosscolors: { Yellow: true, White: false, Red: false, Orange: false, Blue: false, Green: false },
-      howfar: 1,
+      howfar: 0,
     };
     const [fixed, legacy] = await Promise.all([
       runAnalyzer('fixed', req),

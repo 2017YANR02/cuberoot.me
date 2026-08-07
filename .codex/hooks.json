@@ -11,6 +11,13 @@
             "commandWindows": "pwsh -NoProfile -File \"$(git rev-parse --show-toplevel)/.claude/hooks/block-component-reimplementation.ps1\"",
             "timeout": 15,
             "statusMessage": "Checking shared component reuse"
+          },
+          {
+            "type": "command",
+            "command": "pwsh -NoProfile -File \"$(git rev-parse --show-toplevel)/.claude/hooks/block-nested-links.ps1\"",
+            "commandWindows": "pwsh -NoProfile -File \"$(git rev-parse --show-toplevel)/.claude/hooks/block-nested-links.ps1\"",
+            "timeout": 15,
+            "statusMessage": "Checking nested links"
           }
         ]
       },

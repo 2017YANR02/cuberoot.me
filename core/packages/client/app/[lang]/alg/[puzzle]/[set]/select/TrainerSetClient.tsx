@@ -208,8 +208,12 @@ export default function TrainerSetClient() {
   return (
     <div className="trainer-root">
       <div className="trainer-topbar">
-        <Link href={backHref} className="trainer-back">
-          <ArrowLeft size={14} /> {tr({ zh: '返回', en: 'Back' })}
+        <Link
+          href={backHref}
+          className="trainer-back"
+          aria-label={tr({ zh: '返回公式集', en: 'Back to alg set' })}
+        >
+          <ArrowLeft size={14} />
         </Link>
         <span style={{ fontSize: '1.1rem', fontWeight: 600 }}>
           {puzzle} · {tr(meta)}{scopeSlug ? ` · ${setSlug === 'zbll' ? displayZbllToken(scopeSlug) : scopeSlug.toUpperCase()}` : ''}

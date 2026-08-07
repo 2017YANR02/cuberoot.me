@@ -8,7 +8,7 @@
  *
  * 端点:
  *   GET /v1/wca/grand-slam?event=&onlyFirst=
- *   GET /v1/wca/all-results?event=&type=&country=&year=&month=&q=&page=&size=
+ *   GET /v1/wca/all-results?event=&type=&country=&year=&month=&q=&nameMode=&page=&size=
  *   GET /v1/wca/cohort-ranks?cohort=&event=&type=&country=&page=&size=
  *   GET /v1/wca/success-rate?event=&country=&minAttempted=&page=&size=
  *   GET /v1/wca/all-events-done?country=&hidePodiumless=&page=&size=
@@ -16,6 +16,7 @@
  *   GET /v1/wca/sum-of-ranks/census?type=&cancelled=&no_podium=&year=&timeline=  (历史名人堂:历年名次和第一)
  *   GET /v1/wca/sum-of-ranks/player-best?wcaId=           (指定选手最优项目组合 + 支柱/毒药/自由项剖析)
  *   GET /v1/wca/sum-of-ranks/person-subset?wcaId=&events= (自选组合计算器:该子集下选手的名次和+世界第几)
+ *   GET /v1/wca/kinch?country=&wcaId=&page=&size=           (Kinch 榜单 / 指定选手逐项分)
  *   GET /v1/wca/person-best-ranks?wcaId=
  *   GET /v1/wca/person-rank-history?wcaId=&eventId=
  *
@@ -26,6 +27,13 @@ import { Hono } from 'hono';
 import { query } from '../db/connection.js';
 import { getOverlayEntries, overlayDeltaPure, type OverlayEntry } from '../utils/wca_live_overlay.js';
 import { inferredOverlayEntries } from './cubing_live.js';
+import {
+  KINCH_EVENTS,
+  averageKinchScoreX100,
+  calculateKinchEvent,
+} from '@cuberoot/shared/kinch';
+import { calculatePersonalRecordStreak } from '@cuberoot/shared/pr-streak';
+import { buildWcaPersonNameFilter, isWcaNameMatchMode } from '../utils/wca_name_filter.js';
 
 export const wcaStatsExtraRoutes = new Hono();
 
@@ -152,10 +160,151 @@ wcaStatsExtraRoutes.get('/wca/grand-slam', async (c) => {
   });
 });
 
+// ── 1a. /v1/wca/kinch ──
+// 无 wcaId:按所选世界 / 大洲 / 国家基准分页。带 wcaId:逐项返回选手相对该区域纪录的得分。
+// 总分由每日 builder 预计算；逐项明细复用 wca_person_results 的 PB 与
+// wca_fs_current_records 的三档当前纪录，计算公式只来自 @cuberoot/shared/kinch。
+wcaStatsExtraRoutes.get('/wca/kinch', async (c) => {
+  const country = c.req.query('country') ?? '';
+  const wcaId = (c.req.query('wcaId') ?? '').trim().toUpperCase();
+  const requestedPage = Math.max(1, intParam(c.req.query('page'), 1));
+  const size = Math.min(MAX_SIZE, Math.max(1, intParam(c.req.query('size'), DEFAULT_SIZE)));
+  if (wcaId && !/^[0-9]{4}[A-Z]{4}[0-9]{2}$/.test(wcaId)) {
+    return c.json({ error: 'Invalid wcaId' }, 400);
+  }
+  const resolved = await resolveCountry(country);
+  if (!resolved.ok) return c.json({ error: resolved.err }, 400);
+
+  const scope = resolved.continentId ? 'continent' : resolved.id ? 'country' : 'world';
+  const scoreColumn = scope === 'continent'
+    ? 'continent_score_x100'
+    : scope === 'country'
+      ? 'country_score_x100'
+      : 'world_score_x100';
+  const scopeWhere = scope === 'continent'
+    ? 'k.continent_id = ?'
+    : scope === 'country'
+      ? 'k.country_id = ?'
+      : '';
+  const scopeId = resolved.continentId ?? resolved.id;
+  const scopeParams: unknown[] = scopeWhere ? [scopeId] : [];
+
+  if (!wcaId) {
+    const [totalRow] = await query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM wca_kinch k${scopeWhere ? ` WHERE ${scopeWhere}` : ''}`,
+      scopeParams,
+    );
+    const total = Number(totalRow?.n ?? 0);
+    const totalPages = Math.max(1, Math.ceil(total / size));
+    const page = Math.min(requestedPage, totalPages);
+    const offset = (page - 1) * size;
+    const rows = await query<{
+      wca_id: string; name: string; country_id: string; iso2: string | null; score_x100: number; rank: string;
+    }>(
+      `SELECT k.wca_id, p.name, k.country_id, co.iso2, k.${scoreColumn} AS score_x100,
+              RANK() OVER (ORDER BY k.${scoreColumn} DESC) AS rank
+         FROM wca_kinch k
+         JOIN wca_persons p ON p.wca_id = k.wca_id
+         LEFT JOIN wca_countries co ON co.id = k.country_id
+         ${scopeWhere ? `WHERE ${scopeWhere}` : ''}
+        ORDER BY k.${scoreColumn} DESC, k.wca_id
+        LIMIT ? OFFSET ?`,
+      [...scopeParams, size, offset],
+    );
+    c.header('Cache-Control', CACHE_HEADER);
+    return c.json({
+      scope, country: scopeId, page, size, total,
+      rows: rows.map(row => ({
+        rank: Number(row.rank),
+        wcaId: row.wca_id,
+        name: row.name,
+        countryId: row.country_id,
+        iso2: row.iso2,
+        score: Number(row.score_x100) / 100,
+      })),
+    });
+  }
+
+  const [person] = await query<{
+    wca_id: string; name: string; country_id: string; continent_id: string; iso2: string | null;
+    world_score_x100: number; continent_score_x100: number; country_score_x100: number;
+  }>(
+    `SELECT k.*, p.name, co.iso2
+       FROM wca_kinch k
+       JOIN wca_persons p ON p.wca_id = k.wca_id
+       LEFT JOIN wca_countries co ON co.id = k.country_id
+      WHERE k.wca_id = ?`,
+    [wcaId],
+  );
+  if (!person) return c.json({ error: 'Not found' }, 404);
+
+  const eventPlaceholders = KINCH_EVENTS.map(() => '?').join(',');
+  const [personalRows, recordRows] = await Promise.all([
+    query<{ event_id: string; single: number | null; average: number | null }>(
+      `SELECT event_id,
+              MIN(best) FILTER (WHERE best > 0) AS single,
+              MIN(average) FILTER (WHERE average > 0) AS average
+         FROM wca_person_results
+        WHERE wca_id = ? AND event_id IN (${eventPlaceholders})
+        GROUP BY event_id`,
+      [wcaId, ...KINCH_EVENTS],
+    ),
+    query<{ event_id: string; is_avg: boolean; value: number }>(
+      `SELECT event_id, is_avg, value
+         FROM wca_fs_current_records
+        WHERE scope_kind = ? AND scope_id = ? AND event_id IN (${eventPlaceholders})`,
+      [scope === 'world' ? 'W' : scope === 'continent' ? 'K' : 'N', scopeId, ...KINCH_EVENTS],
+    ),
+  ]);
+  const personalByEvent = new Map(personalRows.map(row => [row.event_id, row]));
+  const recordByEvent = new Map(recordRows.map(row => [`${row.event_id}:${row.is_avg ? 'a' : 's'}`, row.value]));
+  const scores = KINCH_EVENTS.map(eventId => {
+    const personalResult = personalByEvent.get(eventId);
+    return {
+      eventId,
+      ...calculateKinchEvent({
+        eventId,
+        single: Number(personalResult?.single ?? 0),
+        average: Number(personalResult?.average ?? 0),
+        recordSingle: Number(recordByEvent.get(`${eventId}:s`) ?? 0),
+        recordAverage: Number(recordByEvent.get(`${eventId}:a`) ?? 0),
+      }),
+    };
+  });
+  const scoreX100 = averageKinchScoreX100(scores);
+  const belongsToScope = scope === 'world'
+    || (scope === 'continent' && person.continent_id === scopeId)
+    || (scope === 'country' && person.country_id === scopeId);
+  let rank: number | null = null;
+  if (belongsToScope) {
+    const storedScore = Number(person[scoreColumn as 'world_score_x100' | 'continent_score_x100' | 'country_score_x100']);
+    const [rankRow] = await query<{ n: string }>(
+      `SELECT COUNT(*) AS n FROM wca_kinch k
+        WHERE ${scopeWhere ? `${scopeWhere} AND ` : ''}k.${scoreColumn} > ?`,
+      [...scopeParams, storedScore],
+    );
+    rank = Number(rankRow?.n ?? 0) + 1;
+  }
+
+  c.header('Cache-Control', CACHE_HEADER);
+  return c.json({
+    scope, country: scopeId, wcaId,
+    person: { name: person.name, countryId: person.country_id, iso2: person.iso2 },
+    rank,
+    score: scoreX100 / 100,
+    events: scores.map(item => ({
+      eventId: item.eventId,
+      score: item.scoreX100 / 100,
+      value: item.value || null,
+      type: item.type,
+    })),
+  });
+});
+
 // ── 2. /v1/wca/all-results ──
 // 全量(无 cap):11M 行,WHERE 用 event_id + is_avg + 可选 country / year / month / q,
 // ORDER BY value 走 wrf_main / wrf_country / wrf_wca_id / wrf_comp_id 索引.
-// q 在 wca_persons.name 和 wca_competitions.name 上 ILIKE,各 LIMIT 200.
+// q 的 person 匹配由 wca_name_filter 统一处理(最多 1000 人)；any 模式另搜比赛名(最多 200 场)。
 wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
   const event = (c.req.query('event') ?? '333').toLowerCase();
   const type = (c.req.query('type') ?? 'single').toLowerCase();
@@ -163,6 +312,7 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
   const year = parseInt(c.req.query('year') ?? '0', 10);   // 0 = 全部
   const month = parseInt(c.req.query('month') ?? '0', 10); // 0 = 全部
   const q = (c.req.query('q') ?? '').trim();
+  const nameMode = (c.req.query('nameMode') ?? 'any').toLowerCase(); // any | first | last | exact
   const basis = (c.req.query('basis') ?? 'period').toLowerCase();  // 'period'(当期) | 'cumulative'(截至年末)
   const group = (c.req.query('group') ?? 'result').toLowerCase();  // 'result'(每条成绩) | 'person'(每选手一行)
   const gender = (c.req.query('gender') ?? 'all').toLowerCase();   // 'all' | 'm' | 'f';性别下拉,JOIN wca_persons 过滤
@@ -174,6 +324,7 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
   if (group !== 'result' && group !== 'person') return c.json({ error: 'Invalid group' }, 400);
   if (type !== 'single' && type !== 'average') return c.json({ error: 'Invalid type' }, 400);
   if (gender !== 'all' && gender !== 'm' && gender !== 'f') return c.json({ error: 'Invalid gender' }, 400);
+  if (!isWcaNameMatchMode(nameMode)) return c.json({ error: 'Invalid nameMode' }, 400);
   // 333mbf 平均 = 非官方 Mo3,数据由 wca_results_flat 的 is_avg=true 行提供(builder 现算写入)。
   const cn = await resolveCountry(country);
   if (!cn.ok) return c.json({ error: cn.err }, 400);
@@ -205,21 +356,24 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
   }
 
   if (q) {
+    const nameFilter = buildWcaPersonNameFilter(q, nameMode);
     const [personRows, compRows] = await Promise.all([
       query<{ wca_id: string }>(
-        `SELECT wca_id FROM wca_persons WHERE name ILIKE ? LIMIT 200`,
-        [`%${q}%`],
+        `SELECT wca_id FROM wca_persons WHERE ${nameFilter.sql} LIMIT 1000`,
+        nameFilter.params,
       ),
-      query<{ id: string }>(
-        `SELECT id FROM wca_competitions WHERE name ILIKE ? LIMIT 200`,
-        [`%${q}%`],
-      ),
+      nameMode === 'any'
+        ? query<{ id: string }>(
+            `SELECT id FROM wca_competitions WHERE name ILIKE ? LIMIT 200`,
+            [`%${q}%`],
+          )
+        : Promise.resolve([]),
     ]);
     const personIds = personRows.map(r => r.wca_id);
     const compIds = compRows.map(r => r.id);
     if (personIds.length === 0 && compIds.length === 0) {
       c.header('Cache-Control', CACHE_HEADER);
-      return c.json({ event, type, country: cn.id, year, month, q, page, size, total: 0, rows: [] });
+      return c.json({ event, type, country: cn.id, year, month, q, nameMode, page, size, total: 0, rows: [] });
     }
     const conds: string[] = [];
     if (personIds.length > 0) {
@@ -289,7 +443,7 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
     const total = totalRow[0] ? parseInt(totalRow[0].n, 10) : 0;
     c.header('Cache-Control', CACHE_HEADER);
     return c.json({
-      event, type, country: cn.id, year, month, basis, group, gender, page, size, total,
+      event, type, country: cn.id, year, month, q, nameMode, basis, group, gender, page, size, total,
       rows: rows.map(r => ({
         rank: parseInt(r.rnk, 10), value: r.value,
         wcaId: r.wca_id, name: r.person_name,
@@ -343,7 +497,7 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
 
   c.header('Cache-Control', CACHE_HEADER);
   return c.json({
-    event, type, country: cn.id, year, month, q, gender, page, size, total,
+    event, type, country: cn.id, year, month, q, nameMode, gender, page, size, total,
     rows: rows.map((r, i) => ({
       rank: offset + i + 1, value: r.value,
       wcaId: r.wca_id, name: r.person_name,
@@ -482,14 +636,47 @@ wcaStatsExtraRoutes.get('/wca/person-misc', async (c) => {
   const wcaId = (c.req.query('wcaId') ?? '').trim().toUpperCase();
   if (!/^[0-9]{4}[A-Z]{4}[0-9]{2}$/.test(wcaId)) return c.json({ error: 'Invalid wcaId' }, 400);
 
-  const compRows = await query<{ comp_id: string }>(
-    `SELECT DISTINCT comp_id FROM wca_results_flat WHERE wca_id = ?`,
-    [wcaId],
-  );
+  const [compRows, streakRows] = await Promise.all([
+    query<{ comp_id: string }>(
+      `SELECT DISTINCT comp_id FROM wca_results_flat WHERE wca_id = ?`,
+      [wcaId],
+    ),
+    query<{ comp_id: string; comp_date: string; event_id: string; best: number; average: number }>(
+      `SELECT comp_id, comp_date, event_id, best, average
+         FROM wca_person_results
+        WHERE wca_id = ?
+        ORDER BY comp_date, comp_id, event_id, round_type_id`,
+      [wcaId],
+    ),
+  ]);
+  const streakIds = calculatePersonalRecordStreak(streakRows.map(row => ({
+    competitionId: row.comp_id,
+    competitionDate: row.comp_date,
+    eventId: row.event_id,
+    single: Number(row.best),
+    average: Number(row.average),
+  })));
+  const streakCompIds = [...new Set([...streakIds.current, ...streakIds.longest])];
+  const streakCompRows = streakCompIds.length
+    ? await query<{ id: string; name: string; start_date: string | null }>(
+        `SELECT id, name, start_date FROM wca_competitions
+          WHERE id IN (${streakCompIds.map(() => '?').join(',')})`,
+        streakCompIds,
+      )
+    : [];
+  const streakCompById = new Map(streakCompRows.map(row => [row.id, row]));
+  const streakDetails = (ids: string[]) => ids.map(compId => {
+    const row = streakCompById.get(compId);
+    return { compId, name: row?.name ?? compId, date: row?.start_date ?? null };
+  });
+  const recordStreak = {
+    current: streakDetails(streakIds.current),
+    longest: streakDetails(streakIds.longest),
+  };
   const compIds = compRows.map(r => r.comp_id);
   if (compIds.length === 0) {
     c.header('Cache-Control', CACHE_HEADER);
-    return c.json({ wcaId, myComps: 0, totalMet: 0, closest: [], distribution: [] });
+    return c.json({ wcaId, myComps: 0, totalMet: 0, closest: [], distribution: [], recordStreak });
   }
 
   const placeholders = compIds.map(() => '?').join(',');
@@ -535,7 +722,7 @@ wcaStatsExtraRoutes.get('/wca/person-misc', async (c) => {
     .sort((a, b) => a.shared - b.shared);
 
   c.header('Cache-Control', CACHE_HEADER);
-  return c.json({ wcaId, myComps: compIds.length, totalMet: others.length, closest, distribution });
+  return c.json({ wcaId, myComps: compIds.length, totalMet: others.length, closest, distribution, recordStreak });
 });
 
 // ── 2a-quater. /v1/wca/person-championship-podiums ──

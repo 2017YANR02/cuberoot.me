@@ -150,6 +150,7 @@ const GOAL_MISS: Record<AlgGoal, string> = {
   'll-corners': '顶层角没做好(位置 + 朝向),或 F2L / 顶棱翻色没保住',
   'roux-blocks': '桥式左右两块没做完(D 层角 + 非 M 层棱)',
   'roux-blocks+eo': '桥式两块没做完,或 M 层四棱(UF/UB/DF/DB)没翻色',
+  'roux-blocks+eolr': 'EOLR 没做完(桥式两块、棱朝向或 UL/UR 目标位置不正确)',
   cmll: 'CMLL 没做完(Roux 两块没保住,或顶层角没做好)',
   co: '八个角没全部翻色',
   'oll-4x4': '4x4 OLL 没做完(顶面没同色,或顶面以下没还原)',

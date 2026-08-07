@@ -1,0 +1,32 @@
+.kinch-filters { align-items: flex-start; }
+.kinch-person-filter { min-width: min(360px, 100%); }
+.kinch-person-filter .cuber-search { width: 100%; }
+
+.kinch-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+  margin: 20px 0;
+}
+.kinch-summary > div { display: flex; flex-direction: column; gap: 2px; }
+.kinch-summary-label { color: var(--muted-foreground); font-size: 13px; }
+.kinch-summary strong { color: var(--foreground); font-size: 28px; font-variant-numeric: tabular-nums; }
+
+.kinch-event-name .cubing-icon { width: 22px; height: 22px; margin-right: 8px; vertical-align: middle; }
+.kinch-result-type,
+.kinch-person-id { margin-left: 8px; color: var(--muted-foreground); font-size: 12px; font-weight: 400; }
+
+.kinch-about { max-width: 760px; margin-top: 36px; color: var(--foreground); line-height: 1.65; }
+.kinch-about h2 { margin: 0 0 8px; font-size: 18px; }
+.kinch-about p { margin: 8px 0; }
+.kinch-about a { color: var(--accent); text-decoration: none; }
+.kinch-about a:hover { text-decoration: underline; }
+.kinch-about-separator { color: var(--muted-foreground); }
+
+@media (max-width: 480px) {
+  .kinch-person-filter { width: 100%; min-width: 0; }
+  .kinch-summary { gap: 20px; }
+  .kinch-event-table th,
+  .kinch-event-table td { padding-inline: 8px; }
+  .kinch-result-type { display: block; margin-left: 0; }
+}

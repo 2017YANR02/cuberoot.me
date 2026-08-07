@@ -141,6 +141,7 @@ function AllResultsPageInner() {
       year: parseAsString,
       month: parseAsString,
       q: parseAsString,
+      qmode: parseAsString,   // 名字匹配:any(选手/比赛) | first | last | exact
       basis: parseAsString,
       hidePodium: parseAsString, // 名次和:未登领奖台
       ssort: parseAsString,      // 名次和表头排序:'total'(默认) | 'best'(历史最佳名次) | 项目 id(单项名次列)
@@ -198,6 +199,7 @@ function AllResultsPageInner() {
   const year = show === 'persons' && yearRaw === 0 ? currentYear : yearRaw;
   const month = parseInt(query.month ?? '0', 10);
   const qFromUrl = query.q ?? '';
+  const qMode = ['first', 'last', 'exact'].includes(query.qmode ?? '') ? query.qmode! : 'any';
   const page = parseInt(query.page ?? '1', 10);
   const size = parseInt(query.size ?? '100', 10);
   const hidePodium = query.hidePodium === '1';
@@ -293,7 +295,7 @@ function AllResultsPageInner() {
   const [qInput, setQInput] = useState(qFromUrl);
   useEffect(() => { setQInput(qFromUrl); }, [qFromUrl]);
   useEffect(() => {
-    if (mode !== 'single' || show !== 'results') return;
+    if (mode !== 'single') return;
     if (qInput === qFromUrl) return;
     const t = setTimeout(() => { setQuery({ q: qInput, page: null }); }, 300);
     return () => clearTimeout(t);
@@ -352,15 +354,16 @@ function AllResultsPageInner() {
     qs.set('size', String(size));
     if (country) qs.set('country', country);
     if (gender !== 'all') qs.set('gender', gender);
-    if (show === 'persons' && basis === 'cumulative') {
+    if (show === 'persons' && basis === 'cumulative' && !qFromUrl) {
       qs.set('year', String(year));
       fetch(apiUrl(`/v1/wca/historical-ranks?${qs.toString()}`))
         .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
         .then((j: { rows: PersonRow[]; total: number }) => setData({ mode: 'persons', rows: j.rows, total: j.total }))
         .catch(e => setError(e.message)).finally(() => setLoading(false));
     } else if (show === 'persons') {
-      qs.set('group', 'person'); qs.set('basis', 'period'); qs.set('year', String(year));
+      qs.set('group', 'person'); qs.set('basis', basis); qs.set('year', String(year));
       if (month > 0) qs.set('month', String(month));
+      if (qFromUrl) { qs.set('q', qFromUrl); qs.set('nameMode', qMode); }
       fetch(apiUrl(`/v1/wca/all-results?${qs.toString()}`))
         .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
         .then((j: { rows: PersonRow[]; total: number }) => setData({ mode: 'persons', rows: j.rows, total: j.total }))
@@ -369,13 +372,13 @@ function AllResultsPageInner() {
       qs.set('basis', basis);
       if (year > 0) qs.set('year', String(year));
       if (basis === 'period' && month > 0) qs.set('month', String(month));
-      if (qFromUrl) qs.set('q', qFromUrl);
+      if (qFromUrl) { qs.set('q', qFromUrl); qs.set('nameMode', qMode); }
       fetch(apiUrl(`/v1/wca/all-results?${qs.toString()}`))
         .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
         .then((j: { rows: ResultRow[]; total: number }) => setData({ mode: 'results', rows: j.rows, total: j.total }))
         .catch(e => setError(e.message)).finally(() => setLoading(false));
     }
-  }, [view, mode, show, basis, singleEvent, effType, country, gender, year, month, qFromUrl, page, size]);
+  }, [view, mode, show, basis, singleEvent, effType, country, gender, year, month, qFromUrl, qMode, page, size]);
 
   // 空态「分布」:姓名统计(静态 JSON,缓存一次)
   useEffect(() => {
@@ -761,15 +764,30 @@ function AllResultsPageInner() {
                 </select>
               </div>
             )}
-            {show === 'results' && (
-              <div className="wse-filter wse-filter-q">
-                <label>{tr({ zh: '搜索', en: 'Search' })}</label>
-                <div className="wse-q-wrap">
-                  <input type="search" className="wse-q-input" value={qInput} onChange={e => setQInput(e.target.value)} placeholder={tr({ zh: '选手或比赛名', en: 'Person or competition' })} />
-                  {qInput && <ClearButton onClick={() => { setQInput(''); update('q', ''); }} isZh={isZh} preserveFocus />}
-                </div>
+            <div className="wse-filter wse-filter-q">
+              <label>{tr({ zh: '搜索', en: 'Search' })}</label>
+              <div className="wse-q-wrap">
+                <input
+                  type="search"
+                  className="wse-q-input"
+                  value={qInput}
+                  onChange={e => setQInput(e.target.value)}
+                  placeholder={show === 'persons' || qMode !== 'any'
+                    ? tr({ zh: '选手名', en: 'Person name' })
+                    : tr({ zh: '选手或比赛名', en: 'Person or competition' })}
+                />
+                {qInput && <ClearButton onClick={() => { setQInput(''); update('q', ''); }} isZh={isZh} preserveFocus />}
               </div>
-            )}
+            </div>
+            <div className="wse-filter">
+              <label>{tr({ zh: '名字匹配', en: 'Name match' })}</label>
+              <select className="wse-filter-select" value={qMode} onChange={e => update('qmode', e.target.value === 'any' ? '' : e.target.value)}>
+                <option value="any">{tr({ zh: '任意部分', en: 'Any part' })}</option>
+                <option value="first">{tr({ zh: '名完全相同', en: 'Exact first name' })}</option>
+                <option value="last">{tr({ zh: '姓完全相同', en: 'Exact last name' })}</option>
+                <option value="exact">{tr({ zh: '全名完全相同', en: 'Exact full name' })}</option>
+              </select>
+            </div>
           </div>
 
           {/* 纪录走势 bar chart race:常显在排名表上方(方案 B)。复用 wr_metric 的 Top10HistoryPage,

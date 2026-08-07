@@ -95,13 +95,9 @@ jobs:
         working-directory: core
         run: pnpm --filter @cuberoot/server typecheck
 
-      # 全集,含慢测。analyzer_worker.test.ts 一个人 ~257s,占整集墙钟 99%(测试按文件分线程
-      # 并行,其余 115 个文件早在它底下跑完了),所以它默认被 vitest.config 排除出本地
-      # `pnpm test` —— 但它是 recon 分析器的回归防线,CI 这一层必须跑。在这里显式打开。
-      - name: Test
+      # 常规全集不和 analyzer_worker 慢测争 CPU；后者由独立 job 并行覆盖。
+      - name: Test fast suite
         working-directory: core
-        env:
-          RUN_SLOW_TESTS: '1'
         run: pnpm --filter @cuberoot/client test
 
       # 死代码棘轮:只卡已清零的类别(unused files / deps / unlisted / binaries),
@@ -109,3 +105,33 @@ jobs:
       - name: Knip dead-code guard
         working-directory: core
         run: pnpm exec knip --include files,dependencies,unlisted,binaries --no-config-hints
+
+  # analyzer_worker 会做深度搜索并加载多份 WASM。独占 runner 可避免与 360+ 个快测文件
+  # 互抢 CPU；它与主 test job 并行，所以既保留精确回归，也缩短整条 workflow 墙钟。
+  analyzer-worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            core
+          filter: blob:none
+
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: core/package.json
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+          cache-dependency-path: core/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: core
+        run: pnpm install --frozen-lockfile
+
+      - name: Analyzer worker regression
+        working-directory: core
+        run: pnpm --filter @cuberoot/client test:slow

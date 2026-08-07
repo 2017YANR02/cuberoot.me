@@ -436,6 +436,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'wca/fun-stats': { title: { zh: '趣味统计', en: 'Fun Statistics' } },
   'wca/globe-about': { title: { zh: '地球视图说明', en: 'Globe Guide' } },
   'wca/grand-slam': { title: { zh: '大满贯', en: 'Grand Slam' } },
+  'wca/kinch': {
+    title: { zh: 'Kinch 综合分', en: 'Kinch Ranks' },
+    description: {
+      zh: '按世界、大洲或国家纪录计算 17 个现役 WCA 项目的综合分榜单与选手逐项明细。',
+      en: 'Kinch all-round rankings and per-event scores across all 17 current WCA events, using world, continental or national records.',
+    },
+  },
   'wca/prediction': { title: { zh: '预测', en: 'Prediction' } },
   'wca/prediction-about': { title: { zh: '速拧极限预测说明', en: 'Speedcubing Prediction Guide' } },
   'wca/prediction/333': { title: { zh: '三阶成绩预测', en: '3×3 Prediction' } },

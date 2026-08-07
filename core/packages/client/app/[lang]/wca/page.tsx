@@ -18,7 +18,7 @@ import {
   Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin, Wrench,
   TrendingDown, Target, Calculator, Search,
   Users, Percent, LayoutGrid, Crown, Sparkles, BellRing,
-  Radio, ListOrdered,
+  Radio, ListOrdered, Gauge,
   type LucideIcon,
 } from 'lucide-react';
 import { useIsAdmin } from '@/lib/auth-store';
@@ -59,6 +59,8 @@ const LOOKUP_ITEMS: { path: string; zh: string; en: string; Icon: LucideIcon; ex
   { path: '/wca/records',         zh: '纪录',         en: 'Records',         Icon: Trophy
 },
   { path: '/wca/results',         zh: '排名',         en: 'Rankings',        Icon: ListOrdered
+},
+  { path: '/wca/kinch',           zh: 'Kinch 综合分', en: 'Kinch Ranks',     Icon: Gauge
 },
   { path: '/nemesizer',           zh: '宿敌',         en: 'Nemesizer',       Icon: Target
 },

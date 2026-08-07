@@ -640,6 +640,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
             <label className="settings-category-picker">
               <span>{tr({ zh: '分类', en: 'Category' })}</span>
               <select
+                className="settings-category-select"
                 value={activeCategory}
                 onChange={(event) => setActiveCategory(event.target.value as SettingsCategory)}
               >
@@ -688,6 +689,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           <Row label={tr({ zh: '观察时间（秒）', en: 'Inspection (sec)'
         })}>
             <input
+              className="settings-row-control-input"
               type="number" min={0} max={60}
               value={s.inspection}
               onChange={(e) => updateSettings({ inspection: Math.max(0, Math.min(60, Number(e.target.value) || 0)) })}
@@ -698,6 +700,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           <Row label={tr({ zh: '按住阈值（毫秒）', en: 'Hold threshold (ms)'
         })}>
             <input
+              className="settings-row-control-input"
               type="number" min={100} max={2000} step={50}
               value={s.holdMs}
               onChange={(e) => updateSettings({ holdMs: Math.max(100, Math.min(2000, Number(e.target.value) || 550)) })}
@@ -817,6 +820,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           <Row label={tr({ zh: '目标时间', en: 'Target time'
         })}>
             <input
+              className="settings-row-control-input"
               type="text"
               value={targetInput}
               placeholder={tr({ zh: '例：0:10.50（留空关闭）', en: 'e.g. 0:10.50 (blank = off)'
@@ -836,6 +840,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           <Row label={tr({ zh: '每日目标次数', en: 'Daily solve goal'
         })}>
             <input
+              className="settings-row-control-input"
               type="number"
               min={0}
               step={1}
@@ -955,6 +960,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           />
           <Row label={tr({ zh: '音量', en: 'Volume' })}>
             <input
+              className="settings-row-control-input"
               type="range" min={0} max={1} step={0.05}
               value={s.volume}
               disabled={!s.soundsEnabled}
@@ -1016,6 +1022,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           </BooleanRow>
           <Row label={tr({ zh: '速度', en: 'Tempo' })}>
             <input
+              className="settings-row-control-input"
               type="range" min={BPM_MIN} max={BPM_MAX} step={1}
               value={metro.bpm}
               disabled={!s.metronomeOn}
@@ -1044,6 +1051,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           <Row label={tr({ zh: '观察提示音（秒）', en: 'Beep at (sec)'
         })}>
             <input
+              className="settings-row-control-input"
               type="text"
               value={beepAtInput}
               disabled={!s.metronomeOn}
@@ -1074,6 +1082,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           <Row label={tr({ zh: '种子', en: 'Seed'
         })}>
             <input
+              className="settings-row-control-input"
               type="text"
               value={seedDraft}
               placeholder={tr({ zh: '任意字符串', en: 'any string'
@@ -1145,6 +1154,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           <Row label={tr({ zh: '每完成 N 次自动备份', en: 'Back up every N solves'
         })}>
             <input
+              className="settings-row-control-input"
               type="number" min={0} max={30} step={1}
               value={s.autoBackupEvery}
               onChange={(e) => updateSettings({ autoBackupEvery: Math.max(0, Math.min(30, Number(e.target.value) | 0)) })}
@@ -1262,6 +1272,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           <Row label={tr({ zh: '导入', en: 'Import'
         })}>
             <input
+              className="settings-row-control-input"
               ref={cstimerFileRef}
               type="file"
               accept=".json,.txt,application/json"
@@ -1337,6 +1348,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
                         <label className="cstimer-target-picker">
                           <span>{tr({ zh: `${sess.solves.length} 条，选择项目`, en: `${sess.solves.length} solves, choose event` })}</span>
                           <select
+                            className="cstimer-target-select"
                             value={selectedTarget ?? ''}
                             onChange={(event) => setCstimerTargets((current) => ({ ...current, [sess.sessionId]: event.target.value as EventId }))}
                           >
@@ -1414,6 +1426,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           <Row label={tr({ zh: '计时器字号', en: 'Timer font scale'
         })}>
             <input
+              className="settings-row-control-input"
               type="range" min={0.5} max={2} step={0.05}
               value={s.timerFontScale}
               onChange={(e) => updateSettings({ timerFontScale: Number(e.target.value) })}
@@ -1434,6 +1447,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           <Row label={tr({ zh: '打乱字号', en: 'Scramble font scale'
         })}>
             <input
+              className="settings-row-control-input"
               type="range" min={0.6} max={2.5} step={0.05}
               value={s.scrambleFontScale}
               onChange={(e) => updateSettings({ scrambleFontScale: Number(e.target.value) })}
@@ -1541,6 +1555,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           </Row>
           <Row label={tr({ zh: '过关线', en: 'Cutoff' })}>
             <input
+              className="settings-row-control-input"
               type="text"
               value={roundCutoffInput}
               placeholder={tr({ zh: '留空 = 无', en: 'blank = none' })}
@@ -1556,6 +1571,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           </Row>
           <Row label={tr({ zh: '时限', en: 'Time limit' })}>
             <input
+              className="settings-row-control-input"
               type="text"
               value={roundLimitInput}
               placeholder={tr({ zh: '留空 = 无', en: 'blank = none' })}

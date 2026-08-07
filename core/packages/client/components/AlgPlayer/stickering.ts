@@ -15,7 +15,7 @@ export function pickStickering(puzzle: AlgPuzzle, set: string): string | undefin
     case 'oll': case 'ollcp':                     return 'OLL';
     case 'pll': case 'anti-pll':                  return 'PLL';
     case 'coll':                                  return 'COLL';
-    case 'cmll':                                  return 'CMLL';
+    case 'cmll': case '2-look-cmll': case 'oh-cmll': return 'CMLL';
     case 'ell':                                   return 'ELL';
     case 'cls':                                   return 'CLS';
     case 'zbls':                                  return 'ZBLS';
@@ -23,7 +23,7 @@ export function pickStickering(puzzle: AlgPuzzle, set: string): string | undefin
     case 'wv':                                    return 'WVLS';
     case 'zbll':                                  return 'ZBLL';
     case '1lll':                                  return 'LL';
-    case 'eo4a':                                  return 'EO';
+    case 'eo4a': case 'lse-eolr':                 return 'EO';
     case 'sv': case 'sbls': case 'fruf':          return 'LS';
     default:                                      return undefined;
   }

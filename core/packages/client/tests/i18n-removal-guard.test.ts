@@ -30,6 +30,7 @@ const EXCLUDE = [
   /scramble[\\/]gen[\\/]_tnoodle-i18n\.ts$/, // vendored tnoodle (zh-TW/ja/ko)
   /code[\\/]language[\\/]ruby[\\/]page\.tsx$/, // 《…スクリプト言語 Ruby》 title
   /[\\/]site[\\/]page\.tsx$/, // /[㐀-鿿豈-﫿]/ CJK-range regex
+  /[\\/]site[\\/]data[\\/]wca-authors\.ts$/, // canonical WCA names may contain Traditional/Japanese characters
 ];
 const HAN_RUN = /[㐀-䶿一-鿿豈-﫿]+/g;
 

@@ -161,6 +161,7 @@
 
 .site-row-yt {
   position: absolute;
+  z-index: 3;
   top: 50%;
   right: 10px;
   transform: translateY(-50%);
@@ -173,6 +174,7 @@
 .site-row-yt:hover { background: var(--sites-danger-soft); }
 
 .site-row-main {
+  position: relative;
   display: grid;
   grid-template-columns: 34px minmax(0, 1.3fr) minmax(0, 0.9fr) minmax(0, 2.2fr);
   align-items: center;
@@ -180,6 +182,20 @@
   padding: 9px 32px 9px 12px;  /* 右留空位给 yt 角标 */
   color: inherit;
   text-decoration: none;
+}
+.site-row-primary-link {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+}
+.site-row-primary-link:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+.site-row-main > :not(.site-row-primary-link) {
+  position: relative;
+  z-index: 2;
+  pointer-events: none;
 }
 
 .site-row-icon {
@@ -238,6 +254,12 @@
   color: var(--sites-text);
   overflow-wrap: anywhere;
 }
+.site-row-author a {
+  color: inherit;
+  text-decoration: none;
+  pointer-events: auto;
+}
+.site-row-author a:hover { color: var(--sites-accent); }
 .site-row-desc {
   min-width: 0;
   font-size: 12.5px;
@@ -280,28 +302,29 @@
   color: var(--sites-text-faint);
 }
 
-/* ── Admin: + Add 按钮 + 行内 ✏/🗑/⬆⬇ ─────────────────── */
+/* ── Admin: + 按钮 + 行内 ✏/🗑/⬆⬇ ─────────────────── */
 .sites-add-btn {
   margin-left: auto;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  border: 1px solid var(--sites-border);
-  background: var(--sites-bg);
+  justify-content: center;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 4px;
+  border: 0;
+  background: transparent;
   color: var(--sites-text);
   border-radius: 5px;
-  font-size: 12px;
   cursor: pointer;
 }
 .sites-add-btn:hover {
   background: var(--sites-accent-soft);
   color: var(--sites-accent);
-  border-color: var(--sites-accent);
 }
 
 .site-row-admin {
   position: absolute;
+  z-index: 3;
   top: 50%;
   right: 36px;        /* 让位 yt 角标(无 yt 时 right:10 也够,稍微偏左统一) */
   transform: translateY(-50%);
