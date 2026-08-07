@@ -320,15 +320,15 @@ export interface AlgCategoryViewProps {
   initialData?: AlgFile;
 }
 
-/** Large sets normally start collapsed; SQ1 cubeshape is learned slice-count by
- * slice-count, so its eight groups stay visible on first entry despite 169 cases. */
+/** Large sets normally start collapsed; SQ1 cubeshape sets are learned slice-count by
+ * slice-count, so their groups stay visible on first entry despite 100+ cases. */
 export function collapseAlgGroupsByDefault(
   puzzle: string,
   set: string,
   caseCount: number,
   umbrella: boolean,
 ): boolean {
-  return caseCount > 100 && !umbrella && !(puzzle === 'sq1' && set === 'cs');
+  return caseCount > 100 && !umbrella && !(puzzle === 'sq1' && (set === 'cs' || set === 'csp'));
 }
 
 export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initialData }: AlgCategoryViewProps) {
@@ -750,7 +750,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
           {setHeading}
           {subgroupDisplay && <span className="alg-cat-subgroup"> {subgroupDisplay}</span>}
         </h1>
-        {meta.short && <p className="alg-cat-intro">{tr(meta)}</p>}
+        {meta.short && <p className="alg-cat-intro">{tr(meta.intro ?? meta)}</p>}
         {data && !showSubgroupPicker && (
           <span className="alg-cat-count">{visibleCases.length} {tr({ zh: '个', en: 'cases'
         })}</span>

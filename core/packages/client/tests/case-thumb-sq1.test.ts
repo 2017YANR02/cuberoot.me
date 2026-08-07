@@ -79,6 +79,30 @@ describe('CaseThumb — Square-1 renderer', () => {
     expect(centers[1] - centers[0]).toBeLessThan(100);
   });
 
+  it('renders CSP as a full-colour cubeshape without an equator or overlapping faces', () => {
+    const props = {
+      puzzle: 'sq1' as const,
+      set: 'csp',
+      sticker: { kind: 'raw' as const, tag: 'sqcube', attrs: {} },
+      alg: '0,-2 / -2,0 / -1,-2 / -3,-3 /',
+      size: 96,
+      sq1BlackTop: false,
+    };
+    const html = renderToStaticMarkup(createElement(CaseThumb, props));
+    const blackTop = renderToStaticMarkup(createElement(CaseThumb, { ...props, sq1BlackTop: true }));
+    const centers = [...new Set(
+      [...html.matchAll(/translate\([^,]+,([^)]+)\) rotate/g)].map(match => Number(match[1])),
+    )].sort((a, b) => a - b);
+
+    expect(html).not.toContain('<rect');
+    for (const color of ['#FFFF00', '#FFFFFF', '#FF0000', '#00FF00', '#FF8000', '#0000FF']) {
+      expect(html).toContain(color);
+    }
+    expect(blackTop).not.toBe(html);
+    expect(centers).toHaveLength(2);
+    expect(centers[1] - centers[0]).toBeGreaterThan(124.4);
+  });
+
   it('keeps a safe gap between both faces for a non-cubic shape', () => {
     const html = renderToStaticMarkup(createElement(CaseThumb, {
       puzzle: 'sq1',

@@ -80,6 +80,7 @@ describe('displayAlgCaseName 按 set 路由', () => {
   it('SQ1 cs 把 Left / Right 缩写为 L / R', () => {
     expect(displayAlgCaseName('sq1', 'cs', 'Left paw / Right fist')).toBe('L paw / R fist');
     expect(displayAlgCaseName('sq1', 'cs', 'Parallel Edges / Left 4-2')).toBe('Parallel Edges / L 4-2');
+    expect(displayAlgCaseName('sq1', 'csp', 'Left 4-2 / Right fist (Odd)')).toBe('L 4-2 / R fist (Odd)');
     expect(displayAlgCaseName('sq1', 'eo', 'Left paw / Right fist')).toBe('Left paw / Right fist');
   });
   it('3x3 oll 走 OLL 变换', () => expect(displayAlgCaseName('3x3', 'oll', 'OLL 24')).toBe('T (24)'));
