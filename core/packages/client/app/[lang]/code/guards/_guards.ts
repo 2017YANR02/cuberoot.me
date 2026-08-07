@@ -22,6 +22,14 @@ export const PAIRED_GUARDS: PairedGuard[] = [
     en: { title: 'Raw checkbox', desc: 'No bare <input type="checkbox"> — boolean toggles go through BoolToggle (left switch + right label). Multi-select grids are exempt via inline allow-checkbox.' },
   },
   {
+    id: 'component-reimplementation',
+    hook: 'block-component-reimplementation.ps1 → hook-detect-component-reimplementation.mjs',
+    test: 'component-reuse-guard.test.ts',
+    baseline: '79 ↓',
+    zh: { title: '重复实现已有组件', desc: '用规则表拦高置信度的重复造轮子,不是用模糊相似度乱猜。首条规则:手写 <button> + X/× + 关闭/清除语义时,统一复用 /code/components 已登记的 ClearButton。Claude Edit/Write 与 Codex apply_patch 写入即拦,CI 锁存量只降不升;真正不同的交互行内 allow-component-reimplementation 并写理由。' },
+    en: { title: 'Reimplementing cataloged components', desc: 'A rule registry blocks high-confidence reinventions instead of guessing from fuzzy similarity. The first rule routes a hand-written <button> + X/× with close/clear semantics through the cataloged ClearButton. Claude Edit/Write and Codex apply_patch are blocked at write time; CI ratchets legacy debt down. Genuinely different interactions require an inline allow-component-reimplementation reason.' },
+  },
+  {
     id: 'static-onclick',
     hook: 'block-static-onclick-button.ps1',
     test: 'no-static-element-onclick-button.test.ts',

@@ -99,6 +99,7 @@ describe('/code/guards stays in sync with guard-registry-marked tests', () => {
     // verifiable from CI — the global ones live in ~/.claude on the developer's
     // machine and aren't part of this repo. See file header for the full list.
     const projectHooks = [
+      'block-component-reimplementation.ps1',
       'block-raw-checkbox.ps1',
       'block-handwritten-trad.ps1',
       'recon-ground-truth-gate.ps1',
