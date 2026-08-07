@@ -1,0 +1,4 @@
+# Repo-relative client TSX path<TAB>reason.
+# Prefer the inline `allow-component-reimplementation: <reason>` escape hatch for a
+# single intentional control. This file is only for a whole file whose interaction
+# cannot use the cataloged component.
