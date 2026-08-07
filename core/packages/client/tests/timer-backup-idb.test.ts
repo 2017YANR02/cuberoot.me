@@ -22,7 +22,7 @@ const g = globalThis as unknown as { window?: unknown; localStorage?: ReturnType
 g.window = { addEventListener() {} };
 g.localStorage = makeLocalStorage();
 
-const { pushBackup, listBackups, restoreBackup } = await import('@/app/[lang]/timer/_lib/storage/db');
+const { pushBackup, listBackups, restoreBackup, inspectImportJson } = await import('@/app/[lang]/timer/_lib/storage/db');
 
 const DB_KEY = 'cuberoot-timer.v3';
 
@@ -39,6 +39,26 @@ function seedDb(marker: string): string {
 }
 
 describe('timer backups on IndexedDB', () => {
+  it('previews a native import without replacing current data', () => {
+    const current = seedDb('current');
+    const incoming = JSON.stringify({
+      version: 3,
+      sessions: [
+        { id: 'a', name: 'A', createdTs: 1 },
+        { id: 'b', name: 'B', createdTs: 2 },
+      ],
+      activeSessionId: 'a',
+      dataBySession: {
+        a: { 333: [{ id: '1' }, { id: '2' }] },
+        b: { 222: [{ id: '3' }] },
+      },
+    });
+
+    expect(inspectImportJson(incoming)).toEqual({ sessionCount: 2, solveCount: 3 });
+    expect(g.localStorage!.getItem(DB_KEY)).toBe(current);
+    expect(inspectImportJson('{"version":99}')).toBeNull();
+  });
+
   it('migrates legacy localStorage backups into IDB and removes the keys', async () => {
     seedDb('m');
     g.localStorage!.setItem('cuberoot-timer.backup.v1.1000', '{"version":3,"legacy":1}');

@@ -22,15 +22,14 @@ import { useQueryState, parseAsBoolean, parseAsString, parseAsStringEnum } from 
 import {
   Trash2, Settings as SettingsIcon, Maximize2, Minimize2,
   Bluetooth, Mic, BarChart3, Plus, Wrench, ListPlus, Printer,
-  AlertTriangle, Target, Crosshair, Keyboard, Link2, Globe,
+  AlertTriangle, Target, Crosshair, Link2, Globe,
   Brain, X, Check, CheckCircle2, Footprints, Repeat,
 } from 'lucide-react';
-import AppLink from '@/components/AppLink';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { CubingIcon, EventIcon } from '@/components/EventIcon/EventIcon';
 import CubeRootLogo from '@/components/CubeRootLogo';
 import { petReact } from '@/lib/deskpet';
-import { type MoreMenuItem } from '../_components/MoreMenu';
+import MoreMenu, { type MoreMenuItem } from '../_components/MoreMenu';
 import { syncLangToUrl } from '@/i18n/i18n-client';
 
 import { generateScramble, registerScramble } from '../_lib/scramble';
@@ -125,13 +124,12 @@ import '../_components/charts/charts.css';
 import '../_components/charts/practice_heatmap.css';
 
 // 弹层一律 next/dynamic。每一个的渲染都写成 `{xxxOpen && <Modal/>}`,首屏一个都不挂;
-// 静态 import 会把这 11 个弹层连同各自的 CSS 一起焊进计时器首屏那个 chunk,而绝大多数
+// 静态 import 会把这些弹层连同各自的 CSS 一起焊进计时器首屏那个 chunk,而绝大多数
 // 用户一次也不会打开它们。ssr:false —— 本文件已经在一个 ssr:false 的动态边界里(page.tsx
 // 只在客户端拉 TimerShell),弹层再声明一次只是显式表态,不新增行为。
 const BldHelperModal = dynamic(() => import('../_components/BldHelperModal'), { ssr: false });
 const SolveModal = dynamic(() => import('../_components/SolveModal'), { ssr: false });
 const ReconstructModal = dynamic(() => import('../_components/ReconstructModal'), { ssr: false });
-const ShortcutsModal = dynamic(() => import('../_components/ShortcutsModal'), { ssr: false });
 const BluetoothModal = dynamic(() => import('../_components/BluetoothModal'), { ssr: false });
 const StackmatModal = dynamic(() => import('../_components/StackmatModal'), { ssr: false });
 const TrainerSubsetModal = dynamic(() => import('../_components/TrainerSubsetModal'), { ssr: false });
@@ -217,8 +215,7 @@ function useMediaQuery(query: string): boolean {
   return matches;
 }
 
-// 「工具」那一档搬进设置弹窗了(见 SettingsPanel 的 tools 节),入口是左下角那块统计
-// (点它就弹出来),底部导航条已整条撤掉。
+// 工具收进顶栏 MoreMenu；齿轮只保留持久设置，避免工具动作再叠一层弹窗。
 //
 // 三档各答一个问题,名字就是答案:**成绩**是这些把本身(会话 + 那张单子),**统计**
 // 是从它们算出来的数(当前/最佳、σ/CV、阈值占比、完整统计),**图表**是画出来的。
@@ -1618,7 +1615,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   }, [isZh, byEvent]);
 
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const closeSettings = useCallback(() => setSettingsOpen(false), []);
   const [bluetoothOpen, setBluetoothOpen] = useState(false);
   const [bluetoothConnectAttempt, setBluetoothConnectAttempt] = useState<Promise<void> | null>(null);
   const bluetoothConnectingRef = useRef(false);
@@ -1676,7 +1673,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   // 整屏那一形态要算进「有东西盖住计时器」—— 否则空格会穿到后面预备计时。
   const panelFullscreen = panelTab !== null && !isDesktop;
   const otherModalOpen =
-    settingsOpen || shortcutsOpen || bluetoothOpen || stackmatOpen ||
+    settingsOpen || bluetoothOpen || stackmatOpen ||
     trainerSubsetOpen !== null || statsModalOpen ||
     manualEntryOpen || solverOpen || bulkScrambleOpen ||
     drillModalOpen || bldHelperOpen || panelFullscreen ||
@@ -1829,6 +1826,11 @@ export default function SoloView({ playersControl }: SoloViewProps) {
 
   // ── More menu items ─────────────────────────────────────────────
   const moreItems = useMemo<MoreMenuItem[]>(() => [
+    {
+      icon: <Footprints size={14} />,
+      label: tr({ zh: '打乱足迹', en: 'Scramble marks' }),
+      href: '/timer/marks',
+    },
     // External timing devices. These used to sit inside the mobile-only block,
     // which made the Stackmat toggle unreachable on desktop — exactly where a
     // Stackmat is most likely to be plugged in.
@@ -1862,8 +1864,6 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       icon: <Brain size={14} />, label: tr({ zh: '盲拧助手', en: 'BLD helper'
     }), onClick: () => setBldHelperOpen(true),
     }] : []),
-    { icon: <Keyboard size={14} />, label: tr({ zh: '快捷键', en: 'Shortcuts'
-    }), onClick: () => setShortcutsOpen(true) },
     { icon: fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />, label: tr({ zh: '全屏', en: 'Fullscreen' }), onClick: toggleFullscreen },
     { icon: <Plus size={14} />, label: tr({ zh: '手动录入', en: 'Manual entry'
     }), onClick: () => setManualEntryOpen(true) },
@@ -2051,30 +2051,6 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     return null;
   };
 
-  // ── 工具清单 ────────────────────────────────────────────────────
-  // 原来是底部导航第三档,现在是设置弹窗里的一节(设置本身不再列在里面 —— 人已经在设置里了)。
-  // 打乱足迹从顶栏图标挪到了这里,仍是真链接(中键 / Ctrl 点能新开标签页)。
-  const toolsList = (
-    <div className="shell-tools-list">
-      <AppLink className="shell-tools-item" href="/timer/marks">
-        <span className="shell-tools-icon"><Footprints size={14} /></span>
-        <span>{tr({ zh: '打乱足迹', en: 'Scramble marks' })}</span>
-      </AppLink>
-      {moreItems.map((it, i) => (
-        <button
-          key={i}
-          type="button"
-          className={`shell-tools-item${it.danger ? ' danger' : ''}`}
-          disabled={it.disabled}
-          onClick={() => { if (!it.disabled) it.onClick(); }}
-        >
-          {it.icon && <span className="shell-tools-icon">{it.icon}</span>}
-          <span>{it.label}</span>
-        </button>
-      ))}
-    </div>
-  );
-
   // 解法提示(仅 333)。同一个组件在两处挂点里二选一:桌面进右侧 .shell-rail(展开成竖栏),
   // 手机进顶栏那一组控件的末尾(点开 = 全屏浮层)。写成一个变量,免得两处各写一遍 props。
   const solverHintPanel = event === '333'
@@ -2150,7 +2126,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
           {!isDesktop && solverHintPanel}
         </div>
         <div className="shell-topbar-right">
-          {/* 打乱足迹搬进了设置里的「工具」一节 —— 顶栏只留蓝牙 + 设置两颗。 */}
+          <MoreMenu items={moreItems} />
           <button
             type="button"
             className={`tb-btn${bluetoothCube.status.connected ? ' connected' : ''}`}
@@ -2549,7 +2525,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       </div>
 
       {/* ── Side panel: desktop dock / 非桌面整屏 ───────────────
-          入口是左下角那块统计(见上);底部导航条已撤掉,「工具」搬进了设置。
+          入口是左下角那块统计(见上);底部导航条已撤掉,工具在顶栏 MoreMenu。
           非桌面宽度整屏铺开,关闭走右上角 × 或 Escape。 */}
       {panelTab && (
         <aside className={`shell-panel${isDesktop ? ' shell-panel--rail' : ' shell-panel--sheet'}`}>
@@ -2635,7 +2611,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
         />
       )}
 
-      {settingsOpen && <SettingsPanel isZh={isZh} event={event} tools={toolsList} onClose={() => setSettingsOpen(false)} onDataReplaced={() => setByEvent(loadAll())} />}
+      {settingsOpen && <SettingsPanel event={event} onClose={closeSettings} onDataReplaced={() => setByEvent(loadAll())} />}
 
       {infoToast && (
         <div className="shell-info-toast" role="status">
@@ -2647,7 +2623,6 @@ export default function SoloView({ playersControl }: SoloViewProps) {
         </div>
       )}
 
-      {shortcutsOpen && <ShortcutsModal isZh={isZh} onClose={() => setShortcutsOpen(false)} />}
       {trainerSubsetOpen && <TrainerSubsetModal kind={trainerSubsetOpen} isZh={isZh} onClose={() => setTrainerSubsetOpen(null)} />}
 
       {bluetoothOpen && (
