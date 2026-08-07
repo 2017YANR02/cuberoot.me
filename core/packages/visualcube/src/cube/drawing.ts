@@ -48,6 +48,8 @@ function attr(value: string | number): string {
  */
 export function renderCubeSVG(geometry: CubeGeometry, options: ResolvedCubeOptions): string {
   if (options.view === 'q2look') return renderQ2LookSVG(options)
+  if (options.view === 'qlast') return renderQLastSVG(options)
+  if (options.view === 'qcube') return renderQCubeSVG(options)
 
   const faceRotations = rotateFaces(defaultFaceRotations, options.viewportRotations)
   const renderOrder = getRenderOrder(faceRotations)
@@ -119,20 +121,33 @@ export function renderCubeSVG(geometry: CubeGeometry, options: ResolvedCubeOptio
   return parts.join('')
 }
 
-/**
- * csTimer-style q2Look projection: the complete U face, the top two F rows,
- * and the R top row folded into a vertical strip. It is deliberately driven by
- * the same facelet/color pipeline as every other visualcube view; only the
- * projection changes.
- */
-function renderQ2LookSVG(options: ResolvedCubeOptions): string {
-  const n = options.cubeSize
-  const frontRows = Math.min(2, n)
-  const gap = 0.12
+interface FlatSticker {
+  face: Face
+  row: number
+  col: number
+  x: number
+  y: number
+  width?: number
+  height?: number
+}
+
+interface FlatBlock {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+/** Shared SVG pipeline for csTimer's qCube, qLast, and q2Look projections. */
+function renderFlatCubeSVG(
+  options: ResolvedCubeOptions,
+  contentWidth: number,
+  contentHeight: number,
+  blocks: FlatBlock[],
+  cells: FlatSticker[],
+): string {
   const inset = 0.07
   const pad = 0.1
-  const contentWidth = n + 1 + gap
-  const contentHeight = n + frontRows + gap
   const viewBox = {
     x: -pad,
     y: -pad,
@@ -146,32 +161,24 @@ function renderQ2LookSVG(options: ResolvedCubeOptions): string {
       ? `<rect x="${attr(viewBox.x)}" y="${attr(viewBox.y)}" width="${attr(viewBox.width)}" height="${attr(viewBox.height)}" fill="${attr(options.backgroundColor)}"/>`
       : `<rect x="${attr(viewBox.x)}" y="${attr(viewBox.y)}" width="${attr(viewBox.width)}" height="${attr(viewBox.height)}" fill="none" opacity="0"/>`,
     `<g opacity="${attr(options.cubeOpacity / 100)}" fill="${attr(options.cubeColor)}">` +
-      `<rect x="0" y="0" width="${attr(n)}" height="${attr(n)}"/>` +
-      `<rect x="0" y="${attr(n + gap)}" width="${attr(n)}" height="${attr(frontRows)}"/>` +
-      `<rect x="${attr(n + gap)}" y="0" width="1" height="${attr(n)}"/>` +
+      blocks.map(block =>
+        `<rect x="${attr(block.x)}" y="${attr(block.y)}" width="${attr(block.width)}" height="${attr(block.height)}"/>`
+      ).join('') +
       `</g>`,
   ]
 
   const stickers: string[] = []
-  const cell = (face: Face, row: number, col: number, x: number, y: number) => {
-    const color = getStickerColor(face, row, col, options)
+  cells.forEach(cell => {
+    const color = getStickerColor(cell.face, cell.row, cell.col, options)
     if (color === ColorName.Transparent) return
-    const p1: Vec3 = [x + inset, y + inset, 0]
-    const p2: Vec3 = [x + 1 - inset, y + inset, 0]
-    const p3: Vec3 = [x + 1 - inset, y + 1 - inset, 0]
-    const p4: Vec3 = [x + inset, y + 1 - inset, 0]
+    const width = cell.width ?? 1
+    const height = cell.height ?? 1
+    const p1: Vec3 = [cell.x + inset, cell.y + inset, 0]
+    const p2: Vec3 = [cell.x + width - inset, cell.y + inset, 0]
+    const p3: Vec3 = [cell.x + width - inset, cell.y + height - inset, 0]
+    const p4: Vec3 = [cell.x + inset, cell.y + height - inset, 0]
     stickers.push(renderSticker(p1, p2, p3, p4, color, options.cubeColor))
-  }
-
-  for (let row = 0; row < n; row++) {
-    for (let col = 0; col < n; col++) cell(Face.U, row, col, col, row)
-  }
-  for (let row = 0; row < frontRows; row++) {
-    for (let col = 0; col < n; col++) cell(Face.F, row, col, col, n + gap + row)
-  }
-  for (let pos = 0; pos < n; pos++) {
-    cell(Face.R, 0, n - 1 - pos, n + gap, pos)
-  }
+  })
 
   parts.push(
     `<g opacity="${attr(options.stickerOpacity / 100)}" stroke-opacity="0.5" ` +
@@ -179,6 +186,113 @@ function renderQ2LookSVG(options: ResolvedCubeOptions): string {
     `</svg>`,
   )
   return parts.join('')
+}
+
+/** Complete U face, top two F rows, and R top row folded into a side strip. */
+function renderQ2LookSVG(options: ResolvedCubeOptions): string {
+  const n = options.cubeSize
+  const frontRows = Math.min(2, n)
+  const gap = 0.12
+  const cells: FlatSticker[] = []
+
+  for (let row = 0; row < n; row++) {
+    for (let col = 0; col < n; col++) cells.push({ face: Face.U, row, col, x: col, y: row })
+  }
+  for (let row = 0; row < frontRows; row++) {
+    for (let col = 0; col < n; col++) cells.push({ face: Face.F, row, col, x: col, y: n + gap + row })
+  }
+  for (let pos = 0; pos < n; pos++) {
+    cells.push({ face: Face.R, row: 0, col: n - 1 - pos, x: n + gap, y: pos })
+  }
+
+  return renderFlatCubeSVG(
+    options,
+    n + 1 + gap,
+    n + frontRows + gap,
+    [
+      { x: 0, y: 0, width: n, height: n },
+      { x: 0, y: n + gap, width: n, height: frontRows },
+      { x: n + gap, y: 0, width: 1, height: n },
+    ],
+    cells,
+  )
+}
+
+/** qLast adds L and B rim strips around q2Look for full last-layer recognition. */
+function renderQLastSVG(options: ResolvedCubeOptions): string {
+  const n = options.cubeSize
+  const frontRows = Math.min(2, n)
+  const gap = 0.12
+  const offset = 1 + gap
+  const cells: FlatSticker[] = []
+
+  for (let row = 0; row < n; row++) {
+    for (let col = 0; col < n; col++) {
+      cells.push({ face: Face.U, row, col, x: offset + col, y: offset + row })
+      if (row < frontRows) {
+        cells.push({ face: Face.F, row, col, x: offset + col, y: offset + n + gap + row })
+      }
+    }
+  }
+  for (let pos = 0; pos < n; pos++) {
+    cells.push({ face: Face.L, row: 0, col: pos, x: offset + pos, y: 0 })
+    cells.push({ face: Face.B, row: 0, col: n - 1 - pos, x: 0, y: offset + pos })
+    cells.push({ face: Face.R, row: 0, col: n - 1 - pos, x: offset + n + gap, y: offset + pos })
+  }
+
+  return renderFlatCubeSVG(
+    options,
+    n + 2 + gap * 2,
+    n + frontRows + 1 + gap * 2,
+    [
+      { x: offset, y: 0, width: n, height: 1 },
+      { x: 0, y: offset, width: 1, height: n },
+      { x: offset, y: offset, width: n, height: n },
+      { x: offset + n + gap, y: offset, width: 1, height: n },
+      { x: offset, y: offset + n + gap, width: n, height: frontRows },
+    ],
+    cells,
+  )
+}
+
+/** qCube stacks complete U and F faces, with L/R folded into side strips. */
+function renderQCubeSVG(options: ResolvedCubeOptions): string {
+  const n = options.cubeSize
+  const gap = 0.12
+  const mainX = 1 + gap
+  const frontY = n + gap
+  const rightX = mainX + n + gap
+  const cells: FlatSticker[] = []
+
+  for (let row = 0; row < n; row++) {
+    for (let col = 0; col < n; col++) {
+      cells.push({ face: Face.U, row, col, x: mainX + col, y: row })
+      cells.push({ face: Face.F, row, col, x: mainX + col, y: frontY + row })
+    }
+  }
+  for (let pos = 0; pos < n - 1; pos++) {
+    cells.push({ face: Face.L, row: 0, col: n - 1 - pos, x: 0, y: pos })
+    cells.push({ face: Face.R, row: 0, col: n - 1 - pos, x: rightX, y: pos })
+  }
+  cells.push({ face: Face.L, row: 0, col: 0, x: 0, y: n - 1, height: 2 + gap })
+  cells.push({ face: Face.R, row: 0, col: 0, x: rightX, y: n - 1, height: 2 + gap })
+  for (let row = 1; row < n; row++) {
+    cells.push({ face: Face.L, row, col: 0, x: 0, y: frontY + row })
+    cells.push({ face: Face.R, row, col: 0, x: rightX, y: frontY + row })
+  }
+
+  return renderFlatCubeSVG(
+    options,
+    n + 2 + gap * 2,
+    n * 2 + gap,
+    [
+      { x: 0, y: 0, width: 1, height: n * 2 + gap },
+      { x: mainX, y: 0, width: n, height: n },
+      { x: mainX, y: frontY, width: n, height: n },
+      { x: rightX, y: 0, width: 1, height: n * 2 + gap },
+    ],
+    cells,
+  )
 }
 
 /**
