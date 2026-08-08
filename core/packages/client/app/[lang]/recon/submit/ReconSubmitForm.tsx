@@ -1235,6 +1235,14 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
   const clearReconer = useCallback(() => handleReconerPick(null), [handleReconerPick]);
 
+  const handleReconerQueryChange = useCallback((query: string) => {
+    // A reconstructor can be outside the WCA database. In that case the typed name is
+    // the identity itself and reconerId must stay empty instead of dropping the field.
+    setForm(prev => ({ ...prev, reconer: query, reconerId: '' }));
+    setReconerCountry('');
+    pruneReused(['reconer', 'reconerId']);
+  }, [pruneReused]);
+
   // ── Auto-fill reconer from auth user (once on login) ──
   useEffect(() => {
     if (!authUser) return;
@@ -1326,6 +1334,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         ...form,
         date: toDateInput(form.date),
         reconDate: toDateInput(form.reconDate),
+        reconer: form.reconer?.trim() ?? '',
+        reconerId: form.reconerId?.trim() ?? '',
         // 非重复提交不落原因(选择器仅在 dupId 命中时出现,残留值在此清掉)
         dupReason: dupId != null ? form.dupReason : undefined,
       };
@@ -2085,9 +2095,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
               </div>
 
               <div className="submit-row">
-                <div className={`submit-field ${(form.reconer || form.reconerId) ? 'submit-field-shrink' : ''}${reusedCls('reconer')}`}>
+                <div className={`submit-field ${form.reconerId ? 'submit-field-shrink' : ''}${reusedCls('reconer')}`}>
                   <span className="submit-label">{t('recon.reconstructor')}</span>
-                  {(form.reconer || form.reconerId) ? (
+                  {form.reconerId ? (
                     <div className="submit-solver-pill">
                       <Flag iso2={reconerCountry || ''} />
                       <span className="submit-solver-name">{displayCuberName(form.reconer || '', isZh)}</span>
@@ -2097,8 +2107,11 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     <WcaPersonPicker
                       value={null}
                       onChange={handleReconerPick}
+                      onQueryChange={handleReconerQueryChange}
+                      defaultQuery={form.reconer || ''}
+                      allowFreeText
                       isZh={isZh}
-                      placeholder={tr({ zh: '搜选手名 / WCA ID', en: 'Search name / WCA ID'
+                      placeholder={tr({ zh: '输入姓名或搜 WCA ID', en: 'Enter a name or search WCA ID'
                     })}
                     />
                   )}
