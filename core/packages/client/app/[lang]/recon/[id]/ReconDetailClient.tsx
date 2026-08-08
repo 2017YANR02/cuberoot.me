@@ -29,7 +29,7 @@ import {
   formatReconSingle,
 } from '@/lib/recon-utils';
 import { compLinkProps } from '@/lib/comp-link';
-import { displayCuberName, ownerDisplayName } from '@/lib/cuber-name-display';
+import { displayCuberName } from '@/lib/cuber-name-display';
 import { eventDisplayName, toWcaEventId } from '@/lib/wca-events';
 import { EventIcon } from '@/components/EventIcon';
 import { loadFlagData, flagDataVersion, personFlagIso2 } from '@/lib/country-flags';
@@ -1709,8 +1709,7 @@ function CommentsView({
   // 非空即已登录,故同时兼作「是否登录」门控与「是不是我的评论/另解」判定。
   const myKey = user ? computeOwnerKey(user.uid, user.wcaId) : '';
   const isAdminUser = useIsAdmin();
-  const { t, i18n } = useTranslation();
-  const isZh = i18n.language === 'zh';
+  const { t } = useTranslation();
 
   const { topLevel, repliesByParent } = useMemo(() => {
     const tl: ReconComment[] = [];
@@ -1766,9 +1765,10 @@ function CommentsView({
   };
 
   const startReply = (parent: ReconComment) => {
-    const name = ownerDisplayName(parent.authorId, parent.authorName, isZh);
     setReplyingToId(parent.id);
-    setReplyText(`@${name} `);
+    // parentId already carries the reply target for threading + notifications.
+    // Keep the visible comment body limited to what the replier actually types.
+    setReplyText('');
     setExpandedReplies(prev => new Set(prev).add(parent.id));
   };
 
