@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import {
-  validateRow, visibilityDiscoverFilter, visibilityOwnerFilter, ADMIN_WCA_IDS,
+  jsonToRow, validateRow, visibilityDiscoverFilter, visibilityOwnerFilter, ADMIN_WCA_IDS,
 } from '../../server/src/utils/recon_helpers';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -82,6 +82,14 @@ describe('server validateRow enforces visibility enum', () => {
 
   it('rejects an unknown visibility value', () => {
     expect(validateRow({ visibility: 'secret' }).some(e => e.includes('visibility'))).toBe(true);
+  });
+});
+
+describe('reconstructor identity without a WCA ID', () => {
+  it('keeps the name, stores a null ID, and passes server validation', () => {
+    const row = jsonToRow({ reconer: '孙卓远', reconerId: '' });
+    expect(row).toEqual({ reconer: '孙卓远', reconer_id: null });
+    expect(validateRow(row)).toEqual([]);
   });
 });
 
