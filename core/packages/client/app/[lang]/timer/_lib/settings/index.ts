@@ -454,6 +454,16 @@ function load(): TimerSettings {
     if (!raw) return { ...DEFAULTS };
     const parsed = JSON.parse(raw) as Partial<TimerSettings>;
     const merged = { ...DEFAULTS, ...parsed };
+
+    // These two controls are entry defaults, not preferences to restore. A
+    // fresh /timer visit (including a reload) always starts from real WCA
+    // scrambles with difficulty filtering off. The user can still change both
+    // for the rest of the current visit; the next page load resets them again.
+    // Keep the detailed difficulty selection so turning the filter on during
+    // the visit restores its method / stage / step range.
+    merged.scrambleSource = 'wca';
+    merged.wcaDifficultyOn = false;
+
     // 迁移都先改 `merged`,末尾只落一次盘 —— 每条自己 `save()` 会在一次加载里写三遍。
     let dirty = false;
     // One-shot migration: scramble-click now copies by default. Flip the legacy

@@ -80,3 +80,34 @@ describe('录姿态:老存档里的 false 要翻过来', () => {
     expect(getSettings().recordGyro).toBe(true);
   });
 });
+
+describe('计时器每次进入的打乱默认值', () => {
+  beforeEach(() => { vi.unstubAllGlobals(); });
+
+  it('忽略上次保存的打乱来源和难度开关', async () => {
+    installStorage({
+      [KEY]: JSON.stringify({
+        scrambleSource: 'manual',
+        wcaDifficultyOn: true,
+        scrambleClickMigrated: true,
+        recordGyroMigrated: true,
+      }),
+    });
+
+    const { getSettings } = await freshSettings();
+    expect(getSettings().scrambleSource).toBe('wca');
+    expect(getSettings().wcaDifficultyOn).toBe(false);
+  });
+
+  it('本次打开期间可以手动改,刷新后再次重置', async () => {
+    installStorage();
+    let settings = await freshSettings();
+    settings.updateSettings({ scrambleSource: 'random', wcaDifficultyOn: true });
+    expect(settings.getSettings().scrambleSource).toBe('random');
+    expect(settings.getSettings().wcaDifficultyOn).toBe(true);
+
+    settings = await freshSettings();
+    expect(settings.getSettings().scrambleSource).toBe('wca');
+    expect(settings.getSettings().wcaDifficultyOn).toBe(false);
+  });
+});
