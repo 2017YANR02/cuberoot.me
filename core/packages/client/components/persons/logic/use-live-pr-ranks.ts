@@ -8,7 +8,7 @@
 
 import { useEffect, useState } from 'react';
 import { fetchCubingLiveResultInfo } from '@/lib/wca-results-api';
-import type { WcaResultRow } from '@/lib/wca-person-api';
+import { wcaResultRowKey, type WcaResultRow } from '@/lib/wca-person-api';
 import type { KeatonedInfo } from '@/lib/record-tag';
 
 export interface LivePrRank {
@@ -18,13 +18,13 @@ export interface LivePrRank {
   singleKeatoned: KeatonedInfo | null; averageKeatoned: KeatonedInfo | null;
 }
 
-export function useLivePrRanks(rows: WcaResultRow[] | null, personId: string): Map<number, LivePrRank> {
-  const [map, setMap] = useState<Map<number, LivePrRank>>(new Map());
+export function useLivePrRanks(rows: WcaResultRow[] | null, personId: string): Map<string, LivePrRank> {
+  const [map, setMap] = useState<Map<string, LivePrRank>>(new Map());
 
   const liveRows = (rows ?? []).filter((r) => r.live);
   // 行集(及其 best/avg)变了才重拉;依赖串避免每次 render 重跑 effect。
   const sig = liveRows
-    .map((r) => `${r.id}:${r.competition_id}:${r.event_id}:${r.round_type_id}:${r.best}:${r.average}`)
+    .map((r) => `${wcaResultRowKey(r)}:${r.best}:${r.average}`)
     .join('|');
 
   useEffect(() => {
@@ -36,7 +36,7 @@ export function useLivePrRanks(rows: WcaResultRow[] | null, personId: string): M
           r.competition_id, r.event_id, r.round_type_id, personId,
           r.best || null, r.average || null,
         );
-        return [r.id, {
+        return [wcaResultRowKey(r), {
           pS: info?.pS ?? null, pA: info?.pA ?? null,
           singleTag: info?.singleTag ?? '', averageTag: info?.averageTag ?? '',
           singleKeatoned: info?.singleKeatoned ?? null, averageKeatoned: info?.averageKeatoned ?? null,

@@ -5,10 +5,11 @@
 // recon 提交页的「单次纪录」自动填充用:以前只填本轮最佳那把,这里补齐任意把。
 
 import {
-  fetchWcaPersonResults, fetchWcaPersonCompetitions, fetchWcaPersonLiveResults,
+  fetchWcaPersonResults, fetchWcaPersonCompetitions, fetchWcaPersonLiveResults, wcaResultRowKey,
 } from './wca-person-api';
-import { mergePersonLive } from './person-live-merge';
-import { matchRoundType } from './wca-results-api';
+import { mergePersonCompetitionResults, mergePersonLive } from './person-live-merge';
+import { extractPersonCompetitionResults, fetchWcaResults, matchRoundType } from './wca-results-api';
+import { fetchCompInfo } from './comp-wcif';
 import { toWcaEventId } from './wca-events';
 import { computePrRank } from '@/components/persons/logic/progress';
 
@@ -21,17 +22,31 @@ export async function fetchAttemptPrRank(
 ): Promise<number | null> {
   if (!personId || !compId || !reconEvent || !reconRound || !solveNum) return null;
   const wcaEventId = toWcaEventId(reconEvent);
-  const [official, comps, live] = await Promise.all([
+  const [official, comps, live, competitionData, compInfo] = await Promise.all([
     fetchWcaPersonResults(personId).catch(() => []),
     fetchWcaPersonCompetitions(personId).catch(() => []),
     fetchWcaPersonLiveResults(personId).catch(() => null),
+    fetchWcaResults(compId, wcaEventId).catch(() => null),
+    fetchCompInfo(compId).catch(() => null),
   ]);
   const merged = mergePersonLive(official, comps, live?.results ?? [], live?.comps ?? []);
-  const row = merged.results.find(
+  const competitionRows = extractPersonCompetitionResults(competitionData, personId);
+  const results = mergePersonCompetitionResults(merged.results, competitionRows);
+  const rankComps = merged.comps.some((c) => c.id === compId) ? merged.comps : [...merged.comps, {
+    id: compId,
+    name: compInfo?.name ?? compId,
+    city: compInfo?.city ?? '',
+    country_iso2: compInfo?.country_iso2 ?? '',
+    start_date: compInfo?.start_date ?? '9999-12-31',
+    end_date: compInfo?.end_date ?? compInfo?.start_date ?? '9999-12-31',
+  }];
+  const row = results.find(
     (r) => r.competition_id === compId && r.event_id === wcaEventId && matchRoundType(reconRound, r.round_type_id),
   );
   if (!row) return null;
   // 官方行只用官方成绩算名次;直播行用「官方 + 直播」合并算(与选手页 prRank / prRankLive 同口径)。
-  const map = row.live ? computePrRank(merged.results, merged.comps) : computePrRank(official, comps);
-  return map.get(row.id)?.attemptRanks?.[solveNum - 1] ?? null;
+  const map = row.live
+    ? computePrRank(results, rankComps)
+    : computePrRank(results.filter((result) => !result.live), rankComps);
+  return map.get(wcaResultRowKey(row))?.attemptRanks?.[solveNum - 1] ?? null;
 }

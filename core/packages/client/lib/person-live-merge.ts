@@ -7,7 +7,7 @@
 // 注意:本函数只服务「成绩 tab」展示。直播(非官方)成绩绝不能进 PR 表 / Hero / 最优组合 /
 // 名次和,调用方只把合并结果喂给 ResultsTab。
 
-import type { WcaResultRow, WcaCompetition } from './wca-person-api';
+import { wcaResultRowKey, type WcaResultRow, type WcaCompetition } from './wca-person-api';
 
 export function mergePersonLive(
   official: WcaResultRow[],
@@ -29,4 +29,20 @@ export function mergePersonLive(
     results: [...official, ...freshLive],
     comps: [...officialComps, ...freshLiveComps],
   };
+}
+
+/**
+ * Fill the mirror/live hand-off gap with the competition-scoped official endpoint.
+ * Matching competition/event/round rows from the competition endpoint win.
+ */
+export function mergePersonCompetitionResults(
+  existing: WcaResultRow[],
+  competitionRows: WcaResultRow[],
+): WcaResultRow[] {
+  if (competitionRows.length === 0) return existing;
+  const replacementKeys = new Set(competitionRows.map(wcaResultRowKey));
+  return [
+    ...existing.filter((row) => !replacementKeys.has(wcaResultRowKey(row))),
+    ...competitionRows,
+  ];
 }

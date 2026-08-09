@@ -39,7 +39,6 @@ export default function PersonHero({
   const collections = [
     {
       key: 'medals',
-      title: t('奖牌', 'Medals'),
       items: [
         { key: 'gold', label: t('金牌', 'Gold'), value: profile.medals.gold },
         { key: 'silver', label: t('银牌', 'Silver'), value: profile.medals.silver },
@@ -48,7 +47,6 @@ export default function PersonHero({
     },
     {
       key: 'records',
-      title: t('纪录', 'Records'),
       items: [
         { key: 'world', label: 'WR', value: profile.records.world },
         { key: 'continental', label: 'CR', value: profile.records.continental },
@@ -117,8 +115,7 @@ export default function PersonHero({
       {collections.length > 0 && (
         <div className="wp-hero-collections">
           {collections.map((collection) => (
-            <section className={`wp-hero-collection wp-hero-collection-${collection.key}`} key={collection.key}>
-              <h2>{collection.title}</h2>
+            <div className={`wp-hero-collection wp-hero-collection-${collection.key}`} key={collection.key}>
               <dl>
                 {collection.items.map((item) => (
                   <div className={`wp-hero-collection-item wp-hero-collection-item-${item.key}`} key={item.key}>
@@ -127,7 +124,7 @@ export default function PersonHero({
                   </div>
                 ))}
               </dl>
-            </section>
+            </div>
           ))}
         </div>
       )}

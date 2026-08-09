@@ -15,6 +15,7 @@ import './record_select.css';
 interface RecordSelectProps {
   value: string;
   onChange: (next: string) => void;
+  onFocus?: () => void;
   className?: string;
   /** Limit options + show counts (used by ReconListPage). */
   records?: { code: string; count: number }[];
@@ -30,7 +31,7 @@ interface RecordSelectProps {
   official?: ReconOfficial;
 }
 
-export function RecordSelect({ value, onChange, className, records, placeholder, personIso2, official }: RecordSelectProps) {
+export function RecordSelect({ value, onChange, onFocus, className, records, placeholder, personIso2, official }: RecordSelectProps) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState('');
@@ -122,6 +123,7 @@ export function RecordSelect({ value, onChange, className, records, placeholder,
           autoComplete="off"
           spellCheck={false}
           onFocus={e => {
+            onFocus?.();
             setEditing(true);
             setText(value || '');
             setOpen(true);

@@ -53,7 +53,7 @@ import { fetchAttempts, fetchCubingAttempts, fetchResultRow, fetchCubingPrRanks,
 import { fetchAttemptPrRank } from '@/lib/recon-attempt-pr-rank';
 import { fetchPb, type PbByEvent } from '@/lib/wca-pb';
 import {
-  fetchWcaPersonResults, fetchWcaPersonCompetitions, fetchWcaPersonLiveResults,
+  fetchWcaPersonResults, fetchWcaPersonCompetitions, fetchWcaPersonLiveResults, wcaResultRowKey,
   type WcaResultRow, type WcaCompetition,
 } from '@/lib/wca-person-api';
 import { mergePersonLive } from '@/lib/person-live-merge';
@@ -1063,7 +1063,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             setRecordAutoSource(null);
             return;
           }
-          const rf = computePrRank(personMerged!.results, personMerged!.comps).get(liveRow.id);
+          const rf = computePrRank(personMerged!.results, personMerged!.comps).get(wcaResultRowKey(liveRow));
           const prTag = (rank: number | null | undefined): string =>
             rank == null ? '' : (rank <= 1 ? 'PR' : `PR${rank}`);
           let avgFilled: string | null = null;
@@ -1750,6 +1750,11 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     type="text"
                     inputMode={isFmc ? 'numeric' : undefined}
                     value={isFmc ? toFmcInt(timeInput) : timeInput}
+                    onFocus={() => {
+                      setTimeUserTouched(true);
+                      setTimeAutoSource(null);
+                      timeAutoFilledRef.current = false;
+                    }}
                     onChange={e => {
                       setTimeInput(isFmc ? toFmcInt(e.target.value) : e.target.value);
                       setTimeUserTouched(true);
@@ -1768,6 +1773,11 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     type="text"
                     inputMode={isFmc ? 'numeric' : undefined}
                     value={isFmc ? toFmcInt(form.value ?? '') : (form.value ?? '')}
+                    onFocus={() => {
+                      if (singleAutoSource) return;
+                      setSingleUserTouched(true);
+                      singleAutoFilledRef.current = false;
+                    }}
                     onChange={e => {
                       setField('value', isFmc ? toFmcInt(e.target.value) : e.target.value);
                       setSingleUserTouched(true);
@@ -1788,6 +1798,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   <span className="submit-label">{t('recon.badge.singleRecord')}</span>
                   <RecordSelect
                     value={form.regionalSingleRecord || ''}
+                    onFocus={() => setSingleRecordUserTouched(true)}
                     onChange={(v) => { setField('regionalSingleRecord', v); setSingleRecordUserTouched(true); }}
                     personIso2={form.personCountry}
                     official={form.official}
@@ -1802,6 +1813,11 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   <input
                     type="text"
                     value={avgInput}
+                    onFocus={() => {
+                      if (avgAutoSource) return;
+                      setAvgUserTouched(true);
+                      avgAutoFilledRef.current = false;
+                    }}
                     onChange={e => {
                       setAvgInput(e.target.value);
                       setAvgUserTouched(true);
@@ -1823,6 +1839,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   <span className="submit-label">{t('recon.badge.averageRecord')}</span>
                   <RecordSelect
                     value={form.regionalAverageRecord || ''}
+                    onFocus={() => setAverageRecordUserTouched(true)}
                     onChange={(v) => { setField('regionalAverageRecord', v); setAverageRecordUserTouched(true); }}
                     personIso2={form.personCountry}
                     official={form.official}
@@ -1865,7 +1882,12 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   autoResize(e.target);
                 }}
                 onInput={e => autoResize(e.target as HTMLTextAreaElement)}
-                onFocus={() => { if (!scrambleAutoSource) setActiveVkbField('wca'); }}
+                onFocus={() => {
+                  if (scrambleAutoSource) return;
+                  setScrambleUserTouched(true);
+                  scrambleAutoFilledRef.current = false;
+                  setActiveVkbField('wca');
+                }}
                 onBlur={() => setActiveVkbField(f => f === 'wca' ? null : f)}
                 style={{ overflow: 'hidden', resize: 'none' }}
               />
@@ -1915,7 +1937,12 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   autoResize(e.target);
                 }}
                 onInput={e => autoResize(e.target as HTMLTextAreaElement)}
-                onFocus={() => setActiveVkbField('optimal')}
+                onFocus={() => {
+                  setOptimalUserTouched(true);
+                  setOptimalAutoSource(null);
+                  optimalAutoFilledRef.current = false;
+                  setActiveVkbField('optimal');
+                }}
                 onBlur={() => setActiveVkbField(f => f === 'optimal' ? null : f)}
                 ref={el => { optimalScrambleRef.current = el; if (el) autoResize(el); }}
                 style={{ overflow: 'hidden', resize: 'none' }}
@@ -2061,6 +2088,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     type="text"
                     list="recon-method-options"
                     value={form.method || ''}
+                    onFocus={() => setMethodUserTouched(true)}
                     onChange={e => { setField('method', e.target.value); setMethodUserTouched(true); }}
                   />
                   <datalist id="recon-method-options">
@@ -2075,6 +2103,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     type="text"
                     list="recon-cube-options"
                     value={form.cube || ''}
+                    onFocus={() => setCubeUserTouched(true)}
                     onChange={e => { setField('cube', e.target.value); setCubeUserTouched(true); }}
                   />
                   <datalist id="recon-cube-options">
