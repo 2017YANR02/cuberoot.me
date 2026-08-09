@@ -2079,7 +2079,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 <span className="submit-label">{tr({ zh: '未复原原因', en: 'Reason the puzzle is not solved' })} *</span>
                 <span className="submit-hint submit-hint-warn" role="alert">
                   {tr({
-                    zh: '应用打乱和解法后,魔方没有还原。如果这是刻意保留的不完整复盘,请说明原因；否则请修正解法。',
+                    zh: '魔方未还原.修复解法,或说明未还原理由',
                     en: 'After applying the scramble and solution, the puzzle is not solved. If this incomplete reconstruction is intentional, explain why; otherwise, fix the solution.',
                   })}
                 </span>
