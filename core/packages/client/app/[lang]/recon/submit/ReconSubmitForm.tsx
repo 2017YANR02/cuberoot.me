@@ -63,6 +63,7 @@ import { buildNormalizedSolution, hasNormalizableCrossMove } from '@/lib/recon-n
 import { encodeUrlAlg, decodeUrlAlg } from '@/lib/cubedb-url';
 import { simPuzzleForReconEvent, buildSimQuery } from '@/lib/sim-recon-link';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
+import { checkReconCompletion } from '@cuberoot/shared/recon-completion';
 import { loadComps, type Comp } from '@/lib/comp-search';
 import type { WcaPersonLite } from '@/lib/wca-api';
 import { ArrowLeft, ArrowRightLeft, History, Home, LogIn, UserPlus, ListPlus, AlertTriangle, Rows3, Globe, Link2, Lock } from 'lucide-react';
@@ -185,6 +186,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   }, [flagVer]);
 
   const solutionFieldRef = useRef<ReconSolutionFieldHandle>(null);
+  const unsolvedReasonRef = useRef<HTMLTextAreaElement>(null);
 
   const [form, setForm] = useState<Partial<ReconSolve>>({
     official: 'wca',
@@ -219,6 +221,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const [avgInput, setAvgInput] = useState('');
   const [execInput, setExecInput] = useState('');
   const [dupId, setDupId] = useState<number | null>(null);
+  const [needsUnsolvedReason, setNeedsUnsolvedReason] = useState(false);
   const [avgUserTouched, setAvgUserTouched] = useState(false);
   const [avgAutoSource, setAvgAutoSource] = useState<string | null>(null);
   const [avgLoading, setAvgLoading] = useState(false);
@@ -317,6 +320,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         reconDate: toDateInput(solve.reconDate),
       };
       setForm(normalized);
+      setNeedsUnsolvedReason(!!solve.unsolvedReason);
       const baseKey = `${solve.personId ?? ''}|${solve.event ?? ''}|${solve.comp ?? ''}|${solve.compWcaId ?? ''}|${solve.round ?? ''}`;
       loadedAvgKeySnapshot.current = baseKey;
       loadedTimeKeySnapshot.current = `${baseKey}|${solve.solveNum ?? ''}`;
@@ -1330,6 +1334,26 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     }
     setSaving(true);
     try {
+      const completion = await checkReconCompletion({
+        event: form.event || '',
+        scramble: form.wcaScramble || form.optimalScramble || '',
+        solution: form.solution || '',
+      });
+      if (completion.status === 'invalid') {
+        alert(tr({
+          zh: '打乱或解法里有无法识别的魔方记号,请修正后再提交。',
+          en: 'The scramble or solution contains puzzle notation that cannot be parsed. Fix it before submitting.',
+        }));
+        return;
+      }
+      const unsolvedReason = form.unsolvedReason?.trim() ?? '';
+      if (completion.status === 'unsolved' && !unsolvedReason) {
+        setNeedsUnsolvedReason(true);
+        requestAnimationFrame(() => unsolvedReasonRef.current?.focus());
+        return;
+      }
+      setNeedsUnsolvedReason(completion.status === 'unsolved');
+
       const data: Partial<ReconSolve> = {
         ...form,
         date: toDateInput(form.date),
@@ -1338,6 +1362,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         reconerId: form.reconerId?.trim() ?? '',
         // 非重复提交不落原因(选择器仅在 dupId 命中时出现,残留值在此清掉)
         dupReason: dupId != null ? form.dupReason : undefined,
+        // 已复原时主动清掉旧理由；未复原时只保存去掉首尾空白后的说明。
+        unsolvedReason: completion.status === 'unsolved' ? unsolvedReason : null,
       };
       if (stats) {
         data.stm = stats.stm;
@@ -2047,6 +2073,27 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 />
               )}
             </div>
+
+            {(needsUnsolvedReason || !!form.unsolvedReason) && (
+              <label className="submit-field submit-block">
+                <span className="submit-label">{tr({ zh: '未复原原因', en: 'Reason the puzzle is not solved' })} *</span>
+                <span className="submit-hint submit-hint-warn" role="alert">
+                  {tr({
+                    zh: '应用打乱和解法后,魔方没有还原。如果这是刻意保留的不完整复盘,请说明原因；否则请修正解法。',
+                    en: 'After applying the scramble and solution, the puzzle is not solved. If this incomplete reconstruction is intentional, explain why; otherwise, fix the solution.',
+                  })}
+                </span>
+                <textarea
+                  ref={unsolvedReasonRef}
+                  className="submit-field-textarea"
+                  value={form.unsolvedReason || ''}
+                  onChange={(event) => setField('unsolvedReason', event.target.value)}
+                  rows={2}
+                  maxLength={1000}
+                  required
+                />
+              </label>
+            )}
 
             <div className="submit-row">
                 <label className={`submit-field submit-field-wide${reusedCls('videoUrl')}`}>

@@ -50,6 +50,7 @@ const FIELD_MAP_JSON_TO_SQL: Record<string, string> = {
   coPersons: 'co_persons',
   videoUrl: 'video_url',
   dupReason: 'dup_reason',
+  unsolvedReason: 'unsolved_reason',
 };
 
 // NOTE: 反向映射（运行时自动生成）
@@ -69,7 +70,7 @@ const ALLOWED_COLUMNS = new Set([
   'cross_type', 'cross_stm', 'f2l', 'll', 's_move', 'cross_color',
   'cube', 'reconer', 'reconer_id', 'group_id', 'recon_date', 'created_at',
   'added_by', 'added_by_id', 'comp_wca_id', 'person_country', 'co_persons',
-  'video_url', 'alternatives', 'dup_reason', 'visibility',
+  'video_url', 'alternatives', 'dup_reason', 'unsolved_reason', 'visibility',
 ]);
 
 // 同选手+同打乱重复提交时,用户必须二选一说明原因(否则后端拒收)。空=非重复提交。
@@ -252,6 +253,15 @@ export function validateRow(row: Record<string, unknown>): string[] {
   if (row.dup_reason !== undefined && row.dup_reason !== null
       && !(DUP_REASONS as readonly string[]).includes(String(row.dup_reason))) {
     errors.push(`dup_reason must be one of: ${DUP_REASONS.join(', ')}`);
+  }
+
+  if (row.unsolved_reason !== undefined && row.unsolved_reason !== null
+      && String(row.unsolved_reason).trim().length === 0) {
+    errors.push('unsolved_reason must not be blank');
+  }
+  if (row.unsolved_reason !== undefined && row.unsolved_reason !== null
+      && String(row.unsolved_reason).length > 1000) {
+    errors.push('unsolved_reason exceeds max length (1000)');
   }
 
   // official: 三值枚举(jsonToRow 已归一化,此处兜底防绕过)

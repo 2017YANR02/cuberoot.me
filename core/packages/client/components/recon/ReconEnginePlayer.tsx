@@ -27,6 +27,7 @@
 import { type ReactNode, type RefObject } from 'react';
 import { getPuzzleId } from '@/lib/recon-utils';
 import { cleanForPlayer } from '@/lib/recon-alg-utils';
+import { cleanReconAlgText } from '@cuberoot/shared/recon-completion';
 import { parseSkewbMoves } from '@/app/[lang]/sim/engine/skewb/skewbState';
 import { parsePyraMoves } from '@/app/[lang]/sim/engine/pyra/pyraState';
 import TwistySection from '@/components/TwistySection';
@@ -123,7 +124,9 @@ export default function ReconEnginePlayer({
       <TwistySection
         puzzle={puzzleId}
         scramble={scramble}
-        alg={cleanForPlayer(solution)}
+        alg={puzzleId === 'clock' || puzzleId === 'megaminx'
+          ? cleanReconAlgText(solution)
+          : cleanForPlayer(solution)}
         playerRef={playerRef}
         fillPane={fillPane}
         backView={backView}
