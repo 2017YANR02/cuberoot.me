@@ -128,7 +128,7 @@ import { stripGripMarks } from '@cuberoot/shared/alg-notation';
 import { stripFtnBlocks, FTN_TOKEN, parseFtnPin } from './engine/hands/ftn';
 import { WheelPicker } from '@/components/WheelPicker';
 import { ClearButton } from '@/components/ClearButton';
-import { CubingIcon } from '@/components/EventIcon/EventIcon';
+import PuzzlePicker, { type PuzzlePickerGroup } from '@/components/PuzzlePicker/PuzzlePicker';
 import { eventDisplayName } from '@/lib/wca-events';
 import AlgInput from '@/components/AlgInput';
 import PlaybackBar from '@/components/PlaybackBar';
@@ -316,54 +316,29 @@ export function PuzzleTypeSelect({ value, onChange, isZh, allowedValues }: {
   /** Optional subset for another /sim tool that shares this selector. */
   allowedValues?: readonly string[];
 }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [open]);
-
-  const options = useMemo(() => {
+  const options = (() => {
     if (!allowedValues) return ALL_PUZZLE_TYPE_OPTIONS;
     const allowed = new Set(allowedValues);
     return ALL_PUZZLE_TYPE_OPTIONS.filter((option) => allowed.has(option.value));
-  }, [allowedValues]);
-  const current = options.find(o => o.value === value) ?? options[0] ?? ALL_PUZZLE_TYPE_OPTIONS[0];
+  })();
+  const current = options.find((option) => option.value === value) ?? options[0];
+  const groups: readonly PuzzlePickerGroup[] = [{
+    id: 'sim-puzzles',
+    label: ['Puzzles', '项目'][Number(isZh)],
+    items: options.map((option) => ({
+      id: option.value,
+      label: [option.labelEn, option.labelZh][Number(isZh)],
+      iconClass: option.iconClass,
+    })),
+  }];
 
   return (
-    <div ref={ref} className="sim-puzzle-type-select">
-      <button
-        type="button"
-        title={isZh ? current.labelZh : current.labelEn}
-        className="sim-puzzle-select sim-puzzle-type-trigger"
-        onClick={() => setOpen(o => !o)}
-      >
-        <CubingIcon icon={current.iconClass} className="sim-puzzle-type-icon" />
-        <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden>
-          <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-        </svg>
-      </button>
-      {open && (
-        <div className="sim-puzzle-type-popup">
-          {options.map(o => (
-            <button
-              key={o.value}
-              type="button"
-              title={isZh ? o.labelZh : o.labelEn}
-              className={`sim-puzzle-type-item${o.value === value ? ' sim-puzzle-type-item--active' : ''}`}
-              onClick={() => { onChange(o.value); setOpen(false); }}
-            >
-              <CubingIcon icon={o.iconClass} className="sim-puzzle-type-icon" />
-              <span className="sim-puzzle-type-label">{isZh ? o.labelZh : o.labelEn}</span>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+    <PuzzlePicker
+      isZh={isZh}
+      selectedEvent={current?.value}
+      groups={groups}
+      onSelect={onChange}
+    />
   );
 }
 

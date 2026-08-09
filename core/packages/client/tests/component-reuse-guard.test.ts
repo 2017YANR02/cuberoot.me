@@ -42,7 +42,47 @@ describe('component reuse rule registry', () => {
         <X size={16} />
       </button>`;
     expect(scanComponentReimplementations(source)).toHaveLength(1);
-    expect(COMPONENT_REUSE_RULES[0].component).toBe('ClearButton');
+    expect(COMPONENT_REUSE_RULES.find((rule) => rule.id === 'clear-button')?.component).toBe('ClearButton');
+  });
+
+  it('recognizes page-local project dropdowns and native project selects', () => {
+    const dropdown = `
+      function EventPickerDropdown() {
+        const [open, setOpen] = useState(false);
+        return <button onClick={() => setOpen(!open)}><EventIcon event="333" /></button>;
+      }`;
+    const nativeSelect = `
+      <select aria-label={tr({ zh: '拼图', en: 'Puzzle' })}>
+        {events.map((event) => <option value={event.id}>{event.name}</option>)}
+      </select>`;
+    expect(scanComponentReimplementations(dropdown).map((hit) => hit.ruleId)).toContain('puzzle-picker');
+    expect(scanComponentReimplementations(nativeSelect).map((hit) => hit.ruleId)).toContain('puzzle-picker');
+  });
+
+  it('allows thin data wrappers around the shared project pickers', () => {
+    expect(scanComponentReimplementations(`
+      function PuzzleTypeSelect() {
+        return <PuzzlePicker selectedEvent={event} groups={groups} onSelect={setEvent} />;
+      }`)).toEqual([]);
+    expect(scanComponentReimplementations(`
+      function EventSelector() {
+        return <WcaEventSelector availableEvents={events} selectedEvent={event} onSelect={setEvent} />;
+      }`)).toEqual([]);
+  });
+
+  it('keeps the named product surfaces on the shared PuzzlePicker', () => {
+    const surfaces = [
+      join(ROOT, 'components', 'RecentScrambles.tsx'),
+      join(ROOT, 'app', '[lang]', 'predict', 'page.tsx'),
+      join(ROOT, 'app', '[lang]', 'timer', '_shell', 'SoloView.tsx'),
+      join(ROOT, 'app', '[lang]', 'sim', 'PlayerControls.tsx'),
+      join(ROOT, 'app', '[lang]', 'scramble', '_components', 'SolveTabs.tsx'),
+    ];
+    for (const file of surfaces) {
+      const source = readFileSync(file, 'utf8');
+      expect(source, relative(ROOT, file)).toContain("from '@/components/PuzzlePicker/PuzzlePicker'");
+      expect(source, relative(ROOT, file)).toContain('<PuzzlePicker');
+    }
   });
 
   it('allows status crosses, text buttons, the shared component, and reasoned exceptions', () => {
@@ -67,32 +107,40 @@ describe('component reuse rule registry', () => {
         patch: `*** Begin Patch\n*** Update File: D:\\cube\\cuberoot.me\\core\\packages\\client\\app\\demo\\page.tsx\n@@\n+${block}\n*** End Patch`,
       },
     };
+    const exec = {
+      tool_input: `const patch = "*** Begin Patch\\n*** Update File: D:\\\\cube\\\\cuberoot.me\\\\core\\\\packages\\\\client\\\\app\\\\demo\\\\page.tsx\\n@@\\n+${block.replaceAll('"', '\\"')}\\n*** End Patch"; await tools.apply_patch(patch);`,
+    };
     expect(violationsFromHookPayload(edit, new Set())).toHaveLength(1);
     expect(violationsFromHookPayload(patch, new Set())).toHaveLength(1);
+    expect(violationsFromHookPayload(exec, new Set())).toHaveLength(1);
   });
 
   it('keeps source violations at or below the legacy baseline', () => {
-    let count = 0;
+    const counts = new Map<string, number>();
     const offenders: string[] = [];
     for (const base of SCAN_DIRS) {
       for (const file of walk(join(ROOT, base))) {
         const hits = scanComponentReimplementations(readFileSync(file, 'utf8'));
-        if (hits.length) offenders.push(`${hits.length}\t${relative(ROOT, file)}`);
-        count += hits.length;
+        if (hits.length) offenders.push(`${hits.map((hit) => hit.ruleId).join(',')}\t${relative(ROOT, file)}`);
+        for (const hit of hits) counts.set(hit.ruleId, (counts.get(hit.ruleId) ?? 0) + 1);
       }
     }
     expect(
-      count,
-      `Hand-written close/clear cross buttons = ${count} (baseline ${BASELINE}). ` +
+      counts.get('clear-button') ?? 0,
+      `Hand-written close/clear cross buttons = ${counts.get('clear-button') ?? 0} (baseline ${BASELINE}). ` +
         `Use <ClearButton variant="standalone"> and lower BASELINE; never raise it.\n${offenders.join('\n')}`,
     ).toBeLessThanOrEqual(BASELINE);
+    expect(
+      counts.get('puzzle-picker') ?? 0,
+      `Page-local project selectors must be consolidated into PuzzlePicker.\n${offenders.join('\n')}`,
+    ).toBe(0);
   });
 
   it('is wired into both repository hook configurations and the component catalog', () => {
     const codex = JSON.parse(readFileSync(join(REPO_ROOT, '.codex', 'hooks.json'), 'utf8'));
     const preTool = codex.hooks?.PreToolUse ?? [];
     expect(preTool.some((group: { matcher?: string; hooks?: Array<{ command?: string }> }) =>
-      group.matcher?.includes('apply_patch')
+      group.matcher?.includes('apply_patch') && group.matcher?.includes('exec')
       && group.hooks?.some((hook) => hook.command?.includes('block-component-reimplementation.ps1')),
     )).toBe(true);
     expect(existsSync(join(REPO_ROOT, '.claude', 'hooks', 'block-component-reimplementation.ps1'))).toBe(true);
@@ -100,5 +148,7 @@ describe('component reuse rule registry', () => {
     const catalog = readFileSync(join(ROOT, 'app', '[lang]', 'code', 'components', '_catalog.tsx'), 'utf8');
     expect(catalog).toContain("name: 'ClearButton'");
     expect(catalog).toContain("import { ClearButton } from '@/components/ClearButton';");
+    expect(catalog).toContain("name: 'PuzzlePicker'");
+    expect(catalog).toContain("import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';");
   });
 });

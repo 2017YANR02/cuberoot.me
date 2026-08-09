@@ -32,7 +32,9 @@ import HeaderToggles from '@/components/HeaderToggles';
 import LiquidGlassChips from '@/components/LiquidGlassChips';
 import PlaybackBar from '@/components/PlaybackBar';
 import BoolToggle from '@/components/BoolToggle';
+import PuzzlePicker, { type PuzzlePickerGroup } from '@/components/PuzzlePicker/PuzzlePicker';
 import { tr } from '@/i18n/tr';
+import { eventDisplayName } from '@/lib/wca-events';
 import { CUBE_ORIENTATIONS, orientedFaceColors } from '@/lib/cube-orientation';
 import CubeOrientationSelect from '@/components/CubeOrientationSelect';
 import {
@@ -49,7 +51,7 @@ import {
   type PredictBoardChallenge, type PredictTrack,
 } from './_lib/puzzle_challenge';
 import {
-  getPuzzle, stickerCount, PREDICT_PUZZLE_IDS, PUZZLE_LABELS,
+  getPuzzle, stickerCount, PREDICT_PUZZLE_IDS,
   type PredictPuzzle, type PredictPuzzleId,
 } from './_lib/puzzles';
 import './predict.css';
@@ -72,6 +74,19 @@ const MODE_LABELS: Record<PredictMode, { zh: string; en: string }> = {
   cross: { zh: '十字', en: 'Cross' },
   twoLayers: { zh: '前两层', en: 'Two layers' },
   f2l: { zh: 'F2L', en: 'F2L' },
+};
+
+const PREDICT_PICKER_META: Record<PredictPuzzleId, { eventId: string; iconClass: string }> = {
+  2: { eventId: '222', iconClass: 'event-222' },
+  3: { eventId: '333', iconClass: 'event-333' },
+  4: { eventId: '444', iconClass: 'event-444' },
+  5: { eventId: '555', iconClass: 'event-555' },
+  6: { eventId: '666', iconClass: 'event-666' },
+  7: { eventId: '777', iconClass: 'event-777' },
+  megaminx: { eventId: 'minx', iconClass: 'event-minx' },
+  pyraminx: { eventId: 'pyram', iconClass: 'event-pyram' },
+  skewb: { eventId: 'skewb', iconClass: 'event-skewb' },
+  ivy: { eventId: 'ivy', iconClass: 'unofficial-ivy' },
 };
 
 /** 三阶那套追踪档(它的引擎只认这三档;中心在三阶上不动,追它没意义)。 */
@@ -184,6 +199,18 @@ function PredictPageInner() {
   const sources = is333 ? SOURCES : PUZZLE_SOURCES;
   const source = sources.includes(rawSource) ? rawSource : 'random';
   const moveCount = rawMoveCount ?? puzzle.defaultMoveCount;
+  const puzzlePickerGroups: readonly PuzzlePickerGroup[] = [{
+    id: 'puzzles',
+    label: tr({ zh: '项目', en: 'Puzzles' }),
+    items: PREDICT_PUZZLE_IDS.map((id) => {
+      const meta = PREDICT_PICKER_META[id];
+      return {
+        id,
+        label: tr({ zh: eventDisplayName(meta.eventId, true), en: eventDisplayName(meta.eventId, false) }),
+        iconClass: meta.iconClass,
+      };
+    }),
+  }];
 
   /** 色号 → 屏幕上的颜色。立方体族吃 24 档拿方朝向,金字塔 / 五魔方那种没有对面的不吃。 */
   const shown = useMemo(
@@ -383,16 +410,11 @@ function PredictPageInner() {
           .predict-controls 的孩子,由容器的 align-items:flex-end 与有标题那几个的
           下沿对齐 —— 否则整行会高低错开。 */}
       <div className="predict-controls">
-        <select
-          className="predict-select"
-          aria-label={tr({ zh: '拼图', en: 'Puzzle' })}
-          value={puzzleId}
-          onChange={(e) => void setPuzzleId(e.target.value as PredictPuzzleId)}
-        >
-          {PREDICT_PUZZLE_IDS.map((id) => (
-            <option key={id} value={id}>{tr(PUZZLE_LABELS[id])}</option>
-          ))}
-        </select>
+        <PuzzlePicker
+          selectedEvent={puzzleId}
+          groups={puzzlePickerGroups}
+          onSelect={(id) => void setPuzzleId(id as PredictPuzzleId)}
+        />
 
         {is333 && (
           <LiquidGlassChips<PredictMode>

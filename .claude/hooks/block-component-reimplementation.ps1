@@ -9,9 +9,8 @@ $OutputEncoding = New-Object System.Text.UTF8Encoding $false
 $payload = [Console]::In.ReadToEnd()
 if ([string]::IsNullOrEmpty($payload)) { exit 0 }
 
-# Current registry starts with the canonical ClearButton rule. Avoid starting node
-# for edits that cannot contain a hand-written close / clear cross.
-if ($payload -notmatch '<button|<X\b|×|✕|关闭|close|clear|dismiss') { exit 0 }
+# Cheap gate for the current registry: close/clear buttons and project selectors.
+if ($payload -notmatch '<button|<select|<X\b|×|✕|关闭|close|clear|dismiss|EventIcon|CubingIcon|EventPicker|PuzzlePicker|PuzzleTypeSelect|eventPickerOpen|puzzlePickerOpen') { exit 0 }
 
 $detector = Join-Path $PSScriptRoot '../../core/packages/client/scripts/hook-detect-component-reimplementation.mjs'
 if (-not (Test-Path $detector)) { exit 0 } # fail open; CI is authoritative

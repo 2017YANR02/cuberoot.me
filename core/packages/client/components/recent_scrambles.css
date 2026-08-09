@@ -29,44 +29,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* 项目选择器收进下拉:触发钮只显示当前图标,菜单里摊开 WcaEventSelector 原生网格。 */
-.rs-event-picker { position: relative; display: inline-flex; }
-.rs-event-trigger {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.1rem;
-  height: 2.1rem;
-  padding: 0;
-  border: none;
-  border-radius: 8px;
-  background: none;
-  cursor: pointer;
-  transition: color 0.12s;
-  color: var(--foreground);
-}
-.rs-event-trigger:hover { color: var(--accent); }
-.rs-event-trigger.is-open { color: var(--accent); }
-.rs-event-trigger:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
-.rs-event-trigger .rs-evt { width: 1.3rem; height: 1.3rem; color: inherit; }
-.rs-event-panel {
-  /* anchored-panel: clamped (usePanelClamp in RecentScrambles) */
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  z-index: 100;
-  width: max(280px, min(90vw, 360px));
-  padding: 0.5rem 0.6rem;
-  background: var(--popover);
-  border: 1px solid var(--border-default);
-  border-radius: 10px;
-  box-shadow: 0 10px 28px color-mix(in srgb, #000 22%, transparent);
-}
-.rs-event-panel .wca-stats-event-selector {
-  margin: 0;
-  flex-wrap: wrap;
-}
-
 .rs-select {
   appearance: none;
   padding: 0.3rem 1.6rem 0.3rem 0.6rem;
