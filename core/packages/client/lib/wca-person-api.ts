@@ -170,7 +170,8 @@ const officialProfile = (wcaId: string) =>
   wcaJson<WcaPersonProfile>(`/persons/${encodeURIComponent(wcaId)}`);
 
 export interface WcaResultRow {
-  id: number;
+  /** WCA's person-results payload and our person-page mirror may omit the database id. */
+  id?: number | null;
   competition_id: string;
   event_id: string;
   round_type_id: string;
@@ -186,6 +187,13 @@ export interface WcaResultRow {
   /** 直播·非官方成绩(cubing.com / WCA Live,官方尚未收录)— 仅成绩 tab 展示,不进 PR/纪录/名次和 */
   live?: boolean;
   source?: string;          // 'cubing' | 'wca_live'(仅 live 行)
+}
+
+/** A result row's actual business identity; stable across mirror / WCA / live data sources. */
+export function wcaResultRowKey(
+  row: Pick<WcaResultRow, 'competition_id' | 'event_id' | 'round_type_id'>,
+): string {
+  return `${row.competition_id}|${row.event_id}|${row.round_type_id}`;
 }
 
 async function officialResults(wcaId: string): Promise<WcaResultRow[]> {

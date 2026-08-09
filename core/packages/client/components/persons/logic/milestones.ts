@@ -10,7 +10,7 @@
 //   grand_slam                完成所有 18 个现役 WCA 项目
 //   comeback                  连续两场比赛间隔 ≥ 3 年
 
-import type { WcaResultRow, WcaCompetition, WcaPersonProfile } from '@/lib/wca-person-api';
+import { wcaResultRowKey, type WcaResultRow, type WcaCompetition, type WcaPersonProfile } from '@/lib/wca-person-api';
 
 export type MilestoneType =
   | 'first_competition'
@@ -307,7 +307,7 @@ function sortResultsByDate(
     const da = compById.get(a.competition_id)?.start_date ?? '';
     const db = compById.get(b.competition_id)?.start_date ?? '';
     if (da !== db) return da.localeCompare(db);
-    return a.id - b.id;
+    return wcaResultRowKey(a).localeCompare(wcaResultRowKey(b));
   });
 }
 

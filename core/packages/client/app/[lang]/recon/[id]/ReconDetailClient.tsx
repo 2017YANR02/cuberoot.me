@@ -11,10 +11,10 @@ import { useParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import {
   Box, PenLine, Calendar, UserPlus, StickyNote,
-  ChartColumn, Video, MessageCircle, TriangleAlert,
+  ChartColumn, Video, TriangleAlert,
   Pencil, Trash2, Pin, PinOff, Plus, Key,
-  Globe, Radio, ClipboardPaste, ChevronDown, ChevronUp,
-  GitFork, ArrowLeft, Copy, Check, Maximize2, Minimize2,
+  ChevronDown, ChevronUp,
+  ArrowLeft, Copy, Check, Maximize2, Minimize2,
   Lock, Link2, LogIn,
 } from 'lucide-react';
 import type { ReconSolve, ReconComment, ReconAlternative } from '@cuberoot/shared';
@@ -38,13 +38,14 @@ import { localizeCompName } from '@/lib/comp-localize';
 import { displayCity } from '@/lib/city-display';
 import { cleanForPlayer, countMovesExpanded } from '@/lib/recon-alg-utils';
 import {
-  fetchAttempts, fetchCubingAttempts, fetchScrambles, matchRoundType,
+  extractPersonCompetitionResults, fetchAttempts, fetchCubingAttempts, fetchScrambles, fetchWcaResults, matchRoundType,
 } from '@/lib/wca-results-api';
 import {
-  fetchWcaPersonResults, fetchWcaPersonCompetitions, fetchWcaPersonLiveResults,
+  fetchWcaPersonResults, fetchWcaPersonCompetitions, fetchWcaPersonLiveResults, wcaResultRowKey,
   type WcaResultRow as WcaResultsRow, type WcaCompetition,
 } from '@/lib/wca-person-api';
-import { mergePersonLive } from '@/lib/person-live-merge';
+import { mergePersonCompetitionResults, mergePersonLive } from '@/lib/person-live-merge';
+import { fetchCompInfo } from '@/lib/comp-wcif';
 import { computePrRank } from '@/components/persons/logic/progress';
 import { useLivePrRanks } from '@/components/persons/logic/use-live-pr-ranks';
 import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } from '@/lib/wca-round-meta';
@@ -743,7 +744,6 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
   const [loaded, setLoaded] = useState(false);
   const [wcaAttempts, setWcaAttempts] = useState<(number | null)[] | null>(null);
   const [scrambles, setScrambles] = useState<(string | null)[] | null>(null);
-  const [attemptsSource, setAttemptsSource] = useState<'wca' | 'cubing' | null>(null);
   const [pastedAttempts, setPastedAttempts] = useState<(number | null)[] | null>(null);
   const [showPaste, setShowPaste] = useState(false);
   const [pasteRaw, setPasteRaw] = useState('');
@@ -767,13 +767,11 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
       if (cancelled) return;
       if (wca) {
         setWcaAttempts(wca);
-        setAttemptsSource('wca');
       } else {
         const cubing = await fetchCubingAttempts(solve.compWcaId!, solve.event!, solve.round!, solve.personId!);
         if (cancelled) return;
         if (cubing) {
           setWcaAttempts(cubing);
-          setAttemptsSource('cubing');
         }
       }
       const sc = await fetchScrambles(solve.compWcaId!, solve.event!, solve.round!, solve.groupId);
@@ -834,25 +832,10 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
   const hasAnyAttempt = wcaAttempts != null || pastedAttempts != null;
   const hasMissingSlot = slots.some(n => !bySolveNum.get(n));
 
-  const sourceKind = pastedAttempts ? 'paste' : attemptsSource;
-  const sourceIcon = (() => {
-    if (sourceKind === 'wca') return <Globe size={12} aria-label="WCA" />;
-    if (sourceKind === 'cubing') return <Radio size={12} aria-label="cubing.com" />;
-    if (sourceKind === 'paste') return <ClipboardPaste size={12} aria-label="paste" />;
-    return null;
-  })();
-  const sourceTitle = sourceKind === 'wca' ? 'WCA'
-    : sourceKind === 'cubing' ? 'cubing.com'
-    : sourceKind === 'paste' ? t('recon.pasteAttempts')
-    : '';
-
   return (
     <div className="detail-section">
       <div className="detail-section-label">
         {t('recon.sameRound')}
-        {sourceIcon && (
-          <span className="same-round-source" title={sourceTitle}>{sourceIcon}</span>
-        )}
       </div>
       <div className="detail-same-round">
         {slots.map(n => {
@@ -983,6 +966,8 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
   const [official, setOfficial] = useState<WcaResultsRow[] | null>(null);
   const [officialComps, setOfficialComps] = useState<WcaCompetition[] | null>(null);
   const [live, setLive] = useState<{ results: WcaResultsRow[]; comps: WcaCompetition[] } | null>(null);
+  const [competitionRows, setCompetitionRows] = useState<WcaResultsRow[] | null>(null);
+  const [competitionInfo, setCompetitionInfo] = useState<WcaCompetition | null>(null);
   const [reconByRoundSolve, setReconByRoundSolve] = useState<Map<string, ReconSolve>>(new Map());
 
   useEffect(() => {
@@ -996,14 +981,71 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
       .catch(() => setLive({ results: [], comps: [] }));
   }, [solve.personId]);
 
+  // The person-page mirror and pre-official live table deliberately hand off at different moments.
+  // Always read the current competition too, so that hand-off can never hide some/all rounds.
+  useEffect(() => {
+    const compId = solve.compWcaId;
+    const personId = solve.personId;
+    const eventId = solve.event ? toWcaEventId(solve.event) : null;
+    let cancelled = false;
+    setCompetitionRows(null);
+    setCompetitionInfo(null);
+    if (!compId || !personId || !eventId) {
+      setCompetitionRows([]);
+      return () => { cancelled = true; };
+    }
+    fetchWcaResults(compId, eventId)
+      .then((data) => {
+        if (!cancelled) setCompetitionRows(extractPersonCompetitionResults(data, personId));
+      })
+      .catch(() => { if (!cancelled) setCompetitionRows([]); });
+    fetchCompInfo(compId)
+      .then((info) => {
+        if (cancelled || !info) return;
+        setCompetitionInfo({
+          id: compId,
+          name: info.name,
+          city: info.city,
+          country_iso2: info.country_iso2,
+          start_date: info.start_date,
+          end_date: info.end_date,
+        });
+      })
+      .catch(() => { /* result rows do not depend on metadata */ });
+    return () => { cancelled = true; };
+  }, [solve.compWcaId, solve.event, solve.personId]);
+
   // 官方成绩一旦收录某场,该场直播行整场丢弃(官方权威);剩下的直播行 + 其比赛元数据追加进来。
   const merged = useMemo(() => {
-    if (!official || !officialComps) return null;
+    // Competition-scoped rows can render without waiting for either person endpoint.
+    if (!official || !officialComps) return competitionRows ? { results: [], comps: [] } : null;
     if (!live || live.results.length === 0) return { results: official, comps: officialComps };
     return mergePersonLive(official, officialComps, live.results, live.comps);
-  }, [official, officialComps, live]);
-  const allResults = merged?.results ?? null;
-  const allComps = merged?.comps ?? null;
+  }, [official, officialComps, live, competitionRows]);
+  const effectiveCompWcaId = useMemo(() => {
+    if (solve.compWcaId) return solve.compWcaId;
+    if (!merged?.comps || !solve.comp) return null;
+    return merged.comps.find(c => c.name === solve.comp)?.id ?? null;
+  }, [solve.compWcaId, solve.comp, merged?.comps]);
+
+  const allResults = useMemo(() => {
+    if (!merged) return null;
+    return mergePersonCompetitionResults(merged.results, competitionRows ?? []);
+  }, [merged, competitionRows]);
+
+  const allComps = useMemo(() => {
+    if (!merged) return null;
+    if (!effectiveCompWcaId || merged.comps.some(c => c.id === effectiveCompWcaId)) return merged.comps;
+    const date = competitionInfo?.start_date || solve.date?.slice(0, 10) || '9999-12-31';
+    return [...merged.comps, competitionInfo ?? {
+      id: effectiveCompWcaId,
+      name: solve.comp ?? effectiveCompWcaId,
+      city: '',
+      country_iso2: solve.country?.toUpperCase() ?? '',
+      start_date: date,
+      end_date: date,
+    }];
+  }, [merged, effectiveCompWcaId, competitionInfo, solve.comp, solve.country, solve.date]);
 
   useEffect(() => {
     listRecons().then(all => {
@@ -1029,12 +1071,6 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
   const findReconForCell = (roundTypeId: string, attemptNum: number): number | undefined =>
     findReconStatsForCell(roundTypeId, attemptNum)?.id;
 
-  const effectiveCompWcaId = useMemo(() => {
-    if (solve.compWcaId) return solve.compWcaId;
-    if (!allComps || !solve.comp) return null;
-    return allComps.find(c => c.name === solve.comp)?.id ?? null;
-  }, [solve.compWcaId, solve.comp, allComps]);
-
   // 取整 comp 对象拿 start_date / country_iso2,与 /wca/persons 的「点去复盘」链接同源(同一比赛日期/国别)。
   const compObj = useMemo(
     () => allComps?.find(c => c.id === effectiveCompWcaId) ?? null,
@@ -1051,8 +1087,8 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
 
   // PR / 名次染色只算官方成绩:直播行不参与,也不挤掉官方 PR 标记。
   const prRank = useMemo(
-    () => (official && officialComps ? computePrRank(official, officialComps) : new Map()),
-    [official, officialComps],
+    () => (allResults && allComps ? computePrRank(allResults.filter(r => !r.live), allComps) : new Map()),
+    [allResults, allComps],
   );
   // 直播行另算一份「官方 + 直播」的时间序名次,使直播行的单次/平均/逐把 PR 与官方行同口径且自洽。
   const prRankLive = useMemo(
@@ -1101,8 +1137,9 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
             </thead>
             <tbody>
               {rows.map(r => {
-                const rank = r.live ? prRankLive?.get(r.id) : prRank.get(r.id);
-                const liveRank = r.live ? livePrRanks.get(r.id) : null;
+                const rowKey = wcaResultRowKey(r);
+                const rank = r.live ? prRankLive?.get(rowKey) : prRank.get(rowKey);
+                const liveRank = r.live ? livePrRanks.get(rowKey) : null;
                 const singleRank = rank?.singleRank ?? liveRank?.pS ?? null;
                 const averageRank = rank?.averageRank ?? liveRank?.pA ?? null;
                 const singleRecord = r.regional_single_record || (liveRank?.singleTag || null);
@@ -1126,7 +1163,7 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
                 const roundRecons = r.attempts.map((_, i) => findReconStatsForCell(r.round_type_id, i + 1));
                 const hasRecon = roundRecons.some(Boolean);
                 return (
-                  <tr key={r.id} className={r.live ? 'same-comp-event-row-live' : ''}>
+                  <tr key={rowKey} className={r.live ? 'same-comp-event-row-live' : ''}>
                     <td>
                       <div className="same-comp-round-cell">
                         <div className="same-comp-round-head">
@@ -1614,7 +1651,7 @@ function AlternativesSection({ reconId, alts, setAlts, solveTime, event }: {
   return (
     <div className="detail-section">
       <div className="detail-section-label">
-        <GitFork size={14} /> {t('recon.alternatives')} ({alts.length})
+        {t('recon.alternativeCount', { count: alts.length })}
       </div>
 
       {myKey ? (
@@ -1629,9 +1666,7 @@ function AlternativesSection({ reconId, alts, setAlts, solveTime, event }: {
         </div>
       )}
 
-      {alts.length === 0 ? (
-        <div className="alt-empty">{t('recon.emptyAlternatives')}</div>
-      ) : (
+      {alts.length > 0 && (
         <div className="yt-comment-list">
           {alts.map((alt, idx) => {
             const isOwn = !!myKey && myKey === alt.addedById;
@@ -1870,7 +1905,7 @@ function CommentsView({
   return (
     <div className="detail-section">
       <div className="detail-section-label">
-        <MessageCircle size={14} /> {t('recon.comments')} ({comments.length})
+        {t('recon.commentCount', { count: comments.length })}
       </div>
       <DiscussionComposer
         value={newComment}
@@ -1913,8 +1948,8 @@ function CommentsView({
                         onChange={setReplyText}
                         onSubmit={async () => { await handleSubmitReply(comment.id); }}
                         onCancel={cancelReply}
-                        placeholder={t('recon.writeReply')}
-                        submitLabel={t('recon.post')}
+                        placeholder=""
+                        submitLabel={t('recon.reply')}
                         loginHint=""
                         autoFocus
                       />

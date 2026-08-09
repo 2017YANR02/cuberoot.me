@@ -243,13 +243,6 @@ html[data-theme=dark] .wp-page {
     min-width: max-content;
     text-align: center;
 }
-.wp-hero-collection h2 {
-    margin: 0 0 5px;
-    color: var(--wp-text-sub);
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-}
 .wp-hero-collection dl {
     display: grid; grid-template-columns: repeat(3, max-content);
     gap: 0 18px;
