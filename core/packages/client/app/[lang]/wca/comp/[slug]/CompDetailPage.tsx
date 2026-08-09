@@ -449,7 +449,8 @@ function recordTagRank(tag: string): number {
 }
 
 // 扫所有轮次,收集本场产生的所有官方纪录 (单次 sr / 平均 ar)。同一 (项目, 选手, 单次|平均)
-// 只留最好一条 (跨轮多次破纪录时);按 comp.events 顺序分组,组内 WR→大洲→NR、单次先于平均。
+// 只留最好一条 (跨轮多次破纪录时);项目按本场最高纪录等级 WR→大洲→NR 分组,
+// 同等级保持 comp.events 顺序;组内同样 WR→大洲→NR、单次先于平均。
 function computeCompRecords(data: CompData): CompRecordGroup[] {
   const best = new Map<string, CompRecordEntry>();
   for (const ev of data.events) {
@@ -483,7 +484,7 @@ function computeCompRecords(data: CompData): CompRecordGroup[] {
     );
     out.push({ ev, rows });
   }
-  return out;
+  return out.sort((a, b) => recordTagRank(a.rows[0].tag) - recordTagRank(b.rows[0].tag));
 }
 
 // URL 的轮次统一用数字 1,2,3,4(第几轮),不再用 WCA round_type_id 字母('d'/'f'/...)。
