@@ -19,7 +19,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
-import WcaEventSelector from '@/components/WcaEventSelector';
+import PuzzlePicker, { type PuzzlePickerGroup } from '@/components/PuzzlePicker/PuzzlePicker';
 import { Flag } from '@/components/Flag';
 import { SubsetColorPicker, SubsetSwatch, useSubsetSelection, COLOR_LETTERS, COLOR_NAME, type ColorLetter, type ColorMode, type SubsetSelection } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import { localizeCompName } from '@/lib/comp-localize';
@@ -30,8 +30,8 @@ import { VARIANT_ORDER, stageLabel, variantLabel, BLOCK_DATA_VARIANTS, BLOCK_STA
 import { VariantSelect } from '@/components/VariantSelect';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { fetchRecentScramblesEvents, type RecentScramblesEventsJson, type RecentScrMeta } from '@/lib/recent-scrambles-events';
-import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { formatDateRangeIso } from '@/lib/wca-date';
+import { eventDisplayName } from '@/lib/wca-events';
 import './recent_scrambles.css';
 import './scroll_panel.css';
 import { tr } from '@/i18n/tr';
@@ -107,63 +107,6 @@ function batchDateRange(
   if (eventsJson?.meta) for (const k in eventsJson.meta) consider(eventsJson.meta[k].cd);
   if (!minStart) return null;
   return formatDateRangeIso(minStart, maxEnd).replace(/^\d{4}-/, '');
-}
-
-// 项目选择器收进下拉:触发按钮只显示当前项目图标,菜单里摊开 WcaEventSelector 原生图标网格
-// (共 28 处共用该组件,不改它本身;只在本栏外面套一层折叠壳)。
-function EventPickerDropdown({
-  availableEvents, curEvent, onSelect, isZh,
-}: { availableEvents: Set<string>; curEvent: string; onSelect: (id: string) => void; isZh: boolean }) {
-  const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-  const btnRef = useRef<HTMLButtonElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
-  usePanelClamp(open, panelRef); // 触发钮靠右时面板右缘可能越出视口 → 实测左移
-
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: PointerEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      setOpen(false);
-      btnRef.current?.focus();
-    };
-    document.addEventListener('pointerdown', onDown);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('pointerdown', onDown);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
-
-  return (
-    <div ref={rootRef} className="rs-event-picker">
-      <button
-        ref={btnRef}
-        type="button"
-        className={`rs-event-trigger${open ? ' is-open' : ''}`}
-        onClick={() => setOpen((v) => !v)}
-        aria-haspopup="true"
-        aria-expanded={open}
-        aria-label={tr({ zh: '项目', en: 'Puzzle' })}
-      >
-        <EventIcon event={curEvent} className="rs-evt" />
-      </button>
-      {open && (
-        <div ref={panelRef} className="rs-event-panel" role="group" aria-label={tr({ zh: '项目', en: 'Puzzle' })}>
-          <WcaEventSelector
-            availableEvents={availableEvents}
-            selectedEvent={curEvent}
-            onSelect={(id) => { onSelect(id); setOpen(false); btnRef.current?.focus(); }}
-            isZh={isZh}
-            onlyAvailable
-          />
-        </div>
-      )}
-    </div>
-  );
 }
 
 // 紧凑数字(960000→960k)。
@@ -499,6 +442,15 @@ export default function RecentScrambles({ lang }: Props) {
   if (availableEvents.size === 0) return null;
 
   const curEvent = availableEvents.has(event) ? event : (availableEvents.has('333') ? '333' : [...availableEvents][0]);
+  const pickerGroups: readonly PuzzlePickerGroup[] = [{
+    id: 'wca',
+    label: tr({ zh: 'WCA 项目', en: 'WCA events' }),
+    items: [...availableEvents].map((id) => ({
+      id,
+      label: eventDisplayName(id, isZh),
+      iconClass: `event-${id}`,
+    })),
+  }];
 
   return (
     <div className="recent-scrambles">
@@ -506,7 +458,7 @@ export default function RecentScrambles({ lang }: Props) {
         <span className="rs-title">{tr({ zh: '近期打乱', en: 'Recent Scrambles' })}</span>
         {dateRange && <span className="rs-date-range">{dateRange}</span>}
       </div>
-      <EventPickerDropdown availableEvents={availableEvents} curEvent={curEvent} onSelect={setEvent} isZh={isZh} />
+      <PuzzlePicker isZh={isZh} selectedEvent={curEvent} groups={pickerGroups} onSelect={setEvent} />
       {curEvent === '333'
         ? <Recent333Body data={data} dist={dist} eventsJson={eventsJson} isZh={isZh} lp={lp} />
         : <RecentEventBody event={curEvent} json={eventsJson} isZh={isZh} lp={lp} />}

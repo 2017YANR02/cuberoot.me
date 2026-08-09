@@ -115,71 +115,6 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   border-color: var(--accent);
 }
 
-/* Event pill + popover */
-.shell-event-pick { position: relative; }
-/* 项目选择器:不画框(图标本身就是内容),悬停才浮出底色。 */
-.shell-event-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 8px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--foreground);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 120ms;
-}
-.shell-event-btn:hover { background: var(--shell-hover); }
-/* Icon variant: CubingIcon is a 1em SVG, so bump font-size to make it read as an
-   icon button (matches the grid glyphs) and square up the padding. */
-.shell-event-btn.icon-only { padding: 5px 11px; font-size: 18px; line-height: 1; }
-.shell-event-btn.icon-only .cubing-icon { display: block; }
-.shell-event-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-}
-.shell-event-pop {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  z-index: 41;
-  /* Give the popover a real width so the inner flex grid wraps to ~7 columns
-     instead of shrink-wrapping to a single 40px column (the overflow bug). */
-  width: min(92vw, 360px);
-  max-height: min(440px, 70dvh);
-  /* visible (not auto) so a top-row icon's hover tooltip can escape the
-     popover's top edge instead of being clipped. Desktop content is ~4 short
-     rows, well under max-height, so it never needs to scroll. Mobile (touch,
-     no hover) re-enables overflow-y:auto below for tall full-width grids. */
-  overflow: visible;
-  overscroll-behavior: contain;
-  padding: 10px;
-  border-radius: 12px;
-  background: var(--popover);
-  border: 1px solid var(--border-default);
-  box-shadow: 0 8px 28px color-mix(in srgb, var(--foreground) 18%, transparent);
-}
-/* Strip the shared selector's own frame inside the popover (it already sits in
-   a framed popover — no double box) and retint its dark-locked tokens so the
-   icons stay legible in light theme too. The shared component CSS is off-limits;
-   we override only from this wrapper, with higher specificity. */
-.shell-event-pop .wca-stats-event-selector {
-  margin: 0;
-  padding: 0;
-  background: transparent;
-  border: 0;
-  --evbtn-bg: var(--shell-chip);
-  --evbtn-bg-hover: var(--shell-hover);
-  --evbtn-border-hover: var(--shell-divider);
-  --evbtn-icon: var(--muted-foreground);
-  --evbtn-icon-hover: var(--foreground);
-}
-
 /* ── Main column ────────────────────────────────────────── */
 .shell-main {
   flex: 1;
@@ -1545,21 +1480,9 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   .shell-topbar-right { grid-column: 2; justify-self: end; }
   .shell-topbar-left { gap: 4px 6px; }
   .shell-players-select { padding: 0 4px; font-size: 12px; }
-  .shell-event-btn { padding: 5px 10px; font-size: 12px; }
   /* 顶栏这组控件在手机上要挤下五件(多了「难度」),解法入口与难度开关跟着同档收窄。 */
   .shell-topbar-left .solver-panel-head { height: 30px; padding: 0 3px; font-size: 12px; gap: 4px; }
   .shell-topbar-diff .settings-row-tight-group { font-size: 12px; gap: 4px; }
-  /* Anchor the picker to the viewport (not the off-center button) so a wide
-     grid never runs off the right edge; full-width with 8px gutters. */
-  .shell-event-pop {
-    position: fixed;
-    top: calc(48px + env(safe-area-inset-top));
-    left: 8px;
-    right: 8px;
-    width: auto;
-    max-height: 68dvh;
-    overflow-y: auto;
-  }
   .shell-topbar-right .tb-btn { width: 30px; height: 30px; }
   .shell-stat-rail { bottom: 8px; }
   .shell-stat-val { font-size: 13px; }
@@ -1615,7 +1538,6 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 
 /* Keyboard focus ring — the shell had none, so tab-focus fell back to the
    near-invisible UA outline on the dark surface. Token-only, both themes. */
-.shell-event-btn:focus-visible,
 .shell-topbar .tb-btn:focus-visible,
 .shell-panel-tab:focus-visible,
 .shell-undersurface .solver-hints .solver-hint-btn:focus-visible {
@@ -1674,7 +1596,7 @@ body:has(.solver-sheet) .clawd-deskpet,
 body:has(.timer-shell .shell-penalty-sheet) .clawd-deskpet,
 body:has(.timer-shell .row-quick-sheet-backdrop) .clawd-deskpet,
 body:has(.timer-shell .row-quick-menu) .clawd-deskpet,
-body:has(.timer-shell .shell-event-pop) .clawd-deskpet,
+body:has(.timer-shell .pp-popup) .clawd-deskpet,
 body:has(.battle-container .settings-overlay.visible) .clawd-deskpet,
 body:has(.battle-container .history-overlay.visible) .clawd-deskpet,
 body:has(.battle-container .vs-history-panel) .clawd-deskpet,

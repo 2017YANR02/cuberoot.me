@@ -38,6 +38,7 @@
 .pp-trigger-chevron { color: var(--muted-foreground); flex-shrink: 0; }
 
 .pp-popup {
+  /* anchored-panel: clamped (usePanelClamp in PuzzlePicker) */
   position: absolute;
   top: calc(100% + 6px);
   left: 0;
@@ -46,11 +47,11 @@
   max-height: 70vh;
   overflow-y: auto;
   background: var(--popover);
-  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  border: 1px solid var(--border-default);
   border-radius: 10px;
   padding: 6px;
   z-index: 200;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--foreground) 22%, transparent);
 }
 
 .pp-group + .pp-group { margin-top: 4px; }

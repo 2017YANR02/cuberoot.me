@@ -33,16 +33,3 @@ export const getPuzzle = (id: PredictPuzzleId): PredictPuzzle => REGISTRY[id] ??
 
 /** 这个拼图的贴纸总数。 */
 export const stickerCount = (p: PredictPuzzle): number => p.faces.length * p.perFace;
-
-export const PUZZLE_LABELS: Record<PredictPuzzleId, { zh: string; en: string }> = {
-  2: { zh: '二阶', en: '2×2' },
-  3: { zh: '三阶', en: '3×3' },
-  4: { zh: '四阶', en: '4×4' },
-  5: { zh: '五阶', en: '5×5' },
-  6: { zh: '六阶', en: '6×6' },
-  7: { zh: '七阶', en: '7×7' },
-  megaminx: { zh: '五魔方', en: 'Megaminx' },
-  pyraminx: { zh: '金字塔', en: 'Pyraminx' },
-  skewb: { zh: '斜转', en: 'Skewb' },
-  ivy: { zh: '枫叶', en: 'Ivy' },
-};

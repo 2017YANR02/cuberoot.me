@@ -107,6 +107,7 @@ pnpm --filter @cuberoot/client lint
 - 锚定下拉面板(absolute + top:100%)必挂 `hooks/usePanelClamp` 钳视口,CSS 注明 `anchored-panel: clamped`;确证安全注明 `anchored-panel: safe (<理由>)`。守卫:hook + CI ratchet;实测 `audit:overflow` popup pass。
 - 吸顶表头走 `components/sticky-table.css`(`.sticky-scroll` + `.sticky-thead`),禁手写 sticky thead;契约见文件头注。
 - 新可复用组件/hook 登记 `/code` catalog(`_catalog.tsx`)。CI 守卫:`code-catalog-sync` + `code-tokens-drift`。
+- 项目下拉统一用 `components/PuzzlePicker`;`/wca` 页内展开式项目行用 `WcaEventSelector`;禁页面内自写项目菜单。hook + CI 守卫:`component-reuse-guard`。
 - 全局固定按钮对齐内容右沿:`right: max(16px, calc((100vw - <content-max-width>) / 2))`。
 - chip/tab/下拉项不显示数量计数。
 - WCA 时间锚点:时间序列默认视图从 2003-08-22 起步(第 0 帧 = 1982 快照),统计聚合必含 1982 场。
