@@ -14,6 +14,12 @@
   padding-right: 0.4rem;
 }
 
+/* 子项 hover 向上抬起时，为效果留出裁剪空间，同时保持首行视觉位置。 */
+.scroll-panel--hover-lift {
+  padding-top: 0.4rem;
+  margin-top: -0.4rem;
+}
+
 .scroll-panel::-webkit-scrollbar {
   width: 12px;
 }

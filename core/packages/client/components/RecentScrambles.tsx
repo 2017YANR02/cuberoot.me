@@ -720,7 +720,7 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
       {mode === 'rare' ? (
         rare.length > 0 ? (
           <>
-            <div className="rs-cards scroll-panel">
+            <div className="rs-cards scroll-panel scroll-panel--hover-lift">
               {rare.slice(0, RARE_CAP).map((r) => {
                 // 综合视图:点显示整个胜出档的色集(多色档 = 扇形拼色),消除「多色档被当单色底」歧义。
                 // 具体档视图:档已由 picker 明示,点仍显示单个胜出色。
@@ -751,7 +751,7 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
           <div className="rs-empty">{tr({ zh: '本批暂无低于该概率的打乱', en: 'No scrambles below this probability in this batch' })}</div>
         )
       ) : entries.length > 0 ? (
-        <div className="rs-cards scroll-panel">
+        <div className="rs-cards scroll-panel scroll-panel--hover-lift">
           {entries.slice(0, 12).map(([id, color]) => (
             <ScrambleCard key={id} event="333" scramble={data.opt?.[id] ?? data.scr[id] ?? ''} optimal={!!data.opt?.[id]} m={data.meta[id]} lp={lp} isZh={isZh} ssTarget={ssTarget} color={color || undefined} />
           ))}
@@ -813,7 +813,7 @@ function RecentEventBody({ event, json, isZh, lp, headExtra }: {
       </div>
 
       {ids.length > 0 ? (
-        <div className="rs-cards scroll-panel">
+        <div className="rs-cards scroll-panel scroll-panel--hover-lift">
           {ids.slice(0, 12).map((id) => (
             <ScrambleCard key={id} event={event} scramble={scrOf(id)} optimal={!!optOf(id)} m={metaOf(id)} lp={lp} isZh={isZh} />
           ))}
