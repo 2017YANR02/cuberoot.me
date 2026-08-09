@@ -436,6 +436,15 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
           </div>
         )}
 
+        {solve.unsolvedReason && (
+          <div className="detail-section">
+            <div className="detail-section-label">
+              <TriangleAlert size={14} /> {tr({ zh: '未复原原因', en: 'Reason the puzzle is not solved' })}
+            </div>
+            <div className="detail-note">{solve.unsolvedReason}</div>
+          </div>
+        )}
+
         <div className="detail-meta">
           {solve.cube && (
             <div className="detail-meta-item">

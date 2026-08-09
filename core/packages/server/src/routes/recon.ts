@@ -14,6 +14,7 @@ import {
   visibilityDiscoverFilter, visibilityOwnerFilter,
   buildInsert, buildUpdate, buildDuplicateQuery, DUP_REASONS, ADMIN_WCA_IDS,
 } from '../utils/recon_helpers.js';
+import { checkReconRowCompletion, hasUnsolvedReason } from '../utils/recon_completion.js';
 import { fetchCubingAttempts } from '../utils/cubing_proxy.js';
 import { wcaIdToCubingSlug, nameToCubingSlug } from '@cuberoot/shared/cubing-slug';
 import { notify, adminRecipients } from '../utils/notify.js';
@@ -1027,6 +1028,18 @@ reconRoutes.post('/recon', async (c) => {
     return c.json({ error: 'Validation failed', fields: errors }, 400);
   }
 
+  const completion = await checkReconRowCompletion(row);
+  if (completion.status === 'invalid') {
+    return c.json({ error: 'The scramble or solution contains invalid puzzle notation.' }, 400);
+  }
+  if (completion.status === 'unsolved' && !hasUnsolvedReason(row)) {
+    return c.json({
+      error: 'The reconstruction does not solve the puzzle. Explain why it is intentionally incomplete before submitting.',
+      needsUnsolvedReason: true,
+    }, 422);
+  }
+  if (completion.status === 'solved') row.unsolved_reason = null;
+
   // 同选手 + 同打乱:允许提交,但必须带合法 dup_reason 说明原因(重复打乱 / 不同比赛),
   // 否则拒收(前端 check-duplicate 同口径预警 + 弹出二选一选择器)。占位打乱已在 buildDuplicateQuery 豁免。
   const dup = buildDuplicateQuery(row);
@@ -1056,8 +1069,8 @@ reconRoutes.put('/recon/:id', async (c) => {
   const id = c.req.param('id');
   const body = await c.req.json<Record<string, unknown>>();
 
-  const existing = await query<{ added_by_id: string }>(
-    'SELECT added_by_id FROM recons WHERE id = ?', [id]
+  const existing = await query<Record<string, unknown>>(
+    'SELECT * FROM recons WHERE id = ?', [id]
   );
   if (existing.length === 0) {
     return c.json({ error: 'Not found' }, 404);
@@ -1076,6 +1089,22 @@ reconRoutes.put('/recon/:id', async (c) => {
   if (errs.length > 0) {
     return c.json({ error: 'Validation failed', fields: errs }, 400);
   }
+
+
+  // PUT 可被脚本按字段调用,因此用数据库原行补齐本次没传的 event / scramble /
+  // solution / reason 后再校验，不能让局部更新绕开终态约束。
+  const completionRow = { ...existing[0], ...row };
+  const completion = await checkReconRowCompletion(completionRow);
+  if (completion.status === 'invalid') {
+    return c.json({ error: 'The scramble or solution contains invalid puzzle notation.' }, 400);
+  }
+  if (completion.status === 'unsolved' && !hasUnsolvedReason(completionRow)) {
+    return c.json({
+      error: 'The reconstruction does not solve the puzzle. Explain why it is intentionally incomplete before submitting.',
+      needsUnsolvedReason: true,
+    }, 422);
+  }
+  if (completion.status === 'solved') row.unsolved_reason = null;
 
   // 编辑成与别的复盘同选手 + 同打乱:同样允许,但需合法 dup_reason;排除自身。
   // NOTE: 仅当本次 PUT 带了选手与打乱字段时才判(buildDuplicateQuery 缺字段返回 null)。
@@ -1237,4 +1266,3 @@ reconRoutes.delete('/recon/:id/alternatives/:idx', async (c) => {
   await saveAlternatives(id, alts);
   return c.json({ alternatives: alts });
 });
-

@@ -4,13 +4,10 @@
  */
 import { etm } from '@cuberoot/shared/alg-notation';
 import { parseSq1Tokens } from '@cuberoot/shared/sq1-notation';
-
-const STRIP_TOKENS = new Set([
-  '[regrip]', '[lockup]', '[freePair]', '[free_pair]',
-  '[yRot]', '[y_rot]', '[sMove]', '[s_move]',
-]);
-
-const COMMENT_LINE_RE = /^\/\/.*/;
+import {
+  cleanReconAlgForPlayer,
+  expandReconGroupRepeats,
+} from '@cuberoot/shared/recon-completion';
 
 /**
  * 装饰性标注字符:`·`(间隔)、`↑↓`(方向 / regrip 记号)、分数 `⅓⅔`、ASCII `.`、各类零宽字符。
@@ -18,7 +15,6 @@ const COMMENT_LINE_RE = /^\/\/.*/;
  * 据此放行(否则「非 ASCII = 非法」会把它们拦下、提交被拒)。两处共用同一来源,改一处即可。
  */
 const COSMETIC_ANNOTATION_CHARS = '.·↑↓⅓⅔​‌‍﻿';
-const COSMETIC_ANNOTATION_STRIP_RE = new RegExp(`[${COSMETIC_ANNOTATION_CHARS}]`, 'g');
 
 /**
  * 展开分组重复记号 `(...)N` → 把括号里的招式重复 N 遍(内层优先,迭代到不动点,支持嵌套)。
@@ -26,42 +22,11 @@ const COSMETIC_ANNOTATION_STRIP_RE = new RegExp(`[${COSMETIC_ANNOTATION_CHARS}]`
  * 保证步数统计、外链、播放器三方口径一致。
  */
 export function expandGroupRepeats(alg: string): string {
-  if (!alg) return alg;
-  let expanded = alg;
-  let prev: string;
-  do {
-    prev = expanded;
-    expanded = expanded.replace(/\(([^()]*)\)(\d+)/g, (_, body: string, n: string) => {
-      const reps = parseInt(n, 10);
-      return Array(reps).fill(body.trim()).join(' ');
-    });
-  } while (expanded !== prev);
-  return expanded;
+  return expandReconGroupRepeats(alg);
 }
 
 export function cleanForPlayer(text: string): string {
-  if (!text) return '';
-  const lines = text.split(/\r?\n/);
-  const cleaned: string[] = [];
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (COMMENT_LINE_RE.test(trimmed)) continue;
-    const commentIdx = trimmed.indexOf('//');
-    const effective = commentIdx >= 0 ? trimmed.substring(0, commentIdx).trim() : trimmed;
-    if (!effective) continue;
-    const tokens = effective.split(/\s+/).filter((t) => !STRIP_TOKENS.has(t));
-    if (tokens.length > 0) {
-      cleaned.push(tokens.join(' '));
-    }
-  }
-  let alg = cleaned.join('\n');
-  alg = alg.replace(COSMETIC_ANNOTATION_STRIP_RE, '');
-  // 先把 `(...)N` 重复展开成字面招式:cuber(/sim)播放器按空白切 token 逐招喂,不认分组重复,
-  // 展开后每个 token 都是合法单招,`(R' F R F')2` 才会真播两遍(cubing.js 原生认分组,展开对它无害)。
-  alg = expandGroupRepeats(alg);
-  alg = alg.replace(/\(([^)]*)\)(?!\d)/g, '$1');
-  alg = alg.replace(/([RULDFBMESruldfbmesxyz][w]?2?'?)(?=[RULDFBMESruldfbmesxyz])/g, '$1 ');
-  return alg;
+  return cleanReconAlgForPlayer(text);
 }
 
 export function cleanForAlgCubingNet(text: string): string {

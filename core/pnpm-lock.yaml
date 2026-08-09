@@ -438,6 +438,9 @@ importers:
       axios:
         specifier: ^1.13.6
         version: 1.13.6
+      cubing:
+        specifier: ^0.63.3
+        version: 0.63.3(patch_hash=7431f5edc75e23be84aa4cd6c1dad4789ffc2143728cda152bc02535f2845bd6)
       react:
         specifier: ^19.0.0
         version: 19.2.4
