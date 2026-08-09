@@ -2080,7 +2080,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 <span className="submit-hint submit-hint-warn" role="alert">
                   {tr({
                     zh: '魔方未还原.修复解法,或说明未还原理由',
-                    en: 'After applying the scramble and solution, the puzzle is not solved. If this incomplete reconstruction is intentional, explain why; otherwise, fix the solution.',
+                    en: 'Puzzle not solved. Fix the solution or explain why.',
                   })}
                 </span>
                 <textarea
