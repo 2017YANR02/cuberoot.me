@@ -112,7 +112,7 @@ pnpm --filter @cuberoot/client lint
 - WCA 时间锚点:时间序列默认视图从 2003-08-22 起步(第 0 帧 = 1982 快照),统计聚合必含 1982 场。
 - 调试不主动 `git log`/`git status`;删文件/配置先确认。
 - 报根因/"修好了"/done 前必须实证(日志/EXPLAIN/run 输出/playwright);未证实标「假设」;性能/502/OOM 先 profile 禁猜。
-- Codex CLI 的 UI 验证走已配置的 Playwright MCP;fixtures 全集别采样。
+- UI 验证先搜并用 Playwright MCP(可能延迟加载);fixtures 全集别采样。
 - 新路由先 grep 防撞名;路由改名/合并不为旧路径加 redirect。
 
 ## 页面标题 / SEO metadata
@@ -150,6 +150,8 @@ pnpm --filter @cuberoot/client lint
 - 站内违禁词表 `.Codex/banned-words.json`(hook `block-banned-words` 写入即拦,`.Codex/` 自身豁免);用户说「添加违禁词:x」= 往该表加 `{word,use,why}` 一条。行内豁免注释 `allow-banned-word`。
 
 ## Skill 路由
+
+Skill 路径按 catalog 的 root alias 展开,禁猜路径。
 
 主题命中 trigger 时主动调对应 skill,不凭记忆(描述已由 harness 加载,不在此列索引)。
 

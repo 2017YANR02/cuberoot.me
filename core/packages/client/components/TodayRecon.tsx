@@ -53,7 +53,7 @@ export default function TodayRecon({ lang }: Props) {
         <Link href="/recon" prefetch={false} className="tr-all">{tr({ zh: '全部', en: 'All recons' })}</Link>
       </div>
 
-      <div className="tr-cards scroll-panel">
+      <div className="tr-cards scroll-panel scroll-panel--hover-lift">
         {recons.map((s) => (
           <ReconCard key={s.id} solve={s} isZh={isZh} href={`/recon/${reconPathSeg(s)}`} scrambleThumb={false} />
         ))}
