@@ -2314,6 +2314,8 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
           {displayResults.map((r, idx) => {
             const u = users[String(r.n)];
             if (!u) return null;
+            const fullCuberName = displayCuberName(u.name, isZh);
+            const cuberName = displayCuberName(u.name, isZh, { compactForeign: compIso2 === 'cn' && isZh });
             const place = placeByN.get(r.n) ?? null;
             const pb = pbMap[u.wcaid];
             const { singleRank, averageRank } = classifyPr(r, pb);
@@ -2340,9 +2342,9 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
                   <Flag iso2={regionToIso2(u.region)} className="comp-flag" />
                   <span
                     className="cuber-name"
-                    title={regionDisplay(u.region, isZh)}
+                    title={`${fullCuberName}\n${regionDisplay(u.region, isZh)}`}
                   >
-                    {displayCuberName(u.name, isZh)}
+                    {cuberName}
                   </span>
                   {/* 行级编辑铅笔已移除:管理员经点成绩弹窗里的「编辑变更记录…」打开整条变更编辑器。 */}
                 </td>
@@ -2682,6 +2684,8 @@ function CombinedDualRoundsTable({ data, ev, r1, r2, isZh, pbMap, compIso2, memb
           {rows.map((row, idx) => {
             const u = data.users[String(row.n)];
             if (!u) return null;
+            const fullCuberName = displayCuberName(u.name, isZh);
+            const cuberName = displayCuberName(u.name, isZh, { compactForeign: compIso2 === 'cn' && isZh });
             const advanced = advancers.has(row.n);
             const subRows: { rd: RoundMeta; res: LiveResult; roundNo: 1 | 2 }[] = [];
             if (row.r1) subRows.push({ rd: r1, res: row.r1, roundNo: 1 });
@@ -2731,8 +2735,8 @@ function CombinedDualRoundsTable({ data, ev, r1, r2, isZh, pbMap, compIso2, memb
                     <td className="dual-td-span dual-td-person" rowSpan={span}>
                       <span className="dual-person-inner">
                         <Flag iso2={regionToIso2(u.region)} className="comp-flag" />
-                        <span className="cuber-name" title={regionDisplay(u.region, isZh)}>
-                          {displayCuberName(u.name, isZh)}
+                        <span className="cuber-name" title={`${fullCuberName}\n${regionDisplay(u.region, isZh)}`}>
+                          {cuberName}
                         </span>
                       </span>
                     </td>

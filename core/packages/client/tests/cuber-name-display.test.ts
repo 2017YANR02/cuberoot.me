@@ -42,4 +42,12 @@ describe('displayCuberName', () => {
     expect(displayCuberName('Yiheng Wang (王艺衡)', false)).toBe('Yiheng Wang');
     expect(displayCuberName('Park Sang-Won (박상원)', false)).toBe('Park Sang-Won');
   });
+  it('compact foreign name uses given name and punctuated surname initial', () => {
+    expect(displayCuberName('Tymon Kolasiński', true, { compactForeign: true })).toBe('Tymon K.');
+    expect(displayCuberName('Leo Borromeo', true, { compactForeign: true })).toBe('Leo B.');
+  });
+  it('compact mode leaves Chinese names and mononyms intact', () => {
+    expect(displayCuberName('Yiheng Wang (王艺衡)', true, { compactForeign: true })).toBe('王艺衡');
+    expect(displayCuberName('Adele', true, { compactForeign: true })).toBe('Adele');
+  });
 });
