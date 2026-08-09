@@ -115,11 +115,13 @@ export interface PredictBoardProps {
   step?: number;
   /** true = 内核 0% 且关闭提示贴片;false = 内核 100% 且恢复提示贴片。 */
   transparent?: boolean;
+  /** 每次成功出新题递增,让题板回到默认视角。 */
+  viewResetSeq?: number;
 }
 
 export default function PredictBoard({
   puzzle, labels, bright = NO_FACELETS, dim = NO_FACELETS, onSticker,
-  moves = NO_MOVES, step = 0, transparent = true,
+  moves = NO_MOVES, step = 0, transparent = true, viewResetSeq = 0,
 }: PredictBoardProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mountRef = useRef<SimMount | null>(null);
@@ -292,6 +294,10 @@ export default function PredictBoard({
       mountRef.current?.invalidate();
     }
   }, []);
+
+  // 出题可能早于 3D 引擎 ready;把 ready 放进依赖,冷启时也会在
+  // 题板真正挂载后执行同一个复位入口。
+  useEffect(() => { resetView(); }, [resetView, viewResetSeq, ready]);
 
   return (
     <div className="predict-board">
