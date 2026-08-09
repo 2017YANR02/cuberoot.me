@@ -19,10 +19,25 @@ export function stripChineseParens(text: string): string {
   return text.replace(/\s*\([^)]*\)\s*/g, ' ').trim();
 }
 
+interface DisplayCuberNameOptions {
+  /** 窄列里的外国名缩写为「名 + 姓氏首字母 + .」。 */
+  compactForeign?: boolean;
+}
+
+function compactForeignName(name: string): string {
+  const parts = name.split(/\s+/).filter(Boolean);
+  if (parts.length < 2) return name;
+  const surnameInitial = Array.from(parts[parts.length - 1])[0];
+  return `${parts[0]} ${surnameInitial}.`;
+}
+
 /** 根据当前语言返回选手显示名 */
-export function displayCuberName(rawName: string, isZh: boolean): string {
+export function displayCuberName(rawName: string, isZh: boolean, options?: DisplayCuberNameOptions): string {
   if (isZh) {
-    return extractChineseName(rawName) ?? stripChineseParens(rawName);
+    const chineseName = extractChineseName(rawName);
+    if (chineseName) return chineseName;
+    const foreignName = stripChineseParens(rawName);
+    return options?.compactForeign ? compactForeignName(foreignName) : foreignName;
   }
   return stripChineseParens(rawName);
 }
