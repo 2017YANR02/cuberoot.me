@@ -633,14 +633,6 @@ function PredictPageInner() {
             })}
           </div>
         )}
-        {revealed && (
-          <p className="predict-hint">
-            {tr({
-              zh: '目标块已整块画在它的落点上,题面问的那个颜色就是要点的那一格。',
-              en: 'The tracked pieces are now painted in full at where they landed — the asked colour marks the square.',
-            })}
-          </p>
-        )}
       </div>
 
       <div className="predict-actions">

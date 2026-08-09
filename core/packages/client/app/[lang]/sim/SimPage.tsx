@@ -1360,7 +1360,7 @@ export default function SimPage() {
     // createBackView helper) the first time the user enables it. Rendered in
     // lockstep with the main view (only inside the dirty block) so they never
     // drift.
-    const renderBackView = (w: World) => {
+    const renderBackView = (w: World, activeHints: World['faceHints']) => {
       if (!settingsRef.current.backView) return;
       const host = backFrameRef.current;
       if (!host) return;
@@ -1368,7 +1368,10 @@ export default function SimPage() {
         backViewRef.current = createBackView(THREE, SIZE, backSizeRef.current);
         host.appendChild(backViewRef.current.domElement);
       }
-      backViewRef.current.render(w);
+      backViewRef.current.render(w, (camera) => { activeHints.prepareForCamera(camera); });
+      // 小窗绘制把字母切到了背视相机;还原主相机状态,否则下一帧
+      // tick 又切回来会永久标 dirty,开着背视小窗就变成 60fps 空转。
+      activeHints.prepareForCamera(w.camera);
     };
 
     let raf = 0;
@@ -1396,9 +1399,10 @@ export default function SimPage() {
       // SMPL-X 全身查看时字母无意义(拼图已藏),一并压掉。
       const showLabels = settingsRef.current.faceLabels === true && !world.smplxBodyOn;
       if (showLabels) activeHints.show(); else activeHints.hide();
+      activeHints.setCameraOverlay(true);
       for (const h of allHints) if (h !== activeHints) h.hide();
       let hintsAnimating = false;
-      for (const h of allHints) if (h.tick(dt)) hintsAnimating = true;
+      for (const h of allHints) if (h.tick(dt, h === activeHints ? world.camera : undefined)) hintsAnimating = true;
       if (hintsAnimating) world.dirty = true;
       // 手部指法 rig(3x3 + 设置开启时才存在):轮询转层角度驱动手势,动着就重渲。
       if (world.hands && world.hands.tick(dt)) world.dirty = true;
@@ -1408,7 +1412,7 @@ export default function SimPage() {
         (world.cube as { updateLogoTransform?: () => void }).updateLogoTransform?.();
         renderer.clear();
         renderer.render(world.scene, world.camera);
-        renderBackView(world);
+        renderBackView(world, activeHints);
         world.dirty = false;
         world.cube.dirty = false;
       }

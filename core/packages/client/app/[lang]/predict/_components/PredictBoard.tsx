@@ -188,6 +188,9 @@ export default function PredictBoard({
       });
       mountRef.current = mount;
       const world: World = mount.world;
+      // 题面方位字母是 HUD:可见面整枚压在最上层,背面按朝向整枚隐藏。
+      // 不再交给深度缓冲逐像素切字,否则斜视时灰色块身会“啃掉” F 等字母。
+      world.faceHints.setCameraOverlay(true);
       // World 的构造函数只知道立方体那个姿势(它还没被 setPuzzle 过),开局要摆的是**这个
       // 拼图**的姿态 —— 五魔方在立方体角度下是一条棱正对镜头,12 个面全是斜的。
       resetSceneView(world);
@@ -436,8 +439,9 @@ async function mountSolidPainter(
 
   // 金字塔的方位提示 = 四个顶点字母(U/L/R/B),正好就是它的转动记号,引擎自带那份直接用。
   if (puzzle.id === 'pyraminx') {
+    world.pyraHints.setCameraOverlay(true);
     world.pyraHints.show();
-    frameTicks.push((dt) => world.pyraHints.tick(dt));
+    frameTicks.push((dt) => world.pyraHints.tick(dt, world.camera));
   }
 
   // 五魔方的十二个面名:引擎自带的 `world.megaHints` 写的是 PG 名(`C A I BF E`),和题面
@@ -450,8 +454,9 @@ async function mountSolidPainter(
       hintsMod.MEGA_HINT_LAYOUT.sizeMul,
     );
     world.scene.add(labels);
+    labels.setCameraOverlay(true);
     labels.show();
-    frameTicks.push((dt) => labels.tick(dt));
+    frameTicks.push((dt) => labels.tick(dt, world.camera));
     disposers.push(() => {
       labels.removeFromParent();
       labels.traverse((obj) => {

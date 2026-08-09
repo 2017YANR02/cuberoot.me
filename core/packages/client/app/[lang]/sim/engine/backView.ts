@@ -14,8 +14,9 @@ import type World from './world';
 export interface BackView {
   /** The overlay canvas — caller appends it into its framed host element. */
   domElement: HTMLCanvasElement;
-  /** Render the shared scene from behind. Call right after the main render. */
-  render(world: World): void;
+  /** Render the shared scene from behind. `beforeRender` prepares camera-dependent
+   * overlays after this camera has reached its final position. */
+  render(world: World, beforeRender?: (camera: THREE_NS.Camera) => void): void;
   /** Resize the square viewport (CSS px). */
   setSize(px: number): void;
   /** Release the GL context + detach the canvas. */
@@ -107,7 +108,7 @@ export function createBackView(
     setSize(px: number) {
       renderer.setSize(px, px, false);
     },
-    render(world: World) {
+    render(world: World, beforeRender?: (camera: THREE_NS.Camera) => void) {
       // Per-puzzle framing so this mini fills its (square) box ~like the left image panel
       // (the sr-puzzlegen 2D companion, which sits at ~84–91% of its box). Each value below
       // was measured so the 3D body fills the same fraction its own left image does — the two
@@ -182,6 +183,7 @@ export function createBackView(
       camera.up.set(0, 1, 0).applyQuaternion(quat);
       camera.lookAt(target);
       camera.updateProjectionMatrix();
+      beforeRender?.(camera);
       renderer.render(world.scene, camera);
     },
     dispose() {

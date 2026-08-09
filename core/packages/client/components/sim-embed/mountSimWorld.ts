@@ -157,7 +157,7 @@ export function mountSimWorld(opts: SimMountOpts): SimMount {
     lastFrameAt = now;
     if (onFrame?.(world, dt)) world.dirty = true;
     // Orientation letters fade in/out over several frames of their own.
-    if (faceHints && world.faceHints.tick(dt)) world.dirty = true;
+    if (faceHints && world.faceHints.tick(dt, world.camera)) world.dirty = true;
     // world.dirty proxies cube.dirty (world.ts) — both are read for parity with
     // the hand-rolled loops this replaces.
     if (world.dirty || world.cube.dirty) {

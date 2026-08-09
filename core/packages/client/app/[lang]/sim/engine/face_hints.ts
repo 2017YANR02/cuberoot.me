@@ -166,10 +166,27 @@ function makeLetterTexture(label: string): { tex: THREE.CanvasTexture; aspect: n
 const LETTER_OPACITY_FULL = 1;
 const FADE_MS = 200;
 
+/** 该面的外法线是否朝向相机。必须从魔方中心算视线,不能从悬浮字母算:
+ * 字母比面浮得更远,用它自己的位置会误杀本已可见的斜视面。侧对相机(dot = 0)
+ * 当背面,免得字母在轮廓线上忽明忽暗。 */
+export function hintFacesCamera(
+  outwardWorld: THREE.Vector3,
+  puzzleWorldCenter: THREE.Vector3,
+  cameraWorldPosition: THREE.Vector3,
+): boolean {
+  return outwardWorld.dot(cameraWorldPosition) - outwardWorld.dot(puzzleWorldCenter) > 0;
+}
+
 export default class FaceHints extends THREE.Group {
   private letterMats: THREE.SpriteMaterial[] = [];
+  private letters: { sprite: THREE.Sprite; outward: THREE.Vector3 }[] = [];
   private _alpha = 0;
   private _target = 0;
+  private cameraOverlay = false;
+  private readonly worldQuat = new THREE.Quaternion();
+  private readonly worldOutward = new THREE.Vector3();
+  private readonly puzzleWorldCenter = new THREE.Vector3();
+  private readonly cameraWorldPosition = new THREE.Vector3();
 
   /** unit = 1 个 cubelet 的边长。NxN/SQ1 用 SIZE (默认 64);
    *  cubing.js puzzle (skewb 等) bbox 半径 ~1,传 ~0.6。 */
@@ -211,6 +228,7 @@ export default class FaceHints extends THREE.Group {
       // its aspect so the text keeps its proportions.
       sprite.scale.set(size * aspect, size, 1);
       this.letterMats.push(letterMat);
+      this.letters.push({ sprite, outward: hint.dir.clone().normalize() });
       this.add(sprite);
     }
     this.visible = false;
@@ -224,11 +242,46 @@ export default class FaceHints extends THREE.Group {
   show(): void { this._target = 1; this.visible = true; }
   hide(): void { this._target = 0; }
 
+  /** /sim 和 /predict 的方位字母是 HUD:可见面整枚显示,背面整枚隐藏。
+   * 默认关闭,由渲染宿主显式开启并在每个相机绘制前调 `prepareForCamera`。 */
+  setCameraOverlay(enabled: boolean): void {
+    if (this.cameraOverlay === enabled) return;
+    this.cameraOverlay = enabled;
+    for (const { sprite } of this.letters) {
+      const mat = sprite.material as THREE.SpriteMaterial;
+      mat.depthTest = !enabled;
+      mat.needsUpdate = true;
+      sprite.renderOrder = enabled ? 1000 : 0;
+      if (!enabled) sprite.visible = true;
+    }
+  }
+
+  /** 按这一次真正要绘制的相机切换整枚字母。双视角必须各调一次。 */
+  prepareForCamera(camera: THREE.Camera): boolean {
+    if (!this.cameraOverlay) return false;
+    this.updateWorldMatrix(true, false);
+    camera.updateWorldMatrix(true, false);
+    this.getWorldQuaternion(this.worldQuat);
+    this.getWorldPosition(this.puzzleWorldCenter);
+    camera.getWorldPosition(this.cameraWorldPosition);
+    let changed = false;
+    for (const { sprite, outward } of this.letters) {
+      this.worldOutward.copy(outward).applyQuaternion(this.worldQuat);
+      const next = hintFacesCamera(this.worldOutward, this.puzzleWorldCenter, this.cameraWorldPosition);
+      if (sprite.visible !== next) {
+        sprite.visible = next;
+        changed = true;
+      }
+    }
+    return changed;
+  }
+
   /** Called from render loop with dt in ms. Returns true if still animating. */
-  tick(dt: number): boolean {
+  tick(dt: number, camera?: THREE.Camera): boolean {
+    const facingChanged = camera ? this.prepareForCamera(camera) : false;
     if (this._alpha === this._target) {
       if (this._alpha === 0 && this.visible) this.visible = false;
-      return false;
+      return facingChanged;
     }
     const step = dt / FADE_MS;
     this._alpha = this._target > this._alpha
