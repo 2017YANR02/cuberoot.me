@@ -73,6 +73,16 @@ export interface TrainerHistEntry {
   recap?: { pos: number; total: number };
 }
 
+/** 把当前题的 1-based 位置换成「已经练完几题」；确认轮末后才计入最后一题。 */
+export function completedRecapCount(
+  recap: TrainerHistEntry['recap'],
+  roundCompleted: boolean,
+): number {
+  if (!recap || !Number.isInteger(recap.pos) || !Number.isInteger(recap.total) || recap.total <= 0) return 0;
+  if (roundCompleted) return recap.total;
+  return Math.min(recap.total, Math.max(0, recap.pos - 1));
+}
+
 interface PersistedSession {
   selected: string[];
   solves: TrainerSolve[];

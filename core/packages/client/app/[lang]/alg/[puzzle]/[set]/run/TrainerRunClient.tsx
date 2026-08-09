@@ -9,7 +9,8 @@ import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Settings, Copy, Check, QrCode, RotateCcw, X } from 'lucide-react';
 import { ALG_CATALOG, getAlgSetMeta, loadAlg, type AlgCase } from '@cuberoot/shared';
 import {
-  useTrainerStore, TimerState, trainerPool, trainerScramblesReady, mixSessionId, type TrainerMode,
+  useTrainerStore, TimerState, trainerPool, trainerScramblesReady, mixSessionId,
+  completedRecapCount, type TrainerMode,
 } from '@/lib/trainer-store';
 import TimerFontPicker from '@/components/TimerFontPicker';
 import { useSpaceHoldTimer } from '@/hooks/useSpaceHoldTimer';
@@ -247,6 +248,7 @@ export default function TrainerRunClient() {
   const prevScramble = useTrainerStore(s => s.prevScramble);
   const jumpToHist = useTrainerStore(s => s.jumpToHist);
   const recapRoundDone = useTrainerStore(s => s.recapRoundDone);
+  const recapRoundAcked = useTrainerStore(s => s.recapRoundAcked);
   const continueRecapRound = useTrainerStore(s => s.continueRecapRound);
   const dismissRecapRound = useTrainerStore(s => s.dismissRecapRound);
   const getTimerReady = useTrainerStore(s => s.getTimerReady);
@@ -1048,10 +1050,11 @@ export default function TrainerRunClient() {
   // 真实概率只有带 meta 的 LL set(zbll / pll / ell / 1lll)有数学定义
   // 真实概率按「一套 LL set 内部的 AUF 轨道」定义,跨集混起来没有公认的相对权重 —— 合练不给
   const probSupported = puzzle === '3x3' && !isMix && !!ALG_SET_UNIVERSE[setSlug];
-  // recap 进度:进度随「当前题」走(store 的 recapPos 因预抽下一题已领先一格),
-  // 直接读当前历史条目上记的 pos/total。
+  // recap 进度:历史条目记的是当前题的 1-based 位置；顶部数字表达的是已经练完的数量，
+  // 所以进入首题显示 0，前进后才增加。轮末确认后题面仍停在最后一题，要单独显示 total。
   const recapCur = hist.idx >= 0 ? hist.list[hist.idx]?.recap : undefined;
   const recapShown = mode === 'recap' && !!recapCur;
+  const recapCompleted = completedRecapCount(recapCur, recapRoundDone || recapRoundAcked);
 
   return (
     <div className="trainer-root">
@@ -1115,7 +1118,7 @@ export default function TrainerRunClient() {
               ) : roundLabel ? (
                 <span className="trainer-recap-round">{tr(roundLabel)}</span>
               ) : null}
-              {recapCur.pos}/{recapCur.total}
+              {recapCompleted}/{recapCur.total}
               {room && (
                 <span className="trainer-recap-coop">
                   {tr({ zh: `房间 ${room.code} 全队`, en: `room ${room.code} team` })}
