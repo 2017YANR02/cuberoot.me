@@ -3,7 +3,7 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "^apply_patch$",
+        "matcher": "^(apply_patch|functions\\.exec|exec)$",
         "hooks": [
           {
             "type": "command",

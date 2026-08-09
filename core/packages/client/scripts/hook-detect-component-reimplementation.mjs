@@ -12,8 +12,11 @@ import { fileURLToPath } from 'node:url';
 export const EXEMPTION = 'allow-component-reimplementation';
 
 const CLIENT_TSX = /(?:^|\/)core\/packages\/client\/(?:app|components)\/.*\.tsx$/i;
-const SKIP_PATH = /(?:^|\/)(?:tests?|node_modules|\.next)(?:\/|$)|\/components\/ClearButton\.tsx$/i;
+const SKIP_PATH = /(?:^|\/)(?:tests?|node_modules|\.next)(?:\/|$)|\/components\/(?:ClearButton|PuzzlePicker\/PuzzlePicker)\.tsx$/i;
 const BUTTON_BLOCK = /<button\b[\s\S]{0,1600}?<\/button\s*>/gi;
+const SELECT_BLOCK = /<select\b[\s\S]{0,1800}?<\/select\s*>/gi;
+const PICKER_DECL = /(?:function\s+|const\s+)([A-Za-z_$][\w$]*)/gi;
+const PICKER_OPEN_STATE = /const\s*\[\s*[A-Za-z_$][\w$]*(?:event|puzzle)[\w$]*(?:open|menu)[\w$]*\s*,[\s\S]{0,120}?useState\s*\(/gi;
 const CROSS = /<X\b|[×✕]/;
 const CLOSE_OR_CLEAR =
   /(?:aria-label|ariaLabel|title|className|class)\s*=\s*[\s\S]{0,260}?(?:关闭|清除|close|clear|dismiss)|\bonClose\b/i;
@@ -27,6 +30,15 @@ export const COMPONENT_REUSE_RULES = [
       '<ClearButton variant="standalone" ariaLabel={tr({ zh: \'关闭\', en: \'Close\' })} onClick={onClose} />',
     reason:
       '检测到手写的关闭/清除叉号按钮。统一复用 ClearButton，保留全站一致的尺寸、主题、hover 与无障碍语义。',
+  },
+  {
+    id: 'puzzle-picker',
+    component: 'PuzzlePicker',
+    importStatement: "import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';",
+    replacement:
+      '<PuzzlePicker selectedEvent={event} groups={groups} onSelect={setEvent} />',
+    reason:
+      '检测到页面内重新实现项目选择菜单。下拉统一复用 PuzzlePicker；/wca 页内展开式 21 项图标行复用 WcaEventSelector。',
   },
 ];
 
@@ -52,6 +64,54 @@ export function scanComponentReimplementations(source) {
       index: match.index,
       snippet: block.replace(/\s+/g, ' ').slice(0, 180),
     });
+  }
+
+  // Native project <select> is a high-confidence duplicate: a project selector must
+  // keep the shared icon + name menu, not silently fall back to a page-local option list.
+  SELECT_BLOCK.lastIndex = 0;
+  while ((match = SELECT_BLOCK.exec(source))) {
+    const block = match[0];
+    const exactProjectLabel = /(?:aria-label|title)[\s\S]{0,260}?(?:zh\s*:\s*['"](?:项目|拼图)['"][\s\S]{0,120}?en\s*:\s*['"](?:Puzzle|Event)['"]|en\s*:\s*['"](?:Puzzle|Event)['"][\s\S]{0,120}?zh\s*:\s*['"](?:项目|拼图)['"])/i;
+    if (!exactProjectLabel.test(block)) continue;
+    if (exemptionNear(source, match.index, block)) continue;
+    violations.push({
+      ruleId: 'puzzle-picker',
+      index: match.index,
+      snippet: block.replace(/\s+/g, ' ').slice(0, 180),
+    });
+  }
+
+  let hasPickerViolation = violations.some((item) => item.ruleId === 'puzzle-picker');
+  const addPickerViolation = (index, block) => {
+    if (hasPickerViolation || exemptionNear(source, index, block)) return;
+    hasPickerViolation = true;
+    violations.push({
+      ruleId: 'puzzle-picker',
+      index,
+      snippet: block.replace(/\s+/g, ' ').slice(0, 180),
+    });
+  };
+
+  // Named page-local dropdowns: require their own open state + icon button so thin
+  // wrappers that merely feed data into PuzzlePicker/WcaEventSelector stay legal.
+  PICKER_DECL.lastIndex = 0;
+  while ((match = PICKER_DECL.exec(source))) {
+    if (!/(?:Event|Puzzle)/i.test(match[1]) || !/(?:Picker|Select|Selector|Dropdown)/i.test(match[1])) continue;
+    if (/^(?:PuzzlePicker|WcaEventSelector|EventSelect)$/.test(match[1])) continue;
+    const block = source.slice(match.index, match.index + 7000);
+    if (!/(?:\[\s*open\s*,|\bsetOpen\b|PickerOpen|SelectorOpen|DropdownOpen)/i.test(block)) continue;
+    if (!/<button\b/i.test(block) || !/(?:<EventIcon\b|<CubingIcon\b)/i.test(block)) continue;
+    if (/<(?:PuzzlePicker|WcaEventSelector)\b/.test(block)) continue;
+    addPickerViolation(match.index, block);
+  }
+
+  // Inline variants (for example a timer topbar) may not extract a named component.
+  PICKER_OPEN_STATE.lastIndex = 0;
+  while ((match = PICKER_OPEN_STATE.exec(source))) {
+    const block = source.slice(match.index, match.index + 7000);
+    if (!/<button\b/i.test(block) || !/(?:<EventIcon\b|<CubingIcon\b)/i.test(block)) continue;
+    if (/<(?:PuzzlePicker|WcaEventSelector)\b/.test(block)) continue;
+    addPickerViolation(match.index, block);
   }
   return violations;
 }
@@ -82,14 +142,30 @@ function parseApplyPatch(patch) {
   return writes;
 }
 
+function parseEmbeddedApplyPatch(source) {
+  const raw = String(source || '');
+  if (!raw.includes('*** Begin Patch')) return [];
+  const stringLiteral = /(?:const|let)\s+[A-Za-z_$][\w$]*\s*=\s*("(?:\\.|[^"\\])*")/gs;
+  let match;
+  while ((match = stringLiteral.exec(raw))) {
+    try {
+      const decoded = JSON.parse(match[1]);
+      if (decoded.includes('*** Begin Patch')) return parseApplyPatch(decoded);
+    } catch {
+      // Malformed unrelated JS string:keep looking,then fail open.
+    }
+  }
+  return parseApplyPatch(raw);
+}
+
 export function writesFromHookPayload(payload) {
   const ti = payload?.tool_input;
-  if (typeof ti === 'string') return parseApplyPatch(ti);
+  if (typeof ti === 'string') return parseEmbeddedApplyPatch(ti);
   if (!ti || typeof ti !== 'object') return [];
 
-  for (const key of ['patch', 'input']) {
+  for (const key of ['patch', 'input', 'script', 'code']) {
     if (typeof ti[key] === 'string' && ti[key].includes('*** Begin Patch')) {
-      return parseApplyPatch(ti[key]);
+      return parseEmbeddedApplyPatch(ti[key]);
     }
   }
 

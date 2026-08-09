@@ -372,68 +372,6 @@
   border-color: var(--ring);
 }
 
-/* Puzzle-type icon dropdown */
-.sim-puzzle-type-select {
-  position: relative;
-}
-.sim-puzzle-type-trigger {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 10px;
-  min-width: 0;
-}
-.sim-puzzle-type-icon {
-  font-size: 17px;
-  line-height: 1;
-  flex-shrink: 0;
-}
-.sim-puzzle-type-popup {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  background: var(--popover);
-  border: 1px solid var(--border-default);
-  border-radius: 6px;
-  padding: 4px;
-  z-index: 200;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 150px;
-  max-height: 320px;
-  overflow-y: auto;
-}
-.sim-puzzle-type-item {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
-  width: 100%;
-  padding: 5px 8px;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  background: none;
-  color: var(--muted-foreground);
-  cursor: pointer;
-  font: inherit;
-  text-align: left;
-  white-space: nowrap;
-}
-.sim-puzzle-type-label {
-  font-size: 13px;
-}
-.sim-puzzle-type-item:hover {
-  background: var(--accent);
-  color: var(--foreground);
-}
-.sim-puzzle-type-item--active {
-  border-color: var(--border-default);
-  background: var(--accent);
-  color: var(--foreground);
-}
-
 .sim-player-scramble {
   display: inline-flex;
   align-items: center;

@@ -25,8 +25,8 @@ import {
   AlertTriangle, Target, Crosshair, Link2, Globe,
   Brain, X, Check, CheckCircle2, Footprints, Repeat,
 } from 'lucide-react';
-import WcaEventSelector from '@/components/WcaEventSelector';
-import { CubingIcon, EventIcon } from '@/components/EventIcon/EventIcon';
+import PuzzlePicker, { type PuzzlePickerGroup } from '@/components/PuzzlePicker/PuzzlePicker';
+import { EventIcon } from '@/components/EventIcon/EventIcon';
 import CubeRootLogo from '@/components/CubeRootLogo';
 import { petReact } from '@/lib/deskpet';
 import MoreMenu, { type MoreMenuItem } from '../_components/MoreMenu';
@@ -118,6 +118,8 @@ import RankBadge from './RankBadge';
 import SessionSwitcher from './SessionSwitcher';
 import { useRankCountry } from '@/app/[lang]/timer/_shared/use-rank-country';
 import { Spinner } from '@/components/Spinner/Spinner';
+import { ALL_EVENT_IDS } from '@/lib/event-constants';
+import { eventDisplayName } from '@/lib/wca-events';
 
 import '../timer.css';
 import '../_components/charts/charts.css';
@@ -162,10 +164,9 @@ const WCA_SELECTABLE = new Set<string>([
   '333bf', 'minx', 'pyram', 'clock', 'skewb', 'sq1', '444bf', '555bf', '333mbf',
 ]);
 
-/** Non-WCA / training events surfaced in the picker as the "Other" append
- *  group. iconClass '' renders the textLabel. */
-const APPEND_EVENTS: ReadonlyArray<{ id: string; iconClass: string; label?: string; textLabel?: string }> = [
-  { id: '333ni',  iconClass: 'event-333bf', label: '3x3 NI / 三盲 NI' },
+/** Non-WCA / training events surfaced in the shared picker's "Other" group. */
+const APPEND_EVENTS: ReadonlyArray<{ id: string; iconClass: string; textLabel?: string }> = [
+  { id: '333ni',  iconClass: 'event-333bf' },
   { id: '333mr',  iconClass: '', textLabel: 'MR' },
   { id: '666bld', iconClass: '', textLabel: '6BLD' },
   { id: '777bld', iconClass: '', textLabel: '7BLD' },
@@ -190,10 +191,17 @@ const APPEND_EVENTS: ReadonlyArray<{ id: string; iconClass: string; label?: stri
   ...EVENTS.filter(e => e.group === 'nonwca').map(e => ({
     id: e.id as string,
     iconClass: e.icon ?? '',
-    label: `${e.nameEn} / ${e.nameZh}`,
     textLabel: e.nameEn,
   })),
 ];
+
+const SOLO_WCA_PICKER_IDS = ALL_EVENT_IDS.filter((id) =>
+  WCA_SELECTABLE.has(id) || id === 'magic' || id === 'mmagic');
+
+const timerEventName = (id: string, isZh: boolean): string => {
+  const info = EVENTS.find((item) => item.id === id || toWcaSpelling(item.id) === id);
+  return info ? [info.nameEn, info.nameZh][Number(isZh)] : eventDisplayName(id, isZh);
+};
 
 /** Map a timer EventId -> the id the WcaEventSelector renders as active, and
  *  back. Both directions come from the shared table in _lib/types.ts (the same
@@ -1934,26 +1942,29 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   }, [timer.phase, timer.displayMs, lastPenalty, settings.timingEnabled]);
 
   const eventInfoCurrent = EVENTS.find(e => e.id === event);
-  const printEventName = eventInfoCurrent ? ((isZh ? eventInfoCurrent.nameZh : eventInfoCurrent.nameEn)) : event;
-  const eventLabel = eventInfoCurrent ? ((isZh ? eventInfoCurrent.nameZh : eventInfoCurrent.nameEn)) : event;
+  const printEventName = eventInfoCurrent
+    ? [eventInfoCurrent.nameEn, eventInfoCurrent.nameZh][Number(isZh)]
+    : event;
 
-  // Available set for the selector: every WCA id we map to + the append ids +
-  // magic/mmagic (rendered in the main grid via ALL_EVENT_IDS, not appended).
-  // With onlyAvailable the selector renders ONLY this set, so 333ft / 333mbo
-  // (never timer events) are dropped instead of showing as stray disabled icons.
-  const availableEvents = useMemo(() => new Set<string>([
-    ...WCA_SELECTABLE, 'magic', 'mmagic', ...APPEND_EVENTS.map(e => e.id),
-  ]), []);
   const selectorActiveId = eventToSelectorId(event);
-  // Trigger shows the event icon (same mapping the grid uses). Non-WCA training
-  // events without an icon (Cross / OLL / Custom…) fall back to their text label.
-  const triggerAppend = APPEND_EVENTS.find(e => e.id === event);
-  const triggerIcon = triggerAppend
-    ? (triggerAppend.iconClass || null)
-    : `event-${selectorActiveId}`;
-
-  // Picker dropdown open state (the topbar event pill opens the icon grid).
-  const [eventPickerOpen, setEventPickerOpen] = useState(false);
+  const eventPickerGroups = useMemo<readonly PuzzlePickerGroup[]>(() => [{
+    id: 'wca',
+    label: tr({ zh: 'WCA 项目', en: 'WCA events' }),
+    items: SOLO_WCA_PICKER_IDS.map((id) => ({
+      id,
+      label: eventDisplayName(id, isZh),
+      iconClass: `event-${id}`,
+    })),
+  }, {
+    id: 'other',
+    label: tr({ zh: '其他项目', en: 'Other puzzles' }),
+    items: APPEND_EVENTS.map((item) => ({
+      id: item.id,
+      label: timerEventName(item.id, isZh),
+      iconClass: item.iconClass || undefined,
+      textLabel: item.textLabel,
+    })),
+  }], [isZh]);
 
   // 「难度」开关的挂点。开关的可用性归打乱来源那两个配置组件(只有它们知道当前项目 / 当前
   // 比赛能不能按难度筛),但它属于顶栏这排常驻控件 —— 所以状态留在原处,DOM 用 portal 送上来。
@@ -2073,36 +2084,13 @@ export default function SoloView({ playersControl }: SoloViewProps) {
         <CubeRootLogo className="shell-topbar-brand" />
         <div className="shell-topbar-left">
           {playersControl}
-          <div className="shell-event-pick">
-            <button
-              type="button"
-              className={`shell-event-btn${triggerIcon ? ' icon-only' : ''}`}
-              onClick={() => setEventPickerOpen(o => !o)}
-              aria-expanded={eventPickerOpen}
-              aria-label={eventLabel}
-              title={eventLabel}
-            >
-              {triggerIcon
-                ? <CubingIcon icon={triggerIcon} />
-                : <span className="shell-event-label">{eventLabel}</span>}
-            </button>
-            {eventPickerOpen && (
-              <>
-                <div className="shell-event-backdrop" onClick={() => setEventPickerOpen(false)} />
-                <div className="shell-event-pop">
-                  <WcaEventSelector
-                    availableEvents={availableEvents}
-                    isZh={isZh}
-                    selectedEvent={selectorActiveId}
-                    onSelect={(id) => { setEvent(selectorIdToEvent(id)); setEventPickerOpen(false); }}
-                    appendEvents={APPEND_EVENTS}
-                    collapsibleAppend
-                    onlyAvailable
-                  />
-                </div>
-              </>
-            )}
-          </div>
+          <PuzzlePicker
+            isZh={isZh}
+            selectedEvent={selectorActiveId}
+            groups={eventPickerGroups}
+            onSelect={(id) => setEvent(selectorIdToEvent(id))}
+            dataNoTimer
+          />
           {/* 打乱来源:随机 / WCA 真题 / 手动输入。放在项目选择器右侧,和「人数」下拉同一组。
               data-no-timer:聚焦此下拉时空格不触发计时(见 lib/timer-ignore-target / 键盘处理)。 */}
           <select

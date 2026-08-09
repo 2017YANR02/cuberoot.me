@@ -1076,8 +1076,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'PuzzlePicker',
     import: "import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';",
     category: 'more',
-    zh: '魔方项目下拉,/scramble/solver 与 /scramble/stats 共用。传 wcaEvents 则 WCA 项目置顶成组(图标 + 名),其后按家族(长方体 / 异形扭转 / Square 系 / 滑块 / 联体 / 其他)列非 WCA;数据驱动:lib/cstimer-scramble 标 solvable 的 puzzle 自动出现。linkFor(求解页跨 COEP 硬导航)或 onSelect(分布页回调)二选一。',
-    en: 'Puzzle dropdown shared by /scramble/solver and /scramble/stats. Pass wcaEvents to lead with a WCA group (icon + name), followed by non-WCA puzzles grouped by family (cuboids / twisty / square / sliding / siamese / other) — data-driven: any puzzle flagged solvable in lib/cstimer-scramble shows up automatically. Pass linkFor (solver page, hard-nav across COEP) or onSelect (dist page callback).',
+    zh: '全站魔方项目下拉：首页近期打乱、预判、计时器、模拟器、求解与打乱统计共用同一套图标 + 名称菜单。传 wcaEvents 使用数据驱动的 WCA + csTimer 家族目录;页面有自己的可用集时传 groups。linkFor 保留中键新开,onSelect 用于页内状态。禁止页面内自写项目菜单。',
+    en: 'Site-wide puzzle dropdown shared by Recent Scrambles, Predict, Timer, Sim, Solver, and Scramble Stats. Pass wcaEvents for the data-driven WCA + csTimer family catalog, or groups for a page-specific available set. linkFor preserves middle-click navigation; onSelect updates in-page state. Do not hand-roll page-local puzzle menus.',
   },
   {
     name: 'GestureWheel',
