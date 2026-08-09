@@ -166,6 +166,7 @@ function PredictPageInner() {
   const [elapsed, setElapsed] = useState(0);
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [viewResetSeq, setViewResetSeq] = useState(0);
   const startedAt = useRef(0);
   const algElRef = useRef<HTMLTextAreaElement | null>(null);
   /** 出题时读的是 ref 而不是 state:公式每敲一个字都在变,不能每个字换一题。 */
@@ -250,6 +251,7 @@ function PredictPageInner() {
     setStep(0);
     setPlaying(false);
     setElapsed(0);
+    setViewResetSeq((seq) => seq + 1);
     startedAt.current = Date.now();
   }, [puzzle, is333, mode, track, source, moveCount, crossEdges, orientation]);
 
@@ -510,6 +512,7 @@ function PredictPageInner() {
             moves={ch?.moves}
             step={step}
             transparent={transparent}
+            viewResetSeq={viewResetSeq}
           />
           <div className="predict-clock" aria-live="off">{clock(elapsed)}</div>
           {feedback?.kind === 'wrong' && (
