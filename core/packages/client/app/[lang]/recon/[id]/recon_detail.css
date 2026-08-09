@@ -212,7 +212,6 @@
   background: color-mix(in srgb, var(--foreground) 3%, transparent);
   padding: 10px 14px;
   border-radius: 6px;
-  border: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
 }
 
 .stat-item {
@@ -460,13 +459,6 @@
   vertical-align: middle;
   display: inline-flex;
   align-items: center;
-}
-
-/* --- 另解 --- */
-.alt-empty {
-  padding: 12px 0 4px;
-  color: var(--faint-foreground);
-  font-size: 0.88rem;
 }
 
 .alt-solution-text {
@@ -904,14 +896,6 @@
   color: var(--faint-foreground);
 }
 
-.same-round-source {
-  display: inline-flex;
-  align-items: center;
-  margin-left: 6px;
-  color: var(--muted-foreground);
-  vertical-align: middle;
-}
-
 /* --- YouTube 风格评论输入框 --- */
 .yt-composer {
   display: flex;
@@ -1254,6 +1238,10 @@
   gap: 12px;
   align-items: flex-start;
   margin-top: 4px;
+}
+.yt-reply-composer > .yt-composer {
+  flex: 1;
+  min-width: 0;
 }
 .yt-reply-composer .yt-composer-avatar {
   width: 24px;

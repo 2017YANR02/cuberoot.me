@@ -17,7 +17,7 @@ import { ALL_EVENT_IDS } from '@/lib/event-constants';
 import { isAo5Bracketed } from '@/lib/wca-ao5-brackets';
 import { ROUND_ORDER, roundLabel, roundClass } from '@/lib/wca-round-meta';
 import { useT } from '@/hooks/useT';
-import type { WcaPersonProfile, WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
+import { wcaResultRowKey, type WcaPersonProfile, type WcaResultRow, type WcaCompetition } from '@/lib/wca-person-api';
 
 interface Props {
   profile: WcaPersonProfile;
@@ -131,7 +131,7 @@ function TierRows({
         const singleHit = !!r.regional_single_record && typeSet.has(r.regional_single_record);
         const averageHit = !!r.regional_average_record && typeSet.has(r.regional_average_record);
         return (
-          <tr key={r.id} className={showEvent && i !== 0 ? 'wp-rec-event-first' : ''}>
+          <tr key={wcaResultRowKey(r)} className={showEvent && i !== 0 ? 'wp-rec-event-first' : ''}>
             <th scope="row" className="wp-cell-event">
               {showEvent && (
                 <span className="wp-rec-event">

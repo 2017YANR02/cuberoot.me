@@ -2,7 +2,7 @@
 // 一条 result 是 PB iff 该选手在该项目下,所有更早(comp.start_date 较小)的成绩里没有更好的值.
 // 注意 best/average 分别判断,DNF/DNS/0 一律不是 PB(且不参与最佳值更新).
 
-import type { WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
+import { wcaResultRowKey, type WcaResultRow, type WcaCompetition } from '@/lib/wca-person-api';
 
 export interface ProgressFlag {
   bestIsPb: boolean;
@@ -15,12 +15,12 @@ function isValidValue(v: number): boolean {
   return v > 0;
 }
 
-/** 给定本 person 全部 results + 全部 comps,返回 result.id → ProgressFlag.
+/** 给定本 person 全部 results + 全部 comps,返回比赛 / 项目 / 轮次业务 key → ProgressFlag.
  *  对每个 event:按 comp.start_date 升序,逐条扫描;若 best/average 严格优于此前最优,标 PB. */
 export function computeProgress(
   results: WcaResultRow[],
   comps: WcaCompetition[],
-): Map<number, ProgressFlag> {
+): Map<string, ProgressFlag> {
   const compDate = new Map<string, string>();
   for (const c of comps) compDate.set(c.id, c.start_date);
 
@@ -28,10 +28,10 @@ export function computeProgress(
     const da = compDate.get(a.competition_id) ?? '';
     const db = compDate.get(b.competition_id) ?? '';
     if (da !== db) return da.localeCompare(db);
-    return a.id - b.id;
+    return wcaResultRowKey(a).localeCompare(wcaResultRowKey(b));
   });
 
-  const out = new Map<number, ProgressFlag>();
+  const out = new Map<string, ProgressFlag>();
   const bestSoFar = new Map<string, { single: number | null; average: number | null }>();
 
   for (const r of sorted) {
@@ -48,7 +48,7 @@ export function computeProgress(
       cur.average = r.average;
     }
     bestSoFar.set(key, cur);
-    out.set(r.id, { bestIsPb: bestPb, averageIsPb: avgPb });
+    out.set(wcaResultRowKey(r), { bestIsPb: bestPb, averageIsPb: avgPb });
   }
   return out;
 }
@@ -130,7 +130,7 @@ function rankTrackers(results: WcaResultRow[]): {
   return { single: build(singleValues), average: build(averageValues) };
 }
 
-/** 时间序 PR rank: 按 (comp.start_date, round, result.id) 时间序遍历本 person 全部成绩.
+/** 时间序 PR rank: 按 (comp.start_date, round,业务行 key) 时间序遍历本 person 全部成绩.
  *  单次维度的「已见过」序列 = 此前所有 solve(含平均里非最佳的把),不是只算各轮最佳单次;
  *  这样一把更早更快的非最佳把(如某次平均里的 43.66)会压低后来更慢单次(如 43.88)的名次.
  *  平均维度按标准竞赛排名:并列平均同名次,但会分别占据后续名次位.
@@ -139,7 +139,7 @@ function rankTrackers(results: WcaResultRow[]): {
 export function computePrRank(
   results: WcaResultRow[],
   comps: WcaCompetition[],
-): Map<number, RankFlag> {
+): Map<string, RankFlag> {
   const compDate = new Map(comps.map(c => [c.id, c.start_date]));
 
   const sorted = results.slice().sort((a, b) => {
@@ -150,10 +150,10 @@ export function computePrRank(
     const ra = CHRONO_ROUND_ORDER[a.round_type_id] ?? 99;
     const rb = CHRONO_ROUND_ORDER[b.round_type_id] ?? 99;
     if (ra !== rb) return ra - rb;
-    return a.id - b.id;
+    return wcaResultRowKey(a).localeCompare(wcaResultRowKey(b));
   });
 
-  const out = new Map<number, RankFlag>();
+  const out = new Map<string, RankFlag>();
   const { single: singleRankers, average: averageRankers } = rankTrackers(results);
 
   for (const r of sorted) {
@@ -182,7 +182,7 @@ export function computePrRank(
       averageRank = averageRanker.rank(r.average);
       averageRanker.add(r.average);
     }
-    out.set(r.id, { singleRank, averageRank, attemptRanks });
+    out.set(wcaResultRowKey(r), { singleRank, averageRank, attemptRanks });
   }
   return out;
 }

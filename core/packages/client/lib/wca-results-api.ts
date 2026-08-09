@@ -6,6 +6,7 @@
 import { toWcaEventId } from './wca-events';
 import { apiUrl } from './api-base';
 import { judgeRecordTag, type JudgedRecord, type KeatonedInfo, type RecordsSnapshot } from './record-tag';
+import type { WcaResultRow as WcaPersonResultRow } from './wca-person-api';
 
 /** Recon round (`1`/`2`/`3`/`f`) → WCA round_type_id variants (incl. combined / cutoff). */
 export const ROUND_VARIANTS: Record<string, string[]> = {
@@ -21,9 +22,16 @@ export function matchRoundType(reconRound: string, wcaRoundTypeId: string): bool
 }
 
 interface WcaResultRow {
+  id?: number | null;
   wca_id: string;
+  competition_id: string;
+  event_id: string;
   attempts: number[];
   round_type_id: string;
+  format_id: string;
+  best: number;
+  average: number;
+  pos: number;
   regional_single_record?: string | null;
   regional_average_record?: string | null;
 }
@@ -34,7 +42,7 @@ interface WcaRound {
   results: WcaResultRow[];
 }
 
-interface WcaResultsResponse {
+export interface WcaResultsResponse {
   id: string;
   rounds: WcaRound[];
 }
@@ -57,6 +65,29 @@ export function fetchWcaResults(compId: string, wcaEventId: string): Promise<Wca
     );
   cache.set(key, p);
   return p;
+}
+
+/** Extract every round for one person from the competition-scoped results endpoint. */
+export function extractPersonCompetitionResults(
+  data: WcaResultsResponse | null,
+  personId: string,
+): WcaPersonResultRow[] {
+  if (!data || !personId) return [];
+  return data.rounds.flatMap((round) => round.results
+    .filter((row) => row.wca_id === personId)
+    .map((row) => ({
+      id: row.id ?? null,
+      competition_id: row.competition_id || data.id,
+      event_id: row.event_id,
+      round_type_id: row.round_type_id || round.roundTypeId,
+      format_id: row.format_id,
+      best: row.best,
+      average: row.average,
+      pos: row.pos,
+      attempts: row.attempts,
+      regional_single_record: row.regional_single_record ?? null,
+      regional_average_record: row.regional_average_record ?? null,
+    })));
 }
 
 export async function fetchAttempts(

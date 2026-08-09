@@ -29,7 +29,7 @@ import { AttemptRanksToggle } from './AttemptRanksToggle';
 import { rowHasReconStats, computeReconRoundAvg, type ReconAttemptInfo } from '@/lib/recon-attempt-lookup';
 import { AvgDec } from '@/components/wca-results/AvgDec';
 import { trimEmptyAttempts } from '@/lib/wca-ao5-brackets';
-import { fetchPersonRankHistory, type PersonRankHistoryResponse, type WcaPersonProfile, type WcaResultRow, type WcaCompetition } from '@/lib/wca-person-api';
+import { fetchPersonRankHistory, wcaResultRowKey, type PersonRankHistoryResponse, type WcaPersonProfile, type WcaResultRow, type WcaCompetition } from '@/lib/wca-person-api';
 import { useHashHighlight } from '@/hooks/useHashHighlight';
 import { resolveResultRow, resultRowHash, resultRowIndex } from '@/lib/wca-result-anchor';
 import { isMbldEvent, effectiveMbldAverage as effectiveAverage } from '@/lib/mbf-average';
@@ -85,7 +85,7 @@ export default function ByEventView({ profile, results, comps, reconLookup, even
     .sort((a, b) => {
       const da = compById.get(a.competition_id)?.start_date ?? '';
       const db = compById.get(b.competition_id)?.start_date ?? '';
-      return da.localeCompare(db) || a.id - b.id;
+      return da.localeCompare(db) || wcaResultRowKey(a).localeCompare(wcaResultRowKey(b));
     });
 
   return (
@@ -387,8 +387,9 @@ function EventRoundsList({
         <tbody>
           {displayRows.slice(0, count).map((r, ri) => {
             const cmp = compById.get(r.competition_id);
-            const rank = r.live ? prRankLive?.get(r.id) : prRank.get(r.id);
-            const liveRank = r.live ? livePrRanks.get(r.id) : null;
+            const rowKey = wcaResultRowKey(r);
+            const rank = r.live ? prRankLive?.get(rowKey) : prRank.get(rowKey);
+            const liveRank = r.live ? livePrRanks.get(rowKey) : null;
             const singleRank = rank?.singleRank ?? liveRank?.pS ?? null;
             const averageRank = rank?.averageRank ?? liveRank?.pA ?? null;
             // 直播行的区域纪录(NR/WR/CR)与 /wca/comp 结果表同口径,优先于 PR 标志。
@@ -421,7 +422,7 @@ function EventRoundsList({
             const roundAvg = hasReconStats ? computeReconRoundAvg(reconLookup, r.competition_id, eventId, r.round_type_id) : null;
             return (
               <tr
-                key={r.id}
+                key={rowKey}
                 id={`r-${r.competition_id}-${eventId}-${r.round_type_id}`}
                 className={`wp-row-anchorable ${showComp ? 'wp-row-comp-first' : ''} ${hasChange ? 'wp-row-changed' : ''} ${r.live ? 'wp-row-live' : ''} ${hasReconStats ? 'wp-row-has-recon-stats' : ''}`}
                 onClick={(e) => handleRowClick(e, r.competition_id, r.round_type_id)}

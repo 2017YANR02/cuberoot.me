@@ -23,7 +23,7 @@ import { rowHasReconStats, computeReconRoundAvg, type ReconAttemptInfo } from '@
 import { AvgDec } from '@/components/wca-results/AvgDec';
 import { isMbldEvent, effectiveMbldAverage } from '@/lib/mbf-average';
 import { useMbldAvgRecords, mbldAvgRecordKey } from '@/lib/mbld-avg-records';
-import type { WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
+import { wcaResultRowKey, type WcaResultRow, type WcaCompetition } from '@/lib/wca-person-api';
 import { useHashHighlight } from '@/hooks/useHashHighlight';
 import { resolveResultRow, resultRowHash } from '@/lib/wca-result-anchor';
 import { rowChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, effectiveAttemptPenalties, effectiveAttemptPenaltyNote, effectiveAttemptVideos, pendingAttemptVideos, recordAttemptEdit, recordAttemptOriginal, recordAttemptPenalty, recordAttemptVideos, splitChainByStatus } from '@/lib/result-watch-api';
@@ -207,8 +207,9 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                   </th>
                 </tr>
                 {rows.map((r, ri) => {
-                    const rank = r.live ? prRankLive?.get(r.id) : prRank.get(r.id);
-                    const liveRank = r.live ? livePrRanks.get(r.id) : null;
+                    const rowKey = wcaResultRowKey(r);
+                    const rank = r.live ? prRankLive?.get(rowKey) : prRank.get(rowKey);
+                    const liveRank = r.live ? livePrRanks.get(rowKey) : null;
                     const singleRank = rank?.singleRank ?? liveRank?.pS ?? null;
                     const averageRank = rank?.averageRank ?? liveRank?.pA ?? null;
                     // 直播行的区域纪录(NR/WR/CR)与 /wca/comp 结果表同口径,优先于 PR 标志。
@@ -241,7 +242,7 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                     const roundAvg = hasReconStats ? computeReconRoundAvg(reconLookup, comp.id, r.event_id, r.round_type_id) : null;
                     return (
                       <tr
-                        key={r.id}
+                        key={rowKey}
                         id={`r-${comp.id}-${r.event_id}-${r.round_type_id}`}
                         className={`wp-row-anchorable ${hasChange ? 'wp-row-changed' : ''} ${r.live ? 'wp-row-live' : ''} ${hasReconStats ? 'wp-row-has-recon-stats' : ''}`}
                         onClick={(e) => handleRowClick(e, comp.id, r.event_id, r.round_type_id)}
@@ -420,4 +421,3 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
     </div>
   );
 }
-
