@@ -18,6 +18,7 @@ import {
   Lock, Link2, LogIn,
 } from 'lucide-react';
 import type { ReconSolve, ReconComment, ReconAlternative } from '@cuberoot/shared';
+import { ReconCompletionBadge } from '@/components/recon/ReconCompletionBadge';
 import {
   getRecon, listComments, addComment, updateComment, deleteComment, pinComment, getBiliCover, getDouyinCover,
   listRecons, deleteAlternative, getSameScramble,
@@ -274,6 +275,7 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
             </span>
           )}
           {solve.city && <span className="detail-meta-item">{displayCity(solve.city, isZh)}</span>}
+          <ReconCompletionBadge status={solve.completionStatus} />
           {/* 可见性徽标——仅非公开(不公开列出 / 私享)时显示,提示当前分享状态 */}
           {solve.visibility === 'unlisted' && (
             <span className="detail-meta-item recon-vis-badge" title={tr({ zh: '不在列表中显示,仅凭链接可访问', en: 'Not listed; accessible only via the link' })}>

@@ -196,11 +196,13 @@ export function SolveCard({
 }
 
 export function StatsList({
-  solves, observingIdx, onPick, onClear,
+  solves, cases, puzzle, set, observingIdx, onPick, onClear,
 }: {
   solves: TrainerSolve[];
+  cases: AlgCase[];
+  puzzle: AlgPuzzle;
+  set: string;
   observingIdx: number;
-  isZh: boolean;
   onPick: (i: number) => void;
   onClear: () => void;
 }) {
@@ -212,24 +214,40 @@ export function StatsList({
           <Trash2 size={14} />
         </button>
       )}
-      {solves.length === 0 ? (
-        <div className="trainer-stats-empty">
-          {tr({ zh: '空格开始计时', en: 'Space to start'
-        })}
-        </div>
-      ) : (
+      {solves.length > 0 && (
         <div className="trainer-stats-list">
           {/* 最新一条在最前 —— 刚练完那条才是要看的,不该滚到列表末尾去找。
               `s.i` 是这条在会话里的原始序号(高亮 / 点击回看都按它),倒序只换呈现。 */}
-          {solves.slice().reverse().map(s => (
-            <span
-              key={s.i}
-              className={`trainer-stat-time${observingIdx === s.i ? ' is-active' : ''}${s.penalty === 'DNF' ? ' is-dnf' : ''}`}
-              onClick={() => onPick(s.i)}
-            >
-              {formatSolveTime(s)}
-            </span>
-          ))}
+          {solves.slice().reverse().map((s, shownIndex) => {
+            const c = findCaseByKey(cases, s.caseKey);
+            const name = c ? primaryCaseName(puzzle, set, c) : s.caseName;
+            const time = formatSolveTime(s);
+            return (
+              <button
+                key={s.i}
+                type="button"
+                className={`trainer-stat-item${observingIdx === s.i ? ' is-active' : ''}${s.penalty === 'DNF' ? ' is-dnf' : ''}`}
+                onClick={() => onPick(s.i)}
+                title={`${name} ${time}`}
+                aria-label={`${name} ${time}`}
+              >
+                {c && (
+                  <CaseThumb
+                    puzzle={puzzle}
+                    set={set}
+                    sticker={c.sticker}
+                    alg={c.algs.flat()[0]?.alg ?? c.standard ?? ''}
+                    setup={s.scramble || c.setup}
+                    size={48}
+                    // 新近 40 把本地同步画,保证刚完成的图瞬间出现；更早的记录懒加载网络图。
+                    local={shownIndex < 40}
+                    loading={shownIndex < 40 ? undefined : 'lazy'}
+                  />
+                )}
+                <span className="trainer-stat-time">{time}</span>
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
@@ -340,6 +358,8 @@ export function HistoryList({
                     // 图从该条的实际打乱渲染(含 pre/post-AUF),否则与回看时主屏那张对不上
                     setup={e.scramble || c.setup}
                     size={56}
+                    // 每页最多 10 张,在本地同步生成可让新历史项与按钮同帧出现,不等 SVG 网络请求。
+                    local
                   />
                 ) : (
                   // 这一条的 case 已不在当前选集里(切过 set / 合练成员变了):没有图可画,

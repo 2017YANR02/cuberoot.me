@@ -51,6 +51,7 @@ const FIELD_MAP_JSON_TO_SQL: Record<string, string> = {
   videoUrl: 'video_url',
   dupReason: 'dup_reason',
   unsolvedReason: 'unsolved_reason',
+  completionStatus: 'completion_status',
 };
 
 // NOTE: 反向映射（运行时自动生成）
@@ -70,7 +71,7 @@ const ALLOWED_COLUMNS = new Set([
   'cross_type', 'cross_stm', 'f2l', 'll', 's_move', 'cross_color',
   'cube', 'reconer', 'reconer_id', 'group_id', 'recon_date', 'created_at',
   'added_by', 'added_by_id', 'comp_wca_id', 'person_country', 'co_persons',
-  'video_url', 'alternatives', 'dup_reason', 'unsolved_reason', 'visibility',
+  'video_url', 'alternatives', 'dup_reason', 'unsolved_reason', 'completion_status', 'visibility',
 ]);
 
 // 同选手+同打乱重复提交时,用户必须二选一说明原因(否则后端拒收)。空=非重复提交。

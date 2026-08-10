@@ -2,8 +2,12 @@ import { describe, expect, it } from 'vitest';
 import {
   checkReconCompletion,
   cleanReconCubeStateMoves,
+  normalizeReconScrambleSpacing,
 } from '@cuberoot/shared/recon-completion';
-import { hasUnsolvedReason } from '../../server/src/utils/recon_completion';
+import {
+  hasUnsolvedReason,
+  normalizeReconScrambleRow,
+} from '../../server/src/utils/recon_completion';
 
 describe('reconstruction completion validation', () => {
   it('accepts a compact scramble followed by its solution', async () => {
@@ -42,6 +46,14 @@ U X R' U R' D2 R U' R' D2 R2 x' U' pl 1-A+`;
     expect(cleanReconCubeStateMoves("U pl R' 1-A+")).toBe("U R'");
   });
 
+  it('adds spaces to compact cube moves without deleting unknown chunks', () => {
+    expect(normalizeReconScrambleSpacing(
+      '3x3',
+      "ULB2LD' B' FR' B' U' L2F' D' R2F' U' B",
+    )).toBe("U L B2 L D' B' F R' B' U' L2 F' D' R2 F' U' B");
+    expect(normalizeReconScrambleSpacing('3x3', "R Q R'")).toBe("R Q R'");
+  });
+
   it('does not guess when the scramble is an unknown placeholder', async () => {
     await expect(checkReconCompletion({
       event: '3x3',
@@ -60,11 +72,32 @@ U X R' U R' D2 R U' R' D2 R2 x' U' pl 1-A+`;
     await expect(checkReconCompletion({ event, scramble, solution }))
       .resolves.toEqual({ status: 'solved' });
   });
+
+  it.each(['OH', '3BLD', 'Pyraminx', 'SQ1', 'Skewb', 'Mirror', '3x3 Smart'].map((event) => [event]))(
+    'checks the historical %s event alias',
+    async (event) => {
+      const move = event.toLowerCase() === 'pyraminx' ? 'R' : event.toLowerCase() === 'sq1' ? '(1,0)' : 'R';
+      const inverse = event.toLowerCase() === 'sq1' ? '(-1,0)' : "R'";
+      await expect(checkReconCompletion({ event, scramble: move, solution: inverse }))
+        .resolves.toEqual({ status: 'solved' });
+    },
+  );
 });
 
 describe('unsolved reason validation', () => {
   it('requires non-whitespace text', () => {
     expect(hasUnsolvedReason({ unsolved_reason: '   ' })).toBe(false);
     expect(hasUnsolvedReason({ unsolved_reason: '原视频缺少最后一步' })).toBe(true);
+  });
+
+  it('normalizes both SQL scramble columns before persistence', () => {
+    const row: Record<string, unknown> = {
+      event: '3x3',
+      wca_scramble: "RUR'",
+      optimal_scramble: "F2LU'",
+    };
+    normalizeReconScrambleRow(row);
+    expect(row.wca_scramble).toBe("R U R'");
+    expect(row.optimal_scramble).toBe("F2 L U'");
   });
 });
