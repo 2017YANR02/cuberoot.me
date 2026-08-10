@@ -24227,6 +24227,15 @@
     "NanchangSummer2026": {
       "name": "Nanchang Summer 2026"
     },
+    "GuangzhouGraDUAL3x3I2026": {
+      "name": "Guangzhou GraDUAL 3x3 I 2026"
+    },
+    "MaomingOpen2026": {
+      "name": "Maoming Open 2026"
+    },
+    "ZhanjiangOpen2026": {
+      "name": "Zhanjiang Open 2026"
+    },
     "CzechOpen2006": {
       "name": "Czech Open 2006"
     },
@@ -31487,6 +31496,9 @@
     "NEMelbourneMarchSunday2026": {
       "name": "NE Melbourne March Sunday 2026"
     },
+    "ZhuhaiPiDay2026": {
+      "name": "Zhuhai Pi Day 2026"
+    },
     "SouthernOregonGameExpo2026": {
       "name": "Southern Oregon Game Expo 2026"
     },
@@ -31813,9 +31825,6 @@
     },
     "SzczeciNxN2026": {
       "name": "SzczeciNxN 2026"
-    },
-    "ZhuhaiPiDay2026": {
-      "name": "Zhuhai Pi Day 2026"
     },
     "DFWCubingSpring2026": {
       "name": "DFW Cubing Spring 2026"
@@ -34273,6 +34282,9 @@
     },
     "WarmUpNiepolomice2026": {
       "name": "Warm Up Niepołomice 2026"
+    },
+    "ScenicCitySummerTN2026": {
+      "name": "Scenic City Summer TN 2026"
     },
     "FinnishOpen2009": {
       "name": "Finnish Open 2009"
@@ -41102,11 +41114,11 @@
     "BigNBlindNYC2017": {
       "name": "Big N Blind NYC 2017"
     },
-    "HendersonvilleWinter2018": {
-      "name": "Hendersonville Winter 2018"
-    },
     "DontPeek2018": {
       "name": "Don't Peek 2018"
+    },
+    "HendersonvilleWinter2018": {
+      "name": "Hendersonville Winter 2018"
     },
     "ImaginaliaOpen2018": {
       "name": "Imaginalia Open 2018"
@@ -41372,11 +41384,11 @@
     "BimaalCuboBogota2025": {
       "name": "Bima al Cubo Bogotá 2025"
     },
-    "VITCubeOpen2025": {
-      "name": "VIT Cube Open 2025"
-    },
     "LaMontagneOpen2025": {
       "name": "La Montagne Open 2025"
+    },
+    "VITCubeOpen2025": {
+      "name": "VIT Cube Open 2025"
     },
     "ThailandChampionship2025": {
       "name": "Thailand Championship 2025"
@@ -41396,11 +41408,11 @@
     "RheinSiegOpen2026": {
       "name": "Rhein-Sieg Open 2026"
     },
-    "LetsGoCarlow2026": {
-      "name": "Lets Go Carlow 2026"
-    },
     "CernaylesReimsOpen2026": {
       "name": "Cernay-lès-Reims Open 2026"
+    },
+    "LetsGoCarlow2026": {
+      "name": "Lets Go Carlow 2026"
     },
     "CFGoesSidewaysBrzeziny2026": {
       "name": "CF Goes Sideways Brzeziny 2026"
@@ -41513,11 +41525,11 @@
     "GermanBigCubeOpen2019": {
       "name": "German Big Cube Open 2019"
     },
-    "SouthSurreySideEvents2019": {
-      "name": "South Surrey Side Events 2019"
-    },
     "ShriRamCubingChallenge2019": {
       "name": "Shri Ram Cubing Challenge 2019"
+    },
+    "SouthSurreySideEvents2019": {
+      "name": "South Surrey Side Events 2019"
     },
     "LaSillaII2019": {
       "name": "La Silla II 2019"
@@ -41558,11 +41570,11 @@
     "SanMarinoNationals2023": {
       "name": "San Marino Nationals 2023"
     },
-    "SwissNationals2023": {
-      "name": "Swiss Nationals 2023"
-    },
     "JaquecaDiTella2023": {
       "name": "Jaqueca Di Tella 2023"
+    },
+    "SwissNationals2023": {
+      "name": "Swiss Nationals 2023"
     },
     "BigCubesinEdneyville2023": {
       "name": "Big Cubes in Edneyville 2023"
@@ -41654,11 +41666,11 @@
     "TokyoAutumn2025": {
       "name": "Tokyo Autumn 2025"
     },
-    "MachesneyParkFall2025": {
-      "name": "Machesney Park Fall 2025"
-    },
     "BacktoBuchy2025": {
       "name": "Back to Buchy 2025"
+    },
+    "MachesneyParkFall2025": {
+      "name": "Machesney Park Fall 2025"
     },
     "KrungthepFarewell2025": {
       "name": "Krungthep Farewell 2025"
@@ -41687,11 +41699,11 @@
     "MumbaiTwistathon2026": {
       "name": "Mumbai Twistathon 2026"
     },
-    "WildWestWyoming2026": {
-      "name": "Wild West Wyoming 2026"
-    },
     "MiddleGASummerSolving2026": {
       "name": "Middle GA Summer Solving 2026"
+    },
+    "WildWestWyoming2026": {
+      "name": "Wild West Wyoming 2026"
     },
     "VegasCubingCupFall2025": {
       "name": "Vegas Cubing Cup Fall 2025"
@@ -45992,6 +46004,9 @@
     "StevenageJuly2026": {
       "name": "Stevenage July 2026"
     },
+    "PilznoCubingHoliday2026": {
+      "name": "Pilzno Cubing Holiday 2026"
+    },
     "LaveyVouslesMains2026": {
       "name": "Lavey-Vous les Mains 2026"
     },
@@ -47942,6 +47957,9 @@
     "StAnsgar2026": {
       "name": "St. Ansgar 2026"
     },
+    "Svealandsmasterskapet2026": {
+      "name": "Svealandsmästerskapet 2026"
+    },
     "FullSailSpring2011": {
       "name": "Full Sail Spring 2011"
     },
@@ -48232,6 +48250,9 @@
     },
     "FingerLakesSideEvents2026": {
       "name": "Finger Lakes Side Events 2026"
+    },
+    "BristolAugust2026": {
+      "name": "Bristol August 2026"
     },
     "XelaOpen2016": {
       "name": "Xela Open 2016"
@@ -50168,6 +50189,12 @@
     "Cube4funinLublin2025": {
       "name": "Cube4fun in Lublin 2025"
     },
+    "CFClausRaceBrzeziny2025": {
+      "name": "CF Claus Race Brzeziny 2025"
+    },
+    "OlsztyNxN2026": {
+      "name": "OlsztyNxN 2026"
+    },
     "HungarianAllRounder12026": {
       "name": "Hungarian All-Rounder 1 2026"
     },
@@ -50212,6 +50239,9 @@
     },
     "MikesCubesIsrael2026": {
       "name": "Mike's Cubes Israel 2026"
+    },
+    "CFLBrzeziny2026": {
+      "name": "CFL Brzeziny 2026"
     },
     "KingscubeToulouseOpen2014": {
       "name": "Kingscube Toulouse Open 2014"
@@ -50437,9 +50467,6 @@
     },
     "KorumWinterCubeChallenge2025": {
       "name": "Korum Winter Cube Challenge 2025"
-    },
-    "CFClausRaceBrzeziny2025": {
-      "name": "CF Claus Race Brzeziny 2025"
     },
     "CorningWinter2026": {
       "name": "Corning Winter 2026"
@@ -51986,9 +52013,6 @@
     "SlowNSteadyUMDFall2025": {
       "name": "Slow N Steady UMD Fall 2025"
     },
-    "OlsztyNxN2026": {
-      "name": "OlsztyNxN 2026"
-    },
     "SteelCitySprint2026": {
       "name": "Steel City Sprint PA 2026"
     },
@@ -52000,6 +52024,9 @@
     },
     "SummerCubingSzczecin2026": {
       "name": "Summer Cubing Szczecin 2026"
+    },
+    "HungarianAllRounder62026": {
+      "name": "Hungarian All-Rounder 6 2026"
     },
     "LasLomas2014": {
       "name": "Las Lomas 2014"

@@ -779,12 +779,6 @@
       5,
       "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
       "United States",
-      "[Ohio Valley Open 2022](https://www.worldcubeassociation.org/competitions/OhioValleyOpen2022)"
-    ],
-    [
-      5,
-      "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
-      "United States",
       "[Bulldog Spring 2023](https://www.worldcubeassociation.org/competitions/BulldogSpring2023)"
     ],
     [
@@ -792,6 +786,12 @@
       "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
       "United States",
       "[Cincinnati Speed Solving 2025](https://www.worldcubeassociation.org/competitions/CincinnatiSpeedSolving2025)"
+    ],
+    [
+      5,
+      "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
+      "United States",
+      "[Ohio Valley Open 2022](https://www.worldcubeassociation.org/competitions/OhioValleyOpen2022)"
     ],
     [
       5,
@@ -1067,18 +1067,6 @@
       4,
       "[Bryan Eng](https://www.worldcubeassociation.org/persons/2017ENGB01)",
       "Australia",
-      "[Chilling in Canberra Sat 2024](https://www.worldcubeassociation.org/competitions/ChillinginCanberraSaturday2024)"
-    ],
-    [
-      4,
-      "[Bryan Eng](https://www.worldcubeassociation.org/persons/2017ENGB01)",
-      "Australia",
-      "[Newcastle Autumn 2021](https://www.worldcubeassociation.org/competitions/NewcastleAutumn2021)"
-    ],
-    [
-      4,
-      "[Bryan Eng](https://www.worldcubeassociation.org/persons/2017ENGB01)",
-      "Australia",
       "[Sydney Winter Sunday 2022](https://www.worldcubeassociation.org/competitions/SydneyWinterSunday2022)"
     ],
     [
@@ -1086,6 +1074,18 @@
       "[Bryan Eng](https://www.worldcubeassociation.org/persons/2017ENGB01)",
       "Australia",
       "[Tramsheds Series Saturday 2022](https://www.worldcubeassociation.org/competitions/TramshedsSeriesSaturday2022)"
+    ],
+    [
+      4,
+      "[Bryan Eng](https://www.worldcubeassociation.org/persons/2017ENGB01)",
+      "Australia",
+      "[Chilling in Canberra Sat 2024](https://www.worldcubeassociation.org/competitions/ChillinginCanberraSaturday2024)"
+    ],
+    [
+      4,
+      "[Bryan Eng](https://www.worldcubeassociation.org/persons/2017ENGB01)",
+      "Australia",
+      "[Newcastle Autumn 2021](https://www.worldcubeassociation.org/competitions/NewcastleAutumn2021)"
     ],
     [
       4,
@@ -1187,13 +1187,13 @@
       4,
       "[Hill Pong Yong Feng](https://www.worldcubeassociation.org/persons/2017FENG10)",
       "Malaysia",
-      "[Slow and Easy Selangor 2024](https://www.worldcubeassociation.org/competitions/SlowandEasySelangor2024)"
+      "[PBQ Kuala Lumpur 2025](https://www.worldcubeassociation.org/competitions/PBQKualaLumpur2025)"
     ],
     [
       4,
       "[Hill Pong Yong Feng](https://www.worldcubeassociation.org/persons/2017FENG10)",
       "Malaysia",
-      "[PBQ Kuala Lumpur 2025](https://www.worldcubeassociation.org/competitions/PBQKualaLumpur2025)"
+      "[Slow and Easy Selangor 2024](https://www.worldcubeassociation.org/competitions/SlowandEasySelangor2024)"
     ],
     [
       4,
@@ -1355,13 +1355,13 @@
       4,
       "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
       "United States",
-      "[Gonna Need a Bigger Cube SD 2023](https://www.worldcubeassociation.org/competitions/GonnaNeedaBiggerCubeSD2023)"
+      "[AZCubing Big Cube Brawl 2018](https://www.worldcubeassociation.org/competitions/AZCubingBigCubeBrawl2018)"
     ],
     [
       4,
       "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
       "United States",
-      "[AZCubing Big Cube Brawl 2018](https://www.worldcubeassociation.org/competitions/AZCubingBigCubeBrawl2018)"
+      "[Gonna Need a Bigger Cube SD 2023](https://www.worldcubeassociation.org/competitions/GonnaNeedaBiggerCubeSD2023)"
     ],
     [
       4,
@@ -1385,13 +1385,13 @@
       4,
       "[Mohith B (ಮೋಹಿತ್ ಬಿ)](https://www.worldcubeassociation.org/persons/2023BMOH01)",
       "India",
-      "[VR Bengaluru Cube Open A 2025](https://www.worldcubeassociation.org/competitions/VRBengaluruCubeOpenA2025)"
+      "[M5 Open A Bengaluru 2025](https://www.worldcubeassociation.org/competitions/M5OpenABengaluru2025)"
     ],
     [
       4,
       "[Mohith B (ಮೋಹಿತ್ ಬಿ)](https://www.worldcubeassociation.org/persons/2023BMOH01)",
       "India",
-      "[M5 Open A Bengaluru 2025](https://www.worldcubeassociation.org/competitions/M5OpenABengaluru2025)"
+      "[VR Bengaluru Cube Open A 2025](https://www.worldcubeassociation.org/competitions/VRBengaluruCubeOpenA2025)"
     ],
     [
       4,
@@ -1767,6 +1767,12 @@
     ],
     [
       3,
+      "[Josip De Lora](https://www.worldcubeassociation.org/persons/2024LORA02)",
+      "Panama",
+      "[Panama Nationals FMC-BLD 2026](https://www.worldcubeassociation.org/competitions/PanamaNationalsFMCBLD2026)"
+    ],
+    [
+      3,
       "[Juan Miguel Saboya Soto](https://www.worldcubeassociation.org/persons/2021SOTO01)",
       "Colombia",
       "[Avenida Chile VI 2023](https://www.worldcubeassociation.org/competitions/AvenidaChileVIFourRounds2023)"
@@ -1805,19 +1811,31 @@
       3,
       "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
       "United States",
-      "[Michigan Mini 26A 2024](https://www.worldcubeassociation.org/competitions/MichiganMini26A2024)"
+      "[Imagination Station A 2023](https://www.worldcubeassociation.org/competitions/ImaginationStationA2023)"
     ],
     [
       3,
       "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
       "United States",
-      "[Imagination Station A 2023](https://www.worldcubeassociation.org/competitions/ImaginationStationA2023)"
+      "[Michigan Mini 26A 2024](https://www.worldcubeassociation.org/competitions/MichiganMini26A2024)"
     ],
     [
       3,
       "[Marcos Ferreira Semolini](https://www.worldcubeassociation.org/persons/2017SEMO02)",
       "Brazil",
       "[Big Cubata 2023](https://www.worldcubeassociation.org/competitions/BigCubata2023)"
+    ],
+    [
+      3,
+      "[Martin Vædele Egdal](https://www.worldcubeassociation.org/persons/2013EGDA02)",
+      "Denmark",
+      "[Malmø Opvarmning 2022](https://www.worldcubeassociation.org/competitions/MalmoOpvarmning2022)"
+    ],
+    [
+      3,
+      "[Martin Vædele Egdal](https://www.worldcubeassociation.org/persons/2013EGDA02)",
+      "Denmark",
+      "[Nørre Campus Side Events 2024](https://www.worldcubeassociation.org/competitions/NorreCampusSideEvents2024)"
     ],
     [
       3,
@@ -1836,18 +1854,6 @@
       "[Martin Vædele Egdal](https://www.worldcubeassociation.org/persons/2013EGDA02)",
       "Denmark",
       "[Hvidovre med Dessert 2025](https://www.worldcubeassociation.org/competitions/HvidovremedDessert2025)"
-    ],
-    [
-      3,
-      "[Martin Vædele Egdal](https://www.worldcubeassociation.org/persons/2013EGDA02)",
-      "Denmark",
-      "[Malmø Opvarmning 2022](https://www.worldcubeassociation.org/competitions/MalmoOpvarmning2022)"
-    ],
-    [
-      3,
-      "[Martin Vædele Egdal](https://www.worldcubeassociation.org/persons/2013EGDA02)",
-      "Denmark",
-      "[Nørre Campus Side Events 2024](https://www.worldcubeassociation.org/competitions/NorreCampusSideEvents2024)"
     ],
     [
       3,
@@ -1883,13 +1889,13 @@
       3,
       "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
       "United States",
-      "[Anaheim A 2022](https://www.worldcubeassociation.org/competitions/AnaheimA2022)"
+      "[Florida Spring B 2022](https://www.worldcubeassociation.org/competitions/FloridaSpringB2022)"
     ],
     [
       3,
       "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
       "United States",
-      "[Florida Spring B 2022](https://www.worldcubeassociation.org/competitions/FloridaSpringB2022)"
+      "[Anaheim A 2022](https://www.worldcubeassociation.org/competitions/AnaheimA2022)"
     ],
     [
       3,
@@ -2093,13 +2099,13 @@
       2,
       "[Ben Baron](https://www.worldcubeassociation.org/persons/2016BARO04)",
       "Israel",
-      "[PBQ Strikes Back Israel 2025](https://www.worldcubeassociation.org/competitions/PBQStrikesBackIsrael2025)"
+      "[6 by Road 6 Israel 2024](https://www.worldcubeassociation.org/competitions/6byRoad6Israel2024)"
     ],
     [
       2,
       "[Ben Baron](https://www.worldcubeassociation.org/persons/2016BARO04)",
       "Israel",
-      "[6 by Road 6 Israel 2024](https://www.worldcubeassociation.org/competitions/6byRoad6Israel2024)"
+      "[PBQ Strikes Back Israel 2025](https://www.worldcubeassociation.org/competitions/PBQStrikesBackIsrael2025)"
     ],
     [
       2,
@@ -2135,13 +2141,13 @@
       2,
       "[Caio Hideaki Sato](https://www.worldcubeassociation.org/persons/2016SATO01)",
       "Brazil",
-      "[Bom Viver Open 2024](https://www.worldcubeassociation.org/competitions/BomViverOpen2024)"
+      "[FECAP 2026](https://www.worldcubeassociation.org/competitions/FECAP2026)"
     ],
     [
       2,
       "[Caio Hideaki Sato](https://www.worldcubeassociation.org/persons/2016SATO01)",
       "Brazil",
-      "[FECAP 2026](https://www.worldcubeassociation.org/competitions/FECAP2026)"
+      "[Bom Viver Open 2024](https://www.worldcubeassociation.org/competitions/BomViverOpen2024)"
     ],
     [
       2,
@@ -2519,24 +2525,6 @@
       1,
       "[Adam Marcellus Kelly](https://www.worldcubeassociation.org/persons/2016KELL10)",
       "Denmark",
-      "[HDC X - Hvidovre i Få Træk 2024](https://www.worldcubeassociation.org/competitions/HDCXHvidovreiFaTraek2024)"
-    ],
-    [
-      1,
-      "[Adam Marcellus Kelly](https://www.worldcubeassociation.org/persons/2016KELL10)",
-      "Denmark",
-      "[HDC XIX - Hvidovre FM 2025](https://www.worldcubeassociation.org/competitions/HDCXIXHvidovreFM2025)"
-    ],
-    [
-      1,
-      "[Adam Marcellus Kelly](https://www.worldcubeassociation.org/persons/2016KELL10)",
-      "Denmark",
-      "[HDC XXII - FM Flere Byer 2026](https://www.worldcubeassociation.org/competitions/HDCXXIIFMFlereByer2026)"
-    ],
-    [
-      1,
-      "[Adam Marcellus Kelly](https://www.worldcubeassociation.org/persons/2016KELL10)",
-      "Denmark",
       "[Don't Move Copenhagen 2022](https://www.worldcubeassociation.org/competitions/DontMoveCopenhagen2022)"
     ],
     [
@@ -2550,6 +2538,24 @@
       "[Adam Marcellus Kelly](https://www.worldcubeassociation.org/persons/2016KELL10)",
       "Denmark",
       "[First Solves at Fisketorvet 2025](https://www.worldcubeassociation.org/competitions/FirstSolvesatFisketorvet2025)"
+    ],
+    [
+      1,
+      "[Adam Marcellus Kelly](https://www.worldcubeassociation.org/persons/2016KELL10)",
+      "Denmark",
+      "[HDC X - Hvidovre i Få Træk 2024](https://www.worldcubeassociation.org/competitions/HDCXHvidovreiFaTraek2024)"
+    ],
+    [
+      1,
+      "[Adam Marcellus Kelly](https://www.worldcubeassociation.org/persons/2016KELL10)",
+      "Denmark",
+      "[HDC XIX - Hvidovre FM 2025](https://www.worldcubeassociation.org/competitions/HDCXIXHvidovreFM2025)"
+    ],
+    [
+      1,
+      "[Adam Marcellus Kelly](https://www.worldcubeassociation.org/persons/2016KELL10)",
+      "Denmark",
+      "[HDC XXII - FM Flere Byer 2026](https://www.worldcubeassociation.org/competitions/HDCXXIIFMFlereByer2026)"
     ],
     [
       1,
@@ -2615,13 +2621,13 @@
       1,
       "[Alexander Wheeler](https://www.worldcubeassociation.org/persons/2014WHEE01)",
       "United States",
-      "[Southeast FMC Championship 2026](https://www.worldcubeassociation.org/competitions/SoutheastFMCChampionship2026)"
+      "[Evanston FMC Spring 2026](https://www.worldcubeassociation.org/competitions/EvanstonFMCSpring2026)"
     ],
     [
       1,
       "[Alexander Wheeler](https://www.worldcubeassociation.org/persons/2014WHEE01)",
       "United States",
-      "[Evanston FMC Spring 2026](https://www.worldcubeassociation.org/competitions/EvanstonFMCSpring2026)"
+      "[Southeast FMC Championship 2026](https://www.worldcubeassociation.org/competitions/SoutheastFMCChampionship2026)"
     ],
     [
       1,
@@ -3363,6 +3369,12 @@
     ],
     [
       1,
+      "[Davi Ferreira Gadelha](https://www.worldcubeassociation.org/persons/2025GADE03)",
+      "Brazil",
+      "[Cubetec UEA II Manaus 2026](https://www.worldcubeassociation.org/competitions/CubetecUEAIIManaus2026)"
+    ],
+    [
+      1,
       "[Dávid Balog](https://www.worldcubeassociation.org/persons/2009BALO03)",
       "Hungary",
       "[FMC Eastern Europe 2024](https://www.worldcubeassociation.org/competitions/FMCEasternEurope2024)"
@@ -3539,18 +3551,6 @@
       1,
       "[Enrico Tenuti](https://www.worldcubeassociation.org/persons/2017TENU01)",
       "Italy",
-      "[Slovenian FMC Nationals 2024](https://www.worldcubeassociation.org/competitions/SlovenianFMCNationals2024)"
-    ],
-    [
-      1,
-      "[Enrico Tenuti](https://www.worldcubeassociation.org/persons/2017TENU01)",
-      "Italy",
-      "[Try To Get Sub-Trento 2024](https://www.worldcubeassociation.org/competitions/TryToGetSubTrento2024)"
-    ],
-    [
-      1,
-      "[Enrico Tenuti](https://www.worldcubeassociation.org/persons/2017TENU01)",
-      "Italy",
       "[Finnish FMC Championship 2025](https://www.worldcubeassociation.org/competitions/FinnishFMCChampionship2025)"
     ],
     [
@@ -3569,6 +3569,18 @@
       1,
       "[Enrico Tenuti](https://www.worldcubeassociation.org/persons/2017TENU01)",
       "Italy",
+      "[Slovenian FMC Nationals 2024](https://www.worldcubeassociation.org/competitions/SlovenianFMCNationals2024)"
+    ],
+    [
+      1,
+      "[Enrico Tenuti](https://www.worldcubeassociation.org/persons/2017TENU01)",
+      "Italy",
+      "[Try To Get Sub-Trento 2024](https://www.worldcubeassociation.org/competitions/TryToGetSubTrento2024)"
+    ],
+    [
+      1,
+      "[Enrico Tenuti](https://www.worldcubeassociation.org/persons/2017TENU01)",
+      "Italy",
       "[Fun with FM in Kraków 2025](https://www.worldcubeassociation.org/competitions/FunwithFMinKrakow2025)"
     ],
     [
@@ -3576,6 +3588,30 @@
       "[Ernesto Fernández Regueira](https://www.worldcubeassociation.org/persons/2004FERN01)",
       "Spain",
       "[Spain 2004](https://www.worldcubeassociation.org/competitions/Spain2004)"
+    ],
+    [
+      1,
+      "[Evan Brown](https://www.worldcubeassociation.org/persons/2013BROW04)",
+      "United States",
+      "[Festive Mini-sota 2024](https://www.worldcubeassociation.org/competitions/FestiveMinisota2024)"
+    ],
+    [
+      1,
+      "[Evan Brown](https://www.worldcubeassociation.org/persons/2013BROW04)",
+      "United States",
+      "[FMCats Wisconsin III 2024](https://www.worldcubeassociation.org/competitions/FMCatsWisconsinIII2024)"
+    ],
+    [
+      1,
+      "[Evan Brown](https://www.worldcubeassociation.org/persons/2013BROW04)",
+      "United States",
+      "[FMC LIVE - North America 2025](https://www.worldcubeassociation.org/competitions/FMCLIVENorthAmerica2025)"
+    ],
+    [
+      1,
+      "[Evan Brown](https://www.worldcubeassociation.org/persons/2013BROW04)",
+      "United States",
+      "[Oberlin Challenge I 2025](https://www.worldcubeassociation.org/competitions/OberlinChallengeI2025)"
     ],
     [
       1,
@@ -3600,30 +3636,6 @@
       "[Evan Brown](https://www.worldcubeassociation.org/persons/2013BROW04)",
       "United States",
       "[Glendale Heights FMC Winter 2023](https://www.worldcubeassociation.org/competitions/GlendaleHeightsFMCWinter2023)"
-    ],
-    [
-      1,
-      "[Evan Brown](https://www.worldcubeassociation.org/persons/2013BROW04)",
-      "United States",
-      "[Oberlin Challenge I 2025](https://www.worldcubeassociation.org/competitions/OberlinChallengeI2025)"
-    ],
-    [
-      1,
-      "[Evan Brown](https://www.worldcubeassociation.org/persons/2013BROW04)",
-      "United States",
-      "[Festive Mini-sota 2024](https://www.worldcubeassociation.org/competitions/FestiveMinisota2024)"
-    ],
-    [
-      1,
-      "[Evan Brown](https://www.worldcubeassociation.org/persons/2013BROW04)",
-      "United States",
-      "[FMCats Wisconsin III 2024](https://www.worldcubeassociation.org/competitions/FMCatsWisconsinIII2024)"
-    ],
-    [
-      1,
-      "[Evan Brown](https://www.worldcubeassociation.org/persons/2013BROW04)",
-      "United States",
-      "[FMC LIVE - North America 2025](https://www.worldcubeassociation.org/competitions/FMCLIVENorthAmerica2025)"
     ],
     [
       1,
@@ -4781,6 +4793,12 @@
       1,
       "[Michael Young](https://www.worldcubeassociation.org/persons/2008YOUN02)",
       "United States",
+      "[Fewest Moves LA 2019](https://www.worldcubeassociation.org/competitions/FewestMovesLA2019)"
+    ],
+    [
+      1,
+      "[Michael Young](https://www.worldcubeassociation.org/persons/2008YOUN02)",
+      "United States",
       "[FMC USA 2015](https://www.worldcubeassociation.org/competitions/FMCUSA2015)"
     ],
     [
@@ -4788,12 +4806,6 @@
       "[Michael Young](https://www.worldcubeassociation.org/persons/2008YOUN02)",
       "United States",
       "[Irvine FMC B 2022](https://www.worldcubeassociation.org/competitions/IrvineFMCB2022)"
-    ],
-    [
-      1,
-      "[Michael Young](https://www.worldcubeassociation.org/persons/2008YOUN02)",
-      "United States",
-      "[Fewest Moves LA 2019](https://www.worldcubeassociation.org/competitions/FewestMovesLA2019)"
     ],
     [
       1,
@@ -4847,6 +4859,12 @@
       1,
       "[Morgan Yeh](https://www.worldcubeassociation.org/persons/2017YEHM01)",
       "Canada",
+      "[Mississauga Newcomers A 2025](https://www.worldcubeassociation.org/competitions/MississaugaNewcomersA2025)"
+    ],
+    [
+      1,
+      "[Morgan Yeh](https://www.worldcubeassociation.org/persons/2017YEHM01)",
+      "Canada",
       "[Ajax 3x3x3 Morning 2023](https://www.worldcubeassociation.org/competitions/Ajax333Morning2023)"
     ],
     [
@@ -4854,12 +4872,6 @@
       "[Morgan Yeh](https://www.worldcubeassociation.org/persons/2017YEHM01)",
       "Canada",
       "[Ajax 3x3x3 Newcomers A 2024](https://www.worldcubeassociation.org/competitions/Ajax3x3x3NewcomersA2024)"
-    ],
-    [
-      1,
-      "[Morgan Yeh](https://www.worldcubeassociation.org/persons/2017YEHM01)",
-      "Canada",
-      "[Mississauga Newcomers A 2025](https://www.worldcubeassociation.org/competitions/MississaugaNewcomersA2025)"
     ],
     [
       1,
@@ -5045,13 +5057,13 @@
       1,
       "[Owen Widdis](https://www.worldcubeassociation.org/persons/2015WIDD01)",
       "United States",
-      "[Michigan Mini 16 2024](https://www.worldcubeassociation.org/competitions/MichiganMini162024)"
+      "[Lake Orion FMC Meltdown 2025](https://www.worldcubeassociation.org/competitions/LakeOrionFMCMeltdown2025)"
     ],
     [
       1,
       "[Owen Widdis](https://www.worldcubeassociation.org/persons/2015WIDD01)",
       "United States",
-      "[Lake Orion FMC Meltdown 2025](https://www.worldcubeassociation.org/competitions/LakeOrionFMCMeltdown2025)"
+      "[Michigan Mini 16 2024](https://www.worldcubeassociation.org/competitions/MichiganMini162024)"
     ],
     [
       1,
@@ -5087,13 +5099,13 @@
       1,
       "[Phillip Espinoza](https://www.worldcubeassociation.org/persons/2007ESPI01)",
       "United States",
-      "[San Diego Science Festival 2009](https://www.worldcubeassociation.org/competitions/SanDiegoScience2009)"
+      "[Discovery Winter 2009](https://www.worldcubeassociation.org/competitions/DiscoveryWinter2009)"
     ],
     [
       1,
       "[Phillip Espinoza](https://www.worldcubeassociation.org/persons/2007ESPI01)",
       "United States",
-      "[Discovery Winter 2009](https://www.worldcubeassociation.org/competitions/DiscoveryWinter2009)"
+      "[San Diego Science Festival 2009](https://www.worldcubeassociation.org/competitions/SanDiegoScience2009)"
     ],
     [
       1,
@@ -5153,6 +5165,36 @@
       1,
       "[Radomił Baran](https://www.worldcubeassociation.org/persons/2020BARA02)",
       "Poland",
+      "[Find Minimum in Warsaw 2023](https://www.worldcubeassociation.org/competitions/FindMinimumInWarsaw2023)"
+    ],
+    [
+      1,
+      "[Radomił Baran](https://www.worldcubeassociation.org/persons/2020BARA02)",
+      "Poland",
+      "[FMC Europe 2024](https://www.worldcubeassociation.org/competitions/FMCEurope2024)"
+    ],
+    [
+      1,
+      "[Radomił Baran](https://www.worldcubeassociation.org/persons/2020BARA02)",
+      "Poland",
+      "[FMC Europe 2025](https://www.worldcubeassociation.org/competitions/FMCEurope2025)"
+    ],
+    [
+      1,
+      "[Radomił Baran](https://www.worldcubeassociation.org/persons/2020BARA02)",
+      "Poland",
+      "[FMC Norway 2026](https://www.worldcubeassociation.org/competitions/FMCNorway2026)"
+    ],
+    [
+      1,
+      "[Radomił Baran](https://www.worldcubeassociation.org/persons/2020BARA02)",
+      "Poland",
+      "[FMC Poland-Czechia-Slovakia 2024](https://www.worldcubeassociation.org/competitions/FMCPolandCzechiaSlovakia2024)"
+    ],
+    [
+      1,
+      "[Radomił Baran](https://www.worldcubeassociation.org/persons/2020BARA02)",
+      "Poland",
       "[FMC Warszawa 2026](https://www.worldcubeassociation.org/competitions/FMCWarszawa2026)"
     ],
     [
@@ -5196,36 +5238,6 @@
       "[Radomił Baran](https://www.worldcubeassociation.org/persons/2020BARA02)",
       "Poland",
       "[Cichy Piątek w Gdańsku 2025](https://www.worldcubeassociation.org/competitions/CichyPiatekwGdansku2025)"
-    ],
-    [
-      1,
-      "[Radomił Baran](https://www.worldcubeassociation.org/persons/2020BARA02)",
-      "Poland",
-      "[Find Minimum in Warsaw 2023](https://www.worldcubeassociation.org/competitions/FindMinimumInWarsaw2023)"
-    ],
-    [
-      1,
-      "[Radomił Baran](https://www.worldcubeassociation.org/persons/2020BARA02)",
-      "Poland",
-      "[FMC Europe 2024](https://www.worldcubeassociation.org/competitions/FMCEurope2024)"
-    ],
-    [
-      1,
-      "[Radomił Baran](https://www.worldcubeassociation.org/persons/2020BARA02)",
-      "Poland",
-      "[FMC Europe 2025](https://www.worldcubeassociation.org/competitions/FMCEurope2025)"
-    ],
-    [
-      1,
-      "[Radomił Baran](https://www.worldcubeassociation.org/persons/2020BARA02)",
-      "Poland",
-      "[FMC Norway 2026](https://www.worldcubeassociation.org/competitions/FMCNorway2026)"
-    ],
-    [
-      1,
-      "[Radomił Baran](https://www.worldcubeassociation.org/persons/2020BARA02)",
-      "Poland",
-      "[FMC Poland-Czechia-Slovakia 2024](https://www.worldcubeassociation.org/competitions/FMCPolandCzechiaSlovakia2024)"
     ],
     [
       1,
@@ -5285,6 +5297,12 @@
       1,
       "[Ryan Pilat](https://www.worldcubeassociation.org/persons/2016PILA03)",
       "United States",
+      "[Georgetown FMC 2025](https://www.worldcubeassociation.org/competitions/GeorgetownFMC2025)"
+    ],
+    [
+      1,
+      "[Ryan Pilat](https://www.worldcubeassociation.org/persons/2016PILA03)",
+      "United States",
       "[Southern FMC Championship 2025](https://www.worldcubeassociation.org/competitions/SouthernFMCChampionship2025)"
     ],
     [
@@ -5304,12 +5322,6 @@
       "[Ryan Pilat](https://www.worldcubeassociation.org/persons/2016PILA03)",
       "United States",
       "[Texas FMC Championship 2025](https://www.worldcubeassociation.org/competitions/TexasFMCChampionship2025)"
-    ],
-    [
-      1,
-      "[Ryan Pilat](https://www.worldcubeassociation.org/persons/2016PILA03)",
-      "United States",
-      "[Georgetown FMC 2025](https://www.worldcubeassociation.org/competitions/GeorgetownFMC2025)"
     ],
     [
       1,
@@ -5952,6 +5964,12 @@
       "[Yeon Kyun Park (박연균)](https://www.worldcubeassociation.org/persons/2016PARK10)",
       "Republic of Korea",
       "[5BLD Madness Seoul 2024](https://www.worldcubeassociation.org/competitions/5BLDMadnessSeoul2024)"
+    ],
+    [
+      1,
+      "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
+      "China",
+      "[Guangzhou GraDUAL 3x3 I 2026](https://www.worldcubeassociation.org/competitions/GuangzhouGraDUAL3x3I2026)"
     ],
     [
       1,
