@@ -38,7 +38,7 @@ export function RoomQrModal({ url, code, onClose }: { url: string; code: string;
         >
           <X size={18} />
         </button>
-        <h2>{tr({ zh: '扫码加入房间', en: 'Scan to join room' })}</h2>
+        <h2>{tr({ zh: '扫码加入', en: 'Scan to join' })}</h2>
         <div className="room-qr-code" dangerouslySetInnerHTML={{ __html: svg }} />
         <div className="room-qr-code-text">{code}</div>
         <button

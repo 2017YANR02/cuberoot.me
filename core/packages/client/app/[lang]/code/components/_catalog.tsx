@@ -42,6 +42,7 @@ import NumberCommitInput from '@/components/NumberCommitInput';
 import CubeOrientationSelect from '@/components/CubeOrientationSelect';
 import TimerFontPicker from '@/components/TimerFontPicker';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
+import { ReconCompletionBadge } from '@/components/recon/ReconCompletionBadge';
 import CubeColorChip from '@/components/CubeColorChip/CubeColorChip';
 import MembershipBadge from '@/components/MembershipBadge';
 import { Flag } from '@/components/Flag';
@@ -408,6 +409,10 @@ function RecordBadgeDemo() {
       <RecordBadge record="PR2" />
     </div>
   );
+}
+
+function ReconCompletionBadgeDemo() {
+  return <ReconCompletionBadge status="unsolved" />;
 }
 
 function MembershipBadgeDemo() {
@@ -950,6 +955,15 @@ export const CATALOG: ComponentEntry[] = [
     en: 'The single entry point for WCA record badges (WR / CR / NR / AsR / ER / PR-rank …). Pass iso2 to expand a continental record to the right continent.',
     usage: '<RecordBadge record="WR" />',
     Demo: RecordBadgeDemo,
+  },
+  {
+    name: 'ReconCompletionBadge',
+    import: "import { ReconCompletionBadge } from '@/components/recon/ReconCompletionBadge';",
+    category: 'badge',
+    zh: '复盘终态未还原标记，只在 completionStatus 为 unsolved 时显示。',
+    en: 'Reconstruction end-state marker, shown only when completionStatus is unsolved.',
+    usage: '<ReconCompletionBadge status={solve.completionStatus} />',
+    Demo: ReconCompletionBadgeDemo,
   },
   {
     name: 'MembershipBadge',

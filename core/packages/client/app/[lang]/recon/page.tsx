@@ -10,7 +10,7 @@ import {
 import Link from '@/components/AppLink';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { useQueryState, parseAsStringEnum } from 'nuqs';
+import { useQueryState, parseAsBoolean, parseAsStringEnum } from 'nuqs';
 import { Plus, HelpCircle, TriangleAlert, LayoutGrid, List, TestTube2 } from 'lucide-react';
 import type { ReconSolve } from '@cuberoot/shared';
 import { useReconStore, type SortKey, type SortDir } from '@/lib/recon-store';
@@ -38,6 +38,8 @@ import { isWcaEvent, eventDisplayName } from '@/lib/wca-events';
 import './recon.css';
 import { tr } from '@/i18n/tr';
 import { useIsAdmin } from '@/lib/auth-store';
+import BoolToggle from '@/components/BoolToggle';
+import { ReconCompletionBadge } from '@/components/recon/ReconCompletionBadge';
 
 // ── 视图模式 ──
 type ViewMode = 'list' | 'grid';
@@ -207,6 +209,10 @@ export default function ReconListPage() {
     'view',
     parseAsStringEnum<ViewMode>(VIEW_MODES).withDefault('grid').withOptions({ history: 'push', clearOnDefault: false }),
   );
+  const [unsolvedOnly, setUnsolvedOnly] = useQueryState(
+    'unsolved',
+    parseAsBoolean.withDefault(false),
+  );
   const {
     loading, error, filters,
     sortKey, sortDir,
@@ -222,6 +228,10 @@ export default function ReconListPage() {
   useEffect(() => {
     loadAll();
   }, [loadAll]);
+
+  useEffect(() => {
+    setFilter('unsolvedOnly', unsolvedOnly);
+  }, [setFilter, unsolvedOnly]);
 
   // 裸 /recon 强制写显式 ?view=grid（默认视图也进 URL）。用 replace 不污染后退历史。
   useEffect(() => {
@@ -677,11 +687,14 @@ export default function ReconListPage() {
       case 'rawTime':
         // NOTE: Single 列——优先 value 字段（含 DNF/(5.09) 括号格式），缺失时回退 rawTime 格式化
         return (
-          <span className="record-num-cell">
-            {formatReconSingle(solve.event, solve.value, solve.rawTime)}
-            {solve.regionalSingleRecord && (
-              <RecordBadge record={solve.regionalSingleRecord} variant="inline" iso2={solve.personCountry} />
-            )}
+          <span className="recon-result-status">
+            <span className="record-num-cell">
+              {formatReconSingle(solve.event, solve.value, solve.rawTime)}
+              {solve.regionalSingleRecord && (
+                <RecordBadge record={solve.regionalSingleRecord} variant="inline" iso2={solve.personCountry} />
+              )}
+            </span>
+            <ReconCompletionBadge status={solve.completionStatus} />
           </span>
         );
       case 'person': {
@@ -855,6 +868,14 @@ export default function ReconListPage() {
             <LayoutGrid size={16} />
           </button>
         </div>
+        <BoolToggle
+          value={unsolvedOnly}
+          onChange={(value) => {
+            setFilter('unsolvedOnly', value);
+            void setUnsolvedOnly(value);
+          }}
+          label={tr({ zh: '仅看未还原', en: 'Unsolved only' })}
+        />
         <div className="recon-actions">
           <span className="recon-stats-count">
             {t('recon.count', { count: filtered.length })}

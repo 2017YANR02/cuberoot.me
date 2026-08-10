@@ -63,7 +63,10 @@ import { buildNormalizedSolution, hasNormalizableCrossMove } from '@/lib/recon-n
 import { encodeUrlAlg, decodeUrlAlg } from '@/lib/cubedb-url';
 import { simPuzzleForReconEvent, buildSimQuery } from '@/lib/sim-recon-link';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
-import { checkReconCompletion } from '@cuberoot/shared/recon-completion';
+import {
+  checkReconCompletion,
+  normalizeReconScrambleSpacing,
+} from '@cuberoot/shared/recon-completion';
 import { loadComps, type Comp } from '@/lib/comp-search';
 import type { WcaPersonLite } from '@/lib/wca-api';
 import { ArrowLeft, ArrowRightLeft, History, Home, LogIn, UserPlus, ListPlus, AlertTriangle, Rows3, Globe, Link2, Lock } from 'lucide-react';
@@ -318,6 +321,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         ...solve,
         date: toDateInput(solve.date),
         reconDate: toDateInput(solve.reconDate),
+        wcaScramble: normalizeReconScrambleSpacing(solve.event, solve.wcaScramble || ''),
+        optimalScramble: normalizeReconScrambleSpacing(solve.event, solve.optimalScramble || ''),
       };
       setForm(normalized);
       setNeedsUnsolvedReason(!!solve.unsolvedReason);
@@ -382,7 +387,10 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         }
       }
       if (suggestScramble) {
-        setForm(prev => ({ ...prev, wcaScramble: suggestScramble }));
+        setForm(prev => ({
+          ...prev,
+          wcaScramble: normalizeReconScrambleSpacing(src.event, suggestScramble),
+        }));
       }
       // Same-round prefill already carried over method/cube from the source recon.
       setMethodUserTouched(true);
@@ -400,8 +408,12 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     if (!scramble && !optimal && !solution) return;
     setForm(prev => ({
       ...prev,
-      wcaScramble: scramble || prev.wcaScramble || '',
-      optimalScramble: optimal || prev.optimalScramble || '',
+      wcaScramble: scramble
+        ? normalizeReconScrambleSpacing(prev.event || '3x3', scramble)
+        : prev.wcaScramble || '',
+      optimalScramble: optimal
+        ? normalizeReconScrambleSpacing(prev.event || '3x3', optimal)
+        : prev.optimalScramble || '',
       solution: solution || prev.solution || '',
     }));
     if (solution) solutionFieldRef.current?.setText(solution);
@@ -990,7 +1002,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         const raw = arr && idx >= 0 && idx < arr.length ? arr[idx] : null;
         // SQ1 → compact `1/06/33/…` shorthand (matches /sim & /scramble/gen);
         // other events pass through. parseSq1Tokens round-trips the compact form.
-        const scr = raw ? formatScrambleForEvent(form.event!, raw) : null;
+        const scr = raw
+          ? normalizeReconScrambleSpacing(form.event!, formatScrambleForEvent(form.event!, raw))
+          : null;
         if (scr) {
           setField('wcaScramble', scr);
           setScrambleAutoSource(tr({ zh: '自动:WCA', en: 'auto: WCA'
@@ -1008,7 +1022,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
           const optArr = await fetchOptimalScrambles(form.compWcaId!, form.event!, form.round!, form.groupId || undefined);
           if (!cancelled) {
             const optRaw = optArr && idx >= 0 && idx < optArr.length ? optArr[idx] : null;
-            const optScr = optRaw ? formatScrambleForEvent(form.event!, optRaw) : null;
+            const optScr = optRaw
+              ? normalizeReconScrambleSpacing(form.event!, formatScrambleForEvent(form.event!, optRaw))
+              : null;
             if (optScr) {
               setField('optimalScramble', optScr);
               setOptimalAutoSource(tr({ zh: '自动:最优(整解)', en: 'auto: optimal' }));
@@ -1334,9 +1350,14 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     }
     setSaving(true);
     try {
+      const wcaScramble = normalizeReconScrambleSpacing(form.event || '', form.wcaScramble || '');
+      const optimalScramble = normalizeReconScrambleSpacing(form.event || '', form.optimalScramble || '');
+      if (wcaScramble !== (form.wcaScramble || '') || optimalScramble !== (form.optimalScramble || '')) {
+        setForm(previous => ({ ...previous, wcaScramble, optimalScramble }));
+      }
       const completion = await checkReconCompletion({
         event: form.event || '',
-        scramble: form.wcaScramble || form.optimalScramble || '',
+        scramble: wcaScramble || optimalScramble,
         solution: form.solution || '',
       });
       if (completion.status === 'invalid') {
@@ -1360,6 +1381,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         reconDate: toDateInput(form.reconDate),
         reconer: form.reconer?.trim() ?? '',
         reconerId: form.reconerId?.trim() ?? '',
+        wcaScramble,
+        optimalScramble,
         // 非重复提交不落原因(选择器仅在 dupId 命中时出现,残留值在此清掉)
         dupReason: dupId != null ? form.dupReason : undefined,
         // 已复原时主动清掉旧理由；未复原时只保存去掉首尾空白后的说明。
@@ -1516,16 +1539,17 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 event={form.event}
                 onClose={() => setScramblePickerFor(null)}
                 onPick={scramble => {
+                  const normalizedScramble = normalizeReconScrambleSpacing(form.event || '', scramble);
                   if (scramblePickerFor === 'wca') {
                     setScrambleUserTouched(true);
                     setScrambleAutoSource(null);
                     scrambleAutoFilledRef.current = false;
-                    setField('wcaScramble', scramble);
+                    setField('wcaScramble', normalizedScramble);
                   } else {
                     setOptimalUserTouched(true);
                     setOptimalAutoSource(null);
                     optimalAutoFilledRef.current = false;
-                    setField('optimalScramble', scramble);
+                    setField('optimalScramble', normalizedScramble);
                   }
                   setScramblePickerFor(null);
                 }}
@@ -1914,7 +1938,10 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   scrambleAutoFilledRef.current = false;
                   setActiveVkbField('wca');
                 }}
-                onBlur={() => setActiveVkbField(f => f === 'wca' ? null : f)}
+                onBlur={() => {
+                  setActiveVkbField(f => f === 'wca' ? null : f);
+                  setField('wcaScramble', normalizeReconScrambleSpacing(form.event || '', form.wcaScramble || ''));
+                }}
                 style={{ overflow: 'hidden', resize: 'none' }}
               />
               {isMobile && (
@@ -1969,7 +1996,10 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   optimalAutoFilledRef.current = false;
                   setActiveVkbField('optimal');
                 }}
-                onBlur={() => setActiveVkbField(f => f === 'optimal' ? null : f)}
+                onBlur={() => {
+                  setActiveVkbField(f => f === 'optimal' ? null : f);
+                  setField('optimalScramble', normalizeReconScrambleSpacing(form.event || '', form.optimalScramble || ''));
+                }}
                 ref={el => { optimalScrambleRef.current = el; if (el) autoResize(el); }}
                 style={{ overflow: 'hidden', resize: 'none' }}
               />
@@ -2079,8 +2109,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 <span className="submit-label">{tr({ zh: '未复原原因', en: 'Reason the puzzle is not solved' })} *</span>
                 <span className="submit-hint submit-hint-warn" role="alert">
                   {tr({
-                    zh: '魔方未还原.修复解法,或说明未还原理由',
-                    en: 'Puzzle not solved. Fix the solution or explain why.',
+                    zh: '修复解法,或说明未还原理由',
+                    en: 'Fix the solution or explain why.',
                   })}
                 </span>
                 <textarea

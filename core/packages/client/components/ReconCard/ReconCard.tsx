@@ -17,6 +17,7 @@ import { EventIcon } from '@/components/EventIcon';
 import { isWcaEvent, eventDisplayName, toWcaEventId } from '@/lib/wca-events';
 import { ScramblePreview2D, eventHasScramblePreview } from '@/components/ScramblePreview2D';
 import { tr } from '@/i18n/tr';
+import { ReconCompletionBadge } from '@/components/recon/ReconCompletionBadge';
 import './recon_card.css';
 
 // 卡片缩略图：有视频→封面图（YouTube 直链 / B 站 / 抖音异步取），否则打乱图，再否则项目图标。
@@ -117,6 +118,7 @@ export function ReconCard({ solve, isZh, href, horizontal = false, scrambleThumb
                 : solve.event}
             </span>
           )}
+          <ReconCompletionBadge status={solve.completionStatus} />
           <span className="recon-card-solver">
             {cubers.map((c, i) => (
               <span key={i}>

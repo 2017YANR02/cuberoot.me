@@ -193,6 +193,13 @@
   line-height: 1;
 }
 
+.recon-result-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
 /* 工具栏 EventSelect 滤镜——固定宽度避免随选项变化跳动 */
 .recon-event-filter {
   min-width: 130px;

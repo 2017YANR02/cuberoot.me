@@ -749,18 +749,46 @@
 }
 
 .trainer-stats-list {
-  display: flex; flex-wrap: wrap; gap: 6px 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+  gap: 8px 4px;
 }
-.trainer-stats-list .trainer-stat-time {
-  padding: 3px 0;
-  font-size: 0.82rem;
+.trainer-stat-item {
+  appearance: none;
+  -webkit-appearance: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 4px 2px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
   cursor: pointer;
 }
-.trainer-stats-list .trainer-stat-time.is-active {
+.trainer-stat-time {
+  font-size: 0.82rem;
+  line-height: 1.2;
+}
+.trainer-stat-item.is-active {
+  background: color-mix(in srgb, var(--tr-sel) 18%, transparent);
+}
+.trainer-stat-item.is-active .trainer-stat-time {
   color: var(--tr-sel);
   font-weight: 600;
 }
-.trainer-stats-list .trainer-stat-time.is-dnf { color: var(--faint-foreground); }
+.trainer-stat-item.is-dnf .trainer-stat-time { color: var(--faint-foreground); }
+.trainer-stat-item:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+@media (hover: hover) {
+  .trainer-stat-item:hover { background: color-mix(in srgb, var(--foreground) 7%, transparent); }
+  .trainer-stat-item.is-active:hover { background: color-mix(in srgb, var(--tr-sel) 26%, transparent); }
+}
 
 /* ─── 历史面板:每条 = 一张打乱图(名字/公式不出,见 HistoryList 注释) ─── */
 .trainer-hist-grid {
@@ -1000,11 +1028,6 @@
   font-size: 12px;
   font-family: var(--font-mono);
   text-transform: uppercase;
-}
-/* 进度旁的房间提示,弱化一档 */
-.trainer-recap-coop {
-  margin-left: 8px;
-  color: var(--faint-foreground);
 }
 /* 「第 3 / 494 轮」—— 分轮次的范围(LSLL 已收录)贴在本轮进度前面 */
 .trainer-recap-round {

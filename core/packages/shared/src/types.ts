@@ -119,6 +119,7 @@ export interface ReconSolve {
   dupReason?: 'repeat_scramble' | 'different_comp';
   /** 打乱 + 解法未完整复原时的提交者说明；完整复原时为空。 */
   unsolvedReason?: string | null;
+  completionStatus?: 'solved' | 'unsolved' | 'invalid' | 'unchecked';
   /** STM 步数 */
   stm?: number;
   /** TPS (Turns Per Second) */

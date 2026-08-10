@@ -14,7 +14,11 @@ import {
   visibilityDiscoverFilter, visibilityOwnerFilter,
   buildInsert, buildUpdate, buildDuplicateQuery, DUP_REASONS, ADMIN_WCA_IDS,
 } from '../utils/recon_helpers.js';
-import { checkReconRowCompletion, hasUnsolvedReason } from '../utils/recon_completion.js';
+import {
+  checkReconRowCompletion,
+  hasUnsolvedReason,
+  normalizeReconScrambleRow,
+} from '../utils/recon_completion.js';
 import { fetchCubingAttempts } from '../utils/cubing_proxy.js';
 import { wcaIdToCubingSlug, nameToCubingSlug } from '@cuberoot/shared/cubing-slug';
 import { notify, adminRecipients } from '../utils/notify.js';
@@ -60,7 +64,7 @@ const LIST_COLUMNS = [
   'reconer', 'reconer_id',
   'value', 'raw_time', 'average', 'ao_type',
   'regional_single_record', 'regional_average_record', 'regional_aoxr_record',
-  'stm', 'tps', 'visibility',
+  'stm', 'tps', 'visibility', 'completion_status',
   // 多数解的打乱在 optimal_scramble；缺的（社区 Home 解等 ~234 条）落在 wca_scramble。
   // COALESCE 回退到 wca_scramble（仍以 optimal_scramble 列名出，客户端 optimalScramble||wcaScramble 无感），
   // 让卡片视图打乱图 + 搜索都拿得到打乱；只给缺 optimal 的行加数据，不对全表多带一列。
@@ -1023,6 +1027,7 @@ reconRoutes.post('/recon', async (c) => {
   delete body.id;
 
   const row = jsonToRow(body);
+  normalizeReconScrambleRow(row);
   const errors = validateRow(row);
   if (errors.length > 0) {
     return c.json({ error: 'Validation failed', fields: errors }, 400);
@@ -1039,6 +1044,7 @@ reconRoutes.post('/recon', async (c) => {
     }, 422);
   }
   if (completion.status === 'solved') row.unsolved_reason = null;
+  row.completion_status = completion.status;
 
   // 同选手 + 同打乱:允许提交,但必须带合法 dup_reason 说明原因(重复打乱 / 不同比赛),
   // 否则拒收(前端 check-duplicate 同口径预警 + 弹出二选一选择器)。占位打乱已在 buildDuplicateQuery 豁免。
@@ -1082,6 +1088,7 @@ reconRoutes.put('/recon/:id', async (c) => {
   }
 
   const row = jsonToRow(body);
+  normalizeReconScrambleRow(row, existing[0].event);
   if (Object.keys(row).length === 0) {
     return c.json({ error: 'No valid fields to update' }, 400);
   }
@@ -1105,6 +1112,7 @@ reconRoutes.put('/recon/:id', async (c) => {
     }, 422);
   }
   if (completion.status === 'solved') row.unsolved_reason = null;
+  row.completion_status = completion.status;
 
   // 编辑成与别的复盘同选手 + 同打乱:同样允许,但需合法 dup_reason;排除自身。
   // NOTE: 仅当本次 PUT 带了选手与打乱字段时才判(buildDuplicateQuery 缺字段返回 null)。

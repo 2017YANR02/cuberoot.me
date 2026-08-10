@@ -74,7 +74,10 @@ CREATE TABLE recons (
   -- 同选手+同打乱重复提交时,用户必须二选一说明原因:'repeat_scramble'(重复打乱)/ 'different_comp'(不同比赛)。见 migrations/0063。
   dup_reason      VARCHAR(20),
   -- 打乱 + 解法未完整复原时的提交者说明；已复原记录保持 NULL。见 migrations/0112。
-  unsolved_reason TEXT
+  unsolved_reason TEXT,
+  -- 打乱 + 解法终态审计结果；列表与详情页据此标记未还原复盘。见 migrations/0113。
+  completion_status VARCHAR(10) NOT NULL DEFAULT 'unchecked'
+                    CHECK (completion_status IN ('solved', 'unsolved', 'invalid', 'unchecked'))
 );
 CREATE INDEX idx_date ON recons(date);
 CREATE INDEX idx_comp ON recons(comp);
