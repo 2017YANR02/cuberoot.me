@@ -47,6 +47,7 @@ export interface ReconFilters {
   idMin: number | null;
   idMax: number | null;
   search: string;      // '' = 不限；匹配表格任意可见列
+  unsolvedOnly: boolean;
 }
 
 // NOTE: 搜索——把该行在表格里可见的列拼成一个 haystack，做不区分大小写的子串匹配
@@ -129,6 +130,7 @@ const DEFAULT_FILTERS: ReconFilters = {
   idMin: null,
   idMax: null,
   search: '',
+  unsolvedOnly: false,
 };
 
 const PAGE_SIZE = 50;
@@ -309,6 +311,9 @@ export const useReconStore = create<ReconStoreState & ReconStoreActions>()((set,
     if (filters.search.trim()) {
       const q = filters.search.trim().toLowerCase();
       result = result.filter(s => matchesSearch(s, q));
+    }
+    if (filters.unsolvedOnly) {
+      result = result.filter(s => s.completionStatus === 'unsolved');
     }
 
     // NOTE: 排序——'result' 实际排 rawTime

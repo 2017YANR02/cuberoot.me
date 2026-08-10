@@ -220,7 +220,6 @@ export default function TrainerRunClient() {
   const setSrsFromSolves = useTrainerStore(s => s.setSrsFromSolves);
   const room = useTrainerStore(s => s.room);
   const roomBusy = useTrainerStore(s => s.roomBusy);
-  const roomClaimed = useTrainerStore(s => s.roomClaimed);
   const roomError = useTrainerStore(s => s.roomError);
   const createRoom = useTrainerStore(s => s.createRoom);
   const joinRoom = useTrainerStore(s => s.joinRoom);
@@ -1027,7 +1026,8 @@ export default function TrainerRunClient() {
 
   // 计时:统计=成绩用时列表。不计时:同一个开关切成「历史」=打乱历史列表(点某条跳回看那条打乱)。
   // 两者用同一 showStats 偏好,互补出现;都开着侧栏才铺。
-  const statsVisible = timing && showStats;
+  // 没有成绩时不摆空统计框；第一把完成后再出现成绩列表。
+  const statsVisible = timing && showStats && solves.length > 0;
   const historyVisible = !timing && showStats;
   // 三块各自成列:上一个在左、统计在右、历史铺满底部。哪块空了哪列就不占宽。
   const leftShown = showPrevCard;
@@ -1119,11 +1119,6 @@ export default function TrainerRunClient() {
                 <span className="trainer-recap-round">{tr(roundLabel)}</span>
               ) : null}
               {recapCompleted}/{recapCur.total}
-              {room && (
-                <span className="trainer-recap-coop">
-                  {tr({ zh: `房间 ${room.code} 全队`, en: `room ${room.code} team` })}
-                </span>
-              )}
             </span>
           )}
           {optsOpen && (
@@ -1352,9 +1347,6 @@ export default function TrainerRunClient() {
                         >
                           <QrCode size={15} />
                         </button>
-                        <span className="trainer-opts-label">
-                          {tr({ zh: '全队', en: 'Team' })} {roomClaimed}/{room.total}
-                        </span>
                         <button
                           type="button"
                           className="trainer-opts-btn is-ghost"
@@ -1394,8 +1386,8 @@ export default function TrainerRunClient() {
                   <div className="trainer-opts-hint">
                     {room
                       ? tr({
-                          zh: '在线协同:全队共享一条队列,各设备领到的 case 互不重复,合起来正好覆盖全部一次;全队领完自动一起进下一轮。点上方「房间」徽章复制邀请链接,队友打开即加入',
-                          en: 'Online coop: the team shares one queue, each device gets distinct cases that together cover the set exactly once; the round ends for everyone at once. Tap the “Room” badge above to copy an invite link — teammates join on open',
+                          zh: '各设备领到的 case 互不重复',
+                          en: 'Each device receives distinct cases',
                         })
                       : tr({
                           zh: '创建房间把全部选中的 case 作为全队题库,进度接着你当前的往下走(你已刷的算你的份,不再派给别人;队友接着分工),其他设备输房间码或打开邀请链接加入,自动分工不重不漏',
@@ -1765,8 +1757,10 @@ export default function TrainerRunClient() {
           <aside className="trainer-sidebar is-right">
             <StatsList
               solves={solves}
+              cases={cases}
+              puzzle={puzzle}
+              set={setSlug}
               observingIdx={observingIdx}
-              isZh={isZh}
               onPick={pinObserving}
               onClear={() => {
                 if (confirm(tr({ zh: '清空所有成绩?', en: 'Clear all solves?'
