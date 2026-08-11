@@ -32,6 +32,7 @@ interface Target { csv: string; stages: number; outDir: string }
 const TARGETS: Target[] = [
   { csv: 'std.csv', stages: 5, outDir: 'comp_steps' },
   { csv: 'daisy.csv', stages: 1, outDir: 'comp_steps_daisy' },
+  { csv: 'first_layer.csv', stages: 2, outDir: 'comp_steps_first_layer' },
   { csv: 'eo.csv', stages: 5, outDir: 'comp_steps_eo' },
   { csv: 'pseudo.csv', stages: 4, outDir: 'comp_steps_pseudo' },
   { csv: 'pseudo_pair.csv', stages: 4, outDir: 'comp_steps_pseudo_pair' },

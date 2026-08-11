@@ -9,6 +9,7 @@ export const __wbg_cube222solverwasm_free: (a: number, b: number) => void;
 export const __wbg_daisysolverwasm_free: (a: number, b: number) => void;
 export const __wbg_eodrsolverwasm_free: (a: number, b: number) => void;
 export const __wbg_f2leosolverwasm_free: (a: number, b: number) => void;
+export const __wbg_firstlayersolverwasm_free: (a: number, b: number) => void;
 export const __wbg_frsolverwasm_free: (a: number, b: number) => void;
 export const __wbg_htrphase2solverwasm_free: (a: number, b: number) => void;
 export const __wbg_htrsolverwasm_free: (a: number, b: number) => void;
@@ -54,6 +55,9 @@ export const f2leosolverwasm_solve_f2leo_stage_progress: (a: number, b: number, 
 export const f2leosolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => [number, number];
 export const f2leosolverwasm_solve_moves_masked: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number) => [number, number];
 export const f2leosolverwasm_solve_pseudo_f2leo: (a: number, b: number, c: number) => [number, number];
+export const firstlayersolverwasm_new: () => number;
+export const firstlayersolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number];
+export const firstlayersolverwasm_solve_stage: (a: number, b: number, c: number, d: number) => [number, number];
 export const frsolverwasm_new: () => number;
 export const frsolverwasm_solve: (a: number, b: number, c: number) => [number, number];
 export const frsolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];

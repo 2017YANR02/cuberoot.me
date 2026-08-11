@@ -56,9 +56,7 @@ describe('rust-cross table sets', () => {
 
   it('matches what the worker actually fetches, need by need', () => {
     for (const need of Object.keys(TABLE_SETS)) {
-      // 零表 need 在 worker 里没有 get(...) 调用,两边都应为空。
       const declared = [...TABLE_SETS[need as keyof typeof TABLE_SETS]].sort();
-      if (declared.length === 0) continue;
       const actual = workerTablesFor(need).filter((t) => !t.startsWith('mt_')).sort();
       // std 分支的 pt_cross_C4E0 走 attachXCross,不在 init 里 —— 单独由下面那条断言管。
       expect(actual, `need=${need}`).toEqual(declared);
