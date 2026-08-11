@@ -109,7 +109,7 @@ export default function TrainerRunClient() {
   // 深链模式:进度总览页的「复习 N」直接带 ?mode=memo 进来。只应用一次,之后用户自己切不再被覆盖。
   const [modeParam] = useQueryState('mode');
   const modeApplied = useRef(false);
-  // 单设备双人分屏是大视图状态,进历史栈；分享 URL 也能直接恢复同一视图。
+  // 单设备分屏是大视图状态,进历史栈；分享 URL 也能直接恢复同一视图。
   const [splitParam, setSplitParam] = useQueryState(
     'split',
     parseAsString.withOptions({ history: 'push' }),
@@ -1327,19 +1327,16 @@ export default function TrainerRunClient() {
                         setOptsOpen(false);
                       }}
                       disabled={!!room || pool.length < 2}
-                      label={tr({ zh: '双人分屏', en: 'Two-player split' })}
+                      label={tr({ zh: '分屏', en: 'Split view' })}
                     />
                   </div>
-                  <div className="trainer-opts-hint trainer-split-setting">
-                    {pool.length < 2
-                      ? tr({ zh: '至少选择 2 个 case 才能分屏', en: 'Select at least 2 cases to use split view' })
-                      : room
-                      ? tr({ zh: '先离开多设备房间，再开启单屏分工', en: 'Leave the multi-device room before starting a shared-screen drill' })
-                      : tr({
-                          zh: '同一屏幕分成 A/B 两边，共用选中题库并自动分工，不需要房间码。开启后使用覆盖模式并关闭计时和智能魔方；三条开启时两边各显示最多三条',
-                          en: 'One screen, two independent lanes. Selected cases are divided without overlap and no room code is needed. Split view uses Coverage and turns off timing and smart cube; Three at once shows up to three cases on each side',
-                        })}
-                  </div>
+                  {(pool.length < 2 || room) && (
+                    <div className="trainer-opts-hint trainer-split-setting">
+                      {pool.length < 2
+                        ? tr({ zh: '至少选择 2 个 case 才能分屏', en: 'Select at least 2 cases to use split view' })
+                        : tr({ zh: '先离开多设备房间，再开启单屏分工', en: 'Leave the multi-device room before starting a shared-screen drill' })}
+                    </div>
+                  )}
                 </>
               )}
               {/* 智能魔方:接上就不用照打乱拧了,魔方本身变成当前 case */}
@@ -1350,14 +1347,6 @@ export default function TrainerRunClient() {
                   state={trainerCube}
                   supported={!splitActive && puzzleHasSmartCube(puzzle)}
                 />
-              )}
-              {!isMemo && (
-                <div className="trainer-opts-hint">
-                  {tr({
-                    zh: '换到下一题 = 这题过了:还没标过的 case 自动记成「已掌握」,手动标的「不熟」不动;没过的话在「上一个」卡片上点「不熟」',
-                    en: 'Moving on counts as a pass: an unmarked case is recorded as Mastered, while your own Shaky marks stay put. Didn’t get it? Hit Shaky on the Previous card',
-                  })}
-                </div>
               )}
               {isMemo && (
                 <div className="trainer-opts-hint">
