@@ -101,14 +101,14 @@ export type ScrambleKind = 'inv' | 'cstimer' | 'rand' | 'stm' | 'sqtm' | 'htm' |
  * `cstimer` = 随机态求解器风格(同 cstimer 训练打乱:现算 ≈20 步全脸序列),仅 3x3。
  */
 export const SCRAMBLE_KINDS: ReadonlyArray<{ id: ScrambleKind; label: () => string }> = [
-  { id: 'htm', label: () => `H* (HTM)` },
+  { id: 'htm', label: () => tr({ zh: '最优HTM', en: 'Optimal HTM' }) },
   // 金字塔专有(见 generateScramble):同一个 case,随机长路径 + 随机顶层朝向。
   // 排在 `inv` 之前 —— 它是金字塔的默认(TrainerRunClient 的 kinds 兜底取它)。
   { id: 'rand', label: () => tr({ zh: '随机长打乱', en: 'Randomized' }) },
   { id: 'inv', label: () => tr({ zh: '逆 case', en: 'Inv case' }) },
-  { id: 'stm', label: () => `SH* (STM)` },
-  { id: 'sqtm', label: () => `SQ* (SQTM)` },
-  { id: 'qtm', label: () => `Q* (QTM)` },
+  { id: 'stm', label: () => tr({ zh: '最优STM', en: 'Optimal STM' }) },
+  { id: 'sqtm', label: () => tr({ zh: '最优SQTM', en: 'Optimal SQTM' }) },
+  { id: 'qtm', label: () => tr({ zh: '最优QTM', en: 'Optimal QTM' }) },
   { id: 'coep', label: () => 'COEP' },
   { id: 'cstimer', label: () => 'cstimer' },
 ];
