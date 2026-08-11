@@ -61,10 +61,11 @@ export interface Text { zh: string; en: string }
 
 /**
  * 阶段键 —— 与 lib/scramble-variants.ts 的 VARIANT_STAGES / distribution.json 的
- * `variants[*].stages` 逐字相同,可与经验分布直接对照。全部 39 个都在,包括一个数都还没算的。
+ * `variants[*].stages` 逐字相同,可与经验分布直接对照。全部 40 个都在,包括一个数都还没算的。
  */
 export type ExactStage =
   | '333'
+  | 'daisy'
   | 'cross' | 'xcross' | 'xxcross' | 'xxxcross' | 'xxxxcross'
   | 'pseudo_cross' | 'pseudo_xcross' | 'pseudo_xxcross' | 'pseudo_xxxcross'
   | 'cross_pair' | 'xcross_pair' | 'xxcross_pair' | 'xxxcross_pair'
@@ -85,6 +86,7 @@ export type ExactStage =
 export const EXACT_VARIANT_STAGES: Record<string, ExactStage[]> = {
   '333': ['333'],
   std: ['cross', 'xcross', 'xxcross', 'xxxcross', 'xxxxcross'],
+  daisy: ['daisy'],
   pseudo: ['pseudo_cross', 'pseudo_xcross', 'pseudo_xxcross', 'pseudo_xxxcross'],
   pair: ['cross_pair', 'xcross_pair', 'xxcross_pair', 'xxxcross_pair'],
   pseudo_pair: [
@@ -111,7 +113,7 @@ export const EXACT_VARIANT_STAGES: Record<string, ExactStage[]> = {
  * EO 那一段是 EO / EOLine / 十字…(= EO_UI_STAGES)。
  */
 export const EXACT_VARIANT_ORDER: string[] = [
-  '333', 'std', 'pseudo', 'pair', 'pseudo_pair', 'eoline', 'eo', 'f2leo', 'pseudo_f2leo',
+  '333', 'std', 'daisy', 'pseudo', 'pair', 'pseudo_pair', 'eoline', 'eo', 'f2leo', 'pseudo_f2leo',
   '123', '222', '223', '123x2', 'dr',
 ];
 
@@ -159,6 +161,7 @@ export const SLOT_LABEL: Record<ExactSlot, Text> = {
  */
 export const SLOT_OK: Record<ExactStage, ExactSlot[]> = {
   '333': ['unfixed'],
+  daisy: ['unfixed'],
 
   cross: ['unfixed'],
   xcross: ['unfixed', 'fixed1'],
@@ -253,6 +256,7 @@ export const FRAME_NOTE: Partial<Record<ExactStage, Text>> = {
  * EO 族把「全部 12 条棱的翻转字」(2¹¹)乘上被追踪棱的有序位置。
  */
 export const FRAME_STATES: Partial<Record<ExactStage, string>> = {
+  daisy: '190080',
   cross: '190080',
   xcross: '72990720',
   xxcross: '21459271680',
@@ -416,6 +420,18 @@ export const EXACT_DIST: Record<ExactStage, StageTable> = {
           + '|G| − Σ(d ≤ 15), and the 490 million at d = 20 is a lower bound, not a count.',
       },
     }),
+  },
+
+  // ── Daisy ─────────────────────────────────────────────────────────────
+  // solver/src/daisy_solver.rs:edge4 的 190,080 态，24 个花瓣环上排列做多源 BFS。
+  daisy: {
+    unfixed: {
+      W: {
+        kind: 'full',
+        total: '190080',
+        counts: ['24', '288', '2640', '16080', '56184', '89256', '25128', '480'],
+      },
+    },
   },
 
   // ── Cross ─────────────────────────────────────────────────────────────
@@ -969,6 +985,12 @@ const BEST_TOO_BIG = OOR(
  * 单元号对应 solver/EXACT_DIST_EXPANSION.md 的 backlog 项。
  */
 const STAGE_PLAN: Partial<Record<ExactStage, PendingPlan>> = {
+  daisy: {
+    best: OOR(
+      '单色底的 190,080 态已完整算出；多色底要同时追踪不同面的四组花瓣棱，不能再落在单个 edge4 商空间',
+      'The 190,080-state single-colour space is complete; multiple colours require tracking the petal edges for several faces at once, outside one edge4 quotient',
+    ),
+  },
   xcross: { best: BEST_TOO_BIG },
   xxcross: { best: BEST_TOO_BIG },
   xxxcross: {

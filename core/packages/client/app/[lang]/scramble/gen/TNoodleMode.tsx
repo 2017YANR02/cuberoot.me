@@ -62,7 +62,7 @@ import { useCrossMap } from './useCrossMap';
 import { useCompSteps, normScramble } from './useCompSteps';
 import { displaySq1ForEvent } from '@cuberoot/shared/sq1-notation';
 import { useF2leoStepMap } from './useF2leoStepMap';
-import { useRoux223StepMap, useVariantStepMap, VARIANT_WASM_ID } from './useVariantStepMap';
+import { useStageFamilyStepMap, useVariantStepMap, VARIANT_WASM_ID } from './useVariantStepMap';
 import { getRustCrossPool, poolSizeForDevice, type PoolNeed } from '@/lib/rust-cross-pool';
 import { persistItem } from '@/lib/safe-storage';
 import BoolToggle from '@/components/BoolToggle';
@@ -82,8 +82,9 @@ const STD_STAGES: Metric[] = ['cross', 'xc', 'xxc', 'xxxc', 'xxxxc'];
 const F2L_STAGES: Metric[] = ['cross', 'xc', 'xxc', 'xxxc'];
 // engine:'variant' = VariantSolverWasm 小表浏览器现算(pair 已接;eo/pseudo/pseudo_pair
 // solver 就绪后从 'none' 改 'variant')。'none' = 仅 comp_steps 预计算,无 client 引擎。
-const VARIANT_SPEC: Record<VariantKey, { stages: Metric[]; engine: 'std' | 'f2leo' | 'variant' | 'roux223' | 'none' }> = {
+const VARIANT_SPEC: Record<VariantKey, { stages: Metric[]; engine: 'std' | 'f2leo' | 'variant' | 'stagefamily' | 'none' }> = {
   std: { stages: STD_STAGES, engine: 'std' },
+  daisy: { stages: ['bdaisy'], engine: 'stagefamily' },
   // EO 是 UI 聚合方法:EOLine 变体的两阶段(beo/beoline)并进来,细分落阶段下拉。engine 按
   // 阶段所属数据变体取(见 dataVariant / variantEngine)—— EO+十字系列走 VariantSolverWasm,
   // EO / EOLine 走 EoDrSolverWasm,不能只看方法。
@@ -96,13 +97,13 @@ const VARIANT_SPEC: Record<VariantKey, { stages: Metric[]; engine: 'std' | 'f2le
   // 块族:UI 聚合为方法 'block'(阶段=块形状);数据层按 metric 经 BLOCK_STAGE_VARIANT
   // 映射回 123/222/223/123x2(comp_steps 文件 + WASM need 都按底层变体取)。
   // Roux223SolverWasm / EoDrSolverWasm 浏览器现算,comp_steps 命中则秒出。
-  block: { stages: ['b122', 'b123', 'b222', 'b223', 'bf2b'], engine: 'roux223' },
-  '123': { stages: ['b122', 'b123'], engine: 'roux223' },
-  '123x2': { stages: ['bf2b'], engine: 'roux223' },
-  '222': { stages: ['b222'], engine: 'roux223' },
-  '223': { stages: ['b223'], engine: 'roux223' },
-  eoline: { stages: ['beo', 'beoline'], engine: 'roux223' },
-  dr: { stages: ['bdr'], engine: 'roux223' },
+  block: { stages: ['b122', 'b123', 'b222', 'b223', 'bf2b'], engine: 'stagefamily' },
+  '123': { stages: ['b122', 'b123'], engine: 'stagefamily' },
+  '123x2': { stages: ['bf2b'], engine: 'stagefamily' },
+  '222': { stages: ['b222'], engine: 'stagefamily' },
+  '223': { stages: ['b223'], engine: 'stagefamily' },
+  eoline: { stages: ['beo', 'beoline'], engine: 'stagefamily' },
+  dr: { stages: ['bdr'], engine: 'stagefamily' },
   // htr 为条件式阶段(原始打乱不适用),不进 VARIANT_ORDER 下拉;条目仅满足类型完备。
   htr: { stages: [], engine: 'none' },
   // htr2(HTR 收尾)同 htr 条件式,不进 VARIANT_ORDER 下拉;条目仅满足类型完备。
@@ -960,22 +961,22 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
     VARIANT_WASM_ID[variant] ?? 0,
     vspec.stages.length,
   );
-  // 123 / 222 / 223:Roux223SolverWasm 浏览器现算(同上,comp_steps 未覆盖的打乱)。
-  const roux223Scrambles = variantEngine === 'roux223' ? uncovered : NO_SCRAMBLES;
-  const roux223Live = useRoux223StepMap(roux223Scrambles, variantEngine === 'roux223', dataVariant);
-  const roux223CrossMap = useMemo(() => {
+  // Daisy / 块族 / EO-DR 族:各自小型精确引擎浏览器现算(comp_steps 未覆盖的打乱)。
+  const stageFamilyScrambles = variantEngine === 'stagefamily' ? uncovered : NO_SCRAMBLES;
+  const stageFamilyLive = useStageFamilyStepMap(stageFamilyScrambles, variantEngine === 'stagefamily', dataVariant);
+  const stageFamilyCrossMap = useMemo(() => {
     const m = new Map<string, number[]>();
-    if (variantEngine === 'roux223' && roux223Live.map) for (const [s, v] of roux223Live.map) m.set(s, v.slice(0, 6));
+    if (variantEngine === 'stagefamily' && stageFamilyLive.map) for (const [s, v] of stageFamilyLive.map) m.set(s, v.slice(0, 6));
     return m;
-  }, [variantEngine, roux223Live.map, roux223Live.done, roux223Live.crossReady]);
-  const roux223MetricMap = useMemo(() => {
+  }, [variantEngine, stageFamilyLive.map, stageFamilyLive.done, stageFamilyLive.crossReady]);
+  const stageFamilyMetricMap = useMemo(() => {
     const m = new Map<string, number[]>();
     const off = METRIC_OFFSET[safeMetric];
-    if (variantEngine === 'roux223' && roux223Live.map) {
-      for (const [s, v] of roux223Live.map) if (v.length >= off + 6) m.set(s, v.slice(off, off + 6));
+    if (variantEngine === 'stagefamily' && stageFamilyLive.map) {
+      for (const [s, v] of stageFamilyLive.map) if (v.length >= off + 6) m.set(s, v.slice(off, off + 6));
     }
     return m;
-  }, [variantEngine, roux223Live.map, roux223Live.done, roux223Live.fullReady, safeMetric]);
+  }, [variantEngine, stageFamilyLive.map, stageFamilyLive.done, stageFamilyLive.fullReady, safeMetric]);
   const variantCrossMap = useMemo(() => {
     const m = new Map<string, number[]>();
     if (variantEngine === 'variant' && variantLive.map) for (const [s, v] of variantLive.map) m.set(s, v.slice(0, 6));
@@ -992,22 +993,22 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
   // 按引擎统一选源喂 CompCrossAnalysis。cross 视图 gate 在 crossReady(秒出),深阶段 gate 在 fullReady。
   const cxCrossMap = variantEngine === 'f2leo' ? f2leoCrossMap
     : variantEngine === 'variant' ? variantCrossMap
-    : variantEngine === 'roux223' ? roux223CrossMap
+    : variantEngine === 'stagefamily' ? stageFamilyCrossMap
     : (variantEngine === 'std' ? crossA.map : EMPTY_MAP_TN);
   const cxReady = variantEngine === 'f2leo' ? f2leoLive.crossReady
     : variantEngine === 'variant' ? variantLive.crossReady
-    : variantEngine === 'roux223' ? roux223Live.crossReady
+    : variantEngine === 'stagefamily' ? stageFamilyLive.crossReady
     : (variantEngine === 'std' ? crossA.ready : true);
   const cxStep: StepMapState = variantEngine === 'f2leo'
     ? { map: f2leoMetricMap, ready: f2leoLive.fullReady, done: f2leoLive.done, total: f2leoLive.total, error: f2leoLive.error }
     : variantEngine === 'variant'
       ? { map: variantMetricMap, ready: variantLive.fullReady, done: variantLive.done, total: variantLive.total, error: variantLive.error }
-      : variantEngine === 'roux223'
-        ? { map: roux223MetricMap, ready: roux223Live.fullReady, done: roux223Live.done, total: roux223Live.total, error: roux223Live.error }
+      : variantEngine === 'stagefamily'
+        ? { map: stageFamilyMetricMap, ready: stageFamilyLive.fullReady, done: stageFamilyLive.done, total: stageFamilyLive.total, error: stageFamilyLive.error }
         : (variantEngine === 'std' ? stepLive : EMPTY_STEP);
   const cxStepUncovered = variantEngine === 'f2leo' ? f2leoScrambles.length
     : variantEngine === 'variant' ? variantScrambles.length
-    : variantEngine === 'roux223' ? roux223Scrambles.length
+    : variantEngine === 'stagefamily' ? stageFamilyScrambles.length
     : (variantEngine === 'std' ? stepUncovered.length : 0);
   // 逐行徽标取值(BADGE_ORDER 6 值),无数据 → undefined。
   const rowDigits = useCallback((scr: string, m: Metric): number[] | undefined => {
@@ -1025,12 +1026,12 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
       const fv = variantLive.map?.get(scr);
       if (fv && fv.length >= off + 6) return fv.slice(off, off + 6);
     }
-    if (variantEngine === 'roux223') {
-      const fv = roux223Live.map?.get(scr);
+    if (variantEngine === 'stagefamily') {
+      const fv = stageFamilyLive.map?.get(scr);
       if (fv && fv.length >= off + 6) return fv.slice(off, off + 6);
     }
     return undefined;
-  }, [variantEngine, crossA.map, compSteps.map, stepLive.map, f2leoLive.map, variantLive.map, roux223Live.map, safeMetric]);
+  }, [variantEngine, crossA.map, compSteps.map, stepLive.map, f2leoLive.map, variantLive.map, stageFamilyLive.map, safeMetric]);
   // 稳定引用:CompCrossAnalysis 把它当 sheets333,身份不稳会让上报 filter 的 effect
   // 每 render 都 fire → setState 循环。
   const sheetsInEvent = useMemo(

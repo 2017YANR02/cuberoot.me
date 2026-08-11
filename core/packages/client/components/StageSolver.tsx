@@ -59,7 +59,7 @@ function fmtBytes(b: number): string {
 // 'htr2'(HTR phase-2,G3→solved)同理:输入须已处于该视角 HTR,否则引擎返回
 // HTR2_NOT_HTR 哨兵 → 同样显示 '-' 且不参与 min。
 // 'fr'(Floppy 还原,HTR→FR)同理:输入须已处于该视角 HTR,否则引擎返回 FR_NOT_HTR 哨兵。
-export type Method = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo' | 'block' | 'eoline' | 'dr' | 'htr' | 'htr2' | 'fr';
+export type Method = 'std' | 'daisy' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo' | 'block' | 'eoline' | 'dr' | 'htr' | 'htr2' | 'fr';
 const VARIANT_ID: Record<'pair' | 'eo' | 'pseudo' | 'pseudo_pair', number> = {
   pair: 0, eo: 1, pseudo: 2, pseudo_pair: 3,
 };
@@ -82,16 +82,17 @@ const SINGLE_FACE_METHODS: ReadonlySet<Method> = new Set<Method>([
 // 这里只定引擎支持的方法顺序(按 WASM kind 分组),标签 = variantLabel(key, isZh)。
 // 块族(原 123/222/223)聚合为一个方法 'block',块形状落在阶段下拉。
 export const METHOD_KEYS: Method[] = [
-  'std', 'eo', 'pair', 'pseudo', 'pseudo_pair', 'f2leo', 'pseudo_f2leo',
+  'std', 'daisy', 'eo', 'pair', 'pseudo', 'pseudo_pair', 'f2leo', 'pseudo_f2leo',
   'block', 'eoline', 'dr', 'htr', 'htr2', 'fr',
 ];
 // 阶段键序 + 显示名同样走 scramble-variants(VARIANT_STAGES / stageLabel),
 // WASM 阶段索引 i ↔ VARIANT_STAGES[method][i],与 /scramble/stats 完全同名。
-type Kind = 'std' | 'variant' | 'f2leo' | 'block222' | 'roux223' | 'eodr' | 'htr' | 'htr2' | 'fr';
+type Kind = 'std' | 'daisy' | 'variant' | 'f2leo' | 'block222' | 'roux223' | 'eodr' | 'htr' | 'htr2' | 'fr';
 // block 方法按阶段分流:block222 阶段走专用 Block222SolverWasm,其余走 Roux223SolverWasm
 // (其阶段 id 0..4 恰与 VARIANT_STAGES.block 的索引一一对应,无需映射)。
 const kindOf = (m: Method, stageKey: string): Kind =>
   m === 'std' ? 'std'
+    : m === 'daisy' ? 'daisy'
     : m === 'f2leo' || m === 'pseudo_f2leo' ? 'f2leo'
       : m === 'block' ? (stageKey === 'block222' ? 'block222' : 'roux223')
         : m === 'eoline' || m === 'dr' ? 'eodr'
@@ -102,6 +103,7 @@ const kindOf = (m: Method, stageKey: string): Kind =>
 // 求解器都建),方法内切阶段不换池、不重拉表。
 const needOf = (m: Method): PoolNeed =>
   m === 'std' ? 'cross'
+    : m === 'daisy' ? 'daisy'
     : m === 'f2leo' || m === 'pseudo_f2leo' ? 'f2leo'
       : m === 'block' ? 'roux223'
         : m === 'eoline' || m === 'dr' ? 'eodr'
@@ -712,6 +714,8 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
         };
         const vals = kind === 'f2leo'
           ? await pool.solveF2leoStage(scr, method === 'pseudo_f2leo', stage, stageMask, onFace)
+          : kind === 'daisy'
+            ? await pool.solveDaisyStage(scr)
           : kind === 'block222'
             ? await pool.solveBlock222Stage(scr)
             : kind === 'roux223'
@@ -834,6 +838,8 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
           : await pool.solveMoves(scr, stage, f, { extra: slack, cap, combo, mask: movesMask }, onPartial))
         : kind === 'f2leo'
           ? await pool.solveF2leoMoves(scr, method === 'pseudo_f2leo', f, stage, { extra: slack, cap, combo, mask: movesMask })
+          : kind === 'daisy'
+            ? await pool.solveDaisyMoves(scr, f, { extra: slack, cap })
           : kind === 'block222'
             ? await pool.solveBlock222Moves(scr, f, { extra: slack, cap })
             : kind === 'roux223'

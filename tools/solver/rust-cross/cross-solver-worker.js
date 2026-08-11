@@ -22,6 +22,7 @@ let solver = null;       // CrossSolverWasm(std cross/xc..xxxxc);xcross 段惰�
 let f2leoSolver = null;  // F2leoSolverWasm(f2leo / pseudo),只需 pt_cross
 let variantSolver = null;// VariantSolverWasm(pair / eo / pseudo / pseudo_pair),小表显式逐槽追踪
 let block222Solver = null;// Block222SolverWasm(2x2x2 块),零下载,距离表现场 BFS
+let daisySolver = null;  // DaisySolverWasm(四条指定色棱围绕对面中心),零下载,edge4 全空间精确 BFS
 let roux223Solver = null; // Roux223SolverWasm(FB 方块/1x2x3/双1x2x3 + Petrus 2x2x2/2x2x3),零下载
 let eoDrSolver = null;    // EoDrSolverWasm(EO/EOLine/DR),零表下载,微表现场建
 let htrSolver = null;     // HtrSolverWasm(DR→HTR),零表下载,2.8MB 距离表首查惰性现场 BFS
@@ -100,6 +101,9 @@ async function init(glueUrl, wasmUrl, tablesBase, need, wantXCross, xcrossGz) {
   } else if (need === 'block222') {
     // 2x2x2 块:零下载(mt_edge3 + mt_corn 现场生成),距离表构造时现场 BFS(毫秒级)。
     block222Solver = new mod.Block222SolverWasm();
+  } else if (need === 'daisy') {
+    // Daisy:零下载(mt_edge4 现场生成),190,080 态 / 24 目标精确距离表构造时现场 BFS。
+    daisySolver = new mod.DaisySolverWasm();
   } else if (need === 'roux223') {
     // FB(方块/1x2x3/双1x2x3)+ Petrus(2x2x2/2x2x3):零下载,4 张 mt 现场生成;方块与
     // 2x2x2 即建,1x2x3 全表(5.3M 态)与 2x2x3 启发式表首次查询时惰性 BFS(~秒级)。
@@ -309,6 +313,18 @@ self.onmessage = async (e) => {
         msg.scramble, msg.face | 0, msg.extra ?? 0, msg.cap ?? 20,
       );
       self.postMessage({ type: 'block222_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
+    } else if (msg.type === 'daisy_stage') {
+      if (!daisySolver) throw new Error('daisy solver not initialized');
+      const t0 = performance.now();
+      const out = daisySolver.solve(msg.scramble);
+      self.postMessage({ type: 'variant', id: msg.id, values: Array.from(out), ms: performance.now() - t0 });
+    } else if (msg.type === 'daisy_moves') {
+      if (!daisySolver) throw new Error('daisy solver not initialized');
+      const t0 = performance.now();
+      const json = daisySolver.solve_moves(
+        msg.scramble, msg.face | 0, msg.extra ?? 0, msg.cap ?? 20,
+      );
+      self.postMessage({ type: 'daisy_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
     } else if (msg.type === 'roux223_stage') {
       if (!roux223Solver) throw new Error('roux223 solver not initialized');
       const t0 = performance.now();

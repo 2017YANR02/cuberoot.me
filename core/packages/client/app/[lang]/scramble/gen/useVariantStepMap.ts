@@ -60,7 +60,8 @@ function poolSize(): number {
  */
 // 块族变体 → (WASM 池 need, flat 阶段 id 列表)。
 // roux223:0=1x2x2 方块 1=1x2x3 2=2x2x2 3=2x2x3 4=双1x2x3;eodr:0=EO 1=EOLine 2=DR。
-const BLOCK_SPEC: Record<string, { need: 'roux223' | 'eodr'; ids: number[] }> = {
+const STAGE_FAMILY_SPEC: Record<string, { need: 'daisy' | 'roux223' | 'eodr'; ids: number[] }> = {
+  daisy: { need: 'daisy', ids: [0] },
   '123': { need: 'roux223', ids: [0, 1] },
   '222': { need: 'roux223', ids: [2] },
   '223': { need: 'roux223', ids: [3] },
@@ -73,14 +74,14 @@ const BLOCK_SPEC: Record<string, { need: 'roux223' | 'eodr'; ids: number[] }> = 
  * 块族(123/123x2/222/223 走 Roux223SolverWasm;eoline/dr 走 EoDrSolverWasm 零表)
  * 浏览器内求解(count-only)。两遍同 useVariantStepMap:首阶段先出,余下阶段后台补。
  */
-export function useRoux223StepMap(
+export function useStageFamilyStepMap(
   scrambles: string[],
   enabled: boolean,
   variant: string,
 ): VariantState {
   const [state, setState] = useState<VariantState>(IDLE);
   const poolRef = useRef<RustCrossPool | null>(null);
-  const poolNeedRef = useRef<'roux223' | 'eodr' | null>(null);
+  const poolNeedRef = useRef<'daisy' | 'roux223' | 'eodr' | null>(null);
   const cacheRef = useRef<Map<string, Map<string, number[]>>>(new Map());
   const lastArrRef = useRef<string[] | null>(null);
 
@@ -88,7 +89,7 @@ export function useRoux223StepMap(
 
   useEffect(() => {
     if (!enabled) { setState(IDLE); return; }
-    const spec = BLOCK_SPEC[variant] ?? BLOCK_SPEC['123'];
+    const spec = STAGE_FAMILY_SPEC[variant] ?? STAGE_FAMILY_SPEC['123'];
     const stageIds = spec.ids;
     if (scrambles.length === 0) {
       setState({ map: new Map(), crossReady: true, fullReady: true, done: 0, total: 0, error: null });
@@ -126,7 +127,9 @@ export function useRoux223StepMap(
     }
     const pool = poolRef.current;
     const solveStage = (s: string, sid: number) =>
-      spec.need === 'eodr' ? pool.solveEoDrStage(s, sid) : pool.solveRoux223Stage(s, sid);
+      spec.need === 'daisy' ? pool.solveDaisyStage(s)
+        : spec.need === 'eodr' ? pool.solveEoDrStage(s, sid)
+          : pool.solveRoux223Stage(s, sid);
 
     (async () => {
       try {

@@ -26,7 +26,7 @@ import { localizeCompName } from '@/lib/comp-localize';
 import { loadFlagData, flagDataVersion, compFlagIso2 } from '@/lib/country-flags';
 import { compSourceLine } from '@/lib/comp-schedule';
 import { statsUrl } from '@/lib/stats-base';
-import { VARIANT_ORDER, stageLabel, variantLabel, BLOCK_DATA_VARIANTS, BLOCK_STAGE_VARIANT, EO_DATA_VARIANTS, EO_STAGE_VARIANT, VARIANT_STAGES, LENGTH_VARIANT, uiVariantOf, uiVariantOptions } from '@/lib/scramble-variants';
+import { VARIANT_ORDER, stageLabel, variantLabel, BLOCK_DATA_VARIANTS, BLOCK_STAGE_VARIANT, EO_DATA_VARIANTS, EO_STAGE_VARIANT, VARIANT_STAGES, LENGTH_VARIANT, RECENT_METRIC_ORDER, uiVariantOf, uiVariantOptions } from '@/lib/scramble-variants';
 import { VariantSelect } from '@/components/VariantSelect';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { fetchRecentScramblesEvents, type RecentScramblesEventsJson, type RecentScrMeta } from '@/lib/recent-scrambles-events';
@@ -61,9 +61,6 @@ interface DistHist { counts: Record<string, number> }
 interface DistributionJson {
   sets: Record<string, { variants: Record<string, { data: Record<string, Record<string, DistHist>> }> }>;
 }
-
-// eo / eoline 排在十字系列之前:EO 方法下的阶段顺序是「先定向,再 EOLine,再 EO+十字」。
-const METRIC_ORDER = ['333', 'eo', 'eoline', 'cross', 'xc', 'xxc', 'xxxc', 'xxxxc', 'fbsquare', 'rouxs1', 'block222', 'block223', 'f2b', 'dr'];
 
 // 难度模式的项目(整解最优步数);其余项目只按打乱长度。
 // 222/金字塔/斜转走 puzzle 管道;单手/脚拧/最少步/三盲走 333opt(难度视图显示最优等态打乱,同 333 富控件)。
@@ -541,13 +538,13 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
   const stageVariantMap = curVariant === 'block' ? BLOCK_STAGE_VARIANT : curVariant === 'eo' ? EO_STAGE_VARIANT : null;
   const metrics = useMemo(() => {
     if (stageVariantMap) {
-      return METRIC_ORDER.filter((m) => {
+      return RECENT_METRIC_ORDER.filter((m) => {
         const dv = stageVariantMap[m];
         return dv !== undefined && m in (data?.rank?.[dv] ?? {});
       });
     }
     const r = data?.rank?.[curVariant];
-    return r ? METRIC_ORDER.filter((m) => m in r) : [];
+    return r ? RECENT_METRIC_ORDER.filter((m) => m in r) : [];
   }, [data, curVariant, stageVariantMap]);
   const curMetric = metrics.includes(metric) ? metric : (metrics[0] ?? 'cross');
   const dataVariant = stageVariantMap

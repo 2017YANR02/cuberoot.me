@@ -462,6 +462,78 @@ export class Cube222SolverWasm {
 if (Symbol.dispose) Cube222SolverWasm.prototype[Symbol.dispose] = Cube222SolverWasm.prototype.free;
 
 /**
+ * 三阶小花:指定底色四条棱围绕对面中心，且贴纸朝向中心面。
+ * 复用 edge4 190,080 态移动表，24 个花瓣排列做多源 BFS；全空间严格最优。
+ */
+export class DaisySolverWasm {
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        DaisySolverWasmFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_daisysolverwasm_free(ptr, 0);
+    }
+    /**
+     * 零下载:mt_edge4 现场生成(~17.4MB)，Daisy 距离表现场 BFS(~186KB)。
+     */
+    constructor() {
+        const ret = wasm.daisysolverwasm_new();
+        this.__wbg_ptr = ret;
+        DaisySolverWasmFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+    /**
+     * 6 个花瓣颜色的最优步数，顺序对应 ROTS。
+     * @param {string} scramble
+     * @returns {Uint32Array}
+     */
+    solve(scramble) {
+        const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.daisysolverwasm_solve(this.__wbg_ptr, ptr0, len0);
+        var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v2;
+    }
+    /**
+     * @param {string} scramble
+     * @param {number} face
+     * @returns {number}
+     */
+    solve_face(scramble, face) {
+        const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.daisysolverwasm_solve_face(this.__wbg_ptr, ptr0, len0, face);
+        return ret >>> 0;
+    }
+    /**
+     * @param {string} scramble
+     * @param {number} face
+     * @param {number} extra
+     * @param {number} cap
+     * @returns {string}
+     */
+    solve_moves(scramble, face, extra, cap) {
+        let deferred2_0;
+        let deferred2_1;
+        try {
+            const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ret = wasm.daisysolverwasm_solve_moves(this.__wbg_ptr, ptr0, len0, face, extra, cap);
+            deferred2_0 = ret[0];
+            deferred2_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+        }
+    }
+}
+if (Symbol.dispose) DaisySolverWasm.prototype[Symbol.dispose] = DaisySolverWasm.prototype.free;
+
+/**
  * EOLine / DR 求解器(全自包含,**零表下载**):eo12/line/co8/slice 微 move 表与
  * 全部距离表现场从内置运动学构建。EOLine 即时构建(~1MB BFS);DR 惰性
  * (两张 ~1M 距离表,首次查询时建)。
@@ -1453,6 +1525,9 @@ const CrossSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined'
 const Cube222SolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_cube222solverwasm_free(ptr, 1));
+const DaisySolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_daisysolverwasm_free(ptr, 1));
 const EoDrSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_eodrsolverwasm_free(ptr, 1));
