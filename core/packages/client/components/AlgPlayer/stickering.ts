@@ -11,7 +11,7 @@ import type { AlgPuzzle } from '@cuberoot/shared';
 export function pickStickering(puzzle: AlgPuzzle, set: string): string | undefined {
   if (puzzle !== '3x3') return undefined;
   switch (set) {
-    case 'f2l': case 'adv-f2l':                   return 'F2L';
+    case 'f2l': case 'adv-f2l': case 'psf2l':     return 'F2L';
     case 'oll': case 'ollcp':                     return 'OLL';
     case 'pll': case 'anti-pll':                  return 'PLL';
     case 'coll':                                  return 'COLL';

@@ -7,6 +7,7 @@ import { tr } from '@/i18n/tr';
 
 const AUF = ['', 'U', 'U2', "U'"];
 const Y = ['', 'y', 'y2', "y'"];
+const D_ADJUSTMENTS = ['D', 'D2', "D'"] as const;
 /** 金字塔的顶层是 3 阶轴,只有 U / U' 两种「不是不转」的对齐(没有 U2)。 */
 const PYRA_AUF = ['', 'U', "U'"];
 
@@ -16,6 +17,7 @@ function pick<T>(arr: readonly T[]): T {
 
 const U_TURN_RE = /^(U2|U'|U)$/;
 const Y_TURN_RE = /^(y2|y'|y)$/;
+const D_TURN_RE = /^(D2|D'|D)$/;
 function quarterOf(tok: string): number {
   if (tok.endsWith('2')) return 2;
   if (tok.endsWith("'")) return 3;
@@ -68,6 +70,26 @@ function appendYMerge(base: string, post: string): string {
   } else {
     tokens.push(post);
   }
+  return tokens.join(' ');
+}
+
+/**
+ * 换掉 PSF2L 打乱首尾那对互逆 D 转动。
+ *
+ * 不能只随机第一步:canonical `D body D'` 的逆打乱也是 `D body⁻¹ D'`,只换开头会让
+ * 原本对应的伪槽结构失去逆式。首尾一起换成 `q ... q⁻¹` 后,三种 D 调整仍各自严格可解。
+ * 输入不是一对互逆 D(空串、普通 F2L、脏数据)时原样退回,不碰不适用的打乱。
+ */
+export function replaceOuterDAdjustment(base: string, adjustment: string): string {
+  if (!D_TURN_RE.test(adjustment)) return base;
+  const tokens = base.split(/\s+/).filter(Boolean);
+  if (tokens.length < 2 || !D_TURN_RE.test(tokens[0]) || !D_TURN_RE.test(tokens[tokens.length - 1])) {
+    return base;
+  }
+  if ((quarterOf(tokens[0]) + quarterOf(tokens[tokens.length - 1])) % 4 !== 0) return base;
+  const q = quarterOf(adjustment);
+  tokens[0] = turnOf(q, 'D');
+  tokens[tokens.length - 1] = turnOf(-q, 'D');
   return tokens.join(' ');
 }
 
@@ -132,11 +154,13 @@ export function caseBaseAlg(c: AlgCase): string {
 }
 
 export interface TrainerSetScrambleFeatures {
+  randomInitialD: boolean;
   randomFinalAuf: boolean;
   randomFinalY: boolean;
 }
 
 const NO_SET_SCRAMBLE_FEATURES: TrainerSetScrambleFeatures = {
+  randomInitialD: false,
   randomFinalAuf: false,
   randomFinalY: false,
 };
@@ -150,7 +174,10 @@ export function trainerSetScrambleFeatures(
   set: string | null | undefined,
 ): TrainerSetScrambleFeatures {
   if (puzzle === '3x3' && (set === 'f2l' || set === 'adv-f2l')) {
-    return { randomFinalAuf: true, randomFinalY: true };
+    return { randomInitialD: false, randomFinalAuf: true, randomFinalY: true };
+  }
+  if (puzzle === '3x3' && set === 'psf2l') {
+    return { randomInitialD: true, randomFinalAuf: false, randomFinalY: false };
   }
   return NO_SET_SCRAMBLE_FEATURES;
 }
@@ -204,6 +231,8 @@ function postAufPool(
 export interface TrainerScrambleOpts {
   preAuf?: boolean;
   postAuf?: boolean;
+  /** PSF2L 特化:把打乱首尾的 D ... D' 随机换成 D / D2 / D' 的互逆夹心。 */
+  randomInitialD?: boolean;
   /** F2L 系特化:打乱末尾随机补 U / U2 / U' / 无。 */
   randomFinalAuf?: boolean;
   /** F2L 系特化:打乱末尾随机补 y / y2 / y' / 无。 */
@@ -230,9 +259,12 @@ export function generateScramble(
 
   if (puzzle === '3x3') {
     if (c.sticker.kind === 'f2l') {
+      const adjustedBase = opts?.randomInitialD
+        ? replaceOuterDAdjustment(base, pick(D_ADJUSTMENTS))
+        : base;
       const finalAuf = opts?.randomFinalAuf ? pick(AUF) : '';
       const finalY = opts?.randomFinalY ? pick(Y) : '';
-      const withAuf = joinWithAufMerge('', base.split(/\s+/).filter(Boolean), finalAuf);
+      const withAuf = joinWithAufMerge('', adjustedBase.split(/\s+/).filter(Boolean), finalAuf);
       return appendYMerge(withAuf, finalY);
     }
     // 收尾随机 AUF(post-AUF,默认开):同一个 case 每次呈现的朝向不同,练的是识别不是背图。

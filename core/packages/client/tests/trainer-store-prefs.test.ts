@@ -29,6 +29,7 @@ describe('trainer-store 开关联动', () => {
     g.localStorage = makeLocalStorage();
     st().setMultiScramble(false);
     st().setShowStageThumb(true);
+    st().setRandomInitialD(true);
     st().setRandomFinalAuf(true);
     st().setRandomFinalY(true);
   });
@@ -69,23 +70,27 @@ describe('trainer-store 开关联动', () => {
     expect(st().postAuf).toBe(false);
   });
 
-  it('F2L 的末尾 AUF / y 偏好会一起持久化', () => {
+  it('公式集特化的随机 D / AUF / y 偏好会一起持久化', () => {
+    st().setRandomInitialD(false);
     st().setRandomFinalAuf(false);
     st().setRandomFinalY(false);
 
     const saved = JSON.parse(g.localStorage!.getItem('trainer:prefs') ?? '{}');
+    expect(saved.randomInitialD).toBe(false);
     expect(saved.randomFinalAuf).toBe(false);
     expect(saved.randomFinalY).toBe(false);
   });
 
-  it('旧偏好没有 F2L 字段时回落到默认开启', () => {
+  it('旧偏好没有公式集特化字段时回落到默认开启', () => {
     g.localStorage!.setItem('trainer:prefs', JSON.stringify({ timing: true }));
+    st().setRandomInitialD(false);
     st().setRandomFinalAuf(false);
     st().setRandomFinalY(false);
     // 上面两个 setter 会覆盖存储,重新放回旧版快照再补水。
     g.localStorage!.setItem('trainer:prefs', JSON.stringify({ timing: true }));
     st().hydratePrefs();
 
+    expect(st().randomInitialD).toBe(true);
     expect(st().randomFinalAuf).toBe(true);
     expect(st().randomFinalY).toBe(true);
   });

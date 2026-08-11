@@ -211,6 +211,8 @@ export default function TrainerRunClient() {
   const setPreAuf = useTrainerStore(s => s.setPreAuf);
   const postAuf = useTrainerStore(s => s.postAuf);
   const setPostAuf = useTrainerStore(s => s.setPostAuf);
+  const randomInitialD = useTrainerStore(s => s.randomInitialD);
+  const setRandomInitialD = useTrainerStore(s => s.setRandomInitialD);
   const randomFinalAuf = useTrainerStore(s => s.randomFinalAuf);
   const setRandomFinalAuf = useTrainerStore(s => s.setRandomFinalAuf);
   const randomFinalY = useTrainerStore(s => s.randomFinalY);
@@ -420,12 +422,13 @@ export default function TrainerRunClient() {
     return {
       preAuf,
       postAuf,
+      randomInitialD: features.randomInitialD && randomInitialD,
       randomFinalAuf: features.randomFinalAuf && randomFinalAuf,
       randomFinalY: features.randomFinalY && randomFinalY,
       orientation: oriSel,
       orientationSet: isMix ? null : setSlug,
     };
-  }, [puzzle, isMix, setSlug, preAuf, postAuf, randomFinalAuf, randomFinalY, oriSel]);
+  }, [puzzle, isMix, setSlug, preAuf, postAuf, randomInitialD, randomFinalAuf, randomFinalY, oriSel]);
 
   // 改了选中的 case 之后,原先选的那种打乱可能一个 case 都不再支持 —— 此时 <select> 的
   // value 落空、显示成一片空白。退回 `inv`(它永远支持)。
@@ -1093,11 +1096,14 @@ export default function TrainerRunClient() {
   // 跟着一起转,而收尾 AUF 恰恰是 LSLL 真解里要先补的那一下。
   const aufSupported = (puzzle === '3x3' || puzzle === '2x2') && !isMemo
     && !cases.some(c => c.sticker.kind === 'f2l');
-  // F2L 系的随机末尾调整由公式集显式声明,不拿 sticker.kind 猜 —— 其它同样使用
-  // f2l 贴纸模板的集不会因此凭空多两个开关。合练也不继承单集的特化设置。
+  // F2L 系的随机 D / 末尾调整由公式集显式声明,不拿 sticker.kind 猜 —— 其它同样使用
+  // f2l 贴纸模板的集不会因此凭空多开关。合练也不继承单集的特化设置。
   const setScrambleFeatures = trainerSetScrambleFeatures(puzzle, isMix ? null : setSlug);
-  const finalAdjustSupported = !isMemo
-    && (setScrambleFeatures.randomFinalAuf || setScrambleFeatures.randomFinalY);
+  const setAdjustSupported = !isMemo && (
+    setScrambleFeatures.randomInitialD
+    || setScrambleFeatures.randomFinalAuf
+    || setScrambleFeatures.randomFinalY
+  );
   /** 有没有钉过朝向 —— 空数组的组在 store 里是删掉而不是留空的,所以数键就够 */
   const oriPinned = Object.keys(oriSel).length > 0;
   // 真实概率只有带 meta 的 LL set(zbll / pll / ell / 1lll)有数学定义
@@ -1523,8 +1529,15 @@ export default function TrainerRunClient() {
                   )}
                 </div>
               )}
-              {finalAdjustSupported && (
+              {setAdjustSupported && (
                 <div className="trainer-opts-row">
+                  {setScrambleFeatures.randomInitialD && (
+                    <BoolToggle
+                      value={randomInitialD}
+                      onChange={setRandomInitialD}
+                      label={tr({ zh: '随机 D 调整', en: 'Random D setup' })}
+                    />
+                  )}
                   {setScrambleFeatures.randomFinalAuf && (
                     <BoolToggle
                       value={randomFinalAuf}
