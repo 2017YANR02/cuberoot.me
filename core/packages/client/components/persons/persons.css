@@ -251,15 +251,16 @@ html[data-theme=dark] .wp-page {
 .wp-hero-collection-item { display: grid; gap: 2px; }
 .wp-hero-collection dt {
     color: var(--wp-text-mute);
-    font-size: 0.68rem;
+    font-size: 0.72rem;
     line-height: 1.1;
+    letter-spacing: 0.04em;
     white-space: nowrap;
 }
 .wp-hero-collection dd {
     margin: 0;
     color: var(--wp-text);
-    font-size: 0.9rem;
-    font-weight: 650;
+    font-size: 0.95rem;
+    font-weight: 600;
     font-variant-numeric: tabular-nums;
     line-height: 1.2;
 }

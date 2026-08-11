@@ -32,7 +32,7 @@ export const TEXTS: Record<string, { en: string; zh: string
 },
   globe:           { en: 'Globe', zh: '地球' },
   cstimer:         { en: 'csTimer', zh: 'csTimer' },
-  timer:           { en: 'Timer', zh: '计时器'
+  timer:           { en: 'Timer', zh: '计时'
 },
   predict:         { en: 'Lookahead', zh: '预判'
 },
