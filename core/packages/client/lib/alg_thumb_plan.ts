@@ -13,7 +13,6 @@ import { invertSq1Alg } from '@cuberoot/shared/sq1-notation';
 import { renderSkewbPyramidSvgParametric } from '@cuberoot/shared/skewb-pyramid-svg';
 import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS } from '@/lib/sq1-svg';
 import { sq1StageHiddenStickerIds } from '@/lib/sq1-stage-mask';
-import { canonicalLlSetup, oriCornersOnly } from '@/lib/alg_ll_orientation';
 
 export const PUZZLE_SIZE: Record<AlgPuzzle, number> = {
   '2x2': 2, '3x3': 3, '4x4': 4, '5x5': 5,
@@ -106,7 +105,7 @@ export interface CaseThumbPlanInput {
   setup?: string;
   mask?: string;
   sq1BlackTop?: boolean;
-  /** 3x3 plan-view teaching projection: preserve recognisable bars and colour pairs only. */
+  /** 3x3 plan-view teaching projection: hide noise without changing the case orientation. */
   simplifyRecognition?: boolean;
 }
 
@@ -188,9 +187,7 @@ export function caseThumbPlan({
   return {
     renderer: 'visualcube',
     algorithm: alg,
-    setup: puzzle === '3x3' && simplifyRecognition && setup
-      ? canonicalLlSetup(setup, 3, oriCornersOnly(puzzle, set))
-      : setup,
+    setup,
     params: {
       ...cubeThumbParams(puzzle, set, sticker, mask),
       ...(puzzle === '3x3' && simplifyRecognition

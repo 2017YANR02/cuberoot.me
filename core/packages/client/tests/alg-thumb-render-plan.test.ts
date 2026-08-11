@@ -98,7 +98,8 @@ describe('网页与 PDF 共用 case 缩略图渲染计划', () => {
     }
     expect(plain.params.planSimplify).toBeUndefined();
     expect(simplified.params.planSimplify).toEqual({ side: 'oppbar', up: 'all', showYellow: true });
-    expect(simplified.setup).toBeTruthy();
+    expect(simplified.setup).toBe(plain.setup);
+    expect(simplified.algorithm).toBe(plain.algorithm);
     await expect(algCaseSvg({ ...base, simplifyRecognition: true }))
       .resolves.not.toBe(await algCaseSvg(base));
 
