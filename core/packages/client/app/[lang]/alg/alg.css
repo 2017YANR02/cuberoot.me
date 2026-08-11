@@ -538,6 +538,22 @@ html[data-theme=dark] .alg-root {
 .alg-view-toggle {
   align-self: center;
 }
+/* ZBLL 全集开关与相邻的图/公式 PillToggle 同高，避免页头里一高一矮。 */
+.alg-show-all-toggle {
+  align-self: center;
+}
+.alg-show-all-toggle .pill-toggle--switch {
+  width: 46px;
+  height: 28px;
+}
+.alg-show-all-toggle .pill-toggle--switch .pill-toggle-dot {
+  width: 22px;
+  height: 22px;
+  left: 2px;
+}
+.alg-show-all-toggle .pill-toggle--switch.is-on .pill-toggle-dot {
+  left: calc(100% - 24px);
+}
 /* 页首可扩展下拉（记号、标签筛选等）：宽度跟内容走，header 自己负责窄屏折行。 */
 .alg-header-select {
   padding: 3px 8px;
