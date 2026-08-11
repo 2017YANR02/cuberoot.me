@@ -48,7 +48,7 @@
 }
 
 .wca-teacher-action,
-.wca-teacher-dialog-actions button {
+.wca-teacher-dialog-action {
   border: 0;
   padding: 0;
   background: none;
@@ -60,7 +60,7 @@
 }
 
 .wca-teacher-action:disabled,
-.wca-teacher-dialog-actions button:disabled {
+.wca-teacher-dialog-action:disabled {
   color: var(--faint-foreground);
   cursor: default;
 }

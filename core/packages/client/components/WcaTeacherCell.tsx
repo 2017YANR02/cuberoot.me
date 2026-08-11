@@ -293,21 +293,21 @@ export function WcaTeacherCell({ studentWcaId, eventIds, directory, isZh, showEv
             {error && <p className="wca-teacher-dialog-error" role="alert">{error}</p>}
             <div className="wca-teacher-dialog-actions">
               {directory.isAdmin && (
-                <button type="button" className="wca-teacher-dialog-primary" disabled={!selected || saving} onClick={saveAdmin}>
+                <button type="button" className="wca-teacher-dialog-action wca-teacher-dialog-primary" disabled={!selected || saving} onClick={saveAdmin}>
                   {saving ? tr({ zh: '保存中…', en: 'Saving…' }) : tr({ zh: '保存', en: 'Save' })}
                 </button>
               )}
               {!directory.isAdmin && !teacher && directory.canSelfAssign && (
-                <button type="button" className="wca-teacher-dialog-primary" disabled={saving} onClick={selfAssign}>
+                <button type="button" className="wca-teacher-dialog-action wca-teacher-dialog-primary" disabled={saving} onClick={selfAssign}>
                   {saving ? tr({ zh: '保存中…', en: 'Saving…' }) : tr({ zh: '登记自己', en: 'Add myself' })}
                 </button>
               )}
               {teacher && (directory.isAdmin || isOwnRelation) && (
-                <button type="button" className="wca-teacher-dialog-remove" disabled={saving} onClick={remove}>
+                <button type="button" className="wca-teacher-dialog-action wca-teacher-dialog-remove" disabled={saving} onClick={remove}>
                   {tr({ zh: '移除', en: 'Remove' })}
                 </button>
               )}
-              <button type="button" className="wca-teacher-dialog-cancel" disabled={saving} onClick={() => setEditing(false)}>
+              <button type="button" className="wca-teacher-dialog-action wca-teacher-dialog-cancel" disabled={saving} onClick={() => setEditing(false)}>
                 {tr({ zh: '取消', en: 'Cancel' })}
               </button>
             </div>

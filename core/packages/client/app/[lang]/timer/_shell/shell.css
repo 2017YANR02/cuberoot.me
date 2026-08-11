@@ -1464,20 +1464,24 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   }
 }
 
-/* ── Phone (<480px) ─────────────────────────────────────── */
-@media (max-width: 480px) {
-  .shell-topbar { gap: 6px; padding: 6px 10px; min-height: 44px; }
-  /* 窄屏放不下三列:两侧的 1fr 被挤成 0,logo 只剩两三像素(等于看不见)却仍占着
-     一格,把中列顶得既不居中也不贴边,控件还被迫多折一行。索性收起 logo,改成
-     [左组 auto][右组 1fr]:左组贴左紧凑排,右组贴右,不再有幽灵格。 */
-  .shell-topbar { grid-template-columns: auto 1fr; }
+/* 平板与窄桌面:中列按 max-content 参与三列布局时,右侧工具会被项目/来源控件挤出视口。
+   这里提前切成两列,左侧允许折行,右侧工具始终保留完整宽度。 */
+@media (max-width: 800px) {
+  .shell-topbar { grid-template-columns: minmax(0, 1fr) auto; }
   .shell-topbar-brand { display: none; }
   .shell-topbar-left {
     grid-column: 1;
-    justify-self: start;
+    justify-self: stretch;
     justify-content: flex-start;
   }
   .shell-topbar-right { grid-column: 2; justify-self: end; }
+}
+
+/* ── Phone (<480px) ─────────────────────────────────────── */
+@media (max-width: 480px) {
+  .shell-topbar { gap: 6px; padding: 6px 10px; min-height: 44px; }
+  /* 左组继续收缩和折行,右组保留操作按钮的固有宽度。 */
+  .shell-topbar { grid-template-columns: minmax(0, 1fr) auto; }
   .shell-topbar-left { gap: 4px 6px; }
   .shell-players-select { padding: 0 4px; font-size: 12px; }
   /* 顶栏这组控件在手机上要挤下五件(多了「难度」),解法入口与难度开关跟着同档收窄。 */
@@ -1535,6 +1539,23 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 }
 .shell-topbar .tb-btn:hover { background: var(--shell-hover); color: var(--foreground); }
 .shell-topbar .tb-btn.connected { color: var(--signal-success); }
+.shell-topbar .shell-stage-training-btn {
+  width: auto;
+  gap: 5px;
+  padding: 0 9px;
+  color: var(--accent);
+  white-space: nowrap;
+}
+.shell-topbar .shell-stage-training-btn:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.shell-stage-training-label { font-size: 12px; font-weight: 600; }
+
+@media (max-width: 480px) {
+  .shell-topbar .shell-stage-training-btn { width: 30px; padding: 0; }
+  .shell-stage-training-label { display: none; }
+}
 
 /* Keyboard focus ring — the shell had none, so tab-focus fell back to the
    near-invisible UA outline on the dark surface. Token-only, both themes. */
