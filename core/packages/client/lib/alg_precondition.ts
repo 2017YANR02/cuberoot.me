@@ -43,9 +43,10 @@ export const SET_PRECONDITION: Record<string, AlgPrecondition> = {
   '3x3/sv': 'f2l-one-slot',
   '3x3/vls': 'f2l-one-slot',
   '3x3/cls': 'f2l-one-slot',
-  // adv-f2l(Trapped Corner / Trapped Edge)的 case 本来就是「块被困在另一个槽里」,
-  // 两个槽同时不完整是它的定义,不是错误;fruf 的 case 允许 DF 棱在外。都不套单槽前提。
+  // adv-f2l(Trapped Corner / Trapped Edge)与 psf2l 的 case 本来就可能同时占用两个槽,
+  // 两个槽不完整是定义,不是错误;fruf 的 case 允许 DF 棱在外。都不套单槽前提。
   '3x3/adv-f2l': 'none',
+  '3x3/psf2l': 'none',
   '3x3/fruf': 'none',
   '3x3/oll': 'll',
   '3x3/2-look-oll': 'll',
