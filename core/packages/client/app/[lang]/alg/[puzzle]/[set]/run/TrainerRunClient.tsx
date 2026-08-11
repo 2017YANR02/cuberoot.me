@@ -1,7 +1,7 @@
 'use client';
 
 // Ported from packages/client-vite/src/pages/trainer/TrainerRunPage.tsx
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import Link from '@/components/AppLink';
 import { useParams, useRouter } from 'next/navigation';
 import { parseAsString, useQueryState } from 'nuqs';
@@ -44,6 +44,7 @@ import MixSetPicker from '@/app/[lang]/alg/_trainer/MixSetPicker';
 import SmartCubeRow from '@/app/[lang]/alg/_trainer/SmartCubeRow';
 import OrientationPicker from '@/app/[lang]/alg/_trainer/OrientationPicker';
 import TrainerLiveCube from '@/app/[lang]/alg/_trainer/TrainerLiveCube';
+import TrainerSplitScreen from './TrainerSplitScreen';
 import { useTrainerCube } from '@/app/[lang]/alg/_trainer/useTrainerCube';
 import { puzzleHasSmartCube } from '@/app/[lang]/alg/_trainer/smartcube';
 import { resolveAlgPuzzle } from '@/app/[lang]/alg/_trainer/events';
@@ -64,6 +65,20 @@ const PRIMARY_MODES: Array<{ id: 'train' | 'memo'; zh: string; en: string }> = [
 
 const TIMER_DELAY_MS = 0;
 
+const SPLIT_SCREEN_QUERY = '(min-width: 768px) and (min-height: 600px)';
+const splitScreenServerSnapshot = () => false;
+const splitScreenSnapshot = () => window.matchMedia(SPLIT_SCREEN_QUERY).matches;
+const subscribeSplitScreen = (onChange: () => void) => {
+  const media = window.matchMedia(SPLIT_SCREEN_QUERY);
+  media.addEventListener('change', onChange);
+  return () => media.removeEventListener('change', onChange);
+};
+
+/** Split view deliberately excludes phones, including wide landscape phones. */
+function useSplitScreenAvailable(): boolean {
+  return useSyncExternalStore(subscribeSplitScreen, splitScreenSnapshot, splitScreenServerSnapshot);
+}
+
 export default function TrainerRunClient() {
   const params = useParams<{ puzzle: string; set: string }>();
   const puzzleParam = (Array.isArray(params?.puzzle) ? params.puzzle[0] : params?.puzzle) ?? '';
@@ -71,6 +86,7 @@ export default function TrainerRunClient() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const router = useRouter();
+  const splitScreenAvailable = useSplitScreenAvailable();
 
   // 训练范围:subgroup 页的训练按钮带 ?scope=<组slug> 进来,只练该组(筛选/默认 replace)
   const [scopeParam, setScopeParam] = useQueryState(
@@ -93,6 +109,11 @@ export default function TrainerRunClient() {
   // 深链模式:进度总览页的「复习 N」直接带 ?mode=memo 进来。只应用一次,之后用户自己切不再被覆盖。
   const [modeParam] = useQueryState('mode');
   const modeApplied = useRef(false);
+  // 单设备双人分屏是大视图状态,进历史栈；分享 URL 也能直接恢复同一视图。
+  const [splitParam, setSplitParam] = useQueryState(
+    'split',
+    parseAsString.withOptions({ history: 'push' }),
+  );
 
   const puzzle = resolveAlgPuzzle(puzzleParam);   // 接受 event code(333)或 legacy puzzle 名(3x3)
 
@@ -393,6 +414,19 @@ export default function TrainerRunClient() {
     return SCRAMBLE_KINDS.filter(k => seen.has(k.id));
   }, [pool, cases, puzzle, virtual]);
 
+  // 分屏两条题道各自现算打乱；偏好与普通训练题面完全同源。
+  const splitScrambleOpts = useMemo(() => {
+    const features = trainerSetScrambleFeatures(puzzle, isMix ? null : setSlug);
+    return {
+      preAuf,
+      postAuf,
+      randomFinalAuf: features.randomFinalAuf && randomFinalAuf,
+      randomFinalY: features.randomFinalY && randomFinalY,
+      orientation: oriSel,
+      orientationSet: isMix ? null : setSlug,
+    };
+  }, [puzzle, isMix, setSlug, preAuf, postAuf, randomFinalAuf, randomFinalY, oriSel]);
+
   // 改了选中的 case 之后,原先选的那种打乱可能一个 case 都不再支持 —— 此时 <select> 的
   // value 落空、显示成一片空白。退回 `inv`(它永远支持)。
   // pool 为空(还没选 case / cases 未加载)时 kinds 只是过渡态(仅 cstimer),此时 htm 尚未
@@ -471,12 +505,29 @@ export default function TrainerRunClient() {
   const isMemo = mode === 'memo';
   const isMemoRef = useRef(false);
   isMemoRef.current = isMemo;
+  const splitEligible = splitParam === '1' && splitScreenAvailable && !room && pool.length >= 2;
+  const splitActive = splitEligible && !isMemo;
+  const splitActiveRef = useRef(false);
+  splitActiveRef.current = splitActive;
+
+  // 直接打开 / 分享 ?split=1 也必须落到与手动开关相同的稳定配置，不能只靠点击事件校正。
+  useEffect(() => {
+    if (!splitEligible) return;
+    if (mode !== 'recap') {
+      lastTrainingMode.current = 'recap';
+      setMode('recap');
+    }
+    if (timing) setTiming(false);
+    if (multiScramble) setMultiScramble(false);
+    if (smartCube) setSmartCube(false);
+  }, [splitEligible, mode, timing, multiScramble, smartCube,
+      setMode, setTiming, setMultiScramble, setSmartCube]);
 
   useSpaceHoldTimer({
     state: timerState,
     delayMs: TIMER_DELAY_MS,
     // 「本轮结束」/ 二维码 / case 详情弹窗开着时别让空格误起表
-    enabled: timing && !recapRoundDone && !isMemo && !overlayOpen,
+    enabled: timing && !recapRoundDone && !isMemo && !splitActive && !overlayOpen,
     getTimerReady,
     startTimer,
     stopTimer,
@@ -487,6 +538,7 @@ export default function TrainerRunClient() {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (isMemoRef.current) return;   // 记忆模式的键盘在 MemoryTrainer 里
+      if (splitActiveRef.current) return; // 分屏两边各用自己的「完成」按钮,全局快捷键不抢题
       if (overlayOpenRef.current) return;   // 弹窗盖着,空格/方向键别在背后翻题(Esc 归弹窗)
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA'
@@ -581,7 +633,8 @@ export default function TrainerRunClient() {
     return () => document.removeEventListener('pointerdown', handler);
   }, [optsOpen]);
   // 房间模式题面由服务端队列领取,本机 selected 可空(经邀请链接进来的新设备)—— 不算「未选」。
-  const stageMounted = !!(puzzle && meta) && !isMemo && !(pool.length === 0 && cases.length > 0 && !room);
+  const stageMounted = !!(puzzle && meta) && !isMemo && !splitActive
+    && !(pool.length === 0 && cases.length > 0 && !room);
 
   /** meta.no → case:元数据弹窗里的镜像 / 逆链接用(同 AlgCategoryView) */
   const byNo = useMemo(() => {
@@ -689,6 +742,7 @@ export default function TrainerRunClient() {
     let pressed = false;
     const down = (e: PointerEvent) => {
       if (isMemoRef.current) return;   // 记忆模式没有「点空白 = 下一题」这回事
+      if (splitActiveRef.current) return; // 分屏空白不推进任一方,避免归属不明
       if (e.pointerType === 'mouse' && e.button !== 0) return;
       // 设置面板开着时,面板外的按压只该关面板 —— 不该顺带切打乱/触发计时。
       if (optsOpenRef.current) return;
@@ -842,7 +896,7 @@ export default function TrainerRunClient() {
    */
   const cubeCase = currentKey ? findCaseByKey(cases, currentKey) ?? null : null;
   const trainerCube = useTrainerCube({
-    enabled: smartCube && !isMemo,
+    enabled: smartCube && !isMemo && !splitActive,
     timing,
     puzzle: puzzle ?? null,
     sessionSet: storeSet,
@@ -1086,7 +1140,7 @@ export default function TrainerRunClient() {
             <Settings size={22} />
           </button>
           {/* 复习进度贴在齿轮右侧(absolute 脱流:齿轮仍精确居中,面板锚点不受影响) */}
-          {recapShown && recapCur && (
+          {recapShown && recapCur && !splitActive && (
             <span className="trainer-recap-progress">
               {/* 分轮次的范围(LSLL 已收录:302 条一轮、494 轮)把「第几轮」摆在进度前面 */}
               {roundLabel && roundNumber && totalRounds && virtual?.scopeForRound ? (
@@ -1193,7 +1247,7 @@ export default function TrainerRunClient() {
                   className="trainer-scramble-kind trainer-mode-select"
                   value={isMemo ? 'memo' : 'train'}
                   onChange={e => setMode(e.target.value === 'memo' ? 'memo' : lastTrainingMode.current)}
-                  disabled={!!room}
+                  disabled={!!room || splitActive}
                   aria-label={tr({ zh: '训练模式', en: 'Training mode' })}
                 >
                   {PRIMARY_MODES.map(m => (
@@ -1213,11 +1267,13 @@ export default function TrainerRunClient() {
                       onLabel={tr({ zh: '覆盖', en: 'Coverage' })}
                       offLabel={tr({ zh: '随机', en: 'Random' })}
                       ariaLabel={tr({ zh: '出题方式', en: 'Draw mode' })}
+                      disabled={splitActive}
                     />
                     <BoolToggle
                       value={timing}
                       onChange={setTiming}
                       label={tr({ zh: '计时', en: 'Timing' })}
+                      disabled={splitActive}
                     />
                     {mode === 'recap' && (
                       <>
@@ -1253,13 +1309,48 @@ export default function TrainerRunClient() {
                     : tr({ zh: '随机:每题独立抽取,同一 case 可能连续出现', en: 'Random: draw each case independently, so the same case may repeat' })}
                 </div>
               )}
+              {!isMemo && splitScreenAvailable && (
+                <>
+                  <div className="trainer-opts-row trainer-split-setting">
+                    <BoolToggle
+                      value={splitActive}
+                      onChange={enabled => {
+                        if (!enabled) {
+                          void setSplitParam(null);
+                          return;
+                        }
+                        if (room || pool.length < 2) return;
+                        lastTrainingMode.current = 'recap';
+                        setMode('recap');
+                        setTiming(false);
+                        setMultiScramble(false);
+                        setSmartCube(false);
+                        void setSplitParam('1');
+                        setOptsOpen(false);
+                      }}
+                      disabled={!!room || pool.length < 2}
+                      label={tr({ zh: '双人分屏', en: 'Two-player split' })}
+                    />
+                  </div>
+                  <div className="trainer-opts-hint trainer-split-setting">
+                    {pool.length < 2
+                      ? tr({ zh: '至少选择 2 个 case 才能分屏', en: 'Select at least 2 cases to use split view' })
+                      : room
+                      ? tr({ zh: '先离开多设备房间，再开启单屏分工', en: 'Leave the multi-device room before starting a shared-screen drill' })
+                      : tr({
+                          zh: '同一屏幕分成 A/B 两边，共用选中题库并自动分工，不需要房间码。开启后使用覆盖模式并关闭计时、智能魔方和三条一屏',
+                          en: 'One screen, two independent lanes. Selected cases are divided without overlap and no room code is needed. Split view uses Coverage and turns off timing, smart cube, and Three at once',
+                        })}
+                  </div>
+                </>
+              )}
               {/* 智能魔方:接上就不用照打乱拧了,魔方本身变成当前 case */}
               {!isMemo && (
                 <SmartCubeRow
                   enabled={smartCube}
                   onEnabledChange={setSmartCube}
                   state={trainerCube}
-                  supported={puzzleHasSmartCube(puzzle)}
+                  supported={!splitActive && puzzleHasSmartCube(puzzle)}
                 />
               )}
               {!isMemo && (
@@ -1323,7 +1414,7 @@ export default function TrainerRunClient() {
                 </>
               )}
               {/* 在线房间:后端共享队列,多设备原子领取 —— 不重不漏、动态均衡、真·合并进度 */}
-              {mode === 'recap' && (
+              {mode === 'recap' && !splitActive && (
                 <>
                   <div className="trainer-opts-row trainer-room-row">
                     {room ? (
@@ -1477,7 +1568,7 @@ export default function TrainerRunClient() {
                   label={tr({ zh: '纯打乱', en: 'Plain scramble' })}
                 />
                 {/* 三条一屏只在不计时下有意义(计时是一把一把的),与「统计」正好互补出现。 */}
-                {!timing && (
+                {!timing && !splitActive && (
                   <BoolToggle
                     value={multiScramble}
                     onChange={setMultiScramble}
@@ -1485,11 +1576,13 @@ export default function TrainerRunClient() {
                   />
                 )}
                 {/* 计时 = 成绩统计;不计时 = 打乱历史(查看以前的打乱)。同一开关,标签随模式变。 */}
-                <BoolToggle
-                  value={showStats}
-                  onChange={setShowStats}
-                  label={timing ? tr({ zh: '统计', en: 'Stats' }) : tr({ zh: '历史', en: 'History' })}
-                />
+                {!splitActive && (
+                  <BoolToggle
+                    value={showStats}
+                    onChange={setShowStats}
+                    label={timing ? tr({ zh: '统计', en: 'Stats' }) : tr({ zh: '历史', en: 'History' })}
+                  />
+                )}
               </div>
               {/* 计时练的这几把也算复习 —— 不然计时练一晚上,记忆模式明天还当你没碰过 */}
               {timing && (
@@ -1510,13 +1603,15 @@ export default function TrainerRunClient() {
                 </>
               )}
               {/* 三条一屏时「上一个」整屏回看,改叫「上三个」。 */}
-              <div className="trainer-opts-row">
-                <BoolToggle
-                  value={showPrevCard}
-                  onChange={setShowPrevCard}
-                  label={multi ? tr({ zh: '上三个', en: 'Previous 3' }) : tr({ zh: '上一个', en: 'Previous' })}
-                />
-              </div>
+              {!splitActive && (
+                <div className="trainer-opts-row">
+                  <BoolToggle
+                    value={showPrevCard}
+                    onChange={setShowPrevCard}
+                    label={multi ? tr({ zh: '上三个', en: 'Previous 3' }) : tr({ zh: '上一个', en: 'Previous' })}
+                  />
+                </div>
+              )}
               {timing && (
                 <div className="trainer-opts-row">
                   <span className="trainer-opts-label">{tr({ zh: '计时字体', en: 'Timer font' })}</span>
@@ -1567,6 +1662,22 @@ export default function TrainerRunClient() {
           // 点大图开详情,与训练 / 复习那边的卡片同一个入口(同一份弹窗)
           onShowCase={setMetaCase}
           paused={overlayOpen}
+        />
+      ) : splitActive ? (
+        <TrainerSplitScreen
+          puzzle={puzzle}
+          set={setSlug}
+          cases={cases}
+          pool={pool}
+          order={recapOrder}
+          scrambleKind={scrambleKind}
+          scrambleOpts={splitScrambleOpts}
+          showThumb={showStageThumb}
+          pureScramble={pureScramble}
+          scrambleFont={scrambleFont}
+          resolveCase={resolveCase}
+          markPassedAsMastered={markPassedAsMastered}
+          onExit={() => { void setSplitParam(null); }}
         />
       ) : (
       <div className={`trainer-run${leftShown ? ' has-left' : ''}${statsVisible ? ' has-right' : ''}`}>
@@ -1825,7 +1936,7 @@ export default function TrainerRunClient() {
       )}
 
       {/* 「下一轮」会重洗队列(房间还会把全队进度清零)—— 只认按钮,点背景不触发(误触代价太大) */}
-      {recapRoundDone && (
+      {recapRoundDone && !splitActive && (
         <div className="trainer-round-modal-backdrop" role="dialog" aria-modal="true" data-no-timer>
           <div className="trainer-round-modal">
             <h2>{tr({ zh: '本轮复习结束', en: 'Round complete' })}</h2>
