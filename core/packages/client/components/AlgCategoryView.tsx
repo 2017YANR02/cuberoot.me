@@ -412,11 +412,19 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     'black',
     parseAsBoolean.withDefault(true),
   );
+  const [showAllCasesParam, setShowAllCasesParam] = useQueryState(
+    'all',
+    parseAsBoolean.withDefault(false),
+  );
+  const canShowAllCases = puzzleParam === '3x3' && set === 'zbll' && !subgroupParam;
+  const showAllCases = canShowAllCases && showAllCasesParam;
   const animatable = true;
 
   // 列表视图(`cards` 只看图 / `full` 公式内联)。语义 + localStorage key 都在
   // AlgViewModeToggle 里,`/alg` 下所有 case 列表页共用同一个偏好。
   const [view, changeView] = useAlgViewMode();
+  // ZBLL 全集有 472 张卡，固定只看图；若沿用用户在子页保存的 full 偏好，会一次铺开全部公式。
+  const effectiveView = showAllCases ? 'cards' : view;
 
   /** 这个 set 里实际出现过的标签 —— 没有就不渲染筛选器 */
   const availableTags = useMemo(() => {
@@ -642,9 +650,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     // 选了标签就只留「至少有一条带该标签的公式」的 case —— 否则筛出来一堆空卡片。
     // ⚠ 这个 set 压根没有该标签(书签 / 后退带过来的 `?tag=oh` 落到 f2l 上)⟹ 当没筛 ——
     //    否则页面空空如也,而下拉根本不渲染,用户没有任何控件能把它改回来。
-    if (tagFilter === 'all' || !availableTags.includes(tagFilter)) return inSubgroup;
+    if (showAllCases || tagFilter === 'all' || !availableTags.includes(tagFilter)) return inSubgroup;
     return inSubgroup.filter(c => c.algs.some(ori => ori.some(a => a.tags?.includes(tagFilter))));
-  }, [data, subgroupSlug, slugLevel, tagFilter, availableTags]);
+  }, [data, subgroupSlug, slugLevel, showAllCases, tagFilter, availableTags]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, typeof visibleCases>();
@@ -686,7 +694,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     return <div className="alg-root"><div className="alg-empty">Unknown set: {puzzleParam}/{set}</div></div>;
   }
 
-  const showSubgroupPicker = !!meta.umbrella && !subgroupParam;
+  const showSubgroupPicker = !!meta.umbrella && !subgroupParam && !showAllCases;
 
   const subSubgroups = useMemo(() => {
     if (!meta.umbrella || slugLevel !== 'top') return [];
@@ -773,6 +781,14 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
           <span className="alg-cat-count">{visibleCases.length} {tr({ zh: '个', en: 'cases'
         })}</span>
         )}
+        {data && canShowAllCases && (
+          <BoolToggle
+            value={showAllCases}
+            onChange={setShowAllCasesParam}
+            label={tr({ zh: '显示全部情况', en: 'Show all cases' })}
+            className="alg-show-all-toggle"
+          />
+        )}
         {puzzleParam === 'sq1' && (
           <BoolToggle
             value={sq1BlackTop}
@@ -781,10 +797,10 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
           />
         )}
         {/* 图 / 公式 视图开关(只在真列出 case 的页面;子组选择页没有卡片) */}
-        {data && !showSubgroupPicker && !showSubSubgroupPicker && (
+        {data && !showSubgroupPicker && !showSubSubgroupPicker && !showAllCases && (
           <AlgViewModeToggle value={view} onChange={changeView} className="alg-view-toggle" />
         )}
-        {isZh && data && !showSubgroupPicker && !showSubSubgroupPicker && view === 'full' && puzzleParam === '3x3' && (
+        {isZh && data && !showSubgroupPicker && !showSubSubgroupPicker && effectiveView === 'full' && puzzleParam === '3x3' && (
           <select
             className="alg-header-select"
             value={notationStyle}
@@ -797,7 +813,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
           </select>
         )}
         {/* 标签筛选只在公式内联时有意义(只看图时没公式可筛) */}
-        {data && !showSubgroupPicker && !showSubSubgroupPicker && view === 'full' && availableTags.length > 0 && (
+        {data && !showSubgroupPicker && !showSubSubgroupPicker && effectiveView === 'full' && availableTags.length > 0 && (
           <select
             className="alg-header-select"
             value={tagFilter}
@@ -929,7 +945,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                   items={cases.map(c => c.id).filter((x): x is number => typeof x === 'number')}
                   strategy={rectSortingStrategy}
                 >
-              <div className={`alg-case-list${view === 'cards' ? ' is-cards' : ''}`}>
+              <div className={`alg-case-list${effectiveView === 'cards' ? ' is-cards' : ''}`}>
                 {cases.map(c => {
                   const rawOri = caseOri[c.name] ?? activeOri;
                   const oriIdx = rawOri < c.algs.length ? rawOri : 0;
@@ -1009,10 +1025,10 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                               </button>
                             )}
                           </div>
-                          {view === 'full' && c.setup && <SetupLine puzzle={puzzleParam} setup={c.setup} />}
+                          {effectiveView === 'full' && c.setup && <SetupLine puzzle={puzzleParam} setup={c.setup} />}
                         </div>
                       </div>
-                      {view === 'full' && (<>
+                      {effectiveView === 'full' && (<>
                       <div className="alg-case-algs">
                         {(() => {
                           // 筛了标签就别拖:看到的是子集,拖出来的顺序对不上真实数组
