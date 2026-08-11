@@ -90,7 +90,7 @@
 
 - [x] **FL1** Rust 核心 + analyzer。✅ 2026-08-11 `7dedf0c18f`。共享 `first_layer_solver.rs` 两阶段 + 12 列 analyzer；First Face 无标号 44,906,400 态精确 BFS,God=10,完整直方图已锁；First Layer 有标号 25,866,086,400 态,IDA* + 可采纳 max PDB 逐态严格最优,当前只证明 11≤God≤20。零持久化新表；clean release 核心4/4+e2e1/1 绿，独立 State/IDDFS/replay/无效尾动/列序全锁；约 250.6 scrambles/s。
 - [ ] **FL2** ⚠仅欠浏览器验收。代码完成 `41a865f67d`:单 WASM need/两阶段、worker/client/pool/StageSolver、stats/comp/gen/home/timer、精确矩阵与看板共 25 文件；clean WASM 4 产物。typecheck、前端72/72、Rust 4+1、PS 语法、小样本、5 条 native↔WASM 与独立 replay 全绿；未跑全量/发布/push。桌面+390px 因子 agent 无可用浏览器实例未跑，见 §4；补过才勾。
-- [ ] **FL3 REVIEW** fresh agent 只审查 FL1/FL2:目标语义/最优性独立判据、12 列顺序、worker 表契约、统计 builder↔gen/home/timer 映射、i18n、窄屏与现有 Daisy/standard 回归;发现问题就聚焦修复并独立 commit。门:审查结论零 blocker。
+- [x] **FL3 REVIEW** ✅ 2026-08-11 `23f3c171d1`。语义/独立判据/12列/ROTS6/worker零下载契约/stats↔gen↔home↔timer/i18n/Daisy+std 回归均无功能 blocker；修正源码注释状态数笔误。clean Rust 4+1、精确分布+table_sets 68 项绿，281.4/s。browser-client 按 troubleshooting 确认实例列表为空，故只剩 FL2 §4 实页欠账。
 - [ ] **📦 MANUAL(First Face/First Layer)** 两套语料全量灌注 + 重建 stats/recent/comp_steps + static/PG 发布(本轮 loop 不执行)。
 
 ### EPIC 3 — 独立 puzzle 引擎(档3,非 3x3)
@@ -174,12 +174,14 @@
 - 2026-06-12 — **P5c** sq1 统计管线,`84ee30e18`。两跑绿(49+1 条),dist 峰值 11;实测平均 ~200 CPU-s/态 + 病态长尾 → P5d「秒级」设计前提被打破,挂 ⏸ soft-gate(§3 四选一),**loop 按协议停,等用户拍板**。(build_puzzle_dist.ts 的 node 类型诊断仍为 P2c 已记录的 LSP 误报。)
 - 2026-08-11 — **FL1** First Face + First Layer Rust 核心/analyzer,`7dedf0c18f`。Face 44,906,400 态精确表,God=10；Layer 25,866,086,400 态严格最优 IDA*,God 仅报已证 11..20；零落盘新表；release 5 门全绿,吞吐约 250.6/s。下一个 = FL2。
 - 2026-08-11 — **FL2 代码完成/待浏览器** `41a865f67d`。25 文件全链路 + clean WASM；typecheck/72前端/Rust4+1/小样本/native↔WASM/replay 全绿；Playwright 实例不可用记 §4，暂不算完成。下一个 = FL3 审查并回补。
+- 2026-08-11 — **FL3 审查** `23f3c171d1`。代码映射/语义/回归无 blocker，修一处状态数注释；clean Rust+68前端门绿。browser-client 无实例，FL2 实页欠账保留；MANUAL 前 home/timer 按数据驱动隐藏属预期。
 
 ---
 
 ## §3 BLOCKERS / 需用户决策 / MANUAL 交接
 
 - 磁盘历史(决策依据):`solver/tables/` ~34GB;曾有 6.6G 表、剩余一度 5.5G。任何 >1G 新表先 `df -h` + 红灯确认。
+- **📦 MANUAL First Face/First Layer(代码已就绪,先补 §4 浏览器门再发布)**:variant `first_layer`,CSV 两阶段 `first_face`/`first_layer`；跑 stages 两套语料全量增量灌注，再重建 distribution/examples/recent/comp_steps 与 PG steps 索引并走共享发布。发布后回验 solver/timer/home 桌面+390px；当前本地只跑过 5 条小样本。
 - **✅ 2026-06-12 MANUAL 灌注+发布完成(pocket/pyraminx/skewb,用户在场手动)**:全量解算 — pocket 435,680(dist 4..11 峰 9)、pyraminx 313,373(6..14 峰 11)、skewb 223,853(7..11 峰 9);`stats/scramble/puzzle_distribution.json` 重算(临时排除 sq1 小样本,build 脚本即改即还原未提交)+ commit `7377bd4d6` + scp static.cuberoot.me `/stats/scramble/`,公网 curl 验证三 puzzle 全量、sq1 缺席。**仍 pending:`/scramble/stats` 的 puzzle 难度分布展示 tab 未做**(P2c 只落数据契约 `lib/puzzle-distribution.ts`,无消费 UI)——数据已上线但网页尚无展示入口。sq1 灌注+发布仍待 P5d soft-gate 拍板后做。
 - **⛔ M2a 红灯 — 扩 move 集撞承重墙(2026-06-11,等用户三选一)**:
   - **推导**:8角12棱无中心模型在"件"层面能表达 M(4 棱 cycle+flip)/ r(=R∘M'),朝向参照无矛盾(cstimer 也不在求解器里用 M 切片搜索,M/r 只在记号层)。但整个 move-table / 剪枝 / 搜索 **硬编码 stride=18**(`valid_moves` 用 `i/3==prev/3` 面剪枝、`MASK_ALL=(1<<18)-1`、`INV_MOVE:[u8;18]`、`create_multi_move_table` 列宽 18、坐标乘 18),**36 个源文件 + 34GB 表**全建在 18-stride 上。原生加 M/r(索引≥18)= 重构表生成引擎 + 重建全部表,明确触 §0.3 红线。
@@ -255,7 +257,7 @@
 > 内存紧时按 §0.10 跳过的测试/验收登记在此。每条:**单元 + 跳了什么验收(cargo test --release / e2e / playwright)+ 回补怎么跑**。
 > 回补并通过后标 `✅ 日期` 或划掉。**规则铁律:一个变体的欠账没清零前不算完成、不发布上线。**
 
-- **FL2** — 欠 analyzer 页桌面 + 390px Playwright、0 console error 与实页两阶段交互；fresh FL3 用 browser skill 连接 `http://127.0.0.1:3000/zh/scramble/solver`、`/zh/timer?event=333&players=1`、`/zh` 回补。代码侧 native↔WASM/replay 已过。
+- **FL2** — 欠 solver/timer/home 桌面 + 390px Playwright、0 console error/无横溢出与实页两阶段交互。FL3 已按 browser skill 跑 `getForUrl` → troubleshooting → 唯一允许的 `list()`,结果 `[]`,不再盲重试。浏览器实例可用且 MANUAL 数据灌注后回补；代码侧 native↔WASM/replay 已过。
 
 ---
 
