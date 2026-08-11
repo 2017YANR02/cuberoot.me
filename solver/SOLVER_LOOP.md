@@ -12,10 +12,10 @@
 ## §0 LOOP PROTOCOL(每轮照做)
 
 1. **读本文件全文**。**优先级**:若当前可用内存宽松(§0.10,可用 > ~3GB)且 §4「测试欠账」非空 → **先回补欠账**(把欠着的测试/验收跑掉)再推新活;否则在 §1 自顶向下找第一个未打勾任务(尊重 EPIC 顺序)。
-2. **遇到 `⛔ GATE` 或 `⏸ soft-gate`**:**停 loop,不 ScheduleWakeup**。在 §3 写清需要用户拍板的取舍,
+2. **遇到 `⛔ GATE` 或 `⏸ soft-gate`**:**停 loop,不继续调度**。在 §3 写清需要用户拍板的取舍,
    正文给一句话摘要,等用户。绝不擅自跨过 gate 开工。
    ⚠ **区分**:只有 `⛔ GATE` / `⏸ soft-gate` 才停;`📦 MANUAL` **不是 gate**——它是"loop 跳过这条、写 §3 交接、继续做下一个"(灌数据/发布留用户)。**别把 `📦 MANUAL` 当 gate 停住**,否则 loop 会卡死在变体之间永不前进。
-3. **否则把该单元整体派给一个 fresh 子 agent 执行**(`Agent` 工具,general-purpose)。**主 loop 不亲自写代码 / 跑 cargo / 读大文件**——只给子 agent 一段自包含 prompt:指向 `VARIANT_PLAYBOOK.md` + 调 `new-substep-solver` skill、本单元的验收门、限核 **≤8 线程硬上限**(`RAYON_NUM_THREADS=8` + 编译 `CARGO_BUILD_JOBS=8` 或 `cargo … -j 8`、低优先级、`CUBE_TABLE_DIR=solver\tables`)、内存门(§0.10)、提交规则(§0.5)。要求它干到验收门过、自行 commit,**只回 ≤20 行摘要**(改了哪些文件 / 门过没 / commit 短 hash / 有无 blocker)。**子 agent(L2)内部若自己撞上大输出**(读大 obfuscated 文件 / 长 cargo 日志 / 大批量改)**可再下放一层子 agent(L3)只收摘要**(Claude Code ≥2.1.172 支持嵌套子 agent,上限 5 层);但 **≤2 层(L2→L3)够用,别为嵌套而嵌套**——层越深摘要越失真、协调成本越高。UI 验收(playwright)单独派一个子 agent,**只回关键断言**(native↔WASM 是否逐格相等、有无 console error),**绝不回 DOM snapshot**。
+3. **否则把该单元整体派给一个 fresh 子 agent 执行**(用 Codex `spawn_agent`)。**主 loop 不亲自写代码 / 跑 cargo / 读大文件**——只给子 agent 一段自包含 prompt:指向 `VARIANT_PLAYBOOK.md` + 调 `new-substep-solver` skill、本单元的验收门、限核 **≤8 线程硬上限**(`RAYON_NUM_THREADS=8` + 编译 `CARGO_BUILD_JOBS=8` 或 `cargo … -j 8`、低优先级、`CUBE_TABLE_DIR=solver\tables`)、内存门(§0.10)、提交规则(§0.5)。要求它干到验收门过、自行 commit,**只回 ≤20 行摘要**(改了哪些文件 / 门过没 / commit 短 hash / 有无 blocker)。**子 agent(L2)内部若自己撞上大输出**(读大 obfuscated 文件 / 长 cargo 日志 / 大批量改)**可再下放一层子 agent(L3)只收摘要**;**≤2 层(L2→L3)够用,别为嵌套而嵌套**——层越深摘要越失真、协调成本越高。UI 验收(playwright)单独派一个子 agent,**只回关键断言**(native↔WASM 是否逐格相等、有无 console error),**绝不回 DOM snapshot**。
    **绝不跑全量 ~130 万打乱灌注、绝不跑 static 发布**——那是 `📦 MANUAL`,只在 §3 留交接条目。
    重活前若磁盘紧先 `df -h` 报告再动(剩余<6G 直接红灯,见 §3 磁盘历史:6.6G 表 / 曾剩 5.5G)。
 4. **验收门(按任务类型,全过才算成)**:
@@ -24,17 +24,17 @@
    - UI:playwright 开 `127.0.0.1:3000/zh/scramble/analyzer` 切到新方法,**桌面 + 390px 各一遍**,
      0 console error,**native↔WASM 同打乱逐格相等**(别拿截图肉眼当真值,用 cubing.js 独立 replay)。
      playwright 前先确认 dev server 在 `127.0.0.1:3000`(用户常驻);**不在就把 UI/playwright 验证标 §4 欠账继续,绝不自己 `pnpm dev`**(端口占用 + 留孤儿 node,见全局规则)。
-   门**真跑了却没过、且两次聚焦修复仍不过 → 红灯**:停 loop、不 ScheduleWakeup,把失败摘要写进 §3,等用户。**内存不够跑验收门 ≠ 红灯**——按 §0.10 降级:跳过测试、记 §4 欠账、照常推进下一个任务。
+   门**真跑了却没过、且两次聚焦修复仍不过 → 红灯**:停 loop、不继续调度,把失败摘要写进 §3,等用户。**内存不够跑验收门 ≠ 红灯**——按 §0.10 降级:跳过测试、记 §4 欠账、照常推进下一个任务。
 5. **提交(子 agent 在单元内做)**:`git add` **只加本单元改动的文件**(别 `git add .` 扫进无关 WIP),
-   commit(英文 message,结尾带 `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`),**不 push**。**按 §0.10 跳过了验收门(欠测试)时** message 加前缀 `[untested]` 并登记 §4。
+   commit(英文 message,不添加旧 agent 署名),**不 push**。**按 §0.10 跳过了验收门(欠测试)时** message 加前缀 `[untested]` 并登记 §4。
    主 loop 只在摘要里核对拿到了 commit 短 hash。
-6. **更新并提交本文件**:勾掉任务;§2 追加一行(日期 + 单元 + commit 短 hash);生成了 MANUAL 交接就写 §3、有测试欠账就写 §4。然后 `git add solver/SOLVER_LOOP.md` 单独 commit(这步主 loop 自己做,小输出)——进度文件也版本化,`/clear` 重启 + git log 都能续上。
-7. **决定下一步(标准 Ralph:跑到底,不中途停)**:默认**一路推进直到 backlog 清空**,不预防性急停、不让用户中途 /clear。只有以下情形停:
-   - **还有未 gate 的 backlog** → `ScheduleWakeup`(self-paced:一般 ~150–240s 起下一个单元;若有长 build/test 在后台跑,delay 对齐它),**原样回传同一条 /loop 指令**。这是常态,持续到 backlog 见底。
-   - **完成信号:backlog 全部打勾 / 下一个是 `⛔ GATE` / `⏸ soft-gate`** → **停**(不 ScheduleWakeup),正文给收尾总结。这是唯一的"正常结束"。
+6. **更新并提交本文件**:勾掉任务;§2 追加一行(日期 + 单元 + commit 短 hash);生成了 MANUAL 交接就写 §3、有测试欠账就写 §4。然后 `git add solver/SOLVER_LOOP.md` 单独 commit(这步主 loop 自己做,小输出)——进度文件也版本化,新会话 + git log 都能续上。
+7. **决定下一步(标准 Ralph:跑到底,不中途停)**:默认**一路推进直到 backlog 清空**,不预防性急停。只有以下情形停:
+   - **还有未 gate 的 backlog** → 在当前持续任务中直接开始下一个单元;若有长 build/test 在跑,用等待机制取回结果后继续。
+   - **完成信号:backlog 全部打勾 / 下一个是 `⛔ GATE` / `⏸ soft-gate`** → **停**(不继续调度),正文给收尾总结。这是唯一的"正常结束"。
    - **红灯**(验收门真跑两次仍不过)→ 停,写 §3,等用户。
-   - **空转自断**:连续 ~3 轮醒来都因内存紧 / 无可做活而**没推进任何单元** → 停、不再 ScheduleWakeup,提示用户腾内存。
-   - **安全网(max-iterations 类比)**:单 session 连续推进 **~15 个单元**仍没到完成信号 → 完成当前单元后停一次,正文提示 `/clear` 重 `/loop` 续(纯防失控烧 token 的硬上限,不是常规节奏;远高于一般 EPIC 的单元数,正常 backlog 跑完都到不了)。
+   - **空转自断**:连续 ~3 轮都因内存紧 / 无可做活而**没推进任何单元** → 停,提示用户腾内存。
+   - **安全网(max-iterations 类比)**:单 session 连续推进 **~15 个单元**仍没到完成信号 → 完成当前单元后停一次,正文提示新会话重发 `/loop` 续(纯防失控烧 token 的硬上限,不是常规节奏;远高于一般 EPIC 的单元数,正常 backlog 跑完都到不了)。
 8. **每轮目标一个可验收单元**:commit 完再调度下一轮,让进度落盘、可断点续。
 9. **上下文防腐(主 loop 必须一直瘦)**:真相只在 git(代码)+ 本文件(§1 进度 / §3 决策),**从不靠"记得"**;每轮从读文件重建状态。
    - (a) **核心机制**:每个单元的重活全在 fresh 子 agent 里干、干完即弃(见 §0.3)——这等价于标准 bash-Ralph 的"每轮 fresh 上下文",只是粒度在单元。主 loop 每轮只净增"一次文件读 + 一段 ≤20 行摘要",**所以才敢一路跑到底**。
@@ -44,7 +44,7 @@
     - 跑得动 `cargo check`/debug 但跑不动 `cargo test --release` 全量 → 至少 `cargo check` 确认能编过,把 release 全测 + playwright 标欠账。
     - **地基底线(不可跳)**:每个变体的 Rust 核心(H1 / M1 这类下游都依赖的单元)的**独立暴力对照测试**(playbook 金标准,内存占用小、吃内存的是编译)**内存再紧也必须跑**;只许欠 release 全量 e2e / playwright。**绝不让未验证的地基喂给下游单元**(否则在错地基上白盖楼)。
     - 内存紧时**编译也降并行**:`cargo … -j 2`(甚至 `-j 1`),别 8 个 rustc 一起吃爆内存(`-j` 是编译并行,跟运行时 `RAYON_NUM_THREADS=8` 是两回事)。
-    - 连编译都吃力(可用 < ~1.5GB)→ 这个需重编译的单元整单元欠账、跳过,去 backlog 找能在低内存下做的活(纯前端 typecheck 类 / 看板文案);实在没有就 ScheduleWakeup 稍后再看内存。
+    - 连编译都吃力(可用 < ~1.5GB)→ 这个需重编译的单元整单元欠账、跳过,去 backlog 找能在低内存下做的活(纯前端 typecheck 类 / 看板文案);实在没有就停下并提示用户腾内存。
     - **凡跳过的**:代码照常 commit(message 前缀 `[untested]`),§1 任务旁标 `⚠欠测试`,§4 登记一条(单元 / 跳了啥验收 / 怎么补),**继续推进 backlog,不停 loop**。
     - 以后内存宽松(可用 > ~3GB)的轮次按 §0.1 **优先回补 §4 欠账**。
     - **安全阀**:一个变体的 §4 欠账没清零前**不算"完成"、不进 §3 的 MANUAL 发布交接**(上线前测试必须补齐,未验证代码不流到线上)。
@@ -84,6 +84,14 @@
 - [x] **M3c** WASM 类 `HtrPhase2SolverWasm` + 重建仪式(照 H3 清单)。✅ 2026-06-11 `a8b9449f4`(8 文件)。`TABLE_SETS.htr2=[]` 零下载,哨兵 `HTR2_NOT_HTR`,V bump 20260611b;typecheck 主 loop 复核 EXIT=0(从 core/ 跑;注意别 cd 到仓库根否则 ERR_PNPM_NO_PKG_MANIFEST);cargo htr2 仍绿;node 冒烟 3 G3 词 native↔wasm 6 视角全等。
 - [x] **M3d** StageSolver UI 集成(照 H4 清单)。✅ 2026-06-11 `5626a0e9c`(3 文件)。htr↔htr2 各登记点对齐 + isSentinel 统一哨兵;typecheck 主 loop 复核 EXIT=0(我的文件干净);playwright 8/8 PASS、native↔WASM 12/12 格相等、0 相关 console error;htr2 不进 VARIANT_ORDER。文案 zh「HTR 收尾」/en「HTR-finish」,EAGER_MAX=0。
 - [x] **M3e** `/code/solvers` 看板同步 `4cd201d20` + **📦 MANUAL(htr2)** 交接见 §3。✅ 2026-06-11 typecheck EXIT=0(主 loop 复核)+ code-tokens-drift 35/35 + zh-hant-drift 4/4;htr2 登记 TABLES/NATIVE/BROWSER/hero/概览卡,rate 留 null「未实测」。**M3 全链路完成,EPIC 2 收尾。**
+
+### EPIC 2.5 — 三阶 First Face + First Layer(2026-08-11 用户指定优先)
+> 共用一个求解器家族,但保留两个独立阶段。固定所选底色、HTM:First Face = 该色 4 角+4 棱都在该面且色贴纸朝该面,环上排列不限;First Layer = 同一组 8 块位置与朝向全部正确,侧色与中心对齐。6 底色沿用 `ROTS6`;同底色绕轴不产生额外目标。First Face 用无标号集合商空间争取整表精确分布;First Layer 用有标号件 + 可采纳 PDB/IDA*,禁止拿采样最大值冒充 God's number。任何 >1GB 落盘表先停到 soft-gate。
+
+- [ ] **FL1** Rust 核心 + analyzer:共享 `first_layer_solver.rs`(阶段 `first_face` / `first_layer`)与 `first_layer_analyzer.rs`(suffix `_first_layer`,12 列 = 2 阶段×6 底色),必要时新增 `mt_corn4`;三件套测试含独立 `State` 物理判据、短深 IDDFS 最优性、枚举无无效尾动、e2e。门:`cargo test --release first_layer` 全绿;记录两阶段精确/已知直径、First Face 全空间直方图、真题吞吐;大表门按上文。
+- [ ] **FL2** 两阶段全链路:WASM 单类/单 need + worker/client/pool + StageSolver;`scramble-variants` 作为一个方法下的「底面 / 底层」两阶段;注册两套 stats 增量管道、gen comp steps、首页 Recent、timer 真题筛、stats 精确矩阵(First Face 有完整穷举就落 full,First Layer 无证明就诚实 pending)、`/code/solvers` 看板。只跑小样本验形,不灌 130 万/不发布 static。门:clean WASM rebuild + node native↔WASM/replay + typecheck + 定向测试 + analyzer 桌面/390px Playwright 0 error。
+- [ ] **FL3 REVIEW** fresh agent 只审查 FL1/FL2:目标语义/最优性独立判据、12 列顺序、worker 表契约、统计 builder↔gen/home/timer 映射、i18n、窄屏与现有 Daisy/standard 回归;发现问题就聚焦修复并独立 commit。门:审查结论零 blocker。
+- [ ] **📦 MANUAL(First Face/First Layer)** 两套语料全量灌注 + 重建 stats/recent/comp_steps + static/PG 发布(本轮 loop 不执行)。
 
 ### EPIC 3 — 独立 puzzle 引擎(档3,非 3x3)
 > 2026-06-11 GATE 解除,用户拍板:**四个全做,且接统计管道**(覆盖调研的"无落点"结论——管道统计 = **整解最优步数分布**:WCA 打乱语料喂最优 solver,每打乱最优解长度分桶,即 `/scramble/stats` 对 3x3 cross 那类难度分布的 puzzle 级单阶段版)。各 puzzle 0 复用 `cube_common`,需独立状态模型(小空间全表 BFS / SQ1 双阶段)。**真正灌百万打乱 + static 发布仍是 📦 MANUAL**(顶部锁定规矩);loop 建 native 引擎 + analyzer + 统计管线注册 + WASM + 在线求解器 + 难度分布 UI + 看板。
