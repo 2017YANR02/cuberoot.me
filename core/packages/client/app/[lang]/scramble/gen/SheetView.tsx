@@ -29,20 +29,22 @@ import { CUBE_FILL, BADGE_FACE_ORDER } from '@/lib/cube-colors';
 const StageSolver = dynamic(() => import('@/components/StageSolver'), { ssr: false });
 
 // gen 变体 key 与 StageSolver Method 对应(块族数据变体 123/123x2/222/223 都归聚合方法 block)。
-const NON_BLOCK_METHODS = new Set<string>(['std', 'daisy', 'eo', 'pair', 'pseudo', 'pseudo_pair', 'f2leo', 'pseudo_f2leo', 'eoline', 'dr']);
+const NON_BLOCK_METHODS = new Set<string>(['std', 'daisy', 'first_layer', 'eo', 'pair', 'pseudo', 'pseudo_pair', 'f2leo', 'pseudo_f2leo', 'eoline', 'dr']);
 const variantToMethod = (v: string): Method =>
   isBlockVariant(v) || v === 'block' ? 'block' : NON_BLOCK_METHODS.has(v) ? (v as Method) : 'std';
 // metric → StageSolver initialStage 索引(cross=0 / xc=1 / …;块族走方法 block 的
 // 阶段序 [122, 123, 222, 223, F2B];beo/beoline=方法 eoline 的阶段 0/1,bdr=方法 dr 的阶段 0)。
 const METRIC_STAGE_IDX: Record<Metric, number> = {
   cross: 0, xc: 1, xxc: 2, xxxc: 3, xxxxc: 4,
-  bdaisy: 0, b122: 0, b123: 1, b222: 2, b223: 3, bf2b: 4, beo: 0, beoline: 1, bdr: 0,
+  bdaisy: 0, bfirst_face: 0, bfirst_layer: 1,
+  b122: 0, b123: 1, b222: 2, b223: 3, bf2b: 4, beo: 0, beoline: 1, bdr: 0,
 };
 
 // 逐行徽标点击循环顺序;块族变体只在自家阶段集内循环。label: cross='C',块类=尺寸数字,其它=大写指标名。
 const METRIC_CYCLE: Metric[] = ['cross', 'xc', 'xxc', 'xxxc', 'xxxxc'];
 const BLOCK_CYCLE: Record<string, Metric[]> = {
   daisy: ['bdaisy'],
+  first_layer: ['bfirst_face', 'bfirst_layer'],
   '123': ['b122', 'b123'], '222': ['b222'], '223': ['b223'],
   '123x2': ['bf2b'], eoline: ['beo', 'beoline'], dr: ['bdr'],
 };
@@ -50,6 +52,8 @@ const cycleOf = (v?: string): Metric[] => (v && BLOCK_CYCLE[v]) || METRIC_CYCLE;
 const metricBadgeLabel = (m: Metric): string =>
   m === 'cross' ? 'C'
     : m === 'bdaisy' ? 'Daisy'
+    : m === 'bfirst_face' ? 'FF'
+      : m === 'bfirst_layer' ? 'FL'
     : m === 'bf2b' ? 'F2B'
       : m === 'beo' ? 'EO'
         : m === 'beoline' ? 'EOLine'
@@ -60,7 +64,8 @@ const metricBadgeLabel = (m: Metric): string =>
 // 块族指标无 stage 查询值(空串即不带),深链只保留 scramble。
 const METRIC_STAGE: Record<Metric, string> = {
   cross: 'cross', xc: 'xcross', xxc: 'xxcross', xxxc: 'xxxcross', xxxxc: 'xxxxcross',
-  bdaisy: '', b122: '', b123: '', b222: '', b223: '', bf2b: '', beo: '', beoline: '', bdr: '',
+  bdaisy: '', bfirst_face: '', bfirst_layer: '',
+  b122: '', b123: '', b222: '', b223: '', bf2b: '', beo: '', beoline: '', bdr: '',
 };
 
 export interface AttemptScramble {

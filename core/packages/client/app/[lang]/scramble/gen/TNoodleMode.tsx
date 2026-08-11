@@ -85,6 +85,7 @@ const F2L_STAGES: Metric[] = ['cross', 'xc', 'xxc', 'xxxc'];
 const VARIANT_SPEC: Record<VariantKey, { stages: Metric[]; engine: 'std' | 'f2leo' | 'variant' | 'stagefamily' | 'none' }> = {
   std: { stages: STD_STAGES, engine: 'std' },
   daisy: { stages: ['bdaisy'], engine: 'stagefamily' },
+  first_layer: { stages: ['bfirst_face', 'bfirst_layer'], engine: 'stagefamily' },
   // EO 是 UI 聚合方法:EOLine 变体的两阶段(beo/beoline)并进来,细分落阶段下拉。engine 按
   // 阶段所属数据变体取(见 dataVariant / variantEngine)—— EO+十字系列走 VariantSolverWasm,
   // EO / EOLine 走 EoDrSolverWasm,不能只看方法。

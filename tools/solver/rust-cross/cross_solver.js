@@ -770,6 +770,67 @@ export class F2leoSolverWasm {
 if (Symbol.dispose) F2leoSolverWasm.prototype[Symbol.dispose] = F2leoSolverWasm.prototype.free;
 
 /**
+ * 三阶 First Face / First Layer 两阶段求解器。两阶段共用角4/棱4移动表与
+ * First Face / 角 / 棱 / 联合排列 PDB，零下载、首次查询惰性现场构建。
+ */
+export class FirstLayerSolverWasm {
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        FirstLayerSolverWasmFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_firstlayersolverwasm_free(ptr, 0);
+    }
+    constructor() {
+        const ret = wasm.firstlayersolverwasm_new();
+        this.__wbg_ptr = ret;
+        FirstLayerSolverWasmFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+    /**
+     * 单视角多解；前缀 = rot，c = 所选物理底面标签。
+     * @param {string} scramble
+     * @param {number} stage
+     * @param {number} face
+     * @param {number} extra
+     * @param {number} cap
+     * @returns {string}
+     */
+    solve_moves(scramble, stage, face, extra, cap) {
+        let deferred2_0;
+        let deferred2_1;
+        try {
+            const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ret = wasm.firstlayersolverwasm_solve_moves(this.__wbg_ptr, ptr0, len0, stage, face, extra, cap);
+            deferred2_0 = ret[0];
+            deferred2_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+        }
+    }
+    /**
+     * 单阶段 6 底色最优步数。stage 0=First Face，1=First Layer。
+     * @param {string} scramble
+     * @param {number} stage
+     * @returns {Uint32Array}
+     */
+    solve_stage(scramble, stage) {
+        const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.firstlayersolverwasm_solve_stage(this.__wbg_ptr, ptr0, len0, stage);
+        var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v2;
+    }
+}
+if (Symbol.dispose) FirstLayerSolverWasm.prototype[Symbol.dispose] = FirstLayerSolverWasm.prototype.free;
+
+/**
  * FR(Floppy Reduction,HTR/G3 → FR)求解器(全自包含,**零表下载**):H=⟨L2,R2,F2,B2⟩
  * 右陪集空间(3456 态)移动表 + 精确距离表全部现场从内置运动学构建,首次查询时惰性
  * BFS(RefCell,~秒级);查长度 O(1),枚举首达即最优。条件式阶段:该视角必须已处于
@@ -1534,6 +1595,9 @@ const EoDrSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
 const F2leoSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_f2leosolverwasm_free(ptr, 1));
+const FirstLayerSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_firstlayersolverwasm_free(ptr, 1));
 const FrSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_frsolverwasm_free(ptr, 1));

@@ -30,7 +30,7 @@ param(
   [switch]$NoPublish,     # 跑完只更新本地 csv + JSON, 不 commit/push/scp
   [switch]$SkipSolve,     # 调试: 跳过 incremental + std 解算, 复用上次取数/solver 产出, 直接走追加/变体/发布
   [switch]$SkipSolve333,  # 跳过 333opt 整解最优求解(solve_loop), 只 inject 当前 out.0.csv(快路径: 已解部分直接发布)
-  [string[]]$Variants = @('daisy','eo','pseudo','pseudo_pair','pair','f2leo','pseudo_f2leo','222','roux','223','eoline','dr','f2b'),  # 跟 std 锁步补缺的全部变体 (@()=只 std)。瓶颈始终是 eo ~0.9/s; 想快跑显式 -Variants eo,pseudo,pseudo_pair 跳过重型
+  [string[]]$Variants = @('daisy','first_layer','eo','pseudo','pseudo_pair','pair','f2leo','pseudo_f2leo','222','roux','223','eoline','dr','f2b'),  # 跟 std 锁步补缺的全部变体 (@()=只 std)。瓶颈始终是 eo ~0.9/s; 想快跑显式 -Variants eo,pseudo,pseudo_pair 跳过重型
   [int]$ChunkSize = 20000, # 显式传则覆盖所有变体的分块大小; 不传则用每变体默认(见 $VARIANT_CHUNK: eo/pair=2000, 其余=20000)。逐块追加, 中断只丢当前块
   [int]$MaxChunks = 0,     # >0: 每个变体最多跑 N 块就停, 之后照常重算+发布(还差的下次 run 自动续)。0=补满。用于"只跑一两块"而无需人工盯/中途 kill
   [switch]$PublishOnly,    # 跳过取数/解算/变体, 直接用当前 CSV 状态重算 distribution+comp-steps 并发布(把已落盘但未发布的累积变更推上线)
@@ -111,6 +111,7 @@ $StaticDest  = '/www/wwwroot/toolkit/stats'    # nginx 静态根 (self-hosted + 
 # std 不在此: 它单独走 new_no_wide_move.txt 的全量 diff (见下)。eo ~0.9/s 是瓶颈; pair/f2leo/pseudo_f2leo 现已入默认(增量只补 delta, 想跳过用显式 -Variants)。
 $VARIANT_EXE = @{
   daisy        = 'daisy_analyzer.exe'      # 小花 edge4 全空间精确表直查
+  first_layer  = 'first_layer_analyzer.exe' # First Face 全表 + First Layer 严格最优 IDA*
   eo           = 'eo_cross_analyzer.exe'
   pseudo       = 'pseudo_analyzer.exe'
   pseudo_pair  = 'pseudo_pair_analyzer.exe'
@@ -130,6 +131,7 @@ $VARIANT_EXE = @{
 # eo ~0.9/s(一块 2000≈37min)、pair ~2/s、pseudo ~390/s、pseudo_pair ~47/s(2000 才几十秒,重启占比高,故快变体保持 20000≈数分钟)。
 $VARIANT_CHUNK = @{
   daisy        = 200000   # 190,080 态直查，一块秒级
+  first_layer  = 10000    # 两阶段 12 列，实测约 250/s，一块约 40s
   eo           = 2000
   pair         = 2000
   pseudo       = 20000
@@ -148,6 +150,7 @@ $VARIANT_CHUNK = @{
 # 注: 现钉 RAYON_NUM_THREADS=14, 实际略低于下列值, 向导估时偏乐观。
 $VARIANT_RATE = @{
   daisy        = 45000
+  first_layer  = 250
   eo           = 0.9
   pair         = 2
   pseudo       = 390
@@ -715,7 +718,7 @@ function Estimate($count,$rate){
 # 交互向导: 取数后调。扫描各变体待补 -> 弹问题(变体/每变体几块/是否发布)-> 总览确认。
 # 返回 @{Variants;MaxChunks;NoPublish} 套用到主流程; 取消返回 $null。
 function Invoke-CrossWizard([int]$nNew){
-  $order    = @('daisy','eo','pseudo','pseudo_pair','pair','f2leo','pseudo_f2leo','222','roux','223','eoline','dr','f2b')
+  $order    = @('daisy','first_layer','eo','pseudo','pseudo_pair','pair','f2leo','pseudo_f2leo','222','roux','223','eoline','dr','f2b')
   $coreFast = @('eo','pseudo','pseudo_pair')   # [D] 快速收窄到的"核心快"组; 全 6 现都是默认, 向导初始全勾选
   Write-Host "`n================ 交互向导 ================" -ForegroundColor Magenta
   Write-Host ("新 std 打乱: {0} 条  (≈{1} 解算)" -f $nNew,(Estimate $nNew 115)) -ForegroundColor White
@@ -874,7 +877,7 @@ if($DryRun){
   # 关键: 即使 0 新打乱, 变体回填仍可能有缺口 (慢变体没追平 master)。纯行数比对(只读), 与向导 survey 同口径。
   # 实跑工作量 = (master 现有 - 变体已有) + 新 std; 各变体串行跑, 总墙钟 ≈ 各 ETA 之和 (eo 为长杆)。
   $masterN = if(Test-Path $MasterTxt){ Lc $MasterTxt } else { 0 }
-  $dryOrder = @('daisy','eo','pseudo','pseudo_pair','pair','f2leo','pseudo_f2leo','222','roux','223','eoline','dr','f2b')
+  $dryOrder = @('daisy','first_layer','eo','pseudo','pseudo_pair','pair','f2leo','pseudo_f2leo','222','roux','223','eoline','dr','f2b')
   $dryShow  = @($dryOrder | Where-Object { $Variants -contains $_ })
   if($dryShow.Count -gt 0){
     Write-Host "[DryRun] 变体回填积压 (待补 = master $masterN - 变体已有; 实跑 = 待补 + 新std):" -ForegroundColor Yellow

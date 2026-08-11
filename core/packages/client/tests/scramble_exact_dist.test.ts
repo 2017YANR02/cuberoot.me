@@ -48,12 +48,12 @@ describe('exact_dist 数据完整性', () => {
   // 2×2×3(E1)与 EO+XCross(E2)是 solver/src/bin/dist_tracked.rs 跑出来的,各占 1 格。
   // F2LEO 十字(E3)与伪 F2LEO 十字(P4)各两格:站内口径(两条 EO 轴取最短)+ 固定一条轴。
   // 都是 dist_tracked 在 EdgeSet 商空间上跑的,各 2.6s;两条站内口径那格与真题逐档对过。
-  it('矩阵 51 格:37 个完整分布 + 14 个仅 0 步', () => {
+  it('矩阵 52 格:38 个完整分布 + 14 个仅 0 步', () => {
     let full = 0, zero = 0;
     eachCell((_s, _sl, _c, cell) => {
       if ((cell as ExactFull).kind === 'full') full++; else zero++;
     });
-    expect(full).toBe(37);
+    expect(full).toBe(38);
     expect(zero).toBe(14);
   });
 
@@ -84,6 +84,14 @@ describe('对齐 C++ 金标的关键数值', () => {
     expect(c.counts).toEqual(['24', '288', '2640', '16080', '56184', '89256', '25128', '480']);
     expect(c.counts.length - 1).toBe(7);
     expect(exactMean(c).toFixed(4)).toBe('4.6241');
+  });
+
+  it('First Face 单色底全空间与上帝之数；First Layer 保持待定', () => {
+    const c = EXACT_DIST.first_face.unfixed!.W as ExactFull;
+    expect(c.total).toBe('44906400');
+    expect(c.counts).toEqual(['1', '12', '150', '1886', '21916', '242166', '2292695', '14228012', '25293406', '2825994', '162']);
+    expect(c.counts.length - 1).toBe(10);
+    expect(getExactCell('first_layer', 'unfixed', 'W')?.kind).toBe('todo');
   });
 
   // .done/cross_1_col/ 的 .2do:190,080 / Average Distance 5.8121
@@ -422,7 +430,12 @@ describe('菜单与 WCA 数据集逐项相同', () => {
     .sets.wca.variants as Record<string, { stages: string[] }>;
 
   it('变体键集合相同', () => {
-    expect(Object.keys(EXACT_VARIANT_STAGES).sort()).toEqual(Object.keys(wca).sort());
+    // first_layer 已完成代码/管道注册，但 130 万真题灌注属于 MANUAL；静态数据发布前
+    // 精确矩阵先诚实展示 First Face 全分布 + First Layer pending。
+    const exactKeys = Object.keys(EXACT_VARIANT_STAGES);
+    const wcaKeys = Object.keys(wca);
+    expect(exactKeys.filter((v) => !wcaKeys.includes(v))).toEqual(['first_layer']);
+    expect(exactKeys.filter((v) => wcaKeys.includes(v)).sort()).toEqual(wcaKeys.sort());
   });
 
   it('每个变体的阶段序相同', () => {
@@ -433,8 +446,8 @@ describe('菜单与 WCA 数据集逐项相同', () => {
 
   it('展平后的阶段表就是矩阵的行,一个不多一个不少', () => {
     const flat = Object.values(wca).flatMap((v) => v.stages).sort();
-    expect([...EXACT_STAGES].sort()).toEqual(flat);
-    expect(EXACT_STAGES.length).toBe(40);
+    expect(EXACT_STAGES.filter((s) => !EXACT_VARIANT_STAGES.first_layer.includes(s)).sort()).toEqual(flat);
+    expect(EXACT_STAGES.length).toBe(42);
     // 每个阶段都得知道自己属于哪个变体(矩阵分组 + 深链的 variant 参数)
     for (const st of EXACT_STAGES) expect(EXACT_STAGE_VARIANT[st], st).toBeTruthy();
   });
@@ -449,8 +462,8 @@ describe('菜单与 WCA 数据集逐项相同', () => {
       seen.add(v);
       prev = v;
     }
-    // 11 个方法 = 整解 + 截图里的子阶段方法
-    expect(seen.size).toBe(11);
+    // 12 个方法 = 整解 + 已发布子阶段 + 待全量灌注的 First Layer
+    expect(seen.size).toBe(12);
   });
 
   it('砖 / EO 两个聚合方法的阶段序与阶段下拉一致', () => {

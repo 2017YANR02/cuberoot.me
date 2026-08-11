@@ -60,8 +60,9 @@ function poolSize(): number {
  */
 // 块族变体 → (WASM 池 need, flat 阶段 id 列表)。
 // roux223:0=1x2x2 方块 1=1x2x3 2=2x2x2 3=2x2x3 4=双1x2x3;eodr:0=EO 1=EOLine 2=DR。
-const STAGE_FAMILY_SPEC: Record<string, { need: 'daisy' | 'roux223' | 'eodr'; ids: number[] }> = {
+const STAGE_FAMILY_SPEC: Record<string, { need: 'daisy' | 'first_layer' | 'roux223' | 'eodr'; ids: number[] }> = {
   daisy: { need: 'daisy', ids: [0] },
+  first_layer: { need: 'first_layer', ids: [0, 1] },
   '123': { need: 'roux223', ids: [0, 1] },
   '222': { need: 'roux223', ids: [2] },
   '223': { need: 'roux223', ids: [3] },
@@ -81,7 +82,7 @@ export function useStageFamilyStepMap(
 ): VariantState {
   const [state, setState] = useState<VariantState>(IDLE);
   const poolRef = useRef<RustCrossPool | null>(null);
-  const poolNeedRef = useRef<'daisy' | 'roux223' | 'eodr' | null>(null);
+  const poolNeedRef = useRef<'daisy' | 'first_layer' | 'roux223' | 'eodr' | null>(null);
   const cacheRef = useRef<Map<string, Map<string, number[]>>>(new Map());
   const lastArrRef = useRef<string[] | null>(null);
 
@@ -122,12 +123,14 @@ export function useStageFamilyStepMap(
       poolRef.current = null;
     }
     if (!poolRef.current) {
-      poolRef.current = createRustCrossPool(poolSize(), spec.need);
+      // First Layer 的零下载表会在 worker 内展开成大块内存，只开一路避免按并发数复制。
+      poolRef.current = createRustCrossPool(spec.need === 'first_layer' ? 1 : poolSize(), spec.need);
       poolNeedRef.current = spec.need;
     }
     const pool = poolRef.current;
     const solveStage = (s: string, sid: number) =>
       spec.need === 'daisy' ? pool.solveDaisyStage(s)
+        : spec.need === 'first_layer' ? pool.solveFirstLayerStage(s, sid)
         : spec.need === 'eodr' ? pool.solveEoDrStage(s, sid)
           : pool.solveRoux223Stage(s, sid);
 

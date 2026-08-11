@@ -29,6 +29,7 @@ use crate::eo_cross_solver::EOSmallSolver;
 use crate::eoline_solver::{eo_axis_label, eoline_label, EOLineSolver};
 use crate::f2b_solver::{f2b_label, F2BSolver};
 use crate::f2leo_solver::F2leoSolver;
+use crate::first_layer_solver::{first_layer_face_label, FirstLayerSolver, FirstLayerStage};
 use crate::fr_solver::FrSolver;
 use crate::htr_phase2_solver::HtrPhase2Solver;
 use crate::htr_solver::HtrSolver;
@@ -150,6 +151,82 @@ impl DaisySolverWasm {
         let items = sols
             .iter()
             .map(|sol| (fmt_moves(rot, &sol.moves), daisy_label(face).to_string()))
+            .collect::<Vec<_>>();
+        sols_json(len, &items)
+    }
+}
+
+/// 三阶 First Face / First Layer 两阶段求解器。两阶段共用角4/棱4移动表与
+/// First Face / 角 / 棱 / 联合排列 PDB，零下载、首次查询惰性现场构建。
+#[wasm_bindgen]
+pub struct FirstLayerSolverWasm {
+    solver: RefCell<Option<FirstLayerSolver>>,
+}
+
+#[wasm_bindgen]
+impl FirstLayerSolverWasm {
+    #[wasm_bindgen(constructor)]
+    #[allow(clippy::new_without_default)]
+    pub fn new() -> FirstLayerSolverWasm {
+        FirstLayerSolverWasm {
+            solver: RefCell::new(None),
+        }
+    }
+
+    fn ensure(&self) {
+        if self.solver.borrow().is_none() {
+            *self.solver.borrow_mut() = Some(FirstLayerSolver::from_edge4(mt_gen::get("mt_edge4")));
+        }
+    }
+
+    /// 单阶段 6 底色最优步数。stage 0=First Face，1=First Layer。
+    pub fn solve_stage(&self, scramble: &str, stage: u32) -> Vec<u32> {
+        self.ensure();
+        let stage = if stage == 0 {
+            FirstLayerStage::FirstFace
+        } else {
+            FirstLayerStage::FirstLayer
+        };
+        let alg = string_to_alg(scramble);
+        self.solver
+            .borrow()
+            .as_ref()
+            .unwrap()
+            .get_stage_stats(stage, &alg, &ROTS)
+    }
+
+    /// 单视角多解；前缀 = rot，c = 所选物理底面标签。
+    pub fn solve_moves(
+        &self,
+        scramble: &str,
+        stage: u32,
+        face: u32,
+        extra: u32,
+        cap: u32,
+    ) -> String {
+        self.ensure();
+        let stage = if stage == 0 {
+            FirstLayerStage::FirstFace
+        } else {
+            FirstLayerStage::FirstLayer
+        };
+        let face = (face as usize).min(5);
+        let rot = ROTS[face];
+        let alg = string_to_alg(scramble);
+        let binding = self.solver.borrow();
+        let (len, sols) =
+            binding
+                .as_ref()
+                .unwrap()
+                .enumerate_face(stage, &alg, rot, extra, cap as usize);
+        let items = sols
+            .iter()
+            .map(|sol| {
+                (
+                    fmt_moves(rot, &sol.moves),
+                    first_layer_face_label(face).to_string(),
+                )
+            })
             .collect::<Vec<_>>();
         sols_json(len, &items)
     }

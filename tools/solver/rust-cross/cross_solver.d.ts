@@ -262,6 +262,24 @@ export class F2leoSolverWasm {
 }
 
 /**
+ * 三阶 First Face / First Layer 两阶段求解器。两阶段共用角4/棱4移动表与
+ * First Face / 角 / 棱 / 联合排列 PDB，零下载、首次查询惰性现场构建。
+ */
+export class FirstLayerSolverWasm {
+    free(): void;
+    [Symbol.dispose](): void;
+    constructor();
+    /**
+     * 单视角多解；前缀 = rot，c = 所选物理底面标签。
+     */
+    solve_moves(scramble: string, stage: number, face: number, extra: number, cap: number): string;
+    /**
+     * 单阶段 6 底色最优步数。stage 0=First Face，1=First Layer。
+     */
+    solve_stage(scramble: string, stage: number): Uint32Array;
+}
+
+/**
  * FR(Floppy Reduction,HTR/G3 → FR)求解器(全自包含,**零表下载**):H=⟨L2,R2,F2,B2⟩
  * 右陪集空间(3456 态)移动表 + 精确距离表全部现场从内置运动学构建,首次查询时惰性
  * BFS(RefCell,~秒级);查长度 O(1),枚举首达即最优。条件式阶段:该视角必须已处于
@@ -504,6 +522,7 @@ export interface InitOutput {
     readonly __wbg_daisysolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_eodrsolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_f2leosolverwasm_free: (a: number, b: number) => void;
+    readonly __wbg_firstlayersolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_frsolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_htrphase2solverwasm_free: (a: number, b: number) => void;
     readonly __wbg_htrsolverwasm_free: (a: number, b: number) => void;
@@ -549,6 +568,9 @@ export interface InitOutput {
     readonly f2leosolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => [number, number];
     readonly f2leosolverwasm_solve_moves_masked: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number) => [number, number];
     readonly f2leosolverwasm_solve_pseudo_f2leo: (a: number, b: number, c: number) => [number, number];
+    readonly firstlayersolverwasm_new: () => number;
+    readonly firstlayersolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number];
+    readonly firstlayersolverwasm_solve_stage: (a: number, b: number, c: number, d: number) => [number, number];
     readonly frsolverwasm_new: () => number;
     readonly frsolverwasm_solve: (a: number, b: number, c: number) => [number, number];
     readonly frsolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];

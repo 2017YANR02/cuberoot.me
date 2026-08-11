@@ -155,6 +155,15 @@ export const VARIANTS: VariantSpec[] = [
     angleToColor: ANGLE_COLOR_STD,
     colFor: (stage, angle) => `${stage}_${angle}`,
   },
+  {
+    // First Face / First Layer 同一分析器两阶段；继续只在末尾追加，既有槽位偏移不动。
+    key: 'first_layer',
+    file: 'first_layer.csv',
+    id_col: 'id',
+    stages: ['first_face', 'first_layer'],
+    angleToColor: ANGLE_COLOR_STD,
+    colFor: (stage, angle) => `${stage}_${angle}`,
+  },
 ];
 
 // NOTE: 实际 UI 用到的 subset —— single (6), dual (3 对相反色), quad (3 种排除相反色对), cn (1)
