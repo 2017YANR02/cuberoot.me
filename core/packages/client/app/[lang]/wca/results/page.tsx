@@ -435,11 +435,16 @@ function AllResultsPageInner() {
 
   const teacherStudentIds = useMemo(() => {
     if (view !== 'rank') return [];
-    if (mode === 'empty') return dirData?.rows.map((row) => row.wcaId) ?? [];
+    if (mode === 'empty') return [];
     if (mode === 'single') return data?.rows.map((row) => row.wcaId) ?? [];
     return sorData?.rows.map((row) => row.wcaId) ?? [];
-  }, [view, mode, dirData, data, sorData]);
-  const teacherDirectory = useWcaTeachers(teacherStudentIds);
+  }, [view, mode, data, sorData]);
+  const teacherEventIds = useMemo(() => {
+    if (view !== 'rank' || mode === 'empty') return [];
+    if (mode === 'single') return [singleEvent];
+    return RANK_EVENTS.filter((eventId) => selectedSet.has(eventId));
+  }, [view, mode, singleEvent, selectedSet]);
+  const teacherDirectory = useWcaTeachers(teacherStudentIds, teacherEventIds);
 
   // ---- 名次和工具:名人堂 + 排名演化 ----
   const [raceOpen, setRaceOpen] = useState(false);
@@ -623,7 +628,7 @@ function AllResultsPageInner() {
         </div>
       </div>
 
-      <WcaTeacherNote />
+      {view === 'rank' && mode !== 'empty' && <WcaTeacherNote />}
 
       {/* ============ 空态:姓名分布(name_stats viz) + 名录(A-Z 平铺) ============ */}
       {mode === 'empty' && (
@@ -704,7 +709,6 @@ function AllResultsPageInner() {
                           <SortArrow active dir={pdir} />
                         </button>
                       </th>
-                      <WcaTeacherColumnHeader />
                     </tr>
                   </thead>
                   <tbody>
@@ -718,7 +722,6 @@ function AllResultsPageInner() {
                             {pname === 'aka' && <FormerNames former={r.former} />}
                           </span>
                         </td>
-                        <td><WcaTeacherCell studentWcaId={r.wcaId} directory={teacherDirectory} isZh={isZh} /></td>
                       </tr>
                     ))}
                   </tbody>
@@ -851,7 +854,7 @@ function AllResultsPageInner() {
                           {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
                           <Link prefetch={false} href={personHref(r.wcaId)}>{displayCuberName(r.name, isZh)}</Link>
                         </td>
-                        <td><WcaTeacherCell studentWcaId={r.wcaId} directory={teacherDirectory} isZh={isZh} /></td>
+                        <td><WcaTeacherCell studentWcaId={r.wcaId} eventIds={teacherEventIds} directory={teacherDirectory} isZh={isZh} /></td>
                         <td className="wse-value-col">
                           <span className="record-num-cell">
                             {formatWcaResult(r.value, singleEvent, effType)}
@@ -895,7 +898,7 @@ function AllResultsPageInner() {
                           {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
                           <Link prefetch={false} href={personHref(r.wcaId)}>{displayCuberName(r.name, isZh)}</Link>
                         </td>
-                        <td><WcaTeacherCell studentWcaId={r.wcaId} directory={teacherDirectory} isZh={isZh} /></td>
+                        <td><WcaTeacherCell studentWcaId={r.wcaId} eventIds={teacherEventIds} directory={teacherDirectory} isZh={isZh} /></td>
                         <td className="wse-value-col">{r.value != null ? formatWcaResult(r.value, singleEvent, effType) : '—'}</td>
                         <td className="wse-detail-cell">{r.compDate ?? ''}</td>
                         <td>{r.compId ? <Link {...compLinkProps(r.compId)}><CompCell compId={r.compId} compName={r.compName} isZh={isZh} date={r.compDate ?? null} /></Link> : ''}</td>
@@ -1036,7 +1039,7 @@ function AllResultsPageInner() {
                             <Link prefetch={false} href={personHref(r.wcaId)}>{displayCuberName(r.name, isZh)}</Link>
                           </span>
                         </td>
-                        <td><WcaTeacherCell studentWcaId={r.wcaId} directory={teacherDirectory} isZh={isZh} /></td>
+                        <td><WcaTeacherCell studentWcaId={r.wcaId} eventIds={teacherEventIds} directory={teacherDirectory} isZh={isZh} /></td>
                         <td className="wse-value-col">{r.subsetTotal != null ? r.subsetTotal : isCountryMode ? r.totalCountryRank : r.totalWorldRank}</td>
                         {showBest && (
                           <td className="wse-value-col"

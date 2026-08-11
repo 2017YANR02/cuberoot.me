@@ -22,6 +22,27 @@
   text-overflow: ellipsis;
 }
 
+.wca-teacher-value-multi {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  white-space: normal;
+}
+
+.wca-teacher-relation,
+.wca-teacher-dialog-event {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.wca-teacher-relation svg,
+.wca-teacher-dialog-event svg {
+  flex: 0 0 auto;
+}
+
 .wca-teacher-empty {
   color: var(--faint-foreground);
 }
@@ -77,6 +98,17 @@
 .wca-teacher-dialog h2 {
   margin: 0 0 16px;
   font-size: 1.05rem;
+}
+
+.wca-teacher-dialog-event,
+.wca-teacher-dialog-current {
+  margin: 0 0 12px;
+  color: var(--muted-foreground);
+  font-size: 0.86rem;
+}
+
+.wca-teacher-dialog .wca-stats-event-selector {
+  margin-bottom: 14px;
 }
 
 .wca-teacher-dialog .cuber-search {

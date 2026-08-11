@@ -185,8 +185,8 @@ const TABLES: Table[] = [
   ] },
   { name: 'membership_orders', domain: 'commerce', origin: '0046', purpose: { zh: '会员订单(我方单号 + provider / channel)', en: 'Membership orders (out_trade_no + provider/channel)' } },
   { name: 'memberships', domain: 'commerce', origin: '0046', purpose: { zh: '会员有效期', en: 'Active membership validity' } },
-  { name: 'wca_teachers', domain: 'commerce', origin: '0114', naturalKey: true, purpose: { zh: '选手老师关系：有效会员自报，管理员可代填', en: 'Cuber-teacher relations: member self-reporting with admin override' }, cols: [
-    { name: 'student_wca_id (PK)' }, { name: 'teacher_wca_id, teacher_name' }, { name: 'created_by, updated_by' },
+  { name: 'wca_teachers', domain: 'commerce', origin: '0114', naturalKey: true, purpose: { zh: '选手按项目登记老师：有效会员自报，管理员可代填', en: 'Per-event cuber-teacher relations: member self-reporting with admin override' }, cols: [
+    { name: 'student_wca_id + event_id (PK)' }, { name: 'teacher_wca_id, teacher_name' }, { name: 'created_by, updated_by' },
   ] },
   { name: 'sponsors', domain: 'commerce', origin: '0043', purpose: { zh: '/support 致谢 / 赞助墙(admin 手录)', en: 'Sponsor / support wall (admin-entered)' } },
   { name: 'contributors', domain: 'commerce', origin: '0075', purpose: { zh: '/support 贡献者名单:score = 贡献次数(admin 点数字 +1),contributions = 每次贡献的内容明细 [{ zh, en, date? }]', en: 'Contributor wall on /support: score = contribution count (admin clicks to +1), contributions = per-contribution content details [{ zh, en, date? }]' } },
@@ -358,7 +358,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 111, slug: 'wca_kinch', desc: { zh: '新表 wca_kinch：统计管道按同一份共享公式预计算每位活跃选手的世界 / 大洲 / 国家 Kinch 综合分；逐项明细继续复用现有 PB 与当前纪录表。', en: 'New wca_kinch table: the stats pipeline precomputes every active person’s world, continental and national Kinch totals with the shared formula; per-event detail continues to reuse the existing PB and current-record tables.' } },
   { n: 112, slug: 'recons_unsolved_reason', desc: { zh: 'recons 加 unsolved_reason：服务端执行真实魔方状态校验；完整复原直接提交，未复原必须由提交者说明有意保留不完整复盘的原因。', en: 'recons gains unsolved_reason: the API evaluates the real puzzle end state; solved reconstructions submit normally, while incomplete ones require the submitter to explain why they are intentionally preserved.' } },
   { n: 113, slug: 'recons_completion_status', desc: { zh: 'recons 加 completion_status：全库复盘按项目审计终态，持久化已还原、未还原、记号无效和无法校验四种状态，供列表与详情页标记。', en: 'recons gains completion_status: audit every reconstruction by puzzle and persist solved, unsolved, invalid, or unchecked for list and detail markers.' } },
-  { n: 114, slug: 'wca_teachers', desc: { zh: '新表 wca_teachers：每位选手最多一位老师；有效会员只能登记自己，管理员可指定或替换任意老师。', en: 'New wca_teachers table: one teacher per cuber; active members may only register themselves, while admins may assign or replace any teacher.' } },
+  { n: 114, slug: 'wca_teachers', desc: { zh: '新表 wca_teachers：每位选手每个项目可有不同老师；有效会员只能登记自己，管理员可指定或替换任意老师。', en: 'New wca_teachers table: each cuber may have a different teacher per event; active members may only register themselves, while admins may assign or replace any teacher.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
