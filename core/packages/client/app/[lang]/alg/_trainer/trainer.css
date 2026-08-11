@@ -487,7 +487,6 @@
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
-.trainer-split-kicker { color: var(--muted-foreground); font-size: 0.78rem; }
 .trainer-split-shared strong { font-size: 0.88rem; }
 .trainer-split-meter {
   min-width: 0;
