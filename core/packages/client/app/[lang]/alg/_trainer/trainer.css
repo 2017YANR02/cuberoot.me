@@ -575,11 +575,6 @@
   gap: 10px;
   margin-bottom: 12px;
 }
-.trainer-split-person {
-  color: var(--split-color);
-  font-size: 1.05rem;
-  font-weight: 700;
-}
 .trainer-split-person-progress {
   color: var(--muted-foreground);
   font-size: 0.78rem;
