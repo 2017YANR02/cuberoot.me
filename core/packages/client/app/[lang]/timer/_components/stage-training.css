@@ -50,7 +50,7 @@
   font-size: 12px;
 }
 
-.stage-training-controls select {
+.stage-training-select {
   align-self: flex-start;
   width: fit-content;
   max-width: 100%;
@@ -89,11 +89,8 @@
   color: var(--destructive);
 }
 
-.stage-training-stats button,
-.stage-training-error button,
-.stage-training-actions button,
-.stage-training-primary,
-.stage-training-connect button {
+.stage-training-button,
+.stage-training-primary {
   padding: 7px 12px;
   border: 1px solid var(--border-default);
   border-radius: 6px;
@@ -103,7 +100,7 @@
   cursor: pointer;
 }
 
-.stage-training-stats button {
+.stage-training-stats-reset {
   padding: 4px 8px;
   font-size: 12px;
 }
@@ -187,7 +184,7 @@
   margin-bottom: 12px;
 }
 
-.stage-training-number-grid button {
+.stage-training-number-button {
   min-height: 42px;
   padding: 6px;
   border: 1px solid var(--border-default);
@@ -198,12 +195,12 @@
   cursor: pointer;
 }
 
-.stage-training-number-grid button:hover:not(:disabled) {
+.stage-training-number-button:hover:not(:disabled) {
   border-color: var(--border-strong);
   background: var(--shell-hover);
 }
 
-.stage-training-number-grid button:disabled {
+.stage-training-number-button:disabled {
   cursor: default;
   opacity: 0.55;
 }
@@ -246,7 +243,7 @@
     max-width: 100%;
   }
 
-  .stage-training-controls select {
+  .stage-training-select {
     min-height: 44px;
     font-size: 16px;
   }
@@ -270,10 +267,9 @@
     grid-template-columns: repeat(4, minmax(44px, 1fr));
   }
 
-  .stage-training-number-grid button,
-  .stage-training-actions button,
-  .stage-training-primary,
-  .stage-training-connect button {
+  .stage-training-number-button,
+  .stage-training-button,
+  .stage-training-primary {
     min-height: 44px;
   }
 }

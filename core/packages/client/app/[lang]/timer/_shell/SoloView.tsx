@@ -326,6 +326,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   const [drillModalOpen, setDrillModalOpen] = useState(false);
   const [stageTrainingOpen, setStageTrainingOpen] = useState(false);
   const drillAllowed = ['333', '333oh', '333fm', 'oll', 'pll'].includes(event);
+  const stageTrainingAllowed = ['333', '333oh', '333fm', '333mr'].includes(event);
   useEffect(() => {
     if (!drillAllowed && drillTarget) setDrillTarget(null);
   }, [drillAllowed, drillTarget]);
@@ -1874,11 +1875,6 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       icon: <Crosshair size={14} />, label: tr({ zh: '专项练习', en: 'Drill mode'
     }), onClick: () => setDrillModalOpen(true),
     }] : []),
-    ...(['333', '333oh', '333fm', '333mr'].includes(event) ? [{
-      icon: <Target size={14} />,
-      label: tr({ zh: '阶段最优训练', en: 'Optimal stage training' }),
-      onClick: () => setStageTrainingOpen(true),
-    }] : []),
     // Speffz 记忆读数只对 3x3 盲拧有意义。原来写的是 startsWith('333'),于是 3x3 / OH / FM / MR
     // 这些非盲项目也挂着这一项。三个 3x3 盲拧项目都要:三盲、三盲 NI(不给观察)、多盲(逐个
     // 魔方还是同一套编码)。4BLD 以上不算 —— 那是另一套编码,这个助手只读 3x3 打乱。
@@ -2128,6 +2124,20 @@ export default function SoloView({ playersControl }: SoloViewProps) {
           {!isDesktop && solverHintPanel}
         </div>
         <div className="shell-topbar-right">
+          {stageTrainingAllowed && (
+            <button
+              type="button"
+              className="tb-btn shell-stage-training-btn"
+              onClick={() => setStageTrainingOpen(true)}
+              title={tr({ zh: '阶段最优训练', en: 'Optimal stage training' })}
+              aria-label={tr({ zh: '阶段最优训练', en: 'Optimal stage training' })}
+            >
+              <Target size={14} />
+              <span className="shell-stage-training-label">
+                {tr({ zh: '最优训练', en: 'Optimal stages' })}
+              </span>
+            </button>
+          )}
           <MoreMenu items={moreItems} />
           <button
             type="button"

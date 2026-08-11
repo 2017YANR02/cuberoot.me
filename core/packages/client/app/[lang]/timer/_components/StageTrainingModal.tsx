@@ -6,6 +6,7 @@ import { VisualCube } from '@/components/VisualCube';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { SubsetColorPicker, COLOR_NAME, useSubsetSelection, type ColorLetter } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import { tr } from '@/i18n/tr';
+import { persistItem } from '@/lib/safe-storage';
 import type { BluetoothCubeHandle } from '../_lib/bluetooth';
 import { applyScramble, facesEqual, isSolvedFaces, toFaceletString, type CubeFaces } from '../_lib/cube/state';
 import { countHtm } from '../_lib/reconstruct/htm';
@@ -83,11 +84,7 @@ function loadStats(): StatsStore {
 }
 
 function saveStats(stats: StatsStore): void {
-  try {
-    localStorage.setItem(STATS_KEY, JSON.stringify(stats));
-  } catch {
-    // Statistics are useful but must never block a training question.
-  }
+  persistItem(STATS_KEY, JSON.stringify(stats));
 }
 
 export default function StageTrainingModal({ isZh, cube, onMoveSubscriber, onClose }: Props) {
@@ -305,13 +302,13 @@ export default function StageTrainingModal({ isZh, cube, onMoveSubscriber, onClo
         <div className="stage-training-controls" data-no-timer>
           <label>
             <span>{tr({ zh: '练习方式', en: 'Training mode' })}</span>
-            <select value={mode} onChange={(event) => setMode(event.target.value as StageTrainingMode)}>
+            <select className="stage-training-select" value={mode} onChange={(event) => setMode(event.target.value as StageTrainingMode)}>
               {(['plan', 'guess', 'smart'] as StageTrainingMode[]).map((value) => <option key={value} value={value}>{modeLabel(value)}</option>)}
             </select>
           </label>
           <label>
             <span>{tr({ zh: '阶段', en: 'Stage' })}</span>
-            <select value={stage} onChange={(event) => { setStage(event.target.value as StageTrainingStage); setSlot('best'); }}>
+            <select className="stage-training-select" value={stage} onChange={(event) => { setStage(event.target.value as StageTrainingStage); setSlot('best'); }}>
               {STAGE_ORDER.map((value) => <option key={value} value={value}>{stageName(value)}</option>)}
             </select>
           </label>
@@ -319,7 +316,7 @@ export default function StageTrainingModal({ isZh, cube, onMoveSubscriber, onClo
           {showSlot && (
             <label>
               <span>{tr({ zh: '槽位', en: 'Slot' })}</span>
-              <select value={resolvedSlot} onChange={(event) => setSlot(event.target.value === 'best' ? 'best' : Number(event.target.value))}>
+              <select className="stage-training-select" value={resolvedSlot} onChange={(event) => setSlot(event.target.value === 'best' ? 'best' : Number(event.target.value))}>
                 <option value="best">{tr({ zh: '最优槽组合', en: 'Best slot combination' })}</option>
                 {slotOptions.map((_combo, index) => <option key={index} value={index}>{stageSlotLabel(stage, index)}</option>)}
               </select>
@@ -328,7 +325,7 @@ export default function StageTrainingModal({ isZh, cube, onMoveSubscriber, onClo
           {mode === 'smart' && (
             <label>
               <span>{tr({ zh: '智能魔方流程', en: 'Smart cube flow' })}</span>
-              <select value={smartMode} onChange={(event) => setSmartMode(event.target.value as SmartTrainingMode)}>
+              <select className="stage-training-select" value={smartMode} onChange={(event) => setSmartMode(event.target.value as SmartTrainingMode)}>
                 <option value="virtual">{tr({ zh: '免打乱，直接还原', en: 'Virtual setup, solve directly' })}</option>
                 <option value="physical">{tr({ zh: '先打乱，再还原', en: 'Scramble physically, then solve' })}</option>
               </select>
@@ -337,7 +334,7 @@ export default function StageTrainingModal({ isZh, cube, onMoveSubscriber, onClo
           {mode !== 'guess' && (
             <label>
               <span>{tr({ zh: '打乱长度', en: 'Scramble length' })}</span>
-              <select value={style} onChange={(event) => setStyle(event.target.value as StageScrambleStyle)}>
+              <select className="stage-training-select" value={style} onChange={(event) => setStyle(event.target.value as StageScrambleStyle)}>
                 {(['current', 'optimal', 'plus-one', 'fixed'] as StageScrambleStyle[]).map((value) => <option key={value} value={value}>{styleLabel(value)}</option>)}
               </select>
             </label>
@@ -359,7 +356,7 @@ export default function StageTrainingModal({ isZh, cube, onMoveSubscriber, onClo
             <span className="is-correct">{tr({ zh: `对 ${currentStats.correct}`, en: `${currentStats.correct} correct` })}</span>
             <span className="is-wrong">{tr({ zh: `错 ${currentStats.wrong}`, en: `${currentStats.wrong} wrong` })}</span>
             <span>{accuracy}%</span>
-            <button type="button" onClick={resetStats}>{tr({ zh: '重置本组', en: 'Reset group' })}</button>
+            <button type="button" className="stage-training-button stage-training-stats-reset" onClick={resetStats}>{tr({ zh: '重置本组', en: 'Reset group' })}</button>
           </div>
         )}
 
@@ -367,7 +364,7 @@ export default function StageTrainingModal({ isZh, cube, onMoveSubscriber, onClo
         {!loading && error && (
           <div className="stage-training-error" role="alert">
             <span>{error}</span>
-            <button type="button" onClick={newQuestion}>{tr({ zh: '重试', en: 'Retry' })}</button>
+            <button type="button" className="stage-training-button" onClick={newQuestion}>{tr({ zh: '重试', en: 'Retry' })}</button>
           </div>
         )}
 
@@ -402,7 +399,7 @@ export default function StageTrainingModal({ isZh, cube, onMoveSubscriber, onClo
               <div className="stage-training-answer-area">
                 <div className="stage-training-number-grid" aria-label={tr({ zh: '选择最优步数', en: 'Choose the optimal length' })}>
                   {Array.from({ length: STAGE_FIXED_LENGTH[stage] }, (_, index) => index + 1).map((answer) => (
-                    <button key={answer} type="button" disabled={!!result} onClick={() => answerGuess(answer)}>{answer}</button>
+                    <button key={answer} type="button" className="stage-training-number-button" disabled={!!result} onClick={() => answerGuess(answer)}>{answer}</button>
                   ))}
                 </div>
                 {result && (
@@ -443,7 +440,7 @@ export default function StageTrainingModal({ isZh, cube, onMoveSubscriber, onClo
 
             <div className="stage-training-actions">
               {(mode === 'plan' ? revealed : !!result) && <button type="button" className="stage-training-primary" onClick={newQuestion}>{tr({ zh: '下一题', en: 'Next question' })}</button>}
-              <button type="button" onClick={onClose}>{tr({ zh: '关闭', en: 'Close' })}</button>
+              <button type="button" className="stage-training-button" onClick={onClose}>{tr({ zh: '关闭', en: 'Close' })}</button>
             </div>
           </>
         )}
