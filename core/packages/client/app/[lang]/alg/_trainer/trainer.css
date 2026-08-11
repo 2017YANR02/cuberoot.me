@@ -801,7 +801,8 @@
   font-size: 0.74rem;
   color: var(--muted-foreground);
   white-space: nowrap;
-  justify-self: end;
+  justify-self: start;
+  text-align: left;
 }
 .trainer-ori-cells { display: flex; flex-wrap: wrap; gap: 4px; }
 /* 没被选中的压暗;被钉住的那个套一圈开启色。全放开时四张都亮、都不套圈 */
