@@ -40,8 +40,7 @@
  * a small subset of pre-MAC firmwares and silently fails on the rest.
  */
 
-import type { CubeDriver, CubeDriverStartResult } from './driver';
-import { BATTERY_SERVICE } from './driver';
+import { BATTERY_SERVICE, writeGattValue, type CubeDriver, type CubeDriverStartResult } from './driver';
 import type { CubeBrand } from './types';
 import {
   decodeGanGyro,
@@ -140,6 +139,8 @@ export interface MoveDecodeState {
  * for history then just fights the live events.
  */
 const FACELET_RESYNC_QUIET_MS = 500;
+/** See the matching GAN v3 constant. */
+const IDLE_STATE_CHECK_MS = [650, 1600, 3200] as const;
 
 /** Fresh decoder state. Use this rather than an object literal — the FIFO has
  *  identity, and a half-built state silently disables lost-move recovery. */
@@ -415,6 +416,22 @@ export const ganV4Driver: CubeDriver = {
       onState: (facelets) => ctx?.onState?.(facelets),
     });
     let keyErrorFired = false;
+    let cleaned = false;
+    const idleStateChecks = new Set<ReturnType<typeof setTimeout>>();
+    const clearIdleStateChecks = (): void => {
+      for (const timer of idleStateChecks) clearTimeout(timer);
+      idleStateChecks.clear();
+    };
+    const scheduleIdleStateChecks = (): void => {
+      clearIdleStateChecks();
+      for (const delay of IDLE_STATE_CHECK_MS) {
+        const timer = setTimeout(() => {
+          idleStateChecks.delete(timer);
+          if (!cleaned) void sendCmd(requestFaceletsFrame());
+        }, delay);
+        idleStateChecks.add(timer);
+      }
+    };
 
     const onChar = (ev: Event): void => {
       const target = ev.target as BluetoothRemoteGATTCharacteristic;
@@ -429,6 +446,7 @@ export const ganV4Driver: CubeDriver = {
       }
       const moves = decodeGanV4Frame(pt, decState, ctx?.onGyro);
       for (const mv of moves) onMove(mv.mv, mv.ts);
+      if (moves.length > 0) scheduleIdleStateChecks();
       // Several unrecognised frames in a row ⇒ wrong MAC. Tell the hook once.
       if (!keyErrorFired && decState.badFrames >= 6) {
         keyErrorFired = true;
@@ -452,23 +470,18 @@ export const ganV4Driver: CubeDriver = {
       // No write characteristic — older firmware variant; just listen.
     }
 
-    sendCmd = async (req: Uint8Array): Promise<void> => {
-      if (!cmdChar) return;
+    let writeTail: Promise<void> = Promise.resolve();
+    sendCmd = (req: Uint8Array): Promise<void> => {
+      if (!cmdChar) return Promise.resolve();
       const enc = encryptFrame(req, expandedKey, aesIv);
       // Detach into a fresh ArrayBuffer-backed Uint8Array — the strict TS
       // lib types narrow `BufferSource` to `Uint8Array<ArrayBuffer>` and our
       // chained subarrays surface as `ArrayBufferLike`.
       const buf = new Uint8Array(enc.length);
       buf.set(enc);
-      try {
-        if (cmdChar.writeValueWithResponse) {
-          await cmdChar.writeValueWithResponse(buf);
-        } else {
-          await cmdChar.writeValue(buf);
-        }
-      } catch {
-        // Ignore — write rejected, cube may still stream regardless.
-      }
+      const task = writeTail.then(() => writeGattValue(cmdChar!, buf));
+      writeTail = task.catch(() => {});
+      return task.catch(() => {});
     };
 
     if (cmdChar) {
@@ -483,10 +496,10 @@ export const ganV4Driver: CubeDriver = {
       await sendCmd(battery);
     }
 
-    let cleaned = false;
     const cleanup = (): void => {
       if (cleaned) return;
       cleaned = true;
+      clearIdleStateChecks();
       notifyChar.removeEventListener('characteristicvaluechanged', onChar);
       void notifyChar.stopNotifications().catch(() => {});
     };
