@@ -39,6 +39,7 @@ export type AlgGoal =
 /** `puzzle/set` → 目标态。没列的按 sticker.kind 兜底(face → solve,f2l → f2l)。 */
 export const SET_GOAL: Record<string, AlgGoal> = {
   // 3x3 —— 只解一半的那些
+  '3x3/psf2l': 'f2l',
   '3x3/oll': 'oll',
   // 同一 set 同时含第一步和第二步；弱阶段目标会让第二步 case 在零步时就误判完成。
   '3x3/2-look-oll': 'solve',

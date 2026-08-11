@@ -147,7 +147,7 @@ export { MIRROR_SETS, MIRROR_ALG_SYNC_SETS } from './alg_mirror';
 
 /** 3x3 set slug — matches `slug` in {@link ALG_CATALOG['3x3']}. */
 export type Alg3x3Set =
-  | 'f2l' | 'adv-f2l' | '2-look-oll' | 'oll' | '2-look-pll' | 'pll'
+  | 'f2l' | 'adv-f2l' | 'psf2l' | '2-look-oll' | 'oll' | '2-look-pll' | 'pll'
   | 'coll' | 'wv' | '2-look-cmll' | 'cmll' | 'oh-cmll' | 'sbls' | 'eo4a' | 'lse-eolr'
   | 'anti-pll' | 'sv' | 'ell' | 'fruf'
   | 'cls' | 'vls' | 'ollcp' | 'zbll' | '1lll' | 'zbls';
@@ -193,6 +193,13 @@ export const ALG_CATALOG: Record<AlgPuzzle, AlgSetMeta[]> = {
   '3x3': [
     { slug: 'f2l',       scd: 'F2L',         en: 'F2L',                  zh: 'F2L' },
     { slug: 'adv-f2l',   scd: 'AdvancedF2L', en: 'Advanced F2L',         zh: 'F2L 进阶' },
+    {
+      slug: 'psf2l', scd: '', en: 'Pseudoslotting', zh: '伪槽',
+      intro: {
+        en: 'Temporarily misalign the D layer, insert a mismatched corner and edge as a normal F2L pair, then restore D. This advanced double-keyhole technique solves pieces from two slots together and is especially useful for the last two slots, pseudo X-crosses and FMC.',
+        zh: '先暂时错开 D 层，把不属于同一槽的角块和棱块当作普通 F2L 对插入，再复原 D 层。这是一种进阶的“双锁孔”技巧，可同时处理两个槽的块，常用于最后两槽、伪拓展十字与最少步。',
+      },
+    },
     {
       slug: '2-look-oll', scd: '', en: '2 Look OLL', zh: '2 步 OLL',
       intro: {

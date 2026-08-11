@@ -16,18 +16,22 @@ afterEach(() => { vi.restoreAllMocks(); });
 describe('F2L trainer scramble features', () => {
   it('are declared only by F2L and Advanced F2L sets', () => {
     expect(trainerSetScrambleFeatures('3x3', 'f2l')).toEqual({
+      randomInitialD: false,
       randomFinalAuf: true,
       randomFinalY: true,
     });
     expect(trainerSetScrambleFeatures('3x3', 'adv-f2l')).toEqual({
+      randomInitialD: false,
       randomFinalAuf: true,
       randomFinalY: true,
     });
     expect(trainerSetScrambleFeatures('3x3', 'zbls')).toEqual({
+      randomInitialD: false,
       randomFinalAuf: false,
       randomFinalY: false,
     });
     expect(trainerSetScrambleFeatures('3x3', 'mix:adv-f2l+f2l')).toEqual({
+      randomInitialD: false,
       randomFinalAuf: false,
       randomFinalY: false,
     });

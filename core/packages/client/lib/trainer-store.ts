@@ -155,6 +155,8 @@ interface TrainerPrefs {
   preAuf: boolean;
   /** 打乱收尾随机 AUF(历史默认行为,关掉 = 打乱原样呈现)。 */
   postAuf: boolean;
+  /** PSF2L:打乱首尾的互逆 D 调整在 D / D2 / D' 之间随机。 */
+  randomInitialD: boolean;
   /** F2L / 进阶 F2L:打乱末尾随机补 AUF。 */
   randomFinalAuf: boolean;
   /** F2L / 进阶 F2L:打乱末尾随机补 y 转体。 */
@@ -199,7 +201,7 @@ interface TrainerPrefs {
   smartCube: boolean;
 }
 const DEFAULT_PREFS: TrainerPrefs = {
-  preAuf: true, postAuf: true, randomFinalAuf: true, randomFinalY: true,
+  preAuf: true, postAuf: true, randomInitialD: true, randomFinalAuf: true, randomFinalY: true,
   oriSel: {}, timing: false, mode: 'recap', probMode: 'uniform',
   recapOrder: 'shuffle', timerFont: 'lcd', scrambleFont: 'sans',
   showPrevCard: true, showStats: true, showStageThumb: true,
@@ -226,6 +228,7 @@ const persistPrefs = (p: TrainerPrefs) => {
 /** 从整个 store state 里只摘偏好字段(直接 stringify 整个 state 会把 cases/solves 一起写进去)。 */
 const prefsOf = (st: TrainerPrefs): TrainerPrefs => ({
   preAuf: st.preAuf, postAuf: st.postAuf,
+  randomInitialD: st.randomInitialD,
   randomFinalAuf: st.randomFinalAuf, randomFinalY: st.randomFinalY,
   oriSel: st.oriSel, timing: st.timing, mode: st.mode,
   probMode: st.probMode, recapOrder: st.recapOrder,
@@ -335,6 +338,7 @@ interface TrainerState {
   // 训练偏好(localStorage `trainer:prefs`;SSR 渲染默认值,挂载后 hydratePrefs 补水)
   preAuf: boolean;
   postAuf: boolean;
+  randomInitialD: boolean;
   randomFinalAuf: boolean;
   randomFinalY: boolean;
   oriSel: Record<string, number[]>;
@@ -388,6 +392,7 @@ interface TrainerState {
   hydratePrefs: () => void;
   setPreAuf: (v: boolean) => void;
   setPostAuf: (v: boolean) => void;
+  setRandomInitialD: (v: boolean) => void;
   setRandomFinalAuf: (v: boolean) => void;
   setRandomFinalY: (v: boolean) => void;
   /** 改某个朝向组的相位偏好。`offs` 为空 / 覆盖全部 = 该组不限制(存成空数组)。 */
@@ -554,15 +559,17 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
    */
   const aufOpts = (st: {
     mode: TrainerMode; puzzle: AlgPuzzle | null; set: string | null;
-    preAuf: boolean; postAuf: boolean; randomFinalAuf: boolean; randomFinalY: boolean;
+    preAuf: boolean; postAuf: boolean; randomInitialD: boolean;
+    randomFinalAuf: boolean; randomFinalY: boolean;
     oriSel: Record<string, number[]>;
   }) => {
     const features = trainerSetScrambleFeatures(st.puzzle, st.set);
     return st.mode === 'memo'
-      ? { preAuf: false, postAuf: false, randomFinalAuf: false, randomFinalY: false }
+      ? { preAuf: false, postAuf: false, randomInitialD: false, randomFinalAuf: false, randomFinalY: false }
       : {
           preAuf: st.preAuf,
           postAuf: st.postAuf,
+          randomInitialD: features.randomInitialD && st.randomInitialD,
           randomFinalAuf: features.randomFinalAuf && st.randomFinalAuf,
           randomFinalY: features.randomFinalY && st.randomFinalY,
           orientation: st.oriSel,
@@ -1048,6 +1055,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       // 光靠一次性的 hydratePrefs 是回不来的。
       preAuf: opts?.noAufDefault ? false : prefs.preAuf,
       postAuf: opts?.noAufDefault ? false : prefs.postAuf,
+      randomInitialD: prefs.randomInitialD,
       randomFinalAuf: prefs.randomFinalAuf,
       randomFinalY: prefs.randomFinalY,
       // 朝向偏好按形状分组、跨 set 通用,没有「本场默认关」这回事 —— 直接取落盘的。
@@ -1155,6 +1163,11 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     setPostAuf: (v) => {
       set({ postAuf: v });
       if (!get().noAufDefault) persistPrefs(prefsOf(get()));
+      regenCurrent();
+    },
+    setRandomInitialD: (v) => {
+      set({ randomInitialD: v });
+      persistPrefs(prefsOf(get()));
       regenCurrent();
     },
     setRandomFinalAuf: (v) => {

@@ -360,6 +360,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 113, slug: 'recons_completion_status', desc: { zh: 'recons 加 completion_status：全库复盘按项目审计终态，持久化已还原、未还原、记号无效和无法校验四种状态，供列表与详情页标记。', en: 'recons gains completion_status: audit every reconstruction by puzzle and persist solved, unsolved, invalid, or unchecked for list and detail markers.' } },
   { n: 114, slug: 'wca_teachers', desc: { zh: '新表 wca_teachers：每位选手每个项目可有不同老师；有效会员只能登记自己，管理员可指定或替换任意老师。', en: 'New wca_teachers table: each cuber may have a different teacher per event; active members may only register themselves, while admins may assign or replace any teacher.' } },
   { n: 115, slug: 'keep_sexy_in_english', desc: { zh: '数据修正：公式备注与 Wiki 术语中的 sexy 统一保留英文，不再翻译。', en: 'Data correction: keep sexy in English in algorithm notes and Wiki terminology instead of translating it.' } },
+  { n: 116, slug: 'psf2l', desc: { zh: '数据迁移：把 PSF2L.docx 的 33 个伪槽情况与公式加入三阶公式库；每条 setup 由公式严格取逆并经三阶状态模型验证。', en: 'Data migration: add all 33 Pseudoslotting cases and algorithms from PSF2L.docx to the 3x3 library; every setup is the exact inverse of its algorithm and is verified with the 3x3 state model.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
