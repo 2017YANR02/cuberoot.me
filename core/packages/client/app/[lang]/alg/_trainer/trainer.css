@@ -538,6 +538,7 @@
 }
 .trainer-split-lane {
   --split-color: var(--accent);
+  position: relative;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -549,6 +550,24 @@
   --split-color: var(--signal-info);
   border-left: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
 }
+.trainer-split-hit {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.trainer-split-hit:disabled { cursor: default; }
+/* 整半屏都落到背后的原生 button；标记与失败重试仍保留自己的独立点击目标。 */
+.trainer-split-lane > :not(.trainer-split-hit) {
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+}
+.trainer-split-lane .trainer-mark-btn,
+.trainer-split-lane .trainer-split-retry { pointer-events: auto; }
 .trainer-split-lane-head {
   display: flex;
   align-items: baseline;
@@ -592,7 +611,6 @@
 }
 .trainer-split-loading.is-error { color: var(--destructive); }
 .trainer-split-wait strong { color: var(--foreground); font-size: 1rem; }
-.trainer-split-next,
 .trainer-split-next-round {
   display: inline-flex;
   align-items: center;
@@ -610,11 +628,9 @@
   font-weight: 650;
   cursor: pointer;
 }
-.trainer-split-next:hover:not(:disabled),
 .trainer-split-next-round:hover:not(:disabled) {
   background: color-mix(in srgb, var(--split-color, var(--accent)) 22%, transparent);
 }
-.trainer-split-next:disabled { opacity: 0.45; cursor: default; }
 .trainer-split-finish {
   display: flex;
   align-items: center;

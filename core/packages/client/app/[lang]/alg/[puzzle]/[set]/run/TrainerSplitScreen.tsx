@@ -79,9 +79,17 @@ function TrainerSplitLane({
 
   const shownScramble = pureScramble ? purifyScramble(puzzle, scramble) : scramble;
   const laneSet = c?.srcSet ?? set;
+  const ready = !!c && !!scramble && !loading && !failed;
 
   return (
     <section className={`trainer-split-lane is-${lane}`} aria-label={tr({ zh: `用户 ${laneLabel}`, en: `Player ${laneLabel}` })}>
+      <button
+        type="button"
+        className="trainer-split-hit"
+        onClick={onComplete}
+        disabled={!ready}
+        aria-label={tr({ zh: `用户 ${laneLabel}：下一题`, en: `Player ${laneLabel}: next case` })}
+      />
       <div className="trainer-split-lane-head">
         <span className="trainer-split-person">{tr({ zh: `用户 ${laneLabel}`, en: `Player ${laneLabel}` })}</span>
         <span className="trainer-split-person-progress">
@@ -131,14 +139,6 @@ function TrainerSplitLane({
               </>
             )}
           </div>
-          <button
-            type="button"
-            className="trainer-split-next"
-            onClick={onComplete}
-            disabled={!scramble || loading || failed}
-          >
-            {tr({ zh: '完成，下一题', en: 'Done, next case' })}
-          </button>
         </>
       )}
     </section>
