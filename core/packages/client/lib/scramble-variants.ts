@@ -9,7 +9,7 @@
 // 'block'(砖)是 UI 聚合方法:把数据层 4 个块变体(123/123x2/222/223)收进一个
 // 方法下拉项,块的具体形状落到阶段下拉(122/123/222/223/F2B)。数据键不变。
 export type ScrambleVariant =
-  | 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo'
+  | 'std' | 'daisy' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo'
   | 'block' | '123' | '123x2' | '222' | '223' | 'eoline' | 'dr' | 'htr' | 'htr2' | 'fr'
   | '333';
 
@@ -19,6 +19,7 @@ export const VARIANT_LABEL: Record<ScrambleVariant, VariantLabel> = {
   // 整解:整个 3x3 最优解(stats 难度 tab 的一个方法,阶段只有 '333' 自身)。
   '333': { zh: '整体', en: 'Full' },
   std: { zh: '标准', en: 'Standard' },
+  daisy: { zh: '小花', en: 'Daisy' },
   eo: { zh: 'EO', en: 'EO' },
   pair: { zh: '基态', en: 'Pair' },
   pseudo: { zh: '伪', en: 'Pseudo' },
@@ -45,7 +46,7 @@ export const VARIANT_LABEL: Record<ScrambleVariant, VariantLabel> = {
 // 块族只出 'block' 一项;EOLine 并入 'eo' 一项(见下)。
 export const VARIANT_ORDER: ScrambleVariant[] = [
   '333',
-  'std', 'pseudo', 'pair', 'pseudo_pair', 'eo', 'f2leo', 'pseudo_f2leo',
+  'std', 'daisy', 'pseudo', 'pair', 'pseudo_pair', 'eo', 'f2leo', 'pseudo_f2leo',
   'block', 'dr',
 ];
 
@@ -106,6 +107,7 @@ export const variantLabel = (key: string, isZh: boolean): string => {
 const STAGE_BASE: Record<string, VariantLabel> = {
   // 整解:整个 3x3 的最优解步数(stats 页专属阶段,数据驱动;StageSolver/gen 不含)。
   '333': { zh: '整体', en: 'Full' },
+  daisy: { zh: '小花', en: 'Daisy' },
   cross: { zh: '十字', en: 'Cross' },
   xcross: { zh: 'XCross', en: 'XCross' },
   xxcross: { zh: 'XXCross', en: 'XXCross' },
@@ -156,6 +158,7 @@ export const VARIANT_STAGES: Record<ScrambleVariant, string[]> = {
   // 整解只有一个「阶段」= 整解本身;在 VARIANT_ORDER(首页+stats 方法下拉),但 gen 手动排除(无求解引擎)。
   '333': ['333'],
   std: ['cross', 'xcross', 'xxcross', 'xxxcross', 'xxxxcross'],
+  daisy: ['daisy'],
   eo: ['eo_cross', 'eo_xcross', 'eo_xxcross', 'eo_xxxcross', 'eo_xxxxcross'],
   pair: ['cross_pair', 'xcross_pair', 'xxcross_pair', 'xxxcross_pair'],
   pseudo: ['pseudo_cross', 'pseudo_xcross', 'pseudo_xxcross', 'pseudo_xxxcross'],
@@ -179,8 +182,15 @@ export const VARIANT_STAGES: Record<ScrambleVariant, string[]> = {
 // 刻意不塞进 VARIANT_STAGES.eo —— 那个数组是 StageSolver 的 WASM 阶段索引契约(i ↔ 阶段 id)。
 export const EO_UI_STAGES: string[] = [...VARIANT_STAGES.eoline, ...VARIANT_STAGES.eo];
 
+// 首页近期打乱 JSON 的短 metric 展开序。新管道阶段必须同步加进来,
+// 否则方法会出现在下拉里,但选中后找不到任何步数桶。
+export const RECENT_METRIC_ORDER: string[] = [
+  '333', 'daisy', 'eo', 'eoline', 'cross', 'xc', 'xxc', 'xxxc', 'xxxxc',
+  'fbsquare', 'rouxs1', 'block222', 'block223', 'f2b', 'dr',
+];
+
 // ── 方法/阶段下拉的 UI 聚合(首页 RecentScrambles 与 /timer 真题难度筛共用)────────
-// 数据层有 13 个变体(块族 4 个 + eo/eoline 2 个各自独立),下拉只给 9 个方法:块族折成
+// 数据层有 15 个变体(含整解;块族 4 个 + eo/eoline 2 个各自独立),下拉给 11 个方法:块族折成
 // 「砖」、eoline 并入「EO」,细分落到阶段下拉。存回设置 / 查表一律用数据变体。
 
 /** 数据变体 → 方法下拉里的 UI 项(块族折成 'block';eoline 并入 'eo')。 */

@@ -38,6 +38,7 @@ interface NativeSolver {
 // 原生分析器 (solver/target/release/*_analyzer.exe). rate 实测 (pair 2026-06-03 暖表稳态, 余 2026-05-30).
 const NATIVE: NativeSolver[] = [
   { key: 'std', stages: 5, fbRows: 1_289_663, rate: 115, tier: 'huge', zhWhy: '联合大表剪枝最强, 全 5 阶段', enWhy: 'strongest joint-table pruning, full 5 stages' },
+  { key: 'daisy', stages: 1, fbRows: 1_323_255, rate: 45_000, tier: 'small', zhWhy: 'edge4 仅 190,080 态,24 个合法花瓣排列做多源 BFS;上帝之数 7,精确距离直查零搜索', enWhy: 'only 190,080 edge4 states, multi-source BFS from all 24 petal permutations; God\'s number 7, exact lookup with zero search' },
   { key: 'eo', stages: 5, fbRows: 1_240_119, rate: 0.9, tier: 'huge', zhWhy: 'xxxxcross 全枚举 ~13M 节点每条, 唯一长极', enWhy: 'xxxxcross full enumeration ~13M nodes/case — the long pole' },
   { key: 'pseudo', stages: 4, fbRows: 1_289_663, rate: 390, tier: 'huge', zhWhy: '槽解耦 + 强剪枝, 最快', enWhy: 'slot-decoupled + strong pruning, fastest' },
   { key: 'pseudo_pair', stages: 4, fbRows: 1_289_663, rate: 47, tier: 'huge', zhWhy: '角槽棱槽耦合, 搜索较重', enWhy: 'corner/edge slot coupling, heavier search' },
@@ -65,6 +66,7 @@ interface BrowserSolver { key: string; zhEngine: string; enEngine: string; zhLat
 // 浏览器端 WASM (gen 页现算). 定性, 非精确遥测.
 const BROWSER: BrowserSolver[] = [
   { key: 'std cross-step', zhEngine: '纯十字只下 pt_cross (gz 50KB); XCross+ 再补 pt_cross_C4E0 (gz 20MB); mt_* 现场生成', enEngine: 'cross-only downloads just pt_cross (50KB gz); XCross+ adds pt_cross_C4E0 (20MB gz); mt_* generated in-WASM', zhLatency: 'cross 秒出', enLatency: 'cross instant' },
+  { key: 'Daisy', zhEngine: 'DaisySolverWasm (零下载,mt_edge4 + 190,080 态距离表现场建)', enEngine: 'DaisySolverWasm (zero download; mt_edge4 + 190,080-state distance table built in-WASM)', zhLatency: '全 6 花瓣色即时', enLatency: 'all 6 petal colours instant' },
   { key: 'pair', zhEngine: 'VariantSolverWasm', enEngine: 'VariantSolverWasm', zhLatency: '全 4 阶段 ~0.04s', enLatency: 'all 4 stages ~0.04s' },
   { key: 'eo', zhEngine: 'VariantSolverWasm', enEngine: 'VariantSolverWasm', zhLatency: '深阶段 数十秒', enLatency: 'deep stages tens of seconds' },
   { key: 'pseudo', zhEngine: 'VariantSolverWasm', enEngine: 'VariantSolverWasm', zhLatency: '~5s', enLatency: '~5s' },
@@ -83,9 +85,9 @@ const BROWSER: BrowserSolver[] = [
   { key: 'Skewb', zhEngine: 'SkewbSolverWasm (零表下载, 3.0MB 距离表现场建, 转移件级现算免 ~100.8MB 联合移动表)', enEngine: 'SkewbSolverWasm (zero downloads, 3.0MB distance table built in-wasm, piecewise transitions — no ~100.8MB joint move table)', zhLatency: '首算惰性建表 ~3.3s 后即时; /scramble/solver?event=skewb 在线出最优解', enLatency: 'lazy first-solve build (~3.3s), then instant; serves optimal solutions on /scramble/solver?event=skewb' },
 ];
 
-// native key → 浏览器条目 key (一个浏览器引擎可覆盖多个 native 阶段; 全 17 条 BROWSER 均被至少一行命中, 无遗漏).
+// native key → 浏览器条目 key (一个浏览器引擎可覆盖多个 native 阶段; 全 18 条 BROWSER 均被至少一行命中, 无遗漏).
 const BROWSER_BY_KEY: Record<string, string> = {
-  std: 'std cross-step', eo: 'eo', pseudo: 'pseudo', pseudo_pair: 'pseudo_pair', pair: 'pair',
+  std: 'std cross-step', daisy: 'Daisy', eo: 'eo', pseudo: 'pseudo', pseudo_pair: 'pseudo_pair', pair: 'pair',
   f2leo: 'f2leo / pseudo_f2leo', pseudo_f2leo: 'f2leo / pseudo_f2leo',
   '333': '333 整解最优 (h48)', '222': '2x2x2 block', '123': '1x2x3 / 2x2x3', '223': '1x2x3 / 2x2x3',
   eoline: 'EO / EOLine / DR', dr: 'EO / EOLine / DR', htr: 'HTR (DR→HTR)', htr2: 'HTR finish (HTR→solved)',
@@ -103,6 +105,12 @@ interface SolverTbls { move: Tbl[]; prune: Tbl[]; builtZh?: string; builtEn?: st
  }
 
 const TABLES: Record<string, SolverTbls> = {
+  daisy: {
+    move: [{ n: 'mt_edge4', b: 18247692 }],
+    prune: [],
+    builtZh: '不落盘剪枝:24 个合法花瓣排列做多源 BFS,现场建 190,080 字节精确距离表;全空间上帝之数 7,查长度 O(1)',
+    builtEn: 'no on-disk prune: multi-source BFS from all 24 valid petal permutations builds a 190,080-byte exact distance table in RAM; full-space God\'s number 7, O(1) lookups',
+  },
   std: {
     move: [{ n: 'mt_edge2', b: 38028 }, { n: 'mt_edge', b: 1740 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge4', b: 18247692 }, { n: 'mt_edge6', b: 3065610252 }, { n: 'mt_corn2', b: 36300 }],
     prune: [{ n: 'pt_cross', b: 139408 }, { n: 'pt_cross_C4E0', b: 54743056 }, { n: 'pt_cross_C4C5E0E1', b: 10729635856 }, { n: 'pt_cross_C4C6E0E2', b: 10729635856 }],
@@ -245,8 +253,8 @@ const MEM_HUGE = {
   en: 'GB-scale joint/battery prune tables (CEE/CCE/C4C5C6 / pair huge / E0E1E2) via mmap. eo peaks ~24GB working set but only ~0.1GB private — read-only shared mmap. f2leo reuses std pair huge tables (~10GB each); pseudo_f2leo uses the pseudo battery (corner3 862MB + edge3 1GB), each adding only leaf free-edge EO gating. 333 whole-cube optimal is the exception: its Tronto h48 15G table is copied into the emscripten heap in chunks (not a shared mmap), independent of the Rust tables. sq1 uses a 13G jsq_full + two 283MB projection disk tables (the slash metric is a separate ~43MB zero-disk in-RAM build).',
 };
 const MEM_SMALL = {
-  zh: '333-222/333-123/333-223 仅 mt_corn/mt_corn2/mt_edge2/mt_edge3 微移动表 (各家合计 <1MB);333-eoline/333-dr/333-htr/333-htr2/333-fr/222/pyraminx/skewb 零盘表。精确距离/剪枝表启动或首查时内存现场 BFS (333-htr 全空间 2,822,400 态 ~2.8MB, 333-htr2 663,552 态 ~648KB, 333-fr 3,456 陪集 ~3.4KB, 222 独立 2x2x2 全空间 3,674,160 态 ~3.6MB + 移动表 ~132MB, pyraminx 核心 933,120 态 ~0.9MB + 移动表 ~29.9MB, skewb 整魔方 3,149,280 态 ~3.0MB 转移件级现算免移动表), 不落盘。无 GB 级依赖, 可与任意 huge 变体并发。',
-  en: '333-222/333-123/333-223 use only micro move tables (mt_corn/mt_corn2/mt_edge2/mt_edge3, <1MB each analyzer); 333-eoline/333-dr/333-htr/333-htr2/333-fr/222/pyraminx/skewb need zero disk tables. Exact distance/prune tables are BFS-built in RAM at startup or first query (333-htr: full 2,822,400-state space, ~2.8MB; 333-htr2: 663,552 states, ~648KB; 333-fr: 3,456 cosets, ~3.4KB; 222: the full standalone 2x2x2, 3,674,160 states, ~3.6MB + ~132MB move table; pyraminx: the 933,120-state core, ~0.9MB + ~29.9MB move table; skewb: the whole 3,149,280-state puzzle, ~3.0MB with piecewise transitions, no move table), never written to disk. No GB-scale dependency — runs alongside any huge variant.',
+  zh: '333-daisy 仅 mt_edge4 (17.4MB) + 190,080 字节现场距离表;333-222/333-123/333-223 仅 mt_corn/mt_corn2/mt_edge2/mt_edge3 微移动表 (各家合计 <1MB);333-eoline/333-dr/333-htr/333-htr2/333-fr/222/pyraminx/skewb 零盘表。精确距离/剪枝表启动或首查时内存现场 BFS (333-htr 全空间 2,822,400 态 ~2.8MB, 333-htr2 663,552 态 ~648KB, 333-fr 3,456 陪集 ~3.4KB, 222 独立 2x2x2 全空间 3,674,160 态 ~3.6MB + 移动表 ~132MB, pyraminx 核心 933,120 态 ~0.9MB + 移动表 ~29.9MB, skewb 整魔方 3,149,280 态 ~3.0MB 转移件级现算免移动表), 不落盘。无 GB 级依赖, 可与任意 huge 变体并发。',
+  en: '333-daisy uses only mt_edge4 (17.4MB) plus a 190,080-byte in-RAM distance table; 333-222/333-123/333-223 use only micro move tables (mt_corn/mt_corn2/mt_edge2/mt_edge3, <1MB each analyzer); 333-eoline/333-dr/333-htr/333-htr2/333-fr/222/pyraminx/skewb need zero disk tables. Exact distance/prune tables are BFS-built in RAM at startup or first query (333-htr: full 2,822,400-state space, ~2.8MB; 333-htr2: 663,552 states, ~648KB; 333-fr: 3,456 cosets, ~3.4KB; 222: the full standalone 2x2x2, 3,674,160 states, ~3.6MB + ~132MB move table; pyraminx: the 933,120-state core, ~0.9MB + ~29.9MB move table; skewb: the whole 3,149,280-state puzzle, ~3.0MB with piecewise transitions, no move table), never written to disk. No GB-scale dependency — runs alongside any huge variant.',
 };
 const MEM_MID = {
   zh: '介于 small 与 huge 之间:333-123x2 现场 BFS 出 6 棱联合表 (111.5M 态) + 4 角联合表, 另把 {整块+对侧2角} 表 (2.68G 态) 落盘 pt_f2b_be3c2.bin 后 mmap 秒开;具体见「表」列。',
@@ -257,7 +265,7 @@ const MEM_PARALLEL = {
   en: 'Each analyzer runs rayon par_iter over a whole chunk across all 16 cores; tables shared read-only via mmap. Running variants concurrently loads distinct GB-scale tables → blows past 32GB, so they run serially.',
 };
 const MEM_LIST_HUGE = '333-std / 333-eo / 333-pseudo / 333-pseudo_pair / 333-pair / 333-f2leo / 333-pseudo_f2leo / 333 / sq1';
-const MEM_LIST_SMALL = '333-222 / 333-123 / 333-223 / 333-eoline / 333-dr / 333-htr / 333-htr2 / 333-fr / 222 / pyraminx / skewb';
+const MEM_LIST_SMALL = '333-daisy / 333-222 / 333-123 / 333-223 / 333-eoline / 333-dr / 333-htr / 333-htr2 / 333-fr / 222 / pyraminx / skewb';
 
 function fmtBytes(b: number): string {
   if (b >= 1_073_741_824) return (b / 1_073_741_824).toFixed(1) + ' GB';

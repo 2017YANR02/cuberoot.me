@@ -14,10 +14,11 @@ const EMPTY: CompStepsState = { map: null, ready: false };
 
 // 变体 → 静态目录。std 用历史路径 comp_steps/;f2leo 系各自子目录。
 export type CompStepsVariant =
-  | 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo'
+  | 'std' | 'daisy' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo'
   | '123' | '222' | '223' | '123x2' | 'eoline' | 'dr';
 const DIR: Record<CompStepsVariant, string> = {
   std: 'comp_steps',
+  daisy: 'comp_steps_daisy',
   eo: 'comp_steps_eo',
   pair: 'comp_steps_pair',
   pseudo: 'comp_steps_pseudo',

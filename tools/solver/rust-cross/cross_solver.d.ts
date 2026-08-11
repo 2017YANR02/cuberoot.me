@@ -167,6 +167,25 @@ export class Cube222SolverWasm {
 }
 
 /**
+ * 三阶小花:指定底色四条棱围绕对面中心，且贴纸朝向中心面。
+ * 复用 edge4 190,080 态移动表，24 个花瓣排列做多源 BFS；全空间严格最优。
+ */
+export class DaisySolverWasm {
+    free(): void;
+    [Symbol.dispose](): void;
+    /**
+     * 零下载:mt_edge4 现场生成(~17.4MB)，Daisy 距离表现场 BFS(~186KB)。
+     */
+    constructor();
+    /**
+     * 6 个花瓣颜色的最优步数，顺序对应 ROTS。
+     */
+    solve(scramble: string): Uint32Array;
+    solve_face(scramble: string, face: number): number;
+    solve_moves(scramble: string, face: number, extra: number, cap: number): string;
+}
+
+/**
  * EOLine / DR 求解器(全自包含,**零表下载**):eo12/line/co8/slice 微 move 表与
  * 全部距离表现场从内置运动学构建。EOLine 即时构建(~1MB BFS);DR 惰性
  * (两张 ~1M 距离表,首次查询时建)。
@@ -482,6 +501,7 @@ export interface InitOutput {
     readonly __wbg_crossrestrictsolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_crosssolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_cube222solverwasm_free: (a: number, b: number) => void;
+    readonly __wbg_daisysolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_eodrsolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_f2leosolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_frsolverwasm_free: (a: number, b: number) => void;
@@ -514,6 +534,10 @@ export interface InitOutput {
     readonly cube222solverwasm_new: () => number;
     readonly cube222solverwasm_solve: (a: number, b: number, c: number) => number;
     readonly cube222solverwasm_solve_moves: (a: number, b: number, c: number) => [number, number];
+    readonly daisysolverwasm_new: () => number;
+    readonly daisysolverwasm_solve: (a: number, b: number, c: number) => [number, number];
+    readonly daisysolverwasm_solve_face: (a: number, b: number, c: number, d: number) => number;
+    readonly daisysolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
     readonly eodrsolverwasm_new: () => number;
     readonly eodrsolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number];
     readonly eodrsolverwasm_solve_stage: (a: number, b: number, c: number, d: number) => [number, number];

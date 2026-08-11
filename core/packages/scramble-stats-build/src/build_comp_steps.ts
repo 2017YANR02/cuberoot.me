@@ -31,6 +31,7 @@ const BADGE_FROM_STD = [1, 0, 3, 2, 5, 4];
 interface Target { csv: string; stages: number; outDir: string }
 const TARGETS: Target[] = [
   { csv: 'std.csv', stages: 5, outDir: 'comp_steps' },
+  { csv: 'daisy.csv', stages: 1, outDir: 'comp_steps_daisy' },
   { csv: 'eo.csv', stages: 5, outDir: 'comp_steps_eo' },
   { csv: 'pseudo.csv', stages: 4, outDir: 'comp_steps_pseudo' },
   { csv: 'pseudo_pair.csv', stages: 4, outDir: 'comp_steps_pseudo_pair' },
