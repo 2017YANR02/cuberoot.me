@@ -15,6 +15,7 @@ import PersonLink from '@/components/PersonLink';
 import { addSubmission, updateSubmission, deleteSubmission } from '@/lib/alg_api';
 import { validateAlgCase, setupForCase } from '@/lib/alg_validation';
 import { displayAlg } from '@/lib/alg_display';
+import { formatAlgNotation, type AlgNotationStyle } from '@/lib/alg-notation-display';
 import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import { ownerDisplayName } from '@/lib/cuber-name-display';
@@ -31,6 +32,8 @@ interface Props {
   firstAlg?: string;
   /** All current submissions for this case (parent already filtered). */
   submissions: AlgSubmission[];
+  /** 只改只读公式的显示；编辑框和提交值始终保持标准记号。 */
+  notationStyle?: AlgNotationStyle;
   /** Patch the page-level submissions array. caseName edits cross cases so we
    *  let the parent see the full add/update/delete intent rather than a per-case
    *  "next list". */
@@ -41,7 +44,7 @@ interface Props {
   ) => void;
 }
 
-export default function CommunityAlgs({ puzzle, setSlug, caseName, sticker, setup, firstAlg, submissions, onPatch }: Props) {
+export default function CommunityAlgs({ puzzle, setSlug, caseName, sticker, setup, firstAlg, submissions, notationStyle = 'standard', onPatch }: Props) {
   const { i18n } = useTranslation(); // subscribe to language changes; text via tr()
   const isZh = i18n.language.startsWith('zh');
   const user = useAuthStore(s => s.user);
@@ -186,7 +189,7 @@ export default function CommunityAlgs({ puzzle, setSlug, caseName, sticker, setu
               </div>
             ) : (
               <>
-                <code className="alg-community-alg">{s.alg}</code>
+                <code className="alg-community-alg">{formatAlgNotation(s.alg, notationStyle)}</code>
                 {s.notes && <span className="alg-community-notes">{s.notes}</span>}
                 {/* authorId 是归属键 ownerKey,没绑 WCA 的账号是合成 `u<uid>`——
                     PersonLink 对非 WCA id 自动降级成纯文本,不出死链。 */}
