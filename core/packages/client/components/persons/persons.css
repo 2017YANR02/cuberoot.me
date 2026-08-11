@@ -192,6 +192,39 @@ html[data-theme=dark] .wp-page {
     display: flex; flex-direction: row; align-items: center;
     flex-wrap: wrap; gap: 12px 28px;
 }
+
+.wp-teachers {
+    margin: 18px 0;
+}
+.wp-teachers h2 {
+    margin: 0 0 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--wp-text-sub);
+}
+.wp-teachers .wca-teacher-cell {
+    align-items: flex-start;
+    width: auto;
+    max-width: 100%;
+}
+.wp-teachers .wca-teacher-value {
+    min-width: 0;
+    max-width: 100%;
+}
+.wp-teachers .wca-teacher-value-multi {
+    gap: 6px;
+    min-width: 0;
+    max-width: 100%;
+}
+.wp-teachers .wca-teacher-relation {
+    max-width: 100%;
+    flex-wrap: wrap;
+    white-space: normal;
+}
+.wp-teachers .wca-teacher-event-name {
+    color: var(--wp-text-sub);
+    white-space: nowrap;
+}
 .wp-hero-avatar-wrap {
     display: flex; flex-direction: row; align-items: center;
     gap: 14px;
