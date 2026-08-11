@@ -20,6 +20,7 @@ import { loadFlagData } from '@/lib/country-flags';
 import { listRecons } from '@/lib/recon-api';
 import { buildReconAttemptMap, type ReconAttemptInfo } from '@/lib/recon-attempt-lookup';
 import PersonHero from '@/components/persons/sections/PersonHero';
+import PersonTeachers from '@/components/persons/sections/PersonTeachers';
 import PersonPRTable from '@/components/persons/sections/PersonPRTable';
 import PersonBestCombos from '@/components/persons/sections/PersonBestCombos';
 import PersonResultChanges from '@/components/persons/sections/PersonResultChanges';
@@ -152,6 +153,7 @@ export default function PersonDetailClient() {
           inclCancelled={inclCancelled}
           onInclCancelledChange={setInclCancelled}
         />
+        <PersonTeachers profile={profile} isZh={isZh} />
         <PersonPRTable profile={profile} results={results} isZh={isZh} inclCancelled={inclCancelled} mode={rankMode} />
         <PersonBestCombos wcaId={profile.person.wca_id} isZh={isZh} inclCancelled={inclCancelled} />
         <PersonResultChanges wcaId={profile.person.wca_id} isZh={isZh} />
