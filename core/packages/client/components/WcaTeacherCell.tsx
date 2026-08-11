@@ -40,6 +40,8 @@ function teacherErrorMessage(caught: unknown): string {
 
 export interface WcaTeacherDirectory {
   teachers: ReadonlyMap<string, WcaTeacher>;
+  loading: boolean;
+  loadFailed: boolean;
   userWcaId: string;
   isAdmin: boolean;
   canSelfAssign: boolean;
@@ -51,6 +53,7 @@ export function useWcaTeachers(studentWcaIds: string[], eventIds: string[]): Wca
   const user = useAuthUser();
   const isAdmin = isAdminWcaId(user?.wcaId);
   const [teachers, setTeachers] = useState<Map<string, WcaTeacher>>(() => new Map());
+  const [loadState, setLoadState] = useState<'ready' | 'loading' | 'error'>('ready');
   const [activeMembership, setActiveMembership] = useState(false);
   const idsKey = useMemo(
     () => [...new Set(studentWcaIds.filter(Boolean))].sort().join(','),
@@ -67,8 +70,10 @@ export function useWcaTeachers(studentWcaIds: string[], eventIds: string[]): Wca
     let cancelled = false;
     if (ids.length === 0 || events.length === 0) {
       setTeachers(new Map());
+      setLoadState('ready');
       return;
     }
+    setLoadState('loading');
     const requests: Promise<WcaTeacher[]>[] = [];
     for (let i = 0; i < ids.length; i += LOOKUP_CHUNK_SIZE) {
       requests.push(listWcaTeachers(ids.slice(i, i + LOOKUP_CHUNK_SIZE), events));
@@ -80,9 +85,13 @@ export function useWcaTeachers(studentWcaIds: string[], eventIds: string[]): Wca
           teacherRelationKey(teacher.studentWcaId, teacher.eventId),
           teacher,
         ])));
+        setLoadState('ready');
       })
       .catch(() => {
-        if (!cancelled) setTeachers(new Map());
+        if (!cancelled) {
+          setTeachers(new Map());
+          setLoadState('error');
+        }
       });
     return () => { cancelled = true; };
   }, [idsKey, eventsKey]);
@@ -115,6 +124,8 @@ export function useWcaTeachers(studentWcaIds: string[], eventIds: string[]): Wca
 
   return {
     teachers,
+    loading: loadState === 'loading',
+    loadFailed: loadState === 'error',
     userWcaId: user?.wcaId ?? '',
     isAdmin,
     canSelfAssign: !!user?.wcaId && activeMembership,
@@ -145,11 +156,13 @@ export function WcaTeacherNote() {
   );
 }
 
-export function WcaTeacherCell({ studentWcaId, eventIds, directory, isZh }: {
+export function WcaTeacherCell({ studentWcaId, eventIds, directory, isZh, showEventNames = false, emptyLabel = '—' }: {
   studentWcaId: string;
   eventIds: readonly string[];
   directory: WcaTeacherDirectory;
   isZh: boolean;
+  showEventNames?: boolean;
+  emptyLabel?: string;
 }) {
   const eventIdsKey = eventIds.join(',');
   const normalizedEventIds = useMemo(
@@ -174,7 +187,8 @@ export function WcaTeacherCell({ studentWcaId, eventIds, directory, isZh }: {
     : undefined;
   const isOwnRelation = !!teacher && teacher.teacherWcaId === directory.userWcaId;
   const hasOwnRelation = relations.some(({ teacher: relation }) => relation.teacherWcaId === directory.userWcaId);
-  const canOpenEditor = directory.isAdmin || directory.canSelfAssign || hasOwnRelation;
+  const teacherDataReady = !directory.loading && !directory.loadFailed;
+  const canOpenEditor = teacherDataReady && (directory.isAdmin || directory.canSelfAssign || hasOwnRelation);
   const isMultiEvent = normalizedEventIds.length > 1;
 
   useEffect(() => {
@@ -212,13 +226,14 @@ export function WcaTeacherCell({ studentWcaId, eventIds, directory, isZh }: {
         {relations.length > 0
           ? relations.map(({ eventId, teacher: relation }) => (
             <span key={eventId} className="wca-teacher-relation">
-              {isMultiEvent && <EventIcon event={eventId} title={eventDisplayName(eventId, isZh)} />}
+              {(isMultiEvent || showEventNames) && <EventIcon event={eventId} title={eventDisplayName(eventId, isZh)} />}
+              {showEventNames && <span className="wca-teacher-event-name">{eventDisplayName(eventId, isZh)}:</span>}
               <PersonLink wcaId={relation.teacherWcaId} name={relation.teacherName} isZh={isZh} />
             </span>
           ))
-          : <span className="wca-teacher-empty">—</span>}
+          : <span className="wca-teacher-empty">{emptyLabel}</span>}
       </span>
-      {directory.isAdmin ? (
+      {directory.isAdmin && teacherDataReady ? (
         <button type="button" className="wca-teacher-action" onClick={() => openEditor()}>
           {relations.length > 0 ? tr({ zh: '编辑', en: 'Edit' }) : tr({ zh: '填写', en: 'Add' })}
         </button>
@@ -226,11 +241,11 @@ export function WcaTeacherCell({ studentWcaId, eventIds, directory, isZh }: {
         <button type="button" className="wca-teacher-action" onClick={() => openEditor()}>
           {tr({ zh: '管理', en: 'Manage' })}
         </button>
-      ) : !teacher && directory.canSelfAssign ? (
+      ) : teacherDataReady && !teacher && directory.canSelfAssign ? (
         <button type="button" className="wca-teacher-action" disabled={saving} onClick={selfAssign}>
           {saving ? tr({ zh: '保存中…', en: 'Saving…' }) : tr({ zh: '登记自己', en: 'Add myself' })}
         </button>
-      ) : isOwnRelation ? (
+      ) : teacherDataReady && isOwnRelation ? (
         <button type="button" className="wca-teacher-action" disabled={saving} onClick={remove}>
           {saving ? tr({ zh: '撤销中…', en: 'Removing…' }) : tr({ zh: '撤销', en: 'Remove' })}
         </button>
