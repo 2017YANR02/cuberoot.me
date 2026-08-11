@@ -7,11 +7,13 @@
  * this module for the same plan and only adapt that plan to their output API.
  */
 import type { AlgPuzzle, AlgSticker } from '@cuberoot/shared';
+import type { PlanSimplifyOptions } from '@cuberoot/visualcube';
 import { toWca as toWcaSkewb, invert as invertSkewbAlg } from '@cuberoot/shared/skewb-notation';
 import { invertSq1Alg } from '@cuberoot/shared/sq1-notation';
 import { renderSkewbPyramidSvgParametric } from '@cuberoot/shared/skewb-pyramid-svg';
 import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS } from '@/lib/sq1-svg';
 import { sq1StageHiddenStickerIds } from '@/lib/sq1-stage-mask';
+import { canonicalLlSetup, oriCornersOnly } from '@/lib/alg_ll_orientation';
 
 export const PUZZLE_SIZE: Record<AlgPuzzle, number> = {
   '2x2': 2, '3x3': 3, '4x4': 4, '5x5': 5,
@@ -38,6 +40,7 @@ export interface CubeThumbParams {
   mask?: string;
   scheme?: string;
   hideGreySides?: boolean;
+  planSimplify?: PlanSimplifyOptions;
   puzzleSize: number;
 }
 
@@ -103,6 +106,8 @@ export interface CaseThumbPlanInput {
   setup?: string;
   mask?: string;
   sq1BlackTop?: boolean;
+  /** 3x3 plan-view teaching projection: preserve recognisable bars and colour pairs only. */
+  simplifyRecognition?: boolean;
 }
 
 function driverFor(setup: string | undefined, alg: string): AlgDriver {
@@ -118,6 +123,7 @@ export function caseThumbPlan({
   setup,
   mask,
   sq1BlackTop = true,
+  simplifyRecognition = false,
 }: CaseThumbPlanInput): CaseThumbPlan {
   if (puzzle === 'sq1') {
     const normalizedSet = set.toLowerCase();
@@ -182,7 +188,14 @@ export function caseThumbPlan({
   return {
     renderer: 'visualcube',
     algorithm: alg,
-    setup,
-    params: cubeThumbParams(puzzle, set, sticker, mask),
+    setup: puzzle === '3x3' && simplifyRecognition && setup
+      ? canonicalLlSetup(setup, 3, oriCornersOnly(puzzle, set))
+      : setup,
+    params: {
+      ...cubeThumbParams(puzzle, set, sticker, mask),
+      ...(puzzle === '3x3' && simplifyRecognition
+        ? { planSimplify: { side: 'oppbar', up: 'all', showYellow: true } satisfies PlanSimplifyOptions }
+        : {}),
+    },
   };
 }

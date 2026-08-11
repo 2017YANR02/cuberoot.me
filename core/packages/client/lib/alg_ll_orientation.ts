@@ -197,6 +197,22 @@ export function orientationCycle(base: string, size: number, corners = false): O
 }
 
 /**
+ * Append the shortest U adjustment that moves an LL shape to this module's
+ * canonical orientation. Recognition diagrams use it to keep every case in one
+ * OLL/COLL family facing the same way while ordinary formula diagrams retain the
+ * setup's original execution angle.
+ */
+export function canonicalLlSetup(base: string, size: number, corners = false): string {
+  const alg = base.trim();
+  if (!alg) return alg;
+  const cycle = orientationCycle(alg, size, corners);
+  if (!cycle || cycle.distinct < 2) return alg;
+  const index = cycle.offs.findIndex(offset => offset === 0);
+  const auf = index >= 0 ? ORI_AUF[index] : '';
+  return auf ? `${alg} ${auf}` : alg;
+}
+
+/**
  * 按用户的朝向偏好筛出还能用的收尾 AUF。返回 null = 不限制(调用方照旧四选一):
  * 这一组没设偏好、阶数不支持、或者筛完一个不剩(设置与实际打乱对不上时宁可全放,
  * 也不能出不了题)。

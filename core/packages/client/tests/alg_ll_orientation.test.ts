@@ -7,7 +7,7 @@ import type { AlgCase } from '@cuberoot/shared';
 import { generateScramble } from '@/lib/trainer-scramble';
 import {
   ORI_AUF, rotateMask, orientationCycle, allowedPostAuf, oriSupportedSize,
-  oriCornersOnly,
+  oriCornersOnly, canonicalLlSetup,
 } from '@/lib/alg_ll_orientation';
 
 /** 参照实现:直接模拟,不走 rotateMask。与 lib 里的读法逐字一致。 */
@@ -110,6 +110,13 @@ describe('orientationCycle', () => {
     expect(new Set(h.offs)).toEqual(new Set([0, 1]));
     // 规范掩码那一相位的偏移恒为 0
     expect(sune.masks[sune.offs.indexOf(0)]).toBe(Math.min(...sune.masks));
+  });
+  it('识别图 setup 会补最短 AUF，统一到规范朝向', () => {
+    for (const setup of SETUPS_3) {
+      const cycle = orientationCycle(setup, 3)!;
+      const canonical = canonicalLlSetup(setup, 3);
+      expect(simMask(canonical, 3)).toBe(Math.min(...cycle.masks));
+    }
   });
   it('阶数不支持 → null(位宽不够,也没有 LL 训练场景)', () => {
     expect(orientationCycle("R U R'", 4)).toBeNull();

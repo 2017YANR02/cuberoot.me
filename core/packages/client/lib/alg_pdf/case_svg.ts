@@ -26,6 +26,8 @@ export interface CaseSvgInput {
   size?: number;
   /** Square-1 网页当前是否使用黑顶；PDF 必须跟随。 */
   sq1BlackTop?: boolean;
+  /** Keep PDF recognition sheets consistent with the on-screen simplified projection. */
+  simplifyRecognition?: boolean;
 }
 
 /** sr-puzzlegen 是 DOM 渲染器(往宿主元素里塞 <svg>),借个离屏容器取字符串。 */
@@ -62,8 +64,8 @@ const cache = new Map<string, string | null>();
 const CACHE_CAP = 4000;
 
 export async function algCaseSvg(input: CaseSvgInput): Promise<string | null> {
-  const { puzzle, set, sticker, alg, setup, mask, size = 160, sq1BlackTop = true } = input;
-  const key = `${puzzle}|${set}|${JSON.stringify(sticker)}|${mask ?? ''}|${size}|${sq1BlackTop}|${setup ?? ''}|${alg}`;
+  const { puzzle, set, sticker, alg, setup, mask, size = 160, sq1BlackTop = true, simplifyRecognition = false } = input;
+  const key = `${puzzle}|${set}|${JSON.stringify(sticker)}|${mask ?? ''}|${size}|${sq1BlackTop}|${simplifyRecognition}|${setup ?? ''}|${alg}`;
   const hit = cache.get(key);
   if (hit !== undefined) return hit;
   const svg = await renderCaseSvg(input);
@@ -73,9 +75,9 @@ export async function algCaseSvg(input: CaseSvgInput): Promise<string | null> {
 }
 
 async function renderCaseSvg({
-  puzzle, set, sticker, alg, setup, mask, size = 160, sq1BlackTop,
+  puzzle, set, sticker, alg, setup, mask, size = 160, sq1BlackTop, simplifyRecognition,
 }: CaseSvgInput): Promise<string | null> {
-  const plan = caseThumbPlan({ puzzle, set, sticker, alg, setup, mask, sq1BlackTop });
+  const plan = caseThumbPlan({ puzzle, set, sticker, alg, setup, mask, sq1BlackTop, simplifyRecognition });
   if (plan.renderer === 'inline-svg') return plan.svg || null;
   if (plan.renderer === 'engine') {
     return renderEngineSvg(plan.puzzle, engineForwardAlg(plan.puzzle, plan.driver), size);
@@ -92,5 +94,10 @@ async function renderCaseSvg({
     ...(p.mask ? { mask: p.mask } : {}),
     ...(p.scheme ? { sch: p.scheme } : {}),
     ...(p.hideGreySides ? { ngs: '1' } : {}),
+    ...(p.planSimplify?.side ? { psr: p.planSimplify.side } : {}),
+    ...(p.planSimplify?.up ? { pur: p.planSimplify.up } : {}),
+    ...(p.planSimplify?.showYellow !== undefined ? { psy: p.planSimplify.showYellow ? '1' : '0' } : {}),
+    ...(p.planSimplify?.forceShow ? { pfs: p.planSimplify.forceShow } : {}),
+    ...(p.planSimplify?.forceHide ? { pfh: p.planSimplify.forceHide } : {}),
   });
 }

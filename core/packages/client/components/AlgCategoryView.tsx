@@ -12,7 +12,7 @@
  * per-case ori cycle, subgroup collapse, sticker/setup/HTML alg rendering.
  */
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
-import { useQueryState, parseAsBoolean, parseAsStringEnum } from 'nuqs';
+import { useQueryState, parseAsBoolean, parseAsInteger, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Plus, Pencil, ShieldCheck, GripVertical, AlertTriangle, FlipHorizontal2 } from 'lucide-react';
@@ -25,7 +25,7 @@ import {
 } from '@cuberoot/shared';
 import { VisualCube } from '@/components/VisualCube';
 import { CaseThumb } from '@/components/CaseThumb';
-import { LEVEL2_PICKER_MASK } from '@/lib/alg_thumb_plan';
+import { cubeThumbParams, LEVEL2_PICKER_MASK } from '@/lib/alg_thumb_plan';
 import AlgCard from '@/components/AlgCard';
 import CommunityAlgs from '@/components/CommunityAlgs';
 import AdminCaseEditor, { type AdminEditorState } from '@/components/AdminCaseEditor';
@@ -62,6 +62,14 @@ import { useHashHighlight } from '@/hooks/useHashHighlight';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
 import BoolToggle from '@/components/BoolToggle';
+import {
+  OPTIMAL_METRICS,
+  availableOptimalMetrics,
+  filterCasesByOptimal,
+  optimalRange,
+  type OptimalComparison,
+  type OptimalMetric,
+} from '@/lib/alg_case_optimal';
 
 // oriAdjustSetup / shortOriName 已提到 lib/alg_display 与 case 详情页共用(详情页原先漏了它们,见那里的注释)。
 
@@ -328,6 +336,17 @@ export interface AlgCategoryViewProps {
   subgroupParam?: string;
   /** 上层(哨兵壳分流)已经加载好的整份 set,直接复用免二次拉。admin 仍会 fresh 重拉。 */
   initialData?: AlgFile;
+  /** A curated view over one DB-backed set, used by learning paths such as Simple ZBLL. */
+  collection?: {
+    heading: { zh: string; en: string };
+    intro: { zh: string; en: string };
+    backHref: string;
+    sourcePath: string;
+    filename: string;
+    include: (c: AlgCase) => boolean;
+    cardsOnly?: boolean;
+    simplifiedByDefault?: boolean;
+  };
 }
 
 /** Large sets normally start collapsed; SQ1 cubeshape sets are learned slice-count by
@@ -341,20 +360,21 @@ export function collapseAlgGroupsByDefault(
   return caseCount > 100 && !umbrella && !(puzzle === 'sq1' && ['cs', 'csp', 'obl'].includes(set));
 }
 
-export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initialData }: AlgCategoryViewProps) {
+export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initialData, collection }: AlgCategoryViewProps) {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const narrow = useIsMobile(480);
   const validPuzzle = isPuzzle(puzzleParam);
   const meta = validPuzzle ? getAlgSetMeta(puzzleParam, set) : undefined;
-  const setHeading = meta?.short ?? (meta ? tr(meta) : set);
+  const setHeading = collection ? tr(collection.heading) : meta?.short ?? (meta ? tr(meta) : set);
   const algSetTitle = (() => {
     const fallback = tr({ zh: '公式库', en: 'Algorithms'
     });
     if (!puzzleParam || !set) return fallback;
     return `${puzzleParam} · ${setHeading}`;
   })();
-  useDocumentTitle(algSetTitle, algSetTitle);
+  // Curated child routes own their server metadata; do not overwrite it after hydration.
+  useDocumentTitle(algSetTitle, algSetTitle, !collection);
   const [data, setData] = useState<AlgFile | null>(initialData ?? null);
   const [error, setError] = useState<string | null>(null);
   const [activeOri, setActiveOri] = useState(0);
@@ -416,15 +436,26 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     'all',
     parseAsBoolean.withDefault(false),
   );
-  const canShowAllCases = puzzleParam === '3x3' && set === 'zbll' && !subgroupParam;
-  const showAllCases = canShowAllCases && showAllCasesParam;
+  const [simplified, setSimplified] = useQueryState(
+    'simplified',
+    parseAsBoolean.withDefault(collection?.simplifiedByDefault ?? false),
+  );
+  const [optimalMetric, setOptimalMetric] = useQueryState(
+    'metric',
+    parseAsStringEnum<OptimalMetric>([...OPTIMAL_METRICS]).withDefault('htm'),
+  );
+  const [optimalComparison, setOptimalComparison] = useQueryState(
+    'op',
+    parseAsStringEnum<OptimalComparison>(['lte', 'eq', 'gte']).withDefault('lte'),
+  );
+  const [optimalMoves, setOptimalMoves] = useQueryState('moves', parseAsInteger);
+  const canShowAllCases = !collection && puzzleParam === '3x3' && set === 'zbll' && !subgroupParam;
   const animatable = true;
 
   // 列表视图(`cards` 只看图 / `full` 公式内联)。语义 + localStorage key 都在
   // AlgViewModeToggle 里,`/alg` 下所有 case 列表页共用同一个偏好。
   const [view, changeView] = useAlgViewMode();
   // ZBLL 全集有 472 张卡，固定只看图；若沿用用户在子页保存的 full 偏好，会一次铺开全部公式。
-  const effectiveView = showAllCases ? 'cards' : view;
 
   /** 这个 set 里实际出现过的标签 —— 没有就不渲染筛选器 */
   const availableTags = useMemo(() => {
@@ -637,22 +668,67 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
    * 展示用的排序:ZBLL / COLL 把「角块已成型」(U)和「对角换」(D)提到所在组的最前。
    * 只动这一份 —— `data.cases` 保持库里的原顺序,admin 拖动重排写回的还是它。
    */
-  const orderedCases = useMemo(() => sortByCp(set, data?.cases ?? []), [data, set]);
+  const orderedCases = useMemo(() => {
+    const ordered = sortByCp(set, data?.cases ?? []);
+    return collection ? ordered.filter(collection.include) : ordered;
+  }, [data, set, collection]);
 
-  const visibleCases = useMemo(() => {
-    if (!data) return [];
-    const inSubgroup = !subgroupSlug ? orderedCases : orderedCases.filter(c => {
+  const scopedCases = useMemo(() => {
+    if (!subgroupSlug) return orderedCases;
+    return orderedCases.filter(c => {
       const parts = (c.subgroup || '').toLowerCase().split('/');
       if (slugLevel === 'top') return parts[0] === subgroupSlug;
       if (slugLevel === 'sub') return parts[1] === subgroupSlug;
       return false;
     });
+  }, [orderedCases, subgroupSlug, slugLevel]);
+
+  const availableMetrics = useMemo(() => availableOptimalMetrics(scopedCases), [scopedCases]);
+  const resolvedOptimalMetric = availableMetrics.includes(optimalMetric)
+    ? optimalMetric
+    : availableMetrics[0] ?? optimalMetric;
+  const selectedOptimalRange = useMemo(
+    () => availableMetrics.length > 0 ? optimalRange(scopedCases, resolvedOptimalMetric) : null,
+    [availableMetrics.length, resolvedOptimalMetric, scopedCases],
+  );
+  useEffect(() => {
+    if (availableMetrics.length > 0 && resolvedOptimalMetric !== optimalMetric) {
+      void setOptimalMetric(resolvedOptimalMetric);
+    }
+  }, [availableMetrics.length, optimalMetric, resolvedOptimalMetric, setOptimalMetric]);
+  useEffect(() => {
+    if (optimalMoves === null || !selectedOptimalRange) return;
+    const clamped = Math.max(selectedOptimalRange.min, Math.min(selectedOptimalRange.max, optimalMoves));
+    if (clamped !== optimalMoves) void setOptimalMoves(clamped);
+  }, [optimalMoves, selectedOptimalRange, setOptimalMoves]);
+
+  const optimalFilterActive = optimalMoves !== null
+    && availableMetrics.length > 0
+    && selectedOptimalRange !== null;
+  const showAllCases = canShowAllCases && (showAllCasesParam || optimalFilterActive || simplified);
+  const effectiveView = showAllCases || collection?.cardsOnly ? 'cards' : view;
+  const canSimplifyRecognition = useMemo(() => {
+    if (puzzleParam !== '3x3') return false;
+    const sample = scopedCases[0];
+    if (!sample) return false;
+    const viewName = cubeThumbParams(puzzleParam, set, sample.sticker).view;
+    return viewName === 'plan' || viewName === 'oll' || viewName === 'pll';
+  }, [puzzleParam, scopedCases, set]);
+
+  const visibleCases = useMemo(() => {
+    if (!data) return [];
+    const optimallyFiltered = filterCasesByOptimal(
+      scopedCases,
+      optimalFilterActive
+        ? { metric: resolvedOptimalMetric, comparison: optimalComparison, moves: optimalMoves }
+        : null,
+    );
     // 选了标签就只留「至少有一条带该标签的公式」的 case —— 否则筛出来一堆空卡片。
     // ⚠ 这个 set 压根没有该标签(书签 / 后退带过来的 `?tag=oh` 落到 f2l 上)⟹ 当没筛 ——
     //    否则页面空空如也,而下拉根本不渲染,用户没有任何控件能把它改回来。
-    if (showAllCases || tagFilter === 'all' || !availableTags.includes(tagFilter)) return inSubgroup;
-    return inSubgroup.filter(c => c.algs.some(ori => ori.some(a => a.tags?.includes(tagFilter))));
-  }, [data, subgroupSlug, slugLevel, showAllCases, tagFilter, availableTags]);
+    if (effectiveView === 'cards' || tagFilter === 'all' || !availableTags.includes(tagFilter)) return optimallyFiltered;
+    return optimallyFiltered.filter(c => c.algs.some(ori => ori.some(a => a.tags?.includes(tagFilter))));
+  }, [data, scopedCases, optimalFilterActive, resolvedOptimalMetric, optimalComparison, optimalMoves, effectiveView, tagFilter, availableTags]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, typeof visibleCases>();
@@ -694,7 +770,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     return <div className="alg-root"><div className="alg-empty">Unknown set: {puzzleParam}/{set}</div></div>;
   }
 
-  const showSubgroupPicker = !!meta.umbrella && !subgroupParam && !showAllCases;
+  const showSubgroupPicker = !collection && !!meta.umbrella && !subgroupParam && !showAllCases;
 
   const subSubgroups = useMemo(() => {
     if (!meta.umbrella || slugLevel !== 'top') return [];
@@ -711,11 +787,11 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   }, [visibleCases, slugLevel, meta.umbrella]);
   const showSubSubgroupPicker = subSubgroups.length > 1;
 
-  const rawBackTo = slugLevel === 'sub' && subParentSlug
+  const rawBackTo = collection?.backHref ?? (slugLevel === 'sub' && subParentSlug
     ? `/alg/${puzzleParam}/${set}/${subParentSlug}`
     : subgroupParam
       ? `/alg/${puzzleParam}/${set}`
-      : `/alg/${puzzleParam}`;
+      : `/alg/${puzzleParam}`);
   const backTo = puzzleParam === 'sq1' && !sq1BlackTop ? `${rawBackTo}?black=false` : rawBackTo;
 
   const dispToken = (slug: string) => {
@@ -739,14 +815,16 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   const buildPdfSheet = () => {
     const listing = !showSubgroupPicker && !showSubSubgroupPicker;
     const pdfCases = listing || subgroupSlug ? visibleCases : orderedCases;
-    const title = `${puzzleParam} ${tr(meta)}${subgroupDisplay ? ` ${subgroupDisplay}` : ''}`;
+    const title = collection
+      ? `${puzzleParam} ${tr(collection.heading)}`
+      : `${puzzleParam} ${tr(meta)}${subgroupDisplay ? ` ${subgroupDisplay}` : ''}`;
     return algSheetFromCases({
       puzzle: puzzleParam as AlgPuzzle,
       set,
       cases: pdfCases,
       title,
-      sourcePath: `/alg/${puzzleParam}/${set}${subgroupSlug ? `/${subgroupSlug}` : ''}`,
-      filename: `${puzzleParam}-${set}${subgroupSlug ? `-${subgroupSlug}` : ''}`,
+      sourcePath: collection?.sourcePath ?? `/alg/${puzzleParam}/${set}${subgroupSlug ? `/${subgroupSlug}` : ''}`,
+      filename: collection?.filename ?? `${puzzleParam}-${set}${subgroupSlug ? `-${subgroupSlug}` : ''}`,
       oriOf: listing ? (c => caseOri[c.name] ?? activeOri) : undefined,
       algFilter: listing && filtering ? (a => !!a.tags?.includes(tagFilter)) : undefined,
       // 组标题印展示名:库里的 `AS/ASD` 在页面上叫 `S-D`,打印表不该露出 DB 里那一串
@@ -755,6 +833,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       // ZBLL 一页一类:每个子组 12 个 case 正好是一张练习表,翻到哪页就练哪一类
       groupPerPage: set === 'zbll',
       sq1BlackTop,
+      simplifyRecognition: simplified,
     });
   };
 
@@ -776,7 +855,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
           {setHeading}
           {subgroupDisplay && <span className="alg-cat-subgroup"> {subgroupDisplay}</span>}
         </h1>
-        {meta.short && <p className="alg-cat-intro">{tr(meta.intro ?? meta)}</p>}
+        {(collection || meta.short) && (
+          <p className="alg-cat-intro">{collection ? tr(collection.intro) : tr(meta.intro ?? meta)}</p>
+        )}
         {data && !showSubgroupPicker && (
           <span className="alg-cat-count">{visibleCases.length} {tr({ zh: '个', en: 'cases'
         })}</span>
@@ -784,10 +865,64 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
         {data && canShowAllCases && (
           <BoolToggle
             value={showAllCases}
-            onChange={setShowAllCasesParam}
+            onChange={(value) => {
+              void setShowAllCasesParam(value);
+              if (!value) {
+                void setOptimalMoves(null);
+                void setSimplified(false);
+              }
+            }}
             label={tr({ zh: '显示全部情况', en: 'Show all cases' })}
             className="alg-show-all-toggle"
           />
+        )}
+        {data && canSimplifyRecognition && (!showSubgroupPicker || canShowAllCases) && (
+          <BoolToggle
+            value={simplified}
+            onChange={setSimplified}
+            label={tr({ zh: '简化图', en: 'Simplified diagrams' })}
+            className="alg-show-all-toggle"
+          />
+        )}
+        {data && availableMetrics.length > 0 && (!showSubgroupPicker || canShowAllCases) && selectedOptimalRange && (
+          <div className="alg-optimal-filter" role="group" aria-label={tr({ zh: '按最优步数筛选', en: 'Filter by optimal move count' })}>
+            <span className="alg-optimal-filter-label">{tr({ zh: '最优', en: 'Optimal' })}</span>
+            <select
+              className="alg-header-select"
+              value={resolvedOptimalMetric}
+              onChange={e => setOptimalMetric(e.target.value as OptimalMetric)}
+              aria-label={tr({ zh: '步数指标', en: 'Move metric' })}
+            >
+              {availableMetrics.map(metric => <option key={metric} value={metric}>{metric.toUpperCase()}</option>)}
+            </select>
+            <select
+              className="alg-header-select alg-optimal-comparison"
+              value={optimalComparison}
+              onChange={e => setOptimalComparison(e.target.value as OptimalComparison)}
+              aria-label={tr({ zh: '比较方式', en: 'Comparison' })}
+            >
+              <option value="lte">≤</option>
+              <option value="eq">=</option>
+              <option value="gte">≥</option>
+            </select>
+            <select
+              className="alg-header-select"
+              value={optimalMoves ?? ''}
+              onChange={e => setOptimalMoves(e.target.value ? Number(e.target.value) : null)}
+              aria-label={tr({ zh: '最优步数', en: 'Optimal move count' })}
+            >
+              <option value="">{tr({ zh: '步数', en: 'Moves' })}</option>
+              {Array.from(
+                { length: selectedOptimalRange.max - selectedOptimalRange.min + 1 },
+                (_, i) => selectedOptimalRange.min + i,
+              ).map(moves => <option key={moves} value={moves}>{moves}</option>)}
+            </select>
+            {optimalFilterActive && (
+              <button type="button" className="alg-filter-clear" onClick={() => setOptimalMoves(null)}>
+                {tr({ zh: '清除', en: 'Clear' })}
+              </button>
+            )}
+          </div>
         )}
         {puzzleParam === 'sq1' && (
           <BoolToggle
@@ -797,7 +932,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
           />
         )}
         {/* 图 / 公式 视图开关(只在真列出 case 的页面;子组选择页没有卡片) */}
-        {data && !showSubgroupPicker && !showSubSubgroupPicker && !showAllCases && (
+        {data && !showSubgroupPicker && !showSubSubgroupPicker && !showAllCases && !collection?.cardsOnly && (
           <AlgViewModeToggle value={view} onChange={changeView} className="alg-view-toggle" />
         )}
         {isZh && data && !showSubgroupPicker && !showSubSubgroupPicker && effectiveView === 'full' && puzzleParam === '3x3' && (
@@ -830,7 +965,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
           <AlgPdfButton build={buildPdfSheet} />
         )}
         {/* set 级(含 umbrella 落地页)从全集选;subgroup 页带 ?scope= 只从该组选 */}
-        {data && (
+        {data && !collection && (
           <Link
             href={`/alg/${puzzleParam}/${set}/select${subgroupSlug ? `?scope=${encodeURIComponent(subgroupSlug)}` : ''}`}
             className="alg-train-cta"
@@ -841,15 +976,25 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
         )}
         {/* 观察训练:只认图形不还原,和上面的「训练」是同一套 case 的另一种练法,
             所以入口就在这套自己的页首(以前是 /alg/3x3 底部一排不分套的 chip)。 */}
-        {puzzleParam === '3x3' && RECOGNIZE_SETS_3X3.has(set) && (
+        {!collection && puzzleParam === '3x3' && RECOGNIZE_SETS_3X3.has(set) && (
           <Link href={`/recognize/${set}`} className="alg-recog-cta" prefetch={false}>
             {tr({ zh: '观察', en: 'Recognition' })}
+          </Link>
+        )}
+        {!collection && !subgroupParam && puzzleParam === '3x3' && set === 'zbll' && (
+          <Link href="/alg/3x3/zbll/simple" className="alg-recog-cta" prefetch={false}>
+            {tr({ zh: '简单 ZBLL', en: 'Simple ZBLL' })}
+          </Link>
+        )}
+        {!collection && !subgroupParam && puzzleParam === '3x3' && (set === 'pll' || set === 'oll') && (
+          <Link href={`/recognize/${set}/guide`} className="alg-recog-cta" prefetch={false}>
+            {tr({ zh: '识别指南', en: 'Recognition guide' })}
           </Link>
         )}
         {/* 新增 / 校验作用在**整个 set** 上,和这一层是不是列 case 卡片无关 ——
             子组选择页(umbrella set 首页,如 /alg/3x3/zbls)照样要有:那一层没有卡片可点,
             但「这套公式集有没有校验不过的」正是从这儿开始查的。 */}
-        {isAdmin && data && (
+        {!collection && isAdmin && data && (
           <>
             <button
               type="button"
@@ -999,6 +1144,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                                也别改成 local 本地渲染:那会把几千次渲染压进主线程,比发请求更糟。 */
                             loading="lazy"
                             sq1BlackTop={sq1BlackTop}
+                            simplifyRecognition={simplified}
                           />
                         </div>
                         <div className="alg-case-info">

@@ -9,6 +9,14 @@ import { algCaseSvg } from '@/lib/alg_pdf/case_svg';
 // guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
 
 const RAW = { kind: 'raw' as const, tag: '', attrs: {} };
+const FACE = {
+  kind: 'face' as const,
+  us: 'rygyyyyyy',
+  ub: 'yrybbbbbb',
+  uf: 'ggogggggg',
+  ul: 'bbrrrrrrr',
+  ur: 'boooooooo',
+};
 
 function input(puzzle: AlgPuzzle, set = 'shape'): CaseThumbPlanInput {
   return { puzzle, set, sticker: RAW, alg: '', setup: '' };
@@ -77,6 +85,26 @@ describe('网页与 PDF 共用 case 缩略图渲染计划', () => {
     expect(black.svg).not.toBe(yellow.svg);
     await expect(algCaseSvg({ ...base, sq1BlackTop: true })).resolves.toBe(black.svg);
     await expect(algCaseSvg({ ...base, sq1BlackTop: false })).resolves.toBe(yellow.svg);
+  });
+
+  it('3x3 识别简化进入网页与 PDF 共用计划，其他阶数不误用', async () => {
+    const base = { puzzle: '3x3' as const, set: 'zbll', sticker: FACE, alg: "R U R'", setup: "R U R'" };
+    const plain = caseThumbPlan(base);
+    const simplified = caseThumbPlan({ ...base, simplifyRecognition: true });
+    expect(plain.renderer).toBe('visualcube');
+    expect(simplified.renderer).toBe('visualcube');
+    if (plain.renderer !== 'visualcube' || simplified.renderer !== 'visualcube') {
+      throw new Error('expected visualcube plans');
+    }
+    expect(plain.params.planSimplify).toBeUndefined();
+    expect(simplified.params.planSimplify).toEqual({ side: 'oppbar', up: 'all', showYellow: true });
+    expect(simplified.setup).toBeTruthy();
+    await expect(algCaseSvg({ ...base, simplifyRecognition: true }))
+      .resolves.not.toBe(await algCaseSvg(base));
+
+    const four = caseThumbPlan({ ...base, puzzle: '4x4', simplifyRecognition: true });
+    expect(four.renderer).toBe('visualcube');
+    if (four.renderer === 'visualcube') expect(four.params.planSimplify).toBeUndefined();
   });
 
   it('网页适配器和 PDF 适配器都只能消费 caseThumbPlan,不能再按 puzzle 分叉', () => {
