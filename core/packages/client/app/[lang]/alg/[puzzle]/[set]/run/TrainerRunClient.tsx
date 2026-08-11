@@ -518,10 +518,9 @@ export default function TrainerRunClient() {
       setMode('recap');
     }
     if (timing) setTiming(false);
-    if (multiScramble) setMultiScramble(false);
     if (smartCube) setSmartCube(false);
-  }, [splitEligible, mode, timing, multiScramble, smartCube,
-      setMode, setTiming, setMultiScramble, setSmartCube]);
+  }, [splitEligible, mode, timing, smartCube,
+      setMode, setTiming, setSmartCube]);
 
   useSpaceHoldTimer({
     state: timerState,
@@ -1323,7 +1322,6 @@ export default function TrainerRunClient() {
                         lastTrainingMode.current = 'recap';
                         setMode('recap');
                         setTiming(false);
-                        setMultiScramble(false);
                         setSmartCube(false);
                         void setSplitParam('1');
                         setOptsOpen(false);
@@ -1338,8 +1336,8 @@ export default function TrainerRunClient() {
                       : room
                       ? tr({ zh: '先离开多设备房间，再开启单屏分工', en: 'Leave the multi-device room before starting a shared-screen drill' })
                       : tr({
-                          zh: '同一屏幕分成 A/B 两边，共用选中题库并自动分工，不需要房间码。开启后使用覆盖模式并关闭计时、智能魔方和三条一屏',
-                          en: 'One screen, two independent lanes. Selected cases are divided without overlap and no room code is needed. Split view uses Coverage and turns off timing, smart cube, and Three at once',
+                          zh: '同一屏幕分成 A/B 两边，共用选中题库并自动分工，不需要房间码。开启后使用覆盖模式并关闭计时和智能魔方；三条开启时两边各显示最多三条',
+                          en: 'One screen, two independent lanes. Selected cases are divided without overlap and no room code is needed. Split view uses Coverage and turns off timing and smart cube; Three at once shows up to three cases on each side',
                         })}
                   </div>
                 </>
@@ -1567,8 +1565,8 @@ export default function TrainerRunClient() {
                   onChange={setPureScramble}
                   label={tr({ zh: '纯打乱', en: 'Plain scramble' })}
                 />
-                {/* 三条一屏只在不计时下有意义(计时是一把一把的),与「统计」正好互补出现。 */}
-                {!timing && !splitActive && (
+                {/* 三条一屏只在不计时下有意义(计时是一把一把的),分屏时每边独立显示一组。 */}
+                {!timing && (
                   <BoolToggle
                     value={multiScramble}
                     onChange={setMultiScramble}
@@ -1675,6 +1673,7 @@ export default function TrainerRunClient() {
           showThumb={showStageThumb}
           pureScramble={pureScramble}
           scrambleFont={scrambleFont}
+          multi={multi}
           resolveCase={resolveCase}
           markPassedAsMastered={markPassedAsMastered}
           onExit={() => { void setSplitParam(null); }}
