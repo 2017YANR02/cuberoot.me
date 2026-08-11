@@ -376,7 +376,6 @@ export default function StageTrainingModal({ isZh, cube, onMoveSubscriber, onClo
                 <div className="stage-training-scramble">{question.scramble}</div>
                 <div className="stage-training-meta">
                   <span>{tr({ zh: `打乱 ${question.scrambleLength} HTM`, en: `${question.scrambleLength} HTM scramble` })}</span>
-                  {mode === 'plan' && <span>{styleLabel(activeStyle)}</span>}
                 </div>
               </div>
             </div>

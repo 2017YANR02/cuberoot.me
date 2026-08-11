@@ -53,7 +53,7 @@ function moveToCsTimerZh(move: ParsedMove): string {
   return `${face}${layer}${direction}转${quarterTurns * 90}度`;
 }
 
-/** 标准记号后跟紧凑中文提示，例如 R（右顺）/ U'（上逆）/ r（右双顺）。 */
+/** 纯紧凑中文记号，例如右顺 / 上逆 / 右双顺。 */
 function moveToCompactZh(move: ParsedMove): string {
   if (move.kind === 'rotation' || move.kind === 'slice') return move.raw;
 
@@ -65,7 +65,7 @@ function moveToCompactZh(move: ParsedMove): string {
   const turn = quarterTurns === 2
     ? '180'
     : `${move.amount < 0 ? '逆' : '顺'}${quarterTurns === 1 ? '' : quarterTurns * 90}`;
-  return `${move.raw}（${face}${doubleLayer}${turn}）`;
+  return `${face}${doubleLayer}${turn}`;
 }
 
 interface DisplayPiece {
@@ -96,7 +96,7 @@ export function formatAlgNotation(alg: string, style: AlgNotationStyle): string 
   return pieces.map((piece, index) => {
     if (piece.moves) return piece.moves.map(moveDisplay).join(moveSeparator);
 
-    // 中文说明用逗号隔开连续招式；紧凑对照保留原空格。括号、换位子标点和未知内容照原文保留。
+    // 中文说明用逗号隔开连续招式；紧凑中文保留原空格。括号、换位子标点和未知内容照原文保留。
     if (/^\s+$/.test(piece.raw) && pieces[index - 1]?.moves && pieces[index + 1]?.moves) {
       return style === 'zh-cstimer' ? '，' : piece.raw;
     }

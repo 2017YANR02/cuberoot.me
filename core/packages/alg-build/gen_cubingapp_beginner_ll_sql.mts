@@ -31,11 +31,11 @@ assertSetCounts('2 Look PLL', twoLookPll, 6, 10);
 assertSetCounts('4x4 PLL Parity', pllParity, 22, 22);
 
 const NOTE_ZH: Record<string, string> = {
-  "F sexy F'": "F 性感转动 F'",
-  "F inverse sexy F'": "F 反性感转动 F'",
+  "F sexy F'": "F sexy F'",
+  "F inverse sexy F'": "F inverse sexy F'",
   'Inverse of Sune': '小鱼的逆公式',
   'Double Sune with cancellation': '双小鱼，消去重复转动',
-  'Sexy sledge with wide moves': '性感转动接 Sledge，使用宽层转动',
+  'Sexy sledge with wide moves': 'Sexy sledge with wide moves',
   'Inverse of T OLL': 'T OLL 的逆公式',
   'Inverse of Ub perm': 'Ub perm 的逆公式',
   'Inverse of Ua perm': 'Ua perm 的逆公式',
