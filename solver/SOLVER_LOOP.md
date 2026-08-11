@@ -88,7 +88,7 @@
 ### EPIC 2.5 — 三阶 First Face + First Layer(2026-08-11 用户指定优先)
 > 共用一个求解器家族,但保留两个独立阶段。固定所选底色、HTM:First Face = 该色 4 角+4 棱都在该面且色贴纸朝该面,环上排列不限;First Layer = 同一组 8 块位置与朝向全部正确,侧色与中心对齐。6 底色沿用 `ROTS6`;同底色绕轴不产生额外目标。First Face 用无标号集合商空间争取整表精确分布;First Layer 用有标号件 + 可采纳 PDB/IDA*,禁止拿采样最大值冒充 God's number。任何 >1GB 落盘表先停到 soft-gate。
 
-- [ ] **FL1** Rust 核心 + analyzer:共享 `first_layer_solver.rs`(阶段 `first_face` / `first_layer`)与 `first_layer_analyzer.rs`(suffix `_first_layer`,12 列 = 2 阶段×6 底色),必要时新增 `mt_corn4`;三件套测试含独立 `State` 物理判据、短深 IDDFS 最优性、枚举无无效尾动、e2e。门:`cargo test --release first_layer` 全绿;记录两阶段精确/已知直径、First Face 全空间直方图、真题吞吐;大表门按上文。
+- [x] **FL1** Rust 核心 + analyzer。✅ 2026-08-11 `7dedf0c18f`。共享 `first_layer_solver.rs` 两阶段 + 12 列 analyzer；First Face 无标号 44,906,400 态精确 BFS,God=10,完整直方图已锁；First Layer 有标号 25,866,086,400 态,IDA* + 可采纳 max PDB 逐态严格最优,当前只证明 11≤God≤20。零持久化新表；clean release 核心4/4+e2e1/1 绿，独立 State/IDDFS/replay/无效尾动/列序全锁；约 250.6 scrambles/s。
 - [ ] **FL2** 两阶段全链路:WASM 单类/单 need + worker/client/pool + StageSolver;`scramble-variants` 作为一个方法下的「底面 / 底层」两阶段;注册两套 stats 增量管道、gen comp steps、首页 Recent、timer 真题筛、stats 精确矩阵(First Face 有完整穷举就落 full,First Layer 无证明就诚实 pending)、`/code/solvers` 看板。只跑小样本验形,不灌 130 万/不发布 static。门:clean WASM rebuild + node native↔WASM/replay + typecheck + 定向测试 + analyzer 桌面/390px Playwright 0 error。
 - [ ] **FL3 REVIEW** fresh agent 只审查 FL1/FL2:目标语义/最优性独立判据、12 列顺序、worker 表契约、统计 builder↔gen/home/timer 映射、i18n、窄屏与现有 Daisy/standard 回归;发现问题就聚焦修复并独立 commit。门:审查结论零 blocker。
 - [ ] **📦 MANUAL(First Face/First Layer)** 两套语料全量灌注 + 重建 stats/recent/comp_steps + static/PG 发布(本轮 loop 不执行)。
@@ -172,6 +172,7 @@
 - 2026-06-12 — **P5a** SQ1 Rust 核心,`5b7c44950`(实现,被并行 session 打包)+ `0e740eaf5`(性能修复+基线回填)。过程:两个子 agent 先后死于"后台等测试不收尾"(主 loop 直接接管基线回填);初版 16 刀深态 IDDFS 爆炸(单态 49min 单核满载,实测后杀),聚焦修复换五张全空间投影表 max 启发式(节点数 16.5 万倍削减)后最差 7.3s;6/6 + 全量 lib 132/0。教训已写派发模板:cargo 一律前台跑 + 10min 自断。下一个 = P5b。
 - 2026-06-12 — **P5b** sq1 analyzer + e2e,`d104a7a16`。raw 通道照 pyraminx 范本;真实 WCA 5 条 + 手算 5 条双 baseline 锁死;全量 132/0。预警:单态方差大(少数深态 45~95s),灌注侧需并行(写进 P5b 行 + P5c 判断)。下一个 = P5c。
 - 2026-06-12 — **P5c** sq1 统计管线,`84ee30e18`。两跑绿(49+1 条),dist 峰值 11;实测平均 ~200 CPU-s/态 + 病态长尾 → P5d「秒级」设计前提被打破,挂 ⏸ soft-gate(§3 四选一),**loop 按协议停,等用户拍板**。(build_puzzle_dist.ts 的 node 类型诊断仍为 P2c 已记录的 LSP 误报。)
+- 2026-08-11 — **FL1** First Face + First Layer Rust 核心/analyzer,`7dedf0c18f`。Face 44,906,400 态精确表,God=10；Layer 25,866,086,400 态严格最优 IDA*,God 仅报已证 11..20；零落盘新表；release 5 门全绿,吞吐约 250.6/s。下一个 = FL2。
 
 ---
 
