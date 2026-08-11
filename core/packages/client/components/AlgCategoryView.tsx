@@ -52,6 +52,11 @@ import { sortByCp } from '@/lib/alg_cp_order';
 import { ALG_TAG_LABEL, ALG_TAGS } from '@/lib/alg_tags';
 import { displayAlg, oriAdjustSetup, shortOriName } from '@/lib/alg_display';
 import { sanitizeAlgHtml } from '@/lib/alg_html';
+import {
+  ALG_NOTATION_STYLES,
+  formatAlgNotation,
+  type AlgNotationStyle,
+} from '@/lib/alg-notation-display';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useHashHighlight } from '@/hooks/useHashHighlight';
 import { useIsMobile } from '@/hooks/useIsMobile';
@@ -92,19 +97,21 @@ function SetupLine({ puzzle, setup }: { puzzle: string; setup: string }) {
   );
 }
 
-function AlgRow({ entry, expanded, onToggle, animatable, puzzle, set, setup, invalid, mirror, ori = 0 }: {
+function AlgRow({ entry, expanded, onToggle, animatable, puzzle, set, setup, invalid, mirror, ori = 0, notationStyle }: {
   entry: AlgEntry; expanded: boolean; onToggle: () => void; animatable: boolean;
   puzzle: AlgPuzzle; set: string; setup?: string; invalid?: string;
   /** 有值 = 这个 set 吃镜像系统,行尾出翻转图标;`partner` 是伙伴 case 名(没建链时为 null) */
   mirror?: { partner: string | null; self: string };
   /** 这条公式在第几个视角(0=FR),镜像面板要拿它算落点 */
   ori?: number;
+  notationStyle: AlgNotationStyle;
 }) {
   const { alg, algHtml } = entry;
   const { copied, copy } = useCopy();
   const [mirrorOpen, setMirrorOpen] = useState(false);
   // 显示 / 复制都剥掉收尾 AUF;下面的 AlgPlayer 拿的仍是完整公式,动画才停在还原态。
-  const algShown = formatScrambleForEvent(puzzle, displayAlg(alg));
+  const standardAlgShown = formatScrambleForEvent(puzzle, displayAlg(alg));
+  const algShown = formatAlgNotation(standardAlgShown, notationStyle);
   // 步数要数**屏幕上这一条**。`entry.stm` 是入库值(含收尾 AUF),拿它当徽章就会
   // 出现「显示 10 步、徽章写 11」。
   const shownStm = useMemo(() => (entry.stm == null ? null : stm(displayAlg(alg))), [entry.stm, alg]);
@@ -129,7 +136,7 @@ function AlgRow({ entry, expanded, onToggle, animatable, puzzle, set, setup, inv
           <span key={t} className={`alg-tag alg-tag-${t}`} title={ALG_TAG_LABEL[t]()}>{ALG_TAG_LABEL[t]()}</span>
         ))}
         <span className="alg-alg-text">
-          {algHtml && puzzle !== 'sq1'
+          {algHtml && puzzle !== 'sq1' && notationStyle === 'standard'
             ? <span dangerouslySetInnerHTML={{ __html: sanitizeAlgHtml(algHtml) }} />
             : algShown}
           {entry.note && <span className="alg-alg-note">({tr(entry.note)})</span>}
@@ -393,6 +400,14 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   }, []);
   // 筛选 → replace(不往历史里塞;CLAUDE.md「URL 状态」)
   const [tagFilter, setTagFilter] = useQueryState('tag', parseAsStringEnum<AlgTag | 'all'>(['all', ...ALG_TAGS]).withDefault('all'));
+  const [notationStyle, setNotationStyle] = useQueryState(
+    'notation',
+    parseAsStringEnum<AlgNotationStyle>([...ALG_NOTATION_STYLES]).withDefault('standard'),
+  );
+  // 第一版只开放三阶 OLL。即使有人把 query 手工带去其它项目，也不能按三阶面转误译。
+  const displayedNotationStyle: AlgNotationStyle = puzzleParam === '3x3' && set === 'oll'
+    ? notationStyle
+    : 'standard';
   const [sq1BlackTop, setSq1BlackTop] = useQueryState(
     'black',
     parseAsBoolean.withDefault(true),
@@ -769,10 +784,21 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
         {data && !showSubgroupPicker && !showSubSubgroupPicker && (
           <AlgViewModeToggle value={view} onChange={changeView} className="alg-view-toggle" />
         )}
+        {data && !showSubgroupPicker && !showSubSubgroupPicker && view === 'full' && puzzleParam === '3x3' && set === 'oll' && (
+          <select
+            className="alg-header-select"
+            value={notationStyle}
+            onChange={e => setNotationStyle(e.target.value as AlgNotationStyle)}
+            aria-label={tr({ zh: '转动记号', en: 'Move notation' })}
+          >
+            <option value="standard">{tr({ zh: '英文记号', en: 'English notation' })}</option>
+            <option value="zh-cstimer">{tr({ zh: '中文记号（csTimer）', en: 'Chinese notation (csTimer)' })}</option>
+          </select>
+        )}
         {/* 标签筛选只在公式内联时有意义(只看图时没公式可筛) */}
         {data && !showSubgroupPicker && !showSubSubgroupPicker && view === 'full' && availableTags.length > 0 && (
           <select
-            className="alg-tag-filter"
+            className="alg-header-select"
             value={tagFilter}
             onChange={e => setTagFilter(e.target.value as AlgTag | 'all')}
             aria-label={tr({ zh: '按标签筛选公式', en: 'Filter algs by tag' })}
@@ -1008,6 +1034,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                                 invalid={c.id != null ? invalidAlgs.get(`${c.id}:${oriIdx}:${trueIdx}`) : undefined}
                                 ori={oriIdx}
                                 mirror={mirrorFor(c)}
+                                notationStyle={displayedNotationStyle}
                               />
                             );
                             const key = `${entry.altId ?? ''}::${trueIdx}`;
@@ -1042,6 +1069,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                         setup={c.setup}
                         firstAlg={c.algs[0]?.[0]?.alg}
                         submissions={submissionsByCase.get(c.name) ?? []}
+                        notationStyle={displayedNotationStyle}
                         onPatch={(action) => {
                           setSubmissions(prev => {
                             if (action.type === 'add') return [...prev, action.submission];
