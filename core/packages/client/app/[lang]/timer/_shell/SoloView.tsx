@@ -140,6 +140,7 @@ const ManualEntryModal = dynamic(() => import('../_components/ManualEntryModal')
 const SolverModal = dynamic(() => import('../_components/SolverModal'), { ssr: false });
 const BulkScrambleModal = dynamic(() => import('../_components/BulkScrambleModal'), { ssr: false });
 const DrillModal = dynamic(() => import('../_components/DrillModal'), { ssr: false });
+const StageTrainingModal = dynamic(() => import('../_components/StageTrainingModal'), { ssr: false });
 /** 停表后就地摊开的复盘(见 SolveRecap 头注)。和上面那些弹层一样留在自己的 chunk
  *  里,但它不是「用户可能会打开的东西」而是「拧完就会出现的东西」—— 所以魔方一连上
  *  就 onIdle 预取(见 recapPrefetch),真停表那下已经在注册表里。 */
@@ -323,6 +324,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   // ── Drill mode ──────────────────────────────────────────────────
   const [drillTarget, setDrillTarget] = useState<{ type: DrillType; id: string } | null>(null);
   const [drillModalOpen, setDrillModalOpen] = useState(false);
+  const [stageTrainingOpen, setStageTrainingOpen] = useState(false);
   const drillAllowed = ['333', '333oh', '333fm', 'oll', 'pll'].includes(event);
   useEffect(() => {
     if (!drillAllowed && drillTarget) setDrillTarget(null);
@@ -875,6 +877,11 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   const consumeFacesRef = useRef<(faces: import('../_lib/cube/state').CubeFaces) => void>(() => {});
   useEffect(() => { consumeFacesRef.current = multiStage.consumeFromState; }, [multiStage.consumeFromState]);
   const bluetoothSubscribersRef = useRef<Set<(m: string, ts: number) => void>>(new Set());
+  const subscribeBluetoothMoves = useCallback((cb: (m: string, ts: number) => void) => {
+    const subscribers = bluetoothSubscribersRef.current;
+    subscribers.add(cb);
+    return () => { subscribers.delete(cb); };
+  }, []);
 
   const [macPrompt, setMacPrompt] = useState<{ deviceName: string; isWrongKey?: boolean } | null>(null);
   const macResolverRef = useRef<((m: string | null) => void) | null>(null);
@@ -916,6 +923,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
    */
   const startFromCubeRef = useRef<(ts: number) => void>(() => {});
   startFromCubeRef.current = (ts: number) => {
+    if (stageTrainingOpen) return; // 阶段训练自己记录动作，不能在遮罩后面偷启主计时器
     if (!getSettings().timingEnabled) return; // 练习模式:换题不计时
     // The phase check lives inside startFromCube, against the timer's own
     // synchronous phase — two turns from one BLE batch must not start twice.
@@ -977,6 +985,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       }
     },
     onSolved: () => {
+      if (stageTrainingOpen) return;
       if (phaseSnapshotRef.current === 'running') timer.onPressDown();
     },
     onNeedMac: requestMac,
@@ -1684,7 +1693,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     settingsOpen || bluetoothOpen || stackmatOpen ||
     trainerSubsetOpen !== null || statsModalOpen ||
     manualEntryOpen || solverOpen || bulkScrambleOpen ||
-    drillModalOpen || bldHelperOpen || panelFullscreen ||
+    drillModalOpen || stageTrainingOpen || bldHelperOpen || panelFullscreen ||
     modalSolve !== null || reconstructSolve !== null;
   // 整屏之后没有「点空白处关掉」了(遮罩全被盖住,已删),所以 Escape 得亲自接住 ——
   // 主键盘处理器见 anyModalOpenRef 那道闸,面板开着时它整个不响应,不会误触 reset()。
@@ -1864,6 +1873,11 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     ...(drillAllowed && !drillTarget ? [{
       icon: <Crosshair size={14} />, label: tr({ zh: '专项练习', en: 'Drill mode'
     }), onClick: () => setDrillModalOpen(true),
+    }] : []),
+    ...(['333', '333oh', '333fm', '333mr'].includes(event) ? [{
+      icon: <Target size={14} />,
+      label: tr({ zh: '阶段最优训练', en: 'Optimal stage training' }),
+      onClick: () => setStageTrainingOpen(true),
     }] : []),
     // Speffz 记忆读数只对 3x3 盲拧有意义。原来写的是 startsWith('333'),于是 3x3 / OH / FM / MR
     // 这些非盲项目也挂着这一项。三个 3x3 盲拧项目都要:三盲、三盲 NI(不给观察)、多盲(逐个
@@ -2664,6 +2678,15 @@ export default function SoloView({ playersControl }: SoloViewProps) {
           onPick={(type, id) => { setDrillTarget({ type, id }); }}
           onExit={() => setDrillTarget(null)}
           onClose={() => setDrillModalOpen(false)}
+        />
+      )}
+
+      {stageTrainingOpen && (
+        <StageTrainingModal
+          isZh={isZh}
+          cube={bluetoothCube}
+          onMoveSubscriber={subscribeBluetoothMoves}
+          onClose={() => setStageTrainingOpen(false)}
         />
       )}
 
