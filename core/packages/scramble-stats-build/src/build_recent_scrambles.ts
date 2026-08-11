@@ -57,6 +57,7 @@ interface Variant { key: string; file: string; stages: string[]; metrics?: strin
 const VARIANTS: Variant[] = [
   { key: 'std', file: 'std.csv', stages: ['cross', 'xcross', 'xxcross', 'xxxcross', 'xxxxcross'] },
   { key: 'daisy', file: 'daisy.csv', stages: ['daisy'], metrics: ['daisy'] },
+  { key: 'first_layer', file: 'first_layer.csv', stages: ['first_face', 'first_layer'], metrics: ['first_face', 'first_layer'] },
   { key: 'eo', file: 'eo.csv', stages: ['eo_cross', 'eo_xcross', 'eo_xxcross', 'eo_xxxcross', 'eo_xxxxcross'] },
   { key: 'pseudo', file: 'pseudo.csv', stages: ['pseudo_cross', 'pseudo_xcross', 'pseudo_xxcross', 'pseudo_xxxcross'] },
   { key: 'pseudo_pair', file: 'pseudo_pair.csv', stages: ['pseudo_cross_pseudo_pair', 'pseudo_xcross_pseudo_pair', 'pseudo_xxcross_pseudo_pair', 'pseudo_xxxcross_pseudo_pair'] },

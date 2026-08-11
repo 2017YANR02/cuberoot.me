@@ -66,6 +66,7 @@ export interface Text { zh: string; en: string }
 export type ExactStage =
   | '333'
   | 'daisy'
+  | 'first_face' | 'first_layer'
   | 'cross' | 'xcross' | 'xxcross' | 'xxxcross' | 'xxxxcross'
   | 'pseudo_cross' | 'pseudo_xcross' | 'pseudo_xxcross' | 'pseudo_xxxcross'
   | 'cross_pair' | 'xcross_pair' | 'xxcross_pair' | 'xxxcross_pair'
@@ -87,6 +88,7 @@ export const EXACT_VARIANT_STAGES: Record<string, ExactStage[]> = {
   '333': ['333'],
   std: ['cross', 'xcross', 'xxcross', 'xxxcross', 'xxxxcross'],
   daisy: ['daisy'],
+  first_layer: ['first_face', 'first_layer'],
   pseudo: ['pseudo_cross', 'pseudo_xcross', 'pseudo_xxcross', 'pseudo_xxxcross'],
   pair: ['cross_pair', 'xcross_pair', 'xxcross_pair', 'xxxcross_pair'],
   pseudo_pair: [
@@ -113,7 +115,7 @@ export const EXACT_VARIANT_STAGES: Record<string, ExactStage[]> = {
  * EO 那一段是 EO / EOLine / 十字…(= EO_UI_STAGES)。
  */
 export const EXACT_VARIANT_ORDER: string[] = [
-  '333', 'std', 'daisy', 'pseudo', 'pair', 'pseudo_pair', 'eoline', 'eo', 'f2leo', 'pseudo_f2leo',
+  '333', 'std', 'daisy', 'first_layer', 'pseudo', 'pair', 'pseudo_pair', 'eoline', 'eo', 'f2leo', 'pseudo_f2leo',
   '123', '222', '223', '123x2', 'dr',
 ];
 
@@ -162,6 +164,8 @@ export const SLOT_LABEL: Record<ExactSlot, Text> = {
 export const SLOT_OK: Record<ExactStage, ExactSlot[]> = {
   '333': ['unfixed'],
   daisy: ['unfixed'],
+  first_face: ['unfixed'],
+  first_layer: ['unfixed'],
 
   cross: ['unfixed'],
   xcross: ['unfixed', 'fixed1'],
@@ -257,6 +261,8 @@ export const FRAME_NOTE: Partial<Record<ExactStage, Text>> = {
  */
 export const FRAME_STATES: Partial<Record<ExactStage, string>> = {
   daisy: '190080',
+  first_face: '44906400',
+  first_layer: '25866086400',
   cross: '190080',
   xcross: '72990720',
   xxcross: '21459271680',
@@ -433,6 +439,21 @@ export const EXACT_DIST: Record<ExactStage, StageTable> = {
       },
     },
   },
+
+  // ── First Face / First Layer ──────────────────────────────────────────
+  // solver/src/first_layer_solver.rs:First Face 无标号集合商空间全图 BFS。
+  first_face: {
+    unfixed: {
+      W: {
+        kind: 'full',
+        total: '44906400',
+        counts: ['1', '12', '150', '1886', '21916', '242166', '2292695', '14228012', '25293406', '2825994', '162'],
+      },
+    },
+  },
+  // First Layer 每一态由 IDA* + 可采纳 max-PDB 严格求最优，但 258.66 亿态尚未全枚举；
+  // 目前只证明直径 11..20，不能把语料样本最大值冒充上帝之数或完整分布。
+  first_layer: {},
 
   // ── Cross ─────────────────────────────────────────────────────────────
   // dist_cross_1col / _2col / _6col(四色底走 `dist_cross_6col --faces LRFB`)
@@ -989,6 +1010,18 @@ const STAGE_PLAN: Partial<Record<ExactStage, PendingPlan>> = {
     best: OOR(
       '单色底的 190,080 态已完整算出；多色底要同时追踪不同面的四组花瓣棱，不能再落在单个 edge4 商空间',
       'The 190,080-state single-colour space is complete; multiple colours require tracking the petal edges for several faces at once, outside one edge4 quotient',
+    ),
+  },
+  first_face: {
+    best: OOR(
+      '单色底 44,906,400 态已经完整穷举；多色底要同时追踪多个面的 4 角 + 4 棱集合，不能再落在这一张无标号商空间里',
+      'The 44,906,400-state single-colour quotient is complete; multiple colours require tracking the four-corner and four-edge sets for several faces at once, outside this unlabeled quotient',
+    ),
+  },
+  first_layer: {
+    best: OOR(
+      '单色底有 25,866,086,400 个有标号状态；逐态 IDA* 能严格求最优，但尚未全枚举。当前只证明直径在 11..20，分布与上帝之数都保持待定',
+      'A single colour has 25,866,086,400 labelled states. IDA* proves each queried optimum, but the space has not been fully enumerated; only the diameter interval 11..20 is proven, so both the distribution and God\'s number remain pending',
     ),
   },
   xcross: { best: BEST_TOO_BIG },

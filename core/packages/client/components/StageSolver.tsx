@@ -59,7 +59,7 @@ function fmtBytes(b: number): string {
 // 'htr2'(HTR phase-2,G3→solved)同理:输入须已处于该视角 HTR,否则引擎返回
 // HTR2_NOT_HTR 哨兵 → 同样显示 '-' 且不参与 min。
 // 'fr'(Floppy 还原,HTR→FR)同理:输入须已处于该视角 HTR,否则引擎返回 FR_NOT_HTR 哨兵。
-export type Method = 'std' | 'daisy' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo' | 'block' | 'eoline' | 'dr' | 'htr' | 'htr2' | 'fr';
+export type Method = 'std' | 'daisy' | 'first_layer' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo' | 'block' | 'eoline' | 'dr' | 'htr' | 'htr2' | 'fr';
 const VARIANT_ID: Record<'pair' | 'eo' | 'pseudo' | 'pseudo_pair', number> = {
   pair: 0, eo: 1, pseudo: 2, pseudo_pair: 3,
 };
@@ -82,17 +82,18 @@ const SINGLE_FACE_METHODS: ReadonlySet<Method> = new Set<Method>([
 // 这里只定引擎支持的方法顺序(按 WASM kind 分组),标签 = variantLabel(key, isZh)。
 // 块族(原 123/222/223)聚合为一个方法 'block',块形状落在阶段下拉。
 export const METHOD_KEYS: Method[] = [
-  'std', 'daisy', 'eo', 'pair', 'pseudo', 'pseudo_pair', 'f2leo', 'pseudo_f2leo',
+  'std', 'daisy', 'first_layer', 'eo', 'pair', 'pseudo', 'pseudo_pair', 'f2leo', 'pseudo_f2leo',
   'block', 'eoline', 'dr', 'htr', 'htr2', 'fr',
 ];
 // 阶段键序 + 显示名同样走 scramble-variants(VARIANT_STAGES / stageLabel),
 // WASM 阶段索引 i ↔ VARIANT_STAGES[method][i],与 /scramble/stats 完全同名。
-type Kind = 'std' | 'daisy' | 'variant' | 'f2leo' | 'block222' | 'roux223' | 'eodr' | 'htr' | 'htr2' | 'fr';
+type Kind = 'std' | 'daisy' | 'first_layer' | 'variant' | 'f2leo' | 'block222' | 'roux223' | 'eodr' | 'htr' | 'htr2' | 'fr';
 // block 方法按阶段分流:block222 阶段走专用 Block222SolverWasm,其余走 Roux223SolverWasm
 // (其阶段 id 0..4 恰与 VARIANT_STAGES.block 的索引一一对应,无需映射)。
 const kindOf = (m: Method, stageKey: string): Kind =>
   m === 'std' ? 'std'
     : m === 'daisy' ? 'daisy'
+    : m === 'first_layer' ? 'first_layer'
     : m === 'f2leo' || m === 'pseudo_f2leo' ? 'f2leo'
       : m === 'block' ? (stageKey === 'block222' ? 'block222' : 'roux223')
         : m === 'eoline' || m === 'dr' ? 'eodr'
@@ -104,6 +105,7 @@ const kindOf = (m: Method, stageKey: string): Kind =>
 const needOf = (m: Method): PoolNeed =>
   m === 'std' ? 'cross'
     : m === 'daisy' ? 'daisy'
+    : m === 'first_layer' ? 'first_layer'
     : m === 'f2leo' || m === 'pseudo_f2leo' ? 'f2leo'
       : m === 'block' ? 'roux223'
         : m === 'eoline' || m === 'dr' ? 'eodr'
@@ -435,6 +437,10 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
       : method === 'eoline' ? (stage === 0
         ? t(`${face} 底 EO(整棱定向)`, `${face}-bottom EO (all edges oriented)`)
         : t(`${face} 底 EOLine`, `${face}-bottom EOLine`))
+      : method === 'daisy' ? t(`${face} 色小花`, `${face}-colour Daisy`)
+        : method === 'first_layer' ? (stage === 0
+          ? t(`${face} 底面`, `${face}-bottom First Face`)
+          : t(`${face} 底层`, `${face}-bottom First Layer`))
       : method === 'dr' ? t(`${face} 轴 DR`, `${face}-axis DR`)
         : method === 'htr' ? t(`${face} 轴 HTR(需已处于该轴 DR)`, `${face}-axis HTR (requires DR on this axis)`)
           : method === 'htr2' ? t(`${face} 轴 HTR 收尾(需已处于该轴 HTR)`, `${face}-axis HTR-finish (requires HTR on this axis)`)
@@ -573,7 +579,8 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   // 设备并行度只在客户端可知;Node 21+ SSR 也有全局 navigator(hardwareConcurrency=构建机核数)
   // 会渲染出 4,移动端客户端是 2 → hydration mismatch。挂载后再取,水合期两端都渲染占位值。
   const [poolSize, setPoolSize] = useState<number | null>(null);
-  useEffect(() => { setPoolSize(poolSizeForDevice()); }, []);
+  // First Layer 会在 worker 内现场建约百 MB 的启发式表；多 worker 复制会让移动端迅速顶内存。
+  useEffect(() => { setPoolSize(method === 'first_layer' ? 1 : poolSizeForDevice()); }, [method]);
   // std 池的第二段加载:纯十字只要 pt_cross(50KB),切到 XCross/F2L 阶段才补
   // pt_cross_C4E0(20MB)。为 true 时复用同一套 loading UI,只是表清单换成那张大表。
   const [xLoading, setXLoading] = useState(false);
@@ -716,6 +723,8 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
           ? await pool.solveF2leoStage(scr, method === 'pseudo_f2leo', stage, stageMask, onFace)
           : kind === 'daisy'
             ? await pool.solveDaisyStage(scr)
+          : kind === 'first_layer'
+            ? await pool.solveFirstLayerStage(scr, stage)
           : kind === 'block222'
             ? await pool.solveBlock222Stage(scr)
             : kind === 'roux223'
@@ -840,6 +849,8 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
           ? await pool.solveF2leoMoves(scr, method === 'pseudo_f2leo', f, stage, { extra: slack, cap, combo, mask: movesMask })
           : kind === 'daisy'
             ? await pool.solveDaisyMoves(scr, f, { extra: slack, cap })
+          : kind === 'first_layer'
+            ? await pool.solveFirstLayerMoves(scr, stage, f, { extra: slack, cap })
           : kind === 'block222'
             ? await pool.solveBlock222Moves(scr, f, { extra: slack, cap })
             : kind === 'roux223'
