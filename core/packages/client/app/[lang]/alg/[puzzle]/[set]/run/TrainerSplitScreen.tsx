@@ -50,7 +50,9 @@ function TrainerSplitLane({
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
-  const laneLabel = lane === 'a' ? 'A' : 'B';
+  const laneName = lane === 'a'
+    ? { zh: '左侧分屏', en: 'Left split pane' }
+    : { zh: '右侧分屏', en: 'Right split pane' };
 
   useEffect(() => {
     let cancelled = false;
@@ -88,18 +90,17 @@ function TrainerSplitLane({
     && !loading
     && !failed;
   return (
-    <section className={`trainer-split-lane is-${lane}`} aria-label={tr({ zh: `用户 ${laneLabel}`, en: `Player ${laneLabel}` })}>
+    <section className={`trainer-split-lane is-${lane}`} aria-label={tr(laneName)}>
       <button
         type="button"
         className="trainer-split-hit"
         onClick={onComplete}
         disabled={!ready}
         aria-label={grouped
-          ? tr({ zh: `用户 ${laneLabel}：下一组`, en: `Player ${laneLabel}: next group` })
-          : tr({ zh: `用户 ${laneLabel}：下一题`, en: `Player ${laneLabel}: next case` })}
+          ? tr({ zh: `${laneName.zh}：下一组`, en: `${laneName.en}: next group` })
+          : tr({ zh: `${laneName.zh}：下一题`, en: `${laneName.en}: next case` })}
       />
       <div className="trainer-split-lane-head">
-        <span className="trainer-split-person">{tr({ zh: `用户 ${laneLabel}`, en: `Player ${laneLabel}` })}</span>
         <span className="trainer-split-person-progress">
           {tr({ zh: `已完成 ${completed}`, en: `${completed} done` })}
         </span>
