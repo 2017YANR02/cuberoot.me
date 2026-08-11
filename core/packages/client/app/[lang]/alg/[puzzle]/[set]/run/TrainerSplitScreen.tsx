@@ -220,7 +220,6 @@ export default function TrainerSplitScreen({
     <div className="trainer-split" data-no-timer>
       <div className="trainer-split-shared">
         <div>
-          <span className="trainer-split-kicker">{tr({ zh: '同屏协作', en: 'Shared-screen drill' })}</span>
           <strong>{tr({ zh: `第 ${round.round} 轮`, en: `Round ${round.round}` })}</strong>
         </div>
         <div className="trainer-split-meter" aria-label={tr({ zh: '分屏训练进度', en: 'Split drill progress' })}>
