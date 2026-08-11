@@ -464,6 +464,179 @@
 
 /* 分钟冒号统一走 components/SegmentTime + globals.css 的 .timer-colon(与 /timer 共用)。 */
 
+/* ─── 单设备双人分屏 ───
+   只服务平板 / 桌面:两条题道必须始终并排,手机不把它压成上下两张伪分屏。 */
+.trainer-split {
+  min-height: min(680px, calc(100vh - 130px));
+  display: flex;
+  flex-direction: column;
+}
+.trainer-split-shared {
+  display: grid;
+  grid-template-columns: max-content minmax(180px, 520px) max-content;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin: 0 auto 18px;
+  width: min(100%, 880px);
+}
+.trainer-split-shared > div:first-child {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.trainer-split-kicker { color: var(--muted-foreground); font-size: 0.78rem; }
+.trainer-split-shared strong { font-size: 0.88rem; }
+.trainer-split-meter {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.trainer-split-meter-track {
+  flex: 1;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--foreground) 10%, transparent);
+}
+.trainer-split-meter-track > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), var(--signal-info));
+  transition: width 180ms ease;
+}
+.trainer-split-meter-count {
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+.trainer-split-exit,
+.trainer-split-retry {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+  padding: 5px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+.trainer-split-exit:hover,
+.trainer-split-retry:hover { color: var(--foreground); }
+.trainer-split-lanes {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+}
+.trainer-split-lane {
+  --split-color: var(--accent);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 8px clamp(22px, 4vw, 68px) 24px;
+  text-align: center;
+}
+.trainer-split-lane.is-b {
+  --split-color: var(--signal-info);
+  border-left: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+}
+.trainer-split-lane-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.trainer-split-person {
+  color: var(--split-color);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.trainer-split-person-progress {
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+.trainer-split-case {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 260px;
+}
+.trainer-split-case .trainer-scramble-text {
+  max-width: 520px;
+  margin-inline: auto;
+  overflow-wrap: anywhere;
+}
+.trainer-split-loading,
+.trainer-split-wait {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 260px;
+  color: var(--muted-foreground);
+  font-size: 0.86rem;
+}
+.trainer-split-loading.is-error { color: var(--destructive); }
+.trainer-split-wait strong { color: var(--foreground); font-size: 1rem; }
+.trainer-split-next,
+.trainer-split-next-round {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  align-self: center;
+  min-height: 44px;
+  padding: 9px 26px;
+  border: 1px solid color-mix(in srgb, var(--split-color, var(--accent)) 54%, var(--border-default));
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--split-color, var(--accent)) 14%, transparent);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+.trainer-split-next:hover:not(:disabled),
+.trainer-split-next-round:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--split-color, var(--accent)) 22%, transparent);
+}
+.trainer-split-next:disabled { opacity: 0.45; cursor: default; }
+.trainer-split-finish {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+  color: var(--muted-foreground);
+  font-size: 0.86rem;
+}
+.trainer-split-next-round { --split-color: var(--toggle-on); min-height: 38px; padding: 7px 16px; }
+/* 用户要求手机不启用；同时压掉 URL 从大屏带到手机时的分屏主体与设置入口。 */
+@media (max-width: 767px), (max-height: 599px) {
+  .trainer-split,
+  .trainer-split-setting { display: none; }
+}
+@media (min-width: 768px) and (max-width: 980px) {
+  .trainer-split-shared { grid-template-columns: max-content minmax(120px, 1fr) max-content; }
+  .trainer-split-lane { padding-inline: clamp(14px, 3vw, 28px); }
+  .trainer-split-case .trainer-scramble-text { font-size: 1.3rem; }
+}
+
 .trainer-help {
   font-size: 0.85rem;
   color: var(--faint-foreground);
