@@ -1,0 +1,15 @@
+# Scramble samples — daisy / daisy / BG / bin 7
+# Population in this bin: 8
+# Samples listed: 8 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-08-06
+# Columns: id,scramble,bottom_color,competition,round
+
+125349001,D F' L' B U F2 B R2 B' R' L' B2 R2 U' R2 F2 D' R2 U,B,Lexington Spring 2015 (2015-04-11),333 R2 A E2
+452558001,D2 B L2 D B2 R' F' L' U D' R' U2 L' U2 F2 L B2 L' U2 B2 L,B,Hamburg Open 2017 (2017-02-25~26),333ft R1 A E2
+574480001,R2 D2 F U2 B' R2 B' L2 U2 F' D2 U L' R U2 B2 R2 U' B' D' L,B,Michigan 2017 (2017-08-19~20),333bf Final B #2
+826683001,R2 B2 R' B2 R D2 B2 U2 R U2 B' U2 B' U F D' F R D2 U L' F',B,Tangerang Open 2018 (2018-07-15),333bf Final A E2
+2726641001,R' F' D' R2 D' L2 B2 D U L2 B2 L' U' R D2 F' D F2 D2 U2,B,MYHM Puzzling in Plano 2023 (2023-05-20~21),333 R1 A E2
+3186301001,R U2 B' L2 U D F2 B' L F' B2 R2 B2 L' D2 F2 R' B2 L D2,B,Belgian Nationals 2023 (2023-10-21~22),333oh Final A E1
+3626721001,B2 R' B2 L F2 L2 U2 L2 R2 U B2 D2 R2 B' R B' D B2 L D2 B' L2,B,TahimiKubing in MultiLupa 2024 (2024-03-31),333bf R1 A E2
+5577381001,U F' R' L U' R2 F D2 B' U L' B2 D' F2 L2 B2 U2 L2 U',B,UCD Cube Days 2026 (2026-04-25~26),333 R2 B E1

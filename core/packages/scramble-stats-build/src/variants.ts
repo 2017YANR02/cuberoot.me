@@ -146,6 +146,15 @@ export const VARIANTS: VariantSpec[] = [
     angleToColor: ANGLE_COLOR_STD,
     colFor: (stage, angle) => `${stage}_${angle}`,
   },
+  {
+    // Daisy:新变体必须追加在末尾，保持 wca_scramble_steps 既有槽位偏移不变。
+    key: 'daisy',
+    file: 'daisy.csv',
+    id_col: 'id',
+    stages: ['daisy'],
+    angleToColor: ANGLE_COLOR_STD,
+    colFor: (stage, angle) => `${stage}_${angle}`,
+  },
 ];
 
 // NOTE: 实际 UI 用到的 subset —— single (6), dual (3 对相反色), quad (3 种排除相反色对), cn (1)

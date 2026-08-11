@@ -17,6 +17,8 @@ pub mod block223_solver;
 // chain:mallard 式链式 EO→DR→HTR→[FR]→Finish 编排(全自包含,native+wasm 双轨)。
 pub mod chain_solver;
 pub mod cross_solver;
+// daisy:四条指定色棱围绕对面中心的 190,080 态精确多源 BFS。
+pub mod daisy_solver;
 // cross restricted optimal:任意受限 54-move 集 + 中心朝向 + center_offset/max_rot 的最优十字 BFS。
 // 全自包含(运行时建表,无外部文件),native+wasm 双轨可编。
 pub mod cross_restrict_solver;

@@ -23,6 +23,7 @@ use crate::cross_restrict_solver::{CrossRestrictSolver, MOVE_NAMES_54, ROTS_FACE
 use crate::cross_solver::CrossSolver;
 use crate::xcross_restrict_solver::XCrossRestrictSolver;
 use crate::cube_common::{state_space, string_to_alg, MOVE_NAMES};
+use crate::daisy_solver::{daisy_label, DaisySolver};
 use crate::dr_solver::{dr_axis_label, DrSolver};
 use crate::eo_cross_solver::EOSmallSolver;
 use crate::eoline_solver::{eo_axis_label, eoline_label, EOLineSolver};
@@ -110,6 +111,48 @@ fn emit_face(on_face: &js_sys::Function, face: usize, value: u32) {
         &JsValue::from_f64(face as f64),
         &JsValue::from_f64(value as f64),
     );
+}
+
+/// 三阶小花:指定底色四条棱围绕对面中心，且贴纸朝向中心面。
+/// 复用 edge4 190,080 态移动表，24 个花瓣排列做多源 BFS；全空间严格最优。
+#[wasm_bindgen]
+pub struct DaisySolverWasm {
+    solver: DaisySolver,
+}
+
+#[wasm_bindgen]
+impl DaisySolverWasm {
+    /// 零下载:mt_edge4 现场生成(~17.4MB)，Daisy 距离表现场 BFS(~186KB)。
+    #[wasm_bindgen(constructor)]
+    #[allow(clippy::new_without_default)]
+    pub fn new() -> DaisySolverWasm {
+        DaisySolverWasm {
+            solver: DaisySolver::from_table(mt_gen::get("mt_edge4")),
+        }
+    }
+
+    /// 6 个花瓣颜色的最优步数，顺序对应 ROTS。
+    pub fn solve(&self, scramble: &str) -> Vec<u32> {
+        self.solver.get_stats(&string_to_alg(scramble), &ROTS)
+    }
+
+    pub fn solve_face(&self, scramble: &str, face: u32) -> u32 {
+        let face = (face as usize).min(5);
+        self.solver.solve_one(&string_to_alg(scramble), ROTS[face])
+    }
+
+    pub fn solve_moves(&self, scramble: &str, face: u32, extra: u32, cap: u32) -> String {
+        let face = (face as usize).min(5);
+        let rot = ROTS[face];
+        let (len, sols) =
+            self.solver
+                .enumerate_face(&string_to_alg(scramble), rot, extra, cap as usize);
+        let items = sols
+            .iter()
+            .map(|sol| (fmt_moves(rot, &sol.moves), daisy_label(face).to_string()))
+            .collect::<Vec<_>>();
+        sols_json(len, &items)
+    }
 }
 
 /// 2x2x2 块求解(1 角 + 3 棱)。表最小:mt_edge3 (~743KB) + mt_corn (~1.7KB),

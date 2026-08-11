@@ -1,0 +1,43 @@
+# Scramble samples — daisy / daisy / BGWY / bin 3
+# Population in this bin: 36
+# Samples listed: 36 (all entries in this bin)
+# Source: scrambles.txt
+# Generated: 2026-08-06
+# Columns: id,scramble,bottom_color
+
+1144,U L2 F2 D' R2 U2 L2 B2 D L2 U2 F2 D' R2 B' L' U' B' F' R U2 B D' R U' ,G
+1145,R2 L2 B2 L2 D F2 L2 D' B2 D2 R2 U' F2 U F' U' R' L' B D' U2 L2 B L ,G
+5939,L2 F2 R2 B2 U' B2 U B2 L2 D R2 U' B2 U' L' B U L F D' R' U' B2 L' ,B
+5940,D L2 B2 F2 D R2 D L2 B2 U2 B2 U R2 D R2 L' D' U2 F R' B L2 D' U2 L' U' ,B
+5986,D2 R2 U L2 F2 U' R2 L2 D' L2 F2 D' F2 U2 L2 B' R' L' B' F' D' U' F' U2 ,B
+6224,D2 L2 D F2 L2 B2 R2 F2 L2 U L2 D U' R' L' B' F' R' L' ,G
+6225,D R2 L2 B2 R2 U B2 U R2 B2 D2 F2 U B2 R' L' B' F' R' U R2 U' L' ,G
+6226,R2 U' L2 D L2 B2 R2 L2 D2 F2 D B2 U' B2 U2 B' D F' R' L' B' F' L' D' L' ,G
+6227,D' R2 D L2 D B2 D' F2 L2 U' L2 U' R2 U2 R' F' L B' L' F L F' R' L' ,G
+6236,B2 F2 U B2 D B2 D' L2 U F2 U F2 D2 R' D' L2 D L' B F' R' L' U' ,G
+6237,D R2 L2 D' R2 D B2 D F2 D' F2 D F2 U2 R' B' R B L' B' R' F' R L' ,G
+6238,R2 F2 D R2 U B2 U' B2 U F2 R2 B2 L2 U2 R' U L2 U' L' B' F' R' L' ,G
+6239,B2 R2 U2 B2 U R2 F2 U B2 R2 U2 L2 D' U2 B' R L U2 B F L' U F2 ,G
+6249,L2 U2 R2 F2 D' F2 D2 B2 R2 U' L2 U' B2 L2 U' R' D' L2 D L' B F' R' L' ,G
+6250,B2 D' B2 L2 U' B2 L2 U' F2 D2 F2 D B' D R2 D' R' L U2 B F L' ,G
+6251,U2 L2 F2 U L2 D B2 D2 R2 F2 R2 D' F2 U' B' R L U2 B F L' U F2 U ,G
+6258,U L2 D' L2 B2 U' B2 D2 F2 L2 U' F2 D' L2 U2 B' L B2 R' F' L' B2 R B' L2 ,G
+6259,R2 D2 F2 D B2 D' F2 D R2 U L2 U R2 U' R' B' D L' F' D R' B' L' U' ,G
+6267,L2 U2 B2 R2 D F2 U R2 D2 U' B2 F2 L2 B' D' L D' R F D' B R ,G
+6268,U' R2 D' B2 L2 U2 R2 U F2 R2 L2 F2 L2 U2 R' B' F' U2 R' L' F' U ,G
+6269,U L2 D L2 B2 U L2 F2 D' B2 D2 U' F2 U' B' R L U2 B F L' U2 ,G
+6380,D B2 U' F2 U R2 D2 F2 L2 F2 U' R2 D' L2 F' R' U2 L B' U2 L U2 F' L' ,G
+6383,B2 L2 D' R2 D R2 U2 B2 U' B2 U' B2 U B' U' F2 R U' L F U' B L ,G
+6473,D R2 B2 D' L2 B2 D' R2 U' F2 R2 F2 L2 B' U2 R' L' B' U' F' R' F2 D' ,G
+6474,B2 L2 D R2 D B2 U' F2 U B2 L2 F2 U' B' L' U' R' B' F' U2 R' ,G
+6477,U2 R2 D' F2 D' R2 B2 U' R2 D R2 U B2 F' D' R' B L F' L2 D' R U' ,G
+6478,R2 D2 F2 U F2 U2 L2 U B2 U B2 L2 U B2 L2 B' D' L' F R B' D' L' D2 U2 ,G
+6481,B2 F2 D R2 D F2 R2 D R2 B2 D U B' R L D F' D B' D' U2 L' ,G
+6713,U2 R2 D F2 D2 B2 R2 D R2 U2 R2 F2 U' R2 L' U' R B' L F' R' U F2 D' ,G
+6800,B2 U F2 U' B2 R2 L2 U L2 B2 U R2 D' F2 D' F' U L' B' D R' F' U' R2 L' ,G
+6817,D F2 D' F2 U' L2 B2 F2 U L2 B2 U L2 U' R' D' B F' D U2 F' R' F L' U2 ,G
+6897,R2 D B2 U L2 U' L2 U B2 F2 L2 U' F2 R' D' B F' D U2 F' R' F L' U ,G
+6905,L2 U' F2 U F2 R2 U F2 R2 U' F2 D2 B2 L2 U' L' F R' F' U' L2 B' F D' L' U' ,G
+145991,R2 L2 D B2 L2 U B2 D' F2 U' R2 U' F2 L2 R' L' B' R2 F R' L' U' ,B
+218721,U' L2 U' R2 D2 B2 R2 B2 U' F2 D2 F2 R2 F' L' B D' U F' L' D' R L2 ,B
+218722,L2 D' L2 B2 D' F2 U R2 B2 U B2 D' L2 B' L' F L D' R' F' U' F' L D' ,B

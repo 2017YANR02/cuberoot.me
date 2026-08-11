@@ -10,7 +10,7 @@ import {
   type ExactFull, type ExactStage,
 } from '@/app/[lang]/scramble/stats/_data/exact_dist';
 import { CUBE3_STATES, GOD_DIST_333, GOD_DIST_333_NORMALIZED } from '@/lib/god-distance-333';
-import { EO_UI_STAGES, VARIANT_STAGES, uiVariantOf } from '@/lib/scramble-variants';
+import { EO_UI_STAGES, RECENT_METRIC_ORDER, VARIANT_STAGES, uiVariantOf } from '@/lib/scramble-variants';
 import {
   BLOCK123_HISTOGRAM, SQUARE122_HISTOGRAM, block222Histogram,
 } from '@/lib/cross-trainer/block';
@@ -40,19 +40,20 @@ describe('exact_dist 数据完整性', () => {
   // 格数 ≠ solver 那边的 dist_* bin 数:dist_xcross_{1col,2col}_0f 算出的
   // 0 步数已经是各自完整分布的 d=0 行(37,908,599 / 4,716,424,212,835),不另占格子;
   // 反过来 xxxxcross 单色底没有对应 bin,0 步平凡为 1,这里补上。
-  // 13 个完整分布 = 9 个标准阶段 + 4 档伪十字(dist_cross_6col --pseudo × 四个色集)。
+  // 14 个这组早期完整分布 = Daisy + 9 个标准阶段 +
+  // 4 档伪十字(dist_cross_6col --pseudo × 四个色集)。
   // 四色底那 4 格没有对应 bin,0 步由 lib/skip-probability 的容斥现算 ——
   // 同一套代码把其余 12 个 0 步金标逐位复现,证明见 tests/skip_probability.test.ts。
   // 整解那一格是同一个对象挂在四个底色键上(最优解长度与底色无关),所以它记 4 格。
   // 2×2×3(E1)与 EO+XCross(E2)是 solver/src/bin/dist_tracked.rs 跑出来的,各占 1 格。
   // F2LEO 十字(E3)与伪 F2LEO 十字(P4)各两格:站内口径(两条 EO 轴取最短)+ 固定一条轴。
   // 都是 dist_tracked 在 EdgeSet 商空间上跑的,各 2.6s;两条站内口径那格与真题逐档对过。
-  it('矩阵 50 格:36 个完整分布 + 14 个仅 0 步', () => {
+  it('矩阵 51 格:37 个完整分布 + 14 个仅 0 步', () => {
     let full = 0, zero = 0;
     eachCell((_s, _sl, _c, cell) => {
       if ((cell as ExactFull).kind === 'full') full++; else zero++;
     });
-    expect(full).toBe(36);
+    expect(full).toBe(37);
     expect(zero).toBe(14);
   });
 
@@ -77,6 +78,14 @@ describe('exact_dist 数据完整性', () => {
 });
 
 describe('对齐 C++ 金标的关键数值', () => {
+  it('Daisy 单色底全空间与上帝之数', () => {
+    const c = EXACT_DIST.daisy.unfixed!.W as ExactFull;
+    expect(c.total).toBe('190080');
+    expect(c.counts).toEqual(['24', '288', '2640', '16080', '56184', '89256', '25128', '480']);
+    expect(c.counts.length - 1).toBe(7);
+    expect(exactMean(c).toFixed(4)).toBe('4.6241');
+  });
+
   // .done/cross_1_col/ 的 .2do:190,080 / Average Distance 5.8121
   it('单色底 Cross', () => {
     const c = EXACT_DIST.cross.unfixed!.W as ExactFull;
@@ -425,7 +434,7 @@ describe('菜单与 WCA 数据集逐项相同', () => {
   it('展平后的阶段表就是矩阵的行,一个不多一个不少', () => {
     const flat = Object.values(wca).flatMap((v) => v.stages).sort();
     expect([...EXACT_STAGES].sort()).toEqual(flat);
-    expect(EXACT_STAGES.length).toBe(39);
+    expect(EXACT_STAGES.length).toBe(40);
     // 每个阶段都得知道自己属于哪个变体(矩阵分组 + 深链的 variant 参数)
     for (const st of EXACT_STAGES) expect(EXACT_STAGE_VARIANT[st], st).toBeTruthy();
   });
@@ -440,8 +449,8 @@ describe('菜单与 WCA 数据集逐项相同', () => {
       seen.add(v);
       prev = v;
     }
-    // 10 个方法 = 截图里那份下拉
-    expect(seen.size).toBe(10);
+    // 11 个方法 = 整解 + 截图里的子阶段方法
+    expect(seen.size).toBe(11);
   });
 
   it('砖 / EO 两个聚合方法的阶段序与阶段下拉一致', () => {
@@ -483,6 +492,18 @@ describe('菜单与 WCA 数据集逐项相同', () => {
       worst = Math.max(worst, Math.abs(theory - real));
     }
     expect(worst, `${stage}/${colors} 最大逐档偏差 ${worst.toFixed(4)} 个百分点`).toBeLessThan(0.08);
+  });
+});
+
+describe('首页近期打乱阶段序', () => {
+  it('覆盖管道产出的每一个 metric', () => {
+    const stats = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../../stats/scramble');
+    const recent = JSON.parse(readFileSync(path.join(stats, 'recent_scrambles.json'), 'utf-8')) as {
+      rank: Record<string, Record<string, unknown>>;
+    };
+    const produced = new Set(Object.values(recent.rank).flatMap((byMetric) => Object.keys(byMetric)));
+    expect([...produced].filter((metric) => !RECENT_METRIC_ORDER.includes(metric))).toEqual([]);
+    expect(produced.has('daisy')).toBe(true);
   });
 });
 
