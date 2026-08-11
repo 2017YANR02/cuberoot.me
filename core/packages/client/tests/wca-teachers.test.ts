@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  MAX_TEACHER_LOOKUP_EVENTS,
   MAX_TEACHER_LOOKUP_IDS,
   mayReplaceTeacher,
+  normalizeWcaEventId,
   normalizeWcaId,
+  parseTeacherLookupEvents,
   parseTeacherLookupIds,
 } from '../../server/src/utils/wca_teachers';
 
@@ -29,6 +32,18 @@ describe('WCA teacher input boundaries', () => {
       `2000TEST${String(index % 100).padStart(2, '0')}`,
     ).join(',');
     expect(parseTeacherLookupIds(oversized)).toBeNull();
+  });
+
+  it('normalizes event IDs and rejects malformed or oversized event batches', () => {
+    expect(normalizeWcaEventId(' 333OH ')).toBe('333oh');
+    expect(normalizeWcaEventId('3x3/oh')).toBeNull();
+    expect(normalizeWcaEventId('fakeevent')).toBeNull();
+    expect(normalizeWcaEventId(null)).toBeNull();
+    expect(parseTeacherLookupEvents(undefined)).toEqual([]);
+    expect(parseTeacherLookupEvents('333, 333OH,333')).toEqual(['333', '333oh']);
+    expect(parseTeacherLookupEvents('333,bad event')).toBeNull();
+    const oversized = Array.from({ length: MAX_TEACHER_LOOKUP_EVENTS + 1 }, () => '333').join(',');
+    expect(parseTeacherLookupEvents(oversized)).toBeNull();
   });
 });
 
