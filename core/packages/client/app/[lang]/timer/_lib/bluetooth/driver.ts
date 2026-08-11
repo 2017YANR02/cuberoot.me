@@ -32,6 +32,10 @@ declare global {
     readonly uuid: string;
     readonly value?: DataView;
     readonly service: BluetoothRemoteGATTService;
+    readonly properties?: {
+      readonly write?: boolean;
+      readonly writeWithoutResponse?: boolean;
+    };
     readValue(): Promise<DataView>;
     writeValue(value: BufferSource): Promise<void>;
     writeValueWithResponse?(value: BufferSource): Promise<void>;
@@ -125,6 +129,57 @@ declare global {
   interface Navigator {
     readonly bluetooth?: Bluetooth;
   }
+}
+
+/**
+ * Write one GATT command across both the legacy API used by csTimer/Bluefy and
+ * the split modern APIs used by Chromium.
+ *
+ * Merely testing whether `writeValueWithResponse` exists is not enough: the
+ * method lives on the prototype even when the characteristic only supports a
+ * write without response. Bluefy also remains most compatible with the legacy
+ * `writeValue`, which chooses the mode from the characteristic properties.
+ */
+export async function writeGattValue(
+  characteristic: BluetoothRemoteGATTCharacteristic,
+  value: BufferSource,
+): Promise<void> {
+  const attempts: Array<() => Promise<void>> = [];
+
+  if (typeof characteristic.writeValue === 'function') {
+    attempts.push(() => characteristic.writeValue(value));
+  }
+
+  const props = characteristic.properties;
+  if (props?.write && typeof characteristic.writeValueWithResponse === 'function') {
+    attempts.push(() => characteristic.writeValueWithResponse!(value));
+  }
+  if (props?.writeWithoutResponse
+    && typeof characteristic.writeValueWithoutResponse === 'function') {
+    attempts.push(() => characteristic.writeValueWithoutResponse!(value));
+  }
+
+  // Some Web Bluetooth bridges omit `properties`. Keep both explicit APIs as
+  // fallbacks, after the csTimer-compatible legacy path.
+  if (!props) {
+    if (typeof characteristic.writeValueWithResponse === 'function') {
+      attempts.push(() => characteristic.writeValueWithResponse!(value));
+    }
+    if (typeof characteristic.writeValueWithoutResponse === 'function') {
+      attempts.push(() => characteristic.writeValueWithoutResponse!(value));
+    }
+  }
+
+  let lastError: unknown = new Error('Characteristic is not writable');
+  for (const attempt of attempts) {
+    try {
+      await attempt();
+      return;
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError;
 }
 
 /* ------------------------------------------------------------------ */
