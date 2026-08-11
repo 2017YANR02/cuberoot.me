@@ -16,6 +16,7 @@ import { join, dirname } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..'); // packages/client
 const SRC_DIRS = ['app', 'components', 'lib', 'hooks'];
+const SEXY_BAN = /\u6027\u611f/;
 
 interface Rule {
   /** en 术语(报错信息用) */
@@ -35,6 +36,8 @@ const RULES: Rule[] = [
   { term: 'commutator', ban: /交换子/, fix: '换位子' },
   // glossary: Corner Cutting 容错(硬件容错角度,不是几何切角)
   { term: 'corner cutting', ban: /(?:corner.{0,3}cutting.{0,30}切角|切角.{0,30}corner.{0,3}cutting)/i, fix: '容错' },
+  // 用户定名:sexy 是魔方公式英文名,全站不翻译。
+  { term: 'sexy', ban: SEXY_BAN, fix: 'sexy' },
   // 用户定名:Roux = 桥式,FB = 左桥,SB = 右桥(禁直译"第一/二块")
   { term: 'Roux FB/SB', ban: /Roux[^,。;:]{0,6}第[一二]块/, fix: '左桥 / 右桥' },
   // 用户定名:extra scrambles 在 UI 文案统一简称「备打」。只查文案行
@@ -49,6 +52,16 @@ function sourceFiles(): string[] {
       if (!e.isFile() || !/\.tsx?$/.test(e.name) || /\.test\./.test(e.name)) continue;
       out.push(join(e.parentPath, e.name));
     }
+  }
+  return out;
+}
+
+function sexyDataFiles(): string[] {
+  const out = [join(ROOT, 'app/[lang]/wiki/glossary.json')];
+  const algBuild = join(ROOT, '../alg-build');
+  for (const e of readdirSync(algBuild, { recursive: true, withFileTypes: true })) {
+    if (!e.isFile() || !/\.(?:mts|json)$/.test(e.name) || e.parentPath.includes('node_modules')) continue;
+    out.push(join(e.parentPath, e.name));
   }
   return out;
 }
@@ -68,6 +81,14 @@ describe('魔方术语错译黑名单(termbase = wiki/glossary.json)', () => {
           if (r.ban.test(line)) {
             violations.push(`${p}:${i + 1} [${r.term}] 应作「${r.fix}」: ${lines[i].trim().slice(0, 120)}`);
           }
+        }
+      }
+    }
+    for (const p of sexyDataFiles()) {
+      const lines = readFileSync(p, 'utf8').split('\n');
+      for (let i = 0; i < lines.length; i++) {
+        if (SEXY_BAN.test(lines[i])) {
+          violations.push(`${p}:${i + 1} [sexy] 应作「sexy」: ${lines[i].trim().slice(0, 120)}`);
         }
       }
     }
