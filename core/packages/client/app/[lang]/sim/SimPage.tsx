@@ -397,8 +397,6 @@ export default function SimPage() {
       ? (PG_DEF_BY_ID[puzzleParam] ?? ENGINE_TWISTY_DEF[puzzleParam])
       : undefined;
   const twisty = (isTwistyPuzzle(puzzleParam) || pgDef !== undefined) && !useEngine;
-  const useEngineRef = useRef(useEngine);
-  useEffect(() => { useEngineRef.current = useEngine; }, [useEngine]);
 
   // 「去复盘」头部链接:把当前打乱 / 解法交给 /recon/submit,与 recon 表单的「去模拟器」互为往返。
   // 引擎版 skewb/pyra/mega/fto 用自有记号,/recon(WCA 记号)解析不了 → 不给链接(门槛同 useEngine)。
@@ -1460,7 +1458,7 @@ export default function SimPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [twisty]);
 
-  const handlePuzzle = useCallback((kind: SimPuzzle) => {
+  const applyPuzzle = useCallback((kind: SimPuzzle) => {
     setPuzzleKind(kind);
     if (typeof kind === 'number') setOrder(kind);
     // A Mirror Cube is an NxN under the hood — pin `order` to its logical order so the
@@ -1468,24 +1466,19 @@ export default function SimPage() {
     else if (kind === 'mirror') setOrder(3);
     else if (kind === 'mirror2') setOrder(2);
     const world = worldRef.current;
-    // Always write the puzzle id (incl. '3') so it's forced into the URL — never
-    // omit it, or the selection reads back as the 3x3 default on reload/share.
-    const writeUrl = () => setQuery({ puzzle: String(kind) });
-    // A twisty puzzle on the cubing.js renderer doesn't use World — just update URL.
-    // The world-init effect's [twisty] dep tears down any live cuber instance.
-    // An ENGINE_TWISTY puzzle (skewb) with renderer='engine' falls through to World.
-    const toEngine = ENGINE_TWISTY.has(kind as string) && useEngineRef.current;
-    // Twisty-class (cubing.js: pyraminx/megaminx/skewb + PuzzleGeometry explore
-    // set) never touches World — just update the URL.
-    if ((isTwistyPuzzle(kind) || (typeof kind === 'string' && isPgPuzzleId(kind))) && !toEngine) { writeUrl(); return; }
     const wk = kind as PuzzleKind; // narrowed at runtime: number / sq1 / … / heli / 'skewb'
-    if (!world || world.puzzleKind === wk) { writeUrl(); return; }
+    if (!world || world.puzzleKind === wk) return;
     world.setPuzzle(wk);
     wasCompleteRef.current = true;
     ensureCubeCallback();
     applySettings(world, renderSettingsRef.current);
-    writeUrl();
-  }, [ensureCubeCallback, setQuery]);
+  }, [ensureCubeCallback]);
+
+  // URL is the sole puzzle-state entry point. Keeping user requests separate from
+  // applyPuzzle avoids a local world/order write racing the previous puzzleParam.
+  const handlePuzzle = useCallback((kind: SimPuzzle) => {
+    void setQuery({ puzzle: String(kind) });
+  }, [setQuery]);
 
   // Switch an ENGINE_TWISTY puzzle (skewb) between the cubing.js TwistyPlayer and the
   // in-house engine. Flips `renderer` in the URL; the [twisty] world-init effect then
@@ -1509,8 +1502,8 @@ export default function SimPage() {
     }
     if (!worldRef.current) return;
     if (worldRef.current.puzzleKind === (puzzleParam as PuzzleKind)) return;
-    handlePuzzle(puzzleParam);
-  }, [twisty, puzzleParam, handlePuzzle, worldTick]);
+    applyPuzzle(puzzleParam);
+  }, [twisty, puzzleParam, applyPuzzle, worldTick]);
 
   // 按阶段展示色块 → NxN 引擎(镜面单色不适用;twisty 的 megaminx/fto 由下方
   // TwistySection 的 experimentalStickering prop 接管)。依赖 puzzleParam / worldTick:
