@@ -184,7 +184,11 @@ function RecordsPageInner() {
     () => (show === 'current' ? currentRows : visibleRows).map((row) => row.p),
     [show, currentRows, visibleRows],
   );
-  const teacherDirectory = useWcaTeachers(teacherStudentIds);
+  const teacherEventIds = useMemo(
+    () => (show === 'current' ? currentRows : visibleRows).map((row) => row.e),
+    [show, currentRows, visibleRows],
+  );
+  const teacherDirectory = useWcaTeachers(teacherStudentIds, teacherEventIds);
 
   return (
     <div className="wse-page records-page">
@@ -359,7 +363,7 @@ function RowsTable({ rows, isZh, showEvent, showRank = true, teacherDirectory }:
               {r.pc && <Flag iso2={r.pc} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
               <PersonLink wcaId={r.p} name={r.pn} isZh={isZh} />
             </td>
-            <td><WcaTeacherCell studentWcaId={r.p} directory={teacherDirectory} isZh={isZh} /></td>
+            <td><WcaTeacherCell studentWcaId={r.p} eventIds={[r.e]} directory={teacherDirectory} isZh={isZh} /></td>
             <td>
               <Link {...compLinkProps(r.c)}>
                 <CompCell compId={r.c} compName={r.cn} isZh={isZh} date={r.d} />

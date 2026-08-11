@@ -840,18 +840,20 @@ CREATE INDEX kinch_world_score ON wca_kinch (world_score_x100 DESC, wca_id);
 CREATE INDEX kinch_continent_score ON wca_kinch (continent_id, continent_score_x100 DESC, wca_id);
 CREATE INDEX kinch_country_score ON wca_kinch (country_id, country_score_x100 DESC, wca_id);
 
--- WCA 选手老师关系(0114)。每位学生最多一位老师；普通写入者只能登记自己且须为有效会员，
+-- WCA 选手按项目登记老师关系(0114)。每位学生每个项目最多一位老师；普通写入者只能登记自己且须为有效会员，
 -- 管理员可指定任意 WCA 选手。WCA ID 是跨数据源自然键，不建外键。
 CREATE TABLE wca_teachers (
-  student_wca_id VARCHAR(20)  PRIMARY KEY,
+  student_wca_id VARCHAR(20)  NOT NULL,
+  event_id       VARCHAR(20)  NOT NULL,
   teacher_wca_id VARCHAR(20)  NOT NULL,
   teacher_name   VARCHAR(200) NOT NULL,
   created_by     VARCHAR(20)  NOT NULL,
   updated_by     VARCHAR(20)  NOT NULL,
   created_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
   updated_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (student_wca_id, event_id),
   CHECK (student_wca_id <> teacher_wca_id)
 );
-CREATE INDEX idx_wca_teachers_teacher ON wca_teachers(teacher_wca_id);
+CREATE INDEX idx_wca_teachers_teacher ON wca_teachers(teacher_wca_id, event_id);
 CREATE TRIGGER wca_teachers_updated_at BEFORE UPDATE ON wca_teachers
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
