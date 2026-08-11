@@ -404,8 +404,8 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     'notation',
     parseAsStringEnum<AlgNotationStyle>([...ALG_NOTATION_STYLES]).withDefault('standard'),
   );
-  // 第一版只开放三阶 OLL。即使有人把 query 手工带去其它项目，也不能按三阶面转误译。
-  const displayedNotationStyle: AlgNotationStyle = puzzleParam === '3x3' && set === 'oll'
+  // 中文面转只适用于三阶。即使有人把 query 手工带去其它项目，也不能按三阶规则误译。
+  const displayedNotationStyle: AlgNotationStyle = puzzleParam === '3x3'
     ? notationStyle
     : 'standard';
   const [sq1BlackTop, setSq1BlackTop] = useQueryState(
@@ -784,7 +784,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
         {data && !showSubgroupPicker && !showSubSubgroupPicker && (
           <AlgViewModeToggle value={view} onChange={changeView} className="alg-view-toggle" />
         )}
-        {data && !showSubgroupPicker && !showSubSubgroupPicker && view === 'full' && puzzleParam === '3x3' && set === 'oll' && (
+        {data && !showSubgroupPicker && !showSubSubgroupPicker && view === 'full' && puzzleParam === '3x3' && (
           <select
             className="alg-header-select"
             value={notationStyle}
@@ -793,6 +793,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
           >
             <option value="standard">{tr({ zh: '英文记号', en: 'English notation' })}</option>
             <option value="zh-cstimer">{tr({ zh: '中文记号（csTimer）', en: 'Chinese notation (csTimer)' })}</option>
+            <option value="zh-compact">{tr({ zh: '中英对照（紧凑）', en: 'Bilingual notation (compact)' })}</option>
           </select>
         )}
         {/* 标签筛选只在公式内联时有意义(只看图时没公式可筛) */}

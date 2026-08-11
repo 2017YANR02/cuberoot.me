@@ -23,6 +23,12 @@ describe('formatAlgNotation', () => {
     expect(formatAlgNotation("x y2 z' E M' S2", 'zh-cstimer')).toBe("x，y2，z'，E，M'，S2");
   });
 
+  it('renders compact bilingual hints while keeping standard move tokens', () => {
+    expect(formatAlgNotation("R U' r R2 f' Uw x M'", 'zh-compact')).toBe(
+      "R（右顺） U'（上逆） r（右双顺） R2（右180） f'（前双逆） Uw（上双顺） x M'",
+    );
+  });
+
   it('preserves grouping, commutator punctuation, and unknown text', () => {
     expect(formatAlgNotation("(R U R')2 [F, B']", 'zh-cstimer')).toBe(
       '(右面顺时针转90度，上面顺时针转90度，右面逆时针转90度)2 [前面顺时针转90度, 后面逆时针转90度]',
