@@ -361,6 +361,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 114, slug: 'wca_teachers', desc: { zh: '新表 wca_teachers：每位选手每个项目可有不同老师；有效会员只能登记自己，管理员可指定或替换任意老师。', en: 'New wca_teachers table: each cuber may have a different teacher per event; active members may only register themselves, while admins may assign or replace any teacher.' } },
   { n: 115, slug: 'keep_sexy_in_english', desc: { zh: '数据修正：公式备注与 Wiki 术语中的 sexy 统一保留英文，不再翻译。', en: 'Data correction: keep sexy in English in algorithm notes and Wiki terminology instead of translating it.' } },
   { n: 116, slug: 'psf2l', desc: { zh: '数据迁移：把 PSF2L.docx 的 33 个伪槽情况与公式加入三阶公式库；每条 setup 由公式严格取逆并经三阶状态模型验证。', en: 'Data migration: add all 33 Pseudoslotting cases and algorithms from PSF2L.docx to the 3x3 library; every setup is the exact inverse of its algorithm and is verified with the 3x3 state model.' } },
+  { n: 117, slug: 'psf2l_f2l_names', desc: { zh: '数据修正：伪槽情况改用首选解去掉首尾 D 层转动后所对应的 F2L 情况名，例如 PSF2L 01 改为 A+。', en: 'Data correction: name each Pseudoslotting case after the F2L case matched by its primary algorithm with the outer D turns removed, for example PSF2L 01 becomes A+.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
