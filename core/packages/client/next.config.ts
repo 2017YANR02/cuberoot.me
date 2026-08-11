@@ -265,8 +265,8 @@ const nextConfig: NextConfig = {
         // browser). The space grows with the alg DB (1LLL alone ~3.4k cases), so route
         // every URL to ONE static sentinel shell — no per-URL function render on a
         // crawler sweep. The negative lookahead keeps the real static siblings
-        // (run / select) on their own routes. See alg/[puzzle]/[set]/[subgroup]/page.tsx.
-        { source: "/:lang(en|zh)/alg/:puzzle/:set/:seg((?!run$|select$)[^/]+)", destination: "/:lang/alg/_/_/_" },
+        // (run / select / simple) on their own routes. See alg/[puzzle]/[set]/[subgroup]/page.tsx.
+        { source: "/:lang(en|zh)/alg/:puzzle/:set/:seg((?!run$|select$|simple$)[^/]+)", destination: "/:lang/alg/_/_/_" },
       ],
       afterFiles: [
         // Dev only: FMC chain solver (vendored cubelib) runs as a local native

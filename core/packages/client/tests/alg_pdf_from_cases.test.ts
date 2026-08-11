@@ -90,4 +90,12 @@ describe('algSheetFromCases', () => {
     expect(black.cases[0].thumb?.sq1BlackTop).toBe(true);
     expect(yellow.cases[0].thumb?.sq1BlackTop).toBe(false);
   });
+
+  it('PDF 缩略图跟随网页的识别简化开关', () => {
+    const c = mkCase({ name: 'T', algs: [[{ alg: "R U R'" }]] });
+    const plain = algSheetFromCases({ ...base, cases: [c] });
+    const simplified = algSheetFromCases({ ...base, cases: [c], simplifyRecognition: true });
+    expect(plain.cases[0].thumb?.simplifyRecognition).toBeUndefined();
+    expect(simplified.cases[0].thumb?.simplifyRecognition).toBe(true);
+  });
 });

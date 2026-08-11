@@ -58,6 +58,8 @@ export interface FromCasesOptions {
   groupPerPage?: boolean;
   /** Square-1 当前的顶面配色；打印图必须跟网页同步。 */
   sq1BlackTop?: boolean;
+  /** 识别简化图开关；网页与 PDF 必须使用同一张渲染计划。 */
+  simplifyRecognition?: boolean;
 }
 
 export function algSheetFromCases(o: FromCasesOptions): AlgSheetInput {
@@ -95,6 +97,7 @@ export function algSheetFromCases(o: FromCasesOptions): AlgSheetInput {
           ? {
               puzzle, set, sticker: c.sticker, alg: firstAlg || c.setup || '', setup, size: 160,
               ...(puzzle === 'sq1' ? { sq1BlackTop: o.sq1BlackTop ?? true } : {}),
+              ...(o.simplifyRecognition ? { simplifyRecognition: true } : {}),
             }
           : undefined,
       });

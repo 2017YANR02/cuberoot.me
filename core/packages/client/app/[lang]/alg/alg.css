@@ -564,6 +564,40 @@ html[data-theme=dark] .alg-root {
   font-size: 13px;
   width: fit-content;
 }
+.alg-optimal-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  align-self: center;
+  white-space: nowrap;
+}
+.alg-optimal-filter-label {
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+.alg-optimal-comparison {
+  padding-inline: 6px;
+}
+.alg-filter-clear {
+  border: 0;
+  padding: 3px 5px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  cursor: pointer;
+}
+.alg-filter-clear:hover,
+.alg-filter-clear:focus-visible {
+  color: var(--accent);
+}
+
+@media (max-width: 480px) {
+  .alg-optimal-filter {
+    flex-basis: 100%;
+    width: max-content;
+    max-width: 100%;
+  }
+}
 .alg-case {
   background: var(--card);
   border: 1px solid var(--border-default);
