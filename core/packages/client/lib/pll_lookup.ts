@@ -64,7 +64,7 @@ let _tablePromise: Promise<Map<string, PllAlgEntry[]>> | null = null;
 
 async function buildTable(): Promise<Map<string, PllAlgEntry[]>> {
   if (_tablePromise) return _tablePromise;
-  _tablePromise = (async () => {
+  const pending = (async () => {
     const db = await loadAlg('3x3', 'pll');
     const kp = await getCube3();
     const solved = kp.defaultPattern();
@@ -98,6 +98,10 @@ async function buildTable(): Promise<Map<string, PllAlgEntry[]>> {
     });
     return t;
   })();
+  _tablePromise = pending.catch((error) => {
+    _tablePromise = null;
+    throw error;
+  });
   return _tablePromise;
 }
 

@@ -34,8 +34,9 @@ import { applyOneToken } from '@/app/[lang]/timer/_lib/cube/apply_token';
 import { applyScramble } from '@/app/[lang]/timer/_lib/cube/state';
 import type { CubeFaces } from '@/app/[lang]/timer/_lib/cube/state';
 import { patternFromAlg } from '@/lib/cube3';
+import { warmupOllTable } from '@/lib/oll_lookup';
+import { warmupPllTable } from '@/lib/pll_lookup';
 import { crossOnDRotation, detectStage } from '@/lib/stage_detect';
-import { loadAlg } from '@cuberoot/shared/alg';
 
 const SCRAMBLE = "D R' D' R B' U' R' F2 L' F2 D' U2 L' D2 F L' B R'";
 const SOLUTION = [
@@ -77,7 +78,12 @@ function buildWithRotations(events: Array<{ tMs: number; token: string; angleRad
 
 /** 公式库在 API 上。拉不到(离线 / API 挂了)就跳过依赖它的那一条,并吼一声。 */
 async function algDbUp(): Promise<boolean> {
-  try { await loadAlg('3x3', 'oll'); return true; } catch { return false; }
+  try {
+    await Promise.all([warmupOllTable(), warmupPllTable()]);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 describe('buildReconText', () => {
