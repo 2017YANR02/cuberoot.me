@@ -303,56 +303,25 @@
   width: 100%;
 }
 .sim-puzzle-order-control {
-  position: relative;
   width: 72px;
 }
-.sim-puzzle-order-wheel {
-  height: 66px;
-  min-height: 0;
-  border: 1px solid var(--border-default);
-  border-radius: 6px;
-  --wp-bg: var(--background);
-  --wp-highlight-h: 24px;
-}
-.sim-puzzle-order-wheel .wheel-picker-item {
-  font-size: 14px;
-  padding: 2px 0;
-}
-/* 中间高亮位由 input 接管 — 隐藏滚筒自带的居中文本层 */
-.sim-puzzle-order-wheel .wheel-picker-list-white {
-  visibility: hidden;
-}
 .sim-puzzle-order-input {
-  position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
   width: 100%;
-  height: 24px;
-  transform: translateY(-50%);
-  padding: 0;
-  border: 0;
-  background: transparent;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--input);
+  border-radius: 6px;
+  background: var(--background);
   color: var(--foreground);
-  font-size: 14px;
+  font-size: 16px;
   font-variant-numeric: tabular-nums;
   text-align: center;
-  z-index: 3;
   outline: none;
-  touch-action: none;
 }
 .sim-puzzle-order-input:focus {
-  outline: 1px solid var(--ring);
+  outline: 2px solid var(--ring);
   outline-offset: -1px;
-  border-radius: 4px;
-}
-.sim-puzzle-order-input::-webkit-inner-spin-button,
-.sim-puzzle-order-input::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-.sim-puzzle-order-input[type="number"] {
-  -moz-appearance: textfield;
+  border-color: var(--ring);
 }
 .sim-puzzle-select {
   width: auto;

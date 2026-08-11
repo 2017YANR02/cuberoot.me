@@ -193,7 +193,7 @@ export const DEFAULT_SETTINGS: SimSettings = {
   pointerTurns: true,
   faceLabels: true,
   boardBg: 'auto',
-  lockView: false,
+  lockView: true,
   backView: false,
   viewMode: 'cube',
   playbackMode: 'moves',
