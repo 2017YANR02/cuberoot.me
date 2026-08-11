@@ -248,22 +248,31 @@ html[data-theme=dark] .wp-page {
     gap: 0 18px;
     margin: 0;
 }
-.wp-hero-collection-item { display: grid; gap: 2px; }
-.wp-hero-collection dt {
+.wp-hero-collection-item,
+.wp-hero-cell {
+    display: grid;
+    gap: 3px;
+    text-align: center;
+}
+.wp-hero-collection dt,
+.wp-hero-cell-label {
     color: var(--wp-text-mute);
     font-size: 0.72rem;
-    line-height: 1.1;
+    line-height: 1.2;
     letter-spacing: 0.04em;
+}
+.wp-hero-collection dt {
     white-space: nowrap;
 }
-.wp-hero-collection dd {
+.wp-hero-collection dd,
+.wp-hero-cell-value {
     margin: 0;
     color: var(--wp-text);
     font-size: 0.95rem;
-    font-weight: 600;
     font-variant-numeric: tabular-nums;
     line-height: 1.2;
 }
+.wp-hero-collection dd { font-weight: 600; }
 .wp-hero-collection-item-gold dd { color: var(--wp-gold); }
 .wp-hero-collection-item-silver dd { color: var(--wp-silver); }
 .wp-hero-collection-item-bronze dd { color: var(--wp-bronze); }
@@ -276,19 +285,12 @@ html[data-theme=dark] .wp-page {
 .wp-hero-rank-controls {
     display: flex; align-items: center; gap: 8px;
 }
-.wp-hero-cell { text-align: center; }
 .wp-hero-cell-label {
-    font-size: 0.72rem;
-    color: var(--wp-text-mute);
     text-transform: uppercase;
-    letter-spacing: 0.04em;
-    margin-bottom: 3px;
 }
 .wp-hero-cell-value {
     display: inline-flex; align-items: center; gap: 6px;
-    font-size: 0.95rem;
-    color: var(--wp-text);
-    font-variant-numeric: tabular-nums;
+    justify-self: center;
 }
 .wp-hero-id {
     display: inline-flex; align-items: center; gap: 6px;
