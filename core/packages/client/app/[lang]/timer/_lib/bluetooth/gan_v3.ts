@@ -38,8 +38,7 @@
  * the rest — at which point the user must use cstimer to learn the MAC.
  */
 
-import type { CubeDriver, CubeDriverStartResult } from './driver';
-import { BATTERY_SERVICE } from './driver';
+import { BATTERY_SERVICE, writeGattValue, type CubeDriver, type CubeDriverStartResult } from './driver';
 import type { CubeBrand } from './types';
 import {
   decryptFrame,
@@ -129,6 +128,12 @@ interface MoveDecodeState {
 
 /** See the identical constant in `gan_v4.ts`. */
 const FACELET_RESYNC_QUIET_MS = 500;
+/**
+ * Re-check state after the move stream goes quiet. The first check catches a
+ * dropped final move; later checks retry when either the state request or its
+ * history reply was itself lost on a noisy radio link.
+ */
+const IDLE_STATE_CHECK_MS = [650, 1600, 3200] as const;
 
 /**
  * Decode the cube-state payload of a mode-2 frame into a facelet string, or
@@ -342,6 +347,22 @@ export const ganV3Driver: CubeDriver = {
       now: () => Date.now(),
     };
     let keyErrorFired = false;
+    let cleaned = false;
+    const idleStateChecks = new Set<ReturnType<typeof setTimeout>>();
+    const clearIdleStateChecks = (): void => {
+      for (const timer of idleStateChecks) clearTimeout(timer);
+      idleStateChecks.clear();
+    };
+    const scheduleIdleStateChecks = (): void => {
+      clearIdleStateChecks();
+      for (const delay of IDLE_STATE_CHECK_MS) {
+        const timer = setTimeout(() => {
+          idleStateChecks.delete(timer);
+          if (!cleaned) void sendCmd(requestFaceletsFrame());
+        }, delay);
+        idleStateChecks.add(timer);
+      }
+    };
 
     const onChar = (ev: Event): void => {
       const target = ev.target as BluetoothRemoteGATTCharacteristic;
@@ -356,6 +377,7 @@ export const ganV3Driver: CubeDriver = {
       }
       const moves = decodeFrame(pt, decState);
       for (const mv of moves) onMove(mv.mv, mv.ts);
+      if (moves.length > 0) scheduleIdleStateChecks();
       // Several bad-magic frames in a row ⇒ wrong MAC. Tell the hook once.
       if (!keyErrorFired && decState.badFrames >= 6) {
         keyErrorFired = true;
@@ -380,23 +402,20 @@ export const ganV3Driver: CubeDriver = {
       // No write characteristic — older firmware variant; just listen.
     }
 
-    sendCmd = async (req: Uint8Array): Promise<void> => {
-      if (!cmdChar) return;
+    let writeTail: Promise<void> = Promise.resolve();
+    sendCmd = (req: Uint8Array): Promise<void> => {
+      if (!cmdChar) return Promise.resolve();
       const enc = encryptFrame(req, expandedKey, aesIv);
       // Detach into a fresh ArrayBuffer-backed Uint8Array — the strict TS
       // lib types narrow `BufferSource` to `Uint8Array<ArrayBuffer>` and our
       // chained subarrays surface as `ArrayBufferLike`.
       const buf = new Uint8Array(enc.length);
       buf.set(enc);
-      try {
-        if (cmdChar.writeValueWithResponse) {
-          await cmdChar.writeValueWithResponse(buf);
-        } else {
-          await cmdChar.writeValue(buf);
-        }
-      } catch {
-        // Ignore — write rejected, cube may still stream regardless.
-      }
+      const task = writeTail.then(() => writeGattValue(cmdChar!, buf));
+      // GATT permits only one operation at a time. Keep the queue alive after
+      // a rejected write so the next idle-state retry still gets a chance.
+      writeTail = task.catch(() => {});
+      return task.catch(() => {});
     };
 
     if (cmdChar) {
@@ -410,10 +429,10 @@ export const ganV3Driver: CubeDriver = {
       await sendCmd(battery);
     }
 
-    let cleaned = false;
     const cleanup = (): void => {
       if (cleaned) return;
       cleaned = true;
+      clearIdleStateChecks();
       notifyChar.removeEventListener('characteristicvaluechanged', onChar);
       void notifyChar.stopNotifications().catch(() => {});
     };

@@ -29,9 +29,10 @@
  * BLE notification desynced the model with no path back.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { ganV3Driver } from '@/app/[lang]/timer/_lib/bluetooth/gan_v3';
 import { ganV4Driver } from '@/app/[lang]/timer/_lib/bluetooth/gan_v4';
+import { CubeStateTracker } from '@/app/[lang]/timer/_lib/bluetooth/state_track';
 import { makeFakeGatt, type FakeCharacteristic, type FakeWrite } from '@/tests/_fake_gatt';
 import { createCstimerSandbox, cstimerFileExists, type CstimerSandbox } from '@/tests/_cstimer_sandbox';
 import {
@@ -185,6 +186,11 @@ for (const v of [V3, V4]) {
         .map((w) => w.bytes);
       expect(theirs.length).toBe(3);
       expect(ours.length).toBe(3);
+      // Bluefy is proven against csTimer's legacy `writeValue` path. Calling
+      // `writeValueWithResponse` merely because that prototype method exists
+      // can select a mode the characteristic does not support.
+      expect(rig.ourWrites.filter((w) => w.uuid.toLowerCase() === v.write.toLowerCase())
+        .every((w) => w.kind === 'plain')).toBe(true);
       for (let i = 0; i < 3; i++) {
         expect(`${v.name} req${i}=${ours[i].join(',')}`).toBe(`${v.name} req${i}=${theirs[i].join(',')}`);
       }
@@ -285,6 +291,9 @@ for (const v of [V3, V4]) {
 
       // Counter 13 never reaches the host (BLE drop). 14 arrives instead.
       rig.feed(v.moveFrame(14, 2, 1)); // F'
+      // GAN command writes are serialized to satisfy Web Bluetooth's one-GATT-
+      // operation-at-a-time rule, so the history request enters on a microtask.
+      await Promise.resolve();
 
       // Neither side may apply 14 before the hole at 13 is filled...
       expectSameMoves(rig.ourMoves, rig.cstimerMoves(), `${v.name} gap-hold`);
@@ -312,6 +321,44 @@ for (const v of [V3, V4]) {
         ganHistoryAxisPowToMove(5, 1), // R' — recovered from history
         "F'",                          // the held-back live move, now in order
       ]);
+    });
+
+    it('REGRESSION: a dropped FINAL move is found after idle and returns the tracker to solved', async () => {
+      const rig = await makeRig(v);
+      vi.useFakeTimers();
+      try {
+        const solved = realState(rig.sb, []);
+        rig.feed(v.faceletFrame(0, solved.ca, solved.ea));
+
+        // Counter 1 arrives, then counter 2 (R') physically solves the cube but
+        // its BLE notification is lost. There is no later live move to reveal
+        // the counter gap — the old implementation waited forever here.
+        rig.feed(v.moveFrame(1, 1, 0)); // R
+        expect(rig.ourMoves).toEqual(['R']);
+
+        await vi.advanceTimersByTimeAsync(700);
+        expect(rig.ourCommandsAfterHello().length).toBeGreaterThanOrEqual(1);
+
+        // The idle state check reports counter 2. That must trigger a history
+        // request even though no later move notification ever arrived.
+        rig.feed(v.faceletFrame(2, solved.ca, solved.ea));
+        await Promise.resolve();
+        expect(rig.ourCommandsAfterHello().length).toBeGreaterThanOrEqual(2);
+
+        // GAN history is newest-first. Slot 3 is padding/unknown; slot 2 is the
+        // missed R', which completes the physical solve.
+        rig.feed(v.historyFrame(3, [
+          { axis: 7, pow: 0 },
+          { axis: 5, pow: 1 },
+        ]));
+        expect(rig.ourMoves).toEqual(['R', "R'"]);
+
+        const tracker = new CubeStateTracker();
+        for (const move of rig.ourMoves) tracker.applyMove(move);
+        expect(tracker.isSolved()).toBe(true);
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it('duplicate move frames (same counter) are ignored by both', async () => {
