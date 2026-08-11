@@ -63,10 +63,10 @@ for (const item of l3eOverlap) {
 const NOTE_ZH: Record<string, string> = {
   'Inverse of Sune': '小鱼的逆公式',
   'Double Sune with cancellation': '双小鱼，消去重复转动',
-  'Sexy sledge': '性感转动接 Sledge',
+  'Sexy sledge': 'Sexy sledge',
   'Inverse of T CMLL': 'T CMLL 的逆公式',
-  "F sexy F'": "F 性感转动 F'",
-  "F double sexy F'": "F 双性感转动 F'",
+  "F sexy F'": "F sexy F'",
+  "F double sexy F'": "F double sexy F'",
   'J Perm': 'J Perm',
   'Y Perm': 'Y Perm',
 };

@@ -23,9 +23,9 @@ describe('formatAlgNotation', () => {
     expect(formatAlgNotation("x y2 z' E M' S2", 'zh-cstimer')).toBe("x，y2，z'，E，M'，S2");
   });
 
-  it('renders compact bilingual hints while keeping standard move tokens', () => {
-    expect(formatAlgNotation("R U' r R2 f' Uw x M'", 'zh-compact')).toBe(
-      "R（右顺） U'（上逆） r（右双顺） R2（右180） f'（前双逆） Uw（上双顺） x M'",
+  it('renders compact Chinese notation without standard move tokens', () => {
+    expect(formatAlgNotation("R U2' U' r R2 f' Uw x M'", 'zh-compact')).toBe(
+      "右顺 上180 上逆 右双顺 右180 前双逆 上双顺 x M'",
     );
   });
 
