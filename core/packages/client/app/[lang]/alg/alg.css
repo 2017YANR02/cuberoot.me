@@ -538,6 +538,16 @@ html[data-theme=dark] .alg-root {
 .alg-view-toggle {
   align-self: center;
 }
+/* 页首可扩展下拉（记号、标签筛选等）：宽度跟内容走，header 自己负责窄屏折行。 */
+.alg-header-select {
+  padding: 3px 8px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 13px;
+  width: fit-content;
+}
 .alg-case {
   background: var(--card);
   border: 1px solid var(--border-default);
@@ -1407,16 +1417,6 @@ a.alg-community-author:hover {
 }
 
 /* ── 元数据弹窗 ─────────────────────────────────────────────────────────────── */
-.alg-tag-filter {
-  padding: 3px 8px;
-  border: 1px solid var(--border-default);
-  border-radius: 6px;
-  background: var(--background);
-  color: var(--foreground);
-  font-size: 13px;
-  width: fit-content;
-}
-
 /* 宽度**由内容定**:`max-content` = 最长那条公式一行放下所需的宽,短公式的 case(PLL)就窄。
    钉死 800px 的话,PLL 那种四五十字符的 case 会拖着半屏空白。上限管住全库最长的一条
    (76 字符 ≈ 560px + 缩略图列 + 步数 + 复制),下限防止只有寥寥几字时缩成一条。 */
