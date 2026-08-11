@@ -61,6 +61,7 @@ export default function RecognizeClient() {
   const completed = results.length;
   const progressPercent = totalCases > 0 ? (completed / totalCases) * 100 : 0;
   const image = currentCase ? recog.image(currentCase, mistake !== '') : null;
+  const hasRecognitionGuide = algSetId === 'pll' || algSetId === 'oll';
 
   useEffect(() => {
     if (!hydrated || !dataReady) return;
@@ -200,6 +201,18 @@ export default function RecognizeClient() {
 
   return (
     <div className="training-page" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '1rem' }}>
+      {hasRecognitionGuide && (
+        <div style={{ width: '100%', maxWidth: '600px', display: 'flex', justifyContent: 'flex-start', marginBottom: '0.75rem' }}>
+          <Link
+            className="btn-secondary"
+            href={`/recognize/${algSetId}/guide`}
+            prefetch={false}
+            style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
+          >
+            {tr({ zh: '识别指南', en: 'Recognition guide' })}
+          </Link>
+        </div>
+      )}
       <div style={{ width: '100%', maxWidth: '600px', marginBottom: '1rem' }}>
         <div
           style={{

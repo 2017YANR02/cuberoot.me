@@ -13,6 +13,7 @@ import { caseThumbPlan } from '@/lib/alg_thumb_plan';
 export function CaseThumb({
   puzzle, set, sticker, alg, setup, size = 88, mask: maskOverride, local, loading,
   sq1BlackTop = true,
+  simplifyRecognition = false,
 }: {
   puzzle: AlgPuzzle;
   set: string;
@@ -30,10 +31,12 @@ export function CaseThumb({
   loading?: 'lazy' | 'eager';
   /** Square-1 flat thumbnails default to the common black-top colour scheme. */
   sq1BlackTop?: boolean;
+  /** Show only the strongest recognition features on supported 3x3 plan views. */
+  simplifyRecognition?: boolean;
 }) {
   const plan = useMemo(() => caseThumbPlan({
-    puzzle, set, sticker, alg, setup, mask: maskOverride, sq1BlackTop,
-  }), [puzzle, set, sticker, alg, setup, maskOverride, sq1BlackTop]);
+    puzzle, set, sticker, alg, setup, mask: maskOverride, sq1BlackTop, simplifyRecognition,
+  }), [puzzle, set, sticker, alg, setup, maskOverride, sq1BlackTop, simplifyRecognition]);
 
   if (plan.renderer === 'inline-svg') {
     return (
@@ -61,6 +64,7 @@ export function CaseThumb({
       mask={p.mask}
       scheme={p.scheme}
       hideGreySides={p.hideGreySides}
+      planSimplify={p.planSimplify}
       size={size}
       puzzleSize={p.puzzleSize}
       local={local}

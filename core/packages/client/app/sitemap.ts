@@ -62,6 +62,9 @@ const EXTRA = [
   ...Object.keys(ABOUT_REGISTRY).map((id) => `wca/about/${id}`),
   'recognize/pll',
   'recognize/oll',
+  'alg/3x3/zbll/simple',
+  'recognize/pll/guide',
+  'recognize/oll/guide',
 ];
 
 // Walk app/[lang]/** collecting static routes (dirs containing page.tsx),

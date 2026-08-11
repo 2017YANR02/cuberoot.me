@@ -117,6 +117,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'alg/lsll/route': { title: { zh: 'LSLL 路线详情', en: 'LSLL Route Detail' } },
   'alg/progress': { title: { zh: '学习进度', en: 'Progress' } },
   'alg/progress/cases': { title: { zh: '公式清单', en: 'Algorithm List' } },
+  'alg/3x3/zbll/simple': {
+    title: { zh: '简单 ZBLL', en: 'Simple ZBLL' },
+    description: {
+      zh: '适合开始学习的 ZBLL 情况:收录最优 HTM 不超过 10 步，以及四面合计至少有 4 组相邻同色、容易观察的情况。',
+      en: 'An approachable ZBLL subset: cases with optimal HTM at most 10, plus visually clear cases with at least four adjacent same-colour pairs.',
+    },
+  },
   'alg/roux': { title: { zh: '桥式训练器', en: 'Roux Trainer' } },
   'alg/skewb-trainer': { title: { zh: 'Skewb 技巧训练', en: 'Skewb Skills' } },
   'algTrainer': { title: { zh: '公式训练器', en: 'Alg Trainer' } },

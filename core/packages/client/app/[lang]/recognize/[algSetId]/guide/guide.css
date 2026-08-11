@@ -1,0 +1,352 @@
+.recognition-guide-page {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: 42px 24px 88px;
+  color: var(--foreground);
+}
+
+.recognition-guide-hero {
+  display: grid;
+  gap: 30px;
+}
+
+.recognition-guide-heading {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 680px);
+  align-items: end;
+  gap: clamp(22px, 5vw, 64px);
+}
+
+.recognition-guide-set-mark {
+  color: color-mix(in srgb, var(--foreground) 13%, transparent);
+  font-family: var(--font-mono);
+  font-size: clamp(68px, 12vw, 140px);
+  font-weight: 800;
+  letter-spacing: -0.09em;
+  line-height: 0.77;
+  user-select: none;
+}
+
+.recognition-guide-kicker {
+  margin: 0 0 8px;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.recognition-guide-heading h1,
+.recognition-guide-library-head h2,
+.recognition-guide-group h3 {
+  margin: 0;
+}
+
+.recognition-guide-heading h1 {
+  font-size: clamp(2.1rem, 5vw, 4.4rem);
+  line-height: 0.98;
+  letter-spacing: -0.045em;
+}
+
+.recognition-guide-intro {
+  max-width: 66ch;
+  margin: 18px 0 0;
+  color: var(--muted-foreground);
+  font-size: clamp(1rem, 1.6vw, 1.12rem);
+  line-height: 1.8;
+}
+
+.recognition-guide-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(20px, 4vw, 52px);
+  margin: 0;
+  padding: 22px 0 0;
+  border-top: 1px solid var(--border-default);
+  list-style: none;
+  counter-reset: recognition-step;
+}
+
+.recognition-guide-steps li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  column-gap: 10px;
+  row-gap: 6px;
+  counter-increment: recognition-step;
+}
+
+.recognition-guide-steps li::before {
+  content: counter(recognition-step, decimal-leading-zero);
+  grid-row: 1 / span 2;
+  color: var(--faint-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.6;
+}
+
+.recognition-guide-steps strong {
+  font-size: 0.95rem;
+}
+
+.recognition-guide-steps span {
+  color: var(--muted-foreground);
+  font-size: 0.88rem;
+  line-height: 1.65;
+}
+
+.recognition-guide-actions,
+.recognition-guide-library-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 22px;
+}
+
+.recognition-guide-reference {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.75fr) minmax(0, 1.5fr);
+  gap: 24px 48px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-default);
+}
+
+.recognition-guide-reference h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.recognition-guide-reference p {
+  margin: 8px 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.88rem;
+  line-height: 1.65;
+}
+
+.recognition-guide-reference ul {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 8px 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.recognition-guide-reference li {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.recognition-guide-reference code {
+  color: var(--foreground);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.recognition-guide-reference li span {
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+}
+
+.recognition-guide-primary-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.recognition-guide-primary-link:hover {
+  background: color-mix(in srgb, var(--primary) 88%, var(--foreground));
+}
+
+.recognition-guide-primary-link:focus-visible,
+.recognition-guide-text-link:focus-visible,
+.recognition-guide-case-link:focus-visible,
+.recognition-guide-retry:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+
+.recognition-guide-text-link {
+  color: var(--muted-foreground);
+  font-weight: 650;
+  text-underline-offset: 4px;
+}
+
+.recognition-guide-text-link:hover {
+  color: var(--foreground);
+}
+
+.recognition-guide-library {
+  margin-top: 78px;
+}
+
+.recognition-guide-library-head {
+  align-items: flex-end;
+}
+
+.recognition-guide-library-head h2 {
+  font-size: clamp(1.7rem, 3vw, 2.5rem);
+  letter-spacing: -0.035em;
+}
+
+.recognition-guide-library-head .bool-toggle {
+  margin-bottom: 4px;
+}
+
+.recognition-guide-simplified-note {
+  max-width: 72ch;
+  margin: 16px 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+
+.recognition-guide-status {
+  margin: 38px 0;
+  color: var(--muted-foreground);
+}
+
+.recognition-guide-retry {
+  min-height: 38px;
+  margin-top: 8px;
+  padding: 0 14px;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+.recognition-guide-group {
+  margin-top: 48px;
+}
+
+.recognition-guide-group h3 {
+  font-size: 1.05rem;
+  letter-spacing: -0.015em;
+}
+
+.recognition-guide-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(154px, 1fr));
+  gap: 0 18px;
+  margin-top: 14px;
+}
+
+.recognition-guide-case {
+  min-width: 0;
+  padding: 20px 4px 15px;
+  border-top: 1px solid var(--border-default);
+}
+
+.recognition-guide-case-link {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--foreground);
+  text-align: center;
+  text-decoration: none;
+}
+
+.recognition-guide-case-art {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 160ms ease;
+}
+
+.recognition-guide-case-link strong {
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+  line-height: 1.35;
+}
+
+.recognition-guide-case-link:hover .recognition-guide-case-art {
+  transform: translateY(-2px);
+}
+
+.recognition-guide-case-link:hover strong {
+  color: var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recognition-guide-case-art {
+    transition: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .recognition-guide-page {
+    padding-top: 30px;
+  }
+
+  .recognition-guide-heading {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .recognition-guide-set-mark {
+    font-size: clamp(62px, 22vw, 96px);
+  }
+
+  .recognition-guide-steps {
+    grid-template-columns: 1fr;
+  }
+
+  .recognition-guide-reference {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .recognition-guide-page {
+    padding: 26px 16px 64px;
+  }
+
+  .recognition-guide-heading h1 {
+    font-size: 2rem;
+  }
+
+  .recognition-guide-intro {
+    line-height: 1.7;
+  }
+
+  .recognition-guide-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .recognition-guide-reference li {
+    white-space: normal;
+  }
+
+  .recognition-guide-library {
+    margin-top: 58px;
+  }
+
+  .recognition-guide-library-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .recognition-guide-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 10px;
+  }
+
+  .recognition-guide-case {
+    padding-inline: 0;
+  }
+}

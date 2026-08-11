@@ -10,14 +10,15 @@ import { useTranslation } from 'react-i18next';
 const BRAND = 'CubeRoot';
 const SEP = ' — ';
 
-export function useDocumentTitle(zh: string, en: string): void {
+export function useDocumentTitle(zh: string, en: string, enabled = true): void {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   useEffect(() => {
+    if (!enabled) return;
     const page = (isZh ? zh : en).trim();
     document.title = page ? `${BRAND}${SEP}${page}` : BRAND;
     return () => {
       document.title = BRAND;
     };
-  }, [zh, en, isZh, i18n.language]);
+  }, [zh, en, isZh, i18n.language, enabled]);
 }
