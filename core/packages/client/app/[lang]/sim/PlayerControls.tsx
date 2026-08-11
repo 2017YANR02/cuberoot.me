@@ -126,7 +126,6 @@ import type { PickGrain, CustomTreatment } from './engine/nxn/customStickering';
 import { simulateGrips, type GripName, type GripSimStep, type HandSide, type PinSpec } from './engine/hands/handsRig';
 import { stripGripMarks } from '@cuberoot/shared/alg-notation';
 import { stripFtnBlocks, FTN_TOKEN, parseFtnPin } from './engine/hands/ftn';
-import { WheelPicker } from '@/components/WheelPicker';
 import { ClearButton } from '@/components/ClearButton';
 import PuzzlePicker, { type PuzzlePickerGroup } from '@/components/PuzzlePicker/PuzzlePicker';
 import { eventDisplayName } from '@/lib/wca-events';
@@ -1822,6 +1821,10 @@ export default function PlayerControls({
     if (kbVariant !== 'qwerty') return;
     const onKey = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const target = e.target as HTMLElement | null;
+      // 设置区的原生表单控件必须自行接收按键。否则 Digit2 等会命中魔方
+      // keymap，applyMove 随后聚焦解法框，在 iOS 上表现为数字键盘输一位即关闭。
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.isContentEditable)) return;
       if (document.activeElement === setupElRef.current) return;
       const k = keymap[e.code];
       if (!k) return;
@@ -2787,51 +2790,26 @@ function PuzzleSettings({
       `Taken over by the image panel's trans (x-ray) view: silver core at ${transCore.coreOpacity}% opacity. Switch to another view to unlock`)
     : undefined;
 
-  const renderOrderSlot = useCallback((v: number) => (v >= 1 && v <= 400 ? String(v) : ''), []);
-  const [orderDraft, setOrderDraft] = useState<string>(String(order));
-  useEffect(() => { setOrderDraft(String(order)); }, [order]);
-
-  const applyTimerRef = useRef<number | null>(null);
-  const wheelRootRef = useRef<HTMLDivElement>(null);
-  const cancelPendingApply = useCallback(() => {
-    if (applyTimerRef.current != null) {
-      window.clearTimeout(applyTimerRef.current);
-      applyTimerRef.current = null;
-    }
-  }, []);
-  const handleWheelChange = useCallback((n: number) => {
-    cancelPendingApply();
-    setOrderDraft(String(n));
-  }, [cancelPendingApply]);
-  const handleWheelSettle = useCallback((n: number) => {
-    cancelPendingApply();
-    applyTimerRef.current = window.setTimeout(() => {
-      applyTimerRef.current = null;
-      onOrderChange(n);
-    }, 500);
-  }, [cancelPendingApply, onOrderChange]);
-
+  const orderInputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    const el = wheelRootRef.current;
-    if (!el) return;
-    el.addEventListener('touchstart', cancelPendingApply, { passive: true });
-    el.addEventListener('mousedown', cancelPendingApply);
-    return () => {
-      el.removeEventListener('touchstart', cancelPendingApply);
-      el.removeEventListener('mousedown', cancelPendingApply);
-    };
-  }, [cancelPendingApply]);
-  useEffect(() => () => cancelPendingApply(), [cancelPendingApply]);
+    const input = orderInputRef.current;
+    if (input && document.activeElement !== input) input.value = String(order);
+  }, [order]);
 
-  const commitOrderInput = () => {
-    const raw = Number(orderDraft);
-    if (!Number.isFinite(raw)) { setOrderDraft(String(order)); return; }
-    const n = Math.max(1, Math.min(400, Math.floor(raw)));
-    setOrderDraft(String(n));
-    if (n !== order) {
-      cancelPendingApply();
-      onOrderChange(n);
+  const commitOrderInput = (value: string) => {
+    const input = orderInputRef.current;
+    if (!value.trim()) {
+      if (input) input.value = String(order);
+      return;
     }
+    const raw = Number(value);
+    if (!Number.isFinite(raw)) {
+      if (input) input.value = String(order);
+      return;
+    }
+    const n = Math.max(1, Math.min(400, Math.floor(raw)));
+    if (input) input.value = String(n);
+    if (n !== order) onOrderChange(n);
   };
 
   const set = <K extends keyof SimSettings>(key: K, value: SimSettings[K]) => {
@@ -2905,33 +2883,21 @@ function PuzzleSettings({
             </div>
             {isNxNLocal && (
               <div className="sim-puzzle-section">
-                <div className="sim-puzzle-order-control" ref={wheelRootRef}>
-                  <WheelPicker
-                    value={order}
-                    minValue={1}
-                    maxValue={400}
-                    renderSlot={renderOrderSlot}
-                    onChange={handleWheelChange}
-                    onSettle={handleWheelSettle}
-                    width={72}
-                    itemHeight={22}
-                    slots={3}
-                    ariaLabel={t('阶数', 'Order')}
-                    className="sim-puzzle-order-wheel"
-                  />
+                <div className="sim-puzzle-order-control">
                   <input
-                    type="number"
+                    type="text"
+                    ref={orderInputRef}
                     className="sim-puzzle-order-input"
-                    min={1}
-                    max={400}
-                    step={1}
-                    value={orderDraft}
-                    onChange={(e) => setOrderDraft(e.target.value)}
-                    onBlur={commitOrderInput}
+                    aria-label={t('阶数', 'Order')}
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    enterKeyHint="done"
+                    defaultValue={order}
+                    onBlur={(e) => commitOrderInput(e.currentTarget.value)}
                     onMouseDown={(e) => e.stopPropagation()}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-                      else if (e.key === 'Escape') { setOrderDraft(String(order)); (e.target as HTMLInputElement).blur(); }
+                      if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); }
+                      else if (e.key === 'Escape') { e.currentTarget.value = String(order); e.currentTarget.blur(); }
                     }}
                   />
                 </div>
