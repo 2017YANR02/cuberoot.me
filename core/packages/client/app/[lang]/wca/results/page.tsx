@@ -45,6 +45,12 @@ import { WR_METRICS, RANK_TYPE_IDS, DEFAULT_METRIC_ID } from '@/lib/wr-metrics';
 import '../_wca_stats_extra.css';
 import { tr } from '@/i18n/tr';
 import '@/i18n/i18n-client';
+import {
+  WcaTeacherCell,
+  WcaTeacherColumnHeader,
+  WcaTeacherNote,
+  useWcaTeachers,
+} from '@/components/WcaTeacherCell';
 
 // Persons / Results display mode for the WCA ranking view — was exported by the
 // (now removed) ShowToggle component; this page is its sole consumer.
@@ -427,6 +433,14 @@ function AllResultsPageInner() {
       .then(setSorData).catch(e => setError(e.message)).finally(() => setLoading(false));
   }, [view, mode, type, country, sorEventsParam, hidePodium, ssort, sdir, page, size]);
 
+  const teacherStudentIds = useMemo(() => {
+    if (view !== 'rank') return [];
+    if (mode === 'empty') return dirData?.rows.map((row) => row.wcaId) ?? [];
+    if (mode === 'single') return data?.rows.map((row) => row.wcaId) ?? [];
+    return sorData?.rows.map((row) => row.wcaId) ?? [];
+  }, [view, mode, dirData, data, sorData]);
+  const teacherDirectory = useWcaTeachers(teacherStudentIds);
+
   // ---- 名次和工具:名人堂 + 排名演化 ----
   const [raceOpen, setRaceOpen] = useState(false);
   const [census, setCensus] = useState<Census | null>(null);
@@ -609,6 +623,8 @@ function AllResultsPageInner() {
         </div>
       </div>
 
+      <WcaTeacherNote />
+
       {/* ============ 空态:姓名分布(name_stats viz) + 名录(A-Z 平铺) ============ */}
       {mode === 'empty' && (
         <>
@@ -688,6 +704,7 @@ function AllResultsPageInner() {
                           <SortArrow active dir={pdir} />
                         </button>
                       </th>
+                      <WcaTeacherColumnHeader />
                     </tr>
                   </thead>
                   <tbody>
@@ -701,6 +718,7 @@ function AllResultsPageInner() {
                             {pname === 'aka' && <FormerNames former={r.former} />}
                           </span>
                         </td>
+                        <td><WcaTeacherCell studentWcaId={r.wcaId} directory={teacherDirectory} isZh={isZh} /></td>
                       </tr>
                     ))}
                   </tbody>
@@ -818,6 +836,7 @@ function AllResultsPageInner() {
                     <tr>
                       <th className="wse-rank-col">#</th>
                       <th>{tr({ zh: '选手', en: 'Person' })}</th>
+                      <WcaTeacherColumnHeader />
                       <th className="wse-value-col">{isZh ? (effType === 'single' ? '单次' : '平均') : (effType === 'single' ? 'Single' : 'Average')}{isMbldAvg && effType === 'average' && <UnofficialMark />}</th>
                       <th>{tr({ zh: '日期', en: 'Date' })}</th>
                       <th>{tr({ zh: '比赛', en: 'Competition' })}</th>
@@ -832,6 +851,7 @@ function AllResultsPageInner() {
                           {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
                           <Link prefetch={false} href={personHref(r.wcaId)}>{displayCuberName(r.name, isZh)}</Link>
                         </td>
+                        <td><WcaTeacherCell studentWcaId={r.wcaId} directory={teacherDirectory} isZh={isZh} /></td>
                         <td className="wse-value-col">
                           <span className="record-num-cell">
                             {formatWcaResult(r.value, singleEvent, effType)}
@@ -860,6 +880,7 @@ function AllResultsPageInner() {
                     <tr>
                       <th className="wse-rank-col">#</th>
                       <th>{tr({ zh: '选手', en: 'Person' })}</th>
+                      <WcaTeacherColumnHeader />
                       <th className="wse-value-col">{isZh ? (effType === 'single' ? '单次' : '平均') : (effType === 'single' ? 'Single' : 'Average')}{isMbldAvg && effType === 'average' && <UnofficialMark />}</th>
                       <th>{tr({ zh: '日期', en: 'Date' })}</th>
                       <th>{tr({ zh: '比赛', en: 'Competition' })}</th>
@@ -874,6 +895,7 @@ function AllResultsPageInner() {
                           {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
                           <Link prefetch={false} href={personHref(r.wcaId)}>{displayCuberName(r.name, isZh)}</Link>
                         </td>
+                        <td><WcaTeacherCell studentWcaId={r.wcaId} directory={teacherDirectory} isZh={isZh} /></td>
                         <td className="wse-value-col">{r.value != null ? formatWcaResult(r.value, singleEvent, effType) : '—'}</td>
                         <td className="wse-detail-cell">{r.compDate ?? ''}</td>
                         <td>{r.compId ? <Link {...compLinkProps(r.compId)}><CompCell compId={r.compId} compName={r.compName} isZh={isZh} date={r.compDate ?? null} /></Link> : ''}</td>
@@ -977,6 +999,7 @@ function AllResultsPageInner() {
                     <tr>
                       <th className="wse-rank-col">#</th>
                       <th>{tr({ zh: '选手', en: 'Person' })}</th>
+                      <WcaTeacherColumnHeader />
                       <th className="wse-value-col">
                         <button type="button" className="wse-th-sort" onClick={() => setSorSort('total')}>
                           {tr({ zh: '名次总和', en: 'Total' })}
@@ -1013,6 +1036,7 @@ function AllResultsPageInner() {
                             <Link prefetch={false} href={personHref(r.wcaId)}>{displayCuberName(r.name, isZh)}</Link>
                           </span>
                         </td>
+                        <td><WcaTeacherCell studentWcaId={r.wcaId} directory={teacherDirectory} isZh={isZh} /></td>
                         <td className="wse-value-col">{r.subsetTotal != null ? r.subsetTotal : isCountryMode ? r.totalCountryRank : r.totalWorldRank}</td>
                         {showBest && (
                           <td className="wse-value-col"

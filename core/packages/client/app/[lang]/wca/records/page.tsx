@@ -26,6 +26,13 @@ import { AttemptHeaderCells, AttemptCells } from '@/components/wca-results/Attem
 import '../_wca_stats_extra.css';
 import '../_records.css';
 import { tr } from '@/i18n/tr';
+import {
+  WcaTeacherCell,
+  WcaTeacherColumnHeader,
+  WcaTeacherNote,
+  useWcaTeachers,
+  type WcaTeacherDirectory,
+} from '@/components/WcaTeacherCell';
 
 interface Row {
   e: string; t: 's' | 'a'; v: number; l: string;
@@ -173,6 +180,12 @@ function RecordsPageInner() {
       });
   }, [visibleRows, show]);
 
+  const teacherStudentIds = useMemo(
+    () => (show === 'current' ? currentRows : visibleRows).map((row) => row.p),
+    [show, currentRows, visibleRows],
+  );
+  const teacherDirectory = useWcaTeachers(teacherStudentIds);
+
   return (
     <div className="wse-page records-page">
       <header className="wse-header">
@@ -239,6 +252,8 @@ function RecordsPageInner() {
         />
       </div>
 
+      <WcaTeacherNote />
+
       <div className="wse-table-wrapper sticky-scroll">
         {loading && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...'
         })}</div>}
@@ -251,7 +266,7 @@ function RecordsPageInner() {
             )}
 
             {show === 'current' && currentRows.length > 0 && (
-              <RowsTable rows={currentRows} isZh={isZh} showEvent={!event} showRank={false} />
+              <RowsTable rows={currentRows} isZh={isZh} showEvent={!event} showRank={false} teacherDirectory={teacherDirectory} />
             )}
 
             {show === 'history' && grouped && grouped.map(g => (
@@ -262,12 +277,12 @@ function RecordsPageInner() {
                     <span>{eventDisplayName(g.event, isZh)}</span>
                   </h2>
                 )}
-                <RowsTable rows={g.rows} isZh={isZh} showEvent={false} />
+                <RowsTable rows={g.rows} isZh={isZh} showEvent={false} teacherDirectory={teacherDirectory} />
               </section>
             ))}
 
             {show === 'mixed' && visibleRows.length > 0 && (
-              <RowsTable rows={visibleRows} isZh={isZh} showEvent={!event} />
+              <RowsTable rows={visibleRows} isZh={isZh} showEvent={!event} teacherDirectory={teacherDirectory} />
             )}
           </>
         )}
@@ -281,9 +296,10 @@ interface RowsTableProps {
   isZh: boolean;
   showEvent: boolean;
   showRank?: boolean;
+  teacherDirectory: WcaTeacherDirectory;
 }
 
-function RowsTable({ rows, isZh, showEvent, showRank = true }: RowsTableProps) {
+function RowsTable({ rows, isZh, showEvent, showRank = true, teacherDirectory }: RowsTableProps) {
   const ranks = useMemo(() => {
     const totals = new Map<string, number>();
     for (const r of rows) {
@@ -316,6 +332,7 @@ function RowsTable({ rows, isZh, showEvent, showRank = true }: RowsTableProps) {
           <th className="wse-value-col">{tr({ zh: '平均', en: 'Average' })}</th>
           <th>{tr({ zh: '选手', en: 'Person'
         })}</th>
+          <WcaTeacherColumnHeader />
           <th>{tr({ zh: '比赛', en: 'Competition'
         })}</th>
           <th>{tr({ zh: '日期', en: 'Date' })}</th>
@@ -342,6 +359,7 @@ function RowsTable({ rows, isZh, showEvent, showRank = true }: RowsTableProps) {
               {r.pc && <Flag iso2={r.pc} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
               <PersonLink wcaId={r.p} name={r.pn} isZh={isZh} />
             </td>
+            <td><WcaTeacherCell studentWcaId={r.p} directory={teacherDirectory} isZh={isZh} /></td>
             <td>
               <Link {...compLinkProps(r.c)}>
                 <CompCell compId={r.c} compName={r.cn} isZh={isZh} date={r.d} />

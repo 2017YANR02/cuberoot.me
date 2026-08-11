@@ -60,7 +60,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   comp_follows cube cubeopt_solve cubing_live feedback forum health historical_ranks
 //   membership nav_sites nemesizer notifications ops page_notices paint pattern_examples progress quiz recon recon_ground_truth scramble_555
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
-//   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wechat_jssdk wiki
+//   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wechat_jssdk wiki
 // ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
   // ---- auth ----
@@ -141,6 +141,9 @@ const ENDPOINTS: Ep[] = [
   { d: 'wca-data', m: 'GET', p: '/v1/wca/historical-ranks/countries', g: 'public', c: 'cdn', zh: '国家列表', en: 'Country list' },
   { d: 'wca-data', m: 'GET', p: '/v1/wca/historical-ranks/meta', g: 'public', c: 'cdn', zh: '时间线元信息', en: 'Timeline meta' },
   { d: 'wca-data', m: 'GET', p: '/v1/wca/recent-records', g: 'public', zh: '近期纪录(WCA Live 轮询)', en: 'Recent records (WCA Live poll)' },
+  { d: 'wca-data', m: 'GET', p: '/v1/wca/teachers', g: 'public', c: 'cdn', zh: '批量读取选手老师', en: 'Batch-read cuber teachers' },
+  { d: 'wca-data', m: 'PUT', p: '/v1/wca/teachers/:studentId', g: 'login', zh: '有效会员登记自己为老师；管理员可代填', en: 'Active member self-registration; admin assignment' },
+  { d: 'wca-data', m: 'DELETE', p: '/v1/wca/teachers/:studentId', g: 'login', zh: '老师本人或管理员撤销关系', en: 'Teacher or admin removes a relation' },
   { d: 'wca-data', m: 'GET', p: '/v1/wca/comp/:id/schedule', g: 'public', c: 'cdn', zh: '比赛赛程(服务端缓存)', en: 'Competition schedule (cached)' },
   { d: 'wca-data', m: 'POST', p: '/v1/wca/format-record', g: 'public', zh: '成绩值格式化', en: 'Format a raw result value' },
   { d: 'wca-data', m: 'GET', p: '/v1/wca/result-watch/status', g: 'public', zh: '往期成绩监控状态', en: 'Result-watch status' },
