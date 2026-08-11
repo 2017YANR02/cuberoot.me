@@ -773,6 +773,14 @@ export const EXTRA_DEMOS: Partial<Record<string, () => ReactNode>> = {
 
 export const CATALOG: ComponentEntry[] = [
   {
+    name: 'WcaTeacherCell',
+    import: "import { WcaTeacherCell, WcaTeacherColumnHeader, WcaTeacherNote, useWcaTeachers } from '@/components/WcaTeacherCell';",
+    category: 'more',
+    zh: 'WCA 榜单老师列：批量读取老师关系，显示老师的选手链接，并按有效会员 / 管理员权限提供登记、编辑和撤销入口。',
+    en: 'Teacher column for WCA tables: batch-loads relations, links teacher profiles, and exposes register, edit, or remove actions according to membership and admin permissions.',
+    note: { zh: '页面只调用一次 useWcaTeachers，再把 directory 传给各行，避免逐行请求。', en: 'Call useWcaTeachers once per page and pass its directory to rows to avoid per-row requests.' },
+  },
+  {
     name: 'PillToggle',
     import: "import PillToggle from '@/components/PillToggle/PillToggle';",
     category: 'toggle',
