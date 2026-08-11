@@ -702,7 +702,8 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     if (clamped !== optimalMoves) void setOptimalMoves(clamped);
   }, [optimalMoves, selectedOptimalRange, setOptimalMoves]);
 
-  const optimalFilterActive = optimalMoves !== null
+  const optimalFilterActive = !collection
+    && optimalMoves !== null
     && availableMetrics.length > 0
     && selectedOptimalRange !== null;
   const showAllCases = canShowAllCases && (showAllCasesParam || optimalFilterActive || simplified);
@@ -884,7 +885,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
             className="alg-show-all-toggle"
           />
         )}
-        {data && availableMetrics.length > 0 && (!showSubgroupPicker || canShowAllCases) && selectedOptimalRange && (
+        {data && !collection && availableMetrics.length > 0 && (!showSubgroupPicker || canShowAllCases) && selectedOptimalRange && (
           <div className="alg-optimal-filter" role="group" aria-label={tr({ zh: '按最优步数筛选', en: 'Filter by optimal move count' })}>
             <span className="alg-optimal-filter-label">{tr({ zh: '最优', en: 'Optimal' })}</span>
             <select
