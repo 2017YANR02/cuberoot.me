@@ -38,6 +38,39 @@ describe('网页与 PDF 共用 case 缩略图渲染计划', () => {
     expect(caseThumbPlan(input('megaminx')).renderer).toBe('sr');
     expect(caseThumbPlan(input('pyraminx')).renderer).toBe('engine');
     expect(caseThumbPlan(input('skewb')).renderer).toBe('inline-svg');
+    expect(caseThumbPlan(input('fto')).renderer).toBe('inline-svg');
+  });
+
+  it('FTO 的网页与 PDF 使用逐字相同的 EIF SVG', async () => {
+    const spec = { ...input('fto', 'tcp'), alg: "Fo R U' R' U Fo'" };
+    const plan = caseThumbPlan(spec);
+    expect(plan.renderer).toBe('inline-svg');
+    if (plan.renderer !== 'inline-svg') throw new Error('expected inline FTO SVG');
+    expect(plan.svg).toContain('viewBox="0 0 279.92 301.94"');
+    await expect(algCaseSvg(spec)).resolves.toBe(plan.svg);
+  });
+
+  it('LowCubes Megaminx case 使用本地原图资源', () => {
+    const plan = caseThumbPlan({
+      ...input('megaminx', 'full-pll'),
+      sticker: {
+        kind: 'raw',
+        tag: 'lowcubes-megaminx',
+        attrs: {
+          image: 'cases/megaminx/full-pll/a1p.webp',
+          imageAlt: 'A1+',
+          imageWidth: '300',
+          imageHeight: '303',
+        },
+      },
+    });
+    expect(plan).toEqual({
+      renderer: 'asset',
+      src: '/cases/megaminx/full-pll/a1p.webp',
+      alt: 'A1+',
+      width: 300,
+      height: 303,
+    });
   });
 
   it.each(['cs', 'csp', 'co', 'eo', 'cp', 'ep', 'obl', 'parity'])('%s 的网页和 PDF 使用逐字相同的 SQ1 平面 SVG', async (set) => {

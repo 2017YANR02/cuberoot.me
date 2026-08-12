@@ -4,6 +4,7 @@ import { flattenAlg } from '@cuberoot/shared/alg-notation';
 import { equivalentPyraScramble } from './pyraminx-solver';
 import { allowedPostAuf, oriCornersOnly, type OrientationSel } from './alg_ll_orientation';
 import { tr } from '@/i18n/tr';
+import { invertFtoEifAlgorithm, parseFtoEifAlgorithm } from '@/lib/fto-eif-image';
 
 const AUF = ['', 'U', 'U2', "U'"];
 const Y = ['', 'y', 'y2', "y'"];
@@ -183,14 +184,16 @@ export function trainerSetScrambleFeatures(
 }
 
 /** 选定类型下的打乱本体(没有就 null —— 调用方退回 `inv`) */
-function baseForKind(c: AlgCase, kind: ScrambleKind): string | null {
+function baseForKind(c: AlgCase, kind: ScrambleKind, puzzle?: AlgPuzzle): string | null {
   if (kind === 'coep') return c.meta?.coep?.scramble ?? null;
   if (kind === 'stm' || kind === 'sqtm' || kind === 'htm' || kind === 'qtm') {
     return c.meta?.optimal?.[kind]?.scramble ?? null;
   }
   // `inv`(以及 `cstimer` 求解完成前的同步占位)都用 setup / 首条公式的逆
   const baseAlg = c.algs.flat()[0]?.alg ?? c.standard ?? '';
-  return (c.setup && c.setup.trim() ? c.setup.trim() : inverseAlg(baseAlg)) || null;
+  return (c.setup && c.setup.trim()
+    ? c.setup.trim()
+    : puzzle === 'fto' ? invertFtoEifAlgorithm(baseAlg) : inverseAlg(baseAlg)) || null;
 }
 
 /**
@@ -250,7 +253,7 @@ export function generateScramble(
   opts?: TrainerScrambleOpts,
 ): string {
   // 这个 case 没有选定的那种打乱 → 退回 inv(整个 set 里只有一部分 case 有)
-  const base = baseForKind(c, kind) ?? baseForKind(c, 'inv');
+  const base = baseForKind(c, kind, puzzle) ?? baseForKind(c, 'inv', puzzle);
   if (!base) return '';
 
   // 起手随机 AUF(pre-AUF):打乱前先 U^k,case 不变(起手/收尾 AUF 同属一条轨道),
@@ -319,6 +322,10 @@ export function generateScramble(
  */
 export function purifyScramble(puzzle: AlgPuzzle | undefined, s: string): string {
   if (!s || !puzzle || puzzle === 'sq1') return s;
+  if (puzzle === 'fto') {
+    const parsed = parseFtoEifAlgorithm(s);
+    return parsed.invalid.length === 0 ? parsed.tokens.join(' ') : s;
+  }
   try {
     const flat = flattenAlg(s);
     // 只改 `2'`(`3Rw2'` 同理),**不碰其它角度**:`U3'` = `U'`,写成 `U3` 就是另一个招式。

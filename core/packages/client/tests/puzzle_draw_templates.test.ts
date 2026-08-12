@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FTO_DRAW_ELEMENTS } from '@/components/puzzle-draw/FtoDrawPanel-data';
+import { FTO_DRAW_ELEMENTS } from '@/lib/fto-draw-elements';
 import {
   MEGAMINX_EXPANDED_ELEMENTS,
   MEGAMINX_TOP_ELEMENTS,

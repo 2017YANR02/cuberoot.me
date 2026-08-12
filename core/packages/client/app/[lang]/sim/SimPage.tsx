@@ -16,7 +16,6 @@ import {
 import dynamic from 'next/dynamic';
 import { useQueryStates, parseAsString, parseAsStringEnum } from 'nuqs';
 import HomeLink from '@/components/HomeLink';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { persistItem } from '@/lib/safe-storage';
 // THREE is type-only at module scope — runtime instance is dynamically imported
 // inside the world-init effect so the ~1.2MB three bundle doesn't ship with
@@ -132,6 +131,8 @@ import {
   loadKeymap, saveKeymap, resetKeymap as resetKeymapStorage, type KeyMove,
 } from './keymap';
 import './sim.css';
+
+const FtoImageGenerator = dynamic(() => import('./FtoImageGenerator'), { ssr: false });
 import { useT } from "@/hooks/useT";
 
 /** Gap (px) between the back-view window and the canvas top-right corner.
@@ -281,7 +282,7 @@ export default function SimPage() {
   // identity is never silently dropped (which used to read back as a 3x3 fallback).
   const [query, setQuery] = useQueryStates(
     {
-      tool: parseAsStringEnum(['sim', 'draw'] as const)
+      tool: parseAsStringEnum(['sim', 'draw', 'image'] as const)
         .withDefault('sim')
         .withOptions({ history: 'push' }),
       puzzle: parseAsString.withDefault('3').withOptions({ clearOnDefault: false }),
@@ -289,6 +290,7 @@ export default function SimPage() {
       cuts: parseAsString,
       alg: parseAsString,
       setup: parseAsString,
+      imageInverse: parseAsStringEnum(['1'] as const),
       // Which renderer for an ENGINE_TWISTY puzzle: 'group' = the in-house Three.js engine
       // + a live group-theory panel backed by the vendored puzzle-geometry (the default —
       // its strict superset of the engine view, so the preferred entry point), or 'cubing'
@@ -318,8 +320,10 @@ export default function SimPage() {
   const algParam = query.alg || '';
   const setupParam = query.setup || '';
   const drawMode = query.tool === 'draw';
+  const imageMode = query.tool === 'image';
 
   const puzzleParam: SimPuzzle = useMemo(() => {
+    if (imageMode) return 'fto';
     const raw = query.puzzle;
     if (!raw) return 3;
     if (raw === 'sq1') return 'sq1';
@@ -338,7 +342,7 @@ export default function SimPage() {
     const n = parseInt(raw, 10);
     if (!Number.isFinite(n) || n < 1 || n > 400) return 3;
     return n;
-  }, [query.puzzle]);
+  }, [imageMode, query.puzzle]);
 
   // Force the puzzle id into the URL on mount (clearOnDefault:false keeps it there):
   // a bare /sim becomes /sim?puzzle=3 so the project is always explicit and never
@@ -620,10 +624,10 @@ export default function SimPage() {
 
   // World init. Twisty puzzles (pyraminx/skewb/megaminx) don't use the cuber
   // engine — they render via cubing.js TwistyPlayer in <TwistySection> below.
-  // [twisty] in deps lets cleanup tear down a live cuber instance when the
-  // user switches NxN ↔ twisty.
+  // Dependencies let cleanup tear down a live cuber instance when the user
+  // switches NxN ↔ twisty or enters the image-only tool.
   useEffect(() => {
-    if (twisty) return;
+    if (imageMode || twisty) return;
     if (worldRef.current) return;
     const container = containerRef.current;
     if (!container) return;
@@ -1338,6 +1342,9 @@ export default function SimPage() {
         rendererRef.current = null;
         toucherRef.current = null;
         resizeMainViewRef.current = null;
+        if (process.env.NODE_ENV !== 'production') {
+          delete (window as unknown as { __simWorld?: World }).__simWorld;
+        }
       };
       // If unmount happened during the await above, the cancelled-check at
       // the top short-circuits; if it happens here (between resolve and
@@ -1350,7 +1357,7 @@ export default function SimPage() {
       cleanup?.();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [twisty]);
+  }, [imageMode, twisty]);
 
   const applyPuzzle = useCallback((kind: SimPuzzle) => {
     setPuzzleKind(kind);
@@ -1977,22 +1984,27 @@ export default function SimPage() {
   }, [imgSwapActive]);
 
   return (
-    <div className={`sim-page${fullscreen && !drawMode ? ' sim-page--fullscreen' : ''}`} data-board-bg={settings.boardBg}>
+    <div className={`sim-page${fullscreen && !drawMode && !imageMode ? ' sim-page--fullscreen' : ''}`} data-board-bg={settings.boardBg}>
       <header className="sim-header">
         <HomeLink className="sim-back" title={t('返回', 'Back')}>
           <ChevronLeft size={18} />
         </HomeLink>
         <h1 className="sim-title">{t('模拟', 'Sim')}</h1>
-        <PillToggle
-          value={!drawMode}
-          onChange={(simulate) => setQuery({ tool: simulate ? null : 'draw' })}
-          onLabel={t('模拟', 'Simulate')}
-          offLabel={t('绘图', 'Draw')}
-          ariaLabel={t('模拟或绘图', 'Simulate or draw')}
-          className="sim-tool-toggle"
-        />
+        <select
+          className="sim-tool-select"
+          value={query.tool}
+          onChange={(event) => {
+            const tool = event.target.value as 'sim' | 'draw' | 'image';
+            setQuery({ tool: tool === 'sim' ? null : tool, ...(tool === 'image' ? { puzzle: 'fto' } : {}) });
+          }}
+          aria-label={t('工具', 'Tool')}
+        >
+          <option value="sim">{t('模拟', 'Simulate')}</option>
+          <option value="draw">{t('绘图', 'Draw')}</option>
+          <option value="image">{t('FTO 图片', 'FTO image')}</option>
+        </select>
         <div className="sim-spacer" />
-        {!drawMode && reconHref && (
+        {!drawMode && !imageMode && reconHref && (
           <AppLink
             href={reconHref}
             className="sim-open-recon"
@@ -2003,7 +2015,7 @@ export default function SimPage() {
         )}
       </header>
 
-      <div className="sim-body" style={{ display: drawMode ? 'none' : undefined }} aria-hidden={drawMode}>
+      <div className="sim-body" style={{ display: drawMode || imageMode ? 'none' : undefined }} aria-hidden={drawMode || imageMode}>
         <div className="sim-stage">
         <div
           // puzzle-art:柔和度的统一钩子(见 globals.css)。挂在 wrap 而不是 3D canvas
@@ -2269,6 +2281,15 @@ export default function SimPage() {
           )}
         </aside>
       </div>
+
+      {imageMode && (
+        <FtoImageGenerator
+          algorithm={algParam}
+          onAlgorithmChange={(algorithm) => setQuery({ alg: algorithm || null })}
+          inverse={query.imageInverse === '1'}
+          onInverseChange={(inverse) => setQuery({ imageInverse: inverse ? '1' : null })}
+        />
+      )}
 
       {drawVisited && (
         <div style={{ display: drawMode ? 'contents' : 'none' }}>

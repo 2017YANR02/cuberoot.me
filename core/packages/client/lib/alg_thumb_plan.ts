@@ -14,10 +14,11 @@ import { renderSkewbPyramidSvgParametric } from '@cuberoot/shared/skewb-pyramid-
 import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS } from '@/lib/sq1-svg';
 import { sq1StageHiddenStickerIds } from '@/lib/sq1-stage-mask';
 import { caseViewAlg, caseViewSetup, type CaseViewAngle } from '@/lib/alg_display';
+import { invertFtoEifAlgorithm, renderFtoEifSvg } from '@/lib/fto-eif-image';
 
 export const PUZZLE_SIZE: Record<AlgPuzzle, number> = {
   '2x2': 2, '3x3': 3, '4x4': 4, '5x5': 5,
-  'sq1': 3, 'megaminx': 3, 'pyraminx': 3, 'skewb': 3,
+  'sq1': 3, 'megaminx': 3, 'pyraminx': 3, 'skewb': 3, 'fto': 3,
 };
 
 const CORNER_LL_MASK: Partial<Record<string, string>> = {
@@ -101,6 +102,7 @@ type AlgDriver = { alg: string; case?: never } | { case: string; alg?: never };
 
 export type CaseThumbPlan =
   | { renderer: 'inline-svg'; svg: string; alt: string }
+  | { renderer: 'asset'; src: string; alt: string; width: number; height: number }
   | { renderer: 'engine'; puzzle: 'pyraminx'; driver: AlgDriver }
   | { renderer: 'sr'; kind: 'megaminx-top'; driver: AlgDriver }
   | {
@@ -182,6 +184,15 @@ export function caseThumbPlan({
     return { renderer: 'engine', puzzle: 'pyraminx', driver: driverFor(setup, alg) };
   }
 
+  if (puzzle === 'fto') {
+    const forward = setup?.trim() ? setup : invertFtoEifAlgorithm(alg);
+    return {
+      renderer: 'inline-svg',
+      svg: renderFtoEifSvg(forward),
+      alt: 'FTO case',
+    };
+  }
+
   if (puzzle === 'skewb') {
     const driver = driverFor(setup ? toWcaSkewb(setup, 'sarah') : setup, toWcaSkewb(alg, 'sarah'));
     const scramble = driver.case !== undefined ? invertSkewbAlg(driver.case) : (driver.alg ?? '');
@@ -197,6 +208,15 @@ export function caseThumbPlan({
   }
 
   if (puzzle === 'megaminx') {
+    if (sticker.kind === 'raw' && sticker.tag === 'lowcubes-megaminx' && sticker.attrs.image) {
+      return {
+        renderer: 'asset',
+        src: `/${sticker.attrs.image.replace(/^\/+/, '')}`,
+        alt: sticker.attrs.imageAlt || 'Megaminx case',
+        width: Number(sticker.attrs.imageWidth) || 300,
+        height: Number(sticker.attrs.imageHeight) || 303,
+      };
+    }
     return { renderer: 'sr', kind: 'megaminx-top', driver: driverFor(setup, alg) };
   }
 

@@ -135,6 +135,7 @@ function AlgRow({ entry, expanded, onToggle, animatable, puzzle, set, setup, inv
   const angledAlg = caseViewAlg(alg, viewAngle);
   const standardAlgShown = formatScrambleForEvent(puzzle, displayAlg(angledAlg));
   const algShown = formatAlgNotation(standardAlgShown, notationStyle);
+  const playerSetup = entry.setup ?? setup;
   // 步数要数**屏幕上这一条**。`entry.stm` 是入库值(含收尾 AUF),拿它当徽章就会
   // 出现「显示 10 步、徽章写 11」。
   const shownStm = useMemo(
@@ -196,7 +197,7 @@ function AlgRow({ entry, expanded, onToggle, animatable, puzzle, set, setup, inv
           alg={angledAlg}
           puzzle={puzzle}
           set={set}
-          setup={setup === undefined ? undefined : caseViewSetup(setup, viewAngle)}
+          setup={playerSetup === undefined ? undefined : caseViewSetup(playerSetup, viewAngle)}
         />
       )}
     </>

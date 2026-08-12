@@ -5,7 +5,7 @@ import { ALG_PUZZLES, type AlgPuzzle } from '@cuberoot/shared';
 // alg-set puzzle <-> WCA event id
 export const PUZZLE_EVENT: Record<AlgPuzzle, string> = {
   '2x2': '222', '3x3': '333', '4x4': '444', '5x5': '555',
-  'sq1': 'sq1', 'megaminx': 'minx', 'pyraminx': 'pyram', 'skewb': 'skewb',
+  'sq1': 'sq1', 'megaminx': 'minx', 'pyraminx': 'pyram', 'skewb': 'skewb', 'fto': 'fto',
 };
 const EVENT_TO_PUZZLE: Record<string, AlgPuzzle> = Object.fromEntries(
   Object.entries(PUZZLE_EVENT).map(([p, e]) => [e, p as AlgPuzzle]),

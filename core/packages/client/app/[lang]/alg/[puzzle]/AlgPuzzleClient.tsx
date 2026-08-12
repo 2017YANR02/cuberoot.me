@@ -15,7 +15,7 @@ import Link from '@/components/AppLink';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { GraduationCap, X } from 'lucide-react';
-import { ALG_CATALOG, ALG_PUZZLES, loadAlg, type AlgCase, type AlgPuzzle } from '@cuberoot/shared';
+import { ALG_CATALOG, ALG_CATALOG_SECTIONS, ALG_PUZZLES, loadAlg, type AlgCase, type AlgPuzzle } from '@cuberoot/shared';
 import AlgPuzzleSelect from '../_components/AlgPuzzleSelect';
 import BackHome from '@/components/BackHome';
 import { CaseThumb } from '@/components/CaseThumb';
@@ -198,9 +198,12 @@ export default function AlgPuzzleClient() {
 
   const valid = isPuzzle(puzzle);
   const sets = useMemo(() => (valid ? ALG_CATALOG[puzzle] : []), [puzzle, valid]);
+  const catalogSections = valid ? (ALG_CATALOG_SECTIONS[puzzle] ?? []) : [];
   const lsSets = puzzle === '2x2' ? sets.filter(s => /^ls[1-9]$/.test(s.slug)) : [];
   const rouxSets = puzzle === '3x3' ? sets.filter(s => ROUX_SET_SLUGS.has(s.slug)) : [];
-  const regularSets = puzzle === '2x2'
+  const regularSets = catalogSections.length > 0
+    ? []
+    : puzzle === '2x2'
     ? sets.filter(s => !/^ls[1-9]$/.test(s.slug))
     : puzzle === '3x3'
       ? sets.filter(s => !ROUX_SET_SLUGS.has(s.slug))
@@ -250,6 +253,9 @@ export default function AlgPuzzleClient() {
     const n = counts[s.slug];
     const first = firstCases[s.slug];
     const firstAlg = first?.algs.flat()[0]?.alg ?? first?.standard ?? '';
+    const title = puzzle === 'fto' && ['pf', 'tl', 'lt'].includes(s.slug)
+      ? `${s.short} (${tr(s)})`
+      : s.short ?? tr(s);
     return (
       /* LSLL 不在 catalog 里(不是一套公式而是整层枚举),但归属上紧跟 ZBLL,所以就地插在它后面 */
       <Fragment key={s.slug}>
@@ -263,7 +269,7 @@ export default function AlgPuzzleClient() {
                长 case 网格不能照抄这条,那边走 loading="lazy",见 AlgCategoryView。 */
             <CaseThumb puzzle={puzzle} set={s.slug} sticker={first.sticker} alg={firstAlg} setup={first.setup} size={thumbSize} local sq1BlackTop={sq1BlackTop} />
           )}
-          title={s.short ?? tr(s)}
+          title={title}
           count={n == null ? '…' : n < 0 ? '!' : n}
         />
         {s.slug === 'zbll' && puzzle === '3x3' && !picking && (
@@ -316,9 +322,34 @@ export default function AlgPuzzleClient() {
         />
       </div>
 
-      <div className="alg-bento">
-        {regularSets.map(renderSetCard)}
-      </div>
+      {puzzle === 'fto' && (
+        <div className="alg-puzzle-method-intro">
+          <p>Face-Turning Octahedron</p>
+          <h2>Bencisco</h2>
+        </div>
+      )}
+      {puzzle === 'megaminx' && (
+        <div className="alg-puzzle-method-intro">
+          <p>{tr({ zh: '3×3 正十二面体', en: '3×3 Dodecahedron' })}</p>
+        </div>
+      )}
+
+      {regularSets.length > 0 && (
+        <div className="alg-bento">
+          {regularSets.map(renderSetCard)}
+        </div>
+      )}
+
+      {catalogSections.map(section => (
+        <section key={section.id} className="alg-set-section" aria-labelledby={`alg-${section.id}-title`}>
+          <div className="alg-set-section-heading">
+            <h2 id={`alg-${section.id}-title`}>{tr(section)}</h2>
+          </div>
+          <div className="alg-bento">
+            {section.slugs.map(slug => sets.find(set => set.slug === slug)).filter((set): set is (typeof sets)[number] => Boolean(set)).map(renderSetCard)}
+          </div>
+        </section>
+      ))}
 
       {puzzle === '3x3' && (
         <section className="alg-set-section" aria-labelledby="alg-roux-index-title">
@@ -436,6 +467,18 @@ export default function AlgPuzzleClient() {
               rel="noopener noreferrer"
             >
               Best 2x2 Algs (Google Sheets)
+            </a>
+          </>
+        )}
+        {(puzzle === 'fto' || puzzle === 'megaminx') && (
+          <>
+            {', '}
+            <a
+              href={puzzle === 'fto' ? 'https://www.lowcubes.com/fto' : 'https://www.lowcubes.com/megaminx/full-pll'}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              LowCubes
             </a>
           </>
         )}

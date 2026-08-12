@@ -2,7 +2,7 @@
 
 import DrawCanvas from './DrawCanvas';
 import { FTO_STICKER_PALETTE } from './palettes';
-import { FTO_DRAW_ELEMENTS } from './FtoDrawPanel-data';
+import { FTO_DRAW_ELEMENTS } from '@/lib/fto-draw-elements';
 import type { DrawExport } from './types';
 
 export interface FtoDrawPanelProps {

@@ -79,6 +79,24 @@ async function renderCaseSvg({
 }: CaseSvgInput): Promise<string | null> {
   const plan = caseThumbPlan({ puzzle, set, sticker, alg, setup, mask, sq1BlackTop, simplifyRecognition });
   if (plan.renderer === 'inline-svg') return plan.svg || null;
+  if (plan.renderer === 'asset') {
+    try {
+      const blob = await fetch(plan.src).then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.blob();
+      });
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(blob);
+      });
+      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${plan.width} ${plan.height}"><image href="${dataUrl}" width="${plan.width}" height="${plan.height}" /></svg>`;
+    } catch (err) {
+      console.warn('[alg_pdf] case asset render failed', plan.src, err);
+      return null;
+    }
+  }
   if (plan.renderer === 'engine') {
     return renderEngineSvg(plan.puzzle, engineForwardAlg(plan.puzzle, plan.driver), size);
   }

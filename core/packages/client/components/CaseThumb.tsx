@@ -53,6 +53,19 @@ export function CaseThumb({
       />
     );
   }
+  if (plan.renderer === 'asset') {
+    return (
+      <img
+        className="puzzle-art"
+        src={plan.src}
+        alt={plan.alt}
+        width={plan.width}
+        height={plan.height}
+        loading={loading}
+        style={{ width: size, height: size, display: 'inline-block', objectFit: 'contain' }}
+      />
+    );
+  }
   if (plan.renderer === 'engine') {
     return <EnginePuzzleSVG kind={plan.puzzle} {...plan.driver} size={size} />;
   }

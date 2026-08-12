@@ -17,6 +17,8 @@ export interface AlgEntry {
   /** Plain-text alg, used for clipboard copy (no HTML, but `[OH]` prefix and
    *  finger-trick UTF-8 chars like `·` `↑` `↓` `←` `→` are kept inline). */
   alg: string;
+  /** Optional per-algorithm setup when alternatives represent the same visual case from different orientations. */
+  setup?: string;
   /** Optional HTML markup for display, with whitelist tags `<u> <s> <em>
    *  <strong> <sub> <sup>` preserving docx finger-trick notation
    *  (underline / strike / italic-wave / bold / sub / sup). When absent,
@@ -28,7 +30,7 @@ export interface AlgEntry {
   /** 单手 / 脚拧 / 最少步 / 高阶 / 虚拟键盘。UI 据此做筛选。 */
   tags?: AlgTag[];
   /** 公式出处。站长自编的排在外部数据源前面。 */
-  source?: 'cuberoot' | 'speedcubedb' | 'cubingapp';
+  source?: 'cuberoot' | 'speedcubedb' | 'cubingapp' | 'LowCubes / Raul Low';
   /** Optional source annotation shown beside the formula. */
   note?: { en: string; zh: string };
   /** 这条公式**照写**的步数(`R4` = 1 STM / 4 SQTM —— 它是个真实的物理动作,见 alg_notation)。 */
@@ -140,7 +142,7 @@ export interface AlgFile {
   cases: AlgCase[];
 }
 
-export type AlgPuzzle = '2x2' | '3x3' | '4x4' | '5x5' | 'sq1' | 'megaminx' | 'pyraminx' | 'skewb';
+export type AlgPuzzle = '2x2' | '3x3' | '4x4' | '5x5' | 'sq1' | 'megaminx' | 'pyraminx' | 'skewb' | 'fto';
 
 // 两张镜像 set 名单的定义在 `./alg_mirror`(那儿是镜像域的家),这里转出去让 barrel 保持原样。
 export { MIRROR_SETS, MIRROR_ALG_SYNC_SETS } from './alg_mirror';
@@ -285,6 +287,7 @@ export const ALG_CATALOG: Record<AlgPuzzle, AlgSetMeta[]> = {
     { slug: 'parity', scd: 'SQ1Parity', short: 'Parity', en: 'Parity',             zh: 'Parity' },
   ],
   'megaminx': [
+    { slug: 'full-pll', scd: '', short: 'Full PLL', en: 'Full PLL', zh: 'Full PLL' },
     { slug: 'eo', scd: 'MegaminxEO', en: 'Edge Orientation',    zh: '棱块朝向 (EO)' },
     { slug: 'co', scd: 'MegaminxCO', en: 'Corner Orientation',  zh: '角块朝向 (CO)' },
     { slug: 'ep', scd: 'MegaminxEP', en: 'Edge Permutation',    zh: '棱块排列 (EP)' },
@@ -297,9 +300,36 @@ export const ALG_CATALOG: Record<AlgPuzzle, AlgSetMeta[]> = {
   'skewb': [
     { slug: 'sarahs-advanced', scd: 'SarahsAdvanced', en: "Sarah's Advanced", zh: "Sarah's Advanced" },
   ],
+  'fto': [
+    { slug: 'pf', scd: '', short: 'PF', en: 'Pair Formation', zh: '配对成形' },
+    { slug: 'tl', scd: '', short: 'TL', en: 'Top Layer', zh: '顶层' },
+    { slug: 'lt', scd: '', short: 'LT', en: 'Last Triangles', zh: '最后三角' },
+    { slug: 'tcp', scd: '', short: 'TCP', en: 'Triangle Combination and Permutation', zh: '三角组合与排列' },
+    { slug: '1l3t', scd: '', short: '1L3T', en: 'One-Look Last Three Triangles', zh: '一步最后三角' },
+  ],
 };
 
-export const ALG_PUZZLES: AlgPuzzle[] = ['2x2', '3x3', '4x4', '5x5', 'sq1', 'megaminx', 'pyraminx', 'skewb'];
+/** Optional grouped landing layout. A slug may appear in more than one section. */
+export interface AlgCatalogSection {
+  id: string;
+  en: string;
+  zh: string;
+  slugs: string[];
+}
+
+export const ALG_CATALOG_SECTIONS: Partial<Record<AlgPuzzle, AlgCatalogSection[]>> = {
+  fto: [
+    { id: '3-look-l3t', en: '3-Look L3T', zh: '3-Look L3T', slugs: ['pf', 'tl', 'lt'] },
+    { id: '2-look-l3t', en: '2-Look L3T', zh: '2-Look L3T', slugs: ['pf', 'tcp'] },
+    { id: '1-look-l3t', en: '1-Look L3T', zh: '1-Look L3T', slugs: ['1l3t'] },
+  ],
+  megaminx: [
+    { id: 'megaminx-last-layer', en: 'Last Layer', zh: '最后一层', slugs: ['full-pll'] },
+    { id: 'megaminx-stages', en: 'Stage Algorithms', zh: '阶段公式', slugs: ['eo', 'co', 'ep', 'cp'] },
+  ],
+};
+
+export const ALG_PUZZLES: AlgPuzzle[] = ['2x2', '3x3', '4x4', '5x5', 'sq1', 'megaminx', 'pyraminx', 'skewb', 'fto'];
 
 export function getAlgSetMeta(puzzle: AlgPuzzle, slug: string): AlgSetMeta | undefined {
   return ALG_CATALOG[puzzle]?.find(s => s.slug === slug);

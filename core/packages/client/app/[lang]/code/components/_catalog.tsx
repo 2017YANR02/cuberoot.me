@@ -1610,7 +1610,7 @@ export const CATALOG: ComponentEntry[] = [
     category: 'more',
     zh: `内联 3D 魔方动画预览,播放给定 (alg, puzzle, set, setup)。默认按魔方分流:NxN 走站内 /sim 引擎,其余走懒加载的 cubing.js;教学场景可指定从复原态自动循环。支持固定尺寸或 fillPane 撑满父容器。`,
     en: `Inline animated 3D cube preview for a given (alg, puzzle, set, setup). By default NxN uses the in-house /sim engine and other puzzles lazy-load cubing.js; teaching views can start solved and auto-loop. Fixed size or fillPane.`,
-    note: { zh: `engine="twisty" 可钉死走 cubing.js —— 只有 admin 编辑器要,它靠 forwardRef 的 getPlayer() 拿实例做光标 sync,sim 那版没有对应物。`, en: `Pass engine="twisty" to force cubing.js — only the admin editor needs it, for the getPlayer() handle used by caret-sync; the sim player has no equivalent.` },
+    note: { zh: `engine="twisty" 可钉死走 cubing.js;FTO 因 EIF 宏文法始终走自有播放器。两者都通过 forwardRef 的 getPlayer() 提供 admin 光标同步。`, en: `Pass engine="twisty" to force cubing.js; FTO always uses its EIF-native player because its macros are a different grammar. Both expose the admin caret-sync handle through getPlayer().` },
   },
   {
     name: 'AlgSimPlayer',
@@ -1619,6 +1619,13 @@ export const CATALOG: ComponentEntry[] = [
     zh: `公式动画的 /sim 引擎版:NxN、金字塔和斜转可用;setup 瞬时落位、逐步播放、进度条可拖,NxN 顶层遮罩复用 /sim 的阶段遮罩。一般不直接用 —— 走 AlgPlayer 的分流。`,
     en: `The /sim-engine alg animation for NxN, Pyraminx, and Skewb: setup lands instantly, moves play one at a time, the scrubber seeks, and NxN last-layer masks reuse /sim stickering. Usually reached through AlgPlayer rather than directly.`,
     note: { zh: `拖拽只转视角(paintMode + orbitSceneFree),不会转层改状态;转速改的是引擎模块级全局 timing.frames,卸载时还回去。`, en: `Dragging only orbits the view (paintMode + orbitSceneFree) — it can never twist a layer; the turn speed writes the engine-global timing.frames and restores it on unmount.` },
+  },
+  {
+    name: 'AlgPlaybackControls',
+    import: "import AlgPlaybackControls from '@/components/AlgPlayer/AlgPlaybackControls';",
+    category: 'more',
+    zh: `公式播放器共用的逐步控制条:起点、前后一步、播放暂停、终点、进度拖动与步数。由父级持有播放状态,FTO 与 /sim 引擎播放器共用。`,
+    en: `Shared step controls for algorithm players: start, previous/next, play/pause, end, scrubber, and step count. The parent owns playback state; shared by the FTO and /sim-engine players.`,
   },
   {
     name: 'MoveNotationDemo',
