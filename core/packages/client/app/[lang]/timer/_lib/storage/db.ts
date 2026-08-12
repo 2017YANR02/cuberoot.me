@@ -13,7 +13,16 @@
  * Schema versioned via `version` so we can migrate later.
  */
 
-import type { EventId, Solve } from '../types';
+import {
+  createTimerDatabase,
+  parseTimerDatabaseJson,
+  summarizeTimerDatabase,
+  type EventId,
+  type Solve,
+  type TimerDatabase,
+  type TimerSessionMeta,
+  type TimerSolvesByEvent,
+} from '../types';
 import { getSettings } from '../settings';
 import { BACKUP_LS_PREFIX, idbBackupGet, idbBackupList, idbBackupPut } from './backup-idb';
 import { persistItem } from '@/lib/safe-storage';
@@ -24,26 +33,9 @@ const LEGACY_V1_KEY = 'cuberoot-timer.v1';
 const SAVE_COUNTER_KEY = 'cuberoot-timer.saveCounter';
 const BACKUP_KEEP = 10;
 
-type ByEvent = Partial<Record<EventId, Solve[]>>;
-
-export interface SessionMeta {
-  id: string;
-  name: string;
-  createdTs: number;
-}
-
-interface DbShapeV3 {
-  version: 3;
-  sessions: SessionMeta[];
-  activeSessionId: string;
-  /** sessionId → (event id → solves, oldest → newest). */
-  dataBySession: Record<string, ByEvent>;
-}
-
-interface DbShapeV2 {
-  version: 2;
-  byEvent: ByEvent;
-}
+type ByEvent = TimerSolvesByEvent;
+export type SessionMeta = TimerSessionMeta;
+type DbShapeV3 = TimerDatabase;
 
 function genSessionId(): string {
   return 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -57,89 +49,39 @@ function defaultSessionName(): string {
   return 'Default';
 }
 
+function databaseEnvironment() {
+  return {
+    nowMs: Date.now(),
+    sessionId: genSessionId(),
+    language: defaultSessionName() === '默认' ? 'zh' as const : 'en' as const,
+  };
+}
+
 function emptyDb(): DbShapeV3 {
-  const id = genSessionId();
-  return {
-    version: 3,
-    sessions: [{ id, name: defaultSessionName(), createdTs: Date.now() }],
-    activeSessionId: id,
-    dataBySession: { [id]: {} },
-  };
-}
-
-/** Build a v3 db that wraps a single migrated byEvent into a default session. */
-function wrapByEventAsDefaultSession(byEvent: ByEvent): DbShapeV3 {
-  const id = genSessionId();
-  return {
-    version: 3,
-    sessions: [{ id, name: defaultSessionName(), createdTs: Date.now() }],
-    activeSessionId: id,
-    dataBySession: { [id]: byEvent },
-  };
-}
-
-/** v1 sessions[] → flat byEvent. */
-function v1ToByEvent(parsed: { sessions?: Array<{ event: EventId; solves: Solve[] }> }): ByEvent {
-  const byEvent: ByEvent = {};
-  for (const sess of parsed.sessions ?? []) {
-    if (!byEvent[sess.event]) byEvent[sess.event] = [];
-    byEvent[sess.event]!.push(...sess.solves);
-  }
-  for (const k of Object.keys(byEvent) as EventId[]) {
-    byEvent[k]!.sort((a, b) => a.ts - b.ts);
-  }
-  return byEvent;
-}
-
-function isValidV3(v: unknown): v is DbShapeV3 {
-  if (!v || typeof v !== 'object') return false;
-  const o = v as Partial<DbShapeV3>;
-  return (
-    o.version === 3 &&
-    Array.isArray(o.sessions) &&
-    o.sessions.length > 0 &&
-    typeof o.activeSessionId === 'string' &&
-    !!o.dataBySession &&
-    typeof o.dataBySession === 'object'
-  );
-}
-
-/** Repair invariants we depend on (active id exists, every session has data). */
-function normalizeV3(db: DbShapeV3): DbShapeV3 {
-  const sessions = db.sessions.length > 0
-    ? db.sessions
-    : [{ id: genSessionId(), name: defaultSessionName(), createdTs: Date.now() }];
-  const dataBySession = { ...db.dataBySession };
-  for (const s of sessions) {
-    if (!dataBySession[s.id] || typeof dataBySession[s.id] !== 'object') dataBySession[s.id] = {};
-  }
-  let activeSessionId = db.activeSessionId;
-  if (!sessions.some(s => s.id === activeSessionId)) activeSessionId = sessions[0].id;
-  return { version: 3, sessions, activeSessionId, dataBySession };
+  const environment = databaseEnvironment();
+  return createTimerDatabase(environment.nowMs, environment.sessionId, environment.language);
 }
 
 function loadRaw(): DbShapeV3 {
   try {
     const s = localStorage.getItem(KEY);
     if (s) {
-      const parsed = JSON.parse(s) as unknown;
-      if (isValidV3(parsed)) return normalizeV3(parsed);
+      const parsed = parseTimerDatabaseJson(s, databaseEnvironment());
+      if (parsed) return parsed;
     }
     // Migrate forward: v2 first, then v1.
     const v2 = localStorage.getItem(LEGACY_V2_KEY);
     if (v2) {
-      const parsed = JSON.parse(v2) as Partial<DbShapeV2>;
-      if (parsed.version === 2 && parsed.byEvent && typeof parsed.byEvent === 'object') {
-        const migrated = wrapByEventAsDefaultSession(parsed.byEvent);
+      const migrated = parseTimerDatabaseJson(v2, databaseEnvironment());
+      if (migrated) {
         saveRaw(migrated);
         return migrated;
       }
     }
     const v1 = localStorage.getItem(LEGACY_V1_KEY);
     if (v1) {
-      const parsed = JSON.parse(v1) as { version?: number; sessions?: Array<{ event: EventId; solves: Solve[] }> };
-      if (parsed.version === 1 && Array.isArray(parsed.sessions)) {
-        const migrated = wrapByEventAsDefaultSession(v1ToByEvent(parsed));
+      const migrated = parseTimerDatabaseJson(v1, databaseEnvironment());
+      if (migrated) {
         saveRaw(migrated);
         return migrated;
       }
@@ -417,20 +359,7 @@ export function exportJson(): string {
 }
 
 function parseImportedDb(json: string): DbShapeV3 | null {
-  try {
-    const parsed = JSON.parse(json) as unknown;
-    if (isValidV3(parsed)) return normalizeV3(parsed);
-    const o = parsed as { version?: number; byEvent?: ByEvent; sessions?: Array<{ event: EventId; solves: Solve[] }> };
-    if (o.version === 2 && o.byEvent && typeof o.byEvent === 'object') {
-      return wrapByEventAsDefaultSession(o.byEvent);
-    }
-    if (o.version === 1 && Array.isArray(o.sessions)) {
-      return wrapByEventAsDefaultSession(v1ToByEvent(o));
-    }
-    return null;
-  } catch {
-    return null;
-  }
+  return parseTimerDatabaseJson(json, databaseEnvironment());
 }
 
 export interface NativeImportPreview {
@@ -442,11 +371,7 @@ export interface NativeImportPreview {
 export function inspectImportJson(json: string): NativeImportPreview | null {
   const db = parseImportedDb(json);
   if (!db) return null;
-  let solveCount = 0;
-  for (const byEvent of Object.values(db.dataBySession)) {
-    for (const solves of Object.values(byEvent)) solveCount += solves?.length ?? 0;
-  }
-  return { sessionCount: db.sessions.length, solveCount };
+  return summarizeTimerDatabase(db);
 }
 
 /**

@@ -149,7 +149,11 @@ jobs:
         working-directory: core
         run: |
           pnpm --filter @cuberoot/mobile assets:android
-          git diff --exit-code -- packages/mobile/android/app/src/main/res
+          git diff --exit-code -- packages/client/public/icons packages/mobile/android/app/src/main/res
+          if [[ -n "$(git ls-files --others --exclude-standard -- packages/client/public/icons packages/mobile/android/app/src/main/res)" ]]; then
+            echo "Asset generation produced untracked files"
+            exit 1
+          fi
 
       - name: Typecheck mobile
         working-directory: core
@@ -163,11 +167,28 @@ jobs:
         working-directory: core
         run: pnpm --filter @cuberoot/mobile cap:sync
 
-      - name: Compile Android APK and AAB
+      - name: Create ephemeral CI upload key
+        run: |
+          keytool -genkeypair -v -keystore "$RUNNER_TEMP/mobile-ci.jks" -storepass ci-mobile-store -keypass ci-mobile-store -alias ci-upload -keyalg RSA -keysize 2048 -validity 1 -dname "CN=CI, OU=Mobile, O=CubeRoot, L=CI, ST=CI, C=US"
+
+      - name: Compile Android APK and signed release AAB
         working-directory: core/packages/mobile/android
+        env:
+          MOBILE_REQUIRE_RELEASE_SIGNING: 'true'
+          MOBILE_UPLOAD_KEYSTORE_FILE: ${{ runner.temp }}/mobile-ci.jks
+          MOBILE_UPLOAD_STORE_PASSWORD: ci-mobile-store
+          MOBILE_UPLOAD_KEY_ALIAS: ci-upload
+          MOBILE_UPLOAD_KEY_PASSWORD: ci-mobile-store
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug bundleDebug --no-daemon
+          ./gradlew assembleDebug assembleRelease bundleRelease --no-daemon --max-workers=14
+          jarsigner -verify app/build/outputs/bundle/release/app-release.aab
+          permissions=$("$ANDROID_HOME/cmdline-tools/latest/bin/apkanalyzer" manifest permissions app/build/outputs/apk/release/app-release.apk)
+          echo "$permissions"
+          if echo "$permissions" | grep -Eq 'CAMERA|RECORD_AUDIO|ACCESS_FINE_LOCATION|ACCESS_COARSE_LOCATION'; then
+            echo "Release artifact requests a forbidden sensitive permission"
+            exit 1
+          fi
 
   # analyzer_worker 会做深度搜索并加载多份 WASM。独占 runner 可避免与 360+ 个快测文件
   # 互抢 CPU；它与主 test job 并行，所以既保留精确回归，也缩短整条 workflow 墙钟。

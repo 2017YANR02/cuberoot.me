@@ -49,8 +49,13 @@ describe('timer backups on IndexedDB', () => {
       ],
       activeSessionId: 'a',
       dataBySession: {
-        a: { 333: [{ id: '1' }, { id: '2' }] },
-        b: { 222: [{ id: '3' }] },
+        a: { 333: [
+          { id: '1', timeMs: 1, penalty: 'ok', scramble: 'R', event: '333', ts: 1 },
+          { id: '2', timeMs: 2, penalty: 'ok', scramble: 'U', event: '333', ts: 2 },
+        ] },
+        b: { 222: [
+          { id: '3', timeMs: 3, penalty: 'ok', scramble: 'F', event: '222', ts: 3 },
+        ] },
       },
     });
 

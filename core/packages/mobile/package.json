@@ -16,8 +16,8 @@
   },
   "dependencies": {
     "@capacitor/android": "8.5.0",
+    "@capacitor/browser": "8.0.4",
     "@capacitor/core": "8.5.0",
-    "@capacitor/inappbrowser": "4.0.2",
     "@capacitor/network": "8.0.1",
     "@cuberoot/shared": "workspace:*",
     "react": "19.2.4",
