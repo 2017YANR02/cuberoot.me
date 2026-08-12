@@ -362,6 +362,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 115, slug: 'keep_sexy_in_english', desc: { zh: '数据修正：公式备注与 Wiki 术语中的 sexy 统一保留英文，不再翻译。', en: 'Data correction: keep sexy in English in algorithm notes and Wiki terminology instead of translating it.' } },
   { n: 116, slug: 'psf2l', desc: { zh: '数据迁移：把 PSF2L.docx 的 33 个伪槽情况与公式加入三阶公式库；每条 setup 由公式严格取逆并经三阶状态模型验证。', en: 'Data migration: add all 33 Pseudoslotting cases and algorithms from PSF2L.docx to the 3x3 library; every setup is the exact inverse of its algorithm and is verified with the 3x3 state model.' } },
   { n: 117, slug: 'psf2l_f2l_names', desc: { zh: '数据修正：伪槽情况改用首选解去掉首尾 D 层转动后所对应的 F2L 情况名，例如 PSF2L 01 改为 A+。', en: 'Data correction: name each Pseudoslotting case after the F2L case matched by its primary algorithm with the outer D turns removed, for example PSF2L 01 becomes A+.' } },
+  { n: 118, slug: 'update_wrap_up_prompt_for_codex', desc: { zh: '数据修正：收尾审查提示词改用当前的 AGENTS.md、skill、memory 与 hook 交接约定。', en: 'Data correction: update the wrap-up prompt to use the current AGENTS.md, skill, memory, and hook handoff conventions.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
