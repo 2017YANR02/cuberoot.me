@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Mirrors the mobile web surface token for a seamless native handoff. -->
+    <color name="splash_background">#faf9f7</color>
+</resources>
