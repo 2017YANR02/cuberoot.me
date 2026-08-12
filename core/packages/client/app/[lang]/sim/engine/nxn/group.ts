@@ -66,6 +66,7 @@ export default class CubeGroup extends THREE.Group {
 
   _angle: number;
   set angle(angle) {
+    if (!Number.isFinite(angle)) return;
     this._angle = angle;
     this.setRotationFromAxisAngle(CubeGroup.AXIS_VECTOR[this.axis], this._angle);
     this.updateMatrix();
@@ -235,6 +236,15 @@ export default class CubeGroup extends THREE.Group {
   }
 
   twist(angle: number, fast: boolean): boolean {
+    if (!Number.isFinite(angle)) {
+      if (this.tween) tweener.cancel(this.tween);
+      this.tween = undefined;
+      if (this.holding) {
+        this.angle = 0;
+        this.drop();
+      }
+      return false;
+    }
     if (this.holding) {
       angle = angle + this.cancel();
     } else {
