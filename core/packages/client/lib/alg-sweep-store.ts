@@ -111,11 +111,11 @@ function adopt(p: string, s: string, sw: SetSweep, foldedAt: number) {
   if (st.puzzle === p && st.set === s) useAlgSweep.setState({ sweep: sw, foldedAt });
 }
 
-/** 当前有手动标记(状态或星标)的 case key —— 折叠永远绕开它们。 */
+/** 当前有手动状态标记的 case key —— 折叠永远绕开它们。 */
 function markedKeys(): Set<string> {
   const { marks } = useTrainerMarks.getState();
   const out = new Set<string>();
-  for (const k in marks) { const m = marks[k]; if (m.s || m.f === 1) out.add(k); }
+  for (const k in marks) if (marks[k].s) out.add(k);
   return out;
 }
 

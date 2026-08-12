@@ -3,6 +3,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import type { AlgPuzzle } from '@cuberoot/shared';
+import { Face, Masking, makeMasking } from '@cuberoot/visualcube';
 import {
   caseThumbPlan,
   cubeThumbParams,
@@ -159,6 +160,62 @@ describe('网页与 PDF 共用 case 缩略图渲染计划', () => {
     }
 
     expect(supportsRecognitionSimplification(cubeThumbParams('3x3', 'zbll', FACE))).toBe(true);
+  });
+
+  it.each(['sv', 'vls', 'wv'])('%s 共用 SV 的俯视遮罩图', (set) => {
+    const params = cubeThumbParams('3x3', set, FACE);
+    expect(params).toEqual({
+      view: 'pll',
+      mask: 'wv',
+      hideGreySides: true,
+      puzzleSize: 3,
+    });
+
+    const simplified = caseThumbPlan({
+      puzzle: '3x3',
+      set,
+      sticker: FACE,
+      alg: "R U R'",
+      simplifyRecognition: true,
+    });
+    expect(simplified.renderer).toBe('visualcube');
+    if (simplified.renderer !== 'visualcube') throw new Error('expected visualcube plan');
+    expect(simplified.params.planSimplify?.showYellow).toBe(false);
+  });
+
+  it('OLLCP 保留角块侧色，但把棱块侧色置灰', () => {
+    expect(cubeThumbParams('3x3', 'ollcp', FACE)).toEqual({
+      view: 'pll',
+      mask: 'ollcp',
+      hideGreySides: true,
+      puzzleSize: 3,
+    });
+
+    const mask = makeMasking(Masking.OLLCP, 3);
+    expect(mask[Face.U]).toEqual(Array(9).fill(true));
+    for (const side of [Face.R, Face.F, Face.L, Face.B]) {
+      expect(mask[side]).toEqual([
+        true, false, true,
+        false, false, false,
+        false, false, false,
+      ]);
+    }
+
+    const simplified = caseThumbPlan({
+      puzzle: '3x3',
+      set: 'ollcp',
+      sticker: FACE,
+      alg: "R U2 R2 F R F' U2 R' F R F'",
+      simplifyRecognition: true,
+    });
+    expect(simplified.renderer).toBe('visualcube');
+    if (simplified.renderer !== 'visualcube') throw new Error('expected visualcube plan');
+    expect(simplified.params.planSimplify).toEqual({
+      side: 'oppbar',
+      up: 'all',
+      showYellow: true,
+      forceHide: 'side=1,2,3,4,5,6,7,8,9,10,11,12',
+    });
   });
 
   it('顶层平面图可切换观察角度，立体和槽位图不误转', () => {

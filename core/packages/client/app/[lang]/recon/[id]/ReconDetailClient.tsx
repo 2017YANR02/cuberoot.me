@@ -365,7 +365,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
     if (!solutionText) return '';
     const scrambleLine = scramble ? `${displayScramble}${optimalScrambleTag}` : '';
     const body = [scrambleLine, displayText].filter(Boolean).join('\n');
-    return [captionHeader, body].filter(Boolean).join('\n\n');
+    return [captionHeader, body].filter(Boolean).join('\n');
   }, [solutionText, scramble, displayScramble, optimalScrambleTag, displayText, captionHeader]);
 
   // 复盘者与提交者常是同一人——同一人时合并成一行,名字只显示一次(双图标)
@@ -1661,13 +1661,9 @@ function AlternativesSection({ reconId, alts, setAlts, solveTime, event }: {
 
   return (
     <div className="detail-section">
-      <div className="detail-section-label">
-        {t('recon.alternativeCount', { count: alts.length })}
-      </div>
-
       {myKey ? (
         <div className="alt-add-bar">
-          <Link href={`/recon/${reconId}/alt`} className="recon-btn recon-btn-edit" title={t('recon.addAlternative')}>
+          <Link href={`/recon/${reconId}/alt`} className="recon-btn recon-btn-edit alt-add-link" title={t('recon.addAlternative')}>
             <Plus size={14} /> {t('recon.alternatives')}
           </Link>
         </div>

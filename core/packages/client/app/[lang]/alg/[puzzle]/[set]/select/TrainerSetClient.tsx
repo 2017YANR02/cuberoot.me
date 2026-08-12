@@ -11,7 +11,7 @@ import { getAlgSetMeta, loadAlg, type AlgCase } from '@cuberoot/shared';
 import { MIX_SLUG, MIX_MIN_SETS, parseMixSets, mixTitle, mixHref, loadMixCases, setLabel } from '@/lib/alg-mix';
 import { useTrainerStore, mixSessionId } from '@/lib/trainer-store';
 import {
-  useTrainerMarks, markStatus, markStarred, MARK_STATUS_LABEL,
+  useTrainerMarks, markStatus, MARK_STATUS_LABEL,
   type TrainerMarkBrush, type CaseMarkStatus,
 } from '@/lib/trainer-marks';
 import { caseKey } from '@/lib/trainer-case-key';
@@ -28,7 +28,7 @@ import '@/app/[lang]/alg/_trainer/memory.css';
 import { tr } from '@/i18n/tr';
 
 /** 显示过滤:按标记只看一类(大 set 里找 case 用)。 */
-const MARK_FILTERS = ['all', 'none', 'learning', 'mastered', 'star'] as const;
+const MARK_FILTERS = ['all', 'none', 'learning', 'mastered'] as const;
 type MarkFilter = (typeof MARK_FILTERS)[number];
 
 export default function TrainerSetClient() {
@@ -142,7 +142,6 @@ export default function TrainerSetClient() {
     if (markFilter === 'all') return scopedCases;
     return scopedCases.filter((c) => {
       const k = caseKey(c);
-      if (markFilter === 'star') return markStarred(marks, k);
       const st = markStatus(marks, k);
       return markFilter === 'none' ? !st : st === markFilter;
     });
@@ -176,12 +175,7 @@ export default function TrainerSetClient() {
   /** 画笔落地:整批已是目标态 → 清该维度(再涂一次 = 擦掉),否则涂上。 */
   const onPaint = (keys: string[]) => {
     if (!brush || keys.length === 0) return;
-    if (brush === 'clear') { applyMarks(keys, { s: null, f: false }); return; }
-    if (brush === 'star') {
-      const allOn = keys.every(k => markStarred(marks, k));
-      applyMarks(keys, { f: !allOn });
-      return;
-    }
+    if (brush === 'clear') { applyMarks(keys, { s: null }); return; }
     const allOn = keys.every(k => markStatus(marks, k) === brush);
     applyMarks(keys, { s: allOn ? null : brush });
   };
@@ -258,7 +252,6 @@ export default function TrainerSetClient() {
                 {(['learning', 'mastered'] as CaseMarkStatus[]).map(s => (
                   <option key={s} value={s}>{MARK_STATUS_LABEL[s]()}</option>
                 ))}
-                <option value="star">{tr({ zh: '星标', en: 'Star' })}</option>
                 <option value="clear">{tr({ zh: '清除标记', en: 'Clear marks' })}</option>
               </select>
             </label>
@@ -274,7 +267,6 @@ export default function TrainerSetClient() {
                 <option value="none">{tr({ zh: '未学', en: 'Unlearned' })}</option>
                 <option value="learning">{MARK_STATUS_LABEL.learning()}</option>
                 <option value="mastered">{MARK_STATUS_LABEL.mastered()}</option>
-                <option value="star">{tr({ zh: '星标', en: 'Starred' })}</option>
               </select>
             </label>
             {/* 快选:一键把训练范围对准短板(替换选择) */}
@@ -287,10 +279,6 @@ export default function TrainerSetClient() {
               <button type="button" className="trainer-quick-btn"
                 onClick={() => quickSelect(k => markStatus(marks, k) === 'learning')}>
                 {MARK_STATUS_LABEL.learning()}
-              </button>
-              <button type="button" className="trainer-quick-btn"
-                onClick={() => quickSelect(k => markStarred(marks, k))}>
-                {tr({ zh: '星标', en: 'Starred' })}
               </button>
             </span>
           </div>

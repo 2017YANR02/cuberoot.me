@@ -41,13 +41,39 @@ export function isCubeColorLetters(s: string): boolean {
  * `GR` / `OB` 是那一对 F2L 的两片侧贴纸,`W cross` 是十字的颜色 —— 都是 cubedb 那套
  * 写法,认得的人一秒,不认得的要背一张表。
  *
- * 只认**开头**、只认 1~2 个字母、后面必须断开(空白 / `/` / 括号 / 到头)。末层的
+ * 只认**开头**、只认 1~2 个字母、后面必须断开(空白 / `/` / `+` / 括号 / 到头)。末层的
  * `OLL-F-` / `PLL-T` / `EPLL-Z` 因此一个都不会误中 —— 首字母要么不是色字母,要么
  * 后面紧跟着别的字母。宁可少摆一个色块,也不能给 `OLL-F-` 摆一个橙色块。
  */
 export function leadingCubeColors(label: string): string | null {
-  const m = /^([WYGBOR]{1,2})(?=$|[\s/(])/.exec(label);
+  const m = /^([WYGBOR]{1,2})(?=$|[\s/(+])/.exec(label);
   return m ? m[1] : null;
+}
+
+export interface CubeColorGroup {
+  colors: string;
+  start: number;
+  end: number;
+}
+
+/**
+ * 找出复盘标注里的配色组。开头允许单色十字,其余位置只认双色 F2L 槽位,避免把
+ * 注释中的单个转动字母当作颜色。
+ */
+export function cubeColorGroups(label: string): CubeColorGroup[] {
+  const groups: CubeColorGroup[] = [];
+  const candidates = label.matchAll(/[WYGBOR]{1,2}/g);
+  for (const match of candidates) {
+    const colors = match[0];
+    const start = match.index;
+    const end = start + colors.length;
+    const beforeOk = start === 0 || /[\s(+/]/.test(label[start - 1]);
+    const afterOk = end === label.length || /[\s/+).]/.test(label[end]);
+    if (beforeOk && afterOk && (start === 0 || colors.length === 2)) {
+      groups.push({ colors, start, end });
+    }
+  }
+  return groups;
 }
 
 export interface CubeColorChipProps {

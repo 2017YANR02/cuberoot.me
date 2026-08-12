@@ -150,7 +150,7 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
     color: var(--text);
 }
 
-/* ── 大标语 ── */
+/* ── 子页大标题(首页已改用共享搜索框) ── */
 .landing-page .landing-tagline {
     font-family: var(--font-serif);
     font-size: clamp(2rem, 5vw, 3.5rem);
@@ -533,4 +533,3 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
     padding: 0;
     background: transparent;
 }
-

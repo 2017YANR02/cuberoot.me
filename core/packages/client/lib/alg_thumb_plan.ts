@@ -31,6 +31,14 @@ const CORNER_LL_MASK: Partial<Record<string, string>> = {
 /** Only-corner masks whose grey side rim is not part of the recognition case. */
 const CORNER_LL_MASK_NAMES = new Set(Object.values(CORNER_LL_MASK));
 
+/** Last-slot sets that share the SV recognition projection. */
+const SV_STYLE_SETS_3X3 = new Set(['sv', 'vls', 'wv']);
+const ALL_SIDE_RING_3X3 = 'side=1,2,3,4,5,6,7,8,9,10,11,12';
+
+export function usesSvThumbStyle(puzzle: string, set: string): boolean {
+  return puzzle === '3x3' && SV_STYLE_SETS_3X3.has(set);
+}
+
 /** Shared mask for second-level umbrella cards in the library and trainer. */
 export const LEVEL2_PICKER_MASK: Record<string, string> = {
   zbll: 'coll', '1lll': 'coll', ollcp: 'coll',
@@ -79,6 +87,12 @@ export function cubeThumbParams(
   if (maskOverride) {
     const hideGreySides = CORNER_LL_MASK_NAMES.has(maskOverride) || undefined;
     return { view: 'pll', mask: maskOverride, hideGreySides, puzzleSize };
+  }
+  if (usesSvThumbStyle(puzzle, set)) {
+    return { view: 'pll', mask: 'wv', hideGreySides: true, puzzleSize };
+  }
+  if (puzzle === '3x3' && set === 'ollcp') {
+    return { view: 'pll', mask: 'ollcp', hideGreySides: true, puzzleSize };
   }
   if (sticker.kind === 'face' && sticker.mask) {
     const hideGreySides = CORNER_LL_MASK_NAMES.has(sticker.mask) || set === '2-look-oll' || undefined;
@@ -229,7 +243,14 @@ export function caseThumbPlan({
     params: {
       ...params,
       ...(puzzle === '3x3' && simplifyRecognition && supportsRecognitionSimplification(params)
-        ? { planSimplify: { side: 'oppbar', up: 'all', showYellow: true } satisfies PlanSimplifyOptions }
+        ? {
+            planSimplify: {
+              side: 'oppbar',
+              up: 'all',
+              showYellow: !usesSvThumbStyle(puzzle, set),
+              ...(set === 'ollcp' ? { forceHide: ALL_SIDE_RING_3X3 } : {}),
+            } satisfies PlanSimplifyOptions,
+          }
         : {}),
     },
   };

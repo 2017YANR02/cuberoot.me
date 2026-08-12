@@ -1279,8 +1279,11 @@
   max-width: 100%;
 }
 .settings-modal .settings-row-control .hint-btn {
+  display: inline-flex;
+  align-items: center;
   min-height: 34px;
   padding: 5px 10px;
+  white-space: nowrap;
 }
 .settings-modal .settings-row-control .hint-btn svg { vertical-align: -2px; }
 .settings-backup-list {

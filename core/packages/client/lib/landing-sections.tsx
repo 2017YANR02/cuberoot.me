@@ -15,8 +15,6 @@ import { type LandingSearchCard } from '@/components/LandingSearch';
 export const TEXTS: Record<string, { en: string; zh: string
  }> = {
   brand:           { en: 'CubeRoot', zh: 'CubeRoot' },
-  tagline:         { en: 'Solve. Train. Analyze.', zh: '解法 · 训练 · 分析'
-},
   solver:          { en: 'or18 Solver', zh: 'or18 求解器' },
   wcaStats:        { en: 'WCA', zh: 'WCA' },
   recon:           { en: 'Recon', zh: '复盘'
@@ -113,7 +111,7 @@ export interface Section {
   cards: CardConfig[];
 }
 
-// 主入口 — 标语正下方的整行直达卡,从 train / tool 分组里提上来,分组里不再重复出现。
+// 主入口 — 搜索框正下方的整行直达卡,从 train / tool 分组里提上来,分组里不再重复出现。
 export const PRIMARY_CARDS: CardConfig[] = [
   { id: 'timer',    href: '/timer',    internal: true, tier: 'medium', Icon: TimerIcon,  nameKey: 'timer' },
   { id: 'algdb',    href: '/alg',      internal: true, tier: 'medium', Icon: Blocks,     nameKey: 'algdb' },

@@ -4,13 +4,13 @@ import { query } from '../db/connection.js';
 import { requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
 
 /**
- * /v1/alg/marks — 公式训练器 per-case 学习标记(不熟/已掌握 + 星标)。
+ * /v1/alg/marks — 公式训练器 per-case 学习标记(不熟/已掌握)。
  *
  *   GET /alg/marks/:puzzle/:set — 当前用户该 set 的全部标记
- *       { marks: { [caseKey]: { s?: status, f?: 1, t: updatedAt } } }
+ *       { marks: { [caseKey]: { s: status, t: updatedAt } } }
  *   PUT /alg/marks/:puzzle/:set — 批量 upsert(客户端画笔拖涂防抖后一次提交)
- *       body { items: [{ k: caseKey, s: status|null, f: boolean, t: updatedAt }] }
- *       status 与 starred 全空 = 清除标记 → 删行。t 用于多设备 last-write-wins:
+ *       body { items: [{ k: caseKey, s: status|null, t: updatedAt }] }
+ *       s=null = 清除标记 → 删行。t 用于多设备 last-write-wins:
  *       服务器只接受 t 更新的写(旧设备迟到的防抖包不能覆盖新标记)。
  *
  * 身份始终取 requireAuth(c).wcaId(ownerKey);客户端不传 userId
@@ -37,16 +37,16 @@ function validCaseKey(k: unknown): k is string {
   return typeof k === 'string' && k.length >= 1 && k.length <= 128 && !/[\x00-\x1f]/.test(k);
 }
 
-interface MarkRow { case_key: string; status: string | null; starred: boolean; updated_at: string }
+interface MarkRow { case_key: string; status: string; updated_at: string }
 
 /**
  * GET /alg/marks — 当前用户跨全部 set 的标记聚合(/alg/progress 学习进度页用)。
- *   { sets: [{ puzzle, set, learning, mastered, starred }] }
+ *   { sets: [{ puzzle, set, learning, mastered }] }
  * 只回计数,不回 case_key(明细走 per-set GET);单次 GROUP BY,便宜。
  * 注意:此路由必须在 /alg/marks/:puzzle/:set 之前不敏感——Hono 按精确路径匹配,
  * /alg/marks 与 /alg/marks/:p/:s 是两条不同路径,顺序无关。
  */
-interface MarkAggRow { puzzle: string; set_slug: string; learning: number; mastered: number; starred: number }
+interface MarkAggRow { puzzle: string; set_slug: string; learning: number; mastered: number }
 
 algMarksRoutes.get('/alg/marks', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -55,8 +55,7 @@ algMarksRoutes.get('/alg/marks', async (c) => {
   const rows = await query<MarkAggRow>(
     `SELECT puzzle, set_slug,
             COUNT(*) FILTER (WHERE status = 'learning')::int AS learning,
-            COUNT(*) FILTER (WHERE status = 'mastered')::int AS mastered,
-            COUNT(*) FILTER (WHERE starred)::int            AS starred
+            COUNT(*) FILTER (WHERE status = 'mastered')::int AS mastered
        FROM alg_case_marks WHERE wca_id = ?
       GROUP BY puzzle, set_slug
       ORDER BY puzzle, set_slug`,
@@ -68,7 +67,6 @@ algMarksRoutes.get('/alg/marks', async (c) => {
       set: r.set_slug,
       learning: Number(r.learning),
       mastered: Number(r.mastered),
-      starred: Number(r.starred),
     })),
   });
 });
@@ -82,20 +80,17 @@ algMarksRoutes.get('/alg/marks/:puzzle/:set', async (c) => {
   if (!puzzle || !setSlug) return c.json({ error: 'invalid puzzle/set' }, 400);
 
   const rows = await query<MarkRow>(
-    'SELECT case_key, status, starred, updated_at FROM alg_case_marks WHERE wca_id = ? AND puzzle = ? AND set_slug = ?',
+    'SELECT case_key, status, updated_at FROM alg_case_marks WHERE wca_id = ? AND puzzle = ? AND set_slug = ?',
     [authUser.wcaId, puzzle, setSlug],
   );
-  const marks: Record<string, { s?: string; f?: 1; t: number }> = {};
+  const marks: Record<string, { s: string; t: number }> = {};
   for (const r of rows) {
-    const m: { s?: string; f?: 1; t: number } = { t: Number(r.updated_at) };
-    if (r.status) m.s = r.status;
-    if (r.starred) m.f = 1;
-    marks[r.case_key] = m;
+    marks[r.case_key] = { s: r.status, t: Number(r.updated_at) };
   }
   return c.json({ marks });
 });
 
-interface PutItem { k: unknown; s?: unknown; f?: unknown; t?: unknown }
+interface PutItem { k: unknown; s?: unknown; t?: unknown }
 
 algMarksRoutes.put('/alg/marks/:puzzle/:set', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -117,20 +112,19 @@ algMarksRoutes.put('/alg/marks/:puzzle/:set', async (c) => {
 
   // 逐条校验,任何一条坏 shape 整包拒收(客户端是我们自己的,坏包只能是 bug/恶意)
   const now = Date.now();
-  const parsed: Array<{ k: string; s: string | null; f: boolean; t: number }> = [];
+  const parsed: Array<{ k: string; s: string | null; t: number }> = [];
   for (const it of items) {
     if (!validCaseKey(it.k)) return c.json({ error: 'invalid case key' }, 400);
     const s = it.s == null ? null : (typeof it.s === 'string' && STATUSES.has(it.s) ? it.s : undefined);
     if (s === undefined) return c.json({ error: 'invalid status' }, 400);
-    const f = it.f === true || it.f === 1;
     // 时间戳只在 [0, now+5min] 内可信,其余按服务器时间(防客户端时钟漂移把 LWW 卡死)
     const tRaw = typeof it.t === 'number' ? it.t : now;
     const t = tRaw > 0 && tRaw <= now + 300_000 ? tRaw : now;
-    parsed.push({ k: it.k, s, f, t });
+    parsed.push({ k: it.k, s, t });
   }
 
-  const clears = parsed.filter((p) => p.s === null && !p.f);
-  const upserts = parsed.filter((p) => p.s !== null || p.f);
+  const clears = parsed.filter((p) => p.s === null);
+  const upserts = parsed.filter((p): p is typeof p & { s: string } => p.s !== null);
 
   if (upserts.length > 0) {
     const cnt = await query<{ n: number }>(
@@ -143,14 +137,14 @@ algMarksRoutes.put('/alg/marks/:puzzle/:set', async (c) => {
     // 单语句批量 upsert;LWW:只有更新的 t 才覆盖已有行
     const values: unknown[] = [];
     const placeholders = upserts.map((p) => {
-      values.push(authUser.wcaId, puzzle, setSlug, p.k, p.s, p.f, p.t);
-      return '(?, ?, ?, ?, ?, ?, ?)';
+      values.push(authUser.wcaId, puzzle, setSlug, p.k, p.s, p.t);
+      return '(?, ?, ?, ?, ?, ?)';
     });
     await query(
-      `INSERT INTO alg_case_marks (wca_id, puzzle, set_slug, case_key, status, starred, updated_at)
+      `INSERT INTO alg_case_marks (wca_id, puzzle, set_slug, case_key, status, updated_at)
        VALUES ${placeholders.join(', ')}
        ON CONFLICT (wca_id, puzzle, set_slug, case_key) DO UPDATE
-       SET status = EXCLUDED.status, starred = EXCLUDED.starred, updated_at = EXCLUDED.updated_at
+       SET status = EXCLUDED.status, updated_at = EXCLUDED.updated_at
        WHERE alg_case_marks.updated_at <= EXCLUDED.updated_at`,
       values,
     );

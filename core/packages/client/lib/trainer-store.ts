@@ -4,7 +4,8 @@
 import { create } from 'zustand';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import {
-  generateScramble, cstimerStyleScramble, trainerSetScrambleFeatures, type ScrambleKind,
+  generateScramble, cstimerStyleScramble, f2lFinalAdjustmentVariants,
+  trainerSetScrambleFeatures, type F2LFinalAdjustment, type ScrambleKind,
 } from './trainer-scramble';
 import { caseKey, findCaseByKey } from './trainer-case-key';
 import { histBack, histForward, histPush, type ScrambleHist } from './scramble-history';
@@ -67,6 +68,8 @@ export interface TrainerHistEntry {
   key: string;
   name: string;
   scramble: string;
+  /** 覆盖模式为这条题预排的 F2L AUF × y；重出打乱时复用，避免预抽组合被丢掉。 */
+  f2lFinalAdjustment?: F2LFinalAdjustment;
   /** recap 模式下该条在本轮的位置(1 起)/ 本轮总数 —— 进度条随「当前题」而非预抽的
    *  下一题走:store 的 recapPos 是「已抽到第几格」,因预抽 peek/peek2 最多领先当前题两格。
    *  凡是要问「用户刷到第几个了」的地方,一律读这里,别读 recapPos。 */
@@ -172,6 +175,8 @@ interface TrainerPrefs {
   mode: TrainerMode;
   probMode: TrainerProbMode;
   recapOrder: TrainerRecapOrder;
+  /** 单机覆盖训练刷完一轮时是否停下来显示结束提示。 */
+  showRecapRoundEnd: boolean;
   timerFont: TrainerTimerFont;
   scrambleFont: TrainerTimerFont;
   /** 极简开关:侧栏「上一个」卡片、统计卡片,可各自隐藏。 */
@@ -203,7 +208,7 @@ interface TrainerPrefs {
 const DEFAULT_PREFS: TrainerPrefs = {
   preAuf: true, postAuf: true, randomInitialD: true, randomFinalAuf: true, randomFinalY: true,
   oriSel: {}, timing: false, mode: 'recap', probMode: 'uniform',
-  recapOrder: 'shuffle', timerFont: 'lcd', scrambleFont: 'sans',
+  recapOrder: 'shuffle', showRecapRoundEnd: true, timerFont: 'lcd', scrambleFont: 'sans',
   showPrevCard: true, showStats: true, showStageThumb: true,
   pureScramble: true, multiScramble: false,
   srsNewLimit: 10, srsSessionLimit: 60, srsFillExtra: true, srsAutoMark: true,
@@ -231,7 +236,7 @@ const prefsOf = (st: TrainerPrefs): TrainerPrefs => ({
   randomInitialD: st.randomInitialD,
   randomFinalAuf: st.randomFinalAuf, randomFinalY: st.randomFinalY,
   oriSel: st.oriSel, timing: st.timing, mode: st.mode,
-  probMode: st.probMode, recapOrder: st.recapOrder,
+  probMode: st.probMode, recapOrder: st.recapOrder, showRecapRoundEnd: st.showRecapRoundEnd,
   timerFont: st.timerFont, scrambleFont: st.scrambleFont,
   showPrevCard: st.showPrevCard, showStats: st.showStats,
   showStageThumb: st.showStageThumb, pureScramble: st.pureScramble,
@@ -275,6 +280,8 @@ interface TrainerState {
    * 同 caseResolver:运行时态,不持久化,换一套集自然复位。
    */
   noAufDefault: boolean;
+  /** 分轮次虚拟集必须停下来让用户选择进入下一轮，不受轮末提示偏好影响。 */
+  roundEndPromptRequired: boolean;
   selected: string[];
   /**
    * 训练范围(case key 列表)。从 subgroup 页的训练按钮进来时是该组的全部 key,
@@ -312,7 +319,7 @@ interface TrainerState {
    * 复习一轮刷完时置 true —— 出下一题被拦住,弹「本轮复习结束」提示,
    * `continueRecapRound()` 才进下一轮。
    * 在线房间:队列服务端共享,领完对全员同时弹(真·多方共同刷完)。
-   * 单机整集:刷完必弹 —— 一轮走完是个节点,别无声重洗接着刷。
+   * 单机整集:默认弹出；用户关闭轮末提示后直接进入下一轮。
    */
   recapRoundDone: boolean;
   /**
@@ -346,6 +353,7 @@ interface TrainerState {
   mode: TrainerMode;
   probMode: TrainerProbMode;
   recapOrder: TrainerRecapOrder;
+  showRecapRoundEnd: boolean;
   timerFont: TrainerTimerFont;
   scrambleFont: TrainerTimerFont;
   showPrevCard: boolean;
@@ -374,6 +382,8 @@ interface TrainerState {
       caseResolver?: CaseResolver | null;
       /** 本场 AUF 默认关(见 {@link TrainerState.noAufDefault})。 */
       noAufDefault?: boolean;
+      /** 本场轮末必须停下来显示提示(分轮次虚拟集)。 */
+      roundEndPromptRequired?: boolean;
     },
   ) => void;
   /**
@@ -403,6 +413,7 @@ interface TrainerState {
   setMode: (m: TrainerMode) => void;
   setProbMode: (m: TrainerProbMode) => void;
   setRecapOrder: (o: TrainerRecapOrder) => void;
+  setShowRecapRoundEnd: (v: boolean) => void;
   /** 清空本轮复习进度:重洗队列、从第 1 个重新开始(不动成绩与学习标记)。 */
   restartRecapRound: () => void;
   /** 「本轮复习结束」里选「先不了」:关掉弹窗停在原地,本轮不再弹。 */
@@ -488,6 +499,17 @@ export const trainerPool = (selected: string[], scope: string[] | null): string[
 const EMPTY_HIST: ScrambleHist<TrainerHistEntry> = { list: [], idx: -1 };
 
 export const useTrainerStore = create<TrainerState>((set, get) => {
+  // 覆盖模式把 F2L 的 AUF × y 当成一个洗牌袋。袋内每种组合恰好一次；抽空再洗，
+  // 避免原先两次独立 Math.random 在短期内反复撞到同一组合。
+  let f2lAdjustmentBag: F2LFinalAdjustment[] = [];
+  let f2lAdjustmentSig = '';
+  let lastF2LAdjustment = '';
+  const resetF2LAdjustmentBag = () => {
+    f2lAdjustmentBag = [];
+    f2lAdjustmentSig = '';
+    lastF2LAdjustment = '';
+  };
+
   /**
    * cstimer 风格打乱是异步求解:同步先展示逆 case 占位,解出来后若还停在
    * 同一道题(且没在计时)原地替换。token 防串:后发的题作废先前的解。
@@ -577,15 +599,53 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
         };
   };
 
+  const nextF2LFinalAdjustment = (st: TrainerState): F2LFinalAdjustment | undefined => {
+    const features = trainerSetScrambleFeatures(st.puzzle, st.set);
+    const useAuf = features.randomFinalAuf && st.randomFinalAuf;
+    const useY = features.randomFinalY && st.randomFinalY;
+    if (st.mode !== 'recap' || (!useAuf && !useY)) return undefined;
+
+    const sig = `${st.puzzle ?? ''}|${st.set ?? ''}|${useAuf ? 1 : 0}|${useY ? 1 : 0}`;
+    if (f2lAdjustmentSig !== sig) {
+      f2lAdjustmentSig = sig;
+      f2lAdjustmentBag = [];
+      lastF2LAdjustment = '';
+    }
+    if (f2lAdjustmentBag.length === 0) {
+      f2lAdjustmentBag = shuffle(f2lFinalAdjustmentVariants(useAuf, useY));
+      // 两袋交界也尽量不连续重复；袋内覆盖保证不受影响。
+      const nextIdx = f2lAdjustmentBag.length - 1;
+      const next = f2lAdjustmentBag[nextIdx];
+      if (nextIdx > 0 && `${next.auf}|${next.y}` === lastF2LAdjustment) {
+        [f2lAdjustmentBag[0], f2lAdjustmentBag[nextIdx]] = [f2lAdjustmentBag[nextIdx], f2lAdjustmentBag[0]];
+      }
+    }
+    const adjustment = f2lAdjustmentBag.pop();
+    if (adjustment) lastF2LAdjustment = `${adjustment.auf}|${adjustment.y}`;
+    return adjustment;
+  };
+
+  const generateTrainerScramble = (
+    c: AlgCase,
+    st: TrainerState,
+    adjustment?: F2LFinalAdjustment,
+  ): string => {
+    return generateScramble(c, st.puzzle!, st.scrambleKind, {
+      ...aufOpts(st),
+      ...(adjustment ? { f2lFinalAdjustment: adjustment } : {}),
+    });
+  };
+
   /** 某个 case 的 setup 到位后,把当时留空的打乱补上(当前 / 预抽两条 / 历史里同一 case)。 */
   const patchScramble = (key: string) => {
     const st = get();
     if (!st.puzzle) return;
     const c = findCaseByKey(st.cases, key);
     if (!c || !c.setup.trim()) return;
-    const gen = () => generateScramble(c, st.puzzle!, st.scrambleKind, aufOpts(st));
     const fix = <T extends TrainerHistEntry | null>(e: T): T =>
-      (e && e.key === key && !e.scramble ? { ...e, scramble: gen() } as T : e);
+      (e && e.key === key && !e.scramble
+        ? { ...e, scramble: generateTrainerScramble(c, st, e.f2lFinalAdjustment) } as T
+        : e);
     const list = st.hist.list.map(fix);
     const peek = fix(st.peek);
     const peek2 = fix(st.peek2);
@@ -676,8 +736,14 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
 
     const c = findCaseByKey(st.cases, key);
     if (!c) return null;
-    const scramble = generateScramble(c, st.puzzle, st.scrambleKind, aufOpts(st));
-    return { entry: { key, name: c.name, scramble, recap: entryRecap }, recapQueue, recapPos, recapSig };
+    const f2lFinalAdjustment = c.sticker.kind === 'f2l' ? nextF2LFinalAdjustment(st) : undefined;
+    const scramble = generateTrainerScramble(c, st, f2lFinalAdjustment);
+    return {
+      entry: { key, name: c.name, scramble, recap: entryRecap, f2lFinalAdjustment },
+      recapQueue,
+      recapPos,
+      recapSig,
+    };
   };
 
   /** 出一道新题(current)并预抽下一题(peek)、再下一题(peek2)、推进历史。pool 空时清空。 */
@@ -837,8 +903,15 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     for (const { caseKey: k, index } of res.cases) {
       const c = findCaseByKey(st2.cases, k);
       if (!c) continue;
-      const scramble = generateScramble(c, st2.puzzle, st2.scrambleKind, aufOpts(st2));
-      cases.push({ key: k, name: c.name, scramble, recap: { pos: index + 1, total: res.total } });
+      const f2lFinalAdjustment = c.sticker.kind === 'f2l' ? nextF2LFinalAdjustment(st2) : undefined;
+      const scramble = generateTrainerScramble(c, st2, f2lFinalAdjustment);
+      cases.push({
+        key: k,
+        name: c.name,
+        scramble,
+        recap: { pos: index + 1, total: res.total },
+        f2lFinalAdjustment,
+      });
       maxClaimed = Math.max(maxClaimed, index + 1);
     }
     set({ roomClaimed: maxClaimed, room: { ...st2.room, round: res.round, total: res.total } });
@@ -1005,25 +1078,33 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
   };
 
   /** 当前题的打乱重出一条(换打乱类型 / 切 pre-AUF / 改朝向时),历史当前条 + 手上预取的全部同步替换。 */
-  const regenCurrent = () => {
+  const regenCurrent = (rerollF2LAdjustments = false) => {
     const st = get();
-    const { currentKey, cases, puzzle, timerState, scrambleKind, hist, peek, peek2, roomBuf } = st;
+    const { currentKey, cases, puzzle, timerState, hist, peek, peek2, roomBuf } = st;
     if (!currentKey || !puzzle || timerState !== TimerState.NOT_RUNNING) return;
     const c = findCaseByKey(cases, currentKey);
     if (!c) return;
     // 走 aufOpts 而不是直接读 preAuf/postAuf —— 出题(draw)用的就是它,两条路各读各的
     // 会让「重出」这一下和原来那题不是同一套规则(记忆模式尤其明显:那边一律不加 AUF)。
-    const opts = aufOpts(st);
-    const scramble = generateScramble(c, puzzle, scrambleKind, opts);
-    const list = hist.list.map((e, i) => (i === hist.idx ? { ...e, scramble } : e));
+    const regenEntry = (entry: TrainerHistEntry, entryCase: AlgCase): TrainerHistEntry => {
+      const f2lFinalAdjustment = rerollF2LAdjustments && entryCase.sticker.kind === 'f2l'
+        ? nextF2LFinalAdjustment(st)
+        : entry.f2lFinalAdjustment;
+      return {
+        ...entry,
+        scramble: generateTrainerScramble(entryCase, st, f2lFinalAdjustment),
+        f2lFinalAdjustment,
+      };
+    };
+    const list = hist.list.map((e, i) => (i === hist.idx ? regenEntry(e, c) : e));
     // 预览的下两题、房间里手上揣着的预取也一起用新打乱类型重出,保证看到的 == 将来实际要做的
     const regenPeek = <T extends TrainerHistEntry | null>(pk: T): T => {
       if (!pk) return pk;
       const pc = findCaseByKey(cases, pk.key);
-      return (pc ? { ...pk, scramble: generateScramble(pc, puzzle, scrambleKind, opts) } : pk) as T;
+      return (pc ? regenEntry(pk, pc) : pk) as T;
     };
     set({
-      currentScramble: scramble, hist: { list, idx: hist.idx },
+      currentScramble: list[hist.idx]?.scramble ?? null, hist: { list, idx: hist.idx },
       peek: regenPeek(peek), peek2: regenPeek(peek2), roomBuf: roomBuf.map(regenPeek),
     });
     afterDraw();
@@ -1032,8 +1113,14 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
   /** 起一场会话(单集 / 合练共用):清干净运行时态,按持久化的勾选出第一题。 */
   const startSession = (
     puzzle: AlgPuzzle, sessionId: string, sets: string[] | null, cases: AlgCase[],
-    opts?: { defaultAll?: boolean; caseResolver?: CaseResolver | null; noAufDefault?: boolean },
+    opts?: {
+      defaultAll?: boolean;
+      caseResolver?: CaseResolver | null;
+      noAufDefault?: boolean;
+      roundEndPromptRequired?: boolean;
+    },
   ) => {
+    resetF2LAdjustmentBag();
     const persisted = loadPersisted(puzzle, sessionId);
     const prefs = loadPrefs();
     const valid = new Set(cases.map(caseKey));
@@ -1051,6 +1138,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       caseResolver: opts?.caseResolver ?? null,
       caseResolveErrors: {},
       noAufDefault: !!opts?.noAufDefault,
+      roundEndPromptRequired: !!opts?.roundEndPromptRequired,
       // 声明了默认关就压成关;普通集从落盘的偏好取回来 —— 从 LSLL 切回 PLL 得能恢复,
       // 光靠一次性的 hydratePrefs 是回不来的。
       preAuf: opts?.noAufDefault ? false : prefs.preAuf,
@@ -1089,6 +1177,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     caseResolver: null,
     caseResolveErrors: {},
     noAufDefault: false,
+    roundEndPromptRequired: false,
     selected: [],
     scope: null,
     solves: [],
@@ -1171,14 +1260,16 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       regenCurrent();
     },
     setRandomFinalAuf: (v) => {
+      resetF2LAdjustmentBag();
       set({ randomFinalAuf: v });
       persistPrefs(prefsOf(get()));
-      regenCurrent();
+      regenCurrent(true);
     },
     setRandomFinalY: (v) => {
+      resetF2LAdjustmentBag();
       set({ randomFinalY: v });
       persistPrefs(prefsOf(get()));
-      regenCurrent();
+      regenCurrent(true);
     },
     setOriSel: (key, offs) => {
       const next = { ...get().oriSel };
@@ -1202,6 +1293,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     },
     setMode: (m) => {
       if (get().room) return; // 房间是复习专用,离开房间才切模式
+      resetF2LAdjustmentBag();
       set({ mode: m, recapSig: '' }); // 清 sig ⟹ 下一题重洗队列
       persistPrefs(prefsOf(get()));
       // 切到 recap 立刻从头开始过一遍(空闲时)
@@ -1212,16 +1304,22 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       persistPrefs(prefsOf(get()));
     },
     setRecapOrder: (o) => {
+      resetF2LAdjustmentBag();
       set({ recapOrder: o, recapSig: '' }); // 清 sig ⟹ 下一题按新顺序重排队列
       persistPrefs(prefsOf(get()));
       // 房间模式顺序由服务端队列定,本地不重出(改 recapOrder 只影响下次建房)
       if (!get().room && get().mode === 'recap' && get().timerState === TimerState.NOT_RUNNING) pickFresh();
+    },
+    setShowRecapRoundEnd: (v) => {
+      set({ showRecapRoundEnd: v });
+      persistPrefs(prefsOf(get()));
     },
     // 「7/472 刷到一半想重来」:只清本轮队列进度,成绩 / 学习标记 / 记忆排期一概不动
     //(那三样是长期资产,清进度是「这一遍重刷」而不是「从没学过」)。
     restartRecapRound: () => {
       const st = get();
       if (st.room || st.mode !== 'recap') return; // 房间轮次由服务端队列定,本地不重开
+      resetF2LAdjustmentBag();
       // 清 sig ⟹ 下一抽重洗、从第 1 格起;顺手收掉「本轮结束」弹窗(重开就是新一轮)
       set({ recapQueue: [], recapPos: 0, recapSig: '', recapRoundDone: false, recapRoundAcked: false });
       // 计时中不打断手上这把(新一轮从下一题起);空闲则立刻从头出第一题
@@ -1314,11 +1412,14 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       }
       // 在线房间:队尾向服务器领取下一题(异步,不预抽)
       if (st.room) { void roomAdvance(1); return; }
-      // 单机整集刷完一轮:先停下来弹「本轮复习结束」,由用户决定要不要再来一轮
+      // 单机整集刷完一轮:默认停下来弹「本轮复习结束」,由用户决定要不要再来一轮。
+      // 用户关掉提示时普通集直接进下一轮；分轮次虚拟集仍必须停下来让用户选择目标轮次。
       //(「先不了」= acked,停在原地不再弹,再点一下直接进新一轮)。
       if (!st.recapRoundAcked && atRoundTail(st)) {
-        set({ recapRoundDone: true });
-        return;
+        if (st.showRecapRoundEnd || st.roundEndPromptRequired) {
+          set({ recapRoundDone: true });
+          return;
+        }
       }
       // 已在队尾:把预抽的下一题(peek)扶正为当前题,peek2 递补为新 peek,再预抽新的 peek2。
       // 这样「先前预抽的下一题」就是「现在要做的这一题」,打乱稳定不重roll(三条一屏切下一屏
