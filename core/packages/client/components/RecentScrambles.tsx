@@ -26,7 +26,7 @@ import { localizeCompName } from '@/lib/comp-localize';
 import { loadFlagData, flagDataVersion, compFlagIso2 } from '@/lib/country-flags';
 import { compSourceLine } from '@/lib/comp-schedule';
 import { statsUrl } from '@/lib/stats-base';
-import { VARIANT_ORDER, stageLabel, variantLabel, BLOCK_DATA_VARIANTS, BLOCK_STAGE_VARIANT, EO_DATA_VARIANTS, EO_STAGE_VARIANT, VARIANT_STAGES, LENGTH_VARIANT, RECENT_METRIC_ORDER, uiVariantOf, uiVariantOptions } from '@/lib/scramble-variants';
+import { VARIANT_ORDER, stageLabel, variantLabel, BLOCK_DATA_VARIANTS, BLOCK_STAGE_VARIANT, EO_DATA_VARIANTS, EO_STAGE_VARIANT, VARIANT_STAGES, LENGTH_VARIANT, RECENT_METRIC_ORDER, uiVariantOf, uiVariantOptions, variantDataRef } from '@/lib/scramble-variants';
 import { VariantSelect } from '@/components/VariantSelect';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { fetchRecentScramblesEvents, type RecentScramblesEventsJson, type RecentScrMeta } from '@/lib/recent-scrambles-events';
@@ -543,16 +543,22 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
         return dv !== undefined && m in (data?.rank?.[dv] ?? {});
       });
     }
+    if (curVariant === 'second_layer') {
+      const ref = variantDataRef(curVariant, 'second_layer');
+      return ref.recentMetric in (data?.rank?.[ref.variant] ?? {}) ? ['second_layer'] : [];
+    }
     const r = data?.rank?.[curVariant];
     return r ? RECENT_METRIC_ORDER.filter((m) => m in r) : [];
   }, [data, curVariant, stageVariantMap]);
   const curMetric = metrics.includes(metric) ? metric : (metrics[0] ?? 'cross');
+  const aliasRef = variantDataRef(curVariant, curMetric);
   const dataVariant = stageVariantMap
     ? (stageVariantMap[curMetric] ?? (curVariant === 'block' ? '123' : 'eo'))
-    : curVariant;
+    : aliasRef.variant;
+  const dataMetric = curVariant === 'second_layer' ? aliasRef.recentMetric : curMetric;
   const isWhole = curVariant === WHOLE_SOLVE;                                  // 整解: 无底色维度
   const subsetKey = isWhole ? WHOLE_SOLVE_SUBSET : sel.subsetKey;
-  const byStep = data?.rank?.[dataVariant]?.[curMetric]?.[subsetKey];
+  const byStep = data?.rank?.[dataVariant]?.[dataMetric]?.[subsetKey];
   const steps = useMemo(() => Object.keys(byStep ?? {}).map(Number).sort((a, b) => a - b), [byStep]);
   const curStep = (step != null && steps.includes(step)) ? step : (steps[0] ?? null);
   const entries = (curStep != null ? byStep?.[String(curStep)] : undefined) ?? [];
@@ -562,9 +568,10 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
   const distVar = dist?.sets?.wca?.variants?.[dataVariant];
   const distStageKey = useMemo(() => {
     if (!distVar) return null;
+    if (curVariant === 'second_layer') return aliasRef.stage;
     const target = stageLabel(curMetric, false);
     return Object.keys(distVar.data).find((s) => stageLabel(s, false) === target) ?? null;
-  }, [distVar, curMetric]);
+  }, [distVar, curMetric, curVariant, aliasRef.stage]);
   const prob = useMemo(() => {
     if (curStep == null || !distVar || !distStageKey) return null;
     const counts = distVar.data[distStageKey]?.[subsetKey]?.counts;
@@ -580,12 +587,14 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
   const probHref = useMemo(() => {
     if (!prob) return null;
     const p = new URLSearchParams();
-    if (dataVariant !== 'std') p.set('variant', dataVariant);
-    if (prob.stageKey !== 'cross') p.set('stage', prob.stageKey);
+    const linkVariant = curVariant === 'second_layer' ? curVariant : dataVariant;
+    const linkStage = curVariant === 'second_layer' ? curMetric : prob.stageKey;
+    if (linkVariant !== 'std') p.set('variant', linkVariant);
+    if (linkStage !== 'cross') p.set('stage', linkStage);
     if (!isWhole && subsetKey !== 'BGORWY') p.set('colors', subsetKey);  // 整解无底色维度
     const qs = p.toString();
     return `${lp}/scramble/stats${qs ? `?${qs}` : ''}`;
-  }, [prob, dataVariant, isWhole, subsetKey, lp]);
+  }, [prob, curVariant, curMetric, dataVariant, isWhole, subsetKey, lp]);
 
   // 稀有汇总:在选定底色档(rareSel)内、或「综合」(rareAgg=合并全档),概率 < threshold 的去重打乱
   // (最稀有在前)。仅 rare 模式计算。

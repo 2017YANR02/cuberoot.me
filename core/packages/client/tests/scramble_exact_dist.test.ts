@@ -92,6 +92,7 @@ describe('对齐 C++ 金标的关键数值', () => {
     expect(c.counts).toEqual(['1', '12', '150', '1886', '21916', '242166', '2292695', '14228012', '25293406', '2825994', '162']);
     expect(c.counts.length - 1).toBe(10);
     expect(getExactCell('first_layer', 'unfixed', 'W')?.kind).toBe('todo');
+    expect(getExactCell('second_layer', 'unfixed', 'W')?.kind).toBe('todo');
   });
 
   // .done/cross_1_col/ 的 .2do:190,080 / Average Distance 5.8121
@@ -430,11 +431,10 @@ describe('菜单与 WCA 数据集逐项相同', () => {
     .sets.wca.variants as Record<string, { stages: string[] }>;
 
   it('变体键集合相同', () => {
-    // first_layer 已完成代码/管道注册，但 130 万真题灌注属于 MANUAL；静态数据发布前
-    // 精确矩阵先诚实展示 First Face 全分布 + First Layer pending。
+    // first_layer 尚待真题灌注；second_layer 是 std/xxxxcross 薄别名，不复制静态数据。
     const exactKeys = Object.keys(EXACT_VARIANT_STAGES);
     const wcaKeys = Object.keys(wca);
-    expect(exactKeys.filter((v) => !wcaKeys.includes(v))).toEqual(['first_layer']);
+    expect(exactKeys.filter((v) => !wcaKeys.includes(v))).toEqual(['first_layer', 'second_layer']);
     expect(exactKeys.filter((v) => wcaKeys.includes(v)).sort()).toEqual(wcaKeys.sort());
   });
 
@@ -446,8 +446,12 @@ describe('菜单与 WCA 数据集逐项相同', () => {
 
   it('展平后的阶段表就是矩阵的行,一个不多一个不少', () => {
     const flat = Object.values(wca).flatMap((v) => v.stages).sort();
-    expect(EXACT_STAGES.filter((s) => !EXACT_VARIANT_STAGES.first_layer.includes(s)).sort()).toEqual(flat);
-    expect(EXACT_STAGES.length).toBe(42);
+    const aliasOnly = new Set<ExactStage>([
+      ...EXACT_VARIANT_STAGES.first_layer,
+      ...EXACT_VARIANT_STAGES.second_layer,
+    ]);
+    expect(EXACT_STAGES.filter((s) => !aliasOnly.has(s)).sort()).toEqual(flat);
+    expect(EXACT_STAGES.length).toBe(43);
     // 每个阶段都得知道自己属于哪个变体(矩阵分组 + 深链的 variant 参数)
     for (const st of EXACT_STAGES) expect(EXACT_STAGE_VARIANT[st], st).toBeTruthy();
   });
@@ -462,8 +466,8 @@ describe('菜单与 WCA 数据集逐项相同', () => {
       seen.add(v);
       prev = v;
     }
-    // 12 个方法 = 整解 + 已发布子阶段 + 待全量灌注的 First Layer
-    expect(seen.size).toBe(12);
+    // 13 个方法 = 整解 + 已发布子阶段 + First Layer + Second Layer 别名。
+    expect(seen.size).toBe(13);
   });
 
   it('砖 / EO 两个聚合方法的阶段序与阶段下拉一致', () => {
