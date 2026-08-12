@@ -2,6 +2,8 @@ import { scramble444RandomState } from './scramble_444_rs';
 import { get222Mode } from '@/lib/scramble-222-mode';
 import { wcaPocketScramble, optimalPocketScramble } from '@/lib/pocket-scramble';
 
+export { scramble333 } from '@cuberoot/shared/timer';
+
 /**
  * Random-move scrambles for NxN cubes (WCA-style face filtering).
  *
@@ -19,40 +21,10 @@ import { wcaPocketScramble, optimalPocketScramble } from '@/lib/pocket-scramble'
 
 const FACES_3 = ['U', 'D', 'L', 'R', 'F', 'B'] as const;
 
-// Axis groups: same-axis moves cancel/commute (R&L, U&D, F&B).
-const AXIS: Record<string, number> = {
-  U: 0, D: 0,
-  L: 1, R: 1,
-  F: 2, B: 2,
-};
-
 const SUFFIX = ['', "'", '2'];
 
 function pick<T>(arr: readonly T[], rng: () => number): T {
   return arr[Math.floor(rng() * arr.length)];
-}
-
-function genFaceMoves(faces: readonly string[], len: number, rng: () => number): string {
-  const out: string[] = [];
-  let lastFace = '';
-  let prevAxisFace = ''; // face before lastFace (only relevant if same axis)
-  for (let i = 0; i < len; i++) {
-    let face: string;
-    let attempts = 0;
-    do {
-      face = pick(faces, rng);
-      attempts++;
-      if (attempts > 50) break; // safety, should never trigger with 6 faces
-    } while (
-      face === lastFace ||
-      // forbid R L R or U D U (same axis sandwich would just be 2 layers' worth)
-      (AXIS[face] === AXIS[lastFace] && face === prevAxisFace)
-    );
-    out.push(face + pick(SUFFIX, rng));
-    prevAxisFace = AXIS[face] === AXIS[lastFace] ? lastFace : '';
-    lastFace = face;
-  }
-  return out.join(' ');
 }
 
 export function scramble222(rng: () => number): string {
@@ -60,10 +32,6 @@ export function scramble222(rng: () => number): string {
   // /scramble/gen 同源。口径由全站 2x2 设置(Scramble222ModePicker)决定 —— wca = 恰好 11 步、
   // 握位代价最小(与赛场一致);optimal = HTM 最短 + Q|H(均 ~8.8 步)。二者都只含 U/R/F。
   return get222Mode() === 'optimal' ? optimalPocketScramble(rng) : wcaPocketScramble(rng);
-}
-
-export function scramble333(rng: () => number): string {
-  return genFaceMoves(FACES_3, 20, rng);
 }
 
 /**
