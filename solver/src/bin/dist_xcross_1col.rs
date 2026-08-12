@@ -180,13 +180,25 @@ unsafe fn aggregate_avx2(
 
     let mut buf = [0i64; 4];
     _mm256_storeu_si256(buf.as_mut_ptr() as *mut __m256i, acc0_lo);
-    acc[0] += buf[0]; acc[2] += buf[1]; acc[4] += buf[2]; acc[6] += buf[3];
+    acc[0] += buf[0];
+    acc[2] += buf[1];
+    acc[4] += buf[2];
+    acc[6] += buf[3];
     _mm256_storeu_si256(buf.as_mut_ptr() as *mut __m256i, acc0_hi);
-    acc[1] += buf[0]; acc[3] += buf[1]; acc[5] += buf[2]; acc[7] += buf[3];
+    acc[1] += buf[0];
+    acc[3] += buf[1];
+    acc[5] += buf[2];
+    acc[7] += buf[3];
     _mm256_storeu_si256(buf.as_mut_ptr() as *mut __m256i, acc1_lo);
-    acc[8] += buf[0]; acc[10] += buf[1]; acc[12] += buf[2]; acc[14] += buf[3];
+    acc[8] += buf[0];
+    acc[10] += buf[1];
+    acc[12] += buf[2];
+    acc[14] += buf[3];
     _mm256_storeu_si256(buf.as_mut_ptr() as *mut __m256i, acc1_hi);
-    acc[9] += buf[0]; acc[11] += buf[1]; acc[13] += buf[2]; acc[15] += buf[3];
+    acc[9] += buf[0];
+    acc[11] += buf[1];
+    acc[13] += buf[2];
+    acc[15] += buf[3];
 }
 
 #[inline(always)]
@@ -311,10 +323,14 @@ fn process_cr(
 
             let mut s = [0i32; 4];
             for k in (0..D_BINS - 2).rev() {
-                s[0] += h[0][k]; valid_ge_k[0][u][v][k] = s[0] as i16;
-                s[1] += h[1][k]; valid_ge_k[1][u][v][k] = s[1] as i16;
-                s[2] += h[2][k]; valid_ge_k[2][u][v][k] = s[2] as i16;
-                s[3] += h[3][k]; valid_ge_k[3][u][v][k] = s[3] as i16;
+                s[0] += h[0][k];
+                valid_ge_k[0][u][v][k] = s[0] as i16;
+                s[1] += h[1][k];
+                valid_ge_k[1][u][v][k] = s[1] as i16;
+                s[2] += h[2][k];
+                valid_ge_k[2][u][v][k] = s[2] as i16;
+                s[3] += h[3][k];
+                valid_ge_k[3][u][v][k] = s[3] as i16;
             }
         }
     }
@@ -350,10 +366,8 @@ fn process_cr(
                 let v1_c1e2 = valid_ge_k[1][c1][e2][k] as i32;
                 let v1_c2e1 = valid_ge_k[1][c2][e1][k] as i32;
                 let v1_c2e2 = valid_ge_k[1][c2][e2][k] as i32;
-                l_mat[idx].0[k] = v0_c1e1 * v1_c2e2
-                    + v0_c1e2 * v1_c2e1
-                    + v0_c2e1 * v1_c1e2
-                    + v0_c2e2 * v1_c1e1;
+                l_mat[idx].0[k] =
+                    v0_c1e1 * v1_c2e2 + v0_c1e2 * v1_c2e1 + v0_c2e1 * v1_c1e2 + v0_c2e2 * v1_c1e1;
                 let v2_c1e1 = valid_ge_k[2][c1][e1][k] as i32;
                 let v2_c1e2 = valid_ge_k[2][c1][e2][k] as i32;
                 let v2_c2e1 = valid_ge_k[2][c2][e1][k] as i32;
@@ -362,10 +376,8 @@ fn process_cr(
                 let v3_c1e2 = valid_ge_k[3][c1][e2][k] as i32;
                 let v3_c2e1 = valid_ge_k[3][c2][e1][k] as i32;
                 let v3_c2e2 = valid_ge_k[3][c2][e2][k] as i32;
-                r_mat[idx].0[k] = v2_c1e1 * v3_c2e2
-                    + v2_c1e2 * v3_c2e1
-                    + v2_c2e1 * v3_c1e2
-                    + v2_c2e2 * v3_c1e1;
+                r_mat[idx].0[k] =
+                    v2_c1e1 * v3_c2e2 + v2_c1e2 * v3_c2e1 + v2_c2e1 * v3_c1e2 + v2_c2e2 * v3_c1e1;
             }
         }
     }
@@ -399,25 +411,28 @@ fn main() {
     let use_avx2 = is_x86_feature_detected!("avx2");
     eprintln!(
         "[Step 4] Aggregating ({})...",
-        if use_avx2 { "AVX2 + rayon" } else { "scalar + rayon" }
+        if use_avx2 {
+            "AVX2 + rayon"
+        } else {
+            "scalar + rayon"
+        }
     );
     let t_agg = Instant::now();
 
     let total_counts: [i64; D_BINS] = (0..SZ_CR)
         .into_par_iter()
         .with_min_len(64)
-        .fold(
-            Scratch::new,
-            |mut s, cr| {
-                #[cfg(target_arch = "x86_64")]
-                if use_avx2 {
-                    unsafe { process_cr_avx2(cr, &table_bl, &table_br, &aux, &mut s); }
-                    return s;
+        .fold(Scratch::new, |mut s, cr| {
+            #[cfg(target_arch = "x86_64")]
+            if use_avx2 {
+                unsafe {
+                    process_cr_avx2(cr, &table_bl, &table_br, &aux, &mut s);
                 }
-                process_cr(cr, &table_bl, &table_br, &aux, &mut s, use_avx2);
-                s
-            },
-        )
+                return s;
+            }
+            process_cr(cr, &table_bl, &table_br, &aux, &mut s, use_avx2);
+            s
+        })
         .map(|s| s.acc)
         .reduce(
             || [0i64; D_BINS],
@@ -429,7 +444,10 @@ fn main() {
             },
         );
 
-    eprintln!(" -> Calculation Time: {:.5}s", t_agg.elapsed().as_secs_f64());
+    eprintln!(
+        " -> Calculation Time: {:.5}s",
+        t_agg.elapsed().as_secs_f64()
+    );
 
     println!("\n=== Final Distribution ===");
     let mut grand_total: i64 = 0;
@@ -444,7 +462,10 @@ fn main() {
         }
     }
     println!("total\t{}", grand_total);
-    eprintln!("\n[Done] Total elapsed: {:.3}s", t_total.elapsed().as_secs_f64());
+    eprintln!(
+        "\n[Done] Total elapsed: {:.3}s",
+        t_total.elapsed().as_secs_f64()
+    );
 }
 
 fn build_bfs(

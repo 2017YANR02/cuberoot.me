@@ -36,7 +36,13 @@ impl SolverWrapper for EoCrossWrapper {
 
     fn get_csv_header() -> String {
         let mut s = String::from("id");
-        for prefix in ["eo_cross", "eo_xcross", "eo_xxcross", "eo_xxxcross", "eo_xxxxcross"] {
+        for prefix in [
+            "eo_cross",
+            "eo_xcross",
+            "eo_xxcross",
+            "eo_xxxcross",
+            "eo_xxxxcross",
+        ] {
             for suf in SUFFIXES {
                 s.push(',');
                 s.push_str(prefix);

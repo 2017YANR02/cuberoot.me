@@ -177,9 +177,9 @@ fn get_cross_eo_parity(cr: i32) -> u8 {
 // ===========================================================================
 
 struct Partitions {
-    partitions: Vec<u8>,         // 70 masks (popcount=4) over 8 bits
-    parities: [u8; 70],          // partition parity (Lehmer of W/Y interleave)
-    complement: [u8; 70],        // index of complement partition
+    partitions: Vec<u8>,  // 70 masks (popcount=4) over 8 bits
+    parities: [u8; 70],   // partition parity (Lehmer of W/Y interleave)
+    complement: [u8; 70], // index of complement partition
 }
 
 fn get_partition_parity(mask: u32) -> u8 {
@@ -392,7 +392,9 @@ fn gen_pruning_transposed(
             for ed in 0..SZ_ED {
                 let old_idx = (cr * SZ_CN + cn) * SZ_ED + ed;
                 let new_idx = (ed * SZ_CR + cr) * SZ_CN + cn;
-                unsafe { *tp.add(new_idx) = temp_table[old_idx]; }
+                unsafe {
+                    *tp.add(new_idx) = temp_table[old_idx];
+                }
             }
         }
     });
@@ -419,12 +421,20 @@ fn init_perms_4() -> ([[u8; 4]; 24], [u8; 24]) {
 
 fn next_permutation(a: &mut [u8]) -> bool {
     let n = a.len();
-    if n < 2 { return false; }
+    if n < 2 {
+        return false;
+    }
     let mut i = n - 1;
-    while i > 0 && a[i - 1] >= a[i] { i -= 1; }
-    if i == 0 { return false; }
+    while i > 0 && a[i - 1] >= a[i] {
+        i -= 1;
+    }
+    if i == 0 {
+        return false;
+    }
     let mut j = n - 1;
-    while a[j] <= a[i - 1] { j -= 1; }
+    while a[j] <= a[i - 1] {
+        j -= 1;
+    }
     a.swap(i - 1, j);
     a[i..].reverse();
     true
@@ -459,7 +469,9 @@ struct HistBucket {
 
 impl HistBucket {
     fn new() -> Self {
-        HistBucket { counts: [[[0u16; 48]; 2]; 2] }
+        HistBucket {
+            counts: [[[0u16; 48]; 2]; 2],
+        }
     }
     fn clear(&mut self) {
         for p in 0..2 {
@@ -494,7 +506,12 @@ impl CntTable {
 
 #[target_feature(enable = "avx2")]
 #[inline]
-unsafe fn conv3_mixed(a: [__m256i; 3], pb0: *const i16, pb1: *const i16, pb2: *const i16) -> [__m256i; 3] {
+unsafe fn conv3_mixed(
+    a: [__m256i; 3],
+    pb0: *const i16,
+    pb1: *const i16,
+    pb2: *const i16,
+) -> [__m256i; 3] {
     let b0 = _mm256_loadu_si256(pb0 as *const __m256i);
     let b1 = _mm256_loadu_si256(pb1 as *const __m256i);
     let b2 = _mm256_loadu_si256(pb2 as *const __m256i);
@@ -530,10 +547,7 @@ unsafe fn accumulate_corners(
     eo_val: u8,
     corner_perms: &[CornerPermInfo],
 ) {
-    let mut acc: [[__m256i; 3]; 2] = [
-        [_mm256_setzero_si256(); 3],
-        [_mm256_setzero_si256(); 3],
-    ];
+    let mut acc: [[__m256i; 3]; 2] = [[_mm256_setzero_si256(); 3], [_mm256_setzero_si256(); 3]];
     let mut current_mask = corner_perms[0].mask_idx;
 
     for info in corner_perms {
@@ -624,9 +638,15 @@ unsafe fn fill_cnt_for_perm_ori(
             let mut d0 = (raw_depths & 0xFF) as u8;
             let mut d1 = ((raw_depths >> 8) & 0xFF) as u8;
             let mut d2 = ((raw_depths >> 16) & 0xFF) as u8;
-            if d0 > SENTINEL { d0 = SENTINEL; }
-            if d1 > SENTINEL { d1 = SENTINEL; }
-            if d2 > SENTINEL { d2 = SENTINEL; }
+            if d0 > SENTINEL {
+                d0 = SENTINEL;
+            }
+            if d1 > SENTINEL {
+                d1 = SENTINEL;
+            }
+            if d2 > SENTINEL {
+                d2 = SENTINEL;
+            }
             let lut = &hist_lut[hist_lut_index(d0, d1, d2)];
             let dst0 = cnt.data[s][0][c].as_mut_ptr() as *mut __m256i;
             let dst1 = cnt.data[s][1][c].as_mut_ptr() as *mut __m256i;
@@ -787,16 +807,29 @@ fn main() {
 
     eprintln!("[init] move tables...");
     let mgr = move_tables::instance();
-    let mt_edge: Vec<i32> = mgr.ensure_edge().as_u32().iter().map(|&x| x as i32).collect();
-    let mt_corn: Vec<i32> = mgr.ensure_corn().as_u32().iter().map(|&x| x as i32).collect();
+    let mt_edge: Vec<i32> = mgr
+        .ensure_edge()
+        .as_u32()
+        .iter()
+        .map(|&x| x as i32)
+        .collect();
+    let mt_corn: Vec<i32> = mgr
+        .ensure_corn()
+        .as_u32()
+        .iter()
+        .map(|&x| x as i32)
+        .collect();
     // mt_multi (4-edge cross,stride 18 raw idx)
     let mt_multi = create_multi_move_table(4, 2, 12, SZ_CR as i32, &mt_edge);
 
     eprintln!("[init] D4h symmetries + canon reps...");
     let symmetries = init_symmetries();
     let reps = generate_reps(&symmetries);
-    eprintln!("       {} reps (reduction {:.2}x)",
-              reps.len(), SZ_CR as f64 / reps.len() as f64);
+    eprintln!(
+        "       {} reps (reduction {:.2}x)",
+        reps.len(),
+        SZ_CR as f64 / reps.len() as f64
+    );
 
     eprintln!("[init] partitions, corner_perms, hist_lut...");
     let (partitions, mask_map) = init_partitions();
@@ -813,10 +846,10 @@ fn main() {
         (187520, 15, 2, "W_BR"),
         (187520, 18, 4, "W_FR"),
         (187520, 21, 6, "W_FL"),
-        (yc_cr,    0,  0, "Y_BL"),  // C0=0 (UBL),E0=0 (BL)
-        (yc_cr,    3,  2, "Y_BR"),  // C1=3 (UBR),E1=2 (BR)
-        (yc_cr,    6,  4, "Y_FR"),  // C2=6 (UFR),E2=4 (FR)
-        (yc_cr,    9,  6, "Y_FL"),  // C3=9 (UFL),E3=6 (FL)
+        (yc_cr, 0, 0, "Y_BL"), // C0=0 (UBL),E0=0 (BL)
+        (yc_cr, 3, 2, "Y_BR"), // C1=3 (UBR),E1=2 (BR)
+        (yc_cr, 6, 4, "Y_FR"), // C2=6 (UFR),E2=4 (FR)
+        (yc_cr, 9, 6, "Y_FL"), // C3=9 (UFL),E3=6 (FL)
     ];
     let tables: [Vec<u8>; 8] = std::array::from_fn(|i| {
         let (cr, cn, ed, name) = table_specs[i];
@@ -868,14 +901,20 @@ fn main() {
     let mut total_sum: u128 = 0;
     let mut raws = vec![0u128; MAX_D + 1];
     for k in 0..=MAX_D {
-        let ge_next = if k + 1 < HIST_SIZE { final_hist[k + 1] } else { 0 };
+        let ge_next = if k + 1 < HIST_SIZE {
+            final_hist[k + 1]
+        } else {
+            0
+        };
         let raw = final_hist[k] - ge_next;
         raws[k] = raw;
         total_sum += raw;
     }
     for k in 0..=MAX_D {
         let raw = raws[k];
-        if raw == 0 && k > 10 { continue; }
+        if raw == 0 && k > 10 {
+            continue;
+        }
         let pct = if total_sum > 0 {
             (raw as f64) / (total_sum as f64) * 100.0
         } else {
@@ -888,7 +927,10 @@ fn main() {
     eprintln!("[Done] {:.1}s total", t0.elapsed().as_secs_f64());
 
     // 校验
-    assert_eq!(total_sum, THEORETICAL_TOTAL, "total mismatch with theoretical");
+    assert_eq!(
+        total_sum, THEORETICAL_TOTAL,
+        "total mismatch with theoretical"
+    );
     for (k, &exp) in GOLDEN.iter().enumerate() {
         assert_eq!(raws[k], exp, "d={} got {} expected {}", k, raws[k], exp);
     }

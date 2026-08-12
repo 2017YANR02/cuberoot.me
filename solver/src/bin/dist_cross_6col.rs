@@ -85,23 +85,30 @@ fn build_quad_rank() -> Box<[[[[u32; 12]; 12]; 12]; 12]> {
 
     let mut t = vec![[[[0u32; 12]; 12]; 12]; 12].into_boxed_slice();
     // 平铺向 box;手动 unsafe 转
-    let mut tab = unsafe {
-        Box::from_raw(Box::into_raw(t) as *mut [[[[u32; 12]; 12]; 12]; 12])
-    };
+    let mut tab = unsafe { Box::from_raw(Box::into_raw(t) as *mut [[[[u32; 12]; 12]; 12]; 12]) };
 
     for a in 0..12usize {
         for b in 0..12usize {
-            if a == b { continue; }
+            if a == b {
+                continue;
+            }
             for c in 0..12usize {
-                if c == a || c == b { continue; }
+                if c == a || c == b {
+                    continue;
+                }
                 for d in 0..12usize {
-                    if d == a || d == b || d == c { continue; }
+                    if d == a || d == b || d == c {
+                        continue;
+                    }
                     let mask = (1u32 << a) | (1 << b) | (1 << c) | (1 << d);
                     let mid = mask_to_id[mask as usize];
                     let mut map = [0u8; 12];
                     let mut k = 0u8;
                     for i in 0..12 {
-                        if (mask >> i) & 1 == 1 { map[i] = k; k += 1; }
+                        if (mask >> i) & 1 == 1 {
+                            map[i] = k;
+                            k += 1;
+                        }
                     }
                     let ra = map[a] as i32;
                     let rb = map[b] as i32;
@@ -109,12 +116,16 @@ fn build_quad_rank() -> Box<[[[[u32; 12]; 12]; 12]; 12]> {
                     // pid (与 cpp 同):pid = ra*6 + (rb_adj)*2 + rc_adj
                     let mut pid = ra * 6;
                     let mut v = rb;
-                    if v > ra { v -= 1; }
+                    if v > ra {
+                        v -= 1;
+                    }
                     pid += v * 2;
                     let used = (1i32 << ra) | (1 << rb);
                     let mut v2 = 0i32;
                     for j in 0..rc {
-                        if (used >> j) & 1 == 0 { v2 += 1; }
+                        if (used >> j) & 1 == 0 {
+                            v2 += 1;
+                        }
                     }
                     pid += v2;
                     tab[a][b][c][d] = (mid * 384 + pid * 16) as u32;
@@ -176,13 +187,14 @@ fn build_bfs_table(
     let o = [0u8; 4];
 
     let mut frontier: Vec<([u8; 4], [u8; 4])> = Vec::new();
-    let mut seed = |np: [u8; 4], no: [u8; 4], tab: &mut Vec<i8>, fr: &mut Vec<([u8; 4], [u8; 4])>| {
-        let key = encode(&np, &no);
-        if tab[key] == -1 {
-            tab[key] = 0;
-            fr.push((np, no));
-        }
-    };
+    let mut seed =
+        |np: [u8; 4], no: [u8; 4], tab: &mut Vec<i8>, fr: &mut Vec<([u8; 4], [u8; 4])>| {
+            let key = encode(&np, &no);
+            if tab[key] == -1 {
+                tab[key] = 0;
+                fr.push((np, no));
+            }
+        };
     seed(p, o, &mut tab, &mut frontier);
     if pseudo {
         // 该面的三个转(90° / 180° / 270°)—— move 索引就是 face*3 .. face*3+2
@@ -246,7 +258,8 @@ fn build_simd_indices(face_slots: &[[u8; 4]; 6]) -> [[u8; 2048]; 6] {
 
 #[target_feature(enable = "avx2")]
 unsafe fn process_chunk(
-    p0: u8, p1: u8,
+    p0: u8,
+    p1: u8,
     quad_rank: &[[[[u32; 12]; 12]; 12]; 12],
     face_slots: &[[u8; 4]; 6],
     tables: &[Vec<i8>; 6],
@@ -277,10 +290,9 @@ unsafe fn process_chunk(
         let mut row_vecs: [__m256i; 6] = [v_zero; 6];
         for &f in active {
             let t = &face_slots[f];
-            let base = quad_rank[inv_p[t[0] as usize] as usize]
-                                [inv_p[t[1] as usize] as usize]
-                                [inv_p[t[2] as usize] as usize]
-                                [inv_p[t[3] as usize] as usize] as usize;
+            let base = quad_rank[inv_p[t[0] as usize] as usize][inv_p[t[1] as usize] as usize]
+                [inv_p[t[2] as usize] as usize][inv_p[t[3] as usize] as usize]
+                as usize;
             let row128 = _mm_loadu_si128(tables[f].as_ptr().add(base) as *const __m128i);
             row_vecs[f] = _mm256_broadcastsi128_si256(row128);
         }
@@ -294,9 +306,12 @@ unsafe fn process_chunk(
                 let val = _mm256_shuffle_epi8(row_vecs[f], idx);
                 min_d = _mm256_min_epu8(min_d, val);
             }
-            local_hist[0] += (_mm256_movemask_epi8(_mm256_cmpeq_epi8(min_d, v_zero)) as u32).count_ones() as u64;
+            local_hist[0] +=
+                (_mm256_movemask_epi8(_mm256_cmpeq_epi8(min_d, v_zero)) as u32).count_ones() as u64;
             for k in 1..=8 {
-                local_hist[k] += (_mm256_movemask_epi8(_mm256_cmpeq_epi8(min_d, v_depths[k])) as u32).count_ones() as u64;
+                local_hist[k] += (_mm256_movemask_epi8(_mm256_cmpeq_epi8(min_d, v_depths[k]))
+                    as u32)
+                    .count_ones() as u64;
             }
             i += 32;
         }
@@ -311,12 +326,20 @@ unsafe fn process_chunk(
 
 fn next_permutation(a: &mut [u8]) -> bool {
     let n = a.len();
-    if n < 2 { return false; }
+    if n < 2 {
+        return false;
+    }
     let mut i = n - 1;
-    while i > 0 && a[i - 1] >= a[i] { i -= 1; }
-    if i == 0 { return false; }
+    while i > 0 && a[i - 1] >= a[i] {
+        i -= 1;
+    }
+    if i == 0 {
+        return false;
+    }
     let mut j = n - 1;
-    while a[j] <= a[i - 1] { j -= 1; }
+    while a[j] <= a[i - 1] {
+        j -= 1;
+    }
     a.swap(i - 1, j);
     a[i..].reverse();
     true
@@ -327,7 +350,8 @@ fn next_permutation(a: &mut [u8]) -> bool {
 fn parse_faces() -> (Vec<usize>, String) {
     const NAMES: [char; 6] = ['U', 'D', 'L', 'R', 'F', 'B'];
     let args: Vec<String> = std::env::args().collect();
-    let spec = args.windows(2)
+    let spec = args
+        .windows(2)
         .find(|w| w[0] == "--faces")
         .map(|w| w[1].to_uppercase())
         .unwrap_or_else(|| NAMES.iter().collect());
@@ -359,30 +383,60 @@ fn main() {
     eprintln!("      face_slots = {:?}", face_slots);
     let simd_indices = build_simd_indices(&face_slots);
 
-    eprintln!("[2/3] build 6 BFS tables{}...", if pseudo { " (pseudo: 4 goals per face)" } else { "" });
-    let tables: [Vec<i8>; 6] = std::array::from_fn(|f| {
-        build_bfs_table(&face_slots[f], &quad_rank, &mt_edge, f, pseudo)
-    });
+    eprintln!(
+        "[2/3] build 6 BFS tables{}...",
+        if pseudo {
+            " (pseudo: 4 goals per face)"
+        } else {
+            ""
+        }
+    );
+    let tables: [Vec<i8>; 6] =
+        std::array::from_fn(|f| build_bfs_table(&face_slots[f], &quad_rank, &mt_edge, f, pseudo));
     eprintln!("      done @ {:.2}s", t0.elapsed().as_secs_f64());
 
-    eprintln!("[3/3] main scan 12! × 2048 with AVX2 over faces {}...", faces_label);
+    eprintln!(
+        "[3/3] main scan 12! × 2048 with AVX2 over faces {}...",
+        faces_label
+    );
     let chunks: Vec<(u8, u8)> = (0u8..12)
-        .flat_map(|p0| (0u8..12).filter(move |&p1| p1 != p0).map(move |p1| (p0, p1)))
+        .flat_map(|p0| {
+            (0u8..12)
+                .filter(move |&p1| p1 != p0)
+                .map(move |p1| (p0, p1))
+        })
         .collect();
 
     let hist: [u64; 10] = chunks
         .par_iter()
         .map(|&(p0, p1)| unsafe {
-            process_chunk(p0, p1, &quad_rank, &face_slots, &tables, &simd_indices, &active)
+            process_chunk(
+                p0,
+                p1,
+                &quad_rank,
+                &face_slots,
+                &tables,
+                &simd_indices,
+                &active,
+            )
         })
-        .reduce(|| [0u64; 10], |mut a, b| {
-            for k in 0..10 { a[k] += b[k]; }
-            a
-        });
+        .reduce(
+            || [0u64; 10],
+            |mut a, b| {
+                for k in 0..10 {
+                    a[k] += b[k];
+                }
+                a
+            },
+        );
 
     println!();
-    println!("=== {}Cross Exact Distribution over faces {} ({} colors) ===",
-             if pseudo { "Pseudo " } else { "" }, faces_label, active.len());
+    println!(
+        "=== {}Cross Exact Distribution over faces {} ({} colors) ===",
+        if pseudo { "Pseudo " } else { "" },
+        faces_label,
+        active.len()
+    );
     println!("Depth     Count               Pct        Cumul");
     println!("------------------------------------------------------------");
     let mut cumul: u64 = 0;
@@ -400,7 +454,11 @@ fn main() {
     println!("------------------------------------------------------------");
     println!("Total: {} (theory {})", total, THEORETICAL_TOTAL);
     println!("Avg Depth: {:.4}", wsum as f64 / total as f64);
-    eprintln!("[Done] {:.2}s, {} perms", t0.elapsed().as_secs_f64(), TOTAL_PERMS);
+    eprintln!(
+        "[Done] {:.2}s, {} perms",
+        t0.elapsed().as_secs_f64(),
+        TOTAL_PERMS
+    );
 
     // 校验:总数对齐理论值
     assert_eq!(total, THEORETICAL_TOTAL, "total mismatch");
@@ -408,33 +466,35 @@ fn main() {
 
     // 若 .tmp/cross_6_col_golden.txt 存在,逐深度对齐(金标只覆盖六色全开这一种)
     if active.len() == 6 && !pseudo {
-    if let Ok(text) = std::fs::read_to_string(GOLDEN_FILE) {
-        let mut golden = Vec::new();
-        for line in text.lines() {
-            let parts: Vec<&str> = line.split_whitespace().collect();
-            if parts.len() >= 2 {
-                if let Ok(d) = parts[0].parse::<usize>() {
-                    if d <= 8 {
-                        if let Ok(c) = parts[1].parse::<u64>() {
-                            while golden.len() <= d { golden.push(0u64); }
-                            golden[d] = c;
+        if let Ok(text) = std::fs::read_to_string(GOLDEN_FILE) {
+            let mut golden = Vec::new();
+            for line in text.lines() {
+                let parts: Vec<&str> = line.split_whitespace().collect();
+                if parts.len() >= 2 {
+                    if let Ok(d) = parts[0].parse::<usize>() {
+                        if d <= 8 {
+                            if let Ok(c) = parts[1].parse::<u64>() {
+                                while golden.len() <= d {
+                                    golden.push(0u64);
+                                }
+                                golden[d] = c;
+                            }
                         }
                     }
                 }
             }
-        }
-        if golden.len() >= 9 {
-            let mut ok = true;
-            for k in 0..=8 {
-                if hist[k] != golden[k] {
-                    eprintln!("d={} got {} expected {}", k, hist[k], golden[k]);
-                    ok = false;
+            if golden.len() >= 9 {
+                let mut ok = true;
+                for k in 0..=8 {
+                    if hist[k] != golden[k] {
+                        eprintln!("d={} got {} expected {}", k, hist[k], golden[k]);
+                        ok = false;
+                    }
+                }
+                if ok {
+                    eprintln!("[OK] bit-exact vs cpp golden");
                 }
             }
-            if ok {
-                eprintln!("[OK] bit-exact vs cpp golden");
-            }
         }
-    }
     }
 }

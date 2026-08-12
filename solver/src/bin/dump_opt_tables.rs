@@ -21,7 +21,9 @@ fn dump(dir: &Path, name: &str, bytes: &[u8]) {
 }
 
 fn main() {
-    let dir = std::env::args().nth(1).unwrap_or_else(|| "tables".to_string());
+    let dir = std::env::args()
+        .nth(1)
+        .unwrap_or_else(|| "tables".to_string());
     let dir = Path::new(&dir);
     fs::create_dir_all(dir).expect("create out dir");
 

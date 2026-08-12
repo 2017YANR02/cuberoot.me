@@ -16,7 +16,11 @@ fn block223_analyzer_matches_lib() {
     let root = project_root();
     let bin = PathBuf::from(env!("CARGO_BIN_EXE_block223_analyzer"));
     let scramble = root.join("testdata").join("scramble_5.txt");
-    assert!(scramble.exists(), "missing scramble: {}", scramble.display());
+    assert!(
+        scramble.exists(),
+        "missing scramble: {}",
+        scramble.display()
+    );
 
     let table_dir = root.join("target").join("test-tables").join("e2e-223");
     let _ = std::fs::remove_dir_all(&table_dir);

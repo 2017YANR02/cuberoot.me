@@ -38,7 +38,9 @@ fn bfs_dist(mt: &[u32], start: usize) -> Vec<u8> {
                 }
             }
         }
-        if next.is_empty() { break; }
+        if next.is_empty() {
+            break;
+        }
         depth += 1;
         frontier = next;
     }
@@ -59,18 +61,24 @@ fn idx_to_mask(idx: usize) -> u32 {
 }
 
 /// IDA* 找 (W_idx, Y_idx) → (W_solved, Y_solved) 的最短 move 序列
-fn ida_solve(
-    w_start: usize, y_start: usize,
-    w_dist: &[u8], y_dist: &[u8],
-    mt: &[u32],
-) -> Vec<u8> {
+fn ida_solve(w_start: usize, y_start: usize, w_dist: &[u8], y_dist: &[u8], mt: &[u32]) -> Vec<u8> {
     let h0 = (w_dist[w_start] as i32).max(y_dist[y_start] as i32);
     let mut bound = h0;
     let mut path: Vec<u8> = Vec::with_capacity(20);
 
     while bound <= 20 {
         path.clear();
-        if dfs(w_start, y_start, 0, bound, &mut path, w_dist, y_dist, mt, u8::MAX) {
+        if dfs(
+            w_start,
+            y_start,
+            0,
+            bound,
+            &mut path,
+            w_dist,
+            y_dist,
+            mt,
+            u8::MAX,
+        ) {
             return path;
         }
         bound += 1;
@@ -79,19 +87,32 @@ fn ida_solve(
 }
 
 fn dfs(
-    w: usize, y: usize, g: i32, bound: i32, path: &mut Vec<u8>,
-    w_dist: &[u8], y_dist: &[u8], mt: &[u32], last_m: u8,
+    w: usize,
+    y: usize,
+    g: i32,
+    bound: i32,
+    path: &mut Vec<u8>,
+    w_dist: &[u8],
+    y_dist: &[u8],
+    mt: &[u32],
+    last_m: u8,
 ) -> bool {
     let wd = w_dist[w] as i32;
     let yd = y_dist[y] as i32;
     let h = wd.max(yd);
-    if g + h > bound { return false; }
-    if h == 0 { return true; }
+    if g + h > bound {
+        return false;
+    }
+    if h == 0 {
+        return true;
+    }
     for m in 0..18u8 {
         if last_m != u8::MAX {
             let m_ax = m / 3;
             let l_ax = last_m / 3;
-            if m_ax == l_ax { continue; }
+            if m_ax == l_ax {
+                continue;
+            }
             if (m_ax == 0 && l_ax == 1) || (m_ax == 2 && l_ax == 3) || (m_ax == 4 && l_ax == 5) {
                 continue;
             }
@@ -144,14 +165,17 @@ fn main() {
     eprintln!("[4] IDA* solving in parallel...");
     let processed = AtomicUsize::new(0);
     let total = jobs.len();
-    let results: Vec<Vec<u8>> = jobs.par_iter().map(|&(w, y)| {
-        let path = ida_solve(w, y, &w_dist, &y_dist, mt);
-        let n = processed.fetch_add(1, Ordering::Relaxed) + 1;
-        if n % 200 == 0 || n == total {
-            eprintln!("    {}/{}", n, total);
-        }
-        path
-    }).collect();
+    let results: Vec<Vec<u8>> = jobs
+        .par_iter()
+        .map(|&(w, y)| {
+            let path = ida_solve(w, y, &w_dist, &y_dist, mt);
+            let n = processed.fetch_add(1, Ordering::Relaxed) + 1;
+            if n % 200 == 0 || n == total {
+                eprintln!("    {}/{}", n, total);
+            }
+            path
+        })
+        .collect();
 
     // self-check:抽样 100 个 path,apply 后 (w_start, y_start) 应到 (SOLVED_W, solved_y)
     let step = (jobs.len() / 100).max(1);
@@ -183,6 +207,9 @@ fn main() {
     }
     drop(w_out);
 
-    eprintln!("[Done] {:.2}s, wrote {} scrambles to cross_2_col_state.txt",
-        t0.elapsed().as_secs_f64(), results.len());
+    eprintln!(
+        "[Done] {:.2}s, wrote {} scrambles to cross_2_col_state.txt",
+        t0.elapsed().as_secs_f64(),
+        results.len()
+    );
 }

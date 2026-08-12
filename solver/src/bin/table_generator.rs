@@ -71,72 +71,140 @@ fn main() {
     let ptm = prune_tables::instance();
 
     eprintln!("\n=== Move tables (12) ===");
-    step("mt_edge",      || { mtm.ensure_edge(); });
-    step("mt_corn",      || { mtm.ensure_corn(); });
-    step("mt_edge2",     || { mtm.ensure_edge2(); });
-    step("mt_edge3",     || { mtm.ensure_edge3(); });
-    step("mt_edge4",     || { mtm.ensure_edge4(); });
-    step("mt_corn2",     || { mtm.ensure_corn2(); });
-    step("mt_corn3",     || { mtm.ensure_corn3(); });
-    step("mt_eo12",      || { mtm.ensure_eo12(); });
-    step("mt_eo12_alt",  || { mtm.ensure_eo12_alt(); });
-    step("mt_ep1",       || { mtm.ensure_ep1(); });
-    step("mt_ep4",       || { mtm.ensure_ep4(); });
+    step("mt_edge", || {
+        mtm.ensure_edge();
+    });
+    step("mt_corn", || {
+        mtm.ensure_corn();
+    });
+    step("mt_edge2", || {
+        mtm.ensure_edge2();
+    });
+    step("mt_edge3", || {
+        mtm.ensure_edge3();
+    });
+    step("mt_edge4", || {
+        mtm.ensure_edge4();
+    });
+    step("mt_corn2", || {
+        mtm.ensure_corn2();
+    });
+    step("mt_corn3", || {
+        mtm.ensure_corn3();
+    });
+    step("mt_eo12", || {
+        mtm.ensure_eo12();
+    });
+    step("mt_eo12_alt", || {
+        mtm.ensure_eo12_alt();
+    });
+    step("mt_ep1", || {
+        mtm.ensure_ep1();
+    });
+    step("mt_ep4", || {
+        mtm.ensure_ep4();
+    });
     if !disable_huge {
-        step("mt_edge6 [HUGE ~3GB]", || { mtm.ensure_edge6(); });
+        step("mt_edge6 [HUGE ~3GB]", || {
+            mtm.ensure_edge6();
+        });
     } else {
         eprintln!("[SKIP] mt_edge6 (huge)");
     }
 
     eprintln!("\n=== Prune tables: small/medium ===");
-    step("pt_cross",            || { ptm.ensure_pt_cross(); });
-    step("pt_cross_ins_c4",     || { ptm.ensure_pt_cross_ins_c4(); });
-    step("pt_pair_c4e0",        || { ptm.ensure_pt_pair_c4e0(); });
-    step("pt_cross_c4e0",       || { ptm.ensure_pt_cross_c4e0(); });
-    step("pt_pscross",          || { ptm.ensure_pt_pscross(); });
-    step("pt_pscross_e0e1",     || { ptm.ensure_pt_pscross_e0e1(); });
-    step("pt_pscross_e0e2",     || { ptm.ensure_pt_pscross_e0e2(); });
-    step("pt_pscross_c4c5",     || { ptm.ensure_pt_pscross_c4c5(); });
-    step("pt_pscross_c4c6",     || { ptm.ensure_pt_pscross_c4c6(); });
-    step("pt_ep4eo12",          || { ptm.ensure_pt_ep4eo12(); });
-    step("pt_cross_c4e0e1",     || { ptm.ensure_pt_cross_c4e0e1(); });
-    step("pt_cross_c4e0e2",     || { ptm.ensure_pt_cross_c4e0e2(); });
-    step("pt_cross_c4e0e3",     || { ptm.ensure_pt_cross_c4e0e3(); });
-    step("pt_cross_c4c5e0",     || { ptm.ensure_pt_cross_c4c5e0(); });
-    step("pt_cross_c4c6e0",     || { ptm.ensure_pt_cross_c4c6e0(); });
-    step("pt_cross_c4c7e0",     || { ptm.ensure_pt_cross_c4c7e0(); });
+    step("pt_cross", || {
+        ptm.ensure_pt_cross();
+    });
+    step("pt_cross_ins_c4", || {
+        ptm.ensure_pt_cross_ins_c4();
+    });
+    step("pt_pair_c4e0", || {
+        ptm.ensure_pt_pair_c4e0();
+    });
+    step("pt_cross_c4e0", || {
+        ptm.ensure_pt_cross_c4e0();
+    });
+    step("pt_pscross", || {
+        ptm.ensure_pt_pscross();
+    });
+    step("pt_pscross_e0e1", || {
+        ptm.ensure_pt_pscross_e0e1();
+    });
+    step("pt_pscross_e0e2", || {
+        ptm.ensure_pt_pscross_e0e2();
+    });
+    step("pt_pscross_c4c5", || {
+        ptm.ensure_pt_pscross_c4c5();
+    });
+    step("pt_pscross_c4c6", || {
+        ptm.ensure_pt_pscross_c4c6();
+    });
+    step("pt_ep4eo12", || {
+        ptm.ensure_pt_ep4eo12();
+    });
+    step("pt_cross_c4e0e1", || {
+        ptm.ensure_pt_cross_c4e0e1();
+    });
+    step("pt_cross_c4e0e2", || {
+        ptm.ensure_pt_cross_c4e0e2();
+    });
+    step("pt_cross_c4e0e3", || {
+        ptm.ensure_pt_cross_c4e0e3();
+    });
+    step("pt_cross_c4c5e0", || {
+        ptm.ensure_pt_cross_c4c5e0();
+    });
+    step("pt_cross_c4c6e0", || {
+        ptm.ensure_pt_cross_c4c6e0();
+    });
+    step("pt_cross_c4c7e0", || {
+        ptm.ensure_pt_cross_c4c7e0();
+    });
 
     eprintln!("\n=== Prune tables: indexed families ===");
     for i in 0..4 {
-        step(&format!("pt_pscross_C4E{}", i), || { ptm.ensure_pt_pscross_c4e(i); });
+        step(&format!("pt_pscross_C4E{}", i), || {
+            ptm.ensure_pt_pscross_c4e(i);
+        });
     }
     for c in 0..4 {
-        step(&format!("pt_pscross_C{}", c + 4), || { ptm.ensure_pt_pscross_c(c); });
+        step(&format!("pt_pscross_C{}", c + 4), || {
+            ptm.ensure_pt_pscross_c(c);
+        });
     }
     for c in 0..4 {
         for e in 0..4 {
-            step(
-                &format!("pt_pscross_ins_C{}_diff{}", c + 4, e),
-                || { ptm.ensure_pt_pscross_ins_c_diff(c, e); },
-            );
+            step(&format!("pt_pscross_ins_C{}_diff{}", c + 4, e), || {
+                ptm.ensure_pt_pscross_ins_c_diff(c, e);
+            });
         }
     }
     for c in 0..4 {
         for e in 0..4 {
-            step(
-                &format!("pt_pspair_C{}E{}", c + 4, e),
-                || { ptm.ensure_pt_pspair_ce(c, e); },
-            );
+            step(&format!("pt_pspair_C{}E{}", c + 4, e), || {
+                ptm.ensure_pt_pspair_ce(c, e);
+            });
         }
     }
 
     if !disable_huge {
         eprintln!("\n=== Prune tables: HUGE (≥800MB) ===");
-        step("pt_pscross_E0E1E2 [~1GB]",  || { ptm.ensure_pt_pscross_e0e1e2(); });
-        step("pt_pscross_C4C5C6 [~822MB]",|| { ptm.ensure_pt_pscross_c4c5c6(); });
-        step("pt_cross_C4C5C6 [~1.2GB]",  || { ptm.ensure_pt_cross_c4c5c6(); });
-        step("pt_cross_C4C5E0E1 [~10GB]", || { ptm.ensure_pt_cross_c4c5e0e1(); });
-        step("pt_cross_C4C6E0E2 [~10GB]", || { ptm.ensure_pt_cross_c4c6e0e2(); });
+        step("pt_pscross_E0E1E2 [~1GB]", || {
+            ptm.ensure_pt_pscross_e0e1e2();
+        });
+        step("pt_pscross_C4C5C6 [~822MB]", || {
+            ptm.ensure_pt_pscross_c4c5c6();
+        });
+        step("pt_cross_C4C5C6 [~1.2GB]", || {
+            ptm.ensure_pt_cross_c4c5c6();
+        });
+        step("pt_cross_C4C5E0E1 [~10GB]", || {
+            ptm.ensure_pt_cross_c4c5e0e1();
+        });
+        step("pt_cross_C4C6E0E2 [~10GB]", || {
+            ptm.ensure_pt_cross_c4c6e0e2();
+        });
     } else {
         eprintln!("\n[SKIP] 5 huge prune tables");
     }

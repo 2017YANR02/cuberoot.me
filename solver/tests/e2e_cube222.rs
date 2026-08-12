@@ -13,8 +13,8 @@
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
-use cube_solver::cube_common::string_to_alg;
 use cube_solver::cube222_solver::Cube222Solver;
+use cube_solver::cube_common::string_to_alg;
 
 fn project_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -70,7 +70,10 @@ fn cube222_analyzer_matches_lib() {
     let root = project_root();
     let bin = PathBuf::from(env!("CARGO_BIN_EXE_cube222_analyzer"));
 
-    let work_dir = root.join("target").join("test-tables").join("e2e-cube222-work");
+    let work_dir = root
+        .join("target")
+        .join("test-tables")
+        .join("e2e-cube222-work");
     let _ = std::fs::remove_dir_all(&work_dir);
     std::fs::create_dir_all(&work_dir).unwrap();
     std::fs::write(work_dir.join("wca222_5.txt"), WCA_INPUT).unwrap();
@@ -104,7 +107,12 @@ fn cube222_analyzer_matches_lib() {
     for (v, src) in vals.iter().zip(WCA_INPUT.lines()) {
         let pos = src.find(',').unwrap();
         let alg = string_to_alg(&src[pos + 1..]);
-        assert_eq!(*v, s.solve_one(&alg), "lib direct query mismatch on {}", &src[..pos]);
+        assert_eq!(
+            *v,
+            s.solve_one(&alg),
+            "lib direct query mismatch on {}",
+            &src[..pos]
+        );
     }
 
     // --- D/L/B 打乱:形状 + 旋转归一语义 baseline ---

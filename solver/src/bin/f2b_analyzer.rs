@@ -23,7 +23,13 @@ struct F2bWrapper;
 impl SolverWrapper for F2bWrapper {
     fn global_init() {
         let light = std::env::var("CUBE_F2B_LIGHT").is_ok_and(|v| v == "1");
-        let s = S.get_or_init(|| if light { F2BSolver::new() } else { F2BSolver::new_heavy() });
+        let s = S.get_or_init(|| {
+            if light {
+                F2BSolver::new()
+            } else {
+                F2BSolver::new_heavy()
+            }
+        });
         eprintln!(
             "[INFO] f2b tables ready (s1 max depth {}, mode {})",
             s.max_depth_s1(),

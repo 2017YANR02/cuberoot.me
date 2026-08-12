@@ -16,19 +16,31 @@ fn main() {
         let mut active_w: u8 = 0;
         let mut active_y: u8 = 0;
         for i in 0..4 {
-            if (w >> i) & 1 == 1 { active_w |= TRIPLET_MASKS[i]; }
-            if (y >> i) & 1 == 1 { active_y |= TRIPLET_MASKS[i]; }
+            if (w >> i) & 1 == 1 {
+                active_w |= TRIPLET_MASKS[i];
+            }
+            if (y >> i) & 1 == 1 {
+                active_y |= TRIPLET_MASKS[i];
+            }
         }
 
         let mut fixed_edges = 0usize;
         let mut fixed_corners = 0usize;
-        if w > 0 { fixed_edges += 4; }
-        if y > 0 { fixed_edges += 4; }
+        if w > 0 {
+            fixed_edges += 4;
+        }
+        if y > 0 {
+            fixed_edges += 4;
+        }
         fixed_edges += (active_w | active_y).count_ones() as usize;
         fixed_corners += active_w.count_ones() as usize + active_y.count_ones() as usize;
 
         let count = count_legal_states(fixed_edges, fixed_corners) as i128;
-        if mask.count_ones() % 2 == 1 { total += count; } else { total -= count; }
+        if mask.count_ones() % 2 == 1 {
+            total += count;
+        } else {
+            total -= count;
+        }
     }
     println!("Result: {}", total as u128);
 }

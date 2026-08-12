@@ -117,7 +117,12 @@ impl SolverWrapper for PseudoSolver {
 
     fn get_csv_header() -> String {
         let mut s = String::from("id");
-        for prefix in ["pseudo_cross", "pseudo_xcross", "pseudo_xxcross", "pseudo_xxxcross"] {
+        for prefix in [
+            "pseudo_cross",
+            "pseudo_xcross",
+            "pseudo_xxcross",
+            "pseudo_xxxcross",
+        ] {
             for suf in SUFFIXES {
                 s.push(',');
                 s.push_str(prefix);

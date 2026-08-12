@@ -17,7 +17,11 @@ fn f2b_analyzer_matches_lib() {
     let root = project_root();
     let bin = PathBuf::from(env!("CARGO_BIN_EXE_f2b_analyzer"));
     let scramble = root.join("testdata").join("scramble_5.txt");
-    assert!(scramble.exists(), "missing scramble: {}", scramble.display());
+    assert!(
+        scramble.exists(),
+        "missing scramble: {}",
+        scramble.display()
+    );
 
     let table_dir = root.join("target").join("test-tables").join("e2e-f2b");
     let _ = std::fs::remove_dir_all(&table_dir);

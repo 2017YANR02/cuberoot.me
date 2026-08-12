@@ -20,8 +20,12 @@ const SUFFIXES: [&str; 6] = ["_z0", "_z2", "_z3", "_z1", "_x3", "_x1"];
 fn use_big() -> bool {
     static F: OnceLock<bool> = OnceLock::new();
     *F.get_or_init(|| {
-        let huge = std::env::var("CUBE_ALLOW_HUGE_TABLES").map(|v| v == "1").unwrap_or(false);
-        let force_small = std::env::var("CUBE_F2LEO_FORCE_SMALL").map(|v| v == "1").unwrap_or(false);
+        let huge = std::env::var("CUBE_ALLOW_HUGE_TABLES")
+            .map(|v| v == "1")
+            .unwrap_or(false);
+        let force_small = std::env::var("CUBE_F2LEO_FORCE_SMALL")
+            .map(|v| v == "1")
+            .unwrap_or(false);
         huge && !force_small
     })
 }
@@ -33,7 +37,9 @@ impl SolverWrapper for PseudoF2leoWrapper {
         if use_big() {
             // 进程级 warm:ensure 大表电池(含 huge E0E1E2/C4C5C6 mmap)+ move 表 + cross 剪枝。
             let _ = pseudo_f2leo_big_instance();
-            eprintln!("[INFO] pseudo_f2leo: huge-table battery fast path (C4E + corner2/3 + edge2/3).");
+            eprintln!(
+                "[INFO] pseudo_f2leo: huge-table battery fast path (C4E + corner2/3 + edge2/3)."
+            );
         } else {
             let _ = PseudoF2leoSolver::new();
             eprintln!(

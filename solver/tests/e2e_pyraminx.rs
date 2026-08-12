@@ -68,7 +68,10 @@ fn pyraminx_analyzer_matches_lib() {
     let root = project_root();
     let bin = PathBuf::from(env!("CARGO_BIN_EXE_pyraminx_analyzer"));
 
-    let work_dir = root.join("target").join("test-tables").join("e2e-pyraminx-work");
+    let work_dir = root
+        .join("target")
+        .join("test-tables")
+        .join("e2e-pyraminx-work");
     let _ = std::fs::remove_dir_all(&work_dir);
     std::fs::create_dir_all(&work_dir).unwrap();
     std::fs::write(work_dir.join("wca_pyram_5.txt"), WCA_INPUT).unwrap();
@@ -97,20 +100,38 @@ fn pyraminx_analyzer_matches_lib() {
     );
 
     // --- WCA 打乱:形状 + baseline + lib 直查逐位一致 ---
-    let vals = check_csv(&work_dir.join("wca_pyram_5_pyraminx.csv"), WCA_INPUT, &WCA_BASELINE);
+    let vals = check_csv(
+        &work_dir.join("wca_pyram_5_pyraminx.csv"),
+        WCA_INPUT,
+        &WCA_BASELINE,
+    );
     let s = PyraminxSolver::new();
     for (v, src) in vals.iter().zip(WCA_INPUT.lines()) {
         let pos = src.find(',').unwrap();
         let alg = parse_pyraminx(&src[pos + 1..]).expect("WCA scramble must parse");
-        assert_eq!(*v, s.solve_one(&alg), "lib direct query mismatch on {}", &src[..pos]);
+        assert_eq!(
+            *v,
+            s.solve_one(&alg),
+            "lib direct query mismatch on {}",
+            &src[..pos]
+        );
     }
 
     // --- 记号边角:形状 + 手算 baseline ---
-    let vals = check_csv(&work_dir.join("edge_5_pyraminx.csv"), EDGE_INPUT, &EDGE_BASELINE);
+    let vals = check_csv(
+        &work_dir.join("edge_5_pyraminx.csv"),
+        EDGE_INPUT,
+        &EDGE_BASELINE,
+    );
     for (v, src) in vals.iter().zip(EDGE_INPUT.lines()) {
         let pos = src.find(',').unwrap();
         let alg = parse_pyraminx(&src[pos + 1..]).expect("edge case must parse");
-        assert_eq!(*v, s.solve_one(&alg), "lib direct query mismatch on {}", &src[..pos]);
+        assert_eq!(
+            *v,
+            s.solve_one(&alg),
+            "lib direct query mismatch on {}",
+            &src[..pos]
+        );
     }
 
     let _ = std::fs::remove_dir_all(&work_dir);

@@ -16,9 +16,13 @@ fn main() {
 
         let mut fixed_edges = 0usize;
         let mut fixed_corners = 0usize;
-        if w > 0 { fixed_edges += 4; }   // 白 cross
-        if y > 0 { fixed_edges += 4; }   // 黄 cross
-        // F2L 棱 (E 层): 白槽 i 和 黄槽 i 对应同一物理棱, 取并
+        if w > 0 {
+            fixed_edges += 4;
+        } // 白 cross
+        if y > 0 {
+            fixed_edges += 4;
+        } // 黄 cross
+          // F2L 棱 (E 层): 白槽 i 和 黄槽 i 对应同一物理棱, 取并
         fixed_edges += (w | y).count_ones() as usize;
         // F2L 角: 白用 D 层, 黄用 U 层, 不相交
         fixed_corners += w.count_ones() as usize + y.count_ones() as usize;

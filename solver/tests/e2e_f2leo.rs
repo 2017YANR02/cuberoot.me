@@ -17,7 +17,14 @@ fn project_root() -> PathBuf {
 }
 
 /// 跑一次 analyzer:把 scramble 文件喂 stdin,返回输出 CSV 的行。
-fn run_analyzer(bin: &PathBuf, table_dir: &PathBuf, work_dir: &PathBuf, scramble_name: &str, out_name: &str, envs: &[(&str, &str)]) -> Vec<String> {
+fn run_analyzer(
+    bin: &PathBuf,
+    table_dir: &PathBuf,
+    work_dir: &PathBuf,
+    scramble_name: &str,
+    out_name: &str,
+    envs: &[(&str, &str)],
+) -> Vec<String> {
     let mut cmd = Command::new(bin);
     cmd.current_dir(work_dir)
         .env("CUBE_TABLE_DIR", table_dir)
@@ -39,10 +46,19 @@ fn run_analyzer(bin: &PathBuf, table_dir: &PathBuf, work_dir: &PathBuf, scramble
     }
     let output = child.wait_with_output().expect("wait analyzer");
     let stderr = String::from_utf8_lossy(&output.stderr);
-    assert!(output.status.success(), "analyzer exit={} stderr=\n{}", output.status, stderr);
+    assert!(
+        output.status.success(),
+        "analyzer exit={} stderr=\n{}",
+        output.status,
+        stderr
+    );
     let out_path = work_dir.join(out_name);
     assert!(out_path.exists(), "no output {}", out_path.display());
-    std::fs::read_to_string(&out_path).unwrap().lines().map(|s| s.to_string()).collect()
+    std::fs::read_to_string(&out_path)
+        .unwrap()
+        .lines()
+        .map(|s| s.to_string())
+        .collect()
 }
 
 fn assert_bit_exact(big: &[String], small: &[String]) {
@@ -69,17 +85,41 @@ fn pseudo_f2leo_big_matches_small() {
     let e3 = real_tables.join("pt_pscross_E0E1E2.bin");
     let c3 = real_tables.join("pt_pscross_C4C5C6.bin");
     if !e3.exists() || !c3.exists() {
-        eprintln!("[SKIP] pseudo_f2leo_big_matches_small: huge battery tables absent at {}", real_tables.display());
+        eprintln!(
+            "[SKIP] pseudo_f2leo_big_matches_small: huge battery tables absent at {}",
+            real_tables.display()
+        );
         return;
     }
     let bin = PathBuf::from(env!("CARGO_BIN_EXE_pseudo_f2leo_analyzer"));
-    let work = root.join("target").join("test-tables").join("e2e-pseudo-f2leo-work");
+    let work = root
+        .join("target")
+        .join("test-tables")
+        .join("e2e-pseudo-f2leo-work");
     let _ = std::fs::remove_dir_all(&work);
     std::fs::create_dir_all(&work).unwrap();
-    std::fs::copy(root.join("testdata").join("scramble_100.txt"), work.join("s.txt")).unwrap();
+    std::fs::copy(
+        root.join("testdata").join("scramble_100.txt"),
+        work.join("s.txt"),
+    )
+    .unwrap();
 
-    let big = run_analyzer(&bin, &real_tables, &work, "s.txt", "s_pseudo_f2leo.csv", &[("CUBE_ALLOW_HUGE_TABLES", "1")]);
-    let small = run_analyzer(&bin, &real_tables, &work, "s.txt", "s_pseudo_f2leo.csv", &[("CUBE_F2LEO_FORCE_SMALL", "1")]);
+    let big = run_analyzer(
+        &bin,
+        &real_tables,
+        &work,
+        "s.txt",
+        "s_pseudo_f2leo.csv",
+        &[("CUBE_ALLOW_HUGE_TABLES", "1")],
+    );
+    let small = run_analyzer(
+        &bin,
+        &real_tables,
+        &work,
+        "s.txt",
+        "s_pseudo_f2leo.csv",
+        &[("CUBE_F2LEO_FORCE_SMALL", "1")],
+    );
     assert_bit_exact(&big, &small);
     let _ = std::fs::remove_dir_all(&work);
 }
@@ -97,12 +137,26 @@ fn f2leo_big_matches_small() {
         return;
     }
     let bin = PathBuf::from(env!("CARGO_BIN_EXE_f2leo_analyzer"));
-    let work = root.join("target").join("test-tables").join("e2e-f2leo-work");
+    let work = root
+        .join("target")
+        .join("test-tables")
+        .join("e2e-f2leo-work");
     let _ = std::fs::remove_dir_all(&work);
     std::fs::create_dir_all(&work).unwrap();
-    std::fs::copy(root.join("testdata").join("scramble_100.txt"), work.join("s.txt")).unwrap();
+    std::fs::copy(
+        root.join("testdata").join("scramble_100.txt"),
+        work.join("s.txt"),
+    )
+    .unwrap();
 
-    let big = run_analyzer(&bin, &real_tables, &work, "s.txt", "s_f2leo.csv", &[("CUBE_ALLOW_HUGE_TABLES", "1")]);
+    let big = run_analyzer(
+        &bin,
+        &real_tables,
+        &work,
+        "s.txt",
+        "s_f2leo.csv",
+        &[("CUBE_ALLOW_HUGE_TABLES", "1")],
+    );
     let small = run_analyzer(&bin, &real_tables, &work, "s.txt", "s_f2leo.csv", &[]);
     assert_bit_exact(&big, &small);
     let _ = std::fs::remove_dir_all(&work);

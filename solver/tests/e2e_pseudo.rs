@@ -28,7 +28,11 @@ fn run_pseudo(table_dir_name: &str, work_dir_name: &str, allow_huge: bool) -> (P
     let bin = target_binary();
     let testdata = root.join("testdata");
     let scramble = testdata.join("scramble_5.txt");
-    assert!(scramble.exists(), "missing scramble: {}", scramble.display());
+    assert!(
+        scramble.exists(),
+        "missing scramble: {}",
+        scramble.display()
+    );
 
     // 表目录复用(huge tables 太贵不每次清)
     let table_dir = root.join("target").join("test-tables").join(table_dir_name);
@@ -90,7 +94,11 @@ fn assert_csv_matches(out_path: &PathBuf, compare_cols: usize) {
 
     let got_lines: Vec<&str> = got.lines().collect();
     let golden_lines: Vec<&str> = golden_text.lines().collect();
-    assert!(got_lines.len() >= 6, "expected >=6 lines, got {}", got_lines.len());
+    assert!(
+        got_lines.len() >= 6,
+        "expected >=6 lines, got {}",
+        got_lines.len()
+    );
     assert!(golden_lines.len() >= 6);
 
     for i in 0..6 {
