@@ -133,21 +133,26 @@ function TrainerSplitLane({
                 const shownScramble = pureScramble ? purifyScramble(puzzle, scramble) : scramble;
                 return (
                   <div className="trainer-split-case" key={caseKey(c)}>
-                    <div className="trainer-figure">
-                      <CaseMarkBar k={caseKey(c)} />
-                      {showThumb && scramble && (
-                        <CaseThumb
-                          puzzle={puzzle}
-                          set={c.srcSet ?? set}
-                          sticker={c.sticker}
-                          alg={c.algs.flat()[0]?.alg ?? c.standard ?? ''}
-                          setup={scramble}
-                          size={grouped ? 104 : 160}
-                          local
-                        />
-                      )}
+                    {showThumb && (
+                      <div className="trainer-figure">
+                        <CaseMarkBar k={caseKey(c)} />
+                        {scramble && (
+                          <CaseThumb
+                            puzzle={puzzle}
+                            set={c.srcSet ?? set}
+                            sticker={c.sticker}
+                            alg={c.algs.flat()[0]?.alg ?? c.standard ?? ''}
+                            setup={scramble}
+                            size={grouped ? 104 : 160}
+                            local
+                          />
+                        )}
+                      </div>
+                    )}
+                    <div className="trainer-scramble-line">
+                      {!showThumb && <CaseMarkBar k={caseKey(c)} />}
+                      <ScrambleHeader scramble={shownScramble} font={scrambleFont} />
                     </div>
-                    <ScrambleHeader scramble={shownScramble} font={scrambleFont} />
                   </div>
                 );
               })
