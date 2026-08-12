@@ -52,6 +52,7 @@ import { fetchByDifficultyCountries, type ByDifficultyCountry } from '@/lib/scra
 import { statsUrl } from '@/lib/stats-base';
 import {
   stageLabel, isBlockVariant, uiVariantOf, uiVariantOptions, uiStagesOf, dataVariantOfStage,
+  variantDataRef,
   type ScrambleVariant,
 } from '@/lib/scramble-variants';
 import { VariantSelect } from '@/components/VariantSelect';
@@ -532,6 +533,10 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   }, [allSets, dataset]);
 
   const currentSet = useMemo(() => allSets?.[scrambleSet] ?? null, [allSets, scrambleSet]);
+  // 用户态保留 second_layer/second_layer，所有静态数据读取复用 std/xxxxcross。
+  const sourceRef = variantDataRef(variant, stage);
+  const sourceVariant = sourceRef.variant;
+  const sourceStage = sourceRef.stage;
 
   // ── 精确穷举集的派生量 ────────────────────────────────────────────────
   const isExact = dataset === EXACT_SET_KEY;
@@ -544,6 +549,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
 
   const currentStages = useMemo(() => {
     if (!currentSet) return [] as string[];
+    if (variant === 'second_layer') return ['second_layer'];
     return currentSet.variants[variant]?.stages ?? [];
   }, [currentSet, variant]);
 
@@ -555,8 +561,8 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
 
   // 切项目/数据集后当前方法可能不存在(如 '333' 只在合并池有)——回退到 std。
   useEffect(() => {
-    if (currentSet && !currentSet.variants[variant] && !isBlockVariant(variant)) setVariant('std');
-  }, [currentSet, variant]);
+    if (currentSet && !currentSet.variants[sourceVariant] && !isBlockVariant(variant)) setVariant('std');
+  }, [currentSet, variant, sourceVariant]);
 
   const subsetKey = sel.subsetKey;
   const selectedColors = sel.selectedColors;
@@ -623,10 +629,10 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
       return out;
     }
     if (!currentSet) return {};
-    const hist = currentSet.variants[variant]?.data[stage]?.[effectiveSubset];
+    const hist = currentSet.variants[sourceVariant]?.data[sourceStage]?.[effectiveSubset];
     if (!hist) return {};
     return (is333 && optMetric === 'qtm') ? (hist.counts_qtm ?? {}) : hist.counts;
-  }, [isExact, exactFull, currentSet, variant, stage, effectiveSubset, is333, optMetric]);
+  }, [isExact, exactFull, currentSet, sourceVariant, sourceStage, effectiveSubset, is333, optMetric]);
 
   // 切换阶段时重置整解口径(离开/进入 333 都回到 HTM)。
   useEffect(() => { setOptMetric('htm'); }, [stage]);
@@ -637,8 +643,8 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   );
   const downloadBins = useMemo<number[]>(() => {
     if (!currentSet) return [];
-    return currentSet.variants[variant]?.data[stage]?.[effectiveSubset]?.example_bins ?? [];
-  }, [currentSet, variant, stage, effectiveSubset]);
+    return currentSet.variants[sourceVariant]?.data[sourceStage]?.[effectiveSubset]?.example_bins ?? [];
+  }, [currentSet, sourceVariant, sourceStage, effectiveSubset]);
 
   // 精确穷举:哪几档能把状态**列全**(规则与上限在 _data/exact_dist,枚举路线在
   // lib/cross-trainer/exact-cases)。
@@ -695,7 +701,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   };
   const handleAvgBarClick = (bin: number) => {
     setSelectedBin(bin);
-    ensureAvgExamplesLoaded(variant, stage);
+    ensureAvgExamplesLoaded(sourceVariant, sourceStage);
   };
 
   useEffect(() => {
@@ -716,8 +722,8 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   const exSet = isPerEvent ? (evExamples[scrambleSet] ?? null) : (examples?.sets[dataset] ?? null);
   const currentSamples = useMemo<ExampleSample[] | null>(() => {
     if (selectedBin === null || !exSet) return null;
-    return exSet.variants[variant]?.[stage]?.[effectiveSubset]?.[String(selectedBin)] ?? null;
-  }, [exSet, variant, stage, effectiveSubset, selectedBin]);
+    return exSet.variants[sourceVariant]?.[sourceStage]?.[effectiveSubset]?.[String(selectedBin)] ?? null;
+  }, [exSet, sourceVariant, sourceStage, effectiveSubset, selectedBin]);
 
   // 各国占比条(仅合并 WCA 池:scrambleSet==='wca';per-event/xcross 无 country 数据 → undefined → 不画)。
   // 换 set/变体/阶段/底色/步数/度量 → 清国家筛选(避免筛着一个国家切走后列表空/口径错位)。
@@ -731,8 +737,8 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     // 口径对不上的格(EOCross:固定轴 vs 两轴取 min)有真题数据也不叠 —— 画出来的
     // 偏差列量的是两套定义的差,不是打乱池的偏差。理由直接显示在图下方。
     if (exactFull.noOverlay) return null;
-    return data.sets.wca?.variants[variant]?.data[stage]?.[subsetKey]?.counts ?? null;
-  }, [isExact, overlayOn, slot, exactFull, data, variant, stage, subsetKey]);
+    return data.sets.wca?.variants[sourceVariant]?.data[sourceStage]?.[subsetKey]?.counts ?? null;
+  }, [isExact, overlayOn, slot, exactFull, data, sourceVariant, sourceStage, subsetKey]);
 
   // 整解 HTM 才有理论对照(QTM 那档的真题分布还没生成,cube20.org 的 QTM 表也没搬)。
   const godOverlayAvailable = !isExact && is333 && optMetric === 'htm';
@@ -807,10 +813,10 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   const avgDenom = avgData?.meta.avg_denom ?? 5;
   const avgActiveCounts = useMemo<Record<string, number>>(() => {
     if (!avgOn || tab !== 'difficulty' || !avgData) return {};
-    const sh = avgData.sets[scrambleSet]?.variants[variant]?.data[stage]?.[effectiveSubset];
+    const sh = avgData.sets[scrambleSet]?.variants[sourceVariant]?.data[sourceStage]?.[effectiveSubset];
     if (!sh) return {};
     return (avgExtras ? sh.we : sh.ne).counts;
-  }, [avgOn, tab, avgData, scrambleSet, variant, stage, effectiveSubset, avgExtras]);
+  }, [avgOn, tab, avgData, scrambleSet, sourceVariant, sourceStage, effectiveSubset, avgExtras]);
   const avgSeries = useMemo<HistSeries[]>(() => {
     if (Object.keys(avgActiveCounts).length === 0) return [];
     return [{ name: modeLabel, fillColors: fillColorsForSubset(selectedColors), counts: avgActiveCounts }];
@@ -825,7 +831,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   // 命中所选 bin 且(per-event 时)项目匹配者全收(头尾极端 bin 分片里是完整的,面板再决定展示多少)。
   const avgMatchingGroups = useMemo<AvgGroupCase[] | null>(() => {
     if (!avgOn || tab !== 'difficulty' || selectedBin === null) return null;
-    const shard = avgShards[`${variant}#${stage}`];
+    const shard = avgShards[`${sourceVariant}#${sourceStage}`];
     if (!shard) return null; // 尚未加载完成
     const order = shard.meta.color_order;
     const letters = [...effectiveSubset] as ColorLetter[];
@@ -859,7 +865,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     // 稳定排序:先按组平均、再按成员数,展示时确定。
     out.sort((a, b) => a.mean - b.mean || b.cnt - a.cnt);
     return out;
-  }, [avgOn, tab, selectedBin, avgShards, variant, stage, effectiveSubset, avgExtras, isPerEvent, event]);
+  }, [avgOn, tab, selectedBin, avgShards, sourceVariant, sourceStage, effectiveSubset, avgExtras, isPerEvent, event]);
 
   // 非 3x3 puzzle 项目:难度 tab 显示 puzzle 整解分布,3x3 专属的合并/数据集开关无意义,隐藏。
   const isPuzzleEvent = tab === 'difficulty' && !!PUZZLE_EVENT_MAP[event];
@@ -894,7 +900,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     if (tab !== 'difficulty') return [];
     if (is333 && optMetric === 'qtm') return []; // 333 QTM 首现未生成(同图表 counts_qtm 占位)
     if (!faDiffSet || !faDiffComps || !faDiffIdMeta) return [];
-    const binMap = faDiffSet.variants[variant]?.data[stage]?.[effectiveSubset];
+    const binMap = faDiffSet.variants[sourceVariant]?.data[sourceStage]?.[effectiveSubset];
     if (!binMap) return [];
     const out: TimelineEntry[] = [];
     for (const [binStr, s] of Object.entries(binMap)) {
@@ -909,7 +915,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
       });
     }
     return out;
-  }, [tab, is333, optMetric, faDiffSet, faDiffComps, faDiffIdMeta, variant, stage, effectiveSubset]);
+  }, [tab, is333, optMetric, faDiffSet, faDiffComps, faDiffIdMeta, sourceVariant, sourceStage, effectiveSubset]);
 
   // 长度首次出现:合并态跨成员项目取最早;单项目直接取。
   const lengthTimeline = useMemo<TimelineEntry[]>(() => {
@@ -1388,7 +1394,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     );
   }
 
-  const vData = currentSet.variants[variant];
+  const vData = currentSet.variants[sourceVariant];
 
   // 样本量由图内自报(DiscreteHistogram 对 series 求和 = 打乱条数 / 组数),这里不再另算一份。
 
@@ -1397,10 +1403,12 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   // 数据/示例/下载全走原 variant+stage 键。聚合规则用 scramble-variants 那三个共享函数
   // (与 /timer 的 GenDiffConfig / WcaSourceConfig 同一份),这里不另写一遍。
   const methodOptions = uiVariantOptions((dv) => !!currentSet.variants[dv]) as VariantKey[];
-  const uiVariant = uiVariantOf(variant) as VariantKey;
+  const uiVariant = (variant === 'second_layer' ? variant : uiVariantOf(variant)) as VariantKey;
   /** 该 UI 方法在本数据集里真有数据的阶段(聚合方法跨数据变体展开)。 */
-  const stagesOfUi = (v: string) => uiStagesOf(v).filter((s) =>
-    currentSet.variants[dataVariantOfStage(v, s)]?.stages.includes(s));
+  const stagesOfUi = (v: string) => uiStagesOf(v).filter((s) => {
+    const ref = variantDataRef(dataVariantOfStage(v, s), s);
+    return currentSet.variants[ref.variant]?.stages.includes(ref.stage);
+  });
   const isAggregate = uiVariant !== variant;
   const stageOptions = isAggregate ? stagesOfUi(uiVariant) : currentStages;
 
@@ -1552,7 +1560,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
       </div>
       <AvgExamplesPanel
         cases={avgMatchingGroups}
-        comps={avgShards[`${variant}#${stage}`]?.comps}
+        comps={avgShards[`${sourceVariant}#${sourceStage}`]?.comps}
         lang={uiLangOf(i18n.language)}
         isZh={isZh}
         selectedBin={selectedBin}
@@ -1777,8 +1785,8 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
         isZh={isZh}
         lang={(i18n.language.startsWith('zh') ? 'zh' : 'en')}
         scrambleSet={scrambleSet}
-        variant={variant}
-        stage={stage}
+        variant={sourceVariant}
+        stage={sourceStage}
         subsetKey={subsetKey}
         downloadBins={downloadBins}
         selectedBin={selectedBin}

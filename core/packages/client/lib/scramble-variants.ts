@@ -9,7 +9,7 @@
 // 'block'(砖)是 UI 聚合方法:把数据层 4 个块变体(123/123x2/222/223)收进一个
 // 方法下拉项,块的具体形状落到阶段下拉(122/123/222/223/F2B)。数据键不变。
 export type ScrambleVariant =
-  | 'std' | 'daisy' | 'first_layer' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo'
+  | 'std' | 'daisy' | 'first_layer' | 'second_layer' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo'
   | 'block' | '123' | '123x2' | '222' | '223' | 'eoline' | 'dr' | 'htr' | 'htr2' | 'fr'
   | '333';
 
@@ -21,6 +21,7 @@ export const VARIANT_LABEL: Record<ScrambleVariant, VariantLabel> = {
   std: { zh: '标准', en: 'Standard' },
   daisy: { zh: '小花', en: 'Daisy' },
   first_layer: { zh: '底层', en: 'First Layer' },
+  second_layer: { zh: '第二层', en: 'Second Layer' },
   eo: { zh: 'EO', en: 'EO' },
   pair: { zh: '基态', en: 'Pair' },
   pseudo: { zh: '伪', en: 'Pseudo' },
@@ -47,7 +48,7 @@ export const VARIANT_LABEL: Record<ScrambleVariant, VariantLabel> = {
 // 块族只出 'block' 一项;EOLine 并入 'eo' 一项(见下)。
 export const VARIANT_ORDER: ScrambleVariant[] = [
   '333',
-  'std', 'daisy', 'first_layer', 'pseudo', 'pair', 'pseudo_pair', 'eo', 'f2leo', 'pseudo_f2leo',
+  'std', 'daisy', 'first_layer', 'second_layer', 'pseudo', 'pair', 'pseudo_pair', 'eo', 'f2leo', 'pseudo_f2leo',
   'block', 'dr',
 ];
 
@@ -111,6 +112,7 @@ const STAGE_BASE: Record<string, VariantLabel> = {
   daisy: { zh: '小花', en: 'Daisy' },
   first_face: { zh: '底面', en: 'First Face' },
   first_layer: { zh: '底层', en: 'First Layer' },
+  second_layer: { zh: '第二层', en: 'Second Layer' },
   cross: { zh: '十字', en: 'Cross' },
   xcross: { zh: 'XCross', en: 'XCross' },
   xxcross: { zh: 'XXCross', en: 'XXCross' },
@@ -133,6 +135,7 @@ const STAGE_BASE: Record<string, VariantLabel> = {
   b122: { zh: '122', en: '122' },
   bfirst_face: { zh: '底面', en: 'First Face' },
   bfirst_layer: { zh: '底层', en: 'First Layer' },
+  bsecond_layer: { zh: '第二层', en: 'Second Layer' },
   b123: { zh: '123', en: '123' },
   b222: { zh: '222', en: '222' },
   b223: { zh: '223', en: '223' },
@@ -165,6 +168,8 @@ export const VARIANT_STAGES: Record<ScrambleVariant, string[]> = {
   std: ['cross', 'xcross', 'xxcross', 'xxxcross', 'xxxxcross'],
   daisy: ['daisy'],
   first_layer: ['first_face', 'first_layer'],
+  // 第二层与 std stage-4(XXXXCross/F2L) 逐态同义；只是用户可见别名。
+  second_layer: ['second_layer'],
   eo: ['eo_cross', 'eo_xcross', 'eo_xxcross', 'eo_xxxcross', 'eo_xxxxcross'],
   pair: ['cross_pair', 'xcross_pair', 'xxcross_pair', 'xxxcross_pair'],
   pseudo: ['pseudo_cross', 'pseudo_xcross', 'pseudo_xxcross', 'pseudo_xxxcross'],
@@ -191,7 +196,7 @@ export const EO_UI_STAGES: string[] = [...VARIANT_STAGES.eoline, ...VARIANT_STAG
 // 首页近期打乱 JSON 的短 metric 展开序。新管道阶段必须同步加进来,
 // 否则方法会出现在下拉里,但选中后找不到任何步数桶。
 export const RECENT_METRIC_ORDER: string[] = [
-  '333', 'daisy', 'first_face', 'first_layer', 'eo', 'eoline', 'cross', 'xc', 'xxc', 'xxxc', 'xxxxc',
+  '333', 'daisy', 'first_face', 'first_layer', 'second_layer', 'eo', 'eoline', 'cross', 'xc', 'xxc', 'xxxc', 'xxxxc',
   'fbsquare', 'rouxs1', 'block222', 'block223', 'f2b', 'dr',
 ];
 
@@ -208,6 +213,7 @@ export const uiVariantOptions = (hasData: (dataVariant: string) => boolean): str
   VARIANT_ORDER.filter((v) => (
     v === 'block' ? BLOCK_DATA_VARIANTS.some(hasData)
       : v === 'eo' ? EO_DATA_VARIANTS.some(hasData)
+        : v === 'second_layer' ? hasData('std')
         : hasData(v)
   ));
 
@@ -222,3 +228,15 @@ export const dataVariantOfStage = (uiVariant: string, stage: string): string => 
   uiVariant === 'block' ? (BLOCK_STAGE_VARIANT[stage] ?? '123')
     : uiVariant === 'eo' ? (EO_STAGE_VARIANT[stage] ?? 'eo')
       : uiVariant);
+
+/**
+ * UI 别名→唯一底层数据坐标。Second Layer 不生成新 CSV/JSON/步数槽，
+ * 永远复用 std.xxxxcross；首页的短 metric 同理复用 xxxxc。
+ */
+export interface VariantDataRef { variant: string; stage: string; recentMetric: string }
+export const variantDataRef = (uiVariant: string, stage: string): VariantDataRef => {
+  if (uiVariant === 'second_layer' || stage === 'second_layer') {
+    return { variant: 'std', stage: 'xxxxcross', recentMetric: 'xxxxc' };
+  }
+  return { variant: dataVariantOfStage(uiVariant, stage), stage, recentMetric: stage };
+};

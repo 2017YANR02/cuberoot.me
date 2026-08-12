@@ -37,7 +37,7 @@ interface NativeSolver {
 
 // 原生分析器 (solver/target/release/*_analyzer.exe). rate 实测 (pair 2026-06-03 暖表稳态, 余 2026-05-30).
 const NATIVE: NativeSolver[] = [
-  { key: 'std', stages: 5, fbRows: 1_289_663, rate: 115, tier: 'huge', zhWhy: '联合大表剪枝最强, 全 5 阶段', enWhy: 'strongest joint-table pruning, full 5 stages' },
+  { key: 'std', stages: 5, fbRows: 1_289_663, rate: 115, tier: 'huge', zhWhy: '联合大表剪枝最强, 全 5 阶段;第二层直接复用 stage-4/XXXXCross,无独立分析器或统计副本', enWhy: 'strongest joint-table pruning, full 5 stages; Second Layer directly aliases stage 4 / XXXXCross, with no separate analyzer or stats copy' },
   { key: 'daisy', stages: 1, fbRows: 1_323_255, rate: 45_000, tier: 'small', zhWhy: 'edge4 仅 190,080 态,24 个合法花瓣排列做多源 BFS;上帝之数 7,精确距离直查零搜索', enWhy: 'only 190,080 edge4 states, multi-source BFS from all 24 petal permutations; God\'s number 7, exact lookup with zero search' },
   { key: 'first_layer', stages: 2, fbRows: 0, rate: 250, tier: 'small', zhWhy: '底面 44,906,400 态全图精确 BFS,上帝之数 10；底层 258.66 亿有标号态走 IDA* + 可采纳 max-PDB,逐态严格最优,直径目前只证明 11..20', enWhy: 'First Face uses an exact full BFS over 44,906,400 states (God\'s number 10); First Layer spans 25.866 billion labelled states and uses IDA* with an admissible max-PDB, proving every queried optimum while its diameter remains bounded only to 11..20' },
   { key: 'eo', stages: 5, fbRows: 1_240_119, rate: 0.9, tier: 'huge', zhWhy: 'xxxxcross 全枚举 ~13M 节点每条, 唯一长极', enWhy: 'xxxxcross full enumeration ~13M nodes/case — the long pole' },
@@ -66,7 +66,7 @@ interface BrowserSolver { key: string; zhEngine: string; enEngine: string; zhLat
 
 // 浏览器端 WASM (gen 页现算). 定性, 非精确遥测.
 const BROWSER: BrowserSolver[] = [
-  { key: 'std cross-step', zhEngine: '纯十字只下 pt_cross (gz 50KB); XCross+ 再补 pt_cross_C4E0 (gz 20MB); mt_* 现场生成', enEngine: 'cross-only downloads just pt_cross (50KB gz); XCross+ adds pt_cross_C4E0 (20MB gz); mt_* generated in-WASM', zhLatency: 'cross 秒出', enLatency: 'cross instant' },
+  { key: 'std cross-step', zhEngine: '纯十字只下 pt_cross (gz 50KB); XCross+ 再补 pt_cross_C4E0 (gz 20MB);第二层复用同一份 stage-4 资产,不重复下载;mt_* 现场生成', enEngine: 'cross-only downloads just pt_cross (50KB gz); XCross+ adds pt_cross_C4E0 (20MB gz); Second Layer reuses the same stage-4 asset with no duplicate download; mt_* generated in-WASM', zhLatency: 'cross 秒出;第二层按需严格最优搜索', enLatency: 'cross instant; Second Layer uses on-demand exact search' },
   { key: 'Daisy', zhEngine: 'DaisySolverWasm (零下载,mt_edge4 + 190,080 态距离表现场建)', enEngine: 'DaisySolverWasm (zero download; mt_edge4 + 190,080-state distance table built in-WASM)', zhLatency: '全 6 花瓣色即时', enLatency: 'all 6 petal colours instant' },
   { key: 'First Layer', zhEngine: 'FirstLayerSolverWasm (下载预构建 opt_first_layer: gzip 26.3MiB / 解压 54.7MiB,移动表与 4-bit PDB 一次装载)', enEngine: 'FirstLayerSolverWasm (loads prebuilt opt_first_layer: 26.3MiB gzip / 54.7MiB raw, containing move tables and 4-bit PDBs)', zhLatency: '客户端零 BFS；装载后底面直查,底层严格最优搜索', enLatency: 'zero client-side BFS; after load, First Face is a lookup and First Layer an exact search' },
   { key: 'pair', zhEngine: 'VariantSolverWasm', enEngine: 'VariantSolverWasm', zhLatency: '全 4 阶段 ~0.04s', enLatency: 'all 4 stages ~0.04s' },
@@ -122,6 +122,8 @@ const TABLES: Record<string, SolverTbls> = {
   std: {
     move: [{ n: 'mt_edge2', b: 38028 }, { n: 'mt_edge', b: 1740 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge4', b: 18247692 }, { n: 'mt_edge6', b: 3065610252 }, { n: 'mt_corn2', b: 36300 }],
     prune: [{ n: 'pt_cross', b: 139408 }, { n: 'pt_cross_C4E0', b: 54743056 }, { n: 'pt_cross_C4C5E0E1', b: 10729635856 }, { n: 'pt_cross_C4C6E0E2', b: 10729635856 }],
+    builtZh: '第二层是 std stage-4/XXXXCross 的薄别名,原生复用这组 mmap 表与分析结果;浏览器只复用 pt_cross_C4E0,不新增表、不重复下载',
+    builtEn: 'Second Layer is a thin alias of std stage 4 / XXXXCross: native reuses these mmap tables and analysis results, while the browser reuses pt_cross_C4E0 with no new table or duplicate download',
   },
   eo: {
     move: [{ n: 'mt_edge2', b: 38028 }, { n: 'mt_eo12', b: 147468 }, { n: 'mt_edge4', b: 18247692 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge', b: 1740 }, { n: 'mt_edge6', b: 3065610252 }, { n: 'mt_corn2', b: 36300 }, { n: 'mt_ep4', b: 855372 }, { n: 'mt_eo12_alt', b: 147468 }],
