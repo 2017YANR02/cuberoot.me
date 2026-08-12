@@ -26,7 +26,7 @@ import { localizeCompName } from '@/lib/comp-localize';
 import { loadFlagData, flagDataVersion, compFlagIso2 } from '@/lib/country-flags';
 import { compSourceLine } from '@/lib/comp-schedule';
 import { statsUrl } from '@/lib/stats-base';
-import { VARIANT_ORDER, stageLabel, variantLabel, BLOCK_DATA_VARIANTS, BLOCK_STAGE_VARIANT, EO_DATA_VARIANTS, EO_STAGE_VARIANT, VARIANT_STAGES, LENGTH_VARIANT, RECENT_METRIC_ORDER, uiVariantOf, uiVariantOptions, variantDataRef } from '@/lib/scramble-variants';
+import { VARIANT_ORDER, stageLabel, variantLabel, BLOCK_DATA_VARIANTS, BLOCK_STAGE_VARIANT, EO_DATA_VARIANTS, EO_STAGE_VARIANT, LBL_STAGE_VARIANT, VARIANT_STAGES, LENGTH_VARIANT, RECENT_METRIC_ORDER, uiVariantOf, uiVariantOptions, dataVariantOfStage, uiStagesOf, variantDataRef } from '@/lib/scramble-variants';
 import { VariantSelect } from '@/components/VariantSelect';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { fetchRecentScramblesEvents, type RecentScramblesEventsJson, type RecentScrMeta } from '@/lib/recent-scrambles-events';
@@ -280,7 +280,8 @@ const compScrambleHref = (lp: string, m: RecentScrMeta | ScrMeta): string => {
 // EO 是 UI 聚合方法,但 StageSolver 那边 EOLine 仍是独立引擎方法 → EO/EOLine 两个阶段回落到 'eoline'。
 function stageSolverTarget(uiVariant: string, metric: string): { method: string; stage: number } | null {
   if (uiVariant === '333') return null;
-  const method = uiVariant === 'eo' ? (EO_STAGE_VARIANT[metric] ?? 'eo') : uiVariant;
+  const method = uiVariant === 'lbl' ? (LBL_STAGE_VARIANT[metric] ?? 'daisy')
+    : uiVariant === 'eo' ? (EO_STAGE_VARIANT[metric] ?? 'eo') : uiVariant;
   const stages = VARIANT_STAGES[method as keyof typeof VARIANT_STAGES];
   if (!stages) return null;
   const target = stageLabel(metric, false);
@@ -534,28 +535,28 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
   );
   const curVariant = variantOptions.includes(variant) ? variant : (variants[0] ?? 'std');
   const isLength = curVariant === LENGTH_VARIANT;
-  // 聚合方法(block / eo)的指标散在多个数据变体里 -> 按映射表逐个指标回查其所属变体。
+  // 聚合方法(lbl / block / eo)的指标散在多个数据变体里 -> 按映射逐个指标回查。
   const stageVariantMap = curVariant === 'block' ? BLOCK_STAGE_VARIANT : curVariant === 'eo' ? EO_STAGE_VARIANT : null;
   const metrics = useMemo(() => {
+    if (curVariant === 'lbl') {
+      return uiStagesOf(curVariant).filter((m) => {
+        const ref = variantDataRef(curVariant, m);
+        return ref.recentMetric in (data?.rank?.[ref.variant] ?? {});
+      });
+    }
     if (stageVariantMap) {
       return RECENT_METRIC_ORDER.filter((m) => {
         const dv = stageVariantMap[m];
         return dv !== undefined && m in (data?.rank?.[dv] ?? {});
       });
     }
-    if (curVariant === 'second_layer') {
-      const ref = variantDataRef(curVariant, 'second_layer');
-      return ref.recentMetric in (data?.rank?.[ref.variant] ?? {}) ? ['second_layer'] : [];
-    }
     const r = data?.rank?.[curVariant];
     return r ? RECENT_METRIC_ORDER.filter((m) => m in r) : [];
   }, [data, curVariant, stageVariantMap]);
   const curMetric = metrics.includes(metric) ? metric : (metrics[0] ?? 'cross');
   const aliasRef = variantDataRef(curVariant, curMetric);
-  const dataVariant = stageVariantMap
-    ? (stageVariantMap[curMetric] ?? (curVariant === 'block' ? '123' : 'eo'))
-    : aliasRef.variant;
-  const dataMetric = curVariant === 'second_layer' ? aliasRef.recentMetric : curMetric;
+  const dataVariant = aliasRef.variant;
+  const dataMetric = aliasRef.recentMetric;
   const isWhole = curVariant === WHOLE_SOLVE;                                  // 整解: 无底色维度
   const subsetKey = isWhole ? WHOLE_SOLVE_SUBSET : sel.subsetKey;
   const byStep = data?.rank?.[dataVariant]?.[dataMetric]?.[subsetKey];
@@ -568,7 +569,7 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
   const distVar = dist?.sets?.wca?.variants?.[dataVariant];
   const distStageKey = useMemo(() => {
     if (!distVar) return null;
-    if (curVariant === 'second_layer') return aliasRef.stage;
+    if (curMetric === 'second_layer') return aliasRef.stage;
     const target = stageLabel(curMetric, false);
     return Object.keys(distVar.data).find((s) => stageLabel(s, false) === target) ?? null;
   }, [distVar, curMetric, curVariant, aliasRef.stage]);
@@ -587,14 +588,14 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
   const probHref = useMemo(() => {
     if (!prob) return null;
     const p = new URLSearchParams();
-    const linkVariant = curVariant === 'second_layer' ? curVariant : dataVariant;
-    const linkStage = curVariant === 'second_layer' ? curMetric : prob.stageKey;
+    const linkVariant = dataVariantOfStage(curVariant, curMetric);
+    const linkStage = curMetric === 'second_layer' ? curMetric : prob.stageKey;
     if (linkVariant !== 'std') p.set('variant', linkVariant);
     if (linkStage !== 'cross') p.set('stage', linkStage);
     if (!isWhole && subsetKey !== 'BGORWY') p.set('colors', subsetKey);  // 整解无底色维度
     const qs = p.toString();
     return `${lp}/scramble/stats${qs ? `?${qs}` : ''}`;
-  }, [prob, curVariant, curMetric, dataVariant, isWhole, subsetKey, lp]);
+  }, [prob, curVariant, curMetric, isWhole, subsetKey, lp]);
 
   // 稀有汇总:在选定底色档(rareSel)内、或「综合」(rareAgg=合并全档),概率 < threshold 的去重打乱
   // (最稀有在前)。仅 rare 模式计算。
