@@ -816,8 +816,8 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     if (!sample || !isPuzzle(puzzleParam)) return false;
     return supportsCaseViewAngle(cubeThumbParams(puzzleParam, set, sample.sticker));
   }, [puzzleParam, scopedCases, set]);
-  // OLL 总览的主要任务是选子组，角度只在 /oll/<subgroup> 的 case 列表里有意义。
-  const canChooseViewAngleHere = canChooseViewAngle && (set !== 'oll' || !!subgroupParam);
+  // OLL 的总览和分类页都是 case 选择器；角度只留在 /oll/<case> 详情页。
+  const canChooseViewAngleHere = canChooseViewAngle && set !== 'oll';
   const effectiveViewAngle: CaseViewAngle = canChooseViewAngleHere ? viewAngle : 'default';
   const useSvDualThumb = usesSvThumbStyle(puzzleParam, set);
   const useZbllDualThumb = canShowAllCases && zbllDiagramMode === 'dual';

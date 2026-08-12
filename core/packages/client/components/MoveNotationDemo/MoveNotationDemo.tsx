@@ -85,7 +85,7 @@ export default function MoveNotationDemo({ puzzle, moves, variant = 'list' }: Mo
             <button
               key={option.move}
               type="button"
-              className={active ? 'is-active' : undefined}
+              className={`move-notation-option${active ? ' is-active' : ''}`}
               aria-pressed={active}
               onClick={() => setSelectedMove(option.move)}
             >
