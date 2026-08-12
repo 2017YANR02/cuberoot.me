@@ -26,9 +26,14 @@ describe('formatAlgNotation', () => {
 
   it('renders compact Chinese notation without standard move tokens', () => {
     expect(formatAlgNotation("R U2' U' r R2 f' Uw x M'", 'zh-compact')).toBe(
-      "右 上2' 上' 右双 右2 前双' 上双 天 中'",
+      "右 上2' 上' 佑 右2 剪' 让 天 中'",
     );
     expect(formatAlgNotation("R U2 R2 F R F'", 'zh-compact')).toBe("右 上2 右2 前 右 前'");
+  });
+
+  it('uses the requested mnemonic characters for all compact double-layer turns', () => {
+    expect(formatAlgNotation("u d2 l' r f2' b", 'zh-compact')).toBe("让 吓2 佐' 佑 剪2' 垢");
+    expect(formatAlgNotation("Uw Dw2 Lw' Rw Fw2' Bw", 'zh-compact')).toBe("让 吓2 佐' 佑 剪2' 垢");
   });
 
   it('preserves grouping, commutator punctuation, and unknown text', () => {
