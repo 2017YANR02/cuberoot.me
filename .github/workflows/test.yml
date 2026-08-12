@@ -56,6 +56,7 @@ jobs:
             /.githooks/pre-commit
             /stats/scramble/2x2_essential.json
             /stats/scramble/puzzle_distribution.json
+            /stats/scramble/recent_scrambles.json
             # scramble_exact_dist.test.ts 拿它当「WCA 那套菜单」的真源逐项比对(420KB)。
             /stats/scramble/distribution.json
           filter: blob:none

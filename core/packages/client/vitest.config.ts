@@ -40,6 +40,7 @@ export default defineConfig({
     environment: 'node',
     testTimeout: 120_000,
     pool: 'threads',
-    maxWorkers: 14,
+    // 本机限制最多 14 线程；CI 交给 Vitest 按 runner 实际核心数决定，避免过量并发拖慢重测。
+    maxWorkers: process.env.CI ? undefined : 14,
   },
 });
