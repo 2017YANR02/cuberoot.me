@@ -15,6 +15,7 @@ import {
   DEFAULT_PREVIEW_TIMING,
   resolvePlayerSetup,
   resolvePreviewTiming,
+  resolveSimMoveDurationScale,
   resolveTwistyTempoScale,
 } from '@/components/AlgPlayer/player-setup';
 
@@ -85,6 +86,10 @@ describe('notation demo timing', () => {
 
   it('把一秒单步换算为 sim 帧数和 TwistyPlayer 速度', () => {
     expect(resolvePreviewTiming(1000)).toEqual({ frames: 60, stepMs: 1000 });
+    const halfTurnScale = resolveSimMoveDurationScale('3x3', 'R2');
+    const pyraTurnScale = resolveSimMoveDurationScale('pyraminx', 'R');
+    expect(resolvePreviewTiming(1000, halfTurnScale)).toEqual({ frames: 45, stepMs: 1000 });
+    expect(resolvePreviewTiming(1000, pyraTurnScale).frames * pyraTurnScale).toBeCloseTo(60);
     expect(resolveTwistyTempoScale(1000, 'R')).toBe(1);
     expect(resolveTwistyTempoScale(1000, 'R2')).toBe(1.5);
     expect(resolveTwistyTempoScale(1000, 'R++')).toBe(1.5);

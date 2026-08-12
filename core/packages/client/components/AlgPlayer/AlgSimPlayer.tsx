@@ -31,7 +31,7 @@ import type { SimMount } from '@/components/sim-embed/mountSimWorld';
 import type Cube from '@/app/[lang]/sim/engine/nxn/cube';
 import type { PuzzleKind } from '@/app/[lang]/sim/engine/world';
 import { pickStickering } from './stickering';
-import { resolvePlayerSetup, resolvePreviewTiming } from './player-setup';
+import { resolvePlayerSetup, resolvePreviewTiming, resolveSimMoveDurationScale } from './player-setup';
 import './alg-sim-player.css';
 
 const LOOP_PAUSE_MS = 900;
@@ -85,10 +85,6 @@ export default function AlgSimPlayer({
 }) {
   const t = useT();
   const puzzleKind = SIM_PUZZLE[puzzle] ?? 3;
-  const previewTiming = resolvePreviewTiming(moveDurationMs);
-  const hasCustomTiming = typeof moveDurationMs === 'number'
-    && Number.isFinite(moveDurationMs)
-    && moveDurationMs > 0;
 
   /**
    * 逐步切开。库里存的是**人写的**文本(换握记号、连写、分组括号都有),
@@ -100,6 +96,13 @@ export default function AlgSimPlayer({
     () => normalizeAlgForTwisty(puzzle, alg).split(/\s+/).filter(Boolean),
     [puzzle, alg],
   );
+  const previewTiming = resolvePreviewTiming(
+    moveDurationMs,
+    resolveSimMoveDurationScale(puzzle, moves[0] ?? ''),
+  );
+  const hasCustomTiming = typeof moveDurationMs === 'number'
+    && Number.isFinite(moveDurationMs)
+    && moveDurationMs > 0;
   /** 起手态由共享规则统一决定;教学演示从还原态开始。 */
   const setupAlg = useMemo(() => {
     return resolvePlayerSetup(puzzle, alg, setup, startSolved);

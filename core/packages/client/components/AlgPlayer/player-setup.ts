@@ -5,12 +5,27 @@ import { normalizeAlgForTwisty } from '@/lib/alg_normalize';
 export const DEFAULT_PREVIEW_TIMING = { frames: 8, stepMs: 260 } as const;
 const SIM_FRAMES_PER_SECOND = 60;
 
-export function resolvePreviewTiming(moveDurationMs?: number): { frames: number; stepMs: number } {
+export function resolveSimMoveDurationScale(puzzle: AlgPuzzle, move: string): number {
+  const token = move.trim();
+  if (!token || /\s/.test(token)) return 1;
+
+  let magnitude = 1;
+  if (puzzle === 'pyraminx' || (puzzle === 'skewb' && !/^[xyz]/i.test(token))) {
+    magnitude = 4 / 3;
+  } else {
+    const amount = Number(token.match(/(\d+)'?$/)?.[1]);
+    if (Number.isFinite(amount) && amount > 0) magnitude = amount;
+  }
+  return 2 - 2 / (magnitude + 1);
+}
+
+export function resolvePreviewTiming(moveDurationMs?: number, durationScale = 1): { frames: number; stepMs: number } {
   if (moveDurationMs === undefined || !Number.isFinite(moveDurationMs) || moveDurationMs <= 0) {
     return DEFAULT_PREVIEW_TIMING;
   }
+  const frames = moveDurationMs * SIM_FRAMES_PER_SECOND / 1000 / durationScale;
   return {
-    frames: Math.max(1, Math.round(moveDurationMs * SIM_FRAMES_PER_SECOND / 1000)),
+    frames: Math.max(1, Number(frames.toFixed(6))),
     stepMs: moveDurationMs,
   };
 }
