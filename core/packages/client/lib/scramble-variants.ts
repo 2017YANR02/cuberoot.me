@@ -9,7 +9,7 @@
 // 'block'(砖)是 UI 聚合方法:把数据层 4 个块变体(123/123x2/222/223)收进一个
 // 方法下拉项,块的具体形状落到阶段下拉(122/123/222/223/F2B)。数据键不变。
 export type ScrambleVariant =
-  | 'std' | 'daisy' | 'first_layer' | 'second_layer' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo'
+  | 'std' | 'lbl' | 'daisy' | 'first_layer' | 'second_layer' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo'
   | 'block' | '123' | '123x2' | '222' | '223' | 'eoline' | 'dr' | 'htr' | 'htr2' | 'fr'
   | '333';
 
@@ -19,6 +19,8 @@ export const VARIANT_LABEL: Record<ScrambleVariant, VariantLabel> = {
   // 整解:整个 3x3 最优解(stats 难度 tab 的一个方法,阶段只有 '333' 自身)。
   '333': { zh: '整体', en: 'Full' },
   std: { zh: '标准', en: 'Standard' },
+  // UI 聚合方法:Daisy / First Face / First Layer / Second Layer 都收进 LBL。
+  lbl: { zh: '层先', en: 'LBL' },
   daisy: { zh: '小花', en: 'Daisy' },
   first_layer: { zh: '底层', en: 'First Layer' },
   second_layer: { zh: '第二层', en: 'Second Layer' },
@@ -48,9 +50,21 @@ export const VARIANT_LABEL: Record<ScrambleVariant, VariantLabel> = {
 // 块族只出 'block' 一项;EOLine 并入 'eo' 一项(见下)。
 export const VARIANT_ORDER: ScrambleVariant[] = [
   '333',
-  'std', 'daisy', 'first_layer', 'second_layer', 'pseudo', 'pair', 'pseudo_pair', 'eo', 'f2leo', 'pseudo_f2leo',
+  'std', 'lbl', 'pseudo', 'pair', 'pseudo_pair', 'eo', 'f2leo', 'pseudo_f2leo',
   'block', 'dr',
 ];
+
+// LBL 是 UI 聚合方法:数据仍分别落 daisy / first_layer / second_layer；其中
+// second_layer 是 std/xxxxcross 的薄别名，不复制统计或求解表。
+export const LBL_DATA_VARIANTS = ['daisy', 'first_layer', 'second_layer'] as const;
+export const isLblVariant = (v: string): boolean =>
+  (LBL_DATA_VARIANTS as readonly string[]).includes(v);
+export const LBL_STAGE_VARIANT: Record<string, ScrambleVariant> = {
+  daisy: 'daisy', bdaisy: 'daisy',
+  first_face: 'first_layer', first_layer: 'first_layer',
+  bfirst_face: 'first_layer', bfirst_layer: 'first_layer',
+  second_layer: 'second_layer', bsecond_layer: 'second_layer',
+};
 
 // 数据层块变体集合 + 「block 方法的阶段/指标 → 底层数据变体」映射
 // (键同时覆盖 distribution/recent_scrambles 的全名键与 gen comp_steps 的 b 前缀指标键)。
@@ -132,6 +146,7 @@ const STAGE_BASE: Record<string, VariantLabel> = {
   block223: { zh: '223', en: '223' },
   f2b: { zh: 'F2B', en: 'F2B' },
   // gen comp_steps 的 b 前缀指标键别名
+  bdaisy: { zh: '小花', en: 'Daisy' },
   b122: { zh: '122', en: '122' },
   bfirst_face: { zh: '底面', en: 'First Face' },
   bfirst_layer: { zh: '底层', en: 'First Layer' },
@@ -166,6 +181,8 @@ export const VARIANT_STAGES: Record<ScrambleVariant, string[]> = {
   // 整解只有一个「阶段」= 整解本身;在 VARIANT_ORDER(首页+stats 方法下拉),但 gen 手动排除(无求解引擎)。
   '333': ['333'],
   std: ['cross', 'xcross', 'xxcross', 'xxxcross', 'xxxxcross'],
+  // 只用于站点的两级菜单；StageSolver 仍按三套独立引擎显示原方法。
+  lbl: ['daisy', 'first_face', 'first_layer', 'second_layer'],
   daisy: ['daisy'],
   first_layer: ['first_face', 'first_layer'],
   // 第二层与 std stage-4(XXXXCross/F2L) 逐态同义；只是用户可见别名。
@@ -201,19 +218,21 @@ export const RECENT_METRIC_ORDER: string[] = [
 ];
 
 // ── 方法/阶段下拉的 UI 聚合(首页 RecentScrambles 与 /timer 真题难度筛共用)────────
-// 数据层有 16 个变体(含整解;块族 4 个 + eo/eoline 2 个各自独立),下拉给 12 个方法:块族折成
-// 「砖」、eoline 并入「EO」,细分落到阶段下拉。存回设置 / 查表一律用数据变体。
+// 数据层有 16 个变体(含整解;块族 4 个 + eo/eoline 2 个各自独立),方法下拉把 LBL 阶段、
+// 块族和 EOLine 各自聚合,细分落到阶段下拉。存回设置 / 查表一律用数据变体。
 
-/** 数据变体 → 方法下拉里的 UI 项(块族折成 'block';eoline 并入 'eo')。 */
+/** 数据变体 → 方法下拉里的 UI 项(LBL / block / EO 各自聚合)。 */
 export const uiVariantOf = (dataVariant: string): string =>
-  (isBlockVariant(dataVariant) ? 'block' : dataVariant === 'eoline' ? 'eo' : dataVariant);
+  (isLblVariant(dataVariant) ? 'lbl'
+    : isBlockVariant(dataVariant) ? 'block'
+      : dataVariant === 'eoline' ? 'eo' : dataVariant);
 
 /** 方法下拉选项 = VARIANT_ORDER 里有数据的项;聚合项只要有一个成员变体有数据就算。 */
 export const uiVariantOptions = (hasData: (dataVariant: string) => boolean): string[] =>
   VARIANT_ORDER.filter((v) => (
-    v === 'block' ? BLOCK_DATA_VARIANTS.some(hasData)
+    v === 'lbl' ? (LBL_DATA_VARIANTS.some(hasData) || hasData('std'))
+      : v === 'block' ? BLOCK_DATA_VARIANTS.some(hasData)
       : v === 'eo' ? EO_DATA_VARIANTS.some(hasData)
-        : v === 'second_layer' ? hasData('std')
         : hasData(v)
   ));
 
@@ -225,7 +244,8 @@ export const uiStagesOf = (uiVariant: string): string[] =>
 
 /** UI 方法 + 阶段键 → 底层数据变体(过滤 / 查表口径)。 */
 export const dataVariantOfStage = (uiVariant: string, stage: string): string => (
-  uiVariant === 'block' ? (BLOCK_STAGE_VARIANT[stage] ?? '123')
+  uiVariant === 'lbl' ? (LBL_STAGE_VARIANT[stage] ?? 'daisy')
+    : uiVariant === 'block' ? (BLOCK_STAGE_VARIANT[stage] ?? '123')
     : uiVariant === 'eo' ? (EO_STAGE_VARIANT[stage] ?? 'eo')
       : uiVariant);
 
@@ -235,7 +255,7 @@ export const dataVariantOfStage = (uiVariant: string, stage: string): string => 
  */
 export interface VariantDataRef { variant: string; stage: string; recentMetric: string }
 export const variantDataRef = (uiVariant: string, stage: string): VariantDataRef => {
-  if (uiVariant === 'second_layer' || stage === 'second_layer') {
+  if (uiVariant === 'second_layer' || stage === 'second_layer' || stage === 'bsecond_layer') {
     return { variant: 'std', stage: 'xxxxcross', recentMetric: 'xxxxc' };
   }
   return { variant: dataVariantOfStage(uiVariant, stage), stage, recentMetric: stage };
