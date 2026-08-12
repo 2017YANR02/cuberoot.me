@@ -15,6 +15,7 @@ interface Row {
   puzzle: string;
   set_slug: string;
   algs: AlgEntry[][];
+  setup?: string;
   mirror_case_id: number | null;
 }
 
@@ -57,8 +58,8 @@ const { syncMirrorForCase, mirrorAlgSyncEnabled } = await import('../../server/s
 const views = (fr: string[], fl: string[] = [], bl: string[] = [], br: string[] = []): AlgEntry[][] =>
   [fr, fl, bl, br].map(v => v.map(alg => ({ alg })));
 
-const row = (id: number, algs: AlgEntry[][], mirror: number | null, set = 'f2l'): Row =>
-  ({ id, puzzle: '3x3', set_slug: set, algs, mirror_case_id: mirror });
+const row = (id: number, algs: AlgEntry[][], mirror: number | null, set = 'f2l', setup?: string): Row =>
+  ({ id, puzzle: '3x3', set_slug: set, algs, setup, mirror_case_id: mirror });
 
 const texts = (id: number) => db.rows.find(r => r.id === id)!.algs.map(v => v.map(e => e.alg));
 
@@ -123,6 +124,40 @@ describe('自镜像', () => {
     expect(updated).toEqual([7]);
     expect(texts(7)).toEqual([["U R U' R'"], ["U' L' U L"], ["U L U' L'"], ["U' R' U R"]]);
     expect(db.log.filter(l => l.startsWith('select'))).toEqual(['select 7']);
+  });
+
+  it('按目标 setup 补齐必要的起手 AUF，并合并原有起手 U', async () => {
+    db.rows = [
+      row(
+        5169,
+        views(["U (R2 U2 F R2 F') (U2 R' U R')"]),
+        5169,
+        'zbls',
+        "R U' R U2 F R2 F' U2 R2 U'",
+      ),
+      row(
+        5170,
+        views(["U' y U' F R' U2 (R2 U R2' U) F R F2'"]),
+        5170,
+        'zbls',
+        "R2 B' R' U' B2 U' B2 U2 B R' U2",
+      ),
+      row(
+        6081,
+        views(["F R U R' U' F'"]),
+        6081,
+        'zbls',
+        "F U R U' R' F'",
+      ),
+    ];
+
+    for (const id of [5169, 5170, 6081]) await syncMirrorForCase('3x3', 'zbls', id);
+
+    const generatedLr = (id: number) => db.rows.find(r => r.id === id)!.algs[1]
+      .find(entry => entry.gen === 'lr')?.alg;
+    expect(generatedLr(5169)).toBe("L2 U2 F' L2 F U2 L U' L");
+    expect(generatedLr(5170)).toBe("U2 y' U F' L U2 L2 U' L2 U' F' L' F2");
+    expect(generatedLr(6081)).toBe("U F' L' U' L U F");
   });
 });
 

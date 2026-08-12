@@ -6,6 +6,7 @@ import type { AlgPuzzle } from '@cuberoot/shared';
 import {
   caseThumbPlan,
   cubeThumbParams,
+  supportsCaseViewAngle,
   supportsRecognitionSimplification,
   type CaseThumbPlanInput,
 } from '@/lib/alg_thumb_plan';
@@ -125,6 +126,28 @@ describe('网页与 PDF 共用 case 缩略图渲染计划', () => {
     }
 
     expect(supportsRecognitionSimplification(cubeThumbParams('3x3', 'zbll', FACE))).toBe(true);
+  });
+
+  it('顶层平面图可切换观察角度，立体和槽位图不误转', () => {
+    const top = { puzzle: '3x3' as const, set: 'zbll', sticker: FACE, alg: "U R U R'", setup: "R U R'" };
+    const rotated = caseThumbPlan({ ...top, viewAngle: 'u' });
+    expect(rotated.renderer).toBe('visualcube');
+    if (rotated.renderer !== 'visualcube') throw new Error('expected visualcube plan');
+    expect(rotated.setup).toBe("R U R' U");
+    expect(rotated.algorithm).toBe("R U R'");
+    expect(supportsCaseViewAngle(rotated.params)).toBe(true);
+
+    const slot = caseThumbPlan({ ...top, set: 'f2l', sticker: { kind: 'f2l', fl: '' }, viewAngle: 'u' });
+    expect(slot.renderer).toBe('visualcube');
+    if (slot.renderer !== 'visualcube') throw new Error('expected visualcube plan');
+    expect(slot.setup).toBe(top.setup);
+    expect(slot.algorithm).toBe(top.alg);
+    expect(supportsCaseViewAngle(slot.params)).toBe(false);
+
+    const iso = caseThumbPlan({ ...top, set: 'lsll', sticker: RAW, viewAngle: 'u' });
+    expect(iso.renderer).toBe('visualcube');
+    if (iso.renderer !== 'visualcube') throw new Error('expected visualcube plan');
+    expect(supportsCaseViewAngle(iso.params)).toBe(false);
   });
 
   it('网页适配器和 PDF 适配器都只能消费 caseThumbPlan,不能再按 puzzle 分叉', () => {
