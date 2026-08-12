@@ -75,6 +75,7 @@ jobs:
           DB_USERNAME: recordranks_app
           DB_PASSWORD: build-only-password
         run: |
+          touch ../.env
           export NEXT_PUBLIC_BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           export NEXT_PUBLIC_VERSION="${{ steps.recordranks.outputs.sha }}"
           pnpm build
