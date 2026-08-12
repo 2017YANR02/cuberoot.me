@@ -31,6 +31,12 @@ function beforeRim(svg: string): string {
   return svg.slice(0, i);
 }
 
+function rim(svg: string): string {
+  const i = svg.indexOf(RIM_GROUP);
+  expect(i).toBeGreaterThan(0);
+  return svg.slice(i);
+}
+
 const polygons = (svg: string): string[] => svg.match(/<polygon[^>]*>/g) ?? [];
 const withFill = (svg: string, hex: string): string[] =>
   polygons(svg).filter((p) => p.includes(`fill="${hex}"`));
@@ -126,15 +132,16 @@ describe('plan view — hide grey sides', () => {
   // 顶层公式集的图统一「侧面无灰」:OLL 的灰是「这里不是黄」,COLL / CMLL 的灰是「这条棱
   // 不用看」,都是占位而非题面 —— 删了侧环只剩真要认的色块。顶面照旧一格不动(CMLL 顶面
   // 那圈灰是「M 层没解开」,是题面)。
-  describe('顶层公式集(coll / cmll)', () => {
+  describe('顶层公式集(coll / cmll / ollcp)', () => {
     const RAW: AlgSticker = { kind: 'raw', tag: '', attrs: {} };
     const params = (set: string, mask?: string) => cubeThumbParams('3x3', set, RAW, mask);
 
-    it('coll / cmll 走 pll 视角 + 自家遮罩,并删侧环灰格', () => {
+    it('coll / cmll / ollcp 走 pll 视角 + 自家遮罩,并删侧环灰格', () => {
       expect(params('coll')).toEqual({ view: 'pll', mask: 'coll', hideGreySides: true, puzzleSize: 3 });
       expect(params('cmll')).toEqual({ view: 'pll', mask: 'cmll', hideGreySides: true, puzzleSize: 3 });
       expect(params('2-look-cmll')).toEqual({ view: 'pll', mask: 'cmll', hideGreySides: true, puzzleSize: 3 });
       expect(params('oh-cmll')).toEqual({ view: 'pll', mask: 'cmll', hideGreySides: true, puzzleSize: 3 });
+      expect(params('ollcp')).toEqual({ view: 'pll', mask: 'ollcp', hideGreySides: true, puzzleSize: 3 });
     });
 
     it('ZBLL / 1LLL / OLLCP 二级选择卡(mask=coll)同样删', () => {
@@ -166,6 +173,29 @@ describe('plan view — hide grey sides', () => {
       expect(withFill(off, '#404040')).toHaveLength(9); // 顶面 4 棱 + 中心 + 侧环 4
       expect(polygons(on)).toHaveLength(18);
       expect(withFill(on, '#404040')).toHaveLength(5); // 顶面那 5 格
+    });
+
+    it('OLLCP:完整图和简化图都不绘制侧环灰格', () => {
+      const q = {
+        view: 'pll' as const,
+        mask: 'ollcp',
+        size: 88,
+        setup: "F R' F' R U2' F R' F' R2' U2' R'",
+        ngs: '1',
+      };
+      const full = renderFromSimpleQuery(q);
+      const simplified = renderFromSimpleQuery({
+        ...q,
+        psr: 'oppbar',
+        pur: 'all',
+        psy: '1',
+        pfh: 'side=1,2,3,4,5,6,7,8,9,10,11,12',
+      });
+      expect(withFill(rim(full), '#404040')).toHaveLength(0);
+      expect(withFill(rim(simplified), '#404040')).toHaveLength(0);
+      for (const color of ['#00D800', '#EE0000', '#FFA100', '#0000F2']) {
+        expect(withFill(rim(simplified), color)).toHaveLength(0);
+      }
     });
   });
 

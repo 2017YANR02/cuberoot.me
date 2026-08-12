@@ -6,8 +6,8 @@ import { allowedPostAuf, oriCornersOnly, type OrientationSel } from './alg_ll_or
 import { tr } from '@/i18n/tr';
 import { invertFtoEifAlgorithm, parseFtoEifAlgorithm } from '@/lib/fto-eif-image';
 
-const AUF = ['', 'U', 'U2', "U'"];
-const Y = ['', 'y', 'y2', "y'"];
+const AUF = ['', 'U', 'U2', "U'"] as const;
+const Y = ['', 'y', 'y2', "y'"] as const;
 const D_ADJUSTMENTS = ['D', 'D2', "D'"] as const;
 /** 金字塔的顶层是 3 阶轴,只有 U / U' 两种「不是不转」的对齐(没有 U2)。 */
 const PYRA_AUF = ['', 'U', "U'"];
@@ -160,6 +160,21 @@ export interface TrainerSetScrambleFeatures {
   randomFinalY: boolean;
 }
 
+export interface F2LFinalAdjustment {
+  auf: (typeof AUF)[number];
+  y: (typeof Y)[number];
+}
+
+/** 覆盖模式的 F2L 收尾候选:开两项 = 4×4 共 16 项，只开一项 = 4 项。 */
+export function f2lFinalAdjustmentVariants(
+  randomFinalAuf: boolean,
+  randomFinalY: boolean,
+): F2LFinalAdjustment[] {
+  const aufs = randomFinalAuf ? AUF : AUF.slice(0, 1);
+  const ys = randomFinalY ? Y : Y.slice(0, 1);
+  return aufs.flatMap(auf => ys.map(y => ({ auf, y })));
+}
+
 const NO_SET_SCRAMBLE_FEATURES: TrainerSetScrambleFeatures = {
   randomInitialD: false,
   randomFinalAuf: false,
@@ -240,6 +255,8 @@ export interface TrainerScrambleOpts {
   randomFinalAuf?: boolean;
   /** F2L 系特化:打乱末尾随机补 y / y2 / y' / 无。 */
   randomFinalY?: boolean;
+  /** 覆盖模式预先排好的 F2L AUF × y 组合；传入时不再各自独立随机。 */
+  f2lFinalAdjustment?: F2LFinalAdjustment;
   /** 顶层朝向偏好(朝向组键 → 允许的相位),见 `lib/alg_ll_orientation`。 */
   orientation?: OrientationSel;
   /** 本场的 set slug —— 判据按 set 走(CMLL 只看角块)。合练时以 case 自带的 `srcSet` 为准。 */
@@ -265,8 +282,8 @@ export function generateScramble(
       const adjustedBase = opts?.randomInitialD
         ? replaceOuterDAdjustment(base, pick(D_ADJUSTMENTS))
         : base;
-      const finalAuf = opts?.randomFinalAuf ? pick(AUF) : '';
-      const finalY = opts?.randomFinalY ? pick(Y) : '';
+      const finalAuf = opts?.f2lFinalAdjustment?.auf ?? (opts?.randomFinalAuf ? pick(AUF) : '');
+      const finalY = opts?.f2lFinalAdjustment?.y ?? (opts?.randomFinalY ? pick(Y) : '');
       const withAuf = joinWithAufMerge('', adjustedBase.split(/\s+/).filter(Boolean), finalAuf);
       return appendYMerge(withAuf, finalY);
     }

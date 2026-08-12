@@ -222,7 +222,6 @@
   gap: 0.45rem;
   margin-bottom: 0.5rem;
   padding-bottom: 0.4rem;
-  border-bottom: 1px solid var(--border-default);
 }
 
 .landing-search-section-header svg {

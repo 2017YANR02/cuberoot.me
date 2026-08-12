@@ -12,7 +12,7 @@
  * per-case ori cycle, subgroup collapse, sticker/setup/HTML alg rendering.
  */
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
-import { useQueryState, parseAsBoolean, parseAsInteger, parseAsStringEnum } from 'nuqs';
+import { useQueryState, useQueryStates, parseAsBoolean, parseAsInteger, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Plus, Pencil, ShieldCheck, GripVertical, AlertTriangle, FlipHorizontal2, HelpCircle } from 'lucide-react';
@@ -30,6 +30,7 @@ import {
   LEVEL2_PICKER_MASK,
   supportsCaseViewAngle,
   supportsRecognitionSimplification,
+  usesSvThumbStyle,
 } from '@/lib/alg_thumb_plan';
 import AlgCard from '@/components/AlgCard';
 import CommunityAlgs from '@/components/CommunityAlgs';
@@ -51,7 +52,7 @@ import { scanCases } from '@/lib/alg_validation_scan';
 import { caseAnchor, findCaseByHash, algCaseDetailHref, buildCaseSlugMap, caseSlugBase } from '@/lib/alg_case_link';
 import { replaceHash } from '@/lib/url_hash';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
-import { displayAlgCaseName, primaryCaseName, displayZbllToken } from '@/lib/alg_case_display';
+import { buildOllNameByGroup, displayAlgCaseName, primaryCaseName, displayZbllToken } from '@/lib/alg_case_display';
 import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
 import { sortByCp } from '@/lib/alg_cp_order';
 import { ALG_TAG_LABEL, ALG_TAGS } from '@/lib/alg_tags';
@@ -90,6 +91,53 @@ function isPuzzle(s: string): s is AlgPuzzle {
   return (ALG_PUZZLES as readonly string[]).includes(s);
 }
 
+function SvThumbImages({
+  puzzle,
+  set,
+  sticker,
+  alg,
+  setup,
+  largeSize,
+  smallSize,
+  simplifyRecognition = false,
+  viewAngle = 'default',
+}: {
+  puzzle: AlgPuzzle;
+  set: string;
+  sticker: AlgCase['sticker'];
+  alg: string;
+  setup?: string;
+  largeSize: number;
+  smallSize: number;
+  simplifyRecognition?: boolean;
+  viewAngle?: CaseViewAngle;
+}) {
+  return (
+    <>
+      <CaseThumb
+        puzzle={puzzle}
+        set={set}
+        sticker={sticker}
+        alg={alg}
+        setup={setup}
+        size={largeSize}
+        loading="lazy"
+        simplifyRecognition={simplifyRecognition}
+        viewAngle={viewAngle}
+      />
+      <VisualCube
+        algorithm={caseViewAlg(alg, viewAngle)}
+        setup={caseViewSetup(setup ?? '', viewAngle)}
+        view="iso"
+        mask="wv"
+        size={smallSize}
+        loading="lazy"
+        alt=""
+      />
+    </>
+  );
+}
+
 /**
  * 有观察训练器(`/recognize/<set>`)的 3x3 公式集 —— 入口就挂在这一套自己的页面上,
  * 而不是堆在 `/alg/3x3` 的「训练专区」里(一整排 chip 看不出各自属于哪套)。
@@ -97,6 +145,8 @@ function isPuzzle(s: string): s is AlgPuzzle {
  * 模块是为了不把 oll/pll 题库和打乱生成器拽进公式库页的 bundle。
  */
 const RECOGNIZE_SETS_3X3 = new Set(['oll', 'pll', 'coll', 'ell', 'zbll', '1lll']);
+const ZBLL_DIAGRAM_MODES = ['full', 'simplified', 'dual'] as const;
+type ZbllDiagramMode = (typeof ZBLL_DIAGRAM_MODES)[number];
 
 /** 打乱行。复制的是**屏幕上这一条**(sq1 之类会重排格式),不是库里的原文。 */
 function SetupLine({ puzzle, setup }: { puzzle: string; setup: string }) {
@@ -281,10 +331,14 @@ function SubgroupIndex({
   });
 
   const useF2lThumb = puzzle === '3x3' && set === 'zbls';
+  const useSvStyle = usesSvThumbStyle(puzzle, set);
   const pickerMask = LEVEL2_PICKER_MASK[set];
   // 窄屏这两个网格都是四列(alg.css 的 480 断点),110px 的图会撑破格子 —— 图跟着降档。
   // 只能从这里给:缩略图的宽高是 React 出的(inline style / img 属性),CSS 压不住。
-  const thumbSize = useIsMobile(480) ? 60 : 110;
+  const mobile = useIsMobile(480);
+  const thumbSize = mobile ? 60 : 110;
+  const svLargeThumbSize = mobile ? 42 : 110;
+  const svSmallThumbSize = mobile ? 19 : 48;
 
   // 卡片网格:单级 umbrella(直接链到 case),或组太多的两级 umbrella(链到二级选择页)。
   if (!inlineExpand) {
@@ -305,10 +359,24 @@ function SubgroupIndex({
                  是 no-op(整页都落在 Chrome 的预加载阈值内),手机首屏请求实测能砍掉三到五成。 */
               thumb={useF2lThumb
                 ? <VisualCube setup={sample.setup} algorithm={firstAlg} view="f2l" size={thumbSize} loading="lazy" />
-                : <VisualCube setup={sample.setup} algorithm={firstAlg} view="oll" size={thumbSize} loading="lazy" hideGreySides />}
+                : useSvStyle
+                  ? (
+                    <div className="alg-case-cube is-dual">
+                      <SvThumbImages
+                        puzzle={puzzle}
+                        set={set}
+                        sticker={sample.sticker}
+                        alg={firstAlg}
+                        setup={sample.setup}
+                        largeSize={svLargeThumbSize}
+                        smallSize={svSmallThumbSize}
+                      />
+                    </div>
+                  )
+                  : <VisualCube setup={sample.setup} algorithm={firstAlg} view="oll" size={thumbSize} loading="lazy" hideGreySides />}
               title={ollName ?? (useF2lThumb ? (dispTop || tr({ zh: '其他', en: 'Other' })) : `${set.toUpperCase()} ${dispTop || tr({ zh: '其他', en: 'Other' })}`)}
               count={total}
-              sub={ollName ? `${set.toUpperCase()} ${dispTop}` : undefined}
+              sub={ollName && set !== 'ollcp' ? `${set.toUpperCase()} ${dispTop}` : undefined}
             />
           );
         })}
@@ -462,9 +530,12 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     'all',
     parseAsBoolean.withDefault(false),
   );
-  const [simplified, setSimplified] = useQueryState(
-    'simplified',
-    parseAsBoolean.withDefault(collection?.simplifiedByDefault ?? false),
+  const [{ simplified, diagram: zbllDiagramParam }, setDiagramParams] = useQueryStates(
+    {
+      simplified: parseAsBoolean.withDefault(collection?.simplifiedByDefault ?? false),
+      diagram: parseAsStringEnum<ZbllDiagramMode>([...ZBLL_DIAGRAM_MODES]).withDefault('full'),
+    },
+    { history: 'replace', scroll: false },
   );
   const [viewAngle, setViewAngle] = useQueryState(
     'angle',
@@ -480,6 +551,12 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   );
   const [optimalMoves, setOptimalMoves] = useQueryState('moves', parseAsInteger);
   const canShowAllCases = !collection && puzzleParam === '3x3' && set === 'zbll' && !subgroupParam;
+  // `simplified=true` was the old ZBLL toggle URL. Keep those shared links meaningful,
+  // while all new menu choices use the single `diagram` parameter atomically.
+  const zbllDiagramMode: ZbllDiagramMode = canShowAllCases && simplified && zbllDiagramParam === 'full'
+    ? 'simplified'
+    : zbllDiagramParam;
+  const recognitionSimplified = canShowAllCases ? zbllDiagramMode === 'simplified' : simplified;
   const animatable = true;
 
   // 列表视图(`cards` 只看图 / `full` 公式内联)。语义 + localStorage key 都在
@@ -495,22 +572,11 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     return ALG_TAGS.filter(t => seen.has(t));
   }, [data]);
 
-  /**
-   * 组号 → 字母制 OLL 名(1lll:`06` → `O-`)。
-   *
-   * ⚠ 只有当这是个**单射**时才用得上 —— 光「组内唯一」不够。pll 每个 case 的 `meta.oll`
-   * 都是常量 `"PLL"`,照那样贴标题,`Adj Swap` / `Diag Swap` / `EPLL` 三个组会全变成 `PLL`。
-   * (我只在 1lll 上验了组内唯一就推广,pll 立刻被打脸。)组间撞名 ⟹ 整个 set 退回原组名。
-   */
-  const ollByGroup = useMemo(() => {
-    const m = new Map<string, string>();
-    for (const c of data?.cases ?? []) {
-      const top = (c.subgroup || '').split('/', 1)[0];
-      if (c.meta?.oll && !m.has(top)) m.set(top, c.meta.oll);
-    }
-    const injective = new Set(m.values()).size === m.size;
-    return injective ? m : new Map<string, string>();
-  }, [data]);
+  // 1LLL 读 `meta.oll`;OLLCP 的数字 subgroup 交给 OLL 页同一个 displayOllName 映射。
+  const ollByGroup = useMemo(
+    () => buildOllNameByGroup(puzzleParam, set, data?.cases ?? []),
+    [data, puzzleParam, set],
+  );
 
   /** 标签筛选真的在生效吗(选了 `oh`、且这个 set 确实有 `oh`)—— 生效时公式列表是个子集 */
   const filtering = tagFilter !== 'all' && availableTags.includes(tagFilter);
@@ -736,7 +802,8 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     && optimalMoves !== null
     && availableMetrics.length > 0
     && selectedOptimalRange !== null;
-  const showAllCases = canShowAllCases && (showAllCasesParam || optimalFilterActive || simplified);
+  const showAllCases = canShowAllCases
+    && (showAllCasesParam || optimalFilterActive || simplified || zbllDiagramMode !== 'full');
   const effectiveView = showAllCases || collection?.cardsOnly ? 'cards' : view;
   const canSimplifyRecognition = useMemo(() => {
     if (puzzleParam !== '3x3') return false;
@@ -749,7 +816,13 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     if (!sample || !isPuzzle(puzzleParam)) return false;
     return supportsCaseViewAngle(cubeThumbParams(puzzleParam, set, sample.sticker));
   }, [puzzleParam, scopedCases, set]);
-  const effectiveViewAngle: CaseViewAngle = canChooseViewAngle ? viewAngle : 'default';
+  // OLL 总览的主要任务是选子组，角度只在 /oll/<subgroup> 的 case 列表里有意义。
+  const canChooseViewAngleHere = canChooseViewAngle && (set !== 'oll' || !!subgroupParam);
+  const effectiveViewAngle: CaseViewAngle = canChooseViewAngleHere ? viewAngle : 'default';
+  const useSvDualThumb = usesSvThumbStyle(puzzleParam, set);
+  const useZbllDualThumb = canShowAllCases && zbllDiagramMode === 'dual';
+  const dualLargeThumbSize = effectiveView === 'cards' ? (narrow ? 84 : 96) : 108;
+  const dualSmallThumbSize = effectiveView === 'cards' ? (narrow ? 38 : 42) : 48;
 
   const visibleCases = useMemo(() => {
     if (!data) return [];
@@ -872,7 +945,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       // ZBLL 一页一类:每个子组 12 个 case 正好是一张练习表,翻到哪页就练哪一类
       groupPerPage: set === 'zbll',
       sq1BlackTop,
-      simplifyRecognition: simplified,
+      simplifyRecognition: recognitionSimplified,
       viewAngle: effectiveViewAngle,
     });
   };
@@ -909,29 +982,47 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
               void setShowAllCasesParam(value);
               if (!value) {
                 void setOptimalMoves(null);
-                void setSimplified(false);
+                void setDiagramParams({ simplified: null, diagram: null });
               }
             }}
             label={tr({ zh: '显示全部情况', en: 'Show all cases' })}
             className="alg-show-all-toggle"
           />
         )}
-        {data && canSimplifyRecognition && (!showSubgroupPicker || canShowAllCases) && (
+        {data && canShowAllCases && (
+          <select
+            className="alg-header-select"
+            value={zbllDiagramMode}
+            onChange={(event) => {
+              const diagram = event.target.value as ZbllDiagramMode;
+              void setDiagramParams({
+                simplified: null,
+                diagram: diagram === 'full' ? null : diagram,
+              });
+            }}
+            aria-label={tr({ zh: '图片显示', en: 'Diagram display' })}
+          >
+            <option value="full">{tr({ zh: '完整', en: 'Full' })}</option>
+            <option value="simplified">{tr({ zh: '简化', en: 'Simplified' })}</option>
+            <option value="dual">{tr({ zh: '双图', en: 'Dual' })}</option>
+          </select>
+        )}
+        {data && !canShowAllCases && canSimplifyRecognition && !showSubgroupPicker && (
           <BoolToggle
             value={simplified}
-            onChange={setSimplified}
+            onChange={value => setDiagramParams({ simplified: value })}
             label={tr({ zh: '简化图', en: 'Simplified diagrams' })}
             className="alg-show-all-toggle"
           />
         )}
-        {data && canChooseViewAngle && !showSubgroupPicker && !showSubSubgroupPicker && (
+        {data && canChooseViewAngleHere && !showSubgroupPicker && !showSubSubgroupPicker && (
           <label className="alg-view-angle">
-            <span>{tr({ zh: '观察角度', en: 'View angle' })}</span>
+            <span>{tr({ zh: '角度', en: 'Angle' })}</span>
             <select
               className="alg-header-select"
               value={effectiveViewAngle}
               onChange={event => setViewAngle(event.target.value as CaseViewAngle)}
-              aria-label={tr({ zh: '观察角度', en: 'View angle' })}
+              aria-label={tr({ zh: '角度', en: 'Angle' })}
             >
               <option value="default">{tr({ zh: '默认', en: 'Default' })}</option>
               <option value="u">U</option>
@@ -1163,6 +1254,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                   const oriCount = c.algs.length;
                   // 缩略图始终用**未筛选**的首条 —— 筛选只该影响公式列表,不该换掉 case 的图
                   const firstAlg = allAlgsForOri[0]?.alg ?? c.standard ?? '';
+                  const orientedSetup = oriAdjustSetup(c.setup, oriIdx);
                   const primaryName = primaryCaseName(puzzleParam, set, c);
                   // LS 页首已经写明 LS1–LS9；卡片只留 Hammer 1 / PBL 2 等组内名称，避免重复套名。
                   const cardName = puzzleParam === '2x2' && /^ls[1-9]$/.test(set)
@@ -1196,21 +1288,64 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                         </button>
                       )}
                       <div className="alg-case-head">
-                        <div className="alg-case-cube">
-                          <CaseThumb
-                            puzzle={puzzleParam as AlgPuzzle}
-                            set={set}
-                            sticker={c.sticker}
-                            alg={firstAlg || c.setup || ''}
-                            setup={oriAdjustSetup(c.setup, oriIdx)}
-                            /* case 网格不分页,大集一次铺满(1lll 3397 张 / zbll 472 张)。
-                               懒加载让视口外的图根本不发请求 —— 这是长网格的常规做法,
-                               也别改成 local 本地渲染:那会把几千次渲染压进主线程,比发请求更糟。 */
-                            loading="lazy"
-                            sq1BlackTop={sq1BlackTop}
-                            simplifyRecognition={simplified}
-                            viewAngle={effectiveViewAngle}
-                          />
+                        <div className={`alg-case-cube${useSvDualThumb || useZbllDualThumb ? ' is-dual' : ''}`}>
+                          {useSvDualThumb ? (
+                            <>
+                              {/* SV / VLS / WV 共用 /sim 的 VLS 可见区:
+                                  黄色块上的非黄色贴纸置灰；外围灰色侧环不提供识别信息，直接隐藏。
+                                  小图保留立体拿方，但沿用同一遮罩。 */}
+                              <SvThumbImages
+                                puzzle={puzzleParam as AlgPuzzle}
+                                set={set}
+                                sticker={c.sticker}
+                                alg={firstAlg || c.setup || ''}
+                                setup={orientedSetup}
+                                largeSize={dualLargeThumbSize}
+                                smallSize={dualSmallThumbSize}
+                                simplifyRecognition={recognitionSimplified}
+                                viewAngle={effectiveViewAngle}
+                              />
+                            </>
+                          ) : useZbllDualThumb ? (
+                            <>
+                              <CaseThumb
+                                puzzle={puzzleParam as AlgPuzzle}
+                                set={set}
+                                sticker={c.sticker}
+                                alg={firstAlg || c.setup || ''}
+                                setup={orientedSetup}
+                                size={dualLargeThumbSize}
+                                loading="lazy"
+                                simplifyRecognition
+                                viewAngle={effectiveViewAngle}
+                              />
+                              <CaseThumb
+                                puzzle={puzzleParam as AlgPuzzle}
+                                set={set}
+                                sticker={c.sticker}
+                                alg={firstAlg || c.setup || ''}
+                                setup={orientedSetup}
+                                size={dualSmallThumbSize}
+                                loading="lazy"
+                                viewAngle={effectiveViewAngle}
+                              />
+                            </>
+                          ) : (
+                            <CaseThumb
+                              puzzle={puzzleParam as AlgPuzzle}
+                              set={set}
+                              sticker={c.sticker}
+                              alg={firstAlg || c.setup || ''}
+                              setup={orientedSetup}
+                              /* case 网格不分页,大集一次铺满(1lll 3397 张 / zbll 472 张)。
+                                 懒加载让视口外的图根本不发请求 —— 这是长网格的常规做法,
+                                 也别改成 local 本地渲染:那会把几千次渲染压进主线程,比发请求更糟。 */
+                              loading="lazy"
+                              sq1BlackTop={sq1BlackTop}
+                              simplifyRecognition={recognitionSimplified}
+                              viewAngle={effectiveViewAngle}
+                            />
+                          )}
                         </div>
                         <div className="alg-case-info">
                           <div className="alg-case-name">

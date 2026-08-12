@@ -307,7 +307,7 @@
   );
 }
 
-/* Solve-level 观察/拿起/识别/执行/放下 summary under the stage bar. */
+/* Solve-level 观察/拿起/放下 summary under the stage bar. */
 .reconstruct-stage-meta {
   font-family: var(--font-mono);
   font-size: 10px;

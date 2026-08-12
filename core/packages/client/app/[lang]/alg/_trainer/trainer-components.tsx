@@ -2,7 +2,7 @@
 
 // Ported from packages/client-vite/src/pages/trainer/components.tsx
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Trash2, ChevronDown, ChevronRight, Check, Star, TriangleAlert } from 'lucide-react';
+import { Trash2, ChevronDown, ChevronRight, Check, TriangleAlert } from 'lucide-react';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import Link from '@/components/AppLink';
 import { CaseThumb } from '@/components/CaseThumb';
@@ -13,8 +13,8 @@ import { TimerState } from '@/lib/trainer-store';
 import type { TrainerSolve, TrainerPenalty, TrainerHistEntry } from '@/lib/trainer-store';
 import type { ScrambleHist } from '@/lib/scramble-history';
 import {
-  useTrainerMarks, markStatus, markStarred, MARK_STATUS_LABEL,
-  type CaseMarks, type CaseMarkStatus, type TrainerMarkBrush,
+  useTrainerMarks, markStatus, MARK_STATUS_LABEL,
+  type CaseMarks, type TrainerMarkBrush,
 } from '@/lib/trainer-marks';
 import { caseKey, findCaseByKey } from '@/lib/trainer-case-key';
 import { primaryCaseName, displayZbllToken } from '@/lib/alg_case_display';
@@ -404,65 +404,44 @@ function TriCheckbox({ checked, indeterminate }: { checked: boolean; indetermina
   return <span className={`trainer-checkbox${cls}`} aria-hidden />;
 }
 
-/** run 页卡片标题行右侧的学习标记直选条:两个图标按钮(不熟 / 星标),
- *  再点同一个 = 取消该标记。数字键 1、2、4 仍是快捷键(绑定在 TrainerRunClient 的
+/** run 页卡片标题行右侧的学习标记直选按钮(不熟),
+ *  再点一次 = 取消该标记。数字键 1、2 仍是快捷键(绑定在 TrainerRunClient 的
  *  keydown 里,title 里带提示),但不再渲染可见的数字小标。data-no-timer:按压不触发计时。
  *
  *  不摆「已掌握」—— 换到下一题就自动算掌握(见 TrainerRunClient 的 markPassedAsMastered),
  *  摆出来等于要用户手点一遍默认值。键盘 2 仍然在,当作把「不熟」直接提成「已掌握」的快捷键。
  *  只出图标、跟卡片标题挤同一行:卡片本体是图 + 打乱,标记是顺手一点的事,不该占两行文字。
  *  文字进 title / aria-label,不靠视觉也读得到。 */
-const MARK_ACTIONS: { digit: string; s?: CaseMarkStatus; star?: boolean }[] = [
-  { digit: '1', s: 'learning' },
-  { digit: '4', star: true },
-];
-
 export function CaseMarkBar({ k }: { k: string }) {
   const marks = useTrainerMarks(s => s.marks);
   const applyMarks = useTrainerMarks(s => s.applyMarks);
   const st = markStatus(marks, k);
-  const starred = markStarred(marks, k);
+  const active = st === 'learning';
+  const label = MARK_STATUS_LABEL.learning();
   return (
     <span className="trainer-mark-bar" data-no-timer>
-      {MARK_ACTIONS.map((a) => {
-        const active = a.star ? starred : st === a.s;
-        const label = a.star ? tr({ zh: '星标', en: 'Star' }) : MARK_STATUS_LABEL[a.s!]();
-        return (
-          <button
-            key={a.digit}
-            type="button"
-            className={`trainer-mark-btn ${a.star ? 'is-star' : `is-${a.s}`}${active ? ' is-active' : ''}`}
-            aria-pressed={active}
-            aria-label={label}
-            title={`${label} (${a.digit})`}
-            onClick={() => (a.star
-              ? applyMarks([k], { f: !starred })
-              : applyMarks([k], { s: st === a.s ? null : a.s }))}
-          >
-            {a.star
-              ? <Star size={22} className="trainer-mark-btn-star" aria-hidden />
-              : <TriangleAlert size={22} aria-hidden />}
-          </button>
-        );
-      })}
+      <button
+        type="button"
+        className={`trainer-mark-btn is-learning${active ? ' is-active' : ''}`}
+        aria-pressed={active}
+        aria-label={label}
+        title={`${label} (1)`}
+        onClick={() => applyMarks([k], { s: active ? null : 'learning' })}
+      >
+        <TriangleAlert size={22} aria-hidden />
+      </button>
     </span>
   );
 }
 
-/** case 图上的学习标记角标:右上状态(✓ 已掌握 / ● 不熟),左上星标。 */
+/** case 图上的学习标记角标:右上状态(✓ 已掌握 / ● 不熟)。 */
 export function CaseMarkBadges({ marks, k }: { marks: CaseMarks; k: string }) {
   const st = markStatus(marks, k);
-  const starred = markStarred(marks, k);
-  if (!st && !starred) return null;
+  if (!st) return null;
   return (
-    <>
-      {st && (
-        <span className={`trainer-mark-badge is-${st}`} aria-hidden>
-          {st === 'mastered' ? <Check size={11} strokeWidth={3.5} /> : null /* learning = 纯色圆点 */}
-        </span>
-      )}
-      {starred && <Star className="trainer-mark-star" size={13} aria-hidden />}
-    </>
+    <span className={`trainer-mark-badge is-${st}`} aria-hidden>
+      {st === 'mastered' ? <Check size={11} strokeWidth={3.5} /> : null /* learning = 纯色圆点 */}
+    </span>
   );
 }
 

@@ -635,6 +635,11 @@ html[data-theme=dark] .alg-root {
 .alg-case-cube {
   flex: 0 0 auto;
 }
+.alg-case-cube.is-dual {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
 .alg-case-info {
   flex: 1;
   display: flex;

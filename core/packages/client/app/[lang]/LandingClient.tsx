@@ -13,7 +13,8 @@ import Link from '@/components/AppLink';
 import LangToggle from '@/components/LangToggle';
 import { useTranslation } from 'react-i18next';
 import { useAuthUser, nextQuery } from '@/lib/auth-store';
-import { TEXTS, SECTIONS, PRIMARY_CARDS } from '@/lib/landing-sections';
+import LandingSearch from '@/components/LandingSearch';
+import { TEXTS, SECTIONS, PRIMARY_CARDS, SEARCH_CARDS } from '@/lib/landing-sections';
 
 // Below-the-fold widgets — dynamic to defer client hydrate / chunk fetch.
 // Min-height placeholders match approximate rendered sizes to avoid layout
@@ -96,7 +97,7 @@ export default function LandingPage() {
         <img src={mounted && effectiveTheme === 'dark' ? '/icons/CubeRoot-dark.png' : '/icons/CubeRoot.png'} alt="" className="brand-logo" />
         <span className="brand-name">{t('brand')}</span>
       </div>
-      <h1 className="landing-tagline">{t('tagline')}</h1>
+      <LandingSearch cards={SEARCH_CARDS} lang={lang} />
 
       {/* 两行 hero 的共同外壳。桌面是 5 + 4 两个独立网格;手机端外壳自己变成 3 列网格、
           两个子网格 display:contents,9 张卡直接排成 3 行 3 个(见 landing.css)。 */}

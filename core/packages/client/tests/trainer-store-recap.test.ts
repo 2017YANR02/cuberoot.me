@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 // 回归:单机复习(recap)队列契约。
 //  1) 复习队列 = 选中池整集(不分片);
 //  2) 顺序模式(seq)= set 原序,与勾选先后无关;
-//  3) 整集出完必停下来弹「本轮复习结束」(不可关);
+//  3) 整集出完默认停下来弹「本轮复习结束」,也可关闭后直接换轮;
 //  4) 训练模式(train)无 recap 进度,永不暂停。
 // 白盒读 store.recapQueue —— draw() 把复习队列写在这里(其长度即侧栏显示的 recap total)。
 
@@ -49,6 +49,7 @@ describe('trainer-store recap queue', () => {
   beforeEach(() => {
     g.localStorage = makeLocalStorage();
     useTrainerStore.getState().setMultiScramble(false);
+    useTrainerStore.getState().setShowRecapRoundEnd(true);
   });
 
   it('复习队列 = 选中池整集(不分片)', () => {
@@ -108,6 +109,62 @@ describe('trainer-store recap queue', () => {
     useTrainerStore.getState().nextScramble();
     useTrainerStore.getState().nextScramble();
     expect(useTrainerStore.getState().recapRoundDone).toBe(true);
+  });
+
+  it('关闭本轮结束提示后直接进入下一轮', () => {
+    boot(['A', 'B']);
+    const st = useTrainerStore.getState();
+    st.setMode('recap');
+    st.setRecapOrder('seq');
+    st.setShowRecapRoundEnd(false);
+
+    st.nextScramble();
+    expect(curRecap()).toEqual({ pos: 2, total: 2 });
+    st.nextScramble();
+    expect(useTrainerStore.getState().recapRoundDone).toBe(false);
+    expect(curRecap()).toEqual({ pos: 1, total: 2 });
+  });
+
+  it('分轮训练即使关闭偏好也必须停下来选择下一轮', () => {
+    const cases = ['A', 'B'].map(mkCase);
+    const st = useTrainerStore.getState();
+    st.loadSession('3x3', 'rounds', cases, { roundEndPromptRequired: true });
+    st.setSelected(cases.map(caseKey));
+    st.setMode('recap');
+    st.setRecapOrder('seq');
+    st.setShowRecapRoundEnd(false);
+
+    st.nextScramble();
+    st.nextScramble();
+    expect(useTrainerStore.getState().recapRoundDone).toBe(true);
+    expect(curRecap()).toEqual({ pos: 2, total: 2 });
+  });
+
+  it('F2L 覆盖模式用最少 16 题走完全部 AUF × y 组合', () => {
+    const f2lCase: AlgCase = {
+      subgroup: 'T',
+      name: 'F2L',
+      setup: "R U R'",
+      algs: [],
+      sticker: { kind: 'f2l', fl: '' },
+    };
+    const st = useTrainerStore.getState();
+    st.setRandomFinalAuf(true);
+    st.setRandomFinalY(true);
+    st.setShowRecapRoundEnd(false);
+    st.loadSession('3x3', 'f2l', [f2lCase]);
+    st.setSelected([caseKey(f2lCase)]);
+    st.setMode('recap');
+
+    const seen: string[] = [];
+    for (let i = 0; i < 16; i++) {
+      const cur = useTrainerStore.getState();
+      const adjustment = cur.hist.list[cur.hist.idx]?.f2lFinalAdjustment;
+      expect(adjustment).toBeDefined();
+      seen.push(`${adjustment?.auf}|${adjustment?.y}`);
+      if (i < 15) cur.nextScramble();
+    }
+    expect(new Set(seen).size).toBe(16);
   });
 
   // 三条一屏:屏上摆的是 current + peek + peek2,所以「刷完没」要看 peek2 而不是 current,

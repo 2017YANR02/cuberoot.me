@@ -16,12 +16,13 @@
  */
 import { describe, it, expect } from 'vitest';
 
-import { isCubeColorLetters, leadingCubeColors } from '@/components/CubeColorChip/CubeColorChip';
+import { cubeColorGroups, isCubeColorLetters, leadingCubeColors } from '@/components/CubeColorChip/CubeColorChip';
 
 describe('leadingCubeColors', () => {
   it('两片配色的标注 → 两个字母', () => {
     expect(leadingCubeColors('GR')).toBe('GR');
     expect(leadingCubeColors('OB')).toBe('OB');
+    expect(leadingCubeColors('OB+RG')).toBe('OB');
     expect(leadingCubeColors('RB/ZBLS')).toBe('RB');
   });
 
@@ -48,5 +49,25 @@ describe('leadingCubeColors', () => {
     expect(isCubeColorLetters('GX')).toBe(false);
     expect(isCubeColorLetters('GRB')).toBe(false);
     expect(isCubeColorLetters('')).toBe(false);
+  });
+});
+
+describe('cubeColorGroups', () => {
+  it('找出 xxcross 与连续 F2L 标注里的每一组颜色', () => {
+    expect(cubeColorGroups('Y xxcross (BR+GO)')).toEqual([
+      { colors: 'Y', start: 0, end: 1 },
+      { colors: 'BR', start: 11, end: 13 },
+      { colors: 'GO', start: 14, end: 16 },
+    ]);
+    expect(cubeColorGroups('OB+RG')).toEqual([
+      { colors: 'OB', start: 0, end: 2 },
+      { colors: 'RG', start: 3, end: 5 },
+    ]);
+  });
+
+  it('不把末层 case 或注释里的单个转动字母当颜色', () => {
+    expect(cubeColorGroups('OLL-V+')).toEqual([]);
+    expect(cubeColorGroups('PLL-A+')).toEqual([]);
+    expect(cubeColorGroups('cancel into R U')).toEqual([]);
   });
 });

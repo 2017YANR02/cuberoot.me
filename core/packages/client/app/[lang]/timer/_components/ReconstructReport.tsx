@@ -416,7 +416,6 @@ export default function ReconstructReport({
       )}
       {stageSegs && memoMs === undefined && method === 'cfop' && (
         <StageMetaLine
-          segs={stageSegs}
           stepMetrics={stepMx}
           inspectionMs={solve.inspectionMs ?? null}
         />
@@ -908,15 +907,14 @@ function ReferenceList({ reference }: { reference: ReferenceResult }) {
 }
 
 /**
- * The solve-level line the step table has no column for: inspection, pickup,
- * the recognition/execution totals and put-down. Everything here is about the
- * WHOLE solve rather than one step, which is exactly why it sits outside the
- * table instead of being squeezed into a TOTAL cell.
+ * The solve-level line the step table has no column for: inspection, pickup
+ * and put-down. Everything here is about the WHOLE solve rather than one step,
+ * which is exactly why it sits outside the table instead of being squeezed
+ * into a TOTAL cell.
  */
 function StageMetaLine({
-  segs, stepMetrics, inspectionMs,
+  stepMetrics, inspectionMs,
 }: {
-  segs: NonNullable<ReturnType<typeof computeStageSegments>>;
   stepMetrics: StepMetricsResult | null;
   inspectionMs: number | null;
 }) {
@@ -932,10 +930,6 @@ function StageMetaLine({
   if (stepMetrics.putDownMs !== null && stepMetrics.putDownMs > 0) {
     parts.push(`${tr({ zh: '放下', en: 'put-down' })} ${t(stepMetrics.putDownMs)}`);
   }
-  if (stepMetrics.execTps !== null) {
-    parts.push(`${stepMetrics.execTps.toFixed(1)} ${tr({ zh: '步/秒(执行)', en: 'tps (exec)' })}`);
-  }
-  if (segs.crossSide) parts.push(segs.crossSide);
   if (parts.length === 0) return null;
   return <div className="reconstruct-stage-meta">{parts.join(' · ')}</div>;
 }

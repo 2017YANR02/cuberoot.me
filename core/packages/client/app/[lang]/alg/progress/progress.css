@@ -378,11 +378,9 @@ a.alg-prog-tile span { text-decoration: underline dotted; text-underline-offset:
 @media (hover: hover) {
   a.alg-prog-stat:hover { color: var(--accent); }
 }
-.alg-prog-stat.is-star,
 .alg-prog-stat.is-learning { color: var(--signal-warning); }
 .alg-prog-stat.is-mature { color: var(--signal-success); }
 .alg-prog-stat.is-lapse { color: var(--destructive); }
-.alg-prog-stat-star { fill: var(--signal-warning); }
 
 /* 每套的「重置」:同一行里最不起眼的一个,悬停才现危险色 */
 button.alg-prog-stat {

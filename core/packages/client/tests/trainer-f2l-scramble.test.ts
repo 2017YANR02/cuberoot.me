@@ -1,7 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AlgCase } from '@cuberoot/shared';
 
-import { generateScramble, trainerSetScrambleFeatures } from '@/lib/trainer-scramble';
+import {
+  f2lFinalAdjustmentVariants,
+  generateScramble,
+  trainerSetScrambleFeatures,
+} from '@/lib/trainer-scramble';
 
 const F2L_CASE: AlgCase = {
   name: 'F2L test',
@@ -14,6 +18,16 @@ const F2L_CASE: AlgCase = {
 afterEach(() => { vi.restoreAllMocks(); });
 
 describe('F2L trainer scramble features', () => {
+  it('enumerates every enabled AUF × y combination exactly once', () => {
+    const both = f2lFinalAdjustmentVariants(true, true);
+    expect(both).toHaveLength(16);
+    expect(new Set(both.map(v => `${v.auf}|${v.y}`)).size).toBe(16);
+
+    expect(f2lFinalAdjustmentVariants(true, false)).toHaveLength(4);
+    expect(f2lFinalAdjustmentVariants(false, true)).toHaveLength(4);
+    expect(f2lFinalAdjustmentVariants(false, false)).toEqual([{ auf: '', y: '' }]);
+  });
+
   it('are declared only by F2L and Advanced F2L sets', () => {
     expect(trainerSetScrambleFeatures('3x3', 'f2l')).toEqual({
       randomInitialD: false,

@@ -13,7 +13,7 @@ import type { CaseMarks, CaseMarkStatus } from './trainer-marks';
 import { type SrsRec, type SrsRecs, isDue, weakness } from './alg-srs';
 
 /** 清单页的筛选档。与 select 页 `?mark=` 的取值同名同义,链接可以互换。 */
-export const CASE_FILTERS = ['star', 'learning', 'mastered', 'none'] as const;
+export const CASE_FILTERS = ['learning', 'mastered', 'none'] as const;
 export type CaseFilter = (typeof CASE_FILTERS)[number];
 
 export const CASE_SORTS = ['weak', 'due', 'set'] as const;
@@ -29,7 +29,6 @@ export interface ProgressCase {
   key: string;
   /** 无 = 未学。 */
   status?: CaseMarkStatus;
-  starred: boolean;
   /** 没练过的 case 没有排期记录。 */
   rec?: SrsRec;
 }
@@ -44,16 +43,14 @@ export interface SetCaseSource {
   allKeys?: readonly string[];
 }
 
-/** 单条是否落进某一档。未学 = 没有状态(星标与否不影响,与 select 页 `?mark=none` 同义)。 */
+/** 单条是否落进某一档。未学 = 没有状态,与 select 页 `?mark=none` 同义。 */
 export function matchesFilter(c: ProgressCase, filter: CaseFilter): boolean {
-  if (filter === 'star') return c.starred;
   if (filter === 'none') return !c.status;
   return c.status === filter;
 }
 
 /**
- * 拍平成清单。墓碑(既无状态又无星标的标记条目)不出现在任何一档里 —— 包括「未学」,
- * 因为它本来就没状态,会由 allKeys 那条路径自然补回来,从墓碑再补一遍就重了。
+ * 拍平成清单。墓碑不单独收集,会由 allKeys 的补集路径自然归入「未学」。
  */
 export function collectCases(sources: readonly SetCaseSource[], filter: CaseFilter): ProgressCase[] {
   const out: ProgressCase[] = [];
@@ -63,19 +60,19 @@ export function collectCases(sources: readonly SetCaseSource[], filter: CaseFilt
     const seen = new Set<string>();
     for (const key in src.marks) {
       const m = src.marks[key];
-      if (!m.s && m.f !== 1) continue;          // 墓碑
+      if (!m.s) continue;                       // 墓碑
       seen.add(key);
       const c: ProgressCase = {
         ps, puzzle: src.puzzle, set: src.set, key,
-        status: m.s, starred: m.f === 1, rec: recs[key],
+        status: m.s, rec: recs[key],
       };
       if (matchesFilter(c, filter)) out.push(c);
     }
-    // 未学:整套减去有标记的。`seen` 里带状态的本就不是未学,只星标没状态的上面已经收过了
+    // 未学:整套减去有状态的
     if (filter === 'none' && src.allKeys) {
       for (const key of src.allKeys) {
         if (seen.has(key)) continue;
-        out.push({ ps, puzzle: src.puzzle, set: src.set, key, starred: false, rec: recs[key] });
+        out.push({ ps, puzzle: src.puzzle, set: src.set, key, rec: recs[key] });
       }
     }
   }
@@ -112,22 +109,20 @@ export function sortCases(cases: readonly ProgressCase[], sort: CaseSort): Progr
 }
 
 /**
- * 「专练不熟」的队列。分三层,先到先得,层内按薄弱度降序:
+ * 「专练不熟」的队列。分两层,先到先得,层内按薄弱度降序:
  *   ① 到期且忘过 —— 系统说你正在忘,而且以前就忘过
  *   ② 自己标的「不熟」
- *   ③ 星标
  * 已掌握且没到期的不进队列 —— 专练的意义就是不练已经会的。
  */
 export function drillQueue(cases: readonly ProgressCase[], now: number): ProgressCase[] {
   const tier = (c: ProgressCase): number => {
     if (c.rec && c.rec.l > 0 && isDue(c.rec, now)) return 0;
     if (c.status === 'learning') return 1;
-    if (c.starred) return 2;
-    return 3;
+    return 2;
   };
   return cases
     .map(c => ({ c, t: tier(c) }))
-    .filter(x => x.t < 3)
+    .filter(x => x.t < 2)
     .sort((a, b) => {
       if (a.t !== b.t) return a.t - b.t;
       const wa = a.c.rec ? weakness(a.c.rec) : -Infinity;

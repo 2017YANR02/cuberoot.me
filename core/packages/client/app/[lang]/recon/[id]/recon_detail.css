@@ -463,7 +463,10 @@
 
 .alt-solution-text {
   margin: 6px 0 0 !important;
-  /* yt-comment-content 已经左侧对齐头像,这里只需把 pre 的边距收紧 */
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
 }
 
 .alt-composer-input {
@@ -476,6 +479,14 @@
 .alt-add-bar {
   display: flex;
   margin: 8px 0 12px;
+}
+
+.alt-add-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: fit-content;
+  white-space: nowrap;
 }
 
 /* AltSubmitPage 专用 */

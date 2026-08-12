@@ -314,7 +314,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
         )}
         {canChooseViewAngle && (
           <label className="alg-view-angle">
-            <span>{tr({ zh: '观察角度', en: 'View angle' })}</span>
+            <span>{tr({ zh: '角度', en: 'Angle' })}</span>
             <select
               className="alg-header-select"
               value={effectiveViewAngle}

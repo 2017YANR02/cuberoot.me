@@ -32,6 +32,7 @@ describe('trainer-store 开关联动', () => {
     st().setRandomInitialD(true);
     st().setRandomFinalAuf(true);
     st().setRandomFinalY(true);
+    st().setShowRecapRoundEnd(true);
   });
 
   it('开三条一屏时自动取消打乱图', () => {
@@ -81,6 +82,22 @@ describe('trainer-store 开关联动', () => {
     expect(saved.randomFinalY).toBe(false);
   });
 
+  it('新偏好默认开启 F2L AUF / y 和本轮结束提示', () => {
+    g.localStorage = makeLocalStorage();
+    st().hydratePrefs();
+
+    expect(st().randomFinalAuf).toBe(true);
+    expect(st().randomFinalY).toBe(true);
+    expect(st().showRecapRoundEnd).toBe(true);
+  });
+
+  it('本轮结束提示偏好会持久化', () => {
+    st().setShowRecapRoundEnd(false);
+
+    const saved = JSON.parse(g.localStorage!.getItem('trainer:prefs') ?? '{}');
+    expect(saved.showRecapRoundEnd).toBe(false);
+  });
+
   it('旧偏好没有公式集特化字段时回落到默认开启', () => {
     g.localStorage!.setItem('trainer:prefs', JSON.stringify({ timing: true }));
     st().setRandomInitialD(false);
@@ -93,5 +110,6 @@ describe('trainer-store 开关联动', () => {
     expect(st().randomInitialD).toBe(true);
     expect(st().randomFinalAuf).toBe(true);
     expect(st().randomFinalY).toBe(true);
+    expect(st().showRecapRoundEnd).toBe(true);
   });
 });

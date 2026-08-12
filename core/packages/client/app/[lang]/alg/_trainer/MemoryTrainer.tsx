@@ -364,7 +364,7 @@ export default function MemoryTrainer({
         </div>
 
         {/* 图 + 一左一右夹着它的标记条:与训练 / 复习模式同一个 CaseMarkBar、同一套
-            .trainer-figure 网格,不另写一份星标按钮。 */}
+            .trainer-figure 网格,不另写一份标记按钮。 */}
         <div className="trainer-figure">
           <CaseMarkBar k={k} />
           {showThumb && (

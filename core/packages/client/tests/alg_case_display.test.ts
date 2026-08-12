@@ -2,7 +2,16 @@ import { describe, it, expect } from 'vitest';
 import {
   displayOllName, displayPllName, ollCommentName, pllCommentName,
   displayAlgCaseName, OLL_NAME_BY_NUMBER, isEpll, pllCommentLabel,
+  buildOllNameByGroup,
 } from '@/lib/alg_case_display';
+import type { AlgCase } from '@cuberoot/shared';
+
+const groupedCase = (subgroup: string, oll?: string): AlgCase => ({
+  name: `case ${subgroup}`,
+  subgroup,
+  algs: [],
+  ...(oll ? { meta: { oll } } : {}),
+}) as unknown as AlgCase;
 
 describe('OLL 英文名 + 编号展示', () => {
   it('OLL 1 → DH (1)', () => {
@@ -23,6 +32,24 @@ describe('OLL 英文名 + 编号展示', () => {
   });
   it('非 OLL 编号格式原样返回', () => {
     expect(displayOllName('Gd')).toBe('Gd');
+  });
+
+  it('OLLCP 的 57 个数字分组全部复用 OLL 页的完整名称', () => {
+    const groups = Array.from({ length: 57 }, (_, i) => String(i + 1));
+    const names = buildOllNameByGroup('3x3', 'ollcp', groups.map(group => groupedCase(group)));
+    expect(names.size).toBe(57);
+    for (const group of groups) {
+      expect(names.get(group)).toBe(displayOllName(`OLL ${group}`));
+    }
+  });
+
+  it('非 OLLCP 仍读取现有 meta.oll,且撞名时整体回退', () => {
+    expect(Object.fromEntries(buildOllNameByGroup('3x3', '1lll', [
+      groupedCase('06', 'O-'), groupedCase('27', 'S+'),
+    ]))).toEqual({ '06': 'O-', 27: 'S+' });
+    expect(buildOllNameByGroup('3x3', 'pll', [
+      groupedCase('Adj', 'PLL'), groupedCase('Diag', 'PLL'),
+    ])).toEqual(new Map());
   });
 });
 

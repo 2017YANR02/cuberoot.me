@@ -44,6 +44,31 @@ export function displayOllName(name: string): string {
   return en ? `${en} (${n})` : name;
 }
 
+/**
+ * umbrella set 的顶层组 → OLL 展示名。
+ *
+ * 1LLL 等数据直接带 `meta.oll`;OLLCP 的 57 组只存数字 subgroup,因此把组号交给
+ * {@link displayOllName}。两条路径最终共用上面的唯一编号映射。若结果不是单射,整组
+ * 回退原名,避免把不同分组显示成同一个标题。
+ */
+export function buildOllNameByGroup(
+  puzzle: string,
+  set: string,
+  cases: readonly AlgCase[],
+): Map<string, string> {
+  const names = new Map<string, string>();
+  for (const c of cases) {
+    const top = (c.subgroup || '').split('/', 1)[0];
+    const numberedOll = `OLL ${top}`;
+    const displayedOll = displayOllName(numberedOll);
+    const name = puzzle === '3x3' && set === 'ollcp' && displayedOll !== numberedOll
+      ? displayedOll
+      : c.meta?.oll;
+    if (name && !names.has(top)) names.set(top, name);
+  }
+  return new Set(names.values()).size === names.size ? names : new Map<string, string>();
+}
+
 /** PLL 列表展示:"Aa" → "A+ (Aa)";未改名原样。 */
 export function displayPllName(name: string): string {
   const key = name.trim();
