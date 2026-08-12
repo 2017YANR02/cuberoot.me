@@ -48,7 +48,12 @@ impl SolverWrapper for F2leoWrapper {
 
     fn get_csv_header() -> String {
         let mut s = String::from("id");
-        for prefix in ["f2leo_cross", "f2leo_xcross", "f2leo_xxcross", "f2leo_xxxcross"] {
+        for prefix in [
+            "f2leo_cross",
+            "f2leo_xcross",
+            "f2leo_xxcross",
+            "f2leo_xxxcross",
+        ] {
             for suf in SUFFIXES {
                 s.push(',');
                 s.push_str(prefix);

@@ -13,13 +13,25 @@ fn main() {
         // 单色 F2L: 该色 cross 4 + F2L 4 = 8 棱, F2L 4 角
         let mut fixed_edges = 0usize;
         let mut fixed_corners = 0usize;
-        if w { fixed_edges += 4 + 4; fixed_corners += 4; }   // 白 cross + 白 F2L 棱 + 白 F2L 角
-        if y { fixed_edges += 4 + 4; fixed_corners += 4; }
+        if w {
+            fixed_edges += 4 + 4;
+            fixed_corners += 4;
+        } // 白 cross + 白 F2L 棱 + 白 F2L 角
+        if y {
+            fixed_edges += 4 + 4;
+            fixed_corners += 4;
+        }
         // 重叠: 白 F2L 棱 (E层) 与 黄 F2L 棱 共享同 4 物理棱
-        if w && y { fixed_edges -= 4; }
+        if w && y {
+            fixed_edges -= 4;
+        }
 
         let count = count_legal_states(fixed_edges, fixed_corners) as i128;
-        if mask.count_ones() % 2 == 1 { total += count; } else { total -= count; }
+        if mask.count_ones() % 2 == 1 {
+            total += count;
+        } else {
+            total -= count;
+        }
     }
     println!("Result: {}", total as u128);
 }

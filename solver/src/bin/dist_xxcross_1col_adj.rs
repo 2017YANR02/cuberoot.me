@@ -15,13 +15,24 @@ use cube_solver::cube_common::{array_to_index, state_space};
 use cube_solver::dist::packed4::bfs_xxcross_packed4;
 use cube_solver::move_tables;
 
-const SZ_EDGES: usize = state_space::EDGE6;     // 42_577_920
+const SZ_EDGES: usize = state_space::EDGE6; // 42_577_920
 const SZ_CORNERS: usize = state_space::CORNER2; // 504
 const TOTAL_STATES: u64 = SZ_EDGES as u64 * SZ_CORNERS as u64;
 
 const GOLDEN: [u64; 13] = [
-    1, 15, 182, 2286, 28611, 349811, 4169855, 47547352, 491359384,
-    3873872622, 12836210229, 4203640870, 2090462,
+    1,
+    15,
+    182,
+    2286,
+    28611,
+    349811,
+    4169855,
+    47547352,
+    491359384,
+    3873872622,
+    12836210229,
+    4203640870,
+    2090462,
 ];
 
 fn main() {
@@ -33,11 +44,21 @@ fn main() {
 
     eprintln!("[1/3] loading mt_edge6 ({} entries, ~3 GB)...", SZ_EDGES);
     let mgr = move_tables::instance();
-    let mt_edges: Vec<i32> = mgr.ensure_edge6().as_u32().iter().map(|&x| x as i32).collect();
+    let mt_edges: Vec<i32> = mgr
+        .ensure_edge6()
+        .as_u32()
+        .iter()
+        .map(|&x| x as i32)
+        .collect();
     eprintln!("      done @ {:.1}s", t0.elapsed().as_secs_f64());
 
     eprintln!("[2/3] loading mt_corn2 ({} entries)...", SZ_CORNERS);
-    let mt_corns: Vec<i32> = mgr.ensure_corn2().as_u32().iter().map(|&x| x as i32).collect();
+    let mt_corns: Vec<i32> = mgr
+        .ensure_corn2()
+        .as_u32()
+        .iter()
+        .map(|&x| x as i32)
+        .collect();
     eprintln!("      done @ {:.1}s", t0.elapsed().as_secs_f64());
 
     // target_edges = {0, 2, 16, 18, 20, 22} = E0,E1(BL,BR) + E8..E11(cross)
@@ -48,9 +69,8 @@ fn main() {
     let start_c = array_to_index(&target_corners, 2, 3, 8) as usize;
 
     eprintln!("[3/3] BFS (~10 GB visited)...");
-    let (_table, dist) = bfs_xxcross_packed4(
-        SZ_EDGES, SZ_CORNERS, start_e, start_c, &mt_edges, &mt_corns,
-    );
+    let (_table, dist) =
+        bfs_xxcross_packed4(SZ_EDGES, SZ_CORNERS, start_e, start_c, &mt_edges, &mt_corns);
 
     println!();
     println!(" Depth |      Count     |   Percent   | Cumul %");
@@ -64,7 +84,12 @@ fn main() {
     }
     println!("---------------------------------------------");
     println!(" Total : {:>14} / {}", total, TOTAL_STATES);
-    let avg: f64 = dist.iter().enumerate().map(|(d, &c)| d as f64 * c as f64).sum::<f64>() / total as f64;
+    let avg: f64 = dist
+        .iter()
+        .enumerate()
+        .map(|(d, &c)| d as f64 * c as f64)
+        .sum::<f64>()
+        / total as f64;
     println!(" Avg   : {:.2}", avg);
     eprintln!("[Done] {:.1}s", t0.elapsed().as_secs_f64());
 

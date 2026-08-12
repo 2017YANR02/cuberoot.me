@@ -215,7 +215,11 @@ fn rot_sigma(size: usize, mt: &[i32], solved: usize, rmap: &[u8; 18]) -> Vec<u32
             }
         }
     }
-    assert!(sigma.iter().all(|&v| v != u32::MAX), "σ 没盖满整个因子(size={})", size);
+    assert!(
+        sigma.iter().all(|&v| v != u32::MAX),
+        "σ 没盖满整个因子(size={})",
+        size
+    );
     // y 是 4 阶的,σ 也必须是 —— 与上面的传播互相独立,错了逮得住。
     for x in 0..size {
         let mut v = x as u32;
@@ -272,23 +276,46 @@ impl Comp {
         let mgr = move_tables::instance();
         match self {
             Comp::Corners(v) => {
-                let basic: Vec<i32> = mgr.ensure_corn().as_u32().iter().map(|&x| x as i32).collect();
+                let basic: Vec<i32> = mgr
+                    .ensure_corn()
+                    .as_u32()
+                    .iter()
+                    .map(|&x| x as i32)
+                    .collect();
                 create_multi_move_table(v.len() as i32, 3, 8, self.size() as i32, &basic)
             }
             // 6 条棱那张 3 GB 表走 manager(磁盘缓存,别每次重算 ~70s);其余现算,毫秒级。
-            Comp::Edges(v) if v.len() == 6 => {
-                mgr.ensure_edge6().as_u32().iter().map(|&x| x as i32).collect()
-            }
+            Comp::Edges(v) if v.len() == 6 => mgr
+                .ensure_edge6()
+                .as_u32()
+                .iter()
+                .map(|&x| x as i32)
+                .collect(),
             Comp::Edges(v) => {
-                let basic: Vec<i32> = mgr.ensure_edge().as_u32().iter().map(|&x| x as i32).collect();
+                let basic: Vec<i32> = mgr
+                    .ensure_edge()
+                    .as_u32()
+                    .iter()
+                    .map(|&x| x as i32)
+                    .collect();
                 create_multi_move_table(v.len() as i32, 2, 12, self.size() as i32, &basic)
             }
             Comp::EdgePos(v) => {
-                let basic: Vec<i32> = mgr.ensure_ep1().as_u32().iter().map(|&x| x as i32).collect();
+                let basic: Vec<i32> = mgr
+                    .ensure_ep1()
+                    .as_u32()
+                    .iter()
+                    .map(|&x| x as i32)
+                    .collect();
                 create_multi_move_table(v.len() as i32, 1, 12, self.size() as i32, &basic)
             }
             // eo12 的值预乘了 18(给 SlotView 那套用),这里要的是原始索引 —— 走 alt 那张。
-            Comp::EoWord => mgr.ensure_eo12_alt().as_u32().iter().map(|&x| x as i32).collect(),
+            Comp::EoWord => mgr
+                .ensure_eo12_alt()
+                .as_u32()
+                .iter()
+                .map(|&x| x as i32)
+                .collect(),
             // 集合口径没有现成的 multi 表:逐态解出「哪几个位、各自翻转」,拿单棱表
             // mt_edge(下标 18*(2*pos+ori)+m,值 2*pos'+ori')逐条推一步,再按新位升序重编。
             // 一条转动把 k 个位打到 k 个互不相同的位上,所以重编总是合法的。
@@ -348,7 +375,10 @@ impl Comp {
         }
         // 集合口径的「朝向好、位置随意」= 翻转字为 0 的全部子集
         if let Comp::EdgeSet(v) = self {
-            assert!(kind == GoalKind::OrientedAnywhere, "EdgeSet 只支持 Solved / OrientedAnywhere");
+            assert!(
+                kind == GoalKind::OrientedAnywhere,
+                "EdgeSet 只支持 Solved / OrientedAnywhere"
+            );
             return (0..self.size()).step_by(1 << v.len()).collect();
         }
         // 朝向全 0、位置任意。array_to_index 把朝向放在低位(idx = idx_p * c^n + idx_o),
@@ -385,7 +415,11 @@ impl Comp {
         if let Comp::EdgeSet(v) = self {
             let k = v.len();
             let (masks, _) = comb_masks(k);
-            return edge_set_decode(index, k, &masks).0.into_iter().map(|p| (1u8, p)).collect();
+            return edge_set_decode(index, k, &masks)
+                .0
+                .into_iter()
+                .map(|p| (1u8, p))
+                .collect();
         }
         let kind: u8 = match self {
             Comp::Corners(_) => 0,
@@ -415,7 +449,12 @@ impl Factor {
     fn build(comps: Vec<(Comp, GoalKind)>) -> Factor {
         let sizes: Vec<usize> = comps.iter().map(|(c, _)| c.size()).collect();
         if comps.is_empty() {
-            return Factor { comps, sizes, size: 1, mt: vec![0i32; 18] };
+            return Factor {
+                comps,
+                sizes,
+                size: 1,
+                mt: vec![0i32; 18],
+            };
         }
         let mut size = sizes[0];
         let mut mt = comps[0].0.move_table();
@@ -434,7 +473,12 @@ impl Factor {
             size *= s2;
             mt = out;
         }
-        Factor { comps, sizes, size, mt }
+        Factor {
+            comps,
+            sizes,
+            size,
+            mt,
+        }
     }
 
     /// 整个因子的归位索引(各分量归位索引按混合基串起来)—— rot_sigma 的传播起点。
@@ -479,10 +523,18 @@ impl Factor {
     }
 }
 
-fn corners(v: &[i32]) -> Comp { Comp::Corners(v.to_vec()) }
-fn edges(v: &[i32]) -> Comp { Comp::Edges(v.to_vec()) }
-fn edge_pos(v: &[i32]) -> Comp { Comp::EdgePos(v.to_vec()) }
-fn edge_set(v: &[i32]) -> Comp { Comp::EdgeSet(v.to_vec()) }
+fn corners(v: &[i32]) -> Comp {
+    Comp::Corners(v.to_vec())
+}
+fn edges(v: &[i32]) -> Comp {
+    Comp::Edges(v.to_vec())
+}
+fn edge_pos(v: &[i32]) -> Comp {
+    Comp::EdgePos(v.to_vec())
+}
+fn edge_set(v: &[i32]) -> Comp {
+    Comp::EdgeSet(v.to_vec())
+}
 
 /// 全部 preset。A 因子放外层(并行维),B 因子放内层(AVX 块扫描维)。
 fn presets() -> Vec<Spec> {
@@ -557,7 +609,9 @@ fn presets() -> Vec<Spec> {
             scale: 1,
             fold_y: false,
             d_offset: false,
-            golden: Some(&[1, 12, 132, 1406, 14099, 122279, 797145, 2638638, 1715068, 33460]),
+            golden: Some(&[
+                1, 12, 132, 1406, 14099, 122279, 797145, 2638638, 1715068, 33460,
+            ]),
         },
         Spec {
             name: "xcross",
@@ -722,7 +776,10 @@ fn presets() -> Vec<Spec> {
         Spec {
             name: "f2leo_cross_split",
             what: "备用:E3 的可区分写法(51 亿真实 / 225 亿乘积,nibble 11.2 GB + 3 GB 表)",
-            a: vec![(edges(&[E_DB, E_DR, E_DF, E_DL, E_BL, E_BR]), HomeThenOriented(4))],
+            a: vec![(
+                edges(&[E_DB, E_DR, E_DF, E_DL, E_BL, E_BR]),
+                HomeThenOriented(4),
+            )],
             b: vec![(edges(&[E_FR, E_FL]), OrientedAnywhere)],
             states: 5_109_350_400,
             scale: 1,
@@ -739,7 +796,10 @@ fn main() {
 
     if args.is_empty() {
         println!("dist_tracked <preset|verify>\n");
-        println!("{:<26} {:>18}  {:>10}  {}", "preset", "states", "nibble", "阶段");
+        println!(
+            "{:<26} {:>18}  {:>10}  {}",
+            "preset", "states", "nibble", "阶段"
+        );
         for s in &all {
             let prod = comps_size(&s.a) as u64 * comps_size(&s.b) as u64;
             println!(
@@ -750,13 +810,19 @@ fn main() {
                 s.what,
                 // 标的是「有没有内建金标」,不是「跑没跑过」—— 新算出来的曲线本来就没有
                 // 可对的既有数,它们的把关在 verify 那三条恒等式和真题逐档偏差上。
-                if s.golden.is_some() { "" } else { "  [无内建金标]" },
+                if s.golden.is_some() {
+                    ""
+                } else {
+                    "  [无内建金标]"
+                },
             );
         }
         return;
     }
 
-    let n = std::thread::available_parallelism().map(|v| v.get()).unwrap_or(4);
+    let n = std::thread::available_parallelism()
+        .map(|v| v.get())
+        .unwrap_or(4);
     rayon::ThreadPoolBuilder::new()
         .num_threads(n.min(MAX_THREADS))
         .build_global()
@@ -797,7 +863,11 @@ fn main() {
 
 /// preset 的因子规模(只为列表显示,不建表)。
 fn comps_size(comps: &[(Comp, GoalKind)]) -> usize {
-    comps.iter().map(|(c, _)| c.size()).product::<usize>().max(1)
+    comps
+        .iter()
+        .map(|(c, _)| c.size())
+        .product::<usize>()
+        .max(1)
 }
 
 fn run(spec: &Spec) -> Vec<u64> {
@@ -806,8 +876,7 @@ fn run(spec: &Spec) -> Vec<u64> {
     let b = Factor::build(spec.b.clone());
     let product = a.size as u64 * b.size as u64;
 
-    if product > HUGE_STATES
-        && std::env::var("CUBE_ALLOW_HUGE_TABLES").ok().as_deref() != Some("1")
+    if product > HUGE_STATES && std::env::var("CUBE_ALLOW_HUGE_TABLES").ok().as_deref() != Some("1")
     {
         eprintln!(
             "[{}] 乘积空间 {} 态(nibble {:.1} GB)—— 要跑请显式 CUBE_ALLOW_HUGE_TABLES=1",
@@ -847,7 +916,12 @@ fn run(spec: &Spec) -> Vec<u64> {
         }
         starts.sort_unstable();
         starts.dedup();
-        eprintln!("[{}] 伪口径:{} 个目标按 D 闭包成 {} 个", spec.name, base.len(), starts.len());
+        eprintln!(
+            "[{}] 伪口径:{} 个目标按 D 闭包成 {} 个",
+            spec.name,
+            base.len(),
+            starts.len()
+        );
     }
 
     // 两条 EO 轴取最短:并上 y 共轭那一份目标。σ 是整体旋转诱导的双射,合法态映到合法态,
@@ -874,7 +948,9 @@ fn run(spec: &Spec) -> Vec<u64> {
         starts.dedup();
         eprintln!(
             "[{}] 两条 EO 轴取最短:轴一 {} 个目标 + y 共轭那份,并起来 {} 个",
-            spec.name, axis1, starts.len(),
+            spec.name,
+            axis1,
+            starts.len(),
         );
     }
 
@@ -906,12 +982,19 @@ fn run(spec: &Spec) -> Vec<u64> {
             total as f64 / spec.states as f64 * 100.0,
         );
     }
-    let avg: f64 = dist.iter().enumerate().map(|(d, &c)| d as f64 * c as f64).sum::<f64>()
+    let avg: f64 = dist
+        .iter()
+        .enumerate()
+        .map(|(d, &c)| d as f64 * c as f64)
+        .sum::<f64>()
         / total as f64;
     println!(" Total : {:>18} | Avg {:.4}", group(total), avg);
     println!(
         " counts: [{}]",
-        dist.iter().map(|c| c.to_string()).collect::<Vec<_>>().join(", "),
+        dist.iter()
+            .map(|c| c.to_string())
+            .collect::<Vec<_>>()
+            .join(", "),
     );
     // 商过的 preset 再报一份站内口径(每档 × scale)—— 页面那格的分母是没商的那个。
     if spec.scale > 1 {
@@ -919,7 +1002,10 @@ fn run(spec: &Spec) -> Vec<u64> {
             " counts × {} (站内口径,总数 {}): [{}]",
             spec.scale,
             group(total * spec.scale),
-            dist.iter().map(|c| (c * spec.scale).to_string()).collect::<Vec<_>>().join(", "),
+            dist.iter()
+                .map(|c| (c * spec.scale).to_string())
+                .collect::<Vec<_>>()
+                .join(", "),
         );
     }
     eprintln!("[{}] {:.1}s", spec.name, t0.elapsed().as_secs_f64());

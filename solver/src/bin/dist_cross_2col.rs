@@ -21,8 +21,7 @@ const MAX_D: usize = 9;
 const TOTAL_THEORETICAL: u64 = 5_109_350_400;
 
 const GOLDEN: [u64; 9] = [
-    53759, 806253, 8484602, 74437062, 506855983,
-    2031420585, 2311536662, 175751822, 3672,
+    53759, 806253, 8484602, 74437062, 506855983, 2031420585, 2311536662, 175751822, 3672,
 ];
 
 /// solve_single_cross: BFS 单色 cross,按 mask (4 个棱位的 12-bit popcount=4 mask)
@@ -70,7 +69,9 @@ fn solve_single_cross(
     let mut p = vec![0i32; 4];
     for i in 0..SZ_CR {
         let d = table[i];
-        if d > max_depth { continue; }
+        if d > max_depth {
+            continue;
+        }
         index_to_array(&mut p, i as i32, 4, 2, 12);
         // p[k] = 18 * (2*pos + ori) — 抽出 pos
         let mut mask = 0u32;
@@ -90,7 +91,12 @@ fn solve_single_cross(
 fn main() {
     let t0 = Instant::now();
     let mgr = move_tables::instance();
-    let mt_multi: Vec<i32> = mgr.ensure_edge4().as_u32().iter().map(|&x| x as i32).collect();
+    let mt_multi: Vec<i32> = mgr
+        .ensure_edge4()
+        .as_u32()
+        .iter()
+        .map(|&x| x as i32)
+        .collect();
 
     // 位置索引 (cube_common 约定):0..3=F2L,4..7=U 层,8..11=D 层
     eprintln!("[1/3] White Cross BFS (D 层 8..11)...");
@@ -115,7 +121,9 @@ fn main() {
         let mw = id_to_mask[i] as u32;
         for j in 0..495 {
             let my = id_to_mask[j] as u32;
-            if (mw & my) != 0 { continue; }
+            if (mw & my) != 0 {
+                continue;
+            }
             for k in 0..=MAX_D {
                 let ge_k = ge_w[i][k] * ge_y[j][k];
                 let ge_k1 = ge_w[i][k + 1] * ge_y[j][k + 1];
@@ -130,7 +138,9 @@ fn main() {
     println!("--------------------------------------------");
     let mut total: u64 = 0;
     for (d, &c) in total_counts.iter().enumerate() {
-        if c == 0 && d > 8 { continue; }
+        if c == 0 && d > 8 {
+            continue;
+        }
         total += c;
         let pct = c as f64 / TOTAL_THEORETICAL as f64 * 100.0;
         println!("{:<10}{:<15}{:.4}%", d, c, pct);
@@ -138,13 +148,22 @@ fn main() {
     println!("--------------------------------------------");
     println!("Total States: {}", total);
     println!("Theoretical:  {}", TOTAL_THEORETICAL);
-    let avg: f64 = total_counts.iter().enumerate().map(|(d, &c)| d as f64 * c as f64).sum::<f64>() / total as f64;
+    let avg: f64 = total_counts
+        .iter()
+        .enumerate()
+        .map(|(d, &c)| d as f64 * c as f64)
+        .sum::<f64>()
+        / total as f64;
     println!("Average Dist: {:.4}", avg);
     eprintln!("[Done] {:.3}s", t0.elapsed().as_secs_f64());
 
     // bit-exact 校验
     for (i, &exp) in GOLDEN.iter().enumerate() {
-        assert_eq!(total_counts[i], exp, "d={} got {} expected {}", i, total_counts[i], exp);
+        assert_eq!(
+            total_counts[i], exp,
+            "d={} got {} expected {}",
+            i, total_counts[i], exp
+        );
     }
     assert_eq!(total, TOTAL_THEORETICAL);
     eprintln!("[OK] bit-exact vs cpp golden");

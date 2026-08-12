@@ -103,12 +103,21 @@ fn square1_analyzer_matches_lib() {
     );
 
     // --- WCA 打乱:形状 + baseline + lib 直查逐位一致 ---
-    let vals = check_csv(&work_dir.join("wca_sq1_5_sq1.csv"), WCA_INPUT, &WCA_BASELINE);
+    let vals = check_csv(
+        &work_dir.join("wca_sq1_5_sq1.csv"),
+        WCA_INPUT,
+        &WCA_BASELINE,
+    );
     let s = Sq1Solver::shared();
     for (v, src) in vals.iter().zip(WCA_INPUT.lines()) {
         let pos = src.find(',').unwrap();
         let st = state_from_scramble(&src[pos + 1..]).expect("WCA scramble must parse");
-        assert_eq!(*v, s.solve_one(&st), "lib direct query mismatch on {}", &src[..pos]);
+        assert_eq!(
+            *v,
+            s.solve_one(&st),
+            "lib direct query mismatch on {}",
+            &src[..pos]
+        );
         // twist 距离奇偶 ≡ ml(P5a 守恒律,顺手锁住)
         assert_eq!(*v % 2, st.ml as u32, "parity ≡ ml on {}", &src[..pos]);
     }
@@ -118,7 +127,12 @@ fn square1_analyzer_matches_lib() {
     for (v, src) in vals.iter().zip(EDGE_INPUT.lines()) {
         let pos = src.find(',').unwrap();
         let st = state_from_scramble(&src[pos + 1..]).expect("edge case must parse");
-        assert_eq!(*v, s.solve_one(&st), "lib direct query mismatch on {}", &src[..pos]);
+        assert_eq!(
+            *v,
+            s.solve_one(&st),
+            "lib direct query mismatch on {}",
+            &src[..pos]
+        );
     }
 
     let _ = std::fs::remove_dir_all(&work_dir);

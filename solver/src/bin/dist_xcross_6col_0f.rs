@@ -18,13 +18,21 @@ const CROSS_EDGES: [[u8; 4]; 6] = [
 ];
 // 每面 4 槽对应角块
 const SLOT_CORNERS: [[u8; 4]; 6] = [
-    [0, 1, 2, 3], [0, 3, 7, 4], [3, 2, 6, 7],
-    [1, 2, 6, 5], [0, 1, 5, 4], [4, 5, 6, 7],
+    [0, 1, 2, 3],
+    [0, 3, 7, 4],
+    [3, 2, 6, 7],
+    [1, 2, 6, 5],
+    [0, 1, 5, 4],
+    [4, 5, 6, 7],
 ];
 // 每面 4 槽对应 F2L 棱块
 const SLOT_EDGES: [[u8; 4]; 6] = [
-    [0, 1, 2, 3], [4, 6, 10, 8], [7, 5, 9, 11],
-    [4, 6, 10, 8], [7, 5, 9, 11], [0, 1, 2, 3],
+    [0, 1, 2, 3],
+    [4, 6, 10, 8],
+    [7, 5, 9, 11],
+    [4, 6, 10, 8],
+    [7, 5, 9, 11],
+    [0, 1, 2, 3],
 ];
 
 fn main() {
@@ -36,9 +44,13 @@ fn main() {
             let mut fixed_c: u8 = 0;
             for f in 0..6usize {
                 let f_mask = (mask >> (f * 4)) & 0xF;
-                if f_mask == 0 { continue; }
+                if f_mask == 0 {
+                    continue;
+                }
                 // cross 棱
-                for &e in &CROSS_EDGES[f] { fixed_e |= 1 << e; }
+                for &e in &CROSS_EDGES[f] {
+                    fixed_e |= 1 << e;
+                }
                 // 槽
                 for s in 0..4 {
                     if (f_mask >> s) & 1 == 1 {
@@ -47,11 +59,14 @@ fn main() {
                     }
                 }
             }
-            let count = count_legal_states(
-                fixed_e.count_ones() as usize,
-                fixed_c.count_ones() as usize,
-            ) as i128;
-            if mask.count_ones() % 2 == 1 { count } else { -count }
+            let count =
+                count_legal_states(fixed_e.count_ones() as usize, fixed_c.count_ones() as usize)
+                    as i128;
+            if mask.count_ones() % 2 == 1 {
+                count
+            } else {
+                -count
+            }
         })
         .sum();
     println!("Result: {}", total as u128);

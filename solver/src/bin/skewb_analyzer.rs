@@ -44,7 +44,11 @@ fn skewb_line(s: &SkewbSolver, alg: &str, id: &str) -> String {
         }
         Err(e) => {
             eprintln!("[ERROR] id={}: {}", id, e);
-            if emit_soln() { format!("{},-,", id) } else { format!("{},-", id) }
+            if emit_soln() {
+                format!("{},-,", id)
+            } else {
+                format!("{},-", id)
+            }
         }
     }
 }
@@ -58,7 +62,11 @@ impl RawSolverWrapper for SkewbWrapper {
     }
 
     fn get_csv_header() -> String {
-        if emit_soln() { "id,skewb,soln".into() } else { "id,skewb".into() }
+        if emit_soln() {
+            "id,skewb,soln".into()
+        } else {
+            "id,skewb".into()
+        }
     }
 
     fn solve_raw(alg: &str, id: &str) -> String {
@@ -81,7 +89,8 @@ mod tests {
     }
 
     fn lcg(x: u64) -> u64 {
-        x.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407)
+        x.wrapping_mul(6364136223846793005)
+            .wrapping_add(1442695040888963407)
     }
 
     /// 确定性伪随机词(全 8 记号:4 轴 × ±')。
@@ -91,7 +100,10 @@ mod tests {
         for _ in 0..len {
             x = lcg(x);
             let v = (x >> 33) as usize % 8;
-            out.push(SkewbMove { axis: (v / 2) as u8, prime: v % 2 == 1 });
+            out.push(SkewbMove {
+                axis: (v / 2) as u8,
+                prime: v % 2 == 1,
+            });
         }
         out
     }
@@ -103,7 +115,10 @@ mod tests {
     /// 行输出 = "id,值" 的值部分(合法行)。
     fn val(s: &SkewbSolver, alg: &str) -> u32 {
         let line = skewb_line(s, alg, "t");
-        line.strip_prefix("t,").unwrap().parse().expect("numeric value")
+        line.strip_prefix("t,")
+            .unwrap()
+            .parse()
+            .expect("numeric value")
     }
 
     #[test]
@@ -142,7 +157,13 @@ mod tests {
             let len = 1 + (seed as usize) % 18;
             let alg = pseudo_word(5000 + seed, len);
             let got = val(s, &word_to_string(&alg));
-            assert_eq!(got, s.solve_one(&alg), "seed={} alg={}", seed, word_to_string(&alg));
+            assert_eq!(
+                got,
+                s.solve_one(&alg),
+                "seed={} alg={}",
+                seed,
+                word_to_string(&alg)
+            );
         }
     }
 
@@ -163,7 +184,10 @@ mod tests {
                     continue;
                 }
                 let mut ns = *st;
-                ns.apply(SkewbMove { axis, prime: v % 2 == 1 });
+                ns.apply(SkewbMove {
+                    axis,
+                    prime: v % 2 == 1,
+                });
                 if dfs(&ns, depth - 1, axis as i32) {
                     return true;
                 }

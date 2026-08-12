@@ -16,9 +16,16 @@ fn eoline_analyzer_matches_lib() {
     let root = project_root();
     let bin = PathBuf::from(env!("CARGO_BIN_EXE_eoline_analyzer"));
     let scramble = root.join("testdata").join("scramble_5.txt");
-    assert!(scramble.exists(), "missing scramble: {}", scramble.display());
+    assert!(
+        scramble.exists(),
+        "missing scramble: {}",
+        scramble.display()
+    );
 
-    let work_dir = root.join("target").join("test-tables").join("e2e-eoline-work");
+    let work_dir = root
+        .join("target")
+        .join("test-tables")
+        .join("e2e-eoline-work");
     let _ = std::fs::remove_dir_all(&work_dir);
     std::fs::create_dir_all(&work_dir).unwrap();
     std::fs::copy(&scramble, work_dir.join("scramble_5.txt")).unwrap();

@@ -33,8 +33,12 @@ fn main() {
     let mt_corn = mt_corn_arc.as_u32();
     let mt_multi = mt_multi_arc.as_u32();
 
-    eprintln!("[Alloc] {} MB visited + {} MB parent + {} MB move...",
-        TOTAL >> 20, (TOTAL * 4) >> 20, TOTAL >> 20);
+    eprintln!(
+        "[Alloc] {} MB visited + {} MB parent + {} MB move...",
+        TOTAL >> 20,
+        (TOTAL * 4) >> 20,
+        TOTAL >> 20
+    );
     let mut depth: Vec<u8> = vec![u8::MAX; TOTAL];
     let mut parent: Vec<u32> = vec![u32::MAX; TOTAL];
     let mut mv: Vec<u8> = vec![u8::MAX; TOTAL];
@@ -52,10 +56,16 @@ fn main() {
         head += 1;
         let d = depth[curr];
         if d > cur_depth {
-            eprintln!("  depth {} done, queue={}, {:.2}s",
-                cur_depth, queue.len(), t_bfs.elapsed().as_secs_f64());
+            eprintln!(
+                "  depth {} done, queue={}, {:.2}s",
+                cur_depth,
+                queue.len(),
+                t_bfs.elapsed().as_secs_f64()
+            );
             cur_depth = d;
-            if cur_depth >= 10 { break; }
+            if cur_depth >= 10 {
+                break;
+            }
         }
 
         let cur_ed = curr % SZ_ED;
@@ -73,8 +83,11 @@ fn main() {
             if lm != u8::MAX {
                 let m_ax = m / 3;
                 let l_ax = lm / 3;
-                if m_ax == l_ax { continue; }
-                if (m_ax == 0 && l_ax == 1) || (m_ax == 2 && l_ax == 3) || (m_ax == 4 && l_ax == 5) {
+                if m_ax == l_ax {
+                    continue;
+                }
+                if (m_ax == 0 && l_ax == 1) || (m_ax == 2 && l_ax == 3) || (m_ax == 4 && l_ax == 5)
+                {
                     continue;
                 }
             }
@@ -90,7 +103,11 @@ fn main() {
             }
         }
     }
-    eprintln!("[BFS] complete, visited={}, {:.2}s", queue.len(), t_bfs.elapsed().as_secs_f64());
+    eprintln!(
+        "[BFS] complete, visited={}, {:.2}s",
+        queue.len(),
+        t_bfs.elapsed().as_secs_f64()
+    );
 
     // 收集每深度 bucket
     let mut buckets: Vec<Vec<u32>> = vec![Vec::new(); 11];
@@ -103,8 +120,12 @@ fn main() {
     let mut total: u64 = 0;
     for d in 0..=10 {
         total += buckets[d].len() as u64;
-        assert_eq!(buckets[d].len() as u64, GOLDEN[d],
-            "depth {} count mismatch", d);
+        assert_eq!(
+            buckets[d].len() as u64,
+            GOLDEN[d],
+            "depth {} count mismatch",
+            d
+        );
     }
     assert_eq!(total, 72_990_720);
     eprintln!("[OK] depth counts bit-exact vs cpp golden");
@@ -131,8 +152,11 @@ fn main() {
                 ed = next % SZ_ED;
             }
             let recovered = (cr * SZ_CN + cn) * SZ_ED + ed;
-            assert_eq!(recovered, idx as usize,
-                "d={} idx={} recovered={}", d, idx, recovered);
+            assert_eq!(
+                recovered, idx as usize,
+                "d={} idx={} recovered={}",
+                d, idx, recovered
+            );
         }
     }
     eprintln!("[OK] scramble self-check passed (50 samples/depth)");
@@ -153,7 +177,9 @@ fn main() {
                 cur = parent[cur] as usize;
             }
             for (i, &m) in moves.iter().rev().enumerate() {
-                if i > 0 { buf.push(' '); }
+                if i > 0 {
+                    buf.push(' ');
+                }
                 buf.push_str(MOVE_NAMES[m as usize]);
             }
             writeln!(w, "{}", buf).unwrap();

@@ -24,7 +24,11 @@ fn std_analyzer_cross_matches_golden_first5() {
     let testdata = root.join("testdata");
     let scramble = testdata.join("scramble_5.txt");
     let golden = testdata.join("golden").join("scramble_5_std_first5.csv");
-    assert!(scramble.exists(), "missing scramble: {}", scramble.display());
+    assert!(
+        scramble.exists(),
+        "missing scramble: {}",
+        scramble.display()
+    );
     assert!(golden.exists(), "missing golden: {}", golden.display());
 
     // 隔离表目录(每次测试前清理)
@@ -34,7 +38,10 @@ fn std_analyzer_cross_matches_golden_first5() {
 
     // 在隔离的临时工作目录跑 binary。binary 会把 csv 写到与 input 同目录,
     // 所以把 scramble 拷到 work_dir,然后输出在 work_dir/scramble_5_std.csv。
-    let work_dir = root.join("target").join("test-tables").join("e2e-cross-work");
+    let work_dir = root
+        .join("target")
+        .join("test-tables")
+        .join("e2e-cross-work");
     let _ = std::fs::remove_dir_all(&work_dir);
     std::fs::create_dir_all(&work_dir).unwrap();
     let work_scramble = work_dir.join("scramble_5.txt");
@@ -71,7 +78,11 @@ fn std_analyzer_cross_matches_golden_first5() {
 
     // 解析 csv
     let out_path = work_dir.join("scramble_5_std.csv");
-    assert!(out_path.exists(), "missing output csv: {}", out_path.display());
+    assert!(
+        out_path.exists(),
+        "missing output csv: {}",
+        out_path.display()
+    );
     let got = std::fs::read_to_string(&out_path).expect("read output");
     let golden_text = std::fs::read_to_string(&golden).expect("read golden");
 
