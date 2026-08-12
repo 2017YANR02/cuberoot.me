@@ -31,13 +31,9 @@ import type { SimMount } from '@/components/sim-embed/mountSimWorld';
 import type Cube from '@/app/[lang]/sim/engine/nxn/cube';
 import type { PuzzleKind } from '@/app/[lang]/sim/engine/world';
 import { pickStickering } from './stickering';
-import { resolvePlayerSetup } from './player-setup';
+import { resolvePlayerSetup, resolvePreviewTiming } from './player-setup';
 import './alg-sim-player.css';
 
-/** 一步的播放时长(帧)。引擎默认偏慢,公式预览要能一眼看完。 */
-const PLAY_FRAMES = 8;
-/** 自动播放每一步之间的间隔(ms),略长于动画本身,让人看清停在哪。 */
-const STEP_MS = 260;
 const LOOP_PAUSE_MS = 900;
 
 export const NXN_ORDER: Partial<Record<AlgPuzzle, number>> = {
@@ -73,7 +69,7 @@ async function preloadEngine() {
 }
 
 export default function AlgSimPlayer({
-  alg, puzzle, set, setup, startSolved = false, autoPlay = false, loop = false, size = 260, fillPane = false,
+  alg, puzzle, set, setup, startSolved = false, autoPlay = false, loop = false, moveDurationMs, size = 260, fillPane = false,
 }: {
   alg: string;
   puzzle: AlgPuzzle;
@@ -82,12 +78,17 @@ export default function AlgSimPlayer({
   startSolved?: boolean;
   autoPlay?: boolean;
   loop?: boolean;
+  moveDurationMs?: number;
   size?: number;
   /** 撑满父容器。给编辑器那种「右半屏放预览」的布局用。 */
   fillPane?: boolean;
 }) {
   const t = useT();
   const puzzleKind = SIM_PUZZLE[puzzle] ?? 3;
+  const previewTiming = resolvePreviewTiming(moveDurationMs);
+  const hasCustomTiming = typeof moveDurationMs === 'number'
+    && Number.isFinite(moveDurationMs)
+    && moveDurationMs > 0;
 
   /**
    * 逐步切开。库里存的是**人写的**文本(换握记号、连写、分组括号都有),
@@ -146,7 +147,7 @@ export default function AlgSimPlayer({
     }
 
     const prevFrames = timing.frames;
-    timing.frames = PLAY_FRAMES;
+    timing.frames = previewTiming.frames;
 
     return () => {
       timing.frames = prevFrames;
@@ -154,7 +155,7 @@ export default function AlgSimPlayer({
       mountRef.current = null;
       lastRef.current = null;
     };
-  }, [puzzleKind, puzzle, set]);
+  }, [puzzleKind, puzzle, set, previewTiming.frames]);
 
   /**
    * 把 (setup, step) 同步到引擎。只有「同一条公式、刚好 +1 步」才播动画,
@@ -180,12 +181,17 @@ export default function AlgSimPlayer({
     if (!playing) return;
     const atLastFrame = step >= moves.length;
     if (atLastFrame && !loop) { setPlaying(false); return; }
+    const delay = atLastFrame
+      ? LOOP_PAUSE_MS + (hasCustomTiming ? previewTiming.stepMs : 0)
+      : step === 0
+        ? Math.min(previewTiming.stepMs, 260)
+        : previewTiming.stepMs;
     const id = setTimeout(
       () => setStep(s => atLastFrame ? 0 : Math.min(s + 1, moves.length)),
-      atLastFrame ? LOOP_PAUSE_MS : STEP_MS,
+      delay,
     );
     return () => clearTimeout(id);
-  }, [playing, loop, step, moves.length]);
+  }, [playing, loop, step, moves.length, hasCustomTiming, previewTiming.stepMs]);
 
   const atEnd = step >= moves.length;
 

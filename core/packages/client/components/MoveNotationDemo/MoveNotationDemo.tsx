@@ -63,6 +63,7 @@ export default function MoveNotationDemo({ puzzle, moves, variant = 'list' }: Mo
           startSolved
           autoPlay
           loop
+          moveDurationMs={1000}
           engine={engine}
           size={260}
         />
