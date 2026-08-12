@@ -20,11 +20,14 @@ pnpm --filter @cuberoot/mobile dev
 pnpm --filter @cuberoot/mobile test
 pnpm --filter @cuberoot/mobile typecheck
 pnpm --filter @cuberoot/mobile build
+pnpm --filter @cuberoot/mobile assets:android
 pnpm --filter @cuberoot/mobile cap:sync
 pnpm --filter @cuberoot/mobile android:open
 ```
 
 `cap:sync` builds the web app and copies it into the native Android project. Run it after changing React code and before making a native build.
+
+`assets:android` regenerates every Android launcher density and the light/dark Android system splash from the website's existing `public/icons` output. Android applies the platform-safe splash mask and density scaling, so there is no second brand source or hand-maintained resolution set.
 
 ## Persistence
 

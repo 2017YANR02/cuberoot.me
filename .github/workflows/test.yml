@@ -145,6 +145,12 @@ jobs:
         working-directory: core
         run: pnpm --filter @cuberoot/shared build
 
+      - name: Verify Android brand assets
+        working-directory: core
+        run: |
+          pnpm --filter @cuberoot/mobile assets:android
+          git diff --exit-code -- packages/mobile/android/app/src/main/res
+
       - name: Typecheck mobile
         working-directory: core
         run: pnpm --filter @cuberoot/mobile typecheck
