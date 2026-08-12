@@ -143,6 +143,17 @@ cargo build --release --bin dist_tracked
 
 ## 有路线(代码还没写)
 
+### FL — First Layer God 数（代码已就绪，待用户本地运行）
+
+* 坐标：D 层四角 `136,080` × D 层四棱 `190,080` =
+  **25,866,086,400** 个全合法有标号态。
+* 引擎：`src/bin/first_layer_gods_number.rs` + `dist/packed2.rs`；每态只存
+  `未见 / 当前层 / 下一层 / 已处理` 四态，2 bit，总计 6,466,521,600 B。
+* 深度无 nibble 14 层上限；完整 BFS 的最后非空层就是严格 God 数，逐层计数就是完整分布。
+* 运行门：硬限 25,000,000,000 B、线程 ≤14、正式跑必须显式
+  `CUBE_ALLOW_HUGE_TABLES=1`。命令、输出和见证复核见 `FIRST_LAYER_GODS_NUMBER.md`。
+* 本轮只写算法和小空间测试，按用户要求不启动 258 亿态正式穷举。
+
 ### E4 — XCross + 一对(`xcross_pair` / 固定双槽)
 
 * 坐标:与 XXCross 定双槽同一个 **21,459,271,680**(6 棱 42,577,920 × 2 角 504),
