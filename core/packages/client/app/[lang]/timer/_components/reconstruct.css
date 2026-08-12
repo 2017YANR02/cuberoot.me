@@ -973,7 +973,7 @@ button.sml-moves:focus-visible { outline: 2px solid var(--ring); outline-offset:
   font-family: var(--font-mono); font-size: 12px;
   color: var(--faint-foreground); white-space: nowrap;
 }
-/* 色块贴着它解释的那几个字母,别人以为那是缩进就白摆了。 */
+/* 色块直接替代颜色字母,和剩余的阶段名称留一点间距。 */
 .sml-label-chip { margin: 0 4px 0 0; width: 17px; height: 11px; }
 
 @media (max-width: 480px) {

@@ -2,7 +2,7 @@
 
 // Ported from packages/client-vite/src/pages/trainer/components.tsx
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Trash2, ChevronDown, ChevronRight, Check, TriangleAlert } from 'lucide-react';
+import { Trash2, ChevronDown, ChevronRight, Check, Star } from 'lucide-react';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import Link from '@/components/AppLink';
 import { CaseThumb } from '@/components/CaseThumb';
@@ -428,7 +428,7 @@ export function CaseMarkBar({ k }: { k: string }) {
         title={`${label} (1)`}
         onClick={() => applyMarks([k], { s: active ? null : 'learning' })}
       >
-        <TriangleAlert size={22} aria-hidden />
+        <Star size={22} fill="currentColor" aria-hidden />
       </button>
     </span>
   );
