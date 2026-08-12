@@ -392,6 +392,8 @@
 }
 .trainer-scramble-line > .trainer-mark-bar { flex: 0 0 auto; }
 .trainer-scramble-line > :last-child { min-width: 0; }
+/* 有星标时这一行已自带垂直节奏，去掉公式原本为图片预留的上边距。 */
+.trainer-scramble-line:has(> .trainer-mark-bar) .trainer-scramble-text { margin-top: 0; }
 /* 打乱字体档位(sf-sans = 默认继承站字体) */
 .trainer-scramble-text.sf-mono { font-family: var(--font-mono); }
 .trainer-scramble-text.sf-liberation { font-family: 'LiberationMono', var(--font-mono);
