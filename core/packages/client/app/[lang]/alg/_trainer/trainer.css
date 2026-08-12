@@ -383,6 +383,15 @@
   margin: 8px 0 0;
   color: var(--foreground);
 }
+/* 关掉打乱图后，学习星标与公式共用一行；整组居中，星标紧贴公式左侧。 */
+.trainer-scramble-line {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+}
+.trainer-scramble-line > .trainer-mark-bar { flex: 0 0 auto; }
+.trainer-scramble-line > :last-child { min-width: 0; }
 /* 打乱字体档位(sf-sans = 默认继承站字体) */
 .trainer-scramble-text.sf-mono { font-family: var(--font-mono); }
 .trainer-scramble-text.sf-liberation { font-family: 'LiberationMono', var(--font-mono);
