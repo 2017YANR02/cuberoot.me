@@ -56,8 +56,8 @@ import { countryName } from '@/lib/country-name';
 import { fetchByDifficultyCountries, type ByDifficultyCountry } from '@/lib/scramble-by-difficulty';
 import { statsUrl } from '@/lib/stats-base';
 import {
-  stageLabel, isBlockVariant, uiVariantOf, uiVariantOptions, uiStagesOf, dataVariantOfStage,
-  variantDataRef,
+  stageLabel, uiVariantOf, uiVariantOptions, uiStagesOf, dataVariantOfStage,
+  normalizeVariantDataRef, variantDataRef,
   type ScrambleVariant,
 } from '@/lib/scramble-variants';
 import { VariantSelect } from '@/components/VariantSelect';
@@ -565,7 +565,11 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   }, [allSets, dataset]);
 
   const currentSet = useMemo(() => allSets?.[scrambleSet] ?? null, [allSets, scrambleSet]);
-  const sourceRef = variantDataRef(variant, stage);
+  // URL 状态可能来自上一数据集(例如 WCA 的 std/cross)；本帧立刻投影到当前数据集的
+  // 有效坐标，不能等 effect 下一拍，否则 <select> 的 value 没有对应 option，会显示空框。
+  const sourceRef = currentSet
+    ? (normalizeVariantDataRef(currentSet.variants, variant, stage) ?? variantDataRef(variant, stage))
+    : variantDataRef(variant, stage);
   const sourceVariant = sourceRef.variant;
   const sourceStage = sourceRef.stage;
 
@@ -581,34 +585,15 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
 
   const currentStages = useMemo(() => {
     if (!currentSet) return [] as string[];
-    // URL / 旧本地状态可能保存 UI 聚合键(lbl / block),而数据集只存真实变体键。
-    // 规范化 effect 落盘前也要从映射后的真实变体取阶段,否则原生 select 会有 value
-    // 却没有 option,视觉上就只剩一个空框和箭头。
-    return currentSet.variants[variant]?.stages
-      ?? currentSet.variants[sourceVariant]?.stages
-      ?? [];
-  }, [currentSet, variant, sourceVariant]);
+    return currentSet.variants[sourceVariant]?.stages ?? [];
+  }, [currentSet, sourceVariant]);
 
-  useEffect(() => {
-    if (currentStages.length > 0 && !currentStages.includes(stage)) {
-      setStage(currentStages[0]);
-    }
-  }, [currentStages, stage]);
-
-  // 切项目/数据集后当前方法可能不存在 —— 回退到该数据集的第一个真实变体。
+  // 派生值负责当前帧正确显示；effect 只把规范值写回 URL，保证刷新与分享稳定。
   useEffect(() => {
     if (!currentSet) return;
-    // 聚合键只属于 UI,URL 永远收敛回真实数据键。否则 lbl + second_layer 虽然能
-    // 找到数据,variant 自身却没有 stages,阶段下拉会成为空 select。
-    if (!currentSet.variants[variant] && currentSet.variants[sourceVariant]) {
-      setVariant(sourceVariant as VariantKey);
-      return;
-    }
-    if (!currentSet.variants[sourceVariant] && !isBlockVariant(variant)) {
-      const first = Object.keys(currentSet.variants)[0] as VariantKey | undefined;
-      if (first) setVariant(first);
-    }
-  }, [currentSet, variant, sourceVariant]);
+    if (variant !== sourceVariant) setVariant(sourceVariant as VariantKey);
+    if (stage !== sourceStage) setStage(sourceStage);
+  }, [currentSet, variant, stage, sourceVariant, sourceStage]);
 
   const subsetKey = sel.subsetKey;
   const selectedColors = sel.selectedColors;
@@ -1451,13 +1436,13 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   // 数据/示例/下载全走原 variant+stage 键。聚合规则用 scramble-variants 那三个共享函数
   // (与 /timer 的 GenDiffConfig / WcaSourceConfig 同一份),这里不另写一遍。
   const methodOptions = uiVariantOptions((dv) => !!currentSet.variants[dv]) as VariantKey[];
-  const uiVariant = uiVariantOf(variant) as VariantKey;
+  const uiVariant = uiVariantOf(sourceVariant) as VariantKey;
   /** 该 UI 方法在本数据集里真有数据的阶段(聚合方法跨数据变体展开)。 */
   const stagesOfUi = (v: string) => uiStagesOf(v).filter((s) => {
     const ref = variantDataRef(dataVariantOfStage(v, s), s);
     return currentSet.variants[ref.variant]?.stages.includes(ref.stage);
   });
-  const isAggregate = uiVariant !== variant;
+  const isAggregate = uiVariant !== sourceVariant;
   const stageOptions = isAggregate ? stagesOfUi(uiVariant) : currentStages;
 
   return (
@@ -1492,7 +1477,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
         <label>
           <VariantSelect
             className="scramble-stats-select"
-            value={stage}
+            value={sourceStage}
             options={stageOptions}
             onChange={(s) => {
               if (isAggregate) setVariant(dataVariantOfStage(uiVariant, s) as VariantKey);
