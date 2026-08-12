@@ -1,0 +1,199 @@
+name: Deploy Contests
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'ops/contests/**'
+      - 'ops/systemd/contests-next.service'
+      - '.github/workflows/deploy_contests.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-contests
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out CubeRoot deployment files
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            ops/contests
+            ops/systemd/contests-next.service
+          filter: blob:none
+
+      - name: Read pinned RecordRanks revision
+        id: recordranks
+        run: echo "sha=$(tr -d '[:space:]' < ops/contests/recordranks-ref.txt)" >> "$GITHUB_OUTPUT"
+
+      - name: Check out RecordRanks
+        uses: actions/checkout@v4
+        with:
+          repository: 2017YANR02/RecordRanks
+          ref: ${{ steps.recordranks.outputs.sha }}
+          path: recordranks
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+          cache-dependency-path: recordranks/client/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: recordranks/client
+        run: pnpm install --frozen-lockfile
+
+      - name: Build RecordRanks standalone
+        working-directory: recordranks/client
+        env:
+          NODE_ENV: production
+          NODE_OPTIONS: --max-old-space-size=4096
+          PORT: '3005'
+          TZ: UTC
+          PROD_HOSTNAME: contests.cuberoot.me
+          NEXT_PUBLIC_BASE_URL: https://contests.cuberoot.me
+          NEXT_PUBLIC_PROJECT_NAME: CubeRoot Contests
+          PROJECT_ID: cuberoot-contests
+          NEXT_PUBLIC_AUTH_PROVIDERS: credential
+          NEXT_PUBLIC_MULTITENANCY_ENABLED: 'false'
+          NEXT_PUBLIC_STORAGE_PUBLIC_BUCKET_BASE_URL: https://contests.cuberoot.me
+          BETTER_AUTH_URL: https://contests.cuberoot.me
+          BETTER_AUTH_SECRET: build-only-secret-not-used-at-runtime
+          DB_HOST: 127.0.0.1
+          DB_PORT: '5432'
+          DB_NAME: recordranks
+          DB_USERNAME: recordranks_app
+          DB_PASSWORD: build-only-password
+        run: |
+          export NEXT_PUBLIC_BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          export NEXT_PUBLIC_VERSION="${{ steps.recordranks.outputs.sha }}"
+          pnpm build
+
+      - name: Assemble deploy bundle
+        run: |
+          APP=recordranks/client
+          BUNDLE="$APP/.next/standalone"
+          test -f "$BUNDLE/server.js"
+
+          mkdir -p "$BUNDLE/.next" "$BUNDLE/server/email"
+          cp -r "$APP/.next/static" "$BUNDLE/.next/static"
+          cp -r "$APP/public" "$BUNDLE/public"
+          cp "$APP/server/logger-utils.js" "$BUNDLE/server/logger-utils.js"
+          cp -r "$APP/server/email/templates" "$BUNDLE/server/email/templates"
+          cp -r "$APP/server/db/drizzle" "$BUNDLE/migrations"
+          cp ops/contests/apply-migrations.sh "$BUNDLE/apply-migrations.sh"
+
+          cat > "$BUNDLE/start.sh" <<'EOF'
+          #!/bin/sh
+          set -eu
+          cd "$(dirname "$0")"
+          NODE_DIR="$(find /root/.nvm/versions/node -mindepth 1 -maxdepth 1 -type d -name 'v*' 2>/dev/null | sort -V | tail -1)"
+          if [ -z "$NODE_DIR" ] || [ ! -x "$NODE_DIR/bin/node" ]; then
+            echo "ERROR: no Node.js binary found" >&2
+            exit 1
+          fi
+          exec "$NODE_DIR/bin/node" server.js
+          EOF
+
+          chmod +x "$BUNDLE/start.sh" "$BUNDLE/apply-migrations.sh"
+          tar -czf /tmp/contests-next.tar.gz -C "$BUNDLE" .
+          ls -lh /tmp/contests-next.tar.gz
+
+      - name: Set up SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id
+          chmod 600 ~/.ssh/id
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Transfer bundle and service unit
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          RSH="ssh -i ~/.ssh/id -o StrictHostKeyChecking=no -o ServerAliveInterval=15 -o ServerAliveCountMax=4"
+          ok=0
+          for i in $(seq 1 40); do
+            rsync -a --partial --inplace --timeout=60 -e "$RSH" \
+              /tmp/contests-next.tar.gz \
+              "$DEPLOY_USER@$DEPLOY_HOST:/tmp/contests-next.tar.gz" \
+              && { ok=1; echo "bundle transferred on attempt $i"; break; }
+            echo "attempt $i stalled or failed; resuming in 5s"
+            sleep 5
+          done
+          [ "$ok" = 1 ] || { echo "rsync failed after 40 attempts"; exit 1; }
+          scp -i ~/.ssh/id ops/systemd/contests-next.service \
+            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/contests-next.service"
+
+      - name: Migrate, deploy, and verify
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" bash -s <<'REMOTE'
+          set -euo pipefail
+          LIVE=/www/wwwroot/contests-next
+          STAGE=/www/wwwroot/contests-next.new
+          BACKUP=/www/wwwroot/contests-next.bak-$(date +%s)
+
+          test -s /etc/contests-next.env
+          rm -rf "$STAGE"
+          mkdir -p "$STAGE"
+          tar -xzf /tmp/contests-next.tar.gz -C "$STAGE"
+          rm -f /tmp/contests-next.tar.gz
+          test -x "$STAGE/start.sh"
+          test -x "$STAGE/apply-migrations.sh"
+
+          set -a
+          . /etc/contests-next.env
+          set +a
+          "$STAGE/apply-migrations.sh" "$STAGE/migrations"
+
+          if [ -d "$LIVE" ]; then
+            find /www/wwwroot -maxdepth 1 -name 'contests-next.bak-*' -exec rm -rf {} +
+            mv "$LIVE" "$BACKUP"
+          fi
+          mv "$STAGE" "$LIVE"
+
+          UNIT_FILE=/etc/systemd/system/contests-next.service
+          if ! cmp -s /tmp/contests-next.service "$UNIT_FILE"; then
+            cp /tmp/contests-next.service "$UNIT_FILE"
+            systemctl daemon-reload
+          fi
+          rm -f /tmp/contests-next.service
+
+          systemctl enable contests-next >/dev/null
+          systemctl restart contests-next
+
+          for i in $(seq 1 30); do
+            PAGE="$(curl -fsSL http://127.0.0.1:3005/default 2>/dev/null || true)"
+            READY="$(curl -fsS http://127.0.0.1:3005/api/healthcheck/ready 2>/dev/null || true)"
+            if echo "$PAGE" | grep -q '<html' && echo "$READY" | grep -q '"status":"ready"'; then
+              echo "OK: contests-next served HTML and passed readiness checks"
+              exit 0
+            fi
+            sleep 1
+          done
+
+          echo "ERROR: contests-next failed production health checks"
+          journalctl -u contests-next --no-pager -n 60 || true
+          if [ -d "$BACKUP" ]; then
+            rm -rf "$LIVE"
+            mv "$BACKUP" "$LIVE"
+            systemctl restart contests-next
+          fi
+          exit 1
+          REMOTE
