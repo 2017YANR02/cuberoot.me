@@ -44,7 +44,7 @@
  *   - Needs the dev server up at --base (default http://127.0.0.1:3000).
  *
  * NOTE: per global rules, ad-hoc WebKit launches must kill WebRTC first; this script
- * loads ~/.claude/bin/pw-no-webrtc.cjs and calls disableWebRTC(ctx) before newPage().
+ * loads ~/.codex/bin/pw-no-webrtc.cjs and calls disableWebRTC(ctx) before newPage().
  */
 const os = require('os');
 const path = require('path');
@@ -58,7 +58,7 @@ const { webkit, devices } = pw;
 // Kill WebRTC (global rule + write-time hook). Helper is user-machine-local; no-op if absent.
 let disableWebRTC = async () => {};
 try {
-  ({ disableWebRTC } = require(path.join(os.homedir(), '.claude', 'bin', 'pw-no-webrtc.cjs')));
+  ({ disableWebRTC } = require(path.join(os.homedir(), '.codex', 'bin', 'pw-no-webrtc.cjs')));
 } catch {
   console.warn('[warn] pw-no-webrtc helper not found; WebRTC not disabled (dev-only harness).');
 }

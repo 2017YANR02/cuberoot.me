@@ -3,7 +3,7 @@ import path from 'node:path';
 import fs from 'fs-extra';
 import type { DocxFile } from './types.js';
 
-/** 递归扫描 docx，跳过规则见 CLAUDE 项目说明 */
+/** 递归扫描 docx，跳过规则见仓库 AGENTS.md */
 const EXCLUDE_GLOBS = [
   '**/Images/**',
   '**/framecount/**',

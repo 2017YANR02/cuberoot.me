@@ -50,7 +50,11 @@ fn pack_atomics_inplace(mut atomics: Vec<AtomicU8>) -> Vec<u8> {
         unsafe { std::slice::from_raw_parts_mut(atomics.as_mut_ptr() as *mut u8, total) };
     for i in 0..nb {
         let lo = buf[2 * i];
-        let hi = if 2 * i + 1 < total { buf[2 * i + 1] } else { 255 };
+        let hi = if 2 * i + 1 < total {
+            buf[2 * i + 1]
+        } else {
+            255
+        };
         let lo = if lo == 255 { 0x0F } else { lo & 0x0F };
         let hi = if hi == 255 { 0x0F } else { hi & 0x0F };
         buf[i] = lo | (hi << 4);
@@ -77,7 +81,6 @@ fn bfs_step<F: Fn(u64, usize) -> u64 + Sync>(
     let nd = d + 1;
     (0..total)
         .into_par_iter()
-
         .map(|i| {
             if tmp[i as usize].load(Ordering::Relaxed) == d {
                 for j in 0..18 {
@@ -218,7 +221,11 @@ fn run_bfs_and_pack<F: Fn(u64, usize) -> u64 + Sync>(
     // 大表(≥1G 状态)走 C++ 式分布进度;小表静默(table_generator 自带 [GEN] 行)。
     let verbose = total >= 1_000_000_000;
     let t0 = Instant::now();
-    let mut dp = if verbose { Some(DistPrinter::new(total)) } else { None };
+    let mut dp = if verbose {
+        Some(DistPrinter::new(total))
+    } else {
+        None
+    };
     let tmp: Vec<AtomicU8> = (0..total).map(|_| AtomicU8::new(255)).collect();
     for &s in seeds {
         if s < total {
@@ -240,7 +247,10 @@ fn run_bfs_and_pack<F: Fn(u64, usize) -> u64 + Sync>(
     }
     if let Some(dp) = dp.as_ref() {
         dp.done(t0.elapsed().as_secs_f64());
-        eprintln!("    packing {:.1} GB in place ...", (total / 2) as f64 / 1e9);
+        eprintln!(
+            "    packing {:.1} GB in place ...",
+            (total / 2) as f64 / 1e9
+        );
     }
     let out = pack_atomics_inplace(tmp);
     if verbose {
@@ -330,7 +340,6 @@ fn create_pt_cross_ins_c(
         let nd = d as u8 + 1;
         let cnt: u64 = (0..total)
             .into_par_iter()
-
             .map(|i| {
                 if atomics[i as usize].load(Ordering::Relaxed) == d as u8 {
                     let i_cr = (i / sz_cn) as usize * 24;
@@ -388,7 +397,6 @@ fn create_pt_pair_basic(
         let nd = d as u8 + 1;
         let cnt: u64 = (0..total)
             .into_par_iter()
-
             .map(|i| {
                 if atomics[i as usize].load(Ordering::Relaxed) == d as u8 {
                     let i_ed = (i / sz_cn) as usize * 18;
@@ -451,7 +459,6 @@ fn create_pt_cross_ce(
         let nd = d as u8 + 1;
         let cnt: u64 = (0..total)
             .into_par_iter()
-
             .map(|i| {
                 if atomics[i as usize].load(Ordering::Relaxed) == d as u8 {
                     let comb = i / sz_ed;
@@ -512,7 +519,7 @@ fn create_pt_pscross_aux2(
     sz_cr: u64,
     sz_aux: u64,
     depth: u32,
-    t_cr: &[u32], // mt_edge4 stride24
+    t_cr: &[u32],  // mt_edge4 stride24
     t_aux: &[u32], // mt_edge2 / mt_corn2  stride18
 ) -> (u64, Vec<u8>) {
     let total = sz_cr * sz_aux;
@@ -679,7 +686,6 @@ fn create_pt_pscross_corn(
         let nd = d as u8 + 1;
         let cnt: u64 = (0..total)
             .into_par_iter()
-
             .map(|i| {
                 if atomics[i as usize].load(Ordering::Relaxed) == d as u8 {
                     let i1 = (i / size2) as usize * 24;
@@ -728,8 +734,7 @@ fn create_pt_pscross_ins_c(
     let mut tmp = vec![255u8; total as usize];
     tmp[(index1 * size2 + index2) as usize] = 0;
     for k in 3..=5usize {
-        let ni = t1[(index1 * 24) as usize + k] as u64
-            + t2[(index2 * 18) as usize + k] as u64;
+        let ni = t1[(index1 * 24) as usize + k] as u64 + t2[(index2 * 18) as usize + k] as u64;
         if ni < total {
             tmp[ni as usize] = 0;
         }
@@ -759,8 +764,7 @@ fn create_pt_pscross_ins_c(
                 tmp[ni2 as usize] = 0;
             }
             // table1[table1[i1] + k]   + table2[table2[i2*18] * 18 + k]
-            let ni3 = t1[(t1[i1] as usize) + k] as u64
-                + t2[(t2[i2 * 18] as usize) * 18 + k] as u64;
+            let ni3 = t1[(t1[i1] as usize) + k] as u64 + t2[(t2[i2 * 18] as usize) * 18 + k] as u64;
             if ni3 < total {
                 tmp[ni3 as usize] = 0;
             }
@@ -793,7 +797,6 @@ fn create_pt_pscross_ins_c(
         let nd = d as u8 + 1;
         let cnt: u64 = (0..total)
             .into_par_iter()
-
             .map(|i| {
                 if atomics[i as usize].load(Ordering::Relaxed) == d as u8 {
                     let i1 = (i / size2) as usize * 24;
@@ -888,7 +891,6 @@ fn create_pt_pspair(
         let nd = d as u8 + 1;
         let cnt: u64 = (0..total)
             .into_par_iter()
-
             .map(|i| {
                 if atomics[i as usize].load(Ordering::Relaxed) == d as u8 {
                     let i1 = (i / size2) as usize * 18;
@@ -962,7 +964,8 @@ pub fn gen_pt_cross_c4e0(_pmgr: &PruneTableManager) -> (u64, Vec<u8>) {
     let ed = mtm.ensure_edge();
     create_pt_cross_ce(
         state_space::CROSS_SOLVED as u64,
-        12, 0,
+        12,
+        0,
         state_space::CROSS as u64,
         state_space::CORNER as u64,
         state_space::EDGE as u64,
@@ -1033,10 +1036,18 @@ fn gen_pt_pscross_c4e_n(i: usize) -> (u64, Vec<u8>) {
     )
 }
 
-pub fn gen_pt_pscross_c4e0(_p: &PruneTableManager) -> (u64, Vec<u8>) { gen_pt_pscross_c4e_n(0) }
-pub fn gen_pt_pscross_c4e1(_p: &PruneTableManager) -> (u64, Vec<u8>) { gen_pt_pscross_c4e_n(1) }
-pub fn gen_pt_pscross_c4e2(_p: &PruneTableManager) -> (u64, Vec<u8>) { gen_pt_pscross_c4e_n(2) }
-pub fn gen_pt_pscross_c4e3(_p: &PruneTableManager) -> (u64, Vec<u8>) { gen_pt_pscross_c4e_n(3) }
+pub fn gen_pt_pscross_c4e0(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    gen_pt_pscross_c4e_n(0)
+}
+pub fn gen_pt_pscross_c4e1(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    gen_pt_pscross_c4e_n(1)
+}
+pub fn gen_pt_pscross_c4e2(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    gen_pt_pscross_c4e_n(2)
+}
+pub fn gen_pt_pscross_c4e3(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    gen_pt_pscross_c4e_n(3)
+}
 
 // pscross_E0E1 = Edge2(0,1) ; pscross_E0E2 = Edge2(0,2)
 fn gen_pt_pscross_edge2(a: i32, b: i32) -> (u64, Vec<u8>) {
@@ -1145,47 +1156,101 @@ fn gen_pt_pscross_c_n(c: usize) -> (u64, Vec<u8>) {
     create_pt_pscross_corn(CORNER_INDICES[c], 10, e4.as_u32(), cn.as_u32())
 }
 
-pub fn gen_pt_pscross_c4(_p: &PruneTableManager) -> (u64, Vec<u8>) { gen_pt_pscross_c_n(0) }
-pub fn gen_pt_pscross_c5(_p: &PruneTableManager) -> (u64, Vec<u8>) { gen_pt_pscross_c_n(1) }
-pub fn gen_pt_pscross_c6(_p: &PruneTableManager) -> (u64, Vec<u8>) { gen_pt_pscross_c_n(2) }
-pub fn gen_pt_pscross_c7(_p: &PruneTableManager) -> (u64, Vec<u8>) { gen_pt_pscross_c_n(3) }
+pub fn gen_pt_pscross_c4(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    gen_pt_pscross_c_n(0)
+}
+pub fn gen_pt_pscross_c5(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    gen_pt_pscross_c_n(1)
+}
+pub fn gen_pt_pscross_c6(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    gen_pt_pscross_c_n(2)
+}
+pub fn gen_pt_pscross_c7(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    gen_pt_pscross_c_n(3)
+}
 
 // ins_C_diff[e*4+c]:c=corner slot, e=edge diff
 fn gen_pt_pscross_ins_c_diff_n(c: usize, e: usize) -> (u64, Vec<u8>) {
     let mtm = mt::instance();
     let e4 = mtm.ensure_edge4();
     let cn = mtm.ensure_corn();
-    create_pt_pscross_ins_c(EDGE_INDICES[e], CORNER_INDICES[c], 10, e4.as_u32(), cn.as_u32())
+    create_pt_pscross_ins_c(
+        EDGE_INDICES[e],
+        CORNER_INDICES[c],
+        10,
+        e4.as_u32(),
+        cn.as_u32(),
+    )
 }
 
 // 一组 16 个函数,每个都 fn(&PruneTableManager) -> (u64, Vec<u8>) 形态。
-pub fn gen_pt_pscross_ins_c4_diff0(_p: &PruneTableManager) -> (u64, Vec<u8>) { gen_pt_pscross_ins_c_diff_n(0, 0) }
-pub fn gen_pt_pscross_ins_c4_diff1(_p: &PruneTableManager) -> (u64, Vec<u8>) { gen_pt_pscross_ins_c_diff_n(0, 1) }
-pub fn gen_pt_pscross_ins_c4_diff2(_p: &PruneTableManager) -> (u64, Vec<u8>) { gen_pt_pscross_ins_c_diff_n(0, 2) }
-pub fn gen_pt_pscross_ins_c4_diff3(_p: &PruneTableManager) -> (u64, Vec<u8>) { gen_pt_pscross_ins_c_diff_n(0, 3) }
-pub fn gen_pt_pscross_ins_c5_diff0(_p: &PruneTableManager) -> (u64, Vec<u8>) { gen_pt_pscross_ins_c_diff_n(1, 0) }
-pub fn gen_pt_pscross_ins_c5_diff1(_p: &PruneTableManager) -> (u64, Vec<u8>) { gen_pt_pscross_ins_c_diff_n(1, 1) }
-pub fn gen_pt_pscross_ins_c5_diff2(_p: &PruneTableManager) -> (u64, Vec<u8>) { gen_pt_pscross_ins_c_diff_n(1, 2) }
-pub fn gen_pt_pscross_ins_c5_diff3(_p: &PruneTableManager) -> (u64, Vec<u8>) { gen_pt_pscross_ins_c_diff_n(1, 3) }
-pub fn gen_pt_pscross_ins_c6_diff0(_p: &PruneTableManager) -> (u64, Vec<u8>) { gen_pt_pscross_ins_c_diff_n(2, 0) }
-pub fn gen_pt_pscross_ins_c6_diff1(_p: &PruneTableManager) -> (u64, Vec<u8>) { gen_pt_pscross_ins_c_diff_n(2, 1) }
-pub fn gen_pt_pscross_ins_c6_diff2(_p: &PruneTableManager) -> (u64, Vec<u8>) { gen_pt_pscross_ins_c_diff_n(2, 2) }
-pub fn gen_pt_pscross_ins_c6_diff3(_p: &PruneTableManager) -> (u64, Vec<u8>) { gen_pt_pscross_ins_c_diff_n(2, 3) }
-pub fn gen_pt_pscross_ins_c7_diff0(_p: &PruneTableManager) -> (u64, Vec<u8>) { gen_pt_pscross_ins_c_diff_n(3, 0) }
-pub fn gen_pt_pscross_ins_c7_diff1(_p: &PruneTableManager) -> (u64, Vec<u8>) { gen_pt_pscross_ins_c_diff_n(3, 1) }
-pub fn gen_pt_pscross_ins_c7_diff2(_p: &PruneTableManager) -> (u64, Vec<u8>) { gen_pt_pscross_ins_c_diff_n(3, 2) }
-pub fn gen_pt_pscross_ins_c7_diff3(_p: &PruneTableManager) -> (u64, Vec<u8>) { gen_pt_pscross_ins_c_diff_n(3, 3) }
+pub fn gen_pt_pscross_ins_c4_diff0(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    gen_pt_pscross_ins_c_diff_n(0, 0)
+}
+pub fn gen_pt_pscross_ins_c4_diff1(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    gen_pt_pscross_ins_c_diff_n(0, 1)
+}
+pub fn gen_pt_pscross_ins_c4_diff2(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    gen_pt_pscross_ins_c_diff_n(0, 2)
+}
+pub fn gen_pt_pscross_ins_c4_diff3(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    gen_pt_pscross_ins_c_diff_n(0, 3)
+}
+pub fn gen_pt_pscross_ins_c5_diff0(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    gen_pt_pscross_ins_c_diff_n(1, 0)
+}
+pub fn gen_pt_pscross_ins_c5_diff1(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    gen_pt_pscross_ins_c_diff_n(1, 1)
+}
+pub fn gen_pt_pscross_ins_c5_diff2(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    gen_pt_pscross_ins_c_diff_n(1, 2)
+}
+pub fn gen_pt_pscross_ins_c5_diff3(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    gen_pt_pscross_ins_c_diff_n(1, 3)
+}
+pub fn gen_pt_pscross_ins_c6_diff0(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    gen_pt_pscross_ins_c_diff_n(2, 0)
+}
+pub fn gen_pt_pscross_ins_c6_diff1(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    gen_pt_pscross_ins_c_diff_n(2, 1)
+}
+pub fn gen_pt_pscross_ins_c6_diff2(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    gen_pt_pscross_ins_c_diff_n(2, 2)
+}
+pub fn gen_pt_pscross_ins_c6_diff3(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    gen_pt_pscross_ins_c_diff_n(2, 3)
+}
+pub fn gen_pt_pscross_ins_c7_diff0(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    gen_pt_pscross_ins_c_diff_n(3, 0)
+}
+pub fn gen_pt_pscross_ins_c7_diff1(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    gen_pt_pscross_ins_c_diff_n(3, 1)
+}
+pub fn gen_pt_pscross_ins_c7_diff2(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    gen_pt_pscross_ins_c_diff_n(3, 2)
+}
+pub fn gen_pt_pscross_ins_c7_diff3(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    gen_pt_pscross_ins_c_diff_n(3, 3)
+}
 
 // 索引数组: PSCROSS_INS_C_DIFF_GENS[c*4+e]
 pub const PSCROSS_INS_C_DIFF_GENS: [fn(&PruneTableManager) -> (u64, Vec<u8>); 16] = [
-    gen_pt_pscross_ins_c4_diff0, gen_pt_pscross_ins_c4_diff1,
-    gen_pt_pscross_ins_c4_diff2, gen_pt_pscross_ins_c4_diff3,
-    gen_pt_pscross_ins_c5_diff0, gen_pt_pscross_ins_c5_diff1,
-    gen_pt_pscross_ins_c5_diff2, gen_pt_pscross_ins_c5_diff3,
-    gen_pt_pscross_ins_c6_diff0, gen_pt_pscross_ins_c6_diff1,
-    gen_pt_pscross_ins_c6_diff2, gen_pt_pscross_ins_c6_diff3,
-    gen_pt_pscross_ins_c7_diff0, gen_pt_pscross_ins_c7_diff1,
-    gen_pt_pscross_ins_c7_diff2, gen_pt_pscross_ins_c7_diff3,
+    gen_pt_pscross_ins_c4_diff0,
+    gen_pt_pscross_ins_c4_diff1,
+    gen_pt_pscross_ins_c4_diff2,
+    gen_pt_pscross_ins_c4_diff3,
+    gen_pt_pscross_ins_c5_diff0,
+    gen_pt_pscross_ins_c5_diff1,
+    gen_pt_pscross_ins_c5_diff2,
+    gen_pt_pscross_ins_c5_diff3,
+    gen_pt_pscross_ins_c6_diff0,
+    gen_pt_pscross_ins_c6_diff1,
+    gen_pt_pscross_ins_c6_diff2,
+    gen_pt_pscross_ins_c6_diff3,
+    gen_pt_pscross_ins_c7_diff0,
+    gen_pt_pscross_ins_c7_diff1,
+    gen_pt_pscross_ins_c7_diff2,
+    gen_pt_pscross_ins_c7_diff3,
 ];
 
 // pt_pspair_CE[e*4+c] — Manager 内部通过 slot 调用,c=slot%4, e=slot/4
@@ -1231,7 +1296,9 @@ fn gen_pt_cross_cee(i: usize) -> (u64, Vec<u8>) {
     let idx_extra = EDGE_INDICES[i + 1];
     create_pt_cross_cex(
         state_space::CROSS_SOLVED as u64,
-        12, 0, idx_extra,
+        12,
+        0,
+        idx_extra,
         state_space::CROSS as u64,
         state_space::CORNER as u64,
         state_space::EDGE as u64,
@@ -1244,9 +1311,15 @@ fn gen_pt_cross_cee(i: usize) -> (u64, Vec<u8>) {
     )
 }
 
-pub fn gen_pt_cross_c4e0e1(_p: &PruneTableManager) -> (u64, Vec<u8>) { gen_pt_cross_cee(0) }
-pub fn gen_pt_cross_c4e0e2(_p: &PruneTableManager) -> (u64, Vec<u8>) { gen_pt_cross_cee(1) }
-pub fn gen_pt_cross_c4e0e3(_p: &PruneTableManager) -> (u64, Vec<u8>) { gen_pt_cross_cee(2) }
+pub fn gen_pt_cross_c4e0e1(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    gen_pt_cross_cee(0)
+}
+pub fn gen_pt_cross_c4e0e2(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    gen_pt_cross_cee(1)
+}
+pub fn gen_pt_cross_c4e0e3(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    gen_pt_cross_cee(2)
+}
 
 fn gen_pt_cross_cce(i: usize) -> (u64, Vec<u8>) {
     let mtm = mt::instance();
@@ -1256,7 +1329,9 @@ fn gen_pt_cross_cce(i: usize) -> (u64, Vec<u8>) {
     let idx_extra = CORNER_INDICES[i + 1];
     create_pt_cross_cex(
         state_space::CROSS_SOLVED as u64,
-        12, 0, idx_extra,
+        12,
+        0,
+        idx_extra,
         state_space::CROSS as u64,
         state_space::CORNER as u64,
         state_space::EDGE as u64,
@@ -1269,9 +1344,15 @@ fn gen_pt_cross_cce(i: usize) -> (u64, Vec<u8>) {
     )
 }
 
-pub fn gen_pt_cross_c4c5e0(_p: &PruneTableManager) -> (u64, Vec<u8>) { gen_pt_cross_cce(0) }
-pub fn gen_pt_cross_c4c6e0(_p: &PruneTableManager) -> (u64, Vec<u8>) { gen_pt_cross_cce(1) }
-pub fn gen_pt_cross_c4c7e0(_p: &PruneTableManager) -> (u64, Vec<u8>) { gen_pt_cross_cce(2) }
+pub fn gen_pt_cross_c4c5e0(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    gen_pt_cross_cce(0)
+}
+pub fn gen_pt_cross_c4c6e0(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    gen_pt_cross_cce(1)
+}
+pub fn gen_pt_cross_c4c7e0(_p: &PruneTableManager) -> (u64, Vec<u8>) {
+    gen_pt_cross_cce(2)
+}
 
 pub fn gen_pt_cross_c4c5c6(_p: &PruneTableManager) -> (u64, Vec<u8>) {
     let mtm = mt::instance();
@@ -1279,7 +1360,9 @@ pub fn gen_pt_cross_c4c5c6(_p: &PruneTableManager) -> (u64, Vec<u8>) {
     let cn = mtm.ensure_corn();
     create_pt_cross_ccc(
         state_space::CROSS_SOLVED as u64,
-        12, 15, 18,
+        12,
+        15,
+        18,
         state_space::CROSS as u64,
         state_space::CORNER as u64,
         state_space::CORNER as u64,

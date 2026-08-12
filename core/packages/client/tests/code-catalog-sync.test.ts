@@ -6,7 +6,7 @@
 //   2. every import path the catalogs point at actually resolves on disk
 //      (catches a component/util that was deleted or renamed but left in the
 //      catalog → stale entry = CI red).
-// New entries themselves still rely on the CLAUDE.md convention — "is this new
+// New entries themselves still rely on the AGENTS.md convention — "is this new
 // component reusable enough to list" is a judgement call a test can't make.
 //
 // Fix when red: register the missing hook in app/[lang]/code/utils/_catalog.tsx,

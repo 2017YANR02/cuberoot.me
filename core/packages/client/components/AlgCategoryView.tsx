@@ -418,7 +418,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       return next.size === prev.size ? prev : next;
     });
   }, []);
-  // 筛选 → replace(不往历史里塞;CLAUDE.md「URL 状态」)
+  // 筛选 → replace(不往历史里塞;AGENTS.md「URL 状态」)
   const [tagFilter, setTagFilter] = useQueryState('tag', parseAsStringEnum<AlgTag | 'all'>(['all', ...ALG_TAGS]).withDefault('all'));
   const [notationStyle, setNotationStyle] = useQueryState(
     'notation',

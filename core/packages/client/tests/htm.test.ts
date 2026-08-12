@@ -13,7 +13,7 @@
  */
 import { describe, it, expect } from 'vitest';
 
-import { htmMoves, countHtm } from '@/app/[lang]/timer/_lib/reconstruct/htm';
+import { countExecutedHtm, htmMoves, countHtm } from '@/app/[lang]/timer/_lib/reconstruct/htm';
 import type { SolveMove } from '@/app/[lang]/timer/_lib/reconstruct/stage_segments';
 
 /** 每 100ms 一个通知。 */
@@ -49,6 +49,15 @@ describe('htmMoves', () => {
     expect(countHtm(stream("R R'"))).toBe(0);
     expect(countHtm(stream("R R' R"))).toBe(1);
     expect(countHtm(stream("U2 U2"))).toBe(0);
+  });
+
+  it('阶段训练按真实执行计步，不把抵消动作吞掉', () => {
+    expect(countExecutedHtm(stream('R R'))).toBe(1);
+    expect(countExecutedHtm(stream("R' R'"))).toBe(1);
+    expect(countExecutedHtm(stream("R R'"))).toBe(2);
+    expect(countExecutedHtm(stream('R R R'))).toBe(2);
+    expect(countExecutedHtm(stream('R R R R'))).toBe(2);
+    expect(countExecutedHtm(stream('R2 U'))).toBe(2);
   });
 
   it('只合并相邻的:隔着别的面就是两步', () => {

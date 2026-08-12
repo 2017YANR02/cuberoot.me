@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // PreToolUse detector: block hand-rolled "strip the trailing 4-digit year off a competition
 // name" regexes in client source. Reads the hook payload on stdin ({tool_name, tool_input}),
-// scans the NEW content (Write.content / Edit.new_string / MultiEdit.edits[]) and DENIES
+// scans normalized newly added content and DENIES
 // (JSON permissionDecision=deny on stdout + exit 0; exit 2 is ignored in auto mode).
 //
 // Why: issue #65 — the same rule ("year already shown on the page → don't repeat it in the

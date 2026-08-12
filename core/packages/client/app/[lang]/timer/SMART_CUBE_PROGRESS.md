@@ -1122,7 +1122,7 @@ tnoodle 参照 emitter，所以布局、描边、字节格式天然一致。
   映射错了只有打乱态才看得出来，而已有 parity 测试只锁复原态）；54 张贴纸只用
   站内配色；任意打乱下每色恰好 9 张。
 - `tests/bluetooth_parity_gan_v34.test.ts`：**主动改 baseline** —— 原来断言
-  补齐动作 `undefined`，现在断言 500_060，注释写清前提哪里错了（按 CLAUDE.md
+  补齐动作 `undefined`，现在断言 500_060，注释写清前提哪里错了（按 AGENTS.md
   「改算法主动改 baseline 当 review 信号」）。
 - 浏览器：`/timer` 实况小窗确认渲染展开图（viewBox `0 0 13 9.8`、54 rect、
   站内配色，127×96）；`/sim` 的引擎伴图在模块搬家后照常渲染。
@@ -4420,7 +4420,7 @@ scramble          = B2 L2 D' L2 R2 U B2 U B D2 F2 U' B2 F L' F L2 B2 R2
 optimal_scramble  = F' L U2 L D' R' D' B2 D' F2 D U L2 F2 U F D' B2   ← 剪贴板里的就是它
 ```
 
-**剪贴板是对的**:开着「最优打乱」,题面就是这条 18 步的等态打乱,成绩记的也是它。
+**剪贴板是对的**:开着「最优打乱」,当前打乱就是这条 18 步的等态打乱,成绩记的也是它。
 错的是眼前那串 —— 屏幕上同时挂着 `拧回原打乱` 标签,说明当时 `fixupActive`,
 条上渲染的是 `ScrambleHintText`,内容是**修正路径**(魔方现在的状态 → 同一个打乱状态),
 不是打乱本身。旁证:那串前 11 手 `B2 D2 L2 U' L2 F2 R2 B2 D L2 D'` 全在

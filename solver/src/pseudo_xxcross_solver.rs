@@ -238,8 +238,7 @@ impl PseudoXXCrossSolver {
                         };
 
                     let target_arr = [target[0], target[1]];
-                    let init_idx =
-                        array_to_index(&target_arr, 2, 2, 12) as u32;
+                    let init_idx = array_to_index(&target_arr, 2, 2, 12) as u32;
                     let mt = self.aux_mt(table);
                     let mut cur = init_idx;
                     let mut cur_cr = virtual_cross_scaled;
@@ -281,8 +280,7 @@ impl PseudoXXCrossSolver {
                         };
 
                     let target_arr = [target[0], target[1]];
-                    let init_idx =
-                        array_to_index(&target_arr, 2, 3, 8) as u32;
+                    let init_idx = array_to_index(&target_arr, 2, 3, 8) as u32;
                     let mt = self.aux_mt(table);
                     let mut cur = init_idx;
                     let mut cur_cr = virtual_cross_scaled;
@@ -357,9 +355,8 @@ impl PseudoXXCrossSolver {
                 let n_cross_scaled = mt_e4[(cur.current_cross_scaled as usize) + m_rot];
                 let lookup_cross_idx = (n_cross_scaled / 24) as u64;
 
-                let idx_aux: u64 =
-                    lookup_cross_idx * Self::aux_multiplier(cur.table) as u64
-                        + n_current_idx as u64;
+                let idx_aux: u64 = lookup_cross_idx * Self::aux_multiplier(cur.table) as u64
+                    + n_current_idx as u64;
                 if self.aux_pt(cur.table).get(idx_aux) as u32 >= depth {
                     aux_pruned = true;
                     break;
@@ -427,8 +424,7 @@ impl PseudoXXCrossSolver {
         alg_rotation(&mut buf, rot);
         let st = self.initial_states(&buf);
 
-        const PAIRS: [(usize, usize); 6] =
-            [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3)];
+        const PAIRS: [(usize, usize); 6] = [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3)];
 
         let mut tasks: Vec<PseudoTask2> = Vec::with_capacity(72);
 
@@ -437,16 +433,10 @@ impl PseudoXXCrossSolver {
                 // 第一组:(ep.0 → cp.0, ep.1 → cp.1)
                 let d1 = Self::get_diff(cp.0 as u32, ep.0 as u32);
                 let d2 = Self::get_diff(cp.1 as u32, ep.1 as u32);
-                let mut h_base = std::cmp::max(
-                    self.get_h(&st[cp.0], d1),
-                    self.get_h(&st[cp.1], d2),
-                );
-                let targets1: [u8; 4] = [
-                    (cp.0 + 4) as u8,
-                    (cp.1 + 4) as u8,
-                    ep.0 as u8,
-                    ep.1 as u8,
-                ];
+                let mut h_base =
+                    std::cmp::max(self.get_h(&st[cp.0], d1), self.get_h(&st[cp.1], d2));
+                let targets1: [u8; 4] =
+                    [(cp.0 + 4) as u8, (cp.1 + 4) as u8, ep.0 as u8, ep.1 as u8];
                 let (aux1, n1) = self.setup_aux_2subset(&targets1, &buf, cp.0);
                 for k in 0..n1 {
                     let cur = &aux1[k];
@@ -455,8 +445,7 @@ impl PseudoXXCrossSolver {
                     } else {
                         st[cp.0].im / 24
                     };
-                    let idx_aux: u64 = lookup_c as u64
-                        * Self::aux_multiplier(cur.table) as u64
+                    let idx_aux: u64 = lookup_c as u64 * Self::aux_multiplier(cur.table) as u64
                         + cur.current_idx as u64;
                     let h = self.aux_pt(cur.table).get(idx_aux) as u32;
                     if h > h_base {
@@ -476,16 +465,10 @@ impl PseudoXXCrossSolver {
                 // 第二组:edges swapped (ep.1 → cp.0, ep.0 → cp.1)
                 let d1s = Self::get_diff(cp.0 as u32, ep.1 as u32);
                 let d2s = Self::get_diff(cp.1 as u32, ep.0 as u32);
-                let mut h_base2 = std::cmp::max(
-                    self.get_h(&st[cp.0], d1s),
-                    self.get_h(&st[cp.1], d2s),
-                );
-                let targets2: [u8; 4] = [
-                    (cp.0 + 4) as u8,
-                    (cp.1 + 4) as u8,
-                    ep.1 as u8,
-                    ep.0 as u8,
-                ];
+                let mut h_base2 =
+                    std::cmp::max(self.get_h(&st[cp.0], d1s), self.get_h(&st[cp.1], d2s));
+                let targets2: [u8; 4] =
+                    [(cp.0 + 4) as u8, (cp.1 + 4) as u8, ep.1 as u8, ep.0 as u8];
                 let (aux2, n2) = self.setup_aux_2subset(&targets2, &buf, cp.0);
                 for k in 0..n2 {
                     let cur = &aux2[k];
@@ -494,8 +477,7 @@ impl PseudoXXCrossSolver {
                     } else {
                         st[cp.0].im / 24
                     };
-                    let idx_aux: u64 = lookup_c as u64
-                        * Self::aux_multiplier(cur.table) as u64
+                    let idx_aux: u64 = lookup_c as u64 * Self::aux_multiplier(cur.table) as u64
                         + cur.current_idx as u64;
                     let h = self.aux_pt(cur.table).get(idx_aux) as u32;
                     if h > h_base2 {

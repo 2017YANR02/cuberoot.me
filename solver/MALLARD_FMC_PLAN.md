@@ -256,7 +256,7 @@ parity on chain JSON. Commit.
   `.analyze-page </div>` (line 762): `<section className="analyze-chain">` h2 (zh『FMC 多阶段还原链』/
   en 'Multi-stage FMC Reduction') wrapping `<ChainExplorer scramble={scramble} lang={lang} />`. Use
   the `.analyze-cfop` collapsible `<details open={...}>` pattern (chain solve is heaviest).
-- `analyze.css`: `.analyze-chain` (margin/gap only, NO card/border/background per CLAUDE.md; mirror
+- `analyze.css`: `.analyze-chain` (margin/gap only, NO card/border/background per AGENTS.md; mirror
   `.analyze-primary`). Colors via theme-tokens skill, no hardcoded greys.
 - `/code/solvers/page.tsx`: add FR row to BROWSER/NATIVE snapshot (skill `solvers-tables`).
 

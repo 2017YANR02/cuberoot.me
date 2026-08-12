@@ -403,7 +403,7 @@ setup 整个甩 worker 后,主线程画面不卡 → 公式可以更早出现。
 4. 每次改动:有提升 → commit;没提升或退步 → `git checkout --`
 5. 只动 NxN 相关(`packages/client-vite/src/pages/sim/cuber/`),不动 Sq1
 6. commit message 用中文,带前后 median 对比
-7. 提交时 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
+7. 提交只加本任务文件,不添加旧 agent 署名
 
 推荐顺序:
 1. 先做 **M**(per-slice compose row),~15min 工作量,稳妥拿 10-20ms

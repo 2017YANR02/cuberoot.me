@@ -377,7 +377,17 @@ impl EOXCrossSolver {
                 bump_node_count(local);
                 return true;
             }
-            if self.search_1(n1, n2 * 18, n3 * 18, nd * 18, neo * 18, depth - 1, m as u8, slot, bound) {
+            if self.search_1(
+                n1,
+                n2 * 18,
+                n3 * 18,
+                nd * 18,
+                neo * 18,
+                depth - 1,
+                m as u8,
+                slot,
+                bound,
+            ) {
                 bump_node_count(local);
                 return true;
             }
@@ -390,17 +400,29 @@ impl EOXCrossSolver {
     #[allow(clippy::too_many_arguments)]
     fn search_2(
         &self,
-        i1a: usize, i2a: usize, i3a: usize,
-        i1b: usize, i2b: usize, i3b: usize,
-        i_dep: usize, i_eo: usize,
-        depth: u32, prev: u8,
-        s1: usize, s2: usize, bound: u32,
-        tab: usize, tba: usize,
-        ea_rel: u32, ca_rel: u32,
-        eb_rel: u32, cb_rel: u32,
+        i1a: usize,
+        i2a: usize,
+        i3a: usize,
+        i1b: usize,
+        i2b: usize,
+        i3b: usize,
+        i_dep: usize,
+        i_eo: usize,
+        depth: u32,
+        prev: u8,
+        s1: usize,
+        s2: usize,
+        bound: u32,
+        tab: usize,
+        tba: usize,
+        ea_rel: u32,
+        ca_rel: u32,
+        eb_rel: u32,
+        cb_rel: u32,
         v_huge: i32,
         p_huge: Option<&PackedPruneTable>,
-        i_e6: u32, i_c2: u32,
+        i_e6: u32,
+        i_c2: u32,
     ) -> bool {
         if depth > bound {
             return false;
@@ -472,14 +494,29 @@ impl EOXCrossSolver {
             }
             let (ne6, nc2) = if v_huge != -1 { (n_ie6, n_ic2) } else { (0, 0) };
             if self.search_2(
-                n1a, n2a * 18, n3a * 18,
-                n1b, n2b * 18, n3b * 18,
-                nd * 18, neo * 18,
-                depth - 1, m as u8, s1, s2, bound,
-                tab, tba,
-                n_ea_rel, n_ca_rel,
-                n_eb_rel, n_cb_rel,
-                v_huge, p_huge, ne6, nc2,
+                n1a,
+                n2a * 18,
+                n3a * 18,
+                n1b,
+                n2b * 18,
+                n3b * 18,
+                nd * 18,
+                neo * 18,
+                depth - 1,
+                m as u8,
+                s1,
+                s2,
+                bound,
+                tab,
+                tba,
+                n_ea_rel,
+                n_ca_rel,
+                n_eb_rel,
+                n_cb_rel,
+                v_huge,
+                p_huge,
+                ne6,
+                nc2,
             ) {
                 bump_node_count(local);
                 return true;
@@ -495,10 +532,15 @@ impl EOXCrossSolver {
         &self,
         views: &[ViewState; 3],
         view_order: [usize; 3],
-        i_dep: usize, i_eo: usize,
-        depth: u32, prev: u8, bound: u32,
-        v_huge: i32, p_huge: Option<&PackedPruneTable>,
-        i_e6: u32, i_c2: u32,
+        i_dep: usize,
+        i_eo: usize,
+        depth: u32,
+        prev: u8,
+        bound: u32,
+        v_huge: i32,
+        p_huge: Option<&PackedPruneTable>,
+        i_e6: u32,
+        i_c2: u32,
     ) -> bool {
         if depth > bound {
             return false;
@@ -548,16 +590,16 @@ impl EOXCrossSolver {
                 let mut inner_pr = false;
                 for t in 0..2 {
                     ne[t] = mt_e[(cur.ex[t] as usize) * 18 + mv];
-                    if self.pt_cross_cee[cur.plus_tab[t] as usize]
-                        .get(idx * 24 + ne[t] as u64) as u32
+                    if self.pt_cross_cee[cur.plus_tab[t] as usize].get(idx * 24 + ne[t] as u64)
+                        as u32
                         >= depth
                     {
                         inner_pr = true;
                         break;
                     }
                     nc[t] = mt_c[(cur.cx[t] as usize) * 18 + mv];
-                    if self.pt_cross_cce[cur.plus_tab[t] as usize]
-                        .get(idx * 24 + nc[t] as u64) as u32
+                    if self.pt_cross_cce[cur.plus_tab[t] as usize].get(idx * 24 + nc[t] as u64)
+                        as u32
                         >= depth
                     {
                         inner_pr = true;
@@ -569,7 +611,8 @@ impl EOXCrossSolver {
                     break;
                 }
                 if cur.has3corner {
-                    let idx_3c: u64 = ((n1 as u64 + n2 as u64) * 24 + nc[0] as u64) * 24 + nc[1] as u64;
+                    let idx_3c: u64 =
+                        ((n1 as u64 + n2 as u64) * 24 + nc[0] as u64) * 24 + nc[1] as u64;
                     if self.pt_cross_c4c5c6.get(idx_3c) as u32 >= depth {
                         pruned = true;
                         break;
@@ -596,8 +639,17 @@ impl EOXCrossSolver {
             }
             let (ne6, nc2) = if v_huge != -1 { (n_ie6, n_ic2) } else { (0, 0) };
             if self.search_3(
-                &nv, view_order, nd * 18, neo * 18, depth - 1, m as u8, bound,
-                v_huge, p_huge, ne6, nc2,
+                &nv,
+                view_order,
+                nd * 18,
+                neo * 18,
+                depth - 1,
+                m as u8,
+                bound,
+                v_huge,
+                p_huge,
+                ne6,
+                nc2,
             ) {
                 bump_node_count(local);
                 return true;
@@ -613,10 +665,15 @@ impl EOXCrossSolver {
         &self,
         views: &[ViewState; 4],
         view_order: [usize; 4],
-        i_dep: usize, i_eo: usize,
-        depth: u32, prev: u8, bound: u32,
-        v_huge: i32, p_huge: Option<&PackedPruneTable>,
-        i_e6: u32, i_c2: u32,
+        i_dep: usize,
+        i_eo: usize,
+        depth: u32,
+        prev: u8,
+        bound: u32,
+        v_huge: i32,
+        p_huge: Option<&PackedPruneTable>,
+        i_e6: u32,
+        i_c2: u32,
     ) -> bool {
         if depth > bound {
             return false;
@@ -705,8 +762,17 @@ impl EOXCrossSolver {
             }
             let (ne6, nc2) = if v_huge != -1 { (n_ie6, n_ic2) } else { (0, 0) };
             if self.search_4(
-                &nv, view_order, nd * 18, neo * 18, depth - 1, m as u8, bound,
-                v_huge, p_huge, ne6, nc2,
+                &nv,
+                view_order,
+                nd * 18,
+                neo * 18,
+                depth - 1,
+                m as u8,
+                bound,
+                v_huge,
+                p_huge,
+                ne6,
+                nc2,
             ) {
                 bump_node_count(local);
                 return true;
@@ -760,9 +826,10 @@ impl EOXCrossSolver {
                 .map(|s| {
                     let idx_xc: u64 = (st[s].i1 as u64 + st[s].i2 as u64) * 24 + st[s].i3 as u64;
                     let pr_xc = self.pt_cross_c4e0.get(idx_xc) as u32;
-                    let pr_de = self.pt_ep4eo12.get(
-                        st[s].idep as u64 * state_space::EO12 as u64 + st[s].ieo as u64,
-                    ) as u32;
+                    let pr_de = self
+                        .pt_ep4eo12
+                        .get(st[s].idep as u64 * state_space::EO12 as u64 + st[s].ieo as u64)
+                        as u32;
                     (pr_xc.max(pr_de), s)
                 })
                 .collect();
@@ -805,8 +872,7 @@ impl EOXCrossSolver {
 
             // --- 2. XXC + EO ---
             {
-                const PAIRS: [[usize; 2]; 6] =
-                    [[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]];
+                const PAIRS: [[usize; 2]; 6] = [[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]];
                 let mut tasks_xx: Vec<(u32, usize)> = Vec::with_capacity(6);
                 for (p, pair) in PAIRS.iter().enumerate() {
                     let s1 = pair[0];
@@ -816,21 +882,22 @@ impl EOXCrossSolver {
 
                     let idx1: u64 = (st[s1].i1 as u64 + st[s1].i2 as u64) * 24 + st[s1].i3 as u64;
                     let h1 = self.pt_cross_c4e0.get(idx1) as u32;
-                    let h1_pe = self.pt_cross_cee[t_ab]
-                        .get(idx1 * 24 + st[s1].e_trk[t_ab] as u64) as u32;
-                    let h1_pc = self.pt_cross_cce[t_ab]
-                        .get(idx1 * 24 + st[s1].c_trk[t_ab] as u64) as u32;
+                    let h1_pe =
+                        self.pt_cross_cee[t_ab].get(idx1 * 24 + st[s1].e_trk[t_ab] as u64) as u32;
+                    let h1_pc =
+                        self.pt_cross_cce[t_ab].get(idx1 * 24 + st[s1].c_trk[t_ab] as u64) as u32;
 
                     let idx2: u64 = (st[s2].i1 as u64 + st[s2].i2 as u64) * 24 + st[s2].i3 as u64;
                     let h2 = self.pt_cross_c4e0.get(idx2) as u32;
-                    let h2_pe = self.pt_cross_cee[t_ba]
-                        .get(idx2 * 24 + st[s2].e_trk[t_ba] as u64) as u32;
-                    let h2_pc = self.pt_cross_cce[t_ba]
-                        .get(idx2 * 24 + st[s2].c_trk[t_ba] as u64) as u32;
+                    let h2_pe =
+                        self.pt_cross_cee[t_ba].get(idx2 * 24 + st[s2].e_trk[t_ba] as u64) as u32;
+                    let h2_pc =
+                        self.pt_cross_cce[t_ba].get(idx2 * 24 + st[s2].c_trk[t_ba] as u64) as u32;
 
-                    let h_de = self.pt_ep4eo12.get(
-                        st[s1].idep as u64 * state_space::EO12 as u64 + st[s1].ieo as u64,
-                    ) as u32;
+                    let h_de = self
+                        .pt_ep4eo12
+                        .get(st[s1].idep as u64 * state_space::EO12 as u64 + st[s1].ieo as u64)
+                        as u32;
                     let h = [h1, h1_pe, h1_pc, h2, h2_pe, h2_pc, h_de]
                         .iter()
                         .copied()
@@ -840,7 +907,11 @@ impl EOXCrossSolver {
                 }
                 tasks_xx.sort();
 
-                best_xx = if (sym & 1) != 0 { res[12 + sym - 1] } else { 99 };
+                best_xx = if (sym & 1) != 0 {
+                    res[12 + sym - 1]
+                } else {
+                    99
+                };
                 for &(h, p) in &tasks_xx {
                     if h >= best_xx {
                         break;
@@ -868,12 +939,19 @@ impl EOXCrossSolver {
                             (st[s1].ieo as usize) * 18,
                             d,
                             18,
-                            s1, s2,
+                            s1,
+                            s2,
                             best_xx - 1,
-                            t_ab, t_ba,
-                            st[s1].e_trk[t_ab], st[s1].c_trk[t_ab],
-                            st[s2].e_trk[t_ba], st[s2].c_trk[t_ba],
-                            v_huge, p_huge, init_e6, init_c2,
+                            t_ab,
+                            t_ba,
+                            st[s1].e_trk[t_ab],
+                            st[s1].c_trk[t_ab],
+                            st[s2].e_trk[t_ba],
+                            st[s2].c_trk[t_ba],
+                            v_huge,
+                            p_huge,
+                            init_e6,
+                            init_c2,
                         ) {
                             best_xx = d;
                             break;
@@ -885,8 +963,7 @@ impl EOXCrossSolver {
 
             // --- 3. XXXC + EO ---
             {
-                const TRIPS: [[usize; 3]; 4] =
-                    [[0, 1, 2], [0, 1, 3], [0, 2, 3], [1, 2, 3]];
+                const TRIPS: [[usize; 3]; 4] = [[0, 1, 2], [0, 1, 3], [0, 2, 3], [1, 2, 3]];
                 let mut tasks_xxx: Vec<(u32, usize)> = Vec::with_capacity(4);
                 for (tr, trip) in TRIPS.iter().enumerate() {
                     let s1 = trip[0];
@@ -963,15 +1040,20 @@ impl EOXCrossSolver {
                     d_3c = d_3c.max(check_3c(s2, t_ba, t_bc));
                     d_3c = d_3c.max(check_3c(s3, t_ca, t_cb));
 
-                    let pr_de = self.pt_ep4eo12.get(
-                        st[s1].idep as u64 * state_space::EO12 as u64 + st[s1].ieo as u64,
-                    ) as u32;
+                    let pr_de = self
+                        .pt_ep4eo12
+                        .get(st[s1].idep as u64 * state_space::EO12 as u64 + st[s1].ieo as u64)
+                        as u32;
                     let h = [h1, h2, h3, pr_de, d_3c].iter().copied().max().unwrap();
                     tasks_xxx.push((h, tr));
                 }
                 tasks_xxx.sort();
 
-                best_xxx = if (sym & 1) != 0 { res[24 + sym - 1] } else { 99 };
+                best_xxx = if (sym & 1) != 0 {
+                    res[24 + sym - 1]
+                } else {
+                    99
+                };
                 for &(h, tr) in &tasks_xxx {
                     if h >= best_xxx {
                         break;
@@ -1031,23 +1113,25 @@ impl EOXCrossSolver {
                     for vi in 0..3 {
                         let vs = &views3[vi];
                         let sv = vs.slot as usize;
-                        let idx: u64 = (st[sv].i1 as u64 + st[sv].i2 as u64) * 24 + st[sv].i3 as u64;
+                        let idx: u64 =
+                            (st[sv].i1 as u64 + st[sv].i2 as u64) * 24 + st[sv].i3 as u64;
                         let mut v = self.pt_cross_c4e0.get(idx) as u32;
                         for tt in 0..2 {
                             v = v.max(
                                 self.pt_cross_cee[vs.plus_tab[tt] as usize]
-                                    .get(idx * 24 + vs.ex[tt] as u64) as u32,
+                                    .get(idx * 24 + vs.ex[tt] as u64)
+                                    as u32,
                             );
                             v = v.max(
                                 self.pt_cross_cce[vs.plus_tab[tt] as usize]
-                                    .get(idx * 24 + vs.cx[tt] as u64) as u32,
+                                    .get(idx * 24 + vs.cx[tt] as u64)
+                                    as u32,
                             );
                         }
                         if vs.has3corner {
-                            let idx_3c: u64 = ((st[sv].i1 as u64 + st[sv].i2 as u64) * 24
-                                + vs.cx[0] as u64)
-                                * 24
-                                + vs.cx[1] as u64;
+                            let idx_3c: u64 =
+                                ((st[sv].i1 as u64 + st[sv].i2 as u64) * 24 + vs.cx[0] as u64) * 24
+                                    + vs.cx[1] as u64;
                             v = v.max(self.pt_cross_c4c5c6.get(idx_3c) as u32);
                         }
                         vh[vi] = v;
@@ -1101,26 +1185,24 @@ impl EOXCrossSolver {
                     let idx: u64 = (st[v].i1 as u64 + st[v].i2 as u64) * 24 + st[v].i3 as u64;
                     let mut h = self.pt_cross_c4e0.get(idx) as u32;
                     for t in 0..3 {
-                        h = h.max(
-                            self.pt_cross_cee[t].get(idx * 24 + st[v].e_trk[t] as u64) as u32,
-                        );
-                        h = h.max(
-                            self.pt_cross_cce[t].get(idx * 24 + st[v].c_trk[t] as u64) as u32,
-                        );
+                        h = h
+                            .max(self.pt_cross_cee[t].get(idx * 24 + st[v].e_trk[t] as u64) as u32);
+                        h = h
+                            .max(self.pt_cross_cce[t].get(idx * 24 + st[v].c_trk[t] as u64) as u32);
                     }
-                    let idx_3c: u64 = ((st[v].i1 as u64 + st[v].i2 as u64) * 24
-                        + st[v].c_trk[0] as u64)
-                        * 24
-                        + st[v].c_trk[1] as u64;
+                    let idx_3c: u64 =
+                        ((st[v].i1 as u64 + st[v].i2 as u64) * 24 + st[v].c_trk[0] as u64) * 24
+                            + st[v].c_trk[1] as u64;
                     h = h.max(self.pt_cross_c4c5c6.get(idx_3c) as u32);
                     view_h[v] = h;
                 }
                 let mut view_order = [0usize, 1, 2, 3];
                 view_order.sort_by(|a, b| view_h[*b].cmp(&view_h[*a]));
 
-                let h_de = self.pt_ep4eo12.get(
-                    st[0].idep as u64 * state_space::EO12 as u64 + st[0].ieo as u64,
-                ) as u32;
+                let h_de = self
+                    .pt_ep4eo12
+                    .get(st[0].idep as u64 * state_space::EO12 as u64 + st[0].ieo as u64)
+                    as u32;
                 let h_max = [h_de, view_h[0], view_h[1], view_h[2], view_h[3]]
                     .iter()
                     .copied()
@@ -1129,7 +1211,11 @@ impl EOXCrossSolver {
 
                 let (v_huge, p_huge, init_e6, init_c2) = self.pick_huge(0, 1, &st);
 
-                let mut best_xxxx = if (sym & 1) != 0 { res[36 + sym - 1] } else { 99 };
+                let mut best_xxxx = if (sym & 1) != 0 {
+                    res[36 + sym - 1]
+                } else {
+                    99
+                };
                 if h_max == 0 {
                     best_xxxx = 0;
                 } else {
@@ -1168,7 +1254,10 @@ pub fn fold_sym_to_rot(sym48: &[u32]) -> Vec<u32> {
     let mut out = Vec::with_capacity(24);
     for stage_base in [0usize, 12, 24, 36] {
         for c in 0..6 {
-            out.push(std::cmp::min(sym48[stage_base + 2 * c], sym48[stage_base + 2 * c + 1]));
+            out.push(std::cmp::min(
+                sym48[stage_base + 2 * c],
+                sym48[stage_base + 2 * c + 1],
+            ));
         }
     }
     out
@@ -1177,7 +1266,9 @@ pub fn fold_sym_to_rot(sym48: &[u32]) -> Vec<u32> {
 /// 给 Cross+EO 单独折叠(12 sym → 6 rotation)。
 pub fn fold_cross_sym_to_rot(sym12: &[u32]) -> Vec<u32> {
     assert_eq!(sym12.len(), 12);
-    (0..6).map(|c| std::cmp::min(sym12[2 * c], sym12[2 * c + 1])).collect()
+    (0..6)
+        .map(|c| std::cmp::min(sym12[2 * c], sym12[2 * c + 1]))
+        .collect()
 }
 
 /// 整体便捷接口:对一个 `Move` slice,返回 30 个值(5 阶段 × 6 rotation)。
@@ -1423,7 +1514,13 @@ impl EOSmallSolver {
             idep = mt_ep4[(idep as usize) * 18 + m_global];
             ieo = mt_eo[(ieo as usize) * 18 + m_global];
         }
-        EoSlotSmall { i1, i2, i3, idep, ieo }
+        EoSlotSmall {
+            i1,
+            i2,
+            i3,
+            idep,
+            ieo,
+        }
     }
 
     /// per-slot pt_cross_C4E0 下界(idx = (e4*24 + corner)*24 + edge)。
@@ -1481,7 +1578,11 @@ impl EOSmallSolver {
                 let n1 = mt_e4[i1 + m_slot] as usize;
                 let n2 = mt_c[i2 + m_slot] as usize;
                 let n3 = mt_e[i3 + m_slot] as usize;
-                if self.pt_cross_c4e0.get((n1 as u64 + n2 as u64) * 24 + n3 as u64) as u32 >= depth {
+                if self
+                    .pt_cross_c4e0
+                    .get((n1 as u64 + n2 as u64) * 24 + n3 as u64) as u32
+                    >= depth
+                {
                     pruned = true;
                     break;
                 }
@@ -1542,13 +1643,7 @@ impl EOSmallSolver {
 
     /// 单 sym 下指定阶段(stage 1=xc / 2=xxc / 3=xxxc / 4=xxxxc)的最优步数,min over combo。
     /// `lower` = 上一阶段(cascade 单调下界);`bound` = sym&1 配对早停上界。
-    fn stage_for_sym(
-        &self,
-        st: &[EoSlotSmall; 4],
-        stage: usize,
-        lower: u32,
-        bound: u32,
-    ) -> u32 {
+    fn stage_for_sym(&self, st: &[EoSlotSmall; 4], stage: usize, lower: u32, bound: u32) -> u32 {
         const XC: [&[usize]; 4] = [&[0], &[1], &[2], &[3]];
         const XXC: [&[usize]; 6] = [&[0, 1], &[0, 2], &[0, 3], &[1, 2], &[1, 3], &[2, 3]];
         const XXXC: [&[usize]; 4] = [&[0, 1, 2], &[0, 1, 3], &[0, 2, 3], &[1, 2, 3]];
@@ -1597,7 +1692,11 @@ impl EOSmallSolver {
             let mut prev_stage = 0u32;
             for (si, stage) in (1..=4).enumerate() {
                 let base = si * 12;
-                let bound = if (sym & 1) != 0 { res[base + sym - 1] } else { 99 };
+                let bound = if (sym & 1) != 0 {
+                    res[base + sym - 1]
+                } else {
+                    99
+                };
                 let v = self.stage_for_sym(&st, stage, prev_stage, bound);
                 res[base + sym] = v;
                 prev_stage = v;
@@ -1683,7 +1782,13 @@ impl EOSmallSolver {
             idep = mt_ep4[(idep as usize) * 18 + (m as usize)];
             ieo = mt_eo[(ieo as usize) * 18 + (m as usize)];
         }
-        EoSlotSmall { i1, i2, i3, idep, ieo }
+        EoSlotSmall {
+            i1,
+            i2,
+            i3,
+            idep,
+            ieo,
+        }
     }
 
     /// stage 0 专用:rot 帧下推(已 rotate 的)alg,得到 edge2 cross 群 (i1,i2) + EO (ieo)。
@@ -1732,7 +1837,9 @@ impl EOSmallSolver {
             let m = row[k] as usize;
             let n1 = mt2[i1 + m] as usize;
             let n2 = mt2[i2 + m] as usize;
-            let pr = self.pt_cross.get(n1 as u64 * state_space::EDGE2 as u64 + n2 as u64) as u32;
+            let pr = self
+                .pt_cross
+                .get(n1 as u64 * state_space::EDGE2 as u64 + n2 as u64) as u32;
             if pr >= depth {
                 continue;
             }
@@ -1799,7 +1906,9 @@ impl EOSmallSolver {
                 let n1 = mt_e4[i1 + m_slot] as usize;
                 let n2 = mt_c[i2 + m_slot] as usize;
                 let n3 = mt_e[i3 + m_slot] as usize;
-                let hs = self.pt_cross_c4e0.get((n1 as u64 + n2 as u64) * 24 + n3 as u64) as u32;
+                let hs = self
+                    .pt_cross_c4e0
+                    .get((n1 as u64 + n2 as u64) * 24 + n3 as u64) as u32;
                 if hs >= depth {
                     pruned = true;
                     break;
@@ -1817,7 +1926,16 @@ impl EOSmallSolver {
                 out.push(path.clone());
             } else if max_h > 0 {
                 // max_h==0 ⟺ DE+EO 与全槽皆解;depth>1 还要走步 = 更短解 + 无效尾动,跳过。
-                self.enum_small(&nxc[..n], nd * 18, neo * 18, depth - 1, m as u8, path, out, cap);
+                self.enum_small(
+                    &nxc[..n],
+                    nd * 18,
+                    neo * 18,
+                    depth - 1,
+                    m as u8,
+                    path,
+                    out,
+                    cap,
+                );
             }
             path.pop();
         }
@@ -1850,7 +1968,11 @@ impl EOSmallSolver {
         force: &[usize],
     ) -> (u32, Vec<(String, Vec<usize>, Vec<u8>)>) {
         let alg_idx: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
-        let y_frame = if rot.is_empty() { "y".to_string() } else { format!("{} y", rot) };
+        let y_frame = if rot.is_empty() {
+            "y".to_string()
+        } else {
+            format!("{} y", rot)
+        };
         let frames = [rot.to_string(), y_frame];
 
         // stage 0(eo_cross):edge2 cross 群 + EO,无 slot。两帧各取 root 下界,统一加深。
@@ -1861,8 +1983,10 @@ impl EOSmallSolver {
                 let mut a = alg_idx.clone();
                 alg_rotation(&mut a, fr);
                 let (i1, i2, ieo) = self.rot_virt_cross(&a);
-                let mut h =
-                    self.pt_cross.get(i1 as u64 * state_space::EDGE2 as u64 + i2 as u64) as u32;
+                let mut h = self
+                    .pt_cross
+                    .get(i1 as u64 * state_space::EDGE2 as u64 + i2 as u64)
+                    as u32;
                 if h == 0 && ieo != 0 {
                     h = 1;
                 }
@@ -1905,7 +2029,16 @@ impl EOSmallSolver {
                     let (_, fi, i1, i2, ieo) = roots[ri];
                     let mut out: Vec<Vec<u8>> = Vec::new();
                     let mut path = Vec::new();
-                    self.enum_cross(i1 * 18, i2 * 18, ieo, d, 18, &mut path, &mut out, cap - items.len());
+                    self.enum_cross(
+                        i1 * 18,
+                        i2 * 18,
+                        ieo,
+                        d,
+                        18,
+                        &mut path,
+                        &mut out,
+                        cap - items.len(),
+                    );
                     for sol in out {
                         items.push((frames[fi].clone(), vec![], sol));
                     }
@@ -1939,7 +2072,12 @@ impl EOSmallSolver {
             let st: [EoSlotSmall; 4] = std::array::from_fn(|s| self.rot_virt(&a, s));
             let h_de = self.h_ep4eo12(&st[0]);
             for (ci, c) in combos.iter().enumerate() {
-                let h = c.iter().map(|&s| self.h_c4e0(&st[s])).max().unwrap_or(0).max(h_de);
+                let h = c
+                    .iter()
+                    .map(|&s| self.h_c4e0(&st[s]))
+                    .max()
+                    .unwrap_or(0)
+                    .max(h_de);
                 cands.push((h, fi, ci));
             }
             ctxs.push(st);
@@ -1950,7 +2088,12 @@ impl EOSmallSolver {
         let mk_xc = |st: &[EoSlotSmall; 4], combo: &[usize]| {
             let mut xc = [(0usize, 0usize, 0usize, 0usize); 4];
             for (j, &s) in combo.iter().enumerate() {
-                xc[j] = (st[s].i1 as usize, (st[s].i2 as usize) * 18, (st[s].i3 as usize) * 18, s);
+                xc[j] = (
+                    st[s].i1 as usize,
+                    (st[s].i2 as usize) * 18,
+                    (st[s].i3 as usize) * 18,
+                    s,
+                );
             }
             xc
         };
@@ -2003,7 +2146,16 @@ impl EOSmallSolver {
                 let i_eo0 = (st[0].ieo as usize) * 18;
                 let mut out: Vec<Vec<u8>> = Vec::new();
                 let mut path = Vec::new();
-                self.enum_small(&xc[..n], i_dep0, i_eo0, d, 18, &mut path, &mut out, cap - items.len());
+                self.enum_small(
+                    &xc[..n],
+                    i_dep0,
+                    i_eo0,
+                    d,
+                    18,
+                    &mut path,
+                    &mut out,
+                    cap - items.len(),
+                );
                 for sol in out {
                     items.push((frames[fi].clone(), combo.to_vec(), sol));
                 }
@@ -2022,7 +2174,15 @@ impl EOSmallSolver {
 // pt 表是无限制距离的可采纳下界,对任意 mask 仍可采纳 ⇒ IDA* 首达即真·受限最优
 // (≤ max_depth),超界返回 99。EO 破 y-对称,枚举走 rot / rot·y 两帧(逐条带 frame)。
 impl EOSmallSolver {
-    fn cross_search_masked(&self, i1: usize, i2: usize, i_eo: usize, depth: u32, prev: u8, vm: &ValidMovesTable) -> bool {
+    fn cross_search_masked(
+        &self,
+        i1: usize,
+        i2: usize,
+        i_eo: usize,
+        depth: u32,
+        prev: u8,
+        vm: &ValidMovesTable,
+    ) -> bool {
         let (vmoves, vcnt) = vm;
         let count = vcnt[prev as usize] as usize;
         let row = &vmoves[prev as usize];
@@ -2070,7 +2230,14 @@ impl EOSmallSolver {
                 continue;
             }
             for d in h..=max_depth {
-                if self.cross_search_masked(i1 as usize * 18, i2 as usize * 18, ieo as usize, d, 18, vm) {
+                if self.cross_search_masked(
+                    i1 as usize * 18,
+                    i2 as usize * 18,
+                    ieo as usize,
+                    d,
+                    18,
+                    vm,
+                ) {
                     res[s] = d;
                     break;
                 }
@@ -2117,7 +2284,11 @@ impl EOSmallSolver {
                 let n1 = mt_e4[i1 + m_slot] as usize;
                 let n2 = mt_c[i2 + m_slot] as usize;
                 let n3 = mt_e[i3 + m_slot] as usize;
-                if self.pt_cross_c4e0.get((n1 as u64 + n2 as u64) * 24 + n3 as u64) as u32 >= depth {
+                if self
+                    .pt_cross_c4e0
+                    .get((n1 as u64 + n2 as u64) * 24 + n3 as u64) as u32
+                    >= depth
+                {
                     pruned = true;
                     break;
                 }
@@ -2153,7 +2324,12 @@ impl EOSmallSolver {
         }
         let mut xc = [(0usize, 0usize, 0usize, 0usize); 4];
         for (j, &s) in slots.iter().enumerate() {
-            xc[j] = (st[s].i1 as usize, (st[s].i2 as usize) * 18, (st[s].i3 as usize) * 18, s);
+            xc[j] = (
+                st[s].i1 as usize,
+                (st[s].i2 as usize) * 18,
+                (st[s].i3 as usize) * 18,
+                s,
+            );
         }
         let n = slots.len();
         let i_dep = (st[slots[0]].idep as usize) * 18;
@@ -2188,7 +2364,12 @@ impl EOSmallSolver {
         let mut scored: Vec<(u32, &[usize])> = combos
             .iter()
             .map(|&c| {
-                let h = c.iter().map(|&s| self.h_c4e0(&st[s])).max().unwrap().max(h_de);
+                let h = c
+                    .iter()
+                    .map(|&s| self.h_c4e0(&st[s]))
+                    .max()
+                    .unwrap()
+                    .max(h_de);
                 (h, c)
             })
             .collect();
@@ -2222,7 +2403,8 @@ impl EOSmallSolver {
             let max_d = 20u32.min(max_depth);
             (0..12)
                 .map(|sym| {
-                    let st: [EoSlotSmall; 4] = std::array::from_fn(|s| self.slot_virt(&alg_idx, sym, s));
+                    let st: [EoSlotSmall; 4] =
+                        std::array::from_fn(|s| self.slot_virt(&alg_idx, sym, s));
                     self.stage_for_sym_masked(&st, stage, max_d, &vm)
                 })
                 .collect()
@@ -2230,7 +2412,11 @@ impl EOSmallSolver {
         (0..6)
             .map(|c| {
                 let best = sym12[2 * c].min(sym12[2 * c + 1]);
-                if best >= 99 { None } else { Some(best) }
+                if best >= 99 {
+                    None
+                } else {
+                    Some(best)
+                }
             })
             .collect()
     }
@@ -2263,7 +2449,9 @@ impl EOSmallSolver {
             let m = row[k] as usize;
             let n1 = mt2[i1 + m] as usize;
             let n2 = mt2[i2 + m] as usize;
-            let pr = self.pt_cross.get(n1 as u64 * state_space::EDGE2 as u64 + n2 as u64) as u32;
+            let pr = self
+                .pt_cross
+                .get(n1 as u64 * state_space::EDGE2 as u64 + n2 as u64) as u32;
             if pr >= depth {
                 continue;
             }
@@ -2274,7 +2462,17 @@ impl EOSmallSolver {
                     out.push(path.clone());
                 }
             } else if pr > 0 || neo != 0 {
-                self.enum_cross_masked(n1 * 18, n2 * 18, neo, depth - 1, m as u8, path, out, cap, vm);
+                self.enum_cross_masked(
+                    n1 * 18,
+                    n2 * 18,
+                    neo,
+                    depth - 1,
+                    m as u8,
+                    path,
+                    out,
+                    cap,
+                    vm,
+                );
             }
             path.pop();
         }
@@ -2327,7 +2525,9 @@ impl EOSmallSolver {
                 let n1 = mt_e4[i1 + m_slot] as usize;
                 let n2 = mt_c[i2 + m_slot] as usize;
                 let n3 = mt_e[i3 + m_slot] as usize;
-                let hs = self.pt_cross_c4e0.get((n1 as u64 + n2 as u64) * 24 + n3 as u64) as u32;
+                let hs = self
+                    .pt_cross_c4e0
+                    .get((n1 as u64 + n2 as u64) * 24 + n3 as u64) as u32;
                 if hs >= depth {
                     pruned = true;
                     break;
@@ -2344,7 +2544,17 @@ impl EOSmallSolver {
             if depth == 1 {
                 out.push(path.clone());
             } else if max_h > 0 {
-                self.enum_small_masked(&nxc[..n], nd * 18, neo * 18, depth - 1, m as u8, path, out, cap, vm);
+                self.enum_small_masked(
+                    &nxc[..n],
+                    nd * 18,
+                    neo * 18,
+                    depth - 1,
+                    m as u8,
+                    path,
+                    out,
+                    cap,
+                    vm,
+                );
             }
             path.pop();
         }
@@ -2365,7 +2575,11 @@ impl EOSmallSolver {
     ) -> (u32, Vec<(String, Vec<usize>, Vec<u8>)>) {
         let vm = valid_moves_masked(mask);
         let alg_idx: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
-        let y_frame = if rot.is_empty() { "y".to_string() } else { format!("{} y", rot) };
+        let y_frame = if rot.is_empty() {
+            "y".to_string()
+        } else {
+            format!("{} y", rot)
+        };
         let frames = [rot.to_string(), y_frame];
 
         // stage 0(eo_cross)
@@ -2376,7 +2590,10 @@ impl EOSmallSolver {
                 let mut a = alg_idx.clone();
                 alg_rotation(&mut a, fr);
                 let (i1, i2, ieo) = self.rot_virt_cross(&a);
-                let mut h = self.pt_cross.get(i1 as u64 * state_space::EDGE2 as u64 + i2 as u64) as u32;
+                let mut h = self
+                    .pt_cross
+                    .get(i1 as u64 * state_space::EDGE2 as u64 + i2 as u64)
+                    as u32;
                 if h == 0 && ieo != 0 {
                     h = 1;
                 }
@@ -2394,7 +2611,17 @@ impl EOSmallSolver {
                     }
                     let mut probe: Vec<Vec<u8>> = Vec::new();
                     let mut path = Vec::new();
-                    self.enum_cross_masked(i1 * 18, i2 * 18, ieo, d, 18, &mut path, &mut probe, 1, &vm);
+                    self.enum_cross_masked(
+                        i1 * 18,
+                        i2 * 18,
+                        ieo,
+                        d,
+                        18,
+                        &mut path,
+                        &mut probe,
+                        1,
+                        &vm,
+                    );
                     if !probe.is_empty() {
                         tied.push(ri);
                     }
@@ -2416,7 +2643,17 @@ impl EOSmallSolver {
                     let (_, fi, i1, i2, ieo) = roots[ri];
                     let mut out: Vec<Vec<u8>> = Vec::new();
                     let mut path = Vec::new();
-                    self.enum_cross_masked(i1 * 18, i2 * 18, ieo, d, 18, &mut path, &mut out, cap - items.len(), &vm);
+                    self.enum_cross_masked(
+                        i1 * 18,
+                        i2 * 18,
+                        ieo,
+                        d,
+                        18,
+                        &mut path,
+                        &mut out,
+                        cap - items.len(),
+                        &vm,
+                    );
                     for sol in out {
                         items.push((frames[fi].clone(), vec![], sol));
                     }
@@ -2451,7 +2688,12 @@ impl EOSmallSolver {
             let st: [EoSlotSmall; 4] = std::array::from_fn(|s| self.rot_virt(&a, s));
             let h_de = self.h_ep4eo12(&st[0]);
             for (ci, c) in combos.iter().enumerate() {
-                let h = c.iter().map(|&s| self.h_c4e0(&st[s])).max().unwrap_or(0).max(h_de);
+                let h = c
+                    .iter()
+                    .map(|&s| self.h_c4e0(&st[s]))
+                    .max()
+                    .unwrap_or(0)
+                    .max(h_de);
                 cands.push((h, fi, ci));
             }
             ctxs.push(st);
@@ -2461,7 +2703,12 @@ impl EOSmallSolver {
         let mk_xc = |st: &[EoSlotSmall; 4], combo: &[usize]| {
             let mut xc = [(0usize, 0usize, 0usize, 0usize); 4];
             for (j, &s) in combo.iter().enumerate() {
-                xc[j] = (st[s].i1 as usize, (st[s].i2 as usize) * 18, (st[s].i3 as usize) * 18, s);
+                xc[j] = (
+                    st[s].i1 as usize,
+                    (st[s].i2 as usize) * 18,
+                    (st[s].i3 as usize) * 18,
+                    s,
+                );
             }
             xc
         };
@@ -2482,7 +2729,17 @@ impl EOSmallSolver {
                 let i_eo0 = (st[0].ieo as usize) * 18;
                 let mut probe: Vec<Vec<u8>> = Vec::new();
                 let mut path = Vec::new();
-                self.enum_small_masked(&xc[..n], i_dep0, i_eo0, d, 18, &mut path, &mut probe, 1, &vm);
+                self.enum_small_masked(
+                    &xc[..n],
+                    i_dep0,
+                    i_eo0,
+                    d,
+                    18,
+                    &mut path,
+                    &mut probe,
+                    1,
+                    &vm,
+                );
                 if !probe.is_empty() {
                     tied.push(ci);
                 }
@@ -2511,7 +2768,17 @@ impl EOSmallSolver {
                 let i_eo0 = (st[0].ieo as usize) * 18;
                 let mut out: Vec<Vec<u8>> = Vec::new();
                 let mut path = Vec::new();
-                self.enum_small_masked(&xc[..n], i_dep0, i_eo0, d, 18, &mut path, &mut out, cap - items.len(), &vm);
+                self.enum_small_masked(
+                    &xc[..n],
+                    i_dep0,
+                    i_eo0,
+                    d,
+                    18,
+                    &mut path,
+                    &mut out,
+                    cap - items.len(),
+                    &vm,
+                );
                 for sol in out {
                     items.push((frames[fi].clone(), combo.to_vec(), sol));
                 }
@@ -2635,8 +2902,8 @@ mod tests {
         let cases: &[(&str, [u32; 30])] = &[(
             "U B' L R2 U B2 R2 U2 B2 U R2 U2 F2 B' R' B2 F' U2 L2 R",
             [
-                7, 8, 7, 8, 6, 8, 8, 9, 8, 9, 7, 9, 10, 11, 10, 9, 10, 11, 12, 11, 13, 12, 12,
-                13, 14, 15, 15, 14, 15, 14,
+                7, 8, 7, 8, 6, 8, 8, 9, 8, 9, 7, 9, 10, 11, 10, 9, 10, 11, 12, 11, 13, 12, 12, 13,
+                14, 15, 15, 14, 15, 14,
             ],
         )];
 
@@ -2650,7 +2917,11 @@ mod tests {
                     let dt = t0.elapsed();
                     eprintln!(
                         "rot={:>2} stage={} -> len={} items={} ({:.2?})",
-                        rot, stage, len, items.len(), dt
+                        rot,
+                        stage,
+                        len,
+                        items.len(),
+                        dt
                     );
                     assert_eq!(
                         len, want,
@@ -2660,13 +2931,23 @@ mod tests {
                     if len == 0 {
                         continue;
                     }
-                    assert!(!items.is_empty(), "no sols `{}` rot={} stage={}", scr, rot, stage);
+                    assert!(
+                        !items.is_empty(),
+                        "no sols `{}` rot={} stage={}",
+                        scr,
+                        rot,
+                        stage
+                    );
                     for (frame, combo, sol) in &items {
                         assert_eq!(
                             sol.len() as u32,
                             len,
                             "sol not optimal `{}` rot={} stage={}: frame='{}' {:?}",
-                            scr, rot, stage, frame, sol
+                            scr,
+                            rot,
+                            stage,
+                            frame,
+                            sol
                         );
                         // 每条解带自己的 frame ⇒ 用该 frame 打乱基底(可能含尾随 y)。
                         let mut full: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
@@ -2674,7 +2955,11 @@ mod tests {
                         full.extend_from_slice(sol);
                         if stage == 0 {
                             // eo_cross:edge2 cross 群 + EO 全解(pt_cross==0 && ieo==0)。
-                            assert!(combo.is_empty(), "stage 0 combo must be empty, got {:?}", combo);
+                            assert!(
+                                combo.is_empty(),
+                                "stage 0 combo must be empty, got {:?}",
+                                combo
+                            );
                             let (c1, c2, ceo) = solver.rot_virt_cross(&full);
                             let pr = solver
                                 .pt_cross
@@ -2694,7 +2979,11 @@ mod tests {
                             solver.h_ep4eo12(&sg),
                             0,
                             "ep4eo12 unsolved `{}` rot={} stage={} frame='{}' sol={:?}",
-                            scr, rot, stage, frame, sol
+                            scr,
+                            rot,
+                            stage,
+                            frame,
+                            sol
                         );
                         // 各 combo 槽:cross+角+棱(c4e0)解出 ⇒ 该 combo 在 best_len 下确达成(合法并列)。
                         assert!(!combo.is_empty(), "stage {} combo must be non-empty", stage);
@@ -2704,7 +2993,12 @@ mod tests {
                                 solver.h_c4e0(&sx),
                                 0,
                                 "combo slot {} unsolved `{}` rot={} stage={} frame='{}' sol={:?}",
-                                s, scr, rot, stage, frame, sol
+                                s,
+                                scr,
+                                rot,
+                                stage,
+                                frame,
+                                sol
                             );
                         }
                     }

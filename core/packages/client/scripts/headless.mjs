@@ -2,7 +2,7 @@
  * Shared headless chromium setup for all ad-hoc playwright scripts.
  *
  * Bakes in the same init script the MCP playwright browser uses
- * (`~/.claude/playwright-mcp-init.js` ),
+ * (`~/.codex/playwright-mcp-init.js` ),
  * so behavior matches between MCP and standalone runs.
  *
  * Usage — concise (auto teardown):
@@ -21,7 +21,7 @@
 
 import { chromium } from '@playwright/test';
 
-const INIT_SCRIPT = 'C:/Users/CubeRoot/.claude/playwright-mcp-init.js';
+const INIT_SCRIPT = 'C:/Users/CubeRoot/.codex/playwright-mcp-init.js';
 
 const DEFAULT_VIEWPORT = { width: 1280, height: 800 };
 

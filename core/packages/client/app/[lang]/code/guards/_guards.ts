@@ -5,6 +5,7 @@
 
 export interface PairedGuard {
   id: string;
+  scope: 'project' | 'user';
   hook: string;
   test: string;
   baseline: string;
@@ -15,6 +16,7 @@ export interface PairedGuard {
 export const PAIRED_GUARDS: PairedGuard[] = [
   {
     id: 'checkbox',
+    scope: 'project',
     hook: 'block-raw-checkbox.ps1',
     test: 'no-raw-checkbox.test.ts',
     baseline: '0（113→0）',
@@ -23,14 +25,16 @@ export const PAIRED_GUARDS: PairedGuard[] = [
   },
   {
     id: 'component-reimplementation',
+    scope: 'project',
     hook: 'block-component-reimplementation.ps1 → hook-detect-component-reimplementation.mjs',
     test: 'component-reuse-guard.test.ts',
     baseline: '关闭按钮 79 ↓;项目选择器 0',
-    zh: { title: '重复实现已有组件', desc: '用规则表拦高置信度的重复造轮子,不是用模糊相似度乱猜。手写关闭/清除叉号统一复用 ClearButton;页面内自写项目下拉或原生项目 select 统一复用 PuzzlePicker(/wca 展开式项目行用 WcaEventSelector)。Claude Edit/Write 与 Codex apply_patch 写入即拦,CI 对项目选择器保持零存量、对旧关闭按钮只降不升;真正不同的交互行内 allow-component-reimplementation 并写理由。' },
-    en: { title: 'Reimplementing cataloged components', desc: 'A rule registry blocks high-confidence reinventions instead of guessing from fuzzy similarity. Hand-written close/clear crosses route through ClearButton; page-local puzzle dropdowns and native puzzle selects route through PuzzlePicker (expanded /wca event rows use WcaEventSelector). Claude Edit/Write and Codex apply_patch are blocked at write time; CI keeps puzzle-selector debt at zero and ratchets legacy close buttons down. Genuinely different interactions require an inline allow-component-reimplementation reason.' },
+    zh: { title: '重复实现已有组件', desc: '用规则表拦高置信度的重复造轮子,不是用模糊相似度乱猜。手写关闭/清除叉号统一复用 ClearButton;页面内自写项目下拉或原生项目 select 统一复用 PuzzlePicker(/wca 展开式项目行用 WcaEventSelector)。Codex apply_patch 写入即拦,CI 对项目选择器保持零存量、对旧关闭按钮只降不升;真正不同的交互行内 allow-component-reimplementation 并写理由。' },
+    en: { title: 'Reimplementing cataloged components', desc: 'A rule registry blocks high-confidence reinventions instead of guessing from fuzzy similarity. Hand-written close/clear crosses route through ClearButton; page-local puzzle dropdowns and native puzzle selects route through PuzzlePicker (expanded /wca event rows use WcaEventSelector). Codex apply_patch is blocked at write time; CI keeps puzzle-selector debt at zero and ratchets legacy close buttons down. Genuinely different interactions require an inline allow-component-reimplementation reason.' },
   },
   {
     id: 'nested-links',
+    scope: 'project',
     hook: 'block-nested-links.ps1 → hook-detect-nested-links.mjs',
     test: 'no-nested-links.test.ts',
     baseline: '0',
@@ -39,6 +43,7 @@ export const PAIRED_GUARDS: PairedGuard[] = [
   },
   {
     id: 'static-onclick',
+    scope: 'user',
     hook: 'block-static-onclick-button.ps1',
     test: 'no-static-element-onclick-button.test.ts',
     baseline: '45 ↓',
@@ -47,6 +52,7 @@ export const PAIRED_GUARDS: PairedGuard[] = [
   },
   {
     id: 'button-nav',
+    scope: 'user',
     hook: 'block-button-navigation.ps1',
     test: 'no-button-navigation.test.ts',
     baseline: '0',
@@ -55,6 +61,7 @@ export const PAIRED_GUARDS: PairedGuard[] = [
   },
   {
     id: 'raw-history',
+    scope: 'user',
     hook: 'block-raw-history-url-state.ps1',
     test: 'url-state-no-raw-history.test.ts',
     baseline: '0',
@@ -63,6 +70,7 @@ export const PAIRED_GUARDS: PairedGuard[] = [
   },
   {
     id: 'ime-input',
+    scope: 'user',
     hook: 'block-nuqs-ime-input.mjs',
     test: 'ime-safe-search-input.test.ts',
     baseline: '0',
@@ -71,6 +79,7 @@ export const PAIRED_GUARDS: PairedGuard[] = [
   },
   {
     id: 'anchored-panel',
+    scope: 'project',
     hook: 'block-unclamped-anchored-panel.ps1 → hook-detect-unclamped-anchored-panel.mjs',
     test: 'anchored-panel-clamp.test.ts',
     baseline: '21 ↓',
@@ -79,6 +88,7 @@ export const PAIRED_GUARDS: PairedGuard[] = [
   },
   {
     id: 'raw-localstorage',
+    scope: 'user',
     hook: 'block-raw-localstorage-setitem.ps1',
     test: 'no-raw-localstorage-setitem.test.ts',
     baseline: '0（95→0）',
@@ -87,6 +97,7 @@ export const PAIRED_GUARDS: PairedGuard[] = [
   },
   {
     id: 'traditional',
+    scope: 'project',
     hook: 'block-handwritten-trad.ps1 → hook-detect-traditional.mjs',
     test: 'i18n-removal-guard.test.ts + i18n-no-isz-text-ternary.test.ts',
     baseline: '0（419→0）',
@@ -95,6 +106,7 @@ export const PAIRED_GUARDS: PairedGuard[] = [
   },
   {
     id: 'forwarded-for',
+    scope: 'project',
     hook: 'block-server-forwarded-for.ps1 → hook-detect-server-forwarded-for.mjs',
     test: 'server-no-forwarded-for.test.ts',
     baseline: '0（21→0）',
@@ -103,6 +115,7 @@ export const PAIRED_GUARDS: PairedGuard[] = [
   },
   {
     id: 'comp-name-year',
+    scope: 'project',
     hook: 'block-comp-name-year-regex.ps1 → hook-detect-comp-year-regex.mjs',
     test: 'comp-year-single-source.test.ts',
     baseline: '0（3 份手抄 → 1 份）',
@@ -111,11 +124,12 @@ export const PAIRED_GUARDS: PairedGuard[] = [
   },
   {
     id: 'recon-ground-truth',
+    scope: 'project',
     hook: 'recon-ground-truth-gate.ps1 → recon-ground-truth-gate.mjs',
     test: 'recon-ground-truth-gate.test.ts + recon_ground_truth.test.ts',
     baseline: '当前集合全量',
-    zh: { title: '复盘 Ground Truth 未验证', desc: '管理员管理器是唯一手工入口，测试命令从公开导出生成供 Git 和 AI 审查的 JSON。Codex、Claude 命令 hook 与 Git pre-commit 三层拦截：提交复盘算法、陀螺仪、转体处理或 ground-truth 管道前，当前内容指纹必须对应一次全部 confirmed 样本测试通过记录；管理器新增样本并同步后，旧凭证立即失效。' },
-    en: { title: 'Unverified reconstruction ground truth', desc: 'The admin manager is the only manual entry point; the test command generates the Git- and AI-reviewable JSON from its public export. Codex and Claude command hooks plus Git pre-commit require the exact current content fingerprint to have a successful run over every confirmed case before reconstruction logic, gyro, rotation handling or the ground-truth pipeline can be committed. Syncing a newly confirmed case immediately invalidates the old credential.' },
+    zh: { title: '复盘 Ground Truth 未验证', desc: '管理员管理器是唯一手工入口，测试命令从公开导出生成供 Git 和 AI 审查的 JSON。Codex 命令 hook 与 Git pre-commit 两层拦截：提交复盘算法、陀螺仪、转体处理或 ground-truth 管道前，当前内容指纹必须对应一次全部 confirmed 样本测试通过记录；管理器新增样本并同步后，旧凭证立即失效。' },
+    en: { title: 'Unverified reconstruction ground truth', desc: 'The admin manager is the only manual entry point; the test command generates the Git- and AI-reviewable JSON from its public export. The Codex command hook and Git pre-commit require the exact current content fingerprint to have a successful run over every confirmed case before reconstruction logic, gyro, rotation handling or the ground-truth pipeline can be committed. Syncing a newly confirmed case immediately invalidates the old credential.' },
   },
 ];
 
@@ -311,6 +325,7 @@ export const CI_GUARDS_API: CiGuard[] = [
 
 export interface ProcessGuard {
   id: string;
+  scope: 'project' | 'user';
   hook: string;
   matcher: string;
   zh: { title: string; desc: string };
@@ -319,35 +334,56 @@ export interface ProcessGuard {
 
 export const PROCESS_GUARDS: ProcessGuard[] = [
   {
+    id: 'banned-words',
+    scope: 'project',
+    hook: 'block-banned-words.ps1',
+    matcher: 'apply_patch',
+    zh: { title: '站内违禁词', desc: 'Codex 新增文本命中 .codex/banned-words.json 时立即拦截,并给出统一替代词;确有必要时用行内 allow-banned-word 说明原因。' },
+    en: { title: 'Site-banned wording', desc: 'Codex writes are blocked when newly added text matches .codex/banned-words.json, with the approved replacement shown; genuine exceptions require an inline allow-banned-word reason.' },
+  },
+  {
     id: 'browser-launch',
+    scope: 'user',
     hook: 'guard-browser-launch.mjs',
-    matcher: 'Bash | PowerShell',
+    matcher: 'Bash',
     zh: { title: 'Ad-hoc Playwright 起浏览器', desc: 'AI 自起的 WebKit/Firefox/Chromium 脚本(不走 MCP)起浏览器前必须先禁 WebRTC,没禁直接拦。' },
     en: { title: 'Ad-hoc Playwright browser launch', desc: 'AI-launched WebKit/Firefox/Chromium scripts (not via MCP) must disable WebRTC before launching — blocked if they don’t.' },
   },
   {
     id: 'webkit-webrtc',
+    scope: 'user',
     hook: 'block-webkit-no-webrtc.ps1',
-    matcher: 'Edit | Write | MultiEdit',
+    matcher: 'apply_patch',
     zh: { title: '写入态 WebRTC 检测', desc: '写入 .launch( 调用时静态扫描,没带 WebRTC 禁用同样拦 —— 与上面的运行态检测同一份 kill,双保险。' },
     en: { title: 'Write-time WebRTC check', desc: 'Statically scans a written .launch( call — missing the WebRTC kill is blocked the same way, a belt-and-suspenders pair with the runtime check above.' },
   },
   {
     id: 'next-build-dev',
+    scope: 'user',
     hook: 'block-next-build-while-dev.ps1',
-    matcher: 'Bash | PowerShell',
+    matcher: 'Bash',
     zh: { title: 'dev 时禁 next build', desc: 'dev server 在跑时 build 和 dev 共用 .next/,并发写会撕裂 manifest JSON → 全站 500。dev 活着就拦 build。' },
     en: { title: 'No next build while dev runs', desc: 'build and dev share .next/ — concurrent writes tear the manifest JSON and 500 the whole site. Blocked whenever dev is alive.' },
   },
   {
     id: 'repo-image-write',
+    scope: 'user',
     hook: 'block-repo-image-write.ps1',
-    matcher: 'Bash | PowerShell',
+    matcher: 'Bash',
     zh: { title: 'AI 产物落仓库根', desc: 'AI 自己生成的截图 / 调试图 / 对比图写进仓库根或其他工作区路径直接拦,必须落 .tmp/png/。' },
     en: { title: 'AI artifacts landing in the repo', desc: 'AI-generated screenshots / debug images / comparisons written to the repo root or other workspace paths are blocked — they must land in .tmp/png/.' },
   },
   {
+    id: 'trash-only-delete',
+    scope: 'user',
+    hook: 'block-rm-use-trash.ps1',
+    matcher: 'Bash',
+    zh: { title: '源码删除必须进回收站', desc: 'Codex 命令直接删除源码或执行高危 Git 覆盖操作时立即拦截;源码文件统一走 trash.ps1,垃圾构建目录仍可直接清理。' },
+    en: { title: 'Recoverable source deletion', desc: 'Codex commands that directly delete source or run destructive Git overwrites are blocked; source files go through trash.ps1 while disposable build directories remain removable.' },
+  },
+  {
     id: 'redirect-screenshot',
+    scope: 'user',
     hook: 'redirect-screenshot.ps1',
     matcher: 'mcp__playwright__browser_take_screenshot',
     zh: { title: 'Playwright MCP 截图重定向', desc: '不是拦,是改:playwright MCP 的截图调用自动重写输出路径到 .tmp/png/,不用等写入态规则去抓。' },

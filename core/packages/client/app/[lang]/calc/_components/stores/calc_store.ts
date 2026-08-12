@@ -232,7 +232,7 @@ export const useCalcStore = create<CalcState>((set, get) => ({
         }
       }
       // 豁免:zustand store(无法用 React hook)+ t0/t1.. 动态键的成绩数据序列化,不适合 nuqs 固定 schema;
-      // 改 nuqs 会变 URL 格式破坏已分享链接。data-blob 例外(见 CLAUDE.md「URL 状态 / 后退导航」)。
+      // 改 nuqs 会变 URL 格式破坏已分享链接。data-blob 例外(见 AGENTS.md「URL 状态 / 后退导航」)。
       // eslint-disable-next-line no-restricted-syntax, no-restricted-globals
       history.replaceState(null, '', '?' + params.toString());
     }, URL_DEBOUNCE_MS);

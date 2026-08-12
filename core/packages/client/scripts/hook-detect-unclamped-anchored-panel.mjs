@@ -3,7 +3,7 @@
 // top:~100%) written without a viewport-clamp declaration — the trigger can sit near the
 // right viewport edge and the panel gets clipped (issue #29, homepage pickers on phones).
 // Reads the hook payload on stdin ({tool_name, tool_input}), scans NEW content
-// (Write.content / Edit.new_string / MultiEdit.edits[]) for complete CSS rule blocks in
+// normalized newly added content for complete CSS rule blocks in
 // that shape and DENIES (JSON permissionDecision=deny on stdout + exit 0) unless the
 // content carries an `anchored-panel:` declaration. Auto-safe shapes (left+right pinned,
 // width:100%, ::before/::after decorations) pass. Partial edits without a full {...}

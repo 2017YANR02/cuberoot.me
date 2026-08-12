@@ -29,8 +29,8 @@ pub mod executor;
 pub mod f2b_solver;
 pub mod first_layer_solver;
 pub mod fr_solver;
-pub mod htr_solver;
 pub mod htr_phase2_solver;
+pub mod htr_solver;
 // 222:2x2x2 口袋魔方全空间最优(3.6MB 零盘表现场 BFS)。
 pub mod cube222_solver;
 // pyraminx:金字塔核心+顶点全空间最优(0.9MB 零盘表现场 BFS,独立状态模型)。
@@ -63,8 +63,8 @@ pub mod eo_cross_solver;
 // f2leo / pseudo_f2leo / pair 双轨:native(manager)+ wasm(from_tables + *_small cascade)。
 // manager 调用(new)已各自 cfg 门控,模块本身 wasm 可编。
 pub mod f2leo_solver;
-pub mod pseudo_f2leo_solver;
 pub mod pair_solver;
+pub mod pseudo_f2leo_solver;
 // pseudo_pair:native(manager,GB 表)+ wasm(PseudoPairSmallSolver,全 prune 现建)。自包含 wasm 可编。
 pub mod pseudo_pair_solver;
 // pseudo:native(manager,4×54MB 表)+ wasm(PseudoSmallSolver,cross+corner 表现建)。

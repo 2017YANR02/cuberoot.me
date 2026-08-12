@@ -18,7 +18,7 @@ description: "Use when adding/editing user-visible text in the React client (cor
 ## 禁区(以后的 AI 强制遵守)
 
 - **禁内联 UI 语言文案三元**:`isZh ? '中文' : 'English'`、`i18n.language.startsWith('zh') ? x.zh : x.en`、`i18n.language === 'zh' ? <>…</> : <>…</>` 一律改走上面四种。
-  双层守卫:写入即拦 PreToolUse hook(`.Codex/hooks/block-handwritten-trad.ps1` → `core/packages/client/scripts/hook-detect-traditional.mjs`)+ CI ratchet `tests/i18n-no-isz-text-ternary.test.ts`(全局语言文案三元计数只降不升;迁移后把 BASELINE 调低)。
+  双层守卫:写入即拦 PreToolUse hook(`.codex/hooks/block-handwritten-trad.ps1` → `core/packages/client/scripts/hook-detect-traditional.mjs`)+ CI ratchet `tests/i18n-no-isz-text-ternary.test.ts`(全局语言文案三元计数只降不升;迁移后把 BASELINE 调低)。
 - **禁单语裸字**(切语言会断)、**禁繁体字**(hook + `tests/i18n-removal-guard.test.ts`)。
 
 ## 唯一允许的 isZh:函数参数(util 契约)

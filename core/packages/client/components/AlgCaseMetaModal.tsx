@@ -43,7 +43,7 @@ export default function AlgCaseMetaModal({ caseObj, puzzle, set, byNo, onClose, 
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  /** 「在列表中打开」—— 真 <a>,中键能新开(CLAUDE.md「链接支持中键新开」) */
+  /** 「在列表中打开」—— 真 <a>,中键能新开(AGENTS.md「链接支持中键新开」) */
   const listHref = useMemo(() => href ?? algCaseHref(puzzle, set, caseObj), [href, caseObj, puzzle, set]);
 
   return (

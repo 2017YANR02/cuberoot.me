@@ -148,8 +148,7 @@ impl PairSolver {
         let mt_e = self.mt_edge.as_u32();
         let cj = conj_moves_flat();
 
-        let mut cur_mul: u32 =
-            (state_space::CROSS_SOLVED as u32) * (state_space::CORNER as u32);
+        let mut cur_mul: u32 = (state_space::CROSS_SOLVED as u32) * (state_space::CORNER as u32);
         let mut cur_corn: u32 = IDX_C4 * 18;
         let mut cur_e0: u32 = IDX_E0 * 18;
 
@@ -508,7 +507,14 @@ impl PairSolver {
             }
             let max_search = std::cmp::min(18, min_v.saturating_sub(1));
             for d in h..=max_search {
-                if self.search_1(st.im as usize, (st.ic as usize) * 18, (st.ie as usize) * 18, d, 18, s1) {
+                if self.search_1(
+                    st.im as usize,
+                    (st.ic as usize) * 18,
+                    (st.ie as usize) * 18,
+                    d,
+                    18,
+                    s1,
+                ) {
                     if d < min_v {
                         min_v = d;
                     }
@@ -734,8 +740,7 @@ impl PairSolver {
                 return 0;
             }
             // 3 个 pair: (fix[0], fix[1]), (fix[1], fix[2]), (fix[2], fix[0])
-            let pairs: [[usize; 2]; 3] =
-                [[fix[0], fix[1]], [fix[1], fix[2]], [fix[2], fix[0]]];
+            let pairs: [[usize; 2]; 3] = [[fix[0], fix[1]], [fix[1], fix[2]], [fix[2], fix[0]]];
             let mut ie6 = [0u32; 3];
             let mut ic2 = [0u32; 3];
             let mut v: [i32; 3] = [-1; 3];
@@ -891,7 +896,15 @@ impl PairSolver {
                 bump_node_count(local);
                 return true;
             }
-            if self.search_small(nim_p, nic_p * 18, nie_p * 18, p_slot, &nxc[..n], depth - 1, m as u8) {
+            if self.search_small(
+                nim_p,
+                nic_p * 18,
+                nie_p * 18,
+                p_slot,
+                &nxc[..n],
+                depth - 1,
+                m as u8,
+            ) {
                 bump_node_count(local);
                 return true;
             }
@@ -1145,7 +1158,18 @@ impl PairSolver {
                 out.push(path.clone());
             } else if max_h > 0 {
                 // max_h==0 ⟺ pair 与全 xcross 槽皆解;depth>1 还要走步 = 更短解 + 无效尾动,跳过。
-                self.enum_small(nim_p, nic_p * 18, nie_p * 18, p_slot, &nxc[..n], depth - 1, m as u8, path, out, cap);
+                self.enum_small(
+                    nim_p,
+                    nic_p * 18,
+                    nie_p * 18,
+                    p_slot,
+                    &nxc[..n],
+                    depth - 1,
+                    m as u8,
+                    path,
+                    out,
+                    cap,
+                );
             }
             path.pop();
         }
@@ -1190,7 +1214,11 @@ impl PairSolver {
                         if fix == tgt {
                             continue;
                         }
-                        tasks.push((tgt, vec![fix], self.h_ins(&st[tgt]).max(self.h_c4e0(&st[fix]))));
+                        tasks.push((
+                            tgt,
+                            vec![fix],
+                            self.h_ins(&st[tgt]).max(self.h_c4e0(&st[fix])),
+                        ));
                     }
                 }
             }
@@ -1229,7 +1257,11 @@ impl PairSolver {
         if !force.is_empty() {
             let fset: std::collections::BTreeSet<usize> = force.iter().copied().collect();
             tasks.retain(|(_tgt, xc_slots, _h)| {
-                xc_slots.iter().copied().collect::<std::collections::BTreeSet<usize>>() == fset
+                xc_slots
+                    .iter()
+                    .copied()
+                    .collect::<std::collections::BTreeSet<usize>>()
+                    == fset
             });
         }
         if (base >= 0 || !force.is_empty()) && tasks.is_empty() {
@@ -1316,7 +1348,16 @@ impl PairSolver {
 // wasm 不查 huge 表 ⇒ 这里只重写它们的受限版。正确性:所有剪枝表是无限制距离的可采纳下界,
 // 对任意 mask 仍可采纳 ⇒ IDA* 首达即真·受限最优(≤ max_depth),超界返回 99 哨兵。无 frame。
 impl PairSolver {
-    fn search_1_masked(&self, i1: usize, i2: usize, i3: usize, depth: u32, prev: u8, s1: usize, vm: &ValidMovesTable) -> bool {
+    fn search_1_masked(
+        &self,
+        i1: usize,
+        i2: usize,
+        i3: usize,
+        depth: u32,
+        prev: u8,
+        s1: usize,
+        vm: &ValidMovesTable,
+    ) -> bool {
         let (vmoves, vcnt) = vm;
         let count = vcnt[prev as usize] as usize;
         let row = &vmoves[prev as usize];
@@ -1358,9 +1399,16 @@ impl PairSolver {
     #[allow(clippy::too_many_arguments)]
     fn search_2_masked(
         &self,
-        im_p: usize, ic_p: usize, ie_p: usize,
-        im_x: usize, ic_x: usize, ie_x: usize,
-        depth: u32, prev: u8, s_p: usize, s_x: usize,
+        im_p: usize,
+        ic_p: usize,
+        ie_p: usize,
+        im_x: usize,
+        ic_x: usize,
+        ie_x: usize,
+        depth: u32,
+        prev: u8,
+        s_p: usize,
+        s_x: usize,
         vm: &ValidMovesTable,
     ) -> bool {
         let (vmoves, vcnt) = vm;
@@ -1401,9 +1449,17 @@ impl PairSolver {
                     return true;
                 }
             } else if self.search_2_masked(
-                n_im_p, n_ic_p * 18, n_ie_p * 18,
-                n_im_x, n_ic_x * 18, n_ie_x * 18,
-                depth - 1, m as u8, s_p, s_x, vm,
+                n_im_p,
+                n_ic_p * 18,
+                n_ie_p * 18,
+                n_im_x,
+                n_ic_x * 18,
+                n_ie_x * 18,
+                depth - 1,
+                m as u8,
+                s_p,
+                s_x,
+                vm,
             ) {
                 bump_node_count(local);
                 return true;
@@ -1433,7 +1489,15 @@ impl PairSolver {
                 return 0;
             }
             for d in h.max(1)..=max_depth {
-                if self.search_1_masked(st.im as usize, (st.ic as usize) * 18, (st.ie as usize) * 18, d, 18, s1, vm) {
+                if self.search_1_masked(
+                    st.im as usize,
+                    (st.ic as usize) * 18,
+                    (st.ie as usize) * 18,
+                    d,
+                    18,
+                    s1,
+                    vm,
+                ) {
                     if d < min_v {
                         min_v = d;
                     }
@@ -1445,7 +1509,13 @@ impl PairSolver {
     }
 
     /// 受限版 solve_2_group(stage 1:xcross+pair)。max_depth 内无解返回 99。
-    fn solve_2_group_masked(&self, alg: &[u8], lower_bound: u32, vm: &ValidMovesTable, max_depth: u32) -> u32 {
+    fn solve_2_group_masked(
+        &self,
+        alg: &[u8],
+        lower_bound: u32,
+        vm: &ValidMovesTable,
+        max_depth: u32,
+    ) -> u32 {
         let mut tasks: Vec<(usize, usize, u32)> = Vec::with_capacity(12);
         for fix in 0..4 {
             for tgt in 0..4 {
@@ -1457,7 +1527,8 @@ impl PairSolver {
                 let h1 = self.pt_cross_ins_c4.get((sp.im + sp.ic) as u64) as u32;
                 let h2 = self
                     .pt_cross_c4e0
-                    .get((sx.im as u64 + sx.ic as u64) * 24 + sx.ie as u64) as u32;
+                    .get((sx.im as u64 + sx.ic as u64) * 24 + sx.ie as u64)
+                    as u32;
                 tasks.push((tgt, fix, std::cmp::max(h1, h2)));
             }
         }
@@ -1475,9 +1546,17 @@ impl PairSolver {
             let start_d = std::cmp::max(h.max(1), lower_bound);
             for d in start_d..=max_depth {
                 if self.search_2_masked(
-                    sp.im as usize, (sp.ic as usize) * 18, (sp.ie as usize) * 18,
-                    sx.im as usize, (sx.ic as usize) * 18, (sx.ie as usize) * 18,
-                    d, 18, s1, s2, vm,
+                    sp.im as usize,
+                    (sp.ic as usize) * 18,
+                    (sp.ie as usize) * 18,
+                    sx.im as usize,
+                    (sx.ic as usize) * 18,
+                    (sx.ie as usize) * 18,
+                    d,
+                    18,
+                    s1,
+                    s2,
+                    vm,
                 ) {
                     if d < min_v {
                         min_v = d;
@@ -1493,9 +1572,14 @@ impl PairSolver {
     #[allow(clippy::too_many_arguments)]
     fn search_small_masked(
         &self,
-        p_im: usize, p_ic: usize, p_ie: usize, p_slot: usize,
+        p_im: usize,
+        p_ic: usize,
+        p_ie: usize,
+        p_slot: usize,
         xc: &[(usize, usize, usize, usize)],
-        depth: u32, prev: u8, vm: &ValidMovesTable,
+        depth: u32,
+        prev: u8,
+        vm: &ValidMovesTable,
     ) -> bool {
         let (vmoves, vcnt) = vm;
         let count = vcnt[prev as usize] as usize;
@@ -1541,7 +1625,16 @@ impl PairSolver {
                 bump_node_count(local);
                 return true;
             }
-            if self.search_small_masked(nim_p, nic_p * 18, nie_p * 18, p_slot, &nxc[..n], depth - 1, m as u8, vm) {
+            if self.search_small_masked(
+                nim_p,
+                nic_p * 18,
+                nie_p * 18,
+                p_slot,
+                &nxc[..n],
+                depth - 1,
+                m as u8,
+                vm,
+            ) {
                 bump_node_count(local);
                 return true;
             }
@@ -1567,19 +1660,39 @@ impl PairSolver {
         }
         let mut xc = [(0usize, 0usize, 0usize, 0usize); 3];
         for (j, &s) in xc_slots.iter().enumerate() {
-            xc[j] = (st[s].im as usize, (st[s].ic as usize) * 18, (st[s].ie as usize) * 18, s);
+            xc[j] = (
+                st[s].im as usize,
+                (st[s].ic as usize) * 18,
+                (st[s].ie as usize) * 18,
+                s,
+            );
         }
         let n = xc_slots.len();
         let start = std::cmp::max(h.max(lower), 1);
         for d in start..=max_d {
-            if self.search_small_masked(sp.im as usize, (sp.ic as usize) * 18, (sp.ie as usize) * 18, tgt, &xc[..n], d, 18, vm) {
+            if self.search_small_masked(
+                sp.im as usize,
+                (sp.ic as usize) * 18,
+                (sp.ie as usize) * 18,
+                tgt,
+                &xc[..n],
+                d,
+                18,
+                vm,
+            ) {
                 return d;
             }
         }
         99
     }
 
-    fn solve_3_small_masked(&self, alg: &[u8], lower: u32, vm: &ValidMovesTable, max_d: u32) -> u32 {
+    fn solve_3_small_masked(
+        &self,
+        alg: &[u8],
+        lower: u32,
+        vm: &ValidMovesTable,
+        max_d: u32,
+    ) -> u32 {
         const PAIRS: [[usize; 2]; 6] = [[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]];
         let st: [VirtState; 4] = std::array::from_fn(|s| self.get_virt(alg, s));
         let mut tasks: Vec<(usize, usize, usize, u32)> = Vec::with_capacity(12);
@@ -1588,7 +1701,10 @@ impl PairSolver {
                 if tgt == p[0] || tgt == p[1] {
                     continue;
                 }
-                let h = self.h_ins(&st[tgt]).max(self.h_c4e0(&st[p[0]])).max(self.h_c4e0(&st[p[1]]));
+                let h = self
+                    .h_ins(&st[tgt])
+                    .max(self.h_c4e0(&st[p[0]]))
+                    .max(self.h_c4e0(&st[p[1]]));
                 tasks.push((tgt, p[0], p[1], h));
             }
         }
@@ -1606,7 +1722,13 @@ impl PairSolver {
         min_v
     }
 
-    fn solve_4_small_masked(&self, alg: &[u8], lower: u32, vm: &ValidMovesTable, max_d: u32) -> u32 {
+    fn solve_4_small_masked(
+        &self,
+        alg: &[u8],
+        lower: u32,
+        vm: &ValidMovesTable,
+        max_d: u32,
+    ) -> u32 {
         let st: [VirtState; 4] = std::array::from_fn(|s| self.get_virt(alg, s));
         let mut tasks: Vec<(usize, [usize; 3], u32)> = Vec::with_capacity(4);
         for tgt in 0..4 {
@@ -1660,7 +1782,11 @@ impl PairSolver {
                     2 => self.solve_3_small_masked(&a, 0, &vm, 18u32.min(max_depth)),
                     _ => self.solve_4_small_masked(&a, 0, &vm, 18u32.min(max_depth)),
                 };
-                if v >= 99 { None } else { Some(v) }
+                if v >= 99 {
+                    None
+                } else {
+                    Some(v)
+                }
             })
             .collect()
     }
@@ -1669,10 +1795,16 @@ impl PairSolver {
     #[allow(clippy::too_many_arguments)]
     fn enum_small_masked(
         &self,
-        p_im: usize, p_ic: usize, p_ie: usize, p_slot: usize,
+        p_im: usize,
+        p_ic: usize,
+        p_ie: usize,
+        p_slot: usize,
         xc: &[(usize, usize, usize, usize)],
-        depth: u32, prev: u8,
-        path: &mut Vec<u8>, out: &mut Vec<Vec<u8>>, cap: usize,
+        depth: u32,
+        prev: u8,
+        path: &mut Vec<u8>,
+        out: &mut Vec<Vec<u8>>,
+        cap: usize,
         vm: &ValidMovesTable,
     ) {
         if out.len() >= cap {
@@ -1729,7 +1861,19 @@ impl PairSolver {
             if depth == 1 {
                 out.push(path.clone());
             } else if max_h > 0 {
-                self.enum_small_masked(nim_p, nic_p * 18, nie_p * 18, p_slot, &nxc[..n], depth - 1, m as u8, path, out, cap, vm);
+                self.enum_small_masked(
+                    nim_p,
+                    nic_p * 18,
+                    nie_p * 18,
+                    p_slot,
+                    &nxc[..n],
+                    depth - 1,
+                    m as u8,
+                    path,
+                    out,
+                    cap,
+                    vm,
+                );
             }
             path.pop();
         }
@@ -1769,7 +1913,11 @@ impl PairSolver {
                         if fix == tgt {
                             continue;
                         }
-                        tasks.push((tgt, vec![fix], self.h_ins(&st[tgt]).max(self.h_c4e0(&st[fix]))));
+                        tasks.push((
+                            tgt,
+                            vec![fix],
+                            self.h_ins(&st[tgt]).max(self.h_c4e0(&st[fix])),
+                        ));
                     }
                 }
             }
@@ -1779,7 +1927,10 @@ impl PairSolver {
                         if tgt == p[0] || tgt == p[1] {
                             continue;
                         }
-                        let h = self.h_ins(&st[tgt]).max(self.h_c4e0(&st[p[0]])).max(self.h_c4e0(&st[p[1]]));
+                        let h = self
+                            .h_ins(&st[tgt])
+                            .max(self.h_c4e0(&st[p[0]]))
+                            .max(self.h_c4e0(&st[p[1]]));
                         tasks.push((tgt, vec![p[0], p[1]], h));
                     }
                 }
@@ -1787,7 +1938,9 @@ impl PairSolver {
             _ => {
                 for tgt in 0..4 {
                     let fix: Vec<usize> = (0..4).filter(|&k| k != tgt).collect();
-                    let h = fix.iter().fold(self.h_ins(&st[tgt]), |acc, &s| acc.max(self.h_c4e0(&st[s])));
+                    let h = fix
+                        .iter()
+                        .fold(self.h_ins(&st[tgt]), |acc, &s| acc.max(self.h_c4e0(&st[s])));
                     tasks.push((tgt, fix, h));
                 }
             }
@@ -1801,7 +1954,11 @@ impl PairSolver {
         if !force.is_empty() {
             let fset: std::collections::BTreeSet<usize> = force.iter().copied().collect();
             tasks.retain(|(_tgt, xc_slots, _h)| {
-                xc_slots.iter().copied().collect::<std::collections::BTreeSet<usize>>() == fset
+                xc_slots
+                    .iter()
+                    .copied()
+                    .collect::<std::collections::BTreeSet<usize>>()
+                    == fset
             });
         }
         if (base_slot >= 0 || !force.is_empty()) && tasks.is_empty() {
@@ -1843,15 +2000,29 @@ impl PairSolver {
                 let sp = &st[*tgt];
                 let mut xc = [(0usize, 0usize, 0usize, 0usize); 3];
                 for (j, &s) in xc_slots.iter().enumerate() {
-                    xc[j] = (st[s].im as usize, (st[s].ic as usize) * 18, (st[s].ie as usize) * 18, s);
+                    xc[j] = (
+                        st[s].im as usize,
+                        (st[s].ic as usize) * 18,
+                        (st[s].ie as usize) * 18,
+                        s,
+                    );
                 }
                 let n = xc_slots.len();
                 let mut combo = vec![*tgt];
                 combo.extend(xc_slots.iter().copied());
                 let mut task_out: Vec<Vec<u8>> = Vec::new();
                 self.enum_small_masked(
-                    sp.im as usize, (sp.ic as usize) * 18, (sp.ie as usize) * 18, *tgt,
-                    &xc[..n], d, 18, &mut path, &mut task_out, cap - out.len(), &vm,
+                    sp.im as usize,
+                    (sp.ic as usize) * 18,
+                    (sp.ie as usize) * 18,
+                    *tgt,
+                    &xc[..n],
+                    d,
+                    18,
+                    &mut path,
+                    &mut task_out,
+                    cap - out.len(),
+                    &vm,
                 );
                 for sol in task_out {
                     out.push((rot.to_string(), combo.clone(), sol));
@@ -1896,15 +2067,24 @@ mod tests {
         let cases: &[(&str, [u32; 24])] = &[
             (
                 "U B' L R2 U B2 R2 U2 B2 U R2 U2 F2 B' R' B2 F' U2 L2 R",
-                [6, 7, 6, 7, 6, 7, 7, 8, 8, 8, 7, 9, 10, 10, 10, 10, 9, 11, 13, 12, 13, 12, 11, 12],
+                [
+                    6, 7, 6, 7, 6, 7, 7, 8, 8, 8, 7, 9, 10, 10, 10, 10, 9, 11, 13, 12, 13, 12, 11,
+                    12,
+                ],
             ),
             (
                 "D2 L B2 R2 D R2 D R2 B2 R2 D2 L' D2 B D2 U2 R2 D' B2 R",
-                [6, 6, 7, 6, 7, 7, 8, 8, 8, 7, 8, 8, 11, 10, 10, 10, 10, 10, 13, 12, 12, 11, 13, 11],
+                [
+                    6, 6, 7, 6, 7, 7, 8, 8, 8, 7, 8, 8, 11, 10, 10, 10, 10, 10, 13, 12, 12, 11, 13,
+                    11,
+                ],
             ),
             (
                 "B2 D' F2 L' U' R' D R2 F D' B2 L2 F2 R2 B' R2 L2 U2 L",
-                [7, 7, 7, 6, 7, 6, 9, 8, 9, 7, 8, 7, 11, 9, 10, 10, 11, 10, 12, 11, 12, 13, 12, 13],
+                [
+                    7, 7, 7, 6, 7, 6, 9, 8, 9, 7, 8, 7, 11, 9, 10, 10, 11, 10, 12, 11, 12, 13, 12,
+                    13,
+                ],
             ),
         ];
 
@@ -1951,11 +2131,17 @@ mod tests {
         let cases: &[(&str, [u32; 24])] = &[
             (
                 "U B' L R2 U B2 R2 U2 B2 U R2 U2 F2 B' R' B2 F' U2 L2 R",
-                [6, 7, 6, 7, 6, 7, 7, 8, 8, 8, 7, 9, 10, 10, 10, 10, 9, 11, 13, 12, 13, 12, 11, 12],
+                [
+                    6, 7, 6, 7, 6, 7, 7, 8, 8, 8, 7, 9, 10, 10, 10, 10, 9, 11, 13, 12, 13, 12, 11,
+                    12,
+                ],
             ),
             (
                 "D2 L B2 R2 D R2 D R2 B2 R2 D2 L' D2 B D2 U2 R2 D' B2 R",
-                [6, 6, 7, 6, 7, 7, 8, 8, 8, 7, 8, 8, 11, 10, 10, 10, 10, 10, 13, 12, 12, 11, 13, 11],
+                [
+                    6, 6, 7, 6, 7, 7, 8, 8, 8, 7, 8, 8, 11, 10, 10, 10, 10, 10, 13, 12, 12, 11, 13,
+                    11,
+                ],
             ),
         ];
 
@@ -1973,7 +2159,13 @@ mod tests {
                     if len == 0 {
                         continue;
                     }
-                    assert!(!items.is_empty(), "no sols `{}` rot={} stage={}", scr, rot, stage);
+                    assert!(
+                        !items.is_empty(),
+                        "no sols `{}` rot={} stage={}",
+                        scr,
+                        rot,
+                        stage
+                    );
                     // rot 后打乱基底。
                     let mut base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
                     alg_rotation(&mut base, rot);
@@ -1984,13 +2176,15 @@ mod tests {
                             frame.as_str(),
                             *rot,
                             "frame mismatch `{}` rot={} stage={}: {:?}",
-                            scr, rot, stage, frame
+                            scr,
+                            rot,
+                            stage,
+                            frame
                         );
                         let tgt = combo[0];
                         let xc_slots = &combo[1..];
                         // 该 combo 必须在本 stage 下达成 best_len(合法并列)。
-                        let combo_len =
-                            solver.solve_small_task(&st, tgt, xc_slots, 0, 0, 99);
+                        let combo_len = solver.solve_small_task(&st, tgt, xc_slots, 0, 0, 99);
                         assert_eq!(
                             combo_len, len,
                             "tied combo {:?} not best_len `{}` rot={} stage={}: combo_len={} best_len={}",
@@ -2000,7 +2194,10 @@ mod tests {
                             sol.len() as u32,
                             len,
                             "sol not optimal `{}` rot={} stage={}: {:?}",
-                            scr, rot, stage, sol
+                            scr,
+                            rot,
+                            stage,
+                            sol
                         );
                         let mut full = base.clone();
                         full.extend_from_slice(sol);
@@ -2010,22 +2207,34 @@ mod tests {
                             solver.pt_cross_ins_c4.get((sp.im + sp.ic) as u64),
                             0,
                             "tgt cross_ins unsolved `{}` rot={} stage={} sol={:?}",
-                            scr, rot, stage, sol
+                            scr,
+                            rot,
+                            stage,
+                            sol
                         );
                         assert_eq!(
                             solver.pt_pair_c4e0.get((sp.ie * 24 + sp.ic) as u64),
                             0,
                             "tgt pair unsolved `{}` rot={} stage={} sol={:?}",
-                            scr, rot, stage, sol
+                            scr,
+                            rot,
+                            stage,
+                            sol
                         );
                         // 各 xcross 槽:cross+corner+edge(c4e0)解出。
                         for &s in xc_slots {
                             let sx = solver.get_virt(&full, s);
                             assert_eq!(
-                                solver.pt_cross_c4e0.get(((sx.im + sx.ic) * 24 + sx.ie) as u64),
+                                solver
+                                    .pt_cross_c4e0
+                                    .get(((sx.im + sx.ic) * 24 + sx.ie) as u64),
                                 0,
                                 "xc slot {} unsolved `{}` rot={} stage={} sol={:?}",
-                                s, scr, rot, stage, sol
+                                s,
+                                scr,
+                                rot,
+                                stage,
+                                sol
                             );
                         }
                     }

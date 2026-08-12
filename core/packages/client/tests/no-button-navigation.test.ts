@@ -1,6 +1,6 @@
 // 链接导航约定守卫:站内"可点即跳 URL"的元素必须是真 <a> / AppLink(带 href),
 // 禁在 onClick 里直接 router.push / router.replace 当导航 —— 否则鼠标中键 / Ctrl 点
-// 开新标签页失效,复制链接 / SEO / 爬虫可达全丢。约定见仓库根 CLAUDE.md「链接支持中键新开」。
+// 开新标签页失效,复制链接 / SEO / 爬虫可达全丢。约定见仓库根 AGENTS.md「链接支持中键新开」。
 //
 // 合理例外(提交后程序化重定向、disabled 门控的动作、纯动作按钮、已是真 <a href> 的
 // 渐进增强)走 ALLOWLIST,每条带理由。

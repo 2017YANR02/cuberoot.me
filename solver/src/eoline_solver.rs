@@ -162,13 +162,30 @@ impl EOLineSolver {
             state_space::EO12 * LINE,
             LINE_SOLVED,
         );
-        EOLineSolver { mt_eo, mt_line, pt_eo, pt }
+        EOLineSolver {
+            mt_eo,
+            mt_line,
+            pt_eo,
+            pt,
+        }
     }
 
     /// 两阶段最大深度 (EO God, EOLine God)(信息用)。
     pub fn max_depths(&self) -> (u8, u8) {
-        let eo = self.pt_eo.iter().copied().filter(|&v| v != 255).max().unwrap_or(0);
-        let line = self.pt.iter().copied().filter(|&v| v != 255).max().unwrap_or(0);
+        let eo = self
+            .pt_eo
+            .iter()
+            .copied()
+            .filter(|&v| v != 255)
+            .max()
+            .unwrap_or(0);
+        let line = self
+            .pt
+            .iter()
+            .copied()
+            .filter(|&v| v != 255)
+            .max()
+            .unwrap_or(0);
         (eo, line)
     }
 
@@ -285,12 +302,28 @@ impl EOLineSolver {
             for d in dists[k]..=budget {
                 if stage == 0 {
                     Self::enumerate_single(
-                        &self.mt_eo, &self.pt_eo, eo, d, 18, &mut path, &mut out, cap,
+                        &self.mt_eo,
+                        &self.pt_eo,
+                        eo,
+                        d,
+                        18,
+                        &mut path,
+                        &mut out,
+                        cap,
                     );
                 } else {
                     crate::roux_s1_solver::enumerate_product(
-                        &self.mt_eo, &self.mt_line, LINE, &self.pt, eo, line, d, 18,
-                        &mut path, &mut out, cap,
+                        &self.mt_eo,
+                        &self.mt_line,
+                        LINE,
+                        &self.pt,
+                        eo,
+                        line,
+                        d,
+                        18,
+                        &mut path,
+                        &mut out,
+                        cap,
                     );
                 }
                 if out.len() >= cap {
@@ -335,11 +368,29 @@ impl EOLineSolver {
         let mut path = Vec::new();
         for d in best..=budget {
             if stage == 0 {
-                Self::enumerate_single(&self.mt_eo, &self.pt_eo, eo, d, 18, &mut path, &mut out, cap);
+                Self::enumerate_single(
+                    &self.mt_eo,
+                    &self.pt_eo,
+                    eo,
+                    d,
+                    18,
+                    &mut path,
+                    &mut out,
+                    cap,
+                );
             } else {
                 crate::roux_s1_solver::enumerate_product(
-                    &self.mt_eo, &self.mt_line, LINE, &self.pt, eo, line, d, 18, &mut path,
-                    &mut out, cap,
+                    &self.mt_eo,
+                    &self.mt_line,
+                    LINE,
+                    &self.pt,
+                    eo,
+                    line,
+                    d,
+                    18,
+                    &mut path,
+                    &mut out,
+                    cap,
                 );
             }
             if out.len() >= cap {
@@ -386,7 +437,11 @@ mod tests {
         );
         let (eo_god, line_god) = s.max_depths();
         assert!((6..=8).contains(&eo_god), "suspicious EO God {}", eo_god);
-        assert!((7..=10).contains(&line_god), "suspicious EOLine God {}", line_god);
+        assert!(
+            (7..=10).contains(&line_god),
+            "suspicious EOLine God {}",
+            line_god
+        );
 
         // 单 move:U/D 不翻棱不动线 → 0/0;F 翻 4 棱 → eo 1;L 动 DL 不动线棱 → line 0
         let one_eo = |scr: &str| s.solve_one_eo(&string_to_alg(scr), "", 0);
@@ -476,8 +531,14 @@ mod tests {
                 st.apply(m);
             }
             for (goal, got) in [
-                (&state_eo_done as &dyn Fn(&State) -> bool, s.solve_one_eo(&alg, "", 0)),
-                (&state_eoline_done as &dyn Fn(&State) -> bool, s.solve_one(&alg, "", 0)),
+                (
+                    &state_eo_done as &dyn Fn(&State) -> bool,
+                    s.solve_one_eo(&alg, "", 0),
+                ),
+                (
+                    &state_eoline_done as &dyn Fn(&State) -> bool,
+                    s.solve_one(&alg, "", 0),
+                ),
             ] {
                 assert!(got <= 5 + 2, "5-move scramble dist way off");
                 let mut want = 99;
@@ -507,7 +568,11 @@ mod tests {
                     s.get_stats(&alg, &[""])[0]
                 };
                 let (best, sols) = s.enumerate_face(&alg, "", stage, 1, 20);
-                assert_eq!(best, stats_min, "best mismatch seed={} stage={}", seed, stage);
+                assert_eq!(
+                    best, stats_min,
+                    "best mismatch seed={} stage={}",
+                    seed, stage
+                );
                 if best == 0 {
                     assert!(sols.is_empty());
                     continue;

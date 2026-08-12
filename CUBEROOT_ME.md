@@ -182,7 +182,7 @@ Phase F 之前(panel 路径下)的历史 `.bak` 已归档至 `/root/archive/ngin
 
 **ALTER 顺序**:先在云服务器跑 ALTER → 再 push 代码。反过来部署上去 SELECT 新列直接 500。
 
-详细 PG 方言 / 部署细节见 `.claude/skills/server-deploy/SKILL.md`。
+详细 PG 方言 / 部署细节见 `.agents/skills/server-deploy/SKILL.md`。
 
 ### 备份策略
 
@@ -211,4 +211,3 @@ ssh root@cuberoot
 ```
 
 服务器 IP / 密码见云控制台,不放 repo。
-

@@ -15,7 +15,7 @@ export const OBSIDIAN: StackTool = {
   floats: ['markdown', '[[wiki-link]]', 'vault', 'Dataview', 'Templater', 'community plugins', 'Obsidian Sync', 'Publish', 'Canvas', 'MCP server', 'obsidian-cli', 'obsidian://'],
   zh: {
     tagline: '本地优先的 Markdown 思考工具',
-    role: '计划中 — 个人知识管理 + AI-era 上下文仓库。当前 cuberoot.me 代码库不依赖, 但下一年准备把笔记 / 设计决策 / 调研记录都搬进来, 跟 Claude Code 形成闭环。',
+    role: '计划中 — 个人知识管理 + AI-era 上下文仓库。当前 cuberoot.me 代码库不依赖, 但下一年准备把笔记 / 设计决策 / 调研记录都搬进来, 跟 Codex 形成闭环。',
     heroSub: <>2020 年由 Dynalist 团队的 Erica Xu 和 Shida Li 推出, 反方向走 Roam Research 的全云订阅路线:<strong>本地优先</strong>, 文件就是普通 markdown, 你拥有你的数据。六年长成 2000+ plugin 的生态, 在 AI 时代又因为"vault 就是给 LLM 的最佳长期记忆"被重新发现。</>,
     whatDesc: <>Obsidian 是一个 <strong>本地 markdown 笔记应用</strong>, 数据存在你的硬盘上的一个普通文件夹 (vault) 里。每个笔记就是一个 .md 文件, 双链 / tag / metadata 全部在文件本体里, app 关停了 vault 还是普通文件夹, 任何编辑器都能读。</>,
     historyDesc: <>2020 年公开 beta, 那时 Roam Research 刚把"双链笔记"概念引爆, Obsidian 走相反方向:本地、买断、文件归你。2021-2024 plugin 生态指数级长, Dataview / Templater / Excalidraw 几乎成事实标准。2025 起 MCP 让 vault 直接接进 Claude / Cursor, 角色从"个人笔记本"变成"AI agent 的长期记忆"。</>,
@@ -29,7 +29,7 @@ export const OBSIDIAN: StackTool = {
   },
   en: {
     tagline: 'Local-first markdown thinking tool',
-    role: 'Planned tooling — personal knowledge base + AI-era context store. The cuberoot.me codebase does not depend on it yet, but the next year of work plans to move notes / design decisions / research into a vault and close the loop with Claude Code.',
+    role: 'Planned tooling — personal knowledge base + AI-era context store. The cuberoot.me codebase does not depend on it yet, but the next year of work plans to move notes / design decisions / research into a vault and close the loop with Codex.',
     heroSub: <>Built in 2020 by Erica Xu and Shida Li of the Dynalist team, deliberately opposing Roam Research's cloud-subscription model: <strong>local-first</strong>, files stay plain markdown, the data is yours. Six years grew into 2000+ plugins, and the AI era rediscovered it because "a vault is the ideal long-term memory for an LLM."</>,
     whatDesc: <>Obsidian is a <strong>local markdown notes app</strong>; data sits in a plain folder (the vault) on your disk. Each note is a .md file; bidirectional links / tags / metadata all live in the file body. If Obsidian shut down tomorrow, the vault is still just a folder any editor can read.</>,
     historyDesc: <>Public beta in 2020 — Roam Research had just ignited the "bidirectional links" wave, and Obsidian went the other way: local, one-time license, your files. From 2021-2024 the plugin ecosystem grew exponentially; Dataview / Templater / Excalidraw became de-facto standards. From 2025 onward MCP wires vaults straight into Claude / Cursor, and the role shifts from "personal notebook" to "AI agent's long-term memory."</>,
@@ -124,9 +124,9 @@ export const OBSIDIAN: StackTool = {
       <>
         <p><strong>明确写在前面: cuberoot.me 当前代码库不依赖 Obsidian。</strong> 整个 monorepo (<code>packages/client</code> / <code>packages/server</code> / <code>packages/shared</code> / <code>packages/stats-build</code>) 跑起来不需要 vault 存在, 也没有任何运行时 / 构建时调用 vault。把这页放在 /code/stack 是因为它即将进入 owner 的个人工作流, 跟代码库形成 "笔记 ↔ commit ↔ 设计文档" 闭环 —— 写在 /code/stack 比藏在 /timeline 里诚实。</p>
         <p>下一年 (2026-05 至 2027-05) 的迁移计划大致四步:</p>
-        <p>1. <strong>整理 D:\cube 下散乱的 markdown 进一个 vault。</strong> 现在 SKILL 文件 / 设计决策 / 调研笔记 / failed experiment 散在 <code>D:\cube\</code>, <code>D:\cube\cuberoot.me\</code>, <code>D:\cube\solver\</code>, <code>.claude\skills\</code> 各处。第一步是把它们按"项目 / 概念 / 日记 / 决策" 四类整合进同一个 vault。<br/>
-        2. <strong>把 Claude Code 的 CLAUDE.md / skill / memory 文件视作 vault 的子集。</strong> 这些本质上都是 markdown, 跟 Obsidian 天然兼容。让 Claude Code 直接读 vault 里的设计 doc 跟读 CLAUDE.md 是同一件事。<br/>
-        3. <strong>装 obsidian-mcp-server 让 Claude 直接 query / append note。</strong> agent 跑完一个任务把"做了什么 + 为什么这么做"自动追加进 daily note, 长期下来 vault 就是 AI-augmented 工作日志。<br/>
+        <p>1. <strong>整理 D:\cube 下散乱的 markdown 进一个 vault。</strong> 现在 SKILL 文件 / 设计决策 / 调研笔记 / failed experiment 散在 <code>D:\cube\</code>, <code>D:\cube\cuberoot.me\</code>, <code>D:\cube\solver\</code>, <code>.agents\skills\</code> 各处。第一步是把它们按"项目 / 概念 / 日记 / 决策" 四类整合进同一个 vault。<br/>
+        2. <strong>把 Codex 的 AGENTS.md / skill / memory 文件视作 vault 的子集。</strong> 这些本质上都是 markdown, 跟 Obsidian 天然兼容。让 Codex 直接读 vault 里的设计 doc 跟读 AGENTS.md 是同一件事。<br/>
+        3. <strong>装 obsidian-mcp-server 让 Codex 直接 query / append note。</strong> agent 跑完一个任务把"做了什么 + 为什么这么做"自动追加进 daily note, 长期下来 vault 就是 AI-augmented 工作日志。<br/>
         4. <strong>把 /code/architecture 第 11 节的 timeline 数据半自动从 vault 同步出来。</strong> daily note 里写过的 "今天上线 /foo" 通过脚本提取进 <code>timeline_commits.json</code>, 不用人工维护两份。</p>
         <p>为什么是 Obsidian 而不是 Notion / Logseq: Notion 是云锁 + 私有格式, AI agent 操作要走 API + rate limit, markdown 来回转损耗大。Logseq 路线最近 (block-first / outline-first) 偏激进, 跟 markdown-first 的 LLM 训练分布不太匹配。Obsidian 是<strong>本地优先 + 纯 markdown + plugin 自由 + 不订阅也能用</strong>这四件事同时满足的唯一一个。</p>
         <p>这页就当作给"未来一年的工作流"立一个 flag。一年后回看, 如果 vault 真上手了, 就把 cuberoot 这段改成现在时;如果没上手, 就改成"复盘:为什么没上手"。两种结果都比闷头不写诚实。</p>
@@ -136,9 +136,9 @@ export const OBSIDIAN: StackTool = {
       <>
         <p><strong>To be explicit up front: cuberoot.me's codebase does not depend on Obsidian today.</strong> The whole monorepo (<code>packages/client</code> / <code>packages/server</code> / <code>packages/shared</code> / <code>packages/stats-build</code>) runs without a vault — no runtime, no build-time call into one. This page sits in /code/stack because Obsidian is about to enter the owner's personal workflow, closing a "notes ↔ commits ↔ design docs" loop with the codebase. Putting it in /code/stack is more honest than burying it in /timeline.</p>
         <p>The migration plan for the next year (2026-05 → 2027-05) is roughly four steps:</p>
-        <p>1. <strong>Consolidate the scattered markdown under D:\cube into one vault.</strong> SKILL files / design decisions / research notes / failed experiments are currently spread across <code>D:\cube\</code>, <code>D:\cube\cuberoot.me\</code>, <code>D:\cube\solver\</code>, <code>.claude\skills\</code>, and more. Step one is to organize them into a single vault by "project / concept / journal / decision."<br/>
-        2. <strong>Treat Claude Code's CLAUDE.md / skill / memory files as a vault subset.</strong> They are all markdown — natively compatible with Obsidian. Letting Claude Code read a design doc in the vault is the same operation as reading CLAUDE.md.<br/>
-        3. <strong>Install obsidian-mcp-server so Claude can query / append notes directly.</strong> When an agent finishes a task, it appends "what I did + why" into a daily note. Over time the vault becomes an AI-augmented work journal.<br/>
+        <p>1. <strong>Consolidate the scattered markdown under D:\cube into one vault.</strong> SKILL files / design decisions / research notes / failed experiments are currently spread across <code>D:\cube\</code>, <code>D:\cube\cuberoot.me\</code>, <code>D:\cube\solver\</code>, <code>.agents\skills\</code>, and more. Step one is to organize them into a single vault by "project / concept / journal / decision."<br/>
+        2. <strong>Treat Codex's AGENTS.md / skill / memory files as a vault subset.</strong> They are all markdown — natively compatible with Obsidian. Letting Codex read a design doc in the vault is the same operation as reading AGENTS.md.<br/>
+        3. <strong>Install obsidian-mcp-server so Codex can query / append notes directly.</strong> When an agent finishes a task, it appends "what I did + why" into a daily note. Over time the vault becomes an AI-augmented work journal.<br/>
         4. <strong>Semi-automate the /code/architecture section-11 timeline from vault data.</strong> The "shipped /foo today" lines already in daily notes get extracted by a script into <code>timeline_commits.json</code> — no more dual maintenance.</p>
         <p>Why Obsidian, not Notion / Logseq: Notion is cloud-locked and stores in a proprietary format; AI agents have to go through API + rate limits, with high markdown round-trip loss. Logseq's recent block-first / outline-first direction is more radical and matches the markdown-first LLM training distribution less well. Obsidian is the only one ticking all four of <strong>local-first + pure markdown + plugin freedom + no-subscription-required</strong> at once.</p>
         <p>Treat this page as a flag planted for "next year's workflow." A year from now, if the vault has actually taken hold, this section gets rewritten in the present tense. If it hasn't, it gets rewritten as a postmortem on why not. Either outcome is more honest than not writing it down.</p>

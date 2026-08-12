@@ -319,8 +319,7 @@ impl Sq1TwoPhase {
 
     fn build() -> Sq1TwoPhase {
         // ---- Shape_init ----
-        const HALFLAYER: [u32; 13] =
-            [0, 3, 6, 12, 15, 24, 27, 30, 48, 51, 54, 60, 63];
+        const HALFLAYER: [u32; 13] = [0, 3, 6, 12, 15, 24, 27, 30, 48, 51, 54, 60, 63];
         let mut shape_idx: Vec<u32> = Vec::new();
         for i in 0..28561usize {
             let dr = HALFLAYER[i % 13];
@@ -347,7 +346,11 @@ impl Sq1TwoPhase {
             square_bottom: vec![0; 40320],
         };
 
-        let mut w = ShapeWork { top: 0, bottom: 0, parity: 0 };
+        let mut w = ShapeWork {
+            top: 0,
+            bottom: 0,
+            parity: 0,
+        };
         for i in 0..7356 {
             t.shape_set_idx(&mut w, i as i32);
             let mv = Self::shape_top_move(&mut w);
@@ -618,14 +621,7 @@ impl<'a> Search<'a> {
     }
 
     #[allow(clippy::too_many_arguments)]
-    fn phase1(
-        &mut self,
-        shape: i32,
-        prunvalue: i32,
-        maxl: i32,
-        depth: usize,
-        lm: i32,
-    ) -> bool {
+    fn phase1(&mut self, shape: i32, prunvalue: i32, maxl: i32, depth: usize, lm: i32) -> bool {
         if prunvalue == 0 && maxl < 4 {
             return maxl == 0 && self.init2();
         }
@@ -936,7 +932,11 @@ mod tests {
                 eprintln!("FAIL replay seed={} twist={}", seed, twist);
             }
         }
-        assert_eq!(fail, 0, "{} random-walk solutions did not replay to SOLVED", fail);
+        assert_eq!(
+            fail, 0,
+            "{} random-walk solutions did not replay to SOLVED",
+            fail
+        );
 
         // 81 真实 WCA sq1 打乱
         let txt = include_str!("../test_data/sq1_scrambles.txt");
@@ -947,8 +947,7 @@ mod tests {
                 continue;
             }
             let (id, scr) = line.split_once(',').expect("id,scramble");
-            let st = state_from_scramble(scr)
-                .unwrap_or_else(|e| panic!("parse id={}: {}", id, e));
+            let st = state_from_scramble(scr).unwrap_or_else(|e| panic!("parse id={}: {}", id, e));
             let (twist, sol) = solve_with_solution(&st);
             let slash = sol.iter().filter(|t| matches!(t, Sq1Token::Slash)).count() as u32;
             assert_eq!(twist, slash, "real id={} twist != slash", id);
@@ -975,7 +974,13 @@ mod tests {
             let st = random_walk(80_000 + seed, tw);
             let tp = solve_twist(&st);
             let ex = exact.solve_one(&st);
-            assert!(tp >= ex, "twophase {} below optimal {}, seed={}", tp, ex, seed);
+            assert!(
+                tp >= ex,
+                "twophase {} below optimal {}, seed={}",
+                tp,
+                ex,
+                seed
+            );
             assert_eq!(tp % 2, st.ml as u32, "parity must track ml, seed={}", seed);
         }
 
@@ -1002,7 +1007,13 @@ mod tests {
             let ex: u32 = v.parse().unwrap();
             let st = state_from_scramble(scr[id]).unwrap();
             let tp = solve_twist(&st);
-            assert!(tp >= ex, "real id={} twophase {} below exact {}", id, tp, ex);
+            assert!(
+                tp >= ex,
+                "real id={} twophase {} below exact {}",
+                id,
+                tp,
+                ex
+            );
             let gap = (tp - ex) as usize;
             assert!(gap <= 4, "real id={} gap {} exceeds 4", id, gap);
             hist[gap] += 1;
@@ -1018,7 +1029,11 @@ mod tests {
             sum as f64 / n as f64
         );
         // gap 必偶(parity 守恒)。
-        assert_eq!(hist[1] + hist[3], 0, "odd gaps impossible (parity invariant)");
+        assert_eq!(
+            hist[1] + hist[3],
+            0,
+            "odd gaps impossible (parity invariant)"
+        );
     }
 
     /// G3:吞吐 —— 单线程毫秒级/题。语料 = 81 条真实 WCA sq1 打乱重复 25 遍(2025 题,
@@ -1102,7 +1117,11 @@ mod tests {
             for &v in &arr {
                 seen |= 1 << v;
             }
-            assert_eq!(seen, 0xff, "set_n_perm({}) not a permutation: {:?}", idx, arr);
+            assert_eq!(
+                seen, 0xff,
+                "set_n_perm({}) not a permutation: {:?}",
+                idx, arr
+            );
             assert_eq!(get_n_perm(&arr, 8), idx, "round-trip idx={}", idx);
         }
     }

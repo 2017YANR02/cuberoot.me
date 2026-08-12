@@ -147,7 +147,7 @@ Get-Content 10.txt -First 3
 | `xxcross_1_col_fixed_12f_state` | 21 B state space + parent tracking 需 ~100 GB RAM |
 | `xxcross_2_col_12f` | 同 `xxcross_1_col_12f`,2×21 GB |
 
-详细决策见 `CLAUDE.md`。
+详细决策见 `AGENTS.md`。
 
 ---
 
@@ -186,5 +186,5 @@ count 与 cpp golden line 数完全一致(state_cross_2col 跟 cpp 30s 跑的 st
 | **dist_*** | 无 | 各深度的状态计数 | 状态空间分布统计 |
 | **state_*** | 无 | 各深度所有状态对应的 scramble | 枚举特定深度状态供训练/分析 |
 
-跑 analyzer 看 `USAGE.md`;跑 dist 看 `CLAUDE.md` 文件地图,直接
+跑 analyzer 看 `USAGE.md`;跑 dist 看 `AGENTS.md` 文件地图,直接
 `.\target\release\dist_<name>.exe`,大多数 1s 内跑完。

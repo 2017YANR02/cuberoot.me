@@ -1,7 +1,7 @@
 // High-confidence component reuse guard. This is intentionally rule-based rather
 // than a vague similarity score: every rule points to one canonical catalog entry,
 // has fixtures, a write-time hook, and a ratchet over existing source.
-// Paired hook: .claude/hooks/block-component-reimplementation.ps1.
+// Paired hook: .codex/hooks/block-component-reimplementation.ps1.
 // guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
@@ -136,14 +136,15 @@ describe('component reuse rule registry', () => {
     ).toBe(0);
   });
 
-  it('is wired into both repository hook configurations and the component catalog', () => {
+  it('is wired into the repository apply_patch hook and the component catalog', () => {
     const codex = JSON.parse(readFileSync(join(REPO_ROOT, '.codex', 'hooks.json'), 'utf8'));
     const preTool = codex.hooks?.PreToolUse ?? [];
     expect(preTool.some((group: { matcher?: string; hooks?: Array<{ command?: string }> }) =>
-      group.matcher?.includes('apply_patch') && group.matcher?.includes('exec')
-      && group.hooks?.some((hook) => hook.command?.includes('block-component-reimplementation.ps1')),
-    )).toBe(true);
-    expect(existsSync(join(REPO_ROOT, '.claude', 'hooks', 'block-component-reimplementation.ps1'))).toBe(true);
+      group.matcher === 'apply_patch'
+      && group.hooks?.some((hook) => hook.command?.includes('adapt-codex-write-payload.mjs')
+        && hook.command.includes('block-component-reimplementation.ps1')),
+    ), 'missing adapted component-reuse hook for apply_patch').toBe(true);
+    expect(existsSync(join(REPO_ROOT, '.codex', 'hooks', 'block-component-reimplementation.ps1'))).toBe(true);
 
     const catalog = readFileSync(join(ROOT, 'app', '[lang]', 'code', 'components', '_catalog.tsx'), 'utf8');
     expect(catalog).toContain("name: 'ClearButton'");

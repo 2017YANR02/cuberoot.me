@@ -79,8 +79,7 @@ fn permute_y2(mt: &[u32], n: usize) -> Vec<u32> {
 }
 
 /// pt9 逻辑条目数(2,682,408,960)。
-const PT9_ENTRIES: u64 =
-    (state_space::CORNER2 * state_space::EDGE3 * state_space::CORNER2) as u64;
+const PT9_ENTRIES: u64 = (state_space::CORNER2 * state_space::EDGE3 * state_space::CORNER2) as u64;
 
 /// pt9 BFS(直接写 packed nibbles,峰值内存 ~1.6GB):frontier 模式起步,
 /// 层宽超阈值切全表扫描模式(省 frontier 内存),层宽缩回再切回。
@@ -112,8 +111,7 @@ fn build_pt9_packed(s1: &RouxS1Solver) -> Vec<u8> {
                 let e3 = rest % e3n;
                 let ac2 = rest / e3n;
                 for m in 0..18 {
-                    let ni = (mt_c2[ac2 * 18 + m] as usize * e3n
-                        + mt_e3[e3 * 18 + m] as usize)
+                    let ni = (mt_c2[ac2 * 18 + m] as usize * e3n + mt_e3[e3 * 18 + m] as usize)
                         * c2n
                         + mt_c2_y2[bc2 * 18 + m] as usize;
                     if get_prune_nibble(&bytes, ni as u64) == 0xF {
@@ -221,7 +219,12 @@ impl F2BSolver {
             state_space::CORNER2 * state_space::CORNER2,
             s1.c2_solved * state_space::CORNER2 + s1.c2_solved,
         );
-        F2BSolver { s1, pt_cc, pt_ee: Vec::new(), pt9: None }
+        F2BSolver {
+            s1,
+            pt_cc,
+            pt_ee: Vec::new(),
+            pt9: None,
+        }
     }
 
     /// s1 表最大深度(信息用)。
@@ -277,10 +280,7 @@ impl F2BSolver {
         let rm2 = &rot_map()[2];
         for k in 0..count {
             let m = row[k] as usize;
-            let nfb = (
-                mt_c2[fb.0 * 18 + m] as usize,
-                mt_e3[fb.1 * 18 + m] as usize,
-            );
+            let nfb = (mt_c2[fb.0 * 18 + m] as usize, mt_e3[fb.1 * 18 + m] as usize);
             if self.d(nfb.0, nfb.1) >= depth {
                 continue;
             }
@@ -397,10 +397,7 @@ impl F2BSolver {
                 return;
             }
             let m = row[k] as usize;
-            let nfb = (
-                mt_c2[fb.0 * 18 + m] as usize,
-                mt_e3[fb.1 * 18 + m] as usize,
-            );
+            let nfb = (mt_c2[fb.0 * 18 + m] as usize, mt_e3[fb.1 * 18 + m] as usize);
             let h_fb = self.d(nfb.0, nfb.1);
             if h_fb >= depth {
                 continue;
@@ -504,8 +501,8 @@ impl F2BSolver {
 mod tests {
     use super::*;
     use crate::cube_common::{string_to_alg, test_env_lock, State};
-    use crate::roux_s1_solver::tests::{pseudo_scramble, s1_block_pieces};
     use crate::roux_s1_solver::s1_block_label;
+    use crate::roux_s1_solver::tests::{pseudo_scramble, s1_block_pieces};
     use std::path::PathBuf;
 
     fn setup_dir(name: &str) -> PathBuf {
@@ -701,7 +698,10 @@ mod tests {
                 st.apply(Move::from_index(rm[inv_k][m as usize] as usize));
             }
             let (corners, edges) = f2b_pieces(0, sol.yk);
-            assert!(state_f2b_done(&st, &corners, &edges), "F2B not physically done");
+            assert!(
+                state_f2b_done(&st, &corners, &edges),
+                "F2B not physically done"
+            );
         }
 
         let _ = std::fs::remove_dir_all(&dir);

@@ -76,8 +76,12 @@ pub fn cube222_rot24() -> &'static [(String, Vec<Move>)] {
             ("z", &[F, BPrime]),
             ("z'", &[FPrime, B]),
         ];
-        let b: [(&str, &[Move]); 4] =
-            [("", &[]), ("y", &[U, DPrime]), ("y2", &[U2, D2]), ("y'", &[UPrime, D])];
+        let b: [(&str, &[Move]); 4] = [
+            ("", &[]),
+            ("y", &[U, DPrime]),
+            ("y2", &[U2, D2]),
+            ("y'", &[UPrime, D]),
+        ];
         let mut out = Vec::with_capacity(24);
         for (an, aw) in a {
             for (bn, bw) in b {
@@ -283,12 +287,22 @@ impl Cube222Solver {
             frontier = next;
         }
 
-        Cube222Solver { mt, dist, fixed, movable }
+        Cube222Solver {
+            mt,
+            dist,
+            fixed,
+            movable,
+        }
     }
 
     /// 距离表最大深度(实测 God's number)。
     pub fn max_depth(&self) -> u8 {
-        self.dist.iter().copied().filter(|&v| v != 255).max().unwrap_or(0)
+        self.dist
+            .iter()
+            .copied()
+            .filter(|&v| v != 255)
+            .max()
+            .unwrap_or(0)
     }
 
     /// 各深度的态数分布(distribution[d] = 距 d 的态数)。
@@ -354,7 +368,10 @@ impl Cube222Solver {
                 }
             }
         }
-        Cube222Sol { len: moves.len() as u32, moves }
+        Cube222Sol {
+            len: moves.len() as u32,
+            moves,
+        }
     }
 
     /// 轻量构造(WASM 用):只建 3.6MB 全空间距离表,**不存**联合移动表(new() 的
@@ -467,7 +484,12 @@ impl Cube222Solver {
             frontier = next;
         }
 
-        Cube222Solver { mt: Vec::new(), dist, fixed, movable }
+        Cube222Solver {
+            mt: Vec::new(),
+            dist,
+            fixed,
+            movable,
+        }
     }
 
     /// 角布局(固定 DBL 角 + 其余 7 个 movable 角升序),由 move 运动学现推(常数级)。
@@ -510,7 +532,12 @@ impl Cube222Solver {
     pub fn from_dist(dist: Vec<u8>) -> Self {
         assert_eq!(dist.len(), CUBE222_STATES, "222 dist table size mismatch");
         let (fixed, movable) = Self::corner_layout();
-        Cube222Solver { mt: Vec::new(), dist, fixed, movable }
+        Cube222Solver {
+            mt: Vec::new(),
+            dist,
+            fixed,
+            movable,
+        }
     }
 
     /// 全空间距离表原始字节(落盘成静态资源用)。
@@ -581,7 +608,8 @@ mod tests {
     use std::collections::HashMap;
 
     fn lcg(x: u64) -> u64 {
-        x.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407)
+        x.wrapping_mul(6364136223846793005)
+            .wrapping_add(1442695040888963407)
     }
 
     /// 确定性伪随机词(给定 move 池)。
@@ -590,7 +618,9 @@ mod tests {
         let mut out = Vec::with_capacity(len);
         for _ in 0..len {
             x = lcg(x);
-            out.push(Move::from_index(pool[(x >> 33) as usize % pool.len()] as usize));
+            out.push(Move::from_index(
+                pool[(x >> 33) as usize % pool.len()] as usize,
+            ));
         }
         out
     }
@@ -716,7 +746,12 @@ mod tests {
                 corners: std::array::from_fn(|i| 3 * cp[i] + co[i]),
                 edges: State::SOLVED.edges,
             };
-            assert_eq!(s.dist[s.state_coord(&st)], dv, "full-space mismatch key={:x}", k);
+            assert_eq!(
+                s.dist[s.state_coord(&st)],
+                dv,
+                "full-space mismatch key={:x}",
+                k
+            );
         }
 
         // 前端对照:任意全 18 move 打乱,solver == brute(以固定 DBL 帧投影)。
@@ -743,7 +778,10 @@ mod tests {
             let best = s.solve_one(&alg);
             let sol = s.enumerate(&alg);
             assert_eq!(sol.len, best, "enum len != optimal, seed={}", seed);
-            assert!(sol.moves.iter().all(|&m| CUBE222_MOVES.contains(&m)), "non-222 move");
+            assert!(
+                sol.moves.iter().all(|&m| CUBE222_MOVES.contains(&m)),
+                "non-222 move"
+            );
 
             // 物理 replay:打乱态 + 解 → solved
             let mut st = State::SOLVED;
@@ -830,7 +868,12 @@ mod tests {
         for seed in 0..40u64 {
             let len = 1 + (seed as usize) % 12;
             let alg = pseudo_scramble(23000 + seed, len);
-            assert_eq!(loaded.solve_one_any(&alg), lean.solve_one_any(&alg), "seed={}", seed);
+            assert_eq!(
+                loaded.solve_one_any(&alg),
+                lean.solve_one_any(&alg),
+                "seed={}",
+                seed
+            );
             let sol = loaded.enumerate_any(&alg);
             let mut st = State::SOLVED;
             for &m in &alg {
@@ -839,7 +882,12 @@ mod tests {
             for &m in sol.rot_moves.iter().chain(sol.moves.iter()) {
                 st.apply(Move::from_index(m as usize));
             }
-            assert_eq!(st.corners, State::SOLVED.corners, "loaded solution not solved, seed={}", seed);
+            assert_eq!(
+                st.corners,
+                State::SOLVED.corners,
+                "loaded solution not solved, seed={}",
+                seed
+            );
         }
     }
 
@@ -900,7 +948,12 @@ mod tests {
             for &m in sol.rot_moves.iter().chain(sol.moves.iter()) {
                 st.apply(Move::from_index(m as usize));
             }
-            assert_eq!(st.corners, State::SOLVED.corners, "any-solution not solved, seed={}", seed);
+            assert_eq!(
+                st.corners,
+                State::SOLVED.corners,
+                "any-solution not solved, seed={}",
+                seed
+            );
         }
 
         // 短词独立 IDDFS 最优性对照(目标 = 24 个旋转后的 solved 角态,绕开归一与距离表)

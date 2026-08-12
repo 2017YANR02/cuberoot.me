@@ -278,14 +278,13 @@ impl PseudoXXXCrossSolver {
                                 AuxTable::PsCrossE0E1E2,
                                 [0i32, 2, 4], // E0(idx=0,eo=0→0) / E1(1*2=2) / E2(2*2=4)
                                 rot_idx,
-                                3i32, // n
-                                2i32, // c (edge base)
+                                3i32,  // n
+                                2i32,  // c (edge base)
                                 12i32, // pn (12 edges)
                             )
                         };
 
-                        let init_idx =
-                            array_to_index(&target_arr, mt_n, mt_c, mt_pn) as u32;
+                        let init_idx = array_to_index(&target_arr, mt_n, mt_c, mt_pn) as u32;
                         let mt = self.aux_mt(table);
                         let mut cur = init_idx;
                         let mut cur_cr = virtual_cross_scaled;
@@ -462,8 +461,7 @@ impl PseudoXXXCrossSolver {
                 let n_current_idx = mt_aux[(cur.current_idx as usize) * 18 + m_rot];
                 let n_cross_scaled = mt_e4[(cur.current_cross_scaled as usize) + m_rot];
                 let lookup_cross_idx = (n_cross_scaled / 24) as u64;
-                let idx_aux: u64 = lookup_cross_idx
-                    * Self::aux_multiplier(cur.table) as u64
+                let idx_aux: u64 = lookup_cross_idx * Self::aux_multiplier(cur.table) as u64
                     + n_current_idx as u64;
                 if self.aux_pt(cur.table).get(idx_aux) as u32 >= depth {
                     aux_pruned = true;
@@ -513,10 +511,24 @@ impl PseudoXXXCrossSolver {
                 return true;
             }
             if self.search_3(
-                n_i1a, n_i2a * 18, n_i3a * 18, p1,
-                n_i1b, n_i2b * 18, n_i3b * 18, tr_b, p2,
-                n_i1c, n_i2c * 18, n_i3c * 18, tr_c, p3,
-                depth - 1, m as u8, num_aux, &next_aux,
+                n_i1a,
+                n_i2a * 18,
+                n_i3a * 18,
+                p1,
+                n_i1b,
+                n_i2b * 18,
+                n_i3b * 18,
+                tr_b,
+                p2,
+                n_i1c,
+                n_i2c * 18,
+                n_i3c * 18,
+                tr_c,
+                p3,
+                depth - 1,
+                m as u8,
+                num_aux,
+                &next_aux,
             ) {
                 bump_node_count(local);
                 return true;
@@ -543,8 +555,7 @@ impl PseudoXXXCrossSolver {
         alg_rotation(&mut buf, rot);
         let st = self.initial_states(&buf);
 
-        const TRIPLES: [[usize; 3]; 4] =
-            [[0, 1, 2], [0, 1, 3], [0, 2, 3], [1, 2, 3]];
+        const TRIPLES: [[usize; 3]; 4] = [[0, 1, 2], [0, 1, 3], [0, 2, 3], [1, 2, 3]];
 
         let mut tasks: Vec<PseudoTask3> = Vec::with_capacity(16);
 
@@ -558,10 +569,7 @@ impl PseudoXXXCrossSolver {
                         continue;
                     }
                     let mut h_base = std::cmp::max(
-                        std::cmp::max(
-                            self.get_h(&st[ct[0]], d1),
-                            self.get_h(&st[ct[1]], d2),
-                        ),
+                        std::cmp::max(self.get_h(&st[ct[0]], d1), self.get_h(&st[ct[1]], d2)),
                         self.get_h(&st[ct[2]], d3),
                     );
 
@@ -581,8 +589,7 @@ impl PseudoXXXCrossSolver {
                         } else {
                             st[ct[0]].im / 24
                         };
-                        let idx_aux: u64 = lookup_c as u64
-                            * Self::aux_multiplier(cur.table) as u64
+                        let idx_aux: u64 = lookup_c as u64 * Self::aux_multiplier(cur.table) as u64
                             + cur.current_idx as u64;
                         let h = self.aux_pt(cur.table).get(idx_aux) as u32;
                         if h > h_base {

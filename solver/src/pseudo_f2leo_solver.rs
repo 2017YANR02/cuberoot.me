@@ -78,8 +78,8 @@ fn product(subsets: &[&[usize]]) -> Vec<Vec<Pair>> {
 // ---- 剪枝表(进程级建一次)----
 
 struct PseudoPrune {
-    cross: Vec<u8>,        // 528×528,4 个 D-AUF 种子
-    xcross: [Vec<u8>; 4],  // 4 张逐角槽,各 190080×24,带 D-AUF 多种子
+    cross: Vec<u8>,       // 528×528,4 个 D-AUF 种子
+    xcross: [Vec<u8>; 4], // 4 张逐角槽,各 190080×24,带 D-AUF 多种子
 }
 
 impl PseudoPrune {
@@ -87,7 +87,9 @@ impl PseudoPrune {
     fn build(mt_edge2: &[u32], mt_edge4: &[u32], mt_corn: &[u32]) -> Self {
         PseudoPrune {
             cross: build_pscross_prune(mt_edge2),
-            xcross: std::array::from_fn(|s| build_psxcross_prune(mt_edge4, mt_corn, SLOT_CORNER[s])),
+            xcross: std::array::from_fn(|s| {
+                build_psxcross_prune(mt_edge4, mt_corn, SLOT_CORNER[s])
+            }),
         }
     }
 }
@@ -466,8 +468,9 @@ impl PseudoF2leoSolver {
     /// 单个阶段(0=cross,1=xc,2=xxc,3=xxxc)的 12 朝向解,折叠成 6 值。
     /// `on_face`:每定下一个视角就报出去(同 f2leo:视角 k 在朝向 2k+1 算完即成定局)。
     pub fn get_stage(&self, alg: &[Move], stage: usize, on_face: FaceProgress<'_>) -> Vec<u32> {
-        const ROTS12: [&str; 12] =
-            ["", "y", "z2", "z2 y", "z'", "z' y", "z", "z y", "x'", "x' y", "x", "x y"];
+        const ROTS12: [&str; 12] = [
+            "", "y", "z2", "z2 y", "z'", "z' y", "z", "z y", "x'", "x' y", "x", "x y",
+        ];
         let base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
         let cb = combos();
         let mut v = [0u32; 12];
@@ -491,8 +494,9 @@ impl PseudoF2leoSolver {
     /// 6 视角 × 4 阶段,返回 24 值,顺序 [cross×6, xcross×6, xxcross×6, xxxcross×6]。
     pub fn get_stats(&self, alg: &[Move]) -> Vec<u32> {
         // 12 朝向 = 6 面 × {无 y, y};每面折叠取 min(同 f2leo / eo 口径)。
-        const ROTS12: [&str; 12] =
-            ["", "y", "z2", "z2 y", "z'", "z' y", "z", "z y", "x'", "x' y", "x", "x y"];
+        const ROTS12: [&str; 12] = [
+            "", "y", "z2", "z2 y", "z'", "z' y", "z", "z y", "x'", "x' y", "x", "x y",
+        ];
         let mut cross = [0u32; 12];
         let mut xc = [0u32; 12];
         let mut xxc = [0u32; 12];
@@ -700,7 +704,11 @@ impl PseudoF2leoSolver {
         force: &[usize],
     ) -> (u32, Vec<(String, Vec<usize>, Vec<u8>)>) {
         let base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
-        let y_frame = if rot.is_empty() { "y".to_string() } else { format!("{} y", rot) };
+        let y_frame = if rot.is_empty() {
+            "y".to_string()
+        } else {
+            format!("{} y", rot)
+        };
         let frames = [rot.to_string(), y_frame];
 
         // ---- stage 0:pscross + 4 棱 EO ----
@@ -765,7 +773,16 @@ impl PseudoF2leoSolver {
                     let eo18: [usize; 4] = std::array::from_fn(|t| edg[t] * 18);
                     let mut co: Vec<Vec<u8>> = Vec::new();
                     let mut path = Vec::new();
-                    self.enum_cross(i1 * 18, i2 * 18, eo18, d, 18, &mut path, &mut co, cap - out.len());
+                    self.enum_cross(
+                        i1 * 18,
+                        i2 * 18,
+                        eo18,
+                        d,
+                        18,
+                        &mut path,
+                        &mut co,
+                        cap - out.len(),
+                    );
                     for sol in co {
                         out.push((frames[fi].clone(), vec![], sol));
                     }
@@ -790,7 +807,10 @@ impl PseudoF2leoSolver {
             cs_filt = cs
                 .iter()
                 .filter(|c| {
-                    c.iter().map(|&(s, _)| s).collect::<std::collections::BTreeSet<usize>>() == fset
+                    c.iter()
+                        .map(|&(s, _)| s)
+                        .collect::<std::collections::BTreeSet<usize>>()
+                        == fset
                 })
                 .cloned()
                 .collect();
@@ -877,8 +897,17 @@ impl PseudoF2leoSolver {
             let mut co: Vec<Vec<u8>> = Vec::new();
             let mut path = Vec::new();
             solver.enum_combo(
-                ctx.e4_24, &corn18[..n], &edge18[..n], &egoal[..n], &free18[..nf],
-                &prune_refs[..n], d, 18, &mut path, &mut co, cap - out.len(),
+                ctx.e4_24,
+                &corn18[..n],
+                &edge18[..n],
+                &egoal[..n],
+                &free18[..nf],
+                &prune_refs[..n],
+                d,
+                18,
+                &mut path,
+                &mut co,
+                cap - out.len(),
             );
             let nonempty = !co.is_empty();
             let label: Vec<usize> = combo.iter().map(|&(s, _p)| s).collect();
@@ -976,7 +1005,14 @@ impl PseudoF2leoSolver {
         false
     }
 
-    fn solve_cross_masked(&self, i1: usize, i2: usize, eo: [usize; 4], vm: &ValidMovesTable, max_depth: u32) -> u32 {
+    fn solve_cross_masked(
+        &self,
+        i1: usize,
+        i2: usize,
+        eo: [usize; 4],
+        vm: &ValidMovesTable,
+        max_depth: u32,
+    ) -> u32 {
         let pr = self.prune.cross[i1 * E2 + i2] as u32;
         if pr == 0 && eo.iter().all(|&e| e % 2 == 0) {
             return 0;
@@ -1178,8 +1214,9 @@ impl PseudoF2leoSolver {
         mask: MoveMask,
         max_depth: u32,
     ) -> Vec<Option<u32>> {
-        const ROTS12: [&str; 12] =
-            ["", "y", "z2", "z2 y", "z'", "z' y", "z", "z y", "x'", "x' y", "x", "x y"];
+        const ROTS12: [&str; 12] = [
+            "", "y", "z2", "z2 y", "z'", "z' y", "z", "z y", "x'", "x' y", "x", "x y",
+        ];
         let vm = valid_moves_masked(mask);
         let base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
         let cb = combos();
@@ -1190,15 +1227,35 @@ impl PseudoF2leoSolver {
             let (i1, i2, e4_24, corn, edg) = self.root_state(&a);
             v[r] = match stage {
                 0 => self.solve_cross_masked(i1, i2, edg, &vm, CAP_CROSS.min(max_depth)),
-                1 => self.solve_stage_masked(e4_24, &corn, &edg, &cb.xc, CAP_XC.min(max_depth), &vm),
-                2 => self.solve_stage_masked(e4_24, &corn, &edg, &cb.xxc, CAP_XXC.min(max_depth), &vm),
-                _ => self.solve_stage_masked(e4_24, &corn, &edg, &cb.xxxc, CAP_XXXC.min(max_depth), &vm),
+                1 => {
+                    self.solve_stage_masked(e4_24, &corn, &edg, &cb.xc, CAP_XC.min(max_depth), &vm)
+                }
+                2 => self.solve_stage_masked(
+                    e4_24,
+                    &corn,
+                    &edg,
+                    &cb.xxc,
+                    CAP_XXC.min(max_depth),
+                    &vm,
+                ),
+                _ => self.solve_stage_masked(
+                    e4_24,
+                    &corn,
+                    &edg,
+                    &cb.xxxc,
+                    CAP_XXXC.min(max_depth),
+                    &vm,
+                ),
             };
         }
         (0..6)
             .map(|k| {
                 let best = v[2 * k].min(v[2 * k + 1]);
-                if best >= 99 { None } else { Some(best) }
+                if best >= 99 {
+                    None
+                } else {
+                    Some(best)
+                }
             })
             .collect()
     }
@@ -1375,7 +1432,11 @@ impl PseudoF2leoSolver {
     ) -> (u32, Vec<(String, Vec<usize>, Vec<u8>)>) {
         let vm = valid_moves_masked(mask);
         let base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
-        let y_frame = if rot.is_empty() { "y".to_string() } else { format!("{} y", rot) };
+        let y_frame = if rot.is_empty() {
+            "y".to_string()
+        } else {
+            format!("{} y", rot)
+        };
         let frames = [rot.to_string(), y_frame];
 
         // ---- stage 0:pscross + 4 棱 EO ----
@@ -1408,7 +1469,17 @@ impl PseudoF2leoSolver {
                     let eo18: [usize; 4] = std::array::from_fn(|t| edg[t] * 18);
                     let mut co: Vec<Vec<u8>> = Vec::new();
                     let mut path = Vec::new();
-                    self.enum_cross_masked(i1 * 18, i2 * 18, eo18, d, 18, &mut path, &mut co, 1, &vm);
+                    self.enum_cross_masked(
+                        i1 * 18,
+                        i2 * 18,
+                        eo18,
+                        d,
+                        18,
+                        &mut path,
+                        &mut co,
+                        1,
+                        &vm,
+                    );
                     if !co.is_empty() {
                         tied.push(ri);
                     }
@@ -1430,7 +1501,17 @@ impl PseudoF2leoSolver {
                     let eo18: [usize; 4] = std::array::from_fn(|t| edg[t] * 18);
                     let mut co: Vec<Vec<u8>> = Vec::new();
                     let mut path = Vec::new();
-                    self.enum_cross_masked(i1 * 18, i2 * 18, eo18, d, 18, &mut path, &mut co, cap - out.len(), &vm);
+                    self.enum_cross_masked(
+                        i1 * 18,
+                        i2 * 18,
+                        eo18,
+                        d,
+                        18,
+                        &mut path,
+                        &mut co,
+                        cap - out.len(),
+                        &vm,
+                    );
                     for sol in co {
                         out.push((frames[fi].clone(), vec![], sol));
                     }
@@ -1454,7 +1535,10 @@ impl PseudoF2leoSolver {
             cs_filt = cs0
                 .iter()
                 .filter(|c| {
-                    c.iter().map(|&(s, _)| s).collect::<std::collections::BTreeSet<usize>>() == fset
+                    c.iter()
+                        .map(|&(s, _)| s)
+                        .collect::<std::collections::BTreeSet<usize>>()
+                        == fset
                 })
                 .cloned()
                 .collect();
@@ -1496,7 +1580,13 @@ impl PseudoF2leoSolver {
         cands.sort_by_key(|t| t.0);
         let d0 = cands.iter().map(|t| t.0).min().unwrap_or(1).max(1);
 
-        let run = |solver: &Self, fi: usize, ci: usize, d: u32, out: &mut Vec<Vec<u8>>, cap: usize, ctxs: &[Ctx]| {
+        let run = |solver: &Self,
+                   fi: usize,
+                   ci: usize,
+                   d: u32,
+                   out: &mut Vec<Vec<u8>>,
+                   cap: usize,
+                   ctxs: &[Ctx]| {
             let ctx = &ctxs[fi];
             let combo = &cs[ci];
             let n = combo.len();
@@ -1522,8 +1612,18 @@ impl PseudoF2leoSolver {
             }
             let mut path = Vec::new();
             solver.enum_combo_masked(
-                ctx.e4_24, &corn18[..n], &edge18[..n], &egoal[..n], &free18[..nf],
-                &prune_refs[..n], d, 18, &mut path, out, cap, &vm,
+                ctx.e4_24,
+                &corn18[..n],
+                &edge18[..n],
+                &egoal[..n],
+                &free18[..nf],
+                &prune_refs[..n],
+                d,
+                18,
+                &mut path,
+                out,
+                cap,
+                &vm,
             );
         };
 
@@ -1731,7 +1831,12 @@ impl PseudoF2leoBigSolver {
     /// 给定 combo 的 target_pieces(角 +4 / 棱 raw)+ ref_slot(combo 首角 pslot),共轭整条
     /// (已旋转)alg 算出每个 corner-group / edge-group 的根 aux 态。move_mapper_idx 标记 rot_map
     /// 视角;`is_valid()` 假表(mapper>=4)忽略。与 std-pseudo 逐字节同构(根共轭同式)。
-    fn setup_aux(&self, target_pieces: &[u8], alg: &[u8], ref_slot: usize) -> ([AuxState; MAX_AUX], usize) {
+    fn setup_aux(
+        &self,
+        target_pieces: &[u8],
+        alg: &[u8],
+        ref_slot: usize,
+    ) -> ([AuxState; MAX_AUX], usize) {
         let mut out = [AuxState::EMPTY; MAX_AUX];
         let mut count = 0;
         let mt_e4 = self.mt_edge4.as_u32();
@@ -1752,7 +1857,12 @@ impl PseudoF2leoBigSolver {
                 cur = mt[(cur as usize) * 18 + m_r];
                 cur_cr = mt_e4[(cur_cr as usize) + m_r];
             }
-            AuxState { table, current_idx: cur, current_cross_scaled: cur_cr, move_mapper_idx: rot_idx as u8 }
+            AuxState {
+                table,
+                current_idx: cur,
+                current_cross_scaled: cur_cr,
+                move_mapper_idx: rot_idx as u8,
+            }
         };
 
         // --- Step 1: 3-subset(corner3 / edge3),标记覆盖的 pair ---
@@ -1771,9 +1881,12 @@ impl PseudoF2leoBigSolver {
                             continue;
                         }
                         let (table, init_idx, rot_idx) = if is_c3 {
-                            let r1 = ((p1 - 4) as i32 - ref_slot as i32 + 4).rem_euclid(4) as u32 + 4;
-                            let r2 = ((p2 - 4) as i32 - ref_slot as i32 + 4).rem_euclid(4) as u32 + 4;
-                            let r3 = ((p3 - 4) as i32 - ref_slot as i32 + 4).rem_euclid(4) as u32 + 4;
+                            let r1 =
+                                ((p1 - 4) as i32 - ref_slot as i32 + 4).rem_euclid(4) as u32 + 4;
+                            let r2 =
+                                ((p2 - 4) as i32 - ref_slot as i32 + 4).rem_euclid(4) as u32 + 4;
+                            let r3 =
+                                ((p3 - 4) as i32 - ref_slot as i32 + 4).rem_euclid(4) as u32 + 4;
                             let mut keys = [r1, r2, r3];
                             keys.sort();
                             let rot_idx = match (keys[0], keys[1], keys[2]) {
@@ -1783,7 +1896,11 @@ impl PseudoF2leoBigSolver {
                                 (5, 6, 7) => 3,
                                 _ => continue,
                             };
-                            (AuxTable::PsCrossC4C5C6, array_to_index(&[12, 15, 18], 3, 3, 8) as u32, rot_idx)
+                            (
+                                AuxTable::PsCrossC4C5C6,
+                                array_to_index(&[12, 15, 18], 3, 3, 8) as u32,
+                                rot_idx,
+                            )
                         } else {
                             let r1 = (p1 as i32 - ref_slot as i32 + 4).rem_euclid(4) as u32;
                             let r2 = (p2 as i32 - ref_slot as i32 + 4).rem_euclid(4) as u32;
@@ -1797,7 +1914,11 @@ impl PseudoF2leoBigSolver {
                                 (1, 2, 3) => 3,
                                 _ => continue,
                             };
-                            (AuxTable::PsCrossE0E1E2, array_to_index(&[0, 2, 4], 3, 2, 12) as u32, rot_idx)
+                            (
+                                AuxTable::PsCrossE0E1E2,
+                                array_to_index(&[0, 2, 4], 3, 2, 12) as u32,
+                                rot_idx,
+                            )
                         };
                         out[count] = build(table, init_idx, rot_idx);
                         count += 1;
@@ -1827,36 +1948,38 @@ impl PseudoF2leoBigSolver {
                     let r1 = ((p1 as i32 - ref_slot as i32 + 4) & 3) as u32;
                     let r2 = ((p2 as i32 - ref_slot as i32 + 4) & 3) as u32;
                     let (k1, k2) = if r1 < r2 { (r1, r2) } else { (r2, r1) };
-                    let (table, rot_idx, target): (AuxTable, usize, [i32; 2]) = if k2.wrapping_sub(k1) == 2 {
-                        (AuxTable::PsCrossE0E2, if k1 == 0 { 0 } else { 1 }, [0, 4])
-                    } else {
-                        let rot = match (k1, k2) {
-                            (0, 1) => 0,
-                            (0, 3) => 1,
-                            (2, 3) => 2,
-                            (1, 2) => 3,
-                            _ => 0,
+                    let (table, rot_idx, target): (AuxTable, usize, [i32; 2]) =
+                        if k2.wrapping_sub(k1) == 2 {
+                            (AuxTable::PsCrossE0E2, if k1 == 0 { 0 } else { 1 }, [0, 4])
+                        } else {
+                            let rot = match (k1, k2) {
+                                (0, 1) => 0,
+                                (0, 3) => 1,
+                                (2, 3) => 2,
+                                (1, 2) => 3,
+                                _ => 0,
+                            };
+                            (AuxTable::PsCrossE0E1, rot, [0, 2])
                         };
-                        (AuxTable::PsCrossE0E1, rot, [0, 2])
-                    };
                     out[count] = build(table, array_to_index(&target, 2, 2, 12) as u32, rot_idx);
                     count += 1;
                 } else if p1 >= 4 && p2 >= 4 {
                     let r1 = (((p1 - 4) as i32 - ref_slot as i32 + 4) & 3) as u32 + 4;
                     let r2 = (((p2 - 4) as i32 - ref_slot as i32 + 4) & 3) as u32 + 4;
                     let (k1, k2) = if r1 < r2 { (r1, r2) } else { (r2, r1) };
-                    let (table, rot_idx, target): (AuxTable, usize, [i32; 2]) = if k2.wrapping_sub(k1) == 2 {
-                        (AuxTable::PsCrossC4C6, if k1 == 4 { 0 } else { 3 }, [12, 18])
-                    } else {
-                        let rot = match (k1, k2) {
-                            (4, 5) => 0,
-                            (4, 7) => 1,
-                            (6, 7) => 2,
-                            (5, 6) => 3,
-                            _ => 0,
+                    let (table, rot_idx, target): (AuxTable, usize, [i32; 2]) =
+                        if k2.wrapping_sub(k1) == 2 {
+                            (AuxTable::PsCrossC4C6, if k1 == 4 { 0 } else { 3 }, [12, 18])
+                        } else {
+                            let rot = match (k1, k2) {
+                                (4, 5) => 0,
+                                (4, 7) => 1,
+                                (6, 7) => 2,
+                                (5, 6) => 3,
+                                _ => 0,
+                            };
+                            (AuxTable::PsCrossC4C5, rot, [12, 15])
                         };
-                        (AuxTable::PsCrossC4C5, rot, [12, 15])
-                    };
                     out[count] = build(table, array_to_index(&target, 2, 3, 8) as u32, rot_idx);
                     count += 1;
                 }
@@ -1895,9 +2018,14 @@ impl PseudoF2leoBigSolver {
         let mt_c = self.mt_corn.as_u32();
         let mt_e = self.mt_edge.as_u32();
         let cj = conj_moves_flat();
-        let mut out = [BigConj { im: 0, ic_b: 0, ie_rel: [0; 4] }; 4];
+        let mut out = [BigConj {
+            im: 0,
+            ic_b: 0,
+            ie_rel: [0; 4],
+        }; 4];
         for p in 0..4 {
-            let mut cur_mul: u32 = (state_space::CROSS_SOLVED as u32) * (state_space::CORNER as u32);
+            let mut cur_mul: u32 =
+                (state_space::CROSS_SOLVED as u32) * (state_space::CORNER as u32);
             let mut cur_cn: u32 = 12 * 18;
             let mut cur_e: [u32; 4] = [0, 2, 4, 6];
             for &m in alg {
@@ -1908,7 +2036,11 @@ impl PseudoF2leoBigSolver {
                     cur_e[k] = mt_e[(cur_e[k] as usize) * 18 + mc];
                 }
             }
-            out[p] = BigConj { im: cur_mul, ic_b: cur_cn / 18, ie_rel: cur_e };
+            out[p] = BigConj {
+                im: cur_mul,
+                ic_b: cur_cn / 18,
+                ie_rel: cur_e,
+            };
         }
         out
     }
@@ -2018,7 +2150,8 @@ impl PseudoF2leoBigSolver {
                 let mt_aux = self.aux_mt(cur.table);
                 let n_idx = mt_aux[(cur.current_idx as usize) * 18 + m_r];
                 let n_cross = mt_e4[(cur.current_cross_scaled as usize) + m_r];
-                let lookup: u64 = (n_cross / 24) as u64 * Self::aux_multiplier(cur.table) as u64 + n_idx as u64;
+                let lookup: u64 =
+                    (n_cross / 24) as u64 * Self::aux_multiplier(cur.table) as u64 + n_idx as u64;
                 if self.aux_pt(cur.table).get(lookup) as u32 >= depth {
                     pruned = true;
                     break;
@@ -2066,7 +2199,15 @@ impl PseudoF2leoBigSolver {
                 for j in 0..nf {
                     nf18[j] = nfree[j] * 18;
                 }
-                if self.search_psx(&next[..n], ref_slot, &next_aux, num_aux, &nf18[..nf], depth - 1, m as u8) {
+                if self.search_psx(
+                    &next[..n],
+                    ref_slot,
+                    &next_aux,
+                    num_aux,
+                    &nf18[..nf],
+                    depth - 1,
+                    m as u8,
+                ) {
                     bump_node_count(local);
                     return true;
                 }
@@ -2077,7 +2218,14 @@ impl PseudoF2leoBigSolver {
     }
 
     /// `a` = 已旋转 move 序列(setup_aux 共轭用)。combo 启发式 = max(每对 C4E, 角组, 棱组)。
-    fn solve_stage(&self, a: &[u8], st: &[BigConj; 4], edg: &[usize; 4], combos: &[Vec<Pair>], cap: u32) -> u32 {
+    fn solve_stage(
+        &self,
+        a: &[u8],
+        st: &[BigConj; 4],
+        edg: &[usize; 4],
+        combos: &[Vec<Pair>],
+        cap: u32,
+    ) -> u32 {
         let m = combos.len();
         let mut scored: [(u32, usize); 36] = [(0, 0); 36];
         // 每 combo 预建 aux(角组/棱组),存 (aux, num_aux, ref_slot)。
@@ -2097,7 +2245,11 @@ impl PseudoF2leoBigSolver {
                 tn += 1;
             }
             let (aux, naux) = self.setup_aux(&tp[..tn], a, ref_slot);
-            let mut h = combo.iter().map(|&(s, p)| self.pair_h(st, s, p)).max().unwrap();
+            let mut h = combo
+                .iter()
+                .map(|&(s, p)| self.pair_h(st, s, p))
+                .max()
+                .unwrap();
             for cur in aux.iter().take(naux) {
                 let lookup: u64 = (cur.current_cross_scaled / 24) as u64
                     * Self::aux_multiplier(cur.table) as u64
@@ -2137,7 +2289,13 @@ impl PseudoF2leoBigSolver {
                 let mut pairs = [(0usize, 0usize, 0usize, 0usize, 0usize); 3];
                 for (i, &(s, p)) in combo.iter().enumerate() {
                     let d = Self::diff(s, p);
-                    pairs[i] = (st[p].im as usize, (st[p].ic_b as usize) * 18, (st[p].ie_rel[d] as usize) * 18, p, d);
+                    pairs[i] = (
+                        st[p].im as usize,
+                        (st[p].ic_b as usize) * 18,
+                        (st[p].ie_rel[d] as usize) * 18,
+                        p,
+                        d,
+                    );
                 }
                 let np = combo.len();
                 let max_d = cap.min(best.saturating_sub(1));
@@ -2157,8 +2315,9 @@ impl PseudoF2leoBigSolver {
 
     /// 6 视角 × 4 阶段,返回 24 值(同小表版口径:12 朝向折叠 min)。
     pub fn get_stats(&self, alg: &[Move]) -> Vec<u32> {
-        const ROTS12: [&str; 12] =
-            ["", "y", "z2", "z2 y", "z'", "z' y", "z", "z y", "x'", "x' y", "x", "x y"];
+        const ROTS12: [&str; 12] = [
+            "", "y", "z2", "z2 y", "z'", "z' y", "z", "z y", "x'", "x' y", "x", "x y",
+        ];
         let base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
         let cb = combos();
         let mut cross = [0u32; 12];
@@ -2196,7 +2355,8 @@ impl Default for PseudoF2leoBigSolver {
 #[cfg(not(target_arch = "wasm32"))]
 pub fn pseudo_f2leo_big_instance() -> Arc<PseudoF2leoBigSolver> {
     static S: OnceLock<Arc<PseudoF2leoBigSolver>> = OnceLock::new();
-    S.get_or_init(|| Arc::new(PseudoF2leoBigSolver::new())).clone()
+    S.get_or_init(|| Arc::new(PseudoF2leoBigSolver::new()))
+        .clone()
 }
 
 #[cfg(test)]
@@ -2226,8 +2386,7 @@ mod enum_tests {
             for stage in 0..3usize {
                 let counts = solver.get_stage(&alg, stage, None);
                 for face in 0..6usize {
-                    let (len, items) =
-                        solver.enumerate_small(&alg, ROTS[face], stage, 0, 100, &[]);
+                    let (len, items) = solver.enumerate_small(&alg, ROTS[face], stage, 0, 100, &[]);
                     assert_eq!(
                         len, counts[face],
                         "pseudo len mismatch scr={scr} stage={stage} face={face}: enum {len} vs count {}",
@@ -2245,7 +2404,8 @@ mod enum_tests {
                     let mut seen: Vec<(&str, &Vec<usize>)> = Vec::new();
                     for (frame, combo, p) in &items {
                         assert_eq!(
-                            p.len() as u32, len,
+                            p.len() as u32,
+                            len,
                             "tied (frame={frame}, combo={combo:?}) must solve at best_len {len}"
                         );
                         if !seen.iter().any(|&(f, c)| f == frame.as_str() && c == combo) {
