@@ -5,7 +5,8 @@ import { METHOD_KEYS } from '@/components/StageSolver';
 import { TABLE_SETS } from '@/lib/rust-cross-client';
 import {
   RECENT_METRIC_ORDER, VARIANT_LABEL, VARIANT_ORDER, VARIANT_STAGES,
-  dataVariantOfStage, stageLabel, uiVariantOf, uiVariantOptions, variantDataRef,
+  dataVariantOfStage, normalizeVariantDataRef, stageLabel, uiVariantOf, uiVariantOptions,
+  variantDataRef,
 } from '@/lib/scramble-variants';
 import { METRIC_OFFSET } from '@/app/[lang]/scramble/gen/CompCrossAnalysis';
 import { EXACT_VARIANT_STAGES } from '@/app/[lang]/scramble/stats/_data/exact_dist';
@@ -44,6 +45,19 @@ describe('第一层已还原条件下的第二层分布', () => {
     expect(dataVariantOfStage('lbl', 'second_layer')).toBe('second_layer');
   });
 
+  it('从其他数据集带来的旧方法和阶段会在渲染当帧归一为第二层', () => {
+    const variants = { second_layer: { stages: ['second_layer'] } };
+    expect(normalizeVariantDataRef(variants, 'std', 'cross')).toEqual({
+      variant: 'second_layer', stage: 'second_layer', recentMetric: 'second_layer',
+    });
+    expect(normalizeVariantDataRef(variants, 'lbl', 'cross')).toEqual({
+      variant: 'second_layer', stage: 'second_layer', recentMetric: 'second_layer',
+    });
+    expect(normalizeVariantDataRef(variants, 'second_layer', 'cross')).toEqual({
+      variant: 'second_layer', stage: 'second_layer', recentMetric: 'second_layer',
+    });
+  });
+
   it('WCA、近期打乱、生成器和现场求解器均不再暴露伪别名', () => {
     expect(METHOD_KEYS).not.toContain('second_layer');
     expect(RECENT_METRIC_ORDER).not.toContain('second_layer');
@@ -69,8 +83,8 @@ describe('第一层已还原条件下的第二层分布', () => {
     expect(page).toContain('客户端不运行搜索');
     // 深链 / 旧设置可能残留 UI 聚合键 lbl。页面必须先用真实数据键渲染 options,
     // 再把 URL 规范化,不能让原生 select 出现 value 存在但 option 为空的白框。
-    expect(page).toContain('currentSet.variants[sourceVariant]?.stages');
-    expect(page).toContain('!currentSet.variants[variant] && currentSet.variants[sourceVariant]');
+    expect(page).toContain('normalizeVariantDataRef(currentSet.variants, variant, stage)');
+    expect(page).toContain('value={sourceStage}');
 
     const variants = read('core/packages/scramble-stats-build/src/variants.ts');
     const recent = read('core/packages/scramble-stats-build/src/build_recent_scrambles.ts');
