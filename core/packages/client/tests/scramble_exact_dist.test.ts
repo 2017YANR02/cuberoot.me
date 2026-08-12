@@ -466,12 +466,13 @@ describe('菜单与 WCA 数据集逐项相同', () => {
       seen.add(v);
       prev = v;
     }
-    // 13 个方法 = 整解 + 已发布子阶段 + First Layer + Second Layer 别名。
-    expect(seen.size).toBe(13);
+    // 11 个方法:Daisy / First Layer / Second Layer 合并成一个 LBL 方法。
+    expect(seen.size).toBe(11);
   });
 
-  it('砖 / EO 两个聚合方法的阶段序与阶段下拉一致', () => {
+  it('LBL / 砖 / EO 聚合方法的阶段序与阶段下拉一致', () => {
     const stagesOf = (ui: string) => EXACT_STAGES.filter((s) => uiVariantOf(EXACT_STAGE_VARIANT[s]) === ui);
+    expect(stagesOf('lbl')).toEqual(VARIANT_STAGES.lbl);
     expect(stagesOf('block')).toEqual(VARIANT_STAGES.block);
     expect(stagesOf('eo')).toEqual(EO_UI_STAGES);
   });

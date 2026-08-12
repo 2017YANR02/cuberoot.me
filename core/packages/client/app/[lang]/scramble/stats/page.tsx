@@ -1403,7 +1403,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   // 数据/示例/下载全走原 variant+stage 键。聚合规则用 scramble-variants 那三个共享函数
   // (与 /timer 的 GenDiffConfig / WcaSourceConfig 同一份),这里不另写一遍。
   const methodOptions = uiVariantOptions((dv) => !!currentSet.variants[dv]) as VariantKey[];
-  const uiVariant = (variant === 'second_layer' ? variant : uiVariantOf(variant)) as VariantKey;
+  const uiVariant = uiVariantOf(variant) as VariantKey;
   /** 该 UI 方法在本数据集里真有数据的阶段(聚合方法跨数据变体展开)。 */
   const stagesOfUi = (v: string) => uiStagesOf(v).filter((s) => {
     const ref = variantDataRef(dataVariantOfStage(v, s), s);

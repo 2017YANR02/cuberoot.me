@@ -34,7 +34,7 @@ import { type WcaScrambleRow } from '@/lib/wca-results-api';
 import { fetchCompName } from '@/lib/comp-wcif';
 import { apiUrl } from '@/lib/api-base';
 import { eventDisplayName } from '@/lib/wca-events';
-import { VARIANT_LABEL, VARIANT_ORDER, BLOCK_STAGE_VARIANT, EO_STAGE_VARIANT, stageLabel, variantDataRef, type ScrambleVariant } from '@/lib/scramble-variants';
+import { VARIANT_LABEL, VARIANT_ORDER, stageLabel, dataVariantOfStage, variantDataRef, type ScrambleVariant } from '@/lib/scramble-variants';
 import { TNOODLE_WCA_EVENTS, TWIZZLE_NONWCA_EVENTS, TWIZZLE_NONWCA_APPEND, tnoodleRandomScramble } from '@/lib/cubing-scramble';
 import { CSTIMER_NONWCA_APPEND, CSTIMER_EVENT_IDS, CSTIMER_EVENTS, cstimerScramble, isCstimerEvent } from '@/lib/cstimer-scramble';
 import { SHAPE_MOD_APPEND, SHAPE_MOD_EVENT_IDS, SHAPE_MOD_EVENTS, isShapeModEvent, shapeModSourceEvent } from '@/lib/shape-mod-scramble';
@@ -84,6 +84,8 @@ const F2L_STAGES: Metric[] = ['cross', 'xc', 'xxc', 'xxxc'];
 // solver 就绪后从 'none' 改 'variant')。'none' = 仅 comp_steps 预计算,无 client 引擎。
 const VARIANT_SPEC: Record<VariantKey, { stages: Metric[]; engine: 'std' | 'f2leo' | 'variant' | 'stagefamily' | 'none' }> = {
   std: { stages: STD_STAGES, engine: 'std' },
+  // UI 聚合方法:阶段仍分别走 daisy / first_layer / std(second_layer 别名)的原引擎。
+  lbl: { stages: ['bdaisy', 'bfirst_face', 'bfirst_layer', 'bsecond_layer'], engine: 'none' },
   daisy: { stages: ['bdaisy'], engine: 'stagefamily' },
   first_layer: { stages: ['bfirst_face', 'bfirst_layer'], engine: 'stagefamily' },
   // 薄别名：读 std/xxxxcross 的 comp_steps，未命中时也走 cross WASM stage 4。
@@ -914,10 +916,9 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
   const safeMetric: Metric = vspec.stages.includes(metric) ? metric : vspec.stages[0];
   // UI 聚合方法 → 数据层底层变体由当前 metric 决定('block': b122/b123→123,b222→222,b223→223,
   // bf2b→123x2;'eo': beo/beoline→eoline,其余→eo);comp_steps 文件 + WASM need 都按它取。
-  const sourceRef = variantDataRef(variant, safeMetric);
-  const dataVariant: VariantKey = variant === 'block' ? (BLOCK_STAGE_VARIANT[safeMetric] ?? '123')
-    : variant === 'eo' ? (EO_STAGE_VARIANT[safeMetric] ?? 'eo')
-      : sourceRef.variant as VariantKey;
+  const logicalVariant = dataVariantOfStage(variant, safeMetric) as VariantKey;
+  const sourceRef = variantDataRef(logicalVariant, safeMetric);
+  const dataVariant = sourceRef.variant as VariantKey;
   // 引擎随数据变体走(块族 4 个变体同为 roux223;EO 的两半分属 variant / roux223)。
   const variantEngine = VARIANT_SPEC[dataVariant].engine;
   // 切变体后复位越界 metric(同步 select)。
@@ -930,7 +931,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
   const crossA = useCrossMap(showCross && is333Family && variantEngine === 'std' ? analysisScrambles : NO_SCRAMBLES);
   // 预计算步数表:每个变体取自己的 comp_steps 目录(命中秒出)。404 → std/f2leo 退实时
   // 引擎;无 client 引擎的变体(eo/pair/pseudo/pseudo_pair)显示「暂无数据」而非永远转圈。
-  const compSteps = useCompSteps(showCross && is333Family ? loadedCompId : null, dataVariant as Exclude<VariantKey, 'block' | 'htr' | 'htr2' | 'fr' | '333'>);
+  const compSteps = useCompSteps(showCross && is333Family ? loadedCompId : null, dataVariant as Exclude<VariantKey, 'lbl' | 'block' | 'htr' | 'htr2' | 'fr' | '333'>);
   const uncovered = useMemo(() => {
     if (!(showCross && is333Family) || !compSteps.ready) return NO_SCRAMBLES;
     if (!compSteps.map) return analysisScrambles;
@@ -1602,7 +1603,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
                 analyzable={showCross && is333Family}
                 copyOnClick
                 metric={metric}
-                variant={variant === 'second_layer' ? 'second_layer' : dataVariant}
+                variant={logicalVariant}
                 selectedLabel={selected && sh.groupIdx === selected.groupIdx ? selected.label : null}
                 onSelectScramble={(label) => selectScramble(sh.groupIdx, label)}
                 clockColors={!loadedCompId && sh.event === 'clock' ? events[sh.event]?.colors : undefined}

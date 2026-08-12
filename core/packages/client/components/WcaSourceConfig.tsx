@@ -214,8 +214,8 @@ export default function WcaSourceConfig({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [diffSel.subsetKey]);
 
-  // 方法 / 阶段两个下拉与首页「近期打乱」同一套聚合(lib/scramble-variants):方法只出 9 项
-  // (块族折成「砖」、eoline 并入「EO」),细分落到阶段下拉。设置里仍存底层数据变体 + 阶段键
+  // 方法 / 阶段两个下拉与首页「近期打乱」同一套聚合(lib/scramble-variants):LBL、块族、
+  // EOLine 各自折成一个方法,细分落到阶段下拉。设置里仍存底层数据变体 + 阶段键
   // (= 后端筛选与 distribution 查表的口径),UI 侧按 uiVariantOf 反推当前方法。
   // 「整体」(整解最优 HTM)不在 steps 布局里 —— 它的步数存在另一张表(wca_scramble_optimal.htm,
   // 见 server 的 isWholeSolve),故不看布局;但那张表只灌了同态项目(见 WCA_OPTIMAL_EVENTS,
@@ -239,9 +239,7 @@ export default function WcaSourceConfig({
     () => [...uiVariantOptions(hasVariant), ...(canLength ? [LENGTH_VARIANT] : [])],
     [layout, canWhole, canLength], // eslint-disable-line react-hooks/exhaustive-deps
   );
-  const uiVariant = settings.wcaDiffVariant === 'second_layer'
-    ? settings.wcaDiffVariant
-    : uiVariantOf(settings.wcaDiffVariant);
+  const uiVariant = uiVariantOf(settings.wcaDiffVariant);
   const stagesOfUi = (v: string) => uiStagesOf(v).filter((s) => hasStage(dataVariantOfStage(v, s), s));
   const stageOpts = useMemo(() => stagesOfUi(uiVariant), [layout, uiVariant]); // eslint-disable-line react-hooks/exhaustive-deps
   // 选方法 / 阶段都要连带写回数据变体(聚合方法下,变体由阶段决定)。

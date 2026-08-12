@@ -4,7 +4,8 @@ import { describe, expect, it } from 'vitest';
 import { METHOD_KEYS } from '@/components/StageSolver';
 import { TABLE_SETS, XCROSS_TABLES } from '@/lib/rust-cross-client';
 import {
-  RECENT_METRIC_ORDER, VARIANT_STAGES, uiVariantOptions, variantDataRef,
+  RECENT_METRIC_ORDER, VARIANT_LABEL, VARIANT_ORDER, VARIANT_STAGES,
+  dataVariantOfStage, stageLabel, uiVariantOf, uiVariantOptions, variantDataRef,
 } from '@/lib/scramble-variants';
 import { METRIC_OFFSET } from '@/app/[lang]/scramble/gen/CompCrossAnalysis';
 import { EXACT_VARIANT_STAGES, getExactCell } from '@/app/[lang]/scramble/stats/_data/exact_dist';
@@ -14,11 +15,26 @@ const read = (p: string) => readFileSync(path.join(ROOT, p), 'utf8');
 
 describe('Second Layer 薄别名全链路登记', () => {
   it('用户态独立，数据态统一落到 std stage-4', () => {
+    expect(VARIANT_LABEL.lbl).toEqual({ zh: '层先', en: 'LBL' });
+    expect(VARIANT_ORDER).toContain('lbl');
+    expect(VARIANT_ORDER).not.toContain('daisy');
+    expect(VARIANT_ORDER).not.toContain('first_layer');
+    expect(VARIANT_ORDER).not.toContain('second_layer');
     expect(VARIANT_STAGES.second_layer).toEqual(['second_layer']);
     expect(variantDataRef('second_layer', 'second_layer')).toEqual({
       variant: 'std', stage: 'xxxxcross', recentMetric: 'xxxxc',
     });
-    expect(uiVariantOptions((v) => v === 'std')).toContain('second_layer');
+    expect(uiVariantOf('daisy')).toBe('lbl');
+    expect(uiVariantOf('first_layer')).toBe('lbl');
+    expect(uiVariantOf('second_layer')).toBe('lbl');
+    expect(uiVariantOptions((v) => v === 'std')).toContain('lbl');
+    expect(VARIANT_STAGES.lbl).toEqual(['daisy', 'first_face', 'first_layer', 'second_layer']);
+    expect(VARIANT_STAGES.lbl.map((s) => stageLabel(s, true))).toEqual(['小花', '底面', '底层', '第二层']);
+    expect(VARIANT_STAGES.lbl.map((s) => stageLabel(s, false))).toEqual(['Daisy', 'First Face', 'First Layer', 'Second Layer']);
+    expect(dataVariantOfStage('lbl', 'second_layer')).toBe('second_layer');
+    expect(variantDataRef('lbl', 'second_layer')).toEqual({
+      variant: 'std', stage: 'xxxxcross', recentMetric: 'xxxxc',
+    });
     expect(METHOD_KEYS).toContain('second_layer');
     expect(RECENT_METRIC_ORDER).toContain('second_layer');
   });
