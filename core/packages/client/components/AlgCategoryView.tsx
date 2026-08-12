@@ -15,7 +15,7 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryState, parseAsBoolean, parseAsInteger, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Plus, Pencil, ShieldCheck, GripVertical, AlertTriangle, FlipHorizontal2 } from 'lucide-react';
+import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Plus, Pencil, ShieldCheck, GripVertical, AlertTriangle, FlipHorizontal2, HelpCircle } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, useSortable, arrayMove, rectSortingStrategy, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -936,16 +936,24 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
           <AlgViewModeToggle value={view} onChange={changeView} className="alg-view-toggle" />
         )}
         {isZh && data && !showSubgroupPicker && !showSubSubgroupPicker && effectiveView === 'full' && puzzleParam === '3x3' && (
-          <select
-            className="alg-header-select"
-            value={notationStyle}
-            onChange={e => setNotationStyle(e.target.value as AlgNotationStyle)}
-            aria-label={tr({ zh: '转动记号', en: 'Move notation' })}
-          >
-            <option value="standard">{tr({ zh: '英文', en: 'English' })}</option>
-            <option value="zh-compact">{tr({ zh: '紧凑', en: 'Compact' })}</option>
-            <option value="zh-cstimer">{tr({ zh: '傻瓜', en: 'Foolproof' })}</option>
-          </select>
+          <>
+            <select
+              className="alg-header-select"
+              value={notationStyle}
+              onChange={e => setNotationStyle(e.target.value as AlgNotationStyle)}
+              aria-label={tr({ zh: '转动记号', en: 'Move notation' })}
+            >
+              <option value="standard">{tr({ zh: '英文', en: 'English' })}</option>
+              <option value="zh-compact">{tr({ zh: '紧凑', en: 'Compact' })}</option>
+              <option value="zh-cstimer">{tr({ zh: '傻瓜', en: 'Foolproof' })}</option>
+            </select>
+            {notationStyle === 'zh-compact' && (
+              <Link href="/alg/3x3/notation" prefetch={false} className="alg-back">
+                <HelpCircle size={15} aria-hidden="true" />
+                {tr({ zh: '记号说明', en: 'Notation guide' })}
+              </Link>
+            )}
+          </>
         )}
         {/* 标签筛选只在公式内联时有意义(只看图时没公式可筛) */}
         {data && !showSubgroupPicker && !showSubSubgroupPicker && effectiveView === 'full' && availableTags.length > 0 && (

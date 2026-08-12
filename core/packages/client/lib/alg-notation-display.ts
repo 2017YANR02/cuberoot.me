@@ -25,6 +25,15 @@ const FACE_SHORT_ZH: Record<string, string> = {
   B: '后',
 };
 
+const FACE_WIDE_SHORT_ZH: Record<string, string> = {
+  U: '让',
+  D: '吓',
+  L: '佐',
+  R: '佑',
+  F: '剪',
+  B: '垢',
+};
+
 const ROTATION_ZH: Record<string, string> = {
   x: '天',
   y: '地',
@@ -91,12 +100,15 @@ function moveToCompactZh(move: ParsedMove): string {
   if (specialMove) return specialMove;
   if (move.kind === 'rotation' || move.kind === 'slice') return move.raw;
 
-  const face = FACE_SHORT_ZH[move.family[0]?.toUpperCase()];
+  const faceKey = move.family[0]?.toUpperCase();
+  if (!faceKey) return move.raw;
+  const face = FACE_SHORT_ZH[faceKey];
   const doubleLayer = doubleLayerOf(move);
   const quarterTurns = Math.abs(move.amount);
   if (!face || doubleLayer == null || !Number.isFinite(quarterTurns) || quarterTurns === 0) return move.raw;
 
-  return `${face}${doubleLayer}${compactSuffix(move.amount)}`;
+  const compactFace = doubleLayer ? FACE_WIDE_SHORT_ZH[faceKey] : face;
+  return `${compactFace}${compactSuffix(move.amount)}`;
 }
 
 interface DisplayPiece {
