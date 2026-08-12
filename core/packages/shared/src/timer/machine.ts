@@ -25,6 +25,7 @@ export interface TimerMachineConfig {
 export type TimerMachineAction =
   | { type: 'press-down'; nowMs: number }
   | { type: 'press-up'; nowMs: number }
+  | { type: 'cancel-press' }
   | { type: 'hold-ready' }
   | { type: 'start-now'; nowMs: number; elapsedMs?: number }
   | { type: 'start-from-cube'; nowMs: number; atMs?: number }
@@ -132,6 +133,30 @@ export function transitionTimer(
   if (action.type === 'hold-ready') {
     if (state.phase !== 'holding') return { state, effects: [], accepted: false };
     return { state: { ...state, phase: 'ready' }, effects: [], accepted: true };
+  }
+
+  if (action.type === 'cancel-press') {
+    if (state.phase === 'holding' || state.phase === 'ready') {
+      return {
+        state: {
+          ...state,
+          phase: state.inspectionStartedAtMs === null
+            ? (state.lastMs === null ? 'idle' : 'stopped')
+            : 'inspecting',
+          pendingInspectionStart: false,
+        },
+        effects: ['hold-cancelled'],
+        accepted: true,
+      };
+    }
+    if (state.pendingInspectionStart) {
+      return {
+        state: { ...state, pendingInspectionStart: false },
+        effects: ['hold-cancelled'],
+        accepted: true,
+      };
+    }
+    return { state, effects: [], accepted: false };
   }
 
   if (action.type === 'start-now') {
