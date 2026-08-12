@@ -23,6 +23,7 @@ interface TimerControllerOptions {
 export interface TimerController {
   machine: TimerMachineState;
   nowMs: number;
+  pointerCancel(event: ReactPointerEvent<HTMLButtonElement>): void;
   pointerDown(event: ReactPointerEvent<HTMLButtonElement>): void;
   pointerUp(event: ReactPointerEvent<HTMLButtonElement>): void;
 }
@@ -102,13 +103,19 @@ export function useTimerController({
       event.preventDefault();
       apply({ type: 'press-up', nowMs: performance.now() });
     };
+    const cancelPress = () => {
+      clearHoldTimeout();
+      apply({ type: 'cancel-press' });
+    };
     window.addEventListener('keydown', keyDown);
     window.addEventListener('keyup', keyUp);
+    window.addEventListener('blur', cancelPress);
     return () => {
       window.removeEventListener('keydown', keyDown);
       window.removeEventListener('keyup', keyUp);
+      window.removeEventListener('blur', cancelPress);
     };
-  }, [apply]);
+  }, [apply, clearHoldTimeout]);
 
   const pointerDown = useCallback((event: ReactPointerEvent<HTMLButtonElement>) => {
     if (event.button !== 0) return;
@@ -124,5 +131,11 @@ export function useTimerController({
     apply({ type: 'press-up', nowMs: performance.now() });
   }, [apply, clearHoldTimeout]);
 
-  return { machine, nowMs, pointerDown, pointerUp };
+  const pointerCancel = useCallback((event: ReactPointerEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    clearHoldTimeout();
+    apply({ type: 'cancel-press' });
+  }, [apply, clearHoldTimeout]);
+
+  return { machine, nowMs, pointerCancel, pointerDown, pointerUp };
 }
