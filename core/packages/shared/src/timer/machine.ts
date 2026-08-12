@@ -13,6 +13,8 @@ export interface TimerMachineState {
   lastMs: number | null;
   startedAtMs: number | null;
   inspectionStartedAtMs: number | null;
+  /** Frozen when inspection starts so settings changes cannot alter an active attempt. */
+  inspectionSec: number | null;
   /** Frozen when the run starts so a mid-run settings change cannot alter the result. */
   autoPenalty: AutoPenalty | null;
   pendingInspectionStart: boolean;
@@ -58,6 +60,7 @@ export function initialTimerMachineState(): TimerMachineState {
     lastMs: null,
     startedAtMs: null,
     inspectionStartedAtMs: null,
+    inspectionSec: null,
     autoPenalty: null,
     pendingInspectionStart: false,
   };
@@ -71,12 +74,17 @@ function normalizedNow(value: number): number {
   return Number.isFinite(value) ? value : 0;
 }
 
-function startInspection(state: TimerMachineState, nowMs: number): TimerMachineTransition {
+function startInspection(
+  state: TimerMachineState,
+  nowMs: number,
+  inspectionSec: number,
+): TimerMachineTransition {
   return {
     state: {
       ...state,
       phase: 'inspecting',
       inspectionStartedAtMs: normalizedNow(nowMs),
+      inspectionSec: finiteNonNegative(inspectionSec),
       autoPenalty: null,
       pendingInspectionStart: false,
     },
@@ -100,7 +108,7 @@ function startRunning(
       phase: 'running',
       lastMs: null,
       startedAtMs: normalizedStartedAtMs,
-      autoPenalty: inspectionPenalty(inspectionMs, config.inspectionSec),
+      autoPenalty: inspectionPenalty(inspectionMs, state.inspectionSec ?? config.inspectionSec),
       pendingInspectionStart: false,
     },
     effects,
@@ -133,6 +141,7 @@ export function transitionTimer(
         ...state,
         phase: state.lastMs === null ? 'idle' : 'stopped',
         inspectionStartedAtMs: null,
+        inspectionSec: null,
         autoPenalty: null,
         pendingInspectionStart: false,
       },
@@ -175,7 +184,7 @@ export function transitionTimer(
     const nowMs = normalizedNow(action.nowMs);
     const elapsedMs = finiteNonNegative(action.elapsedMs ?? 0);
     return startRunning(
-      { ...state, inspectionStartedAtMs: null },
+      { ...state, inspectionStartedAtMs: null, inspectionSec: null },
       nowMs - elapsedMs,
       config,
     );
@@ -198,7 +207,7 @@ export function transitionTimer(
 
   if (action.type === 'press-up') {
     if (state.pendingInspectionStart && (state.phase === 'idle' || state.phase === 'stopped')) {
-      return startInspection(state, action.nowMs);
+      return startInspection(state, action.nowMs, config.inspectionSec);
     }
     if (state.phase === 'ready') return startRunning(state, action.nowMs, config);
     if (state.phase === 'holding') {
@@ -235,6 +244,7 @@ export function transitionTimer(
         lastMs: timeMs,
         startedAtMs: null,
         inspectionStartedAtMs: null,
+        inspectionSec: null,
         autoPenalty: null,
         pendingInspectionStart: false,
       },
@@ -251,7 +261,7 @@ export function transitionTimer(
           effects: [],
         };
       }
-      return startInspection(state, nowMs);
+      return startInspection(state, nowMs, config.inspectionSec);
     }
     return {
       state: { ...state, phase: 'holding', pendingInspectionStart: false },

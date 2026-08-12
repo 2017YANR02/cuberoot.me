@@ -122,6 +122,21 @@ describe('shared timer machine', () => {
     expect(stopped.solve).toEqual({ timeMs: 1_000, inspectionMs: 16_001, autoPenalty: '+2' });
   });
 
+  it('freezes inspection settings when inspection starts', () => {
+    const disabled = { ...inspection, inspectionSec: 0 };
+    let state = apply(initialTimerMachineState(), { type: 'press-down', nowMs: 0 }, inspection).state;
+    expect(state.inspectionSec).toBe(15);
+    state = apply(state, { type: 'press-down', nowMs: 15_701 }, disabled).state;
+    state = apply(state, { type: 'hold-ready' }, disabled).state;
+    const started = apply(state, { type: 'press-up', nowMs: 16_001 }, disabled).state;
+    expect(started.autoPenalty).toBe('+2');
+
+    const holding = apply(initialTimerMachineState(), { type: 'press-down', nowMs: 0 }, disabled).state;
+    const ready = apply(holding, { type: 'hold-ready' }, inspection).state;
+    const noInspectionRun = apply(ready, { type: 'press-up', nowMs: 1_000 }, inspection).state;
+    expect(noInspectionRun.autoPenalty).toBe('ok');
+  });
+
   it('starts from a cube only while armed and clamps its timestamp', () => {
     const idle = initialTimerMachineState();
     expect(apply(idle, { type: 'start-from-cube', nowMs: 10_000, atMs: 5_000 }).accepted).toBe(false);

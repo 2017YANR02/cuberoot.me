@@ -1,7 +1,7 @@
 import { EVENTS, type EventId, type Penalty, type Solve } from './types';
 
 export const TIMER_DATABASE_VERSION = 3;
-export const TIMER_STORE_SCHEMA_VERSION = 1;
+export const TIMER_STORE_SCHEMA_VERSION = 2;
 export const MAX_TIMER_BACKUP_BYTES = 10 * 1024 * 1024;
 
 const MAX_DATE_MS = 8_640_000_000_000_000;
@@ -36,9 +36,7 @@ export interface TimerDatabase {
 /** Mobile envelope. App-only preferences intentionally do not enter the solve database. */
 export interface TimerStoreData {
   schemaVersion: typeof TIMER_STORE_SCHEMA_VERSION;
-  sessions: TimerSessionMeta[];
-  activeSessionId: string;
-  dataBySession: Record<string, TimerSolvesByEvent>;
+  database: TimerDatabase;
   settings: TimerStoreSettings;
 }
 
@@ -335,13 +333,18 @@ export function decodeTimerDatabase(
 ): TimerDatabase | null {
   if (!isRecord(value)) return null;
   if (value.schemaVersion === TIMER_STORE_SCHEMA_VERSION) {
-    const projected = decodeCurrentDatabase({
-      version: TIMER_DATABASE_VERSION,
+    return decodeTimerDatabase(value.database, environment);
+  }
+  if (value.schemaVersion === 1) {
+    // Store schema v1 predated the nested database envelope. Its database was
+    // explicitly v3; keep that version frozen so a future DB migration cannot
+    // accidentally reinterpret it as whatever the newest version is.
+    return decodeTimerDatabase({
+      version: 3,
       sessions: value.sessions,
       activeSessionId: value.activeSessionId,
       dataBySession: value.dataBySession,
-    });
-    return projected;
+    }, environment);
   }
   const current = decodeCurrentDatabase(value);
   if (current) return current;
@@ -378,9 +381,7 @@ export function createTimerStoreData(
   const database = createTimerDatabase(nowMs, sessionId, language);
   return {
     schemaVersion: TIMER_STORE_SCHEMA_VERSION,
-    sessions: database.sessions,
-    activeSessionId: database.activeSessionId,
-    dataBySession: database.dataBySession,
+    database,
     settings: {
       event: '333',
       inspectionSec: 0,
@@ -393,15 +394,13 @@ export function createTimerStoreData(
 
 /** Deeply validates every persisted field and returns a sanitized clone. */
 export function decodeTimerStoreData(value: unknown): TimerStoreData | null {
-  if (!isRecord(value) || value.schemaVersion !== TIMER_STORE_SCHEMA_VERSION) return null;
+  if (!isRecord(value) || (value.schemaVersion !== 1 && value.schemaVersion !== TIMER_STORE_SCHEMA_VERSION)) return null;
   const database = decodeTimerDatabase(value, { nowMs: 0, sessionId: 'default' });
   const settings = decodeSettings(value.settings);
   if (!database || !settings) return null;
   return {
     schemaVersion: TIMER_STORE_SCHEMA_VERSION,
-    sessions: database.sessions,
-    activeSessionId: database.activeSessionId,
-    dataBySession: database.dataBySession,
+    database,
     settings,
   };
 }
@@ -432,9 +431,7 @@ export function parseTimerStoreJson(
     if (!database || !settings) return null;
     return {
       schemaVersion: TIMER_STORE_SCHEMA_VERSION,
-      sessions: database.sessions,
-      activeSessionId: database.activeSessionId,
-      dataBySession: database.dataBySession,
+      database,
       settings,
     };
   } catch {
@@ -458,5 +455,5 @@ export function summarizeTimerDatabase(data: Pick<TimerDatabase, 'sessions' | 'd
 }
 
 export function activeTimerSolves(data: TimerStoreData, event: EventId): Solve[] {
-  return data.dataBySession[data.activeSessionId]?.[event] ?? [];
+  return data.database.dataBySession[data.database.activeSessionId]?.[event] ?? [];
 }
