@@ -12,7 +12,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 import { ArrowRightLeft } from 'lucide-react';
-import CubeColorChip, { cubeColorGroups } from '@/components/CubeColorChip/CubeColorChip';
+import CubeColorChip, { cubeColorGroups, f2lDisplayColors } from '@/components/CubeColorChip/CubeColorChip';
 import { findTokenPositions, extractAlgFromText, syncPlayerToMoveCount, countMovesExpanded, type TokenPosition } from '@/lib/recon-alg-utils';
 import { parseSq1Tokens } from '@cuberoot/shared/sq1-notation';
 import './solution_view.css';
@@ -250,18 +250,27 @@ export default function SolutionView({ text, playerRef, crossLineIdx = -1, cross
         const cuts = new Set<number>([0, line.length]);
         if (localCursor != null) cuts.add(localCursor);
         if (hasHl) { cuts.add(Math.max(0, hlS)); cuts.add(Math.min(line.length, hlE)); }
-        for (const group of labelColorGroups) cuts.add(group.start);
+        for (const group of labelColorGroups) {
+          cuts.add(group.start);
+          cuts.add(group.end);
+        }
         const sorted = [...cuts].sort((a, b) => a - b);
         const parts: React.ReactNode[] = [];
         for (let s = 0; s < sorted.length - 1; s++) {
           const a = sorted[s], b = sorted[s + 1];
           const colors = colorsAt.get(a);
           if (colors) {
-            parts.push(<CubeColorChip key={`color${a}`} colors={colors} className="recon-label-chip" />);
+            parts.push(<CubeColorChip key={`color${a}`} colors={f2lDisplayColors(colors)} className="recon-label-chip" />);
           }
           if (localCursor === a) parts.push(<span key={`c${a}`} className="detail-cursor" />);
           const seg = line.slice(a, b);
           if (!seg) continue;
+          const isColorCode = labelColorGroups.some(group => a >= group.start && b <= group.end);
+          if (isColorCode) {
+            // 保留原文字节点供光标偏移计算,视觉上由紧邻的色块完全替代。
+            parts.push(<span key={`code${a}`} className="recon-color-code" aria-hidden="true">{seg}</span>);
+            continue;
+          }
           const inHl = hasHl && a >= Math.max(0, hlS) && b <= Math.min(line.length, hlE);
           if (inHl) parts.push(<span key={`h${a}`} className="recon-move-current">{seg}</span>);
           else parts.push(seg);
