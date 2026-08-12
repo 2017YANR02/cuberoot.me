@@ -24,6 +24,7 @@ const IMG_MAX_DIM = 1920;
 const VIDEO_MAX_BYTES = 20 * 1024 * 1024;
 const VIDEO_MAX_SEC = 15;
 const BODY_MAX = 8000;
+const PAGE_URL_MAX = 500;
 
 interface PendingImage { dataB64: string; mime: string; previewUrl: string; }
 interface PendingVideo { file: File; durationMs: number; previewUrl: string; }
@@ -69,6 +70,7 @@ export default function FeedbackModal({ lang, onClose }: Props) {
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
 
   const [text, setText] = useState('');
+  const [pageUrl, setPageUrl] = useState(() => typeof window === 'undefined' ? '' : window.location.href);
   const [images, setImages] = useState<PendingImage[]>([]);
   const [video, setVideo] = useState<PendingVideo | null>(null);
   const [imgBusy, setImgBusy] = useState(false);
@@ -150,7 +152,7 @@ export default function FeedbackModal({ lang, onClose }: Props) {
       const { id } = await submitFeedback({
         kind: 'other',
         body: text.trim().slice(0, BODY_MAX),
-        pageUrl: location.href,
+        pageUrl: pageUrl.trim().slice(0, PAGE_URL_MAX),
         lang,
         theme,
         viewport: `${window.innerWidth}x${window.innerHeight}`,
@@ -209,6 +211,18 @@ export default function FeedbackModal({ lang, onClose }: Props) {
               placeholder={t('需求 / Bug / 建议,想说什么都行(可 Ctrl+V 粘贴截图)',
                 'Ideas, bugs, anything — paste a screenshot with Ctrl+V')}
             />
+
+            <label className="fb-url-field">
+              <span className="fb-url-label">{t('网址', 'URL')}</span>
+              <input
+                className="fb-url-input"
+                type="url"
+                inputMode="url"
+                value={pageUrl}
+                maxLength={PAGE_URL_MAX}
+                onChange={(e) => setPageUrl(e.target.value)}
+              />
+            </label>
 
             {(images.length > 0 || video) && (
               <div className="fb-attachments">
