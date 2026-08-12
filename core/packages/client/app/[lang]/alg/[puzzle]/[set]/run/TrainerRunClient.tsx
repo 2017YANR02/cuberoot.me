@@ -1474,17 +1474,14 @@ export default function TrainerRunClient() {
                     )}
                   </div>
                   {roomError && <div className="trainer-opts-hint trainer-room-err">{roomError}</div>}
-                  <div className="trainer-opts-hint">
-                    {room
-                      ? tr({
-                          zh: '各设备领到的 case 互不重复',
-                          en: 'Each device receives distinct cases',
-                        })
-                      : tr({
-                          zh: '创建房间把全部选中的 case 作为全队题库,进度接着你当前的往下走(你已刷的算你的份,不再派给别人;队友接着分工),其他设备输房间码或打开邀请链接加入,自动分工不重不漏',
-                          en: 'Create a room with all selected cases as the team pool; progress continues from where you are (the ones you’ve done count as yours and aren’t re-served — teammates pick up the rest). Others join by code or invite link for automatic, no-overlap division',
-                        })}
-                  </div>
+                  {room && (
+                    <div className="trainer-opts-hint">
+                      {tr({
+                        zh: '各设备领到的 case 互不重复',
+                        en: 'Each device receives distinct cases',
+                      })}
+                    </div>
+                  )}
                 </>
               )}
               {probSupported && mode === 'train' && (
