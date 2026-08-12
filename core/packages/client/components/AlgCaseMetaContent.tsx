@@ -10,7 +10,7 @@
  * 镜像 / 逆 / 镜像逆存的是**表编号**(`meta.no`),不是 DB id;三者关联全落在本 set 内,
  * 所以 `byNo` 一定查得到(查不到只显示编号,不猜)。背景见 AlgCaseMetaModal 顶部注释。
  */
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Copy, Check } from 'lucide-react';
 import Link from '@/components/AppLink';
 import type { AlgCase, AlgCaseMeta, AlgPuzzle } from '@cuberoot/shared';
@@ -18,7 +18,13 @@ import { stm } from '@cuberoot/shared/alg-notation';
 import { CaseThumb } from '@/components/CaseThumb';
 import { useCopy } from '@/hooks/useCopy';
 import { ALG_SET_UNIVERSE, LL_UNIVERSE_TOTAL, caseOrbit, probabilityFraction } from '@/lib/alg_probability';
-import { caseScramble } from '@/lib/alg_scramble';
+import { alignScrambleToSetup, caseScramble } from '@/lib/alg_scramble';
+import {
+  availableKinds,
+  cstimerStyleScramble,
+  SCRAMBLE_KINDS,
+  type ScrambleKind,
+} from '@/lib/trainer-scramble';
 import { ALG_TAG_LABEL } from '@/lib/alg_tags';
 import { primaryCaseName } from '@/lib/alg_case_display';
 import { displayAlg } from '@/lib/alg_display';
@@ -76,12 +82,17 @@ interface Props {
    */
   algsWrap?: (rows: React.ReactNode) => React.ReactNode;
   algRowWrap?: (row: React.ReactNode, index: number) => React.ReactNode;
+  /** 详情页才传:选择状态由页级 nuqs 持有;训练弹窗仍只显示默认打乱。 */
+  scrambleKind?: ScrambleKind;
+  onScrambleKindChange?: (kind: ScrambleKind) => void;
 }
 
 export default function AlgCaseMetaContent({
   caseObj, puzzle, set, byNo, jump,
   algsWrap = (rows) => rows,
   algRowWrap = (row) => row,
+  scrambleKind = 'inv',
+  onScrambleKindChange,
 }: Props) {
   /**
    * 没有 meta 的集(虚拟集 LSLL、库里还没补元数据的集)一样要能看:空对象兜底后
@@ -168,7 +179,47 @@ export default function AlgCaseMetaContent({
     return { family: fam, selfNotes: notes, missing: [...gone.values()] };
   }, [m, byNo, caseObj]);
 
-  const scramble = useMemo(() => caseScramble(caseObj, byNo), [caseObj, byNo]);
+  const scrambleKinds = useMemo(() => {
+    const ids = new Set(availableKinds(caseObj));
+    if (puzzle === '3x3') ids.add('cstimer');
+    return SCRAMBLE_KINDS.filter(kind => ids.has(kind.id));
+  }, [caseObj, puzzle]);
+  const selectedScrambleKind = scrambleKinds.some(kind => kind.id === scrambleKind) ? scrambleKind : 'inv';
+  const inverseScramble = useMemo(
+    () => caseScramble(caseObj, byNo, puzzle, 'inv'),
+    [caseObj, byNo, puzzle],
+  );
+  const storedScramble = useMemo(
+    () => selectedScrambleKind === 'cstimer'
+      ? null
+      : caseScramble(caseObj, byNo, puzzle, selectedScrambleKind),
+    [caseObj, byNo, puzzle, selectedScrambleKind],
+  );
+  const [cstimerScramble, setCstimerScramble] = useState<{ text: string; fallback: boolean } | null>(null);
+
+  useEffect(() => {
+    if (selectedScrambleKind !== 'cstimer' || !inverseScramble) {
+      setCstimerScramble(null);
+      return;
+    }
+    let live = true;
+    setCstimerScramble(null);
+    void cstimerStyleScramble(inverseScramble.text).then(generated => {
+      if (!live) return;
+      const aligned = generated
+        ? alignScrambleToSetup(puzzle, generated, caseObj.setup)
+        : null;
+      setCstimerScramble({
+        text: aligned ?? inverseScramble.text,
+        fallback: !aligned,
+      });
+    });
+    return () => { live = false; };
+  }, [caseObj.setup, inverseScramble, puzzle, selectedScrambleKind]);
+
+  const scramble = selectedScrambleKind === 'cstimer'
+    ? cstimerScramble && { text: cstimerScramble.text, fromInvCase: cstimerScramble.fallback }
+    : storedScramble;
 
   const sym = m.sym ?? {};
   const symFlags = [
@@ -244,13 +295,35 @@ export default function AlgCaseMetaContent({
 
       {/* 打乱紧跟着图 —— 图画的就是打乱之后的样子,两者一起看才对得上;公式是「怎么解开它」,
           排在后面。取值的三档(逆 case 的公式 / 现推 / setup 保底)见 {@link caseScramble}。 */}
-      {scramble && (
+      {(scramble || (selectedScrambleKind === 'cstimer' && inverseScramble)) && (
         <div className="alg-meta-section">
-          <h3>{tr({ zh: '打乱', en: 'Scramble' })}</h3>
-          <AlgLine
-            label={scramble.fromInvCase ? tr({ zh: '逆 case', en: 'Inv case' }) : ''}
-            alg={scramble.text}
-          />
+          <div className="alg-meta-section-head">
+            <h3>{tr({ zh: '打乱', en: 'Scramble' })}</h3>
+            {onScrambleKindChange && scrambleKinds.length > 1 && (
+              <select
+                className="alg-meta-scramble-kind"
+                value={selectedScrambleKind}
+                onChange={event => onScrambleKindChange(event.target.value as ScrambleKind)}
+                aria-label={tr({ zh: '打乱类型', en: 'Scramble type' })}
+              >
+                {scrambleKinds.map(kind => (
+                  <option key={kind.id} value={kind.id}>{kind.label()}</option>
+                ))}
+              </select>
+            )}
+          </div>
+          {scramble ? (
+            <AlgLine
+              label={scramble.fromInvCase && (!onScrambleKindChange || selectedScrambleKind === 'cstimer')
+                ? tr({ zh: '逆 case', en: 'Inv case' })
+                : ''}
+              alg={scramble.text}
+            />
+          ) : (
+            <span className="alg-meta-scramble-loading">
+              {tr({ zh: '正在生成…', en: 'Generating…' })}
+            </span>
+          )}
         </div>
       )}
 

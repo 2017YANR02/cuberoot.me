@@ -43,7 +43,8 @@ import { useCopy } from '@/hooks/useCopy';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
 import BoolToggle from '@/components/BoolToggle';
-import { parseAsBoolean, useQueryState } from 'nuqs';
+import { SCRAMBLE_KINDS, type ScrambleKind } from '@/lib/trainer-scramble';
+import { parseAsBoolean, parseAsStringEnum, useQueryState } from 'nuqs';
 
 /** 打乱行(和列表卡片同款,sq1 之类会重排格式)。 */
 function SetupLine({ puzzle, setup }: { puzzle: string; setup: string }) {
@@ -124,6 +125,10 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
     'black',
     parseAsBoolean.withDefault(true),
   );
+  const [scrambleKind, setScrambleKind] = useQueryState(
+    'scramble',
+    parseAsStringEnum<ScrambleKind>(SCRAMBLE_KINDS.map(kind => kind.id)).withDefault('inv'),
+  );
   const isAdmin = useIsAdmin();
   const [editorState, setEditorState] = useState<AdminEditorState | null>(null);
   const m = caseObj.meta;
@@ -141,6 +146,15 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
     return `${path}${path.includes('?') ? '&' : '?'}black=false${hash}`;
   };
 
+  /** 在关联 case 之间切换时保留用户刚选的打乱类型;默认值不写进 URL。 */
+  const keepScrambleKind = (href: string) => {
+    if (scrambleKind === 'inv') return href;
+    const hashAt = href.indexOf('#');
+    const path = hashAt < 0 ? href : href.slice(0, hashAt);
+    const hash = hashAt < 0 ? '' : href.slice(hashAt);
+    return `${path}${path.includes('?') ? '&' : '?'}scramble=${encodeURIComponent(scrambleKind)}${hash}`;
+  };
+
   // 「返回」→ case 所在的子组列表页(带 #name 高亮那张卡)。是有明确目标的导航,不是 history.back。
   const rawBackHref = algCaseHref(puzzle, set, caseObj);
   const backHref = keepSq1Top(rawBackHref);
@@ -156,7 +170,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
   const slugMap = useMemo(() => buildCaseSlugMap(data.cases, set), [data, set]);
   const hrefFor = (c: AlgCase) => {
     const href = algCaseDetailHref(puzzle, set, (c.id != null && slugMap.byId.get(c.id)) || '');
-    return keepSq1Top(href);
+    return keepScrambleKind(keepSq1Top(href));
   };
 
   // 社区公式:只这张 case 的。
@@ -294,6 +308,8 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
             set={set}
             byNo={byNo}
             jump={{ kind: 'link', href: hrefFor }}
+            scrambleKind={scrambleKind}
+            onScrambleKindChange={setScrambleKind}
             algsWrap={dragAlgs ? withDnd(0) : undefined}
             algRowWrap={dragAlgs
               ? (row, i) => <SortableAlgRow key={algDragId(0, i)} id={algDragId(0, i)} draggable>{row}</SortableAlgRow>

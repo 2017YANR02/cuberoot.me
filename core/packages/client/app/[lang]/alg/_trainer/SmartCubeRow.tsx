@@ -161,15 +161,14 @@ export default function SmartCubeRow({ enabled, onEnabledChange, state, supporte
       )}
       {error && <div className="trainer-opts-hint trainer-room-err">{error}</div>}
 
-      <div className="trainer-opts-hint">
-        {reason === 'disconnected'
+      {reason !== 'off' && (
+        <div className="trainer-opts-hint">
+          {reason === 'disconnected'
           ? tr({
               zh: '连上蓝牙魔方后,每题由魔方直接「变成」那个 case —— 不用照打乱拧,拧完自动判定、自动下一题。练的是这一套的收尾动作,魔方本体越练越乱,不用管',
               en: 'Connect a bluetooth cube and each case is handed to you on the cube itself — no scramble to apply, and the clock starts and stops on its own. The cube in your hands drifts further from solved every rep, which never matters',
             })
-          : reason === 'off'
-            ? tr({ zh: '正在启用智能魔方…', en: 'Enabling smart cube…' })
-            : reason === 'unreadable-case'
+          : reason === 'unreadable-case'
               ? tr({ zh: '这题的打乱含看不懂的记号,本题由你自己停表', en: 'This case’s scramble has notation we can’t read, so stop the clock yourself' })
               : reason === 'no-case'
                 ? tr({ zh: '等出题', en: 'Waiting for a case' })
@@ -188,7 +187,8 @@ export default function SmartCubeRow({ enabled, onEnabledChange, state, supporte
                       zh: '这一套的收尾状态判定不了,第一下转动开始计时,整体还原或按空格停表',
                       en: 'We can’t state where this set finishes: your first turn starts the clock, and a full solve or the space bar stops it',
                     })}
-      </div>
+        </div>
+      )}
     </>
   );
 }
