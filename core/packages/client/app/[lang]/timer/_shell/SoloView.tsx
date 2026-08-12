@@ -47,7 +47,7 @@ import { Flag } from '@/components/Flag';
 import { compFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags';
 import { localizeCompName } from '@/lib/comp-localize';
 import { compSourceLine } from '@/lib/comp-schedule';
-import { usesStepsIndex } from '@/lib/scramble-variants';
+import { usesStepsIndex, variantDataRef } from '@/lib/scramble-variants';
 import { useAuthStore } from '@/lib/auth-store';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import { displayCuberName } from '@/lib/cuber-name-display';
@@ -373,6 +373,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   // 真题:optimal → 服务端 God's-number 最优等态(复用 optimal_scramble);随机状态 → 见 scramble222。
   const [mode222] = use222Mode();
   const wcaOptimalOn = event === '222' ? mode222 === 'optimal' : settings.wcaUseOptimal;
+  const wcaDiffRef = variantDataRef(settings.wcaDiffVariant, settings.wcaDiffStage);
   const wcaSpec = useMemo<WcaSourceSpec>(() => {
     const compMissing = settings.wcaScrambleMode === 'comp' && !settings.wcaComp;
     return {
@@ -391,7 +392,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       // 稀有档(0 步十字)也能出题。
       diff: !wcaCompUnindexed && settings.wcaDifficultyOn && settings.wcaDiffSteps.length > 0
         ? {
-          variant: settings.wcaDiffVariant, stage: settings.wcaDiffStage,
+          variant: wcaDiffRef.variant, stage: wcaDiffRef.stage,
           colors: settings.wcaDiffColors, steps: settings.wcaDiffSteps,
           merged: settings.wcaDiffMerged,
         }
@@ -399,7 +400,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       stepFilter: wcaStep ?? undefined,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [event, settings.wcaScrambleMode, settings.wcaComp, settings.wcaCompName, settings.wcaRound, settings.wcaGroup, settings.wcaDateFrom, settings.wcaDateTo, wcaOptimalOn, settings.wcaDifficultyOn, settings.wcaDiffVariant, settings.wcaDiffStage, settings.wcaDiffColors, settings.wcaDiffSteps, settings.wcaDiffMerged, wcaStepSig, wcaCompUnindexed]);
+  }, [event, settings.wcaScrambleMode, settings.wcaComp, settings.wcaCompName, settings.wcaRound, settings.wcaGroup, settings.wcaDateFrom, settings.wcaDateTo, wcaOptimalOn, settings.wcaDifficultyOn, wcaDiffRef.variant, wcaDiffRef.stage, settings.wcaDiffColors, settings.wcaDiffSteps, settings.wcaDiffMerged, wcaStepSig, wcaCompUnindexed]);
   const wcaSpecRef = useRef(wcaSpec);
   wcaSpecRef.current = wcaSpec;
   const wcaSourceSig = settings.scrambleSource === 'wca'

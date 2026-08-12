@@ -26,7 +26,7 @@ import type { EventId } from '@/app/[lang]/timer/_lib/types';
 import { VariantSelect } from '@/components/VariantSelect';
 import { RangeSlider } from '@/components/RangeSlider/RangeSlider';
 import { useSubsetSelection, SubsetColorPicker } from '@/components/SubsetColorPicker/SubsetColorPicker';
-import { stageLabel, LENGTH_VARIANT, WHOLE_VARIANT, usesStepsIndex, uiVariantOf, uiVariantOptions, uiStagesOf, dataVariantOfStage } from '@/lib/scramble-variants';
+import { stageLabel, LENGTH_VARIANT, WHOLE_VARIANT, usesStepsIndex, uiVariantOf, uiVariantOptions, uiStagesOf, dataVariantOfStage, variantDataRef } from '@/lib/scramble-variants';
 import { statsUrl } from '@/lib/stats-base';
 import { tr } from '@/i18n/tr';
 import './wca-source.css';
@@ -230,13 +230,18 @@ export default function WcaSourceConfig({
   const hasStage = (dv: string, stage: string) => (
     dv === WHOLE_VARIANT ? canWhole
       : dv === LENGTH_VARIANT ? canLength
-        : (layout ? !!layout.variants[dv]?.[stage] : true));
+        : (() => {
+          const ref = variantDataRef(dv, stage);
+          return layout ? !!layout.variants[ref.variant]?.[ref.stage] : true;
+        })());
   const hasVariant = (dv: string) => (dv === WHOLE_VARIANT ? canWhole : (layout ? !!layout.variants[dv] : true));
   const variantOpts = useMemo(
     () => [...uiVariantOptions(hasVariant), ...(canLength ? [LENGTH_VARIANT] : [])],
     [layout, canWhole, canLength], // eslint-disable-line react-hooks/exhaustive-deps
   );
-  const uiVariant = uiVariantOf(settings.wcaDiffVariant);
+  const uiVariant = settings.wcaDiffVariant === 'second_layer'
+    ? settings.wcaDiffVariant
+    : uiVariantOf(settings.wcaDiffVariant);
   const stagesOfUi = (v: string) => uiStagesOf(v).filter((s) => hasStage(dataVariantOfStage(v, s), s));
   const stageOpts = useMemo(() => stagesOfUi(uiVariant), [layout, uiVariant]); // eslint-disable-line react-hooks/exhaustive-deps
   // 选方法 / 阶段都要连带写回数据变体(聚合方法下,变体由阶段决定)。
@@ -273,6 +278,7 @@ export default function WcaSourceConfig({
   const isWhole = settings.wcaDiffVariant === WHOLE_VARIANT;
   // 「打乱」(伪变体)按招式数筛,端点来自长度直方图而非 distribution;同样无底色 / 无阶段。
   const isLength = settings.wcaDiffVariant === LENGTH_VARIANT;
+  const diffRef = variantDataRef(settings.wcaDiffVariant, settings.wcaDiffStage);
   const effectiveDiffSubset = isWhole ? 'ALL' : diffSel.subsetKey;
   // 长度端点:合并开 → 3x3 族各项目长度直方图取并;否则只看当前项目。
   const lenBounds = useMemo<[number, number] | null>(() => {
@@ -296,7 +302,7 @@ export default function WcaSourceConfig({
   const [stepLo, stepHi] = useMemo<[number, number]>(() => {
     if (isLength) return lenBounds ?? [STEP_MIN, STEP_MAX];
     const bounds = (setKey: string): [number, number] | null => {
-      const h = diffDist?.sets?.[setKey]?.variants?.[settings.wcaDiffVariant]?.data?.[settings.wcaDiffStage]?.[effectiveDiffSubset];
+      const h = diffDist?.sets?.[setKey]?.variants?.[diffRef.variant]?.data?.[diffRef.stage]?.[effectiveDiffSubset];
       if (!h || !Number.isFinite(h.min) || !Number.isFinite(h.max) || h.max < h.min) return null;
       return [h.min, h.max];
     };
@@ -314,7 +320,7 @@ export default function WcaSourceConfig({
     if (hi >= lo) return [lo, hi];
     // per-event 集缺失(旧 distribution.json)→ 退合并池端点,再退静态范围
     return bounds('wca') ?? [STEP_MIN, STEP_MAX];
-  }, [diffDist, settings.wcaDiffVariant, settings.wcaDiffStage, effectiveDiffSubset, settings.wcaDiffMerged, canMerge, wev, isLength, lenBounds]);
+  }, [diffDist, diffRef.variant, diffRef.stage, effectiveDiffSubset, settings.wcaDiffMerged, canMerge, wev, isLength, lenBounds]);
   // 刻度尽量标全整数;范围宽到标签会重叠时,按 nice 步长(1/2/5/10…)抽稀,始终含两端。
   const stepMarks = useMemo(() => {
     const span = stepHi - stepLo;
