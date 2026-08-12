@@ -25,7 +25,7 @@ import {
 } from '@cuberoot/shared';
 import { VisualCube } from '@/components/VisualCube';
 import { CaseThumb } from '@/components/CaseThumb';
-import { cubeThumbParams, LEVEL2_PICKER_MASK } from '@/lib/alg_thumb_plan';
+import { cubeThumbParams, LEVEL2_PICKER_MASK, supportsRecognitionSimplification } from '@/lib/alg_thumb_plan';
 import AlgCard from '@/components/AlgCard';
 import CommunityAlgs from '@/components/CommunityAlgs';
 import AdminCaseEditor, { type AdminEditorState } from '@/components/AdminCaseEditor';
@@ -712,8 +712,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     if (puzzleParam !== '3x3') return false;
     const sample = scopedCases[0];
     if (!sample) return false;
-    const viewName = cubeThumbParams(puzzleParam, set, sample.sticker).view;
-    return viewName === 'plan' || viewName === 'oll' || viewName === 'pll';
+    return supportsRecognitionSimplification(cubeThumbParams(puzzleParam, set, sample.sticker));
   }, [puzzleParam, scopedCases, set]);
 
   const visibleCases = useMemo(() => {
