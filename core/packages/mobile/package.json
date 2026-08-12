@@ -8,6 +8,7 @@
     "build": "vite build",
     "test": "vitest run",
     "typecheck": "tsgo --noEmit",
+    "assets:android": "node scripts/gen-android-assets.mjs",
     "cap:add:android": "cap add android",
     "cap:sync": "pnpm build && cap sync android",
     "android:open": "cap open android",
