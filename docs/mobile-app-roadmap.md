@@ -45,18 +45,20 @@
 ### 阶段 2：共享核心边界
 
 - [x] 完成计时器、打乱、统计、存储、训练、BLE、API 和设置的依赖盘点。
-- [ ] 提取计时记录模型、校验、统计和序列化，网站与 App 使用同一实现。
+- [x] 提取计时记录模型、校验、统计和序列化，网站与 App 使用同一实现。
   - [x] 计时记录模型、观察罚时规则和统计函数已迁入 `@cuberoot/shared/timer`，网站原路径保留兼容导出。
-  - [ ] 输入校验和版本化序列化仍待共享。
+  - [x] 输入校验和版本化序列化已共享；App 的 IndexedDB 仓储只接受通过统一 schema 校验的数据。
 - [ ] 提取无框架依赖的打乱生成核心，网站与 App 使用同一实现。
 - [ ] 定义 BLE transport，并逐步让现有 Web 驱动与未来原生驱动共用协议层。
-- [ ] 共享层回归测试和移动端 adapter contract tests 全部通过。
+- [x] 共享层回归测试和移动端 adapter contract tests 全部通过。
   - [x] 共享包构建、网站 typecheck、93 个计时/统计测试和 4 个复盘真值 fixture 已通过。
-  - [ ] 移动端 adapter contract tests 待实现。
+  - [x] 移动端仓储 adapter 的 6 个 contract tests 已通过，覆盖首次初始化、并发写、修改/删除、导入导出、损坏数据和设置校验。
 
 当前证据：
 
 - 共享计时模型、统计和观察规则提交：`6fec2c94c3`。
+- 共享计时状态机提交：`fba563fc35`。
+- 版本化 schema、IndexedDB 仓储和 adapter contract tests 提交：`ac5a88bf39`。
 
 ### 阶段 3：PWA 补强和网站兜底
 
