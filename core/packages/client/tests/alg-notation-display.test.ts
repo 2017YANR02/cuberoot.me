@@ -26,8 +26,9 @@ describe('formatAlgNotation', () => {
 
   it('renders compact Chinese notation without standard move tokens', () => {
     expect(formatAlgNotation("R U2' U' r R2 f' Uw x M'", 'zh-compact')).toBe(
-      "右顺 上180 上逆 右双顺 右180 前双逆 上双顺 天 中'",
+      "右 上2' 上' 右双 右2 前双' 上双 天 中'",
     );
+    expect(formatAlgNotation("R U2 R2 F R F'", 'zh-compact')).toBe("右 上2 右2 前 右 前'");
   });
 
   it('preserves grouping, commutator punctuation, and unknown text', () => {
