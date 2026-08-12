@@ -569,7 +569,6 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
   const distVar = dist?.sets?.wca?.variants?.[dataVariant];
   const distStageKey = useMemo(() => {
     if (!distVar) return null;
-    if (curMetric === 'second_layer') return aliasRef.stage;
     const target = stageLabel(curMetric, false);
     return Object.keys(distVar.data).find((s) => stageLabel(s, false) === target) ?? null;
   }, [distVar, curMetric, curVariant, aliasRef.stage]);
@@ -589,7 +588,7 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
     if (!prob) return null;
     const p = new URLSearchParams();
     const linkVariant = dataVariantOfStage(curVariant, curMetric);
-    const linkStage = curMetric === 'second_layer' ? curMetric : prob.stageKey;
+    const linkStage = prob.stageKey;
     if (linkVariant !== 'std') p.set('variant', linkVariant);
     if (linkStage !== 'cross') p.set('stage', linkStage);
     if (!isWhole && subsetKey !== 'BGORWY') p.set('colors', subsetKey);  // 整解无底色维度

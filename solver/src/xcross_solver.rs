@@ -43,6 +43,9 @@ pub struct XCrossSolver {
     idx_solved_c2_nb: u32,
     idx_solved_e6_dg: u32,
     idx_solved_c2_dg: u32,
+    /// first-layer-solved input:physical code(2*position+orientation) → each slot's
+    /// canonical single-edge code. Built from the same move semantics as `get_virt`.
+    second_layer_edge_map: [[u8; 24]; 4],
 }
 
 /// 单槽位在 alg 下的虚拟状态。im/ic/ie 用于 XCross;ie6_*/ic2_* 用于 huge 阶段。
@@ -59,6 +62,37 @@ struct VirtState {
 }
 
 const IDX_C4: u32 = 12;
+
+/// With the first layer fixed, only the four labelled middle-layer edges vary:
+/// P(8,4) positions × 2^4 orientations. Top-layer pieces are irrelevant fillers.
+pub const SECOND_LAYER_INPUT_STATES: usize = 26_880;
+
+fn build_second_layer_edge_map(mt_edge: &MoveTable) -> [[u8; 24]; 4] {
+    let mt = mt_edge.as_u32();
+    let cj = conj_moves_flat();
+    std::array::from_fn(|slot| {
+        let mut out = [u8::MAX; 24];
+        let mut queue = std::collections::VecDeque::new();
+        // Physical piece `slot` starts in physical position `slot`; after the slot
+        // conjugation the same solved piece is canonical edge 0.
+        out[2 * slot] = 0;
+        queue.push_back((2 * slot, 0usize));
+        while let Some((physical, canonical)) = queue.pop_front() {
+            for m in 0..18 {
+                let np = mt[physical * 18 + m] as usize;
+                let nc = mt[canonical * 18 + cj[m][slot] as usize] as usize;
+                if out[np] == u8::MAX {
+                    out[np] = nc as u8;
+                    queue.push_back((np, nc));
+                } else {
+                    assert_eq!(out[np] as usize, nc, "inconsistent slot edge conjugation");
+                }
+            }
+        }
+        assert!(out.iter().all(|&v| v != u8::MAX));
+        out
+    })
+}
 
 impl XCrossSolver {
     /// `with_huge=false`:仅 XCross(52 MB 表);`true`:额外 ensure mt_edge6 +
@@ -85,10 +119,14 @@ impl XCrossSolver {
             (None, None, None, None)
         };
 
+        let mt_edge4 = mtm.ensure_edge4();
+        let mt_corn = mtm.ensure_corn();
+        let mt_edge = mtm.ensure_edge();
+        let second_layer_edge_map = build_second_layer_edge_map(&mt_edge);
         XCrossSolver {
-            mt_edge4: mtm.ensure_edge4(),
-            mt_corn: mtm.ensure_corn(),
-            mt_edge: mtm.ensure_edge(),
+            mt_edge4,
+            mt_corn,
+            mt_edge,
             pt_cross_c4e0: ptm.ensure_pt_cross_c4e0(),
             mt_edge6,
             mt_corn2,
@@ -98,6 +136,7 @@ impl XCrossSolver {
             idx_solved_c2_nb: array_to_index(&v_c2_nb, 2, 3, 8) as u32,
             idx_solved_e6_dg: array_to_index(&v_e6_dg, 6, 2, 12) as u32,
             idx_solved_c2_dg: array_to_index(&v_c2_dg, 2, 3, 8) as u32,
+            second_layer_edge_map,
         }
     }
 
@@ -114,6 +153,7 @@ impl XCrossSolver {
         let v_e6_dg: [i32; 6] = [0, 4, 16, 18, 20, 22];
         let v_c2_nb: [i32; 2] = [12, 15];
         let v_c2_dg: [i32; 2] = [12, 18];
+        let second_layer_edge_map = build_second_layer_edge_map(&mt_edge);
         XCrossSolver {
             mt_edge4,
             mt_corn,
@@ -127,6 +167,7 @@ impl XCrossSolver {
             idx_solved_c2_nb: array_to_index(&v_c2_nb, 2, 3, 8) as u32,
             idx_solved_e6_dg: array_to_index(&v_e6_dg, 6, 2, 12) as u32,
             idx_solved_c2_dg: array_to_index(&v_c2_dg, 2, 3, 8) as u32,
+            second_layer_edge_map,
         }
     }
 
@@ -689,6 +730,42 @@ impl XCrossSolver {
             }
         }
         99
+    }
+
+    /// Exact HTM distance for the conditional LBL Second Layer problem.
+    ///
+    /// The input contains the four labelled middle-layer edge pieces (piece 0..3),
+    /// encoded as `2 * physical_position + orientation`. A valid conditional input
+    /// has four distinct positions in 0..=7:the complete first layer is fixed, while
+    /// the four untracked U-layer edges fill the remaining positions. Search is still
+    /// unrestricted and may temporarily disturb the first layer; the goal restores it
+    /// and solves all four middle edges.
+    pub fn second_layer_distance(&self, middle_edges: [u8; 4]) -> Option<u32> {
+        let mut seen = 0u16;
+        for &code in &middle_edges {
+            let pos = (code / 2) as usize;
+            if code >= 16 || seen & (1 << pos) != 0 {
+                return None;
+            }
+            seen |= 1 << pos;
+        }
+
+        let solved_im = (state_space::CROSS_SOLVED * state_space::CORNER) as u32;
+        let st: [VirtState; 4] = std::array::from_fn(|slot| VirtState {
+            im: solved_im,
+            ic: IDX_C4,
+            ie: self.second_layer_edge_map[slot][middle_edges[slot] as usize] as u32,
+            ..VirtState::default()
+        });
+        let h = st.iter().map(|s| self.slot_h(s)).max().unwrap_or(0);
+        // Any cube state is at most 20 HTM from solved, so 20 is a strict upper
+        // bound for this weaker target as well. Returning 99 would be a bug.
+        let distance = self.solve_subset(&st, &[0, 1, 2, 3], h, 0, 20);
+        assert!(
+            distance <= 20,
+            "conditional second-layer search exceeded cube upper bound"
+        );
+        Some(distance)
     }
 
     /// K 槽多解枚举:把 `coords` 对应的子集在恰好 `depth` 步内的所有解(rotated frame

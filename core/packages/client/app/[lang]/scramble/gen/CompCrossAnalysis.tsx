@@ -25,15 +25,13 @@ import type { RoundSheet } from './SheetView';
 // b122/b123/b222/b223/bf2b = 块类指标(1x2x2 方块 / 1x2x3 / 2x2x2 / 2x2x3 / 双1x2x3),
 // beo/beoline/bdr = EOLine 系与 DR;数据在各自变体的 comp_steps_<key> 里按阶段序排
 // (123/eoline 两阶段,其余单阶段)。
-export type Metric = 'cross' | StepMetric | 'bdaisy' | 'bfirst_face' | 'bfirst_layer' | 'bsecond_layer' | 'b122' | 'b123' | 'b222' | 'b223' | 'bf2b' | 'beo' | 'beoline' | 'bdr';
+export type Metric = 'cross' | StepMetric | 'bdaisy' | 'bfirst_face' | 'bfirst_layer' | 'b122' | 'b123' | 'b222' | 'b223' | 'bf2b' | 'beo' | 'beoline' | 'bdr';
 // 指标显示名统一走 lib/scramble-variants 的 stageLabel(b 前缀指标键已在表内别名)。
 // comp_steps [30] 里各阶段的起始下标(每阶段 6 底色)。逐行徽标切片也用它。
 export const METRIC_OFFSET: Record<Metric, number> = {
   cross: 0, xc: 6, xxc: 12, xxxc: 18, xxxxc: 24,
   bdaisy: 0,
   bfirst_face: 0, bfirst_layer: 6,
-  // Second Layer 直接读 std comp_steps 的 stage-4(XXXXCross) 六色槽。
-  bsecond_layer: 24,
   b122: 0, b123: 6, b222: 0, b223: 0,
   bf2b: 0, beo: 0, beoline: 6, bdr: 0,
 };
