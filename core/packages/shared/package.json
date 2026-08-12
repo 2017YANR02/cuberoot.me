@@ -117,6 +117,7 @@
       "node": "./dist/calendar.js",
       "default": "./src/calendar.ts"
     },
+    "./timer": "./src/timer/index.ts",
     "./data/*.json": "./data/*.json"
   },
   "scripts": {
