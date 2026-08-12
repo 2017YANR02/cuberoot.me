@@ -1575,8 +1575,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'IframePage',
     import: "import IframePage from '@/components/IframePage';",
     category: 'nav',
-    zh: `通用 iframe 包装页,带标题栏全屏嵌入未迁移的上游模块(Solver / Alg Trainer / csTimer),并把内部 / 链接劫持到顶层路由。`,
-    en: `Generic full-screen iframe wrapper page with a title bar for embedding un-ported upstream modules (Solver / Alg Trainer / csTimer), retargeting internal '/' links to the top frame.`,
+    zh: `通用 iframe 包装页,带标题栏全屏嵌入未迁移的上游模块或独立应用;同源模块会把跨树 / 链接交给顶层路由,独立应用可显示新标签页入口。`,
+    en: `Generic full-screen iframe wrapper for un-ported modules or standalone apps; same-origin links can be retargeted to the top frame, while standalone apps can expose a new-tab entry.`,
   },
   {
     name: 'Paginator',

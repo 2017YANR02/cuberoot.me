@@ -153,7 +153,7 @@ export default function LandingPage() {
                     {(card.iconImg || card.Icon) && (
                       <div className="card-icon">
                         {card.iconImg
-                          ? <img src={card.iconImg} alt={`${t(card.nameKey)} Logo`} className="cstimer-logo" />
+                          ? <img src={card.iconImg} alt={`${t(card.nameKey)} Logo`} className="card-logo" />
                           : card.Icon
                             ? <card.Icon size={iconSize} strokeWidth={1.5} />
                             : null}

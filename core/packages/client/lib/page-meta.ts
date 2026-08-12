@@ -225,6 +225,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'code/wcif': { title: { zh: 'WCIF', en: 'WCIF' } },
   'cross_trainer': { title: { zh: '十字训练', en: 'Cross Trainer' } },
   'cstimer': { title: { zh: 'csTimer', en: 'csTimer' } },
+  'contests': {
+    title: { zh: '比赛系统', en: 'Contests' },
+    description: {
+      zh: '创建比赛、管理项目与选手、录入现场成绩,并自动生成排名和纪录。',
+      en: 'Create competitions, manage events and competitors, enter live results, and generate rankings and records.',
+    },
+  },
   'documentation': { title: { zh: '文档', en: 'Documentation' } },
   'eocross_trainer': { title: { zh: 'EO 十字训练', en: 'EOCross Trainer' } },
   'feedback': { title: { zh: '我的反馈', en: 'My feedback' } },

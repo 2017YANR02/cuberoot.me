@@ -405,14 +405,14 @@ body:has(.page-notice-wrap) .landing-page .landing-auth {
     pointer-events: none;
 }
 
-/* ── csTimer logo ── */
-.landing-page .cstimer-logo {
+/* ── Upstream app logos ── */
+.landing-page .card-logo {
     width: 1.65rem;
     height: 1.65rem;
     border-radius: 6px;
     display: block;
 }
-.landing-page .card.tier-utility .cstimer-logo {
+.landing-page .card.tier-utility .card-logo {
     width: 1.4rem;
     height: 1.4rem;
     border-radius: 5px;
