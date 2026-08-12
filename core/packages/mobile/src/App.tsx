@@ -231,7 +231,7 @@ export function App() {
   if (timer.machine.phase === 'ready') timerInstruction = copy.releaseToStart;
   if (timer.machine.phase === 'inspecting') {
     const elapsed = Math.max(0, timer.nowMs - (timer.machine.inspectionStartedAtMs ?? timer.nowMs));
-    const remaining = (store?.settings.inspectionSec ?? 0) * 1000 - elapsed;
+    const remaining = (timer.machine.inspectionSec ?? 0) * 1000 - elapsed;
     timerText = remaining >= 0 ? String(Math.ceil(remaining / 1000)) : remaining >= -2000 ? '+2' : 'DNF';
     timerInstruction = copy.holdToArm;
   }
@@ -281,7 +281,7 @@ export function App() {
       const data = await repository.importJson(text);
       setStore(data);
       setLoadError(null);
-      setCanUndoImport(true);
+      setCanUndoImport(await repository.hasImportRecovery());
       applyPreferences(data.settings);
       announce(COPY[data.settings.language].importSuccess);
     })().catch(() => announce(copy.actionFailed));

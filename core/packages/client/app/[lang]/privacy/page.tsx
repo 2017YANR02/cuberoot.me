@@ -27,8 +27,24 @@ export default function PrivacyPage() {
       <h2>{t('备份与删除', 'Backups and deletion')}</h2>
       <p>
         {t(
-          '只有在你主动导出时,App 才会创建 JSON 备份并交给系统分享或下载界面。App 不会自动上传备份。你可以删除单条记录,也可以通过系统设置清除 App 数据或卸载 App 来删除全部本地数据。',
-          'The app creates a JSON backup only when you choose Export and hands it to the system share or download interface. Backups are not uploaded automatically. You can delete individual solves or remove all local data by clearing app storage in system settings or uninstalling the app.',
+          '只有在你主动导出时,App 才会创建 JSON 备份并交给系统分享或下载界面。App 不会自动上传备份。数据保留在设备上,直到你删除单条记录、通过系统设置清除 App 数据或卸载 App。导出文件由你选择的位置或接收方保管,需要由你自行删除。',
+          'The app creates a JSON backup only when you choose Export and hands it to the system share or download interface. Backups are not uploaded automatically. Data remains on your device until you delete individual solves, clear app storage in system settings, or uninstall the app. You control and must delete any exported copies from their chosen destination or recipient.',
+        )}
+      </p>
+
+      <h2>{t('导入与本地恢复', 'Import and local recovery')}</h2>
+      <p>
+        {t(
+          '当你主动选择 JSON 文件导入时,App 只在设备上读取并校验该文件,然后把有效数据保存到 App 的本地数据库。替换前的有效数据会在本地保留为一次撤销恢复点;导入文件和恢复点都不会由 App 上传。',
+          'When you choose a JSON file to import, the app reads and validates it only on the device, then stores valid data in the app’s local database. Valid data replaced by the import is retained locally as a one-time undo recovery point. Neither the imported file nor the recovery point is uploaded by the app.',
+        )}
+      </p>
+
+      <h2>{t('安全处理', 'Security')}</h2>
+      <p>
+        {t(
+          'App 使用操作系统提供的应用隔离存储,并在导入或保存前校验数据结构和大小。CubeRoot 无法控制设备本身、系统备份或你导出文件的安全性;请为设备设置锁屏并谨慎选择备份接收方。',
+          'The app uses operating-system app-isolated storage and validates data structure and size before importing or saving it. CubeRoot cannot control the security of your device, operating-system backups, or exported files; use a device lock and choose backup recipients carefully.',
         )}
       </p>
 
@@ -42,7 +58,7 @@ export default function PrivacyPage() {
 
       <h2>{t('联系我们', 'Contact')}</h2>
       <p>
-        {t('如有隐私或支持问题,请发送邮件至 ', 'For privacy or support questions, email ')}
+        {t('本 App 由商店页面列明的 CubeRoot 发布主体运营。如有隐私或支持问题,请发送邮件至 ', 'This app is operated by the CubeRoot publisher identified on its store listing. For privacy or support questions, email ')}
         <a href="mailto:yrmfxc@gmail.com">yrmfxc@gmail.com</a>{t('。', '.')}
       </p>
     </main>

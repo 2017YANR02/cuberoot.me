@@ -76,6 +76,10 @@ export class TimerRepository {
     }
     const decoded = decodeTimerStoreData(raw);
     if (!decoded) throw new CorruptTimerStoreError();
+    const storedSchemaVersion = raw !== null && typeof raw === 'object'
+      ? (raw as { schemaVersion?: unknown }).schemaVersion
+      : undefined;
+    if (storedSchemaVersion !== decoded.schemaVersion) await this.driver.write(decoded);
     return decoded;
   }
 
@@ -100,7 +104,7 @@ export class TimerRepository {
         id: this.environment.createId(),
         ts: this.environment.now(),
       };
-      const byEvent = data.dataBySession[data.activeSessionId];
+      const byEvent = data.database.dataBySession[data.database.activeSessionId];
       byEvent[input.event] = [...(byEvent[input.event] ?? []), solve]
         .sort((a, b) => a.ts - b.ts);
       const decoded = decodeTimerStoreData(data);
@@ -117,7 +121,7 @@ export class TimerRepository {
   ): Promise<TimerStoreData> {
     return this.run(async () => {
       const data = await this.loadUnlocked();
-      const byEvent = data.dataBySession[data.activeSessionId];
+      const byEvent = data.database.dataBySession[data.database.activeSessionId];
       const solves = byEvent[event] ?? [];
       byEvent[event] = solves.map((solve) => (
         solve.id === id ? { ...solve, ...changes } : solve
@@ -132,7 +136,7 @@ export class TimerRepository {
   deleteSolve(event: EventId, id: string): Promise<TimerStoreData> {
     return this.run(async () => {
       const data = await this.loadUnlocked();
-      const byEvent = data.dataBySession[data.activeSessionId];
+      const byEvent = data.database.dataBySession[data.database.activeSessionId];
       byEvent[event] = (byEvent[event] ?? []).filter((solve) => solve.id !== id);
       const decoded = decodeTimerStoreData(data);
       if (!decoded) throw new CorruptTimerStoreError();
@@ -193,8 +197,8 @@ export class TimerRepository {
       const incoming = parseTimerStoreJson(text, current.settings, this.migrationEnvironment());
       if (!incoming) throw new CorruptTimerStoreError();
       return {
-        current: summarizeTimerDatabase(current),
-        incoming: summarizeTimerDatabase(incoming),
+        current: summarizeTimerDatabase(current.database),
+        incoming: summarizeTimerDatabase(incoming.database),
       };
     });
   }

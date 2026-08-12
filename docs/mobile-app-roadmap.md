@@ -24,6 +24,7 @@
 - [ ] 建立发布账号 2FA、恢复方式、密码管理和签名密钥备份规则。（需要账号所有者参与）
 - [x] 完成当前本地 MVP 的数据与 SDK 清单：本地计时数据、网络状态、Capacitor Browser/Network；无广告、分析或敏感权限。
 - [x] 完成双语移动端隐私政策源码、App 内隐私入口、支持邮箱和版本信息。
+- [ ] 在提交商店前，把最终组织法定名称及公开地址、电话补进隐私政策，并与商店开发者资料逐字核对。（需要所有者确认公开资料）
 - [ ] 在加入登录、同步、分析、崩溃上报、BLE 或付费前，补齐对应数据声明、账号删除和商店问卷。
 
 ### 阶段 1：技术验证
@@ -59,8 +60,8 @@
 - [x] 提取无框架依赖的三阶打乱生成核心，网站与 App 使用同一实现。
 - [ ] 定义 BLE transport，并逐步让现有 Web 驱动与未来原生驱动共用协议层。
 - [x] 共享层回归测试和移动端 adapter contract tests 全部通过。
-  - [x] 既有共享包构建、网站 typecheck、93 个计时/统计测试和 4 个复盘真值 fixture 已通过；本轮 45 个计时、迁移、元数据和品牌资源定向测试再次通过。
-  - [x] 移动端仓储 adapter 的 9 个 contract tests 已通过，覆盖初始化、并发写、修改/删除、跨网站/App 导入导出、逐版本迁移、损坏数据、导入预览和单次撤销。
+  - [x] 既有共享包构建、网站 typecheck、93 个计时/统计测试和 4 个复盘真值 fixture 已通过；本轮 47 个计时、迁移、元数据和品牌资源定向测试再次通过。
+  - [x] 移动端仓储 adapter 的 contract tests 已通过，覆盖初始化、并发写、修改/删除、跨网站/App 导入导出、逐版本迁移、损坏数据、导入预览和单次撤销。
 
 当前证据：
 
@@ -98,13 +99,13 @@
 - [ ] API client 的超时、认证、错误和版本头统一。
 - [ ] TalkBack、动态字号、对比度和触摸目标基础检查通过。
 - [ ] 生成并验证 Android 内部测试 AAB。
-  - [x] 本机已用临时上传密钥生成并验证签名 Release APK/AAB；CI 也使用临时密钥强制验证 release 签名、版本和敏感权限。
+  - [x] 本机已用临时上传密钥生成并验证签名 Release APK/AAB；CI 也使用临时密钥强制验证 release 签名、版本和完整权限白名单。
   - [ ] Play App Signing 的真实上传密钥、internal track 安装/升级和回滚尚未验证；需要已通过验证的发布账号。
 
 当前阶段 4 证据：
 
 - 本地 MVP 提交：`68955879ba`；中断按压修复：`1c2b57edcb`。
-- 移动端仓储 9 项测试、网站计时/迁移/元数据/品牌资源 45 项定向测试、共享包构建、网站与移动端 typecheck 全部通过。
+- 移动端仓储 10 项测试、网站计时/迁移/元数据/品牌资源 47 项定向测试、共享包构建、网站与移动端 typecheck 全部通过。
 - `cap:sync`、`assembleDebug`、`assembleRelease` 和 `bundleRelease` 已通过；本地签名 AAB 经 `jarsigner` 验证。
 - Release 元数据实测为 `versionName 0.1.0`、`versionCode 1000`、`targetSdk 36`；合并 manifest 只有网络访问、网络状态和应用签名级动态 receiver 权限，没有相机、麦克风或定位权限。
 - MuMu 冷启动约 1.25 秒；杀进程后的记录、语言和主题仍保留，设置页可见隐私、支持和版本入口。
@@ -125,7 +126,8 @@
 - [ ] outbox、幂等重试、冲突策略和旧版 API 兼容测试通过。
 - [ ] App 内账号注销和网页删除入口端到端验证通过。
 - [x] 当前无账号、无同步 MVP 的双语隐私政策、支持入口、版本信息、数据删除方法和 SDK 清单已进入源码。
-- [ ] 隐私政策线上发布、服务条款、账号删除入口和数据保留规则随账号功能一起完成。（当前未 push，线上 URL 尚不可作为证据）
+- [ ] 当前本地 MVP 的隐私政策补入最终组织身份并线上发布。（当前未 push，线上 URL 尚不可作为证据）
+- [ ] 加入账号功能时再完成服务条款、账号删除入口、服务端数据保留规则和数据请求流程。
 - [x] 当前 `0.1.0` 的 Google Data safety、Google Play 内容表和未来 Apple App Privacy 草稿已与代码事实核对，见 `docs/mobile-store-submission.md`；任何数据功能或 SDK 变化都必须重审。
 
 ### 阶段 7：Google Play 封闭测试
@@ -1142,8 +1144,8 @@ CubeRoot 应以这些证据证明不是简单套壳：
 ### 15.1 版本规则
 
 - 用户可见版本：语义化版本，如 `1.2.0`。
-- Android versionCode：CI 单调递增，不能复用。
-- iOS build number：CI 单调递增。
+- Android versionCode：由版本号确定且 CI 校验当前构建；每次提交商店前再与 Play Console 已用最大值比较，不能复用。
+- iOS build number：未来接入 iOS 发布后由 CI 单调递增。
 - 每个商店构建记录 commit SHA、构建时间和 API compatibility version。
 - 数据库 schema 和本地 schema 独立版本化。
 
@@ -1471,28 +1473,27 @@ Android Studio 官方支持 Windows，安装要求见[官方文档](https://deve
 
 ```text
 现在
-  1. 决定个人/组织身份
-  2. 注册 Google Play 组织账号 + 建立真机测试名单
-  3. 准备隐私、删除、支持资料
+  1. 注册并验证 Google Play 组织账号
+  2. 确认公开组织名称、地址、电话和发布密钥保管人
+  3. 用实体 Android 手机补齐竖屏截图和基础真机测试
+  4. 上传同一签名 AAB 到 internal track，验证安装、升级和回滚
 
 接下来
-  4. Windows 建 Android 技术壳
-  5. 真机验证 BLE transport
-  6. 提取共享计时/协议核心
-  7. 做离线 Android MVP
-  8. 接原生 BLE、账号和同步
-  9. internal/closed test；人数和时长按组织账号控制台实际要求
- 10. Google Play 分阶段发布
+  5. 按组织账号控制台实际要求完成测试者验证
+  6. 补齐 feature graphic、内容评级和最终商店问卷
+  7. 真机验证 BLE transport，再决定原生 BLE 实现
+  8. Google Play 分阶段发布
+  9. 按需求优先级继续训练、BLE、账号和同步
 
 Android 稳定后
- 11. 准备 Mac、iPhone 和 Apple 账号
- 12. 实现 iOS adapter 和合规项
- 13. TestFlight
- 14. App Store 审核和全球分阶段发布
+ 10. 准备 Mac、iPhone 和 Apple 账号
+ 11. 实现 iOS adapter 和合规项
+ 12. TestFlight
+ 13. App Store 审核和全球分阶段发布
 
 长期
- 15. 内容继续走网站/API即时更新
- 16. App 代码按月集中发布
+ 14. 内容继续走网站/API即时更新
+ 15. App 代码按月集中发布
  17. 旧版兼容、隐私、SDK和证书定期复核
 ```
 
