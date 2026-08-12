@@ -25,6 +25,15 @@ const Y_AXIS = new THREE.Vector3(0, 1, 0);
 const TOP_Y = HALF_MID + LAYER_HEIGHT;
 const BOT_Y = -HALF_MID - LAYER_HEIGHT;
 
+function finiteVector3(v: THREE.Vector3): boolean {
+  return Number.isFinite(v.x) && Number.isFinite(v.y) && Number.isFinite(v.z);
+}
+
+function finiteScreenInput(screenX: number, screenY: number, width: number, height: number): boolean {
+  return Number.isFinite(screenX) && Number.isFinite(screenY) &&
+    Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0;
+}
+
 /** Live drag of one layer, snapped on release. */
 export interface Sq1TurnDrag {
   kind: 'turn';
@@ -47,7 +56,8 @@ export type Sq1DragStart = Sq1TurnDrag | Sq1SliceDrag;
 function buildLocalRay(
   scene: THREE.Scene, camera: THREE.Camera,
   screenX: number, screenY: number, width: number, height: number,
-): THREE.Ray {
+): THREE.Ray | null {
+  if (!finiteScreenInput(screenX, screenY, width, height)) return null;
   const ray = new THREE.Ray();
   ray.origin.setFromMatrixPosition(camera.matrixWorld);
   const ndcX = (screenX / width) * 2 - 1;
@@ -55,16 +65,18 @@ function buildLocalRay(
   ray.direction.set(ndcX, ndcY, 0.5).unproject(camera).sub(ray.origin).normalize();
   const inv = new THREE.Matrix4().copy(scene.matrix).invert();
   ray.applyMatrix4(inv);
-  return ray;
+  return finiteVector3(ray.origin) && finiteVector3(ray.direction) ? ray : null;
 }
 
 /** Ray ∩ Y=const plane in cube-local frame. No cap-footprint check — once we
  *  know which layer was hit, the plane is just a reference for polar angle. */
 function planeIntersect(ray: THREE.Ray, y: number): THREE.Vector3 | null {
+  if (!Number.isFinite(y) || !finiteVector3(ray.origin) || !finiteVector3(ray.direction)) return null;
   if (Math.abs(ray.direction.y) < 1e-6) return null;
   const t = (y - ray.origin.y) / ray.direction.y;
-  if (t < 0) return null;
-  return ray.origin.clone().add(ray.direction.clone().multiplyScalar(t));
+  if (!Number.isFinite(t) || t < 0) return null;
+  const point = ray.origin.clone().add(ray.direction.clone().multiplyScalar(t));
+  return finiteVector3(point) ? point : null;
 }
 
 const _raycaster = new THREE.Raycaster();
@@ -78,6 +90,7 @@ export function sq1DragStart(
   scene: THREE.Scene, camera: THREE.Camera,
   screenX: number, screenY: number, width: number, height: number,
 ): Sq1DragStart | null {
+  if (!finiteScreenInput(screenX, screenY, width, height)) return null;
   _ndc.set((screenX / width) * 2 - 1, -(screenY / height) * 2 + 1);
   _raycaster.setFromCamera(_ndc, camera);
   const hits = _raycaster.intersectObject(cube, true);
@@ -87,6 +100,7 @@ export function sq1DragStart(
   const hitLocal = hits[0].point.clone();
   const sceneInv = new THREE.Matrix4().copy(scene.matrix).invert();
   hitLocal.applyMatrix4(sceneInv);
+  if (!finiteVector3(hitLocal)) return null;
   // Mid-slab hit (equator) → one-shot slice. Walk up the parent chain of the
   // hit mesh; if it descends from either middle pivot, it's a slice gesture.
   // Has to be done before the y-sign layer pick — a slab face at y=+ε would
@@ -105,7 +119,7 @@ export function sq1DragStart(
   // if the ray runs parallel to the plane (rare degenerate view).
   const ray = buildLocalRay(scene, camera, screenX, screenY, width, height);
   const planeY = layer === 'top' ? TOP_Y : BOT_Y;
-  const planePt = planeIntersect(ray, planeY);
+  const planePt = ray ? planeIntersect(ray, planeY) : null;
   const refX = planePt ? planePt.x : hitLocal.x;
   const refZ = planePt ? planePt.z : hitLocal.z;
 
@@ -133,15 +147,16 @@ export function sq1DragDelta(
   scene: THREE.Scene, camera: THREE.Camera,
   screenX: number, screenY: number, width: number, height: number,
 ): number | null {
+  if (!Number.isFinite(start.startAngle)) return null;
   const ray = buildLocalRay(scene, camera, screenX, screenY, width, height);
+  if (!ray) return null;
   const y = start.layer === 'top' ? TOP_Y : BOT_Y;
   // Don't reuse planeHit's footprint check — once dragging started we want to
   // keep following the finger even if it leaves the W×W cap.
-  if (Math.abs(ray.direction.y) < 1e-6) return null;
-  const t = (y - ray.origin.y) / ray.direction.y;
-  if (t < 0) return null;
-  const pt = ray.origin.clone().add(ray.direction.clone().multiplyScalar(t));
+  const pt = planeIntersect(ray, y);
+  if (!pt) return null;
   let d = Math.atan2(pt.z, pt.x) - start.startAngle;
+  if (!Number.isFinite(d)) return null;
   while (d > Math.PI) d -= 2 * Math.PI;
   while (d < -Math.PI) d += 2 * Math.PI;
   // R_y(+θ) decreases cube-local atan2 by θ, while the finger's atan2 increases
@@ -153,6 +168,7 @@ export function sq1DragDelta(
 /** Apply live rotation to all tracked pivots: quat = q(Δ) · startQuat,
  *  pos = q(Δ) · startPos (so the sticker tracks the finger). */
 export function sq1DragApply(start: Sq1TurnDrag, delta: number): void {
+  if (!Number.isFinite(delta)) return;
   const q = new THREE.Quaternion().setFromAxisAngle(Y_AXIS, delta);
   for (const s of start.starts) {
     s.pivot.quaternion.multiplyQuaternions(q, s.quat);
@@ -184,6 +200,11 @@ export function sq1DragCommit(
   start: Sq1TurnDrag,
   delta: number,
 ): Sq1Move | null {
+  if (!Number.isFinite(delta)) {
+    sq1DragSnapBack(start);
+    cube.dirty = true;
+    return null;
+  }
   // Raw drag in 30°-units, sign = drag direction (R_y(+delta) is applied).
   // Map to the layer's state-U: top R_y(δ) ↔ move.top = -δ/(π/6); bot ↔ +δ/(π/6).
   const rawUnits = delta / (Math.PI / 6);
@@ -255,7 +276,7 @@ export function sq1SliceLiveStart(cube: Sq1Cube, dir: 1 | -1, downY: number): Sq
 /** Map vertical finger travel → flip progress and apply it live. */
 export function sq1SliceLiveApply(live: Sq1SliceLive, localY: number): void {
   const v = (localY - live.downY) * live.dir / SLICE_FLIP_PX;
-  applyAnimFrame(live.anims, Math.min(1, Math.max(0, v)));
+  applyAnimFrame(live.anims, v);
 }
 
 /** Cancel a frozen partial slice: snap the flipped pivots back to v=0 (no state

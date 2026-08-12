@@ -55,9 +55,9 @@ import {
   type Sq1DragStart, type Sq1TurnDrag, type Sq1SliceLive,
 } from './engine/sq1/sq1Drag';
 import { moveToString as sq1MoveToString, isSlashValid as sq1SlashValid } from './engine/sq1/sq1State';
-import IvyCube, { type IvyAnim } from './engine/ivy/IvyCube';
+import IvyCube, { type IvyMove } from './engine/ivy/IvyCube';
 import {
-  ivyPickHit, ivyResolveMove, ivyResolveLive, ivyApplyPartial, ivySnapBack, type IvyHit,
+  ivyPickHit, ivyResolveMove, ivyResolveLive, type IvyHit,
 } from './engine/ivy/ivyDrag';
 import { dinoPickHit, dinoResolveMove, dinoResolveLive, type DinoPickHit } from './engine/dino/dinoDrag';
 import { dinoMoveToString, type DinoMove } from './engine/dino/dinoState';
@@ -893,27 +893,8 @@ export default function SimPage() {
     let sq1DownX = 0;
     let sq1DownY = 0;
     let sq1MovedPastThreshold = false;
-    // Ivy: drag a petal (a turning corner) to twist it; a drag on a lens/center
-    // or empty space orbits the whole scene (pinch still zooms via the shared
-    // block below). A move is a discrete 120° twist, so we fire once past a
-    // small threshold (no live finger-tracking yet — see ivyDrag.ts).
-    let ivyRotating = false;
-    let ivyLastX = 0;
-    let ivyLastY = 0;
-    let ivyPick: IvyHit | null = null; // pending corner-twist gesture (cube grabbed)
-    let ivyDownX = 0;
-    let ivyDownY = 0;
-    let ivyMoved = false;
-    // Debug hold-partial: live-tracked Ivy turn. While set, pointermove maps drag
-    // → t∈[0,1] and rotates the tripod live; pointerup freezes it (no commit).
-    let ivyLive: { anims: IvyAnim[]; tx: number; ty: number; downX: number; downY: number } | null = null;
-    const IVY_TURN_THRESHOLD_PX = 6;
-    const IVY_FULL_PX = 150; // drag px (along the turn tangent) for a full 120° turn
-    // ── Corner/edge-turn gesture controllers (Dino/Redi/Rex 120°, Heli 180°) ──────────
-    // The four share one pointer flow (engine/cornerTurnGesture.ts); only the cube class,
-    // the pick/resolve functions, the full-turn px span, and whether beginMove takes a
-    // sweep dir differ — captured per puzzle in a small adapter. Adding a corner-turn
-    // puzzle = one adapter + a registry entry here, not another ~175 lines of dispatch.
+    // Discrete corner/edge-turn gesture controllers. Every engine puzzle below shares
+    // one pointer flow; each adapter only supplies its cube-specific pick/resolve logic.
     const cornerCtx: CornerGestureCtx = {
       world,
       dom: renderer.domElement,
@@ -923,6 +904,12 @@ export default function SimPage() {
       orbit: (dx, dy) => orbitScene(world, dx, dy, mapOrbitK(settingsRef.current.sensitivity)),
       clearPartialFreeze,
       setPartialSnapBack: (fn) => { partialSnapBackRef.current = fn; },
+    };
+    const ivyAdapter: CornerTurnAdapter<IvyCube, IvyMove, IvyHit> = {
+      match: (c): c is IvyCube => c instanceof IvyCube,
+      pickHit: ivyPickHit, resolveLive: ivyResolveLive, resolveMove: ivyResolveMove,
+      beginMove: (c, m) => c.beginMove(m), moveToString: (m) => m.name,
+      fullPx: 150, threshold: 6,
     };
     const dinoAdapter: CornerTurnAdapter<DinoCube, DinoMove, DinoPickHit> = {
       match: (c): c is DinoCube => c instanceof DinoCube,
@@ -978,7 +965,8 @@ export default function SimPage() {
       beginMove: (c, m) => c.beginMove(m), moveToString: ftoMoveToString,
       fullPx: 140, threshold: 6,
     };
-    const cornerGestures: Record<'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'skewb' | 'pyraminx' | 'megaminx' | 'fto', CornerGestureHandle> = {
+    const cornerGestures = {
+      ivy: new CornerTurnGesture(ivyAdapter, cornerCtx),
       dino: new CornerTurnGesture(dinoAdapter, cornerCtx),
       redi: new CornerTurnGesture(rediAdapter, cornerCtx),
       rex: new CornerTurnGesture(rexAdapter, cornerCtx),
@@ -990,7 +978,9 @@ export default function SimPage() {
       fto: new CornerTurnGesture(ftoAdapter, cornerCtx),
     };
     const cornerGestureFor = (pk: unknown): CornerGestureHandle | null =>
-      pk === 'dino' || pk === 'redi' || pk === 'rex' || pk === 'heli' || pk === 'gear' || pk === 'skewb' || pk === 'pyraminx' || pk === 'megaminx' || pk === 'fto' ? cornerGestures[pk] : null;
+      typeof pk === 'string' && Object.prototype.hasOwnProperty.call(cornerGestures, pk)
+        ? cornerGestures[pk as keyof typeof cornerGestures]
+        : null;
     const dist = (a: { x: number; y: number }, b: { x: number; y: number }) =>
       Math.hypot(a.x - b.x, a.y - b.y);
 
@@ -1003,33 +993,6 @@ export default function SimPage() {
         panLastY = e.clientY;
         renderer.domElement.setPointerCapture(e.pointerId);
         return;
-      }
-      if (worldRef.current?.puzzleKind === 'ivy' && (e.pointerType !== 'mouse' || e.button === 0)) {
-        const isTouchMulti = e.pointerType === 'touch' && activePointers.size >= 1;
-        if (!isTouchMulti) {
-          const w = worldRef.current;
-          const r0 = renderer.domElement.getBoundingClientRect();
-          const lx = e.clientX - r0.left;
-          const ly = e.clientY - r0.top;
-          // Grab anywhere on the cube → turn (drag direction picks the corner);
-          // only an off-cube miss orbits the view (on-cube never rotates whole).
-          // 手拧锁:不 pick → 恒等于"没抓到" → 整段手势都是 orbit 视角。
-          ivyPick = settingsRef.current.pointerTurns !== false && w.cube instanceof IvyCube
-            ? ivyPickHit(w.cube, w.scene, w.camera, lx, ly, w.width, w.height)
-            : null;
-          ivyDownX = lx;
-          ivyDownY = ly;
-          ivyMoved = false;
-          ivyRotating = ivyPick === null; // orbit only when the cube was missed
-          ivyLastX = e.clientX;
-          ivyLastY = e.clientY;
-          if (e.pointerType !== 'touch') renderer.domElement.setPointerCapture(e.pointerId);
-        }
-        if (e.pointerType === 'touch') {
-          activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-          if (activePointers.size === 2) { ivyRotating = false; ivyPick = null; }
-        }
-        if (e.pointerType !== 'touch') return;
       }
       if (worldRef.current?.puzzleKind === 'sq1' && (e.pointerType !== 'mouse' || e.button === 0)) {
         const isTouchMulti = e.pointerType === 'touch' && activePointers.size >= 1;
@@ -1092,58 +1055,6 @@ export default function SimPage() {
         world.panX += d.x;
         world.panY += d.y;
         world.resize();
-        return;
-      }
-      // Debug hold-partial: live-track the locked Ivy turn (drag → partial angle).
-      if (worldRef.current?.puzzleKind === 'ivy' && ivyLive) {
-        const r0 = renderer.domElement.getBoundingClientRect();
-        const lx = e.clientX - r0.left;
-        const ly = e.clientY - r0.top;
-        const proj = (lx - ivyLive.downX) * ivyLive.tx + (ly - ivyLive.downY) * ivyLive.ty;
-        ivyApplyPartial(ivyLive.anims, proj / IVY_FULL_PX);
-        worldRef.current.dirty = true;
-        return;
-      }
-      if (worldRef.current?.puzzleKind === 'ivy' && ivyPick && !ivyMoved) {
-        const w = worldRef.current;
-        const r0 = renderer.domElement.getBoundingClientRect();
-        const lx = e.clientX - r0.left;
-        const ly = e.clientY - r0.top;
-        const ddx = lx - ivyDownX;
-        const ddy = ly - ivyDownY;
-        if (ddx * ddx + ddy * ddy >= IVY_TURN_THRESHOLD_PX * IVY_TURN_THRESHOLD_PX) {
-          ivyMoved = true;
-          if (w.cube instanceof IvyCube) {
-            if (settingsRef.current.holdPartialTurn) {
-              // Lock a live partial turn: resolve corner + drag-aligned tangent,
-              // drop any prior freeze, begin (pivots tracked live, NOT committed).
-              const plan = ivyResolveLive(w.cube, w.camera, ivyPick, ivyDownX, ivyDownY, lx, ly, w.width, w.height);
-              if (plan) {
-                clearPartialFreeze();
-                const anims = w.cube.beginMove(plan.move);
-                ivyLive = { anims, tx: plan.tangentX, ty: plan.tangentY, downX: ivyDownX, downY: ivyDownY };
-                const proj = (lx - ivyDownX) * plan.tangentX + (ly - ivyDownY) * plan.tangentY;
-                ivyApplyPartial(anims, proj / IVY_FULL_PX);
-                w.dirty = true;
-              }
-            } else {
-              const move = ivyResolveMove(w.cube, w.camera, ivyPick, ivyDownX, ivyDownY, lx, ly, w.width, w.height);
-              if (move) {
-                w.cube.twister.twist(move, false, true);
-                userMoveRef.current?.(move.name);
-              }
-            }
-          }
-          ivyPick = null;
-        }
-        return;
-      }
-      if (worldRef.current?.puzzleKind === 'ivy' && ivyRotating) {
-        const dx = e.clientX - ivyLastX;
-        const dy = e.clientY - ivyLastY;
-        ivyLastX = e.clientX;
-        ivyLastY = e.clientY;
-        orbitView(dx, dy);
         return;
       }
       if (worldRef.current?.puzzleKind === 'sq1') {
@@ -1300,22 +1211,6 @@ export default function SimPage() {
         sq1Pending = false;
         try { renderer.domElement.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
       }
-      if (ivyLive) {
-        // Hold-partial: freeze where released — keep the live pivots, register a
-        // snap-back (next turn / toggle-off restores them), do NOT commit.
-        const frozen = ivyLive.anims;
-        partialSnapBackRef.current = () => ivySnapBack(frozen);
-        ivyLive = null;
-        ivyPick = null;
-        ivyMoved = false;
-        try { renderer.domElement.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
-      }
-      if (ivyRotating || ivyPick) {
-        ivyRotating = false;
-        ivyPick = null;
-        ivyMoved = false;
-        try { renderer.domElement.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
-      }
       if (sq1Rotating) {
         sq1Rotating = false;
         sq1MovedPastThreshold = false;
@@ -1343,8 +1238,7 @@ export default function SimPage() {
       activePointers.delete(e.pointerId);
       if (pinching && activePointers.size < 2) {
         pinching = false;
-        const pk = worldRef.current?.puzzleKind;
-        world.controller.disable = pk === 'sq1' || pk === 'ivy' || pk === 'dino' || pk === 'redi' || pk === 'rex' || pk === 'heli' || pk === 'gear' || pk === 'skewb' || pk === 'fto';
+        world.controller.disable = asNxN(world) === null;
         syncScaleToSettings();
       }
     };

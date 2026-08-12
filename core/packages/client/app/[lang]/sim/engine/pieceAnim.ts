@@ -41,12 +41,14 @@ export function makeAnim(
 const _scratch = new THREE.Quaternion();
 
 /** Set every pivot to progress `v` ∈ [0,1] of its turn: quaternion always, and
- *  position when the anim carries it. Used by TweenTwister's per-frame callback
- *  and the drag "hold partial turn" debug path (which clamps v). Single-threaded
- *  synchronous use, so a module-level scratch quaternion is safe. */
+ *  position when the anim carries it. This is the shared non-NxN animation sink,
+ *  so it rejects non-finite progress and owns the clamp for tween + live-drag callers.
+ *  Single-threaded synchronous use makes a module-level scratch quaternion safe. */
 export function applyAnimFrame(anims: PieceAnim[], v: number): void {
+  if (!Number.isFinite(v)) return;
+  const progress = Math.max(0, Math.min(1, v));
   for (const a of anims) {
-    _scratch.setFromAxisAngle(a.axis, a.angle * v);
+    _scratch.setFromAxisAngle(a.axis, a.angle * progress);
     a.pivot.quaternion.multiplyQuaternions(_scratch, a.startQuat);
     if (a.startPos) a.pivot.position.copy(a.startPos).applyQuaternion(_scratch);
   }
