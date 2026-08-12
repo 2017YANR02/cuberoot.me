@@ -1,0 +1,30 @@
+{
+  "name": "@cuberoot/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "typecheck": "tsgo --noEmit",
+    "cap:add:android": "cap add android",
+    "cap:sync": "pnpm build && cap sync android",
+    "android:open": "cap open android",
+    "android:run": "pnpm cap:sync && cap run android"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.5.0",
+    "@capacitor/core": "8.5.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.5.0",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@typescript/native-preview": "7.0.0-dev.20260517.1",
+    "@vitejs/plugin-react": "^6.0.5",
+    "typescript": "^5",
+    "vite": "8.0.1"
+  }
+}
