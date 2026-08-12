@@ -101,8 +101,11 @@ function TrainerSplitLane({
           : tr({ zh: `${laneName.zh}：下一题`, en: `${laneName.en}: next case` })}
       />
       <div className="trainer-split-lane-head">
-        <span className="trainer-split-person-progress">
-          {tr({ zh: `已完成 ${completed}`, en: `${completed} done` })}
+        <span
+          className="trainer-split-person-progress"
+          aria-label={tr({ zh: `已完成 ${completed}`, en: `${completed} done` })}
+        >
+          {completed}
         </span>
       </div>
 
@@ -231,7 +234,9 @@ export default function TrainerSplitScreen({
           <span className="trainer-split-meter-track" aria-hidden>
             <span style={{ width: `${round.total > 0 ? (round.completed / round.total) * 100 : 0}%` }} />
           </span>
-          <span className="trainer-split-meter-count">{round.completed}/{round.total}</span>
+          <span className="trainer-split-meter-count">
+            {round.lanes.a.completed}+{round.lanes.b.completed}={round.completed}/{round.total}
+          </span>
         </div>
         <button type="button" className="trainer-split-exit" onClick={onExit}>
           <X size={15} /> {tr({ zh: '退出分屏', en: 'Exit split view' })}
