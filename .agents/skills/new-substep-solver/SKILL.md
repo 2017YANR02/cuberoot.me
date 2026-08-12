@@ -45,3 +45,4 @@ description: "用户要造一个新求解器时用。**先分流**:3x3 子阶段
 7. /scramble/gen 比赛页(**标准步骤别漏**,六处见 playbook):build_comp_steps TARGETS → useCompSteps → TNoodleMode(VARIANT_SPEC+引擎 ternary)→ CompCrossAnalysis(Metric+OFFSET)→ SheetView(METHODS/STAGE_IDX/CYCLE)→ 实时兜底 hook;comp_steps_* 随 stats tar+scp 发布。
 8. **命名规范**:用户可见标签一律纯块尺寸(1x2x2/1x2x3/2x2x2/2x2x3),UI/JSON key 用数字(123/222/223),禁「桥式/Roux」进标签;管道名/CSV 名可以另叫(123 的管道名是 roux)。
 9. `/code/solvers` 看板走 solvers-tables skill;commit 前 typecheck + zh:check(繁体一律 conv.mjs 取值)。
+10. **分布样例是发布门**:每个非空柱都要有离线生成、可回放的代表打乱;最深稀有档能列全就列全,否则写明每档上限。样例必须用独立实体状态模型回放,并测试「非空 bin 集合 = 样例 bin 集合」。因计算量/内存/状态补全不可生成时,柱子可禁点,但图下必须直接说明原因与覆盖边界,禁静默无响应。客户端只读预生成数据,禁点击后现场搜索。

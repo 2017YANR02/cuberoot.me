@@ -426,8 +426,18 @@ describe('底色折叠与槽位适用性', () => {
  */
 describe('菜单与 WCA 数据集逐项相同', () => {
   const STATS = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../../stats/scramble');
+  const PAGE = readFileSync(path.resolve(
+    path.dirname(fileURLToPath(import.meta.url)),
+    '../app/[lang]/scramble/stats/page.tsx',
+  ), 'utf-8');
   const wca = JSON.parse(readFileSync(path.join(STATS, 'distribution.json'), 'utf-8'))
     .sets.wca.variants as Record<string, { stages: string[] }>;
+
+  it('没有逐态语料的精确分布明确说明柱子为何不可点', () => {
+    expect(PAGE).toContain('isExact && exactFull && exactCaseDepths.length === 0');
+    expect(PAGE).toContain('生成示例需要额外的大规模状态补全或整层枚举');
+    expect(PAGE).toContain('that computation is not run in the client');
+  });
 
   it('变体键集合相同', () => {
     // first_layer 尚待真题灌注；条件式第二层单列为另一数据集，不属于完整状态空间矩阵。

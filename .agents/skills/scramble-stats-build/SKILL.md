@@ -75,3 +75,10 @@ z3/z'   橙 #FFA100      x1/x    蓝 #0000F2      x3/x'   绿 #00D800
 - 页：`core/packages/client/app/[lang]/scramble/stats/page.tsx`（`COLOR_LETTERS` / `COLOR_HEX` / `DUAL_PAIRS` 在这里）
 - 图：`core/packages/client/app/[lang]/scramble/stats/_components/DiscreteHistogram.tsx`（自写的离散整数 SVG，**不要**改用 `components/wca-stats/DistributionChart.tsx`）
 - 样式：对齐 `landing.css` 的 Codex 浅色系；`wca_stats.css` 的暗棕**不要污染**
+
+## 图表样例验收
+
+- 每个非空柱提供可回放样例;合成/穷举集离线生成,客户端只读。
+- 最深稀有档能列全就列全;其余档写明样例上限,测试非空 bin 与样例 bin 集合一致。
+- 用独立实体状态模型回放样例,禁求解器自证。
+- 计算量、内存或状态补全使样例不可行时,禁点该柱并在图下直写原因与覆盖范围,禁静默无响应。

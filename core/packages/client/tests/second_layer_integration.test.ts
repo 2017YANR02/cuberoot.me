@@ -15,6 +15,7 @@ import {
   FIRST_LAYER_SOLVED_SECOND_LAYER_GOD,
   FIRST_LAYER_SOLVED_SECOND_LAYER_TOTAL,
 } from '@/app/[lang]/scramble/stats/_data/first_layer_solved_dist';
+import { FIRST_LAYER_SOLVED_SECOND_LAYER_EXAMPLES } from '@/app/[lang]/scramble/stats/_data/first_layer_solved_examples';
 
 const ROOT = path.resolve(__dirname, '../../../..');
 const read = (p: string) => readFileSync(path.join(ROOT, p), 'utf8');
@@ -25,6 +26,52 @@ describe('第一层已还原条件下的第二层分布', () => {
     expect(FIRST_LAYER_SOLVED_SECOND_LAYER_GOD).toBe(13);
     expect(Object.values(FIRST_LAYER_SOLVED_SECOND_LAYER_COUNTS).reduce((a, b) => a + b, 0)).toBe(26_880);
     expect(FIRST_LAYER_SOLVED_SECOND_LAYER_COUNTS['13']).toBe(18);
+  });
+
+  it('每个非空步数档都有离线打乱，13 步 18 个状态全部覆盖', () => {
+    const nonEmptyBins = Object.entries(FIRST_LAYER_SOLVED_SECOND_LAYER_COUNTS)
+      .filter(([, count]) => count > 0)
+      .map(([depth]) => depth);
+    expect(Object.keys(FIRST_LAYER_SOLVED_SECOND_LAYER_EXAMPLES)).toEqual(nonEmptyBins);
+    for (const depth of nonEmptyBins) {
+      const rows = FIRST_LAYER_SOLVED_SECOND_LAYER_EXAMPLES[depth];
+      expect(rows.length, depth).toBeGreaterThan(0);
+      expect(new Set(rows).size, depth).toBe(rows.length);
+      expect(rows.length, depth).toBeLessThanOrEqual(
+        depth === '13' ? 18 : Math.min(12, FIRST_LAYER_SOLVED_SECOND_LAYER_COUNTS[depth]),
+      );
+    }
+    expect(FIRST_LAYER_SOLVED_SECOND_LAYER_EXAMPLES['13']).toHaveLength(18);
+  });
+
+  it('全部离线打乱都保持第一层，且打乱长度等于所属步数档', async () => {
+    const [{ Alg }, { cube3x3x3 }] = await Promise.all([
+      import('cubing/alg'),
+      import('cubing/puzzles'),
+    ]);
+    const kpuzzle = await cube3x3x3.kpuzzle();
+    for (const [depth, rows] of Object.entries(FIRST_LAYER_SOLVED_SECOND_LAYER_EXAMPLES)) {
+      for (const scramble of rows) {
+        expect([...new Alg(scramble).experimentalLeafMoves()]).toHaveLength(Number(depth));
+        const data = kpuzzle.defaultPattern().applyAlg(scramble).patternData;
+        const corners = data.CORNERS as unknown as { pieces: number[]; orientation: number[] };
+        const edges = data.EDGES as unknown as { pieces: number[]; orientation: number[] };
+        for (const i of [4, 5, 6, 7]) {
+          expect(corners.pieces[i], `${depth}:${scramble}`).toBe(i);
+          expect(corners.orientation[i], `${depth}:${scramble}`).toBe(0);
+        }
+        // cubing.js edge order = U layer 0..3, D layer 4..7, middle 8..11
+        // (Rust solver order differs:middle 0..3, U 4..7, D 8..11).
+        for (const i of [4, 5, 6, 7]) {
+          expect(edges.pieces[i], `${depth}:${scramble}`).toBe(i);
+          expect(edges.orientation[i], `${depth}:${scramble}`).toBe(0);
+        }
+        if (depth !== '0') {
+          expect([8, 9, 10, 11].every((i) => edges.pieces[i] === i && edges.orientation[i] === 0),
+            `${depth}:${scramble} must still need second-layer work`).toBe(false);
+        }
+      }
+    }
   });
 
   it('LBL 保留真实条件阶段，但不再把 std 数据伪装成第二层', () => {
@@ -81,6 +128,8 @@ describe('第一层已还原条件下的第二层分布', () => {
     const page = read('core/packages/client/app/[lang]/scramble/stats/page.tsx');
     expect(page).toContain("const FIRST_LAYER_SOLVED_SET_KEY = 'first_layer_solved'");
     expect(page).toContain('客户端不运行搜索');
+    expect(page).toContain('FIRST_LAYER_SOLVED_SECOND_LAYER_EXAMPLES[String(selectedBin)]');
+    expect(page).toContain('isFirstLayerSolved ? setSelectedBin : handleBarClick');
     // 深链 / 旧设置可能残留 UI 聚合键 lbl。页面必须先用真实数据键渲染 options,
     // 再把 URL 规范化,不能让原生 select 出现 value 存在但 option 为空的白框。
     expect(page).toContain('normalizeVariantDataRef(currentSet.variants, variant, stage)');

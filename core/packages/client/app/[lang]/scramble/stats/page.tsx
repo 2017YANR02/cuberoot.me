@@ -36,6 +36,7 @@ import {
   FIRST_LAYER_SOLVED_SECOND_LAYER_GOD,
   FIRST_LAYER_SOLVED_SECOND_LAYER_TOTAL,
 } from './_data/first_layer_solved_dist';
+import { FIRST_LAYER_SOLVED_SECOND_LAYER_EXAMPLES } from './_data/first_layer_solved_examples';
 import {
   CUBE3_STATES, GOD_DIST_333, GOD_DIST_333_NORMALIZED, GOD_KIND_MARK, GOD_MEAN_HTM,
 } from '@/lib/god-distance-333';
@@ -669,7 +670,10 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   useEffect(() => { setOptMetric('htm'); }, [stage]);
 
   const previewBins = useMemo<number[]>(
-    () => Object.keys(activeCounts).map(Number).sort((a, b) => a - b),
+    () => Object.entries(activeCounts)
+      .filter(([, count]) => count > 0)
+      .map(([depth]) => Number(depth))
+      .sort((a, b) => a - b),
     [activeCounts],
   );
   const downloadBins = useMemo<number[]>(() => {
@@ -752,9 +756,14 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   // 当前示例来源:per-event 选择 → 该项目的分片;否则 examples.json 的顶级 set。
   const exSet = isPerEvent ? (evExamples[scrambleSet] ?? null) : (examples?.sets[dataset] ?? null);
   const currentSamples = useMemo<ExampleSample[] | null>(() => {
-    if (selectedBin === null || !exSet) return null;
+    if (selectedBin === null) return null;
+    if (isFirstLayerSolved) {
+      return (FIRST_LAYER_SOLVED_SECOND_LAYER_EXAMPLES[String(selectedBin)] ?? [])
+        .map((scramble, i) => [`second-layer-${selectedBin}-${i}`, scramble, '']);
+    }
+    if (!exSet) return null;
     return exSet.variants[sourceVariant]?.[sourceStage]?.[effectiveSubset]?.[String(selectedBin)] ?? null;
-  }, [exSet, sourceVariant, sourceStage, effectiveSubset, selectedBin]);
+  }, [isFirstLayerSolved, exSet, sourceVariant, sourceStage, effectiveSubset, selectedBin]);
 
   // 各国占比条(仅合并 WCA 池:scrambleSet==='wca';per-event/xcross 无 country 数据 → undefined → 不画)。
   // 换 set/变体/阶段/底色/步数/度量 → 清国家筛选(避免筛着一个国家切走后列表空/口径错位)。
@@ -1608,12 +1617,20 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
       ) : (
       <>
       {isFirstLayerSolved && (
-        <p className="scramble-stats-exact-note">
-          {tr({
-            zh: '输入前提:第一层 4 个角块与 4 个棱块均已归位。这里只枚举 4 条中层棱在其余 8 个棱位中的位置与朝向,共 P(8,4) × 2⁴ = 26,880 个状态；求解过程中允许暂时拆开第一层,终点必须还原完整前两层。分布已离线穷举,客户端不运行搜索。',
-            en: 'Input condition: all four first-layer corners and edges are solved. The coordinate enumerates only the four middle-layer edges across the remaining eight edge positions and orientations: P(8,4) × 2⁴ = 26,880 states. A solution may temporarily disturb the first layer, but must finish with the full first two layers solved. The distribution is precomputed offline; the client runs no search.',
-          })}
-        </p>
+        <>
+          <p className="scramble-stats-exact-note">
+            {tr({
+              zh: '输入前提:第一层 4 个角块与 4 个棱块均已归位。这里只枚举 4 条中层棱在其余 8 个棱位中的位置与朝向,共 P(8,4) × 2⁴ = 26,880 个状态；求解过程中允许暂时拆开第一层,终点必须还原完整前两层。分布已离线穷举,客户端不运行搜索。',
+              en: 'Input condition: all four first-layer corners and edges are solved. The coordinate enumerates only the four middle-layer edges across the remaining eight edge positions and orientations: P(8,4) × 2⁴ = 26,880 states. A solution may temporarily disturb the first layer, but must finish with the full first two layers solved. The distribution is precomputed offline; the client runs no search.',
+            })}
+          </p>
+          <p className="scramble-stats-exact-note">
+            {tr({
+              zh: '点任一非空柱查看预生成打乱。0 步与 5–12 步各保留最多 12 个代表；最深 13 步的 18 个状态全部列出。打乱与最优步数均由离线生成器计算并经实体魔方状态回放,客户端只展示结果。',
+              en: 'Click any non-empty bar for precomputed scrambles. Up to 12 representatives are kept for the 0- and 5–12-move bins; all 18 states at the maximum depth of 13 are listed. Scrambles and optimal distances are generated offline and replayed against a physical cube model; the client only displays the results.',
+            })}
+          </p>
+        </>
       )}
 
       {/* 精确穷举的两个显示口径。叠加只在「不固定槽」可用 —— 固定槽与真题分析器
@@ -1741,9 +1758,9 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             chartMode={chartMode}
             // 精确穷举不来自任何打乱池,所以没有「示例真题」可点;但小到能列全的那几档
             // 可以把状态本身摆出来(exactCaseDepths),那些柱子照样可点。
-            clickableBins={isExact ? exactCaseDepths : isFirstLayerSolved ? [] : previewBins}
+            clickableBins={isExact ? exactCaseDepths : previewBins}
             selectedBin={selectedBin}
-            onBarClick={isExact ? setSelectedBin : isFirstLayerSolved ? undefined : handleBarClick}
+            onBarClick={isExact ? setSelectedBin : isFirstLayerSolved ? setSelectedBin : handleBarClick}
             hideLegendColors
             logY={logY}
             onLogYToggle={setLogY}
@@ -1805,6 +1822,17 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
         </p>
       )}
 
+      {/* 精确计数不等于保存了每个完整状态。没有逐态语料的组合必须直接说明限制，
+          不能让不可点的柱子像交互故障，也不能把大规模反推搜索推到客户端。 */}
+      {isExact && exactFull && exactCaseDepths.length === 0 && (
+        <p className="scramble-stats-exact-note">
+          {tr({
+            zh: '此组合目前只有精确计数，没有可回放状态语料，因此柱子不可点。生成示例需要额外的大规模状态补全或整层枚举；该计算没有放到客户端现场运行。',
+            en: 'This combination currently has exact counts but no replayable state corpus, so its bars are not clickable. Producing examples requires additional large-scale state completion or full-layer enumeration; that computation is not run in the client.',
+          })}
+        </p>
+      )}
+
       {isExact && selectedBin !== null && exactFull && (
         <ExactCaseList
           stage={stage}
@@ -1825,17 +1853,17 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
         />
       )}
 
-      {!isExact && !isFirstLayerSolved && <ExamplesPanel
+      {!isExact && <ExamplesPanel
         isZh={isZh}
         lang={(i18n.language.startsWith('zh') ? 'zh' : 'en')}
         scrambleSet={scrambleSet}
         variant={sourceVariant}
         stage={sourceStage}
-        subsetKey={subsetKey}
+        subsetKey={effectiveSubset}
         downloadBins={downloadBins}
         selectedBin={selectedBin}
-        loading={examplesLoading}
-        errorText={examplesError}
+        loading={isFirstLayerSolved ? false : examplesLoading}
+        errorText={isFirstLayerSolved ? null : examplesError}
         samples={currentSamples}
         comps={exSet?.comps}
         idMeta={exSet?.idMeta}
@@ -2073,6 +2101,7 @@ function ExamplesPanel({
             const comp = m ? comps?.[m[0]] : undefined;
             // 最优视图:用最短等价打乱(同状态),无数据则回退原始。预览与跳转都跟当前视图。
             const disp = (exView === 'opt' && opt ? opt : scr).trim();
+            const displayText = disp || tr({ zh: '已还原', en: 'Solved' });
             return (
               <li key={i}>
                 {color && (
@@ -2097,7 +2126,7 @@ function ExamplesPanel({
                     href={`/${lang}/scramble/analyzer?${new URLSearchParams({ scramble: disp.replace(/ /g, '_') })}`}
                     prefetch={false}
                   >
-                    {disp}
+                    {displayText}
                   </Link>
                   {comp && m && (() => {
                     const iso2 = compFlagIso2(m[0]);
@@ -2122,6 +2151,11 @@ function ExamplesPanel({
             );
           })}
         </ul>
+      )}
+      {!showAll && selectedBin === null && (
+        <div className="scramble-stats-examples-hint">
+          {tr({ zh: '点柱子查看该步数的打乱', en: 'Click a bar to see scrambles at that distance' })}
+        </div>
       )}
       {!showAll && selectedBin !== null && !loading && !errorText && samples && previewSamples && previewSamples.length === 0 && (
         <div className="scramble-stats-examples-hint">
