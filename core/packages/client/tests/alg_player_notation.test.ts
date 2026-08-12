@@ -11,7 +11,12 @@ import { describe, it, expect } from 'vitest';
 import { Alg } from 'cubing/alg';
 import { cube3x3x3 } from 'cubing/puzzles';
 import { normalizeAlgForTwisty } from '@/components/AlgPlayer/AlgPlayer';
-import { resolvePlayerSetup } from '@/components/AlgPlayer/player-setup';
+import {
+  DEFAULT_PREVIEW_TIMING,
+  resolvePlayerSetup,
+  resolvePreviewTiming,
+  resolveTwistyTempoScale,
+} from '@/components/AlgPlayer/player-setup';
 
 const kpuzzle = await cube3x3x3.kpuzzle();
 const playable = (s: string) => {
@@ -69,5 +74,26 @@ describe('resolvePlayerSetup', () => {
   it('普通公式预览仍优先使用显式 setup,否则从公式逆态开始', () => {
     expect(resolvePlayerSetup('3x3', 'R U', 'F R', false)).toBe('F R');
     expect(resolvePlayerSetup('3x3', 'R U', undefined, false)).toBe("(R U)'");
+  });
+});
+
+describe('notation demo timing', () => {
+  it('保留普通公式预览的快速节奏', () => {
+    expect(resolvePreviewTiming()).toBe(DEFAULT_PREVIEW_TIMING);
+    expect(resolveTwistyTempoScale()).toBeUndefined();
+  });
+
+  it('把一秒单步换算为 sim 帧数和 TwistyPlayer 速度', () => {
+    expect(resolvePreviewTiming(1000)).toEqual({ frames: 60, stepMs: 1000 });
+    expect(resolveTwistyTempoScale(1000, 'R')).toBe(1);
+    expect(resolveTwistyTempoScale(1000, 'R2')).toBe(1.5);
+    expect(resolveTwistyTempoScale(1000, 'R++')).toBe(1.5);
+  });
+
+  it('拒绝非法时长,极短时长至少保留一帧', () => {
+    expect(resolvePreviewTiming(0)).toBe(DEFAULT_PREVIEW_TIMING);
+    expect(resolvePreviewTiming(Number.NaN)).toBe(DEFAULT_PREVIEW_TIMING);
+    expect(resolvePreviewTiming(1)).toEqual({ frames: 1, stepMs: 1 });
+    expect(resolveTwistyTempoScale(-1)).toBeUndefined();
   });
 });

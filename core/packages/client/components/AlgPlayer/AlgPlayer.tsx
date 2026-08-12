@@ -15,7 +15,7 @@ import type { AlgPuzzle } from '@cuberoot/shared';
 import { normalizeAlgForTwisty } from '@/lib/alg_normalize';
 import { pickStickering } from './stickering';
 import AlgSimPlayer from './AlgSimPlayer';
-import { resolvePlayerSetup } from './player-setup';
+import { resolvePlayerSetup, resolveTwistyTempoScale } from './player-setup';
 
 export interface AlgPlayerHandle {
   /** 拿到底层 cubing.js TwistyPlayer 实例,给光标 sync 等高级用法用 */
@@ -52,6 +52,8 @@ interface Props {
   autoPlay?: boolean;
   /** 自动播放到末尾后从头重播。 */
   loop?: boolean;
+  /** 单步教学示例的动画时长(ms)。不传时保留公式预览的快速节奏。 */
+  moveDurationMs?: number;
   /** 自定义尺寸,默认 260px;`fillPane=true` 时忽略 */
   size?: number;
   /** 撑满父容器(用 ResizeObserver 把像素尺寸直接写入 player),否则用 size 固定方形 */
@@ -77,14 +79,14 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
       <AlgSimPlayer
         alg={props.alg} puzzle={props.puzzle} set={props.set} setup={props.setup}
         startSolved={props.startSolved} autoPlay={props.autoPlay} loop={props.loop}
-        size={props.size ?? 260} fillPane={props.fillPane}
+        moveDurationMs={props.moveDurationMs} size={props.size ?? 260} fillPane={props.fillPane}
       />
     );
   }
   return <TwistyAlgPlayer {...props} ref={ref} />;
 });
 
-const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPlayer({ alg, puzzle, set, setup, startSolved = false, autoPlay = false, loop = false, size = 260, fillPane = false }, ref) {
+const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPlayer({ alg, puzzle, set, setup, startSolved = false, autoPlay = false, loop = false, moveDurationMs, size = 260, fillPane = false }, ref) {
   const hostRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const playerRef = useRef<any>(null);
@@ -100,6 +102,8 @@ const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPla
     const normalized = normalizeAlgForTwisty(puzzle, alg);
     const stickering = pickStickering(puzzle, set);
     const setupForTwisty = resolvePlayerSetup(puzzle, alg, setup, startSolved);
+    const tempoScale = resolveTwistyTempoScale(moveDurationMs, normalized);
+    const replayDelayMs = tempoScale !== undefined && moveDurationMs ? moveDurationMs + 900 : 1800;
     // NOTE: 播的是库里的完整公式(含收尾 AUF),动画才停在还原态。前端只在**显示/复制**时
     // 用 displayAlg() 剥掉那个 AUF —— 别把 displayAlg 的结果传进来。
     import('cubing/twisty').then((mod) => {
@@ -119,6 +123,7 @@ const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPla
         };
         if (stickering) opts.experimentalStickering = stickering;
         player = new Ctor(opts);
+        if (tempoScale !== undefined) player.tempoScale = tempoScale;
         player.style.colorScheme = 'light';
         if (fillPane) {
           // ResizeObserver 把 host 像素尺寸写到 player,WebGL canvas 才会重绘
@@ -145,7 +150,7 @@ const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPla
           if (loop) {
             replayTimer = setInterval(() => {
               try { player.timestamp = 0; player.play?.(); } catch { /* player may be between frames */ }
-            }, 1800);
+            }, replayDelayMs);
           }
         }
       } catch (err) {
@@ -160,7 +165,7 @@ const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPla
       if (player && host.contains(player)) host.removeChild(player);
       if (playerRef.current === player) playerRef.current = null;
     };
-  }, [alg, puzzle, set, setup, startSolved, autoPlay, loop, size, fillPane]);
+  }, [alg, puzzle, set, setup, startSolved, autoPlay, loop, moveDurationMs, size, fillPane]);
   // NOTE: 固定 host 尺寸,player 重 mount 时容器占位不丢,父布局不抖
   const hostStyle: CSSProperties = fillPane
     ? { width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }
