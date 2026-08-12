@@ -95,13 +95,12 @@
 - [ ] **📦 MANUAL(First Face/First Layer)** 两套语料全量灌注 + 重建 stats/recent/comp_steps + static/PG 发布(本轮 loop 不执行)。
 
 ### EPIC 2.6 — 三阶 Second Layer / F2L(2026-08-11 用户指定下一个)
-> 固定所选底色、HTM。目标 = 第一层保持还原，并把 4 条中层棱复原，即前两层全部还原；搜索可暂时拆开第一层，但最终不得破坏。先审计与现有 `std` 的 `xxxxcross` 是否逐态完全同义，若同义必须复用既有核心/统计列，禁止重复造大表或重灌 130 万题。浏览器遵循 FL4：能离线预构建的表不现场 BFS。
+> 2026-08-12 语义纠正：输入也必须已经还原第一层。目标虽然等于 `xxxxcross`，条件状态域并不等于普通 WCA / XXXXCross；旧薄别名已撤销。
 
-- [x] **SL0 DESIGN/AUDIT** ✅ 2026-08-11 `c69215ce4a`。独立物理 `State` + 浅层 IDDFS 证明 Second Layer 逐态等于 `std` stage-4 `xxxxcross`；状态空间 695,280,402,432,000，God 只证 16..20；现有 native/WASM/CSV/stats/comp_steps 全可复用。native full std mmap 22.909GiB（8 线程共享），浏览器复用 20.04MiB gzip PDB，零新增下载/BFS。每步不动第一层在 18 面转下只剩 U、无法解中层，故锁终态约束。
-- [x] **SL1 CORE** ✅ 由 SL0 去重证明消解：严格最优核心就是既有 `XCrossSolver`，analyzer 就是 `std_analyzer` 的 `xxxxcross_*`；新增搜索器/bin/表/CSV 都会是重复实现。`tests/second_layer_audit.rs` 已提供独立目标、6 色浅层 IDDFS 2/2 绿；SL2 只做薄 UI/数据别名。
-- [x] **SL2 INTEGRATION** ✅ 2026-08-11 `0c0f35754a`。独立 UI 状态 `second_layer` 全链路薄映射到 `std/xxxxcross/xxxxc`：StageSolver 复用 `CrossSolverWasm need='cross'` stage 4（含受限招式），stats/gen/comp_steps/recent/timer/exact matrix/dashboard 复用既有数据。零新 Rust/WASM/worker need/表/CSV/全量重算；浏览器仍唯一 54,743,056B raw PDB（gzip ~20MB）。Vitest 68+20、typecheck、Rust audit 2/2 全绿。
-- [x] **SL3 REVIEW** ✅ 2026-08-11 `1f16dfd176`。独立审查修复 analyzer 真题筛选别名泄漏，现统一归一到 `std/xxxxcross`；WASM↔native 六色对拍 + cubing.js 物理 replay、前端135项、typecheck、Rust Second Layer/Daisy/First Face/First Layer 回归全绿。确认零新 solver/WASM/worker need/表/CSV/下载；native 22.909GiB mmap 由8线程共享。Browser 无实例，实页门记 §4。
-- [x] **📦 MANUAL(Second Layer)** ✅ SL0 已证明现有 `std/xxxxcross/xxxxc` 数据逐态同义，统计、recent、comp_steps 与 PG 步数索引均直接复用；无需重灌语料、重建静态资产或新增 PG 索引，前端别名随普通部署上线即可。
+- [x] **SL0 CONDITIONAL COORDINATE** ✅ 固定第一层后只追踪 4 条有标号中层棱：`P(8,4) × 2^4 = 26,880` 态；U 层其余块全部商掉。搜索可临时拆第一层，终点必须还原完整 F2L。
+- [x] **SL1 EXACT CORE** ✅ `XCrossSolver::second_layer_distance` 复用现有 54,743,056B 单槽精确 PDB 做可采纳 max 启发式；独立物理目标、六色浅层 IDDFS、条件坐标↔普通招式路径与无重枚举共 4 项 release 审计全绿。无 22.9GiB 大表、无新持久化表。
+- [x] **SL2 OFFLINE DISTRIBUTION** ✅ 14 线程 release 全枚举 26,880 态用时 57.75s；直方图 `[1,0,0,0,0,22,24,283,682,2590,7006,12400,3854,18]`，严格证明 God=13 HTM。
+- [x] **SL3 INTEGRATION** ✅ 删除 WCA/recent/gen/timer/live StageSolver/完整状态空间矩阵中的伪 Second Layer 别名；`/scramble/stats` 新增独立 `第一层已还原 / First layer solved` 数据集，客户端只读 14 档离线常量，不运行 BFS/IDA*、不下载求解表。
 
 ### EPIC 3 — 独立 puzzle 引擎(档3,非 3x3)
 > 2026-06-11 GATE 解除,用户拍板:**四个全做,且接统计管道**(覆盖调研的"无落点"结论——管道统计 = **整解最优步数分布**:WCA 打乱语料喂最优 solver,每打乱最优解长度分桶,即 `/scramble/stats` 对 3x3 cross 那类难度分布的 puzzle 级单阶段版)。各 puzzle 0 复用 `cube_common`,需独立状态模型(小空间全表 BFS / SQ1 双阶段)。**真正灌百万打乱 + static 发布仍是 📦 MANUAL**(顶部锁定规矩);loop 建 native 引擎 + analyzer + 统计管线注册 + WASM + 在线求解器 + 难度分布 UI + 看板。
@@ -189,6 +188,7 @@
 - 2026-08-11 — **SL0+SL1 Second Layer 去重审计** `c69215ce4a`。物理目标逐态等于既有严格最优 `std/xxxxcross`，状态空间约 6.95e14、God 16..20；核心/analyzer/WASM/两套全量统计全复用，禁止新表/CSV。下一个 = SL2 薄入口全链路。
 - 2026-08-11 — **SL2 Second Layer 薄入口** `0c0f35754a`。独立 UI key，统一映射 `std/xxxxcross/xxxxc`；solver/stats/gen/recent/timer/exact/dashboard 全接且零新表/CSV。定向 88 项、typecheck、Rust audit 2/2 绿。下一个 = SL3 独立审查。
 - 2026-08-11 — **SL3 Second Layer 独立审查** `1f16dfd176`。修复 analyzer 真题筛选未归一别名；native↔WASM 六色与独立 replay、前端135项、typecheck、Second Layer/Daisy/First Face/First Layer Rust 回归全绿。确认统计与资产完全复用，MANUAL 无需另跑；仅剩浏览器实页欠账。
+- 2026-08-12 — **Second Layer 语义纠正**。前述 SL0-SL3 只证明目标谓词等价，错误忽略了“输入第一层已还原”的条件域；已撤销 WCA/XXXXCross 薄别名，改为 26,880 态条件全枚举，God=13 HTM，并以独立数据集发布离线直方图。
 
 ---
 
@@ -272,7 +272,7 @@
 > 回补并通过后标 `✅ 日期` 或划掉。**规则铁律:一个变体的欠账没清零前不算完成、不发布上线。**
 
 - **FL2** — 欠 solver/timer/home 桌面 + 390px Playwright、0 console error/无横溢出与实页两阶段交互。FL3 已按 browser skill 跑 `getForUrl` → troubleshooting → 唯一允许的 `list()`,结果 `[]`,不再盲重试。浏览器实例可用且 MANUAL 数据灌注后回补；代码侧 native↔WASM/replay 已过。
-- **SL3** — 欠 solver/analyzer、timer、home 桌面 + 390px Playwright、0 console error/无横溢出与 Second Layer 实页交互。审查已按 Browser skill 跑 `getForUrl` → troubleshooting → 唯一一次 `list()`,结果 `[]`,不再重试；三目标 URL HEAD 均 200，代码侧 native↔WASM/replay 已过。
+- **SL3** — 旧伪 Second Layer 入口已撤销；当前只欠 `/scramble/stats` 新条件数据集的桌面 + 390px Playwright、0 console error/无横溢出。此前 Browser skill 确认实例列表为空。
 
 ---
 

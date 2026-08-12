@@ -32,6 +32,11 @@ import {
   type ExactColors, type ExactFull, type ExactSlot, type ExactStage,
 } from './_data/exact_dist';
 import {
+  FIRST_LAYER_SOLVED_SECOND_LAYER_COUNTS,
+  FIRST_LAYER_SOLVED_SECOND_LAYER_GOD,
+  FIRST_LAYER_SOLVED_SECOND_LAYER_TOTAL,
+} from './_data/first_layer_solved_dist';
+import {
   CUBE3_STATES, GOD_DIST_333, GOD_DIST_333_NORMALIZED, GOD_KIND_MARK, GOD_MEAN_HTM,
 } from '@/lib/god-distance-333';
 import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
@@ -186,6 +191,7 @@ const DIFFICULTY_EVENTS = new Set(['333', '333oh', '333bf', '333fm', '333ft', '3
 // 而是 _data/exact_dist.ts 的 TS 常量。这里只合成一个同形状的空壳 SetData 塞进 sets,
 // 让数据集下拉 / 阶段下拉 / variant 回退这些既有逻辑原样复用;真正的数值走 EXACT_DIST 旁路。
 const EXACT_SET_KEY = 'exact';
+const FIRST_LAYER_SOLVED_SET_KEY = 'first_layer_solved';
 /** 图表区的锚点 id —— 覆盖矩阵在页尾,点一格得把视口带回图上。 */
 const DIST_ANCHOR = 'dist-view';
 /** 阶段属于哪个变体(阶段下拉按变体列选项,少设这一步会让下拉里没有刚选中的那档)。 */
@@ -208,6 +214,28 @@ const EXACT_SET_META: SetData = {
       v, { sample_count: 0, stages: stages as string[], data: {} },
     ]),
   ),
+};
+
+/** 离线遍历 26,880 个条件坐标所得；客户端只读常量，不现场搜索。 */
+const FIRST_LAYER_SOLVED_SET_META: SetData = {
+  label: 'First layer solved',
+  label_zh: '第一层已还原',
+  sample_count: FIRST_LAYER_SOLVED_SECOND_LAYER_TOTAL,
+  variants: {
+    second_layer: {
+      sample_count: FIRST_LAYER_SOLVED_SECOND_LAYER_TOTAL,
+      stages: ['second_layer'],
+      data: {
+        second_layer: {
+          W: {
+            min: 0,
+            max: FIRST_LAYER_SOLVED_SECOND_LAYER_GOD,
+            counts: FIRST_LAYER_SOLVED_SECOND_LAYER_COUNTS,
+          },
+        },
+      },
+    },
+  },
 };
 
 // 列表要现场枚举(cross-trainer 的距离表)+ 现算打乱(min2phase WASM),两样都不该进
@@ -518,10 +546,14 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     }
   }, [lengthsData, event]);
 
-  // sets = JSON 里的 + 合成的精确穷举集。下游一切(数据集下拉 / currentSet / 阶段下拉)
-  // 都从这里取,精确集因此不需要在各处特判「这个 set 存不存在」。
+  // sets = JSON 里的 + 两个离线穷举集。下游一切(数据集下拉 / currentSet / 阶段下拉)
+  // 都从这里取,合成集因此不需要在各处特判「这个 set 存不存在」。
   const allSets = useMemo<Record<string, SetData> | null>(
-    () => (data ? { ...data.sets, [EXACT_SET_KEY]: EXACT_SET_META } : null),
+    () => (data ? {
+      ...data.sets,
+      [FIRST_LAYER_SOLVED_SET_KEY]: FIRST_LAYER_SOLVED_SET_META,
+      [EXACT_SET_KEY]: EXACT_SET_META,
+    } : null),
     [data],
   );
 
@@ -533,13 +565,13 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   }, [allSets, dataset]);
 
   const currentSet = useMemo(() => allSets?.[scrambleSet] ?? null, [allSets, scrambleSet]);
-  // 用户态保留 second_layer/second_layer，所有静态数据读取复用 std/xxxxcross。
   const sourceRef = variantDataRef(variant, stage);
   const sourceVariant = sourceRef.variant;
   const sourceStage = sourceRef.stage;
 
   // ── 精确穷举集的派生量 ────────────────────────────────────────────────
   const isExact = dataset === EXACT_SET_KEY;
+  const isFirstLayerSolved = dataset === FIRST_LAYER_SOLVED_SET_KEY;
   // 槽位:切阶段后旧档可能不适用(如 XCross 的「固定相邻双槽」切到 Cross),回退 unfixed。
   const slot = (isExact && SLOT_OK[stage as ExactStage]?.includes(slotRaw as ExactSlot))
     ? (slotRaw as ExactSlot) : 'unfixed';
@@ -549,7 +581,6 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
 
   const currentStages = useMemo(() => {
     if (!currentSet) return [] as string[];
-    if (variant === 'second_layer') return ['second_layer'];
     return currentSet.variants[variant]?.stages ?? [];
   }, [currentSet, variant]);
 
@@ -559,9 +590,12 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     }
   }, [currentStages, stage]);
 
-  // 切项目/数据集后当前方法可能不存在(如 '333' 只在合并池有)——回退到 std。
+  // 切项目/数据集后当前方法可能不存在 —— 回退到该数据集的第一个真实变体。
   useEffect(() => {
-    if (currentSet && !currentSet.variants[sourceVariant] && !isBlockVariant(variant)) setVariant('std');
+    if (currentSet && !currentSet.variants[sourceVariant] && !isBlockVariant(variant)) {
+      const first = Object.keys(currentSet.variants)[0] as VariantKey | undefined;
+      if (first) setVariant(first);
+    }
   }, [currentSet, variant, sourceVariant]);
 
   const subsetKey = sel.subsetKey;
@@ -573,7 +607,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   // 整解:作为独立「方法」(variant '333'),阶段仅有 '333' 自身;无配色维度,
   // 数据存在单一伪子集 'ALL',口径走 HTM/QTM 而非颜色选择器。
   const is333 = variant === '333';
-  const effectiveSubset = is333 ? 'ALL' : subsetKey;
+  const effectiveSubset = is333 ? 'ALL' : isFirstLayerSolved ? 'W' : subsetKey;
   // 组平均可用性:难度族(限 wca 数据集、非整解 333 变体)或有分组元数据的长度项目;
   // 其余(非 WCA puzzle / 合成集 / 整解)隐藏钮并退回单条。avgOn = 已开且当前选择支持。
   const avgAvailable = tab === 'difficulty'
@@ -583,7 +617,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   // 精确穷举:当前 (阶段, 槽位, 底色) 对应的数据格。三 / 五色底在这批数据里无对应口径 → null。
   // 固定帧那几档没有底色维度(钉死一个帧就把底面一并钉死了),一律折到存储键 W ——
   // 否则底色档一切,明明算好的曲线会被读成「还没算」,矩阵里那一格也不再高亮。
-  const colorInert = isExact && isColorFreeCell(stage, slot);
+  const colorInert = isFirstLayerSolved || (isExact && isColorFreeCell(stage, slot));
   const exactColors: ExactColors | null = isExact
     ? (colorInert ? 'W' : exactColorsOf(subsetKey))
     : null;
@@ -708,7 +742,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     // 组平均模式:重置选中(单条 bin 值在平均空间无意义),等用户点柱触发按需加载。
     if (avgOn) { setSelectedBin(null); return; }
     // 精确穷举是全状态空间的理论分布,不来自任何打乱池 —— 没有「示例打乱」可点。
-    if (isExact) { setSelectedBin(null); return; }
+    if (isExact || isFirstLayerSolved) { setSelectedBin(null); return; }
     if (previewBins.length > 0) {
       setSelectedBin(previewBins[0]);
       ensureExamplesLoaded();
@@ -774,9 +808,11 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
       return [theory];
     }
     const empirical: HistSeries = {
-      // 整解:中性暖色单色;其余按所选配色子集渐变。
-      name: is333 ? (optMetric === 'qtm' ? 'QTM' : 'HTM') : modeLabel,
-      fillColors: is333 ? [NEUTRAL_FILL] : fillColorsForSubset(selectedColors),
+      // 整解与条件全空间没有底色选择,用中性单色；其余按所选配色子集渐变。
+      name: is333
+        ? (optMetric === 'qtm' ? 'QTM' : 'HTM')
+        : isFirstLayerSolved ? tr({ zh: '全部状态', en: 'All states' }) : modeLabel,
+      fillColors: (is333 || isFirstLayerSolved) ? [NEUTRAL_FILL] : fillColorsForSubset(selectedColors),
       counts: activeCounts,
     };
     // 整解 HTM:把 cube20.org 的 0..20 理论分布套在真题柱外面。WCA 打乱本就是随机态,
@@ -796,7 +832,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
       }];
     }
     return [empirical];
-  }, [activeCounts, isExact, exactFull, overlayCounts, is333, optMetric, selectedColors, modeLabel, godOverlayOn]);
+  }, [activeCounts, isExact, exactFull, overlayCounts, is333, isFirstLayerSolved, optMetric, selectedColors, modeLabel, godOverlayOn]);
 
   const extendedStats = useMemo(() => {
     // 精确集的均值必须用 BigInt 直算 Σd·count/total —— computeStats 走 Number 累加,
@@ -969,7 +1005,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
 
   // 时间线视图可用性:长度 tab 该项目有数据;难度 tab 三阶族 或 有首现数据的 puzzle。
   // 精确穷举没有「首次出现在哪场比赛」——它不来自任何打乱池,时间线不适用。
-  const canTimeline = isExact ? false : tab === 'length'
+  const canTimeline = (isExact || isFirstLayerSolved) ? false : tab === 'length'
     ? !!faLen?.events[event]
     : isPuzzleEvent
       ? !!faPuzzle?.puzzles[PUZZLE_EVENT_MAP[event]]
@@ -1480,10 +1516,12 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
         {/* 底色选择器刚刚消失了 —— 说清为什么,别让它读成「控件坏了」。 */}
         {colorInert && !is333 && (
           <span className="scramble-stats-puzzle-toggle-hint">
-            {tr({
-              zh: '固定之后不分底色 —— 钉死一个具体的槽 / 轴 / 块,底面也就跟着钉死了',
-              en: 'A fixed frame has no colour tier — the frame already pins the face',
-            })}
+            {isFirstLayerSolved
+              ? tr({ zh: '条件状态已经固定一个底面,不再取六个底色的最小值', en: 'The conditional states pin one bottom face; no minimum is taken over six colours' })
+              : tr({
+                zh: '固定之后不分底色 —— 钉死一个具体的槽 / 轴 / 块,底面也就跟着钉死了',
+                en: 'A fixed frame has no colour tier — the frame already pins the face',
+              })}
           </span>
         )}
         {is333 && (
@@ -1572,6 +1610,15 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
       </>
       ) : (
       <>
+      {isFirstLayerSolved && (
+        <p className="scramble-stats-exact-note">
+          {tr({
+            zh: '输入前提:第一层 4 个角块与 4 个棱块均已归位。这里只枚举 4 条中层棱在其余 8 个棱位中的位置与朝向,共 P(8,4) × 2⁴ = 26,880 个状态；求解过程中允许暂时拆开第一层,终点必须还原完整前两层。分布已离线穷举,客户端不运行搜索。',
+            en: 'Input condition: all four first-layer corners and edges are solved. The coordinate enumerates only the four middle-layer edges across the remaining eight edge positions and orientations: P(8,4) × 2⁴ = 26,880 states. A solution may temporarily disturb the first layer, but must finish with the full first two layers solved. The distribution is precomputed offline; the client runs no search.',
+          })}
+        </p>
+      )}
+
       {/* 精确穷举的两个显示口径。叠加只在「不固定槽」可用 —— 固定槽与真题分析器
           (恒对 4 个 F2L 槽取 min)不是一回事,没有可比对象。 */}
       {isExact && exactFull && (
@@ -1697,9 +1744,9 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             chartMode={chartMode}
             // 精确穷举不来自任何打乱池,所以没有「示例真题」可点;但小到能列全的那几档
             // 可以把状态本身摆出来(exactCaseDepths),那些柱子照样可点。
-            clickableBins={isExact ? exactCaseDepths : previewBins}
+            clickableBins={isExact ? exactCaseDepths : isFirstLayerSolved ? [] : previewBins}
             selectedBin={selectedBin}
-            onBarClick={isExact ? setSelectedBin : handleBarClick}
+            onBarClick={isExact ? setSelectedBin : isFirstLayerSolved ? undefined : handleBarClick}
             hideLegendColors
             logY={logY}
             onLogYToggle={setLogY}
@@ -1781,7 +1828,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
         />
       )}
 
-      {!isExact && <ExamplesPanel
+      {!isExact && !isFirstLayerSolved && <ExamplesPanel
         isZh={isZh}
         lang={(i18n.language.startsWith('zh') ? 'zh' : 'en')}
         scrambleSet={scrambleSet}
@@ -1813,10 +1860,14 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
           {tr({ zh: '本变体样本', en: 'Variant samples'
         })}: {(vData?.sample_count ?? 0).toLocaleString()}
         </span>
-        <span>
-          {tr({ zh: '生成时间', en: 'Generated'
-        })}: {new Date(data.meta.generated_at).toLocaleString()}
-        </span>
+        {isFirstLayerSolved ? (
+          <span>{tr({ zh: '离线穷举,上帝之数 13 HTM', en: 'Offline exhaustive enumeration, God\'s number 13 HTM' })}</span>
+        ) : (
+          <span>
+            {tr({ zh: '生成时间', en: 'Generated'
+          })}: {new Date(data.meta.generated_at).toLocaleString()}
+          </span>
+        )}
       </div>
     </div>
   );

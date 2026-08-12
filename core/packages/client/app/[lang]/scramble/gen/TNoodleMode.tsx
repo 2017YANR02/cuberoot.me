@@ -71,10 +71,13 @@ const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
 
 // 变体 (key 与 /scramble/analyzer + /scramble/stats 对齐);标签 + 顺序走共享
 // lib/scramble-variants(单一真源,别再各写一份)。
-type VariantKey = ScrambleVariant;
+// 条件式 second_layer 只在离线统计集出现，不属于 WCA 打乱生成器。
+type VariantKey = Exclude<ScrambleVariant, 'second_layer'>;
 // 333(整解)在 VARIANT_ORDER 里(首页+stats 方法下拉),但 gen 无整解求解引擎,排除。
 const VARIANTS: { key: VariantKey; zh: string; en: string }[] =
-  VARIANT_ORDER.filter((key) => key !== '333').map((key) => ({ key, ...VARIANT_LABEL[key] }));
+  VARIANT_ORDER
+    .filter((key): key is VariantKey => key !== '333' && key !== 'second_layer')
+    .map((key) => ({ key, ...VARIANT_LABEL[key] }));
 // 每变体:阶段集 + 实时引擎能力。std=现有 cross WASM(5 阶段);f2leo/pseudo_f2leo=
 // F2leoSolverWasm 浏览器当场算(4 阶段,无 xxxxc);其余暂仅靠预计算(comp_steps 未生成
 // → 无数据时显示提示)。后端 comp_steps_<variant> 出齐后这些会自动秒载。
@@ -84,12 +87,10 @@ const F2L_STAGES: Metric[] = ['cross', 'xc', 'xxc', 'xxxc'];
 // solver 就绪后从 'none' 改 'variant')。'none' = 仅 comp_steps 预计算,无 client 引擎。
 const VARIANT_SPEC: Record<VariantKey, { stages: Metric[]; engine: 'std' | 'f2leo' | 'variant' | 'stagefamily' | 'none' }> = {
   std: { stages: STD_STAGES, engine: 'std' },
-  // UI 聚合方法:阶段仍分别走 daisy / first_layer / std(second_layer 别名)的原引擎。
-  lbl: { stages: ['bdaisy', 'bfirst_face', 'bfirst_layer', 'bsecond_layer'], engine: 'none' },
+  // UI 聚合方法:真题生成只含已有 WCA 步数数据的小花 / 第一层阶段。
+  lbl: { stages: ['bdaisy', 'bfirst_face', 'bfirst_layer'], engine: 'none' },
   daisy: { stages: ['bdaisy'], engine: 'stagefamily' },
   first_layer: { stages: ['bfirst_face', 'bfirst_layer'], engine: 'stagefamily' },
-  // 薄别名：读 std/xxxxcross 的 comp_steps，未命中时也走 cross WASM stage 4。
-  second_layer: { stages: ['bsecond_layer'], engine: 'std' },
   // EO 是 UI 聚合方法:EOLine 变体的两阶段(beo/beoline)并进来,细分落阶段下拉。engine 按
   // 阶段所属数据变体取(见 dataVariant / variantEngine)—— EO+十字系列走 VariantSolverWasm,
   // EO / EOLine 走 EoDrSolverWasm,不能只看方法。
@@ -938,7 +939,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
     return analysisScrambles.filter((s) => !compSteps.map!.has(normScramble(s)));
   }, [showCross, is333Family, analysisScrambles, compSteps.ready, compSteps.map]);
   // std:非 cross 指标走实时 cross-step WASM(comp_steps 未覆盖的打乱);cross 走 JS crossA。
-  const stdMetric = safeMetric === 'bsecond_layer' ? 'xxxxc' : safeMetric;
+  const stdMetric = safeMetric;
   const stepUncovered = variantEngine === 'std' && stdMetric !== 'cross' ? uncovered : NO_SCRAMBLES;
   const stepLive = useStepMap(stepUncovered, stepUncovered.length === 0 ? null : (stdMetric as StepMetric));
   // f2leo / pseudo_f2leo:整变体一次算全 24 值(浏览器当场算,无需预计算)。
