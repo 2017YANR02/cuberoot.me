@@ -490,6 +490,42 @@ impl FirstLayerSolver {
         out.truncate(cap);
         (best, out)
     }
+
+    /// Offline diameter-proof helper: return one optimal solution for a raw
+    /// labelled corner4 × edge4 coordinate produced by the exact BFS.
+    ///
+    /// Keeping this here makes the proof witness pass through the normal IDA*
+    /// and admissible PDB stack instead of teaching the BFS a second solver.
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn solve_coords_for_proof(&self, c: usize, e: usize) -> Result<FirstLayerSol, String> {
+        if c >= CORNER4 || e >= state_space::CROSS {
+            return Err(format!(
+                "First Layer coordinate out of range: c={c}/{CORNER4}, e={e}/{}",
+                state_space::CROSS
+            ));
+        }
+        let best = self.distance_from_coords(FirstLayerStage::FirstLayer, c, e);
+        if best == 0 {
+            return Ok(FirstLayerSol {
+                len: 0,
+                moves: Vec::new(),
+            });
+        }
+        let mut out = Vec::with_capacity(1);
+        self.enumerate_at(
+            FirstLayerStage::FirstLayer,
+            c,
+            e,
+            best,
+            18,
+            &mut Vec::with_capacity(best as usize),
+            &mut out,
+            1,
+        );
+        out.into_iter()
+            .next()
+            .ok_or_else(|| format!("IDA* found distance {best} but no First Layer proof witness"))
+    }
 }
 
 impl FirstLayerTables {
