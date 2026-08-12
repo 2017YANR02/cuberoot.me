@@ -944,8 +944,8 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
             aria-label={tr({ zh: '转动记号', en: 'Move notation' })}
           >
             <option value="standard">{tr({ zh: '英文记号', en: 'English notation' })}</option>
-            <option value="zh-cstimer">{tr({ zh: '中文记号', en: 'Chinese notation' })}</option>
-            <option value="zh-compact">{tr({ zh: '中文记号（紧凑）', en: 'Chinese notation (compact)' })}</option>
+            <option value="zh-cstimer">{tr({ zh: '傻瓜记号', en: 'Foolproof notation' })}</option>
+            <option value="zh-compact">{tr({ zh: '紧凑', en: 'Compact' })}</option>
           </select>
         )}
         {/* 标签筛选只在公式内联时有意义(只看图时没公式可筛) */}
