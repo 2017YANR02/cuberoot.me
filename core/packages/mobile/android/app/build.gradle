@@ -7,10 +7,14 @@ def versionParts = mobilePackage.version.toString().tokenize('.')
 if (versionParts.size() != 3 || !versionParts.every { part -> part ==~ /\d+/ }) {
     throw new GradleException("packages/mobile/package.json must use numeric major.minor.patch versioning")
 }
+def versionNumbers = versionParts.collect { it.toInteger() }
+if (versionNumbers[1] > 999 || versionNumbers[2] > 999) {
+    throw new GradleException('Minor and patch versions must stay between 0 and 999')
+}
 def mobileVersionCode = (System.getenv('MOBILE_VERSION_CODE')
-        ?: (versionParts[0].toInteger() * 1_000_000
-        + versionParts[1].toInteger() * 1_000
-        + versionParts[2].toInteger()).toString()).toInteger()
+        ?: (versionNumbers[0] * 1_000_000
+        + versionNumbers[1] * 1_000
+        + versionNumbers[2]).toString()).toInteger()
 if (mobileVersionCode < 1 || mobileVersionCode > 2_100_000_000) {
     throw new GradleException('MOBILE_VERSION_CODE must be between 1 and 2100000000')
 }
