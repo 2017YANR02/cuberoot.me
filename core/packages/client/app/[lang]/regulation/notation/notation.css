@@ -1,65 +1,7 @@
 /* ─── /regulation/notation — Article 12 bespoke styles ───
  * Builds on the shared .reg-page tokens (--blue / --ink / --rule / --card ...).
- * The centrepiece is a responsive grid of looping 3D move tiles (.nt-grid).
+ * Move-player styles live with the shared MoveNotationDemo component.
  * ──────────────────────────────────────────────────────── */
-
-/* ── Move-tile grid ─────────────────────────────────────── */
-.nt-grid {
-  display: grid;
-  gap: 16px;
-  grid-template-columns: repeat(auto-fill, minmax(146px, 1fr));
-  margin-top: 8px;
-}
-/* Slightly larger tiles for the puzzles whose moves are subtler. */
-.nt-grid.nt-grid-lg {
-  grid-template-columns: repeat(auto-fill, minmax(172px, 1fr));
-}
-
-.nt-tile {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  padding: 16px 14px 18px;
-  border: 1px solid var(--rule);
-  border-radius: 16px;
-  background: var(--card);
-  cursor: pointer;
-  transition: border-color .15s, transform .15s, box-shadow .15s;
-}
-.nt-tile:hover,
-.nt-tile:focus-visible {
-  border-color: var(--blue);
-  transform: translateY(-2px);
-  box-shadow: 0 10px 30px -18px color-mix(in srgb, var(--blue) 70%, transparent);
-  outline: none;
-}
-
-.nt-sym {
-  font-family: var(--font-mono);
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: .01em;
-  color: var(--blue);
-  line-height: 1.1;
-  min-height: 1.1em;
-  text-align: center;
-}
-
-.nt-cube {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  display: block;
-}
-
-.nt-cap {
-  font-size: 13.5px;
-  line-height: 1.45;
-  color: var(--ink-dim);
-  text-align: center;
-  max-width: 18ch;
-}
 
 /* ── Modifier legend (the ' / 2 / w universal table) ────── */
 .nt-mods {
@@ -165,12 +107,6 @@
 
 /* ── Responsive ─────────────────────────────────────────── */
 @media (max-width: 720px) {
-  .nt-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-  .nt-grid.nt-grid-lg { grid-template-columns: repeat(2, 1fr); }
-  .nt-sym { font-size: 21px; }
   .nt-sq1, .nt-clock { grid-template-columns: 1fr; gap: 18px; justify-items: center; }
   .nt-sq1-fig, .nt-clock-fig { max-width: 240px; }
-}
-@media (max-width: 380px) {
-  .nt-grid, .nt-grid.nt-grid-lg { grid-template-columns: 1fr; }
 }

@@ -113,10 +113,10 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'alg/3bld/twist': { title: { zh: '翻角公式训练', en: 'Corner Twist Trainer' } },
   'alg/commutator': { title: { zh: '换位子', en: 'Commutator' } },
   'alg/3x3/notation': {
-    title: { zh: '三阶转动记号', en: '3×3 Move Notation' },
+    title: { zh: '三阶中文转动记号', en: 'Chinese 3×3 Move Notation' },
     description: {
-      zh: '三阶魔方英文、紧凑中文转动记号对照，每种转动都可跳到模拟器查看动画。',
-      en: 'A guide to standard and compact Chinese 3×3 move notation, with every move linked to an animated simulator example.',
+      zh: '三阶魔方傻瓜和紧凑中文转动记号速查，可直接切换并播放每种转动的模拟动画。',
+      en: 'A visual guide to foolproof and compact Chinese 3×3 move notation, with an inline animated simulator for every move.',
     },
   },
   'alg/lsll': { title: { zh: 'LSLL 公式集', en: 'LSLL Algorithms' } },

@@ -3,9 +3,8 @@
 /**
  * 公式动画 —— 跑站内 `/sim` 引擎,不是 cubing.js 的 TwistyPlayer。
  *
- * 只接 NxN(2x2 / 3x3 / 4x4 / 5x5)。sq1 / 五魔 / 金字塔 / 斜转的记号各是一套文法,
- * `/sim` 那边每种都有专门的解析器,跟公式库存的写法不是一一对应 —— 那几种仍走 TwistyPlayer,
- * 分流在 `AlgPlayer` 里。
+ * 公式库默认只接 NxN(2x2 / 3x3 / 4x4 / 5x5)。记号教学还会显式接入文法一致的
+ * 金字塔和斜转;Square-1 与五魔官方打乱文法仍由 `AlgPlayer` 分流到 TwistyPlayer。
  *
  * ## 三件与 TwistyPlayer 不同、写的时候会绊一下的事
  *
@@ -30,16 +29,30 @@ import { normalizeAlgForTwisty } from '@/lib/alg_normalize';
 import { useT } from '@/hooks/useT';
 import type { SimMount } from '@/components/sim-embed/mountSimWorld';
 import type Cube from '@/app/[lang]/sim/engine/nxn/cube';
+import type { PuzzleKind } from '@/app/[lang]/sim/engine/world';
 import { pickStickering } from './stickering';
+import { resolvePlayerSetup } from './player-setup';
 import './alg-sim-player.css';
 
 /** 一步的播放时长(帧)。引擎默认偏慢,公式预览要能一眼看完。 */
 const PLAY_FRAMES = 8;
 /** 自动播放每一步之间的间隔(ms),略长于动画本身,让人看清停在哪。 */
 const STEP_MS = 260;
+const LOOP_PAUSE_MS = 900;
 
 export const NXN_ORDER: Partial<Record<AlgPuzzle, number>> = {
   '2x2': 2, '3x3': 3, '4x4': 4, '5x5': 5,
+};
+
+const SIM_PUZZLE: Partial<Record<AlgPuzzle, PuzzleKind>> = {
+  ...NXN_ORDER,
+  pyraminx: 'pyraminx',
+  skewb: 'skewb',
+};
+
+type PreviewTwister = {
+  setup(scramble: string): void;
+  push(scramble: string): void;
 };
 
 async function preloadEngine() {
@@ -60,18 +73,21 @@ async function preloadEngine() {
 }
 
 export default function AlgSimPlayer({
-  alg, puzzle, set, setup, size = 260, fillPane = false,
+  alg, puzzle, set, setup, startSolved = false, autoPlay = false, loop = false, size = 260, fillPane = false,
 }: {
   alg: string;
   puzzle: AlgPuzzle;
   set: string;
   setup?: string;
+  startSolved?: boolean;
+  autoPlay?: boolean;
+  loop?: boolean;
   size?: number;
   /** 撑满父容器。给编辑器那种「右半屏放预览」的布局用。 */
   fillPane?: boolean;
 }) {
   const t = useT();
-  const order = NXN_ORDER[puzzle] ?? 3;
+  const puzzleKind = SIM_PUZZLE[puzzle] ?? 3;
 
   /**
    * 逐步切开。库里存的是**人写的**文本(换握记号、连写、分组括号都有),
@@ -83,13 +99,10 @@ export default function AlgSimPlayer({
     () => normalizeAlgForTwisty(puzzle, alg).split(/\s+/).filter(Boolean),
     [puzzle, alg],
   );
-  /** 起手态:优先用库里的 setup(不带转体),没有就用公式的逆。 */
+  /** 起手态由共享规则统一决定;教学演示从还原态开始。 */
   const setupAlg = useMemo(() => {
-    const normalized = normalizeAlgForTwisty(puzzle, alg);
-    return setup && setup.trim()
-      ? normalizeAlgForTwisty(puzzle, setup)
-      : `(${normalized})'`;
-  }, [puzzle, alg, setup]);
+    return resolvePlayerSetup(puzzle, alg, setup, startSolved);
+  }, [puzzle, alg, setup, startSolved]);
 
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -102,15 +115,22 @@ export default function AlgSimPlayer({
   // 换公式 = 从头开始。
   useEffect(() => { setStep(0); setPlaying(false); }, [setupAlg, moves]);
 
+  useEffect(() => {
+    if (!ready || !autoPlay || moves.length === 0) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    setStep(0);
+    setPlaying(true);
+  }, [ready, autoPlay, setupAlg, moves.length]);
+
   const mount = useCallback(async (host: HTMLElement) => {
     const {
       mountSimWorld, orbitSceneFree, resetSceneView, ORBIT_K, timing, stickeringMaskFn,
     } = await preloadEngine();
 
-    const m = mountSimWorld({ host, puzzle: order, interactive: true });
+    const m = mountSimWorld({ host, puzzle: puzzleKind, interactive: true });
     mountRef.current = m;
     const world = m.world;
-    const cube = world.cube as Cube;
+    const cube = world.cube;
 
     // 拖 = 看视角。paintMode 关掉「拖层」那条路,dragEmpty 让空处拖也算看视角;
     // orbitSceneFree 只转场景,不把超出的角度折成整体转体(那会改魔方状态)。
@@ -119,8 +139,11 @@ export default function AlgSimPlayer({
     world.controller.onOrbit = (dx, dy) => orbitSceneFree(world, dx, dy, ORBIT_K);
     resetViewRef.current = () => { resetSceneView(world); m.invalidate(); };
 
+    const order = NXN_ORDER[puzzle];
     const name = pickStickering(puzzle, set);
-    if (name) cube.instancedRenderer.setStickering(stickeringMaskFn(order, name) ?? null);
+    if (order && name) {
+      (cube as Cube).instancedRenderer.setStickering(stickeringMaskFn(order, name) ?? null);
+    }
 
     const prevFrames = timing.frames;
     timing.frames = PLAY_FRAMES;
@@ -131,7 +154,7 @@ export default function AlgSimPlayer({
       mountRef.current = null;
       lastRef.current = null;
     };
-  }, [order, puzzle, set]);
+  }, [puzzleKind, puzzle, set]);
 
   /**
    * 把 (setup, step) 同步到引擎。只有「同一条公式、刚好 +1 步」才播动画,
@@ -140,14 +163,14 @@ export default function AlgSimPlayer({
   useEffect(() => {
     const m = mountRef.current;
     if (!m || !ready) return;
-    const cube = m.world.cube as Cube;
+    const twister = m.world.cube.twister as PreviewTwister;
     const last = lastRef.current;
     lastRef.current = { setupAlg, step };
 
     if (last && last.setupAlg === setupAlg && step === last.step + 1 && step > 0) {
-      cube.twister.push(moves[step - 1]);   // push 自己排队,还在转也不会丢
+      twister.push(moves[step - 1]);   // push 自己排队,还在转也不会丢
     } else {
-      cube.twister.setup([setupAlg, ...moves.slice(0, step)].join(' '));
+      twister.setup([setupAlg, ...moves.slice(0, step)].join(' '));
     }
     m.invalidate();
   }, [setupAlg, moves, step, ready]);
@@ -155,10 +178,14 @@ export default function AlgSimPlayer({
   // 自动播放:走到头就停。
   useEffect(() => {
     if (!playing) return;
-    if (step >= moves.length) { setPlaying(false); return; }
-    const id = setTimeout(() => setStep(s => Math.min(s + 1, moves.length)), STEP_MS);
+    const atLastFrame = step >= moves.length;
+    if (atLastFrame && !loop) { setPlaying(false); return; }
+    const id = setTimeout(
+      () => setStep(s => atLastFrame ? 0 : Math.min(s + 1, moves.length)),
+      atLastFrame ? LOOP_PAUSE_MS : STEP_MS,
+    );
     return () => clearTimeout(id);
-  }, [playing, step, moves.length]);
+  }, [playing, loop, step, moves.length]);
 
   const atEnd = step >= moves.length;
 
