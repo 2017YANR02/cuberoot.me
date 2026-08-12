@@ -69,7 +69,7 @@ async function preloadEngine() {
 }
 
 export default function AlgSimPlayer({
-  alg, puzzle, set, setup, startSolved = false, autoPlay = false, loop = false, moveDurationMs, size = 260, fillPane = false,
+  alg, puzzle, set, setup, startSolved = false, autoPlay = false, loop = false, controlMode = 'full', moveDurationMs, size = 260, fillPane = false,
 }: {
   alg: string;
   puzzle: AlgPuzzle;
@@ -78,6 +78,7 @@ export default function AlgSimPlayer({
   startSolved?: boolean;
   autoPlay?: boolean;
   loop?: boolean;
+  controlMode?: 'full' | 'replay';
   moveDurationMs?: number;
   size?: number;
   /** 撑满父容器。给编辑器那种「右半屏放预览」的布局用。 */
@@ -110,6 +111,7 @@ export default function AlgSimPlayer({
 
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [replayRequest, setReplayRequest] = useState(0);
   const [ready, setReady] = useState(false);
   const mountRef = useRef<SimMount | null>(null);
   const resetViewRef = useRef<() => void>(() => {});
@@ -194,7 +196,7 @@ export default function AlgSimPlayer({
       delay,
     );
     return () => clearTimeout(id);
-  }, [playing, loop, step, moves.length, hasCustomTiming, previewTiming.stepMs]);
+  }, [playing, loop, step, moves.length, hasCustomTiming, previewTiming.stepMs, replayRequest]);
 
   return (
     <div className={`alg-sim-player${fillPane ? ' is-fill' : ''}`}>
@@ -202,7 +204,7 @@ export default function AlgSimPlayer({
         size={size}
         mount={mount}
         onReady={() => setReady(true)}
-        onResetView={() => resetViewRef.current()}
+        onResetView={controlMode === 'full' ? () => resetViewRef.current() : undefined}
         busyLabel={t('正在加载魔方', 'Loading the cube')}
       />
       <AlgPlaybackControls
@@ -211,6 +213,12 @@ export default function AlgSimPlayer({
         playing={playing}
         onStepChange={setStep}
         onPlayingChange={setPlaying}
+        mode={controlMode}
+        onReplay={controlMode === 'replay' ? () => {
+          setStep(0);
+          setPlaying(true);
+          setReplayRequest(request => request + 1);
+        } : undefined}
       />
     </div>
   );

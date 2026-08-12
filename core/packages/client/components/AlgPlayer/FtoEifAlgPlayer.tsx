@@ -36,6 +36,7 @@ const FtoEifAlgPlayer = forwardRef<AlgPlayerHandle, {
   startSolved?: boolean;
   autoPlay?: boolean;
   loop?: boolean;
+  controlMode?: 'full' | 'replay';
   moveDurationMs?: number;
   size?: number;
   fillPane?: boolean;
@@ -45,6 +46,7 @@ const FtoEifAlgPlayer = forwardRef<AlgPlayerHandle, {
   startSolved = false,
   autoPlay = false,
   loop = false,
+  controlMode = 'full',
   moveDurationMs = 260,
   size = 260,
   fillPane = false,
@@ -58,6 +60,7 @@ const FtoEifAlgPlayer = forwardRef<AlgPlayerHandle, {
   );
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [replayRequest, setReplayRequest] = useState(0);
   const seekPlayer = useMemo(
     () => createFtoSeekPlayer(parsedAlg.tokens.length, setStep),
     [parsedAlg.tokens.length],
@@ -89,7 +92,7 @@ const FtoEifAlgPlayer = forwardRef<AlgPlayerHandle, {
       delay,
     );
     return () => clearTimeout(timer);
-  }, [loop, moveDurationMs, parsedAlg.tokens.length, playing, step]);
+  }, [loop, moveDurationMs, parsedAlg.tokens.length, playing, replayRequest, step]);
 
   const visibleAlgorithm = [setupAlg, ...parsedAlg.tokens.slice(0, step)].filter(Boolean).join(' ');
   const svg = useMemo(
@@ -121,6 +124,12 @@ const FtoEifAlgPlayer = forwardRef<AlgPlayerHandle, {
         playing={playing}
         onStepChange={setStep}
         onPlayingChange={setPlaying}
+        mode={controlMode}
+        onReplay={controlMode === 'replay' ? () => {
+          setStep(0);
+          setPlaying(true);
+          setReplayRequest(request => request + 1);
+        } : undefined}
       />
     </div>
   );

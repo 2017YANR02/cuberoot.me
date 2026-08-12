@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronLeft, ChevronRight, Pause, Play, SkipBack, SkipForward } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Pause, Play, RotateCcw, SkipBack, SkipForward } from 'lucide-react';
 import { useT } from '@/hooks/useT';
 
 export default function AlgPlaybackControls({
@@ -9,12 +9,16 @@ export default function AlgPlaybackControls({
   playing,
   onStepChange,
   onPlayingChange,
+  mode = 'full',
+  onReplay,
 }: {
   step: number;
   count: number;
   playing: boolean;
   onStepChange: (step: number) => void;
   onPlayingChange: (playing: boolean) => void;
+  mode?: 'full' | 'replay';
+  onReplay?: () => void;
 }) {
   const t = useT();
   const atEnd = step >= count;
@@ -22,6 +26,26 @@ export default function AlgPlaybackControls({
     onPlayingChange(false);
     onStepChange(Math.max(0, Math.min(count, next)));
   };
+
+  if (mode === 'replay') {
+    return (
+      <div className="alg-sim-controls is-replay-only">
+        <button
+          type="button"
+          className="alg-sim-btn"
+          onClick={onReplay ?? (() => {
+            onStepChange(0);
+            onPlayingChange(true);
+          })}
+          disabled={count === 0}
+          title={t('重播', 'Replay')}
+          aria-label={t('重播', 'Replay')}
+        >
+          <RotateCcw size={15} aria-hidden="true" />
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="alg-sim-controls">
