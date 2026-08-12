@@ -9,6 +9,7 @@
   --accent: #c15f3c;
   --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
   --border-default: #e5e5e5;
+  --success: #3f7f5a;
 }
 
 * {
@@ -46,26 +47,17 @@ select {
     max(24px, env(safe-area-inset-left));
 }
 
-.foundation {
-  width: min(100%, 360px);
-}
-
-.eyebrow {
-  margin: 0 0 28px;
-  color: var(--accent);
-  font-size: 0.72rem;
-  font-weight: 760;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+.gateway {
+  width: min(100%, 390px);
 }
 
 .cube-mark {
   display: grid;
-  width: 76px;
+  width: 68px;
   aspect-ratio: 1;
   grid-template-columns: repeat(3, 1fr);
-  gap: 5px;
-  margin-bottom: 30px;
+  gap: 4px;
+  margin-bottom: 28px;
   rotate: -4deg;
 }
 
@@ -76,6 +68,7 @@ select {
 
 .cube-sticker:nth-child(5) {
   background: var(--accent);
+  animation: center-turn 1.8s ease-in-out infinite;
 }
 
 h1 {
@@ -87,40 +80,104 @@ h1 {
 }
 
 .summary {
-  max-width: 28ch;
-  margin: 20px 0 42px;
+  max-width: 31ch;
+  margin: 20px 0 34px;
   color: var(--muted-foreground);
   font-size: 1.02rem;
   line-height: 1.6;
 }
 
-.runtime-status {
-  margin: 0;
-  border-top: 1px solid var(--border-default);
-}
-
-.runtime-status > div {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) max-content;
+.launch-link {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
   gap: 20px;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--border-default);
+  padding: 17px 20px;
+  border-radius: 14px;
+  background: var(--foreground);
+  color: var(--background);
+  font-size: 1rem;
+  font-weight: 760;
+  text-decoration: none;
+  transition: opacity 160ms ease, transform 160ms ease;
 }
 
-.runtime-status dt,
-.runtime-status dd {
-  margin: 0;
+.launch-link:active {
+  transform: scale(0.985);
 }
 
-.runtime-status dt {
+.launch-link[aria-disabled="true"] {
+  cursor: default;
+  opacity: 0.42;
+  pointer-events: none;
+}
+
+.launch-arrow {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 1.2rem;
+}
+
+.connection-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 22px;
   color: var(--muted-foreground);
 }
 
-.runtime-status dd {
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  font-size: 0.82rem;
-  font-weight: 720;
-  letter-spacing: 0.05em;
+.connection-status strong,
+.connection-status small {
+  display: block;
+}
+
+.connection-status strong {
+  color: var(--foreground);
+  font-size: 0.85rem;
+  line-height: 1.25;
+}
+
+.connection-status small {
+  margin-top: 4px;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  margin-top: 4px;
+  border-radius: 50%;
+  background: var(--muted-foreground);
+}
+
+.status-dot--checking {
+  animation: status-pulse 1.2s ease-in-out infinite;
+}
+
+.status-dot--online {
+  background: var(--success);
+}
+
+.status-dot--offline {
+  background: var(--accent);
+}
+
+@keyframes center-turn {
+  0%, 70%, 100% {
+    rotate: 0deg;
+  }
+
+  84% {
+    rotate: 90deg;
+  }
+}
+
+@keyframes status-pulse {
+  50% {
+    opacity: 0.35;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -131,6 +188,18 @@ h1 {
     --accent: #d97757;
     --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
     --border-default: color-mix(in srgb, var(--foreground) 10%, transparent);
+    --success: #78ae8d;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cube-sticker:nth-child(5),
+  .status-dot--checking {
+    animation: none;
+  }
+
+  .launch-link {
+    transition: none;
   }
 }
 
@@ -139,16 +208,20 @@ h1 {
     place-items: start center;
   }
 
-  .eyebrow {
-    margin-bottom: 20px;
-  }
-
   .cube-mark {
-    width: 58px;
-    margin-bottom: 22px;
+    width: 48px;
+    margin-bottom: 18px;
   }
 
   .summary {
-    margin: 14px 0 24px;
+    margin: 12px 0 20px;
+  }
+
+  .launch-link {
+    padding-block: 14px;
+  }
+
+  .connection-status {
+    margin-top: 16px;
   }
 }
