@@ -55,7 +55,7 @@ export async function scanCases(
       for (let ai = 0; ai < c.algs[oi].length; ai++) {
         if (opts.shouldCancel?.()) return out;
         const entry = c.algs[oi][ai];
-        const r = await validateAlgCase(setup, entry.alg, c.sticker, puzzle, set);
+        const r = await validateAlgCase(entry.setup ?? setup, entry.alg, c.sticker, puzzle, set);
         if (!r.ok) {
           out.push({ puzzle, set, caseObj: c, oriIdx: oi, algIdx: ai, alg: entry.alg, reason: r.reason ?? 'unknown' });
         }
@@ -88,7 +88,7 @@ export async function scanTargets(targets: ScanTarget[], opts: ScanOpts = {}): P
         for (let ai = 0; ai < c.algs[oi].length; ai++) {
           if (opts.shouldCancel?.()) return out;
           const entry = c.algs[oi][ai];
-          const r = await validateAlgCase(setup, entry.alg, c.sticker, sd.puzzle, sd.set);
+          const r = await validateAlgCase(entry.setup ?? setup, entry.alg, c.sticker, sd.puzzle, sd.set);
           if (!r.ok) {
             out.push({
               puzzle: sd.puzzle, set: sd.set, caseObj: c,

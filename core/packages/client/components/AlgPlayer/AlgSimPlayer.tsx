@@ -22,7 +22,6 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Play, Pause, SkipBack, SkipForward, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { AlgPuzzle } from '@cuberoot/shared';
 import SimStage from '@/components/sim-embed/SimStage';
 import { normalizeAlgForTwisty } from '@/lib/alg_normalize';
@@ -32,6 +31,7 @@ import type Cube from '@/app/[lang]/sim/engine/nxn/cube';
 import type { PuzzleKind } from '@/app/[lang]/sim/engine/world';
 import { pickStickering } from './stickering';
 import { resolvePlayerSetup, resolvePreviewTiming, resolveSimMoveDurationScale } from './player-setup';
+import AlgPlaybackControls from './AlgPlaybackControls';
 import './alg-sim-player.css';
 
 const LOOP_PAUSE_MS = 900;
@@ -196,8 +196,6 @@ export default function AlgSimPlayer({
     return () => clearTimeout(id);
   }, [playing, loop, step, moves.length, hasCustomTiming, previewTiming.stepMs]);
 
-  const atEnd = step >= moves.length;
-
   return (
     <div className={`alg-sim-player${fillPane ? ' is-fill' : ''}`}>
       <SimStage
@@ -207,57 +205,13 @@ export default function AlgSimPlayer({
         onResetView={() => resetViewRef.current()}
         busyLabel={t('正在加载魔方', 'Loading the cube')}
       />
-      <div className="alg-sim-controls">
-        <button
-          type="button" className="alg-sim-btn"
-          onClick={() => { setPlaying(false); setStep(0); }}
-          disabled={step === 0}
-          title={t('回到起点', 'Back to start')}
-        >
-          <SkipBack size={14} />
-        </button>
-        <button
-          type="button" className="alg-sim-btn"
-          onClick={() => { setPlaying(false); setStep(s => Math.max(0, s - 1)); }}
-          disabled={step === 0}
-          title={t('上一步', 'Previous move')}
-        >
-          <ChevronLeft size={14} />
-        </button>
-        <button
-          type="button" className="alg-sim-btn is-primary"
-          onClick={() => { if (atEnd) setStep(0); setPlaying(p => !p); }}
-          title={playing ? t('暂停', 'Pause') : t('播放', 'Play')}
-        >
-          {playing ? <Pause size={14} /> : <Play size={14} />}
-        </button>
-        <button
-          type="button" className="alg-sim-btn"
-          onClick={() => { setPlaying(false); setStep(s => Math.min(moves.length, s + 1)); }}
-          disabled={atEnd}
-          title={t('下一步', 'Next move')}
-        >
-          <ChevronRight size={14} />
-        </button>
-        <button
-          type="button" className="alg-sim-btn"
-          onClick={() => { setPlaying(false); setStep(moves.length); }}
-          disabled={atEnd}
-          title={t('走到最后', 'Jump to the end')}
-        >
-          <SkipForward size={14} />
-        </button>
-        <input
-          type="range"
-          className="alg-sim-scrub"
-          min={0}
-          max={moves.length}
-          value={step}
-          onChange={(e) => { setPlaying(false); setStep(Number(e.target.value)); }}
-          aria-label={t('进度', 'Progress')}
-        />
-        <span className="alg-sim-count">{step}/{moves.length}</span>
-      </div>
+      <AlgPlaybackControls
+        step={step}
+        count={moves.length}
+        playing={playing}
+        onStepChange={setStep}
+        onPlayingChange={setPlaying}
+      />
     </div>
   );
 }

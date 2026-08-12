@@ -46,3 +46,20 @@
   color: var(--muted-foreground);
   font-variant-numeric: tabular-nums;
 }
+.fto-eif-player-art {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+.fto-eif-player-art svg {
+  width: 100%;
+  height: 100%;
+}
+.fto-eif-player-error {
+  max-width: 100%;
+  margin: 0;
+  color: var(--destructive);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}

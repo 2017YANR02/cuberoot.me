@@ -15,6 +15,7 @@ import type { AlgPuzzle } from '@cuberoot/shared';
 import { normalizeAlgForTwisty } from '@/lib/alg_normalize';
 import { pickStickering } from './stickering';
 import AlgSimPlayer from './AlgSimPlayer';
+import FtoEifAlgPlayer from './FtoEifAlgPlayer';
 import { resolvePlayerSetup, resolveTwistyTempoScale } from './player-setup';
 
 export interface AlgPlayerHandle {
@@ -33,6 +34,7 @@ export const TWISTY_PUZZLE: Record<AlgPuzzle, string> = {
   'megaminx': 'megaminx',
   'pyraminx': 'pyraminx',
   'skewb': 'skewb',
+  'fto': 'fto',
 };
 
 /** 归一化搬去了 `lib/alg_normalize.ts`(校验器要用同一份)。这里转出去,老 import 不用改。 */
@@ -61,8 +63,8 @@ interface Props {
   /**
    * 用哪个引擎画。默认:NxN 走站内 `/sim` 引擎,其余(sq1 / 五魔 / 金字塔 / 斜转)走 TwistyPlayer。
    *
-   * 显式传 `'twisty'` 的只有一处 —— admin 编辑器要 `getPlayer()` 拿 cubing.js 实例做光标同步,
-   * sim 那版没有对应物。
+   * 显式传 `'twisty'` 可钉死 cubing.js。FTO 例外:EIF 宏不是 cubing.js 文法,
+   * 因此始终走自有播放器,并通过兼容 handle 支持 admin 光标同步。
    */
   engine?: 'sim' | 'twisty';
 }
@@ -72,6 +74,21 @@ const DEFAULT_SIM = new Set<AlgPuzzle>(['2x2', '3x3', '4x4', '5x5']);
 const EXPLICIT_SIM = new Set<AlgPuzzle>([...DEFAULT_SIM, 'pyraminx', 'skewb']);
 
 const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, ref) {
+  if (props.puzzle === 'fto') {
+    return (
+      <FtoEifAlgPlayer
+        ref={ref}
+        alg={props.alg}
+        setup={props.setup}
+        startSolved={props.startSolved}
+        autoPlay={props.autoPlay}
+        loop={props.loop}
+        moveDurationMs={props.moveDurationMs}
+        size={props.size}
+        fillPane={props.fillPane}
+      />
+    );
+  }
   const requestedEngine = props.engine ?? (DEFAULT_SIM.has(props.puzzle) ? 'sim' : 'twisty');
   const useSim = requestedEngine === 'sim' && EXPLICIT_SIM.has(props.puzzle);
   if (useSim) {

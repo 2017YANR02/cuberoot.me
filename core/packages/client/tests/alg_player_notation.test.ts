@@ -9,7 +9,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { Alg } from 'cubing/alg';
-import { cube3x3x3 } from 'cubing/puzzles';
+import { cube3x3x3, puzzles } from 'cubing/puzzles';
 import { normalizeAlgForTwisty } from '@/components/AlgPlayer/AlgPlayer';
 import {
   DEFAULT_PREVIEW_TIMING,
@@ -20,6 +20,7 @@ import {
 } from '@/components/AlgPlayer/player-setup';
 
 const kpuzzle = await cube3x3x3.kpuzzle();
+const megaminxKpuzzle = await puzzles.megaminx.kpuzzle();
 const playable = (s: string) => {
   kpuzzle.defaultPattern().applyAlg(new Alg(s));   // 抛 = 播放器会空白
   return s;
@@ -60,6 +61,16 @@ describe('normalizeAlgForTwisty', () => {
   it('别的记号体系原样透传', () => {
     expect(normalizeAlgForTwisty('megaminx', "R++ D-- R++ D--")).toBe("R++ D-- R++ D--");
     expect(normalizeAlgForTwisty('sq1', '(1,0)/(3,0)')).toContain('/');
+    expect(normalizeAlgForTwisty('fto', "Uo' U Rw2 R' S H'")).toBe("Uo' U Rw2 R' S H'");
+  });
+
+  it('把 LowCubes Full PLL 记号转换成 cubing.js 可执行的 Megaminx 记号', () => {
+    const normalized = normalizeAlgForTwisty(
+      'megaminx',
+      "L- (R' DR' R U R' DR R U)x3 x'",
+    );
+    expect(normalized).toBe("L' (R' DR' R U R' DR R U)3 x2");
+    expect(() => megaminxKpuzzle.defaultPattern().applyAlg(new Alg(normalized))).not.toThrow();
   });
 
   it('认不出来的东西不静默改写 —— 原样退回,别硬塞半截给播放器', () => {
@@ -75,6 +86,7 @@ describe('resolvePlayerSetup', () => {
   it('普通公式预览仍优先使用显式 setup,否则从公式逆态开始', () => {
     expect(resolvePlayerSetup('3x3', 'R U', 'F R', false)).toBe('F R');
     expect(resolvePlayerSetup('3x3', 'R U', undefined, false)).toBe("(R U)'");
+    expect(resolvePlayerSetup('fto', "U Rw S'", undefined, false)).toBe("S Rw' U'");
   });
 });
 

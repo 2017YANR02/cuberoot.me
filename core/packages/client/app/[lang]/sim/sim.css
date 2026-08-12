@@ -610,6 +610,242 @@
   overflow: hidden;
 }
 
+/* FTO EIF image tool lives in /sim so its URL, export helpers and puzzle
+ * renderer stay on the same source of truth as the interactive simulator. */
+.sim-tool-select {
+  max-width: 150px;
+  height: 32px;
+  padding: 0 28px 0 10px;
+  color: var(--foreground);
+  background: var(--background);
+  border: 1px solid var(--border-default);
+  border-radius: 7px;
+  font: inherit;
+}
+
+.fto-image-generator {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 28px;
+}
+.fto-image-heading {
+  margin: 0 auto 24px;
+  max-width: 1190px;
+}
+.fto-image-heading h2 {
+  margin: 0;
+  font-size: clamp(1.55rem, 3vw, 2rem);
+}
+.fto-image-heading p {
+  margin: 6px 0 0;
+  color: var(--muted-foreground);
+}
+.fto-image-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 320px);
+  gap: 24px;
+  max-width: 1190px;
+  margin: 0 auto;
+}
+.fto-image-main,
+.fto-image-colors {
+  min-width: 0;
+}
+.fto-image-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 430px;
+  padding: 20px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--card) 72%, var(--background));
+  border: 1px solid var(--border-default);
+  border-radius: 18px;
+}
+.fto-image-preview svg {
+  display: block;
+  width: min(100%, 350px);
+  height: auto;
+  max-height: 410px;
+}
+.fto-image-alg-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0 7px;
+  color: var(--muted-foreground);
+  font-size: 0.88rem;
+}
+.fto-image-notation summary {
+  cursor: pointer;
+  color: var(--primary);
+}
+.fto-image-notation-content {
+  width: max-content;
+  max-width: min(380px, calc(100vw - 32px));
+  margin-top: 8px;
+  padding: 10px 12px;
+  color: var(--foreground);
+  background: var(--popover);
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+}
+.fto-image-notation-content p {
+  margin: 3px 0;
+  white-space: normal;
+}
+.fto-image-alg-input-wrap {
+  position: relative;
+}
+.fto-image-alg-input-wrap > input,
+.fto-image-hex input {
+  width: 100%;
+  color: var(--foreground);
+  background: var(--background);
+  border: 1px solid var(--border-default);
+  border-radius: 9px;
+  font-family: var(--font-mono);
+}
+.fto-image-alg-input-wrap > input {
+  height: 52px;
+  padding: 0 42px 0 14px;
+  font-size: 1rem;
+}
+.fto-image-alg-input-wrap .clear-button {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+}
+.fto-image-error {
+  margin: 7px 0 0;
+  color: var(--destructive);
+  font-size: 0.84rem;
+}
+.fto-image-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+.fto-image-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 16px;
+  color: var(--primary-foreground);
+  background: var(--primary);
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.fto-image-download:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.fto-image-status {
+  min-height: 1.25em;
+  color: var(--muted-foreground);
+  font-size: 0.84rem;
+}
+.fto-image-colors {
+  align-self: start;
+}
+.fto-image-colors-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.fto-image-colors-heading h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+.fto-image-colors-heading button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 6px;
+  color: var(--muted-foreground);
+  background: none;
+  border: 0;
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.fto-image-color-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+.fto-image-color-grid button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 4px 7px;
+  color: var(--muted-foreground);
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  font: inherit;
+  font-size: 0.76rem;
+  cursor: pointer;
+}
+.fto-image-color-grid button.is-selected {
+  color: var(--foreground);
+  border-color: var(--primary);
+}
+.fto-image-color-swatch {
+  width: 38px;
+  height: 34px;
+  border: 1px solid color-mix(in srgb, var(--foreground) 18%, transparent);
+  border-radius: 8px;
+}
+.fto-image-picker.react-colorful {
+  width: 100%;
+  height: 158px;
+  margin-top: 18px;
+}
+.fto-image-picker .react-colorful__saturation {
+  border-radius: 9px 9px 0 0;
+}
+.fto-image-picker .react-colorful__hue {
+  height: 24px;
+  border-radius: 0 0 9px 9px;
+}
+.fto-image-picker .react-colorful__pointer {
+  width: 24px;
+  height: 24px;
+}
+.fto-image-hex {
+  display: grid;
+  gap: 5px;
+  margin-top: 14px;
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+}
+.fto-image-hex input {
+  height: 38px;
+  padding: 0 10px;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 900px) {
+  .fto-image-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .fto-image-colors {
+    width: min(100%, 430px);
+  }
+}
+
 @media (max-width: 480px) {
   .sim-header {
     padding: 6px 8px;
@@ -627,5 +863,37 @@
     min-width: 28px;
     height: 28px;
     padding: 0 6px;
+  }
+  .sim-tool-select {
+    max-width: 118px;
+    padding-left: 7px;
+    font-size: 12px;
+  }
+  .fto-image-generator {
+    padding: 16px 12px 28px;
+  }
+  .fto-image-heading {
+    margin-bottom: 16px;
+  }
+  .fto-image-heading p {
+    font-size: 0.88rem;
+  }
+  .fto-image-layout {
+    gap: 20px;
+  }
+  .fto-image-preview {
+    min-height: 330px;
+    padding: 12px;
+    border-radius: 13px;
+  }
+  .fto-image-preview svg {
+    width: min(100%, 285px);
+    max-height: 320px;
+  }
+  .fto-image-actions {
+    align-items: flex-start;
+  }
+  .fto-image-status {
+    flex-basis: 100%;
   }
 }

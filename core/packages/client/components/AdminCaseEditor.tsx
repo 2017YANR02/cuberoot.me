@@ -87,16 +87,20 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
   const [trainerKey, setTrainerKey] = useState(initial.trainerKey ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [previewAlg, setPreviewAlg] = useState(() => initial.algs[0]?.[0]?.alg ?? '');
-  const handlePreviewAlg = useCallback((a: string) => {
-    if (a.trim()) setPreviewAlg(a);
+  const initialPreviewEntry = initial.algs[0]?.[0];
+  const [preview, setPreview] = useState(() => ({
+    alg: initialPreviewEntry?.alg ?? '',
+    setup: initialPreviewEntry?.setup,
+  }));
+  const handlePreviewAlg = useCallback((alg: string, entrySetup?: string) => {
+    if (alg.trim()) setPreview({ alg, setup: entrySetup });
   }, []);
-  // Debounce previewAlg → debouncedPreviewAlg(给 AlgPlayer);避免每次按键都重建 TwistyPlayer
-  const [debouncedPreviewAlg, setDebouncedPreviewAlg] = useState(previewAlg);
+  // Debounce preview(给 AlgPlayer);避免每次按键都重建播放器。
+  const [debouncedPreview, setDebouncedPreview] = useState(preview);
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedPreviewAlg(previewAlg), 400);
+    const t = setTimeout(() => setDebouncedPreview(preview), 400);
     return () => clearTimeout(t);
-  }, [previewAlg]);
+  }, [preview]);
 
   // 光标 sync:AlgEditor 上报 prefix token 数,这里转成 player.timestamp
   const playerHandleRef = useRef<AlgPlayerHandle>(null);
@@ -115,7 +119,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
       }, d),
     );
     return () => tries.forEach(clearTimeout);
-  }, [debouncedPreviewAlg, setup]);
+  }, [debouncedPreview, setup]);
 
   /**
    * 镜像伙伴(issue #40 T5)—— 删一条公式 / 删整张 case 之前要算「会连带抹掉哪些生成公式」,
@@ -251,7 +255,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
           const bare = displayAlg(entry.alg);
           // setup 只描述第 0 个朝向;别的槽位要共轭过去。空 setup 的集合由首条公式反推。
           const oriSetup = setupForCase(puzzle, body.setup, algs[0]?.[0]?.alg, oi);
-          return validateAlgCase(oriSetup, bare, sticker, puzzle, setSlug)
+          return validateAlgCase(entry.setup ?? oriSetup, bare, sticker, puzzle, setSlug)
             .then(r => ({ oi, ai, alg: entry.alg, bare, ...r }));
         }))
       );
@@ -355,6 +359,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
   const title = state.mode === 'edit'
     ? tr({ zh: `编辑 case: ${state.existing.name}`, en: `Edit case: ${state.existing.name}` })
     : tr({ zh: '新增 case', en: 'Add new case' });
+  const previewSetup = debouncedPreview.setup ?? setup;
 
   return (
     <div className="alg-admin-modal-backdrop alg-admin-modal-backdrop-top" onClick={onClose} role="dialog" aria-modal="true">
@@ -368,9 +373,17 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
 
         <div className="alg-admin-modal-main">
           <aside className="alg-admin-modal-side">
-            {setup.trim() ? (
-              // 光标同步要 cubing.js 的 player 实例(`getPlayer()`),sim 那版没有对应物 → 钉死 twisty
-              <AlgPlayer ref={playerHandleRef} alg={debouncedPreviewAlg} puzzle={puzzle} set={setSlug} setup={setup} fillPane engine="twisty" />
+            {previewSetup.trim() ? (
+              // getPlayer() 提供可 seek handle；FTO 的自有 EIF 播放器也实现同一契约。
+              <AlgPlayer
+                ref={playerHandleRef}
+                alg={debouncedPreview.alg}
+                puzzle={puzzle}
+                set={setSlug}
+                setup={previewSetup}
+                fillPane
+                engine="twisty"
+              />
             ) : (
               <div className="alg-admin-modal-side-empty">
                 {tr({ zh: '填入 Setup 公式后,左侧会显示动画演示', en: 'Enter a setup to preview here' })}
