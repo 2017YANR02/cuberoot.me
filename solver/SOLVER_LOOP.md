@@ -91,7 +91,17 @@
 - [x] **FL1** Rust 核心 + analyzer。✅ 2026-08-11 `7dedf0c18f`。共享 `first_layer_solver.rs` 两阶段 + 12 列 analyzer；First Face 无标号 44,906,400 态精确 BFS,God=10,完整直方图已锁；First Layer 有标号 25,866,086,400 态,IDA* + 可采纳 max PDB 逐态严格最优,当前只证明 11≤God≤20。零持久化新表；clean release 核心4/4+e2e1/1 绿，独立 State/IDDFS/replay/无效尾动/列序全锁；约 250.6 scrambles/s。
 - [ ] **FL2** ⚠仅欠浏览器验收。代码完成 `41a865f67d`:单 WASM need/两阶段、worker/client/pool/StageSolver、stats/comp/gen/home/timer、精确矩阵与看板共 25 文件；clean WASM 4 产物。typecheck、前端72/72、Rust 4+1、PS 语法、小样本、5 条 native↔WASM 与独立 replay 全绿；未跑全量/发布/push。桌面+390px 因子 agent 无可用浏览器实例未跑，见 §4；补过才勾。
 - [x] **FL3 REVIEW** ✅ 2026-08-11 `23f3c171d1`。语义/独立判据/12列/ROTS6/worker零下载契约/stats↔gen↔home↔timer/i18n/Daisy+std 回归均无功能 blocker；修正源码注释状态数笔误。clean Rust 4+1、精确分布+table_sets 68 项绿，281.4/s。browser-client 按 troubleshooting 确认实例列表为空，故只剩 FL2 §4 实页欠账。
+- [x] **FL4 CLIENT PREBUILD** ✅ 2026-08-11 `dd4249fa0c`。浏览器不再现场生成角4/棱4移动表或跑 44,906,400 态 BFS；构建机产 `opt_first_layer` bundle（gzip 27,584,701B / 解压 57,383,828B，PDB 4-bit），WASM 解压+装载实测约 228ms、随后六色 Face 3ms / Layer 9ms。native 统计端保留 u8 表与现场建表（稳定约 107MiB、峰值约 258MiB），Rust 5+1、WASM 对拍、前端45、typecheck 全绿。playbook 已锁“能预构建就不留 client 算”。
 - [ ] **📦 MANUAL(First Face/First Layer)** 两套语料全量灌注 + 重建 stats/recent/comp_steps + static/PG 发布(本轮 loop 不执行)。
+
+### EPIC 2.6 — 三阶 Second Layer / F2L(2026-08-11 用户指定下一个)
+> 固定所选底色、HTM。目标 = 第一层保持还原，并把 4 条中层棱复原，即前两层全部还原；搜索可暂时拆开第一层，但最终不得破坏。先审计与现有 `std` 的 `xxxxcross` 是否逐态完全同义，若同义必须复用既有核心/统计列，禁止重复造大表或重灌 130 万题。浏览器遵循 FL4：能离线预构建的表不现场 BFS。
+
+- [ ] **SL0 DESIGN/AUDIT** 独立物理目标对照 `std` stage-4/xxxxcross，证明是否逐态等价；核对现有 native/WASM/统计数据能否直接复用，给出状态空间、God 数已知边界、表/内存/吞吐方案。若“每一步都不得动第一层”在 18 面转下不可行或不是用户意图，只做上述终态约束，不擅自扩 move 集。产出短设计说明 + 测试探针并 commit。
+- [ ] **SL1 CORE** 按 SL0 结论实现最小 Rust/analyzer（优先薄复用，禁止复制搜索器）；独立 `State` 目标、浅层 IDDFS、物理 replay、无效尾动与 6 色列序全锁。门：`cargo test --release second_layer -j 8`。
+- [ ] **SL2 INTEGRATION** WASM/worker/client/StageSolver + stats/gen/home/timer/exact matrix/dashboard 全链路；若复用既有预构建资产则零新增下载，若必须新资产则构建机生成并登记真实 gzip/raw 字节。门：native↔WASM、独立 replay、前端定向测试、typecheck；不跑全量/不发布。
+- [ ] **SL3 REVIEW** 独立审查语义、最优性、复用边界、性能/内存、Daisy/First Face/First Layer/std 回归；桌面+390px 浏览器若无实例记 §4，不编通过。
+- [ ] **📦 MANUAL(Second Layer)** 仅当 SL0 证明现有 `xxxxcross` 数据不可直接复用时才灌两套语料；否则只重建别名消费数据与发布静态资产/PG 索引。
 
 ### EPIC 3 — 独立 puzzle 引擎(档3,非 3x3)
 > 2026-06-11 GATE 解除,用户拍板:**四个全做,且接统计管道**(覆盖调研的"无落点"结论——管道统计 = **整解最优步数分布**:WCA 打乱语料喂最优 solver,每打乱最优解长度分桶,即 `/scramble/stats` 对 3x3 cross 那类难度分布的 puzzle 级单阶段版)。各 puzzle 0 复用 `cube_common`,需独立状态模型(小空间全表 BFS / SQ1 双阶段)。**真正灌百万打乱 + static 发布仍是 📦 MANUAL**(顶部锁定规矩);loop 建 native 引擎 + analyzer + 统计管线注册 + WASM + 在线求解器 + 难度分布 UI + 看板。
@@ -175,6 +185,7 @@
 - 2026-08-11 — **FL1** First Face + First Layer Rust 核心/analyzer,`7dedf0c18f`。Face 44,906,400 态精确表,God=10；Layer 25,866,086,400 态严格最优 IDA*,God 仅报已证 11..20；零落盘新表；release 5 门全绿,吞吐约 250.6/s。下一个 = FL2。
 - 2026-08-11 — **FL2 代码完成/待浏览器** `41a865f67d`。25 文件全链路 + clean WASM；typecheck/72前端/Rust4+1/小样本/native↔WASM/replay 全绿；Playwright 实例不可用记 §4，暂不算完成。下一个 = FL3 审查并回补。
 - 2026-08-11 — **FL3 审查** `23f3c171d1`。代码映射/语义/回归无 blocker，修一处状态数注释；clean Rust+68前端门绿。browser-client 无实例，FL2 实页欠账保留；MANUAL 前 home/timer 按数据驱动隐藏属预期。
+- 2026-08-11 — **FL4 client prebuild** `dd4249fa0c`。First Layer 浏览器从 20.49s 现场 BFS 改为 26.3MiB gzip 预构建 bundle 直载，解压+装载约 228ms；native 保留 u8 路径，稳定/峰值约 107/258MiB。用户指定下一个 = Second Layer/F2L，已插 EPIC 2.6，先做 SL0 去重审计。
 
 ---
 
