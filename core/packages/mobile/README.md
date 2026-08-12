@@ -19,10 +19,11 @@ pnpm --filter @cuberoot/mobile android:open
 ## Permanent identifiers
 
 - App name: `CubeRoot`
-- Android application ID: `me.cuberoot.app`
+- Release Android application ID: `me.cuberoot.app`
+- Debug Android application ID: `me.cuberoot.app.debug`
 - Web output: `dist/`
 
-Do not change the Android application ID after the first Play Store release.
+The debug suffix lets development builds coexist with the signed release app. Do not change the release application ID after the first Play Store release.
 
 ## Windows Android prerequisites
 
