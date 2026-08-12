@@ -13,6 +13,8 @@ export interface TimerMachineState {
   lastMs: number | null;
   startedAtMs: number | null;
   inspectionStartedAtMs: number | null;
+  /** Frozen when the run starts so a mid-run settings change cannot alter the result. */
+  autoPenalty: AutoPenalty | null;
   pendingInspectionStart: boolean;
 }
 
@@ -56,6 +58,7 @@ export function initialTimerMachineState(): TimerMachineState {
     lastMs: null,
     startedAtMs: null,
     inspectionStartedAtMs: null,
+    autoPenalty: null,
     pendingInspectionStart: false,
   };
 }
@@ -74,6 +77,7 @@ function startInspection(state: TimerMachineState, nowMs: number): TimerMachineT
       ...state,
       phase: 'inspecting',
       inspectionStartedAtMs: normalizedNow(nowMs),
+      autoPenalty: null,
       pendingInspectionStart: false,
     },
     effects: ['inspection-started'],
@@ -83,14 +87,20 @@ function startInspection(state: TimerMachineState, nowMs: number): TimerMachineT
 function startRunning(
   state: TimerMachineState,
   startedAtMs: number,
+  config: TimerMachineConfig,
   effects: TimerMachineEffect[] = ['run-started'],
 ): TimerMachineTransition {
+  const normalizedStartedAtMs = normalizedNow(startedAtMs);
+  const inspectionMs = state.inspectionStartedAtMs === null
+    ? 0
+    : finiteNonNegative(normalizedStartedAtMs - state.inspectionStartedAtMs);
   return {
     state: {
       ...state,
       phase: 'running',
       lastMs: null,
-      startedAtMs: normalizedNow(startedAtMs),
+      startedAtMs: normalizedStartedAtMs,
+      autoPenalty: inspectionPenalty(inspectionMs, config.inspectionSec),
       pendingInspectionStart: false,
     },
     effects,
@@ -123,6 +133,7 @@ export function transitionTimer(
         ...state,
         phase: state.lastMs === null ? 'idle' : 'stopped',
         inspectionStartedAtMs: null,
+        autoPenalty: null,
         pendingInspectionStart: false,
       },
       effects: ['arm-cancelled'],
@@ -143,6 +154,7 @@ export function transitionTimer(
           phase: state.inspectionStartedAtMs === null
             ? (state.lastMs === null ? 'idle' : 'stopped')
             : 'inspecting',
+          autoPenalty: null,
           pendingInspectionStart: false,
         },
         effects: ['hold-cancelled'],
@@ -165,6 +177,7 @@ export function transitionTimer(
     return startRunning(
       { ...state, inspectionStartedAtMs: null },
       nowMs - elapsedMs,
+      config,
     );
   }
 
@@ -180,14 +193,14 @@ export function transitionTimer(
       config.maxCubeBackdateMs ?? DEFAULT_MAX_CUBE_BACKDATE_MS,
     );
     const startedAtMs = Math.min(nowMs, Math.max(nowMs - maxBackdateMs, requestedAt));
-    return { ...startRunning(state, startedAtMs), accepted: true };
+    return { ...startRunning(state, startedAtMs, config), accepted: true };
   }
 
   if (action.type === 'press-up') {
     if (state.pendingInspectionStart && (state.phase === 'idle' || state.phase === 'stopped')) {
       return startInspection(state, action.nowMs);
     }
-    if (state.phase === 'ready') return startRunning(state, action.nowMs);
+    if (state.phase === 'ready') return startRunning(state, action.nowMs, config);
     if (state.phase === 'holding') {
       return {
         state: {
@@ -195,6 +208,7 @@ export function transitionTimer(
           phase: state.inspectionStartedAtMs === null
             ? (state.lastMs === null ? 'idle' : 'stopped')
             : 'inspecting',
+          autoPenalty: null,
         },
         effects: ['hold-cancelled'],
       };
@@ -212,7 +226,7 @@ export function transitionTimer(
     const solve: SolveResult = {
       timeMs,
       inspectionMs,
-      autoPenalty: inspectionPenalty(inspectionMs, config.inspectionSec),
+      autoPenalty: state.autoPenalty ?? 'ok',
     };
     return {
       state: {
@@ -221,6 +235,7 @@ export function transitionTimer(
         lastMs: timeMs,
         startedAtMs: null,
         inspectionStartedAtMs: null,
+        autoPenalty: null,
         pendingInspectionStart: false,
       },
       effects: ['run-stopped'],

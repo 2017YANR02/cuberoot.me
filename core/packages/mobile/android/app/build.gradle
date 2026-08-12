@@ -1,4 +1,34 @@
+import groovy.json.JsonSlurper
+
 apply plugin: 'com.android.application'
+
+def mobilePackage = new JsonSlurper().parse(file('../../package.json'))
+def versionParts = mobilePackage.version.toString().tokenize('.')
+if (versionParts.size() != 3 || !versionParts.every { part -> part ==~ /\d+/ }) {
+    throw new GradleException("packages/mobile/package.json must use numeric major.minor.patch versioning")
+}
+def mobileVersionCode = (System.getenv('MOBILE_VERSION_CODE')
+        ?: (versionParts[0].toInteger() * 1_000_000
+        + versionParts[1].toInteger() * 1_000
+        + versionParts[2].toInteger()).toString()).toInteger()
+if (mobileVersionCode < 1 || mobileVersionCode > 2_100_000_000) {
+    throw new GradleException('MOBILE_VERSION_CODE must be between 1 and 2100000000')
+}
+
+def uploadSigning = [
+    storeFile: System.getenv('MOBILE_UPLOAD_KEYSTORE_FILE'),
+    storePassword: System.getenv('MOBILE_UPLOAD_STORE_PASSWORD'),
+    keyAlias: System.getenv('MOBILE_UPLOAD_KEY_ALIAS'),
+    keyPassword: System.getenv('MOBILE_UPLOAD_KEY_PASSWORD'),
+]
+def suppliedSigningValues = uploadSigning.values().findAll { it }
+if (!suppliedSigningValues.isEmpty() && suppliedSigningValues.size() != uploadSigning.size()) {
+    throw new GradleException('All MOBILE_UPLOAD_* signing variables must be set together')
+}
+def hasUploadSigning = suppliedSigningValues.size() == uploadSigning.size()
+if (System.getenv('MOBILE_REQUIRE_RELEASE_SIGNING') == 'true' && !hasUploadSigning) {
+    throw new GradleException('Release signing is required but MOBILE_UPLOAD_* variables are missing')
+}
 
 android {
     namespace = "me.cuberoot.app"
@@ -7,13 +37,23 @@ android {
         applicationId "me.cuberoot.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode mobileVersionCode
+        versionName mobilePackage.version.toString()
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
              // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    signingConfigs {
+        if (hasUploadSigning) {
+            upload {
+                storeFile file(uploadSigning.storeFile)
+                storePassword uploadSigning.storePassword
+                keyAlias uploadSigning.keyAlias
+                keyPassword uploadSigning.keyPassword
+            }
         }
     }
     buildTypes {
@@ -24,6 +64,7 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            if (hasUploadSigning) signingConfig signingConfigs.upload
         }
     }
 }

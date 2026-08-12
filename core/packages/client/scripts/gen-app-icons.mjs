@@ -10,25 +10,14 @@
 //   2) maskable 那张要留 20% 安全边 —— Android launcher 会把它裁成圆 / 圆角方,art 只能
 //      占中间 80%。
 //
-// sharp 只在 pnpm store 里(没被任何 package 直接依赖),这里从 store 里捞;捞不到就
-// `pnpm -F @cuberoot/client add -D sharp` 再跑。
-import { readFileSync, readdirSync } from 'node:fs';
-import { createRequire } from 'node:module';
+// sharp 是 core 根工具依赖,由 pnpm-lock.yaml 锁定,不扫描 pnpm 私有目录。
+import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import sharp from 'sharp';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ICONS = join(HERE, '..', 'public', 'icons');
-const CORE = join(HERE, '..', '..', '..');
-
-function loadSharp() {
-  const req = createRequire(join(CORE, 'noop.js'));
-  try { return req('sharp'); } catch { /* 没链接到 workspace,继续去 store 里找 */ }
-  const store = join(CORE, 'node_modules', '.pnpm');
-  const dir = readdirSync(store).find((d) => /^sharp@/.test(d));
-  if (!dir) throw new Error('找不到 sharp:先 `pnpm -F @cuberoot/client add -D sharp`');
-  return req(join(store, dir, 'node_modules', 'sharp'));
-}
 
 const MARK_VB = '71.81 4.82 686.92 392.99'; // CubeRoot-mark.svg 的 viewBox(已收紧到墨迹)
 const BG = '#ffffff';
@@ -53,7 +42,6 @@ const JOBS = [
   ['icon-maskable-512.png', 512, 0.20],
 ];
 
-const sharp = loadSharp();
 for (const [name, size, pad] of JOBS) {
   await sharp(Buffer.from(compose(size, pad)), { density: 512 })
     .resize(size, size)

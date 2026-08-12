@@ -1,8 +1,10 @@
 import {
+  MAX_TIMER_BACKUP_BYTES,
   createTimerStoreData,
   decodeTimerStoreData,
   parseTimerStoreJson,
   serializeTimerStoreData,
+  summarizeTimerDatabase,
   type EventId,
   type Solve,
   type TimerStoreData,
@@ -11,7 +13,14 @@ import {
 
 export interface TimerStoreDriver {
   read(): Promise<unknown | undefined>;
+  readRecovery(): Promise<unknown | undefined>;
   write(data: TimerStoreData): Promise<void>;
+  writeWithRecovery(data: TimerStoreData, recovery: unknown): Promise<void>;
+}
+
+export interface TimerImportPreview {
+  current: ReturnType<typeof summarizeTimerDatabase>;
+  incoming: ReturnType<typeof summarizeTimerDatabase>;
 }
 
 export interface TimerRepositoryEnvironment {
@@ -147,12 +156,70 @@ export class TimerRepository {
     return this.run(async () => serializeTimerStoreData(await this.loadUnlocked()));
   }
 
+  private assertBackupSize(text: string): void {
+    if (new TextEncoder().encode(text).byteLength > MAX_TIMER_BACKUP_BYTES) {
+      throw new CorruptTimerStoreError();
+    }
+  }
+
+  private async importContext(): Promise<{
+    current: TimerStoreData;
+    raw: unknown;
+  }> {
+    const raw = await this.driver.read();
+    const decoded = raw === undefined ? undefined : decodeTimerStoreData(raw);
+    return {
+      current: decoded ?? createTimerStoreData(
+        this.environment.now(),
+        this.environment.createId(),
+        this.environment.language(),
+      ),
+      raw,
+    };
+  }
+
+  private migrationEnvironment() {
+    return {
+      nowMs: this.environment.now(),
+      sessionId: this.environment.createId(),
+      language: this.environment.language(),
+    };
+  }
+
+  previewImport(text: string): Promise<TimerImportPreview> {
+    return this.run(async () => {
+      this.assertBackupSize(text);
+      const { current } = await this.importContext();
+      const incoming = parseTimerStoreJson(text, current.settings, this.migrationEnvironment());
+      if (!incoming) throw new CorruptTimerStoreError();
+      return {
+        current: summarizeTimerDatabase(current),
+        incoming: summarizeTimerDatabase(incoming),
+      };
+    });
+  }
+
   importJson(text: string): Promise<TimerStoreData> {
     return this.run(async () => {
-      const parsed = parseTimerStoreJson(text);
+      this.assertBackupSize(text);
+      const { current, raw } = await this.importContext();
+      const parsed = parseTimerStoreJson(text, current.settings, this.migrationEnvironment());
       if (!parsed) throw new CorruptTimerStoreError();
-      await this.driver.write(parsed);
+      await this.driver.writeWithRecovery(parsed, raw);
       return parsed;
+    });
+  }
+
+  hasImportRecovery(): Promise<boolean> {
+    return this.run(async () => decodeTimerStoreData(await this.driver.readRecovery()) !== null);
+  }
+
+  restoreImportRecovery(): Promise<TimerStoreData> {
+    return this.run(async () => {
+      const recovery = decodeTimerStoreData(await this.driver.readRecovery());
+      if (!recovery) throw new CorruptTimerStoreError();
+      await this.driver.writeWithRecovery(recovery, undefined);
+      return recovery;
     });
   }
 }
@@ -161,6 +228,7 @@ const DB_NAME = 'cuberoot-mobile';
 const DB_VERSION = 1;
 const STORE_NAME = 'app-state';
 const TIMER_KEY = 'timer';
+const RECOVERY_KEY = 'timer-before-import';
 
 function requestResult<T>(request: IDBRequest<T>): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -211,6 +279,34 @@ export class IndexedDbTimerStoreDriver implements TimerStoreDriver {
       const transaction = database.transaction(STORE_NAME, 'readwrite');
       const done = transactionDone(transaction);
       transaction.objectStore(STORE_NAME).put(data, TIMER_KEY);
+      await done;
+    } finally {
+      database.close();
+    }
+  }
+
+  async readRecovery(): Promise<unknown | undefined> {
+    const database = await openDatabase();
+    try {
+      const transaction = database.transaction(STORE_NAME, 'readonly');
+      const done = transactionDone(transaction);
+      const value = await requestResult(transaction.objectStore(STORE_NAME).get(RECOVERY_KEY));
+      await done;
+      return value;
+    } finally {
+      database.close();
+    }
+  }
+
+  async writeWithRecovery(data: TimerStoreData, recovery: unknown): Promise<void> {
+    const database = await openDatabase();
+    try {
+      const transaction = database.transaction(STORE_NAME, 'readwrite');
+      const done = transactionDone(transaction);
+      const store = transaction.objectStore(STORE_NAME);
+      if (recovery === undefined) store.delete(RECOVERY_KEY);
+      else store.put(recovery, RECOVERY_KEY);
+      store.put(data, TIMER_KEY);
       await done;
     } finally {
       database.close();

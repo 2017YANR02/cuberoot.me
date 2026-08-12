@@ -142,8 +142,8 @@ button {
   min-height: 100%;
   flex-direction: column;
   margin: 0 auto;
-    padding-right: max(18px, env(safe-area-inset-right));
-    padding-left: max(18px, env(safe-area-inset-left));
+  padding-right: max(18px, env(safe-area-inset-right));
+  padding-left: max(18px, env(safe-area-inset-left));
 }
 
 .scramble-bar {
@@ -171,6 +171,11 @@ button {
   background: var(--accent-soft);
   color: var(--accent);
   font-size: 1.25rem;
+}
+
+.scramble-bar button:disabled {
+  cursor: default;
+  opacity: 0.45;
 }
 
 .timer-pad {
@@ -451,6 +456,19 @@ button {
   color: var(--accent);
   font-weight: 720;
   text-decoration: none;
+}
+
+.settings-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 18px;
+  color: var(--muted-foreground);
+  font-size: 0.82rem;
+}
+
+.settings-meta .site-link {
+  color: var(--muted-foreground);
 }
 
 .bottom-nav {

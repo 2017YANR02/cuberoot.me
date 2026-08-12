@@ -70,6 +70,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'account': { title: { zh: '账号', en: 'Account' } },
+  'privacy': {
+    title: { zh: '移动端隐私政策', en: 'Mobile Privacy Policy' },
+    description: {
+      zh: 'CubeRoot Android 与 iOS App 的数据处理、备份、删除与联系说明。',
+      en: 'How the CubeRoot Android and iOS apps handle local timer data, backups, deletion, and support requests.',
+    },
+  },
   // 'alg' 没有条目:/alg 不再是页面(next.config 直接 redirect 到 /alg/3x3),
   // 每个魔方页的标题由 alg/[puzzle]/layout.tsx 的 generateMetadata 逐个发。
   'alg-trainers': { title: { zh: '公式训练器', en: 'Alg Trainers' } },

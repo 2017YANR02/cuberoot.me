@@ -1,10 +1,8 @@
 /**
  * Shared timer types — keep this file dependency-free (no React, no DOM).
  *
- * After the v2 refactor we no longer model "sessions" — solves are stored as
- * a flat list per event id. Round 1 agents extending this file should add
- * new EventIds (BLD / relay / CFOP step / PLL / OLL / COLL / ZBLL training
- * etc.) and update EVENTS to surface them in the picker.
+ * Solves are grouped by event inside a session by the shared persistence
+ * schema. Extend EventId and EVENTS together when adding another timer mode.
  */
 
 // Type-only import — fully erased at runtime, does not pull cube/recognizer deps.

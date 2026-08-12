@@ -1,12 +1,8 @@
+import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
-import {
-  DefaultAndroidWebViewOptions,
-  DefaultiOSWebViewOptions,
-  DefaultWebViewOptions,
-  InAppBrowser,
-} from '@capacitor/inappbrowser';
 import { Network } from '@capacitor/network';
 import {
+  MAX_TIMER_BACKUP_BYTES,
   activeTimerSolves,
   formatMs,
   formatSolveResult,
@@ -34,6 +30,7 @@ import {
   TimerRepository,
 } from './data/timer-repository';
 import { useTimerController } from './hooks/use-timer-controller';
+import packageInfo from '../package.json';
 
 const SITE_ORIGIN = 'https://cuberoot.me';
 const repository = new TimerRepository(new IndexedDbTimerStoreDriver());
@@ -45,9 +42,14 @@ function siteUrl(language: SupportedLanguage): string {
   return language === 'zh' ? `${SITE_ORIGIN}/zh` : `${SITE_ORIGIN}/`;
 }
 
-function applyTheme(theme: TimerStoreSettings['theme']): void {
-  if (theme === 'system') delete document.documentElement.dataset.theme;
-  else document.documentElement.dataset.theme = theme;
+function privacyUrl(language: SupportedLanguage): string {
+  return language === 'zh' ? `${SITE_ORIGIN}/zh/privacy` : `${SITE_ORIGIN}/privacy`;
+}
+
+function applyPreferences(settings: TimerStoreSettings): void {
+  if (settings.theme === 'system') delete document.documentElement.dataset.theme;
+  else document.documentElement.dataset.theme = settings.theme;
+  document.documentElement.lang = settings.language === 'zh' ? 'zh-Hans' : 'en';
 }
 
 function downloadBackup(text: string): void {
@@ -148,6 +150,7 @@ export function App() {
   const [connection, setConnection] = useState<ConnectionState>('checking');
   const [scramble, setScramble] = useState(() => scramble333(Math.random));
   const [toast, setToast] = useState('');
+  const [canUndoImport, setCanUndoImport] = useState(false);
   const fallbackLanguage = preferredLanguage();
   const language = store?.settings.language ?? fallbackLanguage;
   const copy = COPY[language];
@@ -164,7 +167,10 @@ export function App() {
     void repository.load().then((data) => {
       if (!active) return;
       setStore(data);
-      applyTheme(data.settings.theme);
+      applyPreferences(data.settings);
+      void repository.hasImportRecovery().then((available) => {
+        if (active) setCanUndoImport(available);
+      });
     }).catch((error: unknown) => {
       if (active) setLoadError(error instanceof Error ? error : new Error('load failed'));
     });
@@ -233,7 +239,7 @@ export function App() {
   const updateSettings = useCallback((changes: Partial<TimerStoreSettings>) => {
     void repository.updateSettings(changes).then((data) => {
       setStore(data);
-      applyTheme(data.settings.theme);
+      applyPreferences(data.settings);
     }).catch(() => announce(copy.actionFailed));
   }, [announce, copy.actionFailed]);
 
@@ -264,36 +270,38 @@ export function App() {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
-    void file.text()
-      .then((text) => repository.importJson(text))
-      .then((data) => {
-        setStore(data);
-        setLoadError(null);
-        applyTheme(data.settings.theme);
-        announce(COPY[data.settings.language].importSuccess);
-      })
-      .catch(() => announce(copy.actionFailed));
-  }, [announce, copy.actionFailed]);
+    if (file.size > MAX_TIMER_BACKUP_BYTES) {
+      announce(copy.importTooLarge);
+      return;
+    }
+    void (async () => {
+      const text = await file.text();
+      const preview = await repository.previewImport(text);
+      if (!window.confirm(copy.importConfirm(preview.incoming.solveCount, preview.current.solveCount))) return;
+      const data = await repository.importJson(text);
+      setStore(data);
+      setLoadError(null);
+      setCanUndoImport(true);
+      applyPreferences(data.settings);
+      announce(COPY[data.settings.language].importSuccess);
+    })().catch(() => announce(copy.actionFailed));
+  }, [announce, copy.actionFailed, copy.importConfirm, copy.importTooLarge]);
 
-  const openSite = useCallback((event: ReactMouseEvent<HTMLAnchorElement>) => {
+  const undoImport = useCallback(() => {
+    if (!window.confirm(copy.undoImportConfirm)) return;
+    void repository.restoreImportRecovery().then((data) => {
+      setStore(data);
+      setCanUndoImport(false);
+      applyPreferences(data.settings);
+      announce(COPY[data.settings.language].undoImportSuccess);
+    }).catch(() => announce(copy.actionFailed));
+  }, [announce, copy.actionFailed, copy.undoImportConfirm]);
+
+  const openExternal = useCallback((event: ReactMouseEvent<HTMLAnchorElement>) => {
     if (!Capacitor.isNativePlatform()) return;
     event.preventDefault();
-    void InAppBrowser.openInWebView({
-      url: siteUrl(language),
-      options: {
-        ...DefaultWebViewOptions,
-        showURL: true,
-        clearCache: false,
-        clearSessionCache: false,
-        android: { ...DefaultAndroidWebViewOptions, hardwareBack: true, isIsolated: true },
-        iOS: {
-          ...DefaultiOSWebViewOptions,
-          allowInLineMediaPlayback: true,
-          allowsBackForwardNavigationGestures: true,
-        },
-      },
-    }).catch(() => announce(copy.actionFailed));
-  }, [announce, copy.actionFailed, language]);
+    void Browser.open({ url: event.currentTarget.href }).catch(() => announce(copy.actionFailed));
+  }, [announce, copy.actionFailed]);
 
   if (!store && !loadError) {
     return <main className="loading-screen"><strong>{copy.title}</strong></main>;
@@ -328,7 +336,12 @@ export function App() {
             <h1 className="sr-only" id="timer-title">{copy.timer}</h1>
             <div className="scramble-bar">
               <p>{scramble}</p>
-              <button aria-label={copy.newScramble} onClick={() => setScramble(scramble333(Math.random))} type="button">↻</button>
+              <button
+                aria-label={copy.newScramble}
+                disabled={timer.machine.phase !== 'idle' && timer.machine.phase !== 'stopped'}
+                onClick={() => setScramble(scramble333(Math.random))}
+                type="button"
+              >↻</button>
             </div>
             <button
               className={`timer-pad timer-pad--${timer.machine.phase}`}
@@ -434,15 +447,26 @@ export function App() {
                   {copy.importData}
                   <input accept="application/json,.json" hidden onChange={importData} type="file" />
                 </label>
+                {canUndoImport && (
+                  <button className="secondary-action" onClick={undoImport} type="button">{copy.undoImport}</button>
+                )}
               </div>
             </div>
 
             <div className="settings-section">
               <h2>{copy.fullSite}</h2>
               <p>{copy.fullSiteDetail}</p>
-              <a className="site-link" href={siteUrl(language)} onClick={openSite} rel="noreferrer" target="_blank">
+              <a className="site-link" href={siteUrl(language)} onClick={openExternal} rel="noreferrer" target="_blank">
                 {copy.openFullSite}<span aria-hidden="true">↗</span>
               </a>
+            </div>
+
+            <div className="settings-section settings-meta">
+              <a className="site-link" href={privacyUrl(language)} onClick={openExternal} rel="noreferrer" target="_blank">
+                {copy.privacy}<span aria-hidden="true">↗</span>
+              </a>
+              <a className="site-link" href="mailto:yrmfxc@gmail.com">{copy.support}</a>
+              <span>{copy.version} {packageInfo.version}</span>
             </div>
           </section>
         )}

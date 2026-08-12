@@ -1,29 +1,19 @@
 // Generate Android launcher and splash assets from the website's existing
-// CubeRoot icon set. The brand SVG remains the single source of truth; run the
-// client icon generator first after changing it.
+// CubeRoot icon set. The brand SVG remains the single source of truth; this
+// command refreshes the website/PWA icons before deriving Android assets.
 //
 //   pnpm --filter @cuberoot/mobile assets:android
 
-import { mkdirSync, readdirSync } from 'node:fs';
-import { createRequire } from 'node:module';
+import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import sharp from 'sharp';
+
+await import('../../client/scripts/gen-app-icons.mjs');
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const CORE = join(HERE, '..', '..', '..');
 const BRAND_ICONS = join(HERE, '..', '..', 'client', 'public', 'icons');
 const RES = join(HERE, '..', 'android', 'app', 'src', 'main', 'res');
-
-function loadSharp() {
-  const req = createRequire(join(CORE, 'noop.js'));
-  try { return req('sharp'); } catch { /* Fall through to the pnpm store. */ }
-  const store = join(CORE, 'node_modules', '.pnpm');
-  const directory = readdirSync(store).find((entry) => /^sharp@/.test(entry));
-  if (!directory) throw new Error('sharp is unavailable; run pnpm install in core');
-  return req(join(store, directory, 'node_modules', 'sharp'));
-}
-
-const sharp = loadSharp();
 const regularIcon = join(BRAND_ICONS, 'icon-512.png');
 const safeIcon = join(BRAND_ICONS, 'icon-maskable-512.png');
 const lightMark = join(BRAND_ICONS, 'CubeRoot-mark.svg');
