@@ -7,36 +7,73 @@
  *
  * Ported 1:1 from packages/client-vite/src/pages/IframePage.tsx
  */
+import { ExternalLink } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { T, type Msg } from '@/i18n/tr';
 
 interface IframePageProps {
-  /** iframe 加载的 URL 路径（如 /tools/solver/） */
+  /** iframe 加载的 URL（如 /tools/solver/ 或独立应用 origin） */
   src: string;
   /** 页面标题 */
   title: string;
+  /** 独立应用地址；提供后在标题栏显示新标签页入口 */
+  fullAppHref?: string;
+  fullAppLabel?: Msg;
+  /** 路由已有 server metadata 时关闭客户端标题覆盖 */
+  syncDocumentTitle?: boolean;
 }
 
-export default function IframePage({ src, title }: IframePageProps) {
+function IframeDocumentTitle({ title }: { title: string }) {
   // 工具名都是英文(csTimer / Solver / Cross Trainer 等),两语都用同一份
   useDocumentTitle(title, title);
+  return null;
+}
+
+export default function IframePage({
+  src,
+  title,
+  fullAppHref,
+  fullAppLabel = { en: 'Open full app', zh: '打开完整应用' },
+  syncDocumentTitle = true,
+}: IframePageProps) {
   return (
     <div style={{
       display: 'flex',
       flexDirection: 'column',
-      height: '100vh',
-      background: '#0d1117',
+      height: '100dvh',
+      background: 'var(--background)',
     }}>
+      {syncDocumentTitle ? <IframeDocumentTitle title={title} /> : null}
       {/* NOTE: 顶部标题栏 */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
         gap: 12,
         padding: '8px 16px',
-        background: 'rgba(13, 17, 23, 0.95)',
-        borderBottom: '1px solid rgba(138, 180, 248, 0.15)',
+        background: 'color-mix(in srgb, var(--background) 95%, transparent)',
+        borderBottom: '1px solid var(--border)',
         flexShrink: 0,
       }}>
-        <span style={{ color: '#9aa0a6', fontSize: 14 }}>{title}</span>
+        <span style={{ color: 'var(--muted-foreground)', fontSize: 14 }}>{title}</span>
+        {fullAppHref ? (
+          <a
+            href={fullAppHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5,
+              marginLeft: 'auto',
+              color: 'var(--foreground)',
+              fontSize: 14,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <T {...fullAppLabel} />
+            <ExternalLink size={14} aria-hidden />
+          </a>
+        ) : null}
       </div>
 
       {/* NOTE: iframe 全屏填满剩余空间 */}
@@ -49,8 +86,10 @@ export default function IframePage({ src, title }: IframePageProps) {
           width: '100%',
         }}
         // NOTE: 允许 iframe 中的脚本和表单操作，同时允许通过 target="_top" 导航顶层窗口
-        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-top-navigation allow-top-navigation-by-user-activation"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads allow-top-navigation allow-top-navigation-by-user-activation"
         onLoad={(e) => {
+          // 独立应用是跨域页面，浏览器本就不允许读取其 DOM；直接跳过同源链接修正。
+          if (!src.startsWith('/')) return;
           try {
             const iframe = e.target as HTMLIFrameElement;
             const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
@@ -69,8 +108,7 @@ export default function IframePage({ src, title }: IframePageProps) {
               });
             }
           } catch (err) {
-            // 跨域 iframe 可能会抛出 DOMException，由于 src 一般是同源的，极少发生。
-            console.warn('Failed to intercept iframe links (possibly cross-origin):', err);
+            console.warn('Failed to intercept iframe links:', err);
           }
         }}
       />

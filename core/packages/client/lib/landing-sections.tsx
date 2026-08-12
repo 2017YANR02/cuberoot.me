@@ -32,6 +32,7 @@ export const TEXTS: Record<string, { en: string; zh: string
 },
   globe:           { en: 'Globe', zh: '地球' },
   cstimer:         { en: 'csTimer', zh: 'csTimer' },
+  contests:        { en: 'Contests', zh: '比赛系统' },
   timer:           { en: 'Timer', zh: '计时'
 },
   predict:         { en: 'Lookahead', zh: '预判'
@@ -143,11 +144,12 @@ export const SECTIONS: Section[] = [
     eyebrow: { en: 'TOOL', zh: '工具' },
     title:   { en: 'Solve, count, make.', zh: '求解、数帧、创作。'
     },
-    sub:     { en: 'A solver for any scramble and frame-accurate timing, plus cube mosaics, vector drawings, event icons, a time zone converter for cubers spread across the world, and a calendar you can share.', zh: '把任意打乱交给求解器、逐帧核对成绩,以及拼马赛克、画矢量图、生成项目图标,还有给天南海北的魔友用的时区换算和一个能对外分享的日历。'
+    sub:     { en: 'A solver for any scramble and frame-accurate timing, plus competition management, cube mosaics, vector drawings, event icons, time zone conversion and a shareable calendar.', zh: '把任意打乱交给求解器、逐帧核对成绩,也能管理比赛、拼马赛克、画矢量图、生成项目图标、换算时区和分享日历。'
     },
     cards: [
       { id: 'frame-count', href: '/frame-count', internal: true, tier: 'medium', Icon: Film,       nameKey: 'frameCount' },
       { id: 'solver',      href: '/solver',      internal: true, tier: 'medium', iconImg: '/icons/upstream/solver.png', nameKey: 'solver' },
+      { id: 'contests',     href: '/contests',    internal: true, tier: 'medium', iconImg: '/icons/upstream/recordranks.png', nameKey: 'contests' },
       { id: 'mosaic',      href: '/mosaic',      internal: true, tier: 'medium', Icon: Grid2x2,    nameKey: 'mosaic' },
       { id: 'paint',       href: '/paint',       internal: true, tier: 'medium', Icon: Brush,      nameKey: 'paint' },
       { id: 'icon',        href: '/icon',        internal: true, tier: 'medium', Icon: Shapes,     nameKey: 'icon' },

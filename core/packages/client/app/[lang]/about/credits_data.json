@@ -46,6 +46,12 @@
     "long_en": "professional speedcubing timer & WCA random-state scramble engine; also vendored at tools/cstimer-scramble/ to power non-WCA puzzle generation (gear/ivy/dino/sq2/giga/pyracrystal/heli/curvycopter/cuboids/15-puzzle/bicube/siamese cubes/...) via classic Web Worker bridge; for a few puzzles whose state space is too large for a full BFS/table, cstimer's own solver is wrapped directly as the SOLVING engine in /scramble/solver (Dino = redi IDA*, Master Pyraminx = two-phase, Square-1 = sq12phase two-phase); cstimer's megascramble model + poly3dlib geometry (makePuzzle) are also used as the bit-exact piece-model oracle when building from-scratch reductions (e.g. the Helicopter Cube and the Siamese 2×2×2 solvers)"
   },
   {
+    "name": "mintydev789/RecordRanks",
+    "url": "https://github.com/mintydev789/RecordRanks",
+    "zh": "比赛管理、现场成绩、排名与纪录系统;独立实例嵌入 /contests",
+    "en": "Competition management, live results, rankings and records; self-hosted instance embedded at /contests"
+  },
+  {
     "name": "afedotov/gan-web-bluetooth",
     "url": "https://github.com/afedotov/gan-web-bluetooth",
     "zh": "GAN 智能魔方协议参考;/timer 的 GAN Gen2 / Gen4 陀螺仪四元数位布局按其规格实现",
