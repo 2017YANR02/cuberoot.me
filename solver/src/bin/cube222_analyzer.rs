@@ -12,9 +12,9 @@
 
 use std::sync::OnceLock;
 
+use cube_solver::cube222_solver::{Cube222Solver, CUBE222_MOVES};
 use cube_solver::cube_common::{move_state, Move, State};
 use cube_solver::executor::{run_analyzer_app, SolverWrapper};
-use cube_solver::cube222_solver::{Cube222Solver, CUBE222_MOVES};
 
 static S: OnceLock<Cube222Solver> = OnceLock::new();
 
@@ -52,11 +52,11 @@ fn rot24() -> &'static Vec<Vec<Move>> {
         use Move::*;
         let a: [&[Move]; 6] = [
             &[],
-            &[R, LPrime],  // x
-            &[R2, L2],     // x2
-            &[RPrime, L],  // x'
-            &[F, BPrime],  // z
-            &[FPrime, B],  // z'
+            &[R, LPrime], // x
+            &[R2, L2],    // x2
+            &[RPrime, L], // x'
+            &[F, BPrime], // z
+            &[FPrime, B], // z'
         ];
         let b: [&[Move]; 4] = [&[], &[U, DPrime], &[U2, D2], &[UPrime, D]];
         let mut out = Vec::with_capacity(24);
@@ -109,7 +109,11 @@ impl SolverWrapper for Cube222Wrapper {
     }
 
     fn get_csv_header() -> String {
-        if emit_soln() { "id,222,soln".into() } else { "id,222".into() }
+        if emit_soln() {
+            "id,222,soln".into()
+        } else {
+            "id,222".into()
+        }
     }
 
     fn solve(alg: &[Move], id: &str) -> String {
@@ -145,7 +149,8 @@ mod tests {
     }
 
     fn lcg(x: u64) -> u64 {
-        x.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407)
+        x.wrapping_mul(6364136223846793005)
+            .wrapping_add(1442695040888963407)
     }
 
     /// 确定性伪随机词(给定 move 池)。
@@ -154,7 +159,9 @@ mod tests {
         let mut out = Vec::with_capacity(len);
         for _ in 0..len {
             x = lcg(x);
-            out.push(Move::from_index(pool[(x >> 33) as usize % pool.len()] as usize));
+            out.push(Move::from_index(
+                pool[(x >> 33) as usize % pool.len()] as usize,
+            ));
         }
         out
     }

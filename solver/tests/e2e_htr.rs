@@ -44,7 +44,11 @@ fn htr_analyzer_matches_lib() {
     let root = project_root();
     let bin = PathBuf::from(env!("CARGO_BIN_EXE_htr_analyzer"));
     let scramble = root.join("testdata").join("scramble_5.txt");
-    assert!(scramble.exists(), "missing scramble: {}", scramble.display());
+    assert!(
+        scramble.exists(),
+        "missing scramble: {}",
+        scramble.display()
+    );
 
     let work_dir = root.join("target").join("test-tables").join("e2e-htr-work");
     let _ = std::fs::remove_dir_all(&work_dir);
@@ -92,7 +96,13 @@ fn htr_analyzer_matches_lib() {
         let want = s.get_stats(&alg, &ROTS6);
         for (k, w) in want.iter().enumerate() {
             assert_eq!(*w, None, "WCA scramble unexpectedly in DR");
-            assert_eq!(cols[k + 1], fmt_cell(*w), "col {} mismatch on {}", k + 1, cols[0]);
+            assert_eq!(
+                cols[k + 1],
+                fmt_cell(*w),
+                "col {} mismatch on {}",
+                k + 1,
+                cols[0]
+            );
         }
     }
 
@@ -110,10 +120,19 @@ fn htr_analyzer_matches_lib() {
         let alg = string_to_alg(&src[pos + 1..]);
         let want = s.get_stats(&alg, &ROTS6);
         // G2 词:UD 轴必为 DR(z0/z2 数值),其余轴本批全非 DR
-        assert!(want[0].is_some() && want[1].is_some(), "G2 word must be DR on UD axis");
+        assert!(
+            want[0].is_some() && want[1].is_some(),
+            "G2 word must be DR on UD axis"
+        );
         assert_eq!(want[0], want[1], "z0 != z2 (HTR axis invariance)");
         for (k, w) in want.iter().enumerate() {
-            assert_eq!(cols[k + 1], fmt_cell(*w), "col {} mismatch on {}", k + 1, cols[0]);
+            assert_eq!(
+                cols[k + 1],
+                fmt_cell(*w),
+                "col {} mismatch on {}",
+                k + 1,
+                cols[0]
+            );
         }
     }
 

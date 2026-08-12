@@ -34,7 +34,11 @@ fn main() {
         let d = max_d;
         let mut next: Vec<u32> = Vec::with_capacity(frontier.len() * 4);
         for &cur in &frontier {
-            let last = if cur as usize == start { u8::MAX } else { mv_from_parent[cur as usize] };
+            let last = if cur as usize == start {
+                u8::MAX
+            } else {
+                mv_from_parent[cur as usize]
+            };
             for m in 0..18u8 {
                 if last != u8::MAX && last / 3 == m / 3 {
                     continue;
@@ -48,12 +52,18 @@ fn main() {
                 }
             }
         }
-        if next.is_empty() { break; }
+        if next.is_empty() {
+            break;
+        }
         max_d += 1;
         frontier = next;
     }
 
-    eprintln!("[BFS] max_depth={}, time {:.3}s", max_d, t0.elapsed().as_secs_f64());
+    eprintln!(
+        "[BFS] max_depth={}, time {:.3}s",
+        max_d,
+        t0.elapsed().as_secs_f64()
+    );
 
     let mut buckets: Vec<Vec<u32>> = vec![Vec::new(); (max_d as usize) + 1];
     for i in 0..SZ {
@@ -67,8 +77,12 @@ fn main() {
     for d in 0..=max_d as usize {
         total += buckets[d].len() as u64;
         if d < golden.len() {
-            assert_eq!(buckets[d].len() as u64, golden[d],
-                "depth {} count mismatch", d);
+            assert_eq!(
+                buckets[d].len() as u64,
+                golden[d],
+                "depth {} count mismatch",
+                d
+            );
         }
     }
     assert_eq!(total, SZ as u64);
@@ -89,7 +103,9 @@ fn main() {
             }
             moves.reverse();
             for (i, &m) in moves.iter().enumerate() {
-                if i > 0 { buf.push(' '); }
+                if i > 0 {
+                    buf.push(' ');
+                }
                 buf.push_str(MOVE_NAMES[m as usize]);
             }
             writeln!(w, "{}", buf).unwrap();
@@ -99,7 +115,10 @@ fn main() {
 
     // self-check:抽样 100 条 scramble,apply 后检查仍是合法 cross idx 且距 0 相符
     for d in 1..=max_d as usize {
-        let sample = buckets[d].iter().step_by((buckets[d].len() / 50).max(1)).take(50);
+        let sample = buckets[d]
+            .iter()
+            .step_by((buckets[d].len() / 50).max(1))
+            .take(50);
         for &idx in sample {
             let mut moves: Vec<u8> = Vec::new();
             let mut cur = idx as usize;
@@ -120,8 +139,11 @@ fn main() {
                 }
             }
             let recovered_idx = array_to_index(&arr, 4, 2, 12) as usize;
-            assert_eq!(recovered_idx, idx as usize,
-                "scramble for idx {} (d={}) produced wrong state {}", idx, d, recovered_idx);
+            assert_eq!(
+                recovered_idx, idx as usize,
+                "scramble for idx {} (d={}) produced wrong state {}",
+                idx, d, recovered_idx
+            );
         }
     }
     eprintln!("[OK] scramble self-check passed (50 samples/depth)");

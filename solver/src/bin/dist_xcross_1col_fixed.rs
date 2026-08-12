@@ -29,9 +29,24 @@ const GOLDEN: [u64; 11] = [
 fn main() {
     let t0 = Instant::now();
     let mgr = move_tables::instance();
-    let mt_edge: Vec<i32> = mgr.ensure_edge().as_u32().iter().map(|&x| x as i32).collect();
-    let mt_corn: Vec<i32> = mgr.ensure_corn().as_u32().iter().map(|&x| x as i32).collect();
-    let mt_multi: Vec<i32> = mgr.ensure_edge4().as_u32().iter().map(|&x| x as i32).collect();
+    let mt_edge: Vec<i32> = mgr
+        .ensure_edge()
+        .as_u32()
+        .iter()
+        .map(|&x| x as i32)
+        .collect();
+    let mt_corn: Vec<i32> = mgr
+        .ensure_corn()
+        .as_u32()
+        .iter()
+        .map(|&x| x as i32)
+        .collect();
+    let mt_multi: Vec<i32> = mgr
+        .ensure_edge4()
+        .as_u32()
+        .iter()
+        .map(|&x| x as i32)
+        .collect();
 
     let start = (187520 * SZ_CN + 12) * SZ_ED + 0;
     let (table, max_depth) = bfs_byte(TOTAL, start, |i, out| {

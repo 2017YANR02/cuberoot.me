@@ -38,7 +38,11 @@ fn pyra_line(s: &PyraminxSolver, alg: &str, id: &str) -> String {
         }
         Err(e) => {
             eprintln!("[ERROR] id={}: {}", id, e);
-            if emit_soln() { format!("{},-,", id) } else { format!("{},-", id) }
+            if emit_soln() {
+                format!("{},-,", id)
+            } else {
+                format!("{},-", id)
+            }
         }
     }
 }
@@ -48,11 +52,18 @@ struct PyraminxWrapper;
 impl RawSolverWrapper for PyraminxWrapper {
     fn global_init() {
         let s = S.get_or_init(PyraminxSolver::new);
-        eprintln!("[INFO] pyraminx table ready (core max depth {})", s.max_depth());
+        eprintln!(
+            "[INFO] pyraminx table ready (core max depth {})",
+            s.max_depth()
+        );
     }
 
     fn get_csv_header() -> String {
-        if emit_soln() { "id,pyraminx,soln".into() } else { "id,pyraminx".into() }
+        if emit_soln() {
+            "id,pyraminx,soln".into()
+        } else {
+            "id,pyraminx".into()
+        }
     }
 
     fn solve_raw(alg: &str, id: &str) -> String {
@@ -75,7 +86,8 @@ mod tests {
     }
 
     fn lcg(x: u64) -> u64 {
-        x.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407)
+        x.wrapping_mul(6364136223846793005)
+            .wrapping_add(1442695040888963407)
     }
 
     /// 确定性伪随机词(全 16 记号:8 大写 + 8 小写,含 ')。
@@ -85,7 +97,11 @@ mod tests {
         for _ in 0..len {
             x = lcg(x);
             let v = (x >> 33) as usize % 16;
-            out.push(PyraMove { axis: (v % 8 / 2) as u8, prime: v % 2 == 1, tip: v >= 8 });
+            out.push(PyraMove {
+                axis: (v % 8 / 2) as u8,
+                prime: v % 2 == 1,
+                tip: v >= 8,
+            });
         }
         out
     }
@@ -97,7 +113,10 @@ mod tests {
     /// 行输出 = "id,值" 的值部分(合法行)。
     fn val(s: &PyraminxSolver, alg: &str) -> u32 {
         let line = pyra_line(s, alg, "t");
-        line.strip_prefix("t,").unwrap().parse().expect("numeric value")
+        line.strip_prefix("t,")
+            .unwrap()
+            .parse()
+            .expect("numeric value")
     }
 
     #[test]
@@ -138,7 +157,13 @@ mod tests {
             let len = 1 + (seed as usize) % 18;
             let alg = pseudo_word(4000 + seed, len);
             let got = val(s, &word_to_string(&alg));
-            assert_eq!(got, s.solve_one(&alg), "seed={} alg={}", seed, word_to_string(&alg));
+            assert_eq!(
+                got,
+                s.solve_one(&alg),
+                "seed={} alg={}",
+                seed,
+                word_to_string(&alg)
+            );
         }
     }
 
@@ -158,7 +183,11 @@ mod tests {
                     continue;
                 }
                 let mut ns = *st;
-                ns.apply(PyraMove { axis: v % 8 / 2, prime: v % 2 == 1, tip: v >= 8 });
+                ns.apply(PyraMove {
+                    axis: v % 8 / 2,
+                    prime: v % 2 == 1,
+                    tip: v >= 8,
+                });
                 if dfs(&ns, depth - 1, v as i32) {
                     return true;
                 }

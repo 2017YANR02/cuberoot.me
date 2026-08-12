@@ -18,12 +18,12 @@ const CROSS_EDGES: [[u8; 4]; 6] = [
 ];
 // SLOT_DEFS[face][slot] = (corner_id, edge_id)
 const SLOT_DEFS: [[(u8, u8); 4]; 6] = [
-    [(4, 0), (5, 1), (6, 2), (7, 3)],     // D
-    [(0, 0), (1, 1), (2, 2), (3, 3)],     // U
-    [(3, 7), (2, 5), (6, 9), (7, 11)],    // F
-    [(1, 5), (0, 7), (4, 11), (5, 9)],    // B
-    [(0, 4), (3, 6), (7, 10), (4, 8)],    // L
-    [(1, 4), (2, 6), (6, 10), (5, 8)],    // R
+    [(4, 0), (5, 1), (6, 2), (7, 3)],  // D
+    [(0, 0), (1, 1), (2, 2), (3, 3)],  // U
+    [(3, 7), (2, 5), (6, 9), (7, 11)], // F
+    [(1, 5), (0, 7), (4, 11), (5, 9)], // B
+    [(0, 4), (3, 6), (7, 10), (4, 8)], // L
+    [(1, 4), (2, 6), (6, 10), (5, 8)], // R
 ];
 
 const TRIPLET_MASKS: [u8; 4] = [7, 11, 13, 14];
@@ -34,7 +34,9 @@ fn main() {
     let mut base_c = [0u8; 24];
     for f in 0..6usize {
         let mut cross_mask = 0u16;
-        for &e in &CROSS_EDGES[f] { cross_mask |= 1 << e; }
+        for &e in &CROSS_EDGES[f] {
+            cross_mask |= 1 << e;
+        }
         for t in 0..4usize {
             let tm = TRIPLET_MASKS[t];
             let mut e_mask = cross_mask;
@@ -64,11 +66,14 @@ fn main() {
                 fixed_c |= base_c[bit];
                 m &= m - 1;
             }
-            let count = count_legal_states(
-                fixed_e.count_ones() as usize,
-                fixed_c.count_ones() as usize,
-            ) as i128;
-            if mask.count_ones() % 2 == 1 { count } else { -count }
+            let count =
+                count_legal_states(fixed_e.count_ones() as usize, fixed_c.count_ones() as usize)
+                    as i128;
+            if mask.count_ones() % 2 == 1 {
+                count
+            } else {
+                -count
+            }
         })
         .sum();
     println!("Result: {}", total as u128);

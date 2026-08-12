@@ -121,7 +121,11 @@ fn decide_t(start: Sq1State, s: u8) -> Option<u8> {
     let cap = s / 2; // = ceil((s-1)/2)
     let vf = bfs_to_radius(start, cap)?;
     let vb = bfs_to_radius(Sq1State::SOLVED, cap)?;
-    let (small, big) = if vf.len() <= vb.len() { (&vf, &vb) } else { (&vb, &vf) };
+    let (small, big) = if vf.len() <= vb.len() {
+        (&vf, &vb)
+    } else {
+        (&vb, &vf)
+    };
     let mut best = u32::MAX;
     for (k, &d) in small {
         if let Some(&d2) = big.get(k) {
@@ -220,7 +224,12 @@ fn main() {
         match res {
             Some(t) => {
                 writeln!(out, "{},{}", id, t).ok();
-                eprintln!("[OK] id={} t={} ({:.2}s)", id, t, t0.elapsed().as_secs_f64());
+                eprintln!(
+                    "[OK] id={} t={} ({:.2}s)",
+                    id,
+                    t,
+                    t0.elapsed().as_secs_f64()
+                );
             }
             None => {
                 writeln!(out, "{},INFEASIBLE", id).ok();
@@ -274,7 +283,11 @@ mod tests {
         assert_eq!(fast_key(&Sq1State::SOLVED), Sq1State::SOLVED.canon_key());
         for seed in 0..100u64 {
             let s = gen_state(seed, (seed % 13) as usize + 1);
-            assert_eq!(fast_key(&s), s.canon_key(), "fast_key != canon_key (seed {seed})");
+            assert_eq!(
+                fast_key(&s),
+                s.canon_key(),
+                "fast_key != canon_key (seed {seed})"
+            );
             for a in 0..12u32 {
                 for b in 0..12u32 {
                     assert_eq!(
@@ -291,7 +304,10 @@ mod tests {
     // graph is undirected => backward BFS from SOLVED is valid).
     #[test]
     fn slashed_is_involution_and_closed() {
-        assert!(Sq1State::SOLVED.slash_legal(), "SOLVED must be slash-legal for backward BFS");
+        assert!(
+            Sq1State::SOLVED.slash_legal(),
+            "SOLVED must be slash-legal for backward BFS"
+        );
         let mut checked = 0usize;
         for seed in 0..150u64 {
             let s = gen_state(seed, (seed % 11) as usize + 1);
@@ -302,13 +318,19 @@ mod tests {
                         continue;
                     }
                     let z = y.slashed();
-                    assert!(z.slash_legal(), "slashed() result not slash-legal (closure broken)");
+                    assert!(
+                        z.slash_legal(),
+                        "slashed() result not slash-legal (closure broken)"
+                    );
                     assert_eq!(z.slashed(), y, "slashed() not an involution");
                     checked += 1;
                 }
             }
         }
-        assert!(checked > 1000, "too few slash-legal states exercised: {checked}");
+        assert!(
+            checked > 1000,
+            "too few slash-legal states exercised: {checked}"
+        );
     }
 
     // The decisive guard: decide_t must agree with the full bidirectional distance
@@ -330,9 +352,17 @@ mod tests {
                 continue; // skip trivial (cap underflow at d<2) / keep CI fast
             }
             // true optimum is d => no <=d-1 solution => returns Some(d)
-            assert_eq!(decide_t(s, d), Some(d), "decide_t(s,d) wrong (seed {seed}, d {d})");
+            assert_eq!(
+                decide_t(s, d),
+                Some(d),
+                "decide_t(s,d) wrong (seed {seed}, d {d})"
+            );
             // a length-d solution exists and d <= (d+1)-1 => must be found => returns Some(d)
-            assert_eq!(decide_t(s, d + 1), Some(d), "decide_t(s,d+1) wrong (seed {seed}, d {d})");
+            assert_eq!(
+                decide_t(s, d + 1),
+                Some(d),
+                "decide_t(s,d+1) wrong (seed {seed}, d {d})"
+            );
             parity[(d % 2) as usize] += 1;
             tested += 1;
             if tested >= 16 {
@@ -341,6 +371,9 @@ mod tests {
         }
         assert!(tested >= 12, "too few states tested: {tested}");
         // odd d in the d+1 case is exactly what catches a radius off-by-one.
-        assert!(parity[1] >= 2, "need odd-distance states to guard the off-by-one, got {parity:?}");
+        assert!(
+            parity[1] >= 2,
+            "need odd-distance states to guard the off-by-one, got {parity:?}"
+        );
     }
 }

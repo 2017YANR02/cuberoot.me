@@ -48,9 +48,16 @@ fn htr_phase2_analyzer_matches_lib() {
     let root = project_root();
     let bin = PathBuf::from(env!("CARGO_BIN_EXE_htr_phase2_analyzer"));
     let scramble = root.join("testdata").join("scramble_5.txt");
-    assert!(scramble.exists(), "missing scramble: {}", scramble.display());
+    assert!(
+        scramble.exists(),
+        "missing scramble: {}",
+        scramble.display()
+    );
 
-    let work_dir = root.join("target").join("test-tables").join("e2e-htr2-work");
+    let work_dir = root
+        .join("target")
+        .join("test-tables")
+        .join("e2e-htr2-work");
     let _ = std::fs::remove_dir_all(&work_dir);
     std::fs::create_dir_all(&work_dir).unwrap();
     std::fs::copy(&scramble, work_dir.join("scramble_5.txt")).unwrap();
@@ -96,7 +103,13 @@ fn htr_phase2_analyzer_matches_lib() {
         let want = s.get_stats(&alg, &ROTS6);
         for (k, w) in want.iter().enumerate() {
             assert_eq!(*w, None, "WCA scramble unexpectedly in HTR");
-            assert_eq!(cols[k + 1], fmt_cell(*w), "col {} mismatch on {}", k + 1, cols[0]);
+            assert_eq!(
+                cols[k + 1],
+                fmt_cell(*w),
+                "col {} mismatch on {}",
+                k + 1,
+                cols[0]
+            );
         }
     }
 
@@ -114,10 +127,22 @@ fn htr_phase2_analyzer_matches_lib() {
         let alg = string_to_alg(&src[pos + 1..]);
         let want = s.get_stats(&alg, &ROTS6);
         // G3 词:全程在 G3,对任意旋转仍 HTR ⇒ 6 视角全数值且恒同值。
-        assert!(want.iter().all(|w| w.is_some()), "G3 word must be HTR on all views");
-        assert!(want.iter().all(|w| *w == want[0]), "G3 word: views must be identical");
+        assert!(
+            want.iter().all(|w| w.is_some()),
+            "G3 word must be HTR on all views"
+        );
+        assert!(
+            want.iter().all(|w| *w == want[0]),
+            "G3 word: views must be identical"
+        );
         for (k, w) in want.iter().enumerate() {
-            assert_eq!(cols[k + 1], fmt_cell(*w), "col {} mismatch on {}", k + 1, cols[0]);
+            assert_eq!(
+                cols[k + 1],
+                fmt_cell(*w),
+                "col {} mismatch on {}",
+                k + 1,
+                cols[0]
+            );
         }
     }
 

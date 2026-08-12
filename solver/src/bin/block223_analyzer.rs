@@ -22,7 +22,10 @@ struct Block223Wrapper;
 impl SolverWrapper for Block223Wrapper {
     fn global_init() {
         let s = SOLVER.get_or_init(Block223Solver::new);
-        eprintln!("[INFO] block223 tables ready (ce2 max depth {})", s.max_depth_ce2());
+        eprintln!(
+            "[INFO] block223 tables ready (ce2 max depth {})",
+            s.max_depth_ce2()
+        );
     }
 
     fn get_csv_header() -> String {

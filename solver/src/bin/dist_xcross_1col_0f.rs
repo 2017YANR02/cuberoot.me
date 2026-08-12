@@ -11,7 +11,11 @@ fn main() {
     let mut signed: i128 = 0;
     for k in 1..=4 {
         let term = (binom(4, k) * w_sub(k)) as i128;
-        if k % 2 == 1 { signed += term; } else { signed -= term; }
+        if k % 2 == 1 {
+            signed += term;
+        } else {
+            signed -= term;
+        }
     }
     let result = signed as u128;
     println!("Result: {}", result);
