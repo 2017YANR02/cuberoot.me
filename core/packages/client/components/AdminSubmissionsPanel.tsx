@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * 管理员「新公式投稿」下拉面板 —— 桌宠角标点开。
+ * 管理员「新公式投稿」下拉面板 —— 桌宠角标或账号页入口点开。
  * 挂载即拉最近投稿 + 标记已读(角标回落 0)。每条链到对应 case 的 alg 页。
  * DeskPet 在 I18nProvider 外,故文案 / 链接前缀都靠 lang prop,不用 react-i18next / AppLink。
  */
