@@ -25,6 +25,32 @@ const FACE_SHORT_ZH: Record<string, string> = {
   B: '后',
 };
 
+const ROTATION_ZH: Record<string, string> = {
+  x: '天',
+  y: '地',
+  z: '人',
+};
+
+const SLICE_ZH: Record<string, string> = {
+  E: '赤',
+  M: '中',
+  S: '经',
+  e: '赤',
+  m: '中',
+  s: '经',
+};
+
+function specialMoveToZh(move: ParsedMove): string | null {
+  if (move.layer != null) return null;
+
+  const symbol = move.kind === 'rotation'
+    ? ROTATION_ZH[move.family]
+    : move.kind === 'slice'
+      ? SLICE_ZH[move.family]
+      : undefined;
+  return symbol ? `${symbol}${move.raw.slice(move.family.length)}` : null;
+}
+
 function doubleLayerOf(move: ParsedMove): '' | '双' | null {
   if (move.kind !== 'wide') return '';
   const family = move.family;
@@ -33,8 +59,9 @@ function doubleLayerOf(move: ParsedMove): '' | '双' | null {
   return isWideFamily && (move.layer == null || move.layer === '2') ? '双' : null;
 }
 
-/** x/y/z 与 E/M/S（含小写内层切）按产品约定保留标准原文。 */
 function moveToCsTimerZh(move: ParsedMove): string {
+  const specialMove = specialMoveToZh(move);
+  if (specialMove) return specialMove;
   if (move.kind === 'rotation' || move.kind === 'slice') return move.raw;
 
   const family = move.family;
@@ -55,6 +82,8 @@ function moveToCsTimerZh(move: ParsedMove): string {
 
 /** 纯紧凑中文记号，例如右顺 / 上逆 / 右双顺。 */
 function moveToCompactZh(move: ParsedMove): string {
+  const specialMove = specialMoveToZh(move);
+  if (specialMove) return specialMove;
   if (move.kind === 'rotation' || move.kind === 'slice') return move.raw;
 
   const face = FACE_SHORT_ZH[move.family[0]?.toUpperCase()];
@@ -96,7 +125,7 @@ export function formatAlgNotation(alg: string, style: AlgNotationStyle): string 
   return pieces.map((piece, index) => {
     if (piece.moves) return piece.moves.map(moveDisplay).join(moveSeparator);
 
-    // 中文说明用逗号隔开连续招式；紧凑中文保留原空格。括号、换位子标点和未知内容照原文保留。
+    // 傻瓜记号用逗号隔开连续转动；紧凑记号保留原空格。括号、换位子标点和未知内容照原文保留。
     if (/^\s+$/.test(piece.raw) && pieces[index - 1]?.moves && pieces[index + 1]?.moves) {
       return style === 'zh-cstimer' ? '，' : piece.raw;
     }
