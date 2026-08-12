@@ -50,4 +50,12 @@ describe('Second Layer 薄别名全链路登记', () => {
     expect(recent).not.toMatch(/key:\s*['"]second_layer['"]/);
     expect(compSteps).not.toMatch(/second_layer\.csv/);
   });
+
+  it('计时器与分析器真题筛选都先归一到 std/xxxxcross', () => {
+    const timer = read('core/packages/client/app/[lang]/timer/_shell/SoloView.tsx');
+    const analyzer = read('core/packages/client/app/[lang]/scramble/analyzer/page.tsx');
+    expect(timer).toContain('const wcaDiffRef = variantDataRef(settings.wcaDiffVariant, settings.wcaDiffStage)');
+    expect(analyzer).toContain('const diffRef = variantDataRef(s.wcaDiffVariant, s.wcaDiffStage)');
+    expect(analyzer).toContain('variant: diffRef.variant, stage: diffRef.stage');
+  });
 });
