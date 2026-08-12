@@ -56,8 +56,9 @@ export interface SimMountOpts {
    * 在挂载时摆而不是让调用方挂载后再改:后者会先按等轴画出一帧再跳过去。
    */
   sceneRot?: { x: number; y: number; z: number };
-  /** Clamp for devicePixelRatio. Default 2 — a corner overlay on a 3x DPR
-   *  phone does not need 9x the fragments. */
+  /** Clamp for devicePixelRatio. Default 2. Embedded canvases supersample at
+   *  2x for crisp cube edges; an explicit cap below 2 opts out for a cheaper
+   *  overlay. */
   pixelRatioCap?: number;
   /**
    * Per-frame hook, called before the dirty check with the ms since the last
@@ -85,6 +86,16 @@ export interface SimMount {
   invalidate(): void;
   /** Stop the loop, drop the canvas, release the GL context. Idempotent. */
   dispose(): void;
+}
+
+/** Match the full /sim renderer: small canvases need 2x supersampling even on
+ *  a 1x desktop display, while the caller's cap remains the upper bound. */
+export function resolveRenderPixelRatio(devicePixelRatio: number, cap: number): number {
+  const safeDpr = Number.isFinite(devicePixelRatio) && devicePixelRatio > 0
+    ? devicePixelRatio
+    : 1;
+  const safeCap = Number.isFinite(cap) && cap > 0 ? cap : 2;
+  return Math.min(safeCap, Math.max(safeDpr, 2));
 }
 
 export function mountSimWorld(opts: SimMountOpts): SimMount {
@@ -124,7 +135,7 @@ export function mountSimWorld(opts: SimMountOpts): SimMount {
   });
   renderer.autoClear = false;
   renderer.setClearColor(0xffffff, 0);
-  renderer.setPixelRatio(Math.min(pixelRatioCap, window.devicePixelRatio || 1));
+  renderer.setPixelRatio(resolveRenderPixelRatio(window.devicePixelRatio, pixelRatioCap));
 
   const canvas = renderer.domElement;
   canvas.style.outline = 'none';
