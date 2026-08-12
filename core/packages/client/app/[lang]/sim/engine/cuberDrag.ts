@@ -1,35 +1,33 @@
 /**
- * Shared drag-to-turn math for the corner-turning cuber engines (Ivy / Dino / Redi).
+ * Shared drag-to-turn math for the discrete corner/edge-turning cuber engines.
  *
- * All three resolve a drag the same way: grab anywhere on the cube, then score each
+ * These engines resolve a drag the same way: grab anywhere on the cube, then score each
  * CANDIDATE corner by how well the screen-space tangent of a ±120° twist at the grab
  * point aligns with the drag vector, and fire the best (corner, direction). The
- * partial-turn application + snap-back + screen projection are byte-identical across
- * the three; this module owns them so each puzzle's drag file is just its own
+ * partial-turn application + snap-back + screen projection are identical across
+ * them; this module owns those primitives so each puzzle's drag file is just its own
  * raycast/candidate logic plus thin wrappers SimPage keeps importing.
  */
 import * as THREE from 'three';
-import type { PieceAnim } from './pieceAnim';
-
-const _q = new THREE.Quaternion();
+import { applyAnimFrame, type PieceAnim } from './pieceAnim';
 
 /** Apply a partial turn (t∈[0,1]) to anims from a cube's beginMove — multiply each
  *  pivot's start orientation by a fraction of the move's rotation. Shared by every
  *  corner-turn drag for the debug "hold partial turn" mode. */
 export function applyPartial(anims: PieceAnim[], t: number): void {
-  const tt = Math.max(0, Math.min(1, t));
-  for (const a of anims) {
-    _q.setFromAxisAngle(a.axis, a.angle * tt);
-    a.pivot.quaternion.multiplyQuaternions(_q, a.startQuat);
-  }
+  applyAnimFrame(anims, t);
 }
 
 /** Snap the affected pivots back to their pre-turn pose (cancel a frozen turn). */
 export function snapBack(anims: PieceAnim[]): void {
-  for (const a of anims) a.pivot.quaternion.copy(a.startQuat);
+  applyAnimFrame(anims, 0);
 }
 
 const _proj = new THREE.Vector3();
+
+function finiteVector3(v: THREE.Vector3): boolean {
+  return Number.isFinite(v.x) && Number.isFinite(v.y) && Number.isFinite(v.z);
+}
 
 /** Project a world point to CSS pixels (y down). */
 export function worldToScreenPx(
@@ -86,24 +84,34 @@ export function scoreCornerTwist(
   camera: THREE.Camera, width: number, height: number,
   minCos = 0,
 ): CornerTwistScore | null {
+  if (
+    !Number.isFinite(dragX) || !Number.isFinite(dragY) ||
+    !Number.isFinite(width) || !Number.isFinite(height) ||
+    !Number.isFinite(minCos) || width <= 0 || height <= 0 ||
+    !finiteVector3(pointWorld) || !finiteVector3(originWorld)
+  ) return null;
   const dragLen = Math.hypot(dragX, dragY);
-  if (dragLen < 1e-6) return null;
+  if (!Number.isFinite(dragLen) || dragLen < 1e-6) return null;
   const pScreen = worldToScreenPx(pointWorld, camera, width, height);
+  if (!Number.isFinite(pScreen.x) || !Number.isFinite(pScreen.y)) return null;
   _r.copy(pointWorld).sub(originWorld);
   let best: CornerTwistScore | null = null;
   let bestAbsCos = minCos;
   for (const corner of candidates) {
     _tan.crossVectors(axisWorldOf(corner), _r);
-    if (_tan.lengthSq() < 1e-9) continue;
+    const tangentLengthSq = _tan.lengthSq();
+    if (!Number.isFinite(tangentLengthSq) || tangentLengthSq < 1e-9) continue;
     _tan.normalize();
     const tScreen = worldToScreenPx(_tmp.copy(pointWorld).add(_tan), camera, width, height);
+    if (!Number.isFinite(tScreen.x) || !Number.isFinite(tScreen.y)) continue;
     let tx = tScreen.x - pScreen.x;
     let ty = tScreen.y - pScreen.y;
     const tl = Math.hypot(tx, ty);
-    if (tl < 1e-6) continue;
+    if (!Number.isFinite(tl) || tl < 1e-6) continue;
     tx /= tl; ty /= tl;
     const dot = tx * dragX + ty * dragY;
     const absCos = Math.abs(dot / dragLen);
+    if (!Number.isFinite(absCos)) continue;
     if (absCos > bestAbsCos) {
       bestAbsCos = absCos;
       const dir: 1 | -1 = dot >= 0 ? 1 : -1;
