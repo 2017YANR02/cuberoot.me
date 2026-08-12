@@ -581,8 +581,13 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
 
   const currentStages = useMemo(() => {
     if (!currentSet) return [] as string[];
-    return currentSet.variants[variant]?.stages ?? [];
-  }, [currentSet, variant]);
+    // URL / 旧本地状态可能保存 UI 聚合键(lbl / block),而数据集只存真实变体键。
+    // 规范化 effect 落盘前也要从映射后的真实变体取阶段,否则原生 select 会有 value
+    // 却没有 option,视觉上就只剩一个空框和箭头。
+    return currentSet.variants[variant]?.stages
+      ?? currentSet.variants[sourceVariant]?.stages
+      ?? [];
+  }, [currentSet, variant, sourceVariant]);
 
   useEffect(() => {
     if (currentStages.length > 0 && !currentStages.includes(stage)) {
@@ -592,7 +597,14 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
 
   // 切项目/数据集后当前方法可能不存在 —— 回退到该数据集的第一个真实变体。
   useEffect(() => {
-    if (currentSet && !currentSet.variants[sourceVariant] && !isBlockVariant(variant)) {
+    if (!currentSet) return;
+    // 聚合键只属于 UI,URL 永远收敛回真实数据键。否则 lbl + second_layer 虽然能
+    // 找到数据,variant 自身却没有 stages,阶段下拉会成为空 select。
+    if (!currentSet.variants[variant] && currentSet.variants[sourceVariant]) {
+      setVariant(sourceVariant as VariantKey);
+      return;
+    }
+    if (!currentSet.variants[sourceVariant] && !isBlockVariant(variant)) {
       const first = Object.keys(currentSet.variants)[0] as VariantKey | undefined;
       if (first) setVariant(first);
     }
