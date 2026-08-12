@@ -25,7 +25,12 @@ import {
 } from '@cuberoot/shared';
 import { VisualCube } from '@/components/VisualCube';
 import { CaseThumb } from '@/components/CaseThumb';
-import { cubeThumbParams, LEVEL2_PICKER_MASK, supportsRecognitionSimplification } from '@/lib/alg_thumb_plan';
+import {
+  cubeThumbParams,
+  LEVEL2_PICKER_MASK,
+  supportsCaseViewAngle,
+  supportsRecognitionSimplification,
+} from '@/lib/alg_thumb_plan';
 import AlgCard from '@/components/AlgCard';
 import CommunityAlgs from '@/components/CommunityAlgs';
 import AdminCaseEditor, { type AdminEditorState } from '@/components/AdminCaseEditor';
@@ -50,7 +55,15 @@ import { displayAlgCaseName, primaryCaseName, displayZbllToken } from '@/lib/alg
 import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
 import { sortByCp } from '@/lib/alg_cp_order';
 import { ALG_TAG_LABEL, ALG_TAGS } from '@/lib/alg_tags';
-import { displayAlg, oriAdjustSetup, shortOriName } from '@/lib/alg_display';
+import {
+  CASE_VIEW_ANGLES,
+  caseViewAlg,
+  caseViewSetup,
+  displayAlg,
+  oriAdjustSetup,
+  shortOriName,
+  type CaseViewAngle,
+} from '@/lib/alg_display';
 import { sanitizeAlgHtml } from '@/lib/alg_html';
 import {
   ALG_NOTATION_STYLES,
@@ -105,7 +118,7 @@ function SetupLine({ puzzle, setup }: { puzzle: string; setup: string }) {
   );
 }
 
-function AlgRow({ entry, expanded, onToggle, animatable, puzzle, set, setup, invalid, mirror, ori = 0, notationStyle }: {
+function AlgRow({ entry, expanded, onToggle, animatable, puzzle, set, setup, invalid, mirror, ori = 0, notationStyle, viewAngle }: {
   entry: AlgEntry; expanded: boolean; onToggle: () => void; animatable: boolean;
   puzzle: AlgPuzzle; set: string; setup?: string; invalid?: string;
   /** 有值 = 这个 set 吃镜像系统,行尾出翻转图标;`partner` 是伙伴 case 名(没建链时为 null) */
@@ -113,16 +126,21 @@ function AlgRow({ entry, expanded, onToggle, animatable, puzzle, set, setup, inv
   /** 这条公式在第几个视角(0=FR),镜像面板要拿它算落点 */
   ori?: number;
   notationStyle: AlgNotationStyle;
+  viewAngle: CaseViewAngle;
 }) {
   const { alg, algHtml } = entry;
   const { copied, copy } = useCopy();
   const [mirrorOpen, setMirrorOpen] = useState(false);
   // 显示 / 复制都剥掉收尾 AUF;下面的 AlgPlayer 拿的仍是完整公式,动画才停在还原态。
-  const standardAlgShown = formatScrambleForEvent(puzzle, displayAlg(alg));
+  const angledAlg = caseViewAlg(alg, viewAngle);
+  const standardAlgShown = formatScrambleForEvent(puzzle, displayAlg(angledAlg));
   const algShown = formatAlgNotation(standardAlgShown, notationStyle);
   // 步数要数**屏幕上这一条**。`entry.stm` 是入库值(含收尾 AUF),拿它当徽章就会
   // 出现「显示 10 步、徽章写 11」。
-  const shownStm = useMemo(() => (entry.stm == null ? null : stm(displayAlg(alg))), [entry.stm, alg]);
+  const shownStm = useMemo(
+    () => (entry.stm == null ? null : stm(displayAlg(angledAlg))),
+    [entry.stm, angledAlg],
+  );
   return (
     <>
       <div
@@ -144,7 +162,7 @@ function AlgRow({ entry, expanded, onToggle, animatable, puzzle, set, setup, inv
           <span key={t} className={`alg-tag alg-tag-${t}`} title={ALG_TAG_LABEL[t]()}>{ALG_TAG_LABEL[t]()}</span>
         ))}
         <span className="alg-alg-text">
-          {algHtml && puzzle !== 'sq1' && notationStyle === 'standard'
+          {algHtml && viewAngle === 'default' && puzzle !== 'sq1' && notationStyle === 'standard'
             ? <span dangerouslySetInnerHTML={{ __html: sanitizeAlgHtml(algHtml) }} />
             : algShown}
           {entry.note && <span className="alg-alg-note">({tr(entry.note)})</span>}
@@ -171,9 +189,16 @@ function AlgRow({ entry, expanded, onToggle, animatable, puzzle, set, setup, inv
         </button>
       </div>
       {mirror && mirrorOpen && (
-        <AlgMirrorPanel alg={alg} puzzle={puzzle} mirrorName={mirror.partner} selfName={mirror.self} ori={ori} />
+        <AlgMirrorPanel alg={angledAlg} puzzle={puzzle} mirrorName={mirror.partner} selfName={mirror.self} ori={ori} />
       )}
-      {expanded && animatable && <AlgPlayer alg={alg} puzzle={puzzle} set={set} setup={setup} />}
+      {expanded && animatable && (
+        <AlgPlayer
+          alg={angledAlg}
+          puzzle={puzzle}
+          set={set}
+          setup={setup === undefined ? undefined : caseViewSetup(setup, viewAngle)}
+        />
+      )}
     </>
   );
 }
@@ -439,6 +464,10 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   const [simplified, setSimplified] = useQueryState(
     'simplified',
     parseAsBoolean.withDefault(collection?.simplifiedByDefault ?? false),
+  );
+  const [viewAngle, setViewAngle] = useQueryState(
+    'angle',
+    parseAsStringEnum<CaseViewAngle>([...CASE_VIEW_ANGLES]).withDefault('default'),
   );
   const [optimalMetric, setOptimalMetric] = useQueryState(
     'metric',
@@ -714,6 +743,12 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     if (!sample) return false;
     return supportsRecognitionSimplification(cubeThumbParams(puzzleParam, set, sample.sticker));
   }, [puzzleParam, scopedCases, set]);
+  const canChooseViewAngle = useMemo(() => {
+    const sample = scopedCases[0];
+    if (!sample || !isPuzzle(puzzleParam)) return false;
+    return supportsCaseViewAngle(cubeThumbParams(puzzleParam, set, sample.sticker));
+  }, [puzzleParam, scopedCases, set]);
+  const effectiveViewAngle: CaseViewAngle = canChooseViewAngle ? viewAngle : 'default';
 
   const visibleCases = useMemo(() => {
     if (!data) return [];
@@ -761,9 +796,12 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   const caseDetailHref = useCallback(
     (c: AlgCase) => {
       const href = algCaseDetailHref(puzzleParam, set, (c.id != null && slugMap?.byId.get(c.id)) || caseSlugBase(set, c));
-      return puzzleParam === 'sq1' && !sq1BlackTop ? `${href}?black=false` : href;
+      const query = new URLSearchParams();
+      if (puzzleParam === 'sq1' && !sq1BlackTop) query.set('black', 'false');
+      if (effectiveViewAngle !== 'default') query.set('angle', effectiveViewAngle);
+      return query.size > 0 ? `${href}?${query}` : href;
     },
-    [slugMap, puzzleParam, set, sq1BlackTop],
+    [effectiveViewAngle, slugMap, puzzleParam, set, sq1BlackTop],
   );
 
   if (!validPuzzle || !meta) {
@@ -834,6 +872,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       groupPerPage: set === 'zbll',
       sq1BlackTop,
       simplifyRecognition: simplified,
+      viewAngle: effectiveViewAngle,
     });
   };
 
@@ -883,6 +922,22 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
             label={tr({ zh: '简化图', en: 'Simplified diagrams' })}
             className="alg-show-all-toggle"
           />
+        )}
+        {data && canChooseViewAngle && !showSubgroupPicker && !showSubSubgroupPicker && (
+          <label className="alg-view-angle">
+            <span>{tr({ zh: '观察角度', en: 'View angle' })}</span>
+            <select
+              className="alg-header-select"
+              value={effectiveViewAngle}
+              onChange={event => setViewAngle(event.target.value as CaseViewAngle)}
+              aria-label={tr({ zh: '观察角度', en: 'View angle' })}
+            >
+              <option value="default">{tr({ zh: '默认', en: 'Default' })}</option>
+              <option value="u">U</option>
+              <option value="u2">U2</option>
+              <option value="up">U&apos;</option>
+            </select>
+          </label>
         )}
         {data && !collection && availableMetrics.length > 0 && (!showSubgroupPicker || canShowAllCases) && selectedOptimalRange && (
           <div className="alg-optimal-filter" role="group" aria-label={tr({ zh: '按最优步数筛选', en: 'Filter by optimal move count' })}>
@@ -1153,6 +1208,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                             loading="lazy"
                             sq1BlackTop={sq1BlackTop}
                             simplifyRecognition={simplified}
+                            viewAngle={effectiveViewAngle}
                           />
                         </div>
                         <div className="alg-case-info">
@@ -1179,7 +1235,12 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                               </button>
                             )}
                           </div>
-                          {effectiveView === 'full' && c.setup && <SetupLine puzzle={puzzleParam} setup={c.setup} />}
+                          {effectiveView === 'full' && c.setup && (
+                            <SetupLine
+                              puzzle={puzzleParam}
+                              setup={caseViewSetup(oriAdjustSetup(c.setup, oriIdx), effectiveViewAngle)}
+                            />
+                          )}
                         </div>
                       </div>
                       {effectiveView === 'full' && (<>
@@ -1206,6 +1267,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                                 ori={oriIdx}
                                 mirror={mirrorFor(c)}
                                 notationStyle={displayedNotationStyle}
+                                viewAngle={effectiveViewAngle}
                               />
                             );
                             const key = `${entry.altId ?? ''}::${trueIdx}`;
@@ -1241,6 +1303,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                         firstAlg={c.algs[0]?.[0]?.alg}
                         submissions={submissionsByCase.get(c.name) ?? []}
                         notationStyle={displayedNotationStyle}
+                        viewAngle={effectiveViewAngle}
                         onPatch={(action) => {
                           setSubmissions(prev => {
                             if (action.type === 'add') return [...prev, action.submission];

@@ -9,11 +9,13 @@ import { VisualCube } from '@/components/VisualCube';
 import { PuzzleSVG } from '@/components/PuzzleSVG';
 import { EnginePuzzleSVG } from '@/components/EnginePuzzleSVG';
 import { caseThumbPlan } from '@/lib/alg_thumb_plan';
+import type { CaseViewAngle } from '@/lib/alg_display';
 
 export function CaseThumb({
   puzzle, set, sticker, alg, setup, size = 88, mask: maskOverride, local, loading,
   sq1BlackTop = true,
   simplifyRecognition = false,
+  viewAngle = 'default',
 }: {
   puzzle: AlgPuzzle;
   set: string;
@@ -33,10 +35,12 @@ export function CaseThumb({
   sq1BlackTop?: boolean;
   /** Show only the strongest recognition features on supported 3x3 plan views. */
   simplifyRecognition?: boolean;
+  /** Rotate an applicable last-layer case by U / U2 / U' while keeping its solution coherent. */
+  viewAngle?: CaseViewAngle;
 }) {
   const plan = useMemo(() => caseThumbPlan({
-    puzzle, set, sticker, alg, setup, mask: maskOverride, sq1BlackTop, simplifyRecognition,
-  }), [puzzle, set, sticker, alg, setup, maskOverride, sq1BlackTop, simplifyRecognition]);
+    puzzle, set, sticker, alg, setup, mask: maskOverride, sq1BlackTop, simplifyRecognition, viewAngle,
+  }), [puzzle, set, sticker, alg, setup, maskOverride, sq1BlackTop, simplifyRecognition, viewAngle]);
 
   if (plan.renderer === 'inline-svg') {
     return (

@@ -4,7 +4,7 @@ import { cube3x3x3 } from 'cubing/puzzles';
 import type { AlgSticker } from '@cuberoot/shared';
 import { toMoveString } from '@cuberoot/shared/alg-notation';
 import { validateAlgCase, completeAlgAuf } from '@/lib/alg_validation';
-import { displayAlg } from '@/lib/alg_display';
+import { caseViewAlg, caseViewSetup, displayAlg } from '@/lib/alg_display';
 
 const FACE: AlgSticker = { kind: 'face', us: '', ub: '', uf: '', ul: '', ur: '' };
 const inv = (a: string) => new Alg(a).invert().toString();
@@ -125,6 +125,11 @@ describe('displayAlg', () => {
     expect(displayAlg("F R U R' U' F' (U)")).toBe("F R U R' U' F'");
   });
 
+  it('hides every consecutive finishing AUF without touching the leading AUF', () => {
+    expect(displayAlg("U R U R' U2 U2")).toBe("U R U R'");
+    expect(displayAlg("U' R U R' (U) U2'")).toBe("U' R U R'");
+  });
+
   it('leaves an alg with no trailing AUF alone', () => {
     expect(displayAlg("R U R' U R U2 R'")).toBe("R U R' U R U2 R'");
     expect(displayAlg('M2 U M2 U2 M2 U M2')).toBe('M2 U M2 U2 M2 U M2');
@@ -146,5 +151,37 @@ describe('displayAlg', () => {
   it('never strips an alg down to nothing', () => {
     expect(displayAlg('U')).toBe('U');
     expect(displayAlg('')).toBe('');
+  });
+});
+
+describe('case observation angle', () => {
+  it('keeps setup and solution as an exact inverse pair at every selectable angle', async () => {
+    const kp = await cube3x3x3.kpuzzle();
+    const solved = kp.defaultPattern();
+    const setup = inv(BODY);
+    for (const angle of ['default', 'u', 'u2', 'up'] as const) {
+      const result = solved.applyAlg(`${caseViewSetup(setup, angle)} ${caseViewAlg(BODY, angle)}`);
+      expect(result.isIdentical(solved), angle).toBe(true);
+    }
+  });
+
+  it('rotates the setup and prefixes the inverse AUF to its solution', () => {
+    expect(caseViewSetup("R U R'", 'u')).toBe("R U R' U");
+    expect(caseViewAlg("R U R'", 'u')).toBe("U' R U R'");
+    expect(caseViewSetup("R U R'", 'up')).toBe("R U R' U'");
+    expect(caseViewAlg("R U R'", 'up')).toBe("U R U R'");
+  });
+
+  it('combines an existing leading U move without touching wide turns', () => {
+    expect(caseViewAlg("U R U R'", 'u')).toBe("R U R'");
+    expect(caseViewAlg("U' R U R'", 'u')).toBe("U2 R U R'");
+    expect(caseViewAlg("Uw R U R'", 'u')).toBe("U' Uw R U R'");
+  });
+
+  it('keeps default and empty inputs unchanged', () => {
+    expect(caseViewSetup("R U R'", 'default')).toBe("R U R'");
+    expect(caseViewAlg("R U R'", 'default')).toBe("R U R'");
+    expect(caseViewSetup('', 'u')).toBe('');
+    expect(caseViewAlg('', 'u')).toBe('');
   });
 });

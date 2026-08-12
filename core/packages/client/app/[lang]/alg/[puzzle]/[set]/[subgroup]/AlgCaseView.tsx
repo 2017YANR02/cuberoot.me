@@ -31,11 +31,20 @@ import AdminCaseEditor, { type AdminEditorState } from '@/components/AdminCaseEd
 import AlgAdminValidate from '@/components/AlgAdminValidate';
 import AlgPdfButton from '@/components/AlgPdfButton';
 import { algSheetFromCases } from '@/lib/alg_pdf/from_cases';
+import { cubeThumbParams, supportsCaseViewAngle } from '@/lib/alg_thumb_plan';
 import SortableAlgRow from '@/components/SortableAlgRow';
 import AlgMirrorPanel, { hasMirror } from '@/components/AlgMirrorPanel';
 import { algCaseHref, algCaseDetailHref, buildCaseSlugMap } from '@/lib/alg_case_link';
 import { primaryCaseName, displayAlgCaseName } from '@/lib/alg_case_display';
-import { displayAlg, oriAdjustSetup, shortOriName } from '@/lib/alg_display';
+import {
+  CASE_VIEW_ANGLES,
+  caseViewAlg,
+  caseViewSetup,
+  displayAlg,
+  oriAdjustSetup,
+  shortOriName,
+  type CaseViewAngle,
+} from '@/lib/alg_display';
 import { listSubmissions } from '@/lib/alg_api';
 import { reorderCaseAlgs } from '@/lib/alg_sets_api';
 import { useIsAdmin } from '@/lib/auth-store';
@@ -62,18 +71,20 @@ function SetupLine({ puzzle, setup }: { puzzle: string; setup: string }) {
 }
 
 /** 可播放的公式行(点一下展开 3D 动画)。非 meta 精简正文用,复用列表的 .alg-alg-* 样式。 */
-function PlayableAlgRow({ entry, puzzle, set, setup, mirror, ori = 0 }: {
+function PlayableAlgRow({ entry, puzzle, set, setup, mirror, ori = 0, viewAngle }: {
   entry: AlgEntry; puzzle: AlgPuzzle; set: string; setup?: string;
   /** 有值 = 这个 set 吃镜像系统,行尾出 ⧉;`partner` 是伙伴 case 名(没建链时为 null) */
   mirror?: { partner: string | null; self: string };
   /** 这条公式在第几个视角(0=FR),镜像面板要拿它算落点 */
   ori?: number;
+  viewAngle: CaseViewAngle;
 }) {
   const [open, setOpen] = useState(false);
   const [mirrorOpen, setMirrorOpen] = useState(false);
   const { copied, copy } = useCopy();
-  const shown = formatScrambleForEvent(puzzle, displayAlg(entry.alg));
-  const len = entry.stm == null ? null : stm(displayAlg(entry.alg));
+  const angledAlg = caseViewAlg(entry.alg, viewAngle);
+  const shown = formatScrambleForEvent(puzzle, displayAlg(angledAlg));
+  const len = entry.stm == null ? null : stm(displayAlg(angledAlg));
   return (
     <>
       <div
@@ -105,9 +116,16 @@ function PlayableAlgRow({ entry, puzzle, set, setup, mirror, ori = 0 }: {
         </button>
       </div>
       {mirror && mirrorOpen && (
-        <AlgMirrorPanel alg={entry.alg} puzzle={puzzle} mirrorName={mirror.partner} selfName={mirror.self} ori={ori} />
+        <AlgMirrorPanel alg={angledAlg} puzzle={puzzle} mirrorName={mirror.partner} selfName={mirror.self} ori={ori} />
       )}
-      {open && <AlgPlayer alg={entry.alg} puzzle={puzzle} set={set} setup={setup} />}
+      {open && (
+        <AlgPlayer
+          alg={angledAlg}
+          puzzle={puzzle}
+          set={set}
+          setup={setup === undefined ? undefined : caseViewSetup(setup, viewAngle)}
+        />
+      )}
     </>
   );
 }
@@ -129,6 +147,10 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
     'scramble',
     parseAsStringEnum<ScrambleKind>(SCRAMBLE_KINDS.map(kind => kind.id)).withDefault('inv'),
   );
+  const [viewAngle, setViewAngle] = useQueryState(
+    'angle',
+    parseAsStringEnum<CaseViewAngle>([...CASE_VIEW_ANGLES]).withDefault('default'),
+  );
   const isAdmin = useIsAdmin();
   const [editorState, setEditorState] = useState<AdminEditorState | null>(null);
   const m = caseObj.meta;
@@ -137,6 +159,8 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
   const sub = displayAlgCaseName(puzzle, set, caseObj.name);
   const showSub = sub && sub !== primary;
   useDocumentTitle(primary, primary);
+  const canChooseViewAngle = supportsCaseViewAngle(cubeThumbParams(puzzle, set, caseObj.sticker));
+  const effectiveViewAngle: CaseViewAngle = canChooseViewAngle ? viewAngle : 'default';
 
   const keepSq1Top = (href: string) => {
     if (puzzle !== 'sq1' || sq1BlackTop) return href;
@@ -155,9 +179,17 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
     return `${path}${path.includes('?') ? '&' : '?'}scramble=${encodeURIComponent(scrambleKind)}${hash}`;
   };
 
+  const keepViewAngle = (href: string) => {
+    if (effectiveViewAngle === 'default') return href;
+    const hashAt = href.indexOf('#');
+    const path = hashAt < 0 ? href : href.slice(0, hashAt);
+    const hash = hashAt < 0 ? '' : href.slice(hashAt);
+    return `${path}${path.includes('?') ? '&' : '?'}angle=${effectiveViewAngle}${hash}`;
+  };
+
   // 「返回」→ case 所在的子组列表页(带 #name 高亮那张卡)。是有明确目标的导航,不是 history.back。
   const rawBackHref = algCaseHref(puzzle, set, caseObj);
-  const backHref = keepSq1Top(rawBackHref);
+  const backHref = keepViewAngle(keepSq1Top(rawBackHref));
 
   /** meta.no → case,给镜像/逆做详情页之间的链接(表编号,不是 DB id)。 */
   const byNo = useMemo(() => {
@@ -170,7 +202,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
   const slugMap = useMemo(() => buildCaseSlugMap(data.cases, set), [data, set]);
   const hrefFor = (c: AlgCase) => {
     const href = algCaseDetailHref(puzzle, set, (c.id != null && slugMap.byId.get(c.id)) || '');
-    return keepScrambleKind(keepSq1Top(href));
+    return keepViewAngle(keepScrambleKind(keepSq1Top(href)));
   };
 
   // 社区公式:只这张 case 的。
@@ -279,6 +311,21 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
             label={tr({ zh: '黑顶', en: 'Black top' })}
           />
         )}
+        {canChooseViewAngle && (
+          <label className="alg-view-angle">
+            <span>{tr({ zh: '观察角度', en: 'View angle' })}</span>
+            <select
+              className="alg-header-select"
+              value={effectiveViewAngle}
+              onChange={event => setViewAngle(event.target.value as CaseViewAngle)}
+            >
+              <option value="default">{tr({ zh: '默认', en: 'Default' })}</option>
+              <option value="u">U</option>
+              <option value="u2">U2</option>
+              <option value="up">U&apos;</option>
+            </select>
+          </label>
+        )}
         {/* 单张也能印:每个视角各一份(这页本来就把视角都列出来了) */}
         <AlgPdfButton
           build={() => algSheetFromCases({
@@ -291,6 +338,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
             allOris: true,
             maxAlgs: Infinity,  // 单张 case 的表,备选公式正是它的价值
             sq1BlackTop,
+            viewAngle: effectiveViewAngle,
           })}
         />
         {/* 校验只扫这一张 —— 报告里点失败项就开上面同一个编辑器,不再叠第二个 */}
@@ -310,6 +358,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
             jump={{ kind: 'link', href: hrefFor }}
             scrambleKind={scrambleKind}
             onScrambleKindChange={setScrambleKind}
+            viewAngle={effectiveViewAngle}
             algsWrap={dragAlgs ? withDnd(0) : undefined}
             algRowWrap={dragAlgs
               ? (row, i) => <SortableAlgRow key={algDragId(0, i)} id={algDragId(0, i)} draggable>{row}</SortableAlgRow>
@@ -320,7 +369,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
         <div className="alg-case-detail-lean">
           <div className="alg-case-detail-lean-aside">
             <div className="alg-case-detail-lean-thumb">
-              <CaseThumb puzzle={puzzle} set={set} sticker={caseObj.sticker} alg={caseObj.algs[0]?.[0]?.alg || caseObj.setup || ''} setup={caseObj.setup} size={116} sq1BlackTop={sq1BlackTop} />
+              <CaseThumb puzzle={puzzle} set={set} sticker={caseObj.sticker} alg={caseObj.algs[0]?.[0]?.alg || caseObj.setup || ''} setup={caseObj.setup} size={116} sq1BlackTop={sq1BlackTop} viewAngle={effectiveViewAngle} />
             </div>
             {mirror?.card && (
               <div className="alg-mirror-row">
@@ -334,12 +383,13 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
                     setup={mirror.card.setup}
                     size={36}
                     sq1BlackTop={sq1BlackTop}
+                    viewAngle={effectiveViewAngle}
                   />
                   <span className="alg-mirror-name">{mirror.partner}</span>
                 </Link>
               </div>
             )}
-            {caseObj.setup && <SetupLine puzzle={puzzle} setup={caseObj.setup} />}
+            {caseObj.setup && <SetupLine puzzle={puzzle} setup={caseViewSetup(caseObj.setup, effectiveViewAngle)} />}
           </div>
           <div className={`alg-case-detail-lean-algs${multiOri ? ' is-multi-ori' : ''}`}>
             {caseObj.algs.map((oriAlgs, oi) => {
@@ -350,6 +400,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
                     entry={entry} puzzle={puzzle} set={set} ori={oi}
                     setup={oriAdjustSetup(caseObj.setup, oi)}
                     mirror={mirror ? { partner: mirror.partner, self: mirror.self } : undefined}
+                    viewAngle={effectiveViewAngle}
                   />
                 );
                 return dragAlgs
@@ -375,6 +426,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
         setup={caseObj.setup}
         firstAlg={caseObj.algs[0]?.[0]?.alg}
         submissions={submissions}
+        viewAngle={effectiveViewAngle}
         onPatch={(action) => {
           setSubmissions(prev => {
             if (action.type === 'add') return [...prev, action.submission];

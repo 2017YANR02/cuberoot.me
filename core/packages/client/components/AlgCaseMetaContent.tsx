@@ -27,7 +27,12 @@ import {
 } from '@/lib/trainer-scramble';
 import { ALG_TAG_LABEL } from '@/lib/alg_tags';
 import { primaryCaseName } from '@/lib/alg_case_display';
-import { displayAlg } from '@/lib/alg_display';
+import {
+  caseViewAlg,
+  caseViewSetup,
+  displayAlg,
+  type CaseViewAngle,
+} from '@/lib/alg_display';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { tr } from '@/i18n/tr';
 
@@ -38,7 +43,7 @@ function AlgLine({ label, alg, len }: { label: string; alg: string; len?: number
   const { copied, copy } = useCopy();
   return (
     <div className="alg-meta-algline">
-      <span className="alg-meta-algline-label">{label}</span>
+      {label && <span className="alg-meta-algline-label">{label}</span>}
       <code className="alg-meta-algline-code">{alg}</code>
       {len != null && <span className="alg-meta-algline-len" title="STM">{len}</span>}
       <button
@@ -85,6 +90,8 @@ interface Props {
   /** 详情页才传:选择状态由页级 nuqs 持有;训练弹窗仍只显示默认打乱。 */
   scrambleKind?: ScrambleKind;
   onScrambleKindChange?: (kind: ScrambleKind) => void;
+  /** 顶层 case 的观察角度；详情页传入，训练弹窗沿用库里的默认角度。 */
+  viewAngle?: CaseViewAngle;
 }
 
 export default function AlgCaseMetaContent({
@@ -93,6 +100,7 @@ export default function AlgCaseMetaContent({
   algRowWrap = (row) => row,
   scrambleKind = 'inv',
   onScrambleKindChange,
+  viewAngle = 'default',
 }: Props) {
   /**
    * 没有 meta 的集(虚拟集 LSLL、库里还没补元数据的集)一样要能看:空对象兜底后
@@ -103,14 +111,14 @@ export default function AlgCaseMetaContent({
 
   /** 首个朝向的公式(1lll / zbll / pll / ell 都只有一个朝向)。显示 / 步数都剥掉收尾 AUF。 */
   const algs = useMemo(() => (caseObj.algs[0] ?? []).map(a => {
-    const shown = displayAlg(a.alg);
+    const shown = displayAlg(caseViewAlg(a.alg, viewAngle));
     return {
       key: a.altId ?? shown,
       text: formatScrambleForEvent(puzzle, shown),
       len: a.stm == null ? undefined : stm(shown),
       tags: a.tags ?? [],
     };
-  }), [caseObj.algs, puzzle]);
+  }), [caseObj.algs, puzzle, viewAngle]);
 
   /**
    * 这一族:镜像 / 逆 / 镜像逆 连起来的那一小撮 case(含当前这张),拆成三堆。
@@ -217,9 +225,13 @@ export default function AlgCaseMetaContent({
     return () => { live = false; };
   }, [caseObj.setup, inverseScramble, puzzle, selectedScrambleKind]);
 
-  const scramble = selectedScrambleKind === 'cstimer'
+  const rawScramble = selectedScrambleKind === 'cstimer'
     ? cstimerScramble && { text: cstimerScramble.text, fromInvCase: cstimerScramble.fallback }
     : storedScramble;
+  const scramble = rawScramble && {
+    ...rawScramble,
+    text: caseViewSetup(rawScramble.text, viewAngle),
+  };
 
   const sym = m.sym ?? {};
   const symFlags = [
@@ -250,6 +262,7 @@ export default function AlgCaseMetaContent({
                 alg={f.case.algs[0]?.[0]?.alg || f.case.setup || ''}
                 setup={f.case.setup}
                 size={76}
+                viewAngle={viewAngle}
               />
               <span className="alg-meta-related-label">{labelText}</span>
               <span className="alg-meta-related-name">{primaryCaseName(puzzle, set, f.case)}</span>
@@ -297,7 +310,7 @@ export default function AlgCaseMetaContent({
           排在后面。取值的三档(逆 case 的公式 / 现推 / setup 保底)见 {@link caseScramble}。 */}
       {(scramble || (selectedScrambleKind === 'cstimer' && inverseScramble)) && (
         <div className="alg-meta-section">
-          <div className="alg-meta-section-head">
+          <div className="alg-meta-scramble-row">
             <h3>{tr({ zh: '打乱', en: 'Scramble' })}</h3>
             {onScrambleKindChange && scrambleKinds.length > 1 && (
               <select
@@ -311,19 +324,19 @@ export default function AlgCaseMetaContent({
                 ))}
               </select>
             )}
+            {scramble ? (
+              <AlgLine
+                label={scramble.fromInvCase && (!onScrambleKindChange || selectedScrambleKind === 'cstimer')
+                  ? tr({ zh: '逆 case', en: 'Inv case' })
+                  : ''}
+                alg={scramble.text}
+              />
+            ) : (
+              <span className="alg-meta-scramble-loading">
+                {tr({ zh: '正在生成…', en: 'Generating…' })}
+              </span>
+            )}
           </div>
-          {scramble ? (
-            <AlgLine
-              label={scramble.fromInvCase && (!onScrambleKindChange || selectedScrambleKind === 'cstimer')
-                ? tr({ zh: '逆 case', en: 'Inv case' })
-                : ''}
-              alg={scramble.text}
-            />
-          ) : (
-            <span className="alg-meta-scramble-loading">
-              {tr({ zh: '正在生成…', en: 'Generating…' })}
-            </span>
-          )}
         </div>
       )}
 
@@ -404,7 +417,7 @@ export default function AlgCaseMetaContent({
               <span className="alg-meta-optimal-len">
                 {METRIC_LABEL[metric] ?? metric} <strong>{o.len}</strong>
               </span>
-              {o.scramble && <AlgLine label="" alg={o.scramble} />}
+              {o.scramble && <AlgLine label="" alg={caseViewSetup(o.scramble, viewAngle)} />}
             </div>
           ))}
         </div>
@@ -413,8 +426,8 @@ export default function AlgCaseMetaContent({
       {(m.coep?.alg || m.coep?.scramble) && (
         <div className="alg-meta-section">
           <h3>COEP</h3>
-          {m.coep.alg && <AlgLine label={tr({ zh: '公式', en: 'Alg' })} alg={m.coep.alg} />}
-          {m.coep.scramble && <AlgLine label={tr({ zh: '打乱', en: 'Scramble' })} alg={m.coep.scramble} />}
+          {m.coep.alg && <AlgLine label={tr({ zh: '公式', en: 'Alg' })} alg={displayAlg(caseViewAlg(m.coep.alg, viewAngle))} />}
+          {m.coep.scramble && <AlgLine label={tr({ zh: '打乱', en: 'Scramble' })} alg={caseViewSetup(m.coep.scramble, viewAngle)} />}
         </div>
       )}
 
