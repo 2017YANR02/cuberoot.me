@@ -152,6 +152,8 @@ cargo build --release --bin dist_tracked
 * 深度无 nibble 14 层上限；完整 BFS 的最后非空层就是严格 God 数，逐层计数就是完整分布。
 * 运行门：硬限 25,000,000,000 B、线程 ≤14、正式跑必须显式
   `CUBE_ALLOW_HUGE_TABLES=1`。命令、输出和见证复核见 `FIRST_LAYER_GODS_NUMBER.md`。
+* A/B 双槽整层断点固定占 12,933,051,392 B；同趟按层额外计数
+  `edge4=CROSS_SOLVED`，给出「十字已好 → First Layer」严格分布和直径。
 * 本轮只写算法和小空间测试，按用户要求不启动 258 亿态正式穷举。
 
 ### E4 — XCross + 一对(`xcross_pair` / 固定双槽)
