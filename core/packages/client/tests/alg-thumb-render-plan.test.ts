@@ -3,7 +3,12 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import type { AlgPuzzle } from '@cuberoot/shared';
-import { caseThumbPlan, type CaseThumbPlanInput } from '@/lib/alg_thumb_plan';
+import {
+  caseThumbPlan,
+  cubeThumbParams,
+  supportsRecognitionSimplification,
+  type CaseThumbPlanInput,
+} from '@/lib/alg_thumb_plan';
 import { algCaseSvg } from '@/lib/alg_pdf/case_svg';
 
 // guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
@@ -106,6 +111,20 @@ describe('网页与 PDF 共用 case 缩略图渲染计划', () => {
     const four = caseThumbPlan({ ...base, puzzle: '4x4', simplifyRecognition: true });
     expect(four.renderer).toBe('visualcube');
     if (four.renderer === 'visualcube') expect(four.params.planSimplify).toBeUndefined();
+  });
+
+  it('OLL 系列已经是简化朝向图，不再提供无效的二次简化', () => {
+    for (const set of ['oll', '2-look-oll']) {
+      const params = cubeThumbParams('3x3', set, FACE);
+      expect(params.view).toBe('oll');
+      expect(supportsRecognitionSimplification(params)).toBe(false);
+
+      const plan = caseThumbPlan({ puzzle: '3x3', set, sticker: FACE, alg: "R U R'", simplifyRecognition: true });
+      expect(plan.renderer).toBe('visualcube');
+      if (plan.renderer === 'visualcube') expect(plan.params.planSimplify).toBeUndefined();
+    }
+
+    expect(supportsRecognitionSimplification(cubeThumbParams('3x3', 'zbll', FACE))).toBe(true);
   });
 
   it('网页适配器和 PDF 适配器都只能消费 caseThumbPlan,不能再按 puzzle 分叉', () => {

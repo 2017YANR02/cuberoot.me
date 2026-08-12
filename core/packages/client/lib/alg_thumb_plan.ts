@@ -43,6 +43,13 @@ export interface CubeThumbParams {
   puzzleSize: number;
 }
 
+/** Whether the optional recognition filter can remove information from this view. */
+export function supportsRecognitionSimplification(params: CubeThumbParams): boolean {
+  // OLL is already a yellow/grey projection with grey side stickers hidden, so
+  // applying the recognition filter produces the same image.
+  return params.view === 'plan' || params.view === 'pll';
+}
+
 function pickView(
   puzzle: AlgPuzzle,
   set: string,
@@ -184,13 +191,14 @@ export function caseThumbPlan({
     return { renderer: 'sr', kind: 'megaminx-top', driver: driverFor(setup, alg) };
   }
 
+  const params = cubeThumbParams(puzzle, set, sticker, mask);
   return {
     renderer: 'visualcube',
     algorithm: alg,
     setup,
     params: {
-      ...cubeThumbParams(puzzle, set, sticker, mask),
-      ...(puzzle === '3x3' && simplifyRecognition
+      ...params,
+      ...(puzzle === '3x3' && simplifyRecognition && supportsRecognitionSimplification(params)
         ? { planSimplify: { side: 'oppbar', up: 'all', showYellow: true } satisfies PlanSimplifyOptions }
         : {}),
     },
