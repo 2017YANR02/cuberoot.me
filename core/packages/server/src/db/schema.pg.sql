@@ -607,18 +607,17 @@ CREATE TRIGGER contributors_updated_at BEFORE UPDATE ON contributors
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
 
 -- ── 26c. alg_case_marks (公式训练器 per-case 学习标记) ──
--- migration 0076_alg_case_marks.sql + 0093(退役「搁置」)。状态(不熟/已掌握)+ 难点星标,
--- 登录用户跨设备同步。
+-- migration 0076_alg_case_marks.sql + 0093(退役「搁置」)+ 0120(退役星标)。
+-- 状态(不熟/已掌握)由登录用户跨设备同步。
 -- 身份 = ownerKey(requireAuth);case 身份 = (puzzle, set_slug, case_key),case_key 是客户端
 -- trainer 全链路的 `subgroup|name`(不 FK alg_cases.id:legacy 路径 id 可能缺失)。
--- 「未学」= 无行;status 与 starred 全空时删行。
+-- 「未学」= 无行;清除 status 时删行。
 CREATE TABLE alg_case_marks (
   wca_id      VARCHAR(20)  NOT NULL,
   puzzle      VARCHAR(16)  NOT NULL,
   set_slug    VARCHAR(32)  NOT NULL,
   case_key    VARCHAR(128) NOT NULL,
-  status      VARCHAR(16)  CHECK (status IN ('learning', 'mastered')),
-  starred     BOOLEAN      NOT NULL DEFAULT FALSE,
+  status      VARCHAR(16)  NOT NULL CHECK (status IN ('learning', 'mastered')),
   updated_at  BIGINT       NOT NULL,
   PRIMARY KEY (wca_id, puzzle, set_slug, case_key)
 );

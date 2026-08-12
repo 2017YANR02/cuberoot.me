@@ -238,12 +238,6 @@
   box-shadow: 0 0 0 2px var(--background);
 }
 .trainer-mark-badge.is-learning { background: var(--signal-warning); width: 12px; height: 12px; top: -3px; right: -3px; }
-.trainer-mark-star {
-  position: absolute; top: -6px; left: -6px;
-  color: var(--destructive);
-  fill: var(--destructive);
-  filter: drop-shadow(0 0 1px var(--background));
-}
 /* 画笔模式:格子光标提示「点了是涂不是选」 */
 .trainer-set-block.is-painting .trainer-case-cell,
 .trainer-set-block.is-painting .trainer-bulk-toggle,
@@ -273,8 +267,7 @@
   align-items: center;
   gap: 12px;
 }
-/* 无外框:只有图标,靠颜色区分选中。padding 撑出手指点得到的热区(≈36px),
-   两个图标之间再留 gap —— 手机上挨着点容易把「不熟」误点成「星标」 */
+/* 无外框:只有图标,靠颜色区分选中。padding 撑出手指点得到的热区(≈36px)。 */
 .trainer-mark-btn {
   appearance: none; -webkit-appearance: none;
   display: inline-flex; align-items: center; justify-content: center;
@@ -289,8 +282,6 @@
   .trainer-mark-btn:hover { color: var(--foreground); }
 }
 .trainer-mark-btn.is-active.is-learning { color: var(--signal-warning); }
-.trainer-mark-btn.is-active.is-star      { color: var(--destructive); }
-.trainer-mark-btn-star { fill: currentColor; }
 
 /* 成绩驱动的升降级建议条(stage 内,data-no-timer) */
 .trainer-mark-suggest {

@@ -32,7 +32,7 @@ import {
 } from '@/lib/trainer-scramble';
 import { MIX_SLUG, MIX_MIN_SETS, parseMixSets, mixTitle, mixHref, loadMixCases, setLabel } from '@/lib/alg-mix';
 import { virtualAlgSet } from '@/lib/alg-virtual-sets';
-import { useTrainerMarks, markStatus, markStarred, type CaseMarkStatus } from '@/lib/trainer-marks';
+import { useTrainerMarks, markStatus, type CaseMarkStatus } from '@/lib/trainer-marks';
 import { ALG_SET_UNIVERSE } from '@/lib/alg_probability';
 import {
   TimerDisplay, ScrambleHeader, SolveCard, StatsList, HistoryList, CaseMarkBar,
@@ -230,6 +230,9 @@ export default function TrainerRunClient() {
   const setProbMode = useTrainerStore(s => s.setProbMode);
   const recapOrder = useTrainerStore(s => s.recapOrder);
   const setRecapOrder = useTrainerStore(s => s.setRecapOrder);
+  const showRecapRoundEnd = useTrainerStore(s => s.showRecapRoundEnd);
+  const setShowRecapRoundEnd = useTrainerStore(s => s.setShowRecapRoundEnd);
+  const roundEndPromptRequired = useTrainerStore(s => s.roundEndPromptRequired);
   const restartRecapRound = useTrainerStore(s => s.restartRecapRound);
   const srsNewLimit = useTrainerStore(s => s.srsNewLimit);
   const setSrsNewLimit = useTrainerStore(s => s.setSrsNewLimit);
@@ -339,6 +342,7 @@ export default function TrainerRunClient() {
       virtual.loadCases(virtualScope)
         .then(cs => loadSession(puzzle, sessionId, cs, {
           defaultAll: true, caseResolver: virtual.resolveCase, noAufDefault: virtual.noAufDefault,
+          roundEndPromptRequired: virtual.totalRounds != null,
         }))
         .catch(e => console.error('[trainer] virtual loadCases failed', e));
       return;
@@ -562,22 +566,18 @@ export default function TrainerRunClient() {
       }
       if (e.code === 'ArrowLeft') { e.preventDefault(); prevScramble(); return; }
       if (e.code === 'ArrowRight') { e.preventDefault(); advanceScramble(); return; }
-      // 1、2、4:直接给卡片当前 case 打标记(1 不熟 / 2 已掌握 / 4 星标);再按同键取消。
+      // 1、2:直接给卡片当前 case 打标记(1 不熟 / 2 已掌握);再按同键取消。
       // 卡片上不摆「已掌握」按钮(过了就自动算,见 CaseMarkBar),但 2 仍然有效 ——
       // 那是把已标「不熟」的 case 直接提成「已掌握」的快捷路径。
-      if (!e.repeat && (e.code === 'Digit1' || e.code === 'Digit2' || e.code === 'Digit4')) {
+      if (!e.repeat && (e.code === 'Digit1' || e.code === 'Digit2')) {
         const st = useTrainerStore.getState();
         if (st.timerState !== TimerState.NOT_RUNNING && st.timerState !== TimerState.STOPPING) return;
         const k = pillKeyRef.current;
         if (!k) return;
         e.preventDefault();
         const mk = useTrainerMarks.getState();
-        if (e.code === 'Digit4') {
-          mk.applyMarks([k], { f: !markStarred(mk.marks, k) });
-        } else {
-          const target: CaseMarkStatus = e.code === 'Digit1' ? 'learning' : 'mastered';
-          mk.applyMarks([k], { s: markStatus(mk.marks, k) === target ? null : target });
-        }
+        const target: CaseMarkStatus = e.code === 'Digit1' ? 'learning' : 'mastered';
+        mk.applyMarks([k], { s: markStatus(mk.marks, k) === target ? null : target });
         return;
       }
       if (e.code === 'Space' && !useTrainerStore.getState().timing) {
@@ -1290,6 +1290,13 @@ export default function TrainerRunClient() {
                           ariaLabel={tr({ zh: '复习顺序', en: 'Recap order' })}
                           disabled={!!room}
                         />
+                        {!room && !roundEndPromptRequired && (
+                          <BoolToggle
+                            value={showRecapRoundEnd}
+                            onChange={setShowRecapRoundEnd}
+                            label={tr({ zh: '显示本轮结束', en: 'Show round end' })}
+                          />
+                        )}
                         {/* 刷到一半想重来:清掉「7/472」这个本轮进度,重洗后从第 1 个再走一遍 */}
                         <button
                           type="button"
@@ -1638,12 +1645,12 @@ export default function TrainerRunClient() {
               <div className="trainer-opts-help">
                 {multi
                   ? tr({
-                      zh: '数字键 1 不熟、2 已掌握、4 星标,标在「上三个」最后一条;其余两条点卡片上的标记条',
-                      en: 'Keys 1 shaky, 2 mastered, 4 star — mark the last of “Previous 3”; use each card’s mark bar for the other two',
+                      zh: '数字键 1 不熟、2 已掌握,标在「上三个」最后一条;其余两条点卡片上的标记按钮',
+                      en: 'Keys 1 shaky and 2 mastered mark the last of “Previous 3”; use each card’s mark button for the other two',
                     })
                   : tr({
-                      zh: '数字键 1 不熟、2 已掌握、4 星标,标在「上一个」case',
-                      en: 'Keys 1 shaky, 2 mastered, 4 star — mark the “Previous” case',
+                      zh: '数字键 1 不熟、2 已掌握,标在「上一个」case',
+                      en: 'Keys 1 shaky and 2 mastered mark the “Previous” case',
                     })}
               </div>
             </div>

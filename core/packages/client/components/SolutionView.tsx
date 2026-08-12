@@ -12,6 +12,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 import { ArrowRightLeft } from 'lucide-react';
+import CubeColorChip, { cubeColorGroups } from '@/components/CubeColorChip/CubeColorChip';
 import { findTokenPositions, extractAlgFromText, syncPlayerToMoveCount, countMovesExpanded, type TokenPosition } from '@/lib/recon-alg-utils';
 import { parseSq1Tokens } from '@cuberoot/shared/sq1-notation';
 import './solution_view.css';
@@ -236,15 +237,28 @@ export default function SolutionView({ text, playerRef, crossLineIdx = -1, cross
 
         // 注释行整体上色;招式高亮只会落在指令区,注释行不会命中 hlRange。
         const isComment = trimmed.startsWith('//');
+        const commentStart = line.indexOf('//');
+        const labelStart = commentStart >= 0
+          ? commentStart + 2 + (line.slice(commentStart + 2).match(/^\s*/)?.[0].length ?? 0)
+          : -1;
+        const labelColorGroups = labelStart >= 0
+          ? cubeColorGroups(line.slice(labelStart)).map(group => ({ ...group, start: group.start + labelStart }))
+          : [];
+        const colorsAt = new Map(labelColorGroups.map(group => [group.start, group.colors]));
 
-        // 切点:0 / 行尾 / 光标 / 高亮起止 → 分段渲染,光标插空 span,高亮段包 .recon-move-current。
+        // 切点:0 / 行尾 / 光标 / 高亮起止 / 色块位置 → 分段渲染。
         const cuts = new Set<number>([0, line.length]);
         if (localCursor != null) cuts.add(localCursor);
         if (hasHl) { cuts.add(Math.max(0, hlS)); cuts.add(Math.min(line.length, hlE)); }
+        for (const group of labelColorGroups) cuts.add(group.start);
         const sorted = [...cuts].sort((a, b) => a - b);
         const parts: React.ReactNode[] = [];
         for (let s = 0; s < sorted.length - 1; s++) {
           const a = sorted[s], b = sorted[s + 1];
+          const colors = colorsAt.get(a);
+          if (colors) {
+            parts.push(<CubeColorChip key={`color${a}`} colors={colors} className="recon-label-chip" />);
+          }
           if (localCursor === a) parts.push(<span key={`c${a}`} className="detail-cursor" />);
           const seg = line.slice(a, b);
           if (!seg) continue;

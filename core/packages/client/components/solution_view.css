@@ -21,6 +21,13 @@
   font-weight: 500;
 }
 
+/* 和计时器复盘一致:色块贴着它解释的颜色字母。 */
+.recon-label-chip {
+  width: 17px;
+  height: 11px;
+  margin: 0 4px 0 0;
+}
+
 /* 解法文本中的可视闪烁光标 */
 .detail-cursor {
   display: inline-block;

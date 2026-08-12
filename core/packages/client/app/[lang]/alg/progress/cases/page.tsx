@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * /alg/progress/cases — 「星标 / 不熟 / 已掌握 / 未学」点开之后的那张清单。
+ * /alg/progress/cases — 「不熟 / 已掌握 / 未学」点开之后的那张清单。
  *
  * progress 页只报计数,这里回答「那些究竟是谁」:每行一张图 + **公式文本** + 忘过几次 / 何时到期。
  * 公式取和缩略图同一条(`algs[0] ?? standard`),图文不会打架。
@@ -14,7 +14,7 @@
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
-import { ArrowLeft, Star, Loader2, Dumbbell } from 'lucide-react';
+import { ArrowLeft, Loader2, Dumbbell } from 'lucide-react';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { ALG_PUZZLES, loadAlg, type AlgPuzzle, type AlgCase } from '@cuberoot/shared';
@@ -41,7 +41,6 @@ import '../progress.css';
 import './cases.css';
 
 const FILTER_LABEL: Record<CaseFilter, () => string> = {
-  star: () => tr({ zh: '星标', en: 'Starred' }),
   learning: () => MARK_STATUS_LABEL.learning(),
   mastered: () => MARK_STATUS_LABEL.mastered(),
   none: () => tr({ zh: '未学', en: 'New' }),
@@ -114,7 +113,7 @@ export default function AlgProgressCasesPage() {
   );
 
   /**
-   * 这一档真的需要哪些套的 case 本体。星标 / 不熟 / 已掌握 从标记里就知道有没有命中,
+   * 这一档真的需要哪些套的 case 本体。不熟 / 已掌握从标记里就知道有没有命中,
    * 只有命中的套才值得下载;「未学」是补集,必须把有记录的套全拉下来才算得出来。
    */
   const neededSets = useMemo(() => {
@@ -125,7 +124,7 @@ export default function AlgProgressCasesPage() {
       const m = data.marks[`${puzzle}/${set}`] ?? {};
       for (const k in m) {
         const v = m[k];
-        if (filter === 'star' ? v.f === 1 : v.s === filter) return true;
+        if (v.s === filter) return true;
       }
       return false;
     });
@@ -259,7 +258,7 @@ export default function AlgProgressCasesPage() {
 
             {ALG_PUZZLES.filter(p => byPuzzle.has(p)).map(p => {
               const cases = byPuzzle.get(p)!;
-              // 「未学」这档不给专练按钮:队列只收不熟 / 星标 / 忘过,在一张全是新 case 的表上
+              // 「未学」这档不给专练按钮:队列只收不熟 / 忘过,在一张全是新 case 的表上
               // 会算出「专练 1」对着「70」,读起来像坏了。未学的下一步是去学,不是专练
               const drill = filter === 'none' ? null : drillFor(p, cases);
               return (
@@ -293,8 +292,8 @@ export default function AlgProgressCasesPage() {
             {unlistable.length > 0 && (
               <p className="alg-prog-sub">
                 {tr({
-                  zh: `${unlistable.map(s => setLabel(s.puzzle, s.set)).join('、')} 的「未学」列不出来:这套是按需枚举的,没有一张固定的全表可以拿来相减。星标和不熟照常显示。`,
-                  en: `“New” cannot be listed for ${unlistable.map(s => setLabel(s.puzzle, s.set)).join(', ')} — that set is enumerated on demand, so there is no fixed full list to subtract from. Starred and shaky cases still show.`,
+                  zh: `${unlistable.map(s => setLabel(s.puzzle, s.set)).join('、')} 的「未学」列不出来:这套是按需枚举的,没有一张固定的全表可以拿来相减。不熟和已掌握照常显示。`,
+                  en: `“New” cannot be listed for ${unlistable.map(s => setLabel(s.puzzle, s.set)).join(', ')} — that set is enumerated on demand, so there is no fixed full list to subtract from. Shaky and mastered cases still show.`,
                 })}
               </p>
             )}
@@ -323,7 +322,6 @@ function CaseRow({ row, cases }: { row: ProgressCase; cases: AlgCase[] | undefin
         : <span className="alg-case-blank" aria-hidden />}
       <span className="alg-case-main">
         <span className="alg-case-name">
-          {row.starred && <Star size={12} className="alg-case-star" aria-label={tr({ zh: '星标', en: 'Starred' })} />}
           {name}
           <i className="alg-case-set">{setLabel(row.puzzle, row.set)}</i>
         </span>

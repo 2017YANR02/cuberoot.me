@@ -1,6 +1,6 @@
 'use client';
 
-// 公式训练器 per-case 学习标记(不熟/已掌握 + 难点星标)。
+// 公式训练器 per-case 学习标记(不熟/已掌握)。
 // 未登录:localStorage 本地存;登录:本地 + 云端(/v1/alg/marks)双写,
 // 进页时拉云端做单条 last-write-wins 合并(本地较新的差异回传),之后写操作
 // 乐观更新本地 + 防抖批量 PUT。清除标记留 { t } 墓碑,否则合并会从云端复活。
@@ -19,13 +19,12 @@ export const MARK_STATUS_LABEL: Record<CaseMarkStatus, () => string> = {
   mastered: () => tr({ zh: '已掌握', en: 'Mastered' }),
 };
 
-/** select 页画笔:两个状态 + 星标 + 清除(null = 普通选择模式)。 */
-export type TrainerMarkBrush = CaseMarkStatus | 'star' | 'clear';
+/** select 页画笔:两个状态 + 清除(null = 普通选择模式)。 */
+export type TrainerMarkBrush = CaseMarkStatus | 'clear';
 
-/** 一条标记:s = 状态(无 = 未学),f = 星标,t = 最后修改时间(LWW 用)。s/f 全空 = 墓碑。 */
+/** 一条标记:s = 状态(无 = 未学),t = 最后修改时间(LWW 用)。无 s = 墓碑。 */
 export interface CaseMark {
   s?: CaseMarkStatus;
-  f?: 1;
   t: number;
 }
 export type CaseMarks = Record<string, CaseMark>;
@@ -76,25 +75,26 @@ const persistLocal = (p: string, s: string, marks: CaseMarks) => {
   persistItem(marksKey(p, s), JSON.stringify(marks));
 };
 
-/** 服务器批量 PUT 的一条(k=caseKey;s=null 且 f=false ⟹ 服务器删行)。 */
-interface PutItem { k: string; s: CaseMarkStatus | null; f: boolean; t: number }
+/** 服务器批量 PUT 的一条(k=caseKey;s=null ⟹ 服务器删行)。 */
+interface PutItem { k: string; s: CaseMarkStatus | null; t: number }
 
-const toPutItem = (k: string, m: CaseMark): PutItem => ({ k, s: m.s ?? null, f: m.f === 1, t: m.t });
+const toPutItem = (k: string, m: CaseMark): PutItem => ({ k, s: m.s ?? null, t: m.t });
 
 /**
- * 「搁置」已退役(勾选与否本身就是「练不练它」那个开关,两套机制只会互相打架)。
- * 读到的旧数据一律当没标过 —— 星标留着,`t` 推到现在:只有更新的 t 才能在 LWW 里
- * 盖掉别的设备和云端还留着的那条「搁置」,否则下次合并它又活回来。
- * 返回的 `cleaned` 由调用方上云;没有旧数据时原样返回,不产生无谓的同步。
+ * 「搁置」和星标都已退役。读到旧数据时只保留不熟/已掌握,纯星标回到未学；
+ * `t` 推到现在,让清理结果能在 LWW 中盖掉旧设备或旧服务端留下的记录。
+ * 返回的 `cleaned` 由调用方上云;没有退役字段时原样返回,不产生无谓同步。
  */
-function dropRetiredPaused(marks: CaseMarks, now: number): { marks: CaseMarks; cleaned: PutItem[] } {
+function dropRetiredMarkData(marks: CaseMarks, now: number): { marks: CaseMarks; cleaned: PutItem[] } {
   const out: CaseMarks = {};
   const cleaned: PutItem[] = [];
   for (const k in marks) {
     const m = marks[k];
-    if ((m.s as string | undefined) !== 'paused') { out[k] = m; continue; }
+    const legacy = m as { s?: unknown; f?: unknown; t: number };
+    const retired = legacy.s === 'paused' || legacy.f !== undefined;
+    if (!retired) { out[k] = m; continue; }
     const next: CaseMark = { t: now };
-    if (m.f === 1) next.f = 1;
+    if (legacy.s === 'learning' || legacy.s === 'mastered') next.s = legacy.s;
     out[k] = next;
     cleaned.push(toPutItem(k, next));
   }
@@ -123,7 +123,7 @@ export function mergeMarks(local: CaseMarks, cloud: CaseMarks): { merged: CaseMa
     } else if (l) {
       merged[k] = l;
       // 本地实标记 → 上云;本地墓碑而云端无行 → 不用传
-      if (l.s || l.f) toUpload.push(toPutItem(k, l));
+      if (l.s) toUpload.push(toPutItem(k, l));
     } else if (c) {
       merged[k] = c;
     }
@@ -176,9 +176,9 @@ function queueUpload(puzzle: string, set: string, items: PutItem[]) {
   flushTimer = setTimeout(() => { void flushPending(); }, 800);
 }
 
-/** 装本地一套,顺手洗掉退役的「搁置」(落地 + 排队上云,让云端那份也跟着掉)。 */
+/** 装本地一套,顺手洗掉退役字段(落地 + 排队上云,让云端那份也跟着掉)。 */
 function loadLocalClean(p: string, s: string): CaseMarks {
-  const { marks, cleaned } = dropRetiredPaused(loadLocal(p, s), Date.now());
+  const { marks, cleaned } = dropRetiredMarkData(loadLocal(p, s), Date.now());
   if (cleaned.length > 0) {
     persistLocal(p, s, marks);
     queueUpload(p, s, cleaned);
@@ -203,7 +203,7 @@ function dropPending(puzzle: string, setSlug: string): void {
  */
 function applyPatchTo(
   marks: CaseMarks, keys: readonly string[],
-  patch: { s?: CaseMarkStatus | null; f?: boolean }, t: number,
+  patch: { s?: CaseMarkStatus | null }, t: number,
 ): { next: CaseMarks; items: PutItem[] } {
   const next = { ...marks };
   const items: PutItem[] = [];
@@ -211,11 +211,9 @@ function applyPatchTo(
     const cur = next[k];
     const m: CaseMark = { t };
     const s = patch.s === undefined ? cur?.s : (patch.s ?? undefined);
-    const f = patch.f === undefined ? cur?.f === 1 : patch.f;
     if (s) m.s = s;
-    if (f) m.f = 1;
-    if ((cur?.s ?? undefined) === m.s && (cur?.f === 1) === (m.f === 1)) continue;
-    next[k] = m; // s/f 全空也保留 —— 墓碑,防云端复活
+    if ((cur?.s ?? undefined) === m.s) continue;
+    next[k] = m; // s 为空也保留 —— 墓碑,防云端复活
     items.push(toPutItem(k, m));
   }
   return { next, items };
@@ -234,8 +232,8 @@ interface TrainerMarksState {
   loadMarks: (puzzle: string, set: string) => void;
   /** 合练版:一次装 N 个 set,合并成一张带前缀的表。 */
   loadMarksMulti: (puzzle: string, sets: string[]) => void;
-  /** 单个/批量写标记:patch.s = null 清状态,f = false 清星标;两者全空 → 墓碑。 */
-  applyMarks: (keys: string[], patch: { s?: CaseMarkStatus | null; f?: boolean }) => void;
+  /** 单个/批量写标记:patch.s = null 清状态并留下墓碑。 */
+  applyMarks: (keys: string[], patch: { s?: CaseMarkStatus | null }) => void;
 }
 
 let loadToken = 0;
@@ -244,10 +242,10 @@ let loadToken = 0;
 async function fetchSetMarks(puzzle: string, setSlug: string): Promise<CaseMarks | null> {
   try {
     const data = await handleApi<{ marks: CaseMarks }>(
-      await fetch(apiUrl(`/v1/alg/marks/${puzzle}/${setSlug}`), { headers: authHeaders(false) }),
+      await fetch(apiUrl(`/v1/alg/marks/${puzzle}/${setSlug}?v=2`), { headers: authHeaders(false) }),
     );
-    // 云端可能还留着老版本设备写上去的「搁置」——同样洗掉,并把清除回传
-    const { marks, cleaned } = dropRetiredPaused(data.marks, Date.now());
+    // 云端可能还留着老版本设备写上去的退役字段——同样洗掉,并把清除回传
+    const { marks, cleaned } = dropRetiredMarkData(data.marks, Date.now());
     if (cleaned.length > 0) queueUpload(puzzle, setSlug, cleaned);
     return marks;
   } catch (e) {
@@ -341,7 +339,7 @@ export const useTrainerMarks = create<TrainerMarksState>((set, get) => ({
 /**
  * 清空一套 set 的全部标记(/alg/progress 的「重置」)。
  *
- * 走的是已有的「清除」语义,不需要新端点:PUT 一条 `s=null, f=false` 服务端就删行(带 LWW)。
+ * 走的是已有的「清除」语义,不需要新端点:PUT 一条 `s=null` 服务端就删行(带 LWW)。
  * 顺序是**先云后本地** —— 云端没删掉就整个失败,免得本地清了、下次进页又被云端合并回来。
  * 本地留墓碑而不是整张扔掉,理由同 applyMarks:光删本地,合并时会从别处复活。
  */
@@ -356,9 +354,9 @@ export async function resetSetMarks(puzzle: string, setSlug: string): Promise<vo
     const cloud = await fetchSetMarks(puzzle, setSlug);
     const keys = [...new Set([...Object.keys(local), ...Object.keys(cloud ?? {})])];
     // 已经是墓碑、云端也没有的键不用再发一次
-    const live = keys.filter(k => local[k]?.s || local[k]?.f === 1 || cloud?.[k]);
+    const live = keys.filter(k => local[k]?.s || cloud?.[k]);
     for (let i = 0; i < live.length; i += MAX_ITEMS_PER_PUT) {
-      const items = live.slice(i, i + MAX_ITEMS_PER_PUT).map(k => ({ k, s: null, f: false, t }));
+      const items = live.slice(i, i + MAX_ITEMS_PER_PUT).map(k => ({ k, s: null, t }));
       await putItems(puzzle, setSlug, items);
     }
     const tombs: CaseMarks = {};
@@ -373,27 +371,25 @@ export async function resetSetMarks(puzzle: string, setSlug: string): Promise<vo
   }
 }
 
-/** 展示态便捷读取:未标记与墓碑都归一为 undefined / false。 */
+/** 展示态便捷读取:未标记与墓碑都归一为 undefined。 */
 export const markStatus = (marks: CaseMarks, key: string): CaseMarkStatus | undefined => marks[key]?.s;
-export const markStarred = (marks: CaseMarks, key: string): boolean => marks[key]?.f === 1;
 
 // ── 跨 set 学习进度总览(/alg/progress) ──────────────────────────────
 
 /** 一套 set 的标记计数(分子);total 分母来自 /v1/alg/sets 的 count,不在这里。 */
-export interface SetMarkSummary { learning: number; mastered: number; starred: number }
+export interface SetMarkSummary { learning: number; mastered: number }
 /** key = `${puzzle}/${set}`。 */
 export type MarkOverview = Record<string, SetMarkSummary>;
 
-const emptySummary = (): SetMarkSummary => ({ learning: 0, mastered: 0, starred: 0 });
+const emptySummary = (): SetMarkSummary => ({ learning: 0, mastered: 0 });
 
-/** 把一套 set 的 CaseMarks 归约成计数(墓碑 = 无 s 无 f,不计)。 */
+/** 把一套 set 的 CaseMarks 归约成计数(墓碑 = 无 s,不计)。 */
 export function summarizeMarks(marks: CaseMarks): SetMarkSummary {
   const sum = emptySummary();
   for (const k in marks) {
     const m = marks[k];
     if (m.s === 'learning') sum.learning++;
     else if (m.s === 'mastered') sum.mastered++;
-    if (m.f === 1) sum.starred++;
   }
   return sum;
 }
@@ -415,7 +411,7 @@ export function scanLocalOverview(): MarkOverview {
     try {
       const marks = JSON.parse(localStorage.getItem(k) ?? '{}') as CaseMarks;
       const sum = summarizeMarks(marks);
-      if (sum.learning || sum.mastered || sum.starred) out[ps] = sum;
+      if (sum.learning || sum.mastered) out[ps] = sum;
     } catch { /* 坏 JSON 跳过 */ }
   }
   return out;
@@ -424,12 +420,12 @@ export function scanLocalOverview(): MarkOverview {
 /** 拉云端跨 set 聚合(需登录)。 */
 async function fetchCloudOverview(): Promise<MarkOverview> {
   const data = await handleApi<{ sets: Array<{ puzzle: string; set: string } & SetMarkSummary> }>(
-    await fetch(apiUrl('/v1/alg/marks'), { headers: authHeaders(false) }),
+    await fetch(apiUrl('/v1/alg/marks?v=2'), { headers: authHeaders(false) }),
   );
   const out: MarkOverview = {};
   for (const s of data.sets) {
     out[`${s.puzzle}/${s.set}`] = {
-      learning: s.learning, mastered: s.mastered, starred: s.starred,
+      learning: s.learning, mastered: s.mastered,
     };
   }
   return out;

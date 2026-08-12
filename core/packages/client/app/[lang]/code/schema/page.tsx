@@ -146,8 +146,8 @@ const TABLES: Table[] = [
   ] },
   { name: 'timer_sessions', domain: 'studio', origin: 'snapshot', purpose: { zh: '计时器分组 / 分段', en: 'Timer sessions / groups' } },
   { name: 'train_results', domain: 'studio', origin: 'snapshot', purpose: { zh: '公式计时训练成绩', en: 'Trainer (timed-alg) results' } },
-  { name: 'alg_case_marks', domain: 'studio', origin: '0076', naturalKey: true, purpose: { zh: '训练器 per-case 学习标记(不熟/已掌握 + 星标)', en: 'Per-case learning marks in the alg trainer (shaky/mastered + star)' }, cols: [
-    { name: 'wca_id, puzzle, set_slug, case_key', note: { zh: '自然键;case_key = subgroup|name', en: 'natural key; case_key = subgroup|name' } }, { name: 'status, starred, updated_at' },
+  { name: 'alg_case_marks', domain: 'studio', origin: '0076', naturalKey: true, purpose: { zh: '训练器 per-case 学习标记(不熟/已掌握)', en: 'Per-case learning marks in the alg trainer (shaky/mastered)' }, cols: [
+    { name: 'wca_id, puzzle, set_slug, case_key', note: { zh: '自然键;case_key = subgroup|name', en: 'natural key; case_key = subgroup|name' } }, { name: 'status, updated_at' },
   ] },
   { name: 'alg_case_srs', domain: 'studio', origin: '0089', naturalKey: true, purpose: { zh: '公式记忆(间隔重复)per-case 调度状态:到期时刻 / 间隔 / 难度因子 / 遗忘次数 / 最近 12 次评分。与手动标记分表 —— 清标记不该抹掉记忆曲线', en: 'Per-case spaced-repetition schedule for algs: due, interval, ease, lapses, last 12 grades. Kept apart from manual marks — clearing a mark must not wipe the memory curve' }, cols: [
     { name: 'wca_id, puzzle, set_slug, case_key', note: { zh: '自然键;同 alg_case_marks', en: 'natural key; same shape as alg_case_marks' } }, { name: 'due, ivl, ease' }, { name: 'reps, lapses, streak' }, { name: 'hist', note: { zh: '最近 12 次评分,2bit/次', en: 'last 12 grades, 2 bits each' } }, { name: 'reviewed_at', note: { zh: '上次复习,兼作 LWW 版本号', en: 'last review; doubles as the LWW version' } },
@@ -364,6 +364,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 117, slug: 'psf2l_f2l_names', desc: { zh: '数据修正：伪槽情况改用首选解去掉首尾 D 层转动后所对应的 F2L 情况名，例如 PSF2L 01 改为 A+。', en: 'Data correction: name each Pseudoslotting case after the F2L case matched by its primary algorithm with the outer D turns removed, for example PSF2L 01 becomes A+.' } },
   { n: 118, slug: 'update_wrap_up_prompt_for_codex', desc: { zh: '数据修正：收尾审查提示词改用当前的 AGENTS.md、skill、memory 与 hook 交接约定。', en: 'Data correction: update the wrap-up prompt to use the current AGENTS.md, skill, memory, and hook handoff conventions.' } },
   { n: 119, slug: 'fix_zbls_mirror_auf', desc: { zh: '数据修正：为 3 个自镜像 ZBLS 的自动镜像公式补齐目标视角所需的起手 U 层调整。', en: 'Data correction: add the starting U-layer alignment required by three auto-mirrored self-symmetric ZBLS algorithms.' } },
+  { n: 120, slug: 'drop_alg_mark_starred', desc: { zh: '退役公式训练器星标：删除纯星标记录，收紧 status 为非空，并移除 starred 列。', en: 'Retire alg-trainer stars: delete star-only rows, require a status, and remove the starred column.' } },
   { n: 121, slug: 'lowcubes_fto_megaminx', desc: { zh: '数据迁移：导入 LowCubes / Raul Low 的 216 个 FTO L3T 情况与 151 个 Megaminx Full PLL 情况，setup 按上游记号规则严格取逆。', en: 'Data migration: import 216 LowCubes / Raul Low FTO L3T cases and 151 Megaminx Full PLL cases, with each setup exactly inverted under the upstream notation rules.' } },
 ];
 

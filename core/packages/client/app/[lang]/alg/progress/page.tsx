@@ -4,7 +4,7 @@
  * /alg/progress — 公式学习进度总览。
  *
  * 两套数据合在一起讲同一件事:
- *   ① 手动标记(alg_case_marks):不熟 / 已掌握 / 星标 —— 用户自己的判断。
+ *   ① 手动标记(alg_case_marks):不熟 / 已掌握 —— 用户自己的判断。
  *   ② 记忆调度(alg_case_srs):到期时刻 / 间隔 / 遗忘次数 —— 系统算出来的记忆强度。
  * 标记回答「我认不认」,调度回答「还记不记得住」。分开采集,合起来展示。
  *
@@ -12,7 +12,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from '@/components/AppLink';
-import { ArrowLeft, Star, Flame, Loader2 } from 'lucide-react';
+import { ArrowLeft, Flame, Loader2 } from 'lucide-react';
 import { ALG_CATALOG, ALG_PUZZLES, loadAlg, type AlgPuzzle, type AlgCase } from '@cuberoot/shared';
 import { virtualAlgSet, VIRTUAL_ALG_SET_PARAMS } from '@/lib/alg-virtual-sets';
 import { flushSweep, readSweep } from '@/lib/alg-sweep-store';
@@ -63,7 +63,7 @@ interface SetRow {
   srs: SrsSetStat;
 }
 
-const emptyMarks = (): SetMarkSummary => ({ learning: 0, mastered: 0, starred: 0 });
+const emptyMarks = (): SetMarkSummary => ({ learning: 0, mastered: 0 });
 
 /** 两张表的 key 并集 → 按 puzzle 分组的行,保持 ALG_CATALOG 里的 set 顺序。 */
 function buildRows(
@@ -345,11 +345,6 @@ function SetProgressRow({ row, onReset, busy }: {
             })}
           </span>
         )}
-        {marks.starred > 0 && (
-          <Link href={listHref('star')} className="alg-prog-stat is-star" prefetch={false}>
-            <Star size={12} className="alg-prog-stat-star" /> {marks.starred}
-          </Link>
-        )}
         {marks.learning > 0 && (
           <Link href={listHref('learning')} className="alg-prog-stat is-learning" prefetch={false}>
             {MARK_STATUS_LABEL.learning()} {marks.learning}
@@ -538,7 +533,7 @@ export default function AlgProgressPage() {
 
   const totals = useMemo(() => {
     const t = {
-      sets: 0, marked: 0, mastered: 0, starred: 0, learning: 0,
+      sets: 0, marked: 0, mastered: 0, learning: 0,
       due: 0, tracked: 0, relearn: 0, young: 0, mature: 0, reviews: 0, lapses: 0,
       known: 0,        // 分母已知的 set 里一共多少 case
       knownMarked: 0,  // 其中标过状态的。必须与 known 同口径 —— 拿含虚拟集的 marked 去减会把未学减没
@@ -546,12 +541,11 @@ export default function AlgProgressPage() {
     for (const rows of byPuzzle.values()) {
       for (const r of rows) {
         const n = r.marks.learning + r.marks.mastered;
-        if (n === 0 && r.marks.starred === 0 && r.srs.tracked === 0) continue;
+        if (n === 0 && r.srs.tracked === 0) continue;
         t.sets++;
         t.marked += n;
         t.mastered += r.marks.mastered;
         t.learning += r.marks.learning;
-        t.starred += r.marks.starred;
         t.due += r.srs.due;
         t.tracked += r.srs.tracked;
         t.relearn += r.srs.relearn;
@@ -584,8 +578,8 @@ export default function AlgProgressPage() {
   /** 清一套:标记 + 记忆排期。云端先删,失败就整个中止(不留「本地清了云端还在」的半态)。 */
   const resetOne = async (row: SetRow) => {
     const ok = window.confirm(tr({
-      zh: `重置「${row.name}」的学习进度?\n\n已掌握 / 不熟 / 星标 和这一套的记忆排期都会清空,不能撤销。复习日历不受影响。`,
-      en: `Reset your progress on ${row.name}?\n\nIts marks (mastered / shaky / starred) and memory schedule will be cleared. This cannot be undone. The review calendar is not affected.`,
+      zh: `重置「${row.name}」的学习进度?\n\n已掌握 / 不熟 和这一套的记忆排期都会清空,不能撤销。复习日历不受影响。`,
+      en: `Reset your progress on ${row.name}?\n\nIts marks (mastered / shaky) and memory schedule will be cleared. This cannot be undone. The review calendar is not affected.`,
     }));
     if (!ok) return;
     setResetting(row.key);
@@ -689,8 +683,6 @@ export default function AlgProgressPage() {
                 <StatTile n={`${Math.round(ret.rate * 100)}%`} label={tr({ zh: '记忆保持率', en: 'Retention' })}
                   sub={tr({ zh: `${ret.samples} 次复习`, en: `${ret.samples} reviews` })} />
               )}
-              <StatTile n={totals.starred} label={tr({ zh: '星标', en: 'Starred' })}
-                href={totals.starred > 0 ? '/alg/progress/cases?mark=star' : undefined} />
               <StatTile n={totals.sets} label={tr({ zh: '套', en: 'Sets' })} />
             </div>
 
