@@ -943,8 +943,8 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
             onChange={e => setNotationStyle(e.target.value as AlgNotationStyle)}
             aria-label={tr({ zh: '转动记号', en: 'Move notation' })}
           >
-            <option value="standard">{tr({ zh: '英文记号', en: 'English notation' })}</option>
-            <option value="zh-cstimer">{tr({ zh: '傻瓜记号', en: 'Foolproof notation' })}</option>
+            <option value="standard">{tr({ zh: '英文', en: 'English' })}</option>
+            <option value="zh-cstimer">{tr({ zh: '傻瓜', en: 'Foolproof' })}</option>
             <option value="zh-compact">{tr({ zh: '紧凑', en: 'Compact' })}</option>
           </select>
         )}
