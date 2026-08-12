@@ -1,0 +1,21 @@
+[Unit]
+Description=RecordRanks Next.js app for contests.cuberoot.me
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+WorkingDirectory=/www/wwwroot/contests-next
+EnvironmentFile=/etc/contests-next.env
+Environment="NODE_ENV=production"
+Environment="PORT=3005"
+Environment="HOSTNAME=127.0.0.1"
+ExecStart=/www/wwwroot/contests-next/start.sh
+Restart=on-failure
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target
