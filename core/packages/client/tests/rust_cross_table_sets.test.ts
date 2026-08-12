@@ -3,8 +3,8 @@
  *
  * 三条不变量,任一破了都会让浏览器端悄悄多下几十 MB、或者拿不到表直接 panic:
  *
- *  1. `TABLE_SETS` 只列 pt_ / opt_ 前缀的表(BFS 产物,必须下载)。mt_(移动表)由 WASM 现场生成
- *     (solver/src/mt_gen.rs),再出现在清单里就是白下载 —— mt_edge4 一张 gz 8.3MB。
+ *  1. `TABLE_SETS` 只列 pt_ / opt_ 前缀的预构建资产。mt_(移动表)不作为独立文件下载；
+ *     First Layer 所需移动表封在 opt_first_layer bundle 内。
  *  2. 清单与 worker 的 init 分支一一对应:worker 是手维护源,两边不同步 = 表缺失 panic
  *     或多下无用表。
  *  3. std 的 20MB pt_cross_C4E0 不在 `TABLE_SETS.cross` 里(它归 `XCROSS_TABLES`,
@@ -46,7 +46,7 @@ function workerTablesFor(need: string): string[] {
 }
 
 describe('rust-cross table sets', () => {
-  it('never lists a move table — those are generated in-WASM', () => {
+  it('never lists a standalone move-table asset', () => {
     for (const [need, tables] of Object.entries(TABLE_SETS)) {
       const mt = tables.filter((t) => t.startsWith('mt_'));
       expect(mt, `TABLE_SETS.${need} must not download move tables`).toEqual([]);

@@ -4,8 +4,8 @@
 //! 表的两条来路(2026-07-27 起):
 //!   · **pt_*(剪枝表)**:BFS 深搜产物,生成要几十秒 ⇒ 只能由 JS fetch 后传入构造器,
 //!     `PackedPruneTable::from_bin` 装进线性内存。
-//!   · **mt_*(移动表)**:纯运动学枚举产物 ⇒ 构造器内 `mt_gen::get()` **现场生成**,
-//!     不再经 JS 传入。浏览器因此少下 8.3MB(mt_edge4)~9MB(全套),见 `mt_gen` 模块文档。
+//!   · **mt_*(移动表)**:多数小求解器在 `mt_gen::get()` 现场生成，不再经 JS 传入。
+//!     First Layer 是例外：其 4490 万态 BFS 冷启动过重，最终移动表与 packed PDB 一起离线装载。
 //!
 //! 另:`CrossSolverWasm` 分两段 —— 构造只吃 pt_cross(gz 50KB)即可算纯十字;
 //! xcross 及以上要的 pt_cross_C4E0(gz 20MB)由 `attach_xcross` 惰性补,用户不切到
@@ -157,42 +157,31 @@ impl DaisySolverWasm {
 }
 
 /// 三阶 First Face / First Layer 两阶段求解器。两阶段共用角4/棱4移动表与
-/// First Face / 角 / 棱 / 联合排列 PDB，零下载、首次查询惰性现场构建。
+/// First Face / 角 / 棱 / 联合排列 PDB；全部从预构建 bundle 装载，客户端不跑 BFS。
 #[wasm_bindgen]
 pub struct FirstLayerSolverWasm {
-    solver: RefCell<Option<FirstLayerSolver>>,
+    solver: FirstLayerSolver,
 }
 
 #[wasm_bindgen]
 impl FirstLayerSolverWasm {
     #[wasm_bindgen(constructor)]
-    #[allow(clippy::new_without_default)]
-    pub fn new() -> FirstLayerSolverWasm {
-        FirstLayerSolverWasm {
-            solver: RefCell::new(None),
-        }
-    }
-
-    fn ensure(&self) {
-        if self.solver.borrow().is_none() {
-            *self.solver.borrow_mut() = Some(FirstLayerSolver::from_edge4(mt_gen::get("mt_edge4")));
-        }
+    pub fn new(precomputed: &[u8]) -> Result<FirstLayerSolverWasm, JsError> {
+        Ok(FirstLayerSolverWasm {
+            solver: FirstLayerSolver::from_precomputed(precomputed)
+                .map_err(|error| JsError::new(&error))?,
+        })
     }
 
     /// 单阶段 6 底色最优步数。stage 0=First Face，1=First Layer。
     pub fn solve_stage(&self, scramble: &str, stage: u32) -> Vec<u32> {
-        self.ensure();
         let stage = if stage == 0 {
             FirstLayerStage::FirstFace
         } else {
             FirstLayerStage::FirstLayer
         };
         let alg = string_to_alg(scramble);
-        self.solver
-            .borrow()
-            .as_ref()
-            .unwrap()
-            .get_stage_stats(stage, &alg, &ROTS)
+        self.solver.get_stage_stats(stage, &alg, &ROTS)
     }
 
     /// 单视角多解；前缀 = rot，c = 所选物理底面标签。
@@ -204,7 +193,6 @@ impl FirstLayerSolverWasm {
         extra: u32,
         cap: u32,
     ) -> String {
-        self.ensure();
         let stage = if stage == 0 {
             FirstLayerStage::FirstFace
         } else {
@@ -213,12 +201,9 @@ impl FirstLayerSolverWasm {
         let face = (face as usize).min(5);
         let rot = ROTS[face];
         let alg = string_to_alg(scramble);
-        let binding = self.solver.borrow();
-        let (len, sols) =
-            binding
-                .as_ref()
-                .unwrap()
-                .enumerate_face(stage, &alg, rot, extra, cap as usize);
+        let (len, sols) = self
+            .solver
+            .enumerate_face(stage, &alg, rot, extra, cap as usize);
         let items = sols
             .iter()
             .map(|sol| {

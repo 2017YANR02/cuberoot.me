@@ -263,12 +263,12 @@ export class F2leoSolverWasm {
 
 /**
  * 三阶 First Face / First Layer 两阶段求解器。两阶段共用角4/棱4移动表与
- * First Face / 角 / 棱 / 联合排列 PDB，零下载、首次查询惰性现场构建。
+ * First Face / 角 / 棱 / 联合排列 PDB；全部从预构建 bundle 装载，客户端不跑 BFS。
  */
 export class FirstLayerSolverWasm {
     free(): void;
     [Symbol.dispose](): void;
-    constructor();
+    constructor(precomputed: Uint8Array);
     /**
      * 单视角多解；前缀 = rot，c = 所选物理底面标签。
      */
@@ -568,7 +568,7 @@ export interface InitOutput {
     readonly f2leosolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => [number, number];
     readonly f2leosolverwasm_solve_moves_masked: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number) => [number, number];
     readonly f2leosolverwasm_solve_pseudo_f2leo: (a: number, b: number, c: number) => [number, number];
-    readonly firstlayersolverwasm_new: () => number;
+    readonly firstlayersolverwasm_new: (a: number, b: number) => [number, number, number];
     readonly firstlayersolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number];
     readonly firstlayersolverwasm_solve_stage: (a: number, b: number, c: number, d: number) => [number, number];
     readonly frsolverwasm_new: () => number;

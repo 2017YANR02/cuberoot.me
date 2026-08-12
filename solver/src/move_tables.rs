@@ -136,7 +136,7 @@ impl MoveTable {
     }
 
     /// 从现场生成的 u32 数组构造(不经 .bin 序列化)。`mt_gen` 走这条路:浏览器端
-    /// mt_* 一律现场建,不再下载。
+    /// mt_* 默认现场建；First Layer 的最终移动表走独立 opt bundle，不经本入口。
     pub fn from_vec(v: Vec<u32>, state_count: u32, stride: u32) -> MoveTable {
         assert_eq!(
             v.len() as u64,
