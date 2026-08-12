@@ -57,13 +57,13 @@ export default function MoveNotationDemo({ puzzle, moves, variant = 'list' }: Mo
           <span>{selected.caption}</span>
         </div>
         <AlgPlayer
-          key={`${puzzle}:${selected.move}`}
           alg={selected.move}
           puzzle={puzzle}
           set=""
           startSolved
           autoPlay
           loop
+          controlMode="replay"
           moveDurationMs={1000}
           engine={engine}
           size={260}

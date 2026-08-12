@@ -16,6 +16,7 @@ import { normalizeAlgForTwisty } from '@/lib/alg_normalize';
 import { pickStickering } from './stickering';
 import AlgSimPlayer from './AlgSimPlayer';
 import FtoEifAlgPlayer from './FtoEifAlgPlayer';
+import AlgPlaybackControls from './AlgPlaybackControls';
 import { resolvePlayerSetup, resolveTwistyTempoScale } from './player-setup';
 
 export interface AlgPlayerHandle {
@@ -54,6 +55,8 @@ interface Props {
   autoPlay?: boolean;
   /** 自动播放到末尾后从头重播。 */
   loop?: boolean;
+  /** 完整播放条或仅重播按钮。记号教学使用极简重播模式。 */
+  controlMode?: 'full' | 'replay';
   /** 单步教学示例的动画时长(ms)。不传时保留公式预览的快速节奏。 */
   moveDurationMs?: number;
   /** 自定义尺寸,默认 260px;`fillPane=true` 时忽略 */
@@ -83,6 +86,7 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
         startSolved={props.startSolved}
         autoPlay={props.autoPlay}
         loop={props.loop}
+        controlMode={props.controlMode}
         moveDurationMs={props.moveDurationMs}
         size={props.size}
         fillPane={props.fillPane}
@@ -96,6 +100,7 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
       <AlgSimPlayer
         alg={props.alg} puzzle={props.puzzle} set={props.set} setup={props.setup}
         startSolved={props.startSolved} autoPlay={props.autoPlay} loop={props.loop}
+        controlMode={props.controlMode}
         moveDurationMs={props.moveDurationMs} size={props.size ?? 260} fillPane={props.fillPane}
       />
     );
@@ -103,7 +108,7 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
   return <TwistyAlgPlayer {...props} ref={ref} />;
 });
 
-const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPlayer({ alg, puzzle, set, setup, startSolved = false, autoPlay = false, loop = false, moveDurationMs, size = 260, fillPane = false }, ref) {
+const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPlayer({ alg, puzzle, set, setup, startSolved = false, autoPlay = false, loop = false, controlMode = 'full', moveDurationMs, size = 260, fillPane = false }, ref) {
   const hostRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const playerRef = useRef<any>(null);
@@ -133,7 +138,7 @@ const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPla
           puzzle: TWISTY_PUZZLE[puzzle],
           experimentalSetupAlg: setupForTwisty,
           alg: normalized,
-          controlPanel: 'bottom-row',
+          controlPanel: controlMode === 'replay' ? 'none' : 'bottom-row',
           background: 'none',
           hintFacelets: 'none',
           backView: 'none',
@@ -182,12 +187,36 @@ const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPla
       if (player && host.contains(player)) host.removeChild(player);
       if (playerRef.current === player) playerRef.current = null;
     };
-  }, [alg, puzzle, set, setup, startSolved, autoPlay, loop, moveDurationMs, size, fillPane]);
+  }, [alg, puzzle, set, setup, startSolved, autoPlay, loop, controlMode, moveDurationMs, size, fillPane]);
   // NOTE: 固定 host 尺寸,player 重 mount 时容器占位不丢,父布局不抖
   const hostStyle: CSSProperties = fillPane
     ? { width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }
     : { width: size, height: size, display: 'flex', alignItems: 'center', justifyContent: 'center' };
-  return <div ref={hostRef} className="alg-twisty-host" style={hostStyle} />;
+  const host = <div ref={hostRef} className="alg-twisty-host" style={hostStyle} />;
+  if (controlMode !== 'replay') return host;
+
+  return (
+    <div className={`alg-sim-player${fillPane ? ' is-fill' : ''}`}>
+      {host}
+      <AlgPlaybackControls
+        step={0}
+        count={alg.trim() ? 1 : 0}
+        playing={false}
+        onStepChange={() => {}}
+        onPlayingChange={() => {}}
+        mode="replay"
+        onReplay={() => {
+          const player = playerRef.current;
+          if (!player) return;
+          try {
+            player.pause?.();
+            player.timestamp = 0;
+            player.play?.();
+          } catch { /* player may still be initializing */ }
+        }}
+      />
+    </div>
+  );
 });
 
 export default AlgPlayer;

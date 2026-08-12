@@ -35,6 +35,7 @@
 }
 .alg-sim-btn:disabled { opacity: 0.35; cursor: default; }
 .alg-sim-btn.is-primary { color: var(--foreground); }
+.alg-sim-controls.is-replay-only .alg-sim-btn { padding: 6px; }
 .alg-sim-scrub {
   width: 120px;
   max-width: 40vw;

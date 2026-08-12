@@ -39,7 +39,7 @@ export default function NotationPage() {
         )}
       >
         <p className="reg-sec-lede" style={{ marginTop: 0 }}>
-          {<T zh={<>每种魔方都有自己的一套字母,但思路是统一的:<b>一个大写字母代表转动哪一层或哪个面</b>,后面可以跟修饰符表示方向和角度。下面按魔方种类逐一演示,选择记号后可直接播放、逐步查看,也可进入完整模拟器自由拖动。</>} en={<>Each puzzle has its own letters, but the idea is the same: <b>one capital letter says which face or layer turns</b>, and an optional suffix says how far and which way. Choose a symbol below to play it, step through it, or open the full simulator for hands-on exploration.</>} />}
+          {<T zh={<>每种魔方都有自己的一套字母,但思路是统一的:<b>一个大写字母代表转动哪一层或哪个面</b>,后面可以跟修饰符表示方向和角度。下面按魔方种类逐一演示,选择记号后可直接播放或重播,也可进入完整模拟器自由拖动。</>} en={<>Each puzzle has its own letters, but the idea is the same: <b>one capital letter says which face or layer turns</b>, and an optional suffix says how far and which way. Choose a symbol below to play or replay it, or open the full simulator for hands-on exploration.</>} />}
         </p>
       </RegSection>
 
