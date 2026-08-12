@@ -1,7 +1,7 @@
 /**
  * 校验 alg case 的"setup + alg" 是否真的完成了**这个 set 该完成的事**。
  *
- * 支持的 puzzle:2x2 / 3x3 / 4x4 / 5x5 / sq1 / megaminx / pyraminx / skewb。
+ * 支持的 puzzle:2x2 / 3x3 / 4x4 / 5x5 / sq1 / megaminx / pyraminx / skewb / FTO。
  *
  * ## 判据按 set 走,不是按 sticker.kind
  *
@@ -29,6 +29,7 @@ import type { AlgPuzzle, AlgSticker } from '@cuberoot/shared';
 import { normalizeAlg } from '@/lib/alg_normalize';
 import { displayAlg } from '@/lib/alg_display';
 import { goalOf, reachesGoal, type AlgGoal } from '@/lib/alg_goals';
+import { invertFtoEifAlgorithm, isFtoEifSolved, parseFtoEifAlgorithm } from '@/lib/fto-eif-image';
 
 export interface ValidateAlgResult {
   ok: boolean;
@@ -78,6 +79,7 @@ export function setupForCase(
 ): string {
   let base = caseSetup?.trim() ?? '';
   if (!base && firstAlg) {
+    if (puzzle === 'fto') return invertFtoEifAlgorithm(firstAlg);
     try { base = new Alg(normalizeAlg(puzzle as AlgPuzzle, firstAlg)).invert().toString(); }
     catch { return ''; }
   }
@@ -94,6 +96,17 @@ export async function validateAlgCase(
   puzzle: string,
   set?: string,
 ): Promise<ValidateAlgResult> {
+  if (puzzle === 'fto') {
+    if (!alg.trim()) return { ok: true, auf: '' };
+    const cleanAlg = parseFtoEifAlgorithm(alg);
+    const cleanSetup = parseFtoEifAlgorithm(setup);
+    const invalid = [...cleanSetup.invalid, ...cleanAlg.invalid];
+    if (invalid.length > 0) return { ok: false, reason: `公式语法错误:不支持的 EIF 记号 ${invalid.join(' ')}` };
+    const sequence = [...cleanSetup.tokens, ...cleanAlg.tokens].join(' ');
+    return isFtoEifSolved(sequence)
+      ? { ok: true, auf: '' }
+      : { ok: false, reason: '执行 setup + alg 后没有还原 FTO' };
+  }
   const loader = loadKpuzzle(puzzle);
   if (!loader) return { ok: true };
   if (!alg.trim()) return { ok: true };

@@ -364,6 +364,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 117, slug: 'psf2l_f2l_names', desc: { zh: '数据修正：伪槽情况改用首选解去掉首尾 D 层转动后所对应的 F2L 情况名，例如 PSF2L 01 改为 A+。', en: 'Data correction: name each Pseudoslotting case after the F2L case matched by its primary algorithm with the outer D turns removed, for example PSF2L 01 becomes A+.' } },
   { n: 118, slug: 'update_wrap_up_prompt_for_codex', desc: { zh: '数据修正：收尾审查提示词改用当前的 AGENTS.md、skill、memory 与 hook 交接约定。', en: 'Data correction: update the wrap-up prompt to use the current AGENTS.md, skill, memory, and hook handoff conventions.' } },
   { n: 119, slug: 'fix_zbls_mirror_auf', desc: { zh: '数据修正：为 3 个自镜像 ZBLS 的自动镜像公式补齐目标视角所需的起手 U 层调整。', en: 'Data correction: add the starting U-layer alignment required by three auto-mirrored self-symmetric ZBLS algorithms.' } },
+  { n: 121, slug: 'lowcubes_fto_megaminx', desc: { zh: '数据迁移：导入 LowCubes / Raul Low 的 216 个 FTO L3T 情况与 151 个 Megaminx Full PLL 情况，setup 按上游记号规则严格取逆。', en: 'Data migration: import 216 LowCubes / Raul Low FTO L3T cases and 151 Megaminx Full PLL cases, with each setup exactly inverted under the upstream notation rules.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

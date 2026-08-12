@@ -85,6 +85,7 @@ function PlayableAlgRow({ entry, puzzle, set, setup, mirror, ori = 0, viewAngle 
   const angledAlg = caseViewAlg(entry.alg, viewAngle);
   const shown = formatScrambleForEvent(puzzle, displayAlg(angledAlg));
   const len = entry.stm == null ? null : stm(displayAlg(angledAlg));
+  const playerSetup = entry.setup ?? setup;
   return (
     <>
       <div
@@ -123,7 +124,7 @@ function PlayableAlgRow({ entry, puzzle, set, setup, mirror, ori = 0, viewAngle 
           alg={angledAlg}
           puzzle={puzzle}
           set={set}
-          setup={setup === undefined ? undefined : caseViewSetup(setup, viewAngle)}
+          setup={playerSetup === undefined ? undefined : caseViewSetup(playerSetup, viewAngle)}
         />
       )}
     </>

@@ -58,8 +58,8 @@ interface Props {
   mirrorPending?: boolean;
   /** 伙伴 case 拉不回来的说明。有值就在弹层里明说,不假装「没有连带」。 */
   mirrorError?: string | null;
-  /** 当前聚焦行的纯文本(无聚焦则空)—— 父组件用来驱动左侧 AlgPlayer */
-  onCurrentAlgChange?: (alg: string) => void;
+  /** 当前聚焦行的纯文本和专属 setup —— 父组件用来驱动左侧 AlgPlayer。 */
+  onCurrentAlgChange?: (alg: string, setup?: string) => void;
   /** 聚焦行内 caret 之前的 token 数(光标 sync 用) */
   onCursorMoveCount?: (n: number) => void;
 }
@@ -128,8 +128,9 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, initialInv
   }, [focusedUid]);
 
   useEffect(() => {
-    onCurrentAlgChange?.(currentAlg);
-  }, [currentAlg, onCurrentAlgChange]);
+    const row = layout.flat().find(item => item.uid === focusedUid);
+    onCurrentAlgChange?.(currentAlg, row?.setup);
+  }, [currentAlg, focusedUid, layout, onCurrentAlgChange]);
 
   useImperativeHandle(ref, () => ({
     getValue: (): AlgEntry[][] =>

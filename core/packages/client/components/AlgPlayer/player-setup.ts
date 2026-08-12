@@ -1,5 +1,6 @@
 import type { AlgPuzzle } from '@cuberoot/shared';
 import { normalizeAlgForTwisty } from '@/lib/alg_normalize';
+import { invertFtoEifAlgorithm } from '@/lib/fto-eif-image';
 
 /** 公式预览沿用的快速动画;记号教学可单独传入更慢的单步时长。 */
 export const DEFAULT_PREVIEW_TIMING = { frames: 8, stepMs: 260 } as const;
@@ -55,5 +56,6 @@ export function resolvePlayerSetup(
 ): string {
   if (startSolved) return '';
   if (setup?.trim()) return normalizeAlgForTwisty(puzzle, setup);
+  if (puzzle === 'fto') return invertFtoEifAlgorithm(alg);
   return `(${normalizeAlgForTwisty(puzzle, alg)})'`;
 }

@@ -194,6 +194,13 @@
     "long_en": "UI/concept reference for `/wca` sub-pages and person details. The authorized source also provides the flat SVG templates and puzzle-specific controls ported into `/sim` drawing mode for SQ1, Megaminx, Skewb, Pyraminx, and FTO; CubeRoot supplies the shared editor, theme, responsive UI, and export pipeline."
   },
   {
+    "name": "LowCubes / Raul Low",
+    "url": "https://www.lowcubes.com/",
+    "zh": "经作者许可移植 FTO Bencisco L3T、Megaminx Full PLL 公式数据及 FTO EIF 图片生成器；页面、渲染器与交互按本站架构重写",
+    "en": "Authorized FTO Bencisco L3T and Megaminx Full PLL data, plus the FTO EIF image-generator behavior; pages, renderer, and interactions are reimplemented for CubeRoot",
+    "long_en": "Authorized source for the FTO Bencisco last-three-triangles library, Megaminx Full PLL library, and the EIF-notation FTO image generator behavior. CubeRoot reimplements the pages, strict notation parser, SVG renderer, simulator integration, responsive UI, and export flow in its own architecture."
+  },
+  {
     "name": "rullerzhou-afk/clawd-on-desk",
     "url": "https://github.com/rullerzhou-afk/clawd-on-desk",
     "zh": "桌面 AI 桌宠;右下角 Clawd 像素螃蟹的动画与交互移植自此(Clawd 形象版权归 Anthropic,非官方粉丝作品)",

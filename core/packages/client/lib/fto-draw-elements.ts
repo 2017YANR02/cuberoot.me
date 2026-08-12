@@ -1,4 +1,4 @@
-import type { DrawElement } from './types';
+import type { DrawElement } from '@/components/puzzle-draw/types';
 
 export const FTO_DRAW_ELEMENTS: DrawElement[] = [
   { key: "D1", d: "M91.59,236.79H37.16a2.84,2.84,0,0,0-1.42,5.29L61.54,257a5.68,5.68,0,0,0,5.67,0L93,242.08A2.84,2.84,0,0,0,91.59,236.79Z" },

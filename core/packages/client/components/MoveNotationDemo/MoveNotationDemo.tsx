@@ -29,6 +29,7 @@ const SIM_PUZZLE: Record<AlgPuzzle, string> = {
   megaminx: 'megaminx',
   pyraminx: 'pyraminx',
   skewb: 'skewb',
+  fto: 'fto',
 };
 
 function simHref(puzzle: AlgPuzzle, move: string): string {
