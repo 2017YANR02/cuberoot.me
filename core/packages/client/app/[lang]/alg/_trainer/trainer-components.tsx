@@ -161,11 +161,10 @@ export function SolveCard({
           })}</div>
         ) : (
           <>
-            {/* 图这一行三格:标记图标一左一右夹着图。标记是顺手一点的事,贴着它指的那张图
-                最好按 —— 摆回标题行就离图远了,还得多占一行。 */}
-            <div className="trainer-figure">
-              {markSlot}
-              {showThumb && (
+            {/* 开图时标记图标一左一右夹着图；关图时标记与下方公式共用一行。 */}
+            {showThumb && (
+              <div className="trainer-figure">
+                {markSlot}
                 <CaseThumbAction
                   name={name ?? ''}
                   onOpen={onShowCase && c ? () => onShowCase(c) : undefined}
@@ -183,11 +182,14 @@ export function SolveCard({
                     local={localThumb}
                   />
                 </CaseThumbAction>
-              )}
-            </div>
+              </div>
+            )}
             {/* 打乱与主屏那条同一份渲染(同字号 / 同字体档位):两边并排摆着,字号不一样
                 只会让人以为它们是两种东西。 */}
-            <ScrambleHeader scramble={scramble} font={font} />
+            <div className="trainer-scramble-line">
+              {!showThumb && markSlot}
+              <ScrambleHeader scramble={scramble} font={font} />
+            </div>
           </>
         )}
       </div>
