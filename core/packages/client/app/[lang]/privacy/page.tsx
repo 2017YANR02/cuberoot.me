@@ -27,16 +27,16 @@ export default function PrivacyPage() {
       <h2>{t('备份与删除', 'Backups and deletion')}</h2>
       <p>
         {t(
-          '只有在你主动导出时,App 才会创建 JSON 备份并交给系统分享或下载界面。App 不会自动上传备份。数据保留在设备上,直到你删除单条记录、通过系统设置清除 App 数据或卸载 App。导出文件由你选择的位置或接收方保管,需要由你自行删除。',
-          'The app creates a JSON backup only when you choose Export and hands it to the system share or download interface. Backups are not uploaded automatically. Data remains on your device until you delete individual solves, clear app storage in system settings, or uninstall the app. You control and must delete any exported copies from their chosen destination or recipient.',
+          '只有在你主动导出时,App 才会创建 JSON 备份并交给系统分享或下载界面。App 不会自动上传备份。你可以删除活动记录中的单条成绩;通过系统设置清除 App 数据或卸载 App 会删除 App 保存的全部本地数据。导出文件由你选择的位置或接收方保管,需要由你自行删除。',
+          'The app creates a JSON backup only when you choose Export and hands it to the system share or download interface. Backups are not uploaded automatically. You can delete individual solves from the active history; clearing app storage in system settings or uninstalling the app deletes all local data stored by the app. You control and must delete any exported copies from their chosen destination or recipient.',
         )}
       </p>
 
       <h2>{t('导入与本地恢复', 'Import and local recovery')}</h2>
       <p>
         {t(
-          '当你主动选择 JSON 文件导入时,App 只在设备上读取并校验该文件,然后把有效数据保存到 App 的本地数据库。替换前的有效数据会在本地保留为一次撤销恢复点;导入文件和恢复点都不会由 App 上传。',
-          'When you choose a JSON file to import, the app reads and validates it only on the device, then stores valid data in the app’s local database. Valid data replaced by the import is retained locally as a one-time undo recovery point. Neither the imported file nor the recovery point is uploaded by the app.',
+          '当你主动选择 JSON 文件导入时,App 只在设备上读取并校验该文件,然后把有效数据保存到 App 的本地数据库。替换前的有效数据会在本地保留为一次撤销恢复点,因此之后从活动记录删除的成绩仍可能存在于该恢复点中。使用一次“撤销导入”会删除恢复点;下一次成功导入会替换它;清除 App 数据或卸载 App 会将它一并删除。导入文件和恢复点都不会由 App 上传。',
+          'When you choose a JSON file to import, the app reads and validates it only on the device, then stores valid data in the app’s local database. Valid data replaced by the import is retained locally as a one-time undo recovery point, so a solve later deleted from the active history may still remain in that recovery point. Using Undo import deletes the recovery point, the next successful import replaces it, and clearing app storage or uninstalling the app deletes it with all other local data. Neither the imported file nor the recovery point is uploaded by the app.',
         )}
       </p>
 

@@ -32,7 +32,7 @@
 - [x] Windows 上的 Android SDK、JDK、adb 和 Gradle 构建链可用。
 - [x] 已建立 `core/packages/mobile` React + Vite + Capacitor workspace，Web 资源从本地 `dist` 打包。
 - [x] Debug 使用独立 application ID `me.cuberoot.app.debug`，Release 保留 `me.cuberoot.app`。
-- [x] 已构建并在 MuMu 模拟器安装 Debug APK，验证启动、横竖屏和 Android 返回键。
+- [x] 已构建并在 MuMu 模拟器安装 Debug APK，验证启动、横屏布局和 Android 返回键。
 - [x] 已验证 HTTPS 网络访问；当前远程网站入口仅为过渡验证，不计作正式 App 核心体验。
 - [x] 已用本地计时、记录和设置替换自动打开远程网站的过渡界面；网站只保留为用户主动打开的外链。
 - [ ] 在实体 Android 设备验证启动、触摸、键盘、安全区、旋转、后台恢复和 adb 日志。（当前没有 Android 真机）
@@ -47,6 +47,7 @@
 - 本地离线计时 MVP 提交：`68955879ba`；中断按压边界修复：`1c2b57edcb`。
 - Android 构建 CI 提交：`b910dceccd`；复用网站品牌资源的图标和系统启动页提交：`eca3ee0a15`。
 - Release 签名、权限收口、统一迁移、导入恢复、隐私页和发布 CI 提交：`774004d2a2`。
+- 三路审计修复提交：`8eaeacabd2`。
 - MuMu 实测完成一次 `6.93` 计时，修改为 `+2` 后显示 `8.93`，添加备注后杀进程重启，记录数和最佳成绩均保留。
 - MuMu 已实测桌面启动图标；Android 12 系统启动页已完成原生主题迁移并通过构建。录屏只能确认背景和交接过程，未把系统图标层作为已验证证据。
 - Debug APK：`core/packages/mobile/android/app/build/outputs/apk/debug/app-debug.apk`。
@@ -101,6 +102,7 @@
 - [ ] 生成并验证 Android 内部测试 AAB。
   - [x] 本机已用临时上传密钥生成并验证签名 Release APK/AAB；CI 也使用临时密钥强制验证 release 签名、版本和完整权限白名单。
   - [ ] Play App Signing 的真实上传密钥、internal track 安装/升级和回滚尚未验证；需要已通过验证的发布账号。
+- [x] 完成代码正确性、复用维护性、发布合规三路 agent 审计；审计发现已修复并通过只读复审，无上架代码阻断。
 
 当前阶段 4 证据：
 
@@ -1494,7 +1496,7 @@ Android 稳定后
 长期
  14. 内容继续走网站/API即时更新
  15. App 代码按月集中发布
- 17. 旧版兼容、隐私、SDK和证书定期复核
+ 16. 旧版兼容、隐私、SDK和证书定期复核
 ```
 
 最省心不是永远不更新 App，而是把“每天会变的内容”和“必须审核的客户端代码”分开。只要这个边界从第一天守住，CubeRoot 网站继续快速迭代，App 不需要跟着每次手工改一遍。
