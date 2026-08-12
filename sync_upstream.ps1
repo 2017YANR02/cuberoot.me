@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-    一键同步全部上游 fork（csTimer / RubiksSolverDemo / Alg-Trainers）到本仓库。
+    一键同步全部上游 fork（csTimer / RubiksSolverDemo / Alg-Trainers / BLDDB / RecordRanks）。
 .DESCRIPTION
-    统一入口：先把三个上游 clone 拉到最新（本地补丁自动 stash/pop 保住），
-    再依次跑各自的同步脚本。不自动 commit —— 跑完自己 git diff 审完再提。
+    统一入口：拉取各上游并运行对应同步脚本。不自动提交 cuberoot.me，
+    跑完自己审 diff 再提交。RecordRanks 会验证并推送本站 fork，再更新部署 SHA。
 
     子脚本（可单独跑，但日常一律走本脚本）：
       _sync_cstimer.ps1           csTimer 全量构建 → tools/cstimer/ + client public/scramble_module.js
@@ -11,17 +11,18 @@
       _sync_RubiksSolverDemo.ps1  Solver → tools/{src,solver,2x2x2,...}/
       sync_alg_trainers.ps1       Alg-Trainers → tools/alg_trainers/
       _sync_blddb.ps1             BLDDB → tools/blddb/(next build 静态导出)
+      _sync_recordranks.ps1       RecordRanks → fork main + ops/contests/recordranks-ref.txt
 .PARAMETER Only
-    只同步部分上游：cstimer / solver / algtrainers / blddb（可多选）。默认全同步。
+    只同步部分上游：cstimer / solver / algtrainers / blddb / recordranks（可多选）。默认全同步。
 .PARAMETER SkipPull
     跳过 git pull，只用当前 clone 的工作区重新生成产物。
 .PARAMETER DryRun
-    传给支持预览的子脚本（solver / algtrainers）；csTimer 构建不支持，会被跳过。
+    传给支持预览的子脚本（solver / algtrainers / recordranks）；其余构建会被跳过。
 .NOTES
     前置：Java 21 + PHP 8.3 + C:\mingw64\bin\mingw32-make.exe（仅 csTimer 构建需要）。
 #>
 param(
-    [ValidateSet('cstimer', 'solver', 'algtrainers', 'blddb')]
+    [ValidateSet('cstimer', 'solver', 'algtrainers', 'blddb', 'recordranks')]
     [string[]]$Only,
     [switch]$SkipPull,
     [switch]$DryRun
@@ -38,7 +39,8 @@ $upstreams = @(
     @{ Key = 'blddb';       Dir = 'D:\cube\blddb';                    Branch = 'v2';     Repo = 'https://github.com/nbwzx/blddb.git' }
 )
 
-$targets = if ($Only) { $Only } else { $upstreams.Key }
+$allTargets = @($upstreams.Key) + 'recordranks'
+$targets = if ($Only) { $Only } else { $allTargets }
 $summary = [ordered]@{}
 
 function Write-Section($text)
@@ -150,6 +152,16 @@ if ($targets -contains 'blddb')
     }
 }
 
+if ($targets -contains 'recordranks')
+{
+    Write-Host "`n--- RecordRanks（合并上游、检查、构建、推 fork、更新部署 SHA）---" -ForegroundColor Cyan
+    $recordRanksArgs = @{}
+    if ($SkipPull) { $recordRanksArgs.SkipPull = $true }
+    if ($DryRun) { $recordRanksArgs.DryRun = $true }
+    & (Join-Path $root '_sync_recordranks.ps1') @recordRanksArgs
+    $summary.recordranks = if ($DryRun) { '预览完成' } else { 'fork 与部署 SHA 已同步' }
+}
+
 # ===== 汇总 =====
 Write-Section '全部完成'
 foreach ($k in $summary.Keys)
@@ -157,4 +169,4 @@ foreach ($k in $summary.Keys)
     Write-Host ("  {0,-12} {1}" -f $k, $summary[$k])
 }
 Write-Host "`n改动未提交。审 diff：" -ForegroundColor Green
-Write-Host "  git status --short tools/ core/packages/client/public/scramble_module.js" -ForegroundColor DarkGray
+Write-Host "  git status --short tools/ core/packages/client/public/scramble_module.js ops/contests/recordranks-ref.txt" -ForegroundColor DarkGray
