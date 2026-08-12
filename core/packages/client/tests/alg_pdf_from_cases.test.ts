@@ -98,4 +98,17 @@ describe('algSheetFromCases', () => {
     expect(plain.cases[0].thumb?.simplifyRecognition).toBeUndefined();
     expect(simplified.cases[0].thumb?.simplifyRecognition).toBe(true);
   });
+
+  it('PDF 的图、打乱和公式跟随网页观察角度', () => {
+    const c = mkCase({
+      name: 'T',
+      setup: "R U R'",
+      algs: [[{ alg: "U R U R' U" }]],
+    });
+    const sheet = algSheetFromCases({ ...base, cases: [c], viewAngle: 'u' });
+    expect(sheet.cases[0].setup).toBe("R U R' U");
+    expect(sheet.cases[0].thumb?.setup).toBe("R U R' U");
+    expect(sheet.cases[0].thumb?.alg).toBe("R U R' U");
+    expect(sheet.cases[0].algs).toEqual(["R U R'"]);
+  });
 });

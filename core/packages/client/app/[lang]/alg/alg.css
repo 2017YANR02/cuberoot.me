@@ -1754,16 +1754,25 @@ a.alg-community-author:hover {
   gap: 4px;
 }
 .alg-meta-section > h3,
-.alg-meta-section-head > h3 {
+.alg-meta-scramble-row > h3 {
   margin: 0;
   font-size: 12px;
   font-weight: 600;
   color: var(--muted-foreground);
 }
-.alg-meta-section-head {
+.alg-meta-scramble-row {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
+}
+.alg-meta-scramble-row > h3,
+.alg-meta-scramble-row > select {
+  flex: none;
+}
+.alg-meta-scramble-row > .alg-meta-algline {
+  flex: 1;
+  min-width: 0;
 }
 .alg-meta-scramble-kind {
   align-self: flex-start;
@@ -1774,6 +1783,17 @@ a.alg-community-author:hover {
   background: var(--background);
   color: var(--foreground);
   font-size: 12px;
+}
+
+.alg-view-angle {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  gap: 5px;
+  width: max-content;
+  white-space: nowrap;
+  color: var(--muted-foreground);
+  font-size: 13px;
 }
 .alg-meta-scramble-loading {
   font-size: 12px;

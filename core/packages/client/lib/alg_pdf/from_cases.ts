@@ -10,7 +10,14 @@
 import type { AlgCase, AlgEntry, AlgPuzzle } from '@cuberoot/shared';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { primaryCaseName } from '@/lib/alg_case_display';
-import { displayAlg, oriAdjustSetup, shortOriName } from '@/lib/alg_display';
+import {
+  caseViewAlg,
+  caseViewSetup,
+  displayAlg,
+  oriAdjustSetup,
+  shortOriName,
+  type CaseViewAngle,
+} from '@/lib/alg_display';
 import type { AlgPdfCase, AlgPdfSheetInput } from './sheet';
 
 export type AlgSheetInput = Omit<AlgPdfSheetInput, 'onProgress' | 'shouldCancel'>;
@@ -60,6 +67,8 @@ export interface FromCasesOptions {
   sq1BlackTop?: boolean;
   /** 识别简化图开关；网页与 PDF 必须使用同一张渲染计划。 */
   simplifyRecognition?: boolean;
+  /** 顶层 case 的观察角度；打乱、缩略图与公式一起旋转。 */
+  viewAngle?: CaseViewAngle;
 }
 
 export function algSheetFromCases(o: FromCasesOptions): AlgSheetInput {
@@ -82,9 +91,9 @@ export function algSheetFromCases(o: FromCasesOptions): AlgSheetInput {
       const allForOri = c.algs[oriIdx] ?? c.algs[0] ?? [];
       const picked = (algFilter ? allForOri.filter(algFilter) : allForOri).slice(0, maxAlgs);
       // 印出来的打乱跟着视角转 —— 图是按 `oriAdjustSetup` 画的,打乱不跟着就摆不出图上那个态
-      const setup = oriAdjustSetup(c.setup, oriIdx);
+      const setup = caseViewSetup(oriAdjustSetup(c.setup, oriIdx), o.viewAngle ?? 'default');
       // 图取未筛选的首条 —— 筛选只该影响印出来的公式,不该换掉这张 case 的图
-      const firstAlg = allForOri[0]?.alg ?? c.standard ?? '';
+      const firstAlg = caseViewAlg(allForOri[0]?.alg ?? c.standard ?? '', o.viewAngle ?? 'default');
       const sub = c.subgroup || '';
       const oriName = oris.length > 1 ? shortOriName(c.oriNames?.[oriIdx] ?? '') : '';
       out.push({
@@ -92,7 +101,10 @@ export function algSheetFromCases(o: FromCasesOptions): AlgSheetInput {
         sub: oriName || (subOf ? subOf(c) : (c.number != null ? `#${c.number}` : undefined)),
         group: showGroups ? (groupLabel?.(sub) ?? sub ?? undefined) : undefined,
         setup: setups && setup ? formatScrambleForEvent(puzzle, setup) : undefined,
-        algs: picked.map(e => formatScrambleForEvent(puzzle, rawAlg ? e.alg : displayAlg(e.alg))),
+        algs: picked.map(e => {
+          const angled = caseViewAlg(e.alg, o.viewAngle ?? 'default');
+          return formatScrambleForEvent(puzzle, rawAlg ? angled : displayAlg(angled));
+        }),
         thumb: thumbs
           ? {
               puzzle, set, sticker: c.sticker, alg: firstAlg || c.setup || '', setup, size: 160,

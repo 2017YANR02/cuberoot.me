@@ -14,9 +14,9 @@
  * 3. **只对 `MIRROR_ALG_SYNC_SETS` 生效**(3x3 f2l / zbls)。cls 有伙伴但只存一个视角,
  *    生成的公式没有格子可放,见那个常量的注释。
  *
- * 不做校验:server 对**人写的**公式都不跑 `validateAlgCase`(那是 AdminCaseEditor 保存前的事),
- * 对机器按固定表重写出来的公式反而更严一档说不通。镜像表本身的正确性由
- * `tests/alg_mirror_rewrite.test.ts`(全库对撞 + 逐条过站上同一份 `reachesGoal`)守。
+ * 自动生成条还要按目标 case 的 setup 做一次状态对齐。镜像几何能保证公式手性正确，却不能
+ * 保证自镜像 case 在目标槽位仍是同一个 AUF；少数对称 case 需要在公式开头补 U / U2 / U'。
+ * 这里尝试四种起手 AUF 并只改生成条，人写的公式仍由 AdminCaseEditor 的完整校验负责。
  */
 import {
   MIRROR_ALG_SYNC_SETS,
@@ -24,11 +24,14 @@ import {
   type AlgEntry,
   type MirrorPairCase,
 } from '@cuberoot/shared/alg-mirror';
+import type { KPattern, KPuzzle } from 'cubing/kpuzzle';
+import { puzzles } from 'cubing/puzzles';
 import { query } from '../db/connection.js';
 
 interface MirrorRow {
   id: number | string;
   algs: unknown;
+  setup: string | null;
   mirror_case_id: number | string | null;
 }
 
@@ -62,9 +65,109 @@ const toPairCase = (r: MirrorRow): MirrorPairCase => ({
   algs: (Array.isArray(r.algs) ? r.algs : []) as AlgEntry[][],
 });
 
+const AUF_PREFIXES = ['', 'U', 'U2', "U'"] as const;
+const VIEW_PRE = ['', "y'", 'y2', 'y'] as const;
+const VIEW_POST = ['', 'y', 'y2', "y'"] as const;
+const CUBE_ORIENTATIONS = ['', 'y', 'y2', "y'", 'x', 'x y', 'x y2', "x y'", 'x2', 'x2 y', 'x2 y2', "x2 y'", "x'", "x' y", "x' y2", "x' y'", 'z', 'z y', 'z y2', "z y'", "z'", "z' y", "z' y2", "z' y'"] as const;
+const U_TURNS: Record<string, number> = { U: 1, U2: 2, "U2'": 2, "U'": 3 };
+const TURN_U = ['', 'U', 'U2', "U'"] as const;
+const LEADING_U = /^U(2'?|')?(?:\s+|$)/;
+const D_CORNERS = [4, 5, 6, 7];
+const U_EDGES = [0, 1, 2, 3];
+const F2L_EDGES = [4, 5, 6, 7, 8, 9, 10, 11];
+
+type Orbit = { pieces: number[]; orientation: number[] };
+const orbit = (pattern: KPattern, name: string) => pattern.patternData[name] as unknown as Orbit;
+const solvedAt = (o: Orbit, slots: number[]) => slots.every(i => o.pieces[i] === i && (o.orientation[i] ?? 0) === 0);
+const orientedAt = (o: Orbit, slots: number[]) => slots.every(i => (o.orientation[i] ?? 0) === 0);
+
+let cube3Promise: Promise<KPuzzle> | null = null;
+const cube3 = () => (cube3Promise ??= puzzles['3x3x3'].kpuzzle());
+
+/** f2l / zbls 自动镜像条真正需要达成的目标；只在这两个同步 set 内调用。 */
+function reachesMirrorGoal(pattern: KPattern, set: string): boolean {
+  const c = orbit(pattern, 'CORNERS');
+  const e = orbit(pattern, 'EDGES');
+  const f2l = solvedAt(c, D_CORNERS) && solvedAt(e, F2L_EDGES);
+  return f2l && (set !== 'zbls' || orientedAt(e, U_EDGES));
+}
+
+function reachesMirrorGoalInAnyOrientation(pattern: KPattern, set: string): boolean {
+  return CUBE_ORIENTATIONS.some(rotation => {
+    try {
+      const candidate = rotation ? pattern.applyAlg(rotation) : pattern;
+      return reachesMirrorGoal(candidate, set);
+    } catch {
+      return false;
+    }
+  });
+}
+
+/** 前缀与公式原有的第一个 U 合并，避免修成 `U U' ...` 这种虽对但难读的形式。 */
+function prependAuf(alg: string, prefix: Exclude<(typeof AUF_PREFIXES)[number], ''>): string {
+  const trimmed = alg.trimStart();
+  const match = trimmed.match(LEADING_U);
+  const leading = match?.[0]?.trim();
+  if (!match || !leading) return `${prefix} ${trimmed}`;
+  const rest = trimmed.slice(match[0].length);
+  const turns = (U_TURNS[prefix] + (U_TURNS[leading] ?? 0)) % 4;
+  return [TURN_U[turns], rest].filter(Boolean).join(' ');
+}
+
+function setupForView(setup: string, view: number): string {
+  const i = ((view % 4) + 4) % 4;
+  if (i === 0) return setup;
+  return `${VIEW_PRE[i]} ${setup} ${VIEW_POST[i]}`;
+}
+
+async function alignGeneratedAuf(
+  set: string,
+  setup: string,
+  view: number,
+  alg: string,
+): Promise<string | null> {
+  const kp = await cube3();
+  const orientedSetup = setupForView(setup, view);
+  for (const prefix of AUF_PREFIXES) {
+    const candidate = prefix ? prependAuf(alg, prefix) : alg;
+    try {
+      const pattern = kp.defaultPattern().applyAlg(`${orientedSetup} ${candidate}`);
+      if (reachesMirrorGoalInAnyOrientation(pattern, set)) return candidate;
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
+/** 校正本轮新算出的生成条；原创条和没有 setup 的旧数据都保持原样。 */
+async function alignGeneratedAlgs(
+  set: string,
+  rows: MirrorRow[],
+  algsById: Map<number, AlgEntry[][]>,
+  notes: string[],
+): Promise<void> {
+  const rowById = new Map(rows.map(row => [Number(row.id), row]));
+  for (const [id, views] of algsById) {
+    const setup = rowById.get(id)?.setup?.trim();
+    if (!setup) continue;
+    for (let view = 0; view < views.length; view++) {
+      for (const entry of views[view]) {
+        if (!entry.gen) continue;
+        const aligned = await alignGeneratedAuf(set, setup, view, entry.alg);
+        if (aligned == null) {
+          notes.push(`case ${id} 第 ${view} 视角的 ${entry.gen} 生成公式无法对齐目标 case`);
+        } else {
+          entry.alg = aligned;
+        }
+      }
+    }
+  }
+}
+
 async function loadCase(puzzle: string, set: string, id: number): Promise<MirrorRow | null> {
   const rows = await query<MirrorRow>(
-    'SELECT id, algs, mirror_case_id FROM alg_cases WHERE id = ? AND puzzle = ? AND set_slug = ?',
+    'SELECT id, algs, setup, mirror_case_id FROM alg_cases WHERE id = ? AND puzzle = ? AND set_slug = ?',
     [id, puzzle, set],
   );
   return rows[0] ?? null;
@@ -109,6 +212,7 @@ export async function syncMirrorForCase(
 
   const result = regenerateMirrorAlgs(self, partner);
   notes.push(...result.notes);
+  await alignGeneratedAlgs(set, partnerRow && partnerRow !== selfRow ? [selfRow, partnerRow] : [selfRow], result.algsById, notes);
 
   const before = new Map<number, string>([[self.id, canon(self.algs)]]);
   if (partner && partner.id !== self.id) before.set(partner.id, canon(partner.algs));

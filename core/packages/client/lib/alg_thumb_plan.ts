@@ -13,6 +13,7 @@ import { invertSq1Alg } from '@cuberoot/shared/sq1-notation';
 import { renderSkewbPyramidSvgParametric } from '@cuberoot/shared/skewb-pyramid-svg';
 import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS } from '@/lib/sq1-svg';
 import { sq1StageHiddenStickerIds } from '@/lib/sq1-stage-mask';
+import { caseViewAlg, caseViewSetup, type CaseViewAngle } from '@/lib/alg_display';
 
 export const PUZZLE_SIZE: Record<AlgPuzzle, number> = {
   '2x2': 2, '3x3': 3, '4x4': 4, '5x5': 5,
@@ -48,6 +49,11 @@ export function supportsRecognitionSimplification(params: CubeThumbParams): bool
   // OLL is already a yellow/grey projection with grey side stickers hidden, so
   // applying the recognition filter produces the same image.
   return params.view === 'plan' || params.view === 'pll';
+}
+
+/** Whether a case uses a flat last-layer view where a U-angle choice is meaningful. */
+export function supportsCaseViewAngle(params: CubeThumbParams): boolean {
+  return params.view === 'plan' || params.view === 'oll' || params.view === 'pll';
 }
 
 function pickView(
@@ -114,6 +120,8 @@ export interface CaseThumbPlanInput {
   sq1BlackTop?: boolean;
   /** 3x3 plan-view teaching projection: hide noise without changing the case orientation. */
   simplifyRecognition?: boolean;
+  /** User-selected final U-layer angle for applicable last-layer views. */
+  viewAngle?: CaseViewAngle;
 }
 
 function driverFor(setup: string | undefined, alg: string): AlgDriver {
@@ -130,6 +138,7 @@ export function caseThumbPlan({
   mask,
   sq1BlackTop = true,
   simplifyRecognition = false,
+  viewAngle = 'default',
 }: CaseThumbPlanInput): CaseThumbPlan {
   if (puzzle === 'sq1') {
     const normalizedSet = set.toLowerCase();
@@ -192,10 +201,11 @@ export function caseThumbPlan({
   }
 
   const params = cubeThumbParams(puzzle, set, sticker, mask);
+  const angle = supportsCaseViewAngle(params) ? viewAngle : 'default';
   return {
     renderer: 'visualcube',
-    algorithm: alg,
-    setup,
+    algorithm: caseViewAlg(alg, angle),
+    setup: setup === undefined ? undefined : caseViewSetup(setup, angle),
     params: {
       ...params,
       ...(puzzle === '3x3' && simplifyRecognition && supportsRecognitionSimplification(params)

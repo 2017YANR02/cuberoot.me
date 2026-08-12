@@ -18,9 +18,63 @@ const TRAILING_AUF = /[\s(]*\bU(?:2'?|'|)(?![\w'])\s*\)?\s*$/;
 
 export function displayAlg(alg: string): string {
   if (!alg) return '';
-  const stripped = alg.replace(TRAILING_AUF, '').trimEnd();
-  // 整条公式就是一个 U(理论上不该有)—— 剥空了就别剥。
-  return stripped || alg;
+  let stripped = alg;
+  while (true) {
+    const next = stripped.replace(TRAILING_AUF, '').trimEnd();
+    // 整条公式只剩 AUF(理论上不该有)—— 至少留下一步,别剥成空串。
+    if (!next || next === stripped) return stripped;
+    stripped = next;
+  }
+}
+
+/**
+ * 顶层 case 的观察角度。URL 不直接存 `U'`，避免引号在分享链接里显得含混。
+ * `default` 是库里的原始角度，其余三项表示在摆好 case 后再做的 U 层调整。
+ */
+export const CASE_VIEW_ANGLES = ['default', 'u', 'u2', 'up'] as const;
+export type CaseViewAngle = (typeof CASE_VIEW_ANGLES)[number];
+
+const CASE_VIEW_SETUP_AUF: Record<CaseViewAngle, string> = {
+  default: '',
+  u: 'U',
+  u2: 'U2',
+  up: "U'",
+};
+
+const CASE_VIEW_SOLUTION_AUF: Record<CaseViewAngle, string> = {
+  default: '',
+  u: "U'",
+  u2: 'U2',
+  up: 'U',
+};
+
+const LEADING_U = /^U(2'?|')?(?:\s+|$)/;
+const U_TURNS: Record<string, number> = { U: 1, U2: 2, "U2'": 2, "U'": 3 };
+const TURN_U = ['', 'U', 'U2', "U'"] as const;
+
+/** 摆好 case 后补用户选择的 U 层角度。 */
+export function caseViewSetup(setup: string, angle: CaseViewAngle): string {
+  const auf = CASE_VIEW_SETUP_AUF[angle];
+  if (!setup || !auf) return setup;
+  return `${setup.trimEnd()} ${auf}`;
+}
+
+/**
+ * 同一状态转了 U^k 后，解法必须在开头补 U^-k；若原公式也以 U 开头，顺手合并相邻 AUF。
+ * 这里只动最开头一个普通 U 层动作，不碰 Uw / u，也不改公式主体与收尾 AUF。
+ */
+export function caseViewAlg(alg: string, angle: CaseViewAngle): string {
+  const prefix = CASE_VIEW_SOLUTION_AUF[angle];
+  if (!alg || !prefix) return alg;
+
+  const trimmed = alg.trimStart();
+  const match = trimmed.match(LEADING_U);
+  const leading = match?.[0]?.trim();
+  if (!match || !leading) return `${prefix} ${trimmed}`;
+
+  const rest = trimmed.slice(match[0].length);
+  const turns = (U_TURNS[prefix] + U_TURNS[leading]) % 4;
+  return [TURN_U[turns], rest].filter(Boolean).join(' ');
 }
 
 /**
