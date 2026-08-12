@@ -248,7 +248,7 @@ const CSS = `
 .clawd-deskpet[data-char=cloudling] .clawd-deskpet-hit{left:27%;top:28%;width:46%;height:54%;}
 .clawd-deskpet.dragging .clawd-deskpet-hit{cursor:grabbing;}
 /* Unread-feedback badge — anchored to each character's body, always visible while
-   the pet is on screen. Visual only (pet container is aria-hidden / click-through). */
+   the pet is on screen. Visual only; the clickable badges remain accessible. */
 .clawd-deskpet-badge{position:absolute;z-index:3;pointer-events:none;
   display:flex;align-items:center;justify-content:center;
   min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;
@@ -1018,9 +1018,9 @@ export default function DeskPet() {
         inputMode="search"
         style={{ position: 'fixed', bottom: 0, left: 0, width: 1, height: 1, opacity: 0, padding: 0, margin: 0, border: 0, fontSize: 16, background: 'transparent', pointerEvents: 'none', zIndex: -1 }}
       />
-      <div className={`clawd-deskpet${searchOpen ? ' pet-front' : ''}`} data-size={size} data-char={character} ref={rootRef} aria-hidden>
+      <div className={`clawd-deskpet${searchOpen ? ' pet-front' : ''}`} data-size={size} data-char={character} ref={rootRef}>
         <style>{CSS}</style>
-        <svg ref={svgRef} xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45">
+        <svg ref={svgRef} xmlns="http://www.w3.org/2000/svg" viewBox="-15 -25 45 45" aria-hidden>
           <defs>
             <style>{`
               .clawddp-breathe{transform-origin:7.5px 13px;animation:clawddp-breathe 3.2s infinite ease-in-out;}
@@ -1047,7 +1047,7 @@ export default function DeskPet() {
         </svg>
         <img ref={imgRef} alt="" />
         {fbUnread > 0 && (
-          <span className="clawd-deskpet-badge">{fbUnread > 9 ? '9+' : fbUnread}</span>
+          <span className="clawd-deskpet-badge" aria-hidden>{fbUnread > 9 ? '9+' : fbUnread}</span>
         )}
         {ntfUnread > 0 && (
           <AppLink
@@ -1056,8 +1056,6 @@ export default function DeskPet() {
             title={t('新消息', 'New notifications')}
             aria-label={t('新消息', 'New notifications')}
             prefetch={false}
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => e.stopPropagation()}
           >
             {ntfUnread > 9 ? '9+' : ntfUnread}
           </AppLink>
@@ -1068,8 +1066,7 @@ export default function DeskPet() {
             className="clawd-deskpet-badge clawd-deskpet-badge-admin"
             title={t('新公式投稿', 'New alg submissions')}
             aria-label={t('新公式投稿', 'New alg submissions')}
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => { e.stopPropagation(); setSubmPanelOpen(true); }}
+            onClick={() => setSubmPanelOpen(true)}
           >
             {algUnread > 9 ? '9+' : algUnread}
           </button>
@@ -1077,6 +1074,7 @@ export default function DeskPet() {
         <div
           className="clawd-deskpet-hit"
           ref={hitRef}
+          aria-hidden
           title={t('点我搜索 / 拖动', 'click to search · drag')}
           onContextMenu={(e) => e.preventDefault()}
         />
