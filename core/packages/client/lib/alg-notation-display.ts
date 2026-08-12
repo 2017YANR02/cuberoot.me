@@ -80,7 +80,12 @@ function moveToCsTimerZh(move: ParsedMove): string {
   return `${face}${layer}${direction}转${quarterTurns * 90}度`;
 }
 
-/** 纯紧凑中文记号，例如右顺 / 上逆 / 右双顺。 */
+function compactSuffix(amount: number): string {
+  const turns = Math.abs(amount);
+  return `${turns === 1 ? '' : turns}${amount < 0 ? "'" : ''}`;
+}
+
+/** 紧凑中文显示只替换面名，保留 2 和撇号后缀。 */
 function moveToCompactZh(move: ParsedMove): string {
   const specialMove = specialMoveToZh(move);
   if (specialMove) return specialMove;
@@ -91,10 +96,7 @@ function moveToCompactZh(move: ParsedMove): string {
   const quarterTurns = Math.abs(move.amount);
   if (!face || doubleLayer == null || !Number.isFinite(quarterTurns) || quarterTurns === 0) return move.raw;
 
-  const turn = quarterTurns === 2
-    ? '180'
-    : `${move.amount < 0 ? '逆' : '顺'}${quarterTurns === 1 ? '' : quarterTurns * 90}`;
-  return `${face}${doubleLayer}${turn}`;
+  return `${face}${doubleLayer}${compactSuffix(move.amount)}`;
 }
 
 interface DisplayPiece {
