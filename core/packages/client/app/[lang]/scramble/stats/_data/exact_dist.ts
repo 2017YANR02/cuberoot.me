@@ -66,7 +66,7 @@ export interface Text { zh: string; en: string }
 export type ExactStage =
   | '333'
   | 'daisy'
-  | 'first_face' | 'first_layer' | 'second_layer'
+  | 'first_face' | 'first_layer'
   | 'cross' | 'xcross' | 'xxcross' | 'xxxcross' | 'xxxxcross'
   | 'pseudo_cross' | 'pseudo_xcross' | 'pseudo_xxcross' | 'pseudo_xxxcross'
   | 'cross_pair' | 'xcross_pair' | 'xxcross_pair' | 'xxxcross_pair'
@@ -89,7 +89,6 @@ export const EXACT_VARIANT_STAGES: Record<string, ExactStage[]> = {
   std: ['cross', 'xcross', 'xxcross', 'xxxcross', 'xxxxcross'],
   daisy: ['daisy'],
   first_layer: ['first_face', 'first_layer'],
-  second_layer: ['second_layer'],
   pseudo: ['pseudo_cross', 'pseudo_xcross', 'pseudo_xxcross', 'pseudo_xxxcross'],
   pair: ['cross_pair', 'xcross_pair', 'xxcross_pair', 'xxxcross_pair'],
   pseudo_pair: [
@@ -116,7 +115,7 @@ export const EXACT_VARIANT_STAGES: Record<string, ExactStage[]> = {
  * EO 那一段是 EO / EOLine / 十字…(= EO_UI_STAGES)。
  */
 export const EXACT_VARIANT_ORDER: string[] = [
-  '333', 'std', 'daisy', 'first_layer', 'second_layer', 'pseudo', 'pair', 'pseudo_pair', 'eoline', 'eo', 'f2leo', 'pseudo_f2leo',
+  '333', 'std', 'daisy', 'first_layer', 'pseudo', 'pair', 'pseudo_pair', 'eoline', 'eo', 'f2leo', 'pseudo_f2leo',
   '123', '222', '223', '123x2', 'dr',
 ];
 
@@ -167,7 +166,6 @@ export const SLOT_OK: Record<ExactStage, ExactSlot[]> = {
   daisy: ['unfixed'],
   first_face: ['unfixed'],
   first_layer: ['unfixed'],
-  second_layer: ['unfixed'],
 
   cross: ['unfixed'],
   xcross: ['unfixed', 'fixed1'],
@@ -457,8 +455,6 @@ export const EXACT_DIST: Record<ExactStage, StageTable> = {
   // 目前只证明直径 11..20，不能把语料样本最大值冒充上帝之数或完整分布。
   first_layer: {},
 
-  // Second Layer 是标准 stage-4(XXXXCross/F2L) 的用户可见别名；不复制分布常量。
-  second_layer: {},
 
   // ── Cross ─────────────────────────────────────────────────────────────
   // dist_cross_1col / _2col / _6col(四色底走 `dist_cross_6col --faces LRFB`)
@@ -1027,12 +1023,6 @@ const STAGE_PLAN: Partial<Record<ExactStage, PendingPlan>> = {
     best: OOR(
       '单色底有 25,866,086,400 个有标号状态；逐态 IDA* 能严格求最优，但尚未全枚举。当前只证明直径在 11..20，分布与上帝之数都保持待定',
       'A single colour has 25,866,086,400 labelled states. IDA* proves each queried optimum, but the space has not been fully enumerated; only the diameter interval 11..20 is proven, so both the distribution and God\'s number remain pending',
-    ),
-  },
-  second_layer: {
-    best: OOR(
-      '与标准 XXXXCross/F2L 是同一个目标；单色底有 695,280,402,432,000 个态，约 350TB visited。现有按需 IDA* 能严格求单态最优，完整分布与上帝之数只证明在 16..20 之间',
-      'This is the same target as Standard XXXXCross/F2L. A single colour has 695,280,402,432,000 states and needs roughly 350 TB of visited storage. The existing on-demand IDA* proves each queried optimum; the full distribution is unavailable and God\'s number is bounded only to 16..20',
     ),
   },
   xcross: { best: BEST_TOO_BIG },

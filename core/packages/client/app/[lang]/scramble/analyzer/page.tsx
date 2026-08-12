@@ -110,13 +110,14 @@ function loadWcaSrc(): WcaSourceSettings {
 // WcaSourceSettings → wca_pool 的 WcaSourceSpec(event 恒 333;难度关或步数空则不带 diff)。
 function specFromWcaSrc(s: WcaSourceSettings): WcaSourceSpec {
   const diffRef = variantDataRef(s.wcaDiffVariant, s.wcaDiffStage);
+  const conditionalOnly = diffRef.variant === 'second_layer';
   return {
     event: '333' as EventId,
     mode: s.wcaScrambleMode,
     comp: s.wcaComp, compName: s.wcaCompName, round: s.wcaRound, group: s.wcaGroup,
     from: s.wcaDateFrom, to: s.wcaDateTo,
     optimal: s.wcaUseOptimal,
-    diff: s.wcaDifficultyOn && s.wcaDiffSteps.length
+    diff: !conditionalOnly && s.wcaDifficultyOn && s.wcaDiffSteps.length
       ? {
         variant: diffRef.variant, stage: diffRef.stage, colors: s.wcaDiffColors,
         steps: s.wcaDiffSteps, merged: s.wcaDiffMerged,

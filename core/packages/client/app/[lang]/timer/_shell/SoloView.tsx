@@ -374,6 +374,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   const [mode222] = use222Mode();
   const wcaOptimalOn = event === '222' ? mode222 === 'optimal' : settings.wcaUseOptimal;
   const wcaDiffRef = variantDataRef(settings.wcaDiffVariant, settings.wcaDiffStage);
+  const wcaDiffIsConditionalOnly = wcaDiffRef.variant === 'second_layer';
   const wcaSpec = useMemo<WcaSourceSpec>(() => {
     const compMissing = settings.wcaScrambleMode === 'comp' && !settings.wcaComp;
     return {
@@ -390,7 +391,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       // 难度控件此时照常显示可操作(WcaSourceConfig 只看开关不看有无选中比赛),丢弃会静默出不符条件的
       // 打乱(如选了 0 步十字却拿到普通打乱);date 池服务端 /random 对空 from/to 走飞镖采样带环绕补齐,
       // 稀有档(0 步十字)也能出题。
-      diff: !wcaCompUnindexed && settings.wcaDifficultyOn && settings.wcaDiffSteps.length > 0
+      diff: !wcaDiffIsConditionalOnly && !wcaCompUnindexed && settings.wcaDifficultyOn && settings.wcaDiffSteps.length > 0
         ? {
           variant: wcaDiffRef.variant, stage: wcaDiffRef.stage,
           colors: settings.wcaDiffColors, steps: settings.wcaDiffSteps,

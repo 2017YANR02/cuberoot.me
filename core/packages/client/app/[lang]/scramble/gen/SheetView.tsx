@@ -29,7 +29,7 @@ import { CUBE_FILL, BADGE_FACE_ORDER } from '@/lib/cube-colors';
 const StageSolver = dynamic(() => import('@/components/StageSolver'), { ssr: false });
 
 // gen 变体 key 与 StageSolver Method 对应(块族数据变体 123/123x2/222/223 都归聚合方法 block)。
-const NON_BLOCK_METHODS = new Set<string>(['std', 'daisy', 'first_layer', 'second_layer', 'eo', 'pair', 'pseudo', 'pseudo_pair', 'f2leo', 'pseudo_f2leo', 'eoline', 'dr']);
+const NON_BLOCK_METHODS = new Set<string>(['std', 'daisy', 'first_layer', 'eo', 'pair', 'pseudo', 'pseudo_pair', 'f2leo', 'pseudo_f2leo', 'eoline', 'dr']);
 const variantToMethod = (v: string): Method =>
   isBlockVariant(v) || v === 'block' ? 'block' : NON_BLOCK_METHODS.has(v) ? (v as Method) : 'std';
 // metric → StageSolver initialStage 索引(cross=0 / xc=1 / …;块族走方法 block 的
@@ -37,7 +37,6 @@ const variantToMethod = (v: string): Method =>
 const METRIC_STAGE_IDX: Record<Metric, number> = {
   cross: 0, xc: 1, xxc: 2, xxxc: 3, xxxxc: 4,
   bdaisy: 0, bfirst_face: 0, bfirst_layer: 1,
-  bsecond_layer: 0,
   b122: 0, b123: 1, b222: 2, b223: 3, bf2b: 4, beo: 0, beoline: 1, bdr: 0,
 };
 
@@ -46,7 +45,6 @@ const METRIC_CYCLE: Metric[] = ['cross', 'xc', 'xxc', 'xxxc', 'xxxxc'];
 const BLOCK_CYCLE: Record<string, Metric[]> = {
   daisy: ['bdaisy'],
   first_layer: ['bfirst_face', 'bfirst_layer'],
-  second_layer: ['bsecond_layer'],
   '123': ['b122', 'b123'], '222': ['b222'], '223': ['b223'],
   '123x2': ['bf2b'], eoline: ['beo', 'beoline'], dr: ['bdr'],
 };
@@ -56,8 +54,7 @@ const metricBadgeLabel = (m: Metric): string =>
     : m === 'bdaisy' ? 'Daisy'
     : m === 'bfirst_face' ? 'FF'
       : m === 'bfirst_layer' ? 'FL'
-        : m === 'bsecond_layer' ? 'F2L'
-    : m === 'bf2b' ? 'F2B'
+        : m === 'bf2b' ? 'F2B'
       : m === 'beo' ? 'EO'
         : m === 'beoline' ? 'EOLine'
           : m === 'bdr' ? 'DR'
@@ -67,7 +64,7 @@ const metricBadgeLabel = (m: Metric): string =>
 // 块族指标无 stage 查询值(空串即不带),深链只保留 scramble。
 const METRIC_STAGE: Record<Metric, string> = {
   cross: 'cross', xc: 'xcross', xxc: 'xxcross', xxxc: 'xxxcross', xxxxc: 'xxxxcross',
-  bdaisy: '', bfirst_face: '', bfirst_layer: '', bsecond_layer: '',
+  bdaisy: '', bfirst_face: '', bfirst_layer: '',
   b122: '', b123: '', b222: '', b223: '', bf2b: '', beo: '', beoline: '', bdr: '',
 };
 
@@ -216,8 +213,6 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
     const stage = METRIC_STAGE[m];
     if (stage && stage !== 'cross') q.set('stage', stage);
     if (variant && variant !== 'std') q.set('variant', variant);
-    // 旧参数仍给 CFOP 枚举器；Second Layer 另把独立 UI 方法交给 StageSolver。
-    if (variant === 'second_layer') q.set('method', 'second_layer');
     return `${langPrefix}/scramble/analyzer?${q.toString()}`;
   };
   const colSpan = showPreview ? 3 : 2;

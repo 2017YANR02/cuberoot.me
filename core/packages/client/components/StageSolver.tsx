@@ -59,7 +59,7 @@ function fmtBytes(b: number): string {
 // 'htr2'(HTR phase-2,G3→solved)同理:输入须已处于该视角 HTR,否则引擎返回
 // HTR2_NOT_HTR 哨兵 → 同样显示 '-' 且不参与 min。
 // 'fr'(Floppy 还原,HTR→FR)同理:输入须已处于该视角 HTR,否则引擎返回 FR_NOT_HTR 哨兵。
-export type Method = 'std' | 'daisy' | 'first_layer' | 'second_layer' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo' | 'block' | 'eoline' | 'dr' | 'htr' | 'htr2' | 'fr';
+export type Method = 'std' | 'daisy' | 'first_layer' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' | 'pseudo_f2leo' | 'block' | 'eoline' | 'dr' | 'htr' | 'htr2' | 'fr';
 const VARIANT_ID: Record<'pair' | 'eo' | 'pseudo' | 'pseudo_pair', number> = {
   pair: 0, eo: 1, pseudo: 2, pseudo_pair: 3,
 };
@@ -82,7 +82,7 @@ const SINGLE_FACE_METHODS: ReadonlySet<Method> = new Set<Method>([
 // 这里只定引擎支持的方法顺序(按 WASM kind 分组),标签 = variantLabel(key, isZh)。
 // 块族(原 123/222/223)聚合为一个方法 'block',块形状落在阶段下拉。
 export const METHOD_KEYS: Method[] = [
-  'std', 'daisy', 'first_layer', 'second_layer', 'eo', 'pair', 'pseudo', 'pseudo_pair', 'f2leo', 'pseudo_f2leo',
+  'std', 'daisy', 'first_layer', 'eo', 'pair', 'pseudo', 'pseudo_pair', 'f2leo', 'pseudo_f2leo',
   'block', 'eoline', 'dr', 'htr', 'htr2', 'fr',
 ];
 // 阶段键序 + 显示名同样走 scramble-variants(VARIANT_STAGES / stageLabel),
@@ -91,7 +91,7 @@ type Kind = 'std' | 'daisy' | 'first_layer' | 'variant' | 'f2leo' | 'block222' |
 // block 方法按阶段分流:block222 阶段走专用 Block222SolverWasm,其余走 Roux223SolverWasm
 // (其阶段 id 0..4 恰与 VARIANT_STAGES.block 的索引一一对应,无需映射)。
 const kindOf = (m: Method, stageKey: string): Kind =>
-  m === 'std' || m === 'second_layer' ? 'std'
+  m === 'std' ? 'std'
     : m === 'daisy' ? 'daisy'
     : m === 'first_layer' ? 'first_layer'
     : m === 'f2leo' || m === 'pseudo_f2leo' ? 'f2leo'
@@ -103,7 +103,7 @@ const kindOf = (m: Method, stageKey: string): Kind =>
 // 池按方法选:'block' 全程用 roux223 池(其 worker 表是 block222 的超集,init 时两个
 // 求解器都建),方法内切阶段不换池、不重拉表。
 const needOf = (m: Method): PoolNeed =>
-  m === 'std' || m === 'second_layer' ? 'cross'
+  m === 'std' ? 'cross'
     : m === 'daisy' ? 'daisy'
     : m === 'first_layer' ? 'first_layer'
     : m === 'f2leo' || m === 'pseudo_f2leo' ? 'f2leo'
@@ -441,8 +441,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
         : method === 'first_layer' ? (stage === 0
           ? t(`${face} 底面`, `${face}-bottom First Face`)
           : t(`${face} 底层`, `${face}-bottom First Layer`))
-        : method === 'second_layer' ? t(`${face} 底第二层`, `${face}-bottom Second Layer`)
-      : method === 'dr' ? t(`${face} 轴 DR`, `${face}-axis DR`)
+        : method === 'dr' ? t(`${face} 轴 DR`, `${face}-axis DR`)
         : method === 'htr' ? t(`${face} 轴 HTR(需已处于该轴 DR)`, `${face}-axis HTR (requires DR on this axis)`)
           : method === 'htr2' ? t(`${face} 轴 HTR 收尾(需已处于该轴 HTR)`, `${face}-axis HTR-finish (requires HTR on this axis)`)
             : method === 'fr' ? t(`${face} 轴 Floppy 还原(需已处于该轴 HTR)`, `${face}-axis Floppy Reduction (requires HTR on this axis)`)
@@ -686,9 +685,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     setTotalMs(null);
     const wall = performance.now();
     const kind = kindOf(method, stages[stage] ?? '');
-    // Second Layer 是 std stage-4(XXXXCross/F2L) 的纯别名；UI 只有一阶段，
-    // 但 WASM 仍必须收到原始 flat stage id 4。
-    const engineStage = method === 'second_layer' ? 4 : stage;
+    const engineStage = stage;
     try {
       if (kind === 'std' && useCrRef.current) {
         // cross/xcross/xxcross/xxxcross/F2L 18 格受限(含宽/中层/转体)→ 统一走 XCrossRestrictSolver
@@ -832,7 +829,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     try {
       const scr = scrambleRef.current.trim();
       const kind = kindOf(method, stages[stage] ?? '');
-      const engineStage = method === 'second_layer' ? 4 : stage;
+      const engineStage = stage;
       // 用户指定槽位:仅当其槽数与当前阶段一致时生效(切阶段后旧选择失配 → 回退自动)。
       const sc = slotCount(method, stage);
       const combo = sc >= 1 && comboArity(selSlotRef.current) === sc ? selSlotRef.current : '';

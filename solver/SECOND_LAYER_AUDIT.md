@@ -1,80 +1,54 @@
-# Second Layer / F2L design audit
+# Second Layer conditional-state audit
 
 ## Semantics
 
-The canonical bottom face is D. The requested terminal state is:
+The input, not just the terminal state, has a solved D first layer:
 
-- D-layer corners 4..7 solved in position and orientation;
-- D-cross edges 8..11 solved in position and orientation;
-- middle-layer edges 0..3 solved in position and orientation.
+- D-layer corners 4..7 are solved in position and orientation;
+- D-cross edges 8..11 are solved in position and orientation;
+- the four labelled middle-layer edges 0..3 may occupy any remaining edge
+  position with either orientation.
 
-The existing `std` stage `xxxxcross` requires the D cross plus all four F2L
-slots. Each slot contributes one of corners 4..7 and one of edges 0..3.
-Consequently its terminal predicate is exactly the predicate above, state by
-state. The six views already use `ROTS6 = ["", "z2", "z'", "z", "x'", "x"]`
-and therefore cover D/U/L/R/F/B in the same order as First Layer.
+The goal also solves edges 0..3, so the terminal state has the full first two
+layers solved. Search may temporarily disturb the first layer. Requiring it to
+remain solved after every move would leave only U turns and make almost every
+input unreachable.
 
-The search may temporarily disturb the first layer. Requiring every
-intermediate state to preserve it would leave only U turns in the 18-turn
-face-move model; U turns cannot repair middle-layer edges, so almost every
-applicable input would be unreachable. The contract is therefore a terminal
-state constraint, not an intermediate-state move restriction.
+The goal predicate equals `std` stage 4 (`xxxxcross`), but the problem does not:
+`std` accepts arbitrary cube states, whereas this distribution is conditioned
+on the first layer already being solved. WCA / XXXXCross samples therefore
+cannot stand in for this dataset.
 
-## State space and optimality bounds
+## Exact quotient and result
 
-Tracking the four D corners and the eight solved F2L edges gives
+The U-layer corners and edges are irrelevant fillers. Once the first layer is
+fixed, the complete target-relevant input coordinate is only the four labelled
+middle-layer edges:
 
-`P(8,4) * 3^4 * P(12,8) * 2^8 = 695,280,402,432,000`
+`P(8,4) * 2^4 = 26,880` states.
 
-coordinate states. A full exact-distance table is not practical. The existing
-IDA* is nevertheless exact: the native path uses exact cross-plus-two-slot
-PDBs, while the browser path uses the maximum of four exact single-slot PDBs;
-both are admissible and accept only when all four slots are solved.
+`src/bin/second_layer_distribution.rs` enumerates each coordinate exactly once
+and calls the exact IDA* primitive in `XCrossSolver::second_layer_distance`.
+The admissible heuristic is the maximum of four exact single-slot PDB values;
+the goal test requires all four slots. The resulting HTM distribution is:
 
-The certified HTM God's-number interval is currently `16 <= God <= 20`:
+`[1, 0, 0, 0, 0, 22, 24, 283, 682, 2590, 7006, 12400, 3854, 18]`
 
-- hard-corpus row 149604 has an exact D-view distance of 16;
-- solving the whole 3x3 always solves F2L, so the full-cube diameter 20 is an
-  unconditional upper bound.
+The counts sum to 26,880 and prove God's number 13 HTM. A 14-thread release run
+on the development machine completed the enumeration in 57.75 seconds.
 
-The WCA corpus currently observes a maximum of 15 and the two-colour 10f
-corpus a maximum of 16. Neither sample maximum is presented as a diameter.
+## Resources and integration
 
-## Reuse and resource plan
+The offline enumerator loads the existing `pt_cross_C4E0` single-slot PDB
+(54,743,056 bytes) and `mt_edge4` (18,247,692 bytes), plus two 1,740-byte move
+tables: 72,994,228 known table bytes (69.61 MiB) total. It does not map the
+22.9 GiB XXXXCross pair tables and creates no persistent table.
 
-Second Layer should be a thin alias of `std` stage 4 (`xxxxcross`), not a new
-solver family.
+The client stores only the 14-bin precomputed histogram. It runs no BFS or
+IDA*, downloads no solver table, and exposes the result under the separate
+`First layer solved` / `第一层已还原` dataset. The old WCA, recent-scramble,
+generator, timer and live StageSolver aliases are intentionally removed.
 
-- Native/analyzer: reuse `XCrossSolver`, `std_analyzer`, and the existing
-  `xxxxcross_*` CSV columns. The recorded full-cascade throughput is about 115
-  scrambles/s for five stages by six colours.
-- Statistics: reuse the already computed `std.xxxxcross` distributions,
-  examples, recent-scramble data, and competition step matrices. No 1.3M-row
-  re-analysis is needed.
-- WASM: reuse the `cross` worker need and `CrossSolverWasm` variant 4. There is
-  no new download and no new client-side BFS.
-
-Native exact solving maps 24,598,089,928 bytes (22.909 GiB) of shared read-only
-tables in the full `std` configuration, principally:
-
-- `pt_cross_C4C5E0E1.bin`: 10,729,635,856 bytes;
-- `pt_cross_C4C6E0E2.bin`: 10,729,635,856 bytes;
-- `mt_edge6.bin`: 3,065,610,252 bytes.
-
-They are mmap-backed and shared by analyzer threads, so eight threads do not
-duplicate 22.9 GiB of private allocations. The OS may warm a comparable amount
-of physical page cache; private committed memory remains small by comparison.
-
-The browser reuses prebuilt `pt_cross_C4E0.bin.gz` (21,013,802 bytes compressed,
-54,743,056 bytes decoded) plus generated movement tables. A complete F2L table
-would be hundreds of terabytes even at four bits per coordinate, so arbitrary
-scrambles must still run query-specific IDA*. Known competition rows already
-use precomputed `comp_steps`, avoiding live client search.
-
-## SL1/SL2 minimum implementation
-
-Expose a user-facing `second_layer` label that delegates to `std` stage 4 and
-maps every data consumer back to `std/xxxxcross`. Do not add a Rust searcher,
-analyzer executable, table, WASM class, worker need, CSV, or full-corpus job.
-Keep the independent physical-State/shallow-IDDFS probe in
-`tests/second_layer_audit.rs` as the semantic regression guard.
+`tests/second_layer_audit.rs` locks the coordinate cardinality, physical target
+predicate, shallow independent IDDFS agreement in all six views, and agreement
+between conditional coordinates and ordinary algorithm-applied cube states.

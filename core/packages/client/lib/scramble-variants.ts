@@ -54,8 +54,8 @@ export const VARIANT_ORDER: ScrambleVariant[] = [
   'block', 'dr',
 ];
 
-// LBL 是 UI 聚合方法:数据仍分别落 daisy / first_layer / second_layer；其中
-// second_layer 是 std/xxxxcross 的薄别名，不复制统计或求解表。
+// LBL 是 UI 聚合方法:数据分别落 daisy / first_layer / second_layer。
+// second_layer 只属于「第一层已还原」条件状态集，不是 WCA / XXXXCross 的别名。
 export const LBL_DATA_VARIANTS = ['daisy', 'first_layer', 'second_layer'] as const;
 export const isLblVariant = (v: string): boolean =>
   (LBL_DATA_VARIANTS as readonly string[]).includes(v);
@@ -63,7 +63,7 @@ export const LBL_STAGE_VARIANT: Record<string, ScrambleVariant> = {
   daisy: 'daisy', bdaisy: 'daisy',
   first_face: 'first_layer', first_layer: 'first_layer',
   bfirst_face: 'first_layer', bfirst_layer: 'first_layer',
-  second_layer: 'second_layer', bsecond_layer: 'second_layer',
+  second_layer: 'second_layer',
 };
 
 // 数据层块变体集合 + 「block 方法的阶段/指标 → 底层数据变体」映射
@@ -150,7 +150,6 @@ const STAGE_BASE: Record<string, VariantLabel> = {
   b122: { zh: '122', en: '122' },
   bfirst_face: { zh: '底面', en: 'First Face' },
   bfirst_layer: { zh: '底层', en: 'First Layer' },
-  bsecond_layer: { zh: '第二层', en: 'Second Layer' },
   b123: { zh: '123', en: '123' },
   b222: { zh: '222', en: '222' },
   b223: { zh: '223', en: '223' },
@@ -185,7 +184,7 @@ export const VARIANT_STAGES: Record<ScrambleVariant, string[]> = {
   lbl: ['daisy', 'first_face', 'first_layer', 'second_layer'],
   daisy: ['daisy'],
   first_layer: ['first_face', 'first_layer'],
-  // 第二层与 std stage-4(XXXXCross/F2L) 逐态同义；只是用户可见别名。
+  // 条件输入:第一层已还原，只需复原 4 条中层棱。
   second_layer: ['second_layer'],
   eo: ['eo_cross', 'eo_xcross', 'eo_xxcross', 'eo_xxxcross', 'eo_xxxxcross'],
   pair: ['cross_pair', 'xcross_pair', 'xxcross_pair', 'xxxcross_pair'],
@@ -213,7 +212,7 @@ export const EO_UI_STAGES: string[] = [...VARIANT_STAGES.eoline, ...VARIANT_STAG
 // 首页近期打乱 JSON 的短 metric 展开序。新管道阶段必须同步加进来,
 // 否则方法会出现在下拉里,但选中后找不到任何步数桶。
 export const RECENT_METRIC_ORDER: string[] = [
-  '333', 'daisy', 'first_face', 'first_layer', 'second_layer', 'eo', 'eoline', 'cross', 'xc', 'xxc', 'xxxc', 'xxxxc',
+  '333', 'daisy', 'first_face', 'first_layer', 'eo', 'eoline', 'cross', 'xc', 'xxc', 'xxxc', 'xxxxc',
   'fbsquare', 'rouxs1', 'block222', 'block223', 'f2b', 'dr',
 ];
 
@@ -230,7 +229,7 @@ export const uiVariantOf = (dataVariant: string): string =>
 /** 方法下拉选项 = VARIANT_ORDER 里有数据的项;聚合项只要有一个成员变体有数据就算。 */
 export const uiVariantOptions = (hasData: (dataVariant: string) => boolean): string[] =>
   VARIANT_ORDER.filter((v) => (
-    v === 'lbl' ? (LBL_DATA_VARIANTS.some(hasData) || hasData('std'))
+    v === 'lbl' ? LBL_DATA_VARIANTS.some(hasData)
       : v === 'block' ? BLOCK_DATA_VARIANTS.some(hasData)
       : v === 'eo' ? EO_DATA_VARIANTS.some(hasData)
         : hasData(v)
@@ -249,14 +248,8 @@ export const dataVariantOfStage = (uiVariant: string, stage: string): string => 
     : uiVariant === 'eo' ? (EO_STAGE_VARIANT[stage] ?? 'eo')
       : uiVariant);
 
-/**
- * UI 别名→唯一底层数据坐标。Second Layer 不生成新 CSV/JSON/步数槽，
- * 永远复用 std.xxxxcross；首页的短 metric 同理复用 xxxxc。
- */
+/** UI 方法 / 阶段 → 唯一底层数据坐标。 */
 export interface VariantDataRef { variant: string; stage: string; recentMetric: string }
-export const variantDataRef = (uiVariant: string, stage: string): VariantDataRef => {
-  if (uiVariant === 'second_layer' || stage === 'second_layer' || stage === 'bsecond_layer') {
-    return { variant: 'std', stage: 'xxxxcross', recentMetric: 'xxxxc' };
-  }
-  return { variant: dataVariantOfStage(uiVariant, stage), stage, recentMetric: stage };
-};
+export const variantDataRef = (uiVariant: string, stage: string): VariantDataRef => ({
+  variant: dataVariantOfStage(uiVariant, stage), stage, recentMetric: stage,
+});
